@@ -1,4 +1,9 @@
 baseURL = 'https://text-matrix.3hao8.com/'
-locale = 'en-us'
+#locale = 'en-us'
+locale = 'zh'
+languageCode = "zh-cn"
 title = 'text matrix'
 theme = "dark-theme-editor"
+
+
+enableGitInfo = true
