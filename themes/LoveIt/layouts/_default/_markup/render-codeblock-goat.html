@@ -1,0 +1,8 @@
+{{- $params := .Page.Scratch.Get "params" -}}
+{{- $render := $params.code.render | default dict -}}
+{{- if $render.goat | default true -}}
+    {{- partial "plugin/goat.html" . -}}
+{{- else -}}
+    {{- $result := transform.HighlightCodeBlock . -}}
+    {{- $result.Wrapped -}}
+{{- end -}}

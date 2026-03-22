@@ -3,7 +3,7 @@ baseURL = 'https://text-matrix.3hao8.com/'
 locale = 'zh'
 languageCode = "zh-cn"
 title = 'text matrix'
-theme = "dark-theme-editor"
+theme = "LoveIt"
 
 
 enableGitInfo = true
