@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+if command -v uv >/dev/null 2>&1; then
+  uv run python scripts/frontmatter_autofill.py --root content
+else
+  python3 scripts/frontmatter_autofill.py --root content
+fi
+
+git add content
