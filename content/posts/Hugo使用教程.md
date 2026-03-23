@@ -373,13 +373,13 @@ Hugo 会使用 `archetypes/default.md` 作为模板。如果要使用特定的 a
 Hugo 提供了一些内置的短代码。例如，嵌入 YouTube 视频：
 
 ```markdown
-{{< youtube dQw4w9WgXcQ >}}
+{{</* youtube dQw4w9WgXcQ */>}}
 ```
 
 显示 GitHub Gist：
 
 ```markdown
-{{< gist username 1234567 >}}
+{{</* gist username 1234567 */>}}
 ```
 
 **自定义短代码**
@@ -396,9 +396,9 @@ Hugo 提供了一些内置的短代码。例如，嵌入 YouTube 视频：
 在 Markdown 中使用：
 
 ```markdown
-{{< note type="warning" title="注意" >}}
+{{</* note type="warning" title="注意" */>}}
 这是警告提示框的内容。
-{{< /note >}}
+{{</* /note */>}}
 ```
 
 ### 4.5 分类与标签
@@ -1363,7 +1363,7 @@ Hugo 作为静态站点生成器，输出的纯 HTML 文件与 AdSense 无任何
 在文章中使用短代码：
 
 ```markdown
-{{< adsense slot="1234567890" format="auto" responsive="true" >}}
+{{</* adsense slot="1234567890" format="auto" responsive="true" */>}}
 ```
 
 ### 10.4 广告单元类型与配置
