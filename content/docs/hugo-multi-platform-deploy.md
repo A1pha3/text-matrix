@@ -1,7 +1,7 @@
 +++
-date = '2026-03-23T10:00:00+08:00'
-draft = true
-title = 'Hugo 新手多平台上线实战  GitHub Pages、Vercel、Cloudflare'
+date = '2026-03-22T00:10:00+08:00'
+draft = false
+title = 'Hugo 新手多平台上线实战（GitHub Pages、Vercel、Cloudflare）'
 +++
 
 # Hugo 新手多平台上线实战（GitHub Pages、Vercel、Cloudflare）
