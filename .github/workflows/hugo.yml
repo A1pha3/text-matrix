@@ -56,6 +56,11 @@ jobs:
           hugo \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+      - name: Verify taxonomy pages
+        run: |
+          test -f public/categories/index.html
+          test -f public/categories/行业快讯/index.html
+          test -f public/tags/index.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

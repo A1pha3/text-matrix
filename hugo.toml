@@ -9,6 +9,10 @@ theme = "LoveIt"
 
 enableGitInfo = true
 
+[taxonomies]
+  category = "categories"
+  tag = "tags"
+
 [params]
   title = "Text Matrix"
   description = "Text Matrix"
