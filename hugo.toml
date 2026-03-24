@@ -2,6 +2,7 @@ baseURL = 'https://text-matrix.3hao8.com/'
 #locale = 'en-us'
 locale = 'zh'
 languageCode = "zh-cn"
+defaultContentLanguage = "zh-cn"
 title = 'Text Matrix'
 theme = "LoveIt"
 
@@ -12,11 +13,17 @@ enableGitInfo = true
   title = "Text Matrix"
   description = "Text Matrix"
 
+  [params.author]
+    name = "TextMatrix"
+
   [params.header.title]
     name = "Text Matrix"
 
   [params.app]
     title = "Text Matrix"
+
+  [params.footer]
+    copyright = false
 
   [params.home]
     [params.home.profile]
