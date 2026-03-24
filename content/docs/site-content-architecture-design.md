@@ -60,6 +60,36 @@ content/
 *   **技术标签**：`["ChatGPT"]`, `["LangChain"]`, `["Solidity"]`, `["Python"]`。
 *   *组合示例*：一篇关于“用 Python 写量化交易策略”的文章：`categories: ["技术笔记"]`，`tags: ["传统金融", "Python", "量化交易"]`。
 
+### Taxonomy 路由映射速查表
+为避免分类页或标签页路径不一致，`hugo.toml` 建议显式配置：
+
+```toml
+[taxonomies]
+  category = "categories"
+  tag = "tags"
+```
+
+配置与 Frontmatter 的关系如下：
+
+| Frontmatter 字段 | 示例值 | 生成的聚合页 | 生成的详情页 |
+|---|---|---|---|
+| `categories` | `["行业快讯"]` | `/categories/` | `/categories/行业快讯/` |
+| `tags` | `["AI"]` | `/tags/` | `/tags/ai/` |
+
+当导航菜单中的 URL 指向分类详情页（如 `/categories/行业快讯/`）时，上述映射需要与菜单保持一致，才能确保页面可访问。
+
+### Taxonomy 404 三步排查清单
+当分类详情页或标签详情页出现 404，可按以下顺序排查：
+
+1. **看构建产物是否存在页面文件**
+   - 检查 `public/categories/index.html`、`public/categories/行业快讯/index.html`、`public/tags/index.html`。
+2. **看路由映射与导航是否一致**
+   - 检查 `hugo.toml` 中 `[taxonomies]` 是否为 `category = "categories"`、`tag = "tags"`。
+   - 检查 `[menu.main]` 中的分类 URL 是否与 taxonomy 路径一致。
+3. **看部署结果是否完整发布**
+   - 在 CI 中增加构建后 `test -f` 校验，避免缺页产物被上传。
+   - 部署后用线上 URL 验证 `/categories/`、`/categories/行业快讯/`、`/tags/` 是否返回 200。
+
 ---
 
 ## 3. 主页分流与展示策略（核心机制）

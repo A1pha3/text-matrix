@@ -505,18 +505,64 @@ git push
 - 选择 **Connect to Git**
 - 连接 GitHub 并授权仓库
 
-### 6.2 设置构建参数
+### 6.2 设置构建参数（官方推荐流程）
+
+入口路径：**Pages 项目 → Settings → Builds & deployments → Build configurations → Edit configurations**
 
 选择仓库 `my-hugo-multi-deploy` 后，设置：
 
 - Production branch：`main`
 - Framework preset：`Hugo`
-- Build command：`hugo --gc --minify`
+- Build command：`hugo --gc --minify --environment production`
 - Build output directory：`public`
 
-点击 **Save and Deploy**。
+然后点击 **Save and Deploy**。
 
-如果 Cloudflare 没有自动识别 Hugo，手工填以上 2 个关键字段也可以正常部署。
+如果 Cloudflare 没有自动识别 Hugo，至少保证这 3 个字段正确：
+
+- Build command
+- Build output directory
+- Production branch
+
+补充两项最新配置建议：
+
+- Root directory（可选）：单仓库可留空；Monorepo 再指定子目录
+- Environment variables：建议在 Production 和 Preview 都设置 `HUGO_VERSION`，固定 Hugo 版本避免构建漂移
+
+说明：Cloudflare 官方 Hugo 示例命令是 `hugo`。在实际生产中常用 `hugo --gc --minify --environment production`，用于更小产物和更一致的环境行为。
+
+### 6.2.1 为什么这里用 `hugo --gc --minify`
+
+这个命令是 Hugo 在生产环境中最常见的一组默认参数，原因是：
+
+- 稳定：不依赖额外插件，三大平台（GitHub Pages、Vercel、Cloudflare Pages）都能直接使用
+- 产物更轻：`--minify` 会压缩输出内容，减少页面体积
+- 构建更干净：`--gc` 会清理无用缓存和无引用资源，避免历史构建残留
+
+参数含义如下：
+
+- `hugo`：执行站点构建，把内容和模板生成到 `public/`
+- `--gc`：构建后做垃圾回收（garbage collection），清理无用资源
+- `--minify`：压缩 HTML、CSS、JS 等输出内容
+
+是否是“最佳工业实践”：
+
+- 对大多数中小型静态站点：可以视为通用最佳实践起点
+- 对有严格 CI 规范的团队：建议显式指定环境，常用写法如下
+
+```bash
+hugo --gc --minify --environment production
+```
+
+其中 `--environment production` 表示显式把 Hugo 当前环境设为 `production`。
+
+为什么这会更“严格”：
+
+- 不是语法更严格，而是工程约束更严格
+- 模板里常会按 `hugo.Environment` 分支处理（例如只在生产环境注入统计脚本）
+- 把环境写进构建命令后，不再依赖默认值或外部环境变量，减少“本地与 CI 行为不一致”
+
+这样可以让构建行为更可预测，便于和 CI/CD 流水线保持一致。
 
 ### 6.3 首次发布验证
 
