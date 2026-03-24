@@ -748,18 +748,88 @@ my-hugo-multi-deploy/
 - [ ] 修改一篇文章后，三平台都自动更新
 - [ ] 我能根据日志定位一次失败原因，而不是只靠重试
 
-## 13. 可选进阶：绑定自定义域名
+## 13. 可选进阶：双域名分别绑定（GitHub Pages + Cloudflare Pages）
 
-如果你后续要把三个平台统一成自己的域名，可以按这个顺序做：
+如果你现在是这个场景：
 
-1. 先在一个平台完成自定义域名绑定并验证成功
-1. 再决定是否把其余两个平台作为备份发布目标
-1. 最后把 `hugo.toml` 的 `baseURL` 改成你的正式域名并重新部署
+- `txtmix.com` 给 Cloudflare Pages（主站）
+- `mixtxt.com` 给 GitHub Pages（备用）
+
+按下面顺序执行，最稳妥。
+
+### 13.1 先确定主域名与 `baseURL`
+
+1. 先选一个“主域名”（你当前建议用 `txtmix.com`）
+1. 把 `hugo.toml` 里的 `baseURL` 改成主域名，格式必须完整：
+
+   ```toml
+   baseURL = "https://txtmix.com/"
+   ```
+
+1. 另一个域名作为“备用入口”，先保证可访问，不要同时当 canonical 主域名
+
+### 13.2 给 GitHub Pages 绑定 `mixtxt.com`
+
+1. 打开 GitHub 仓库：`Settings` → `Pages`
+1. 在 `Custom domain` 填入 `mixtxt.com`，点击 `Save`
+1. 回到 `mixtxt.com` 的 DNS 管理页，添加根域名解析（A 记录）：
+
+   - 类型：`A`，名称：`@`，内容：`185.199.108.153`
+   - 类型：`A`，名称：`@`，内容：`185.199.109.153`
+   - 类型：`A`，名称：`@`，内容：`185.199.110.153`
+   - 类型：`A`，名称：`@`，内容：`185.199.111.153`
+   - 代理状态：`DNS only`（灰云）
+
+1. 为 `www.mixtxt.com` 增加一条记录（推荐）：
+
+   - 类型：`CNAME`
+   - 名称：`www`
+   - 目标：`<你的 GitHub 用户名>.github.io`
+   - 代理状态：`DNS only`（灰云）
+
+1. 在 Hugo 项目中创建（或保留）`static/CNAME` 文件，内容只有一行：
+
+   ```text
+   mixtxt.com
+   ```
+
+1. 推送代码触发 GitHub Actions 重新部署
+1. 回到 GitHub `Pages` 页面，等待域名校验与证书完成，打开 `Enforce HTTPS`
+1. 访问 `https://mixtxt.com` 验证
+
+### 13.3 给 Cloudflare Pages 绑定 `txtmix.com`
+
+1. 打开 Cloudflare：`Workers & Pages` → 你的 Pages 项目
+1. 进入 `Custom domains` → `Set up a custom domain`
+1. 输入 `txtmix.com` 并确认
+1. 如果 DNS 未自动生成，手动补一条：
+
+   - 类型：`CNAME`
+   - 名称：`@`
+   - 目标：`<你的 Cloudflare Pages 默认域名>.pages.dev`
+   - 代理状态：`Proxied`（橙云）
+
+1. 为 `www.txtmix.com` 增加一条记录（推荐）：
+
+   - 类型：`CNAME`
+   - 名称：`www`
+   - 目标：`@`
+   - 代理状态：`Proxied`（橙云）
+
+1. 等待域名状态变为可用（SSL 证书生效）
+1. 访问 `https://txtmix.com` 验证是否正常
+
+### 13.4 两个平台都绑定后的收口动作
+
+1. 用 `txtmix.com`（`baseURL` 指向域名）做 SEO 与对外入口
+1. `mixtxt.com` 仅用于容灾、回退或技术验证
+1. 若你希望用户只看到一个域名，在 `mixtxt.com` 上做 301 到 `https://txtmix.com`（可用 Cloudflare Redirect Rules）
 
 建议：
 
-- 不要在三个平台同时绑定同一个生产域名，以免 DNS 与证书排障复杂度陡增
-- 新手阶段优先使用平台默认域名完成流程，等流程稳定后再切正式域名
+- 不要把 `txtmix.com` 与 `mixtxt.com` 互相 CNAME 到对方
+- 不要把两个域名都当主域名写入 `baseURL`
+- 每次改域名后都做一次全量部署，再检查 CSS、JS、RSS 与 sitemap 是否正常
 
 ## 14. 已知边界说明（避免误解）
 
