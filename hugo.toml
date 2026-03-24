@@ -1,4 +1,4 @@
-baseURL = 'https://text-matrix.3hao8.com/'
+baseURL = 'https://txtmix.com/'
 #locale = 'en-us'
 locale = 'zh'
 languageCode = "zh-cn"
