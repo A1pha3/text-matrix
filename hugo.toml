@@ -20,7 +20,7 @@ enableGitInfo = true
   [params.adsense]
     enabled = true
     client = "ca-pub-3883067925168693"
-    autoAds = false
+    autoAds = true
 
   [params.author]
     name = "TextMatrix"
