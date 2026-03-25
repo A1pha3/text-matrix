@@ -1280,332 +1280,165 @@ jobs:
 
 ## 第十章：Google AdSense 广告集成
 
-### 10.1 AdSense 与 Hugo 的兼容性
+> **🎯 本章学习目标**
+> - 了解 Hugo 静态网站接入 Google AdSense 的标准流程。
+> - 掌握通过配置文件统一管理广告参数的最佳实践。
+> - 学会编写可复用的广告短代码（Shortcode），实现灵活投放。
+> - 掌握广告合规性要求及核心性能优化技巧（如降低 CLS 布局偏移）。
 
-Hugo 创建的静态网站完全支持 Google AdSense。AdSense 通过在网页中嵌入广告代码，根据用户访问自动展示相关广告，站长通过广告点击或展示获得收益。
+Google AdSense 与 Hugo 完全兼容。Hugo 负责输出极速的静态 HTML，而 AdSense 依赖前端 JavaScript 脚本在客户端渲染广告，两者在架构上互不干扰。其核心渲染流程如下：
 
-Hugo 作为静态站点生成器，输出的纯 HTML 文件与 AdSense 无任何冲突。整个集成过程分为三个阶段：申请 AdSense 账号、配置广告代码、持续优化收益。
+```mermaid
+sequenceDiagram
+    participant B as 浏览器 (Client)
+    participant H as Hugo 静态服务器
+    participant G as Google 广告服务器
+    
+    B->>H: 1. 请求页面
+    H-->>B: 2. 返回包含 AdSense 脚本的 HTML
+    B->>G: 3. 异步加载 adsbygoogle.js
+    B->>G: 4. 根据 slot ID 请求匹配广告
+    G-->>B: 5. 返回广告内容并在容器 (ins) 中渲染
+```
 
-### 10.2 AdSense 账号申请
+### 10.1 接入前置准备
 
-**申请前提条件**
+在申请 AdSense 账号前，请确保你的站点满足以下基准条件，这能大幅提升审核通过率：
 
-在申请 AdSense 之前，确保网站满足以下要求：
+- **站点状态**：已绑定自定义域名（如 `txtmix.com`），并强制启用 HTTPS。
+- **内容质量**：站点已有一定数量的高质量原创文章，且保持稳定更新，切忌用空壳页面申请。
+- **合规页面**：必须包含清晰的导航、关于我们（About）以及**隐私政策（Privacy Policy）**页面（隐私政策中需声明 Cookie 及第三方广告的使用）。
 
-- 网站已完成部署并可公开访问
-- 拥有自定义域名（不建议使用 GitHub Pages 默认域名）
-- 网站内容原创、有价值，数量不少于 10 篇文章
-- 网站界面清晰、无非法内容、符合 AdSense 政策
-- 网站需已备案（针对中国大陆地区）
+> **💡 专家建议**：优先提升内容价值和自然流量，再考虑广告变现。急于在无流量的站点投放广告不仅没有收益，还容易触发平台风控。
 
-**申请流程**
+### 10.2 核心配置：参数化管理
 
-1. 访问 Google AdSense 官网（adsense.google.com），使用 Google 账号登录
-2. 点击"开始使用 AdSense"，输入网站地址
-3. 添加网站后，复制 AdSense 提供的验证代码
-4. 将验证代码添加到 Hugo 站点
+**为什么需要统一配置？**
+如果在多个模板和文章中直接写死（硬编码）AdSense 的 Publisher ID，未来修改或临时关闭广告时将非常痛苦。最佳实践是在 `hugo.toml` 中集中管理。
 
-### 10.3 Hugo 站点验证代码配置
-
-**方式一：通过主题配置**
-
-大多数 Hugo 主题都提供了 `head` 或 `customhead` 配置项。在 `hugo.toml` 中添加：
+在你的 `hugo.toml` 文件中添加以下配置：
 
 ```toml
-[params]
-  # Google AdSense 验证代码
-  google_adsense = "ca-pub-xxxxxxxxxxxxxxxx"
-  
-  # 是否在 head 中加载广告脚本
-  enable_adsense = true
+[params.adsense]
+  # 广告总开关，方便在测试环境或特定情况下全局一键关闭
+  enabled = true
+  # 你的 AdSense 发布商 ID，必须包含 ca-pub- 前缀
+  client = "ca-pub-xxxxxxxxxxxxxxxx"
+  # 是否开启自动广告（交由 Google 决定插入位置）
+  autoAds = false
 ```
 
-**方式二：创建自定义头部模板**
+### 10.3 注入主脚本（全局引入）
 
-如果主题不支持直接配置，可以创建自定义头部模板。在 `layouts/partials/` 目录下创建 `custom head.html`：
+要让 AdSense 生效，必须在所有页面的 `<head>` 标签中引入一次（且仅一次）基础脚本。
+
+**步骤 1：创建局部模板**
+在项目目录下创建文件 `layouts/partials/adsense/head.html`，输入以下代码：
 
 ```html
-<!-- layouts/partials/custom_head.html -->
-{{ if .Site.Params.google_adsense }}
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-{{ .Site.Params.google_adsense }}"
-     crossorigin="anonymous"></script>
-{{ end }}
+{{- $cfg := .Site.Params.adsense -}}
+<!-- 仅在生产环境、开关打开且配置了 client ID 时注入代码 -->
+{{- if and (not hugo.IsServer) $cfg.enabled $cfg.client -}}
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ $cfg.client }}" crossorigin="anonymous"></script>
+{{- end -}}
 ```
 
-确保主题的模板文件引用了这个 partial：
+> **🛡️ 安全护栏：为什么使用 `not hugo.IsServer`？**
+> 在本地开发时（运行 `hugo server`），页面上的广告一旦被意外点击，会被 Google 判定为“无效流量（Invalid Traffic）”，严重时会导致账号被封禁。引入 `not hugo.IsServer` 可以确保广告脚本**绝对不会**在本地开发环境中加载。
+
+**步骤 2：在 `<head>` 中引入**
+你需要将这个 partial 挂载到站点的 `<head>` 中。通常的做法是找到你的主题提供的自定义 head 钩子（例如 LoveIt 主题的 `layouts/partials/custom/head.html`），或者直接覆写基础模板，添加以下调用：
 
 ```html
-<head>
-  ...
-  {{ partial "custom_head.html" . }}
-</head>
+{{ partial "adsense/head.html" . }}
 ```
 
-**方式三：通过 Shortcode 注入**
+> **注意**：现代 AdSense 自动广告只需上述带有 `client` 参数的脚本即可生效，无需额外推送 `enable_page_level_ads`（这是旧版写法）。如果开启了自动广告，Google 会自动分析页面结构并插入广告。
 
-创建 AdSense 短代码 `layouts/shortcodes/adsense.html`：
+### 10.4 灵活投放：自定义广告短代码
+
+如果你关闭了自动广告（`autoAds = false`），或者希望在文章的特定段落精准插入广告，我们需要借助 Hugo 的短代码（Shortcode）功能。
+
+创建文件 `layouts/shortcodes/adsense.html`：
 
 ```html
-{{ if .Site.Params.google_adsense }}
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-{{ .Site.Params.google_adsense }}"
-     data-ad-slot="{{ .Get "slot" }}"
-     data-ad-format="{{ .Get "format" | default "auto" }}"
-     data-full-width-responsive="{{ .Get "responsive" | default "true" }}">
-</ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-{{ end }}
+{{- $cfg := .Site.Params.adsense -}}
+{{- $slot := .Get "slot" -}}
+
+<!-- 仅在生产环境且配置齐全时加载真实广告 -->
+{{- if and (not hugo.IsServer) $cfg.enabled $cfg.client $slot -}}
+<div class="ad-container" style="min-height: 100px; margin: 2rem 0; overflow: hidden;">
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="{{ $cfg.client }}"
+       data-ad-slot="{{ $slot }}"
+       data-ad-format="{{ .Get "format" | default "auto" }}"
+       data-full-width-responsive="{{ .Get "responsive" | default "true" }}"></ins>
+  <script>
+       (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</div>
+<!-- 在本地开发环境展示占位符，方便预览排版 -->
+{{- else if hugo.IsServer -}}
+<div class="ad-placeholder" style="min-height: 100px; margin: 2rem 0; background: #f0f0f0; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #888;">
+  [AdSense 广告位占位符 - Slot: {{ $slot | default "未指定" }}]
+</div>
+{{- end -}}
 ```
 
-在文章中使用短代码：
+**如何在 Markdown 中使用？**
+在编写文章时，只需在需要展示广告的地方插入以下短代码（请将 `slot` 替换为你在 AdSense 后台创建的真实广告单元 ID）：
 
 ```markdown
 {{</* adsense slot="1234567890" format="auto" responsive="true" */>}}
 ```
 
-### 10.4 广告单元类型与配置
+*注：上面代码块中的 `/*` 和 `*/` 是为了在文档中转义展示，实际使用时请去掉它们。*
 
-**展示广告（Display Ads）**
+### 10.5 性能、体验与合规优化
 
-最常见的广告形式，自动适配网页布局：
+广告加载不当会严重拖慢页面速度并影响 SEO。请务必执行以下优化：
 
-```html
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
-     data-ad-slot="1234567890"
-     data-ad-format="auto"
-     data-full-width-responsive="true">
-</ins>
+#### 1. 降低 CLS（累积布局偏移）
+在上述短代码中，我们为 `<div class="ad-container">` 设置了 `min-height: 100px;`。
+**为什么？** 广告脚本通常在页面渲染后才异步拉取广告内容。如果没有预留高度，广告突然出现会将正文往下挤，导致 CLS 指标飙升，严重影响核心网页指标（Core Web Vitals）。
+
+#### 2. 部署 ads.txt（合规必备）
+AdSense 强制要求验证站点的广告授权。
+在 Hugo 项目的 `static` 目录下新建 `ads.txt` 文件（即 `static/ads.txt`），填入 Google 提供的一行认证代码：
+```text
+google.com, pub-xxxxxxxxxxxxxxxx, DIRECT, f08c47fec0942fa0
 ```
+Hugo 构建时会将 `static` 目录下的文件原样复制到根目录，从而确保可以通过 `https://你的域名/ads.txt` 成功访问。
 
-**文章内嵌广告（In-Article Ads）**
+#### 3. CSP (内容安全策略) 适配
+如果你的 Hugo 站点通过 Netlify / Cloudflare Pages 部署并启用了严格的 CSP (Content Security Policy) 请求头，默认会拦截 Google 的脚本和 iframe。你必须在你的 CSP 头中放行以下域名：
+- `script-src`：允许 `https://pagead2.googlesyndication.com` 和 `https://partner.googleadservices.com`
+- `frame-src`：允许 `https://googleads.g.doubleclick.net` 和 `https://tpc.googlesyndication.com`
 
-在文章段落之间自动插入的广告，需要启用自适应广告：
+#### 4. GDPR / CCPA 隐私合规 (Cookie 同意)
+如果你的网站有来自欧洲（EEA）或美国加州的访客，强制要求获取用户 Cookie 同意。
+- 推荐直接在 Google AdSense 后台启用 **“隐私权与消息 (Privacy & messaging)”**。
+- Google 会自动通过前文注入的 `adsbygoogle.js` 脚本下发符合 IAB 框架的 CMP (Consent Management Platform) 弹窗，**无需在 Hugo 中额外编写前端代码**。
 
-```html
-<ins class="adsbygoogle"
-     style="display:block; text-align:center;"
-     data-ad-layout="in-article"
-     data-ad-format="fluid"
-     data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
-     data-ad-slot="1234567890">
-</ins>
-```
+#### 5. 投放策略与底线
+- **克制投放**：一篇文章内手动插入的广告位建议不超过 2 个（如标题下方 1 个，文末 1 个）。
+- **严守红线**：绝不能将广告伪装成下载按钮或导航链接，严禁诱导点击，否则账号会被永久封禁。
 
-**匹配内容广告（Matched Content）**
+### 10.6 常见排错指南 (FAQ)
 
-推荐站内文章的广告单元，提升内循环：
+**Q：为什么我配置好了，页面上却是一片空白（广告不展示）？**
+1. **学习期**：新创建的广告单元或刚通过审核的账号，通常需要几小时到 48 小时才能开始匹配并展示广告。
+2. **拦截插件**：检查你的浏览器是否开启了 AdBlock 等广告拦截扩展。
+3. **控制台报错**：按 `F12` 打开浏览器控制台，检查是否有 `403 Forbidden` 或相关跨域脚本阻断错误。
 
-```html
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-type="matched_content"
-     data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
-     data-ad-slot="1234567890">
-</ins>
-```
+**Q：为什么短代码在页面上直接输出了文本，没有渲染成广告？**
+检查短代码的调用语法是否正确（应为 `{{< >}}` 而非 `{{% %}}`），并确保 `hugo.toml` 中的 `enabled` 已设置为 `true`。
 
-### 10.5 完整广告布局模板
+**Q：如何验证我的 `ads.txt` 是否生效？**
+在浏览器中直接访问 `https://你的域名/ads.txt`，如果能看到你填写的 Google 认证代码文本，即代表部署成功。Google 爬虫最多可能需要 24 小时才能抓取并更新后台状态。
 
-以下是一个完整的单页模板示例，包含文章内广告位：
-
-```html
-<!DOCTYPE html>
-<html lang="{{ .Site.Language.Lang }}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ .Title }} | {{ .Site.Title }}</title>
-  <meta name="description" content="{{ .Description }}">
-  
-  {{ if .Site.Params.google_adsense }}
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-{{ .Site.Params.google_adsense }}"
-       crossorigin="anonymous"></script>
-  {{ end }}
-</head>
-<body>
-  <header>
-    <h1><a href="{{ "/" | relURL }}">{{ .Site.Title }}</a></h1>
-  </header>
-  
-  <main>
-    <article>
-      <h1>{{ .Title }}</h1>
-      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006年1月2日" }}</time>
-      
-      {{ .Content }}
-      
-      {{ if .Site.Params.google_adsense }}
-      <div class="ad-container" style="margin: 2rem 0; text-align: center;">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-{{ .Site.Params.google_adsense }}"
-             data-ad-slot="1234567890"
-             data-ad-format="auto"
-             data-full-width-responsive="true">
-        </ins>
-        <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      </div>
-      {{ end }}
-    </article>
-  </main>
-  
-  <footer>
-    <p>&copy; {{ now.Year }} {{ .Site.Title }}</p>
-  </footer>
-  
-  {{ if .Site.Params.google_adsense }}
-  <script>
-    (adsbygoogle = window.adsbygoogle || []).push({});
-  </script>
-  {{ end }}
-</body>
-</html>
-```
-
-### 10.6 列表页广告配置
-
-在文章列表页（如首页、分类页、标签页）添加广告：
-
-```html
-{{ if .Site.Params.google_adsense }}
-<div class="ad-banner" style="margin: 1rem 0;">
-  <ins class="adsbygoogle"
-       style="display:block"
-       data-ad-client="ca-pub-{{ .Site.Params.google_adsense }}"
-       data-ad-slot="0987654321"
-       data-ad-format="auto"
-       data-full-width-responsive="true">
-  </ins>
-  <script>
-    (adsbygoogle = window.adsbygoogle || []).push({});
-  </script>
-</div>
-{{ end }}
-```
-
-### 10.7 侧边栏广告
-
-如果主题支持侧边栏，可以在侧边栏添加广告位：
-
-```html
-<aside class="sidebar">
-  <div class="widget">
-    <h3>广告</h3>
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
-         data-ad-slot="6789012345"
-         data-ad-format="vertical"
-         data-ad-sizes="300x250">
-    </ins>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-  </div>
-</aside>
-```
-
-### 10.8 广告加载优化
-
-**延迟加载广告**
-
-为了不影响页面首次加载速度，可以使用 Intersection Observer 实现懒加载：
-
-```javascript
-// static/js/adsloader.js
-document.addEventListener('DOMContentLoaded', function() {
-  const adElements = document.querySelectorAll('.adsbygoogle');
-  
-  const observer = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) {
-        (adsbygoogle = window.adsbygoogle || []).push({});
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1 });
-  
-  adElements.forEach(function(el) {
-    observer.observe(el);
-  });
-});
-```
-
-在模板中引用：
-
-```html
-<script src="/js/adsloader.js"></script>
-```
-
-**广告位占位符**
-
-为防止广告加载时页面跳动，预留固定高度占位符：
-
-```css
-.ad-container {
-  min-height: 90px;
-  background-color: #f9f9f9;
-  border: 1px dashed #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-```
-
-### 10.9 AdSense 政策合规要点
-
-使用 AdSense 时必须遵守以下政策，否则账号可能被封禁：
-
-**内容政策**
-
-- 内容必须原创或拥有合法使用权
-- 禁止任何形式的抄袭或自动生成内容
-- 禁止成人内容、暴力内容、仇恨言论
-- 禁止赌博、毒品、非法内容
-
-**布局政策**
-
-- 文章内容需达到一定字数（建议每篇 800 字以上）
-- 广告面积不能超过内容面积的 30%
-- 禁止诱导点击（如"点击广告支持我们"）
-- 禁止使用自动弹窗或干扰性广告
-
-**技术要求**
-
-- 网页需可被 Google 爬虫正常抓取
-- 禁止使用 robots.txt 阻止广告抓取
-- HTTPS 为必选项（Google AdSense 基本要求）
-
-### 10.10 收益优化建议
-
-**广告数量控制**
-
-- 文章页建议 1 至 2 个广告位
-- 列表页建议顶部 1 个广告位
-- 避免过多广告影响用户体验
-
-**广告类型选择**
-
-| 广告类型 | 适用场景 | 收益特点 |
-|----------|----------|----------|
-| 展示广告 | 所有页面 | 稳定但单价较低 |
-| 文章内广告 | 长篇文章 | 点击率高，收益好 |
-| 匹配内容 | 侧边栏/文末 | 增加内循环 |
-| 锚定广告 | 移动端 | 固定顶部，不干扰 |
-
-**持续优化**
-
-- 定期查看 AdSense 后台数据
-- 分析高收益文章特征，增加同类内容
-- 测试不同广告位置的效果
-- 关注 RPM（千次展示收益）指标
+完成以上步骤后，你就拥有一个可持续迭代的 Hugo 广告系统：结构清晰、风险可控、可按数据持续优化。
 
 ---
 
