@@ -17,7 +17,7 @@ author: 钳岳星君
 
 > **目标读者**：学完前三课，想把知识融会贯通的学习者
 > **核心问题**：如何综合运用所有技能？真实世界的人怎么用 Claude？
-> **前置知识**：[第一课 Meet Claude](../claude-101-meet-claude-what-is-claude) ⭐⭐ | [第二课 组织工作](../../tech/claude-101-organizing-work-knowledge) ⭐⭐⭐⭐ | [第三课 扩展能力](../../tech/claude-101-expanding-reach) ⭐⭐⭐⭐
+> **前置知识**：[第一课 Meet Claude](./claude-101-meet-claude-what-is-claude) ⭐⭐ | [第二课 组织工作](./claude-101-organizing-work-knowledge) ⭐⭐⭐⭐ | [第三课 扩展能力](./claude-101-expanding-reach) ⭐⭐⭐⭐
 
 ---
 
