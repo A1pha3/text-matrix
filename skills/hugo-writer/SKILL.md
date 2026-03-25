@@ -1,7 +1,7 @@
 ---
 name: "hugo-writer"
 description: "为 Hugo 文章生成/修复 Frontmatter，校验 categories、tags、首页曝光，自动生成 SEO 字段，并转换内部链接。触发词：生成 Frontmatter、修复元数据、分类标签、taxonomy。"
-version: "2.1.0"
+version: "2.2.0"
 tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ---
 
@@ -12,6 +12,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ## 核心规则与约束
 
 ### 1. 分类 (Categories)
+
 - **绝对限制**：必须且只能从以下 4 个固定分类中选择 **1 个**。严禁自创分类或输出多个分类。
   - `["行业快讯"]`：每日事件、即时新闻、短平快内容（AI/金融/Web3等）。
   - `["技术笔记"]`：代码开发、架构分析、技术教程。
@@ -19,18 +20,22 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
   - `["思考与随笔"]`：宏观分析、投资感悟、生活随笔、长篇思考。
 
 ### 2. 标签 (Tags)
+
 - **数量与来源**：提取 2-5 个精准标签，来源于文章核心实体与主题。
 - **质量要求**：必须是具体的名词（如 `AI`、`Python`、`量化交易`），严禁使用空泛或抽象词汇。
 
 ### 3. SEO 优化字段 (Slug & Description)
+
 - **Slug (URL 路径)**：必须将中文标题翻译为简短、小写、连字符分隔的英文（如 `slug: "bitcoin-price-backtest"`）。严禁包含空格或特殊字符。
 - **Description (摘要)**：必须根据文章正文自动提取或总结一段 50-100 字的纯文本摘要。
 
 ### 4. 首页曝光 (Homepage Visibility)
+
 - 若分类为 `["行业快讯"]`，**必须**输出 `hiddenFromHomePage: true`。
 - 其他分类，**严禁**输出 `hiddenFromHomePage` 字段。
 
 ### 5. 内部链接 (Internal Links)
+
 - **改写规则**：处理正文时，必须将普通相对路径（如 `[链接](./foo.md)`）改写为 Hugo `relref` 短代码。
 - **格式规范**：使用 `relref` 语法。为避免当前文档被 Hugo 解析报错，此处加了注释符：`[链接]({{</* relref "target.md" */>}})`。**你在实际输出时，必须移除 `/*` 和 `*/`**。
 
@@ -44,9 +49,50 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 3. **链接修复 (如适用)**：扫描正文，将所有站内 `.md` 相对链接替换为 `relref`。
 4. **纯净输出**：若任务仅要求生成 Frontmatter，只输出 YAML 代码块本体，**不附加任何解释说明**。
 
+## 禁止项
+
+- 禁止输出 4 个固定分类之外的分类。
+- 禁止输出多个分类。
+- 禁止输出 `hiddenFromHomePage: false`。
+- 非 `["行业快讯"]` 场景，禁止输出 `hiddenFromHomePage`。
+- 在已有具体实体、产品、协议、技术名词时，禁止使用空泛标签。
+- 若任务仅要求 Frontmatter，禁止额外输出解释、分析过程或注意事项。
+- 若未要求处理正文，禁止擅自改写正文内容或内部链接。
+
+## 异常输入处理
+
+- **只有标题，没有正文**：仍需生成分类、`slug` 和基础 `description`，但摘要必须基于标题与写作意图谨慎概括，不虚构细节。
+- **正文不足以支撑 50-100 字摘要**：优先输出简洁、保守、无臆测的 `description`，允许接近下限。
+- **无法稳定判断分类**：根据体裁优先级选择最接近的一项，不输出“待定分类”。
+- **任务只要求修复 Frontmatter**：只处理 Frontmatter，不改正文链接。
+- **任务只要求修复链接**：只改正文链接，不重写 Frontmatter 字段。
+- **相对链接不是站内 Markdown 页面**：若不是 `.md` 页面链接，则保持原样。
+
+## 链接改写示例
+
+### 示例 3：正文链接修复
+
+```markdown
+原文：参考[这篇文章](./bitcoin-guide.md)继续阅读。
+输出：参考[这篇文章]({{</* relref "bitcoin-guide.md" */>}})继续阅读。
+```
+
+实际生成正文时，必须输出未加注释的 `relref` 写法。
+
+## 输出前自检
+
+- 分类必须合法且只有 1 个。
+- 标签必须为 2-5 个具体名词。
+- `slug` 必须为小写英文或连字符组合，不含空格。
+- `description` 必须为纯文本摘要，不要写成标题复述或关键词堆砌。
+- `hiddenFromHomePage` 只能在 `["行业快讯"]` 时出现。
+- 若任务仅要求 Frontmatter，最终输出只能包含 YAML 块。
+- 若任务包含链接修复，所有站内 `.md` 链接都必须改为 `relref`。
+
 ## 示例
 
 ### 示例 1：行业快讯 (包含隐藏字段与 SEO)
+
 ```yaml
 ---
 title: "3月25日 行业大事件早报"
@@ -61,6 +107,7 @@ hiddenFromHomePage: true
 ```
 
 ### 示例 2：技术笔记 (无隐藏字段)
+
 ```yaml
 ---
 title: "使用 Python Pandas 进行比特币历史价格回测"

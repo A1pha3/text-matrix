@@ -1,17 +1,11 @@
 ---
 title: "Claude 101 第一课：Claude 桌面应用——Chat、Cowork、Code 三种模式详解"
 date: 2026-03-25
+slug: "claude-101-desktop-app-modes"
+description: "全面解析 Claude 桌面应用的 Chat、Cowork 和 Code 三大核心模式，帮助你根据不同任务场景选择最合适的 AI 工作方式。"
 draft: false
-categories:
-  - 技术笔记
-tags:
-  - Claude
-  - Claude桌面应用
-  - Claude Code
-  - Claude Cowork
-  - AI工具
-hiddenFromHomePage: false
-author: 钳岳星君
+categories: ["技术笔记"]
+tags: ["Claude", "桌面应用", "开发工具", "AI工具", "效率指南"]
 ---
 
 ## 学习目标
@@ -319,8 +313,8 @@ Claude Code 原生支持：
 
 接下来进入第二课，学习如何用 Claude 组织你的工作：
 
-- **[Projects 介绍](链接)**：如何用项目来组织长期工作
-- **[Artifacts 用法](链接)**：让 Claude 生成的内容更易于分享
+- **[Projects 介绍]({{< relref "claude-101-organizing-work-knowledge.md" >}})**：如何用项目来组织长期工作
+- **[Artifacts 用法]({{< relref "claude-101-organizing-work-knowledge.md" >}})**：让 Claude 生成的内容更易于分享
 
 ---
 

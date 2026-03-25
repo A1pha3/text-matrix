@@ -1,18 +1,11 @@
 ---
 title: "Claude 101 第三课：扩展 Claude 的能力边界——工具连接、企业搜索与深度研究"
 date: 2026-03-25
+slug: "claude-101-expanding-reach"
+description: "介绍如何通过 MCP (Model Context Protocol) 扩展 Claude 的能力边界，实现企业级搜索与复杂场景下的深度研究与推理。"
 draft: false
-categories:
-  - 技术笔记
-tags:
-  - Claude
-  - MCP
-  - Model Context Protocol
-  - 企业集成
-  - 工具连接
-  - Anthropic
-hiddenFromHomePage: false
-author: 钳岳星君
+categories: ["技术笔记"]
+tags: ["Claude", "MCP", "企业搜索", "工具连接", "Anthropic"]
 ---
 
 ## 学习目标

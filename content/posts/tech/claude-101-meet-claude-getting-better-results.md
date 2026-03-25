@@ -1,17 +1,11 @@
 ---
 title: "Claude 101 第一课：Getting Better Results——让 AI 输出质量倍增的技巧"
 date: 2026-03-25
+slug: "claude-101-getting-better-results"
+description: "深入讲解提升 Claude 输出质量的高级技巧，包括 Few-shot 示例引导、思维链、输出结构控制以及负面提示等策略。"
 draft: false
-categories:
-  - 技术笔记
-tags:
-  - Claude
-  - Prompt Engineering
-  - 提示词工程
-  - 输出优化
-  - Anthropic
-hiddenFromHomePage: false
-author: 钳岳星君
+categories: ["技术笔记"]
+tags: ["Claude", "提示词工程", "输出优化", "Anthropic"]
 ---
 
 ## 学习目标
@@ -378,8 +372,8 @@ def calculate_average(numbers):
 
 现在你已经掌握了提升 AI 输出质量的技巧。接下来让我们了解：
 
-- **[Claude 桌面应用](链接)**：在电脑上安装 Claude，开始实操
-- **[Projects 和 Artifacts](链接)**：Claude 的两个强大功能，让你的工作更有条理
+- **[Claude 桌面应用]({{< relref "claude-101-meet-claude-desktop-app.md" >}})**：在电脑上安装 Claude，开始实操
+- **[Projects 和 Artifacts]({{< relref "claude-101-organizing-work-knowledge.md" >}})**：Claude 的两个强大功能，让你的工作更有条理
 
 ---
 
