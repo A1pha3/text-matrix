@@ -1,5 +1,5 @@
 ---
-name: "hugo-frontmatter-generator"
+name: "hugo-writer"
 description: "自动为 Hugo 文章生成符合站点架构规范的 Frontmatter（包含 categories 和 tags）。当需要编写、生成或修改文章元数据时触发。"
 ---
 
@@ -28,6 +28,10 @@ description: "自动为 Hugo 文章生成符合站点架构规范的 Frontmatter
 **规则三：主页曝光控制（`hiddenFromHomePage`）**
 *   如果文章的 Categories 是 `["行业快讯"]`，必须在 Frontmatter 中强制添加 `hiddenFromHomePage: true`，以防止短频快内容刷屏主页。
 *   其他分类（技术笔记、视频精读、思考与随笔）通常不需要此字段。
+
+**规则四：Markdown 内部链接规范**
+*   在文章正文中引用本站其他 Markdown 文件时，**严禁使用普通相对路径**（如 `[链接](./xxx)`），因为编译后目录结构变化会导致 404 错误。
+*   **必须使用 Hugo 的 `relref` 短代码**来生成跨页面链接，格式示例：`[链接文本]({{< relref "目标文件名.md" >}})`。
 
 ## 📝 典型输出示例
 
