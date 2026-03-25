@@ -524,8 +524,8 @@ Claude（生成 Artifact）：
 
 学完了第二课，你已经掌握了 Claude 的三大组织工具。接下来让我们学习：
 
-- **[Expanding Claude's Reach](链接)**：Connecting your tools、Enterprise search、Research mode——让 Claude 连接更多工具和知识
-- **[Putting it all together](链接)**：真实案例，看别人如何用 Claude 改变工作方式
+- **Expanding Claude's Reach**：Connecting your tools、Enterprise search、Research mode——让 Claude 连接更多工具和知识
+- **Putting it all together**：真实案例，看别人如何用 Claude 改变工作方式
 
 ---
 
