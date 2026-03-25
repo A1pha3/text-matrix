@@ -1,0 +1,5 @@
+{{- $cfg := .Site.Params.adsense -}}
+<!-- 仅在生产环境、开关打开且配置了 client ID 时注入代码 -->
+{{- if and (not hugo.IsServer) $cfg.enabled $cfg.client -}}
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ $cfg.client }}" crossorigin="anonymous"></script>
+{{- end -}}

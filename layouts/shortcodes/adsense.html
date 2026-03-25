@@ -1,0 +1,22 @@
+{{- $cfg := .Site.Params.adsense -}}
+{{- $slot := .Get "slot" -}}
+
+<!-- 仅在生产环境且配置齐全时加载真实广告 -->
+{{- if and (not hugo.IsServer) $cfg.enabled $cfg.client $slot -}}
+<div class="ad-container" style="min-height: 100px; margin: 2rem 0; overflow: hidden;">
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="{{ $cfg.client }}"
+       data-ad-slot="{{ $slot }}"
+       data-ad-format="{{ .Get "format" | default "auto" }}"
+       data-full-width-responsive="{{ .Get "responsive" | default "true" }}"></ins>
+  <script>
+       (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</div>
+<!-- 在本地开发环境展示占位符，方便预览排版 -->
+{{- else if hugo.IsServer -}}
+<div class="ad-placeholder" style="min-height: 100px; margin: 2rem 0; background: #f0f0f0; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #888;">
+  [AdSense 广告位占位符 - Slot: {{ $slot | default "未指定" }}]
+</div>
+{{- end -}}
