@@ -11,7 +11,7 @@ tags:
   - Python
   - 认证
   - 结构化输出
-hiddenFromHomePage: true
+hiddenFromHomePage: false
 author: 钳岳星君
 ---
 

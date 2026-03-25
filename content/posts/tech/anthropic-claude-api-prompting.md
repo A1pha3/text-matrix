@@ -12,7 +12,7 @@ tags:
   - Prompt Engineering
   - Temperature
   - Few-shot
-hiddenFromHomePage: true
+hiddenFromHomePage: false
 author: 钳岳星君
 ---
 
