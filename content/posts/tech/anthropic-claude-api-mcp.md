@@ -6,13 +6,11 @@ categories:
   - 技术笔记
 tags:
   - Claude
-  - API
   - MCP
-  - Model Context Protocol
-  - Anthropic
+  - JSON-RPC
   - Python
-hiddenFromHomePage: false
-author: 钳岳星君
+slug: "claude-api-mcp-model-context-protocol"
+description: "本文深度解析了MCP（Model Context Protocol）协议的设计思想、架构组成与工作流程，详细介绍了如何构建MCP服务器与客户端，并探讨了MCP与传统工具调用的区别与适用场景。"
 ---
 
 # Claude API基础专题（五）：MCP协议深度解析 ⭐⭐⭐⭐

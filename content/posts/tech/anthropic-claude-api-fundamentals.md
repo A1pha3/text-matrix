@@ -7,12 +7,9 @@ categories:
 tags:
   - Claude
   - API
-  - Anthropic
   - Python
-  - 认证
-  - 结构化输出
-hiddenFromHomePage: false
-author: 钳岳星君
+slug: "claude-api-authentication-requests-session"
+description: "本文详细介绍了Claude API的认证方式（API Key与Bearer Token）、HTTP请求构建、会话管理机制，以及如何实现结构化输出。适合入门开发者阅读。"
 ---
 
 # Claude API基础专题（一）：认证、请求与会话管理 ⭐⭐⭐⭐

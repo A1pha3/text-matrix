@@ -6,13 +6,11 @@ categories:
   - 技术笔记
 tags:
   - Claude
-  - API
   - Claude Code
   - Computer Use
-  - Anthropic
-  - Python
-hiddenFromHomePage: false
-author: 钳岳星君
+  - 自动化
+slug: "claude-api-computer-use-automation"
+description: "本文详细介绍了Claude的Computer Use能力与Claude Code命令行工具，解析了观察-决策-执行循环的工作原理，探讨了安全机制与沙箱环境，并提供了自动化脚本的开发实战案例。"
 ---
 
 # Claude API基础专题（六）：Claude Code与Computer Use ⭐⭐⭐⭐

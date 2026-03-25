@@ -6,14 +6,11 @@ categories:
   - 技术笔记
 tags:
   - Claude
-  - API
   - RAG
-  - 检索增强生成
   - 向量数据库
-  - Anthropic
   - Python
-hiddenFromHomePage: false
-author: 钳岳星君
+slug: "claude-api-rag-retrieval-augmented-generation"
+description: "本文全面介绍了RAG（检索增强生成）系统的构建方法，涵盖文档分块、嵌入向量生成、向量数据库选择、语义搜索策略、重排序技术等关键环节，附带完整的Python代码实现示例。"
 ---
 
 # Claude API基础专题（四）：RAG检索增强生成系统 ⭐⭐⭐⭐

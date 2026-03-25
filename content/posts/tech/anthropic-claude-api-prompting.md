@@ -6,14 +6,11 @@ categories:
   - 技术笔记
 tags:
   - Claude
-  - API
-  - Anthropic
   - 提示词
-  - Prompt Engineering
-  - Temperature
   - Few-shot
-hiddenFromHomePage: false
-author: 钳岳星君
+  - Temperature
+slug: "claude-api-prompting-engineering"
+description: "本文系统讲解了Claude API的提示词工程技巧，涵盖提示词原则、系统提示词、Few-shot学习、温度参数调节、链式思考等核心主题，帮助开发者掌握高效提示词设计方法。"
 ---
 
 # Claude API基础专题（二）：提示词工程 ⭐⭐⭐⭐
