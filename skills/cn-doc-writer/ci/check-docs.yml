@@ -1,0 +1,148 @@
+# GitHub Actions 工作流：中文文档质量检查
+#
+# 用法：
+#   1. 将此文件复制到目标项目的 .github/workflows/ 目录
+#   2. 将 cn-doc-writer/scripts/ 和 cn-doc-writer/references/ 复制到项目中
+#   3. 按需修改 DOCS_DIR 和 SCRIPTS_DIR 路径
+#
+# 功能：
+#   - PR 提交时自动检查变更的 Markdown 文件
+#   - 检查中英文空格、标点符号、术语一致性、Markdown 结构
+#   - 生成可读性量化报告
+#   - 支持 --fix 自动修复后提交
+
+name: 中文文档质量检查
+
+on:
+  pull_request:
+    paths:
+      - "docs/**/*.md"
+      - "*.md"
+  push:
+    branches: [main]
+    paths:
+      - "docs/**/*.md"
+      - "*.md"
+
+env:
+  DOCS_DIR: docs
+  SCRIPTS_DIR: scripts/cn-doc-writer
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    name: 文档格式检查
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史以对比变更
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: 获取变更的 Markdown 文件
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --name-only --diff-filter=ACMR ${{ github.event.pull_request.base.sha }} ${{ github.sha }} -- '*.md' > /tmp/changed_md_files.txt
+          else
+            git diff --name-only --diff-filter=ACMR HEAD~1 HEAD -- '*.md' > /tmp/changed_md_files.txt
+          fi
+          if [ ! -s /tmp/changed_md_files.txt ]; then
+            echo "没有变更的 Markdown 文件"
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "变更文件:"
+            cat /tmp/changed_md_files.txt
+            echo "has_files=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 运行文档检查
+        if: steps.changed-files.outputs.has_files == 'true'
+        run: |
+          echo "## 📋 文档质量检查报告" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          TOTAL_ISSUES=0
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              echo "检查: $file"
+              OUTPUT=$(python "${{ env.SCRIPTS_DIR }}/check_format.py" "$file" 2>&1) || true
+              ISSUES=$(echo "$OUTPUT" | grep -c "^  -" || true)
+              TOTAL_ISSUES=$((TOTAL_ISSUES + ISSUES))
+
+              if [ "$ISSUES" -gt 0 ]; then
+                echo "### ❌ $file ($ISSUES 个问题)" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+                echo "$OUTPUT" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo "### ✅ $file" >> "$GITHUB_STEP_SUMMARY"
+              fi
+            fi
+          done < /tmp/changed_md_files.txt
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**总计: $TOTAL_ISSUES 个问题**" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$TOTAL_ISSUES" -gt 0 ]; then
+            echo "::warning::发现 $TOTAL_ISSUES 个文档格式问题"
+            # 如果要设为阻断性检查，取消下面这行注释：
+            # exit 1
+          fi
+
+      - name: 运行可读性分析
+        if: steps.changed-files.outputs.has_files == 'true'
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 📊 可读性分析" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              OUTPUT=$(python "${{ env.SCRIPTS_DIR }}/check_format.py" "$file" --readability 2>&1) || true
+              echo "### $file" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              echo "$OUTPUT" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done < /tmp/changed_md_files.txt
+
+  # 可选：自动修复并提交
+  auto-fix:
+    runs-on: ubuntu-latest
+    name: 自动修复（可选）
+    if: github.event_name == 'pull_request'
+    needs: check-docs
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: 自动修复格式
+        run: |
+          # 取消注释以启用自动修复
+          # for file in $(git diff --name-only --diff-filter=ACMR origin/main -- '*.md'); do
+          #   python "${{ env.SCRIPTS_DIR }}/check_format.py" "$file" --fix
+          # done
+          echo "自动修复已跳过（取消注释以启用）"
+
+      - name: 提交修复
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "style: 自动修复中文文档格式"
+          # git push
