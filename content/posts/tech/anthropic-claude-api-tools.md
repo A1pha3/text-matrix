@@ -11,7 +11,7 @@ tags:
   - Tools
   - Function Calling
   - MCP
-hiddenFromHomePage: true
+hiddenFromHomePage: false
 author: 钳岳星君
 ---
 
