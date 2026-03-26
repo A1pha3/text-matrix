@@ -1,0 +1,14 @@
+{{- /* Count Chinese characters and English words combined for mixed content */ -}}
+{{- $content := . -}}
+{{- /* Count Chinese characters using Unicode script */ -}}
+{{- $chineseChars := findRE "\\p{Han}" $content -}}
+{{- $chineseCount := len $chineseChars -}}
+{{- /* Count English words */ -}}
+{{- $englishWords := findRE "[a-zA-Z]+" $content -}}
+{{- $englishCount := len $englishWords -}}
+{{- /* Count numbers */ -}}
+{{- $numbers := findRE "[0-9]+" $content -}}
+{{- $numberCount := len $numbers -}}
+{{- /* Add Chinese chars + English words + Numbers */ -}}
+{{- $total := add (add $chineseCount $englishCount) $numberCount -}}
+{{- return $total -}}
