@@ -52,7 +52,7 @@
                 {{- with .Site.Params.dateformat | default "2006-01-02" | .PublishDate.Format -}}
                     <i class="far fa-calendar-alt" aria-hidden="true"></i>&nbsp;<time datetime="{{ . }}">{{ . }}</time>&nbsp;
                 {{- end -}}
-                <i class="fas fa-pencil-alt" aria-hidden="true"></i>&nbsp;{{ T "wordCount" (chineseCharCount .PlainText) }}&nbsp;
+                <i class="fas fa-pencil-alt" aria-hidden="true"></i>&nbsp;{{ T "wordCount" (countrunes (replaceRE "\\s+" "" (plainify .Content))) }}&nbsp;
                 <i class="far fa-clock" aria-hidden="true"></i>&nbsp;{{ T "readingTime" .ReadingTime }}&nbsp;
                 {{- $comment := .Scratch.Get "comment" | default dict -}}
                 {{- if $comment.enable | and $comment.valine.enable | and $comment.valine.visitor -}}

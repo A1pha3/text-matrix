@@ -1,4 +1,4 @@
-{{- /* Count characters including Chinese characters properly */ -}}
-{{- $content := . -}}
-{{- $charCount := len $content -}}
-{{- return $charCount -}}
+{{- /* Count visible characters with Unicode runes, excluding whitespace */ -}}
+{{- $content := . | default "" -}}
+{{- $normalized := replaceRE "\\s+" "" $content -}}
+{{- return countrunes $normalized -}}
