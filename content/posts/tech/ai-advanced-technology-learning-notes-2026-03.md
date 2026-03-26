@@ -1,9 +1,11 @@
 ---
 title: "AI先进技术学习笔记｜2026年3月"
 date: 2026-03-24T18:30:00+08:00
+slug: "ai-advanced-technology-learning-notes-2026-03"
+description: "系统整理2026年最新AI先进技术发展趋势与核心原理，涵盖大语言模型(LLM)、AI Agent、RAG检索增强生成及多模态AI四大前沿领域，并提供详尽的学习路线与优质论文/工具资源推荐。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "大模型", "Agent", "RAG", "多模态", "AI安全"]
+tags: ["大模型", "RAG", "多模态", "Agent", "AI安全"]
 ---
 
 # 🤖 AI先进技术学习笔记

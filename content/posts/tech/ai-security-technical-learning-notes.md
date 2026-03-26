@@ -1,9 +1,11 @@
 ---
 title: "AI安全技术学习笔记"
 date: 2026-03-25T01:27:00+08:00
+slug: "ai-security-technical-learning-notes"
+description: "系统整理AI安全与对齐技术的核心概念，涵盖RLHF、Constitutional AI、红队测试、隐私保护及对抗鲁棒性等关键领域，并提供企业级AI安全治理与合规实践指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI安全", "对齐技术", "RLHF", "隐私保护", "对抗鲁棒性"]
+tags: ["AI", "安全", "大模型", "合规"]
 ---
 
 # 🔐 AI安全技术学习笔记

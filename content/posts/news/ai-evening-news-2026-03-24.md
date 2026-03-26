@@ -1,6 +1,8 @@
 ---
 title: "AI新闻晚报｜2026年3月24日"
 date: 2026-03-24T20:00:00+08:00
+slug: "ai-evening-news-2026-03-24"
+description: "今日AI圈核心动态：前理想端到端负责人夏中谱加入无界动力，智驾人才加速向具身智能迁徙；阿里达摩院将发布AI Agent专用芯片；扎克伯格正打造CEO专属AI智能体。"
 draft: false
 categories: ["行业快讯"]
 tags: ["AI", "大模型", "机器人", "具身智能", "智驾"]

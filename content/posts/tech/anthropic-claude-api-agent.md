@@ -1,17 +1,11 @@
 ---
 title: "Claude API基础专题（七）：Agent架构与智能体设计"
 date: 2026-03-25
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - Claude
-  - Agent
-  - 并行执行
-  - 链式调用
-  - Python
 slug: "claude-api-agent-architecture-design"
 description: "本文系统讲解了Claude API的Agent架构设计，涵盖单Agent与多Agent系统、并行执行与链式调用模式、条件路由与状态管理、错误处理与恢复机制，以及生产环境中的最佳实践与安全考量。"
+draft: false
+categories: ["技术笔记"]
+tags: ["Claude", "Agent", "并行执行", "链式调用", "Python"]
 ---
 
 # Claude API基础专题（七）：Agent架构与智能体设计 ⭐⭐⭐⭐

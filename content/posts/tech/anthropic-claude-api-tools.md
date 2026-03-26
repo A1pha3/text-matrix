@@ -1,16 +1,11 @@
 ---
 title: "Claude API基础专题（三）：工具调用"
 date: 2026-03-25
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - Claude
-  - 工具调用
-  - Function Calling
-  - MCP
 slug: "claude-api-tools-function-calling"
 description: "本文深入探讨了Claude API的工具调用机制，包括Function Calling的原理、工具定义与注册、多工具协同、批处理模式，以及MCP（Model Context Protocol）协议的使用方法。"
+draft: false
+categories: ["技术笔记"]
+tags: ["Claude", "工具调用", "MCP", "Python"]
 ---
 
 # Claude API基础专题（三）：工具调用 ⭐⭐⭐⭐

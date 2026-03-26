@@ -1,18 +1,11 @@
 ---
 title: "Anthropic AI通识课：4D框架——与AI协作的核心能力"
 date: 2026-03-25
+slug: "anthropic-ai-fluency-framework-foundations"
+description: "基于 Anthropic 官方课程整理的 AI 通识指南，详细讲解 4D 框架（委托、描述、判断、审慎），帮助读者系统性提升与大语言模型协作的核心能力。"
 draft: false
-categories:
-  - 技术笔记
-tags:
-  - Claude
-  - AI
-  - AI通识
-  - 4D框架
-  - Anthropic
-  - 提示词
-hiddenFromHomePage: true
-author: 钳岳星君
+categories: ["技术笔记"]
+tags: ["Claude", "AI通识", "提示词", "Anthropic"]
 ---
 
 # Anthropic AI通识课：4D框架——与AI协作的核心能力 ⭐⭐⭐⭐
