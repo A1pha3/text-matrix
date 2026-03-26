@@ -1,9 +1,11 @@
 ---
 title: "AI新闻早报｜2026年3月26日"
 date: 2026-03-26T08:00:00+08:00
+slug: "ai-news-daily-mar-26"
+description: "2026年3月26日AI领域重大事件汇总：OpenAI关停Sora、黄仁勋称AGI已实现、OpenClaw引发智能体大战升级、DeepSeek招聘Agent方向、宇树科技IPO获受理、昆仑万维AI音乐登顶全球榜单。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "Sora", "OpenClaw", "具身智能", "机器人"]
+tags: ["AI", "Sora", "OpenClaw", "具身智能", "黄仁勋"]
 hiddenFromHomePage: true
 ---
 
