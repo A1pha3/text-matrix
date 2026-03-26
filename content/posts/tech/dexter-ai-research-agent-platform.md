@@ -391,5 +391,4 @@ Compare Apple and Microsoft on revenue growth, operating margin, and free cash f
 
 **📚 延伸阅读**
 
-- **Dexter GitHub**：https://github.com/A1pha3/dexter
-- **中文文档中心**：https://github.com/A1pha3/dexter/tree/main/docs/cn
+- **Dexter GitHub**：[https://github.com/virattt/dexter](https://github.com/virattt/dexter)
