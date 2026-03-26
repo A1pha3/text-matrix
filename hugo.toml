@@ -2,6 +2,7 @@ baseURL = 'https://txtmix.com/'
 #locale = 'en-us'
 locale = 'zh'
 languageCode = "zh-cn"
+hasCJKLanguage = true
 defaultContentLanguage = "zh-cn"
 title = 'Text Matrix'
 theme = "LoveIt"
@@ -16,6 +17,7 @@ enableGitInfo = true
 [params]
   title = "Text Matrix"
   description = "Text Matrix"
+  readingSpeedCJK = 400
 
   [params.adsense]
     enabled = true
