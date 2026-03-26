@@ -1,7 +1,7 @@
 ---
 name: "hugo-writer"
 description: "为 Hugo 文章生成/修复 Frontmatter，校验 categories、tags、首页曝光，自动生成 SEO 字段，并转换内部链接。触发词：生成 Frontmatter、修复元数据、分类标签、taxonomy。"
-version: "2.2.0"
+version: "2.2.1"
 tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ---
 
@@ -11,7 +11,11 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 
 ## 核心规则与约束
 
-### 1. 分类 (Categories)
+### 1. YAML 数组格式规范 (Array Format)
+
+- **强制单行内联**：`categories` 和 `tags` 必须严格使用单行内联数组格式（如 `categories: ["行业快讯"]`）。**严禁**使用多行破折号缩进格式（如 `- 行业快讯`），否则会导致 Hugo 解析漂移。
+
+### 2. 分类 (Categories)
 
 - **绝对限制**：必须且只能从以下 4 个固定分类中选择 **1 个**。严禁自创分类或输出多个分类。
   - `["行业快讯"]`：每日事件、即时新闻、短平快内容（AI/金融/Web3等）。
@@ -19,22 +23,22 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
   - `["视频精读"]`：以视频搜集、总结、解读为核心的文章。
   - `["思考与随笔"]`：宏观分析、投资感悟、生活随笔、长篇思考。
 
-### 2. 标签 (Tags)
+### 3. 标签 (Tags)
 
 - **数量与来源**：提取 2-5 个精准标签，来源于文章核心实体与主题。
 - **质量要求**：必须是具体的名词（如 `AI`、`Python`、`量化交易`），严禁使用空泛或抽象词汇。
 
-### 3. SEO 优化字段 (Slug & Description)
+### 4. SEO 优化字段 (Slug & Description)
 
 - **Slug (URL 路径)**：必须将中文标题翻译为简短、小写、连字符分隔的英文（如 `slug: "bitcoin-price-backtest"`）。严禁包含空格或特殊字符。
 - **Description (摘要)**：必须根据文章正文自动提取或总结一段 50-100 字的纯文本摘要。
 
-### 4. 首页曝光 (Homepage Visibility)
+### 5. 首页曝光 (Homepage Visibility)
 
 - 若分类为 `["行业快讯"]`，**必须**输出 `hiddenFromHomePage: true`。
 - 其他分类，**严禁**输出 `hiddenFromHomePage` 字段。
 
-### 5. 内部链接 (Internal Links)
+### 6. 内部链接 (Internal Links)
 
 - **改写规则**：处理正文时，必须将普通相对路径（如 `[链接](./foo.md)`）改写为 Hugo `relref` 短代码。
 - **格式规范**：使用 `relref` 语法。为避免当前文档被 Hugo 解析报错，此处加了注释符：`[链接]({{</* relref "target.md" */>}})`。**你在实际输出时，必须移除 `/*` 和 `*/`**。
@@ -55,6 +59,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - 禁止输出多个分类。
 - 禁止输出 `hiddenFromHomePage: false`。
 - 非 `["行业快讯"]` 场景，禁止输出 `hiddenFromHomePage`。
+- **禁止使用多行缩进列表格式输出 `categories` 和 `tags`**（必须用单行内联数组）。
 - 在已有具体实体、产品、协议、技术名词时，禁止使用空泛标签。
 - 若任务仅要求 Frontmatter，禁止额外输出解释、分析过程或注意事项。
 - 若未要求处理正文，禁止擅自改写正文内容或内部链接。
@@ -81,6 +86,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 
 ## 输出前自检
 
+- `categories` 和 `tags` 是否使用了严格的单行内联数组格式（如 `["xxx"]`）。
 - 分类必须合法且只有 1 个。
 - 标签必须为 2-5 个具体名词。
 - `slug` 必须为小写英文或连字符组合，不含空格。
