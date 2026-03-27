@@ -25,7 +25,7 @@ hiddenFromHomePage: true
 - 编程学习工具
 
 **盈利模式：** 订阅制 $9-29/月，或按次 $19-99/次
-> [原文](https://www.qbitai.com/2026/03/387756.html)
+[原文](https://www.qbitai.com/2026/03/387756.html)
 
 ### 二、金融Agent服务
 金融Agent赛道火爆，启明创投、红杉资本、高瓴近2亿集体押注。5个月内连获两轮融资。
@@ -36,7 +36,7 @@ hiddenFromHomePage: true
 - 风险评估AI工具
 
 **盈利模式：** 企业SaaS $500-5000/月
-> [原文](https://www.qbitai.com/2026/03/392684.html)
+[原文](https://www.qbitai.com/2026/03/392684.html)
 
 ### 三、AI Agent工作流设计
 "首席龙虾官"月薪6万横空出世，专门负责企业Agent工作流设计、部署与优化。
@@ -49,7 +49,7 @@ hiddenFromHomePage: true
 **盈利模式：**
 - 咨询：998-4998元/次
 - 常年顾问：9998-49998元/年
-> [原文](https://www.qbitai.com/2026/03/392128.html)
+[原文](https://www.qbitai.com/2026/03/392128.html)
 
 ### 四、AI视频/音乐生成
 中国AI音乐拿下全球第一（昆仑万维Mureka V8），谷歌入局AI音乐。
@@ -60,7 +60,7 @@ hiddenFromHomePage: true
 - 内容本地化（字幕+翻译）
 
 **盈利模式：** 按作品 $50-500/首，或订阅制
-> [原文](https://www.36kr.com/p/3739613285974276)
+[原文](https://www.36kr.com/p/3739613285974276)
 
 ### 五、AI硬件代理/租赁
 机器人从实验室走向商业演出，机器人租赁公司成立3个月就获明星投资人争相注资。
@@ -71,7 +71,7 @@ hiddenFromHomePage: true
 - 线下体验店
 
 **盈利模式：** 设备销售15-30%毛利，或租赁分成
-> [原文](https://www.qbitai.com/2026/03/392121.html)
+[原文](https://www.qbitai.com/2026/03/392121.html)
 
 ### 六、AI内容自动化
 企业营销需求持续增长，AI可将内容生产成本降低80%。
@@ -80,7 +80,7 @@ hiddenFromHomePage: true
 - 社交媒体内容（微博/小红书/抖音文案）：500-2000元/月
 - 产品描述（电商详情页）：1-5元/条
 - SEO文章：200-1000元/篇
-> [原文](https://www.36kr.com/p/3740431158001925)
+[原文](https://www.36kr.com/p/3740431158001925)
 
 ## 🤖 AI副业五大热门方向（按热度排序）
 
