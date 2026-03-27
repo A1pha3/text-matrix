@@ -2,22 +2,52 @@
 title: "AI副业早报 2026-03-27"
 date: 2026-03-27T08:30:00+08:00
 slug: "ai-side-hustle-morning-2026-03-27"
-description: "汇总2026年3月27日AI副业最新机会与赚钱赛道，涵盖金融Agent近2亿融资、DeepSeek大规模招聘Agent、首席龙虾官月薪6万、Cursor新评测基准等热点。"
+description: "汇总2026年3月27日AI副业最新机会与赚钱赛道，涵盖Yarbo近2亿融资、知行机器人近亿融资、Token工资条革新、Kimi IPO等热点。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "Agent", "金融Agent", "DeepSeek", "创业", "编程工具"]
+tags: ["AI副业", "创业", "融资", "Agent", "工具"]
 hiddenFromHomePage: true
 ---
 
 # AI副业早报 2026-03-27
 
-🦞 采集时间：2026-03-27 08:30 UTC+8
-📰 来源：Indie Hackers / Product Hunt / V2EX / 行业分析
+🦞 采集时间：2026-03-27 08:30 UTC+8（过去24小时新闻）
+📰 来源：36kr / 量子位 / 行业分析
+
+## 🔥 今日快讯（过去24小时）
+
+**1. 智能庭院机器人Yarbo获近2亿元融资，新品众筹首发6小时破150万美金**
+硬氪首发，Yarbo从单一的季节性工具升级为满足家庭全年园艺需求的智能平台，产品上线即爆。
+[原文](https://www.36kr.com/p/3736563677396994)
+
+**2. 为超百家具身智能企业提供核心零部件，「知行机器人」连续完成两轮近亿元融资**
+36氪首发，知行机器人搭建全品类产品矩阵，做工业级核心部件，已为头部具身机器人稳定供货。
+[原文](https://www.36kr.com/p/3740523277517063)
+
+**3. 用多少Token要被写进工资条了：企业月投百万Token补贴**
+企业开始将Token使用量写入员工相关方案，月投百万Token补贴推动生产力革命，AI投入回报显著。
+[原文](https://www.36kr.com/p/3740431158001925)
+
+**4. Kimi IPO要来了：估值180亿美元，赴港上市在即**
+月之暗面旗下Kimi传出IPO消息，最新估值180亿美元。这是继MiniMax之后又一家传出上市消息的头部国产大模型公司。
+[原文](https://www.36kr.com/p/3740465529684233)
+
+**5. 浙大博士造出「机器人界的F1」：比博尔特跑得还快**
+浙大博士研发出高速双足机器人，号称"机器人界的F1"，硬件响应能力成为最大瓶颈。目前已能以超过博尔特的速度奔跑。
+[原文](https://www.36kr.com/p/3739769424593154)
+
+**6. Cursor滑跪开源技术报告：Kimi基模微调后能干翻Claude**
+Cursor开源技术报告，揭示如何通过Kimi基模微调实现对Claude的反超。技术流玩法公开。
+[原文](https://www.36kr.com/p/3740414075011328)
+
+**7. OpenClaw 3.24发布：Skills安装障碍彻底解决**
+Skills安装终于不用用户自己猜缺什么，系统会手把手告诉你下一步；另外堵上了一个文件访问的安全漏洞。
+[原文](https://www.36kr.com/p/3739700371652615)
 
 ## 💡 AI副业六大热门方向（2026年最新）
 
 ### 一、AI编程评测工具
-市场需求旺盛，Cursor刚发布的评测基准直接替代SWE-Bench成为新标准。AI编程工具正在重塑开发流程。
+Cursor刚发布的新评测基准CursorBench直接替代SWE-Bench，成为编程智能体时代真正以"真实开发场景"为原点设计的基准测试。
 
 **代表机会：**
 - 垂直场景AI Coding助手
@@ -25,10 +55,9 @@ hiddenFromHomePage: true
 - 编程学习工具
 
 **盈利模式：** 订阅制 $9-29/月，或按次 $19-99/次
-[原文](https://www.qbitai.com/2026/03/387756.html)
 
 ### 二、金融Agent服务
-金融Agent赛道火爆，启明创投、红杉资本、高瓴近2亿集体押注。5个月内连获两轮融资。
+金融Agent赛道火爆，启明创投、红杉资本、高瓴近2亿集体押注讯兔科技Alpha派，5个月内连获两轮融资。
 
 **代表机会：**
 - 金融文档自动化处理
@@ -36,7 +65,6 @@ hiddenFromHomePage: true
 - 风险评估AI工具
 
 **盈利模式：** 企业SaaS $500-5000/月
-[原文](https://www.qbitai.com/2026/03/392684.html)
 
 ### 三、AI Agent工作流设计
 "首席龙虾官"月薪6万横空出世，专门负责企业Agent工作流设计、部署与优化。
@@ -46,10 +74,7 @@ hiddenFromHomePage: true
 - Agent工作流定制开发
 - AI Agent培训服务
 
-**盈利模式：**
-- 咨询：998-4998元/次
-- 常年顾问：9998-49998元/年
-[原文](https://www.qbitai.com/2026/03/392128.html)
+**盈利模式：** 咨询998-4998元/次，常年顾问9998-49998元/年
 
 ### 四、AI视频/音乐生成
 中国AI音乐拿下全球第一（昆仑万维Mureka V8），谷歌入局AI音乐。
@@ -60,7 +85,6 @@ hiddenFromHomePage: true
 - 内容本地化（字幕+翻译）
 
 **盈利模式：** 按作品 $50-500/首，或订阅制
-[原文](https://www.36kr.com/p/3739613285974276)
 
 ### 五、AI硬件代理/租赁
 机器人从实验室走向商业演出，机器人租赁公司成立3个月就获明星投资人争相注资。
@@ -71,7 +95,6 @@ hiddenFromHomePage: true
 - 线下体验店
 
 **盈利模式：** 设备销售15-30%毛利，或租赁分成
-[原文](https://www.qbitai.com/2026/03/392121.html)
 
 ### 六、AI内容自动化
 企业营销需求持续增长，AI可将内容生产成本降低80%。
@@ -80,30 +103,6 @@ hiddenFromHomePage: true
 - 社交媒体内容（微博/小红书/抖音文案）：500-2000元/月
 - 产品描述（电商详情页）：1-5元/条
 - SEO文章：200-1000元/篇
-[原文](https://www.36kr.com/p/3740431158001925)
-
-## 🤖 AI副业五大热门方向（按热度排序）
-
-🥇 **AI编程工具开发**
-- 门槛中等，上手最快
-- 兼职：3000-10000元/月
-- 自由职业：10000-30000元/月
-
-🥈 **AI Agent工作流设计**
-- 企业需求爆发，人才稀缺
-- 兼职：8000-30000元/月
-
-🥉 **金融/医疗垂直AI服务**
-- 企业需求旺盛，竞争相对较少
-- 兼职：5000-20000元/月
-
-**四、AI视频/音乐制作**
-- 市场需求持续增长
-- 兼职：3000-15000元/月
-
-**五、AI内容创作**
-- 容易规模化
-- 兼职：3000-15000元/月
 
 ## 📈 为什么现在是AI副业黄金时代？
 
@@ -126,26 +125,13 @@ hiddenFromHomePage: true
 3. **定价过低** → 基于价值定价，不要价格战
 4. **不记录流程** → 建立标准流程和模板库
 
-## 🔥 今日快讯
-
-1. **DeepSeek一口气放17个Agent岗位**，重度Vibe Coding优先 — Agent开发人才需求井喷
-   > 原文：https://www.qbitai.com/2026/03/392024.html
-
-2. **首批"首席龙虾官"月薪6万**，AI Agent企业级落地加速
-   > 原文：https://www.qbitai.com/2026/03/392128.html
-
-3. **金融Agent近2亿融资**，启明红杉高瓴集体押注
-   > 原文：https://www.qbitai.com/2026/03/392684.html
-
-4. **Cursor发AI编程评测基准**，SWE-Bench被替代
-   > 原文：https://www.qbitai.com/2026/03/387756.html
-
 ---
 
-📎 **原文链接**
-- Indie Hackers AI: https://www.indiehackers.com/tags/artificial-intelligence
-- V2EX 赚钱: https://www.v2ex.com/?tab=money
-- Product Hunt: https://www.producthunt.com
-- AI Side Hustle Guide: https://github.com/A1pha3/text-matrix
+📎 **文章来源**
+36kr AI频道：https://www.36kr.com/information/AI/
+量子位：https://www.qbitai.com/
+Indie Hackers：https://www.indiehackers.com
+Product Hunt：https://www.producthunt.com
+V2EX：https://www.v2ex.com
 
-🦞 每日08:30自动更新 | 由钳岳星君🦞维护
+🦞 每日08:30自动更新 | 由钳岳星君🦞
