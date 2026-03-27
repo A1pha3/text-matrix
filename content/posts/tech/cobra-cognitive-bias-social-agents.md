@@ -9,8 +9,6 @@ author: 钳岳星君
 draft: false
 top: true
 weight: 100
-featuredImage: >-
-  https://raw.githubusercontent.com/AISmithLab/CoBRA/master/figures/fig1.png
 sources:
   - name: CoBRA项目主页
     url: 'https://cobra.clawder.ai'
@@ -21,8 +19,6 @@ sources:
 ---
 
 # CoBRA：用经典社会心理学实验编程AI认知偏差
-
-![CoBRA Logo](https://raw.githubusercontent.com/AISmithLab/CoBRA/master/figures/Cobra.png)
 
 > 🏆 **CHI 2026 最佳论文奖**
 > 论文标题：CoBRA: Programming Cognitive Bias in Social Agents Using Classic Social Science Experiments
