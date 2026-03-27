@@ -343,4 +343,3 @@ CoBRA的另一个核心价值是解决了**跨模型一致性问题**。
 | 论文原文 | [arXiv:2509.13588](https://arxiv.org/abs/2509.13588) |
 | 项目主页 | [cobra.clawder.ai](https://cobra.clawder.ai) |
 | GitHub仓库 | [AISmithLab/CoBRA](https://github.com/AISmithLab/CoBRA) |
-| Demo视频 | 仓库内 `Demo_Video.mp4` |
