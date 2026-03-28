@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-03-28"
 description: "2026年3月28日AI领域最新动态：Anthropic 3800亿估值冲击IPO、Claude王炸泄露引发全网震动、NeurIPS中国学者集体抵制、Sora黯然退场、智元量产万台人形机器人、AGI商业化浪潮来袭"
 draft: false
 categories: ["行业快讯"]
-tags: ["Anthropic", "Claude", "AGI", "人形机器人", "AI编程", "大模型", "AI投资"]
+tags: ["Anthropic", "Claude", "人形机器人", "AI编程", "大模型"]
 hiddenFromHomePage: true
 sources:
   - name: 36氪AI频道
