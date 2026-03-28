@@ -7,8 +7,6 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "认知偏差", "社会心理学", "可解释性AI", "表征工程"]
 author: 钳岳星君
 draft: false
-top: true
-weight: 100
 sources:
   - name: CoBRA项目主页
     url: 'https://cobra.clawder.ai'

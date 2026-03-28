@@ -1,7 +1,7 @@
 ---
 name: "hugo-writer"
 description: "为 Hugo 文章生成/修复 Frontmatter，校验 categories、tags、首页曝光，自动生成 SEO 字段，并转换内部链接。触发词：生成 Frontmatter、修复元数据、分类标签、taxonomy。"
-version: "2.2.1"
+version: "2.3.0"
 tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ---
 
@@ -38,7 +38,14 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - 若分类为 `["行业快讯"]`，**必须**输出 `hiddenFromHomePage: true`。
 - 其他分类，**严禁**输出 `hiddenFromHomePage` 字段。
 
-### 6. 内部链接 (Internal Links)
+### 6. 日期格式规范 (Date Format)
+
+- **强制包含时间**：日期**必须**包含完整时间，格式为 `YYYY-MM-DDTHH:MM:SS+08:00`（如 `date: 2026-03-25T08:00:00+08:00`）。
+- **严禁**使用 `date: 2026-03-25` 或 `date: 2026-03-25T08:00` 等缺少完整时间的格式。
+- **原因**：Hugo 排序默认按日期降序，缺少时间的日期会被当作 `00:00:00`，导致同一天的文章排序异常（较晚时间发布的文章反而排在前面）。
+- **timezone**：必须携带时区信息（`+08:00`、`Z` 或 `-05:00` 等），禁止使用无时区的 UTC 时间。
+
+### 7. 内部链接 (Internal Links)
 
 - **改写规则**：处理正文时，必须将普通相对路径（如 `[链接](./foo.md)`）改写为 Hugo `relref` 短代码。
 - **格式规范**：使用 `relref` 语法。为避免当前文档被 Hugo 解析报错，此处加了注释符：`[链接]({{</* relref "target.md" */>}})`。**你在实际输出时，必须移除 `/*` 和 `*/`**。
@@ -60,6 +67,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - 禁止输出 `hiddenFromHomePage: false`。
 - 非 `["行业快讯"]` 场景，禁止输出 `hiddenFromHomePage`。
 - **禁止使用多行缩进列表格式输出 `categories` 和 `tags`**（必须用单行内联数组）。
+- **禁止输出不完整的日期格式**（如 `date: 2026-03-25` 或 `date: 2026-03-25T08:00`），必须包含完整时间 `YYYY-MM-DDTHH:MM:SS±HH:MM`（如 `+08:00`、`Z`）。
 - 在已有具体实体、产品、协议、技术名词时，禁止使用空泛标签。
 - 若任务仅要求 Frontmatter，禁止额外输出解释、分析过程或注意事项。
 - 若未要求处理正文，禁止擅自改写正文内容或内部链接。
@@ -92,6 +100,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - `slug` 必须为小写英文或连字符组合，不含空格。
 - `description` 必须为纯文本摘要，不要写成标题复述或关键词堆砌。
 - `hiddenFromHomePage` 只能在 `["行业快讯"]` 时出现。
+- **日期格式**：`date` 必须为 `YYYY-MM-DDTHH:MM:SS±HH:MM` 完整格式，不能缺少时间或时区。
 - 若任务仅要求 Frontmatter，最终输出只能包含 YAML 块。
 - 若任务包含链接修复，所有站内 `.md` 链接都必须改为 `relref`。
 
