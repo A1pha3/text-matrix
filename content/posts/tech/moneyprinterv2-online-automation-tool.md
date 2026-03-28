@@ -5,7 +5,7 @@ slug: "moneyprinterv2-online-automation-tool"
 description: "深度解析 MoneyPrinterV2：全自动在线赚钱工具，26.8k stars，支持Twitter Bot + YouTube Shorts + Affiliate营销 + 冷启动邮件外展，详解原理、安装、配置与脚本使用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MoneyPrinterV2", "在线赚钱", "Twitter Bot", "YouTube Shorts", "Affiliate营销", "自动化"]
+tags: ["MoneyPrinterV2", "在线赚钱", "Twitter Bot", "YouTube Shorts", "自动化"]
 ---
 
 # MoneyPrinterV2：全自动在线赚钱工具从入门到精通

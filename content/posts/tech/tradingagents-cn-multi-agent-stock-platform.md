@@ -5,7 +5,7 @@ slug: "tradingagents-cn-multi-agent-stock-platform"
 description: "深度解析 TradingAgents-CN：多智能体 AI 量化投资学习平台，Fork自43k stars原版，21.9k stars，FastAPI+Vue3全新架构，支持A股/港股/美股，详解原理、安装、配置与风险提示。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TradingAgents-CN", "多智能体", "量化投资", "AI金融", "Vue3", "FastAPI"]
+tags: ["TradingAgents-CN", "多智能体", "量化投资", "AI金融", "Vue3"]
 ---
 
 # TradingAgents-CN：多智能体 AI 量化投资学习平台从入门到精通
