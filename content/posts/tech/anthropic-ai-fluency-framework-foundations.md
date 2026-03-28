@@ -489,7 +489,7 @@ AI：[最终版本]
 ## 参考来源
 
 - [AI Fluency: Framework & Foundations](https://anthropic.skilljar.com/ai-fluency-framework-foundations)（Anthropic官方课程）
-- [Anthropic Academic Partners](https://www-cdn.anthropic.com/7e9692bba414a91a562af2a64b7e99d7946de590.pdf)（课程合作教授介绍）
+- [Anthropic Academic Partners](/files/posts/tech/anthropic-ai-fluency-framework-foundations/anthropic-academic-partners.pdf)（课程合作教授介绍）
 - [What 81,000 people want from AI](https://www.anthropic.com/81k-interviews)（Anthropic用户研究）
 
 ---
