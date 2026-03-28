@@ -1,6 +1,6 @@
 ---
 title: "Onyx 中文指南：自托管 AI 对话平台的入门到精通"
-date: 2026-03-28
+date: 2026-03-28T13:30:00+08:00
 slug: "onyx-ai-platform-guide"
 description: "Onyx 是一个功能丰富的自托管 AI 对话平台，支持任意 LLM、RAG、知识图谱、MCP 集成和代码执行。本文从原理到实践全面讲解。"
 draft: false

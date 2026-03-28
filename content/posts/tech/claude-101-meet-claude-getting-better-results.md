@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第一课：Getting Better Results——让 AI 输出质量倍增的技巧"
-date: 2026-03-25
+date: 2026-03-25T15:30:00+08:00
 slug: "claude-101-getting-better-results"
 description: "深入讲解提升 Claude 输出质量的高级技巧，包括 Few-shot 示例引导、思维链、输出结构控制以及负面提示等策略。"
 draft: false

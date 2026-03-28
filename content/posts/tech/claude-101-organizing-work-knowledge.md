@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第二课：用 Claude 组织你的工作——Projects、Artifacts 与 Skills 深度指南"
-date: 2026-03-25
+date: 2026-03-25T16:30:00+08:00
 slug: "claude-101-organizing-work-knowledge"
 description: "深入探讨如何利用 Claude 的 Projects、Artifacts 和 Skills 功能建立长期上下文与可持久化产物，打造高效的人机协作工作流。"
 draft: false

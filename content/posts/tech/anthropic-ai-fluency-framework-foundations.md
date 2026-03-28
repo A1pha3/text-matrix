@@ -1,6 +1,6 @@
 ---
 title: "Anthropic AI通识课：4D框架——与AI协作的核心能力"
-date: 2026-03-25
+date: 2026-03-25T09:00:00+08:00
 slug: "anthropic-ai-fluency-framework-foundations"
 description: "基于 Anthropic 官方课程整理的 AI 通识指南，详细讲解 4D 框架（委托、描述、判断、审慎），帮助读者系统性提升与大语言模型协作的核心能力。"
 draft: false

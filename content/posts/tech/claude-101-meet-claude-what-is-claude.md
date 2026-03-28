@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第一课：认识 Claude——它是谁，能做什么"
-date: 2026-03-25
+date: 2026-03-25T16:00:00+08:00
 slug: "claude-101-what-is-claude"
 description: "本文是 Claude 101 系列课程的第一课，详细介绍了 Claude 的核心能力、适用场景与任务边界，帮助初学者建立与大语言模型协作的正确心智模型。"
 draft: false

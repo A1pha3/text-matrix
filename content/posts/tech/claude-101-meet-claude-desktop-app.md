@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第一课：Claude 桌面应用——Chat、Cowork、Code 三种模式详解"
-date: 2026-03-25
+date: 2026-03-25T14:00:00+08:00
 slug: "claude-101-desktop-app-modes"
 description: "全面解析 Claude 桌面应用的 Chat、Cowork 和 Code 三大核心模式，帮助你根据不同任务场景选择最合适的 AI 工作方式。"
 draft: false
