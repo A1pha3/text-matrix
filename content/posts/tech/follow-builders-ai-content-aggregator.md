@@ -1,6 +1,6 @@
 ---
 title: "Follow Builders：追踪 AI 顶尖建造者的信息聚合神器"
-date: 2026-03-29T08:00:00+08:00
+date: 2026-03-29T21:51:00+08:00
 slug: "follow-builders-ai-content-aggregator"
 description: "深入解读 Follow Builders 项目，一个 AI 驱动的信息聚合工具，追踪 AI 领域顶尖研究员、创始人、产品经理和工程师的最新动态，整理成易于消化的摘要推送。"
 draft: false
