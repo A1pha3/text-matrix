@@ -29,7 +29,7 @@ tags: ["Coding Plan", "方舟", "MiniMax", "智谱", "大模型"]
 - 新增语音、音乐、视频、图片生成权益，覆盖多模态创作需求。
 - 邀请机制支持双向激励：好友享受 9 折优惠，你可获得返利与社区特权。
 - 适合高频调用 API、需要内容生成能力的一体化开发者。
-- 立即参与：[MiniMax Token Plan](https://platform.minimaxi.com/subscribe/token-plan?code=Jj04rRsImc&source=link)
+- 立即参与：[MiniMax Token Plan](https://platform.minimaxi.com/subscribe/token-plan?code=DRm14bJp5I&source=link)
 
 ## 智谱 Coding Plan
 
