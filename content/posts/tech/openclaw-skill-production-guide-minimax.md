@@ -1,6 +1,6 @@
 ---
 title: "如何做一个生产级 SKILL：MiniMax-M2.7 给 OpenClaw 写 SKILL 的保姆教程"
-date: 2026-03-29T15:47:00+08:00
+date: 2026-03-29T21:00:00+08:00
 slug: "openclaw-skill-production-guide-minimax"
 description: "深入解读 karminski-牙医 的 OpenClaw SKILL 开发教程，学习如何用 MiniMax-M2.7 写出生产级稳定的 SKILL，实现 Apple 风格产品爆炸图网页的批量生成。"
 draft: false
