@@ -41,6 +41,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ### 6. 日期格式规范 (Date Format)
 
 - **强制包含时间**：日期**必须**包含完整时间，格式为 `YYYY-MM-DDTHH:MM:SS+08:00`（如 `date: 2026-03-25T08:00:00+08:00`）。
+- **时间约束**：`date` 的发布时间**必须等于系统当前时间**（以北京时间 `+08:00` 输出），禁止使用历史时间或未来时间。
 - **严禁**使用 `date: 2026-03-25` 或 `date: 2026-03-25T08:00` 等缺少完整时间的格式。
 - **原因**：Hugo 排序默认按日期降序，缺少时间的日期会被当作 `00:00:00`，导致同一天的文章排序异常（较晚时间发布的文章反而排在前面）。
 - **timezone**：统一使用 `+08:00`（北京时间），不混用其他时区格式（如 `Z`、`-05:00` 等）。所有文章发布都在北京时间下进行，因此统一用 `+08:00`。
@@ -68,6 +69,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - 非 `["行业快讯"]` 场景，禁止输出 `hiddenFromHomePage`。
 - **禁止使用多行缩进列表格式输出 `categories` 和 `tags`**（必须用单行内联数组）。
 - **禁止输出不完整的日期格式**（如 `date: 2026-03-25` 或 `date: 2026-03-25T08:00`），必须包含完整时间 `YYYY-MM-DDTHH:MM:SS+08:00`。
+- **禁止输出非系统当前时间的 `date`**（必须使用生成当下的系统时间，且为北京时间 `+08:00`）。
 - 在已有具体实体、产品、协议、技术名词时，禁止使用空泛标签。
 - 若任务仅要求 Frontmatter，禁止额外输出解释、分析过程或注意事项。
 - 若未要求处理正文，禁止擅自改写正文内容或内部链接。
@@ -101,17 +103,20 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - `description` 必须为纯文本摘要，不要写成标题复述或关键词堆砌。
 - `hiddenFromHomePage` 只能在 `["行业快讯"]` 时出现。
 - **日期格式**：`date` 必须为 `YYYY-MM-DDTHH:MM:SS+08:00` 完整格式，不能缺少时间或时区。
+- **时间一致性**：`date` 必须为生成时的系统当前时间（北京时间 `+08:00`），不能回填旧时间或预填未来时间。
 - 若任务仅要求 Frontmatter，最终输出只能包含 YAML 块。
 - 若任务包含链接修复，所有站内 `.md` 链接都必须改为 `relref`。
 
 ## 示例
+
+> 说明：以下 `date` 仅为格式示意，实际生成时必须替换为“系统当前时间（北京时间 +08:00）”，不可复用示例中的时间值。
 
 ### 示例 1：行业快讯 (包含隐藏字段与 SEO)
 
 ```yaml
 ---
 title: "3月25日 行业大事件早报"
-date: 2026-03-25T08:00:00+08:00
+date: <SYSTEM_NOW_YYYY-MM-DDTHH:MM:SS+08:00>
 slug: "industry-news-daily-mar-25"
 description: "汇总3月25日AI大模型、美股科技股及宏观经济领域的最新动态与核心事件解读。"
 draft: false
@@ -126,7 +131,7 @@ hiddenFromHomePage: true
 ```yaml
 ---
 title: "使用 Python Pandas 进行比特币历史价格回测"
-date: 2026-03-25T14:30:00+08:00
+date: <SYSTEM_NOW_YYYY-MM-DDTHH:MM:SS+08:00>
 slug: "bitcoin-price-backtest-pandas"
 description: "本文详细介绍了如何使用 Python Pandas 库获取并处理比特币历史价格数据，进而实现简单的量化交易回测策略。"
 draft: false
