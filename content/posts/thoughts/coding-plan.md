@@ -4,6 +4,16 @@ draft = false
 title = 'Coding Plan 优惠合集'
 +++
 
+---
+title: "Coding Plan 优惠合集"
+date: 2026-03-29T10:00:00+08:00
+slug: "coding-plan-deals"
+description: "整理方舟、MiniMax 与智谱三类 Coding/Token 订阅方案，涵盖核心权益、适用场景与快速选择建议，帮助读者按需求选择更高性价比的国产大模型方案。"
+draft: false
+categories: ["思考与随笔"]
+tags: ["Coding Plan", "方舟", "MiniMax", "智谱", "大模型"]
+---
+
 # Coding Plan 优惠合集
 
 支持国货，从我做起。这里整理了 3 个我在用的 Coding/Token 计划，适合想长期稳定使用国产大模型的同学。
