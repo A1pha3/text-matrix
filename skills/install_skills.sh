@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # 安装 Trae Skills 软链接脚本
 # 作用：将当前目录下的所有子文件夹（代表各个 skill）通过相对路径软链接到 .trae/skills/ 目录下
@@ -17,6 +18,15 @@ if [ ! -d "$TRAE_SKILLS_DIR" ]; then
     echo "📁 创建目标目录: $TRAE_SKILLS_DIR"
     mkdir -p "$TRAE_SKILLS_DIR"
 fi
+
+for existing_link in "$TRAE_SKILLS_DIR"/*; do
+    [ -L "$existing_link" ] || continue
+    existing_name=$(basename "$existing_link")
+    if [ ! -d "$SKILLS_DIR/$existing_name" ]; then
+        echo "🧹 清理无效链接: $existing_name"
+        rm -rf "$existing_link"
+    fi
+done
 
 # 遍历 skills 目录下的所有子目录
 count=0
@@ -43,10 +53,7 @@ for skill_path in "$SKILLS_DIR"/*/; do
     # 执行软链接操作
     # 注意这里使用相对路径：从 .trae/skills/ 出发，退回两层到项目根目录，再进入 skills/ 目录
     # 这样可以保证即使整个项目被移动到其他电脑，软链接依然有效
-    cd "$TRAE_SKILLS_DIR" && ln -s "../../skills/$skill_name" "$skill_name"
-    
-    # 回到原目录，防止后续逻辑受影响
-    cd "$SKILLS_DIR"
+    ln -s "../../skills/$skill_name" "$target_link"
     
     count=$((count + 1))
 done
