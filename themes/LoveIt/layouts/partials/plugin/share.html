@@ -196,29 +196,80 @@
 
     {{- /* 028: Bilibili */ -}}
     {{- if $share.Bilibili -}}
-        <a href="https://search.bilibili.com/all?keyword={{ printf `%s %s` .Title .Permalink | urlquery }}" target="_blank" rel="noopener noreferrer" title="{{ T `shareOn` }} B站">
+        <a href="javascript:void(0);" data-share-copy data-share-title="{{ .Title }}" data-share-url="{{ .Permalink }}" data-open-url="https://t.bilibili.com/" title="{{ T `shareOn` }} B站">
             {{- dict "Simpleicons" "bilibili" "Prefix" (.Scratch.Get "cdn" | default dict).simpleIconsPrefix | partial "plugin/icon.html" -}}
         </a>
     {{- end -}}
 
     {{- /* 029: Xiaohongshu */ -}}
     {{- if $share.Xiaohongshu -}}
-        <a href="https://www.xiaohongshu.com/search_result?keyword={{ printf `%s %s` .Title .Permalink | urlquery }}" target="_blank" rel="noopener noreferrer" title="{{ T `shareOn` }} 小红书">
+        <a href="javascript:void(0);" data-share-copy data-share-title="{{ .Title }}" data-share-url="{{ .Permalink }}" data-open-url="https://www.xiaohongshu.com/explore" title="{{ T `shareOn` }} 小红书">
             {{- dict "Simpleicons" "xiaohongshu" "Prefix" (.Scratch.Get "cdn" | default dict).simpleIconsPrefix | partial "plugin/icon.html" -}}
         </a>
     {{- end -}}
 
     {{- /* 030: Toutiao */ -}}
     {{- if $share.Toutiao -}}
-        <a href="https://so.toutiao.com/search?keyword={{ printf `%s %s` .Title .Permalink | urlquery }}" target="_blank" rel="noopener noreferrer" title="{{ T `shareOn` }} 今日头条">
+        <a href="javascript:void(0);" data-share-copy data-share-title="{{ .Title }}" data-share-url="{{ .Permalink }}" data-open-url="https://mp.toutiao.com/" title="{{ T `shareOn` }} 今日头条">
             {{- dict "Simpleicons" "bytedance" "Prefix" (.Scratch.Get "cdn" | default dict).simpleIconsPrefix | partial "plugin/icon.html" -}}
         </a>
     {{- end -}}
 
     {{- /* 031: Douyin */ -}}
     {{- if $share.Douyin -}}
-        <a href="https://www.douyin.com/search/{{ printf `%s %s` .Title .Permalink | urlquery }}" target="_blank" rel="noopener noreferrer" title="{{ T `shareOn` }} 抖音">
+        <a href="javascript:void(0);" data-share-copy data-share-title="{{ .Title }}" data-share-url="{{ .Permalink }}" data-open-url="https://creator.douyin.com/" title="{{ T `shareOn` }} 抖音">
             {{- dict "Simpleicons" "tiktok" "Prefix" (.Scratch.Get "cdn" | default dict).simpleIconsPrefix | partial "plugin/icon.html" -}}
         </a>
     {{- end -}}
+
+    <script>
+        (() => {
+            if (window.__loveitChinaShareBound) return;
+            window.__loveitChinaShareBound = true;
+            const fallbackCopy = text => {
+                const input = document.createElement('textarea');
+                input.value = text;
+                input.setAttribute('readonly', '');
+                input.style.position = 'absolute';
+                input.style.left = '-9999px';
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+            };
+            const bind = () => {
+                document.querySelectorAll('.post-info-share [data-share-copy]').forEach($btn => {
+                    if ($btn.dataset.bound === '1') return;
+                    $btn.dataset.bound = '1';
+                    $btn.addEventListener('click', async e => {
+                        e.preventDefault();
+                        const shareTitle = $btn.dataset.shareTitle || document.title;
+                        const shareUrl = $btn.dataset.shareUrl || window.location.href;
+                        const shareText = `${shareTitle}\n${shareUrl}`;
+                        let copied = false;
+                        try {
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                await navigator.clipboard.writeText(shareText);
+                                copied = true;
+                            }
+                        } catch (_) {}
+                        if (!copied) {
+                            try {
+                                fallbackCopy(shareText);
+                                copied = true;
+                            } catch (_) {}
+                        }
+                        if (copied) $btn.title = '已复制链接，去发布页粘贴';
+                        const openUrl = $btn.dataset.openUrl;
+                        if (openUrl) window.open(openUrl, '_blank', 'noopener,noreferrer');
+                    });
+                });
+            };
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bind, { once: true });
+            } else {
+                bind();
+            }
+        })();
+    </script>
 {{- end -}}
