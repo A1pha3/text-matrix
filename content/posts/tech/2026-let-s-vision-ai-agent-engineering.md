@@ -1,6 +1,6 @@
 ---
 title: "AI Agent 的道与术：工程师如何重构工作方式"
-date: 2026-03-29T08:00:00+08:00
+date: 2026-03-29T15:47:00+08:00
 slug: "ai-agent-engineer-workflow"
 description: "深入解读 onevcat/2026-let-s-vision 演讲项目，探讨 AI Agent 时代工程师如何重构工作方式，涵盖人机协作的道与术、Slidev 制作流程、AI 驱动制作工作流等核心实践。"
 draft: false
