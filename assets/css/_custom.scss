@@ -754,6 +754,14 @@
 }
 
 @media (max-width: 680px) {
+  #header-desktop {
+    display: none;
+  }
+
+  #header-mobile {
+    display: block;
+  }
+
   #header-mobile .header-title .header-brand {
     max-width: 100%;
   }
