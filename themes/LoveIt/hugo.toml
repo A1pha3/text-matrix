@@ -417,6 +417,10 @@
       Diaspora = true
       Mix = false
       Telegram = true
+      Bilibili = true
+      Xiaohongshu = true
+      Toutiao = true
+      Douyin = true
     # Comment config
     # 评论系统设置
     [params.page.comment]

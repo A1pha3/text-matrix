@@ -193,4 +193,32 @@
             {{- dict "Class" "fab fa-telegram" | partial "plugin/icon.html" -}}
         </a>
     {{- end -}}
+
+    {{- /* 028: Bilibili */ -}}
+    {{- if $share.Bilibili -}}
+        <a href="https://search.bilibili.com/all?keyword={{ printf `%s %s` .Title .Permalink | urlquery }}" target="_blank" rel="noopener noreferrer" title="{{ T `shareOn` }} B站">
+            {{- dict "Simpleicons" "bilibili" "Prefix" (.Scratch.Get "cdn" | default dict).simpleIconsPrefix | partial "plugin/icon.html" -}}
+        </a>
+    {{- end -}}
+
+    {{- /* 029: Xiaohongshu */ -}}
+    {{- if $share.Xiaohongshu -}}
+        <a href="https://www.xiaohongshu.com/search_result?keyword={{ printf `%s %s` .Title .Permalink | urlquery }}" target="_blank" rel="noopener noreferrer" title="{{ T `shareOn` }} 小红书">
+            {{- dict "Simpleicons" "xiaohongshu" "Prefix" (.Scratch.Get "cdn" | default dict).simpleIconsPrefix | partial "plugin/icon.html" -}}
+        </a>
+    {{- end -}}
+
+    {{- /* 030: Toutiao */ -}}
+    {{- if $share.Toutiao -}}
+        <a href="https://so.toutiao.com/search?keyword={{ printf `%s %s` .Title .Permalink | urlquery }}" target="_blank" rel="noopener noreferrer" title="{{ T `shareOn` }} 今日头条">
+            {{- dict "Simpleicons" "bytedance" "Prefix" (.Scratch.Get "cdn" | default dict).simpleIconsPrefix | partial "plugin/icon.html" -}}
+        </a>
+    {{- end -}}
+
+    {{- /* 031: Douyin */ -}}
+    {{- if $share.Douyin -}}
+        <a href="https://www.douyin.com/search/{{ printf `%s %s` .Title .Permalink | urlquery }}" target="_blank" rel="noopener noreferrer" title="{{ T `shareOn` }} 抖音">
+            {{- dict "Simpleicons" "tiktok" "Prefix" (.Scratch.Get "cdn" | default dict).simpleIconsPrefix | partial "plugin/icon.html" -}}
+        </a>
+    {{- end -}}
 {{- end -}}
