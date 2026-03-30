@@ -1,3 +1,6 @@
+# 文章评价
+
+- 你觉得这篇文章写的如何？有没有错误和疏漏？还有哪些需要提高的地方？
 # github development tasks
 - 在github上创建Fine-grained personal access tokens，用于访问github 仓库。但是我不知道怎么设置，我希望你能写个详细的步骤。
 - 从申请token，到如何配置终端的git环境，成功克隆github仓库。你把每一个步骤的细节和原理都详细的讲清楚，整理一个文档，放到content/docs 目录下，文件名叫做github_personal_access_tokens.md
