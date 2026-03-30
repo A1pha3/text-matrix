@@ -2,11 +2,14 @@
 title: "Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统"
 date: 2026-03-30T16:05:00+08:00
 slug: slavingia-skills-minimalist-entrepreneur
+description: "系统拆解 slavingia/skills 的 10 个 Minimalist Entrepreneur Skills：它们解决什么问题、适合在什么阶段使用、如何串成一条可执行的创业路径。"
+draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "Skill", "创业", "Minimalist Entrepreneur", "Sahil Lavingia"]
-description: "系统拆解 slavingia/skills 的 10 个 Minimalist Entrepreneur Skills：它们解决什么问题、适合在什么阶段使用、如何串成一条可执行的创业路径。"
 ---
 
+> 专题导读：[Minimalist Entrepreneur Skills 专题导读：原理、案例与 Prompt 模板一站看完]({{< relref "slavingia-skills-series-guide.md" >}}) ⭐⭐
+>
 > 目标读者：想用 Claude Code 做产品验证、早期销售和创业决策的开发者、独立开发者、AI 产品实践者。
 >
 > 核心问题：slavingia/skills 到底是什么、10 个 Skill 分别解决什么问题、如何按正确顺序使用，才能把“想创业”变成“可执行、可验证、可收费”的路径？
@@ -429,3 +432,15 @@ slavingia/skills 的价值，不在于它把创业讲得更热血，而在于它
 真正的重点不是把 10 个命令都试一遍，而是让自己形成一个新习惯：任何产品冲动出现时，先问社区、再问交易、再问手工交付、最后才问系统实现。
 
 这才是 Minimalist Entrepreneur Skills 最值得带走的东西。
+
+## 下一步
+
+如果你已经理解了方法论，最好的下一步不是反复回看概念，而是顺着这条链路继续推进：
+
+- [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "slavingia-skills-real-startup-case.md" >}})：看这套方法如何在一个真实创业约束里落地。
+- [Minimalist Entrepreneur Skills 实战 Prompt 模板：从找社区到首批付费的可复制脚本]({{< relref "slavingia-skills-prompt-templates.md" >}})：把当前这篇方法论直接转成你今天就能使用的 Prompt。
+
+---
+
+**文档元信息**
+难度：⭐⭐⭐ | 类型：方法总览 | 更新日期：2026-03-30 | 预计阅读时间：18 分钟

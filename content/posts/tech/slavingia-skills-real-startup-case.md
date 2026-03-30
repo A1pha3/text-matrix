@@ -2,11 +2,14 @@
 title: "如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例"
 date: 2026-03-30T17:10:00+08:00
 slug: slavingia-skills-real-startup-case
+description: "用一个基于真实创业约束整理的完整案例，演示如何按顺序使用 10 个 Minimalist Entrepreneur Skills，从找社区、验证、定价到拿下首批付费客户。"
+draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "Skill", "创业案例", "Minimalist Entrepreneur", "独立开发"]
-description: "用一个基于真实创业约束整理的完整案例，演示如何按顺序使用 10 个 Minimalist Entrepreneur Skills，从找社区、验证、定价到拿下首批付费客户。"
 ---
 
+> 专题导读：[Minimalist Entrepreneur Skills 专题导读：原理、案例与 Prompt 模板一站看完]({{< relref "slavingia-skills-series-guide.md" >}}) ⭐⭐
+>
 > 前置知识：[Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统]({{< relref "slavingia-skills-minimalist-entrepreneur.md" >}}) ⭐⭐⭐
 >
 > 案例说明：本文使用一个基于真实创业约束整理的去标识化合成案例。人物、名称和个别细节做了脱敏处理，但保留了真实的决策顺序、常见数据尺度和最容易踩坑的地方。你可以把它当成一份可直接照抄的执行脚本。
@@ -362,3 +365,15 @@ description: "用一个基于真实创业约束整理的完整案例，演示如
 - 哪一步真的值得自动化。
 
 这才是一个创业项目从“想做”走向“值得做”的分水岭。
+
+## 下一步
+
+如果你已经看懂这条案例路径，下一步就不应该停在“觉得有道理”，而是把它替换成你的项目上下文：
+
+- [Minimalist Entrepreneur Skills 实战 Prompt 模板：从找社区到首批付费的可复制脚本]({{< relref "slavingia-skills-prompt-templates.md" >}})：把本文案例中的动作，改写成你可以直接复制执行的 Prompt。
+- [Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统]({{< relref "slavingia-skills-minimalist-entrepreneur.md" >}})：如果你在案例某一步仍然搞不清边界，回到方法论总览重新校准顺序。
+
+---
+
+**文档元信息**
+难度：⭐⭐⭐⭐ | 类型：案例拆解 | 更新日期：2026-03-30 | 预计阅读时间：20 分钟
