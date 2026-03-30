@@ -316,13 +316,15 @@ git clone https://github.com/slavingia/skills.git ~/.claude/plugins/skills
 
 如果你是做 AI 工具、自动化产品或独立开发项目，这套 Skills 最有价值的地方，不是给你结论，而是让你每一步都更难自欺。
 
+> 延伸阅读：如果你想看一条完整的落地路径，可以继续读 [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "slavingia-skills-real-startup-case.md" >}})。
+
 比如你想做一个“帮内容创作者自动拆解长视频并生成短视频脚本”的产品，比较合理的使用顺序会是：
 
 1. 先用 /find-community，明确你服务的是哪一类创作者，而不是泛泛地说“内容行业”。
 2. 再用 /validate-idea，确认他们今天是否已经在手工切片、是否觉得这个过程真的痛、是否有预算。
-3. 再用 /processize，先手工接 3 个创作者案例，自己做人肉拆解流程。
-4. 接着用 /pricing，给出一个能收钱的初始交付方式。
-5. 然后用 /mvp，把反复出现的稳定步骤压缩成最小工具。
+3. 再用 /mvp，先把“到底交付什么结果”收缩到一个本周能推出的最小版本。
+4. 接着用 /processize，先手工接 3 个创作者案例，自己把交付流程跑通。
+5. 然后用 /pricing，给出一个能收钱的初始交付方式。
 6. 再用 /first-customers，把早期成交动作系统化。
 7. 最后在有稳定客户后，再考虑 /marketing-plan。
 
