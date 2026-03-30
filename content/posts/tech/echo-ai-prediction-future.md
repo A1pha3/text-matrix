@@ -349,9 +349,10 @@ graph LR
 
 | 资源 | 链接 |
 |------|------|
-| **UniPat AI Echo** | [https://unipat.ai/echo](https://unipat.ai/echo) |
-| **General AI Prediction Leaderboard** | 公开排行榜（见 UniPat AI Echo 页面） |
+| **UniPat AI Echo 官方介绍** | [https://unipat.ai/blog/Echo](https://unipat.ai/blog/Echo) |
+| **General AI Prediction Leaderboard** | [https://unipat.ai/benchmarks](https://unipat.ai/benchmarks) |
 | **Polymarket** | [https://polymarket.com](https://polymarket.com) |
+| **UniPat AI GitHub** | [https://github.com/UniPat-AI](https://github.com/UniPat-AI) |
 
 ---
 
