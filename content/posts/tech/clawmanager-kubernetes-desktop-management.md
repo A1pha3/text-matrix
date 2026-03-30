@@ -1,478 +1,442 @@
 ---
-title: "ClawManager：Kubernetes 桌面运维平台从入门到精通专家级技术文档"
+title: "ClawManager：Kubernetes 桌面管理平台实战指南"
 date: 2026-03-30T18:22:00+08:00
 slug: clawmanager-kubernetes-desktop-management
 categories: ["技术笔记"]
 tags: ["ClawManager", "Kubernetes", "OpenClaw", "AI Gateway", "桌面管理"]
-description: "ClawManager是面向Kubernetes的OpenClaw和Linux桌面运行时管理平台，本文档涵盖核心功能、AI Gateway治理、Kubernetes部署和开发扩展。"
+description: "基于 ClawManager 上游 README 与 AI Gateway 文档，系统讲清其定位、核心能力、部署流程、治理逻辑与运维要点。"
 ---
 
-# ClawManager：Kubernetes 桌面运维平台从入门到精通专家级技术文档
+> 本文基于 ClawManager 上游 README.zh-CN 与 docs/aigateway.md 整理，校验时间为 2026-03-30。
+>
+> 目标读者：需要在 Kubernetes 中集中管理 OpenClaw 或 Linux 桌面运行时的运维工程师、平台工程师、技术负责人。
+>
+> 阅读收益：你会明确 ClawManager 能做什么、为什么值得用、如何快速部署、AI Gateway 到底解决了什么问题，以及上线后应该重点检查哪些环节。
 
-> **目标读者**：需要管理团队级 AI Agent 桌面实例的运维工程师、技术负责人
-> **核心问题**：如何在 Kubernetes 集群上批量管理 OpenClaw 桌面实例？如何实现 AI Gateway 模型治理？
+## 1. 先用一句话理解 ClawManager
 
----
+ClawManager 是一个面向团队和集群规模场景的 Kubernetes-first 控制平面，用来统一部署、运维并访问 OpenClaw 与 Linux 桌面运行时。
 
-## 1. 学习目标
+它并不是桌面运行时本身，而是围绕实例生命周期、配额、运行时镜像、访问代理和模型治理构建的一层管理平面。理解这一点很重要，因为它决定了 ClawManager 的真正价值不在“再造一个桌面”，而在“把原本分散、脆弱、难审计的桌面管理流程收拢为一套平台能力”。
 
-完成本文档后，你将掌握：
+## 2. 学习目标
 
-- ✅ 理解 ClawManager 的定位与核心功能
-- ✅ 掌握 Kubernetes 环境下的部署与配置
-- ✅ 熟练管理用户、配额和桌面实例
-- ✅ 理解 AI Gateway 模型治理架构
-- ✅ 掌握权限控制、审计追踪、成本分析
-- ✅ 能够进行二次开发和扩展
+读完本文后，你应该能够回答下面 6 个问题：
 
----
+- ClawManager 与直接部署 OpenClaw 或 Webtop 相比，多出来的核心价值是什么？
+- 它在 Kubernetes 中管理了哪些资源，哪些能力留给底层运行时本身？
+- 团队为什么需要用户、配额、运行时镜像和访问代理的集中控制？
+- AI Gateway 如何把模型访问从“直接调 Provider”升级为“可治理、可审计、可控成本”的平台入口？
+- 初次部署完成后，应该按什么顺序验证平台是否可用？
+- 如果要将它用于生产环境，哪些配置和运维习惯最值得优先建立？
 
-## 2. 原理分析
+## 3. 它适合什么场景
 
-### 2.1 什么是 ClawManager？
+### 3.1 适合的典型场景
 
-**ClawManager** 是面向 Kubernetes 的 OpenClaw 和 Linux 桌面运行时管理平台，让团队从一个地方完成桌面实例的部署、运维和访问。
+ClawManager 适合下面这类团队环境：
 
-> 💡 **核心定位**：不是替代 OpenClaw，而是为团队提供**集中化管理平面**——多用户、多配额、多集群的桌面实例生命周期管理。
+- 需要为多个用户创建桌面实例，而不是每个人各自手工部署。
+- 希望集中管理 CPU、内存、存储、GPU 和实例数量配额。
+- 希望将桌面服务保留在集群内部，而不是直接暴露 Pod 或 Service。
+- 希望通过统一的浏览器入口提供桌面访问能力。
+- 希望在 OpenClaw 场景中增加模型治理、审计追踪和成本核算。
+- 希望同时支持管理员统一发放和用户自助创建实例。
 
-### 2.2 解决的核心问题
+### 3.2 不要对它期待错位
 
-| 问题 | 传统方式 | ClawManager |
-|------|---------|-------------|
-| **多用户管理** | 各自部署 | 集中配额管控 |
-| **桌面访问** | 直接暴露 Pod | 安全代理访问 |
-| **模型治理** | 无统一管控 | AI Gateway |
-| **资源隔离** | 手动配置 | 自动配额 |
-| **运维成本** | 逐台维护 | 批量管理 |
+ClawManager 的官方定位非常明确：它是控制平面，不是通用虚拟化平台，也不是独立的模型网关产品。更准确的理解方式是：
 
-### 2.3 技术边界
+- 如果你缺的是桌面运行时本身，ClawManager 不是替代品。
+- 如果你缺的是团队级集中管理、统一访问和治理能力，ClawManager 才是问题的正解。
+- 如果你的场景是单用户、单实例、短周期试用，直接部署运行时通常更轻。
 
-| 支持 | 不支持 |
-|------|--------|
-| ✅ OpenClaw 实例 | ❌ Windows 桌面 |
-| ✅ Webtop 桌面 | ❌ macOS 桌面 |
-| ✅ Ubuntu/Debian/CentOS | ❌ 嵌套虚拟化 |
-| ✅ AI Gateway 治理 | ❌ 离线部署 |
-| ✅ 多集群管理 | ❌ 物理机管理 |
+## 4. 为什么团队会选择它
 
----
+上游文档给出的价值点可以浓缩为 5 件事：
 
-## 3. 架构分析
+| 价值点 | 直接手工管理的典型问题 | ClawManager 的改进 |
+| ------ | ------ | ------ |
+| 用户与配额统一管理 | 用户多了以后，资源分配靠口头约束 | 用平台集中定义用户、角色和配额 |
+| 运行时镜像统一治理 | 镜像版本散乱，环境不一致 | 管理后台统一维护运行时镜像卡片 |
+| 生命周期集中控制 | 创建、停止、删除依赖人工排查 | 平台统一管理实例创建、启动、停止、重启、删除、查看和同步 |
+| 安全桌面访问 | 直接暴露 Pod 或 Service，边界脆弱 | 通过平台认证后的代理链路访问桌面 |
+| AI 模型治理 | 每个实例各自直连 Provider，缺少审计与成本视图 | 用 AI Gateway 提供统一入口、审计、成本与风险控制 |
 
-### 3.1 整体架构
+其中最容易被低估的一点是“访问路径收口”。很多团队前期会把桌面服务直接暴露出去，短期看省事，长期会在权限、可追溯性和运维复杂度上付出更高成本。ClawManager 的平台代理模式，解决的就是这类隐性治理问题。
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        ClawManager 架构                           │
-├─────────────────────────────────────────────────────────────────┤
-│  用户层                                                           │
-│  ├── Admin Portal（管理面板）                                      │
-│  ├── User Portal（用户门户）                                      │
-│  └── Desktop Access（桌面访问）                                   │
-├─────────────────────────────────────────────────────────────────┤
-│  控制层                                                           │
-│  ├── ClawManager Frontend（React 19）                            │
-│  ├── ClawManager Backend（Go）                                   │
-│  └── AI Gateway（模型治理）                                       │
-├─────────────────────────────────────────────────────────────────┤
-│  资源层                                                           │
-│  ├── MySQL（状态存储）                                            │
-│  └── Kubernetes API（资源调度）                                   │
-├─────────────────────────────────────────────────────────────────┤
-│  运行时层                                                         │
-│  ├── OpenClaw（AI Agent 桌面）                                   │
-│  ├── Webtop（浏览器桌面）                                         │
-│  └── Linux Desktop（Ubuntu/Debian/CentOS）                       │
-└─────────────────────────────────────────────────────────────────┘
-```
+## 5. 核心能力总览
 
-### 3.2 数据流
+### 5.1 实例生命周期管理
 
-```
-Browser → ClawManager Frontend → ClawManager Backend → MySQL
-                                                      ↓
-                                              Kubernetes API
-                                                      ↓
-                              Pod / PVC / Service → OpenClaw / Webtop / Linux Desktop
-```
+ClawManager 支持的实例操作包括：创建、启动、停止、重启、删除、查看和同步。
 
-### 3.3 核心技术栈
+这类能力的重要性不在于“按钮多”，而在于它把 Kubernetes 资源操作包装成了面向团队的业务动作。对普通用户来说，他们不需要直接理解 Pod、PVC、Service 之间的关系；对平台管理员来说，则可以把实例运维纳入统一流程。
 
-| 组件 | 技术选型 | 说明 |
-|------|---------|------|
-| **前端框架** | React 19 | 现代化响应式 UI |
-| **后端语言** | Go 1.21+ | 高性能、Kubernetes 原生 |
-| **数据库** | MySQL | 关系型状态存储 |
-| **容器编排** | Kubernetes | Pod/PVC/Service 管理 |
-| **访问协议** | WebSocket | 安全的桌面代理访问 |
-| **认证** | JWT Token | 无状态认证 |
+### 5.2 支持的运行时类型
 
-### 3.4 目录结构
-
-```
-ClawManager/
-├── backend/                 # Go 后端
-│   └── cmd/server/          # 主服务入口
-├── frontend/               # React 前端
-│   └── src/                # 前端源码
-├── deployments/            # Kubernetes 部署
-│   └── k8s/
-│       └── clawmanager.yaml # 一键部署清单
-├── docs/                   # 文档
-├── .github/workflows/      # CI/CD
-└── Dockerfile              # 容器镜像
-```
-
----
-
-## 4. 核心功能详解
-
-### 4.1 实例生命周期管理
-
-| 操作 | 命令 | 说明 |
-|------|------|------|
-| **创建** | Portal 发起 | 用户自助创建实例 |
-| **启动** | K8s Pod | 基于 PVC 的有状态启动 |
-| **停止** | K8s Pod | 保留数据、释放资源 |
-| **重启** | K8s Pod | 热重启 |
-| **删除** | K8s PVC | 清理存储 |
-| **检查** | 状态同步 | Pod 状态同步 |
-
-### 4.2 支持的运行时类型
+上游文档明确列出了 6 类运行时：
 
 ```yaml
 runtime_types:
-  - openclaw    # AI Agent 桌面（主要）
-  - webtop      # 浏览器桌面
-  - ubuntu      # Ubuntu 桌面
-  - debian      # Debian 桌面
-  - centos      # CentOS 桌面
-  - custom      # 自定义镜像
+  - openclaw
+  - webtop
+  - ubuntu
+  - debian
+  - centos
+  - custom
 ```
 
-### 4.3 用户配额控制
+其中，`custom` 的意义很大。它说明 ClawManager 并没有把自己锁死在固定镜像集合上，而是保留了面向组织内部镜像规范的扩展空间。
 
-| 配额维度 | 说明 | 单位 |
-|----------|------|------|
-| **CPU 核数** | 最大 CPU 核心数 | 核 |
-| **内存** | 最大内存 | GB |
-| **存储** | 最大存储空间 | GB |
-| **GPU** | 最大 GPU 卡数 | 卡 |
-| **实例数** | 最大实例个数 | 个 |
+### 5.3 运行时镜像卡片管理
 
-**CSV 批量导入模板**：
+官方文档特别强调，管理员可以在系统设置中查看或更新运行时镜像卡片。这一点非常关键，因为桌面平台真正难以长期维护的地方，往往不是“起得来”，而是“全员环境是否一致、镜像是否可控、更新是否可追溯”。
 
-```csv
-Username,Email,Role,Max Instances,Max CPU Cores,Max Memory (GB),Max Storage (GB),Max GPU Count (optional)
-john, john@example.com, user, 2, 4, 8, 100, 0
+### 5.4 用户配额控制
+
+ClawManager 支持的配额维度包括：
+
+| 配额项 | 含义 |
+| ------ | ------ |
+| CPU | 用户可用的 CPU 额度 |
+| 内存 | 用户可用的内存额度 |
+| 存储 | 用户可用的存储额度 |
+| GPU | 用户可用的 GPU 额度 |
+| 实例数量 | 用户可创建的实例数上限 |
+
+这套配额模型已经覆盖了大多数团队型桌面场景的核心约束。对平台负责人来说，这意味着资源分配终于可以从“临时沟通”升级为“平台策略”。
+
+### 5.5 OpenClaw 的备份与迁移支持
+
+README 还提到了一项很实用的能力：支持 OpenClaw 记忆与偏好设置的 Markdown 备份和迁移。这意味着 ClawManager 的价值不只体现在“把实例跑起来”，还体现在帮助团队保留用户上下文与使用连续性。
+
+## 6. 架构与工作流
+
+### 6.1 整体架构
+
+上游文档给出的架构非常简洁，但足够表达系统边界：
+
+```text
+Browser
+  -> ClawManager Frontend
+  -> ClawManager Backend
+  -> MySQL
+  -> Kubernetes API
+  -> Pod / PVC / Service
+  -> OpenClaw / Webtop / Linux Desktop Runtime
 ```
 
-### 4.4 AI Gateway 治理
+把这张图翻译成工程语言，可以得到 3 个结论：
 
-**AI Gateway** 是 ClawManager 内置的模型访问治理平面，为 OpenClaw 实例提供统一的 OpenAI 兼容入口，同时在上游 Provider 之上增加策略、审计和成本控制。
+- 前端负责管理入口与用户操作承载。
+- 后端一头连接 MySQL 持久化平台状态，一头连接 Kubernetes API 驱动实际资源。
+- 桌面运行时被作为受管资源存在，而不是让用户直接操作底层集群对象。
 
-#### 核心功能
+### 6.2 产品工作流
 
-| 功能 | 说明 |
-|------|------|
-| **模型管理** | 普通模型/安全模型、Provider 接入、激活、端点配置、定价策略 |
-| **审计追踪** | 请求/响应/路由决策/风险命中 全链路记录 |
-| **成本核算** | Token 追踪、预估用量分析 |
-| **风险控制** | 可配置规则、自动执行 block/route_secure_model |
-
-#### 治理流程
+官方产品流程可以概括成下面这条链路：
 
 ```mermaid
 graph LR
-    A["OpenClaw 实例<br/>请求模型"] --> B["AI Gateway<br/>入口"]
-    B --> C{"风险规则<br/>检查"}
-    C -->|通过| D["模型路由"]
-    C -->|命中| E["阻止或路由<br/>到安全模型"]
-    D --> F["Provider<br/>API"]
-    F --> G["响应记录<br/>审计日志"]
-    G --> H["成本追踪"]
+    A[管理员定义用户 配额 运行时镜像策略] --> B[用户创建 OpenClaw 或 Linux 桌面实例]
+    B --> C[ClawManager 创建并跟踪 Kubernetes 资源]
+    C --> D[用户通过平台访问桌面]
+    D --> E[管理员通过仪表盘监控健康状态和容量]
 ```
 
-### 4.5 集群资源概览
+这个流程体现了 ClawManager 的真正定位：它把管理员关心的治理动作与用户关心的自助动作纳入了同一平台闭环。
 
-管理员面板实时展示：
+### 6.3 为什么它坚持把访问留在平台里
 
-| 资源 | 监控指标 |
-|------|---------|
-| **节点** | 节点数、状态 |
-| **CPU** | 总量、使用量、使用率 |
-| **内存** | 总量、使用量、使用率 |
-| **存储** | PVC 总量、已用 |
+官方配置说明有两条非常重要：
 
----
+- 实例服务保留在 Kubernetes 集群内部网络。
+- 桌面访问通过已认证的后端代理转发。
 
-## 5. 使用说明
+这意味着平台在设计上优先选择“统一入口 + 受控代理”，而不是“每个实例独立暴露”。从安全、审计和统一体验看，这是更适合团队管理的路线。
 
-### 5.1 环境准备
+## 7. 快速部署
 
-**前置条件**：
+### 7.1 前置条件
 
-- ✅ 工作的 Kubernetes 集群
-- ✅ kubectl 已配置（`kubectl get nodes` 可用）
-- ✅ Kubernetes 1.20+
+开始之前，至少确保以下两件事成立：
 
-### 5.2 快速部署
+- 你已经有一个可用的 Kubernetes 集群。
+- `kubectl get nodes` 可以正常执行。
 
-**方式一：一键部署（推荐）**
+如果连这两点都没有满足，后续问题大概率不是 ClawManager 自身，而是底层集群或访问权限尚未就绪。
+
+### 7.2 使用官方清单部署
+
+官方推荐的起步方式很直接：
 
 ```bash
-# 应用清单
 kubectl apply -f deployments/k8s/clawmanager.yaml
-
-# 检查 Pod
 kubectl get pods -A
-
-# 检查服务
 kubectl get svc -A
 ```
 
-**方式二：从源码构建**
+这三条命令不是机械步骤，而是一套最小验证路径：
+
+- 第一条负责部署资源。
+- 第二条确认核心 Pod 是否成功启动。
+- 第三条确认服务是否已正确暴露到集群内部访问链路。
+
+### 7.3 部署后先检查什么
+
+建议你不要一部署完就急着登录页面，而是先做一轮平台可用性检查：
+
+| 检查项 | 要确认什么 | 为什么重要 |
+| ------ | ------ | ------ |
+| Pod 状态 | 核心组件是否进入 Running 或 Ready | 这是最基础的系统健康信号 |
+| Service 状态 | 平台服务是否创建成功 | 没有服务就没有后续访问链路 |
+| 数据库连通性 | 后端是否能正常访问 MySQL | 后台状态与登录流程依赖持久化层 |
+| Kubernetes API 访问 | 后端是否具备资源编排能力 | 无法编排就无法创建实例 |
+| 浏览器访问路径 | 管理后台、Portal、桌面访问入口是否通 | 平台价值最终要落到可访问体验 |
+
+## 8. 从源码构建
+
+如果你不想直接使用官方 Kubernetes 清单，而是希望从源码构建，官方 README 给出了最直接的路径。
+
+### 8.1 前端构建
 
 ```bash
-# 前端构建
 cd frontend
 npm install
 npm run build
+```
 
-# 后端构建
+### 8.2 后端构建
+
+```bash
 cd backend
 go mod tidy
 go build -o bin/clawreef cmd/server/main.go
+```
 
-# Docker 镜像
+### 8.3 构建镜像
+
+```bash
 docker build -t clawmanager:latest .
 ```
 
-### 5.3 首次使用
+这里有一个很值得注意的细节：前端、后端与整应用镜像构建路径都很清楚，说明项目并不是只能依赖预制产物，更适合团队按自己的 CI/CD 流程进行打包和交付。
 
-| 步骤 | 操作 | 说明 |
-|------|------|------|
-| 1 | 登录管理面板 | admin / admin123 |
-| 2 | 创建/导入用户 | 设置配额 |
-| 3 | 配置运行时镜像 | 系统设置中管理 |
-| 4 | 用户登录创建实例 | 自助服务 |
-| 5 | 通过门户访问桌面 | WebSocket 代理 |
+## 9. 首次使用路径
 
-### 5.4 默认账户
+### 9.1 默认账户
 
-| 账户类型 | 用户名 | 密码 |
-|----------|--------|------|
-| **管理员** | admin | admin123 |
-| **导入管理员** | - | admin123 |
-| **导入普通用户** | - | user123 |
+上游文档提供了默认账户信息：
 
-### 5.5 配置参数
+| 场景 | 账户信息 |
+| ------ | ------ |
+| 默认管理员账户 | `admin / admin123` |
+| 导入管理员用户默认密码 | `admin123` |
+| 导入普通用户默认密码 | `user123` |
 
-**常用后端环境变量**：
+如果你把平台用于团队环境，第一件事不是“继续用默认密码”，而是尽快建立密码变更与访问控制流程。默认账户只适合启动验证，不适合作为长期配置。
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| **SERVER_ADDRESS** | 服务地址 | :8080 |
-| **SERVER_MODE** | 运行模式 | release |
-| **DB_HOST** | 数据库主机 | localhost |
-| **DB_PORT** | 数据库端口 | 3306 |
-| **DB_USER** | 数据库用户 | root |
-| **DB_PASSWORD** | 数据库密码 | - |
-| **DB_NAME** | 数据库名 | clawmanager |
-| **JWT_SECRET** | JWT 密钥 | - |
+### 9.2 官方建议的首次使用顺序
 
----
+官方给出的首次使用路径是：
 
-## 6. 开发扩展
+1. 使用管理员账户登录。
+2. 创建或导入用户，并分配配额。
+3. 在系统设置中查看或更新运行时镜像卡片。
+4. 使用普通用户登录并创建实例。
+5. 通过 Portal View 或 Desktop Access 访问桌面。
 
-### 6.1 添加新的运行时类型
+这套顺序本身就体现了产品设计理念：先建治理边界，再开放实例创建，最后才进入终端使用体验。
 
-在 `backend` 中扩展运行时类型定义：
+### 9.3 CSV 批量导入模板
 
-```go
-// backend/pkg/runtime/types.go
-type RuntimeType string
+如果你需要批量导入用户，可以使用官方给出的模板：
 
-const (
-    RuntimeOpenClaw  RuntimeType = "openclaw"
-    RuntimeWebtop    RuntimeType = "webtop"
-    RuntimeUbuntu    RuntimeType = "ubuntu"
-    RuntimeDebian    RuntimeType = "debian"
-    RuntimeCentOS    RuntimeType = "centos"
-    RuntimeCustom    RuntimeType = "custom"  // 新增
-)
+```csv
+Username,Email,Role,Max Instances,Max CPU Cores,Max Memory (GB),Max Storage (GB),Max GPU Count (optional)
+john,john@example.com,user,2,4,8,100,0
 ```
 
-### 6.2 AI Gateway 扩展 Provider
+需要注意的是：
 
-添加新的模型 Provider：
+- `Email` 是可选项。
+- `Max GPU Count (optional)` 是可选项。
+- 其余列都是必填项。
 
-```yaml
-# deployments/k8s/aigateway-providers.yaml
-providers:
-  - name: "custom-provider"
-    type: "openai-compatible"
-    endpoint: "https://api.custom.com/v1"
-    api_key: "${CUSTOM_API_KEY}"
-    models:
-      - "custom-model-1"
-      - "custom-model-2"
+对团队导入场景来说，这种设计已经足够实用，因为它把用户身份、角色和资源策略放进了同一份结构化输入。
+
+## 10. AI Gateway：这套平台最有技术含量的部分
+
+如果说 ClawManager 解决的是“桌面集中管理”，那么 AI Gateway 解决的就是“模型访问治理”。这也是它相对普通桌面平台最有差异化的部分。
+
+### 10.1 AI Gateway 的一句话定义
+
+AI Gateway 是 ClawManager 中负责模型访问治理的控制平面。它为 OpenClaw 实例提供统一的 OpenAI 兼容入口，并在上游 Provider 之上增加策略、审计和成本控制。
+
+这句话的重点不在“兼容 OpenAI API”，而在“兼容只是入口，治理才是核心增量”。
+
+### 10.2 它具体管哪些事
+
+#### 模型管理
+
+- 通过统一入口和路由屏蔽上游 Provider 差异。
+- 支持 Provider 接入、发现和集中端点配置。
+- 支持普通模型与安全模型的分层治理。
+- 支持按模型配置激活状态、端点、凭据引用和价格策略。
+
+#### 审计与追踪
+
+- 用 `trace_id`、session ID 和 request ID 形成全链路关联。
+- 持久化记录请求与响应，包括流式 SSE 响应。
+- 记录风险命中、路由决策和最终调用状态。
+- 支持按用户、模型、实例、时间窗口或 trace ID 检索。
+
+#### 成本核算
+
+- 记录 prompt、completion 与 total token。
+- 在可用时支持 reasoning token 与 cached token 分类。
+- 支持按模型配置输入、输出价格与币种。
+- 支持对外部模型进行估算成本，对安全模型进行内部成本分摊。
+- 支持从用户、实例、模型、会话等维度分析成本。
+
+#### 风险控制
+
+- 内置隐私、企业敏感数据、金融、安全合规等规则场景。
+- 支持基于正则和自定义规则进行扩展。
+- 支持 `block` 与 `route_secure_model` 等自动动作。
+- 治理决策会被透明记录到审计链路中。
+- 管理台支持规则测试与命中预览。
+
+### 10.3 路由逻辑要点
+
+AI Gateway 的路由逻辑并不是优先看 Provider 类型，而是优先看 `is_secure` 标记。这是理解其治理行为的关键。
+
+官方文档描述的核心逻辑如下：
+
+1. 如果请求使用 `model: "auto"`，网关会选择第一个处于激活状态且 `is_secure=false` 的模型。
+2. 如果请求明确指定模型名，网关会按 `display_name` 匹配激活模型。
+3. 网关会在转发前用已配置的风险规则扫描全部消息。
+4. 如果风险评估触发 `route_secure_model`，请求会切换到第一个激活的安全模型。
+5. 最终路由由 `is_secure` 决定：`true` 走内部安全路径，`false` 走常规外部路径。
+
+这个设计很有代表性：平台没有把“安全”理解成某个单独 Provider，而是把它抽象成一层与路由决策直接耦合的治理属性。
+
+### 10.4 AI Gateway 工作流
+
+```mermaid
+graph TD
+    A[用户请求模型] --> B{是否指定模型}
+    B -- auto --> C[选择首个激活的普通模型]
+    B -- 指定模型 --> D[按 display_name 匹配激活模型]
+    C --> E[执行风险规则扫描]
+    D --> E
+    E -- 触发 route_secure_model --> F[切换到首个激活的安全模型]
+    E -- 未触发 --> G[保持当前模型]
+    F --> H{is_secure}
+    G --> H
+    H -- true --> I[走内部安全路径]
+    H -- false --> J[走常规外部路径]
 ```
 
-### 6.3 自定义风险规则
+## 11. 配置与运维要点
 
-```yaml
-risk_rules:
-  - id: "block-high-cost"
-    condition: "token_usage > 100000"
-    action: "block"
-    message: "单次请求 Token 超过限制"
-  
-  - id: "route-secure"
-    condition: "user.quota_level == 'restricted'"
-    action: "route_secure_model"
-    fallback: "gpt-4o-mini"
-```
+### 11.1 官方明确提到的后端环境变量
 
-### 6.4 Webhook 集成
+README 中列出的常用后端环境变量如下：
 
-```yaml
-webhooks:
-  - name: "slack-notification"
-    url: "${SLACK_WEBHOOK_URL}"
-    events:
-      - instance.created
-      - instance.deleted
-      - risk.blocked
-```
+| 变量 | 用途 |
+| ------ | ------ |
+| `SERVER_ADDRESS` | 服务监听地址 |
+| `SERVER_MODE` | 服务运行模式 |
+| `DB_HOST` | 数据库主机 |
+| `DB_PORT` | 数据库端口 |
+| `DB_USER` | 数据库用户 |
+| `DB_PASSWORD` | 数据库密码 |
+| `DB_NAME` | 数据库名 |
+| `JWT_SECRET` | 平台认证所需密钥 |
 
----
+这组变量本身已经说明了平台的最小运行依赖：Web 服务、数据库与认证密钥。对生产环境来说，`DB_PASSWORD` 与 `JWT_SECRET` 不应该以明文硬编码方式管理，而应该进入受控的密钥分发机制。
 
-## 7. 最佳实践
+### 11.2 生产环境最值得优先做的 5 件事
 
-### 7.1 生产环境部署
+下面这 5 项并不是官方“唯一正确答案”，但它们是从平台设计逻辑推导出的高优先级运维动作：
 
-**高可用架构**：
+1. 第一时间替换默认密码，避免验证环境配置直接流入生产。
+2. 把数据库与密钥管理纳入正式运维体系，而不是依赖手工配置。
+3. 为运行时镜像建立版本管理和变更记录，避免用户环境漂移。
+4. 把用户配额策略前置到平台层，而不是等资源打满后再补救。
+5. 把 AI Gateway 的审计、成本和风险规则一起启用，避免模型治理只做一半。
 
-```yaml
-# 生产环境建议配置
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: clawmanager-backend
-spec:
-  replicas: 3  # 多副本高可用
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-```
+## 12. 故障排查思路
 
-**数据库高可用**：
+顶级文档不能只教“怎么部署”，还要教“出问题时先看哪里”。下面这张表给出的是与官方部署路径一致的最小排查顺序。
 
-```yaml
-# 使用云数据库或 RDS
-DB_HOST: mysql.prod.svc.cluster.local
-DB_PORT: 3306
-# 建议开启自动备份
-```
+| 现象 | 第一检查点 | 建议动作 |
+| ------ | ------ | ------ |
+| 部署后页面无法访问 | Service 与访问路径 | 先执行 `kubectl get svc -A`，确认服务是否存在 |
+| 实例创建失败 | 后端与 Kubernetes API 连接 | 检查后端日志与集群访问权限 |
+| 登录后状态异常 | 后端与 MySQL 连接 | 优先排查数据库配置和连通性 |
+| 桌面无法打开 | 平台代理链路 | 确认后端代理是否正常、实例资源是否已就绪 |
+| AI 调用结果异常 | AI Gateway 路由与风险规则 | 检查是否命中审计记录、路由切换或风险动作 |
 
-### 7.2 安全配置
+如果你只记一个原则，请记住这句：先验证平台控制面是否健康，再验证实例层是否健康，最后再看用户访问层。这样排查效率通常最高。
 
-| 安全项 | 配置建议 |
-|--------|---------|
-| **JWT 密钥** | 使用强随机值，定期轮换 |
-| **数据库密码** | 使用 Kubernetes Secret |
-| **API 访问** | 限制来源 IP |
-| **WebSocket** | 启用 TLS |
-| **审计日志** | 开启全链路记录 |
+## 13. 动手练习
 
-### 7.3 性能优化
+为了确保你不是“看懂了”，而是真的“会用了”，建议按下面的顺序做 3 个练习：
 
-| 优化项 | 建议 |
-|--------|------|
-| **前端构建** | 启用 CDN 加速 |
-| **后端缓存** | 启用 Redis 缓存 |
-| **数据库索引** | 为常用查询建索引 |
-| **K8s 资源** | 合理设置 Requests/Limits |
+### 13.1 练习 1：完成一次最小部署验证
 
----
+目标：确认平台基础链路打通。
 
-## 8. 常见问题
+验收标准：
 
-### Q1: 如何迁移已有 OpenClaw 实例？
+- 能成功执行官方清单部署。
+- 能看到核心 Pod 与 Service。
+- 能用默认管理员账户登录。
 
-```bash
-# 导出配置
-openclaw export --format markdown
+### 13.2 练习 2：完成一次用户导入与实例创建
 
-# 在 ClawManager 中导入
-# 管理员面板 → 用户 → 导入 → 选择文件
-```
+目标：确认治理路径和自助路径都成立。
 
-### Q2: AI Gateway 支持哪些 Provider？
+验收标准：
 
-| Provider 类型 | 支持情况 |
-|--------------|---------|
-| OpenAI 兼容 | ✅ 完全支持 |
-| Anthropic | ✅ 通过 OpenAI 兼容层 |
-| Azure OpenAI | ✅ 自定义端点 |
-| 本地模型 | ✅ Ollama/vLLM |
-| 自定义 | ✅ OpenAI 兼容 API |
+- 能通过 CSV 导入至少一个普通用户。
+- 能为用户设置实例数和资源配额。
+- 能以普通用户身份创建并访问桌面实例。
 
-### Q3: 如何查看审计日志？
+### 13.3 练习 3：完成一次 AI Gateway 治理验证
 
-```bash
-# 后端日志
-kubectl logs -f deployment/clawmanager-backend
+目标：确认模型访问不是“可调用”而已，而是“可治理”。
 
-# AI Gateway 追踪
-# 管理员面板 → AI Gateway → 审计追踪
-```
+验收标准：
 
-### Q4: 实例访问很慢怎么办？
+- 能区分普通模型与安全模型。
+- 能观察到一次审计记录。
+- 能验证至少一个风险动作，例如 `block` 或 `route_secure_model`。
 
-| 可能原因 | 排查方法 | 解决方案 |
-|----------|---------|---------|
-| 网络延迟 | 检查 K8s 节点网络 | 使用同区域节点 |
-| WebSocket 代理 | 检查 backend 资源 | 扩容 backend |
-| 桌面启动慢 | 检查镜像大小 | 使用预热镜像 |
+## 14. 自测清单
 
----
+如果下面 8 个问题你都能回答清楚，说明这篇文章对你已经产生了实际价值：
 
-## 9. 总结
+- ClawManager 和桌面运行时本身的职责边界分别是什么？
+- 为什么团队场景更适合通过平台代理访问桌面，而不是直接暴露 Pod？
+- 运行时镜像卡片管理解决了什么长期问题？
+- 用户配额控制为什么应该放在平台层统一做？
+- AI Gateway 相比直接调用模型 Provider，多出来的治理价值有哪些？
+- `model: "auto"` 与 `route_secure_model` 在路由决策里分别扮演什么角色？
+- 初次部署完成后，应该先验证哪几层链路？
+- 把默认密码直接留在团队环境里，风险在哪里？
 
-### 9.1 核心要点
+## 15. 总结
 
-| 要点 | 说明 |
-|------|------|
-| **ClawManager** | Kubernetes-first 桌面管理平台 |
-| **多运行时** | OpenClaw + Webtop + Linux Desktop |
-| **AI Gateway** | 模型治理 + 审计 + 成本控制 |
-| **安全访问** | WebSocket 代理，不直接暴露 Pod |
-| **配额管理** | CPU/内存/存储/GPU/实例数 |
+ClawManager 的核心价值，不是把 OpenClaw 或 Linux 桌面单独跑在 Kubernetes 上，而是把“实例管理、用户治理、访问代理、模型治理、审计追踪和成本分析”收敛为一个平台化控制面。
 
-### 9.2 快速参考
+如果你的需求只是快速起一个桌面实例，那么它可能显得偏重；但如果你的目标是把多用户桌面运行时真正纳入团队级治理体系，ClawManager 的设计就很有针对性，尤其是 AI Gateway 这部分，已经明显超出了普通桌面管理工具的范畴。
 
-```bash
-# 一键部署
-kubectl apply -f deployments/k8s/clawmanager.yaml
+## 16. 参考资料
 
-# 默认账户
-admin / admin123
-
-# 访问服务
-# 管理员面板 + 用户门户 + 桌面访问
-```
-
-### 9.3 资源链接
-
-| 资源 | 链接 |
-|------|------|
-| **GitHub** | [https://github.com/Yuan-lab-LLM/ClawManager](https://github.com/Yuan-lab-LLM/ClawManager) |
-| **项目文档** | [https://github.com/Yuan-lab-LLM/ClawManager/blob/main/README.zh-CN.md](https://github.com/Yuan-lab-LLM/ClawManager/blob/main/README.zh-CN.md) |
-
----
-
-*文档信息：ClawManager 入门到精通 | 更新日期：2026-03-30 | 难度：⭐⭐⭐*
+- GitHub 仓库：[ClawManager](https://github.com/Yuan-lab-LLM/ClawManager)
+- 中文 README：[README.zh-CN.md](https://github.com/Yuan-lab-LLM/ClawManager/blob/main/README.zh-CN.md)
+- AI Gateway 文档：[docs/aigateway.md](https://github.com/Yuan-lab-LLM/ClawManager/blob/main/docs/aigateway.md)
