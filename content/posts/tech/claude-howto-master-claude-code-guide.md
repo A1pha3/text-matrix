@@ -3,712 +3,412 @@ title: "Claude How To：从入门到精通 Claude Code 终极指南"
 date: 2026-03-30T23:45:00+08:00
 slug: claude-howto-master-claude-code-guide
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI编程", "Skills", "MCP", "Subagents"]
-description: "Claude How To 是目前最完整的 Claude Code 学习指南。本文从入门到精通，涵盖 Slash Commands、Memory、Skills、MCP、Hooks、Subagents 等十大模块的实战教程。"
+tags: ["Claude Code", "AI 编程", "Skills", "MCP", "Subagents", "Hooks", "Plugins"]
+description: "基于 2026 年 3 月仓库状态，对 Claude How To 做一次系统化中文导读。本文讲清 Claude Code 的学习顺序、安装路径、功能边界、常见误区与实战工作流。"
 ---
 
-# Claude How To：从入门到精通：Claude Code 终极指南
+> 目标读者：已经在用或准备系统使用 Claude Code 的开发者、团队技术负责人、AI 工作流设计者
+> 前置知识：命令行基础、Git 基础、理解 LLM 工具调用的基本概念
+> 版本基线：本文依据 2026-03-31 的仓库状态整理；Stars / Forks 等实时指标会继续变化，请以仓库页面为准。
 
-> **目标读者**：希望掌握 Claude Code 的开发者，从零基础到高级用户
-> **前置知识**：命令行基础、了解 AI/LLM 概念
-> **预计学习时间**：11-13 小时（可分模块学习）
+## 先看结论
 
----
+如果你只想记住一句话：Claude How To 的价值，不在于“把 Claude Code 的功能列一遍”，而在于它把 Slash Commands（斜杠命令）、Memory（记忆）、Skills（技能）、Subagents（子代理）、MCP、Hooks（钩子）、Plugins（插件）、Checkpoints（检查点）和 CLI（命令行接口）串成了一条真正可落地的学习与交付路径。
 
-## 🎯 学习目标
+它最适合三类人：
 
-完成本文档后，你将掌握：
+- 已经装了 Claude Code，但还停留在“聊天式使用”的个人开发者
+- 想把团队规范沉淀到 `CLAUDE.md`、Skills、Subagents 里的技术负责人
+- 准备把 AI 编程从“偶尔试试”升级为“稳定工作流”的重度用户
 
-- ✅ 理解 Claude Code 的核心设计理念与解决问题
-- ✅ 从零开始搭建 Claude Code 开发环境（15 分钟）
-- ✅ 掌握 Slash Commands 的使用与自定义（30 分钟）
-- ✅ 构建项目记忆系统（Memory）（45 分钟）
-- ✅ 开发自定义 Skills 技能（1 小时）
-- ✅ 配置 MCP 服务器实现工具扩展（1 小时）
-- ✅ 使用 Hooks 自动化工作流（1 小时）
-- ✅ 掌握 Subagents 子代理并行开发（1.5 小时）
-- ✅ 理解 Checkpoints 检查点机制（45 分钟）
-- ✅ 部署 Plugins 插件扩展（2 小时）
-- ✅ 精通 CLI 命令行接口（30 分钟）
-- ✅ 组合所有功能构建生产级工作流
+它不太适合两类人：
 
----
+- 只想找一页命令清单，不打算理解工作流组合的人
+- 完全不准备配置持久上下文、自动化和外部工具的人
 
-## 一、项目概述与背景
+如果你现在只有 15 分钟，请先做四件事：
 
-### 1.1 什么是 Claude How To？
+1. 克隆仓库并读一遍 `README.md`。
+2. 复制一个 Slash Command 到项目里。
+3. 创建项目级 `CLAUDE.md`。
+4. 安装一个现成 Skill，并实际运行一次。
 
-Claude How To（[luongnv89/claude-howto](https://github.com/luongnv89/claude-howto)）是一个**结构化、可视化、示例驱动**的 Claude Code 学习指南。与官方文档不同，它不教你每个功能是什么，而是教你**如何组合这些功能**构建真实的生产级工作流。
+## 一、Claude How To 到底是什么
 
-**核心定位**：让开发者在 11-13 小时内，从 Claude Code 新手成长为高级用户。
+Claude How To 是仓库 [luongnv89/claude-howto](https://github.com/luongnv89/claude-howto)。它不是 Anthropic 官方文档的替代品，而是一套“怎么把功能组合成工作流”的教程系统。
 
-```mermaid
-graph LR
-    A["Claude Code 新手"] --> B["基础操作<br/>Slash Commands"]
-    B --> C["记忆系统<br/>Memory"]
-    C --> D["检查点<br/>Checkpoints"]
-    D --> E["CLI 基础"]
-    E --> F["Skills 技能"]
-    F --> G["Hooks 钩子"]
-    G --> H["MCP 服务器"]
-    H --> I["Subagents 子代理"]
-    I --> J["高级特性"]
-    J --> K["Plugins 插件"]
-    K --> L["Claude Code 高级用户"]
-```
+官方文档更像 Reference（参考手册）：告诉你某个能力存在、参数是什么、限制在哪里。Claude How To 更像 Workflow Guide（工作流指南）：告诉你应该先学什么、不同能力怎么配合、哪些配置可以直接拷走用。
 
-### 1.2 项目数据
+这也是它和普通“功能清单型教程”最大的区别：它强调的不只是“会用”，而是“能组合、能复用、能迁移到真实项目里”。
 
-| 指标 | 数值 |
-|------|------|
-| GitHub Stars | **9.3k** |
-| GitHub Forks | **941** |
-| 许可证 | MIT |
-| 最新版本 | v2.2.0（2026年3月） |
-| Commits | 125 |
-| 维护状态 | 活跃（每次 Claude Code 更新同步） |
+## 二、已核实的项目概况
 
-### 1.3 它解决了什么问题？
+| 项目 | 信息 |
+| ---- | ---- |
+| 仓库 | [luongnv89/claude-howto](https://github.com/luongnv89/claude-howto) |
+| 仓库定位 | 面向 Claude Code 的可视化、示例驱动、工作流导向教程 |
+| 最新发布 | v2.2.0 |
+| 兼容版本 | Claude Code 2.1+ |
+| 兼容模型 | Claude Sonnet 4.6、Claude Opus 4.6、Claude Haiku 4.5 |
+| 仓库结构 | 10 个主模块，外加 `CATALOG.md`、`LEARNING-ROADMAP.md`、`QUICK_REFERENCE.md`、`INDEX.md` 等总览文档 |
+| 实时热度 | 截至 2026-03-31，约 9.4k Stars、945 Forks |
+| 维护状态 | 活跃维护，文档持续随 Claude Code 版本同步 |
 
-| 问题 | Claude How To 的方案 |
-|------|---------------------|
-| 官方文档只描述功能，不展示如何组合 | 可视化教程 + Mermaid 图表 + 生产级模板 |
-| 不知道该按什么顺序学习 | 渐进式学习路径（初学者→高级） |
-| 示例太基础，无法用于生产 | 开箱即用的生产级模板 |
-| 没有清晰的上手路径 | 15 分钟快速入门，11-13 小时精通 |
+这里有一个值得注意的细节：README 中使用了 “Trusted by 5,900+ Developers” 这样的宣传文案，但 GitHub 页面实时显示的 Stars 已更高。写这类文章时，最好把“README 文案”与“仓库实时指标”分开写，避免把营销文案误当成实时数据。
 
-### 1.4 你将获得什么？
+此外，这个仓库不只有 README：
 
-- **10 个教程模块**：覆盖 Claude Code 全部功能
-- **可复制粘贴的配置**：Slash Commands、CLAUDE.md 模板、Hook 脚本、MCP 配置、Subagent 定义
-- **Mermaid 架构图**：理解每个功能的工作原理
-- **引导式学习路径**：带时间估算的渐进式教程
-- **内置自测**：运行 `/self-assessment` 或 `/lesson-quiz` 找到知识盲点
+- `LEARNING-ROADMAP.md` 负责学习顺序
+- `CATALOG.md` 负责功能矩阵和安装优先级
+- `QUICK_REFERENCE.md` 负责速查
+- `INDEX.md` 负责完整索引
 
----
+如果你不是按教程顺序学习，而是按“我现在缺什么能力”来检索，这四份总览文档的价值非常高。
 
-## 二、快速开始：15 分钟入门
+### 它提供的不是“信息”，而是“现成产物”
 
-### 2.1 环境要求
+| 你能拿到什么 | 为什么有用 |
+| ---- | ---- |
+| Slash Commands 示例 | 把高频提示词变成稳定入口 |
+| `CLAUDE.md` 模板 | 让 Claude Code 记住项目结构、规范与偏好 |
+| Skills 示例 | 把重复任务封装为可自动触发的能力 |
+| Subagents 示例 | 把复杂任务拆给不同专长的子代理 |
+| MCP 配置示例 | 让 Claude Code 连接 GitHub、数据库、文件系统等外部能力 |
+| Hooks 示例 | 在关键事件上自动做校验、记录、通知 |
+| Plugins 示例 | 把 commands、agents、skills、hooks、MCP 打成可共享的完整方案 |
 
-- Claude Code 已安装（v2.1+）
-- Git 已安装
-- 命令行基础
-
-### 2.2 安装步骤
-
-**第一步：克隆指南仓库**
+如果你经常离线阅读长文档，这个仓库还支持生成 EPUB 电子书：
 
 ```bash
+uv run scripts/build_epub.py
+```
+
+## 三、先搞清作用域，再谈安装
+
+很多人第一次看 Claude How To，会直接把所有文件都复制到一个项目里。这样做通常不是最快路径。先搞清“项目级”和“用户级”的边界，效率会高很多。
+
+| 作用域 | 典型路径 | 适合放什么 |
+| ---- | ---- | ---- |
+| 项目级 | `.claude/commands/`、`.claude/agents/`、`.claude/skills/`、`.claude/settings.json`、`.mcp.json`、`CLAUDE.md` | 团队共享规则、项目专用命令、项目专用技能 |
+| 用户级 | `~/.claude/commands/`、`~/.claude/agents/`、`~/.claude/skills/`、`~/.claude/hooks/`、`~/.claude/settings.json`、`~/.claude/CLAUDE.md` | 跨项目个人偏好、私有习惯、通用自动化 |
+
+经验上，推荐这样理解：
+
+- 想让团队都能用到的东西，尽量放项目级并纳入版本控制。
+- 只属于你个人的偏好与自动化，放用户级。
+- Hooks 脚本通常更适合用户级；但 Hook 配置既可以放用户级，也可以放项目级 settings。
+- MCP 配置不要随手写成 `.claude/mcp.json`。当前文档体系更推荐项目级 `.mcp.json`，或者通过 CLI 直接 `claude mcp add ...`。
+
+## 四、15 分钟上手：最短可行路径
+
+如果你只想验证“这个仓库到底值不值得学”，按下面的最短路径来就够了。
+
+```bash
+# 1. 克隆仓库
 git clone https://github.com/luongnv89/claude-howto.git
 cd claude-howto
-```
 
-**第二步：复制第一个 Slash Command**
-
-```bash
-# 创建你的项目目录
+# 2. 复制第一个 Slash Command 到你的项目
 mkdir -p /path/to/your-project/.claude/commands
-
-# 复制优化命令模板
 cp 01-slash-commands/optimize.md /path/to/your-project/.claude/commands/
+
+# 3. 设置项目级 Memory
+cp 02-memory/project-CLAUDE.md /path/to/your-project/CLAUDE.md
+
+# 4. 安装一个 Skill
+cp -r 03-skills/code-review ~/.claude/skills/
 ```
 
-**第三步：在 Claude Code 中试用**
+然后进入你的项目并启动 Claude Code，直接试：
 
 ```bash
-# 进入你的项目
 cd /path/to/your-project
-
-# 启动 Claude Code
 claude
-
 # 在 Claude Code 中输入：
 /optimize
 ```
 
-**第四步：设置项目记忆（可选）**
+这套路径的意义，不是让你“装了三个功能”，而是让你同时感受到三种完全不同的价值：
+
+- Slash Commands 解决的是“入口标准化”。
+- Memory 解决的是“上下文稳定”。
+- Skills 解决的是“能力自动化”。
+
+### 如果你愿意再多花 45 分钟
+
+下面这组配置，会让你从“能用”升级到“开始有工作流意识”。
 
 ```bash
+# 项目级 Slash Commands
+cp 01-slash-commands/*.md /path/to/your-project/.claude/commands/
+
+# 项目级 Memory
 cp 02-memory/project-CLAUDE.md /path/to/your-project/CLAUDE.md
+
+# 项目级 Subagents
+mkdir -p /path/to/your-project/.claude/agents
+cp 04-subagents/*.md /path/to/your-project/.claude/agents/
+
+# GitHub MCP
+export GITHUB_TOKEN="your_token"
+claude mcp add github -- npx -y @modelcontextprotocol/server-github
 ```
 
-**第五步：安装一个 Skill（可选）**
+做到这一步，你已经可以开始拼出最有价值的一类场景：项目上下文 + 自定义命令 + 子代理分工 + GitHub 外部数据。
 
-```bash
-cp -r 03-skills/code-review ~/.claude/skills/
-```
+## 五、学习顺序和装配顺序不是一回事
 
-### 2.3 1 小时速成方案
+Claude How To 做得很好的一个地方，是它同时给出了“学习顺序”和“安装优先级”。这两者不要混为一谈。
 
-如果想更快上手，可以一次性安装核心组件：
+| 视角 | 推荐顺序 | 为什么 |
+| ---- | ---- | ---- |
+| 学习顺序 | Slash Commands → Memory → Checkpoints → CLI → Skills → Hooks → MCP → Subagents → Advanced Features → Plugins | 这是认知递进路径，先理解单点能力，再理解组合能力 |
+| 装配顺序 | Memory → Slash Commands → Subagents → Hooks → MCP → Skills → Plugins | 这是工程回报路径，优先装那些最能立刻提高产出的组件 |
 
-```bash
-# 1. 安装 Slash Commands（15 分钟）
-cp 01-slash-commands/*.md .claude/commands/
+这也是我认为这类指南是否“高级”的分水岭。低水平教程只会告诉你“有哪些功能”；高水平教程会告诉你“先学什么”和“先装什么”其实不是一回事。
 
-# 2. 设置项目记忆（15 分钟）
-cp 02-memory/project-CLAUDE.md ./CLAUDE.md
+### 按当前水平选入口
 
-# 3. 安装代码审查 Skill（15 分钟）
-cp -r 03-skills/code-review ~/.claude/skills/
-```
+| 你的现状 | 先看哪块 | 预计投入 |
+| ---- | ---- | ---- |
+| 刚会在 Claude Code 里聊天 | Slash Commands + Memory | 约 2.5 小时 |
+| 已经会用 `CLAUDE.md` 和自定义命令 | Skills + Hooks + Checkpoints | 约 3.5 小时 |
+| 已开始接外部工具和多代理协作 | MCP + Subagents + Advanced Features + Plugins | 约 5 小时 |
 
----
+### 10 个模块的正确打开方式
 
-## 三、核心概念深度解析
+| 顺序 | 模块 | 你真正要学会的东西 | 最直接的产出 |
+| ---- | ---- | ---- | ---- |
+| 1 | Slash Commands | 把重复提示词做成统一入口 | `/optimize`、`/pr` 这类稳定命令 |
+| 2 | Memory | 让 Claude Code 读懂你的项目和团队规则 | 项目级 `CLAUDE.md` |
+| 3 | Checkpoints | 在高风险操作中安全回退 | `/rewind` 的使用习惯 |
+| 4 | CLI | 把 Claude Code 接进终端、脚本和 CI | `claude -p ...` 这类自动化入口 |
+| 5 | Skills | 把“领域知识 + 操作规则”封装成可复用能力 | 项目 Skill 或个人 Skill |
+| 6 | Hooks | 让校验、记录、通知自动发生 | 写入前格式化、敏感操作校验、日志记录 |
+| 7 | MCP | 给 Claude 接上 GitHub、数据库、浏览器等外部世界 | GitHub 审查、数据库查询、自动化浏览 |
+| 8 | Subagents | 把复杂任务拆成多角色协作 | 代码审查、测试、文档并行处理 |
+| 9 | Advanced Features | 学会规划模式、深度思考、后台任务等高级能力 | 长任务的可控执行 |
+| 10 | Plugins | 把多项能力打包成可分发方案 | 团队级工作流套件 |
 
-### 3.1 Claude Code 的核心理念
+## 六、最容易混淆的功能边界
 
-Claude Code 不是另一个 AI 聊天机器人，而是一个**程序员友好的开发助手**。它的设计哲学是：
+真正把 Claude Code 用顺手的人，往往不是“知道很多命令”的人，而是“知道什么时候用哪种扩展机制”的人。
 
-1. **命令行优先**：直接在终端运行，无需切换上下文
-2. **工具增强**：通过 Bash、Read、Write、Edit 等工具与文件系统交互
-3. **状态保持**：通过 Memory 系统记住项目上下文
-4. **可扩展性**：支持 Skills、MCP、Plugins 扩展
+| 功能 | 它解决什么问题 | 什么时候优先用 | 常见误解 |
+| ---- | ---- | ---- | ---- |
+| Slash Commands（斜杠命令） | 给高频任务一个稳定入口 | 你反复输入相似提示词时 | 它不是知识库，也不会自动长期记忆 |
+| Memory（记忆） | 持久保存项目背景和规则 | 需要长期稳定上下文时 | 它不是 README 的替代品，而是面向 Claude 的规则层 |
+| Skills（技能） | 把某类任务的专业处理方式自动化 | 任务模式重复、判断逻辑相对稳定时 | 它不是“更高级的 Slash Command” |
+| Subagents（子代理） | 把任务拆分给不同专长的代理 | 问题复杂、需要并行或隔离上下文时 | 它不是 Skill 的别名，两者解决的问题不同 |
+| MCP | 接入外部工具和实时数据 | 需要 GitHub、数据库、浏览器、API 时 | 它不是提示工程，而是外部能力接入层 |
+| Hooks（钩子） | 在事件发生时自动执行动作 | 需要校验、审计、通知、强制流程时 | 它不是“写在系统提示里的规则” |
+| Plugins（插件） | 把 commands、agents、skills、hooks、MCP 打包分发 | 团队共享、标准化安装、统一维护时 | 它不是“命令合集”，而是完整解决方案 |
+| Checkpoints（检查点） | 安全试错与回退 | 重构、批量修改、探索多方案时 | 它不依赖你手写备份脚本 |
+| CLI | 把 Claude Code 接入脚本和流水线 | 自动化、批处理、CI/CD 时 | 它不只是交互式聊天的另一种外壳 |
 
-```mermaid
-graph TB
-    subgraph "Claude Code 核心"
-        A["用户输入"]
-        B["上下文管理器"]
-        C["工具调用"]
-        D["结果输出"]
-    end
-    
-    subgraph "扩展系统"
-        E["Slash Commands"]
-        F["Skills"]
-        G["MCP 服务器"]
-        H["Hooks"]
-        I["Subagents"]
-        J["Plugins"]
-    end
-    
-    A --> B
-    B --> C
-    C --> D
-    E --> C
-    F --> C
-    G --> C
-    H --> B
-    I --> C
-    J --> C
-```
+把这些边界想清楚之后，你会更容易明白一个关键判断：
 
-### 3.2 Slash Commands 斜杠命令
+> 先用 Slash Commands 统一入口，再用 Memory 稳定上下文，用 Subagents 拆复杂任务，用 MCP 接外部世界，用 Hooks 固化流程，最后再用 Plugins 打包分发。
 
-Slash Commands 是预定义的提示词模板，通过 `/` 触发。例如 `/optimize` 会启动代码优化流程。
+## 七、这套体系为什么比“会几个命令”更强
 
-**为什么需要 Slash Commands？**
-
-- 标准化工作流程
-- 团队共享最佳实践
-- 减少重复输入
-
-**常用 Slash Commands 列表**：
-
-| 命令 | 功能 | 使用场景 |
-|------|------|----------|
-| `/optimize` | 代码优化 | 性能调优、重构建议 |
-| `/test` | 生成测试 | TDD 开发 |
-| `/review` | 代码审查 | PR 检查 |
-| `/explain` | 解释代码 | 学习源码 |
-| `/fix` | 修复 Bug | 错误调试 |
-
-### 3.3 Memory 记忆系统
-
-Memory 是 Claude Code 保持项目上下文的能力。通过 CLAUDE.md 文件注入项目知识。
-
-**CLAUDE.md 的结构**：
-
-```markdown
-# 项目名称
-
-## 技术栈
-- 前端：React 18
-- 后端：Node.js + Express
-- 数据库：PostgreSQL
-
-## 代码规范
-- 使用 ESLint + Prettier
-- Git commit 格式：feat|fix|docs|style|refactor|test|chore
-
-## 项目结构
-/src
-  /components  # React 组件
-  /routes      # API 路由
-  /services    # 业务逻辑
-  /models      # 数据模型
-```
-
-**为什么重要？**
-
-- 让 Claude Code 理解项目背景
-- 保持多轮对话的上下文一致性
-- 避免每次都要解释项目结构
-
-### 3.4 Checkpoints 检查点机制
-
-Checkpoints 是 Claude Code 的"存档"功能，让你可以在任意时刻保存状态，并在之后恢复。
-
-**使用场景**：
-- 复杂重构前保存进度
-- 实验性修改不怕丢失
-- 多分支开发时快速切换
+Claude How To 的真正上限，不在单个模块，而在组合能力。
 
 ```mermaid
 graph LR
-    A["开始任务"] --> B["Checkpoint 1"]
-    B --> C["尝试方案 A"]
-    C --> D{"可行？"}
-    D -->|是| E["完成"]
-    D -->|否| F["恢复 Checkpoint 1"]
-    F --> G["尝试方案 B"]
-    G --> E
+    A["用户请求 / Slash Command"] --> B["Memory 载入项目上下文"]
+    B --> C["主代理制定任务"]
+    C --> D["Subagents 并行分工"]
+    D --> E["MCP 访问 GitHub / DB / Browser"]
+    E --> F["Hooks 触发校验、记录、通知"]
+    F --> G["输出结果 / Checkpoints 回退"]
 ```
 
-### 3.5 Skills 技能系统
-
-Skills 是可配置的、预打包的知识和工具集。它们可以被 Claude Code 加载，并在对话中激活。
-
-**Skill 的结构**：
-
-```
-~/.claude/skills/<skill-name>/
-├── SKILL.md       # 技能定义
-├── README.md      # 使用文档
-├── commands/      # 关联的 Slash Commands
-├── agents/       # 子代理定义
-├── rules/        # 规则文件
-└── tools/        # 自定义工具
-```
-
-**内置 Skill 示例**：
-- `code-review`：自动化代码审查
-- `test-generator`：测试生成
-- `docs-writer`：文档编写
-
-### 3.6 MCP 服务器
-
-MCP（Model Context Protocol）是一种让 Claude 与外部工具和服务交互的协议。通过 MCP，你可以让 Claude 访问数据库、API、文件系统等。
-
-**MCP 的架构**：
-
-```mermaid
-graph TB
-    subgraph "Claude Code"
-        A["用户请求"]
-        B["MCP Client"]
-    end
-    
-    subgraph "MCP Servers"
-        C["文件系统服务器"]
-        D["数据库服务器"]
-        E["API 服务器"]
-        F["自定义服务器"]
-    end
-    
-    B --> C
-    B --> D
-    B --> E
-    B --> F
-    
-    C --> G["读写文件"]
-    D --> H["查询数据"]
-    E --> I["调用 API"]
-    F --> J["业务逻辑"]
-```
-
-**常用 MCP 服务器**：
-- **Filesystem**：读写本地文件
-- **Git**：版本控制操作
-- **Puppeteer**：浏览器自动化
-- **SQL Database**：数据库查询
-
-### 3.7 Hooks 钩子系统
-
-Hooks 是在特定事件触发时自动执行的脚本。它们让你自动化工作流程的各个阶段。
-
-**Hook 类型**：
-
-| Hook | 触发时机 | 使用场景 |
-|------|----------|----------|
-| `pre-tool-use` | 工具调用前 | 确认敏感操作 |
-| `post-tool-use` | 工具调用后 | 记录日志 |
-| `on-error` | 错误发生时 | 发送通知 |
-| `on-context-expired` | 上下文过期前 | 保存进度 |
-
-**示例：自动保存检查点**
+上图看起来简单，但它解释了 Claude Code 工作流的核心：不是“让模型更聪明”，而是“让系统更稳定”。
 
-```bash
-#!/bin/bash
-# .claude/hooks/post-tool-use/save-checkpoint.sh
+### 1. 自动化代码审查
 
-# 当工具调用成功后自动保存检查点
-if [ "$TOOL_NAME" = "Bash" ]; then
-    claude checkpoint create "Auto-save before $1"
-fi
-```
+最有现实价值的起手式通常是：
 
-### 3.8 Subagents 子代理
+- Slash Command 负责触发 `/review-pr`
+- Memory 提供编码规范、目录说明、测试要求
+- Subagents 分别负责安全、性能、测试覆盖率
+- MCP 读取 GitHub PR 数据
+- Hooks 负责审查前校验或审查后记录
 
-Subagents 是 Claude Code 启动的子任务，它们可以并行执行，专门负责特定领域。
+这类工作流最适合团队落地，因为它直接对应 PR 质量、代码一致性和审查成本。
 
-**使用场景**：
-- 代码审查 + 单元测试 + 文档生成 并行执行
-- 多文件重构
-- 大型项目的模块化处理
+### 2. 团队知识沉淀
 
-```mermaid
-graph TB
-    A["主 Agent"] --> B["代码审查子代理"]
-    A --> C["测试生成子代理"]
-    A --> D["文档生成子代理"]
-    A --> E["类型检查子代理"]
-    
-    B --> F["审查报告"]
-    C --> G["测试用例"]
-    D --> H["API 文档"]
-    E --> I["类型报告"]
-```
+当你发现团队总在重复讲同一套规范时，最好的办法不是多开几次分享会，而是把规则写进：
 
----
+- `CLAUDE.md`
+- 项目级 Skills
+- 项目级 Slash Commands
+- 必要时再封装为 Plugin
 
-## 四、学习路径详解
+这样做的价值在于：规范不再停留在 Wiki 里，而是变成真正会被 Claude Code 执行的系统配置。
 
-### 4.1 初学者路径（Beginner）
+### 3. 长任务与高风险改动
 
-**目标**：能够日常使用 Claude Code
+当任务涉及大规模重构、长链路改动或多种方案试验时，Checkpoints、Planning Mode、Background Tasks 这些能力才真正开始体现价值。
 
-**时间**：约 2.5 小时
+很多“AI 写代码不可靠”的抱怨，本质上不是模型不行，而是使用者没有建立：
 
-| 顺序 | 模块 | 内容 | 时间 |
-|------|------|------|------|
-| 1 | Slash Commands | 学会使用和创建斜杠命令 | 30 min |
-| 2 | Memory | 设置项目上下文 | 45 min |
-| 4 | CLI Basics | 掌握命令行接口 | 30 min |
+- 可回退点
+- 任务分解
+- 外部验证
+- 自动化守卫
 
-**推荐起点**：
+Claude How To 恰好就在补这一层。
 
-```bash
-# 安装第一个 Slash Command
-cp 01-slash-commands/optimize.md ~/.claude/commands/
+## 八、文中最容易写错的 6 个点
 
-# 设置项目记忆
-cp 02-memory/project-CLAUDE.md ./CLAUDE.md
-```
+原始版本里，最值得修正的不是文风，而是这些事实和边界问题。
 
-### 4.2 中级路径（Intermediate）
+### 1. 不要在正文重复写 H1
 
-**目标**：能够自动化工作流程
+Hugo 站点已经在 frontmatter 里给了 `title`，正文再写一遍 `#` 标题，会触发典型的 Markdown 结构问题，也让页面层级重复。
 
-**时间**：约 3.5 小时
+### 2. Hooks 不是几个“随口起名”的事件
 
-| 顺序 | 模块 | 内容 | 时间 |
-|------|------|------|------|
-| 3 | Checkpoints | 保存和恢复进度 | 45 min |
-| 5 | Skills | 开发自定义技能 | 1 hour |
-| 6 | Hooks | 自动化工作流 | 1 hour |
+当前资料里，Hooks 明确分为 4 大类、25 个事件，例如 `PreToolUse`、`PostToolUse`、`SessionStart`、`SubagentStart`、`TaskCompleted`、`ConfigChange` 等。不要把它写成一组自定义的小写事件名，否则读者按文中配置会直接对不上。
 
-**推荐起点**：
+### 3. Checkpoints 的重点是“自动快照 + 回退”，不是“手动存档命令”
 
-```bash
-# 复制 Skill
-cp -r 03-skills/code-review ~/.claude/skills/
+当前文档强调的操作方式是：
 
-# 设置 Hook
-mkdir -p .claude/hooks/post-tool-use
-cp 06-hooks/examples/* .claude/hooks/
-```
+- 每次用户提示后会自动创建检查点
+- 通过 `Esc` 连按两次或 `/rewind` 回退
+- 可选择恢复代码、恢复对话，或只做摘要
 
-### 4.3 高级路径（Advanced）
+如果把它讲成“先执行某个自定义 checkpoint create 命令”，就会把读者带偏。
 
-**目标**：构建生产级自动化系统
+### 4. MCP 的项目级配置重点是 `.mcp.json`
 
-**时间**：约 5 小时
+把 MCP 简化为“把配置丢到 `.claude/mcp.json`”不够准确。当前更稳妥的写法是：
 
-| 顺序 | 模块 | 内容 | 时间 |
-|------|------|------|------|
-| 7 | MCP | 集成外部工具 | 1 hour |
-| 8 | Subagents | 并行任务处理 | 1.5 hours |
-| 9 | Advanced Features | 高级特性组合 | 2-3 hours |
+- 项目级用 `.mcp.json`
+- 用户级用 `~/.claude.json`
+- 或直接通过 `claude mcp add ...` 配置
 
-**推荐起点**：
+### 5. Skill 结构不是固定目录模板
 
-```bash
-# 配置 MCP 服务器
-cp 05-mcp/configs/* ./.claude/
+Skill 的核心是 `SKILL.md`，其余目录可能包含 `scripts/`、`templates/` 或其他辅助文件，但不是所有 Skill 都必须有 `commands/`、`agents/`、`rules/`、`tools/` 这整套固定骨架。
 
-# 复制子代理模板
-cp -r 04-subagents/* .claude/agents/
-```
+### 6. Plugin 不是“命令打包版”
 
-### 4.4 专家路径（Expert）
+Plugin 的定位更高，它通常包含：
 
-**目标**：搭建团队级开发平台
+- `.claude-plugin/plugin.json`
+- `commands/`
+- `agents/`
+- `skills/`
+- `hooks/`
+- `.mcp.json`
+- `settings.json`
+- `scripts/`
 
-**时间**：约 2 小时
+如果只把 Plugin 理解成“多个 Slash Commands 的合集”，读者会低估它的工程价值。
 
-| 顺序 | 模块 | 内容 | 时间 |
-|------|------|------|------|
-| 10 | Plugins | 打包和分发技能 | 2 hours |
+另外，Plugin 内的 Subagents 还有明确的安全限制，不能借 frontmatter 去定义 `hooks`、`mcpServers` 或 `permissionMode`。这说明 Plugin 的设计目标不是无限扩权，而是受控打包。
 
----
+## 九、推荐给中文开发者的实践策略
 
-## 五、实战模板库
+如果你的目标不是“了解 Claude Code 有哪些功能”，而是“让团队真的用起来”，我更推荐下面这条路线。
 
-### 5.1 自动化代码审查工作流
+### 阶段 1：先拿到稳定收益
 
-组合使用：Slash Commands + Subagents + Memory + MCP
+先做三件事：
 
-```mermaid
-graph TB
-    A["触发 /review"] --> B["加载项目记忆"]
-    B --> C["启动代码审查子代理"]
-    C --> D["启动测试生成子代理"]
-    C --> E["启动类型检查子代理"]
-    D --> F["汇总审查报告"]
-    E --> F
-    F --> G["输出结果"]
-```
+- 给项目写一份 `CLAUDE.md`
+- 复制 2 到 3 个最常用的 Slash Commands
+- 安装 1 个最符合当前任务的 Skill 或 Subagent
 
-**部署步骤**：
+这一步的目标是减少重复解释和重复提示词。
 
-```bash
-# 1. 复制 Slash Commands
-cp 01-slash-commands/review.md ~/.claude/commands/
+### 阶段 2：让流程开始自动化
 
-# 2. 设置项目记忆
-cp 02-memory/code-review-CLAUDE.md ./CLAUDE.md
+当团队开始稳定使用后，再加：
 
-# 3. 安装代码审查 Skill
-cp -r 03-skills/code-review ~/.claude/skills/
+- GitHub MCP
+- 基础 Hooks
+- 1 到 2 个项目级 Subagents
 
-# 4. 配置 MCP 服务器
-cp 05-mcp/puppeteer-mcp.json ./.claude/mcp.json
-```
+这一步的目标是让审查、校验、上下文加载开始“自动发生”。
 
-### 5.2 CI/CD 自动化工作流
+### 阶段 3：再做团队级打包
 
-组合使用：CLI + Hooks + Background Tasks
+只有当团队已经验证过这套工作流有持续价值时，再把它封装成 Plugin。不要一开始就追求“大而全”的插件化，那会让维护成本先于收益到来。
 
-```mermaid
-graph LR
-    A["代码提交"] --> B["pre-commit Hook"]
-    B --> C["Lint 检查"]
-    C --> D{"通过？"}
-    D -->|是| E["运行测试"]
-    D -->|否| F["阻止提交"]
-    E --> G{"通过？"}
-    G -->|是| H["部署"]
-    G -->|否| I["通知失败"]
-```
+## 十、常见故障排查
 
-### 5.3 团队知识库工作流
+| 问题 | 常见原因 | 优先排查什么 |
+| ---- | ---- | ---- |
+| 命令不生效 | 文件路径不对、文件名不对、语法有问题 | 先看 `.claude/commands/` 是否存在，再看 frontmatter 是否正确 |
+| Skill 没有被触发 | 触发描述不清、放错目录、任务不匹配 | 先看 `SKILL.md` 是否在正确路径，再看描述是否足够明确 |
+| Subagent 不委派 | 任务不够复杂、描述不聚焦、权限不合适 | 先查 agent 描述，再确认当前任务是否值得拆分 |
+| MCP 连不上 | 环境变量缺失、服务未安装、网络或权限问题 | 先看 token，再看 `claude mcp add` 是否成功 |
+| Hooks 不执行 | 脚本无执行权限、settings 未配置、事件名写错 | 先 `chmod +x`，再检查 `settings.json` 和事件名 |
+| Plugin 装了但组件不加载 | `plugin.json` 路径错误、组件路径不一致、版本兼容性问题 | 先检查 `.claude-plugin/plugin.json` 和目录结构，再尝试 `/reload-plugins` |
 
-组合使用：Memory + Skills + Plugins
+如果你是团队内第一次推广 Claude Code，建议把这些排错项单独整理成内部 Runbook。这样出问题时，不会回到“谁会配、谁来救火”的人肉依赖模式。
 
-**部署团队知识库**：
+## 十一、练习与自测
 
-```bash
-# 1. 安装知识库 Skill
-cp -r 03-skills/knowledge-base ~/.claude/skills/
+一篇顶级教程不能只有“知识点”，还要能让读者验证自己是否真的会了。下面这组练习，能快速判断你是否已经从“看懂”进入“会用”。
 
-# 2. 复制团队规范
-cp 02-memory/team-CLAUDE.md ./CLAUDE.md
+### 基础练习
 
-# 3. 配置只读 Hook
-cp 06-hooks/read-only-mode.sh .claude/hooks/pre-tool-use/
-```
+1. 在一个真实项目里创建 `CLAUDE.md`，写入技术栈、目录结构、测试与提交规范。
+2. 安装一个 Slash Command，并让它在实际任务里跑通一次。
+3. 运行 `/self-assessment`，确认自己目前处在 Beginner、Intermediate 还是 Advanced。
 
----
+### 进阶练习
 
-## 六、常见问题
+1. 增加一个项目级 Subagent，用于代码审查或文档生成。
+2. 配置 GitHub MCP，让 Claude Code 能获取 PR 或仓库信息。
+3. 完成一个 `Hooks + Memory + Subagents` 组合工作流。
 
-### Q1：这个教程免费吗？
+### 专家练习
 
-**是的**。MIT 许可证，永久免费。可以用于个人项目、工作、团队，没有任何限制（只需保留许可证声明）。
+1. 把一套真实团队流程封装成 Plugin。
+2. 为 Plugin 补齐安装说明、目录结构、权限边界和排错说明。
+3. 在团队中做一次最小规模试点，而不是只在个人环境里演示。
 
-### Q2：这个项目还在维护吗？
+### 自测清单
 
-**是的**，活跃维护中。每次 Claude Code 发布更新时，这个指南也会同步更新。当前版本 v2.2.0（2026年3月），兼容 Claude Code 2.1+。
+- 我能解释 Slash Commands、Skills、Subagents、Plugins 的区别吗？
+- 我知道哪些配置应该放项目级，哪些应该放用户级吗？
+- 我知道 MCP 的项目级入口是 `.mcp.json`，也会用 `claude mcp add` 吗？
+- 我知道检查点的核心操作是 `/rewind` 或 `Esc` 连按两次吗？
+- 我能说清一个高质量 Claude Code 工作流，为什么必须同时包含“上下文、分工、外部数据、验证”这四层吗？
 
-### Q3：与官方文档有什么区别？
+如果这 5 个问题里有 2 个以上答不稳，不建议直接跳到 Plugins 或复杂自动化，先把前 4 个模块练扎实。
 
-| 维度 | 官方文档 | Claude How To |
-|------|----------|---------------|
-| 格式 | 功能参考 | 可视化教程 |
-| 深度 | 功能描述 | 内部原理 |
-| 示例 | 基础片段 | 生产级模板 |
-| 结构 | 按功能组织 | 渐进式学习路径 |
-| 自测 | 无 | 内置测验 |
+## 十二、结论：怎么把这份指南真正用起来
 
-### Q4：学完需要多长时间？
+Claude How To 的价值，不在于它“资料很多”，而在于它把 Claude Code 从单点功能，提升成了可复用、可协作、可打包的工作流系统。
 
-完整学习路径 11-13 小时。但**15 分钟就能获得立竿见影的效果**——只需复制一个 Slash Command 模板并试用。
+如果你是个人开发者，最值得先做的是：
 
-### Q5：支持 Claude Sonnet/Haiku/Opus 吗？
+1. 用 `CLAUDE.md` 固定项目上下文。
+2. 用 Slash Commands 固定高频入口。
+3. 用 1 个 Skill 或 1 个 Subagent 处理最重复的任务。
 
-**支持**。所有模板兼容 Claude Sonnet 4.6、Claude Opus 4.6 和 Claude Haiku 4.5。
+如果你是团队负责人，最值得先做的是：
 
-### Q6：可以贡献代码吗？
+1. 先验证一条工作流，而不是先设计一整套平台。
+2. 先把规范写成 Claude 能执行的文件，而不是只写在文档平台里。
+3. 只有在工作流稳定后，再升级到 Plugin 级打包与分发。
 
-**欢迎**！参见 [CONTRIBUTING.md](https://github.com/luongnv89/claude-howto/blob/main/CONTRIBUTING.md)。我们欢迎新的示例、Bug 修复、文档改进和社区模板。
+一句话收尾：官方文档负责告诉你“有什么”，Claude How To 负责教你“怎么把这些东西真正连起来”。
 
----
+## 参考链接
 
-## 七、可构建的实战项目
-
-### 7.1 自动化代码审查
-
-**组合功能**：Slash Commands + Subagents + Memory + MCP
-
-```yaml
-工作流：
-1. 开发者触发 /review
-2. Claude 加载项目规范（Memory）
-3. 启动并行子代理：
-   - 代码风格审查
-   - 安全漏洞扫描
-   - 性能分析
-   - 测试覆盖率检查
-4. 汇总所有报告
-5. 输出结构化审查结果
-```
-
-### 7.2 团队代码规范化
-
-**组合功能**：Memory + Slash Commands + Hooks + Plugins
-
-```yaml
-工作流：
-1. 开发者提交代码
-2. pre-commit Hook 触发
-3. 自动检查：
-   - Commit 格式规范
-   - 代码风格（ESLint/Prettier）
-   - 类型检查（TypeScript）
-   - 秘密密钥扫描
-4. 不符合规范的提交被阻止
-5. 符合规范的提交通过并运行测试
-```
-
-### 7.3 智能文档生成
-
-**组合功能**：Skills + Subagents + Plugins
-
-```yaml
-工作流：
-1. 开发者触发 /generate-docs
-2. 启动文档生成子代理：
-   - API 文档生成
-   - README 更新
-   - CHANGELOG 维护
-3. Skill 自动格式化输出
-4. Plugin 提交 PR
-```
-
-### 7.4 安全审计自动化
-
-**组合功能**：Subagents + Skills + Hooks（只读模式）
-
-```yaml
-工作流：
-1. 触发 /security-audit
-2. 以只读模式启动（防止误操作）
-3. 并行扫描：
-   - 依赖漏洞检查
-   - SQL 注入检测
-   - XSS 向量扫描
-   - 敏感数据暴露检查
-4. 生成安全报告
-```
-
-### 7.5 复杂重构项目管理
-
-**组合功能**：Checkpoints + Planning Mode + Hooks
-
-```yaml
-工作流：
-1. 触发 /refactor <target-module>
-2. Claude 创建重构计划
-3. 每次重大修改前创建检查点
-4. 用户确认后继续
-5. 完成后运行完整测试套件
-6. 如有问题，恢复到上一个检查点
-```
-
----
-
-## 八、最佳实践
-
-### 8.1 项目结构推荐
-
-```
-your-project/
-├── .claude/
-│   ├── commands/           # Slash Commands
-│   │   ├── optimize.md
-│   │   ├── review.md
-│   │   └── test.md
-│   ├── skills/            # Skills
-│   │   └── code-review/
-│   ├── agents/            # Subagents
-│   │   └── reviewer.md
-│   ├── hooks/             # Hooks
-│   │   ├── pre-tool-use/
-│   │   └── post-tool-use/
-│   ├── mcp.json          # MCP 配置
-│   └── .cspell.json      # 拼写检查
-├── CLAUDE.md             # 项目记忆
-├── CLAUDE.local.md       # 本地覆盖（不被 Git 跟踪）
-└── ...
-```
-
-### 8.2 团队协作规范
-
-1. **统一 CLAUDE.md**：团队共享项目上下文
-2. **版本控制 Skill**：将 Skill 放在 Git 中管理
-3. **代码审查流程**：使用 Subagents 并行审查
-4. **CI/CD 集成**：使用 Hooks 自动化检查
-
-### 8.3 性能优化
-
-1. **减少上下文大小**：定期清理对话历史
-2. **使用 Checkpoints**：避免重复工作
-3. **选择性加载**：不要一次性加载所有 Skills
-4. **缓存常用响应**：使用 Memory 记住常见答案
-
----
-
-## 九、总结
-
-Claude How To 是目前最完整的 Claude Code 学习指南。它的独特价值在于：
-
-| 优势 | 说明 |
-|------|------|
-| 🗺️ **清晰路径** | 从 15 分钟到 11 小时，覆盖所有级别 |
-| 📊 **可视化** | Mermaid 图表让你看得懂原理 |
-| 🛠️ **生产就绪** | 所有模板可直接用于真实项目 |
-| 🔄 **活跃维护** | 每次 Claude Code 更新同步更新 |
-| 🤝 **社区驱动** | 690+ Fork，开发者贡献真实配置 |
-
-**下一步推荐**：
-
-1. [快速开始](#二快速开始15-分钟入门)：克隆仓库，15 分钟体验
-2. [学习路径](#四学习路径详解)：按级别选择适合的模块
-3. [实战模板](#五实战模板库)：选择一个模板开始使用
-4. [贡献代码](#q6可以贡献代码吗)：成为贡献者
-
----
-
-**文档信息**
-
-- 难度：⭐⭐⭐⭐（专家级）
-- 类型：完整教程
-- 更新日期：2026-03-30
-- 预计学习时间：11-13 小时
-- GitHub：https://github.com/luongnv89/claude-howto
-
-🦞 由钳岳星君撰写 | 项目源码：https://github.com/luongnv89/claude-howto
+- [仓库主页](https://github.com/luongnv89/claude-howto)
+- [学习路线图](https://github.com/luongnv89/claude-howto/blob/main/LEARNING-ROADMAP.md)
+- [功能总览](https://github.com/luongnv89/claude-howto/blob/main/CATALOG.md)
+- [速查卡](https://github.com/luongnv89/claude-howto/blob/main/QUICK_REFERENCE.md)
+- [官方 Claude Code 文档](https://code.claude.com/docs/en/overview)
+- [官方 Plugins 文档](https://code.claude.com/docs/en/plugins)
