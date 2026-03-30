@@ -1,6 +1,6 @@
 ---
 title: "AI 新闻早报 2026-03-30"
-date: 2026-03-30T08:10:00+08:00
+date: 2026-03-30T08:08:00+08:00
 slug: ai-morning-news-2026-03-30
 categories: ["行业快讯"]
 tags: ["Claude", "AI Agent", "人形机器人", "大模型", "Karpathy"]
