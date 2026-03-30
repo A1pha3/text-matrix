@@ -349,9 +349,9 @@ graph LR
 
 | 资源 | 链接 |
 |------|------|
-| **UniPat AI Echo** | https://unipat.ai/echo |
-| **General AI Prediction Leaderboard** | 公开排行榜 |
-| **Polymarket** | https://polymarket.com |
+| **UniPat AI Echo** | [https://unipat.ai/echo](https://unipat.ai/echo) |
+| **General AI Prediction Leaderboard** | 公开排行榜（见 UniPat AI Echo 页面） |
+| **Polymarket** | [https://polymarket.com](https://polymarket.com) |
 
 ---
 
