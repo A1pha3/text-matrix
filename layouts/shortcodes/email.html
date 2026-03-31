@@ -1,0 +1,30 @@
+{{- $email := .Get 0 | default .Inner -}}
+{{- $text := .Get 1 | default $email -}}
+
+<!-- 
+    Email Obfuscation Shortcode
+    用法：
+    {{/* < email "user@example.com" > */}} 
+    {{/* < email "user@example.com" "点击给我发邮件" > */}}
+-->
+
+<script>
+    (function() {
+        var user = "{{ index (split $email "@") 0 }}";
+        var domain = "{{ index (split $email "@") 1 }}";
+        var text = "{{ $text }}";
+        
+        // 如果 text 是默认的邮箱地址，也需要混淆替换，否则页面上直接暴露了
+        if (text === user + "@" + domain) {
+            text = user + "&#64;" + domain;
+        }
+        
+        var email = user + "&#64;" + domain;
+        var link = "<a href='mailto:" + user + "@" + domain + "'>" + text + "</a>";
+        document.write(link);
+    })();
+</script>
+<noscript>
+    <!-- 对于禁用 JS 的爬虫/用户，展示防爬虫的占位符 -->
+    <span>{{ index (split $email "@") 0 }} [at] {{ index (split $email "@") 1 }}</span>
+</noscript>

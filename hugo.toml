@@ -9,6 +9,7 @@ theme = "LoveIt"
 
 
 enableGitInfo = true
+enableRobotsTXT = true
 
 [taxonomies]
   category = "categories"
@@ -35,6 +36,9 @@ enableGitInfo = true
 
   [params.footer]
     copyright = false
+    custom = '''
+<a href="/about/">关于</a> · <a href="/privacy-policy/">隐私政策</a> · <a href="/contact/">联系</a>
+'''
 
   [params.home]
     [params.home.profile]
