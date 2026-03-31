@@ -1,20 +1,33 @@
 ---
-title: "Claude Code 源码架构深度解析"
-date: 2026-03-31T21:22:42+08:00
+title: "Claude Code 源码架构全解析：Tool、Command、MCP 与权限系统"
+date: 2026-03-31T21:54:05+08:00
 slug: "claude-code-source-architecture-analysis"
-description: "基于 instructkr/claude-code 镜像说明与 Anthropic 官方文档，系统解析 Claude Code 的公开快照、整体架构、工具系统、命令系统、扩展方式、使用场景与研究边界。"
+description: "基于 instructkr/claude-code 镜像说明与 Anthropic 官方资料，系统拆解 Claude Code 的 Tool、Command、MCP、Bridge、权限模型与扩展机制，帮助你从入门一路看懂到架构层。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "Anthropic", "TypeScript", "MCP", "智能体架构"]
 ---
 
-# Claude Code 源码架构深度解析
+# Claude Code 源码架构全解析：Tool、Command、MCP 与权限系统
 
 > **目标读者**：希望系统理解 Claude Code 产品定位、源码快照价值、架构分层与扩展机制的开发者
 > **核心问题**：Claude Code 为什么不是普通聊天工具，而更像一个可扩展的软件工程代理平台？
 > **难度**：⭐⭐⭐⭐（架构分析）
 > **事实口径**：官方产品能力以 Anthropic 官方资料为准；源码组织分析以 instructkr/claude-code 镜像说明为准
 > **延伸阅读**：[Claude Code 最佳实践大全：22.9k Stars 的 AI 编程指南解读]({{< relref "claude-code-best-practice-guide.md" >}}) ｜ [Claude Code Skills & Plugins：AI 编程智能体技能库完全指南]({{< relref "claude-code-skills-agent-plugins-guide.md" >}}) ｜ [Awesome Claude Code：从入门到精通 Claude Code 资源大全]({{< relref "awesome-claude-code-resources-guide.md" >}})
+
+如果你最近正好看到了 `instructkr/claude-code` 这个镜像仓库，最容易产生的两个误解是：第一，Claude Code 是不是已经“完全开源”；第二，这个项目的核心到底只是一个终端聊天器，还是一个真正的工程代理平台。本文会把这两个问题拆开讲清楚：哪些内容来自 Anthropic 官方公开资料，哪些内容来自公开快照镜像说明，以及 Tool、Command、MCP、Bridge、权限系统与多智能体机制是如何共同组成 Claude Code 的。
+
+## §0 先看结论
+
+如果你时间有限，先记住下面 6 句话：
+
+- Claude Code 的官方定位是**智能体式编程工具**，不是普通聊天助手。
+- `instructkr/claude-code` 是**公开快照镜像**，不是 Anthropic 官方开源仓库。
+- 真正决定 Claude Code 工程价值的，不是“回答效果”，而是**工具系统 + 权限系统 + 工作流编排**。
+- 命令系统面向用户意图，工具系统面向执行动作，服务层负责隔离外部复杂性。
+- MCP、插件、技能、hooks 与 subagents 共同构成了 Claude Code 的扩展生态。
+- 这份公开快照很适合学架构，但不应被误读为“今天线上版本的完整真相”。
 
 ## §1 阅读说明与事实边界
 
@@ -48,6 +61,23 @@ tags: ["Claude Code", "Anthropic", "TypeScript", "MCP", "智能体架构"]
 - ✅ 从开发者视角理解 Claude Code 的插件、技能、命令、MCP 与 hooks 扩展路径
 - ✅ 从实践视角判断 Claude Code 适合什么场景，不适合什么场景
 - ✅ 建立一条从“能用”到“能分析”再到“能扩展”的学习路径
+
+---
+
+## §2.5 按你的目标选择阅读路径
+
+如果你打开这篇文章，是带着不同任务来的，可以直接这样读：
+
+- **想快速建立整体认识**：优先阅读 §0、§3、§8、§21
+- **想理解内部架构**：重点阅读 §7、§8、§9、§10、§11、§12、§13、§14
+- **想研究扩展开发**：重点阅读 §16、§17、§18、§22
+- **想判断是否适合自己团队**：重点阅读 §5、§17、§19、§20
+
+如果你读完本文后准备继续深入：
+
+- 先去读 [Claude Code 最佳实践大全：22.9k Stars 的 AI 编程指南解读]({{< relref "claude-code-best-practice-guide.md" >}})
+- 再去读 [Claude Code Skills & Plugins：AI 编程智能体技能库完全指南]({{< relref "claude-code-skills-agent-plugins-guide.md" >}})
+- 最后用 [Awesome Claude Code：从入门到精通 Claude Code 资源大全]({{< relref "awesome-claude-code-resources-guide.md" >}}) 做资源索引
 
 ---
 
@@ -1107,7 +1137,20 @@ claude mcp add <name> <command> [args...]
 
 ---
 
-## §22 延伸阅读
+## §22 下一步行动建议
+
+如果你准备把“看懂”转成“真正用起来”，建议直接选一条路径继续：
+
+- **想把 Claude Code 用顺手**：下一篇去读最佳实践文章，把命令、工作流与常见使用误区补齐。
+- **想自己做扩展**：下一篇去读 Skills & Plugins 文章，把命令、技能、插件与跨平台转换链路搞明白。
+- **想系统追踪生态**：下一篇去读 Awesome 资源大全，把常用扩展、社区项目与资料入口收集完整。
+- **想做自家 AI 工程代理**：回看本文 §9、§11、§13、§16，再把工具抽象、权限模型与扩展边界画成你自己的架构图。
+
+你不一定要一次看完所有内容，但最好立即选一条路径继续，否则这篇文章带来的理解很容易停留在“知道有这些概念”。
+
+---
+
+## §23 延伸阅读
 
 如果你接下来想继续把 Claude Code 学深，建议按下面的顺序延伸：
 
@@ -1124,20 +1167,20 @@ claude mcp add <name> <command> [args...]
 
 ---
 
-## §23 参考来源
+## §24 参考来源
 
-### 23.1 官方来源
+### 24.1 官方来源
 
 - Anthropic 官方 README：`https://github.com/anthropics/claude-code/blob/main/README.md`
 - Anthropic 官方文档站：`https://docs.anthropic.com/en/docs/claude-code/`
 - 官方插件目录与示例：`https://github.com/anthropics/claude-code/tree/main/plugins`
 
-### 23.2 镜像与公开线索
+### 24.2 镜像与公开线索
 
 - 镜像仓库：`https://github.com/instructkr/claude-code`
 - 公开传播线索：`https://x.com/Fried_rice/status/2038894956459290963`
 
-### 23.3 本文的取材说明
+### 24.3 本文的取材说明
 
 本文优先依据以下几类公开材料进行整理：
 
