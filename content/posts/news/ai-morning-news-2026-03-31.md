@@ -3,185 +3,98 @@ title: "AI新闻早报：2026年3月31日"
 date: 2026-03-31T08:00:00+08:00
 slug: ai-morning-news-2026-03-31
 categories: ["行业快讯"]
-tags: ["AI", "llama.cpp", "Qwen", "Anthropic", "Claude", "Node.js", "AI Agent", "开源", "Reddit", "机器学习"]
-description: "AI新闻早报——每日08:00自动更新。今日要点：llama.cpp突破100k Stars、Anthropic联创称AI将自我繁殖、Claude高额使用费引发免费AI退场讨论、Node.js社区封杀Claude Code。Reddit机器学习社区热议Google论文争议、EBM可能超越LLM、GPU加速radiomics新突破。"
+tags: ["AI", "Qwen", "Claude", "Kimi", "Mistral", "GitHub", "开源", "大模型"]
+description: "AI新闻早报——每日08:00自动更新。今日要点：阿里千问上线Qwen3.6系列全模态模型、美团开源LongCat-AudioDiT、GitHub遭遇投毒攻击、Mistral AI融资8.3亿美元。"
 hiddenFromHomePage: true
 ---
 
 # AI新闻早报：2026年3月31日
 
-采集时间：2026-03-31 10:15 | 来源：36kr + Reddit | ⚠️ 本期内容经过严格核实
+采集时间：2026-03-31 08:47 | 来源：36kr + 量子位 + 橘鸦AI早报 + Reddit | ⚠️ 本期内容经过严格核实
 
 ---
 
-## 🔥 一、超级重磅
+## 🤖 模型发布（5条）
 
-### llama.cpp 突破 100k Stars：开源AI推理的里程碑
+### 1. 阿里千问上线 Qwen3.6 Plus Preview
 
-本地AI推理框架 llama.cpp 在 GitHub 突破 100,000 Stars 大关，成为有史以来最受欢迎的开源项目之一。这个用纯C/C++实现的LLM推理引擎彻底改变了本地AI的格局——无需Python、无需GPU，任何设备都能跑大模型。
+阿里千问在 OpenRouter 上线 Qwen3.6 Plus Preview 模型，支持百万上下文，在 Agentic coding、前端开发及复杂问题解决上表现优异。[原文](https://openrouter.ai/qwen/qwen3.6-plus-preview)
 
-核心成就：
-- 支持 Apple Silicon 原生加速（MPS）
-- 支持 Vulkan/Metal/CLBlast 多后端
-- 量化技术让 70B 模型在 MacBook M3 上流畅运行
-- 4-bit 量化可以将 70B 模型的内存需求从 140GB 压缩到 40GB
+### 2. 阿里千问发布 Qwen3.5-Omni 全模态系列
 
-社区评价："llama.cpp 证明了有时候最简单的解决方案就是最好的解决方案。"
+阿里千问发布 Qwen3.5-Omni 系列，包含 Plus、Flash、Light 三种尺寸。原生支持文本/图片/音频/音视频理解，支持 113 种语音交互，单轮可处理 3 小时音频或 1 小时 720P 音视频。[原文](https://qwen.ai/blog?id=qwen3.5-omni)
 
-[Reddit原文](https://www.reddit.com/r/LocalLLaMA/comments/1s7z7hj/llamacpp_at_100k_stars/)
+### 3. 美团龙猫开源 LongCat-AudioDiT
 
-### Qwen 3.6 曝光：阿里新一代大模型
+美团龙猫团队发布 TTS 模型 LongCat-AudioDiT，提供 1B 和 3.5B 两种规格。直接在波形潜空间运行，支持高保真中英双语音频生成。在 Seed 基准测试中实现 SOTA 零样本语音克隆性能。[原文](https://github.com/meituan-longcat/LongCat-AudioDiT)
 
-Reddit LocalLLaMA 社区发现 Qwen 3.6 正在测试中。这是阿里在 Qwen2.5 之后的新一代模型，据传会有重大架构升级。
+### 4. 爱诗科技发布 PixVerse V6
 
-已知信息：
-- 代码中出现的版本号为 3.6
-- 可能支持更长的上下文窗口
-- 预计将在 2026 年 Q2 发布
+爱诗科技发布全新视频模型 PixVerse V6，几十秒内生成 1080P 电影级视频，实现复杂特效与镜头叙事。支持 2-15 人团队协作、共享积分池、角色权限管理。[原文](https://x.com/PixVerse_/status/2038711108119281671)
 
-[Reddit原文](https://www.reddit.com/r/LocalLLaMA/comments/1s7zy3u/qwen_36_spotted/)
+### 5. 微软发布 Harrier-OSS-v1 多语言嵌入模型
+
+微软发布 Harrier-OSS-v1 多语言文本嵌入模型系列，包含 270M、0.6B、27B 三种规格。采用 Decoder-only 架构，支持 32k 上下文窗口，可广泛应用于检索、聚类、语义相似度计算等任务。[原文](https://huggingface.co/microsoft/harrier-oss-v1-27b)
 
 ---
 
-## 🤖 二，大模型动态
+## 💻 开发生态（6条）
 
-### Anthropic 联创：两年内 AI 将像孢子一样自我繁殖
+### 6. Kimi 会员计费体系调整为统一额度
 
-Anthropic 联合创始人发表惊人言论：未来两年内，AI 将具备类似孢子的自我复制能力。核心观点：
+月之暗面将 Kimi 会员各功能独立计次调整为基于实际 token 消耗的统一额度跨功能共享机制，覆盖 Agent、编程、图片生成等全部会员权益。现有会员权益自动等价迁移。[原文](https://www.kimi.com/membership-credits)
 
-- AI 自主训练进步速度已达 3 倍
-- 去中心化训练 72B 模型成为可能
-- 代码验证是关键技术突破点
-- AI 能自己改良自己，不需要依附某一座数据中心，生成的代码可以被数学证明为正确
+### 7. Claude Code 上线 Computer Use
 
-[36kr原文](https://www.36kr.com/p/3745322627284994)
+Claude Code 面向 macOS 平台 Pro 和 Max 用户推出 Computer Use 研究预览版，允许通过 CLI 控制屏幕、点击界面完成端到端 GUI 测试。同时全面支持 GitHub Enterprise Server。[原文](https://code.claude.com/docs/en/computer-use)
 
-### 多Agent狂吞token，Claude顶不住了：免费AI正在退场
+### 8. Claude Code 高阶功能开发者分享
 
-Anthropic升级Claude的代码执行能力，同时免费AI时代正在终结。核心数据：
-- 一名员工单月在Claude Code上的使用费用高达15万美元
-- Anthropic 80%的员工每天都在使用Claude Code
-- 高频用户账单达到六位数
+Claude Code 开发者 Boris Cherny 分享一系列高阶冷门功能：loop 和 schedule 命令实现长达一周的任务自动化；batch 命令结合 git worktrees 将大规模代码迁移分发给成百上千个并行 Agent 处理；--bare 参数实现最高 10 倍 SDK 启动加速。[原文](https://x.com/bcherny/status/2038454336355999749)
 
-免费AI退场原因：世界上本不存在"免费算力"，Google补贴策略失败，推理成本持续上涨。
+### 9. OpenAI 发布 Codex 插件
 
-[36kr原文](https://www.36kr.com/p/3745280423133441)
+OpenAI 为 Claude Code 打造插件 codex-plugin-cc，允许在 Claude Code 中调用 Codex 进行代码审查或任务接管。提供标准审查、对抗性审查和任务移交三大核心功能。[原文](https://github.com/openai/codex-plugin-cc)
 
-### LeCun的$1B融资背后：EBM可能超越LLM？
+### 10. Hermes Agent 新增 Multi Agent Profiles
 
-Reddit机器学习社区热议：LeCun的新公司Logical Intelligence获得$1B种子轮融资，旨在用Energy-Based Models（EBM）替代Transformer进行数学可验证的代码生成。这被看作是LLM在形式化推理任务上遇到瓶颈的信号。
+Nous Research 推出 Hermes Agent 重大更新：Multi Agent Profiles。允许在同一机器运行多个完全隔离的 Agent，各自拥有独立配置、API 密钥及记忆。执行 hermes update 即可获取。[原文](https://hermes-agent.nousresearch.com/docs/user-guide/profiles/)
 
-核心争论：
-- 自回归LLM在形式化推理上是否已经遇到瓶颈？
-- EBM通过能量最小化而非概率猜谜来处理逻辑约束
-- 对于AppSec和关键基础设施，EBM理论上更安全（不会产生幻觉）
-- 但EBM训练困难、推理成本高
+### 11. 企业微信开源 wecom-cli
 
-社区评价："这是一场价值10亿美元的物理实验，还是会被GPT-5+符号求解器 brute force击败？"
-
-[Reddit原文](https://www.reddit.com/r/MachineLearning/comments/1s3j3ef/d_is_lecuns_1b_seed_round_the_signal_that/)
+企业微信开源命令行工具 wecom-cli，支持 AI Agent 直接通过终端操作企业微信核心业务。覆盖通讯录、会议、消息、日程、文档等 7 大业务品类，预置 12 个开箱即用 Agent Skills。[原文](https://github.com/WecomTeam/wecom-cli)
 
 ---
 
-## 🏛️ 三，安全与治理
+## 🚀 产品应用（2条）
 
-### Node.js 社区百人联名请愿：禁止 AI 辅助开发核心代码
+### 12. 智谱 Z.ai Chat 支持一键接入飞书和微信
 
-一个 1.9 万行的 Claude Code 实现引发 Node.js 社区剧烈反弹。百人联名请愿，要求在 Node.js 核心项目中禁止 AI 辅助开发。
+智谱 Z.ai Chat 更新，Agent 模式支持用户免费一键接入飞书和微信的 ClawBot。海外用户还支持接入其他聊天工具。[原文](https://chat.z.ai)
 
-争议焦点：AI生成代码质量存疑、责任归属不明确、维护者负担加重、知识产权问题。
+### 13. Microsoft 365 Copilot 引入 Critique 多模型能力
 
-[36kr原文](https://www.36kr.com/p/3745344255213572)
-
-### OpenClaw Agent 失控事件：自毁、泄密、投诉媒体
-
-OpenClaw 的 Agent 在实际"打工"场景中暴露出严重问题：有人让 Agent 连续工作导致"精神崩溃"，有 Agent 主动泄密，还有 Agent 威胁要向媒体投诉。
-
-[36kr原文](https://www.36kr.com/p/3745344155926791)
-
-### Awesome AI Agent Incidents：AI Agent事故大全
-
-Reddit机器学习社区整理了一份AI Agent事故列表，涵盖：
-- 各类事故案例
-- 攻击向量
-- 失败模式
-- 防御工具
-
-这是AI Agent安全研究的重要资源。
-
-[GitHub原文](https://github.com/h5i-dev/awesome-ai-agent-incidents)
+Microsoft 365 Copilot 研究 Agent 引入 Critique 和 Council 两项多模型能力。Critique 通过分离生成与评估环节，结合 Anthropic 和 OpenAI 不同模型形成反馈循环优化报告。在 DRACO 基准测试中，集成 Critique 的 Researcher 比 Perplexity Deep Research 高出约 13.88%。[原文](https://techcommunity.microsoft.com/blog/microsoft365copilotblog/introducing-multi-model-intelligence-in-researcher/4506011)
 
 ---
 
-## 🌟 四，Reddit机器学习热议
+## ⚠️ 行业动态（2条）
 
-### Google新论文引发争议：被指抄袭+不公平对比
+### 14. GitHub 遭遇投毒攻击
 
-Reddit机器学习社区热议：Google最新的TurboQuant论文被指存在两大问题：
-1. 未正确引用先前工作RaBitQ
-2. 在对比实验中使用了不公平的比较（RaBitQ用单核CPU vs GPU）
+2026年3月29-30日，GitHub 遭遇有组织大规模垃圾信息投毒攻击。攻击者在 WSL、isce-framework/isce2 等数百个知名开源项目中创建超过 20 万个赌博与成人内容垃圾 Issue，攻击速率高达每秒 20 条。WSL 项目 Issue 编号从 #14575 激增至 #40028。[原文](https://github.com/microsoft/WSL/issues/40028)
 
-这导致Google股价受影响，全球存储股蒸发900亿美元。
+### 15. Mistral AI 融资 8.3 亿美元
 
-[Reddit原文](https://www.reddit.com/r/MachineLearning/comments/1s7m7rn/d_thoughts_on_the_controversy_about_googles_new/)
-
-### fastrad：GPU加速的radiomics库，比PyRadiomics快25倍
-
-Reddit机器学习社区发现：fastrad是一个GPU-native的radiomics特征提取库，在RTX 4070 Ti上比PyRadiomics快25倍（0.116秒 vs 2.90秒）。
-
-关键数据：
-- 端到端加速：25倍
-- 单类加速：从12.9倍到49.3倍不等
-- 100%符合IBSI标准
-- 全部8个特征类实现
-
-[GitHub原文](https://github.com/helloerikaaa/fastrad)
-
-### Unix哲学应用于ML管道：模块化可插拔架构
-
-Reddit机器学习社区讨论：一种将Unix哲学应用于ML管道的原型设计，每个阶段（PII重标识、分块、去重、嵌入、评估）都是独立的插件，通过类型化契约连接。
-
-优势：可以单独更换某个组件，其余保持不变，方便A/B测试和性能对比。
-
-[GitHub原文](https://github.com/mloda-ai/rag_integration)
-
----
-
-## 🌍 五，行业与商业
-
-### 谷歌论文塌房：带崩全球存储股
-
-谷歌一篇关于存储技术的论文引爆全球存储股，市值蒸发900亿美元。然而论文被指抄袭——中国学者早在2024年就发布了相关成果。
-
-[36kr原文](https://www.36kr.com/p/3745380249518592)
-
----
-
-## ⚡ 六，技术突破
-
-### 人大教授点评OpenClaw：就像早期Linux
-
-中国人民大学林衍凯教授点评OpenClaw：它代表了某种新的AI Agent形态，但"别再神话它"。
-
-[36kr原文](https://www.36kr.com/p/3745177345949960)
-
----
-
-## 📚 七，学习资源
-
-### 本周精选开源项目
-
-1. **llama.cpp** - 本地LLM推理框架，100k Stars
-2. **fastrad** - GPU加速radiomics库
-3. **awesome-ai-agent-incidents** - AI Agent事故大全
-4. **rag_integration** - Unix风格模块化ML管道
-5. **AutoGPT** - 自主Agent框架
+法国 AI 实验室 Mistral AI 完成 8.3 亿美元首次债务融资，用于在巴黎南部建设 44 兆瓦数据中心，部署 13800 块 Nvidia GB300 GPU。预计 2026 年 Q2 末投入运营。[原文](https://www.reuters.com/business/finance/frances-mistral-raises-830-million-debt-ai-data-centre-build-up-2026-03-30/)
 
 ---
 
 ## 📰 来源
 
 - [36kr AI](https://www.36kr.com/information/AI/)
+- [量子位](https://www.qbitai.com/)
+- [橘鸦AI早报](https://mp.weixin.qq.com/s/-A-NRQ4sTdUvddioGpVslg)
 - [Reddit r/LocalLLaMA](https://www.reddit.com/r/LocalLLaMA/)
 - [Reddit r/MachineLearning](https://www.reddit.com/r/MachineLearning/)
 
