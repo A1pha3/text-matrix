@@ -171,10 +171,15 @@ categories: ["技术笔记"]
 
 - `ai-agent`
 - `llm`
-- `python`
-- `devtools`
-- `data`
+- `tools`
 - `quant`
+
+补充一条归类规则：**凡与 `Claude` 直接相关的文章，统一归入 `ai-agent`。** 这类内容即使带有明显的编码工具、CLI、API、课程、工作流或工具属性，也优先按 AI Agent 主题归档。
+
+再补充两条归类规则：
+
+- `Claude` 相关内容统一归入 `ai-agent`
+- BI、OCR、结构化处理与通用开发工具类内容优先归入 `tools`
 
 是否值得为某个主题新建子目录，可以用以下标准判断：
 

@@ -46,9 +46,7 @@ categories: ["系统基建"]
 content/posts/tech/
   ai-agent/
   llm/
-  python/
-  devtools/
-  data/
+  tools/
   quant/
 ```
 
@@ -120,9 +118,7 @@ content/posts/tech/_index.md
 
 - `ai-agent`
 - `llm`
-- `python`
-- `devtools`
-- `data`
+- `tools`
 - `quant`
 
 是否值得单独建子目录，可以用以下判断标准：
@@ -202,9 +198,7 @@ content/
         ├── _index.md
         ├── ai-agent/
         ├── llm/
-        ├── python/
-        ├── devtools/
-        ├── data/
+        ├── tools/
         └── quant/
 ```
 

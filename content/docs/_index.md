@@ -20,6 +20,8 @@ draft: false
 *   **[Hugo 目录结构解析：docs 与 posts 的区别](./hugo-docs-vs-posts/)**：解释了为什么文档和博文要分开存储。
 *   **[tech 目录长期扩展与防膨胀方案](./tech-directory-scalability-plan/)**：定义 `content/posts/tech/` 的长期扩展路径、标签治理与分阶段迁移策略。
 *   **[技术文章 Front Matter 模板与标签规范](./tech-frontmatter-tagging-guide/)**：统一技术文章的元数据模板、标签命名与新文章创建方式。
+*   **[tech 现有文章子目录迁移规划表](./tech-migration-planning-table/)**：按子域给出现有技术文章的迁移优先级、试迁移清单与暂缓项。
+*   **[tech 根目录剩余平铺文章归类决策清单](./tech-root-remaining-classification-decisions/)**：给出剩余平铺文章后续是否迁入 ai-agent、tools、quant 或继续平铺的决策依据。
 
 ### 学习与研究
 *   **[Hugo 静态网站生成器完全指南](./hugo使用教程/)**：面向 Web 开发者的 Hugo 全面技术教程与入门指南。
