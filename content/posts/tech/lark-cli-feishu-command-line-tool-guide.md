@@ -4,7 +4,7 @@ date: 2026-04-01T20:47:00+08:00
 slug: lark-cli-feishu-command-line-tool-guide
 categories: ["技术笔记"]
 tags: ["Lark", "飞书", "CLI", "命令行", "AI Agent", "Open Platform"]
-description: "飞书官方 CLI 工具完全指南，涵盖 11 大业务领域、200+ 命令、19 个 AI Agent Skills，从安装配置到高级用法的全方位讲解。
+description: "飞书官方 CLI 工具完全指南，涵盖 11 大业务领域、200+ 命令、19 个 AI Agent Skills，从安装配置到高级用法的全方位讲解。"
 ---
 # Lark CLI：飞书官方命令行工具完全指南
 

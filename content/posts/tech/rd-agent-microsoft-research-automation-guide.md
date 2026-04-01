@@ -4,7 +4,7 @@ date: 2026-04-01T16:55:00+08:00
 slug: rd-agent-microsoft-research-automation-guide
 categories: ["技术笔记"]
 tags: ["RD-Agent", "Microsoft", "AI Agent", "量化交易", "MLE-bench", "自动化研发"]
-description: "微软研究院开源的自动化研发智能体框架 RD-Agent 完全指南，涵盖 RD 循环、MLE-bench 最强性能、RD-Agent(Q) 量化交易等全方位讲解。
+description: "微软研究院开源的自动化研发智能体框架 RD-Agent 完全指南，涵盖 RD 循环、MLE-bench 最强性能、RD-Agent(Q) 量化交易等全方位讲解。"
 ---
 # RD-Agent：微软自动化研发智能体完全指南
 

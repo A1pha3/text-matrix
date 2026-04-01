@@ -1,7 +1,7 @@
 ---
 name: "hugo-writer"
 description: "为 Hugo 文章生成/修复 Frontmatter，校验 categories、tags、首页曝光，自动生成 SEO 字段，并转换内部链接。触发词：生成 Frontmatter、修复元数据、分类标签、taxonomy。"
-version: "2.3.0"
+version: "2.4.0"
 tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ---
 
@@ -14,6 +14,12 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ### 1. YAML 数组格式规范 (Array Format)
 
 - **强制单行内联**：`categories` 和 `tags` 必须严格使用单行内联数组格式（如 `categories: ["行业快讯"]`）。**严禁**使用多行破折号缩进格式（如 `- 行业快讯`），否则会导致 Hugo 解析漂移。
+
+### 1.1 Front Matter 引号与边界闭合
+
+- **引号必须成对闭合**：凡使用双引号包裹的标量值（如 `title`、`description`、部分 `slug`）必须在同一字段值内完成闭合，禁止出现只写开引号、不写闭引号的情况。
+- **边界必须完整配对**：Front Matter 若使用 YAML `---` 边界，必须保证开头与结尾各有一行独立的 `---`，中间不得因未闭合引号、未结束数组或其他语法错误导致结尾边界失效。
+- **保守改写原则**：发现字段存在未闭合引号、残缺数组、残缺边界时，优先做最小修复，使 YAML 能被 Hugo 正常解析；不要为追求润色而重写无关字段。
 
 ### 2. 分类 (Categories)
 
@@ -70,6 +76,8 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - **禁止使用多行缩进列表格式输出 `categories` 和 `tags`**（必须用单行内联数组）。
 - **禁止输出不完整的日期格式**（如 `date: 2026-03-25` 或 `date: 2026-03-25T08:00`），必须包含完整时间 `YYYY-MM-DDTHH:MM:SS+08:00`。
 - **禁止输出非系统当前时间的 `date`**（必须使用生成当下的系统时间，且为北京时间 `+08:00`）。
+- **禁止输出未闭合的双引号字符串**（尤其是 `title`、`description`、`slug`）。
+- **禁止输出缺失结束边界的 Front Matter**，也禁止让未闭合字段吞掉结尾 `---`。
 - 在已有具体实体、产品、协议、技术名词时，禁止使用空泛标签。
 - 若任务仅要求 Frontmatter，禁止额外输出解释、分析过程或注意事项。
 - 若未要求处理正文，禁止擅自改写正文内容或内部链接。
@@ -82,6 +90,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - **任务只要求修复 Frontmatter**：只处理 Frontmatter，不改正文链接。
 - **任务只要求修复链接**：只改正文链接，不重写 Frontmatter 字段。
 - **相对链接不是站内 Markdown 页面**：若不是 `.md` 页面链接，则保持原样。
+- **存在明显 YAML 语法残缺**：先修复语法完整性，再做分类、标签、摘要等内容层面的优化。
 
 ## 链接改写示例
 
@@ -104,6 +113,8 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - `hiddenFromHomePage` 只能在 `["行业快讯"]` 时出现。
 - **日期格式**：`date` 必须为 `YYYY-MM-DDTHH:MM:SS+08:00` 完整格式，不能缺少时间或时区。
 - **时间一致性**：`date` 必须为生成时的系统当前时间（北京时间 `+08:00`），不能回填旧时间或预填未来时间。
+- **引号完整性**：所有以双引号开始的字段值都已正确闭合，尤其检查 `description`。
+- **边界完整性**：Front Matter 开头和结尾的 `---` 都独立存在，未被未闭合字符串或数组吞并。
 - 若任务仅要求 Frontmatter，最终输出只能包含 YAML 块。
 - 若任务包含链接修复，所有站内 `.md` 链接都必须改为 `relref`。
 

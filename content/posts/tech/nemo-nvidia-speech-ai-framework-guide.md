@@ -4,7 +4,7 @@ date: 2026-04-01T16:45:00+08:00
 slug: nemo-nvidia-speech-ai-framework-guide
 categories: ["技术笔记"]
 tags: ["NeMo", "NVIDIA", "语音识别", "TTS", "对话AI", "深度学习"]
-description: "NVIDIA 开源对话式 AI 框架 NeMo 完全指南，涵盖语音识别、TTS、对话AI、多模态模型等全方位讲解。
+description: "NVIDIA 开源对话式 AI 框架 NeMo 完全指南，涵盖语音识别、TTS、对话AI、多模态模型等全方位讲解。"
 ---
 # NeMo：NVIDIA 对话式 AI 框架完全指南
 
