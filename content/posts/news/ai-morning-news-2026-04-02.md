@@ -1,3 +1,12 @@
+---
+title: "AI 新闻早报 2026-04-02"
+date: 2026-04-02T07:45:00+08:00
+slug: ai-morning-news-2026-04-02
+categories: ["行业快讯"]
+tags: ["OpenAI", "Claude Code", "Wan2.7", "Qwen3.5-Omni", "AI融资"]
+hiddenFromHomePage: true
+description: "AI新闻早报：OpenAI完成1220亿美元史上最大融资，Claude Code开源事件持续发酵，Wan2.7、Qwen3.5-Omni等国产模型进展迅猛，AI行业资本化浪潮加速。"
+---
 # AI 新闻早报（2026-04-02）
 
 **今日概览**：OpenAI完成史上最大1220亿美元融资，Claude Code开源事件持续发酵，Wan2.7、Qwen3.5-Omni等国产模型进展迅猛，AI行业资本化浪潮加速。
