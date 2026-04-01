@@ -1,788 +1,638 @@
 ---
 title: "ValueCell：社区驱动的多智能体金融应用平台完全指南"
 slug: "valuecell-multi-agent-finance-platform-guide"
-date: 2026-04-01T02:16:00+08:00
+date: 2026-04-01T14:00:57+08:00
+description: "基于 README、配置文档与源码结构，系统讲解 ValueCell 的功能边界、使用方法、运行原理、架构设计与二次开发路径。"
+draft: false
 categories: ["技术笔记"]
-tags: ["ValueCell", "多智能体", "Multi-Agent", "金融科技", "量化交易", "AI Agent", "Binance", "OKX", "Hyperliquid", "去中心化金融"]
-description: "深度解析 ValueCell：社区驱动的多智能体金融应用平台，支持DeepResearch Agent/Strategy Agent/News Retrieval Agent，提供选股、调研、跟踪、交易全流程服务，完全本地存储敏感信息，Apache-2.0许可证，Python 3.12+，支持Binance/Hyperliquid/OKX等交易所。"
+tags: ["ValueCell", "多智能体", "量化交易", "金融科技", "源码分析"]
 ---
 
-# ValueCell：社区驱动的多智能体金融应用平台完全指南
+> 这篇文章只写可验证事实。
+>
+> 内容依据主要来自 ValueCell 的公开 README、配置文档、官网说明与仓库源码结构。凡是尚未落地、只出现在路线图中的内容，本文都会明确标记为规划或预览，避免把愿景写成现状。
 
-## §1 学习目标
+## §1 阅读目标
 
-完成本文档后，你将能够：
+读完本文后，你应该能够：
 
-- ✅ 理解 ValueCell 的定位与设计理念
-- ✅ 掌握 ValueCell 的核心功能与使用方法
-- ✅ 部署和配置 ValueCell 开发环境
-- ✅ 配置 AI 模型提供商和交易所连接
-- ✅ 使用多智能体进行投资研究
-- ✅ 创建和执行交易策略
-- ✅ 扩展开发 ValueCell 智能体
-- ✅ 集成到生产级金融应用
+- 准确定义 ValueCell 是什么。
+- 理解它当前已经公开实现的核心功能边界。
+- 区分产品能力、源码能力与路线图能力。
+- 完成从下载体验到本地开发启动的基本流程。
+- 看懂 Strategy Agent 的执行链路与扩展点。
+- 用更稳妥的方式阅读和评估这个项目。
 
----
+## §2 什么是 ValueCell
 
-## §2 项目概述
+根据官方 README，**ValueCell 是一个面向金融应用的社区驱动型多智能体平台**，目标是构建去中心化金融智能体社区。
 
-### 2.1 什么是 ValueCell？
+它强调的核心价值主要有三点：
 
-**ValueCell**（[GitHub 仓库](https://github.com/ValueCell-ai/valuecell)）是一个**社区驱动的多智能体金融应用平台**，使命是打造世界最大的去中心化金融智能体社区。
+| 维度 | 说明 |
+| ---- | ---- |
+| 场景 | 金融研究、市场跟踪、策略执行 |
+| 形态 | 多智能体协作平台，而不是单一聊天机器人 |
+| 安全原则 | 敏感信息保存在本地设备，不通过互联网发送给第三方 |
 
-**官方描述**：
+官网同时强调，ValueCell 已经提供 A 股深度研究与市场分析能力，用户可以直接访问官网使用，而不一定要先部署源码。
 
-> ValueCell 是一个社区驱动的多智能体金融应用平台，我们的使命是打造世界最大的去中心化金融智能体社区。它为您提供顶级的投资智能体团队，帮助您完成选股、调研、跟踪，甚至交易。系统会将您的敏感信息完全托管在本地，确保核心数据安全。
+### 2.1 先把几个核心概念说清楚
 
-**官网**：[valuecell.ai](https://valuecell.ai)
+为了避免后文出现“词都认识，但意思混在一起”的情况，先给出本文使用的几个定义。
 
-**产品状态**：🔥🔥🔥 产品已上线，提供 A 股深度研究与市场分析，无需部署。
+| 概念 | 本文中的含义 |
+| ---- | ---- |
+| 多智能体 | 由多个职责不同的 Agent 共同完成一条业务链路，而不是一个 Agent 包打天下 |
+| 研究 | 围绕标的、公司、项目或事件收集资料、整理材料并形成可解释结论 |
+| 策略 | 基于约束、市场数据和决策逻辑生成可执行交易动作的规则集合 |
+| 运行时 | 让策略按周期持续运行、更新状态并与外部系统交互的执行环境 |
+| 本地存储 | 敏感凭证、知识数据和本地数据库保存在用户设备侧，而不是托管到第三方服务 |
 
-### 2.2 核心数据
+这些定义看似基础，但它们决定了你会不会误把 ValueCell 理解成下面两类错误形态：
 
-| 指标 | 数值 |
-|------|------|
-| **许可证** | Apache-2.0 |
-| **语言** | Python 3.12+ |
-| **社区** | Discord、Twitter、LinkedIn、YouTube |
+- 一个只能聊天的金融问答机器人。
+- 一个只会下单、没有研究和跟踪能力的交易脚本壳。
 
-### 2.3 使命与愿景
+### 2.2 这篇文章适合谁读
 
-| 维度 | 内容 |
-|------|------|
-| **使命** | 打造世界最大的去中心化金融智能体社区 |
-| **愿景** | 让每个人都能获得顶级的投资智能体服务 |
-| **核心价值** | 用户数据完全本地托管，确保安全 |
-| **社区** | 欢迎开发者参与共建 |
+| 读者类型 | 是否适合 | 原因 |
+| ---- | ---- | ---- |
+| 想先判断项目值不值得看的人 | 适合 | 本文先讲边界，再讲实现 |
+| 想体验产品的新手用户 | 适合 | 文中保留了最短使用路径 |
+| 想读源码的开发者 | 适合 | 文中补了架构层与模块层视角 |
+| 想寻找现成稳定 SDK 的集成方 | 部分适合 | 本文会明确指出哪些内容仍是路线图 |
 
-### 2.4 与其他平台的区别
+## §3 先建立边界：哪些是事实，哪些只是规划
 
-| 特性 | ValueCell | TradingAgents | AutoGen | LangChain Agents |
-|------|-----------|---------------|---------|------------------|
-| **金融专注** | 原生 | 部分 | 否 | 否 |
-| **多智能体** | 原生 | 是 | 是 | 是 |
-| **交易所集成** | 内置 | 部分 | 否 | 否 |
-| **本地存储** | 完全本地 | 部分 | 否 | 否 |
-| **A 股支持** | 原生 | 否 | 否 | 否 |
+很多技术文档写坏，不是因为信息少，而是因为把“已经实现”“正在预览”“路线图计划”混写成一件事。
 
----
+### 3.1 当前可确认的已实现能力
 
-## §3 核心功能详解
+| 能力 | 当前状态 | 依据 |
+| ---- | ---- | ---- |
+| DeepResearch Agent | 已实现 | README 与 `python/valuecell/agents/research_agent/` |
+| Strategy Agent | 已实现 | README 与 `python/valuecell/agents/common/trading/` |
+| News Agent | 已实现 | README 与 `python/valuecell/agents/news_agent/` |
+| Web UI | 已实现 | README 与 `frontend/src/` |
+| 桌面封装 | 已实现 | `frontend/src-tauri/` |
+| 本地存储 | 已实现 | README 中给出 LanceDB、知识目录与 SQLite 路径 |
+| 多交易所接入 | 已实现，但公开测试成熟度不完全一致 | README 与 CCXT 执行层代码 |
 
-### 3.1 多智能体系统
+### 3.2 需要谨慎表述的内容
 
-**核心理念**：为金融投资场景打造专业的多智能体协作团队。
+| 内容 | 正确写法 | 不应写法 |
+| ---- | ---- | ---- |
+| OKX 交易能力 | 已接入，另有 preview / paper 配置指引 | “已经是完全成熟的默认实盘方案” |
+| Python SDK、WebSocket、插件架构、Agent Registry | README 路线图中提到 | “仓库已经稳定提供这些 API” |
+| 一批投资大师 Agent 名称 | 前端 UI 有对应名称或图标 | “后端已经有完整实现” |
 
-#### 3.1.1 DeepResearch Agent
+### 3.3 为什么这个边界必须写清楚
 
-**深度研究智能体**：
+金融产品和普通效率工具不同。用户不仅关心“能不能跑”，还关心：
 
-| 能力 | 说明 |
-|------|------|
-| **基本面分析** | 获取并分析股票的基本面文件 |
-| **数据输出** | 输出准确的数据、可解释性的总结 |
-| **研究范围** | 股票基本面、财务报表、行业分析 |
+- 这个功能是否真正存在。
+- 这个能力是否已经过充分测试。
+- 这个模块是不是会触达真实资金。
 
-```python
-# DeepResearch Agent 使用示例
-from valuecell.agents import DeepResearchAgent
+文档只要在这三点上含糊，就不是普通的不严谨，而是会直接误导使用者。
 
-agent = DeepResearchAgent()
-result = await agent.research("AAPL")
-# 输出：财务数据 + 可解释的研究总结
-```
+## §4 核心功能全景图
 
-#### 3.1.2 Strategy Agent
+### 4.1 三类核心智能体
 
-**策略交易智能体**：
+当前公开资料里最核心的能力，主要集中在三类智能体上：
 
-| 能力 | 说明 |
-|------|------|
-| **多币种支持** | 支持多种加密资产 |
-| **多策略执行** | 支持多种交易策略 |
-| **自动执行** | 自动执行你的交易策略 |
-| **风险管理** | 内置风险控制机制 |
+| 智能体 | 主要职责 | 输出结果 |
+| ---- | ---- | ---- |
+| DeepResearch Agent | 检索、整理并分析研究材料 | 研究结果、摘要、知识沉淀 |
+| Strategy Agent | 形成交易决策并驱动执行 | 决策循环、订单、仓位与绩效 |
+| News Agent | 持续追踪新闻与事件 | 新闻结果、快讯、定时推送 |
 
-```python
-# Strategy Agent 使用示例
-from valuecell.agents import StrategyAgent
+### 4.2 DeepResearch Agent：研究管线，而不是空想式问答
 
-agent = StrategyAgent(
-    exchange="binance",
-    strategy="grid",
-    pairs=["BTC/USDT"]
-)
-await agent.start()
-```
-
-#### 3.1.3 News Retrieval Agent
-
-**新闻检索智能体**：
-
-| 能力 | 说明 |
-|------|------|
-| **个性化定时任务** | 支持个性化定时任务的新闻推送 |
-| **及时跟踪** | 及时跟踪关键信息 |
-| **多源整合** | 整合多个新闻来源 |
-| **智能过滤** | 基于用户偏好过滤新闻 |
-
-### 3.2 灵活集成
-
-#### 3.2.1 多 LLM 提供商支持
-
-| 提供商 | 说明 | 状态 |
-|--------|------|------|
-| **OpenRouter** | 聚合多个模型的路由服务 | ✅ 支持 |
-| **SiliconFlow** | 国产模型聚合平台 | ✅ 支持 |
-| **Azure** | 微软云 OpenAI 服务 | ✅ 支持 |
-| **OpenAI-compatible** | 兼容 OpenAI 格式的 API | ✅ 支持 |
-| **Google** | Google Gemini 系列 | ✅ 支持 |
-| **OpenAI** | OpenAI GPT 系列 | ✅ 支持 |
-| **DeepSeek** | 国产深度求索模型 | ✅ 支持 |
-
-#### 3.2.2 市场数据覆盖
-
-| 市场 | 说明 | 状态 |
-|------|------|------|
-| **美国市场** | 股票、ETF、期权 | ✅ 支持 |
-| **加密货币市场** | BTC、ETH、主流 altcoin | ✅ 支持 |
-| **香港市场** | 港股、ETF | ✅ 支持 |
-| **中国市场** | A 股、ETF | ✅ 支持 |
-
-#### 3.2.3 多智能体框架兼容
-
-| 框架 | 协议 | 状态 |
-|------|------|------|
-| **LangChain** | A2A | ✅ 支持 |
-| **Agno** | A2A | ✅ 支持 |
-| **AutoGen** | 待定 | 🔜 规划中 |
-
-#### 3.2.4 交易所连接
-
-| 交易所 | 说明 | 状态 | 合约类型 |
-|--------|------|------|----------|
-| **Binance** | 仅国际站，不支持美国站 | ✅ 已测试 | USDT 本位合约 |
-| **Hyperliquid** | 仅支持 USDC 保证金 | ✅ 已测试 | USDC 本位合约 |
-| **OKX** | USDT 本位合约 | ✅ 已测试 | USDT 本位合约 |
-| **Coinbase** | USDT 本位合约 | 🟡 部分测试 | USDT 本位合约 |
-| **Gate.io** | USDT 本位合约 | 🟡 部分测试 | USDT 本位合约 |
-| **MEXC** | USDT 本位合约 | 🟡 部分测试 | USDT 本位合约 |
-| **Blockchain.com** | USDT 本位合约 | 🟡 部分测试 | USDT 本位合约 |
-
-**图例说明**：
-- ✅ 已测试：在生产环境中经过充分测试和验证
-- 🟡 部分测试：代码实现已完成但未完全测试，可能需要调试
-- 🔜 规划中：功能正在开发中
-
-### 3.3 安全机制
-
-| 安全特性 | 说明 |
-|----------|------|
-| **本地存储** | 敏感信息完全托管在本地 |
-| **密钥保护** | API 密钥本地存储，不通过互联网发送 |
-| **定期轮换** | 建议定期重置 API 密钥 |
-| **IP 白名单** | 支持交易所 API IP 白名单配置 |
-
----
-
-## §4 技术架构
-
-### 4.1 核心模块
-
-| 模块 | 说明 |
-|------|------|
-| **Agents** | 核心智能体实现 |
-| **Backend** | 后端 API 服务 |
-| **Frontend** | Web UI 界面 |
-| **Exchange Adapters** | 交易所适配器 |
-| **LLM Adapters** | LLM 提供商适配器 |
-| **Storage** | 本地存储（LanceDB/SQLite） |
-
-### 4.2 架构图
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    ValueCell Platform                    │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌──────────────┐   ┌──────────────┐   ┌────────────┐ │
-│  │ DeepResearch │   │   Strategy    │   │    News    │ │
-│  │    Agent    │   │    Agent      │   │  Retrieval  │ │
-│  └──────┬───────┘   └──────┬───────┘   └──────┬─────┘ │
-│          │                   │                    │        │
-│          └───────────────────┼────────────────────┘        │
-│                              │                           │
-│                    ┌──────────┴──────────┐               │
-│                    │    Agent Manager    │               │
-│                    │   (A2A Protocol)   │               │
-│                    └──────────┬──────────┘               │
-│                               │                           │
-│  ┌────────────────────────────┼────────────────────────┐  │
-│  │                    Adapters Layer                    │  │
-│  ├─────────────┬─────────────┬─────────────┬─────────┤  │
-│  │ LLM Adapters│Exchange     │ Market Data │ Storage  │  │
-│  │ (OpenAI/    │ Adapters    │  Adapters   │(LanceDB/ │  │
-│  │ DeepSeek)   │(Binance/   │ (US/HK/CN/  │ SQLite)  │  │
-│  │             │ OKX/Hyper)  │  Crypto)    │          │  │
-│  └─────────────┴─────────────┴─────────────┴─────────┘  │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 4.3 数据流
-
-```
-用户请求
-    ↓
-Web UI (localhost:1420)
-    ↓
-Backend API (FastAPI)
-    ↓
-Agent Manager (A2A Protocol)
-    ↓
-┌─────────────────────────────────────┐
-│         Agent Execution              │
-│                                      │
-│ DeepResearch / Strategy / News       │
-│      ↓              ↓                │
-│ LLM Adapter    Exchange Adapter    │
-│      ↓              ↓                │
-│ OpenAI/DeepSeek  Binance/OKX       │
-└─────────────────────────────────────┘
-    ↓
-Local Storage (LanceDB + SQLite)
-    ↓
-结果返回 Web UI
-```
-
----
-
-## §5 快速开始
-
-### 5.1 新用户安装
-
-#### 5.1.1 下载应用程序
-
-从 GitHub 的[发布页面](https://github.com/ValueCell-ai/valuecell/releases)下载：
-
-| 平台 | 安装包 | 说明 |
-|------|--------|------|
-| **macOS** | ValueCell.dmg | Apple Silicon + Intel |
-| **Windows** | ValueCell.exe | x64 |
-
-#### 5.1.2 配置 AI 模型
-
-1. 通过网页 UI 界面添加你的 AI 模型 API Key
-2. 选择提供商（OpenAI/DeepSeek/SiliconFlow 等）
-3. 配置模型参数
-
-#### 5.1.3 配置交易所
-
-1. 在交易所申请 API Key
-2. 设置 IP 白名单（可选）
-3. 配置 API 凭证到 ValueCell
-
-### 5.2 开发者安装
-
-#### 5.2.1 克隆仓库
+从源码结构来看，Research Agent 至少覆盖了以下几类数据来源：
+
+| 数据来源 | 说明 |
+| ---- | ---- |
+| SEC 披露文件 | 美股公司定期与事件型披露材料 |
+| A 股公告源 | 面向 A 股研究的公告检索 |
+| RootData 相关实体 | 项目、VC、人物等加密领域实体信息 |
+| Web Search | 通用网页检索补充 |
+| 本地知识库存储 | 将材料写入知识目录与向量库 |
+
+这说明它不是让模型凭空“懂金融”，而是先把研究资料抓取和整理做好，再让模型参与分析与表达。
+
+### 4.3 Strategy Agent：真正重要的是运行时，而不是某一条策略
+
+如果只说“Strategy Agent 会自动交易”，其实不够准确。
+
+更准确的说法是：**ValueCell 提供了一套可组合的交易运行时框架。**
+
+从交易框架目录可以确认以下组成：
+
+| 组件 | 作用 |
+| ---- | ---- |
+| Models | 定义请求、配置、约束等数据结构 |
+| Features Pipeline | 拉取市场数据并生成特征 |
+| Composer | 生成决策，可由 LLM 或规则逻辑驱动 |
+| Execution Gateway | 对接真实或模拟执行 |
+| Portfolio Service | 管理仓位与资金状态 |
+| History / Digest | 记录与汇总历史表现 |
+
+这套分层的价值在于，它把自动交易拆成了可观测、可替换、可扩展的模块，而不是把一切塞进一个长提示词里。
+
+### 4.4 News Agent：它解决的是“持续跟踪”问题
+
+News Agent 的意义不在于“搜到一条新闻”，而在于：
+
+- 针对主题做持续监控。
+- 形成定时任务或推送机制。
+- 把研究结果和后续事件跟踪连接起来。
+
+金融研究如果只有一次分析、没有持续跟踪，通常很快就会过时。News Agent 补的正是这块空白。
+
+### 4.5 用一句话理解三类 Agent 的分工
+
+如果你希望把三类 Agent 的关系记成一句话，可以这样记：
+
+- DeepResearch Agent 负责“把材料找齐、理顺”。
+- Strategy Agent 负责“把判断变成动作”。
+- News Agent 负责“让动作之后仍然持续跟踪”。
+
+这三者拼起来，才接近一个完整的金融工作流闭环。
+
+## §5 灵活集成能力怎么理解
+
+### 5.1 多 LLM 提供商支持
+
+README 公开列出了多个模型提供商，包括 OpenRouter、SiliconFlow、Azure、OpenAI-compatible、Google、OpenAI 与 DeepSeek。
+
+文档上更稳妥的理解方式是：**ValueCell 不是绑定单一模型厂商，而是把模型接入层做成了可切换配置。**
+
+### 5.2 市场覆盖不等于每个市场成熟度完全一致
+
+README 提到美国市场、加密市场、香港市场、中国市场等覆盖范围。这能说明项目的目标市场广度，但不能自动推导出“每个市场、每项能力都已经同样成熟”。
+
+写文档时应区分：
+
+- 覆盖范围。
+- 公开主打场景。
+- 仓库里真正有清晰实现链路的能力。
+
+### 5.3 A2A 协议与多 Agent 兼容性
+
+README 提到通过 A2A 协议与 LangChain、Agno 等框架进行研发集成。对读者来说，这句话真正重要的含义是：
+
+- ValueCell 不是封闭黑盒。
+- 它在设计上考虑了多 Agent 系统之间的协作与扩展。
+- 其内部模块并不是“只有产品团队自己能改”的死结构。
+
+## §6 新手快速开始
+
+### 6.1 先用产品，再决定是否读源码
+
+如果你的目标只是体验能力，合理顺序是：
+
+1. 访问官网看产品形态。
+2. 再下载应用程序。
+3. 只有在需要二次开发或本地调试时，才进入源码层。
+
+这比“上来先 clone 仓库”更符合大多数人的真实需求。
+
+### 6.2 开发者最短启动路径
+
+README 给出的启动方式非常直接：
 
 ```bash
 git clone https://github.com/ValueCell-ai/valuecell.git
 cd valuecell
-```
-
-#### 5.2.2 运行应用程序
-
-**Linux / macOS**：
-
-```bash
 bash start.sh
 ```
 
-**Windows (PowerShell)**：
+Windows 对应命令为：
 
 ```powershell
 .\start.ps1
 ```
 
-#### 5.2.3 访问界面
+启动后，默认访问入口为：
 
-- **Web UI**：[http://localhost:1420](http://localhost:1420)
-- **日志**：在终端查看应用程序日志
+- Web UI：`http://localhost:1420`
+- 日志：直接查看终端输出
 
-### 5.3 实时交易配置
+### 6.3 第一次使用时应该先配置什么
 
-#### 5.3.1 配置 AI 模型
+README 中的新手流程可以概括为四步：
 
-```python
-# 在 Web UI 中配置
-# 提供商: OpenAI / DeepSeek / SiliconFlow
-# API Key: xxx
-# 模型: gpt-4 / deepseek-chat / silicon-flow-xxx
+1. 配置 AI 模型。
+2. 配置交易所凭证。
+3. 创建策略。
+4. 启动与监控策略。
+
+其中有一个特别容易被忽视的限制：**当前主要是合约交易场景，现货是以 1X 合约形式实现。**
+
+这句话意味着，新手不应把它理解为一个纯现货理财工具，而要把它理解为研究与交易自动化平台。
+
+## §7 交易所与安全配置
+
+### 7.1 支持的交易所状态
+
+| 交易所 | 状态 | 需要注意的地方 |
+| ---- | ---- | ---- |
+| Binance | README 标记为已测试 | 仅国际站，不支持美国站；使用 USDT 本位合约 |
+| Hyperliquid | README 标记为已测试 | 使用主钱包地址与 API 钱包私钥；USDC 保证金 |
+| OKX | 已接入且有独立配置说明 | 需要 API Key、Secret、Passphrase |
+| Coinbase | README 标记为部分测试 | 不能默认等同于生产稳定能力 |
+| Gate.io | README 标记为部分测试 | 同上 |
+| MEXC | README 标记为部分测试 | 同上 |
+| Blockchain | README 标记为部分测试 | 同上 |
+
+### 7.2 三个最容易配错的地方
+
+#### 7.2.1 Binance 不是任意站点都行
+
+README 明确写的是国际站 `binance.com`，而不是美国站。技术文档不应该把它泛化成“支持所有 Binance 站点”。
+
+#### 7.2.2 Hyperliquid 的认证方式不同于常规交易所
+
+Hyperliquid 不是传统 API Key / Secret 模式，而是钱包地址与私钥组合。对使用者来说，这会直接影响配置流程与安全策略。
+
+#### 7.2.3 开发时要区分展示名称与内部 ID
+
+在执行层代码里，部分交易所的内部 ID 并不是页面展示名称的直译。例如：
+
+- `gate` 不是 `gateio`
+- `blockchaincom` 不是 `blockchain`
+- `coinbaseexchange` 不是 `coinbase`
+
+如果二次开发时直接凭印象写字符串，执行网关创建时就可能失败。
+
+### 7.3 关于真实资金的底线建议
+
+官方文档已经给出了非常明确的安全建议，这里直接浓缩成三条：
+
+- 密钥本地保存。
+- 不把敏感凭证发给第三方。
+- 实盘前先用 testnet 或 paper 环境验证。
+
+任何涉及真实资金的自动化系统，这三条都不能当成可选项。
+
+## §8 原理分析：为什么会采用这种设计
+
+### 8.1 为什么金融任务适合多智能体
+
+金融任务通常不是一个动作，而是一条链路：
+
+1. 找资料。
+2. 做研究。
+3. 形成判断。
+4. 执行动作。
+5. 持续跟踪。
+
+如果把这五类职责都压到一个 Agent 上，会出现几个问题：
+
+- 状态难管理。
+- 失败点难定位。
+- 风险边界不清楚。
+- 模块无法独立替换。
+
+ValueCell 采用多智能体和分层运行时，本质上是在工程层面解决这些问题。
+
+### 8.2 为什么要强调本地存储
+
+对普通 AI 工具来说，云端存储上下文可能不是大问题；但在金融场景里，研究标的、交易偏好、资金配置、API 密钥都高度敏感。
+
+README 直接给出了 LanceDB、知识目录与 SQLite 的本地路径，这说明“本地存储”在这里不是模糊的口号，而是具体到落盘位置的设计选择。
+
+### 8.3 为什么 Strategy Agent 要做成运行时框架
+
+自动交易不是一次 prompt 调用，而是循环过程：
+
+- 读取市场状态。
+- 计算特征。
+- 根据约束形成决策。
+- 执行或跳过操作。
+- 更新持仓与历史。
+- 等待下一个决策周期。
+
+把这件事做成运行时框架，才能把交易系统拆分成清晰模块，也才能为后续扩展留下空间。
+
+## §9 架构分析：从仓库结构看全局
+
+### 9.1 顶层技术栈
+
+| 层级 | 技术栈 | 说明 |
+| ---- | ---- | ---- |
+| 前端 | React + TypeScript | Web UI |
+| 桌面端壳层 | Tauri / Rust | 桌面应用包装 |
+| 服务端 | Python 3.12+ | API、智能体、存储、运行时 |
+| 交易执行 | CCXT | 多交易所统一接口 |
+| 知识存储 | LanceDB | 本地知识库 |
+| 结构化存储 | SQLite / DB 层 | 本地数据库 |
+
+### 9.2 关键目录怎么读
+
+```text
+frontend/
+  src/                 # 页面、表单、前端类型定义
+  src-tauri/           # 桌面端壳层
+
+python/
+  valuecell/
+    agents/            # 智能体实现
+    server/            # API 与数据库层
+    utils/             # 通用工具
+
+docs/
+  CONFIGURATION_GUIDE.md
 ```
 
-#### 5.3.2 配置交易所
+### 9.3 推荐的阅读顺序
 
-**Binance 配置**：
+如果你想快速读懂项目，建议按以下顺序：
 
-```
-交易所: Binance
-交易对: BTC/USDT
-合约类型: USDT 本位永续合约
-注意事项:
-- 仅支持国际站 (binance.com)，不支持美国站
-- 请确保永续合约账户有足够的 USDT 余额
-- 交易对格式: BTC/USDT
+1. `README.md`：建立功能边界。
+2. `docs/CONFIGURATION_GUIDE.md`：理解配置与安全约束。
+3. `python/valuecell/agents/common/trading/README.md`：理解交易运行时。
+4. `python/valuecell/agents/research_agent/`：再进入研究管线。
+5. `frontend/src/types/strategy.ts`：补齐前后端数据结构视角。
+
+这样读，比一上来从入口函数往下追更高效，因为你先建立了整体模型，再去看代码时不容易迷路。
+
+### 9.4 源码阅读地图
+
+如果你准备真正进入源码，这里给出一份更具体的阅读地图。
+
+| 你想回答的问题 | 优先看哪里 |
+| ---- | ---- |
+| 项目整体在解决什么问题 | `README.md` |
+| 交易配置有哪些硬约束 | `docs/CONFIGURATION_GUIDE.md` |
+| 交易运行时是如何拼起来的 | `python/valuecell/agents/common/trading/README.md` |
+| 交易所接入差异在哪里 | `python/valuecell/agents/common/trading/execution/` |
+| 研究材料从哪里抓 | `python/valuecell/agents/research_agent/` |
+| 前端如何组织策略创建数据 | `frontend/src/types/strategy.ts` |
+
+如果按问题驱动方式读代码，你会比“从上往下机械翻目录”更快建立有效认知。
+
+## §10 源码分析：最值得关注的几条链路
+
+### 10.1 Research Agent 的重点在资料获取与知识沉淀
+
+从 `research_agent/sources.py` 可以确认几个关键动作：
+
+- 拉取 SEC 材料。
+- 拉取 A 股披露数据。
+- 搜索项目、VC 与人物信息。
+- 处理 Markdown / PDF 并写入知识库。
+
+这说明它的核心不是“自动写研报”，而是“围绕研究任务组织材料处理流水线”。
+
+### 10.2 Strategy Agent 的执行链路
+
+可以把 Strategy Agent 的运行过程理解为下面这条主链：
+
+```text
+用户请求
+  -> UserRequest 校验
+  -> 创建 StrategyRuntime
+  -> 构建 Features Pipeline
+  -> 构建 Composer
+  -> 选择 Execution Gateway
+  -> 循环 run_cycle()
+  -> 持久化策略状态与结果
 ```
 
-**Hyperliquid 配置**：
+这条链路反映了三件事：
 
-```
-交易所: Hyperliquid
-保证金货币: USDC
-认证方式: 主钱包地址 + API 钱包私钥
-交易对格式: SYMBOL/USDC (例如 WIF/USDC)
-最低交易额: 10 USDC
-```
+1. 决策与执行是分层的。
+2. 运行时是循环型，不是一次性调用。
+3. 交易策略系统的关键不只是“模型回答”，而是上下文组织、约束注入与状态维护。
 
-**OKX 配置**：
+### 10.3 LLM 在这里扮演的是“决策组成器”角色
 
-```
-交易所: OKX
-认证信息: API Key + Secret + Passphrase
-合约类型: USDT 本位合约
-交易对格式: BTC/USDT
-```
+在 `prompt_based/composer.py` 中，可以看到 `LlmComposer` 会把以下信息整理进上下文：
+
+- 组合摘要。
+- 市场片段。
+- 分组后的特征数据。
+- 当前持仓。
+- 约束与风险信息。
+- 历史表现摘要。
+
+这意味着 LLM 不是直接面对原始市场流裸推理，而是在结构化输入上做决策生成。这种设计的好处是：
+
+- 上下文更可控。
+- 风险约束更容易显式表达。
+- 决策依据更容易被追踪。
+
+### 10.4 Prompt-Based 与 Grid 是两条不同路线
+
+根据源码与交易框架文档，至少可以确认两类策略形态：
+
+| 类型 | 特征 |
+| ---- | ---- |
+| Prompt-Based Strategy Agent | 借助 LLM Composer 形成决策 |
+| Grid Strategy Agent | 规则驱动的网格策略实现 |
+
+这说明 ValueCell 并不是把“AI 交易”限制为纯 LLM 路线，而是允许规则型与模型型策略并存。
+
+### 10.5 Execution Gateway 为什么重要
+
+在 `ccxt_trading.py` 中，执行网关需要处理不同交易所的认证与配置差异，例如：
+
+- OKX 需要 passphrase。
+- Hyperliquid 需要 wallet address 与 private key。
+- 不同交易所可能有不同的 `defaultType`、`marginMode` 与 `positionMode`。
+
+这部分通常不显眼，但它决定了系统能否真正对接现实世界的交易环境。
+
+## §11 开发扩展：哪些地方真的能扩，哪些还不能写死
+
+### 11.1 当前能确认的扩展点
+
+交易框架文档中已经给出了比较清晰的扩展入口：
+
+| 扩展点 | 作用 |
+| ---- | ---- |
+| Features Pipeline | 自定义市场数据提取与特征构建 |
+| Composer | 自定义决策机制 |
+| Lifecycle Hooks | 在启动、循环、停止阶段插入逻辑 |
+| Custom Agent Module | 构建新的策略智能体模块 |
+
+如果你准备二次开发，最稳妥的方式不是推翻默认实现，而是从默认实现开始，只替换你真正需要替换的那一层。
+
+### 11.2 建议的二次开发顺序
+
+一个低风险的切入顺序是：
+
+1. 先改 Features Pipeline。
+2. 再改 Composer。
+3. 最后才碰执行层或新增交易所网关。
+
+原因是：
+
+- 特征层最容易控制影响范围。
+- Composer 层能带来明显的策略差异。
+- 执行层风险最高，也最容易碰到真实资金问题。
+
+### 11.3 现在不应写成“已具备”的扩展生态
+
+以下内容如果要写，只能写成“路线图方向”而不能写成已交付能力：
+
+- 稳定 Python SDK
+- WebSocket SDK
+- 插件市场
+- Agent Registry 社区注册机制
+- 面向外部开发者的完整 API Explorer 生态
+
+### 11.4 一个务实的扩展原则
+
+如果你真的要在 ValueCell 上做二次开发，最实用的原则不是“多改”，而是“少改但能验证”。
+
+具体来说：
+
+- 先改你能验证结果的那一层。
+- 先在虚拟或测试环境完成闭环。
+- 先证明新特征或新约束有效，再考虑改执行行为。
+
+这样做的原因很简单。金融系统里最危险的，从来不是“功能少”，而是“改动大、验证弱、又直接触达资金”。
+
+## §12 使用场景：适合做什么，不适合夸大什么
+
+### 12.1 适合的场景
+
+| 场景 | 为什么适合 |
+| ---- | ---- |
+| A 股或美股研究辅助 | 有资料抓取与研究管线 |
+| 加密策略实验 | 有交易运行时、执行网关与特征层 |
+| 新闻与研究联动跟踪 | 研究和新闻能力可以形成闭环 |
+| 金融 Agent 工程学习 | 结构完整，适合源码阅读与架构分析 |
+
+### 12.2 不应夸大的场景
+
+| 场景 | 为什么不应夸大 |
+| ---- | ---- |
+| 机构级资管平台 | 公开信息不足以支持这种结论 |
+| 完整成熟的 SDK 平台生态 | 相关内容主要仍在路线图中 |
+| 全资产类别稳定自动交易平台 | 固定收益、衍生品等更多属于规划 |
+
+## §13 从入门到精通：一条更靠谱的学习顺序
+
+### 13.1 第一阶段：先把边界学清楚
+
+你至少要回答这四个问题：
+
+- 它的核心是研究、新闻、策略三类 Agent。
+- 它强调本地存储与凭证本地保管。
+- 它重点覆盖金融研究与交易自动化场景。
+- 它有一部分内容仍属于路线图（roadmap）。
+
+### 13.2 第二阶段：跑通最短开发闭环
+
+你至少要完成这四件事：
+
+1. 克隆仓库。
+2. 用 `start.sh` 启动项目。
+3. 打开本地 Web UI。
+4. 读完交易框架 README。
+
+### 13.3 第三阶段：带着问题读源码
+
+建议围绕这几个问题进入源码：
+
+- 研究数据从哪里来。
+- 决策上下文如何组织给 LLM。
+- 不同交易所认证差异如何被抽象。
+- 交易循环与状态如何被持久化。
+
+### 13.4 第四阶段：做最小可验证扩展
+
+一个合理的练手方式是：
+
+- 不碰真实资金。
+- 先不改执行层。
+- 只新增一个简单特征或约束。
+
+这样能让你真正理解系统，而不是一上来就把风险放到最高的位置。
+
+### 13.5 一份自测清单
+
+如果你读完本文，想判断自己是否真的掌握了核心内容，可以快速自测这 8 个问题：
+
+1. 你能否清楚区分产品能力、源码能力和路线图能力。
+2. 你能否用一句话说明 DeepResearch、Strategy、News 三类 Agent 的分工。
+3. 你能否解释为什么 Strategy Agent 更像运行时框架，而不是单一策略。
+4. 你能否说明本地存储在金融场景里的意义。
+5. 你能否指出 Hyperliquid 与 OKX 在认证方式上的差异。
+6. 你能否说出为什么不能直接把前端 UI 名称当作后端模块事实。
+7. 你能否给出一条合理的源码阅读顺序。
+8. 你能否说明为什么二次开发应先改特征层或 Composer，而不是先动执行层。
+
+如果这 8 个问题里有 6 个以上你能独立答清楚，说明你已经不是“看过文章”，而是开始真正理解这个项目。
+
+## §14 常见误区与排查建议
+
+### 14.1 误区一：把路线图当现状
+
+排查方法：看到 SDK、插件、Registry 等描述时，先去仓库搜实现，再决定文档怎么写。
+
+### 14.2 误区二：把 UI 名称当后端模块
+
+前端里出现的某些 Agent 名称，不代表后端一定已经有完整模块。写技术文档时必须以后端实现和 README 为准。
+
+### 14.3 误区三：忽视交易所认证差异
+
+排查方法：先看执行网关与配置文档，不要根据页面文案直接想当然。
+
+### 14.4 误区四：未验证就直接上实盘
+
+官方文档已经明确建议先用 testnet 或 paper 环境。任何自动交易系统，只要跳过这一步，后果都可能是真实资金损失。
+
+## §15 常见问题
+
+### Q1：ValueCell 更像研究平台还是交易平台？
+
+更准确的说法是：它是一个把研究、新闻跟踪、策略执行串起来的金融多智能体平台，而不是单一形态产品。
+
+### Q2：官网能力与开源仓库能力完全等价吗？
+
+不能直接这样假设。官网代表产品形态，仓库代表公开源码现状。严谨写作时，应该把两者分开表述。
+
+### Q3：它支持哪些市场？
+
+公开资料提到美国市场、加密市场、香港市场、中国市场等覆盖范围，但“覆盖”不等于“每个能力在每个市场同等成熟”。
+
+### Q4：我应该把它视为稳定的金融基础设施吗？
+
+如果你的标准是“可研究、可实验、可扩展”，它已经有相当强的参考价值；如果你的标准是“全链路、全市场、全生态全部成熟稳定”，目前公开资料还不能支持这样的结论。
+
+## §16 总结
+
+如果要用一句话概括 ValueCell，我会这样定义：
+
+**它最值得关注的地方，不是“AI 会不会替你赚钱”，而是它把金融研究、新闻跟踪与自动交易拆成了一个可以阅读、验证与扩展的多智能体工程系统。**
+
+它的优势在于：
+
+- 有明确的金融场景聚焦。
+- 有真实的多模块运行时，而不只是对话包装。
+- 有本地存储和安全边界意识。
+- 有继续扩展为更完整生态的路线图。
+
+它的边界也同样明确：
+
+- 一部分能力仍在路线图（roadmap）中。
+- 一部分交易所只做到部分测试。
+- 某些 UI 名称并不等于后端已实现。
+
+对新手来说，正确姿势是先把边界学明白，再开始用；对开发者来说，正确姿势是先读交易运行时和研究数据链路，再决定如何扩展。
 
 ---
 
-## §6 使用指南
-
-### 6.1 创建研究任务
-
-```python
-from valuecell.agents import DeepResearchAgent
-
-# 创建研究智能体
-agent = DeepResearchAgent()
-
-# 执行研究
-result = await agent.research(
-    symbol="AAPL",
-    report_type="fundamental",
-    depth="comprehensive"
-)
-
-print(result)
-```
-
-### 6.2 创建交易策略
-
-```python
-from valuecell.agents import StrategyAgent
-from valuecell.config import ExchangeConfig
-
-# 配置交易所
-config = ExchangeConfig(
-    exchange="binance",
-    api_key="your-api-key",
-    api_secret="your-secret",
-    testnet=False
-)
-
-# 创建策略智能体
-agent = StrategyAgent(
-    exchange=config,
-    strategy="grid",
-    pairs=["BTC/USDT", "ETH/USDT"],
-    grid_spacing=0.01,
-    position_size=0.1
-)
-
-# 启动策略
-await agent.start()
-```
-
-### 6.3 新闻监控
-
-```python
-from valuecell.agents import NewsRetrievalAgent
-
-# 创建新闻智能体
-agent = NewsRetrievalAgent()
-
-# 设置定时任务
-agent.add_schedule(
-    keyword="BTC",
-    frequency="hourly",
-    callback=my_notification_function
-)
-
-# 启动监控
-await agent.start()
-```
-
-### 6.4 实时监控
-
-```python
-from valuecell.monitoring import Dashboard
-
-# 创建监控面板
-dashboard = Dashboard(port=1420)
-
-# 添加监控指标
-dashboard.add_metric("pnl")
-dashboard.add_metric("positions")
-dashboard.add_metric("orders")
-
-# 启动
-await dashboard.start()
-```
-
----
-
-## §7 交易所配置详解
-
-### 7.1 Binance
-
-| 配置项 | 说明 |
-|--------|------|
-| **交易所** | Binance (仅国际站) |
-| **合约类型** | USDT 本位永续合约 |
-| **交易对格式** | BTC/USDT |
-| **注意事项** | 确保合约账户有足够 USDT 余额 |
-| **API 设置** | 申请 API，添加 IP 白名单（通过搜索引擎搜索 "My IP" 查看） |
-
-### 7.2 Hyperliquid
-
-| 配置项 | 说明 |
-|--------|------|
-| **保证金货币** | USDC |
-| **认证方式** | 主钱包地址 + API 钱包私钥 |
-| **申请地址** | app.hyperliquid.xyz/API |
-| **交易对格式** | 必须手动调整为 SYMBOL/USDC |
-| **最低交易额** | 10 USDC |
-| **订单类型** | 市价单自动转换为 IoC 限价单 |
-
-### 7.3 OKX
-
-| 配置项 | 说明 |
-|--------|------|
-| **认证信息** | API Key + Secret + Passphrase |
-| **合约类型** | USDT 本位合约 |
-| **交易对格式** | BTC/USDT |
-| **注意** | 需要提供 OKX 账号密码 |
-
----
-
-## §8 数据管理
-
-### 8.1 本地存储结构
-
-| 数据类型 | 存储位置 | 说明 |
-|----------|----------|------|
-| **LanceDB** | 与 .env 同路径 | 智能体知识库 |
-| **Knowledge** | 与 .env 同路径 | 知识目录 |
-| **SQLite** | 与 .env 同路径 | 应用数据库 |
-
-### 8.2 存储路径
-
-**macOS**：
-
-```
-~/Library/Application Support/ValueCell/
-├── lancedb/           # 知识库
-├── .knowledge/        # 知识目录
-└── valuecell.db       # SQLite 数据库
-```
-
-**Linux**：
-
-```
-~/.config/valuecell/
-├── lancedb/
-├── .knowledge/
-└── valuecell.db
-```
-
-**Windows**：
-
-```
-%APPDATA%\ValueCell\
-├── lancedb\
-├── .knowledge\
-└── valuecell.db
-```
-
-### 8.3 数据重置
-
-如长时间没有更新，可以删除本地数据并重新启动：
-
-```bash
-# 删除 LanceDB 目录
-rm -rf ~/Library/Application\ Support/ValueCell/lancedb
-
-# 删除知识目录
-rm -rf ~/Library/Application\ Support/ValueCell/.knowledge
-
-# 删除数据库
-rm ~/Library/Application\ Support/ValueCell/valuecell.db
-```
-
----
-
-## §9 开发扩展
-
-### 9.1 ValueCell SDK
-
-#### 9.1.1 Python SDK
-
-```python
-from valuecell import ValueCellSDK
-
-# 初始化 SDK
-sdk = ValueCellSDK(
-    api_key="your-api-key",
-    base_url="http://localhost:8000"
-)
-
-# 创建研究任务
-result = await sdk.research(symbol="AAPL")
-
-# 创建交易策略
-strategy = await sdk.create_strategy(
-    exchange="binance",
-    strategy="grid",
-    pairs=["BTC/USDT"]
-)
-```
-
-#### 9.1.2 WebSocket 支持
-
-```python
-from valuecell.sdk import WebSocketClient
-
-# 创建 WebSocket 客户端
-client = WebSocketClient("ws://localhost:8000/ws")
-
-# 订阅事件
-client.subscribe("trade.executed")
-client.subscribe("order.filled")
-client.subscribe("position.updated")
-
-# 处理事件
-@client.on("trade.executed")
-async def on_trade(trade):
-    print(f"Trade executed: {trade}")
-
-# 启动
-await client.connect()
-```
-
-### 9.2 插件架构
-
-```python
-from valuecell.plugins import Plugin
-
-class MyCustomPlugin(Plugin):
-    name = "my-custom-plugin"
-    version = "1.0.0"
-
-    async def on_trade(self, trade):
-        # 自定义交易逻辑
-        pass
-
-    async def on_order(self, order):
-        # 自定义订单逻辑
-        pass
-
-# 注册插件
-ValueCellSDK.register_plugin(MyCustomPlugin())
-```
-
-### 9.3 智能体注册
-
-```python
-from valuecell.agents import AgentRegistry
-
-# 注册自定义智能体
-@AgentRegistry.register
-class MyCustomAgent:
-    name = "my-custom-agent"
-    description = "Custom investment research agent"
-
-    async def research(self, symbol):
-        # 自定义研究逻辑
-        pass
-```
-
----
-
-## §10 最佳实践
-
-### 10.1 安全实践
-
-| 实践 | 说明 |
-|------|------|
-| **密钥保管** | 妥善保管 API 密钥，避免泄露 |
-| **本地存储** | 敏感信息仅存储在本地 |
-| **定期轮换** | 定期重置 API 密钥 |
-| **IP 白名单** | 尽量配置交易所 API IP 白名单 |
-| **最小权限** | 仅授予交易所 API 必要的权限 |
-
-### 10.2 交易实践
-
-| 实践 | 说明 |
-|------|------|
-| **仓位管理** | 控制单笔交易仓位不超过 10% |
-| **止损设置** | 始终设置止损单 |
-| **策略测试** | 先在测试网验证策略 |
-| **风险监控** | 实时监控持仓和盈亏 |
-| **多样化** | 不要把所有资金放在一个策略 |
-
-### 10.3 开发实践
-
-| 实践 | 说明 |
-|------|------|
-| **环境隔离** | 开发、测试、生产环境分离 |
-| **日志记录** | 详细记录运行日志 |
-| **错误处理** | 实现完善的错误捕获和处理 |
-| **单元测试** | 为核心功能编写单元测试 |
-| **代码审查** | 提交前进行代码审查 |
-
----
-
-## §11 应用场景
-
-### 11.1 个人投资者
-
-**场景**：帮助个人投资者进行股票研究和交易。
-
-```python
-# 个股研究
-researcher = DeepResearchAgent()
-report = await researcher.research("AAPL")
-
-# 创建交易策略
-strategy = StrategyAgent(
-    exchange="binance",
-    strategy="dca",
-    pairs=["BTC/USDT"],
-    amount=100,
-    frequency="daily"
-)
-await strategy.start()
-```
-
-### 11.2 量化团队
-
-**场景**：为量化团队提供智能体协作框架。
-
-```python
-# 多智能体协作
-team = AgentTeam()
-
-researcher = DeepResearchAgent()
-analyst = AnalystAgent()
-trader = StrategyAgent()
-
-team.add_agent(researcher)
-team.add_agent(analyst)
-team.add_agent(trader)
-
-# 协作流程
-await team.execute("Research and trade BTC")
-```
-
-### 11.3 财富管理
-
-**场景**：为财富管理公司提供智能投顾服务。
-
-```python
-# 财富管理智能体
-wealth_manager = WealthManagementAgent(
-    risk_profile="moderate",
-    investment_horizon="long-term"
-)
-
-# 生成投资建议
-recommendations = await wealth_manager.generate_recommendations(
-    client_id="client-123",
-    goals=["retirement", "education"]
-)
-```
-
----
-
-## §12 常见问题
-
-### Q1: ValueCell 和 TradingAgents 有什么区别？
-
-ValueCell 专注于金融投资场景，原生支持 A 股和加密货币，提供完整的本地存储和交易所集成。TradingAgents 是一个更通用的多智能体框架。
-
-### Q2: 支持中国 A 股交易吗？
-
-是的，ValueCell 产品已上线 A 股深度研究与市场分析，可访问 valuecell.ai 使用。
-
-### Q3: 如何确保资金安全？
-
-- API 密钥仅存储在本地设备
-- 不通过互联网传输敏感信息
-- 建议设置交易所 API IP 白名单
-- 定期轮换 API 密钥
-- 仅授予交易所 API 必要的权限
-
-### Q4: 支持哪些交易所？
-
-主要支持 Binance、Hyperliquid、OKX（均已测试），部分支持 Coinbase、Gate.io、MEXC、Blockchain.com。
-
-### Q5: 如何参与开发？
-
-欢迎开发者加入 Discord 讨论组，交流社区 Roadmap 及未来贡献者权益规划。开发流程及标准详见 CONTRIBUTING.md。
-
----
-
-## §13 总结
-
-### 13.1 核心优势
-
-| 优势 | 说明 |
-|------|------|
-| **金融专注** | 原生支持股票、加密货币投资 |
-| **多智能体** | 专业的研究、策略、新闻智能体团队 |
-| **本地存储** | 敏感信息完全本地托管 |
-| **灵活集成** | 支持多个 LLM 提供商和交易所 |
-| **开源免费** | Apache-2.0 许可证 |
-| **社区驱动** | 欢迎开发者参与共建 |
-
-### 13.2 适用场景
-
-| 场景 | 说明 |
-|------|------|
-| **个人投资** | 股票研究和交易辅助 |
-| **量化交易** | 策略开发和自动化执行 |
-| **财富管理** | 智能投顾服务 |
-| **机构研究** | 团队协作投研平台 |
-
-### 13.3 项目信息
-
-| 项目 | 信息 |
-|------|------|
-| **许可证** | Apache-2.0 |
-| **语言** | Python 3.12+ |
-| **官网** | valuecell.ai |
-| **社区** | Discord、Twitter、YouTube |
-
-### 13.4 相关链接
-
-| 资源 | 链接 |
-|------|------|
-| **GitHub** | https://github.com/ValueCell-ai/valuecell |
-| **官网** | https://valuecell.ai |
-| **Discord** | https://discord.com/invite/84Kex3GGAh |
-| **Twitter** | @valuecell |
-| **YouTube** | Watch on YouTube |
-
----
-
-*文档版本 1.0 | 撰写日期：2026-04-01 | 基于 ValueCell (Apache-2.0)*
+## 文档元信息
+
+- 难度：⭐⭐⭐
+- 类型：技术笔记 / 架构与源码分析
+- 更新日期：2026-04-01
+- 依据来源：ValueCell 官网、README、配置文档与公开源码结构

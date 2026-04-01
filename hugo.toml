@@ -33,6 +33,7 @@ enableRobotsTXT = true
 
   [params.app]
     title = "Text Matrix"
+    svgFavicon = "/favicon.svg"
 
   [params.footer]
     copyright = false

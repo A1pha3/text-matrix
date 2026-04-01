@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="faviconTitle">
+  <title id="faviconTitle">Text Matrix favicon</title>
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f172a" />
+      <stop offset="1" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="grid" x1="10" y1="12" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22d3ee" />
+      <stop offset="1" stop-color="#34d399" />
+    </linearGradient>
+    <linearGradient id="glyph" x1="19" y1="17" x2="44" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fafc" />
+      <stop offset="1" stop-color="#bfdbfe" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)" />
+  <path d="M14 20.5H50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.42" />
+  <path d="M14 30.5H50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.3" />
+  <path d="M14 40.5H50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.42" />
+  <path d="M22.5 14V50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.28" />
+  <path d="M32 14V50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.4" />
+  <path d="M41.5 14V50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.28" />
+  <path d="M18 18.5h28v27H18z" fill="none" stroke="#38bdf8" stroke-opacity="0.18" />
+  <path d="M20 21h24v4h-10v19h-4V25H20z" fill="url(#glyph)" />
+  <path d="M36.5 44V21h4.4l5.1 7.9V21H50v23h-4.2l-5.3-8.3V44z" fill="url(#glyph)" />
+  <circle cx="50" cy="18" r="3" fill="#34d399" opacity="0.9" />
+  <circle cx="14" cy="46" r="2" fill="#22d3ee" opacity="0.8" />
+</svg>
