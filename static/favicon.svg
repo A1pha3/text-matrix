@@ -1,29 +1,58 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="faviconTitle">
   <title id="faviconTitle">Text Matrix favicon</title>
   <defs>
-    <linearGradient id="bg" x1="8" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0f172a" />
+    <linearGradient id="bg" x1="10" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#07111f" />
+      <stop offset="0.55" stop-color="#0c1729" />
       <stop offset="1" stop-color="#111827" />
     </linearGradient>
-    <linearGradient id="grid" x1="10" y1="12" x2="54" y2="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#22d3ee" />
+    <linearGradient id="panel" x1="14" y1="14" x2="50" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f2138" stop-opacity="0.96" />
+      <stop offset="1" stop-color="#0c1628" stop-opacity="0.9" />
+    </linearGradient>
+    <linearGradient id="line" x1="18" y1="20" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fafc" />
+      <stop offset="1" stop-color="#cbd5e1" />
+    </linearGradient>
+    <linearGradient id="matrix" x1="36" y1="19" x2="50" y2="45" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#67e8f9" />
       <stop offset="1" stop-color="#34d399" />
     </linearGradient>
-    <linearGradient id="glyph" x1="19" y1="17" x2="44" y2="46" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#f8fafc" />
-      <stop offset="1" stop-color="#bfdbfe" />
-    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(48 17) rotate(128) scale(24 22)">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.32" />
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0" />
+    </radialGradient>
   </defs>
   <rect width="64" height="64" rx="16" fill="url(#bg)" />
-  <path d="M14 20.5H50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.42" />
-  <path d="M14 30.5H50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.3" />
-  <path d="M14 40.5H50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.42" />
-  <path d="M22.5 14V50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.28" />
-  <path d="M32 14V50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.4" />
-  <path d="M41.5 14V50" stroke="url(#grid)" stroke-width="1.4" stroke-linecap="round" opacity="0.28" />
-  <path d="M18 18.5h28v27H18z" fill="none" stroke="#38bdf8" stroke-opacity="0.18" />
-  <path d="M20 21h24v4h-10v19h-4V25H20z" fill="url(#glyph)" />
-  <path d="M36.5 44V21h4.4l5.1 7.9V21H50v23h-4.2l-5.3-8.3V44z" fill="url(#glyph)" />
-  <circle cx="50" cy="18" r="3" fill="#34d399" opacity="0.9" />
-  <circle cx="14" cy="46" r="2" fill="#22d3ee" opacity="0.8" />
+  <path d="M9 18C18 13 28 12 37 15C45 17 53 24 57 34" fill="none" stroke="#38bdf8" stroke-opacity="0.14" stroke-width="1.2" stroke-linecap="round" />
+  <path d="M7 45C16 37 24 34 35 35C44 36 51 40 57 49" fill="none" stroke="#34d399" stroke-opacity="0.12" stroke-width="1.2" stroke-linecap="round" />
+  <g opacity="0.18" fill="#67e8f9">
+    <circle cx="16" cy="14" r="1.1" />
+    <circle cx="24" cy="18" r="1" />
+    <circle cx="12" cy="28" r="1" />
+    <circle cx="50" cy="14" r="1" />
+    <circle cx="54" cy="24" r="1.1" />
+    <circle cx="11" cy="46" r="1" />
+    <circle cx="20" cy="52" r="1" />
+    <circle cx="49" cy="50" r="1.1" />
+  </g>
+  <rect x="12" y="12" width="40" height="40" rx="12" fill="url(#panel)" stroke="#67e8f9" stroke-opacity="0.18" />
+  <rect x="12" y="12" width="40" height="40" rx="12" fill="url(#glow)" />
+  <circle cx="18" cy="18" r="1.4" fill="#67e8f9" opacity="0.8" />
+  <circle cx="22" cy="18" r="1.4" fill="#f8fafc" opacity="0.55" />
+  <circle cx="26" cy="18" r="1.4" fill="#34d399" opacity="0.75" />
+  <path d="M34 21V43" stroke="#38bdf8" stroke-opacity="0.22" stroke-width="1.5" stroke-linecap="round" />
+  <rect x="18" y="24" width="11" height="3.6" rx="1.8" fill="url(#line)" />
+  <rect x="18" y="31" width="13" height="3.6" rx="1.8" fill="url(#line)" opacity="0.9" />
+  <rect x="18" y="38" width="9" height="3.6" rx="1.8" fill="url(#line)" opacity="0.82" />
+  <rect x="22" y="45" width="8" height="2.6" rx="1.3" fill="#38bdf8" opacity="0.55" />
+  <g fill="url(#matrix)">
+    <rect x="39" y="24" width="4.8" height="4.8" rx="1.3" />
+    <rect x="45" y="24" width="4.8" height="4.8" rx="1.3" opacity="0.62" />
+    <rect x="39" y="30" width="4.8" height="4.8" rx="1.3" opacity="0.7" />
+    <rect x="45" y="30" width="4.8" height="4.8" rx="1.3" />
+    <rect x="39" y="36" width="4.8" height="4.8" rx="1.3" opacity="0.52" />
+    <rect x="45" y="36" width="4.8" height="4.8" rx="1.3" />
+  </g>
+  <rect x="38.2" y="42.5" width="12.6" height="2.6" rx="1.3" fill="#86efac" opacity="0.75" />
 </svg>

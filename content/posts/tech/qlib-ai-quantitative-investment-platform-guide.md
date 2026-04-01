@@ -4,7 +4,7 @@ date: 2026-04-01T14:10:00+08:00
 slug: qlib-ai-quantitative-investment-platform
 categories: ["技术笔记"]
 tags: ["QLib", "量化投资", "机器学习", "微软", "Python", "AI量化"]
-description: "微软开源 AI 量化投资平台 QLib 完全指南，涵盖项目概述、核心特性、架构设计、快速开始、模型库、RD-Agent 等全方位讲解。
+description: "微软开源 AI 量化投资平台 QLib 完全指南，涵盖项目概述、核心特性、架构设计、快速开始、模型库、RD-Agent 等全方位讲解。"
 ---
 
 # QLib：微软 AI 量化投资平台完全指南

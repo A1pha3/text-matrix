@@ -447,6 +447,22 @@ docs/
 
 这部分通常不显眼，但它决定了系统能否真正对接现实世界的交易环境。
 
+### 10.6 源码入口索引
+
+如果你不满足于“知道大概”，而是想直接进入源码定位关键实现，可以优先看下面这些入口。
+
+| 入口 | 主要作用 | 为什么值得先看 |
+| ---- | ---- | ---- |
+| `python/valuecell/agents/research_agent/sources.py` | 研究材料来源组织 | 能直接看到研究智能体到底从哪些渠道取数 |
+| `python/valuecell/agents/common/trading/models.py` | 交易配置与请求模型 | 能建立交易系统的数据契约认知 |
+| `python/valuecell/agents/common/trading/_internal/runtime.py` | 策略运行时创建 | 能看清运行时是如何装配出来的 |
+| `python/valuecell/agents/common/trading/decision/prompt_based/composer.py` | LLM 决策上下文组织 | 能理解模型在系统里的真实职责 |
+| `python/valuecell/agents/common/trading/execution/ccxt_trading.py` | 真实交易执行网关 | 能看清交易所接入与认证差异 |
+| `python/valuecell/agents/common/trading/execution/exchanges.py` | 支持交易所元数据 | 能快速确认内部 ID 与特殊要求 |
+| `frontend/src/types/strategy.ts` | 前端策略类型定义 | 能把 UI 表单与后端数据结构对应起来 |
+
+如果你时间有限，我建议至少先读 `runtime.py`、`composer.py` 和 `ccxt_trading.py`。这三处连起来，基本就能拼出 Strategy Agent 的核心工作方式。
+
 ## §11 开发扩展：哪些地方真的能扩，哪些还不能写死
 
 ### 11.1 当前能确认的扩展点
@@ -589,7 +605,27 @@ docs/
 
 官方文档已经明确建议先用 testnet 或 paper 环境。任何自动交易系统，只要跳过这一步，后果都可能是真实资金损失。
 
-## §15 常见问题
+## §15 事实核查入口与延伸阅读
+
+如果你希望对本文里的判断做二次核验，或者继续深入，建议按下面这组入口继续看。
+
+| 类型 | 入口 | 用途 |
+| ---- | ---- | ---- |
+| 官方仓库主页 | [GitHub 仓库](https://github.com/ValueCell-ai/valuecell) | 核对 README、版本、发布与总体说明 |
+| 官方 README | [README.md](https://github.com/ValueCell-ai/valuecell/blob/main/README.md) | 核对功能边界、交易所状态与路线图 |
+| 中文 README | [README.zh.md](https://github.com/ValueCell-ai/valuecell/blob/main/README.zh.md) | 对照中文描述，避免二次转述偏差 |
+| 配置文档 | [CONFIGURATION_GUIDE.md](https://github.com/ValueCell-ai/valuecell/blob/main/docs/CONFIGURATION_GUIDE.md) | 核对模型、交易所和运行参数 |
+| 交易框架文档 | [trading README](https://github.com/ValueCell-ai/valuecell/blob/main/python/valuecell/agents/common/trading/README.md) | 核对运行时结构与扩展点 |
+| 官方网站 | [valuecell.ai](https://valuecell.ai) | 区分产品形态与源码形态 |
+
+更稳妥的阅读策略是：
+
+1. 先看 README，确认官方主叙事。
+2. 再看配置文档，确认可操作约束。
+3. 再看交易框架与研究源码，确认实现细节。
+4. 最后再回头看官网，区分产品展示与开源仓库现状。
+
+## §16 常见问题
 
 ### Q1：ValueCell 更像研究平台还是交易平台？
 
@@ -607,7 +643,7 @@ docs/
 
 如果你的标准是“可研究、可实验、可扩展”，它已经有相当强的参考价值；如果你的标准是“全链路、全市场、全生态全部成熟稳定”，目前公开资料还不能支持这样的结论。
 
-## §16 总结
+## §17 总结
 
 如果要用一句话概括 ValueCell，我会这样定义：
 
