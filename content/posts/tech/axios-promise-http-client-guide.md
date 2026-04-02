@@ -1,0 +1,846 @@
+---
+title: "Axios：Promise HTTP 客户端完全指南"
+date: 2026-04-03T01:25:00+08:00
+slug: "axios-promise-http-client-guide"
+description: "Axios是基于Promise的HTTP客户端，支持浏览器和Node.js双环境。本文详细介绍Axios的安装配置、基本使用、拦截器、错误处理、请求取消、数据序列化等核心功能，以及最佳实践和常见问题解决方案。"
+draft: false
+categories: ["技术笔记"]
+tags: ["JavaScript", "HTTP", "Axios", "Node.js", "前端开发"]
+---
+
+# Axios：Promise HTTP 客户端完全指南
+
+## 学习目标
+
+学完本指南后，你将掌握以下核心技能：
+
+1. **理解 Axios 的核心概念**：理解什么是 Promise-based HTTP 客户端、为什么选择 Axios、以及它与 fetch API 的区别
+2. **掌握 Axios 的安装和配置**：能够根据不同环境（浏览器、Node.js）选择合适的安装方式，并完成基础配置
+3. **熟练使用 Axios 发送各类请求**：掌握 GET、POST、PUT、PATCH、DELETE 等请求方法，以及如何传递参数和请求体
+4. **理解和使用拦截器**：掌握请求拦截器和响应拦截器的使用场景和用法
+5. **处理错误和超时**：理解 Axios 的错误处理机制，能够正确处理网络错误和超时情况
+6. **掌握取消请求的方法**：理解 AbortController 和 CancelToken 的用法
+7. **理解请求配置选项**：掌握常用的请求配置项，理解配置优先级的规则
+8. **二次开发和扩展**：能够创建 Axios 实例、编写自定义适配器、实现请求限流等功能
+
+---
+
+## 一，项目概述
+
+### 1.1 Axios 是什么
+
+**Axios** 是一个基于 Promise 的 HTTP 客户端，用于浏览器和 Node.js 环境。它提供了简洁易用的 API，能够轻松发送异步 HTTP 请求。
+
+**官方网站**：[https://axios-http.com](https://axios-http.com)
+**GitHub 仓库**：[https://github.com/axios/axios](https://github.com/axios/axios)
+
+### 1.2 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| 浏览器请求 | 从浏览器使用 XMLHttpRequest 发送请求 |
+| Node.js 请求 | 在 Node.js 环境中发送 http 请求 |
+| Promise API | 完整支持 Promise API，async/await 友好 |
+| 拦截器 | 拦截请求和响应，可添加自定义逻辑 |
+| 数据转换 | 自动转换请求和响应数据 |
+| 请求取消 | 支持使用 AbortController 取消请求 |
+| 自动 JSON 处理 | 自动序列化/解析 JSON 数据 |
+| 表单序列化 | 支持 application/x-www-form-urlencoded 和 multipart/form-data |
+| XSRF 防护 | 内置跨站请求伪造防护机制 |
+
+### 1.3 仓库统计
+
+| 指标 | 数值 |
+|------|------|
+| GitHub Stars | 109k |
+| Forks | 11.6k |
+| Commits | 1,888 |
+| Issues | 187 |
+| Pull Requests | 168 |
+| 许可证 | MIT |
+
+### 1.4 Axios vs fetch API
+
+| 对比项 | Axios | fetch API |
+|--------|-------|-----------|
+| JSON 自动处理 | ✅ 自动 | ❌ 需要手动调用 .json() |
+| 请求取消 | ✅ 简单易用 | ⚠️ AbortController（较复杂） |
+| 超时控制 | ✅ 内置 timeout 配置 | ❌ 需要额外实现 |
+| 拦截器 | ✅ 简洁易用 | ❌ 需要包装 fetch |
+| 错误处理 | ✅ 统一处理 4xx/5xx | ⚠️ 仅在网络错误时 reject |
+| 浏览器兼容 | ✅ 广泛兼容 | ⚠️ 现代浏览器 |
+| 请求/响应转换 | ✅ 易于配置 | ❌ 需要手动处理 |
+
+---
+
+## 二，安装与环境配置
+
+### 2.1 支持的环境
+
+**浏览器支持**：Chrome、Firefox、Safari、Opera、Edge（最新版）
+
+**Node.js 版本**：Node.js 环境直接支持
+
+### 2.2 安装方式
+
+**使用 npm**：
+
+```bash
+npm install axios
+```
+
+**使用 yarn**：
+
+```bash
+yarn add axios
+```
+
+**使用 pnpm**：
+
+```bash
+pnpm add axios
+```
+
+**使用 bun**：
+
+```bash
+bun add axios
+```
+
+**使用 bower**（已过时）：
+
+```bash
+bower install axios
+```
+
+### 2.3 CDN 引入
+
+**使用 jsDelivr（推荐）**：
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/axios@1.13.2/dist/axios.min.js"></script>
+```
+
+**使用 unpkg**：
+
+```html
+<script src="https://unpkg.com/axios@1.13.2/dist/axios.min.js"></script>
+```
+
+### 2.4 ESM 导入方式
+
+**现代 ES6 导入**：
+
+```javascript
+import axios, { isCancel, AxiosError } from 'axios';
+```
+
+**默认导出方式**：
+
+```javascript
+import axios from 'axios';
+console.log(axios.isCancel('something'));
+```
+
+**CommonJS 导入**（Node.js 传统方式）：
+
+```javascript
+const axios = require('axios');
+console.log(axios.isCancel('something'));
+```
+
+---
+
+## 三，基本使用
+
+### 3.1 GET 请求
+
+**基础 GET 请求**：
+
+```javascript
+import axios from 'axios';
+
+try {
+  const response = await axios.get('/user?ID=12345');
+  console.log(response);
+} catch (error) {
+  console.error(error);
+}
+```
+
+**带参数的 GET 请求**：
+
+```javascript
+const response = await axios.get('/user', {
+  params: {
+    ID: 12345,
+    name: 'John'
+  }
+});
+```
+
+### 3.2 POST 请求
+
+**基础 POST 请求**：
+
+```javascript
+const response = await axios.post('/user', {
+  firstName: 'Fred',
+  lastName: 'Flintstone'
+});
+console.log(response);
+```
+
+### 3.3 并发请求
+
+```javascript
+function getUserAccount() {
+  return axios.get('/user/12345');
+}
+
+function getUserPermissions() {
+  return axios.get('/user/12345/permissions');
+}
+
+Promise.all([getUserAccount(), getUserPermissions()])
+  .then(function (results) {
+    const acct = results[0];
+    const perm = results[1];
+    console.log('Account:', acct);
+    console.log('Permissions:', perm);
+  });
+```
+
+### 3.4 async/await 用法
+
+```javascript
+async function getUser() {
+  try {
+    const response = await axios.get('/user?ID=12345');
+    console.log(response);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+getUser();
+```
+
+> **注意**：async/await 是 ECMAScript 2017 的一部分，Internet Explorer 和旧版浏览器不支持，使用时需注意兼容性。
+
+---
+
+## 四，Axios API 详解
+
+### 4.1 请求方式
+
+Axios 提供了多种请求方式：
+
+```javascript
+// 通用请求方式
+axios({
+  method: 'post',
+  url: '/user/12345',
+  data: {
+    firstName: 'Fred',
+    lastName: 'Flintstone'
+  }
+});
+
+// GET 请求
+axios.get('/user/12345');
+
+// POST 请求
+axios.post('/user', {
+  firstName: 'Fred',
+  lastName: 'Flintstone'
+});
+
+// DELETE 请求
+axios.delete('/user/12345');
+
+// PUT 请求
+axios.put('/user/12345', {
+  firstName: 'Fred'
+});
+
+// PATCH 请求
+axios.patch('/user/12345', {
+  firstName: 'Fred'
+});
+
+// HEAD 请求
+axios.head('/user/12345');
+
+// OPTIONS 请求
+axios.options('/user/12345');
+```
+
+### 4.2 请求配置
+
+**常用配置项**：
+
+```javascript
+const response = await axios({
+  baseURL: 'https://api.example.com',
+  timeout: 5000,
+  headers: {
+    'X-Custom-Header': 'foobar',
+    'Content-Type': 'application/json'
+  },
+  params: {
+    ID: 12345
+  },
+  auth: {
+    username: 'admin',
+    password: 'secret'
+  }
+});
+```
+
+### 4.3 配置项详解
+
+| 配置项 | 类型 | 说明 |
+|--------|------|------|
+| url | string | 请求 URL，必填 |
+| method | string | 请求方法，默认为 GET |
+| baseURL | string | 基础 URL，将自动拼接在 url 前 |
+| timeout | number | 超时时间（毫秒），默认为 0（无超时） |
+| headers | object | 自定义请求头 |
+| params | object | URL 参数，会自动序列化为 ?key=value |
+| data | any | 请求体数据 |
+| auth | object | HTTP Basic 认证 {username, password} |
+| responseType | string | 响应类型：json/blob/document/stream/text |
+| withCredentials | boolean | 是否携带跨域 cookies |
+| xsrfToken | boolean | 是否启用 XSRF 防护 |
+
+---
+
+## 五，创建 Axios 实例
+
+### 5.1 为什么需要实例
+
+创建实例可以设置默认配置，适用于需要多个不同配置的 API 场景：
+
+```javascript
+const apiClient = axios.create({
+  baseURL: 'https://api.example.com',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// 使用实例发送请求
+const response = await apiClient.get('/users');
+```
+
+### 5.2 实例方法
+
+实例拥有与 axios 相同的方法别名：
+
+```javascript
+const instance = axios.create({
+  baseURL: 'https://api.example.com'
+});
+
+// 等价于 axios.get()
+instance.get('/users');
+
+// 等价于 axios.post()
+instance.post('/users', { name: 'John' });
+
+// 获取完整 URL
+const uri = instance.getUri({ params: { ID: 123 } });
+// -> https://api.example.com/users?ID=123
+```
+
+---
+
+## 六，拦截器
+
+### 6.1 请求拦截器
+
+请求拦截器用于在请求发送前修改配置或添加通用逻辑：
+
+```javascript
+axios.interceptors.request.use(
+  function (config) {
+    // 在发送请求之前做些什么
+    console.log('请求发送:', config.url);
+    return config;
+  },
+  function (error) {
+    // 对请求错误做些什么
+    return Promise.reject(error);
+  }
+);
+```
+
+### 6.2 响应拦截器
+
+响应拦截器用于在处理响应前统一处理：
+
+```javascript
+axios.interceptors.response.use(
+  function (response) {
+    // 对响应数据做点什么
+    console.log('响应成功:', response.status);
+    return response;
+  },
+  function (error) {
+    // 对响应错误做点什么
+    console.error('响应错误:', error.message);
+    return Promise.reject(error);
+  }
+);
+```
+
+### 6.3 移除拦截器
+
+```javascript
+const myInterceptor = axios.interceptors.request.use(function () {/*...*/});
+
+// 移除拦截器
+axios.interceptors.request.eject(myInterceptor);
+```
+
+### 6.4 多个拦截器
+
+多个请求拦截器按添加顺序执行（先添加先执行）：
+
+```javascript
+axios.interceptors.request.use(fn1, fn2); // 先执行 fn1
+axios.interceptors.request.use(fn3);     // 后执行 fn3
+// fn1 -> fn3 -> 请求发送
+```
+
+---
+
+## 七，错误处理
+
+### 7.1 错误类型
+
+```javascript
+async function fetchData() {
+  try {
+    const response = await axios.get('/user/12345');
+    console.log(response.data);
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      console.log('请求被取消');
+    } else if (error.code === 'ECONNABORTED') {
+      console.log('请求超时');
+    } else if (error.response) {
+      // 服务器返回错误状态码
+      console.log('服务器错误:', error.response.status);
+      console.log('错误数据:', error.response.data);
+    } else {
+      // 请求配置错误或网络问题
+      console.log('请求错误:', error.message);
+    }
+  }
+}
+```
+
+### 7.2 获取错误信息
+
+```javascript
+try {
+  await axios.get('/user/12345');
+} catch (error) {
+  if (error.response) {
+    console.log('状态码:', error.response.status);
+    console.log('响应数据:', error.response.data);
+    console.log('请求配置:', error.config);
+  } else {
+    console.log('错误信息:', error.message);
+  }
+}
+```
+
+---
+
+## 八，请求取消
+
+### 8.1 AbortController（推荐方式）
+
+现代浏览器原生支持的方式：
+
+```javascript
+const controller = new AbortController();
+
+async function fetchData() {
+  try {
+    const response = await axios.get('/user/12345', {
+      signal: controller.signal
+    });
+    console.log(response);
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      console.log('请求被取消');
+    } else {
+      console.error(error);
+    }
+  }
+}
+
+// 取消请求
+controller.abort();
+```
+
+### 8.2 取消多个请求
+
+```javascript
+const controller = new AbortController();
+
+Promise.all([
+  axios.get('/user/1', { signal: controller.signal }),
+  axios.get('/user/2', { signal: controller.signal }),
+  axios.get('/user/3', { signal: controller.signal })
+]).then(function (results) {
+  console.log(results);
+});
+
+// 批量取消
+controller.abort();
+```
+
+---
+
+## 九，数据序列化
+
+### 9.1 URLSearchParams
+
+```javascript
+const params = new URLSearchParams();
+params.append('username', 'john');
+params.append('password', 'secret');
+
+await axios.post('/login', params);
+```
+
+### 9.2 自动序列化
+
+Axios v1.x 支持自动将对象序列化为 URL 编码格式：
+
+```javascript
+await axios.post('/user', {
+  username: 'john',
+  password: 'secret',
+  // 自动序列化为 username=john&password=secret
+}, {
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  }
+});
+```
+
+### 9.3 FormData 上传
+
+```javascript
+const formData = new FormData();
+formData.append('file', fileObject);
+formData.append('name', 'my-file');
+
+await axios.post('/upload', formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data'
+  }
+});
+```
+
+### 9.4 自动 FormData 序列化
+
+Axios 支持直接将对象转换为 FormData：
+
+```javascript
+await axios.post('/upload', {
+  name: 'my-file',
+  file: fileObject
+}, {
+  headers: {
+    'Content-Type': 'multipart/form-data'
+  }
+});
+```
+
+---
+
+## 十，配置默认值
+
+### 10.1 全局默认值
+
+```javascript
+axios.defaults.baseURL = 'https://api.example.com';
+axios.defaults.timeout = 5000;
+axios.defaults.headers.common['Authorization'] = 'Bearer token';
+```
+
+### 10.2 实例默认值
+
+```javascript
+const api = axios.create({
+  baseURL: 'https://api.example.com'
+});
+
+api.defaults.timeout = 10000;
+```
+
+### 10.3 配置优先级
+
+配置项优先级从高到低：
+
+1. **请求的 config**
+2. **实例的 defaults**
+3. **全局的 defaults**
+
+```javascript
+// 全局设置 timeout 为 5000
+axios.defaults.timeout = 5000;
+
+// 实例设置 timeout 为 1000
+const api = axios.create();
+api.defaults.timeout = 1000;
+
+// 此次请求设置 timeout 为 2000（优先）
+api.get('/user', { timeout: 2000 });
+// 此次请求使用 2000
+```
+
+---
+
+## 十一，速率限制
+
+### 11.1 请求间隔控制
+
+```javascript
+class RateLimiter {
+  constructor(maxRequests, intervalMs) {
+    this.requests = [];
+    this.maxRequests = maxRequests;
+    this.intervalMs = intervalMs;
+  }
+
+  async execute(fn) {
+    const now = Date.now();
+    // 清理过期的请求记录
+    this.requests = this.requests.filter(t => now - t < this.intervalMs);
+
+    if (this.requests.length >= this.maxRequests) {
+      const oldest = this.requests[0];
+      const waitTime = this.intervalMs - (now - oldest);
+      await new Promise(r => setTimeout(r, waitTime));
+    }
+
+    this.requests.push(now);
+    return fn();
+  }
+}
+
+const limiter = new RateLimiter(5, 1000); // 1秒最多5个请求
+
+for (const id of userIds) {
+  await limiter.execute(() => axios.get(`/user/${id}`));
+}
+```
+
+---
+
+## 十二，最佳实践
+
+### 12.1 统一错误处理
+
+```javascript
+// 创建封装函数
+async function apiRequest(method, url, data = null, config = {}) {
+  try {
+    const response = await axios({
+      method,
+      url,
+      data,
+      ...config
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    if (error.response) {
+      return {
+        success: false,
+        status: error.response.status,
+        message: error.response.data?.message || '服务器错误'
+      };
+    } else if (error.request) {
+      return {
+        success: false,
+        message: '网络连接失败'
+      };
+    } else {
+      return {
+        success: false,
+        message: error.message
+      };
+    }
+  }
+}
+
+// 使用
+const result = await apiRequest('get', '/users');
+if (result.success) {
+  console.log(result.data);
+} else {
+  console.error(result.message);
+}
+```
+
+### 12.2 请求重试机制
+
+```javascript
+axios.interceptors.response.use(
+  response => response,
+  async error => {
+    const config = error.config;
+
+    // 只重试网络错误和 5xx 错误
+    if (!error.response && !config._retry) {
+      config._retry = 0;
+    }
+
+    if (config._retry < 3) {
+      config._retry++;
+      await new Promise(r => setTimeout(r, 1000 * config._retry));
+      return axios(config);
+    }
+
+    return Promise.reject(error);
+  }
+);
+```
+
+### 12.3 请求日志
+
+```javascript
+axios.interceptors.request.use(config => {
+  console.group(`🚀 ${config.method?.toUpperCase()} ${config.url}`);
+  console.log('参数:', config.params);
+  console.log('数据:', config.data);
+  console.log('时间:', new Date().toISOString());
+  console.groupEnd();
+  return config;
+});
+
+axios.interceptors.response.use(
+  response => {
+    console.group(`✅ ${response.status} ${response.config.url}`);
+    console.log('响应:', response.data);
+    console.groupEnd();
+    return response;
+  },
+  error => {
+    console.group(`❌ ${error.config?.url}`);
+    console.error('错误:', error.message);
+    console.groupEnd();
+    return Promise.reject(error);
+  }
+);
+```
+
+---
+
+## 十三，常见问题
+
+### Q1：Axios 和 fetch 哪个更好？
+
+**取决于使用场景**：
+
+- **选择 Axios**：需要简洁的 API、良好的错误处理、内置拦截器、请求取消、JSON 自动处理
+- **选择 fetch**：项目不想引入额外依赖、现代浏览器环境、需要更底层的控制
+
+### Q2：如何处理 CORS 跨域？
+
+Axios 本身不处理 CORS，CORS 需要后端配置。如果遇到 CORS 问题：
+
+1. 确认后端设置了正确的 `Access-Control-Allow-Origin` 头
+2. 使用代理服务器转发请求
+3. 配置 `withCredentials: true` 发送跨域 cookies
+
+### Q3：如何处理文件下载？
+
+```javascript
+// 浏览器端文件下载
+async function downloadFile(url, filename) {
+  const response = await axios.get(url, {
+    responseType: 'blob'
+  });
+
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([response.data]));
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+```
+
+### Q4：如何处理大文件上传？
+
+```javascript
+const formData = new FormData();
+formData.append('file', largeFile);
+
+// 使用 onUploadProgress 监控进度
+await axios.post('/upload', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+  onUploadProgress: (progressEvent) => {
+    const percentCompleted = Math.round(
+      (progressEvent.loaded * 100) / progressEvent.total
+    );
+    console.log(`上传进度: ${percentCompleted}%`);
+  }
+});
+```
+
+### Q5：如何设置代理？
+
+```javascript
+const proxyAgent = new https-proxyagent('http://proxy-server:8080');
+
+axios.get('/user', {
+  httpAgent: proxyAgent,  // Node.js 环境
+  httpsAgent: proxyAgent
+});
+```
+
+---
+
+## 十四，总结
+
+### 核心要点
+
+1. **Axios 是基于 Promise 的 HTTP 客户端**，同时支持浏览器和 Node.js 环境
+2. **安装简单**：支持 npm、yarn、pnpm、bun 等包管理器，也可用 CDN 引入
+3. **API 设计优雅**：支持请求方法别名（get、post、put 等）和通用请求方式
+4. **拦截器强大**：可以全局拦截请求和响应，统一添加认证、日志等逻辑
+5. **错误处理完善**：区分网络错误和服务器错误，isCancel 判断请求是否被取消
+6. **配置灵活**：支持全局默认配置、实例配置、请求级配置，优先级明确
+7. **生态丰富**：拥有大量配套工具和中间件
+
+### 生态现状
+
+Axios 是目前最流行的 HTTP 客户端库之一，npm 周下载量超过数千万次。它被广泛应用于：
+
+- 前端框架（React、Vue、Angular）
+- 移动端开发（React Native、Ionic）
+- Node.js 服务端
+- Electron 桌面应用
+
+### 相关资源
+
+| 资源 | 链接 |
+|------|------|
+| 官方文档 | [https://axios-http.com/docs/intro](https://axios-http.com/docs/intro) |
+| GitHub | [https://github.com/axios/axios](https://github.com/axios/axios) |
+| npm | [https://www.npmjs.com/package/axios](https://www.npmjs.com/package/axios) |
+| 官方博客 | [https://axios-http.com/blog](https://axios-http.com/blog) |
+
+---
+
+🦞 文档版本：2026-04-03 | Axios 版本：v1.x | 来源：[GitHub](https://github.com/axios/axios)
