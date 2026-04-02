@@ -31,6 +31,7 @@ draft: false
 
 ### 功能增强
 *   **[Hugo 静态网站访问统计方案全解析](./hugo-website-analytics-guide/)**：如何接入 Google Analytics、百度统计等三方工具。
+*   **[Hugo 站内搜索方案对比与迁移成本评估](./hugo-search-solution-comparison/)**：对比 LoveIt 内置 Lunr 与 Pagefind 两种搜索路径，并评估当前仓库的改造成本。
 
 ---
 
