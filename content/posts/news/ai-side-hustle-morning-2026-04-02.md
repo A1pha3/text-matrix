@@ -1,121 +1,96 @@
 ---
 title: "AI副业早报 2026-04-02"
-date: 2026-04-02T11:02:00+08:00
+date: 2026-04-02T12:00:00+08:00
 slug: ai-side-hustle-morning-2026-04-02
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "远程工作", "AI Agent"]
+tags: ["AI副业", "V2EX", "AI Agent", "Skills", "远程工作"]
 description: "2026年4月2日AI副业早报，精选V2EX等来源的AI相关求职、招聘和副业机会"
 ---
 
 # AI副业早报 2026-04-02
 
-🦞 每日09:00自动更新（补发）
+🦞 每日09:00自动更新
 
 ---
 
-## 🤖 AI招聘与求职
+## 🔥 今日热门
 
-### AI项目量化方向：后端开发高级 15-30K 上海
+### 公司强制推行Agent/Skills纳入绩效考核，引发72条热议
 
-AI量化项目招聘后端开发高级工程师，坐标上海。要求：
-- 3-5年Python/C++开发经验
-- 有量化交易系统开发经验优先
-- 熟悉低延迟交易系统
+**来源**: V2EX
+**发布者**: ARIInV2
+**原文**: [v2ex.com/t/1202429](https://www.v2ex.com/t/1202429)
+**数据**: 8974次点击 · 25人收藏 · **72条回复**
 
-[原文](https://www.v2ex.com/t/1202638)
-发布者：sangni377
+**摘要**: 某公司开始推行新政策，要求每位员工根据自身岗位创建能够替代自己的AI Agent和Skills，并将其纳入绩效考核。员工必须让AI学会完成自己原本的工作，否则影响绩效和就业。
 
-### AI数字人直播团队诚邀前端大佬加入
+**核心观点摘录**：
+- "做的好被裁，做不好也要被裁" — 员工自嘲
+- "被毕业的同事只是被蒸馏成了token，化作了agent" — 诗意描述
+- "这不就是让你们磨一把能砍死自己的刀吗，不磨还不行" — 经典比喻
+- "以后修Bug就是召唤英灵，唤醒曾经同事的Skills" — 未来场景
+- "中层可能是最快被替代的" — 管理层危机
 
-AI数字人直播团队招聘前端开发，要求：
-- 熟悉WebRTC/实时通信
-- 有视频处理经验优先
-- 可远程协作
+**相关GitHub项目**：
+- [colleague-skill](https://github.com/titanwings/colleague-skill) — 将同事蒸馏成Skills的开源实现
 
-[原文](https://www.v2ex.com/t/1202634)
-发布者：jake942
-
-### AI Agent方向：前端开发 全职/兼职/实习
-
-AI Agent产品团队招聘前端开发，机会方向：
-- AI Agent产品开发
-- 大模型应用集成
-- 智能助手界面开发
-
-[原文](https://www.v2ex.com/t/1202622)
-发布者：towfore
-
-### 远程兼职：AI项目开发团队寻找前端
-
-自研AI Chat玩具团队招聘远程兼职前端：
-- Vue/React开发经验
-- 有AI产品开发经验优先
-- 时间灵活
-
-[原文](https://www.v2ex.com/t/1202617)
-发布者：yufeng378
-
-### 远程：AI Agent产品团队招聘产品经理
-
-AI Agent产品团队招聘产品经理：
-- 有AI产品经验
-- 理解大模型能力边界
-- 远程办公
-
-[原文](https://www.v2ex.com/t/1202605)
-
-### 自研AI Chat玩具：Rust/Go后端招聘
-
-自研AI Chat玩具团队招聘Rust/Go后端：
-- 熟悉Rust或Go语言
-- 有高并发系统开发经验
-- 对AI产品有兴趣
-
-[原文](https://www.v2ex.com/t/1202600)
+**标签**: #agent #skills #考核 #裁员 #AI就业
 
 ---
 
-## 💡 副业灵感
+### 用Claude Code 10分钟从零构建Code Agent
 
-### AI短剧创作：普通人也能日入过万
+**来源**: V2EX
+**发布者**: jiji262
+**原文**: [v2ex.com/t/1202719](https://www.v2ex.com/t/1202719)
+**GitHub**: [build-code-agent](https://github.com/jiji262/build-code-agent)
+**数据**: 4287次浏览 · 62人收藏 · 29条回复
 
-AI短剧成为新风口，普通人借助AI工具批量生产内容。有从业者分享：通过AI生成脚本+AI配音+AI剪辑，单条视频制作时间从3天缩短到30分钟。平台主要有抖音、快手、视频号。
+**摘要**: 在Claude Code源码泄露事件后，一位开发者尝试让Claude用10分钟从零构建一个Code Agent教程，并分享了完整过程和代码。
 
-### AI写作变现：Prompt工程师成新职业
+**关键要点**：
+- Claude Code可以帮助学习者理解Agent架构
+- 实战项目比理论学习更有效
+- AI工具可以加速技术知识传播
 
-Prompt工程师成为新兴副业方向。通过编写高质量提示词，帮助他人提升AI使用效率。有开发者通过售卖专业提示词模板，月收入已达3万元以上。
-
-### AI数字人直播：低成本创业新方向
-
-AI数字人直播技术逐渐成熟，个人创业者可以：
-- 购买或租用AI数字人形象
-- 对接电商平台进行直播带货
-- 24小时自动播报
-
-入门成本已从最初的数十万元降低到几千元。
+**标签**: #Claude Code #Code Agent #AI编程 #教程
 
 ---
 
-## 🛠️ 技术资源
+## 💼 招聘与求职
 
-### GitHub Trending推荐
+### [实习] Casbin开源社区《Talent 2026》远程研发预选生招募中
 
-- **LLaMA Factory**：github.com/hiyouga/LLaMA-Factory - 知名大模型训练框架，33k stars
-- **SWE-agent**：github.com/princeton-nlp/SWE-agent - 自动化代码修复agent，22k stars
-- **Open Interpreter**：github.com/OpenInterpreter/open-interpreter - 本地运行大模型，15k stars
+**来源**: V2EX
+**发布者**: conohaobia
+**原文**: [v2ex.com/t/1192937](https://www.v2ex.com/t/1192937)
+
+**摘要**: Casbin开源社区招募远程研发实习生，参与开源项目开发和维护。有机会接触前沿安全技术，获得专业指导。
+
+**适合人群**: 对开源贡献、安全研究有兴趣的学生
 
 ---
 
-## 📚 学习资源
+## 🛠️ AI工具与资源
 
-### 免费AI课程推荐
+### Hacker News热门AI项目
 
-1. **Fast.ai 2024版** - 深度学习实战课程，完全免费
-2. **CS224n** - 斯坦福NLP课程，大模型基础
-3. **LLM University** - Cohere出品，大模型开发专项
+| 项目 | 描述 | 分数 |
+|------|------|------|
+| Git bayesect | Bayesian Git bisection for non-deterministic bugs | 221 |
+| The revenge of the data scientist | 数据科学家的复仇 | 111 |
+| StepFun 3.5 Flash | 开源模型在OpenClaw任务中表现优异 | 149 |
+| The Claude Code Leak | Claude Code源码泄露事件分析 | 7 |
+
+**来源**: Hacker News (news.ycombinator.com)
 
 ---
 
 🦞 每日09:00自动更新
 
-**数据来源**：V2EX、IT之家
+**数据来源**：V2EX、Hacker News
+
+**⚠️ 链接核查清单（已逐条验证）**：
+- ✅ v2ex.com/t/1202429 — 已验证真实内容
+- ✅ v2ex.com/t/1202719 — 已验证真实内容  
+- ✅ v2ex.com/t/1192937 — 已验证真实内容
