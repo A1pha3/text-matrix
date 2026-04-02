@@ -170,7 +170,7 @@ feishu_doc(action=append, doc_token="{文档ID}", content="{markdown内容}")
 
 ### 4.3 更新发布索引
 
-编辑 `~/.openclaw/workspace/memory/publish-index.md`，添加一行：
+编辑 `~/.openclaw/workspace/GitHub/text-matrix/docs/memory/publish-index.md`，添加一行：
 
 ```markdown
 | **{项目名}** | {owner}/{repo} | {Stars} | {slug}.md | {commit hash} | {飞书文档ID} | {日期} |
@@ -196,7 +196,7 @@ feishu_doc(action=append, doc_token="{文档ID}", content="{markdown内容}")
 
 ### 发布索引位置
 
-`~/.openclaw/workspace/memory/publish-index.md`
+`~/.openclaw/workspace/GitHub/text-matrix/docs/memory/publish-index.md`
 
 ### cn-doc-writer 位置
 

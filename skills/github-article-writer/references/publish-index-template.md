@@ -28,4 +28,4 @@
 
 1. **按 Stars 数量排序**：Stars 多的在上，少的在下
 2. **同一项目多次发布**：只更新对应的行，不新增
-3. **文件路径**：`~/.openclaw/workspace/memory/publish-index.md`
+3. **文件路径**：`~/.openclaw/workspace/GitHub/text-matrix/docs/memory/publish-index.md`
