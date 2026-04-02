@@ -2,6 +2,8 @@
 title: "Everything Claude Code 完全指南"
 date: 2026-04-02T07:35:00+08:00
 slug: everything-claude-code-comprehensive-guide
+aliases:
+  - /posts/tech/everything-claude-code-comprehensive-guide/
 categories: ["技术笔记"]
 tags: ["Claude Code", "AI编程", "Anthropic", "工具使用", "工作效率"]
 description: "Everything Claude Code 是 GitHub 上 2.8k Stars 的 Claude Code 全面指南仓库，涵盖安装配置、核心概念、进阶用法、自定义扩展等内容，帮助开发者从入门到精通。"

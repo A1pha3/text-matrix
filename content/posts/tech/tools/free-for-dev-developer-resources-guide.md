@@ -1,6 +1,8 @@
 ---
 title: "free-for-dev：开发者免费资源大全完全指南"
 slug: "free-for-dev-developer-resources-guide"
+aliases:
+  - /posts/tech/free-for-dev-developer-resources-guide/
 date: 2026-03-31T14:15:00+08:00
 categories: ["技术笔记"]
 tags: ["free-for-dev", "开发者资源", "免费服务", "Freemium", "开发工具"]

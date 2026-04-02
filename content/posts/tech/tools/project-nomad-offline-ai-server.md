@@ -2,6 +2,8 @@
 title: "Project N.O.M.A.D.：离线优先的 AI 知识与教育服务器从入门到精通"
 date: 2026-03-28T16:30:00+08:00
 slug: "project-nomad-offline-ai-server"
+aliases:
+  - /posts/tech/project-nomad-offline-ai-server/
 description: "深度解析 Project N.O.M.A.D.：离线优先 AI 知识服务器，Ollama 本地 LLM、Kiwix 离线百科、Kolibri 教育平台、ProtoMaps 离线地图、Docker 容器化，详解原理、安装、配置与安全。"
 draft: false
 categories: ["技术笔记"]

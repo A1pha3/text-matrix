@@ -2,6 +2,8 @@
 title: "全球通用智能体竞争报告深度解读：通用 Agent 的真正战场，已经从模型切到任务交付"
 date: 2026-03-30T22:32:08+08:00
 slug: "general-agent-competition-task-delivery-analysis"
+aliases:
+  - /posts/tech/general-agent-competition-task-delivery-analysis/
 description: "基于《全球通用智能体竞争报告》原文，系统拆解 Manus、Genspark、Flowith、Operator 与 Devin 的分层关系，解释通用 Agent 为何进入以任务交付、工作台入口和治理能力为核心的新竞争阶段。"
 draft: false
 categories: ["技术笔记"]

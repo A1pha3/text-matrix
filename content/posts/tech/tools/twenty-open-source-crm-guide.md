@@ -2,6 +2,8 @@
 title: "Twenty：开源CRM的完整技术指南与最佳实践"
 date: 2026-03-29T16:14:00+08:00
 slug: "twenty-open-source-crm-guide"
+aliases:
+  - /posts/tech/twenty-open-source-crm-guide/
 description: "Twenty 是 42.6k Stars 的开源 CRM 平台，Salesforce 的现代替代品。本文全面介绍其功能架构、技术栈、权限系统、工作流、API 集成和最佳实践。"
 draft: false
 categories: ["技术笔记"]

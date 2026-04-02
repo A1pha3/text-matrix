@@ -2,6 +2,8 @@
 title: "NeMo Skills：LLM 技能提升流水线完全指南"
 date: 2026-04-01T16:50:00+08:00
 slug: nemo-skills-llm-skill-pipeline-guide
+aliases:
+  - /posts/tech/nemo-skills-llm-skill-pipeline-guide/
 categories: ["技术笔记"]
 tags: ["NeMo Skills", "LLM", "NVIDIA", "合成数据", "模型训练", "评估基准"]
 description: "NVIDIA 开源 LLM 技能提升工具集 NeMo Skills 完全指南，涵盖合成数据生成、模型训练、基准评估等全方位讲解。"

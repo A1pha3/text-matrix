@@ -2,6 +2,8 @@
 title: "CZSC：缠中说禅技术分析工具完全指南"
 date: 2026-04-02T01:34:00+08:00
 slug: czsc-chanlun-technical-analysis-tool-guide
+aliases:
+  - /posts/tech/czsc-chanlun-technical-analysis-tool-guide/
 categories: ["技术笔记"]
 tags: ["CZSC", "缠论", "量化交易", "缠中说禅", "技术分析", "Python"]
 description: "CZSC 缠中说禅技术分析工具完全指南，涵盖缠论核心概念、分型笔识别、信号-事件-交易体系，从安装配置到量化策略开发的全方位讲解。"
