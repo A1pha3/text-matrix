@@ -1,3 +1,13 @@
+---
+title: "Hyperagents：自指性自我改进智能体完全指南"
+date: 2026-04-02T18:00:00+08:00
+slug: "hyperagents-self-referential-ai-agents-guide"
+description: "Hyperagents是Meta FAIR提出的自指性自我改进智能体框架，通过任务智能体和元智能体的双层架构实现开放式自我改进。本文详细解析了其核心原理、算法流程、代码架构及在各领域的应用。"
+draft: false
+categories: ["技术笔记"]
+tags: ["AI Agent", "Hyperagents", "元学习", "自我改进", "Meta FAIR"]
+---
+
 # Hyperagents：自指性自我改进智能体完全指南
 
 ## 学习目标
