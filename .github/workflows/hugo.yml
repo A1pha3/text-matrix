@@ -46,21 +46,27 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
       - name: Build with Hugo
         env:
+          BASE_URL: ${{ steps.pages.outputs.base_url }}/
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
           HUGO_ENVIRONMENT: production
-        run: |
-          hugo \
-            --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }}/"
+        run: npm run build:github-pages
       - name: Verify taxonomy pages
         run: |
           test -f public/categories/index.html
           test -f public/categories/行业快讯/index.html
           test -f public/tags/index.html
+      - name: Verify Pagefind assets
+        run: |
+          test -f public/pagefind/pagefind-ui.js
+          test -f public/pagefind/pagefind-ui.css
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

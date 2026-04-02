@@ -60,3 +60,7 @@
 {{- $source := $cdn.animateCSS | default "lib/animate/animate.min.css" -}}
 {{- $options := dict "Source" $source "Fingerprint" $fingerprint "Preload" true -}}
 {{- partial "plugin/style.html" $options -}}
+
+{{- if eq .Type "search" -}}
+    <link rel="stylesheet" href="{{ "pagefind/pagefind-ui.css" | relURL }}">
+{{- end -}}

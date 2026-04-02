@@ -1,0 +1,103 @@
+{{- define "title" }}{{ .Title }} - {{ .Site.Title }}{{ end -}}
+
+{{- define "content" -}}
+  {{- $regularPages := .Site.RegularPages -}}
+  {{- $postsCount := len (where $regularPages "Section" "posts") -}}
+  {{- $docsCount := len (where $regularPages "Section" "docs") -}}
+  {{- $tagsCount := len .Site.Taxonomies.tags -}}
+  {{- $suggestions := slice "AI Agent" "Hugo" "Cloudflare" "GitHub Pages" "量化交易" "系统设计" -}}
+    <div class="page single special pagefind-search-page" data-pagefind-ignore="all">
+    <div class="pagefind-hero">
+      <div class="pagefind-hero-copy">
+        <p class="pagefind-kicker">SEARCH MATRIX</p>
+        <h1 class="single-title animate__animated animate__pulse animate__faster">
+          {{- .Title -}}
+        </h1>
+
+        <h2 class="single-subtitle">在文章、文档与专题记录之间做一次跨栏目检索，直接定位到最相关的正文片段。</h2>
+
+        <div class="pagefind-suggestion-row">
+          {{- range $suggestions -}}
+            <a class="pagefind-suggestion-chip" href="?q={{ . | urlquery }}">{{ . }}</a>
+          {{- end -}}
+        </div>
+      </div>
+
+      <div class="pagefind-hero-grid">
+        <div class="pagefind-stat-card">
+          <span class="pagefind-stat-label">已收录文章</span>
+          <strong class="pagefind-stat-value">{{ $postsCount }}</strong>
+        </div>
+        <div class="pagefind-stat-card">
+          <span class="pagefind-stat-label">已收录文档</span>
+          <strong class="pagefind-stat-value">{{ $docsCount }}</strong>
+        </div>
+        <div class="pagefind-stat-card">
+          <span class="pagefind-stat-label">可探索标签</span>
+          <strong class="pagefind-stat-value">{{ $tagsCount }}</strong>
+        </div>
+      </div>
+    </div>
+
+        <div class="content" id="content">
+            <div class="pagefind-search-card">
+        <div class="pagefind-search-meta">
+          <p class="pagefind-search-intro">输入文章标题、标签或正文关键词，结果会按相关性返回。长文会显示章节级子结果，适合快速跳转到具体内容段。</p>
+          <div class="pagefind-search-notes">
+            <span class="pagefind-note-pill">全文搜索</span>
+            <span class="pagefind-note-pill">章节级结果</span>
+            <span class="pagefind-note-pill">双端部署同步</span>
+          </div>
+        </div>
+                <div id="pagefind-search"></div>
+                <noscript>
+                    <p class="pagefind-search-unavailable">搜索功能需要启用 JavaScript。</p>
+                </noscript>
+            </div>
+        </div>
+
+        <script src="{{ "pagefind/pagefind-ui.js" | relURL }}"></script>
+        <script>
+          window.addEventListener('DOMContentLoaded', function () {
+            var searchElement = document.getElementById('pagefind-search');
+            var params = new URLSearchParams(window.location.search);
+            var presetQuery = params.get('q');
+            if (!searchElement) return;
+
+            if (!window.PagefindUI) {
+              searchElement.innerHTML = '<p class="pagefind-search-unavailable">搜索索引尚未生成，请先执行完整构建。</p>';
+              return;
+            }
+
+            var search = new window.PagefindUI({
+              element: '#pagefind-search',
+              bundlePath: '{{ "pagefind/" | relURL }}',
+              autofocus: true,
+              resetStyles: false,
+              showImages: false,
+              showSubResults: true,
+              debounceTimeoutMs: 200,
+              excerptLength: 18,
+              pageSize: 8,
+              translations: {
+                placeholder: '搜索标题、标签或正文关键词',
+                clear_search: '清空',
+                load_more: '加载更多结果',
+                zero_results: '没有找到 “[SEARCH_TERM]” 相关结果',
+                searching: '正在检索…',
+                search_label: '站内搜索',
+                many_results: '[COUNT] 条结果',
+                one_result: '[COUNT] 条结果',
+                alt_search: '切换搜索输入',
+                filters: '筛选',
+                sort: '排序'
+              }
+            });
+
+            if (presetQuery) {
+              search.triggerSearch(presetQuery);
+            }
+          });
+        </script>
+    </div>
+{{- end -}}

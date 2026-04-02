@@ -1,0 +1,10 @@
+{
+  "name": "text-matrix",
+  "private": true,
+  "scripts": {
+    "build": "sh ./scripts/build_hugo.sh --gc --minify",
+    "build:pagefind": "npm run build && sh ./scripts/run_pagefind.sh public",
+    "build:github-pages": "if [ -z \"$BASE_URL\" ]; then echo 'BASE_URL is required' >&2; exit 1; fi; sh ./scripts/build_hugo.sh --gc --minify --baseURL \"$BASE_URL\" && sh ./scripts/run_pagefind.sh public",
+    "build:cloudflare-pages": "if [ -z \"$CF_PAGES_URL\" ]; then echo 'CF_PAGES_URL is required' >&2; exit 1; fi; sh ./scripts/build_hugo.sh --gc --minify --baseURL \"${CF_PAGES_URL}/\" && sh ./scripts/run_pagefind.sh public"
+  }
+}

@@ -155,6 +155,45 @@ PY
     ' "$from_dir" "$to_path"
 }
 
+canonical_path() {
+    local path="$1"
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - "$path" <<'PY'
+import os
+import sys
+
+print(os.path.realpath(sys.argv[1]))
+PY
+        return
+    fi
+
+    perl -MCwd=realpath -e 'print realpath($ARGV[0]) || q()' "$path"
+}
+
+is_managed_link() {
+    local link_path="$1"
+    local resolved_link
+    local resolved_skills_dir
+
+    [ -L "$link_path" ] || return 1
+
+    resolved_link="$(canonical_path "$link_path")"
+    resolved_skills_dir="$(canonical_path "$SKILLS_DIR")"
+
+    [ -n "$resolved_link" ] || return 1
+    [ -n "$resolved_skills_dir" ] || return 1
+
+    case "$resolved_link" in
+        "$resolved_skills_dir"/*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 set_target() {
     local name="$1"
     local dir="$2"
@@ -245,7 +284,7 @@ cleanup_invalid_links() {
         local existing_name
         existing_name="$(basename "$existing_link")"
 
-        if [ ! -d "$SKILLS_DIR/$existing_name" ]; then
+        if is_managed_link "$existing_link" && [ ! -d "$SKILLS_DIR/$existing_name" ]; then
             echo "🧹 清理无效链接: $target_dir/$existing_name"
             rm -f "$existing_link"
         fi
@@ -282,9 +321,17 @@ install_to_target() {
         source_dir="${skill_path%/}"
         relative_source="$(relative_path "$target_dir" "$source_dir")"
 
-        if [ -L "$target_link" ] || [ -f "$target_link" ]; then
-            echo "🔄 更新现有链接: $skill_name"
-            rm -f "$target_link"
+        if [ -L "$target_link" ]; then
+            if is_managed_link "$target_link"; then
+                echo "🔄 更新现有链接: $skill_name"
+                rm -f "$target_link"
+            else
+                echo "⚠️  跳过 $skill_name：$target_link 是外部已有软链接，未自动覆盖"
+                continue
+            fi
+        elif [ -f "$target_link" ]; then
+            echo "⚠️  跳过 $skill_name：$target_link 已存在同名文件，未自动覆盖"
+            continue
         elif [ -d "$target_link" ]; then
             echo "⚠️  跳过 $skill_name：$target_link 已存在同名目录，未自动覆盖"
             continue

@@ -261,53 +261,55 @@ Cloudflare Pages 的 Hugo 默认配置通常是：
 
 因此，在 Cloudflare Pages 中最关键的就是把构建命令改成“两段式构建”。
 
-### 6.2 推荐的构建命令
+### 6.2 当前仓库采用的构建命令
 
-如果直接在 Cloudflare Pages 后台配置，推荐使用：
-
-```bash
-hugo -b "$CF_PAGES_URL" && npx -y pagefind --site public
-```
-
-说明如下：
-
-1. `hugo -b "$CF_PAGES_URL"` 用于让 Hugo 在 Cloudflare Pages 环境下使用正确的部署 URL。
-2. `npx -y pagefind --site public` 会在 Hugo 构建完成后，对 `public/` 建立搜索索引。
-
-如果以后希望本地、CI、Cloudflare Pages 使用同一条构建命令，更推荐写进 `package.json`：
-
-```json
-{
-  "scripts": {
-    "build": "hugo -b \"$CF_PAGES_URL\" && npx -y pagefind --site public"
-  }
-}
-```
-
-然后让 Cloudflare Pages 的 Build command 改为：
+当前仓库已经将 Pagefind 构建逻辑收敛到根目录的 `package.json` 中，并提供了 Cloudflare Pages 专用脚本：
 
 ```bash
-npm run build
+npm run build:cloudflare-pages
 ```
 
-这种方式的优点是：
+这个脚本的职责是：
 
-1. 构建逻辑不散落在 Cloudflare 后台配置里。
-2. 本地测试、CI 和线上部署更容易保持一致。
-3. 后续如果增加额外步骤，例如压缩、校验或排除规则，也更容易维护。
+1. 调用 Hugo 生成静态站点。
+2. 使用 `CF_PAGES_URL` 作为 `baseURL`。
+3. 在 `public/` 目录上运行 Pagefind 建立索引。
 
-### 6.3 Cloudflare Pages 接入步骤
+这种方式比把长命令直接写死在平台后台更稳，因为：
+
+1. 本地、CI 和托管平台更容易保持一致。
+2. 以后调整 Hugo 路径、Pagefind runner 或平台兼容逻辑时，只改仓库脚本即可。
+3. Cloudflare 后台只保留一个简短命令，更不容易漂移。
+
+### 6.3 Cloudflare Pages 后台配置清单
+
+如果你要把当前仓库部署到 Cloudflare Pages，并启用已经接入好的 Pagefind，后台建议按下面清单逐项配置：
+
+| 配置项 | 建议值 |
+| ------ | ------ |
+| Framework preset | Hugo 或 None 均可 |
+| Production branch | `main` |
+| Build command | `npm run build:cloudflare-pages` |
+| Build output directory | `public` |
+| Root directory | 仓库根目录 |
+| Node.js | 使用平台默认即可 |
+| Environment variable | 保留平台注入的 `CF_PAGES_URL` |
+
+如果你在 Cloudflare 后台看到已有旧配置，例如 `hugo` 或 `hugo --gc --minify`，应更新为新的 `npm run build:cloudflare-pages`，否则 Pagefind 不会参与构建。
+
+### 6.4 Cloudflare Pages 接入步骤
 
 建议按下面顺序接入：
 
-1. **先确认 Hugo 的输出目录仍是 `public/`**。
-2. **把构建命令改为 Hugo + Pagefind 两段式命令**。
-3. **在模板中引入 Pagefind UI 脚本和样式，或者接入自定义搜索 UI**。
-4. **完成一次完整构建，确认 `public/pagefind/` 目录已生成**。
-5. **发布到 Cloudflare Pages，确认线上部署产物包含 Pagefind 资源**。
-6. **验证桌面端与移动端搜索，重点检查首次搜索、结果跳转和无结果状态**。
+1. **打开 Cloudflare Pages 项目的 Build settings**。
+2. **把 Build command 改成 `npm run build:cloudflare-pages`**。
+3. **确认 Build output directory 是 `public`**。
+4. **保存配置后触发一次重新部署**。
+5. **部署完成后，检查线上是否可访问 `/search/`**。
+6. **再检查是否能访问 `/pagefind/pagefind-ui.js` 与 `/pagefind/pagefind-ui.css`**。
+7. **最后验证搜索页的输入、结果、高亮与跳转是否正常**。
 
-### 6.4 需要注意的工程点
+### 6.5 需要注意的工程点
 
 Cloudflare Pages 支持 Pagefind，不代表本地开发模式应当每次都运行 Pagefind。
 
@@ -322,12 +324,13 @@ Cloudflare Pages 支持 Pagefind，不代表本地开发模式应当每次都运
 
 | 注意项 | 说明 |
 | ------ | ------ |
-| 中文内容 | 推荐使用 `npx pagefind` 默认安装路径，对中文支持更友好 |
+| 中文内容 | 当前仓库已采用支持中文的 Pagefind Extended 路径 |
 | 发布产物 | 需要确保 `public/pagefind/` 被一并发布 |
 | 预览部署 | Cloudflare Pages 的 Preview 部署同样可以跑这条构建命令 |
 | 环境变量 | 若依赖正确站点 URL，保留 `CF_PAGES_URL` 的 Hugo baseURL 写法 |
+| 平台配置同步 | 修改了 `package.json` 后，仍需手动同步 Cloudflare 后台的 Build command |
 
-### 6.5 最终判断
+### 6.6 最终判断
 
 对当前仓库而言，Cloudflare Pages 接入 Pagefind 是一条标准、可行、风险较低的路径。
 
@@ -366,61 +369,35 @@ GitHub Pages 这条链路与 Cloudflare Pages 的核心逻辑相同：
 
 因此，GitHub Pages 的关键不是改发布目标，而是改 Actions 里的 build job。
 
-### 7.3 推荐的工作流改造方式
+### 7.3 当前仓库采用的工作流改造方式
 
-假设当前工作流已经包含 Hugo 构建步骤，那么推荐增加一个 Pagefind 步骤，位置应放在 Hugo 构建之后、上传产物之前。
+当前仓库已经把 GitHub Pages workflow 改成直接调用根目录脚本：
 
-示意结构如下：
-
-```yaml
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Node.js dependencies
-        run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
-
-      - name: Build with Hugo
-        run: |
-          hugo \
-            --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }}/"
-
-      - name: Build search index with Pagefind
-        run: npx -y pagefind --site public
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
+```bash
+npm run build:github-pages
 ```
 
-如果你希望本地和 CI 共享同一套构建命令，也可以把 Hugo + Pagefind 合并进 `package.json` 的 `build` 脚本，然后在 Actions 中执行 `npm run build`。
+这条脚本会：
 
-例如：
+1. 用 GitHub Pages 传入的 `BASE_URL` 生成 Hugo 产物。
+2. 对 `public/` 目录执行 Pagefind 索引。
+3. 保证 `public/pagefind/` 目录会被后续上传步骤一并带上。
 
-```json
-{
-  "scripts": {
-    "build": "hugo --minify && npx -y pagefind --site public"
-  }
-}
-```
+相对于在 workflow 里手写长命令，这样的好处是：
 
-但对当前仓库而言，如果你已经在工作流里显式写了 Hugo 的安装与构建流程，那么**直接在 workflow 里加 Pagefind 步骤会更直观，也更符合现有结构**。
+1. 构建逻辑集中在仓库脚本中。
+2. GitHub Pages 与 Cloudflare Pages 更容易共享同一套约定。
+3. 后续如果要改 Pagefind runner，不需要同时改多个平台配置。
 
 ### 7.4 GitHub Pages 接入步骤
 
 建议按下面顺序操作：
 
 1. **确认现有工作流的 Hugo 构建产物目录是 `public/`**。
-2. **在 Hugo 构建步骤后增加 `npx -y pagefind --site public`**。
+2. **确认 Build with Hugo 步骤调用的是 `npm run build:github-pages`**。
 3. **保留原有 `actions/upload-pages-artifact` 上传步骤，让 `public/pagefind/` 一并被上传**。
 4. **推送到默认分支，观察 GitHub Actions 的 build job 是否成功执行**。
-5. **部署完成后，验证线上页面是否能正常加载 `/pagefind/` 资源**。
+5. **部署完成后，验证线上页面是否能正常加载 `/search/` 与 `/pagefind/` 资源**。
 6. **验证搜索 UI、搜索结果跳转和无结果状态**。
 
 ### 7.5 GitHub Pages 需要注意的点
