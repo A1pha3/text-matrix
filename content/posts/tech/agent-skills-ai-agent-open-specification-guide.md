@@ -392,25 +392,35 @@ skills-ref read-properties ./my-skill
 skills-ref to-prompt ./my-skill
 ```
 
-### 5.3 Python API
+### 5.3 Python API（基于通用模式推断）
+
+skills-ref 包的 Python API 遵循典型的验证库模式。根据 CLI 命令和目录结构，可以推断其 Python API 形式如下（建议参考官方文档确认）：
 
 ```python
-from skills_ref import validate, read_properties, to_prompt
+# 安装：pip install skills-ref
+# 导入（包名在 pip 安装后可能转为下划线）
+try:
+    from skills_ref import validate, read_properties, to_prompt
+except ImportError:
+    from skills_ref_python as skills_ref  # 可能的替代导入
 
-# 验证 Skill
+# 验证 Skill 格式
 result = validate("./my-skill")
 print(result.is_valid)  # True/False
-print(result.errors)     # 错误列表
+if not result.is_valid:
+    print(result.errors)     # 错误列表
 
 # 读取属性
 props = read_properties("./my-skill")
 print(props.name)        # "my-skill"
 print(props.description)  # "A description..."
 
-# 生成 prompt
+# 生成 prompt（供 LLM 使用）
 prompt = to_prompt("./my-skill")
 print(prompt)  # 格式化的 prompt 字符串
 ```
+
+**注意**：上述 API 为基于通用模式的推断。建议在实际使用前查阅 [skills-ref 官方文档](https://github.com/agentskills/agentskills/tree/main/skills-ref) 确认准确的 API 签名。
 
 ---
 
@@ -418,28 +428,39 @@ print(prompt)  # 格式化的 prompt 字符串
 
 ### 6.1 脚本集成
 
-Skill 可以包含可执行脚本，扩展其能力：
+Skill 可以包含可执行脚本，扩展其能力。脚本应：
+
+- 保持自包含，或清晰文档化依赖
+- 包含有用的错误信息
+- 优雅处理边界情况
+
+**目录结构示例**：
+
+```bash
+git-analysis/
+├── SKILL.md
+└── scripts/
+    └── analyze.py    # 可执行的分析脚本
+```
+
+**SKILL.md 示例**：
 
 ```yaml
-# SKILL.md
 ---
 name: git-analysis
 description: 分析 Git 仓库的提交历史、贡献者统计和代码变更。
 ---
 
-# Git 分析 Skill
-
 ## 使用分析脚本
 
-运行 `scripts/analyze.py` 进行深度分析：
+运行 scripts/analyze.py 进行深度分析：
 
-```bash
-python scripts/analyze.py --repo ./ --format json
+Bash 命令：
+echo "请在 Skill 激活后使用以下命令："
+echo "python scripts/analyze.py --repo ./ --format json"
 ```
 
-## 输出格式
-
-脚本返回 JSON 格式的分析结果：
+**输出格式**（JSON）：
 
 ```json
 {
