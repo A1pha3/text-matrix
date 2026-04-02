@@ -1,672 +1,657 @@
 ---
 title: "Hyperagents：自指性自我改进智能体完全指南"
-date: 2026-04-02T18:00:00+08:00
+date: 2026-04-03T01:31:57+08:00
 slug: "hyperagents-self-referential-ai-agents-guide"
-description: "Hyperagents是Meta FAIR提出的自指性自我改进智能体框架，通过任务智能体和元智能体的双层架构实现开放式自我改进。本文详细解析了其核心原理、算法流程、代码架构及在各领域的应用。"
+description: "Hyperagents 是 Meta FAIR 提出的自指性自我改进智能体框架。本文基于论文摘要、官方 README 与公开源码入口，系统解释其定义、运行流程、代码结构、扩展方式与使用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Hyperagents", "元学习", "自我改进", "Meta FAIR"]
+tags: ["HyperAgents", "AI Agent", "自我改进", "元认知", "Meta FAIR"]
 ---
-
-# Hyperagents：自指性自我改进智能体完全指南
 
 ## 学习目标
 
-学完本指南后，你将掌握以下核心技能：
+读完这篇文章后，你应该能够：
 
-1. **理解自我改进AI系统的核心概念**：理解什么是自我改进、为什么需要元级别（meta-level）的自我修改、以及传统方法的局限性
-2. **掌握Hyperagents的核心设计**：理解任务智能体（task agent）和元智能体（meta agent）的自指性架构、以及元认知自我修改（metacognitive self-modification）的原理
-3. **理解DGM-H的算法流程**：深入理解Darwin Gödel Machine到Hyperagents的演进、以及DGM-H如何消除领域特定对齐假设
-4. **能够运行Hyperagents系统**：掌握从环境配置、依赖安装、到运行实验的完整流程
-5. **理解核心代码架构**：理解meta_agent.py、task_agent.py、generate_loop.py等核心模块的职责和交互
-6. **应用场景与扩展**：理解Hyperagents在哪些场景下有效，以及如何进行二次开发
+1. 用准确术语解释什么是自指性智能体、自我改进智能体、元智能体、任务智能体。
+2. 理解 Hyperagents 为什么要把任务求解与元级别修改放进同一个可编辑程序。
+3. 看懂官方仓库的关键入口，包括 task_agent.py、meta_agent.py、run_meta_agent.py、generate_loop.py 和 ensemble.py 各自负责什么。
+4. 按官方 README 的最小路径配置环境、初始化实验并启动一次生成循环。
+5. 判断 Hyperagents 适合解决什么问题，不适合解决什么问题，以及扩展到新领域时应该从哪里下手。
 
----
+## 阅读前说明
 
-## 一、项目概述
+这篇文档按 cn-doc-writer 的优化标准重写，并严格区分三类信息来源：
 
-### 1.1 论文基本信息
+1. 论文摘要与 arXiv 条目中明确写出的结论。
+2. 官方 GitHub README、LICENSE、Dockerfile 和公开源码入口中可以直接看到的事实。
+3. 基于代码结构做出的工程解释。凡是属于解释而不是原文声明的部分，都会明确写成“可以理解为”或“从代码入口看”。
 
-| 属性 | 内容 |
-|------|------|
+这意味着本文不会把猜测写成事实，也不会把概念性伪代码误写成仓库真实实现。
+
+## 一、先用一句话理解 Hyperagents
+
+Hyperagents 是 Meta FAIR 提出的一个自指性自我改进智能体框架。它把“负责做任务的智能体”和“负责修改智能体的元智能体”放进同一个可编辑程序里，让系统不仅能改进做事的方法，还能改进“如何产生改进”的方法。
+
+如果只看 30 秒，可以把它理解成下面这个闭环：
+
+1. 任务智能体先去解题或执行任务。
+2. 系统根据结果评估当前版本表现。
+3. 元智能体基于代码仓库和评估结果生成修改。
+4. 新版本再次被评估，好的版本进入归档，继续成为后续迭代的父版本。
+
+论文把这种框架称为 self-referential self-improving agents，也就是“自指性的自我改进智能体”。
+
+## 二、核心定义必须先讲清楚
+
+### 2.1 自我改进 AI 系统是什么
+
+论文摘要中的定义很直接：这类系统试图通过学习来改进自己的学习过程与问题求解过程，从而减少对人工工程设计的依赖。
+
+这里有两个关键词：
+
+1. 改进对象不只是任务结果，还包括产生结果的方法。
+2. 改进来源不只是人类手工调参，而是系统自身在运行中积累出来的修改。
+
+### 2.2 什么是任务智能体
+
+任务智能体（Task Agent）负责直接面向目标任务输出答案、动作或预测结果。它离用户任务最近，表现优劣最终要靠它的输出质量来衡量。
+
+从官方仓库当前源码入口看，task_agent.py 中的 TaskAgent 很简洁：它接收一个输入字典，把输入包装成提示词，要求模型按 JSON 结构返回 response 字段，然后抽取该字段作为预测结果。也就是说，任务智能体本体并不承载全部领域逻辑，很多领域适配工作被放在 domains 目录和评测流程里完成。
+
+### 2.3 什么是元智能体
+
+元智能体（Meta Agent）不是直接解题，而是修改代码库。公开仓库中的 meta_agent.py 入口非常朴素：它继承自 AgentSystem，核心动作是向模型发出“修改这个仓库任意部分代码”的指令，并允许工具调用。
+
+这一点非常重要，因为它说明 Hyperagents 的“元级别能力”在工程上不是一个神秘黑盒，而是一个可以对仓库做真实修改并输出 diff 的智能体过程。
+
+### 2.4 什么叫“自指性”
+
+“自指性”不是一个修辞词，而是架构层面的说法。它至少包含两层含义：
+
+1. 元智能体修改任务智能体。
+2. 元智能体所依赖的改进流程本身也在同一个可编辑程序体系内，因此元级别机制也可以被修改。
+
+论文把第二层称为 metacognitive self-modification，也就是“元认知自我修改”。
+
+### 2.5 什么叫“开放式自我改进”
+
+论文用 open-ended self-improvement 来描述一种持续生成、持续评估、持续积累的改进过程。更稳妥的理解方式是：
+
+1. 系统没有被限定为只学习一组固定策略。
+2. 改进过程不是一次性离线训练，而是循环迭代。
+3. 历史版本、评测结果、补丁和选择策略都可以继续影响后续演化。
+
+这里不应把“开放式”误解成“已经证明可以无限提升”或“必然失控地递归爆炸”。公开材料支持的是“持续改进机制”，而不是对最终能力上限的数学证明。
+
+## 三、论文到底解决了什么问题
+
+### 3.1 现有方法的瓶颈
+
+摘要明确指出，已有自我改进方法通常依赖固定的、手工设计的元级别机制。问题在于：
+
+1. 如果“如何改进”的机制本身是固定的，那么系统的提升速度就被那个固定机制卡住了。
+2. 系统也许能提升任务性能，但不一定能提升生成改进的能力。
+
+### 3.2 Darwin Gödel Machine 为什么不够
+
+论文把 Darwin Gödel Machine，简称 DGM，视为重要前身。DGM 在编程领域能工作，一个关键前提是：
+
+1. 评估是编程任务。
+2. 自我修改也是编程任务。
+3. 因此编程能力的提升，可能自然转化为自我改进能力的提升。
+
+但这个前提不一定能推广到编程以外的领域。摘要把这一点称为 domain-specific alignment assumption，也就是“任务性能与自我修改技能之间存在领域特定对齐”的假设。
+
+### 3.3 Hyperagents 的关键突破
+
+Hyperagents 的目标，就是把这种局限从“只在编程里天然成立”推进到“原则上可支持任意可计算任务”。
+
+论文中的核心论点可以压缩成三句话：
+
+1. 任务智能体和元智能体被合并进一个可编辑程序。
+2. 元级别修改过程本身也是可编辑的。
+3. 因而系统不仅能找更好的解，还能改进“寻找更好解的方法”。
+
+## 四、从新手到专家的四层理解路径
+
+### 4.1 Level 1：把它当作“会改自己代码的代理系统”
+
+这是最容易理解的一层。
+
+你可以把 Hyperagents 看成一个带版本演化能力的代理系统：
+
+1. 当前版本先完成任务。
+2. 系统记录表现。
+3. 元智能体提出补丁。
+4. 新版本被测试。
+5. 更好的版本进入归档，继续参与后续迭代。
+
+如果你已经熟悉 AI coding agent，这一层足以帮助你快速理解工程形态。
+
+### 4.2 Level 2：它不只是会改代码，而是在改“改代码的方法”
+
+真正让 Hyperagents 与普通“自动修补脚本”区分开的，不是会生成 diff，而是元级别流程本身也在被纳入改进对象。
+
+这就是为什么论文特别强调 metacognitive self-modification。它想做的不是一次次局部修补，而是让系统逐渐学会更有效地提出下一轮修补方案。
+
+### 4.3 Level 3：它试图绕开“只有编程领域天然对齐”的局限
+
+在编程任务里，修改器与被修改对象共享同一种操作媒介，也就是代码，因此自我改进比较自然。跨到其他领域后，这种自然对齐不再自动成立。
+
+Hyperagents 的回答是：不要把自我改进能力绑定在单一领域技能上，而是把任务代理、元代理、评估、归档与选择机制组成一个统一的可编辑系统。
+
+### 4.4 Level 4：真正的重点是“程序级别的递归可编辑性”
+
+从专家视角看，Hyperagents 最值得关注的不是一句“自我改进”，而是它把以下东西都工程化了：
+
+1. 仓库级修改。
+2. 基于评测结果的选择。
+3. 归档与父版本选择。
+4. 跨领域迁移与跨运行累积的实验叙述。
+
+也就是说，它不是只在论文里谈元学习，而是用仓库、补丁、Docker、评测 harness 和归档流程把这件事落成了可运行的系统原型。
+
+## 五、公开事实总表
+
+### 5.1 论文与仓库的已核验信息
+
+| 项目 | 已核验事实 |
+| ---- | ---- |
 | 论文标题 | Hyperagents |
-| arXiv ID | 2603.19461 |
-| 投稿日期 | 2026年3月19日 |
-| 作者 | Jenny Zhang, Bingchen Zhao, Wannan Yang, Jakob Foerster, Jeff Clune, Minqi Jiang, Sam Devlin, Tatiana Shavrina |
-| 机构 | Meta FAIR |
-| 学科分类 | Computer Science > Artificial Intelligence (cs.AI) |
-| GitHub | facebookresearch/HyperAgents |
-| GitHub Stars | 2,048 |
-| 许可证 | CC BY-NC-SA 4.0（论文）/ Apache 2.0（代码）|
+| arXiv 编号 | 2603.19461 |
+| 提交时间 | arXiv 条目显示为 2026 年 3 月 19 日提交 |
+| 作者 | Jenny Zhang、Bingchen Zhao、Wannan Yang、Jakob Foerster、Jeff Clune、Minqi Jiang、Sam Devlin、Tatiana Shavrina |
+| 机构 | 公开材料显示为 Meta FAIR 团队 |
+| 学科分类 | cs.AI |
+| 仓库 | facebookresearch/HyperAgents |
+| README 标语 | Self-referential self-improving agents that can optimize for any computable task |
 
-### 1.2 研究背景与问题
+### 5.2 必须纠正的一处常见误写
 
-**自我改进AI系统的定义**：自我改进AI系统（Self-improving AI systems）旨在通过学习来改进自身的学习和问题解决能力，从而减少对人类工程设计的依赖。
+一些二手资料会写成“论文使用 CC，代码使用 Apache 2.0”。但在当前公开仓库根目录中，LICENSE.md 展示的是 Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International，也就是 CC BY-NC-SA 4.0。
 
-**现有方法的根本局限**：
+因此，至少基于当前公开仓库状态，不能把根许可证写成 Apache 2.0。
 
-现有方法依赖于**固定的、手工设计的元级别机制**（fixed, handcrafted meta-level mechanisms），这从根本上限制了这类系统的改进速度。
+### 5.3 本文不再使用的模糊说法
 
-**Darwin Gödel Machine (DGM)**：
+为了避免误导，下面这些说法本文不会直接当作事实陈述：
 
-DGM通过以下方式展示在编程领域的开放式自我改进：
-- 反复生成自我修改的变体
-- 对这些变体进行评估
-- 由于评估和自我修改都是编程任务，编程能力的提升可以转化为自我改进能力的提升
+1. “支持所有主流基础模型。”
+2. “需要某个固定 GPU 门槛。”
+3. “代码里已经实现了复杂的持久记忆、性能跟踪策略模块。”
 
-**核心问题**：DGM中的对齐假设（alignment）——即任务性能与自我修改技能之间的对齐——**并不能泛化到编程以外的领域**。
+更准确的写法是：
 
-### 1.3 Hyperagents的解决方案
+1. agent/llm.py 中确实定义了多个 OpenAI、Anthropic 和 Gemini 模型常量。
+2. 不同领域对运行环境要求差异很大，尤其 Genesis 相关部分明显偏向 GPU 环境。
+3. 论文摘要把 persistent memory、performance tracking 作为元级别改进例子提到，但公开入口源码是否完整体现所有论文细节，需要以具体子模块和实验脚本为准。
 
-**核心理念**：Hyperagents是**自指性智能体**（self-referential agents），将以下两个组件整合为单一可编辑程序：
+## 六、Hyperagents 的功能特点
 
-1. **任务智能体（Task Agent）**：解决目标任务
-2. **元智能体（Meta Agent）**：修改自身和任务智能体
+### 6.1 把任务执行与自我修改放在统一系统里
 
-**关键创新**：元级别修改过程本身也是可编辑的，实现了**元认知自我修改**（metacognitive self-modification），不仅改进任务解决行为，还改进了生成未来改进的机制。
+这是它最核心的功能特征。不是一个外部脚本在旁边调参，而是系统内部就包含任务求解与元级别改进两个角色。
 
-### 1.4 技术突破
+### 6.2 通过真实代码补丁完成迭代
 
-| 特性 | DGM（Darwin Gödel Machine） | DGM-H（Hyperagents） |
-|------|---------------------------|---------------------|
-| 任务领域 | 仅限于编程 | 任意可计算任务 |
-| 自我修改范围 | 仅修改任务解决行为 | 修改任务解决+元级别改进机制 |
-| 对齐假设 | 领域特定（编程） | 消除（任何领域） |
-| 跨领域迁移 | 有限 | 元级别改进可跨领域转移 |
+从 run_meta_agent.py 可以看到，元智能体运行完成后会把当前仓库相对 base commit 的差异保存为 model_patch.diff。也就是说，系统的改进结果不是抽象参数，而是实实在在的代码差异。
 
----
+### 6.3 通过归档和父版本选择组织演化过程
 
-## 二、核心概念深度解析
+generate_loop.py 不是简单地“每次都在上一个版本上继续改”。它会维护 archive，并根据选择策略为下一代挑选 parent。这使得系统更接近“版本种群演化”，而不是单链式的线性微调。
 
-### 2.1 自我改进的三层架构
+### 6.4 支持多领域评测
 
-Hyperagents实现了三层自我改进架构：
+从 generate_loop.py 和 domains.harness.py 的参数可以看到，公开仓库至少覆盖以下领域或任务组：
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 元认知层（Metacognitive Layer）               │
-│    元智能体修改"如何生成新智能体"的机制本身                      │
-│    → 持久记忆、性能跟踪、改进策略                            │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  元级别层（Meta Level）                       │
-│    元智能体修改任务智能体的代码、提示词、工具集                  │
-│    → 生成新版本的Task Agent                                  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  任务层（Task Level）                         │
-│    任务智能体解决具体的用户任务                               │
-│    → 编程、推理、写作等具体任务                              │
-└─────────────────────────────────────────────────────────────┘
-```
+1. search_arena
+2. paper_review
+3. balrog_babyai
+4. balrog_babaisai
+5. balrog_minihack
+6. balrog_nle
+7. genesis_go2walking
+8. genesis_go2walkback
+9. genesis_go2hop
+10. polyglot
+11. imo_grading
+12. imo_proof
 
-### 2.2 自指性的含义
+这比“只会做代码自改进”的系统更广，也正好对应论文试图摆脱编程领域对齐假设的目标。
 
-"自指性"（self-referential）在本论文中有两个层面的含义：
+### 6.5 支持归档评估与 ensemble 逻辑
 
-**第一层自指**：元智能体修改任务智能体
+ensemble.py 并不是传统意义上对多个模型输出做投票，而是从 archive 中找得分最好的 agent，再使用该版本的预测结果。因此这里的 ensemble 更接近“归档择优使用”，而不是简单集成平均。
 
-- 元智能体的输出会影响任务智能体的行为
-- 任务智能体是元智能体的"产物"
+### 6.6 从工程上重视沙箱与安全告警
 
-**第二层自指**：元智能体修改元智能体自身
+README 明确警告：仓库会执行由模型生成、且不完全可信的代码。这个警告不是装饰，它直接决定了你应该如何部署和实验。
 
-- 元智能体的修改过程本身也是可修改的
-- 这是元认知（metacognitive）层面的自我修改
+## 七、原理分析：从论文概念到工程闭环
 
-### 2.3 开放式自我改进
+### 7.1 论文层面的原理
 
-**开放式（open-ended）** 意味着：
+论文摘要给出的原理链条可以整理为：
 
-1. **没有预定义的成功标准上限**：系统可以持续改进
-2. **没有预先设定的改进路径**：改进方向是涌现的
-3. **跨_run累积**：不同运行之间的改进可以累积
+1. 自我改进系统希望减少人工设计依赖。
+2. 固定元机制限制提升速度。
+3. 若元级别机制本身也可编辑，则改进对象扩展到“改进过程”。
+4. 这样有望把自我改进从单一领域对齐推进到更一般的可计算任务。
 
-这与传统的强化学习不同，后者通常有固定的环境和奖励函数。
+### 7.2 代码层面的对应关系
 
----
+公开仓库把这个思想映射成几个很具体的工程步骤：
 
-## 三、系统架构详解
+1. 用 TaskAgent 作为统一任务接口。
+2. 用 MetaAgent 直接对仓库进行修改。
+3. 用 run_meta_agent.py 把修改固化为 diff。
+4. 用 generate_loop.py 管理代际迭代、评测、归档和父版本选择。
+5. 用 domains.harness、domains.report 以及各领域子目录承接具体任务评估。
 
-### 3.1 核心组件
+### 7.3 为什么“统一可编辑程序”很重要
 
-Hyperagents系统的核心组件如下：
+如果任务智能体和元智能体是完全割裂的两个外部系统，那么你很难定义“谁在改谁、如何保留改进、如何让改进累积”。
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                     Hyperagents 系统架构                       │
-├──────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌─────────────────┐         ┌─────────────────┐              │
-│  │   Task Agent   │◄────────│   Meta Agent    │              │
-│  │  (任务智能体)   │         │  (元智能体)     │              │
-│  │                 │         │                  │              │
-│  │  - 接收任务     │         │  - 生成变体      │              │
-│  │  - 生成代码     │         │  - 评估变体      │              │
-│  │  - 执行测试     │         │  - 选择最优      │              │
-│  └────────┬────────┘         └────────┬────────┘              │
-│           │                           │                       │
-│           │         循环迭代           │                       │
-│           └───────────────────────────┘                       │
-│                         │                                     │
-│                         ▼                                     │
-│              ┌─────────────────┐                             │
-│              │   Ensemble     │                             │
-│              │  (集成评估)     │                             │
-│              │  - 收集多个版本 │                             │
-│              │  - 择优保留     │                             │
-│              └─────────────────┘                             │
-└──────────────────────────────────────────────────────────────┘
-```
+Hyperagents 的设计选择是把它们都纳入同一个可被 diff、复制、回放和评估的程序空间里。这样有三个直接好处：
 
-### 3.2 核心文件说明
+1. 改动可以版本化。
+2. 改动可以评估。
+3. 改动可以在后续运行中继续被继承和筛选。
 
-| 文件 | 职责 |
-|------|------|
-| `meta_agent.py` | 元智能体的核心实现，负责生成和评估变体 |
-| `task_agent.py` | 任务智能体的核心实现，负责解决具体任务 |
-| `generate_loop.py` | 主循环入口，负责协调整个生成-评估流程 |
-| `run_meta_agent.py` | 运行元智能体的脚本，获取代码差异 |
-| `ensemble.py` | 集成方法，管理多个候选版本的评估和选择 |
-| `select_next_parent.py` | 父版本选择策略 |
+## 八、架构分析：系统到底怎么跑起来
 
-### 3.3 目录结构
+### 8.1 顶层架构
 
-```
-HyperAgents/
-├── agent/              # 基础模型调用代码
-│   └── ...
-├── analysis/           # 绘图和分析脚本
-│   └── ...
-├── baselines/          # 基线方法实现
-│   └── ...
-├── domains/            # 各领域的实现
-│   └── ...
-├── utils/              # 通用工具函数
-│   └── ...
-├── meta_agent.py        # 元智能体核心
-├── task_agent.py        # 任务智能体核心
-├── generate_loop.py     # 主循环入口
-├── run_meta_agent.py   # 运行元智能体
-├── ensemble.py          # 集成方法
-├── select_next_parent.py # 父版本选择
-├── setup_initial.sh    # 初始化脚本
-└── requirements.txt    # 依赖列表
-```
+用工程语言描述，Hyperagents 至少包含五个层次：
 
----
+1. 任务层：TaskAgent 负责输出具体任务结果。
+2. 元层：MetaAgent 负责修改仓库。
+3. 评测层：domains.harness 和 report 负责跑任务与打分。
+4. 演化层：generate_loop 负责生成、评估、归档、选父。
+5. 运行层：Docker、Git diff、输出目录与日志共同保证实验可回放。
 
-## 四、算法原理深度解析
+### 8.2 真实运行链路
 
-### 4.1 DGM-H算法流程
+从 generate_loop.py 的公开入口看，一次典型运行大致是这样：
 
-DGM-H（Darwin Gödel Machine - Hyperagents）的核心算法流程：
+1. 初始化 DockerClient。
+2. 调用 setup_initial_gen 复制仓库、准备 root_dir 并拿到初始 commit。
+3. 创建输出目录，通常位于 outputs/generate_某个运行标识 下。
+4. 如果是初始节点，就先评测初始 agent 或预置补丁版本。
+5. 进入 generation 循环。
+6. 每一轮把需要的代码和历史评测结果复制进容器。
+7. 运行元智能体生成新补丁。
+8. 检查修改后的代码是否可导入或可编译。
+9. 运行各领域评测。
+10. 更新 archive.jsonl 等元数据。
+11. 如有需要，评估归档级 ensemble 结果。
+12. 依据选择策略挑选下一轮 parent。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      DGM-H 主循环                           │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  Step 1: 初始化                                              │
-│  ├─ 创建初始任务智能体（Task Agent v0）                       │
-│  └─ 创建初始元智能体（Meta Agent v0）                         │
-│                                                               │
-│  Step 2: 任务解决循环                                         │
-│  ├─ Task Agent 尝试解决当前任务                               │
-│  ├─ 评估任务性能                                              │
-│  └─ 记录成功的模式和失败的模式                                 │
-│                                                               │
-│  Step 3: 元级别改进循环                                       │
-│  ├─ Meta Agent 观察任务智能体的表现                           │
-│  ├─ Meta Agent 生成候选修改（变体）                           │
-│  ├─ 评估修改的有效性                                         │
-│  └─ 选择性采纳修改                                           │
-│                                                               │
-│  Step 4: 元认知改进（可选）                                    │
-│  ├─ Meta Agent 分析自身的改进策略                             │
-│  ├─ 修改"如何生成改进建议"的机制                             │
-│  └─ 这种改进可以跨领域转移                                     │
-│                                                               │
-│  Step 5: 返回Step 2，继续迭代                                  │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
+### 8.3 为什么要用 Docker
 
-### 4.2 变体生成与评估
+generate_loop.py 会显式构建并启动容器，再把仓库和评测资源复制进去执行。这么做的主要原因不是“炫技”，而是为了：
 
-**变体生成策略**：
+1. 控制模型生成代码的执行边界。
+2. 提高实验复现性。
+3. 让不同代际版本在更一致的环境中被比较。
 
-元智能体生成候选变体的策略包括：
+### 8.4 polyglot 是一个特殊分支
 
-1. **代码修改**：直接修改任务智能体的实现代码
-2. **提示词优化**：调整任务智能体的系统提示词
-3. **工具扩展**：为任务智能体添加新工具或API
-4. **记忆增强**：修改任务智能体的持久记忆机制
+generate_loop.py 在处理 domains 时，会把 polyglot 从常规列表里分离出来单独走流程。这说明 polyglot 评估与其他领域共享顶层循环，但底层评测路径并不完全相同。
 
-**评估机制**：
+这类细节值得注意，因为它提醒我们：Hyperagents 的“统一框架”并不等于“所有领域完全共用一套评测实现”。
 
-变体的评估考虑：
+## 九、源码分析：关键文件逐个讲透
 
-- **任务性能**：解决任务的准确性和效率
-- **泛化能力**：在新任务上表现如何
-- **改进效率**：相对于父版本的改进程度
-- **安全性**：修改是否引入潜在风险
+### 9.1 task_agent.py：统一而极简的任务代理接口
 
-### 4.3 父版本选择
+公开入口里的 TaskAgent 非常轻：
 
-当有多个历史版本时，选择下一个父版本的策略：
+1. 接收 inputs 字典。
+2. 将 inputs 连同域信息组织成提示词。
+3. 调用 chat_with_agent。
+4. 从最后一轮消息里提取 JSON，并读取 response 字段。
+5. 返回 prediction 与消息历史。
 
-```python
-# select_next_parent.py 中的策略
-class ParentSelector:
-    def select(self, population, task_history):
-        # 策略1：基于性能的选择
-        # 选择在类似任务上表现最好的版本
-        
-        # 策略2：多样性选择
-        # 避免选择过于相似的版本
-        
-        # 策略3：适应性选择
-        # 根据当前任务的特性选择最适合的版本
-```
+这说明两件事：
 
----
+1. Hyperagents 当前公开入口把任务代理设计成了一个通用接口，而不是为每个领域在根目录放一套复杂策略。
+2. 真正的任务差异主要来自输入格式、领域工具、评测脚本和各个 domains 子目录。
 
-## 五、快速入门
+### 9.2 meta_agent.py：最关键的一句不是复杂逻辑，而是“修改代码库”
 
-### 5.1 环境准备
+MetaAgent 的 forward 接收 repo_path、eval_path 和 iterations_left。它构造的核心指令是让模型修改某个仓库路径下的代码，并开放工具使用。
 
-**系统要求**：
+这意味着 Hyperagents 的元智能体在公开实现上，本质是一个“面向代码仓库的可工具化修改代理”。
 
-- Python 3.12+
-- Linux/macOS（Windows可能需要额外配置）
+从研究角度看，这种极简入口反而很有代表性：复杂性不一定全在 agent prompt 里，很多复杂性被分配到了执行环境、评测基础设施和代际管理逻辑里。
 
-**依赖安装**：
+### 9.3 run_meta_agent.py：把元智能体输出沉淀为补丁文件
+
+这个脚本做了三件非常具体的事：
+
+1. 解析模型、仓库路径、评测目录、git 目录和 base commit 等参数。
+2. 调用 MetaAgent 执行修改。
+3. 把相对 base commit 的 git diff 存成 model_patch.diff。
+
+此外，它还会把 domains 目录重置到指定 commit。至少从公开代码看，这一步是在过滤不希望保留的改动范围，避免实验结果把某些域文件也一起改乱。
+
+### 9.4 generate_loop.py：整个系统真正的总控台
+
+如果只能读一个文件，优先读 generate_loop.py，因为它负责把所有概念连成闭环。
+
+它的职责包括：
+
+1. 管理 run_id、输出目录和恢复运行。
+2. 初始化根仓库快照。
+3. 构建并清理容器。
+4. 触发元智能体或基线方法。
+5. 调用领域评测。
+6. 更新归档与节点元数据。
+7. 绘制进展图。
+8. 选择下一代父版本。
+
+从代码结构看，Hyperagents 并不是“一个大模型提示词”，而是一整套围绕版本演化构建的实验操作系统。
+
+### 9.5 ensemble.py：不是投票器，而是归档优选器
+
+这个文件里最值得注意的点，是它会从 archive.jsonl 取归档，再根据已有分数找到最佳 genid，随后取该 agent 的预测。
+
+也就是说，如果你看到论文或博客里提到 ensemble，不要自动脑补成“多个代理同时回答后做多数表决”。当前公开实现更像“利用归档记录选择当前最优版本”。
+
+### 9.6 select_next_parent 与 select_parent：决定搜索轨迹的关键钩子
+
+公开代码里既有普通的 select_parent 逻辑，也有 select_next_parent_container 这种容器化选择路径。研究上这很重要，因为 parent selection 会直接影响：
+
+1. 搜索是否容易陷入局部最优。
+2. 是否能保留多样性。
+3. 哪些版本有资格继续繁殖后代。
+
+如果你未来要做二次开发，这通常是最有研究价值、也最容易体现策略差异的切入点之一。
+
+## 十、使用说明：从 0 到跑起来
+
+### 10.1 环境要求应该怎样理解
+
+官方 README 给出了最小安装步骤，但有两个细节必须说明：
+
+1. README 里的系统依赖安装命令使用的是 dnf，说明那部分示例偏向 Fedora 系发行版。
+2. 官方 Dockerfile 实际基于 Ubuntu 22.04 的 CUDA 镜像，并安装 Python 3.12、PyTorch、图形和编译工具链。
+
+因此，最稳妥的理解是：
+
+1. 论文与仓库主要面向 Linux 环境。
+2. macOS 更适合阅读代码、准备轻量流程或做非完整复现实验。
+3. 某些领域，尤其涉及仿真和大规模评测时，更可能依赖 GPU、CUDA 和容器环境。
+
+### 10.2 官方最小安装路径
+
+根据 README，可以按下面的顺序理解安装流程：
+
+1. 准备 API key，并写入 .env。
+2. 安装 Python 3.12 与系统依赖。
+3. 创建虚拟环境。
+4. 安装 requirements.txt 与 requirements_dev.txt。
+5. 视需要构建 Docker 镜像。
+6. 执行 setup_initial.sh 初始化初始 agent。
+
+### 10.3 API key
+
+README 明确列出三类环境变量：
+
+1. OPENAI_API_KEY
+2. ANTHROPIC_API_KEY
+3. GEMINI_API_KEY
+
+但这不意味着每次实验都必须同时使用三家服务，更准确的理解是：仓库支持多家模型提供方接口，实际依赖哪个模型，取决于具体 agent 配置与领域实现。
+
+### 10.4 一次最小运行怎么启动
+
+官方 README 给出的顶层命令是：
 
 ```bash
-# 1. 安装系统依赖
-sudo dnf install -y python3.12-devel
-sudo dnf install -y graphviz graphviz-devel cmake ninja-build
-sudo dnf install -y bzip2-devel zlib-devel ncurses-devel libffi-devel
-
-# 2. 创建虚拟环境
-python3.12 -m venv venv_nat
-source venv_nat/bin/activate
-
-# 3. 安装Python依赖
-pip install -r requirements.txt
-pip install -r requirements_dev.txt
-
-# 4. 配置API密钥
-# 在 .env 文件中配置
-OPENAI_API_KEY=your_openai_key
-ANTHROPIC_API_KEY=your_anthropic_key
-GEMINI_API_KEY=your_gemini_key
-
-# 5. 构建Docker容器（可选）
-docker build --network=host -t hyperagents .
-
-# 6. 初始化智能体
-bash ./setup_initial.sh
-```
-
-### 5.2 运行实验
-
-```bash
-# 基本用法
 python generate_loop.py --domains <domain>
-
-# 参数说明
-# --domains: 选择领域，可选值包括coding、reasoning等
-
-# 输出
-# 默认保存在 outputs/ 目录下
 ```
 
-### 5.3 查看实验日志
-
-实验日志存储为多部分ZIP归档：
-
-```bash
-# 1. 确保所有 .z01, .z02 等文件在同一目录
-# 2. 提取日志
-zip -s 0 outputs_os_parts.zip --out unsplit_logs.zip
-unzip unsplit_outputs.zip
-```
-
----
-
-## 六、代码架构分析
-
-### 6.1 任务智能体（Task Agent）
-
-**核心职责**：解决具体的用户任务
-
-**典型实现**：
-
-```python
-# task_agent.py (概念性代码)
-class TaskAgent:
-    def __init__(self, config):
-        self.model = load_foundation_model(config)
-        self.memory = PersistentMemory()
-        self.tools = load_tools(config)
-    
-    def solve(self, task):
-        # 1. 理解任务
-        task_description = self.parse_task(task)
-        
-        # 2. 检索相关记忆
-        relevant_memory = self.memory.retrieve(task_description)
-        
-        # 3. 生成解决方案
-        solution = self.model.generate(
-            prompt=self.build_prompt(task_description, relevant_memory),
-            tools=self.tools
-        )
-        
-        # 4. 验证解决方案
-        if self.validate(solution, task):
-            # 5. 更新记忆
-            self.memory.add(task_description, solution)
-        
-        return solution
-```
-
-### 6.2 元智能体（Meta Agent）
-
-**核心职责**：生成和评估对智能体的修改
-
-**典型实现**：
-
-```python
-# meta_agent.py (概念性代码)
-class MetaAgent:
-    def __init__(self, config):
-        self.model = load_foundation_model(config)
-        self.improvement_history = []
-    
-    def generate_variants(self, task_agent, task_history):
-        # 1. 分析历史改进
-        successful_patterns = self.analyze_successes(task_history)
-        failed_patterns = self.analyze_failures(task_history)
-        
-        # 2. 生成候选修改
-        candidates = []
-        for pattern in successful_patterns:
-            variant = self.propose_modification(
-                target=task_agent,
-                pattern=pattern,
-                direction="improve"
-            )
-            candidates.append(variant)
-        
-        # 3. 评估候选修改
-        evaluated = []
-        for candidate in candidates:
-            score = self.evaluate(candidate, task_history)
-            evaluated.append((candidate, score))
-        
-        # 4. 选择最优
-        evaluated.sort(key=lambda x: x[1], reverse=True)
-        return evaluated[0][0] if evaluated else None
-    
-    def metacognitive_modify(self):
-        # 元认知修改：改进自身的改进策略
-        if len(self.improvement_history) > N:
-            # 分析改进历史
-            patterns = self.extract_patterns(self.improvement_history)
-            
-            # 修改生成策略
-            self.improvement_strategy = self.modify_strategy(patterns)
-```
-
-### 6.3 主循环（Generate Loop）
-
-```python
-# generate_loop.py (概念性代码)
-def main(config):
-    # 1. 初始化
-    task_agent = TaskAgent(config)
-    meta_agent = MetaAgent(config)
-    ensemble = Ensemble()
-    
-    # 2. 加载初始智能体
-    task_agent = load_initial_task_agent(config)
-    meta_agent = load_initial_meta_agent(config)
-    
-    # 3. 主循环
-    for iteration in range(max_iterations):
-        # 任务解决
-        task = get_next_task(config)
-        solution = task_agent.solve(task)
-        
-        # 记录历史
-        history.add(task, solution)
-        
-        # 元级别改进
-        if iteration % improvement_interval == 0:
-            # 生成变体
-            variant = meta_agent.generate_variants(task_agent, history)
-            
-            # 评估变体
-            if ensemble.is_better(variant, task_agent):
-                # 采纳修改
-                task_agent = variant
-                
-                # 元认知改进（可选）
-                if enable_metacognitive:
-                    meta_agent.metacognitive_modify()
-        
-        # 定期保存检查点
-        if iteration % checkpoint_interval == 0:
-            save_checkpoint(task_agent, meta_agent)
-    
-    return task_agent, meta_agent
-```
-
----
+如果你是第一次上手，建议先做三件事：
 
-## 七、安全考虑
-
-### 7.1 风险提示
+1. 先阅读 setup_initial.sh，因为它说明了哪些域默认启用。
+2. 先挑 paper_review 这类理解成本相对低的任务域。
+3. 先确认 Docker 和依赖可用，再考虑更重的域，如 Genesis 相关任务。
 
-> ⚠️ **警告**：本仓库涉及执行不受信任的、由模型生成的代码。
+### 10.5 setup_initial.sh 在做什么
 
-论文作者明确指出：
+这个脚本不是“可有可无的预处理”。从公开内容看，它会按域准备初始评测与子集数据。当前脚本注释明确写出可选域，且默认启用的是 paper_review 相关流程。
 
-1. **代码执行风险**：虽然在使用当前设置和模型时，代码执行恶意操作的可能性极低，但模型生成的代码仍可能因能力或对齐限制而具有破坏性
-2. **用户责任**：使用本仓库即表示您承认并接受这些风险
-3. **建议措施**：
-   - 在隔离环境中运行
-   - 限制网络访问
-   - 监控系统行为
+这意味着：
 
-### 7.2 缓解措施
+1. 初始化阶段已经在建立“第 0 代”或“初始参考版本”的评测基线。
+2. 后续代际改进不是从空白开始，而是从已有初始节点继续演化。
 
-| 措施 | 说明 |
-|------|------|
-| 沙箱隔离 | 使用容器或虚拟机隔离执行环境 |
-| 权限控制 | 限制代码的文件系统访问 |
-| 网络限制 | 禁止或限制网络请求 |
-| 审计日志 | 记录所有代码执行行为 |
+### 10.6 输出结果会放在哪里
 
----
+README 说默认输出到 outputs 目录。进一步从 generate_loop.py 可以看到，实际会按运行标识生成类似 outputs/generate_运行编号 的目录，并在其中保存各代输出、归档和日志。
 
-## 八、使用场景与案例
+### 10.7 多部分 ZIP 日志怎么处理
 
-### 8.1 编程任务
+官方 README 给出了拆分日志归档的恢复方法。如果你下载的是 outputs_os_parts.z01、z02 和 zip 这类文件，需要先合并再解压，而不是直接只解 zip 主文件。
 
-**场景描述**：让Hyperagents自动改进解决编程问题的能力
+## 十一、入门到精通的实践路线
 
-**典型流程**：
-1. 初始任务：解决简单的算法问题
-2. 元智能体观察：哪些模式有效，哪些无效
-3. 变体生成：提出代码改进建议
-4. 评估采纳：接受有效的修改
-5. 迭代改进：持续优化任务解决策略
+### 11.1 入门阶段：先建立正确心智模型
 
-### 8.2 形式化数学推理
+初学者最容易犯的错误，是把 Hyperagents 想成“一个更强的大模型提示词工程”。更好的入门方式是：
 
-**场景描述**：在数学定理证明任务上应用Hyperagents
+1. 把它当作一个由 Git、Docker、评测 harness 和 agent 组成的演化实验框架。
+2. 先搞清楚每一轮的输入、补丁、评测结果和归档关系。
+3. 暂时不要急着改进算法细节。
 
-**关键挑战**：
-- 证明步骤的正确性易于验证
-- 但生成有效证明需要深层推理能力
+### 11.2 核心阶段：读懂最重要的五个文件
 
-### 8.3 开放域问答
+推荐阅读顺序：
 
-**场景描述**：改进问答系统的准确性和效率
+1. README.md
+2. generate_loop.py
+3. task_agent.py
+4. meta_agent.py
+5. run_meta_agent.py
 
-**改进方向**：
-- 信息检索策略优化
-- 答案生成质量改进
-- 跨问题知识迁移
+这样读的好处是，你会先理解系统怎样跑，再理解每个 agent 实际做了什么。
 
----
+### 11.3 进阶阶段：把 domains 看成“论文结论落地的载体”
 
-## 九、实验结果与分析
+如果只看根目录的 task_agent.py 和 meta_agent.py，你可能会觉得“实现很简单”。这时候不要误判论文价值低，而应继续看 domains 目录。
 
-### 9.1 核心结果
+原因是：
 
-根据论文摘要，DGM-H在多个关键指标上表现出色：
+1. 任务定义在 domains 中。
+2. 评测逻辑在 domains.harness 和 report 中展开。
+3. 真正体现跨领域能力的，不是单个 prompt，而是“同一演化框架如何套到不同域”。
 
-| 指标 | 描述 |
-|------|------|
-| 随时间改进 | DGM-H的性能随时间持续提升 |
-| 超越基线 | 优于无自我改进或无开放式探索的基线 |
-| 先前系统 | 优于先前的自我改进系统 |
-| 跨领域迁移 | 元级别改进可跨领域转移 |
-| 跨_run累积 | 改进可在不同运行间累积 |
+### 11.4 专家阶段：关注选择机制、归档结构和实验协议
 
-### 9.2 元认知改进的效果
+如果你的目标是研究或二次开发，最有价值的问题通常不是“这个 prompt 再怎么润色”，而是：
 
-**元级别改进可转移**：元智能体学到的改进策略不仅适用于当前领域，还可以泛化到新领域。
+1. 父版本如何选择。
+2. 哪些改动允许被保留。
+3. 初始节点如何构造。
+4. 评测样本与 split 如何影响代际选择。
+5. 哪些域支持 ensemble，哪些域不支持。
 
-**持续累积**：每次运行的改进都会添加到知识库中，形成累积性的自我提升。
+这类问题才真正决定系统会沿着什么方向演化。
 
----
+## 十二、开发扩展：想二次开发应该改哪里
 
-## 十、相关工作与理论基础
+### 12.1 改任务行为：看 task_agent.py 与 domains
 
-### 10.1 Darwin Gödel Machine
+如果你想改变任务代理的回答风格、输出格式或通用行为，可以从 task_agent.py 开始。
 
-Darwin Gödel Machine (DGM) 是Hyperagents的前身，由Jürgen Schmidhuber提出。DGM的核心思想是通过自我修改和自然选择来达到通用人工智能。
+如果你想引入新的领域输入格式、任务数据集、评分逻辑或报告流程，则更应该从 domains 子目录与 domains.harness.py 入手。
 
-**DGM vs DGM-H**：
+### 12.2 改元级别行为：看 meta_agent.py 与 run_meta_agent.py
 
-| 特性 | DGM | DGM-H |
-|------|-----|-------|
-| 修改目标 | 仅任务解决 | 任务解决+元级别机制 |
-| 领域泛化 | 受限于编程 | 任意可计算任务 |
-| 实现复杂度 | 理论框架 | 可运行系统 |
+如果你想实验不同的自我修改策略，例如：
 
-### 10.2 元学习（Meta-Learning）
+1. 不同的修改提示词。
+2. 不同的工具授权边界。
+3. 不同的 diff 过滤或保留规则。
 
-Hyperagents与元学习密切相关：
+那么最直接的入口是 meta_agent.py 和 run_meta_agent.py。
 
-- **MAML**（Model-Agnostic Meta-Learning）：学习初始化参数
-- **REPTILE**：简化的元学习方法
-- **Hyperagents**：学习修改策略本身
+### 12.3 改演化策略：看 generate_loop.py、select_parent 和 ensemble
 
-### 10.3 开放式进化
+如果你关心的是搜索空间探索质量，而不是单轮补丁质量，那么应该优先研究：
 
-Hyperagents受到开放式进化（Open-Ended Evolution）研究的启发：
+1. parent selection 方法。
+2. optimize_option 选项。
+3. 归档更新逻辑。
+4. ensemble 的触发条件与取优逻辑。
 
-- 开放式学习：没有预定义的终点
-- 创新涌现：新的能力和策略可以持续涌现
-- 复杂性增长：系统可以变得越来越复杂
+### 12.4 新增领域时要注意什么
 
----
+从现有结构可以稳妥推断，新增领域至少要解决四件事：
 
-## 十一、常见问题
+1. 如何把原始任务样本格式化为 TaskAgent 可消费的输入。
+2. 如何运行该领域的评测。
+3. 如何把结果转换为统一的分数或报告。
+4. 如何让 generate_loop 能识别并在该领域上执行完整闭环。
 
-### Q1：Hyperagents和传统的强化学习有什么区别？
+具体细节应以现有 domains 子目录为模板，而不是凭空新造接口。
 
-| 方面 | 强化学习 | Hyperagents |
-|------|----------|-------------|
-| 奖励函数 | 预定义，固定 | 动态生成 |
-| 策略更新 | 基于梯度 | 基于代码修改 |
-| 探索方式 | 随机扰动 | 智能生成 |
-| 改进上限 | 受限于奖励设计 | 理论无限 |
+## 十三、使用场景：它更适合哪里，不适合哪里
 
-### Q2：元认知自我修改会不会导致系统失控？
+### 13.1 更适合的场景
 
-理论上存在风险，但当前实现有以下安全措施：
+从官方公开域来看，Hyperagents 更适合这些情形：
 
-1. **沙箱隔离**：代码在隔离环境中执行
-2. **人类监督**：关键决策需要人类确认
-3. **渐进式修改**：每次修改幅度受限
-4. **可回滚性**：可以恢复到之前的状态
+1. 任务可以被重复评测。
+2. 版本差异可以通过代码补丁表达。
+3. 任务表现能形成比较稳定的反馈信号。
+4. 需要观察跨代改进，而不是只做单次最优解。
 
-### Q3：需要什么样的硬件资源？
+对应到公开仓库，典型场景包括：
 
-| 资源 | 最低要求 | 推荐配置 |
-|------|----------|----------|
-| GPU | 单卡A100 | 多卡A100/H100 |
-| 内存 | 32GB | 128GB+ |
-| 存储 | 100GB | 500GB+ |
+1. 论文评审或检索类任务。
+2. 文本环境中的代理任务。
+3. 数学证明与评分任务。
+4. 多语言编程或仓库级任务评测。
+5. 具备仿真环境的控制类实验。
 
-### Q4：支持哪些基础模型？
+### 13.2 不太适合的场景
 
-根据requirements.txt，支持：
+如果一个任务缺少稳定评测信号，或者无法把改进沉淀为仓库可追踪的修改，那么 Hyperagents 的优势就会明显下降。
 
-- OpenAI GPT系列
-- Anthropic Claude系列
-- Google Gemini系列
-- 其他兼容API格式的模型
+例如：
 
-### Q5：如何贡献代码？
+1. 纯主观创意写作。
+2. 没有可重复验证标准的开放型决策。
+3. 需要强实时交互，但难以回放和复评的任务。
 
-```bash
-# 1. Fork仓库
-# 2. 创建特性分支
-git checkout -b feature/my-feature
+### 13.3 为什么“任何可计算任务”不等于“任何现实任务都适合”
 
-# 3. 提交更改
-git commit -m "Add my feature"
+README 和论文摘要中的口号是 optimize for any computable task。这是一个研究目标陈述，不应该被误读为“现实世界所有任务都已经可直接拿来跑”。
 
-# 4. 推送分支
-git push origin feature/my-feature
+更专业的理解是：
 
-# 5. 创建Pull Request
-```
+1. 框架设计上试图摆脱单一领域依赖。
+2. 真正能否落地，还取决于任务表示、评测机制、算力与环境约束。
 
----
+## 十四、安全、风险与边界
 
-## 十二、总结
+### 14.1 官方已经明确警告
 
-### 核心要点
+README 的安全说明写得很直接：仓库会执行不受信任的、由模型生成的代码。即便在当前设置下显式恶意行为概率不高，仍可能因为模型能力或对齐限制而做出破坏性操作。
 
-1. **Hyperagents是自指性智能体**：通过任务智能体和元智能体的双层架构实现自我改进
-2. **元认知自我修改是关键创新**：不仅修改任务解决行为，还修改"如何改进"的机制
-3. **消除领域对齐假设**：DGM-H可以应用于任意可计算任务
-4. **跨领域迁移能力**：元级别改进可以在不同领域间转移
+### 14.2 实验时的最低安全要求
 
-### 生态现状
+如果你真的要跑实验，至少应该做到：
 
-- **论文发表**：arXiv:2603.19461（2026年3月19日）
-- **开源代码**：GitHub: facebookresearch/HyperAgents（2k Stars）
-- **研究团队**：Meta FAIR（Jenny Zhang等）
+1. 在隔离环境中执行。
+2. 不给无必要的宿主机权限。
+3. 控制网络访问边界。
+4. 保留完整日志与补丁轨迹。
 
-### 未来展望
+### 14.3 许可证边界也值得注意
 
-Hyperagents代表了开放式自我改进AI系统研究的重要一步。随着基础模型能力的提升和系统工程化程度的完善，这类系统有望在更多领域发挥重要作用。
+当前仓库根许可证为 CC BY-NC-SA 4.0。这意味着你在复用、修改和再分发时，需要特别留意非商业与相同方式共享条款，而不能想当然地按宽松开源许可证处理。
 
----
+## 十五、常见误解与澄清
+
+### Q1：Hyperagents 是否等于“自动递归自我升级的通用智能”
+
+不是。公开材料支持的是一个可运行的自我改进框架与实验结果叙述，不是对通用智能或无限递归提升的证明。
+
+### Q2：task_agent.py 这么短，为什么论文还能做复杂实验
+
+因为根目录任务代理只是统一接口。很多复杂性被放进了 domains、评测流程、容器环境和代际管理逻辑中。
+
+### Q3：ensemble 是不是多个版本一起投票
+
+至少从当前公开的 ensemble.py 入口看，不是传统多数投票，而是根据归档分数取当前最佳版本的输出。
+
+### Q4：我能在 macOS 上完整复现吗
+
+可以阅读代码、整理实验流程，甚至做部分轻量准备；但若涉及 Docker、GPU、CUDA、Genesis 等重型依赖，完整复现通常更适合 Linux 环境。
+
+### Q5：我应该先读论文还是先读代码
+
+如果你是工程实践导向，建议先读 README 和 generate_loop.py，再回头看论文摘要和论文正文。因为 Hyperagents 的价值高度体现在工程闭环上，而不只是一组抽象概念。
+
+## 十六、专家视角下最值得研究的三个问题
+
+### 16.1 如何定义“好父本”
+
+自我改进系统的上限，很大程度上受 parent selection 影响。选择最新、选择最好、选择按分数比例采样，都会导向不同的演化轨迹。
+
+### 16.2 如何避免把短期提分误认为长期改进
+
+如果某个版本只对当前评测集投机，却破坏长期泛化能力，那么归档与评测协议就需要足够谨慎。这个问题在任何自我改进系统里都非常关键。
+
+### 16.3 元级别改进如何跨领域迁移
+
+论文摘要声称元级别改进可以跨领域转移并跨运行累积。对研究者来说，这也许是全文最值得追问的部分，因为它关系到“改进机制”能否成为比“单领域技能”更通用的资产。
+
+## 十七、练习与自测
+
+### 17.1 入门自测
+
+1. 为什么 Hyperagents 不只是普通的代码代理？
+2. 任务智能体和元智能体的职责边界分别是什么？
+3. 为什么 DGM 的对齐假设在编程外不一定成立？
+
+### 17.2 进阶练习
+
+1. 结合 generate_loop.py，手工画出一轮 generation 的输入、输出和状态变更图。
+2. 比较 task_agent.py 与 meta_agent.py 的接口差异，解释为什么前者偏向统一任务接口，后者偏向仓库操作入口。
+3. 分析 ensemble.py 当前实现为什么更像“归档优选”，而不是“投票集成”。
+
+### 17.3 专家练习
+
+1. 设计一种新的 parent selection 策略，并说明它如何改善探索与利用的平衡。
+2. 设计一个新领域接入方案，明确输入格式、评测函数、报告输出与代际选择如何对接。
+3. 思考在保证安全的前提下，哪些元级别改动应该允许自动保留，哪些应该强制人工审核。
+
+## 十八、总结
+
+Hyperagents 值得关注，不是因为它喊出了“自我改进”这个大词，而是因为它把这个概念落实为一个可审计、可回放、可比较的工程系统。
+
+如果把全文压缩成最重要的五点，就是：
+
+1. 它把任务代理与元代理整合进统一可编辑程序。
+2. 它关注的不只是做任务，还包括改进“如何改进”。
+3. 它通过生成补丁、运行评测、维护归档和选择父版本形成闭环。
+4. 它的公开源码入口其实相当朴素，很多复杂性来自整体实验基础设施，而不是单个神奇文件。
+5. 它为“跨领域自我改进”提供了一个值得认真研究的工程原型，但不应被夸张理解为已经解决了通用递归自我提升。
 
 ## 相关链接
 
 | 资源 | 地址 |
-|------|------|
-| 论文 | https://arxiv.org/abs/2603.19461 |
-| GitHub | https://github.com/facebookresearch/HyperAgents |
-| Meta AI研究 | https://ai.meta.com/research/publications/hyperagents/ |
+| ---- | ---- |
+| 论文 | [arXiv 2603.19461](https://arxiv.org/abs/2603.19461) |
+| 仓库 | [facebookresearch/HyperAgents](https://github.com/facebookresearch/HyperAgents) |
+| Meta AI 页面 | [Meta AI Hyperagents](https://ai.meta.com/research/publications/hyperagents/) |
 
----
+## 更新说明
 
-*🦞 文档版本：2026-04-02 | 论文版本：arXiv:2603.19461 | 来源：Hyperagents论文及GitHub仓库*
+本文版本：2026-04-03  
+核验来源：arXiv 条目、官方 README、公开仓库代码入口与许可证文件。

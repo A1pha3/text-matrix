@@ -560,6 +560,160 @@ Giscus 方案对当前部署链路几乎没有新增复杂度：
 
 这正是它适合 text-matrix 的原因。
 
+### 7.6 text-matrix 实际接入时建议修改哪些文件
+
+如果后面要把文档里的方案真正落地到当前仓库，建议优先关注下面这些文件。
+
+#### 1. Hugo 全局配置文件
+
+文件：`hugo.toml`
+
+建议修改内容：
+
+- 增加或启用 `[params.page.comment]`
+- 回填 Giscus 的 `repo`、`repoId`、`category`、`categoryId`
+- 固定 `mapping = "pathname"`
+- 设置 `lazyLoading = true`
+
+为什么改这里：
+
+- 这是评论系统的全局配置入口。
+- LoveIt 初始化时会从这里把评论参数注入页面上下文。
+
+建议控制原则：
+
+- 这里只放“全站默认评论配置”。
+- 不要在这里直接假设所有 single page 都应该展示评论。
+
+#### 2. 文章页模板
+
+文件：`layouts/posts/single.html`
+
+建议修改内容：
+
+- 保留文章页评论入口。
+- 如有需要，可在这里对 `posts` 做更明确的评论显示判断。
+
+为什么改这里：
+
+- 这是正文文章的主承载模板。
+- text-matrix 的评论第一阶段最适合只对文章页开放。
+
+推荐目标：
+
+- `posts` 下的文章默认允许评论。
+
+#### 3. 默认单页模板
+
+文件：`layouts/_default/single.html`
+
+建议修改内容：
+
+- 不要无条件渲染评论 partial。
+- 改成按 section、type 或 front matter 条件判断后再渲染。
+
+为什么改这里：
+
+- 当前很多普通页面和文档页都会走这个模板。
+- 如果这里不加约束，一旦全局启用评论，`docs`、`about`、`contact`、`privacy-policy`、`search` 都可能出现评论。
+
+推荐目标：
+
+- 默认 single page 不显示评论。
+- 仅在满足明确条件时显示。
+- 条件示例：属于 `posts`。
+- 条件示例：front matter 显式写了 `comment: true`。
+
+#### 4. 隐私政策页面
+
+文件：`content/privacy-policy.md`
+
+建议修改内容：
+
+- 增加第三方评论服务说明。
+- 说明评论数据由 GitHub Discussions 承载。
+- 说明页面会向 Giscus/GitHub 发起请求。
+- 说明评论需要 GitHub 身份登录。
+
+为什么改这里：
+
+- 一旦接入 Giscus，前端就会加载第三方资源并发生用户数据交互。
+- 这是合规和用户告知的最小要求。
+
+#### 5. 需要评论的文档页 front matter
+
+文件范围：`content/docs/**/*.md` 或其他未来需要开放评论的内容页
+
+建议修改内容：
+
+- 对个别确实需要讨论的文档显式加：
+
+```yaml
+comment: true
+```
+
+为什么改这里：
+
+- 文档页不应该默认开放评论。
+- 但少数教程、方案对比、架构文档可能确实适合收集反馈。
+
+推荐目标：
+
+- 通过 front matter 白名单方式开启，而不是默认打开。
+
+#### 6. 不需要评论的普通页面 front matter
+
+文件范围：
+
+- `content/about.md`
+- `content/contact.md`
+- `content/privacy-policy.md`
+- `content/search.md`
+
+建议修改内容：
+
+- 显式加：
+
+```yaml
+comment: false
+```
+
+为什么改这里：
+
+- 即使后面模板判断发生调整，这些页面也不应成为评论入口。
+- 用 front matter 做二次保险，比只依赖模板更稳。
+
+#### 7. 可选：评论接入说明文档
+
+文件：本文件所在路径
+
+- `docs/comment/comment-system-architecture-design.md`
+
+建议修改内容：
+
+- 在真正实施后，把最终生效的仓库名、分类名、模板策略、验证结果补回文档。
+
+为什么改这里：
+
+- 架构文档如果不记录最终实现状态，后面很容易出现“文档设计”和“线上实际配置”漂移。
+
+#### 最小改动版本的推荐顺序
+
+如果要用最小改动把 Giscus 接进去，我建议按下面顺序改：
+
+1. 改 `hugo.toml`，写入 Giscus 全局配置。
+2. 改 `layouts/_default/single.html`，阻止普通页面默认显示评论。
+3. 检查 `layouts/posts/single.html`，确保文章页仍能显示评论。
+4. 给 `content/privacy-policy.md` 补评论服务声明。
+5. 给不需要评论的普通页面显式加 `comment: false`。
+6. 如有需要，再给少量文档页加 `comment: true`。
+
+这样做的好处是：
+
+- 风险最可控
+- 变更面最小
+- 最符合当前仓库“静态站 + 明确内容分层”的结构
+
 ## 8. 业界最佳工业实践
 
 如果把“最佳实践”写成一句话，就是：
