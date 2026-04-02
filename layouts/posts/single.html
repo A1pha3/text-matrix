@@ -19,12 +19,26 @@
     {{- end -}}
 
     <article class="page single">
+        <div class="pagefind-document" data-pagefind-body>
         {{- /* Title */ -}}
-        <h1 class="single-title animate__animated animate__flipInX">{{ .Title | emojify }}</h1>
+        <h1 class="single-title animate__animated animate__flipInX" data-pagefind-meta="title">{{ .Title | emojify }}</h1>
 
         {{- /* Subtitle */ -}}
         {{- with $params.subtitle -}}
             <h2 class="single-subtitle">{{ . }}</h2>
+        {{- end -}}
+
+        <span hidden data-pagefind-meta="section">{{ .Section }}</span>
+        <span hidden data-pagefind-meta="type">{{ .Type }}</span>
+        <span hidden data-pagefind-meta="date">{{ .PublishDate.Format "2006-01-02T15:04:05Z07:00" }}</span>
+        {{- with .Description -}}
+            <span hidden data-pagefind-meta="description">{{ . | plainify }}</span>
+        {{- end -}}
+        {{- with .Params.categories -}}
+            <span hidden data-pagefind-meta="category">{{ delimit . ", " }}</span>
+        {{- end -}}
+        {{- with .Params.tags -}}
+            <span hidden data-pagefind-meta="tags">{{ delimit . ", " }}</span>
         {{- end -}}
 
         {{- /* Meta */ -}}
@@ -93,6 +107,7 @@
         {{- /* Content */ -}}
         <div class="content" id="content">
             {{- dict "Content" .Content "Ruby" $params.ruby "Fraction" $params.fraction "Fontawesome" $params.fontawesome | partial "function/content.html" | safeHTML -}}
+        </div>
         </div>
 
         {{- /* Footer */ -}}

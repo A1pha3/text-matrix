@@ -1,0 +1,25 @@
+{{- define "title" -}}
+    {{- .Title }} - {{ .Site.Title -}}
+{{- end -}}
+
+{{- define "content" -}}
+    <div class="page archive" data-pagefind-ignore="all">
+        <h2 class="single-title animate__animated animate__pulse animate__faster">{{ .Title }}</h2>
+        {{- if eq .Data.Plural "categories" -}}
+            <div class="categories-card">
+                {{- range .Data.Terms.Alphabetical -}}
+                    <a class="card-item" href="{{ .Page.RelPermalink }}">
+                        <span class="card-item-label">{{ .Page.Title }}</span>
+                        <span class="card-item-count">{{ .Count }}</span>
+                    </a>
+                {{- end -}}
+            </div>
+        {{- else if eq .Data.Plural "tags" -}}
+            <div class="tag-cloud-tags">
+                {{- range .Data.Terms.Alphabetical -}}
+                    <a href="{{ .Page.RelPermalink }}">{{ .Page.Title }}</a>
+                {{- end -}}
+            </div>
+        {{- end -}}
+    </div>
+{{- end -}}

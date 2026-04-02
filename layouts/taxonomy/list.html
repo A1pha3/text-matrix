@@ -14,6 +14,7 @@
                 {{- printf "%v - %v" (T $taxonomy | default $taxonomy) .Title -}}
             {{- end -}}
         </h2>
+
         {{- if .Pages -}}
             {{- $pages := .Pages.GroupByDate "2006" -}}
             {{- with .Site.Params.list.paginate | default .Site.Params.paginate -}}
