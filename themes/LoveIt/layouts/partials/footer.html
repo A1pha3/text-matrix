@@ -3,8 +3,11 @@
         <div class="footer-container">
             {{- /* Custom Content */ -}}
             {{- with .Site.Params.footer.custom -}}
+                {{- $custom := . -}}
+                {{- $siteRoot := $.Site.Home.RelPermalink -}}
+                {{- $custom = replaceRE `href="/` (printf `href="%s` $siteRoot) $custom -}}
                 <div class="footer-line">
-                    {{- safeHTML . -}}
+                    {{- safeHTML $custom -}}
                 </div>
             {{- end -}}
 

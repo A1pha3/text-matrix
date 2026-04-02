@@ -6,7 +6,7 @@
 {{- $headerLead := index $headerParts 0 -}}
 {{- $headerTail := "" -}}
 {{- $pagefindEnabled := .Site.Params.pagefind.enable -}}
-{{- $searchPageURL := (.Site.Params.pagefind.searchPage | default "/search/") | relLangURL -}}
+{{- $searchPageURL := (.Site.Params.pagefind.searchPage | default "search/") | relLangURL -}}
 {{- if gt (len $headerParts) 1 -}}
     {{- $headerTail = delimit (after 1 $headerParts) " " -}}
 {{- end -}}

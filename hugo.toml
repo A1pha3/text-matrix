@@ -43,7 +43,7 @@ enableRobotsTXT = true
 
   [params.pagefind]
     enable = true
-    searchPage = "/search/"
+    searchPage = "search/"
 
   [params.home]
     [params.home.profile]
