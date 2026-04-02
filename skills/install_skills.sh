@@ -115,7 +115,7 @@ builtin_target_dir() {
             printf '%s' "$HOME/.trae/skills"
             ;;
         openclaw)
-            printf '%s' "$HOME/.openclaw/skills"
+            printf '%s' "$HOME/.openclaw/workspace/skills"
             ;;
         opencode)
             printf '%s' "$HOME/.opencode/skills"
