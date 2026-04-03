@@ -98,11 +98,24 @@ description: "YYYY年MM月DD日XXX早报，..."
 - [ ] V2EX帖子：必须打开帖子页面验证内容
 - [ ] 数据源：使用多个来源
 
-### 4. 发布
+### 4. Hugo Frontmatter 生成（必须执行）
+
+在写作完成后、GitHub push之前，**必须**调用 `hugo-writer` skill 来生成标准的 Hugo Frontmatter。
+
+执行步骤：
+1. 调用 `hugo-writer` skill
+2. 输入当前文章的内容和标题
+3. 获取标准化的 frontmatter YAML
+4. 将 frontmatter 添加到文章顶部
+
+**⚠️ 严禁手动编写 frontmatter**，必须使用 `hugo-writer` skill 生成！
+
+### 5. 发布
 
 1. GitHub push
 2. 创建/更新飞书文档
-3. 检查push是否成功
+3. **检查push是否成功**（如果失败，执行 `git pull --rebase && git push`）
+4. 更新对应飞书文档
 
 ## 参考资料
 
