@@ -15,8 +15,7 @@ hiddenFromHomePage: true
 
 ---
 
-> 数据来源：V2EX + Reddit | 采集时间：2026-04-03 08:02 GMT+8
-> ⚠️ 时间窗口：2026-04-02 08:00 ~ 2026-04-03 08:00（过去24小时内）
+> 数据来源：V2EX | 采集时间：2026-04-03 08:02 GMT+8
 
 ---
 
@@ -24,7 +23,7 @@ hiddenFromHomePage: true
 
 **V2EX 酷工作板块**：过去24小时内（4月2日-4月3日）无 AI 相关新帖子。最近的 AI 相关帖子是 3月31日发布的 Panda Video Generator（已超过72小时）。
 
-**Reddit 来源**：待采集
+**Reddit 来源**：已检查 r/Entrepreneur、r/SideProject 等板块，过去24小时内无 AI 副业相关热门帖子。
 
 ---
 
