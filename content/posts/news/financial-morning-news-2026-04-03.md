@@ -1,10 +1,25 @@
+---
+title: "经济财经早报 2026-04-03"
+date: 2026-04-03T07:50:00+08:00
+slug: financial-morning-news-2026-04-03
+categories: ["行业快讯"]
+tags: ["财经", "早报", "A股", "美股", "原油", "房地产", "SpaceX"]
+description: "2026年4月3日经济财经早报，涵盖A股下跌、创业板指跌超2%、美股涨跌不一、特斯拉重挫5.4%、SC原油暴跌超12%等重磅财经新闻"
+---
+
 # 经济财经早报 | 2026-04-03
+
+🦞 每日08:30自动更新
+
+---
 
 > 数据来源：新浪财经 | 采集时间：2026-04-03 07:50 GMT+8
 
+---
+
 ## 🌏 全球市场
 
-**A股收评：创业板指跌超2%，近4400股飘绿** 原文：https://finance.sina.com.cn/zt_d/subject-1775089987
+**A股收评：创业板指跌超2%，近4400股飘绿** [原文](https://finance.sina.com.cn/zt_d/subject-1775089987)
 
 4月3日，A股三大指数集体下跌，创业板指跌超2%表现最弱。截至收盘：
 - 上证综指：3919.29（-0.74%）
@@ -18,7 +33,7 @@
 
 ---
 
-**美股涨跌不一，特斯拉重挫5.4%** 原文：https://finance.sina.com.cn/roll/2026-04-03/doc-inhteimm3945753.shtml
+**美股涨跌不一，特斯拉重挫5.4%** [原文](https://finance.sina.com.cn/roll/2026-04-03/doc-inhteimm3945753.shtml)
 
 美股三大指数本周均录得涨幅，但周五收盘涨跌不一：
 - 特斯拉一季度交付不及预期，股价重挫5.4%
@@ -31,7 +46,7 @@
 
 ## 🛢️ 大宗商品
 
-**SC原油4月首个交易日暴跌超12%** 原文：https://finance.sina.com.cn/money/future/fmnews/2026-04-02/doc-inhtaemy2098357.shtml
+**SC原油4月首个交易日暴跌超12%** [原文](https://finance.sina.com.cn/money/future/fmnews/2026-04-02/doc-inhtaemy2098357.shtml)
 
 国际油价大幅波动，SC原油在4月首个交易日暴跌超12%，反映市场对全球需求前景的担忧。同时，黄金价格连续四天反弹，市场聚焦特朗普讲话。
 
@@ -39,7 +54,7 @@
 
 ## 🏠 房地产市场
 
-**楼市风向变了？地方公积金新政超60次** 原文：https://finance.sina.com.cn/roll/2026-04-02/doc-inhtaemy2094772.shtml
+**楼市风向变了？地方公积金新政超60次** [原文](https://finance.sina.com.cn/roll/2026-04-02/doc-inhtaemy2094772.shtml)
 
 据不完全统计，3月以来全国已有超60个城市出台地方公积金新政，主要涉及贷款额度提升、首付比例下调、提取条件放宽等措施。市场分析认为，这意味着楼市政策正在进一步放松。
 
@@ -49,7 +64,7 @@
 
 ## 🚀 IPO动态
 
-**SpaceX冲刺6月上市：史上最大IPO** 原文：https://finance.sina.com.cn/wm/2026-04-02/doc-inhtaenm4479495.shtml
+**SpaceX冲刺6月上市：史上最大IPO** [原文](https://finance.sina.com.cn/wm/2026-04-02/doc-inhtaenm4479495.shtml)
 
 马斯克旗下SpaceX宣布正式启动上市程序，目标创下史上最大规模IPO纪录。市场人士估计其估值可能超过2000亿美元。
 
@@ -57,7 +72,7 @@
 
 ## 🌍 地缘政治
 
-**特朗普：伊朗刚发出"请求"** 原文：https://finance.sina.com.cn/stock/zqgd/2026-04-02/doc-inhtaemy2112851.shtml
+**特朗普：伊朗刚发出"请求"** [原文](https://finance.sina.com.cn/stock/zqgd/2026-04-02/doc-inhtaemy2112851.shtml)
 
 地缘紧张局势持续升温：
 - 特朗普称"伊朗刚发出请求"，暗示美伊谈判出现新动向
@@ -69,7 +84,7 @@
 
 ## 📊 机构观点
 
-**多家机构看好中国资产结构性机遇** 原文：https://finance.sina.com.cn/jjxw/2026-04-02/doc-inhtaenm4453349.shtml
+**多家机构看好中国资产结构性机遇** [原文](https://finance.sina.com.cn/jjxw/2026-04-02/doc-inhtaenm4453349.shtml)
 
 尽管A股短期承压，但多家机构发布报告认为：
 - 中国资产或成全球资金避风港
