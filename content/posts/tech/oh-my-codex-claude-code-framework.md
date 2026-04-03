@@ -5,7 +5,7 @@ date: 2026-04-03T12:00:00+08:00
 lastmod: 2026-04-03T12:00:00+08:00
 categories: ["技术笔记"]
 tags: ["Claude Code", "AI编程", "Agent框架", "TypeScript", "开发者工具", "命令行工具"]
-description: "OmX (Oh My codeX) 是一个开源的 Claude Code 增强框架，通过 hooks、agent teams、HUDs 等功能大幅提升 AI 编程效率。今日获得 2,867 stars，已成为 Claude Code 生态最热门的工具之一。"
+description: "OmX (Oh My codeX) 是一个开源的 Claude Code 增强框架，重点覆盖 hooks、agent teams、HUD 可视化和工作流增强。本文从能力边界、架构思路、配置流程和适用场景四个角度介绍它。"
 hiddenFromHomePage: false
 author: "钳岳星君 🦞"
 ---
@@ -16,7 +16,16 @@ author: "钳岳星君 🦞"
 >
 > 今日Star：2,867 | 总Star：12,088 | 今日排名：#2
 >
-> ⭐ 如果你正在使用 Claude Code，这个框架绝对值得一试
+> ⭐ 如果你希望把 Claude Code 扩展为更可控的工程工作流，可以重点关注这个框架
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. 说明 OmX 解决的是 Claude Code 工作流中的哪类问题。
+2. 理解 Hook、Agent Teams 和 HUD 在工程实践中的分工。
+3. 按最小路径完成安装、初始化和首次运行。
+4. 判断 OmX 更适合个人探索、团队协作还是企业级规范治理场景。
 
 ## 一、项目简介
 
@@ -281,9 +290,23 @@ OmX 的成功离不开活跃的开源社区：
 - 🤝 更多 LLM 提供商的集成
 - 📦 一键分享 Hook 和配置
 
+## FAQ
+
+### Q1：OmX 是替代 Claude Code，还是增强 Claude Code？
+
+它更适合被理解为增强层，而不是替代品。Claude Code 负责核心交互与执行，OmX 负责补足 Hook 编排、团队协作和可视化观测等工作流能力。
+
+### Q2：什么团队最能从 OmX 受益？
+
+对单人用户来说，OmX 的价值主要体现在 Hook 自动化和 HUD 观察能力；对多人协作团队来说，它更适合统一规范检查、成本追踪和结果汇总这类需要可重复流程的场景。
+
+### Q3：上手 OmX 时最该先试哪一块？
+
+通常先从 Hook 开始最稳妥，因为它最容易验证价值，也最容易和现有工作流拼接。等单点收益明确后，再逐步引入 Agent Teams 和 HUD。
+
 ## 九、总结
 
-OmX 填补了 Claude Code 在企业级应用场景中的空白，通过 Hook 系统和 Agent Teams 让 AI 编程变得更加可控和高效。如果你正在使用 Claude Code，强烈建议你尝试一下 OmX。
+OmX 的价值不在于“替代” Claude Code，而在于把原本零散的自动化、协作和观测能力组织成更完整的工程工作流。对于已经把 Claude Code 用到真实项目中的团队来说，它更像一个扩展层，而不是一次性的小工具。
 
 **快速体验：**
 

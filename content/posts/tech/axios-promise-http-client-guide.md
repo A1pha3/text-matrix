@@ -2,7 +2,7 @@
 title: "Axios：Promise HTTP 客户端完全指南"
 date: 2026-04-03T01:25:00+08:00
 slug: "axios-promise-http-client-guide"
-description: "Axios是基于Promise的HTTP客户端，支持浏览器和Node.js双环境。本文详细介绍Axios的安装配置、基本使用、拦截器、错误处理、请求取消、数据序列化等核心功能，以及最佳实践和常见问题解决方案。"
+description: "Axios 是基于 Promise 的 HTTP 客户端，支持浏览器和 Node.js 环境。本文覆盖安装配置、基本使用、拦截器、错误处理、请求取消、数据序列化、最佳实践和常见问题。"
 draft: false
 categories: ["技术笔记"]
 tags: ["JavaScript", "HTTP", "Axios", "Node.js", "前端开发"]
@@ -25,7 +25,7 @@ tags: ["JavaScript", "HTTP", "Axios", "Node.js", "前端开发"]
 
 ---
 
-## 一，项目概述
+## 一、项目概述
 
 ### 1.1 Axios 是什么
 
@@ -71,15 +71,20 @@ tags: ["JavaScript", "HTTP", "Axios", "Node.js", "前端开发"]
 | 浏览器兼容 | ✅ 广泛兼容 | ⚠️ 现代浏览器 |
 | 请求/响应转换 | ✅ 易于配置 | ❌ 需要手动处理 |
 
+### 1.5 什么时候优先选 Axios
+
+如果你需要统一错误处理、请求拦截器、超时控制和更直接的请求配置接口，Axios 往往比原生 `fetch` 更省心。  
+如果你的项目对额外依赖极度敏感，且只需要少量基础请求，直接使用 `fetch` 也完全合理。
+
 ---
 
-## 二，安装与环境配置
+## 二、安装与环境配置
 
 ### 2.1 支持的环境
 
 **浏览器支持**：Chrome、Firefox、Safari、Opera、Edge（最新版）
 
-**Node.js 版本**：Node.js 环境直接支持
+**Node.js 环境**：官方同时覆盖浏览器和 Node.js 运行场景，具体兼容范围以当前版本发布说明为准。
 
 ### 2.2 安装方式
 
@@ -151,7 +156,7 @@ console.log(axios.isCancel('something'));
 
 ---
 
-## 三，基本使用
+## 三、基本使用
 
 ### 3.1 GET 请求
 
@@ -230,7 +235,7 @@ getUser();
 
 ---
 
-## 四，Axios API 详解
+## 四、Axios API 详解
 
 ### 4.1 请求方式
 
@@ -316,7 +321,7 @@ const response = await axios({
 
 ---
 
-## 五，创建 Axios 实例
+## 五、创建 Axios 实例
 
 ### 5.1 为什么需要实例
 
@@ -357,7 +362,7 @@ const uri = instance.getUri({ params: { ID: 123 } });
 
 ---
 
-## 六，拦截器
+## 六、拦截器
 
 ### 6.1 请求拦截器
 
@@ -417,7 +422,7 @@ axios.interceptors.request.use(fn3);     // 后执行 fn3
 
 ---
 
-## 七，错误处理
+## 七、错误处理
 
 ### 7.1 错误类型
 
@@ -461,7 +466,7 @@ try {
 
 ---
 
-## 八，请求取消
+## 八、请求取消
 
 ### 8.1 AbortController（推荐方式）
 
@@ -567,7 +572,7 @@ await axios.post('/upload', {
 
 ---
 
-## 十，配置默认值
+## 十、配置默认值
 
 ### 10.1 全局默认值
 
@@ -610,7 +615,7 @@ api.get('/user', { timeout: 2000 });
 
 ---
 
-## 十一，速率限制
+## 十一、速率限制
 
 ### 11.1 请求间隔控制
 
@@ -647,7 +652,7 @@ for (const id of userIds) {
 
 ---
 
-## 十二，最佳实践
+## 十二、最佳实践
 
 ### 12.1 统一错误处理
 
@@ -746,7 +751,7 @@ axios.interceptors.response.use(
 
 ---
 
-## 十三，常见问题
+## 十三、常见问题
 
 ### Q1：Axios 和 fetch 哪个更好？
 
@@ -811,7 +816,7 @@ axios.get('/user', {
 
 ---
 
-## 十四，总结
+## 十四、总结
 
 ### 核心要点
 
