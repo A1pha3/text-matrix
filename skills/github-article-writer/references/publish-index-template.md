@@ -15,7 +15,7 @@
 ## 字段说明
 
 | 字段 | 来源 |
-|------|------|
+| ------ | ------ |
 | 项目名 | GitHub 仓库名或中文项目名 |
 | owner/repo | GitHub 仓库完整路径 |
 | Stars | GitHub 页面右上角数字 |
@@ -28,4 +28,4 @@
 
 1. **按 Stars 数量排序**：Stars 多的在上，少的在下
 2. **同一项目多次发布**：只更新对应的行，不新增
-3. **文件路径**：`~/.openclaw/workspace/GitHub/text-matrix/docs/memory/publish-index.md`
+3. **文件路径**：仓库根目录相对路径 `docs/memory/publish-index.md`

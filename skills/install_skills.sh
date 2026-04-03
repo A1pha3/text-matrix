@@ -24,6 +24,7 @@ usage() {
         - 不带参数时，默认进入检测模式，只安装本机已存在目录的内置目标。
         - --detect 显式启用检测模式。
         - 内置目标: trae、openclaw、opencode、claude-code、codex、vscode。
+    - 内置目标使用各工具的默认用户目录；如需跨仓库或自定义位置，请使用 --target name=dir（支持相对路径和绝对路径）。
     - --all 会安装所有内置目标以及通过 --target 追加的目标。
   - --target name=dir 可临时追加安装目标。
     - 在 Windows 上需要系统支持符号链接；若失败，请以管理员权限运行终端或开启 Developer Mode。
