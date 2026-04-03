@@ -1,7 +1,8 @@
 # 更新日志
 
 | 版本 | 日期 | 作者 | 变更说明 |
-|------|------|------|----------|
+| ------ | ------ | ------ | ---------- |
+| v5.1.0 | 2026-04-03 | GitHub Copilot | **Enhance 优化**。重写 SKILL.md 的核心结构：将任务判断拆为命令路由、交付深度、追问策略 3 个原子步骤；新增命令级按需加载表，明确 `scripts/`、`ci/`、`CHANGELOG.md` 为普通写作任务的禁止预加载项；补齐输出契约、微型示例、异常恢复与交付前回路；同步 `skill.json` 与 `README.md` 版本和描述，使激活信息、执行规则和元数据一致。 |
 | v5.0.1 | 2026-03-01 | skill-optimize | **精简优化**。YAML description 去冗余修饰词（-58%）；删除 Quick Start 失败恢复示例（已覆盖于 edge-cases.md）；核心原则 4 条列表压缩为 1 行（术语统一已由 §4 自检 #3 保障）；§3 删除与 §7 重复的"按需加载"列；§5 产物骨架移至 commands.md 按需加载（-70 行）；§6 删除与 §4 红线重复的禁止项；§7 合并低频条目。字符数 6400→4898（↓23.5%），语义保真率 100%。 |
 | v4.1.0 | 2026-03-01 | Sisyphus | **Skill-Optimize 增强迭代（3 轮）**。新增 Quick Start 示例（3 正例 + 反例，覆盖 write/translate/optimize）；新增独立 §7 规则章节（适用边界 + 必须/禁止双向清单 + 异常输入处理表）；§2 场景路由增强为多维度按序判断规则；§4 命令入口表新增输入/输出列；§6 新增 2 个产物骨架模板（write-cn-doc + optimize-cn-doc）；精简 §7 规则与 §5 自检重叠条目。加权评分 33→39.5/40。 |
 | v3.8.0 | 2026-03-01 | Sisyphus | **架构重构：懒加载优化**。将 SKILL.md 从 ~15K tokens 的单体文件拆分为瘦核心（~3.5K tokens）+ 5 个按需加载模块。新增 `references/commands.md`（命令流程）、`references/quality.md`（评估标准）、`references/examples.md`（示例与语气）、`references/edge-cases.md`（边界与恢复）、`references/knowledge.md`（知识与框架）。典型调用 token 消耗降低 60-76%，功能零损失。 |

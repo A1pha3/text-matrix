@@ -1,9 +1,9 @@
 {
   "name": "cn-doc-writer",
-  "description": "专业的技术文档编写助手，支持中文技术文档的创作、翻译和优化。提供场景路由（快速/标准/完整模式）、量化评估（5 维度 100 分制）、术语管理（JSON 单一数据源）、格式检查和翻译校验全流程支持。特别强调专家级知识传递、学习路径设计、认知负荷管理和刻意练习。",
-  "version": "3.7.0",
+  "description": "中文技术文档工作流，适用于编写中文技术教程、README、API 文档，或将英文技术资料译成中文、优化现有技术文档、补充学习目标与练习。强调任务路由、按需加载、术语一致性、量化评估与技术准确性。",
+  "version": "5.1.0",
   "author": "Sisyphus",
-  "tags": ["documentation", "chinese", "cn-doc", "writing", "technical", "translation", "education", "learning"],
+  "tags": ["documentation", "chinese", "cn-doc", "writing", "technical", "translation", "education", "learning", "readme", "api-docs"],
   "commands": [
     {
       "name": "write-cn-doc",
@@ -11,15 +11,15 @@
     },
     {
       "name": "translate-cn",
-      "description": "将英文文档翻译成中文（前分析 → 翻译 → 后校验）"
+      "description": "将英文技术资料翻译成中文（保留代码、命令和术语边界）"
     },
     {
       "name": "optimize-cn-doc",
-      "description": "优化现有中文文档（诊断 → 改进 → 量化评估）"
+      "description": "优化现有中文技术文档（诊断 → 改进 → 量化评估）"
     },
     {
       "name": "enhance-learning",
-      "description": "为文档添加学习元素（目标、练习、评估、路径）"
+      "description": "为文档添加学习元素（目标、练习、自测、进阶路径）"
     }
   ]
 }
