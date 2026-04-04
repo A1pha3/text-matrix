@@ -152,3 +152,4 @@
 | 75 | CZSC | waditu/czsc | 4.8k Stars | czsc-chanlun-technical-analysis-tool-guide.md | 6274b3f | AGdQdXSEJoyLroxxHo3cvXcen2b | 2026-04-02 |
 | 76 | Prompts.chat | f/prompts.chat | 156k Stars | prompts-chat-open-source-prompt-library-guide.md | b44be61 | HkTldeZsxopAjIx7MsucocXxnke | 2026-04-02 |
 | everything-claude-code | affaan-m/everything-claude-code | 2.8k | content/posts/tech/everything-claude-code-comprehensive-guide.md | b4cf776 | CERtdlMr4oP0ysx6tCecvWWfnhf | 2026-04-02 |
+| breferrari/obsidian-mind | 462 | obsidian-mind-claude-code-memory-system-guide.md | 2297b28 | DKVHdIKWUoND4Fx3V9jcUsTtnog | 2026-04-04 |
