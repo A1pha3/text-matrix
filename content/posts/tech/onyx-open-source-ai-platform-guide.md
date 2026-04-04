@@ -4,7 +4,7 @@ slug: "onyx-open-source-ai-platform-guide"
 date: 2026-04-04T14:35:00+08:00
 lastmod: 2026-04-04T14:35:00+08:00
 categories: ["技术笔记"]
-tags: ["AI平台", "RAG", "Deep Research", "Agent", "开源", "LLM", "企业搜索", "Python"]
+tags: ["AI平台", "RAG", "Deep Research", "Agent", "开源"]
 description: "Onyx 是一个开源 AI 平台，提供 RAG、Deep Research、自定义 Agent、代码执行等高级功能，支持所有主流 LLM 提供商。本文介绍其核心功能、架构设计和部署方式。"
 ---
 
@@ -51,10 +51,7 @@ RAG（Retrieval-Augmented Generation）是企业使用 LLM 的核心场景。Ony
 - **混合索引**：结合向量搜索和关键词搜索，兼顾语义匹配和精确检索
 - **AI Agent 增强**：Agent 会自动判断检索策略、多次迭代搜索、验证答案质量
 
-```python
-# Onyx RAG 工作流程
-query → 混合索引检索 → Agent 二次检索 → 生成答案 → 答案验证
-```
+**工作流程示意**：query → 混合索引检索 → Agent 二次检索 → 生成答案 → 答案验证
 
 ### 2.2 Deep Research — 深度研究代理
 
