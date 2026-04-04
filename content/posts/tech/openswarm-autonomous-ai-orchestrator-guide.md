@@ -2,7 +2,7 @@
 title: "OpenSwarm：基于 Claude Code 的自主式 AI Agent 编排框架完全指南"
 slug: "openswarm-autonomous-ai-orchestrator-guide"
 date: 2026-04-04T20:32:00+08:00
-lastmod: 2026-04-04T20:32:00+08:00
+draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Claude Code", "多智能体", "编排框架", "自动化开发"]
 description: "OpenSwarm 是由 Claude Code CLI 驱动的自主式 AI Agent 编排框架，通过 Linear 问题采集、Worker/Reviewer 配对流水线、Discord 实时控制、LanceDB 向量记忆和知识图谱，实现多 Agent 协同的自动化代码开发与 PR 自动修复。"
