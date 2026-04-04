@@ -1,11 +1,11 @@
 ---
 title: "DeepScientist：本地优先的 AI 科研自动化工作室完全指南"
-slug: "deepscientist-ai-research-studio-guide"
 date: 2026-04-04T20:38:00+08:00
+slug: "deepscientist-ai-research-studio-guide"
+description: "DeepScientist 是本地优先的 AI 科研工作室（ICLR 2026 论文），通过论文复现、实验自动化、结果整理和写作辅助，将研究员的重复性工作转化为可积累、可进化的 AI 工作流。支持 Web/TUI/微信/QQ/飞书等多端协作。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI科研", "实验自动化", "论文复现", "AI Agent", "本地优先"]
-description: "DeepScientist 是本地优先的 AI 科研工作室（ICLR 2026 论文），通过论文复现、实验自动化、结果整理和写作辅助，将研究员的重复性工作转化为可积累、可进化的 AI 工作流。支持 Web/TUI/微信/QQ/飞书等多端协作。"
 ---
 
 # DeepScientist：本地优先的 AI 科研自动化工作室完全指南
