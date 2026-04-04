@@ -154,3 +154,4 @@
 | everything-claude-code | affaan-m/everything-claude-code | 2.8k | content/posts/tech/everything-claude-code-comprehensive-guide.md | b4cf776 | CERtdlMr4oP0ysx6tCecvWWfnhf | 2026-04-02 |
 | breferrari/obsidian-mind | 462 | obsidian-mind-claude-code-memory-system-guide.md | 2297b28 | DKVHdIKWUoND4Fx3V9jcUsTtnog | 2026-04-04 |
 | anthropics/skill-creator | - | skill-creator-anthropic-skill-authoring-guide.md | e9fc185 | Xfhndah3doLeZCxUGCscBseAn3c | 2026-04-04 |
+| unohee/OpenSwarm | 378 | openswarm-autonomous-ai-orchestrator-guide.md | 9ac86bb | MRSjdmOr0oamFix1bHgcqyTLnzf | 2026-04-04 |
