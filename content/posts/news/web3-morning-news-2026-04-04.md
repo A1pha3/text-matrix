@@ -4,7 +4,7 @@ date: 2026-04-04T09:20:00+08:00
 slug: "web3-morning-news-2026-04-04"
 categories: ["行业快讯"]
 tags: ["Web3", "加密货币", "区块链", "DeFi", "比特币", "以太坊"]
-description: "每日 Web3、区块链、加密货币市场最新动态，涵盖 BTC、ETH、DeFi、监管政策
+description: "每日 Web3、区块链、加密货币市场最新动态，涵盖 BTC、ETH、DeFi、监管政策"
 hiddenFromHomePage: true
 ---
 
