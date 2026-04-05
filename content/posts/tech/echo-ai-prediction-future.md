@@ -2,9 +2,10 @@
 title: "AI 能否预测未来？Echo 预测智能系统与通用预测市场深度分析"
 date: 2026-03-30T16:44:00+08:00
 slug: echo-ai-prediction-future
+description: "基于 UniPat AI 当前公开页面，严谨分析 Echo 的通用 AI 预测定位、公开指标、方法边界与预测市场关系。"
+draft: false
 categories: ["技术笔记"]
 tags: ["AI预测", "Echo", "Polymarket", "预测市场", "大模型"]
-description: "基于 UniPat AI 当前公开页面，严谨分析 Echo 的通用 AI 预测定位、公开指标、方法边界与预测市场关系。"
 ---
 
 > **目标读者**：关注 AI、预测市场、量化研究与产品基础设施的技术读者

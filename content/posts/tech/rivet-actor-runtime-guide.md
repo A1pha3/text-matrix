@@ -1,10 +1,11 @@
 ---
 title: "Rivet：新一代 Actor 持久化运行时完全指南"
-slug: "rivet-actor-runtime-guide"
 date: 2026-03-31T15:20:00+08:00
+slug: "rivet-actor-runtime-guide"
+description: "全面解析 Rivet (5.3k Stars)：新一代 Actor 持久化运行时。~20ms冷启动、~0.6KB内存、$0空闲成本，内置Workflows/Queues/Scheduling，支持TypeScript/Rust/Python SDK。"
+draft: false
 categories: ["技术笔记"]
 tags: ["Rivet", "Actor", "持久化运行时", "AI Agent", "Rust", "TypeScript", "WebSocket"]
-description: "全面解析 Rivet (5.3k Stars)：新一代 Actor 持久化运行时。~20ms冷启动、~0.6KB内存、$0空闲成本，内置Workflows/Queues/Scheduling，支持TypeScript/Rust/Python SDK。"
 ---
 
 # Rivet：新一代 Actor 持久化运行时完全指南

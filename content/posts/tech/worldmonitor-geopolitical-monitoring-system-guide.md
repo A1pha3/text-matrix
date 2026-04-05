@@ -2,9 +2,10 @@
 title: "WorldMonitor 地缘政治监测系统：从入门到精通 AI预测分析平台"
 date: 2026-03-31T03:00:00+08:00
 slug: worldmonitor-geopolitical-monitoring-system-guide
+description: "WorldMonitor 是地缘政治监测系统，3.1k Stars，v2.8.1，基于 BERT/Transformer NLP 和 LSTM 预测模型，实现多源数据采集、地缘政治分析、预测预警和可视化 Dashboard。本文涵盖九大核心模块、API 开发和 Kubernetes 部署指南。"
+draft: false
 categories: ["技术笔记"]
 tags: ["WorldMonitor", "地缘政治", "NLP分析", "预测模型", "TensorFlow", "PyTorch", "BERT"]
-description: "WorldMonitor 是地缘政治监测系统，3.1k Stars，v2.8.1，基于 BERT/Transformer NLP 和 LSTM 预测模型，实现多源数据采集、地缘政治分析、预测预警和可视化 Dashboard。本文涵盖九大核心模块、API 开发和 Kubernetes 部署指南。"
 ---
 
 # WorldMonitor 地缘政治监测系统：从入门到精通

@@ -1,10 +1,11 @@
 ---
 title: "Botan：C++ 密码学库完全指南"
-slug: "botan-cpp-cryptography-guide"
 date: 2026-03-31T12:45:00+08:00
+slug: "botan-cpp-cryptography-guide"
+description: "全面解析 Botan：C++ 密码学库（3.2k Stars，BSD-2 许可证）。覆盖 TLSv1.3、X.509、AEAD、后量子密码学（ML-KEM、ML-DSA）等完整功能体系。从入门到精通，包含架构分析、原理讲解、C++/Python/C API 使用说明和最佳实践。"
+draft: false
 categories: ["技术笔记"]
 tags: ["Botan", "密码学", "C++", "TLS", "加密", "PKI", "后量子密码学"]
-description: "全面解析 Botan：C++ 密码学库（3.2k Stars，BSD-2 许可证）。覆盖 TLSv1.3、X.509、AEAD、后量子密码学（ML-KEM、ML-DSA）等完整功能体系。从入门到精通，包含架构分析、原理讲解、C++/Python/C API 使用说明和最佳实践。"
 ---
 
 # Botan：C++ 密码学库完全指南

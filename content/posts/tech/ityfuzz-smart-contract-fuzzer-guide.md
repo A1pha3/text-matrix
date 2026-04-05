@@ -1,10 +1,11 @@
 ---
 title: "ItyFuzz：极速智能合约混合模糊测试器完全指南"
-slug: "ityfuzz-smart-contract-fuzzer-guide"
 date: 2026-04-01T01:03:00+08:00
+slug: "ityfuzz-smart-contract-fuzzer-guide"
+description: "深度解析 ItyFuzz (1.1k Stars)：极速 EVM/MoveVM 智能合约混合模糊测试器，结合符号执行和模糊测试技术，在大型项目上发现126个漏洞（vs Echidna 0个），支持链上分叉/闪电贷/重入攻击自动利用。"
+draft: false
 categories: ["技术笔记"]
 tags: ["ItyFuzz", "智能合约", "模糊测试", "符号执行", "EVM", "MoveVM", "漏洞挖掘", "安全审计", "LibAFL", "区块链安全"]
-description: "深度解析 ItyFuzz (1.1k Stars)：极速 EVM/MoveVM 智能合约混合模糊测试器，结合符号执行和模糊测试技术，在大型项目上发现126个漏洞（vs Echidna 0个），支持链上分叉/闪电贷/重入攻击自动利用。"
 ---
 
 # ItyFuzz：极速智能合约混合模糊测试器完全指南

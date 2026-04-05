@@ -1,14 +1,11 @@
 ---
 title: "Sherlock：一键溯源社交媒体账户，开源OSINT调查工具"
 date: 2026-04-05T11:30:00+08:00
-lastmod: 2026-04-05T11:30:00+08:00
 slug: "sherlock-osint-tool-social-media-investigation"
 description: "Sherlock是一款强大的开源OSINT工具，通过用户名快速追踪用户在300+社交平台的存在情况，适用于网络安全研究、渗透测试和数字取证。"
 draft: false
-categories: ["技术教程"]
+categories: ["技术笔记"]
 tags: ["OSINT", "网络安全", "开源工具", "社交媒体", "信息收集"]
-originalUrl: "https://github.com/sherlock-project/sherlock"
-source: "GitHub Trending"
 ---
 
 # Sherlock：一键溯源社交媒体账户，开源OSINT调查工具

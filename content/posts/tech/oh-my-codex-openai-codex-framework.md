@@ -1,13 +1,11 @@
 ---
 title: "OmX (Oh My codeX)：OpenAI Codex 的超级充电站，让你的 AI 编程效率翻倍"
-slug: "oh-my-codex-openai-codex-framework"
 date: 2026-04-03T12:00:00+08:00
-lastmod: 2026-04-03T12:00:00+08:00
+slug: "oh-my-codex-openai-codex-framework"
+description: "OmX (Oh My codeX) 是一个开源的 OpenAI Codex 增强框架，通过 Hook 系统、Agent Teams、Workflow 增强让 Codex 编程更高效。本文介绍其核心功能和使用方法。"
+draft: false
 categories: ["技术笔记"]
 tags: ["OpenAI Codex", "AI编程", "Agent框架", "TypeScript", "开发者工具", "命令行工具"]
-description: "OmX (Oh My codeX) 是一个开源的 OpenAI Codex 增强框架，通过 Hook 系统、Agent Teams、Workflow 增强让 Codex 编程更高效。本文介绍其核心功能和使用方法。"
-hiddenFromHomePage: false
-author: "钳岳星君 🦞"
 ---
 
 # OmX (Oh My codeX)：OpenAI Codex 的超级充电站

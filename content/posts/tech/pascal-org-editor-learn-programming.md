@@ -2,9 +2,10 @@
 title: "Pascal.org Editor：从入门到精通 浏览器端Pascal编程学习平台"
 date: 2026-03-31T01:10:00+08:00
 slug: pascal-org-editor-learn-programming
+description: "Pascal.org Editor 是在线 Pascal 编程学习平台，18 Stars。本文从入门到精通，涵盖 Pascal 语法基础、函数过程、文件操作、Web 端解释器原理和技术架构分析。"
+draft: false
 categories: ["技术笔记"]
 tags: ["Pascal", "编程入门", "在线IDE", "Web开发", "教育"]
-description: "Pascal.org Editor 是在线 Pascal 编程学习平台，18 Stars。本文从入门到精通，涵盖 Pascal 语法基础、函数过程、文件操作、Web 端解释器原理和技术架构分析。"
 ---
 
 # Pascal.org Editor：从入门到精通 — 浏览器端 Pascal 编程学习平台

@@ -1,10 +1,11 @@
 ---
 title: "TaxHacker：自托管 AI 会计应用完全指南"
-slug: "taxhacker-self-hosted-ai-accounting-guide"
 date: 2026-04-01T01:22:00+08:00
+slug: "taxhacker-self-hosted-ai-accounting-guide"
+description: "深度解析 TaxHacker (3.6k Stars)：vas3k 开源的自托管 AI 会计应用，支持收据/发票/ PDF 的 AI 自动识别提取、170+货币和14种加密货币自动汇率转换、自定义分类字段和 LLM 提示词、CSV 导出税务报告，采用 Next.js + PostgreSQL + Prisma 技术栈，支持 Docker 一键部署。"
+draft: false
 categories: ["技术笔记"]
 tags: ["TaxHacker", "AI会计", "自托管", "财务管理", "发票识别", "多货币", "加密货币", "Docker", "Next.js", "PostgreSQL"]
-description: "深度解析 TaxHacker (3.6k Stars)：vas3k 开源的自托管 AI 会计应用，支持收据/发票/ PDF 的 AI 自动识别提取、170+货币和14种加密货币自动汇率转换、自定义分类字段和 LLM 提示词、CSV 导出税务报告，采用 Next.js + PostgreSQL + Prisma 技术栈，支持 Docker 一键部署。"
 ---
 
 # TaxHacker：自托管 AI 会计应用完全指南

@@ -1,10 +1,11 @@
 ---
 title: "GEPA：基于反射式文本进化的 AI 系统优化框架完全指南"
-slug: "gepa-genetic-pareto-optimization-guide"
 date: 2026-04-01T01:04:00+08:00
+slug: "gepa-genetic-pareto-optimization-guide"
+description: "深度解析 GEPA (3.1k Stars)：基于 LLM 反射和 Pareto 高效进化搜索的 AI 系统优化框架。比 RL 快 35 倍，只需 100-500 次评估即可超越 5000-25000 次的 RL 效果。开源模型+GEPA 以 1/90 成本击败 Claude Opus 4.1。"
+draft: false
 categories: ["技术笔记"]
 tags: ["GEPA", "Pareto优化", "AI优化", "提示词工程", "DSPy", "反射式进化", "MLflow", "智能体架构", "文本优化", "机器学习"]
-description: "深度解析 GEPA (3.1k Stars)：基于 LLM 反射和 Pareto 高效进化搜索的 AI 系统优化框架。比 RL 快 35 倍，只需 100-500 次评估即可超越 5000-25000 次的 RL 效果。开源模型+GEPA 以 1/90 成本击败 Claude Opus 4.1。"
 ---
 
 # GEPA：基于反射式文本进化的 AI 系统优化框架完全指南

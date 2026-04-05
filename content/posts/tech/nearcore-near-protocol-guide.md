@@ -1,10 +1,11 @@
 ---
 title: "NEAR Protocol 核心节点完全指南"
-slug: "nearcore-near-protocol-guide"
 date: 2026-03-31T14:45:00+08:00
+slug: "nearcore-near-protocol-guide"
+description: "全面解析 NEAR Protocol (nearcore)：2.6k Stars 的去中心化应用平台。NEAR 是以太坊竞争对手，采用 Nightshade 分片和 PoS 共识，支持 Rust/JavaScript 智能合约开发。"
+draft: false
 categories: ["技术笔记"]
 tags: ["NEAR Protocol", "NEAR", "nearcore", "区块链", "智能合约", "Rust", "Web3"]
-description: "全面解析 NEAR Protocol (nearcore)：2.6k Stars 的去中心化应用平台。NEAR 是以太坊竞争对手，采用 Nightshade 分片和 PoS 共识，支持 Rust/JavaScript 智能合约开发。"
 ---
 
 # NEAR Protocol 核心节点完全指南

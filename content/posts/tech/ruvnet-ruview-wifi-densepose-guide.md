@@ -1,10 +1,11 @@
 ---
 title: "RuView WiFi DensePose：从入门到精通 — 穿墙感知AI系统"
-slug: "ruvnet-ruview-wifi-densepose-guide"
 date: 2026-03-31T13:20:00+08:00
+slug: "ruvnet-ruview-wifi-densepose-guide"
+description: "RuView 是基于 WiFi 信号的人体感知系统，44.7k Stars，实现穿墙姿态估计、生命体征检测、多目标追踪。本文涵盖 CSI 原理、ESP32 部署、自适应分类器训练、Rust 信号处理流水线。自学即可以掌握隐私保护、穿墙感知和自学习等核心技术。"
+draft: false
 categories: ["技术笔记"]
 tags: ["RuView", "WiFi感知", "DensePose", "CSI", "边缘AI", "穿墙感知", "ESP32", "生命体征"]
-description: "RuView 是基于 WiFi 信号的人体感知系统，44.7k Stars，实现穿墙姿态估计、生命体征检测、多目标追踪。本文涵盖 CSI 原理、ESP32 部署、自适应分类器训练、Rust 信号处理流水线。自学即可以掌握隐私保护、穿墙感知和自学习等核心技术。"
 ---
 
 > **目标读者**：物联网工程师、AI 感知开发者、隐私计算研究者、边缘 AI 爱好者
