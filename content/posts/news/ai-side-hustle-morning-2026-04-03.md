@@ -6,7 +6,6 @@ description: "汇总4月3日AI副业与招聘动态，V2EX酷工作板块过去2
 draft: false
 categories: ["行业快讯"]
 tags: ["副业", "AI", "V2EX", "招聘"]
-hiddenFromHomePage: true
 ---
 
 # AI 副业早报 | 2026-04-03

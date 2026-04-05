@@ -1,15 +1,11 @@
 ---
 title: "AI新闻早报：2026年4月5日"
 date: 2026-04-05T08:00:00+08:00
-lastmod: 2026-04-05T08:00:00+08:00
 slug: "ai-morning-news-2026-04-05"
 description: "汇总4月5日AI大模型、具身智能、程序员职业风险及Hacker News热点等最新动态与核心事件解读。"
 draft: false
 categories: ["行业快讯"]
 tags: ["AI", "大模型", "具身智能", "HackerNews"]
-hiddenFromHomePage: true
-originalUrl: "https://feishu.cn/docx/NPp7dG5xDoKFLdxlS3wcOdCFnkg"
-source: "36kr AI频道、量子位、Hacker News"
 ---
 
 # AI新闻早报：2026年4月5日

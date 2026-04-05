@@ -1,15 +1,11 @@
 ---
 title: "AI副业早报：2026年4月5日"
 date: 2026-04-05T08:30:00+08:00
-lastmod: 2026-04-05T08:30:00+08:00
 slug: "ai-side-hustle-morning-2026-04-05"
 description: "汇总2026年4月5日V2EX酷工作、AI相关岗位招聘、职场热议话题及独立开发者副业机会。"
 draft: false
 categories: ["行业快讯"]
 tags: ["AI工作", "V2EX", "远程工作", "求职", "副业"]
-hiddenFromHomePage: true
-originalUrl: "https://feishu.cn/docx/NcPYdibuQo8hQwxPHZwc1PRdnFd"
-source: "V2EX酷工作、职场话题"
 ---
 
 # AI副业早报：2026年4月5日

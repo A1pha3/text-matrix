@@ -6,7 +6,6 @@ description: "汇总2026年3月27日AI副业最新机会与赚钱赛道，涵盖
 draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "创业", "融资", "Agent", "工具", "Indie Hackers", "V2EX"]
-hiddenFromHomePage: true
 ---
 
 # AI副业早报 2026-03-27

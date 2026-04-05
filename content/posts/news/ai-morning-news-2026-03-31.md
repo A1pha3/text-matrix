@@ -2,10 +2,10 @@
 title: "AI新闻早报：2026年3月31日"
 date: 2026-03-31T08:00:00+08:00
 slug: ai-morning-news-2026-03-31
+description: "AI新闻早报——每日08:00自动更新。今日要点：阿里千问上线Qwen3.6系列全模态模型、美团开源LongCat-AudioDiT、GitHub遭遇投毒攻击、Mistral AI融资8.3亿美元。"
+draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Qwen", "Claude", "Kimi", "Mistral", "GitHub", "开源", "大模型"]
-description: "AI新闻早报——每日08:00自动更新。今日要点：阿里千问上线Qwen3.6系列全模态模型、美团开源LongCat-AudioDiT、GitHub遭遇投毒攻击、Mistral AI融资8.3亿美元。"
-hiddenFromHomePage: true
 ---
 
 # AI新闻早报：2026年3月31日

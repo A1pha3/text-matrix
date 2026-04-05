@@ -1,15 +1,11 @@
 ---
 title: "经济财经早报：2026年4月5日"
 date: 2026-04-05T08:00:00+08:00
-lastmod: 2026-04-05T08:00:00+08:00
 slug: "financial-morning-news-2026-04-05"
 description: "汇总4月5日中东战争第35天、原油价格飙升至141美元、美联储按兵不动、信贷投资者避险等全球经济金融重大动态。"
 draft: false
 categories: ["行业快讯"]
 tags: ["经济", "美联储", "原油", "中东战争", "SpaceX", "信贷市场"]
-hiddenFromHomePage: true
-originalUrl: "https://feishu.cn/docx/TgWvdcRIpo8lblx3xNlc7eSLnMb"
-source: "FT中文网、华尔街见闻、金十数据"
 ---
 
 # 经济财经早报：2026年4月5日

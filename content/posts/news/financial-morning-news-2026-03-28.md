@@ -6,14 +6,6 @@ description: "2026年3月28日全球金融市场最新动态：伊朗战争第27
 draft: false
 categories: ["行业快讯"]
 tags: ["伊朗战争", "美股", "美联储", "SpaceX", "滞胀"]
-hiddenFromHomePage: true
-sources:
-  - name: FT中文网
-    url: https://www.ftchinese.com/
-  - name: 华尔街见闻
-    url: https://wallstreetcn.com/
-  - name: 彭博社
-    url: https://www.bloomberg.com
 ---
 
 # 经济财经早报：2026年3月28日

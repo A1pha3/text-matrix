@@ -6,7 +6,6 @@ description: "汇总4月3日AI行业最新动态，涵盖Google Gemma 4开源、
 draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Gemma", "Qwen", "Claude", "Anthropic", "具身智能", "机器人"]
-hiddenFromHomePage: true
 ---
 
 # AI 新闻早报 | 2026-04-03

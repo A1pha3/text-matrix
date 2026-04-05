@@ -2,10 +2,10 @@
 title: "AI副业早报｜2026-03-31"
 date: 2026-03-31T09:00:00+08:00
 slug: ai-side-hustle-morning-2026-03-31
+description: "AI副业早报——每日09:00自动更新，涵盖AI开发求职热招、技术合伙人招募、AI定制外包、独立开发者变现经验、V2EX精选副业等副业机会。"
+draft: false
 categories: ["行业快讯"]
 tags: ["副业", "AI赚钱", "求职", "创业", "Reddit"]
-description: "AI副业早报——每日09:00自动更新，涵盖AI开发求职热招、技术合伙人招募、AI定制外包、独立开发者变现经验、V2EX精选副业等副业机会。"
-hiddenFromHomePage: true
 ---
 
 # AI 副业早报｜2026-03-31

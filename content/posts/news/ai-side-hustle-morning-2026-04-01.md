@@ -1,9 +1,11 @@
 ---
 title: "AI副业早报 2026-04-01"
 date: 2026-04-01T10:06:00+08:00
+slug: 
+description: "每日08:30自动更新的AI副业早报，汇集独立开发、远程工作、创业组队、工具发现等副业相关内容，涵盖GitHub热门项目、Product Hunt爆款产品、V2ex精选帖子等。"
+draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "独立开发", "远程工作", "GitHub", "Product Hunt"]
-description: "每日08:30自动更新的AI副业早报，汇集独立开发、远程工作、创业组队、工具发现等副业相关内容，涵盖GitHub热门项目、Product Hunt爆款产品、V2ex精选帖子等。"
 ---
 
 # AI副业早报 2026-04-01
