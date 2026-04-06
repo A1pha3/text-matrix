@@ -157,3 +157,4 @@
 | unohee/OpenSwarm | 378 | openswarm-autonomous-ai-orchestrator-guide.md | 9ac86bb | MRSjdmOr0oamFix1bHgcqyTLnzf | 2026-04-04 |
 | block/goose | 35.3k | goose-block-ai-agent-engineering-automation-guide.md | 7421b78 | VjkpdILKFozrTCxLgf1c64Ahn8b | 2026-04-04 |
 | ResearAI/DeepScientist | 1.1k | deepscientist-ai-research-studio-guide.md | 3ae32d2 | ODsxdw3s3oTwOBxJZ9Zcpjz6ntb | 2026-04-04 |
+| google-ai-edge/gallery | 17.4k | google-ai-edge-gallery-on-device-llm-guide.md | b5b0c0f | G5xJdNwLjoOUcVxH76Kcbtj1nCe | 2026-04-06 |
