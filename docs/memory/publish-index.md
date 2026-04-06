@@ -159,3 +159,4 @@
 | ResearAI/DeepScientist | 1.1k | deepscientist-ai-research-studio-guide.md | 3ae32d2 | ODsxdw3s3oTwOBxJZ9Zcpjz6ntb | 2026-04-04 |
 | google-ai-edge/gallery | 17.4k | google-ai-edge-gallery-on-device-llm-guide.md | b5b0c0f | G5xJdNwLjoOUcVxH76Kcbtj1nCe | 2026-04-06 |
 | Blaizzy/mlx-vlm | 4.1k | mlx-vlm-apple-silicon-vlm-inference-guide.md | 79b3426 | DOizd2gPuoHWrxxH9fFck4zgnWh | 2026-04-06 |
+| siddharthvaddem/openscreen | 23.2k | openscreen-free-screen-recording-guide.md | 033cbed | TNyjdYnamobAi6xSGRUcywNvnCc | 2026-04-06 |
