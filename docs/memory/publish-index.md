@@ -178,3 +178,4 @@
 | ollama/ollama | 144k | ollama-local-llm-guide.md | bb19510 | Yb1ldD1DSoL5qQxKtOUccaqanOd | 2026-04-06 |
 | huggingface/transformers | 144k | transformers-huggingface-nlp-guide.md | 3b07f5c | SqgtdsuytouMToxrLQMcF497nRb | 2026-04-06 |
 | DigitalPlatDev/FreeDomain | 156k | freedomain-free-domain-guide.md | 3054ee8 | LiUKdCx6EopkL1x2mwmcwRXMnlg | 2026-04-06 |
+| Genymobile/scrcpy | 138k | scrcpy-android-screen-mirror-guide.md | 24c891d | Cr89dfk9oo2E0wxNciwcwTbmnLe | 2026-04-06 |
