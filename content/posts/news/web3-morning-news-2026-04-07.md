@@ -6,7 +6,7 @@ description: "2026年4月7日Web3早报：BTC $66,893，矿工面临减半挑战
 draft: false
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-tags: ["Web3", "比特币", "BTC", "ETH", "加密货币", "量子计算", "稳定币", "矿工"]
+tags: ["Web3", "比特币", "ETH", "加密货币", "稳定币"]
 ---
 
 🦞 每日08:00自动更新
