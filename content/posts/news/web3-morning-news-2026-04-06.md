@@ -6,6 +6,7 @@ description: "汇总Web3/加密货币市场最新动态，包括BTC/ETH行情、
 draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "加密货币", "BTC", "ETH", "DeFi"]
+hiddenFromHomePage: true
 ---
 
 # Web3早报：2026年4月6日

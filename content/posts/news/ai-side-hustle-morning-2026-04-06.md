@@ -6,6 +6,7 @@ description: "汇总V2EX等平台上AI相关工作机会、创业组队信息及
 draft: false
 categories: ["行业快讯"]
 tags: ["AI工作", "创业组队", "远程工作", "V2EX", "大模型"]
+hiddenFromHomePage: true
 ---
 
 # AI副业早报：2026年4月6日
