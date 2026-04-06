@@ -180,3 +180,4 @@
 | DigitalPlatDev/FreeDomain | 156k | freedomain-free-domain-guide.md | 3054ee8 | LiUKdCx6EopkL1x2mwmcwRXMnlg | 2026-04-06 |
 | Genymobile/scrcpy | 138k | scrcpy-android-screen-mirror-guide.md | 24c891d | Cr89dfk9oo2E0wxNciwcwTbmnLe | 2026-04-06 |
 | labuladong/fucking-algorithm | 142k | fucking-algorithm-crack-algorithm-problems-guide.md | a4e1f5c | BESadGWi7o0x4IxmUYUcsisEnfe | 2026-04-06 |
+| microsoft/generative-ai-for-beginners | 109k | microsoft-generative-ai-for-beginners-course-guide.md | a6bc6ec | NXBJdPORfoS85UxESnkcjpPLnAW | 2026-04-06 |
