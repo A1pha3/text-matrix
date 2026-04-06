@@ -162,3 +162,4 @@
 | siddharthvaddem/openscreen | 23.2k | openscreen-free-screen-recording-guide.md | 033cbed | TNyjdYnamobAi6xSGRUcywNvnCc | 2026-04-06 |
 | mattpocock/skills | 12.4k | mattpocock-skills-claude-code-agent-guide.md | 86dfad4 | RxGtdPL9xoS2gcxrhyRcBawNnSd | 2026-04-06 |
 | google-ai-edge/LiteRT-LM | 1.8k | litert-lm-google-edge-llm-inference-guide.md | f8f4f59 | WNwJdANsKoXfPXxrk7AcaqaXnbb | 2026-04-06 |
+| dmtrKovalenko/fff.nvim | 248 | fff.nvim-ai-neovim-file-search-guide.md | 50867e3 | YaqXdRGkPonLK4x9Uo2c4PJenBe | 2026-04-06 |
