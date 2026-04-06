@@ -160,3 +160,4 @@
 | google-ai-edge/gallery | 17.4k | google-ai-edge-gallery-on-device-llm-guide.md | b5b0c0f | G5xJdNwLjoOUcVxH76Kcbtj1nCe | 2026-04-06 |
 | Blaizzy/mlx-vlm | 4.1k | mlx-vlm-apple-silicon-vlm-inference-guide.md | 79b3426 | DOizd2gPuoHWrxxH9fFck4zgnWh | 2026-04-06 |
 | siddharthvaddem/openscreen | 23.2k | openscreen-free-screen-recording-guide.md | 033cbed | TNyjdYnamobAi6xSGRUcywNvnCc | 2026-04-06 |
+| mattpocock/skills | 12.4k | mattpocock-skills-claude-code-agent-guide.md | 86dfad4 | RxGtdPL9xoS2gcxrhyRcBawNnSd | 2026-04-06 |
