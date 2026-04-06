@@ -176,3 +176,4 @@
 | EbookFoundation/free-programming-books | 294k | free-programming-books-curated-list-guide.md | 2e3d486 | OlqId5mpmoPjgoxssmlcPzrknTg | 2026-04-06 |
 | n8n-io/n8n | 183k | n8n-workflow-automation-guide.md | f377f33 | KZ3bdfB1ioIaG5xRNzvccYhBnKj | 2026-04-06 |
 | ollama/ollama | 144k | ollama-local-llm-guide.md | bb19510 | Yb1ldD1DSoL5qQxKtOUccaqanOd | 2026-04-06 |
+| huggingface/transformers | 144k | transformers-huggingface-nlp-guide.md | 3b07f5c | SqgtdsuytouMToxrLQMcF497nRb | 2026-04-06 |
