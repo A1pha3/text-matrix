@@ -5,7 +5,7 @@ slug: "immich-self-hosted-photo-video-management-guide"
 description: "全面介绍 96.6k Stars 的 Immich 自托管照片和视频管理方案，涵盖 Docker 部署、多端架构、人脸识别、CLIP 搜索、API 集成等核心功能，以及开发指南和常见问题解决方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Immich", "自托管", "照片管理", "Google Photos替代", "Flutter", "NestJS", "人脸识别"]
+tags: ["Immich", "自托管", "照片管理", "Flutter", "NestJS"]
 ---
 
 ## 学习目标
