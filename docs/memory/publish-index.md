@@ -183,3 +183,4 @@
 | microsoft/generative-ai-for-beginners | 109k | microsoft-generative-ai-for-beginners-course-guide.md | a6bc6ec | NXBJdPORfoS85UxESnkcjpPLnAW | 2026-04-06 |
 | Shubhamsaboo/awesome-llm-apps | 105k | awesome-llm-apps-curated-llm-application-projects-guide.md | c161fd6 | Y8pdduiQro4LkSxVMuqctO6FnW6 | 2026-04-06 |
 | ggml-org/llama.cpp | 68.9k | llama-cpp-gogu-gpu-llm-inference-guide.md | 57c947c | JuPIdJX9nomkE2xtJ0Lc56k9ngq | 2026-04-06 |
+| openai/whisper | 97.2k | openai-whisper-speech-recognition-guide.md | fa79b12 | FE2Fde0WQoC2ZFx1CWEcplv3nxc | 2026-04-06 |
