@@ -3,7 +3,7 @@ title: "Hugo 目录结构解析：docs 与 posts 的区别与最佳实践"
 date: 2026-03-23T10:30:00+08:00
 draft: false
 tags: ["Hugo", "目录结构", "最佳实践", "LoveIt"]
-categories: ["系统基建"]
+categories: ["技术笔记"]
 ---
 
 > **🎯 学习目标**

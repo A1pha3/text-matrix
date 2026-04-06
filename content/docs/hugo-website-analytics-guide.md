@@ -3,7 +3,7 @@ title: "Hugo 静态网站如何查看访问数据？三种主流方案全解析"
 date: 2026-03-23T10:00:00+08:00
 draft: false
 tags: ["Hugo", "网站统计", "LoveIt", "教程"]
-categories: ["技术分享"]
+categories: ["技术笔记"]
 ---
 
 > **🎯 学习目标**

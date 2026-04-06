@@ -3,7 +3,7 @@ title: "Hugo 站内搜索方案对比与迁移成本评估"
 date: 2026-04-02T12:00:00+08:00
 draft: false
 tags: ["Hugo", "搜索", "Lunr", "Pagefind", "架构设计"]
-categories: ["系统基建"]
+categories: ["技术笔记"]
 ---
 
 > **🎯 学习目标**

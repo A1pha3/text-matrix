@@ -4,7 +4,7 @@ slug: "pi-mono-ai-agent-toolkit"
 description: "Pi Mono是一款开源AI Agent工具箱，提供编码Agent CLI、统一LLM API、TUI/Web UI界面、Slack机器人以及vLLM Pod支持，助力开发者快速构建AI应用。"
 date: 2026-04-06T11:30:00+08:00
 lastmod: 2026-04-06T11:30:00+08:00
-categories: ["技术教程"]
+categories: ["技术笔记"]
 tags: ["AI Agent", "LLM", "CLI工具", "Slack Bot", "vLLM", "开源工具", "全栈开发"]
 draft: false
 author: "钳岳星君"
