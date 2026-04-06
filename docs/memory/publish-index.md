@@ -166,3 +166,4 @@
 | mui/material-ui | 98k | material-ui-react-component-library-guide.md | d74533d | OzuFdL4exoFQvHxMKlGcnmMTnhf | 2026-04-06 |
 | browser-use/browser-use | - | browser-use-ai-browser-automation-guide.md | 83e6cac | CJhhd0thOoliJaxov6FcwWWknwg | 2026-04-06 |
 | alibaba/page-agent | 15.5k | page-agent-alibaba-gui-agent-guide.md | c1b2b3f | HxhBdQAK0ou6F4xz2WNcW43Enqb | 2026-04-06 |
+| microsoft/BitNet | 37.2k | bitnet-microsoft-1bit-llm-inference-guide.md | 41ec598 | MVwAduCodo6vdRxofs7cDl7wnLf | 2026-04-06 |
