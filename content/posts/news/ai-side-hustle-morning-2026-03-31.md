@@ -6,6 +6,7 @@ description: "AI副业早报——每日09:00自动更新，涵盖AI开发求职
 draft: false
 categories: ["行业快讯"]
 tags: ["副业", "AI赚钱", "求职", "创业", "Reddit"]
+hiddenFromHomePage: true
 ---
 
 # AI 副业早报｜2026-03-31

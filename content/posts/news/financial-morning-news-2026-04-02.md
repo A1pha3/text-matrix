@@ -6,6 +6,7 @@ description: "2026年4月2日经济财经早报，涵盖美股下跌、中东战
 draft: false
 categories: ["行业快讯"]
 tags: ["财经", "早报", "美股", "黄金", "原油", "特朗普", "中东局势"]
+hiddenFromHomePage: true
 ---
 
 # 经济财经早报 2026-04-02

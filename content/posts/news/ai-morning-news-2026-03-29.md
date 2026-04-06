@@ -6,6 +6,7 @@ description: "2026年3月29日AI行业新闻早报：算力成本拆解、马斯
 draft: false
 categories: ["行业快讯"]
 tags: ["Anthropic", "Claude", "大模型", "人形机器人", "AI编程"]
+hiddenFromHomePage: true
 ---
 
 # AI新闻早报（2026-03-29）

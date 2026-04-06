@@ -6,6 +6,7 @@ description: "每日AI副业/赚钱相关资讯速递，涵盖独立开发、远
 draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "独立开发", "远程工作", "AI工具", "创业"]
+hiddenFromHomePage: true
 ---
 
 # AI副业早报 2026-04-04

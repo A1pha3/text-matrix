@@ -6,6 +6,7 @@ description: "AI副业早报：resume-coach简历工具、远程工作招聘、A
 draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "远程工作", "外包", "创业组队", "赚钱方法"]
+hiddenFromHomePage: true
 ---
 
 # AI 副业早报 2026-03-30

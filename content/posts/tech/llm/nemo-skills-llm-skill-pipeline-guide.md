@@ -8,7 +8,10 @@ categories: ["技术笔记"]
 tags: ["NeMo Skills", "LLM", "NVIDIA", "合成数据", "模型训练", "评估基准"]
 description: "NVIDIA 开源 LLM 技能提升工具集 NeMo Skills 完全指南，涵盖合成数据生成、模型训练、基准评估等全方位讲解。"
 ---
-# NeMo Skills：LLM 技能提升流水线完全指南
+
+> **目标读者**：LLM 训练工程师、模型优化研究者
+> **核心问题**：如何使用 NeMo Skills 提升 LLM 技能？
+> **难度**：⭐⭐⭐⭐（高级）
 
 ## 一、项目概述
 

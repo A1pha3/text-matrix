@@ -8,7 +8,10 @@ categories: ["技术笔记"]
 tags: ["Self-Rationalization Guard", "AI Agent", "OpenClaw", "质量防护", "自我合理化"]
 description: "OpenClaw AgentSkill 自我合理化防护指南，识别和反制 AI Agent 常见的偷懒、逃避和自我欺骗模式。"
 ---
-# Self-Rationalization Guard：AI Agent 自我合理化防护完全指南
+
+> **目标读者**：AI Agent 开发者、质量保障工程师
+> **核心问题**：如何防止 AI Agent 自我合理化导致的偷懒和逃避行为？
+> **难度**：⭐⭐⭐⭐（高级）
 
 ## 一、项目概述
 

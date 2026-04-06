@@ -6,6 +6,7 @@ description: "2026年3月29日AI副业早报：汇总V2EX网友真实AI赚钱案
 draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "独立开发", "远程工作", "变现", "外包"]
+hiddenFromHomePage: true
 ---
 
 # AI副业早报（2026-03-29）

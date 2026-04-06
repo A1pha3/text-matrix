@@ -479,7 +479,6 @@ echo "python scripts/analyze.py --repo ./ --format json"
   "top_contributors": [...]
 }
 ```
-```
 
 目录结构：
 

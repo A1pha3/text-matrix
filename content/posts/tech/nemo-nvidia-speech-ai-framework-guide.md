@@ -7,7 +7,10 @@ draft: false
 categories: ["技术笔记"]
 tags: ["NeMo", "NVIDIA", "语音识别", "TTS", "对话AI", "深度学习"]
 ---
-# NeMo：NVIDIA 对话式 AI 框架完全指南
+
+> **目标读者**：希望构建语音 AI 应用的开发者、AI 工程师
+> **核心问题**：如何使用 NVIDIA NeMo 构建语音识别和对话 AI 系统？
+> **难度**：⭐⭐⭐（中级）
 
 ## 一、项目概述
 

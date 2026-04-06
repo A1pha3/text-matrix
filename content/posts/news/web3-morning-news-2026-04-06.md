@@ -33,16 +33,16 @@ hiddenFromHomePage: true
 
 ## 🔥 今日热点新闻
 
-### 【安全事件】Drift $270万攻击系朝鲜情报部门所为
+### 【安全事件】Drift 2.7 亿美元攻击被指与朝鲜黑客有关
 来源: CoinDesk | 时间: 4月5日 12:17 PM | 情绪: 负面
 原文: [https://www.coindesk.com/markets/2026/04/05/drift-says-usd270-million-exploit-was-a-six-month-north-korean-intelligence-operation](https://www.coindesk.com/markets/2026/04/05/drift-says-usd270-million-exploit-was-a-six-month-north-korean-intelligence-operation)
 
 **核心内容：** 
-- 攻击者伪装成Trading Firm，在多个国家与Drift团队成员当面见面
-- 存入$100万自有资金作为信任建立
+- 攻击者伪装成交易公司（trading firm），在多个国家与 Drift 团队成员线下接触
+- 存入 100 万美元自有资金建立信任
 - 等待半年后才执行攻击
 - CoinDesk本周早些时候已详细报道此事件
-- **朝鲜黑客已不是首次针对DeFi协议**
+- CoinDesk 引述链上安全公司判断称，此类手法与朝鲜黑客惯用模式一致
 
 ### 【监管动态】Polymarket删除伊朗救援市场引发强烈反对
 来源: CoinDesk | 时间: 4月5日 7:20 PM | 情绪: 负面
@@ -93,13 +93,13 @@ hiddenFromHomePage: true
 - 即将推出直接加密交易服务
 - 提供Schwab Crypto账户提前访问订阅
 
-### 【稳定币动态】Circle因Drift黑客攻击$285万USDC未冻结而受到质疑
+### 【稳定币动态】Circle 因 Drift 2.85 亿美元黑客事件中的 USDC 冻结问题受到质疑
 来源: CoinDesk | 时间: 4月3日 7:02 PM | 情绪: 负面
 原文: [https://www.coindesk.com/business/2026/04/03/circle-under-fire-after-usd285-million-drift-hack-over-inaction-to-freeze-stolen-usdc](https://www.coindesk.com/business/2026/04/03/circle-under-fire-after-usd285-million-drift-hack-over-inaction-to-freeze-stolen-usdc)
 
 **核心内容：** 
-- 区块链侦探ZachXKT指控Circle更快行动可减少损失
-- 但未经法律授权冻结资产存在法律风险
+- ZachXBT 认为，如果 Circle 反应更快，理论上可能减少部分损失
+- CoinDesk 指出，未经法院或执法授权就冻结资产，也会给发行方带来法律风险
 
 ### 【机构布局】Ant Group区块链部门推出AI Agent交易平台
 来源: CoinDesk | 时间: 4月2日 12:00 PM | 情绪: 正面
@@ -114,22 +114,22 @@ hiddenFromHomePage: true
 
 ## 🔬 技术前沿
 
-### 【量子安全】BTC的$1.3万亿安全竞赛：量子防护正在进行
+### 【量子安全】Bitcoin 的 1.3 万亿美元安全竞赛：量子防护正在推进
 来源: CoinDesk | 时间: 4月4日 3:31 AM | 情绪: 中性
 原文: [https://www.coindesk.com/tech/2026/04/04/bitcoin-s-usd1-3-trillion-security-race-key-initiatives-aimed-at-quantum-proofing-the-world-s-largest-blockchain](https://www.coindesk.com/tech/2026/04/04/bitcoin-s-usd1-3-trillion-security-race-key-initiatives-aimed-at-quantum-proofing-the-world-s-largest-blockchain)
 
 **核心内容：** 
-- 开发者正考虑让世界最古老区块链量子防护的方法
-- 量子计算威胁已不再是假设
+- 开发者正在讨论如何为 Bitcoin 网络引入抗量子升级
+- CoinDesk 认为，量子计算带来的威胁已不再只是纯理论问题
 
-### 【Layer2动态】Solana量子威胁准备揭示安全和速度的艰难权衡
+### 【公链安全】Solana 的量子威胁准备揭示安全和速度的艰难权衡
 来源: CoinDesk | 时间: 4月4日 12:00 PM | 情绪: 中性
 原文: [https://www.coindesk.com/tech/2026/04/04/solana-s-quantum-threat-readiness-reveals-harsh-tradeoff-security-vs-speed](https://www.coindesk.com/tech/2026/04/04/solana-s-quantum-threat-readiness-reveals-harsh-tradeoff-security-vs-speed)
 
 **核心内容：** 
-- Bitcoin开发者正在努力寻找解决方案
-- Ethereum准备迎接"Q-Day"
-- Solana正试图领先这一场景
+- Bitcoin 开发者仍在寻找系统级方案
+- Ethereum 也在为 "Q-Day" 做准备
+- Solana 已开始做更前置的实测，但代价是吞吐和性能显著下降
 
 ---
 

@@ -935,7 +935,6 @@ def my_skill_impl(args):
     # 工具逻辑
     pass
 ```
-```
 
 ### 9.4 发布到社区
 

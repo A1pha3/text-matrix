@@ -6,6 +6,7 @@ description: "汇总4月3日全球金融市场动态，涵盖A股下跌、创业
 draft: false
 categories: ["行业快讯"]
 tags: ["财经", "A股", "美股", "特斯拉", "原油"]
+hiddenFromHomePage: true
 ---
 
 # 经济财经早报 | 2026-04-03
