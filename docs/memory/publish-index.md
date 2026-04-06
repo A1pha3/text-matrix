@@ -172,3 +172,4 @@
 | tobi/qmd | 481 | qmd-local-document-semantic-search-guide.md | fd3617e | EoQZdhNa0otvNYx6yDocTSCqnsb | 2026-04-06 |
 | kepano/obsidian-skills | 20.2k | obsidian-skills-agent-skills-for-obsidian-guide.md | af83c2d | X2bGdoUy6oPt6zxk5TUcMmuJn2c | 2026-04-06 |
 | NVIDIA/personaplex | 7k | personaplex-nvidia-full-duplex-speech-model-guide.md | af01029 | TMhTdJB3QoMqQkxgPkoc7v5fn5d | 2026-04-06 |
+| pydantic/pydantic | 27.4k | pydantic-python-data-validation-guide.md | be3be9d | B3bIdEOV0oAuxGx9th1cIxLKnAc | 2026-04-06 |
