@@ -8,6 +8,7 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **MemPalace** | milla-jovovich/mempalace | 7.7k | mempalace-ai-memory-system-guide.md | 0b83ca0 | HutgdMTZ5oTjChxQ7FHc6ZPDn5e | 2026-04-07 |
 | **Weekly** | tw93/Weekly | 848 | weekly-trendy-weekly-personal-blog.md | dec29e3 | KbyNdVydKoU2FPxoxZncuMIzn2d | 2026-04-07 |
 | **Mole** | tw93/Mole | 45.6k | mole-mac-clean-optimize-tool.md | 9d0eace | BtO8dAgbEoJhk1xFL2wc33c9n8f | 2026-04-07 |
 | **Kaku** | tw93/Kaku | 3.9k | kaku-ai-native-terminal-built-for-ai-coding.md | 3daeef6 | YyKHdOrBaoTV0LxfMeAcRipynwb | 2026-04-07 |
