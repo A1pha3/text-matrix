@@ -8,6 +8,7 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **Mole** | tw93/Mole | 45.6k | mole-mac-clean-optimize-tool.md | 9d0eace | BtO8dAgbEoJhk1xFL2wc33c9n8f | 2026-04-07 |
 | **Kaku** | tw93/Kaku | 3.9k | kaku-ai-native-terminal-built-for-ai-coding.md | 3daeef6 | YyKHdOrBaoTV0LxfMeAcRipynwb | 2026-04-07 |
 | **Pake** | tw93/Pake | 47.6k | pake-turn-any-webpage-into-desktop-app.md | 8e3448b | Q2p9dSd7woVGzfxUOwMcTUjInmh | 2026-04-07 |
 | **Onyx** | onyx-dot-app/onyx | 23.5k | onyx-open-source-ai-platform-guide.md | f50c22c | PGpmd3VAeobEujxEo5UcEClUnWV | 2026-04-04 |
