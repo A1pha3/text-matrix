@@ -186,4 +186,5 @@
 | openai/whisper | 97.2k | openai-whisper-speech-recognition-guide.md | fa79b12 | FE2Fde0WQoC2ZFx1CWEcplv3nxc | 2026-04-06 |
 | ghostty-org/ghostty | 49.9k | ghostty-fast-native-terminal-emulator-guide.md | 9f959c4 | RKAKdv33XoDeCUxE2xscrDuUnqb | 2026-04-07 |
 | rasbt/mini-coding-agent | 309 | mini-coding-agent-sebastian-raschka-guide.md | d38b88a | QXD8ddtJ3oKsnqxJGzYcItjgn4z | 2026-04-07 |
+| KeygraphHQ/shannon | 3.2k | shannon-keygraph-multi-agent-framework-guide.md | 48e5d61 | QYqxdPDL3omfhuxYbBGcN17anhh | 2026-04-07 |
 | rasbt/mini-coding-agent | 309 | mini-coding-agent-sebastian-raschka-source-code-guide.md | ebc33a7 | OugvdqywooRZCJx2gCdc8CHZnvh | 2026-04-07 |
