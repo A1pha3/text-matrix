@@ -9,7 +9,7 @@ declare -a TARGET_NAMES=()
 declare -a TARGET_DIRS=()
 declare -a REQUESTED_TARGET_NAMES=()
 declare -a DETECTED_TARGET_NAMES=()
-BUILTIN_TARGETS=("trae" "openclaw" "opencode" "claude-code" "codex" "vscode")
+BUILTIN_TARGETS=("trae" "trae-cn" "openclaw" "opencode" "claude-code" "codex" "vscode")
 
 usage() {
     cat <<EOF
@@ -23,7 +23,7 @@ usage() {
 说明:
         - 不带参数时，默认进入检测模式，只安装本机已存在目录的内置目标。
         - --detect 显式启用检测模式。
-        - 内置目标: trae、openclaw、opencode、claude-code、codex、vscode。
+        - 内置目标: trae、trae-cn、openclaw、opencode、claude-code、codex、vscode。
     - 内置目标使用各工具的默认用户目录；如需跨仓库或自定义位置，请使用 --target name=dir（支持相对路径和绝对路径）。
     - --all 会安装所有内置目标以及通过 --target 追加的目标。
   - --target name=dir 可临时追加安装目标。
@@ -114,6 +114,9 @@ builtin_target_dir() {
     case "$name" in
         trae)
             printf '%s' "$HOME/.trae/skills"
+            ;;
+        trae-cn)
+            printf '%s' "$HOME/.traecn/skills"
             ;;
         openclaw)
             printf '%s' "$HOME/.openclaw/workspace/skills"
@@ -310,7 +313,7 @@ install_to_target() {
     cleanup_invalid_links "$target_dir"
 
     for skill_path in "$SKILLS_DIR"/*/; do
-        local skill_name
+        local skill_name=""
         local target_link
         local source_dir
         local relative_source
@@ -327,14 +330,14 @@ install_to_target() {
                 echo "🔄 更新现有链接: $skill_name"
                 rm -f "$target_link"
             else
-                echo "⚠️  跳过 $skill_name：$target_link 是外部已有软链接，未自动覆盖"
+                echo "⚠️  跳过 ${skill_name}：${target_link} 是外部已有软链接，未自动覆盖"
                 continue
             fi
         elif [ -f "$target_link" ]; then
-            echo "⚠️  跳过 $skill_name：$target_link 已存在同名文件，未自动覆盖"
+            echo "⚠️  跳过 ${skill_name}：${target_link} 已存在同名文件，未自动覆盖"
             continue
         elif [ -d "$target_link" ]; then
-            echo "⚠️  跳过 $skill_name：$target_link 已存在同名目录，未自动覆盖"
+            echo "⚠️  跳过 ${skill_name}：${target_link} 已存在同名目录，未自动覆盖"
             continue
         else
             echo "🔗 创建全新链接: $skill_name"
