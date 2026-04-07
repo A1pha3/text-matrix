@@ -1,8 +1,9 @@
 ---
 name: morning-report
 description: 为 text-matrix 生成四类中文早报：AI 新闻早报、经济财经早报、AI 副业早报、Web3 早报。触发词："做早报""写早报""morning report""AI 新闻早报""财经早报""副业早报""Web3 早报""加密货币早报"。强制 24h 时间窗、Browser 逐条核链、V2EX 验真、Hugo 快讯 frontmatter 输出。
-version: 2.1.0
-tags: ["morning-report", "news", "hugo", "verification", "workflow"]
+metadata:
+   version: 2.1.1
+   tags: ["morning-report", "news", "hugo", "verification", "workflow"]
 ---
 
 # Morning Report Skill

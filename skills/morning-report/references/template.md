@@ -7,6 +7,7 @@
 - `date` 使用北京时间完整格式 `YYYY-MM-DDTHH:MM:SS+08:00`。
 - `slug` 使用主 SKILL 中定义的固定模式，不要自行改写。
 - `description` 为 50 到 100 字纯文本摘要。
+- 每条新闻的原文字段固定写为 `原文: [原文](url)`。
 
 ## AI 新闻早报模板
 
@@ -14,7 +15,7 @@
 ---
 title: "AI新闻早报 YYYY-MM-DD"
 date: YYYY-MM-DDTHH:MM:SS+08:00
-slug: ai-morning-news-yyyy-mm-dd
+slug: ai-morning-news-YYYY-MM-DD
 description: "YYYY年MM月DD日 AI 新闻早报，精选过去 24 小时内值得关注的模型、产品、融资与行业动态。"
 draft: false
 categories: ["行业快讯"]
@@ -55,7 +56,7 @@ hiddenFromHomePage: true
 ---
 title: "经济财经早报 YYYY-MM-DD"
 date: YYYY-MM-DDTHH:MM:SS+08:00
-slug: financial-morning-news-yyyy-mm-dd
+slug: financial-morning-news-YYYY-MM-DD
 description: "YYYY年MM月DD日经济财经早报，汇总过去 24 小时内市场、宏观、商品与政策的重要变化。"
 draft: false
 categories: ["行业快讯"]
@@ -100,7 +101,7 @@ hiddenFromHomePage: true
 ---
 title: "AI副业早报 YYYY-MM-DD"
 date: YYYY-MM-DDTHH:MM:SS+08:00
-slug: ai-side-hustle-morning-yyyy-mm-dd
+slug: ai-side-hustle-morning-YYYY-MM-DD
 description: "YYYY年MM月DD日 AI 副业早报，精选过去 24 小时内招聘、项目、工具与真实赚钱机会。"
 draft: false
 categories: ["行业快讯"]
@@ -133,6 +134,54 @@ hiddenFromHomePage: true
 **⚠️ 链接核查清单（已逐条验证）：**
 - ✅ url1 - 已验证内容匹配
 - ✅ url2 - 已验证内容匹配
+```
+
+## Web3 早报模板
+
+```markdown
+---
+title: "Web3早报 YYYY-MM-DD"
+date: YYYY-MM-DDTHH:MM:SS+08:00
+slug: web3-morning-news-YYYY-MM-DD
+description: "YYYY年MM月DD日 Web3 早报，汇总过去 24 小时内加密货币价格、监管、机构与链上生态动态。"
+draft: false
+categories: ["行业快讯"]
+tags: ["Web3", "加密货币", "BTC", "ETH"]
+hiddenFromHomePage: true
+---
+
+# Web3 早报 YYYY-MM-DD
+
+🦞 每日08:00自动更新
+
+---
+
+## 📊 市场速览
+
+| 币种 | 价格 | 24h涨跌 | 7d涨跌 |
+| ------ | ------ | ------ | ------ |
+| BTC | $00,000 | +0.00% | +0.00% |
+| ETH | $0,000 | +0.00% | +0.00% |
+
+## 🔥 今日热点
+
+### 标题
+来源: CoinDesk
+原文: [原文](url)
+摘要: 2-3句描述
+
+## ⚠️ 风险提示
+
+### 标题
+来源: 华尔街见闻
+原文: [原文](url)
+摘要: 2-3句描述
+
+---
+
+🦞 每日08:00自动更新
+
+**数据来源**：CoinMarketCap、CoinDesk、华尔街见闻
 ```
 
 ## 链接格式规范
