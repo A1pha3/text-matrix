@@ -8,6 +8,7 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **Kaku** | tw93/Kaku | 3.9k | kaku-ai-native-terminal-built-for-ai-coding.md | 3daeef6 | YyKHdOrBaoTV0LxfMeAcRipynwb | 2026-04-07 |
 | **Pake** | tw93/Pake | 47.6k | pake-turn-any-webpage-into-desktop-app.md | 8e3448b | Q2p9dSd7woVGzfxUOwMcTUjInmh | 2026-04-07 |
 | **Onyx** | onyx-dot-app/onyx | 23.5k | onyx-open-source-ai-platform-guide.md | f50c22c | PGpmd3VAeobEujxEo5UcEClUnWV | 2026-04-04 |
 | **OmX (Oh My codeX)** | Yechan-Heo/oh-my-codex | 14.1k | oh-my-codex-openai-codex-framework.md | 64dec19 | WflCdNB02o9rYcxJWChckZDxnub | 2026-04-03 |
