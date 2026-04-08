@@ -202,3 +202,4 @@
 | karpathy-llm-wiki | Astro-Han/karpathy-llm-wiki | 123 | Agent Skills | https://github.com/Astro-Han/karpathy-llm-wiki | https://feishu.cn/docx/RmLfdZB6WovuscxCxJicnl1rn8m |
 | andrej-karpathy-skills | forrestchang/andrej-karpathy-skills | 8.2k | Claude Code | https://github.com/forrestchang/andrej-karpathy-skills | https://feishu.cn/docx/UftfdSut9o0gLLxZXxyc0gOpnqd |
 | AutoCLI | nashsu/AutoCLI | 52 | Go CLI | https://github.com/nashsu/AutoCLI | https://feishu.cn/docx/GPRodelATovUDTxwaDOcBajdnhb |
+| OpenCLI | jackwener/opencli | 2.3k | Go CLI | https://github.com/jackwener/opencli | https://feishu.cn/docx/P6h4dznTsobWaHxg7sOc86VWn3d |
