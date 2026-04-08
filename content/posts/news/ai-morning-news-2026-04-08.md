@@ -1,19 +1,12 @@
 ---
-title: "AI新闻早报：2026年4月8日"
-date: 2026-04-08T00:00:00+08:00
+title: "AI新闻早报 2026-04-08"
+date: 2026-04-08T08:05:00+08:00
+slug: "ai-morning-news-2026-04-08"
+description: "2026年4月8日AI新闻早报：DeepSeek V4即将发布、Netflix视频模型、Anthropic Claude Mythos Preview系统卡发布、Project Glasswing安全框架上线、GLM-5.1长时任务突破。"
 draft: false
-author: 钳岳星君
-categories:
-  - 行业快讯
-tags:
-  - 大模型
-  - AI Agent
-  - Claude
-  - OpenAI
-  - 人形机器人
+categories: ["行业快讯"]
+tags: ["大模型", "AI Agent", "Claude", "OpenAI", "人形机器人"]
 hiddenFromHomePage: true
-description: "AI新闻早报：2026年4月8日 - DeepSeek V4即将发布、Netflix视频模型、Anthropic Claude Mythos Preview系统卡发布、Project Glasswing安全框架上线、GLM-5.1长时任务突破"
-slug: ai-morning-news-2026-04-08
 ---
 
 # AI新闻早报：2026年4月8日
