@@ -205,3 +205,4 @@
 | OpenCLI | jackwener/opencli | 2.3k | Go CLI | https://github.com/jackwener/opencli | https://feishu.cn/docx/P6h4dznTsobWaHxg7sOc86VWn3d |
 | Open-Antigravity | jackwener/open-antigravity | 180 | TypeScript API代理 | https://github.com/jackwener/open-antigravity | https://feishu.cn/docx/TlKTd58ZNo6ZLnxxUSecEKwvnkb |
 | WeChat Article to Markdown | jackwener/wechat-article-to-markdown | 472 | Python 微信公众号 | https://github.com/jackwener/wechat-article-to-markdown | https://feishu.cn/docx/EadHdv8AOo1pQixE3QochzZdn0f |
+| BiliSummary | jackwener/bilibili-summary | 11 | Python B站摘要 | https://github.com/jackwener/bilibili-summary | https://feishu.cn/docx/COhOdGAKdo2qaOx9yuscbacrnUe |
