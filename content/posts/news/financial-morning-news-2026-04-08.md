@@ -8,6 +8,7 @@ categories: ["行业快讯"]
 tags: ["美联储", "伊朗战争", "油价", "Anthropic", "中国经济"]
 hiddenFromHomePage: true
 ---
+
 # 经济财经早报：2026年4月8日
 
 🦞 每日08:00自动更新

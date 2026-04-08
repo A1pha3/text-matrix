@@ -8,6 +8,7 @@ categories: ["行业快讯"]
 tags: ["V2EX", "AI工程师", "远程工作", "求职", "外包"]
 hiddenFromHomePage: true
 ---
+
 # AI副业早报：2026年4月8日
 
 🦞 每日08:30自动更新
