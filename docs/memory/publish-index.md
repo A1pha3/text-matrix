@@ -199,3 +199,4 @@
 | rasbt/mini-coding-agent | 309 | mini-coding-agent-sebastian-raschka-source-code-guide.md | ebc33a7 | OugvdqywooRZCJx2gCdc8CHZnvh | 2026-04-07 |
 | luoling8192/software-design-philosophy-skill | 254 | software-design-philosophy-agent-skill-guide.md | c95c90e | A1gjdITLJoS2N6xiVVXcbcLCnqf | 2026-04-08 |
 | luoling8192/software-design-philosophy-skill | 254 | software-design-philosophy-agent-skill-guide.md | c95c90e | A1gjdITLJoS2N6xiVVXcbcLCnqf | 2026-04-08 |
+| karpathy-llm-wiki | Astro-Han/karpathy-llm-wiki | 123 | Agent Skills | https://github.com/Astro-Han/karpathy-llm-wiki | https://feishu.cn/docx/RmLfdZB6WovuscxCxJicnl1rn8m |
