@@ -200,3 +200,4 @@
 | luoling8192/software-design-philosophy-skill | 254 | software-design-philosophy-agent-skill-guide.md | c95c90e | A1gjdITLJoS2N6xiVVXcbcLCnqf | 2026-04-08 |
 | luoling8192/software-design-philosophy-skill | 254 | software-design-philosophy-agent-skill-guide.md | c95c90e | A1gjdITLJoS2N6xiVVXcbcLCnqf | 2026-04-08 |
 | karpathy-llm-wiki | Astro-Han/karpathy-llm-wiki | 123 | Agent Skills | https://github.com/Astro-Han/karpathy-llm-wiki | https://feishu.cn/docx/RmLfdZB6WovuscxCxJicnl1rn8m |
+| andrej-karpathy-skills | forrestchang/andrej-karpathy-skills | 8.2k | Claude Code | https://github.com/forrestchang/andrej-karpathy-skills | https://feishu.cn/docx/UftfdSut9o0gLLxZXxyc0gOpnqd |
