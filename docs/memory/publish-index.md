@@ -208,3 +208,4 @@
 | BiliSummary | jackwener/bilibili-summary | 11 | Python B站摘要 | https://github.com/jackwener/bilibili-summary | https://feishu.cn/docx/COhOdGAKdo2qaOx9yuscbacrnUe |
 | SEOMachine | TheCraigHewitt/seomachine | 5.1k | TypeScript SEO AI | https://github.com/TheCraigHewitt/seomachine | https://feishu.cn/docx/LTH8d3IgioXXzcxPzwgcMTMvnmg |
 | ForgeCode | antinomyhq/forgecode | 6.3k | Rust AI Terminal | https://github.com/antinomyhq/forgecode | https://feishu.cn/docx/ChOMdKXn1oTrUbxikLPcRAw0nih |
+| Harness Engineering | huasheng.ai/orange-books/harness | 102页 | AI方法论 | https://www.huasheng.ai/orange-books/harness/ | https://feishu.cn/docx/Op3Cd9KDOoInljxqqe8cjbKDn3g |
