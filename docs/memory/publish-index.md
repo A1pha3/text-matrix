@@ -197,3 +197,5 @@
 | rasbt/mini-coding-agent | 309 | mini-coding-agent-sebastian-raschka-guide.md | d38b88a | QXD8ddtJ3oKsnqxJGzYcItjgn4z | 2026-04-07 |
 | KeygraphHQ/shannon | 3.2k | shannon-keygraph-multi-agent-framework-guide.md | 48e5d61 | QYqxdPDL3omfhuxYbBGcN17anhh | 2026-04-07 |
 | rasbt/mini-coding-agent | 309 | mini-coding-agent-sebastian-raschka-source-code-guide.md | ebc33a7 | OugvdqywooRZCJx2gCdc8CHZnvh | 2026-04-07 |
+| luoling8192/software-design-philosophy-skill | 254 | software-design-philosophy-agent-skill-guide.md | c95c90e | A1gjdITLJoS2N6xiVVXcbcLCnqf | 2026-04-08 |
+| luoling8192/software-design-philosophy-skill | 254 | software-design-philosophy-agent-skill-guide.md | c95c90e | A1gjdITLJoS2N6xiVVXcbcLCnqf | 2026-04-08 |
