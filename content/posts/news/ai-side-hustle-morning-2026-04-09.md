@@ -1,6 +1,6 @@
 ---
 title: "AI副业早报 2026-04-09"
-date: 2026-04-09T09:30:00+08:00
+date: 2026-04-09T09:55:00+08:00
 slug: "ai-side-hustle-morning-2026-04-09"
 description: "AI副业早报汇总独立开发、远程工作、AI赚钱相关的最新机会和动态。"
 draft: false
@@ -34,11 +34,49 @@ hiddenFromHomePage: true
 
 ---
 
+### 去深圳 Agent 开发还是继续留在研究院训练 LLM？
+
+**来源**: [V2ex](https://www.v2ex.com/t/1203849)
+**发布者**: [24mlight](https://www.v2ex.com/member/24mlight)
+**摘要**: 职业发展求助。现状：研究院 LLM 训练（30B），55+工时/周，约30Wpackage。新机会：深圳保险金融公司 Agent 方向，涨薪20%。16条回复讨论：深圳机会多但要问清楚是正编还是外包；也有人建议多陪家人更重要。
+
+**关键建议**:
+- "要是5年前的市场肯定建议去钱多的地方，但现在建议多陪陪家人"
+- "问清楚自己是外包还是正编"
+- "平安正编可以，配外包干活，但稳定性要考虑"
+
+---
+
+## 💼 招聘职位
+
+### NVIDIA Shanghai LLM RL Algorithm Engineer
+
+**来源**: [V2ex](https://www.v2ex.com/t/1204264)
+**发布者**: [zoe1016aaa](https://www.v2ex.com/member/zoe1016aaa)
+**摘要**: NVIDIA 上海招聘 LLM 强化学习算法工程师，聚焦 RLHF、RLAIF、curriculum RL，要求：C++/Python、3年经验、RL应用于LLM经验。邮箱：xiaozhao@nvidia.com
+
+**核心要求**:
+- RL算法应用于 LLM（ reasoning、math、coding、agentic AI）
+- C++/Python、3年以上经验
+- RL实战经验（最好有LLM或序贯决策问题经验）
+- 理解 GPU 架构和 CUDA 优先
+
+---
+
 ## 📊 今日快讯
 
-- AI 工具迭代加速：Skill、Harness、OpenClaw、Claude Code 等新概念层不出穷
-- 企业内 AI 分享成为新常态，但内容越来越卷
-- 独立开发者建议：聚焦核心需求，不必追新所有工具
+- **工具迭代加速**：Skill、Harness、OpenClaw、Claude Code 等新概念层不出穷，开发者焦虑感上升
+- **企业AI分享成为新常态**：选题越来越卷，需要高质量内容
+- **职业选择分化**：Agent 开发 vs LLM 训练成为新热点，需权衡技术深度与工作生活平衡
+- **GLM-5 支持 OpenClaw**：国产模型开始支持 OpenClaw 工具链
+
+---
+
+## 💡 独立开发者观察
+
+- AI 工具学习优先级建议：先聚焦核心需求，不必追新所有工具
+- Agent 开发方向热度上升：用 langgraph 等框架开发成为新赛道
+- 多陪家人成为职场新共识
 
 ---
 
