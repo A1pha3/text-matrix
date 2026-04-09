@@ -209,3 +209,5 @@
 | SEOMachine | TheCraigHewitt/seomachine | 5.1k | TypeScript SEO AI | https://github.com/TheCraigHewitt/seomachine | https://feishu.cn/docx/LTH8d3IgioXXzcxPzwgcMTMvnmg |
 | ForgeCode | antinomyhq/forgecode | 6.3k | Rust AI Terminal | https://github.com/antinomyhq/forgecode | https://feishu.cn/docx/ChOMdKXn1oTrUbxikLPcRAw0nih |
 | Harness Engineering | huasheng.ai/orange-books/harness | 102页 | AI方法论 | https://www.huasheng.ai/orange-books/harness/ | https://feishu.cn/docx/Op3Cd9KDOoInljxqqe8cjbKDn3g |
+
+| wenyan-cli | 文颜CLI：Markdown多平台发布工具 | tech | 2026-04-09 | [GitHub](https://github.com/caol64/wenyan-cli) | [文章](/posts/tech/wenyan-cli-markdown-multi-platform-publishing-guide/) | [飞书](https://feishu.cn/docx/QEyFdBcN7o1bAyx3Hvocwc2ln4o) |
