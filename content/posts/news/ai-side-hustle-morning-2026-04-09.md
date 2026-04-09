@@ -5,7 +5,7 @@ description: "每日AI副业赚钱相关资讯，采集V2EX、Reddit等平台的
 categories: ["行业快讯"]
 tags: ["AI副业", "远程工作", "外包", "V2EX", "求职"]
 hiddenFromHomePage: true
-date: 2026年4月9日T08:30:00+08:00
+date: 2026-04-09T08:30:00+08:00
 draft: false
 ---
 
