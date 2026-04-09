@@ -272,7 +272,7 @@ npm run build:cloudflare-pages
 这个脚本的职责是：
 
 1. 调用 Hugo 生成静态站点。
-2. 使用 `CF_PAGES_URL` 作为 `baseURL`。
+2. 在生产分支保留 `hugo.toml` 里的主域名，在 Preview 部署时再使用 `CF_PAGES_URL` 作为 `baseURL`。
 3. 在 `public/` 目录上运行 Pagefind 建立索引。
 
 这种方式比把长命令直接写死在平台后台更稳，因为：
@@ -293,7 +293,7 @@ npm run build:cloudflare-pages
 | Build output directory | `public` |
 | Root directory | 仓库根目录 |
 | Node.js | 使用平台默认即可 |
-| Environment variable | 保留平台注入的 `CF_PAGES_URL` |
+| Environment variable | 保留平台注入的 `CF_PAGES_URL` 与 `CF_PAGES_BRANCH` |
 
 如果你在 Cloudflare 后台看到已有旧配置，例如 `hugo` 或 `hugo --gc --minify`，应更新为新的 `npm run build:cloudflare-pages`，否则 Pagefind 不会参与构建。
 
@@ -327,7 +327,7 @@ Cloudflare Pages 支持 Pagefind，不代表本地开发模式应当每次都运
 | 中文内容 | 当前仓库已采用支持中文的 Pagefind Extended 路径 |
 | 发布产物 | 需要确保 `public/pagefind/` 被一并发布 |
 | 预览部署 | Cloudflare Pages 的 Preview 部署同样可以跑这条构建命令 |
-| 环境变量 | 若依赖正确站点 URL，保留 `CF_PAGES_URL` 的 Hugo baseURL 写法 |
+| 环境变量 | 生产分支使用 `hugo.toml` 主域名，Preview 部署才使用 `CF_PAGES_URL` |
 | 平台配置同步 | 修改了 `package.json` 后，仍需手动同步 Cloudflare 后台的 Build command |
 
 ### 6.6 最终判断
