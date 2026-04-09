@@ -215,3 +215,5 @@
 | newton | Newton：GPU加速物理仿真引擎 | tech | 2026-04-09 | [GitHub](https://github.com/newton-physics/newton) | [文章](/posts/tech/newton-gpu-accelerated-physics-simulation-guide/) | [飞书](https://feishu.cn/docx/CzSud1h3YoA1zYxswNnccD1anOh) |
 
 | harbor | Harbor：CNCF云原生容器注册表 | tech | 2026-04-09 | [GitHub](https://github.com/goharbor/harbor) | [文章](/posts/tech/harbor-cncf-cloud-native-registry-guide/) | [飞书](https://feishu.cn/docx/C9M8d7U0uoKgOGxrzsjcKbvlnje) |
+
+| awesome-persona-distill-skills | Awesome Persona Distill Skills人格蒸馏 | tech | 2026-04-09 | [GitHub](https://github.com/xixu-me/awesome-persona-distill-skills) | [文章](/posts/tech/awesome-persona-distill-skills-agent-skills-guide/) | [飞书](https://feishu.cn/docx/Y2sPdNTLForRxwxZzzNcUrCmngf) |
