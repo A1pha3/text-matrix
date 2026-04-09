@@ -227,3 +227,5 @@
 | opendataloader-pdf | OpenDataLoader-PDF大规模PDF数据处理 | tech | 2026-04-09 | [GitHub](https://github.com/opendataloader-project/opendataloader-pdf) | [文章](/posts/tech/opendataloader-pdf-scalable-pdf-processing-guide/) | [飞书](https://feishu.cn/docx/W9thdH6QmoDH0Kxo04Cc9mbKnod) |
 
 | archon | Archon开源AI编程工作流引擎 | tech | 2026-04-09 | [GitHub](https://github.com/coleam00/Archon) | [文章](/posts/tech/archon-ai-coding-workflow-engine-guide/) | [飞书](https://feishu.cn/docx/Zup6dJpAaozJumx6u6McFljHn2d) |
+
+| kronos | Kronos金融基础模型股价预测 | tech | 2026-04-09 | [GitHub](https://github.com/shiyu-coder/Kronos) | [文章](/posts/tech/kronos-foundation-model-financial-markets-guide/) | [飞书](https://feishu.cn/docx/NhZid28sPo5vohx30whcSp3Vnwh) |
