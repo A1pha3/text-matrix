@@ -223,3 +223,5 @@
 | claude-mythos-preview-security | Claude Mythos Preview安全研究揭秘 | video | 2026-04-09 | 微博@宝玉xp | [文章](/posts/video/claude-mythos-preview-security-vulnerabilities-analysis/) | [飞书](https://feishu.cn/docx/QW2idnFRQoFNorxWNICcdGC6nKh) |
 
 | voxcpm | VoxCPM生物分子动力学视觉-语言模型 | tech | 2026-04-09 | [GitHub](https://github.com/OpenBMB/VoxCPM) | [文章](/posts/tech/voxcpm-vision-language-biomolecular-dynamics-guide/) | [飞书](https://feishu.cn/docx/GPFRdHWpGoU54kxQgKncaZggnDa) |
+
+| opendataloader-pdf | OpenDataLoader-PDF大规模PDF数据处理 | tech | 2026-04-09 | [GitHub](https://github.com/opendataloader-project/opendataloader-pdf) | [文章](/posts/tech/opendataloader-pdf-scalable-pdf-processing-guide/) | [飞书](https://feishu.cn/docx/W9thdH6QmoDH0Kxo04Cc9mbKnod) |
