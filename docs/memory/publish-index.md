@@ -219,3 +219,5 @@
 | awesome-persona-distill-skills | Awesome Persona Distill Skills人格蒸馏 | tech | 2026-04-09 | [GitHub](https://github.com/xixu-me/awesome-persona-distill-skills) | [文章](/posts/tech/awesome-persona-distill-skills-agent-skills-guide/) | [飞书](https://feishu.cn/docx/Y2sPdNTLForRxwxZzzNcUrCmngf) |
 
 | moyin-creator | 魔因漫创Moyin Creator AI影视生产工具 | tech | 2026-04-09 | [GitHub](https://github.com/MemeCalculate/moyin-creator) | [文章](/posts/tech/moyin-creator-ai-film-production-guide/) | [飞书](https://feishu.cn/docx/QrA9dPKcWoSYMSxBeX0cOH6NnBc) |
+
+| claude-mythos-preview-security | Claude Mythos Preview安全研究揭秘 | video | 2026-04-09 | 微博@宝玉xp | [文章](/posts/video/claude-mythos-preview-security-vulnerabilities-analysis/) | [飞书](https://feishu.cn/docx/QW2idnFRQoFNorxWNICcdGC6nKh) |
