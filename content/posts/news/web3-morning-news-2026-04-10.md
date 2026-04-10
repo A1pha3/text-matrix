@@ -47,19 +47,19 @@ description: "Web3早报：BTC $71798上涨7日新高/Hyperliquid $39.45周涨12
 
 比特币（BTC）在美伊达成临时停火协议后上涨，缓解了全球能源市场的紧张情绪。BTC现报$71,798，24小时上涨1.12%，7天上涨7.21%。伊朗战争进入第40天，尽管停火协议脆弱，但市场情绪有所改善。
 
-来源：CoinMarketCap | [原文](https://coinmarketcap.com/)
+来源：CoinMarketCap | [原文](https://www.coindesk.cc/bitcoin-btc-surges-past-72-000-following-u-s-iran-ceasefire-agreement-33178.html)
 
 ### Hyperliquid（HYPE）周涨幅12%领跑主流代币
 
 Hyperliquid（HYPE）延续强势表现，本周上涨12.04%，领跑主流加密货币。现报$39.45，市值达$10.10B。分析师指出，Hyperliquid在去中心化永续合约市场的领先地位继续支撑其代币表现。
 
-来源：CoinMarketCap | [原文](https://coinmarketcap.com/)
+来源：CoinMarketCap | [原文](https://coinmarketcap.com/currencies/hyperliquid/)
 
 ### ETH企稳，7天涨幅6.38%
 
 以太坊（ETH）现报$2,189，24小时基本持平（+0.01%），但7天涨幅达6.38%。ETH的表现继续稳健，尽管整体市场波动较大。
 
-来源：CoinMarketCap | [原文](https://coinmarketcap.com/)
+来源：CoinMarketCap | [原文](https://coinmarketcap.com/currencies/ethereum/)
 
 ---
 
