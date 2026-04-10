@@ -1,3 +1,9 @@
++++
+date = '2026-04-10T12:55:31+08:00'
+draft = false
+title = '软件设计哲学 Agent Skill：从《A Philosophy of Software Design》到 AI 代码审查'
++++
+
 # 软件设计哲学 Agent Skill：从《A Philosophy of Software Design》到 AI 代码审查
 
 ## 1. 项目概述

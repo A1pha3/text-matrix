@@ -132,22 +132,22 @@ Anthropic通过Claude API和Agent工具链的持续更新，正在"消灭"一批
 **Reallocating $100/Month Claude Code Spend to Zed and OpenRouter** (282 points, 193 comments)
 一位开发者分享了他将每月$100的Claude Code预算转向Zed编辑器和OpenRouter的经验。通过自建Claude Code兼容层，他成功将成本降低了80%，同时获得了更快的响应速度。这一实践表明，开源工具与大模型API的结合正在成为一种新的AI开发范式。
 
-来源：Hacker News（15小时前）| [原文](https://news.ycombinator.com/)
+来源：Hacker News（15小时前）| [原文](https://news.ycombinator.com/item?id=47700972)
 
 **Research-Driven Agents: When an agent reads before it codes** (113 points, 40 comments)
 研究表明，在执行编码任务前让AI Agent先阅读相关代码和文档，可以显著提升任务完成率。这种"先读后做"的模式正在成为Agent开发的新趋势。
 
-来源：Hacker News（7小时前）| [原文](https://news.ycombinator.com/)
+来源：Hacker News（7小时前）| [原文](https://news.ycombinator.com/item?id=47706141)
 
 **Instant 1.0, a backend for AI-coded apps** (54 points, 32 comments)
 Instant推出1.0版本，专为AI编码应用设计的开源后端框架，支持快速构建和部署AI驱动的应用程序。
 
-来源：Hacker News（3小时前）| [原文](https://news.ycombinator.com/)
+来源：Hacker News（3小时前）| [原文](https://news.ycombinator.com/item?id=47707632)
 
 **Reverse engineering Gemini's SynthID detection** (90 points, 39 comments)
 研究人员逆向工程了Google Gemini的SynthID水印检测系统，揭示了其工作原理。这一研究对AI内容溯源和版权保护具有重要意义。
 
-来源：Hacker News（3小时前）| [原文](https://news.ycombinator.com/)
+来源：Hacker News（3小时前）| [原文](https://news.ycombinator.com/item?id=47709130)
 
 ---
 
