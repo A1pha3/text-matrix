@@ -1,37 +1,37 @@
 ---
-title: "Self-Improving-Agent：从入门到精通的自进化AI技能框架"
+title: "Self-Improving-Agent：从入门到精通的自进化 AI 技能框架"
 slug: "self-improving-agent-openclaw-self-evolution-guide"
-description: "深入解析peterskoett/self-improving-agent，掌握AI编程的自进化技能——通过结构化日志、智能晋升和多Agent支持实现跨会话的持续改进。"
-date: 2026-04-10T20:50:00+08:00
+description: "深入解析 peterskoett/self-improving-agent，掌握 AI 编程的自进化技能——通过结构化日志、智能晋升和多 Agent 支持实现跨会话的持续改进。"
+date: 2026-04-10T15:15:30+08:00
 categories: ["技术笔记"]
-tags: ["AI", "OpenClaw", "Claude", "自进化", "持续学习", "技能框架"]
+tags: ["AI", "OpenClaw", "自进化", "持续学习", "技能框架"]
 ---
 
-# Self-Improving-Agent：从入门到精通的自进化AI技能框架
+# Self-Improving-Agent：从入门到精通的自进化 AI 技能框架
 
 ## §1 学习目标
 
 通过本文，您将掌握：
 
-1. **理解自进化机制**：了解AI编程中"自进化"的核心概念——让AI从错误中学习、持续改进
-2. **掌握三大日志系统**：LEARNINGS.md、ERRORS.md、FEATURE_REQUESTS.md的用法和格式
-3. **学会智能晋升**：将通用学习内容晋升到CLAUDE.md、AGENTS.md、SOUL.md、TOOLS.md
-4. **配置Hook集成**：实现自动提醒和错误检测
-5. **多Agent协作**：在Claude Code、Codex、GitHub Copilot、OpenClaw之间共享学习
+1. **理解自进化机制**：了解 AI 编程中「自进化」的核心概念——让 AI 从错误中学习、持续改进
+2. **掌握三大日志系统**：LEARNINGS.md、ERRORS.md、FEATURE_REQUESTS.md 的用法和格式
+3. **学会智能晋升**：将通用学习内容晋升到 CLAUDE.md、AGENTS.md、SOUL.md、TOOLS.md
+4. **配置 Hook 集成**：实现自动提醒和错误检测
+5. **多 Agent 协作**：在 Claude Code、Codex、GitHub Copilot、OpenClaw 之间共享学习
 
 ---
 
 ## §2 背景与原理
 
-### 2.1 为什么AI需要"自进化"？
+### 2.1 为什么 AI 需要「自进化」？
 
-传统编程中，AI每次会话都是从零开始——无法记住上一次犯过的错误、用户纠正过的偏好、以及发现的更好的工作方式。这导致：
+传统编程中，AI 每次会话都是从零开始——无法记住上一次犯过的错误、用户纠正过的偏好，以及发现的更好的工作方式。这导致：
 
 - **重复错误**：同样的问题在不同会话中反复出现
 - **知识断层**：一个会话中学到的教训在另一个会话中丢失
 - **效率低下**：每次都要重新探索已知的最佳实践
 
-**Self-Improving-Agent** 的出现解决了这个问题。它是一套结构化的自进化技能框架，让AI能够：
+**Self-Improving-Agent** 的出现解决了这个问题。它是一套结构化的自进化技能框架，让 AI 能够：
 
 - 📝 **记录学习**：将每次会话中的洞察、纠正、知识差距记录下来
 - 🔄 **跨会话记忆**：通过文件持久化，让未来的会话能够读取历史教训
@@ -39,7 +39,7 @@ tags: ["AI", "OpenClaw", "Claude", "自进化", "持续学习", "技能框架"]
 
 ### 2.2 核心设计理念
 
-Self-Improving-Agent基于三个核心原则：
+Self-Improving-Agent 基于三个核心原则：
 
 **1. 即时记录（Log Immediately）**
 > 上下文越新鲜，记录越准确。在错误发生或用户纠正后立即记录。
@@ -53,12 +53,12 @@ Self-Improving-Agent基于三个核心原则：
 ### 2.3 与传统方法的对比
 
 | 特性 | 传统方法 | Self-Improving-Agent |
-|------|---------|-------------------|
+|------|---------|---------------------|
 | 错误记忆 | 仅靠开发者手动记录 | 自动检测并记录 |
-| 知识共享 | 口头传递或笔记 | 晋升到CLAUDE.md等文件 |
-| 跨会话 | 完全丢失 | 持久化到`.learnings/` |
-| 多Agent | 各自为战 | 共享学习成果 |
-| 模式识别 | 手动发现 | 结构化追踪+自动提示 |
+| 知识共享 | 口头传递或笔记 | 晋升到 CLAUDE.md 等文件 |
+| 跨会话 | 完全丢失 | 持久化到 `.learnings/` |
+| 多 Agent | 各自为战 | 共享学习成果 |
+| 模式识别 | 手动发现 | 结构化追踪 + 自动提示 |
 
 ---
 
@@ -71,7 +71,7 @@ Self-Improving-Agent基于三个核心原则：
 **用途**：记录所有形式的学习和洞察
 
 **分类标签**：
-- `correction` - 用户的纠正（"不，应该这样做..."）
+- `correction` - 用户的纠正（「不，应该这样做...」）
 - `insight` - 发现的洞察或技巧
 - `knowledge_gap` - 知识差距或过时信息
 - `best_practice` - 发现的最佳实践
@@ -80,7 +80,7 @@ Self-Improving-Agent基于三个核心原则：
 ```markdown
 ## [LRN-YYYYMMDD-XXX] category
 
-**Logged**: ISO-8601时间戳
+**Logged**: ISO-8601 时间戳
 **Priority**: low | medium | high | critical
 **Status**: pending | resolved | promoted
 **Area**: frontend | backend | infra | tests | docs | config
@@ -113,7 +113,7 @@ Self-Improving-Agent基于三个核心原则：
 ```markdown
 ## [ERR-YYYYMMDD-XXX] skill_or_command_name
 
-**Logged**: ISO-8601时间戳
+**Logged**: ISO-8601 时间戳
 **Priority**: high
 **Status**: pending
 **Area**: frontend | backend | infra | tests | docs | config
@@ -147,7 +147,7 @@ Self-Improving-Agent基于三个核心原则：
 ```markdown
 ## [FEAT-YYYYMMDD-XXX] capability_name
 
-**Logged**: ISO-8601时间戳
+**Logged**: ISO-8601 时间戳
 **Priority**: medium
 **Status**: pending
 **Area**: frontend | backend | infra | tests | docs | config
@@ -175,24 +175,26 @@ simple | medium | complex
 
 | 目标文件 | 存储内容 | 示例 |
 |---------|---------|------|
-| **CLAUDE.md** | 项目事实、规范、gotchas | "使用pnpm而非npm" |
-| **AGENTS.md** | Agent工作流、工具使用模式 | "API变更后先运行generate:api" |
+| **CLAUDE.md** | 项目事实、规范、gotchas | "使用 pnpm 而非 npm" |
+| **AGENTS.md** | Agent 工作流、工具使用模式 | "API 变更后先运行 `generate:api`" |
 | **SOUL.md** | 行为准则、沟通风格 | "保持简洁，避免免责声明" |
-| **TOOLS.md** | 工具能力、使用模式 | "Git push需要先配置auth" |
+| **TOOLS.md** | 工具能力、使用模式 | "Git push 需要先配置 auth" |
 
-**晋升规则**：
-当以下条件全部满足时，将重复出现的模式晋升到Agent上下文文件：
+### 晋升规则
+
+当以下条件**全部**满足时，将重复出现的模式晋升到 Agent 上下文文件：
+
 - `Recurrence-Count >= 3`
-- 在至少2个不同任务中出现过
-- 在30天窗口内出现过
+- 在至少 2 个不同任务中出现过
+- 在 30 天窗口内出现过
 
 ---
 
 ## §4 安装与配置
 
-### 4.1 OpenClaw安装（推荐）
+### 4.1 OpenClaw 安装（推荐）
 
-**通过ClawdHub安装**：
+**通过 ClawdHub 安装**：
 ```bash
 clawdhub install self-improving-agent
 ```
