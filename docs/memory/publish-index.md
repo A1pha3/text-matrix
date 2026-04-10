@@ -232,3 +232,4 @@
 
 | claudian | Claudian Obsidian AI协作插件 | tech | 2026-04-09 | [GitHub](https://github.com/YishenTu/claudian) | [文章](/posts/tech/claudian-obsidian-ai-collaboration-guide/) | [飞书](https://feishu.cn/docx/XtKwdDD2Mo5yb5xgQkWcIVwSn7e) |
 | self-improving-agent | peterskoett/self-improving-agent | 489 | tech | 2026-04-10 | [GitHub](https://github.com/peterskoett/self-improving-agent) | [文章](/posts/tech/self-improving-agent-openclaw-self-evolution-guide/) | [飞书](https://feishu.cn/docx/WnPbdTLXnoq6lBxM5k6cmEPenHq) |
+| agent-skills-with-anthropic | datawhalechina/agent-skills-with-anthropic | 494 | tech | 2026-04-10 | [GitHub](https://github.com/datawhalechina/agent-skills-with-anthropic) | [文章](/posts/tech/datawhale-agent-skills-with-anthropic-guide/) | [飞书](https://feishu.cn/docx/Ss6udfN0hoiSvBxoq5kczzKinvb) |
