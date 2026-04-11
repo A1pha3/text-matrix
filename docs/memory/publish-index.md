@@ -247,3 +247,4 @@
 | Scientific Agent Skills | scientific-agent-skills-ai-scientist-complete-guide | 03a7c1f | 18.1k | Python | https://github.com/K-Dense-AI/scientific-agent-skills | https://www.feishu.cn/docx/LQuyd7CgOoMSBexjc2PcBFUJnYd |
 | Scrapling | scrapling-adaptive-web-scraping-framework-guide | cfb9610 | 36.1k | Python | https://github.com/D4Vinci/Scrapling | https://www.feishu.cn/docx/FyAgd8xVXolHI5xDYohced2pndg |
 | CC-Connect | cc-connect-multi-platform-ai-agent-bridge-guide | e48ad3a | 4.9k | Go | https://github.com/chenhg5/cc-connect | https://www.feishu.cn/docx/Rs3Qdd53IoKGZ9x1Ohuc0BZEnQe |
+| Awesome AI Apps | awesome-ai-apps-complete-llm-application-guide | c11d78d | 10k | Python | https://github.com/Arindam200/awesome-ai-apps | https://www.feishu.cn/docx/OSwpdX68yodXAjxQA1gcSYeznUb |
