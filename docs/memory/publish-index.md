@@ -257,3 +257,4 @@
 | Unsloth | unsloth-ai-training-inference-platform-guide | 189b888 | 61k | Python/TS | https://github.com/unslothai/unsloth | https://www.feishu.cn/docx/EXLDdCIfsoFSpCxAXYlcjbwnnQe |
 | Hindsight | hindsight-agent-memory-system-guide | 0f232de | 8.9k | Python/TS | https://github.com/vectorize-io/hindsight | https://www.feishu.cn/docx/DI64d3yfEo19VSxkcDUcvFr2nGb |
 | Cloudflare Temp Email | cloudflare-temp-email-complete-guide.md | dfed5fe | 8.3k | TypeScript/Vue | https://github.com/dreamhunter2333/cloudflare_temp_email | https://www.feishu.cn/docx/MgH5dZnnUoURWWx8Uhbc7LXXnXr |
+| Claude-Mem | claude-mem-persistent-memory-system-guide.md | 5e4120c | 48k | TypeScript | https://github.com/thedotmack/claude-mem | https://www.feishu.cn/docx/BtAQdrjlfo5GQTxS2ShclnOynxh |
