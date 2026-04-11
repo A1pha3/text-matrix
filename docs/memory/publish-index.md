@@ -274,3 +274,4 @@
 | Prettier | prettier-code-formatter-guide.md | d6d2c59 | 50.5k | JavaScript | https://github.com/prettier/prettier | https://www.feishu.cn/docx/Zry9ddgA9olMqcx9BXvcKnnxn2c |
 | 9Router | 9router-ultimate-router-guide.md | 8930a96 | 1.5k | Python | https://github.com/decolua/9router | https://www.feishu.cn/docx/Sl7MdNPyEoj41SxCPL7cuIYEnOc |
 | Zig | zig-programming-language-guide.md | b914daa | 42.8k | Zig | https://github.com/ziglang/zig | https://www.feishu.cn/docx/EUiVdWoq9oynmOxymXBc8pPJn7h |
+| TikTokDownloader | tiktok-downloader-douk-guide.md | d5f09e5 | 14k | Python | https://github.com/JoeanAmier/TikTokDownloader | https://www.feishu.cn/docx/ScFVdhYf5o2p9Uxdt9UcQEvnnAb |
