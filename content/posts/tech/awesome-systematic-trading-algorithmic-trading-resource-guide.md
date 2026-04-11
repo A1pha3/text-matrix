@@ -1,3 +1,13 @@
+---
+title: "awesome-systematic-trading：8.4K Stars·量化交易资源大全·论文/数据集/代码库"
+date: 2026-04-12T02:29:31+08:00
+slug: awesome-systematic-trading-algorithmic-trading-resource-guide
+description: "awesome-systematic-trading 是一个精心策划的量化交易资源集合，涵盖研究论文、书籍、量化专家、数据集、代码库等全方位资源，涵盖动量、均值回归、统计套利等策略。"
+draft: false
+categories: ["技术笔记"]
+tags: ["量化交易", "Python", "R", "金融", "算法"]
+---
+
 # awesome-systematic-trading：8.4K Stars·量化交易资源大全·论文/数据集/代码库·Python/R/JS·策略研究
 
 ## 一，项目概述
