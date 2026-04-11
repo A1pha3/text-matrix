@@ -245,3 +245,4 @@
 | awesome-design-systems | awesome-design-systems-complete-curated-guide | efd2af2 | 38.3k | JS/CSS | https://github.com/alexpate/awesome-design-systems | https://www.feishu.cn/docx/QWmbdgpzmo6tlzxfBQDc6YVXndV |
 | DeepTutor | deeptutor-agent-native-personalized-learning-platform | ab0bad1 | 16.5k | Python | https://github.com/HKUDS/DeepTutor | https://www.feishu.cn/docx/TJB0drkkUomPOfx0bKAcrhChnlc |
 | Scientific Agent Skills | scientific-agent-skills-ai-scientist-complete-guide | 03a7c1f | 18.1k | Python | https://github.com/K-Dense-AI/scientific-agent-skills | https://www.feishu.cn/docx/LQuyd7CgOoMSBexjc2PcBFUJnYd |
+| Scrapling | scrapling-adaptive-web-scraping-framework-guide | cfb9610 | 36.1k | Python | https://github.com/D4Vinci/Scrapling | https://www.feishu.cn/docx/FyAgd8xVXolHI5xDYohced2pndg |
