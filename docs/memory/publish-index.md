@@ -281,3 +281,4 @@
 | Flash Attention | flash-attention-fast-exact-attention-guide.md | 6aa475f | 40.2k | C++ | https://github.com/Dao-AILab/flash-attention | https://www.feishu.cn/docx/F64RdHLhcoL5MTxhI9hcOIcznVg |
 | SkyPilot | skypilot-any-cloud-llm-serving-guide.md | 13c14e0 | 59.7k | Python | https://github.com/skypilot-org/skypilot | https://www.feishu.cn/docx/LHI1dLiONoJplJxWpiYcVH7qnnh |
 | Manifest | manifest-smart-model-router-guide.md | 6190517 | 4.3k | TypeScript | https://github.com/mnfst/manifest | https://www.feishu.cn/docx/BetUdsQzPozmA3xDUa0cE9jPn2b |
+| HackingTool | hackingtool-all-in-one-hacking-suite-guide.md | 2e3f2c5 | 56.8k | Python | https://github.com/Z4nzu/hackingtool | https://www.feishu.cn/docx/THWAdb9SGooslQxfHZncTfmsnfe |
