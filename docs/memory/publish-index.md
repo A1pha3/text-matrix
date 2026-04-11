@@ -259,3 +259,4 @@
 | Cloudflare Temp Email | cloudflare-temp-email-complete-guide.md | dfed5fe | 8.3k | TypeScript/Vue | https://github.com/dreamhunter2333/cloudflare_temp_email | https://www.feishu.cn/docx/MgH5dZnnUoURWWx8Uhbc7LXXnXr |
 | Claude-Mem | claude-mem-persistent-memory-system-guide.md | 5e4120c | 48k | TypeScript | https://github.com/thedotmack/claude-mem | https://www.feishu.cn/docx/BtAQdrjlfo5GQTxS2ShclnOynxh |
 | Pangolin | pangolin-zero-trust-remote-access-guide.md | 721fe03 | 20.1k | TypeScript | https://github.com/fosrl/pangolin | https://www.feishu.cn/docx/B4BRdPcb6omWbwxHqVkc1jhnnfb |
+| AutoBE | autobe-ai-backend-builder-guide.md | 59465db | 1.2k | TypeScript | https://github.com/wrtnlabs/autobe | https://www.feishu.cn/docx/QNEYd9YDxoH5MkxsvhucuaLYnGe |
