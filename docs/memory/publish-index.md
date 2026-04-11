@@ -252,3 +252,4 @@
 | Gemma | gemma-google-deepmind-llm-library-guide | a2881a7 | 4.8k | Python/JAX | https://github.com/google-deepmind/gemma | https://www.feishu.cn/docx/MkQwd3IXcol2BdxSrO1c2MugnSg |
 | Fli | fli-google-flights-mcp-server-guide | f696fda | 1.8k | Python | https://github.com/punitarani/fli | https://www.feishu.cn/docx/X79MdMVX9ovL6ExbwdNc0pVDnNf |
 | AI-Trader | ai-trader-agent-native-trading-platform-guide | ae21068 | 13.1k | Python/TypeScript | https://github.com/HKUDS/AI-Trader | https://www.feishu.cn/docx/ExMrdwvDIohGYJxvX5gcczBFn5e |
+| PraisonAI | praisonai-multi-agent-framework-guide | 4e85cc2 | 6.9k | Python | https://github.com/MervinPraison/PraisonAI | https://www.feishu.cn/docx/SL8udmymxoFEKWxCMNkcOBpjnAf |
