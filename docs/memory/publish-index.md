@@ -284,3 +284,4 @@
 | HackingTool | hackingtool-all-in-one-hacking-suite-guide.md | 2e3f2c5 | 56.8k | Python | https://github.com/Z4nzu/hackingtool | https://www.feishu.cn/docx/THWAdb9SGooslQxfHZncTfmsnfe |
 | LazyGit | lazygit-git-terminal-ui-guide.md | daae670 | 47.7k | Go | https://github.com/jesseduffield/lazygit | https://www.feishu.cn/docx/IdnodG0Y4olxb3xWWgfcA42Vnfd |
 | awesome-systematic-trading | awesome-systematic-trading-algorithmic-trading-resource-guide.md | dddaf4d | 8.4k | Python | https://github.com/paperswithbacktest/awesome-systematic-trading | https://www.feishu.cn/docx/SIlcduUvjoyAjSxDbN9ciu9Rngh |
+| awesome-mac | awesome-mac-macos-software-resource-guide.md | 8f949fd | 17k | Markdown | https://github.com/jaywcjlove/awesome-mac | https://www.feishu.cn/docx/JJPSdrp0toGkHPxXuj2cIyYdnQe |
