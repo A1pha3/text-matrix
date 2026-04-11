@@ -269,3 +269,4 @@
 | Penta GI | pentagi-pentesting-gui-guide.md | 7c3345c | 1.4k | Rust | https://github.com/vxcontrol/pentagi | https://www.feishu.cn/docx/VVZLdJ2QuoVOVCxLCpIcYl2Wnyd |
 | Marketing Skills | marketing-skills-ai-agents-guide.md | 45268d8 | 20.3k | JavaScript | https://github.com/coreyhaines31/marketingskills | https://www.feishu.cn/docx/GoKqd7CJsoOQUfxfVbWcpjOynHD |
 | Open Higgsfield AI | open-higgsfield-ai-podcast-guide.md | 7afb737 | 2.7k | Python | https://github.com/Anil-matcha/Open-Higgsfield-AI | https://www.feishu.cn/docx/ErbWd0OhhoGpntxSrOrcKcFJnfg |
+| Ground Station | ground-station-sdr-framework-guide.md | 4b9051b | 1.2k | Python | https://github.com/sgoudelis/ground-station | https://www.feishu.cn/docx/G5zRdz740oDrG5x5j9qclIzNn1c |
