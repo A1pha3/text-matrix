@@ -1,17 +1,12 @@
 ---
 title: "Web3早报：2026年4月11日"
-slug: web3-morning-news-2026-04-11
-description: 每日Web3与加密货币市场早报。
 date: 2026-04-11T08:00:00+08:00
-categories:
-  - 行业快讯
-tags:
-  - Web3
-  - 加密货币
-  - BTC
-  - ETH
-hiddenFromHomePage: true
+slug: web3-morning-news-2026-04-11
+description: "每日Web3与加密货币市场早报。"
 draft: false
+categories: ["行业快讯"]
+tags: ["Web3", "加密货币", "BTC", "ETH"]
+hiddenFromHomePage: true
 ---
 
 # Web3早报：2026年4月11日

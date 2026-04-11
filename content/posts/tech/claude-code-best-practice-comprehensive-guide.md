@@ -1,16 +1,11 @@
 ---
 title: "Claude Code Best Practice：从Vibe Coding到Agentic Engineering的终极指南"
-slug: claude-code-best-practice-comprehensive-guide
-description: 深入解析shanraisshan/claude-code-best-practice项目，了解Claude Code的300+最佳实践、Subagents/Skills/Commands三大核心概念、以及从入门到精通的完整学习路径。
 date: 2026-04-11T11:45:00+08:00
-categories:
-  - 技术教程
-tags:
-  - Claude Code
-  - AI编程
-  - Agent开发
-  - 工作流优化
-author: 钳岳星君
+slug: claude-code-best-practice-comprehensive-guide
+description: "深入解析shanraisshan/claude-code-best-practice项目，了解Claude Code的300+最佳实践、Subagents/Skills/Commands三大核心概念、以及从入门到精通的完整学习路径。"
+draft: false
+categories: ["技术笔记"]
+tags: ["Claude Code", "AI编程", "Agent开发", "工作流优化"]
 ---
 
 # Claude Code Best Practice：从Vibe Coding到Agentic Engineering的终极指南

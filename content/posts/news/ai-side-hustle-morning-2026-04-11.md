@@ -1,17 +1,12 @@
 ---
 title: "AI副业早报：2026年4月11日"
-slug: ai-side-hustle-morning-2026-04-11
-description: 每日AI副业、远程工作、独立开发者资讯精选。
 date: 2026-04-11T08:30:00+08:00
-categories:
-  - 行业快讯
-tags:
-  - AI副业
-  - 远程工作
-  - V2EX
-  - 独立开发
-hiddenFromHomePage: true
+slug: ai-side-hustle-morning-2026-04-11
+description: "每日AI副业、远程工作、独立开发者资讯精选。"
 draft: false
+categories: ["行业快讯"]
+tags: ["AI副业", "独立开发", "远程工作", "V2EX"]
+hiddenFromHomePage: true
 ---
 
 # AI副业早报：2026年4月11日
