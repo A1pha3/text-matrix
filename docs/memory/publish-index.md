@@ -272,3 +272,4 @@
 | Ground Station | ground-station-sdr-framework-guide.md | 4b9051b | 1.2k | Python | https://github.com/sgoudelis/ground-station | https://www.feishu.cn/docx/G5zRdz740oDrG5x5j9qclIzNn1c |
 | Open Claude Cowork | open-claude-cowork-composio-guide.md | 9c17dc4 | 3.8k | JavaScript | https://github.com/ComposioHQ/open-claude-cowork | https://www.feishu.cn/docx/QK8KdEIxjoNZnYxIXsrcdr23nfb |
 | Prettier | prettier-code-formatter-guide.md | d6d2c59 | 50.5k | JavaScript | https://github.com/prettier/prettier | https://www.feishu.cn/docx/Zry9ddgA9olMqcx9BXvcKnnxn2c |
+| 9Router | 9router-ultimate-router-guide.md | 8930a96 | 1.5k | Python | https://github.com/decolua/9router | https://www.feishu.cn/docx/Sl7MdNPyEoj41SxCPL7cuIYEnOc |
