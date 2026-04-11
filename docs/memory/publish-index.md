@@ -275,3 +275,4 @@
 | 9Router | 9router-ultimate-router-guide.md | 8930a96 | 1.5k | Python | https://github.com/decolua/9router | https://www.feishu.cn/docx/Sl7MdNPyEoj41SxCPL7cuIYEnOc |
 | Zig | zig-programming-language-guide.md | b914daa | 42.8k | Zig | https://github.com/ziglang/zig | https://www.feishu.cn/docx/EUiVdWoq9oynmOxymXBc8pPJn7h |
 | TikTokDownloader | tiktok-downloader-douk-guide.md | d5f09e5 | 14k | Python | https://github.com/JoeanAmier/TikTokDownloader | https://www.feishu.cn/docx/ScFVdhYf5o2p9Uxdt9UcQEvnnAb |
+| D2L-ZH | d2l-zh-dive-into-deep-learning-guide.md | df8b5be | 77k | Python | https://github.com/d2l-ai/d2l-zh | https://www.feishu.cn/docx/GZXIdpXqGoD0jrxB78GcOoA0nCe |
