@@ -256,3 +256,4 @@
 | Microsoft Agent Framework | microsoft-agent-framework-multi-language-guide | 7010d29 | 9.3k | Python/C# | https://github.com/microsoft/agent-framework | https://www.feishu.cn/docx/NGsGddGl3okbefxTnOVcIvydngh |
 | Unsloth | unsloth-ai-training-inference-platform-guide | 189b888 | 61k | Python/TS | https://github.com/unslothai/unsloth | https://www.feishu.cn/docx/EXLDdCIfsoFSpCxAXYlcjbwnnQe |
 | Hindsight | hindsight-agent-memory-system-guide | 0f232de | 8.9k | Python/TS | https://github.com/vectorize-io/hindsight | https://www.feishu.cn/docx/DI64d3yfEo19VSxkcDUcvFr2nGb |
+| Cloudflare Temp Email | cloudflare-temp-email-complete-guide.md | dfed5fe | 8.3k | TypeScript/Vue | https://github.com/dreamhunter2333/cloudflare_temp_email | https://www.feishu.cn/docx/MgH5dZnnUoURWWx8Uhbc7LXXnXr |
