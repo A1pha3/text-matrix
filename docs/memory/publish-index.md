@@ -237,3 +237,5 @@
 | rowboat | rowboatlabs/rowboat | 11.5k | tech | 2026-04-11 | [GitHub](https://github.com/rowboatlabs/rowboat) | [文章](/posts/tech/rowboat-ai-knowledge-graph-coworker-guide/) | [飞书](https://feishu.cn/docx/FFAVdxi0vo2TNxxvzIfc2H1znef) |
 | multica | multica-ai/multica | 5.5k | tech | 2026-04-11 | [GitHub](https://github.com/multica-ai/multica) | [文章](/posts/tech/multica-agent-management-platform-guide/) | [飞书](https://feishu.cn/docx/IJyRdrxNRorBO3xJ2tSczX2gn7f) |
 | jq | jqlang/jq | 34.2k | tech | 2026-04-11 | [GitHub](https://github.com/jqlang/jq) | [文章](/posts/tech/jq-command-line-json-processor-guide/) | [飞书](https://feishu.cn/docx/YWDVdwQFBoe7Rhxr8XscveAvndb) |
+
+| hermes-agent-orange-book | 1.5k Stars | 2026-04-11 | 技术笔记 | https://github.com/alchaincyf/hermes-agent-orange-book | https://www.feishu.cn/docx/MAqMdp4tLoUdIexdAkIc5X2PnIc |
