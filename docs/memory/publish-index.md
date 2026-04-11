@@ -263,3 +263,4 @@
 | CC-Switch | cc-switch-ai-context-switcher-guide.md | 74b39a5 | 258 | TypeScript/Python | https://github.com/farion1231/cc-switch | https://www.feishu.cn/docx/XlQKdIsraojuUIxHCrzc1lMYnGd |
 | RustFS | rustfs-distributed-fault-tolerant-file-system-guide.md | 620b020 | 4.8k | Rust | https://github.com/rustfs/rustfs | https://www.feishu.cn/docx/DDVtdAp7xokoFTx5BvqctyNKnod |
 | Memvid | memvid-ai-agent-memory-layer-guide.md | ef58a03 | 14.8k | Rust | https://github.com/memvid/memvid | https://www.feishu.cn/docx/AcHedo8HGoLxJZx2QdLc9iASn8g |
+| Tailcall ForgeCode | tailcall-forgecode-api-gateway-graphql-platform-guide.md | 5c28f0a | 19.3k | TypeScript/Rust | https://github.com/tailcallhq/forgecode | https://www.feishu.cn/docx/TpiIdbKk4o5zDGxemekcbCIbnqz |
