@@ -1,3 +1,13 @@
+---
+title: "Memvid：14.8K Stars·AI智能体记忆层·单文件持久化"
+date: 2026-04-12T02:31:39+08:00
+slug: memvid-ai-agent-memory-layer-guide
+description: "Memvid 是一个 AI 智能体记忆层，提供单文件持久化功能，无需数据库，支持极速检索。"
+draft: false
+categories: ["技术笔记"]
+tags: ["AI", "Agent", "记忆系统", "向量数据库", "Rust"]
+---
+
 # Memvid：14.8K Stars·AI智能体记忆层·单文件持久化·无数据库·极速检索
 
 ## 一、项目概述

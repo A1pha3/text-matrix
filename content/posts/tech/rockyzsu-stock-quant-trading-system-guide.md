@@ -1,3 +1,13 @@
+---
+title: "Rockyzsu/stock：7.5K Stars·Python量化交易系统"
+date: 2026-04-12T02:31:39+08:00
+slug: rockyzsu-stock-quant-trading-system-guide
+description: "Rockyzsu/stock 是一个 Python 量化交易系统，覆盖 A 股、港股、基金、可转债等，支持机器学习和技术分析。"
+draft: false
+categories: ["技术笔记"]
+tags: ["量化交易", "Python", "A股", "机器学习", "金融"]
+---
+
 # Rockyzsu/stock：7.5K Stars·Python量化交易系统·A股/港股/基金/转债全覆盖·机器学习+技术分析
 
 ## 一，项目概述

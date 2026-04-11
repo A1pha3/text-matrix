@@ -1,8 +1,12 @@
-+++
-date = '2026-04-11T23:01:28+08:00'
-draft = false
-title = 'gbrain：开源 AI Agent 与工作流自动化平台'
-+++
+---
+title: "gbrain：开源AI Agent与工作流自动化平台"
+date: 2026-04-11T23:01:28+08:00
+slug: gbrain-ai-agent-workflow-automation-platform
+description: "gbrain 是一个开源 AI Agent 与工作流自动化平台，支持多种 AI 模型集成和工作流编排。"
+draft: false
+categories: ["技术笔记"]
+tags: ["AI", "Agent", "工作流", "自动化", "Python"]
+---
 
 # gbrain：开源 AI Agent 与工作流自动化平台
 

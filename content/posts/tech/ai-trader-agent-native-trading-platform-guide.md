@@ -1,4 +1,14 @@
-# AI-Trader：100% 全自动 Agent 原生交易平台完全指南
+---
+title: "AI-Trader：100%全自动Agent原生交易平台完全指南"
+date: 2026-04-12T02:31:39+08:00
+slug: ai-trader-agent-native-trading-platform-guide
+description: "AI-Trader 是一个 100% 全自动的 Agent 原生交易平台，支持股票、加密货币、外汇、期权、期货等多种资产类别。"
+draft: false
+categories: ["技术笔记"]
+tags: ["交易", "AI", "Agent", "加密货币", "量化交易"]
+---
+
+# AI-Trader：100%全自动Agent原生交易平台完全指南
 
 ## 一、项目概述
 

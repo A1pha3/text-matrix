@@ -1,3 +1,13 @@
+---
+title: "D2L-ZH动手学深度学习：77K Stars·全球500+高校教材·PyTorch/TensorFlow/JAX"
+date: 2026-04-12T02:31:39+08:00
+slug: d2l-zh-dive-into-deep-learning-guide
+description: "D2L-ZH（动手学深度学习）是李沐团队编写的经典教材，被全球 500+ 高校采用，覆盖 PyTorch、TensorFlow、JAX 三大框架。"
+draft: false
+categories: ["技术笔记"]
+tags: ["深度学习", "PyTorch", "TensorFlow", "JAX", "李沐"]
+---
+
 # D2L-ZH 动手学深度学习：77K Stars·全球500+高校教材·李沐沐神团队·PyTorch/TensorFlow/JAX三大框架
 
 ## 一，项目概述

@@ -1,3 +1,13 @@
+---
+title: "Scrapling：现代网页爬虫框架·自适应·反反爬"
+date: 2026-04-12T02:31:39+08:00
+slug: scrapling-adaptive-web-scraping-framework-guide
+description: "Scrapling 是一个现代网页爬虫框架，具有自适应解析、反反爬绕过、并发爬取等功能，性能比 MechanicalSoup 快 767 倍。"
+draft: false
+categories: ["技术笔记"]
+tags: ["爬虫", "Python", "网页抓取", "反反爬", "并发"]
+---
+
 # Scrapling：现代网页爬虫框架——自适应、反反爬、并发爬取
 
 ## 一、项目概述

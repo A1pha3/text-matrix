@@ -1,3 +1,13 @@
+---
+title: "Open Higgsfield AI：2.7K Stars·开源NotebookLM·文档转播客"
+date: 2026-04-12T02:31:39+08:00
+slug: open-higgsfield-ai-podcast-guide
+description: "Open Higgsfield AI 是一个开源的 NotebookLM 替代品，能够将文档转换为播客，支持 AI 双主持和引用溯源功能。"
+draft: false
+categories: ["技术笔记"]
+tags: ["AI", "播客", "文档", "NotebookLM", "开源"]
+---
+
 # Open Higgsfield AI：2.7K Stars·开源NotebookLM·文档转播客·AI双主持·引用溯源
 
 ## 一，项目概述

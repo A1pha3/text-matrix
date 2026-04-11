@@ -1,3 +1,13 @@
+---
+title: "Claude-Mem：48K Stars·AI记忆系统·让Claude跨越会话持续学习"
+date: 2026-04-12T02:31:39+08:00
+slug: claude-mem-persistent-memory-system-guide
+description: "Claude-Mem 是一个 AI 记忆系统，让 Claude 能够在会话之间持续学习和记忆，提供持久化记忆功能。"
+draft: false
+categories: ["技术笔记"]
+tags: ["Claude", "AI", "记忆系统", "会话", "机器学习"]
+---
+
 # Claude-Mem：48K Stars·AI记忆系统·让Claude跨越会话持续学习
 
 ## 一、项目概述

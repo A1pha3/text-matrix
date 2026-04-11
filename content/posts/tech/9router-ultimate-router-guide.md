@@ -1,3 +1,13 @@
+---
+title: "9Router：1.5K Stars·Ultimate Router for Claude Code·多后端路由·本地模型网关"
+date: 2026-04-12T02:31:39+08:00
+slug: 9router-ultimate-router-guide
+description: "9Router 是一个多后端 AI 路由器，支持 Claude Code、Ollama、Jan 等多种后端，提供统一的 API 接口和智能路由功能。"
+draft: false
+categories: ["技术笔记"]
+tags: ["Claude Code", "路由器", "API", "本地模型", "Ollama"]
+---
+
 # 9Router：1.5K Stars·Ultimate Router for Claude Code·多后端路由·本地模型网关·Ollama·Jan
 
 ## 一、项目概述

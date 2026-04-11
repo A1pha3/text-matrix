@@ -1,3 +1,13 @@
+---
+title: "Marketing Skills：20.3K Stars·40+营销技能·AI Agent营销助手"
+date: 2026-04-12T02:31:39+08:00
+slug: marketing-skills-ai-agents-guide
+description: "Marketing Skills 收录了 40+ 营销技能，是一个 AI Agent 营销助手，提供转化优化、SEO、内容创作等多种营销功能。"
+draft: false
+categories: ["技术笔记"]
+tags: ["AI", "营销", "SEO", "内容创作", "Agent"]
+---
+
 # Marketing Skills：20.3K Stars·40+营销技能·AI Agent营销助手·转化优化·SEO·内容创作
 
 ## 一、项目概述

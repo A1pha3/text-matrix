@@ -1,3 +1,13 @@
+---
+title: "Scientific Agent Skills：AI科学家必备的134个科研技能库"
+date: 2026-04-12T02:31:39+08:00
+slug: scientific-agent-skills-ai-scientist-complete-guide
+description: "Scientific Agent Skills 是 AI 科学家必备的 134 个科研技能库，涵盖机器学习、深度学习、数据分析等多个领域。"
+draft: false
+categories: ["技术笔记"]
+tags: ["AI", "科研", "机器学习", "深度学习", "Python"]
+---
+
 # Scientific Agent Skills：AI科学家必备的134个科研技能库
 
 ## 一、项目概述

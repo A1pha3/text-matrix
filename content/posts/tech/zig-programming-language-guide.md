@@ -1,3 +1,13 @@
+---
+title: "Zig：42.8K Stars·通用编程语言·系统级性能"
+date: 2026-04-12T02:31:39+08:00
+slug: zig-programming-language-guide
+description: "Zig 是一个通用编程语言，提供系统级性能和精确的内存控制，无需运行时，主要用于系统编程和嵌入式开发。"
+draft: false
+categories: ["技术笔记"]
+tags: ["Zig", "编程语言", "系统编程", "内存管理", "性能"]
+---
+
 # Zig：42.8K Stars·通用编程语言·系统级性能·内存控制·无需运行时
 
 ## 一，项目概述

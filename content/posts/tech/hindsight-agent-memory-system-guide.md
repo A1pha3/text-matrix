@@ -1,3 +1,13 @@
+---
+title: "Hindsight：Agent记忆系统·最准确的记忆系统·SOTA性能"
+date: 2026-04-12T02:31:39+08:00
+slug: hindsight-agent-memory-system-guide
+description: "Hindsight 是一个 Agent 记忆系统，具有最准确的记忆功能，在 SOTA 性能测试中表现优异，支持多种 AI 模型集成。"
+draft: false
+categories: ["技术笔记"]
+tags: ["AI", "Agent", "记忆系统", "机器学习", "向量数据库"]
+---
+
 # Hindsight：Agent记忆系统·最准确的记忆系统·SOTA性能·8.9K Stars
 
 ## 一、项目概述

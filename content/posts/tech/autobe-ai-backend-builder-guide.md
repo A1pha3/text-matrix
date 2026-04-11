@@ -1,3 +1,13 @@
+---
+title: "AutoBE：1.2K Stars·AI后端构建器·从需求到生产的完整解决方案"
+date: 2026-04-12T02:31:39+08:00
+slug: autobe-ai-backend-builder-guide
+description: "AutoBE 是一个 AI 后端构建器，能够从需求描述自动生成完整的生产级后端代码，支持 TypeScript、Prisma、NestJS 等技术栈。"
+draft: false
+categories: ["技术笔记"]
+tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
+---
+
 # AutoBE：1.2K Stars·AI后端构建器·从需求到生产的完整解决方案
 
 ## 一、项目概述

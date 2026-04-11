@@ -1,3 +1,13 @@
+---
+title: "SymPy：14.6K Stars·纯Python符号计算系统"
+date: 2026-04-12T02:31:39+08:00
+slug: sympy-python-computer-algebra-guide
+description: "SymPy 是一个纯 Python 符号计算系统，是科学 Python 生态系统的核心组成部分，广泛应用于数学、物理和工程领域。"
+draft: false
+categories: ["技术笔记"]
+tags: ["SymPy", "Python", "符号计算", "数学", "科学计算"]
+---
+
 # SymPy：14.6K Stars·纯Python符号计算系统·科学Python生态系统核心·数学/物理/工程
 
 ## 一，项目概述

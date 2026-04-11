@@ -1,3 +1,13 @@
+---
+title: "SkyPilot：59K Stars·任意云LLM服务框架·自动故障转移"
+date: 2026-04-12T02:31:39+08:00
+slug: skypilot-any-cloud-llm-serving-guide
+description: "SkyPilot 是一个任意云 LLM 服务框架，支持自动故障转移和 Spot 实例，可节省高达 70% 的成本，每天处理 1000+ 任务。"
+draft: false
+categories: ["技术笔记"]
+tags: ["LLM", "云服务", "GPU", "成本优化", "Kubernetes"]
+---
+
 # SkyPilot：59K Stars·任意云LLM服务框架·自动故障转移·Spot实例节省70%·1000+任务/天·$10M+成本节省
 
 ## 一，项目概述
