@@ -1,3 +1,9 @@
++++
+date = '2026-04-11T23:01:28+08:00'
+draft = false
+title = 'gbrain：开源 AI Agent 与工作流自动化平台'
++++
+
 # gbrain：开源 AI Agent 与工作流自动化平台
 
 ## 一、项目概述
