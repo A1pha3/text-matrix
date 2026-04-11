@@ -254,3 +254,4 @@
 | AI-Trader | ai-trader-agent-native-trading-platform-guide | ae21068 | 13.1k | Python/TypeScript | https://github.com/HKUDS/AI-Trader | https://www.feishu.cn/docx/ExMrdwvDIohGYJxvX5gcczBFn5e |
 | PraisonAI | praisonai-multi-agent-framework-guide | 4e85cc2 | 6.9k | Python | https://github.com/MervinPraison/PraisonAI | https://www.feishu.cn/docx/SL8udmymxoFEKWxCMNkcOBpjnAf |
 | Microsoft Agent Framework | microsoft-agent-framework-multi-language-guide | 7010d29 | 9.3k | Python/C# | https://github.com/microsoft/agent-framework | https://www.feishu.cn/docx/NGsGddGl3okbefxTnOVcIvydngh |
+| Unsloth | unsloth-ai-training-inference-platform-guide | 189b888 | 61k | Python/TS | https://github.com/unslothai/unsloth | https://www.feishu.cn/docx/EXLDdCIfsoFSpCxAXYlcjbwnnQe |
