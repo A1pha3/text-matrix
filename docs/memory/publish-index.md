@@ -280,3 +280,4 @@
 | Rockyzsu/stock | rockyzsu-stock-quant-trading-system-guide.md | 7dd3725 | 7.5k | Python | https://github.com/Rockyzsu/stock | https://www.feishu.cn/docx/WoaDdWv4zoV4EvxRhsOcFRzHnb6 |
 | Flash Attention | flash-attention-fast-exact-attention-guide.md | 6aa475f | 40.2k | C++ | https://github.com/Dao-AILab/flash-attention | https://www.feishu.cn/docx/F64RdHLhcoL5MTxhI9hcOIcznVg |
 | SkyPilot | skypilot-any-cloud-llm-serving-guide.md | 13c14e0 | 59.7k | Python | https://github.com/skypilot-org/skypilot | https://www.feishu.cn/docx/LHI1dLiONoJplJxWpiYcVH7qnnh |
+| Manifest | manifest-smart-model-router-guide.md | 6190517 | 4.3k | TypeScript | https://github.com/mnfst/manifest | https://www.feishu.cn/docx/BetUdsQzPozmA3xDUa0cE9jPn2b |
