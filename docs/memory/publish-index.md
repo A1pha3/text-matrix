@@ -241,3 +241,4 @@
 | hermes-agent-orange-book | 1.5k Stars | 2026-04-11 | 技术笔记 | https://github.com/alchaincyf/hermes-agent-orange-book | https://www.feishu.cn/docx/MAqMdp4tLoUdIexdAkIc5X2PnIc |
 
 | yazi | yazi-terminal-file-manager-complete-guide | 3c98aa2 | 36.2k | Rust/Lua | https://github.com/sxyazi/yazi | https://www.feishu.cn/docx/RLdedCwLzoCTO5xmfyGcBCnUnuc |
+| gbrain | gbrain-ai-agent-workflow-automation-platform | 14184f8 | 8.9k | Python | https://github.com/garrytan/gbrain | https://www.feishu.cn/docx/ZbS8dBXsGoUANzxUSuacu0ONnzf |
