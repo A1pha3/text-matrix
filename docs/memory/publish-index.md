@@ -239,3 +239,5 @@
 | jq | jqlang/jq | 34.2k | tech | 2026-04-11 | [GitHub](https://github.com/jqlang/jq) | [文章](/posts/tech/jq-command-line-json-processor-guide/) | [飞书](https://feishu.cn/docx/YWDVdwQFBoe7Rhxr8XscveAvndb) |
 
 | hermes-agent-orange-book | 1.5k Stars | 2026-04-11 | 技术笔记 | https://github.com/alchaincyf/hermes-agent-orange-book | https://www.feishu.cn/docx/MAqMdp4tLoUdIexdAkIc5X2PnIc |
+
+| yazi | yazi-terminal-file-manager-complete-guide | 3c98aa2 | 36.2k | Rust/Lua | https://github.com/sxyazi/yazi | https://www.feishu.cn/docx/RLdedCwLzoCTO5xmfyGcBCnUnuc |
