@@ -278,3 +278,4 @@
 | D2L-ZH | d2l-zh-dive-into-deep-learning-guide.md | df8b5be | 77k | Python | https://github.com/d2l-ai/d2l-zh | https://www.feishu.cn/docx/GZXIdpXqGoD0jrxB78GcOoA0nCe |
 | SymPy | sympy-python-computer-algebra-guide.md | 78129f7 | 14.6k | Python | https://github.com/sympy/sympy | https://www.feishu.cn/docx/Mkugdr5UKocZeBxCrpQc0R6Wn9f |
 | Rockyzsu/stock | rockyzsu-stock-quant-trading-system-guide.md | 7dd3725 | 7.5k | Python | https://github.com/Rockyzsu/stock | https://www.feishu.cn/docx/WoaDdWv4zoV4EvxRhsOcFRzHnb6 |
+| Flash Attention | flash-attention-fast-exact-attention-guide.md | 6aa475f | 40.2k | C++ | https://github.com/Dao-AILab/flash-attention | https://www.feishu.cn/docx/F64RdHLhcoL5MTxhI9hcOIcznVg |
