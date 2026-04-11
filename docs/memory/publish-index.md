@@ -250,3 +250,4 @@
 | Awesome AI Apps | awesome-ai-apps-complete-llm-application-guide | c11d78d | 10k | Python | https://github.com/Arindam200/awesome-ai-apps | https://www.feishu.cn/docx/OSwpdX68yodXAjxQA1gcSYeznUb |
 | Reverse SynthID | reverse-SynthID-gemini-watermark-analysis-guide | c3c81c4 | 2.1k | Python | https://github.com/aloshdenny/reverse-SynthID | https://www.feishu.cn/docx/IF6wdmjQJoxIcQxU6v0cJGdWnxu |
 | Gemma | gemma-google-deepmind-llm-library-guide | a2881a7 | 4.8k | Python/JAX | https://github.com/google-deepmind/gemma | https://www.feishu.cn/docx/MkQwd3IXcol2BdxSrO1c2MugnSg |
+| Fli | fli-google-flights-mcp-server-guide | f696fda | 1.8k | Python | https://github.com/punitarani/fli | https://www.feishu.cn/docx/X79MdMVX9ovL6ExbwdNc0pVDnNf |
