@@ -266,3 +266,4 @@
 | Tailcall ForgeCode | tailcall-forgecode-api-gateway-graphql-platform-guide.md | 5c28f0a | 19.3k | TypeScript/Rust | https://github.com/tailcallhq/forgecode | https://www.feishu.cn/docx/TpiIdbKk4o5zDGxemekcbCIbnqz |
 | Arnis | arnis-minecraft-world-generator-guide.md | 1e7e5ee | 14.8k | Rust | https://github.com/louis-e/arnis | https://www.feishu.cn/docx/ImWddaPYEoq91px4WlAcjXlVnpd |
 | Delta | delta-git-syntax-highlighting-pager-guide.md | b2751f1 | 30.1k | Rust | https://github.com/dandavison/delta | https://www.feishu.cn/docx/AZZodDUUdohnaExCVVsc3LxnnAc |
+| Penta GI | pentagi-pentesting-gui-guide.md | 7c3345c | 1.4k | Rust | https://github.com/vxcontrol/pentagi | https://www.feishu.cn/docx/VVZLdJ2QuoVOVCxLCpIcYl2Wnyd |
