@@ -283,3 +283,4 @@
 | Manifest | manifest-smart-model-router-guide.md | 6190517 | 4.3k | TypeScript | https://github.com/mnfst/manifest | https://www.feishu.cn/docx/BetUdsQzPozmA3xDUa0cE9jPn2b |
 | HackingTool | hackingtool-all-in-one-hacking-suite-guide.md | 2e3f2c5 | 56.8k | Python | https://github.com/Z4nzu/hackingtool | https://www.feishu.cn/docx/THWAdb9SGooslQxfHZncTfmsnfe |
 | LazyGit | lazygit-git-terminal-ui-guide.md | daae670 | 47.7k | Go | https://github.com/jesseduffield/lazygit | https://www.feishu.cn/docx/IdnodG0Y4olxb3xWWgfcA42Vnfd |
+| awesome-systematic-trading | awesome-systematic-trading-algorithmic-trading-resource-guide.md | dddaf4d | 8.4k | Python | https://github.com/paperswithbacktest/awesome-systematic-trading | https://www.feishu.cn/docx/SIlcduUvjoyAjSxDbN9ciu9Rngh |
