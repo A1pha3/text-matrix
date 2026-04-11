@@ -276,3 +276,4 @@
 | Zig | zig-programming-language-guide.md | b914daa | 42.8k | Zig | https://github.com/ziglang/zig | https://www.feishu.cn/docx/EUiVdWoq9oynmOxymXBc8pPJn7h |
 | TikTokDownloader | tiktok-downloader-douk-guide.md | d5f09e5 | 14k | Python | https://github.com/JoeanAmier/TikTokDownloader | https://www.feishu.cn/docx/ScFVdhYf5o2p9Uxdt9UcQEvnnAb |
 | D2L-ZH | d2l-zh-dive-into-deep-learning-guide.md | df8b5be | 77k | Python | https://github.com/d2l-ai/d2l-zh | https://www.feishu.cn/docx/GZXIdpXqGoD0jrxB78GcOoA0nCe |
+| SymPy | sympy-python-computer-algebra-guide.md | 78129f7 | 14.6k | Python | https://github.com/sympy/sympy | https://www.feishu.cn/docx/Mkugdr5UKocZeBxCrpQc0R6Wn9f |
