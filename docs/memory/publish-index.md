@@ -287,3 +287,4 @@
 | awesome-mac | awesome-mac-macos-software-resource-guide.md | 8f949fd | 17k | Markdown | https://github.com/jaywcjlove/awesome-mac | https://www.feishu.cn/docx/JJPSdrp0toGkHPxXuj2cIyYdnQe |
 
 | agent-browser-vercel-ai-browser-automation-guide | 技术笔记 | 28.7k Stars | https://github.com/vercel-labs/agent-browser | https://www.feishu.cn/wiki/X3EywDfwPi10aakuVp7cpuiDnMe | 2026-04-12 |
+| Antigravity Tools | antigravity-tools-ai-account-management-proxy-guide.md | 0ec4d0d | 28.1k | Tauri/Rust | https://github.com/lbjlaq/Antigravity-Manager | https://www.feishu.cn/docx/TnNNdXFgmobHUaxcToRcFGGMnld | 2026-04-12 |
