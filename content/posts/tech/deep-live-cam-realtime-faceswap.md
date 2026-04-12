@@ -1,14 +1,14 @@
 ---
-title: "Deep-Live-Cam：83.8k Stars 一键实时换脸与视频深度伪造（Deepfake）工具"
+title: "Deep-Live-Cam：89.7k Stars 一键实时换脸与视频深度伪造（Deepfake）工具"
 date: 2026-03-28T22:00:00+08:00
 slug: "deep-live-cam-realtime-faceswap"
-description: "深度解读 Deep-Live-Cam：83.8k Stars 的实时换脸与视频深度伪造工具，一键操作、仅需一张照片，支持 webcam 直播、视频通话、电影角色扮演等多种场景。"
+description: "深度解读 Deep-Live-Cam：89.7k Stars 的实时换脸与视频深度伪造工具，一键操作、仅需一张照片，支持 webcam 直播、视频通话、电影角色扮演等多种场景。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Deep-Live-Cam", "实时换脸", "深度伪造", "Deepfake", "AI视频"]
 ---
 
-# Deep-Live-Cam：83.8k Stars 一键实时换脸与视频深度伪造工具
+# Deep-Live-Cam：89.7k Stars 一键实时换脸与视频深度伪造工具
 
 > **目标读者**：对 AI 换脸技术感兴趣的内容创作者、开发者
 > **核心问题**：如何用一张照片实现实时换脸和视频深度伪造？
