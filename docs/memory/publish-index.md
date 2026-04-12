@@ -290,3 +290,4 @@
 | Antigravity Tools | antigravity-tools-ai-account-management-proxy-guide.md | 0ec4d0d | 28.1k | Tauri/Rust | https://github.com/lbjlaq/Antigravity-Manager | https://www.feishu.cn/docx/TnNNdXFgmobHUaxcToRcFGGMnld | 2026-04-12 |
 | Planning with Files | planning-with-files-manus-style-agent-guide.md | 5d68cda | 18.6k | Python/Shell | https://github.com/OthmanAdi/planning-with-files | https://www.feishu.cn/docx/W0JcdFepOo1infxbLwXcgA9Fnid | 2026-04-12 |
 | CLIProxyAPI | cliproxyapi-openai-compatible-api-proxy-guide.md | 3a176c0 | 25.2k | Go | https://github.com/router-for-me/CLIProxyAPI | https://www.feishu.cn/docx/LrI2dUHbEo6Ym2xRs2Vcyux9n6f | 2026-04-12 |
+| Antigravity Awesome Skills | antigravity-awesome-skills-ai-tools-ecosystem-guide.md | 13a2890 | 1.7k | MD | https://github.com/sickn33/antigravity-awesome-skills | https://www.feishu.cn/docx/TXo0dSCgToIBgDxborGcWofmnfd | 2026-04-12 |
