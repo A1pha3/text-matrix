@@ -1,13 +1,12 @@
 ---
 title: "Web3早报 2026-04-12：BTC $73055/ETH $2285/市场小幅回升"
-date: 2026-04-12T00:20:00+08:00
-lastmod: 2026-04-12T00:20:00+08:00
-draft: false
-tags: ["Web3", "比特币", "以太坊", "Hyperliquid", "加密货币"]
-categories: ["行业快讯"]
-hiddenFromHomePage: true
-description: "Web3早报：BTC $73,055（周涨8.57%），ETH $2,285（周涨10.67%），Hyperliquid HYPE周涨16.09%领跑市场。"
+date: 2026-04-12T08:00:00+08:00
 slug: web3-morning-news-2026-04-12
+description: "Web3早报：BTC $73,055（周涨8.57%），ETH $2,285（周涨10.67%），Hyperliquid HYPE周涨16.09%领跑市场。"
+draft: false
+categories: ["行业快讯"]
+tags: ["Web3", "比特币", "以太坊", "Hyperliquid", "加密货币"]
+hiddenFromHomePage: true
 ---
 
 # Web3早报 2026-04-12

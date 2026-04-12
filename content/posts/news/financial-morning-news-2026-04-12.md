@@ -1,13 +1,12 @@
 ---
 title: "经济财经早报 2026-04-12：中东战争第42天/油价新高/PPI转正/AI安全风暴"
-date: 2026-04-12T00:15:00+08:00
-lastmod: 2026-04-12T00:15:00+08:00
-draft: false
-tags: ["经济", "中东战争", "石油", "AI", "美联储"]
-categories: ["行业快讯"]
-hiddenFromHomePage: true
-description: "经济财经早报：中东战争进入第42天，黎以同意会谈；北海油价创历史新高；中国PPI转正；AI安全风暴席卷华尔街。"
+date: 2026-04-12T08:00:00+08:00
 slug: financial-morning-news-2026-04-12
+description: "经济财经早报：中东战争进入第42天，黎以同意会谈；北海油价创历史新高；中国PPI转正；AI安全风暴席卷华尔街。"
+draft: false
+categories: ["行业快讯"]
+tags: ["经济", "中东战争", "石油", "AI", "美联储"]
+hiddenFromHomePage: true
 ---
 
 # 经济财经早报 2026-04-12
