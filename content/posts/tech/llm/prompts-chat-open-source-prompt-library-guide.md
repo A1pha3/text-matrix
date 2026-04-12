@@ -1,6 +1,6 @@
 ---
 title: "Prompts.chat：开源提示词平台、自托管方案与 MCP 集成完全指南"
-date: 2026-04-02T01:37:00+08:00
+date: 2026-04-12T13:00:00+08:00
 slug: prompts-chat-open-source-prompt-library-guide
 aliases:
   - /posts/tech/prompts-chat-open-source-prompt-library-guide/

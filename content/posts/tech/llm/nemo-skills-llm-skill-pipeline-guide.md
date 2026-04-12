@@ -1,381 +1,218 @@
 ---
-title: "NeMo Skills：LLM 技能提升流水线完全指南"
-date: 2026-04-01T16:50:00+08:00
+title: "NeMo Skills：NVIDIA 开源 LLM 技能提升流水线"
+date: 2026-04-12T11:00:00+08:00
 slug: nemo-skills-llm-skill-pipeline-guide
 aliases:
   - /posts/tech/nemo-skills-llm-skill-pipeline-guide/
 categories: ["技术笔记"]
-tags: ["NeMo Skills", "LLM", "NVIDIA", "合成数据", "模型训练", "评估基准"]
-description: "NVIDIA 开源 LLM 技能提升工具集 NeMo Skills 完全指南，涵盖合成数据生成、模型训练、基准评估等全方位讲解。"
+tags: ["NeMo Skills", "NVIDIA", "LLM训练", "合成数据", "模型评估", "OpenReasoning"]
+description: "NeMo Skills 是 NVIDIA 开源的 LLM 技能提升工具集，覆盖合成数据生成、模型训练与基准评估全流程。本文基于仓库 README，梳理核心功能、已发布模型与数据集、评估基准体系与快速上手路径。"
 ---
 
 > **目标读者**：LLM 训练工程师、模型优化研究者
-> **核心问题**：如何使用 NeMo Skills 提升 LLM 技能？
+> **核心问题**：如何用 NeMo Skills 构建从数据生成到评估的完整 LLM 技能提升流水线？
 > **难度**：⭐⭐⭐⭐（高级）
+> **事实边界**：本文基于 NVIDIA-NeMo/Skills 仓库 README 和官方文档。CLI 命令的具体参数格式请以 `ns --help` 和官方文档为准。
 
 ## 一、项目概述
 
 ### 1.1 什么是 NeMo Skills
 
-**NeMo Skills** 是 NVIDIA 开源的 LLM 技能提升工具集，提供从合成数据生成、模型训练到基准评估的完整流水线。支持在本地工作站运行，并可一键扩展到大规模 Slurm 集群。
-
-### 1.2 关键数据
-
-| 指标 | 数值 |
-|------|------|
-| **GitHub Stars** | 905 |
-| **GitHub Forks** | 169 |
-| **协议** | Apache-2.0 |
-| **主语言** | Python 98.9% |
-| **提交数** | 1,089 |
-| **贡献者** | 87+ |
-
-### 1.3 核心定位
-
-NeMo Skills 围绕 LLM 开发全流程：
-- **合成数据生成**（SDG）
-- **模型训练**（Training）
-- **基准评估**（Evaluation）
+NeMo Skills（[NVIDIA-NeMo/Skills](https://github.com/NVIDIA-NeMo/Skills)）是 NVIDIA 开源的 LLM 技能提升工具集，提供从合成数据生成（Synthetic Data Generation, SDG）、模型训练到基准评估的完整流水线。核心设计理念是：在本地工作站开发，一行配置切换到大规模 Slurm 集群。
 
 > 免责声明：此项目仅用于研究目的，非 NVIDIA 官方产品。
 
----
+### 1.2 核心能力
 
-## 二、核心功能
-
-### 2.1 灵活的 LLM 推理
-
-| 功能 | 说明 |
+| 能力 | 说明 |
 |------|------|
-| **多后端支持** | TensorRT-LLM、vLLM、sglang、Megatron |
-| **无缝切换** | API 提供商、本地服务、Slurm 集群一键切换 |
-| **弹性扩展** | 从1块GPU扩展到数万台GPU |
+| **灵活推理** | 无缝切换 API 提供商、本地服务和 Slurm 集群；支持 TensorRT-LLM、vLLM、sglang、Megatron 托管模型 |
+| **弹性扩展** | SDG 任务从 1 块 GPU 扩展到数万块 GPU |
+| **多基准评估** | 覆盖数学、代码、科学、指令遵循、长上下文、工具调用、多语言、语音、视觉等 10+ 类别 |
+| **并行评估** | 每个评估可跨多个 Slurm 作业并行，支持自托管 LLM 评判 |
+| **模型训练** | 支持 NeMo-RL 和 verl 两个训练框架 |
 
-### 2.2 模型评估
+### 1.3 项目数据
 
-NeMo Skills 支持全方位评估：
-
-| 类别 | 基准 |
+| 指标 | 数值 |
 |------|------|
-| **数学（自然语言）** | aime24、aime25、hmmt_feb25 |
-| **数学（形式语言）** | minif2f、proofnet、putnam-bench |
-| **代码** | swe-bench、livecodebench、bird |
-| **科学知识** | hle、scicode、gpqa |
-| **指令遵循** | ifbench、ifeval |
-| **长上下文** | ruler、mrcr、aalcr、longbench-v2 |
-| **工具调用** | bfcl_v3 |
-| **多语言** | mmlu-prox、flores-200、wmt24pp |
-| **语音与音频** | asr-leaderboard、mmau-pro |
-| **视觉语言模型** | mmmu-pro |
-
-### 2.3 模型训练
-
-| 框架 | 说明 |
-|------|------|
-| **NeMo-RL** | NVIDIA RL 训练框架 |
-| **verl** | Volcengine RL 训练框架 |
+| Stars | 905+ |
+| Forks | 169+ |
+| 协议 | Apache-2.0 |
+| 主语言 | Python |
+| 文档 | [nvidia-nemo.github.io/Skills](https://nvidia-nemo.github.io/Skills/) |
 
 ---
 
-## 三、快速开始
+## 二、评估基准体系
 
-### 3.1 安装
+NeMo Skills 支持广泛的评估基准，覆盖 LLM 的核心能力维度：
+
+| 类别 | 基准示例 | 说明 |
+|------|----------|------|
+| **数学（自然语言）** | aime24、aime25、hmmt_feb25 | 数学竞赛题，自然语言作答 |
+| **数学（形式语言）** | minif2f、proofnet、putnam-bench | 形式化证明，严格验证 |
+| **代码** | swe-bench、livecodebench、bird | 代码生成与调试 |
+| **科学知识** | hle、scicode、gpqa | 高难度科学问答 |
+| **指令遵循** | ifbench、ifeval | 指令遵循能力 |
+| **长上下文** | ruler、mrcr、aalcr、longbench-v2 | 长文本理解与检索 |
+| **工具调用** | bfcl_v3 | 函数调用能力 |
+| **多语言** | mmlu-prox、flores-200、wmt24pp | 跨语言能力 |
+| **语音与音频** | asr-leaderboard、mmau-pro | 语音理解 |
+| **视觉语言模型** | mmmu-pro | 多模态理解 |
+
+每个评估基准都支持自定义 Prompt 和配置，且可并行化到多个 Slurm 作业。
+
+---
+
+## 三、已发布模型与数据集
+
+NeMo Skills 已基于该流水线发布多个有影响力的模型和数据集。
+
+### 3.1 OpenReasoning（2025-07-18）
+
+OpenReasoning 模型在数学、代码和科学基准上达到开源模型 SoTA。
+
+相关数据集：
+- 数学与代码数据：Nemotron-Post-Training-Dataset-v1
+- 科学数据：OpenScienceReasoning-2
+
+### 3.2 OpenMathReasoning（2025-04-23）
+
+OpenMathReasoning 数据集规模：
+
+| 数据类型 | 数量 |
+|----------|------|
+| 唯一数学问题 | 306K（来自 AoPS 论坛） |
+| 长链式思维（CoT）解决方案 | 3.2M |
+| 工具集成推理（TIR）解决方案 | 1.7M |
+| GenSelect 样本 | 566K |
+
+GenSelect 是一种从多个候选解中选择最优解的方法，用于提升模型在数学推理上的准确率。
+
+OpenMath-Nemotron 系列模型在发布时为开源数学推理最强模型。
+
+### 3.3 OpenMathInstruct-2（2024-10-03）
+
+- 14M 问题-解决方案对
+- 使用 Llama3.1-405B-Instruct 生成
+- OpenMath-2-Llama 系列相比 Llama3.1-Instruct 有显著提升
+
+### 3.4 Nemotron-Math-v2
+
+用于训练 NVIDIA-Nemotron-3-Nano-30B-A3B-BF16 的数据集。2025-12-15 发布了复现配方（recipe）。
+
+### 3.5 Nemotron-Post-Training-Dataset-v1
+
+用于训练 OpenReasoning 模型的后训练数据集，包含数学和代码数据。
+
+### 3.6 最新动态
+
+| 日期 | 事件 |
+|------|------|
+| 2025-12-15 | 发布 Nemotron-Math-v2 和 Nemotron-Math-Proofs-v1 数据集复现配方 |
+| 2025-11-25 | 发布生成式验证器（Generative Verifiers）实验复现方案 |
+| 2025-08-22 | 发布 Nemotron-Nano-9B-v2 评估复现 |
+| 2025-08-15 | 发布 Llama-3_3-Nemotron-Super-49B-v1_5 评估复现 |
+
+---
+
+## 四、训练框架
+
+NeMo Skills 支持两个训练框架：
+
+| 框架 | 来源 | 说明 |
+|------|------|------|
+| **NeMo-RL** | NVIDIA | NVIDIA 自研 RL 训练框架 |
+| **verl** | Volcengine | 字节跳动开源 RL 训练框架 |
+
+两个框架均支持分布式训练，可从单节点扩展到多节点 Slurm 集群。
+
+---
+
+## 五、快速开始
+
+### 5.1 安装
 
 ```bash
-# 克隆仓库
 git clone https://github.com/NVIDIA-NeMo/Skills.git
 cd Skills
-
-# 安装依赖
 pip install -e .
+```
 
-# 验证安装
+### 5.2 查看可用命令
+
+```bash
 ns --help
 ```
 
-### 3.2 基本命令
+README 建议通过 `ns --help` 查看所有可用命令和选项。更多示例见官方 [tutorials 页面](https://nvidia-nemo.github.io/Skills/)。
 
-```bash
-# 查看所有可用命令
-ns --help
+### 5.3 推理后端配置
 
-# 运行评估
-ns eval --model nvidia/nemotron-3-8b
+NeMo Skills 支持多种推理后端，可根据硬件和需求选择：
 
-# 运行数据生成
-ns generate --model meta-llama/llama-3
-```
-
-### 3.3 配置
-
-```bash
-# 查看配置选项
-ns config --help
-
-# 设置 API key
-export OPENAI_API_KEY=your_key
-```
+| 后端 | 适用场景 |
+|------|----------|
+| TensorRT-LLM | 高吞吐推理（NVIDIA GPU） |
+| vLLM | 通用高吞吐推理 |
+| sglang | 低延迟推理 |
+| Megatron | 大规模分布式推理 |
 
 ---
 
-## 四、评估流水线
+## 六、架构与扩展
 
-### 4.1 评估配置
-
-```yaml
-# evaluation.yaml
-model: nvidia/nemotron-3-8b
-benchmarks:
-  - math/aime24
-  - code/swe-bench
-  - instruction/ifbench
-parallel: 8  # 并行 Slurm 任务数
-judge: self-host  # 自托管 LLM 评判
-```
-
-### 4.2 运行评估
-
-```bash
-# 运行完整评估
-ns eval --config evaluation.yaml
-
-# 运行特定基准
-ns eval --benchmark math/aime24
-
-# 分布式评估
-ns eval --parallel 64
-```
-
-### 4.3 评估结果
-
-| 指标 | pass@1 | GenSelect |
-|------|---------|-----------|
-| 数学 | 提升显著 | 领先 |
-| 代码 | 提升显著 | 领先 |
-| 科学 | 提升显著 | 领先 |
-
----
-
-## 五、合成数据生成（SDG）
-
-### 5.1 SDG 配置
-
-```yaml
-# sdg.yaml
-model: meta-llama/llama-3.1-405b
-num_gpus: 8
-batch_size: 32
-temperature: 0.8
-top_p: 0.95
-```
-
-### 5.2 运行 SDG
-
-```bash
-# 生成数学数据
-ns generate --task math --num_samples 100000
-
-# 生成代码数据
-ns generate --task code --num_samples 50000
-
-# 扩展到集群
-ns generate --task math --num_gpus 1024
-```
-
-### 5.3 数据质量
-
-生成的合成数据经过多轮过滤和质量评估，确保高质量。
-
----
-
-## 六、模型训练
-
-### 6.1 训练流水线
-
-```bash
-# 使用 NeMo-RL 训练
-ns train --config train.yaml --framework nemorl
-
-# 使用 verl 训练
-ns train --config train.yaml --framework verl
-```
-
-### 6.2 分布式训练
-
-```bash
-# 单节点多卡
-ns train --num_gpus 8
-
-# 多节点集群
-ns train --num_nodes 32 --num_gpus_per_node 8
-```
-
----
-
-## 七、已发布模型与数据集
-
-### 7.1 OpenReasoning
-
-| 模型 | 说明 | 发布时间 |
-|------|------|----------|
-| **OpenReasoning** | 数学、代码、科学 SoTA | 2025-07-18 |
-
-**评估结果**：在数学、代码、科学基准上达到当时最高水平。
-
-### 7.2 OpenMathReasoning
-
-**数据集规模**：
-- 306K 数学问题（来自 AoPS 论坛）
-- 3.2M 长链式思维（CoT）解决方案
-- 1.7M 工具集成推理（TIR）解决方案
-- 566K GenSelect 样本
-
-**模型**：OpenMath-Nemotron 系列，在发布时为开源数学推理最强模型。
-
-### 7.3 OpenMathInstruct-2
-
-**数据集**：14M 问题-解决方案对（使用 Llama3.1-405B-Instruct 生成）
-
-**效果**：相比 Llama3.1-Instruct 有显著提升。
-
-### 7.4 Nemotron-Math-v2
-
-**数据集**：用于训练 NVIDIA-Nemotron-3-Nano-30B-A3B-BF16
-
-### 7.5 Nemotron-Post-Training-Dataset-v1
-
-用于训练 OpenReasoning 模型，包含数学和代码数据。
-
----
-
-## 八、架构分析
-
-### 8.1 目录结构
+### 6.1 目录结构
 
 ```
 Skills/
-├── core/                 # 核心模块
+├── nemo_skills/          # 核心代码
+├── recipes/              # 训练与评估配方
+├── cluster_configs/      # 集群配置模板
+├── dockerfiles/          # Docker 构建文件
 ├── docs/                 # 文档
-├── nemo_skills/         # NeMo Skills 核心代码
-├── recipes/             # 训练配方
-├── requirements/        # 依赖
-├── tests/              # 测试
-├── dockerfiles/         # Docker 配置
-├── cluster_configs/     # 集群配置
-└── recipes/            # 训练脚本
+├── requirements/         # 依赖
+└── tests/                # 测试
 ```
 
-### 8.2 核心组件
-
-| 组件 | 说明 |
-|------|------|
-| **推理引擎** | 支持多后端推理 |
-| **评估器** | 多基准评估 |
-| **数据生成器** | 合成数据生成 |
-| **训练器** | 分布式训练支持 |
-
-### 8.3 扩展机制
+### 6.2 扩展点
 
 | 扩展点 | 说明 |
 |--------|------|
-| **自定义基准** | 添加新的评估基准 |
-| **自定义模型** | 支持新的模型后端 |
-| **自定义数据** | 使用自有数据集训练 |
+| 自定义基准 | 添加新的评估基准配置 |
+| 自定义 Prompt | 修改基准的 Prompt 模板 |
+| 自托管评判 | 部署本地 LLM 作为评判模型 |
+| 自定义推理后端 | 接入新的推理引擎 |
 
 ---
 
-## 九、集群部署
+## 七、适用场景与边界
 
-### 9.1 单机部署
+### 7.1 适合的场景
 
-```bash
-# 本地安装
-pip install -e .
-
-# 快速测试
-ns eval --benchmark math/aime24
-```
-
-### 9.2 Slurm 集群部署
-
-```bash
-# 配置集群
-ns cluster setup --config cluster_config.yaml
-
-# 提交集群任务
-ns submit --num_gpus 1024 --task generate
-```
-
-### 9.3 Docker 部署
-
-```bash
-# 构建镜像
-docker build -t nemo-skills:latest -f dockerfiles/Dockerfile .
-
-# 运行容器
-docker run --gpus all nemo-skills:latest ns --help
-```
-
----
-
-## 十，最佳实践
-
-### 10.1 评估优化
-
-| 优化 | 方法 |
+| 场景 | 说明 |
 |------|------|
-| **并行评估** | 使用 Slurm 并行化 |
-| **自托管评判** | 减少 API 调用成本 |
-| **批量处理** | 提高吞吐量 |
+| **数学推理增强** | 使用 SDG 生成数学训练数据，评估数学推理能力 |
+| **代码能力提升** | 生成代码数据，在 swe-bench 等基准上评估 |
+| **模型后训练** | 使用 NeMo-RL/verl 进行 RL 训练 |
+| **大规模评估** | 在 Slurm 集群上并行运行多基准评估 |
+| **数据集发布** | 基于流水线生成和发布高质量训练数据 |
 
-### 10.2 数据生成优化
+### 7.2 边界与注意事项
 
-| 优化 | 方法 |
+| 边界 | 说明 |
 |------|------|
-| **温度采样** | 根据任务调整 temperature |
-| **去重过滤** | 去除重复样本 |
-| **质量过滤** | 多轮质量评估 |
-
-### 10.3 训练优化
-
-| 优化 | 方法 |
-|------|------|
-| **梯度累积** | 增加有效 batch size |
-| **混合精度** | 加速训练 |
-| **分布式** | 多节点并行 |
-
----
-
-## 十一，常见问题
-
-**Q1: NeMo Skills 和 NeMo有什么区别？**
-
-NeMo 是 NVIDIA 的对话式 AI 框架，NeMo Skills 是构建在 NeMo 之上的 LLM 技能提升工具集。
-
-**Q2: 需要什么硬件？**
-
-推理可以本地运行，训练建议使用 NVIDIA GPU（8卡以上）。
-
-**Q3: 如何添加自定义基准？**
-
-参考 docs/ 目录下的指南，创建新的基准配置文件即可。
-
----
-
-## 十二，项目信息
-
-| 信息 | 内容 |
-|------|------|
-| 许可证 | Apache-2.0 |
-| 主语言 | Python 98.9% |
-| 文档 | [nvidia-nemo.github.io/Skills](https://nvidia-nemo.github.io/Skills/) |
+| **研究用途** | 项目明确声明仅用于研究，非 NVIDIA 官方产品 |
+| **硬件要求** | 本地推理可运行，但大规模 SDG 和训练需要多卡 GPU |
+| **CLI 参数待验证** | 具体命令参数格式请以 `ns --help` 和官方文档为准 |
+| **Slurm 依赖** | 大规模并行需要 Slurm 集群环境 |
 
 ---
 
 ## 相关链接
 
-💻 **GitHub**：[NVIDIA-NeMo/Skills](https://github.com/NVIDIA-NeMo/Skills)
-
-📖 **文档**：[nvidia-nemo.github.io/Skills](https://nvidia-nemo.github.io/Skills/)
-
-🤖 **HuggingFace**：[nvidia](https://huggingface.co/nvidia)
+- GitHub：[NVIDIA-NeMo/Skills](https://github.com/NVIDIA-NeMo/Skills)
+- 官方文档：[nvidia-nemo.github.io/Skills](https://nvidia-nemo.github.io/Skills/)
+- Tutorials：[nvidia-nemo.github.io/Skills/tutorials](https://nvidia-nemo.github.io/Skills/tutorials)
+- Papers & Releases：[nvidia-nemo.github.io/Skills/papers](https://nvidia-nemo.github.io/Skills/papers)
