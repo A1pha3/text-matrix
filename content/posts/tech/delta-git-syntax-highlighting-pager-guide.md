@@ -164,11 +164,11 @@ git config --global merge.conflictStyle zdiff3
 ```
 
 ```
-<<<<<<< HEAD
-fn old_function() {
-=======
-fn new_function() {
->>>>>>> feature-branch
+    <<<<<<< HEAD
+    fn old_function() {
+    =======
+    fn new_function() {
+    >>>>>>> feature-branch
 ```
 
 ## 四、配色主题

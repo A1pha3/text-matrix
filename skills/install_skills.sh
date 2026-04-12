@@ -9,7 +9,7 @@ declare -a TARGET_NAMES=()
 declare -a TARGET_DIRS=()
 declare -a REQUESTED_TARGET_NAMES=()
 declare -a DETECTED_TARGET_NAMES=()
-BUILTIN_TARGETS=("trae" "trae-cn" "openclaw" "opencode" "claude-code" "codex" "vscode")
+BUILTIN_TARGETS=("trae" "trae-cn" "openclaw" "opencode" "cursor" "windsurf" "goose" "claude-code" "codex" "vscode")
 
 usage() {
     cat <<EOF
@@ -23,7 +23,7 @@ usage() {
 说明:
         - 不带参数时，默认进入检测模式，只安装本机已存在目录的内置目标。
         - --detect 显式启用检测模式。
-        - 内置目标: trae、trae-cn、openclaw、opencode、claude-code、codex、vscode。
+        - 内置目标: trae、trae-cn、openclaw、opencode、cursor、windsurf、goose、claude-code、codex、vscode。
     - 内置目标使用各工具的默认用户目录；如需跨仓库或自定义位置，请使用 --target name=dir（支持相对路径和绝对路径）。
     - --all 会安装所有内置目标以及通过 --target 追加的目标。
   - --target name=dir 可临时追加安装目标。
@@ -116,13 +116,22 @@ builtin_target_dir() {
             printf '%s' "$HOME/.trae/skills"
             ;;
         trae-cn)
-            printf '%s' "$HOME/.traecn/skills"
+            printf '%s' "$HOME/.trae-cn/skills"
             ;;
         openclaw)
             printf '%s' "$HOME/.openclaw/workspace/skills"
             ;;
         opencode)
             printf '%s' "$HOME/.opencode/skills"
+            ;;
+        cursor)
+            printf '%s' "$HOME/.cursor/skills"
+            ;;
+        windsurf)
+            printf '%s' "$HOME/.windsurf/skills"
+            ;;
+        goose)
+            printf '%s' "$HOME/.goose/skills"
             ;;
         claude-code)
             printf '%s' "$HOME/.claude/skills"

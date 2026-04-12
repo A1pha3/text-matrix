@@ -1,13 +1,21 @@
 ---
 name: github-article-writer
-description: 面向 GitHub 开源仓库的中文技术文章工作流。适用于用户提供 github.com 仓库链接、owner/repo，或要求“分析这个项目并写文章”“整理成技术笔记”“为 text-matrix 产出文章”等场景。覆盖仓库取证、选题定位、中文技术写作、Hugo frontmatter 生成与发布前校验；关键词：GitHub URL、开源项目分析、技术文章、仓库解读、text-matrix。
-version: 1.0.0
+description: "面向 GitHub 开源仓库的中文技术文章工作流。只要用户输入任意 GitHub 仓库链接、仓库内页面链接、github.com URL 或 owner/repo，就应激活本 skill；如果消息里只有链接或链接加一句短指令，默认直接进入写作模式并产出中文技术文章。适用于“根据这个 GitHub 链接写文章”“分析这个 repo 并写成技术笔记”“把这个仓库整理成 Hugo 文章”等场景。覆盖仓库取证、选题定位、中文技术写作、Hugo frontmatter 生成与发布前校验；关键词：GitHub URL、仓库链接、repo link、owner/repo、开源项目分析、技术文章、仓库解读、text-matrix。"
+version: 1.1.0
 tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 ---
 
 # GitHub 技术文章工作流
 
 将 GitHub 仓库转化为可发布的中文技术文章，核心原则是先取证，再写作。
+
+## 0. 触发与默认动作
+
+- 用户消息只要包含以下任一形式，就视为本 skill 的触发信号：`https://github.com/owner/repo`、`github.com/owner/repo`、`owner/repo`、仓库内 `tree`、`blob`、`issues`、`pull`、`releases`、`wiki` 等页面链接。
+- 如果消息里只有 GitHub 链接，或只有 GitHub 链接加上“写文章”“整理成技术笔记”“写成 Hugo 文章”之类短指令，默认激活本 skill 并直接进入“写作”模式。
+- 收到仓库内子页面链接时，先归一化为仓库根路径和 `owner/repo`，再继续取证与写作。
+- 只有当用户明确要求“只分析不写”“只给摘要”“只做发布”时，才覆盖默认写作动作。
+- 不要因为用户只给了链接就先追问题目、角度或受众；应先基于仓库证据完成首版可读草稿，再在必要时补充边界说明。
 
 ## 1. 适用边界
 
@@ -33,13 +41,19 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 | 写作 | “根据这个仓库写文章”“整理成技术笔记” | 完整文章草稿 |
 | 发布 | 明确要求“发布到 text-matrix / 飞书 / 更新索引” | 文章文件 + 发布结果 |
 
-默认执行“写作”模式；只有明确要求时才进入“发布”模式。
+默认执行“写作”模式；如果输入只有 GitHub 链接，也直接进入“写作”模式；只有明确要求时才进入“发布”模式。
 
 ## 3. 执行流程
 
 ### Step 1: 仓库取证
 
 先从 GitHub 页面、README、docs、示例、发行记录中收集证据，再决定文章结构。
+
+如果用户提供的是仓库内子页面链接，先提取并记录：
+
+- 原始链接
+- 归一化后的仓库根链接
+- 对应的 `owner/repo`
 
 最低取证项：
 
@@ -77,7 +91,7 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 
 ### Step 3: 生成文章草稿
 
-进入写作阶段时，必须加载 [skills/cn-doc-writer/SKILL.md](skills/cn-doc-writer/SKILL.md)，再将仓库证据整理为写作输入。文章默认定位为：
+进入写作阶段时，必须加载 [../cn-doc-writer/SKILL.md](../cn-doc-writer/SKILL.md)，再将仓库证据整理为写作输入。文章默认定位为：
 
 - 分类：技术笔记
 - 文风：专业、克制、可验证
@@ -111,8 +125,8 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 
 生成 Frontmatter 前，必须加载以下文件：
 
-- [skills/hugo-writer/SKILL.md](skills/hugo-writer/SKILL.md)
-- [skills/github-article-writer/references/frontmatter-template.md](skills/github-article-writer/references/frontmatter-template.md)
+- [../hugo-writer/SKILL.md](../hugo-writer/SKILL.md)
+- [references/frontmatter-template.md](references/frontmatter-template.md)
 
 Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个精准名词；date 必须使用生成当下的北京时间且格式完整；description 必须是 50-100 字纯文本摘要。
 
@@ -129,7 +143,7 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 - 用户是否要求同步飞书
 - 用户是否要求更新发布索引
 
-如果需要更新发布索引，按需加载 [skills/github-article-writer/references/publish-index-template.md](skills/github-article-writer/references/publish-index-template.md)。
+如果需要更新发布索引，按需加载 [references/publish-index-template.md](references/publish-index-template.md)。
 
 发布结果至少回报：
 
@@ -194,10 +208,10 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 
 | 需要什么 | 加载哪里 |
 |----------|----------|
-| 中文技术写作 | [skills/cn-doc-writer/SKILL.md](skills/cn-doc-writer/SKILL.md) |
-| Hugo Frontmatter 生成 | [skills/hugo-writer/SKILL.md](skills/hugo-writer/SKILL.md) |
-| Frontmatter 字段提醒 | [skills/github-article-writer/references/frontmatter-template.md](skills/github-article-writer/references/frontmatter-template.md) |
-| 发布索引格式 | [skills/github-article-writer/references/publish-index-template.md](skills/github-article-writer/references/publish-index-template.md) |
+| 中文技术写作 | [../cn-doc-writer/SKILL.md](../cn-doc-writer/SKILL.md) |
+| Hugo Frontmatter 生成 | [../hugo-writer/SKILL.md](../hugo-writer/SKILL.md) |
+| Frontmatter 字段提醒 | [references/frontmatter-template.md](references/frontmatter-template.md) |
+| 发布索引格式 | [references/publish-index-template.md](references/publish-index-template.md) |
 
 ## 8. 输出前自检
 

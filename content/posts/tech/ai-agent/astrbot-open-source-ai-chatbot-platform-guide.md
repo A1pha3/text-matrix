@@ -11,466 +11,455 @@ description: "全面解析 AstrBot (28.4k Stars)：开源一站式AI Agent聊天
 
 # AstrBot：开源一站式 AI Agent 聊天机器人平台完全指南
 
-## §1 学习目标
-
-完成本文档后，你将能够：
-
-- ✅ 理解 AstrBot 的核心定位与设计理念
-- ✅ 掌握 AstrBot 的十大核心特性
-- ✅ 熟练部署 AstrBot（Docker/uv/一键云部署/桌面应用）
-- ✅ 配置多平台聊天机器人（QQ/微信/Telegram/飞书/Slack/Discord等）
-- ✅ 配置多种 LLM 服务（OpenAI/Claude/Gemini/Ollama/通义/智谱等）
-- ✅ 使用 Agent Sandbox 沙箱安全执行代码
-- ✅ 安装和使用插件（1000+ 插件）
-- ✅ 自定义人格和知识库
-- ✅ 排查常见问题
-- ✅ 为 AstrBot 贡献代码
+> **目标读者**：想搭建 IM 平台机器人的开发者、AI 应用实践者
+> **前置知识**：命令行基础、Python 入门、了解聊天机器人概念
+> **预计阅读时间**：25 分钟
+> **核心价值**：一个项目搞定所有主流 IM 平台的 AI 聊天机器人
 
 ---
 
-## §2 项目概述
+## 一句话理解 AstrBot
 
-### 2.1 什么是 AstrBot？
-
-**AstrBot**（官方仓库：[AstrBotDevs/AstrBot](https://github.com/AstrBotDevs/AstrBot)）是一个**开源一站式 AI Agent 聊天机器人平台**，集成主流即时通讯应用。
-
-**官方描述**：
-
-> AstrBot is an open-source all-in-one Agent chatbot platform that integrates with mainstream instant messaging apps. It provides reliable and scalable conversational AI infrastructure for individuals, developers, and teams. Whether you're building a personal AI companion, intelligent customer service, automation assistant, or enterprise knowledge base, AstrBot enables you to quickly build production-ready AI applications within your IM platform workflows.
-
-**翻译**：AstrBot 是一个开源一站式 AI Agent 聊天机器人平台，集成主流即时通讯应用。它为个人、开发者和团队提供可靠且可扩展的对话式 AI 基础设施。无论你是构建个人 AI 伴侣、智能客服、自动化助手还是企业知识库，AstrBot 都能让你在 IM 平台工作流中快速构建生产级 AI 应用。
-
-### 2.2 核心价值主张
-
-| 价值 | 说明 |
-|------|------|
-| **免费开源** | 💯 AGPL-3.0 开源许可证 |
-| **全功能** | LLM 对话、多模态、Agent、MCP、Skills、知识库、人格设置、上下文自动压缩 |
-| **多平台集成** | QQ、微信企业号、飞书、钉钉、Telegram、Slack、Discord 等 |
-| **1000+ 插件** | 一键安装丰富功能 |
-| **安全沙箱** | Agent Sandbox 隔离执行代码和 Shell 调用 |
-| **多种部署** | Docker/uv/云端/桌面应用/Launcher |
-| **国际化** | 支持多语言 |
-
-### 2.3 核心数据
+AstrBot（[AstrBotDevs/AstrBot](https://github.com/AstrBotDevs/AstrBot)，28.4k Stars）是**把 AI 对话能力接入所有主流聊天平台**的开源解决方案。它的核心逻辑是：
 
 ```
-Stars:     28,400 (28.4k)
-Forks:     1,900 (1.9k)
-Watchers:  74
-贡献者:    255 人
-提交数:   4,410 次
-分支数:    69 个
-标签数:    217 个
-发布版本:  207 个
-最新版本:  v4.22.2 (2026-03-28)
-许可证:    AGPL-3.0
-语言:     Python 69.6%, Vue 24.5%, TypeScript 3.2%
+你选平台 → 配置模型 → 装插件 → 对接用户
 ```
 
-### 2.4 功能一览
+不需要为每个平台单独开发，AstrBot 统一处理所有 IM 协议的接入，让你在 15+ 平台上同时拥有 AI 对话能力。
 
-| 功能 | 说明 |
+**为什么值得关注**：
+
+- 一个项目支持 QQ、微信、Telegram、飞书、钉钉、Discord 等 15+ 平台
+- 支持 OpenAI、Claude、Gemini、本地模型等所有主流 LLM
+- 1000+ 社区插件，涵盖图像生成、日程管理、办公等场景
+- 内置 Agent Sandbox，在隔离环境中安全执行代码
+- 支持多语言，中文文档完善
+
+---
+
+## 核心数据一览
+
+| 指标 | 数值 |
 |------|------|
-| 💙 角色扮演与情感陪伴 | 情感化对话 |
-| ✨ 主动 Agent | 主动执行任务 |
-| 🚀 通用 Agent 能力 | 多功能 AI 助手 |
-| 🧩 1000+ 社区插件 | 一键安装 |
+| GitHub Stars | **28.4k** |
+| Forks | **1.9k** |
+| 贡献者 | 255 人 |
+| 提交数 | 4,410 次 |
+| 最新版本 | v4.22.2 (2026-03-28) |
+| 许可证 | AGPL-3.0 |
+| 主要语言 | Python 69.6%, Vue 24.5% |
 
 ---
 
-## §3 支持的聊天平台
+## 工作原理
 
-### 3.1 官方支持的平台
+AstrBot 采用分层架构：
 
-| 平台 | 维护者 | 说明 |
-|------|--------|------|
-| **QQ** | 官方 | QQ 官方机器人 |
-| **OneBot v11** | 官方 | 兼容 OneBot v11 协议 |
-| **Telegram** | 官方 | Telegram Bot |
-| **企业微信 & 企业微信 AI Bot** | 官方 | WeChat Work |
-| **微信公众号** | 官方 | WeChat Official Accounts |
-| **飞书 (Lark)** | 官方 | Feishu Bot |
-| **钉钉** | 官方 | DingTalk Bot |
-| **Slack** | 官方 | Slack Bot |
-| **Discord** | 官方 | Discord Bot |
-| **LINE** | 官方 | LINE Bot |
-| **Satori** | 官方 | Satori 协议 |
-| **Misskey** | 官方 | Misskey 平台 |
-| **WhatsApp** | 官方 | 即将支持 |
+```
+┌─────────────────────────────────────────────────────┐
+│                     用户视角                          │
+│  QQ / 微信 / Telegram / 飞书 / Discord / ...       │
+└─────────────────────┬───────────────────────────────┘
+                      │ 各平台协议
+┌─────────────────────▼───────────────────────────────┐
+│              AstrBot 核心引擎                        │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐           │
+│  │ LLM     │  │ Agent   │  │ Plugin  │           │
+│  │ 对话    │  │ 任务执行 │  │ 扩展    │           │
+│  └─────────┘  └─────────┘  └─────────┘           │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐           │
+│  │ MCP     │  │ RAG     │  │Sandbox  │           │
+│  │ 协议    │  │ 知识库  │  │ 沙箱   │           │
+│  └─────────┘  └─────────┘  └─────────┘           │
+└─────────────────────┬───────────────────────────────┘
+                      │ API 调用
+┌─────────────────────▼───────────────────────────────┐
+│           LLM 提供商（可选）                         │
+│  OpenAI / Anthropic / Gemini / Ollama / ...       │
+└─────────────────────────────────────────────────────┘
+```
 
-### 3.2 社区支持的平台
+**核心模块职责**：
 
-| 平台 | 维护者 | 说明 |
-|------|--------|------|
-| **Matrix** | 社区 | Matrix 协议 |
-| **KOOK** | 社区 | KOOK 平台 |
-| **VoceChat** | 社区 | VoceChat 平台 |
+- **LLM 对话**：统一接入各模型，处理多轮对话和上下文
+- **Agent 引擎**：拆解任务、调用工具、执行多步骤操作
+- **插件系统**：通过插件扩展功能，1000+ 社区插件可用
+- **MCP 协议**：连接外部数据源和服务
+- **RAG 知识库**：基于文档的检索增强生成
+- **Agent Sandbox**：隔离环境执行代码，防止恶意操作
 
 ---
 
-## §4 支持的模型服务
+## 支持的聊天平台
 
-### 4.1 LLM 服务（语言模型）
-
-| 服务 | 类型 | 说明 |
-|------|------|------|
-| **OpenAI & 兼容服务** | LLM | GPT-4o 等 |
-| **Anthropic Claude** | LLM | Claude 3.5 等 |
-| **Google Gemini** | LLM | Gemini 2.0 等 |
-| **Moonshot AI (月之暗面)** | LLM | Kimi 等 |
-| **智谱 AI** | LLM | GLM 等 |
-| **DeepSeek** | LLM | DeepSeek 系列 |
-| **Ollama (本地)** | LLM | 本地运行 |
-| **LM Studio (本地)** | LLM | 本地运行 |
-| **AIHubMix** | LLM | API 网关，支持所有模型 |
-| **CompShare** | LLM | API 服务 |
-| **302.AI** | LLM | API 服务 |
-| **TokenPony** | LLM | API 服务 |
-| **SiliconFlow** | LLM | API 服务 |
-| **PPIO Cloud** | LLM | API 服务 |
-| **ModelScope** | LLM | 魔搭 |
-| **OneAPI** | LLM | API 管理 |
-
-### 4.2 LLMOps 平台
+### 官方支持平台
 
 | 平台 | 说明 |
 |------|------|
-| **Dify** | 知名 LLMOps 平台 |
-| **阿里云百炼** | 阿里云 LLM 平台 |
-| **Coze** | 扣子平台 |
+| QQ / QQ 官方机器人 | 官方支持 |
+| OneBot v11 | 兼容 OneBot 协议的机器人框架 |
+| Telegram | Bot API |
+| 企业微信 & 企业微信 AI Bot | WeChat Work |
+| 微信公众号 | 订阅号/服务号 |
+| 飞书 (Lark) | 飞书 Bot |
+| 钉钉 | 钉钉自定义机器人 |
+| Slack | Slack Bot |
+| Discord | Discord Bot |
+| LINE | LINE Bot |
+| Satori | Satori 协议 |
+| Misskey | Misskey 平台 |
+| WhatsApp | 即将支持 |
 
-### 4.3 语音转文本（STT）
+### 社区支持平台
 
-| 服务 | 说明 |
-|------|------|
-| **OpenAI Whisper** | 语音识别 |
-| **SenseVoice** | 硅基流动语音 |
-
-### 4.4 文本转语音（TTS）
-
-| 服务 | 说明 |
-|------|------|
-| **OpenAI TTS** | GPT-4o audio |
-| **Google Gemini TTS** | Gemini 语音 |
-| **GPT-Sovits-Inference** | 声音克隆 |
-| **GPT-Sovits** | 声音克隆 |
-| **FishAudio** | 声音克隆 |
-| **Edge TTS** | 微软 Edge 语音 |
-| **阿里云百炼 TTS** | 阿里云语音 |
-| **Azure TTS** | 微软 Azure 语音 |
-| **MiniMax TTS** | MiniMax 语音 |
-| **火山引擎 TTS** | 字节跳动语音 |
+Matrix、KOOK、VoceChat 由社区维护。
 
 ---
 
-## §5 核心功能详解
+## 支持的模型服务
 
-### 5.1 AI LLM 对话
+### 语言模型（LLM）
 
-- 多模型支持（OpenAI/Claude/Gemini/本地模型）
-- 多模态支持（文本/图片/语音）
-- 上下文自动压缩
-- 长对话管理
+OpenAI 系列、Anthropic Claude 系列、Google Gemini、Moonshot AI（月之暗面）、智谱 AI、DeepSeek 系列、Ollama（本地模型）、LM Studio（本地模型）等。
 
-### 5.2 Agent 能力
+### 语音服务
 
-- 自动任务分解和执行
-- 工具调用（Function Calling）
-- 插件扩展
-- 知识库问答
+- **STT（语音转文字）**：OpenAI Whisper、SenseVoice
+- **TTS（文字转语音）**：OpenAI TTS、Google Gemini TTS、Edge TTS、阿里云百炼 TTS、火山引擎 TTS、MiniMax TTS、GPT-Sovits 声音克隆
 
-### 5.3 MCP (Model Context Protocol)
+### LLMOps 平台
 
-- 支持 MCP 协议
-- 连接外部数据源
-- 扩展 Agent 能力
-
-### 5.4 Skills 系统
-
-- 模块化技能设计
-- 1000+ 社区插件
-- 一键安装
-
-### 5.5 Agent Sandbox（安全沙箱）
-
-- 隔离执行代码
-- 安全的 Shell 调用
-- 会话级资源复用
-- 防止恶意代码执行
-
-### 5.6 知识库
-
-- RAG（检索增强生成）
-- 文档上传和分析
-- 向量数据库支持
-
-### 5.7 人格设置
-
-- 自定义 AI 人格
-- 角色扮演模式
-- 情感陪伴模式
-
-### 5.8 Web UI & Chat UI
-
-- Web 管理界面
-- Web 聊天界面
-- 内置 Agent Sandbox
-- 内置网页搜索
+Dify、阿里云百炼、Coze 扣子。
 
 ---
 
-## §6 安装与部署
+## 安装与部署
 
-### 6.1 uv 一键部署（推荐）
-
-**前置要求**：安装 [uv](https://docs.astral.sh/uv/)
+### 方式一：uv 一键部署（推荐新手）
 
 ```bash
-# 首次安装
+# 1. 安装 uv（如果还没有）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. 安装 AstrBot
 uv tool install astrbot
+
+# 3. 初始化配置
 astrbot init
 
-# 运行
+# 4. 启动
 astrbot run
-
-# 更新
-uv tool upgrade astrbot
 ```
 
-**注意**：macOS 用户首次运行可能需要 10-20 秒。
+> **注意**：macOS 用户首次运行可能需要 10-20 秒启动时间。
 
-### 6.2 Docker 部署（生产环境推荐）
+### 方式二：Docker 部署（生产环境推荐）
 
 ```bash
-# 使用 Docker Compose
-docker compose up -d
+# 下载 docker-compose 配置
+git clone https://github.com/AstrBotDevs/AstrBot.git
+cd AstrBot
 
-# 或使用 Docker
-docker run -d -p 20080:20080 \
-  -v astrbot-data:/app/data \
-  --name astrbot \
-  soulter/astrbot:latest
+# 启动
+docker-compose up -d
 ```
 
-详细配置请参考[官方文档](https://astrbot.app/deploy/astrbot/docker.html)。
+访问 `http://your-server:20080` 打开管理界面。
 
-### 6.3 RainYun 云端一键部署
+### 方式三：云端一键部署
 
 适合不想管理服务器的用户：
 
-[立即部署到 RainYun](https://app.rainyun.com/apps/rca/store/5994?ref=NjU1ODg0)
+[部署到 RainYun](https://app.rainyun.com/apps/rca/store/5994?ref=NjU1ODg0)
 
-### 6.4 桌面应用部署
+### 方式四：桌面应用
 
 适合主要使用 ChatUI 的桌面用户：
 
 [下载 AstrBot Desktop](https://github.com/AstrBotDevs/AstrBot-desktop)
 
-### 6.5 Launcher 部署
+### 方式五：Launcher 部署
 
-适合需要快速部署和多实例隔离的桌面用户：
+适合需要快速部署和多实例隔离的用户：
 
 [下载 AstrBot Launcher](https://github.com/Raven95676/astrbot-launcher)
 
-### 6.6 其他部署方式
+### 其他部署方式
 
 | 方式 | 说明 |
 |------|------|
-| **Replit** | 适合在线演示和轻量试用 |
-| **AUR** | Arch Linux 用户（`yay -S astrbot-git`）|
-| **BT-Panel** | 宝塔面板部署 |
-| **1Panel** | 1Panel 应用市场 |
-| **CasaOS** | NAS/家庭服务器可视化部署 |
-| **手动部署** | 源码安装 |
+| Replit | 在线演示和轻量试用 |
+| AUR (Arch Linux) | `yay -S astrbot-git` |
+| BT-Panel | 宝塔面板部署 |
+| 1Panel | 1Panel 应用市场 |
+| CasaOS | NAS/家庭服务器可视化部署 |
 
 ---
 
-## §7 配置指南
+## 快速配置指南
 
-### 7.1 配置 LLM 提供商
+### 配置 LLM 提供商
 
-在管理界面配置 API Key 和模型选择：
+启动后，在管理界面（通常是 `http://localhost:20080`）配置 API Key：
+
+1. 打开管理界面 → 设置 → LLM 配置
+2. 选择提供商（OpenAI / Anthropic / Gemini / Ollama 等）
+3. 填入 API Key 和模型名称
+4. 保存并测试连接
+
+**Ollama 本地模型配置示例**：
 
 ```yaml
-# 示例配置
 llm:
-  provider: openai  # 或 anthropic/gemini/ollama 等
-  model: gpt-4o
-  api_key: your-api-key
+  provider: ollama
+  model: llama3.3:latest
+  base_url: http://localhost:11434
 ```
 
-### 7.2 配置聊天平台
+### 配置 Telegram Bot
 
-以 Telegram 为例：
+1. 在 Telegram 找 **@BotFather**，发送 `/newbot` 创建机器人
+2. 复制获得的 Bot Token
+3. 在 AstrBot 管理界面 → 渠道 → Telegram → 填入 Token → 启用
 
-1. 在 Telegram BotFather 创建 Bot
-2. 获取 Bot Token
-3. 在管理界面配置：
-
-```yaml
-telegram:
-  enabled: true
-  bot_token: your-bot-token
-```
-
-### 7.3 配置 Agent Sandbox
+### 配置 Agent Sandbox
 
 ```yaml
 sandbox:
   enabled: true
-  max_memory_mb: 512
-  timeout_seconds: 30
+  max_memory_mb: 512      # 最大内存
+  timeout_seconds: 30      # 执行超时时间
 ```
+
+Sandbox 允许 AI 安全地执行代码和 Shell 命令，不会影响宿主机安全。
 
 ---
 
-## §8 插件系统
+## 核心功能详解
 
-### 8.1 安装插件
+### 1. 多平台统一对话
 
-在管理界面或使用命令：
+AstrBot 最大的价值是**一个后端服务，多个平台同时响应**。你在 Telegram 配置的 Bot 和在 Discord 配置的 Bot，共享同一套 AI 配置和插件系统。
+
+用户无论从哪个平台发送消息，都会得到一致的服务体验。
+
+### 2. Agent 能力
+
+AstrBot 不只是问答机器人，它能执行多步骤任务：
+
+```
+用户：帮我查一下北京的天气，然后发一条 Slack 消息告诉团队
+
+AstrBot 内部：
+1. 调用天气 API 查询北京天气
+2. 格式化消息内容
+3. 调用 Slack API 发送消息
+4. 将结果汇总回复用户
+```
+
+### 3. 插件系统
+
+1000+ 社区插件覆盖各种场景：
+
+| 类别 | 示例功能 |
+|------|----------|
+| 图像生成 | 接入 DALL-E、Stable Diffusion |
+| 搜索 | 网页搜索、学术搜索 |
+| 日程管理 | Google Calendar 集成 |
+| 办公 | 生成 PPT、Excel 处理 |
+| 社交 | Twitter 发帖、邮件发送 |
+
+安装插件：
 
 ```bash
 astrbot plugin install <plugin-name>
 ```
 
-### 8.2 社区插件
+或在管理界面搜索安装。
 
-1000+ 社区插件可用，包括：
+### 4. 知识库（RAG）
 
-- 图像生成插件
-- 搜索插件
-- 日程管理插件
-- 办公插件
-- 社交插件
-- 更多...
+上传文档（PDF、Word、Markdown 等），AstrBot 会自动分块、向量化存储。当用户提问时，检索相关内容作为上下文注入，提升回答准确度。
 
-### 8.3 开发插件
+### 5. MCP 协议支持
 
-详见[官方插件开发文档](https://docs.astrbot.app/)。
+MCP（Model Context Protocol）允许 AstrBot 连接外部服务：
+
+- 读取 GitHub Issues
+- 查询数据库
+- 发送 Slack 消息
+- 更多第三方集成
+
+### 6. 人格与角色
+
+- **自定义人格**：设定 AI 的性格、语气、专长
+- **角色扮演**：支持情感陪伴、角色扮演模式
+- **上下文压缩**：长对话自动压缩，保持响应速度
 
 ---
 
-## §9 项目结构
+## 实际使用示例
 
-### 9.1 目录结构
+### 示例一：搭建 Telegram AI 助手
 
-| 目录 | 说明 |
-|------|------|
-| `astrbot/` | 核心代码 |
-| `dashboard/` | Web 管理界面 |
-| `docs/` | 文档 |
-| `k8s/` | Kubernetes 配置 |
-| `changelogs/` | 更新日志 |
-| `samples/` | 示例 |
-| `scripts/` | 脚本 |
-| `tests/` | 测试 |
-| `openspec/` | 开放规范 |
+**目标**：让团队在 Telegram 里直接问 AI 问题
 
-### 9.2 核心文件
+**步骤**：
+
+1. 创建 Telegram Bot，获取 Token
+2. 安装 AstrBot 并启动
+3. 配置 Telegram 渠道和 LLM
+4. 在群里 @机器人 开始对话
+
+**效果**：
+
+```
+团队成员：@mybot 帮我翻译这段英文文档
+[AstrBot 回复翻译结果]
+
+团队成员：@mybot 用这个功能写一封道歉邮件
+[AstrBot 生成邮件草稿]
+```
+
+### 示例二：搭建企业微信客服
+
+**目标**：用 AI 回答用户常见问题
+
+**步骤**：
+
+1. 配置企业微信应用
+2. 上传产品文档到知识库
+3. 开启 RAG 增强
+4. 设置自动回复规则
+
+### 示例三：多平台同步通知
+
+**目标**：一个命令，向所有平台发送通知
+
+```bash
+# 假设插件支持多平台广播
+astrbot broadcast "系统维护通知：今晚 22:00 停机"
+```
+
+---
+
+## 项目结构
+
+```
+AstrBot/
+├── astrbot/           # 核心 Python 包
+├── dashboard/          # Vue.js Web 管理界面
+├── docs/              # 项目文档
+├── k8s/               # Kubernetes 部署配置
+├── changelogs/         # 更新日志
+├── samples/            # 示例配置
+├── scripts/            # 辅助脚本
+├── tests/              # 测试代码
+└── openspec/           # 开放规范
+```
+
+核心文件：
 
 | 文件 | 说明 |
 |------|------|
-| `pyproject.toml` | Python 项目配置 |
-| `Dockerfile` | Docker 镜像配置 |
+| `pyproject.toml` | Python 依赖配置 |
+| `Dockerfile` | Docker 镜像定义 |
 | `compose.yml` | Docker Compose 配置 |
-| `main.py` | 主入口 |
-| `requirements.txt` | 依赖列表 |
-| `AGENTS.md` | Agent 说明 |
+| `main.py` | 程序入口 |
+| `AGENTS.md` | Agent 相关文档 |
 
 ---
 
-## §10 常见问题
+## 硬件要求
+
+| 部署方式 | 最低要求 | 推荐配置 |
+|----------|----------|----------|
+| Docker | 1GB RAM, 10GB 磁盘 | 2GB+ RAM |
+| 桌面应用 | 2GB RAM, 5GB 磁盘 | 4GB+ RAM |
+| 完整部署 | 4GB+ RAM, 20GB+ 磁盘 | 8GB+ RAM, 50GB+ SSD |
+
+如果使用本地模型（Ollama），需要额外显存支持。
+
+---
+
+## 常见问题
 
 ### Q1：AstrBot 和 OpenClaw 有什么区别？
 
-| 特性 | AstrBot | OpenClaw |
-|------|---------|-----------|
-| **定位** | IM 平台集成 | 通用 Agent 框架 |
-| **聊天平台** | 15+ 平台 | 更多通用 |
-| **插件系统** | 1000+ | 更多通用 |
-| **主要语言** | Python | Node.js |
+| 对比 | AstrBot | OpenClaw |
+|------|---------|----------|
+| 定位 | IM 平台集成专家 | 通用 Agent 框架 |
+| 平台支持 | 15+ 官方支持 | 更多通用场景 |
+| 主要语言 | Python | Node.js |
+| 插件数量 | 1000+ | 相对较少 |
 
-### Q2：需要多少硬件？
+**选 AstrBot**：你已经明确要接入特定 IM 平台
+**选 OpenClaw**：你需要更通用的 Agent 能力
 
-| 部署方式 | 最低要求 |
-|----------|----------|
-| **Docker** | 1GB RAM, 10GB 磁盘 |
-| **桌面应用** | 2GB RAM, 5GB 磁盘 |
-| **完整部署** | 4GB+ RAM, 20GB+ 磁盘 |
+### Q2：支持私有部署吗？
 
-### Q3：支持私有模型吗？
+支持。通过 Ollama 或 LM Studio，可以完全本地运行，不依赖任何外部 API。
 
-**支持**。通过 Ollama 或 LM Studio 支持完全私有的本地部署。
-
-### Q4：如何更新 AstrBot？
+### Q3：如何更新 AstrBot？
 
 ```bash
-# uv 更新
+# uv 安装的更新
 uv tool upgrade astrbot
 
-# Docker 更新
+# Docker 安装的更新
 docker pull soulter/astrbot:latest
+docker-compose up -d
 ```
 
-### Q5：支持中文吗？
+### Q4：支持中文吗？
 
-**支持**。AstrBot 有简体中文、繁体中文、日语、法语、俄语等多语言 README。
+支持。官方提供简体中文、繁体中文、日语、法语、俄语等多语言 README 和文档。
 
-### Q6：如何获取帮助？
+### Q5：遇到问题怎么获取帮助？
 
 - 官方文档：https://astrbot.app/
 - GitHub Issues：https://github.com/AstrBotDevs/AstrBot/issues
-- QQ 群：多个中文群组（详见 README）
+- QQ 群：多个中文群组（详见 GitHub README）
 - Discord：https://discord.gg/hAVk6tgV36
 
 ---
 
-## §11 总结
+## 总结
 
-### 11.1 核心优势
+### 核心优势
 
 | 优势 | 说明 |
 |------|------|
-| **开源免费** | AGPL-3.0，完全开源 |
-| **多平台集成** | 15+ 聊天平台 |
-| **1000+ 插件** | 丰富的功能扩展 |
-| **多模型支持** | OpenAI/Claude/Gemini/本地模型 |
-| **安全沙箱** | Agent Sandbox 保护安全 |
-| **多种部署** | Docker/云端/桌面/移动端 |
-| **活跃社区** | 255 贡献者，28.4k Stars |
+| 多平台统一 | 一个后端覆盖 15+ IM 平台 |
+| 模型无关 | 支持所有主流 LLM 和本地模型 |
+| 插件生态 | 1000+ 插件，开箱即用 |
+| 安全执行 | Agent Sandbox 隔离代码执行 |
+| 部署灵活 | Docker/桌面/云端多种选择 |
+| 活跃社区 | 28.4k Stars，255 贡献者持续维护 |
 
-### 11.2 适用场景
+### 适用场景
 
-| 场景 | 推荐指数 |
-|------|----------|
-| 个人 AI 伴侣 | ⭐⭐⭐⭐⭐ |
-| 智能客服 | ⭐⭐⭐⭐⭐ |
-| 团队协作助手 | ⭐⭐⭐⭐⭐ |
-| 自动化工作流 | ⭐⭐⭐⭐ |
-| 企业知识库 | ⭐⭐⭐⭐ |
-| 情感陪伴 | ⭐⭐⭐⭐⭐ |
+| 场景 | 推荐度 | 说明 |
+|------|--------|------|
+| 个人 AI 伴侣 | ⭐⭐⭐⭐⭐ | 多平台同时在线 |
+| 智能客服 | ⭐⭐⭐⭐⭐ | 多平台统一响应 |
+| 团队协作助手 | ⭐⭐⭐⭐⭐ | Slack/飞书/钉钉集成 |
+| 自动化工作流 | ⭐⭐⭐⭐ | 插件扩展 + Agent 能力 |
+| 企业知识库 | ⭐⭐⭐⭐ | RAG + 多平台分发 |
+| 情感陪伴 | ⭐⭐⭐⭐⭐ | 人格定制 + 角色扮演 |
 
-### 11.3 项目信息
-
-- Stars：28.4k
-- Forks：1.9k
-- 贡献者：255 人
-- 最新版本：v4.22.2 (2026-03-28)
-- 许可证：AGPL-3.0
-
-### 11.4 相关资源
+### 相关资源
 
 | 资源 | 链接 |
 |------|------|
 | 官方网站 | https://astrbot.app |
 | GitHub | https://github.com/AstrBotDevs/AstrBot |
-| 文档 | https://astrbot.app/ |
-| 博客 | https://blog.astrbot.app/ |
-| 路线图 | https://astrbot.featurebase.app/roadmap |
+| 官方文档 | https://docs.astrbot.app/ |
+| 更新日志 | https://blog.astrbot.app/ |
+| 产品路线图 | https://astrbot.featurebase.app/roadmap |
 | Docker Hub | https://hub.docker.com/r/soulter/astrbot |
 
 ---
 
-*文档版本 1.0 | 撰写日期：2026-03-31 | 基于 v4.22.2 (2026-03-28) | Stars: 28.4k ⭐*
+*文档版本 1.1 | 更新日期：2026-03-31 | 基于 v4.22.2 | Stars: 28.4k ⭐*
