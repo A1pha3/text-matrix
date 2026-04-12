@@ -12,6 +12,10 @@ tags: ["AI", "Claude", "Anthropic", "大模型"]
 
 # Anthropic 开放 13 门免费 AI 课程，Claude 学习地图完整发布
 
+> 预计阅读时间：15分钟 | 难度：⭐
+
+---
+
 Anthropic（Claude 母公司）现已开放 **13 门免费 AI 课程及认证**，涵盖从 Claude 入门到 MCP 进阶的全方位学习路径。无论你是 AI 初学者还是专业开发者，都能找到适合自己的课程。
 
 ## 📚 课程列表

@@ -11,8 +11,11 @@ description: "Supermemory 是 AI 时代的记忆与上下文引擎，20.5k Stars
 
 # Supermemory：从入门到精通 — AI 记忆与上下文引擎
 
+> 预计阅读时间：30分钟 | 难度：⭐⭐⭐⭐
+
+---
+
 > **目标读者**：AI 应用开发者、智能体工程师、数据工程师、对 AI 记忆系统感兴趣的技术人员
-> **前置知识**：了解 LLM/RAG 概念、有 JavaScript/TypeScript 或 Python 基础
 > **预计学习时间**：1-2 小时（入门），4-6 小时（精通）
 
 ---

@@ -12,6 +12,10 @@ tags: ["tmux", "终端", "AI Agent", "自动化", "Claude Code"]
 
 # smux：一键 tmux 配置，让 AI Agent 操控终端
 
+> 预计阅读时间：15分钟 | 难度：⭐⭐
+
+---
+
 > 一文读懂 smux：让 AI Agent 与人类共享同一个终端
 
 **学习目标**

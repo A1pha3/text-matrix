@@ -5,23 +5,13 @@ aliases:
   - /posts/tech/agentflow-agent-dependency-graph-guide/
 date: 2026-04-01T01:09:00+08:00
 categories: ["技术笔记"]
-tags: ["AgentFlow", "智能体编排", "依赖图", "并行处理", "Fanout", "Claude", "Codex", "EC2", "ECS", "SSH", "远程执行", "Python"]
-description: "深度解析 AgentFlow (277 Stars)：智能体依赖图编排框架，支持并行扇出、迭代循环和零配置远程执行 SSH/EC2/ECS。通过 Graph 管道符、fanout 并行、merge 归约等核心概念，实现高效的 AI 智能体工作流编排。"
+tags: ["AgentFlow", "智能体编排", "依赖图", "并行处理", "Fanout", "Claude", "Codex", "SSH", "远程执行", "Python"]
+description: "智能体依赖图编排框架，支持并行扇出、迭代循环和零配置远程执行 SSH/EC2/ECS，通过 Graph 管道符实现高效的 AI 智能体工作流编排。"
 ---
 
 # AgentFlow：智能体依赖图编排框架完全指南
 
-## §1 学习目标
-
-完成本文档后，你将能够：
-
-- ✅ 理解 AgentFlow 的核心定位与设计理念
-- ✅ 掌握 AgentFlow 的安装与基本使用方法
-- ✅ 理解 AgentFlow 的依赖图编排原理
-- ✅ 掌握并行扇出（Fanout）的三种模式
-- ✅ 使用迭代循环实现自动化修复
-- ✅ 配置远程执行（SSH/EC2/ECS）
-- ✅ 构建实用的智能体工作流
+> 预计阅读时间：30分钟 | 难度：⭐⭐⭐
 
 ---
 
@@ -573,7 +563,3 @@ Graph(name, concurrency=1, max_iterations=None, scratchboard=False)
 |------|------|
 | `>>` | 连接节点 |
 | `.on_failure` | 失败时循环 |
-
----
-
-*文档版本 1.0 | 撰写日期：2026-04-01 | 基于 AgentFlow (277 Stars) | 安装：`curl -fsSL https://raw.githubusercontent.com/shouc/agentflow/master/install.sh | bash`*

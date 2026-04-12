@@ -10,7 +10,11 @@ categories: ["技术笔记"]
 tags: ["Claude", "API", "Python"]
 ---
 
-# Claude API基础专题（一）：认证、请求与会话管理 ⭐⭐⭐⭐
+# Claude API基础专题（一）：认证、请求与会话管理
+
+> 预计阅读时间：30分钟 | 难度：⭐⭐
+
+---
 
 > **目标读者**：刚开始学习Claude API开发的工程师
 > **前置知识**：Python基础、HTTP基本概念

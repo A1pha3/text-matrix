@@ -12,6 +12,10 @@ tags: ["open-swe", "LangChain", "编程Agent", "企业内部AI", "Deep Agents"]
 
 # open-swe：LangChain 开源的 8.7k Stars 企业内部编程 Agent 框架
 
+> 预计阅读时间：30分钟 | 难度：⭐⭐⭐⭐
+
+---
+
 > **目标读者**：希望构建企业内部编程 Agent 的工程师和架构师
 > **核心问题**：如何像 Stripe/Ramp/Coinbase 一样构建自己的内部编程 Agent？
 > **难度**：⭐⭐⭐⭐（专家设计）

@@ -11,6 +11,12 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "Skill", "专题导读", "创业", "Minimalist Entrepreneur"]
 ---
 
+# Minimalist Entrepreneur Skills 专题导读：原理、案例与 Prompt 模板一站看完
+
+> 预计阅读时间：15分钟 | 难度：⭐⭐
+
+---
+
 > 适合读者：想用 Claude Code 做早期创业验证，但不想只看概念、也不想只看空模板的人。
 >
 > 阅读目标：用最短路径建立正确顺序感，然后马上开始执行。

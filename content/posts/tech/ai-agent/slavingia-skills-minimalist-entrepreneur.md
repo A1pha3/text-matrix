@@ -10,6 +10,12 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "Skill", "创业", "Minimalist Entrepreneur", "Sahil Lavingia"]
 ---
 
+# Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统
+
+> 预计阅读时间：25分钟 | 难度：⭐⭐⭐
+
+---
+
 > 专题导读：[Minimalist Entrepreneur Skills 专题导读：原理、案例与 Prompt 模板一站看完]({{< relref "slavingia-skills-series-guide.md" >}}) ⭐⭐
 >
 > 目标读者：想用 Claude Code 做产品验证、早期销售和创业决策的开发者、独立开发者、AI 产品实践者。

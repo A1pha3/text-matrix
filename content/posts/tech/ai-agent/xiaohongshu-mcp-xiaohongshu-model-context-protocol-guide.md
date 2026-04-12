@@ -11,7 +11,11 @@ description: "全面解析 xiaohongshu-mcp (12.4k Stars)：小红书Model Contex
 
 # xiaohongshu-mcp：小红书 MCP 服务完全指南
 
-## §1 学习目标
+> 预计阅读时间：20分钟 | 难度：⭐⭐⭐
+
+---
+
+## 学习目标
 
 完成本文档后，你将能够：
 

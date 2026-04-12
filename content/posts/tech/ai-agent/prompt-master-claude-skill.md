@@ -12,6 +12,10 @@ tags: ["Prompt Master", "提示词工程", "Claude", "AI工具", "效率优化"]
 
 # Prompt Master：2.8k Stars 让提示词零浪费的 Claude Skill
 
+> 预计阅读时间：20分钟 | 难度：⭐⭐⭐
+
+---
+
 > **目标读者**：使用 AI 工具（Claude/ChatGPT/Midjourney 等）的所有用户
 > **核心问题**：如何写出一个精准的提示词，一次到位，不浪费 Token 和 credits？
 > **难度**：⭐⭐（效率工具）

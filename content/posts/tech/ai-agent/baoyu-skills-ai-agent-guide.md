@@ -11,7 +11,11 @@ description: "全面解析 baoyu-skills (1.8k Stars)：AI Coding Agent 技能套
 
 # baoyu-skills：AI Coding Agent 深度研究市场分析技能套件完全指南
 
-## §1 学习目标
+> 预计阅读时间：20分钟 | 难度：⭐⭐⭐
+
+---
+
+## 学习目标
 
 完成本文档后，你将能够：
 

@@ -10,22 +10,9 @@ categories: ["技术笔记"]
 tags: ["Claude", "AI通识", "提示词", "Anthropic"]
 ---
 
-# Anthropic AI通识课：4D框架——与AI协作的核心能力 ⭐⭐⭐⭐
+# Anthropic AI通识课：4D框架——与AI协作的核心能力
 
-> **目标读者**：所有希望提升与AI协作效率的学习者
-> **核心问题**：如何系统性地提升AI使用能力？有没有可复用的框架？
-> **前置知识**：无（本课程为零基础设计）
-
----
-
-## 学习目标
-
-完成本课后，你将能够：
-- 理解AI通识（AI Fluency）的核心概念
-- 掌握4D框架（Delegation、Description、Discernment、Diligence）
-- 学会系统性地与AI协作
-- 识别并规避AI使用中的常见陷阱
-- 为后续深入学习（如API开发、Agent设计）打下坚实基础
+> 预计阅读时间：40分钟 | 难度：⭐⭐⭐
 
 ---
 

@@ -12,6 +12,10 @@ tags: ["Claude Code", "Claude HUD", "AI编程", "状态监控", "终端工具"]
 
 # Claude HUD：实时显示 Claude Code 状态的智能仪表盘
 
+> 预计阅读时间：15分钟 | 难度：⭐⭐
+
+---
+
 ## 一、项目概览
 
 **Claude HUD** 是由 jarrodwatts 开发的 Claude Code 插件，能够实时显示 Claude Code 会话中的关键状态信息：上下文使用量、活跃工具、运行中的智能体、待办事项进度等。这些信息始终显示在终端输入框下方，让开发者对 AI 编程过程一目了然。

@@ -5,14 +5,13 @@ slug: ai-agent-harness-design-long-running-applications
 aliases:
   - /posts/tech/ai-agent-harness-design-long-running-applications/
 categories: ["技术笔记"]
-tags: ["AI Agent", "Harness", "Claude", "LLM", "生成对抗"]
+tags: ["AI Agent", "Harness", "Claude", "LLM", "代码生成"]
 description: "从 Anthropic 两代长时运行 Harness 到 Karpathy 的 AutoResearch，梳理 AI 编程 Agent 如何通过规划、交接与独立评价，在长任务中稳定逼近高质量输出。"
 ---
 
 # AI 编程 Agent 的 Harness 设计：如何让大模型更稳定地产出高质量代码
 
-> **目标读者**：想构建长时运行 AI 编程 Agent 的开发者
-> **核心问题**：如何设计 Harness 让 AI Agent 在数小时的编程任务中保持高质量输出？
+> 预计阅读时间：40分钟 | 难度：⭐⭐⭐⭐
 
 单靠把模型放进一个循环里，并不能稳定产出高质量应用。真正决定上限的，往往不是模型会不会写代码，而是系统能不能持续完成三件事：把任务拆对、把进度交清、把结果验真。
 

@@ -10,6 +10,12 @@ tags: ["Claude Code", "AI 编程", "Skills", "MCP", "Subagents", "Hooks", "Plugi
 description: "基于 2026 年 3 月仓库状态，对 Claude How To 做一次系统化中文导读。本文讲清 Claude Code 的学习顺序、安装路径、功能边界、常见误区与实战工作流。"
 ---
 
+# Claude How To：从入门到精通 Claude Code 终极指南
+
+> 预计阅读时间：45分钟 | 难度：⭐⭐⭐⭐
+
+---
+
 > 目标读者：已经在用或准备系统使用 Claude Code 的开发者、团队技术负责人、AI 工作流设计者
 > 前置知识：命令行基础、Git 基础、理解 LLM 工具调用的基本概念
 > 版本基线：本文依据 2026-03-31 的仓库状态整理；Stars / Forks 等实时指标会继续变化，请以仓库页面为准。

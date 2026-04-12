@@ -11,7 +11,11 @@ description: "深度解析 Claude Code Telegram Bot (2.3k Stars)：通过 Telegr
 
 # Claude Code Telegram Bot：远程访问 AI 编程助手的完全指南
 
-## §1 学习目标
+> 预计阅读时间：25分钟 | 难度：⭐⭐⭐
+
+---
+
+## 学习目标
 
 完成本文档后，你将能够：
 

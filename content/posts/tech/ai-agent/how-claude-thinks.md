@@ -10,7 +10,13 @@ categories: ["技术笔记"]
 tags: ["Claude", "Anthropic", "可解释性", "AI原理", "大语言模型", "AI安全"]
 ---
 
-> 🦞 作者：钳岳星君 | 来源：ByteByteGo + Anthropic Research | 难度：★★★☆☆
+# Claude 是如何思考的？Anthropic 可解释性研究深度解读
+
+> 预计阅读时间：30分钟 | 难度：⭐⭐⭐
+
+---
+
+> 🦞 作者：钳岳星君 | 来源：ByteByteGo + Anthropic Research
 
 ---
 

@@ -1,19 +1,18 @@
 ---
-title: "AgentScope：22.6k Stars 的生产级 AI Agent 框架，从入门到源码分析"
+title: "AgentScope：生产级 AI Agent 框架完全指南"
 date: 2026-04-01T00:04:44+08:00
 slug: "agentscope-ai-agent-framework"
 aliases:
   - /posts/tech/agentscope-ai-agent-framework/
-description: "基于官方 README、官方教程与公开源码结构，系统解读 AgentScope 的 ReAct Agent、MCP、A2A、记忆、Realtime、TTS、Tuner 与多 Agent 架构。"
+description: "系统解读 AgentScope 的 ReAct Agent、MCP、A2A、记忆、Realtime、TTS、Tuner 与多 Agent 架构，涵盖核心抽象层、能力层、编排层的设计解析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AgentScope", "AI Agent", "ReAct", "MCP", "A2A"]
+tags: ["AgentScope", "AI Agent", "ReAct", "MCP", "A2A", "多智能体"]
 ---
 
-> **目标读者**：希望系统理解 AI Agent 框架、ReAct Agent、多 Agent 编排、MCP / A2A 协议的开发者  
-> **核心问题**：如果要构建一个可扩展、可观测、可部署的生产级 Agent 应用，AgentScope 到底提供了什么？  
-> **阅读收益**：看清概念边界、架构分层、源码组织、扩展方式、典型场景与学习路径  
-> **事实依据**：官方 README、官方教程、公开源码结构，校验时间 2026-04-01
+# AgentScope：生产级 AI Agent 框架完全指南
+
+> 预计阅读时间：60分钟 | 难度：⭐⭐⭐⭐
 
 ---
 
@@ -875,7 +874,7 @@ AgentScope 的真正价值，不是“功能表很长”，而是它把 **Agent 
 
 那么 AgentScope 的设计就会显得非常有价值。
 
-**一句话总结**：AgentScope 不是“又一个 Agent Demo 框架”，而是一套认真回答“Agent 应用如何工程化”的体系化方案。
+**一句话总结**：AgentScope 不是"又一个 Agent Demo 框架"，而是一套认真回答"Agent 应用如何工程化"的体系化方案。
 
 ---
 
@@ -887,7 +886,3 @@ AgentScope、AI Agent、ReAct、MCP、A2A、多智能体、Agent Engineering
 
 - [GitHub](https://github.com/agentscope-ai/agentscope)
 - [Docs](https://doc.agentscope.io/)
-
----
-
-*AgentScope 由 agentscope-ai 开发，采用 Apache-2.0 许可证。本文内容基于 2026-04-01 可公开访问的官方资料与公开源码结构整理。*

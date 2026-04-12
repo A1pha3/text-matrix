@@ -11,6 +11,12 @@ categories: ["技术笔记"]
 tags: ["Claude", "提示词工程", "输出优化", "Anthropic"]
 ---
 
+# Claude 101 第一课：Getting Better Results——让 AI 输出质量倍增的技巧
+
+> 预计阅读时间：20分钟 | 难度：⭐⭐⭐
+
+---
+
 ## 学习目标
 
 学完本节后，你将能够：

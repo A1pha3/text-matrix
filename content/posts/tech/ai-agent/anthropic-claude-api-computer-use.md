@@ -10,7 +10,11 @@ categories: ["技术笔记"]
 tags: ["Claude", "Computer Use", "自动化"]
 ---
 
-# Claude API基础专题（六）：Claude Code与Computer Use ⭐⭐⭐⭐
+# Claude API基础专题（六）：Claude Code与Computer Use
+
+> 预计阅读时间：40分钟 | 难度：⭐⭐⭐⭐
+
+---
 
 > **目标读者**：希望让Claude真正操控计算机完成复杂任务的开发者
 > **前置知识**：已完成第一篇《API基础》、第二篇《提示词工程》、第三篇《工具调用》、第四篇《RAG系统》、第五篇《MCP协议》

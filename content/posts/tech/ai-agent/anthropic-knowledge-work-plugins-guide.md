@@ -10,7 +10,13 @@ categories: ["技术笔记"]
 tags: ["Claude", "MCP", "工作流", "AI工具"]
 ---
 
-## 🎯 学习目标
+# Anthropic Knowledge Work Plugins：把 Claude 变成岗位专家的完整指南
+
+> 预计阅读时间：25分钟 | 难度：⭐⭐⭐
+
+---
+
+## 学习目标
 
 读完这篇文章，你可以做到三件事：
 

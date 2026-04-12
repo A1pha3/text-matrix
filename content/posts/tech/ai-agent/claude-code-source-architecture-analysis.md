@@ -12,6 +12,10 @@ tags: ["Claude Code", "Anthropic", "TypeScript", "MCP", "智能体架构"]
 
 # Claude Code 源码架构全解析：Tool、Command、MCP 与权限系统
 
+> 预计阅读时间：50分钟 | 难度：⭐⭐⭐⭐
+
+---
+
 > **目标读者**：希望系统理解 Claude Code 产品定位、源码快照价值、架构分层与扩展机制的开发者
 > **核心问题**：Claude Code 为什么不是普通聊天工具，而更像一个可扩展的软件工程代理平台？
 > **难度**：⭐⭐⭐⭐（架构分析）

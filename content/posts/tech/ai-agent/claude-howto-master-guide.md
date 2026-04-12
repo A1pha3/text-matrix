@@ -9,6 +9,12 @@ tags: ["Claude Code", "Claude How To", "AI编程", "Skills", "Hooks", "MCP", "Su
 description: "Claude How To 是 GitHub 上最受欢迎的 Claude Code 学习指南，13.7k Stars。涵盖10大学习模块（Slash Commands、Memory、Skills、Hooks、MCP、Subagents等），提供11-13小时从入门到精通的完整学习路径和可复制的生产级模板。"
 ---
 
+# Claude How To：Claude Code 精通学习指南
+
+> 预计阅读时间：40分钟 | 难度：⭐⭐⭐⭐
+
+---
+
 ## 学习目标
 
 阅读本文后，您将能够：

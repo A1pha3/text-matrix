@@ -9,6 +9,12 @@ tags: ["ShanClaw", "AI Agent", "macOS", "CLI", "Shannon", "MCP"]
 description: "ShanClaw 是由 Kocoro-lab 开发的 macOS 原生交互式 AI Agent CLI，由 Shannon Gateway 提供 LLM 推理支持。支持多 Agent、MCP 扩展、消息通道（Telegram/Slack/LINE）、定时任务和本地工具控制。"
 ---
 
+# ShanClaw：macOS 智能交互式 AI Agent CLI 指南
+
+> 预计阅读时间：20分钟 | 难度：⭐⭐⭐
+
+---
+
 ## 学习目标
 
 阅读本文后，您将能够：

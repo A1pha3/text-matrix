@@ -11,6 +11,10 @@ description: "GitNexus 是智能 GitHub 管理 Agent，1.8k Stars，基于 Claud
 
 # GitNexus 智能 GitHub 管理 Agent：从入门到精通
 
+> 预计阅读时间：25分钟 | 难度：⭐⭐⭐
+
+---
+
 > **目标读者**：DevOps 工程师、GitHub 管理员、CI/CD 开发者、AI 编程爱好者
 > **前置知识**：了解 GitHub 基础操作、有 Node.js 开发经验
 > **预计学习时间**：1-2 小时（入门），3-4 小时（精通）

@@ -10,6 +10,12 @@ categories: ["技术笔记"]
 tags: ["Claude", "工作流", "知识管理", "AI工具", "效率指南"]
 ---
 
+# Claude 101 第二课：用 Claude 组织你的工作——Projects、Artifacts 与 Skills 深度指南
+
+> 预计阅读时间：20分钟 | 难度：⭐⭐
+
+---
+
 ## 学习目标
 
 学完本节后，你将能够：

@@ -5,23 +5,13 @@ aliases:
   - /posts/tech/agent-lightning-microsoft-ai-agent-training-guide/
 date: 2026-04-01T01:20:00+08:00
 categories: ["技术笔记"]
-tags: ["Agent Lightning", "微软", "AI智能体", "强化学习", "RL", "TLA", "GRPO", "LangChain", "AutoGen", "CrewAI", "PyTorch", "Python"]
-description: "深度解析 Agent Lightning (16.1k Stars)：微软研究院开发的 AI 智能体训练框架，支持 ZERO CODE CHANGE 优化任意框架（LangChain/AutoGen/CrewAI等），内置强化学习、自动提示优化、监督微调等算法，采用 LightningStore 中心枢纽架构。"
+tags: ["Agent Lightning", "微软", "AI智能体", "强化学习", "RL", "TLA", "GRPO", "PyTorch", "Python"]
+description: "微软研究院开发的 AI 智能体训练框架，支持 ZERO CODE CHANGE 优化任意框架，内置强化学习、自动提示优化、监督微调等算法，MIT 许可证。"
 ---
 
 # Agent Lightning：微软 AI 智能体强化学习训练框架完全指南
 
-## §1 学习目标
-
-完成本文档后，你将能够：
-
-- ✅ 理解 Agent Lightning 的核心定位与设计理念
-- ✅ 掌握 Agent Lightning 的安装与基本使用方法
-- ✅ 理解 Agent Lightning 的架构设计与 LightningStore 原理
-- ✅ 使用 Agent Lightning 训练任意框架的智能体
-- ✅ 配置强化学习、自动提示优化、监督微调等算法
-- ✅ 利用轨迹级聚合（TLA）加速训练
-- ✅ 构建生产级别的智能体训练流程
+> 预计阅读时间：35分钟 | 难度：⭐⭐⭐⭐
 
 ---
 
@@ -538,6 +528,4 @@ config = {
 }
 ```
 
----
 
-*文档版本 1.0 | 撰写日期：2026-04-01 | 基于 Agent Lightning (16.1k Stars) | 论文：arXiv:2508.03680*

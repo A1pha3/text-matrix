@@ -10,6 +10,12 @@ tags: ["Claude Code", "AI编程", "Anthropic", "工具使用", "工作效率"]
 description: "基于 affaan-m/everything-claude-code 当前公开仓库状态，讲清这个项目如何从 Claude Code 入门资料演进为覆盖技能、记忆、安全与工作流系统的高热度资源库。"
 ---
 
+# Everything Claude Code：从入门指南到工作流系统
+
+> 预计阅读时间：30分钟 | 难度：⭐⭐⭐
+
+---
+
 ## 一、学习目标
 
 通过本文档的学习，读者将能够：
