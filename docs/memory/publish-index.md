@@ -285,3 +285,5 @@
 | LazyGit | lazygit-git-terminal-ui-guide.md | daae670 | 47.7k | Go | https://github.com/jesseduffield/lazygit | https://www.feishu.cn/docx/IdnodG0Y4olxb3xWWgfcA42Vnfd |
 | awesome-systematic-trading | awesome-systematic-trading-algorithmic-trading-resource-guide.md | dddaf4d | 8.4k | Python | https://github.com/paperswithbacktest/awesome-systematic-trading | https://www.feishu.cn/docx/SIlcduUvjoyAjSxDbN9ciu9Rngh |
 | awesome-mac | awesome-mac-macos-software-resource-guide.md | 8f949fd | 17k | Markdown | https://github.com/jaywcjlove/awesome-mac | https://www.feishu.cn/docx/JJPSdrp0toGkHPxXuj2cIyYdnQe |
+
+| agent-browser-vercel-ai-browser-automation-guide | 技术笔记 | 28.7k Stars | https://github.com/vercel-labs/agent-browser | https://www.feishu.cn/wiki/X3EywDfwPi10aakuVp7cpuiDnMe | 2026-04-12 |
