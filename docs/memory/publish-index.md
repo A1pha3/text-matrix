@@ -292,3 +292,4 @@
 | CLIProxyAPI | cliproxyapi-openai-compatible-api-proxy-guide.md | 3a176c0 | 25.2k | Go | https://github.com/router-for-me/CLIProxyAPI | https://www.feishu.cn/docx/LrI2dUHbEo6Ym2xRs2Vcyux9n6f | 2026-04-12 |
 | Antigravity Awesome Skills | antigravity-awesome-skills-ai-tools-ecosystem-guide.md | 13a2890 | 1.7k | MD | https://github.com/sickn33/antigravity-awesome-skills | https://www.feishu.cn/docx/TXo0dSCgToIBgDxborGcWofmnfd | 2026-04-12 |
 | Agent Skills (addyosmani) | agent-skills-addyosmani-production-engineering-guide.md | 1078064 | 13.1k | MD | https://github.com/addyosmani/agent-skills | https://www.feishu.cn/docx/SlbydBbnDoVBDixcyXCcXEltnvd | 2026-04-12 |
+| Context Mode | context-mode-mcp-context-optimization-guide.md | 298f7f8 | 7.1k | TypeScript | https://github.com/mksglu/context-mode | https://www.feishu.cn/docx/OVmbdVeJuo5dDgxoG9xcX0BDneg | 2026-04-12 |
