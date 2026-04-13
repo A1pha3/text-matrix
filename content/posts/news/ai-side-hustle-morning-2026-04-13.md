@@ -1,5 +1,5 @@
 ---
-title: "AI Side Hustle Morning News - 2026-04-13"
+title: "AI副业早报 2026-04-13"
 date: 2026-04-13T08:30:00+08:00
 slug: "ai-side-hustle-morning-2026-04-13"
 description: "AI副业与独立工作机会每日早报，涵盖AI赚钱、远程工作、副业项目、独立开发等最新动态。"
