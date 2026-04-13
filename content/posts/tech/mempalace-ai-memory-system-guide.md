@@ -1,8 +1,8 @@
 ---
 title: "MemPalace：7.7k Stars史上最高分AI记忆系统，96.6% R@5零API调用"
-date: 2026-04-12T20:00:00+08:00
+date: 2026-04-13T10:30:00+08:00
 slug: mempalace-ai-memory-system-guide
-description: "深度解析MemPalace：基于记忆宫殿原理的AI记忆系统。使用Palace结构组织记忆（Wings/Halls/Rooms）、本地ChromaDB向量检索、SQLite知识图谱。96.6% LongMemEval R@5，零API调用，完全本地运行。"
+description: "深度解析MemPalace：基于记忆宫殿原理的AI记忆系统，采用Wings/Halls/Rooms结构组织记忆。本地ChromaDB向量检索与SQLite知识图谱双引擎驱动，96.6% LongMemEval R@5，零API调用，完全本地运行。"
 categories: ["技术笔记"]
 tags: ["AI记忆", "记忆宫殿", "知识图谱", "MCP", "本地向量数据库"]
 draft: false
@@ -12,7 +12,7 @@ draft: false
 
 ## 项目概述
 
-**MemPalace**是由milla-jovovich团队开发的开源AI记忆系统，核心特点是「基于记忆宫殿原理，让AI记住一切」。与传统的记忆系统不同，MemPalace不依赖云API、不需要订阅、完全本地运行，且在LongMemEval基准测试中取得了**史上最高分96.6%**。
+**MemPalace**是由milla-jovovich团队开发的开源AI记忆系统，核心特点是「基于记忆宫殿（Method of Loci）原理，让AI记住一切」。与传统的记忆系统不同，MemPalace不依赖云API、不需要订阅、完全本地运行，且在LongMemEval（长程记忆评估基准）基准测试中取得了**史上最高分96.6%**。
 
 | 指标 | 数值 |
 |------|------|
@@ -31,6 +31,17 @@ draft: false
 - 💰 **完全免费**：无需API Key，无需订阅，本地运行
 - 🔒 **隐私优先**：所有数据本地存储，无需云端
 - ⚡ **极速唤醒**：~170 tokens wake-up上下文
+
+**学习目标：**
+- 理解记忆宫殿（Method of Loci）原理如何应用于AI记忆系统
+- 掌握Wings/Halls/Rooms三级结构的组织方式
+- 学会使用MCP工具与AI进行有记忆的对话
+- 能够在本地部署完整的MemPalace记忆系统
+
+**读者收益：**
+- 获得一个可完全私有部署的AI记忆解决方案
+- 节约每年数百美元的API摘要费用
+- 拥有一个跨会话持久化的AI协作者
 
 ---
 
@@ -1066,4 +1077,4 @@ MemPalace代表了AI记忆系统的范式转变：
 
 ---
 
-*本文基于MemPalace项目编写，最后更新：2026-04-12*
+*本文基于MemPalace项目编写，最后更新：2026-04-13*

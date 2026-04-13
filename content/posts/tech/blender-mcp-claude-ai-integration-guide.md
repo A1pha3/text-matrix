@@ -1,3 +1,9 @@
++++
+date = '2026-04-13T23:51:22+08:00'
+draft = false
+title = 'BlenderMCP 技术文档：将 Claude AI 引入 Blender 的 Model Context Protocol 解决方案'
++++
+
 # BlenderMCP 技术文档：将 Claude AI 引入 Blender 的 Model Context Protocol 解决方案
 
 ## 1. 项目概述

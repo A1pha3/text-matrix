@@ -1,3 +1,9 @@
++++
+date = '2026-04-13T23:51:22+08:00'
+draft = false
+title = 'Domain Check：Universal Domain Availability Checker'
++++
+
 # Domain Check：Universal Domain Availability Checker
 
 **Domain Check** 是一个通用域名可用性检查引擎，支持CLI、Rust库和MCP服务器三种使用方式。项目地址：[saidutt46/domain-check](https://github.com/saidutt46/domain-check)

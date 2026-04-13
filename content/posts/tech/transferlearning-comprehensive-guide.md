@@ -1,3 +1,9 @@
++++
+date = '2026-04-13T23:51:22+08:00'
+draft = false
+title = 'Transfer Learning：迁移学习全栈资源库'
++++
+
 # Transfer Learning：迁移学习全栈资源库
 
 **Transfer Learning**（迁移学习）是由王晋东（jindongwang）发起的"迁移学习全栈资源库"，涵盖论文、教程、代码、数据集、会议期刊等完整学术生态。被CVPR、 NeurIPS、IJCAI、IEEE TKDE等顶会顶刊广泛引用。
