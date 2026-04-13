@@ -1,12 +1,12 @@
 ---
 title: "Web3 Crypto Morning News - 2026-04-13"
 date: 2026-04-13T08:00:00+08:00
-slug: "web3-morning-news-2026-04-13"
-description: "Web3加密货币市场每日早报，涵盖比特币、以太坊、DeFi、NFT、Layer2等最新动态。
-categories: ["行业快讯"]
-tags: ["Web3", "加密货币", "Blockchain", "DeFi", "NFT"]
 draft: false
+categories: ["行业快讯"]
+tags: ["Web3", "加密货币", "Bitcoin", "Ethereum", "DeFi"]
 hiddenFromHomePage: true
+slug: web3-morning-news-2026-04-13
+description: "Web3加密货币市场每日早报，涵盖比特币、以太坊、DeFi、NFT、Layer2等最新动态。"
 ---
 
 # Web3 加密货币早报
