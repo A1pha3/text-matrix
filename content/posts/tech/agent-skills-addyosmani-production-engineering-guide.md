@@ -2,7 +2,7 @@
 title: "Agent Skills：addyosmani的生产级AI编程工程技能框架"
 date: 2026-04-12T18:02:00+08:00
 slug: agent-skills-addyosmani-production-engineering-guide
-description: "13.1k Stars的生产级工程技能框架，为AI编程Agent提供Define→Plan→Build→Test→Review→Ship的完整生命周期管理。20个结构化技能，7条slash命令，让AI编码遵循专业工程师的最佳实践。"
+description: "14.4k Stars的生产级工程技能框架，为AI编程Agent提供Define→Plan→Build→Test→Review→Ship的完整生命周期管理。20个结构化技能，7条slash命令，让AI编码遵循专业工程师的最佳实践。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI编程", "Claude Code", "工程技能", "工作流框架", "质量门控"]
