@@ -295,3 +295,6 @@
 | Agent Skills (addyosmani) | agent-skills-addyosmani-production-engineering-guide.md | 1078064 | 13.1k | MD | https://github.com/addyosmani/agent-skills | https://www.feishu.cn/docx/SlbydBbnDoVBDixcyXCcXEltnvd | 2026-04-12 |
 | Context Mode | context-mode-mcp-context-optimization-guide.md | 298f7f8 | 7.1k | TypeScript | https://github.com/mksglu/context-mode | https://www.feishu.cn/docx/OVmbdVeJuo5dDgxoG9xcX0BDneg | 2026-04-12 |
 | Claude Code from Source | claude-code-from-source-ai-agent-architecture-guide.md | 67ab30a | - | MD | https://claude-code-from-source.com/ | https://www.feishu.cn/docx/L7jid85jvoqtDzxE6ofcOTOcnAg | 2026-04-12 |
+
+| domain-check-universal-domain-checker-guide | 261 | Rust | MIT OR Apache-2.0 | 通用域名可用性检查引擎，1200+TLDs，RDAP+WHOIS双协议，MCP服务器 | 2026-04-13 |
+| domain-check-universal-domain-checker-guide | 261 | Rust | MIT OR Apache-2.0 | 通用域名可用性检查引擎，1200+TLDs，RDAP+WHOIS双协议，MCP服务器 | 2026-04-13 |
