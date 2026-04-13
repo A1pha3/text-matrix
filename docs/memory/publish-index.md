@@ -298,3 +298,4 @@
 
 | domain-check-universal-domain-checker-guide | 261 | Rust | MIT OR Apache-2.0 | 通用域名可用性检查引擎，1200+TLDs，RDAP+WHOIS双协议，MCP服务器 | 2026-04-13 |
 | domain-check-universal-domain-checker-guide | 261 | Rust | MIT OR Apache-2.0 | 通用域名可用性检查引擎，1200+TLDs，RDAP+WHOIS双协议，MCP服务器 | 2026-04-13 |
+| transferlearning-comprehensive-guide | 14300 | Python/MATLAB | MIT | 迁移学习全栈资源库，14.3K Stars，18个研究领域全覆盖，论文/教程/代码/数据集 | 2026-04-13 |
