@@ -1,101 +1,88 @@
 ---
-title: "Web3早报 2026-04-13：BTC $74031/ETH $2321/ETH周涨幅超BTC"
-date: 2026-04-13T00:20:00+08:00
-lastmod: 2026-04-13T00:20:00+08:00
-draft: false
-tags: ["Web3早报", "加密货币", "比特币", "以太坊"]
+title: "Web3 Crypto Morning News - 2026-04-13"
+date: 2026-04-13T08:00:00+08:00
+slug: "web3-morning-news-2026-04-13"
+description: "Web3加密货币市场每日早报，涵盖比特币、以太坊、DeFi、NFT、Layer2等最新动态。
 categories: ["行业快讯"]
+tags: ["Web3", "加密货币", "Blockchain", "DeFi", "NFT"]
+draft: false
 hiddenFromHomePage: true
-slug: web3-morning-news-2026-04-13
-description: "Web3早报：BTC $74031站稳/ETH周涨12%强于BTC/Coinbase净利下滑/Mars20引领Meme币热潮"
 ---
 
-# Web3早报 2026-04-13
+# Web3 加密货币早报
 
-🦞 每日08:00自动更新
-
----
-
-## 📊 一，市场概况
-
-### 全球加密货币总市值：$2.52T (+0.45%)
-
-来源：CoinMarketCap（链接已删除，无法核实）
-
-### CMC20指数：$151.57 (24h +0.82%, 7d +9.31%)
-
-来源：CoinMarketCap（链接已删除，无法核实）
+**数据来源：CoinDesk**  
+**更新：2026-04-13 08:00 (GMT+8)**
 
 ---
 
-## 🏆 二、主流加密货币行情
+## 市场概况
 
-| 排名 | 代币 | 价格 | 24h涨跌 | 7d涨跌 | 市值 |
-|------|------|------|---------|---------|------|
-| #1 | BTC (比特币) | $74,031.78 | +1.33% | +9.93% | $1.47T |
-| #2 | ETH (以太坊) | $2,321.85 | +2.07% | +12.07% | $280B |
-| #3 | USDT (泰达币) | $1.00 | 0.00% | +0.01% | $184B |
-| #4 | XRP (瑞波币) | $1.36 | +0.53% | +3.18% | $83B |
-| #5 | BNB | $612.47 | +0.76% | +3.29% | $83B |
-| #6 | USDC (USD Coin) | $0.9999 | 0.00% | +0.01% | $79B |
-| #7 | SOL (Solana) | $86.20 | +2.31% | +5.20% | $49B |
-| #8 | TRX (波场) | $0.3188 | +0.08% | +1.62% | $30B |
-| #9 | DOGE (狗狗币) | $0.09426 | +1.25% | +2.38% | $14B |
-| #10 | HYPE (Hyperliquid) | $42.30 | +1.93% | +16.09% | $10.8B |
+| 币种 | 价格 | 24h涨跌 |
+|------|------|---------|
+| Bitcoin (BTC) | $71,085.23 | +0.81% |
+| Ethereum (ETH) | $2,201.80 | +0.82% |
+| XRP | $1.33 | +0.12% |
+| Solana (SOL) | $82.00 | +0.40% |
+
+*来源：[CoinDesk Price](https://www.coindesk.com/price)*
 
 ---
 
-## 💹 三、市场分析
+## 热点新闻
 
-### ETH周涨幅超越BTC
+### 特朗普下令封锁霍尔木兹海峡，BTC跌破$71,000
 
-以太坊本周上涨12.07%，显著优于比特币的9.93%表现。ETH/BTC汇率有所回升，反映市场对以太坊网络升级后的乐观情绪。
+美国总统特朗普在社交媒体上宣布，将立即开始对试图进入或离开霍尔木兹海峡的所有船只进行封锁。受此地缘政治紧张局势影响，比特币价格跌破$71,000，加密市场普遍下跌。
 
-### BTC维持高位震荡
+[原文](https://www.coindesk.com/markets/2026/04/12/bitcoin-slips-below-usd71-000-as-trump-orders-blockade-of-strait-of-hormuz)
 
-比特币维持在$74,000附近，市场整体情绪偏向看涨但谨慎。机构投资者持续关注宏观经济因素对加密市场的影响。
+### 石油期货在Hyperliquid上涨7%
+
+受特朗普封锁令影响，Hyperliquid平台上的石油期货价格上涨7%。这一事件再次显示了链上衍生品市场对全球宏观事件的敏感性。
+
+[原文](https://www.coindesk.com/markets/2026/04/12/oil-futures-up-7-on-hyperliquid-as-trump-orders-naval-blockade-of-hormuz)
+
+### Justin Sun批评特朗普支持的WLFI
+
+Tron创始人Justin Sun公开批评World Liberty Financial (WLFI)，称其将用户视为"个人ATM"。此前WLFI以$7500万抵押贷款引发社区争议。
+
+[原文](https://www.coindesk.com/markets/2026/04/12/tron-s-justin-sun-slams-trump-backed-wlfi-for-treating-users-as-personal-atm-after-usd75-million-defi-loan)
+
+### 商品交易商因伊朗战争被银行取消服务
+
+随着银行因伊朗相关风险而退出贸易融资业务，商品交易商正越来越多地转向稳定币进行结算。这一趋势推动了稳定币在跨境贸易中的应用。
+
+[原文](https://www.coindesk.com/business/2026/04/12/commodity-traders-are-getting-debanked-due-to-iran-war-pushing-them-to-rely-on-stablecoins)
+
+### CFTC主席主张独家监管权
+
+CFTC主席Mike Selig在范德堡大学数字资产峰会上表示，CFTC对预测市场拥有"独家监管权"。这一立场与CFTC正在进行的诉讼案件一致。
+
+[原文](https://www.coindesk.com/policy/2026/04/12/cftc-chair-mike-selig-argues-for-agency-s-exclusive-regulatory-authority-in-prediction-markets-fight-state-of-crypto)
+
+### 分析师：比特币可能飙升至$88,000
+
+多位分析师指出，尽管地缘政治风险持续存在，但ETF资金流向、宏观因素和链上供应等关键因素仍有利于比特币上涨。
+
+[原文](https://www.coindesk.com/markets/2026/04/12/bitcoin-analysts-flag-triggers-for-a-massive-surge-to-usd88-000-even-as-war-risks-linger)
+
+### XRP跌至$1.33
+
+比特币走弱拖累主要加密货币，XRP突然抛售触发类清算式下跌，分析师认为看跌结构仍未改变。
+
+[原文](https://www.coindesk.com/markets/2026/04/12/xrp-drops-to-usd1-33-as-bitcoin-weakness-pulls-down-majors)
+
+---
+
+## 今日关注
+
+- 美伊谈判结果及其对加密市场的持续影响
+- ETF资金流向变化
+- 稳定币在跨境贸易中的应用扩展
 
 ---
 
-## 🚀 四、市场热点
-
-### Mars20 Meme币热潮
-
-来源：CoinMarketCap（链接已删除，无法核实）
-
-Mars20等Meme币持续受到关注，反映了市场对高风险高回报资产的热衷。
-
-### BTC突破$73K后回落
-
-来源：CoinMarketCap（链接已删除，无法核实）
-
-比特币在CPI数据发布后短暂突破$73K，后回落至当前水平。宏观因素继续主导短期走势。
-
----
-
-## 📰 五、行业动态
-
-### Coinbase Q1净利下滑
-
-来源：CoinMarketCap（链接已删除，无法核实）
-
-加密货币交易所Coinbase第一季度净利润下滑，但交易量环比上升。
-
-### SEC批准贝莱德以太坊ETF期权
-
-来源：CoinMarketCap（链接已删除，无法核实）
-
-美国SEC批准贝莱德以太坊ETF期权，为机构投资者提供更多合规渠道。
-
----
-
-## 💡 六、趋势总结
-
-1. **ETH强势补涨**：以太坊本周表现优于比特币，12%的周涨幅显示市场轮动迹象
-2. **BTC高位整固**：$74,000成为重要支撑位，市场等待新催化剂
-3. **Meme币持续活跃**：高风险投机情绪依然浓厚
-4. **机构布局加速**：ETF期权和ETF产品持续获得监管批准
-
----
+*数据来源：CoinDesk | 更新时间：2026-04-13 08:00 GMT+8*
 
 🦞 每日08:00自动更新
