@@ -1,7 +1,7 @@
 ---
 title: "AI新闻早报 2026-04-14：WordPress插件后门/科技裁员潮/斯坦福AI报告"
 date: 2026-04-14T00:08:00+08:00
-lastmod: 2026-04-14T08:00:00+08:00
+lastmod: 2026-04-14T18:45:00+08:00
 draft: false
 tags: ["AI新闻早报"]
 categories: ["行业快讯"]
@@ -26,7 +26,7 @@ hiddenFromHomePage: true
 
 ### 斯坦福报告：AI从业者与普通民众认知鸿沟日益扩大
 
-TechCrunch报道斯坦福AI报告指出AI圈内人与圈外人之间的理解存在巨大鸿沟。圈内人对AI发展极度乐观，而公众担忧就业冲击和安全隐患。([techcrunch.com](https://techcrunch.com/2026/04/13/stanford-report-highlights-growing-disconnect-between-ai-insiders-and-everyone-else/))
+TechCrunch报道斯坦福AI报告指出AI圈内人与圈外人之间的理解存在巨大鸿沟。圈内人对AI发展极度乐观，而公众担忧就业冲击和安全隐患。([techcrunch.com](https://www.techcrunch.com/2026/04/13/stanford-report-highlights-growing-disconnect-between-ai-insiders-and-everyone-else/))
 
 ---
 
@@ -62,24 +62,7 @@ Cloudflare推出全功能CLI工具，支持本地探索Cloudflare服务。235 po
 
 ---
 
-## 四、Hacker News热点 TOP 10
-
-| 排名 | 标题 | Points | Comments |
-|------|------|--------|----------|
-| 1 | WordPress插件后门事件 | 613 | 169 |
-| 2 | GitHub Stacked PRs | 349 | 213 |
-| 3 | 科技裁员潮真实存在 | 77 | 57 |
-| 4 | Polymarket Bot分析 | 343 | 155 |
-| 5 | Firefox构建优化 | 116 | 13 |
-| 6 | AMD本地AI Agent | 72 | 15 |
-| 7 | Rust运行时TypeScript | 30 | 3 |
-| 8 | Obsidian入门指南 | 116 | 82 |
-| 9 | Servo 0.1.0发布 | 406 | 137 |
-| 10 | Cloudflare CLI | 235 | 72 |
-
----
-
-## 五、技术工具
+## 四、技术工具
 
 ### Polymarket"Nothing Ever Happens" Bot
 
@@ -91,7 +74,7 @@ Cloudflare推出全功能CLI工具，支持本地探索Cloudflare服务。235 po
 
 ---
 
-## 六、科研与技术
+## 五、科研与技术
 
 ### MEMS微型投影芯片
 
@@ -103,7 +86,7 @@ IEEE报道可投射沙粒大小视频的MEMS阵列芯片技术突破。([ieee.or
 
 ---
 
-## 七、观点与评论
+## 六、观点与评论
 
 ### Startup生存指南
 
@@ -115,5 +98,4 @@ Planetscale发布数据库索引内部原理详解。([planetscale.com](https://
 
 ---
 
-**来源**: 36kr AI频道、Hacker News
-**时间**: 2026-04-14 08:00 (北京时间)
+🦞 每日08:00自动更新 | 来源：Anchor.host、Economist、TechCrunch、GitHub等（36kr/量子位暂时无法访问）
