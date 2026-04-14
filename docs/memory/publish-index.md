@@ -299,3 +299,11 @@
 | domain-check-universal-domain-checker-guide | 261 | Rust | MIT OR Apache-2.0 | 通用域名可用性检查引擎，1200+TLDs，RDAP+WHOIS双协议，MCP服务器 | 2026-04-13 |
 | domain-check-universal-domain-checker-guide | 261 | Rust | MIT OR Apache-2.0 | 通用域名可用性检查引擎，1200+TLDs，RDAP+WHOIS双协议，MCP服务器 | 2026-04-13 |
 | transferlearning-comprehensive-guide | 14300 | Python/MATLAB | MIT | 迁移学习全栈资源库，14.3K Stars，18个研究领域全覆盖，论文/教程/代码/数据集 | 2026-04-13 |
+
+- file: ai-application-technology-learning-path-guide.md
+  title: 近年 AI 应用技术串讲：从新手到专家的完整学习路线
+  date: 2026-04-14
+  commit: 7155936
+  feishu: AfXedR1AzoRSy7xrAe7ck2VlnMg
+  tags: [AI, LLM, Agent, Prompt Engineering, MCP, RAG]
+
