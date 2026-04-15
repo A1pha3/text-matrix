@@ -1,765 +1,524 @@
 ---
-title: "Agent Browser：AI Agent 原生浏览器自动化 CLI"
+title: "Agent Browser：面向 AI Agent 的原生浏览器自动化 CLI 指南"
 date: 2026-04-12T11:40:00+08:00
+lastmod: 2026-04-15T21:40:02+08:00
 slug: agent-browser-vercel-ai-browser-automation-guide
-description: "Vercel Labs推出的AI Agent原生浏览器自动化CLI工具。采用Rust编写，支持100ms冷启动和80MB内存占用，内置AI聊天和CDP会话，提供30+命令覆盖90%浏览器自动化场景。与Playwright相比启动快30-50倍，内存占用减少70%。"
+summary: "本文基于官方 README 与 CLI 帮助信息，系统讲清 Agent Browser 的安装方法、snapshot + ref 工作流、会话与认证管理、安全控制、调试观测与 Agent 集成边界。"
+description: "基于 vercel-labs/agent-browser README 与 CLI 帮助信息整理的中文指南，聚焦安装、snapshot+ref 工作流、会话与认证、安全控制、调试与 AI Agent 集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Playwright"]
+tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
 ---
 
-# Agent Browser：AI Agent 原生浏览器自动化 CLI ⭐⭐⭐⭐
+> **目标读者**：希望为 AI Agent、命令行工具或自动化流程补充浏览器能力的工程师。
+> **核心问题**：如果你不想先写一层完整 SDK 代码，而是希望让 Agent 直接在终端里“打开页面 -> 识别元素 -> 执行动作 -> 取回结果”，`agent-browser` 是否是一条更短路径？
+> **事实边界**：本文基于 `vercel-labs/agent-browser` 仓库 README 与公开 CLI 帮助信息整理；未公开的内部实现、未验证的性能数字和未出现于官方文档的命令不写成事实。
 
-> **目标读者**：AI工程师和开发者，需要为AI Agent实现浏览器自动化能力
-> **核心问题**：如何为AI Agent构建高性能、可控的浏览器自动化方案？
+## 阅读导航
 
----
+- 只想快速上手：直接看 `§4 快速开始`
+- 想理解为什么它适合 Agent：先看 `§2 定位与适用场景`
+- 想做登录、会话复用和安全收敛：重点看 `§6 会话、认证与安全`
+- 想做调试、追踪和可视化观察：重点看 `§7 调试与观测`
 
 ## §1 学习目标
 
-完成本文档后，你将掌握：
+完成本文后，你应该能够：
 
-- ✅ 理解 Agent Browser 的设计理念和适用场景
-- ✅ 掌握多平台安装与配置方法
-- ✅ 熟练使用全部 30+ CLI 命令
-- ✅ 为 AI Agent 集成浏览器自动化能力
-- ✅ 处理复杂场景：认证、文件上传、多标签页
-- ✅ 性能优化与调试技巧
-- ✅ 与 Playwright/Puppeteer 等方案的架构对比
+- 理解 `agent-browser` 的定位，以及它和 Playwright 这类 SDK 方案的边界差异
+- 掌握官方推荐的 `snapshot + ref` 交互模式，而不是一上来就堆 CSS 选择器
+- 正确完成安装、浏览器准备与最小验证
+- 使用常见命令完成打开页面、等待、点击、填充、抓取、截图、批量执行
+- 在真实项目中处理会话隔离、认证复用、安全限制和调试排障
+- 判断什么时候应该选它，什么时候应该回到 SDK、测试框架或云浏览器平台
 
----
+## §2 定位与适用场景
 
-## §2 背景与问题动机
+### 2.1 它是什么
 
-### 2.1 为什么需要浏览器自动化？
+`agent-browser` 是一个用 Rust 编写的浏览器自动化 CLI。它不是“把浏览器操作塞进一个脚本文件”的轻量玩具，而是一个面向 Agent 工作流设计的命令行入口：你可以在终端中连续执行 `open`、`snapshot`、`click`、`fill`、`wait`、`get` 等命令，浏览器状态由后台进程持续复用。
 
-传统浏览器自动化工具（如 Selenium、Playwright、Puppeteer）面向人类用户设计，API 复杂、启动慢、资源占用高。对于 AI Agent 场景：
+这件事为什么重要？因为很多 AI Agent 任务并不需要你先搭完整测试项目，也不需要围绕某个 SDK 手写大量胶水代码。对 Agent 来说，更短的路径往往是：
 
-| 需求 | 传统方案 | AI Agent 期望 |
-|------|----------|---------------|
-| 启动速度 | 3-10秒 | <500ms |
-| 内存占用 | 300MB+ | <100MB |
-| 并发能力 | 10-50实例 | 100+实例 |
-| AI集成 | 需自行封装 | 原生支持 |
-| 调试难度 | 高 | 低 |
+1. 打开页面
+2. 获取结构化快照
+3. 依据快照里的元素引用执行动作
+4. 在页面变化后重新获取快照
+5. 产出截图、文本或网络信息
 
-### 2.2 Agent Browser 的设计目标
+### 2.2 为什么它对 AI Agent 友好
 
-Agent Browser 是 Vercel Labs 推出的**原生为 AI Agent 设计的浏览器自动化 CLI**：
+官方资料里最值得关注的不是“命令多”，而是下面几条设计取向：
 
-- **极速启动**：Rust 编写的原生二进制，<100ms 冷启动
-- **AI 原生**：内置 AI 聊天功能，支持直接与页面交互
-- **资源高效**：单实例内存 <80MB，支持 100+ 并发
-- **工具丰富**：30+ 命令覆盖 90% 浏览器自动化场景
+| 设计点 | 对 Agent 的意义 |
+| ------ | ------ |
+| 原生命令行接口 | Agent 可以直接拼装和调用命令，不必先进入 SDK 运行时 |
+| `snapshot` 输出元素引用 | Agent 可以围绕 `@e1`、`@e2` 这类稳定引用操作，降低脆弱选择器带来的误点风险 |
+| 后台 daemon 持续复用浏览器 | 多次命令之间不需要每一步都重新拉起浏览器 |
+| `batch` 批量执行 | 多步流程可以合并成一次调用，降低进程往返开销 |
+| 会话、状态、安全开关较完整 | 更适合进入真实任务，而不是只做演示 |
+| `chat`、dashboard、streaming 等能力 | 便于把 CLI 工作流延伸到可视化调试或 AI 辅助交互 |
 
-### 2.3 核心特性矩阵
+### 2.3 什么时候适合选它
 
-| 特性 | 说明 | 状态 |
-|------|------|------|
-| 多平台 | macOS/Linux/Windows | ✅ |
-| 浏览器内核 | Chrome DevTools Protocol | ✅ |
-| AI 聊天 | 内置 AI 对话 | ✅ |
-| CDP 会话 | 直接访问 Chrome DevTools | ✅ |
-| 批量操作 | 减少启动开销 | ✅ |
-| 调试工具 | 内置 UI 和追踪 | ✅ |
-| 认证管理 | Cookie/Chrome Profile 重用 | ✅ |
+| 场景 | 是否适合 | 原因 |
+| ------ | ------ | ------ |
+| 让 AI Agent 在终端里访问网页并完成交互 | 很适合 | 命令模型直接，`snapshot + ref` 非常契合 LLM 决策 |
+| 快速做页面巡检、截图、抓文本、检查网络请求 | 很适合 | 不必先搭测试框架 |
+| 在 CI 或 Serverless 环境跑浏览器任务 | 适合 | 支持本地浏览器、CDP 连接和多种云浏览器 provider |
+| 编写大型端到端测试套件 | 视情况而定 | 如果你需要复杂断言、fixture、报告体系，SDK 型方案通常更稳 |
+| 做重度 DOM 断言和应用级测试组织 | 不太适合单独承担 | CLI 擅长操作与提取，不是完整测试框架替代品 |
 
----
+### 2.4 和 Playwright 的关系
 
-## §3 安装与配置
+把它理解成“Playwright 的完全替代品”容易走偏。更准确的说法是：
 
-### 3.1 系统要求
+- 如果你的核心诉求是“让 Agent 以最少上下文接管浏览器”，`agent-browser` 更直接
+- 如果你的核心诉求是“构建工程化测试系统”，Playwright 一类 SDK 更成熟
+- 两者可以共存：前者偏 Agent 操作层，后者偏测试与应用代码层
 
-| 要求 | 说明 |
-|------|------|
-| 操作系统 | macOS 12+, Ubuntu 20.04+, Windows 10+ |
-| 浏览器 | Chrome for Testing (必须单独安装) |
-| 网络 | 需要访问 Google Maven 仓库 |
-| 权限 | Chrome 数据目录读写权限 |
+## §3 核心工作流
 
-### 3.2 安装方式
+### 3.1 推荐模式：`snapshot + ref`
 
-**方式一：npm（推荐）**
+官方文档反复强调，面向 AI 的最佳路径不是先写复杂选择器，而是先获取页面快照，再使用快照里的引用操作元素。
 
-```bash
-npm install -g @vercel/agent-browser
+```mermaid
+graph TD
+    A[open URL] --> B[snapshot -i]
+    B --> C[识别 ref]
+    C --> D[click or fill @eN]
+    D --> E[页面变化]
+    E --> F[重新 snapshot]
+    F --> G[get / screenshot / network]
 ```
 
-**方式二：Homebrew（macOS/Linux）**
+这种模式为什么更稳？
+
+- 它把“识别元素”和“执行动作”拆成两步，便于 Agent 先观察后行动
+- `ref` 是快照上下文里的确定性引用，比临时猜 CSS 选择器更可靠
+- 页面发生变化后重新快照，能显式刷新 Agent 的世界模型
+
+### 3.2 一个最小可运行示例
 
 ```bash
-brew install vercel-labs/taps/agent-browser
+# 1. 打开页面。
+agent-browser open https://example.com
+
+# 2. 获取交互元素快照，输出里会出现 @e1、@e2 之类的引用。
+agent-browser snapshot -i
+
+# 3. 根据快照选择元素并执行动作。
+agent-browser click @e2
+agent-browser fill @e3 "test@example.com"
+
+# 4. 获取结果或保留证据。
+agent-browser get title
+agent-browser screenshot ./example.png
+
+# 5. 关闭当前浏览器会话。
+agent-browser close
 ```
 
-**方式三：Cargo（Rust 开发者）**
+### 3.3 `ref` 和传统选择器怎么选
+
+| 方式 | 适合场景 | 说明 |
+| ------ | ------ | ------ |
+| `@e2` 这类 ref | Agent 自动化首选 | 来自 `snapshot` 输出，最适合 LLM 决策 |
+| CSS 选择器 | 已知稳定 DOM 结构 | 如 `"#submit"`、`".item > a"` |
+| `find role`、`find text` | 语义化定位 | 对可访问性良好的页面尤其有效 |
+| XPath / `text=` | 兼容性补位 | 可用，但不是官方最推荐的 Agent 工作流 |
+
+## §4 快速开始
+
+### 4.1 安装
+
+#### 全局安装（官方推荐）
+
+```bash
+npm install -g agent-browser
+agent-browser install
+```
+
+#### Homebrew 安装（macOS）
+
+```bash
+brew install agent-browser
+agent-browser install
+```
+
+#### Cargo 安装（Rust 环境）
 
 ```bash
 cargo install agent-browser
+agent-browser install
 ```
 
-**方式四：Docker**
-
-```bash
-docker run -it --rm \\
-  -v $(pwd):/workspace \\
-  ghcr.io/vercel-labs/agent-browser:latest
-```
-
-**方式五：源码编译**
+#### 从源码构建
 
 ```bash
 git clone https://github.com/vercel-labs/agent-browser.git
 cd agent-browser
-cargo build --release
-./target/release/agent-browser --help
+pnpm install
+pnpm build
+pnpm build:native
+pnpm link --global
+agent-browser install
 ```
 
-### 3.3 依赖安装
+这里的 `agent-browser install` 很关键。官方说明是：它会下载 Chrome for Testing；如果系统里已经存在 Chrome、Brave、Playwright 或 Puppeteer 相关浏览器，也会尝试自动检测。也就是说，安装 CLI 和准备浏览器是两步，不要只做前一步。
 
-Agent Browser 需要 Chrome for Testing：
+### 4.2 最小验证
 
 ```bash
-# macOS (使用 Homebrew)
-brew install --cask google-chrome
-
-# Ubuntu/Debian
-wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-sudo apt-get update
-sudo apt-get install google-chrome-stable
+agent-browser open https://example.com
+agent-browser wait --load networkidle
+agent-browser snapshot -i
+agent-browser close
 ```
 
-### 3.4 验证安装
+如果这三步能顺利跑通，说明你的 CLI、浏览器与后台通信链路基本正常。
+
+### 4.3 第一个 Agent 友好流程
 
 ```bash
-agent-browser --version
-# agent-browser v0.25.3
-
-agent-browser doctor
-# ✓ Chrome found: /Applications/Google Chrome.app
-# ✓ Chrome DevTools Protocol: Ready
-# ✓ Agent Browser CLI: Ready
+agent-browser open https://news.ycombinator.com
+agent-browser snapshot -i --urls
+agent-browser find role link click --name "new"
+agent-browser wait --load networkidle
+agent-browser screenshot ./hn-new.png
 ```
 
----
+这个示例体现了两个实践点：
 
-## §4 快速开始
+- 先 `snapshot -i --urls`，把页面可交互元素和 URL 摸清楚
+- 再通过 `find role` 这样的语义化命令执行动作，减少硬编码选择器
 
-### 4.1 基本工作流
+## §5 核心命令地图
 
-Agent Browser 的典型使用流程：
+### 5.1 导航与页面生命周期
 
-```mermaid
-graph TD
-    A[启动浏览器] --> B[打开页面]
-    B --> C[执行操作]
-    C --> D[获取结果]
-    D --> E{继续?}
-    E -->|是| C
-    E -->|否| F[关闭浏览器]
-```
+| 命令 | 作用 | 示例 |
+| ------ | ------ | ------ |
+| `open <url>` | 打开页面 | `agent-browser open https://example.com` |
+| `back` / `forward` / `reload` | 导航控制 | `agent-browser reload` |
+| `close` | 关闭当前浏览器 | `agent-browser close` |
+| `close --all` | 关闭所有活动会话 | `agent-browser close --all` |
+| `wait` | 等待元素、文本、URL 或加载状态 | `agent-browser wait --load networkidle` |
 
-### 4.2 第一个自动化脚本
+为什么这里要优先掌握 `wait`？因为大多数失败并不是“点不到”，而是“页面还没稳定就开始点”。在 Agent 场景里，显式等待几乎是降低误操作的第一手段。
+
+### 5.2 交互命令
+
+| 命令 | 作用 | 示例 |
+| ------ | ------ | ------ |
+| `click <sel>` | 点击元素 | `agent-browser click @e2` |
+| `dblclick <sel>` | 双击元素 | `agent-browser dblclick ".card"` |
+| `hover <sel>` | 悬停元素 | `agent-browser hover @e5` |
+| `type <sel> <text>` | 模拟键入 | `agent-browser type @e3 "hello"` |
+| `fill <sel> <text>` | 清空后填入 | `agent-browser fill @e3 "user@example.com"` |
+| `press <key>` | 发送按键 | `agent-browser press Enter` |
+| `select <sel> <val>` | 选择下拉项 | `agent-browser select @e4 beijing` |
+| `check` / `uncheck` | 复选框状态控制 | `agent-browser check @e6` |
+| `upload <sel> <files>` | 上传文件 | `agent-browser upload @e7 ./report.pdf` |
+| `drag <src> <tgt>` | 拖拽元素 | `agent-browser drag @e8 @e9` |
+
+`type` 和 `fill` 的区别值得注意：
+
+- `type` 更接近真实按键输入
+- `fill` 更适合“把输入框直接改成某个值”
+
+当你在测试输入法、快捷键或前端键盘事件时，优先试 `type`；当你只是想稳定填值时，优先试 `fill`。
+
+### 5.3 获取页面信息
+
+| 命令 | 作用 | 示例 |
+| ------ | ------ | ------ |
+| `snapshot` | 获取可访问性树与引用 | `agent-browser snapshot -i --json` |
+| `get text <sel>` | 取文本 | `agent-browser get text @e1` |
+| `get html <sel>` | 取 HTML | `agent-browser get html "#main"` |
+| `get attr <sel> <attr>` | 取属性 | `agent-browser get attr @e3 href` |
+| `get title` | 取标题 | `agent-browser get title` |
+| `get url` | 取当前 URL | `agent-browser get url` |
+| `screenshot [path]` | 截图 | `agent-browser screenshot ./page.png` |
+| `pdf <path>` | 导出 PDF | `agent-browser pdf ./page.pdf` |
+
+如果是给 LLM 使用，`snapshot --json` 和 `screenshot --annotate` 都很有价值：
+
+- 前者适合文本推理
+- 后者适合视觉模型或人工复核页面布局
+
+### 5.4 语义化查找与状态检查
 
 ```bash
-# 启动浏览器并打开页面
-agent-browser browse "https://example.com"
-
-# 截图保存
-agent-browser screenshot --output example.png
-
-# 等待页面加载完成
-agent-browser wait --selector "h1"
-
-# 获取页面内容
-agent-browser content --format markdown
-
-# 关闭浏览器
-agent-browser quit
+agent-browser find role button click --name "Submit"
+agent-browser find text "Sign In" click
+agent-browser find label "Email" fill "test@example.com"
+agent-browser is visible @e2
+agent-browser is enabled @e2
+agent-browser is checked @e6
 ```
 
-### 4.3 命令行管道
+这些命令回答了一个常见问题：为什么不直接用 CSS？
 
-Agent Browser 支持 Unix 管道，方便与 AI Agent 集成：
+因为很多业务页面在不断迭代，类名和 DOM 层级会变，但按钮角色、可访问名称、标签文本往往更稳定。对 Agent 来说，语义定位通常更接近“看懂页面再行动”的过程。
+
+### 5.5 批量执行
 
 ```bash
-# AI Agent 分析页面后执行操作
-agent-browser ai "分析页面结构，找出登录入口"
-agent-browser click --selector "#login-btn"
-agent-browser type --selector "#username" --text "user@example.com"
-agent-browser type --selector "#password" --text "password123"
-agent-browser click --selector "#submit-btn"
+echo '[
+  ["open", "https://example.com"],
+  ["wait", "--load", "networkidle"],
+  ["snapshot", "-i"],
+  ["screenshot", "result.png"]
+]' | agent-browser batch --json
 ```
 
----
+如果你的任务是多步固定流程，`batch` 能把多次往返压缩成一次调用。它尤其适合：
 
-## §5 核心命令详解
+- 已经确定步骤顺序的 Agent 子任务
+- 需要减少命令调用开销的采集任务
+- 希望统一处理失败停止逻辑的场景，例如 `batch --bail`
 
-### 5.1 浏览器管理
+## §6 会话、认证与安全
 
-| 命令 | 说明 | 示例 |
-|------|------|------|
-| `browse` | 打开 URL | `browse "https://example.com"` |
-| `quit` | 关闭浏览器 | `quit` |
-| `restart` | 重启浏览器 | `restart --clear-state` |
-| `version` | 版本信息 | `version` |
-
-**browse 命令参数：**
-
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `--headless` | bool | true | 无头模式 |
-| `--window-size` | string | "1280x720" | 窗口大小 |
-| `--user-agent` | string | Chrome | 用户代理 |
-| `--proxy` | string | - | 代理服务器 |
-
-### 5.2 元素交互
-
-| 命令 | 说明 | 示例 |
-|------|------|------|
-| `click` | 点击元素 | `click --selector "#btn"` |
-| `dblclick` | 双击元素 | `dblclick --selector "#item"` |
-| `hover` | 悬停元素 | `hover --selector ".menu"` |
-| `type` | 输入文本 | `type --selector "input" --text "hello"` |
-| `fill` | 填充表单 | `fill --selector "form" --data '{"name":"test"}'` |
-| `press` | 按键 | `press --key "Enter"` |
-| `drag` | 拖拽 | `drag --from "#a" --to "#b"` |
-| `upload` | 文件上传 | `upload --selector "input[type=file]" --file ./test.png` |
-
-**click 命令详解：**
+### 6.1 会话隔离
 
 ```bash
-# 基本用法
-agent-browser click --selector "button.submit"
-
-# 位置索引（选择第3个匹配元素）
-agent-browser click --selector "li" --index 2
-
-# 等待元素可见后再点击
-agent-browser click --selector "#btn" --wait-visible
-
-# 点击并等待导航完成
-agent-browser click --selector "a.next" --wait-nav
+agent-browser --session agent1 open https://site-a.com
+agent-browser --session agent2 open https://site-b.com
+agent-browser session list
 ```
 
-### 5.3 页面信息获取
+会话隔离的价值在于，多个 Agent 或多个任务不会把 Cookie、导航历史和页面状态混到一起。对于并发自动化和多租户任务，这几乎是必需能力，而不是“高级选项”。
 
-| 命令 | 说明 | 示例 |
-|------|------|------|
-| `content` | 获取页面内容 | `content --format markdown` |
-| `text` | 获取文本 | `text --selector "h1"` |
-| `attribute` | 获取属性 | `attribute --selector "img" --name "src"` |
-| `screenshot` | 页面截图 | `screenshot --full-page --output page.png` |
-| `pdf` | 生成 PDF | `pdf --output page.pdf` |
-| `title` | 页面标题 | `title` |
-| `url` | 当前 URL | `url` |
+### 6.2 认证状态复用
 
-**content 命令输出格式：**
+Agent Browser 提供多种状态复用方式，最常用的是下面几类：
+
+| 方式 | 适用场景 | 示例 |
+| ------ | ------ | ------ |
+| `--profile <name 或 path>` | 复用 Chrome 现有登录态或持久目录 | `agent-browser --profile Default open https://gmail.com` |
+| `--session-name <name>` | 自动保存和恢复会话状态 | `agent-browser --session-name myapp open https://app.example.com` |
+| `state save/load` | 显式导出与回放状态 | `agent-browser state save ./auth.json` |
+| `auth save/login` | 本地加密存凭据并触发登录 | `echo "pass" \| agent-browser auth save github --url https://github.com/login --username user --password-stdin` |
+
+为什么这里必须强调“选择正确的状态策略”？
+
+- 如果只是临时复用自己的浏览器登录态，`--profile` 上手最快
+- 如果你想让脚本多次执行后都自动保留状态，`--session-name` 更省心
+- 如果你需要把状态在不同机器、任务间转移，`state save/load` 更可控
+
+### 6.3 连接已有 Chrome
 
 ```bash
-# Markdown 格式（默认）
-agent-browser content --format markdown
+agent-browser connect 9222
+agent-browser snapshot -i
 
-# HTML 格式
-agent-browser content --format html
-
-# 纯文本
-agent-browser content --format text
-
-# JSON 结构
-agent-browser content --format json
+# 或自动发现已开启远程调试的 Chrome
+agent-browser --auto-connect snapshot
 ```
 
-### 5.4 元素定位
+这在两类场景中很有用：
 
-Agent Browser 支持多种定位器：
+- 你想接管已经登录好的浏览器
+- 你需要连接远程 CDP 端点，而不是本地新开一个实例
+
+但也要注意安全边界：远程调试端口意味着本机其他进程可能拿到完整浏览器控制权，因此只应在可信环境里使用。
+
+### 6.4 面向 Agent 的安全控制
+
+官方文档给出的安全开关非常值得在生产环境里启用：
+
+| 选项 | 作用 |
+| ------ | ------ |
+| `--allowed-domains` | 限制只允许访问可信域名 |
+| `--content-boundaries` | 给页面内容加边界标记，降低 LLM 把页面内容和系统输出混淆的风险 |
+| `--action-policy` | 用策略文件限制敏感动作 |
+| `--confirm-actions` | 对 `eval`、下载等高风险动作要求确认 |
+| `--max-output` | 限制输出长度，防止页面内容淹没上下文 |
+
+如果你准备把 `agent-browser` 放进真实 Agent 系统，这一节不该略读。很多浏览器自动化事故并不是“命令失败”，而是“命令成功了，但做了不该做的事”。
+
+## §7 调试与观测
+
+### 7.1 先看页面，再看命令
 
 ```bash
-# CSS 选择器（默认）
-agent-browser click --selector ".class#id"
-
-# 文本内容定位
-agent-browser click --text "登录"
-
-# ARIA 角色定位
-agent-browser click --role "button" --name "提交"
-
-# XPath
-agent-browser click --xpath "//div[@class='container']/button"
-
-# JavaScript 表达式
-agent-browser evaluate --script "document.querySelector('.item').click()"
+agent-browser screenshot --annotate ./page.png
+agent-browser highlight @e2
+agent-browser inspect
 ```
 
-### 5.5 等待与超时
+推荐顺序通常是：
 
-| 命令 | 说明 | 示例 |
-|------|------|------|
-| `wait` | 等待条件 | `wait --selector "#loaded"` |
-| `wait-nav` | 等待导航 | `wait-nav --timeout 30s` |
-| `wait-until` | 等待状态 | `wait-until --networkidle` |
+1. `snapshot -i` 看结构
+2. `screenshot --annotate` 看视觉位置
+3. `highlight` 或 `inspect` 核对目标元素
 
-**等待条件类型：**
+这样做的好处是，问题能更快归因到“定位错了”还是“页面没加载完”。
+
+### 7.2 网络与错误观察
 
 ```bash
-# 等待元素出现
-agent-browser wait --selector "#result"
-
-# 等待元素可见
-agent-browser wait --visible "#modal"
-
-# 等待元素消失
-agent-browser wait --hidden "#loading"
-
-# 等待网络空闲
-agent-browser wait-until --networkidle
-
-# 等待 JavaScript 条件
-agent-browser wait --script "document.readyState === 'complete'"
+agent-browser network requests
+agent-browser network requests --filter api
+agent-browser network request <requestId>
+agent-browser console
+agent-browser errors
 ```
 
----
+当页面行为异常时，优先排查三件事：
 
-## §6 高级用法
+- 接口有没有发出去
+- 控制台有没有脚本错误
+- 页面是不是因为权限、重定向或接口失败而停在错误状态
 
-### 6.1 AI 聊天集成
-
-Agent Browser 内置 AI 对话功能，可以直接与页面交互：
+### 7.3 Trace、Profiler 与 Dashboard
 
 ```bash
-# 启动 AI 对话模式
-agent-browser ai
+agent-browser trace start
+agent-browser trace stop ./trace.zip
 
-# 交互示例
-> 分析这个页面的结构
-> 找到登录表单并填写
-> 点击提交按钮
-> 获取登录结果
+agent-browser profiler start
+agent-browser profiler stop ./profile.json
 
-# 或者一行命令
-agent-browser ai "分析页面，找出所有可交互元素"
+agent-browser dashboard start
 ```
 
-**AI 命令参数：**
+这组能力的意义不只是“能调试”，而是能把 Agent 的浏览器执行过程留痕。对排查偶发问题、复盘错误路径和做多人协作都很有帮助。
 
-| 参数 | 说明 | 示例 |
-|------|------|------|
-| `--model` | AI 模型 | `--model gpt-4` |
-| `--provider` | AI 提供商 | `--provider openai` |
-| `--context` | 上下文 | `--context "用户正在登录"` |
+## §8 两个实战示例
 
-### 6.2 批量操作优化
-
-对于需要执行大量相似操作的场景，Agent Browser 提供批量模式：
+### 8.1 场景一：登录后提取仪表盘标题
 
 ```bash
-# 读取批量操作文件
-agent-browser batch --file operations.json
+#!/usr/bin/env bash
+set -euo pipefail
 
-# 或者使用 stdin
-cat urls.txt | agent-browser batch --stdin
+# 打开登录页并等待页面稳定。
+agent-browser open https://app.example.com/login
+agent-browser wait --load networkidle
+
+# 获取页面快照，确认输入框和按钮的 ref。
+agent-browser snapshot -i
+
+# 下面的 @e2、@e3、@e4 仅为示例，实际值以当前快照输出为准。
+agent-browser fill @e2 "user@example.com"
+agent-browser fill @e3 "$APP_PASSWORD"
+agent-browser click @e4
+
+# 登录后等待 URL 变化并抓取结果。
+agent-browser wait --url "**/dashboard"
+agent-browser get title
+agent-browser screenshot ./dashboard.png
 ```
 
-**operations.json 格式：**
+这个例子里最容易被忽略的点是最后一行等待：如果你在登录按钮点下去之后立刻取标题，拿到的往往还是旧页面。
 
-```json
-{
-  "operations": [
-    {
-      "action": "browse",
-      "url": "https://example.com/page1"
-    },
-    {
-      "action": "screenshot",
-      "output": "page1.png"
-    },
-    {
-      "action": "click",
-      "selector": "#next"
-    }
-  ]
-}
-```
-
-### 6.3 认证与状态管理
-
-**复用 Chrome Profile：**
+### 8.2 场景二：批量执行固定浏览动作
 
 ```bash
-# 使用已有 Chrome 配置
-agent-browser browse --profile /Users/$USER/Library/Application\\ Support/Google/Chrome/Default
-
-# 保存登录状态
-agent-browser auth --save --file ./auth.json
-
-# 下次复用
-agent-browser browse --auth ./auth.json
+echo '[
+  ["open", "https://example.com"],
+  ["wait", "--load", "networkidle"],
+  ["snapshot", "-i", "--json"],
+  ["screenshot", "./example-home.png"],
+  ["open", "https://example.com/docs"],
+  ["wait", "--load", "networkidle"],
+  ["screenshot", "./example-docs.png"]
+]' | agent-browser batch --json
 ```
 
-**Cookie 管理：**
+这个例子说明，`batch` 更适合“步骤已知”的流程。如果页面下一步要靠上一步输出动态决策，还是应回到单步命令，让 Agent 在中间重新判断。
+
+## §9 常见问题
+
+### 9.1 装好了 CLI，但浏览器起不来
+
+优先检查这三件事：
+
+- 你是否执行过 `agent-browser install`
+- 本机是否存在可检测到的 Chrome、Brave 或相关浏览器
+- 当前环境是否限制了浏览器启动权限
+
+### 9.2 页面总是超时
+
+先不要急着改复杂逻辑，先做最小化排查：
 
 ```bash
-# 导出 Cookie
-agent-browser cookie --export --file cookies.json
-
-# 导入 Cookie
-agent-browser cookie --import --file cookies.json
-
-# 查看当前 Cookie
-agent-browser cookie --list
+agent-browser open https://example.com
+agent-browser wait --load networkidle
+agent-browser snapshot -i
 ```
 
-### 6.4 多标签页管理
-
-```bash
-# 打开新标签页
-agent-browser tab --new
-
-# 切换标签页
-agent-browser tab --switch 2
-
-# 关闭标签页
-agent-browser tab --close
-
-# 列出所有标签页
-agent-browser tab --list
-```
-
-### 6.5 网络控制
-
-```bash
-# 拦截请求
-agent-browser intercept --pattern "*.json" --action block
-
-# 修改响应
-agent-browser intercept --pattern "api/*" --modify '{"mocked": true}'
-
-# 等待特定请求
-agent-browser wait-request --pattern "/api/data"
-```
+如果这里已经失败，问题多半不在业务操作，而在网络、浏览器或页面本身。官方还提到默认操作超时是 `25000 ms`，如果你通过 `AGENT_BROWSER_DEFAULT_TIMEOUT` 提高超时，最好不要盲目超过 `30000 ms`，否则 CLI 侧可能先触发读超时。
 
----
-
-## §7 性能优化
+### 9.3 页面内容太长，把 Agent 上下文撑爆了
 
-### 7.1 启动优化
-
-| 优化项 | 方法 | 效果 |
-|--------|------|------|
-| 无头模式 | `--headless` | 内存 -50% |
-| 禁用图片 | `--block-images` | 加载时间 -30% |
-| 禁用 JavaScript | `--disable-javascript` | 仅适用静态页面 |
-| 复用实例 | 批量操作 | 启动次数 -90% |
+优先组合下面几种办法：
 
-### 7.2 内存优化
+- `snapshot -i` 只看交互元素
+- `snapshot -c` 移除空结构元素
+- `snapshot -d 3` 限制深度
+- `--max-output` 限制输出体积
+- `-s "#main"` 只查看局部区域
 
-```bash
-# 使用轻量级配置
-agent-browser browse --disable-extensions \
-                    --disable-plugins \
-                    --disable-gpu
-
-# 单次操作后立即退出
-agent-browser browse "url" && agent-browser screenshot && agent-browser quit
-```
-
-### 7.3 并发优化
-
-```bash
-# 启动多个实例
-for i in {1..10}; do
-  agent-browser browse "http://example.com/page$i" &
-done
-wait
+### 9.4 想接入 AI，对话式控制怎么开
 
-# 使用批量模式（推荐）
-agent-browser batch --file operations.json --parallel 10
-```
+CLI 本身提供 `chat` 命令和 dashboard 内置聊天面板，但前提是先配置 Vercel AI Gateway 相关环境变量，例如 `AI_GATEWAY_API_KEY`。如果你只需要“让上层 Agent 调命令”，其实不一定非要启用 `chat`，直接用 `snapshot + ref` 往往更可控。
 
----
+## §10 练习与自测
 
-## §8 架构设计
-
-### 8.1 核心架构
-
-```mermaid
-graph TB
-    subgraph CLI["Agent Browser CLI"]
-        A[命令解析] --> B[操作调度器]
-        B --> C[CDP 客户端]
-    end
-    
-    subgraph CDP["Chrome DevTools Protocol"]
-        D[Chrome 进程]
-        C --> E[Tab 会话]
-        C --> F[Network 拦截]
-        C --> G[JS 执行]
-    end
-    
-    subgraph Storage["状态存储"]
-        H[Cookie 库]
-        I[Local Storage]
-        J[Profile]
-    end
-    
-    E --> H
-    E --> I
-    H --> J
-```
-
-### 8.2 CDP 会话管理
-
-Agent Browser 通过 CDP (Chrome DevTools Protocol) 与 Chrome 通信：
-
-```bash
-# 启用 CDP 调试端口
-agent-browser browse --cdp-port 9222
-
-# 直接使用 CDP 命令
-agent-browser cdp "Page.navigate" '{"url": "https://example.com"}'
-agent-browser cdp "Runtime.evaluate" '{"expression": "document.title"}'
-```
-
-### 8.3 与 Playwright 架构对比
-
-| 维度 | Agent Browser | Playwright |
-|------|--------------|------------|
-| 语言 | Rust (CLI) | TypeScript (SDK) |
-| 冷启动 | <100ms | 3-5s |
-| 内存占用 | <80MB | 200-400MB |
-| AI 集成 | 原生 | 需自行封装 |
-| 批量操作 | 原生支持 | 需写代码 |
-| 调试工具 | 内置 CLI | Playwright Debugger |
-
----
-
-## §9 实战案例
-
-### 9.1 案例：AI Agent 网页分析
-
-```bash
-#!/bin/bash
-# ai_page_analyzer.sh - AI Agent 网页分析脚本
-
-URL=$1
-TASK=$2
-
-# 1. 打开页面
-agent-browser browse "$URL"
-
-# 2. 等待加载
-agent-browser wait-until --networkidle
-
-# 3. AI 分析页面
-echo "正在使用 AI 分析页面..."
-ANALYSIS=$(agent-browser ai "分析页面结构，识别关键元素")
+### 10.1 动手练习
 
-# 4. 根据分析结果执行操作
-if echo "$ANALYSIS" | grep -q "登录表单"; then
-    echo "检测到登录表单，准备自动化登录..."
-    agent-browser type --selector "#username" --text "user@example.com"
-    agent-browser type --selector "#password" --text "$PASSWORD"
-    agent-browser click --selector "#login-btn"
-fi
-
-# 5. 获取结果
-agent-browser screenshot --output result.png
-agent-browser content --format markdown > page_content.md
+建议至少做下面 3 个练习：
 
-echo "分析完成，结果保存至 result.png 和 page_content.md"
-```
-
-### 9.2 案例：批量数据采集
-
-```bash
-#!/bin/bash
-# batch_collector.sh - 批量数据采集
-
-# 创建采集任务
-cat > tasks.json << 'EOF'
-{
-  "operations": [
-    {"action": "browse", "url": "https://news.example.com/1"},
-    {"action": "wait", "selector": "article"},
-    {"action": "text", "selector": "article h2", "save": "titles.json"},
-    {"action": "click", "selector": "a.next"},
-    {"action": "browse", "url": "https://news.example.com/2"},
-    {"action": "wait", "selector": "article"},
-    {"action": "text", "selector": "article h2", "append": "titles.json"}
-  ]
-}
-EOF
+1. 用 `open -> snapshot -i -> click @eN -> screenshot` 跑通一次真实页面跳转
+2. 用 `--session-name` 保存一次登录态，再重启后验证状态是否仍可复用
+3. 用 `network requests` 和 `console` 排查一次页面异常，记录你最终定位问题的顺序
 
-# 执行采集
-agent-browser batch --file tasks.json --parallel 5
+### 10.2 自测清单
 
-echo "采集完成，数据保存至 titles.json"
-```
+- 我能解释为什么 Agent 优先使用 `snapshot + ref`，而不是直接猜 CSS 选择器
+- 我知道 `type`、`fill`、`find role`、`wait --load networkidle` 分别适合什么场景
+- 我知道 `--session`、`--session-name`、`--profile`、`state save/load` 的差异
+- 我知道怎样用 `--allowed-domains`、`--content-boundaries` 控制风险
+- 我知道页面失败时先看 `snapshot`、`console`、`network`，而不是盲目重试
 
-### 9.3 案例：自动化测试集成
+## §11 结论与进阶路径
 
-```typescript
-// test_integration.ts - 与测试框架集成
-import { execSync } from 'child_process';
+### 11.1 一句话结论
 
-describe('Web Application Tests', () => {
-  beforeAll(() => {
-    // 启动浏览器
-    execSync('agent-browser browse "http://localhost:3000"');
-  });
+如果你的目标是“让 AI Agent 直接在终端里稳定操控浏览器”，`agent-browser` 是一条很有吸引力的路径。它真正有价值的地方，不是命令列表本身，而是围绕 Agent 设计的交互范式：先观察，再引用，再行动，再刷新上下文。
 
-  afterAll(() => {
-    // 关闭浏览器
-    execSync('agent-browser quit');
-  });
-
-  test('用户可以登录', async () => {
-    execSync('agent-browser type --selector "#username" --text "testuser"');
-    execSync('agent-browser type --selector "#password" --text "password123"');
-    execSync('agent-browser click --selector "#login-btn"');
-    
-    // 验证登录成功
-    const content = execSync('agent-browser content').toString();
-    expect(content).toContain('Welcome');
-  });
-});
-```
+### 11.2 选型建议
 
----
+| 需求 | 更推荐的方向 |
+| ------ | ------ |
+| Agent 主导的网页操作 | `agent-browser` |
+| 大型 E2E 测试工程 | Playwright / 其他测试框架 |
+| 需要远程浏览器基础设施 | `agent-browser` + cloud provider |
+| 需要强类型 SDK、fixture、断言组织 | SDK 方案更稳 |
 
-## §10 常见问题与故障排除
+### 11.3 进阶路径
 
-### 10.1 安装问题
+可以按下面顺序继续深入：
 
-**问题：Chrome 未找到**
+1. 先熟练 `open`、`snapshot -i`、`click`、`fill`、`wait`
+2. 再补 `session`、`profile`、`state`、`auth`
+3. 然后学习 `network`、`trace`、`console`、`errors`
+4. 最后再引入 `chat`、dashboard、streaming 和云浏览器 provider
 
-```bash
-# 解决方案：手动指定 Chrome 路径
-export AGENT_BROWSER_CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-agent-browser browse "https://example.com"
-```
+## 参考资料
 
-**问题：权限被拒绝**
+- GitHub 仓库：<https://github.com/vercel-labs/agent-browser>
+- Chrome DevTools Protocol：<https://chromedevtools.dev/protocol/>
 
-```bash
-# macOS: 授予完全磁盘访问权限
-# 系统偏好设置 → 安全性与隐私 → 隐私 → 完全磁盘访问权限 → 添加 Terminal
-
-# Linux: 检查 Chrome 数据目录权限
-chmod 755 ~/.config/google-chrome
-```
-
-### 10.2 运行问题
-
-**问题：浏览器启动失败**
-
-```bash
-# 清理浏览器状态
-agent-browser restart --clear-state
-
-# 检查端口占用
-lsof -i :9222
-# 或使用随机端口
-agent-browser browse --cdp-port 0
-```
-
-**问题：操作超时**
-
-```bash
-# 增加超时时间
-agent-browser click --selector "#btn" --timeout 60s
-
-# 或禁用超时
-agent-browser click --selector "#btn" --no-timeout
-```
-
-### 10.3 调试技巧
-
-```bash
-# 启用调试模式
-export AGENT_BROWSER_DEBUG=1
-agent-browser browse "https://example.com"
-
-# 查看 CDP 日志
-agent-browser debug --cdp-log
-
-# 使用内置调试器
-agent-browser debug --ui
-```
-
----
-
-## §11 总结与进阶
-
-### 11.1 核心要点回顾
-
-1. **设计理念**：Agent Browser 是为 AI Agent 原生设计的浏览器自动化工具
-2. **性能优势**：Rust 实现，<100ms 启动，<80MB 内存
-3. **AI 集成**：内置 AI 聊天，无需额外封装
-4. **批量操作**：原生支持，减少重复启动开销
-5. **CDP 访问**：直接与 Chrome DevTools 协议交互
-
-### 11.2 命令速查
-
-| 类别 | 命令 |
-|------|------|
-| 启动 | `browse`, `restart`, `quit` |
-| 交互 | `click`, `type`, `fill`, `hover`, `drag` |
-| 信息 | `content`, `text`, `screenshot`, `title` |
-| 等待 | `wait`, `wait-nav`, `wait-until` |
-| AI | `ai` |
-| 批量 | `batch` |
-| 网络 | `intercept`, `wait-request` |
-| 标签页 | `tab` |
-| 认证 | `auth`, `cookie` |
-
-### 11.3 进阶资源
-
-| 资源 | 链接 |
-|------|------|
-| GitHub 仓库 | https://github.com/vercel-labs/agent-browser |
-| Claude Code 集成示例 | https://github.com/vercel-labs/agent-browser/tree/main/examples/claude-code |
-| Chrome DevTools Protocol | https://chromedevtools.dev/protocol/ |
-| Vercel 官方文档 | https://vercel.com/docs/agent-browser |
-
----
-
-## 📋 附录
-
-### A. 环境变量
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `AGENT_BROWSER_CHROME_PATH` | Chrome 可执行文件路径 | 系统查找 |
-| `AGENT_BROWSER_CDP_PORT` | CDP 调试端口 | 9222 |
-| `AGENT_BROWSER_DEBUG` | 调试模式 | false |
-| `AGENT_BROWSER_TIMEOUT` | 默认超时 | 30s |
-
-### B. 配置文件
-
-Agent Browser 支持 YAML 配置文件 `~/.agent-browser.yaml`：
-
-```yaml
-browser:
-  headless: false
-  window-size: "1920x1080"
-  user-agent: "Mozilla/5.0 ..."
-
-ai:
-  provider: openai
-  model: gpt-4
-
-defaults:
-  timeout: 60s
-  screenshot-format: png
-```
-
----
-
-**文档信息**
+## 文档信息
 
 - 难度：⭐⭐⭐⭐
-- 类型：进阶分析
-- 更新日期：2026-04-12
-- 预计阅读时间：45 分钟
-- 前置知识：命令行基础、浏览器自动化概念
+- 类型：工具指南
+- 更新日期：2026-04-15
+- 预计阅读时间：18 分钟
+- 前置知识：命令行基础、浏览器自动化基本概念、HTML 可访问性常识
