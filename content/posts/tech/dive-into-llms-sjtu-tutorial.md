@@ -2,10 +2,10 @@
 title: "《动手学大模型》：上海交通大学29K Stars的LLM编程实践教程——微调/提示工程/知识编辑/RLHF全覆盖"
 date: 2026-04-16T01:30:00+08:00
 slug: "dive-into-llms-sjtu-tutorial"
-description: "dive-into-llms是上海交通大学出品的29K Stars大模型教程，涵盖微调部署、提示学习、思维链、知识编辑、数学推理、文本水印、越狱攻击、隐写术、多模态、G U I Agent、RLHF对齐等11大主题。"
+description: "dive-into-llms是上海交通大学出品的29K Stars大模型教程，涵盖微调部署、提示学习、思维链、知识编辑、数学推理、文本水印、越狱攻击、隐写术、多模态、GUI Agent、RLHF对齐等11大主题。"
 draft: false
 categories: ["技术笔记"]
-tags: ["大模型", "LLM", "上海交通大学", "微调", "RLHF", "提示学习", "知识编辑", "多模态"]
+tags: ["大模型", "LLM", "上海交通大学", "微调", "RLHF"]
 ---
 
 # 《动手学大模型》：上海交通大学29K Stars的LLM编程实践教程——微调/提示工程/知识编辑/RLHF全覆盖

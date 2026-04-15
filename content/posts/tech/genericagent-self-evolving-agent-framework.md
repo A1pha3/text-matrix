@@ -5,7 +5,7 @@ slug: "genericagent-self-evolving-agent-framework"
 description: "GenericAgent是1.7K Stars的极简自我进化Agent框架，核心仅3K行代码。通过9个原子工具+分层记忆系统实现浏览器/终端/文件系统/键鼠/视觉/ADB全控制。设计哲学：不预设技能，靠进化获得能力。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Agent", "自我进化", "Python", "LLM", "浏览器控制", "技能树", "极简架构"]
+tags: ["Agent", "Python", "LLM", "浏览器控制", "技能树"]
 ---
 
 # GenericAgent：仅3K行代码的自我进化Agent框架——6倍Token节省、9个原子工具、Skill树自增长
