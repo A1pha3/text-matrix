@@ -18,7 +18,7 @@ draft: false
 |------|------|
 | **GitHub Stars** | 46.7k |
 | **Forks** | 6,094 |
-| **贡献者** | 3 (milla-jovovich, bensig, claude) |
+| **贡献者** | 3 (igorls, bensig, tmuskal) |
 | **最新提交** | 2026-04-07（16小时前） |
 | **最新版本** | v3.0.0 |
 | **许可证** | MIT |

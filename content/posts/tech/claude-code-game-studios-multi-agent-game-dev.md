@@ -62,7 +62,7 @@ tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 
 | 属性 | 值 |
 |------|------|
-| **Stars** | 10,117 ⭐ |
+| **Stars** | 11,142 ⭐ |
 | **类型** | Claude Code 模板/工具包 |
 | **语言** | Shell（项目本身）+ Markdown（agents配置） |
 | **许可证** | MIT |
