@@ -1,20 +1,20 @@
 ---
-title: "Antigravity Awesome Skills：400+ AI工具插件生态系统完全指南"
+title: "Antigravity Awesome Skills：1,400+ AI工具插件生态系统完全指南"
 date: 2026-04-12T18:01:00+08:00
 slug: antigravity-awesome-skills-ai-tools-ecosystem-guide
-description: "1.7k Stars的Antigravity Awesome Skills专辑，收录400+AI工具插件。涵盖官方26个插件、多Agent系统、AI编程、AI搜索、AI音乐等12大分类，是AI工具爱好者的一站式资源库。"
+description: "33.3k Stars的Antigravity Awesome Skills专辑，收录1,400+AI工具插件。涵盖官方26个插件、多Agent系统、AI编程、AI搜索、AI音乐等12大分类，是AI工具爱好者的一站式资源库。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航"]
 ---
 
-# Antigravity Awesome Skills：400+ AI工具插件生态系统完全指南
+# Antigravity Awesome Skills：1,400+ AI工具插件生态系统完全指南
 
 ## 📋 学习目标
 
 - 理解Antigravity Awesome Skills的定位——AI工具的百科全书
 - 掌握 Antigravity Tools 官方26个插件的功能与用途
-- 了解400+ AI工具的分类体系和精选资源
+- 了解1,400+ AI工具的分类体系和精选资源
 - 学会如何利用这个资源库发现新的AI工具和工作流
 - 理解AI工具生态系统的发展趋势
 
@@ -24,18 +24,18 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ### 什么是Antigravity Awesome Skills
 
-**Antigravity Awesome Skills**是一个精心策划的**AI工具生态系统专辑**，收录了Antigravity Tools官方插件以及400+社区精选AI工具。
+**Antigravity Awesome Skills**是一个精心策划的**AI工具生态系统专辑**，收录了Antigravity Tools官方插件以及1,400+社区精选AI工具。
 
 简而言之：
 - **Antigravity Tools** = 底层代理平台（负责API路由和账号管理）
-- **Antigravity Awesome Skills** = 上层应用市场（收录400+工具的使用技巧和资源链接）
+- **Antigravity Awesome Skills** = 上层应用市场（收录1,400+工具的使用技巧和资源链接）
 
 ### 核心数据
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 1.7k |
-| Forks | 158 |
+| GitHub Stars | 33.3k |
+| Forks | 5,533 |
 | Watchers | 8 |
 | 贡献者 | 1人 (sickn33) |
 | 最新版本 | v1.0.0 (2026-04-09) |
@@ -342,7 +342,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 Antigravity Awesome Skills是AI工具生态的**一站式资源库**：
 
 1. **官方插件支持**：26个官方插件，覆盖主流AI平台
-2. **400+工具收录**：12大分类，应有尽有
+2. **1,400+工具收录**：12大分类，应有尽有
 3. **精选资源导航**：帮您发现新的AI工具
 4. **实用技巧分享**：选择指南和组合推荐
 5. **社区共建**：开源维护，持续更新
