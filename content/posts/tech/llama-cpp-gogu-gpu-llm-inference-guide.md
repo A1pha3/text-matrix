@@ -1,8 +1,8 @@
 ---
-title: "llama.cpp：68.9k Stars 纯C/C++实现的高效LLM推理框架"
+title: "llama.cpp：104k Stars 纯C/C++实现的高效LLM推理框架"
 date: 2026-04-06T22:45:00+08:00
 slug: "llama-cpp-gogu-gpu-llm-inference-guide"
-description: "全面介绍68.9k Stars的llama.cpp，详解纯C/C++实现的LLM推理框架，GGUF格式、量化技术（Q4/Q5/Q6）、CPU/GPU多硬件加速、API服务器部署、LangChain集成和性能优化。"
+description: "全面介绍104k Stars的llama.cpp，详解纯C/C++实现的LLM推理框架，GGUF格式、量化技术（Q4/Q5/Q6）、CPU/GPU多硬件加速、API服务器部署、LangChain集成和性能优化。"
 draft: false
 categories: ["技术笔记"]
 tags: ["llama.cpp", "LLM推理", "GGUF", "量化", "CPU推理", "GPU加速", "C/C++", "本地部署"]
@@ -31,8 +31,8 @@ tags: ["llama.cpp", "LLM推理", "GGUF", "量化", "CPU推理", "GPU加速", "C/
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | **68.9k** |
-| GitHub Forks | **10.3k** |
+| GitHub Stars | **104k** |
+| GitHub Forks | **16.9k** |
 | Contributors | **3,100+** |
 | Commits | **42,000+** |
 | License | **MIT** |
