@@ -35,11 +35,11 @@ tags: ["Transformers", "Hugging Face", "NLP", "PyTorch", "大模型", "预训练
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | **144k** |
-| GitHub Forks | **25.8k** |
+| GitHub Stars | **159.5k** |
+| GitHub Forks | **32.9k** |
 | Contributors | **2,000+** |
 | Releases | **339** |
-| 最新版本 | **v4.49.0** (2026-03) |
+| 最新版本 | **v5.5.4** (2026-04-13) |
 | License | **Apache 2.0** |
 | 语言 | **Python 95.9%** |
 
