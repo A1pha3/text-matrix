@@ -40,8 +40,8 @@ tags: ["Faster Qwen3-TTS", "TTS", "CUDA Graph", "语音合成", "Qwen3"]
 ### 2.2 核心数据
 
 ```
-Stars:     790
-Forks:     110
+Stars:     865
+Forks:     122
 贡献者:    5 人
 提交数:   292 次
 许可证:   MIT
@@ -670,4 +670,4 @@ CUDA-graph capture 在 `torch<=2.5.0` 上不可靠，捕获可能失败并显示
 
 ---
 
-*文档版本 1.0 | 撰写日期：2026-03-31 | 基于 commit 3ee3496 (2026-03-28) | Stars: 790 ⭐*
+*文档版本 1.0 | 撰写日期：2026-03-31 | 基于 commit 3ee3496 (2026-03-28) | Stars: 865 ⭐*
