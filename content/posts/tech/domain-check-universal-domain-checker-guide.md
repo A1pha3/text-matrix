@@ -10,10 +10,10 @@ title = 'Domain Check：Universal Domain Availability Checker'
 
 **核心统计：**
 - Stars: 261 | Forks: 15 | Watchers: 2
-- Contributors: 3 (saidutt46, claude, martimlobao)
+- Contributors: 2 (saidutt46, martimlobao)
 - 语言: Rust 98.2% | Shell 1.8%
 - 最新版本: v1.0.2 (2026-03-22)
-- 许可证: MIT OR Apache-2.0 (双许可证)
+- 许可证: Undeclared (GitHub API: NOASSERTION，需验证LICENSE文件)
 
 ## 为什么选择 Domain Check？
 
