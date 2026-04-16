@@ -1,5 +1,5 @@
 ---
-title: "LazyGit：47K Stars·Go语言编写·Git终端UI·可视化版本控制"
+title: "LazyGit：76K Stars·Go语言编写·Git终端UI·可视化版本控制"
 date: 2026-04-12T02:29:31+08:00
 slug: lazygit-git-terminal-ui-guide
 description: "LazyGit 是一个简单的 Git 终端 UI，使用 Go 语言编写。它旨在通过可视化界面让 Git 版本控制更加用户友好，支持交互式 Rebase、冲突解决等功能。"
@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Git", "Go", "终端", "TUI", "版本控制"]
 ---
 
-# LazyGit：47K Stars·Go语言编写·Git终端UI·可视化版本控制·交互式Rebase·冲突解决
+# LazyGit：76K Stars·Go语言编写·Git终端UI·可视化版本控制·交互式Rebase·冲突解决
 
 ## 一，项目概述
 
@@ -24,11 +24,11 @@ tags: ["Git", "Go", "终端", "TUI", "版本控制"]
 
 | 指标 | 数值 |
 |------|------|
-| Stars | **47.7k** ⭐ |
-| Forks | 1.8k |
-| 贡献者 | **168** |
+| Stars | **76.5k** ⭐ |
+| Forks | 2,757 |
+| 贡献者 | **3,000+** |
 | 提交数 | **2,000+** |
-| 最新版本 | **v0.44** (2026-03) |
+| 最新版本 | **v0.61.1** (2026-04) |
 | 许可证 | **GPL-3.0** |
 | 语言 | **Go 98.7%** |
 
@@ -39,7 +39,7 @@ tags: ["Git", "Go", "终端", "TUI", "版本控制"]
 │                    LazyGit 成绩单                                         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
-│   🌟 GitHub: 47.7k Stars                                     │
+│   🌟 GitHub: 76.5k Stars                                     │
 │   🔧 语言: Go 98.7%                                          │
 │   📦 安装: brew / go install                                 │
 │   🎯 定位: Git 可视化终端界面                               │
@@ -136,7 +136,7 @@ winget install JesseDuffield.LazyGit
 go install github.com/jesseduffield/lazygit@latest
 
 # 或安装特定版本
-go install github.com/jesseduffield/lazygit@v0.44.0
+go install github.com/jesseduffield/lazygit@latest
 ```
 
 ### 3.5 从源码安装
@@ -554,11 +554,11 @@ git:
 
 ## 十一，总结
 
-LazyGit 是 **47.7k Stars 的 Git 终端 UI**：
+LazyGit 是 **76.5k Stars 的 Git 终端 UI**：
 
 | 维度 | 说明 |
 |------|------|
-| 🌟 **人气** | 47.7k Stars，1.8k Forks |
+| 🌟 **人气** | 76.5k Stars，2,757 Forks |
 | 🔧 **语言** | Go 98.7%，高性能 |
 | 🎯 **定位** | Git 可视化终端界面 |
 | ⚡ **特点** | 轻量、快速、用户友好 |
@@ -584,4 +584,4 @@ LazyGit 是 **47.7k Stars 的 Git 终端 UI**：
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 LazyGit (47.7k Stars)_
+_🦞 本文由钳岳星君撰写，基于 LazyGit (76.5k Stars)_
