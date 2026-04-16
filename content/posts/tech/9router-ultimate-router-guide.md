@@ -1,20 +1,20 @@
 ---
-title: "9Router：1.5K Stars·Ultimate Router for Claude Code·多后端路由·本地模型网关"
+title: "9Router：2.5K Stars·Connect All AI Code Tools·统一连接40+ AI提供商的AI工具路由器"
 date: 2026-04-12T02:31:39+08:00
 slug: 9router-ultimate-router-guide
-description: "9Router 是一个多后端 AI 路由器，支持 Claude Code、Ollama、Jan 等多种后端，提供统一的 API 接口和智能路由功能。"
+description: "9Router 是一个统一连接 AI 代码工具到 40+ AI 提供商的路由器，支持 Claude Code、Cursor、Copilot、Codex 等多种工具。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "路由器", "API", "本地模型", "Ollama"]
+tags: ["Claude Code", "Cursor", "路由器", "API", "AI Provider"]
 ---
 
-# 9Router：1.5K Stars·Ultimate Router for Claude Code·多后端路由·本地模型网关·Ollama·Jan
+# 9Router：2.5K Stars·Connect All AI Code Tools·统一连接40+ AI提供商的AI工具路由器
 
 ## 一、项目概述
 
 ### 1.1 9Router 是什么
 
-**9Router** 是 **decolua** 开发的** AI 模型路由器**，支持 Claude Code 和 Cursor，可以将提示路由到不同的 AI 后端，如 OpenAI、Anthropic、Deepseek、Grok 等。它还提供本地模型网关，支持 Ollama 和 Jan，实现离线工作和成本节省。
+**9Router** 是 **decolua** 开发的** AI 工具统一路由器**，可将 Claude Code、Cursor、Copilot、Codex、Gemini、OpenCode、Cline、OpenClaw 等多种 AI 代码工具连接至 40+ AI 提供商和 100+ 模型。
 
 > "9Router is the ultimate router for Claude Code and Cursor. It allows you to route your prompts to different AI backends like OpenAI, Anthropic, Deepseek, Grok, and more."
 
@@ -22,13 +22,12 @@ tags: ["Claude Code", "路由器", "API", "本地模型", "Ollama"]
 
 | 指标 | 数值 |
 |------|------|
-| Stars | **1.5k** ⭐ |
-| Forks | 66 |
-| 贡献者 | 2 (decolua, gaborkut) |
+| Stars | **2.5k** ⭐ |
+| Forks | 630 |
 | 最新版本 | **2026-03-06** |
 | 最新提交 | **2026-03-30** |
 | 许可证 | MIT |
-| 语言 | Python 93.5%, Shell 6.5% |
+| 语言 | JavaScript 93.5%, Shell 6.5% |
 
 ### 1.3 核心定位
 
@@ -117,21 +116,21 @@ tags: ["Claude Code", "路由器", "API", "本地模型", "Ollama"]
 9router/
 ├── src/
 │   └── 9router/
-│       ├── __init__.py
-│       ├── router.py          # 路由核心
+│       ├── __init__.js
+│       ├── router.js          # 路由核心
 │       ├── providers/
-│       │   ├── __init__.py
+│       │   ├── __init__.js
 │       │   ├── openai.py      # OpenAI 提供商
 │       │   ├── anthropic.py    # Anthropic 提供商
 │       │   ├── deepseek.py     # Deepseek 提供商
 │       │   ├── grok.py         # Grok 提供商
 │       │   ├── ollama.py      # Ollama 本地
 │       │   └── jan.py          # Jan 本地
-│       ├── auth.py            # 认证管理
-│       ├── cache.py          # 响应缓存
-│       └── logger.py         # 日志管理
+│       ├── auth.js            # 认证管理
+│       ├── cache.js          # 响应缓存
+│       └── logger.js         # 日志管理
 ├── tests/
-│   ├── test_router.py
+│   ├── test_router.js
 │   └── test_providers.py
 ├── examples/
 │   ├── basic.py
@@ -142,7 +141,7 @@ tags: ["Claude Code", "路由器", "API", "本地模型", "Ollama"]
 ├── docs/
 │   └── README.md
 ├── .env.example              # 环境变量模板
-├── pyproject.toml
+├── package.json
 └── README.md
 ```
 
@@ -162,12 +161,10 @@ tags: ["Claude Code", "路由器", "API", "本地模型", "Ollama"]
 
 | 特性 | 说明 |
 |------|------|
-| **多后端支持** | OpenAI、Anthropic、Deepseek、Grok、Ollama、Jan |
-| **本地模型网关** | Ollama + Jan 实现离线工作 |
-| **统一 API** | OpenAI 兼容 API，易于集成 |
-| **成本节省** | 本地模型减少 API 费用 |
-| **简单配置** | 环境变量配置，无需代码修改 |
-| **缓存机制** | 减少重复 API 调用 |
+| **多提供商** | 40+ AI 提供商和 100+ 模型 |
+| **统一路由** | Claude Code、Cursor、Copilot、Codex、Gemini、OpenCode、Cline、OpenClaw |
+| **成本节省** | 灵活切换提供商，减少 API 费用 |
+| **简单配置** | 环境变量，无需改代码 |
 
 ### 3.2 使用场景
 
@@ -178,21 +175,20 @@ tags: ["Claude Code", "路由器", "API", "本地模型", "Ollama"]
 │                                                               │
 │   💰 成本优化                                                  │
 │   ┌─────────────────────────────────────────────────────┐   │
-│   │ OpenAI GPT-4: $0.03/1K tokens                        │   │
-│   │ Ollama (本地): $0/1K tokens (电费)                  │   │
-│   │ → 节省 99%+                                         │   │
+│   │ 灵活切换 40+ AI 提供商                                    │   │
+│   │ 按需选择最优性价比方案                                    │   │
 │   └─────────────────────────────────────────────────────┘   │
 │                                                               │
 │   🔒 隐私保护                                                  │
 │   ┌─────────────────────────────────────────────────────┐   │
-│   │ 敏感代码不离开本地环境                                  │   │
-│   │ 本地模型处理，API不传输                                │   │
+│   │ 敏感代码灵活处理                                        │   │
+│   │ 多种工具统一管理                                        │   │
 │   └─────────────────────────────────────────────────────┘   │
 │                                                               │
-│   🌐 离线工作                                                  │
+│   🔄 统一管理                                                  │
 │   ┌─────────────────────────────────────────────────────┐   │
-│   │ 无网络连接时仍可使用 AI                                 │   │
-│   │ Ollama/Jan 提供本地推理                               │   │
+│   │ 一个配置，连接所有 AI 代码工具                          │   │
+│   │ Claude Code、Cursor、Copilot、Codex 统一路由            │   │
 │   └─────────────────────────────────────────────────────┘   │
 │                                                               │
 │   🔄 模型切换                                                  │
@@ -230,12 +226,12 @@ tags: ["Claude Code", "路由器", "API", "本地模型", "Ollama"]
 
 ```bash
 # 安装 9Router
-pip install 9router
+npm install -g 9router
 
 # 或从源码安装
 git clone https://github.com/decolua/9router.git
 cd 9router
-pip install -e .
+npm install
 
 # 验证安装
 9router --version
@@ -303,7 +299,7 @@ CACHE_TTL=3600
 ### 5.1 基础使用
 
 ```python
-from 9router import Router
+from nine_router import Router
 
 # 创建路由器
 router = Router(provider="openai")
@@ -319,7 +315,7 @@ print(response)
 ### 5.2 多提供商切换
 
 ```python
-from 9router import Router
+from nine_router import Router
 
 # 使用 OpenAI
 router_openai = Router(provider="openai")
@@ -343,7 +339,7 @@ response_deepseek = router_deepseek.chat(
 ### 5.3 本地模型
 
 ```python
-from 9router import Router
+from nine_router import Router
 
 # 使用 Ollama
 router = Router(provider="ollama", model="llama2")
@@ -463,8 +459,8 @@ curl http://localhost:8000/v1/models
 ### 7.1 缓存配置
 
 ```python
-from 9router import Router
-from 9router.cache import RedisCache
+from nine_router import Router
+from nine_router.cache import RedisCache
 
 # 使用 Redis 缓存
 cache = RedisCache(host="localhost", port=6379, ttl=3600)
@@ -478,7 +474,7 @@ response2 = router.chat(messages=[...])  # 缓存命中
 ### 7.2 负载均衡
 
 ```python
-from 9router import Router
+from nine_router import Router
 
 # 配置多个 API Key
 router = Router(
@@ -499,7 +495,7 @@ for i in range(10):
 ### 7.3 回退机制
 
 ```python
-from 9router import Router
+from nine_router import Router
 
 # 配置回退策略
 router = Router(
@@ -518,7 +514,7 @@ response = router.chat(messages=[...])
 ### 7.4 自定义提供商
 
 ```python
-from 9router import Router, BaseProvider
+from nine_router import Router, BaseProvider
 
 class MyProvider(BaseProvider):
     def __init__(self, api_key, base_url):
@@ -614,14 +610,14 @@ handlers:
 
 ## 十，总结
 
-9Router 是** Claude Code 和 Cursor 的终极路由器**：
+9Router 是**统一连接所有 AI 代码工具到 40+ AI 提供商的路由器**：
 
 | 维度 | 说明 |
 |------|------|
-| 🔀 **多后端** | OpenAI、Anthropic、Deepseek、Grok |
-| 🏠 **本地模型** | Ollama + Jan 离线支持 |
-| 💰 **成本节省** | 本地模型减少 99%+ 费用 |
-| 🔒 **隐私保护** | 敏感代码不离开本地 |
+| 🔀 **统一路由** | Claude Code、Cursor、Copilot、Codex、Gemini、OpenCode、Cline、OpenClaw |
+| 🌍 **多提供商** | 40+ AI 提供商和 100+ 模型 |
+| 💰 **成本节省** | 灵活切换，减少 API 费用 |
+| 🔒 **隐私保护** | 敏感代码灵活处理 |
 | 🔄 **统一 API** | OpenAI 兼容，易于集成 |
 | ⚡ **简单配置** | 环境变量，无需改代码 |
 
@@ -638,4 +634,4 @@ handlers:
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 9Router (1.5k Stars)_
+_🦞 本文由钳岳星君撰写，基于 9Router (2.5k Stars)_
