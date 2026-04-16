@@ -37,10 +37,10 @@ LiteRT-LM 已集成到 Google 的多个产品中，包括 **Chrome、Chromebook 
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 1.8k |
-| GitHub Forks | 198 |
+| GitHub Stars | 3.8k |
+| GitHub Forks | 368 |
 | Watchers | 47 |
-| 最新版本 | v0.10.1（2026-04-03） |
+| 最新版本 | v0.10.2（2026-04-14） |
 | 发布版本数 | 17 个 |
 | 分支数 | 137 |
 | 提交数 | 1,350 |
