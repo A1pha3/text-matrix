@@ -27,8 +27,8 @@ tags: ["MiroFish", "群体智能", "多智能体", "预测引擎", "OASIS"]
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 44.6k |
-| Forks | 6.2k |
+| GitHub Stars | 55.7k |
+| Forks | 8.4k |
 | 最新版本 | v0.1.2（2026-03-07） |
 | License | AGPL-3.0 |
 | 技术栈 | Python 57.8% + Vue 41.1% |
@@ -288,7 +288,7 @@ MiroFish/
 
 | 项目 | 定位 | Stars | 核心技术 |
 |------|------|-------|---------|
-| **MiroFish** | 群体智能预测引擎 | 44.6k | OASIS + GraphRAG + 多Agent |
+| **MiroFish** | 群体智能预测引擎 | 55.7k | OASIS + GraphRAG + 多Agent |
 | **CAMEL** | 多Agent通信框架 | 35k+ | Agent间通信协议 |
 | **AutoGen** | 多Agent协作框架 | 30k+ | 人机协作 |
 | **CrewAI** | Agent团队编排 | 25k+ | 角色扮演Agent |
