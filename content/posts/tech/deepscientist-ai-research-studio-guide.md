@@ -12,7 +12,7 @@ tags: ["AI科研", "实验自动化", "论文复现", "AI Agent", "本地优先"
 
 > 项目地址：[ResearAI/DeepScientist](https://github.com/ResearAI/DeepScientist)
 >
-> 今日Star：1.1k（+0）| Forks：87 | License：Apache-2.0
+> 今日Star：2.2k（+0）| Forks：241 | License：Apache-2.0
 >
 > 核心定位：本地优先的 AI 科研工作室，15 分钟把 AI 科学家搬到你自己的机器上
 

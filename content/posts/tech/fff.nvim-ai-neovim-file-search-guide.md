@@ -45,7 +45,7 @@ FFF.nvim 有两个主要使用场景：
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 248 |
+| GitHub Stars | 5,044 |
 | License | MIT |
 | 作者 | dmtrKovalenko |
 | Neovim 版本要求 | ≥ 0.10.0 |
