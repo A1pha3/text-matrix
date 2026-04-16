@@ -532,10 +532,13 @@ const content = await tools.web.fetch({
 
 | 维度 | Open Agents | Claude Code Host |
 |------|-------------|------------------|
-| 架构 | 云端原生 | 需要自托管 |
-| 模型 | 灵活选择 | 绑定 Claude |
-| 部署 | Vercel 一键 | 需要服务器 |
-| 费用 | 按使用计费 | 订阅制 |
+| 架构 | 云端原生 + 多 VM 分层 | Anthropic 官方托管的云端 CLI |
+| 模型 | 灵活选择（支持多种 LLM） | 绑定 Claude |
+| 部署 | Vercel 一键部署 | 无需部署，直接使用 CLI |
+| 费用 | 按 Vercel 计费 | Anthropic 官方按 Token 计费 |
+| 定制性 | 可 fork 修改源码 | 依赖官方更新 |
+
+**注**：Claude Code Host 是 Anthropic 官方托管的云端服务，用户无需自建服务器，直接通过 `claude code` CLI 连接使用，按 Token 计费。
 
 ### 10.2 vs GenericAgent
 
