@@ -22,8 +22,8 @@ tags: ["设计系统", "UI", "组件库", "前端", "CSS"]
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 38.3k ⭐ |
-| Forks | 2.6k |
+| Stars | 23.5k ⭐ |
+| Forks | 1.5k |
 | 许可证 | CC0-1.0 (公共领域) |
 | 语言 | JavaScript 46.2%, CSS 44.8%, HTML 9.0% |
 | 贡献者 | alexpate |
