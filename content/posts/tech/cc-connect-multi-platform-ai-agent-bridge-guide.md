@@ -20,8 +20,8 @@ tags: ["AI", "Agent", "Telegram", "Discord", "Slack"]
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 4.9k ⭐ |
-| Forks | 436 |
+| Stars | 5.3k ⭐ |
+| Forks | 480 |
 | 最新版本 | v1.2.1 (2026-03-09) |
 | 许可证 | MIT |
 | 语言 | Go 91.9%, TypeScript 7.3% |

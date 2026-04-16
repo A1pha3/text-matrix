@@ -2,7 +2,7 @@
 title: "Claude Code from Source：18章深度拆解Anthropic最畅销AI编程工具的架构精髓"
 date: 2026-04-12T18:03:00+08:00
 slug: claude-code-from-source-ai-agent-architecture-guide
-description: "1.5k Stars的Claude Code from Source，通过npm源码地图逆向分析Anthropic Claude Code的完整架构。36个AI Agent历时6小时写成，涵盖Agent循环、工具执行、多Agent编排、内存系统、性能工程等10大核心架构模式。"
+description: "1,552 Stars的Claude Code from Source，通过npm源码地图逆向分析Anthropic Claude Code的完整架构。36个AI Agent历时6小时写成，涵盖Agent循环、工具执行、多Agent编排、内存系统、性能工程等10大核心架构模式。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "Anthropic", "AI Agent", "架构分析", "MCP"]
