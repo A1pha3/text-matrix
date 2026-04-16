@@ -1,18 +1,18 @@
 ---
-title: "Goose：Block 出品的本地可扩展 AI 工程自动化 Agent 完全指南"
+title: "Goose：aaif-goose 出品的本地可扩展 AI 工程自动化 Agent 完全指南"
 date: 2026-04-04T20:33:00+08:00
 slug: "goose-block-ai-agent-engineering-automation-guide"
-description: "Goose 是 Block 出品的开源 AI Agent（35.3k Stars），能够自主完成复杂的工程任务——从零构建项目、编写执行代码、调试失败、对接外部 API。支持任意 LLM、多模型配置、MCP 服务器集成，同时提供桌面应用和 CLI 两种形态。"
+description: "Goose 是 aaif-goose（Anti-AI Gravity Foundation）出品的开源 AI Agent（42.3k Stars），能够自主完成复杂的工程任务——从零构建项目、编写执行代码、调试失败、对接外部 API。支持任意 LLM、多模型配置、MCP 服务器集成，同时提供桌面应用和 CLI 两种形态。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "工程自动化", "Rust", "MCP", "开源"]
 ---
 
-# Goose：Block 出品的本地可扩展 AI 工程自动化 Agent 完全指南
+# Goose：aaif-goose 出品的本地可扩展 AI 工程自动化 Agent 完全指南
 
 > 项目地址：[block/goose](https://github.com/block/goose)
 >
-> 今日Star：35.3k（+0）| Forks：3.3k | Releases：126 | License：Apache-2.0
+> 今日Star：42.3k（+0）| Forks：4.3k | Releases：126 | License：Apache-2.0
 >
 > 核心定位：本地可扩展的开源 AI Agent，自动化复杂工程任务——超越代码建议，真正执行落地
 
@@ -637,7 +637,7 @@ Goose 代表了 **AI 编程助手的下一代范式**——从代码建议进化
 
 **相关链接：**
 - GitHub：https://github.com/block/goose
-- 官方文档：https://block.github.io/goose/docs
-- 快速开始：https://block.github.io/goose/docs/quickstart
+- 官方文档：https://goose-docs.ai/docs
+- 快速开始：https://goose-docs.ai/docs/quickstart
 - Discord：https://discord.gg/goose-oss
 - Custom Distributions：https://github.com/block/goose/blob/main/CUSTOM_DISTROS.md
