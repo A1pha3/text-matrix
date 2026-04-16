@@ -2,7 +2,7 @@
 title: "free-programming-books：全球最大免费编程书籍精选列表完全指南"
 date: 2026-04-06T22:15:00+08:00
 slug: "free-programming-books-curated-list-guide"
-description: "全面介绍 GitHub 第7大项目 294k Stars 的 free-programming-books，涵盖 4,000+ 免费编程书籍的导航方法、精选推荐、贡献指南、社区生态，以及如何高效利用这个海量学习资源。"
+description: "全面介绍 GitHub 第7大项目 385k Stars 的 free-programming-books，涵盖 4,000+ 免费编程书籍的导航方法、精选推荐、贡献指南、社区生态，以及如何高效利用这个海量学习资源。"
 draft: false
 categories: ["技术笔记"]
 tags: ["免费资源", "编程书籍", "学习路线", "GitHub", "开源社区"]
@@ -13,7 +13,7 @@ tags: ["免费资源", "编程书籍", "学习路线", "GitHub", "开源社区"]
 通过本文，你将全面掌握以下核心能力：
 
 - 深入理解 free-programming-books 项目的定位、发展和社区模式
-- 学会高效浏览和搜索这个 294k Stars 的海量资源库
+- 学会高效浏览和搜索这个 385k Stars 的海量资源库
 - 掌握按编程语言、主题和难度分类的导航方法
 - 理解贡献指南和社区规范，学会为项目做贡献
 - 发现适合不同水平开发者的优质免费学习资源
@@ -32,12 +32,12 @@ tags: ["免费资源", "编程书籍", "学习路线", "GitHub", "开源社区"]
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | **294k** |
-| GitHub Forks | **55.8k** |
+| GitHub Stars | **385.6k** |
+| GitHub Forks | **66.1k** |
 | Commits | **49,000+** |
 | 贡献者 | **10,000+** |
 | 收录书籍 | **4,000+** |
-| License | **MIT** |
+| License | **CC-BY-4.0** |
 | 语言 | **Markdown 100%** |
 
 这个项目在 GitHub 历史上**排名第 7 位**，是学习资源类项目的标杆。
@@ -351,8 +351,8 @@ free-programming-books/
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 294k |
-| Forks | 55.8k |
+| Stars | 385.6k |
+| Forks | 66.1k |
 | Watchers | 2.4k |
 | Issues | 2.4k (open) |
 | Pull Requests | 500+ (open) |
