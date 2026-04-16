@@ -1,5 +1,5 @@
 ---
-title: "MemPalace：7.7k Stars史上最高分AI记忆系统，96.6% R@5零API调用"
+title: "MemPalace：46.7k Stars史上最高分AI记忆系统，96.6% R@5零API调用"
 date: 2026-04-13T10:30:00+08:00
 slug: mempalace-ai-memory-system-guide
 description: "深度解析MemPalace：基于记忆宫殿原理的AI记忆系统，采用Wings/Halls/Rooms结构组织记忆。本地ChromaDB向量检索与SQLite知识图谱双引擎驱动，96.6% LongMemEval R@5，零API调用，完全本地运行。"
@@ -16,8 +16,8 @@ draft: false
 
 | 指标 | 数值 |
 |------|------|
-| **GitHub Stars** | 7.7k |
-| **Forks** | 805 |
+| **GitHub Stars** | 46.7k |
+| **Forks** | 6,094 |
 | **贡献者** | 3 (milla-jovovich, bensig, claude) |
 | **最新提交** | 2026-04-07（16小时前） |
 | **最新版本** | v3.0.0 |
