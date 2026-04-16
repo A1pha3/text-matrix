@@ -35,8 +35,8 @@ tags: ["Ollama", "本地大模型", "LLM", "隐私计算", "开源", "GPU加速"
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | **144k** |
-| GitHub Forks | **56.5k** |
+| GitHub Stars | **169.1k** |
+| GitHub Forks | **15.6k** |
 | Commits | **9,600+** |
 | Issues | **9,600+** |
 | Releases | **100+** |
