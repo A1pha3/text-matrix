@@ -12,7 +12,7 @@ tags: ["Archon", "AI编程", "工作流引擎", "YAML", "Claude Code"]
 
 一句话概括：Archon 是一个面向 AI 编程的 workflow engine（工作流引擎），也是一个 AI coding harness builder。你把开发流程写成 YAML，它负责把规划、实现、验证、评审、批准、PR 创建这些步骤编排成可重复执行的工程流水线。
 
-> 本文基于 2026 年 4 月 11 日公开资料撰写。GitHub About 页显示，Archon 约有 16.2k Stars、2.6k Forks，最新 release 为 v0.3.5，项目采用 MIT 许可证，主体代码为 TypeScript。需要注意的是，官方文档面向入门用户时仍以 17 个核心 workflow 为主目录，但更完整的文档与源码里还能看到 additional workflows；最稳妥的确认方式始终是运行 `archon workflow list`。
+> 本文基于 2026 年 4 月 11 日公开资料撰写。GitHub About 页显示，Archon 约有 18.3k Stars、2,861 Forks，最新 release 为 v0.3.6，项目采用 MIT 许可证，主体代码为 TypeScript。需要注意的是，官方文档面向入门用户时仍以 17 个核心 workflow 为主目录，但更完整的文档与源码里还能看到 additional workflows；最稳妥的确认方式始终是运行 `archon workflow list`。
 
 ## 学习目标
 
