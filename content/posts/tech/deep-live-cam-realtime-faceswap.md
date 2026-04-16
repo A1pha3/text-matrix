@@ -27,8 +27,8 @@ tags: ["Deep-Live-Cam", "实时换脸", "深度伪造", "Deepfake", "AI视频"]
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | **83.8k** |
-| Forks | 12.3k |
+| GitHub Stars | **90.7k** |
+| Forks | 13.2k |
 | Contributors | 57 |
 | 最新版本 | 2.7 beta（2026-03-11） |
 | License | AGPL-3.0 |
