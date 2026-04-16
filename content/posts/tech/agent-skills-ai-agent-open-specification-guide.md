@@ -90,9 +90,9 @@ Agent Skills 通过以下设计解决这些问题：
 | 指标 | 数值 |
 |------|------|
 | 规范版本 | v1.0 |
-| 主仓库 Stars | 14,837 |
+| 主仓库 Stars | 16,306 |
 | 示例库 Stars | 108,862 |
-| Forks | 871（主仓库）/ 12,170（示例库） |
+| Forks | 959（主仓库）/ 12,170（示例库） |
 | 贡献者 | 35 人（主仓库）|
 | 最新提交 | 2026-03-28 |
 | 许可证 | Apache-2.0 |
@@ -894,7 +894,7 @@ compatibility: 需要互联网访问，用于调用外部 API
 
 ### 生态现状
 
-- **官方库**：agentskills/agentskills（14.8k Stars）
+- **官方库**：agentskills/agentskills（16.3k Stars）
 - **示例库**：anthropics/skills（109k Stars）
 - **社区**：Discord 服务器 + GitHub Discussions
 - **文档**：agentskills.io（Mintlify 托管）

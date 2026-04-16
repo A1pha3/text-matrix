@@ -1,14 +1,14 @@
 ---
-title: "OpenSandbox：阿里巴巴开源的 9.4k Stars 通用 AI 应用沙箱平台"
+title: "OpenSandbox：阿里巴巴开源的 10.0k Stars 通用 AI 应用沙箱平台"
 date: 2026-03-28T21:00:00+08:00
 slug: "alibaba-opensandbox-ai-sandbox-platform"
-description: "深度解读阿里巴巴开源的 OpenSandbox：9.4k Stars 的通用 AI 应用沙箱平台，支持多语言 SDK、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、AI 代码执行、强化学习训练等场景。"
+description: "深度解读阿里巴巴开源的 OpenSandbox：10.0k Stars 的通用 AI 应用沙箱平台，支持多语言 SDK、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、AI 代码执行、强化学习训练等场景。"
 draft: false
 categories: ["技术笔记"]
 tags: ["OpenSandbox", "沙箱", "AI平台", "Docker", "Kubernetes"]
 ---
 
-# OpenSandbox：阿里巴巴开源的 9.4k Stars 通用 AI 应用沙箱平台
+# OpenSandbox：阿里巴巴开源的 10.0k Stars 通用 AI 应用沙箱平台
 
 > **目标读者**：构建 AI 应用（编程 Agent、GUI Agent、代码执行、RL 训练）的开发者
 > **核心问题**：如何为 AI 应用提供安全、可扩展的隔离执行环境？
@@ -27,8 +27,8 @@ tags: ["OpenSandbox", "沙箱", "AI平台", "Docker", "Kubernetes"]
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 9.4k |
-| Forks | 715 |
+| GitHub Stars | 10.0k |
+| Forks | 779 |
 | License | Apache-2.0 |
 | 最新版本 | python/code-interpreter 0.1.2 |
 | 官方文档 | https://open-sandbox.ai/ |
