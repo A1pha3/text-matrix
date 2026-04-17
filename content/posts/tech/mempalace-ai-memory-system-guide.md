@@ -1,5 +1,5 @@
 ---
-title: "MemPalace：46.7k Stars史上最高分AI记忆系统，96.6% R@5零API调用"
+title: "MemPalace：47.3k Stars史上最高分AI记忆系统，96.6% R@5零API调用"
 date: 2026-04-13T10:30:00+08:00
 slug: mempalace-ai-memory-system-guide
 description: "深度解析MemPalace：基于记忆宫殿原理的AI记忆系统，采用Wings/Halls/Rooms结构组织记忆。本地ChromaDB向量检索与SQLite知识图谱双引擎驱动，96.6% LongMemEval R@5，零API调用，完全本地运行。"
@@ -8,7 +8,7 @@ tags: ["AI记忆", "记忆宫殿", "知识图谱", "MCP", "本地向量数据库
 draft: false
 ---
 
-# MemPalace：7.7k Stars史上最高分AI记忆系统
+# MemPalace：47.3k Stars史上最高分AI记忆系统
 
 ## 项目概述
 
@@ -16,8 +16,8 @@ draft: false
 
 | 指标 | 数值 |
 |------|------|
-| **GitHub Stars** | 46.7k |
-| **Forks** | 6,094 |
+| **GitHub Stars** | 47.3k (47,262) |
+| **Forks** | 6,174 |
 | **贡献者** | 3 (igorls, bensig, tmuskal) |
 | **最新提交** | 2026-04-07（16小时前） |
 | **最新版本** | v3.0.0 |
@@ -249,7 +249,7 @@ claude mcp add mempalace -- python -m mempalace.mcp_server
 
 ### Gemini CLI集成
 
-MemPalace与Gemini CLI原生集成，自动处理服务器启动和保存Hook。详见 [Gemini CLI Integration Guide](https://github.com/milla-jovovich/mempalace)。
+MemPalace与Gemini CLI原生集成，自动处理服务器启动和保存Hook。详见 [Gemini CLI Integration Guide](https://github.com/MemPalace/mempalace)。
 
 ### 19个工具总览
 
@@ -901,7 +901,7 @@ pip install mempalace
 
 | 项目 | 地址 |
 |------|------|
-| **GitHub** | https://github.com/milla-jovovich/mempalace |
+| **GitHub** | https://github.com/MemPalace/mempalace |
 | **Discord** | https://discord.com/invite/ycTQQCu6kn |
 
 ---
@@ -1051,7 +1051,7 @@ pip install mempalace
 |------|------|
 | [ChromaDB文档](https://docs.trychroma.com) | 向量检索的底层原理 |
 | [西塞罗记忆宫殿](https://en.wikipedia.org/wiki/Method_of_loci) | Palace架构的思想起源 |
-| [GitHub: MemPalace](https://github.com/milla-jovovich/mempalace) | 项目源码与最新动态 |
+| [GitHub: MemPalace](https://github.com/MemPalace/mempalace) | 项目源码与最新动态 |
 
 ---
 
