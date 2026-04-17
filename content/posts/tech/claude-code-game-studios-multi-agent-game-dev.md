@@ -1,14 +1,14 @@
 ---
-title: "Claude Code Game Studios：10K Stars的多Agent游戏开发工作室——49个AI角色、72个技能、12个钩子的完整游戏开发工作流"
+title: "Claude Code Game Studios：11.5K Stars的多Agent游戏开发工作室——49个AI角色、72个技能、12个钩子的完整游戏开发工作流"
 date: 2026-04-16T01:40:00+08:00
 slug: "claude-code-game-studios-multi-agent-game-dev"
-description: "Claude Code Game Studios是10K Stars的开源项目，将Claude Code转变为完整的游戏开发工作室。49个AI agents（导演/主程/美术总监）、72个技能（设计/开发/测试/发布）、12个钩子自动化验证。"
+description: "Claude Code Game Studios是11.5K Stars的开源项目，将Claude Code转变为完整的游戏开发工作室。49个AI agents（导演/主程/美术总监）、72个技能（设计/开发/测试/发布）、12个钩子自动化验证。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 ---
 
-# Claude Code Game Studios：10K Stars的多Agent游戏开发工作室——49个AI角色、72个技能、12个钩子的完整游戏开发工作流
+# Claude Code Game Studios：11.5K Stars的多Agent游戏开发工作室——49个AI角色、72个技能、12个钩子的完整游戏开发工作流
 
 > **目标读者**：独立游戏开发者、AI应用研究者、软件开发团队、对多Agent系统感兴趣的任何人
 > **预计阅读时间**：45-60分钟
