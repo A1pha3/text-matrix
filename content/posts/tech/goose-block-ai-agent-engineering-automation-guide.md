@@ -10,7 +10,7 @@ tags: ["AI Agent", "工程自动化", "Rust", "MCP", "开源"]
 
 # Goose：aaif-goose 出品的本地可扩展 AI 工程自动化 Agent 完全指南
 
-> 项目地址：[block/goose](https://github.com/block/goose)
+> 项目地址：[aaif-goose/goose](https://github.com/aaif-goose/goose)
 >
 > 今日Star：42.3k（+0）| Forks：4.3k | Releases：126 | License：Apache-2.0
 >
@@ -165,7 +165,7 @@ mcpServers:
 brew install block/tap/goose
 
 # 或下载 DMG 安装包
-# https://github.com/block/goose/releases
+# https://github.com/aaif-goose/goose/releases
 ```
 
 #### Windows
@@ -181,7 +181,7 @@ winget install Block.goose
 
 ```bash
 # 使用 apt 安装
-curl -fsSL https://raw.githubusercontent.com/block/goose/main/download_cli.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aaif-goose/goose/main/download_cli.sh | bash
 
 # 或手动下载 .deb/.rpm 包
 ```
@@ -190,7 +190,7 @@ curl -fsSL https://raw.githubusercontent.com/block/goose/main/download_cli.sh | 
 
 ```bash
 # 安装 CLI 版本
-npm install -g @block/goose-cli
+npm install -g @aaif/goose-cli
 
 # 验证安装
 goose --version
@@ -636,8 +636,8 @@ Goose 代表了 **AI 编程助手的下一代范式**——从代码建议进化
 ---
 
 **相关链接：**
-- GitHub：https://github.com/block/goose
+- GitHub：https://github.com/aaif-goose/goose
 - 官方文档：https://goose-docs.ai/docs
 - 快速开始：https://goose-docs.ai/docs/quickstart
 - Discord：https://discord.gg/goose-oss
-- Custom Distributions：https://github.com/block/goose/blob/main/CUSTOM_DISTROS.md
+- Custom Distributions：https://github.com/aaif-goose/goose/blob/main/CUSTOM_DISTROS.md
