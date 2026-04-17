@@ -11,8 +11,8 @@ extraMetadata:
   language: javascript
   version: "1.0.0"
   repo: https://github.com/EvoMap/evolver
-  stars: 3275
-  forks: 349
+  stars: 3862
+  forks: 392
   updated_date: "2026-04-17"
 ---
 
