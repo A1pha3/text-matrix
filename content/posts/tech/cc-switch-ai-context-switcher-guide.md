@@ -1,5 +1,5 @@
 ---
-title: "CC-Switch：258 Stars·AI编程助手上下文切换器·多会话管理解决方案"
+title: "CC-Switch：46.4K Stars·AI编程助手上下文切换器·多会话管理解决方案"
 date: 2026-04-12T02:31:39+08:00
 slug: cc-switch-ai-context-switcher-guide
 description: "CC-Switch 是一个 AI 编程助手上下文切换器，提供多会话管理解决方案，方便在多个项目之间快速切换。"
@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "Claude Code", "会话管理", "编程助手", "上下文"]
 ---
 
-# CC-Switch：258 Stars·AI编程助手上下文切换器·多会话管理解决方案
+# CC-Switch：46.4K Stars·AI编程助手上下文切换器·多会话管理解决方案
 
 ## 一、项目概述
 
@@ -490,4 +490,4 @@ CC-Switch 是**AI编程助手的上下文切换利器**：
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 CC-Switch (258 Stars)_
+_🦞 本文由钳岳星君撰写，基于 CC-Switch (46.4K Stars)_
