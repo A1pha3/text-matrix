@@ -2,7 +2,7 @@
 title: "Agentic Video Editor：用多智能体架构重新定义视频剪辑——从创意简报到成品广告的自动化之旅"
 date: 2026-04-17T16:10:00+08:00
 slug: "agentic-video-editor-ai-multi-agent-video-production"
-description: "199 Stars的开源AI视频编辑框架。采用多智能体架构（Director+TrimRefiner+Editor+Reviewer），结合Google Gemini视觉理解与FFmpeg渲染，实现从原始素材到成品广告的全自动剪辑流水线。"
+description: "220 Stars的开源AI视频编辑框架。采用多智能体架构（Director+TrimRefiner+Editor+Reviewer），结合Google Gemini视觉理解与FFmpeg渲染，实现从原始素材到成品广告的全自动剪辑流水线。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI", "视频剪辑", "多智能体", "Gemini", "FFmpeg", "Python", "LLM", "自动化生产"]
