@@ -2,7 +2,7 @@
 title: "Easy-langent：158 Stars的LangChain/LangGraph学习教程——Datawhale出品从入门到实战"
 date: 2026-04-18T18:25:00+08:00
 slug: "easy-langent-langchain-langgraph-tutorial"
-description: "Easy-langent是Datawhale出品的158 Stars开源教程，专注解决LangChain/LangGraph入门难题。8章递进式内容覆盖框架认知→组件实操→多智能体协作→综合实战，配套"谁是卧底"等实战项目。"
+description: "Easy-langent是Datawhale出品的158 Stars开源教程，专注解决LangChain/LangGraph入门难题。8章递进式内容覆盖框架认知→组件实操→多智能体协作→综合实战，配套谁是卧底等实战项目。"
 draft: false
 categories: ["技术笔记"]
 tags: ["LangChain", "LangGraph", "AI Agent", "LLM", "Python", "教程", "Datawhale"]
