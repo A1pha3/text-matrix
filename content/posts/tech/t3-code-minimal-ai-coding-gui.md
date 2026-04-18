@@ -128,12 +128,10 @@ T3 Code提供详细的观测能力，帮助用户理解AI的工作过程：
 
 **步骤1：安装AI提供商CLI**
 
-以Claude为例：
+以Claude为例（参考官方文档安装）：
 ```bash
-# 安装Claude Code CLI
-npm install -g @anthropic/claude-code
-
-# 认证
+# Claude Code CLI安装方式请参考
+# https://docs.anthropic.com/claude-code
 claude auth login
 ```
 
@@ -212,13 +210,14 @@ bun run electron:start
 
 ```
 t3code/
-├── src/
-│   ├── main/          # Electron主进程
-│   ├── renderer/      # React前端
-│   └── shared/        # 共享类型和工具
-├── docs/              # 文档
+├── src/               # 源代码目录
+├── docs/              # 文档目录
+├── electron/          # Electron相关
+├── web/              # Web前端
 └── package.json
 ```
+
+*注：具体项目结构请参考GitHub仓库的实际目录。*
 
 ### 5.3 项目状态
 

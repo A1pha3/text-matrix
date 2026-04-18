@@ -255,43 +255,68 @@ PagerDuty是商业SaaS，侧重告警管理和值班调度。OpenSRE是开源框
 
 ### 前置条件
 
-- Docker已安装
+- Docker已安装（用于运行测试环境）
 - 至少4GB可用内存
 - Linux/macOS系统（Windows通过WSL）
+- AWS账号（用于E2E测试，如需）
 
-### 步骤
+### 详细步骤
 
-**1. 安装OpenSRE**
+**Step 1：安装OpenSRE CLI**
 ```bash
+# Linux/macOS
 curl -fsSL https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.sh | bash
+
+# 或使用Homebrew
+brew install Tracer-Cloud/opensre/opensre
 ```
 
-**2. 验证安装**
+**Step 2：验证安装**
 ```bash
+# 检查版本
 opensre --version
+
+# 查看帮助
 opensre --help
 ```
 
-**3. 运行示例测试**
+**Step 3：查看可用测试**
 ```bash
-# 查看可用测试（参考官方文档确认命令）
-opensre test --help
+# 列出所有测试套件
+opensre list  # 或参考官方文档确认命令
 
-# 运行一个简单测试
-opensre test synthetic/rds_postgres
+# 查看特定类型的测试
+opensre list synthetic
+opensre list e2e
 ```
 
-**4. 分析结果**
-测试报告会输出：
-- 根因定位准确性评分
-- 证据收集完整性
-- 处理时间和效率
+**Step 4：运行Synthetic RCA测试**
+```bash
+# 运行Postgres相关测试（示例）
+# 具体命令请参考官方文档
+opensre test synthetic/pg_basic
+
+# 查看测试输出
+# 关注：根因分析准确性、证据完整性、处理时间
+```
+
+**Step 5：分析测试报告**
+测试报告会包含：
+- **根因准确性**：AI是否准确定位到真正的问题根因
+- **证据完整性**：是否收集了足够的证据支持结论
+- **效率指标**：处理时间和资源消耗
 
 ### 验证标准
 - [ ] 成功安装OpenSRE CLI
-- [ ] 能够列出可用测试
+- [ ] `opensre --version` 显示版本号
+- [ ] 能够列出可用测试套件
 - [ ] 测试套件运行完成
-- [ ] 理解测试报告的结构
+- [ ] 理解测试报告的评分维度
+
+### 进阶挑战
+- 尝试运行E2E Cloud测试（需要云账号）
+- 分析测试报告，识别AI Agent的弱点
+- 参考官方文档，编写自定义测试场景
 
 ---
 
