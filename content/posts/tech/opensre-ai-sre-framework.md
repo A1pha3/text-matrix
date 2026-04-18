@@ -226,9 +226,76 @@ opensre benchmark --report
 | **PagerDuty + AI** | 商业服务、闭环集成 | 已使用PagerDuty的团队 |
 | **自制方案** | 完全可控 | 有自研能力的团队 |
 
+### FAQ
+
+**Q1: OpenSRE与PagerDuty有何不同？**
+PagerDuty是商业SaaS，侧重告警管理和值班调度。OpenSRE是开源框架，侧重AI自动调查和根因分析。两者可互补使用。
+
+**Q2: 支持哪些云平台？**
+当前版本主要支持AWS（EC2/Lambda/RDS等）。其他云平台的支持正在开发中。
+
+**Q3: 如何确保数据安全？**
+- 所有数据处理在自有基础设施上完成
+- 支持私有化部署
+- 不需要将敏感日志上传到第三方
+
+**Q4: 如何评估Agent效果？**
+通过Synthetic RCA测试套件评估。测试套件提供标准化的评分标准，包括根因准确性、证据完整性和处理效率。
+
+**Q5: 如何参与贡献？**
+参考GitHub上的CONTRIBUTING.md。目前项目处于alpha阶段，API可能变化，贡献前请先讨论。
+
 ---
 
-## §8 相关资源
+## §8 练习：运行第一个Synthetic测试
+
+### 练习目标
+
+在本地环境运行OpenSRE的Synthetic RCA测试套件
+
+### 前置条件
+
+- Docker已安装
+- 至少4GB可用内存
+- Linux/macOS系统（Windows通过WSL）
+
+### 步骤
+
+**1. 安装OpenSRE**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.sh | bash
+```
+
+**2. 验证安装**
+```bash
+opensre --version
+opensre --help
+```
+
+**3. 运行示例测试**
+```bash
+# 查看可用测试
+opensre list-tests
+
+# 运行一个简单测试
+opensre test --suite synthetic/rds_postgres
+```
+
+**4. 分析结果**
+测试报告会输出：
+- 根因定位准确性评分
+- 证据收集完整性
+- 处理时间和效率
+
+### 验证标准
+- [ ] 成功安装OpenSRE CLI
+- [ ] 能够列出可用测试
+- [ ] 测试套件运行完成
+- [ ] 理解测试报告的结构
+
+---
+
+## §9 相关资源
 
 - [GitHub仓库](https://github.com/Tracer-Cloud/opensre)
 - [官方文档](https://www.opensre.com/docs)

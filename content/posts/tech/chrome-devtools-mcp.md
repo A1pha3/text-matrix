@@ -303,54 +303,76 @@ AI → MCP → Chrome → CrUX数据 + 运行时追踪 → 性能报告
 
 ## §7 开发扩展：基于Chrome DevTools MCP构建
 
-### 7.1 MCP协议扩展
+### 7.1 MCP协议扩展思路
 
-如果你想扩展Chrome DevTools MCP的功能：
+Chrome DevTools MCP作为标准MCP服务器，可以与其他MCP工具链配合使用：
 
-```typescript
-// 自定义MCP工具示例
-import { ChromeBridge } from 'chrome-devtools-mcp';
-
-const bridge = new ChromeBridge({
-  browserUrl: 'http://127.0.0.1:9222'
-});
-
-// 添加自定义工具
-bridge.registerTool({
-  name: 'takeElementScreenshot',
-  description: '截取特定元素的截图',
-  execute: async (selector: string) => {
-    const element = await bridge.page.waitForSelector(selector);
-    return await element.screenshot();
+**组合使用示例**：
+```json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/project"]
+    }
   }
-});
+}
 ```
 
-### 7.2 与测试框架集成
+**扩展思路**：
+- 结合文件系统MCP，让AI直接读取项目代码并操控浏览器测试
+- 结合数据库MCP，在浏览器中验证数据库状态
+- 结合API工具MCP，自动调用后端接口并验证浏览器响应
 
-**Jest集成示例**：
-```javascript
-// chrome.test.js
-const { chrome } = require('chrome-devtools-mcp');
+### 7.2 自动化测试集成
 
-test('页面加载成功', async () => {
-  const bridge = await chrome.launch();
-  await bridge.page.goto('https://example.com');
-  
-  const title = await bridge.page.title();
-  expect(title).toBe('Example Domain');
-});
+在实际项目中，可以将Chrome DevTools MCP与CI/CD流程结合：
+
+```yaml
+# GitHub Actions示例
+- name: Run E2E tests with Chrome
+  run: |
+    npx chrome-devtools-mcp --headless &
+    sleep 5
+    # 运行测试
+    npx playwright test
 ```
 
-### 7.3 自定义性能分析
+### 7.3 自定义性能监控
 
-```typescript
-// 使用CrUX API获取真实用户数据
-const cruxData = await bridge.performance.getCruxData({
-  url: 'https://example.com',
-  metrics: ['LCP', 'FID', 'CLS']
-});
+将Chrome DevTools的性能数据接入监控系统：
+
+```bash
+# 导出性能追踪数据
+chrome-devtools-mcp trace --output ./trace.json
+
+# 分析trace文件
+npx @ Chrome/devtools-frontend-front_end/...
 ```
+
+### 7.4 练习：构建自动化UI测试
+
+**练习目标**：使用Chrome DevTools MCP为示例网页构建端到端测试
+
+**步骤**：
+1. 配置Chrome DevTools MCP到你的AI编程助手
+2. 启动浏览器并打开目标页面
+3. 让AI执行以下操作：
+   - 截取登录页面截图
+   - 填写登录表单（用户名/密码）
+   - 点击登录按钮
+   - 验证登录成功后的页面元素
+4. 将AI的操作记录转换为可重复运行的测试脚本
+
+**验证标准**：
+- [ ] 截图清晰包含目标元素
+- [ ] 表单填写正确
+- [ ] 登录后能获取到预期内容
+- [ ] 测试可重复运行
 
 ---
 
