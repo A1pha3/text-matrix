@@ -257,10 +257,10 @@ npm config set registry https://registry.npmmirror.com
 
 **离线使用**：
 ```bash
-# 下载包到本地
-npm pack chrome-devtools-mcp
+# 下载T3到本地
+npm pack t3
 # 手动安装
-npm install ./chrome-devtools-mcp-*.tgz
+npm install ./t3-*.tgz
 ```
 
 ### 6.3 调试技巧

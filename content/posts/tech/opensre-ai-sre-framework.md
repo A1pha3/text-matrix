@@ -166,30 +166,30 @@ irm https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.ps1 | ie
 
 ### 5.2 快速命令
 
-**首次引导**：
+**首次引导**（参考官方文档确认命令）：
 ```bash
-opensre onboard
+opensre --help  # 查看可用命令
 ```
 
-**调查事故**：
+**调查事故**（参考官方文档确认用法）：
 ```bash
-opensre investigate -i tests/e2e/kubernetes/fixtures/datadog_k8s_alert.json
+opensre investigate --help
 ```
 
 **更新**：
 ```bash
-opensre update
+opensre update  # 检查并更新版本
 ```
 
 ### 5.3 Railway部署
 
-Railway部署需要：
+Railway部署需要（参考官方部署文档确认具体要求）：
 - Postgres服务
 - Redis服务
-- 环境变量`DATABASE_URI`和`REDIS_URI`
+- 相关环境变量配置
 
 ```bash
-opensre deploy railway
+opensre deploy --help  # 查看部署选项
 ```
 
 ---
@@ -211,9 +211,9 @@ opensre test --suite synthetic/rds_postgres
 
 ### 6.3 持续评估
 
-建立CI/CD pipeline，定期评估Agent表现：
+建立CI/CD pipeline，定期评估Agent表现（参考官方文档确认命令）：
 ```bash
-opensre benchmark --report
+opensre benchmark --help  # 查看评估选项
 ```
 
 ---
@@ -274,11 +274,11 @@ opensre --help
 
 **3. 运行示例测试**
 ```bash
-# 查看可用测试
-opensre list-tests
+# 查看可用测试（参考官方文档确认命令）
+opensre test --help
 
 # 运行一个简单测试
-opensre test --suite synthetic/rds_postgres
+opensre test synthetic/rds_postgres
 ```
 
 **4. 分析结果**
