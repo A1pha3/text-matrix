@@ -307,3 +307,9 @@
   feishu: AfXedR1AzoRSy7xrAe7ck2VlnMg
   tags: [AI, LLM, Agent, Prompt Engineering, MCP, RAG]
 
+- file: chrome-devtools-mcp-ai-coding-agents-guide.md
+  title: chrome-devtools-mcp 完全指南：让 AI 编程助手掌控 Chrome DevTools
+  date: 2026-04-18
+  commit: abc3fef
+  tags: [MCP, Chrome DevTools, Puppeteer, AI Agent, 浏览器自动化]
+
