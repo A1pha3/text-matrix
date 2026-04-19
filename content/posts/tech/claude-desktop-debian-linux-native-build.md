@@ -741,6 +741,100 @@ flowchart LR
 
 ---
 
+
+
+### 🛡️ 安全最佳实践
+
+```mermaid
+flowchart TD
+    START["🔐 Claude Desktop安全配置"] --> LAYERS[多层安全]
+    
+    LAYERS --> L1[操作系统层]
+    LAYERS --> L2[应用层]
+    LAYERS --> L3[网络层]
+    LAYERS --> L4[数据层]
+    
+    L1 --> S1["✅ 最小化安装
+✅ 定期更新
+✅ SELinux/AppArmor"]
+    
+    L2 --> S2["✅ Cowork Mode隔离
+✅ bwrap沙箱
+✅ 限制文件访问"]
+    
+    L3 --> S3["✅ 防火墙配置
+✅ VPN连接
+✅ TLS加密"]
+    
+    L4 --> S4["✅ 敏感数据加密
+✅ 定期备份
+✅ 安全删除"]
+    
+    style START fill:#d1fae5,stroke:#10b981
+    style LAYERS fill:#dbeafe,stroke:#3b82f6
+    style S1 fill:#d1fae5,stroke:#10b981
+    style S2 fill:#fef3c7,stroke:#f59e0b
+    style S3 fill:#fef3c7,stroke:#f59e0b
+    style S4 fill:#fecaca,stroke:#ef4444
+```
+
+**安全配置检查清单**：
+
+| 检查项 | 推荐配置 | 原因 |
+|--------|----------|------|
+| **Cowork Mode** | 启用 | 隔离AI执行环境 |
+| **bwrap权限** | 最小权限 | 限制系统访问 |
+| **文件访问** | 按需授权 | 防止数据泄露 |
+| **网络隔离** | VPN+防火墙 | 防止网络攻击 |
+| **数据加密** | LUKS/dm-crypt | 防止物理访问 |
+| **自动更新** | 启用 | 修补安全漏洞 |
+
+### ⚡ 性能优化指南
+
+**资源占用对比**：
+
+| 配置 | 内存占用 | CPU占用 | 启动时间 |
+|------|----------|---------|----------|
+| **标准模式** | 800MB-1.5GB | 2-5% | 10-15s |
+| **轻量模式** | 400-600MB | 1-3% | 8-10s |
+| **性能模式** | 1.5-2.5GB | 5-10% | 15-20s |
+
+**优化建议**：
+
+| 场景 | 优化措施 | 效果 |
+|------|----------|------|
+| 低配机器 | 禁用动画、降低画质 | 内存-30% |
+| 快速启动 | 禁用不必要的MCP | 启动+30% |
+| 大文件处理 | 增加bwrap内存限制 | 避免OOM |
+| 长时间运行 | 定期重启清理缓存 | 内存稳定 |
+
+### 📦 各发行版安装速查
+
+```bash
+# Debian/Ubuntu (APT)
+sudo apt update && sudo apt install wget gpg
+wget -qO- https://aaddrick.github.io/KEY.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/claude-desktop.gpg
+echo "deb [signed-by=/usr/share/keyrings/claude-desktop.gpg] https://aaddrick.github.io stable main" | sudo tee /etc/apt/sources.list.d/claude-desktop.list
+sudo apt update && sudo apt install claude-desktop
+
+# Fedora (DNF)
+sudo dnf install -y dnf-plugins-core
+sudo rpm --import https://aaddrick.github.io/KEY.gpg
+sudo curl -fsSL https://aaddrick.github.io/rpm/claude-desktop.repo | sudo tee /etc/yum.repos.d/claude-desktop.repo
+sudo dnf install claude-desktop
+
+# Arch Linux (AUR with paru)
+paru -S claude-desktop-bin
+
+# NixOS
+nix-shell -p claude-desktop --run claude-desktop
+
+# openSUSE
+sudo zypper addrepo https://aaddrick.github.io/rpm/claude-desktop.repo
+sudo zypper install claude-desktop
+```
+
+
 ## 相关资源
 
 - **GitHub仓库**：https://github.com/aaddrick/claude-desktop-debian
