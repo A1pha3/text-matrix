@@ -5,7 +5,7 @@ slug: "deepgemm-high-performance-fp8-gemm-kernels"
 description: "DeepGEMM是DeepSeek开源的6577 Stars CUDA内核库，提供清洁高效的高性能GEMM计算（FP8/FP4/BF16）、融合MoE、Lightning索引MQA评分、HyperConnection等核心原语。在H800上实现1550 TFLOPS性能，采用轻量级JIT编译设计，无需CUDA编译即可安装运行。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GPU", "CUDA", "GEMM", "FP8", "DeepSeek", "高性能计算", "神经网络", "LLM"]
+tags: ["GPU", "CUDA", "FP8", "高性能计算", "LLM"]
 ---
 
 # DeepGEMM：深势科技6577 Stars的高性能FP8 GEMM内核库——从入门到精通

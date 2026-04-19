@@ -5,7 +5,7 @@ slug: "rustdesk-open-source-remote-desktop"
 description: "全面解析 RustDesk：Rust 语言编写的开源远程桌面解决方案，112k Stars 的爆款项目。详解架构设计、P2P连接原理、中继服务器部署、自托管方案与开发扩展。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "远程桌面", "开源", "TeamViewer替代", "P2P", "自托管"]
+tags: ["Rust", "远程桌面", "P2P", "开源", "自托管"]
 ---
 
 > **目标读者**：需要远程桌面解决方案的个人开发者、中小企业IT管理员、重视数据隐私的用户，以及对Rust语言应用感兴趣的开发者。

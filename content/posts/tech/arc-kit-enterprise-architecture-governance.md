@@ -5,7 +5,7 @@ slug: "arc-kit-enterprise-architecture-governance"
 description: "ArcKit是785 Stars的开源企业架构治理工具包,提供68个AI辅助命令支持完整架构生命周期:原则制定、利益相关者分析、风险评估(HM Treasury Orange Book)、业务论证(HM Treasury Green Book SOBC)、需求定义、数据建模、DPIA合规、供应商调研与采购、平台设计Wardley图等。集成Claude Code/Gemini CLI/Copilot/Codex四大平台。"
 draft: false
 categories: ["技术笔记"]
-tags: ["企业架构", "AI辅助", "供应商采购", "UK政府合规", "WardleyMapping", "Mermaid", "TCOP", "GDPR", "DPIA"]
+tags: ["企业架构", "AI辅助", "WardleyMapping", "Mermaid"]
 ---
 
 # ArcKit:785 Stars的企业架构治理与供应商采购工具包--从入门到精通
