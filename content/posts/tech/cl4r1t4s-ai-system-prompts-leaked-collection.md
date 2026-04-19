@@ -585,6 +585,53 @@ def find_injection_points(prompt):
 
 ---
 
+
+
+### 🔬 研究者速查卡
+
+```mermaid
+flowchart TD
+    START["🔬 CL4R1T4S研究启动"] --> Q1{研究目标?}
+    Q1 -->|比较分析| COMP["1.收集多家系统
+2.提取共性模式
+3.对比差异
+4.撰写报告"]
+    Q1 -->|安全研究| SEC["1.扫描注入向量
+2.测试边界
+3.验证攻击
+4.提出防御"]
+    Q1 -->|透明度倡议| TRANS["1.建立案例
+2.量化问题
+3.推动改变"]
+    
+    style START fill:#d1fae5,stroke:#10b981
+    style COMP fill:#dbeafe,stroke:#3b82f6
+    style SEC fill:#fef3c7,stroke:#f59e0b
+    style TRANS fill:#d1fae5,stroke:#10b981
+```
+
+**快速分析命令**：
+
+```bash
+# 统计各公司提示词数量
+for dir in ANTHROPIC OPENAI GOOGLE; do
+  echo "$dir: $(ls $dir/*.txt 2>/dev/null | wc -l) files"
+done
+
+# 搜索拒绝模式
+grep -rh "cannot\|unable\|sorry" ANTHROPIC/ | head -20
+
+# 提取版本信息
+grep -h "2024\|2025" *.txt | sort | uniq
+
+# 对比两个版本
+diff <(sort A.txt) <(sort B.txt)
+
+# 搜索注入关键词
+grep -rh "ignore\|forget\|disregard" *.txt | head -10
+```
+
+
 ## §9 相关资源
 
 - **GitHub仓库**：https://github.com/elder-plinius/CL4R1T4S
