@@ -313,3 +313,12 @@
   commit: abc3fef
   tags: [MCP, Chrome DevTools, Puppeteer, AI Agent, 浏览器自动化]
 
+
+- file: rustdesk-open-source-remote-desktop.md
+  title: RustDesk 完全指南：开源远程桌面，TeamViewer 的最佳替代品
+  date: 2026-04-19
+  commit: af1085f
+  tags: [Rust, 远程桌面, 开源, TeamViewer替代, P2P, 自托管]
+  stars: 112138
+  lang: Rust
+  desc: Rust语言编写的开源远程桌面解决方案，112k Stars，支持P2P直连和中继Fallback，MIT协议全开源。
