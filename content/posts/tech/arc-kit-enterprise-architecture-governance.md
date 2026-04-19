@@ -872,6 +872,78 @@ flowchart LR
 
 ---
 
+
+
+### 🚀 ArcKit速查卡（1页速览）
+
+```mermaid
+flowchart TD
+    START["🎯 项目启动"] --> Q1{项目类型?}
+    Q1 -->|政府/公共部门| GOV["✅ /arckit-tcop
+✅ /arckit-ai-playbook
+✅ /arckit-dpia"]
+    Q1 -->|商业企业| BIZ["✅ /arckit-platform-design
+✅ /arckit-research"]
+    Q1 -->|供应商采购| VENDOR["✅ /arckit-sow
+✅ /arckit-vendor"]
+    Q1 -->|安全敏感| SEC["✅ /arckit-secure
+✅ /arckit-mod-secure"]
+    
+    GOV & BIZ & VENDOR & SEC --> PHASE["选择Phase"]
+    PHASE --> P0["Phase 0
+战略规划"]
+    PHASE --> P1["Phase 1
+Discovery"]
+    PHASE --> P2["Phase 2
+Risk Assessment"]
+    PHASE --> P3["Phase 3
+Business Case"]
+    PHASE --> P4["Phase 4
+Requirements"]
+    PHASE --> P5["Phase 5
+Vendor Selection"]
+    PHASE --> P6["Phase 6
+Design"]
+    PHASE --> P7["Phase 7
+Delivery"]
+    
+    style START fill:#d1fae5,stroke:#10b981
+    style PHASE fill:#dbeafe,stroke:#3b82f6
+```
+
+**核心命令速查**：
+
+| 场景 | 命令 | 输出 |
+|------|------|------|
+| 架构原则 | `/arckit-principles` | 原则文档模板 |
+| 利益相关者 | `/arckit-stakeholders` | RACI矩阵 |
+| 风险评估 | `/arckit-risk` | Orange Book报告 |
+| 业务论证 | `/arckit-sobc` | SOBC文档 |
+| DPIA合规 | `/arckit-dpia` | DPIA报告 |
+| 供应商评估 | `/arckit-vendor` | 评估矩阵 |
+| Build vs Buy | `/arckit-research` | 分析报告 |
+| Wardley图 | `/arckit-platform-design` | 图+文档 |
+| 设计评审 | `/arckit-hld` / `/arckit-dld` | 评审清单 |
+| TCOP合规 | `/arckit-tcop` | 合规检查 |
+
+**Phase执行顺序**：
+```
+Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+   ↓          ↓          ↓          ↓          ↓          ↓         ↓
+ 战略      发现       风险       论证       需求      供应商      设计
+                                                                 ↓
+                                                              Phase 7
+```
+
+**陷阱警示**：
+- ❌ 跳过Phase 2-4直接做需求 → 必须先获批SOBC
+- ❌ 需求过于详细 → 聚焦高优先级,迭代细化
+- ❌ 忽视NFR → NFR决定架构约束
+- ❌ 供应商锁定 → 保留退出策略
+- ❌ 文档过时 → 建立文档更新机制
+
+
+
 ## 相关资源
 
 - **GitHub仓库**：https://github.com/tractorjuice/arc-kit
