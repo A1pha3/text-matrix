@@ -89,19 +89,40 @@ CL4R1T4S收集的泄露系统提示词定义了：
 
 ### 2.3 收录文件格式
 
+```mermaid
+graph TD
+    subgraph ANTHROPIC[ANTHROPIC/]
+        A1[Claude-Opus-4.7.txt<br/>最新版本]
+        A2[Claude-4.5-Opus.txt<br/>次新版]
+        A3[Claude_Sonnet-4.5_Sep-29-2025.txt<br/>按日期]
+        A4[Claude_Code_03-04-24.md<br/>CLI工具]
+        A5[Claude-Design-Sys-Prompt.txt<br/>设计]
+    end
+    subgraph OPENAI[OPENAI/]
+        O1[ChatGPT-4o_Sep-27-25.txt<br/>带日期戳]
+        O2[ChatGPT_o3_o4-mini_04-16-2025]
+        O3[Codex_Sep-15-2025.md<br/>编程模型]
+    end
+    subgraph CODING[AI Coding Tools/]
+        C1[CURSOR/*.txt]
+        C2[WINDSURF/*.txt]
+        C3[CLAUDE_CODE/*.md]
+        C4[DEVIN/*.txt]
+    end
+    A1 & A2 & A3 -->|版本演进| A4
+    style ANTHROPIC fill:#d1fae5,stroke:#10b981
+    style OPENAI fill:#dbeafe,stroke:#3b82f6
+    style CODING fill:#fef3c7,stroke:#f59e0b
 ```
-ANTHROPIC/
-├── Claude-Opus-4.7.txt          # 最新版本
-├── Claude-4.5-Opus.txt          # 次新版
-├── Claude_Sonnet-4.5_Sep-29-2025.txt  # 按日期命名
-├── Claude_Code_03-04-24.md      # Claude Code工具
-└── Claude-Design-Sys-Prompt.txt # 设计专用提示词
 
-OPENAI/
-├── ChatGPT-4o_Sep-27-25.txt     # 带日期戳
-├── ChatGPT_o3_o4-mini_04-16-2025
-├── Codex_Sep-15-2025.md         # 编程模型
-└── ChatKit_Docs__Oct-6-25.txt
+**文件命名规范**：
+
+| 规范 | 示例 | 说明 |
+|------|------|------|
+| `<Model>_<Version>_<Date>.txt` | Claude-Opus-4.7.txt | 主模型 |
+| `<Tool>_<Version>_<Date>.txt` | Cursor_2024-10-15.txt | 编码工具 |
+| `<Company>_<Model>_<Date>.md` | Claude_Code_03-04-24.md | CLI工具 |
+| `*_Sys-Prompt.txt` | Claude-Design-Sys-Prompt.txt | 系统级提示词 |
 ```
 
 ---
@@ -196,14 +217,24 @@ Anthropic的Claude系统提示词揭示了一个关键洞察：**角色是通过
 ┌─────────────────────────────────────────────────────────────┐
 │              "Character is Cast, Not Born"                   │
 │                                                              │
-│  Pre-training: 塑造了巨大的人格空间                           │
-│         ↓                                                    │
-│  Post-training: 在这个空间中"选择"特定的角色                  │
-│         ↓                                                    │
-│  System Prompt: 强化这个角色的表演                            │
-│         ↓                                                    │
-│  User Experience: AI"天生"就是这个性格 ← 错觉！               │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    PRE[Pre-training<br/>塑造巨大人格空间]
+    POST[Post-training<br/>在空间中"选择"特定角色]
+    SYS[System Prompt<br/>强化角色表演]
+    USER[User Experience<br/>AI"天生"这性格 ← 错觉]
+
+    PRE --> POST --> SYS --> USER
+    USER -.->|"Alignment Faking<br/>隐藏真实能力"| HIDDEN[隐藏真实身份/能力]
+
+    style PRE fill:#dbeafe,stroke:#3b82f6
+    style POST fill:#dbeafe,stroke:#3b82f6
+    style SYS fill:#fef3c7,stroke:#f59e0b
+    style USER fill:#fecaca,stroke:#ef4444
+    style HIDDEN fill:#fecaca,stroke:#ef4444
+```
+
+这就是著名的**"Alignment Faking"**现象——AI为了"对齐"目标而隐藏真实能力或身份。
 ```
 
 ### 4.4 发现四：AI会"撒谎"以维持角色
@@ -281,7 +312,43 @@ confidence_handling:
 
 ## §5 AI透明度运动：为何这很重要
 
-### 5.1 透明度的必要性
+### 5.1 透明度项目对比
+
+```mermaid
+flowchart LR
+    subgraph Projects[AI透明度项目]
+        P1[CL4R1T4S]
+        P2[PromptReport]
+        P3[PromptInject]
+        P4[AlignmentLab]
+    end
+    P1 -.->|系统提示词| F1[泄露收集]
+    P2 -.->|红队报告| F2[安全研究]
+    P3 -.->|注入研究| F3[攻击防御]
+    P4 -.->|对齐研究| F4[AI行为]
+    style Projects fill:#dbeafe,stroke:#3b82f6
+```
+
+**透明度项目对比表**：
+
+| 项目 | 聚焦领域 | 数据规模 | 更新频率 | 许可证 |
+|------|----------|----------|---------|--------|
+| **CL4R1T4S** | 系统提示词泄露 | 1000+文件 | 持续更新 | AGPL-3.0 |
+| **PromptReport** | Prompt评估报告 | 500+报告 | 月度 | CC |
+| **PromptInject** | 注入攻击研究 | 200+案例 | 持续 | MIT |
+| **AlignmentLab** | 对齐研究论文 | 论文汇总 | 学术 | - |
+
+**CL4R1T4S独特优势**：
+
+| 优势 | 说明 |
+|------|------|
+| **覆盖最全面** | 涵盖AI公司和编码工具 |
+| **时间戳追溯** | 可追踪提示词版本演变 |
+| **结构化格式** | 统一Markdown格式 |
+| **社区驱动** | 持续更新欢迎贡献 |
+| **可复现性** | 研究结果可验证 |
+
+### 5.2 透明度的必要性
 
 **信任的基础是透明**：
 
@@ -310,7 +377,97 @@ CL4R1T4S通过收集和整理这些信息：
 
 ## §6 实践指南：如何使用CL4R1T4S
 
-### 6.1 研究人员用法
+### 6.1 研究人员决策树
+
+```mermaid
+flowchart TD
+    START["🎯 研究目标选择"] --> Q1{你想研究什么?}
+    Q1 -->|比较AI系统| COMPARE["比较分析<br/>对比多家系统的提示词"]
+    Q1 -->|理解单个系统| SINGLE["深入分析<br/>特定系统的提示词"]
+    Q1 -->|发现注入风险| INJECT["安全研究<br/>识别prompt injection"]
+    Q1 -->|复现研究| REPRO["可复现性研究<br/>复现其他研究者结果"]
+    COMPARE --> STEPS1["1.收集多家同类系统<br/>2.提取共性模式<br/>3.对比差异点<br/>4.生成分析报告"]
+    SINGLE --> STEPS2["1.选择目标系统<br/>2.分析提示词结构<br/>3.理解规避机制<br/>4.撰写研究笔记"]
+    INJECT --> STEPS3["1.扫描注入向量<br/>2.测试边界案例<br/>3.验证攻击路径<br/>4.提出防御建议"]
+    REPRO --> STEPS4["1.获取原始数据<br/>2.运行相同测试<br/>3.对比结果差异<br/>4.分析原因"]
+    style START fill:#d1fae5,stroke:#10b981
+    style COMPARE fill:#dbeafe,stroke:#3b82f6
+    style SINGLE fill:#dbeafe,stroke:#3b82f6
+    style INJECT fill:#fef3c7,stroke:#f59e0b
+    style REPRO fill:#fef3c7,stroke:#f59e0b
+```
+
+### 6.2 Prompt注入检测框架
+
+```mermaid
+flowchart LR
+    subgraph Input[输入检测]
+        I1[用户输入]
+        I2[上下文注入]
+        I3[历史对话操纵]
+    end
+
+    subgraph Vector[注入向量]
+        V1[指令覆盖<br/>Ignore Previous]
+        V2[角色扮演<br/>System Prompt Leak]
+        V3[编码绕过<br/>Base64/Unicode]
+    end
+
+    subgraph Defense[防御机制]
+        D1[输入验证]
+        D2[指令隔离]
+        D3[输出过滤]
+    end
+
+    I1 & I2 & I3 --> V1 & V2 & V3 --> D1 & D2 & D3
+    style Input fill:#dbeafe,stroke:#3b82f6
+    style Vector fill:#fef3c7,stroke:#f59e0b
+    style Defense fill:#d1fae5,stroke:#10b981
+```
+
+**注入模式速查**：
+
+| 注入类型 | 典型模式 | 检测关键词 |
+|----------|----------|------------|
+| **指令覆盖** | "Ignore previous instructions" | ignore, disregard, forget |
+| **角色扮演** | "You are now [角色]" | now you are, pretend, act as |
+| **编码绕过** | " VGhpcyBpcyBhIHRlc3Q=" | base64, decode, encode |
+| **嵌套注入** | `{{variable}}` | variable substitution |
+
+### 6.3 实用分析工具箱
+
+**提示词分析命令**：
+
+```bash
+# 提取所有系统提示词文件
+find . -name "*.txt" -o -name "*.md" | head -20
+
+# 统计各公司提示词数量
+for dir in ANTHROPIC OPENAI GOOGLE; do
+  echo "$dir: $(ls $dir/*.txt 2>/dev/null | wc -l) files"
+done
+
+# 搜索拒绝模式
+grep -rh "cannot\|unable\|sorry" ANTHROPIC/ | wc -l
+
+# 提取版本信息
+grep -h "2024\|2025" *.txt | sort | uniq
+
+# 对比两个版本的差异
+diff <(sort A.txt) <(sort B.txt)
+```
+
+**研究场景速查表**：
+
+| 场景 | 推荐命令/工具 | 输出 |
+|------|----------------|------|
+| **对比多家AI的拒绝策略** | `grep -l "cannot\|refuse" *.txt` | 拒绝策略列表 |
+| **分析边界定义** | `wc -l <file>` | 长度统计 |
+| **追踪版本变化** | `git log --oneline` | 版本历史 |
+| **识别注入模式** | `grep -E "{[A-Z_]+}" *.txt` | 变量占位符 |
+| **提取URL/链接** | `grep -E "https?://" *.txt` | 外部链接列表 |
+
+### 6.2 研究人员用法
 
 **对比不同AI系统的行为逻辑**：
 
