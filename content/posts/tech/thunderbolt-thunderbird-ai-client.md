@@ -941,6 +941,104 @@ Thunderbolt由Mozilla Thunderbird团队开发，继承了Thunderbird的核心理
 
 ---
 
+
+
+### 🚀 快速配置决策树
+
+```mermaid
+flowchart TD
+    START["⚡ Thunderbolt快速配置"] --> Q1{你的隐私需求?}
+    Q1 -->|最高(医疗/法律)| HIGH["✅ 本地Ollama
+✅ E2E加密
+✅ 自托管"]
+    Q1 -->|中(企业用户)| MED["✅ OpenRouter
+✅ TLS传输
+✅ OIDC认证"]
+    Q1 -->|低(日常使用)| LOW["✅ 官方API
+✅ 快速上手"]
+    
+    HIGH --> E2E["配置E2E加密"]
+    MED --> OIDC["配置OIDC"]
+    LOW --> QUICK["直接配置API"]
+    
+    E2E --> VERIFY["验证加密"]
+    OIDC --> VERIFY
+    QUICK --> VERIFY
+    
+    VERIFY --> DONE["✅ 配置完成"]
+    
+    style START fill:#d1fae5,stroke:#10b981
+    style HIGH fill:#d1fae5,stroke:#10b981
+    style MED fill:#dbeafe,stroke:#3b82f6
+    style LOW fill:#fef3c7,stroke:#f59e0b
+```
+
+### ⚙️ 配置参考表
+
+**API提供商配置**：
+
+| 提供商 | 配置项 | 值示例 | 备注 |
+|--------|--------|--------|------|
+| **OpenAI** | `endpoint` | `https://api.openai.com/v1` | 官方API |
+| | `api_key` | `sk-...` | 必填 |
+| | `model` | `gpt-4-turbo` | 默认模型 |
+| **Anthropic** | `endpoint` | `https://api.anthropic.com` | 官方API |
+| | `api_key` | `sk-ant-...` | 必填 |
+| | `model` | `claude-3-5-sonnet` | 默认模型 |
+| **Ollama** | `endpoint` | `http://localhost:11434` | 本地服务 |
+| | `api_key` | 不需要 | 无认证 |
+| | `model` | `llama3:70b` | 自定义模型 |
+| **OpenRouter** | `endpoint` | `https://openrouter.ai/api/v1` | 多模型聚合 |
+| | `api_key` | `sk-or-...` | 必填 |
+| | `model` | `anthropic/claude-3-opus` | 指定模型 |
+
+**加密配置**：
+
+| 配置项 | 值 | 说明 |
+|--------|-----|------|
+| `e2e.enabled` | `true/false` | 启用端到端加密 |
+| `e2e.key_sharing` | `direct/indirect` | 密钥共享方式 |
+| `e2e.key_rotation` | `30d/90d/1y` | 密钥轮换周期 |
+
+### 🔧 故障排除
+
+```mermaid
+flowchart TD
+    START["🔧 遇到问题?"] --> Q1{什么症状?}
+    Q1 -->|连接失败| CONN["检查网络
+检查API密钥"]
+    Q1 -->|加密错误| CRYPT["检查E2E配置
+验证密钥"]
+    Q1 -->|模型不响应| MODEL["检查模型状态
+查看日志"]
+    Q1 -->|性能慢| PERF["检查网络延迟
+切换模型"]
+    
+    CONN --> C1{网络正常?}
+    C1 -->|否| NET["修复网络"]
+    C1 -->|是| KEY["检查API密钥"]
+    KEY -->|错误| FIXKEY["重新配置密钥"]
+    
+    CRYPT --> E1{密钥有效?}
+    E1 -->|否| ROTATE["轮换密钥"]
+    E1 -->|是| CHECK["检查加密配置"]
+    
+    style START fill:#d1fae5,stroke:#10b981
+    style CONN fill:#fef3c7,stroke:#f59e0b
+    style CRYPT fill:#fef3c7,stroke:#f59e0b
+```
+
+**常见问题速查**：
+
+| 问题 | 解决方案 | 命令/检查 |
+|------|----------|-----------|
+| API密钥无效 | 重新配置密钥 | 检查拼写 |
+| 模型超时 | 增加timeout | 检查网络 |
+| E2E加密失败 | 验证密钥同步 | 检查密钥交换 |
+| OIDC登录失败 | 检查IdP配置 | 验证URL |
+| MCP工具不工作 | 检查MCP配置 | 重启Thunderbolt |
+
+
 ## 相关资源
 
 - **GitHub仓库**：https://github.com/thunderbird/thunderbolt
