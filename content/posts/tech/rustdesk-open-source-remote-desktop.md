@@ -215,7 +215,42 @@ flowchart TB
 
 ## §4 使用说明
 
-### 4.1 快速开始（30秒上手）
+### 4.1 安装决策树
+
+```mermaid
+flowchart TD
+    START["🚀 选择安装方式"] --> Q1{你的操作系统?}
+    Q1 -->|Windows| WIN[下载.exe安装]
+    Q1 -->|macOS| MAC[下载.dmg安装]
+    Q1 -->|Linux| LINUX["选择安装方式"]
+    Q1 -->|Android| ANDROID[下载APK/App Store]
+    Q1 -->|iOS| IOS[下载App Store]
+    Q1 -->|Web| WEB[浏览器直接访问]
+
+    LINUX --> L1{你有服务器?}
+    L1 -->|有/需要自控| SELF["自建中继服务器"]
+    L1 -->|无/快速试用| PUB["使用公共服务器"]
+
+    WIN & MAC & ANDROID & IOS & WEB --> DONE[✅ 就绪]
+    SELF & PUB --> DONE
+
+    style START fill:#d1fae5,stroke:#10b981
+    style SELF fill:#dbeafe,stroke:#3b82f6
+    style PUB fill:#fef3c7,stroke:#f59e0b
+```
+
+**安装方式对比**：
+
+| 操作系统 | 推荐方式 | 备选方式 |
+|----------|----------|----------|
+| **Windows** | .exe安装包 | Scoop: `scoop install rustdesk` |
+| **macOS** | .dmg安装包 | Homebrew: `brew install --cask rustdesk` |
+| **Linux** | .deb/AppImage | Snap/Flatpak |
+| **Android** | APK/F-Droid | Google Play |
+| **iOS** | App Store | TestFlight |
+| **Web** | 浏览器访问 | 无 |
+
+### 4.2 快速开始（30秒上手）
 
 **步骤1：下载安装**
 
@@ -294,19 +329,74 @@ Android/iOS 端功能与桌面端一致，支持：
 iOS App Store 下载地址：搜索 "RustDesk"  
 Android Google Play / F-Droid 可用
 
-### 4.4 常见问题
+### 4.4 故障排除决策树
 
-**Q: 连接失败，显示"连接被拒绝"？**
-A: 检查被控端是否运行，防火墙是否放行 21115-21119 UDP/TCP 端口
+```mermaid
+flowchart TD
+    START["🔧 连接问题?"] --> Q1{什么症状?}
+    Q1 -->|连接被拒绝| REJECT["检查清单"]
+    Q1 -->|只能Relay| RELAY["NAT打洞失败
+使用Relay模式"]
+    Q1 -->|画质差/延迟高| QUALITY["切换画质模式
+检查网络带宽"]
+    Q1 -->|无法连接| CONN["检查网络
+测试端口"]
 
-**Q: P2P 无法连接，只能 Relay？**
-A: 某些企业网络不支持 NAT 打洞，使用 Relay 模式即可，建议自建 Relay 服务器提升速度
+    REJECT --> R1{被控端运行?}
+    R1 -->|否| RUN["启动被控端"]
+    R1 -->|是| R2{防火墙?}
+    R2 -->|未开放| FW["开放21115-21119
+UDP/TCP端口"]
+    R2 -->|已开放| R3{密码正确?}
+    R3 -->|错误| PWD["重新获取密码"]
 
-**Q: 画质差/延迟高？**
-A: 在连接设置中切换画质模式；检查网络带宽；确认是否在 Relay 模式
+    CONN --> C1{网络正常?}
+    C1 -->|否| NET["检查网络连接"]
+    C1 -->|是| C2{端口测试?}
+    C2 -->|失败| PORTS["检查端口映射
+确认服务器配置"]
 
-**Q: 如何实现无人在场访问？**
-A: 被控端设为"无人值守模式"（Unattended Access），设置固定密码即可
+    RELAY --> REL1{有自建服务器?}
+    RELAY -->|是| REL2["检查Relay服务器状态"]
+    RELAY -->|否| PUB["使用公共服务器
+或自建服务器"]
+
+    QUALITY --> Q2{连接模式?}
+    Q2 -->|Relay| RELQ["Relay延迟高
+建议自建服务器"]
+    Q2 -->|P2P| P2PQ["检查网络质量
+调整画质预设"]
+
+    style START fill:#d1fae5,stroke:#10b981
+    style RELAY fill:#fef3c7,stroke:#f59e0b
+    style FW fill:#fef3c7,stroke:#f59e0b
+```
+
+**故障速查表**：
+
+| 问题 | 快速解决方案 | 命令/检查点 |
+|------|--------------|-------------|
+| 连接被拒绝 | 启动被控端+开放端口 | `netstat -tlnp | grep rustdesk` |
+| P2P失败 | 使用Relay模式 | 检查NAT类型 |
+| 延迟高 | 自建服务器+调画质 | ping测试 |
+| 画质差 | 切换画质预设 | 设置→画质模式 |
+| 剪贴板不工作 | 重启应用+检查权限 | 更新到最新版本 |
+| 音频无声音 | 开启音频选项 | 设置→音频传输 |
+
+**端口检查命令**：
+
+```bash
+# 检查RustDesk端口状态
+netstat -tlnp | grep -E "21115|21116|21117|21118|21119"
+
+# 测试UDP端口
+nc -vz -u your-server 21115-21119
+
+# 检查防火墙规则 (Ubuntu)
+sudo ufw status
+sudo ufw allow 21115:21119/udp
+sudo ufw allow 21115:21119/tcp
+```
 
 ---
 
@@ -373,22 +463,46 @@ screen.set_quality(rustdesk::screenshare::Quality::Game)?;
 
 ## §6 竞品对比
 
-| 方案 | Stars | 自托管 | 端对端加密 | 平台覆盖 | 开源 |
-|------|-------|--------|-----------|---------|------|
-| **RustDesk** | 112k | ✅ | ✅ | 全平台 | ✅ MIT |
-| TeamViewer | - | ❌ | ✅ | 全平台 | ❌ |
-| AnyDesk | - | ❌ | ✅ | 全平台 | ❌ |
-| Parsec | - | ❌ | ✅ | 桌面端 | ❌ |
-| VNC (RealVNC) | - | ✅ | ❌ | 全平台 | ✅ |
-| Splashtop | - | ❌ | ✅ | 全平台 | ❌ |
+### 6.1 性能对比
 
-**RustDesk 优势：**
+| 方案 | 延迟(P2P) | 带宽占用 | 内存占用 | 适合场景 |
+|------|-----------|----------|---------|----------|
+| **RustDesk** | 20-50ms | 1-5 Mbps | 80-150MB | 通用远程桌面 |
+| TeamViewer | 30-80ms | 2-8 Mbps | 100-200MB | 企业协作 |
+| AnyDesk | 40-100ms | 1-5 Mbps | 50-100MB | 轻量远程支持 |
+| VNC | 100-300ms | 0.5-2 Mbps | 30-80MB | 低带宽环境 |
+| Parsec | 15-30ms | 5-15 Mbps | 150-300MB | 游戏/高清 |
+
+### 6.2 选择决策树
+
+```mermaid
+flowchart TD
+    START["🎯 选择方案"] --> Q1{核心需求?}
+    Q1 -->|数据自主| RUST[✅ RustDesk]
+    Q1 -->|企业协作| ENT[TeamViewer]
+    Q1 -->|低带宽| VNC[VNC]
+    Q1 -->|游戏高清| PARSEC[Parsec]
+    Q1 -->|预算有限| FREE[✅ RustDesk]
+    style START fill:#d1fae5,stroke:#10b981
+    style RUST fill:#d1fae5,stroke:#10b981
+    style FREE fill:#d1fae5,stroke:#10b981
+```
+
+### 6.3 功能矩阵
+
+| 方案 | 自托管 | 端对端加密 | 跨平台 | 文件传输 | 语音聊天 |
+|------|--------|------------|--------|----------|----------|
+| **RustDesk** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| TeamViewer | ❌ | ✅ | ✅ | ✅ | ✅ |
+| AnyDesk | ❌ | ✅ | ✅ | ✅ | ✅ |
+| VNC | ✅ | ❌ | ✅ | ⚠️需配置 | ❌ |
+| Parsec | ❌ | ✅ | ⚠️桌面 | ✅ | ✅ |
+
+**RustDesk 优势**：
 1. **完全开源**：代码可审计，无后门风险
 2. **自托管**：数据完全自主，不经过第三方服务器
 3. **免费**：无使用费用，无设备数量限制
-4. **Rust 实现**：性能优异，无 Electron 的资源占用问题
-
----
+4. **Rust实现**：性能优异，无Electron的资源占用问题
 
 ## §7 进阶配置
 
