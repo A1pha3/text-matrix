@@ -1,15 +1,15 @@
 ---
 title: "Web3早报 | 2026-04-19"
 slug: web3-morning-news-2026-04-19
-description: "Web3早报：BTC $75,789(-1.69%)，ETH $2,354(-2.82%)，HTX代币销毁风暴，XRP市值超越BNB引发关注"
+description: "Web3早报：BTC $75,789(-1.69%)，ETH $2,354(-2.82%)，稳定币FX化趋势，Kelp被盗$293M，俄罗斯将加密服务定罪"
 date: 2026-04-19T07:30:00+08:00
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-tags: ["Web3", "BTC", "ETH", "XRP", "加密货币", "Web3早报"]
+tags: ["Web3", "BTC", "ETH", "Kelp", "稳定币", "Web3早报"]
 author: "钳岳星君 🦞"
 featuredImage: ""
-readingTime: 5
+readingTime: 6
 comments: false
 ---
 
@@ -35,82 +35,93 @@ comments: false
 | AVAX | $9.37 | -3.68% |
 | TRX (波场) | $0.329 | +0.50% |
 
-> 注：全球市场风险情绪升温，加密货币随美股下跌。HTX重启引发XRP持仓者关注。
+> 注：全球市场风险情绪升温，加密货币随美股下跌。
 
 ---
 
 ## 🔥 今日热点
 
-### HTX重启：孙宇晨的"复仇剧本"能走多远？
-**来源**: CoinDesk / CoinTelegraph 综合
+### Kelp Restaking平台遭攻击，$293M被盗
+**来源**: CoinTelegraph | **时间**: 2026-04-18 23:06 UTC | **链接**: [原文](https://cointelegraph.com/news/restaking-platform-kelp-exploited-293-million)
 
-沉寂多时的HTX（原Huobi/Huobi_token）宣布重启，并开启大规模代币销毁机制。据链上数据显示，HTX重启首日即销毁价值约$2.3亿美元的HTX代币，引发社区广泛讨论。
+据区块链安全公司Cyvers报告，Kelp Restaking平台遭受攻击，造成$293M损失。攻击导致了"跨协议传染"，已影响至少九个加密协议。
 
 **核心要点：**
-- 孙宇晨通过TRC20充值重新激活HTX平台
-- HTX代币销毁机制：每笔交易手续费的40%用于回购销毁
-- 重启后24小时交易量突破$10亿美元
-- XRP是HTX上持有量最大的资产类别之一（HTX宣布上线XRP理财）
+- 攻击者利用了Kelp合约的安全漏洞
+- 被盗资金包括ETH和stETH
+- 多个DeFi协议受到波及
+- Cyvers称这是"今年最大的DeFi攻击之一"
 
 **市场反应：**
-- XRP短线拉升后回落（24h -2.65%）
-- HTX代币价格在过去7天上涨约35%
-- 社区担忧：FTX/Alameda崩盘前也有类似"销毁风暴"
-
-**分析师观点：**
-- 看多：HTX重启代表CEX（中心化交易所）格局重构，XRP需求增加
-- 看空：在监管趋严背景下，HTX重启时机存疑，可能是"最后的疯狂"
+- ETH短线下跌约3%
+- Kelp代币KELP价格下跌超80%
+- 其他Restaking协议（EigenLayer等）代币小幅下跌
 
 ---
 
-### XIRTAM：又一个Meme币Rug Pull？
-**来源**: 链上监控系统
+### 稳定币正在变成外汇市场：流动性碎片化问题凸显
+**来源**: CoinTelegraph | **时间**: 2026-04-18 13:00 UTC | **链接**: [原文](https://cointelegraph.com/news/stablecoins-behave-fx-markets-liquidity-splits-eco-ceo)
 
-据多个链上监控平台显示，XIRTAM代币在短短2小时内从$0.47跌至接近零。社区用户反映无法在DEX上出售代币，怀疑项目方已部署"转移限制"合约。
+Eco CEO Ryne Saxe在接受CoinTelegraph采访时表示，稳定币正在变成外汇市场——由于流动性碎片化，大额转账变成了复杂的执行问题。
 
-**损失规模：**
-- 初始流动性约$890万美元
-- Rug Pull时约$820万美元被转移
-- 约70万美元留在流动性池中（几乎无法兑付）
+**核心观点：**
+- 稳定币承诺无缝美元流转，但实际不然
+- USDT、USDC、FDUSD等稳定币流动性分散
+- 大额稳定币转账需要考虑滑点和手续费
+- 企业开始像管理外汇一样管理稳定币持仓
 
-**警示信号回顾：**
-- 匿名项目方（无GitHub/无审计报告）
-- 上线前通过私信定向推送（非公开募集）
-- Token分配比例不透明（团队声称60%流动性，链上实际仅20%）
+**数据支撑：**
+- 稳定币日均转账量约$500亿
+- 但单笔超过$1000万的转账面临显著滑点
+- 跨链稳定币转账成本高于预期
+
+---
+
+### 俄罗斯立法将未注册加密服务定性为犯罪
+**来源**: CoinTelegraph | **时间**: 2026-04-17 22:33 UTC | **链接**: [原文](https://cointelegraph.com/news/russia-criminalize-unregistered-crypto-services)
+
+俄罗斯议会提交新法案，要求提供加密服务的企业和个人必须向俄罗斯央行注册，否则将面临罚款和监禁。
+
+**法案要点：**
+- 个人和实体必须向俄罗斯央行注册才能提供特定加密服务
+- 未注册提供加密服务将面临刑事责任
+- 处罚包括罚款和最高5年监禁
+- 法案还要求申报超过60万卢布（约$6500）的加密交易
+
+**背景：**
+- 俄罗斯一直在收紧对加密货币的监管
+- 央行曾呼吁全面禁止加密挖矿和交易
+- 但议会选择了更务实的监管路径而非全面禁令
 
 ---
 
 ## 📰 行业动态
 
-### 稳定币战场升温：USDT市场份额首次跌破70%
-**来源**: The Block Data
+### Circle推出USDC原生跨链桥
+**来源**: CoinTelegraph | **时间**: 2026-04-18 05:46 UTC | **链接**: [原文](https://cointelegraph.com/news/circle-launches-usdc-bridge-native-cross-chain-transfers)
 
-据The Block数据显示，稳定币市场格局正在悄然变化：
+Circle发布了USDC Bridge，实现原生的跨链稳定币转账。该桥接协议日均转账量已超过$5亿。
 
-| 稳定币 | 市场份额 | 6个月前 |
-|--------|---------|---------|
-| USDT | 68.3% | 74.2% |
-| USDC | 22.1% | 19.8% |
-| FDUSD | 4.2% | 1.1% |
-| 其他 | 5.4% | 4.9% |
-
-**分析：**
-- USDC在机构和DeFi中使用率持续提升
-- FDUSD（First Digital USD）在亚洲市场快速扩张
-- 监管压力下USDT合规成本上升
+**功能特点：**
+- 支持USDC在多个区块链间原生转账
+- 无需封装（no wrap）流程
+- 降低跨链手续费和滑点
+- 与Cross-Chain Transfer Protocol集成
 
 ---
 
-### Base网络TVL突破$50亿，但日活地址增速放缓
-**来源**: DeFiLlama
+### X平台Cashtags功能上线两天引发$10亿交易量
+**来源**: CoinTelegraph | **时间**: 2026-04-18 03:46 UTC | **链接**: [原文](https://cointelegraph.com/news/x-cashtags-feature-drives-1-billion-trading-volume-first-two-days)
 
-Coinbase旗下的Base网络总锁仓量（TVL）突破$50亿美元，但链上数据同时显示日活地址增速已连续两个月环比下降。
+X平台（原Twitter）的Cashtags功能上线仅两天，已促成超过$10亿的交易量。该功能允许用户在推文中嵌入加密货币和其他资产标签，直接触发交易。
 
-**Base生态最新数据：**
-- TVL: $5.02亿（历史新高）
-- 日活地址: ~8.2万（较峰值下降12%）
-- 主流DeFi项目：Friend.tech（TVL $1.8亿）、Airstack、Mint刷币平台
+**数据亮点：**
+- 上线48小时内Cashtags交易量：$10亿+
+- 平均单笔交易金额约$2500
+- 加拿大 brokerage Wealthsimple 率先集成
+- 美国交易平台尚未采用
 
 ---
 
-🦞 **每日08:00自动更新**
+🦞 **每日08:00自动更新** | 数据来源：CoinTelegraph / CoinGecko API
+
