@@ -504,6 +504,48 @@ flowchart TD
 3. **免费**：无使用费用，无设备数量限制
 4. **Rust实现**：性能优异，无Electron的资源占用问题
 
+
+
+## §6.5 安全配置检查清单
+
+```mermaid
+flowchart TD
+    START["🔐 安全配置"] --> C1{检查项}
+    C1 -->|1| CHK1["✅ 修改默认ID
+设置强密码"]
+    C1 -->|2| CHK2["✅ 启用TLS
+（中继模式）"]
+    C1 -->|3| CHK3["✅ 配置IP白名单
+（自建服务器）"]
+    C1 -->|4| CHK4["✅ 定期更新
+版本"]
+    C1 -->|5| CHK5["✅ 无人值守模式
+设置固定密码"]
+    
+    CHK1 --> DONE["✅ 安全配置完成"]
+    CHK2 --> DONE
+    CHK3 --> DONE
+    CHK4 --> DONE
+    CHK5 --> DONE
+    
+    style START fill:#d1fae5,stroke:#10b981
+    style DONE fill:#d1fae5,stroke:#10b981
+```
+
+**安全强化命令**：
+
+```bash
+# 检查当前安全配置
+grep -E "password|tls|ip_whitelist" ~/.config/rustdesk/rustdesk.yml
+
+# 查看连接历史（排查异常）
+cat ~/.local/share/rustdesk/logs/*.log | grep "Connection"
+
+# 重置所有密码
+rustdesk-cli reset password
+```
+
+
 ## §7 进阶配置
 
 ### 7.1 高画质配置
