@@ -54,28 +54,46 @@ tags: ["Claude", "Linux", "Anthropic", "MCP", "跨平台", "沙箱", "Bubblewrap
 
 Claude Desktop原生是为Windows和macOS设计的Electron应用。将其移植到Linux面临几个核心挑战：
 
+```mermaid
+flowchart TD
+    subgraph Official[官方支持平台]
+        W[Windows<br/>原生]
+        M[macOS<br/>原生]
+    end
+
+    subgraph Unofficial[本项目]
+        L[Linux<br/>原生移植]
+    end
+
+    subgraph Runtime[Electron Runtime]
+        E[Electron<br/>Chromium+Node.js]
+    end
+
+    subgraph Abstraction[平台抽象层]
+        P1[Win32 API]
+        P2[Cocoa API]
+        P3[Linux API<br/>GTK/Qt]
+    end
+
+    W --> E
+    M --> E
+    L --> E
+    E --> Abstraction
+    P1 & P2 & P3 --> PLATFORM[平台适配]
+
+    style Official fill:#dbeafe,stroke:#3b82f6
+    style Unofficial fill:#d1fae5,stroke:#10b981
+    style Runtime fill:#fef3c7,stroke:#f59e0b
 ```
-┌─────────────────────────────────────────────────────────────┐
-│              Claude Desktop 跨平台移植架构                       │
-│                                                              │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
-│  │ Windows     │    │ macOS       │    │ Linux       │      │
-│  │ (官方)      │    │ (官方)      │    │ (本项目)    │      │
-│  └─────────────┘    └─────────────┘    └─────────────┘      │
-│         ↓                  ↓                  ↓              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │              Electron Runtime                          │    │
-│  │         (Chromium + Node.js + Native API)             │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                           ↓                                  │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │         Platform Abstraction Layer                   │    │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐          │    │
-│  │  │Win32 API │  │Cocoa API │  │Linux API │          │    │
-│  │  └──────────┘  └──────────┘  └──────────┘          │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-```
+
+**移植核心挑战**：
+
+| 挑战 | 原因 | 解决方案 |
+|------|------|----------|
+| **Win32 API调用** | Windows特有 | Linux等价替代 |
+| **系统托盘** | 平台差异 | AppIndicator/KStatusNotifierItem |
+| **全局快捷键** | X11/Wayland差异 | lib keybinder |
+| **沙箱隔离** | Windows/Sandboxie | bubblewrap/KVM |
 
 ### 2.2 核心技术组件
 
@@ -106,7 +124,48 @@ patches/
 
 ## §3 安装指南：多发行版详解
 
-### 3.1 Debian/Ubuntu（推荐方式）
+### 3.1 安装决策树
+
+```mermaid
+flowchart TD
+    START["🚀 选择安装方式"] --> Q1{你使用什么发行版?}
+    Q1 -->|Debian/Ubuntu| APT[APT仓库<br/>⭐推荐]
+    Q1 -->|Fedora/RHEL| DNF[DNF仓库<br/>⭐推荐]
+    Q1 -->|Arch Linux| AUR[AUR包<br/>yay/paru]
+    Q1 -->|NixOS| NIX[Nix Flake<br/>nix profile]
+    Q1 -->|其他Linux| APP[AppImage<br/>通用]
+
+    APT -->|企业环境| SYSC["系统级安装<br/>sudo apt install"]
+    APT -->|个人用户| USR["用户级安装<br/>无需sudo"]
+
+    DNF -->|企业环境| SYSC_RPM["系统级安装<br/>sudo dnf install"]
+    DNF -->|个人用户| USR_RPM["用户级安装<br/>无需sudo"]
+
+    style START fill:#d1fae5,stroke:#10b981
+    style APT fill:#dbeafe,stroke:#3b82f6
+    style DNF fill:#dbeafe,stroke:#3b82f6
+```
+
+**安装方式对比**：
+
+| 方式 | 适用用户 | 权限要求 | 自动更新 | 隔离性 |
+|------|----------|----------|---------|--------|
+| **APT/DNF仓库** | 企业/技术用户 | sudo | ✅ | 系统级 |
+| **AUR** | Arch用户 | yay/paru | ✅(yay) | 系统级 |
+| **Nix Flake** | NixOS用户 | nix | ✅ | 用户级/隔离 |
+| **AppImage** | 通用/尝鲜 | 无 | ❌手动 | 便携 |
+
+**快速安装命令**：
+
+```bash
+# Debian/Ubuntu (一行命令安装)
+sudo apt install wget && wget -qO- https://aaddrick.github.io/claude-desktop-debian/KEY.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/claude-desktop.gpg > /dev/null && echo "deb [signed-by=/usr/share/keyrings/claude-desktop.gpg] https://aaddrick.github.io/claude-desktop-debian stable main" | sudo tee /etc/apt/sources.list.d/claude-desktop.list > /dev/null && sudo apt update && sudo apt install claude-desktop
+
+# Fedora (一行命令安装)
+sudo dnf install -y dnf-plugins-core && sudo rpm --import https://aaddrick.github.io/claude-desktop-debian/KEY.gpg && sudo curl -fsSL https://aaddrick.github.io/claude-desktop-debian/rpm/claude-desktop.repo | sudo tee /etc/yum.repos.d/claude-desktop.repo > /dev/null && sudo dnf install claude-desktop
+```
+
+### 3.2 Debian/Ubuntu（推荐方式）
 
 **通过APT仓库安装**：
 
@@ -281,7 +340,51 @@ claude-desktop  # 自动选择最佳后端
 
 ## §5 诊断与故障排除
 
-### 5.1 医生诊断命令
+### 5.1 故障决策树
+
+```mermaid
+flowchart TD
+    START["🔧 遇到问题?"] --> Q1{什么类型?}
+    Q1 -->|启动问题| Q2{错误信息?}
+    Q1 -->|连接问题| Q3{连接方式?}
+    Q1 -->|MCP问题| Q4{MCP类型?}
+    Q1 -->|Cowork问题| Q5{Cowork模式?}
+
+    Q2 -->|无错误| REINSTALL["重新安装"]
+    Q2 -->|权限错误| PERM["检查bwrap权限"]
+    Q2 -->|显示错误| DISPLAY["检查DISPLAY变量"]
+    Q2 -->|端口占用| PORT["检查21115-21119端口"]
+
+    Q3 -->|P2P失败| P2P["检查NAT类型<br/>使用Relay模式"]
+    Q3 -->|Relay慢| RELAY["自建Relay服务器"]
+    Q3 -->|超时| TIMEOUT["检查防火墙规则"]
+
+    Q4 -->|文件系统| FS["检查MCP配置<br/>JSON语法"]
+    Q4 -->|Git| GIT["检查git安装<br/>ssh密钥"]
+    Q4 -->|搜索| SEARCH["检查API密钥<br/>配额限制"]
+
+    Q5 -->|bwrap错误| BWRAP["安装bwrap:<br/>sudo apt install bubblewrap"]
+    Q5 -->|VM错误| VM["KVM需要额外配置<br/>参见官方文档"]
+    Q5 -->|隔离无效| ISOLATION["检查bwrap版本<br/>更新到最新"]
+
+    style START fill:#d1fae5,stroke:#10b981
+    style PERM fill:#fef3c7,stroke:#f59e0b
+    style RELAY fill:#dbeafe,stroke:#3b82f6
+    style BWRAP fill:#fef3c7,stroke:#f59e0b
+```
+
+**常见问题速查表**：
+
+| 问题 | 快速解决方案 | 命令 |
+|------|--------------|------|
+| 无法启动 | 检查显示服务器 | `echo $DISPLAY` |
+| MCP不工作 | 验证JSON语法 | `cat ~/.config/Claude/claude_desktop_config.json | jq` |
+| Cowork报错 | 安装bwrap | `sudo apt install bubblewrap` |
+| P2P失败 | 使用Relay模式 | 设置relay服务器 |
+| 端口占用 | 检查端口 | `ss -tlnp | grep 2111` |
+| 版本过旧 | 卸载重装 | `sudo apt remove claude-desktop && sudo apt install claude-desktop` |
+
+### 5.2 医生诊断命令
 
 `claude-desktop --doctor` 是内置的诊断工具，检查：
 
@@ -511,7 +614,59 @@ echo $XDG_CURRENT_DESKTOP
 
 ## §10 总结与展望
 
-### 10.1 项目成就
+### 10.1 vs 虚拟机/Wine方案对比
+
+```mermaid
+flowchart LR
+    subgraph Native[本项目:原生移植]
+        N1[性能无损]
+        N2[资源占用小]
+        N3[原生体验]
+    end
+
+    subgraph VM[虚拟机方案]
+        V1[性能损失20-30%]
+        V2[资源占用大]
+        V3[需要Windows许可证]
+    end
+
+    subgraph Wine[Wine兼容层]
+        W1[兼容性问题多]
+        W2[功能受限]
+        W3[维护困难]
+    end
+
+    Native -.->|vs| VM
+    Native -.->|vs| Wine
+
+    style Native fill:#d1fae5,stroke:#10b981
+    style VM fill:#fef3c7,stroke:#f59e0b
+    style Wine fill:#fecaca,stroke:#ef4444
+```
+
+**方案对比表**：
+
+| 维度 | Claude Desktop Debian | 虚拟机(Windows) | Wine/Crossover |
+|------|---------------------|-----------------|----------------|
+| **性能** | ⭐⭐⭐⭐⭐原生 | ⭐⭐⭐损失20-30% | ⭐⭐⭐损失不定 |
+| **资源占用** | ~200MB | ~2-4GB | ~300-500MB |
+| **许可证** | 不需要Windows | 需要Windows许可 | 不需要 |
+| **功能完整性** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
+| **稳定性** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ |
+| **维护成本** | 低(自动更新) | 高(VM维护) | 中(依赖Wine更新) |
+| **离线支持** | ✅ | ⚠️需要VM镜像 | ✅ |
+| **安全隔离** | ⭐⭐⭐(bwrap) | ⭐⭐⭐⭐⭐(VM完全隔离) | ⭐⭐ |
+
+**推荐场景**：
+
+| 场景 | 推荐方案 | 理由 |
+|------|----------|------|
+| Linux日常开发 | ✅本项目 | 最佳性能体验 |
+| 高安全环境 | 虚拟机 | 完全隔离 |
+| 临时使用 | AppImage | 即开即用 |
+| 兼容性优先 | 虚拟机 | Windows完全兼容 |
+
+### 10.2 项目成就
 
 | 指标 | 值 |
 |------|-----|
@@ -533,10 +688,56 @@ echo $XDG_CURRENT_DESKTOP
 
 ### 10.3 未来发展方向
 
-- KVM/QEMU后端完善
-- 更多桌面环境兼容
-- 更好的Wayland原生支持
-- 与官方Linux支持的潜在合作
+```mermaid
+flowchart LR
+    subgraph Current[当前状态]
+        C1[基本功能完善]
+        C2[bwrap沙箱]
+        C3[多发行版支持]
+    end
+
+    subgraph Roadmap[路线图]
+        R1[KVM/QEMU后端]
+        R2[Wayland原生]
+        R3[官方Linux支持]
+        R4[移动端支持]
+    end
+
+    Current --> R1
+    R1 --> R2
+    R2 --> R3
+    R3 --> R4
+
+    style Current fill:#d1fae5,stroke:#10b981
+    style Roadmap fill:#dbeafe,stroke:#3b82f6
+```
+
+**功能优先级矩阵**：
+
+| 功能 | 社区需求 | 技术难度 | 优先级 |
+|------|----------|---------|--------|
+| **Wayland原生支持** | 高 | 中 | ⭐⭐⭐⭐⭐ |
+| **KVM后端完善** | 中 | 高 | ⭐⭐⭐ |
+| **自动更新优化** | 高 | 低 | ⭐⭐⭐⭐⭐ |
+| **移动端(iOS/Android)** | 低 | 高 | ⭐⭐ |
+| **插件系统** | 中 | 中 | ⭐⭐⭐⭐ |
+
+**贡献者指南**：
+
+```bash
+# 提交贡献前检查清单
+- [ ] 代码通过 `shellcheck` 检查
+- [ ] 新功能添加测试用例
+- [ ] 更新相关文档
+- [ ] PR描述清晰说明动机和方案
+- [ ] 所有commit签署DCO
+
+# 本地测试
+./scripts/test-all-distros.sh  # 测试所有发行版
+./scripts/lint.sh            # 运行lint检查
+```
+
+### 10.4 项目成就
 
 ---
 
