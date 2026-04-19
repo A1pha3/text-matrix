@@ -70,29 +70,48 @@ C = α · (A @ B) + β · C
 
 在Transformer架构中，GEMM操作占据了绝大部分计算时间：
 
+```mermaid
+flowchart LR
+    subgraph SelfAttention [Self-Attention]
+        direction TB
+        Q["Q = X @ Wq<br/>[M×K] × [K×N] → [M×N]"]
+        K["K = X @ Wk"]
+        V["V = X @ Wv"]
+        QK["S = Q @ K^T<br/>GEMM!"]
+        SOFTMAX["P = softmax(S)"]
+        OV["O = P @ V<br/>GEMM!"]
+
+        Q & K & V --> QK
+        QK --> SOFTMAX
+        SOFTMAX --> OV
+    end
+
+    subgraph FFN [FFN]
+        direction TB
+        GATE["Gate = X @ Wgate"]
+        UP["Up = X @ Wup"]
+        SILU["Silu(Gate × Up)"]
+
+        GATE & UP --> SILU
+    end
+
+    OV --> GATE
+    OV --> UP
+
+    style SelfAttention fill:#dbeafe,stroke:#3b82f6
+    style FFN fill:#fef3c7,stroke:#f59e0b
+    style QK fill:#fecaca,stroke:#ef4444
+    style OV fill:#fecaca,stroke:#ef4444
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Transformer 计算瓶颈                            │
-│                                                              │
-│  Self-Attention:                                            │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │ Q = X @ Wq   │───▶│ S = Q @ K^T  │───▶│ P = softmax  │  │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │
-│         │                   │                   │            │
-│         ▼                   ▼                   ▼            │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │ K = X @ Wk   │    │              │    │ O = P @ V    │  │
-│  │ V = X @ Wv   │    │  GEMM!       │    │              │  │
-│  └──────────────┘    │              │    └──────────────┘  │
-│                      └──────────────┘            │            │
-│                                                  ▼            │
-│                      ┌──────────────┐    ┌──────────────┐  │
-│                      │  Output =    │◀───│ O = O @ Wo   │  │
-│                      │  Linear +    │    └──────────────┘  │
-│                      │  Residual    │                         │
-│                      └──────────────┘                         │
-└─────────────────────────────────────────────────────────────┘
-```
+
+**GEMM在Transformer中的占比**：
+
+| 操作 | 计算类型 | GEMM占比 |
+|------|----------|----------|
+| Q/K/V投影 | GEMM | 40-50% |
+| Attention scores | GEMM | 10-15% |
+| Output projection | GEMM | 5-10% |
+| FFN (2层GEMM) | GEMM | 30-40% |
 
 ### 2.2 为什么需要FP8
 
@@ -103,29 +122,45 @@ FP8（8位浮点）是NVIDIA Hopper架构推出的新精度格式，在性能和
 | **FP32** | 32bit | ~10^-38 ~ 10^38 | 训练、梯度计算 |
 | **FP16** | 16bit | ~10^-5 ~ 10^4 | 通用深度学习 |
 | **BF16** | 16bit | ~10^-38 ~ 10^38 | 混合精度训练 |
-| **FP8 E4M3** | 8bit | ~240 | 前向传播 |
-| **FP8 E5M2** | 8bit | ~57344 | 梯度、动量 |
+| **FP8 E4M3** | 8bit | ~240 | 前向传播(activations) |
+| **FP8 E5M2** | 8bit | ~57344 | 梯度、动量(weights) |
 
+```mermaid
+flowchart LR
+    subgraph E4M3 [FP8 E4M3]
+        direction TB
+        S1[Sign: 1bit]
+        E1[Exponent: 4bit]
+        M1[Mantis: 3bit]
+        S1 --> E1 --> M1
+        style E4M3 fill:#d1fae5,stroke:#10b981
+    end
+
+    subgraph E5M2 [FP8 E5M2]
+        direction TB
+        S2[Sign: 1bit]
+        E2[Exponent: 5bit]
+        M2[Mantis: 2bit]
+        S2 --> E2 --> M2
+        style E5M2 fill:#fef3c7,stroke:#f59e0b
+    end
+
+    E4M3 -->|E4M3:<br/>高精度| A[Activations<br/>前向传播]
+    E5M2 -->|E5M2:<br/>大动态范围| W[Weights/Gradients<br/>权重/梯度]
+
+    style A fill:#dbeafe,stroke:#3b82f6
+    style W fill:#fce7f3,stroke:#ec4899
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    FP8 精度格式                                 │
-│                                                              │
-│  E4M3 (4位指数 + 3位尾数):                                   │
-│  ┌───┬────────────┐                                          │
-│  │Sign│  Exponent │  Mantissa                                 │
-│  └───┴────────────┘                                          │
-│       4bit        3bit                                       │
-│                                                              │
-│  E5M2 (5位指数 + 2位尾数):                                   │
-│  ┌───┬────────────┐                                          │
-│  │Sign│  Exponent │  Mantissa                                 │
-│  └───┴────────────┘                                          │
-│       5bit        2bit                                       │
-│                                                              │
-│  E4M3: 更精确，适合 activations                               │
-│  E5M2: 更大动态范围，适合权重、梯度                           │
-└─────────────────────────────────────────────────────────────┘
-```
+
+**FP8 vs FP16/BF16 对比**：
+
+| 指标 | FP16 | BF16 | FP8 E4M3 | FP8 E5M2 |
+|------|------|------|-----------|-----------|
+| 位宽 | 16 | 16 | 8 | 8 |
+| 指数位 | 5 | 8 | 4 | 5 |
+| 尾数位 | 10 | 7 | 3 | 2 |
+| 内存节省 | 1x | 1x | **2x** | **2x** |
+| 算力提升 | 1x | 1x | **2-4x** | **2-4x** |
 
 ### 2.3 细粒度缩放的重要性
 
@@ -147,42 +182,55 @@ DeepGEMM的**fine-grained scaling**确保每个计算块都有最优的缩放因
 
 ### 3.1 整体架构
 
+```mermaid
+flowchart TB
+    subgraph Python [🐍 Python API]
+        GEMM["fp8_gemm_nt/nn/tn/tt()"]
+        MOE["fp8_fp4_mega_moe()"]
+        GROUP["m_grouped_fp8_gemm_*()"]
+        MQA["fp8_mqa_logits()"]
+    end
+
+    subgraph JIT [⚡ JIT Compiler]
+        CONFIG["Config Selection<br/>形状+硬件选择"]
+        TEMPLATE["Template Engine<br/>PTX模板实例化"]
+        NVRTC["NVRTC编译<br/>运行时编译"]
+
+        CONFIG --> TEMPLATE --> NVRTC
+    end
+
+    subgraph Kernels [🔧 CUDA Kernels]
+        FP8G["FP8 GEMM<br/>普通矩阵乘法"]
+        FP4G["FP4 GEMM<br/>超低精度"]
+        MEGA["Mega MoE<br/>融合MoE"]
+        MQAK["MQA Kernel<br/>Lightning索引"]
+    end
+
+    subgraph Hardware [🎮 NVIDIA GPU]
+        TC["Tensor Core<br/>矩阵计算"]
+        TMA["TMA<br/>内存访问"]
+        WARP["Warp Spec<br/>并行策略"]
+    end
+
+    Python --> JIT
+    JIT --> Kernels
+    Kernels --> Hardware
+
+    style Python fill:#d1fae5,stroke:#10b981
+    style JIT fill:#fef3c7,stroke:#f59e0b
+    style Kernels fill:#dbeafe,stroke:#3b82f6
+    style Hardware fill:#fce7f3,stroke:#ec4899
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    DeepGEMM 架构                             │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │                  Python API Layer                     │  │
-│  │         deep_gemm.fp8_gemm_nt() 等函数调用            │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                           │                                  │
-│                           ▼                                  │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │                  JIT Compiler Module                  │  │
-│  │    ┌─────────────┐  ┌─────────────┐  ┌───────────┐  │  │
-│  │    │  Config     │  │  Template   │  │  CodeGen  │  │  │
-│  │    │  Selection  │  │  Engine    │  │           │  │  │
-│  │    └─────────────┘  └─────────────┘  └───────────┘  │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                           │                                  │
-│                           ▼                                  │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │                  CUDA Kernel Layer                     │  │
-│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐          │  │
-│  │  │  FP8 GEMM │ │ FP4 GEMM  │ │ Mega MoE  │          │  │
-│  │  └───────────┘ └───────────┘ └───────────┘          │  │
-│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐          │  │
-│  │  │ MQA Score │ │ HC Kernels│ │ Group GEMM│          │  │
-│  │  └───────────┘ └───────────┘ └───────────┘          │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                           │                                  │
-│                           ▼                                  │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │              NVIDIA GPU (SM90 / SM100)               │  │
-│  │         Tensor Core + TMA + Warp Specialization       │  │
-│  └─────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
+
+**关键设计决策**：
+
+| 设计点 | DeepGEMM选择 | 对比CUTLASS |
+|--------|-------------|-------------|
+| 模板复杂度 | 简化设计 | 复杂多层模板 |
+| 学习曲线 | 平缓，文档清晰 | 陡峭 |
+| 编译方式 | JIT运行时编译 | 预编译 |
+| 代码量 | ~10K行 | ~100K+行 |
+| 性能 | 匹敌或超越 | 专家级调优 |
 
 ### 3.2 与CUTLASS的关系
 
