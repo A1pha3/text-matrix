@@ -322,3 +322,4 @@
   stars: 112138
   lang: Rust
   desc: Rust语言编写的开源远程桌面解决方案，112k Stars，支持P2P直连和中继Fallback，MIT协议全开源。
+paperless-ngx/paperless-ngx | paperless-ngx-document-management-guide | 2026-04-20 | 技术笔记 | 文档管理/Python/Docker/OCR/开源
