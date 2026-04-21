@@ -325,3 +325,4 @@
 | paperless-ngx/paperless-ngx | paperless-ngx-document-management-guide | 2026-04-20 | 技术笔记 | 文档管理/Python/Docker/OCR/开源 |
 | **AutoResearchClaw** | aiming-lab/AutoResearchClaw | 11.4k Stars | autoresearchclaw-23-stage-research-pipeline.md | 5a37543 | Pgqsdb5dKoQeZxxonNqcCYhZnvb | 2026-04-21 |
 | **FinceptTerminal** | Fincept-Corporation/FinceptTerminal | 9,867 Stars | fincept-terminal-open-source-finance-intelligence.md | TBD | TBD | 2026-04-21 |
+| **AutoCLI Skill** | nashsu/autocli-skill | 582 Stars | autocli-skill-55-platforms-cli.md | 7453adf | McBtdTJNeo6ZlrxE5UTcx8tWnLh | 2026-04-22 |
