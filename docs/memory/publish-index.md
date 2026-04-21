@@ -324,3 +324,4 @@
   desc: Rust语言编写的开源远程桌面解决方案，112k Stars，支持P2P直连和中继Fallback，MIT协议全开源。
 | paperless-ngx/paperless-ngx | paperless-ngx-document-management-guide | 2026-04-20 | 技术笔记 | 文档管理/Python/Docker/OCR/开源 |
 | **AutoResearchClaw** | aiming-lab/AutoResearchClaw | 11.4k Stars | autoresearchclaw-23-stage-research-pipeline.md | 5a37543 | Pgqsdb5dKoQeZxxonNqcCYhZnvb | 2026-04-21 |
+| **FinceptTerminal** | Fincept-Corporation/FinceptTerminal | 9,867 Stars | fincept-terminal-open-source-finance-intelligence.md | TBD | TBD | 2026-04-21 |
