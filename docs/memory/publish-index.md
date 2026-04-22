@@ -334,3 +334,4 @@
 | **zilliztech/claude-context** | zilliztech/claude-context | 6.9k Stars | zilliztech-claude-context-mcp-plugin.md | 3ea03f9 | | 2026-04-22 |
 | **YTLite** | dayanch96/YTLite | 4.9k Stars | dayanch96-ytlite-ios-youtube-enhancer.md | a5fec02 | | 2026-04-22 |
 | **Thunderbolt** | thunderbird/thunderbolt | 3.6k Stars | thunderbird-thunderbolt-open-source-ai-client.md | a5fec02 | | 2026-04-22 |
+| **weibo-ai-bridge** | kangjinshan/weibo-ai-bridge | 2 Stars | weibo-ai-bridge-weibo-ai-agent-bridge.md | a15a5f2 | | 2026-04-22 |
