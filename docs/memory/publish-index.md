@@ -329,3 +329,8 @@
 | **Claude-Mem** | thedotmack/claude-mem | 65k Stars | claude-mem-persistent-memory-65k-stars.md | c69a53b | LgVSdsCLVo3zn4xywF5ccygQneb | 2026-04-22 |
 | **AI Agents for Beginners** | microsoft/ai-agents-for-beginners | 57.9k Stars | ai-agents-for-beginners-microsoft-complete-guide.md | a3d689c | | 2026-04-22 |
 | **TrendRadar** | sansan0/TrendRadar | 54k Stars | trendradar-54k-stars-hot-news-assistant.md | d31fea0 | T5XHdUQ9FoydMwxpccbcIO3XnZe | 2026-04-22 |
+| **VoltAgent/awesome-agent-skills** | VoltAgent/awesome-agent-skills | 17.2k Stars | voltagent-awesome-agent-skills-17k.md | 67bc805 | | 2026-04-22 |
+| **RAG-Anything** | HKUDS/RAG-Anything | 17.2k Stars | rag-anything-multimodal-rag-framework.md | ad11346 | | 2026-04-22 |
+| **zilliztech/claude-context** | zilliztech/claude-context | 6.9k Stars | zilliztech-claude-context-mcp-plugin.md | 3ea03f9 | | 2026-04-22 |
+| **YTLite** | dayanch96/YTLite | 4.9k Stars | dayanch96-ytlite-ios-youtube-enhancer.md | a5fec02 | | 2026-04-22 |
+| **Thunderbolt** | thunderbird/thunderbolt | 3.6k Stars | thunderbird-thunderbolt-open-source-ai-client.md | a5fec02 | | 2026-04-22 |
