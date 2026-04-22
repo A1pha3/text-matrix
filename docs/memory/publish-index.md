@@ -328,3 +328,4 @@
 | **AutoCLI Skill** | nashsu/autocli-skill | 582 Stars | autocli-skill-55-platforms-cli.md | 7453adf | McBtdTJNeo6ZlrxE5UTcx8tWnLh | 2026-04-22 |
 | **Claude-Mem** | thedotmack/claude-mem | 65k Stars | claude-mem-persistent-memory-65k-stars.md | c69a53b | LgVSdsCLVo3zn4xywF5ccygQneb | 2026-04-22 |
 | **AI Agents for Beginners** | microsoft/ai-agents-for-beginners | 57.9k Stars | ai-agents-for-beginners-microsoft-complete-guide.md | a3d689c | | 2026-04-22 |
+| **TrendRadar** | sansan0/TrendRadar | 54k Stars | trendradar-54k-stars-hot-news-assistant.md | d31fea0 | T5XHdUQ9FoydMwxpccbcIO3XnZe | 2026-04-22 |
