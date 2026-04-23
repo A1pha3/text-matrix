@@ -1,5 +1,5 @@
 ---
-title: "OpenMythos：开源复现 Claude Mythos 架构，Looped Transformer 如何让大模型学会"深度思考""
+title: "OpenMythos：开源复现 Claude Mythos 架构，Looped Transformer 如何让大模型学会“深度思考”"
 date: 2026-04-23T11:17:00+08:00
 slug: "openmythos-claude-mythos-recurred-transformer"
 description: "OpenMythos 是开源社区对 Claude Mythos 架构的理论重建。本文深入剖析 Recurrent-Depth Transformer 的三阶段结构、MLA/GQA 注意力切换、稀疏 MoE 及动力学稳定性约束。"
