@@ -8,6 +8,8 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **TensorLogic** | Kocoro-lab/tensorlogic | 43 | tensorlogic-ai-unified-reasoning-guide.md | 35407df | QSCldA4Kmo2tIpxg05Nc8QJGnAc | 2026-04-24 |
+| **CC-Switch** | farion1231/cc-switch | 50k | cc-switch-ai-context-switcher-guide.md | a5fa74f | Y6P6d2uWJo3UUCx66lacq6DHnfh | 2026-04-24 |
 | **BlenderMCP** | ahujasid/blender-mcp | 19.2k | blender-mcp-claude-ai-integration-guide.md | 5cf6942 | MSR1dakOOom31DxLC3fcO2hZnRh | 2026-04-13 |
 | **Ghost Pepper** | matthartman/ghost-pepper | 1.4k | ghost-pepper-local-speech-to-text-macos-guide.md | 63f77d7 | SVnjd2ma7oiKK7xjA6rcDbKVn3f | 2026-04-08 |
 | **MemPalace** | milla-jovovich/mempalace | 7.7k | mempalace-ai-memory-system-guide.md | 0b83ca0 | HutgdMTZ5oTjChxQ7FHc6ZPDn5e | 2026-04-07 |
