@@ -45,7 +45,16 @@ enableRobotsTXT = true
     enable = true
     searchPage = "search/"
 
+  [params.section]
+    paginate = 30
+
+  [params.list]
+    paginate = 30
+
   [params.home]
+    [params.home.posts]
+      paginate = 12
+
     [params.home.profile]
       typeit = false
       subtitle = '''
