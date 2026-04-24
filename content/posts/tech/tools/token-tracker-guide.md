@@ -4,878 +4,680 @@ date: 2026-03-28T13:38:00+08:00
 slug: "token-tracker-guide-openclaw-usage"
 aliases:
   - /posts/tech/token-tracker-guide-openclaw-usage/
-description: "全面介绍 Token Tracker 的技术原理、安装配置、使用方法及进阶开发，涵盖 JSONL 格式解析、多工具支持、费用优化等核心主题。"
+summary: "以 OpenClaw 本地会话日志为例，讲清纯本地 Token Tracker 的设计边界、JSONL 解析、字段归一化、时间聚合与多工具扩展路径。"
+description: "这是一篇面向工程实践的本地 Token 用量追踪指南：先对比 Vibe Usage 与自建方案，再用可运行的 Node.js 脚本示范如何从 OpenClaw 日志提取 usage、做多字段归一化，并说明多工具扩展与统计误差边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Token", "AI编程", "OpenClaw", "VibeUsage", "用量追踪"]
 ---
 
-# Token Tracker 入门到精通：纯本地 AI 编程工具 Token 用量追踪实战
+> 定位：这篇文章不教你“怎么接一个现成云面板”，而是把“纯本地 Token Tracker”拆成几个可验证的工程问题：日志在哪里、哪些字段该信、怎样做归一化、怎样避免把示意代码写成事实。
+> 适合读者：想追踪 AI 编程工具 Token 消耗的个人开发者、团队负责人，以及需要本地优先方案的工程团队。
+> 实操范围：以 OpenClaw 的本地会话日志为教学样本，用 Node.js 实现一个最小可用版本地统计脚本；同时说明扩展到 Claude Code、Copilot CLI、OpenCode 等工具时为什么不能继续假设“一切都是 JSONL”。
+> 预计阅读时间：20 到 30 分钟。
 
 ## 学习目标
 
-通过本文档，你将掌握以下技能：
+读完本文，你应该能做到：
 
-- 理解什么是 Token 以及为什么需要追踪 Token 用量
-- 深入理解 VibeUsage 和自建 Token Tracker 的技术原理
-- 独立安装、配置和使用 Token Tracker 工具
-- 学会阅读和解析 JSONL 格式的 Session 日志文件
-- 掌握按时间、按模型、按项目的多维度用量分析方法
-- 了解如何扩展 Token Tracker 支持新的 AI 编程工具
-- 学会优化 Token 用量以降低成本
+1. 分清 Vibe Usage 和纯本地 Tracker 分别适合什么场景。
+2. 知道哪些 AI 编程工具把数据写成 JSONL，哪些直接写进 SQLite。
+3. 读懂 OpenClaw 会话日志里真正该计数的记录。
+4. 用一段可运行的 Node.js 脚本产出按时间、按模型、按项目的本地统计结果。
+5. 知道多工具扩展时应该抽象什么，哪些地方最容易重复计数。
+6. 理解为什么本地统计结果和官方账单经常不会完全一致。
 
----
+## 阅读路径
 
-## 一、背景与原理
+| 你的目标 | 建议优先阅读 |
+| ---- | ---- |
+| 先做一个能跑的本地版本 | §4 |
+| 判断要不要自建 | §1 |
+| 扩展到多工具 | §5 |
+| 排查统计误差 | §6 |
 
-### 1.1 什么是 Token？
+## 一、先判断：你到底该直接用现成工具，还是自己做
 
-Token（词元）是 AI 大语言模型处理文本的最小单位。在自然语言处理中，文本首先被分解成 Token，然后模型基于这些 Token 进行推理和生成。
+### 1.1 为什么 Token 追踪值得单独做
 
-**为什么 Token 如此重要？**
+Token（词元）是模型处理输入与输出时的计量单位。对 AI 编程工具来说，Token 统计至少能回答三类问题：
 
-- **计费依据**：大多数 AI API 服务（如 OpenAI、Anthropic、Google）按照输入和输出的 Token 数量收费
-- **性能指标**：Token 数量直接影响推理速度和响应时间
-- **资源限制**：每种模型都有上下文窗口限制（Context Window），即单次最大可处理的 Token 数量
+1. 成本问题：今天、这周、这个月到底烧了多少量。
+2. 运行问题：哪些模型或项目出现了异常高峰。
+3. 治理问题：团队是否需要预算、审计或本地留痕。
 
-**举例说明**：假设你有一段 1000 字的中文文本，大约包含 1500-2000 个 Token（中文每字约 1.5-2 个 Token，英文每个单词约 1-1.5 个 Token）。
+如果你只是偶尔问几个简单问题，系统账单页面通常已经够用。真正需要额外做 Tracker 的，往往是下面几种情况：
 
-### 1.2 为什么需要追踪 Token 用量？
+1. 你同时使用多个 AI 编程工具，账单分散，难以横向比较。
+2. 你更关心本地日志里的真实运行轨迹，而不是供应商提供的单一账单视图。
+3. 你有隐私或合规要求，不希望把使用数据再同步到第三方服务。
+4. 你想按项目、按模型、按时间窗做自定义聚合，而官方面板不一定支持。
 
-在日常使用 AI 编程工具时，我们往往专注于完成任务，而忽视了资源消耗。然而，追踪 Token 用量有以下几个重要价值：
+### 1.2 Vibe Usage 和纯本地 Tracker 的取舍
 
-**成本控制**
+Vibe Usage（仓库名是 vibe-usage）已经把“从多个本地日志中抓 Token 数据，再同步到仪表板”这件事做成了现成产品。它的价值不是“会不会读日志”，而是“把多工具解析、同步、后台服务和展示面板都包好了”。
 
-了解每个项目、每天、每月的 Token 消耗，可以帮助你：
-- 预测月度 AI 支出
-- 识别异常消耗模式
-- 优化提示词（Prompt）以减少不必要的 Token 使用
+| 维度 | Vibe Usage | 纯本地 Tracker |
+| ---- | ---- | ---- |
+| 数据来源 | 本地日志 | 本地日志 |
+| 是否需要 API Key | 需要 | 不需要 |
+| 是否上传数据 | 会把聚合结果同步到 vibecafe.ai | 不上传 |
+| 多工具支持 | 开箱即用，支持较多工具 | 需要自己逐个实现解析器 |
+| 展示方式 | Web 仪表板 + 后台同步 | 终端、JSON、你自定义的面板 |
+| 适合场景 | 想快速接入、想要现成可视化 | 本地优先、可离线、可定制、可审计 |
 
-**性能优化**
+一句话概括：
 
-通过分析 Token 用量数据，你可以：
-- 发现哪些任务消耗 Token 过多
-- 评估不同模型的经济性
-- 选择性价比最高的模型
+1. 你要的是现成看板、多工具自动同步和后台守护进程，直接上 Vibe Usage。
+2. 你要的是完全本地、能改统计口径、能嵌进自己的工作流，再做自建 Tracker。
 
-**团队协作**
+### 1.3 本文的范围与非目标
 
-对于团队而言：
-- 合理分配 AI 资源配额
-- 避免单用户过度消耗
-- 建立透明的资源使用机制
+为了把问题讲透，这篇文章只做一件事：以 OpenClaw 本地日志为样本，做一个纯本地、可运行、可扩展的最小版本。
 
-### 1.3 VibeUsage vs 自建 Token Tracker
+本文明确不做下面几件事：
 
-市面上有多种 Token 追踪方案，我们来对比分析：
+1. 不把本地统计伪装成财务结算系统。
+2. 不把所有工具都写成同一种日志格式。
+3. 不给出未经版本锚定的模型单价表。
+4. 不提供“克隆一个并不存在的仓库就能跑”的占位式说明。
 
-| 方案 | 云端依赖 | API Key | 隐私性 | 定制化 | 适用场景 |
-|------|----------|---------|--------|--------|----------|
-| VibeUsage | 必须 | 必须 | 中 | 低 | 需要云端仪表板 |
-| 自建 Token Tracker | 无 | 无 | 高 | 高 | 本地优先，注重隐私 |
+## 二、数据从哪里来：先搞清楚格式，再谈解析器
 
-**VibeUsage 特点**
+### 2.1 不是所有 AI 编程工具都把数据写成 JSONL
 
-- 数据上传到 vibecafe.ai 云端
-- 提供 Web 仪表板可视化
-- 支持 12+ 种 AI 编程工具
-- 需要注册账号和 API Key
+这是原始资料里最容易被写错的一点。很多 CLI 风格工具确实会把会话写成本地 JSONL，但并不是全部。按照 Vibe Usage README 当前公开的支持列表，至少可以分成两类：
 
-**自建 Token Tracker 特点**
+| 工具 | 常见本地数据位置 | 存储形态 | 解析要点 |
+| ---- | ---- | ---- | ---- |
+| Claude Code | `~/.claude/projects/`、`~/.claude/transcripts/` | JSONL | `projects` 里有 Token，`transcripts` 更偏会话元数据 |
+| Codex CLI | `~/.codex/sessions/` | JSONL | 逐文件解析会话记录 |
+| GitHub Copilot CLI | `~/.copilot/session-state/*/events.jsonl` | JSONL | 事件流格式，需要按事件类型取 usage |
+| OpenClaw | `~/.openclaw/agents/`、`~/.openclaw-<profile>/agents/` | JSONL | 重点看 assistant 消息里的 `usage` |
+| OpenCode | `~/.local/share/opencode/opencode.db` | SQLite | 不能再用逐行 JSONL 解析 |
+| Hermes | `~/.hermes/state.db` | SQLite | 需要 SQL 查询而不是文本切行 |
 
-- 100% 本地运行
-- 不上传任何数据
-- 完全可定制
-- 无需网络连接
+因此，设计本地 Tracker 时，第一原则不是“先写一个 JSONL parser”，而是“先确认这个工具到底把数据存成了什么”。
 
-**本文重点**：教你如何构建自己的纯本地 Token Tracker，既保护隐私又满足定制需求。
+### 2.2 为什么本文选 OpenClaw 当教学样本
 
----
+OpenClaw 适合作为第一站，不是因为它代表所有工具，而是因为它具备三个教学优势：
 
-## 二、技术原理深度解析
+1. 本地目录结构清楚，容易定位会话文件。
+2. 公开解析器实现已经展示了真实字段命名和兼容策略。
+3. `message.role === 'assistant'` 且带 `usage` 的记录，足够构成最小可用的统计口径。
 
-### 2.1 AI 编程工具的数据存储机制
+Vibe Usage 当前公开解析器对 OpenClaw 的路径假设是：
 
-现代 AI 编程工具（如 OpenClaw、Claude Code、Codex 等）在本地保存会话记录时，通常采用 **JSONL（JSON Lines）** 格式。
+```text
+~/.openclaw/agents/<agentDir>/sessions/*.jsonl
+~/.openclaw-<profile>/agents/<agentDir>/sessions/*.jsonl
 
-**JSONL 格式特点**
-
-- 每行是一个独立的完整 JSON 对象
-- 换行符（\n）是行分隔符
-- 易于流式读写
-- 比标准 JSON 数组更节省内存
-
-**为什么选择 JSONL？**
-
-1. **流式写入**：AI 对话是持续的，数据实时追加到文件
-2. **内存友好**：不需要将整个文件加载到内存
-3. **断裂容忍**：部分损坏不影响其他行
-
-### 2.2 OpenClaw Session 文件结构
-
-OpenClaw 将会话数据存储在以下目录结构中：
-
-```
-~/.openclaw/
-└── agents/
-    └── <agentId>/
-        ├── agent/           # Agent 配置目录
-        └── sessions/        # 会话记录目录
-            ├── <session1>.jsonl
-            ├── <session2>.jsonl
-            └── <session3>.jsonl
+Legacy paths:
+~/.clawdbot/
+~/.moltbot/
+~/.moldbot/
 ```
 
-**Session 文件示例**
+这里有个细节值得记住：解析器把 `agents` 下的目录名直接当成 `project` 标签使用。这个标签足够用于本地统计，但它未必等于真实仓库名。如果你后续需要“项目路径”而不是“代理目录名”，就要继续读取更完整的会话元数据，例如 `session` 事件里的 `cwd`。
+
+### 2.3 JSON Lines（JSONL）真正要记住的规则
+
+JSON Lines 官方规范只讲三件事：
+
+1. 文件应当使用 UTF-8 编码。
+2. 每一行都必须是一个合法的 JSON 值；空白行本身不是合法值。
+3. 行终止符是换行符 `\n`，文件扩展名通常使用 `.jsonl`。
+
+这三条在工程上分别意味着：
+
+1. 你可以逐行读取，而不必先加载整个 JSON 数组。
+2. 遇到单行损坏时，可以跳过这一行，尽量别让整份日志报废。
+3. 历史文件适合直接压缩成 `.jsonl.gz` 保存。
+
+规范并不鼓励空白行，但实际 parser 往往会宽容处理。工程上更稳的做法是：读取时允许 `continue` 跳过空行，写入时不要主动生成空行。
+
+## 三、统计口径：什么该算，什么不该算
+
+### 3.1 真正该计数的是 assistant 消息里的 usage
+
+对 OpenClaw 这类日志，最核心的判断不是“这一行是不是 message”，而是“这是不是带 usage 的 assistant message”。一个足够说明问题的简化样本如下：
 
 ```jsonl
-{"type":"session","version":3,"id":"10115670-855c-4603-947c-b250d43b173e","timestamp":"2026-03-06T11:30:00.220Z","cwd":"/Users/damon/.openclaw/workspace"}
-{"type":"model_change","id":"1733f7b5","parentId":null,"timestamp":"2026-03-06T11:30:00.223Z","provider":"minimax-cn","modelId":"MiniMax-M2.5"}
-{"type":"thinking_level_change","id":"ed264ff0","parentId":"1733f7b5","timestamp":"2026-03-06T11:30:00.223Z","thinkingLevel":"low"}
-{"type":"message","id":"21d29a13","parentId":"620de98e","timestamp":"2026-03-06T11:30:00.231Z","message":{"role":"user","content":[{"type":"text","text":"Hello, world!"}],"timestamp":1772796600228}}
-{"type":"message","id":"664db70e","parentId":"21d29a13","timestamp":"2026-03-06T11:30:05.754Z","message":{"role":"assistant","content":[{"type":"thinking","thinking":"This is a response..."}],"api":"anthropic-messages","provider":"minimax-cn","model":"MiniMax-M2.5","usage":{"input":36,"output":82,"cacheRead":0,"cacheWrite":16646,"totalTokens":16764,"cost":{"input":0.0000108,"output":0.0000984,"cacheRead":0,"cacheWrite":0.0019975,"total":0.0021067}},"stopReason":"toolUse","timestamp":1772796600230}}
+{"type":"session","timestamp":"2026-03-06T11:30:00.220Z"}
+{"type":"message","timestamp":"2026-03-06T11:30:00.231Z","message":{"role":"user","content":[{"type":"text","text":"Hello"}]}}
+{"type":"message","timestamp":"2026-03-06T11:30:05.754Z","message":{"role":"assistant","model":"MiniMax-M2.5","usage":{"input":36,"output":82,"cacheRead":0,"cacheWrite":16646,"totalTokens":16764,"cost":{"total":0.0021067}}}}
 ```
 
-**事件类型说明**
+在这个例子里，真正应该进入 Token 统计的只有第三行，原因很简单：
 
-| type 值 | 说明 | 包含 usage |
-|---------|------|-----------|
-| `session` | 会话开始事件 | 否 |
-| `model_change` | 模型切换事件 | 否 |
-| `thinking_level_change` | 思考级别变更 | 否 |
-| `message` | 消息事件 | 是 |
+1. 第一行是会话元数据，不是模型调用结果。
+2. 第二行虽然是用户消息，但通常不直接携带最终 usage。
+3. 第三行已经包含这一轮模型响应对应的输入、输出、缓存与费用信息。
 
-### 2.3 Message 事件结构详解
+换句话说，用户消息不是“不重要”，而是它的成本通常已经体现在随后那条 assistant 消息的 `input` 字段里。
 
-在 Message 事件中，`message` 字段包含了完整的消息内容和 Token 用量：
+### 3.2 归一化字段是多工具统计的起点
 
-```javascript
-{
-  "type": "message",
-  "id": "664db70e",                    // 消息唯一 ID
-  "parentId": "21d29a13",              // 父消息 ID（用于构建对话树）
-  "timestamp": "2026-03-06T11:30:05.754Z",  // 时间戳
-  
-  "message": {
-    "role": "assistant",                // 角色：user | assistant
-    "content": [                       // 消息内容（多模态）
-      {
-        "type": "thinking",            // 思考内容
-        "thinking": "..."
-      },
-      {
-        "type": "toolCall",           // 工具调用
-        "id": "call_xxx",
-        "name": "web_search",
-        "arguments": {"query": "search term", "count": 10}
+不同工具、不同 provider、甚至同一工具的不同版本，字段名都可能不一样。你真正要做的不是记住某一种命名，而是把它们归一到你自己的 canonical schema。
+
+一个实用的最小字段映射如下：
+
+| 逻辑指标 | 常见候选字段 |
+| ---- | ---- |
+| 输入 Token | `input`、`inputTokens`、`input_tokens`、`promptTokens`、`prompt_tokens` |
+| 输出 Token | `output`、`outputTokens`、`output_tokens`、`completionTokens`、`completion_tokens` |
+| 缓存读取 | `cacheRead`、`cache_read`、`cache_read_input_tokens` |
+| 缓存写入 | `cacheWrite`、`cache_write`、`cache_creation_input_tokens` |
+| 总量 | `totalTokens`、`total_tokens`，或自行求和 |
+| 费用 | `cost.total`、`totalCost`，没有就保持 `0` |
+
+这一步比你想象中更重要，因为一旦归一化没做稳，后面按模型、按项目、按时间聚合出来的报表都会掺假。
+
+### 3.3 时间窗定义要和标题保持一致
+
+很多文档把“最近 7 天”写成“本周”，代码却只是从当前时间往前减 6 天。这个差别看起来小，实际会影响读者对数据的理解。
+
+本文示例统一使用三种口径：
+
+1. 今日：本地时区当天 `00:00:00` 到当前时间。
+2. 近 7 天：滚动窗口，不叫“本周”。
+3. 本月：本地时区当月 1 日 `00:00:00` 到当前时间。
+
+如果你的团队要做财务报表，最好把时区和窗口规则写进代码注释或配置项，不要默认大家理解一致。
+
+## 四、做一个最小可用的本地 Token Tracker
+
+### 4.1 目标和环境
+
+这版示例只追求三件事：
+
+1. 扫描 OpenClaw 及 profile 部署目录。
+2. 读取带 `usage` 的 assistant 消息并归一化字段。
+3. 输出按时间、按模型、按项目的本地统计结果，以及可二次处理的 JSON。
+
+环境要求很简单：
+
+| 项目 | 要求 |
+| ---- | ---- |
+| 运行时 | Node.js 18 或更高版本 |
+| 依赖 | 仅使用 Node.js 内置模块 |
+| 适用场景 | 个人使用、小团队、日志规模中等 |
+
+### 4.2 可直接运行的 Node.js 脚本
+
+下面这段脚本假设文件名是 `token-tracker.mjs`。它不是伪代码，而是能直接运行的最小版本。
+
+```js
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
+const args = new Set(process.argv.slice(2));
+const outputJson = args.has('--json');
+
+function getPossibleRoots() {
+  const home = homedir();
+  const roots = [
+    join(home, '.clawdbot'),
+    join(home, '.moltbot'),
+    join(home, '.moldbot'),
+  ];
+
+  try {
+    for (const entry of readdirSync(home, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name === '.openclaw' || /^\.openclaw-.+/.test(entry.name)) {
+        roots.push(join(home, entry.name));
       }
-    ],
-    "api": "anthropic-messages",       // API 类型
-    "provider": "minimax-cn",         // 提供商
-    "model": "MiniMax-M2.5",          // 模型名称
-    "usage": {                         // Token 用量 ⭐ 核心
-      "input": 36,                    // 输入 Token 数
-      "output": 82,                   // 输出 Token 数
-      "cacheRead": 0,                 // 缓存读取 Token
-      "cacheWrite": 16646,            // 缓存写入 Token
-      "totalTokens": 16764,           // 总 Token 数
-      "cost": {                       // 费用详情（单位：美元）
-        "input": 0.0000108,
-        "output": 0.0000984,
-        "cacheRead": 0,
-        "cacheWrite": 0.0019975,
-        "total": 0.0021067
-      }
-    },
-    "stopReason": "toolUse",          // 停止原因
-    "timestamp": 1772796600230        // 消息级时间戳（毫秒）
+    }
+  } catch {
+    // ignore unreadable entries in home directory
   }
+
+  return roots;
 }
-```
 
-### 2.4 Token 字段的兼容性处理
-
-不同的 AI 编程工具和模型提供商会使用不同的字段名来表示 Token 数量。Token Tracker 必须处理这种命名差异：
-
-```javascript
-// 兼容多种字段名的 Token 提取函数
 function getTokenValue(usage, ...keys) {
   for (const key of keys) {
-    if (usage[key] != null && usage[key] > 0) {
-      return usage[key];
-    }
+    if (usage[key] != null && usage[key] > 0) return usage[key];
   }
   return 0;
 }
 
-// 使用示例
-const inputTokens = getTokenValue(usage, 
-  'input',           // OpenClaw 标准
-  'inputTokens',     // OpenAI 格式
-  'promptTokens',    // Anthropic 格式
-  'prompt_tokens'    // 小写下划线格式
-);
-
-const outputTokens = getTokenValue(usage,
-  'output',              // OpenClaw 标准
-  'outputTokens',        // OpenAI 格式
-  'completionTokens',     // Anthropic 格式
-  'completion_tokens'     // 小写下划线格式
-);
-```
-
-**为什么需要兼容性处理？**
-
-因为不同的工具链有不同的历史包袱和命名习惯：
-- OpenClaw 使用 `input`/`output`
-- OpenAI 使用 `inputTokens`/`outputTokens`
-- Anthropic 使用 `promptTokens`/`completionTokens`
-
----
-
-## 三、安装与使用
-
-### 3.1 环境要求
-
-Token Tracker 基于 Node.js 开发，需要以下环境：
-
-- **运行时**：Node.js 18.0 或更高版本
-- **操作系统**：macOS、Linux、Windows（WSL）
-- **存储空间**：取决于会话数量，通常 < 100MB
-
-**检查 Node.js 版本**
-
-```bash
-node --version
-# 输出示例：v20.11.0
-```
-
-### 3.2 安装步骤
-
-**方法一：直接运行（无需安装）**
-
-```bash
-# 克隆或下载脚本
-git clone https://github.com/your-username/token-tracker.git
-cd token-tracker
-
-# 直接运行
-node token-tracker.js
-```
-
-**方法二：全局安装**
-
-```bash
-# 创建符号链接到全局路径
-npm link
-
-# 然后可以在任意目录运行
-token-tracker
-```
-
-### 3.3 基本用法
-
-**运行统计**
-
-```bash
-node token-tracker.js
-```
-
-**输出说明**
-
-```
-🔧 Token Tracker - 纯本地 Token 用量统计
-
-📂 扫描 OpenClaw...
-   找到 313 条记录
-
-════════════════════════════════════════════════════════════
-  🤖 OpenClaw Token 用量统计
-════════════════════════════════════════════════════════════
-
-📊 总用量
-  输入 Token:   10.42M
-  输出 Token:   114.4K
-  缓存读取:   5.57M
-  缓存写入:   1.58M
-  总费用:     $3.621138
-
-⏰ 时段统计
-  今日:  输入 9.30M | 输出 80.6K | 费用 $3.182288
-  本周:  输入 9.95M | 输出 97.1K | 费用 $3.428856
-  本月:  输入 10.42M | 输出 114.4K | 费用 $3.621138
-
-🧠 按模型
-  MiniMax-M2.7  输入   10.40M | 输出   110.0K | 费用 $3.589263
-  MiniMax-M2.5  输入   25.6K | 输出     4.4K | 费用 $0.031875
-
-📈 最近7天趋势
-  2026-03-20 █ 457.6K
-  2026-03-24 ██ 669.5K
-  2026-03-28 ██████████████████████████████ 9.38M
-```
-
-### 3.4 输出格式
-
-**终端输出（默认）**
-
-彩色格式化输出，适合人类阅读，包含：
-- 总用量统计
-- 时段对比（今日/本周/本月）
-- 按模型分类
-- 7 天趋势图
-
-**JSON 输出**
-
-```bash
-node token-tracker.js --json
-```
-
-```json
-{
-  "total": {
-    "input": 10420000,
-    "output": 114400,
-    "cacheRead": 5570000,
-    "cacheWrite": 1580000,
-    "cost": 3.621138
-  },
-  "today": {
-    "input": 9300000,
-    "output": 80600,
-    "cost": 3.182288
-  },
-  "week": { "input": 9950000, "output": 97100, "cost": 3.428856 },
-  "month": { "input": 10420000, "output": 114400, "cost": 3.621138 },
-  "byModel": {
-    "MiniMax-M2.7": { "input": 10400000, "output": 110000, "cost": 3.589263 },
-    "MiniMax-M2.5": { "input": 25600, "output": 4400, "cost": 0.031875 }
-  },
-  "byDay": {
-    "2026-03-28": { "input": 9300000, "output": 80600, "cost": 3.182288 }
-  }
-}
-```
-
-JSON 格式适合：
-- 程序二次处理
-- 数据导入其他工具
-- 自定义可视化
-
----
-
-## 四、进阶用法与配置
-
-### 4.1 时段统计详解
-
-Token Tracker 按三个时间段聚合数据：
-
-**今日（Today）**
-
-- 定义：当天 00:00:00 至当前时间
-- 用途：实时监控当日消耗
-
-**本周（Week）**
-
-- 定义：最近 7 天
-- 用途：短期趋势分析
-
-**本月（Month）**
-
-- 定义：当月 1 日至当前时间
-- 用途：月度预算规划
-
-### 4.2 按模型分析
-
-不同模型的 Token 单价不同，了解各模型用量有助于优化成本：
-
-| 模型 | 输入单价 | 输出单价 | 适用场景 |
-|------|----------|----------|----------|
-| MiniMax-M2.7 | $0.0003/1K | $0.0012/1K | 高性能任务 |
-| MiniMax-M2.5 | $0.0003/1K | $0.0012/1K | 标准任务 |
-| Claude 3.5 | $0.003/1K | $0.015/1K | 高质量任务 |
-
-### 4.3 7 天趋势图解读
-
-趋势图使用 ASCII 条形图展示每日总 Token 消耗：
-
-```
-📈 最近7天趋势
-  2026-03-20 █ 457.6K      ← 正常用量
-  2026-03-24 ██ 669.5K     ← 略高，可能是复杂任务
-  2026-03-28 ████████████ 9.38M  ← 异常高峰，需调查原因
-```
-
-**异常排查思路**
-
-当日用量异常升高时，检查：
-1. 是否有大规模重构任务？
-2. 是否有新的复杂项目？
-3. 是否误开启了循环调用？
-
-### 4.4 定时任务配置
-
-使用系统定时任务实现每日自动统计：
-
-**Linux/macOS（crontab）**
-
-```bash
-# 编辑 crontab
-crontab -e
-
-# 每天早上 9 点运行统计，并保存日志
-0 9 * * * /usr/bin/node /path/to/token-tracker.js >> ~/token-logs/$(date +\%Y-\%m-\%d).log 2>&1
-```
-
-**查看历史日志**
-
-```bash
-cat ~/token-logs/2026-03-28.log
-```
-
----
-
-## 五、开发指南
-
-### 5.1 架构设计
-
-Token Tracker 采用模块化架构，便于扩展：
-
-```
-token-tracker/
-├── token-tracker.js      # 主入口
-├── parsers/
-│   ├── index.js          # 解析器接口
-│   ├── openclaw.js       # OpenClaw 解析器
-│   ├── claude-code.js    # Claude Code 解析器
-│   └── ...               # 其他工具解析器
-├── aggregators/
-│   └── index.js          # 数据聚合器
-└── output/
-    ├── terminal.js       # 终端输出
-    └── json.js           # JSON 输出
-```
-
-**核心设计原则**
-
-1. **单一职责**：每个模块只做一件事
-2. **开放封闭**：添加新工具只需新增解析器
-3. **依赖注入**：便于测试和替换组件
-
-### 5.2 解析器接口定义
-
-所有解析器必须实现统一的接口：
-
-```javascript
-// parsers/base.js
-export class BaseParser {
-  /**
-   * 返回解析器名称
-   */
-  get name() {
-    return 'base';
-  }
-  
-  /**
-   * 返回支持的数据路径
-   */
-  getPaths() {
-    throw new Error('Not implemented');
-  }
-  
-  /**
-   * 解析单个文件
-   * @param {string} filePath - 文件路径
-   * @returns {Array} 条目数组
-   */
-  parseFile(filePath) {
-    throw new Error('Not implemented');
-  }
-  
-  /**
-   * 执行解析
-   * @returns {Promise<Array>} 所有条目
-   */
-  async parse() {
-    const entries = [];
-    for (const path of this.getPaths()) {
-      const files = await glob(path);
-      for (const file of files) {
-        entries.push(...this.parseFile(file));
-      }
-    }
-    return entries;
-  }
-}
-```
-
-### 5.3 OpenClaw 解析器实现
-
-以下是多工具支持的 OpenClaw 解析器完整实现：
-
-```javascript
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
-import { homedir } from 'node:os';
-import { aggregateToBuckets, extractSessions } from './index.js';
-
-// OpenClaw 及兼容工具的数据路径
-const POSSIBLE_ROOTS = [
-  join(homedir(), '.openclaw'),
-  join(homedir(), '.clawdbot'),   // 旧版本兼容
-  join(homedir(), '.moltbot'),    // 旧版本兼容
-  join(homedir(), '.moldbot'),    // 旧版本兼容
-];
-
-/**
- * 标准化 Token 字段提取
- * 兼容多种命名约定
- */
-function getTokens(usage, ...keys) {
-  for (const key of keys) {
-    if (usage[key] != null && usage[key] > 0) {
-      return usage[key];
-    }
-  }
-  return 0;
+function emptyStats() {
+  return {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    total: 0,
+    cost: 0,
+  };
 }
 
-/**
- * OpenClaw 会话解析器
- */
-export async function parse() {
-  const entries = [];       // Token 用量条目
-  const sessionEvents = []; // 会话事件（用于元数据分析）
-  
-  for (const root of POSSIBLE_ROOTS) {
+function addStats(target, entry) {
+  target.input += entry.input;
+  target.output += entry.output;
+  target.cacheRead += entry.cacheRead;
+  target.cacheWrite += entry.cacheWrite;
+  target.total += entry.total;
+  target.cost += entry.cost;
+}
+
+function parseOpenClaw() {
+  const entries = [];
+
+  for (const root of getPossibleRoots()) {
     const agentsDir = join(root, 'agents');
     if (!existsSync(agentsDir)) continue;
-    
+
     let agentDirs;
     try {
-      agentDirs = readdirSync(agentsDir, { withFileTypes: true })
-        .filter(d => d.isDirectory());
+      agentDirs = readdirSync(agentsDir, { withFileTypes: true }).filter(
+        entry => entry.isDirectory()
+      );
     } catch {
-      continue; // 权限不足等错误，跳过
+      continue;
     }
-    
+
     for (const agentDir of agentDirs) {
       const project = agentDir.name;
       const sessionsDir = join(agentsDir, project, 'sessions');
       if (!existsSync(sessionsDir)) continue;
-      
-      let sessionFiles;
+
+      let files;
       try {
-        sessionFiles = readdirSync(sessionsDir)
-          .filter(f => f.endsWith('.jsonl'));
+        files = readdirSync(sessionsDir).filter(name => name.endsWith('.jsonl'));
       } catch {
         continue;
       }
-      
-      for (const file of sessionFiles) {
+
+      for (const file of files) {
         const filePath = join(sessionsDir, file);
         let content;
         try {
-          content = readFileSync(filePath, 'utf-8');
+          content = readFileSync(filePath, 'utf8');
         } catch {
           continue;
         }
-        
-        // 逐行解析 JSONL
+
         for (const line of content.split('\n')) {
           if (!line.trim()) continue;
-          
+
           try {
             const obj = JSON.parse(line);
-            
-            // 只处理消息事件
             if (obj.type !== 'message') continue;
-            const msg = obj.message;
-            if (!msg) continue;
-            
-            // 提取时间戳
-            const timestamp = obj.timestamp || msg.timestamp;
-            if (!timestamp) continue;
-            const ts = new Date(typeof timestamp === 'number' ? timestamp : timestamp);
-            if (isNaN(ts.getTime())) continue;
-            
-            // 记录会话事件（所有消息）
-            sessionEvents.push({
-              sessionId: filePath,
-              source: 'openclaw',
-              project,
-              timestamp: ts,
-              role: msg.role === 'user' ? 'user' : 'assistant',
-            });
-            
-            // 只处理助手消息（有 Token 用量）
-            if (msg.role !== 'assistant') continue;
-            
-            const usage = msg.usage;
-            if (!usage) continue;
-            
+
+            const message = obj.message;
+            if (!message || message.role !== 'assistant' || !message.usage) continue;
+
+            const rawTs = obj.timestamp ?? message.timestamp;
+            if (!rawTs) continue;
+
+            const timestamp = new Date(rawTs);
+            if (Number.isNaN(timestamp.getTime())) continue;
+
+            const usage = message.usage;
+            const input = getTokenValue(
+              usage,
+              'input',
+              'inputTokens',
+              'input_tokens',
+              'promptTokens',
+              'prompt_tokens'
+            );
+            const output = getTokenValue(
+              usage,
+              'output',
+              'outputTokens',
+              'output_tokens',
+              'completionTokens',
+              'completion_tokens'
+            );
+            const cacheRead = getTokenValue(
+              usage,
+              'cacheRead',
+              'cache_read',
+              'cache_read_input_tokens'
+            );
+            const cacheWrite = getTokenValue(
+              usage,
+              'cacheWrite',
+              'cache_write',
+              'cache_creation_input_tokens'
+            );
+
+            const total =
+              usage.totalTokens ??
+              usage.total_tokens ??
+              input + output + cacheRead + cacheWrite;
+
+            const cost =
+              usage.cost?.total ??
+              usage.cost?.amount ??
+              usage.totalCost ??
+              0;
+
             entries.push({
-              source: 'openclaw',
-              model: msg.model || obj.model || 'unknown',
               project,
-              timestamp: ts,
-              inputTokens: getTokens(usage, 'input', 'inputTokens', 
-                'promptTokens', 'prompt_tokens'),
-              outputTokens: getTokens(usage, 'output', 'outputTokens',
-                'completionTokens', 'completion_tokens'),
-              cachedInputTokens: getTokens(usage, 'cacheRead', 'cache_read',
-                'cache_read_input_tokens'),
-              reasoningOutputTokens: 0,
+              model: message.model || obj.model || 'unknown',
+              timestamp,
+              input,
+              output,
+              cacheRead,
+              cacheWrite,
+              total,
+              cost,
             });
           } catch {
-            // 单行解析失败，跳过该行
             continue;
           }
         }
       }
     }
   }
-  
-  // 聚合数据
+
+  return entries;
+}
+
+function localDayKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function summarize(entries) {
+  const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - 6);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const total = emptyStats();
+  const today = emptyStats();
+  const week = emptyStats();
+  const month = emptyStats();
+  const byModel = new Map();
+  const byProject = new Map();
+  const byDay = new Map();
+
+  for (const entry of entries) {
+    addStats(total, entry);
+
+    if (entry.timestamp >= todayStart) addStats(today, entry);
+    if (entry.timestamp >= weekStart) addStats(week, entry);
+    if (entry.timestamp >= monthStart) addStats(month, entry);
+
+    if (!byModel.has(entry.model)) byModel.set(entry.model, emptyStats());
+    addStats(byModel.get(entry.model), entry);
+
+    if (!byProject.has(entry.project)) byProject.set(entry.project, emptyStats());
+    addStats(byProject.get(entry.project), entry);
+
+    const dayKey = localDayKey(entry.timestamp);
+    if (!byDay.has(dayKey)) byDay.set(dayKey, emptyStats());
+    addStats(byDay.get(dayKey), entry);
+  }
+
   return {
-    buckets: aggregateToBuckets(entries),
-    sessions: extractSessions(sessionEvents),
+    scannedMessages: entries.length,
+    total,
+    today,
+    week,
+    month,
+    byModel: Object.fromEntries(
+      [...byModel.entries()].sort((a, b) => b[1].total - a[1].total)
+    ),
+    byProject: Object.fromEntries(
+      [...byProject.entries()].sort((a, b) => b[1].total - a[1].total)
+    ),
+    byDay: Object.fromEntries([...byDay.entries()].sort()),
   };
 }
-```
 
-### 5.4 添加新工具支持
+function shortNumber(value) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return `${value}`;
+}
 
-假设要添加对「Kimi Code」的支持：
+function printStats(label, stats) {
+  console.log(
+    `${label.padEnd(8)} 输入 ${shortNumber(stats.input).padStart(8)} | 输出 ${shortNumber(stats.output).padStart(8)} | 总量 ${shortNumber(stats.total).padStart(8)} | 费用 $${stats.cost.toFixed(4)}`
+  );
+}
 
-**步骤 1：创建解析器文件**
+function main() {
+  const entries = parseOpenClaw();
+  const result = summarize(entries);
 
-```javascript
-// parsers/kimi-code.js
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
-import { homedir } from 'node:os';
-import { aggregateToBuckets } from './index.js';
-
-const KIMI_PATH = join(homedir(), '.kimi', 'sessions');
-
-export async function parse() {
-  const entries = [];
-  const sessions = [];
-  
-  if (!existsSync(KIMI_PATH)) return { buckets: [], sessions: [] };
-  
-  const files = readdirSync(KIMI_PATH).filter(f => f.endsWith('.jsonl'));
-  
-  for (const file of files) {
-    const content = readFileSync(join(KIMI_PATH, file), 'utf-8');
-    
-    for (const line of content.split('\n')) {
-      if (!line.trim()) continue;
-      try {
-        const obj = JSON.parse(line);
-        // Kimi Code 的格式解析逻辑
-        // 此处需要根据实际日志格式进行调整
-      } catch {
-        continue;
-      }
-    }
+  if (outputJson) {
+    console.log(JSON.stringify(result, null, 2));
+    return;
   }
-  
-  return { buckets: aggregateToBuckets(entries), sessions: [] };
+
+  console.log('Token Tracker（OpenClaw 本地版）');
+  console.log('');
+  console.log(`解析到 ${result.scannedMessages} 条带 usage 的 assistant 消息`);
+  console.log('');
+  printStats('总计', result.total);
+  printStats('今日', result.today);
+  printStats('近 7 天', result.week);
+  printStats('本月', result.month);
+
+  console.log('');
+  console.log('按模型');
+  for (const [model, stats] of Object.entries(result.byModel).slice(0, 10)) {
+    printStats(model, stats);
+  }
+
+  console.log('');
+  console.log('按项目');
+  for (const [project, stats] of Object.entries(result.byProject).slice(0, 10)) {
+    printStats(project, stats);
+  }
 }
+
+main();
 ```
 
-**步骤 2：注册到解析器索引**
-
-```javascript
-// parsers/index.js
-export { parse as parseOpenClaw } from './openclaw.js';
-export { parse as parseClaudeCode } from './claude-code.js';
-export { parse as parseKimiCode } from './kimi-code.js';
-```
-
-**步骤 3：更新主程序**
-
-```javascript
-// 主程序中添加
-import { parseKimiCode } from './parsers/kimi-code.js';
-
-const allEntries = [
-  ...(await parseOpenClaw()),
-  ...(await parseClaudeCode()),
-  ...(await parseKimiCode()),
-];
-```
-
----
-
-## 六、最佳实践
-
-### 6.1 数据安全
-
-**本地优先原则**
-
-- Token Tracker 不上传任何数据到网络
-- 所有计算和存储都在本地完成
-- 定期备份 Session 文件以防丢失
-
-**敏感信息处理**
-
-Session 文件可能包含：
-- 提示词中的 API Key（避免在提示词中硬编码 Key）
-- 项目内部信息
-- 调试输出
-
-**建议**
-
-1. 将 Session 目录加入 .gitignore
-2. 定期清理旧 Session 文件
-3. 使用文件系统加密（如 macOS FileVault）
-
-### 6.2 费用优化
-
-**选择合适的模型**
-
-| 场景 | 推荐模型 | 理由 |
-|------|----------|------|
-| 简单问答 | MiniMax-M2.5 | 便宜快速 |
-| 代码补全 | MiniMax-M2.7 | 性能强 |
-| 复杂推理 | Claude 3.5 | 质量最高 |
-
-**优化提示词**
-
-- 移除冗余的上下文
-- 使用简洁的指令
-- 避免重复示例
-
-**监控异常**
-
-设置费用阈值告警：
-
-```javascript
-const DAILY_COST_LIMIT = 10; // 美元
-
-if (stats.today.cost > DAILY_COST_LIMIT) {
-  console.warn('⚠️ 今日费用超过阈值 $10，请检查是否异常');
-}
-```
-
-### 6.3 性能调优
-
-**大量 Session 文件时的处理**
-
-当 Session 文件很多时（如 > 1000 个），解析可能较慢：
-
-**优化策略 1：并行处理**
-
-```javascript
-import { Worker } from 'worker_threads';
-
-async function parseParallel(files, workerCount = 4) {
-  const chunks = splitArray(files, workerCount);
-  const workers = chunks.map(chunk => new Worker('./parser-worker.js', {
-    workerData: { files: chunk }
-  }));
-  return Promise.all(workers.map(w => new Promise(resolve => {
-    w.on('message', resolve);
-  })));
-}
-```
-
-**优化策略 2：增量更新**
-
-不每次重新解析所有文件，而是：
-1. 记录上次解析的位置
-2. 只解析新增加的记录
-3. 使用内存缓存中间结果
-
----
-
-## 七、FAQ
-
-**Q1：Session 文件占用空间很大怎么办？**
-
-A：Session 文件过大会影响解析性能。建议：
-- 设置 Session 文件自动轮转（如每 10000 行新建文件）
-- 定期归档旧 Session 到外部存储
-- 使用 gzip 压缩历史文件
-
-**Q2：解析失败怎么排查？**
-
-A：首先检查错误类型：
-- 权限错误：`chmod 644 ~/.openclaw/agents/*/sessions/*.jsonl`
-- 格式错误：使用 `head -1 file.jsonl | jq` 验证 JSON 格式
-- 路径错误：确认工具已正确安装并使用过
-
-**Q3：如何支持新的 AI 工具？**
-
-A：参考本文档「第五章 开发指南 - 添加新工具支持」部分。主要工作：
-1. 找到该工具的 Session 文件路径
-2. 分析其 JSONL 格式
-3. 编写对应的解析器
-4. 注册到主程序
-
-**Q4：统计结果和官方仪表板不一致？**
-
-A：可能原因：
-1. 统计时间范围不同（如时区差异）
-2. 计费方式差异（如某些工具按请求计费而非 Token）
-3. 缓存 Token 是否计入
-
-建议以官方数据为准，本工具用于趋势分析。
-
-**Q5：能否导出到 Excel？**
-
-A：可以。使用 JSON 输出后，用以下方式转换：
+### 4.3 运行方式与输出示例
 
 ```bash
-node token-tracker.js --json > stats.json
-# 使用 jq 或其他工具转换格式
+node token-tracker.mjs
+node token-tracker.mjs --json
 ```
 
----
+终端输出大致会长这样：
 
-## 八、术语表
+```text
+Token Tracker（OpenClaw 本地版）
 
-| 术语 | 英文 | 说明 |
-|------|------|------|
-| Token | Token | AI 模型处理的最小文本单位 |
-| 输入 Token | Input Tokens | 用户发送的提示词消耗的 Token |
-| 输出 Token | Output Tokens | AI 生成的回答消耗的 Token |
-| 缓存读取 | Cache Read | 从上下文缓存中读取的 Token |
-| 缓存写入 | Cache Write | 写入上下文缓存的 Token |
-| JSONL | JSON Lines | 每行一个 JSON 的文件格式 |
-| 上下文窗口 | Context Window | 模型单次最大处理的 Token 数量 |
-| 会话 | Session | 一段完整的对话交互 |
-| 思考级别 | Thinking Level | OpenClaw 的推理深度配置 |
+解析到 313 条带 usage 的 assistant 消息
 
----
+总计      输入   10.42M | 输出   114.4K | 总量   17.68M | 费用 $3.6211
+今日      输入    9.30M | 输出    80.6K | 总量   15.91M | 费用 $3.1823
+近 7 天   输入    9.95M | 输出    97.1K | 总量   16.94M | 费用 $3.4288
+本月      输入   10.42M | 输出   114.4K | 总量   17.68M | 费用 $3.6211
+```
 
-## 九、总结
+JSON 输出则更适合接给 `jq`、DuckDB、Grafana 或你自己的内部脚本。
 
-Token Tracker 是一个轻量、隐私友好的 Token 用量追踪工具。通过阅读本文档，你应该已经：
+### 4.4 这段代码为什么这样写
 
-- ✅ 理解了 Token 和用量追踪的概念
-- ✅ 掌握了 OpenClaw Session 文件的结构
-- ✅ 能够独立安装和使用 Token Tracker
-- ✅学会了按时间、按模型分析用量数据
-- ✅ 了解了如何扩展支持新的工具
-- ✅ 掌握了数据安全和费用优化技巧
+这版脚本看起来直白，但几个设计点是故意保留下来的：
 
-**下一步建议**
+1. 目录发现是动态的。除了 `~/.openclaw`，还会扫描 `~/.openclaw-<profile>`，并兼容老目录名。
+2. 统计入口是 assistant 消息，不是所有 message。
+3. 归一化优先做在 parser 层，而不是渲染层。
+4. 按天分桶使用本地日期，而不是 `toISOString()` 的 UTC 日期，避免跨时区后把深夜请求算到第二天。
+5. 遇到单行损坏直接跳过，避免整份文件失败。
+6. 输出同时保留“总量”和分组结果，方便后续二次消费。
 
-1. 运行一次 Token Tracker，了解你的用量模式
-2. 设置定时任务，建立每日统计习惯
-3. 根据数据分析结果优化 AI 使用习惯
-4. 如有需要，尝试扩展支持其他工具
+这版脚本也刻意省略了两件事：
 
-**参考资料**
+1. 没有做 session 元数据统计。Vibe Usage 会额外提取 active time、总时长、消息数等信息；这里先不展开，避免第一版就把抽象做重。
+2. 没有使用流式读取。对个人或中小规模日志，`readFileSync + split('\n')` 足够简单；如果你已经有成千上万份大文件，再换成 `readline` 流式解析更合适。
 
-- VibeUsage 官方仓库：https://github.com/vibe-cafe/vibe-usage
-- OpenClaw 官方文档：https://docs.openclaw.ai
-- JSONL 格式说明：https://jsonlines.org/
+### 4.5 如果你需要 30 分钟粒度，而不是按天聚合
 
----
+Vibe Usage 当前公开口径是把 Token 聚合到 30 分钟 bucket。这个思路很好，因为它天然适合做趋势图和增量同步。你只要把 `byDay` 的 key 换成半小时 bucket 即可：
 
-*🦞 由钳岳星君撰写 · 2026年3月28日*
+```js
+function halfHourBucketKey(date) {
+  const bucket = new Date(date);
+  bucket.setMinutes(bucket.getMinutes() < 30 ? 0 : 30, 0, 0);
+  return bucket.toISOString();
+}
+```
+
+然后把 `bucketKeyByDay(entry.timestamp)` 替换成 `halfHourBucketKey(entry.timestamp)`。第一版为什么我没有直接这么写？因为教学上更重要的是先把“口径是否正确”讲清楚，再把颗粒度细化。
+
+## 五、扩到多工具时，别把整套逻辑重写一遍
+
+### 5.1 先定义统一条目结构
+
+真正该复用的不是某个工具的路径，而是解析完成后的统一条目结构。一个够用的 canonical entry 可以长这样：
+
+```js
+{
+  source: 'openclaw',
+  project: 'demo-project',
+  model: 'MiniMax-M2.5',
+  timestamp: new Date(),
+  input: 36,
+  output: 82,
+  cacheRead: 0,
+  cacheWrite: 16646,
+  total: 16764,
+  cost: 0.0021067,
+}
+```
+
+只要各个 parser 最终都吐出这个形状，后面的聚合器和输出层就不用为每种工具重写一遍。
+
+### 5.2 JSONL 工具和 SQLite 工具，应该分成两条实现路线
+
+多工具扩展最常见的错误，是把 OpenClaw 的解析方式复制到一切工具上。正确做法是按存储形态分层：
+
+| 存储形态 | 代表工具 | 建议策略 |
+| ---- | ---- | ---- |
+| JSONL | OpenClaw、Claude Code、Copilot CLI | 逐行读取，按事件类型和 usage 字段提取 |
+| SQLite | OpenCode、Hermes | 用 SQL 查询抽取所需字段，再映射成 canonical entry |
+
+Claude Code 就是一个很好的反例。它不仅有 `projects` 目录，还会把会话转录写到 `transcripts`；前者更适合提 Token，后者更适合补会话元数据。换句话说，多工具支持不是“多扫几个目录”，而是“搞清这个工具把什么信息拆到了哪里”。
+
+### 5.3 三个最容易踩的坑
+
+扩展到多工具后，下面三个问题几乎一定会出现：
+
+1. 重复计数：同一 session 可能被多个目录、多个副本或子代理文件重复记录。
+2. 字段漂移：不同工具的 usage key 名称不一致，甚至同工具不同版本也会变。
+3. 幂等更新：如果你做增量同步或每日快照，必须保证重复导入不会把总量越加越大。
+
+因此，一个稍微像样的多工具版本通常都会补这几件事：
+
+1. 去重键，例如 UUID、sessionId 或文件路径组合。
+2. 统一 entry schema。
+3. 明确的 bucket 粒度和时间窗定义。
+4. “原始日志解析”与“报表输出”解耦。
+
+## 六、准确性边界：本地统计为什么经常和官方账单不一致
+
+### 6.1 本地 Tracker 更像运行信号系统，不是结算系统
+
+本地 Tracker 的强项是观察趋势，不是给财务做最终对账。出现差异时，通常不是代码错了，而是统计对象本来就不同。常见原因包括：
+
+1. 官方账单会考虑供应商侧重试、舍弃请求、隐藏折扣或特殊计费规则。
+2. 本地日志可能只记录成功写回的 usage，不一定覆盖所有失败请求。
+3. 有些工具会记录缓存字段，有些不会；你计不计缓存，结果都会变。
+4. 时间窗和时区不一致时，“今日”与“本月”的边界也会不同。
+
+更稳的心态是：
+
+1. 用本地 Tracker 做运行监控、项目归因和异常排查。
+2. 用官方账单做最终结算和采购核对。
+
+### 6.2 费用字段不一定可靠，价格表最好独立版本化
+
+有些日志会直接把 `cost.total` 写出来，有些只给 Token 数，没有费用字段。即便有费用字段，也可能随着 provider 版本、地区、折扣策略变化而变化。
+
+因此，费用统计有两条更稳的实践：
+
+1. 日志里有 `cost` 就直接累加，同时保留原始 Token 数。
+2. 日志里没有 `cost` 时，把价格表独立成配置，不要把单价硬编码在 parser 里。
+
+后者的好处是：你升级模型、切换 provider 或补历史价格时，不必重写解析逻辑。
+
+### 6.3 事实锚点优先级：本机日志 > 解析器源码 > 宣传页
+
+写这类技术文档时，最稳的事实来源顺序通常是：
+
+1. 你自己机器上的真实日志样本。
+2. 公开 parser 源码或 README 中明确给出的路径与字段。
+3. 产品官网和宣传页。
+
+原因不复杂：官网讲的是产品能力，parser 关心的却是“具体文件在什么路径、哪条字段可读、哪种格式要兼容”。这两类信息并不总在同一层。
+
+## 七、把它变成能长期使用的工具
+
+### 7.1 一份够用的落地清单
+
+如果你准备把本文示例从“能跑”升级到“能长期用”，优先补下面几项：
+
+1. 把时间窗、时区和 bucket 粒度写进配置。
+2. 增加去重策略，避免重复 session 或子代理日志重复统计。
+3. 为多工具 parser 建立统一测试样本，至少覆盖 3 到 5 份真实日志。
+4. 把历史 JSONL 压缩归档，避免长期增长拖慢解析速度。
+5. 为敏感日志目录加访问控制，并避免把日志纳入 Git 仓库。
+6. 如果要团队使用，优先定义“什么数字拿来做监控，什么数字拿来做结算”。
+
+### 7.2 四个常见问题
+
+**Q1：为什么我明明发了很多消息，统计条数却不高？**
+
+因为这版口径统计的是“带 usage 的 assistant 消息”，不是所有消息条数。用户消息多，不代表模型调用就多。
+
+**Q2：为什么某些工具完全没有数据？**
+
+先确认两件事：
+
+1. 这个工具的本地数据位置是不是你以为的路径。
+2. 它到底写的是 JSONL，还是 SQLite、二进制缓存或别的格式。
+
+**Q3：为什么项目名看起来不像仓库名？**
+
+因为很多 parser 直接用目录名作为 `project` 标签。对 OpenClaw 来说，这个标签常常只是 `agents` 下的子目录名，不一定是实际工作区名称。
+
+**Q4：什么时候该放弃自建，直接用 Vibe Usage？**
+
+当你已经明确需要：
+
+1. 多工具统一面板。
+2. 后台持续同步。
+3. 跨设备追踪。
+4. 少维护、快交付。
+
+这时候继续自建，往往是在重复造已经成熟的轮子。
+
+## 八、总结
+
+如果只保留三条结论，我会留这三条：
+
+1. 纯本地 Token Tracker 最重要的不是界面，而是统计口径和事实锚点。
+2. OpenClaw 这类 JSONL 工具适合做教学起点，但多工具扩展一定要承认 SQLite 等异构存储的存在。
+3. 本地统计更适合做运行监控和行为分析，不适合冒充最终账单。
+
+你可以把本文的最小脚本当成一个稳定起点。先把 OpenClaw 跑通，再决定是继续补多工具 parser，还是直接切换到 Vibe Usage 这类已经把同步、看板和后台服务做好的方案。
+
+## 相关资源
+
+- [Vibe Usage 仓库](https://github.com/vibe-cafe/vibe-usage)
+- [Vibe Usage 的 OpenClaw 解析器](https://github.com/vibe-cafe/vibe-usage/blob/main/src/parsers/openclaw.js)
+- [JSON Lines 官方规范](https://jsonlines.org/)
