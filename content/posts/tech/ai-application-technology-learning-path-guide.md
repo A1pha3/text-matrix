@@ -2,7 +2,7 @@
 title: "近年 AI 应用技术串讲：从入门到精通的完整学习路线"
 date: 2026-04-14T10:30:00+08:00
 slug: "ai-application-technology-learning-path-guide"
-description: "系统梳理 LLM、Prompt Engineering、Fine-tuning、RAG、MCP、Agent、Multi-Agent、Context Engineering、Agent Skill、OpenClaw、Harness Engineering 等 12 个核心主题，设计入门到专家三条学习路径，含练习题与实战示例。"
+description: "系统梳理 LLM、Prompt Engineering、Fine-tuning、RAG、MCP、Agent、Multi-Agent、Workflow Engineering、Context Engineering、Agent Skill、OpenClaw、Harness Engineering 等 12 个核心主题，设计入门到专家三条学习路径，含练习题与实战示例。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI", "LLM", "Agent", "Prompt Engineering", "MCP", "RAG"]
@@ -27,10 +27,11 @@ tags: ["AI", "LLM", "Agent", "Prompt Engineering", "MCP", "RAG"]
 - [§5 Function Calling 与 MCP](#5-function-calling-与-mcp-)
 - [§6 Agent：智能体架构](#6-agent智能体架构-)
 - [§7 Multi-Agent：多智能体系统](#7-multi-agent多智能体系统-)
-- [§8 Context Engineering：上下文工程](#8-context-engineering上下文工程-)
-- [§9 Agent Skill：智能体技能](#9-agent-skill智能体技能-)
-- [§10 OpenClaw：开源智能体框架](#10-openclaw开源智能体框架-)
-- [§11 Harness Engineering：评估工程](#11-harness-engineering评估工程-)
+- [§8 Workflow Engineering：工作流编排](#8-workflow-engineering工作流编排-)
+- [§9 Context Engineering：上下文工程](#9-context-engineering上下文工程-)
+- [§10 Agent Skill：智能体技能](#10-agent-skill智能体技能-)
+- [§11 OpenClaw：开源智能体框架](#11-openclaw开源智能体框架-)
+- [§12 Harness Engineering：评估工程](#12-harness-engineering评估工程-)
 - [端到端实战：构建企业知识库问答智能体](#端到端实战构建企业知识库问答智能体)
 - [学习路线总结](#学习路线总结)
 - [常见问题 FAQ](#常见问题-faq)
@@ -85,10 +86,10 @@ LLM 基础 ──────→ Prompt Engineering ──────→ Fine-t
   智能体 ←──────────── Context Engineering
     │
     ▼
-  Multi-Agent ──→ Agent Skill ──→ OpenClaw
+  Multi-Agent ──→ Workflow Engineering ──→ Agent Skill
     │
     ▼
-  Harness Engineering
+  OpenClaw ──→ Harness Engineering
 ```
 
 ---
