@@ -8,6 +8,7 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **Codecrafters build-your-own-x** | codecrafters-io/build-your-own-x | 494k | codecrafters-build-your-own-x-programming-guide.md | 73746b4 | | 2026-04-25 |
 | **AI Agent架构书籍** | Kocoro-lab/ai-agent-book | 193 | ai-agent-architecture-book-guide.md | ae27728 | Fg0idNfhfoQygQxCI6KcNnGdn8g | 2026-04-24 |
 | **TensorLogic** | Kocoro-lab/tensorlogic | 43 | tensorlogic-ai-unified-reasoning-guide.md | 35407df | QSCldA4Kmo2tIpxg05Nc8QJGnAc | 2026-04-24 |
 | **CC-Switch** | farion1231/cc-switch | 50k | cc-switch-ai-context-switcher-guide.md | a5fa74f | Y6P6d2uWJo3UUCx66lacq6DHnfh | 2026-04-24 |
