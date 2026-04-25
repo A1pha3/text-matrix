@@ -343,3 +343,4 @@
 | **so-large-lm** | datawhalechina/so-large-lm | 7,167 Stars | datawhalechina-so-large-lm-guide.md | 5ca0c50 | | 2026-04-23 |
 | **ai-quant-book** | waylandzhang/ai-quant-book | 323 Stars | ai-quant-book-multi-agent-quant-trading-guide.md | de01903 | | 2026-04-23 |
 | **turboquant-plus** | TheTom/turboquant_plus | 6,482 Stars | turboquant-plus-kv-cache-compression-guide.md | 8a333ff | | 2026-04-23 |
+| **yao-bayesian-skill** | yaojingang/yao-open-skills | - | yao-bayesian-skill-guide.md | 7bfe543 | | 2026-04-25 |
