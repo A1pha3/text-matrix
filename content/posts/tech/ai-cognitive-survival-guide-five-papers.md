@@ -2,7 +2,7 @@
 title: "AI时代认知生存指南：五篇论文揭示的正确用AI姿势"
 date: 2026-04-26T12:00:00+08:00
 slug: ai-cognitive-survival-guide-five-papers
-description: "基于MIT脑电实验、微软×卡内基梅隆调查等5篇重磅研究，深入解析AI时代认知债务的成因与解决方案。核心结论：AI是磨刀石不是拐杖——保留认知摩擦，与AI辩论而非让AI代劳。
+description: "基于MIT脑电实验、微软×卡内基梅隆调查等5篇重磅研究，深入解析AI时代认知债务的成因与解决方案。核心结论：AI是磨刀石不是拐杖——保留认知摩擦，与AI辩论而非让AI代劳。"
 draft: false
 categories: ["思考与随笔"]
 tags: ["AI", "认知科学", "批判性思维", "人机协作", "认知债务", "大模型", "AI使用", "Khan", "微软", "MIT", "研究"]
