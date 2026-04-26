@@ -1,7 +1,7 @@
 {
   "name": "cn-doc-writer",
-  "description": "中文技术文档工作流，适用于编写中文技术教程、README、API 文档，或将英文技术资料译成中文、优化现有技术文档、补充学习目标与练习。强调任务路由、按需加载、术语一致性、量化评估与技术准确性。",
-  "version": "5.1.0",
+  "description": "中文技术文档工作流，适用于编写中文技术教程、README、API 文档，或将英文技术资料译成中文、优化现有技术文档、补充学习目标与练习，并在不牺牲结构、准确性、教学性与实用性的前提下去掉 AI 味、模板腔和生成感。强调任务路由、按需加载、术语一致性、量化评估与技术准确性。",
+  "version": "5.2.0",
   "author": "Sisyphus",
   "tags": ["documentation", "chinese", "cn-doc", "writing", "technical", "translation", "education", "learning", "readme", "api-docs"],
   "commands": [
