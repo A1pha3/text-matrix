@@ -1,8 +1,13 @@
 ---
 title: "Roo Code：VS Code 中的 AI 编程团队，让编码效率提升 10 倍"
 date: 2026-04-26T11:36:00+08:00
+lastmod: 2026-04-26T11:36:00+08:00
 slug: roo-code-ai-coding-agent-guide
 description: "Roo Code 是 VS Code 上的 AI 编程助手，将多个专用 AI Agent（Code、Architect、Ask、Debug、Custom Mode）集成到编辑器中，支持 GPT-5.5、Claude Opus 4.7 等模型，以及 MCP Server 连接外部工具。"
+draft: false
+categories: ["技术笔记"]
+tags: ["VS Code", "AI Agent", "编程助手", "Claude", "GPT", "MCP"]
+hiddenFromHomePage: false
 ---
 
 # Roo Code：VS Code 中的 AI 编程团队
