@@ -1,6 +1,7 @@
 ---
 title: "ClawSweeper：OpenClaw 的大规模 Issue/PR 自动化审查机器人"
-date: 2026-04-26T10:30:00+08:00
+date: 2026-04-26T11:50:00+08:00
+lastmod: 2026-04-26T11:50:00+08:00
 slug: clawsweeper-openclaw-automated-code-review
 description: "深入解析 OpenClaw 官方维护机器人 ClawSweeper 的架构设计、工作流程与安全模型，探讨如何在大规模代码库（9500+ 开放项）中实现可靠的自动化代码审查。"
 draft: false

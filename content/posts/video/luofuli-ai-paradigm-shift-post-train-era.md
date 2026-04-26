@@ -1,6 +1,7 @@
 ---
 title: "独家对话罗福莉：AI范式已然巨变，从Pre-train时代全面转向Post-train时代"
-date: 2026-04-26T10:30:00+08:00
+date: 2026-04-26T11:50:00+08:00
+lastmod: 2026-04-26T11:50:00+08:00
 slug: luofuli-ai-paradigm-shift-post-train-era
 description: "2026年大模型战争第二幕：从ChatGPT时代的Pre-train主导，转向Agent时代的Post-train主导。小米大模型负责人罗福莉首次深度访谈，系统性解析AI巨震下的技术押注、资源调配与组织变革。"
 draft: false

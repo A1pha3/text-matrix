@@ -1,6 +1,7 @@
 ---
 title: "AI是磨刀石，不是拐杖：大模型时代认知使用的科学指南"
-date: 2026-04-26T11:30:00+08:00
+date: 2026-04-26T11:55:00+08:00
+lastmod: 2026-04-26T11:55:00+08:00
 slug: ai-cognitive-debt-sharpening-stone-not-crutches
 description: "MIT脑电实验发现习惯让ChatGPT代写的人大脑额叶和颞顶叶区域活动显著下降。微软×卡内基梅隆319名知识工作者调查证明：对AI越有信心，批判性思维投入越少。科学用AI的正确姿势：保留认知摩擦，把大模型定位为「临时思考伙伴」而非答案来源。"
 draft: false
