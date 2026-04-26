@@ -359,6 +359,11 @@ mapping = "pathname"
 
 - `A1pha3/text-matrix-comments`
 
+如果你希望把评论域与主账号进一步隔离，也可以把 comments 仓库创建在另一个 GitHub 账号或组织下，例如：
+
+- `beta/text-matrix-comments`
+- `txtmix/comments`
+
 建议仓库说明：
 
 - `Comment discussions for txtmix.com, powered by Giscus and GitHub Discussions.`
@@ -368,6 +373,10 @@ mapping = "pathname"
 - 仓库必须是公开仓库，否则 Giscus 无法正常工作。
 - 仓库不要承载主站源码、CI、构建脚本，只承载评论 discussions。
 - README 可以只写简短说明，告诉维护者这是评论承载仓库，不是主站开发仓库。
+- comments 仓库不必和主站源码仓库位于同一个 GitHub 账号；跨账号、跨组织都可以正常接入 Giscus。
+- 但要明确一点：Giscus 仍然会公开暴露它绑定的 owner/repo，只是暴露的可以是独立 comments 仓库，而不一定是主站源码仓库。
+- 如果评论仓库放在另一个账号下，后续的 Discussions 审核、分类维护、Giscus app 安装与仓库权限管理，也都要以那个账号或组织为准。
+- 从长期治理看，独立组织通常比“另注册一个个人小号”更稳，因为权限交接、多人协作和品牌一致性都更容易管理。
 
 ##### Step 2：启用 GitHub Discussions
 
