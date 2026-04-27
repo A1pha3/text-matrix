@@ -63,7 +63,6 @@ categories: ["系统基建"]
 | `astrbot-open-source-ai-chatbot-platform-guide.md` | 迁入 `ai-agent` | 明确是 Agent 聊天机器人平台 |
 | `shanclaw-ai-agent-cli-guide.md` | 迁入 `ai-agent` | 虽有 CLI 属性，但核心是 AI Agent CLI |
 | `xiaohongshu-mcp-xiaohongshu-model-context-protocol-guide.md` | 迁入 `ai-agent` | 直接服务 Claude Code / Cursor / OpenClaw 的 MCP 能力 |
-| `gitnexus-intelligent-github-agent-guide.md` | 迁入 `ai-agent` | 核心对象是 GitHub 多 Agent 系统 |
 | `baoyu-skills-ai-agent-guide.md` | 迁入 `ai-agent` | 主体是 AI Agent 技能体系 |
 | `supermemory-ai-memory-context-engine.md` | 迁入 `ai-agent` | Agent 记忆与上下文引擎主题明确 |
 | `onyx-ai-platform-guide.md` | 迁入 `ai-agent` | 更像 Agent 平台与企业知识系统 |

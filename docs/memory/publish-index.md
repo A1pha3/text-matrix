@@ -68,7 +68,6 @@
 | **Apache Superset** | apache/superset | 71.8k | apache-superset-bi-dashboard-guide.md | 1017d9e | JkhqdDp0goH5VIx4rXcLSiunxg | 2026-03-30 |
 | **Promptfoo** | promptfoo/promptfoo | 18.8k | promptfoo-llm-evaluation-testing-guide.md | 9e8c8ee | W7Bpdap7IovkDyxle77cV8G8nPL | 2026-03-30 |
 | **WorldMonitor** | koala73/worldmonitor | 3.1k | worldmonitor-geopolitical-monitoring-system-guide.md | 7608796 | EH49d0JoLoWA7Gxo0gqctKv7nNc | 2026-03-30 |
-| **GitNexus** | abhigyanpatwari/GitNexus | 1.8k | gitnexus-intelligent-github-agent-guide.md | a8e0236 | RZxmdwTyyoZsszxsdTLcoy3en0f | 2026-03-30 |
 | **Supermemory** | supermemoryai/supermemory | 20.5k | supermemory-ai-memory-context-engine.md | 5f4c07d | DAVedchXNoolaJxlvyNcVnconsd | 2026-03-30 |
 | **Awesome Claude Code** | hesreallyhim/awesome-claude-code | 34.4k | awesome-claude-code-resources-guide.md | 54d916b | BNlIdlkSYoi75PxyOlncD72jnLq | 2026-03-30 |
 | **Minimalist Entrepreneur Skills** | slavingia/skills | 5.5k | slavingia-skills-minimalist-entrepreneur.md | 11ace81 | OkqKdFmFvo650UxQdO1cqzC3nrf | 2026-03-30 |
