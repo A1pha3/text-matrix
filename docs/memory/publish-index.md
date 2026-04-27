@@ -8,6 +8,8 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **DeepSeek-V3** | deepseek-ai/DeepSeek-V3 | 102k | deepseek-v3-ai-model-analysis.md | 7049e28 | | 2026-04-27 |
+| **Penpot** | penpot/penpot | 46.3k | penpot-open-source-design-tool.md | 7049e28 | | 2026-04-27 |
 | **HuggingFace ml-intern** | huggingface/ml-intern | 5.4k | ml-intern-huggingface-autonomous-ml-agent.md | a0ff0cc | | 2026-04-25 |
 | **Codecrafters build-your-own-x** | codecrafters-io/build-your-own-x | 494k | codecrafters-build-your-own-x-programming-guide.md | 73746b4 | | 2026-04-25 |
 | **AI Agent架构书籍** | Kocoro-lab/ai-agent-book | 193 | ai-agent-architecture-book-guide.md | ae27728 | Fg0idNfhfoQygQxCI6KcNnGdn8g | 2026-04-24 |
@@ -345,3 +347,4 @@
 | **turboquant-plus** | TheTom/turboquant_plus | 6,482 Stars | turboquant-plus-kv-cache-compression-guide.md | 8a333ff | | 2026-04-23 |
 | **yao-bayesian-skill** | yaojingang/yao-open-skills | - | yao-bayesian-skill-guide.md | 7bfe543 | | 2026-04-25 |
 | **Google Agent Skills** | google/skills | - | google-agent-skills-guide.md | 26c29fd | | 2026-04-25 |
+| **DeepSeek-V3** | deepseek-ai/DeepSeek-V3 | 102,962 Stars | deepseek-v3-ai-model-analysis.md | | | 2026-04-27 |
