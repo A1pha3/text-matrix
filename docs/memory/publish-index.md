@@ -9,6 +9,8 @@
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
 | **DeepSeek-V3** | deepseek-ai/DeepSeek-V3 | 102k | deepseek-v3-ai-model-analysis.md | 7049e28 | | 2026-04-27 |
+| **DS2API** | CJackHwang/ds2api | 1.9k | ds2api-deepseek-api-proxy-guide.md | 43faacf | | 2026-04-28 |
+| **Claude Code Templates** | davila7/claude-code-templates | 25.8k | claude-code-templates-configuration-guide.md | 43faacf | | 2026-04-28 |
 | **Penpot** | penpot/penpot | 46.3k | penpot-open-source-design-tool.md | 7049e28 | | 2026-04-27 |
 | **HuggingFace ml-intern** | huggingface/ml-intern | 5.4k | ml-intern-huggingface-autonomous-ml-agent.md | a0ff0cc | | 2026-04-25 |
 | **Codecrafters build-your-own-x** | codecrafters-io/build-your-own-x | 494k | codecrafters-build-your-own-x-programming-guide.md | 73746b4 | | 2026-04-25 |
