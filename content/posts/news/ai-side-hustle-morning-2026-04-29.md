@@ -3,10 +3,10 @@ title: "AI副业早报 | 2026年4月29日"
 date: 2026-04-29T08:00:00+08:00
 lastmod: 2026-04-29T08:00:00+08:00
 draft: false
-tags: ["AI副业早报", "兼职", "远程工作", "AI赚钱", "独立开发者"]
+tags: ["AI副业", "招聘", "赚钱", "V2EX", "远程工作"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-description: "每日AI赚钱、副业与远程工作机会速递，覆盖V2EX、Reddit等平台的最新求职招聘动态。"
+description: "每日AI副业、招聘与赚钱机会速递，精选过去24小时内高质量独立项目、外包机会与求职招聘。"
 slug: ai-side-hustle-morning-2026-04-29
 author: ""
 ---
@@ -17,97 +17,58 @@ author: ""
 
 ---
 
-## 🔥 今日热帖
+## 💼 招聘/求职
 
-### V2EX 酷工作精选
+### 深圳AI券商科技公司招聘研发Leader，年包100w-120w+股权
 
-> 数据来源：V2EX (v2ex.com/?tab=jobs)
+来源: V2EX
+发布者: zxyu1231
+原文: [原文](https://www.v2ex.com/t/1209291)
+摘要: 全球首家"Agent First"AI金融操作平台招聘研发Leader，要求10年以上研发经验、3年以上管理经验，负责券商业务系统建设和AI驱动研发流程升级。薪资年包100w-120w+股权激励。另招后端技术工程师，精通Golang或Java，微服务架构，月薪30k-50k。发布者: zxyu1231
 
-**1. [上海 | 远程] 德国小而美公司招 AI Platform Engineer**
-
-德国小而美公司团建归来，在上海招聘 AI Platform Engineer，可远程工作。感兴趣的同学可以前往 V2EX 联系发布者。
-
-发布者：thenetcircle | 节点：远程工作 | [原文](https://www.v2ex.com/t/1203427)
-
----
-
-**2. [广州] 三七互娱 - AI 平台开发工程师 / golang 后端 / AI 算法工程师**
-
-三七互娱广州总部招聘多个岗位，包括：
-- AI 平台开发工程师
-- 资深前端开发工程师
-- 资深测试开发工程师
-- 高级 golang 后端开发工程师
-- 资深 golang 开发工程师
-- AI 算法工程师
-
-发布者：leecheer | 节点：酷工作 | [原文](https://www.v2ex.com/t/1209100)
+标签: #AI券商 #研发招聘 #Agent #高薪
 
 ---
 
-**3. [西安] 自研产品招聘嵌入式全栈工程师**
+### 三七互娱广州多个AI岗位热招，AI平台开发/Golang/算法
 
-西安地区招聘嵌入式全栈工程师，自研产品方向。有兴趣的同学可以在 V2EX 联系。
+来源: V2EX
+发布者: yadoT
+原文: [原文](https://www.v2ex.com/t/1209100)
+摘要: 三七互娱广州办公室开放社招岗位：AI平台开发工程师（5年+经验，熟悉Dify/OpenClaw优先）、资深前端开发、资深测试开发工程师（懂大模型测试）、高级Golang后端、资深Golang开发、AI算法工程师。负责集团核心产品的AI应用落地和前端工程化建设。有Dify、OpenClaw等实践经验者加分。发布者: yadoT
 
-发布者：duruoduruo | 节点：酷工作 | [原文](https://www.v2ex.com/t/1209110)
-
----
-
-**4. [上海] 出海社交 APP 招 ReactNative 开发，20k-35k，Claude 畅用**
-
-上海出海社交 APP 招聘 ReactNative 开发，薪资 20k-35k，Claude 工具畅用，Mac + 4K 显示器。静安寺办公，近期搬至陆家嘴。还缺 2 位小伙伴，长期有效。
-
-发布者：scourgen | 节点：酷工作 | [原文](https://www.v2ex.com/t/1205563)
+标签: #三七互娱 #AI平台 #Golang #大厂招聘
 
 ---
 
-**5. [实习] Casbin 开源社区《Talent 2026》远程研发预选生招募**
+### YouMind出海团队招增长工程实习生，Claude Code无限用
 
-Casbin 开源社区招募 2026 届远程研发实习生，有开源贡献经历优先。
+来源: V2EX
+发布者: anonymous233
+原文: [原文](https://www.v2ex.com/t/1209050)
+摘要: AI出海明星产品YouMind（玉伯创业项目）招聘增长工程实习生，要求技术背景、前端熟练、独立做过全栈项目且作品在线。福利包含Claude Code/ChatGPT无限用、免费咖啡、MAX会员。实习可深度参与从需求挖掘到推广复盘的全链路增长项目，优秀者转正。工作地点可选，简历发送至X账号jaredliu_bravo。发布者: anonymous233
 
-发布者：护法 | 节点：酷工作 | [原文](https://www.v2ex.com/t/1192937)
-
----
-
-**6. [北京/青岛/上海/深圳/远程] Phinomenon 2026 运营和增长专员**
-
-AI 出海明星产品 YouMind 招运营和增长专员，全球化产品方向。可远程或多地可选。
-
-发布者：phenomenon | 节点：酷工作 | [原文](https://www.v2ex.com/t/1206462)
+标签: #YouMind #AI出海 #增长黑客 #实习 #玉伯
 
 ---
 
-**7. [实习] YouMind 招增长工程实习生，可转正**
+## 🔥 今日快讯
 
-AI 出海明星产品 YouMind 招增长工程实习生，优秀者可转正。
+### V2EX求职市场活跃，多个AI相关岗位更新
 
-发布者：albertofu | 节点：酷工作 | [原文](https://www.v2ex.com/t/1209050)
-
----
-
-## 💬 社区热议
-
-### "能一起给本地部署的开源模型做个适配的 coding agent 吗？"
-
-V2EX 用户发起讨论：能否一起为本地部署的开源模型（如 Qwen、DeepSeek 等）做一个适配的 coding agent？作者表示憋了口气想做这件事。这是一个典型的独立开发者协作组队帖。
-
-发布者：tab16360 | [原文](https://www.v2ex.com/t/1209195)
-
----
-
-## 📌 求职建议
-
-1. **AI Platform Engineer** 是当前招聘热门，Remote 岗位多
-2. **golang 后端** 在国内游戏公司招聘中需求旺盛
-3. **独立开发**：Coding agent + 本地开源模型方向值得关注
-4. **出海产品**：多家 AI 出海公司在招增长/运营，说明海外市场仍是 AI 商业化热点
-
----
-
-## ⚠️ 数据说明
-
-今日数据源主要来自 V2EX。Reddit(Product Hunt) 等海外平台今日暂无法访问，数据可能不完整。后续会持续关注海外平台动态。
+数据窗口内V2EX酷工作节点新增多个AI相关招聘帖，涵盖：
+- **北京/上海：Agentic Engineering工程师**（熟悉Node.js/TypeScript，有Agent系统线上交付经验）
+- **深圳：AI券商研发Leader**（年包100w-120w）
+- **广州：三七互娱AI平台开发**（5年+经验，Dify/OpenClaw优先）
+- **出海：YouMind增长实习**（转正机会）
 
 ---
 
 🦞 每日08:30自动更新
+
+**数据来源**：V2EX酷工作
+
+**⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
+- ✅ https://www.v2ex.com/t/1209291 - 已验证标题匹配：深圳AI券商科技招聘
+- ✅ https://www.v2ex.com/t/1209100 - 已验证标题匹配：三七互娱AI岗位
+- ✅ https://www.v2ex.com/t/1209050 - 已验证标题匹配：YouMind增长实习
