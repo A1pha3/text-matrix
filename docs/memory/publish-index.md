@@ -353,3 +353,4 @@
 | **DeepSeek-V3** | deepseek-ai/DeepSeek-V3 | 102,962 Stars | deepseek-v3-ai-model-analysis.md | | | 2026-04-27 |
 | **System Design Primer** | donnemartin/system-design-primer | 345,040 Stars | system-design-primer.md | fe5d37f | | 2026-04-28 |
 | **Astro** | withastro/astro | 58,820 Stars | astro-framework-deep-dive.md | 6c223ec | | 2026-04-28 |
+| **VibeVoice** | microsoft/VibeVoice | 42k+ Stars | vibevoice-microsoft-voice-ai.md | 46144cc | | 2026-04-29 |
