@@ -360,3 +360,4 @@
 | **GitNexus** | abhigyanpatwari/GitNexus | 33k Stars | gitnexus-zero-server-code-intelligence-engine.md | ae80c6d | | 2026-04-29 |
 | **Maigret** | soxoj/maigret | 19.8k Stars | (not written yet) | | | 2026-04-29 |
 | **QuantDinger** | brokermr810/QuantDinger | 2,568 Stars | quantdinger-ai-quantitative-trading-platform-guide.md | 86df524 | | 2026-04-29 |
+| **club-3090** | noonghunna/club-3090 | 65 Stars | club-3090-rtx-llm-local-serving-guide.md | e7eb406 | | 2026-04-29 |
