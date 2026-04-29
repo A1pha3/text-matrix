@@ -355,3 +355,5 @@
 | **Astro** | withastro/astro | 58,820 Stars | astro-framework-deep-dive.md | 6c223ec | | 2026-04-28 |
 | **VibeVoice** | microsoft/VibeVoice | 42k+ Stars | vibevoice-microsoft-voice-ai.md | 46144cc | | 2026-04-29 |
 | **Awesome Codex Skills** | ComposioHQ/awesome-codex-skills | - | awesome-codex-skills-codex-agent-skills.md | 038e67e | | 2026-04-29 |
+| **Quarkdown** | iamgio/quarkdown | 8k+ Stars | quarkdown-markdown-superpowers-complete-guide.md | 0beb378 | | 2026-04-29 |
+| **Ace-Step-UI** | fspecii/ace-step-ui | 2k+ Stars | ace-step-ui-ai-music-generation-guide.md | 0beb378 | | 2026-04-29 |
