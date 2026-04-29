@@ -354,3 +354,4 @@
 | **System Design Primer** | donnemartin/system-design-primer | 345,040 Stars | system-design-primer.md | fe5d37f | | 2026-04-28 |
 | **Astro** | withastro/astro | 58,820 Stars | astro-framework-deep-dive.md | 6c223ec | | 2026-04-28 |
 | **VibeVoice** | microsoft/VibeVoice | 42k+ Stars | vibevoice-microsoft-voice-ai.md | 46144cc | | 2026-04-29 |
+| **Awesome Codex Skills** | ComposioHQ/awesome-codex-skills | - | awesome-codex-skills-codex-agent-skills.md | 038e67e | | 2026-04-29 |
