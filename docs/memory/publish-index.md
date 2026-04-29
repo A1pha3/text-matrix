@@ -357,3 +357,5 @@
 | **Awesome Codex Skills** | ComposioHQ/awesome-codex-skills | - | awesome-codex-skills-codex-agent-skills.md | 038e67e | | 2026-04-29 |
 | **Quarkdown** | iamgio/quarkdown | 8k+ Stars | quarkdown-markdown-superpowers-complete-guide.md | 0beb378 | | 2026-04-29 |
 | **Ace-Step-UI** | fspecii/ace-step-ui | 2k+ Stars | ace-step-ui-ai-music-generation-guide.md | 0beb378 | | 2026-04-29 |
+| **GitNexus** | abhigyanpatwari/GitNexus | 33k Stars | gitnexus-zero-server-code-intelligence-engine.md | ae80c6d | | 2026-04-29 |
+| **Maigret** | soxoj/maigret | 19.8k Stars | (not written yet) | | | 2026-04-29 |
