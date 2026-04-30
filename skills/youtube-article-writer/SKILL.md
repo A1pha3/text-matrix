@@ -1,7 +1,7 @@
 ---
 name: youtube-article-writer
 description: "面向 YouTube 视频的中文深度解读工作流。只要用户提供 YouTube 视频链接、视频ID或视频标题，就应激活本 skill；如果消息里只有视频链接或链接加一句短指令，默认直接进入写作模式并产出视频深度解读文章。覆盖视频取证、选题定位、中文内容写作、Hugo frontmatter 生成与发布前校验；关键词：YouTube URL、youtube.com、youtu.be、视频链接、视频解读、视频精读、bilibili、b站视频解读。"
-version: 1.2.0
+version: 1.3.0
 tags: ["youtube", "video", "article", "hugo", "video-analysis", "workflow"]
 ---
 
@@ -184,15 +184,27 @@ tags: ["youtube", "video", "article", "hugo", "video-analysis", "workflow"]
 
 ### 分析模式
 
-视频信息卡 + 值得写的角度 + 推荐标题与结构 + 证据不足项
+最小产出清单：
+1. 视频信息卡（标题、频道/UP主、时长、观看量、发布时间、原视频链接）
+2. 值得写的角度（1-3 个方向）
+3. 推荐标题与文章结构
+4. 证据不足项（明确标注哪些字段缺失）
 
 ### 写作模式
 
-完整 Markdown 文章 + 合法 Hugo Frontmatter（categories: ["视频精读"]）+ 不确定信息显式标注
+最小产出清单：
+1. 合法 Hugo Frontmatter（categories: ["视频精读"]）
+2. 完整 Markdown 文章正文（含原视频可点击链接）
+3. 不确定信息显式标注（如 `> 注：订阅数未能从页面获取，标记为未知`）
 
 ### 发布模式
 
-写作模式全部产物 + 发布结果摘要 + 未完成项与原因
+最小产出清单：
+1. 写作模式全部产物
+2. 文章文件路径
+3. git commit hash 或未提交状态
+4. 飞书链接或未同步原因
+5. publish-index 更新状态
 
 ## 4. 必须与禁止
 
@@ -223,26 +235,18 @@ tags: ["youtube", "video", "article", "hugo", "video-analysis", "workflow"]
 | 内容明显实验性/未完成 | 改为"视频导读/内容预览"，不写成完整教程 |
 | 用户只要摘要 | 输出视频解读，不强制生成完整文章 |
 
-## 6. 按需加载
-
-不要预加载，只在对应步骤读取。
-
-| 需要 | 加载 |
-|------|------|
-| 中文内容写作 | [../cn-doc-writer/SKILL.md](../cn-doc-writer/SKILL.md) |
-| Hugo Frontmatter | [../hugo-writer/SKILL.md](../hugo-writer/SKILL.md) |
-| Frontmatter 字段模板 | [references/frontmatter-template.md](references/frontmatter-template.md) |
-| 发布索引格式 | [references/publish-index-template.md](references/publish-index-template.md) |
-
-## 7. 输出前自检
+## 6. 输出前自检
 
 - 每个关键判断能否回溯到视频证据
 - 标题、摘要、正文是否围绕同一主叙事
 - 数据、观点、结论是否来自可验证材料
 - 是否错误进入了发布模式
 - Frontmatter 是否符合 Hugo 规范（categories: ["视频精读"]）
+- 正文是否包含原视频可点击链接
 
-## 8. 视频信息卡模板
+## 7. 视频信息卡模板
+
+**YouTube**：
 
 ```
 ## 视频信息卡
@@ -255,5 +259,24 @@ tags: ["youtube", "video", "article", "hugo", "video-analysis", "workflow"]
 | 发布时间 | [发布于 X年X月X日] |
 | 观看量 | [X万/X百万 观看] |
 | 点赞数 | [X万 点赞] |
+| 链接 | [视频URL] |
+```
+
+**B站**：
+
+```
+## 视频信息卡
+
+| 项目 | 内容 |
+|------|------|
+| 标题 | [视频标题] |
+| UP主 | [UP主名] |
+| 时长 | [视频时长]（如无法获取标"未知"） |
+| 发布时间 | [发布于 X年X月X日] |
+| 播放量 | [X万 播放] |
+| 弹幕量 | [X万 弹幕] |
+| 点赞数 | [X万 点赞] |
+| 投硬币 | [X万 硬币] |
+| 收藏数 | [X万 收藏] |
 | 链接 | [视频URL] |
 ```

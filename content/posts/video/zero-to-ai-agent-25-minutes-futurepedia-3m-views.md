@@ -1,14 +1,14 @@
 ---
-title: "25分钟从零到AI Agent：Futurepedia爆款教程深度解析"
+title: "25 分钟从零到 AI Agent：Futurepedia 爆款教程深度解析"
 date: 2026-04-29T15:01:00+08:00
 slug: "zero-to-ai-agent-25-minutes-futurepedia-3m-views"
-description: "Futurepedia 25分钟AI Agent实战教程深度解析，从环境搭建到LangChain开发，手把手教你快速构建第一个可工作的AI Agent系统。"
+description: "Futurepedia 25 分钟 AI Agent 实战教程深度解析，从环境搭建到 LangChain 开发，手把手教你快速构建第一个可工作的 AI Agent 系统。"
 draft: false
 categories: ["视频精读"]
 tags: ["AI Agent", "Futurepedia", "LangChain", "ReAct", "实战教程"]
 ---
 
-> **难度**：⭐⭐⭐⭐ | **类型**：视频深度解读 | **预计阅读时间**：20分钟
+> **难度**：⭐⭐⭐⭐ | **类型**：视频深度解读 | **预计阅读时间**：20 分钟
 > **目标读者**：想快速入门 AI Agent 的实践者
 > **前置知识**：了解 Python 基础，了解 LLM 基本概念
 
@@ -17,6 +17,13 @@ tags: ["AI Agent", "Futurepedia", "LangChain", "ReAct", "实战教程"]
 YouTube 上 AI Agent 教程多如牛毛，但能把"从零到跑通"压缩进 25 分钟、同时还不糊弄的，Futurepedia 这支视频算一个。356 万播放量不是偶然——它击中了一个真实痛点：大多数人对 Agent 的理解停留在概念层面，缺的就是亲手跑通一遍的那个"Aha Moment"。
 
 这篇文章会把视频中每一个步骤拆开、讲透，同时补上视频来不及展开的原理和踩坑点。目标只有一个：你看完就能动手，动手就能跑通。
+
+**完成本文后，你将能够：**
+
+- 在 25 分钟内完成第一个 AI Agent 的开发环境搭建
+- 使用 LangChain 框架快速构建 Agent
+- 理解 Agent 开发的核心流程：定义 → 执行 → 迭代
+- 独立开发一个能完成实际任务的 AI Agent 原型
 
 **本文目录：**
 
@@ -130,10 +137,13 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 
 ```bash
 # 核心依赖（本文基于 LangChain 0.3+）
-pip install langchain>=0.3 langchain-openai>=0.2 langchain-community>=0.3
+pip install langchain>=0.3 langchain-openai>=0.2 langchain-community>=0.3 langchainhub
+
+# .env 文件管理
+pip install python-dotenv
 
 # 工具支持
-pip install wikipedia playwright duckduckgo-search
+pip install wikipedia duckduckgo-search
 
 # 向量数据库（可选，用于 Memory）
 pip install chromadb faiss-cpu
@@ -165,7 +175,7 @@ LangChain 架构
 
 ### Component 1: Prompt Template
 
-Prompt 是 LLM 的「输入格式」。LangChain 提供了模板化的方式管理 Prompt：
+Prompt 是 LLM 的「输入格式」。LangChain 提供了模板化的方式管理 Prompt，避免在代码里拼接大段字符串：
 
 ```python
 from langchain.prompts import PromptTemplate
@@ -352,9 +362,10 @@ test_cases = [
 ]
 
 for i, test_input in enumerate(test_cases, 1):
-    print(f"\n{'='*50}")
+    separator = "=" * 50
+    print(f"\n{separator}")
     print(f"测试 {i}：{test_input}")
-    print('='*50)
+    print(separator)
     try:
         result = agent_executor.invoke({"input": test_input})
         print(f"回答：{result['output']}")
@@ -456,9 +467,10 @@ if __name__ == "__main__":
     ]
 
     for i, test_input in enumerate(test_cases, 1):
-        print(f"\n{'='*50}")
+        separator = "=" * 50
+        print(f"\n{separator}")
         print(f"测试 {i}：{test_input}")
-        print('='*50)
+        print(separator)
         try:
             result = agent_executor.invoke({"input": test_input})
             print(f"回答：{result['output']}")
