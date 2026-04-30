@@ -8,6 +8,7 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **awesome-deepseek-agent** | deepseek-ai/awesome-deepseek-agent | 333 | awesome-deepseek-agent-integration-guide.md | 39ecb82 | | 2026-04-30 |
 | **public-apis** | public-apis/public-apis | 427k | public-apis-free-api-aggregator-guide.md | 3eb96e5 | | 2026-04-28 |
 | **DeepSeek-V3** | deepseek-ai/DeepSeek-V3 | 102k | deepseek-v3-ai-model-analysis.md | 7049e28 | | 2026-04-27 |
 | **DS2API** | CJackHwang/ds2api | 1.9k | ds2api-deepseek-api-proxy-guide.md | 43faacf | | 2026-04-28 |
