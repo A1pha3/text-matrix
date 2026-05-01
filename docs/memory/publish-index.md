@@ -365,3 +365,6 @@
 | **club-3090** | noonghunna/club-3090 | 65 Stars | club-3090-rtx-llm-local-serving-guide.md | e7eb406 | | 2026-04-29 |
 
 | **daily_stock_analysis** | ZhuLinsen/daily_stock_analysis | 32,634 Stars | daily-stock-analysis-llm-stock-trading-guide.md | 15346e5 | | 2026-04-30 |
+
+## 视频精读
+- Agent技术全史：从1960年代逻辑代理到2026年通用数字代理的史诗旅程 | 苏煜×张小珺 | 微博视频 | 2026-05-01
