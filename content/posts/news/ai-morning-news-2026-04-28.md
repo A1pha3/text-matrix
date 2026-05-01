@@ -73,9 +73,9 @@ hiddenFromHomePage: true
 摘要: 据Hacker News报道，AI招聘平台Mercor遭遇重大数据泄露事件。攻击者窃取了约4TB的语音样本和4万名AI合同工的个人信息。泄露数据包括合同工的语音录制、工作样本和敏感个人信息。安全专家警告这些数据可能被用于深度伪造和身份欺诈。Mercor是近年来快速崛起的AI招聘平台，估值一度超过10亿美元。
 
 ### Anthropic Claude Code因HERMES.md触发计费Bug
-来源: 机器之心
-原文: [原文](https://www.jiqizhixin.com/)
-摘要: 据机器之心报道，Anthropic的Claude Code遭遇计费Bug。有用户发现，当Claude Code项目目录中存在名为"HERMES.md"的大写字母文件名时，会触发异常计费，导致用户被扣除200美元的费用。目前Anthropic已得知此问题并正在调查。这一事件再次引发关于AI代码助手计费透明性的讨论。
+来源: Hacker News
+原文: [原文](https://news.ycombinator.com/item?id=47952722)
+摘要: 据Hacker News报道，Anthropic的Claude Code遭遇计费Bug。有用户发现，当Claude Code项目目录中存在名为"HERMES.md"的大写字母文件名时，会触发异常计费，导致用户被扣除200美元的费用。目前Anthropic已得知此问题并正在调查。这一事件再次引发关于AI代码助手计费透明性的讨论。
 
 ---
 
@@ -106,5 +106,5 @@ hiddenFromHomePage: true
 - ✅ https://www.qbitai.com/2026/04/408578.html - 量子位专访楼天城
 - ✅ https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/ - GitHub Copilot billing change
 - ✅ https://news.ycombinator.com/item?id=47919630 - Mercor data breach
-- ✅ https://www.jiqizhixin.com/ - Anthropic Claude Code计费Bug
+- ❌ https://www.jiqizhixin.com/ - ~~Anthropic Claude Code计费Bug~~ （首页链接，已修复为HN链接）
 - ✅ https://www.qbitai.com/2026/04/408049.html - Meshy ARR增长
