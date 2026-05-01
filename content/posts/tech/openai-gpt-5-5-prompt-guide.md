@@ -1,267 +1,432 @@
 ---
-title: "OpenAI GPT-5.5 Prompt 指南：更短、目标导向的提示词设计新范式"
+title: "OpenAI GPT-5.5 Prompt 指南：结果导向提示词、停止条件与迁移模板"
 date: 2026-05-01T00:52:39+08:00
 slug: "openai-gpt-5-5-prompt-guide"
-description: "OpenAI 官方 GPT-5.5 提示词设计指南解读，涵盖结果优先提示词、停止条件、人格与协作风格、前置语、引用预算等核心原则，帮助开发者从流程堆砌式提示词迁移到更高效的目标导向范式。"
+description: "基于 OpenAI 官方 GPT-5.5 Prompt guidance 与 Using GPT-5.5，系统拆解结果导向提示词、停止条件、reasoning effort、Structured Outputs、phase 与 prompt caching 的迁移方法。"
+summary: "GPT-5.5 不再适合流程堆砌式 prompt stack。本文从官方 Prompt guidance 与 Using GPT-5.5 出发，讲清结果导向提示词骨架、停止条件、检索预算、preamble、phase、Structured Outputs、prompt caching，以及把旧 prompt 迁移到 GPT-5.5 的实战步骤。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenAI", "GPT-5.5", "提示词工程", "Prompt Engineering", "AI Agent"]
+tags: ["OpenAI", "GPT-5.5", "提示词工程", "Prompt Engineering", "AI Agent", "Responses API"]
 ---
 
-# OpenAI GPT-5.5 Prompt 指南：更短、目标导向的提示词设计新范式
+> **难度**：⭐⭐⭐ 到 ⭐⭐⭐⭐ | **类型**：官方文档解读 + Prompt 迁移指南 | **预计阅读时间**：18 - 25 分钟
+> **适合读者**：已经在用 OpenAI API、Responses API、AI Agent 或工作流编排，希望把旧 prompt stack 迁移到 GPT-5.5 的开发者、产品经理与 Agent 设计者
+> **一句话结论**：GPT-5.5 不是要求你写“更长的提示词”，而是要求你把提示词从流程剧本改成产品契约，写清目标、成功标准、约束、输出与停止规则，再把 schema、工具细节、状态管理交给更合适的层。
+> **事实边界**：本文依据 OpenAI 官方文档 [Prompt guidance](https://developers.openai.com/api/docs/guides/prompt-guidance) 与 [Using GPT-5.5](https://developers.openai.com/api/docs/guides/latest-model)，以 2026 年 5 月 2 日可公开访问内容为准；文中聚焦文本生成、工具调用与 Agent 编排，不扩展到视觉输入、语音或文档未明确承诺的行为。
 
-GPT-5.5 带来了提示词设计范式的根本转变。
+OpenAI 在官方文档里的意思其实很直接：把 GPT-5.5 当成新的模型家族重新调，不要把 `gpt-5.2` 或 `gpt-5.4` 时代积累的 prompt stack 原样搬过来。迁移的起点不是继续往旧提示词上补规则，而是先把它清回一条更干净的基线，再把真正会改变结果的约束加回去。
 
-OpenAI 官方文档 [Prompt guidance](https://developers.openai.com/api/docs/guides/prompt-guidance) 明确指出：GPT-5.5 与前代模型最大的区别在于——它更擅长自主选择解题路径，而非按部就班执行预设流程。这意味着传统的"步骤堆砌式"提示词反而可能限制模型发挥、增加噪声，甚至导致答案过于机械。
+Prompt guidance 的核心也在这里。它讨论的不只是措辞，而是提示词在生产系统里的分工：哪些应该留在 prompt，哪些更适合交给 Structured Outputs、工具描述、状态管理、`reasoning.effort`、`text.verbosity` 和缓存策略。
 
-本文基于该文档，梳理 GPT-5.5 提示词设计的核心原则与推荐结构。
+## 1. 学习目标
 
----
+这篇文章主要处理这几个问题：
 
-## 1. 核心变化：从"过程导向"到"结果导向"
+- GPT-5.5 为什么不再鼓励“步骤堆砌式” prompt stack。
+- 一个结果导向提示词最小需要哪些组成部分。
+- `MUST`、`ALWAYS`、停止条件、检索预算、人格块分别该放在哪里。
+- `reasoning.effort`、`text.verbosity`、Structured Outputs、工具描述为什么会直接影响提示词效果。
+- 如果你手里已经有一套旧 prompt，应该按什么顺序迁移，而不是一把梭全部重写。
 
-### 1.1 为什么旧范式不再适用
+## 2. 核心变化
 
-早期模型需要大量过程指令来保持任务不偏离轨道，于是"总是检查 X，然后再检查 Y，最后再……"这类提示词大行其道。GPT-5.4 及之后的模型已经足够强大，可以自主规划路径，过度的过程约束反而让模型搜索空间变窄、输出变得机械。
+GPT-5.5 更擅长围绕目标自行规划路径。把官方文档压缩成一句话，就是：**给它结果和边界，不要替它写完整施工脚本。**
 
-### 1.2 新范式的核心逻辑
+### 2.1 GPT-5.5 不适合继续背旧 prompt 包袱
 
-> **描述目标，而非步骤。告诉模型"好的答案长什么样"，让它自己找到路径。**
+OpenAI 在 [Using GPT-5.5](https://developers.openai.com/api/docs/guides/latest-model) 里明确建议，迁移时应该先建立新的 baseline，而不是把旧模型时代留下的每一条流程说明都原封不动搬过来。原因并不神秘：很多旧 prompt 本来是为了弥补早期模型在规划、工具选择和稳定性上的不足；继续保留，只会把 GPT-5.5 的搜索空间压窄。
 
-好的提示词应包含：
-- **目标结果**：最终答案需要达成什么
-- **成功标准**：什么条件下可以停止
-- **约束条件**：真正的 invariants（安全规则、必要输出字段）
-- **可用上下文**：模型可以利用的信息
+先看一组最常见的旧习惯和对应的新做法：
 
-❌ 不推荐（过程堆砌）：
-```
-First inspect A, then inspect B, then compare every field,
-then think through all possible exceptions, then decide
-which tool to call, then call the tool, then explain...
-```
+| 旧习惯 | GPT-5.5 的推荐做法 | 为什么 |
+| ------ | ------ | ------ |
+| 把旧 prompt stack 整段复制过来 | 从最小可用 prompt baseline 开始 | 旧规则里常有大量“历史噪声” |
+| 任务一复杂就直接拉高推理强度 | 先评估 `low` 和 `medium`，再决定是否上调 | 更高 effort 可能带来过搜、过想和更高延迟 |
+| 把 JSON schema 写进 prompt 正文 | 能用 Structured Outputs 就不要在 prompt 里重复描述 schema | schema 校验更适合交给结构化输出层 |
+| 把所有工具使用规则堆进系统提示词 | 工具特有规则优先写在工具描述里 | 更利于工具选择、复用和维护 |
+| 每轮都写当前日期 | 除非业务需要特定时区或生效日期，否则不必重复提供 | GPT-5.5 已知当前 UTC 日期 |
 
-✅ 推荐（结果导向）：
-```
-Resolve the customer's issue end to end.
+### 2.2 结果导向为什么在 GPT-5.5 上更有效
 
-Success means:
-- eligibility decision is made from available policy and account data
-- any allowed action is completed before responding
-- final answer includes completed_actions, customer_message, and blockers
-- if evidence is missing, ask for the smallest missing field
-```
+官方文档列出的原因至少有 4 个：
 
----
+- GPT-5.5 的推理更高效，同样的 `reasoning.effort` 下往往能用更少的推理 token 达到强结果。
+- 它在 outcome-first prompt 下更擅长保持约束、完成多步骤任务、选择合适工具。
+- 默认风格更直接、更简洁，少一点 prompt scaffolding 也能给出较完整的答案。
+- 对工具选择和参数传递更精确，所以不需要每次都在 prompt 里把工具调用过程写成 SOP。
 
-## 2. 停止条件（Stopping Conditions）
+关键不在于把提示词写短，而在于只保留会改变行为的说明。那些只是让 prompt 看起来很严谨、实际上并不提升结果的流程描述，可以删掉。
 
-结果导向提示词需要配套明确的停止规则，否则模型可能在找到答案后继续发散。
+## 3. 结果导向提示词，到底该怎么写
 
-### 2.1 核心停止条件模板
+OpenAI 在 [Prompt guidance](https://developers.openai.com/api/docs/guides/prompt-guidance) 里给出的推荐结构非常克制。它不是一份超长模板，而是一个最小骨架。
 
-```
-Resolve the user query in the fewest useful tool loops,
-but do not let loop minimization outrank correctness,
-accessible fallback evidence, calculations, or required
-citation tags for factual claims.
-
-After each result, ask: "Can I answer the user's core request
-now with useful evidence and citations for the factual claims?"
-If yes, answer.
-```
-
-### 2.2 缺失证据行为定义
-
-```
-Use the minimum evidence sufficient to answer correctly,
-cite it precisely, then stop.
-```
-
-### 2.3 使用决策规则而非绝对指令
-
-| 场景 | 用 MUST/ALWAYS（真 invariants） | 用 Decision Rules（判断场景） |
-|------|------|------|
-| 安全规则 | ✅ | |
-| 必要输出字段 | ✅ | |
-| 何时搜索 | | ✅ 建议用决策规则 |
-| 何时迭代 | | ✅ |
-| 何时问用户 | | ✅ |
-
----
-
-## 3. 人格与协作风格（Personality & Collaboration Style）
-
-GPT-5.5 的默认风格是高效、直接、任务导向的。但对于客服、辅导、对话类产品，需要显式定义人格。
-
-### 3.1 人格块（Personality）
-
-人格控制模型如何"说话"——语调、温度、直接程度、正式程度、幽默感、同理心、修辞水平。
-
-**任务导向型人格示例：**
+### 3.1 一个可复用的最小骨架
 
 ```markdown
-# Personality
-You are a capable collaborator: approachable, steady, and direct.
-Assume the user is competent and acting in good faith, and respond
-with patience, respect, and practical helpfulness.
-
-Prefer making progress over stopping for clarification when the request
-is already clear enough to attempt. Use context and reasonable
-assumptions to move forward. Ask for clarification only when the
-missing information would materially change the answer or create
-meaningful risk, and keep any question narrow.
-
-Stay concise without becoming curt. Give enough context for the user
-to understand and trust the answer, then stop. Use examples, comparisons,
-or simple analogies when they make the point easier to grasp.
-```
-
-**表达型协作人格示例：**
-
-```markdown
-# Personality
-Adopt a vivid conversational presence: intelligent, curious, playful
-when appropriate, and attentive to the user's thinking. Ask good
-questions when the problem is blurry, then become decisive once there
-is enough context.
-
-Be warm, collaborative, and polished. Conversation should feel easy and
-alive, but not chatty for its own sake. Offer a real point of view
-rather than merely mirroring the user, while staying responsive to
-their goals and constraints.
-```
-
-### 3.2 协作风格（Collaboration Style）
-
-协作风格控制模型如何"工作"：何时提问、何时做假设、多主动、提供多少上下文、何时检查工作、如何处理不确定性和风险。
-
-> **保持简短**：人格指令塑造用户体验，协作指令塑造任务行为。两者都不能替代清晰的目标、成功标准、工具规则或停止条件。
-
----
-
-## 4. 前置语（Preamble）：提升首 token 可见速度
-
-在流式应用中，用户等待首响应的感知时间非常重要。对于多步骤或工具密集型任务，GPT-5.5 可能先进行推理、规划或准备工具调用，这期间没有可见输出。
-
-### 4.2 推荐模式
-
-对于工具密集型工作流，让模型先发送一条简短可见的前置语：
-
-```
-Before any tool calls for a multi-step task, send a short user-visible
-update that acknowledges the request and states the first step.
-Keep it to one or two sentences.
-```
-
-对于暴露独立消息阶段的编码 Agent，可以更明确：
-
-```
-You must always start with an intermediary update before any content
-in the analysis channel if the task will require calling tools.
-The user update should acknowledge the request and explain your first step.
-```
-
----
-
-## 5. 引用预算（Retrieval Budget）
-
-引用预算是搜索的停止规则，告诉模型什么时候"足够好了"。
-
-### 5.1 核心原则
-
-对于普通问答，从一个简短、判别性关键词的宽泛搜索开始。如果顶部结果已经包含足够支撑核心请求的可引用证据，直接回答，而不是再次搜索。
-
-### 5.2 需要再次检索的条件
-
-仅在以下情况发起新的检索：
-- 顶部结果不能回答核心问题
-- 缺少必需的事实、参数、owner、日期、ID 或来源
-- 用户要求穷尽性覆盖、对比或完整列表
-- 必须读取特定文档、URL、邮件、会议、记录或代码产物
-- 答案将包含重要的无支撑事实性声明
-
-### 5.3 不应再次检索的场景
-
-- 为了改善措辞
-- 添加示例
-- 引用非必要的细节
-- 支撑可以更泛化表述的无风险措辞
-
----
-
-## 6. 创意起草的护栏（Creative Drafting Guardrails）
-
-对于需要创意起草的任务（PPT、推广文案、客户摘要等），明确区分哪些内容必须来自来源，哪些可以创意发挥。
-
-```
-For creative or generative requests such as slides, leadership blurbs,
-outbound copy, summaries for sharing, talk tracks, or narrative framing:
-
-- Use retrieved or provided facts for concrete product, customer, metric,
-  roadmap, date, capability, and competitive claims, and cite those claims.
-- Do not invent specific names, first-party data claims, metrics, roadmap
-  status, customer outcomes, or product capabilities to make the draft
-  sound stronger.
-- If there is little or no citable support, write a useful generic draft
-  with placeholders or clearly labeled assumptions rather than
-  unsupported specifics.
-```
-
----
-
-## 7. Phase 参数
-
-GPT-5.4 开始，长时间运行或工具密集型的 Responses 工作流可以使用 `phase` 参数区分中间更新和最终答案。GPT-5.5 延续此模式。
-
-如果使用 `previous_response_id`，API 自动保留先前的 assistant 状态。如果应用程序手动将 assistant 输出项重放到下一个请求，需保留每个原始 `phase` 值不变。
-
-| Phase 值 | 用途 |
-|---------|------|
-| `phase: "commentary"` | 中间用户可见更新 |
-| `phase: "final_answer"` | 已完成的最终答案 |
-
----
-
-## 8. 推荐的提示词结构模板
-
-以下是复杂提示词的推荐起始结构，每个部分保持简短，只有在会改变行为时才添加细节。
-
-```markdown
-Role: [1-2 sentences defining the model's function, context, and job]
+Role: [1 - 2 句，定义模型的职责、上下文和任务边界]
 
 # Personality
-[tone, demeanor, and collaboration style]
+[语气、协作方式、是否偏主动]
 
 # Goal
-[user-visible outcome]
+[用户可见的最终目标]
+
+Available context:
+- [模型可使用的数据、文档、工具或事实来源]
 
 # Success criteria
-[what must be true before the final answer]
+- [什么成立时才算完成]
 
 # Constraints
-[policy, safety, business, evidence, and side-effect limits]
+- [安全、证据、业务、输出边界]
 
 # Output
-[sections, length, and tone]
+- [返回结构、长度、语气]
 
 # Stop rules
-[when to retry, fallback, abstain, ask, or stop]
+- [什么时候停止、重试、追问或回退]
 ```
 
----
+这套骨架的作用很直接：把任务写成角色、目标、完成条件、约束和停止规则，而不是一串流程命令。
 
-## 9. 总结：GPT-5.5 提示词设计核心要点
+### 3.2 每个模块分别负责什么
 
-| 原则 | 说明 |
-|------|------|
-| **结果优先于过程** | 描述目标，不描述步骤 |
-| **用停止条件代替过程约束** | 明确的成功标准和停止规则 |
-| **决策规则代替绝对指令** | MUST/ALWAYS 仅用于真 invariants |
-| **人格和协作风格要显式定义** | 客服和对话类产品特别重要 |
-| **前置语提升感知响应速度** | 长任务先发送可见更新 |
-| **引用预算控制搜索次数** | 足够即止，避免过度检索 |
-| **创意内容加护栏** | 事实用来源，创意加标注 |
-| **保留 Phase 参数** | 工具密集型工作流的中间态标识 |
+| 模块 | 要回答的问题 | 写作要点 |
+| ------ | ------ | ------ |
+| `Role` | 这个模型现在扮演什么角色 | 只写职责，不要写一长串背景故事 |
+| `Personality` | 它应该怎么说话、怎么协作 | 简短，控制语气和互动方式即可 |
+| `Goal` | 最终要交付什么结果 | 写用户可见成果，不写完整过程 |
+| `Success criteria` | 满足哪些条件才能算完成 | 尽量可观察、可验收 |
+| `Constraints` | 绝对不能违反什么 | 放真约束，不放临时建议 |
+| `Output` | 最终答案长什么样 | 说明结构、长度和优先级 |
+| `Stop rules` | 什么情况下回答、追问或继续搜索 | 控制迭代次数、证据收集和风险 |
 
-**官方文档**：[Prompt guidance | OpenAI API](https://developers.openai.com/api/docs/guides/prompt-guidance)
+### 3.3 `MUST` 和 `ALWAYS` 只留给真约束
+
+旧 prompt 很喜欢堆 `ALWAYS`、`NEVER`、`must`。GPT-5.5 的官方建议更细：绝对词留给真 invariants，其他交给 decision rules。
+
+| 内容类型 | 适不适合用绝对指令 | 更好的写法 |
+| ------ | ------ | ------ |
+| 安全规则 | 适合 | 明确写 `never`、`must not` |
+| 必要输出字段 | 适合 | 明确列出必须返回的键或段落 |
+| 何时搜索 | 不适合 | 用停止规则或检索预算控制 |
+| 何时继续迭代 | 不适合 | 用 success criteria 和 stop rules 控制 |
+| 何时向用户提问 | 不适合 | 写“仅在缺失信息会实质影响答案时再问” |
+
+### 3.4 什么时候仍然需要过程指令
+
+结果导向不是把过程说明一刀切删光。下面几类任务，过程约束仍然必要：
+
+- 存在不可逆副作用，比如扣费、发邮件、改数据库、执行生产环境操作。
+- 合规、审计、法务、医疗等需要固定检查顺序的场景。
+- 外部系统确实要求严格顺序，比如先取 token、再校验状态、最后调用事务接口。
+- 你要的不是结果本身，而是教学过程、推导过程或规范化操作演示。
+
+区别在于：**只有当路径本身就是产品要求时，才应该把路径写死。**
+
+## 4. 别只盯着 prompt 文本
+
+如果只在 prompt 正文里找答案，很容易把 GPT-5.5 的迁移问题看窄。OpenAI 把不少关键控制面分散在 [Using GPT-5.5](https://developers.openai.com/api/docs/guides/latest-model)、[Prompt guidance](https://developers.openai.com/api/docs/guides/prompt-guidance) 和相关 API 指南里。真正落地时，下面这 5 个点通常要一起评估。
+
+### 4.1 `reasoning.effort`：默认从 `medium` 或 `low` 开始评估
+
+OpenAI 给出的建议是：GPT-5.5 默认 `reasoning.effort` 为 `medium`，这是质量、延迟和成本之间的平衡起点；如果工作流对延迟更敏感，但仍涉及搜索、规划、工具调用或多步判断，应该先评估 `low`，而不是直接降到 `none`。
+
+很多团队过去的调参直觉，在这里都要重新测一遍：
+
+- 不是任务一复杂就直接上 `high`。
+- 不是只要想省时就直接用 `none`。
+- 只有在评测结果确认收益明显时，才把 effort 往上拉。
+
+### 4.2 `text.verbosity`：别再用 prompt 去硬拧篇幅
+
+GPT-5.5 在 `text.verbosity` 上更可控。官方建议是：想要更短、更克制的答案，优先设置 `text.verbosity: low`，而不是在 prompt 里反复写“务必简短”“不要解释太多”“尽量少说话”。
+
+篇幅控制最好分成两层：
+
+- 用 API 参数控制总体冗长程度。
+- 用 `Output` 段描述答案的结构、字数预算和优先级。
+
+### 4.3 Schema 不该长期住在 prompt 里
+
+如果你的目标是稳定 JSON、固定字段、可自动校验的返回结构，官方建议很清楚：**尽量把输出 schema 从 prompt 里移出去，交给 Structured Outputs。**
+
+这样做有 3 个直接好处：
+
+- prompt 更短，不再重复大段字段说明。
+- 结构校验更稳，不靠模型“记住”字段细节。
+- prompt 可以专注在目标、边界和停止规则，而不是承担序列化协议的职责。
+
+这里还有一个很容易忽略的工程差异：JSON mode 只能保证输出是合法 JSON，不能保证它严格贴合你定义的 schema；Structured Outputs 才是官方推荐的 schema adherence 方案。对于带用户输入的场景，官方还专门提醒要处理 `refusal` 分支，因为安全拒答不一定遵循你提供的 schema。
+
+### 4.4 工具规则优先写在工具描述里
+
+很多 Agent 系统会把工具何时用、输入格式、副作用、是否可重试等规则全部塞进系统提示词。OpenAI 在 [Using GPT-5.5](https://developers.openai.com/api/docs/guides/latest-model) 里的建议正好相反：**大多数工具专属规则应该放在 tool description 里，而不是全局 prompt。**
+
+这尤其适合工具面很大的系统。全局 prompt 只保留跨工具的通用政策，比如权限边界、必须校验的安全条件、是否允许真实副作用；具体到某个工具的参数要求、错误模式、重试安全性，交给该工具自己的描述更清楚。
+
+### 4.5 Prompt caching 和日期上下文，都是提示词设计的一部分
+
+这两个点经常被忽略，但都和 prompt 质量直接相关：
+
+- 如果你依赖长 prompt，想提高缓存命中率，应该把稳定内容放前面，动态用户上下文放后面。
+- Prompt Caching 依赖精确前缀匹配，连工具列表、示例和 Structured Outputs schema 都会参与前缀缓存判断。
+- 对 `gpt-5.5` 来说，官方文档给出的默认 retention 是 `24h`，而不是 `in_memory`；如果你的系统有大量共享前缀请求，`prompt_cache_key` 和缓存命中监控值得纳入常规观测项。
+- GPT-5.5 已知当前 UTC 日期，所以“今天是某年某月某日”不必每轮都重复，除非你的业务确实依赖本地时区、政策生效日或用户所在日历日期。
+
+很多看似“prompt 效果差”的问题，本质上并不在写法，而在你把不该重复的静态信息重复发送、把该参数化的东西硬写进了文本。
+
+## 5. 到了 Agent 工作流，真正决定效果的是这些规则
+
+一旦进入多轮工具调用、检索增强和长任务编排，问题就不再只是 prompt 写得短不短，而是退出条件、检索范围和状态管理有没有写清。
+
+### 5.1 明确停止条件，防止过度迭代
+
+官方给出的 stopping conditions 模板值得直接吸收。它的核心思想是：每拿到一次结果，就问自己“现在能不能回答核心请求”。如果能，就不要为了显得谨慎再多绕几轮。
+
+```markdown
+# Stop rules
+- Use the fewest useful tool loops.
+- Do not trade correctness for fewer loops.
+- After each tool result, ask whether the core request can now be answered with sufficient evidence.
+- If yes, answer.
+- If no, gather only the smallest missing evidence needed to answer correctly.
+```
+
+这类规则比“总是先查 A，再查 B，再查 C”更稳，因为它控制的是退出条件，而不是把每个任务都按同一条流程线强行拉平。
+
+### 5.2 给检索加预算，避免为了“更像做过研究”而过搜
+
+检索预算的本质是搜索版停止条件。官方建议是：普通问答先做一次宽泛、判别性强的搜索；如果顶部结果已经能支撑核心结论，就直接回答，不要为了润色、举例或补非必要细节继续检索。
+
+```markdown
+# Retrieval budget
+- Start with one broad search using short, discriminative keywords.
+- Search again only when the top results do not answer the core question.
+- Search again when a required fact, date, ID, owner, or source is still missing.
+- Do not search again just to improve phrasing, add nonessential detail, or support a safer generic statement.
+```
+
+这条规则对 RAG、Web search、企业知识库问答都很关键。没有预算，模型容易在“可能还有更好的证据”这件事上无限追加搜索。
+
+### 5.3 用 preamble 改善首个可见 token 的等待体验
+
+对流式产品和工具型 Agent 来说，用户感受到的“慢”，往往不是最终答案晚了 2 秒，而是前 2 秒完全没反应。官方建议很实用：在多步骤任务真正调用工具前，先发一条一两句的可见更新，说明第一步要做什么。
+
+```text
+Before any tool calls for a multi-step task, send a short user-visible update that acknowledges the request and states the first step. Keep it to one or two sentences.
+```
+
+这不是寒暄模板，也不是要求每次都客套一句。它服务的是“用户知道系统已经开始工作”这一点。
+
+### 5.4 `phase` 只在正确的工作流层使用
+
+Prompt guidance 对 `phase` 的说明很容易被误读。更准确的理解是：
+
+- 如果你用 `previous_response_id`，Responses API 会自动保留 assistant 状态。
+- 如果你选择手动 replay assistant output items，就必须保留原始 `phase` 值不变。
+- 中间用户可见更新使用 `phase: "commentary"`。
+- 最终完成答案使用 `phase: "final_answer"`。
+- 不要把 `phase` 加到 user messages 上。
+
+换句话说，`phase` 不是提示词文案的一部分，而是状态编排协议的一部分。
+
+### 5.5 人格、协作风格和创意护栏，都要短而硬
+
+OpenAI 对 personality block 的建议非常克制。人格负责“怎么说”，协作风格负责“怎么做”，两者都应该短，不要拿来替代任务说明。
+
+| 指令类型 | 负责什么 | 一句好用的写法 |
+| ------ | ------ | ------ |
+| Personality | 语气、温度、直接程度 | steady, direct, respectful |
+| Collaboration style | 何时主动推进、何时提问 | make progress first; ask only when missing info materially changes the answer |
+| Creative guardrails | 哪些事实必须有来源，哪些可创意发挥 | use cited facts for concrete claims; use placeholders instead of invented specifics |
+
+对于创意起草类任务，比如对外文案、领导摘要、客户介绍页、PPT 大纲，官方给出的边界同样值得直接搬用：产品能力、客户名称、指标、路线图、日期、竞品比较都必须有来源；没有来源时，用占位符或显式假设，不要“为了文案更像样”补一堆未经验证的细节。
+
+## 6. 一个更实用的迁移示例：把旧编码 Agent prompt 改成 GPT-5.5 版本
+
+抽象原则看多了很容易发虚，下面直接看一个编码 Agent 的迁移例子。
+
+### 6.1 不推荐的旧写法
+
+```text
+Always inspect the repository tree first.
+Then read every potentially related file.
+Then think step by step about all possible causes.
+Then search for similar code.
+Then run tests.
+Then decide what to edit.
+Then explain every step to the user.
+Never stop before you are completely certain.
+```
+
+这类 prompt 看起来严密，实际上问题很多：
+
+- 把所有任务强行绑定到同一流程。
+- “读每个相关文件”“完全确定再停”这类说法没有可执行边界。
+- 工具调用和验证策略没有退出条件，容易导致过度探索。
+- 用户真正关心的是 bug 是否被安全修好，不是你是否按剧本走完每一步。
+
+### 6.2 更适合 GPT-5.5 的写法
+
+```markdown
+Role: You are the engineering assistant for a TypeScript monorepo.
+
+# Personality
+Be direct, steady, and practical. Prefer progress over unnecessary clarification.
+
+# Goal
+Fix the reported checkout pricing bug with the smallest safe change.
+
+Available context:
+- repository files
+- test suite
+- issue description
+- existing pricing and tax utilities
+
+# Success criteria
+- the root cause is identified from available code and evidence
+- the bug is fixed, or the smallest missing reproduction input is clearly identified
+- relevant validation is run when available
+- the final answer includes cause, changed files, validation, and remaining risk
+
+# Constraints
+- preserve public APIs unless the bug requires otherwise
+- do not refactor unrelated modules
+- reuse existing pricing and tax utilities when possible
+
+# Output
+- brief explanation first
+- then changed files
+- then validation result
+
+# Stop rules
+- use the fewest useful tool loops
+- ask only when missing information would materially change the fix
+- if validation cannot run, state why and name the next best check
+```
+
+这版更好的原因，不在于它更短，而在于它把职责重新分配对了：
+
+`Goal` 和 `Success criteria` 负责定义结果，`Constraints` 负责守住边界，`Stop rules` 负责控制循环次数和追问阈值。至于具体用什么工具、先读哪个文件、先跑哪个测试，则交给模型根据现场决定。
+
+## 7. 三个起步模板
+
+如果你现在就要动手重写 prompt，下面这三个模板已经够大多数团队起步，后续再按场景加细节就行。
+
+### 7.1 普通问答或知识助手
+
+```markdown
+Role: You are a grounded assistant for factual Q&A.
+
+# Goal
+Answer the user's question accurately and concisely.
+
+# Success criteria
+- the core question is answered
+- important factual claims are supported by available evidence
+- missing evidence is called out explicitly
+
+# Constraints
+- do not invent facts
+- prefer precise, low-risk wording when evidence is partial
+
+# Output
+- short paragraphs by default
+- include citations only where factual claims need support
+
+# Stop rules
+- use the minimum evidence sufficient to answer correctly, then stop
+- ask for clarification only if the question is underspecified in a way that materially changes the answer
+```
+
+### 7.2 工具型 Agent
+
+```markdown
+Role: You are a tool-using agent that resolves user requests end to end.
+
+# Goal
+Complete the user's request safely and efficiently.
+
+# Success criteria
+- the required action is completed when allowed
+- the final answer includes completed actions, blockers, and next steps when needed
+
+# Constraints
+- respect tool side effects and permissions
+- never claim an action was completed unless a tool result confirms it
+
+# Output
+- one short visible preamble before multi-step work
+- concise final answer after completion
+
+# Stop rules
+- do not keep calling tools once the core request can be answered
+- gather only the smallest missing evidence needed to proceed
+```
+
+### 7.3 创意起草或对外文案
+
+```markdown
+Role: You are a writing assistant for customer-facing drafts.
+
+# Goal
+Produce a clear, useful draft that separates sourced facts from creative wording.
+
+# Success criteria
+- concrete claims come from retrieved or provided facts
+- unsupported specifics are replaced with placeholders or labeled assumptions
+- the draft matches the requested audience and tone
+
+# Constraints
+- do not invent names, metrics, roadmap dates, customer outcomes, or product capabilities
+
+# Output
+- preserve the requested format and length first
+- improve clarity and flow without adding unsupported claims
+
+# Stop rules
+- if support for a concrete claim is missing, either retrieve it or replace the claim with a generic statement or placeholder
+```
+
+## 8. 几种最常见的误读
+
+最常见的误读，是把 outcome-first 简化成“prompt 越短越好”。真正的变化不是拼命删字数，而是删掉那些不改变结果的流程噪声；相反，安全边界、必需输出字段和停止条件，往往要写得比以前更清楚。
+
+第二类误读是把模型变强理解成“few-shot 可以不要了”或者“effort 越高越稳”。这两句都说过头了。风格迁移、格式改写、边界样例依然有用，而更高的 `reasoning.effort` 也不天然更安全，它同样可能带来过度搜索、过度推理和更高成本。
+
+第三类误读出现在 Agent 编排里：有了 preamble，就好像每次都该先说一大段；用了手动 replay，就可以不管 `phase`。这两件事都不对。preamble 只需要一两句，让用户知道系统已经开始工作；手动 replay assistant items 时，原始 `phase` 则必须原样保留并传回。
+
+最后一类误读集中在创意任务上。文案可以更灵活，但事实不能跟着变松。客户名称、产品能力、路线图、指标、日期这类具体信息，仍然必须有来源；没有来源时，用占位符或显式假设，比“补一个看起来更完整的版本”稳得多。
+
+## 9. 一份真正可执行的迁移清单
+
+如果你手上已经有现成 prompt，不必从零开始重写。更稳妥的做法，是按职责把它一点点拆回去。
+
+1. 先删掉那些只是“看起来严谨”、但并不改变结果的流程说明，把 prompt 清回一个干净 baseline。
+2. 再补 `Goal`、`Success criteria`、`Stop rules` 和真正的 invariants，把结果边界先写稳。
+3. 接着把 schema、工具专属规则、`text.verbosity`、`reasoning.effort`、retrieval budget 这些能力迁到更合适的层，不要继续堆在正文里。
+4. 最后用代表性样本做评测，比较质量、token、延迟和错误率，而不是只凭主观感觉判断“更聪明了没有”。
+
+做到这一步，大多数 GPT-5.5 迁移就已经不再是“旧 prompt 微调”，而是在把整套工作流重新梳顺。
+
+## 10. 结语
+
+这份指南真正要求团队重做的，不是背几句新口号，而是重新划分 prompt、API 参数、工具描述和状态编排的职责。目标、成功标准、约束、输出和停止规则应该留在 prompt 里；schema、verbosity、effort、缓存和 `phase` 则更适合放在系统层处理。
+
+这样做的结果不是 prompt 更花哨，而是工作流更容易评估、更容易调试，也更不依赖历史遗留的 prompt stack。对已经在线的系统来说，最稳妥的迁移顺序依旧是：先删历史噪声，再补完成条件，最后把结构化约束和编排细节迁到该去的地方。
+
+## 11. 官方资料与延伸阅读
+
+- [Prompt guidance | OpenAI API](https://developers.openai.com/api/docs/guides/prompt-guidance)
+- [Using GPT-5.5 | OpenAI API](https://developers.openai.com/api/docs/guides/latest-model)
+- [Reasoning models | OpenAI API](https://developers.openai.com/api/docs/guides/reasoning)
+- [Structured Outputs | OpenAI API](https://developers.openai.com/api/docs/guides/structured-outputs)
+- [Prompt caching | OpenAI API](https://developers.openai.com/api/docs/guides/prompt-caching)
+
+如果你准备把这套方法继续落到评测、提示词资产管理和跨模型对照上，可以继续看站内这几篇：
+
+- [Promptfoo：LLM 评测与 Red Teaming 实战指南](llm/promptfoo-llm-evaluation-testing-guide.md)
+- [Prompts.chat：开源提示词平台、自托管方案与 MCP 集成完全指南](llm/prompts-chat-open-source-prompt-library-guide.md)
+- [Claude API 基础专题（二）：提示词工程](ai-agent/anthropic-claude-api-prompting.md)
