@@ -4,7 +4,7 @@ date: 2026-04-14T11:30:00+08:00
 lastmod: 2026-04-14T11:30:00+08:00
 draft: false
 tags: ["Claude", "Anthropic", "Cookbook", "教程"]
-categories: ["技术教程"]
+categories: ["技术笔记"]
 slug: "claude-cookbooks-anthropic-official-recipes-guide"
 description: "Claude Cookbooks是Anthropic官方维护的Claude应用食谱库，包含40.8k星、540+提交，收录了分类、RAG、摘要、工具调用、多模态、子代理等领域的实战代码和指南，帮助开发者快速掌握Claude API集成。"
 ---

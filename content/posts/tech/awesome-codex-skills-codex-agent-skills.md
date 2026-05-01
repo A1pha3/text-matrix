@@ -4,7 +4,7 @@ date: 2026-04-29T15:00:00+08:00
 lastmod: 2026-04-29T15:00:00+08:00
 draft: false
 tags: ["Codex", "AI智能体", "技能库", "自动化", "工作流"]
-categories: ["技术教程"]
+categories: ["技术笔记"]
 description: "Awesome Codex Skills 是 ComposioHQ 维护的 Codex 编码智能体技能库，涵盖代码开发、产品协作、写作、数据分析等场景，支持 Slack/GitHub/Notion 等 1000+ 应用集成。"
 slug: awesome-codex-skills-codex-agent-skills
 author: ""

@@ -2,6 +2,7 @@
 date = '2026-04-13T23:51:22+08:00'
 draft = false
 title = 'Transfer Learning：迁移学习全栈资源库'
+categories = ['技术笔记']
 +++
 
 # Transfer Learning：迁移学习全栈资源库

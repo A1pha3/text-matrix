@@ -2,6 +2,7 @@
 date = '2026-04-13T23:51:22+08:00'
 draft = false
 title = 'Domain Check：Universal Domain Availability Checker'
+categories = ['技术笔记']
 +++
 
 # Domain Check：Universal Domain Availability Checker
