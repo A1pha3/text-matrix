@@ -8,6 +8,7 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **2026年提示词工程进阶策略** | - | - | 2026-prompt-engineering-advanced-strategies.md | a1d323a | | 2026-05-06 |
 | **n8n-MCP** | czlonkowski/n8n-mcp | | n8n-mcp-claude-workflow-automation-guide.md | b39dec0 | | 2026-05-03 |
 | **awesome-deepseek-agent** | deepseek-ai/awesome-deepseek-agent | 333 | awesome-deepseek-agent-integration-guide.md | 39ecb82 | | 2026-04-30 |
 | **OpenAI GPT-5.5 Prompt 指南** | - | - | openai-gpt-5-5-prompt-guide.md | df3d2d1 | | 2026-05-01 |
