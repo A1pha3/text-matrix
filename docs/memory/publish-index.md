@@ -379,3 +379,4 @@
 - DeepSeek-TUI：终端原生编程智能体深度解读 | 钳岳星君 | 2026-05-03
 - CocoIndex：让 AI Agent 永远拥有最新上下文的增量索引框架 | 钳岳星君 | 2026-05-04
 - Awesome GPT Image 2：世界最大 GPT Image 2 提示词库的技术架构与实战指南 | 钳岳星君 | 2026-05-03
+- Instagram 主题页赚钱方法论：从零到百万收入的完整指南 | 钳岳星君 | Reddit r/Entrepreneur | 2026-05-06
