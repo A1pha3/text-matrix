@@ -1,7 +1,7 @@
 ---
 title: "Harness Engineering：AI时代的方法论级实战手册"
 slug: "harness-engineering-ai-tool-design-guide"
-date: 2026-04-08T20:25:00+08:00
+date: "2026-04-08T20:25:00+08:00"
 lastmod: 2026-04-08T20:25:00+08:00
 categories: ["技术笔记"]
 tags: ["AI", "Harness", "方法论", "Agent", "工作流", "提示词", "经验工程"]

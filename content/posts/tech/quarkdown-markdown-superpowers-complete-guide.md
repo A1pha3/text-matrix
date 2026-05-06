@@ -1,6 +1,6 @@
 ---
 title: "Quarkdown：Markdown 的超能力进化，从想法到论文、演示、知识库的全流程工具"
-date: 2026-04-29T16:41:29+08:00
+date: "2026-04-29T16:41:29+08:00"
 slug: quarkdown-markdown-superpowers-complete-guide
 description: "Quarkdown 是一个基于 Kotlin 的 Markdown 扩展语言，支持函数调用和 Turing-complete 扩展，可编译为书籍、论文、幻灯片、网站和知识库等多种格式。"
 draft: false

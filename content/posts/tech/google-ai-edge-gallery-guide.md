@@ -1,6 +1,6 @@
 ---
 title: "Google AI Edge Gallery：本地ML/GenAI展示与应用平台完全指南"
-date: 2026-04-08T11:30:00+08:00
+date: "2026-04-08T11:30:00+08:00"
 slug: "google-ai-edge-gallery-guide"
 description: "Google AI Edge Gallery 是 Google 推出的本地 ML/GenAI 展示与应用平台，支持在浏览器和移动设备上运行 AI 模型。"
 draft: false

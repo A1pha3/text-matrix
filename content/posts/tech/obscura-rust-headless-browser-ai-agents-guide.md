@@ -1,6 +1,6 @@
 ---
 title: "Obscura：Rust 实现的无头浏览器，专为 AI Agent 与网页爬取而生"
-date: 2026-05-03T11:30:00+08:00
+date: "2026-05-03T11:30:00+08:00"
 slug: "obscura-rust-headless-browser-ai-agents-guide"
 description: "Obscura 是一个由 Rust 编写的开源无头浏览器引擎，专为 AI Agent 自动化与大规模网页爬取设计。支持 Chrome DevTools Protocol，可作为 Puppeteer/Playwright 的底层替代，内存仅 30 MB，内置反指纹与追踪器屏蔽功能。"
 draft: false

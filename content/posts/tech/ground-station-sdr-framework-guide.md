@@ -1,6 +1,6 @@
 ---
 title: "Ground Station：1.2K Stars·软件无线电框架·SDR管道·模块化信号处理"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: ground-station-sdr-framework-guide
 description: "Ground Station 是一个开源的软件无线电框架，提供 SDR 管道和模块化信号处理功能，支持多种硬件设备。"
 draft: false

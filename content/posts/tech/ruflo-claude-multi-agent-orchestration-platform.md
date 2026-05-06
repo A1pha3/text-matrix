@@ -1,6 +1,6 @@
 ---
 title: "RuFlo：让 Claude Code 进化为多智能体协作平台"
-date: 2026-05-04T15:09:55+08:00
+date: "2026-05-04T15:09:55+08:00"
 slug: "ruflo-claude-multi-agent-orchestration-platform"
 description: "RuFlo 是面向 Claude Code 的多智能体编排平台，通过 `ruflo init` 为其赋予多智能体蜂群自组织、跨会话持久记忆、零信任联邦通信和企业级安全防护能力。本文深入解析其 WASM/Rust 内核架构、蜂群协调机制、自学习闭环及 Agent Federation 跨边界协作协议。"
 draft: false

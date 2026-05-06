@@ -1,6 +1,6 @@
 ---
 title: "last30days-skill：AI 全网研究助手从入门到精通"
-date: 2026-03-28T17:30:00+08:00
+date: "2026-03-28T17:30:00+08:00"
 slug: "last30days-skill-ai-agent-research"
 aliases:
   - /posts/tech/last30days-skill-ai-agent-research/

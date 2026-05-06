@@ -1,7 +1,7 @@
 ---
 title: "AutoResearchClaw：全自动23阶段研究论文生成管道，从想法到论文的完整实践"
 slug: autoresearchclaw-23-stage-research-pipeline
-date: 2026-04-21T07:45:00+08:00
+date: "2026-04-21T07:45:00+08:00"
 description: "全面解析 AutoResearchClaw：一个开源的全自动研究论文生成管道，23阶段闭环流程涵盖文献发现、实验设计、论文撰写全链路，支持多代理辩论、Human-in-the-Loop协作、MetaClaw跨运行学习，从研究想法到会议论文一气呵成。"
 categories: ["技术笔记"]
 tags: ["AutoResearchClaw", "LLM", "Multi-Agent", "OpenClaw", "科学研究"]

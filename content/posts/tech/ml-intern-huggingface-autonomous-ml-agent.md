@@ -1,6 +1,6 @@
 ---
 title: "HuggingFace ml-intern：开源AI工程师，从读论文到训练模型一手包办"
-date: 2026-04-25T11:35:00+08:00
+date: "2026-04-25T11:35:00+08:00"
 slug: ml-intern-huggingface-autonomous-ml-agent
 description: "深入解析 HuggingFace ml-intern：开源AI工程师项目，自主研究论文、编写代码、训练模型、部署上线。详细剖析其架构设计、Agent循环、工具路由等核心机制。"
 categories: ["技术笔记"]

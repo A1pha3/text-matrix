@@ -1,6 +1,6 @@
 ---
 title: "Claudian：在Obsidian笔记库中嵌入Claude Code的AI协作插件"
-date: 2026-04-09T20:40:00+08:00
+date: "2026-04-09T20:40:00+08:00"
 slug: "claudian-obsidian-ai-collaboration-guide"
 description: "Claudian是首个将Claude Code嵌入Obsidian笔记库的插件，让笔记成为AI的工作目录。本文深入解析其核心功能、内联编辑、Skills系统、MCP服务器集成，以及在知识管理中的应用。"
 draft: false

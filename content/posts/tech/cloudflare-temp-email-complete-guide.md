@@ -1,6 +1,6 @@
 ---
 title: "Cloudflare临时邮箱：8.3K Stars·零成本临时邮件服务·Rust WASM解析"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: cloudflare-temp-email-complete-guide
 description: "Cloudflare 临时邮箱是一个零成本的临时邮件服务，使用 Rust 和 WASM 编写，提供 AI 智能识别功能。"
 draft: false

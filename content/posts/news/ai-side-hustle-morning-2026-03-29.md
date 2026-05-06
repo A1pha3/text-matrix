@@ -1,6 +1,6 @@
 ---
 title: "AI副业早报（2026-03-29）"
-date: 2026-03-29T08:00:00+08:00
+date: "2026-03-29T08:00:00+08:00"
 slug: "ai-side-hustle-morning-2026-03-29"
 description: "2026年3月29日AI副业早报：汇总V2EX网友真实AI赚钱案例、远程工作机会、创业组队、外包接单等AI副业情报。"
 draft: false

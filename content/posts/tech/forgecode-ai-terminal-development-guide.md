@@ -1,7 +1,7 @@
 ---
 title: "ForgeCode：AI增强的终端开发环境与ZSH插件集成"
 slug: "forgecode-ai-terminal-development-guide"
-date: 2026-04-08T16:40:00+08:00
+date: "2026-04-08T16:40:00+08:00"
 lastmod: 2026-04-08T16:40:00+08:00
 categories: ["技术笔记"]
 tags: ["Rust", "AI", "Terminal", "ZSH", "CLI", "Coding Agent", "Claude", "开发环境"]

@@ -1,6 +1,6 @@
 ---
 title: "AI Agent架构：Kocoro-lab 9部33章完整指南·从ReAct到企业级多智能体编排"
-date: 2026-04-24T21:20:00+08:00
+date: "2026-04-24T21:20:00+08:00"
 slug: "ai-agent-architecture-book-guide"
 description: "《AI Agent 架构：从单体到企业级多智能体》是Wayland Zhang撰写的开源书籍，9部33章涵盖ReAct循环、MCP协议、多Agent编排（DAG/Swarm/Handoff）、生产架构、三层设计、企业治理等，配套Shannon开源参考实现。"
 draft: false

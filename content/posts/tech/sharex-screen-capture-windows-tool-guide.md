@@ -1,6 +1,6 @@
 ---
 title: "ShareX 全面指南：Windows 最强截图与文件分享工具"
-date: 2026-05-02T20:05:17+08:00
+date: "2026-05-02T20:05:17+08:00"
 slug: "sharex-screen-capture-windows-tool-guide"
 description: "ShareX 是 Windows 平台最全能的免费截图与文件分享工具。本文深入解析其多模态截图体系、上传器生态、自定义工作流与二次开发路径，覆盖从安装配置到自定义上传器的完整知识，助你从入门到精通。"
 draft: false

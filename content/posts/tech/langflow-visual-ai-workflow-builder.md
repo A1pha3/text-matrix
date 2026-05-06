@@ -1,6 +1,6 @@
 ---
 title: "LangFlow: 可视化 AI 工作流编排平台"
-date: 2026-04-30T20:00:00+08:00
+date: "2026-04-30T20:00:00+08:00"
 slug: "langflow-visual-ai-workflow-builder"
 description: "LangFlow 是一个开源的可视化 AI 工作流构建与部署平台，支持拖拽式编排 LLM 流程、内置 API 与 MCP 服务器、将任意工作流导出为工具集成到任何框架中。本文详细介绍了其安装配置、核心组件与典型使用场景。"
 draft: false

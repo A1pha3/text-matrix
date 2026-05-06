@@ -1,6 +1,6 @@
 ---
 title: "Anthropic Knowledge Work Plugins：把 Claude 变成岗位专家的完整指南"
-date: 2026-03-24T17:30:00+08:00
+date: "2026-03-24T17:30:00+08:00"
 slug: "anthropic-knowledge-work-plugins-guide"
 aliases:
   - /posts/tech/anthropic-knowledge-work-plugins-guide/

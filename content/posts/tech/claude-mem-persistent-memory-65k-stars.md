@@ -1,7 +1,7 @@
 ---
 title: "Claude-Mem：65K Stars的Claude Code持久记忆系统，从架构到实战的全面解析"
 slug: claude-mem-persistent-memory-65k-stars
-date: 2026-04-22T07:25:00+08:00
+date: "2026-04-22T07:25:00+08:00"
 description: "全面解析Claude-Mem：开源的Claude Code持久记忆系统，65K Stars，5大生命周期钩子自动捕获上下文，3层搜索工作流节省10x Token，SQLite+Chroma混合存储，支持OpenClaw网关和多种IDE。"
 categories: ["技术笔记"]
 tags: ["Claude-Mem", "AI记忆", "Claude Code", "向量数据库", "TypeScript", "OpenClaw"]

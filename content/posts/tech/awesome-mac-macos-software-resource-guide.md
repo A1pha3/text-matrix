@@ -1,6 +1,6 @@
 ---
 title: "awesome-mac：17K Stars·macOS软件资源大全·开发者工具/设计/媒体/效率工具"
-date: 2026-04-12T02:29:31+08:00
+date: "2026-04-12T02:29:31+08:00"
 slug: awesome-mac-macos-software-resource-guide
 description: "awesome-mac 是一个精心策划的 macOS 应用资源集合，收录了各类优质的 macOS 软件，涵盖开发者工具、设计工具、媒体工具、游戏、效率工具等多个领域。"
 draft: false

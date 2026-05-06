@@ -1,6 +1,6 @@
 ---
 title: "FreeDomain：156k Stars 免费域名平台完全指南"
-date: 2026-04-06T22:22:00+08:00
+date: "2026-04-06T22:22:00+08:00"
 slug: "freedomain-free-domain-guide"
 description: "全面介绍 156k Stars 的 FreeDomain 免费域名平台，涵盖可用域名扩展（.DPDNS.ORG 等）、注册流程、DNS 配置（Cloudflare/FreeDNS）、使用场景、社区参与和最佳实践。"
 draft: false

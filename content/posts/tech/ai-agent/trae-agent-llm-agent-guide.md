@@ -3,7 +3,7 @@ title: "Trae Agent：字节跳动 LLM 智能体完全指南"
 slug: "trae-agent-llm-agent-guide"
 aliases:
   - /posts/tech/trae-agent-llm-agent-guide/
-date: 2026-04-01T01:16:00+08:00
+date: "2026-04-01T01:16:00+08:00"
 categories: ["技术笔记"]
 tags: ["Trae Agent", "LLM智能体", "字节跳动", "软件工程", "Claude", "GPT", "Docker", "轨迹录制", "OpenAI", "Anthropic", "Python", "CLI"]
 description: "深度解析 Trae Agent (11.2k Stars)：字节跳动开发的 LLM 智能体，支持 OpenAI/Anthropic/Doubao 等多提供商，提供 Lakeview 摘要、交互模式、轨迹录制等特性，采用透明模块化架构，适合研究智能体架构和开发新能力。"

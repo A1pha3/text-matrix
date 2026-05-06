@@ -1,6 +1,6 @@
 ---
 title: "Photon：极速 OSINT 爬虫——域名发现、敏感信息提取与情报收集从入门到精通"
-date: 2026-04-14T22:35:00+08:00
+date: "2026-04-14T22:35:00+08:00"
 slug: "photon-osint-crawler"
 description: "Photon 是 12.8K Stars 的极速 OSINT 爬虫，支持 8 种数据提取（URL、参数、Intel、文件、密钥、JS 端点、正则匹配、DNS 数据），多线程极速爬取，可提取邮箱、API 密钥、S3 Bucket 等敏感信息，集成 Wayback Machine 和 DNSdumpster 插件。"
 draft: false

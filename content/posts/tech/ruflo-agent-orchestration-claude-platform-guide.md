@@ -1,6 +1,6 @@
 ---
 title: "Ruflo 完全指南：多智能体编排平台从入门到精通"
-date: 2026-05-02T20:03:00+08:00
+date: "2026-05-02T20:03:00+08:00"
 slug: "ruflo-agent-orchestration-claude-platform-guide"
 description: "Ruflo 是基于 Model Context Protocol 的多智能体编排平台，为 Claude Code 添加 100+ 专业化 Agent、群智协调、自学习记忆、联邦通信与企业级安全能力。本文从原理、架构、安装配置、实战演示到开发扩展，系统讲解如何用 Ruflo 搭建生产级多 Agent 工作流。"
 draft: false

@@ -2,7 +2,7 @@
 title: "AI副业早报 | 2026-04-19"
 slug: ai-side-hustle-morning-2026-04-19
 description: "AI副业早报：IPv8协议讨论/企业对冲Token涨价风险/个人云服务创业/Markdown编辑器"
-date: 2026-04-19T07:30:00+08:00
+date: "2026-04-19T07:30:00+08:00"
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true

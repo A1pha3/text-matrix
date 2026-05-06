@@ -1,6 +1,6 @@
 ---
 title: "Agent时代软件构建革命：黄东旭百亿Token实践后的深度思考"
-date: 2026-04-18T00:20:00+08:00
+date: "2026-04-18T00:20:00+08:00"
 slug: "agent-era-software-construction-huangdongxu"
 summary: "基于黄东旭高强度 Agent 实战的公开分享，本文系统拆解 Coding 已死 的真实含义、Goal / Context / Constraints 框架、人机协同方法、程序员能力迁移、AI 软件产业链重组，以及更高一层的终局判断。"
 description: "深度解读黄东旭对 Agent 时代软件构建的判断：代码为何从思考载体退为执行载体，Spec 为什么比堆 Agent 更重要，程序员能力为何会快速分化，以及验证与治理为什么会成为下一代软件基础设施。"

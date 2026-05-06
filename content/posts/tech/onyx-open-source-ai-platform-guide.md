@@ -1,6 +1,6 @@
 ---
 title: "Onyx：开源 AI 平台，让你的团队拥有自己的 ChatGPT"
-date: 2026-04-04T14:35:00+08:00
+date: "2026-04-04T14:35:00+08:00"
 slug: "onyx-open-source-ai-platform-guide"
 description: "Onyx 是一个开源 AI 平台，提供 RAG、Deep Research、自定义 Agent、代码执行等高级功能，支持所有主流 LLM 提供商。本文介绍其核心功能、架构设计和部署方式。"
 draft: false

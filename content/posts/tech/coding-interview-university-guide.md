@@ -1,6 +1,6 @@
 ---
 title: "Coding Interview University：软件工程师求职学习指南"
-date: 2026-04-01T12:50:00+08:00
+date: "2026-04-01T12:50:00+08:00"
 slug: "coding-interview-university-guide"
 description: "Coding Interview University 是 GitHub 上最受欢迎的编程面试准备指南，340k Stars。涵盖数据结构、算法、系统设计、面试技巧等核心知识点，提供完整的学习路线图和资源推荐。"
 draft: false

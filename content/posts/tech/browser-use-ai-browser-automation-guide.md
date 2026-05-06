@@ -1,6 +1,6 @@
 ---
 title: "Browser-Use：让 AI Agent 控制浏览器完成任何任务"
-date: 2026-04-06T20:12:00+08:00
+date: "2026-04-06T20:12:00+08:00"
 slug: "browser-use-ai-browser-automation-guide"
 description: "全面介绍 Browser-Use 开源 AI 浏览器自动化库，涵盖安装配置、Claude Code 集成、自定义工具扩展、生产环境部署和故障排除。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "文颜CLI：Markdown一键发布微信公众号的多平台排版工具"
-date: 2026-04-09T12:25:00+08:00
+date: "2026-04-09T12:25:00+08:00"
 slug: "wenyan-cli-markdown-multi-platform-publishing-guide"
 description: "文颜CLI是一款多平台Markdown排版与发布工具，支持将Markdown一键转换并发布至微信公众号、知乎，今日头条等内容平台，让写作者专注内容而非排版。涵盖本地模式、Server模式、CI/CD集成和AI Agent集成等进阶用法。"
 draft: false

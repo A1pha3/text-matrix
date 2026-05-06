@@ -1,7 +1,7 @@
 ---
 title: "OpenCLI：轻量级AI命令行框架"
 slug: "opencli-ai-cli-framework-guide"
-date: 2026-04-08T12:55:00+08:00
+date: "2026-04-08T12:55:00+08:00"
 lastmod: 2026-04-08T12:55:00+08:00
 categories: ["技术笔记"]
 tags: ["CLI", "Go", "AI", "命令行框架", "代码生成", "轻量级"]

@@ -2,7 +2,7 @@
 title: "jq完全指南：命令行JSON处理神器，34k Stars的瑞士军刀"
 slug: "jq-command-line-json-processor-guide"
 description: "深入解析jq——34.2k Stars的命令行JSON处理工具。零依赖纯C编写，sed/awk/grep般的便捷体验，轻松切片、过滤、映射、转换结构化数据。"
-date: 2026-04-11T00:25:00+08:00
+date: "2026-04-11T00:25:00+08:00"
 categories: ["技术笔记"]
 tags: ["JSON", "命令行", "数据处理", "C语言", "工具", "sed", "awk", "管道"]
 ---

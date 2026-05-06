@@ -1,6 +1,6 @@
 ---
 title: "Ollama：本地大模型运行完全指南"
-date: 2026-04-06T22:18:00+08:00
+date: "2026-04-06T22:18:00+08:00"
 slug: "ollama-local-llm-guide"
 description: "全面介绍 168.9k Stars 的 Ollama 本地大模型运行平台，涵盖安装配置、模型管理、Modelfile 自定义、OpenAI 兼容 API、Agent/ReAct 模式、多模态模型、GPU 加速，以及与 LangChain 的集成方法。"
 draft: false

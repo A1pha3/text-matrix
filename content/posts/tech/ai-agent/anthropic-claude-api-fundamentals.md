@@ -1,6 +1,6 @@
 ---
 title: "Claude API基础专题（一）：认证、请求与会话管理"
-date: 2026-03-25T09:30:00+08:00
+date: "2026-03-25T09:30:00+08:00"
 slug: "claude-api-authentication-requests-session"
 aliases:
   - /posts/tech/claude-api-authentication-requests-session/

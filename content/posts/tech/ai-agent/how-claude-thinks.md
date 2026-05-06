@@ -1,6 +1,6 @@
 ---
 title: "Claude 是如何思考的？Anthropic 可解释性研究深度解读"
-date: 2026-03-27T14:46:00+08:00
+date: "2026-03-27T14:46:00+08:00"
 slug: "how-claude-thinks-anthropic-interpretability"
 aliases:
   - /posts/tech/how-claude-thinks-anthropic-interpretability/

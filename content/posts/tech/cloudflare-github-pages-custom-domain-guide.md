@@ -1,6 +1,6 @@
 ---
 title: "Cloudflare + GitHub Pages 自定义域名配置指南"
-date: 2026-03-24T19:30:00+08:00
+date: "2026-03-24T19:30:00+08:00"
 slug: "cloudflare-github-pages-custom-domain-guide"
 description: "详细讲解如何将 Spaceship 购买的域名通过 Cloudflare DNS 解析，并绑定到 GitHub Pages 上，包含完整配置步骤与常见问题排查。"
 draft: false

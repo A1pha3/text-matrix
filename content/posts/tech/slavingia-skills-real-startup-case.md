@@ -1,6 +1,6 @@
 ---
 title: "如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例"
-date: 2026-03-30T17:10:00+08:00
+date: "2026-03-30T17:10:00+08:00"
 slug: slavingia-skills-real-startup-case
 description: "用一个基于真实创业约束整理的完整案例，演示如何按顺序使用 10 个 Minimalist Entrepreneur Skills，从找社区、验证、定价到拿下首批付费客户。"
 draft: false

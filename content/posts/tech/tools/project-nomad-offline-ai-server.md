@@ -1,6 +1,6 @@
 ---
 title: "Project N.O.M.A.D.：离线优先的 AI 知识与教育服务器从入门到精通"
-date: 2026-03-28T16:30:00+08:00
+date: "2026-03-28T16:30:00+08:00"
 slug: "project-nomad-offline-ai-server"
 aliases:
   - /posts/tech/project-nomad-offline-ai-server/

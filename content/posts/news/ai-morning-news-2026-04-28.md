@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报 2026-04-28"
-date: 2026-04-28T07:00:00+08:00
+date: "2026-04-28T07:00:00+08:00"
 slug: ai-morning-news-2026-04-28
 description: "2026年4月28日 AI 新闻早报，涵盖Manus收购被禁、微软OpenAI分手、AGI时间线判断、GitHub Copilot计费变化等重大事件。"
 draft: false

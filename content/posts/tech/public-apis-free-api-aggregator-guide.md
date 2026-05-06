@@ -1,6 +1,6 @@
 ---
 title: "public-apis: 免费API聚合器 —— 427K星背后的宝藏资源库"
-date: 2026-04-28T20:00:00+08:00
+date: "2026-04-28T20:00:00+08:00"
 slug: "public-apis-free-api-aggregator"
 description: "public-apis 是一个聚合了超过1800+免费API的资源列表，涵盖动物、动漫、反恶意软件、艺术设计、区块链、货币兑换、机器学习、音乐、新闻、天气等数十个分类。本文深入解析其内容结构、使用方法及常见API推荐。"
 categories: ["技术笔记"]

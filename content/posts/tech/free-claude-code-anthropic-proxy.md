@@ -1,6 +1,6 @@
 ---
 title: "Free Claude Code：用开源代理让 Claude Code 调用自由"
-date: 2026-04-28T19:39:53+08:00
+date: "2026-04-28T19:39:53+08:00"
 slug: "free-claude-code-anthropic-proxy"
 description: "Free Claude Code 是一个开源的 Anthropic API 代理，允许用户通过 NVIDIA NIM、OpenRouter、DeepSeek、LM Studio、llama.cpp、Ollama 等后端自由调用 Claude Code，绕过官方付费限制。"
 draft: false

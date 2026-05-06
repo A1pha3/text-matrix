@@ -3,7 +3,7 @@ title: "xiaohongshu-mcp：小红书 MCP 服务完全指南"
 slug: "xiaohongshu-mcp-xiaohongshu-model-context-protocol-guide"
 aliases:
   - /posts/tech/xiaohongshu-mcp-xiaohongshu-model-context-protocol-guide/
-date: 2026-03-31T17:05:00+08:00
+date: "2026-03-31T17:05:00+08:00"
 categories: ["技术笔记"]
 tags: ["xiaohongshu-mcp", "MCP", "小红书", "AI助手", "Claude Code", "Cursor", "OpenClaw", "自动化运营", "社交媒体"]
 description: "全面解析 xiaohongshu-mcp (12.4k Stars)：小红书Model Context Protocol服务，让AI助手直接发布内容、搜索、评论、点赞、收藏，支持Claude Code/Cursor/OpenClaw等多种客户端。"

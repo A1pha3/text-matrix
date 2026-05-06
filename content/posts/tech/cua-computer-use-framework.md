@@ -1,6 +1,6 @@
 ---
 title: "Cua：让 AI 代理真正操控电脑的开源全栈框架"
-date: 2026-04-27T00:59:00+08:00
+date: "2026-04-27T00:59:00+08:00"
 slug: cua-computer-use-agent-framework
 description: "Cua 是一个开源 computer-use 全栈框架，包含 macOS 后台驱动 Driver、跨平台沙箱 Sandbox、CLI 工具 CuaBot、基准测试 Cua-Bench 和虚拟化工具 Lume，让 AI 代理真正操控计算机而非只是生成文本。"
 draft: false

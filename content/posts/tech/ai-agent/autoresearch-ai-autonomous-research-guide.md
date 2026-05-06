@@ -3,7 +3,7 @@ title: "AutoResearch：AI 自主科研智能体完全指南"
 slug: "autoresearch-ai-autonomous-research-guide"
 aliases:
   - /posts/tech/autoresearch-ai-autonomous-research-guide/
-date: 2026-03-31T15:05:00+08:00
+date: "2026-03-31T15:05:00+08:00"
 categories: ["技术笔记"]
 tags: ["AutoResearch", "AI Agent", "LLM训练", "自主研究", "Karpathy", "nanochat", "PyTorch"]
 description: "全面解析 AutoResearch：62.1k Stars 的 AI 自主科研项目，让 AI 智能体自主进行 LLM 训练实验，5分钟/次实验，12次/小时，基于 nanochat 单GPU训练实现。"

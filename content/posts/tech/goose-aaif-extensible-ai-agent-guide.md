@@ -2,7 +2,7 @@
 title: "Goose 入门指南：超越代码建议的可扩展AI Agent"
 slug: goose-aaif-extensible-ai-agent-guide
 description: "Goose 是 aaif-goose 推出的开源可扩展 AI Agent，支持安装、执行、编辑和测试任何 LLM。本文涵盖架构解析、核心功能、使用方法和扩展开发指南。"
-date: 2026-04-07T11:35:00+08:00
+date: "2026-04-07T11:35:00+08:00"
 categories:
   - 技术笔记
 tags:

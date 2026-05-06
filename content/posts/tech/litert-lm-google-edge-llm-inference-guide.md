@@ -1,6 +1,6 @@
 ---
 title: "LiteRT-LM：Google 生产级边缘设备 LLM 推理框架完全指南"
-date: 2026-04-06T20:00:00+08:00
+date: "2026-04-06T20:00:00+08:00"
 slug: "litert-lm-google-edge-llm-inference-guide"
 description: "全面介绍 Google LiteRT-LM 边缘设备 LLM 推理框架，涵盖核心特性、技术架构、多语言API、工具调用、多模态能力和全平台部署实践。"
 draft: false

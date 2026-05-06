@@ -1,6 +1,6 @@
 ---
 title: "Claude How-To 完整指南：从入门到精通的视觉化实战手册"
-date: 2026-03-31T08:00:00+08:00
+date: "2026-03-31T08:00:00+08:00"
 description: "luongnv89/claude-howto 是一个可视化、案例驱动的 Claude Code 指南，涵盖从基础概念到高级 Agent 开发，配有可直接使用的 Copy-Paste 模板。今日斩获 4,232 颗 Stars，GitHub Trending 第一名。"
 slug: claude-howto-visual-guide
 aliases:

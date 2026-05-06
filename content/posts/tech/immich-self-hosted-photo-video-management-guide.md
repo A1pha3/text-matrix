@@ -1,6 +1,6 @@
 ---
 title: "Immich：高性能自托管照片和视频管理解决方案完全指南"
-date: 2026-04-06T21:30:00+08:00
+date: "2026-04-06T21:30:00+08:00"
 slug: "immich-self-hosted-photo-video-management-guide"
 description: "全面介绍 96.6k Stars 的 Immich 自托管照片和视频管理方案，涵盖 Docker 部署、多端架构、人脸识别、CLIP 搜索、API 集成等核心功能，以及开发指南和常见问题解决方案。"
 draft: false

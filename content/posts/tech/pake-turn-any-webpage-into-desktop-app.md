@@ -1,6 +1,6 @@
 ---
 title: "Pake：一条命令将任何网页变成桌面应用，比Electron轻20倍"
-date: 2026-04-07T17:15:00+08:00
+date: "2026-04-07T17:15:00+08:00"
 slug: pake-turn-any-webpage-into-desktop-app
 description: "深度解析Pake项目：如何用Rust Tauri实现轻量级桌面应用打包，支持macOS/Windows/Linux，比Electron小20倍，一行命令将任何网页变成原生应用。"
 categories: ["技术笔记"]

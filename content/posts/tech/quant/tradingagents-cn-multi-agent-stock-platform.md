@@ -1,6 +1,6 @@
 ---
 title: "TradingAgents-CN：多智能体 AI 量化投资学习平台从入门到精通"
-date: 2026-04-08T10:30:00+08:00
+date: "2026-04-08T10:30:00+08:00"
 slug: "tradingagents-cn-multi-agent-stock-platform"
 aliases:
   - /posts/tech/tradingagents-cn-multi-agent-stock-platform/

@@ -1,6 +1,6 @@
 ---
 title: "Mini-Coding-Agent 源码深度解析：Sebastian Raschka 的代码代理第一性原理"
-date: 2026-04-07T01:05:00+08:00
+date: "2026-04-07T01:05:00+08:00"
 slug: "mini-coding-agent-sebastian-raschka-source-code-guide"
 description: "深入源码解读 Sebastian Raschka 的 Mini-Coding-Agent，详解六大核心组件（Live Context、Prompt Cache、Structured Tools、Context Reduction、Memory、Delegation）的第一性原理，650行代码揭示代码代理的本质，附完整代码注释和流程图。"
 draft: false

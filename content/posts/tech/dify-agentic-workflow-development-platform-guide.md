@@ -1,6 +1,6 @@
 ---
 title: "Dify：开源 Agentic Workflow 开发平台从入门到精通指南"
-date: 2026-05-02T10:12:21+08:00
+date: "2026-05-02T10:12:21+08:00"
 slug: "dify-agentic-workflow-development-platform-guide"
 description: "Dify 是一款开源的 LLM 应用开发平台，集成 AI 工作流、RAG 管道、Agent、模型管理等功能，支持从原型到生产的完整流程。本文深入分析其核心原理、系统架构，提供详细的安装配置指南与实战演示，助你掌握这一生产级 Agentic Workflow 开发平台。"
 draft: false

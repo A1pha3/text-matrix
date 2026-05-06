@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报 2026-04-25"
-date: 2026-04-25T07:30:00+08:00
+date: "2026-04-25T07:30:00+08:00"
 slug: ai-morning-news-2026-04-25
 description: "2026年4月25日 AI 新闻早报，精选过去 24 小时内值得关注的模型发布、巨额融资与行业动态。DeepSeek V4 开源引发全球测评热潮，Google 宣布向 Anthropic 投资 400 亿美元，OpenAI GPT-5.5 登陆 API。"
 draft: false

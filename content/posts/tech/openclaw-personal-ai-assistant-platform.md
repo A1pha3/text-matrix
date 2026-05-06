@@ -1,6 +1,6 @@
 ---
 title: "OpenClaw：本地优先的个人 AI 助手平台"
-date: 2026-04-27T15:00:00+08:00
+date: "2026-04-27T15:00:00+08:00"
 slug: "openclaw-personal-ai-assistant-platform"
 description: "OpenClaw 是 GitHub 上备受关注的开源个人 AI 助手项目，支持 20+ 消息渠道、语音交互和 Live Canvas，可运行在 macOS/iOS/Android 等设备上。本文从架构视角解析 OpenClaw 的 Gateway 设计、多渠道消息路由、技能系统与安全沙箱模型。"
 draft: false

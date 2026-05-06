@@ -1,6 +1,6 @@
 ---
 title: "Plannotator：AI 编码 Agent 交互式计划与代码审查工具完全指南"
-date: 2026-03-31T15:40:00+08:00
+date: "2026-03-31T15:40:00+08:00"
 slug: "plannotator-ai-code-review-guide"
 description: "全面解析 Plannotator (3.7k Stars)：交互式计划与代码审查工具，支持 Claude Code/Codex/OpenCode/Pi。可视化审核 AI 计划，端到端加密，零知识存储。"
 draft: false

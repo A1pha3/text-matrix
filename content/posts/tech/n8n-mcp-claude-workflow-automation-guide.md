@@ -1,6 +1,6 @@
 ---
 title: "n8n-MCP：让 AI 编程助手帮你构建 n8n 工作流自动化"
-date: 2026-05-03T20:00:00+08:00
+date: "2026-05-03T20:00:00+08:00"
 slug: "n8n-mcp-claude-workflow-automation-guide"
 description: "n8n-MCP 是一个基于 Model Context Protocol 的 MCP 服务器，为 Claude、Cursor、Windsurf 等 AI 编程助手提供 n8n 工作流自动化平台的深度集成能力。本文详细解析其 1,650 个节点库、2,352 个模板、7 大核心工具及 13 个 n8n 管理工具的使用方法与架构设计。"
 draft: false

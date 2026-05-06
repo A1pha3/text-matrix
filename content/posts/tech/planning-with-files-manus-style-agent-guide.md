@@ -1,6 +1,6 @@
 ---
 title: "Planning with Files：Manus风格的AI Agent持久化规划工作流"
-date: 2026-04-12T18:00:00+08:00
+date: "2026-04-12T18:00:00+08:00"
 slug: planning-with-files-manus-style-agent-guide
 description: "18.6k Stars的AI Agent规划Skill，实现Manus风格的3-文件持久化规划模式。基准测试通过率96.7% vs 6.7%（无Skill），支持16+平台（Claude Code/Cursor/Codex/Gemini CLI/OpenClaw等）。"
 draft: false

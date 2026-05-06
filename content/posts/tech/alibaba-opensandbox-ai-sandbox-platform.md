@@ -1,6 +1,6 @@
 ---
 title: "OpenSandbox：阿里巴巴开源的 10.0k Stars 通用 AI 应用沙箱平台"
-date: 2026-03-28T21:00:00+08:00
+date: "2026-03-28T21:00:00+08:00"
 slug: "alibaba-opensandbox-ai-sandbox-platform"
 description: "深度解读阿里巴巴开源的 OpenSandbox：10.0k Stars 的通用 AI 应用沙箱平台，支持多语言 SDK、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、AI 代码执行、强化学习训练等场景。"
 draft: false

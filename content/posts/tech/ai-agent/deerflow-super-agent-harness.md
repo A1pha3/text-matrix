@@ -1,6 +1,6 @@
 ---
 title: "DeerFlow 2.0：字节跳动 Super Agent Harness 从入门到精通"
-date: 2026-03-28T16:20:00+08:00
+date: "2026-03-28T16:20:00+08:00"
 slug: "deerflow-super-agent-harness"
 aliases:
   - /posts/tech/deerflow-super-agent-harness/

@@ -1,6 +1,6 @@
 ---
 title: "9Router：2.5K Stars·Connect All AI Code Tools·统一连接40+ AI提供商的AI工具路由器"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: 9router-ultimate-router-guide
 description: "9Router 是一个统一连接 AI 代码工具到 40+ AI 提供商的路由器，支持 Claude Code、Cursor、Copilot、Codex 等多种工具。"
 draft: false

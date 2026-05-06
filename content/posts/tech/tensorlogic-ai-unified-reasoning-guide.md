@@ -1,6 +1,6 @@
 ---
 title: "TensorLogic：Pedro Domingos论文实现·神经符号统一推理框架·FB15k-237基准MRR 0.347"
-date: 2026-04-24T19:10:00+08:00
+date: "2026-04-24T19:10:00+08:00"
 slug: "tensorlogic-ai-unified-reasoning-guide"
 description: "TensorLogic是基于Pedro Domingos论文的Python实现，通过Tensor方程统一神经推理和符号推理。Boolean模式零幻觉、RESCAL自动谓词发明、Transformer/RNN全部用Tensor方程表达，FB15k-237 MRR 0.347超越LibKGE参考实现。"
 draft: false

@@ -1,7 +1,7 @@
 ---
 title: "Karpathy LLM Wiki：让AI自动维护你的知识库"
 slug: "karpathy-llm-wiki-agent-skill-guide"
-date: 2026-04-08T11:10:00+08:00
+date: "2026-04-08T11:10:00+08:00"
 lastmod: 2026-04-08T11:10:00+08:00
 categories: ["技术笔记"]
 tags: ["AI", "知识管理", "Wiki", "Agent Skills", "LLM"]

@@ -1,6 +1,6 @@
 ---
 title: "Web3早报 2026-05-03"
-date: 2026-05-03T08:00:00+08:00
+date: "2026-05-03T08:00:00+08:00"
 slug: web3-morning-news-2026-05-03
 description: "2026年5月3日 Web3 加密货币早报，汇总 CoinGecko 价格行情、CoinTelegraph 和 CoinDesk 最新资讯。"
 draft: false

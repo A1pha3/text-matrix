@@ -1,6 +1,6 @@
 ---
 title: "Claude How To：从入门到精通 Claude Code 终极指南"
-date: 2026-03-30T23:45:00+08:00
+date: "2026-03-30T23:45:00+08:00"
 lastmod: 2026-04-03T23:24:59+08:00
 slug: claude-howto-master-claude-code-guide
 aliases:

@@ -1,6 +1,6 @@
 ---
 title: "Vane：隐私优先的 AI 回答引擎完全指南"
-date: 2026-03-31T15:50:00+08:00
+date: "2026-03-31T15:50:00+08:00"
 slug: "vane-ai-search-engine-guide"
 description: "全面解析 Vane (33.5k Stars)：隐私优先的 AI 回答引擎，支持本地 Ollama/OpenAI/Claude/Gemini/Groq，配备 SearxNG 隐私搜索，引用来源，文件上传分析。"
 draft: false

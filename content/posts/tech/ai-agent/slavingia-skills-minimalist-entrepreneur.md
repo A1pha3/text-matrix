@@ -1,6 +1,6 @@
 ---
 title: "Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统"
-date: 2026-03-30T16:05:00+08:00
+date: "2026-03-30T16:05:00+08:00"
 slug: slavingia-skills-minimalist-entrepreneur
 aliases:
   - /posts/tech/slavingia-skills-minimalist-entrepreneur/

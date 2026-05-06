@@ -1,6 +1,6 @@
 ---
 title: "AI Agent 的道与术：工程师如何重构工作方式"
-date: 2026-03-29T21:00:00+08:00
+date: "2026-03-29T21:00:00+08:00"
 slug: "ai-agent-engineer-workflow"
 aliases:
   - /posts/tech/ai-agent-engineer-workflow/

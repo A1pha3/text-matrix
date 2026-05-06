@@ -2,7 +2,7 @@
 title: "Free Claude Code：用免费代理突破 Anthropic API 限制"
 slug: "free-claude-code-proxy-guide"
 description: "Free Claude Code 是一个轻量级代理工具，通过将 Claude Code 的 Anthropic API 调用路由到 NVIDIA NIM、OpenRouter、DeepSeek、LM Studio 或 llama.cpp，让用户无需 Anthropic API Key 即可免费使用 Claude Code CLI 和 VSCode 扩展。"
-date: 2026-04-24T11:30:00+08:00
+date: "2026-04-24T11:30:00+08:00"
 categories: ["技术笔记"]
 tags: ["Claude Code", "AI编程", "API代理", "开源工具", "NVIDIA NIM"]
 ---

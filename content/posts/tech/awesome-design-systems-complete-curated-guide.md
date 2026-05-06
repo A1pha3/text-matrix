@@ -1,6 +1,6 @@
 ---
 title: "awesome-design-systems：设计系统与组件库精选资源大全"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: awesome-design-systems-complete-curated-guide
 description: "awesome-design-systems 收录了多个设计系统和组件库资源，包括 Carbon、Chakra UI、Material 等知名项目的详细介绍和使用指南。"
 draft: false

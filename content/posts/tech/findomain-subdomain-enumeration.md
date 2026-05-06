@@ -1,6 +1,6 @@
 ---
 title: "Findomain：5秒挖掘8万子域名——域名发现与监控从入门到精通"
-date: 2026-04-14T22:10:00+08:00
+date: "2026-04-14T22:10:00+08:00"
 slug: "findomain-subdomain-enumeration"
 description: "Findomain 是 3.7K Stars 的极速子域名发现工具，基于 Rust 实现，支持 14+ 数据源（Certspotter、Crt.sh、Virustotal 等）。5.5秒发现 84,110 个子域名，内置 Discord/Slack/Telegram Webhook 监控告警，支持 DNS over TLS 和暴力枚举。"
 draft: false

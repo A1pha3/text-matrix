@@ -1,6 +1,6 @@
 ---
 title: "OpenBB：开源金融数据平台专家级技术文档"
-date: 2026-04-08T12:00:00+08:00
+date: "2026-04-08T12:00:00+08:00"
 slug: openbb-open-data-platform-guide
 aliases:
   - /posts/tech/openbb-open-data-platform-guide/

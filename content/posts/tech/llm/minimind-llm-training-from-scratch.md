@@ -1,6 +1,6 @@
 ---
 title: "MiniMind：从零开始用3块钱训练64M参数的大语言模型"
-date: 2026-04-12T12:00:00+08:00
+date: "2026-04-12T12:00:00+08:00"
 slug: "minimind-llm-training-from-scratch"
 aliases:
   - /posts/tech/minimind-llm-training-from-scratch/

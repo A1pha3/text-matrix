@@ -1,6 +1,6 @@
 ---
 title: "Page Agent：阿里巴巴开源的网页内置 GUI Agent"
-date: 2026-04-06T21:20:00+08:00
+date: "2026-04-06T21:20:00+08:00"
 slug: "page-agent-alibaba-gui-agent-guide"
 description: "全面介绍阿里巴巴开源的 Page Agent 网页内置 GUI Agent，涵盖集成方式、文本化 DOM 操作、MCP Server、Chrome 扩展和与 browser-use 的差异化定位。"
 draft: false

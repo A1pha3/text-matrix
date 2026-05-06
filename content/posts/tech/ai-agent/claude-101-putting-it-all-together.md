@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第四课：融会贯通——把一切组合起来"
-date: 2026-03-25T17:00:00+08:00
+date: "2026-03-25T17:00:00+08:00"
 lastmod: 2026-04-04T00:01:08+08:00
 slug: "claude-101-putting-it-all-together"
 aliases:

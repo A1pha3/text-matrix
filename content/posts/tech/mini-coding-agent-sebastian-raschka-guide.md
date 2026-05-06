@@ -1,6 +1,6 @@
 ---
 title: "Mini-Coding-Agent：Sebastian Raschka 的极简代码代理框架完全指南"
-date: 2026-04-07T00:55:00+08:00
+date: "2026-04-07T00:55:00+08:00"
 slug: "mini-coding-agent-sebastian-raschka-guide"
 description: "全面介绍 Sebastian Raschka 的 Mini-Coding-Agent 极简代码代理框架，详解六大核心组件（实时上下文、提示缓存、结构化工具、上下文缩减、对话记忆、子代理委托）、Ollama 环境配置、CLI 参数、会话管理和扩展建议。"
 draft: false

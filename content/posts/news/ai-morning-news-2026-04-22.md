@@ -2,7 +2,7 @@
 title: "AI新闻早报 2026-04-22"
 slug: ai-morning-news-2026-04-22
 description: "每日AI领域热点新闻摘要，汇集Hacker News等来源的AI相关热门讨论"
-date: 2026-04-22T08:00:00+08:00
+date: "2026-04-22T08:00:00+08:00"
 lastmod: 2026-04-22T08:00:00+08:00
 categories: ["行业快讯"]
 tags: ["AI", "ChatGPT", "OpenAI", "GitHub Copilot", "Meta", "Claude"]

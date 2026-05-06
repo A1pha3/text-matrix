@@ -1,6 +1,6 @@
 ---
 title: "近年 AI 应用技术学习路线：从 LLM、RAG 到 Agent 工程"
-date: 2026-04-14T10:30:00+08:00
+date: "2026-04-14T10:30:00+08:00"
 slug: "ai-application-technology-learning-path-guide"
 summary: "一篇面向工程师的 AI 应用技术路线图：先把 LLM、Prompt、RAG、Function Calling 与 MCP 打稳，再进入 Agent、Workflow、Context、Skill 与评估工程。"
 description: "系统梳理 LLM、Prompt Engineering、Fine-tuning、RAG、MCP、Agent、Multi-Agent、Workflow Engineering、Context Engineering、Agent Skill、OpenClaw、Harness Engineering 等核心主题，给出从入门到进阶的学习顺序、工程边界、练习题与实战示例。"

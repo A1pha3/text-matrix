@@ -1,6 +1,6 @@
 ---
 title: "Pydantic：Python 类型提示数据验证完全指南"
-date: 2026-04-06T22:09:00+08:00
+date: "2026-04-06T22:09:00+08:00"
 slug: "pydantic-python-data-validation-guide"
 description: "全面介绍 27.4k Stars 的 Pydantic 数据验证库，涵盖 BaseModel、字段类型、验证器、JSON Schema 生成、pydantic-settings 配置管理、pydantic-core Rust 性能优化，以及 API 验证、数据库模型等常见使用模式。"
 draft: false

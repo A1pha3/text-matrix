@@ -1,6 +1,6 @@
 ---
 title: "Web3早报：2026年4月10日"
-date: 2026-04-10T08:00:00+08:00
+date: "2026-04-10T08:00:00+08:00"
 lastmod: 2026-04-10T08:00:00+08:00
 draft: false
 tags: ["Web3早报", "BTC", "ETH", "Hyperliquid", "CoinMarketCap"]

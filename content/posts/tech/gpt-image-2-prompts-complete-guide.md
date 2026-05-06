@@ -1,6 +1,6 @@
 ---
 title: "GPT Image 2 提示词完全指南：四大开源库精华合集"
-date: 2026-05-01T13:11:58+08:00
+date: "2026-05-01T13:11:58+08:00"
 slug: "gpt-image-2-prompts-complete-guide"
 description: "基于 EvoLinkAI、YouMind、freestylefly 与 Anil-matcha 四个开源仓库，系统拆解 GPT Image 2 提示词的选库方法、结构化写法、高频场景模板与常见误区。"
 draft: false

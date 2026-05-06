@@ -1,6 +1,6 @@
 ---
 title: "AI 副业早报 2026-04-03"
-date: 2026-04-03T08:40:00+08:00
+date: "2026-04-03T08:40:00+08:00"
 slug: "ai-side-hustle-morning-2026-04-03"
 description: "汇总4月3日AI副业与招聘动态，V2EX酷工作板块过去24小时内暂无AI相关新帖子，附近期热点AI视频自动化开源工具推荐。"
 draft: false

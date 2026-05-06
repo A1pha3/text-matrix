@@ -1,6 +1,6 @@
 ---
 title: "AI副业早报 2026-04-02"
-date: 2026-04-02T12:00:00+08:00
+date: "2026-04-02T12:00:00+08:00"
 slug: ai-side-hustle-morning-2026-04-02
 description: "2026年4月2日AI副业早报，精选V2EX等来源的AI相关求职、招聘和副业机会"
 draft: false

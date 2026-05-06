@@ -1,7 +1,7 @@
 ---
 title: "dayanch96/YTLite：iOS版YouTube增强工具，支持下载视频/音频、自定义界面"
 slug: dayanch96-ytlite-ios-youtube-enhancer
-date: 2026-04-22T17:50:00+08:00
+date: "2026-04-22T17:50:00+08:00"
 description: "YTLite 是 iOS 版 YouTube 增强工具，支持视频/音频下载、界面定制、画中画等功能，通过 GitHub Actions 自动构建。"
 categories: ["技术笔记"]
 tags: ["iOS", "YouTube", "越狱", "Tweak", "下载工具"]

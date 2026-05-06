@@ -1,6 +1,6 @@
 ---
 title: "free-programming-books：全球最大免费编程书籍精选列表完全指南"
-date: 2026-04-06T22:15:00+08:00
+date: "2026-04-06T22:15:00+08:00"
 slug: "free-programming-books-curated-list-guide"
 description: "全面介绍 GitHub 第7大项目 385k Stars 的 free-programming-books，涵盖 4,000+ 免费编程书籍的导航方法、精选推荐、贡献指南、社区生态，以及如何高效利用这个海量学习资源。"
 draft: false

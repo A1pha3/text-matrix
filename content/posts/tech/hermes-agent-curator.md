@@ -1,6 +1,6 @@
 ---
 title: "Hermes Agent Curator 详解：智能体自创建技能的后台自动维护机制"
-date: 2026-05-01T18:58:00+08:00
+date: "2026-05-01T18:58:00+08:00"
 slug: "hermes-agent-curator"
 description: "全面解析 Hermes Agent 的 Curator 模块：自动管理智能体自创建技能的全生命周期，包括状态流转规则、LLM 自动审查、归档恢复与置顶保护机制，配有配置示例与 CLI 速查。"
 categories: ["技术笔记"]

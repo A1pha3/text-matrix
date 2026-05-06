@@ -1,6 +1,6 @@
 ---
 title: "Superpowers：让 AI 编程助手真正学会软件工程"
-date: 2026-05-02T15:04:24+08:00
+date: "2026-05-02T15:04:24+08:00"
 slug: "superpowers-vscode-ai-pair-programming-guide"
 description: "Superpowers 是一个专为 AI 编程 agent 设计的软件工程方法论与技能框架，支持 Claude Code、Cursor、Copilot 等主流 IDE，通过强制触发式技能系统让 AI agent 自动遵循 TDD、YAGNI、DRY 等工程原则，摆脱\"直觉编码\"，实现数小时级别的自主工作中不离线。"
 draft: false

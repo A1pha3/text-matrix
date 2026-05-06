@@ -1,6 +1,6 @@
 ---
 title: "经济财经早报：2026年4月11日"
-date: 2026-04-11T08:00:00+08:00
+date: "2026-04-11T08:00:00+08:00"
 slug: financial-morning-news-2026-04-11
 description: "每日经济财经早报，涵盖国内外金融市场最新动态。"
 draft: false

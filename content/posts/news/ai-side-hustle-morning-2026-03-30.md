@@ -1,6 +1,6 @@
 ---
 title: "AI 副业早报 2026-03-30"
-date: 2026-03-30T08:08:00+08:00
+date: "2026-03-30T08:08:00+08:00"
 slug: ai-side-hustle-morning-2026-03-30
 description: "AI副业早报：resume-coach简历工具、远程工作招聘、AI创业组队、Product Hunt爆款Crossnode vibe coding付费墙等。"
 draft: false

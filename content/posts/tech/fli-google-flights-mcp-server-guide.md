@@ -1,6 +1,6 @@
 ---
 title: "Fli：Google Flights MCP服务器与Python库完全指南"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: fli-google-flights-mcp-server-guide
 description: "Fli 是一个 Google Flights MCP 服务器和 Python 库，提供航班搜索和预订功能。"
 draft: false

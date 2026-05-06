@@ -1,6 +1,6 @@
 ---
 title: "全球通用智能体竞争报告深度解读：通用 Agent 的真正战场，已经从模型切到任务交付"
-date: 2026-03-30T22:32:08+08:00
+date: "2026-03-30T22:32:08+08:00"
 slug: "general-agent-competition-task-delivery-analysis"
 aliases:
   - /posts/tech/general-agent-competition-task-delivery-analysis/

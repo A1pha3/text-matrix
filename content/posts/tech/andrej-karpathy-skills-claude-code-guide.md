@@ -1,6 +1,6 @@
 ---
 title: "Andrej Karpathy Skills：Claude Code进化指南"
-date: 2026-04-08T12:45:00+08:00
+date: "2026-04-08T12:45:00+08:00"
 slug: "andrej-karpathy-skills-claude-code-guide"
 description: "Andrej Karpathy Skills 是一份改进 Claude Code 行为的 CLAUDE.md 指南，源于 Karpathy 对 LLM 编程陷阱的深刻洞察。掌握四大原则：Think Before Coding、Simplicity First、Surgical Changes、Goal-Driven Execution，让 AI 编程从『幻觉不断』到『精准可控』。"
 draft: false

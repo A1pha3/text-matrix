@@ -1,6 +1,6 @@
 ---
 title: "Awesome Claude Code：从入门到精通 — Claude Code 资源大全"
-date: 2026-03-31T01:30:00+08:00
+date: "2026-03-31T01:30:00+08:00"
 slug: awesome-claude-code-resources-guide
 aliases:
   - /posts/tech/awesome-claude-code-resources-guide/

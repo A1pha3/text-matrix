@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第一课：Claude 桌面应用——Chat、Cowork、Code 三类工作方式"
-date: 2026-03-25T14:00:00+08:00
+date: "2026-03-25T14:00:00+08:00"
 lastmod: 2026-04-04T00:07:25+08:00
 slug: "claude-101-desktop-app-modes"
 aliases:

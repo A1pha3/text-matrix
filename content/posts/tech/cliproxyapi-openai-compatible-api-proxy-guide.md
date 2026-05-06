@@ -1,6 +1,6 @@
 ---
 title: "CLIProxyAPI：25K Stars的AI编程工具统一API代理平台"
-date: 2026-04-12T18:00:00+08:00
+date: "2026-04-12T18:00:00+08:00"
 slug: cliproxyapi-openai-compatible-api-proxy-guide
 description: "25.2k Stars的AI编程工具统一代理平台，支持Claude Code/Gemini/Codex/Qwen/iFlow多账号轮询负载均衡、OAuth登录认证、OpenAI兼容API接口，让免费AI模型通过API调用。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Kaku：开箱即用的AI原生终端，比WezTerm轻40%，一条命令打造AI编码环境"
-date: 2026-04-07T17:15:00+08:00
+date: "2026-04-07T17:15:00+08:00"
 slug: kaku-ai-native-terminal-built-for-ai-coding
 description: "深度解析Kaku终端：基于WezTerm深度定制的AI原生终端，开箱即用、性能极致、内置AI助手，支持Claude Code/Copilot/MiniMax等，Rust编写，支持macOS。"
 categories: ["技术笔记"]

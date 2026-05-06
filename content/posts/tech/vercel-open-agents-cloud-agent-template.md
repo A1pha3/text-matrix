@@ -1,6 +1,6 @@
 ---
 title: "Vercel Open Agents：2.4K Stars的云端Agent部署模板——Web/Workflow/Sandbox三层架构、GitHub集成、Session共享"
-date: 2026-04-16T02:00:00+08:00
+date: "2026-04-16T02:00:00+08:00"
 slug: "vercel-open-agents-cloud-agent-template"
 description: "Vercel Open Agents是2.4K Stars的开源模板，用于在Vercel上构建和运行云端Agent。三层架构（Web/Agent Workflow/Sandbox），支持GitHub集成、自动commit/PR、Session共享。"
 draft: false

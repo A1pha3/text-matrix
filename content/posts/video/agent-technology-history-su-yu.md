@@ -1,6 +1,6 @@
 ---
 title: "Agent技术全史：从1960年代逻辑代理到2026年通用数字代理的史诗旅程"
-date: 2026-05-01T13:50:00+08:00
+date: "2026-05-01T13:50:00+08:00"
 slug: "agent-technology-history-su-yu"
 description: "俄亥俄州立大学苏煜教授与张小珺深入对谈，梳理Agent技术60年演进史：从Logical Agent到Neural Agent再到Language Agent，解析OpenClaw Moment的诞生、中美科技辐射路径，以及$40M种子轮创业公司NeoCognition的世界模型野心。"
 categories: ["视频精读"]

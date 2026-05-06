@@ -1,6 +1,6 @@
 ---
 title: "Hermes Agent：自改进 AI Agent 框架从入门到精通"
-date: 2026-03-28T16:00:00+08:00
+date: "2026-03-28T16:00:00+08:00"
 slug: "hermes-agent-self-improving-ai-framework"
 aliases:
   - /posts/tech/hermes-agent-self-improving-ai-framework/

@@ -1,6 +1,6 @@
 ---
 title: "Yazi：极快的终端文件管理器"
-date: 2026-04-11T14:20:52+08:00
+date: "2026-04-11T14:20:52+08:00"
 slug: yazi-terminal-file-manager-complete-guide
 description: "Yazi 是一个用 Rust 编写的极快终端文件管理器，提供丰富的功能和高效的性能。"
 draft: false

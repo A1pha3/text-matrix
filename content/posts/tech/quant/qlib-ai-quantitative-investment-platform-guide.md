@@ -1,6 +1,6 @@
 ---
 title: "Qlib：微软亚洲研究院 AI 量化投资平台从入门到精通"
-date: 2026-04-08T15:00:00+08:00
+date: "2026-04-08T15:00:00+08:00"
 slug: qlib-ai-quantitative-investment-platform-guide
 aliases:
   - /posts/tech/qlib-ai-quantitative-investment-platform-guide/

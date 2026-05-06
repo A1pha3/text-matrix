@@ -1,6 +1,6 @@
 ---
 title: "25 分钟从零到 AI Agent：Futurepedia 爆款教程深度解析"
-date: 2026-04-29T15:01:00+08:00
+date: "2026-04-29T15:01:00+08:00"
 slug: "zero-to-ai-agent-25-minutes-futurepedia-3m-views"
 description: "Futurepedia 354 万播放量 AI Agent 实战教程深度解析。视频用 n8n 无代码平台，从零构建一个能查日历、看天气、推荐跑步路线的智能个人助手，无需写一行代码。"
 draft: false

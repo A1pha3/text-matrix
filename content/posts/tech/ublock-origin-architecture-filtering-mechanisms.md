@@ -1,6 +1,6 @@
 ---
 title: "uBlock Origin：高效广告拦截的技术架构与多层次过滤机制解析"
-date: 2026-04-30T10:07:00+08:00
+date: "2026-04-30T10:07:00+08:00"
 slug: "ublock-origin-architecture-filtering-mechanisms"
 description: "uBlock Origin 是如何实现 CPU 和内存高效广告拦截的？本文从源码结构出发，深入解析其静态过滤、动态过滤、脚本注入过滤三大引擎的架构设计，以及 BitTrie、Bloom Filter 等数据结构如何支撑其高性能。"
 draft: false

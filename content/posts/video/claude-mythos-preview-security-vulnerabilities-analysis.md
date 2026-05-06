@@ -1,6 +1,6 @@
 ---
 title: "Claude Mythos Preview安全研究揭秘：27年漏洞发现与AI安全新范式"
-date: 2026-04-09T15:05:00+08:00
+date: "2026-04-09T15:05:00+08:00"
 slug: "claude-mythos-preview-security-vulnerabilities-analysis"
 description: "Anthropic发布的Claude Mythos Preview在网络安全领域引发震动。本文深度解析这段官方视频披露的核心发现：27年历史的OpenBSD漏洞、Linux权限提升、以及Anthropic推出的玻璃翼计划(Glasswing Project)，探讨AI安全研究的范式转变。"
 draft: false

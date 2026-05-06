@@ -1,6 +1,6 @@
 ---
 title: "Obsidian Mind：让 Claude Code 拥有持久记忆的 Obsidian 保险库"
-date: 2026-04-04T20:26:00+08:00
+date: "2026-04-04T20:26:00+08:00"
 slug: "obsidian-mind-claude-code-memory-system-guide"
 description: "Obsidian Mind 是一个让 Claude Code 记住一切的 Obsidian 保险库模板。通过 5 个生命周期钩子、15+Slash 命令和 9 个子代理，自动分类、索引和链接你的工作笔记，构建个人知识图谱和绩效追踪系统。"
 draft: false

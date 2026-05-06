@@ -1,6 +1,6 @@
 ---
 title: "MoneyPrinterV2：全自动在线赚钱工具从入门到精通"
-date: 2026-03-28T17:00:00+08:00
+date: "2026-03-28T17:00:00+08:00"
 slug: "moneyprinterv2-online-automation-tool"
 description: "深度解析 MoneyPrinterV2：全自动在线赚钱工具，26.8k stars，支持Twitter Bot + YouTube Shorts + Affiliate营销 + 冷启动邮件外展，详解原理、安装、配置与脚本使用。"
 draft: false

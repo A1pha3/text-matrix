@@ -1,6 +1,6 @@
 ---
 title: "Claude Cookbooks：Anthropic官方Claude应用食谱库"
-date: 2026-04-14T11:30:00+08:00
+date: "2026-04-14T11:30:00+08:00"
 lastmod: 2026-04-14T11:30:00+08:00
 draft: false
 tags: ["Claude", "Anthropic", "Cookbook", "教程"]

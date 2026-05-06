@@ -1,6 +1,6 @@
 ---
 title: "RD-Agent：微软自动化研发智能体完全指南"
-date: 2026-04-01T16:55:00+08:00
+date: "2026-04-01T16:55:00+08:00"
 slug: rd-agent-microsoft-research-automation-guide
 aliases:
   - /posts/tech/rd-agent-microsoft-research-automation-guide/

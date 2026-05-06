@@ -1,6 +1,6 @@
 ---
 title: "软件设计哲学Agent Skill：从《A Philosophy of Software Design》到AI代码审查"
-date: 2026-04-10T12:55:31+08:00
+date: "2026-04-10T12:55:31+08:00"
 slug: software-design-philosophy-agent-skill-guide
 description: "软件设计哲学 Agent Skill 将《A Philosophy of Software Design》与 AI 代码审查结合，提供系统化的软件设计指导。"
 draft: false

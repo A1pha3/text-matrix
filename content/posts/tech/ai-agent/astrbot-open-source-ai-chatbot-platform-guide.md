@@ -3,7 +3,7 @@ title: "AstrBot：开源一站式 AI Agent 聊天机器人平台完全指南"
 slug: "astrbot-open-source-ai-chatbot-platform-guide"
 aliases:
   - /posts/tech/astrbot-open-source-ai-chatbot-platform-guide/
-date: 2026-03-31T16:00:00+08:00
+date: "2026-03-31T16:00:00+08:00"
 categories: ["技术笔记"]
 tags: ["AstrBot", "AI聊天机器人", "开源", "IM集成", "Telegram", "Discord", "飞书", "QQ机器人", "Agent", "MCP"]
 description: "全面解析 AstrBot (28.4k Stars)：开源一站式AI Agent聊天机器人平台，支持QQ/微信/Telegram/飞书等15+平台，集成OpenAI/Claude/Gemini/Ollama等模型，1000+插件，Agent Sandbox。"

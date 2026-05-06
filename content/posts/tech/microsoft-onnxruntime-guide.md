@@ -2,7 +2,7 @@
 title: "ONNX Runtime：微软开源的跨平台机器学习推理加速器"
 slug: "microsoft-onnx-runtime-guide"
 description: "ONNX Runtime 是微软开源的跨平台机器学习推理和训练加速器，支持 PyTorch、TensorFlow/Keras、scikit-learn、LightGBM、XGBoost 等框架。它通过硬件加速器和图优化提供最佳性能。"
-date: 2026-04-24T12:00:00+08:00
+date: "2026-04-24T12:00:00+08:00"
 categories: ["技术笔记"]
 tags: ["机器学习", "ONNX", "微软", "推理加速", "PyTorch"]
 ---

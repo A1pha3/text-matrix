@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报 2026-04-07"
-date: 2026-04-07T08:00:00+08:00
+date: "2026-04-07T08:00:00+08:00"
 slug: "ai-morning-news-2026-04-07"
 description: "2026年4月7日AI新闻早报：Claude 订阅争议、OpenAI 上市前高层波动、Anthropic 扩算力、Claude Code 回归问题、端侧与 Agent 工具继续涌现。"
 draft: false

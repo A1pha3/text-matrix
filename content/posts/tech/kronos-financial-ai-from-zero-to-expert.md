@@ -1,7 +1,7 @@
 ---
 title: "Kronos 完整指南：从金融时间序列入门到论文复现、微调与研究改进"
 subtitle: "45 个交易所、120 亿 K 线、两阶段架构，以及从跑通示例到提出改进方案的完整学习路径"
-date: 2026-04-11T00:25:00+08:00
+date: "2026-04-11T00:25:00+08:00"
 slug: "kronos-financial-ai-from-zero-to-expert"
 aliases:
   - /posts/tech/kronos-foundation-model-financial-markets-guide/

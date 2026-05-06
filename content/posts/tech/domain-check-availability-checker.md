@@ -1,6 +1,6 @@
 ---
 title: "domain-check：极速域名可用性检查——1,200+ TLDs + AI 代理支持的从入门到精通"
-date: 2026-04-14T22:25:00+08:00
+date: "2026-04-14T22:25:00+08:00"
 slug: "domain-check-availability-checker"
 description: "domain-check 是 261 Stars 的 Rust 域名检查工具，支持 1,200+ TLDs、RDAP+WHOIS 双协议、100 并发。内置 11 个预设（startup、tech、creative 等），支持域名生成模式，提供 CLI/Rust库/MCP Server 三种形态，可集成到 Claude、Cursor 等 AI 代理。"
 draft: false

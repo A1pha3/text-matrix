@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报 | 2026年4月17日"
-date: 2026-04-17T07:30:00+08:00
+date: "2026-04-17T07:30:00+08:00"
 slug: "ai-news-morning-2026-04-17"
 description: "汇总2026年4月17日AI领域的最新动态，包括Claude Opus 4.7发布、Qwen3.6-35B-A3B开源、OpenAI Codex等产品更新，以及Cloudflare AI平台等重要进展。"
 draft: false

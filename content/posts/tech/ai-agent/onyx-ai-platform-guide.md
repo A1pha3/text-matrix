@@ -1,6 +1,6 @@
 ---
 title: "Onyx 中文指南：自托管 AI 对话平台的入门到精通"
-date: 2026-03-28T13:30:00+08:00
+date: "2026-03-28T13:30:00+08:00"
 slug: "onyx-ai-platform-guide"
 aliases:
   - /posts/tech/onyx-ai-platform-guide/

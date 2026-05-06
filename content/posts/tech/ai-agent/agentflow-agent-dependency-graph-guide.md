@@ -3,7 +3,7 @@ title: "AgentFlow：智能体依赖图编排框架完全指南"
 slug: "agentflow-agent-dependency-graph-guide"
 aliases:
   - /posts/tech/agentflow-agent-dependency-graph-guide/
-date: 2026-04-01T01:09:00+08:00
+date: "2026-04-01T01:09:00+08:00"
 categories: ["技术笔记"]
 tags: ["AgentFlow", "智能体编排", "依赖图", "并行处理", "Fanout", "Claude", "Codex", "SSH", "远程执行", "Python"]
 description: "智能体依赖图编排框架，支持并行扇出、迭代循环和零配置远程执行 SSH/EC2/ECS，通过 Graph 管道符实现高效的 AI 智能体工作流编排。"

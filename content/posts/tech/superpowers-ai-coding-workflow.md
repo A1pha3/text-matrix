@@ -1,6 +1,6 @@
 ---
 title: "Superpowers 入门到精通：AI 编码工作流的完整开发框架"
-date: 2026-03-28T13:49:00+08:00
+date: "2026-03-28T13:49:00+08:00"
 slug: "superpowers-ai-coding-workflow"
 description: "深入解析 Superpowers 框架，涵盖 Skills 系统、子代理驱动开发、TDD 流程与多平台安装配置指南。"
 draft: false

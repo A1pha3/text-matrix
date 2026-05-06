@@ -1,6 +1,6 @@
 ---
 title: "VoxCPM2：Tokenizer-Free TTS 多语言语音合成指南"
-date: 2026-04-12T11:50:00+08:00
+date: "2026-04-12T11:50:00+08:00"
 slug: voxcpm2-tokenizer-free-tts-guide
 description: "VoxCPM2是OpenBMB推出的2B参数Tokenizer-Free TTS模型，支持30语言语音合成、Voice Design和Voice Cloning。采用LocDiT扩散架构，在保持高质量输出的同时简化了传统TTS的复杂tokenizer设计。"
 draft: false

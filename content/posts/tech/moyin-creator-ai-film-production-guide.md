@@ -1,6 +1,6 @@
 ---
 title: "魔因漫创 Moyin Creator：AI影视生产级工具的完整技术指南"
-date: 2026-04-09T13:10:00+08:00
+date: "2026-04-09T13:10:00+08:00"
 slug: "moyin-creator-ai-film-production-guide"
 description: "魔因漫创（Moyin Creator）是一款面向AI影视创作者的生产级工具，支持从剧本到成片的完整创作链路。本文深入解析其技术架构、五大功能模块、角色一致性系统、批量化生产工作流，以及与Seedance 2.0的集成。"
 draft: false

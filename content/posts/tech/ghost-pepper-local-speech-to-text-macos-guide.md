@@ -1,6 +1,6 @@
 ---
 title: "Ghost Pepper：1.4k Stars本地语音转文字，Hold Control即可转录粘贴"
-date: 2026-04-08T08:35:00+08:00
+date: "2026-04-08T08:35:00+08:00"
 slug: ghost-pepper-local-speech-to-text-macos-guide
 description: "深度解析Ghost Pepper：macOS本地语音转文字工具。基于WhisperKit语音识别+Qwen3.5清理模型，Hold Control录音，松开自动转文字并粘贴到任意文本框。完全本地运行，保护隐私。"
 categories: ["技术笔记"]

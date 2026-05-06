@@ -1,6 +1,6 @@
 ---
 title: "Chrome DevTools MCP：让AI编程助手操控Chrome浏览器的官方利器——35K Stars从入门到精通"
-date: 2026-04-18T15:20:00+08:00
+date: "2026-04-18T15:20:00+08:00"
 slug: "chrome-devtools-mcp"
 description: "Chrome DevTools MCP是Google官方出品的MCP服务器，让AI编程助手（Claude/Gemini/Cursor等）直接控制Chrome浏览器进行自动化操作、性能分析和调试。35K Stars，支持截图、网络请求分析、性能追踪等。"
 draft: false

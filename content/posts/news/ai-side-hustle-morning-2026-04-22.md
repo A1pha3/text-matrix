@@ -2,7 +2,7 @@
 title: "AI 副业早报 2026-04-22"
 slug: ai-side-hustle-morning-2026-04-22
 description: "每日 AI 赚钱、副业与独立开发相关信息，汇集 V2EX、Reddit 等来源"
-date: 2026-04-22T08:00:00+08:00
+date: "2026-04-22T08:00:00+08:00"
 lastmod: 2026-04-22T08:00:00+08:00
 categories: ["行业快讯"]
 tags: ["AI副业", "独立开发", "远程工作", "V2EX", "程序员", "变现"]

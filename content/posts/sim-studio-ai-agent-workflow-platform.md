@@ -1,6 +1,6 @@
 ---
 title: "Sim Studio：开源 AI Agent 工作流编排平台深度解析"
-date: 2026-05-01T20:07:04+08:00
+date: "2026-05-01T20:07:04+08:00"
 slug: "sim-studio-ai-agent-workflow-platform"
 description: "深入解析 Sim Studio 开源 AI Agent 工作流编排平台的架构设计，包括可视化编辑器原理、块扩展体系、执行引擎、Copilot 辅助功能与部署方式。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Deep-Live-Cam：89.7k Stars 一键实时换脸与视频深度伪造（Deepfake）工具"
-date: 2026-03-28T22:00:00+08:00
+date: "2026-03-28T22:00:00+08:00"
 slug: "deep-live-cam-realtime-faceswap"
 description: "深度解读 Deep-Live-Cam：89.7k Stars 的实时换脸与视频深度伪造工具，一键操作、仅需一张照片，支持 webcam 直播、视频通话、电影角色扮演等多种场景。"
 draft: false

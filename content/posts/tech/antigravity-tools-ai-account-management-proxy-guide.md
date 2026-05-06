@@ -1,6 +1,6 @@
 ---
 title: "Antigravity Tools：专业级AI账号管理与协议代理系统"
-date: 2026-04-12T16:57:00+08:00
+date: "2026-04-12T16:57:00+08:00"
 slug: antigravity-tools-ai-account-management-proxy-guide
 description: "28.1k Stars专业级AI账号管理与协议代理系统，支持OAuth 2.0授权、协议转换（OpenAI/Anthropic/Gemini）、智能模型路由、Docker部署，一站式解决多账号配额管理问题。"
 draft: false

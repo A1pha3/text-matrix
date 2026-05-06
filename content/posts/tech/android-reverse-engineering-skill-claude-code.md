@@ -1,6 +1,6 @@
 ---
 title: "Android逆向工程Skill：2.5K Stars的Claude Code智能体——从APK提取Retrofit API完整指南"
-date: 2026-04-17T16:45:00+08:00
+date: "2026-04-17T16:45:00+08:00"
 slug: "android-reverse-engineering-skill-claude-code"
 description: "2.6K Stars的Android逆向工程Claude Code Skill。反编译APK/XAPK/JAR/AAR，提取Retrofit/OkHttp API端点、硬编码URL、认证模式，支持jadx/Vineflower双引擎对比，可追踪Activity→ViewModel→HTTP调用完整链路。"
 draft: false

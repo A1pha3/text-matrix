@@ -1,6 +1,6 @@
 ---
 title: "5月5日 AI副业早报：AI修代码、Instagram年入32万、一人AI团队ARR破10万"
-date: 2026-05-05T08:25:00+08:00
+date: "2026-05-05T08:25:00+08:00"
 slug: "ai-side-hustle-morning-2026-05-05"
 description: "汇总5月5日AI副业领域的最新机会与实战案例，涵盖AI代码优化外包、数据清洗众包、海外TikTok运营等兼职机会，以及Instagram变现32万、一人AI团队达成10万ARR等真实赚钱路径。"
 draft: false

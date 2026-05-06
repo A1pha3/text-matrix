@@ -1,6 +1,6 @@
 ---
 title: "TypeScript Go：微软用 Go 重写 TypeScript 编译器，性能与生态的双重野望"
-date: 2026-04-27T01:00:00+08:00
+date: "2026-04-27T01:00:00+08:00"
 slug: typescript-go-native-port
 description: "微软将 TypeScript 编译器（tsc）从 TypeScript/JavaScript 重写为 Go 语言实现，GitHub 25k stars。本文深度解析这个 native port 的动机、架构设计、当前进度与未来影响。"
 draft: false

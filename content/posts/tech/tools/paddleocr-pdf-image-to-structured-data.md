@@ -1,6 +1,6 @@
 ---
 title: "PaddleOCR：让PDF和图片秒变结构化数据的AI神器"
-date: 2026-04-01T12:00:00+08:00
+date: "2026-04-01T12:00:00+08:00"
 categories: ["技术笔记"]
 tags: ["OCR", "PaddlePaddle", "PDF解析", "文档AI", "结构化数据"]
 slug: paddleocr-pdf-image-to-structured-data

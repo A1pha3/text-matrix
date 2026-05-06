@@ -3,7 +3,7 @@ title: "ChatDev 2.0 (DevAll)：零代码多智能体开发平台完全指南"
 slug: "chatdev-multi-agent-platform-guide"
 aliases:
   - /posts/tech/chatdev-multi-agent-platform-guide/
-date: 2026-04-01T01:22:00+08:00
+date: "2026-04-01T01:22:00+08:00"
 categories: ["技术笔记"]
 tags: ["ChatDev", "DevAll", "多智能体", "Multi-Agent", "零代码", "YAML工作流", "Python SDK", "OpenClaw", "Docker", "Vue.js"]
 description: "深度解析 ChatDev 2.0 DevAll (32.4k Stars)：OpenBMB开源的零代码多智能体编排平台，支持通过简单YAML配置构建数据可视化、3D生成、游戏开发、深度研究等工作流，采用FastAPI+Vue 3技术栈，提供Python SDK和OpenClaw集成，支持Docker一键部署。"

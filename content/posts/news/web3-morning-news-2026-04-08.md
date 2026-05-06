@@ -1,6 +1,6 @@
 ---
 title: "Web3早报 2026-04-08"
-date: 2026-04-08T08:11:00+08:00
+date: "2026-04-08T08:11:00+08:00"
 slug: "web3-morning-news-2026-04-08"
 description: "2026年4月8日Web3早报：BTC $71983/ETH $2245/全球加密市场$2.45T/Hyperliquid领涨DeFi。"
 draft: false

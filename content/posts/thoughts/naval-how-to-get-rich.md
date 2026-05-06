@@ -1,6 +1,6 @@
 ---
 title: "Naval「如何致富」：从财富、运气到杠杆的一套可执行框架"
-date: 2026-05-01T11:55:58+08:00
+date: "2026-05-01T11:55:58+08:00"
 slug: "naval-how-to-get-rich"
 description: "基于 Naval Ravikant 的推文风暴与长篇访谈，系统梳理财富、运气、股权、杠杆、具体知识、责任感、判断力与长期主义，给出一套更可执行的财富创造框架。"
 draft: false

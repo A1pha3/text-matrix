@@ -1,6 +1,6 @@
 ---
 title: "everything-claude-code：AI Agent 性能优化系统完全指南"
-date: 2026-04-30T20:00:00+08:00
+date: "2026-04-30T20:00:00+08:00"
 slug: "everything-claude-code-agent-harness-performance"
 description: "everything-claude-code 是 GitHub 斩获 17 万星标的开源 AI Agent 性能优化系统，汇聚 48 个专用子智能体、182 项 Skills、68 个遗留命令垫片，深度整合 Claude Code、Cursor、Codex、OpenCode 等主流 Harness。文章剖析其 Skills 工作流、Instincts 本能学习、内存持久化、安全扫描等核心机制，并给出最小化安装与生产级配置实践。"
 draft: false

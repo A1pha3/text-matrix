@@ -1,6 +1,6 @@
 ---
 title: "SkyPilot：9.8K Stars·任意云LLM服务框架·自动故障转移"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: skypilot-any-cloud-llm-serving-guide
 description: "SkyPilot 是一个任意云 LLM 服务框架，支持自动故障转移和 Spot 实例，可节省高达 70% 的成本，每天处理 1000+ 任务。"
 draft: false

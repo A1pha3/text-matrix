@@ -1,6 +1,6 @@
 ---
 title: "Career-Ops 全面解析：如何用 AI 打造智能化求职流水线"
-date: 2026-04-30T11:30:00+08:00
+date: "2026-04-30T11:30:00+08:00"
 categories: ["技术笔记"]
 tags: ["Claude", "AI-Agent", "求职自动化", "Go", "Playwright"]
 description: "深入解析 41,005 Star 的开源项目 Career-Ops：基于 Claude Code 的 AI 求职系统，涵盖 14 种技能模式、Go Dashboard、PDF 生成、批量处理与多平台支持的完整技术指南。"

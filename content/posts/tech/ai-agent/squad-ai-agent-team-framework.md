@@ -3,7 +3,7 @@ title: "Squad：AI 智能体团队协作框架完全指南"
 slug: "squad-ai-agent-team-framework"
 aliases:
   - /posts/tech/squad-ai-agent-team-framework/
-date: 2026-03-31T12:50:00+08:00
+date: "2026-03-31T12:50:00+08:00"
 categories: ["技术笔记"]
 tags: ["Squad", "AI智能体", "GitHub Copilot", "多智能体", "协作框架", "团队开发"]
 description: "全面解析 Squad：AI 智能体团队协作框架（1.5k Stars，MIT 许可证）。通过 GitHub Copilot Agent 模式创建 Frontend + Backend + Tester + Architect 多角色 AI 团队。支持持久化知识积累、决策日志记录、SDK-First 团队定义。从入门到精通，包含架构分析、CLI 命令详解和使用说明。"

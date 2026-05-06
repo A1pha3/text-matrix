@@ -1,6 +1,6 @@
 ---
 title: "Evolver：GEP基因组进化协议——让AI Agent实现自进化、自修复、自优化"
-date: 2026-04-17T16:40:00+08:00
+date: "2026-04-17T16:40:00+08:00"
 slug: "evolver-gep-self-evolution-engine"
 description: "3,862 Stars的Evolver是GEP（基因组进化协议）驱动的AI Agent自进化引擎。通过Gene/Capsule/Event结构化资产和Strategy Presets实现可审计的进化，支持修复/优化/创新三种模式，可选接入EvoMap网络共享技能。"
 draft: false

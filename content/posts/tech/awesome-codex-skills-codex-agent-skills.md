@@ -1,6 +1,6 @@
 ---
 title: "Awesome Codex Skills：Codex编码智能体技能库，支持1000+应用集成"
-date: 2026-04-29T15:00:00+08:00
+date: "2026-04-29T15:00:00+08:00"
 lastmod: 2026-04-29T15:00:00+08:00
 draft: false
 tags: ["Codex", "AI智能体", "技能库", "自动化", "工作流"]

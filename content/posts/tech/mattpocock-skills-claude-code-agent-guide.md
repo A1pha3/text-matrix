@@ -1,6 +1,6 @@
 ---
 title: "Matt Pocock Skills：Claude Code Agent 技能集合完全指南"
-date: 2026-04-06T19:55:00+08:00
+date: "2026-04-06T19:55:00+08:00"
 slug: "mattpocock-skills-claude-code-agent-guide"
 description: "全面介绍 Matt Pocock Skills 开源技能集合，涵盖17个Agent技能的定位、场景和用法，以及完整的开发流程工作流。"
 draft: false

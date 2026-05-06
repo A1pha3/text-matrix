@@ -1,6 +1,6 @@
 ---
 title: "Repomix：11.4K Stars·代码库压缩成AI友好格式的利器"
-date: 2026-04-12T01:50:00+08:00
+date: "2026-04-12T01:50:00+08:00"
 slug: repomix-ai-codebase-compression-guide
 description: "Repomix 是一款强大的代码库压缩工具，将 Git 仓库打包成 AI 友好的格式，支持 Claude、ChatGPT、DeepSeek 等大语言模型。"
 draft: false

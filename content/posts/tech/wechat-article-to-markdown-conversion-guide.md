@@ -1,7 +1,7 @@
 ---
 title: "WeChat Article to Markdown：微信公众号文章转Markdown工具"
 slug: "wechat-article-to-markdown-conversion-guide"
-date: 2026-04-08T13:05:00+08:00
+date: "2026-04-08T13:05:00+08:00"
 lastmod: 2026-04-08T13:05:00+08:00
 categories: ["技术笔记"]
 tags: ["Python", "微信", "Markdown", "爬虫", "Camoufox", "反检测"]

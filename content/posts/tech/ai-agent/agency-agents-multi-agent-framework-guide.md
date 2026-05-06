@@ -3,7 +3,7 @@ title: "Agency Agents：轻量级多智能体工作流框架完全指南"
 slug: "agency-agents-multi-agent-framework-guide"
 aliases:
   - /posts/tech/agency-agents-multi-agent-framework-guide/
-date: 2026-04-01T01:25:00+08:00
+date: "2026-04-01T01:25:00+08:00"
 categories: ["技术笔记"]
 tags: ["Agency Agents", "多智能体", "Multi-Agent", "Claude API", "TypeScript", "工作流", "记忆管理", "AI Agent", "工具集成"]
 description: "深度解析 Agency Agents 框架：基于 Claude API 的轻量级多智能体工作流框架，支持高级记忆管理、推理能力、工具使用和流式响应，TypeScript 编写，MIT 许可证。"

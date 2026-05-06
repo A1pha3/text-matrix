@@ -1,7 +1,7 @@
 ---
 title: "SEOMachine：AI驱动的SEO优化与内容生成智能体"
 slug: "seomachine-seo-ai-agent-guide"
-date: 2026-04-08T16:35:00+08:00
+date: "2026-04-08T16:35:00+08:00"
 lastmod: 2026-04-08T16:35:00+08:00
 categories: ["技术笔记"]
 tags: ["TypeScript", "SEO", "AI Agent", "内容生成", "搜索引擎优化", "自动化"]

@@ -1,6 +1,6 @@
 ---
 title: "awesome-go：Go 语言最权威的开源生态导航站"
-date: 2026-04-30T20:00:00+08:00
+date: "2026-04-30T20:00:00+08:00"
 slug: "awesome-go-go-ecosystem-curated-list"
 description: "awesome-go 是 GitHub 星标量超过 17 万的 Go 语言开源框架和库精选列表，涵盖 Web 框架、数据库、CLI、机器学习等数十个领域，是 Go 开发者寻找轮子和了解生态的首选入口。"
 draft: false

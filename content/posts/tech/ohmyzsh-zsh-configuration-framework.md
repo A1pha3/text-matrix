@@ -1,6 +1,6 @@
 ---
 title: "Oh My Zsh：开源社区驱动的 Zsh 配置管理框架"
-date: 2026-04-30T20:00:00+08:00
+date: "2026-04-30T20:00:00+08:00"
 slug: "ohmyzsh-zsh-configuration-framework"
 description: "Oh My Zsh 是一个开源、社区驱动的 Zsh 配置管理框架，集成 300+ 插件和 150+ 主题，支持一键安装、别名补全、Git 增强等功能。本文详细解析其核心架构、插件系统、主题机制及进阶配置。"
 draft: false

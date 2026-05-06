@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报：2026年4月1日"
-date: 2026-04-01T08:00:00+08:00
+date: "2026-04-01T08:00:00+08:00"
 slug: ai-morning-news-2026-04-01
 description: "2026年4月1日AI行业新闻速报：Claude Code源码泄露事件持续发酵，OpenAI完成8520亿美元融资，DeepSeek连续第二天宕机，Axios NPM供应链攻击，摩根大通裁员2500人。"
 draft: false

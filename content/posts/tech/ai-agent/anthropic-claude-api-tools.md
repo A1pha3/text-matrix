@@ -1,6 +1,6 @@
 ---
 title: "Claude API基础专题（三）：工具调用"
-date: 2026-03-25T11:30:00+08:00
+date: "2026-03-25T11:30:00+08:00"
 slug: "claude-api-tools-function-calling"
 aliases:
   - /posts/tech/claude-api-tools-function-calling/

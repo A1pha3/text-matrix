@@ -1,6 +1,6 @@
 ---
 title: "Jellyfin：开源自由媒体服务器，完全掌控你的影音库"
-date: 2026-05-05T11:40:00+08:00
+date: "2026-05-05T11:40:00+08:00"
 slug: "jellyfin-open-source-media-server-complete-guide"
 description: "Jellyfin是功能完整的开源自由媒体系统，提供媒体管理、串流播放、用户权限管理等功能，可完全替代Plex和Emby。本文详解其架构设计、核心功能、部署配置、客户端使用与插件生态。"
 draft: false

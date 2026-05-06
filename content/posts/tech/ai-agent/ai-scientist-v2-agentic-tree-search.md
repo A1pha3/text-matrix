@@ -1,6 +1,6 @@
 ---
 title: "AI Scientist-v2：智能体树搜索驱动的自动化科研论文生成"
-date: 2026-03-29T15:47:00+08:00
+date: "2026-03-29T15:47:00+08:00"
 slug: "ai-scientist-v2-agentic-tree-search"
 aliases:
   - /posts/tech/ai-scientist-v2-agentic-tree-search/

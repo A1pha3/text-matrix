@@ -2,7 +2,7 @@
 title: "Self-Improving-Agent：从入门到精通的自进化 AI 技能框架"
 slug: "self-improving-agent-openclaw-self-evolution-guide"
 description: "深入解析 peterskoett/self-improving-agent，掌握 AI 编程的自进化技能——通过结构化日志、智能晋升和多 Agent 支持实现跨会话的持续改进。"
-date: 2026-04-10T15:15:30+08:00
+date: "2026-04-10T15:15:30+08:00"
 categories: ["技术笔记"]
 tags: ["AI", "OpenClaw", "自进化", "持续学习", "技能框架"]
 ---

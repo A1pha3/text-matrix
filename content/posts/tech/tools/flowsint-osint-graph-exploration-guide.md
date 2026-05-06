@@ -3,7 +3,7 @@ title: "Flowsint：从入门到架构与扩展的 OSINT 图调查平台指南"
 slug: "flowsint-osint-graph-exploration-guide"
 aliases:
   - /posts/tech/flowsint-osint-graph-exploration-guide/
-date: 2026-03-31T21:21:00+08:00
+date: "2026-03-31T21:21:00+08:00"
 categories: ["技术笔记"]
 tags: ["Flowsint", "OSINT", "Neo4j", "Pydantic", "FastAPI"]
 description: "基于官方 README 与 flowsint.io 开发者文档，系统讲解 Flowsint 的定位、安装、调查流程、类型系统、Enricher 与 Tool 架构、Flows 链式编排、开发扩展与合规边界。"

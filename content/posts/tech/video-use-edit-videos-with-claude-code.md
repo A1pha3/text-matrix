@@ -1,6 +1,6 @@
 ---
 title: "video-use：用 Claude Code 对话式编辑视频的开源工作流"
-date: 2026-04-16T13:14:00+08:00
+date: "2026-04-16T13:14:00+08:00"
 slug: "video-use-ai-video-editing-with-claude-code"
 description: "video-use 是 browser-use 团队开源的 AI 视频剪辑工作流。本文从公开 README 与 SKILL.md 出发，拆解它如何用 Claude Code 协调转录、FFmpeg、字幕、动画与自检，把自然语言指令变成可确认、可迭代的视频编辑流程。"
 draft: false

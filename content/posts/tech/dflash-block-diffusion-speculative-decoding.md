@@ -1,6 +1,6 @@
 ---
 title: "DFlash：块扩散模型加速LLM推理——让大模型推理速度提升2-3倍"
-date: 2026-04-17T16:35:00+08:00
+date: "2026-04-17T16:35:00+08:00"
 slug: "dflash-block-diffusion-speculative-decoding"
 description: "1,710 Stars的DFlash是一个轻量级块扩散模型，用于投机解码加速LLM推理。支持Qwen3/LLaMA/GPT-OSS等多种模型，可在vLLM/SGLang/Transformers上部署，实测加速2-3倍。"
 draft: false

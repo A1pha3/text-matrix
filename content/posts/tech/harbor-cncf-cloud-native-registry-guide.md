@@ -1,6 +1,6 @@
 ---
 title: "Harbor：CNCF云原生容器注册表的完整技术指南"
-date: 2026-04-09T12:40:00+08:00
+date: "2026-04-09T12:40:00+08:00"
 slug: "harbor-cncf-cloud-native-registry-guide"
 description: "Harbor是由CNCF托管的开源云原生容器注册表，提供容器镜像和Helm Chart存储、签名、扫描、复制、权限管理等功能。本文深入解析Harbor的架构设计、核心组件、高可用部署、安全机制以及与Kubernetes的集成。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "khazix-skills：一个 AI Agent 技能集的开源实践"
-date: 2026-05-03T11:30:00+08:00
+date: "2026-05-03T11:30:00+08:00"
 slug: "khazix-skills-ai-agent-skills-guide"
 description: "数字生命卡兹克开源的 AI Skills 合集，包含三个结构化 Skill 和一个 Prompt，覆盖知识同步、深度研究、公众号写作等高频场景。"
 draft: false

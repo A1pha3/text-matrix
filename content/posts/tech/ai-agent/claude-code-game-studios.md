@@ -1,6 +1,6 @@
 ---
 title: "Claude Code Game Studios：让 Claude Code 变成完整游戏开发工作室"
-date: 2026-03-26T17:50:00+08:00
+date: "2026-03-26T17:50:00+08:00"
 slug: "claude-code-game-studios"
 aliases:
   - /posts/tech/claude-code-game-studios/

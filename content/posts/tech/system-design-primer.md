@@ -1,6 +1,6 @@
 ---
 title: "System Design Primer：系统设计面试入门指南"
-date: 2026-04-28T03:10:00+08:00
+date: "2026-04-28T03:10:00+08:00"
 description: "System Design Primer 是 GitHub 星标超 34 万的系统设计学习仓库，涵盖大规模系统设计核心概念、面试题分析与 Anki 闪卡，支持 15+ 语言翻译。本文从动机、核心内容、架构分析、使用场景四个维度，带你从零掌握这个面试神器。"
 slug: system-design-primer
 categories: ["技术笔记"]

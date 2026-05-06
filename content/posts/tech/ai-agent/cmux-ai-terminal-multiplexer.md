@@ -1,6 +1,6 @@
 ---
 title: "cmux：11k Stars 的 AI 终端多路复用器，让终端成为 AI 工作流中心"
-date: 2026-03-28T20:30:00+08:00
+date: "2026-03-28T20:30:00+08:00"
 slug: "cmux-ai-terminal-multiplexer"
 aliases:
   - /posts/tech/cmux-ai-terminal-multiplexer/

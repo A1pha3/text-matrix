@@ -1,6 +1,6 @@
 ---
 title: "local-deep-research: 本地优先的 AI 科研助手完整指南"
-date: 2026-05-06T10:08:31+08:00
+date: "2026-05-06T10:08:31+08:00"
 slug: "local-deep-research-local-ai-research-assistant-guide"
 description: "local-deep-research（LDR）是一个本地优先的 AI 科研助手，支持任意 LLM 和 10+ 搜索引擎，在 SimpleQA 基准上达到约 95% 准确率。本文详解其架构、部署方式、支持模型、搜索能力与隐私安全特性。"
 draft: false

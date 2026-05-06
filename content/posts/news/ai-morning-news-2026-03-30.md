@@ -1,6 +1,6 @@
 ---
 title: "AI 新闻早报 2026-03-30"
-date: 2026-03-30T08:43:00+08:00
+date: "2026-03-30T08:43:00+08:00"
 slug: ai-morning-news-2026-03-30
 description: "AI新闻早报：Sora之死、最强Claude泄露、Karpathy叫停AGI、OpenClaw引爆赛博大屠杀等26条热点。"
 draft: false

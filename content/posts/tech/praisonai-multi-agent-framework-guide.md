@@ -1,6 +1,6 @@
 ---
 title: "PraisonAI：AutoGen继任者·100+LLM支持·MCP原生"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: praisonai-multi-agent-framework-guide
 description: "PraisonAI 是 AutoGen 的继任者，支持 100+ LLM 和 MCP 原生，提供多智能体框架功能。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "n8n：开源工作流自动化平台完全指南"
-date: 2026-04-06T22:16:00+08:00
+date: "2026-04-06T22:16:00+08:00"
 slug: "n8n-workflow-automation-guide"
 description: "全面介绍 183k Stars 的 n8n 工作流自动化平台，涵盖 400+ 集成、AI LangChain 原生支持、Docker 部署、企业级 SSO、权限管理、自定义节点开发，以及实战案例和最佳实践。"
 draft: false

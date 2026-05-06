@@ -1,6 +1,6 @@
 ---
 title: "Evolver：基于GEP协议的自进化AI Agent引擎，完全指南"
-date: 2026-04-17T11:36:00+08:00
+date: "2026-04-17T11:36:00+08:00"
 slug: "evomap-evolver-self-evolution-engine-guide"
 description: "Evolver是一款基于Genome Evolution Protocol（GEP）的自进化引擎，专为AI Agent设计，将临时性的Prompt调整转化为可审计、可复用的进化资产。本文全面介绍Evolver的安装、核心概念、架构设计、使用方法和开发扩展。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Microsoft Agent Framework：微软官方·双语言支持·图工作流"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: microsoft-agent-framework-multi-language-guide
 description: "Microsoft Agent Framework 是微软官方的 Agent 框架，支持 Python 和 .NET 双语言，提供图工作流和多种 Provider 支持。"
 draft: false

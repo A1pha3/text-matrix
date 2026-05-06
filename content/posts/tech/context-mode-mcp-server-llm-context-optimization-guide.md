@@ -1,6 +1,6 @@
 ---
 title: "Context Mode：解决 AI 编程 Agent 的另一半上下文问题"
-date: 2026-05-05T20:18:00+08:00
+date: "2026-05-05T20:18:00+08:00"
 slug: "context-mode-mcp-server-llm-context-optimization-guide"
 description: "Context Mode 是一个 MCP Server，解决 AI 编程 Agent 的上下文窗口污染问题：工具输出占满 context、对话压缩后记忆丢失、输出冗长浪费 token。通过沙箱隔离+SQLite+FTS5+输出压缩四合一，实现 98% 工具数据 reduction 和 65-75% 输出 token 压缩。"
 draft: false

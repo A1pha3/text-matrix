@@ -1,7 +1,7 @@
 ---
 title: "AI新闻早报 2026-04-08"
 slug: "ai-morning-news-2026-04-08"
-date: 2026-04-08T20:25:00+08:00
+date: "2026-04-08T20:25:00+08:00"
 lastmod: 2026-04-08T20:25:00+08:00
 categories: ["行业快讯"]
 tags: ["AI", "大模型", "Anthropic", "OpenAI", "Google", "视频生成", "Agent"]

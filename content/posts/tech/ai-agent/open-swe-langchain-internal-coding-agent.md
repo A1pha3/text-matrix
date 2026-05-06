@@ -1,6 +1,6 @@
 ---
 title: "open-swe：LangChain 开源的 8.7k Stars 企业内部编程 Agent 框架"
-date: 2026-03-28T20:50:00+08:00
+date: "2026-03-28T20:50:00+08:00"
 slug: "open-swe-langchain-internal-coding-agent"
 aliases:
   - /posts/tech/open-swe-langchain-internal-coding-agent/

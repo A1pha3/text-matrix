@@ -1,6 +1,6 @@
 ---
 title: "ShanClaw：macOS 智能交互式 AI Agent CLI 指南"
-date: 2026-04-01T12:40:00+08:00
+date: "2026-04-01T12:40:00+08:00"
 slug: "shanclaw-ai-agent-cli-guide"
 aliases:
   - /posts/tech/shanclaw-ai-agent-cli-guide/

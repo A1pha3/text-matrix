@@ -1,6 +1,6 @@
 ---
 title: "Web3早报 2026-04-15：BTC $74K/ETH $2.3K/Strategy增持13亿"
-date: 2026-04-15T00:08:00+08:00
+date: "2026-04-15T00:08:00+08:00"
 lastmod: 2026-04-15T13:00:00+08:00
 draft: false
 tags: ["Web3早报"]

@@ -1,6 +1,6 @@
 ---
 title: "Nanobot：超轻量级个人 AI 助手专家级技术文档"
-date: 2026-03-30T14:26:00+08:00
+date: "2026-03-30T14:26:00+08:00"
 slug: nanobot-ultra-lightweight-ai-assistant
 description: "Nanobot 是超轻量级个人 AI 助手，本文档从入门到精通涵盖原理分析、架构设计、多平台支持配置和开发扩展。"
 draft: false

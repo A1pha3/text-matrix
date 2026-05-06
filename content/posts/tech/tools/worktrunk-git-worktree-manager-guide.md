@@ -3,7 +3,7 @@ title: "Worktrunk：AI 并行开发 Git Worktree 管理器完全指南"
 slug: "worktrunk-git-worktree-manager-guide"
 aliases:
   - /posts/tech/worktrunk-git-worktree-manager-guide/
-date: 2026-03-31T15:35:00+08:00
+date: "2026-03-31T15:35:00+08:00"
 categories: ["技术笔记"]
 tags: ["Worktrunk", "Git", "Worktree", "AI Agent", "Claude Code", "Rust", "CLI工具"]
 description: "全面解析 Worktrunk (4k Stars)：专为并行运行 AI Agent 设计的 Git Worktree 管理器。wt switch/list/merge/remove 四个核心命令，支持 Hooks 自动化、LLM Commit、Merge Workflow。"

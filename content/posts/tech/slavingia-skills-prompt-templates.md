@@ -1,6 +1,6 @@
 ---
 title: "Minimalist Entrepreneur Skills 实战 Prompt 模板：从找社区到首批付费的可复制脚本"
-date: 2026-03-30T18:00:00+08:00
+date: "2026-03-30T18:00:00+08:00"
 slug: slavingia-skills-prompt-templates
 description: "整理一套可直接复制到 Claude Code 的 Minimalist Entrepreneur Skills Prompt 模板，覆盖找社区、验证、MVP、流程化、定价、首批客户与经营复盘。"
 draft: false

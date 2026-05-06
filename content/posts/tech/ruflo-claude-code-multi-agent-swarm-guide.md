@@ -1,6 +1,6 @@
 ---
 title: "Ruflo：让 Claude Code 变身多智能体蜂群指挥系统"
-date: 2026-05-05T20:16:55+08:00
+date: "2026-05-05T20:16:55+08:00"
 slug: "ruflo-claude-code-multi-agent-swarm-guide"
 description: "Ruflo 是 Claude Flow 的下一代继任者，通过 32 个插件体系为 Claude Code 添加 100+ 专业智能体、自我学习记忆、零信任智能体联邦和并行 MCP 工具调用能力。本文深入解析其架构设计、插件体系与联邦安全机制。"
 draft: false

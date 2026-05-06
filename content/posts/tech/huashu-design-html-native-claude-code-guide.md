@@ -1,6 +1,6 @@
 ---
 title: "Huashu Design：HTML 原生的 AI 设计 Skill，从入门到精通完全指南"
-date: 2026-04-30T11:30:00+08:00
+date: "2026-04-30T11:30:00+08:00"
 slug: "huashu-design-html-native-claude-code-guide"
 description: "深入解析 alchaincyf/huashu-design（10,251 stars）—— 一款 Agent-agnostic 的 HTML 原生设计 Skill。涵盖 20 种设计哲学、5 维评审体系、MP4/GIF 导出、交互原型、幻灯片、动画引擎的全套技术架构与实战指南。"
 draft: false

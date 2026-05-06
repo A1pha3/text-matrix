@@ -1,6 +1,6 @@
 ---
 title: "Claw Code: Rust 实现的开源 AI Agent CLI 工具"
-date: 2026-04-30T20:00:00+08:00
+date: "2026-04-30T20:00:00+08:00"
 slug: "claw-code-rust-ai-agent-cli"
 description: "Claw Code 是 ultraworkers 团队开源的 Rust 实现的 claw CLI agent harness，提供跨平台 AI Agent 开发框架，支持 Anthropic/OpenAI API、多工具调用、会话管理和 MCP 协议，可通过容器化工作流快速部署。"
 draft: false

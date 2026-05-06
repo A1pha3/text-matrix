@@ -1,6 +1,6 @@
 ---
 title: "Manifest：4.3K Stars·OpenClaw智能模型路由器·节省70%成本"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: manifest-smart-model-router-guide
 description: "Manifest 是一个 OpenClaw 智能模型路由器，使用 23 维度评分算法在 2ms 内做出路由决策，可节省高达 70% 的成本，支持 300+ 模型。"
 draft: false

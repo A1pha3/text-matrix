@@ -1,6 +1,6 @@
 ---
 title: "OpenAI Whisper：97.2k Stars 通用语音识别完全指南"
-date: 2026-04-06T22:50:00+08:00
+date: "2026-04-06T22:50:00+08:00"
 slug: "openai-whisper-speech-recognition-guide"
 description: "全面介绍97.2k Stars的OpenAI Whisper语音识别模型，详解Transformer seq2seq架构、6种模型规模、命令行/Python API使用、多语言翻译、Faster Whisper加速、LangChain集成和微调训练。"
 draft: false

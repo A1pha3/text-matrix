@@ -1,6 +1,6 @@
 ---
 title: "Neovim：Vim-fork 现代化编辑器完全指南"
-date: 2026-04-01T12:45:00+08:00
+date: "2026-04-01T12:45:00+08:00"
 slug: "neovim-vim-fork-guide"
 aliases:
   - /posts/tech/neovim-vim-fork-guide/

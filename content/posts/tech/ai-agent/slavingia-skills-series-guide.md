@@ -1,6 +1,6 @@
 ---
 title: "Minimalist Entrepreneur Skills 专题导读：原理、案例与 Prompt 模板一站看完"
-date: 2026-03-30T18:20:00+08:00
+date: "2026-03-30T18:20:00+08:00"
 lastmod: 2026-04-03T23:24:59+08:00
 slug: slavingia-skills-series-guide
 aliases:

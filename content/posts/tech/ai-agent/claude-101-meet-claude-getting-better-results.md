@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第一课：Getting Better Results——让 AI 输出质量倍增的技巧"
-date: 2026-03-25T15:30:00+08:00
+date: "2026-03-25T15:30:00+08:00"
 lastmod: 2026-04-04T00:01:08+08:00
 slug: "claude-101-getting-better-results"
 aliases:

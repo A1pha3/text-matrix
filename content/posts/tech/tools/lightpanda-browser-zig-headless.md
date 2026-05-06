@@ -1,6 +1,6 @@
 ---
 title: "Lightpanda Browser：25.5k Stars 从零构建的 Zig 无头浏览器"
-date: 2026-03-28T21:30:00+08:00
+date: "2026-03-28T21:30:00+08:00"
 slug: "lightpanda-browser-zig-headless"
 aliases:
   - /posts/tech/lightpanda-browser-zig-headless/

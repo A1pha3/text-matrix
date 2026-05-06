@@ -2,7 +2,7 @@
 title: "Datawhale Agent Skills完全指南：吴恩达课程深度解读"
 slug: "datawhale-agent-skills-with-anthropic-guide"
 description: "深入解读Datawhale基于吴恩达DeepLearning.AI课程打造的中文Agent Skills学习资料，掌握Skills的核心概念、架构对比和实战技能。"
-date: 2026-04-10T21:15:00+08:00
+date: "2026-04-10T21:15:00+08:00"
 categories: ["技术笔记"]
 tags: ["AI", "Agent", "Skills", "Claude", "MCP", "吴恩达", "Datawhale", "Agentic AI"]
 ---

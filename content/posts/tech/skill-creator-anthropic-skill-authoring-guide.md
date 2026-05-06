@@ -1,6 +1,6 @@
 ---
 title: "Skill Creator：Anthropic 出品的 AI Agent 技能开发框架完全指南"
-date: 2026-04-04T20:31:00+08:00
+date: "2026-04-04T20:31:00+08:00"
 slug: "skill-creator-anthropic-skill-authoring-guide"
 description: "Skill Creator 是 Anthropic 官方出品的 AI Agent 技能开发框架，通过捕获意图→编写 SKILL.md→测试评估→迭代优化的闭环流程，让任何人能创建生产级的 Claude Code 技能。本文深入解析其核心理念、渐进式披露架构、评估体系和迭代工作流。"
 draft: false

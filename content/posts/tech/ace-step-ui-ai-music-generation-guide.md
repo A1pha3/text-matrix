@@ -1,6 +1,6 @@
 ---
 title: "Ace-Step-UI：开源版 Suno 来了，Spotify 风格的本地 AI 音乐生成界面"
-date: 2026-04-29T16:41:29+08:00
+date: "2026-04-29T16:41:29+08:00"
 slug: ace-step-ui-ai-music-generation-guide
 description: "Ace-Step-UI 是 ACE-Step 1.5 AI 音乐生成模型的专业 Web UI，Spotify 风格界面，完全本地运行、免费无限制，是 Suno 的开源替代方案。"
 draft: false

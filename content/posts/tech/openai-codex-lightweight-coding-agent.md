@@ -1,6 +1,6 @@
 ---
 title: "OpenAI Codex：轻量级终端编程智能体完全指南"
-date: 2026-04-02T12:00:00+08:00
+date: "2026-04-02T12:00:00+08:00"
 slug: openai-codex-lightweight-coding-agent
 description: "基于 OpenAI 官方文档与公开仓库结构，系统讲解 Codex CLI 的定位、安装认证、配置、安全模型、交互命令、自动化能力、源码模块划分与适用边界。"
 draft: false

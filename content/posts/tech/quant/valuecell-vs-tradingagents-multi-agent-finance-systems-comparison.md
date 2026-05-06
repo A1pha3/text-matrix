@@ -1,6 +1,6 @@
 ---
 title: "ValueCell vs TradingAgents：两大开源多智能体金融平台深度对比"
-date: 2026-04-08T14:00:00+08:00
+date: "2026-04-08T14:00:00+08:00"
 slug: "valuecell-vs-tradingagents-multi-agent-finance-systems-comparison"
 aliases:
   - /posts/tech/valuecell-vs-tradingagents-multi-agent-finance-systems-comparison/

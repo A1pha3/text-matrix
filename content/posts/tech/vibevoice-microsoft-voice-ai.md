@@ -1,6 +1,6 @@
 ---
 title: "VibeVoice：微软开源前沿语音AI模型家族，ASR支持60分钟长音频"
-date: 2026-04-29T11:30:00+08:00
+date: "2026-04-29T11:30:00+08:00"
 lastmod: 2026-04-29T11:30:00+08:00
 draft: false
 tags: ["语音AI", "微软", "ASR", "TTS", "开源", "VibeVoice"]

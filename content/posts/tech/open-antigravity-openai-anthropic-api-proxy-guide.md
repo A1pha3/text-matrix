@@ -1,7 +1,7 @@
 ---
 title: "Open-Antigravity：将Antigravity转为OpenAI/Anthropic兼容API"
 slug: "open-antigravity-openai-anthropic-api-proxy-guide"
-date: 2026-04-08T13:00:00+08:00
+date: "2026-04-08T13:00:00+08:00"
 lastmod: 2026-04-08T13:00:00+08:00
 categories: ["技术笔记"]
 tags: ["API代理", "TypeScript", "OpenAI兼容", "Anthropic兼容", "Antigravity", "gRPC-Web"]

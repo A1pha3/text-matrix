@@ -1,6 +1,6 @@
 ---
 title: "LangGraph：构建有状态智能体的图形框架——29K Stars 的 AI Agent 编排框架从入门到精通"
-date: 2026-04-15T00:15:00+08:00
+date: "2026-04-15T00:15:00+08:00"
 slug: "langgraph-stateful-agents-framework"
 description: "LangGraph 是 29K Stars 的开源图形框架，用于构建有状态的、持久化的 AI Agent。受 Pregel/Apache Beam/NetworkX 启发，提供 Durable Execution、Human-in-the-Loop、Comprehensive Memory 核心特性，支持 Klarna/Replit/Elastic 等生产级应用。"
 draft: false

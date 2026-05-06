@@ -1,6 +1,6 @@
 ---
 title: "FFF.nvim：让 AI 和 Neovim 拥有极速文件搜索与记忆能力"
-date: 2026-04-06T20:05:00+08:00
+date: "2026-04-06T20:05:00+08:00"
 slug: "fff.nvim-ai-neovim-file-search-guide"
 description: "全面介绍 FFF.nvim极速文件搜索工具，涵盖 AI Agent MCP 集成、Neovim 配置、Frecency 排序、三种搜索模式和高级用法。"
 draft: false

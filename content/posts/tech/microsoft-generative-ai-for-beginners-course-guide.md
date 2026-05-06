@@ -1,6 +1,6 @@
 ---
 title: "microsoft/generative-ai-for-beginners：109k Stars 生成式AI入门完全指南"
-date: 2026-04-06T22:35:00+08:00
+date: "2026-04-06T22:35:00+08:00"
 slug: "microsoft-generative-ai-for-beginners-course-guide"
 description: "微软官方109k Stars生成式AI入门课程完全指南，涵盖21节系统课程、Python/TypeScript双代码示例、Azure OpenAI/GitHub Models/OpenAI API三种平台、RAG/Agent/微调等高级主题。"
 draft: false

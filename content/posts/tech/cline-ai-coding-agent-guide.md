@@ -2,7 +2,7 @@
 title: "Cline：超越代码补全的 AI 编程助手"
 slug: "cline-ai-coding-agent-guide"
 description: "Cline 是一个基于 Claude Sonnet 的 AI 编程助手，可以创建和编辑文件、执行终端命令、使用浏览器、创建自定义 MCP 工具。它支持多种 API 提供商，包括 OpenRouter、Anthropic、OpenAI、Google Gemini、AWS Bedrock 等。"
-date: 2026-04-24T11:40:00+08:00
+date: "2026-04-24T11:40:00+08:00"
 categories: ["技术笔记"]
 tags: ["AI编程", "Claude", "VSCode", "MCP", "开源工具"]
 ---

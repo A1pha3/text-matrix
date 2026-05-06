@@ -1,7 +1,7 @@
 ---
 title: "RAG-Anything：港大开源多模态RAG框架，一站式处理文本/图像/表格/公式"
 slug: rag-anything-multimodal-rag-framework
-date: 2026-04-22T16:25:00+08:00
+date: "2026-04-22T16:25:00+08:00"
 description: "全面解析 RAG-Anything：港大开源的多模态 RAG 框架，基于 LightRAG，支持 PDF、Office、图像等全类型文档，构建多模态知识图谱，实现跨模态检索与问答。"
 categories: ["技术笔记"]
 tags: ["RAG", "多模态", "LightRAG", "RAG框架", "文档处理", "知识图谱"]

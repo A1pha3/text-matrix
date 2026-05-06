@@ -1,6 +1,6 @@
 ---
 title: "Tailcall ForgeCode：19.3K Stars·API Gateway + GraphQL平台"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: tailcall-forgecode-api-gateway-graphql-platform-guide
 description: "Tailcall ForgeCode 是一个 API Gateway 和 GraphQL 平台，使用 TypeScript 和 Rust 双引擎构建，提供 Schema Stitching 功能。"
 draft: false

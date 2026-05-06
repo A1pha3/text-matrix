@@ -1,7 +1,7 @@
 ---
 title: "【视频精读】10天涨粉5.7万：AI科普视频爆火现象与B站内容创作技术深度分析"
 slug: "ai-science-video-douyin-viral-analysis"
-date: 2026-04-07T16:55:00+08:00
+date: "2026-04-07T16:55:00+08:00"
 lastmod: 2026-04-08T13:15:00+08:00
 categories: ["视频精读"]
 tags: ["AI科普", "抖音", "B站", "视频创作", "内容运营", "AIGC"]

@@ -1,6 +1,6 @@
 ---
 title: "DocuSeal：开源电子文档签署平台，DocuSign替代方案"
-date: 2026-05-05T11:35:00+08:00
+date: "2026-05-05T11:35:00+08:00"
 slug: "docuseal-open-source-document-signing-platform-guide"
 description: "DocuSeal是开源的电子文档签署和处理平台，提供PDF表单构建、数字签名、自动化邮件、API和Webhook集成等功能，支持Docker一键部署。本文详解其功能特性、部署方式、API集成与Pro版高级功能。"
 draft: false

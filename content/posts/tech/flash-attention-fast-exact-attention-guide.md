@@ -1,6 +1,6 @@
 ---
 title: "Flash Attention：40K Stars·Tri Dao发明·2-4倍加速·O(N)内存"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: flash-attention-fast-exact-attention-guide
 description: "Flash Attention 是由 Tri Dao 发明的 Transformer 注意力机制加速算法，可实现 2-4 倍加速，内存复杂度从 O(N²) 降为 O(N)，被 Llama、Mistral、CodeLlama 等模型内置采用。"
 draft: false

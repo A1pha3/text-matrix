@@ -1,6 +1,6 @@
 ---
 title: "PrfaaS：跨数据中心LLM服务的革命性架构——KVCache新时代"
-date: 2026-04-18T20:55:00+08:00
+date: "2026-04-18T20:55:00+08:00"
 slug: "prfaas-prefill-as-a-service-cross-datacenter-llm"
 description: "PrfaaS（Prefill-as-a-Service）是一种跨数据中心LLM服务架构，将长上下文prefill任务offload到独立集群，通过商用以太网传输KVCache，实现54%吞吐量提升。本文深入解析PD disaggregation、KVCache优化与分布式LLM serving的前沿技术。"
 draft: false

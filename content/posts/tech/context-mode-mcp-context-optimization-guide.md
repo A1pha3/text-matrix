@@ -1,6 +1,6 @@
 ---
 title: "Context Mode：解决AI编程Agent上下文危机的MCP服务器"
-date: 2026-04-12T18:02:00+08:00
+date: "2026-04-12T18:02:00+08:00"
 slug: context-mode-mcp-context-optimization-guide
 description: "7.1k Stars的Context Mode，通过沙箱执行将315KB上下文压缩至5.4KB，节省98%。支持12大平台：Claude Code/Gemini CLI/Cursor/OpenCode等。FTS5+BM25知识库实现会话连续性。"
 draft: false

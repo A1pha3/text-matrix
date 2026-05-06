@@ -1,6 +1,6 @@
 ---
 title: "Google AI Edge Gallery：移动端运行大模型的完整指南"
-date: 2026-04-06T16:51:00+08:00
+date: "2026-04-06T16:51:00+08:00"
 slug: "google-ai-edge-gallery-on-device-llm-guide"
 description: "全面介绍 Google AI Edge Gallery 的功能与使用方法，涵盖 Agent Skills 扩展系统、JavaScript/Native 技能开发、移动端大模型运行等技术细节。"
 draft: false

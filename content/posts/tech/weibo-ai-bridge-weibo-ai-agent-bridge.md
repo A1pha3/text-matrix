@@ -1,7 +1,7 @@
 ---
 title: "kangjinshan/weibo-ai-bridge：微博私信与AI Agent的桥接服务，支持Claude/Codex多Agent"
 slug: weibo-ai-bridge-weibo-ai-agent-bridge
-date: 2026-04-22T20:57:00+08:00
+date: "2026-04-22T20:57:00+08:00"
 description: "weibo-ai-bridge 是用 Go 语言开发的微博私信与 AI Agent 桥接服务，通过 WebSocket 连接微博和 Claude/Codex，支持多会话、流式回复、Markdown 格式化输出。"
 categories: ["技术笔记"]
 tags: ["Go", "微博", "AI Agent", "WebSocket"]

@@ -1,6 +1,6 @@
 ---
 title: "awesome-llm-apps：105k Stars LLM应用精选合集完全指南"
-date: 2026-04-06T22:40:00+08:00
+date: "2026-04-06T22:40:00+08:00"
 slug: "awesome-llm-apps-curated-llm-application-projects-guide"
 description: "全面介绍105k Stars的awesome-llm-apps精选合集，涵盖100+ LLM应用项目，包括AI Agent、RAG、MCP、Voice Agents、多Agent协作等，详解Google ADK、OpenAI Agents SDK等框架。"
 draft: false

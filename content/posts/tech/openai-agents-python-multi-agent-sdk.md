@@ -1,6 +1,6 @@
 ---
 title: "OpenAI Agents SDK：官方多智能体工作流框架——21K Stars的生产级多Agent架构指南"
-date: 2026-04-17T16:30:00+08:00
+date: "2026-04-17T16:30:00+08:00"
 slug: "openai-agents-python-multi-agent-sdk"
 description: "21,475 Stars的OpenAI官方多智能体SDK。支持OpenAI Responses/Chats API及100+第三方LLM，提供Agent/SandboxAgent/Tool/Guardrail/Handoff/Human-in-the-loop等完整生态，Python 3.10+可用。"
 draft: false

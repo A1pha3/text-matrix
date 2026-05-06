@@ -1,6 +1,6 @@
 ---
 title: "MLX-VLM：Apple Silicon 上的视觉语言模型推理与微调框架"
-date: 2026-04-06T17:30:00+08:00
+date: "2026-04-06T17:30:00+08:00"
 slug: "mlx-vlm-apple-silicon-vlm-inference-guide"
 description: "全面介绍 MLX-VLM 技术框架，涵盖架构解析、支持模型、视觉特征缓存、TurboQuant KV Cache、LoRA微调等核心功能。"
 draft: false

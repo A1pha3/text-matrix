@@ -1,6 +1,6 @@
 ---
 title: "OpenKB：开源 LLM 知识库——无向量检索的长文档处理新范式"
-date: 2026-04-29T20:13:00+08:00
+date: "2026-04-29T20:13:00+08:00"
 slug: "openkb-open-llm-knowledge-base-guide"
 description: "OpenKB 是基于 Andrej Karpathy 理念构建的开源 LLM 知识库系统，通过 PageIndex 无向量索引和编译型维基架构，将原始文档自动转化为互联的概念知识网络。本文从核心原理、系统架构、安装使用、核心命令到 Obsidian 集成，完整解析这一新兴知识管理范式。"
 draft: false

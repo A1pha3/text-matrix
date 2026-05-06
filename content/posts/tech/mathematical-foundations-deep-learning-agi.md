@@ -1,6 +1,6 @@
 ---
 title: "AGI 的数学基础到底是什么：从流形假设、对称性到信息几何"
-date: 2026-04-23T23:10:00+08:00
+date: "2026-04-23T23:10:00+08:00"
 slug: "mathematical-foundations-deep-learning-agi-chern-simons"
 summary: "本文受 Wayland Zhang 同题博客与 B 站视频启发，结合 Neural ODE、几何深度学习、信息几何等文献，重新划清哪些数学视角已经进入深度学习主线，哪些仍属于结构类比或研究假说。"
 description: "围绕“AGI 需要什么数学基础”这个问题，本文把流形假设、连续深度视角、对称性、信息几何、陈类与规范场论放回各自应在的位置，并显式标注启发来源，避免把类比误写成定理。"

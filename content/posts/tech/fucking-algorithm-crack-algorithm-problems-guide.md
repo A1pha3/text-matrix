@@ -1,6 +1,6 @@
 ---
 title: "fucking-algorithm：142k Stars 刷穿算法题完全指南"
-date: 2026-04-06T22:25:00+08:00
+date: "2026-04-06T22:25:00+08:00"
 slug: "fucking-algorithm-crack-algorithm-problems-guide"
 description: "全面介绍 142k Stars 的 fucking-algorithm 算法刷题笔记，涵盖学习路径、vscode-leetcode 插件、动态规划、回溯算法、二叉树、双指针等核心专题，以及多语言版本和面试技巧。"
 draft: false

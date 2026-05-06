@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第二课：用 Claude 组织你的工作——Projects、Artifacts 与 Skills 深度指南"
-date: 2026-03-25T16:30:00+08:00
+date: "2026-03-25T16:30:00+08:00"
 slug: "claude-101-organizing-work-knowledge"
 aliases:
   - /posts/tech/claude-101-organizing-work-knowledge/

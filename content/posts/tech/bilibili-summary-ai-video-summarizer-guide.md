@@ -1,7 +1,7 @@
 ---
 title: "BiliSummary：B站视频AI摘要与知识管理工具"
 slug: "bilibili-summary-ai-video-summarizer-guide"
-date: 2026-04-08T13:10:00+08:00
+date: "2026-04-08T13:10:00+08:00"
 lastmod: 2026-04-08T13:10:00+08:00
 categories: ["技术笔记"]
 tags: ["Python", "B站", "AI摘要", "FastAPI", "Bilibili", "知识管理"]

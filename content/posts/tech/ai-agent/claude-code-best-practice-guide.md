@@ -1,6 +1,6 @@
 ---
 title: "Claude Code 最佳实践大全：高热度 AI 编程指南解读"
-date: 2026-03-28T20:00:00+08:00
+date: "2026-03-28T20:00:00+08:00"
 lastmod: 2026-04-03T23:33:16+08:00
 slug: "claude-code-best-practice-guide"
 aliases:

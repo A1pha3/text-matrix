@@ -1,6 +1,6 @@
 ---
 title: "AI副业早报 2026-04-16"
-date: 2026-04-16T08:00:00+08:00
+date: "2026-04-16T08:00:00+08:00"
 slug: ai-side-hustle-morning-2026-04-16
 description: "2026年4月16日 AI 副业早报，精选过去 24 小时内 AI 赚钱项目、招聘机会与独立开发案例。"
 draft: false

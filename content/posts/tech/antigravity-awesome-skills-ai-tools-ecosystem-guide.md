@@ -1,6 +1,6 @@
 ---
 title: "Antigravity Awesome Skills：1,400+ AI工具插件生态系统完全指南"
-date: 2026-04-12T18:01:00+08:00
+date: "2026-04-12T18:01:00+08:00"
 slug: antigravity-awesome-skills-ai-tools-ecosystem-guide
 description: "33.3k Stars的Antigravity Awesome Skills专辑，收录1,400+AI工具插件。涵盖官方26个插件、多Agent系统、AI编程、AI搜索、AI音乐等12大分类，是AI工具爱好者的一站式资源库。"
 draft: false

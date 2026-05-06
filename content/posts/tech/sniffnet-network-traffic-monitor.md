@@ -1,6 +1,6 @@
 ---
 title: "Sniffnet：Rust 跨平台网络流量监控工具架构解析"
-date: 2026-04-27T19:40:00+08:00
+date: "2026-04-27T19:40:00+08:00"
 slug: sniffnet-network-traffic-monitor
 description: "Sniffnet 是一款使用 Rust 和 iced 框架构建的跨平台网络流量监控工具，支持 PCAP 导入导出、实时流量图表、地理定位、协议识别等功能。本文从架构设计角度深入解析其核心模块、技术选型和性能优化策略。"
 draft: false

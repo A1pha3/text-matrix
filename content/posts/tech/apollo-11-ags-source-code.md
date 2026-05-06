@@ -1,6 +1,6 @@
 ---
 title: "Apollo-11：阿波罗11号制导计算机源码探秘——66K Stars的人类登月编程遗产"
-date: 2026-04-16T01:20:00+08:00
+date: "2026-04-16T01:20:00+08:00"
 slug: "apollo-11-ags-source-code"
 description: "Apollo-11是66K Stars的GitHub明星项目，保存了1969年登月的阿波罗制导计算机(AGC)源码。详解Comanche055(指令舱)和Luminary099(月球舱)的汇编代码，Margaret Hamilton等程序员的传奇故事。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Open WebUI：开源自托管 AI 界面完全指南——从原理到精通"
-date: 2026-05-02T10:11:52+08:00
+date: "2026-05-02T10:11:52+08:00"
 slug: "open-webui-self-hosted-ai-interface-guide"
 description: "Open WebUI 是一款功能丰富、用户友好的自托管 AI 平台，支持完全离线运行。本文深入剖析其核心原理与系统架构，详细讲解 Docker/pip/uv 等多种安装方式，并配合 RAG 检索、多模型对话、函数调用、插件扩展等实战演示，覆盖从入门到生产级部署的完整路径。"
 draft: false

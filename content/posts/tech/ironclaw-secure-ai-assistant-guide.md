@@ -1,6 +1,6 @@
 ---
 title: "IronClaw：安全私密个人 AI 助手完全指南"
-date: 2026-03-31T14:35:00+08:00
+date: "2026-03-31T14:35:00+08:00"
 slug: "ironclaw-secure-ai-assistant-guide"
 description: "全面解析 IronClaw：11.2k Stars 的安全私密个人 AI 助手。支持 WASM 沙箱安全隔离、多渠道（REPL/Telegram/Slack）、混合搜索、Rust 编写的开源项目。"
 draft: false

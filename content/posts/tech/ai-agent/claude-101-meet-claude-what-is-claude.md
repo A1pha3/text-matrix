@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第一课：认识 Claude——它是谁，能做什么"
-date: 2026-03-25T16:00:00+08:00
+date: "2026-03-25T16:00:00+08:00"
 slug: "claude-101-what-is-claude"
 aliases:
   - /posts/tech/claude-101-what-is-claude/

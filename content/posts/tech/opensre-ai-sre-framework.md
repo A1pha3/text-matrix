@@ -1,6 +1,6 @@
 ---
 title: "OpenSRE：开源AI SRE Agent框架——让AI在自有基础设施上调查生产事故"
-date: 2026-04-18T15:50:00+08:00
+date: "2026-04-18T15:50:00+08:00"
 slug: "opensre-ai-sre-agents-framework"
 description: "OpenSRE是Tracer-Cloud出品的开源AI SRE Agent框架，让AI在Kubernetes/EC2/CloudWatch等自有基础设施上调查和解决生产事故。支持60+工具连接，Synthetic RCA测试环境。"
 draft: false

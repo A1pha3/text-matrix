@@ -1,6 +1,6 @@
 ---
 title: "freeCodeCamp：从入门到精通 全球最大免费编程学习平台"
-date: 2026-03-31T00:50:00+08:00
+date: "2026-03-31T00:50:00+08:00"
 slug: freecodecamp-open-source-curriculum-guide
 description: "freeCodeCamp 是全球最大的免费编程学习开源项目，440k Stars。本文从入门到精通，涵盖 10+ 认证课程体系、技术架构、本地开发、参与贡献和就业准备全流程。"
 draft: false

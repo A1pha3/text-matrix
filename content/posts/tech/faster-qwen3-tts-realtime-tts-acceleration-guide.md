@@ -1,6 +1,6 @@
 ---
 title: "Faster Qwen3-TTS：实时语音合成加速完全指南"
-date: 2026-03-31T14:20:00+08:00
+date: "2026-03-31T14:20:00+08:00"
 slug: "faster-qwen3-tts-realtime-tts-acceleration-guide"
 description: "全面解析 Faster Qwen3-TTS：使用 CUDA Graph 实现 Qwen3-TTS 实时推理，支持流式和非流式两种模式。无需 Flash Attention/vLLM/Triton，在 RTX 4090 上实现 5-6 倍加速。支持语音克隆、CustomVoice、VoiceDesign 三种模式。"
 draft: false

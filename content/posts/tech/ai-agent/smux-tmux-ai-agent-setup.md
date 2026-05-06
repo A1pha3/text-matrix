@@ -1,6 +1,6 @@
 ---
 title: "smux：一键 tmux 配置，让 AI Agent 操控终端"
-date: 2026-03-29T21:10:00+08:00
+date: "2026-03-29T21:10:00+08:00"
 slug: "smux-tmux-ai-agent-setup"
 aliases:
   - /posts/tech/smux-tmux-ai-agent-setup/

@@ -1,6 +1,6 @@
 ---
 title: "VibeVoice：微软开源前沿语音 AI，从入门到精通"
-date: 2026-03-30T11:35:00+08:00
+date: "2026-03-30T11:35:00+08:00"
 slug: "vibevoice-microsoft-open-source-voice-ai"
 description: "深度解析微软 VibeVoice 开源前沿语音 AI 系统：低延迟语音交互、多模型支持、实时对话流、模块化架构，详解原理、架构、功能、使用与二次开发。"
 draft: false

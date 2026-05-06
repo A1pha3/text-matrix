@@ -1,7 +1,7 @@
 ---
 title: "RedditVideoMakerBot：一键自动化Reddit内容视频生成工具"
 slug: "reddit-video-maker-bot-guide"
-date: 2026-04-08T16:20:00+08:00
+date: "2026-04-08T16:20:00+08:00"
 lastmod: 2026-04-08T16:20:00+08:00
 categories: ["技术笔记"]
 tags: ["Python", "Reddit", "视频生成", "Playwright", "自动化", "TTS"]

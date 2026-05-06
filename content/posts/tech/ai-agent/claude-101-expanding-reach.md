@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第三课：扩展 Claude 的能力边界——工具连接、企业搜索与深度研究"
-date: 2026-03-25T15:00:00+08:00
+date: "2026-03-25T15:00:00+08:00"
 slug: "claude-101-expanding-reach"
 aliases:
   - /posts/tech/claude-101-expanding-reach/

@@ -1,6 +1,6 @@
 ---
 title: "TimesFM：Google Research 时间序列基础模型完全指南"
-date: 2026-04-06T21:28:00+08:00
+date: "2026-04-06T21:28:00+08:00"
 slug: "timesfm-google-time-series-foundation-model-guide"
 description: "全面介绍 Google Research 的 TimesFM 时间序列基础模型，涵盖 2.5 版本的 200M 参数、16k 上下文、连续分位数预测等核心升级，以及 PyTorch/Flax 推理部署和 BigQuery 集成。"
 draft: false

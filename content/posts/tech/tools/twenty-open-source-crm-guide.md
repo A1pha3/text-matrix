@@ -1,6 +1,6 @@
 ---
 title: "Twenty：开源CRM的完整技术指南与最佳实践"
-date: 2026-03-29T16:14:00+08:00
+date: "2026-03-29T16:14:00+08:00"
 slug: "twenty-open-source-crm-guide"
 aliases:
   - /posts/tech/twenty-open-source-crm-guide/

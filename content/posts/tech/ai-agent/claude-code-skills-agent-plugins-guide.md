@@ -3,7 +3,7 @@ title: "Claude Code Skills & Plugins：AI 编程智能体技能库完全指南"
 slug: "claude-code-skills-agent-plugins-guide"
 aliases:
   - /posts/tech/claude-code-skills-agent-plugins-guide/
-date: 2026-03-31T12:35:00+08:00
+date: "2026-03-31T12:35:00+08:00"
 categories: ["技术笔记"]
 tags: ["Claude Code", "AI编程", "Skills", "OpenClaw", "Cursor"]
 description: "全面解析 Claude Code Skills 项目：205 个生产级 AI 编程技能，支持 11 个平台，涵盖工程、产品、营销等 9 大领域。从入门到精通，包含安装配置、原理分析、架构设计、开发扩展和最佳实践。"

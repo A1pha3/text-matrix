@@ -1,6 +1,6 @@
 ---
 title: "Anthropic AI通识课：4D框架——与AI协作的核心能力"
-date: 2026-03-25T09:00:00+08:00
+date: "2026-03-25T09:00:00+08:00"
 slug: "anthropic-ai-fluency-framework-foundations"
 aliases:
   - /posts/tech/anthropic-ai-fluency-framework-foundations/

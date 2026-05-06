@@ -1,6 +1,6 @@
 ---
 title: "chrome-devtools-mcp 完全指南：让 AI 编程助手掌控 Chrome DevTools"
-date: 2026-04-18T11:35:00+08:00
+date: "2026-04-18T11:35:00+08:00"
 slug: "chrome-devtools-mcp-ai-coding-agents-guide"
 description: "全面解析 ChromeDevTools/chrome-devtools-mcp 项目：MCP 协议如何桥接 AI 编码助手与 Chrome DevTools，puppeteer 底层原理、架构设计、所有工具函数详解、开发扩展方法与最佳实践。"
 draft: false

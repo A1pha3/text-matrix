@@ -1,6 +1,6 @@
 ---
 title: "Claude API基础专题（六）：Claude Code与Computer Use"
-date: 2026-03-25T11:00:00+08:00
+date: "2026-03-25T11:00:00+08:00"
 slug: "claude-api-computer-use-automation"
 aliases:
   - /posts/tech/claude-api-computer-use-automation/

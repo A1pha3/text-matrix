@@ -1,6 +1,6 @@
 ---
 title: "Hermes Agent 深度解析：自我改进 AI Agent 的架构、安装与迁移指南"
-date: 2026-04-10T11:30:00+08:00
+date: "2026-04-10T11:30:00+08:00"
 lastmod: 2026-04-11T09:30:00+08:00
 draft: false
 tags: ["Hermes Agent", "AI Agent", "Nous Research", "OpenClaw", "MCP"]

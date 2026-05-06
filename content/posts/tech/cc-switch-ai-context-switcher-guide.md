@@ -1,6 +1,6 @@
 ---
 title: "CC-Switch 使用指南：统一管理 6 个 AI 编程 CLI 的提供商、MCP 与上下文"
-date: 2026-04-24T12:20:00+08:00
+date: "2026-04-24T12:20:00+08:00"
 slug: "cc-switch-ai-context-switcher-guide"
 description: "CC-Switch 是一款基于 Tauri 2 的跨平台桌面应用，用于统一管理 Claude Code、Codex、Gemini CLI、OpenCode、OpenClaw 与 Hermes Agent 的提供商切换、MCP、Skills、会话和本地路由。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Lightweight Charts™：14.9K Stars·TradingView开源轻量级金融图表库"
-date: 2026-04-12T01:52:00+08:00
+date: "2026-04-12T01:52:00+08:00"
 slug: lightweight-charts-tradingview-financial-charts-guide
 description: "Lightweight Charts 是 TradingView 开源的轻量级金融图表库，14.9K Stars，支持 K线、折线、柱状图等金融图表类型，性能卓越。"
 draft: false

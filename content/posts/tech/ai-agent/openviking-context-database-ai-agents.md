@@ -1,6 +1,6 @@
 ---
 title: "OpenViking：字节跳动开源的 19.6k Stars AI Agent 上下文数据库"
-date: 2026-03-28T21:15:00+08:00
+date: "2026-03-28T21:15:00+08:00"
 slug: "openviking-context-database-ai-agents"
 aliases:
   - /posts/tech/openviking-context-database-ai-agents/

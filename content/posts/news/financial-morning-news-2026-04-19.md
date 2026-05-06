@@ -2,7 +2,7 @@
 title: "经济财经早报 | 2026-04-19"
 slug: financial-morning-news-2026-04-19
 description: "经济财经早报：美伊谈判缓和油价下跌/美股再创新高/Meta万人裁员倒计时/白银突破$80/美联储按兵不动"
-date: 2026-04-19T07:30:00+08:00
+date: "2026-04-19T07:30:00+08:00"
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true

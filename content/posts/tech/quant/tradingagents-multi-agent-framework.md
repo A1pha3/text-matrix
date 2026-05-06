@@ -1,6 +1,6 @@
 ---
 title: "TradingAgents：多智能体 LLM 金融交易框架从入门到精通"
-date: 2026-04-08T12:30:00+08:00
+date: "2026-04-08T12:30:00+08:00"
 slug: "tradingagents-multi-agent-llm-financial-trading"
 aliases:
   - /posts/tech/tradingagents-multi-agent-llm-financial-trading/

@@ -1,6 +1,6 @@
 ---
 title: "AI-Trader 深度拆解：它为什么像是第一个真正面向 Agent 的交易平台？"
-date: 2026-04-13T09:30:00+08:00
+date: "2026-04-13T09:30:00+08:00"
 slug: ai-trader-agent-native-trading-platform-guide
 description: "这不是一篇泛泛的项目介绍，而是一次基于 README、Agent 指南、用户指南与 OpenAPI 的深度拆解：AI-Trader 到底解决什么问题，为什么说它像是第一个真正面向 Agent 的交易平台，以及它的公开能力边界在哪里。"
 draft: false

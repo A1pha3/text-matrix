@@ -1,6 +1,6 @@
 ---
 title: CoBRA：用经典社会心理学实验编程AI认知偏差
-date: 2026-03-28T12:00:00+08:00
+date: "2026-03-28T12:00:00+08:00"
 slug: cobra-cognitive-bias-social-agents
 description: 深入解析CHI 2026最佳论文CoBRA——首个通过经典社会心理学实验实现LLM Agent认知偏差精确量化控制的工具箱
 draft: false

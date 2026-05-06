@@ -1,6 +1,6 @@
 ---
 title: "cloudscraper：攻克 Cloudflare 反爬的终极武器——Python 反爬从入门到精通"
-date: 2026-04-14T22:00:00+08:00
+date: "2026-04-14T22:00:00+08:00"
 slug: "cloudscraper-cloudflare-bypass"
 description: "cloudscraper 是 6.4K Stars 的 Python 反爬神器，支持自动绕过 Cloudflare v1/v2/v3 JavaScript VM 挑战和 Turnstile 验证。本文从入门到精通，涵盖原理分析、架构设计、Stealth Mode、代理轮换、PyInstaller 打包和最佳实践。"
 draft: false

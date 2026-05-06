@@ -1,6 +1,6 @@
 ---
 title: "RustDesk 完全指南：开源远程桌面，TeamViewer 的最佳替代品"
-date: 2026-04-19T11:30:00+08:00
+date: "2026-04-19T11:30:00+08:00"
 slug: "rustdesk-open-source-remote-desktop"
 description: "全面解析 RustDesk：Rust 语言编写的开源远程桌面解决方案，112k Stars 的爆款项目。详解架构设计、P2P连接原理、中继服务器部署、自托管方案与开发扩展。"
 draft: false

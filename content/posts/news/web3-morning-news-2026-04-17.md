@@ -1,6 +1,6 @@
 ---
 title: "Web3早报 | 2026年4月17日"
-date: 2026-04-17T08:00:00+08:00
+date: "2026-04-17T08:00:00+08:00"
 slug: "web3-morning-news-2026-04-17"
 description: "汇总2026年4月17日加密货币市场最新动态，BTC $75,055、ETH $2,351、SOL $89等主流币种行情，及CoinTelegraph重要Web3新闻。"
 draft: false

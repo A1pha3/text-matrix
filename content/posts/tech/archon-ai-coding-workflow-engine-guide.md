@@ -1,6 +1,6 @@
 ---
 title: "Archon：让AI编程变得可重复、可追溯的开源工作流引擎"
-date: 2026-04-09T20:20:00+08:00
+date: "2026-04-09T20:20:00+08:00"
 slug: "archon-ai-coding-workflow-engine-guide"
 description: "Archon 是一个面向 AI 编程的工作流引擎，通过 YAML 定义 DAG，把规划、实现、验证、评审与 PR 创建变成可重复、可审计、可复用的开发流程。本文系统拆解其工作流模型、worktree 隔离、默认工作流、上手路径与自定义方式。"
 draft: false

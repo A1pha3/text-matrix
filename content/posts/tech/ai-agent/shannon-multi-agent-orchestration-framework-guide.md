@@ -3,7 +3,7 @@ title: "Shannon：生产级多智能体编排框架完全指南"
 slug: "shannon-multi-agent-orchestration-framework-guide"
 aliases:
   - /posts/tech/shannon-multi-agent-orchestration-framework-guide/
-date: 2026-04-01T10:15:00+08:00
+date: "2026-04-01T10:15:00+08:00"
 categories: ["技术笔记"]
 tags: ["Shannon", "多智能体", "Multi-Agent", "Orchestration", "WASI", "Token Budget", "生产级AI", "Human-in-the-Loop", "Swarm", "Temporal"]
 description: "深度解析 Shannon：生产级多智能体编排框架，支持Research/Swarm/Human-in-the-Loop/Scheduled四大策略，WASI沙箱安全执行，Token预算控制，15+ LLM提供商，MIT许可证，Go主语言。"

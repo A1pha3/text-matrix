@@ -1,6 +1,6 @@
 ---
 title: "Web3早报：2026年4月11日"
-date: 2026-04-11T08:00:00+08:00
+date: "2026-04-11T08:00:00+08:00"
 slug: web3-morning-news-2026-04-11
 description: "每日Web3与加密货币市场早报。"
 draft: false

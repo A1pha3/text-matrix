@@ -1,6 +1,6 @@
 ---
 title: "Token Tracker 入门到精通：纯本地 AI 编程工具 Token 用量追踪实战"
-date: 2026-03-28T13:38:00+08:00
+date: "2026-03-28T13:38:00+08:00"
 slug: "token-tracker-guide-openclaw-usage"
 aliases:
   - /posts/tech/token-tracker-guide-openclaw-usage/

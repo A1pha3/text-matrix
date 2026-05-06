@@ -1,6 +1,6 @@
 ---
 title: "Claude Code 源码架构全解析：Tool、Command、MCP 与权限系统"
-date: 2026-03-31T21:54:05+08:00
+date: "2026-03-31T21:54:05+08:00"
 slug: "claude-code-source-architecture-analysis"
 aliases:
   - /posts/tech/claude-code-source-architecture-analysis/

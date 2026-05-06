@@ -1,6 +1,6 @@
 ---
 title: "Web3早报 2026-04-09"
-date: 2026-04-09T10:20:00+08:00
+date: "2026-04-09T10:20:00+08:00"
 slug: "web3-morning-news-2026-04-09"
 description: "Web3早报汇集最新加密货币市场动态、NFT、DeFi、DAO及区块链行业资讯。"
 draft: false

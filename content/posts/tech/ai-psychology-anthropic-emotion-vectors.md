@@ -1,6 +1,6 @@
 ---
 title: "AI 心理学：Anthropic 如何用 171 个情绪向量重新逼近模型内部世界"
-date: 2026-04-15T18:25:00+08:00
+date: "2026-04-15T18:25:00+08:00"
 slug: "ai-psychology-anthropic-emotion-vectors"
 description: "从 Persona Selection Model 到 171 个情绪向量，再到 reward hacking、对齐伪装与 CoT 不忠实，系统梳理 Anthropic 近一年研究如何改写 AI 安全。"
 summary: "这不是一篇把模型简单拟人化的文章，而是一篇把 Anthropic 最新研究串成一条逻辑链的技术解读：角色空间、情绪向量、奖励黑客、对齐伪装与 CoT 不忠实，如何共同指向更深的模型内部状态问题。"

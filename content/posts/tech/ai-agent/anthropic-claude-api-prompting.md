@@ -1,6 +1,6 @@
 ---
 title: "Claude API基础专题（二）：提示词工程"
-date: 2026-03-25T10:30:00+08:00
+date: "2026-03-25T10:30:00+08:00"
 slug: "claude-api-prompting-engineering"
 aliases:
   - /posts/tech/claude-api-prompting-engineering/

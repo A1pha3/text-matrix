@@ -1,6 +1,6 @@
 ---
 title: "Claude API基础专题（五）：MCP协议深度解析"
-date: 2026-03-25T14:00:00+08:00
+date: "2026-03-25T14:00:00+08:00"
 slug: "claude-api-mcp-model-context-protocol"
 aliases:
   - /posts/tech/claude-api-mcp-model-context-protocol/

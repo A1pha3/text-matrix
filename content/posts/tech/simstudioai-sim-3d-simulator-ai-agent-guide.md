@@ -1,6 +1,6 @@
 ---
 title: "Sim Studio AI 完全指南：从零构建 AI Agent 工作流"
-date: 2026-05-02T15:06:00+08:00
+date: "2026-05-02T15:06:00+08:00"
 slug: "simstudioai-sim-ai-agent-guide"
 description: "Sim 是开源的 AI Agent 构建与编排平台，支持可视化工作流设计、Copilot 辅助、多模型集成和知识库检索。本文深入解析其架构设计、本地部署流程、核心功能实操及二次开发路径。"
 draft: false

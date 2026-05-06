@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报：2026年3月28日"
-date: 2026-03-28T08:00:00+08:00
+date: "2026-03-28T08:00:00+08:00"
 slug: "ai-morning-news-2026-03-28"
 description: "2026年3月28日AI领域最新动态：Anthropic 3800亿估值冲击IPO、Claude王炸泄露引发全网震动、NeurIPS中国学者集体抵制、Sora黯然退场、智元量产万台人形机器人、AGI商业化浪潮来袭"
 draft: false

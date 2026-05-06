@@ -1,6 +1,6 @@
 ---
 title: "YourMemory: 基于艾宾浩斯遗忘曲线的 Agentic AI 记忆系统深度解析"
-date: 2026-04-27T08:17:54+08:00
+date: "2026-04-27T08:17:54+08:00"
 slug: "yourmemory-ebbinghaus-agent-memory"
 description: "YourMemory 将艾宾浩斯遗忘曲线工程化为可配置的衰减算法，配合混合 BM25+向量+图检索两轮 pipeline，在 LoCoMo-10 基准上取得 59% Recall@5，大幅领先 Zep Cloud 等同类产品。默认本地存储零配置，5 步接入任意 MCP 客户端，适合需要跨会话记忆的 AI 开发工作流。"
 draft: false

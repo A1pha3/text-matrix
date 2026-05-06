@@ -1,6 +1,6 @@
 ---
 title: "小红书MCP Skills全集：一条命令搞定小红书运营自动化，AI时代的社媒利器"
-date: 2026-04-07T17:55:00+08:00
+date: "2026-04-07T17:55:00+08:00"
 slug: xiaohongshu-mcp-skills-complete-guide
 description: "深度解析xiaohongshu-mcp-skills项目：8个Agent Skills覆盖安装、登录、发笔记、搜索、互动、涨粉全流程。兼容OpenClaw和Claude Code，一套工具搞定小红书运营自动化。"
 categories: ["技术笔记"]

@@ -1,6 +1,6 @@
 ---
 title: "32k星股票智能分析系统：一键生成「AI决策仪表盘」，支持A股/港股/美股"
-date: 2026-04-30T03:05:00+08:00
+date: "2026-04-30T03:05:00+08:00"
 slug: "daily-stock-analysis-llm-stock-trading-guide"
 description: "ZhuLinsen/daily_stock_analysis 是一个基于大模型的股票智能分析系统，支持A股/港股/美股多市场，通过GitHub Actions零成本定时运行，自动推送包含买卖点位、风险警报和操作检查清单的决策仪表盘。"
 draft: false

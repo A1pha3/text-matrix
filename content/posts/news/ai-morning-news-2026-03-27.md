@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报 2026-03-27"
-date: 2026-03-27T08:00:00+08:00
+date: "2026-03-27T08:00:00+08:00"
 slug: "ai-morning-news-2026-03-27"
 description: "汇总2026年3月27日AI大模型、Agent、具身智能、AI视频/音乐生成、AI开源、芯片算力等领域的最新动态，全部来自过去24小时。来源：36kr / 量子位 / 机器之心 / FT中文网 / Hacker News"
 draft: false

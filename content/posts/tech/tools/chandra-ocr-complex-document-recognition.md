@@ -6,7 +6,7 @@ aliases:
 description: "深入解析 Chandra OCR 项目，涵盖复杂表格识别、表单处理、手写内容识别等核心功能的技术原理、架构分析与实战应用。"
 categories: ["技术笔记"]
 tags: ["OCR", "深度学习", "表格识别", "文档处理", "AI", "Python"]
-date: 2026-03-29T12:00:00+08:00
+date: "2026-03-29T12:00:00+08:00"
 draft: false
 ---
 

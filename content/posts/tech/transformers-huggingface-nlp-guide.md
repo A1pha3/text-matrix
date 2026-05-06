@@ -1,6 +1,6 @@
 ---
 title: "Hugging Face Transformers：最强大的 NLP 库完全指南"
-date: 2026-04-06T22:19:00+08:00
+date: "2026-04-06T22:19:00+08:00"
 slug: "transformers-huggingface-nlp-guide"
 description: "全面介绍 159.5k Stars 的 Hugging Face Transformers 库，涵盖 Pipeline 推理、AutoClass 自动加载、模型微调、Tokenizer、分词器、多模态模型（音频/图像）、量化加速、优化工具，以及完整生态和使用技巧。"
 draft: false

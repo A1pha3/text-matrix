@@ -1,6 +1,6 @@
 ---
 title: "Claude API基础专题（四）：RAG检索增强生成系统"
-date: 2026-03-25T13:00:00+08:00
+date: "2026-03-25T13:00:00+08:00"
 slug: "claude-api-rag-retrieval-augmented-generation"
 aliases:
   - /posts/tech/claude-api-rag-retrieval-augmented-generation/

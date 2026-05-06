@@ -1,6 +1,6 @@
 ---
 title: "Claude HUD：实时显示 Claude Code 状态的智能仪表盘"
-date: 2026-03-29T15:50:00+08:00
+date: "2026-03-29T15:50:00+08:00"
 slug: "claude-hud-realtime-status-dashboard"
 aliases:
   - /posts/tech/claude-hud-realtime-status-dashboard/

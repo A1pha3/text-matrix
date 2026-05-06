@@ -1,6 +1,6 @@
 ---
 title: "AI Hedge Fund：多 Agent 对冲基金团队实战"
-date: 2026-04-09T11:30:00+08:00
+date: "2026-04-09T11:30:00+08:00"
 lastmod: 2026-04-18T15:51:53+08:00
 slug: "ai-hedge-fund-multi-agent-trading"
 description: "基于源码，解析 virattt/ai-hedge-fund 的多 Agent 架构、风控链路、CLI 与 Web 入口，以及可迁移的量化系统设计模式。"

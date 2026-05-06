@@ -1,7 +1,7 @@
 ---
 title: "AutoCLI Skill：让AI Agent掌控55+平台的终极浏览器自动化利器"
 slug: autocli-skill-55-platforms-cli
-date: 2026-04-22T00:50:00+08:00
+date: "2026-04-22T00:50:00+08:00"
 description: "全面解析AutoCLI Skill：开源的55+平台CLI工具，让AI Agent无需API Key即可操控Twitter/X、B站、知乎、微博、YouTube等平台，复用Chrome登录态，零配置开箱即用，Rust编写仅4.7MB。"
 categories: ["技术笔记"]
 tags: ["AutoCLI", "AI Agent", "浏览器自动化", "Rust", "OpenClaw", "Claude Code"]

@@ -2,7 +2,7 @@
 title: "Open Generative AI：无审查的开源 AI 图像视频生成工作室"
 slug: "open-generative-ai-studio-guide"
 description: "Open Generative AI 是一个免费、开源、无审查的 AI 图像、视频和唇同步生成工作室，支持 200+ 先进模型，包括 Flux、Midjourney、Kling、Sora 等。它是 Higgsfield AI、Freepik、Krea、Openart AI 的开源替代品。"
-date: 2026-04-24T11:42:00+08:00
+date: "2026-04-24T11:42:00+08:00"
 categories: ["技术笔记"]
 tags: ["AI图像", "AI视频", "开源工具", "唇同步", "Midjourney"]
 ---

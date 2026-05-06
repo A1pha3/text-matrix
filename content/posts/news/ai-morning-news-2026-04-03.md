@@ -1,6 +1,6 @@
 ---
 title: "AI 新闻早报 2026-04-03"
-date: 2026-04-03T08:40:00+08:00
+date: "2026-04-03T08:40:00+08:00"
 slug: "ai-news-morning-2026-04-03"
 description: "汇总4月3日AI行业最新动态，涵盖Google Gemma 4开源、阿里Qwen3.6-Plus、Anthropic Claude永久在线，英伟达龙虾大脑、SpaceX史上最大IPO等重磅新闻。"
 draft: false

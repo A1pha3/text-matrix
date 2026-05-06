@@ -1,6 +1,6 @@
 ---
 title: "QMD：本地文档语义搜索完全指南"
-date: 2026-04-06T21:33:00+08:00
+date: "2026-04-06T21:33:00+08:00"
 slug: "qmd-local-document-semantic-search-guide"
 description: "全面介绍 21.8k Stars 的 QMD 本地文档语义搜索工具，涵盖语义搜索+BM25 混合搜索、10+ 文档格式支持、Python API、MCP Server 集成，以及 Ollama 向量嵌入的工作原理。"
 draft: false

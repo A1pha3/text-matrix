@@ -1,6 +1,6 @@
 ---
 title: "RustFS：4.8K Stars·分布式容错文件系统·Rust原生"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: rustfs-distributed-fault-tolerant-file-system-guide
 description: "RustFS 是一个分布式容错文件系统，使用 Rust 原生开发，支持 Raft 共识协议。"
 draft: false

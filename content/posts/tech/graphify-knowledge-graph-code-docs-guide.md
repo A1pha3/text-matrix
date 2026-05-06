@@ -1,7 +1,7 @@
 ---
 title: "Graphify：如何将任意文件夹转化为可查询的知识图谱"
 description: "深度解析 graphify 的核心原理、架构设计、多模态文件处理能力，以及如何将其融入 AI 编码助手工作流"
-date: 2026-04-30T11:30:00+08:00
+date: "2026-04-30T11:30:00+08:00"
 categories: ["技术笔记"]
 tags: ["知识图谱", "GraphRAG", "Claude Code", "tree-sitter", "社区检测"]
 draft: false

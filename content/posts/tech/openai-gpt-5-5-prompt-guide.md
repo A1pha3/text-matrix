@@ -1,6 +1,6 @@
 ---
 title: "OpenAI GPT-5.5 Prompt 指南：结果导向提示词、停止条件与迁移模板"
-date: 2026-05-01T00:52:39+08:00
+date: "2026-05-01T00:52:39+08:00"
 slug: "openai-gpt-5-5-prompt-guide"
 description: "基于 OpenAI 官方 GPT-5.5 Prompt guidance 与 Using GPT-5.5，系统拆解结果导向提示词、停止条件、reasoning effort、Structured Outputs、phase 与 prompt caching 的迁移方法。"
 summary: "GPT-5.5 不再适合流程堆砌式 prompt stack。本文从官方 Prompt guidance 与 Using GPT-5.5 出发，讲清结果导向提示词骨架、停止条件、检索预算、preamble、phase、Structured Outputs、prompt caching，以及把旧 prompt 迁移到 GPT-5.5 的实战步骤。"

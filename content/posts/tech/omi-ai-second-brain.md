@@ -1,6 +1,6 @@
 ---
 title: "Omi：你的第二大脑——9K Stars的全平台AI记忆助手，支持桌面/手机/可穿戴设备"
-date: 2026-04-18T15:30:00+08:00
+date: "2026-04-18T15:30:00+08:00"
 slug: "omi-ai-second-brain"
 description: "Omi是一款开源AI助手产品，捕捉屏幕和对话、实时转录、生成摘要和行动项，让AI记住你看到和听到的一切。支持桌面(macOS)、手机(iOS/Android)和可穿戴设备，GitHub获300K+专业人士信赖。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Prompt Master：2.8k Stars 让提示词零浪费的 Claude Skill"
-date: 2026-03-29T00:05:00+08:00
+date: "2026-03-29T00:05:00+08:00"
 slug: "prompt-master-claude-skill"
 aliases:
   - /posts/tech/prompt-master-claude-skill/

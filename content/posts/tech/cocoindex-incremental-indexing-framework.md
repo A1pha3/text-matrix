@@ -1,6 +1,6 @@
 ---
 title: CocoIndex：让 AI Agent 永远拥有最新上下文的增量索引框架
-date: 2026-05-04
+date: "2026-05-04"
 categories:
   - 技术笔记
 tags:

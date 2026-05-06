@@ -1,6 +1,6 @@
 ---
 title: "Web3 早报 2026-04-05"
-date: 2026-04-05T08:00:00+08:00
+date: "2026-04-05T08:00:00+08:00"
 slug: "web3-morning-news-2026-04-05"
 description: "Web3/区块链行业早报，涵盖BTC/ETH价格走势、DeFi最新动态、NFT与GameFi热点、监管政策动向，以及Twitter Web3圈热门讨论。"
 draft: false

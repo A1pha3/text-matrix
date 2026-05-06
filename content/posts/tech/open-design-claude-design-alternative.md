@@ -1,6 +1,6 @@
 ---
 title: "Open Design：开源版 Claude Design 本地优先设计系统"
-date: 2026-04-28T19:31:21+08:00
+date: "2026-04-28T19:31:21+08:00"
 slug: "open-design-claude-design-alternative"
 description: "Open Design 是一个本地优先的开源设计系统，可作为 Claude Design 的开源替代方案。它支持将现有代码助手（Claude Code、Codex、Cursor Agent 等）作为设计引擎，内置 19 个 Skills 和 71 套品牌级设计系统。"
 draft: false

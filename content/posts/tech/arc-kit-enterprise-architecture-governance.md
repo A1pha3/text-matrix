@@ -1,6 +1,6 @@
 ---
 title: "ArcKit:785 Stars的企业架构治理与供应商采购工具包--从入门到精通"
-date: 2026-04-19T21:03:00+08:00
+date: "2026-04-19T21:03:00+08:00"
 slug: "arc-kit-enterprise-architecture-governance"
 description: "ArcKit是785 Stars的开源企业架构治理工具包,提供68个AI辅助命令支持完整架构生命周期:原则制定、利益相关者分析、风险评估(HM Treasury Orange Book)、业务论证(HM Treasury Green Book SOBC)、需求定义、数据建模、DPIA合规、供应商调研与采购、平台设计Wardley图等。集成Claude Code/Gemini CLI/Copilot/Codex四大平台。"
 draft: false

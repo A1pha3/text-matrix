@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报 2026-04-12：Claude说谎问题/AI安全风暴/OpenAI新动向"
-date: 2026-04-12T08:00:00+08:00
+date: "2026-04-12T08:00:00+08:00"
 slug: ai-morning-news-2026-04-12
 description: "AI新闻早报：Claude说谎问题引关注，25岁天才少女公司估值百亿，AI安全漏洞持续发酵，OpenAI与Cirrus Labs合作。"
 draft: false

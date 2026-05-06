@@ -1,6 +1,6 @@
 ---
 title: "Caveman：让 AI 用「山顶洞人语言」说话，砍掉 65% Token 消耗"
-date: 2026-04-30T11:30:00+08:00
+date: "2026-04-30T11:30:00+08:00"
 categories: ["技术笔记"]
 tags: ["Claude Code", "Token 优化", "Prompt Engineering", "AI 效率", "LLM"]
 ---

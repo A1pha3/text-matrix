@@ -1,6 +1,6 @@
 ---
 title: "Prettier：50.5K Stars·Opinionated Code Formatter"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: prettier-code-formatter-guide
 description: "Prettier 是一个 Opinionated 代码格式化工具，支持 JavaScript、TypeScript、CSS、HTML、Markdown 等多种语言，提供一致的代码风格。"
 draft: false

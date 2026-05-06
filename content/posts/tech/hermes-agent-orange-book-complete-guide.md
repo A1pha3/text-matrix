@@ -1,6 +1,6 @@
 ---
 title: "Hermes Agent 橙皮书：从入门到精通的完整指南"
-date: 2026-04-11T10:30:00+08:00
+date: "2026-04-11T10:30:00+08:00"
 slug: "hermes-agent-orange-book-complete-guide"
 description: "Nous Research开源的Hermes Agent是首个内置自进化学习循环的AI Agent框架。本文基于橙皮书，涵盖17章节5大部分，从核心概念到实战，再到与OpenClaw/Claude Code的三方对比。"
 categories: ["技术笔记"]

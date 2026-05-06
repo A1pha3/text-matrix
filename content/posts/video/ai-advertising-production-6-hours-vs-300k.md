@@ -1,6 +1,6 @@
 ---
 title: "AI广告制作实验：6小时 vs 30万美元，广告行业会被颠覆吗？"
-date: 2026-03-28T18:00:00+08:00
+date: "2026-03-28T18:00:00+08:00"
 slug: "ai-advertising-production-6-hours-vs-300k"
 description: "深度解读可灵AI Cinema Studio 2.5制作奢侈品广告实验：一个人6小时产出广告公司报价30万美元的成品，解析五步制作流程、技术细节与广告行业影响。"
 draft: false

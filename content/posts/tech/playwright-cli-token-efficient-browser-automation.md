@@ -1,6 +1,6 @@
 ---
 title: "Playwright CLI：Microsoft出品的Token高效浏览器自动化利器——8.3K Stars的AI Coding Agent首选"
-date: 2026-04-15T19:00:00+08:00
+date: "2026-04-15T19:00:00+08:00"
 slug: "playwright-cli-token-efficient-browser-automation"
 description: "Microsoft出品的Playwright CLI专为coding agents设计，主打Token高效。CLI模式相比MCP节省上下文窗口，83K Stars。核心功能：snapshot、click、type、storage管理、sessions隔离。"
 draft: false

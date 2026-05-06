@@ -1,6 +1,6 @@
 ---
 title: "Coding Plan 优惠合集"
-date: 2026-03-29T10:00:00+08:00
+date: "2026-03-29T10:00:00+08:00"
 slug: "coding-plan-deals"
 description: "整理方舟、MiniMax、智谱与小米 MiMo 四类 Coding、Token 与 API 方案，涵盖核心权益、适用场景与快速选择建议，帮助读者按需求选择更高性价比的国产大模型服务。"
 draft: false

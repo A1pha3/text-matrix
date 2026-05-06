@@ -1,6 +1,6 @@
 ---
 title: "AI副业早报 | 2026年4月17日"
-date: 2026-04-17T08:30:00+08:00
+date: "2026-04-17T08:30:00+08:00"
 slug: "ai-side-hustle-morning-2026-04-17"
 description: "汇总2026年4月17日AI副业、独立开发、远程工作相关机会与讨论，包括V2EX和Reddit上的热门话题。"
 draft: false

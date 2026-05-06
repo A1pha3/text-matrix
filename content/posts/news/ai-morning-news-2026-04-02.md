@@ -1,6 +1,6 @@
 ---
 title: "AI 新闻早报 2026-04-02"
-date: 2026-04-02T10:58:00+08:00
+date: "2026-04-02T10:58:00+08:00"
 slug: ai-morning-news-2026-04-02
 description: "2026年4月2日AI行业新闻早报，涵盖OpenAI 1220亿美元融资、Claude Code开源事件、智谱财报、阿里Wan2.7-Image等重磅新闻"
 draft: false

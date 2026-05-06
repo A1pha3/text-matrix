@@ -1,6 +1,6 @@
 ---
 title: "AI Agents 全栈指南：Nick Saraev 2小时大师班深度解析"
-date: 2026-04-29T15:01:00+08:00
+date: "2026-04-29T15:01:00+08:00"
 slug: "ai-agents-full-course-2026-nick-saraev-200k-views"
 description: "Nick Saraev AI Agents全栈课程深度解析，涵盖ReAct、Tool Use、Memory、Multi-Agent系统与生产级部署，从入门到专家的完整技术路径。"
 draft: false

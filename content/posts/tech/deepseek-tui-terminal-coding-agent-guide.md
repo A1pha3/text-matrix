@@ -1,6 +1,6 @@
 ---
 title: "DeepSeek-TUI：终端原生编程智能体，1M Token 上下文加持的 DeepSeek 专属 Coding Agent"
-date: 2026-05-04T10:08:26+08:00
+date: "2026-05-04T10:08:26+08:00"
 slug: "deepseek-tui-terminal-coding-agent-guide"
 description: "DeepSeek-TUI 是一款完全运行在终端的 Rust 编程序列智能体，基于 DeepSeek V4 的 1M-token 上下文窗口和前缀缓存机制，内置 MCP 客户端、沙箱、子智能体和持久化任务队列。本文从架构设计、安装配置、交互模式、代码结构到进阶用法，全方位解析这款工具的设计思路与实践方法。"
 draft: false

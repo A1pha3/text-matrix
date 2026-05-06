@@ -2,7 +2,7 @@
 title: "AI新闻早报 | 2026-04-19"
 slug: ai-morning-news-2026-04-19
 description: "AI新闻早报：Claude Design设计工具引发讨论、Opus 4.7通胀率约45%、AI宣传战伊朗正在获胜、剑桥分析2.0隐忧"
-date: 2026-04-19T07:30:00+08:00
+date: "2026-04-19T07:30:00+08:00"
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true

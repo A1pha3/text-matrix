@@ -1,6 +1,6 @@
 ---
 title: "Claude 101 第二课：你的第一段对话——先聊起来，再慢慢变好"
-date: 2026-03-25T14:30:00+08:00
+date: "2026-03-25T14:30:00+08:00"
 lastmod: 2026-04-04T00:07:25+08:00
 slug: "claude-101-first-conversation"
 aliases:

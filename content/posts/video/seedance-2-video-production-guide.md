@@ -1,6 +1,6 @@
 ---
 title: "Seedance 2.0 视频制作实战指南：从提示词到分镜的全流程教程"
-date: 2026-03-30T15:36:00+08:00
+date: "2026-03-30T15:36:00+08:00"
 slug: seedance-2-video-production-guide
 categories: ["视频精读"]
 tags: ["Seedance", "AI视频", "提示词工程", "视频制作", "分镜"]

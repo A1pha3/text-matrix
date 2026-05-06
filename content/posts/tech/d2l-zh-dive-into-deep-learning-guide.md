@@ -1,6 +1,6 @@
 ---
 title: "D2L-ZH动手学深度学习：77K Stars·全球500+高校教材·PyTorch/TensorFlow/JAX"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: d2l-zh-dive-into-deep-learning-guide
 description: "D2L-ZH（动手学深度学习）是李沐团队编写的经典教材，被全球 500+ 高校采用，覆盖 PyTorch、TensorFlow、JAX 三大框架。"
 draft: false

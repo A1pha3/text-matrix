@@ -1,6 +1,6 @@
 ---
 title: "Everything Claude Code：从入门指南到工作流系统"
-date: 2026-04-02T07:35:00+08:00
+date: "2026-04-02T07:35:00+08:00"
 lastmod: 2026-04-03T23:33:16+08:00
 slug: everything-claude-code-comprehensive-guide
 aliases:

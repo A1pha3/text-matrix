@@ -1,6 +1,6 @@
 ---
 title: "DeepSeek-TUI：Rust 终端里的 DeepSeek 编程智能体"
-date: 2026-05-05T20:19:00+08:00
+date: "2026-05-05T20:19:00+08:00"
 slug: "deepseek-tui-rust-terminal-coding-agent-guide"
 description: "DeepSeek-TUI 是 Rust 编写的终端编程智能体，专为 DeepSeek 模型优化，支持代码补全、修改、重构和 Git 操作。文章解析其架构设计、核心功能和使用方法。"
 draft: false

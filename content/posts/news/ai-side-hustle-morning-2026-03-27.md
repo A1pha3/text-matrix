@@ -1,6 +1,6 @@
 ---
 title: "AI副业早报 2026-03-27"
-date: 2026-03-27T08:30:00+08:00
+date: "2026-03-27T08:30:00+08:00"
 slug: "ai-side-hustle-morning-2026-03-27"
 description: "汇总2026年3月27日AI副业最新机会与赚钱赛道，涵盖AI编程工具、Agent服务、音视频生成等热门方向。"
 draft: false

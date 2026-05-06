@@ -1,6 +1,6 @@
 ---
 title: "TabPFN: 表格数据的 Foundation Model 完整指南"
-date: 2026-05-06T10:07:31+08:00
+date: "2026-05-06T10:07:31+08:00"
 slug: "tabpfn-tabular-foundation-model-guide"
 description: "TabPFN 是一个基于 Transformer 架构的表格数据 Foundation Model，完全在合成数据上训练，可同时处理分类与回归任务，无需传统训练过程即可在数秒内完成推理。 本文详细介绍其核心概念、使用方法、适用边界与生态体系。"
 draft: false

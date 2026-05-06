@@ -1,6 +1,6 @@
 ---
 title: "TradingAgents：Multi-Agent LLM 金融交易框架深度解析"
-date: 2026-05-04T11:45:00+08:00
+date: "2026-05-04T11:45:00+08:00"
 slug: "tradingagents-multi-agent-llm-trading-framework"
 description: "TradingAgents 是一个基于 LangGraph 的多 Agent LLM 金融交易框架，通过基本面分析师、舆情分析师、新闻分析师、技术分析师、多空研究员、交易员、风险管理团队和投资组合经理的协作，模拟真实投资公司的运作模式，生成 AI 驱动的交易决策。本文从架构设计、各层 Agent 职责、CLI 使用、Python 集成到持久化机制，完整解析这一 65K Stars 的开源框架。"
 draft: false

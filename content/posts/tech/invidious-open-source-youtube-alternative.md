@@ -1,6 +1,6 @@
 ---
 title: "Invidious：无需 Google 账号的开源 YouTube 替代前端"
-date: 2026-04-30T10:10:59+08:00
+date: "2026-04-30T10:10:59+08:00"
 slug: "invidious-open-source-youtube-alternative"
 description: "Invidious 是一个用 Crystal 语言编写的开源 YouTube 替代前端，通过直接解析 YouTube 页面获取数据而不依赖 Google API，实现了无追踪、无广告的观看体验，支持 RSS 订阅、多语言界面和 JSON API。"
 draft: false

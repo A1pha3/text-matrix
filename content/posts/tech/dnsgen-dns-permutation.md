@@ -1,6 +1,6 @@
 ---
 title: "DNSGen：智能 DNS 域名变形引擎——子域名枚举的进阶武器"
-date: 2026-04-14T22:20:00+08:00
+date: "2026-04-14T22:20:00+08:00"
 slug: "dnsgen-dns-permutation"
 description: "DNSGen 是 1K Stars 的智能 DNS 域名变形工具，支持 8 种高级变形技术（Word Insertion、Cloud Patterns、Microservice 等）。配合 Findomain 和 massdns 使用，可显著扩展子域名发现范围，支持自定义云平台词表和带注释词表格式。"
 draft: false

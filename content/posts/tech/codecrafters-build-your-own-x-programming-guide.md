@@ -1,6 +1,6 @@
 ---
 title: "Codecrafters build-your-own-x：从零构建核心技术，成为真正的系统大师"
-date: 2026-04-25T11:20:00+08:00
+date: "2026-04-25T11:20:00+08:00"
 lastmod: 2026-04-25T11:20:00+08:00
 slug: codecrafters-build-your-own-x-programming-guide
 description: "深入解析 Codecrafters build-your-own-x 项目：近50万星的教育圣地，通过从零重构 BitTorrent、Git、Docker 等核心技术，帮助程序员理解底层原理，构建完整知识体系。"

@@ -1,6 +1,6 @@
 ---
 title: "Self-Rationalization Guard：AI Agent 自我合理化防护完全指南"
-date: 2026-04-01T16:15:00+08:00
+date: "2026-04-01T16:15:00+08:00"
 slug: self-rationalization-guard-ai-agent-quality-guide
 aliases:
   - /posts/tech/self-rationalization-guard-ai-agent-quality-guide/

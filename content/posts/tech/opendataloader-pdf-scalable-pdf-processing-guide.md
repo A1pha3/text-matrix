@@ -1,6 +1,6 @@
 ---
 title: "OpenDataLoader-PDF：面向大规模PDF数据集构建的开源数据处理基础设施"
-date: 2026-04-09T20:10:00+08:00
+date: "2026-04-09T20:10:00+08:00"
 slug: "opendataloader-pdf-scalable-pdf-processing-guide"
 description: "OpenDataLoader-PDF是专为构建大规模PDF数据集设计的开源数据处理基础设施，支持任意规模处理、10倍性能提升、隐私优先本地处理。本文深入解析其技术架构、多后端设计、表格检测与异步处理能力。"
 draft: false

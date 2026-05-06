@@ -1,6 +1,6 @@
 ---
 title: "LazyGit：76K Stars·Go语言编写·Git终端UI·可视化版本控制"
-date: 2026-04-12T02:29:31+08:00
+date: "2026-04-12T02:29:31+08:00"
 slug: lazygit-git-terminal-ui-guide
 description: "LazyGit 是一个简单的 Git 终端 UI，使用 Go 语言编写。它旨在通过可视化界面让 Git 版本控制更加用户友好，支持交互式 Rebase、冲突解决等功能。"
 draft: false

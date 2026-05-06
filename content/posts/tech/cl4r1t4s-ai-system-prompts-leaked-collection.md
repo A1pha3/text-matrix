@@ -1,6 +1,6 @@
 ---
 title: "CL4R1T4S：把 AI 系统提示词放到台前的开源档案库"
-date: 2026-04-19T20:58:00+08:00
+date: "2026-04-19T20:58:00+08:00"
 slug: "cl4r1t4s-ai-system-prompts-leaked-collection"
 description: "CL4R1T4S 是 elder-plinius 维护的系统提示词档案库，集中收录多个主流 AI 产品与 AI 编码工具的提示词文本。本文从仓库证据出发，说明它能做什么、适合谁用，以及使用时必须注意的边界。"
 draft: false

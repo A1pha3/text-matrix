@@ -1,6 +1,6 @@
 ---
 title: "AgentScope：生产级 AI Agent 框架完全指南"
-date: 2026-04-01T00:04:44+08:00
+date: "2026-04-01T00:04:44+08:00"
 slug: "agentscope-ai-agent-framework"
 aliases:
   - /posts/tech/agentscope-ai-agent-framework/

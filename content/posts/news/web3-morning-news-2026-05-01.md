@@ -1,6 +1,6 @@
 ---
 title: "Web3早报 2026-05-01"
-date: 2026-05-01T08:00:00+08:00
+date: "2026-05-01T08:00:00+08:00"
 slug: web3-morning-news-2026-05-01
 description: "2026年5月1日 Web3 加密货币早报，汇总 BTC、ETH、SOL 等主流币种行情动态及最新加密行业新闻。"
 draft: false

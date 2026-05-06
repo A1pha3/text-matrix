@@ -2,7 +2,7 @@
 title: "Web3早报 | 2026-04-19"
 slug: web3-morning-news-2026-04-19
 description: "Web3早报：BTC $75,789(-1.69%)，ETH $2,354(-2.82%)，稳定币FX化趋势，Kelp被盗$293M，俄罗斯将加密服务定罪"
-date: 2026-04-19T07:30:00+08:00
+date: "2026-04-19T07:30:00+08:00"
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true

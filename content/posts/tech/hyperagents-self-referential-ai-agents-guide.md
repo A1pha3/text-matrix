@@ -1,6 +1,6 @@
 ---
 title: "Hyperagents：自指性自我改进智能体完全指南"
-date: 2026-04-03T01:31:57+08:00
+date: "2026-04-03T01:31:57+08:00"
 slug: "hyperagents-self-referential-ai-agents-guide"
 description: "Hyperagents 是 Meta FAIR 提出的自指性自我改进智能体框架。本文基于论文摘要、官方 README 与公开源码入口，系统解释其定义、运行流程、代码结构、扩展方式与使用边界。"
 draft: false

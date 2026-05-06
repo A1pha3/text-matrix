@@ -1,6 +1,6 @@
 ---
 title: "Anthropics Skills 仓库全解析：从入门到精通的 Agent Skills 实战指南"
-date: 2026-05-02T10:12:30+08:00
+date: "2026-05-02T10:12:30+08:00"
 slug: "anthropics-skills-agent-skills-repository-guide"
 description: "深入解析 Anthropic 官方 Agent Skills 仓库，涵盖 Skills 核心原理、三层加载架构、技能分类体系，以及在 Claude Code、Claude.ai 和 API 三种场景下的安装与实战用法，并详解如何基于官方模板开发自定义技能。"
 draft: false

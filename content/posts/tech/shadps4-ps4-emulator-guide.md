@@ -1,6 +1,6 @@
 ---
 title: "shadPS4：30.7K Stars·开源PlayStation 4模拟器"
-date: 2026-04-12T01:54:00+08:00
+date: "2026-04-12T01:54:00+08:00"
 slug: shadps4-ps4-emulator-guide
 description: "shadPS4 是一个开源的 PlayStation 4 模拟器，使用 C++ 编写，支持 Windows、Linux、macOS 和 FreeBSD，能够运行 Bloodborne 等游戏。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Axios：Promise HTTP 客户端完全指南"
-date: 2026-04-03T01:25:00+08:00
+date: "2026-04-03T01:25:00+08:00"
 slug: "axios-promise-http-client-guide"
 description: "Axios 是基于 Promise 的 HTTP 客户端，支持浏览器和 Node.js 环境。本文覆盖安装配置、基本使用、拦截器、错误处理、请求取消、数据序列化、最佳实践和常见问题。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Awesome Persona Distill Skills：人格蒸馏Agent Skills的完整指南"
-date: 2026-04-09T13:05:00+08:00
+date: "2026-04-09T13:05:00+08:00"
 slug: "awesome-persona-distill-skills-agent-skills-guide"
 description: "Awesome Persona Distill Skills是围绕人物、关系、纪念性场景与方法论视角的Agent Skills收录列表。本文深入解析人格蒸馏的概念、Skills分类体系、典型实现案例，以及如何构建属于自己的数字人格助手。"
 draft: false

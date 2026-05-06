@@ -1,6 +1,6 @@
 ---
 title: "EverOS：让智能体拥有「数字灵魂」—— 专为自我演化 Agent 设计的记忆底座从入门到精通"
-date: 2026-04-14T20:42:00+08:00
+date: "2026-04-14T20:42:00+08:00"
 slug: "everos-self-evolving-agent-memory-foundation"
 description: "EverOS 是专为自我演化智能体设计的记忆底座，通过 Self-Evolving Agent Memory、mRAG 混合检索、HyperMem 超图架构三大核心技术，让 Agent 实现从经验到技能的自动进化。27B 模型任务成功率提升 234.8%，小模型+好记忆可追平大模型。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "股票智能分析系统：A股/港股/美股 AI 驱动量化投资平台"
-date: 2026-04-08T11:30:00+08:00
+date: "2026-04-08T11:30:00+08:00"
 slug: daily-stock-analysis-ai-quantitative-investment
 aliases:
   - /posts/tech/daily-stock-analysis-ai-quantitative-investment/

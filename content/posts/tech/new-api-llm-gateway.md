@@ -1,6 +1,6 @@
 ---
 title: "new-api：26.7K Stars 的 LLM 网关——多模型聚合与支付计费的从入门到精通"
-date: 2026-04-14T20:30:00+08:00
+date: "2026-04-14T20:30:00+08:00"
 slug: "new-api-llm-gateway"
 description: "new-api 是 26.7K Stars 的开源 LLM 网关，支持 OpenAI Claude Gemini 等多模型聚合，智能路由负载均衡，内置支付计费和用户管理系统，支持 Docker 一键部署，适合需要聚合多个 AI API 的开发者和企业。"
 draft: false

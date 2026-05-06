@@ -3,7 +3,7 @@ title: "free-for-dev：开发者免费资源大全完全指南"
 slug: "free-for-dev-developer-resources-guide"
 aliases:
   - /posts/tech/free-for-dev-developer-resources-guide/
-date: 2026-03-31T14:15:00+08:00
+date: "2026-03-31T14:15:00+08:00"
 categories: ["技术笔记"]
 tags: ["free-for-dev", "开发者资源", "免费服务", "Freemium", "开发工具"]
 description: "全面解析 free-for-dev：78.8k Stars 的开发者免费资源大全，收录 200+ 服务商的免费层级。涵盖 API、数据库、CDN、CI/CD、监控等 60+ 分类。学会用这份资源列表高效找到免费开发工具。"

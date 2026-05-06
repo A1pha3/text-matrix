@@ -1,7 +1,7 @@
 ---
 title: "thunderbird/thunderbolt：Mozilla邮件客户端的AI扩展，开源跨平台AI客户端"
 slug: thunderbird-thunderbolt-open-source-ai-client
-date: 2026-04-22T18:00:00+08:00
+date: "2026-04-22T18:00:00+08:00"
 description: "Thunderbolt 是 Thunderbird（Mozilla邮件客户端）的 AI 扩展，开源跨平台 AI 客户端，支持本地/云端模型，企业级特性。"
 categories: ["技术笔记"]
 tags: ["Thunderbird", "AI客户端", "开源", "跨平台", "本地部署", "企业级"]

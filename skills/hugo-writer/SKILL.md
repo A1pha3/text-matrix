@@ -1,7 +1,7 @@
 ---
 name: "hugo-writer"
 description: "为 Hugo 文章生成/修复 Frontmatter，校验 categories、tags、首页曝光，自动生成 SEO 字段，并转换内部链接。触发词：生成 Frontmatter、修复元数据、分类标签、taxonomy。"
-version: "2.4.0"
+version: "2.5.0"
 tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ---
 
@@ -17,7 +17,10 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 
 ### 1.1 Front Matter 引号与边界闭合
 
-- **引号必须成对闭合**：凡使用双引号包裹的标量值（如 `title`、`description`、部分 `slug`）必须在同一字段值内完成闭合，禁止出现只写开引号、不写闭引号的情况。
+- **所有字符串值强制双引号包裹**：`title`、`slug`、`description` 等所有字符串类型的字段值，**必须**用双引号包裹。布尔值（`true`/`false`）和日期时间值除外。示例：`title: "经济财经早报 2026-05-05"`、`slug: "financial-morning-news-2026-05-05"`。
+- **冒号是 YAML 的致命字符**：YAML 中 `:` 后跟空格会被解析为新键值对的分隔符。若字段值包含 `:`（如中文冒号 `：`、英文冒号 `:`），**必须**用双引号包裹，否则会触发 `did not find expected key` 错误。例如 `title: "Palantir Q1营收激增85%：AI应用层龙头用业绩正名"` 是正确的，而 `title: Palantir Q1营收激增85%：AI应用层龙头用业绩正名` 会导致 YAML 解析失败。
+- **其他特殊字符同理**：字段值包含 `#`、`&`、`*`、`!`、`%`、`@`、`>` 等 YAML 特殊字符时，也必须用双引号包裹。
+- **引号必须成对闭合**：凡使用双引号包裹的标量值必须在同一字段值内完成闭合，禁止出现只写开引号、不写闭引号的情况。
 - **边界必须完整配对**：Front Matter 若使用 YAML `---` 边界，必须保证开头与结尾各有一行独立的 `---`，中间不得因未闭合引号、未结束数组或其他语法错误导致结尾边界失效。
 - **保守改写原则**：发现字段存在未闭合引号、残缺数组、残缺边界时，优先做最小修复，使 YAML 能被 Hugo 正常解析；不要为追求润色而重写无关字段。
 
@@ -46,7 +49,8 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 
 ### 6. 日期格式规范 (Date Format)
 
-- **强制包含时间**：日期**必须**包含完整时间，格式为 `YYYY-MM-DDTHH:MM:SS+08:00`（如 `date: 2026-03-25T08:00:00+08:00`）。
+- **强制包含时间**：日期**必须**包含完整时间，格式为 `YYYY-MM-DDTHH:MM:SS+08:00`（如 `date: "2026-03-25T08:00:00+08:00"`）。
+- **⚠️ 强制用双引号包裹**：`date` 值**必须**用双引号包裹（如 `date: "2026-03-25T08:00:00+08:00"`），**严禁**不写引号（如 `date: 2026-03-25T08:00:00+08:00`）。原因：日期中的冒号（`:`）会被 YAML 解析器误认为 key-value 分隔符，导致 `yaml: did not find expected key` 构建失败。
 - **时间约束**：`date` 的发布时间**必须等于或早于系统当前时间**（以北京时间 `+08:00` 输出），**严禁使用未来时间**。
 - **严禁**使用 `date: 2026-03-25` 或 `date: 2026-03-25T08:00` 等缺少完整时间的格式。
 - **原因**：Hugo 排序默认按日期降序，缺少时间的日期会被当作 `00:00:00`，导致同一天的文章排序异常（较晚时间发布的文章反而排在前面）。
@@ -66,7 +70,8 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
    - 生成对应的英文 `slug` 和 50-100 字的 `description`。
    - 按严格顺序输出 YAML：`title`, `date`, `slug`, `description`, `draft`, `categories`, `tags`, `hiddenFromHomePage` (仅限快讯)。
 3. **链接修复 (如适用)**：扫描正文，将所有站内 `.md` 相对链接替换为 `relref`。
-4. **纯净输出**：若任务仅要求生成 Frontmatter，只输出 YAML 代码块本体，**不附加任何解释说明**。
+4. **YAML 语法验证（强制）**：生成 Frontmatter 后，**必须**用 Python `yaml.safe_load()` 验证语法正确性。验证命令：`echo '---\n<frontmatter字段>\n---' | uv run python -c "import sys,yaml; data=sys.stdin.read(); yaml.safe_load(data.split('---')[1]); print('YAML OK')"`。若验证失败，立即修复后重新验证，直到通过。
+5. **纯净输出**：若任务仅要求生成 Frontmatter，只输出 YAML 代码块本体，**不附加任何解释说明**。
 
 ## 禁止项
 
@@ -76,8 +81,11 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - 非 `["行业快讯"]` 场景，禁止输出 `hiddenFromHomePage`。
 - **禁止使用多行缩进列表格式输出 `categories` 和 `tags`**（必须用单行内联数组）。
 - **禁止输出不完整的日期格式**（如 `date: 2026-03-25` 或 `date: 2026-03-25T08:00`），必须包含完整时间 `YYYY-MM-DDTHH:MM:SS+08:00`。
+- **禁止 date 值不加双引号**（如 `date: 2026-03-25T08:00:00+08:00`），必须写成 `date: "2026-03-25T08:00:00+08:00"`。
 - **禁止输出非系统当前时间的 `date`**（必须使用生成当下的系统时间，且为北京时间 `+08:00`）。
 - **禁止输出未闭合的双引号字符串**（尤其是 `title`、`description`、`slug`）。
+- **禁止输出不加引号的字符串值**：所有字符串类型字段值必须用双引号包裹，严禁裸写（如 `slug: my-post` 必须写成 `slug: "my-post"`）。
+- **禁止在字段值中裸写冒号**：值中含 `:` 或 `：` 时必须双引号包裹，否则 YAML 会将冒号后内容解析为新键，导致 `did not find expected key` 构建失败。
 - **禁止输出缺失结束边界的 Front Matter**，也禁止让未闭合字段吞掉结尾 `---`。
 - 在已有具体实体、产品、协议、技术名词时，禁止使用空泛标签。
 - 若任务仅要求 Frontmatter，禁止额外输出解释、分析过程或注意事项。
@@ -114,8 +122,12 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - `hiddenFromHomePage` 只能在 `["行业快讯"]` 时出现。
 - **日期格式**：`date` 必须为 `YYYY-MM-DDTHH:MM:SS+08:00` 完整格式，不能缺少时间或时区。
 - **时间一致性**：`date` 必须为生成时的系统当前时间（北京时间 `+08:00`），不能回填旧时间或预填未来时间。
-- **引号完整性**：所有以双引号开始的字段值都已正确闭合，尤其检查 `description`。
+- **⚠️ `date` 必须加引号**：`date` 值**必须**用双引号包裹（如 `date: "2026-05-06T08:00:00+08:00"`），否则冒号会导致 YAML 解析失败。
+- **引号完整性**：所有以双引号开始的字段值都已正确闭合，尤其检查 `description` 和 `date`。
+- **⚠️ 字符串值双引号包裹**：所有字符串类型字段值（`title`、`slug`、`description`）是否都用双引号包裹，不存在裸写值。
+- **⚠️ 冒号安全检查**：逐一检查每个字段值，若包含 `:` 或 `：`，确认已被双引号包裹。这是防止 `did not find expected key` 构建失败的关键检查。
 - **边界完整性**：Front Matter 开头和结尾的 `---` 都独立存在，未被未闭合字符串或数组吞并。
+- **YAML 语法验证**：输出前，必须用 Python 执行 `yaml.safe_load()` 对生成的 Front Matter 进行语法验证，确认无解析错误。验证命令：`echo '<frontmatter_content>' | uv run python -c "import sys,yaml; yaml.safe_load(sys.stdin); print('YAML OK')"`。若验证失败，必须修复后再输出。
 - 若任务仅要求 Frontmatter，最终输出只能包含 YAML 块。
 - 若任务包含链接修复，所有站内 `.md` 链接都必须改为 `relref`。
 
@@ -128,7 +140,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ```yaml
 ---
 title: "3月25日 行业大事件早报"
-date: <SYSTEM_NOW_YYYY-MM-DDTHH:MM:SS+08:00>
+date: "<SYSTEM_NOW_YYYY-MM-DDTHH:MM:SS+08:00>"
 slug: "industry-news-daily-mar-25"
 description: "汇总3月25日AI大模型、美股科技股及宏观经济领域的最新动态与核心事件解读。"
 draft: false
@@ -143,7 +155,7 @@ hiddenFromHomePage: true
 ```yaml
 ---
 title: "使用 Python Pandas 进行比特币历史价格回测"
-date: <SYSTEM_NOW_YYYY-MM-DDTHH:MM:SS+08:00>
+date: "<SYSTEM_NOW_YYYY-MM-DDTHH:MM:SS+08:00>"
 slug: "bitcoin-price-backtest-pandas"
 description: "本文详细介绍了如何使用 Python Pandas 库获取并处理比特币历史价格数据，进而实现简单的量化交易回测策略。"
 draft: false

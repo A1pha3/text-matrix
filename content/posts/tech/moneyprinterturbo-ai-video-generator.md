@@ -1,6 +1,6 @@
 ---
 title: "MoneyPrinterTurbo：AI 全自动短视频生成工具从入门到精通"
-date: 2026-03-28T16:40:00+08:00
+date: "2026-03-28T16:40:00+08:00"
 slug: "moneyprinterturbo-ai-video-generator"
 description: "深度解析 MoneyPrinterTurbo：AI 全自动短视频生成工具，一键生成文案+素材+配音+字幕+音乐，支持竖屏9:16和横屏16:9，53.7k stars，详解原理、安装、配置与常见问题。"
 draft: false

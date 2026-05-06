@@ -1,6 +1,6 @@
 ---
 title: "Web3加密货币早报 2026-04-13"
-date: 2026-04-13T08:00:00+08:00
+date: "2026-04-13T08:00:00+08:00"
 draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "加密货币", "Bitcoin", "Ethereum", "DeFi"]

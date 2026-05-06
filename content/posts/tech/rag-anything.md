@@ -1,6 +1,6 @@
 ---
 title: "RAG-Anything：港大开源的全能多模态 RAG 框架，一站式处理文本/图片/表格/公式"
-date: 2026-04-27T01:10:00+08:00
+date: "2026-04-27T01:10:00+08:00"
 slug: rag-anything-hku-multimodal-rag
 description: "RAG-Anything 是港大 MMLab 开发的 All-in-One 多模态 RAG 框架，基于 LightRAG，能一站式处理 PDF、Office文档、图片、表格、数学公式等多模态内容，构建多模态知识图谱，实现跨模态检索。PyPI 一键安装。"
 draft: false

@@ -1,6 +1,6 @@
 ---
 title: "Pi Monorepo：开源 AI Agent 工具包专家级技术文档"
-date: 2026-03-30T13:03:00+08:00
+date: "2026-03-30T13:03:00+08:00"
 slug: pi-mono-ai-agent-toolkit
 aliases:
   - /posts/tech/pi-mono-ai-agent-toolkit/

@@ -1,6 +1,6 @@
 ---
 title: "Obsidian Skills：Obsidian 智能体技能完全指南"
-date: 2026-04-06T21:34:00+08:00
+date: "2026-04-06T21:34:00+08:00"
 slug: "obsidian-skills-agent-skills-for-obsidian-guide"
 description: "全面介绍 20.2k Stars 的 Obsidian Skills 技能集，涵盖 obsidian-markdown、obsidian-bases、json-canvas、obsidian-cli、defuddle 五大技能，以及在 Claude Code、Codex CLI、OpenCode 中的安装和用法。"
 draft: false

@@ -2,7 +2,7 @@
 title: "DESIGN.md：让 Coding Agents 理解视觉设计的格式规范"
 categories: ["技术笔记"]
 tags: ["design.md", "design-system", "ai-agent", "google-labs-code", "design-token"]
-date: 2026-04-30T11:30:00+08:00
+date: "2026-04-30T11:30:00+08:00"
 draft: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "OpenScreen：免费开源的屏幕录制与演示制作工具"
-date: 2026-04-06T18:40:00+08:00
+date: "2026-04-06T18:40:00+08:00"
 slug: "openscreen-free-screen-recording-guide"
 description: "全面介绍 OpenScreen 开源屏幕录制工具，涵盖功能详解、技术架构、安装配置、跨平台注意事项等内容。"
 draft: false

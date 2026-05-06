@@ -1,6 +1,6 @@
 ---
 title: "claude-desktop-debian：3496 Stars的Claude Desktop Linux原生移植——从入门到精通"
-date: 2026-04-19T20:59:00+08:00
+date: "2026-04-19T20:59:00+08:00"
 slug: "claude-desktop-debian-linux-native-build"
 description: "claude-desktop-debian是aaddrick创建的3496 Stars开源项目，通过重新打包官方Windows应用实现Claude Desktop在Linux上的原生运行。支持Debian/Ubuntu/Fedora/Arch/NixOS全系列发行版，提供deb/rpm/AppImage/AUR等包格式，集成MCP协议和Cowork Mode隔离沙箱。"
 draft: false

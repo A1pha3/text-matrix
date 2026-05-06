@@ -1,6 +1,6 @@
 ---
 title: "Dexter 全面解读：从零到一的 AI 研究代理平台（含架构设计、工具生态与扩展开发）"
-date: 2026-03-26T16:15:00+08:00
+date: "2026-03-26T16:15:00+08:00"
 slug: "dexter-comprehensive-guide"
 aliases:
   - /posts/tech/dexter-comprehensive-guide/

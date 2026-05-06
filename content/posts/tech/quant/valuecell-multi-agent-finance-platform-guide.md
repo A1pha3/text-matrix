@@ -1,6 +1,6 @@
 ---
 title: "ValueCell：社区驱动的多智能体金融应用平台完全指南"
-date: 2026-04-08T13:00:00+08:00
+date: "2026-04-08T13:00:00+08:00"
 slug: "valuecell-multi-agent-finance-platform-guide"
 aliases:
   - /posts/tech/valuecell-multi-agent-finance-platform-guide/

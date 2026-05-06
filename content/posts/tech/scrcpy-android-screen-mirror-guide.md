@@ -1,6 +1,6 @@
 ---
 title: "scrcpy：138k Stars Android 屏幕镜像完全指南"
-date: 2026-04-06T22:23:00+08:00
+date: "2026-04-06T22:23:00+08:00"
 slug: "scrcpy-android-screen-mirror-guide"
 description: "全面介绍 138k Stars 的 scrcpy Android 屏幕镜像工具，涵盖安装配置、USB/无线连接、屏幕录制、音频转发、键盘鼠标/游戏手柄控制、OTG 模式、摄像头镜像、性能优化等全部功能。"
 draft: false

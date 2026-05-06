@@ -1,7 +1,7 @@
 ---
 title: "zilliztech/claude-context：MCP语义代码搜索插件，让Claude理解整个代码库"
 slug: zilliztech-claude-context-mcp-plugin
-date: 2026-04-22T16:35:00+08:00
+date: "2026-04-22T16:35:00+08:00"
 description: "zilliztech/claude-context 是一个 MCP 插件，为 Claude Code 提供语义代码搜索功能，使用 Zilliz Cloud 向量数据库存储代码库，实现百万行代码的精准检索。"
 categories: ["技术笔记"]
 tags: ["MCP", "Claude Code", "语义搜索", "向量数据库", "Zilliz"]

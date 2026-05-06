@@ -1,6 +1,6 @@
 ---
 title: "Claude API基础专题（七）：Agent架构与智能体设计"
-date: 2026-03-25T10:00:00+08:00
+date: "2026-03-25T10:00:00+08:00"
 slug: "claude-api-agent-architecture-design"
 aliases:
   - /posts/tech/claude-api-agent-architecture-design/

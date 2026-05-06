@@ -1,6 +1,6 @@
 ---
 title: "Web3早报：2026年4月6日"
-date: 2026-04-06T10:40:00+08:00
+date: "2026-04-06T10:40:00+08:00"
 slug: "web3-morning-news-2026-04-06"
 description: "汇总Web3/加密货币市场最新动态，包括BTC/ETH行情、DeFi安全事件、机构动态、监管政策等。"
 draft: false

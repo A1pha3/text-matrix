@@ -1,6 +1,6 @@
 ---
 title: "Reverse SynthID：Google Gemini水印的逆向工程"
-date: 2026-04-12T02:31:39+08:00
+date: "2026-04-12T02:31:39+08:00"
 slug: reverse-synthID-gemini-watermark-analysis-guide
 description: "Reverse SynthID 是对 Google Gemini 水印技术的逆向工程研究，探讨 AI 生成图像的版权保护和追溯技术。"
 draft: false

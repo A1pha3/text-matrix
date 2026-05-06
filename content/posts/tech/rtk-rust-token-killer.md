@@ -1,6 +1,6 @@
 ---
 title: "RTK：Rust 写的高性能 CLI 代理，Claude Code 场景节省 80% Token"
-date: 2026-04-27T01:03:00+08:00
+date: "2026-04-27T01:03:00+08:00"
 slug: rtk-rust-token-killer
 description: "RTK 是一个 Rust 写的高性能 CLI 代理，通过过滤和压缩命令输出让 LLM 节省 60-90% Token。一行命令安装，零依赖，单二进制，支持 Claude Code、Cursor、Copilot 等 12 种 AI 编码工具。"
 draft: false

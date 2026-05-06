@@ -1,6 +1,6 @@
 ---
 title: "AI新闻早报 2026-04-13：AI电力悖论/Anthropic缓存降级/欧洲AI独立宣言"
-date: 2026-04-13T08:00:00+08:00
+date: "2026-04-13T08:00:00+08:00"
 draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Anthropic", "Claude", "大模型"]

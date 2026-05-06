@@ -3,7 +3,7 @@ title: "PaddleOCR：全球领先 OCR 工具包与文档 AI 引擎完全指南"
 slug: "paddleocr-ocr-document-ai-engine-guide"
 aliases:
   - /posts/tech/paddleocr-ocr-document-ai-engine-guide/
-date: 2026-04-01T01:23:00+08:00
+date: "2026-04-01T01:23:00+08:00"
 categories: ["技术笔记"]
 tags: ["PaddleOCR", "OCR", "文档识别", "文本识别", "PP-OCR", "PaddleOCR-VL", "PP-StructureV3", "RAG", "文档AI", "表格识别", "多语言OCR"]
 description: "深度解析 PaddleOCR (74k Stars)：百度飞桨开源的全球领先OCR工具包和文档AI引擎，支持PDF/图像转JSON/Markdown、PaddleOCR-VL-1.5 (0.9B VLM, 94.5%准确率)、PP-StructureV3表格识别、PP-OCRv5（100+语言），深度集成Dify、RAGFlow、Cherry Studio等主流RAG和Agent平台，采用Python+C++技术栈，支持TensorRT/ONNX高性能推理。"

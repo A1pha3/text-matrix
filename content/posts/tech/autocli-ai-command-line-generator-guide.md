@@ -1,7 +1,7 @@
 ---
 title: "AutoCLI：用自然语言生成命令行工具的AI框架"
 slug: "autocli-ai-command-line-generator-guide"
-date: 2026-04-08T12:50:00+08:00
+date: "2026-04-08T12:50:00+08:00"
 lastmod: 2026-04-08T12:50:00+08:00
 categories: ["技术笔记"]
 tags: ["CLI", "Go", "AI", "命令行工具", "Cobra", "代码生成"]

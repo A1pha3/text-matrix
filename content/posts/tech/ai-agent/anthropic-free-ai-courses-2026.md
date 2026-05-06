@@ -1,6 +1,6 @@
 ---
 title: "Anthropic 开放 13 门免费 AI 课程，Claude 学习地图完整发布"
-date: 2026-03-25T09:22:00+08:00
+date: "2026-03-25T09:22:00+08:00"
 slug: "anthropic-free-ai-courses-2026"
 aliases:
   - /posts/tech/anthropic-free-ai-courses-2026/
