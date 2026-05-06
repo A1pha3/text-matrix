@@ -6,8 +6,28 @@
     <div class="page archive" data-pagefind-ignore="all">
         <h2 class="single-title animate__animated animate__pulse animate__faster">{{ .Title }}</h2>
         {{- if eq .Data.Plural "categories" -}}
+            {{- $terms := .Data.Terms.Alphabetical -}}
+            {{- $orderedTerms := newScratch -}}
+            {{- $orderedTerms.Set "items" (slice) -}}
+            {{- $orderedTerms.Set "seen" (slice) -}}
+            {{- range .Site.Menus.main -}}
+                {{- if hasPrefix .URL "/categories/" -}}
+                    {{- $menuURL := .URL -}}
+                    {{- range $terms -}}
+                        {{- if eq .Page.RelPermalink $menuURL -}}
+                            {{- $orderedTerms.Add "items" (slice .) -}}
+                            {{- $orderedTerms.Add "seen" (slice .Page.RelPermalink) -}}
+                        {{- end -}}
+                    {{- end -}}
+                {{- end -}}
+            {{- end -}}
+            {{- range $terms -}}
+                {{- if not (in ($orderedTerms.Get "seen") .Page.RelPermalink) -}}
+                    {{- $orderedTerms.Add "items" (slice .) -}}
+                {{- end -}}
+            {{- end -}}
             <div class="categories-card">
-                {{- range .Data.Terms.Alphabetical -}}
+                {{- range $orderedTerms.Get "items" -}}
                     <a class="card-item" href="{{ .Page.RelPermalink }}">
                         <span class="card-item-label">{{ .Page.Title }}</span>
                         <span class="card-item-count">{{ .Count }}</span>
