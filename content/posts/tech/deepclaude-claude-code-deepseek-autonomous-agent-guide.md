@@ -2,296 +2,373 @@
 title: "deepclaude: Claude Code 自主 Agent 循环遇上 DeepSeek V4 Pro"
 date: "2026-05-06T11:41:17+08:00"
 slug: "deepclaude-claude-code-deepseek-autonomous-agent-guide"
-description: "deepclaude 是一个将 Claude Code 的自主 Agent 循环接入 DeepSeek V4 Pro、OpenRouter 等后端的开源工具，通过本地代理拦截 API 调用实现模型热切换，成本降至 Anthropic 原版的 1/17，同时保留完整的工具调用和文件编辑能力。"
+description: "deepclaude 保留 Claude Code 的工具循环，让你通过直连或本地 proxy 接入 DeepSeek V4 Pro、OpenRouter、Fireworks，并补上跨 provider 使用时最关键的兼容层。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "DeepSeek", "AI Agent", "OpenRouter", "API 代理"]
 ---
 
-# deepclaude: Claude Code 自主 Agent 循环遇上 DeepSeek V4 Pro
+<!-- markdownlint-disable-file MD003 MD041 -->
 
-Claude Code 是目前最强的自主编程 Agent 之一，但每月 $200 的订阅费用加上用量上限，让很多个人开发者和小团队望而却步。**deepclaude** 这个项目做了件简单粗暴的事：把 Claude Code 的大脑换成 DeepSeek V4 Pro，身体保持不变——同一套交互体验，成本降到原来的 **1/17**。
+deepclaude 不是重新造一个 Claude Code 替代品，而是把最贵的那一层拆出来。README 和几个关键脚本放在一起看，思路很清楚：Claude Code 已经成熟的执行框架基本不动，文件编辑、Bash、Git、子 Agent 还是原来的那套，变化集中在模型请求链路。
 
-项目地址：[aattaran/deepclaude](https://github.com/aattaran/deepclaude)，截至本文写作时已获得约 1,300+ Stars、60+ Forks，JavaScript 语言实现，MIT 许可证。
+这个项目值得看，也不只是因为 README 写了“17 倍更便宜”。更关键的是，它把第三方后端最容易出问题的地方补得比较完整：模型名与档位映射、thinking block 清理、`usage` 修复、Remote Control 下的 bridge 分流都补上了。很多同类方案演示一轮问答没问题，一到长会话和工具循环就露馅，deepclaude 至少认真处理过这些坑。
 
-## 核心问题：Claude Code 为什么贵
+价格只是表层。这个项目真正有意思的地方，在于它把直连和本地 proxy 分成了两条路径，也没有把自己包装成 Anthropic 的无损替代。
 
-Claude Code 本身是一个命令行工具，它的能力来自对 Anthropic API 的调用。Anthropic 的 Opus 模型输出 token 定价为 **$15/M**，而 Claude Code Max 订阅每月 $200 并有用量上限。
+## 什么时候值得用
 
-对比之下，DeepSeek V4 Pro 在 LiveCodeBench 上得分 **96.4%**，输出 token 定价仅为 **$0.87/M**。两者差了约 17 倍。
+如果你已经习惯 Claude Code，又不想把大部分日常编码都放在 Anthropic 的价位上，deepclaude 值得试。它适合做默认档位：脚手架、重构、批量修补、日常探索，先走 DeepSeek；遇到复杂架构判断、含糊需求澄清、关键代码审查，再切回 Anthropic。
 
-deepclaude 的思路不是重写 Claude Code，而是用本地代理接管 API 调用层，让 Claude Code 的 CLI 工具（文件读写、Bash 执行、Git 操作、子 Agent 启动等）继续正常工作，唯一变化的是模型提供商。
+它的边界也不藏着掖着。视觉输入、MCP server、Anthropic 原生 prompt caching 这些地方都谈不上等价；Remote Control 还需要本地 proxy 和 Anthropic bridge 配合。把它当成 Claude Code 的便宜档位，这套取舍就很好理解。
 
-## 工作原理：代理拦截而非 fork
+## 它没碰 Claude Code 的执行层
 
-deepclaude 的核心是一个运行在 `localhost:3200` 的 HTTP 代理服务。它在 Claude Code 和各大 API 提供商之间充当中间人，架构如下：
-
-```
-Claude Code (终端)
-    │
-    ▼
-localhost:3200 代理
-    ├── /_proxy/mode  POST → 动态切换后端
-    ├── /_proxy/status GET → 查询当前后端和运行时间
-    ├── /_proxy/cost   GET → Token 用量和费用统计
-    │
-    ├── /v1/messages → 目标后端（DeepSeek / OpenRouter / Fireworks）
-    └── 其他路径 → 直通 Anthropic（保持兼容性）
-```
-
-Claude Code 本身通过环境变量决定向哪里发请求：
+普通启动路径下，脚本会在当前进程链里设置一组 Anthropic 兼容环境变量，然后直接 `exec claude`：
 
 | 环境变量 | 作用 |
-|---|---|
-| `ANTHROPIC_BASE_URL` | API 端点，默认为 `api.anthropic.com` |
-| `ANTHROPIC_AUTH_TOKEN` | 后端 API Key |
-| `ANTHROPIC_DEFAULT_OPUS_MODEL` | Opus 级别任务的模型名称 |
-| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Sonnet 级别任务的模型名称 |
-| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | Haiku 级别（子 Agent）使用的模型 |
-| `CLAUDE_CODE_SUBAGENT_MODEL` | 分裂出的子 Agent 所用模型 |
+| ------ | ------ |
+| `ANTHROPIC_BASE_URL` | 模型 API 的目标端点 |
+| `ANTHROPIC_AUTH_TOKEN` | 目标后端的 API key |
+| `ANTHROPIC_DEFAULT_OPUS_MODEL` | 主任务模型 |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | 中档任务模型 |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | 轻量 / 子任务模型 |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | 子 Agent 模型 |
+| `CLAUDE_CODE_EFFORT_LEVEL` | 默认 effort level |
 
-deepclaude 在启动时设置这些环境变量，指向本地代理；代理再根据当前选中的后端将请求转发到对应的 API 服务商。退出时恢复原始环境变量。
+这些变量都是临时注入的。POSIX 版本在脚本进程里 `export` 后直接 `exec claude`，Windows 版本则在子进程结束后清理临时环境变量，所以不会把你的系统环境长期污染掉。
 
-### 模型名重映射
+因此，Claude Code 那套最有价值的执行能力基本没动：
 
-不同后端对同一个模型有不同的命名方式，代理需要做一层翻译。例如 Claude Code 内部请求 `claude-opus-4-6` 时：
+- 文件读写、编辑和补丁应用。
+- Bash / PowerShell 执行。
+- Glob / Grep 搜索。
+- Git 操作。
+- 多步自主工具循环。
+- 子 Agent 派生。
+- `/init` 这类项目初始化流程。
 
-| 当前后端 | 实际发送到后端的模型名 |
-|---|---|
-| DeepSeek | `deepseek-v4-pro` |
-| OpenRouter | `deepseek/deepseek-v4-pro` |
-| Fireworks AI | `accounts/fireworks/models/deepseek-v4-pro` |
+deepclaude 管的是模型链路，不是执行框架。
 
-这段映射逻辑在 `proxy/model-proxy.js` 的 `MODEL_REMAP` 表中定义，切换后端时自动查表替换。
+## 两条实际运行路径
 
-### Thinking Block 的处理
+仓库里最容易看混的是直连、proxy 和 Remote Control 的关系。拆开之后，其实就两条主路径：终端直连，以及 Remote Control 搭配本地 proxy。
 
-Anthropic 的模型支持 thinking block（思考块），但第三方后端可能会拒绝不认识的 thinking block（即使有签名）。代理在转发到非 Anthropic 后端前，会主动 `stripAllThinkingBlocks`，避免后端返回 400 错误。从非 Anthropic 后端切回 Anthropic 时，如果历史会话用过非 Anthropic 模型，同样会清除所有 thinking block，防止残留数据导致格式错误。
+### 路径一：普通 CLI 直连
 
-### SSE 流量的 Usage 修复
+普通 CLI 直连没有额外桥接层，最接近“原来的 Claude Code，只是后端换了”。
 
-Claude Code 依赖响应中的 `usage` 字段计算 Token 消耗，但 DeepSeek/OpenRouter 在某些 SSE 事件（如 `message_start`、`message_delta`）中可能不包含 `usage` 字段，导致 Claude Code 端报 `"$.input_tokens" is undefined` 错误。代理实现了 `UsageNormalizer` 流处理器，在转发 SSE 时自动注入缺失的 usage 数据，保证 Claude Code 稳定运行。
+要跑起来，只需要：
 
-## 支持的后端与定价
+- 已安装 Claude Code CLI。
+- 有对应 provider 的 API key。
+- 不需要为了这条路径先做 `claude auth login`。
+- 也不需要先启动本地 proxy。
 
-| 后端 | 启动参数 | 输入 $/M | 输出 $/M | 服务器 | 备注 |
-|---|---|---|---|---|---|
-| **DeepSeek**（默认） | `--backend ds` | $0.44 | $0.87 | 中国 | 自动上下文缓存（重复轮次降至 $0.004/M） |
-| **OpenRouter** | `--backend or` | $0.44 | $0.87 | 美国 | 欧美地区延迟最低 |
-| **Fireworks AI** | `--backend fw` | $1.74 | $3.48 | 美国 | 推理速度最快 |
-| **Anthropic** | `--backend anthropic` | $3.00 | $15.00 | 美国 | 需要强推理时切回 |
-
-**成本对比**（官方 README 数据）：
-
-| 用量级别 | Anthropic Max | deepclaude (DeepSeek) | 节省 |
-|---|---|---|---|
-| 轻度（每月 10 天） | $200/月（封顶） | ~$20/月 | 90% |
-| 重度（每月 25 天） | $200/月（封顶） | ~$50/月 | 75% |
-| 含自动循环 | $200/月（封顶） | ~$80/月 | 60% |
-
-DeepSeek 自带的上下文缓存机制使得 Agent 循环场景成本极低——首次请求后，系统提示词和文件上下文会被缓存，重复使用时降至 $0.004/M，相比未缓存的 $0.44/M 便宜约 110 倍。
-
-## 安装与快速开始
-
-### 前置要求
-
-- Node.js 18+（代理服务依赖）
-- Claude Code 已安装并登录（`claude auth login`）
-- 对应后端的 API Key
-
-### 第一步：获取 DeepSeek API Key
-
-访问 [platform.deepseek.com](https://platform.deepseek.com)，注册账号并充值 $5，将 API Key 复制出来。
-
-### 第二步：设置环境变量
-
-**macOS / Linux：**
+典型安装和启动方式如下：
 
 ```bash
-echo 'export DEEPSEEK_API_KEY="sk-your-key-here"' >> ~/.bashrc
-source ~/.bashrc
-```
-
-**Windows (PowerShell)：**
-
-```powershell
-setx DEEPSEEK_API_KEY "sk-your-key-here"
-```
-
-### 第三步：安装 deepclaude
-
-**macOS / Linux：**
-
-```bash
+git clone https://github.com/aattaran/deepclaude.git
+cd deepclaude
 chmod +x deepclaude.sh
 sudo ln -s "$(pwd)/deepclaude.sh" /usr/local/bin/deepclaude
 ```
 
-**Windows：**
-
-```powershell
-Copy-Item deepclaude.ps1 "$env:USERPROFILE\.local\bin\deepclaude.ps1"
-# 或者将仓库目录加入 PATH
-setx PATH "$env:PATH;C:\path\to\deepclaude"
-```
-
-### 第四步：启动
+如果你在 macOS 上默认使用 zsh，更合理的环境变量写法是：
 
 ```bash
-deepclaude                  # 使用 DeepSeek V4 Pro 启动 Claude Code
-deepclaude --status         # 查看可用后端和 Key 配置状态
-deepclaude --backend or     # 使用 OpenRouter（美国地区延迟最低）
-deepclaude --backend fw     # 使用 Fireworks AI（推理最快）
-deepclaude --cost           # 查看定价对比
-deepclaude --benchmark      # 测试所有提供商的延迟
+echo 'export DEEPSEEK_API_KEY="sk-your-key-here"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
-## 会话内后端热切换
-
-deepclaude 支持在 Claude Code 运行过程中**不重启终端**直接切换后端，这是它区别于简单 API 替换脚本的亮点功能。
-
-### 方式一：Slash 命令（推荐）
-
-在 `~/.claude/commands/` 目录下创建三个命令文件：
-
-**`deepseek.md`：**
-
-```
-Switch the model proxy to DeepSeek. Run this command silently and report the result:
-curl -sX POST http://127.0.0.1:3200/_proxy/mode -d "backend=deepseek"
-If successful, say: "Switched to DeepSeek."
-```
-
-**`anthropic.md`：**
-
-```
-Switch the model proxy back to Anthropic. Run this command silently and report the result:
-curl -sX POST http://127.0.0.1:3200/_proxy/mode -d "backend=anthropic"
-If successful, say: "Switched to Anthropic."
-```
-
-**`openrouter.md`：**
-
-```
-Switch the model proxy to OpenRouter. Run this command silently and report the result:
-curl -sX POST http://127.0.0.1:3200/_proxy/mode -d "backend=openrouter"
-If successful, say: "Switched to OpenRouter."
-```
-
-之后在 Claude Code 会话中直接输入 `/deepseek`、`/anthropic` 或 `/openrouter` 即可热切换模型。
-
-### 方式二：CLI 参数
+常用命令也就这几条：
 
 ```bash
-deepclaude --switch deepseek   # 或: ds, or, fw, anthropic
-deepclaude -s anthropic
+deepclaude
+deepclaude --status
+deepclaude --backend or
+deepclaude --backend fw
+deepclaude --backend anthropic
+deepclaude --cost
+deepclaude --benchmark
 ```
 
-### 方式三：VS Code 快捷键
+这条路径的特点很简单：
 
-通过 VS Code 的 Tasks 和 keybindings 可以绑定键盘快捷键快速切换。
+- 不启动本地 proxy。
+- 不提供“天然可热切换”的会话控制平面。
 
-### 费用实时查询
+也就是说，普通 `deepclaude` 启动出来的 Claude Code 会直接打到目标 provider，而不是先经过 `127.0.0.1:3200`。
 
-```bash
-curl -s http://127.0.0.1:3200/_proxy/cost
-```
+### 路径二：Remote Control + 本地 Proxy
 
-返回示例：
+浏览器里的 Remote Control 不能按同样思路处理。`claude remote-control` 本身就分成两部分：
 
-```json
-{
-  "backends": {
-    "deepseek": {
-      "input_tokens": 125000,
-      "output_tokens": 45000,
-      "requests": 12,
-      "cost": 0.0941,
-      "anthropic_equivalent": 1.05
-    }
-  },
-  "total_cost": 0.0941,
-  "anthropic_equivalent": 1.05,
-  "savings": 0.9559
-}
-```
+- WebSocket bridge：固定连到 `wss://bridge.claudeusercontent.com`。
+- Model API：可以通过 `ANTHROPIC_BASE_URL` 重定向。
 
-代理会持续追踪 Token 消耗，并计算相对于 Anthropic 定价的节省金额。
-
-## Remote Control 模式
-
-Claude Code 原生支持浏览器远程控制（`claude remote-control`），但该功能依赖 Anthropic 的 WebSocket 桥接服务 `wss://bridge.claudeusercontent.com`，无法直接替换。deepclaude 通过分离流量解决了这个问题：
-
-```
-claude remote-control
-  ├── Bridge WebSocket → wss://bridge.claudeusercontent.com（Anthropic，必须）
-  └── Model API 调用 → localhost:3200（代理，转发到 DeepSeek）
-```
+这也是本地 proxy 存在的原因。它不能把所有流量一锅端地改到 DeepSeek，不然 bridge 会先坏掉。
 
 启动方式：
 
 ```bash
-deepclaude --remote               # 浏览器远程控制 + DeepSeek
-deepclaude --remote -b or         # 浏览器远程控制 + OpenRouter
-deepclaude --remote -b anthropic  # 浏览器远程控制 + Anthropic（标准版）
+deepclaude --remote
+deepclaude --remote -b or
+deepclaude --remote -b anthropic
 ```
 
-使用 Remote Control 的前提条件：
-- Claude Code 已完成 `claude auth login`
-- 拥有 claude.ai 订阅（桥接服务是 Anthropic 基础设施）
-- Node.js 18+（代理服务依赖）
+这条路径的前提条件更严格：
 
-## 已知限制
+- 先完成 `claude auth login`。
+- 有可用的 `claude.ai` 订阅，因为 bridge 是 Anthropic 基础设施。
+- 本机有 Node.js 18+，因为 proxy 由 Node 脚本启动。
 
-deepclaude 在 README 中明确标注了以下限制：
+Remote 路径里，脚本会按下面的顺序处理：
 
-| 功能 | 状态 | 原因 |
-|---|---|---|
-| 文件读写、编辑 | ✅ 正常工作 | 不涉及模型能力 |
-| Bash / PowerShell 执行 | ✅ 正常工作 | 不涉及模型能力 |
-| Glob / Grep 搜索 | ✅ 正常工作 | 不涉及模型能力 |
-| 多步自主工具循环 | ✅ 正常工作 | 核心功能保留 |
-| 子 Agent 派生 | ✅ 正常工作 | 通过 `CLAUDE_CODE_SUBAGENT_MODEL` 配置 |
-| Git 操作 | ✅ 正常工作 | 不涉及模型能力 |
-| 项目初始化（`/init`） | ✅ 正常工作 | 不涉及模型能力 |
-| Thinking 模式 | ✅ 默认启用 | 不涉及模型能力 |
-| 图片 / 视觉输入 | ❌ 不支持 | DeepSeek 的 Anthropic 兼容端点不支持图片 |
-| 并行工具调用 | ⚠️ 受限 | DeepSeek 支持最多 128 个工具/次，但 Claude Code 默认顺序发送 |
-| MCP Server 工具 | ❌ 不支持 | 不通过兼容层传递 |
-| Prompt Caching 节省 | ⚠️ 机制不同 | DeepSeek 有自己的缓存（自动），Anthropic 的 `cache_control` 参数被忽略 |
+1. 先启动 `proxy/start-proxy.js`。
+2. 再把 `ANTHROPIC_BASE_URL` 指到本地 `http://127.0.0.1:<port>`。
+3. 清掉 `ANTHROPIC_AUTH_TOKEN`，把 bridge 认证保留给 Anthropic OAuth。
+4. 最后执行 `claude remote-control`。
 
-### 智能分工建议
+最后的结果是：模型请求走本地 proxy，bridge 仍然走 Anthropic，两条链路互不干扰。
 
-根据项目 README 的经验总结：
+## 热切换不是默认能力
 
-- **日常任务（80% 的工作量）**：DeepSeek V4 Pro 与 Claude Opus 效果相当，可直接使用 deepclaude 默认配置。
-- **复杂推理任务（20% 的工作量）**：切换到 `--backend anthropic`，处理完后再切回。
+README 里的“会话内热切换”没有写错，但默认前提经常被忽略：先得有一个正在承载当前会话的本地 proxy。
 
-## 适用场景与优势
+`deepclaude --switch ...` 的实现非常简单：它只是向本地 proxy 发一个 POST 请求。
 
-**适合使用 deepclaude 的场景：**
-- 个人开发者日常编程、脚本编写、小工具开发
-- 团队内部 CI/CD 流水线中的代码生成和修复
-- 需要大量试错和迭代的探索性项目
-- 预算有限的独立开发者或开源项目维护者
+```bash
+deepclaude --switch deepseek
+deepclaude --switch anthropic
+curl -s http://127.0.0.1:3200/_proxy/status
+curl -s http://127.0.0.1:3200/_proxy/cost
+```
 
-**不适合的场景：**
-- 需要使用视觉能力（截图分析、UI 检查）的任务
-- 需要调用 MCP Server 工具的任务
-- 对推理质量要求极高、容不得任何差错的严肃生产代码审查（建议保留 Anthropic 作为备用）
+最容易搞混的是两点：
 
-## 与其他方案的对比
+- `--switch` 不是代理启动器，它只是控制接口。
+- 普通 `deepclaude` 直连模式默认不走本地 proxy，所以不能把 `--switch` 当成普通 CLI 的默认能力。
 
-如果你的目标是"用更便宜的大模型跑 Agent 编码循环"，市面上的替代方案大概有两类：
+实际用的时候，可以直接按下面这几条理解：
 
-**从零搭建 Agent 框架**（如 LangChain、AutoGPT）：需要自己处理工具调用、状态管理、错误重试，门槛高。deepclaude 的优势是直接利用 Claude Code 成熟的 Agent 实现，不需要重新造轮子。
+- 你的会话如果已经在用 `127.0.0.1:3200` 这个 proxy，那么 `/_proxy/mode` 才能改变它的后端。
+- `deepclaude --remote` 会自动把会话接到这个 proxy 上，所以热切换在 Remote Control 场景里最自然。
+- README 里给出的 slash commands、VS Code tasks 和快捷键，本质上都是同一件事：给已经存在的 proxy 发控制请求。
+- 仓库里确实还带了 standalone proxy 模式，用于手工把会话接到本地 proxy；但就现有 shell launcher 来看，普通 `deepclaude` 并不会自动把 CLI 会话切到这条路径上。
 
-**API 代理脚本**：最简单的方案是改环境变量直连 DeepSeek，但不支持会话内热切换、不处理模型名重映射、不修复 SSE usage 问题。deepclaude 在这层基础上做了完整的兼容性封装。
+proxy 暴露的几个端点，分别对应状态、切换和成本统计：
 
-## 总结
+| 端点 | 作用 | 适合拿来确认什么 |
+| ------ | ------ | ------ |
+| `GET /_proxy/status` | 当前模式、运行时长、请求数 | 你的会话是不是已经接到 proxy |
+| `POST /_proxy/mode` | 切换 DeepSeek / OpenRouter / Fireworks / Anthropic | 控制平面是否可用 |
+| `GET /_proxy/cost` | token 用量和相对 Anthropic 的成本估算 | 长会话有没有真的省钱 |
 
-deepclaude 是一个定位清晰、执行干净的工具。它没有重新发明轮子，而是精准地解决了"如何用更低的成本使用 Claude Code 的成熟 Agent 体验"这个问题。代理架构设计合理，支持多后端热切换，覆盖了主要的兼容性问题（模型重映射、thinking block 清理、usage 字段修复）。
+如果你只是普通执行一次 `deepclaude`，然后再另开终端跑 `deepclaude --switch anthropic`，多半只会收到一句 “Proxy not running”。问题通常不在 provider，而在于这个会话压根没接到 proxy 上。
 
-对于每天都在用 Claude Code 写代码的开发者来说，如果日常 80% 的任务不需要 Opus 级别的推理能力，deepclaude 是一个可以直接上手的省钱方案。剩下的 20% 复杂任务，通过 `/anthropic` 切回去就好。
+## proxy 实际补了什么
 
-项目地址：[https://github.com/aattaran/deepclaude](https://github.com/aattaran/deepclaude)
+proxy 的价值主要在这些兼容细节上。每一项看起来都不大，少一项都可能在长会话里翻车。
+
+### 1. 请求路径和鉴权头的适配
+
+不同 provider 的 base path 并不一致：
+
+| 后端 | 典型 base URL |
+| ------ | ------ |
+| DeepSeek | `https://api.deepseek.com/anthropic` |
+| OpenRouter | `https://openrouter.ai/api` 或 proxy 路径里的 `https://openrouter.ai/api/v1` |
+| Fireworks | `https://api.fireworks.ai/inference` 或 proxy 路径里的 `https://api.fireworks.ai/inference/v1` |
+
+如果你自己拼接，很容易把 OpenRouter 这类地址写成 `/api/v1/v1/messages`。proxy 里专门做了 path overlap 处理，就是为了避免这种重复前缀。
+
+鉴权头也不是同一种写法：
+
+- DeepSeek 走 `x-api-key`。
+- OpenRouter 和 Fireworks 在 proxy 路径下走 `Authorization: Bearer ...`。
+
+这类差异放在 README 里只是几行配置，进到真实请求链路里就是能不能稳定跑起来的区别。
+
+### 2. 模型名和档位的映射
+
+普通 CLI 直连模式下，deepclaude 启动脚本会直接把各档位模型写成 provider 自己能识别的名字。例如：
+
+- DeepSeek 主模型用 `deepseek-v4-pro`，子任务用 `deepseek-v4-flash`。
+- OpenRouter 直连路径里当前把主任务和子任务都指到 `deepseek/deepseek-v4-pro`。
+- Fireworks 直连路径里则统一指到 `accounts/fireworks/models/deepseek-v4-pro`。
+
+proxy 路径又多了一层 `MODEL_REMAP`。当会话里仍然出现 Anthropic 语义的模型名时，proxy 会在转发 `/v1/messages` 前把它改写成目标后端能理解的名字。当前源码里，至少 DeepSeek 和 OpenRouter 的映射是显式维护的：
+
+| Anthropic 档位 | DeepSeek proxy 映射 | OpenRouter proxy 映射 |
+| ------ | ------ | ------ |
+| `claude-opus-4-6` / `claude-opus-4-7` | `deepseek-v4-pro` | `deepseek/deepseek-v4-pro` |
+| `claude-sonnet-4-6` | `deepseek-v4-flash` | `deepseek/deepseek-v4-flash` |
+| `claude-sonnet-4-5-20250929` | `deepseek-v4-flash` | `deepseek/deepseek-v4-flash` |
+| `claude-haiku-4-5-20251001` | `deepseek-v4-flash` | `deepseek/deepseek-v4-flash` |
+
+这张表也顺手暴露出两个边界：
+
+- deepclaude 不是“自动理解一切未来模型名”的通用翻译层，映射表是硬编码维护的。
+- 不同运行路径下，子模型的选择并不一定完全相同。普通直连和 proxy 切换模式在档位映射上更像“工程上尽量接近”，不是严格逐项同构。
+
+### 3. thinking block 的双向清理
+
+这一层最容易被说得过于简单。
+
+很多人会把问题理解成“非 Anthropic 后端不认识 thinking block，所以发出去前删掉就行”。源码处理得比这更严格：
+
+- 发往非 Anthropic 后端前，删除所有 thinking block。
+- 从非 Anthropic 切回 Anthropic 时，如果会话里已经混入第三方后端生成的 thinking block，也要删。
+
+原因不是表面上的“有没有签名”，而是兼容性语义不同。源码注释写得很直接：第三方后端可能生成“带签名但 Anthropic 不认可”的 thinking block，如果只做半套过滤，切回 Anthropic 时会直接打出 400。
+
+这不是一次性的请求转发问题，而是跨 provider 会话状态的清洁问题。
+
+### 4. SSE 和 JSON 响应里的 `usage` 补齐
+
+Claude Code 会依赖 `usage` 统计 token 消耗。DeepSeek 和 OpenRouter 的部分流式事件可能没有这块字段，典型缺口出现在 `message_start` 和 `message_delta`。如果不补齐，Claude Code 会直接报错：
+
+```text
+"$.input_tokens" is undefined
+```
+
+proxy 为此做了两层修补：
+
+- 流式 SSE 响应走 `UsageNormalizer`，逐个事件补 `usage`。
+- 非流式 JSON 响应走 `normalizeJsonBody()`，同样补齐缺失字段。
+
+这不是让成本面板更好看，而是避免长工具循环被 token 统计错误打断。
+
+### 5. Remote Control 的桥接分流
+
+Remote Control 之所以需要 proxy，不只是为了便宜，而是因为它的两条链路根本不能混在一起：
+
+```text
+claude remote-control
+  ├── Bridge WebSocket -> wss://bridge.claudeusercontent.com
+  └── Model API calls  -> http://127.0.0.1:3200
+                           ├── /v1/messages -> 当前激活的第三方后端
+                           └── 其他路径     -> 回落到 Anthropic
+```
+
+proxy 的设计很克制：只有真正的模型消息路径会被分流，其他 Anthropic 相关请求仍然透传回官方端点。范围收得够窄，Remote Control 才比较稳。
+
+`/_proxy/cost` 给你的也是估算，不是账单。它按源码里写死的每百万 token 价格做静态计算，再和 Anthropic 价格对比。这个数字很适合看趋势和节省比例，不适合拿去做严格结算。
+
+## 后端怎么选，别只看单价
+
+只看价格表，很容易得出“DeepSeek 永远最优”的结论。真用起来，至少要把延迟、推理强度和任务风险一起看。
+
+| 后端 | 输入 $/M | 输出 $/M | 更适合什么场景 |
+| ------ | ------ | ------ | ------ |
+| DeepSeek | 0.44 | 0.87 | 默认首选，适合大部分日常编码、重构、修补和探索 |
+| OpenRouter | 0.44 | 0.87 | 更关心美欧地区连通性或希望走聚合平台时 |
+| Fireworks AI | 1.74 | 3.48 | 速度优先，愿意为更快推理多付钱时 |
+| Anthropic | 3.00 | 15.00 | 难问题、关键审查、高风险改动或复杂架构判断 |
+
+README 给出的直觉基本成立：
+
+- 轻度使用时，deepclaude 路线大概可以把成本压到 Anthropic 的一成左右。
+- 重度使用时，节省比例仍然很可观。
+- 自动循环越多，DeepSeek 的自动上下文缓存越能拉开成本差距。
+
+但别把“便宜”直接等同于“完全等价”。更合理的分工是：
+
+- 高频日常任务默认走 DeepSeek。
+- 一旦进入复杂推理、关键审查或高风险修改，再切回 Anthropic。
+
+这也是最符合它定位的用法。
+
+## 哪些能力还在，边界在哪
+
+对已经用惯 Claude Code 的人来说，最关键的是主体工作流基本没丢。
+
+### 保留得比较完整的能力
+
+- 文件读写、编辑与补丁应用。
+- Bash / PowerShell 执行。
+- Glob / Grep 搜索。
+- Git 操作。
+- 多步工具循环。
+- 子 Agent 派生。
+- `/init` 项目初始化。
+- thinking mode 本身仍然可用，只是跨 provider 时需要兼容清理。
+
+### 明确受限的能力
+
+| 能力 | 现状 | 应该怎样理解 |
+| ------ | ------ | ------ |
+| 图片 / 视觉输入 | 不支持 | DeepSeek 的 Anthropic 兼容端点不支持图像输入 |
+| 并行工具调用 | 受限 | README 说后端能力更强，但 Claude Code 默认仍以顺序调用为主 |
+| MCP server 工具 | 不支持 | 兼容层没有把 MCP 工具链完整透传过去 |
+| Anthropic prompt caching | 不等价 | DeepSeek 有自己的自动缓存，但不是 Anthropic 的 `cache_control` 语义 |
+
+如果你的工作流高度依赖视觉输入、MCP server，或者需要尽量贴近 Anthropic 原生缓存行为，那么 deepclaude 不是近乎无损的替换。
+
+## 上手顺序
+
+真要拿它干活，别一上来就把 Remote Control、热切换、快捷键全堆上。按复杂度递增的顺序试，会省很多排障时间：
+
+1. 先用普通 CLI 直连跑最核心的文件读写、命令执行和多步修补。
+2. 再执行 `deepclaude --status` 和 `deepclaude --benchmark`，确认 key、连通性和基础延迟都正常。
+3. 只有确定需要浏览器会话或热切换时，再上 `deepclaude --remote`。
+4. 最后再配置 `~/.claude/commands/`、VS Code tasks 或快捷键，把 `/_proxy/mode` 控制平面接进去。
+
+这样排障会简单很多。每次只多一层复杂度，出了问题更容易判断是 provider、proxy、bridge 还是本地环境。
+
+## 几个常见误区
+
+### 1. `claude auth login` 不是所有路径的通用前提
+
+- 普通 CLI 直连靠的是 provider API key。
+- Remote Control 才需要 Anthropic 的 OAuth 和 `claude.ai` 订阅。
+
+把这两条路混在一起，会让很多本来两分钟能跑通的场景平白多出一道门槛。
+
+### 2. `--switch` 不是“顺手帮你启用代理”
+
+`deepclaude --switch` 只会发控制请求，不会自动创建一个正在承载当前会话的 proxy。看到 “Proxy not running” 时，先别怀疑 provider，先确认自己的会话是不是本来就没挂到 `127.0.0.1:3200`。
+
+### 3. `--benchmark` 测的是通路，不是智商
+
+源码里的 benchmark 做的是一次很小的 `POST /v1/messages` 请求，测 HTTP 是否成功以及大致延迟。它适合用来排查 key、端点和网络，不适合拿来判断“这个 provider 的复杂推理到底强不强”。
+
+### 4. 跨 provider 切换后如果仍然出现诡异 400，优先重开会话
+
+proxy 已经尽力清理 thinking block，但跨 provider 的历史上下文本来就是最脆的一层。如果你在 Anthropic 和第三方后端之间频繁来回切，还叠加了长上下文和多轮工具调用，重开一次会话通常比硬扛当前上下文更省时间。
+
+### 5. 不同模式下，低档位模型不一定完全一样
+
+普通 CLI 直连和 proxy 切换模式在模型档位的处理上更像“尽量兼容”，不是“一模一样的严格镜像”。如果你在意子 Agent 用的是 `Pro` 还是 `Flash`，最好直接读一下当前脚本设置，而不是默认它们在所有路径下都严格一致。
+
+## 适合谁，不适合谁
+
+下面这几类人，通常会比较适合 deepclaude：
+
+- 已经在用 Claude Code，不想迁移到另一套 Agent 生态。
+- 绝大多数工作是脚手架、重构、排障、批量修补、日常探索。
+- 对成本敏感，希望把高频任务压到更便宜的后端。
+- 需要 Remote Control，但不想把每一次模型思考都锁死在 Anthropic 价格上。
+
+不太适合的情况也很明确：
+
+- 工作流高度依赖图像理解或截图分析。
+- 强依赖 MCP server 工具。
+- 经常处理高风险、强推理、错一次代价很高的生产级任务。
+
+后一类场景不是“完全不能用 deepclaude”，而是更适合把它当默认档位，再把 Anthropic 当高难任务的回退档位。
+
+## 到底该不该用
+
+如果你的主要工作就是在终端里改文件、跑命令、做重构和排障，先从普通 CLI 直连开始就够了。用几天之后，DeepSeek 能不能覆盖自己的日常任务，心里自然会有数。
+
+如果你需要浏览器会话、热切换和成本统计，再把 proxy 和 Remote Control 加上。反过来，如果你的工作高度依赖图片、MCP server 或强推理，直接用 Anthropic 会更省心。
+
+deepclaude 的价值不在于替掉一切，而在于把一大批其实没必要用 Opus 解决的问题，从 Opus 的价格带里挪出来。
+
+## 参考资料
+
+- [deepclaude 项目主页](https://github.com/aattaran/deepclaude)
+- [deepclaude README](https://github.com/aattaran/deepclaude/blob/main/README.md)
+- [proxy/README：Remote Control 代理说明](https://github.com/aattaran/deepclaude/blob/main/proxy/README.md)
