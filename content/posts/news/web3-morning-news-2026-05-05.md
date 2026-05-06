@@ -1,3 +1,9 @@
++++
+date = '2026-05-06T10:43:40+08:00'
+draft = false
+title = '🚀 Web3 早报 | 2026年5月5日'
++++
+
 # 🚀 Web3 早报 | 2026年5月5日
 
 > 数据来源：CoinGecko API（价格）+ CoinGecko News（资讯）
