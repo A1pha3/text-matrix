@@ -86,9 +86,9 @@ enableRobotsTXT = true
     url = "/categories/行业快讯/"
     weight = 1
   [[menu.main]]
-    identifier = "investing"
-    name = "📈 投资分析"
-    url = "/categories/投资分析/"
+    identifier = "wealth"
+    name = "💰 财富自由"
+    url = "/categories/财富自由/"
     weight = 2
   [[menu.main]]
     identifier = "tech"

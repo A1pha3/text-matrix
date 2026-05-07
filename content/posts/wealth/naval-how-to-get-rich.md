@@ -4,8 +4,9 @@ date: "2026-05-01T11:55:58+08:00"
 slug: "naval-how-to-get-rich"
 description: "基于 Naval Ravikant 的推文风暴与长篇访谈，系统梳理财富、运气、股权、杠杆、具体知识、责任感、判断力与长期主义，给出一套更可执行的财富创造框架。"
 draft: false
-categories: ["思考与随笔"]
-tags: ["财富", "创业", "杠杆", "Naval Ravikant", "长期主义"]
+aliases: ["/posts/thoughts/naval-how-to-get-rich/"]
+categories: ["财富自由"]
+tags: ["财富自由", "财富", "创业", "杠杆", "Naval Ravikant", "长期主义"]
 ---
 
 > Naval 的「如何致富」不是教人一夜暴富，而是试图回答一个更硬的问题：怎样把财富创造从一次偶然事件，变成一套长期可重复的方法。

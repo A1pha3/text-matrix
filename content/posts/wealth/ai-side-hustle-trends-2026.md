@@ -4,8 +4,9 @@ date: "2026-03-26T08:00:00+08:00"
 slug: "ai-side-hustle-money-making-guide-2026"
 description: "本文系统梳理了2026年最新AI副业赚钱趋势与实操指南，涵盖AI商业工具开发、内容创作自动化、数据分析服务、域名与品牌命名等热门方向，提供从零开始的详细步骤与避坑建议。"
 draft: false
-categories: ["行业快讯"]
-tags: ["AI", "创业", "副业", "Claude"]
+aliases: ["/posts/news/ai-side-hustle-money-making-guide-2026/"]
+categories: ["财富自由"]
+tags: ["财富自由", "AI", "创业", "副业", "Claude"]
 hiddenFromHomePage: true
 ---
 
