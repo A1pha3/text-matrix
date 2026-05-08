@@ -77,6 +77,33 @@ README 里有一句话值得记住：同一份来源，可以作为 [Claude Cowo
 
 Anthropic 还在 Managed Agent 文档里明确标注了一个现实限制：子 agent 委派能力 `callable_agents` 仍是 preview。也就是说，这套架构已经指向多 agent 协作，但并没有把“完全自治”包装成一个已经成熟的默认前提。
 
+### 4.1 一张图看懂它的关系
+
+下面这张关系图，可以把仓库里最容易混淆的几层结构串起来：
+
+```text
+anthropics/financial-services
+├─ plugins/agent-plugins/<slug>/
+│  ├─ agents/<slug>.md          -> 核心系统提示词
+│  └─ skills/                   -> 该 agent 随包携带的技能
+│
+├─ plugins/vertical-plugins/<vertical>/
+│  ├─ skills/                   -> 可复用领域技能源
+│  ├─ commands/                 -> 显式触发的 slash commands
+│  └─ .mcp.json                 -> 数据与系统连接器
+│
+├─ managed-agent-cookbooks/<slug>/
+│  └─ agent.yaml                -> 把同一份 prompt 和 skills 包装成 /v1/agents 配置
+│
+├─ Cowork / Claude Code
+│  └─ 交互式使用：分析师直接安装插件或 vertical plugin
+│
+└─ Managed Agents API
+   └─ 托管式使用：平台团队挂到自家 workflow engine 后面
+```
+
+真正关键的是最下面两行：上层运行面可以不同，但 Anthropic 尽量让它们回到同一份 prompt 和 skill 来源。这样一来，分析师试用过的工作流，不必再从零重写一版给平台团队做托管部署。
+
 ## 5. 现在有哪些命名 agent
 
 截至当前可见仓库版本，README 列出的命名 agent 可以按 4 组来理解：
@@ -165,6 +192,35 @@ scripts/deploy-managed-agent.sh gl-reconciler
 ```
 
 但真正关键的不是这一行命令，而是你要自己提供编排层。README 里把 `scripts/orchestrate.py` 明确标成 reference event loop：它负责根据 `handoff_request` 在 agent 之间路由事件。也就是说，Anthropic 提供的是参考实现，不是替你把企业流程引擎一起做好。
+
+### 8.4 一个务实的试装顺序
+
+如果你是第一次接触这个仓库，最稳妥的顺序不是一上来就部署所有组件，而是按下面 3 步验证：
+
+1. 先在 Cowork 装一个命名 agent，确认团队是否真的需要这种工作流入口。
+2. 再在 Claude Code 安装 `financial-analysis` 和一个对应 vertical plugin，确认 slash commands、skills 和 connectors 是否符合你的实际工作习惯。
+3. 只有在前两步跑通后，再去看 Managed Agents，把它接进自己的审批、调度和审计流程。
+
+如果要做最小可试装，README 里已经给出了一组足够直接的命令：
+
+```bash
+# 添加插件市场发布源
+claude plugin marketplace add anthropics/claude-for-financial-services
+
+# 先装共享建模能力和连接器
+claude plugin install financial-analysis@claude-for-financial-services
+
+# 再装一个最接近你场景的入口
+claude plugin install pitch-agent@claude-for-financial-services
+# 或者
+claude plugin install market-researcher@claude-for-financial-services
+
+# 如果你更想先试独立垂直能力，也可以改装 vertical plugin
+claude plugin install investment-banking@claude-for-financial-services
+claude plugin install equity-research@claude-for-financial-services
+```
+
+如果是 Managed Agents 路径，则至少还要补齐 API key 和对应数据源的 MCP 地址。以仓库里的示例来说，像 Pitch Agent、Market Researcher、GL Reconciler 这些 cookbook，在部署前都要求你先设置相应的环境变量，例如 `CAPIQ_MCP_URL`、`DALOOPA_MCP_URL`、`FACTSET_MCP_URL`、`GL_MCP_URL` 等。少了这些值，命令能跑，工作流也很难真正落地。
 
 ## 9. 这套仓库为什么值得研究
 
