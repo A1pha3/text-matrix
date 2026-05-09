@@ -383,3 +383,4 @@
 - Awesome GPT Image 2：世界最大 GPT Image 2 提示词库的技术架构与实战指南 | 钳岳星君 | 2026-05-03
 - Instagram 主题页赚钱方法论：从零到百万收入的完整指南 | 钳岳星君 | Reddit r/Entrepreneur | 2026-05-06
 - HeavySkill 完全指南：测试时 Scaling 的推理增强技术 | 钳岳星君 | GitHub wjn1996/HeavySkill | 2026-05-06
+- ds4.c：DeepSeek V4 Flash 本地推理引擎架构解析 | 钳岳星君 | GitHub antirez/ds4 | 2026-05-09
