@@ -2,6 +2,13 @@
 title: "项目系统文档"
 date: 2026-03-24T12:00:00+08:00
 draft: false
+build:
+  render: never
+  list: never
+cascade:
+  build:
+    render: never
+    list: never
 ---
 
 ## 📚 项目系统文档 (Docs)

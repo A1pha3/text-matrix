@@ -105,8 +105,3 @@ enableRobotsTXT = true
     name = "🤔 思考与随笔"
     url = "/categories/思考与随笔/"
     weight = 5
-  [[menu.main]]
-    identifier = "docs"
-    name = "Docs"
-    url = "/docs/"
-    weight = 6

@@ -3,7 +3,7 @@
 {{- define "content" -}}
   {{- $regularPages := .Site.RegularPages -}}
   {{- $postsCount := len (where $regularPages "Section" "posts") -}}
-  {{- $docsCount := len (where $regularPages "Section" "docs") -}}
+  {{- $pagesCount := len $regularPages -}}
   {{- $tagsCount := len .Site.Taxonomies.tags -}}
   {{- $suggestions := slice "AI Agent" "Hugo" "Cloudflare" "GitHub Pages" "量化交易" "系统设计" -}}
     <div class="page single special pagefind-search-page" data-pagefind-ignore="all">
@@ -14,7 +14,7 @@
           {{- .Title -}}
         </h1>
 
-        <h2 class="single-subtitle">在文章、文档与专题记录之间做一次跨栏目检索，直接定位到最相关的正文片段。</h2>
+        <h2 class="single-subtitle">在文章与页面内容之间做一次跨栏目检索，直接定位到最相关的正文片段。</h2>
 
         <div class="pagefind-suggestion-row">
           {{- range $suggestions -}}
@@ -29,8 +29,8 @@
           <strong class="pagefind-stat-value">{{ $postsCount }}</strong>
         </div>
         <div class="pagefind-stat-card">
-          <span class="pagefind-stat-label">已收录文档</span>
-          <strong class="pagefind-stat-value">{{ $docsCount }}</strong>
+          <span class="pagefind-stat-label">已收录页面</span>
+          <strong class="pagefind-stat-value">{{ $pagesCount }}</strong>
         </div>
         <div class="pagefind-stat-card">
           <span class="pagefind-stat-label">可探索标签</span>
