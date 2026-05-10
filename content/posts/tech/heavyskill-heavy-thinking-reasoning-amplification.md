@@ -259,10 +259,7 @@ class HeavySkillConfig:
     # Response parsing
     answer_tag: str = "answer_clipped"
     think_start_tag: str = "<think>"
-    think_end_tag: str = "
-</think>
-
-"
+    think_end_tag: str = "\n</think>\n\n"
 
     # Network
     timeout: float = 600.0
@@ -296,11 +293,8 @@ class HeavySkillConfig:
 | `iterations` | 1 | 深思迭代轮数 |
 | `trajectory_selection` | "max_diversity" | 轨迹选择策略 |
 | `max_trajectory_tokens` | 128000 | 轨迹 token 预算上限 |
-| `think_start_tag` | "<think>" | 思考内容开始标签 |
-| `think_end_tag` | `"`
-</think>
-
-" | 思考内容结束标签 |
+| `think_start_tag` | `"<think>"` | 思考内容开始标签 |
+| `think_end_tag` | `"\n</think>\n\n"` | 思考内容结束标签 |
 
 #### Pipeline（pipeline.py）
 
@@ -443,10 +437,7 @@ Note:
 def split_response(
     response: str,
     think_start_tag: str = "<think>",
-    think_end_tag: str = "
-</think>
-
-"
+    think_end_tag: str = "\n</think>\n\n"
 ) -> tuple:
     """Split a response into thinking content and answer content."""
     if think_end_tag in response:

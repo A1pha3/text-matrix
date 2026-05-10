@@ -1,221 +1,144 @@
 ---
-title: "DataWeave/easy-vibe：一个「会说话就能做 App」的 Vibe Coding 2026 教程完全指南"
+title: "Datawhale/easy-vibe：一套把想法落成产品的 Vibe Coding 开源课程"
 date: "2026-05-10T16:55:00+08:00"
 slug: "datawhale-easy-vibe-vibe-coding-course-guide"
-description: "DataWeave/easy-vibe 是一个面向零基础的 Vibe Coding 2026 开源教程，通过「先做出来，再理解原理」的沉浸式交互学习路径，让普通人也能用 AI 构建产品。本文全面解析其学习路径、内容体系、多语言支持，以及与 OpenClaw 等 AI Coding Agent 的协同方式。"
+description: "easy-vibe 是 DatawhaleChina 维护的 Vibe Coding 开源课程，围绕从想法、原型、全栈上线到工程化 AI 协作，构建出一条 3 + 1 的学习路径。本文结合 README、中文 README 与 llms.txt，梳理它真正适合谁、每个阶段解决什么问题，以及为什么它不只是一个教程仓库。"
+summary: "这篇文章基于 easy-vibe 的 README、中文 README 和 llms.txt，重新梳理这套课程的 3 + 1 学习结构、适用人群、代表内容、OpenClaw 与 llms.txt 的位置，以及它为什么比普通的 AI 编程入门教程更完整。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Vibe Coding", "AI Coding", "DataWeave", "AI Agent", "无门槛编程", "教程指南"]
+tags: ["Vibe Coding", "Datawhale", "AI Agent", "OpenClaw", "Claude Code", "教程指南"]
 ---
 
-# DataWeave/easy-vibe：一个「会说话就能做 App」的 Vibe Coding 2026 教程完全指南
+<!-- markdownlint-disable-file MD003 MD041 -->
 
-> 项目地址：[dataweavechina/easy-vibe](https://github.com/dataweavechina/easy-vibe)
->
->  Stars: 8,652⭐ | License: CC BY-NC-SA 4.0 | 官网：[dataweavechina.github.io/easy-vibe](https://dataweavechina.github.io/easy-vibe/welcome.html)
+## 学习目标
 
----
+- 看清 easy-vibe 这套课程到底在教什么，以及它和普通编程入门课的差别。
+- 根据自己的背景选择合适的入口，而不是从头到尾盲目通读。
+- 抓住 Stage 1、Stage 2、Stage 3 和附录知识库各自解决的问题。
+- 理解 llms.txt、Hello Claw 与 Vibe Stories 在整个学习体系里的位置。
 
-## 先体验：If You Can Talk, You Can Build
+## 项目概览
 
-**想要一个记账本？说出来。**
-**需要一个带微信登录的预约系统？说出来。**
-**想要一个带评论的博客？说出来。**
+如果把 easy-vibe 只看成一个“AI 编程入门仓库”，很容易低估它。它真正做的，不是把一堆提示词、工具截图和零散 Demo 堆在一起，而是把“想法出现”“原型落地”“产品上线”“工程化协作”连成一条连续路径。对零基础读者来说，它降低的是第一步的心理门槛；对已经会写代码的人来说，它补的是 AI 协作开发的方法和完整交付链路。
 
-在 AI 时代，编程的起点不再是写代码——而是**描述你想要什么**。
+本文基于 easy-vibe 的 README、中文 README 和仓库根目录 llms.txt 整理，统计口径截至 2026 年 5 月 10 日。
 
-DataWeave/easy-vibe（以下简称 easy-vibe） 是一个零基础友好的人工智能编程学习项目，由 DataWeave（数据小炒）开源维护。核心理念一句话：**If you can talk, you can build.** 只要你会说话，你就能做应用。
+| 项目 | 信息 |
+| ------ | ------ |
+| 仓库 | [datawhalechina/easy-vibe](https://github.com/datawhalechina/easy-vibe) |
+| 官网 | [datawhalechina.github.io/easy-vibe](https://datawhalechina.github.io/easy-vibe/) |
+| GitHub Stars | 8,818 |
+| License | CC BY-NC-SA 4.0 |
+| 多语言文档 | 10 种语言 |
+| 核心口号 | If you can talk, you can build apps. / 会说话就会做应用。 |
 
-项目于 2026 年 1 月正式发布，短短几个月斩获 8,652 颗 Star，课程内容已覆盖 Stage 1（入门）、Stage 2（前端+后端+部署）、Stage 3（AI Coding 高级工作流）和附录知识库，并支持 **10 种语言**：简体中文、繁体中文、英语、日语、韩语、西班牙语、法语、德语、阿拉伯语、越南语。
+官方 README 已提供简体中文、繁體中文、English、日本語、한국어、Español、Français、Deutsch、العربية 和 Tiếng Việt 十种语言入口。对一个面向全球新手的开源课程来说，这不是锦上添花，而是课程真正能扩散出去的基础设施。
 
----
+easy-vibe 由 DatawhaleChina 社区维护。它的目标不是把你训练成某门语言的“语法题选手”，而是让你学会如何和 AI 一起把一个想法做成产品。这个定位非常关键，因为它决定了课程的组织方式：先做出东西，再在需要的时候理解原理，而不是先把所有基础知识压给你。
 
-## 核心学习路径：从零到发布的四个 Stage
+## 它真正解决的，不是“怎么学语法”
 
-### Stage 1：先做出来，再理解原理
+传统编程入门路线常见的断点有三个。第一，很多人刚开始学时并不知道该做什么，于是长期停留在语法和小练习里。第二，能让 AI 生成一个页面的人很多，但能把页面变成完整产品的人不多。第三，已经有经验的开发者知道 AI 能提速，却未必知道怎样把 AI 纳入真实的工程流程。
 
-**适合人群**：完全零基础、产品经理、创业者、在校学生
+easy-vibe 恰好对着这三个断点展开。
 
-这是整个课程的起点，核心方法论：**Build First, Understand Later**——先跑起来，再补课。
+它把 Vibe Coding 解释成一种新的协作方式：人负责表达目标、筛选方向、判断取舍，AI 负责把想法快速变成看得见、点得动、能继续迭代的产物。换句话说，这门课并不是在承诺“以后不需要懂技术了”，而是在教你怎样把技术理解和 AI 的执行能力接起来。
 
-| 阶段 | 核心内容 |
-|:---|:---|
-| [Learning Map](https://dataweavechina.github.io/easy-vibe/en/stage-1/learning-map/) | 完整的成长路线图和学习节奏建议 |
-| [AI Capabilities Through Games](https://dataweavechina.github.io/easy-vibe/en/stage-1/ai-capabilities-through-games/) | 通过游戏例子（如贪吃蛇）感受 AI 编程是什么体验 |
-| [Introduction to AI IDE](https://dataweavechina.github.io/easy-vibe/en/stage-1/introduction-to-ai-ide/) | 了解主流 AI IDE（Cursor、Copilot、Windsurf 等）的工作原理和使用方法 |
-| [Find Great Ideas](https://dataweavechina.github.io/easy-vibe/en/stage-1/finding-great-idea/) | 如何发现、筛选和验证值得做的产品创意 |
-| [Build Product Prototypes](https://dataweavechina.github.io/easy-vibe/en/stage-1/building-prototype/) | 从需求到单页原型，再到完整产品原型 |
-| [Integrate AI Capabilities](https://dataweavechina.github.io/easy-vibe/en/stage-1/integrating-ai-capabilities/) | 集成 AI 能力：文本生成、图片生成、视频生成 |
-| [Complete Project Practice](https://dataweavechina.github.io/easy-vibe/en/stage-1/complete-project-practice/) | 完整走一遍：模拟真实场景→收集用户反馈→迭代优化 |
+## 课程结构：不是资料堆，而是一条 3 + 1 路线
 
-#### 附录：产品思维和用户验证（3大核心框架）
+easy-vibe 在 README 和 llms.txt 里都把自己的结构定义得很清楚：它不是四堆互不相关的内容，而是一个 3 + 1 的体系。三个阶段对应不同能力层级，外加一个随取随用的附录知识库。
 
-Stage 1 的附录知识库新增了产品思维和需求验证内容，帮助学习者在动手之前做正确的事：
+| 模块 | 目标 | 代表内容 | 你最终拿到什么 |
+| ------ | ------ | ------ | ------ |
+| Stage 1：新手入门与产品原型 | 建立 AI 编程直觉，先做出第一个可交互作品 | 学习地图、AI IDE、找点子、做原型、集成 AI 能力、完整项目实战 | 一个能展示、能讨论、能继续迭代的原型 |
+| Stage 2：初中级开发 | 把原型变成可上线的产品 | UI 设计、组件库、Git、Supabase、API、部署、Stripe、Dify、两套大作业 | 一个具备登录、数据库、计费和部署能力的全栈应用 |
+| Stage 3：高级开发 | 进入工程化的 AI 协作和跨平台开发 | Claude Code、MCP、Skills、Agent Teams、Spec Coding、PWA、Electron、移动端、VS Code 扩展 | 更接近生产环境的多平台项目与 AI 开发工作流 |
+| 附录知识库 | 随查随用，补足原理和背景知识 | 9 大知识领域、80+ 交互式专题 | 在遇到陌生概念时，能快速补齐上下文 |
 
-- [Where to Find Ideas](https://dataweavechina.github.io/easy-vibe/en/stage-1/appendix-idea-sources/) — **3 个最佳创意来源**，帮助你持续找到值得做的小产品
-- [Double Diamond](https://dataweavechina.github.io/easy-vibe/en/stage-1/appendix-double-diamond/) — **做正确的事，再正确地做事**：从发散→聚焦→发散→交付的完整设计思维框架
-- [Jobs to Be Done (JTBD)](https://dataweavechina.github.io/easy-vibe/en/stage-1/appendix-jobs-to-be-done/) — **理解用户真正想完成的任务**，而不是他们表面说的功能
-- [The Mom Test](https://dataweavechina.github.io/easy-vibe/en/stage-1/appendix-mom-test/) — **用对问题验证真实需求**，避免自嗨式产品开发
+这条路线的好处是，它允许不同背景的人从不同入口进入。零基础不必硬啃后端和部署；有经验的开发者也不需要先回头看完所有入门章节，才能进入对自己真正有用的部分。
 
-这些框架填补了「只会问 AI」和「能做出好产品」之间的鸿沟。很多人在 AI 时代依然做不出好产品，问题不在于不会写代码——而是不知道该做什么。
+## Stage 1 为什么是 easy-vibe 的核心
 
----
+很多“面向零基础”的 AI 编程教程，真正的问题不是内容少，而是默认读者已经知道什么算一个好需求、什么算一个可演示的原型、什么算可验证的用户反馈。easy-vibe 的 Stage 1 处理得更完整。
 
-### Stage 2：从原型到全栈上线
+这一阶段的主线包括 [学习地图](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/learning-map/)、[AI 时代，会说话就会编程](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/ai-capabilities-through-games/)、[认识 AI IDE 工具](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/introduction-to-ai-ide/)、[寻找好想法](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/finding-great-idea/)、[动手做出原型](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/building-prototype/) 和 [完整项目实战](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/complete-project-practice/)。
 
-**适合人群**：初级开发者、独立开发者、indie hackers
+它的关键不在于章节名，而在于顺序。课程先让你体验 AI 编程是什么，再让你理解怎样找到值得做的题目，接着才进入原型、功能、反馈和迭代。对新手来说，这比一上来讲框架、语法、工程目录更有效，因为真正的阻塞点往往不是“不会写”，而是“不知道做什么”和“不知道怎么判断自己做得对不对”。
 
-Stage 2 教你把 Stage 1 的原型变成真实可用的产品。
+2026 年 3 月新增的“用户研究与需求验证”附录也很关键。像 [Double Diamond](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/appendix-double-diamond/)、[Jobs to Be Done](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/appendix-jobs-to-be-done/) 和 [The Mom Test](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/appendix-mom-test/) 这些内容，补的不是“怎么让 AI 回答得更好”，而是“怎么避免从一开始就在做错的东西”。这是 easy-vibe 和很多提示词教程最大的差别之一。
 
-#### 前端路径
+## Stage 2 把“能做 Demo”推进到“能上线、能收费、能维护”
 
-| 章节 | 内容亮点 |
-|:---|:---|
-| [Lovart & Nanobanana 资产生成](https://dataweavechina.github.io/easy-vibe/en/stage-2/lovart/) | 用 AI 生成设计资产，构建意图识别绘图 Agent |
-| [Figma & MasterGo 工作流](https://dataweavechina.github.io/easy-vibe/en/stage-2/frontend/figma-mastergo/) | 设计稿到代码的完整流程 |
-| [AI 生成 UI：LLM + Skills](https://dataweavechina.github.io/easy-vibe/en/stage-2/frontend/llm-skills/) | 让 AI 生成更美观、更有一致性的界面 |
-| [Design to Code](https://dataweavechina.github.io/easy-vibe/en/stage-2/frontend/design-to-code/) | 设计稿还原为可运行的浏览器代码 |
-| [Modern Component Library](https://dataweavechina.github.io/easy-vibe/en/stage-2/frontend/modern-component-library/) | 用现代组件库快速搭建专业级 UI |
+Stage 2 是这套课程最实用、也最容易被低估的一部分。它并没有停在“再做几个页面”上，而是把一个真实产品上线所需的链路串了起来。
 
-#### 后端路径
+这一阶段一边讲前端表现力，一边补全产品交付链。你会看到 UI 设计、Design to Code、现代组件库和多产品界面规则，也会看到 Git、数据库、API 设计、云端部署、终端优先的 AI Coding 工具，以及收费系统接入。课程的重点已经从“AI 能帮我生成什么”转到“我怎么把这些结果接成一个完整系统”。
 
-| 章节 | 内容亮点 |
-|:---|:---|
-| [Git & GitHub 协作流](https://dataweavechina.github.io/easy-vibe/en/stage-2/backend/git-workflow/) | 版本控制和多人大规模协作 |
-| [Supabase 数据库](https://dataweavechina.github.io/easy-vibe/en/stage-2/backend/database-supabase/) | 现代 BaaS 平台，关系型数据库速通 |
-| [API 设计与 AI 辅助开发](https://dataweavechina.github.io/easy-vibe/en/stage-2/backend/ai-interface-code/) | 用 AI 辅助 API 设计和文档撰写 |
-| [Zeabur 一键部署](https://dataweavechina.github.io/easy-vibe/en/stage-2/backend/zeabur-deployment/) | 前后端一键上线 |
-| [Stripe 支付集成](https://dataweavechina.github.io/easy-vibe/en/stage-2/backend/stripe-payment/) | **实战重点**：完整接入 Stripe 支付体系，支持多产品计费体系 |
-| [WeChat Mini Program 后端](https://dataweavechina.github.io/easy-vibe/en/stage-2/backend/wechat-backend/) | 微信小程序后端集成 |
+这里最值得看的，是两个大作业。一个是 [第一个 SaaS 全栈应用：AI 文案生成网站](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-2/assignments/copywriting-platform-supabase/)，它把登录、生成、数据库、计费和后台管理串成了一个完整闭环；另一个是在线考试与管理系统，适合想看更复杂业务流的读者。很多教程的问题在于案例做完就结束了，而 easy-vibe 的 Stage 2 已经明显朝“可以继续扩展成真实项目”的方向走。
 
-#### 实战项目：AI 文案生成网站（SaaS 全栈）
+## Stage 3 真正进入工程化 AI 开发
 
-Stage 2 的集大成之作——**[Your First SaaS Full-Stack App](https://dataweavechina.github.io/easy-vibe/en/stage-2/assignments/fullstack-app/)**，完整覆盖：
+如果说 Stage 1 教的是“怎么开始”，Stage 2 教的是“怎么把东西做完整”，那么 Stage 3 处理的就是“怎么把 AI 真正纳入开发流程”。
 
-- 用户登录与鉴权
-- AI 文案生成核心流程
-- Stripe 订阅计费
-- 管理后台
+这一阶段的核心已经不再是简单的提示词，而是围绕 Claude Code 展开的工程化能力，包括安装与基础用法、MCP、Skills、Long-Running Tasks、Agent Teams、Spec Coding、工作流最佳实践、移动端远程开发，以及 Claude Agent SDK。它讨论的问题不再是“AI 会不会写代码”，而是“AI 在复杂任务里怎样稳定地持续工作”。
 
-整个项目走完，你就拥有了一个**可演示、可收费的真实 SaaS 产品原型**。
+这背后其实是工程方法的变化：怎样组织上下文，怎样把任务切小，怎样用规格先行减少返工，怎样在多 Agent 协作下控制质量，怎样让 AI 不只会补几段代码，而是能参与长期任务。对于已经在用 Claude Code、Cursor 或类似工具的人，这一部分更像一套系统化工作方法，而不只是工具功能介绍。
 
----
+同一阶段的跨平台章节也很完整，覆盖微信小程序、Android、iOS、PWA、浏览器扩展、Electron、VS Code 扩展和 Qt 工业应用。这说明 easy-vibe 的目标并不是把读者留在单一的 Web 页面，而是让人理解 AI 辅助开发可以延伸到不同交付平台。
 
-### Stage 3：AI Coding 高级工作流
+## 附录知识库不是补丁，而是这套课程的底盘
 
-**适合人群**：中高级开发者、AI 工程感兴趣者
+easy-vibe 的附录知识库目前覆盖 9 大知识领域、80+ 交互式专题。这个部分很容易被忽略，因为它不像 Stage 1 到 Stage 3 那样有一条清晰主线，但它其实承担了非常重要的作用：把新手和进阶读者都会卡住的原理问题，做成可以按需查阅的可视化材料。
 
-Stage 3 是课程的高级内容，围绕 **Claude Code** 展开，涵盖当前最前沿的 AI Coding 工作流。
+这意味着你不需要在一开始就把 Git、终端、RAG、Diffusion、前端基础、后端概念全部学完，才允许自己开始做项目。遇到问题时再回到附录补上下文，更符合真实学习节奏。对很多人来说，这种“边做边补”的组织方式，比传统课程更接近实际工作。
 
-#### Claude Code 核心技能
+## llms.txt 和 Hello Claw 在整个生态里的位置
 
-| 章节 | 核心内容 |
-|:---|:---|
-| [Claude Code 基础](https://dataweavechina.github.io/easy-vibe/en/stage-3/core-skills/basics/) | 安装、配置、核心命令和使用范式 |
-| [MCP (Model Context Protocol)](https://dataweavechina.github.io/easy-vibe/en/stage-3/core-skills/mcp/) | 连接 GitHub、数据库、外部 API，将 Claude Code 接入真实工具链 |
-| [Skills 系统](https://dataweavechina.github.io/easy-vibe/en/stage-3/core-skills/skills/) | 将专业知识封装成可复用的技能，在多个项目中反复调用 |
-| [Agent Teams](https://dataweavechina.github.io/easy-vibe/en/stage-3/core-skills/agent-teams/) | 多 Agent 协作，模拟真实团队分工——规划者、执行者、审查者各司其职 |
-| [Long-Running Tasks](https://dataweavechina.github.io/easy-vige/en/stage-3/core-skills/long-running-tasks/) | 设计可靠的长时间任务，保证 AI 不中途跑偏 |
-| [Spec Coding](https://dataweavechina.github.io/easy-vige/en/stage-3/core-skills/spec-coding/) | 从「随口 prompting」升级到「规范驱动开发」——先写规格说明书，让 AI 按规格执行，减少返工和幻觉。 |
-| [Claude Agent SDK](https://dataweavechina.github.io/easy-vibe/en/stage-3/core-skills/claude-agent-sdk/) | 将 Claude Code 能力集成到自己的工具和平台中 |
-| [Mobile Development](https://dataweavechina.github.io/easy-vibe/en/stage-3/core-skills/mobile-development/) | 用 Claude Code 做移动端开发（iOS/Android）|
-| [Cross-Platform Projects](https://dataweavechina.github.io/easy-vibe/en/stage-3/cross-platform/) | 跨平台项目实战 |
+原稿把 easy-vibe 和 OpenClaw 讲得过于绑定，实际情况更准确的说法是：OpenClaw 是 easy-vibe 友好的外部生态之一，但不是这门课的唯一核心。
 
----
+2026 年 3 月，easy-vibe 在仓库根目录新增了 [llms.txt](https://raw.githubusercontent.com/datawhalechina/easy-vibe/main/llms.txt)。这个文件不是普通宣传文案，而是专门写给 AI Agent 的导航说明，里面直接定义了 3 + 1 的课程架构、各阶段关键词和路径建议。它的意义很直接：当你用 OpenClaw、Claude Code、Cursor、Trae 或其他支持仓库上下文的 Agent 时，AI 不必把整个仓库盲目扫一遍，而是可以先读这份导航，再去更准确的章节里回答问题。
 
-### 附录知识库：80+ 知识点，随用随查
+这让 easy-vibe 不只是“人类可读的教程”，也是“Agent 可导航的教程”。对 AI 时代的文档设计来说，这个点很有代表性。
 
-easy-vibe 的附录知识库覆盖 9 大知识领域，目前已有 **80+ 交互式知识点**，涉及：
-- 计算机基础知识
-- 前端语言基础（HTML/CSS/JS
-- 后端语言基础（Node.js/Python/Go
-- AI 基础 (LLM / Diffusion Model / RAG) 原理可视化
-- 工程实践（Git、终端、API 等）
+至于 [hello-claw](https://github.com/datawhalechina/hello-claw)，它更像 DatawhaleChina 围绕 OpenClaw 提供的配套课程，适合想把命令行 AI 助手真正搭起来的人。如果你的目标是学会用 AI 做产品，easy-vibe 已经足够；如果你的目标是继续深入到 AI Agent 工具链，hello-claw 才是自然的下一站。
 
----
+## Vibe Stories 为什么重要
 
-## 与 OpenClaw 的协同：🦞 + easy-vibe = 真正的 Vibe Coding
+很多开源教程会展示成品，却很少展示“不同背景的人是怎样把这些内容真正用起来的”。easy-vibe 的 [Vibe Stories](https://datawhalechina.github.io/easy-vibe/zh-cn/vibe-stories/story-1.html) 板块补上了这一点。
 
-easy-vibe 在 2026 年 3 月 2 日正式支持 OpenClaw。项目中内置了 `llms.txt`，让 AI Coding Agent（包括 OpenClaw、Claude Code、Cursor、Trae 等）能够**快速理解项目结构，直接定位到最合适的学习内容**。
+目前公开的真实案例包括乡村小学老师、大学生、高中信息技术老师和货车司机。这个板块的价值，不只是“故事励志”，而是它把课程的可迁移性展示出来了：不是只有开发者能从这套内容里获益，不同职业、不同技术基础的人都可能用它做出能解决现实问题的东西。对一门主打零门槛和低心理负担的课程来说，这类证据比口号更有说服力。
 
-这意味着什么？
+## 这套教程适合谁，也不太适合谁
 
-**OpenClaw 是你的 AI Coding Agent，easy-vibe 是你的教科书。**
+如果你属于下面几类人，easy-vibe 很值得投入时间：
 
-两者结合：一个帮你干活，一个教你学习。
-- 当你遇到具体任务 → OpenClaw 直接帮你搞定
-- 当你想系统提升 → easy-vibe 带你从零到高级
+- 零基础，但已经有一个明确的小产品想法。
+- 产品经理、创业者，想把 MVP 更快做出来。
+- 学生或初级开发者，想补齐从原型到上线的完整链路。
+- 已经在用 AI 编码工具，但想把工作流做得更工程化的开发者。
 
-> 🦞 想系统学习 OpenClaw？DataWeave 配套推出了 [hello-claw](https://github.com/dataweavechina/hello-claw)——专门为 OpenClaw 设计的上手教程。
+如果你想要的是另一类内容，预期就要调整：
 
----
+- 想系统刷完一门编程语言语法，easy-vibe 不是那种教材。
+- 想一次性补完计算机基础、网络、数据库、算法再开始动手，这套课的节奏会显得太“先做后学”。
+- 想直接复制现成产品而不理解需求、交互、部署和反馈循环，课程能帮到的也有限。
 
-## 多语言支持：10 种语言，全球覆盖
+换句话说，easy-vibe 最适合那些愿意在做项目的过程中学习，而不是等“全懂了再开始”的人。
 
-easy-vibe 是真正为全球学习者设计的产品。
+## 开始前先回答三个问题
 
-| 语言 | 访问路径 |
-|:---|:---|
-| 🇺🇸 English | `easy-vibe/en/` |
-| 🇨🇳 简体中文 | `easy-vibe/zh-CN/` |
-| 🇹🇼 繁體中文 | `easy-vibe/zh-TW/` |
-| 🇯🇵 日本語 | `easy-vibe/ja/` |
-| 🇰🇷 한국어 | `easy-vibe/ko/` |
-| 🇪🇸 Español | `easy-vibe/es/` |
-| 🇫🇷 Français | `easy-vibe/fr/` |
-| 🇩🇪 Deutsch | `easy-vibe/de/` |
-| 🇸🇦 العربية | `easy-vibe/ar/` |
-| 🇻🇳 Tiếng Việt | `easy-vibe/vi/` |
+在决定从哪一段开始之前，先问自己三件事。
 
-简体中文内容覆盖最完整，英文内容也基本同步更新。
+1. 你现在最缺的是第一份正反馈、一个完整全栈闭环，还是工程化工作流？
+2. 你要做的是练习项目，还是准备真的上线并接受用户反馈？
+3. 你是否愿意边做边补原理，而不是等全部学完再动手？
 
----
+官方首页其实已经把入口做成了五种非常直白的选择：我想先试试、我有个想法要实现、我想系统学习、我想构建 AI Agent、我想查资料。这个设计本身就很能说明 easy-vibe 的思路，它不是要求所有人走同一条路，而是先帮你找到当前最合适的入口。
 
-## Vibe Stories：真实用户，真实故事
-
-easy-vibe 还有一个感人的板块——**Vibe Stories**。
-
-真实用户分享：
-- 🌱 一位乡村小学教师用 AI 做出了教学管理工具
-- 🎓 一个大学生用 AI 做出了毕业设计作品
-- 💻 一位高中信息技术老师用 AI 辅助编程课教学
-- 🚛 一位卡车司机用 AI 做出了物流调度小工具
-
----
-
-## 如何开始
-
-### 如果你是零基础
-
-**Step 1** → 打开 [AI Capabilities Through Games](https://dataweavechina.github.io/easy-vibe/en/stage-1/ai-capabilities-through-games/)，感受一下 AI 编程是什么体验（大约 30 分钟）。
-
-**Step 2** → 跟着 [Learning Map](https://dataweavechina.github.io/easy-vibe/en/stage-1/learning-map/) 走完 Stage 1（约 1-2 周）。
-
-**Step 3** → 根据兴趣选 Stage 2 或 Stage 3。
-
-### 如果你已经有基础
-
-直接跳到 [Stage 2](https://dataweavechina.github.io/easy-vibe/en/stage-2/) 或 [Stage 3](https://dataweavechina.github.io/easy-vibe/en/stage-3/)，哪里不懂查哪里。
-
----
-
-## 项目特色总结
-
-| 特色 | 说明 |
-|:---|:---|
-| 🎮 先做再学 | Build First, Understand Later，打破「学了很多但做不出来」的困境 |
-| 🎨 沉浸式交互 | GIF 动画 + 模拟鼠标 + 可交互 Demo，学习过程不枯燥 |
-| 🌍 10 种语言 | 覆盖全球主要语言，零门槛上手 |
-| 🦞 OpenClaw 友好 | llms.txt 加持，AI Agent 能直接读懂项目结构 |
-| 📦 实战导向 | Stage 2 有完整 SaaS 项目，Stage 3 有跨平台项目实战 |
-| 📚 知识库 | 9 大领域、80+ 知识点，随用随查 |
-| 💡 产品思维优先 | 先教你想清楚做什么，再教你怎么实现 |
-
----
+如果你只想先试试 AI 编程是什么感觉，先看 [学习地图](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/learning-map/) 和 [AI 时代，会说话就会编程](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-1/ai-capabilities-through-games/)。如果你已经有产品想法，优先走 Stage 1 里的“找点子”“做原型”“完整项目实战”，再进入 Stage 2 的数据库、部署和支付。已经有开发经验的人，可以从 Stage 2 或 [Stage 3](https://datawhalechina.github.io/easy-vibe/zh-cn/stage-3/) 直接开始；如果你关心的是 AI Agent，本体课程之外再接上 hello-claw 会更高效。
 
 ## 总结
 
-easy-vibe 的核心价值：**打破编程学习的两个壁垒——不知道该做什么，以及不知道怎么做好。** 课程把产品思维（Appendix 部分）和工程实践融合在一起，先帮你搞清楚需求和用户，再帮你用 AI 把产品做出来、部署上线、接上支付。
+easy-vibe 值得看的地方，不是它把“Vibe Coding”这个词说得多热闹，而是它把这件事拆成了可以学习、可以跟做、可以迁移的一条路径。Stage 1 解决起步和产品感，Stage 2 解决上线和变现，Stage 3 解决工程化协作，附录知识库负责在你卡住时补齐原理背景。再加上 llms.txt 这种面向 AI Agent 的导航设计，它已经不只是传统意义上的教程仓库，而是一套同时服务人和 Agent 的学习基础设施。
 
-**链接资源：**
-- 🦞 OpenClaw + easy-vibe 组合，让 AI Coding 从「能用」到「用好」
+如果你关心的不是“AI 能不能帮我写几行代码”，而是“我怎样更稳定地把一个想法做成产品”，easy-vibe 的确值得花时间系统看一遍。
