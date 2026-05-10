@@ -1,19 +1,5 @@
 ---
-title: "DataWeave/easy-vibe：一个「会说话就能做 App」的 Vibe Coding 2026 教程
-date: "2026-05-10T16:55:00+08:00" to update the article:
-...
-...
-
-...
-The content:
-...
-</think>
-
-
-<minimax:tool_call>
-<invoke name="write">
-<parameter name="content">---
-title: "DataWeave/easy-vibe：一个「会说话就能做 App」的 Vibe Coding 2026 教程完全指南
+title: "DataWeave/easy-vibe：一个「会说话就能做 App」的 Vibe Coding 2026 教程完全指南"
 date: "2026-05-10T16:55:00+08:00"
 slug: "datawhale-easy-vibe-vibe-coding-course-guide"
 description: "DataWeave/easy-vibe 是一个面向零基础的 Vibe Coding 2026 开源教程，通过「先做出来，再理解原理」的沉浸式交互学习路径，让普通人也能用 AI 构建产品。本文全面解析其学习路径、内容体系、多语言支持，以及与 OpenClaw 等 AI Coding Agent 的协同方式。"
