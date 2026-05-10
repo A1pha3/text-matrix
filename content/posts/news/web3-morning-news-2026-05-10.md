@@ -38,11 +38,11 @@ hiddenFromHomePage: true
 
 ## 🔥 今日热点
 
-### 特朗普媒体科技集团加密持仓亏损4.05亿美元
+### 特朗普媒体科技集团Q1加密持仓亏损4.05亿美元
 
-来源: 新浪财经
-原文: [原文](https://finance.sina.com.cn/jijujs/2025-05-08/doc-inavRESP0005989.shtml)
-摘要: 特朗普媒体科技集团（Trump Media & Technology Group）于5月8日披露其加密货币持仓出现约4.05亿美元亏损，主要与其持有的比特币及其他加密资产市值缩水有关。集团在最新财报中确认该笔亏损规模，但同时表示仍看好加密资产作为长期储备的策略。此次披露再度引发市场对机构持仓风险和加密资产波动性的讨论。
+来源: CoinDesk
+原文: [原文](https://www.coindesk.com/business/2026/05/09/trump-media-s-q1-loss-widens-to-usd406-million-on-bitcoin-cro-markdowns)
+摘要: 特朗普媒体科技集团（Trump Media & Technology Group）披露第一季度财报，净亏损达4.05亿美元，主要因持有的比特币及其他加密资产市值缩水。集团表示仍看好加密资产作为长期储备的策略。此披露再度引发市场对机构持仓风险和加密资产波动性的讨论。
 
 ### 伊朗革命卫队警告：侵犯伊朗船只将引发猛烈打击
 
@@ -59,7 +59,7 @@ hiddenFromHomePage: true
 
 🦞 每日08:00自动更新
 
-**数据来源**：CoinMarketCap、新浪财经、华尔街见闻
+**数据来源**：CoinMarketCap、CoinDesk
 
 **原文链接（已逐条核实）：**
-- ✅ https://finance.sina.com.cn/jijujs/2025-05-08/doc-inavRESP0005989.shtml - 特朗普媒体科技集团加密亏损报道
+- ✅ https://www.coindesk.com/business/2026/05/09/trump-media-s-q1-loss-widens-to-usd406-million-on-bitcoin-cro-markdowns - 特朗普媒体Q1亏损报道
