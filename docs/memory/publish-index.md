@@ -8,6 +8,7 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **Spook** | frenck/spook | 1115 | spook-home-assistant-toolbox.md | d6ef257 | | 2026-05-12 |
 | **AutoAgents** | liquidos-ai/AutoAgents | 628 | autoagents-rust-multiagent-framework.md | 028edcd | | 2026-05-12 |
 | **MinivLLM** | Wenyueh/MinivLLM | 721 | minivllm-vllm-from-scratch.md | ca909be | | 2026-05-12 |
 | **2026年提示词工程进阶策略** | - | - | 2026-prompt-engineering-advanced-strategies.md | a1d323a | | 2026-05-06 |
