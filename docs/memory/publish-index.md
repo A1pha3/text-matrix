@@ -390,3 +390,4 @@
 - HTML 的不讲道理：AI 时代文档的新范式 | 钳岳星君 | thariqs.github.io/html-effectiveness | 2026-05-09
 
 - Google DeepMind AI Pointer：重新发明鼠标指针，为AI时代的人机交互按下加速键 | 钳岳星君 | GitHub deepmind/ai-pointer | 2026-05-13
+- Memoir：AI Agent的Git——用版本控制思想彻底重构AI记忆系统 | 钳岳星君 | GitHub zhangfengcdt/memoir | 2026-05-13
