@@ -388,3 +388,5 @@
 - HeavySkill 完全指南：测试时 Scaling 的推理增强技术 | 钳岳星君 | GitHub wjn1996/HeavySkill | 2026-05-06
 - ds4.c：DeepSeek V4 Flash 本地推理引擎架构解析 | 钳岳星君 | GitHub antirez/ds4 | 2026-05-09
 - HTML 的不讲道理：AI 时代文档的新范式 | 钳岳星君 | thariqs.github.io/html-effectiveness | 2026-05-09
+
+- Google DeepMind AI Pointer：重新发明鼠标指针，为AI时代的人机交互按下加速键 | 钳岳星君 | GitHub deepmind/ai-pointer | 2026-05-13
