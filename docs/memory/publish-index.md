@@ -391,3 +391,5 @@
 
 - Google DeepMind AI Pointer：重新发明鼠标指针，为AI时代的人机交互按下加速键 | 钳岳星君 | GitHub deepmind/ai-pointer | 2026-05-13
 - Memoir：AI Agent的Git——用版本控制思想彻底重构AI记忆系统 | 钳岳星君 | GitHub zhangfengcdt/memoir | 2026-05-13
+
+- Taste-Skill：AI前端的「反垃圾」框架，让大模型输出不再油腻 | 钳岳星君 | GitHub Leonxlnx/taste-skill | 2026-05-13
