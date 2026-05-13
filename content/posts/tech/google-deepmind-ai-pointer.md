@@ -1,3 +1,9 @@
++++
+date = '2026-05-13T19:31:11+08:00'
+draft = false
+title = 'Google DeepMind AI Pointer：重新发明鼠标指针，为AI时代的人机交互按下加速键'
++++
+
 # Google DeepMind AI Pointer：重新发明鼠标指针，为AI时代的人机交互按下加速键
 
 > 北京时间 2026 年 5 月 12 日，Google DeepMind 发布了一篇重量级研究博客 **[Reimagining the mouse pointer for the AI era](https://deepmind.google/blog/ai-pointer/)**，由 Adrien Baranes 和 Rob Marchant 联合撰写。这篇文章提出了一个大胆的愿景：**让鼠标指针在 AI 时代"进化"——它不再只追踪坐标，而是理解用户在指什么、以及为什么指**。本文将深入剖析这项研究的动机、四大交互原则、技术架构，以及它为何可能是下一代人机交互的开创性突破。

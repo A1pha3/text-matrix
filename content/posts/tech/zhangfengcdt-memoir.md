@@ -1,3 +1,9 @@
++++
+date = '2026-05-13T19:31:11+08:00'
+draft = false
+title = 'Memoir：AI Agent 的"Git"——用版本控制思想彻底重构 AI 记忆系统'
++++
+
 # Memoir：AI Agent 的"Git"——用版本控制思想彻底重构 AI 记忆系统
 
 > AI 记忆是"全局变量反模式"（Global Variable anti-pattern）。每个生产级 Agent 都会遇到三堵墙：上下文污染、Token 租费、记忆漂移。Memoir 带来了 AI 记忆的版本控制。——项目 README 开篇
