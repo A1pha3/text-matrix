@@ -393,3 +393,4 @@
 - Memoir：AI Agent的Git——用版本控制思想彻底重构AI记忆系统 | 钳岳星君 | GitHub zhangfengcdt/memoir | 2026-05-13
 
 - Taste-Skill：AI前端的「反垃圾」框架，让大模型输出不再油腻 | 钳岳星君 | GitHub Leonxlnx/taste-skill | 2026-05-13
+- TencentDB Agent Memory：让 AI Agent 真正学会记忆的上下文分层框架 | 钳岳星君 | GitHub Tencent/TencentDB-Agent-Memory | 2026-05-15
