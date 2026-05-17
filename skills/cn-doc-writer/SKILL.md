@@ -1,7 +1,7 @@
 ---
 name: cn-doc-writer
-description: 中文技术文档工作流。适用于编写中文技术教程、README、API 文档，或把英文技术资料译成中文、优化现有技术文档、补充学习目标/练习/FAQ/进阶路径等场景，并在不牺牲结构、准确性、教学性与实用性的前提下去掉 AI 味、模板腔和生成感。覆盖任务路由、读者建模、术语一致性、量化评估与 references 按需加载；关键词：中文技术文档、英译中、文档优化、学习元素、技术教程、README、API 文档、去 AI 味、模板腔。
-version: 5.2.0
+description: 中文技术文档工作流。适用于编写中文技术教程、README、API 文档、开源项目解读、架构分析文章，或把英文技术资料译成中文、优化现有技术文档、补充学习目标/练习/FAQ/进阶路径等场景，并在不牺牲结构、准确性、教学性与实用性的前提下去掉 AI 味、模板腔和生成感。覆盖任务路由、读者建模、术语一致性、量化评估、references 按需加载与分析型技术文章增强。
+version: 5.5.0
 author: Sisyphus
 tags: ["cn-doc", "technical", "translation", "learning"]
 commands:
@@ -61,9 +61,9 @@ commands:
 
 | 命令 | 必须加载 | 按需加载 | 禁止预加载 |
 | ------ | ------ | ------ | ------ |
-| `write-cn-doc` | `references/commands.md` | 快速/标准/完整模板用 `references/templates.md`；需要学习路径时用 `references/learning-paths.md`；做文档体系设计时用 `references/tools.md`；输出前评分时用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
+| `write-cn-doc` | `references/commands.md` | 快速/标准/完整模板用 `references/templates.md`；需要学习路径时用 `references/learning-paths.md`；做文档体系设计时用 `references/tools.md`；输出前评分时用 `references/quality.md`；若是开源项目解读/架构分析/benchmark 解读，加载 `references/blog-deep-dive.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
 | `translate-cn` | `references/commands.md` + `references/terminology.json` | 长文档、复杂 Markdown、分片翻译用 `references/edge-cases.md`；需要语气校准时用 `references/examples.md`；做发布级评审时用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
-| `optimize-cn-doc` | `references/commands.md` + `references/quality.md` | 术语密集时用 `references/terminology.json`；需要示例风格时用 `references/examples.md`；超长文档或跨文档优化时用 `references/edge-cases.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
+| `optimize-cn-doc` | `references/commands.md` + `references/quality.md` | 术语密集时用 `references/terminology.json`；需要示例风格时用 `references/examples.md`；超长文档或跨文档优化时用 `references/edge-cases.md`；若是开源项目解读/架构分析/benchmark 解读，加载 `references/blog-deep-dive.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
 | `enhance-learning` | `references/commands.md` + `references/learning-paths.md` | 需要教学框架或知识组织时用 `references/knowledge.md`；需要示例风格时用 `references/examples.md`；输出评分时用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
 
 只有当用户明确要求本地工具、自动化校验、脚本维护或发布流程时，才读取 `scripts/`、`ci/` 或 `CHANGELOG.md`。
@@ -85,6 +85,12 @@ commands:
 - `optimize-cn-doc`：基线问题 + 优先修复项
 - `enhance-learning`：可增强位置 + 学习元素方案
 
+若文档属于开源项目解读、架构分析、benchmark 解读或系统评测，还要额外输出：
+
+- 文档类型：教程 / 参考 / 分析
+- 系统主线：有哪些并行机制必须先拆开
+- 是否需要总览图、任务流案例、采用顺序建议
+
 ### Step 3: 执行命令
 
 详细流程读取 `references/commands.md`。执行时保持下面 4 条不变：
@@ -96,6 +102,16 @@ commands:
 
 补充约束：先把结构、事实、术语和教学路径写稳，再进入“去 AI 味”回路；不要用删除边界说明、验收条件或学习元素的方式换取所谓自然。
 
+### Step 3.5: 分析型技术文章增强回路
+
+当文档属于开源项目解读、架构分析、benchmark 解读或系统评测时，必须加载 `references/blog-deep-dive.md`，并执行以下增强：
+
+- 先给核心判断，再给背景材料或功能清单。
+- 在前 20% 内给读者一个总览图、对照表或明确的边界拆分。
+- 至少补一个“任务如何流过系统”的具体案例，把抽象机制串起来。
+- benchmark 段必须解释“测的是什么、反映哪部分系统、不能推出什么”。
+- 结尾给采用顺序、适用边界或决策建议，而不是停在泛化总结。
+
 ### Step 4: 交付前回路
 
 先做自检，再决定是否交付：
@@ -104,7 +120,8 @@ commands:
 2. 事实、术语、代码、链接是否可以追溯或验证
 3. 是否存在明显模板腔、生成式转场、自我声明堆积、过整齐列表或过强作者在场感
 4. 去 AI 味后五维评分是否持平或提升
-5. 若评分或关键检查不达标，先修改，再输出
+5. 若为分析型技术文章，是否在前 20% 提供总览地图，并至少给出一个任务流案例
+6. 若评分或关键检查不达标，先修改，再输出
 
 ### Step 4.5: 去 AI 味回路
 
@@ -173,6 +190,7 @@ commands:
 | 6 | 命令交付物完整：术语报告、评分表、增强清单等是否齐全 | 补齐缺项 |
 | 7 | 自然度检查：是否存在明显模板腔、机械转场、过整齐列表、过强作者在场感 | 删除元话语、改写标题导语、打散句式后复评分 |
 | 8 | 稳分检查：去 AI 味后五维评分是否持平或提升 | 回滚低效润色，保留信息密度 |
+| 9 | 分析型文章检查：是否区分了并行机制、解释了 benchmark 作用范围，并给出采用顺序 | 补系统地图、补案例、补决策建议 |
 
 红线：禁止把未通过自检的文档直接交付给用户。
 
@@ -208,6 +226,11 @@ commands:
 - 超大文档或多文件文档按 H2 主题分片处理，并维护一致术语
 - 去 AI 味时先锁定事实、结构和教学路径，再动语气与转场
 - 去 AI 味后必须复评五维分数，确认没有因润色导致降分
+- 当文档涉及 2 个以上并行机制、层级或子系统时，先拆边界，再讲细节
+- 当文档属于架构分析或开源项目解读时，在前 20% 内给读者一张总览地图（图、表或明确总览段均可）
+- 当文档属于分析型技术文章时，至少给出一个具体任务流案例，避免全篇停留在静态结构说明
+- benchmark 章节必须先解释测量对象和作用范围，再解释数字，不得只复述结果
+- 讨论生产系统、框架或工程能力时，结尾优先给采用顺序、适用边界或决策建议
 
 ### 禁止
 
@@ -219,6 +242,9 @@ commands:
 - 禁止为了“更像人写的”而删除必要的边界说明、验收条件、免责声明或学习元素
 - 禁止连续堆叠“更准确地说”“换句话说”“如果你……”这类生成式转场句
 - 禁止把技术文章过度口语化，写成聊天记录或情绪化评论
+- 禁止把长期机制、短期机制、存储工件或召回路径混写成一条单线故事，导致边界不清
+- 禁止把 benchmark 写成成绩播报，不解释这些数字主要在测什么、不能说明什么
+- 禁止分析型文章开头只堆功能点、Stars、版本号，而不先给文章判断
 
 ## 9. 异常与恢复
 

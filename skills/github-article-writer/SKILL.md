@@ -1,7 +1,7 @@
 ---
 name: github-article-writer
-description: "面向 GitHub 开源仓库的中文技术文章工作流。只要用户输入任意 GitHub 仓库链接、仓库内页面链接、github.com URL 或 owner/repo，就应激活本 skill；如果消息里只有链接或链接加一句短指令，默认直接进入写作模式并产出中文技术文章。适用于“根据这个 GitHub 链接写文章”“分析这个 repo 并写成技术笔记”“把这个仓库整理成 Hugo 文章”等场景。覆盖仓库取证、选题定位、中文技术写作、Hugo frontmatter 生成与发布前校验；关键词：GitHub URL、仓库链接、repo link、owner/repo、开源项目分析、技术文章、仓库解读、text-matrix。"
-version: 1.1.0
+description: "面向 GitHub 开源仓库的中文技术文章工作流。只要用户输入任意 GitHub 仓库链接、仓库内页面链接、github.com URL 或 owner/repo，就应激活本 skill；如果消息里只有链接或链接加一句短指令，默认直接进入写作模式并产出中文技术文章。适用于“根据这个 GitHub 链接写文章”“分析这个 repo 并写成技术笔记”“把这个仓库整理成 Hugo 文章”等场景。覆盖仓库取证、文章形态路由、中文技术写作、Hugo frontmatter 生成与发布前校验，并支持架构分析 / benchmark 解读场景下的深度技术博客增强；关键词：GitHub URL、仓库链接、repo link、owner/repo、开源项目分析、技术文章、架构分析、benchmark 解读、text-matrix。"
+version: 1.2.0
 tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 ---
 
@@ -71,9 +71,9 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 
 取证原则：README 足够时不必深挖源码；README 不足时再进入关键目录或核心文件；无法确认的信息标记为“未知”或“未在仓库中明确说明”，禁止补写。
 
-### Step 2: 选题定位
+### Step 2: 选题定位与文章形态
 
-根据证据判断文章主轴，只保留一个主叙事。
+根据证据判断文章主轴，只保留一个主叙事。执行本步骤时，必须加载 [references/article-shapes.md](references/article-shapes.md)。
 
 优先级如下：
 
@@ -84,32 +84,33 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 
 选题输出至少包含：
 
+- 文章形态
 - 目标读者
 - 一句话标题方向
 - 为什么值得写
 - 本文不覆盖什么
 
+如果仓库更像“多子系统 + 并行机制 + benchmark + 适用边界”的组合，不要硬写成教程，优先进入“原理拆解 / 架构分析”。
+
 ### Step 3: 生成文章草稿
 
-进入写作阶段时，必须加载 [../cn-doc-writer/SKILL.md](../cn-doc-writer/SKILL.md)，再将仓库证据整理为写作输入。文章默认定位为：
+进入写作阶段时，必须加载 [../cn-doc-writer/SKILL.md](../cn-doc-writer/SKILL.md)，并先依据 [references/article-shapes.md](references/article-shapes.md) 确定正文形态，再将仓库证据整理为写作输入。文章默认定位为：
 
 - 分类：技术笔记
 - 文风：专业、克制、可验证
 - 目标：帮助读者判断项目价值并完成首次上手
 
-推荐结构：
+推荐结构按文章形态调整：
 
-1. 项目概览
-2. 学习目标或读者收益
-3. 核心问题与解决思路
-4. 架构或关键机制
-5. 安装与最小示例
-6. 代码结构或模块拆解
-7. 适用场景、优势与边界
-8. 常见问题或使用建议
-9. 总结与延伸阅读
+- **项目导读**：项目概览 → 为什么值得看 → 核心能力 → 适用边界 → 阅读路径
+- **快速上手**：项目概览 → 安装 → 最小示例 → 常见坑点 → 适用边界
+- **原理拆解 / 架构分析**：核心判断 → 系统地图 → 边界拆分 → 关键机制 → 任务流案例 → benchmark 解读 → 采用建议
+- **源码分析**：项目定位 → 模块切分 → 关键调用链 → 设计取舍 → 适用边界
+- **实验性评估**：项目定位 → 为什么值得观察 → 已验证信号 → 风险与未知项 → 适用人群
 
 结构不是硬性模板；若仓库信息不足，优先缩短而不是补写空章节。
+
+当文章形态是“原理拆解 / 架构分析”，或正文高度依赖 benchmark、系统分层、并行机制时，必须额外加载 [../cn-doc-writer/references/blog-deep-dive.md](../cn-doc-writer/references/blog-deep-dive.md)。
 
 ### Step 4: 三轮事实校验
 
@@ -118,6 +119,15 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 1. 事实一致性：仓库名、作者、Stars、命令、配置项与仓库页面一致
 2. 术语一致性：同一概念的中英文叫法保持统一，首次出现时可保留原文并加中文括注
 3. 证据边界：删除所有无来源的性能结论、兼容性承诺、路线图推断
+4. 形态一致性：正文是否真的围绕所选文章形态展开，而不是重新滑回通用模板
+
+如果文章形态是“原理拆解 / 架构分析”，还必须额外检查：
+
+- 开头是否先给判断，而不是先报 Stars、Forks 或安装命令
+- 前 20% 是否给出系统地图、对照表或明确总览段
+- 是否至少有一个请求 / 任务流案例
+- benchmark 是否解释了“测什么、不能推出什么”
+- 结尾是否给出采用顺序、适用边界或决策建议
 
 任意一轮失败都要先修正，再进入 Frontmatter 或发布阶段。
 
@@ -178,16 +188,21 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 ### 必须
 
 - 先取证，再写作；禁止按仓库名想象内容
+- 先判断文章形态，再写正文；不要默认所有仓库都用同一套文章模板
 - 只基于 GitHub 页面、README、文档、示例、源码等可验证材料写作
 - 信息不足时收缩文章范围，而不是扩写空洞章节
 - 默认输出中文
 - 默认保留英文术语，并在首次出现时加中文括注
 - 发布前完成三轮事实校验
+- 多子系统、并行机制、benchmark 密集的仓库，优先按“原理拆解 / 架构分析”处理
 
 ### 禁止
 
 - 禁止伪造 Stars、Forks、License、维护状态、路线图、Benchmark
 - 禁止把 README 中没有的命令写成“官方推荐命令”
+- 禁止把 README 的 feature list 直接扩写成文章主体
+- 禁止把不同 benchmark 或不同时间尺度的指标混成同一条能力结论
+- 禁止架构分析文章开头只堆 Stars、版本号、安装命令，而不给核心判断
 - 禁止在未获明确指令时执行 git push、创建飞书文档、更新索引
 - 禁止依赖固定机器路径；始终以当前工作区或用户指定路径为准
 - 禁止为了凑结构补写“最佳实践”“FAQ”“性能优化”之类空章节
@@ -208,7 +223,9 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 
 | 需要什么 | 加载哪里 |
 |----------|----------|
+| 文章形态路由 | [references/article-shapes.md](references/article-shapes.md) |
 | 中文技术写作 | [../cn-doc-writer/SKILL.md](../cn-doc-writer/SKILL.md) |
+| 分析型深度增强 | [../cn-doc-writer/references/blog-deep-dive.md](../cn-doc-writer/references/blog-deep-dive.md) |
 | Hugo Frontmatter 生成 | [../hugo-writer/SKILL.md](../hugo-writer/SKILL.md) |
 | Frontmatter 字段提醒 | [references/frontmatter-template.md](references/frontmatter-template.md) |
 | 发布索引格式 | [references/publish-index-template.md](references/publish-index-template.md) |
@@ -216,6 +233,7 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 ## 8. 输出前自检
 
 - 本文的每个关键判断是否都能回溯到仓库证据
+- 所选文章形态是否正确，且正文没有滑回通用项目介绍模板
 - 标题、摘要、正文是否围绕同一个主叙事
 - 安装命令、配置项、代码示例是否来自可验证材料
 - 是否错误进入了发布模式

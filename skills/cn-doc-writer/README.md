@@ -1,10 +1,19 @@
 # cn-doc-writer
 
-> 专业级中文技术文档编写 Skill — v5.2.0
+> 专业级中文技术文档编写 Skill — v5.5.0
 
 ## 功能概述
 
-为 AI 助手提供中文技术文档的**编写、翻译、优化、教学增强**全流程能力，并在不牺牲信息密度与技术准确性的前提下，抑制模板腔、生成感和过强的 AI 话语痕迹。
+为 AI 助手提供中文技术文档的**编写、翻译、优化、教学增强**全流程能力，并在不牺牲结构、准确性、教学性与实用性的前提下，系统性去掉 AI 味、模板腔和生成感。
+
+## 新增能力：分析型技术文章增强
+
+- 当任务属于开源项目解读、架构分析、benchmark 解读、系统评测时，自动切换到“分析型技术文章增强”分支。
+- 强制区分并行机制和系统边界，避免把长期机制、短期机制、存储工件混写成一条故事线。
+- 在正文前 20% 内优先给出总览图 / 对照表 / 总览段，降低读者理解成本。
+- 至少补一个“任务如何流过系统”的具体案例，把抽象架构转成动态理解。
+- benchmark 章节不再只是复述数字，而要解释“测的是什么 / 映射到哪部分系统 / 不能推出什么”。
+- 结尾要求给采用顺序、适用边界或决策建议，把文章从分析推进到可用判断。
 
 ### 四个命令
 
@@ -14,6 +23,14 @@
 | `translate-cn` | 将英文文档翻译成中文（前分析 → 翻译 → 后校验） |
 | `optimize-cn-doc` | 优化现有文档（诊断 → 改进 → 量化评估） |
 | `enhance-learning` | 添加学习元素（目标、练习、评估、路径） |
+
+## 新增能力：去 AI 味门槛检查
+
+- 不新增第六个评分维度，仍然使用原有五维 100 分体系。
+- “自然表达”并入可读性与教学性，作为拿到 A / S 乃至满分 100 的强制门槛。
+- 所有命令都增加去 AI 味后处理步骤，但前提是先锁定事实、结构、术语与教学路径。
+- 去 AI 味后必须复评分；如果分数下降，则回滚低效润色，不用“更像人写的”换取信息损失。
+- 新增启发式脚本，可对高频 AI 味信号做本地检查，不再完全依赖人工复核。
 
 ### 三种模式
 
@@ -29,6 +46,12 @@ cn-doc-writer/
 ├── skill.json                  # Skill 元数据
 ├── README.md                   # 本文件
 ├── references/                 # 知识层
+│   ├── commands.md             # 命令执行流程
+│   ├── quality.md              # 评分标准与发布门槛
+│   ├── blog-deep-dive.md       # 分析型技术文章增强指南
+│   ├── examples.md             # 语气与正反例
+│   ├── edge-cases.md           # 边界与恢复策略
+│   ├── knowledge.md            # 教学框架与知识补充
 │   ├── templates.md            # 四级文档模板 + 快速模板
 │   ├── learning-paths.md       # 三条学习路径指南
 │   ├── tools.md                # 路径规划工具集
@@ -37,6 +60,7 @@ cn-doc-writer/
 ├── scripts/                    # 工具层
 │   ├── utils.py                # 共享工具模块
 │   ├── check_format.py         # 格式检查 + 自动修复
+│   ├── check_ai_tone.py        # AI 味门槛启发式检查
 │   ├── pre_translate.py        # 翻译前分析
 │   ├── post_translate.py       # 翻译后校验
 │   ├── gen_terminology_md.py   # 从 JSON 生成 terminology.md
@@ -58,6 +82,19 @@ python scripts/check_format.py docs/
 
 # 自动修复（中英文空格 + 行尾空格）
 python scripts/check_format.py docs/guide.md --fix
+```
+
+### AI 味门槛检查
+
+```bash
+# 检查单个文档是否存在明显模板腔 / 生成式转场 / 作者在场感
+python scripts/check_ai_tone.py docs/guide.md
+
+# 目录批量检查
+python scripts/check_ai_tone.py docs/
+
+# 作为阻断性检查使用
+python scripts/check_ai_tone.py docs/guide.md --strict
 ```
 
 ### 翻译工作流
@@ -129,6 +166,7 @@ python test_scripts.py
 
 | 版本 | 变更 |
 | ------ | ------ |
+| v5.5.0 | 新增“分析型技术文章增强”分支：增加 `references/blog-deep-dive.md`；主 SKILL 接入开源项目解读 / 架构分析 / benchmark 解读路由；commands 和 quality 增加总览图、任务流案例、benchmark 解读与采用建议等强制检查；新增 `scripts/check_ai_tone.py` 并同步更新 CI 模板、README 与 skill.json。 |
 | v5.2.0 | 在核心流程中加入“去 AI 味”回路；将自然度检查并入评分与自检；补充稳分约束、反模板腔规则，并同步 skill.json 与 SKILL.md 的描述和版本。 |
 | v5.1.0 | 核心 SKILL 重构为更清晰的 3 段路由、命令级按需加载表、原子化约束和异常恢复策略；同步 skill.json、README 与版本元数据。 |
 | v3.7.0 | 代码修复（inline code/LaTeX 误报、变长围栏、CI 注入）、语气框架、发布门槛、增量模式约束、§3.6 文档治理、术语表 216 条（+5 新分类）、4 新模板（Changelog/迁移/故障排除/ADR）、反馈闭环 §1.10，测试 105→126 |

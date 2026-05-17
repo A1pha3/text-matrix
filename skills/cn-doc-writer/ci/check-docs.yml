@@ -9,6 +9,7 @@
 #   - PR 提交时自动检查变更的 Markdown 文件
 #   - 检查中英文空格、标点符号、术语一致性、Markdown 结构
 #   - 生成可读性量化报告
+#   - 启发式检查 AI 味门槛（模板腔、生成式转场、作者在场感）
 #   - 支持 --fix 自动修复后提交
 
 name: 中文文档质量检查
@@ -111,6 +112,38 @@ jobs:
               echo '```' >> "$GITHUB_STEP_SUMMARY"
             fi
           done < /tmp/changed_md_files.txt
+
+      - name: 运行 AI 味门槛检查
+        if: steps.changed-files.outputs.has_files == 'true'
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 🧪 去 AI 味门槛检查" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          TOTAL_FAILED=0
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              OUTPUT=$(python "${{ env.SCRIPTS_DIR }}/check_ai_tone.py" "$file" 2>&1) || true
+              if echo "$OUTPUT" | grep -q "门槛状态: 未通过"; then
+                TOTAL_FAILED=$((TOTAL_FAILED + 1))
+                echo "### ⚠️ $file" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+                echo "$OUTPUT" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+              else
+                echo "### ✅ $file" >> "$GITHUB_STEP_SUMMARY"
+              fi
+            fi
+          done < /tmp/changed_md_files.txt
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**未通过门槛文件数: $TOTAL_FAILED**" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$TOTAL_FAILED" -gt 0 ]; then
+            echo "::warning::有 $TOTAL_FAILED 个文件未通过去 AI 味门槛"
+            # 如果要设为阻断性检查，可改用 --strict 或取消下面这行注释：
+            # exit 1
+          fi
 
   # 可选：自动修复并提交
   auto-fix:
