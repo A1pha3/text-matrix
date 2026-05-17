@@ -1,0 +1,29 @@
+{
+  "name": "github-article-writer",
+  "description": "面向 GitHub 开源仓库的中文技术文章工作流。适用于根据 GitHub 仓库链接、仓库内页面或 owner/repo 写中文技术文章、项目解读、Hugo 博文，并支持仓库证据到文章形态的路由，以及架构分析和 benchmark 解读场景下的深度增强。",
+  "version": "1.2.0",
+  "author": "Sisyphus",
+  "tags": [
+    "github",
+    "article",
+    "hugo",
+    "technical-writing",
+    "open-source",
+    "repo-analysis",
+    "architecture-analysis"
+  ],
+  "commands": [
+    {
+      "name": "analyze-github-repo",
+      "description": "基于 GitHub 仓库证据给出选题方向、文章形态与证据不足项"
+    },
+    {
+      "name": "write-github-article",
+      "description": "将 GitHub 仓库整理成中文技术文章或 Hugo 草稿"
+    },
+    {
+      "name": "publish-github-article",
+      "description": "在明确要求时生成 Frontmatter、落库并汇报发布结果"
+    }
+  ]
+}
