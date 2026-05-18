@@ -3,6 +3,9 @@
 {{- define "content" -}}
     {{- $params := .Scratch.Get "params" -}}
     {{- $current := .RelPermalink -}}
+    {{- $audience := .Params.audience -}}
+    {{- $outcomes := .Params.outcomes -}}
+    {{- $starterPack := .Params.starterPack -}}
     {{- $topicLinks := slice
         (dict "title" "AI Agent 学习路径" "url" "/ai-agent/" "label" "学习路径")
         (dict "title" "Coding Agent 工作流" "url" "/coding-agent/" "label" "工程工作流")
@@ -57,6 +60,49 @@
         </section>
 
         <div class="pagefind-document topic-content-shell" data-pagefind-body>
+            {{- if or $audience $outcomes $starterPack -}}
+                <section class="topic-briefing" data-pagefind-ignore="all">
+                    {{- with $audience -}}
+                        <article class="topic-brief-card">
+                            <p class="topic-brief-label">适合谁看</p>
+                            <h2>这页最适合这些读者</h2>
+                            <ul>
+                                {{- range . -}}
+                                    <li>{{ . }}</li>
+                                {{- end -}}
+                            </ul>
+                        </article>
+                    {{- end -}}
+                    {{- with $starterPack -}}
+                        <article class="topic-brief-card">
+                            <p class="topic-brief-label">先看这几篇</p>
+                            <h2>如果时间有限，从这里开始</h2>
+                            <ol class="topic-starter-list">
+                                {{- range . -}}
+                                    <li>
+                                        <a href="{{ .url }}">{{ .title }}</a>
+                                        {{- with .note -}}
+                                            <span>{{ . }}</span>
+                                        {{- end -}}
+                                    </li>
+                                {{- end -}}
+                            </ol>
+                        </article>
+                    {{- end -}}
+                    {{- with $outcomes -}}
+                        <article class="topic-brief-card">
+                            <p class="topic-brief-label">读完你会得到</p>
+                            <h2>这页想帮你建立的判断</h2>
+                            <ul>
+                                {{- range . -}}
+                                    <li>{{ . }}</li>
+                                {{- end -}}
+                            </ul>
+                        </article>
+                    {{- end -}}
+                </section>
+            {{- end -}}
+
             {{- with $params.subtitle -}}
                 <h2 class="single-subtitle">{{ . }}</h2>
             {{- end -}}

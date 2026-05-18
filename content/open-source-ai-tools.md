@@ -5,6 +5,32 @@ draft = false
 url = "/open-source-ai-tools/"
 type = "topic"
 description = "从工作流自动化、Agent 框架、Coding Agent、记忆系统到浏览器自动化，系统梳理 Text Matrix 站内值得长期关注的开源 AI 工具与项目。"
+audience = [
+  "想系统跟踪开源 AI 工具的开发者",
+  "想搭一套 AI 工作流，而不是被单一 SaaS 绑定的人",
+  "想判断一个开源项目是短期热闹还是长期值得跟的读者"
+]
+
+outcomes = [
+  "更快判断哪些工具适合马上试用，哪些适合长期跟踪",
+  "分清入口级工具、框架层、开发者工具链和辅助能力层",
+  "建立自己的长期工具栈判断标准，而不是只看热度"
+]
+
+[[starterPack]]
+title = "Craft Agents：AI Agent 原生桌面应用深度解析"
+url = "/posts/tech/craft-agents-ai-agent-native-desktop/"
+note = "从入口级产品理解 AI 工具怎样真正进入工作流。"
+
+[[starterPack]]
+title = "Microsoft Agent Framework：多语言 Agent 框架指南"
+url = "/posts/tech/microsoft-agent-framework-multi-language-guide/"
+note = "从框架层理解系统该如何扩展。"
+
+[[starterPack]]
+title = "Cognee：AI Agent 记忆与知识引擎完整指南"
+url = "/posts/tech/cognee-ai-agent-memory-knowledge-engine/"
+note = "把工具判断延伸到上下文、记忆和长期可维护性。"
 +++
 
 # 开源 AI 工具解读

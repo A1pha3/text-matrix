@@ -5,6 +5,32 @@ draft = false
 url = "/coding-agent/"
 type = "topic"
 description = "聚焦 Claude Code、Codex、Cline、Roo Code 与浏览器/MCP 工具链的 Coding Agent 工作流专题页，帮助开发者从工具认知走到真实可复用的工程实践。"
+audience = [
+  "已经开始使用 Claude Code、Codex、Cline 或 Roo Code 的开发者",
+  "想从“让 AI 帮我写几段代码”进化到“让 AI 真正参与工程流程”的实践者",
+  "正在思考 MCP、Skills、浏览器自动化和上下文系统怎么组合的人"
+]
+
+outcomes = [
+  "知道不同 Coding Agent 工具各自适合什么场景",
+  "建立 Skills、MCP、浏览器能力和验证流程之间的连接方式",
+  "把一次性工具体验收束成更稳定的工程工作流"
+]
+
+[[starterPack]]
+title = "Treat Coding Agents Like Developers"
+url = "/posts/tech/treat-coding-agents-like-developers/"
+note = "先建立方法论，再决定怎么选工具。"
+
+[[starterPack]]
+title = "Everything Claude Code：完整指南"
+url = "/posts/tech/ai-agent/everything-claude-code-comprehensive-guide/"
+note = "从主流路径进入最完整的 Coding Agent 工作流。"
+
+[[starterPack]]
+title = "Chrome DevTools MCP 与 AI Coding Agents 使用指南"
+url = "/posts/tech/chrome-devtools-mcp-ai-coding-agents-guide/"
+note = "把 Coding Agent 接进真实浏览器和调试环境。"
 +++
 
 # Coding Agent 工作流

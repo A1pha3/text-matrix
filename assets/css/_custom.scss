@@ -973,6 +973,68 @@
     margin-bottom: 1rem;
   }
 
+  .topic-briefing {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .topic-brief-card {
+    padding: 1.2rem 1.2rem 1.1rem;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 1.25rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(248, 250, 252, .98)),
+      linear-gradient(135deg, rgba(14, 165, 233, .04), rgba(16, 185, 129, .03));
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .04);
+  }
+
+  .topic-brief-label {
+    margin: 0 0 .45rem;
+    color: #0f766e;
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .topic-brief-card h2 {
+    margin: 0 0 .8rem;
+    color: #0f172a;
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+
+  .topic-brief-card ul,
+  .topic-starter-list {
+    margin: 0;
+    padding-left: 1.15rem;
+    color: #475569;
+  }
+
+  .topic-brief-card li,
+  .topic-starter-list li {
+    margin-bottom: .62rem;
+    line-height: 1.72;
+  }
+
+  .topic-starter-list a {
+    color: #0f172a;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .topic-starter-list a:hover {
+    color: #0f766e;
+  }
+
+  .topic-starter-list span {
+    display: block;
+    color: #64748b;
+    font-size: .94rem;
+  }
+
   .topic-content table {
     display: block;
     width: 100%;
@@ -983,7 +1045,8 @@
     .topic-hero-copy,
     .topic-mini-card,
     .topic-switcher-link,
-    .topic-content-shell {
+    .topic-content-shell,
+    .topic-brief-card {
       border-color: rgba(255, 255, 255, .06);
       background:
         linear-gradient(180deg, rgba(15, 23, 42, .84), rgba(2, 6, 23, .92)),
@@ -994,12 +1057,17 @@
     .topic-intro,
     .topic-mini-card p,
     .topic-actions a,
-    .topic-switcher-link {
+    .topic-switcher-link,
+    .topic-brief-card ul,
+    .topic-starter-list,
+    .topic-starter-list span {
       color: #cbd5e1;
     }
 
     .topic-mini-card strong,
-    .topic-switcher-link strong {
+    .topic-switcher-link strong,
+    .topic-brief-card h2,
+    .topic-starter-list a {
       color: #f8fafc;
     }
 
@@ -1030,7 +1098,8 @@
 
   .topic-page {
     .topic-hero,
-    .topic-switcher {
+    .topic-switcher,
+    .topic-briefing {
       grid-template-columns: 1fr;
     }
   }

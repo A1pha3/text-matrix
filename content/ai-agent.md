@@ -5,6 +5,32 @@ draft = false
 url = "/ai-agent/"
 type = "topic"
 description = "面向中文开发者的 AI Agent 学习路径，从概念入门、工具使用、记忆系统、多 Agent 到生产化实践，串起 Text Matrix 站内高价值内容。"
+audience = [
+  "想从零理解 AI Agent 的开发者",
+  "已经在用 Claude Code、Codex、n8n 或 MCP，但知识仍然比较碎片化的实践者",
+  "想把 Agent 从 demo 推进到更稳定工作流的人"
+]
+
+outcomes = [
+  "建立 Agent、自动化、工作流和聊天机器人的边界感",
+  "知道应该先补概念、框架、工具还是生产化能力",
+  "把站内高价值内容串成一条更清晰的学习顺序"
+]
+
+[[starterPack]]
+title = "25 分钟从零到 AI Agent：Futurepedia 爆款教程深度解析"
+url = "/posts/video/zero-to-ai-agent-25-minutes-futurepedia-3m-views/"
+note = "最快建立第一层概念框架。"
+
+[[starterPack]]
+title = "LangGraph：面向状态的 Agent 框架指南"
+url = "/posts/tech/langgraph-stateful-agents-framework/"
+note = "从框架角度理解 Agent 的状态、规划和执行。"
+
+[[starterPack]]
+title = "From Prototype to Production：AI Agents 生产化实践指南"
+url = "/posts/tech/agents-towards-production-ai-agents-production-guide/"
+note = "把注意力提前拉到长期可用的系统问题上。"
 +++
 
 # AI Agent 学习路径
