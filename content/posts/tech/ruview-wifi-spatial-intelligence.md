@@ -1,7 +1,7 @@
 ---
 title: "RuView：用 WiFi 信号实现无摄像头空间感知"
 date: "2026-05-18T19:56:00+08:00"
-description: "RuView 是一个基于 Rust 的 WiFi 感知平台，将普通路由器的无线信号转化为实时空间智能，可检测人体呼吸、心率、姿态和存在状态，全程无需摄像头。
+description: "RuView 是一个基于 Rust 的 WiFi 感知平台，将普通路由器的无线信号转化为实时空间智能，可检测人体呼吸、心率、姿态和存在状态，全程无需摄像头。"
 slug: "ruview-wifi-spatial-intelligence"
 categories:
   - "技术笔记"

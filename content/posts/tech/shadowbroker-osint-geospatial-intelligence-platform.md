@@ -1,7 +1,7 @@
 ---
 categories: ["技术笔记"]
 date: "2026-05-18T20:00:00+08:00"
-slug: "shadowbroker-osint-geospatial-intelligence-platform
+slug: "shadowbroker-osint-geospatial-intelligence-platform"
 description: "ShadowBroker是一款开源地理空间情报平台，整合60+实时OSINT数据源到统一地图界面，涵盖航班、船舶、卫星、监控摄像头等多种数据层。本文详解其架构、数据源生态、InfoNet隐私边界及Docker快速部署方法。"
 ---
 
