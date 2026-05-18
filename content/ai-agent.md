@@ -3,6 +3,7 @@ title = "AI Agent 学习路径"
 date = "2026-05-18T16:30:00+08:00"
 draft = false
 url = "/ai-agent/"
+layout = "topic"
 description = "面向中文开发者的 AI Agent 学习路径，从概念入门、工具使用、记忆系统、多 Agent 到生产化实践，串起 Text Matrix 站内高价值内容。"
 +++
 

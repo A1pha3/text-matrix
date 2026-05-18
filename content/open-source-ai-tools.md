@@ -3,6 +3,7 @@ title = "开源 AI 工具解读"
 date = "2026-05-18T17:45:00+08:00"
 draft = false
 url = "/open-source-ai-tools/"
+layout = "topic"
 description = "从工作流自动化、Agent 框架、Coding Agent、记忆系统到浏览器自动化，系统梳理 Text Matrix 站内值得长期关注的开源 AI 工具与项目。"
 +++
 

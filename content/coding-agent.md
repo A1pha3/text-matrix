@@ -3,6 +3,7 @@ title = "Coding Agent 工作流"
 date = "2026-05-18T17:10:00+08:00"
 draft = false
 url = "/coding-agent/"
+layout = "topic"
 description = "聚焦 Claude Code、Codex、Cline、Roo Code 与浏览器/MCP 工具链的 Coding Agent 工作流专题页，帮助开发者从工具认知走到真实可复用的工程实践。"
 +++
 
