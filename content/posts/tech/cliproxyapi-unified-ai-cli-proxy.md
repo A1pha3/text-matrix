@@ -1,18 +1,18 @@
 ---
-title: "CLIProxyAPI：把 Claude Code、Gemini CLI、Codex 和 Grok 接成统一 API 的完整指南"
+title: "CLIProxyAPI 深度指南：把 Claude Code、Gemini CLI、Codex 和 Grok 接成统一 API"
 date: "2026-05-18T08:37:46+08:00"
 slug: "cliproxyapi-unified-ai-cli-proxy"
-description: "深度拆解 CLIProxyAPI 如何把 Claude Code、Gemini CLI、OpenAI Codex、Grok Build 等订阅制 CLI 能力暴露为统一 API，并梳理协议面、认证文件、管理 API、多账号轮询、部署与观测的真实边界。"
+description: "从协议面、OAuth 与 auth-files 出发，拆解 CLIProxyAPI 如何把 Claude Code、Gemini CLI、OpenAI Codex、Grok Build 接成统一 API，并讲清部署、路由、多账号与观测边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI编程工具", "CLIProxyAPI", "Claude Code", "Gemini CLI", "OpenAI Codex", "OAuth", "OpenAI兼容API", "Amp CLI", "管理 API", "Go"]
+tags: ["CLIProxyAPI", "Claude Code", "Gemini CLI", "OpenAI Codex", "管理 API"]
 ---
 
-CLIProxyAPI 真正抓住的问题，不是“再做一个 AI 中转站”，而是把原本依赖本地 OAuth 会话、主要给人手动使用的 AI CLI，整理成一层稳定的执行访问面。对外它像统一 API；对内它同时在做协议翻译、身份代理、账号调度和运行态管理。
+CLIProxyAPI 的价值，不在于再造一个 AI 网关，而在于把 Claude Code、Gemini CLI、OpenAI Codex、Grok Build 这类原本依赖本地 OAuth 会话的订阅制 CLI，整理成一层程序可以稳定调用的统一 API。对外它像接口服务；对内它同时在做协议翻译、身份代理、账号调度和运行态管理。
 
-如果你只想调用官方按 Token 计费的稳定 API，这条路未必最短。可一旦你的目标变成复用 Claude Code、Gemini CLI、OpenAI Codex、Grok Build 这类订阅制能力，并把它们接进 Cursor、Cline、Amp、自写桌面应用或自动化服务，CLIProxyAPI 解决的就是最难绕开的那道坎。
+当前项目对外已经覆盖 Chat Completions、Responses、Gemini、Claude 等协议面，并且保留了 provider-specific 路由、管理 API、auth-files、多账号轮询和外部观测扩展这几层能力。真正麻烦的不是“有没有 `/v1`”，而是怎么把身份、路由和运行态一起接进工程系统。
 
-本文以项目当前 README、中文手册、管理 API 文档和最新公开发行状态为准，不沿用已经明显漂移的旧教程细节。重点不是复述功能清单，而是把三个判断讲清楚：它在系统里到底扮演哪一层；什么场景值得上；以及部署和接入时哪些环节最容易被二手文章带偏。
+如果你只想调用官方按 Token 计费的稳定 API，这条路未必最短。可一旦你的目标变成复用这些订阅制能力，并把它们接进 Cursor、Cline、Amp、自写桌面应用或自动化服务，CLIProxyAPI 解决的就是那道最难绕开的坎。本文以项目当前 README、中文手册、管理 API 文档和最新公开发行状态为准，重点不是复述功能清单，而是把它的定位、部署顺序和真实边界讲清楚。
 
 ## 读完后你应该能做的三件事
 
