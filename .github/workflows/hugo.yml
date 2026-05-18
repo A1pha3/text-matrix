@@ -52,12 +52,16 @@ jobs:
           node-version: 22
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
+      - name: Validate publish dates
+        run: npm run validate:future-dates
       - name: Build with Hugo
         env:
           BASE_URL: ${{ steps.pages.outputs.base_url }}/
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
           HUGO_ENVIRONMENT: production
         run: npm run build:github-pages
+      - name: Verify topic pages
+        run: npm run validate:topic-pages
       - name: Verify taxonomy pages
         run: |
           test -f public/categories/index.html
