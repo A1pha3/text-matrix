@@ -17,7 +17,7 @@ enableRobotsTXT = true
 
 [params]
   title = "Text Matrix"
-  description = "Text Matrix"
+  description = "面向中文开发者的 AI Agent、AI 开发工作流与开源工具知识库。"
   readingSpeedCJK = 400
 
   [params.adsense]
@@ -77,31 +77,32 @@ enableRobotsTXT = true
     </span>
   </span>
 </span>
+<span class="hero-positioning">面向中文开发者的 AI Agent、AI 开发工作流与开源工具知识库</span>
 '''
 
 [menu]
   [[menu.main]]
-    identifier = "news"
-    name = "📰 行业快讯"
-    url = "/categories/行业快讯/"
+    identifier = "tech"
+    name = "技术笔记"
+    url = "/categories/技术笔记/"
     weight = 1
   [[menu.main]]
-    identifier = "wealth"
-    name = "💰 财富自由"
-    url = "/categories/财富自由/"
+    identifier = "news"
+    name = "行业快讯"
+    url = "/categories/行业快讯/"
     weight = 2
   [[menu.main]]
-    identifier = "tech"
-    name = "💻 技术笔记"
-    url = "/categories/技术笔记/"
+    identifier = "video"
+    name = "视频精读"
+    url = "/categories/视频精读/"
     weight = 3
   [[menu.main]]
-    identifier = "video"
-    name = "🎬 视频精读"
-    url = "/categories/视频精读/"
+    identifier = "wealth"
+    name = "财富自由"
+    url = "/categories/财富自由/"
     weight = 4
   [[menu.main]]
     identifier = "thoughts"
-    name = "🤔 思考与随笔"
+    name = "思考与随笔"
     url = "/categories/思考与随笔/"
     weight = 5

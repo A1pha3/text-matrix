@@ -1,0 +1,161 @@
+{{- define "content" -}}
+    {{- $params := .Scratch.Get "params" -}}
+    {{- $profile := .Site.Params.home.profile -}}
+    {{- $posts := .Site.Params.home.posts -}}
+    {{- $allPosts := where .Site.RegularPages "Type" "posts" -}}
+    {{- $visiblePosts := where $allPosts "Params.hiddenfromhomepage" "!=" true -}}
+    {{- $techPosts := first 4 (where $visiblePosts "Params.categories" "intersect" (slice "技术笔记")) -}}
+    {{- $videoPosts := first 2 (where $visiblePosts "Params.categories" "intersect" (slice "视频精读")) -}}
+    {{- $thoughtPosts := first 2 (where $visiblePosts "Params.categories" "intersect" (slice "思考与随笔")) -}}
+    {{- $featuredPost := index $techPosts 0 -}}
+    {{- $latestNews := first 5 (where $allPosts "Params.categories" "intersect" (slice "行业快讯")) -}}
+
+    <div class="page home home-curated"{{ if ne $posts.enable false }} data-home="posts"{{ end }}>
+        {{- if ne $profile.enable false -}}
+            {{- partial "home/profile.html" . -}}
+        {{- end -}}
+
+        <section class="home-intro-band" data-pagefind-ignore="all">
+            <article class="home-intro-card">
+                <p class="home-intro-kicker">站点定位</p>
+                <h2>先帮你判断什么值得看，什么值得学，什么值得落地。</h2>
+                <p>Text Matrix 重点关注 AI Agent、AI 开发工作流、CLI 工具链和开源项目解读，尽量把高时效内容与长期可复用内容分开组织。</p>
+            </article>
+            <article class="home-intro-card">
+                <p class="home-intro-kicker">阅读路径</p>
+                <h2>如果你第一次来，先从技术笔记和视频精读开始。</h2>
+                <p>前者负责系统化深度内容，后者负责把高价值视频拆成更容易吸收的结构化笔记；快讯单独保留，避免稀释核心信息密度。</p>
+            </article>
+            <article class="home-intro-card">
+                <p class="home-intro-kicker">推荐入口</p>
+                <h2>用专题和目录来沉淀，而不是只靠最新文章列表。</h2>
+                <p>这也是站点接下来会持续强化的方向：让内容更适合搜索、复习、引用和长期积累。</p>
+            </article>
+        </section>
+
+        {{- with $featuredPost -}}
+        <section class="home-featured" data-pagefind-ignore="all">
+            <div class="home-section-heading">
+                <p class="home-section-kicker">本周重点</p>
+                <h2>先看这一篇深度内容</h2>
+            </div>
+            <article class="home-featured-card">
+                <div class="home-featured-copy">
+                    {{- with .Params.categories -}}
+                    <p class="home-featured-meta">{{ index . 0 }}</p>
+                    {{- end -}}
+                    <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+                    <p>{{ .Description | default (.Summary | plainify) }}</p>
+                    <div class="home-featured-actions">
+                        <a class="home-featured-link" href="{{ .RelPermalink }}">阅读全文</a>
+                        <span>{{ .Date.Format "2006-01-02" }}</span>
+                    </div>
+                </div>
+            </article>
+        </section>
+        {{- end -}}
+
+        <section class="home-sections-grid" data-pagefind-ignore="all">
+            <div class="home-section-block">
+                <div class="home-section-heading">
+                    <p class="home-section-kicker">深度内容</p>
+                    <h2>最新技术笔记</h2>
+                </div>
+                <div class="home-compact-list">
+                    {{- range $techPosts -}}
+                    <article class="home-compact-item">
+                        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                        <p>{{ .Description | default (.Summary | plainify) }}</p>
+                    </article>
+                    {{- end -}}
+                </div>
+            </div>
+
+            <div class="home-section-block">
+                <div class="home-section-heading">
+                    <p class="home-section-kicker">提炼内容</p>
+                    <h2>最新视频精读</h2>
+                </div>
+                <div class="home-compact-list">
+                    {{- range $videoPosts -}}
+                    <article class="home-compact-item">
+                        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                        <p>{{ .Description | default (.Summary | plainify) }}</p>
+                    </article>
+                    {{- end -}}
+                </div>
+            </div>
+        </section>
+
+        <section class="home-sections-grid" data-pagefind-ignore="all">
+            <div class="home-section-block">
+                <div class="home-section-heading">
+                    <p class="home-section-kicker">快讯分流</p>
+                    <h2>最近行业快讯</h2>
+                </div>
+                <div class="home-news-list">
+                    {{- range $latestNews -}}
+                    <article class="home-news-item">
+                        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
+                    </article>
+                    {{- end -}}
+                </div>
+                <a class="home-inline-link" href="/categories/行业快讯/">查看全部快讯</a>
+            </div>
+
+            <div class="home-section-block">
+                <div class="home-section-heading">
+                    <p class="home-section-kicker">长期表达</p>
+                    <h2>少量但值得慢读的内容</h2>
+                </div>
+                <div class="home-compact-list">
+                    {{- range $thoughtPosts -}}
+                    <article class="home-compact-item">
+                        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                        <p>{{ .Description | default (.Summary | plainify) }}</p>
+                    </article>
+                    {{- end -}}
+                    {{- if not $thoughtPosts -}}
+                    <article class="home-compact-item">
+                        <a href="/categories/思考与随笔/">查看思考与随笔栏目</a>
+                        <p>这里会保留品牌表达、长期观察和那些不适合被快节奏消费的内容。</p>
+                    </article>
+                    {{- end -}}
+                </div>
+            </div>
+        </section>
+
+        <section class="home-action-band" data-pagefind-ignore="all">
+            <article class="home-action-card">
+                <p class="home-section-kicker">继续探索</p>
+                <h2>从分类页进入你最关心的主题</h2>
+                <div class="home-action-links">
+                    <a href="/ai-agent/">AI Agent 专题</a>
+                    <a href="/coding-agent/">Coding Agent 专题</a>
+                    <a href="/open-source-ai-tools/">开源 AI 工具</a>
+                    <a href="/categories/技术笔记/">技术笔记</a>
+                    <a href="/categories/视频精读/">视频精读</a>
+                    <a href="/categories/行业快讯/">行业快讯</a>
+                </div>
+            </article>
+            <article class="home-action-card">
+                <p class="home-section-kicker">辅助入口</p>
+                <h2>搜索、关于与联系信息也保持就近可达</h2>
+                <div class="home-action-links">
+                    <a href="/search/">站内搜索</a>
+                    <a href="/about/">关于本站</a>
+                    <a href="/contact/">联系</a>
+                </div>
+            </article>
+        </section>
+
+        {{- if .Content -}}
+            <div class="single">
+                <div class="content" id="content">
+                    {{- dict "Content" .Content "Ruby" $params.ruby "Fraction" $params.fraction "Fontawesome" $params.fontawesome | partial "function/content.html" | safeHTML -}}
+                </div>
+            </div>
+        {{- end -}}
+    </div>
+{{- end -}}
