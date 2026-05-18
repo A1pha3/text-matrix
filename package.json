@@ -7,6 +7,7 @@
     "build:github-pages": "if [ -z \"$BASE_URL\" ]; then echo 'BASE_URL is required' >&2; exit 1; fi; sh ./scripts/build_hugo.sh --gc --minify --environment production --baseURL \"$BASE_URL\" && sh ./scripts/run_pagefind.sh public",
     "build:cloudflare-pages": "sh ./scripts/build_cloudflare_pages.sh",
     "validate:future-dates": "python3 ./scripts/validate_site.py future-dates",
-    "validate:topic-pages": "python3 ./scripts/validate_site.py expected-files --site-dir public --paths ai-agent/index.html coding-agent/index.html open-source-ai-tools/index.html"
+    "validate:topic-pages": "python3 ./scripts/validate_site.py expected-files --site-dir public --paths ai-agent/index.html coding-agent/index.html open-source-ai-tools/index.html",
+    "validate:release-assets": "python3 ./scripts/validate_site.py expected-files --site-dir public --manifest ./scripts/expected-public-files.txt"
   }
 }

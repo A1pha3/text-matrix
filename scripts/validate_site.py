@@ -23,8 +23,11 @@ def parse_args() -> argparse.Namespace:
     expected.add_argument(
         "--paths",
         nargs="+",
-        required=True,
         help="Site-relative files that must exist after build, e.g. ai-agent/index.html",
+    )
+    expected.add_argument(
+        "--manifest",
+        help="Optional newline-delimited manifest of site-relative files to validate",
     )
 
     return parser.parse_args()
@@ -111,12 +114,31 @@ def validate_expected_files(site_dir: Path, rel_paths: list[str]) -> int:
     return 0
 
 
+def load_expected_paths(paths: list[str] | None, manifest: str | None) -> list[str]:
+    expected_paths = list(paths or [])
+
+    if manifest:
+        manifest_path = Path(manifest)
+        for line in manifest_path.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            expected_paths.append(stripped)
+
+    # Preserve order while deduplicating.
+    return list(dict.fromkeys(expected_paths))
+
+
 def main() -> None:
     args = parse_args()
     if args.command == "future-dates":
         raise SystemExit(validate_future_dates(Path(args.root)))
     if args.command == "expected-files":
-        raise SystemExit(validate_expected_files(Path(args.site_dir), args.paths))
+        expected_paths = load_expected_paths(args.paths, args.manifest)
+        if not expected_paths:
+            print("expected-files 至少需要提供 --paths 或 --manifest")
+            raise SystemExit(2)
+        raise SystemExit(validate_expected_files(Path(args.site_dir), expected_paths))
     raise SystemExit(2)
 
 

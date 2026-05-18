@@ -60,17 +60,8 @@ jobs:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
           HUGO_ENVIRONMENT: production
         run: npm run build:github-pages
-      - name: Verify topic pages
-        run: npm run validate:topic-pages
-      - name: Verify taxonomy pages
-        run: |
-          test -f public/categories/index.html
-          test -f public/categories/行业快讯/index.html
-          test -f public/tags/index.html
-      - name: Verify Pagefind assets
-        run: |
-          test -f public/pagefind/pagefind-ui.js
-          test -f public/pagefind/pagefind-ui.css
+      - name: Verify release assets
+        run: npm run validate:release-assets
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

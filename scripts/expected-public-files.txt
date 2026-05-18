@@ -1,0 +1,18 @@
+# Core entry points
+index.html
+about/index.html
+search/index.html
+
+# Topic landing pages
+ai-agent/index.html
+coding-agent/index.html
+open-source-ai-tools/index.html
+
+# Discovery surfaces
+categories/index.html
+categories/行业快讯/index.html
+tags/index.html
+
+# Search assets
+pagefind/pagefind-ui.js
+pagefind/pagefind-ui.css
