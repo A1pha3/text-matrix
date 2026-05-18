@@ -3,9 +3,17 @@
 {{- end -}}
 
 {{- define "content" -}}
+    {{- $taxonomy := .Data.Singular -}}
+    {{- $discoveryDescription := "通过这个聚合页继续探索站内相关内容。" -}}
+    {{- if eq $taxonomy "category" -}}
+        {{- $discoveryDescription = "分类更适合按内容载体和阅读意图继续浏览，建议和专题页搭配使用。" -}}
+    {{- else if eq $taxonomy "tag" -}}
+        {{- $discoveryDescription = "标签更适合横向发现主题、工具和概念之间的连接。" -}}
+    {{- end -}}
     <div class="page archive" data-pagefind-ignore="all">
-        <h2 class="single-title animate__animated animate__pulse animate__faster">
-            {{- $taxonomy := .Data.Singular -}}
+        <div class="discovery-hero">
+            <p class="discovery-kicker">{{ if eq $taxonomy "category" }}分类聚合{{ else if eq $taxonomy "tag" }}标签聚合{{ else }}内容聚合{{ end }}</p>
+            <h2 class="single-title animate__animated animate__pulse animate__faster">
             {{- if eq $taxonomy "category" -}}
                 <i class="far fa-folder-open" aria-hidden="true"></i>&nbsp;{{ .Title }}
             {{- else if eq $taxonomy "tag" -}}
@@ -13,7 +21,14 @@
             {{- else -}}
                 {{- printf "%v - %v" (T $taxonomy | default $taxonomy) .Title -}}
             {{- end -}}
-        </h2>
+            </h2>
+            <p class="discovery-intro">{{ $discoveryDescription }}</p>
+            <div class="discovery-actions">
+                <a href="/search/?q={{ .Title | urlquery }}">搜索这个主题</a>
+                <a href="/categories/">浏览分类</a>
+                <a href="/tags/">浏览标签</a>
+            </div>
+        </div>
 
         {{- if .Pages -}}
             {{- $pages := .Pages.GroupByDate "2006" -}}

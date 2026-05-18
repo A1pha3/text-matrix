@@ -6,6 +6,11 @@
   {{- $pagesCount := len $regularPages -}}
   {{- $tagsCount := len .Site.Taxonomies.tags -}}
   {{- $suggestions := slice "AI Agent" "Hugo" "Cloudflare" "GitHub Pages" "量化交易" "系统设计" -}}
+  {{- $featuredDiscovery := slice
+    (dict "title" "AI Agent 学习路径" "url" "/ai-agent/" "description" "从概念、框架、记忆到生产化，按顺序进入站内 Agent 内容。")
+    (dict "title" "Coding Agent 工作流" "url" "/coding-agent/" "description" "聚焦 Claude Code、Codex、Cline 与 MCP/Skills 的工程实践。")
+    (dict "title" "开源 AI 工具解读" "url" "/open-source-ai-tools/" "description" "从工具发现、框架选型到工作流组合，建立长期工具栈视角。")
+  -}}
     <div class="page single special pagefind-search-page" data-pagefind-ignore="all">
     <div class="pagefind-hero">
       <div class="pagefind-hero-copy">
@@ -54,6 +59,15 @@
                     <p class="pagefind-search-unavailable">搜索功能需要启用 JavaScript。</p>
                 </noscript>
             </div>
+            <section class="search-discovery-grid">
+              {{- range $featuredDiscovery -}}
+              <article class="search-discovery-card">
+                <p class="search-discovery-kicker">专题入口</p>
+                <h3><a href="{{ .url }}">{{ .title }}</a></h3>
+                <p>{{ .description }}</p>
+              </article>
+              {{- end -}}
+            </section>
         </div>
 
         <script src="{{ "pagefind/pagefind-ui.js" | relURL }}"></script>

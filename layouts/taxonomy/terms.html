@@ -4,7 +4,23 @@
 
 {{- define "content" -}}
     <div class="page archive" data-pagefind-ignore="all">
-        <h2 class="single-title animate__animated animate__pulse animate__faster">{{ .Title }}</h2>
+        <div class="discovery-hero">
+            <p class="discovery-kicker">{{ if eq .Data.Plural "categories" }}分类目录{{ else }}标签目录{{ end }}</p>
+            <h2 class="single-title animate__animated animate__pulse animate__faster">{{ .Title }}</h2>
+            <p class="discovery-intro">
+                {{- if eq .Data.Plural "categories" -}}
+                    用分类快速进入不同内容板块，再决定是按归档阅读还是进入专题页深挖。
+                {{- else -}}
+                    用标签横向发现概念、工具和主题之间的连接，再回到文章或专题页继续阅读。
+                {{- end -}}
+            </p>
+            <div class="discovery-actions">
+                <a href="/search/">站内搜索</a>
+                <a href="/ai-agent/">AI Agent 专题</a>
+                <a href="/coding-agent/">Coding Agent 专题</a>
+                <a href="/open-source-ai-tools/">开源 AI 工具</a>
+            </div>
+        </div>
         {{- if eq .Data.Plural "categories" -}}
             {{- $terms := .Data.Terms.Alphabetical -}}
             {{- $orderedTerms := newScratch -}}
