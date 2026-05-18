@@ -1,155 +1,196 @@
 ---
-title: "Supertonic: 超高速本地 TTS 引擎，31 语言覆盖 ONNX 推理"
-date: "2026-05-14T10:23:51+08:00"
-slug: "supertonic-onnx-tts-engine-guide"
-description: "Supertonic 是一款基于 ONNX 的超高速本地 TTS 引擎，支持 31 种语言，包含 LARoPE 位置编码创新，可在 Python/JavaScript/C++/Swift 等多平台实现低延迟推理，适合嵌入式与边缘部署场景。"
+title: "Supertonic 3: 99M参数本地多语言TTS引擎，完全基于ONNX实现端侧推理"
+date: "2026-05-18T20:00:00+08:00"
+slug: "supertonic-onnx-tts-engine-guide
+description: "Supertonic是一款99M参数的本地多语言TTS引擎，基于ONNX Runtime实现纯端侧推理，支持31种语言和44.1kHz高保真音频输出。本文详解其核心能力、Python SDK快速上手及本地HTTP API部署方法。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TTS", "ONNX", "Swift", "语音合成", "本地推理", "开源"]
+tags: ["TTS", "ONNX", "语音合成", "本地推理", "开源", "多语言"]
 ---
 
-# Supertonic: 超高速本地 TTS 引擎，31 语言覆盖 ONNX 推理
+# Supertonic 3: 99M参数本地多语言TTS引擎，完全基于ONNX实现端侧推理
 
-## 项目概览
+## 核心价值：纯端侧、隐私优先
 
-[Supertonic](https://github.com/supertone-inc/supertonic) 是 Supertone 公司开源的多语言文本转语音（TTS）推理引擎，主打**本地运行、低延迟、多平台部署**。当前仓库共有 **4,408** 颗星，今日新增 **859** 颗，增速可观。
+Supertonic 3 是 Supertone 公司开源的**超高速本地多语言 TTS 引擎**，99M 参数，ONNX 格式，完全离线运行。与云端 TTS 服务相比，核心差异在于：
 
-核心特性：
+- **数据不出设备**：纯端侧推理，医疗、金融、客服等隐私敏感场景天然适用
+- **零 API 调用成本**：不依赖任何云服务，无配额限制
+- **31 种语言覆盖**：英语、中文、日语、韩语、阿拉伯语、德语、法语等主流语言开箱即用
+- **44.1kHz 高保真音频**：输出质量对标商业级 TTS 服务
+- **<laugh>、<breath>、<sigh> 表达标签**：插入自然韵律，让合成语音更真实
 
-- **超低延迟**：主打流式推理，可用于实时对话场景
-- **31 种语言**：覆盖英语、韩语、日语、阿拉伯语、德语、法语、中文等主流语言
-- **多平台支持**：Python、Node.js、C++、C#、Go、Swift、iOS、Rust、Flutter、Java、Browser（WebGPU/WASM）
-- **完全本地运行**：无需云端 API，数据不出设备
-- **精确数字朗读**：金融表达式、电话号码、技术单位等复杂文本表现优于 ElevenLabs、OpenAI、Gemini、Microsoft
-
----
-
-## 核心技术：SupertonicTTS 架构与 LARoPE
-
-### SupertonicTTS 主体架构
-
-根据项目官方论文（arXiv:2503.23108），SupertonicTTS 包含三个核心模块：
-
-1. **Speech Autoencoder**：将语音信号压缩为离散的潜在表示
-2. **Flow-matching Text-to-Latent**：将文本转换为语音潜在向量，核心扩散模型
-3. **高效推理设计**：针对 ONNX Runtime 优化，减少推理计算量
-
-### LARoPE：长度感知旋转位置编码
-
-论文提出的 **Length-Aware Rotary Position Embedding（LARoPE）** 是本项目的核心技术创新，解决了传统 RoPE 在变长语音片段上位置信息衰减的问题。通过将位置编码与语音片段长度解耦，LARoPE 显著提升了长文本的一致性和准确性。
+GitHub：[https://github.com/supertone-inc/supertonic](https://github.com/supertone-inc/supertonic)，HuggingFace 模型：[Supertone/supertonic-3](https://huggingface.co/Supertone/supertonic-3)。
 
 ---
 
-## 多平台快速开始
+## 快速上手：pip install，一行代码合成语音
 
-### Python（ONNX Runtime）
+### 安装
 
 ```bash
 pip install supertonic
 ```
 
+首次运行会自动从 Hugging Face 下载模型（约百MB），无需手动配置。
+
+### Python 基本用法
+
 ```python
 from supertonic import TTS
 
-tts = TTS(model="supertonic-v3-base")
-audio = tts.tts("Hello world, this is Supertonic TTS.")
-tts.save(audio, "output.wav")
+tts = TTS(model="supertonic-3")
+
+# 基础合成
+audio = tts.tts("你好，欢迎使用 Supertonic 3。")
+tts.save(audio, "hello.wav")
+
+# 使用表达标签增强自然度
+audio = tts.tts("大家好<breath>，今天我们来聊一聊<laugh>最新的 AI 技术进展。")
+tts.save(audio, "expressive.wav")
 ```
 
-### Node.js
+### 多语言示例
+
+```python
+tts = TTS(model="supertonic-3")
+
+texts = {
+    "英语": "Hello, this is a test of multilingual TTS.",
+    "中文": "你好，这是一条中文测试语音。",
+    "日语": "こんにちは、音声合成のテストです。",
+    "韩语": "안녕하세요, 다국어 음성 합성 테스트입니다.",
+    "阿拉伯语": "مرحبا، هذا اختبار للغة العربية.",
+}
+
+for lang, text in texts.items():
+    audio = tts.tts(text)
+    tts.save(audio, f"{lang}.wav")
+```
+
+---
+
+## 本地 HTTP API 部署：supertonic serve
+
+Python SDK v1.3.1 起内置了 `supertonic serve` 命令，一键启动本地 HTTP 服务，暴露 OpenAI 兼容接口，方便 AI Agent 和语音助手集成。
+
+### 启动服务
 
 ```bash
-npm install supertonic
+supertonic serve
 ```
 
-```javascript
-import { TTS } from 'supertonic';
+默认监听 `http://localhost:18792`，模型会在首次请求时自动下载。
 
-const tts = new TTS({ model: 'supertonic-v3-base' });
-const audio = await tts.tts('こんにちは、これはテストです。');
+### 接口一：/v1/tts（原生接口）
+
+```bash
+curl -X POST http://localhost:18792/v1/tts \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "你好，Supertonic。",
+    "output_path": "output.wav"
+  }' \
+  --output output.wav
 ```
 
-### Swift / iOS
+### 接口二：/v1/audio/speech（OpenAI 兼容）
 
-```swift
-import Supertonic
+与 OpenAI TTS API 完全兼容，现有应用无缝切换：
 
-let tts = TTS(modelName: "supertonic-v3-onnx")
-let audio = try await tts.synthesize("你好，Supertonic 多语言测试")
+```bash
+curl -X POST http://localhost:18792/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "supertonic-3",
+    "input": "你好，Supertonic。",
+    "voice": "default"
+  }' \
+  --output output.wav
 ```
 
-### C++ 高性能场景
+Python SDK 调用方式：
 
-```cpp
-#include <supertonic.h>
+```python
+import requests
 
-int main() {
-    auto tts = Supertonic::create("supertonic-v3-base.onnx");
-    auto audio = tts->synthesize("Financial report: Q1 revenue $4.2M, up 12% YoY.");
-    tts->save(audio, "output.wav");
-}
+response = requests.post(
+    "http://localhost:18792/v1/audio/speech",
+    json={
+        "model": "supertonic-3",
+        "input": "你好，欢迎使用 Supertonic 3。",
+        "voice": "default"
+    }
+)
+
+with open("output.wav", "wb") as f:
+    f.write(response.content)
 ```
 
 ---
 
-## 复杂文本处理能力
+## 多 Runtime SDK 矩阵
 
-Supertonic 特别针对**真实世界复杂文本**做了优化，以下是对比数据（官方测试）：
+除了 Python，Supertonic 还提供多语言 SDK，覆盖从生产环境到嵌入式的各种场景：
 
-| 类别 | 关键挑战 | Supertonic | ElevenLabs | OpenAI | Gemini | Microsoft |
-|------|---------|-----------|------------|--------|--------|-----------|
-| 金融表达式 | 货币符号、缩写（M/K）、小数 | ✅ | ❌ | ❌ | ❌ | ❌ |
-| 电话号码 | 区号、横杠、分机（ext.） | ✅ | ❌ | ❌ | ❌ | ❌ |
-| 技术单位 | 小数+单位、缩写技术符号 | ✅ | ❌ | ❌ | ❌ | ❌ |
-
-这意味着 Supertonic 在需要朗读财报、技术文档、客服对话等场景时，无需预处理器即可输出正确发音。
-
----
-
-## 应用生态
-
-基于 Supertonic 的开源项目：
-
-- **TLDRL**：浏览器 TTS 扩展，可朗读任意网页（Chrome）
-- **Read Aloud**：开源浏览器 TTS 扩展（Chrome / Edge）
-- **PageEcho**：iOS 电子书朗读者（App Store）
-- **VoiceChat**：浏览器端本地语音对话聊天机器人
-- **OmniAvatar**：照片+语音生成 Talking Avatar 视频
-- **CopiloTTS**：Kotlin Multiplatform TTS SDK
-- **Transformers.js**：Hugging Face JS 库已支持 Supertonic
+| SDK | 命令 | 适用场景 |
+|-----|------|---------|
+| Python | `pip install supertonic` | AI Agent、云服务、脚本 |
+| Node.js | `npm install supertonic` | Web 应用、后端服务 |
+| Browser (WebGPU) | CDN 引入 | 纯前端语音合成 |
+| Java | Maven/Gradle | 企业级 Java 应用 |
+| C++ | CMake 集成 | 高性能实时系统 |
+| C# | NuGet | .NET 生态 |
+| Go | go get | 微服务 / 云原生 |
+| Swift / iOS | CocoaPods/SPM | iOS/macOS 原生应用 |
+| Rust | Cargo | 嵌入式 / 高性能场景 |
+| Flutter | pub dev | 跨平台移动应用 |
 
 ---
 
-## 适用场景
+## Voice Builder：创建自定义音色
 
-### 适合使用 Supertonic 的场景
+Supertonic 提供 **Voice Builder** 功能，允许用户通过少量语音样本创建**永久自定义音色**，无需 Fine-tuning，适合品牌声音定制和个性化场景。
 
-- **隐私敏感应用**：医疗、金融、客服等数据不能上云的场景
-- **实时对话系统**：低延迟 TTS，配合 ASR 实现语音交互
-- **嵌入式设备**：边缘部署，ONNX 模型体积小、兼容性好
-- **多语言应用**：31 语言覆盖，切换成本低
+具体步骤需参考官方文档（仓库 README），核心流程：
 
-### 边界说明
+1. 准备一段目标音色的参考音频（短则几十秒）
+2. 通过 Voice Builder API 注册音色 profile
+3. 合成时指定音色 ID，即可生成个性化语音
 
-- 当前开源版本基于 v3 模型，如需最新版本需参考官方定价
-- 实时性取决于硬件；树莓派等低端设备可能无法达到 1x 以下延迟
-- 多音色支持情况需查阅各语言目录下的 README
+---
+
+## 适用边界
+
+### 适合的场景
+
+- **隐私敏感行业**：医疗记录、金融客服、法律咨询，数据不离设备
+- **AI Agent / Assistant 集成**：作为语音输出层，配合 ASR 实现端到端语音对话
+- **嵌入式 / 边缘设备**：树莓派、Jetson Nano 等 ARM 设备上的离线语音助手
+- **多语言内容生成**：电子书朗读、教育内容多语言配音
+
+### 不适合的场景
+
+- 超长文本（>5分钟）的广播级音质需求，当前版本更适合短句实时合成
+- 需要精细情感控制的角色扮演场景，表达标签支持有限
+- 无 GPU 的极低端设备（如老旧手机）上追求低延迟
 
 ---
 
 ## 总结
 
-Supertonic 是一个定位清晰的**本地多语言 TTS 引擎**，核心优势在于：
+Supertonic 3 的核心定位是**端侧多语言 TTS 基础设施**：
 
-1. **多语言**：31 种语言，复杂数字/专业术语处理能力强
-2. **多平台**：主流语言全覆盖，从 Python 到 Swift 均有示例
-3. **低延迟**：ONNX 优化，适合实时场景
-4. **开源透明**：架构与论文均可查阅，LARoPE 技术有学术支撑
+- **纯本地**：ONNX Runtime 驱动，无云依赖，数据完全私有
+- **高性能**：99M 参数 + 流式推理，44.1kHz 输出，适合实时场景
+- **开箱即用**：pip install + supertonic serve，两条命令完成部署
+- **多语言**：31 种语言 + 表达标签，覆盖大多数语音合成需求
+- **多 SDK**：从 Python 到 Swift，从浏览器到嵌入式，覆盖全平台
 
-如果你在构建需要本地语音合成的应用，Supertonic 值得优先测试。
+AI Agent 大爆发时代，本地 TTS 是语音交互层的关键基础设施，Supertonic 3 是目前开源生态中技术参数最扎实、平台覆盖最全面的选择之一。
 
-**官方资源：**
+**相关链接：**
 
 - GitHub：https://github.com/supertone-inc/supertonic
-- 论文：https://arxiv.org/abs/2503.23108
-- Interactive Demo：https://supertonic.ai/demo
+- HuggingFace：https://huggingface.co/Supertone/supertonic-3
+- PyPI：https://pypi.org/project/supertonic/
