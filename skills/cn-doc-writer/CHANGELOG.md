@@ -2,6 +2,7 @@
 
 | 版本 | 日期 | 作者 | 变更说明 |
 | ------ | ------ | ------ | ---------- |
+| v5.6.0 | 2026-05-19 | Codex | **去 AI 味增强**。把 OpenCLI 技术文章打磨中验证过的经验沉淀进技能：`SKILL.md` 新增词面、句式、节奏三层去味流程，补充抽象套话、二元口号句、机械总结句、作者在场感失衡等 8 类信号；`references/quality.md` 将这些信号纳入 A/S 级强制门槛；同步 `skill.json`、`README.md` 与术语表版本。 |
 | v5.5.0 | 2026-05-17 | GitHub Copilot | **Enhance 优化**。把单篇高质量技术博客打磨过程中验证过的方法沉淀为通用能力：新增 `references/blog-deep-dive.md`，用于开源项目解读、架构分析、benchmark 解读和系统评测；在 `SKILL.md` 中加入分析型技术文章增强回路与强制约束；在 `references/commands.md`、`references/quality.md` 中加入总览图、任务流案例、benchmark 解释、采用顺序等附加检查；补齐 `scripts/check_ai_tone.py` 与 `ci/check-docs.yml` 的门槛检查，使仓库版与已安装版重新收敛。 |
 | v5.2.0 | 2026-04-26 | GitHub Copilot | **Enhance 优化**。吸收外部 cn-doc-writer 的自然表达治理思路：在 SKILL.md 中新增强制“去 AI 味”回路，将自然度检查纳入交付前回路、自检与 MUST/NEVER 约束；在 `references/quality.md` 中补充自然度辅助检查和稳分要求；在 `references/commands.md` 的 `optimize-cn-doc` 流程中加入模板腔清理与回滚条件；同步 `skill.json` 与 `README.md` 的描述、版本和更新摘要。 |
 | v5.1.0 | 2026-04-03 | GitHub Copilot | **Enhance 优化**。重写 SKILL.md 的核心结构：将任务判断拆为命令路由、交付深度、追问策略 3 个原子步骤；新增命令级按需加载表，明确 `scripts/`、`ci/`、`CHANGELOG.md` 为普通写作任务的禁止预加载项；补齐输出契约、微型示例、异常恢复与交付前回路；同步 `skill.json` 与 `README.md` 版本和描述，使激活信息、执行规则和元数据一致。 |

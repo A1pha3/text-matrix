@@ -1,6 +1,6 @@
 # cn-doc-writer
 
-> 专业级中文技术文档编写 Skill — v5.5.0
+> 专业级中文技术文档编写 Skill — v5.6.0
 
 ## 功能概述
 
@@ -166,6 +166,7 @@ python test_scripts.py
 
 | 版本 | 变更 |
 | ------ | ------ |
+| v5.6.0 | 新增更细的“去 AI 味”回路：按词面、句式、节奏三层处理；补充抽象套话、二元口号句、机械总结句的识别规则；在 quality 评分中加入强制门槛，避免文章只清理“本文将”等浅层元话语，却保留“核心价值”“落地边界”“可发现、可复用、可验证”等生成式套话。 |
 | v5.5.0 | 新增“分析型技术文章增强”分支：增加 `references/blog-deep-dive.md`；主 SKILL 接入开源项目解读 / 架构分析 / benchmark 解读路由；commands 和 quality 增加总览图、任务流案例、benchmark 解读与采用建议等强制检查；新增 `scripts/check_ai_tone.py` 并同步更新 CI 模板、README 与 skill.json。 |
 | v5.2.0 | 在核心流程中加入“去 AI 味”回路；将自然度检查并入评分与自检；补充稳分约束、反模板腔规则，并同步 skill.json 与 SKILL.md 的描述和版本。 |
 | v5.1.0 | 核心 SKILL 重构为更清晰的 3 段路由、命令级按需加载表、原子化约束和异常恢复策略；同步 skill.json、README 与版本元数据。 |
