@@ -1,7 +1,12 @@
----
-title: "GitHub 趋势｜multica-ai/andrej-karpathy-skills：让 AI 编码从"话痨自嗨"到"精准执行"的范式转变"
++++
+date = '2026-05-19T23:58:56+08:00'
+draft = false
+title = '添加市场插件'
++++
+
+title: 'GitHub 趋势｜multica-ai/andrej-karpathy-skills：让 AI 编码从"话痨自嗨"到"精准执行"的范式转变'
 date: 2026-05-19T20:10:00+08:00
-description: "13.7万星！Karpathy 亲授的 AI 编程行为指南，一个 CLAUDE.md 文件让 Claude Code 脱胎换骨"
+description: '13.7万星！Karpathy 亲授的 AI 编程行为指南，一个 CLAUDE.md 文件让 Claude Code 脱胎换骨'
 slug: andrej-karpathy-skills-guide
 tags: [AI, LLM, Claude, GitHub-Trending, Coding-Agent]
 categories: [Tech]
