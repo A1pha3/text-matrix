@@ -45,6 +45,7 @@
 | **Shannon 生产级多智能体编排框架** | Kocoro-lab/Shannon | 1.3k | shannon-multi-agent-orchestration-framework-guide.md | 7a2f3fa | XSnddO7ehoz00sxn36Uc5PR0nNg | 2026-04-01 |
 | **ValueCell 多智能体金融应用平台** | ValueCell-ai/valuecell | - | valuecell-multi-agent-finance-platform-guide.md | 6b0ab1e | OuhPdUe98oEooCxydHucr4Ipn0e | 2026-04-01 |
 | **Agency Agents 多智能体工作流框架** | msitarzewski/agency-agents | 2.4k | agency-agents-multi-agent-framework-guide.md | 76a401a | UUotdfdlfoinZgxa5d3cVrZbnle | 2026-04-01 |
+| **Superpowers AI编程能力框架** | obra/superpowers | 200k | superpowers-agentic-skills-framework.md | 05c0f38 | | 2026-05-21 |
 | **PaddleOCR 全球领先OCR工具包** | PaddlePaddle/PaddleOCR | 74k | paddleocr-ocr-document-ai-engine-guide.md | 0419b9d | JRdJdiA4FoXlUCxiVmEc2nTonNg | 2026-04-01 |
 | **ChatDev 2.0 DevAll 多智能体平台** | OpenBMB/ChatDev | 32.4k | chatdev-multi-agent-platform-guide.md | 97d3564 | LUV9dlyf2onXMGx3WXFcNKQanHg | 2026-04-01 |
 | **TaxHacker 自托管AI会计应用** | vas3k/TaxHacker | 3.6k | taxhacker-self-hosted-ai-accounting-guide.md | b7a387b | UkXid5aCuoCepbx6fBRcwH9snYb | 2026-04-01 |
