@@ -1,5 +1,5 @@
 ---
-title: "AI Engineering From Scratch：一份从"会调用API"到"能独立构建AI系统"的完整路线图"
+title: "AI Engineering From Scratch：一份从\"会调用API\"到\"能独立构建AI系统\"的完整路线图"
 date: "2026-05-20T20:25:00+08:00"
 slug: "ai-engineering-from-scratch-guide"
 description: "AI Engineering From Scratch是一个覆盖20个阶段、428节课程的免费AI工程教程，涵盖数学基础、机器学习、深度学习、LLM构建、Agent开发、多Agent系统等完整路径。每课遵循\"从零构建→生产库验证→产出可安装工具\"的闭环，已斩获8973 Stars。本文深入解析其课程架构、核心方法论与快速上手路径。"
