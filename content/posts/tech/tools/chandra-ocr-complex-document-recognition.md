@@ -676,7 +676,7 @@ Chandra 通过：
 
 **相关文章**
 
-- [Superpowers 入门到精通：AI 编码工作流的完整开发框架](/posts/tech/superpowers-ai-coding-workflow/)
+- [Superpowers 深度解析：把 AI 编程助手纳入软件工程流程](/posts/tech/superpowers-agentic-skills-framework/)
 - [Deep-Live-Cam 实战：实时换脸技术的正确打开方式](/posts/tech/deep-live-cam-realtime-faceswap/)
 
 ---
