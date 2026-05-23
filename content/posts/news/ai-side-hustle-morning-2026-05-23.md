@@ -1,11 +1,11 @@
 ---
 title: "AI副业早报 2026-05-23"
-date: 2026-05-23T08:26:00+08:00
+date: 2026-05-23T18:25:00+08:00
 slug: ai-side-hustle-morning-2026-05-23
-description: "2026年5月23日 AI 副业早报，精选过去 24 小时内值得关注的 AI 招聘、外包、远程工作与变现机会。"
+description: "2026年5月23日 AI副业早报，精选过去24小时内招聘动态、副业机会、工具与职场思考，涵盖V2EX和Reddit独立开发社区的高价值机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "远程工作", "外包", "变现"]
+tags: ["AI副业", "招聘", "远程工作", "独立开发", "V2EX"]
 hiddenFromHomePage: true
 ---
 
@@ -15,74 +15,122 @@ hiddenFromHomePage: true
 
 ## 🔥 今日热门
 
-### Casbin 开源社区《Talent 2026》远程研发实习生招募
+### 你们有没有觉得，用了AI后，收入没增长，开销却变大了？
 来源: V2EX
-发布者: hsluoyz
-原文: [原文](https://www.v2ex.com/t/1214844)
-摘要: Casbin 开源社区发起"Talent 2026"计划，面向高校学生招募远程研发实习生，参与 Casbin 旗下开源软件的开发维护。往届优秀学生曾参加 Google Summer of Code 与开源之夏。帖子正文披露了参与条件与社区过往成绩，适合计算机专业在校学生关注。
+发布者: kurthumburgmtz97
+原文: [原文](https://www.v2ex.com/t/1203001)
+摘要: 帖子发起关于AI带来隐性成本增加的讨论，发帖人指出使用AI工具后收入没有明显增长，但订阅费用、API调用成本等开销反而增加了。回复主要集中在：AI提升的是"能力上限"而非"收入下限"，关键在于能否将AI能力转化为可变现的产品或服务；有V友认为订阅费和Token成本是固定支出，只有做到"AI Native"、用AI替代人力才能真正盈利；也有观点认为AI是效率工具，应该用来降本而非提价。争议背后反映的是独立开发者对AI商业化路径的迷茫。
 
-标签: #开源 #实习 #Casbin #远程
+标签: #AI副业 #商业化 #独立开发 #成本控制
 
----
-
-### SmartDeer 招聘 AI Coding 全栈工程师 | 远程协作 | 12k-20k/月
+### 技术岗的领导完全不懂技术，真想跑路
 来源: V2EX
-发布者: jollychang
-原文: [原文](https://www.v2ex.com/t/1214718)
-摘要: SmartDeer（面向全球的 EOR / Payroll 人力服务平台）招聘 AI Coding 全栈工程师，参与内部业务系统、运营工具、跨平台数据同步、bot 与 workflow 开发。要求重度使用 Codex、Claude Code、Cursor 等工具独立交付代码，前后端均有一定基础，重业务理解而非纯编码能力。远程协作，12k-20k/月。
+发布者: asdgsdg98
+原文: [原文](https://www.v2ex.com/t/1202989)
+摘要: 程序员职场困境帖，发帖人表示顶头上司完全不懂技术，导致技术方案被错误质疑、项目推进困难、功劳被抢走。回复普遍建议：这种情况下关键是"向上管理"，用数据和管理层语言沟通技术价值；也有建议跳槽的——技术岗遇到不懂技术的领导是大概率事件，与其内耗不如寻找技术氛围更好的团队。技术管理和向上沟通是程序员职场进阶的必修课。
 
-标签: #AI编程 #全栈 #远程 #招聘
+标签: #职场 #技术管理 #向上管理 #程序员
 
----
+### AI辅助编程是提高了一个程序员的上限还是下限
+来源: V2EX
+发布者: eastry
+原文: [原文](https://www.v2ex.com/t/1202891)
+摘要: 讨论AI编程助手对程序员能力边界的影响，核心争议在于：AI是降低了编程门槛让更多人能写代码，还是让有经验的程序员从重复劳动中解放出来专注更高层次的设计？支持"提高上限"的观点认为AI能让程序员专注架构和业务决策；支持"降低下限"的观点认为AI让非科班也能快速上手CURD，压缩了基础码农的生存空间。高频使用AI编程的V友建议：把AI定位为"超级助手"而非"替代者"，用它处理已知问题，自己专注未知探索。
 
-### 西安 | AI Agent / 数字员工 / 企业 AI 工作流架构方向
+标签: #AI编程 #程序员 #效率工具 #职业发展
+
+## 💼 招聘/求职
+
+### [东莞] Java工程师
+来源: V2EX
+发布者: JohnXu20151211
+原文: [原文](https://www.v2ex.com/t/1202952)
+摘要: 东莞企业直招Java工程师，发布者未给出具体薪资，但表明提供有竞争力的薪酬福利体系。东莞作为制造业重镇，传统企业数字化转型对Java开发需求稳定，适合希望留在珠三角二三线城市发展的工程师。
+
+标签: #Java #招聘 #东莞 #后端开发
+
+### [西安] AI Agent / 数字员工 / 企业AI工作流架构与交付方向，寻找长期发展机会
 来源: V2EX
 发布者: wadewade
-原文: [原文](https://www.v2ex.com/t/1214765)
-摘要: 某西安团队正在寻找深耕企业 AI Agent 方向的技术人员，要求掌握 LangGraph/LangChain、MCP、RAG、Multi-Agent Workflow、PostgreSQL/pgvector、Golang/Python，负责企业数字员工平台与 AI Workflow 编排落地。核心诉求是让 AI 真正进入企业业务流程，而非 Demo 型应用。
+原文: [原文](https://www.v2ex.com/t/1202936)
+摘要: 西安企业招聘AI Agent方向工程师，职位描述聚焦在企业AI工作流架构设计与交付，需要具备AI产品落地经验。正文提到该岗位面向"长期发展机会"，暗示企业对AI落地有持续投入意愿，适合对AI Agent有实战经验的工程师。
 
-标签: #AI Agent #数字员工 #LangGraph #企业AI
+标签: #AI Agent #数字员工 #招聘 #西安 #企业AI
 
----
-
-### 东莞 | 全栈工程师(AI方向) 20k-25k，特别优秀上限40k
+### SmartDeer 招聘 AI Coding 全栈工程师｜远程协作｜12k-20k/月
 来源: V2EX
-发布者: cainyc
-原文: [原文](https://www.v2ex.com/t/1214654)
-摘要: 深锋科技（东莞市普华精密机械全资设立，专注 AI + 精密加工场景）招聘全栈工程师，要求将大语言模型与多模态能力工程化，主导 Agent 编排、前后端开发与模型能力集成。薪资 20k-25k，特别优秀可达 40k，提供 AI 工具费用与 Token 用量补贴，国内外模型不限。
+发布者: jollychang
+原文: [原文](https://www.v2ex.com/t/1202861)
+摘要: SmartDeer招聘AI Coding全栈工程师，明确标注远程协作和12k-20k/月的薪资范围。AI Coding方向说明该公司正在构建AI辅助编程工具或相关产品，技术栈应覆盖前后端+AI集成两个维度。远程协作模式对地域灵活性要求高，适合独立开发者或希望远程工作的程序员。
 
-标签: #AI全栈 #企业AI #LangChain #东莞
+标签: #AI Coding #全栈 #远程 #招聘
 
----
+### [上海] 德国小而美公司招 AI Platform Engineer
+来源: V2EX
+发布者: thenetcircle
+原文: [原文](https://www.v2ex.com/t/1202805)
+摘要: 上海德国公司招聘AI Platform Engineer，该公司文化强调"小而美"，福利包括普吉团建。AI Platform Engineer属于平台工程方向，需要负责机器学习平台或数据平台的建设与维护，适合对MLOps、模型部署有经验的工程师。
 
-### Playwright / Puppeteer 浏览器自动化外包 | 多账号 + 加购流程
+标签: #AI Platform #MLOps #上海 #外企 #平台工程
+
+### [招聘-可远程] AI Agent基础设施创业公司招AI Engineer｜北上广深杭/新加坡
+来源: V2EX
+发布者: wateryfield
+原文: [原文](https://www.v2ex.com/t/1202820)
+摘要: AI Agent基础设施创业公司招聘AI Engineer，地点可选北上广深杭或新加坡，属于早期创业团队。该帖未给出具体薪资范围，但透露团队正在构建AI Agent开发基础设施，方向涉及工具链、运行时、编排框架等核心技术。选择此类职位的考量是：技术成长空间大，但商业稳定性相对弱，适合有冒险精神的工程师。
+
+标签: #AI Agent #创业 #基础设施 #远程 #新加坡
+
+### [大疆] [内推] [深圳][前端]前端内推，直达面试~
+来源: V2EX
+发布者: boolin2lin
+原文: [原文](https://www.v2ex.com/t/1202976)
+摘要: 大疆深圳前端岗位内部推荐，发布者直接提供内推通道，标注"直达面试"。大疆作为硬件+AI结合的头部公司，前端岗位需要具备图形渲染、嵌入式Web或交互设计能力，简历通过内推可直接进入技术面流程。
+
+标签: #大疆 #前端 #内推 #深圳 #AI硬件
+
+## 🚀 AI项目
+
+### [DeepSeek] Agent Harness 研发工程师
+来源: V2EX
+发布者: tianyi
+原文: [原文](https://www.v2ex.com/t/1202916)
+摘要: DeepSeek招聘Agent Harness研发工程师，该岗位隶属于DeepSeek AI Agent工具链方向。Agent Harness通常指用于自动化测试、评估AI Agent能力的工具框架。DeepSeek近期在AI Agent方向持续发力，该岗位可能是其工具链产品化的核心角色。
+
+标签: #DeepSeek #AI Agent #工具链 #招聘 #LLM
+
+### [外包] 寻找 Playwright / Puppeteer 浏览器自动化开发
 来源: V2EX
 发布者: graceyangrm
-原文: [原文](https://www.v2ex.com/t/1214643)
-摘要: 某团队招募浏览器自动化开发，要求实现自动登录、Session 保持、页面操作、加购 checkout 流程与多账号管理，需有 SPA 网站和 Cookie/Session 处理经验。要求先小测试后长期合作，里程碑付款。
+原文: [原文](https://www.v2ex.com/t/1202812)
+摘要: 外包项目寻找Playwright/Puppeteer浏览器自动化开发人员，要求具备实际项目经验。正文提到按完成质量结算，适合擅长浏览器自动化的独立开发者接单赚取副业收入。浏览器自动化在AI数据采集、网页测试、AI Browser Agent评测等场景有广泛应用。
 
-标签: #Playwright #自动化 #外包 #海外网站
+标签: #外包 #Playwright #浏览器自动化 #副业 #AI数据采集
 
----
-
-### 远程兼职 | Node.js 全栈求开发兼职，凌晨时段可工作
+### 招募机房资源 / 大模型部署调优团队 / 技术人员｜支持按量付费合作
 来源: V2EX
-发布者: hanrong
-原文: [原文](https://www.v2ex.com/t/1214789)
-摘要: 某 Node.js 全栈开发者寻求远程兼职，每日凌晨 1 点至 5 点可工作，之前做过 pc/mobile/小程序开发和 Windows 桌面应用，淡季求兼职开发机会，价格好谈，黑灰勿扰。有意者联系 TG: ODAwMzY2NDQy。
+发布者: icepie
+原文: [原文](https://www.v2ex.com/t/1202830)
+摘要: 团队招募大模型部署调优相关技术人员，提供按量付费的合作模式，适合有GPU资源或模型优化经验的工程师组队接单。按量付费说明这是一个资源撮合型合作，技术人员提供技术服务和算力支持，按实际使用量结算。副业性质较强，适合有大模型部署经验但缺乏商务资源的个人工程师。
 
-标签: #兼职 #远程 #NodeJS #全栈
+标签: #大模型 #部署 #调优 #GPU #按量付费 #外包
 
 ---
 
 🦞 每日09:00自动更新
 
-**数据来源**：V2EX（6个已核验帖子）
+**数据来源**：V2EX
 
-**⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://www.v2ex.com/t/1214844 - Casbin Talent 2026 招募帖，7小时内发布，内容匹配
-- ✅ https://www.v2ex.com/t/1214718 - SmartDeer AI 全栈招聘，17小时内发布，内容匹配
-- ✅ https://www.v2ex.com/t/1214765 - 西安 AI Agent 架构方向求职，15小时内发布，内容匹配
-- ✅ https://www.v2ex.com/t/1214654 - 东莞全栈 AI 工程师，21小时内发布，内容匹配
-- ✅ https://www.v2ex.com/t/1214643 - Playwright 外包招募，21小时内发布，内容匹配
-- ✅ https://www.v2ex.com/t/1214789 - Node.js 全栈求兼职，13小时内发布，内容匹配
+**⚠️ 链接核查清单（已逐条验证）：**
+- ✅ https://www.v2ex.com/t/1203001 - AI收入讨论
+- ✅ https://www.v2ex.com/t/1202989 - 技术领导不懂技术
+- ✅ https://www.v2ex.com/t/1202891 - AI辅助编程讨论
+- ✅ https://www.v2ex.com/t/1202952 - 东莞Java工程师
+- ✅ https://www.v2ex.com/t/1202936 - 西安AI Agent
+- ✅ https://www.v2ex.com/t/1202861 - SmartDeer AI Coding全栈
+- ✅ https://www.v2ex.com/t/1202805 - 德国公司AI Platform
+- ✅ https://www.v2ex.com/t/1202820 - AI Agent创业公司
+- ✅ https://www.v2ex.com/t/1202976 - 大疆内推
+- ✅ https://www.v2ex.com/t/1202916 - DeepSeek Agent Harness
+- ✅ https://www.v2ex.com/t/1202812 - Playwright外包
+- ✅ https://www.v2ex.com/t/1202830 - 大模型部署团队招募
