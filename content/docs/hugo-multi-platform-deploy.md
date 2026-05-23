@@ -649,7 +649,31 @@ git push
 
 - Build output directory 是否是 `public`
 - Production branch 是否是 `main`
+- Root directory 是否留空或指向当前仓库根目录
 - Hugo 内容是否至少包含一篇 `draft: false` 的文章
+
+如果你在 Cloudflare 日志里看到下面这类报错：
+
+```text
+npm error enoent Could not read package.json
+npm error path /opt/buildhome/repo/package.json
+```
+
+这通常不是 `npm run build:cloudflare-pages` 脚本本身坏了，而是 Cloudflare 在一个不包含 `package.json` 的目录里执行了构建命令。
+
+可按下面顺序修正：
+
+1. 单仓库项目：把 Root directory 留空，或明确指向仓库根目录。
+2. Monorepo 项目：把 Root directory 改成同时包含 `package.json`、`hugo.toml` 与 `scripts/` 的子目录。
+3. 保存配置后重新触发一次部署。
+
+如果你想先排除仓库脚本问题，可以在本地仓库根目录执行：
+
+```bash
+CF_PAGES_URL=https://<your-domain> CF_PAGES_BRANCH=main npm run build:cloudflare-pages
+```
+
+这条命令本地能通过，而 Cloudflare 仍报上面的 `ENOENT`，基本就可以确认是平台目录配置问题。
 
 ### 8.4 本地预览正常，线上样式丢失
 

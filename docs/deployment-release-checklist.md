@@ -61,6 +61,16 @@ CF_PAGES_URL=https://txtmix.com CF_PAGES_BRANCH=main npm run build:cloudflare-pa
 - Production branch: `main`
 - Build command: `npm run build:cloudflare-pages`
 - Build output directory: `public`
+- Root directory: 单仓库留空或指向仓库根目录；Monorepo 指向同时包含 `package.json`、`hugo.toml` 与 `scripts/` 的子目录
+
+如果 Cloudflare 构建日志出现下面这类错误：
+
+```text
+npm error enoent Could not read package.json
+npm error path /opt/buildhome/repo/package.json
+```
+
+优先不要改构建脚本，先检查 Root directory。这个错误说明 Cloudflare 当前执行 `npm run build:cloudflare-pages` 的目录里根本没有 `package.json`。对当前仓库，正确做法通常是把 Root directory 留空或改回仓库根目录，然后重新部署。
 
 如果后续新增专题页、核心栏目页或新的搜索静态资源，需要同步更新：
 
