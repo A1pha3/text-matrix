@@ -11,6 +11,7 @@ cn-doc-writer 脚本单元测试
 """
 
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -36,6 +37,7 @@ from utils import (
     DEFAULT_TERMINOLOGY_PATH,
 )
 from check_format import DocChecker
+from check_ai_tone import AIToneChecker
 from pre_translate import PreTranslateAnalyzer
 from post_translate import PostTranslateChecker
 from gen_terminology_md import generate_markdown
@@ -618,8 +620,60 @@ class TestHtmlComment(unittest.TestCase):
     def test_multiline_html_comment_skip(self):
         """多行 HTML 注释内的内容应跳过检查"""
         lines = ["text", "<!--", "这是test注释", "-->", "text"]
-        self.assertTrue(should_skip(lines, 3))  # Line 3 inside <!-- ... -->
-        self.assertFalse(should_skip(lines, 5))  # Line 5 outside
+
+
+class TestAIToneChecker(unittest.TestCase):
+    """AI 味门槛检查测试"""
+
+    def setUp(self):
+        self.checker = AIToneChecker()
+
+    def test_detects_repeated_transitions(self):
+        """重复生成式转场应触发门槛失败"""
+        content = (
+            "更准确地说，这里先看前提。\n"
+            "换句话说，这里可以这样理解。\n"
+            "更准确地说，这不是参数问题。\n"
+            "最重要的是，失败路径要看清。\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertFalse(result["gate_passed"])
+        self.assertTrue(any("生成式转场" in item for item in result["issues"]))
+
+    def test_detects_author_presence(self):
+        """强作者在场感应触发门槛失败"""
+        content = "我认为这是核心分界。\n我更愿意把它理解成失败传播问题。\n"
+        result = self.checker.check_content(content)
+        self.assertFalse(result["gate_passed"])
+        self.assertTrue(any("作者在场感" in item for item in result["issues"]))
+
+    def test_detects_template_headings(self):
+        """重复模板化标题应触发门槛失败"""
+        content = "## 学习目标\n内容。\n\n## 阅读指引\n内容。\n"
+        result = self.checker.check_content(content)
+        self.assertFalse(result["gate_passed"])
+        self.assertTrue(any("模板化标题" in item for item in result["issues"]))
+
+    def test_ignores_code_and_inline_code(self):
+        """代码块和行内代码中的短语不应计入门槛"""
+        content = (
+            "```text\n更准确地说\n```\n"
+            "正文里提到 `换句话说` 只是示例，不算命中。\n"
+            "这里直接说明问题边界和影响。\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertTrue(result["gate_passed"])
+        self.assertEqual(result["summary"]["total_phrase_hits"], 0)
+
+    def test_natural_text_passes(self):
+        """自然、克制的正文应通过门槛"""
+        content = (
+            "这里有一个前提容易被忽略：接口失败并不会自动暴露到入口层。\n"
+            "真正决定排查效率的，是默认值、失败传播和重试边界是否写清。\n"
+            "把这三处看明白，后面的分析就不会失焦。\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertTrue(result["gate_passed"])
 
     def test_format_check_skips_html_comment(self):
         """格式检查应跳过 HTML 注释内容"""
@@ -627,6 +681,8 @@ class TestHtmlComment(unittest.TestCase):
         lines = ["正常行", "<!--", "这是test注释", "-->", "正常行"]
         errors = checker.check_format(lines)
         self.assertFalse(any("第 3 行" in e for e in errors))
+        self.assertTrue(should_skip(lines, 3))  # Line 3 inside <!-- ... -->
+        self.assertFalse(should_skip(lines, 5))  # Line 5 outside
 
 
 class TestDocumentationTerms(unittest.TestCase):
@@ -726,23 +782,190 @@ class TestDogfooding(unittest.TestCase):
         )
 
     def test_version_consistency(self):
-        """所有文件中的版本号必须一致"""
+        """skill 元数据与术语表版本应分别维护"""
         import json as json_mod
         skill_json = self.SKILL_ROOT / "skill.json"
         if not skill_json.exists():
             self.skipTest("skill.json 不存在")
 
         with open(skill_json, "r", encoding="utf-8") as f:
-            expected_version = json_mod.load(f).get("version", "")
+            skill_meta = json_mod.load(f)
 
-        # 检查 terminology.json
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        skill_version = re.search(r"^version:\s*(.+)$", skill_md, re.MULTILINE).group(1)
+        self.assertEqual(skill_meta.get("version"), skill_version)
+
         term_json = self.SKILL_ROOT / "references" / "terminology.json"
         with open(term_json, "r", encoding="utf-8") as f:
             term_version = json_mod.load(f).get("_meta", {}).get("version", "")
         self.assertEqual(
-            term_version, expected_version,
-            f"terminology.json 版本 ({term_version}) != skill.json ({expected_version})"
+            skill_meta.get("terminology_version"), term_version,
+            "skill.json terminology_version 必须跟 terminology.json 对齐"
         )
+        self.assertNotEqual(term_version, skill_version)
+
+    def test_bilingual_description_keywords(self):
+        """触发描述应同时覆盖英文与中文检索信号"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        desc = re.search(r"^description:\s*(.+)$", skill_md, re.MULTILINE).group(1)
+        self.assertTrue(desc.startswith("Use when"))
+        self.assertLessEqual(len(desc), 500)
+        for keyword in ["中文技术文档", "技术翻译", "去 AI 味", "开源项目解读", "benchmark 解读"]:
+            self.assertIn(keyword, desc)
+
+    def test_default_visibility_contract_present(self):
+        """不同命令应明确默认外显内容，减少流程腔"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("默认外显契约", skill_md)
+        self.assertIn("过程可见性", skill_md)
+        self.assertNotIn("额外输出", skill_md)
+        for command in ["write-cn-doc", "translate-cn", "optimize-cn-doc", "enhance-learning"]:
+            self.assertRegex(skill_md, rf"\|\s*`{command}`\s*\|")
+
+    def test_delivery_contract_has_distinct_purpose(self):
+        """默认外显契约与最低交付契约应职责分离"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("## 5. 最低交付契约", skill_md)
+        self.assertIn("默认外显契约只决定是否展示过程", skill_md)
+        self.assertIn("最低交付契约只决定产物是否齐全", skill_md)
+
+    def test_ai_tone_details_are_lazy_loaded(self):
+        """去 AI 味细则应下沉到 reference，主文件只保留导航和红线"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        examples = (self.SKILL_ROOT / "references" / "examples.md").read_text(encoding="utf-8")
+        self.assertIn("完整信号库", examples)
+        self.assertIn("references/examples.md", skill_md)
+        self.assertNotIn("优先识别并处理下面 8 类信号", skill_md)
+        self.assertNotIn("改写时遵守下面 8 条原则", skill_md)
+
+    def test_quality_keeps_ai_tone_as_gate_not_catalog(self):
+        """quality.md 应只定义评分门槛，完整信号库由 examples.md 承担"""
+        quality = (self.SKILL_ROOT / "references" / "quality.md").read_text(encoding="utf-8")
+        examples = (self.SKILL_ROOT / "references" / "examples.md").read_text(encoding="utf-8")
+        self.assertIn("完整信号库", examples)
+        self.assertIn("references/examples.md", quality)
+        self.assertIn("可读性` 上限封顶为 20/25", quality)
+        self.assertIn("总分不得超过 89 分", quality)
+        self.assertIn("不得评为 S 级", quality)
+        for copied_catalog_phrase in [
+            "核心价值 / 落地边界 / 能力闭环",
+            "不是 A，而是 B",
+            "可发现、可复用、可验证",
+        ]:
+            self.assertNotIn(copied_catalog_phrase, quality)
+
+    def test_behavior_pressure_fixtures_exist(self):
+        """Skill 行为压测场景应作为独立 fixture 保留"""
+        fixture = self.SKILL_ROOT / "references" / "behavior-fixtures.md"
+        self.assertTrue(fixture.exists())
+        content = fixture.read_text(encoding="utf-8")
+        for scenario in [
+            "preserve-code-blocks",
+            "benchmark-scope",
+            "insufficient-facts",
+            "de-ai-score-stability",
+            "auto-de-ai-default",
+        ]:
+            self.assertIn(scenario, content)
+
+    def test_behavior_pressure_fixtures_are_structured(self):
+        """每个行为压测场景都应包含完整评审字段"""
+        fixture = self.SKILL_ROOT / "references" / "behavior-fixtures.md"
+        content = fixture.read_text(encoding="utf-8")
+        sections = re.split(r"\n##\s+", content)[1:]
+        required_labels = ["输入：", "失败表现：", "通过条件：", "关联规则："]
+        self.assertGreaterEqual(len(sections), 4)
+        for section in sections:
+            title = section.splitlines()[0]
+            for label in required_labels:
+                self.assertIn(label, section, f"{title} 缺少 {label}")
+
+    def test_behavior_fixtures_have_loading_boundary(self):
+        """behavior fixtures 只能在 Skill 评审、回归测试或优化时加载"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        readme = (self.SKILL_ROOT / "README.md").read_text(encoding="utf-8")
+        boundary = "只在评审、回归测试或优化本 skill 时加载"
+        self.assertIn("references/behavior-fixtures.md", skill_md)
+        self.assertIn(boundary, skill_md)
+        self.assertIn(boundary, readme)
+
+    def test_auto_de_ai_fixture_covers_implicit_requests(self):
+        """行为压测应覆盖用户未显式要求去 AI 味时的自动触发"""
+        fixture = self.SKILL_ROOT / "references" / "behavior-fixtures.md"
+        content = fixture.read_text(encoding="utf-8")
+        section = content.split("## auto-de-ai-default", 1)[1].split("\n## ", 1)[0]
+        for phrase in [
+            "`write-cn-doc`",
+            "`optimize-cn-doc`",
+            "用户没有额外说“去 AI 味”",
+            "仍然自动执行去 AI 味回路",
+            "默认不得跳过",
+        ]:
+            self.assertIn(phrase, section)
+
+    def test_references_inventory_matches_readme(self):
+        """README 的 references 文件清单应与实际目录一致"""
+        readme = (self.SKILL_ROOT / "README.md").read_text(encoding="utf-8")
+        tree = re.search(r"## 文件结构\n\n```text\n(.*?)```", readme, re.DOTALL).group(1)
+        references_block = tree.split("├── references/")[1].split("├── scripts/")[0]
+        listed_files = {
+            match.group(1)
+            for match in re.finditer(r"[├└]──\s+([a-z0-9-]+\.(?:md|json))", references_block)
+        }
+        actual_files = {
+            path.name
+            for path in (self.SKILL_ROOT / "references").iterdir()
+            if path.is_file() and path.suffix in {".md", ".json"}
+        }
+        self.assertEqual(actual_files, listed_files)
+
+    def test_referenced_files_exist(self):
+        """SKILL.md 中提到的 references 文件必须存在"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        refs = sorted(set(re.findall(r"references/[a-z0-9-]+\.(?:md|json)", skill_md)))
+        self.assertGreater(refs, [])
+        missing = [ref for ref in refs if not (self.SKILL_ROOT / ref).exists()]
+        self.assertEqual(missing, [])
+
+    def test_commands_respect_default_visibility_contract(self):
+        """commands.md 不应重新要求默认展示内部评分或计划"""
+        commands = (self.SKILL_ROOT / "references" / "commands.md").read_text(encoding="utf-8")
+        self.assertIn("如用户要求过程说明或发布级评审，再附质量评分", commands)
+        self.assertNotIn("输出：完整文档 + 质量评分", commands)
+        self.assertNotIn("输出：优化后文档 + 改进报告", commands)
+        self.assertIn("输出：优化后文档 + 默认简版报告", commands)
+
+    def test_optimize_report_has_default_and_publish_levels(self):
+        """optimize-cn-doc 应区分默认简版报告与发布级完整评审"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        commands = (self.SKILL_ROOT / "references" / "commands.md").read_text(encoding="utf-8")
+        self.assertIn("默认简版报告", skill_md)
+        self.assertIn("发布级完整评审", skill_md)
+        self.assertIn("默认简版报告格式", commands)
+        self.assertIn("发布级完整评审格式", commands)
+        self.assertIn("输出：优化后文档 + 默认简版报告", commands)
+        self.assertIn("只有用户要求发布级评审、完整评分或发布前审查时，才输出完整五维评分表", commands)
+        self.assertNotIn("输出：优化后文档 + 优化前后对比 + 改进报告", commands)
+        default_section = commands.split("### 默认简版报告格式", 1)[1].split("### 发布级完整评审格式", 1)[0]
+        self.assertNotIn("| 维度 | 优化前 | 优化后 | 变化 |", default_section)
+
+    def test_write_and_optimize_auto_run_de_ai_tone(self):
+        """写作和优化命令应默认自动执行去 AI 味回路"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        commands = (self.SKILL_ROOT / "references" / "commands.md").read_text(encoding="utf-8")
+        readme = (self.SKILL_ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("### 自动去 AI 味契约", skill_md)
+        self.assertIn("默认自动执行，不需要用户单独要求", skill_md)
+        self.assertRegex(skill_md, r"\|\s*`write-cn-doc`\s*\|.*自动去 AI 味")
+        self.assertRegex(skill_md, r"\|\s*`optimize-cn-doc`\s*\|.*自动去 AI 味")
+        self.assertIn("自动调用去 AI 味回路", readme)
+
+        write_section = commands.split("## `write-cn-doc` 执行步骤", 1)[1].split("---", 1)[0]
+        optimize_section = commands.split("## `optimize-cn-doc` 执行步骤", 1)[1].split("---", 1)[0]
+        for section in [write_section, optimize_section]:
+            self.assertIn("自动执行去 AI 味回路", section)
+            self.assertIn("默认不得跳过", section)
 
 
 class TestMultiBacktickInlineCode(unittest.TestCase):
