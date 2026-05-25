@@ -10,6 +10,7 @@
 #   - 检查中英文空格、标点符号、术语一致性、Markdown 结构
 #   - 生成可读性量化报告
 #   - 启发式检查 AI 味门槛（模板腔、生成式转场、作者在场感）
+#   - 可选检查 cn-doc-writer 主副本是否漂移
 #   - 支持 --fix 自动修复后提交
 
 name: 中文文档质量检查
@@ -19,15 +20,22 @@ on:
     paths:
       - "docs/**/*.md"
       - "*.md"
+      - "skills/cn-doc-writer/**"
+      - "agent/skills/my-skills/cn-doc-writer/**"
   push:
     branches: [main]
     paths:
       - "docs/**/*.md"
       - "*.md"
+      - "skills/cn-doc-writer/**"
+      - "agent/skills/my-skills/cn-doc-writer/**"
 
 env:
   DOCS_DIR: docs
   SCRIPTS_DIR: scripts/cn-doc-writer
+  # 留空时跳过同步检查；配置后 CI 会阻断主副本漂移。
+  CN_DOC_WRITER_SOURCE_DIR: ""
+  CN_DOC_WRITER_TARGET_DIR: ""
 
 jobs:
   check-docs:
@@ -44,6 +52,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+
+      - name: 主副本同步防漂移检查
+        if: env.CN_DOC_WRITER_SOURCE_DIR != '' && env.CN_DOC_WRITER_TARGET_DIR != ''
+        run: |
+          python "${{ env.SCRIPTS_DIR }}/check_skill_sync.py" \
+            "${{ env.CN_DOC_WRITER_SOURCE_DIR }}" \
+            "${{ env.CN_DOC_WRITER_TARGET_DIR }}"
 
       - name: 获取变更的 Markdown 文件
         id: changed-files

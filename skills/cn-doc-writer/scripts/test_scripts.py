@@ -994,6 +994,28 @@ class TestSkillSyncGuard(unittest.TestCase):
             self.assertIn(phrase, skill_md)
             self.assertIn(phrase, readme)
 
+    def test_ci_template_contains_optional_sync_guard(self):
+        """CI 模板应提供可配置的主副本防漂移检查"""
+        workflow = (self.SKILL_ROOT / "ci" / "check-docs.yml").read_text(encoding="utf-8")
+        readme = (self.SKILL_ROOT / "README.md").read_text(encoding="utf-8")
+
+        for phrase in [
+            "CN_DOC_WRITER_SOURCE_DIR",
+            "CN_DOC_WRITER_TARGET_DIR",
+            "主副本同步防漂移检查",
+            "check_skill_sync.py",
+            "skills/cn-doc-writer/**",
+            "agent/skills/my-skills/cn-doc-writer/**",
+        ]:
+            self.assertIn(phrase, workflow)
+
+        self.assertRegex(
+            workflow,
+            r"if:.*CN_DOC_WRITER_SOURCE_DIR.*CN_DOC_WRITER_TARGET_DIR",
+        )
+        self.assertIn("CI", readme)
+        self.assertIn("CN_DOC_WRITER_SOURCE_DIR", readme)
+
     def test_sync_guard_accepts_matching_copy_and_ignores_cache(self):
         """完全一致的副本应通过，缓存文件不参与比较"""
         sync = self._load_sync_module()

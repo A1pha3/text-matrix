@@ -1,7 +1,7 @@
 ---
 name: cn-doc-writer
 description: Use when creating, translating, reviewing, or improving Chinese technical documentation / 中文技术文档, including tutorials, README, API docs, 技术翻译, 去 AI 味, 开源项目解读, architecture analysis, benchmark 解读, learning goals, exercises, terminology consistency, and de-AI polishing of Chinese technical prose.
-version: 5.9.0
+version: 5.10.0
 author: Sisyphus
 tags: ["cn-doc", "technical", "translation", "learning"]
 commands:
@@ -76,7 +76,7 @@ commands:
 
 维护本 skill 的多个拷贝时，以 prompt_alpha 中的智能体（代理）技能路径 `agent/skills/my-skills/cn-doc-writer` 为主版本；`text-matrix/skills/cn-doc-writer` 只作为副本。所有能力、术语、reference、脚本和测试修改都必须先落在主版本，再从主版本同步到副本。不要从副本反向合并到主版本。
 
-同步后运行 `scripts/check_skill_sync.py` 对比主版本和副本；只要出现缺失、多余或内容不同的文件，就先修正副本漂移，再继续发布或后续优化。
+同步后运行 `scripts/check_skill_sync.py` 对比主版本和副本；只要出现缺失、多余或内容不同的文件，就先修正副本漂移，再继续发布或后续优化。若使用 `ci/check-docs.yml`，配置 `CN_DOC_WRITER_SOURCE_DIR` 与 `CN_DOC_WRITER_TARGET_DIR` 后，CI 会自动阻断漂移。
 
 ## 3. 执行骨架
 

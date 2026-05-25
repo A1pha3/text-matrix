@@ -1,6 +1,6 @@
 # cn-doc-writer
 
-> 专业级中文技术文档编写 Skill — v5.9.0
+> 专业级中文技术文档编写 Skill — v5.10.0
 
 ## 功能概述
 
@@ -12,6 +12,7 @@
 - `text-matrix/skills/cn-doc-writer` 只作为副本，根据主版本同步。
 - 所有修改先落在主版本；同步后用 `scripts/check_skill_sync.py` 检查缺失、多余和内容不同的文件。
 - 防漂移检查忽略 `__pycache__`、`.pytest_cache`、`.pyc` 等本地缓存，不隐藏真实文档、脚本或配置差异。
+- `ci/check-docs.yml` 已接入可选 CI 防漂移步骤；配置 `CN_DOC_WRITER_SOURCE_DIR` 和 `CN_DOC_WRITER_TARGET_DIR` 后，PR 会在副本漂移时失败。
 
 ## 新增能力：分析型技术文章增强
 
@@ -138,6 +139,17 @@ python scripts/check_skill_sync.py \
 
 该命令只用于校验。若失败，以 `prompt_alpha` 主版本为准，把 `text-matrix` 副本同步到主版本当前状态。
 
+如需接入 CI，在 `ci/check-docs.yml` 中配置：
+
+```yaml
+env:
+  SCRIPTS_DIR: agent/skills/my-skills/cn-doc-writer/scripts
+  CN_DOC_WRITER_SOURCE_DIR: agent/skills/my-skills/cn-doc-writer
+  CN_DOC_WRITER_TARGET_DIR: skills/cn-doc-writer
+```
+
+如果主版本和副本位于不同仓库，需要先在 CI 中把两个仓库检出到同一个工作区，再把上述路径改成对应目录。
+
 ### 运行测试
 
 ```bash
@@ -187,6 +199,7 @@ python test_scripts.py
 
 | 版本 | 变更 |
 |------|------|
+| v5.10.0 | 将主副本同步防漂移接入 `ci/check-docs.yml`：新增可选环境变量 `CN_DOC_WRITER_SOURCE_DIR` / `CN_DOC_WRITER_TARGET_DIR`，配置后 CI 会执行 `check_skill_sync.py` 并阻断副本漂移；触发路径补充 `skills/cn-doc-writer/**` 与 `agent/skills/my-skills/cn-doc-writer/**`。 |
 | v5.9.0 | 新增主副本同步防漂移契约：明确 `prompt_alpha` 为主版本、`text-matrix` 为副本；新增 `scripts/check_skill_sync.py`，可在同步后检查缺失、多余和内容不同的文件；README、SKILL 和回归测试同步覆盖主从方向。 |
 | v5.8.0 | 补强双语触发描述；新增默认外显契约和自动去 AI 味契约；将 `optimize-cn-doc` 拆成默认简版报告与发布级完整评审；将去 AI 味完整信号库下沉到 `references/examples.md`；新增 `references/behavior-fixtures.md` 行为压测场景；拆分 skill 版本与术语表版本；补齐 reference 清单与命令流程可见性回归测试。 |
 | v5.7.0 | 优化 Skill 激活描述与元数据同步；主 SKILL 内置五维评分摘要；默认将路由、评分和自检作为内部步骤；补充去 AI 味与 benchmark 校准短例；压缩重复红线。 |

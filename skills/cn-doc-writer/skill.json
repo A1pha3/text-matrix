@@ -1,7 +1,7 @@
 {
   "name": "cn-doc-writer",
   "description": "Use when creating, translating, reviewing, or improving Chinese technical documentation / 中文技术文档, including tutorials, README, API docs, 技术翻译, 去 AI 味, 开源项目解读, architecture analysis, benchmark 解读, learning goals, exercises, terminology consistency, and de-AI polishing of Chinese technical prose.",
-  "version": "5.9.0",
+  "version": "5.10.0",
   "terminology_version": "3.7.0",
   "author": "Sisyphus",
   "tags": ["documentation", "chinese", "cn-doc", "writing", "technical", "translation", "education", "learning", "readme", "api-docs"],
