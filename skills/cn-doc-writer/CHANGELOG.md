@@ -2,6 +2,7 @@
 
 | 版本 | 日期 | 作者 | 变更说明 |
 |------|------|------|----------|
+| v5.9.0 | 2026-05-25 | Codex | **主副本同步防漂移**。明确 `prompt_alpha` 中的 `agent/skills/my-skills/cn-doc-writer` 是主版本，`text-matrix/skills/cn-doc-writer` 只作为副本；新增 `scripts/check_skill_sync.py`，同步后可检查缺失、多余和内容不同的文件，并忽略本地缓存；README、SKILL 和 dogfooding 测试同步加入主从方向约束，防止后续优化在两个仓库间漂移。 |
 | v5.8.0 | 2026-05-24 | Codex | **触发、外显与压测优化**。`SKILL.md` 的 description 改为中英混合触发描述，保留 `Use when...` 格式并补充“中文技术文档 / 技术翻译 / 去 AI 味 / 开源项目解读 / benchmark 解读”等中文检索词；新增“默认外显契约”，明确四个命令默认输出什么，减少过程话术泄漏；新增自动去 AI 味契约，要求 `write-cn-doc` 与 `optimize-cn-doc` 默认自动调用去 AI 味回路；将 `optimize-cn-doc` 报告拆成默认简版报告与发布级完整评审，普通优化不再默认展开完整五维评分表；将去 AI 味完整信号库与替换例下沉到 `references/examples.md`，主文件只保留三层回路、加载触发和红线；新增 `references/behavior-fixtures.md`，覆盖代码块保留、benchmark 作用范围、事实不足收缩、去 AI 味稳分和隐式自动去味五个行为压测场景；`skill.json` 新增 `terminology_version`，拆开 Skill 版本与术语表版本；补齐 reference 清单、引用存在性与 `commands.md` 外显契约回归测试。 |
 | v5.7.0 | 2026-05-24 | Codex | **Skill 激活与交付边界优化**。同步 `SKILL.md`、`skill.json`、README 与术语表元数据；主文件加入五维评分摘要；默认将路由、评分和自检作为内部步骤；补充去 AI 味与 benchmark 校准短例；压缩重复红线，并修复测试中 HTML 注释断言位置。 |
 | v5.4.0 | 2026-04-24 | GitHub Copilot | **加入“去 AI 味”启发式自动门槛**。新增 `scripts/check_ai_tone.py`，将模板腔、生成式转场、教学控制句、作者在场感和模板化标题中的高频信号转成可执行检查；支持单文件、目录、JSON 输出与 `--strict` 阻断模式。`ci/check-docs.yml` 新增“去 AI 味门槛检查”步骤；README 补齐 references / scripts 目录结构并加入脚本用法。目标：把“自然表达”从纯人工经验推进到“规则 + 脚本 + CI”闭环。 |

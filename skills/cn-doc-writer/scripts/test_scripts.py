@@ -11,6 +11,7 @@ cn-doc-writer 脚本单元测试
 """
 
 import json
+import importlib.util
 import re
 import sys
 import tempfile
@@ -966,6 +967,80 @@ class TestDogfooding(unittest.TestCase):
         for section in [write_section, optimize_section]:
             self.assertIn("自动执行去 AI 味回路", section)
             self.assertIn("默认不得跳过", section)
+
+
+class TestSkillSyncGuard(unittest.TestCase):
+    """主副本同步防漂移测试"""
+
+    SKILL_ROOT = SCRIPTS_DIR.parent
+    SCRIPT_PATH = SCRIPTS_DIR / "check_skill_sync.py"
+
+    @classmethod
+    def _load_sync_module(cls):
+        spec = importlib.util.spec_from_file_location("check_skill_sync", cls.SCRIPT_PATH)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_sync_guard_script_exists_and_is_documented(self):
+        """同步脚本和文档必须声明 prompt_alpha 是主版本"""
+        self.assertTrue(self.SCRIPT_PATH.exists(), "缺少 scripts/check_skill_sync.py")
+        readme = (self.SKILL_ROOT / "README.md").read_text(encoding="utf-8")
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("check_skill_sync.py", readme)
+        self.assertIn("主副本同步防漂移", readme)
+        for phrase in ["prompt_alpha", "主版本", "text-matrix", "副本"]:
+            self.assertIn(phrase, skill_md)
+            self.assertIn(phrase, readme)
+
+    def test_sync_guard_accepts_matching_copy_and_ignores_cache(self):
+        """完全一致的副本应通过，缓存文件不参与比较"""
+        sync = self._load_sync_module()
+        with tempfile.TemporaryDirectory() as source_dir, tempfile.TemporaryDirectory() as target_dir:
+            source = Path(source_dir)
+            target = Path(target_dir)
+            (source / "references").mkdir()
+            (target / "references").mkdir()
+            (target / "scripts" / "__pycache__").mkdir(parents=True)
+            (target / ".pytest_cache").mkdir()
+
+            (source / "SKILL.md").write_text("main\n", encoding="utf-8")
+            (target / "SKILL.md").write_text("main\n", encoding="utf-8")
+            (source / "references" / "commands.md").write_text("commands\n", encoding="utf-8")
+            (target / "references" / "commands.md").write_text("commands\n", encoding="utf-8")
+            (target / "scripts" / "__pycache__" / "x.pyc").write_bytes(b"cache")
+            (target / ".pytest_cache" / "README.md").write_text("cache\n", encoding="utf-8")
+
+            result = sync.compare_skill_dirs(source, target)
+
+        self.assertTrue(result.is_clean)
+        self.assertEqual(result.missing, [])
+        self.assertEqual(result.extra, [])
+        self.assertEqual(result.different, [])
+
+    def test_sync_guard_detects_missing_extra_and_different_files(self):
+        """副本漂移时应明确列出缺失、多余和内容不同的文件"""
+        sync = self._load_sync_module()
+        with tempfile.TemporaryDirectory() as source_dir, tempfile.TemporaryDirectory() as target_dir:
+            source = Path(source_dir)
+            target = Path(target_dir)
+            (source / "references").mkdir()
+            (target / "references").mkdir()
+
+            (source / "SKILL.md").write_text("main\n", encoding="utf-8")
+            (target / "SKILL.md").write_text("edited copy\n", encoding="utf-8")
+            (source / "README.md").write_text("readme\n", encoding="utf-8")
+            (target / "orphan.md").write_text("target only\n", encoding="utf-8")
+            (source / "references" / "quality.md").write_text("quality\n", encoding="utf-8")
+            (target / "references" / "quality.md").write_text("quality\n", encoding="utf-8")
+
+            result = sync.compare_skill_dirs(source, target)
+
+        self.assertFalse(result.is_clean)
+        self.assertEqual(result.missing, ["README.md"])
+        self.assertEqual(result.extra, ["orphan.md"])
+        self.assertEqual(result.different, ["SKILL.md"])
 
 
 class TestMultiBacktickInlineCode(unittest.TestCase):

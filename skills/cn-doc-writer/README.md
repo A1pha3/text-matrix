@@ -1,10 +1,17 @@
 # cn-doc-writer
 
-> 专业级中文技术文档编写 Skill — v5.8.0
+> 专业级中文技术文档编写 Skill — v5.9.0
 
 ## 功能概述
 
 为 AI 助手提供中文技术文档的**编写、翻译、优化、教学增强**全流程能力，并在不牺牲结构、准确性、教学性与实用性的前提下，系统性去掉 AI 味、模板腔和生成感。
+
+## 新增能力：主副本同步防漂移
+
+- `prompt_alpha` 下的智能体（代理）技能路径 `agent/skills/my-skills/cn-doc-writer` 是主版本。
+- `text-matrix/skills/cn-doc-writer` 只作为副本，根据主版本同步。
+- 所有修改先落在主版本；同步后用 `scripts/check_skill_sync.py` 检查缺失、多余和内容不同的文件。
+- 防漂移检查忽略 `__pycache__`、`.pytest_cache`、`.pyc` 等本地缓存，不隐藏真实文档、脚本或配置差异。
 
 ## 新增能力：分析型技术文章增强
 
@@ -67,6 +74,7 @@ cn-doc-writer/
 │   ├── pre_translate.py        # 翻译前分析
 │   ├── post_translate.py       # 翻译后校验
 │   ├── gen_terminology_md.py   # 从 JSON 生成 terminology.md
+│   ├── check_skill_sync.py     # 主副本同步防漂移检查
 │   └── test_scripts.py         # 单元测试
 └── ci/                         # 集成层
     └── check-docs.yml          # GitHub Actions 文档检查模板
@@ -120,6 +128,16 @@ python scripts/post_translate.py README_CN.md --original README.md
 python scripts/gen_terminology_md.py --write
 ```
 
+### 主副本同步防漂移
+
+```bash
+python scripts/check_skill_sync.py \
+  /path/to/prompt_alpha/agent/skills/my-skills/cn-doc-writer \
+  /path/to/text-matrix/skills/cn-doc-writer
+```
+
+该命令只用于校验。若失败，以 `prompt_alpha` 主版本为准，把 `text-matrix` 副本同步到主版本当前状态。
+
 ### 运行测试
 
 ```bash
@@ -146,7 +164,7 @@ python test_scripts.py
                  │ 数据源
 ┌────────────────▼────────────────────────┐
 │         scripts/（工具层）               │
-│  格式检查 · 翻译分析 · 翻译校验 · 生成   │
+│  格式检查 · 翻译分析 · 翻译校验 · 同步校验 · 生成 │
 └────────────────┬────────────────────────┘
                  │ 自动化
 ┌────────────────▼────────────────────────┐
@@ -169,6 +187,7 @@ python test_scripts.py
 
 | 版本 | 变更 |
 |------|------|
+| v5.9.0 | 新增主副本同步防漂移契约：明确 `prompt_alpha` 为主版本、`text-matrix` 为副本；新增 `scripts/check_skill_sync.py`，可在同步后检查缺失、多余和内容不同的文件；README、SKILL 和回归测试同步覆盖主从方向。 |
 | v5.8.0 | 补强双语触发描述；新增默认外显契约和自动去 AI 味契约；将 `optimize-cn-doc` 拆成默认简版报告与发布级完整评审；将去 AI 味完整信号库下沉到 `references/examples.md`；新增 `references/behavior-fixtures.md` 行为压测场景；拆分 skill 版本与术语表版本；补齐 reference 清单与命令流程可见性回归测试。 |
 | v5.7.0 | 优化 Skill 激活描述与元数据同步；主 SKILL 内置五维评分摘要；默认将路由、评分和自检作为内部步骤；补充去 AI 味与 benchmark 校准短例；压缩重复红线。 |
 | v5.5.0 | 新增“分析型技术文章增强”分支：增加 `references/blog-deep-dive.md`；主 SKILL 接入开源项目解读 / 架构分析 / benchmark 解读路由；commands 和 quality 增加总览图、任务流案例、benchmark 解读与采用建议等强制检查；README 与 skill.json 同步更新。 |
