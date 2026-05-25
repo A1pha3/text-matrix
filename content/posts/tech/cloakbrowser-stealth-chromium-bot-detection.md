@@ -7,9 +7,7 @@ categories: ["工具"]
 
 # CloakBrowser：源代码级打补丁的隐身Chromium浏览器
 
-<p align="center">
-<img src="https://i.imgur.com/cqkp6fG.png" width="500" alt="CloakBrowser">
-</p>
+![CloakBrowser](https://i.imgur.com/cqkp6fG.png)
 
 **CloakBrowser** 是一个从 Chromium 源代码层面进行指纹修改的隐身浏览器，49个源代码补丁覆盖 canvas、WebGL、audio、fonts、GPU、screen、WebRTC、network timing 等所有自动化信号。能通过 Cloudflare Turnstile、FingerprintJS、BrowserScan 等 30+ 检测平台的测试，在 headless 模式下依然保持人类浏览器级别的 reCAPTCHA v3 评分（0.9分）。
 

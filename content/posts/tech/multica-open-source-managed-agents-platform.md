@@ -10,19 +10,13 @@ tags: ["AI", "Claude Code", "多代理", "MCP", "开源"]
 
 # Multica：把 AI 代码代理变成真正的队友
 
-<p align="center">
-  <img src="docs/assets/banner.jpg" alt="Multica — humans and agents, side by side" width="100%">
-</p>
-
-<div align="center">
+![Multica: humans and agents, side by side](docs/assets/banner.jpg)
 
 **开源托管代理平台，把编程代理变成真正的团队成员。**
 
 [![CI](https://github.com/multica-ai/multica/actions/workflows/ci.yml/badge.svg)](https://github.com/multica-ai/multica/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/multica-ai/multica?style=flat)](https://github.com/multica-ai/multica/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-</div>
 
 ## 背景：为什么需要 Multica
 

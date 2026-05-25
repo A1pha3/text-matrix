@@ -10,15 +10,11 @@ tags: ["AI", "Chrome", "MCP", "Claude Code", "浏览器自动化"]
 
 # Chrome DevTools MCP：让 AI 编程代理操控 Chrome 的官方方案
 
-<div align="center">
-
 [![GitHub stars](https://img.shields.io/github/stars/ChromeDevTools/chrome-devtools-mcp?style=flat)](https://github.com/ChromeDevTools/chrome-devtools-mcp/stargazers)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 **让 AI 编程代理（Claude Code、Codex 等）通过 Chrome DevTools 协议直接操控 Chrome 浏览器。**
-
-</div>
 
 ## 背景：为什么 AI 代理需要浏览器控制能力
 
