@@ -1,3 +1,9 @@
++++
+date = '2026-05-26T16:16:40+08:00'
+draft = false
+title = 'Taste Skill：给AI的前端注入「审美品味」，告别千篇一律的slop UI'
++++
+
 # Taste Skill：给AI的前端注入「审美品味」，告别千篇一律的slop UI
 
 ## 概述
