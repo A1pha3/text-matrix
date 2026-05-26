@@ -118,7 +118,7 @@ note = "把工具判断延伸到上下文、记忆和长期可维护性。"
 
 1. [Cognee：AI Agent 记忆与知识引擎完整指南](/posts/tech/cognee-ai-agent-memory-knowledge-engine/)
 2. [AgentMemory：持久化记忆如何改变 AI Coding Agent](/posts/tech/agentmemory-persistent-memory-ai-coding-agent/)
-3. [CodeGraph：Claude Code 知识图谱与代码理解](/posts/tech/codegraph-claude-code-knowledge-graph/)
+3. [CodeGraph：把 AI Coding Agent 的代码探索变成图查询](/posts/tech/codegraph-semantic-code-knowledge-graph-for-ai-coding-agents/)
 4. [Context Mode MCP：上下文优化指南](/posts/tech/context-mode-mcp-context-optimization-guide/)
 
 ### 5. 最后看浏览器、自动化和长链路能力
