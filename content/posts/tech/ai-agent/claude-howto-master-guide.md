@@ -4,6 +4,8 @@ date: "2026-04-01T13:00:00+08:00"
 slug: "claude-howto-master-guide"
 aliases:
   - /posts/tech/claude-howto-master-guide/
+  - /posts/tech/ai-agent/claude-howto-master-claude-code-guide/
+  - /posts/tech/ai-agent/claude-howto-visual-guide/
 categories: ["技术笔记"]
 tags: ["Claude Code", "Claude How To", "AI编程", "Skills", "Hooks", "MCP", "Subagents"]
 description: "Claude How To 是 GitHub 上最受欢迎的 Claude Code 学习指南，13.7k Stars。涵盖10大学习模块（Slash Commands、Memory、Skills、Hooks、MCP、Subagents等），提供11-13小时从入门到精通的完整学习路径和可复制的生产级模板。"

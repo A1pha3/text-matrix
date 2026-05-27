@@ -2,6 +2,9 @@
 title: "Cua：开源计算机控制Agent基础设施完全指南"
 date: "2026-05-14T10:47:00+08:00"
 slug: "cua-computer-use-agent-infrastructure-guide"
+aliases:
+    - "/posts/tech/cua-computer-use-framework/"
+    - "/posts/tech/cua-computer-use-agent-framework/"
 description: "Cua是专注于Computer-Use的开源基础设施，提供沙箱、SDK和Benchmark来训练与评估能控制完整桌面的AI Agent。支持macOS、Linux、Windows三大平台，提供Cua Driver（后台控制）、Cua Sandbox（Agent-ready隔离环境）和Cua Bench（评估基准），是当前最完整的开源CUA方案。"
 draft: false
 categories: ["技术笔记"]

@@ -3,7 +3,9 @@ title: "CodeGraph 深度解析：把 AI Coding Agent 的代码探索从文件扫
 date: "2026-05-25T20:16:19+08:00"
 lastmod: "2026-05-26T16:30:00+08:00"
 slug: "codegraph-semantic-code-knowledge-graph-for-ai-coding-agents"
-aliases: ["/posts/tech/codegraph-claude-code-knowledge-graph/"]
+aliases:
+  - "/posts/tech/codegraph-claude-code-knowledge-graph/"
+  - "/posts/tech/codegraph-semantic-code-knowledge-graph-guide/"
 description: "深入拆解 CodeGraph 如何把大型仓库的代码探索前置成可复用的本地知识图谱，并解释它的 MCP 工具、增量同步、benchmark 与适用边界。"
 draft: false
 categories: ["技术笔记"]
@@ -55,6 +57,10 @@ flowchart LR
 - 解析：把调用、导入、继承、实现和框架路由补成可查询、可遍历的图。
 - 同步：监听文件变更，在 2 秒安静窗口后只更新受影响的源码文件。
 
+如果你准备顺着仓库读一遍实现，最省时间的入口也是这 4 层：`src/extraction/` 负责 tree-sitter 解析与符号抽取，`src/resolution/` 负责导入解析、名称匹配和框架路由，`src/graph/` 负责遍历与查询，`src/context/` 负责把结果整理成 agent 能直接消费的 Markdown 或 JSON。重型解析任务会被分流到 `parse-worker`，避免把交互查询卡死在单线程上。
+
+数据层则单独落在 `src/db/`。Schema 写在 `schema.sql`，查询走预编译语句；官方实现同时兼容 `better-sqlite3` 和 `node-sqlite3-wasm` 这两类后端，并默认启用 WAL 模式。这样做的好处很直接：日常读取不会因为一次索引写入就整库阻塞，真要排查锁冲突时也更容易判断问题是出在旧版本安装，还是出在网络盘、WSL 挂载目录这类不适合 WAL 的文件系统。
+
 ## 这张图是怎么建出来的
 
 ### 用 tree-sitter 拿到可靠的结构边界
@@ -86,6 +92,8 @@ CodeGraph 的第一步是用 tree-sitter 解析源码。它的关键价值不只
 如果每保存一次文件都要全量重建索引，CodeGraph 只适合做演示，不适合真开发。它当前的实现是用原生文件事件接口 FSEvents、inotify、ReadDirectoryChangesW 监听变化，在 2 秒安静窗口后增量同步，并且只处理源码文件。
 
 这里还有一个容易忽略的细节：零配置不等于“什么都索引”。官方文档明确写了默认排除策略，`node_modules`、`vendor`、`dist`、`build`、`target`、`.venv`、`Pods`、`.next` 这类依赖、产物和缓存目录会被跳过；Git 仓库下会尊重 `.gitignore`，非 Git 项目则直接读取 `.gitignore`；大于 1 MB 的文件默认也不进图。这让索引更像“你的代码”，而不是把第三方噪声一起吞进去。
+
+如果要手动排查同步本身，命令行层面还有一组更直接的入口：`codegraph watch` 用来开启文件监听，`codegraph unwatch` 用来停掉监听，`codegraph sync` 则适合在怀疑索引没跟上时手动补一次。平时不一定会用到，但当你怀疑“图里怎么还没有刚改过的符号”时，这组命令比盲猜缓存状态更有效。
 
 ## Agent 应该怎么问这张图
 

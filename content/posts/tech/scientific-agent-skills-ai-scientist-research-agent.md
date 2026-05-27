@@ -2,6 +2,9 @@
 title: "Scientific Agent Skills：把 AI 编码助手变成\"AI 科学家\"的 135 个科研技能集合"
 date: 2026-05-14T11:42:48+08:00
 slug: "scientific-agent-skills-ai-scientist-research-agent"
+aliases:
+  - "/posts/tech/scientific-agent-skills-research-ai-agent/"
+  - "/posts/tech/scientific-agent-skills-ai-scientist-complete-guide/"
 description: "Scientific Agent Skills 是 K-Dense-AI 开源的一套 Agent Skills 合集，包含 135 个面向科研场景的即用型技能，覆盖生物信息学、药物发现、临床研究、机器学习等 17 个科学领域，让 Cursor、Claude Code、Codex 等 AI 编码助手可以直接执行复杂的跨学科科研工作流。"
 draft: false
 categories: ["技术笔记"]

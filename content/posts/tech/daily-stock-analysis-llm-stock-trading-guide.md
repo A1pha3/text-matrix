@@ -2,6 +2,8 @@
 title: "LLM驱动的智能股票分析系统：零成本GitHub Actions定时运行 + 多市场覆盖 + AI决策仪表盘"
 date: "2026-05-18T20:00:00+08:00"
 slug: "daily-stock-analysis-llm-stock-trading-guide"
+aliases:
+  - "/posts/tech/daily-stock-analysis-llm-stock-trading-system/"
 description: "daily_stock_analysis是基于LLM的智能股票分析系统，支持A股、港股、美股多市场数据，提供AI决策仪表盘、风险警报和定时推送功能。本文详解其GitHub Actions零成本部署方案、策略问股Agent及多渠道推送配置方法。"
 categories: ["技术笔记"]
 ---

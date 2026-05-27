@@ -2,6 +2,8 @@
 title: "Anthropic Skills 仓库进阶实战：18个技能覆盖研发全链路"
 date: "2026-05-16T15:10:00+08:00"
 slug: "anthropics-skills-18-skills-full-stack-guide"
+aliases:
+  - "/posts/tech/anthropics-skills-agent-skills-repository-guide/"
 description: "Anthropic 官方 Skills 仓库已积累超过 13.5 万颗 Stars，成为 AI Agent 技能生态的标杆资源库。本文聚焦 18 个官方技能的进阶用法，重点解析 MCP Builder 的四阶段开发流程、frontend-design 的反 AI 美学设计原则，以及 PDF/DOCX/PPTX/XLSX 等文档技能的内部实现架构。"
 draft: false
 categories: ["技术笔记"]

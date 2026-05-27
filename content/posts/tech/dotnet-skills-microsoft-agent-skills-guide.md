@@ -2,6 +2,8 @@
 title: "dotnet/skills：.NET官方AI编码智能体技能库完全指南"
 date: 2026-05-23T12:15:00+08:00
 slug: "dotnet-skills-microsoft-agent-skills-guide"
+aliases:
+  - "/posts/tech/dotnet-skills-microsoft-agent-skills/"
 description: "dotnet/skills是微软官方维护的AI编码智能体技能库，为Copilot CLI、Claude Code、VS Code、Cursor、Codex等主流AI编程工具提供12个专项插件，覆盖.NET开发、数据访问、性能诊断、构建优化、包管理、迁移升级、MAUI开发、AI集成、测试等全栈场景。本文解析其标准架构、各插件能力、安装配置及与Agent Skills标准的集成方式。"
 draft: false
 categories: ["技术笔记"]

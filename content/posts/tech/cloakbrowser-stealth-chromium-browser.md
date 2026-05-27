@@ -2,6 +2,9 @@
 title: "CloakBrowser：源码级改写的反机器人 Chromium 分发版"
 date: "2026-05-14T12:44:00+08:00"
 slug: "cloakbrowser-stealth-chromium-browser"
+aliases:
+  - "/posts/tech/cloakbrowser-stealth-chromium-bot-detection/"
+  - "/posts/tech/cloakbrowser-stealth-chromium-anti-bot-detection/"
 description: "CloakBrowser 是一款经过源码级改写的 Chromium 分发版，在 C++ 层面修改浏览器指纹，使反爬虫系统将其识别为正常浏览器。不同于 Patch 配置或 JS 注入方案，它是一个真正、原生的 Chromium 二进制，可直接作为 Playwright/Puppeteer 的零成本替代品。"
 draft: false
 categories: ["技术笔记"]
@@ -68,6 +71,8 @@ const { cloak } = require('cloak-browser');
 ## Cloudflare Turnstile 实测
 
 官方仓库展示了 Cloudflare Turnstile（无感验证码）的实测结果：在 headed 模式和 macOS 环境下均可通过 3 个 live 测试。这对于需要长期运行、且目标站点使用 Cloudflare 保护的业务场景具有实际价值。
+
+另外两篇旧稿里还有两点值得保留。第一，项目不只在静态指纹层做文章，还把行为层当成同一类问题来处理，文档里给出了 `humanize=True` 这类接口入口，用来约束鼠标轨迹、键盘时序和滚动模式；源码补丁解决“你看起来像不像浏览器”，行为模拟解决“你操作起来像不像人”。第二，官方同时提供 PyPI、npm 和 Docker 分发，并给出 GPG tag、GitHub Attestation、Cosign 这类校验路径。对准备把它接进长期采集链路的团队来说，二进制来源可验证，和通过检测本身一样重要。
 
 ## 适用场景
 

@@ -2,6 +2,10 @@
 title: "The Agency：147个专业化AI Agent组成的虚拟团队"
 date: "2026-05-05T11:25:00+08:00"
 slug: "agency-agents-ai-specialist-team-guide"
+aliases:
+  - "/posts/tech/agency-agents-complete-ai-agency-toolkit/"
+  - "/posts/tech/the-agency-open-source-ai-agents-personas/"
+  - "/posts/tech/ai-agent/agency-agents-multi-agent-framework-guide/"
 description: "The Agency是一个包含147个专业化AI Agent的开源项目，覆盖工程、设计、销售、营销等12个领域。每个Agent拥有独特人格、专业流程和可衡量产出，可接入Claude Code、Cursor、Windsurf等主流AI编程工具。本文详解其架构设计、Agent分类、集成方式与实际应用场景。"
 draft: false
 categories: ["技术笔记"]
@@ -43,6 +47,8 @@ tags: ["AI Agent", "Claude Code", "Cursor", "多工具集成", "AI团队", "Open
 | **学习记忆（Memory）** | 持续改进的能力积累 |
 
 ### 12个专业部门一览
+
+旧稿里还有一个很实用的观察：这套仓库并不要求你一次装满 147 个 Agent。它同时支持单个角色独立运行、多个角色按 pipeline 串联，以及通过配置文件替换模型、输出目录和外部凭据。把它理解成一组可组合的岗位库，比把它理解成“超大号提示词包”更贴近真实用法。
 
 The Agency的组织架构模拟了真实公司结构：
 

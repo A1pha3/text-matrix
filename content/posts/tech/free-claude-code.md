@@ -2,6 +2,11 @@
 title: "Free Claude Code：用免费提供商替代 Anthropic API，让 Claude Code 零成本运行"
 date: "2026-04-27T01:04:00+08:00"
 slug: free-claude-code
+aliases:
+  - "/posts/tech/free-claude-code-anthropic-proxy/"
+  - "/posts/tech/free-claude-code-proxy-guide/"
+  - "/posts/tech/free-claude-code-proxy-anthropic/"
+  - "/posts/tech/free-claude-code-proxy-anthropic-api-free/"
 description: "Free Claude Code 是一个 Python 代理服务器，通过环境变量拦截 Claude Code 的 Anthropic API 调用并路由到免费提供商（NVIDIA NIM / OpenRouter / DeepSeek / LM Studio / llama.cpp / Ollama），实现 Claude Code 零成本使用。"
 draft: false
 categories: ["技术笔记"]

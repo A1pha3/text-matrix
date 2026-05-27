@@ -2,6 +2,9 @@
 title: "agentmemory：为 AI Agent 打造可搜索的持久化记忆系统"
 date: 2026-05-10T16:55:00+08:00
 slug: agentmemory-persistent-memory-agents-guide
+aliases:
+    - "/posts/tech/agentmemory-persistent-memory-ai-coding-agent/"
+    - "/posts/tech/agentmemory-persistent-memory-ai-coding-agents/"
 description: "基于 agentmemory 官方 README 与 benchmark，系统解析其四层记忆架构、MCP 接入方式、iii 运行时、Claude Code 与 Cursor 集成，以及真实落地边界。"
 categories: ["技术笔记"]
 tags: ["AI Agent", "MCP", "Claude Code", "Cursor", "agentmemory"]

@@ -4,6 +4,11 @@ date: "2026-03-28T16:00:00+08:00"
 slug: "hermes-agent-self-improving-ai-framework"
 aliases:
   - /posts/tech/hermes-agent-self-improving-ai-framework/
+    - /posts/tech/hermes-agent-curator/
+    - /posts/tech/hermes-agent-growing-ai-agent-framework/
+    - /posts/tech/hermes-agent-nous-self-improving-ai-agent/
+    - /posts/tech/hermes-agent-self-improving-ai-agent/
+    - /posts/tech/hermes-agent-orange-book-complete-guide/
 description: "深度解析 Hermes Agent 自改进 AI Agent 框架：内置学习循环、多平台 Gateway、Skills 系统、模型无关架构，详解原理、架构、使用与二次开发。"
 draft: false
 categories: ["技术笔记"]

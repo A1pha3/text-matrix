@@ -2,6 +2,9 @@
 title: "Supertonic 3: 99M参数本地多语言TTS引擎，完全基于ONNX实现端侧推理"
 date: "2026-05-18T20:00:00+08:00"
 slug: "supertonic-onnx-tts-engine-guide"
+aliases:
+  - "/posts/tech/supertonic-3-onnx-tts-engine/"
+  - "/posts/tech/supertonic-on-device-multilingual-tts/"
 description: "Supertonic是一款99M参数的本地多语言TTS引擎，基于ONNX Runtime实现纯端侧推理，支持31种语言和44.1kHz高保真音频输出。本文详解其核心能力、Python SDK快速上手及本地HTTP API部署方法。"
 draft: false
 categories: ["技术笔记"]

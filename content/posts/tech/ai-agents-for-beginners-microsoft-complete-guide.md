@@ -2,6 +2,11 @@
 title: "微软 AI Agents for Beginners 完全指南：14 节课程从入门到精通"
 date: "2026-04-22T11:30:00+08:00"
 slug: "ai-agents-for-beginners-microsoft-complete-guide"
+aliases:
+    - "/posts/tech/ai-agents-for-beginners-microsoft-guide/"
+    - "/posts/tech/microsoft-ai-agents-for-beginners-course/"
+    - "/posts/tech/microsoft-ai-agents-for-beginners-guide/"
+    - "/posts/tech/microsoft-ai-agents-for-beginners-tutorial/"
 description: "微软官方 AI Agents for Beginners 课程完整解析，涵盖 14 节核心课程、Microsoft Agent Framework 与 Azure AI Foundry Agent Service V2 架构详解，以及从工具调用、多 Agent 协作到生产级部署的完整学习路径。"
 draft: false
 categories: ["技术笔记"]

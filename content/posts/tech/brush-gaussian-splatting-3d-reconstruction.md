@@ -2,6 +2,8 @@
 title: "Brush: 一个跨平台的 Gaussian Splatting 3D 重建引擎"
 date: "2026-05-14T11:44:12+08:00"
 slug: "brush-gaussian-splatting-3d-reconstruction"
+aliases:
+  - "/posts/tech/brush-3d-gaussian-splatting-renderer/"
 description: "Brush 是一个基于 Rust 和 Burn ML 框架构建的 Gaussian Splatting 3D 重建引擎，支持 macOS、Windows、Linux、Android 和浏览器多平台运行，通过 WebGPU 实现跨设备渲染能力。"
 draft: false
 categories: ["技术笔记"]

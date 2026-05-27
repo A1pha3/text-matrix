@@ -2,6 +2,9 @@
 title: "OpenSRE：开源 AI SRE Agent 框架，连接 60+ 工具自动调查生产事故"
 date: "2026-04-27T01:12:00+08:00"
 slug: opensre-ai-sre-agent-framework
+aliases:
+       - "/posts/tech/opensre-ai-sre-framework/"
+       - "/posts/tech/opensre-ai-sre-agent-toolkit/"
 description: "OpenSRE 是一个开源 AI SRE Agent 框架，解决生产事故调查问题。连接 Grafana/Datadog/Sentry 等 60+ 工具，自动抓取告警上下文、日志、指标、追踪，生成结构化 RCA 报告。支持 Kubernetes/EC2/CloudWatch 等多种基础设施。"
 draft: false
 categories: ["技术笔记"]

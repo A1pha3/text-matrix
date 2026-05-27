@@ -2,6 +2,10 @@
 title: "WiFi 空间智能：RuView 如何用 WiFi 信号实现人体感知"
 date: "2026-05-14T20:32:00+08:00"
 slug: "ruview-wifi-spatial-intelligence"
+aliases:
+     - "/posts/tech/ruview-wifi-presence-respiration-detection/"
+     - "/posts/tech/ruview-wifi-spatial-intelligence-platform/"
+     - "/posts/tech/ruvnet-ruview-wifi-densepose-guide/"
 description: "RuView 是一个基于 WiFi CSI（信道状态信息）的空间智能平台，无需摄像头即可实现人体存在检测、呼吸心率监测、姿态估计和穿墙感知。本文深入解析其技术原理、架构设计、安装配置与核心应用场景。"
 draft: false
 categories: ["技术笔记"]

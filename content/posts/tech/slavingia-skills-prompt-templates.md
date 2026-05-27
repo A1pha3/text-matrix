@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "Prompt", "Skill", "创业", "模板"]
 ---
 
-> 前置知识：[Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统]({{< relref "slavingia-skills-minimalist-entrepreneur.md" >}}) ⭐⭐⭐ | [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "slavingia-skills-real-startup-case.md" >}}) ⭐⭐⭐⭐
+> 前置知识：[Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统]({{< relref "ai-agent/slavingia-skills-minimalist-entrepreneur.md" >}}) ⭐⭐⭐ | [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "slavingia-skills-real-startup-case.md" >}}) ⭐⭐⭐⭐
 >
 > 使用方式：本文不是讲原理，而是给你一组可以直接复制、再按自己项目替换的 Prompt 模板。最好的读法不是从头背下来，而是边读边把方括号里的占位符换成你的真实项目。
 
@@ -323,7 +323,7 @@ tags: ["Claude Code", "Prompt", "Skill", "创业", "模板"]
 
 现在你已经有了 3 层材料：
 
-- [Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统]({{< relref "slavingia-skills-minimalist-entrepreneur.md" >}})：建立方法论和顺序感。
+- [Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统]({{< relref "ai-agent/slavingia-skills-minimalist-entrepreneur.md" >}})：建立方法论和顺序感。
 - [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "slavingia-skills-real-startup-case.md" >}})：看清它在真实创业里怎么落地。
 - 当前这篇模板文：把方法和案例转换成你今天就能复制执行的 Prompt。
 

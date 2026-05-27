@@ -2,6 +2,11 @@
 title: "chrome-devtools-mcp 完全指南：让 AI 编程助手掌控 Chrome DevTools"
 date: "2026-04-18T11:35:00+08:00"
 slug: "chrome-devtools-mcp-ai-coding-agents-guide"
+aliases:
+  - "/posts/tech/chrome-devtools-mcp/"
+  - "/posts/tech/chrome-devtools-mcp-ai-browser-control/"
+  - "/posts/tech/chrome-devtools-mcp-ai-coding-agent-chrome/"
+  - "/posts/tech/chrome-devtools-mcp-ai-coding-agents/"
 description: "全面解析 ChromeDevTools/chrome-devtools-mcp 项目：MCP 协议如何桥接 AI 编码助手与 Chrome DevTools，puppeteer 底层原理、架构设计、所有工具函数详解、开发扩展方法与最佳实践。"
 draft: false
 categories: ["技术笔记"]
@@ -182,6 +187,8 @@ server.setRequestHandler("tools/call", async (request) => {
 - **首次调用时启动**：当第一个工具函数需要浏览器时，Puppeteer 才启动 Chrome 进程。
 - **空闲后关闭**：一段时间无操作后（可配置），Puppeteer 自动关闭 Chrome 进程，避免资源泄漏。
 - **多标签支持**：通过 `browser.newPage()` 创建新标签页，每个标签页有独立的 CDP session。
+
+另一篇旧稿补上了一个很实用的工程细节：如果多个 subagent 要并行盯不同标签页，`--experimentalPageIdRouting` 基本是必开的。打开后，工具响应会带回 `pageId`，后续调用可以显式路由到同一标签页；再配合 `--isolated` 给不同 MCP server 分配独立的 user-data-dir，多会话同时跑页面分析时就不容易互相踩状态。这部分不影响单人单页的基础用法，但对真正把它接进 agent 编排系统的团队很关键。
 
 ### 3.4 与其他方案的架构对比
 

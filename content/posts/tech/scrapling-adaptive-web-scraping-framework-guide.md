@@ -2,6 +2,8 @@
 title: "Scrapling：现代网页爬虫框架·自适应·反反爬"
 date: "2026-04-12T02:31:39+08:00"
 slug: scrapling-adaptive-web-scraping-framework-guide
+aliases:
+    - /posts/tech/scrapling-adaptive-web-scraping-framework/
 description: "Scrapling 是一个现代网页爬虫框架，具有自适应解析、反反爬绕过、并发爬取等功能，性能比 MechanicalSoup 快 767 倍。"
 draft: false
 categories: ["技术笔记"]

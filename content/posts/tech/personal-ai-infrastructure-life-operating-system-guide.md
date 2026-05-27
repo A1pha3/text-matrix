@@ -2,6 +2,9 @@
 title: "Personal AI Infrastructure：你的 AI 生活操作系统"
 date: "2026-05-13T20:18:00+08:00"
 slug: "personal-ai-infrastructure-life-operating-system-guide"
+aliases:
+  - "/posts/tech/personal-ai-infrastructure-life-operating-system/"
+  - "/posts/tech/personal-ai-infrastructure-life-os/"
 description: "Personal AI Infrastructure（PAI）是一套以「当前状态→理想状态」为核心理念的 AI 生活操作系统。通过 Algorithm v6.3.0、Pulse 生命仪表盘和数字助理（DA）三层架构，帮助个人实现目标跟踪、记忆管理和自我改进。13k+ Stars，TypeScript + Bun 技术栈，开源免费。"
 draft: false
 categories: ["技术笔记"]

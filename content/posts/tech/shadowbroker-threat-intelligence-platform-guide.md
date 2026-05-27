@@ -2,6 +2,11 @@
 title: "ShadowBroker：开源全球威胁情报平台，60+ 数据源实时聚合"
 date: "2026-05-17T20:10:00+08:00"
 slug: "shadowbroker-threat-intelligence-platform-guide"
+aliases:
+  - "/posts/tech/shadowbroker-open-source-intelligence-platform/"
+  - "/posts/tech/shadowbroker-global-threat-intelligence-platform/"
+  - "/posts/tech/shadowbroker-osint-geospatial-intelligence-platform/"
+  - "/posts/tech/shadowbroker-security-tool-guide/"
 description: "ShadowBroker 是一个开源实时地理空间情报平台，聚合航空、航海、卫星、冲突、无线电等 60+ 公共数据源于单一暗色地图界面。本文从入门到精通全面解析其功能特性、架构设计、Docker 部署、AI 智能体集成与隐私安全模型。"
 draft: false
 categories: ["技术笔记"]

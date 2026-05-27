@@ -12,7 +12,7 @@ draft: false
 <!-- markdownlint-disable-file MD003 MD041 -->
 
 > 本文基于 [Getting the most out of Codex](https://x.com/jxnlco/status/2057153744630890620) 一文，并结合 [OpenAI Codex 官方页面](https://openai.com/codex/) 与相关开发者文档整理。文章不按功能菜单介绍 Codex，而是沿着一条真实工作流看它怎样把上下文、纠偏、长任务和审查放进同一条线程。
-> **延伸阅读**：[OpenAI Codex：轻量级终端编程智能体完全指南]({{< relref "openai-codex-lightweight-coding-agent.md" >}}) ｜ [Superpowers 深度解析：把 AI 编程助手纳入软件工程流程]({{< relref "superpowers-agentic-skills-framework.md" >}}) ｜ [agentmemory：基于真实世界基准的AI编码Agent持久记忆方案]({{< relref "agentmemory-persistent-memory-ai-coding-agent.md" >}})
+> **延伸阅读**：[OpenAI Codex：轻量级终端编程智能体完全指南]({{< relref "openai-codex-lightweight-coding-agent.md" >}}) ｜ [Superpowers 深度解析：把 AI 编程助手纳入软件工程流程]({{< relref "superpowers-agentic-skills-framework.md" >}}) ｜ [agentmemory：为 AI Agent 打造可搜索的持久化记忆系统]({{< relref "agentmemory-persistent-memory-agents-guide.md" >}})
 
 ## 先看它在补哪一段
 
@@ -252,4 +252,4 @@ side panel 好用的地方，在于工件不会离开生成它的线程。代码
 
 - [OpenAI Codex：轻量级终端编程智能体完全指南]({{< relref "openai-codex-lightweight-coding-agent.md" >}})：如果你更关心 CLI 安装、配置、安全模型和终端用法，先读这一篇。
 - [Superpowers 深度解析：把 AI 编程助手纳入软件工程流程]({{< relref "superpowers-agentic-skills-framework.md" >}})：如果你想把 Codex 放进更严格的 brainstorming、worktree、TDD 与 review 流程里，这篇更直接。
-- [agentmemory：基于真实世界基准的AI编码Agent持久记忆方案]({{< relref "agentmemory-persistent-memory-ai-coding-agent.md" >}})：如果你对本文里的 shared memory 特别感兴趣，可以继续看持久记忆层怎么落到编码 Agent 上。
+- [agentmemory：为 AI Agent 打造可搜索的持久化记忆系统]({{< relref "agentmemory-persistent-memory-agents-guide.md" >}})：如果你对本文里的 shared memory 特别感兴趣，可以继续看持久记忆层怎么落到编码 Agent 上。

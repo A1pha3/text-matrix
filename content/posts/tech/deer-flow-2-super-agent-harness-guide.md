@@ -2,6 +2,8 @@
 title: "DeerFlow 2.0：字节跳动超级智能体框架完全指南"
 date: "2026-05-06T20:05:34+08:00"
 slug: "deer-flow-2-super-agent-harness-guide"
+aliases:
+  - "/posts/tech/ai-agent/deerflow-super-agent-harness/"
 description: "DeerFlow 2.0是字节跳动开发的开源超级智能体框架，通过编排子智能体、记忆系统和沙箱环境实现复杂任务自动化。本文详细解析其核心架构、主要特性、本地部署及适用场景。"
 draft: false
 categories: ["技术笔记"]

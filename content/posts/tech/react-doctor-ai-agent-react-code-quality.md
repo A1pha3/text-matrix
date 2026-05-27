@@ -2,6 +2,9 @@
 title: "React Doctor：给 AI 编码智能体把脉的 React 代码质量工具"
 date: 2026-05-14T12:10:00+08:00
 slug: "react-doctor-ai-agent-react-code-quality"
+aliases:
+  - "/posts/tech/react-doctor-ai-coding-agent/"
+  - "/posts/tech/react-doctor-react-code-health-score-guide/"
 description: "React Doctor 是一款专注于检测 AI 编码智能体生成的 React 代码质量问题的工具，运行后对整个代码库打分（0-100），输出具体问题和修复建议。支持 Next.js、Vite、React Native，已集成 GitHub Actions。"
 categories: ["技术笔记"]
 tags: ["React", "AI Agent", "代码质量", "TypeScript", "自动化"]

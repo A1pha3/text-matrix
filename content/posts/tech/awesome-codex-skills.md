@@ -2,6 +2,8 @@
 title: "Awesome Codex Skills：Codex CLI 的技能宝库，让 AI 代理真正替你干活"
 date: "2026-04-27T00:58:00+08:00"
 slug: awesome-codex-skills
+aliases:
+  - /posts/tech/awesome-codex-skills-codex-agent-skills/
 description: "Codex Skills 是模块化指令包，让 Codex CLI 能执行发邮件、操作 GitHub、发 Slack 等真实任务。本文全景解析十大分类热门技能及构建方法。"
 draft: false
 categories: ["技术笔记"]

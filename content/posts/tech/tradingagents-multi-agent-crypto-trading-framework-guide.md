@@ -2,6 +2,10 @@
 title: "TradingAgents 全面指南：多 Agent 大模型金融交易框架从入门到精通"
 date: "2026-05-02T15:04:08+08:00"
 slug: "tradingagents-multi-agent-crypto-trading-framework-guide"
+aliases:
+  - "/posts/tech/tradingagents-multi-agent-llm-trading-framework/"
+  - "/posts/tech/tradingagents-multi-agent-llm-financial-trading/"
+  - "/posts/tech/quant/tradingagents-multi-agent-framework/"
 description: "深度解析 TauricResearch/TradingAgents 框架的架构设计、Agent 协作机制、安装配置与实战使用方法，涵盖 LangGraph 编排、多 Provider LLM 支持、检查点恢复与持久化决策日志等核心功能。"
 draft: false
 categories: ["技术笔记"]
