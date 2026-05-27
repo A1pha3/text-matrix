@@ -1,167 +1,179 @@
----
-title: "OpenStock：开源股市数据追踪平台，12k星的新选择"
-date: 2026-05-27T09:25:00+08:00
++++
+date = '2026-05-27T19:29:38+08:00'
+draft = false
+title = 'Openstock Open Source Stock Market Platform'
++++
+
+title: "OpenStock：开源股票工作台怎么把查询、自选股和邮件摘要接起来"
+date: "2026-05-27T09:25:00+08:00"
 slug: "openstock-open-source-stock-market-platform"
-description: "OpenStock是由Open Dev Society打造的开源股市追踪平台，基于Next.js 15 + shadcn/ui + MongoDB构建，接入Finnhub实时行情和TradingView图表，支持自部署、个性化提醒和公司基本面数据，旨在成为昂贵付费平台的开源替代方案。"
+description: "从数据源、账户体系、邮件工作流和部署路径看 OpenStock，重点是它怎样把股票查询、自选股和通知链路连成一个能持续使用的产品。"
 draft: false
 categories: ["技术笔记"]
-tags: ["开源", "股市", "Next.js", "TypeScript", "Finnhub", "自托管"]
+tags: ["开源", "股票", "Next.js", "MongoDB", "Inngest", "自托管"]
 ---
 
-## 项目概览
+<!-- markdownlint-disable-file MD003 MD041 -->
 
-**OpenStock** 是由 Open Dev Society 社区开发的开源股市追踪平台，目标是为普通用户提供一款永久免费的数据追踪工具，替代彭博终端这类价格高昂的闭源方案。
+OpenStock 已经把账号、自选股、个股详情、市场新闻、邮件工作流和 Docker 自部署接到了一起。拿它来看一套 Web 产品怎样从看盘页长成可持续使用的个人工作台，主要链路已经铺开了。
 
-### 核心数据
+先看 3 个问题：
 
-| 指标 | 数值 |
-|------|------|
-| GitHub Stars | 12,132（今日趋势榜） |
-| Fork 数 | 1,627 |
-| 主要语言 | TypeScript |
-| 许可证 | AGPL-3.0 |
-| 技术栈 | Next.js 15 / shadcn/ui / MongoDB / Finnhub |
-| 官网 | [openstock-ods.vercel.app](https://openstock-ods.vercel.app) |
+- OpenStock 哪些能力是自己实现的，哪些能力是接入第三方服务组合出来的？
+- Inngest、邮件和 LLM 在这套系统里到底是主角还是配角？
+- 什么时候应该把它当作开源产品模板，什么时候又不该把它误判成专业交易终端？
 
-### 定位一句话
+## 三条主线
 
-> 构建透明、开源、永远免费的股市数据平台，让信息不再被付费墙隔离。
+| 主线 | 负责什么 | 关键组件 | 这条主线的作用 |
+| ------ | ------ | ------ | ------ |
+| 市场数据与展示 | 搜索股票、查看个股详情、显示图表和市场概览 | Finnhub、TradingView、可选 Adanos 情绪卡 | 不自己重建行情和图表基础设施，先把信息面板做出来 |
+| 账户与个性化 | 登录、会话保护、自选股、用户偏好 | Better Auth、MongoDB、Next.js middleware | 把一个演示页面拉成可以长期使用的个人工作台 |
+| 自动化与通知 | 欢迎邮件、每日新闻摘要、定时任务 | Inngest、Nodemailer、可选 LLM Provider | 让“看盘界面”延伸成持续触达的产品链路 |
 
----
+截至 2026 年 5 月 27 日，OpenStock 的 GitHub 公开页显示约 12.3k Stars、1.6k Forks，许可证为 AGPL-3.0，最近一次公开提交距今约 3 周。公开仓库还能看到持续更新。
 
-## 核心能力
+## 项目定位
 
-### 实时行情追踪
+从公开实现看，OpenStock 是一套用 Web 产品形态组织起来的股票工作台。第三方市场数据和图表服务负责底层，账号体系、自选股、邮件自动化和部署链路把产品补完整。
 
-OpenStock 接入 **Finnhub API**，提供全球主要交易所的股票、指数行情数据。用户可自定义关注列表，实时盯盘。
+照这个定位去读代码，顺序会清楚很多。低延迟、盘口深度和商业数据授权不在这套项目的目标里；如果只把它看成页面展示项目，又会漏掉它在产品完整度上的工作量。对独立开发者来说，把“登录之后能持续使用”的整套路径做扎实，往往比做一页行情展示更费工。
 
-### TradingView 图表集成
+## 1. 数据层：行情和图表主要靠外部服务
 
-行情页面直接嵌入 **TradingView** 交互式图表，支持技术指标叠加，界面体验接近专业交易终端。
+OpenStock 的数据面主要靠 3 组能力拼起来。
 
-### 个性化提醒
+第一组是 Finnhub。仓库 README 写得很直接：它负责股票搜索、公司资料和市场新闻。OpenStock 把最常见的查询型能力交给了成熟的数据供应商，而没有自己维护一套证券数据抓取和清洗管线。对个人项目来说，这样能把精力留给产品路径，而不是行情基础设施。
 
-支持价格提醒、涨跌幅提醒等触发条件，通过邮件发送通知。数据基于 Finnhub 规则会有延迟。
+第二组是 TradingView 嵌入式组件。个股详情页里的图表、热力图、报价和时间线，并不是 OpenStock 自己从零造出来的可视化引擎，而是借 TradingView 的 widget 把最显眼的那层界面先补齐。这样做能压低前端实现成本，代价是要接受第三方组件的样式限制、能力边界和外部依赖。
 
-### 公司基本面数据
+第三组是可选的 Adanos 情绪卡。README 把它定义成一个补充源，用来汇总 Reddit、X、新闻和 Polymarket 的情绪快照，而不是替代 Finnhub 或 TradingView。情绪分析在 OpenStock 里是加分项，不是主数据源。边界清楚以后就好理解了：项目重点不在生成独家市场洞察，而在把公开可获得的数据、图表和辅助信号整理进同一个面板。
 
-每个标的均提供公司简介、财务数据等基础信息，方便基本面分析。
+现实限制也很明确。Finnhub 免费层通常只能提供延迟数据，而且请求额度有限，所以“实时行情”这句话不能脱离供应商套餐单独成立。拿免费线跑个人面板没有问题，拿它去要求专业终端级别的低延迟和深度行情，就已经超出项目定位了。
 
-### 开源自部署
+## 2. 产品层：账号、自选股和偏好设置让它不再只是 Demo
 
-代码完全开源，支持 Docker 一键部署，自建数据服务，不依赖平台方的服务端。
+很多开源股票项目停在“首页能查一只股票”，OpenStock 往前多走了一步。它把用户状态存了下来，不再只是匿名只读面板。
 
----
+README 里给出的特征很明确：Better Auth 负责邮箱密码登录，MongoDB 负责持久化，Next.js middleware 负责保护路由，自选股列表按用户维度保存，而且同一用户对同一股票只保留一个条目。这些细节凑在一起，指向的是一个持续存在的个人工作台，而不只是一张展示页。
 
-## 技术架构
+另一个容易被忽略的地方是个性化 onboarding。项目会收集国家、投资目标、风险偏好和偏好行业，这些字段看起来不复杂，但它们决定了后面的新闻摘要和内容推荐能围绕“这个用户是谁”继续展开。再配合命令面板、股票搜索和较完整的个股详情页，OpenStock 做的就不只是“看行情”，而是“围绕你的关注列表组织信息”。
 
-### 技术栈一览
+把它放进开源股票工作台这一类里看，重点就在持续使用和个人上下文，而不是单纯的信息展示。
 
-| 层级 | 技术选型 |
-|------|---------|
-| 前端框架 | Next.js 15 (App Router) + React 19 |
-| UI 组件 | shadcn/ui + Radix UI + Tailwind CSS v4 |
-| 类型安全 | TypeScript |
-| 数据库 | MongoDB + Mongoose ODM |
-| 认证 | Better Auth（邮箱/密码）+ MongoDB adapter |
-| 实时数据 | Finnhub API |
-| 图表 | TradingView embeddable widgets |
-| 后端任务 | Inngest（事件驱动 + cron + AI 推理） |
-| 邮件通知 | Nodemailer（Gmail transport） |
+## 3. 自动化层：Inngest 和 AI 在这里是增强层
 
-### 项目结构
+OpenStock 确实接了 Inngest 和 LLM Provider，但它们当前承担的仍是辅助角色。
 
-```
-OpenStock/
-├── app/               # Next.js App Router
-├── components/       # shadcn/ui 组件
-├── lib/              # 工具函数
-├── models/           # MongoDB Mongoose 模型
-├── scripts/          # 工具脚本
-├── public/           # 静态资源
-└── README.md
-```
+README 已经把工作流写得很清楚：一个是 `app/user.created` 事件触发的 AI 个性化欢迎邮件；另一个是每天中午 `0 12 * * *` 的定时任务，按用户的 watchlist 生成每日新闻摘要。邮件发送则通过 Nodemailer 完成。AI 被放在欢迎语气和摘要组织这类边际环节，没有压到行情查询、图表展示、登录和持久化这些主路径上。
 
-### 数据流向
+市场数据查询、图表展示、登录和持久化这些主路径，并不依赖 LLM 才能成立；AI 更像自动化层上的增强器。项目甚至已经预留了 Gemini、MiniMax、Siray 这样的 Provider 选择空间，但这一层仍然只是增强，不是系统内核。
 
-1. 用户在前端添加股票关注
-2. 数据存入 MongoDB（自部署场景）或调用 Finnhub API
-3. Inngest cron 定时任务拉取最新行情
-4. 触发条件满足时，通过 Nodemailer 发送邮件提醒
+所以 AI 现在主要落在摘要、通知和欢迎邮件这些边际收益明确的环节上。
 
----
+## 一条实际链路：从注册到收到摘要
 
-## 快速开始
+静态地看模块不难，难的是把它们串成一条用户路径。OpenStock 至少有一条链路已经能从头走通：
 
-### Docker 部署（推荐）
+1. 用户注册并登录，Better Auth 创建身份，受保护路由开始生效。
+2. 用户完成基础 onboarding，填写国家、风险偏好、投资目标和偏好行业。
+3. 用户把若干股票加入 watchlist，这些数据按用户维度写入 MongoDB。
+4. Inngest 的定时任务按用户 watchlist 拉取相关新闻与相关信息，必要时再交给配置好的 LLM Provider 做摘要组织。
+5. Nodemailer 把每日新闻摘要发到邮箱，OpenStock 从“你主动打开页面查看”变成“系统会主动把与你持仓或关注列表相关的信息推给你”。
+
+沿着这条链路看，OpenStock 在搭的是一套“信息收集 + 用户上下文 + 自动化触达”的轻量闭环，不是一组彼此孤立的金融页面。对大多数个人开发者来说，这一层比单纯展示一张图表更难，也更容易迁移到别的产品里。
+
+## 体验它和改它，是两条不同的路
+
+OpenStock 既能当产品体验，也能当源码样本来看，但这两条路径不该混在一起。
+
+### 只想体验，或者先把它跑起来
+
+线上 Demo 在 [openstock-ods.vercel.app](https://openstock-ods.vercel.app/)；当前公开入口默认就是登录页，所以它更适合感受成品形态，不适合替代源码阅读。
+
+README 里的最短自托管路径是 Docker：
 
 ```bash
 git clone https://github.com/Open-Dev-Society/OpenStock.git
 cd OpenStock
-docker compose up -d
+docker compose up -d mongodb && docker compose up -d --build
 ```
 
-### 环境变量
+Docker 模式下，MongoDB 连接串不是本机 `localhost`，而是容器网络里的：
+
+```env
+MONGODB_URI=mongodb://root:example@mongodb:27017/openstock?authSource=admin
+BETTER_AUTH_SECRET=your_better_auth_secret
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_FINNHUB_API_KEY=your_finnhub_key
+FINNHUB_BASE_URL=https://finnhub.io/api/v1
+```
+
+如果你要打开邮件和工作流，还需要补上 `NODEMAILER_EMAIL`、`NODEMAILER_PASSWORD`，以及在 Vercel 部署场景下额外提供 `INNGEST_SIGNING_KEY`。这些配置决定项目能否从“本地能跑”走到“线上能用”。
+
+### 想读源码、继续开发或改成自己的产品
+
+如果目标是继续开发，就该切到本地开发模式：
 
 ```bash
-# .env.local
-MONGODB_URI=mongodb://localhost:27017/openstock
-FINNHUB_API_KEY=your_finnhub_api_key
-BETTER_AUTH_SECRET=your_secret
-# Nodemailer (可选，启用邮件提醒)
-SMTP_USER=your@gmail.com
-SMTP_PASS=your_app_password
+npm install
+npm run test:db
+npm run dev
+npx inngest-cli@latest dev
 ```
 
-### Finnhub API
+源码入口先看 4 个位置：`app/` 里的页面与路由、`database/` 里的持久化模型、`lib/actions/` 里的业务动作，以及 `lib/inngest/` 里的工作流函数。这 4 处基本覆盖了 OpenStock 的产品骨架。
 
-Finnhub 提供免费层，每日请求限额内足够个人用户使用。注册地址：[finnhub.com](https://finnhub.com)
+## 这套项目里有 3 个明显的工程取舍
 
----
+### 1. 先用外部成熟能力补齐产品面
 
-## 适用边界
+Finnhub 和 TradingView 让项目避开了最重的行情与图表基础设施，团队可以先把产品路径跑通。对资源有限的开源项目，这样排能把人力留给更核心的产品链路。
 
-### 适合人群
+### 2. 后台自动化直接接在用户路径上
 
-- 想自托管个人股票追踪工具的技术用户
-- 需要免费股市数据的独立开发者
-- 学习 Next.js 15 全栈项目实战的学习者
+Inngest 在这里承担的是欢迎邮件和每日摘要这样的持续任务，不只是技术展示。用户第一次访问和之后的持续留存，都能感受到它的存在。
 
-### 不适合场景
+### 3. 把 AI 放在增强层
 
-- 替代专业交易终端（数据延迟，无 L2 盘口）
-- 高频交易（实时性不足）
-- 需要保证数据100%准确性的投资决策
+OpenStock 目前公开出来的 AI 用法集中在欢迎邮件、摘要组织和 Provider 抽象。仓库里能确认的范围到这里为止，再往上推断就超出已公开实现了。
 
-### 注意事项
+## 二次开发优先改哪 3 处
 
-> ⚠️ 项目属于社区开发非券商。行情数据存在延迟，不构成投资建议。用户需自行承担使用风险。
+如果目标是把 OpenStock 改成自己的产品，优先级通常先落在下面 3 处，首页样式和图表主题反而可以后放。
 
----
+### 1. 先动数据入口
 
-## 为什么值得关注
+先顺着 `lib/actions/` 把股票搜索、公司资料、新闻获取这条线读通，再决定你是继续用 Finnhub，还是要额外接别的数据源。数据入口不清楚，后面的筛选器、提醒和面板都会改得很虚。
 
-OpenStock 的核心价值不在于技术突破，而在于**开源替代**的理念。传统股市数据平台年费动辄数万，而 OpenStock 提供了一个可自部署、可审计、可定制的免费方案。
+### 2. 再动工作流和邮件模板
 
-对于 AI + 金融科技的结合点来说，Inngest 已内置对 Gemini AI 推理的接入能力，未来可扩展 AI 驱动的选股/分析逻辑。
+`lib/inngest/` 和邮件模板决定了 OpenStock 能不能从“用户自己打开看”变成“系统主动推送给用户”。如果你要做日报、异动提醒、行业观察或者 AI 摘要，这一层通常会比首页 UI 更早动手。
 
----
+### 3. 最后再扩展用户画像和持久化模型
 
-## 竞争对比
+用户偏好、自选股模型和认证路径决定了这套产品能承载多少个性化逻辑。等你把数据入口和通知链路摸清楚，再回过头扩展 `database/` 里的模型，更容易判断哪些字段应该长期存。
 
-| 平台 | 费用 | 自托管 | 开源 | 技术栈 |
-|------|------|--------|------|--------|
-| Bloomberg Terminal | 年费数万元 | ❌ | ❌ | 闭源 |
-| TradingView | 免费层有限制 | ❌ | ❌ | 闭源SaaS |
-| **OpenStock** | **免费（含限制）** | **✅** | **✅** | Next.js+TypeScript |
+## 哪些场景适合，哪些场景不适合
 
----
+适合的场景有 3 类：
 
-## 阅读路径
+- 你想搭一套可自托管的个人股票工作台，而不是把数据交给封闭平台。
+- 你想研究一个基于 Next.js 15、React 19、Better Auth、MongoDB 和 Inngest 组合出来的完整 Web 产品。
+- 你准备在现有基础上继续加自己的信号源、邮件模板、筛选逻辑或策略面板。
 
-1. 先体验 [在线 demo](https://openstock-ods.vercel.app)
-2. 阅读 [GitHub README](https://github.com/Open-Dev-Society/OpenStock) 了解架构
-3. 参考 `docker-compose.yml` 完成自部署
-4. 按需扩展 Inngest AI 推理流程
+不适合的场景也同样明确：
 
-> 本项目属于非AI项目的纯金融工具，本次写入为趋势覆盖。OpenStock 的 AGPL-3.0 协议要求网络部署时必须开源。
+- 你需要专业终端级别的低延迟行情、深度盘口和商业数据授权。
+- 你要做高频或自动交易执行系统。
+- 你需要券商集成、合规审计和严格金融生产级 SLA。
+
+还要单独看一条许可证约束：OpenStock 使用 AGPL-3.0。只要你修改后继续以网络服务形式部署，原则上就要按许可证要求开放对应源码。对想做内部产品孵化的人来说，这不是细枝末节，而是选型时必须提前确认的条件。
+
+## 适合把它当成什么
+
+它不是面向专业证券终端的系统，更适合作为一套把股票查询、自选股、个性化摘要、邮件触达和部署链路接起来的开源产品样板来看。
+
+拆这个仓库时，可以先看账号、数据、通知怎么连起来，再看 AI 放在哪。
+
+继续往下拆时，可以先读 [GitHub README](https://github.com/Open-Dev-Society/OpenStock)，再跑一遍 Docker 或本地开发环境，最后顺着 `app/`、`database/`、`lib/actions/`、`lib/inngest/` 四条线把代码读通。这样判断它适不适合拿来做自己的下一版产品底座，会更容易落到代码层面。
