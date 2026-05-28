@@ -4,13 +4,13 @@ draft = false
 title = 'Taste Skill：给AI的前端注入「审美品味」，告别千篇一律的slop UI'
 +++
 
-# Taste Skill：给AI的前端注入「审美品味」，告别千篇一律的slop UI
-
 ## 概述
 
 **Taste Skill** 是 Leonxlnx 开源的「AI前端反slop」工具集，通过一系列 Agent Skills 引导 AI 编程工具（Claude Code、Codex、Cursor 等）生成具有设计品味的前端界面，而不是流水线式的 boilerplate 产物。
 
 GitHub: [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) ⭐ 20,015 | License: MIT
+
+> 延伸阅读：[stop-slop：把 AI 写作从套话和模板句里拽出来的 skill]({{< relref "stop-slop-remove-ai-tells-from-prose.md" >}}) 处理的是文字成稿的 slop；本文讨论的是界面生成阶段的 slop。
 
 ---
 
