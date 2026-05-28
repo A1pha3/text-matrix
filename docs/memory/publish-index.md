@@ -110,6 +110,17 @@
 
 ---
 
+## 2026-05 技术文章索引
+
+| 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
+|------|--------|-------|--------|--------|---------|------|
+| **MoneyPrinterTurbo AI视频生成** | harry0703/MoneyPrinterTurbo | 63.8k | moneyprinterturbo-ai-short-video-generator-guide.md | 7828ff8 | - | 2026-05-28 |
+| **Understand-Anything 知识图谱** | Lum1104/Understand-Anything | 41.1k | understand-anything-knowledge-graph-codebase-guide.md | 7828ff8 | - | 2026-05-28 |
+| **Superpowers AI编程能力框架** | obra/superpowers | 200k | superpowers-agentic-skills-framework.md | 05c0f38 | - | 2026-05-21 |
+| **Ruflo 多智能体编排** | ruvnet/ruflo | 42.5k | ruflo-claude-code-multi-agent-swarm-guide.md | ca4c90f | - | 2026-05-05 |
+
+---
+
 ## 搜索指南
 
 **写文章前必查：**

@@ -1,0 +1,70 @@
+{
+  "lastChecks": {
+    "email": null,
+    "calendar": null,
+    "weather": null,
+    "feishu_news_morning": "2026-04-22T00:00:00Z",
+    "feishu_news_afternoon": null,
+    "feishu_news_evening": null,
+    "ai_money_morning": "2026-04-22T00:00:00Z",
+    "ai_money_afternoon": null,
+    "ai_money_evening": null,
+    "financial_morning": "2026-05-19T00:00:00Z",
+    "financial_afternoon": null,
+    "financial_evening": null,
+    "web3_morning": "2026-05-19T00:00:00Z",
+    "github_trending_afternoon": "2026-05-28T15:00:00+08:00",
+    "zangjingge_evening": "2026-05-04T21:00:00Z",
+    "browser_exit": "2026-05-05T03:00:00Z",
+    "ai-news-morning": "2026-05-22",
+    "ai_news_morning": "2026-05-22T00:00:00Z",
+    "github_trending_15": "2026-05-28T15:00:00+08:00"
+  },
+  "apiStatus": {
+    "brave_search": "DOWN_subscription_token_invalid_since_2026-03-20",
+    "feishu_wiki": "⚠️_working_but_add_node_fails_400_error",
+    "clawpi_api": "DOWN_ssl_errors_resolves_to_198.18.x.x"
+  },
+  "networkRestriction": "CRITICAL - ALL external news sources blocked (web_search/web_fetch fail). Browser tool can still access some sites via curl.",
+  "browserAccess": "✅ WORKING - 36kr (JS-rendered), 量子位 (JS-rendered), 机器之心 (JS-rendered), FT中文网 (✅ accessible), V2EX (✅ accessible), GitHub (✅ accessible), CoinGecko API (✅ accessible), 华尔街见闻 (✅ accessible)",
+  "tasksCompletedToday": [
+    "[2026-05-28 15:05] GitHub Trending 15:00 - ✅ COMPLETED - 抓取17个趋势repo，13个已覆盖，新增2篇文章：MoneyPrinterTurbo(AI视频生成，63.8k★，9,257 today)、Understand-Anything(知识图谱代码分析，41.1k★，3,291 today)。Commit 7828ff8 已推送 GitHub (A1pha3/text-matrix)。",
+    "[2026-05-28 13:03] GitHub Trending 13:00 - ✅ COMPLETED - 抓取16个趋势repo（16个非sponsor repo全部已覆盖：Airy/awesome-free-apps/Claude-Code-Harness/DigitalPlatDev/FreeDomain/ECC/English-level-up-tips/Kronos/MoneyPrinterTurbo/Understand-Anything/anthropics/knowledge-work-plugins/hardikpandya/stop-slop/mukul975/Anthropic-Cybersecurity-Skills/twentyhq/twenty/shiyu-coder/Kronos），2篇未覆盖历史文章已commit推送(6711fef→7ab0145)：axorax-awesome-free-apps、p-e-w-heretic。",
+    "[2026-05-27 13:05] GitHub Trending 13:00 - ✅ COMPLETED (已覆盖) - 全部14个趋势repo均已写过文章（Understand-Anything/knowledge-work-plugins/ai-engineering-from-scratch/ECC/Anthropic-Cybersecurity-Skills/stop-slop/taste-skill/FreeDomain/jellyfin/awesome-free-apps/twenty/OpenStock/claude-mem/ppf-contact-solver）。工作区干净，无需git push。",
+    "[2026-05-27 10:18] GitHub Trending 10:00 - ✅ COMPLETED (已覆盖) - 全部13个趋势repo在09:00已全部写过文章（Understand-Anything/knowledge-work-plugins/ai-engineering-from-scratch/Cybersecurity-Skills/stop-slop/taste-skill/FreeDomain/jellyfin/awesome-free-apps/twenty/OpenStock/claude-mem/ppf-contact-solver）。工作区干净，git push无需执行。",
+    "[2026-05-27 09:28] GitHub Trending 09:00 - ✅ COMPLETED - 抓取14个趋势repo，13个已覆盖，新增1篇文章：OpenStock（Open-Dev-Society，12.1k★，开源股市追踪平台，Next.js+TradingView）。Commit 19b65d5 已推送 GitHub (A1pha3/text-matrix)。",
+    "[2026-05-26 09:35] GitHub Trending 09:00 - ✅ COMPLETED - 抓取17个趋势repo，15个已覆盖（Understand-Anything/knowledge-work-plugins/ai-engineering-from-scratch/ECC/Anthropic-Cybersecurity-Skills/codegraph/cmux/andrej-karpathy-skills/FinceptTerminal/paperless-ngx/claude-cookbooks/taste-skill/Kronos/awesome-free-apps/gstack历史文章），新增2篇文章：AIRI(moeru-ai/airi, 39.7k★，自托管Grok Companion带Live2D/VRM虚拟角色)、stop-slop(4.4k★，去除AI味的skill文件)。Commit ebc0ccc 已推送 GitHub。",
+    "[2026-05-25 15:08] GitHub Trending 15:00 - ✅ COMPLETED (已覆盖) - 全部16个趋势repo均已写过文章（Understand-Anything/ai-engineering-from-scratch/claude-plugins-official/knowledge-work-plugins/andrej-karpathy-skills/pi/free-claude-code/codegraph/multica/Kronos/cmux/MiroFish/build-your-own-x/dotnet/skills/frigate/Cybersecurity-Skills历史文章）。无新增项目，工作区干净无需提交。",
+    "[2026-05-25 20:16] GitHub Trending 20:00 - ✅ COMPLETED - codegraph/ECC/taste-skill/awesome-free-apps (4篇新文章已推送GitHub并发布飞书文档)"
+  ],
+  "tasksMissedToday": [],
+  "lastUpdated": "2026-05-28T07:05:00Z",
+  "zaoqingan": "2026-05-18",
+  "heartbeatCronCreated": {
+    "id": "ad2640c0-79c3-4d38-83cb-dd0e5320b941",
+    "name": "心跳保活",
+    "schedule": "0 * * * * @ Asia/Shanghai",
+    "createdAt": "2026-03-27T01:07:00Z"
+  },
+  "browser_exit": "2026-05-05T03:00:00Z",
+  "zangjingge": "2026-05-26",
+  "zangjingge_evening": "2026-05-26T21:00:00+08:00",
+  "github-trending-9": "2026-05-28",
+  "github-trending-23": "2026-05-20",
+  "ai-side-hustle-morning": "2026-04-27",
+  "github-trending-10": "2026-05-27",
+  "github-trending-20": "2026-05-26T20:45:00+08:00",
+  "financial_morning": "2026-05-26T00:00:00Z",
+  "morning-report-quality-check": "2026-05-22",
+  "notes": {
+    "browser-memory-2026-05-16": "Chrome未运行（ps检查无进程），无需操作。",
+    "ai-news-2026-05-18": "✅ 完成。使用curl采集36kr/量子位/Hacker News。飞书文档已追加，Text Matrix已推送GitHub。",
+    "github-trending-23-2026-05-18": "✅ 21:38完成：llama.cpp/12-factor-agents/Sana/daily_stock/Academic-Research-Skills/Agent-Skills (7篇)。23:30完成：CloakBrowser/ShadowBroker/CLI-Anything/Supertonic (4篇)。Commit 211c4e7 已推送 GitHub。已覆盖全部15个趋势项目。",
+    "github-trending-9-2026-05-19": "✅ 全部14个趋势repo均已覆盖。其中：tinyhumansai/openhuman、HKUDS/CLI-Anything、K-Dense-AI/scientific-agent-skills今日已覆盖；ggml-org/llama.cpp、humanlayer/12-factor-agents、NVlabs/Sana、ZhuLinsen/daily_stock已有历史文章；supertone-inc/supertonic、ruvnet/RuView、CloakHQ/CloakBrowser、microsoft/ai-agents-for-beginners、plausible/analytics均于2026-05-18写过文章。Git commit 845bb29+68b3f04已推送。",
+    "zangjingge-2026-05-19": "✅ 藏经阁检查完成。文档500 blocks/61K+字符，内容完整，逻辑严谨，分类合理（入门基础、大模型Agent、工具、赚钱实战、内容创作、技术教程、AI安全、Polymarket）。近期新增文章含Cua/TypeScript Go/PostHog/RTK/Free Claude Code（2026-04-27）。",
+    "zangjingge-2026-05-21": "2026-05-21 21:00 藏经阁修炼检查完成。文档存在(500 blocks)，内容完整(4K+行)，分类清晰，深度充分。网络正常。"
+  },
+  "github-trending-13": "2026-05-28",
+  "github-trending-15": "2026-05-28T15:05:00+08:00",
+  "github-trending-11": "2026-05-27T12:00:00+08:00"
+}
