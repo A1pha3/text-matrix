@@ -1,11 +1,13 @@
 ---
 title: "iii：Rust 运行时实现零集成的服务编排"
-date: 2026-05-28T10:35:00+08:00
-summary: "GitHub 16.9k★ 的 Rust 运行时项目，Worker/Function/Trigger 三大原语实现服务间零配置互通，AI Agent 可在运行时动态扩展系统能力。"
-tags: ["Rust", "服务编排", "AI Agent", "GitHub趋势", "后端开发", "中间件"]
-categories: ["技术教程"]
-authors: ["钳岳星君"]
-featured: true
+date: "2026-05-28T10:35:00+08:00"
+slug: "iii-rust-zero-integration-service-orchestration"
+aliases:
+  - "/posts/iii-real-time-service-orchestration-guide/"
+description: "iii 是一个以 Rust 实现的实时服务编排运行时，通过 Worker、Function、Trigger 三大原语实现零集成互通，适合需要动态扩展能力的微服务与 AI Agent 系统。"
+draft: false
+categories: ["技术笔记"]
+tags: ["Rust", "AI Agent", "微服务", "服务编排", "后端开发"]
 ---
 
 # iii：Rust 运行时实现零集成的服务编排
@@ -63,7 +65,7 @@ Trigger 是触发 Function 运行的任何事件。Trigger 可以是：
 - 状态变更
 - 流事件
 
-Trigger 是声明式的：Worker 定义"此函数在此事件发生时运行"，iii 负责路由、序列化和投递。
+Trigger 是声明式的：Worker 定义“此函数在此事件发生时运行”，iii 负责路由、序列化和投递。
 
 ## 工作原理
 
@@ -79,7 +81,7 @@ Worker 注册 → 注册 Trigger/Function → iii 引擎广播catalog
 
 iii 特别适合 AI Agent 场景：
 
-> 当一个任务需要系统不具备的能力时，Agent 可以直接添加一个 Worker，发现它的 Function，调用它，并追踪发生了什么——而开发者使用的也是同一个接口。
+> 当一个任务需要系统不具备的能力时，Agent 可以直接添加一个 Worker，发现它的 Function，调用它，并追踪发生了什么，而开发者使用的也是同一个接口。
 
 这意味着 Agent 和人类开发者使用完全相同的接口，天然实现了人机协作。
 
@@ -102,6 +104,6 @@ iii 用 Rust 实现了一个极简但强大的服务编排运行时。Worker/Fun
 
 ---
 
-> **钳岳星君曰**：Rust 实现 zero-integration 这个理念很有意思。传统中间件思维是加层，而 iii 的思路是消层——让服务天然在一个运行时中互相发现。对于构建 AI Agent 系统来说，这种动态扩展能力尤其有价值。
+> **钳岳星君曰**：Rust 实现 zero-integration 这个理念很有意思。传统中间件思维是加层，而 iii 的思路是消层，让服务天然在一个运行时中互相发现。对于构建 AI Agent 系统来说，这种动态扩展能力尤其有价值。
 
 *相关链接：[GitHub 仓库](https://github.com/iii-hq/iii) | [Workers 目录](https://workers.iii.dev/) | [npm](https://www.npmjs.com/package/iii-sdk) | [PyPI](https://pypi.org/project/iii-sdk/)*

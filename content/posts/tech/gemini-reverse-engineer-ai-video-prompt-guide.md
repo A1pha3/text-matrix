@@ -229,7 +229,7 @@ Do not invent seed values, camera specs, negative prompts, or editing steps that
 
 这一条通常最容易被忽略，但哪些地方应该留白，往往比多塞几个看起来专业的参数更重要。
 
-### 需要长期复用时，再让模型吐 JSON 中间稿
+### 需要长期复用时，再让模型生成 JSON 中间稿
 
 Markdown 观察稿适合人眼复查，JSON 中间稿适合对比、存档和二次加工。Google 在文件提示策略里本来就建议把复杂多模态任务拆步，并固定输出格式；放到这里，先拿一份结构化证据，比一上来就要长短 prompt 和镜头表更靠谱。
 
