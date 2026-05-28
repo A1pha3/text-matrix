@@ -28,6 +28,7 @@
   "networkRestriction": "CRITICAL - ALL external news sources blocked (web_search/web_fetch fail). Browser tool can still access some sites via curl.",
   "browserAccess": "✅ WORKING - 36kr (JS-rendered), 量子位 (JS-rendered), 机器之心 (JS-rendered), FT中文网 (✅ accessible), V2EX (✅ accessible), GitHub (✅ accessible), CoinGecko API (✅ accessible), 华尔街见闻 (✅ accessible)",
   "tasksCompletedToday": [
+    "[2026-05-28 23:05] GitHub Trending 23:00 - ✅ COMPLETED (已覆盖) - 抓取16个趋势repo，15个已覆盖（compound-engineering-plugin今天20:00已写compound-engineering-agentic-dev-workflow-guide.md），无需新增文章。Commit已推送GitHub。",
     "[2026-05-28 15:05] GitHub Trending 15:00 - ✅ COMPLETED - 抓取17个趋势repo，13个已覆盖，新增2篇文章：MoneyPrinterTurbo(AI视频生成，63.8k★，9,257 today)、Understand-Anything(知识图谱代码分析，41.1k★，3,291 today)。Commit 7828ff8 已推送 GitHub (A1pha3/text-matrix)。",
     "[2026-05-28 13:03] GitHub Trending 13:00 - ✅ COMPLETED - 抓取16个趋势repo（16个非sponsor repo全部已覆盖：Airy/awesome-free-apps/Claude-Code-Harness/DigitalPlatDev/FreeDomain/ECC/English-level-up-tips/Kronos/MoneyPrinterTurbo/Understand-Anything/anthropics/knowledge-work-plugins/hardikpandya/stop-slop/mukul975/Anthropic-Cybersecurity-Skills/twentyhq/twenty/shiyu-coder/Kronos），2篇未覆盖历史文章已commit推送(6711fef→7ab0145)：axorax-awesome-free-apps、p-e-w-heretic。",
     "[2026-05-27 13:05] GitHub Trending 13:00 - ✅ COMPLETED (已覆盖) - 全部14个趋势repo均已写过文章（Understand-Anything/knowledge-work-plugins/ai-engineering-from-scratch/ECC/Anthropic-Cybersecurity-Skills/stop-slop/taste-skill/FreeDomain/jellyfin/awesome-free-apps/twenty/OpenStock/claude-mem/ppf-contact-solver）。工作区干净，无需git push。",
@@ -50,7 +51,7 @@
   "zangjingge": "2026-05-26",
   "zangjingge_evening": "2026-05-26T21:00:00+08:00",
   "github-trending-9": "2026-05-28",
-  "github-trending-23": "2026-05-20",
+  "github-trending-23": "2026-05-28T23:05:00+08:00",
   "ai-side-hustle-morning": "2026-04-27",
   "github-trending-10": "2026-05-27",
   "github-trending-20": "2026-05-26T20:45:00+08:00",
