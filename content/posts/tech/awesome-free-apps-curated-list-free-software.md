@@ -2,6 +2,8 @@
 title: "awesome-free-apps：每个平台最值得收藏的免费软件清单"
 date: "2026-05-25T20:16:19+08:00"
 slug: "awesome-free-apps-curated-list-free-software"
+aliases:
+  - "/posts/tech/axorax-awesome-free-apps-guide/"
 description: "awesome-free-apps 是一个按平台和场景分类的免费软件精选清单，覆盖 Windows、macOS、Linux 三大桌面平台和 Android、iOS 两大移动端，按音频、浏览器、开发工具、文档、图像、安全等场景组织，每个条目标注平台兼容性和开源状态。"
 draft: false
 categories: ["技术笔记"]
@@ -10,7 +12,7 @@ tags: ["免费软件", "Windows", "macOS", "Linux", "开源", "工具推荐"]
 
 ## 核心判断
 
-awesome-free-apps 不只是一个软件列表，而是一套**经过筛选的免费工具清单**。它解决的是"这个场景该用什么免费软件"的问题——不是搜索引擎里的广告排名，也不是应用商店的算法推荐，而是真实维护者手动挑选的、去广告的、无营销套路的工具推荐。182K Stars，说明这东西被相当多的人认可。
+awesome-free-apps 不只是一个软件列表，而是一套**经过筛选的免费工具清单**。它解决的是"这个场景该用什么免费软件"的问题——不是搜索引擎里的广告排名，也不是应用商店的算法推荐，而是真实维护者手动挑选的、去广告的、无营销套路的工具推荐。按当前仓库页面，它大约在 **6.1k Stars / 304 Forks** 的量级，说明这个清单已经形成稳定社区，而不是一次性整理后就无人维护的静态列表。
 
 和一般的 awesome 列表不同，它按平台拆成了桌面版和移动版，桌面版又分别有 Windows Only、macOS Only、Linux Only、Open-source Only、Recommended Only 五个过滤维度，找工具的效率很高。
 

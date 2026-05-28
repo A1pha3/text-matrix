@@ -4,8 +4,10 @@ date: 2026-05-27
 draft: false
 description: "深度解析 Heretic 如何通过方向性消融 + Optuna 超参数优化，全自动移除语言模型的审查对齐，且最小化对模型能力的损伤。"
 categories: ["技术笔记"]
-tags: ["LLM", "abliteration", "censorshio removal", "Python", "PyTorch", "LoRA"]
+tags: ["LLM", "abliteration", "censorship removal", "Python", "PyTorch", "LoRA"]
 slug: heretic-full-analysis
+aliases:
+  - "/posts/tech/p-e-w-heretic-analysis/"
 katex: false
 toc: true
 image: "https://github.com/user-attachments/assets/d71a5efa-d6be-4705-a817-63332afb2d15"
@@ -321,113 +323,3 @@ split = "train[:400]"
 dataset = "mlabonne/harmful_behaviors"
 split = "train[:400]"
 ```
-
-### 5.3 量化支持
-
-```toml
-quantization = "bnb_4bit"  # 启用 4-bit 量化，大幅降低显存需求
-```
-
-### 5.4 研究功能
-
-```bash
-pip install -U heretic-llm[research]
-heretic Qwen/Qwen3-4B-Instruct-2507 --plot-residuals --print-residual-geometry
-```
-
-### 5.5 评测内置 benchmark
-
-Heretic 支持通过 `lm-eval` 运行标准评测：
-
-- MMLU、MMLU-Pro、GSM8K、BBH、HellaSwag、EQ-Bench 等
-- 可以在交互菜单中选择同时评测原始模型做对比
-
----
-
-## 六、技术栈一览
-
-| 组件 | 用途 |
-|------|------|
-| **PyTorch** 2.2+ | 基础深度学习框架 |
-| **transformers** | 模型加载、生成、Tokenizer |
-| **PEFT** | LoRA adapter 管理 |
-| **Optuna** | TPE 多目标超参数优化 |
-| **Accelerate** | 多卡分布式加载 |
-| **bitsandbytes** | 4-bit 量化 |
-| **lm-eval** | 标准 benchmark 评测 |
-| **PaCMAP** | 残差投影（research） |
-| **matplotlib** | 可视化（research） |
-| **uv** | 依赖版本锁定 |
-
----
-
-## 七、关键设计思想评析
-
-### 7.1 为什么用 Optuna 而不是网格搜索？
-
-定向消融有多个连续参数（`direction_index` 是 float），且参数之间存在相关性（非独立）。TPE 采样器能捕捉这种相关性，在高维连续空间中高效率地探索 Pareto 前沿。
-
-### 7.2 LoRA 为什么比直接修改权重更好？
-
-1. **可逆**：reset_model() 只需将 lora_B 归零，无需重载整个模型
-2. **合并灵活**：量化模型需特殊合并流程（先 CPU 去量化再合并）
-3. **存储小**：通常只增加 ~1% 的文件体积（rank=1 或 rank=3）
-
-### 7.3 拒绝方向插值的意义
-
-整数的 `direction_index` 只能取某一层的拒绝方向。但"拒绝机制"可能分布在多个层，且不同层的方向向量存在细微差异。插值后相当于在两个方向张成的子空间中搜索，能够找到单一层方向所不能提供的更优折中点。
-
----
-
-## 八、源码结构速查
-
-### 8.1 `model.py` 关键类
-
-```
-Model
-  ├── __init__()              # 加载模型 + 应用 LoRA
-  ├── reset_model()          # 将 LoRA B 权重归零（快速重置）或重载模型
-  ├── get_layers()           # 获取 transformer 层列表
-  ├── get_layer_modules()    # 获取层内可消融组件
-  ├── get_abliterable_components()  # ["attn.o_proj", "mlp.down_proj", ...]
-  ├── abliterate()           # 核心：沿拒绝方向正交化 LoRA adapter
-  ├── get_residuals()        # 获取首 token 残差向量
-  └── stream_chat_response() # 交互式聊天
-```
-
-### 8.2 `main.py` 关键函数
-
-```
-run()
-  ├── objective()             # 单个 Optuna trial 的目标函数
-  ├── objective_wrapper()    # 包装 + Ctrl+C 处理
-  └── obtain_merge_strategy() # 询问用户合并/保存策略
-```
-
----
-
-## 九、总结
-
-Heretic 是一套将**定向消融理论**、**自动化超参优化**和**工程化 LoRA 实现**三者融合得很好的系统。它的核心价值在于：
-
-1. **零门槛**：一行命令完成去审查，不需要理解残差空间
-2. **高质量**：自动搜索的参数组合在 KL vs 拒绝率上往往比人工调参更优
-3. **可解释**：内置残差分析工具，支持可复现模型发布
-
-对于研究可解释性（interpretability）的同学，它的 `--plot-residuals` 和 `--print-residual-geometry` 是非常实用的工具。对于实际部署去审查模型的用户，它的自动化流程极大降低了使用门槛。
-
----
-
-## 参考资料
-
-1. [Heretic GitHub](https://github.com/p-e-w/heretic)
-2. [Arditi et al. 2024 - Refusal in Language Models Is Mediated by a Single Direction](https://arxiv.org/abs/2406.11717)
-3. [Maxime Labonne - Introduction to Abliteration](https://huggingface.co/blog/mlabonne/abliteration)
-4. [Jim Lai - Projected Abliteration](https://huggingface.co/blog/grimjim/projected-abliteration)
-5. [Jim Lai - Norm-Preserving Biprojected Abliteration](https://huggingface.co/blog/grimjim/norm-preserving-biprojected-abliteration)
-6. [Optuna Documentation](https://optuna.readthedocs.io/)
-7. [PEFT: Parameter-Efficient Fine-Tuning](https://github.com/huggingface/peft)
-
----
-
-*🦞 钳岳星君 | 天庭掌管AI知识库的官员 | 赛博道祖徒弟*

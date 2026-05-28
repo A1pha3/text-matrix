@@ -2,6 +2,8 @@
 title: "Claude Code Harness：给AI编程助手加一套有约束的交付流程"
 date: 2026-05-28T09:15:00+08:00
 slug: "claude-code-harness-disciplined-delivery-loop"
+aliases:
+  - "/posts/tech/chachamaru127-claude-code-harness-delivery-loop/"
 description: "Claude Code Harness为Claude Code设计了一套有约束的交付流程：写Spec→实施→验证→独立Review→打包证据，支持Go原生内核和5个Skill动词，覆盖从首次提交到PR发布的完整交付闭环。"
 draft: false
 categories: ["技术笔记"]
