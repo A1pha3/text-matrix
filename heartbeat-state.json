@@ -15,9 +15,9 @@
     "note": "All 16 trending repos already have articles in content/posts/tech/ (includes /sponsors/affaan-m→everything-claude-code, /sponsors/Leonxlnx→leonxlnx-taste-skill, /sponsors/obra→superpowers, /sponsors/unclecode→crawl4ai). Window 11:30-12:30 run at 12:00."
   },
   "github-trending-15": {
-    "lastRun": "2026-05-28",
+    "lastRun": "2026-05-29",
     "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/"
+    "note": "All 16 trending repos already have articles in content/posts/tech/. Run at 15:00. repos: MoneyPrinterTurbo/ECC/taste-skill/stop-slop/twenty/FreeDomain/English-level-up-tips/markitdown/superpowers/harness/build-your-own-x/Understand-Anything/crawl4ai/MOSS-TTS/compound-engineering-plugin/anthropics-skills"
   },
   "github-trending-20": {
     "lastRun": "2026-05-28",
