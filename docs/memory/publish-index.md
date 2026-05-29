@@ -383,6 +383,8 @@
 
 | **daily_stock_analysis** | ZhuLinsen/daily_stock_analysis | 32,634 Stars | daily-stock-analysis-llm-stock-trading-guide.md | 15346e5 | | 2026-04-30 |
 
+| **Knowledge Work Plugins** | anthropics/knowledge-work-plugins | 17.9k Stars | anthropic-knowledge-work-plugins.md | f346846 | | 2026-05-29 |
+
 | gstack | gstack-yc-ceo-ai-team-factory | bb1c6a9 | 技术笔记 | https://github.com/garrytan/gstack |
 ## 视频精读
 - ClaudeCode操控ComfyUI画涩图：ImageAutoPrompt与noobai画师串探索系统深度解读 | 钳岳星君 | BV1L7RcBAEqN | 2026-05-08
