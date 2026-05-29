@@ -1,8 +1,13 @@
 {
-  "browser-memory-cleanup": {
-    "lastRun": "2026-05-29",
+  "github-trending-03": {
+    "lastRun": "2026-05-30",
     "status": "completed",
-    "note": "15 Chrome processes terminated at 03:02"
+    "note": "Checked 21 trending repos; Biohub/esm (protein world model: ESMC+ESMFold2+Atlas) had no article. Wrote 1 new article: biohub-esm-protein-world-model-guide.md (6B-param protein language model + structure prediction + 1B-protein Atlas). Push: c13e421"
+  },
+  "browser-memory-cleanup": {
+    "lastRun": "2026-05-30",
+    "status": "completed",
+    "note": "35 Chrome processes terminated at 03:04"
   },
   "github-trending-10": {
     "lastRun": "2026-05-29",
@@ -23,11 +28,6 @@
     "lastRun": "2026-05-29",
     "status": "all_already_covered",
     "note": "All trending repos already have articles in content/posts/tech/. 24 repos checked: MoneyPrinterTurbo/ECC/taste-skill/stop-slop/twenty/FreeDomain/English-level-up-tips/markitdown/superpowers/harness/build-your-own-x/Understand-Anything/crawl4ai/MOSS-TTS/compound-engineering-plugin/anthropics-skills/stable-worldmodel/liteparse/project-nomad/esm/greptile-apps/data-engineering-zoomcamp. Non-projects filtered: trending/developers, apps/dependabot, apps/github-actions, sponsors/*. Window 20:00-21:00 run at 20:16."
-  },
-  "github-trending-03": {
-    "lastRun": "2026-05-29",
-    "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/ (3:00 window run)"
   },
   "github-trending-23": {
     "lastRun": "2026-05-29",
