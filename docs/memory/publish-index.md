@@ -383,7 +383,7 @@
 
 | **daily_stock_analysis** | ZhuLinsen/daily_stock_analysis | 32,634 Stars | daily-stock-analysis-llm-stock-trading-guide.md | 15346e5 | | 2026-04-30 |
 
-| **Langfuse** | langfuse/langfuse | 28.1k Stars | langfuse-llm-engineering-platform.md | b3c41bf | | 2026-05-29 |
+| gstack | gstack-yc-ceo-ai-team-factory | bb1c6a9 | 技术笔记 | https://github.com/garrytan/gstack |
 ## 视频精读
 - ClaudeCode操控ComfyUI画涩图：ImageAutoPrompt与noobai画师串探索系统深度解读 | 钳岳星君 | BV1L7RcBAEqN | 2026-05-08
 - Agent技术全史：从1960年代逻辑代理到2026年通用数字代理的史诗旅程 | 苏煜×张小珺 | 微博视频 | 2026-05-01
