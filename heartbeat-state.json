@@ -1,0 +1,57 @@
+{
+  "browser-memory-cleanup": {
+    "lastRun": "2026-05-29",
+    "status": "completed",
+    "note": "15 Chrome processes terminated at 03:02"
+  },
+  "github-trending-10": {
+    "lastRun": "2026-05-29",
+    "status": "all_already_covered",
+    "note": "All 16 trending repos already have articles in content/posts/tech/"
+  },
+  "github-trending-11": {
+    "lastRun": "2026-05-29",
+    "status": "all_already_covered",
+    "note": "All 16 trending repos already have articles in content/posts/tech/ (includes /sponsors/affaan-m→everything-claude-code, /sponsors/Leonxlnx→leonxlnx-taste-skill, /sponsors/obra→superpowers, /sponsors/unclecode→crawl4ai). Window 11:30-12:30 run at 12:00."
+  },
+  "github-trending-15": {
+    "lastRun": "2026-05-28",
+    "status": "all_already_covered",
+    "note": "All 16 trending repos already have articles in content/posts/tech/"
+  },
+  "github-trending-20": {
+    "lastRun": "2026-05-28",
+    "status": "all_already_covered",
+    "note": "All 16 trending repos already have articles in content/posts/tech/"
+  },
+  "github-trending-03": {
+    "lastRun": "2026-05-29",
+    "status": "all_already_covered",
+    "note": "All 16 trending repos already have articles in content/posts/tech/ (3:00 window run)"
+  },
+  "github-trending-23": {
+    "lastRun": "2026-05-28",
+    "status": "all_already_covered",
+    "note": "All 16 trending repos already have articles in content/posts/tech/ (15:00 run covered them)"
+  },
+  "藏经阁修炼": {
+    "lastRun": "2026-05-28",
+    "status": "completed",
+    "note": "21:00窗口执行，藏经阁5项检查全部通过"
+  },
+  "github-trending-13": {
+    "lastRun": "2026-05-29",
+    "status": "all_already_covered",
+    "note": "All 16 trending repos already have articles in content/posts/tech/ (13:00 window run)"
+  },
+  "github-trending-09": {
+    "lastRun": "2026-05-29",
+    "status": "completed",
+    "note": "12 trending repos checked; 10 already covered; wrote 2 new articles: twentyhq/twenty (CRM SDK) and revfactory/harness (multi-agent team architecture). Push: 64c7a51"
+  },
+  "ai-news-morning": {
+    "lastRun": "2026-05-29",
+    "status": "completed",
+    "note": "补做：子任务超时后接手，r.jina.ai降级采集36kr+量子位，推送commit e1d4c87，12条新闻6分类"
+  }
+}
