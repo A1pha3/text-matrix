@@ -1,5 +1,6 @@
 # optimiz doc
 
+
 - content/posts/tech/gemini-reverse-engineer-ai-video-prompt-guide.md 这篇文章你仔细研究文章中的内容和相关资料，用最高水平技术博客写作风格完善丰富内容，用cn-doc-writer 纠错，去除AI味道，持续迭代优化文档到满分100分。
   
   
