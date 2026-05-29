@@ -20,9 +20,9 @@
     "note": "All 16 trending repos already have articles in content/posts/tech/. Run at 15:00. repos: MoneyPrinterTurbo/ECC/taste-skill/stop-slop/twenty/FreeDomain/English-level-up-tips/markitdown/superpowers/harness/build-your-own-x/Understand-Anything/crawl4ai/MOSS-TTS/compound-engineering-plugin/anthropics-skills"
   },
   "github-trending-20": {
-    "lastRun": "2026-05-28",
+    "lastRun": "2026-05-29",
     "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/"
+    "note": "All trending repos already have articles in content/posts/tech/. 24 repos checked: MoneyPrinterTurbo/ECC/taste-skill/stop-slop/twenty/FreeDomain/English-level-up-tips/markitdown/superpowers/harness/build-your-own-x/Understand-Anything/crawl4ai/MOSS-TTS/compound-engineering-plugin/anthropics-skills/stable-worldmodel/liteparse/project-nomad/esm/greptile-apps/data-engineering-zoomcamp. Non-projects filtered: trending/developers, apps/dependabot, apps/github-actions, sponsors/*. Window 20:00-21:00 run at 20:16."
   },
   "github-trending-03": {
     "lastRun": "2026-05-29",
@@ -30,14 +30,14 @@
     "note": "All 16 trending repos already have articles in content/posts/tech/ (3:00 window run)"
   },
   "github-trending-23": {
-    "lastRun": "2026-05-28",
+    "lastRun": "2026-05-29",
     "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/ (15:00 run covered them)"
+    "note": "All 16 trending repos already have articles in content/posts/tech/. Window 23:00 run at 23:00. repos: MoneyPrinterTurbo/ECC/taste-skill/stop-slop/twenty/FreeDomain/English-level-up-tips/markitdown/superpowers/harness/build-your-own-x/Understand-Anything/crawl4ai/MOSS-TTS/compound-engineering-plugin/anthropics-skills"
   },
   "藏经阁修炼": {
-    "lastRun": "2026-05-28",
+    "lastRun": "2026-05-29",
     "status": "completed",
-    "note": "21:00窗口执行，藏经阁5项检查全部通过"
+    "note": "21:00窗口执行，藏经阁5项检查全部通过（500块/61K字符/4K行，分类：入门基础/大模型Agent/工具/赚钱实战/内容创作/技术教程/AI安全/Polymarket/V2EX/Superlinear Academy）"
   },
   "github-trending-13": {
     "lastRun": "2026-05-29",
