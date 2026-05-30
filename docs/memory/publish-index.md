@@ -117,6 +117,7 @@
 | **MoneyPrinterTurbo AI视频生成** | harry0703/MoneyPrinterTurbo | 63.8k | moneyprinterturbo-ai-short-video-generator-guide.md | 7828ff8 | - | 2026-05-28 |
 | **Understand-Anything 知识图谱** | Lum1104/Understand-Anything | 41.1k | understand-anything-knowledge-graph-codebase-guide.md | 7828ff8 | - | 2026-05-28 |
 | **Superpowers AI编程能力框架** | obra/superpowers | 200k | superpowers-agentic-skills-framework.md | 05c0f38 | - | 2026-05-21 |
+| **InkOS 自动化小说写作 Agent** | Narcooo/inkos | - | inkos-ai-novel-writing-agent.md | 93ca1d2 | - | 2026-05-30 |
 | **Ruflo 多智能体编排** | ruvnet/ruflo | 42.5k | ruflo-claude-code-multi-agent-swarm-guide.md | ca4c90f | - | 2026-05-05 |
 
 ---
