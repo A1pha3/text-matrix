@@ -25,9 +25,9 @@
     "note": "15:00窗口执行，17个趋势项目全部已有文章覆盖(MoneyPrinterTurbo/markitdown/compound/twenty/claude-code/taste-skill/cursor/liteparse/stable-worldmodel/english-level-up-tips/esm/project-nomad/FreeDomain/ECC/stop-slop/data-engineering-zoomcamp)；无需写文章或push"
   },
   "github-trending-20": {
-    "lastRun": "2026-05-29",
+    "lastRun": "2026-05-30",
     "status": "all_already_covered",
-    "note": "All trending repos already have articles in content/posts/tech/"
+    "note": "20:00窗口执行，17个趋势项目全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "github-trending-23": {
     "lastRun": "2026-05-29",
