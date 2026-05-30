@@ -114,6 +114,7 @@
 
 | 项目 | GitHub | Stars | 文件名 | Commit | 飞书文档 | 日期 |
 |------|--------|-------|--------|--------|---------|------|
+| **Agent Skill HTTP底层** | 腾讯云开发者公众号 | - | agent-skill-openai-protocol-compilation.md | dbe2105 | - | 2026-05-30 |
 | **MoneyPrinterTurbo AI视频生成** | harry0703/MoneyPrinterTurbo | 63.8k | moneyprinterturbo-ai-short-video-generator-guide.md | 7828ff8 | - | 2026-05-28 |
 | **Understand-Anything 知识图谱** | Lum1104/Understand-Anything | 41.1k | understand-anything-knowledge-graph-codebase-guide.md | 7828ff8 | - | 2026-05-28 |
 | **Superpowers AI编程能力框架** | obra/superpowers | 200k | superpowers-agentic-skills-framework.md | 05c0f38 | - | 2026-05-21 |
