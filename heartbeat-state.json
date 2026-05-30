@@ -17,41 +17,56 @@
   "github-trending-11": {
     "lastRun": "2026-05-29",
     "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/ (includes /sponsors/affaan-m→everything-claude-code, /sponsors/Leonxlnx→leonxlnx-taste-skill, /sponsors/obra→superpowers, /sponsors/unclecode→crawl4ai). Window 11:30-12:30 run at 12:00."
+    "note": "All 16 trending repos already have articles in content/posts/tech/"
   },
   "github-trending-15": {
     "lastRun": "2026-05-29",
     "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/. Run at 15:00. repos: MoneyPrinterTurbo/ECC/taste-skill/stop-slop/twenty/FreeDomain/English-level-up-tips/markitdown/superpowers/harness/build-your-own-x/Understand-Anything/crawl4ai/MOSS-TTS/compound-engineering-plugin/anthropics-skills"
+    "note": "All 16 trending repos already have articles in content/posts/tech/"
   },
   "github-trending-20": {
     "lastRun": "2026-05-29",
     "status": "all_already_covered",
-    "note": "All trending repos already have articles in content/posts/tech/. 24 repos checked: MoneyPrinterTurbo/ECC/taste-skill/stop-slop/twenty/FreeDomain/English-level-up-tips/markitdown/superpowers/harness/build-your-own-x/Understand-Anything/crawl4ai/MOSS-TTS/compound-engineering-plugin/anthropics-skills/stable-worldmodel/liteparse/project-nomad/esm/greptile-apps/data-engineering-zoomcamp. Non-projects filtered: trending/developers, apps/dependabot, apps/github-actions, sponsors/*. Window 20:00-21:00 run at 20:16."
+    "note": "All trending repos already have articles in content/posts/tech/"
   },
   "github-trending-23": {
     "lastRun": "2026-05-29",
     "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/. Window 23:00 run at 23:00. repos: MoneyPrinterTurbo/ECC/taste-skill/stop-slop/twenty/FreeDomain/English-level-up-tips/markitdown/superpowers/harness/build-your-own-x/Understand-Anything/crawl4ai/MOSS-TTS/compound-engineering-plugin/anthropics-skills"
+    "note": "All 16 trending repos already have articles in content/posts/tech/"
   },
   "藏经阁修炼": {
     "lastRun": "2026-05-29",
     "status": "completed",
-    "note": "21:00窗口执行，藏经阁5项检查全部通过（500块/61K字符/4K行，分类：入门基础/大模型Agent/工具/赚钱实战/内容创作/技术教程/AI安全/Polymarket/V2EX/Superlinear Academy）"
+    "note": "21:00窗口执行，藏经阁5项检查全部通过（500块/61K字符/4K行）"
   },
   "github-trending-13": {
-    "lastRun": "2026-05-29",
-    "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/ (13:00 window run)"
+    "lastRun": "2026-05-30",
+    "status": "completed",
+    "note": "16 trending repos checked; 11 already covered; wrote 5 new articles: moneyprinterturbo-ai-short-video-generation-guide.md (70k star AI video generator), compound-engineering-plugin-agent-workflow-guide.md (18k star agent workflow system), english-level-up-tips-ai-english-learning-guide.md (49.7k star AI English learning guide), freedomain-digitalplat-free-domain-guide.md (171k star free domain project), ecc-agent-harness-performance-optimization-guide.md (199k star agent harness system). Push: 63f5b4f"
   },
   "github-trending-09": {
     "lastRun": "2026-05-29",
     "status": "completed",
-    "note": "12 trending repos checked; 10 already covered; wrote 2 new articles: twentyhq/twenty (CRM SDK) and revfactory/harness (multi-agent team architecture). Push: 64c7a51"
+    "note": "12 trending repos checked; 10 already covered; wrote 2 new articles. Push: 64c7a51"
   },
   "ai-news-morning": {
-    "lastRun": "2026-05-29",
+    "lastRun": "2026-05-30",
     "status": "completed",
-    "note": "补做：子任务超时后接手，r.jina.ai降级采集36kr+量子位，推送commit e1d4c87，12条新闻6分类"
+    "note": "补做：Chrome CDP采集36kr 12条新闻+华尔街见闻10条+V2EX 7条，4份早报全部完成，push commit e9cac00"
+  },
+  "financial-morning-news": {
+    "lastRun": "2026-05-30",
+    "status": "completed",
+    "note": "Chrome CDP采集wallstreetcn 12条新闻，推送飞书文档TgWvdcRIpo8lblx3xNlc7eSLnMb"
+  },
+  "ai-side-hustle-morning": {
+    "lastRun": "2026-05-30",
+    "status": "completed",
+    "note": "Chrome CDP采集V2EX 7条招聘/讨论帖，推送飞书文档NcPYdibuQo8hQwxPHZwc1PRdnFd"
+  },
+  "web3-morning-news": {
+    "lastRun": "2026-05-30",
+    "status": "completed",
+    "note": "CoinGecko API采集6个加密货币价格，华尔街见闻采集3条新闻，推送飞书文档LE2YdhBpVoozlexIgdecVDr4n6T"
   }
 }
