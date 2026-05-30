@@ -20,6 +20,8 @@ tags: ["Claude", "Anthropic", "AI Agent", "金融服务", "MCP"]
 - 这个仓库能产出哪些分析产物，又有哪些合规和操作底线绝对不能碰
 - 一套典型的金融工作流从触发到产出，在不同运行面上经历了什么
 
+| → | [分层图](#一张图看懂整个仓库的分层) | [是什么](#1-它到底是什么) | [易混点](#2-第一次读容易搞混的三件事) | [目录拆解](#3-仓库逐层拆开看) | [agent 列表](#4-现在有哪些-agent它们各自能干到什么程度) | [skills/commands](#5-skills-和-commands比-agent-列表更有复用价值的那层) | [任务流案例](#6-一次具体的工作流pitch-agent-从触发到产出经历了什么) | [MCP](#7-mcp-连接器这仓库离生产最近的那层也是最远的那层) | [三条路径](#8-三种进入路径和一套务实的试装顺序) | [M365](#9-补充一块容易被跳过的内容microsoft-365-部署工具) | [工程价值](#10-这个仓库为什么值得研究不止于金融) | [边界](#11-使用前要接受的边界) | [决策表](#12-按你团队的情况做选择)
+
 ## 一张图看懂整个仓库的分层
 
 在深入任何细节之前，先把最容易混淆的几层结构摊开。这张图覆盖了从 GitHub 源代码到两种使用形态的完整链路：
@@ -68,7 +70,7 @@ Anthropic 把这个项目命名为 [Claude for Financial Services](https://githu
 
 仓库不承诺替你完成投资决策，也不宣称可以直接接管审批、入账或交易执行。它交付的是一套按行业语境写好的工作流骨架：提示词怎么拆、技能怎么组织、哪些斜杠命令该显式暴露、数据从哪里接进来、哪些环节必须留人工签字。真正把它带进生产的，还是你自己的数据权限、模板、术语、审阅制度和编排层。
 
-README 开头的声明写得很直白：这里的内容不构成投资、法律、税务或会计建议；所有 agent 产出的是分析师工作底稿，必须由有资质的专业人士复核。把这段话当法律套话就漏掉了重点——它其实定义了整个仓库的设计边界：每个 agent 的终点都不是"完成一个金融动作"，而是"交出第一版底稿，等人签字"。
+README 开头的声明写得很直白：这里的内容不构成投资、法律、税务或会计建议；所有 agent 产出的是分析师工作底稿，必须由有资质的专业人士复核。这段话定义了整个仓库的设计边界——每个 agent 的终点是"交出第一版底稿，等人签字"，不是"完成一个金融动作"。
 
 ## 2. 第一次读容易搞混的三件事
 
@@ -106,7 +108,7 @@ claude-for-msft-365-install/         ← M365 加载项企业部署工具
 scripts/                             ← deploy / validate / sync / orchestrate
 ```
 
-这套目录结构把复用边界划得很清晰。命名 agent 管一条工作流的端到端执行。Vertical plugin 管可复用的领域技能和命令。Managed Agent cookbook 把同一套 system prompt 和 skills 包装成可通过 API 托管部署的形式。分析师和平台团队看到的是不同的运行面，但底层的 prompt 和 skill 来源尽量保持一致。
+这套目录把复用边界划开了。命名 agent 管一条工作流的端到端执行。Vertical plugin 管可复用的领域技能和命令。Managed Agent cookbook 把同一套 system prompt 和 skills 包装成可通过 API 托管部署的形式。分析师和平台团队看到的是不同的运行面，底层的 prompt 和 skill 来源不变。
 
 这个仓库是 file-based 的，主体内容就是 Markdown、JSON、YAML。没有构建系统，没有二进制分发，没有 docker-compose。Anthropic 把复杂度放在了内容组织、引用关系和部署脚本上，而不是代码框架上。这种取舍是刻意的：行业 agent 场景里真正频繁变化的是流程、模板、规则和数据接入方式，不是代码本身。Markdown 比代码更容易被业务团队读懂和修改——这本身就是一个设计决策，不是一个便利性妥协。
 
@@ -130,6 +132,8 @@ README 列出了 10 个命名 agent，按 4 组理解最清晰：
 这些名字大多对应真实岗位里能被拆出来的"第一版产物"——Pitch Agent 的终点是品牌化 pitch deck，GL Reconciler 的终点是异常报告和 controller sign-off，KYC Screener 的终点是把疑点抬出来给合规官决定，而不是"审批通过"。每个 agent 的产出物都是具体的工作底稿，不是泛泛的研究摘要。
 
 每个 agent 的 guardrails 都写得很硬。Pitch Agent 要在模型完成后和 deck 生成后各停一次，交 banker 审核。Earnings Reviewer 要求所有数字可溯源，找不到来源就标 `[UNSOURCED]`。KYC Screener 只给建议，风险评级决定权在合规官。Anthropic 把这些约束直接写进了 agent 定义里——停下来的节点和不能自动化的判断，跟建模和 deck 生成一样，是工作流的一部分，不是外挂的合规备注。
+
+> **自测**：KYC Screener 产出的终点是什么——"审批通过"还是"把疑点交给合规官"？这个设计决定了 agent 在整个 KYC 流程里扮演的角色宽度。
 
 ## 5. skills 和 commands：比 agent 列表更有复用价值的那层
 
@@ -161,9 +165,11 @@ README 列出了 10 个命名 agent，按 4 组理解最清晰：
 
 仓库还在 partner-built 目录下单独放了 LSEG 和 S&P Global 的插件。这个信号比功能列表本身更能说明 Anthropic 的判断：金融工作流的数据层不是一家模型公司能自己写完的，最终要和数据商生态对接。LSEG 插件管债券相对价值、互换曲线、外汇 carry 和期权波动率；S&P Global 插件管 tear sheets、财报预览和融资摘要。
 
+> **自测**：你已经装了 Market Researcher agent，团队里的分析师还想单独用 `/earnings` 命令写季报点评。应该再装 equity-research vertical plugin 吗？提示：想想 agent 是 self-contained 的，slash commands 从哪来。
+
 ## 6. 一次具体的工作流：Pitch Agent 从触发到产出经历了什么
 
-讲层级和模块，不如跟一遍具体任务。下面用 Pitch Agent 完成一次投行 pitch 为例，把前面拆开的机制串起来。
+讲层级和模块不如跟一遍任务。下面用 Pitch Agent 做一次投行 pitch，把前面拆开的机制串起来。
 
 **触发。**一位投行分析师在 Cowork 里激活 Pitch Agent，输入目标公司名称和交易场景（sell-side M&A）。
 
@@ -173,9 +179,11 @@ README 列出了 10 个命名 agent，按 4 组理解最清晰：
 
 **第三段：托管部署面。**如果平台团队决定把同一条工作流挂到后端，他们会拿 `managed-agent-cookbooks/pitch-agent/agent.yaml`，运行 `scripts/deploy-managed-agent.sh pitch-agent`。部署脚本解析 agent.yaml 中的文件引用，上传 skills，创建 leaf-worker 子 agent，然后 POST orchestrator 到 `/v1/agents`。之后编排层通过 `scripts/orchestrate.py` 参考实现来路由 `handoff_request` 事件。
 
-注意这个流程里人工卡点的位置：模型完成后一次，deck 完成后一次。两次停下来都不是因为模型能力不够，而是因为金融场景里，某些判断必须留在人手里。Pitch Agent 替分析师做了两件重体力活——跨数据源拼信息和按模板生成 deck——但最终签字的节点没有让出去。
+这个流程里人工卡点有两处：模型完成后一次，deck 完成后一次。两次停下来都不是因为模型能力不够——金融场景里某些判断必须留在人手里。Pitch Agent 替分析师做了两件重体力活：跨数据源拼信息和按模板生成 deck。签字的节点没有让出去。
 
-**如果走的是 Managed Agents 路径**，这条工作流还多一层：部署脚本要你提前设好 `CAPIQ_MCP_URL`、`DALOOPA_MCP_URL`、`FACTSET_MCP_URL` 等环境变量。少了这些，命令能跑，但数据接不进来。这也是为什么同样装完 agent，有的团队觉得效果很好，有的觉得"只是演示"——差距不在模型侧，在数据层有没有接上。
+走 Managed Agents 路径还多一层：部署脚本要你提前设好 `CAPIQ_MCP_URL`、`DALOOPA_MCP_URL`、`FACTSET_MCP_URL` 等环境变量。少了这些，命令能跑，数据接不进来。同样装完 agent，有的团队觉得效果好，有的觉得"只是演示"——差距不在模型侧，在数据层有没有接上。
+
+> **自测**：Pitch Agent 的工作流里有两个人工卡点，分别在哪两步之后？如果把这两个卡点拿掉会发生什么——答案不是"不合规"，想得更具体一些：产出物在哪个环节最可能出错？
 
 ## 7. MCP 连接器：这仓库离生产最近的那层，也是最远的那层
 
@@ -230,6 +238,8 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 最小可试装的起点就是前面那段 4 行命令。如果是 Managed Agents 路径，部署前还必须补齐对应数据源的 MCP 地址——Pitch Agent、Market Researcher、GL Reconciler 这些 cookbook 都要求先设好 `CAPIQ_MCP_URL`、`DALOOPA_MCP_URL`、`FACTSET_MCP_URL`、`GL_MCP_URL` 等环境变量。
 
+> **自测**：一个做私募尽调的 5 人小团队，没有后端开发人员。他们该从 Cowork、Claude Code + vertical plugin、还是 Managed Agents 开始？如果他们半年后招了平台工程师，又该往哪条路径迁移？
+
 ## 9. 补充一块容易被跳过的内容：Microsoft 365 部署工具
 
 仓库里还有一个独立模块 `claude-for-msft-365-install/`，和前面讲的 agent、vertical plugin 是两套东西。
@@ -240,7 +250,7 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 ## 10. 这个仓库为什么值得研究——不止于金融
 
-如果只当它是"金融行业插件集合"，会低估它的技术价值。Anthropic 在这里把一个强行业约束的 agent 系统拆成了几个相对稳定的层次：
+只把这个项目当"金融行业插件集合"看就错了。Anthropic 在这里把一个强行业约束的 agent 系统拆成了几个相对稳定的层次：
 
 - 工作流入口：命名 agent，自包含，面向端到端任务
 - 领域知识：reusable skill，沉淀在 vertical plugin 里，可被多个 agent 打包引用
@@ -250,7 +260,7 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 这五层拆法解决的其实是一个通用问题：当行业工作流必须同时面对"交互式使用者"和"后端自动化系统"时，知识怎么存、怎么复用、怎么保证两边看到的规则是同一套。医疗、法务、保险、供应链等强流程行业，迟早都会碰到同样的工程需求——不是"模型能不能答"，而是"流程怎么拆、证据怎么留、人工在哪个节点接管、复用层怎么稳定"。
 
-另外，仓库不依赖构建系统的 file-based 策略、skills 源文件与 agent 副本之间的 sync 机制、以及 partner-built 插件目录对第三方数据商生态的开放姿态，都是值得单独展开讲的工程实践——但那些可以留给后续文章了。
+仓库不依赖构建系统的 file-based 策略、skills 源文件与 agent 副本之间的 sync 机制、partner-built 插件目录对第三方数据商生态的开放姿态——每一项都够单独写一篇文章，这里只点到为止。
 
 ## 11. 使用前要接受的边界
 
@@ -285,6 +295,18 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 | 想加自己的流程和模板 | fork 仓库 → 改 skill 文件 → 跑 `sync-agent-skills.py` |
 
 如果在"分析师试用过的工作流"和"平台团队部署的端点"之间感到割裂，矛盾的根通常不在代码，而在组织上没有把同一份 skill 源管好。这个仓库的 sync 脚本和"一套内容两种运行面"的设计，恰好能解决这个问题。
+
+## 13. 常见踩坑
+
+**装了 agent，但跑来跑去都没有产出数据。**十有八九是 MCP 连接器没配。每个 agent 都依赖 `financial-analysis` 核心插件的 MCP 连接器来拉数据，而这些连接器需要供应商订阅或 API key。先检查 `.mcp.json` 里填了哪个服务的地址，再确认那个地址在你当前网络环境里确实能通。如果你用的是 Managed Agents 路径，还要确认 `CAPIQ_MCP_URL`、`FACTSET_MCP_URL` 等环境变量在部署脚本执行前已经 export 了。
+
+**改了 skill 文件，agent 行为没变化。**命名 agent 打包了自己的 skills 副本（在 `agent-plugins/<slug>/skills/` 下），它读的是副本，不是你改的 vertical 源文件。改完 `vertical-plugins/<vertical>/skills/` 之后，需要跑 `python3 scripts/sync-agent-skills.py` 把更新推到所有打包了该 skill 的 agent。没跑 sync 脚本就等于白改。
+
+**Cowork 里装了 agent，但 slash commands 不出现。**slash commands 定义在 `vertical-plugins/<vertical>/commands/` 下。如果你只装了命名 agent 而没有装对应的 vertical plugin，agent 仍然能跑（因为 skills 已打包），但显式的 slash commands 不会出现在命令面板里。想用 `/comps`、`/dcf` 这类命令，要么装对应的 vertical plugin，要么确认你装的 agent 本身就暴露了这些命令。
+
+**Managed Agent 部署后 `orchestrate.py` 报 handoff 超时。**`scripts/orchestrate.py` 是参考事件循环，不是生产级编排器。它假设你的 agent 之间的 handoff 在默认超时内完成。如果你的 agent 要拉大量数据（比如跑一次完整的 comps + DCF + LBO 模型），handoff_request 的响应时间可能远超参考实现的等待窗口。解决办法是自己写编排层的超时和重试逻辑——Anthropic 提供的是骨架，不是现成的重试策略。
+
+**Agent 跑出来的数字和 Bloomberg 终端对不上。**agent 拉的数据来自你配置的 MCP 连接器，不是 Anthropic 自带的金融数据库。如果你配的是 FactSet，结果和 Bloomberg 不一致是正常的——数据源本身就有差异。这不是 bug，是金融数据行业的常态。解决办法是统一团队使用的数据源，或者写一个 cross-source reconciliation skill 来做差异说明。
 
 ## 参考
 
