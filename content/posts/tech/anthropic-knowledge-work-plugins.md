@@ -23,7 +23,7 @@ originLinks: []
 
 这不只是省掉代码的事。它背后是另一个判断：一个 AI Agent 在一个领域里能干多少活，不取决于它连了多少工具，而取决于它对这个领域的**知识编码有多细、有多准确**。而 Markdown 文件——不是 Python 脚本、不是数据库 schema、不是配置文件模板——是当前最适合做这件事的载体。
 
-容易写、容易改、容易审、容易版本控制、容易让非工程师参与。11 个插件覆盖了产品管理、销售、客服、数据分析、工程开发、市场营销、法务、财务、生物研究、企业搜索和插件管理，每个插件都遵循同一套三层结构：Commands（用户显式触发）、Skills（AI 自动调用）、MCP Connectors（连接外部工具）。
+容易写、容易改、容易审，Git 能追踪，非工程师也能动手。11 个插件覆盖了产品管理、销售、客服、数据分析、工程开发、市场营销、法务、财务、生物研究、企业搜索和插件管理，每个插件都遵循同一套三层结构：Commands（用户显式触发）、Skills（AI 自动调用）、MCP Connectors（连接外部工具）。
 
 下面把这三层拆开，然后看几个具体插件怎么跑任务流，最后说清楚不同类型团队该从哪入手。
 
@@ -31,7 +31,7 @@ originLinks: []
 
 ## 一、三层结构：一次完整交互是怎么跑通的
 
-先给一张总览图，避免读者看到后面把 Commands、Skills、Connectors 的关系搞混。这三层不是"上层调下层"的调用链，而是**三个不同决策者**的分工：
+先给一张总览图。Commands、Skills、Connectors 不是调用栈关系——三个不同角色各自控制一层：
 
 ```
                     ┌─────────────────────────────┐
@@ -69,12 +69,12 @@ originLinks: []
 └─────────────────────────────────────────────────┘
 ```
 
-**三层的关键区别**：
-- Commands 是"入口"——没有用户主动触发就不会跑
-- Skills 是"知识"——AI 自己判断该不该用，用户不用管
-- Connectors 是"手脚"——Skills 通过它们访问外部世界
+三层各自抓一件事：
+- Commands 是入口——没人触发就不跑
+- Skills 是知识——AI 自己判断什么时候用，用户不用管
+- Connectors 是手脚——Skills 靠它们碰到外部世界
 
-需要格外注意的边界：**Commands 和 Skills 不是一一对应的**。一个 Command 可能调用多个 Skills，一个 Skill 也可能被多个 Commands 复用。比如 `/incident`（事件响应命令）可能同时激活 `incident-response`、`system-design`、`documentation` 三个技能。
+一个容易踩的坑：Commands 和 Skills 不一定一对一。`/incident` 一个命令下去，可能同时激活 `incident-response`、`system-design`、`documentation` 三个技能。反过来，一个 Skill 也可以被不同 Command 复用。
 
 ### 插件文件结构
 
@@ -102,7 +102,7 @@ plugin-name/
 
 ## 二、三个任务流：用具体案例把三层串起来
 
-光看结构容易觉得抽象。下面用三个真实场景，看一次完整任务怎么流过 Commands → Skills → Connectors。
+光看结构容易抽象。三个真实场景，看完整任务怎么流过 Commands → Skills → Connectors。
 
 ### 案例 1：产品经理写一份 SSO 功能的 PRD
 
@@ -115,7 +115,7 @@ plugin-name/
 3. **Connector 拉取上下文**：如果配置了 Jira 连接器，AI 可能自动拉取相关 Epic 和 Story 的当前状态；如果配置了 Figma，会拉设计稿；如果配置了 Amplitude，会拉当前版本的使用数据作为决策依据。
 4. **输出**：一份结构化的 PRD Markdown 文件，包含问题陈述、用户故事、功能需求（按 P0/P1/P2 分级）、成功指标、开放问题清单。
 
-关键点：**用户只发了一个命令，但背后 Skills 和 Connectors 协作完成了信息收集、结构补全和上下文注入**。
+用户只敲了一个命令。Skills 和 Connectors 在背后协作完成了信息收集、结构补全、上下文注入。用户不需要知道这些层怎么配合。
 
 ### 案例 2：数据分析师做一次月度收入趋势分析
 
@@ -130,7 +130,7 @@ plugin-name/
 5. **验证**：`/validate` 可选，`data-validation` 技能做 sanity check——分母是否包含了不该包含的数据、聚合逻辑是否有偏、解释是否有 survivorship bias。
 6. **输出**：分析报告 + 可视化图表 + 置信度评估。
 
-关键点：**同一个 `/analyze` 命令，连了 Snowflake 就直接查库，没连就接受 CSV 粘贴——Commands 和 Skills 不依赖 Connectors 也能工作**。这是项目设计中一条重要原则：知识能力（Skills）和工具能力（Connectors）解耦。
+同一个 `/analyze`，连了 Snowflake 就直查库，没连就收 CSV 粘贴。Commands 和 Skills 离开 Connectors 照样跑。知识能力和工具能力是两层独立的东西。
 
 ### 案例 3：销售做一次周度预测
 
@@ -143,7 +143,7 @@ plugin-name/
 3. **分析**：AI 生成加权预测（best case / likely / worst case），标记风险项：过期未更新的 deal、单一联系人（single-threaded）的 deal、Pipeline 覆盖倍数。
 4. **输出**：预测报告 + commit vs. upside 拆解 + 缺口分析。
 
-这个案例展示的其实是**渐进式采用**：没连 CRM 时也能用（手动提供数据），连了 CRM 就自动化——同一个 Skill 逻辑不变。
+没连 CRM 也能跑，连了就自动化。同一个 Skill 逻辑从头到尾没变过。
 
 ---
 
@@ -174,7 +174,7 @@ plugin-name/
 
 ### 4.1 Productivity：两层记忆系统的任务管理
 
-这是最基础的插件，但设计上藏了很多心思。
+最基础的插件，但几个设计点很有意思。
 
 **Commands（2 个）**:
 
@@ -203,15 +203,15 @@ productivity/
 └── dashboard.html        # 可视化仪表盘
 ```
 
-**值得注意的设计**：
+**双轨记忆**：高频变更的东西（人名缩写、项目代号、本周优先级）放 CLAUDE.md，低频但需要持久化的东西（org 结构、长期偏好、历史决策）放 memory/ 目录。这和 CPU 的 L1/L2 cache 一个思路。
 
-1. **双轨记忆**：工作记忆存高频变更的东西（人名缩写、项目代号、本周优先级），深度记忆存低频但需要持久化的东西（org 结构、长期偏好、历史决策）。这和计算机体系结构里的 L1/L2 cache 思路一致——不是概念堆砌，是工程判断。
-2. **Dashboard 分离**：AI 管理结构化数据（Markdown），人类通过独立 HTML 文件查看聚合指标。这两者不耦合——改文件格式不影响 Dashboard，改 Dashboard 不破坏数据。
-3. **自然语言入口**：不需要记命令格式。说"让 Todd 去做 Oracle 项目的 PSR"，`memory-management` 就能把"Todd"解析为"Todd Martinez（财务负责人）"，把"PSR"解析为"Pipeline Status Report"，把"Oracle 项目"解析为"$2.3M，Q2 关单"。
+**Dashboard 分离**：AI 管结构化数据（Markdown），人通过独立 HTML 看聚合指标。改文件格式不影响 Dashboard，改 Dashboard 不破坏数据。
+
+**自然语言入口**：不需要记命令格式。说"让 Todd 去做 Oracle 项目的 PSR"，`memory-management` 就能把"Todd"解析为"Todd Martinez（财务负责人）"，把"PSR"解析为"Pipeline Status Report"，把"Oracle 项目"解析为"$2.3M，Q2 关单"。
 
 ### 4.2 Product Management：7 个命令覆盖 PM 全流程
 
-所有 7 个命令都对应一个同名的 Skill。这不是形式上的一一对应——而是 **"Command 定义工作流边界，Skill 提供执行知识"** 的分工：
+所有 7 个命令都对应一个同名的 Skill。Command 画工作流边界，Skill 往里填执行知识：
 
 | Command | 对应 Skill | 核心机制 |
 |---------|-----------|---------|
@@ -223,13 +223,13 @@ productivity/
 | `/metrics-review` | `metrics-tracking` | OKR 层级、指标仪表盘设计、审查节奏 |
 | `/brainstorm` | `product-brainstorming` | How Might We、JTBD、First Principles、Opportunity Solution Tree |
 
-**`/brainstorm` 值得单独说两句**。它不是"你说个想法我帮你展开"的那种头脑风暴。`product-brainstorming` Skill 里编码了 4 种对话模式——问题探索、方案生成、假设验证、策略推演——AI 会根据当前阶段自动切模式。比如用户问"我们要不要加 AI 搜索"，AI 不会立刻回答"加"或"不加"，而是先切到"问题探索"模式追问："用户搜不到东西时，到底是搜索算法的问题，还是信息架构的问题，还是内容可发现性的问题？"
+**`/brainstorm` 多说两句**。它不是"你说个想法我帮你展开"。`product-brainstorming` Skill 里编了 4 种对话模式——问题探索、方案生成、假设验证、策略推演——AI 看阶段自动切。用户问"我们要不要加 AI 搜索"，AI 不回答加或不加，先切到问题探索追问："用户搜不到东西，是算法的问题，还是信息架构的问题，还是内容可发现性的事？"
 
-这种"先挑战问题本身"的行为，不是靠 prompt engineering 实现的，而是 Skill 文件里明确写了"before jumping to solutions, test whether the stated problem is the real problem"。
+Skill 文件里有一行："before jumping to solutions, test whether the stated problem is the real problem"。这个行为就是这么来的，不是 prompt engineering。
 
 ### 4.3 Data：多数据库兼容的分析平台
 
-`data` 插件有 6 个 Commands 和 6 个 Skills，和 Product Management 一样的对称结构。但我更想讲它处理**数据库无关性**的方式：
+`data` 插件 6 个 Commands、6 个 Skills，和 Product Management 对称。但值得看的是它处理数据库无关性的方式：
 
 ```yaml
 # .mcp.json 中可以挂任意 SQL 兼容数据库
@@ -241,28 +241,28 @@ Connectors:
   - 任意 Generic SQL
 ```
 
-关键在于 `sql-queries` Skill 不绑定任何具体数据库。它只编码"怎么写好 SQL"——公共模式、性能反模式、方言中立的最佳实践。当用户说"我们在用 Snowflake"，AI 才从 Skill 的"方言适配"部分读取 Snowflake 特有的优化规则（比如 `QUALIFY` 子句、`CLUSTER BY` 策略）。
+`sql-queries` Skill 不绑任何数据库。它只管"怎么写好 SQL"——公共模式、性能反模式、方言中立的写法。用户说"我们用 Snowflake"时，AI 才从 Skill 的方言适配部分调 Snowflake 特有的优化（`QUALIFY` 子句、`CLUSTER BY`）。
 
-这套设计的工程收益：换一个数据库不需要换插件，只需要改 `.mcp.json` 中的连接目标。Skills 层保持不变。
+实际收益就一条：换数据库不动插件，改 `.mcp.json` 的连接目标就行。Skills 层纹丝不动。
 
-**`/validate` 命令也不常见**。它做的事是——在分析报告发给同事之前，跑一轮方法论审查。检查的问题包括：
+**`/validate`** 做的事不常见：分析报告发出去之前，跑一轮方法论审查。检查项包括：
 
 - 分母定义是不是漏了某个用户段
 - 聚合方式会不会产生 Simpson's paradox
 - 趋势解释是不是考虑到了季节性
 - 有没有 survivorship bias
 
-这些检查不是一句 prompt 能解决的——`data-validation` Skill 文件里给了具体的检查清单和反例，AI 对照着逐条验证。单就这个命令，评估后报告出错率显著降低。
+`data-validation` Skill 文件里给了逐条的检查清单和反例，AI 对着验证。不是"你觉得数据对不对"这种软问题，是"分母定义是不是漏了免费用户"这种硬约束。
 
 ---
 
-## 五、设计模式的提炼
+## 五、五个设计模式
 
-翻完 11 个插件的结构后，有 5 个反复出现的模式值得单独抽取出来：
+翻完 11 个插件，有 5 个模式反复出现。
 
-### 模式 1：三层决策权分离，不是三层调用链
+### 模式 1：三层分别由三个角色控制
 
-Commands、Skills、Connectors 不构成调用栈。它们分别由**人、AI、运维**三个不同角色控制：
+Commands、Skills、Connectors 不是调用栈。它们归三个不同角色管：
 
 | 层 | 控制者 | 触发方式 | 修改频率 |
 |----|-------|---------|---------|
@@ -270,7 +270,7 @@ Commands、Skills、Connectors 不构成调用栈。它们分别由**人、AI、
 | Skills | AI | 上下文自动激活 | 团队定期 review |
 | Connectors | 运维/开发者 | 配置文件绑定 | 基础设施变更时 |
 
-这意味着一个团队可以独立优化 Commands（改交互流程），不动 Skills；可以独立调整 Connectors（换数据库或 CRM），不动 Commands 和 Skills。
+所以团队可以独立改 Commands（交互流程），不碰 Skills；可以独立换 Connectors（换数据库、换 CRM），不碰 Commands 和 Skills。
 
 ### 模式 2：文件系统即状态存储
 
@@ -280,11 +280,11 @@ Commands、Skills、Connectors 不构成调用栈。它们分别由**人、AI、
 - 项目记忆 → `CLAUDE.md`
 - 插件配置 → `.mcp.json`
 
-带来的收益：可 Git 版本控制、可 grep、可直接用编辑器改、迁移时就是复制文件夹。代价是并发写冲突——但当前设计下（单人使用或小团队），这个代价远小于引入数据库带来的复杂度。
+收益：Git 可追踪、grep 能搜、编辑器直接改、迁移就是拷文件夹。代价是并发写冲突——但当前设计面向单人使用或小团队，这个代价比引入数据库的复杂度小得多。
 
-### 模式 3：Standalone + Supercharged 双模式
+### 模式 3：Standalone 和 Supercharged 双模式
 
-每个插件都设计了两种运行模式。以 Engineering 插件为例：
+每个插件都有两套运行模式。以 Engineering 为例：
 
 | 能力 | Standalone（无连接器） | Supercharged（有连接器） |
 |------|----------------------|------------------------|
@@ -293,21 +293,21 @@ Commands、Skills、Connectors 不构成调用栈。它们分别由**人、AI、
 | 调试 | 用户描述症状 | 从 Datadog 拉日志和指标 |
 | 事件响应 | 用户描述事件 | PagerDuty 自动拉 on-call 和 Timeline |
 
-Skills 层的逻辑在这两种模式下完全不变——它只是获取输入的方式不同。这种设计让采用路径变得很平滑：先用 Standalone 跑起来，确认价值了再投入集成。
+Skills 层逻辑在两种模式下不变，只是拿输入的方式不同。先 Standalone 跑起来，确认有用再接 Connectors——采用路径没有前置依赖。
 
 ### 模式 4：记忆的冷热分层
 
-`productivity` 插件的双轨记忆不是孤立的设计。`engineering` 插件也有类似分层——活跃项目上下文放在 CLAUDE.md，历史 ADR 和 runbook 放在知识库连接器里。这个模式的核心判断：**AI Agent 的记忆系统不该是平铺的向量数据库，而应该是分层的、有成本的、可淘汰的**。
+`productivity` 的双轨记忆不是独一份。`engineering` 也做了类似分层——活跃项目上下文放 CLAUDE.md，历史 ADR 和 runbook 放知识库连接器。核心判断是同一个：AI Agent 的记忆系统不应该平铺成向量数据库，得分层、有成本、能淘汰。
 
-### 模式 5：验证技能独立于执行技能
+### 模式 5：做和审分开
 
-`data` 的 `/validate`、`engineering` 的 `/deploy-checklist`、`legal` 的合同审查——这些不是"锦上添花的检查步骤"，而是独立成型的验证 Skill。做和审分离，这是工程纪律在 AI Agent 设计中的体现。
+`data` 的 `/validate`、`engineering` 的 `/deploy-checklist`、`legal` 的合同审查——这些都是独立成型的验证 Skill，不是附加的检查步骤。做和审分成两个 Skill，工程纪律在 AI Agent 里照样成立。
 
 ---
 
-## 六、采用指南：不同类型的团队该从哪开始
+## 六、采用指南
 
-如果读完想在自己的团队里试试，下面是一个按团队类型划分的启动路径：
+想在自己的团队试，按类型走：
 
 ### 个人用户 → 从 productivity 开始
 
@@ -316,11 +316,9 @@ claude plugin marketplace add anthropics/knowledge-work-plugins
 claude plugin install productivity@knowledge-work-plugins
 ```
 
-用 `/start` 初始化，然后正常对话。两周后回来看 TASKS.md 和 CLAUDE.md 里积累了什么东西——这两份文件本身就是你工作方式的镜像，看完往往会发现一些模式你自己都没意识到。
+用 `/start` 初始化，然后正常对话。两周后打开 TASKS.md 和 CLAUDE.md——这两份文件是你工作方式的镜像，看完经常能发现自己没意识到的模式。
 
 ### 产品团队 → productivity + product-management + enterprise-search
-
-三条并行推进：
 
 1. 每个人装 `productivity` 管自己的任务
 2. PM 装 `product-management`，先把 `/write-spec` 和 `/stakeholder-update` 用起来
@@ -328,21 +326,21 @@ claude plugin install productivity@knowledge-work-plugins
 
 ### 工程团队 → engineering（优先配 GitHub/GitLab MCP）
 
-`engineering` 插件在连了源码仓库之后的价值跃升最大：
+`engineering` 连了源码仓库之后变化最大：
 
-- `/standup` 自动生成日报——不是形式上的"我做了什么"，而是从 commit message 和 PR review 里提取的实际产出
-- `/review` 对 PR 做结构化审查——安全检查、性能检查、代码风格、正确性——四种检查有各自的 Skill 文件，改审查标准就是改 Markdown
-- `/incident` 走完整的事故响应流程——triage → 沟通 → 缓解 → 复盘——每个阶段有对应的模板
+- `/standup` 自动生成日报——从 commit message 和 PR review 里提取实际产出，不是"I did X"的形式主义模板
+- `/review` 对 PR 做结构化审查——安全、性能、代码风格、正确性，四个维度各有一个 Skill 文件，改审查标准就是改 Markdown
+- `/incident` 走完整的事故响应流程——triage、沟通、缓解、复盘，每个阶段对应一个模板
 
 如果只能配一个 MCP 连接器，配 GitHub/GitLab。如果配两个，第二个配监控（Datadog / New Relic）。
 
 ### 数据分析团队 → data（配数据仓库 MCP）
 
-连上 Snowflake / BigQuery / Databricks 之后，`data` 插件最直接的价值不是"自动写 SQL"（随便一个 LLM 都会写），而是 `/validate`——在报告发出去之前做一轮方法论审查。这个命令省掉的不是一个 prompt，是发出去后被同事质疑然后重新跑数的那一整天。
+连上 Snowflake / BigQuery / Databricks 之后，`data` 插件最有用的其实不是自动写 SQL（随便哪个 LLM 都会），是 `/validate`——报告发出去之前做一轮方法论审查。省掉的不是一个 prompt，是被同事质疑后重新跑数的那一整天。
 
 ### 销售团队 → sales（优先配 CRM）
 
-三个 Command 覆盖了销售最频繁的三个动作：
+三个 Command 够覆盖销售最高频的动作：
 
 - `/call-summary`：会议录音或笔记 → 结构化摘要 + 待办 + 跟进邮件草稿
 - `/forecast`：CSV 或 CRM 数据 → 加权预测 + 风险标记
@@ -358,19 +356,17 @@ claude plugin install productivity@knowledge-work-plugins
 
 ---
 
-## 七、这件事对 AI Agent 行业意味着什么
+## 七、这件事能活多久
 
-回到开头的判断——这个项目的真正意义不在 11 个插件的数量或覆盖面。
+回到开头的判断——这个项目真正重要的不是 11 个插件，是它定下的三条规则：
 
-它定义了三条规则，这三条规则可能比具体插件存活得更久：
+1. **领域知识写成文件，不写成代码**。Markdown 比 Python 适合描述"好的 PRD 长什么样"或"怎么审一份合同"。文件可以被非工程师编辑、进 Git、做 diff review。
+2. **用户意图（Commands）、AI 知识（Skills）、外部工具（Connectors）由三个角色独立控制**。搅在一起的结果是谁都不敢改。
+3. **能力边界随 Connectors 增减渐进扩展，核心逻辑保持不动**。Standalone 模式是成本最低的信任建立方式。
 
-1. **AI Agent 的领域知识应该编码为文件，而不是代码**。Markdown 比 Python 更适合描述"一个好的 PRD 长什么样"或"怎么审查一份合同"。文件可以被非工程师编辑、可以被 Git 追踪、可以被 diff review。
-2. **用户意图（Commands）、AI 知识（Skills）、外部工具（Connectors）应该由三个不同的角色独立控制**。混在一起的结果是谁都不敢改。
-3. **AI Agent 的能力边界应该可以随着连接器的增减渐进扩展，而不需要重写核心逻辑**。Standalone 模式是门槛最低的信任建立方式。
+这三条绑在一起指向一件事：AI Agent 插件体系的工程化。把知识写成结构，把流程写成可复现，把质量写成可验证。而不是写个 prompt 然后跑一遍看运气。
 
-这三条规则共同指向一个方向：AI Agent 插件体系的**工程化**。不是"写个 prompt 然后祈祷"，而是"把知识结构化、把流程可复现、把质量可验证"。
-
-对还在观望 AI Agent 落地的团队，这条路径的最大吸引力在于——你不需要先投入一个月的集成工程才能验证价值。装一个 productivity 插件，用一周，看看 TASKS.md 和 CLAUDE.md 里长了什么。如果那两份文件里的内容让你觉得"确实比我自己维护的任务清单更准、更全"，那就继续。如果没有，卸载就行——成本就是一个文件夹。
+如果还在观望 AI Agent 落地，这条路径最打动人的地方其实很简单——不需要先投一个月的集成工程才能验证。装一个 productivity 插件，用一周，打开 TASKS.md 和 CLAUDE.md 看看里面长了什么。如果那两份文件比你自己的任务清单更准更全，就继续。如果没有，卸载。成本就一个文件夹。
 
 ---
 
