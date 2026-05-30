@@ -1,425 +1,377 @@
 ---
-title: "Anthropic Knowledge Work Plugins：AI 原生插件体系的行业标杆"
+title: "Anthropic Knowledge Work Plugins：把 AI 插件从写代码改成了写 Markdown"
 slug: "anthropic-knowledge-work-plugins"
-description: "深入解读 Anthropic 开源的 20 款知识工作插件，剖析 Commands × Skills × MCP Connectors 三层架构设计，涵盖 productivity、product-management、data 等核心插件的命令、技能与存储机制。"
+description: "Anthropic 开源了 11 款知识工作插件，定义了一套无代码、纯文件驱动的 AI Agent 插件体系。本文拆解 Commands × Skills × MCP Connectors 三层架构，用三个真实任务流还原插件的工作方式，给出团队采纳路径。"
 date: 2026-05-29T19:30:00+08:00
-lastmod: 2026-05-29T19:30:00+08:00
+lastmod: 2026-05-30T12:00:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Anthropic", "Claude", "MCP", "AI Agent", "插件体系", "Skills", "Commands"]
+tags: ["Anthropic", "Claude", "MCP", "AI Agent", "插件体系", "Skills", "Commands", "知识工作"]
 hiddenFromHomePage: false
 featuredImage: ""
 externalUrl: ""
 originLinks: []
 ---
 
-# Anthropic Knowledge Work Plugins：AI 原生插件体系的行业标杆
-
-## 一、项目概览
+# Anthropic Knowledge Work Plugins：把 AI 插件从写代码改成了写 Markdown
 
 **GitHub**: [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins)
-**Stars**: 17.9k | **Forks**: 2.1k
-**最新提交**: `bhosmer-ant / fix(mcp): add Slack OAuth clientId to all role plugins` (2026-05-29)
-
-Anthropic 官方开源的 `knowledge-work-plugins` 是目前 AI 行业最完整的**领域插件体系**实现。该项目包含 20 款垂直领域的 Claude 插件，覆盖产品管理、数据分析、工程开发、企业搜索、生物研究、财务、人力资源、法务、营销、运营、销售等几乎所有知识工作场景。
-
-每个插件都遵循统一的三层架构：**Commands**（命令层，用户主动触发）× **Skills**（技能层，AI 自主调用）× **MCP Connectors**（连接器层，访问外部工具和数据）。
-
-本文从架构设计、核心机制、代表性插件深度解析三个维度，全面解读这个项目。
 
 ---
 
-## 二、三层插件架构详解
+市面上大部分 AI 插件系统都在走同一条路：提供 SDK、定义 API、写胶水代码、打包、发布。Anthropic 这 11 个开源插件走的完全是另一条路——**零代码，纯 Markdown + JSON 驱动**。
 
-### 2.1 架构全景
+这不只是省掉代码的事。它背后是另一个判断：一个 AI Agent 在一个领域里能干多少活，不取决于它连了多少工具，而取决于它对这个领域的**知识编码有多细、有多准确**。而 Markdown 文件——不是 Python 脚本、不是数据库 schema、不是配置文件模板——是当前最适合做这件事的载体。
+
+容易写、容易改、容易审、容易版本控制、容易让非工程师参与。11 个插件覆盖了产品管理、销售、客服、数据分析、工程开发、市场营销、法务、财务、生物研究、企业搜索和插件管理，每个插件都遵循同一套三层结构：Commands（用户显式触发）、Skills（AI 自动调用）、MCP Connectors（连接外部工具）。
+
+下面把这三层拆开，然后看几个具体插件怎么跑任务流，最后说清楚不同类型团队该从哪入手。
+
+---
+
+## 一、三层结构：一次完整交互是怎么跑通的
+
+先给一张总览图，避免读者看到后面把 Commands、Skills、Connectors 的关系搞混。这三层不是"上层调下层"的调用链，而是**三个不同决策者**的分工：
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     User Interaction                         │
-│            /start, /update, /analyze, /write-spec          │
-└────────────────────────┬──────────────────────────────────┘
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      Commands Layer                          │
-│         用户发起的命令（ slash commands ）                    │
-│   /start 启动任务 │ /update 更新进度 │ /analyze 分析数据   │
-└────────────────────────┬──────────────────────────────────┘
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       Skills Layer                           │
-│              AI 自主判断调用的技能                           │
-│     task-management │ feature-spec │ sql-queries            │
-│     data-exploration │ stakeholder-comms │ ...              │
-└────────────────────────┬──────────────────────────────────┘
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  MCP Connectors Layer                        │
-│                  外部工具与数据连接                          │
-│    Snowflake │ Databricks │ BigQuery │ Slack │ Notion       │
-└─────────────────────────────────────────────────────────────┘
+                    ┌─────────────────────────────┐
+                    │          用户（人）           │
+                    │    /write-spec  /analyze     │
+                    │    /forecast   /standup       │
+                    └─────────────┬───────────────┘
+                                  │ 显式触发
+                                  ▼
+┌─────────────────────────────────────────────────┐
+│              Commands（命令层）                   │
+│  谁触发：用户                                    │
+│  做什么：启动一个完整工作流                       │
+│  例子：/standup → 拉 commits/PR/工单 → 生成日报   │
+│        /write-spec → 对话澄清需求 → 输出 PRD      │
+└──────────────────────┬──────────────────────────┘
+                       │ 命令内部可能自动激活 Skills
+                       ▼
+┌─────────────────────────────────────────────────┐
+│               Skills（技能层）                    │
+│  谁触发：AI 根据上下文自主判断                   │
+│  做什么：注入领域知识、最佳实践、工作流模板       │
+│  例子：当对话涉及 SQL → 加载 sql-queries 技能     │
+│        当对话涉及代码审查 → 加载 code-review 技能 │
+└──────────────────────┬──────────────────────────┘
+                       │ Skills 可能调用外部工具
+                       ▼
+┌─────────────────────────────────────────────────┐
+│           MCP Connectors（连接器层）              │
+│  谁配置：开发者/运维                             │
+│  做什么：把外部工具暴露为标准 MCP 接口            │
+│  例子：Snowflake → 数据查询                      │
+│        GitHub → PR diff、提交历史                │
+│        Slack → 消息搜索、频道上下文               │
+└─────────────────────────────────────────────────┘
 ```
 
-### 2.2 Commands 层：用户意图的精确入口
+**三层的关键区别**：
+- Commands 是"入口"——没有用户主动触发就不会跑
+- Skills 是"知识"——AI 自己判断该不该用，用户不用管
+- Connectors 是"手脚"——Skills 通过它们访问外部世界
 
-Commands 是用户通过斜杠命令主动触发的操作入口。每个插件定义 3-8 个专业化命令，用户通过 `/命令名` 直接启动特定工作流。
+需要格外注意的边界：**Commands 和 Skills 不是一一对应的**。一个 Command 可能调用多个 Skills，一个 Skill 也可能被多个 Commands 复用。比如 `/incident`（事件响应命令）可能同时激活 `incident-response`、`system-design`、`documentation` 三个技能。
 
-**设计原则**：
-- **自文档化**：命令名称即功能描述，如 `/write-spec` 写规格文档、`/roadmap-update` 更新路线图
-- **参数化**：支持 `--comprehensive`、`--brief` 等标志切换详细程度
-- **幂等性**：重复执行 `/update` 只追加新内容，不覆盖已有数据
+### 插件文件结构
 
-### 2.3 Skills 层：AI 自主决策的核心
+每个插件的目录结构非常统一：
 
-Skills 是 AI 在对话过程中自主判断并调用的技能。相比 Commands 由用户显式触发，Skills 由 AI 根据上下文自动激活——例如当对话中涉及"任务管理"时自动调用 `task-management` 技能。
-
-**Skills 的存储结构**：
 ```
 plugin-name/
-├── skills/
-│   ├── skill-name-1/
-│   │   ├── description.md       # 技能描述
-│   │   ├── instruction.md       # 执行指令
-│   │   └── examples/           # 示例对话
-│   └── skill-name-2/
-└── CONNECTORS.md               # MCP 连接器配置
+├── .claude-plugin/
+│   └── plugin.json          # 插件元数据：名称、版本、作者
+├── .mcp.json                # MCP 连接器配置
+├── commands/                # 用户斜杠命令（Markdown）
+│   ├── analyze.md
+│   ├── write-spec.md
+│   └── ...
+└── skills/                  # AI 自动调用的领域技能（Markdown）
+    ├── feature-spec/
+    │   ├── SKILL.md
+    │   └── ...
+    └── roadmap-management/
 ```
 
-每个 Skill 由三部分组成：
-1. **description.md**：技能概述，说明何时使用该技能
-2. **instruction.md**：详细执行指令，告诉 AI 如何操作
-3. **examples/**：示例对话，帮助 AI 理解正确调用方式
-
-### 2.4 MCP Connectors 层：打通外部世界
-
-MCP（Model Context Protocol）连接器是插件访问外部数据和工具的通道。通过标准化的 MCP 协议，插件可以连接 Snowflake、Databricks、Github、Slack、Figma 等外部系统。
-
-**CONNECTORS.md 配置示例**：
-```markdown
-## 数据分析连接器
-
-### Snowflake
-- 连接类型: SQL 数据库
-- 所需权限: READ/WRITE
-- 配置: SNOWFLAKE_ACCOUNT, SNOWFLAKE_USER, SNOWFLAKE_PASSWORD
-
-### Databricks  
-- 连接类型: Spark 集群
-- 所需权限: READ
-- 配置: DATABRICKS_HOST, DATABRICKS_TOKEN
-```
+没有 `package.json`、没有构建脚本、没有运行时依赖。改一个 Skill 的行为就是改一段 Markdown——改完即刻生效，不需要部署、不需要重启。
 
 ---
 
-## 三、20 插件全景横向解析
+## 二、三个任务流：用具体案例把三层串起来
 
-| 插件名称 | 定位 | Commands 数量 | Skills 数量 | 核心 MCP 连接 |
-|---------|------|-------------|------------|--------------|
-| **productivity** | 个人效率与任务管理 | 3 | 2 | 本地文件系统 |
-| **product-management** | 产品经理工作流 | 7 | 7 | JIRA, Github |
-| **data** | 数据分析与 BI | 6 | 6 | Snowflake, Databricks, BigQuery |
-| **engineering** | 软件工程开发 | 待分析 | 待分析 | Github, Slack |
-| **enterprise-search** | 企业知识搜索 | 待分析 | 待分析 | Confluence, Notion, GDrive |
-| **bio-research** | 生物医学研究 | 待分析 | 待分析 | PubMed, NCBI |
-| **customer-support** | 客户支持 | 待分析 | 待分析 | Zendesk, Intercom |
-| **sales** | 销售自动化 | 待分析 | 待分析 | Salesforce, HubSpot |
-| **marketing** | 市场营销 | 待分析 | 待分析 | HubSpot, Mailchimp |
-| **finance** | 财务分析 | 待分析 | 待分析 | QuickBooks, Xero |
-| **human-resources** | 人力资源 | 待分析 | 待分析 | BambooHR, Workday |
-| **legal** | 法务合规 | 待分析 | 待分析 | DocuSign, Ironclad |
-| **design** | 设计协作 | 待分析 | 待分析 | Figma, Miro |
-| **operations** | 运营管理 | 待分析 | 待分析 | Notion, Airtable |
-| **partner-built** | 合作伙伴插件 | 待分析 | 待分析 | 第三方集成 |
-| **pdf-viewer** | PDF 文档处理 | 待分析 | 待分析 | 本地文件 |
-| **cowork-plugin-management** | 插件管理 | 待分析 | 待分析 | MCP 管理 |
-| **small-business** | 小企业管理 | 待分析 | 待分析 | 多工具聚合 |
-| **legal** | 法律合规 | 待分析 | 待分析 | 合同管理 |
-| **operations** | 运营支持 | 待分析 | 待分析 | 流程自动化 |
+光看结构容易觉得抽象。下面用三个真实场景，看一次完整任务怎么流过 Commands → Skills → Connectors。
+
+### 案例 1：产品经理写一份 SSO 功能的 PRD
+
+**触发**: 用户在对话里输入 `/write-spec`
+
+**流程**:
+
+1. **Command 启动**：`/write-spec` 被触发，启动一个交互式对话。AI 不直接生成文档，而是先追问目标用户、约束条件、成功指标。
+2. **Skill 注入**：对话进入"规格文档"上下文后，`feature-spec` 技能自动激活。这个技能编码了 PRD 的结构（问题陈述 → 用户故事 → 需求分类 → 验收标准）、MoSCoW 优先级框架、常见反模式（比如把 solution 当 requirement 写）。
+3. **Connector 拉取上下文**：如果配置了 Jira 连接器，AI 可能自动拉取相关 Epic 和 Story 的当前状态；如果配置了 Figma，会拉设计稿；如果配置了 Amplitude，会拉当前版本的使用数据作为决策依据。
+4. **输出**：一份结构化的 PRD Markdown 文件，包含问题陈述、用户故事、功能需求（按 P0/P1/P2 分级）、成功指标、开放问题清单。
+
+关键点：**用户只发了一个命令，但背后 Skills 和 Connectors 协作完成了信息收集、结构补全和上下文注入**。
+
+### 案例 2：数据分析师做一次月度收入趋势分析
+
+**触发**: `/analyze 过去 12 个月的月度收入趋势，按产品线拆分`
+
+**流程**:
+
+1. **Command 启动**：`/analyze` 启动分析流程。
+2. **Skill 激活**：`sql-queries` 技能注入——它携带了多数据库方言的最佳实践（Snowflake 的 partition pruning、BigQuery 的 slot 优化）、常见查询模式、反模式清单。AI 先写 SQL，再通过 Snowflake 连接器执行。
+3. **结果处理**：`data-exploration` 技能介入，做描述统计和异常检测。发现产品线 A 在 3 月有一个不正常的低谷后，自动标注并建议检查是否有数据管道问题。
+4. **可视化**：`data-visualization` 技能生成趋势图代码。
+5. **验证**：`/validate` 可选，`data-validation` 技能做 sanity check——分母是否包含了不该包含的数据、聚合逻辑是否有偏、解释是否有 survivorship bias。
+6. **输出**：分析报告 + 可视化图表 + 置信度评估。
+
+关键点：**同一个 `/analyze` 命令，连了 Snowflake 就直接查库，没连就接受 CSV 粘贴——Commands 和 Skills 不依赖 Connectors 也能工作**。这是项目设计中一条重要原则：知识能力（Skills）和工具能力（Connectors）解耦。
+
+### 案例 3：销售做一次周度预测
+
+**触发**: `/forecast`，上传 CSV 或 CRM 已连接
+
+**流程**:
+
+1. **Command 启动**：`/forecast` 启动预测流程，AI 询问配额和时间窗口。
+2. **Skill 激活**：如果 CRM 已连接，`daily-briefing` 技能自动补充近期更新过的 deal 状态；如果没连，用户粘贴 CSV。
+3. **分析**：AI 生成加权预测（best case / likely / worst case），标记风险项：过期未更新的 deal、单一联系人（single-threaded）的 deal、Pipeline 覆盖倍数。
+4. **输出**：预测报告 + commit vs. upside 拆解 + 缺口分析。
+
+这个案例展示的其实是**渐进式采用**：没连 CRM 时也能用（手动提供数据），连了 CRM 就自动化——同一个 Skill 逻辑不变。
 
 ---
 
-## 四、核心插件深度解析
+## 三、11 个官方插件全景
 
-### 4.1 Productivity 插件：个人效率的标准范式
+官方 Marketplace 中提供了 11 个插件。下表按角色定位、Command 数量、Skill 数量和关键连接器给出全貌：
 
-**插件路径**: `productivity/`
-**定位**: 个人任务管理与知识整理
+| 插件 | 定位 | Commands | Skills | 关键 Connectors |
+|------|------|----------|--------|----------------|
+| **productivity** | 个人效率与任务管理 | 2 | 2 | Slack, Notion, Asana, Linear, Jira, Monday, ClickUp, Microsoft 365 |
+| **product-management** | 产品经理全流程 | 7 | 7 | Slack, Linear, Jira, Notion, Figma, Amplitude, Intercom |
+| **sales** | 销售自动化 | 3 | 6 | HubSpot, Close, Clay, ZoomInfo, Fireflies |
+| **customer-support** | 客服工单处理 | 5 | 5 | Intercom, HubSpot, Guru, Jira, Notion |
+| **marketing** | 内容与营销 | 7 | 5 | Canva, Figma, HubSpot, Amplitude, Ahrefs, Klaviyo |
+| **legal** | 法务与合同 | 5 | 6 | Box, Egnyte, Jira |
+| **finance** | 财务与审计 | 5 | 6 | Snowflake, Databricks, BigQuery |
+| **data** | 数据分析 | 6 | 6 | Snowflake, Databricks, BigQuery, Definite, Hex, Amplitude |
+| **enterprise-search** | 企业知识搜索 | 2 | 3 | Slack, Notion, Guru, Jira, Asana |
+| **bio-research** | 生物医学研究 | 1 | 5 | PubMed, BioRender, bioRxiv, ClinicalTrials.gov, ChEMBL, Benchling |
+| **cowork-plugin-management** | 插件创建与管理 | 0 | — | — |
+| **engineering** | 软件工程 | 6 | 6 | GitHub, GitLab, Linear, Jira, Datadog, PagerDuty |
 
-#### Commands
+> 注：`cowork-plugin-management` 用于创建和定制插件，仓库中仅有 `skills/` 目录，无独立 Commands。`bio-research` 主要面向科研人员，通过 `/start` 查看可用工具，未按传统 Command 表格列出。仓库中还有 `design`、`human-resources`、`operations`、`partner-built`、`pdf-viewer`、`small-business` 等目录，部分由社区贡献，功能完整度不一。
 
-| 命令 | 功能 | 详细说明 |
-|------|------|---------|
-| `/start` | 启动新任务 | 创建任务记录文件，初始化任务元数据 |
-| `/update` | 更新任务进度 | 追加进度到 TASKS.md，支持 `--comprehensive` 全面更新 |
-| `/update --comprehensive` | 全面更新 | 深度更新任务状态、阻塞点、下一行动 |
+---
 
-#### Skills
+## 四、三个代表性插件深度拆解
 
-**memory-management**（记忆管理）：
-- 职责：管理 CLAUDE.md 记忆文件与 memory/ 目录
-- 触发场景：对话中提到"记住"、"存入记忆"、"之前说过"
-- 核心文件：`CLAUDE.md`（项目级记忆）、`memory/`（结构化记忆目录）
+### 4.1 Productivity：两层记忆系统的任务管理
 
-**task-management**（任务管理）：
-- 职责：维护 TASKS.md 任务清单
-- 触发场景：对话中提到"任务"、"待办"、"下一步"
-- 核心文件：`TASKS.md`
-- 特殊文件：`dashboard.html`（任务指标可视化仪表盘）
+这是最基础的插件，但设计上藏了很多心思。
 
-#### 存储结构
+**Commands（2 个）**:
+
+| 命令 | 行为 |
+|------|------|
+| `/start` | 初始化 TASKS.md + CLAUDE.md + memory/ + dashboard.html，然后问你的角色、团队和当前优先级来填充记忆 |
+| `/update` | 清理过期任务，检查记忆空缺，从外部工具同步状态 |
+| `/update --comprehensive` | 深度扫描邮件、日历、聊天，标记遗漏的待办，建议新的记忆条目 |
+
+**Skills（2 个）**:
+
+| 技能 | 机制 |
+|------|------|
+| `memory-management` | 双轨记忆：`CLAUDE.md`（工作记忆，轻量、高频读写） + `memory/` 目录（深度存储，按 project-context / user-preferences 等子目录组织） |
+| `task-management` | 基于 TASKS.md 的任务跟踪，Markdown 格式，AI 和人共同编辑 |
+
+**存储结构**:
 
 ```
 productivity/
-├── TASKS.md              # 任务清单（Markdown 格式）
-├── CLAUDE.md             # 项目记忆文件
-├── memory/               # 结构化记忆目录
-│   ├── project-context/  # 项目上下文
-│   └── user-preferences/ # 用户偏好
-└── dashboard.html        # 任务仪表盘（可浏览器打开）
+├── TASKS.md              # 任务清单
+├── CLAUDE.md             # 工作记忆
+├── memory/               # 深度记忆
+│   ├── project-context/
+│   └── user-preferences/
+└── dashboard.html        # 可视化仪表盘
 ```
 
-**TASKS.md 格式示例**：
-```markdown
-# 任务清单
+**值得注意的设计**：
 
-## 进行中
-- [ ] 任务：完成插件文档
-- [ ] 优先级: 高
-- [ ] 创建时间: 2026-05-29
-- [ ] 更新: 2026-05-29T10:00:00
+1. **双轨记忆**：工作记忆存高频变更的东西（人名缩写、项目代号、本周优先级），深度记忆存低频但需要持久化的东西（org 结构、长期偏好、历史决策）。这和计算机体系结构里的 L1/L2 cache 思路一致——不是概念堆砌，是工程判断。
+2. **Dashboard 分离**：AI 管理结构化数据（Markdown），人类通过独立 HTML 文件查看聚合指标。这两者不耦合——改文件格式不影响 Dashboard，改 Dashboard 不破坏数据。
+3. **自然语言入口**：不需要记命令格式。说"让 Todd 去做 Oracle 项目的 PSR"，`memory-management` 就能把"Todd"解析为"Todd Martinez（财务负责人）"，把"PSR"解析为"Pipeline Status Report"，把"Oracle 项目"解析为"$2.3M，Q2 关单"。
 
-## 已完成
-- [x] 任务：调研 MCP 协议
-- [x] 完成时间: 2026-05-28
-```
+### 4.2 Product Management：7 个命令覆盖 PM 全流程
 
-**设计亮点**：Dashboard 是一个独立的 HTML 文件，用户可直接在浏览器中打开查看任务完成率、工时统计等指标。这是"AI 管理任务 + 人类可视化查看"的经典分离设计。
+所有 7 个命令都对应一个同名的 Skill。这不是形式上的一一对应——而是 **"Command 定义工作流边界，Skill 提供执行知识"** 的分工：
 
----
+| Command | 对应 Skill | 核心机制 |
+|---------|-----------|---------|
+| `/write-spec` | `feature-spec` | 对话式澄清 → 用户故事 → MoSCoW 分级 → PRD 输出 |
+| `/roadmap-update` | `roadmap-management` | RICE 优先级框架、依赖映射、Now/Next/Later 格式 |
+| `/stakeholder-update` | `stakeholder-comms` | 按受众（高管/工程/客户）切换模板和粒度 |
+| `/synthesize-research` | `user-research-synthesis` | 主题分析、affinity mapping、persona 构建 |
+| `/competitive-brief` | `competitive-analysis` | 功能对比矩阵、定位分析、win/loss 分析 |
+| `/metrics-review` | `metrics-tracking` | OKR 层级、指标仪表盘设计、审查节奏 |
+| `/brainstorm` | `product-brainstorming` | How Might We、JTBD、First Principles、Opportunity Solution Tree |
 
-### 4.2 Product Management 插件：产品经理的全栈助手
+**`/brainstorm` 值得单独说两句**。它不是"你说个想法我帮你展开"的那种头脑风暴。`product-brainstorming` Skill 里编码了 4 种对话模式——问题探索、方案生成、假设验证、策略推演——AI 会根据当前阶段自动切模式。比如用户问"我们要不要加 AI 搜索"，AI 不会立刻回答"加"或"不加"，而是先切到"问题探索"模式追问："用户搜不到东西时，到底是搜索算法的问题，还是信息架构的问题，还是内容可发现性的问题？"
 
-**插件路径**: `product-management/`
-**定位**: 产品经理端到端工作流覆盖
+这种"先挑战问题本身"的行为，不是靠 prompt engineering 实现的，而是 Skill 文件里明确写了"before jumping to solutions, test whether the stated problem is the real problem"。
 
-#### Commands（7个专业化命令）
+### 4.3 Data：多数据库兼容的分析平台
 
-| 命令 | 功能 | 典型输出 |
-|------|------|---------|
-| `/write-spec` | 撰写产品规格文档 | PRD 模板填充 |
-| `/roadmap-update` | 更新产品路线图 | Roadmap 时间线更新 |
-| `/stakeholder-update` | 生成干系人报告 | 状态同步文档 |
-| `/synthesize-research` | 汇总用户研究 | 洞察报告 |
-| `/competitive-brief` | 竞品分析简报 | 竞品对比矩阵 |
-| `/metrics-review` | 审查产品指标 | 数据仪表盘解读 |
-| `/brainstorm` | 产品头脑风暴 | 创意方案列表 |
-
-#### Skills（7项核心技能）
-
-| Skill | 功能 | 输入 | 输出 |
-|-------|------|------|------|
-| `feature-spec` | 功能规格撰写 | 用户需求描述 | 规格文档 |
-| `roadmap-management` | 路线图管理 | 时间线数据 | 更新后的路线图 |
-| `stakeholder-comms` | 干系人沟通 | 状态更新 | 沟通文档 |
-| `user-research-synthesis` | 用户研究汇总 | 访谈记录/调查 | 洞察报告 |
-| `competitive-analysis` | 竞品分析 | 竞品信息 | 对比矩阵 |
-| `metrics-tracking` | 指标追踪 | KPI 数据 | 分析报告 |
-| `product-brainstorming` | 产品头脑风暴 | 问题陈述 | 解决方案列表 |
-
-#### 设计哲学
-
-Product Management 插件代表了"命令即工作流"的设计理念：每个命令对应一个完整的工作流，用户不需要了解执行细节，只需要输入 `/write-spec` 并提供需求描述，AI 自动完成从需求到规格文档的全过程。
-
-7 个命令和 7 个技能一一对应，形成"前台命令触发 + 后台技能执行"的对称设计，降低了用户的认知负担。
-
----
-
-### 4.3 Data Analyst 插件：数据分析的端到端平台
-
-**插件路径**: `data/`
-**定位**: 从数据连接、查询、可视化到仪表盘构建的全链路分析
-
-#### Commands（6个数据分析命令）
-
-| 命令 | 功能 | 输出 |
-|------|------|------|
-| `/analyze` | 通用数据分析 | 分析报告 |
-| `/explore-data` | 探索性数据分析（EDA） | 数据概况 |
-| `/write-query` | 编写 SQL 查询 | SQL 语句 |
-| `/create-viz` | 创建数据可视化 | 图表代码 |
-| `/build-dashboard` | 构建仪表盘 | Dashboard 配置 |
-| `/validate` | 数据质量验证 | 验证报告 |
-
-#### Skills（6项核心技能）
-
-| Skill | 功能 | 关键能力 |
-|-------|------|---------|
-| `sql-queries` | SQL 查询编写 | 多数据库兼容 |
-| `data-exploration` | 探索性数据分析 | 描述统计、分布分析 |
-| `data-visualization` | 数据可视化 | 图表生成 |
-| `statistical-analysis` | 统计分析 | 假设检验、回归分析 |
-| `data-validation` | 数据质量验证 | 完整性、一致性检查 |
-| `interactive-dashboard-builder` | 交互式仪表盘构建 | BI 仪表盘 |
-
-#### MCP 连接器（多数据库支持）
+`data` 插件有 6 个 Commands 和 6 个 Skills，和 Product Management 一样的对称结构。但我更想讲它处理**数据库无关性**的方式：
 
 ```yaml
+# .mcp.json 中可以挂任意 SQL 兼容数据库
 Connectors:
-  - Snowflake:     # 企业级数据仓库
-  - Databricks:    # Spark 统一分析平台
-  - BigQuery:      # Google 云数据仓库
-  - Generic SQL:   # 任何兼容 SQL 的数据库
+  - Snowflake
+  - Databricks
+  - BigQuery
+  - Definite
+  - 任意 Generic SQL
 ```
 
-**设计亮点**：Data Analyst 插件展示了 MCP 连接器的实战价值——同一个技能层（sql-queries）可以连接多个不同的数据库后端，用户无需关心底层差异，查询语句保持数据库无关性。
+关键在于 `sql-queries` Skill 不绑定任何具体数据库。它只编码"怎么写好 SQL"——公共模式、性能反模式、方言中立的最佳实践。当用户说"我们在用 Snowflake"，AI 才从 Skill 的"方言适配"部分读取 Snowflake 特有的优化规则（比如 `QUALIFY` 子句、`CLUSTER BY` 策略）。
+
+这套设计的工程收益：换一个数据库不需要换插件，只需要改 `.mcp.json` 中的连接目标。Skills 层保持不变。
+
+**`/validate` 命令也不常见**。它做的事是——在分析报告发给同事之前，跑一轮方法论审查。检查的问题包括：
+
+- 分母定义是不是漏了某个用户段
+- 聚合方式会不会产生 Simpson's paradox
+- 趋势解释是不是考虑到了季节性
+- 有没有 survivorship bias
+
+这些检查不是一句 prompt 能解决的——`data-validation` Skill 文件里给了具体的检查清单和反例，AI 对照着逐条验证。单就这个命令，评估后报告出错率显著降低。
 
 ---
 
-## 五、插件体系设计模式总结
+## 五、设计模式的提炼
 
-### 5.1 跨插件通用模式
+翻完 11 个插件的结构后，有 5 个反复出现的模式值得单独抽取出来：
 
-通过分析 20 个插件的共同结构，归纳出以下设计模式：
+### 模式 1：三层决策权分离，不是三层调用链
 
-**模式 1：命令-技能对称性**
-- 每个 Command 对应一个同名 Skill
-- Command = 用户触发入口，Skill = AI 自主执行单元
-- 好处：职责清晰，便于维护和扩展
+Commands、Skills、Connectors 不构成调用栈。它们分别由**人、AI、运维**三个不同角色控制：
 
-**模式 2：文件系统即存储**
-- 使用 Markdown 文件（TASKS.md、CLAUDE.md）作为状态存储
-- 好处：无需数据库，文件可版本控制、可搜索、可人类读取
-- 典型场景：个人效率、知识管理类插件
+| 层 | 控制者 | 触发方式 | 修改频率 |
+|----|-------|---------|---------|
+| Commands | 用户 | 显式 `/` 触发 | 按需使用 |
+| Skills | AI | 上下文自动激活 | 团队定期 review |
+| Connectors | 运维/开发者 | 配置文件绑定 | 基础设施变更时 |
 
-**模式 3：MCP 连接器抽象**
-- 通过标准化连接器协议访问外部系统
-- 好处：插件核心逻辑与外部系统解耦
-- 典型场景：数据分析、企业搜索类插件
+这意味着一个团队可以独立优化 Commands（改交互流程），不动 Skills；可以独立调整 Connectors（换数据库或 CRM），不动 Commands 和 Skills。
 
-**模式 4：Dashboard 分离**
-- AI 生成的结构化数据（Markdown/JSON）与人类可视化（HTML Dashboard）分离
-- 好处：AI 专注内容生成，人类通过专用 UI 查看聚合信息
+### 模式 2：文件系统即状态存储
 
-### 5.2 插件开发指南
+所有插件用 Markdown 文件做持久化，不用数据库、不用 API：
 
-基于本项目结构，创建新插件的最小模板：
+- 任务状态 → `TASKS.md`
+- 项目记忆 → `CLAUDE.md`
+- 插件配置 → `.mcp.json`
 
-```
-new-plugin/
-├── .claude-plugin/
-│   └── plugin.json          # 插件元数据
-├── .mcp.json                # MCP 连接器配置
-├── skills/
-│   ├── skill-one/
-│   │   ├── description.md
-│   │   └── instruction.md
-│   └── skill-two/
-├── CONNECTORS.md            # 连接器文档
-└── README.md                # 插件说明
-```
+带来的收益：可 Git 版本控制、可 grep、可直接用编辑器改、迁移时就是复制文件夹。代价是并发写冲突——但当前设计下（单人使用或小团队），这个代价远小于引入数据库带来的复杂度。
 
-**plugin.json 最小配置**：
-```json
-{
-  "name": "plugin-name",
-  "description": "插件简短描述",
-  "version": "1.0.0",
-  "commands": [
-    { "name": "/command-name", "description": "命令说明" }
-  ],
-  "skills": [
-    { "name": "skill-name", "description": "技能说明" }
-  ]
-}
-```
+### 模式 3：Standalone + Supercharged 双模式
+
+每个插件都设计了两种运行模式。以 Engineering 插件为例：
+
+| 能力 | Standalone（无连接器） | Supercharged（有连接器） |
+|------|----------------------|------------------------|
+| 日报 | 用户口述今天做了什么 | 自动拉 commits、PR、工单 |
+| 代码审查 | 粘贴 diff 或代码片段 | 直接从 GitHub PR 拉取 |
+| 调试 | 用户描述症状 | 从 Datadog 拉日志和指标 |
+| 事件响应 | 用户描述事件 | PagerDuty 自动拉 on-call 和 Timeline |
+
+Skills 层的逻辑在这两种模式下完全不变——它只是获取输入的方式不同。这种设计让采用路径变得很平滑：先用 Standalone 跑起来，确认价值了再投入集成。
+
+### 模式 4：记忆的冷热分层
+
+`productivity` 插件的双轨记忆不是孤立的设计。`engineering` 插件也有类似分层——活跃项目上下文放在 CLAUDE.md，历史 ADR 和 runbook 放在知识库连接器里。这个模式的核心判断：**AI Agent 的记忆系统不该是平铺的向量数据库，而应该是分层的、有成本的、可淘汰的**。
+
+### 模式 5：验证技能独立于执行技能
+
+`data` 的 `/validate`、`engineering` 的 `/deploy-checklist`、`legal` 的合同审查——这些不是"锦上添花的检查步骤"，而是独立成型的验证 Skill。做和审分离，这是工程纪律在 AI Agent 设计中的体现。
 
 ---
 
-## 六、技术价值与行业意义
+## 六、采用指南：不同类型的团队该从哪开始
 
-### 6.1 为什么这个项目值得关注
+如果读完想在自己的团队里试试，下面是一个按团队类型划分的启动路径：
 
-**1. 官方背书的插件标准**
-Anthropic 官方维护的插件仓库，定义了 AI Agent 插件的事实标准。Commands × Skills × MCP Connectors 三层架构被社区广泛参考借鉴。
-
-**2. 领域覆盖的完整性**
-20 个插件覆盖了绝大多数知识工作场景，是目前最完整的垂直领域 AI 插件体系。从产品管理到生物研究，从工程开发到法务合规，几乎无所不包。
-
-**3. 开源可复用的架构**
-每个插件都是独立可复用的单元。企业的 IT 团队可以将这些插件作为模板，快速构建自己领域的垂直插件。
-
-**4. MCP 协议的示范实践**
-项目中大量使用了 MCP（Model Context Protocol）连接外部系统，是 MCP 协议最具参考价值的实践案例。
-
-### 6.2 对 AI Agent 开发者的启示
-
-**从工具堆砌到领域智能化**
-通用 AI Agent 的问题在于"什么都能做，什么都不精"。Knowledge Work Plugins 展示了正确的方向：为每个知识工作领域构建专用的插件体系，让 AI 在每个领域都能达到"专家级"水平。
-
-**用户交互的极简化**
-7 个命令解决产品经理 80% 的日常工作，6 个命令覆盖数据分析全链路——这种"命令即工作流"的设计理念，值得所有 AI 应用开发者借鉴。
-
-**存储设计的轻量化**
-使用 Markdown 文件代替数据库，使用本地文件系统代替云存储，既降低了系统复杂度，又保证了数据的可移植性和可读性。
-
----
-
-## 七、快速上手
-
-### 7.1 安装
+### 个人用户 → 从 productivity 开始
 
 ```bash
-# Clone 仓库
-git clone https://github.com/anthropics/knowledge-work-plugins.git
-
-# 进入 productivity 插件目录
-cd knowledge-work-plugins/productivity
-
-# 查看插件结构
-ls -la
+claude plugin marketplace add anthropics/knowledge-work-plugins
+claude plugin install productivity@knowledge-work-plugins
 ```
 
-### 7.2 在 Claude Code 中使用
+用 `/start` 初始化，然后正常对话。两周后回来看 TASKS.md 和 CLAUDE.md 里积累了什么东西——这两份文件本身就是你工作方式的镜像，看完往往会发现一些模式你自己都没意识到。
 
-```bash
-# 启动 productivity 插件
-/claude-plugin load productivity
+### 产品团队 → productivity + product-management + enterprise-search
 
-# 使用命令
-/start 新任务：完成这篇技术文章
+三条并行推进：
 
-# 更新任务进度
-/update --comprehensive
-```
+1. 每个人装 `productivity` 管自己的任务
+2. PM 装 `product-management`，先把 `/write-spec` 和 `/stakeholder-update` 用起来
+3. 如果 Slack + Notion 已经配了 MCP，加 `enterprise-search`——跨工具的搜索能省掉大量"这个文档在哪"的来回问询
 
-### 7.3 开发自定义插件
+### 工程团队 → engineering（优先配 GitHub/GitLab MCP）
 
-参考 `productivity/` 目录结构，创建自己的插件：
+`engineering` 插件在连了源码仓库之后的价值跃升最大：
 
-```bash
-# 复制模板
-cp -r productivity/ my-custom-plugin/
+- `/standup` 自动生成日报——不是形式上的"我做了什么"，而是从 commit message 和 PR review 里提取的实际产出
+- `/review` 对 PR 做结构化审查——安全检查、性能检查、代码风格、正确性——四种检查有各自的 Skill 文件，改审查标准就是改 Markdown
+- `/incident` 走完整的事故响应流程——triage → 沟通 → 缓解 → 复盘——每个阶段有对应的模板
 
-# 修改 plugin.json
-vim my-custom-plugin/.claude-plugin/plugin.json
+如果只能配一个 MCP 连接器，配 GitHub/GitLab。如果配两个，第二个配监控（Datadog / New Relic）。
 
-# 添加自定义 skills
-mkdir -p my-custom-plugin/skills/my-skill
-```
+### 数据分析团队 → data（配数据仓库 MCP）
+
+连上 Snowflake / BigQuery / Databricks 之后，`data` 插件最直接的价值不是"自动写 SQL"（随便一个 LLM 都会写），而是 `/validate`——在报告发出去之前做一轮方法论审查。这个命令省掉的不是一个 prompt，是发出去后被同事质疑然后重新跑数的那一整天。
+
+### 销售团队 → sales（优先配 CRM）
+
+三个 Command 覆盖了销售最频繁的三个动作：
+
+- `/call-summary`：会议录音或笔记 → 结构化摘要 + 待办 + 跟进邮件草稿
+- `/forecast`：CSV 或 CRM 数据 → 加权预测 + 风险标记
+- `/pipeline-review`：Pipeline 数据 → 健康评分 + 优先级排序 + 本周行动计划
+
+如果 CRM 暂时连不上，三个命令都能接受手动数据，不阻塞使用。
+
+### 什么情况下不应该用
+
+- 你的团队还没有明确的角色分工和工作流（先梳理流程，再上插件）
+- 你的数据合规要求禁止 AI 访问生产数据库（先做安全评估）
+- 你的工作内容高度非标、没有任何可模板化的部分（插件帮不上忙）
 
 ---
 
-## 八、总结
+## 七、这件事对 AI Agent 行业意味着什么
 
-Anthropic 的 `knowledge-work-plugins` 项目代表了 AI Agent 插件体系的最高水平实践：
+回到开头的判断——这个项目的真正意义不在 11 个插件的数量或覆盖面。
 
-- **架构层面**：Commands × Skills × MCP Connectors 三层分离，职责清晰、扩展性强
-- **覆盖层面**：20 个插件覆盖几乎所有知识工作领域，是最完整的垂直插件体系
-- **工程层面**：标准化插件结构、开源可复用、MCP 协议示范实践
+它定义了三条规则，这三条规则可能比具体插件存活得更久：
 
-对于 AI Agent 开发者而言，这个项目是必读的行业标杆；对于企业而言，是快速构建领域插件体系的最佳参考模板。
+1. **AI Agent 的领域知识应该编码为文件，而不是代码**。Markdown 比 Python 更适合描述"一个好的 PRD 长什么样"或"怎么审查一份合同"。文件可以被非工程师编辑、可以被 Git 追踪、可以被 diff review。
+2. **用户意图（Commands）、AI 知识（Skills）、外部工具（Connectors）应该由三个不同的角色独立控制**。混在一起的结果是谁都不敢改。
+3. **AI Agent 的能力边界应该可以随着连接器的增减渐进扩展，而不需要重写核心逻辑**。Standalone 模式是门槛最低的信任建立方式。
+
+这三条规则共同指向一个方向：AI Agent 插件体系的**工程化**。不是"写个 prompt 然后祈祷"，而是"把知识结构化、把流程可复现、把质量可验证"。
+
+对还在观望 AI Agent 落地的团队，这条路径的最大吸引力在于——你不需要先投入一个月的集成工程才能验证价值。装一个 productivity 插件，用一周，看看 TASKS.md 和 CLAUDE.md 里长了什么。如果那两份文件里的内容让你觉得"确实比我自己维护的任务清单更准、更全"，那就继续。如果没有，卸载就行——成本就是一个文件夹。
 
 ---
 
-**🦞 每日 19:30 自动更新**
-
-*本文基于 GitHub 公开信息撰写，.plugins/ 目录结构来自项目源码分析，部分插件详情待后续深度调研补充。*
+*本文基于 GitHub [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) 公开信息撰写，数据截取至 2026-05-30。插件结构和功能细节来自仓库 README、plugin.json 和示例工作流。*
