@@ -12,26 +12,16 @@ tags: ["Claude", "Agent Skills", "Anthropic", "MCP", "工作流自动化"]
 
 # Anthropic Skills 仓库进阶实战：18个技能覆盖研发全链路
 
-> 仓库地址：[anthropics/skills](https://github.com/anthropics/skills)
->
-> Stars：135,404 | Forks：15,958 | 语言：Python
->
-> 定位：从「会用」到「会改、会写」的 Agent Skills 进阶实战指南
+[anthropics/skills](https://github.com/anthropics/skills) 仓库发布不到一个月 Stars 破 13.5 万，热度不减反增。上一篇文章我们拆了仓库的整体架构，这次钻进去看四个最有工程深度的技能：MCP Builder 教你系统性开发 MCP 服务器，Frontend Design 用设计约束对抗模型同质化倾向，文档技能（PDF/DOCX/PPTX/XLSX）撑起 Claude 的文件创建能力，Skill Creator 提供了从编写到评估的迭代方法论。
 
----
+读完这篇文章，你对下面几个问题应该有更清晰的判断：
 
-## 前言
+- MCP Builder 的四阶段流程里，哪一步最容易跳过、跳过以后会在哪一步栽跟头
+- Frontend Design 怎么用字体、配色、布局三个维度的约束让 AI 生成「不像 AI 生成的」界面
+- 文档技能的内部实现架构是什么——.docx 本质上是 ZIP+XML，PDF 技能的核心在表单字段提取
+- Skill Creator 的渐进式披露设计怎么降 token 成本
 
-两周前（2026-05-02），我们曾深入解析过 [Anthropics Skills 仓库的整体架构](/thoughts/anthropics-skills-repository-guide)，涵盖了 Skills 的核心原理、三层加载机制和在 Claude Code / Claude.ai / API 三种场景下的安装方式。
-
-两周过去，该仓库 Stars 从 **126,950** 增长到 **135,404**（周均增速约 6,000），热度不减反增。Anthropic 也在此期间对多个技能做了更新，尤其是 **mcp-builder** 和 **skill-creator** 两个工程导向技能的内容大幅扩充。与此同时，仓库新增了 `frontend-design` 等技能，并对 PDF/DOCX 等文档技能的实现细节做了补充。
-
-本文面向已有 Agent Skills 基础认识的读者，聚焦以下三个核心主题：
-
-1. **MCP Builder 技能**：Anthropic 官方出品的 MCP 服务器开发指南，四阶段完整流程
-2. **Frontend Design 技能**：如何用 Skill 约束模型生成「反 AI 味」的独特设计
-3. **文档技能（PDF/DOCX/PPTX/XLSX）**：支撑 Claude 文档能力的幕后实现架构
-4. **Skill Creator 迭代工作流**：从编写到评估到优化的完整闭环
+| → | [MCP Builder](#一mcp-builder-mcp-服务器开发的系统性方法论) | [Frontend Design](#二frontend-design对抗-ai-美学滑失的设计技能) | [文档技能](#三文档技能支撑-claude-文件能力的幕后架构) | [Skill Creator](#四skill-creator从编写到评估的完整迭代闭环) | [速览](#五18-个技能速览与分类索引) | [FAQ](#faq) | [自测](#自测)
 
 ---
 
@@ -435,25 +425,32 @@ XLSX 技能的核心依赖是 `openpyxl` 库，覆盖以下场景：
 
 ---
 
-## 总结
+## FAQ
 
-两周前我们对仓库做了整体鸟瞰，这一次我们深入了三个具体技能的实现细节。核心收获可以归纳为三点：
+**Q1: 四个文档技能为什么用 Proprietary 许可证而不是 Apache 2.0？**
 
-**第一，Skills 是工程化的，不是灵感式的。** MCP Builder 的四阶段方法论、Skill Creator 的迭代评估闭环，都在说同一件事：高质量技能需要系统性开发，而非靠一次 prompt 搞定。
+这应该是 Anthropic 的商业决策。PDF/DOCX/PPTX/XLSX 四个技能直接支撑 Claude 的付费文件能力，开源代码但保留使用限制——开发者可以研究实现细节（比如 .docx 怎么用 ZIP+XML 构建），但不能免费用于商业产品。仓库里其他技能（MCP Builder、Frontend Design 等）都是 Apache 2.0。
 
-**第二，文档技能的「Source-Available」模式值得关注。** Anthropic 将最核心的生产级技能（PDF/DOCX/PPTX/XLSX）公开了源码但不开放使用许可，这既维护了商业利益，又为开发者提供了研究材料。这种中间态的开放策略在 AI 原生应用中可能是常态。
+**Q2: Frontend Design 的设计约束会不会让生成结果走向另一个极端？**
 
-**第三，「反 AI 味」是 Skill 约束设计的试金石。** Frontend Design 技能的核心洞察——用设计风格约束对抗模型的同质化倾向——这个思路可以迁移到任何需要创造力的技能设计中：写作风格约束、代码架构约束、业务流程约束。本质上都是**在模型灵活性上叠加人类偏好**。
+会。技能文档里明确写了要求「极端且一致的风格」——极简主义就是极简到底，复古未来就是复古到底。这种策略的目的是拉开和 AI 默认审美之间的距离，而不是追求「最好看」。如果你需要更温和的设计变量，可以在 Prompt 里覆盖技能的默认约束。
 
-如果你想从「会用 Skills」进化到「会构建 Skills」，强烈建议从 `template/SKILL.md` 开始，基于 `skill-creator` 的流程迭代一个自己的技能——过程中对 Skill 的理解会远比只读文档深刻得多。
+**Q3: Skill Creator 的渐进式披露三层怎么控制 token 成本？**
 
----
+L1（name + description，~100 词）始终加载在上下文中——这是技能被触发的判断依据。L2（完整 SKILL.md，~500 行）只在技能被激活时加载。L3（脚本/模板/参考文件）按需加载——Agent 在执行到具体步骤时才读取对应文件。三层设计保证 18 个技能同时存在时，上下文窗口不会被撑满。
+
+## 自测
+
+1. 打开 MCP Builder 的指导文档，挑一个你常用的工具（GitHub、Jira、Notion 之类），用四阶段流程走一遍 MCP 服务器的开发。哪一阶段最花时间？
+2. 找一个你最近用 AI 生成的界面，对照 Frontend Design 的三步约束检查——字体是不是 Arial/Inter/Roboto？配色是不是蓝紫渐变？如果是，用技能里推荐的字体和配色重做一版。
+3. 试着用 DOCX 技能创建一个带修订追踪的 Word 文档——你不需要手动编辑 XML，Agent 会处理。验证一下 `pandoc --track-changes=all` 能不能正确提取追踪内容。
+4. 用 Skill Creator 的四阶段流程写一个你自己的 Skill。重点是 Stage 3——你的测试 prompt 覆盖了正例、负例和边界条件了吗？用 `description-optimizer` 检查触发准确率。
 
 ## 相关资源
 
-- 仓库地址：[github.com/anthropics/skills](https://github.com/anthropics/skills)
-- Agent Skills 规范：[agentskills.io](https://agentskills.io)
-- 官方博客：[Equipping Agents for the Real World with Agent Skills](https://anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
-- 入门指南：[Anthropics Skills 仓库全解析：从入门到精通的 Agent Skills 实战指南](/tech/anthropics-skills-agent-skills-repository-guide)
-- Skill Creator 专题：[Skill Creator：Anthropic 出品的 AI Agent 技能开发框架完全指南](/tech/skill-creator-anthropic-skill-authoring-guide)
-- Agent Skills 规范专题：[Agent Skills：AI Agent 能力扩展开放规范完全指南](/tech/agent-skills-ai-agent-open-specification-guide)
+- [anthropics/skills](https://github.com/anthropics/skills)
+- [Agent Skills 规范](https://agentskills.io)
+- [Equipping Agents for the Real World with Agent Skills](https://anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
+- [Anthropics Skills 仓库全解析（入门篇）](/tech/anthropics-skills-agent-skills-repository-guide)
+- [Skill Creator 开发框架完全指南](/tech/skill-creator-anthropic-skill-authoring-guide)
+- [Agent Skills 开放规范完全指南](/tech/agent-skills-ai-agent-open-specification-guide)
