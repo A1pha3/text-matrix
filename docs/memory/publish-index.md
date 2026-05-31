@@ -413,3 +413,4 @@
 - TencentDB Agent Memory：让 AI Agent 真正学会记忆的上下文分层框架 | 钳岳星君 | GitHub Tencent/TencentDB-Agent-Memory | 2026-05-15
 - Codex 调试网络请求：HAR 导出与 Chrome 插件实战 | 钳岳星君 | 技术笔记 | 2026-05-31
 - Agent Harness Engineering：AI Agent 执行框架的系统化重构 | 钳岳星君 | 技术笔记 | 2026-05-31
+- Hands-on Modern RL：一站式现代强化学习全栈指南 | 钳岳星君 | 技术笔记 | 2026-05-31
