@@ -20,10 +20,10 @@
     "note": "11:34窗口执行，19个趋势项目(markitdown/MoneyPrinterTurbo/claude-code/plugins/harness/compound-engineering-plugin/ECC/VoxCPM/stable-worldmodel/project-nomad/liteparse/FlClash/train-llm-from-scratch/RuView/data-engineering-zoomcamp/MOSS-TTS/social-auto-upload/anthropics/skills)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "github-trending-15": {
-    "lastRun": "2026-05-30",
+    "lastRun": "2026-05-31",
     "status": "all_already_covered",
-    "note": "15:00窗口执行，17个趋势项目全部已有文章覆盖(MoneyPrinterTurbo/markitdown/compound/twenty/claude-code/taste-skill/cursor/liteparse/stable-worldmodel/english-level-up-tips/esm/project-nomad/FreeDomain/ECC/stop-slop/data-engineering-zoomcamp)；无需写文章或push"
-  },
+    "note": "15:03窗口执行(延迟)，r.jina.ai成功抓取GitHub trending页面，19个趋势项目(markitdown/MoneyPrinterTurbo/claude-code/plugins/harness/compound-engineering-plugin/ECC/VoxCPM/stable-worldmodel/project-nomad/liteparse/FlClash/train-llm-from-scratch/RuView/data-engineering-zoomcamp/MOSS-TTS/social-auto-upload/anthropics/skills/codecrafters/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
+  }
   "github-trending-20": {
     "lastRun": "2026-05-30",
     "status": "all_already_covered",
