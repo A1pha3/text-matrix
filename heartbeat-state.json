@@ -15,9 +15,9 @@
     "note": "10:00窗口执行，23个趋势项目全部已有文章(content/posts/tech/)覆盖(ECC/FlClash/cursor-plugins/codecrafters/build-your-own-x/train-llm-from-scratch/VoxCPM/MOSS-TTS/anthropics/skills/social-auto-upload/RuView)；无需写文章或push"
   },
   "github-trending-11": {
-    "lastRun": "2026-05-29",
+    "lastRun": "2026-05-31",
     "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/"
+    "note": "11:34窗口执行，19个趋势项目(markitdown/MoneyPrinterTurbo/claude-code/plugins/harness/compound-engineering-plugin/ECC/VoxCPM/stable-worldmodel/project-nomad/liteparse/FlClash/train-llm-from-scratch/RuView/data-engineering-zoomcamp/MOSS-TTS/social-auto-upload/anthropics/skills)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "github-trending-15": {
     "lastRun": "2026-05-30",
@@ -40,9 +40,9 @@
     "note": "21:00窗口执行，藏经阁5项检查全部通过（500块/61K字符/4K行/17表）"
   },
   "github-trending-13": {
-    "lastRun": "2026-05-30",
-    "status": "completed",
-    "note": "16 trending repos checked; 11 already covered; wrote 5 new articles: moneyprinterturbo-ai-short-video-generation-guide.md (70k star AI video generator), compound-engineering-plugin-agent-workflow-guide.md (18k star agent workflow system), english-level-up-tips-ai-english-learning-guide.md (49.7k star AI English learning guide), freedomain-digitalplat-free-domain-guide.md (171k star free domain project), ecc-agent-harness-performance-optimization-guide.md (199k star agent harness system). Push: 63f5b4f"
+    "lastRun": "2026-05-31",
+    "status": "all_already_covered",
+    "note": "13:00窗口执行，20个趋势项目(markitdown/MoneyPrinterTurbo/claude-code/plugins/harness/compound-engineering-plugin/ECC/stable-worldmodel/project-nomad/VoxCPM/liteparse/FlClash/train-llm-from-scratch/data-engineering-zoomcamp/MOSS-TTS/social-auto-upload/anthropics/skills/codecrafters/build-your-own-x/RuView)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "github-trending-09": {
     "lastRun": "2026-05-29",
