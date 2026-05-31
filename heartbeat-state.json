@@ -1,18 +1,18 @@
 {
   "github-trending-03": {
-    "lastRun": "2026-05-30",
-    "status": "completed",
-    "note": "Checked 21 trending repos; Biohub/esm (protein world model: ESMC+ESMFold2+Atlas) had no article. Wrote 1 new article: biohub-esm-protein-world-model-guide.md (6B-param protein language model + structure prediction + 1B-protein Atlas). Push: c13e421"
+    "lastRun": "2026-05-31",
+    "status": "all_already_covered",
+    "note": "03:00窗口执行，18个趋势项目(microsoft/markitdown, harry0703/MoneyPrinterTurbo, anthropics/claude-code, cursor/plugins, revfactory/harness, EveryInc/compound-engineering-plugin, affaan-m/ECC, galilai-group/stable-worldmodel, Crosstalk-Solutions/project-nomad, OpenBMB/VoxCPM, run-llama/liteparse, chen08209/FlClash, FareedKhan-dev/train-llm-from-scratch, DataTalksClub/data-engineering-zoomcamp, OpenMOSS/MOSS-TTS, dreammis/social-auto-upload, anthropics/skills, codecrafters-io/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "browser-memory-cleanup": {
-    "lastRun": "2026-05-30",
+    "lastRun": "2026-05-31",
     "status": "completed",
-    "note": "35 Chrome processes terminated at 03:04"
+    "note": "33 Chrome processes terminated at 03:04"
   },
   "github-trending-10": {
-    "lastRun": "2026-05-29",
+    "lastRun": "2026-05-31",
     "status": "all_already_covered",
-    "note": "All 16 trending repos already have articles in content/posts/tech/"
+    "note": "10:00窗口执行，23个趋势项目全部已有文章(content/posts/tech/)覆盖(ECC/FlClash/cursor-plugins/codecrafters/build-your-own-x/train-llm-from-scratch/VoxCPM/MOSS-TTS/anthropics/skills/social-auto-upload/RuView)；无需写文章或push"
   },
   "github-trending-11": {
     "lastRun": "2026-05-29",
@@ -35,9 +35,9 @@
     "note": "All 16 trending repos already have articles in content/posts/tech/"
   },
   "藏经阁修炼": {
-    "lastRun": "2026-05-29",
+    "lastRun": "2026-05-30",
     "status": "completed",
-    "note": "21:00窗口执行，藏经阁5项检查全部通过（500块/61K字符/4K行）"
+    "note": "21:00窗口执行，藏经阁5项检查全部通过（500块/61K字符/4K行/17表）"
   },
   "github-trending-13": {
     "lastRun": "2026-05-30",
@@ -50,9 +50,9 @@
     "note": "12 trending repos checked; 10 already covered; wrote 2 new articles. Push: 64c7a51"
   },
   "ai-news-morning": {
-    "lastRun": "2026-05-30",
-    "status": "completed",
-    "note": "补做：Chrome CDP采集36kr 12条新闻+华尔街见闻10条+V2EX 7条，4份早报全部完成，push commit e9cac00"
+    "lastRun": "2026-05-31",
+    "status": "blocked",
+    "note": "07:34窗口执行失败：web_fetch所有英文源被拦截(BLOCKED:private IP)，web_search的Brave API token失效(422)。无任何可用采集工具，任务无法完成，等待修复"
   },
   "financial-morning-news": {
     "lastRun": "2026-05-30",
@@ -68,5 +68,10 @@
     "lastRun": "2026-05-30",
     "status": "completed",
     "note": "CoinGecko API采集6个加密货币价格，华尔街见闻采集3条新闻，推送飞书文档LE2YdhBpVoozlexIgdecVDr4n6T"
+  },
+  "早请安": {
+    "lastRun": "2026-05-31",
+    "status": "completed",
+    "note": "07:03窗口执行，已向师父问好并汇报当日任务计划"
   }
 }
