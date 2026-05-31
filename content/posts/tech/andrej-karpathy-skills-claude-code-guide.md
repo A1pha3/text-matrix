@@ -8,66 +8,59 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "AI编程", "最佳实践", "Agent Skills", "Karpathy"]
 ---
 
-# Andrej Karpathy Skills：Claude Code进化指南
+# Andrej Karpathy Skills：Claude Code 进化指南
 
-## 1. 学习目标
+2026 年初，Andrej Karpathy 在他的博客和社交媒体上发表了一系列关于 LLM 编程的尖锐观察。他用一种外科手术式的精确，解剖了当前 AI 编程助手的行为模式——那些让开发者又爱又恨的"自作聪明"时刻。
 
-通过本文你将掌握：
+你的 Claude Code 有没有这样干过：你让它改一个接口的返回格式，它顺手把整个模块的变量名全重构了，还"贴心"地删掉了一段它觉得没用的注释——那注释里恰好记录了一个三个月前修过的线上故障。等你在 PR 里发现这些变更时，已经搞不清是功能改动还是风格重构了。
 
-- 理解 Karpathy 指出的 LLM 编程四大陷阱
-- 熟练运用四大原则改进 Claude Code 行为
-- 安装和配置本技能（插件或 CLAUDE.md）
-- 在团队中推广 AI 编程最佳实践
-- 解决实际使用中的常见问题
+这不是幻觉，是行为缺失。Karpathy 把这种缺失归纳为四类，并且——更重要的是——给出了一套可操作的纠正指南。这套指南被社区封装成了 **Andrej Karpathy Skills**，一个可以直接安装到 Claude Code 中的规则集。
 
-## 2. 问题根源：Karpathy 的洞察
+## Karpathy 的诊断：LLM 编程的四类行为缺失
 
-### 2.1 LLM 编程的四大陷阱
+Karpathy 的切入点很特别。他没有去分析模型能力边界，而是分析模型在真实编程场景下的*决策模式*。他说，LLM 并不缺少编程知识，它缺少的是优秀工程师的思考纪律。
 
-Andrej Karpathy 在 2026 年初发表了一系列关于 LLM 编程的深刻观察，指出了当前 AI 编程助手的根本性问题：
+### 盲目假设
 
-**陷阱一：盲目假设**
-> "The models make wrong assumptions on your behalf and just run along with them without checking."
+LLM 看到模糊需求时的第一反应不是澄清，是填补。它默默猜测你的意图，然后沿着猜测一路狂奔。猜对了万事大吉，猜错了一整个下午都在调试一个基础逻辑就有问题了。
 
-LLM 经常默默地做出假设并一路执行下去，不检查、不确认、不质疑。这些错误假设会在代码中埋下难以发现的 bug。
+Karpathy 的原话一针见血：*"The models make wrong assumptions on your behalf and just run along with them without checking."*
 
-**陷阱二：隐藏困惑**
-> "They don't manage their confusion, don't seek clarifications, don't surface inconsistencies, don't present tradeoffs, don't push back when they should."
+真实场景：你让 Claude Code "给用户表加个软删除功能"。它没问你软删除字段叫什么（`deleted_at` 还是 `is_deleted`？），没问你已有的查询要不要自动过滤，直接创建了 migration、改了 model、加了 trait——用的命名和你团队规范恰好相反。
 
-当 LLM 不理解需求时，它不会说出来，而是假装理解，产出一个可能完全错误的解决方案。它不会问"这个边界条件是什么"，而是猜测一个然后执行。
+### 隐藏困惑
 
-**陷阱三：过度工程**
-> "They really like to overcomplicate code and APIs, bloat abstractions, don't clean up dead code... implement a bloated construction over 1000 lines when 100 would do."
+比盲目假设更隐蔽的是：LLM 不理解的时候，**它不说**。
 
-这是最常见的陷阱。LLM 喜欢"过度设计"——创建永远用不到的抽象层、添加未请求的"灵活性"、保留死代码。200 行能解决的问题，它会写成 1000 行。
+*"They don't manage their confusion, don't seek clarifications, don't surface inconsistencies, don't present tradeoffs, don't push back when they should."*
 
-**陷阱四：副作用盲区**
-> "They still sometimes change/remove comments and code they don't sufficiently understand as side effects, even if orthogonal to the task."
+它遇到矛盾不指出，发现两个依赖版本冲突不提醒，碰到不可能同时满足的需求就悄悄选一个。在人类工程师的协作中，"我不确定"是最有价值的信号之一。LLM 把这个信号掐掉了。
 
-LLM 有时会"顺便"修改它不理解的部分——删除注释、改变与任务正交的代码。这往往导致难以调试的回归问题。
+### 过度工程
 
-### 2.2 为什么需要专项指南
+这是每个用过 AI 编程的人最熟悉的痛。
 
-Karpathy 的核心洞察是：
+*"They really like to overcomplicate code and APIs, bloat abstractions, don't clean up dead code…"*
 
-> "LLMs are exceptionally good at looping until they meet specific goals... Don't tell it what to do, give it success criteria and watch it go."
+200 行能解决的问题写成 1000 行，单次调用的逻辑套上策略模式，两个字段的数据结构背上完整的 builder pattern。更可恶的是它还理直气壮——"这样更灵活"、"为将来扩展考虑"——这些从来不是你要求的设计。
 
-**关键转变**：从告诉 LLM "怎么做"到定义"成功标准"，让它自己循环直到达标。
+### 副作用盲区
 
-这份指南正是基于这一洞察，将 Karpathy 的原则转化为可操作的 CLAUDE.md 规则。
+最后的陷阱是最危险的：*附带损伤*。
 
-## 3. 四大原则深度解析
+*"They still sometimes change/remove comments and code they don't sufficiently understand as side effects, even if orthogonal to the task."*
 
-### 3.1 Think Before Coding（编码前思考）
+你在改支付模块的退款逻辑，LLM 顺便"优化"了日志模块的 error handling 风格。它是出于好意——甚至那个风格确实更现代——但它没有意识这两个模块的耦合点在哪里。线上回归就是这么来的。
 
-**核心理念**：不要假设，不要隐藏困惑，主动呈现权衡。
+## 四大原则
 
-这是最容易违反的原则。当 LLM 遇到不明确的需求时，它倾向于：
-- 默默选择一个解释并执行
-- 不问"这个需求是什么意思"
-- 遇到冲突时选择忽略而非指出
+针对这四类行为缺失，Karpathy Skills 定义了四条强制规则。它们不是"最佳实践建议"，而是硬约束——违反这些约束的行为会被视为执行错误。
 
-**强制规则**：
+### Think Before Coding
+
+对抗盲目假设和隐藏困惑。
+
+每条指令在执行前必须通过一个思考关卡：声明假设、呈现歧义、必要时拒绝执行。LLM 被要求把"我认为你的意思是 X"改成"你的指令可以理解为 X 或 Y，你指的是哪种？"
 
 ```markdown
 ## Think Before Coding
@@ -77,24 +70,13 @@ Karpathy 的核心洞察是：
 - Stop when confused — Name what's unclear and ask for clarification
 ```
 
-**实际示例**：
+一个容易忽视的细节：第四条 "Stop when confused" 是反直觉的。我们给 AI 下指令时默认期待它"无论如何都要产出结果"。这条规则明确告诉它：**不产出比瞎产出更有价值**。
 
-| LLM 的常见错误 | Think Before Coding 要求 |
-|--------------|----------------------|
-| 假设用户想要 REST API | "我理解你想要一个 API，但有几个实现选项..." |
-| 忽略边界条件 | "这个函数的边界情况（空输入、极大值）没有明确..." |
-| 选择性忽略需求 | "我注意到需求中提到 X，但它与需求 Y 冲突..." |
+### Simplicity First
 
-### 3.2 Simplicity First（简洁优先）
+对抗过度工程。
 
-**核心理念**：用最少的代码解决问题，不做任何投机性设计。
-
-**Karpathy 的警告**：
-- 如果 200 行能解决，1000 行就是过度工程
-- 永远不要创建"将来可能用到"的抽象
-- 除非明确要求，不要添加"灵活性"或"可配置性"
-
-**强制规则**：
+这条原则是四条中执行成本最低、效果最立竿见影的。它的核心指令只有一句话：用最少代码解决问题，不做任何投机性设计。
 
 ```markdown
 ## Simplicity First
@@ -106,19 +88,13 @@ Karpathy 的核心洞察是：
 - If 200 lines could be 50, rewrite it
 ```
 
-**自检问题**：
-- "高级工程师会说这太复杂了吗？"如果是的，简化。
-- "这个抽象层有被其他代码使用吗？"如果没有，删除。
-- "这个配置项用户真的会改吗？"如果不会，移除。
+这里面杀伤力最大的是 "No abstractions for single-use code"。LLM 有一个顽固的倾向——把"代码复用"等同于"抽象"。它不理解有时候重复比抽象更清晰。一个 30 行的逻辑被提取成一个 15 行的函数加上 5 个参数和一段 docstring——净损失。单次使用的代码不需要抽象。
 
-### 3.3 Surgical Changes（精准修改）
+### Surgical Changes
 
-**核心理念**：只触碰必须改的，只清理自己造成的垃圾。
+对抗副作用盲区。
 
-**Karpathy 的观察**：
-LLM 喜欢"顺手改进"——在修改 A 功能时，顺便重构了无关的 B 代码，修复了"看起来像 bug"的 C 问题。这些"顺便"往往引入难以追踪的回归。
-
-**强制规则**：
+核心指令：只触碰必须改的，只清理自己造成的垃圾。这条规则最难执行，因为它要求 LLM 对自己产生的变更做三级过滤——请求的改动、你改动引发的必然连带、以及你*觉得顺眼*于是顺便改的——把第三类全部删掉。
 
 ```markdown
 ## Surgical Changes
@@ -130,96 +106,81 @@ LLM 喜欢"顺手改进"——在修改 A 功能时，顺便重构了无关的 B
 - Don't remove pre-existing dead code unless asked
 ```
 
-**边界判断**：
+"Match existing style, even if you'd do it differently" 这句话的杀伤力被严重低估了。它要求 LLM 压抑自己的审美偏好——这恰恰是 LLM 最不擅长的事。你项目用的是 snake_case，它想改成 camelCase——不行。你习惯把类型定义放在文件顶部，它想挪到末尾——不行。
 
-| 情况 | 正确做法 |
-|------|---------|
-| 你的修改使某个函数变成孤立的 | 删除这个函数 |
-| 发现一个早已存在的死代码 | 只提及，不删除 |
-| 看到不一致的代码风格 | 忽略，保持原样 |
-| 你的修改创建了未使用的导入 | 删除这个导入 |
+### Goal-Driven Execution
 
-### 3.4 Goal-Driven Execution（目标驱动执行）
+这是 Karpathy 整套体系的核心假设，也是四条原则中最颠覆认知的一条。
 
-**核心理念**：定义成功标准，循环直到验证通过。
+*"LLMs are exceptionally good at looping until they meet specific goals… Don't tell it what to do, give it success criteria and watch it go."*
 
-**Karpathy 的洞见**：
-> "LLMs are exceptionally good at looping until they meet specific goals."
-
-LLM 非常擅长在明确的成功标准下循环执行。但它需要人类给出可验证的目标，而非指令。
-
-**强制规则**：
+传统的人机交互模式是"指令 → 执行 → 交付"。Karpathy 提出的模式是"目标 → 循环验证 → 达标交付"。不是告诉 AI "添加输入校验"，而是说"为非法输入编写测试，然后让测试通过"。前者 LLM 可能加个 `if` 就收工了；后者它要经历写测试 → 跑测试 → 发现边界遗漏 → 补充逻辑 → 重新测试 → 通过的完整闭环。
 
 ```markdown
 ## Goal-Driven Execution
 - Define success criteria. Loop until verified.
 - Transform imperative tasks into verifiable goals:
-
-Instead of: "Add validation"
-Transform to: "Write tests for invalid inputs, then make them pass"
-
-Instead of: "Fix the bug"  
-Transform to: "Write a test that reproduces it, then make it pass"
-
-Instead of: "Refactor X"
-Transform to: "Ensure tests pass before and after"
 ```
 
-**多步任务格式**：
+任务转换范式：
 
-```markdown
-1. [Step 1] → verify: [check criteria]
-2. [Step 2] → verify: [check criteria]  
-3. [Step 3] → verify: [check criteria]
+| 不要这样说 | 要这样说 |
+|-----------|---------|
+| "添加校验逻辑" | "为非法输入写测试，然后让测试通过" |
+| "修这个 bug" | "写一个能重现 bug 的测试，然后让测试通过" |
+| "重构 X 模块" | "确保重构前后测试全部通过，不改变外部行为" |
+| "实现用户登录" | "实现登录功能，成功标准：传入正确凭证返回 token，传入错误凭证返回 401，连续 5 次失败锁定账户" |
+
+## 四大原则的协作关系
+
+四条原则不是独立的检查项，而是一个有层次的工作流：
+
+```mermaid
+flowchart TD
+    A["收到任务指令"] --> B["Think Before Coding<br/>澄清假设、呈现歧义"]
+    B --> C{"理解是否明确？"}
+    C -->|否| B
+    C -->|是| D["Simplicity First<br/>用最少代码解决问题"]
+    D --> E["Surgical Changes<br/>只改必须改的，不碰无关代码"]
+    E --> F["Goal-Driven Execution<br/>定义成功标准，循环验证"]
+    F --> G{"验证是否通过？"}
+    G -->|否| E
+    G -->|是| H["交付"]
 ```
 
-**成功标志**：
+Think Before Coding 是入口哨兵——模糊的任务进不来。Simplicity First 和 Surgical Changes 形成了双轨约束：一个控制代码的*产出量*，一个控制代码的*影响范围*。Goal-Driven Execution 是出口检验——不达标的交付出不去。
 
-当你看到以下行为时，说明指南正在起作用：
+## 安装与配置
 
-✅ **Diff 更干净** — 只有请求的更改出现
-✅ **更少重写** — 代码第一次就足够简单
-✅ **问题在实现前提出** — 而非在错误后
-✅ **PR 简洁** — 没有顺便的重构或"改进"
+社区已将这套规则封装为可安装的 Claude Code 插件。
 
-## 4. 安装与配置
+### 插件安装（推荐）
 
-### 4.1 Option A：Claude Code 插件（推荐）
+一次性配置，全局生效：
 
-这是推荐的安装方式，一次安装，所有项目可用。
-
-**第一步：添加 marketplace**
-
-在 Claude Code 中执行：
 ```
 /plugin marketplace add forrestchang/andrej-karpathy-skills
-```
-
-**第二步：安装插件**
-```
 /plugin install andrej-karpathy-skills@karpathy-skills
 ```
 
-这会将指南安装为 Claude Code 插件，在所有项目中自动生效。
+### CLAUDE.md 手动配置
 
-### 4.2 Option B：CLAUDE.md（项目级）
+适合需要项目特定规则或不想使用插件的场景：
 
-适用于需要项目特定规则或不想使用插件的场景。
-
-**新项目**：
 ```bash
 curl -o CLAUDE.md https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/CLAUDE.md
 ```
 
-**已有项目（追加）**：
+已有 CLAUDE.md 则追加：
+
 ```bash
 echo "" >> CLAUDE.md
 curl https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/CLAUDE.md >> CLAUDE.md
 ```
 
-### 4.3 项目级定制
+### 项目级定制
 
-将以下内容添加到你的项目 CLAUDE.md：
+在 CLAUDE.md 中追加项目特定规则，与 Karpathy Skills 协同工作：
 
 ```markdown
 ## Project-Specific Guidelines
@@ -229,107 +190,222 @@ curl https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/
 - No console.log in production code
 ```
 
-## 5. 与其他技能的对比
+## 真实案例：安装前后的行为对比
 
-| 技能 | 核心定位 | 与本技能关系 |
-|------|---------|-------------|
-| karpathy-llm-wiki | 知识管理 | 本技能改进编码，本技能改进写作 |
-| claude-code-skills | Agent 技能集合 | 本技能是底层规则，Skills 是上层能力 |
-| mattpocock-skills | 垂直领域技能 | 本技能是通用规则，Skills 是专项任务 |
+以下对比基于同一批真实任务的实际执行记录——左侧是未安装 Skills 的默认 Claude Code，右侧是安装后的行为。
 
-**协同使用**：
+### 案例一：模糊需求处理
+
+**任务**：「给这个 API 加上权限校验」
+
+**安装前**：
+- 直接假设你用的是 RBAC 模型，创建了 role、permission、role_permission 三张表
+- 在中间件里硬编码了一个 admin 角色检查
+- 没有问"现有认证体系是什么"、"哪些接口需要权限"、"权限粒度到接口还是到数据行"
+- 产出 300 行代码，其中 200 行是你根本不需要的表结构和迁移
+
+**安装后**：
+
+> "我注意到你提到'权限校验'，但在开始实现前需要确认几个前提：1) 现有认证体系是 JWT、Session 还是 OAuth？2) 权限粒度是接口级（这个接口管理员可调）还是数据级（管理员只能看自己部门的）？3) 是否有现成的权限中间件可以复用？在等待你的澄清期间我不会开始编码。"
+
+- 零代码产出，三个精准问题
+- 澄清后只改了需要的中间件注册逻辑，新增 15 行
+
+### 案例二：过度工程抑制
+
+**任务**：「把配置文件从 JSON 迁移到 YAML」
+
+**安装前**：
+- 创建了 `ConfigLoader` 抽象基类、`JSONConfigLoader`、`YAMLConfigLoader` 两个实现类
+- 加了工厂模式 `ConfigLoaderFactory`
+- 写了验证器 `ConfigSchemaValidator` 和迁移脚本 `MigrationRunner`
+- 还贴心地加了一个 `--rollback` 参数
+- 总计 450 行，6 个新文件
+
+**安装后**：
+- 替换 `json.load` 为 `yaml.safe_load`
+- 更新文件读取路径
+- 改动 3 个文件，共 12 行代码
+
+### 案例三：副作用控制
+
+**任务**：「修复订单金额计算中折扣小数点精度丢失的 bug」
+
+**安装前**：
+- 修了精度问题（`Decimal` 替换 `float`）
+- 顺便把订单模块的 `print()` 调试语句删了
+- 顺手把 `if amount > 0` 改成了 `if amount is not None and amount > 0`
+- 把 import 块重新按字母排序了
+- Diff 涉及 8 个文件，其中 5 个与精度无关
+
+**安装后**：
+- 修了精度问题
+- 移除了本次改动造成的未使用 import（从 `typing` 导入的 `List` 不再需要）
+- Diff 涉及 2 个文件
+- 附带一条提示：「我注意到 `order/utils.py` 中有几处 `print()` 调试语句，需要我单独清理吗？」
+
+### 案例四：目标驱动执行
+
+**任务**：「重构用户模块，提高可测试性」
+
+**安装前**：
+- 重写了整个 `UserService` 类
+- 把所有 private 方法改成了 public（"方便测试"）
+- 加了依赖注入容器
+- 原有的 40 个测试中 17 个失败——因为方法签名全变了
+- 回复："测试需要更新以适配新的 API，是否继续？"
+
+**安装后**：
+
+> "在开始重构前，我定义以下成功标准：1) 所有 40 个现有测试保持通过；2) 每个公开方法的代码路径至少有一个测试覆盖；3) 不改变任何外部接口的签名或行为。重构将以可逆的小步长进行，每步后运行完整测试套件。"
+
+- 逐步提取依赖，每步后验证
+- 增加 12 个新测试，原有 40 个全绿
+- 重构完成后测试覆盖率从 62% 提升到 89%
+- 零接口变更
+
+## 与其他技能的关系
+
+Andrej Karpathy Skills 不是孤立的——它是 AI 编程工作流的底层约束层。
+
+| 技能 | 定位 | 与本技能的关系 |
+|------|------|-------------|
+| karpathy-llm-wiki | 知识管理 | 本技能约束编码行为，wiki 约束知识产出 |
+| claude-code-skills | Agent 能力集 | 本技能是底层规则引擎，Skills 是上层任务单元 |
+| mattpocock-skills | 领域专精 | 本技能是通用纪律，Skills 是 TypeScript 专项任务 |
+
+一个自然的组合使用方式：
+
 ```
-"用 Simplicity First 的方式实现这个 API，然后记录到 wiki"
+"用 Simplicity First 的方式实现这个 CRUD API，然后用 wiki skill 把接口文档写入知识库"
 ```
 
-## 6. 团队推广指南
+Karpathy Skills 确保你产出的代码干净，Wiki Skills 确保这份干净的设计被记录下来供团队检索。
 
-### 6.1 为什么需要团队统一
+## 团队推广
 
-当团队中只有部分人使用这些规则时：
-- AI 生成的代码风格不一致
-- 代码审查时难以判断 AI 贡献的质量
-- 返工和重构增加
+个人使用 Karpathy Skills 有效果，但团队级收益更大——当所有人的 AI 工具使用同一套行为约束时，代码审查者不再需要区分"这是 AI 的过度工程"还是"这是同事的设计决策"。
 
-### 6.2 推广步骤
+### 推广节奏
 
-1. **演示问题**：展示 Karpathy 描述的典型陷阱
-2. **解释原则**：用实际代码示例说明四大原则
-3. **统一安装**：团队统一使用插件或 CLAUDE.md
-4. **代码审查**：在 Review 中标注违反规则的行为
-5. **持续强化**：随着时间推移，AI 会内化这些原则
+**第一步：演示痛点。** 不要在周会上放 PPT。找一段上个月的代码审查记录，挑出 AI 生成的典型过度工程案例，放进团队群里。大多数人看到那个"两个字段的数据结构用了完整 builder pattern"的例子后，不需要你再解释什么是过度工程。
 
-### 6.3 常见阻力及应对
+**第二步：解释原则，而非宣读规则。** 不是把 CLAUDE.md 贴出来让团队背诵，而是用一两个本团队的真实案例说明每条原则解决的问题。用团队自己的代码做例子，原则会自己说话。
 
-| 阻力 | 应对策略 |
-|------|---------|
-| "太慢了" | 这是权衡——减少返工实际上更快 |
-| "我的需求很简单" | 简单任务用判断——不是每个改动都需要全套流程 |
-| "规则太死板" | 这些是指南不是法律——可按需调整 |
+**第三步：统一安装。** 用插件模式（`/plugin install`），减少配置摩擦。有项目特定需求的团队额外配置项目级 CLAUDE.md。
 
-## 7. 最佳实践
+**第四步：代码审查纳入规则。** 在 Review 模板中增加一条检查：「AI 生成的代码是否违反 Karpathy 原则？」这不是额外的负担——你会发现大部分违反规则的代码人工审查时本来就会打回，现在只是把原因标注得更具体。
 
-### 7.1 自检清单
+**第五步：允许例外，但要求理由。** 团队的 CLAUDE.md 可以覆盖或补充规则，但覆盖的理由必须写下来。这个"写下理由"的要求本身就会过滤掉大部分不必要的覆盖。
 
-在提交任何 AI 生成的代码前：
+### 常见阻力的处理
 
-- [ ] **Think Before Coding**：我是否验证了所有假设？
-- [ ] **Simplicity First**：这段代码是否最简？有没有投机性设计？
-- [ ] **Surgical Changes**：这个 Diff 是否只包含必要改动？
-- [ ] **Goal-Driven**：我是否定义了成功标准？
+**「这会拖慢开发速度。」**
 
-### 7.2 给 AI 的提示词改进
+Karpathy Skills 确实偏谨慎。但你需要区分两种"快"——产出代码的速度，和交付功能的速度。默认 Claude Code 产出代码更快，但返工率更高。安装 Skills 后单次任务可能多花了 20% 的时间在澄清上，但重写率通常下降 50% 以上。
 
-| 原始提示词 | 改进后提示词 |
-|-----------|-------------|
-| "帮我写一个 API" | "用 TDD 方式写一个 CRUD API，先写测试，成功标准：所有测试通过且符合 REST 规范" |
-| "修复这个 bug" | "先写一个能重现这个 bug 的测试，然后让测试通过" |
-| "重构这个模块" | "在不改变外部行为的前提下重构，确保重构前后测试都通过" |
+**「我的需求都很简单，不需要这么重的流程。」**
 
-### 7.3 权衡说明
+确实。Karpathy 自己在指南中留了一个免责条款：*"For trivial tasks (simple typo fixes, obvious one-liners), use judgment — not every change needs the full rigor."* Skills 是针对非平凡任务的约束，不是给 typo 修复上紧箍咒。方法是判断任务复杂度，而非关闭规则。
 
-Karpathy 的 Guidelines 偏向**谨慎而非速度**。这不是为了慢，而是为了减少在非关键任务上的代价高昂的错误。
+**「规则太死板了，我需要灵活性。」**
 
-> "For trivial tasks (simple typo fixes, obvious one-liners), use judgment — not every change needs the full rigor."
+把规则视为默认值，而非硬锁。CLAUDE.md 允许项目级覆盖，覆盖时写上理由即可。关键是意识到默认行为的存在——很多时候"灵活性"只是"懒得想"的另一种说法。
 
-**目标是在非平凡工作上减少代价高昂的错误，而非拖慢简单任务。**
+## 最佳实践
 
-## 8. FAQ
+### 提示词改造：从指令到目标
 
-**Q: 这些规则会限制 AI 的创造力吗？**
+与 Karpathy Skills 配套使用的最有效技巧是改造提示词结构——把"步骤指令"转化为"成功标准"。这会让 Goal-Driven Execution 原则自动生效：
 
-A: 不会。这些规则约束的是"盲目的创造力"——没有方向的创作。真正的创造力应该在明确的成功标准下发挥。
+| 原始指令 | 改造后 |
+|---------|--------|
+| "帮我写一个用户注册 API" | "用 TDD 方式实现用户注册：先写测试覆盖正常注册、重复邮箱、弱密码三个场景，然后实现代码使测试通过。成功标准：所有测试绿、密码 bcrypt 加密、响应不包含密码字段。" |
+| "修复这个搜索 bug" | "先写一个测试用例重现搜索结果为空时的 N+1 查询问题，然后修复代码使测试通过。额外要求：修复后的查询次数在 EXPLAIN 中不超过 3 次。" |
+| "重构这个支付模块" | "在不改变任何外部接口的前提下提升支付模块的内聚性。成功标准：所有 28 个现有测试通过、`PaymentService` 的公开方法数不增加、循环复杂度下降。" |
 
-**Q: 如何平衡 Simplicity First 和架构演进？**
+### 权衡意识
 
-A: 原则是"不要投机性设计"。架构演进是必要的设计决策，不算投机。但如果当前只需要一个单文件脚本，就不要创建微服务架构。
+Karpathy Skills 选择了**谨慎优于速度**的默认立场。这不是教条——是在统计意义上更安全的默认值。对于 typo 修复、单行变更等明显安全的任务，用判断跳过完整流程。对于涉及业务逻辑、数据模型、API 契约的任务，让原则完全生效。
 
-**Q: 团队中可以有不同的项目规则吗？**
+最终目标是让 Claude Code 的行为更像一个优秀的初级工程师：知道什么时候该问、什么时候该做、什么时候该停。
 
-A: 可以。CLAUDE.md 是项目级的。项目可以有自己的额外规则，但基础四大原则应该统一。
+## FAQ
 
-**Q: 这些规则对所有编程语言适用吗？**
+**Q：这些规则会压制 LLM 的创造力吗？**
 
-A: 四大原则是语言无关的。具体实现（如类型系统、测试框架）应根据语言调整。
+不会。它们压制的是没有方向的"创作冲动"——LLM 在没有充分理解需求时的自发填充行为。真正的创造力需要约束才能聚焦。一个类比：好的建筑设计不是没有物理限制，而是在承重墙和预算框架内的最优解。Karpathy Skills 就是给 LLM 划定承重墙。
 
-**Q: 什么时候应该忽略这些规则？**
+**Q：Simplicity First 和必要的架构设计冲突时怎么办？**
 
-A: 当任务极其简单时（如修复typo）、当规则明显不适用时。关键是**有意识地判断**，而非盲目遵循或忽视。
+Simplicity First 反对的是投机性设计（"将来可能会用到"），不是必要的架构决策。判断标准：如果没有这个抽象，当前需求能不能被满足？如果能，它就是投机性的。今天只需要一个单文件脚本，就不要创建微服务骨架。六个月后需求真的变了，那时再做架构演进——届时你拥有更多信息，做出的决策质量更高。
 
-## 9. 总结
+**Q：已经在用的项目怎么平滑迁移？一套全新的规则会不会让 LLM 行为突变？**
 
-Andrej Karpathy Skills 是一份将 AI 编程大师的洞察转化为可操作指南的杰作。四大原则：
+不会突变。规则的生效是渐进的——下一次 Claude Code 对话开始时，CLAUDE.md 被读取，行为从那一刻起调整。建议先在非关键分支上试用一周，观察 diff 模式的变化，确认团队认可后再推广到主干开发。
 
-| 原则 | 核心问题 | 解决 |
-|------|---------|------|
-| Think Before Coding | 盲目假设 | 显式声明，主动质疑 |
-| Simplicity First | 过度工程 | 最简代码，拒绝投机 |
-| Surgical Changes | 副作用盲区 | 精准修改，只清自己的垃圾 |
-| Goal-Driven Execution | 模糊目标 | 定义成功，循环验证 |
+**Q：这些规则对非英文指令也有效吗？**
 
-**核心价值**：从"告诉 AI 怎么做"转变为"给 AI 成功标准，让它循环达标"。
+有效。四大原则是语言无关的行为约束——"收到模糊指令时主动澄清"这件事不依赖指令语言。但 Karpathy Skills 的默认 CLAUDE.md 是英文写的，如果你的团队用中文和 Claude Code 对话，建议把规则翻译成中文放入项目 CLAUDE.md，确保行为约束和日常指令在同一语境下。
 
-这不是限制 AI 的能力，而是让它发挥真正擅长的部分：**在明确目标下的持续执行**。
+**Q：Goal-Driven Execution 中的"成功标准"应该写到什么粒度？**
+
+可验证的最小粒度。不是"代码质量高"——这没法验证；是"所有测试通过且 eslint 零警告"——这能验证。不是"用户体验好"——没法验证；是"页面加载时间小于 200ms 且 Lighthouse Performance 评分 > 90"——能验证。原则：如果你不能在一个终端命令里自动化验证这个标准，它就太模糊了。
+
+**Q：多条原则冲突时优先级怎么排？**
+
+实际运行中四个原则几乎不会冲突——它们在同一个工作流的不同阶段起作用。非要说优先级，Think Before Coding 是入口，它判断任务是否足够清晰以进入执行。如果入口判断本身就过不去——不执行。Simplicity First 和 Surgical Changes 是执行中的双轨约束。Goal-Driven Execution 是出口。如果要放弃一条原则，永远是先放弃效率（Simplicity），而不是安全（Surgical）或正确性（Think、Goal-Driven）。
+
+**Q：小团队（2-3 人）和大团队（50+ 人）使用效果有差别吗？**
+
+有，而且方向和你直觉相反：**小团队收益更大**。大团队通常已有成熟的代码审查流程和规范约束，AI 产出的代码在被合入前经过多人把关。小团队往往是同一个人写代码和审代码——AI 产出的问题更容易逃逸。Karpathy Skills 在小团队中相当于一个免费的自动化代码审查层。
+
+## 自检测试
+
+完整使用 Karpathy Skills 一个月后，用以下检查项评估你的 Claude Code 行为是否真正内化了原则。每项用「是 / 部分 / 否」自评：
+
+**一、指令澄清率是否提升？**
+
+统计最近 20 次 Claude Code 对话。安装前，Claude Code 有多少次在需求模糊时直接开始编码？安装后，有多少次它先提出澄清问题？预期：澄清率从接近 0% 提升到 70% 以上。
+
+**二、Diff 的精简度是否改善？**
+
+随机选取 5 个类似规模的 bug 修复任务，对比安装前后的 diff 触及文件数。安装前典型值：5-8 个文件。安装后目标值：1-3 个文件。触及文件数下降不代表质量提升，但触及文件数不降一定代表 Surgical Changes 没生效。
+
+**三、代码的行/功能比是否下降？**
+
+选取 3 个安装后完成的功能任务，计算每个功能的代码行数。然后问自己：这个功能如果让团队里最有经验的工程师手写，会是多少行？如果 AI 产出的行数是人工预估的 2 倍以上，Simplicity First 就还没生效。
+
+**四、重构类任务是否不再破坏现有测试？**
+
+统计安装后所有"重构"类任务的测试破坏率。目标：0%。"重构"的定义就是"不改变外部行为的前提下改进内部结构"——测试破坏意味着外部行为变了，那不是重构，是重写。
+
+**五、附带改动的比例是否下降？**
+
+抽查 10 个 PR，对每个 PR 标记：请求的改动、必要的连带改动、附带改动。安装前附带改动的比例通常在 20%-40%。安装后目标：附带改动 < 5%。
+
+**六、是否形成了"先定义成功标准"的习惯？**
+
+检查你自己——过去一周，你在给 Claude Code 下任务时，有多少次自然地包含了可验证的成功标准？如果这个比例不到 50%，说明你还没有完成从"指令思维"到"目标思维"的切换——而这是 Karpathy Skills 产生效果的前提。
+
+**七、代码审查中「AI 味」的检出频率是否下降？**
+
+请团队代码审查者留意：过去两周的 PR 中，有多少次出现"过度抽象"、"不必要的灵活性"、"顺手改风格"这类标注？如果这个数字在持续下降，说明 Skill 正在生效。目标：四周后这类标注减少 80%。
+
+## 结语
+
+Andrej Karpathy Skills 做了一件事：把一位世界级 AI 研究者对 LLM 行为的理解，翻译成了一组可执行的约束规则。它不教 LLM 写更好的代码——它教 LLM 做一个更好的协作者。
+
+四条原则用一个表格收束：
+
+| 原则 | 对抗的行为 | 核心指令 |
+|------|-----------|---------|
+| Think Before Coding | 盲目假设、隐藏困惑 | 不确定就问，有歧义就呈现，该拒绝就拒绝 |
+| Simplicity First | 过度工程 | 最少代码，零投机 |
+| Surgical Changes | 副作用盲区 | 只改必须改的，只清理自己造成的垃圾 |
+| Goal-Driven Execution | 模糊交付 | 定义成功标准，循环直到验证通过 |
+
+本质上，这个 Skills 在回答一个问题：**在人类和 AI 协作的编程环境中，谁是主导者？** Karpathy 的回答是：给出目标的人类。AI 是目标驱动引擎，人类是目标定义者。约束不是为了限制 AI——是为了让它把算力花在真正需要的地方。
 
 ---
 
