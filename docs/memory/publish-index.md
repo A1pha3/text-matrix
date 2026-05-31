@@ -411,3 +411,4 @@
 
 - Taste-Skill：AI前端的「反垃圾」框架，让大模型输出不再油腻 | 钳岳星君 | GitHub Leonxlnx/taste-skill | 2026-05-13
 - TencentDB Agent Memory：让 AI Agent 真正学会记忆的上下文分层框架 | 钳岳星君 | GitHub Tencent/TencentDB-Agent-Memory | 2026-05-15
+- Codex 调试网络请求：HAR 导出与 Chrome 插件实战 | 钳岳星君 | 技术笔记 | 2026-05-31
