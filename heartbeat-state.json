@@ -23,11 +23,11 @@
     "lastRun": "2026-05-31",
     "status": "all_already_covered",
     "note": "15:03窗口执行(延迟)，r.jina.ai成功抓取GitHub trending页面，19个趋势项目(markitdown/MoneyPrinterTurbo/claude-code/plugins/harness/compound-engineering-plugin/ECC/VoxCPM/stable-worldmodel/project-nomad/liteparse/FlClash/train-llm-from-scratch/RuView/data-engineering-zoomcamp/MOSS-TTS/social-auto-upload/anthropics/skills/codecrafters/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
-  }
+  },
   "github-trending-20": {
-    "lastRun": "2026-05-30",
-    "status": "all_already_covered",
-    "note": "20:00窗口执行，17个趋势项目全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
+    "lastRun": "2026-05-31",
+    "status": "completed",
+    "note": "20:07窗口执行，15个趋势项目中4个缺失文章(nesquena/hermes-webui/supermemoryai/supermemory/nicobailon/pi-subagents/emmabostian/developer-portfolios)，写了4篇新文章并push GitHub，commit bd8e701"
   },
   "github-trending-23": {
     "lastRun": "2026-05-29",
