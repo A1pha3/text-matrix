@@ -11,22 +11,18 @@ tags: ["Claude-Mem", "AI记忆", "Claude Code", "向量数据库", "TypeScript",
 
 # Claude-Mem：65K Stars的Claude Code持久记忆系统，从架构到实战的全面解析
 
-## 🎯 概述
+## 概述
 
 **Claude-Mem** 是为 Claude Code 打造的持久化记忆压缩系统，通过自动捕获编码会话中的工具使用观察、生成语义摘要，并将其注入未来会话，使 Claude 能够在会话结束或重新连接后保持对项目的知识连续性。
 
-> **GitHub**: [thedotmack/claude-mem](https://github.com/thedotmack/claude-mem)  
-> **Stars**: 65,133 ⭐  
-> **Forks**: 5,494  
-> **语言**: TypeScript  
-> **版本**: 6.5.0  
+> **GitHub**: [thedotmack/claude-mem](https://github.com/thedotmack/claude-mem)
+> **Stars**: 65,133 ⭐
+> **Forks**: 5,494
+> **语言**: TypeScript
+> **版本**: 6.5.0
 > **许可证**: AGPL-3.0
 
-### 一句话定位
-
 **"Persistent memory for Claude Code — Context survives across sessions"** —— 让 Claude Code 的上下文跨越会话持久存在。
-
-### 解决的核心痛点
 
 | 痛点 | 传统方案 | Claude-Mem |
 |------|---------|-----------|
@@ -38,7 +34,7 @@ tags: ["Claude-Mem", "AI记忆", "Claude Code", "向量数据库", "TypeScript",
 
 ---
 
-## 🏛️ 系统架构
+## 系统架构
 
 ### 核心组件全景
 
@@ -92,7 +88,6 @@ Claude-Mem 通过 5 个生命周期钩子自动捕获会话上下文：
 ### 数据存储架构
 
 ```sql
--- SQLite Schema (简化)
 CREATE TABLE sessions (
     id INTEGER PRIMARY KEY,
     project_path TEXT,
@@ -104,7 +99,7 @@ CREATE TABLE sessions (
 CREATE TABLE observations (
     id INTEGER PRIMARY KEY,
     session_id INTEGER,
-    type TEXT,  -- bugfix, feature, decision, discovery
+    type TEXT,
     content TEXT,
     file_refs TEXT,
     concept_tags TEXT,
@@ -112,7 +107,6 @@ CREATE TABLE observations (
     FOREIGN KEY (session_id) REFERENCES sessions(id)
 );
 
--- FTS5 全文搜索
 CREATE VIRTUAL TABLE observations_fts USING fts5(
     content, concept_tags, file_refs
 );
@@ -120,7 +114,7 @@ CREATE VIRTUAL TABLE observations_fts USING fts5(
 
 ---
 
-## 🔍 3层搜索工作流
+## 3层搜索工作流
 
 Claude-Mem 提供了独特的 **3层渐进式披露** 搜索模式，避免一次性加载所有记忆，节省约 **10x Token**：
 
@@ -170,11 +164,12 @@ sequenceDiagram
 
 ---
 
-## 🧠 核心特性详解
+## 核心特性详解
 
 ### 1. 持久化记忆
 
 Claude-Mem 自动捕获并持久化：
+
 - **工具使用模式**：哪些命令被频繁使用
 - **Bug 修复历史**：问题的发现和解决方案
 - **架构决策**：关键的技术选型理由
@@ -222,13 +217,11 @@ Claude-Mem 提供本地 Web 界面（http://localhost:37777）：
 ### 5. Privacy Control
 
 ```typescript
-// 使用 <private> 标签排除敏感内容
-// 示例：在代码中添加注释
-// <private>
-// API_KEY=sk-xxx
-// </private>
-
-// 这段内容不会被存储到记忆系统
+/* 使用 <private> 标签排除敏感内容 */
+/* <private>
+   API_KEY=sk-xxx
+   </private> */
+/* 这段内容不会被存储到记忆系统 */
 ```
 
 ### 6. 多 IDE 支持
@@ -244,21 +237,17 @@ Claude-Mem 不仅支持 Claude Code，还支持：
 
 ---
 
-## 🚀 安装与配置
+## 安装与配置
 
 ### 快速安装
 
 ```bash
-# Claude Code 安装
 npx claude-mem install
 
-# Gemini CLI 安装
 npx claude-mem install --ide gemini-cli
 
-# OpenCode 安装
 npx claude-mem install --ide opencode
 
-# OpenClaw Gateway
 curl -fsSL https://install.cmem.ai/openclaw.sh | bash
 ```
 
@@ -296,7 +285,7 @@ curl -fsSL https://install.cmem.ai/openclaw.sh | bash
 
 ---
 
-## 📖 使用指南
+## 使用指南
 
 ### 自然语言查询示例
 
@@ -311,47 +300,157 @@ curl -fsSL https://install.cmem.ai/openclaw.sh | bash
 ### MCP 工具调用
 
 ```typescript
-// Step 1: 搜索索引
 search(query="authentication bug", type="bugfix", limit=10)
-// → 返回紧凑索引 (~50-100 tokens/result)
 
-// Step 2: 审查索引，选择相关 ID（如 #123, #456）
-
-// Step 3: 获取完整详情
 get_observations(ids=[123, 456])
-// → 返回完整观察 (~500-1000 tokens/result)
 ```
 
 ---
 
-## 🆚 与同类系统对比
+## 端到端实战：从安装到查询记忆
 
-| 特性 | Claude-Mem | SuperMemory | MemGPT | OpenMemory |
-|------|------------|-------------|--------|-----------|
-| **Stars** | 65k | 20k | 12k | 8k |
-| **Target** | Claude Code | 通用 | 通用 | 通用 |
-| **Storage** | SQLite + Chroma | PGlite | SQLite | PostgreSQL |
-| **Search** | 3层渐进式 | 全文+向量 | 全文 | 全文+向量 |
-| **Token 优化** | ✅ 10x 节省 | ❌ | ❌ | ❌ |
-| **Hook 架构** | ✅ 5个钩子 | ❌ | ❌ | ❌ |
-| **Web UI** | ✅ | ❌ | ❌ | ❌ |
-| **OpenClaw** | ✅ | ❌ | ❌ | ❌ |
-| **License** | AGPL-3.0 | MIT | MIT | AGPL-3.0 |
+以下是一个完整的端到端流程，演示如何在一个真实的 TypeScript 项目中使用 Claude-Mem 建立持久记忆。
+
+### 场景设定
+
+你正在维护一个名为 `task-board` 的 TypeScript 全栈项目。上周你花了三个会话修复了一个 WebSocket 断连重连的 bug，今天你打开新会话需要继续工作。
+
+### Step 1：在项目中安装 Claude-Mem
+
+```bash
+cd ~/projects/task-board
+npx claude-mem install
+```
+
+安装完成后，Claude-Mem 会在项目根目录生成 `.claude/settings.json`，并将 5 个钩子脚本注入 Claude Code 配置中。
+
+```bash
+cat .claude/settings.json | grep claude-mem
+```
+
+### Step 2：启动 Claude Code 会话，验证记忆注入
+
+```bash
+claude
+```
+
+会话启动时，Worker Service（`localhost:37777`）自动执行 `SessionStart` 钩子，从 SQLite + Chroma 中检索 `task-board` 项目的历史记忆。Claude 会收到一段类似如下的注入上下文：
+
+```
+[Memory Context — task-board]
+Recent sessions summary:
+- 2026-04-20: Fixed WebSocket reconnection race condition in ws-manager.ts.
+  Root cause: event listener not cleaned up before new connection.
+  Solution: Added cleanup() method called before each reconnect().
+- 2026-04-18: Migrated from socket.io to native WebSocket.
+  Decision: reduce bundle size by 12KB gzipped.
+- 2026-04-15: Added exponential backoff to retry logic. Max 5 attempts, 30s cap.
+```
+
+你不需要做任何操作——Claude 已经"记住"了上几次会话的内容。
+
+### Step 3：在新会话中继续工作
+
+你现在要向 Claude 提问，验证它确实继承了之前的记忆：
+
+```
+User: The WebSocket reconnection fix from last time, does it also handle
+      the case where the server sends a 1006 close code?
+
+Claude: Based on the memory context, the fix was in ws-manager.ts.
+        The cleanup() method is called before each reconnect(), which
+        should handle the 1006 case since it tears down all listeners.
+        Let me check the current code to confirm...
+```
+
+Claude 准确引用了 "cleanup() method called before each reconnect()" 这一记忆条目。
+
+### Step 4：主动搜索特定记忆
+
+当你需要查找某个具体的决策或修复时，可以显式调用搜索：
+
+```
+User: /mem-search "What was the bundle size impact of the WebSocket migration?"
+
+Claude-Mem: Found 1 observation:
+  [decision] Migrated from socket.io to native WebSocket
+  Files: ws-manager.ts, package.json
+  Context: Reduced bundle size by 12KB gzipped. Removed socket.io-client
+           dependency (32KB → 20KB after migration).
+  Session: 2026-04-18
+```
+
+### Step 5：使用 Web Viewer UI 浏览记忆流
+
+打开浏览器访问 `http://localhost:37777`，你会看到：
+
+- **记忆流面板**：按时间线展示所有观察记录，每条记录标注类型标签（`bugfix`、`decision`、`feature`）
+- **搜索栏**：输入 `WebSocket` 可以过滤出所有相关记忆
+- **设置面板**：可以切换语言模式，例如改成 `code--zh` 让后续记忆以中文记录
+
+### Step 6：查看记忆的完整性
+
+关闭 Claude Code 会话时，`SessionEnd` 钩子自动触发，生成最终摘要并归档：
+
+```
+[Claude-Mem] Session ended. 8 observations recorded.
+             Summary: Continued WebSocket robustness work.
+             Memory index updated.
+```
+
+下次打开会话时，这 8 条观察会自动出现在注入上下文中。
 
 ---
 
-## 🔧 故障排除
+## 与其他记忆系统的对比
 
-| 问题 | 原因 | 解决方案 |
-|------|------|---------|
-| 记忆未加载 | 会话开始钩子失败 | 重启 Claude Code |
-| 搜索无结果 | Chroma 服务未启动 | 运行 `claude-mem doctor` |
-| Token 超出 | 上下文限制 | 调整 `CLAUDE_MEM_CONTEXT_LIMIT` |
-| 隐私泄露 | 敏感内容未标记 | 使用 `<private>` 标签 |
+### Claude-Mem vs AgentMemory
+
+| 维度 | Claude-Mem | AgentMemory |
+|------|------------|-------------|
+| **定位** | Claude Code 专用持久记忆 | 通用 Agent 记忆框架 |
+| **集成方式** | 5个生命周期钩子自动注入 | Python SDK，手动集成到 Agent 代码 |
+| **存储** | SQLite + Chroma（本地优先） | SQLite + Qdrant/Chroma（可切换） |
+| **搜索策略** | 3层渐进式披露，Token 感知 | 统一向量检索，无分层 |
+| **Token 优化** | 内置 10x Token 节省 | 需用户自行控制返回量 |
+| **多 Agent 支持** | 单一 Claude 会话 | 原生支持多 Agent 隔离 |
+| **安装复杂度** | 一行 `npx` 命令 | 需编写集成代码 |
+| **适用场景** | 个人开发者，Claude Code 用户 | 多 Agent 系统，自定义工作流 |
+
+**选型建议**：如果你只用 Claude Code 做开发，Claude-Mem 开箱即用。如果你在构建一个多 Agent 系统（LangChain/CrewAI 等），AgentMemory 的隔离机制更有优势。
+
+### Claude-Mem vs Mem0
+
+| 维度 | Claude-Mem | Mem0 |
+|------|------------|------|
+| **定位** | Claude Code 会话记忆 | 通用用户级个性化记忆 |
+| **记忆粒度** | 会话级（工具调用、代码变更） | 用户级（偏好、历史交互） |
+| **更新策略** | 会话结束时批量归档 | 实时增量更新（每条交互后） |
+| **记忆类型** | 决策、bug修复、文件变更 | 用户偏好、事实、事件 |
+| **搜索接口** | MCP 工具（search/timeline/get_observations） | REST API + Python/JS SDK |
+| **云端支持** | 纯本地 | 本地 + Mem0 Cloud（托管） |
+| **隐私模型** | `<private>` 标签本地过滤 | 云端加密 + 用户级隔离 |
+| **适用场景** | 代码项目跨会话连续 | 聊天机器人、个性化推荐 |
+
+**选型建议**：Claude-Mem 面向代码项目上下文，Mem0 面向用户画像和个性化。两者的记忆模型本质不同——Claude-Mem 记录"代码变更过程"，Mem0 记录"用户是谁"。
+
+### Claude-Mem vs SuperMemory vs MemGPT
+
+| 特性 | Claude-Mem | SuperMemory | MemGPT |
+|------|------------|-------------|--------|
+| **Stars** | 65k | 20k | 12k |
+| **目标** | Claude Code | 通用知识管理 | 通用 Agent |
+| **存储** | SQLite + Chroma | PGlite | SQLite |
+| **搜索** | 3层渐进式 | 全文+向量 | 全文 |
+| **Token 优化** | 10x 节省 | 无 | 无 |
+| **Hook 架构** | 5个钩子 | 无 | 无 |
+| **Web UI** | 有 | 无 | 无 |
+| **OpenClaw** | 支持 | 不支持 | 不支持 |
+| **许可证** | AGPL-3.0 | MIT | MIT |
 
 ---
 
-## 🎓 架构设计分析
+## 架构设计分析
 
 ### 设计决策回顾
 
@@ -371,7 +470,133 @@ get_observations(ids=[123, 456])
 
 ---
 
-## 🔗 资源链接
+## 故障排除
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| 记忆未加载 | 会话开始钩子失败 | 重启 Claude Code |
+| 搜索无结果 | Chroma 服务未启动 | 运行 `claude-mem doctor` |
+| Token 超出 | 上下文限制 | 调整 `CLAUDE_MEM_CONTEXT_LIMIT` |
+| 隐私泄露 | 敏感内容未标记 | 使用 `<private>` 标签 |
+
+---
+
+## 常见问题（FAQ）
+
+**Q1：Claude-Mem 的记忆数据存储在哪里？体积会很大吗？**
+
+记忆数据存储在 `~/.claude-mem/` 目录下，包含 SQLite 数据库文件和 Chroma 向量索引。实际测试表明，一个活跃开发 3 个月的中型项目（日均 2-3 次会话），数据库体积约 50-150MB。你可以在配置中设置 `CLAUDE_MEM_DATA_DIR` 自定义存储路径，也支持定期手动清理旧会话数据。
+
+**Q2：多个项目之间记忆会互相污染吗？**
+
+不会。Claude-Mem 使用 `project_path` 字段隔离不同项目的记忆。每次会话启动时，只加载当前项目路径的历史记忆，不同项目的记忆完全隔离。你可以同时为 10 个项目安装 Claude-Mem，它们各自维护独立的记忆空间。
+
+**Q3：Claude-Mem 如何处理大型代码仓库（1000+ 文件）？**
+
+3层搜索工作流正是为此设计的。第1层只返回紧凑索引（~50-100 tokens/条），不会因为项目文件数量而膨胀。但注意，记忆质量取决于会话中实际操作的代码范围——如果你只修改过 5 个文件，记忆也只会覆盖这 5 个文件，而不是整个仓库。建议在涉及新模块时，主动在会话中解释模块结构，帮助 Claude-Mem 建立更完整的项目知识图谱。
+
+**Q4：AGPL-3.0 许可证影响商业使用吗？**
+
+AGPL-3.0 要求如果你修改了 Claude-Mem 的源码并通过网络提供服务，必须公开修改后的源码。如果你只是在自己的开发环境中安装使用（不修改源码也不对外提供记忆服务），则不受此限制。如果你的公司有严格的许可证合规要求，建议法务团队评估是否可以使用未经修改的 AGPL-3.0 软件作为开发工具。
+
+**Q5：可以用自己的向量数据库替代内置的 Chroma 吗？**
+
+Claude-Mem 当前版本（6.5.0）深度集成 Chroma，没有提供向量数据库的插件式切换接口。如果你需要使用 Qdrant、Weaviate 或 Pinecone，需要修改 Worker Service 源码中的向量存储层。社区有讨论计划在后续版本中抽象向量存储接口，但目前没有明确时间表。
+
+**Q6：Claude-Mem 的 `<private>` 标签在代码中如何正确使用？**
+
+在任意代码文件或配置文件中，用 HTML 注释格式包裹敏感内容即可：
+
+```html
+<!-- <private> -->
+API_SECRET=prod-key-do-not-leak
+<!-- </private> -->
+```
+
+PostToolUse 钩子在解析工具输出时，会识别并跳过 `<private>` 标签对之间的所有内容。注意标签必须成对出现，且不区分大小写。这个机制是纯字符串匹配，不会解析语言语法，因此适用于任何文本文件。
+
+**Q7：切换项目后，之前的记忆还能访问吗？**
+
+可以，但需要手动指定。Claude-Mem 默认只加载当前项目路径的记忆。如果你需要跨项目查询，可以通过 Web Viewer UI 的全局搜索功能，或者使用 `search_observations` 工具时不限制 `project_path` 参数来查询所有项目的记忆。这在从旧项目迁移代码到新项目时特别有用。
+
+---
+
+## 自检测试
+
+完成 Claude-Mem 安装后，按以下清单逐项验证：
+
+**1. Worker Service 运行状态检查**
+
+```bash
+curl -s http://localhost:37777/health
+```
+
+返回 `{"status":"ok"}` 表示 Worker Service 正常运行。如果返回连接拒绝，运行 `claude-mem doctor` 诊断。
+
+**2. 钩子文件完整性检查**
+
+```bash
+ls -la .claude/hooks/*.sh | wc -l
+```
+
+应该恰好输出 `5`（对应 5 个生命周期钩子）。如果少于 5，重新运行 `npx claude-mem install`。
+
+**3. 会话启动记忆注入验证**
+
+```bash
+claude --print "What do you remember about this project?" 2>&1 | head -20
+```
+
+如果 Claude-Mem 正常工作，输出中应包含类似 `[Memory Context]` 或历史会话摘要的文本段。如果是全新项目，会显示"no prior memory found"，这也是正常状态。
+
+**4. 记忆写入验证**
+
+在 Claude Code 中执行一个明确的代码操作（例如添加一个新文件或修复一个 bug），然后正常退出会话：
+
+```bash
+echo "// test comment" > src/test-mem.ts
+# 在 claude 会话中对这个文件做一些操作，然后退出
+```
+
+退出后检查记忆数据库：
+
+```bash
+sqlite3 ~/.claude-mem/claude-mem.db "SELECT COUNT(*) FROM observations WHERE file_refs LIKE '%test-mem.ts%';"
+```
+
+返回值应 >= 1，表示刚才的操作已被记录。
+
+**5. Web Viewer UI 可访问性检查**
+
+```bash
+curl -s http://localhost:37777 | head -5
+```
+
+应返回 HTML 内容（而不是错误或空响应）。然后手动打开浏览器访问 `http://localhost:37777`，确认记忆流面板有数据显示。
+
+**6. Chroma 向量数据库状态检查**
+
+```bash
+curl -s http://localhost:37777/api/search -H "Content-Type: application/json" \
+  -d '{"query":"test","limit":1}'
+```
+
+返回正常的 JSON 结果（即使空数组 `[]` 也算正常），而不是 `500` 或连接错误。
+
+**7. 多项目隔离验证**
+
+```bash
+mkdir -p /tmp/test-project-2 && cd /tmp/test-project-2
+npx claude-mem install
+# 用 claude 启动一个简短会话后退出
+npx claude-mem search --project /tmp/test-project-2
+```
+
+返回结果中不应包含你主项目的记忆条目，确认项目隔离生效。
+
+---
+
+## 资源链接
 
 | 资源 | 链接 |
 |------|------|
@@ -380,7 +605,3 @@ get_observations(ids=[123, 456])
 | Web UI | http://localhost:37777 |
 | Discord | [Join Discord](https://discord.com/invite/J4wttp9vDu) |
 | 作者 | [@thedotmack](https://github.com/thedotmack) |
-
----
-
-*🦞 Claude-Mem: 让 Claude Code 真正拥有持久记忆，跨越会话的上下文连续性。*

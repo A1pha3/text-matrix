@@ -7,121 +7,66 @@ categories: ["技术笔记"]
 tags: ["AI", "Agent", "Skills", "Claude", "MCP", "吴恩达", "Datawhale", "Agentic AI"]
 ---
 
-# Datawhale Agent Skills完全指南：吴恩达课程深度解读
+# Datawhale Agent Skills 完全指南：吴恩达课程深度解读
 
-## §1 学习目标
+## 项目背景
 
-通过本文，您将掌握：
+2025 年 10 月，Anthropic 正式发布 Agent Skills 系统——一套通过文件夹组织指令、脚本和资源来扩展 Claude 能力的开放标准。同年 12 月，Agent Skills 被发布为跨平台开放标准（[agentskills.io](https://agentskills.io)），这意味着为 Claude 构建的 Skill 原则上可以在任何兼容该标准的平台上运行。
 
-1. **理解Skills的本质**：什么是Agent Skills，为什么需要Skills，Skills的核心特点
-2. **掌握Skills的架构**：YAML前置元数据、Markdown正文、渐进式披露机制
-3. **理解Skills vs 其他组件**：Skills vs Tools、Skills vs MCP、Skills vs Subagents的对比和协作
-4. **学会创建自定义Skills**：以Excel Skill为案例，掌握创建完整Skill的流程
-5. **理解Agent生态系统**：Prompts、Skills、Subagents、MCP如何协同工作
-
----
-
-## §2 项目概述
-
-### 2.1 什么是Agent Skills？
-
-**Agent Skills** 是一种轻量、开放的格式，用于扩展AI Agent的能力。它是一个组织良好的文件夹，包含：
-
-- **指令（Instructions）**：定义Skill的行为和用途
-- **脚本（Scripts）**：可执行的代码文件
-- **资产与资源（Assets and Resources）**：参考文档、模板等
-
-### 2.2 吴恩达 × Anthropic 合作课程
-
-本项目是Datawhale对吴恩达老师在DeepLearning.AI平台推出的 **agent-skills-with-anthropic** 系列课程的完整中文学习资料。
+吴恩达的 DeepLearning.AI 平台随即与 Anthropic 联合推出了 **agent-skills-with-anthropic** 系列课程。Datawhale 社区将该课程完整翻译为中文，并进行了系统化的知识点梳理与代码示例补充，让中文用户能够无障碍地系统学习 Agent Skills。
 
 | 项目 | 信息 |
 |------|------|
-| **课程来源** | DeepLearning.AI × Anthropic |
-| **主讲讲师** | Elie Schoppik |
-| **官方仓库** | [sc-agent-skills-files](https://github.com/https-deeplearning-ai/sc-agent-skills-files) |
-| **视频课程** | [DeepLearning.AI Short Courses](https://www.deeplearning.ai/short-courses/agent-skills-with-anthropic/) |
-| **中文整理** | Datawhale |
-| **Stars** | 494 |
-| **Forks** | 64 |
+| 课程来源 | DeepLearning.AI × Anthropic |
+| 主讲讲师 | Elie Schoppik |
+| 官方仓库 | [sc-agent-skills-files](https://github.com/https-deeplearning-ai/sc-agent-skills-files) |
+| 视频课程 | [DeepLearning.AI Short Courses](https://www.deeplearning.ai/short-courses/agent-skills-with-anthropic/) |
+| 中文整理 | Datawhale |
+| Stars | 494 |
+| Forks | 64 |
 
-### 2.3 项目特点
+## 什么是 Agent Skills
 
-- **完整中文翻译**：降低学习门槛，让中文用户无障碍学习
-- **系统知识点梳理**：帮助理解核心概念，而非碎片化信息
-- **详细代码示例**：提供可运行的实践代码
-- **开源协作模式**：社区共同完善中文学习生态
+Agent Skills 的核心思想非常简单：**Skills 是你为 Claude 编写的"岗位培训手册"**。你把业务规范、操作流程、品牌风格指南、代码模板等打包进一个文件夹，Claude 在遇到相关任务时自动加载这本手册，按照里面定义的规程工作。
 
----
+每个 Skill 是一个独立的文件夹，包含一个必须的 `SKILL.md` 文件，以及可选的脚本、参考文档和模板资源。Skill 通过 **渐进式披露** 机制分三个阶段加载信息：元数据始终在上下文中（约 100 tokens），触发时加载完整指令，只有实际需要时才读取资源文件。这种设计让数十个 Skills 可以同时处于待命状态而不撑爆上下文窗口。
 
-## §3 Skills的核心特点
+### 三大核心特性
 
-### 3.1 三大核心特点
+**开放标准**。Agent Skills 采用标准化格式，已发布为开放规范。任何兼容的智能体产品都可以消费和加载 Skill，不局限于 Claude 生态。
 
-**1. 开放标准（Open Standard）**
-> Skills现在是一个开放标准，采用标准化格式，可与任何兼容的智能体产品配合使用。
+**一次构建，多处部署**。同一个 Skill 文件夹可以在 Claude.ai、Claude Code、API 和 Agent SDK 中无修改使用。
 
-**2. 一次构建，多处部署（Build Once, Deploy Everywhere）**
-> 你可以构建一次技能，然后在多个智能体产品中部署使用。
+**渐进式披露**。Skill 的名称和描述始终存在于智能体的上下文窗口中，但只有当用户请求与 Skill 的描述匹配时，才会加载完整的 Markdown 指令正文。附属资源（脚本、参考文档）仅在实际需要时按需读取。
 
-**3. 渐进式披露（Progressive Disclosure）**
-> 技能的名称和描述始终存在于智能体的上下文窗口中，但只有当用户请求与技能描述匹配时，才会加载其余指令。
-
-### 3.2 Skills的三大用武之地
-
-| 领域 | 示例 |
-|------|------|
-| **领域专业知识** | 品牌规范与模板、法务审核流程、数据分析方法论 |
-| **可重复的工作流程** | 每周营销活动复盘、客户电话准备流程、季度业务复盘 |
-| **新能力** | 制作演示文稿、生成Excel/PDF报告、搭建MCP服务器 |
-
-### 3.3 没有Skills会怎样？
-
-如果每次都要重新描述指令和需求，而不是使用Skills：
-
-- 每次都要重新描述指令与需求
-- 每次都要重新打包参考资料与支持文件
-- 难以保证流程或产出始终一致
-
----
-
-## §4 Skills的架构深度解析
-
-### 4.1 渐进式披露机制
-
-Skills采用 **YAML + Markdown + 元数据** 的三层架构：
-
-```
-┌─────────────────────────────────────┐
-│  YAML Frontmatter（元数据）            │  ← 始终加载
-│  - name: skill-name                 │
-│  - description: 技能描述            │
-├─────────────────────────────────────┤
-│  Markdown正文（指令）                  │  ← 触发时加载
-│  - 输入格式                          │
-│  - 处理流程                          │
-│  - 输出格式                          │
-├─────────────────────────────────────┤
-│  Resources（资源）                    │  ← 按需加载
-│  - scripts/（脚本）                  │
-│  - references/（参考资料）            │
-└─────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[用户发送请求] --> B{Claude 扫描所有 Skill 元数据}
+    B --> C[name + description 始终在上下文中<br/>约 100 tokens/skill]
+    C --> D{元数据与当前任务匹配?}
+    D -->|不匹配| E[Skill 保持待命状态]
+    D -->|匹配| F[加载 SKILL.md 完整指令<br/>&lt;5k tokens]
+    F --> G[按需读取附属文件<br/>scripts / references / assets]
+    G --> H[执行任务]
 ```
 
-### 4.2 Excel Skill目录结构示例
+### 三大应用场景
 
-以"分析营销活动"为例，Skill目录结构如下：
+| 场景 | 典型实例 |
+|------|---------|
+| 领域专业知识 | 品牌视觉规范、法务审核流程、数据分析方法论 |
+| 可重复的工作流 | 每周营销数据复盘、客户电话准备清单、季度业务回顾 |
+| 全新能力扩展 | 生成 PPT/Excel/PDF 报告、搭建 MCP 服务器 |
 
-```
-analyzing-marketing-campaign/
-├── SKILL.md                    # 主说明文档
-└── references/
-    └── budget_relocation_rules.md  # 参考规则和模板
-```
+没有 Skills 的痛点很明确：每次都要重新描述指令、重新打包参考资料、难以保证流程和产出的一致性。Skills 解决的就是"可复用的领域知识"问题。
 
-### 4.3 SKILL.md格式详解
+## Skills 架构深度解析
 
-SKILL.md通常包含YAML Frontmatter和Markdown正文：
+### SKILL.md 文件格式
+
+一个 `SKILL.md` 文件由 YAML Frontmatter 和 Markdown 正文组成。Frontmatter 中 `name` 和 `description` 是两个必填字段，也是渐进式披露的第一层——Claude 在启动时扫描所有可用 Skill 的这两个字段来判断何时激活它们。
+
+以下是 Datawhale 课程中"分析营销活动"Skill 的示例：
 
 ```yaml
 ---
@@ -132,7 +77,11 @@ inputs:
 outputs:
   - Markdown/Excel表格，含各项指标与建议
 ---
+```
 
+Markdown 正文部分定义具体的任务流程和计算规则：
+
+```markdown
 ## 任务流程
 
 1. 读取Excel/CSV数据
@@ -142,253 +91,374 @@ outputs:
 
 ## 公式示例
 
-- CTR% = Clicks / Impressions * 100
-- CVR% = Conversions / Clicks * 100
+- CTR% = Clicks / Impressions × 100
+- CVR% = Conversions / Clicks × 100
 - ROAS = Revenue / Spend
 - CPA = Spend / Conversions
 - Net Profit = Revenue - (Spend + 其它成本)
 ```
 
-### 4.4 常见Excel自动化任务
+### 目录结构
+
+一个完整的 Skill 目录组织如下：
+
+```
+analyzing-marketing-campaign/
+├── SKILL.md
+├── scripts/
+│   ├── process_data.py
+│   └── recalc.py
+└── references/
+    ├── example_input.xlsx
+    ├── output_template.xlsx
+    └── budget_relocation_rules.md
+```
+
+`scripts/` 中放置可执行代码（Python、Bash 等），`references/` 中放置参考文档和模板，均按需加载，不会常驻上下文。
+
+```mermaid
+block-beta
+    columns 1
+    block:layer1
+        columns 1
+        l1["第一层：YAML Frontmatter"]:1
+        l1desc["name + description → 始终加载，约 100 tokens/skill"]:1
+    end
+    space
+    block:layer2
+        columns 1
+        l2["第二层：Markdown 正文"]:1
+        l2desc["完整指令 → 任务匹配时加载，<5k tokens"]:1
+    end
+    space
+    block:layer3
+        columns 1
+        l3["第三层：资源文件"]:1
+        l3desc["scripts/ + references/ + assets/ → 按需读取"]:1
+    end
+```
+
+## Skills 与其他组件的区别
+
+理解 Skills 的定位，关键是厘清它与 Prompts、Tools、MCP 和 Subagents 之间的关系。这些组件不是竞争关系，而是不同抽象层次的互补工具。
+
+```mermaid
+graph TB
+    Agent["AI Agent（智能体）"]
+    
+    subgraph Knowledge["知识层"]
+        Skills["Skills（技能）<br/>可重复的工作流与方法论"]
+    end
+    
+    subgraph Data["数据层"]
+        MCP["MCP Servers<br/>外部数据与工具连接"]
+    end
+    
+    subgraph Foundation["基础层"]
+        Tools["Tools（工具）<br/>文件系统、代码执行、Bash"]
+    end
+    
+    subgraph Execution["执行层"]
+        Subagents["Subagents（子代理）<br/>隔离上下文，并行执行"]
+    end
+    
+    Agent --> Knowledge
+    Agent --> Data
+    Agent --> Foundation
+    Agent --> Execution
+    Skills -.-> MCP
+    Subagents -.-> Skills
+```
+
+### Skills vs MCP
+
+| 维度 | MCP | Skills |
+|------|-----|--------|
+| 核心功能 | 连接智能体与外部系统和数据 | 定义可重复的工作流与方法论 |
+| 数据来源 | 外部数据库、API、文件系统 | 利用 MCP 提供的工具和数据 |
+| 使用场景 | 获取模型训练截止后产生的外部数据 | 教智能体如何处理这些数据 |
+| 加载方式 | 按需建立连接 | 渐进式披露 |
+
+一个直观的类比：MCP 是带来所有原材料和厨具的**供应商**，Skills 是用这些原料做菜的**菜谱**。
+
+### Skills vs Tools
+
+| 维度 | Tools | Skills |
+|------|-------|--------|
+| 本质 | 底层原子能力（读写文件、执行代码） | 组合能力（专业知识 + 操作流程） |
+| 每次加载 | 始终在上下文窗口 | 元数据常驻，正文触发时加载 |
+| 类比 | 锤子、锯子、钉子 | 如何建造一个书架 |
+
+### Skills vs Subagents
+
+Subagents 是拥有独立上下文窗口的子代理，可以被主代理委派任务并并行执行。每个 Subagent 可以访问特定的 Skills，从而实现"隔离上下文 + 专业能力"的组合。Skills 提供的是**可复用的知识**，Subagents 提供的是**可隔离的执行环境**。
+
+### 完整对比表
+
+| 组件 | 定义 | 持久性 | 加载策略 |
+|------|------|--------|---------|
+| Prompts | 与模型通信的最小单元 | 单次对话 | 用户每次手写 |
+| Skills | 通过文件夹打包的领域知识 | 跨对话持久 | 渐进式自动加载 |
+| Subagents | 被委派任务的独立智能体 | 任务级 | 按需创建 |
+| MCP | 外部工具与数据的连接协议 | 持久连接 | 按需调用 |
+
+## 综合案例：客户洞察分析器
+
+Datawhale 课程中以"客户洞察分析器"为综合案例，展示了多层 Agent 系统中各组件的协作关系。
+
+```mermaid
+graph TB
+    Agent["主 Agent 层<br/>LLM 推理引擎 + 代码执行环境"]
+    
+    subgraph Sub["Subagents 层（并行执行）"]
+        IA["Interview Analyzer<br/>处理非结构化访谈记录"]
+        SA["Survey Analyzer<br/>处理结构化问卷数据"]
+    end
+    
+    subgraph Skills["Skills 层"]
+        FS["Filesystem Skills<br/>数据读取与分析方法论"]
+        GD["指导文档 Meta-prompt"]
+    end
+    
+    subgraph MCP["MCP 层"]
+        S1["MCP Server 1"]
+        S2["MCP Server 3"]
+        S3["Google Drive MCP"]
+    end
+    
+    Agent --> Sub
+    Agent --> Skills
+    Agent --> MCP
+    IA --> Skills
+    SA --> Skills
+    IA --> MCP
+    SA --> MCP
+```
+
+**Agent 层**是大脑和指挥中心。LLM 作为推理引擎理解复杂指令、进行多步思考和决策规划，配备代码执行环境来动态调用工具和执行脚本。主要职责是将高层任务目标拆解为可执行的子任务，协调下方的两个子分析器并行工作。
+
+**Subagents 层**是两个独立的执行单元。Interview Analyzer 处理非结构化的客户访谈记录，运用 NLP 技术提取关键观点、情感倾向和深层需求；Survey Analyzer 针对结构化问卷数据进行统计分析、模式识别和趋势归纳。两者相互独立，可并行运行。
+
+**Skills 层**封装了可复用的 Skill 模块，定义了系统处理数据的标准方法论，实现了"知识即配置"的理念。
+
+**MCP 层**通过三个 MCP 服务器提供外部数据连接，Agent 以统一方式调用不同来源的数据。
+
+### 自定义 Skill 开发实战
+
+以 Excel Skill 为例，技术选型上 `pandas` 适合批量数据处理、分析和导出，`openpyxl` 适合复杂格式、公式和 Excel 特性操作。
+
+开发流程遵循六个步骤：
+
+1. **选择工具**：根据需求选择 pandas 或 openpyxl
+2. **创建/加载文件**：新建或读取工作簿
+3. **数据处理**：增删改查、公式计算、格式化
+4. **保存文件**：写回 Excel
+5. **公式重算**：openpyxl 只写入公式字符串不计算结果，涉及公式时需用独立脚本重算
+6. **错误校验与修复**：Skill 返回 JSON 格式的错误报告，标明类型和位置，便于自动修复
+
+最佳实践总结：
+
+- 输入输出样例文件放在 `references/` 目录中
+- 所有脚本包含异常处理与错误报告能力，便于 Agent 自动修复
+- 复杂逻辑分模块实现，主流程在 `SKILL.md` 中清晰描述
+- Excel 公式操作分离为独立脚本处理
+- 输出中间结果与最终数据，便于二次校验
+
+## Claude Code 中的 Skills 实操
+
+Skills 在 Claude Code 中的使用最为灵活，也是大多数开发者日常接触 Skills 的主要场景。以下是在 Claude Code 中使用 Skills 的关键操作细节。
+
+### 安装位置
+
+Skills 有三个安装层级，优先级从高到低为：
+
+```
+~/.claude/skills/              # 个人全局：所有项目可用
+.claude/skills/                # 项目专有：仅当前项目，最高优先级
+插件 skills/ 目录               # 随插件分发
+```
+
+项目专有 Skills 优先级最高，适合团队共享的编码规范、代码审查清单等。个人全局 Skills 适合通用工作流。两者的 `SKILL.md` 格式完全相同。
+
+### 安装官方 Skills
+
+从 Anthropic 官方仓库安装：
+
+```bash
+claude plugins install anthropic-agent-skills@anthropic
+```
+
+或手动克隆后复制到技能目录：
+
+```bash
+git clone https://github.com/anthropics/skills.git
+cp -r skills/skills/xlsx ~/.claude/skills/
+```
+
+### 创建项目专属 Skill
+
+最典型的场景是团队代码规范 Skill。在项目根目录下：
+
+```bash
+mkdir -p .claude/skills/code-standards
+```
+
+然后编写 `.claude/skills/code-standards/SKILL.md`：
+
+```yaml
+---
+name: code-standards
+description: 强制执行团队代码规范：函数不超过30行、禁止console.log、要求TypeScript类型标注、React组件必须使用函数式写法
+allowed-tools: Read, Grep, Glob
+---
+
+审查代码时遵循以下规则：
+
+1. 函数体不超过 30 行（不含注释和空行）
+2. 禁止使用 console.log，统一使用项目 logger 工具
+3. 所有函数参数和返回值必须有 TypeScript 类型标注
+4. React 组件必须使用函数式组件写法，禁止 class component
+5. 文件命名统一使用 kebab-case
+```
+
+`allowed-tools` 字段可以限制 Skill 执行期间的工具访问权限，创建只读的审查类 Skill 时尤其有用。
+
+### 常见 Excel 自动化任务
+
+在日常使用中，Skills 擅长处理以下 Excel 场景：
 
 | 任务类型 | 示例 |
 |---------|------|
-| 数据汇总与统计 | 如销售总额、最大单笔交易 |
-| 条件格式化 | 如根据状态标记行颜色 |
-| 多表合并 | 如客户与订单表按ID合并 |
-| 批量文件生成 | 如根据模板自动生成邀请函、产品文档 |
-| 数据过滤、排序与导出 | 按条件筛选数据并导出 |
+| 数据汇总与统计 | 销售总额、最大单笔交易、环比增长率 |
+| 条件格式化 | 根据状态列标记行颜色、高亮异常值 |
+| 多表合并 | 客户表与订单表按 ID 合并、多月份数据纵向拼接 |
+| 批量文件生成 | 根据模板自动生成邀请函、产品规格文档 |
+| 数据过滤与导出 | 按条件筛选数据，导出为新工作表或 CSV |
 
----
+### Skills 的 frontmatter 高级字段
 
-## §5 Skills vs 其他组件对比
+除了 `name` 和 `description` 两个必填字段外，Skills 支持以下可选字段来控制执行行为：
 
-### 5.1 生态系统全景图
-
-```
-┌────────────────────────────────────────────────────────────┐
-│                    AI Agent（智能体）                        │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │ Skills（技能）= 可重复的工作流                       │   │
-│  │  - 专业知识和指令                                   │   │
-│  │  - 定义处理数据的标准方法论                         │   │
-│  └──────────────────────────────────────────────────┘   │
-│                         ↑                                │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │ MCP Servers（模型上下文协议）                        │   │
-│  │  - 提供外部数据和工具                              │   │
-│  │  - 按需加载                                       │   │
-│  └──────────────────────────────────────────────────┘   │
-│                         ↑                                │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │ Tools（工具）                                     │   │
-│  │  - 底层能力：文件系统、代码执行、Bash              │   │
-│  │  - 每次都加载                                     │   │
-│  └──────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────-───┘
-                            ↓
-          ┌─────────────────────────────────────┐
-          │  Subagents（子代理）                 │
-          │  - 隔离上下文                       │
-          │  - 可访问Skills                      │
-          │  - 并行执行                          │
-          └─────────────────────────────────────┘
-```
-
-### 5.2 Skills vs MCP
-
-| 对比维度 | MCP | Skills |
-|---------|-----|--------|
-| **核心功能** | 连接智能体与外部系统和数据 | 定义可重复的工作流 |
-| **数据来源** | 外部数据库等 | 利用MCP提供的工具和数据 |
-| **使用场景** | 获取模型不知道的外部数据 | 教智能体如何处理这些数据 |
-
-**比喻理解**：
-- **MCP** 就像带来所有底层工具和资源的**连接器**
-- **Skills** 就像使用这些工具构建特定工作流的**可重复流程**
-
-### 5.3 Skills vs Tools
-
-| 对比维度 | Tools（工具） | Skills（技能） |
-|---------|--------------|----------------|
-| **功能** | 提供访问文件系统的方式 | 扩展智能体的能力，提供专业知识和指令 |
-| **性质** | 提供底层能力来生成、读取技能 | 引入需要执行的额外文件和脚本 |
-| **使用方式** | 支持文件编辑、执行代码、加载技能 | 创建可预测的工作流 |
-| **加载方式** | 始终存在于上下文窗口 | 渐进式加载，只在需要时加载 |
-
-**比喻理解**：
-- **Tools** = 锤子、锯子和钉子（提供底层能力）
-- **Skills** = 如何建造书架（定义工作流程）
-
-### 5.4 Skills vs Subagents
-
-| 对比维度 | Subagents（子代理） | Skills（技能） |
-|---------|-------------------|----------------|
-| **核心特性** | 隔离上下文 | 提供专业知识和指令 |
-| **使用场景** | 并行化执行，在独立线程和上下文中运行 | 以可预测、可重复、可移植的方式消费所有信息 |
-| **权限** | 限制工具使用权限 | 每个子代理可以访问特定的技能 |
-
-### 5.5 完整组件对比表
-
-| 组件 | 定义 | 特点 |
+| 字段 | 类型 | 说明 |
 |------|------|------|
-| **Prompts（提示词）** | 与模型通信的最原子单位 | 基础但不易扩展 |
-| **Skills（技能）** | 通过代码和资源打包提示词和对话 | 可预测、可重复、可移植 |
-| **Subagents（子代理）** | 被委派任务的独立智能体 | 可复用技能，隔离上下文 |
-| **MCP** | 定义子代理使用的工具 | 按需加载必要数据 |
+| `allowed-tools` | 逗号分隔列表 | 限制可用的工具（如 `Read, Grep, Glob` 用于只读审查） |
+| `disallowedTools` | 数组 | 禁止使用的工具名称列表 |
+| `effort` | `low` / `medium` / `high` | 覆盖模型推理深度 |
+| `maxTurns` | 数字 | 限制对话轮数上限 |
+| `model` | `opus` / `sonnet` / `haiku` | 覆盖使用的模型 |
 
----
+这些字段在 Claude Code 场景中尤其重要。例如，一个代码审查 Skill 可以设置 `effort: high` + `model: opus` 来保证深度分析，同时用 `allowed-tools: Read, Grep, Glob` 确保只读安全。
 
-## §6 综合案例：客户洞察分析器
+## 与 anthropics/skills 官方仓库的对照
 
-### 6.1 架构详解
+Anthropic 官方维护的 [anthropics/skills](https://github.com/anthropics/skills) 仓库（87K+ stars）是目前最权威的 Skills 参考实现。截至 2026 年初，该仓库包含 **17 个官方 Skill**，分为文档类和示例类两大类别。
 
-这是一个典型的多层AI Agent系统：
+### 官方 Skills 完整列表
 
-**Agent层（大脑与指挥中心）**
-- LLM作为推理引擎，能够理解复杂指令、进行多步思考和决策规划
-- 配备代码执行环境，支持动态调用工具和执行脚本
-- 主要职责：接收高层任务目标，将其拆解为可执行的子任务，协调下方两个子分析器并行工作
+**文档类 Skills**（source-available，非开源）：
 
-**Subagents层（执行手臂）**
-- **Interview Analyzer**：处理非结构化的客户访谈记录，运用自然语言理解技术提取关键观点、情感倾向和深层需求
-- **Survey Analyzer**：针对结构化的问卷数据进行统计分析、模式识别和趋势归纳
-- 两个工具相互独立又可并行运行
+| Skill | 用途 |
+|-------|------|
+| docx | Word 文档生成与编辑，支持修订、批注、完整格式保留 |
+| pdf | PDF 提取（文本、表格、元数据）、创建、合并拆分、表单处理 |
+| pptx | PowerPoint 生成与编辑，布局、模板、图表、自动幻灯片生成 |
+| xlsx | Excel 创建、编辑与分析，公式计算、格式化、数据可视化 |
 
-**Skills层（能力基础设施）**
-- Filesystem作为技能容器，封装了多个可复用的Skill模块
-- 指导文档作为元指令（Meta-prompt），定义了系统处理数据的标准方法论
-- 实现了"知识即配置"的理念
+这四个文档 Skills 正是 Claude.ai 中"创建文档"能力的底层驱动，它们以 source-available 形式公开供参考学习。
 
-**MCP层（外部连接）**
-- 三个MCP服务器：MCP server 1、MCP server 3、Google Drive MCP
-- Agent能够以统一的方式调用不同服务商的API
+**示例类 Skills**（Apache 2.0 开源）：
 
-### 6.2 工作流程
+| Skill | 用途 |
+|-------|------|
+| algorithmic-art | 使用 p5.js 创建算法艺术，支持种子随机、流场、粒子系统 |
+| brand-guidelines | 品牌视觉规范管理与一致性检查 |
+| canvas-design | 使用结构化设计哲学创建 PNG/PDF 视觉作品 |
+| claude-api | Claude API 多语言集成（Python、TypeScript、Java、Go 等） |
+| doc-coauthoring | 文档协作编写工作流，支持 Subagent 驱动的读者测试 |
+| frontend-design | 最热门的 Skill（277K+ 安装），强制大胆设计方向，覆盖排版、配色、动画、空间构成 |
+| internal-comms | 企业内部通讯管理 |
+| mcp-builder | MCP 服务器构建指南：脚手架、工具定义、认证、限流、缓存 |
+| skill-creator | 元 Skill——引导式创建新 Skill 的交互式向导 |
+| slack-gif-creator | Slack GIF 生成器 |
+| theme-factory | 主题工厂，生成设计令牌和管理应用主题 |
+| web-artifacts-builder | 使用 React + Tailwind CSS + shadcn/ui 构建复杂 Web 工件 |
+| webapp-testing | 使用 Playwright 测试本地 Web 应用 |
 
-```
-主智能体（配备工具）
-    ↓
-通过MCP服务器获取工具
-    ↓
-分派子代理分析客户
-    ↓
-并行分析客户访谈和调查
-    ↓
-使用Skills进行可预测的分析
-```
+### 与 Datawhale 课程的差异
 
-### 6.3 各组件作用
+Datawhale 课程侧重**概念教学**和**自定义 Skill 开发流程**，以 Excel Skill 为主线贯穿始终；官方仓库则是**生产级参考实现**，覆盖文档处理、创意设计、开发工具等多个领域。两者的关系是互补的——课程教方法论和基础原理，官方仓库提供可供直接使用和学习的成熟范例。
 
-| 组件 | 作用 |
-|------|------|
-| **MCP** | 外部引入数据 |
-| **子代理** | 并行化执行，在独立线程和上下文中运行 |
-| **Skills** | 以可预测、可重复、可移植的方式消费所有信息 |
+### 社区生态概览
 
----
+截至 2026 年，skills.sh 上已索引超过 85,000 个 Skills，社区生态呈爆炸式增长。热门社区项目包括：
 
-## §7 创建自定义Skills实战
+- **obra/superpowers**（29K stars）：提供 TDD + YAGNI + DRY 方法论框架和内建命令（/brainstorm、/write-plan、/execute-plan）
+- **nextlevelbuilder/ui-ux-pro-max**：包含 7 个专业 UI/UX 设计 Skill，50+ 设计风格、161 色调色板、57 组字体配对
+- **OpenSkills**：社区维护的 Skill 安装器，支持 `npx openskills install` 命令
 
-### 7.1 Skill文件夹完整结构
+## 课程章节速览
 
-以Excel Skill为例：
-
-```
-excel-skill/
-├── SKILL.md                    # 说明技能用途、输入输出、流程
-├── scripts/
-│   ├── process_data.py         # 数据处理脚本
-│   └── recalc.py               # 公式重算脚本
-└── references/
-    ├── example_input.xlsx       # 输入样例
-    ├── output_template.xlsx     # 输出模板
-    └── rules.md                 # 规则文档
-```
-
-### 7.2 技术路线选择
-
-| 工具 | 适用场景 |
+| 章节 | 核心内容 |
 |------|---------|
-| **pandas** | 批量数据处理、分析、导出 |
-| **openpyxl** | 复杂格式、公式、Excel特性操作 |
+| 1. Introduction | Skills 定义、三大特性、组合使用模式 |
+| 2. Why Use Skills I | 三大应用场景、渐进式披露机制、Excel Skill 演示 |
+| 3. Why Use Skills II | 从 Agent 视角理解 Skills、协作模式 |
+| 4. Skills vs Tools/MCP/Subagents | 生态系统全景、各组件对比与协作 |
+| 5. Exploring Pre-Built Skills | 官方预置 Skills 的探索与使用 |
+| 6. Creating Custom Skills | 自定义 Skill 创建流程与最佳实践 |
+| 7. Skills with Claude API | 在 Messages API 中使用 Skills |
+| 8. Skills with Claude Code | Claude Code 中 Skills 的安装、配置、调试 |
+| 9. Skills with Agent SDK | 在 Claude Agent SDK 中集成 Skills |
+| 10. Conclusion | 课程回顾与后续学习方向 |
 
-### 7.3 工作流程
+## 常见问题
 
-1. **选择工具**：根据需求选择pandas或openpyxl
-2. **创建/加载文件**：新建或读取工作簿
-3. **数据处理**：增删改查、公式、格式化
-4. **保存文件**：写回Excel
-5. **公式重算**：如涉及公式，需用recalc.py脚本进行重算（openpyxl仅写入公式字符串，不计算结果）
-6. **错误校验与修复**：Skill应返回JSON报告所有错误类型和位置，便于二次修正
+**Q1：Skills 和 System Prompt 有什么区别？什么时候用 Skills 而不是直接写 Prompt？**
 
-### 7.4 最佳实践
+System Prompt 是单次对话级别的指令，每次新建对话都需要重新提供。Skills 是持久化的知识包，安装一次后 Claude 在所有对话中自动识别和加载。当你的工作流需要跨对话复用、多人共享、或者需要附带脚本和参考文档时，应该使用 Skills。临时性的一次性任务用 Prompt 即可。
 
-1. **明确输入输出标准**：示例文件放在references目录
-2. **异常处理**：所有脚本应有异常处理与错误报告能力，便于Agent自动修复
-3. **模块化实现**：复杂逻辑建议分模块实现，主流程在SKILL.md中清晰描述
-4. **公式分离**：Excel公式相关操作建议分离脚本处理，避免直接在openpyxl中计算
-5. **输出中间结果**：尽量输出中间结果与最终数据，便于人工或Agent二次校验
+**Q2：一个 Skill 能有多大？会不会超出上下文窗口？**
 
----
+由于渐进式披露机制，Skill 的大小理论上没有硬性上限。元数据（约 100 tokens/skill）始终加载，正文在触发时加载（建议控制在 5K tokens 以内），附属文件仅按需读取。你可以将大量细节放在 `references/` 中，Claude 只在实际需要时读取，不会占用上下文。
 
-## §8 课程章节速览
+**Q3：Skills 可以在 Claude Code 之外使用吗？**
 
-| 章节 | 内容 | 核心要点 |
-|------|------|---------|
-| **1. Introduction** | 课程介绍 | Skills定义、三大特点、组合使用 |
-| **2. Why Use Skills I** | Skills的意义 | 三大用武之地、渐进式披露、Excel Skill案例 |
-| **3. Why Use Skills II** | 从Agent角度思考 | Agent与Skills的关系、协作模式 |
-| **4. Skills vs Tools/MCP/Subagents** | 组件对比 | 生态系统全景、各组件协作 |
-| **5. Exploring Pre-Built Skills** | 预设Skills探索 | 官方Skills使用 |
-| **6. Creating Custom Skills** | 自定义Skills | 创建流程、最佳实践 |
-| **7. Skills with Claude API** | API使用 | 在Claude API中使用Skills |
-| **8. Skills with Claude Code** | Claude Code使用 | 在Claude Code中使用Skills |
-| **9. Skills with Agent SDK** | SDK使用 | 在Claude Agent SDK中使用Skills |
-| **10. Conclusion** | 总结 | 回顾与展望 |
+可以。Agent Skills 是开放标准（agentskills.io），已在 GitHub Copilot、Cursor 等平台得到支持。同一个 Skill 文件夹无需修改即可跨平台使用，前提是目标平台支持 Skill 所依赖的环境（如 Python 脚本执行）。
 
----
+**Q4：如何调试一个 Skill 是否被正确触发？**
 
-## §9 总结
+在 Claude Code 中，你可以在对话开头明确提及 Skill 的名称或描述关键词来触发。也可以观察 Claude 的思维链输出（chain of thought），它会显示正在加载哪些 Skill。如果 Skill 没有被触发，检查 `description` 字段是否足够具体且包含触发关键词——这是最常见的失败原因。
 
-### 9.1 Skills的核心价值
+**Q5：多个 Skills 可以同时激活吗？它们之间会冲突吗？**
 
-**Skills为AI Agent提供了专业化、标准化、可复用的能力扩展载体，极大提升了自动化办公与复杂数据处理的效率。**
+可以同时激活多个 Skills。Claude 会自动根据任务需求加载所有相关的 Skills，并协调它们的执行。Skills 之间可能产生冲突——例如两个 Skill 给出了矛盾的操作指令。最佳实践是将每个 Skill 保持专注且单一职责，避免功能重叠。
 
-通过SKILL.md元数据、脚本与参考文件的组合，实现了从数据读取、处理、输出到结果校验的自动化全流程。
+**Q6：Skills 中的脚本安全吗？如何审核第三方 Skill？**
 
-### 9.2 未来展望
+Skills 中的脚本可以执行任意代码，安全风险等同于运行任何第三方代码。Anthropic 建议只安装来自可信来源的 Skill——自己创建、官方提供或经过充分审核的社区 Skill。对于社区 Skill，建议在安装前阅读 `SKILL.md` 和脚本源码，确认没有可疑的网络请求或文件操作。
 
-随着Skill生态的丰富，AI Agent将能像积木一样组合各种能力，满足更多元的业务需求。Skills的开放标准使得一次构建、多处部署成为可能，这将是AI Agent生态发展的重要方向。
+**Q7：如何在团队中共享 Skills？**
 
-### 9.3 学习路径建议
+项目专有 Skills 放在 `.claude/skills/` 目录中，随 Git 仓库一起版本管理，团队成员 clone 后自动生效。对于组织级别的共享，可以通过 Git 子模块或专用仓库来管理，也可以使用 Claude Code 的插件分发机制。
 
-1. **入门**：先学习Introduction和Why Use Skills，理解Skills的核心概念
-2. **进阶**：深入研究Skills vs Tools/MCP/Subagents的对比，理解生态系统
-3. **实践**：通过Creating Custom Skills章节学习创建自己的Skill
-4. **扩展**：探索Pre-Built Skills，了解官方Skill的使用方法
+## 自检测试
 
----
+学习完本文后，用以下检查项验证自己的掌握程度：
 
-## 附录：快速参考
+1. 能否用自己的语言解释"渐进式披露"的三层加载机制，并说明每一层分别加载什么内容、消耗多少 token？
 
-### YAML Frontmatter字段
+2. 能否画出 Agent 生态系统中 Prompts → Skills → Subagents → MCP 的层次关系图，并准确描述各组件的职责边界？
 
-| 字段 | 必填 | 说明 |
-|------|-----|------|
-| `name` | 是 | Skill名称，唯一标识 |
-| `description` | 是 | Skill描述，用于匹配用户请求 |
-| `inputs` | 否 | 输入格式要求 |
-| `outputs` | 否 | 输出格式说明 |
+3. 给定一个业务场景（如"每周自动生成销售数据报表并发送邮件"），能否设计对应的 Skill 目录结构、SKILL.md 内容和大致的脚本划分？
 
-### Skills加载方式
+4. 能否说出 `allowed-tools` 和 `effort` 这两个 frontmatter 字段的作用，并举例说明什么场景下需要使用它们？
 
-| 类型 | 加载时机 | 说明 |
-|------|---------|------|
-| **Metadata** | 始终加载 | name、description |
-| **Instructions** | 触发时加载 | Markdown正文内容 |
-| **Resources** | 按需加载 | scripts/、references/ |
+5. 能否将 anthropics/skills 官方仓库中的 17 个 Skill 按照功能分类（文档处理、创意设计、开发工具、协作通讯），并说出每个分类中至少 2 个 Skill 的名称和用途？
+
+6. 在 Claude Code 中，能否独立完成一个 Skill 的创建、安装、测试和调试全流程？能否判断一个 Skill 是否被正确触发？
+
+7. 能否准确区分 Skills 与 MCP 的职责：什么情况下需要开发 MCP Server，什么情况下只需要写一个 Skill？
 
 ---
 
-*🦞 本文由钳岳星君基于 [Datawhale/agent-skills-with-anthropic](https://github.com/datawhalechina/agent-skills-with-anthropic) 项目撰写，原始课程来自 DeepLearning.AI × Anthropic。*
+*本文基于 [Datawhale/agent-skills-with-anthropic](https://github.com/datawhalechina/agent-skills-with-anthropic) 项目撰写，原始课程来自 DeepLearning.AI × Anthropic。*

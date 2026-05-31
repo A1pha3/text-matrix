@@ -10,35 +10,33 @@ tags: ["Agent Skill", "OpenAI协议", "LLM", "HTTP", "Cursor", "Tool Calling"]
 
 # Agent Skill 的 HTTP 底层：Skill 如何被编译成 OpenAI 协议原语
 
-Skill 是这两年 AI 编程工具最火的概念之一。各种花里胡哨的 skill——读网页、写文件、执行命令——听起来像是在给大模型装插件。但只要稍微追问一句"这个 skill 在 HTTP 层面是怎么跟大模型交互的"，大多数人就哑火了。
+Skill 是这两年 AI 编程工具最火的概念之一。读网页、写文件、执行命令——各种 skill 听起来像在给大模型装插件。但追问一句"这个 skill 在 HTTP 层面怎么跟大模型交互的"，大多数人就卡住了。
 
-这篇文章来自腾讯云开发者张敏在司内论坛的一次技术追问。他实现了一个读取微信公众号文章的 skill 之后，对 skill 的底层原理产生了好奇，然后顺藤摸瓜把整个链路梳理清楚了。结论反直觉但很清晰：**Skill 在 OpenAI 兼容协议里根本不存在**——它是一种"给 LLM 写使用手册，让 LLM 通过已有工具自己照着做"的设计模式。
+这篇文章来自腾讯云开发者张敏在司内论坛的一次技术追问。他实现了一个读取微信公众号文章的 skill 后，顺藤摸瓜梳理了整个底层链路。结论反直觉但很清晰：**Skill 在 OpenAI 兼容协议里根本不存在**——它本质是一种"给 LLM 写使用手册，让 LLM 通过已有工具自己照着做"的设计模式。
 
 ---
 
-## 核心结论先说
+## 协议映射：Skill 在 HTTP 层面究竟是什么
 
-Skill 不是协议层概念，这是理解这件事最关键的前提。
-
-在 OpenAI 兼容协议中，根本不存在 `skill` 这个字段或角色。Skill 最终被 Cursor（或其他 AI IDE）**编译**成三种协议原语的组合：
+在 OpenAI 兼容协议中，不存在 `skill` 这个字段或角色。Skill 最终被 Cursor（或其他 AI IDE）**编译**成三种协议原语的组合：
 
 1. **System/Developer Message** — 把 Skill 的指令文本注入到 system prompt 中
 2. **Tools Definition** — 把 Skill 需要用到的工具（如 Shell、Read）注册为 `tools` 数组
 3. **Multi-turn Tool Calling Loop** — LLM 根据注入的指令，自主决策发起 `tool_calls`，宿主执行后把结果喂回去
 
-用一句话总结这个关系：
+用一句话总结：
 
 > **Skill = 动态注入的 system prompt 片段 + 预定义的 tool schema + 多轮 tool calling 循环**
 
-整个过程的精妙之处在于：它完全复用了 OpenAI 协议已有的 tool calling 机制，不需要任何协议扩展。Skill 的全部"魔法"都发生在 system prompt 的措辞和 SKILL.md 文件的编写质量上——本质上是一种 prompt engineering + 文件系统的组合。
+它完全复用了 OpenAI 协议已有的 tool calling 机制，不需要任何协议扩展。Skill 的全部"魔法"都发生在 system prompt 的措辞和 SKILL.md 文件的编写质量上——本质是一种 prompt engineering + 文件系统的组合。
 
 ---
 
 ## 前提：OpenAI 兼容协议的基础
 
-本文面向对 OpenAI 兼容协议有基本了解的同学。如果你刚接触这个领域，只需要知道一件事：大模型只会"对话"，所谓的工具调用（tool calling）也只是特化的聊天功能——模型输出一个结构化的 `tool_calls` 字段，客户端负责执行对应的工具，然后把结果通过 `role: "tool"` 消息塞回给模型继续处理。
+本文面向对 OpenAI 兼容协议有基本了解的同学。如果刚接触这个领域，只需知道一件事：大模型只会"对话"，所谓的工具调用（tool calling）也只是特化的聊天功能——模型输出一个结构化的 `tool_calls` 字段，客户端负责执行对应的工具，然后把结果通过 `role: "tool"` 消息塞回给模型继续处理。
 
-协议本身并不知道也不关心什么是"skill"。
+协议本身不知道也不关心什么是"skill"。
 
 ---
 
@@ -316,56 +314,45 @@ Shell 执行完毕，mp-read 的 stdout 输出（文章全文）通过 `role: "t
 
 ---
 
-## 协议视角的时序图
+## 协议交互时序图
 
-把 7 步画成一张协议交互时序图，完整视图如下：
+```mermaid
+sequenceDiagram
+    participant C as Cursor（客户端）
+    participant L as LLM（服务端）
 
-```
-            Cursor (客户端)                      LLM (服务端)
-                  │                                   │
-  ┌───────────────┤ 启动时扫描 skill 目录             │
-  │               │ 提取 name + description           │
-  └───────────────┤                                   │
-                  │                                   │
-  Round 1         │ POST /chat/completions             │
-                  │ system: "...skills摘要..." +       │
-                  │    tools: [Shell, Read]            │
-                  │ user: "帮我读一下这篇公众号文章"    │
-                  │ ─────────────────────────────────>│
-                  │                                   │
-                  │  assistant.tool_calls: Read(SKILL)  │
-                  │ <─────────────────────────────────│
-  ┌───────────────┤ 执行: Read(SKILL.md)                │
-  └───────────────┤                                   │
-                  │                                   │
-  Round 2         │ tool: (SKILL.md 完整内容)           │
-                  │ ─────────────────────────────────>│
-                  │    ← LLM 现在"学会"了这个 Skill    │
-                  │  assistant.tool_calls:             │
-                  │    Shell("which mp-read")          │
-                  │    Read(cookie.txt)                │
-                  │ <─────────────────────────────────│
-  ┌───────────────┤ 并行执行两个 tool call             │
-  └───────────────┤                                   │
-                  │                                   │
-  Round 3         │ tool: "/usr/local/go/bin/mp-read" │
-                  │ tool: "skey=xxx;p_skey=yyy..."    │
-                  │ ─────────────────────────────────>│
-                  │                                   │
-                  │  assistant.tool_calls:             │
-                  │    Shell("mp-read cookie.txt URL", │
-                  │           block_until_ms=120000)  │
-                  │ <─────────────────────────────────│
-  ┌───────────────┤ 执行: mp-read（耗时约 30s）         │
-  └───────────────┤                                   │
-                  │                                   │
-  Round 4         │ tool: (文章全文)                   │
-                  │ ─────────────────────────────────>│
-                  │                                   │
-                  │  assistant.content: "这篇文章..."  │
-                  │  finish_reason: "stop"             │
-                  │ <─────────────────────────────────│
-                  ▼                                   ▼
+    Note over C: 启动时扫描 .cursor/skills/<br/>提取 name + description
+
+    rect rgb(240, 248, 255)
+        Note right of C: Round 1
+        C->>L: POST /chat/completions<br/>system: skills 摘要 + tools<br/>user: "帮我读公众号文章"
+        L-->>C: assistant.tool_calls<br/>[Read(SKILL.md)]
+    end
+
+    Note over C: 本地执行 Read(SKILL.md)
+
+    rect rgb(255, 248, 240)
+        Note right of C: Round 2
+        C->>L: tool: SKILL.md 完整内容
+        Note over L: LLM 获得完整技能说明书
+        L-->>C: assistant.tool_calls<br/>[Shell("which mp-read"),<br/>Read(cookie.txt)]
+    end
+
+    Note over C: 并行执行两个 tool call
+
+    rect rgb(240, 255, 240)
+        Note right of C: Round 3
+        C->>L: tool: "/usr/local/go/bin/mp-read"<br/>tool: "skey=xxx;p_skey=yyy..."
+        L-->>C: assistant.tool_calls<br/>[Shell("mp-read cookie.txt URL",<br/>block_until_ms=120000)]
+    end
+
+    Note over C: 执行 mp-read（耗时约 30s）
+
+    rect rgb(255, 240, 255)
+        Note right of C: Round 4
+        C->>L: tool: 文章全文
+        L-->>C: assistant.content: "这篇文章..."<br/>finish_reason: "stop"
+    end
 ```
 
 ---
@@ -407,19 +394,214 @@ Skill 的全部"魔法"都发生在两处：
 
 ---
 
-## 为什么这个拆解值得认真读
+## 实战：在 HTTP 层面观测 Skill 协议交互
 
-很多人在用 Cursor 或 OpenClaw 的时候觉得 skill 很神奇——好像装上一个 skill 就能解锁某种能力。但一旦理解了底层机制，就会意识到 skill 其实是一个**非常干净的设计**。
+既然 Skill 的一切都在 HTTP 中发生，最直接的验证方式就是抓包。以下是实操指南。
 
-它没有发明任何新协议，没有依赖任何特殊 API，只是把三件已有事情组合到一起：
+### 1. 使用 mitmproxy 拦截 HTTPS 流量
+
+```bash
+mitmproxy --mode regular --listen-port 8080 -s inspect_skill.py
+```
+
+需要编写一个简单的 mitmproxy 插件 `inspect_skill.py` 来过滤和格式化 `/chat/completions` 请求：
+
+```python
+from mitmproxy import http
+
+def request(flow: http.HTTPFlow) -> None:
+    if "/chat/completions" in flow.request.pretty_url:
+        body = flow.request.json()
+        if not body:
+            return
+        msgs = body.get("messages", [])
+        tools = body.get("tools", [])
+        print(f"\n=== Round with {len(msgs)} messages, {len(tools)} tools ===")
+        for i, msg in enumerate(msgs):
+            role = msg.get("role", "?")
+            content = str(msg.get("content", ""))[:120]
+            tc = msg.get("tool_calls")
+            tc_summary = f", tool_calls={len(tc)}" if tc else ""
+            print(f"  [{i}] role={role}{tc_summary} content={content}...")
+
+def response(flow: http.HTTPFlow) -> None:
+    if "/chat/completions" in flow.request.pretty_url:
+        body = flow.response.json()
+        if not body:
+            return
+        choice = body.get("choices", [{}])[0]
+        msg = choice.get("message", {})
+        tc = msg.get("tool_calls")
+        finish = choice.get("finish_reason")
+        if tc:
+            names = [t.get("function", {}).get("name", "?") for t in tc]
+            print(f"  <- tool_calls: {names}, finish_reason={finish}")
+        else:
+            content = str(msg.get("content", ""))[:80]
+            print(f"  <- content: {content}..., finish_reason={finish}")
+```
+
+### 2. 配置 IDE 走代理
+
+Cursor 的 HTTP 代理配置因版本而异，通用做法是设置环境变量：
+
+```bash
+export HTTP_PROXY=http://127.0.0.1:8080
+export HTTPS_PROXY=http://127.0.0.1:8080
+```
+
+然后从同一终端启动 Cursor。如果 IDE 不认系统代理，可以使用 `proxychains` 或在 IDE 的 `settings.json` 中配置 `http.proxy`。
+
+### 3. 观察要点
+
+抓包时重点关注以下信号：
+
+| 观察点 | 含义 | 正常表现 |
+|--------|------|----------|
+| `messages[0].role="system"` 中包含 `<available_skills>` | Progressive Loading 生效 | 只有 name + description，没有正文 |
+| LLM 返回的第一个 `tool_calls` 是否包含 `Read(SKILL.md)` | Skill 触发成功 | `name: "Read"`, `arguments` 指向 SKILL.md |
+| 第二轮请求的 `role: "tool"` 消息 | SKILL.md 全文已进入上下文 | content 包含完整的 SKILL.md 文本 |
+| 后续 `tool_calls` 是否按 SKILL.md 步骤执行 | Skill 指令被正确理解 | 命令参数与 SKILL.md 一致 |
+| `finish_reason` 的变化 | 判断当前处于工具循环还是最终回复 | `tool_calls` → 中间轮次；`stop` → 最终轮次 |
+
+### 4. 用 curl 模拟单轮测试
+
+如果只需要验证 Skill 的 system prompt 注入效果，不需要完整的多轮交互，可以用 curl 直接发单轮请求：
+
+```bash
+curl -s https://api.openai.com/v1/chat/completions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an AI assistant.\n\n<available_skills>\n<agent_skill fullPath=\"/tmp/test-skill/SKILL.md\">\n  When user says ping, respond with pong and nothing else.\n</agent_skill>\n</available_skills>\n\nWhen a skill is relevant, read and follow it IMMEDIATELY."
+      },
+      {
+        "role": "user",
+        "content": "ping"
+      }
+    ]
+  }'
+```
+
+预期响应：`pong`——证明 system prompt 中的 skill 描述被 LLM 正确理解并执行。
+
+### 5. 常见问题定位
+
+**Skill 没触发**：检查 system prompt 中是否真的注入了 `<available_skills>` 标签块。部分 IDE 只在特定条件下注入（如工作区存在 `.cursor/skills/` 目录）。
+
+**LLM 没读 SKILL.md**：检查 system prompt 中是否包含 "read and follow it IMMEDIATELY" 这类强制性指令，以及 `tools` 数组中是否注册了 `Read` 工具。
+
+**读完后行为不对**：SKILL.md 的指令可能不够明确。抓包对比 LLM 返回的 `tool_calls` 参数和 SKILL.md 中的要求是否一致。
+
+**并行 tool calling 没生效**：并非所有模型都支持并行调用。确认模型能力，并在 `tool_choice` 中确保没有限制为单次调用。
+
+---
+
+## FAQ
+
+### Q1：Skill 和 Function Calling 是什么关系？
+
+Function Calling 是 Skill 的**基础设施**。Skill 本身不是一个独立的协议功能——它依赖 Function Calling 来实现 LLM ↔ 宿主之间的工具交互。区别在于：Function Calling 解决"怎么调用工具"的问题，Skill 解决"什么时候该用什么工具、按什么顺序、设什么参数"的问题。前者是协议层机制，后者是应用层编排。
+
+### Q2：为什么不直接在协议层支持 Skill？
+
+因为没必要。Skill 需要的所有能力——文本注入、工具定义、多轮对话——OpenAI 协议早在 2023 年就全部支持了。在协议层新增 `skill` 字段反而会增加复杂度，且需要所有模型提供商同步跟进，得不偿失。这恰恰是工程设计中的好决策：用组合替代扩展。
+
+### Q3：多个 Skill 共存时，LLM 如何选择触哪个？
+
+完全靠匹配。system prompt 中列出了所有可用 Skill 的 `name` 和 `description`，LLM 根据用户输入与各 Skill 描述的语义相似度来判断。这也是为什么 `description` 字段至关重要——它必须覆盖足够多的触发场景（关键词、用户意图、URL 模式等），否则 Skill 永远不会被触发。
+
+### Q4：Progressive Loading 具体省了多少 token？
+
+以 mp-read 为例，其 SKILL.md 正文约 3000 token，而摘要（name + description）仅约 50 token。在每次对话的 system prompt 中只注入摘要，只有当 LLM 判定需要该 Skill 时才会 Read 全文。如果用户一次对话中从未提起公众号相关话题，那 2950 token 就省下了。这个数字随 Skill 数量线性累积——5 个 Skill 就是约 15000 token 的区别。
+
+### Q5：Skill 和 MCP（Model Context Protocol）有什么区别？
+
+MCP 是一种标准化的客户端-服务端协议，定义了三方（Host、Client、Server）之间的通信规范，包括资源发现、工具注册、提示模板等，属于**协议层抽象**。Skill 则完全没有自己的协议——它就是 markdown 文件 + system prompt 注入 + tool calling 的组合，属于**应用层模式**。两者的共同点是都依赖 tool calling 作为底层执行机制，但 MCP 试图标准化工具接入方式，Skill 则完全依赖自然语言指令驱动。
+
+### Q6：自己编写的 Skill 需要配置工具吗？
+
+不需要。Skill 本身不声明工具。工具（Shell、Read、Write、Grep 等）由 IDE 宿主统一注册到每轮请求的 `tools` 数组中。Skill 的职责是告诉 LLM：在什么情况下、用哪些已有工具、按什么步骤完成任务。你可以把工具理解为"操作系统提供的系统调用"，Skill 就是"告诉程序怎么组合这些系统调用来完成特定任务的文档"。
+
+---
+
+## 自检测试
+
+读完本文后，用以下问题检验理解程度：
+
+**1. 在 OpenAI 协议中，Skill 对应的字段或角色是什么？**
+
+<details>
+<summary>点击查看答案</summary>
+
+不存在。OpenAI 协议中没有 `skill` 字段或角色。Skill 被编译为 system prompt 片段 + tool definitions + 多轮 tool calling 循环的组合。
+
+</details>
+
+**2. 一个 Skill 从触发到完成，最少需要几轮 HTTP 交互？**
+
+<details>
+<summary>点击查看答案</summary>
+
+最少 2 轮。第 1 轮：LLM 返回 `tool_calls: [Read(SKILL.md)]`；第 2 轮：宿主回传 SKILL.md 内容后，LLM 直接完成核心任务。实际场景通常需要 3-4 轮（加上前置检查和核心命令执行）。
+
+</details>
+
+**3. Progressive Loading 中，第一轮 system prompt 包含 Skill 的什么内容？**
+
+<details>
+<summary>点击查看答案</summary>
+
+只包含 Skill 的 `name` 和 `description`（来自 SKILL.md 的 YAML frontmatter）。正文不会被提前加载，以节省 token。
+
+</details>
+
+**4. LLM 是通过什么机制获取 SKILL.md 的完整内容的？**
+
+<details>
+<summary>点击查看答案</summary>
+
+LLM 发起 `tool_calls: [Read(SKILL.md)]`，宿主在本地读取文件后，将文件内容放入 `role: "tool"` 消息回传给 LLM。整个过程走的是标准的 tool calling 流程。
+
+</details>
+
+**5. 并行 tool calling 在 Skill 执行中的作用是什么？**
+
+<details>
+<summary>点击查看答案</summary>
+
+当 Skill 中存在多个相互独立的检查项（如"检查工具是否安装"和"检查配置文件是否存在"），LLM 可以在一次响应中同时发起多个 `tool_calls`，宿主并行执行后一并回传结果，减少 HTTP 往返次数。
+
+</details>
+
+**6. 如果要调试自己编写的 Skill 是否被正确触发，最先检查哪个 HTTP 字段？**
+
+<details>
+<summary>点击查看答案</summary>
+
+检查第一轮请求中 `messages[0].content`（system prompt）是否包含 `<available_skills>` 标签块，以及 LLM 的第一轮响应 `choices[0].message.tool_calls` 中是否包含 `name: "Read"` 且 `arguments` 指向你的 SKILL.md 路径。
+
+</details>
+
+---
+
+## 设计启示
+
+理解了底层机制后，Skill 给人的感觉不再是"神奇的黑盒"，而是一个极其干净的设计。
+
+它没有发明新协议，没有依赖特殊 API，只是把三件已经存在的事情组合到一起：
 
 - **System prompt 注入**（LLM 早就支持）
 - **Tool schema 注册**（LLM 早就支持）
 - **多轮 tool calling 循环**（LLM 早就支持）
 
-skill 的出现解决了一个实际问题：如何让 LLM 在面对复杂任务时知道该用什么工具、按什么顺序、设什么参数。以前这些信息要么散落在文档里，要么硬编码在提示词里，skill 把它们变成了一份**可执行、可维护、可共享的操作手册**。
+Skill 的出现解决了一个实际问题：如何让 LLM 在面对复杂任务时知道该用什么工具、按什么顺序、设什么参数。以前这些信息要么散落在文档里，要么硬编码在提示词里，Skill 把它们变成了一份可执行、可维护、可共享的操作手册。
 
-理解了这个底层逻辑，你也可以为自己的场景编写高质量的 skill——关键不是写代码，而是**写一份让 LLM 能看懂、能执行、能纠错的操作手册**。
+理解了这层，你就知道编写 Skill 的关键不是写代码，而是写一份让 LLM 能看懂、能执行、能纠错的操作手册——具体来说，就是写好 `description` 的触发覆盖度、前置检查的完备性、以及每一步指令的可执行性。
 
 ---
 
