@@ -1,20 +1,35 @@
 ---
-title: "SocialAutoUpload 拆解：把多平台上传收敛成 CLI 和 Agent 能调用的主线"
+title: "SocialAutoUpload 深拆：7 平台只是覆盖面，4 平台 CLI 主线才是现在能跑稳的核心"
 date: "2026-05-31T10:20:00+08:00"
 slug: "dreammis-social-auto-upload-multi-platform"
-description: "从 README、CLI 文档和 Agent Bootstrap 出发，拆解 SocialAutoUpload 当前主线的能力边界：7 个平台的 uploader、4 个已接入 CLI 和 Skill 的平台，以及 Patchright 驱动下的自动化取舍。"
+description: "深拆 SocialAutoUpload 当前主线：7 平台是底层覆盖，真正收敛成统一 CLI 与 Agent skill 的，是抖音、快手、小红书、Bilibili 这 4 条路径，并解释旧 Web、uploader 与 Patchright 各自的角色。"
+summary: "如果你只想知道这项目现在值不值得上手，结论可以先说：7 平台是覆盖面，4 平台 CLI 主线才是当前最稳的部分。先把抖音、快手、小红书、Bilibili 跑顺，再考虑视频号、百家号、TikTok。"
 draft: false
 categories: ["技术笔记"]
 tags: ["自动化工具", "社交媒体", "视频上传", "Python", "AI Agent", "Browser Automation"]
 ---
 
-多平台内容分发工具常见的误区，是把“支持的平台数量”直接等同于“当前主线的成熟度”。SocialAutoUpload 确实已经覆盖抖音、Bilibili、小红书、快手、视频号、百家号、TikTok 等 7 个平台，但如果你顺着它最新的 README、安装说明和 CLI 文档去看，会发现项目真正收敛出来的主线其实更具体：以 `uploader/` 为底座，以 `sau` CLI 为统一入口，再把其中 4 个平台包成 AI Agent 可调用的 skill。
+SocialAutoUpload 很容易被误读成一个“已经完整打通 7 个平台”的成品。更准确的说法是：它已经把 7 个平台的底层 uploader 铺开了，但真正收敛成统一 CLI、也最适合交给 Agent 接手的，目前是抖音、快手、小红书、Bilibili 这 4 条主线。
 
-这也是它最值得看的地方。它解决的不是“帮你少点几个网页按钮”这么简单，而是把一类高频、重复、对判断力要求很低的浏览器操作，从临场脚本变成了可以验证、可以复用、可以继续交给 Agent 的稳定接口。
+这不是抠字眼，而是决定你能不能少走弯路的判断。你如果按“7 平台已经同样成熟”的预期去用它，大概率会混淆主线入口、历史路径和底层能力；如果你先接受“4 条主线先跑稳，其余平台再补”的现实，整个项目反而会变得很清楚。
 
-读完这篇文章，你应该能判断三件事：SocialAutoUpload 当前哪一层已经能拿来用；为什么它反复强调 CLI 和 skill，而不是旧 Web 界面；以及如果你只想尽快跑通一条发布链路，应该先从哪 4 个平台下手。
+这篇文章想回答的，就是这三个问题：现在真正能拿来用的是哪一层；为什么项目要把 CLI 和 skill 放到比旧 Web 更靠前的位置；以及如果你只想尽快跑通一条发布链路，第一步该从哪里开始。
 
 ## 先看系统地图
+
+先看图，再看表。图里最关键的信息，不是平台数量，而是“谁是当前主线，谁还是底层覆盖，谁只是历史入口”。
+
+```mermaid
+flowchart LR
+  User[运营者 / Agent] --> Bootstrap[Agent Bootstrap Prompt]
+  User --> CLI[sau CLI]
+  Bootstrap --> Skills[skills/]
+  Skills --> CLI
+  CLI --> Uploader[uploader/]
+  Uploader --> Core4[4 个主线平台<br/>抖音 / 快手 / 小红书 / Bilibili]
+  Uploader --> Other3[其余 3 个平台<br/>视频号 / 百家号 / TikTok]
+  Legacy[examples / 历史 Web] -. 旧路径 / 调试入口 .-> Uploader
+```
 
 这张表比“支持 7 平台”更重要，因为它把当前仓库里几条容易混在一起的路径拆开了。
 
