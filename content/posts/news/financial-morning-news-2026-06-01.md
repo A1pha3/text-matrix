@@ -31,7 +31,7 @@ hiddenFromHomePage: true
 
 ### WTI原油盘中涨超2%至92美元，霍尔木兹前景不明
 来源: 金十数据
-原文: [原文](https://www.jin10.com/)
+原文: (原始flash文章链接已失效，按HEARTBEAT铁律无法找到具体URL时删除链接，仅保留来源标注)
 摘要: 伊朗战争和平协议前景不明，油价从六周低点反弹。WTI原油周一盘初涨超2%，报92.07美元/桶。周末美伊双方寻求修改延长停火期限并开放霍尔木兹海峡的协议草案，但实质性进展尚不清楚。经济学家指出，美伊都不会在核计划、霍尔木兹控制权、弹道导弹和制裁等底线上让步，油价将持续对地缘动态保持敏感。
 
 ### 黄金3个月跌超20%，投资者贷款百万追高已亏损
@@ -97,7 +97,7 @@ hiddenFromHomePage: true
 **原文链接（已逐条核实，仅列正文实际引用链接）：**
 - ✅ https://wallstreetcn.com/articles/3773514 - 美伊谈判拉锯
 - ✅ https://flash.jin10.com/detail/20260601073922438800 - 中金地产展望
-- ✅ https://www.jin10.com/ - WTI原油盘中涨超2%
+- ⚠️ ~~https://www.jin10.com/ - WTI原油盘中涨超2%~~（2026-06-02 07:10 已按HEARTBEAT铁律移除该无效链接）
 - ✅ https://finance.sina.com.cn/jjxw/2026-05-29/doc-inhzqccr7625747.shtml - 黄金猴市
 - ✅ https://wallstreetcn.com/articles/3773499 - MLCC第三大成本项
 - ✅ https://wallstreetcn.com/articles/3773517 - 英伟达PC新时代
