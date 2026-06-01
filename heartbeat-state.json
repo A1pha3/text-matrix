@@ -78,5 +78,10 @@
     "lastRun": "2026-06-01",
     "status": "completed_with_issues",
     "note": "09:25窗口执行(延迟)，四份早报文件均已生成(ai/financial/web3/side-hustle morning news 2026-06-01)，发现1个需修复问题：经济财经早报第34行WTI原油文章链接(jin10.com首页)应替换为具体文章URL。三份早报(financial/web3/side-hustle)heartbeat-state lastRun仍为05-30，今日已生成文件，已同步更新。"
+  },
+  "文章健康检查": {
+    "lastRun": "2026-06-02",
+    "status": "completed_with_issues",
+    "note": "03:59窗口weekly检查：检查6份文章(4份早报+2份今早新写的godot/ml4t技术文章)，42个链接全部200，1个老问题仍未修复——经济财经早报第34行WTI原油文章仍指向jin10首页(连续第2次检查到该问题，跨日未处理)。其他全部正常。日志已追加至 memory/早报核查日志.md"
   }
 }
