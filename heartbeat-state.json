@@ -1,8 +1,8 @@
 {
   "github-trending-03": {
-    "lastRun": "2026-06-01",
-    "status": "all_already_covered",
-    "note": "03:00窗口执行，14个趋势项目(Crosstalk-Solutions/project-nomad, D4Vinci/Scrapling, EveryInc/compound-engineering-plugin, FareedKhan-dev/train-llm-from-scratch, OpenBMB/VoxCPM, anthropics/claude-code, harry0703/MoneyPrinterTurbo, microsoft/markitdown, nesquena/hermes-webui, nicobailon/pi-subagents, revfactory/harness, supermemoryai/supermemory, emmabostian/developer-portfolios, codecrafters-io/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "03:05窗口执行，17个趋势项目中有15个已有文章覆盖(markitdown/nesquena/hermes-webui/supermemory/MoneyPrinterTurbo/Scrapling/impeccable/heretic/compound-engineering-plugin/TradingAgents/harness/oh-my-pi/VoxCPM/train-llm-from-scoding/fff/build-your-own-x)，2个缺失：godotengine/godot与stefan-jansen/machine-learning-for-trading。已为两者各写1篇技术文章(push commit 0bd0846)，飞书文档：C6tNdEel0o2U1KxrDNSc0Uugnze(Google)与EDB9dOyX0oo3bkxA8RicIuIMnQe(ML4T)"
   },
   "browser-memory-cleanup": {
     "lastRun": "2026-06-01",
@@ -55,23 +55,28 @@
     "note": "07:49窗口执行，Chrome CDP采集36kr+量子位共12条AI新闻，已推送飞书文档NPp7dG5xDoKFLdxlS3wcOdCFnkg。text-matrix目录不存在，跳过Hugo推送。"
   },
   "financial-morning-news": {
-    "lastRun": "2026-05-30",
+    "lastRun": "2026-06-01",
     "status": "completed",
-    "note": "Chrome CDP采集wallstreetcn 12条新闻，推送飞书文档TgWvdcRIpo8lblx3xNlc7eSLnMb"
+    "note": "2026-06-01生成，114行，华尔街见闻/金十数据/新浪财经。⚠️jin10首页链接需修复(第34行WTI原油文章)。"
   },
   "ai-side-hustle-morning": {
-    "lastRun": "2026-05-30",
+    "lastRun": "2026-06-01",
     "status": "completed",
-    "note": "Chrome CDP采集V2EX 7条招聘/讨论帖，推送飞书文档NcPYdibuQo8hQwxPHZwc1PRdnFd"
+    "note": "2026-06-01生成，53行，V2EX 2条AI相关招聘帖子，链接全部200。"
   },
   "web3-morning-news": {
-    "lastRun": "2026-05-30",
+    "lastRun": "2026-06-01",
     "status": "completed",
-    "note": "CoinGecko API采集6个加密货币价格，华尔街见闻采集3条新闻，推送飞书文档LE2YdhBpVoozlexIgdecVDr4n6T"
+    "note": "2026-06-01生成，64行，CoinGecko行情+CoinTelegraph新闻，4条具体文章链接全部200。"
   },
   "早请安": {
     "lastRun": "2026-06-01",
     "status": "completed",
     "note": "07:00窗口执行，已记录今日任务计划（AI新闻早报待修复、GitHub趋势榜多时段覆盖、早报核查09:00）"
+  },
+  "早报质量核查": {
+    "lastRun": "2026-06-01",
+    "status": "completed_with_issues",
+    "note": "09:25窗口执行(延迟)，四份早报文件均已生成(ai/financial/web3/side-hustle morning news 2026-06-01)，发现1个需修复问题：经济财经早报第34行WTI原油文章链接(jin10.com首页)应替换为具体文章URL。三份早报(financial/web3/side-hustle)heartbeat-state lastRun仍为05-30，今日已生成文件，已同步更新。"
   }
 }
