@@ -1,13 +1,13 @@
 {
   "github-trending-03": {
-    "lastRun": "2026-05-31",
+    "lastRun": "2026-06-01",
     "status": "all_already_covered",
-    "note": "03:00窗口执行，18个趋势项目(microsoft/markitdown, harry0703/MoneyPrinterTurbo, anthropics/claude-code, cursor/plugins, revfactory/harness, EveryInc/compound-engineering-plugin, affaan-m/ECC, galilai-group/stable-worldmodel, Crosstalk-Solutions/project-nomad, OpenBMB/VoxCPM, run-llama/liteparse, chen08209/FlClash, FareedKhan-dev/train-llm-from-scratch, DataTalksClub/data-engineering-zoomcamp, OpenMOSS/MOSS-TTS, dreammis/social-auto-upload, anthropics/skills, codecrafters-io/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
+    "note": "03:00窗口执行，14个趋势项目(Crosstalk-Solutions/project-nomad, D4Vinci/Scrapling, EveryInc/compound-engineering-plugin, FareedKhan-dev/train-llm-from-scratch, OpenBMB/VoxCPM, anthropics/claude-code, harry0703/MoneyPrinterTurbo, microsoft/markitdown, nesquena/hermes-webui, nicobailon/pi-subagents, revfactory/harness, supermemoryai/supermemory, emmabostian/developer-portfolios, codecrafters-io/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "browser-memory-cleanup": {
-    "lastRun": "2026-05-31",
-    "status": "completed",
-    "note": "33 Chrome processes terminated at 03:04"
+    "lastRun": "2026-06-01",
+    "status": "blocked",
+    "note": "03:00窗口执行失败，Chrome CDP WebSocket连接失败(Chrome未开启remote debugging)，跳过"
   },
   "github-trending-10": {
     "lastRun": "2026-05-31",
@@ -45,14 +45,14 @@
     "note": "13:00窗口执行，20个趋势项目(markitdown/MoneyPrinterTurbo/claude-code/plugins/harness/compound-engineering-plugin/ECC/stable-worldmodel/project-nomad/VoxCPM/liteparse/FlClash/train-llm-from-scratch/data-engineering-zoomcamp/MOSS-TTS/social-auto-upload/anthropics/skills/codecrafters/build-your-own-x/RuView)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "github-trending-09": {
-    "lastRun": "2026-05-29",
-    "status": "completed",
-    "note": "12 trending repos checked; 10 already covered; wrote 2 new articles. Push: 64c7a51"
+    "lastRun": "2026-06-01",
+    "status": "all_already_covered",
+    "note": "09:05窗口执行，15个趋势项目(MoneyPrinterTurbo/markitdown/Scrapling/hermes-webui/compound-engineering-plugin/github-docs/VoxCPM/harness/train-llm-from-scratch/supermemory/project-nomad/claude-code/pi-subagents/developer-portfolios/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "ai-news-morning": {
-    "lastRun": "2026-05-31",
-    "status": "blocked",
-    "note": "07:34窗口执行失败：web_fetch所有英文源被拦截(BLOCKED:private IP)，web_search的Brave API token失效(422)。无任何可用采集工具，任务无法完成，等待修复"
+    "lastRun": "2026-06-01",
+    "status": "completed",
+    "note": "07:49窗口执行，Chrome CDP采集36kr+量子位共12条AI新闻，已推送飞书文档NPp7dG5xDoKFLdxlS3wcOdCFnkg。text-matrix目录不存在，跳过Hugo推送。"
   },
   "financial-morning-news": {
     "lastRun": "2026-05-30",
@@ -70,8 +70,8 @@
     "note": "CoinGecko API采集6个加密货币价格，华尔街见闻采集3条新闻，推送飞书文档LE2YdhBpVoozlexIgdecVDr4n6T"
   },
   "早请安": {
-    "lastRun": "2026-05-31",
+    "lastRun": "2026-06-01",
     "status": "completed",
-    "note": "07:03窗口执行，已向师父问好并汇报当日任务计划"
+    "note": "07:00窗口执行，已记录今日任务计划（AI新闻早报待修复、GitHub趋势榜多时段覆盖、早报核查09:00）"
   }
 }
