@@ -82,6 +82,6 @@
   "文章健康检查": {
     "lastRun": "2026-06-03",
     "status": "completed",
-    "note": "00:30窗口检查: 4份早报(2026-06-02) frontmatter全部✓ (date均≤当前时间)，实时链接核查(curl+UA 8s超时,首轮 56/58=200,2个重试后均200 OK—1个cointelegraph 200ERR为curl抖动,1个HN 429为速率限制)，总计58/58可达。整体文章库954篇(news 260/tech 666含子目录/wealth 9/video 12/thoughts 2+5散落)，空文件0、tiny文件2(2026-04-08历史占位 ai-side-hustle+financial, 969B+989B, 之前已标记待优化,本轮不变)。git status干净, origin/main一致, head 1b9bcca。2026-06-03早报未生成(07:30前正常)。系统健康,无紧急问题,本轮无需修复。"
+    "note": "02:00窗口检查: 4份早报(2026-06-02) frontmatter全部✓ (draft:false, date均≤当前时间, AI 08:17/财经 08:30/Web3 08:00/副业 08:30)。本轮抽样链接核查(curl+UA 6s超时): AI 8/8、财经 8/8、Web3 8/8、副业 7/7 = 31/31 全部200 OK (取样覆盖36kr/华尔街见闻/金十/cointelegraph/V2EX等核心源)。整体文章库981篇(news 260/tech 698/wealth 9/video 12/thoughts 2), tiny<1.5KB文件7处(5处news历史占位+1处tech fincept-terminal 1.3KB+1处wealth _index.md)—全部为历史遗留(2026-04~05期间),之前已标记待优化,本轮不变。git status: skills/hugo-writer/SKILL.md v2.5.0→v2.6.0(新增财富自由分类)未提交(本地draft改动,非内容损坏); origin/main head 2d81c175(2个新commit在rebase后落地:GitHub Merge Queue指南+7篇tech博客polish)。2026-06-03早报未生成(07:30前正常)。凌晨低风险窗口,系统健康,无紧急问题,本轮无需修复。"
   }
 }
