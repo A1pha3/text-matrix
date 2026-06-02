@@ -5,18 +5,18 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "Token 优化", "Prompt Engineering", "AI 效率", "LLM"]
 ---
 
-## 引言：一个反直觉的发现
+## 引言
 
-2026 年 4 月，一个名为 **caveman** 的 Claude Code 插件在 GitHub 迅速走红——上线不到一个月斩获 **50,544 颗星**，2,680 个 Fork，话题覆盖 Hacker News 头版。这个项目的核心理念看似荒诞：
+caveman 做一件事：把 LLM 输出里的填充词、客套话、犹豫词系统性去掉。Token 消耗降 65%，技术准确性没动。
 
 > **why use many token when few token do trick**
 > （为什么用很多 token，几个 token 能搞定的事？）
 
-简而言之：让 AI 用「山顶洞人语言」说话——去掉所有冗余的填充词、客套话、犹豫词——结果发现，**Token 消耗降低 65%，技术准确性却纹丝不动**。
+压缩规则不是乱删。冠词、填充词、客套话、长词替换、碎片句式——每一步都针对 LLM 训练时学会的那层「礼貌流利」。代码块、错误信息、文件路径、API 名称保持原样不动。
 
-这不仅仅是省钱的问题。LLM 输出的冗长程度直接决定了响应速度、上下文窗口的消耗，以及人类阅读的体验。更重要的是，2026 年 3 月的一篇论文 ["Brevity Constraints Reverse Performance Hierarchies in Language Models"](https://arxiv.org/abs/2604.00025) 证明：**约束大模型输出简短回答，在某些基准测试上准确率提升了 26 个百分点， Verbose 并不等于准确。**
+LLM 输出的冗长程度直接决定响应速度、上下文窗口消耗和阅读体验。2026 年 3 月的论文 ["Brevity Constraints Reverse Performance Hierarchies in Language Models"](https://arxiv.org/abs/2604.00025) 验证了同一方向：约束大模型输出简短回答，在某些基准测试上准确率提升了 26 个百分点。Verbose 不等于准确。
 
-本文从原理、架构、实战三方面，彻底解析 caveman 这一现象级工具。
+上线不到一个月，GitHub 50,544 星。下面从三条主线把它拆开：压缩规则（原理）、多智能体插件架构（架构）、从安装到二次开发（实战）。
 
 ---
 
@@ -40,7 +40,7 @@ validating the token expiry. Let me take a look and suggest a fix."
 
 ### 1.2 Caveman Speak 的语言学原理
 
-Caveman 的压缩策略并非随意删字，而是基于一套系统的语言压缩规则：
+Caveman 的压缩策略依赖一套明确的规则：
 
 | 压缩维度 | 具体操作 | 示例 |
 |---------|---------|------|
@@ -76,9 +76,9 @@ caveman 在 `benchmarks/` 目录中提供了可复现的 Token 计数结果：
 
 ### 1.4 为什么「简洁」不等于「信息丢失」
 
-核心洞察是：**LLM 训练时大量「有帮助」的输出实际上是 filler（填充词）**。这些词帮助 LLM 生成流畅的文本，但并不携带独立的信息。Caveman 的压缩本质上是信息论中「去冗余」（de-redundancy）的应用。
+核心逻辑直截了当：**LLM 训练时大量「有帮助」的输出实际上是 filler（填充词）**。这些词帮助 LLM 生成流畅文本，但不携带独立信息。Caveman 的压缩本质上是信息论中「去冗余」（de-redundancy）的应用。
 
-更重要的是，Caveman 对以下内容**绝对不压缩**：
+更关键的一条边界——Caveman 对以下内容**绝对不压缩**：
 - 代码块（完全保持原样）
 - 错误信息（逐字引用）
 - 文件路径、URL、命令
@@ -90,7 +90,7 @@ caveman 在 `benchmarks/` 目录中提供了可复现的 Token 计数结果：
 
 ### 2.1 整体架构
 
-caveman 不是一个单一脚本，而是一个**多智能体插件系统**，支持 8+ 种 AI 编程工具：
+caveman 是一个**多智能体插件系统**，支持 8+ 种 AI 编程工具：
 
 ```
 caveman 生态系统
@@ -182,11 +182,11 @@ return 'full';
 // 4. 检测是否缺少 statusLine 配置，提示 Claude 帮助设置
 ```
 
-关键设计决策：**SKILL.md 是唯一行为定义源**，而不是在钩子中硬编码规则。这样任何对 SKILL.md 的编辑会自动反映在 SessionStart 注入中，无需修改钩子代码。
+SKILL.md 是唯一行为定义源，钩子不硬编码规则。对 SKILL.md 的任何编辑会自动反映在 SessionStart 注入中，不用改钩子代码。
 
 #### `hooks/caveman-mode-tracker.js` — UserPromptSubmit 钩子
 
-这是实现「多轮对话中不丢失 caveman 模式」的关键：
+它解决多轮对话中 caveman 模式丢失的问题：
 
 ```javascript
 // 检测自然语言激活：
@@ -246,7 +246,7 @@ caveman 的解决方案（`safeWriteFlag` / `readFlag`）：
 
 #### 文言文模式
 
-这是 caveman 最有趣的设计——利用人类历史上 token 效率最高的书面语言「文言文」进行压缩：
+文言文是人类历史上 token 效率最高的书面语言，caveman 利用这一点做压缩：
 
 | 级别 | 示例 |
 |------|------|
@@ -600,13 +600,23 @@ cavemem 压缩跨会话的持久记忆
 
 ---
 
-## 结语
+## 结语：什么时候用，什么时候不用
 
-caveman 的成功揭示了一个深刻的洞察：**LLM 的冗长输出是一个可以系统性压缩的维度，而不必然伴随信息损失**。它的价值不仅是省 Token——更是在保持技术准确性的同时，大幅提升人机交互的效率。
+caveman 适合这些场景：
 
-50,544 颗星不是偶然。这是一个让开发者真正感到「相见恨晚」的工具——因为每个人都被 AI 的冗长回复折磨过，而 caveman 用最朴素的方式解决了它。
+- 日常编码问答、bug 修复、代码审查——你只需要结论和操作步骤，不需要解释过程。
+- 高频交互——每轮省下的 token 累积起来，响应速度和上下文窗口占用都会明显改善。
+- 上下文已经清晰的任务——问题和上下文明确时，LLM 不需要再「确认一遍」。
 
-**why use many token when few token do trick.**
+这些场景需要谨慎：
+
+- 教学、新人 onboarding——解释过程本身就是价值，压缩会损害学习效果。
+- 需要详细推理链的任务——用 `full` 或 `lite` 模式，别上 `ultra`。
+- 安全相关操作——caveman 的 auto-clarity 机制会自动降级为正常模式，不需要手动干预。
+
+建议采用顺序：先用 `/caveman lite` 试一两轮，感受压缩程度；不影响理解就切到 `full`（默认）；需要极致效率时用 `ultra`。文言文模式适合中文开发者和需要文言文输出的场景。压缩输入文件（`.md`、`CLAUDE.md`）时，先用 `/caveman:compress` 跑一次，对比原始备份确认没有丢关键信息，再替换。
+
+如果团队里有人反感碎片句式，直接用 `lite` 模式——去掉填充词但保留完整句子，学习成本最低。
 
 ---
 

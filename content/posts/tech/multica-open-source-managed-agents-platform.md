@@ -12,239 +12,172 @@ tags: ["AI", "Claude Code", "多代理", "MCP", "开源"]
 
 ![Multica: humans and agents, side by side](docs/assets/banner.jpg)
 
-**开源托管代理平台，把编程代理变成真正的团队成员。**
+**Multica 真正做的事情不是"让 AI 帮你写代码"——Claude Code、Codex 已经在做这个了。它做的是把一群 AI 代理变成能接 issue、报进度、复用技能、互相协调的团队成员，而不是跑完就消失的一次性脚本。**
 
 [![CI](https://github.com/multica-ai/multica/actions/workflows/ci.yml/badge.svg)](https://github.com/multica-ai/multica/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/multica-ai/multica?style=flat)](https://github.com/multica-ai/multica/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 背景：为什么需要 Multica
+读完这篇文章你会知道：Multica 在代理协作这个链条上到底补了哪一环、它的核心机制怎么配合、以及你的团队适合从哪里开始用。
 
-大型语言模型（LLM）驱动下的 AI 编程代理（Claude Code、Codex、Copilot、Cursor Agent 等）已经能独立完成大量代码任务。然而，当你想让多个代理协同工作时，问题来了：
+## 五分钟总览
 
-- 代理之间没有统一的任务分配机制
-- 无法追踪每个代理的进度和阻塞
-- 跨代理的知识和技能无法复用
-- 多代理和人类之间的协作缺乏基础设施
+先不展开细节，Multica 在代理协作栈中的位置大致是：
 
-**Multica** 解决了这些问题。它是一个开源的托管代理平台，让你可以像分配任务给人类同事一样，把 issue 分配给 AI 代理——代理会接取任务、写代码、报告阻塞、自动更新状态。
+```
+你的开发流程：GitHub Issue → 代理认领 → 代理干活 → 代理评论/PR → 完成
+                              ↑
+                         Multica 插在这里
+                    （任务队列 + 代理注册 + 技能复用 + 实时进度）
+```
 
-> 名字由来：**Mul**tiplexed **I**nformation and **C**omputing **A**gent。致敬 1960 年代的多路复用操作系统 Multics（Unix 就是从 Multics 简化而来）。Multica 认为，在 AI 时代，"多路复用"正在重新定义：一个人类工程师 + 一群 AI 代理，应该能像二十个人的团队一样高效运转。
+Multica 提供了四样基础设施：
+
+| 组件 | 解决的问题 |
+|------|-----------|
+| 任务队列 + 代理注册表 | 多个代理之间没有统一的分发和认领机制，只能手动指派 |
+| Squad（编队） | 一个任务需要多个代理协作时，缺乏自主协调者 |
+| 技能仓库 | 代理每次从零写提示词，已经踩过的坑无法沉淀 |
+| WebSocket 实时流 | 代理在后台跑，人看不到进度也收不到阻塞通知 |
+
+如果只用一个代理、任务量也不大，Multica 可能用不上。但当团队里同时跑着 3-5 个代理，或者打算把代理嵌入日常开发流程（issue → agent → PR），这些基础设施就从"锦上添花"变成了"缺了就没法扩展"。
+
+## 名字的由来
+
+**Mul**tiplexed **I**nformation and **C**omputing **A**gent——致敬 1960 年代的多路复用操作系统 Multics（Unix 就是从 Multics 简化出来的）。Multica 的出发点是：一个人类工程师加上一群 AI 代理，在任务分配和进度管理上应该能像多路复用操作系统调度进程一样运转。
 
 ---
 
-## 核心特性
+## 代理如何变成"队友"
 
-### 1. 代理即队友
+先看单个代理的工作方式，再看多个代理怎么编队。
 
-在 Multica 中，每个 AI 代理都是一个"队友"。你可以在 issue 中 @ 某个代理，代理会：
+### 代理注册与生命周期
 
-- **接取任务**：自动认领分配给它的 issue
-- **报告进度**：通过评论更新任务状态
-- **报告阻塞**：当遇到问题时主动提出
-- **提交代码**：独立完成开发工作
-
-代理不再是"跑一次就没了"的单次任务，而是一个持续参与团队协作的成员。
-
-### 2. Squad（编队）：多代理协作
-
-Squad 功能允许你把多个代理（和人类）组成一个小组，由一个"领导代理"负责协调：
+在 Multica 里，注册一个代理不是"配好 API Key 丢进去就行"。每个代理有自己的状态机：
 
 ```
-@FrontendTeam → 领导代理决定谁来做
-              → 前端代理A / 前端代理B / 设计代理
+创建 → 入队（enqueue）→ 认领（claim）→ 开始（start）→ 完成（complete）/ 失败（fail）
+                                    ↓
+                                阻塞（blocked）→ 解阻 → 继续
 ```
 
-当一个新的 issue 分配给 Squad 时，领导代理会决定哪个成员最适合处理，避免了任务分配的混乱。
+这意味着代理在 Multica 眼里是一个**有状态的成员**。它可以在 issue 下评论报告进度、主动标注阻塞、提交 PR 后自动更新状态。每个状态变化通过 WebSocket 实时推给客户端——不是等你刷新页面才知道代理卡住了。
 
-支持的代理：**Claude Code、Codex、GitHub Copilot CLI、OpenClaw、OpenCode、Hermes、 Gemini、Pi、Cursor Agent、Kimi、Kiro CLI** 等。
+注册代理的命令行操作：
 
-### 3. 可复用技能（Skills）
-
-Multica 的技能系统让每个解决过的问题都变成可复用的团队资产：
-
-- 部署流程 → 技能
-- 数据库迁移 → 技能
-- 代码审查 → 技能
-
-当一个新代理需要执行类似任务时，直接调用已有技能，不需要重复编写提示词。
-
-### 4. 实时进度流
-
-通过 WebSocket 提供实时进度流：
-
-```
-代理A：正在处理 #234 用户认证模块...
-代理B：已完成 #123，提交了 PR #456
-领导代理：任务 #789 被阻塞，需要人工介入
+```bash
+multica agent add claude-code --api-key your-key
+multica agent add codex --api-key your-key
 ```
 
-### 5. 自托管与云端
+支持的代理列表：Claude Code、Codex、GitHub Copilot CLI、OpenClaw、OpenCode、Hermes、Gemini、Pi、Cursor Agent、Kimi、Kiro CLI 等。
 
-- **自托管**：完全开源，可以部署在自己的服务器上
-- **云端**：multica.ai 提供托管服务，开箱即用
+### 任务分配
+
+任务的入口可以是 Web 界面或 CLI，分配目标可以是单个代理，也可以是 Squad：
+
+```bash
+multica issue create --title "实现用户登录" --assign @claude-agent
+multica issue create --title "重构前端组件" --assign @FrontendTeam
+```
+
+分配后，代理自动接取任务。整个过程对标的是"给同事开 issue"的体验，而不是"启动一个 CI Pipeline"。
 
 ---
 
-## 架构设计
+## Squad：多代理编队
 
-### 系统架构
+如果只有一个代理在处理任务，Squad 用不上。但一个需要拆成多模块的任务（比如重构一个电商网站的前端），只交给一个代理容易触达上下文上限；拆给多个代理手动协调又很累。
 
-Multica 的核心设计围绕**代理生命周期管理**：
+Squad 的做法是：把一个小组的代理（和人类）编成一个队，指定一个"领导代理"负责分发：
+
+```
+@EcommerceFrontendTeam → 领导代理判断谁来接
+                       → 商品代理 / 购物车代理 / 支付代理 / 用户代理
+```
+
+具体操作：
+
+```bash
+multica squad create EcommerceFrontendTeam --leader claude-code
+multica squad add-member EcommerceFrontendTeam --agent product-agent --role "商品模块"
+multica squad add-member EcommerceFrontendTeam --agent cart-agent --role "购物车模块"
+```
+
+### 一个完整流转案例
+
+假设团队接到需求"重构电商网站前端"，涉及四个模块。在 Multica 里的流转大致是：
+
+1. **创建 Squad**：`EcommerceFrontendTeam`，领导代理为 Claude Code。
+2. **拆 issue**：把大需求拆成四个子 issue——商品列表重构、购物车重构、支付页重构、用户中心重构。
+3. **分配**：四个子 issue 全部 `@EcommerceFrontendTeam`。
+4. **领导代理决策**：Claude Code 作为领导代理，根据每个成员注册时声明的角色和当前负载，把商品 issue 分给 `product-agent`，购物车分给 `cart-agent`，以此类推。
+5. **并行执行**：四个代理同时工作。每个代理在自己的 issue 下更新进度、报告阻塞。
+6. **结果汇总**：领导代理监控所有子任务的完成状态，有阻塞时通知人工介入；全部完成后，领导代理在父 issue 下汇总。
+
+这个流程里，人类只需要创建 Squad、拆 issue、处理阻塞——不需要手动 ping 每个代理问"你做到哪了"。
+
+---
+
+## 技能复用：让踩过的坑有记忆
+
+代理之间最容易浪费的事情是"同一个问题，每个代理都从零写提示词"。
+
+Multica 把常见流程抽象为技能（Skill），存进技能仓库。部署流程、数据库迁移脚本、代码审查模板——做一次，下次新代理加入时直接调用，不必重新描述上下文。
+
+技能仓库对接的是代理适配层，不同代理（Claude Code、Codex 等）通过统一的适配接口调用同一个技能。这意味着换代理不需要重写技能。
+
+---
+
+## 架构总览
+
+Multica 的核心模块围绕代理生命周期展开：
 
 ```
 ┌─────────────────────────────────────────────────┐
 │                  Multica Core                    │
 ├─────────────────────────────────────────────────┤
-│  Task Queue  │  Agent Registry  │  Skill Store │
-│  (任务队列)    │  (代理注册表)      │  (技能仓库)    │
+│  Task Queue  │  Agent Registry  │  Skill Store   │
+│  (任务队列)    │  (代理注册表)      │  (技能仓库)      │
 ├─────────────────────────────────────────────────┤
-│         WebSocket Server (实时进度流)             │
+│         WebSocket Server (实时进度流)              │
 ├─────────────────────────────────────────────────┤
-│  Agent Adapter Layer (多代理适配)                 │
-│  Claude Code / Codex / Copilot / OpenClaw ...   │
+│  Agent Adapter Layer (多代理适配)                  │
+│  Claude Code / Codex / Copilot / OpenClaw ...    │
 └─────────────────────────────────────────────────┘
 ```
 
-**核心模块：**
+五个模块的职责：
 
-1. **Agent Registry**：管理所有注册的代理，维护其状态和能力描述
-2. **Task Queue**：统一的任务队列，支持任务的创建、分配、执行、完成、失败等生命周期
-3. **Skill Store**：存储和管理可复用的技能模板
-4. **WebSocket Server**：实时推送代理进度更新
-5. **Agent Adapter Layer**：不同代理（Claude Code、Codex 等）的统一适配接口
-
-### 任务生命周期
-
-```
-创建 → 入队(enqueue) → 认领(claim) → 开始(start) → 完成(complete) / 失败(fail)
-                                    ↓
-                                阻塞(blocked) → 解阻 → 继续
-```
-
-每个状态变化都会通过 WebSocket 实时通知客户端。
+1. **Agent Registry**：记录每个代理的当前状态、能力标签和角色声明。Squad 的领导代理就是靠这些信息做分发决策的。
+2. **Task Queue**：issue 从创建到完成的全生命周期管理。状态变更触发 WebSocket 推送。
+3. **Skill Store**：可复用技能的存储和版本管理。
+4. **WebSocket Server**：把代理进度、阻塞事件实时广播给 Web 界面和 CLI。
+5. **Agent Adapter Layer**：不同代理（Claude Code、Codex 等）共用一个接口层，Squad 里的混合代理编队不需要各自适配。
 
 ---
 
-## 安装与使用
-
-### 安装
-
-```bash
-# 通过 npm 安装
-npm install -g @multica-ai/cli
-
-# 或者使用 Docker
-docker run -d -p 3000:3000 multica-ai/multica
-```
+## 安装与部署
 
 ### 快速开始
 
 ```bash
-# 初始化项目
+npm install -g @multica-ai/cli
 multica init my-project
-
-# 启动 Multica 服务
 multica start
-
-# 在浏览器打开 http://localhost:3000
+# 浏览器打开 http://localhost:3000
 ```
 
-### 注册代理
+或使用 Docker：
 
 ```bash
-# 注册 Claude Code 代理
-multica agent add claude-code --api-key your-key
-
-# 注册 Codex 代理
-multica agent add codex --api-key your-key
+docker run -d -p 3000:3000 multica-ai/multica
 ```
 
-### 分配任务
+### 自托管（Docker Compose）
 
-通过 Web 界面或 CLI：
-
-```bash
-# 通过 CLI 分配任务
-multica issue create --title "实现用户登录" --assign @claude-agent
-
-# 通过 @Squad 分配
-multica issue create --title "重构前端组件" --assign @FrontendTeam
-```
-
----
-
-## Web 界面
-
-Multica 提供了一个现代化的看板界面，与 GitHub Issue 无缝集成：
-
-- **Board 视图**：类似 GitHub Projects 的看板，看每个代理正在做什么
-- **Issue 列表**：创建、编辑、分配 issue
-- **Activity 时间线**：每个代理的实时活动日志
-- **Squad 管理**：创建和管理多代理编队
-
----
-
-## 与主流工具的集成
-
-### Claude Code 集成
-
-```bash
-# 安装 Claude Code Multica 插件
-claude code plugin install multica
-```
-
-然后在 `claude_desktop_config.json` 中配置：
-
-```json
-{
-  "mcpServers": {
-    "multica": {
-      "command": "npx",
-      "args": ["-y", "@multica-ai/mcp@latest"]
-    }
-  }
-}
-```
-
-### GitHub 集成
-
-Multica 可以直接从 GitHub Issue 获取任务，并在完成时自动提交 PR 和更新 Issue 状态。
-
----
-
-## Squad 模式详解
-
-Squad 是 Multica 最强大的功能之一。想象一个典型的大型任务：
-
-```
-用户需求：重构电商网站的前端
-涉及模块：商品列表、购物车、支付、用户中心
-```
-
-如果只用一个代理，需要把所有上下文都给它，容易达到 token 上限。如果拆成多个代理，又需要手动协调。
-
-**Squad 方案：**
-
-1. 创建一个 `@EcommerceFrontendTeam` Squad
-2. 设置一个领导代理（如 Claude Code）作为协调者
-3. 领导代理下辖多个专业代理：商品代理、购物车代理、支付代理、用户代理
-4. 把任务分配给 Squad，领导代理自动决定谁来处理
-
-```bash
-# 创建 Squad
-multica squad create EcommerceFrontendTeam --leader claude-code
-
-# 添加成员
-multica squad add-member EcommerceFrontendTeam --agent product-agent --role "商品模块"
-multica squad add-member EcommerceFrontendTeam --agent cart-agent --role "购物车模块"
-```
-
----
-
-## 自托管部署
-
-### Docker Compose 部署
+生产环境建议走 PostgreSQL + Redis：
 
 ```yaml
 version: '3.8'
@@ -275,50 +208,87 @@ volumes:
   redisdata:
 ```
 
-### 环境变量
+### 关键环境变量
 
-| 变量 | 说明 | 默认值 |
+| 变量 | 作用 | 默认值 |
 |------|------|--------|
-| `DATABASE_URL` | PostgreSQL 连接串 | `sqlite://multica.db` |
-| `REDIS_URL` | Redis 连接串 | 内置内存 |
+| `DATABASE_URL` | PostgreSQL 连接串；生产环境务必替换 | `sqlite://multica.db` |
+| `REDIS_URL` | 任务队列和 WebSocket 依赖的 Redis 连接 | 内置内存 |
 | `PORT` | 服务端口 | `3000` |
-| `SECRET_KEY` | 会话密钥 | 必填 |
-| `AGENTS_MAX_CONCURRENT` | 最大并发代理数 | `10` |
+| `SECRET_KEY` | 会话加密密钥 | **必填，无默认值** |
+| `AGENTS_MAX_CONCURRENT` | 同时运行的代理上限，防止资源耗尽 | `10` |
+
+使用 SQLite 默认值无法支持多实例部署和高并发——生产环境建议从 Day 1 就用 PostgreSQL。
 
 ---
 
-## 与 LangChain/AutoGen 的对比
+## 与 Claude Code、GitHub 的对接
 
-| 特性 | Multica | LangChain | AutoGen |
+### Claude Code 集成
+
+```bash
+claude code plugin install multica
+```
+
+然后在 `claude_desktop_config.json` 中配置 MCP 服务：
+
+```json
+{
+  "mcpServers": {
+    "multica": {
+      "command": "npx",
+      "args": ["-y", "@multica-ai/mcp@latest"]
+    }
+  }
+}
+```
+
+配置完成后，Claude Code 作为一个代理注册到 Multica，可以接 issue、报进度、提交 PR。
+
+### GitHub 集成
+
+Multica 从 GitHub Issue 拉取任务，代理完成开发后自动提交 PR 并更新 Issue 状态。整个链路是：GitHub Issue → Multica 任务队列 → 代理认领 → 代理 push PR → Issue 状态更新。
+
+---
+
+## 与 LangChain / AutoGen 的差异
+
+| | Multica | LangChain | AutoGen |
 |------|---------|-----------|---------|
-| **定位** | 托管代理平台 | LLM 应用开发框架 | 多代理对话框架 |
-| **任务管理** | 内置 + GitHub 集成 | 需自行实现 | 需自行实现 |
-| **技能复用** | 内置技能市场 | 需自行实现 | 需自行实现 |
-| **Web 界面** | 有，开箱即用 | 无 | 无 |
-| **自托管** | 支持 | 支持 | 支持 |
-| **GitHub Issue 集成** | 有 | 需自行实现 | 需自行实现 |
+| 定位 | 代理托管与协作平台 | LLM（大型语言模型）应用开发框架 | 多代理对话编排框架 |
+| 任务管理 | 内置，对标 GitHub Issue 流程 | 自行实现 | 自行实现 |
+| 技能复用 | 内置技能仓库 | 自行实现 | 自行实现 |
+| Web 界面 | 开箱即用的看板和活动时间线 | 无 | 无 |
+| 自托管 | 支持 | 支持 | 支持 |
 
-Multica 的核心差异在于：**它是一个完整的团队协作平台**，而不是一个开发框架。即使你不懂 LLM，只要你会用 GitHub Issue，就能让 AI 代理帮你干活。
-
----
-
-## 适用场景
-
-- **需要多个 AI 代理协同的中大型项目**（代码重构、大型功能开发）
-- **希望把 AI 代理纳入现有开发流程**（GitHub Issue → 代理执行 → PR）
-- **团队希望建立 AI 代理资产库**（技能复用、经验积累）
-- **研究多代理协作的研究者**（Squad 模式提供了开箱即用的实验环境）
+Multica 不做模型调用、不做对话编排——这些 LangChain 和 AutoGen 已经覆盖了。Multica 只做代理的管理层：谁接什么任务、进度如何、已解决的模式能不能复用。如果你的需求是"让代理写出更好的代码"，你应该看模型和提示词层面；如果你的需求是"让多个代理像团队一样运转"，Multica 填补的是这块空白。
 
 ---
 
-## 结论
+## 适合什么样的团队
 
-Multica 解决了一个实际问题：当 AI 代理从"单次任务执行者"升级为"团队成员"时，我们需要一个完整的基础设施来支撑这种协作。它不是又一个 AI 编程工具，而是一个让 AI 代理融入团队协作流程的**平台层**。
+从轻到重，建议的采用顺序：
 
-如果你正在使用 Claude Code、Codex 或其他 AI 编程代理，Multica 提供了一个让它们协同工作的框架，值得尝试。
+1. **单个代理 + 已有 GitHub Issue 流程**：先用 Multica 把代理注册进来，让一个代理开始接 issue、报进度。成本最低，可以验证"代理作为团队成员"这套流程是否适合你。
+2. **2-3 个代理 + 技能仓库**：当第二个代理加入时，开始在技能仓库里沉淀部署脚本、代码审查模板等。这个阶段的核心收益来自"新代理不用从零教"。
+3. **多代理 + Squad**：当任务需要跨模块协作，或者单个代理上下文不够用时，引入 Squad。领导代理负责分发，人类只需要关注阻塞点。
+
+以下场景可以暂时不用 Multica：
+
+- 只用单个代理做独立任务，不需要进度追踪和技能复用。
+- 代理调用已经通过 CI/CD Pipeline 编排好了，不打算改成"代理主动认领"模式。
+- 团队规模小、一次性任务为主，代理跑完就完。
 
 ---
 
-**GitHub 地址**：[https://github.com/multica-ai/multica](https://github.com/multica-ai/multica)
+## 该从哪里开始
+
+Multica 解决的不是"AI 能不能写代码"，而是"多个 AI 代理能不能像团队一样协作"。如果你已经在用 Claude Code 或 Codex 做日常开发，下一步想做的事是让代理互相配合而不是各自为战，Multica 是目前为数不多的开源选项之一。
+
+可以先从注册一个代理、让它接一个真实 issue 开始。这比读文档更容易理解它到底改了什么工作流。
+
+---
+
+**GitHub**：[https://github.com/multica-ai/multica](https://github.com/multica-ai/multica)
 
 **官网**：[https://multica.ai](https://multica.ai)

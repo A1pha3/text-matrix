@@ -1,5 +1,5 @@
 ---
-title: "Unsloth：61K Stars·本地AI训练与推理平台·2倍速"
+title: "Unsloth：61k Stars 的本地 AI 训练与推理平台——它能省掉的不是时间，是显存焦虑"
 date: "2026-04-12T02:31:39+08:00"
 slug: unsloth-ai-training-inference-platform-guide
 description: "Unsloth 是一个本地 AI 训练与推理平台，可实现 2 倍速度和 70% 显存节省，支持多种开源模型。"
@@ -8,104 +8,41 @@ categories: ["技术笔记"]
 tags: ["AI", "训练", "推理", "GPU", "深度学习"]
 ---
 
-# Unsloth：61K Stars·本地AI训练与推理平台·2倍速·70%显存节省完全指南
+# Unsloth：本地 AI 训练与推理平台实操指南
 
-## 一、项目概述
+在消费级 GPU 上跑模型的人，总会碰到同一个问题：显存不够。买更大显存的卡要花钱，上云要花钱，换更小的模型意味着牺牲效果。Unsloth 做的事很直接——在不换硬件的前提下，让训练快一倍、显存占用量砍到三成，而且不靠黑魔法，靠的是手动写的 Triton 内核和 4-bit QLoRA 量化。
 
-### 1.1 Unsloth 是什么
+这正是它拿到 61k Stars 的原因。Yann LeCun 点了赞，HuggingFace TRL 团队在合作优化，Qwen / Llama 4 / Mistral / Gemma 团队直接跟它修 bug。但 Stars 只说明有人关注，真正决定你该不该用的，是下面这张图。
 
-**Unsloth Studio** 🦥 是一个强大的**本地 AI 训练与推理平台**，支持在 Windows、Linux、macOS 上运行和微调文本、音频、embedding、视觉模型。
+## 系统总览
 
-> "Unsloth Studio (Beta) lets you run and train text, audio, embedding, vision models on Windows, Linux and macOS."
+Unsloth 内部其实是两条独立的主线，共用一个安装入口：
 
-被 **Yann LeCun** 点赞推荐！
-
-### 1.2 核心数据
-
-| 指标 | 数值 |
-|------|------|
-| Stars | **61k** ⭐ |
-| Forks | 5.3k |
-| 贡献者 | 190 |
-| 最新版本 | v0.1.36-beta (2026-04-08) |
-| 提交数 | 5,004 commits |
-| 许可证 | Apache-2.0 / AGPL-3.0 |
-| 语言 | Python 65.2%, TypeScript 30.0% |
-
-### 1.3 核心定位
-
-| 维度 | 说明 |
-|------|------|
-| ⚡ **极速训练** | 最高 2 倍速，70% 显存节省 |
-| 🎯 **500+ 模型** | Gemma、Qwen、Llama、Mistral、DeepSeek 等 |
-| 🔧 **双模式** | Studio UI + Core 代码版 |
-| 🌐 **全平台** | Windows、Linux、macOS、WSL、Docker |
-| 🤖 **推理+训练** | 统一本地接口 |
-| 📊 **可观测** | 实时监控 loss 和 GPU 使用 |
-
----
-
-## 二、核心功能
-
-### 2.1 功能矩阵
-
-| 类别 | 功能 |
-|------|------|
-| 🤖 **推理** | GGUF/LoRA/safetensors 模型搜索下载运行 |
-| 🔧 **工具调用** | Self-healing tool calling、Web search |
-| 💻 **代码执行** | Claude artifacts 沙盒环境 |
-| 🎨 **多模态** | 图片、音频、PDF、DOCX 上传聊天 |
-| 📚 **训练** | 500+ 模型微调，2x 加速，70% 显存节省 |
-| 🧠 **RL/GRPO** | 强化学习，80% 显存节省 |
-| 📝 **Data Recipes** | 可视化数据创建和编辑 |
-| 📊 **可观测** | 实时 loss 曲线、GPU 监控 |
-| 🔄 **多 GPU** | 支持多卡训练（即将重大升级） |
-
-### 2.2 为什么选择 Unsloth
-
-| 特性 | 说明 |
-|------|------|
-| ⚡ **2 倍速** | 自定义 Triton 内核优化 |
-| 💾 **70% 显存** | 4-bit 量化训练，无精度损失 |
-| 🧠 **80% 显存（RL）** | GRPO/PPO 等强化学习算法 |
-| 📊 **500K Context** | 80GB GPU 训练 20B 模型 500K 上下文 |
-| 🔧 **TRL 合作** | 与 HuggingFace TRL 团队合作优化 |
-| 🐛 **Bug 修复** | 直接与 Qwen/Llama4/Mistral/Gemma 团队合作修复 |
-| 📈 **FP8 & Vision RL** | 支持消费级 GPU 做 FP8 和视觉强化学习 |
-
----
-
-## 三、快速开始
-
-### 3.1 Unsloth Studio（Web UI）
-
-#### macOS / Linux / WSL
-
-```bash
-curl -fsSL https://unsloth.ai/install.sh | sh
+```mermaid
+graph TD
+    A[Unsloth 安装] --> B[Unsloth Studio]
+    A --> C[Unsloth Core]
+    B --> D[推理：GGUF / LoRA 模型下载与对话]
+    B --> E[训练：可视化 Data Recipes + 训练配置]
+    B --> F[监控：实时 loss 曲线 + GPU 占用]
+    C --> G[推理：Python API 加载模型]
+    C --> H[训练：FastLanguageModel + GRPO]
+    C --> I[微调：500+ 模型，4-bit / 16-bit / FP8]
+    D --> J[多模态：图片 / 音频 / PDF]
+    E --> K[RL/GRPO 强化学习，80% 显存节省]
+    H --> K
 ```
 
-#### Windows
+- **Studio**：Web UI，适合不想写代码的场景——搜模型、下载、对话、拖数据进去微调，全程在浏览器里完成。
+- **Core**：Python 包，适合要把训练流程嵌进脚本或 CI 的人——`FastLanguageModel` + `GRPOConfig` 两行起手，剩下的交给内核优化。
 
-```powershell
-irm https://unsloth.ai/install.ps1 | iex
-```
+两条线共享同一套加速内核，所以无论选哪个入口，2 倍速和 70% 显存节省都在。
 
-#### 启动
+## 一个完整的微调任务长什么样
 
-```bash
-unsloth studio -H 0.0.0.0 -p 8888
-```
+在讨论功能列表之前，先看一个真实路径：给 Gemma 3 4B 做一次 4-bit 微调。
 
-#### 更新
-
-```bash
-unsloth studio update
-```
-
-### 3.2 Unsloth Core（代码版）
-
-#### Linux / WSL
+**1. 安装 Core**
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -114,7 +51,250 @@ source unsloth_env/bin/activate
 uv pip install unsloth --torch-backend=auto
 ```
 
-#### Windows
+**2. 加载模型（4-bit 量化）**
+
+```python
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="unsloth/gemma-3-4b-it",
+    max_seq_length=2048,
+    load_in_4bit=True,
+)
+```
+
+这一步里，Unsloth 的自定义 Triton 内核接管了 PyTorch 的默认算子。原始 Gemma 3 4B 在 16-bit 下需要约 8 GB 显存，4-bit 量化后降到约 3 GB——多出来的 5 GB 可以塞上下文或更大的 batch。
+
+**3. 准备数据**
+
+```python
+from datasets import load_dataset
+
+dataset = load_dataset("json", data_files="my_data.jsonl", split="train")
+```
+
+也可以用 Studio 的 Data Recipes：上传 PDF、CSV 或 DOCX，在可视化界面里编辑节点，导出为训练集。
+
+**4. 配置并启动训练**
+
+```python
+from unsloth import unsloth_train
+from transformers import TrainingArguments
+
+training_args = TrainingArguments(
+    output_dir="./gemma3-finetuned",
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=4,
+    num_train_epochs=3,
+    learning_rate=2e-4,
+    fp16=not model.config.to_dict().get("load_in_4bit"),
+)
+
+trainer = unsloth_train(model, tokenizer, dataset, training_args)
+trainer.train()
+```
+
+**5. 保存并推理**
+
+```python
+model.save_pretrained("./gemma3-finetuned")
+tokenizer.save_pretrained("./gemma3-finetuned")
+
+FastLanguageModel.for_inference(model)
+inputs = tokenizer(["你好，请介绍一下自己"], return_tensors="pt").to("cuda")
+outputs = model.generate(**inputs, max_new_tokens=128)
+```
+
+这五步走完，你得到的是一个在自己数据上微调过的 Gemma 3 4B，全程显存峰值不超过 6 GB——一张 RTX 3060 就够。
+
+---
+
+## 推理：模型下载、对话与工具调用
+
+### 模型搜索与下载
+
+Studio 内置模型搜索，支持 GGUF、LoRA 适配器和 safetensors 三种格式。搜索到模型后一键下载到本地 `~/.cache/huggingface/hub/`，不用手动处理 HuggingFace 的 LFS。
+
+如果只用 Core，也可以直接写：
+
+```python
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="unsloth/Llama-3.1-8B-bnb-4bit",
+    load_in_4bit=True,
+)
+```
+
+格式选择的经验法则：
+
+| 格式 | 适用场景 | 占用 |
+|------|---------|------|
+| GGUF | 纯推理，想要最小显存 | 最小 |
+| LoRA 适配器 | 在基础模型上叠加多个任务切换 | 极小（几 MB） |
+| safetensors | 完整模型，训练或推理都需要 | 完整大小 |
+
+### 工具调用与代码执行
+
+Unsloth 的 Agent 接口支持 self-healing tool calling——工具调用出错时自动重试修正，而不是直接抛异常。
+
+```python
+agent = Agent(tools=["web_search", "calculator"])
+result = await agent.run("搜索最新的 AI 新闻，然后计算 1000 的 15%")
+```
+
+代码执行跑在沙盒里，类似 Claude Artifacts 的体验：
+
+```python
+agent = Agent(tools=["code_execution"])
+result = await agent.run("写一段 Python 打印斐波那契数列前 20 项并运行")
+```
+
+### 多模态
+
+上传图片、音频、PDF、DOCX 后直接对话。底层由模型自身多模态能力支撑——Unsloth 负责把文件转成模型能消费的格式，不额外加一层代理。
+
+---
+
+## 训练：500+ 模型，4 种精度
+
+### 训练模式对比
+
+Unsloth 支持的训练精度和适用场景：
+
+| 模式 | 显存需求 (7B 模型) | 适用场景 | 精度影响 |
+|------|-------------------|---------|---------|
+| 16-bit Full | ~14 GB | 追求最高精度，有 A100/H100 | 基准 |
+| 4-bit QLoRA | ~6 GB | 消费级 GPU，个人微调 | 实测无明显损失 |
+| FP8 | ~8 GB | Ada/Blackwell 架构，兼顾速度与精度 | 极小 |
+| RL / GRPO | ~4 GB (在 4-bit 上再省 80%) | 强化学习微调 | 训练阶段量化，推理可恢复 16-bit |
+
+GRPO 的 80% 显存节省不是独立数字——它叠在 4-bit 量化之上。对 7B 模型，16-bit RL 原本需要约 20 GB，切成 4-bit 再跑 GRPO 后降到 4 GB 以内，这才是消费级 GPU 能跑强化学习的原因。
+
+### 自定义 Triton 内核为什么快
+
+PyTorch 默认的线性代数算子（矩阵乘、注意力计算）是按通用场景写的。Unsloth 为每个模型家族手写了 Triton 内核——针对 Gemma、Qwen、Llama 各自的注意力模式和 FFN 结构做了特化。效果是：同样的矩阵乘法，少掉 30%-50% 的中间张量分配，省下的显存可以拉大 batch size 或上下文长度。
+
+```python
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="unsloth/gemma-3-4b-it",
+    max_seq_length=2048,
+    load_in_4bit=True,
+)
+# 这行 import 背后已经替换了 PyTorch 默认算子
+```
+
+### 免费 Notebooks 性能表——这些数字在测什么
+
+下面这张表来自 Unsloth 官方免费 Colab Notebooks。但只看数字容易误判，先解释一下测量对象：
+
+- **faster / less VRAM** 的基准线是 HuggingFace Transformers 的默认 Trainer + 对应精度。测的是同一个模型、同一批数据、同样 epoch 下的训练吞吐和显存峰值。
+- 数字反映的是 **Unsloth Triton 内核 + 量化方案的联合优化**，不能直接推出"比所有框架都快"。
+- 显存节省百分比是在该精度下的相对值，不是绝对值——4-bit 本身已经省了 70%，在此基础上 GRPO 再省 80% 指的是 RL 训练阶段的额外优化。
+
+| 模型 | 加速 | 显存节省 |
+|------|------|----------|
+| Gemma 4 (E2B) | 1.5x | 50% |
+| Qwen3.5 (4B) | 1.5x | 60% |
+| gpt-oss (20B) | 2x | 70% |
+| gpt-oss RL | 2x | 80% |
+| Qwen3 GSPO | 2x | 70% |
+| Llama 3.1 (8B) | 2x | 70% |
+| embedding-gemma (300M) | 2x | 20% |
+| Mistral Ministral 3 (3B) | 1.5x | 60% |
+
+embedding-gemma 只省 20% 是合理的：embedding 模型的核心计算在 token embedding 层，矩阵乘占比低，Triton 内核的优化空间本来就小。
+
+---
+
+## 模型支持
+
+Unsloth 不是"兼容 500+ 模型"，而是为每个模型家族写了专用内核。这意味着加一个新模型家族需要专门适配，不是换个 config 就行。当前已适配的家族：
+
+| 模型家族 | 代表模型 | 适配特色 |
+|---------|---------|---------|
+| Gemma | Gemma 4 (E2B), Gemma 3 | Google 最新，完整支持 |
+| Qwen | Qwen3.5 (0.8B-112B), Qwen3 GSPO | 阿里开源，支持 GSPO 强化学习 |
+| Llama | Llama 3.1/3.2 (8B-405B) | Meta 开源，2x 加速 |
+| DeepSeek | DeepSeek V3, Coder | 国产模型，完整适配 |
+| Mistral | Mistral, Ministral 3 | 欧洲团队，1.5x 加速 |
+| gpt-oss | OpenAI o1/o3 开源复现 | Unsloth 参与合作 |
+| Phi | Phi-4 | 微软小模型 |
+| Embedding | embedding-gemma | 向量模型，2x 加速 |
+
+---
+
+## 硬件与显存
+
+### 平台支持
+
+| 平台 | 训练 | 推理 | 备注 |
+|------|:----:|:----:|------|
+| NVIDIA GPU (RTX 30/40/50, Blackwell, DGX) | ✅ | ✅ | 全功能 |
+| AMD GPU | ✅ | ✅ | 仅 Core，无 Studio |
+| Intel GPU | 即将 | ✅ | — |
+| Apple MLX | 即将 | 即将 | — |
+| macOS | 即将 | ✅ | Metal 加速 |
+| CPU | ❌ | ✅ | 纯推理可用 |
+
+AMD 用户注意：训练走 Core 没问题，Studio UI 目前只支持 NVIDIA。
+
+### 显存需求速查
+
+| 模型大小 | 4-bit 训练 | 16-bit 训练 | 4-bit 推理 |
+|---------|-----------|------------|-----------|
+| 3B | ~4 GB | ~8 GB | ~2 GB |
+| 7B | ~6 GB | ~14 GB | ~4 GB |
+| 13B | ~10 GB | ~26 GB | ~7 GB |
+| 20B | ~14 GB | ~40 GB | ~10 GB |
+| 70B | ~48 GB | ~140 GB | ~35 GB |
+
+这张表的前提是 `max_seq_length=2048`。上下文越长，KV cache 吃显存越多，实际需求会往上浮动。
+
+---
+
+## 安装与启动
+
+### Studio（Web UI）
+
+macOS / Linux / WSL：
+
+```bash
+curl -fsSL https://unsloth.ai/install.sh | sh
+```
+
+Windows：
+
+```powershell
+irm https://unsloth.ai/install.ps1 | iex
+```
+
+启动（默认端口 8888）：
+
+```bash
+unsloth studio -H 0.0.0.0 -p 8888
+```
+
+更新：
+
+```bash
+unsloth studio update
+```
+
+### Core（Python 包）
+
+Linux / WSL：
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv venv unsloth_env --python 3.13
+source unsloth_env/bin/activate
+uv pip install unsloth --torch-backend=auto
+```
+
+Windows：
 
 ```powershell
 winget install -e --id Python.Python.3.13
@@ -124,7 +304,7 @@ uv venv unsloth_env --python 3.13
 uv pip install unsloth --torch-backend=auto
 ```
 
-### 3.3 Docker 部署
+### Docker
 
 ```bash
 docker run -d \
@@ -135,168 +315,9 @@ docker run -d \
   unsloth/unsloth
 ```
 
----
+### 开发者安装
 
-## 四、支持的模型
-
-### 4.1 模型目录
-
-| 模型家族 | 代表模型 | 说明 |
-|---------|---------|------|
-| **Gemma** | Gemma 4 (E2B), Gemma 3 | Google 最新模型 |
-| **Qwen** | Qwen3.5 (0.8B-112B), Qwen3 GSPO | 阿里巴巴开源 |
-| **Llama** | Llama 3.1/3.2 (8B-405B) | Meta 开源 |
-| **DeepSeek** | DeepSeek V3, Coder | 中国团队 |
-| **Mistral** | Mistral, Ministral 3 | 欧洲团队 |
-| **gpt-oss** | OpenAI o1/o3 开源复现 | Unsloth 合作 |
-| **Phi** | Phi-4 | 微软小模型 |
-| ** embedding** | embedding-gemma | 向量模型 |
-
-### 4.2 免费 Notebooks 性能表
-
-| 模型 | 性能 | 显存节省 |
-|------|------|----------|
-| **Gemma 4 (E2B)** | 1.5x faster | 50% less |
-| **Qwen3.5 (4B)** | 1.5x faster | 60% less |
-| **gpt-oss (20B)** | 2x faster | 70% less |
-| **gpt-oss RL** | 2x faster | 80% less |
-| **Qwen3 GSPO** | 2x faster | 70% less |
-| **Llama 3.1 (8B)** | 2x faster | 70% less |
-| **embedding-gemma (300M)** | 2x faster | 20% less |
-| **Mistral Ministral 3 (3B)** | 1.5x faster | 60% less |
-
----
-
-## 五、推理功能详解
-
-### 5.1 模型搜索与下载
-
-```bash
-# 在 Unsloth Studio 中
-# 1. 打开模型搜索
-# 2. 搜索 GGUF、LoRA、safetensors
-# 3. 一键下载到本地
-```
-
-### 5.2 工具调用
-
-| 功能 | 说明 |
-|------|------|
-| **Self-healing tool calling** | 自动修复工具调用错误 |
-| **Web search** | 集成网络搜索 |
-
-```python
-# 示例：使用工具调用
-agent = Agent(tools=["web_search", "calculator"])
-result = await agent.run("Search for latest AI news and calculate 15% of 1000")
-```
-
-### 5.3 代码执行
-
-Unsloth 支持 **Claude Artifacts** 风格的代码执行：
-
-```python
-# 代码在沙盒环境中执行
-agent = Agent(tools=["code_execution"])
-result = await agent.run("Write and run a Python script that prints Fibonacci numbers")
-```
-
-### 5.4 多模态支持
-
-支持上传多种文件类型进行聊天：
-
-| 文件类型 | 支持情况 |
-|---------|---------|
-| 🖼️ **图片** | ✅ 支持 |
-| 🎵 **音频** | ✅ 支持 |
-| 📄 **PDF** | ✅ 支持 |
-| 📝 **DOCX** | ✅ 支持 |
-| 💻 **代码** | ✅ 支持 |
-
----
-
-## 六、训练功能详解
-
-### 6.1 训练模式
-
-| 模式 | 说明 |
-|------|------|
-| **Full Fine-tuning** | 全参数微调 |
-| **4-bit Fine-tuning** | 4-bit QLoRA，70% 显存节省 |
-| **16-bit Training** | 16-bit 训练 |
-| **FP8 Training** | FP8 量化训练 |
-| **RL / GRPO** | 强化学习，80% 显存节省 |
-| **Pretraining** | 预训练 |
-
-### 6.2 自定义 Triton 内核
-
-Unsloth 与 **PyTorch** 和 **HuggingFace** 团队合作优化：
-
-```python
-# 使用优化后的 Triton 内核
-from unsloth import FastLanguageModel
-
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="unsloth/gemma-3-4b-it",
-    max_seq_length=2048,
-    load_in_4bit=True,
-)
-```
-
-### 6.3 Data Recipes
-
-**Data Recipes** 是 Unsloth 的可视化数据创建功能：
-
-```bash
-# 在 Unsloth Studio 中
-# 1. 打开 Data Recipes
-# 2. 上传 PDF、CSV、DOCX
-# 3. 使用可视化节点编辑数据
-# 4. 导出为训练数据集
-```
-
-### 6.4 强化学习（RL/GRPO）
-
-Unsloth 提供**最高效的 RL 库**：
-
-```python
-from unsloth import GRPOConfig
-
-config = GRPOConfig(
-    lr=1e-4,
-    grpo_epochs=4,
-    max_steps=100,
-)
-# 80% VRAM 节省
-```
-
----
-
-## 七、Unsloth Studio UI
-
-### 7.1 界面功能
-
-| 功能 | 说明 |
-|------|------|
-| 🖥️ **Chat** | 对话界面，支持多模态 |
-| 📚 **Models** | 模型搜索、下载、管理 |
-| 📝 **Data Recipes** | 可视化数据创建 |
-| 🔧 **Training** | 训练配置和启动 |
-| 📊 **Observability** | 实时监控 |
-
-### 7.2 快捷命令
-
-| 命令 | 说明 |
-|------|------|
-| `unsloth studio` | 启动 Studio |
-| `unsloth studio update` | 更新 Studio |
-| `unsloth studio -H 0.0.0.0 -p 8888` | 指定端口启动 |
-
----
-
-## 八、开发者安装
-
-### 8.1 开发者模式（Mac/Linux/WSL）
+从源码安装，切 nightly 分支可以体验最新特性：
 
 ```bash
 git clone https://github.com/unslothai/unsloth
@@ -305,184 +326,66 @@ cd unsloth
 unsloth studio -H 0.0.0.0 -p 8888
 ```
 
-### 8.2 开发者模式（Windows）
+---
 
-```powershell
-git clone https://github.com/unslothai/unsloth.git
-cd unsloth
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass .\install.ps1 --local
-unsloth studio -H 0.0.0.0 -p 8888
-```
+## 上游合作
 
-### 8.3 Nightly 版本
+Unsloth 跟模型团队的协作不是"提 issue 等 merge"这种松散模式，而是直接修 bug——发现模型在 GGUF 转换、128K 上下文或特定硬件上的问题后，把修复推到上游。这解释了为什么它的内核适配能跟模型发布几乎同步：
 
-```bash
-# Mac/Linux/WSL
-git clone https://github.com/unslothai/unsloth
-cd unsloth
-git checkout nightly
-./install.sh --local
-unsloth studio -H 0.0.0.0 -p 8888
-```
+- **gpt-oss**：联合修复 bug，提升复现准确性
+- **Qwen3**：修复动态 GGUF 128K 上下文的截断 bug
+- **Llama 4 / Mistral / Gemma 1-3 / Phi-4**：训练和推理阶段的问题修复
 
 ---
 
-## 九、硬件支持
-
-### 9.1 支持的硬件
-
-| 平台 | 训练 | 推理 | Data Recipes |
-|------|------|------|-------------|
-| **NVIDIA GPU** | ✅ RTX 30/40/50, Blackwell, DGX | ✅ | ✅ |
-| **AMD GPU** | ✅ (Unsloth Core) | ✅ | ✅ |
-| **Apple MLX** | 即将支持 | 即将支持 | - |
-| **Intel GPU** | 即将支持 | ✅ | - |
-| **CPU** | ❌ | ✅ | ✅ |
-| **macOS** | 即将支持 | ✅ | ✅ |
-
-### 9.2 显存需求
-
-| 模型大小 | 4-bit 训练 | 16-bit 训练 |
-|---------|------------|-------------|
-| 7B | ~6GB | ~14GB |
-| 13B | ~10GB | ~26GB |
-| 20B | ~14GB | ~40GB |
-| 70B | ~48GB | ~140GB |
-
----
-
-## 十、与上游团队合作
-
-Unsloth 与多个模型团队直接合作修复 Bug：
-
-| 模型 | 合作内容 |
-|------|---------|
-| **gpt-oss** | Bug 修复，提升准确性 |
-| **Qwen3** | 动态 GGUF 128K context bug 修复 |
-| **Llama 4** | Bug 修复 |
-| **Mistral** | Bug 修复 |
-| **Gemma 1-3** | Bug 修复 |
-| **Phi-4** | Bug 修复 |
-
----
-
-## 十一、Notebooks 资源
-
-### 11.1 免费 Notebooks
-
-Unsloth 提供**免费 Google Colab Notebooks**：
-
-```bash
-# 访问
-# https://colab.research.google.com/github/unslothai/notebooks
-```
-
-### 11.2 Notebook 类型
-
-| 类型 | 说明 |
-|------|------|
-| **Vision** | 视觉模型微调 |
-| **GRPO** | 强化学习微调 |
-| **TTS** | 文本转语音 |
-| **Embedding** | 向量模型微调 |
-| **Kaggle** | Kaggle 集成 |
-
----
-
-## 十二、卸载与清理
-
-### 12.1 卸载 Studio
-
-```bash
-# macOS / Linux / WSL
-rm -rf ~/.unsloth/studio
-
-# Windows (PowerShell)
-Remove-Item -Recurse -Force "$HOME\.unsloth\studio"
-```
-
-### 12.2 删除模型文件
-
-```bash
-# macOS / Linux / WSL
-rm -rf ~/.cache/huggingface/hub/
-
-# Windows
-Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\huggingface\hub\"
-```
-
----
-
-## 十三、社区资源
-
-### 13.1 社区链接
+## 社区与资源
 
 | 资源 | 链接 |
 |------|------|
-| 💬 **Discord** | https://discord.com/invite/unsloth |
-| 🐦 **Twitter** | https://twitter.com/unslothai |
-| 📚 **Reddit** | https://reddit.com/r/unsloth |
-| 📖 **文档** | https://unsloth.ai/docs |
-| 💼 **模型目录** | https://unsloth.ai/docs/get-started/unsloth-model-catalog |
-
-### 13.2 官方博客
-
-| 博客 | 说明 |
-|------|------|
-| **Gemma 4** | 运行和训练 Google 最新模型 |
-| **Unsloth Studio** | Web UI 发布 |
-| **MoE 训练** | 12x 加速，35% 显存节省 |
-| **Embedding** | 1.8-3.3x 加速 |
-| **500K Context** | 超长上下文训练 |
-| **FP8 & Vision RL** | 消费级 GPU 强化学习 |
-
----
-
-## 十四、最佳实践
-
-### 14.1 训练最佳实践
-
-1. **使用 4-bit 量化** 节省 70% 显存
-2. **使用 GRPO** 进行强化学习微调
-3. **使用 Data Recipes** 可视化准备数据
-4. **监控 loss** 使用 Observability 功能
-
-### 14.2 推理最佳实践
-
-1. **使用 GGUF 格式** 节省存储
-2. **使用 LoRA 适配器** 快速切换任务
-3. **使用 tool calling** 增强能力
-4. **使用多模态** 处理图片、音频、PDF
-
----
-
-## 十五、总结
-
-Unsloth 是**当今最流行的本地 AI 训练平台**：
-
-| 维度 | 说明 |
-|------|------|
-| ⭐ **61k Stars** | 极高人气，开源顶流 |
-| ⚡ **2x 加速** | 自定义 Triton 内核 |
-| 💾 **70% 显存** | 4-bit QLoRA 量化 |
-| 🧠 **80% 显存（RL）** | GRPO/PPO 强化学习 |
-| 📊 **500+ 模型** | Gemma/Qwen/Llama/DeepSeek |
-| 🌐 **全平台** | Windows/Linux/macOS/Docker |
-| 🤝 **上游合作** | 与 Qwen/Llama4/Mistral/Gemma 团队合作 |
-
----
-
-**🔗 相关资源：**
-
-| 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/unslothai/unsloth |
-| 文档 | https://unsloth.ai/docs |
 | Discord | https://discord.com/invite/unsloth |
 | Twitter | https://twitter.com/unslothai |
 | Reddit | https://reddit.com/r/unsloth |
-| 博客 | https://unsloth.ai/blog |
+| 文档 | https://unsloth.ai/docs |
+| 模型目录 | https://unsloth.ai/docs/get-started/unsloth-model-catalog |
+| 免费 Notebooks | https://colab.research.google.com/github/unslothai/notebooks |
+| 官方博客 | https://unsloth.ai/blog |
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 Unsloth (61k Stars)_
+## 卸载
+
+```bash
+# Studio
+rm -rf ~/.unsloth/studio
+
+# 下载的模型文件
+rm -rf ~/.cache/huggingface/hub/
+```
+
+---
+
+## 你应该怎么开始
+
+按场景选入口：
+
+| 你的情况 | 起点 | 下一步 |
+|---------|------|--------|
+| 想先体验，不想写代码 | 安装 Studio → 搜 Gemma 3 4B → 对话 | 对效果满意后再用 Data Recipes 微调 |
+| 已有训练脚本，想加速 | Core + 4-bit QLoRA | 把你的 Trainer 换成 `unsloth_train`，开 4-bit |
+| 做 RLHF / GRPO | Core + GRPOConfig | 从 4-bit 起步，显存够再切 16-bit |
+| 只用推理 | Studio 或 Core GGUF | 不用装训练依赖 |
+| AMD GPU | Core（无 Studio） | 训练和推理都走 Python API |
+| 只有 CPU | Studio（仅推理） | 不用考虑训练 |
+
+**谁先上**：
+- 个人开发者、学生、在 RTX 3060/4060/4070 上做实验的人——4-bit QLoRA 是为你设计的。
+- 做 RLHF 的小团队——GRPO 的 80% 额外显存节省直接决定能不能在单卡上跑。
+
+**谁不用急着上**：
+- 已经在 A100/H100 上跑 16-bit 全参微调的——Unsloth 的 Triton 内核在高端卡上加速幅度会收窄（显存充裕时，内存带宽优化收益不如消费卡明显）。
+- 只用 API 调模型、不做本地微调的——你不需要训练框架。
+- 模型不在适配列表里的——除非你愿意等适配或自己写内核。
+
+---
+
+_本文基于 Unsloth v0.1.36-beta (2026-04-08)，61k Stars，Apache-2.0 / AGPL-3.0 许可证。_

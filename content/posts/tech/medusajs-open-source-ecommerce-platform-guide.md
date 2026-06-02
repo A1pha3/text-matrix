@@ -10,65 +10,94 @@ author: "钳岳星君 🦞"
 draft: false
 ---
 
-## 什么是 MedusaJS？
+## MedusaJS 解决的是什么
 
-**MedusaJS**（官方仓库 [medusajs/medusa](https://github.com/medusajs/medusa)）是一个开源的 **Headless 商务平台**，基于 **Node.js + TypeScript** 构建，旨在为开发者提供灵活、可扩展的电商后端解决方案。与传统电商平台（如 Shopify、Magento）不同，Medusa 采用**前后端分离**架构——后端仅暴露 **REST API**，前端完全由开发者自主选择，可对接 Web、移动端、SaaS、小程序等各种前端。
+选电商后端框架时，大多数团队真正纠结的不是"能不能跑起来"，而是"以后改不动了怎么办"。SaaS 平台把后台逻辑锁在订阅费里，自研又需要从头搭一套商品、订单、支付、物流系统。
 
-> "Medusa 把电商后端变成了开发者手中的构建材料，而非一个黑盒产品。"
+[MedusaJS](https://github.com/medusajs/medusa)（简称 Medusa）走的是第三条路：把电商后端做成一组可替换的模块，用插件而不是配置文件来扩展功能。它是基于 **Node.js + TypeScript** 的开源 **Headless 商务平台**，后端只暴露 REST API，前端你可以用 React、Next.js、Vue 或任何框架。
 
-### 核心定位
+下面这张图概括了 Medusa 的三层拆法和它提供的核心模块：
 
-| 维度 | 传统电商平台 | MedusaJS |
-|------|------------|----------|
-| 前端控制 | 受限，需使用平台主题 | 完全自主，任意前端框架 |
-| 定制化 | 受插件市场限制 | 全源码开放，任意修改 |
-| 商业模式 | 订阅制 | 开源免费（商业友好） |
-| 部署方式 | SaaS 托管 | 自托管，完全自主 |
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    前端（任意框架）                            │
+│       React  /  Next.js  /  Vue  /  小程序  /  Flutter       │
+└──────────────────────────┬───────────────────────────────────┘
+                           │  REST API
+┌──────────────────────────▼───────────────────────────────────┐
+│                   Medusa Server                               │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │
+│  │ Products │ │  Orders  │ │ Payments │ │  Shipping    │   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │
+│  │  Carts   │ │ Regions  │ │  Auth    │  │  Event Bus   │   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │
+│                                                              │
+│  插件系统（依赖注入 + 生命周期钩子）                            │
+│  Workflows 工作流引擎（v1.14+）                                │
+└──────────────────────────┬───────────────────────────────────┘
+                           │  TypeORM / Knex 抽象层
+┌──────────────────────────▼───────────────────────────────────┐
+│          PostgreSQL  /  MySQL  /  SQLite                     │
+│          Redis（事件队列 + 缓存）                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+本文会先讲架构和关键机制，再给一个完整任务流案例，然后展开安装、插件开发、定制部署的具体做法。如果你已经在评估 Medusa，可以直接跳到最后的「采用决策」。
 
 ---
 
-## 架构解析：Headless Commerce
+## 一次下单请求穿过系统
 
-Medusa 的核心架构理念是 **Headless Commerce**（无头商务），将"商务逻辑"从"展示层"中解耦出来。
-
-### 三层架构模型
+在展开模块细节之前，先看一个具体任务在 Medusa 里怎么流转。假设一个用户从浏览商品到支付完成：
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  前端（Storefront）                  │
-│    React Storefront  /  Next.js  /  任意前端框架     │
-└──────────────────────┬──────────────────────────────┘
-                       │  REST API / GraphQL
-┌──────────────────────▼──────────────────────────────┐
-│               Medusa Server（后端）                  │
-│   Products  Orders  Payments  Carts  Shipping...    │
-│              Event Bus (内部消息队列)                 │
-└──────────────────────┬──────────────────────────────┘
-                       │  数据库抽象层（TypeORM / Knex）
-┌──────────────────────▼──────────────────────────────┐
-│                  数据库层                            │
-│         PostgreSQL  /  MySQL  /  SQLite             │
-└─────────────────────────────────────────────────────┘
+用户浏览商品
+  → Store API GET /store/products（可带 ?expand=variants 预加载变体）
+  → 返回商品列表，含变体价格、库存状态
+
+用户加入购物车
+  → Store API POST /store/carts（region_id + variant_id + quantity）
+  → 服务端计算运费、税费，返回 cart 对象含 totals
+
+用户发起结算
+  → Store API POST /store/carts/:id/payment-sessions
+  → 支付插件（Stripe 等）创建 payment session，返回 client_secret
+
+用户在前端完成支付（Stripe Elements / 第三方 SDK）
+  → 前端 Stripe SDK 完成 3D Secure 等流程
+  → Medusa 通过 webhook 收到支付授权结果
+
+Medusa 自动完成
+  → 购物车 → 订单（cart.completeOrder）
+  → 事件总线触发 order.placed
+  → 订阅者执行：扣库存、发邮件、同步 ERP、通知物流
 ```
 
-### API 分层设计
+这个流程里，Medusa 负责的几件事是明确的：商品数据、购物车状态机、订单生命周期、支付 session 管理、以及通过事件总线把"发生了什么"通知给所有关心的插件。它不负责的也同样明确：前端 UI、支付 SDK 集成细节、邮件模板、物流追踪页面——这些都在你的控制范围里。
 
-Medusa 将 API 明确划分为三个独立层级，每个层级服务不同客户端：
+---
 
-1. **Store API**（`/store`）：面向消费者——商品浏览、购物车、下单
-2. **Admin API**（`/admin`）：面向商家——商品管理、订单处理、用户管理
-3. **Auth API**（`/auth`）：面向认证——登录、注册、Token 管理
+## 架构怎么拆的
 
-这种分层设计使得权限控制和 API 版本管理更加清晰，也便于对接不同的客户端应用。
+### 三层 API 设计
+
+Medusa 把 API 拆成三个独立路由组，各自服务不同客户端，权限边界清晰：
+
+| API 层 | 路由前缀 | 服务对象 | 典型操作 |
+|--------|---------|---------|---------|
+| **Store** | `/store` | 消费者（C 端） | 浏览商品、管理购物车、下单、查订单 |
+| **Admin** | `/admin` | 商家（后台） | 商品 CRUD、订单处理、用户管理、报表 |
+| **Auth** | `/auth` | 认证 | 登录、注册、Token 刷新、密码重置 |
+
+Store 和 Admin 各自独立鉴权：Store 用 customer token，Admin 用 JWT + API Key。分开部署时，你可以把 Admin API 放在内网、Store API 暴露公网，中间不用额外加一层网关做权限隔离。
 
 ### 数据库抽象层
 
-Medusa 在数据库层做了良好的抽象：
+Medusa 在 ORM 层做了封装，一套代码可以跑在 PostgreSQL、MySQL 或 SQLite 上。生产环境推荐 PostgreSQL，开发调试可以用 SQLite 省掉数据库安装步骤。
 
-```sql
--- Medusa 使用 TypeORM，支持多种数据库
--- 配置文件：medusa-config.js
-
+```javascript
+// medusa-config.js
 module.exports = {
   projectConfig: {
     redis_url: "redis://localhost:6379",
@@ -81,16 +110,18 @@ module.exports = {
 }
 ```
 
+Redis 承担两件事：事件队列的消息中转（默认用 Redis 做 event bus 后端）和可选的缓存层。如果不用缓存插件，Redis 最低配置也可以跑，但 event bus 依赖它。
+
 ---
 
-## 核心功能特性
+## 核心模块
 
-### 1. 商品管理（Products）
+### 商品（Products）
 
-Medusa 的商品模型支持**多属性变体**、**多标签**、**多分类**，灵活满足各类电商场景。
+Medusa 的商品模型围绕"变体"展开。一个 Product 可以有多个 Option（如尺寸、颜色），每个 Option 组合出一个 Variant，每个 Variant 独立管理价格和库存。这和 Shopify 的模型一致，熟悉 Shopify 数据结构的开发者迁移成本很低。
 
 ```typescript
-// 创建商品示例
+// 通过 Admin API 创建商品（实际调用在服务端）
 const product = await medusa.createProduct({
   title: "Ultimate T-Shirt",
   description: "Premium cotton t-shirt",
@@ -117,66 +148,60 @@ const product = await medusa.createProduct({
 })
 ```
 
-**支持的功能：**
-- 商品多属性变体（尺寸 + 颜色 + 材质等组合）
-- 图片画廊与 metadata 自定义
-- 分类（Collections）与标签（Tags）
-- 库存管理（含多仓库支持）
-- 商品Relations（相关商品推荐）
+商品模块还覆盖：多仓库库存、图片画廊（通过 file plugin 对接 S3/MinIO）、自定义 metadata 字段、以及通过 Relations 做相关商品推荐。
 
-### 2. 购物车（Cart）
+### 购物车（Cart）
+
+购物车是 Medusa 里状态最复杂的一个模块——它需要联查 Region（区域定价）、Shipping Option（可选配送方式）、Payment Session（支付会话）和 Discount（优惠规则）。Medusa 把这套逻辑封装在 CartService 里，前端只需要调用 REST API。
 
 ```typescript
-// 前端添加商品到购物车
+// 创建购物车
 const cart = await fetch("http://localhost:9000/store/carts", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     region_id: "reg_xxx",
-    items: [{
-      variant_id: "variant_xxx",
-      quantity: 2
-    }]
+    items: [{ variant_id: "variant_xxx", quantity: 2 }]
   })
 }).then(r => r.json())
 
-// 更新购物车项
+// 追加商品到已有购物车
 await fetch(`http://localhost:9000/store/carts/${cart.id}/line-items`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    variant_id: "variant_yyy",
-    quantity: 1
-  })
+  body: JSON.stringify({ variant_id: "variant_yyy", quantity: 1 })
 })
 ```
 
-### 3. 订单系统（Orders）
+购物车在生成订单后不会自动删除——这个设计让你可以基于同一购物车做多次支付尝试，或者让用户回到未完成的购物车。
 
-```typescript
-// 完成下单（从购物车创建订单）
-const order = await medusa.createOrder(cart)
+### 订单（Orders）
 
-// 订单状态流转
-// pending → authorized → captured → fulfilled → shipped → delivered
-//                          ↓ (若支付失败)
-//                         canceled
+订单状态机是 Medusa 最值得细看的设计之一。它不是简单的"已支付 / 未支付"二元状态，而是把支付授权和实际扣款拆成两步：
+
+```
+pending → authorized → captured → fulfilled → shipped → delivered
+                ↓（支付失败或取消授权）
+             canceled
 ```
 
-**订单流程支持：**
-- 支付前授权（Authorization）
-- 支付捕获（Capture）
-- 部分退款 / 全额退款
-- 订单编辑（编辑已创建但未发货的订单）
-- 退货处理（Return）
+这个拆分的实际意义是：你可以在用户下单时只做预授权（冻结额度），等仓库确认有货再真正扣款。如果发货前取消，取消授权即可，省掉退款手续费。
 
-### 4. 支付系统（Payments）
+订单还支持：部分退款、订单编辑（发货前修改商品或地址）、退货（Return）和换货（Swap）。
 
-Medusa 原生集成了 **Stripe**、**Mollie**、**Paystack** 等主流支付网关：
+### 支付（Payments）
 
-```typescript
-// 配置 Stripe 支付插件
-// medusa-config.js
+支付通过插件接入，Medusa 本身不处理任何支付逻辑，只管理 Payment Session 的生命周期。原生支持的支付网关：
+
+| 网关 | 覆盖地区 | 说明 |
+|------|---------|------|
+| Stripe | 全球 | 信用卡、Klarna、Afterpay、支付宝等 |
+| Mollie | 欧洲 | iDEAL、SEPA、信用卡 |
+| Paystack | 非洲 | 移动支付、银行转账 |
+| Manual | 测试/开发 | 模拟支付流程，不调用真实网关 |
+
+```javascript
+// medusa-config.js 中配置 Stripe
 module.exports = {
   plugins: [
     {
@@ -184,7 +209,6 @@ module.exports = {
       options: {
         api_key: "sk_test_xxx",
         webhook_secret: "whsec_xxx",
-        // 配置要启用的支付方式
         payment_methods: ["card", "klarna", "afterpay_clearpay"]
       }
     }
@@ -192,22 +216,14 @@ module.exports = {
 }
 ```
 
-**支持的支付方式：**
+### 物流（Shipping）
 
-| 支付网关 | 支持地区 | 特点 |
-|---------|---------|------|
-| Stripe | 全球 | 信用卡、Klarna、Afterpay 等 |
-| Mollie | 欧洲为主 | iDEAL、SEPA、信用卡 |
-| Paystack | 非洲 | 移动支付、银行转账 |
-| Manual | 测试用 | 模拟支付流程 |
-
-### 5. 物流配送（Shipping）
+配送选项按 Region 配置，每个 Region 可以有多个 Shipping Option，各自绑定不同的 Provider（默认手动计算、或对接 DHL/FedEx 等第三方插件）。配送费用可以根据购物车小计设置阶梯规则。
 
 ```typescript
-// 创建配送选项
 const shippingOption = await medusa.createShippingOptions({
   region_id: "reg_xxx",
-  provider_id: "default_shipping", // 或集成 DHL/FedEx 等插件
+  provider_id: "default_shipping",
   name: "Express Shipping",
   amount: 1999,
   requirements: [
@@ -224,44 +240,32 @@ const shippingOption = await medusa.createShippingOptions({
 ### 环境要求
 
 - **Node.js** ≥ 18.0
-- **PostgreSQL** 14+（开发可用 SQLite）
-- **Redis** 6+（用于事件队列和缓存）
+- **PostgreSQL** 14+（开发环境可用 SQLite 替代）
+- **Redis** 6+（事件队列和缓存）
 
-### 方式一：快速创建项目（推荐）
+### 方式一：脚手架创建（推荐）
 
 ```bash
-# 使用官方脚手架创建项目
 npx create-medusa-app@latest my-medusa-store
 
 # 交互式选择：
 # ? Choose a starter template
-#   ❯ Next.js Starter (官方推荐)
+#   ❯ Next.js Starter（官方推荐）
 #     Nuxt.js Storefront
 #     Gatsby Storefront
-#     Medusa UI (管理后台)
-#     None (仅后端)
+#     Medusa UI（管理后台）
+#     None（仅后端）
 ```
 
-该脚本会自动：
-1. 克隆并启动 Medusa Server
-2. 配置 PostgreSQL 数据库连接
-3. 运行数据库迁移
-4. 种子数据初始化
-5. 启动可选的前端商店
+脚本会自动完成：克隆并启动 Medusa Server、配置数据库连接、运行迁移、初始化种子数据、启动可选的前端商店。
 
 ### 方式二：手动安装
 
 ```bash
-# 1. 初始化项目
 mkdir my-medusa-store && cd my-medusa-store
-
-# 2. 安装 Medusa CLI
 npm install @medusajs/cli -g
-
-# 3. 初始化后端
 medusa init --no-db
 
-# 4. 配置文件
 cat > medusa-config.js << 'EOF'
 module.exports = {
   projectConfig: {
@@ -275,94 +279,72 @@ module.exports = {
 }
 EOF
 
-# 5. 安装数据库驱动
 npm install pg
-
-# 6. 启动服务
 medusa develop
 # 服务运行在 http://localhost:9000
-# 管理后台： http://localhost:9000/app
+# 管理后台：http://localhost:9000/app
 ```
 
 ### 启动后验证
 
 ```bash
-# 健康检查
 curl http://localhost:9000/health
-
-# 应返回：
 # {"status":"ok","version":"1.x.x","type":"medusa"}
 
-# 获取商品列表
 curl http://localhost:9000/store/products
-
-# 获取已配置的 API Key
-curl http://localhost:9000/admin/api-keys
 ```
 
 ---
 
-## 插件系统：Medusa 的灵魂
+## 插件系统：替换任意模块
 
-Medusa 的插件系统是其最大亮点之一——**几乎所有功能都是插件**，开发者可以自由替换或扩展任意模块。
+Medusa 的插件不是"功能开关"，而是"模块替换"。支付、物流、文件存储、缓存、事件总线——这些全部通过插件注入，Medusa 核心只提供接口契约和生命周期钩子。
 
-### 插件工作原理
+### 插件怎么写
 
-Medusa 采用 **依赖注入 + 生命周期钩子** 的插件架构：
+每个插件是一个独立 npm 包，暴露 `register`、`load`、`dispose` 三个生命周期函数：
 
 ```typescript
-// 每个插件都是一个独立的 Node.js 包
-// 结构：src/index.ts → 暴露插件主体
-
 // medusa-plugin-example/index.ts
-import {
-  Medusa,
-  Middleware,
-  EventBusService
-} from "@medusajs/medusa"
+import { Medusa, EventBusService } from "@medusajs/medusa"
 
 export default {
   register: async function({ container, configFile }: {
     container: Medusa,
     configFile: Record<string, any>
   }) {
-    // 在容器中注册自定义服务
     container.register({
       myCustomService: new MyCustomService()
     })
   },
 
-  // 插件加载顺序（数字越小越先加载）
   load: async function({ container }) {
     const myService = container.resolve<MyCustomService>("myCustomService")
-
-    // 监听事件
     const eventBus = container.resolve<EventBusService>("eventBusService")
     eventBus.subscribe("order.placed", async (data) => {
       await myService.onOrderPlaced(data)
     })
   },
 
-  // 插件卸载时的清理逻辑
   dispose: async ({ container }) => {
-    // 取消事件订阅、关闭连接等
+    // 取消订阅、关闭连接
   }
 }
 ```
 
+`register` 阶段往 IoC 容器注册服务，`load` 阶段订阅事件或启动后台任务，`dispose` 阶段做清理。加载顺序由 `load` 的优先级字段控制（数字越小越先加载）。
+
 ### 常用官方插件
 
 ```bash
-# 安装常用插件
-npm install @medusajs/medusa-payment-stripe      # Stripe 支付
-npm install @medusajs/medusa-payment-woocommerce # WooCommerce 导入
-npm install @medusajs/medusa-fulfillment-manuel  # 手动物流
-npm install @medusajs/medusa-fulfillment-shippo  # Shippo 物流
+npm install @medusajs/medusa-payment-stripe       # Stripe 支付
+npm install @medusajs/medusa-payment-woocommerce  # WooCommerce 数据导入
+npm install @medusajs/medusa-fulfillment-manual   # 手动配送
+npm install @medusajs/medusa-fulfillment-shippo   # Shippo 物流
 npm install @medusajs/medusa-file-s3              # AWS S3 文件存储
-npm install @medusajs/medusa-file-minio          # MinIO 兼容 S3
-npm install @medusajs/medusa-cache-redis         # Redis 缓存层
-npm install @medusajs/medusa-eventbus-redis     # Redis 事件总线
-npm install @medusajs/medusa-link-Whitels        # Shopify 链接
+npm install @medusajs/medusa-file-minio           # MinIO 兼容 S3
+npm install @medusajs/medusa-cache-redis          # Redis 缓存
+npm install @medusajs/medusa-eventbus-redis       # Redis 事件总线
 ```
 
 ### 完整插件配置示例
@@ -378,7 +360,6 @@ module.exports = {
     port: 9000
   },
   plugins: [
-    // 文件存储（S3 兼容）
     {
       resolve: "@medusajs/medusa-file-s3",
       options: {
@@ -388,7 +369,6 @@ module.exports = {
         secret_access_key: "xxx"
       }
     },
-    // Stripe 支付
     {
       resolve: "@medusajs/medusa-payment-stripe",
       options: {
@@ -396,15 +376,13 @@ module.exports = {
         webhook_secret: "whsec_xxx"
       }
     },
-    // Redis 缓存
     {
       resolve: "@medusajs/medusa-cache-redis",
       options: {
         redis_url: "redis://localhost:6379",
-        ttl: 30 // 缓存 TTL（秒）
+        ttl: 30
       }
     },
-    // 自定义插件（本地路径）
     {
       resolve: "./src/plugins/my-custom-plugin"
     }
@@ -415,24 +393,17 @@ module.exports = {
 ### 发布自定义插件
 
 ```bash
-# 在 plugins 目录创建插件
 mkdir -p plugins/my-medusa-plugin/src
 cd plugins/my-medusa-plugin
-
-# 初始化包
 npm init -y
-
-# 添加 Medusa 类型依赖
 npm install @medusajs/medusa
 
-# 创建插件源码
 cat > src/index.ts << 'EOF'
 import { Medusa } from "@medusajs/medusa"
 
 class MyNotifierService {
   async sendOrderConfirmation(order) {
     console.log(`Order ${order.id} confirmed!`)
-    // 集成邮件 / 短信 / Slack 等通知渠道
   }
 }
 
@@ -445,7 +416,6 @@ export default {
 }
 EOF
 
-# 链接到主项目
 npm link
 cd ../../my-medusa-store
 npm link my-medusa-plugin
@@ -453,32 +423,24 @@ npm link my-medusa-plugin
 
 ---
 
-## 二次开发与个性化定制
+## 二次开发：Service 层与事件总线
 
-### 自定义 Service（服务层）
+Medusa 的业务逻辑封装在 Service 中。扩展的方式不是改源码，而是继承 Service 并重写方法——你的自定义 Service 通过 loader 注册后，会替换掉默认实现。
 
-Medusa 的业务逻辑封装在 **Service** 中，推荐通过继承和重写来定制行为：
+### 继承并扩展 ProductService
 
 ```typescript
 // src/services/MyProductService.ts
-import {
-  ProductService,
-  EventBusService
-} from "@medusajs/medusa"
+import { ProductService, EventBusService } from "@medusajs/medusa"
 
 class MyProductService extends ProductService {
   private eventBus_: EventBusService
 
-  constructor({
-    productRepository,
-    eventBusService,
-    ...otherDeps
-  }) {
+  constructor({ productRepository, eventBusService, ...otherDeps }) {
     super({ productRepository, ...otherDeps })
     this.eventBus_ = eventBusService
   }
 
-  // 添加自定义方法
   async getFeaturedProducts(limit = 10) {
     return this.productRepository.find({
       where: { tags: { value: "featured" } },
@@ -487,13 +449,9 @@ class MyProductService extends ProductService {
     })
   }
 
-  // 重写原有方法（保留原有逻辑 + 扩展）
   async retrieve(productId, config?) {
     const product = await super.retrieve(productId, config)
-
-    // 添加自定义字段或逻辑
     product["my_custom_field"] = await this.computeCustomField(productId)
-
     return product
   }
 }
@@ -528,10 +486,7 @@ export const featuredProducts = (container) =>
   router.get("/store/featured-products", async (req, res) => {
     const productService = container.resolve("myProductService")
     const products = await productService.getFeaturedProducts(20)
-
-    res.json({
-      products
-    })
+    res.json({ products })
   })
 
 // src/api/routes/custom/index.ts
@@ -542,44 +497,39 @@ const customRoutes = (config) => [featuredProducts]
 export default customRoutes
 ```
 
-### 订阅事件总线（Event Bus）
+### 事件总线（Event Bus）
 
-Medusa 内置事件总线，支持异步处理耗时代理：
+事件总线是 Medusa 里实现异步解耦的关键机制。订单创建、支付完成、商品更新等操作都会发出事件，插件和自定义 Service 通过订阅这些事件来响应——发邮件、同步 ERP、写入分析数据库，这些都不阻塞主流程。
 
 ```typescript
-// 在插件或 service 中订阅事件
 class OrderProcessorService {
   constructor({ eventBusService }) {
     this.eventBus_ = eventBusService
   }
 
   async registerSubscribers() {
-    // 订单创建时触发
     this.eventBus_.subscribe("order.placed", async (data) => {
       await this.processNewOrder(data)
     })
 
-    // 订单发货时触发
     this.eventBus_.subscribe("order.shipment_created", async (data) => {
       await this.sendShipmentNotification(data)
     })
 
-    // 产品更新时触发
     this.eventBus_.subscribe("product.updated", async (data) => {
       await this.syncToExternalPlatform(data)
     })
   }
 
   private async processNewOrder(data) {
-    // 执行业务逻辑（发邮件、同步 ERP、更新分析等）
     console.log("Processing order:", data.id)
   }
 }
 ```
 
-### 工作流引擎（Workflows）
+### Workflows 工作流引擎（v1.14+）
 
-Medusa v1.14+ 引入了 **Workflows**（工作流引擎），用于编排复杂的异步业务逻辑：
+事件总线适合"通知"类的异步任务，但遇到需要编排多步骤、带条件判断和补偿逻辑的流程时，Medusa 提供了 Workflows。它把多个步骤串成一个有向图，支持步骤间的数据传递和失败回滚。
 
 ```typescript
 // src/workflows/create-product-workflow.ts
@@ -592,13 +542,11 @@ import {
 const createProductWorkflow = createWorkflow(
   "create-product-with-notification",
   function (input: { title: string; price: number }) {
-    // Step 1: 创建产品
     const product = createProductsStep([{
       title: input.title,
       variants: [{ title: "Default", prices: [{ amount: input.price, currency_code: "usd" }] }]
     }])
 
-    // Step 2: 验证产品（条件判断）
     const validated = transform({ product }, (input) => {
       if (!input.product.id) {
         throw new MedusaError(MedusaError.Types.INVALID_DATA, "Product creation failed")
@@ -606,7 +554,6 @@ const createProductWorkflow = createWorkflow(
       return input.product
     })
 
-    // Step 3: 发送通知（异步，不阻塞主流程）
     sendNotificationStep({
       to: "admin@example.com",
       subject: `New Product: ${input.title}`,
@@ -620,11 +567,13 @@ const createProductWorkflow = createWorkflow(
 export default createProductWorkflow
 ```
 
+事件总线和 Workflows 的边界是这样的：一条规则是"通知别人"，用事件总线；一条规则是"多步骤任务本身需要可观测、可重试、可补偿"，用 Workflows。
+
 ---
 
 ## 部署方案
 
-### 方案一：Docker 部署（推荐生产环境）
+### Docker 部署
 
 ```yaml
 # docker-compose.yml
@@ -668,20 +617,15 @@ volumes:
 ```
 
 ```bash
-# 构建并启动
 docker-compose up -d
-
-# 查看日志
 docker-compose logs -f medusa
 ```
 
-### 方案二：PM2 进程管理（VPS 部署）
+### PM2 进程管理（VPS 部署）
 
 ```bash
-# 1. 安装 PM2
 npm install -g pm2
 
-# 2. 创建启动配置
 cat > ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
@@ -701,47 +645,33 @@ module.exports = {
 }
 EOF
 
-# 3. 启动
 pm2 start ecosystem.config.js
-
-# 4. 配置开机自启
 pm2 save
 pm2 startup
 ```
 
-### 方案三：云平台部署
+### 云平台
 
-| 云平台 | 推荐配置 | 特点 |
-|-------|---------|------|
+| 平台 | 推荐配置 | 特点 |
+|------|---------|------|
 | **Railway** | PostgreSQL + Medusa | 最简部署，按量付费 |
 | **Render** | 共享 PostgreSQL + Web Service | 免费 tier 可用 |
 | **AWS ECS** | ECS Fargate + RDS + ElastiCache | 企业级高可用 |
 | **GCP Cloud Run** | Cloud Run + Cloud SQL + Memorystore | 无服务器容器 |
 
-**Railway 部署示例：**
+Railway 部署示例：
 
 ```bash
-# 1. 安装 Railway CLI
 npm install -g @railway/cli
-
-# 2. 登录
 railway login
-
-# 3. 初始化项目
 railway init
-
-# 4. 添加 PostgreSQL 插件
 railway add postgres
-
-# 5. 设置环境变量
 railway variable set DATABASE_URL=$(railway env postgres -q)
 railway variable set REDIS_URL=$(railway env redis -q)
-
-# 6. 部署
 railway up
 ```
 
-### 生产环境 Nginx 反向代理配置
+### Nginx 反向代理
 
 ```nginx
 # /etc/nginx/sites-available/medusa
@@ -757,7 +687,6 @@ server {
     ssl_certificate /etc/letsencrypt/live/api.mystore.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/api.mystore.com/privkey.pem;
 
-    # API 请求代理
     location / {
         proxy_pass http://medusa_backend;
         proxy_http_version 1.1;
@@ -769,13 +698,11 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
 
-        # 超时配置
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
     }
 
-    # WebSocket 支持（用于管理后台热重载等）
     location /ws {
         proxy_pass http://medusa_backend;
         proxy_http_version 1.1;
@@ -787,128 +714,132 @@ server {
 
 ---
 
-## 最佳实践与性能优化
+## 性能优化与安全加固
 
-### 1. 数据库优化
+### 数据库索引
 
 ```sql
--- 为高频查询字段添加索引
 CREATE INDEX idx_product_tags ON product_tags (value);
 CREATE INDEX idx_product_handle ON product (handle);
 CREATE INDEX idx_order_display_id ON order (display_id);
 
--- 分页查询优化（使用游标分页替代 OFFSET）
--- 游标分页：
+-- 游标分页（大数据量场景）
 SELECT * FROM order WHERE id > last_seen_id ORDER BY id LIMIT 20;
 
--- OFFSET 分页（大数据量时不推荐）
+-- OFFSET 分页（深度分页性能差，不推荐）
 SELECT * FROM order ORDER BY id OFFSET 100000 LIMIT 20;
 ```
 
-### 2. Redis 缓存策略
+### Redis 缓存策略
 
 ```javascript
-// medusa-config.js 中配置 Redis 缓存
+// medusa-config.js
 {
   resolve: "@medusajs/medusa-cache-redis",
   options: {
     redis_url: "redis://localhost:6379",
-    ttl: 60,      // 默认缓存 TTL（秒）
+    ttl: 60,
     scopes: {
       "productService": 300,  // 商品缓存 5 分钟
-      "cartService": 0       // 购物车不缓存（实时性要求高）
+      "cartService": 0        // 购物车不缓存（实时性要求高）
     }
   }
 }
 ```
 
-### 3. API 响应优化
+### API 响应优化
 
 ```typescript
-// 避免 N+1 查询问题，使用Medusa的select/inlude参数
+// 用 fields 减少返回字段，避免 N+1 查询
 const products = await medusa.products.list({
   limit: 20,
-  // 只获取需要的字段，减少数据传输
   fields: "id,title,thumbnail,variants.calculated_price"
 })
 
-// 使用 expand 参数预加载关联数据
+// 用 expand 预加载关联数据
 const orders = await medusa.orders.list({
   expand: "items,variants,shipping_methods"
 })
 ```
 
-### 4. 安全加固
+### 安全配置
 
 ```javascript
-// CORS 配置（medusa-config.js）
+// CORS 白名单（medusa-config.js）
 module.exports = {
   projectConfig: {
-    cors_s横向: [
+    cors_domains: [
       "https://admin.mystore.com",
       "https://store.mystore.com"
     ]
   }
 }
+```
 
-// Rate Limiting（通过 Nginx 或 API 网关实现）
-// Nginx 配置：
-// limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
-// limit_req zone=api burst=20 nodelay;
+限流建议通过 Nginx 或 API 网关实现，不在 Medusa 层做：
+
+```nginx
+# limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+# limit_req zone=api burst=20 nodelay;
 ```
 
 ---
 
-## 与竞品对比
+## 与同类项目对比
 
 | 特性 | MedusaJS | Saleor | Sylius |
 |------|----------|--------|--------|
 | 语言 | TypeScript/Node.js | Python/Django | PHP/Symfony |
 | 数据库 | PostgreSQL | PostgreSQL | PostgreSQL/MySQL |
 | API 风格 | REST | GraphQL | REST + GraphQL |
-| 插件生态 | ⭐⭐⭐⭐ 丰富 | ⭐⭐⭐ 一般 | ⭐⭐⭐ 较成熟 |
+| 插件生态 | 丰富 | 一般 | 较成熟 |
 | 部署复杂度 | 中等 | 中等 | 较高 |
 | 管理后台 | React Admin（官方） | 三方方案 | Symfony Admin |
 | 开源协议 | MIT | BSD | MIT |
 | GitHub Stars | ~25k+ | ~20k+ | ~8k+ |
 
+选择 Medusa 还是 Saleor，主要看团队技术栈。Node.js 团队选 Medusa 几乎没有学习成本，Python 团队选 Saleor 同理。Sylius 的插件生态更成熟，但 PHP 生态的招聘和迭代速度在一些场景下是劣势。
+
 ---
 
-## 总结与学习路径
+## 采用决策与学习路径
 
-**MedusaJS 是目前开源电商领域最具开发者友好度的选择之一。** 其核心优势在于：
+### 什么时候选 Medusa
 
-1. **真正的 Headless**：后端 API 驱动，前端完全自主
-2. **插件化架构**：灵活替换任意功能模块
-3. **TypeScript 原生**：类型安全，开发体验优秀
-4. **活跃社区**：GitHub 25k+ Stars，插件生态持续增长
-5. **商业友好**：MIT 协议，生产可用
+- 你需要一个电商后端，但前端必须完全自主（自定义 UI、多端同步）。
+- 团队技术栈是 Node.js/TypeScript，不想引入额外的语言和运维负担。
+- 业务模型不是标准 B2C——比如 B2B 批发、多租户市场、订阅制电商——这些需要深度定制订单和商品逻辑。
+- 你不希望被 SaaS 平台的订阅费和 API 限流捆住。
 
-### 推荐学习路径
+### 什么时候不急着选 Medusa
+
+- 只需要一个简单的商品展示 + 下单页面，不需要复杂的订单和物流管理——这种情况下用 Shopify 或 WooCommerce 更快上线。
+- 团队没有 Node.js 经验，短期内也不想投入学习成本。
+- 业务需要开箱即用的多语言、多币种前台——Medusa 这些能力需要自己搭建或找插件。
+
+### 推荐的学习顺序
 
 ```
-第1步：快速上手
-  → 运行 create-medusa-app，体验完整电商流程
+第 1 步：跑起来
+  → create-medusa-app，走一遍商品浏览到下单的完整流程
 
-第2步：理解数据模型
-  → 研读 Medusa 官方文档的数据模型章节
-  → 理解 Product / Variant / Cart / Order / Region 的关系
+第 2 步：理解数据模型
+  → 读懂 Product / Variant / Cart / Order / Region 之间的关系
 
-第3步：掌握 API 层
-  → 熟悉 Store API 和 Admin API 的调用方式
-  → 通过 Postman 或 Insomnia 测试 API
+第 3 步：熟悉 API 层
+  → 用 Postman 把 Store API 和 Admin API 的主要端点过一遍
 
-第4步：深入插件系统
-  → 阅读官方插件源码（如 medusa-payment-stripe）
-  → 编写第一个自定义插件
+第 4 步：拆一个插件
+  → 先读 medusa-payment-stripe 的源码，再写一个自定义插件
 
-第5步：进阶定制
-  → 学习 Service 层定制和自定义路由
-  → 掌握 Event Bus 和 Workflows
+第 5 步：定制 Service 和路由
+  → 继承一个 Service，挂一个自定义 API 端点
 
-第6步：生产部署
-  → 使用 Docker 或 PM2 部署到生产环境
-  → 配置 Nginx、SSL 和监控告警
+第 6 步：掌握事件总线和 Workflows
+  → 区分"通知型"和"编排型"异步任务，各自用对工具
+
+第 7 步：生产部署
+  → Docker + Nginx + SSL + 监控，跑通完整部署链路
 ```
 
 ---
@@ -919,8 +850,8 @@ module.exports = {
 - **GitHub 仓库**：https://github.com/medusajs/medusa
 - **官方插件市场**：https://medusajs.com/plugins
 - **Discord 社区**：https://discord.gg/medusajs
-- **Medusa Storefront 模板**：https://github.com/medusajs/nextjs-starter-medusa
+- **Next.js Storefront 模板**：https://github.com/medusajs/nextjs-starter-medusa
 
 ---
 
-*本文基于 MedusaJS v1.x 版本编写，部分特性在 v2.x（开发中）中可能有变化，建议参考官方文档获取最新信息。*
+*本文基于 MedusaJS v1.x 版本编写，v2.x（开发中）的部分特性可能有变化，建议参考官方文档获取最新信息。*

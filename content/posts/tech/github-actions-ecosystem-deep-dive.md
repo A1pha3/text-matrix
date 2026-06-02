@@ -8,11 +8,22 @@ draft: false
 
 # GitHub Actions 生态入门：从基础工作流到自定义 Action 开发
 
-> GitHub Actions 不仅仅是一个 CI/CD 工具——它是 GitHub 的自动化引擎。从自动测试、构建、部署，到运行 AI Agent 工作流、自动化依赖管理，Actions 把整个开发流程编织进 GitHub 的每个事件里。
+> GitHub Actions 把 GitHub 仓库事件（push、PR、release）变成了自动化触发器。它的设计核心不是"能跑脚本"，而是把自动化拆成了三层可组合的抽象——事件触发层、Job 编排层、Action 组件层——每一层解决不同的可靠性问题。读完这篇文章，你应该能判断：什么时候用社区 Action、什么时候自己写、以及 Actions 和 GitHub Apps 的边界在哪里。
 
 ## 一、什么是 GitHub Actions
 
 [GitHub Actions](https://github.com/features/actions) 是 GitHub 内置的 CI/CD 和自动化平台。它通过 **YAML 工作流文件** 定义自动化任务，响应 GitHub 仓库中的各种事件（push、PR、release、issue 等）。
+
+先看一个简化版的总览——搞清楚这套系统里几样东西怎么分工：
+
+| 概念 | 负责什么 | 一句话定位 |
+|---|---|---|
+| **Workflow** | 定义"什么时候干什么" | 自动化脚本的总入口 |
+| **Job** | 分配运行环境和执行顺序 | Workflow 里的执行单元 |
+| **Step** | 实际干活 | Job 里的最小步骤 |
+| **Action** | 封装可复用逻辑 | 别人写好的 Step 组件 |
+
+Workflow 收到事件后，把任务分给多个 Job（默认并行），每个 Job 里顺序执行 Step。Step 可以是 shell 命令，也可以引用现成的 Action——这就是 Actions 生态的核心：你不必从零写每一步。
 
 核心概念：
 
@@ -73,6 +84,12 @@ jobs:
           docker build -t myapp:${{ github.sha }} .
           docker push myapp:${{ github.sha }}
 ```
+
+这个工作流里有一条隐藏的执行链，值得拆开看：当你在 `develop` 分支 push 代码时，GitHub 的 **事件系统** 匹配到 `on.push.branches: [main, develop]`，触发了 Workflow。Workflow 里定义了两个 Job——`test` 和 `build`——因为 `build` 写了 `needs: test`，所以 `test` 先跑。
+
+`test` Job 被分配到 `ubuntu-latest` Runner 上，Runner 按 Step 顺序执行：先 checkout 代码（`actions/checkout@v4`），再装 Node.js，再跑 `npm ci` 和 `npm test`。如果 `npm test` 返回非零退出码，Job 失败，`build` 不会启动。如果全部通过，Runner 上传 coverage 产物，然后 `build` Job 启动，构建 Docker 镜像。
+
+这个链条里真正值得关注的是两个点：**Step 的原子性**（每个 Step 要么全过要么失败，上一个 Step 的产物自动保留到下一个 Step）和 **Job 间的数据传递**（`needs` 只控制执行顺序，不传递文件——文件传递靠 `upload-artifact` / `download-artifact`）。
 
 ### 触发条件（on）详解
 
@@ -443,9 +460,22 @@ steps:
 
 两者可以配合使用：Actions 触发外部 App 处理复杂逻辑，App 将结果通过 API 写回 GitHub。
 
-## 小结
+## 从哪里开始
 
-GitHub Actions 是 GitHub 自动化生态的核心——从简单的 CI 流水线到复杂的 AI Agent 工作流，都可以在 Actions 框架内实现。通过 Marketplace 发现优质 Actions、通过自定义 Action 封装可复用逻辑、通过 Matrix/OIDC 等高级特性构建生产级 CI/CD，是每个现代开发者都应该掌握的技能。
+GitHub Actions 的上手路径取决于你当前的需求：
+
+- **只想跑个 CI**：从 Marketplace 找现成的 Action（`checkout` + `setup-node` + `cache` 三件套基本够用），只写 shell 命令级别的 Step。
+- **团队需要统一自动化逻辑**：写 Composite Action，把多步脚本打包成一个可引用的单元，放在同一个仓库或组织的 `.github` 仓库里共享。
+- **需要和外部系统交互或复杂逻辑**：用 JavaScript/TypeScript Action，调 GitHub API 或第三方服务，然后把编译后的 `dist/index.js` 提交到仓库。
+- **需要隔离的工具链或特殊运行时**：用 Docker 容器 Action。
+
+三个容易踩的坑：
+
+1. **不要把 Secret 写进 workflow YAML**——用 `${{ secrets.XXX }}` 注入，Runner 会自动脱敏日志。
+2. **`needs` 不传文件**——Job 之间的文件共享靠 `upload-artifact` / `download-artifact`，别指望上一个 Job 的文件系统残留。
+3. **OIDC 比长期 Token 安全得多**——如果你用 AWS/GCP/Azure，优先配 OIDC 联邦而不是手动塞 Access Key。
+
+最后，Actions 和 GitHub Apps 的分工值得再强调一遍：**Actions 适合"仓库内事件驱动的自动化"**，GitHub Apps 适合"跨仓库、需要持久状态的集成"。如果你发现自己在一个 workflow 里维护大量跨仓库逻辑或需要长期运行的 Webhook 服务，那可能是 GitHub Apps 的地盘。
 
 **相关资源：**
 - [GitHub Actions 官方文档](https://docs.github.com/en/actions)

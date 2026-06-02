@@ -1,5 +1,5 @@
 ---
-title: "PraisonAI：AutoGen继任者·100+LLM支持·MCP原生"
+title: "PraisonAI：AutoGen 继任者·100+ LLM 支持·MCP 原生"
 date: "2026-04-12T02:31:39+08:00"
 slug: praisonai-multi-agent-framework-guide
 description: "PraisonAI 是 AutoGen 的继任者，支持 100+ LLM 和 MCP 原生，提供多智能体框架功能。"
@@ -8,17 +8,49 @@ categories: ["技术笔记"]
 tags: ["AI", "Agent", "LLM", "MCP", "Python"]
 ---
 
-# PraisonAI 🦞：AutoGen 继任者·100+ LLM 支持·MCP 原生·多智能体框架完全指南
+# PraisonAI：AutoGen 继任者，100+ LLM、MCP 原生多智能体框架
 
-## 一、项目概述
+PraisonAI 真正解决的问题不是“多一个 AI Agent 框架”，而是把模型调用、工具编排、记忆、安全护栏和工作流调度塞进同一套 Python SDK 里，让多 Agent 协作从原型验证跑到生产部署时不换技术栈。
 
-### 1.1 PraisonAI 是什么
+本文从它内部几条并行的主线拆起：**四款产品各自负责什么、Agent 核心能力层、MCP 协议层、记忆与知识层、工作流调度层**，然后给一个完整的研究任务流案例，最后说清楚什么团队该先用、什么场景可以等等。
 
-**PraisonAI** 🦞 — **Hire a 24/7 AI Workforce.** 停止编写样板代码，开始构建能够研究、计划、执行任务的自主智能体。从单个 Agent 到整个组织，只需 5 行代码即可部署。
+---
 
-被 **Elon Musk** 点赞推荐！
+## 一、系统总览：四款产品 + 五层能力
 
-### 1.2 核心数据
+PraisonAI 不是一个单体库，而是四款产品组合。先看清边界，后面才不容易混：
+
+| 产品 | 形态 | 适合谁 |
+|------|------|--------|
+| **Core SDK** (`praisonaiagents`) | Python 库 | 想把 Agent 嵌入现有项目的开发者 |
+| **CLI** (`praisonai`) | 命令行 | 终端里快速跑任务的用户 |
+| **Claw Dashboard** | Web 面板 | 需要接 Telegram / Slack / Discord 的团队 |
+| **Flow Visual Builder** | 拖拽界面 | 不想写代码、用可视化搭工作流的人 |
+| **PraisonAI UI** | 轻量聊天界面 | 快速交互测试 |
+
+安装方式一一对应：
+
+```bash
+pip install praisonaiagents       # Core SDK
+pip install praisonai             # CLI
+pip install "praisonai[claw]"     # Dashboard
+pip install "praisonai[flow]"     # Flow Builder
+pip install "praisonai[ui]"       # 聊天 UI
+```
+
+在这四款产品之下，PraisonAI 的能力栈分五层：
+
+1. **Agent 核心** — Single / Multi / Auto / Self-Reflection / Reasoning / Multi-Modal，决定 Agent 怎么思考、怎么分工。
+2. **MCP 协议层** — stdio、HTTP、WebSocket、SSE 四种传输，决定 Agent 怎么接外部工具和数据源。
+3. **记忆与知识层** — 内置 Memory（零依赖）+ Knowledge（RAG）+ 20+ 数据库持久化，决定 Agent 记住什么、查什么。
+4. **工作流调度层** — Sequential / Parallel / Loop / Repeat / Route + Planning Mode（plan → execute → reason 循环），决定多个 Agent 怎么排顺序。
+5. **安全与可观测层** — Guardrails 输入输出验证 + Langfuse 追踪，决定怎么防出错、怎么排查。
+
+后面逐层展开。
+
+---
+
+## 二、核心数据
 
 | 指标 | 数值 |
 |------|------|
@@ -29,119 +61,26 @@ tags: ["AI", "Agent", "LLM", "MCP", "Python"]
 | 许可证 | MIT |
 | 语言 | Python 85.9%, TypeScript 9.7%, Rust 4.1% |
 
-### 1.3 核心定位
-
-| 定位 | 说明 |
-|------|------|
-| 🤖 **AutoGen 继任者** | 继承 AutoGen 的优秀架构，超越其功能 |
-| 🌐 **100+ LLM 支持** | OpenAI、Anthropic、Gemini、DeepSeek 等 |
-| 🔌 **MCP 原生** | 原生支持 Model Context Protocol |
-| ⚡ **极速部署** | 5 行代码即可运行 |
-| 🧠 **内置记忆** | 零依赖的记忆系统 |
-| ⏰ **24/7 运行** | 支持定时任务和持续运行 |
+项目被 Elon Musk 在 X 上推荐过。它自称 AutoGen 的继任者——继承了 AutoGen 的多 Agent 对话架构，但在模型适配（100+ LLM）、协议标准化（MCP 原生）和产品化（Dashboard / Flow Builder）上往前走了一大步。
 
 ---
 
-## 二、核心功能
+## 三、一次研究任务如何流过系统
 
-### 2.1 完整功能矩阵
+在进入各层细节之前，先看一个具体例子——用户要求“分析 2026 年 AI 领域三大趋势，输出 Markdown 表格”。这条任务在 PraisonAI 里会怎么走：
 
-| 类别 | 功能 |
-|------|------|
-| 🤖 **Core Agents** | Single Agent、Multi Agents、Auto Agents、Self Reflection、Reasoning、Multi-Modal |
-| 🔄 **Workflows** | Sequential、Parallel、Loop、Repeat |
-| 💻 **Code & Development** | 代码生成、调试、重构 |
-| 🧠 **Memory & Knowledge** | 内置记忆、RAG、知识库 |
-| 🔬 **Research & Intelligence** | Deep Research、多步推理 |
-| 📋 **Planning & Execution** | 计划模式、自动执行 |
-| 👥 **Specialized Agents** | 专业化 Agent 定制 |
-| 🎨 **Media & Multimodal** | 多模态支持 |
-| 🔌 **Protocols & Integration** | MCP 协议、API 集成 |
-| 🛡️ **Safety & Control** | Guardrails 输入/输出验证 |
-| ⚙️ **Advanced Features** | 高级特性 |
-| 🛠️ **Tools & Configuration** | 工具配置 |
-| 📊 **Monitoring & Management** | 监控管理 |
-| 🖥️ **CLI Features** | 命令行工具 |
-| 🧪 **Evaluation** | 评估测试 |
-| 🎯 **Agent Skills** | Agent 技能 |
-| ⏰ **24/7 Scheduling** | 定时任务 |
+1. **接收与规划**：Agent 收到指令，Planning Mode 打开，先拆成三个子任务——搜索、交叉验证、格式化输出。
+2. **工具调用**：Agent 通过 MCP（stdio 模式，连本地 Brave Search 服务器）发起搜索。MCP 层把工具调用的输入输出标准化，不依赖特定 API 格式。
+3. **多 Agent 协作**：research agent 收集原始材料 → summarise agent 提取关键信息 → writer agent 格式化为 Markdown 表格。Agents 容器负责把前一个 Agent 的上下文传递给下一个。
+4. **自我反思**：Self Reflection 打开时，Agent 会检查输出是否与搜索来源一致、有没有遗漏趋势维度，发现问题时自动补搜一轮。
+5. **记忆落盘**：Memory 启用时，这次研究的结果和中间步骤写进记忆库，下次问“上次那三个趋势再展开说说”可以直接召回，不用重新搜索。
+6. **安全校验**：Guardrails 的输出 validator 扫一遍最终文本，如果触发了敏感词规则，替换为 `[FILTERED]`，然后才返回用户。
 
-### 2.2 为什么选择 PraisonAI
-
-| 特性 | 说明 |
-|------|------|
-| 🔌 **MCP Protocol** | 支持 stdio、HTTP、WebSocket、SSE 四种传输方式 |
-| 🧠 **Planning Mode** | plan → execute → reason 循环推理 |
-| 🔍 **Deep Research** | 多步自主研究，自动探索 |
-| 🤖 **External Agents** | 编排 Claude Code、 Gemini CLI、Codex |
-| 🔄 **Agent Handoffs** | 无缝对话传递 |
-| 🛡️ **Guardrails** | 输入/输出验证，保护安全 |
-| 🌐 **Web Search + Fetch** | 原生浏览器搜索 |
-| 🪞 **Self Reflection** | Agent 自我反思输出 |
-| 🔀 **Workflow Patterns** | 路由、并行、循环、重复 |
-| 🧠 **Memory** | 零依赖，开箱即用 |
-| 📊 **Langfuse Tracing** | 可观测性支持 |
-
----
-
-## 三、PraisonAI 生态系统
-
-### 3.1 四大核心产品
-
-| 产品 | 安装命令 | 说明 |
-|------|---------|------|
-| **Core SDK** `praisonaiagents` | `pip install praisonaiagents` | 纯 Python 开发 |
-| **CLI** `praisonai` | `pip install praisonai` | 终端开发者 |
-| **Claw Dashboard** 🦞 | `pip install "praisonai[claw]"` | Telegram/Slack/Discord 接入 |
-| **Flow Visual Builder** | `pip install "praisonai[flow]"` | 拖拽工作流 |
-| **UI** 🤖 | `pip install "praisonai[ui]"` | 简洁聊天界面 |
-
-### 3.2 产品详解
-
-#### Core SDK (praisonaiagents)
-纯 Python 核心库，适合集成到现有项目：
-```bash
-pip install praisonaiagents
-```
-
-#### CLI (praisonai)
-功能完整的命令行工具：
-```bash
-pip install praisonai
-```
-
-#### Claw Dashboard 🦞
-连接 Agent 到 Telegram、Slack、Discord 等平台：
-```bash
-pip install "praisonai[claw]"
-praisonai claw
-# 访问 http://localhost:8082
-```
-
-内置 13 个页面：Chat、Agents、Memory、Knowledge、Channels、Guardrails、Cron 等。
-
-#### Flow Visual Builder
-拖拽式可视化工作流构建：
-```bash
-pip install "praisonai[flow]"
-praisonai flow
-# 访问 http://localhost:7861
-```
-
-使用 Agent 和 Agent Team 组件创建顺序或并行工作流。
-
-#### PraisonAI UI
-轻量级聊天界面：
-```bash
-pip install "praisonai[ui]"
-praisonai ui
-```
+这条链路串起了 Planning、MCP、多 Agent 协作、Self Reflection、Memory 和 Guardrails 六个模块。下面分别展开每个模块的用法。
 
 ---
 
 ## 四、快速开始
-
-### 4.1 安装
 
 ```bash
 # 核心 SDK
@@ -154,7 +93,7 @@ pip install praisonai
 export OPENAI_API_KEY="your-api-key"
 ```
 
-### 4.2 单 Agent 模式
+### 4.1 单 Agent 模式
 
 ```python
 from praisonaiagents import Agent
@@ -163,7 +102,7 @@ agent = Agent(instructions="You are a senior data analyst.")
 agent.start("Analyze the top 3 tech trends of 2026 and format as a markdown table.")
 ```
 
-### 4.3 多 Agent 模式
+### 4.2 多 Agent 模式
 
 ```python
 from praisonaiagents import Agent, Agents
@@ -177,18 +116,91 @@ agents.start()
 
 ---
 
-## 五、MCP 协议支持
+## 五、Agent 核心能力
 
-### 5.1 四种传输方式
+### 5.1 Agent 类型
 
-| 传输方式 | 场景 | 示例 |
-|----------|------|------|
-| **stdio** | 本地 NPX/Python 服务器 | 开发测试 |
+| 类型 | 用途 |
+|------|------|
+| **Single Agent** | 单 Agent 处理简单查询 |
+| **Multi Agents** | 多 Agent 协作，前一个输出是后一个输入 |
+| **Auto Agents** | 框架自动选择最优 Agent |
+| **Self Reflection** | 输出后自我检查并修正 |
+| **Reasoning** | 显式推理链路 |
+| **Multi-Modal** | 图像等多模态输入 |
+
+### 5.2 代码示例
+
+单 Agent：
+
+```python
+from praisonaiagents import Agent
+
+agent = Agent(instructions="You are a helpful AI assistant")
+agent.start("Write a movie script about a robot in Mars")
+```
+
+多 Agent 协作：
+
+```python
+from praisonaiagents import Agent, Agents
+
+research_agent = Agent(instructions="Research about AI trends")
+writer_agent = Agent(instructions="Write engaging content based on research")
+
+research_team = Agents(agents=[research_agent, writer_agent])
+research_team.start()
+```
+
+Deep Research（启用后 Agent 自主进行多轮搜索和交叉验证）：
+
+```python
+from praisonaiagents import Agent
+
+agent = Agent(
+    instructions="You are a research analyst",
+    deep_research=True
+)
+agent.start("Research the impact of AI on healthcare in 2026")
+```
+
+### 5.3 Planning Mode（计划模式）
+
+Agent 进入 plan → execute → reason 循环，适合多步骤任务：
+
+```python
+from praisonaiagents import Agent
+
+agent = Agent(
+    instructions="You are a planning assistant",
+    planning=True
+)
+
+agent.start("Plan a product launch for our new AI product")
+```
+
+CLI 中也可以启用：
+
+```bash
+praisonai --planning
+praisonai --planning-tools
+praisonai --planning-reasoning
+```
+
+Planning Mode 的价值在于：它把“大任务拆小步骤”这一步从 prompt 里拎出来做成显式循环，每一步执行完再决定下一步，而不是让模型一口气生成全量计划然后硬执行。
+
+---
+
+## 六、MCP 协议支持
+
+PraisonAI 对 MCP（Model Context Protocol）的支持不是挂个插件，而是四种传输方式全部原生支持：
+
+| 传输方式 | 适用场景 | 示例 |
+|----------|----------|------|
+| **stdio** | 本地 NPX / Python MCP 服务器 | 开发测试 |
 | **HTTP** | 生产服务器 | Streamable HTTP |
-| **WebSocket** | 实时双向通信 | 实时应用 |
+| **WebSocket** | 需要实时双向通信 | 实时应用 |
 | **SSE** | 服务端推送 | 轻量级实时 |
-
-### 5.2 MCP 使用示例
 
 ```python
 from praisonaiagents import Agent, MCP
@@ -212,61 +224,15 @@ agent = Agent(
 )
 ```
 
----
-
-## 六、Agent 核心功能
-
-### 6.1 Agent 类型
-
-| 类型 | 说明 | 示例 |
-|------|------|------|
-| **Single Agent** | 单 Agent 任务 | 简单查询 |
-| **Multi Agents** | 多 Agent 协作 | 复杂研究 |
-| **Auto Agents** | 自动选择最优 Agent | 动态任务分配 |
-| **Self Reflection** | 自我反思改进 | 输出质量提升 |
-| **Reasoning** | 推理模式 | 逻辑问题 |
-| **Multi-Modal** | 多模态支持 | 图像理解 |
-
-### 6.2 Agent 代码示例
-
-#### 单 Agent
-
-```python
-from praisonaiagents import Agent
-
-agent = Agent(instructions="You are a helpful AI assistant")
-agent.start("Write a movie script about a robot in Mars")
-```
-
-#### 多 Agent 协作
-
-```python
-from praisonaiagents import Agent, Agents
-
-research_agent = Agent(instructions="Research about AI trends")
-writer_agent = Agent(instructions="Write engaging content based on research")
-
-research_team = Agents(agents=[research_agent, writer_agent])
-research_team.start()
-```
-
-#### Deep Research Agent
-
-```python
-from praisonaiagents import Agent
-
-agent = Agent(
-    instructions="You are a research analyst",
-    deep_research=True  # 启用深度研究
-)
-agent.start("Research the impact of AI on healthcare in 2026")
-```
+四种传输方式的并存意味着同一套 Agent 代码可以在本地开发时用 stdio 连本地 MCP 服务器，上线时切到 HTTP，不需要改 Agent 逻辑。
 
 ---
 
 ## 七、工具系统
 
 ### 7.1 自定义工具
+
+用 `@tool` 装饰器注册函数为 Agent 可调用工具：
 
 ```python
 from praisonaiagents import Agent, tool
@@ -289,15 +255,9 @@ agent = Agent(
 agent.start("Search for AI news and calculate 15*4")
 ```
 
-### 7.2 内置工具包
+### 7.2 内置工具
 
-| 工具包 | 说明 |
-|--------|------|
-| Web Search | 原生搜索 |
-| File Operations | 文件读写 |
-| API Calls | HTTP 请求 |
-| Database | 数据库连接 |
-| 100+ 工具 | 丰富的内置工具 |
+框架自带 100+ 工具，覆盖 Web Search、文件读写、HTTP 请求、数据库连接等常见场景，不需要从零写。
 
 ---
 
@@ -305,32 +265,33 @@ agent.start("Search for AI news and calculate 15*4")
 
 ### 8.1 Memory（记忆）
 
+`memory=True` 打开后，Agent 自动保存对话上下文，下次对话可直接召回：
+
 ```python
 from praisonaiagents import Agent
 
 agent = Agent(
     name="Assistant",
-    memory=True  # 启用记忆
+    memory=True
 )
 
-agent.chat("Hello!")  # 自动保存
+agent.chat("Hello!")         # 自动保存
 agent.chat("What did I say earlier?")  # 回忆
 ```
 
 ### 8.2 Knowledge（知识库）
 
+CLI 管理知识库，适合把项目文档、API 手册等静态资料喂给 Agent：
+
 ```bash
-# 添加知识
 praisonai knowledge add ./docs
-
-# 查询知识
 praisonai knowledge query "How to use the API"
-
-# 列出知识
 praisonai knowledge list
 ```
 
 ### 8.3 数据库持久化
+
+Memory 默认存本地，也可以接到外部数据库，消息、运行记录、追踪数据自动落库：
 
 ```python
 from praisonaiagents import Agent, db
@@ -341,28 +302,28 @@ agent = Agent(
     session_id="my-session"
 )
 
-agent.chat("Hello!")  # 自动持久化消息、运行、追踪
+agent.chat("Hello!")
 ```
 
-支持：PostgreSQL、MySQL、SQLite、MongoDB、Redis 等 20+ 数据库。
+支持 PostgreSQL、MySQL、SQLite、MongoDB、Redis 等 20+ 数据库。
 
 ---
 
 ## 九、工作流模式
 
-### 9.1 Workflow Patterns
+### 9.1 五种模式
 
-| 模式 | 说明 |
+| 模式 | 行为 |
 |------|------|
-| **Sequential** | 顺序执行 |
-| **Parallel** | 并行执行 |
-| **Loop** | 循环执行 |
-| **Repeat** | 重复执行 |
-| **Route** | 条件路由 |
+| **Sequential** | 按顺序一个接一个 |
+| **Parallel** | 同时跑多个 Agent |
+| **Loop** | 满足条件前一直循环 |
+| **Repeat** | 固定次数重复 |
+| **Route** | 按条件分流到不同 Agent |
 
 ### 9.2 YAML 工作流
 
-创建 `agents.yaml`：
+不想写代码时用 YAML 声明：
 
 ```yaml
 framework: praisonai
@@ -380,43 +341,15 @@ agents:
     instructions: "Write clear, engaging content based on research"
 ```
 
-运行：
-
 ```bash
 praisonai agents.yaml
 ```
 
 ---
 
-## 十、Planning Mode（计划模式）
+## 十、安全护栏（Guardrails）
 
-### 10.1 计划-执行-推理循环
-
-```python
-from praisonaiagents import Agent
-
-agent = Agent(
-    instructions="You are a planning assistant",
-    planning=True  # 启用计划模式
-)
-
-# Agent 会：plan → execute → reason → plan → execute → ...
-agent.start("Plan a product launch for our new AI product")
-```
-
-### 10.2 Planning Tools
-
-```bash
-praisonai --planning
-praisonai --planning-tools
-praisonai --planning-reasoning
-```
-
----
-
-## 十一、Guardrails（安全护栏）
-
-### 11.1 输入/输出验证
+输入输出各挂一个 validator，在 Agent 收到指令前和返回结果前各拦截一次：
 
 ```python
 from praisonaiagents import Agent, Guardrails
@@ -432,128 +365,96 @@ agent = Agent(
 )
 ```
 
+输入 validator 截断超长输入防止 prompt 注入撑爆上下文；输出 validator 检查敏感词。两个 validator 都是纯函数，可以换成自己的规则。
+
 ---
 
-## 十二、支持的大模型
+## 十一、支持的模型
 
-### 12.1 完整列表（24+ 提供商）
+24+ 提供商，通过 `model` 参数切换，不需要改 Agent 逻辑：
 
-| 提供商 | 说明 |
-|--------|------|
-| **OpenAI** | GPT-4、GPT-3.5 |
-| **Anthropic** | Claude 3.5、Claude 3 |
-| **Google Gemini** | Gemini 1.5、Gemini Pro |
-| **DeepSeek** | DeepSeek V3 |
-| **Azure** | Azure OpenAI |
-| **Ollama** | 本地模型 |
-| **Groq** | 高速推理 |
-| **Mistral** | Mistral Large |
-| **Cerebras** | 超快速推理 |
-| **Cohere** | Command R+ |
-| **OpenRouter** | 统一 API |
-| **Perplexity** | Sonar |
-| **Fireworks** | 高性能 |
-| **AWS Bedrock** | Claude on AWS |
-| **xAI Grok** | Grok 系列 |
-| **Vertex AI** | Google Cloud |
-| **HuggingFace** | 开源模型 |
-| **Together AI** | 聚合平台 |
-| **Databricks** | 端到端平台 |
-| **Replicate** | 开源模型托管 |
-| **Cloudflare** | Workers AI |
-
-### 12.2 使用示例
+| 提供商 | 示例模型 |
+|--------|----------|
+| OpenAI | `gpt-4` |
+| Anthropic | `claude-3-5-sonnet-20241022` |
+| Google Gemini | `gemini-pro` |
+| DeepSeek | DeepSeek V3 |
+| Azure | Azure OpenAI |
+| Ollama | `ollama/llama3`（本地） |
+| Groq | 高速推理 |
+| Mistral | Mistral Large |
+| Cerebras | 超快速推理 |
+| Cohere | Command R+ |
+| OpenRouter | 统一 API |
+| Perplexity | Sonar |
+| Fireworks | 高性能 |
+| AWS Bedrock | Claude on AWS |
+| xAI Grok | Grok 系列 |
+| Vertex AI | Google Cloud |
+| HuggingFace | 开源模型 |
+| Together AI | 聚合平台 |
+| Databricks | 端到端平台 |
+| Replicate | 开源模型托管 |
+| Cloudflare | Workers AI |
 
 ```python
 from praisonaiagents import Agent
 
-# 使用 OpenAI
 agent = Agent(model="gpt-4", instructions="...")
-
-# 使用 Anthropic
 agent = Agent(model="claude-3-5-sonnet-20241022", instructions="...")
-
-# 使用 Gemini
 agent = Agent(model="gemini-pro", instructions="...")
-
-# 使用本地 Ollama
 agent = Agent(model="ollama/llama3", instructions="...")
 ```
 
 ---
 
-## 十三、CLI 命令详解
+## 十二、CLI 常用命令
 
-### 13.1 执行命令
+### 运行模式
 
 | 命令 | 说明 |
 |------|------|
-| `praisonai` | 运行 Agent |
-| `praisonai --auto` | 自动模式 |
+| `praisonai` | 默认运行 |
+| `praisonai --auto` | 自动选择 Agent |
 | `praisonai --interactive` | 交互模式 |
 | `praisonai --chat` | 聊天模式 |
 
-### 13.2 研究命令
+### 研究与记忆
 
 | 命令 | 说明 |
 |------|------|
-| `praisonai research` | 运行研究 |
+| `praisonai research` | 研究模式 |
 | `praisonai --deep-research` | 深度研究 |
-| `praisonai --query-rewrite` | 查询重写 |
-
-### 13.3 记忆命令
-
-| 命令 | 说明 |
-|------|------|
 | `praisonai memory show` | 显示记忆 |
 | `praisonai memory add` | 添加记忆 |
 | `praisonai memory search` | 搜索记忆 |
-| `paisonai memory clear` | 清除记忆 |
+| `praisonai memory clear` | 清除记忆 |
 
-### 13.4 知识命令
-
-| 命令 | 说明 |
-|------|------|
-| `praisonai knowledge add` | 添加知识 |
-| `praisonai knowledge query` | 查询知识 |
-| `praisonai knowledge list` | 列出知识 |
-
-### 13.5 MCP 命令
+### MCP 与工具
 
 | 命令 | 说明 |
 |------|------|
 | `praisonai mcp list` | 列出 MCP 服务器 |
 | `praisonai mcp create` | 创建 MCP 服务器 |
-| `praisonai mcp enable` | 启用 MCP |
-
-### 13.6 其他命令
-
-| 命令 | 说明 |
-|------|------|
 | `praisonai tools list` | 列出工具 |
-| `praisonai tools info` | 工具信息 |
 | `praisonai tools search` | 搜索工具 |
-| `praisonai schedule start` | 启动调度 |
+| `praisonai schedule start` | 启动定时调度 |
 | `praisonai workflow run` | 运行工作流 |
 
 ---
 
-## 十四、应用场景
+## 十三、应用场景
 
-### 14.1 六大核心场景
+| 场景 | 典型用法 |
+|------|----------|
+| 研究与分析 | `deep_research=True`，多轮搜索 + 交叉验证 |
+| 代码生成 | 配 `file_read` / `file_write` / `code_execute` 工具 |
+| 内容创作 | 多 Agent：research → write → review |
+| 数据管道 | 结合自定义工具做 ETL |
+| 客服 | `memory=True` + 知识库，24/7 |
+| 工作流自动化 | YAML 声明 + Cron 定时 |
 
-| 场景 | 说明 | 示例 |
-|------|------|------|
-| 🔍 **Research & Analysis** | 深度研究和分析 | 市场调研、竞品分析 |
-| 💻 **Code Generation** | 代码生成和调试 | 自动编程、代码审查 |
-| ✍️ **Content Creation** | 内容创作 | 博客、文档、营销文案 |
-| 📊 **Data Pipelines** | 数据管道 | ETL、数据分析 |
-| 🤖 **Customer Support** | 客服机器人 | 24/7 支持 |
-| ⚙️ **Workflow Automation** | 工作流自动化 | 业务流程自动化 |
-
-### 14.2 示例代码
-
-#### 研究助手
+研究助手示例：
 
 ```python
 from praisonaiagents import Agent
@@ -565,7 +466,7 @@ researcher = Agent(
 researcher.start()
 ```
 
-#### 客服机器人
+客服示例：
 
 ```python
 from praisonaiagents import Agent
@@ -578,7 +479,7 @@ support = Agent(
 support.start()
 ```
 
-#### 代码生成器
+代码生成：
 
 ```python
 from praisonaiagents import Agent
@@ -592,47 +493,51 @@ coder.start("Write a web scraper for news articles")
 
 ---
 
-## 十五、性能基准
+## 十四、性能基准
 
-### 15.1 性能数据
+官方给出的数据是：
 
 | 指标 | 数值 |
 |------|------|
-| **平均实例化时间** | **3.77 μs** |
-| **吞吐量** | 高并发支持 |
-| **内存占用** | 极低 |
+| 平均实例化时间 | 3.77 μs |
+| 吞吐量 | 高并发支持 |
+| 内存占用 | 极低 |
 
-### 15.2 Langfuse 追踪
+这组数字说明什么、不说明什么：
+
+- **实例化时间 3.77 μs** 测的是 `Agent()` 对象的创建开销，反映 SDK 本身的轻量程度。它不包含模型 API 调用延迟——实际端到端响应时间取决于你选的模型和网络。
+- **吞吐量** 官方写“高并发支持”但没给出具体 QPS 或并发数，说明这组 benchmark 主要定位是 SDK 开销参考，不是生产压测报告。
+- **内存占用“极低”** 同样缺少量化——如果你挂了 20+ 数据库连接和 Langfuse 追踪，内存消耗会明显上升。
+
+实际使用中，性能瓶颈大概率在模型 API 响应时间和你接的 MCP 服务器的处理速度上，PraisonAI SDK 本身不是瓶颈。
+
+启用 Langfuse 追踪可以看到端到端链路：
 
 ```bash
 pip install "praisonai[langfuse]"
 praisonai langfuse
 ```
 
-支持完整的请求追踪和性能监控。
-
 ---
 
-## 十六、部署选项
+## 十五、部署选项
 
-### 16.1 Python SDK 部署
+### Python SDK
 
 ```bash
 pip install praisonaiagents
-
-# 环境变量
 export OPENAI_API_KEY="your-key"
 export ANTHROPIC_API_KEY="your-key"
 ```
 
-### 16.2 Docker 部署
+### Docker
 
 ```bash
 docker build -t praisonai .
 docker run -p 8082:8082 praisonai
 ```
 
-### 16.3 Kubernetes 部署
+### Kubernetes
 
 ```yaml
 apiVersion: apps/v1
@@ -652,64 +557,47 @@ spec:
 
 ---
 
-## 十七、开发指南
-
-### 17.1 本地开发
+## 十六、开发指南
 
 ```bash
-# 克隆仓库
 git clone https://github.com/MervinPraison/PraisonAI.git
 cd PraisonAI
-
-# 安装开发依赖
 pip install -e ".[dev]"
-
-# 运行测试
 pytest
-
-# 代码格式
 ruff format .
 ruff check .
 ```
 
-### 17.2 贡献代码
+贡献流程：
 
 ```bash
-# 创建分支
 git checkout -b feature/new-feature
-
-# 提交
 git commit -m "feat: add new feature"
-
-# 推送
 git push origin feature/new-feature
-
 # 创建 PR
 ```
 
 ---
 
-## 十八、最佳实践
+## 十七、最佳实践
 
-### 18.1 Agent 设计
+**Agent 设计**
 
-1. **清晰的指令**：给 Agent 明确的角色和目标
-2. **适当的工具**：提供必要的工具，不过多也不过少
-3. **记忆管理**：根据需要启用记忆功能
-4. **安全护栏**：使用 Guardrails 保护输入输出
+1. 指令写清楚角色和目标，不要让 Agent 猜自己该干什么。
+2. 工具只给必要的——太多工具会分散模型注意力，太少则完不成任务。
+3. Memory 按需开：对话型任务打开，一次性脚本关掉更干净。
+4. Guardrails 的 validator 用纯函数，尽量不依赖外部调用，避免引入新的失败点。
 
-### 18.2 性能优化
+**性能**
 
-1. **选择合适的模型**：根据任务复杂度选择
-2. **并行执行**：多个独立任务使用并行 Agent
-3. **缓存结果**：使用记忆避免重复计算
-4. **流式输出**：使用 SSE 获取实时反馈
+1. 模型越强越慢也越贵——简单任务用 `ollama/llama3` 或 Groq，复杂推理再上 GPT-4。
+2. 独立子任务用 Parallel 模式并行跑，不要串行排队。
+3. 重复查询开 Memory 避免反复调用模型。
+4. 需要流式反馈时用 SSE 传输，比轮询省资源。
 
 ---
 
-## 十九、FAQ
-
-### 19.1 常见问题
+## 十八、FAQ
 
 **Q: ModuleNotFoundError: No module named 'praisonaiagents'**
 
@@ -735,35 +623,44 @@ agent = Agent(model="ollama/llama3", instructions="...")
 agent = Agent(db=db(database_url="postgresql://localhost/mydb"))
 ```
 
-### 19.2 获取帮助
+**获取帮助**
 
 | 资源 | 链接 |
 |------|------|
-| 📚 文档 | https://docs.praison.ai |
-| 🐛 问题 | https://github.com/MervinPraison/PraisonAI/issues |
-| 💬 讨论 | https://github.com/MervinPraison/PraisonAI/discussions |
+| 文档 | https://docs.praison.ai |
+| Issues | https://github.com/MervinPraison/PraisonAI/issues |
+| Discussions | https://github.com/MervinPraison/PraisonAI/discussions |
 
 ---
 
-## 二十、总结
+## 十九、什么时候用 PraisonAI
 
-PraisonAI 是**当今最完整的 AutoGen 继任者**：
+PraisonAI 最合适的场景是：你需要**多 Agent 协作、接外部工具（MCP）、并且希望一套 SDK 从原型跑到部署**。具体来说：
 
-| 维度 | 说明 |
-|------|------|
-| 🤖 **功能完整** | 25+ 特性，覆盖所有 AI Agent 场景 |
-| 🌐 **模型丰富** | 100+ LLM 支持，24+ 提供商 |
-| 🔌 **MCP 原生** | 四种传输方式，开箱即用 |
-| ⚡ **极速部署** | 5 行代码即可运行 |
-| 🧠 **记忆系统** | 零依赖，开箱即用 |
-| ⏰ **24/7 运行** | 定时任务，持续运行 |
-| 🛡️ **安全护栏** | 输入输出验证 |
-| 📊 **可观测性** | Langfuse 追踪支持 |
-| 🚀 **活跃开发** | v4.5.149，持续更新 |
+**优先考虑的场景：**
+
+- 研究类任务，需要搜索 → 交叉验证 → 格式化输出的多步流水线。
+- 已经有 MCP 服务器或打算用 MCP 标准化工具接入。
+- 团队需要 Dashboard 把 Agent 接到 Telegram / Slack / Discord，而不是自己写 Bot 框架。
+- 想用 YAML 声明工作流 + 可视化拖拽，降低非开发同事的参与门槛。
+
+**可以等等的场景：**
+
+- 只跑单 Agent 简单问答——用 OpenAI SDK 或 LangChain 更轻量，PraisonAI 的 Planning / Multi-Agent / MCP 层在这里是额外复杂度。
+- 对模型推理延迟极度敏感的场景——PraisonAI 的 Planning 循环会增加往返次数，如果每个毫秒都关键，直接调模型 API 更可控。
+- 团队已经深度绑定了另一个 Agent 框架（如 CrewAI 或 LangGraph），迁移成本需要单独评估。
+
+**从哪里开始：**
+
+1. `pip install praisonaiagents`，用单 Agent 模式跑通第一个任务。
+2. 打开 `memory=True` 和 `planning=True`，感受多步推理和记忆召回的效果。
+3. 接一个 MCP 服务器（比如 Brave Search），让 Agent 真正调用外部工具。
+4. 上多 Agent 协作，用 `Agents` 容器串联两个 Agent。
+5. 需要对外暴露时，上 Claw Dashboard 或部署到 K8s。
 
 ---
 
-**🔗 相关资源：**
+**相关资源：**
 
 | 资源 | 链接 |
 |------|------|
@@ -775,4 +672,4 @@ PraisonAI 是**当今最完整的 AutoGen 继任者**：
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 PraisonAI (6.9k Stars)_
+_本文基于 PraisonAI v4.5.149（6.9k Stars）撰写_
