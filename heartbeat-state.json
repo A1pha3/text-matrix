@@ -81,7 +81,7 @@
   },
   "文章健康检查": {
     "lastRun": "2026-06-02",
-    "status": "completed_with_issues_resolved",
-    "note": "07:10窗口检查：检查4份早报(2026-06-01)，25个链接全部200。1个老问题已修复——经济财经早报WTI原油文章jin10首页链接按HEARTBEAT铁律已移除（连续第3次检查到该问题，本轮直接修复+git push成功）。补充检查：36kr/qbitai反爬本次放行(200)，华尔街见闻/金十数据/新浪财经具体文章全部200，Cointelegraph/V2EX全部200。"
+    "status": "completed",
+    "note": "12:50窗口检查(30-min cron)：4份早报(2026-06-02) 58/58链接全部200 GET可达，状态稳定无回归。tech文章抽查：stefan-jansen/ml-for-trading 17,747→17,965(+1.2% ✅) / godotengine/godot 111,573→111,712(+0.12% ✅)。无新问题。"
   }
 }
