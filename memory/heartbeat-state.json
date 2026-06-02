@@ -18,7 +18,8 @@
     "browser_exit": "2026-05-05T03:00:00Z",
     "ai-news-morning": "2026-05-22",
     "ai_news_morning": "2026-05-22T00:00:00Z",
-    "github_trending_15": "2026-05-28T15:00:00+08:00"
+    "github_trending_15": "2026-05-28T15:00:00+08:00",
+    "article_health_check": "2026-06-02T12:50:00+08:00"
   },
   "apiStatus": {
     "brave_search": "DOWN_subscription_token_invalid_since_2026-03-20",
@@ -28,6 +29,7 @@
   "networkRestriction": "CRITICAL - ALL external news sources blocked (web_search/web_fetch fail). Browser tool can still access some sites via curl.",
   "browserAccess": "✅ WORKING - 36kr (JS-rendered), 量子位 (JS-rendered), 机器之心 (JS-rendered), FT中文网 (✅ accessible), V2EX (✅ accessible), GitHub (✅ accessible), CoinGecko API (✅ accessible), 华尔街见闻 (✅ accessible)",
   "tasksCompletedToday": [
+    "[2026-06-02 12:50] 文章健康检查 12:50 - ✅ COMPLETED - 4份早报(2026-06-02) 58/58链接全部可达(stefan-jansen 17,747→17,965 +1.2% / godot 111,573→111,712 +0.12% 抽查通过)，无新问题",
     "[2026-05-28 23:05] GitHub Trending 23:00 - ✅ COMPLETED (已覆盖) - 抓取16个趋势repo，15个已覆盖（compound-engineering-plugin今天20:00已写compound-engineering-agentic-dev-workflow-guide.md），无需新增文章。Commit已推送GitHub。",
     "[2026-05-28 15:05] GitHub Trending 15:00 - ✅ COMPLETED - 抓取17个趋势repo，13个已覆盖，新增2篇文章：MoneyPrinterTurbo(AI视频生成，63.8k★，9,257 today)、Understand-Anything(知识图谱代码分析，41.1k★，3,291 today)。Commit 7828ff8 已推送 GitHub (A1pha3/text-matrix)。",
     "[2026-05-28 13:03] GitHub Trending 13:00 - ✅ COMPLETED - 抓取16个趋势repo（16个非sponsor repo全部已覆盖：Airy/awesome-free-apps/Claude-Code-Harness/DigitalPlatDev/FreeDomain/ECC/English-level-up-tips/Kronos/MoneyPrinterTurbo/Understand-Anything/anthropics/knowledge-work-plugins/hardikpandya/stop-slop/mukul975/Anthropic-Cybersecurity-Skills/twentyhq/twenty/shiyu-coder/Kronos），2篇未覆盖历史文章已commit推送(6711fef→7ab0145)：axorax-awesome-free-apps、p-e-w-heretic。",
@@ -39,7 +41,7 @@
     "[2026-05-25 20:16] GitHub Trending 20:00 - ✅ COMPLETED - codegraph/ECC/taste-skill/awesome-free-apps (4篇新文章已推送GitHub并发布飞书文档)"
   ],
   "tasksMissedToday": [],
-  "lastUpdated": "2026-05-28T07:05:00Z",
+  "lastUpdated": "2026-06-02T12:50:00+08:00",
   "zaoqingan": "2026-05-18",
   "heartbeatCronCreated": {
     "id": "ad2640c0-79c3-4d38-83cb-dd0e5320b941",

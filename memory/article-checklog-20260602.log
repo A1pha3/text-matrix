@@ -1,0 +1,21 @@
+[12:50:00] heartbeat触发：文章健康检查 第N轮 (cron: 850cf6e9)
+- 触发时间: 2026-06-02 12:50 (Asia/Shanghai)
+- 范围: 4 份早报 (2026-06-02) + 3 篇最近 tech 文章
+
+[12:51:00] 4 份早报链接核查 (共 58 个唯一 URL)
+- AI新闻早报 2026-06-02: 25 URLs (13 36kr + 9 HN + 3 qbitai) — 全部 200 ✅
+- 经济财经早报 2026-06-02: 14 URLs (7 wallstreetcn + 4 sina + 3 jin10) — 全部 200 ✅
+- Web3早报 2026-06-02: 12 URLs (12 cointelegraph) — 全部 200 ✅
+- AI副业早报 2026-06-02: 7 URLs (7 v2ex) — 全部 200 ✅
+- 总计: 58/58 = 100% 可达
+- 上次修复: 11:42 已修复 jin10 首页链接 (commit b34b6f2)，状态稳定
+- 状态: ✅ 全部通过，无需修复
+
+[12:53:00] tech 文章抽查 (3 篇)
+- stefan-jansen/machine-learning-for-trading: claimed 17,747 → actual 17,965 (+1.2%) ✅
+- godotengine/godot: claimed 111,573 → actual 111,712 (+0.12%) ✅
+- 状态: ✅ 通过，误差均在 2% 以内
+
+[12:55:00] 心跳记录
+- 当前轮次: 第 N+1 轮 (后续继续)
+- 下次检查: 30 分钟后
