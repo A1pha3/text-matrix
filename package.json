@@ -8,6 +8,7 @@
     "build:cloudflare-pages": "sh ./scripts/build_cloudflare_pages.sh",
     "validate:future-dates": "python3 ./scripts/validate_site.py future-dates",
     "validate:topic-pages": "python3 ./scripts/validate_site.py expected-files --site-dir public --paths ai-agent/index.html coding-agent/index.html open-source-ai-tools/index.html",
-    "validate:release-assets": "python3 ./scripts/validate_site.py expected-files --site-dir public --manifest ./scripts/expected-public-files.txt"
+    "validate:release-assets": "python3 ./scripts/validate_site.py expected-files --site-dir public --manifest ./scripts/expected-public-files.txt",
+    "validate:frontmatter": "uv run --with pyyaml python scripts/frontmatter_lint.py --root content"
   }
 }

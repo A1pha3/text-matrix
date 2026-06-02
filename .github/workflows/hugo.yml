@@ -50,10 +50,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
       - name: Validate publish dates
         run: npm run validate:future-dates
+      - name: Lint frontmatter
+        run: npm run validate:frontmatter
       - name: Build with Hugo
         env:
           BASE_URL: ${{ steps.pages.outputs.base_url }}/
