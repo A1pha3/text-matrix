@@ -1,74 +1,87 @@
 {
-  "lastChecks": {
-    "email": null,
-    "calendar": null,
-    "weather": null,
-    "feishu_news_morning": "2026-04-22T00:00:00Z",
-    "feishu_news_afternoon": null,
-    "feishu_news_evening": null,
-    "ai_money_morning": "2026-04-22T00:00:00Z",
-    "ai_money_afternoon": null,
-    "ai_money_evening": null,
-    "financial_morning": "2026-05-19T00:00:00Z",
-    "financial_afternoon": null,
-    "financial_evening": null,
-    "web3_morning": "2026-05-19T00:00:00Z",
-    "github_trending_afternoon": "2026-05-28T15:00:00+08:00",
-    "zangjingge_evening": "2026-05-04T21:00:00Z",
-    "browser_exit": "2026-05-05T03:00:00Z",
-    "ai-news-morning": "2026-05-22",
-    "ai_news_morning": "2026-05-22T00:00:00Z",
-    "github_trending_15": "2026-05-28T15:00:00+08:00",
-    "article_health_check": "2026-06-02T18:40:39+08:00"
+  "github-trending-03": {
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "03:05窗口执行，17个趋势项目中有15个已有文章覆盖(markitdown/nesquena/hermes-webui/supermemory/MoneyPrinterTurbo/Scrapling/impeccable/heretic/compound-engineering-plugin/TradingAgents/harness/oh-my-pi/VoxCPM/train-llm-from-scoding/fff/build-your-own-x)，2个缺失：godotengine/godot与stefan-jansen/machine-learning-for-trading。已为两者各写1篇技术文章(push commit 0bd0846)，飞书文档：C6tNdEel0o2U1KxrDNSc0Uugnze(Google)与EDB9dOyX0oo3bkxA8RicIuIMnQe(ML4T)"
   },
-  "apiStatus": {
-    "brave_search": "DOWN_subscription_token_invalid_since_2026-03-20",
-    "feishu_wiki": "⚠️_working_but_add_node_fails_400_error",
-    "clawpi_api": "DOWN_ssl_errors_resolves_to_198.18.x.x"
+  "browser-memory-cleanup": {
+    "lastRun": "2026-06-01",
+    "status": "blocked",
+    "note": "03:00窗口执行失败，Chrome CDP WebSocket连接失败(Chrome未开启remote debugging)，跳过"
   },
-  "networkRestriction": "CRITICAL - ALL external news sources blocked (web_search/web_fetch fail). Browser tool can still access some sites via curl.",
-  "browserAccess": "✅ WORKING - 36kr (JS-rendered), 量子位 (JS-rendered), 机器之心 (JS-rendered), FT中文网 (✅ accessible), V2EX (✅ accessible), GitHub (✅ accessible), CoinGecko API (✅ accessible), 华尔街见闻 (✅ accessible)",
-  "tasksCompletedToday": [
-    "[2026-06-02 18:38] 文章健康检查 18:38 - ✅ COMPLETED - 4份早报(2026-06-02) 58/58链接全部可达，结构稳定，无新问题",
-    "[2026-06-02 12:50] 文章健康检查 12:50 - ✅ COMPLETED - 4份早报(2026-06-02) 58/58链接全部可达(stefan-jansen 17,747→17,965 +1.2% / godot 111,573→111,712 +0.12% 抽查通过)，无新问题",
-    "[2026-05-28 23:05] GitHub Trending 23:00 - ✅ COMPLETED (已覆盖) - 抓取16个趋势repo，15个已覆盖（compound-engineering-plugin今天20:00已写compound-engineering-agentic-dev-workflow-guide.md），无需新增文章。Commit已推送GitHub。",
-    "[2026-05-28 15:05] GitHub Trending 15:00 - ✅ COMPLETED - 抓取17个趋势repo，13个已覆盖，新增2篇文章：MoneyPrinterTurbo(AI视频生成，63.8k★，9,257 today)、Understand-Anything(知识图谱代码分析，41.1k★，3,291 today)。Commit 7828ff8 已推送 GitHub (A1pha3/text-matrix)。",
-    "[2026-05-28 13:03] GitHub Trending 13:00 - ✅ COMPLETED - 抓取16个趋势repo（16个非sponsor repo全部已覆盖：Airy/awesome-free-apps/Claude-Code-Harness/DigitalPlatDev/FreeDomain/ECC/English-level-up-tips/Kronos/MoneyPrinterTurbo/Understand-Anything/anthropics/knowledge-work-plugins/hardikpandya/stop-slop/mukul975/Anthropic-Cybersecurity-Skills/twentyhq/twenty/shiyu-coder/Kronos），2篇未覆盖历史文章已commit推送(6711fef→7ab0145)：axorax-awesome-free-apps、p-e-w-heretic。",
-    "[2026-05-27 13:05] GitHub Trending 13:00 - ✅ COMPLETED (已覆盖) - 全部14个趋势repo均已写过文章（Understand-Anything/knowledge-work-plugins/ai-engineering-from-scratch/ECC/Anthropic-Cybersecurity-Skills/stop-slop/taste-skill/FreeDomain/jellyfin/awesome-free-apps/twenty/OpenStock/claude-mem/ppf-contact-solver）。工作区干净，无需git push。",
-    "[2026-05-27 10:18] GitHub Trending 10:00 - ✅ COMPLETED (已覆盖) - 全部13个趋势repo在09:00已全部写过文章（Understand-Anything/knowledge-work-plugins/ai-engineering-from-scratch/Cybersecurity-Skills/stop-slop/taste-skill/FreeDomain/jellyfin/awesome-free-apps/twenty/OpenStock/claude-mem/ppf-contact-solver）。工作区干净，git push无需执行。",
-    "[2026-05-27 09:28] GitHub Trending 09:00 - ✅ COMPLETED - 抓取14个趋势repo，13个已覆盖，新增1篇文章：OpenStock（Open-Dev-Society，12.1k★，开源股市追踪平台，Next.js+TradingView）。Commit 19b65d5 已推送 GitHub (A1pha3/text-matrix)。",
-    "[2026-05-26 09:35] GitHub Trending 09:00 - ✅ COMPLETED - 抓取17个趋势repo，15个已覆盖（Understand-Anything/knowledge-work-plugins/ai-engineering-from-scratch/ECC/Anthropic-Cybersecurity-Skills/codegraph/cmux/andrej-karpathy-skills/FinceptTerminal/paperless-ngx/claude-cookbooks/taste-skill/Kronos/awesome-free-apps/gstack历史文章），新增2篇文章：AIRI(moeru-ai/airi, 39.7k★，自托管Grok Companion带Live2D/VRM虚拟角色)、stop-slop(4.4k★，去除AI味的skill文件)。Commit ebc0ccc 已推送 GitHub。",
-    "[2026-05-25 15:08] GitHub Trending 15:00 - ✅ COMPLETED (已覆盖) - 全部16个趋势repo均已写过文章（Understand-Anything/ai-engineering-from-scratch/claude-plugins-official/knowledge-work-plugins/andrej-karpathy-skills/pi/free-claude-code/codegraph/multica/Kronos/cmux/MiroFish/build-your-own-x/dotnet/skills/frigate/Cybersecurity-Skills历史文章）。无新增项目，工作区干净无需提交。",
-    "[2026-05-25 20:16] GitHub Trending 20:00 - ✅ COMPLETED - codegraph/ECC/taste-skill/awesome-free-apps (4篇新文章已推送GitHub并发布飞书文档)"
-  ],
-  "tasksMissedToday": [],
-  "lastUpdated": "2026-06-02T18:40:39+08:00",
-  "zaoqingan": "2026-05-18",
-  "heartbeatCronCreated": {
-    "id": "ad2640c0-79c3-4d38-83cb-dd0e5320b941",
-    "name": "心跳保活",
-    "schedule": "0 * * * * @ Asia/Shanghai",
-    "createdAt": "2026-03-27T01:07:00Z"
+  "github-trending-10": {
+    "lastRun": "2026-06-02",
+    "status": "all_already_covered",
+    "note": "10:03窗口执行，curl直连GitHub trending成功(无CDP)，17个趋势项目全部已有文章(content/posts/tech/)覆盖(microsoft/markitdown→markitdown-microsoft-document-to-markdown-guide.md、nesquena/hermes-webui→hermes-webui-hermes-agent-web-interface-guide.md、supermemoryai/supermemory→supermemory-ai-memory-context-engine-guide.md、harry0703/MoneyPrinterTurbo→moneyprinterturbo-ai-short-video-generation-guide.md、D4Vinci/Scrapling→scrapling-adaptive-web-scraping-framework-guide.md、pbakaus/impeccable→impeccable-ai-design-guide.md、p-e-w/heretic→heretic-full-analysis.md、EveryInc/compound-engineering-plugin→compound-engineering-plugin-agent-workflow-guide.md、TauricResearch/TradingAgents→tradingagents-multi-agent-crypto-trading-framework-guide.md、revfactory/harness→harness-claude-code-multi-agent-team-architecture-guide.md、godotengine/godot→godot-engine-cross-platform-game-engine-guide.md、can1357/oh-my-pi→oh-my-pi-ai-coding-agent-guide.md、OpenBMB/VoxCPM→voxcpm2-tokenizer-free-tts-guide.md、FareedKhan-dev/train-llm-from-scratch→fareedkhan-train-llm-from-scratch-guide.md、stefan-jansen/machine-learning-for-trading→stefan-jansen-machine-learning-for-trading-guide.md、dmtrKovalenko/fff→fff.nvim-ai-neovim-file-search-guide.md、codecrafters-io/build-your-own-x→codecrafters-build-your-own-x-programming-guide.md)，无需写文章"
   },
-  "browser_exit": "2026-05-05T03:00:00Z",
-  "zangjingge": "2026-05-26",
-  "zangjingge_evening": "2026-05-26T21:00:00+08:00",
-  "github-trending-9": "2026-05-28",
-  "github-trending-23": "2026-05-28T23:05:00+08:00",
-  "ai-side-hustle-morning": "2026-04-27",
-  "github-trending-10": "2026-05-27",
-  "github-trending-20": "2026-05-26T20:45:00+08:00",
-  "financial_morning": "2026-05-26T00:00:00Z",
-  "morning-report-quality-check": "2026-05-22",
-  "notes": {
-    "browser-memory-2026-05-16": "Chrome未运行（ps检查无进程），无需操作。",
-    "ai-news-2026-05-18": "✅ 完成。使用curl采集36kr/量子位/Hacker News。飞书文档已追加，Text Matrix已推送GitHub。",
-    "github-trending-23-2026-05-18": "✅ 21:38完成：llama.cpp/12-factor-agents/Sana/daily_stock/Academic-Research-Skills/Agent-Skills (7篇)。23:30完成：CloakBrowser/ShadowBroker/CLI-Anything/Supertonic (4篇)。Commit 211c4e7 已推送 GitHub。已覆盖全部15个趋势项目。",
-    "github-trending-9-2026-05-19": "✅ 全部14个趋势repo均已覆盖。其中：tinyhumansai/openhuman、HKUDS/CLI-Anything、K-Dense-AI/scientific-agent-skills今日已覆盖；ggml-org/llama.cpp、humanlayer/12-factor-agents、NVlabs/Sana、ZhuLinsen/daily_stock已有历史文章；supertone-inc/supertonic、ruvnet/RuView、CloakHQ/CloakBrowser、microsoft/ai-agents-for-beginners、plausible/analytics均于2026-05-18写过文章。Git commit 845bb29+68b3f04已推送。",
-    "zangjingge-2026-05-19": "✅ 藏经阁检查完成。文档500 blocks/61K+字符，内容完整，逻辑严谨，分类合理（入门基础、大模型Agent、工具、赚钱实战、内容创作、技术教程、AI安全、Polymarket）。近期新增文章含Cua/TypeScript Go/PostHog/RTK/Free Claude Code（2026-04-27）。",
-    "zangjingge-2026-05-21": "2026-05-21 21:00 藏经阁修炼检查完成。文档存在(500 blocks)，内容完整(4K+行)，分类清晰，深度充分。网络正常。"
+  "github-trending-11": {
+    "lastRun": "2026-06-02",
+    "status": "all_already_covered",
+    "note": "11:30窗口执行，17个趋势项目(microsoft/markitdown/nesquena/hermes-webui/supermemoryai/supermemory/harry0703/MoneyPrinterTurbo/D4Vinci/Scrapling/pbakaus/impeccable/p-e-w/heretic/EveryInc/compound-engineering-plugin/TauricResearch/TradingAgents/revfactory/harness/godotengine/godot/can1357/oh-my-pi/OpenBMB/VoxCPM/FareedKhan-dev/train-llm-from-scratch/stefan-jansen/machine-learning-for-trading/dmtrKovalenko/fff/codecrafters-io/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，对应文章全部本地验证存在。无需写文章或git push"
   },
-  "github-trending-13": "2026-05-28",
-  "github-trending-15": "2026-05-28T15:05:00+08:00",
-  "github-trending-11": "2026-05-27T12:00:00+08:00"
+  "github-trending-15": {
+    "lastRun": "2026-06-02",
+    "status": "all_already_covered",
+    "note": "15:07窗口执行(7分钟延迟，cron重新触发)，r.jina.ai成功抓取GitHub trending页面，17个趋势项目全部已有文章(content/posts/tech/)覆盖(microsoft/markitdown→markitdown-microsoft-document-to-markdown-guide.md(495行/12.4KB)、nesquena/hermes-webui→hermes-webui-hermes-agent-web-interface-guide.md(155行/7.5KB)、supermemoryai/supermemory→supermemory-ai-memory-context-engine-guide.md(178行/7.2KB)、harry0703/MoneyPrinterTurbo→moneyprinterturbo-ai-short-video-generation-guide.md(90行/3.1KB)、D4Vinci/Scrapling→scrapling-adaptive-web-scraping-framework-guide.md(540行/15.2KB)、pbakaus/impeccable→impeccable-ai-design-guide.md(523行/13.8KB)、p-e-w/heretic→heretic-full-analysis.md(324行/12.6KB)、EveryInc/compound-engineering-plugin→compound-engineering-plugin-agent-workflow-guide.md(227行/11.8KB)、TauricResearch/TradingAgents→tradingagents-multi-agent-crypto-trading-framework-guide.md(640行/29.0KB)、revfactory/harness→harness-claude-code-multi-agent-team-architecture-guide.md(264行/14.3KB)、godotengine/godot→godot-engine-cross-platform-game-engine-guide.md(359行/15.1KB)、can1357/oh-my-pi→oh-my-pi-ai-coding-agent-guide.md(168行/9.9KB)、OpenBMB/VoxCPM→voxcpm2-tokenizer-free-tts-guide.md(641行/15.2KB)、FareedKhan-dev/train-llm-from-scratch→fareedkhan-train-llm-from-scratch-guide.md(250行/9.2KB)、stefan-jansen/machine-learning-for-trading→stefan-jansen-machine-learning-for-trading-guide.md(276行/14.4KB)、dmtrKovalenko/fff→fff.nvim-ai-neovim-file-search-guide.md(571行/15.0KB)、codecrafters-io/build-your-own-x→codecrafters-build-your-own-x-programming-guide.md(692行/25.9KB))。所有文章frontmatter(title/date)与draft状态均验证正常(draft:false)，与对应仓库主题一致。无新增文章或git push(无文件改动)。"
+  },
+  "github-trending-20": {
+    "lastRun": "2026-06-02",
+    "status": "all_already_covered",
+    "note": "20:00窗口执行(验证isolated-HEARTBEAT cron),curl+r.jina.ai抓取GitHub trending成功,17个趋势项目(microsoft/markitdown/nesquena/hermes-webui/supermemoryai/supermemory/harry0703/MoneyPrinterTurbo/D4Vinci/Scrapling/pbakaus/impeccable/p-e-w/heretic/EveryInc/compound-engineering-plugin/TauricResearch/TradingAgents/revfactory/harness/godotengine/godot/can1357/oh-my-pi/OpenBMB/VoxCPM/FareedKhan-dev/train-llm-from-scratch/stefan-jansen/machine-learning-for-trading/dmtrKovalenko/fff/codecrafters-io/build-your-own-x)全部已有文章(content/posts/tech/)覆盖,17/17文件验证存在,文章体量(90-692行/3-29KB)充足,无需新增文章或git push(无文件改动)"
+  },
+  "github-trending-23": {
+    "lastRun": "2026-05-31",
+    "status": "all_already_covered",
+    "note": "23:05窗口执行，14个趋势项目(MoneyPrinterTurbo/markitdown/Scrapling/hermes-webui/compound-engineering-plugin/VoxCPM/harness/train-llm-from-scratch/supermemory/project-nomad/claude-code/pi-subagents/developer-portfolios/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push；push heartbeat c560981→15d2a51"
+  },
+  "藏经阁修炼": {
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "21:05窗口执行(验证isolated-HEARTBEAT cron),feishu_wiki get+feishu_doc read成功,主文档(OZWudOLFioz642xHMOIcg24lnVd)500 blocks/61K+字符/4K+行,block类型分布Page×1/Heading1×2/Heading2×25/Heading3×23/Text×182/Table×17/TableCell×130/Divider×30/Ordered×48/Bullet×40/Quote×2,5项检查全部通过(存在✅/非空✅/逻辑✅/深度✅/分类✅),10+主要分类覆盖(入门基础/大模型&Agent/OpenClaw&工具/AI赚钱实战/内容创作/技术教程/AI安全/Polymarket/V2EX赚钱/Superlinear Academy),近期新增(2026-04-27)Cua/TypeScript Go/PostHog/RTK/Free Claude Code/PPT Master/RAG-Anything/OpenSRE/Beads,revision_id=104,日志已追加memory/藏经阁检查日志.md"
+  },
+  "github-trending-13": {
+    "lastRun": "2026-06-02",
+    "status": "all_already_covered",
+    "note": "13:00窗口执行，curl直连GitHub trending成功(无需CDP)，17个趋势项目全部已有文章(content/posts/tech/)覆盖(microsoft/markitdown→markitdown-microsoft-document-to-markdown-guide.md、nesquena/hermes-webui→hermes-webui-hermes-agent-web-interface-guide.md、supermemoryai/supermemory→supermemory-ai-memory-context-engine-guide.md、harry0703/MoneyPrinterTurbo→moneyprinterturbo-ai-short-video-generation-guide.md、D4Vinci/Scrapling→scrapling-adaptive-web-scraping-framework-guide.md、pbakaus/impeccable→impeccable-ai-design-guide.md、p-e-w/heretic→heretic-full-analysis.md、EveryInc/compound-engineering-plugin→compound-engineering-plugin-agent-workflow-guide.md、TauricResearch/TradingAgents→tradingagents-multi-agent-crypto-trading-framework-guide.md、revfactory/harness→harness-claude-code-multi-agent-team-architecture-guide.md、godotengine/godot→godot-engine-cross-platform-game-engine-guide.md、can1357/oh-my-pi→oh-my-pi-ai-coding-agent-guide.md、OpenBMB/VoxCPM→voxcpm2-tokenizer-free-tts-guide.md、FareedKhan-dev/train-llm-from-scratch→fareedkhan-train-llm-from-scratch-guide.md、stefan-jansen/machine-learning-for-trading→stefan-jansen-machine-learning-for-trading-guide.md、dmtrKovalenko/fff→fff.nvim-ai-neovim-file-search-guide.md、codecrafters-io/build-your-own-x→codecrafters-build-your-own-x-programming-guide.md)，并抽样核验各文章标题/描述均与对应仓库主题一致。无需新增文章或git push(无文件改动)"
+  },
+  "github-trending-09": {
+    "lastRun": "2026-06-02",
+    "status": "all_already_covered",
+    "note": "09:04窗口执行，17个趋势项目(Scrapling/compound-engineering-plugin/train-llm-from-scratch/VoxCPM/TradingAgents/oh-my-pi/build-your-own-x/fff/godot/MoneyPrinterTurbo/markitdown/hermes-webui/heretic/impeccable/harness/machine-learning-for-trading/supermemory)全部已有文章(content/posts/tech/)覆盖：scrapling-adaptive/compound-engineering-plugin-agent/fareedkhan-train/voxcpm2-tokenizer/tradingagents-multi-agent/oh-my-pi/codecrafters/fff.nvim/godot-engine/moneyprinterturbo/markitdown/hermes-webui/heretic/impeccable/harness-claude-code/stefan-jansen/supermemory。已对harness-claude-code(对应revfactory/harness)、voxcpm2、tradingagents、scrapling、markitdown等做内容关键词二次核验，全部对得上对应仓库。无新增文章，无需git push(无文章改动)。web_fetch被挡，使用curl+r.jina.ai+GitHub trending HTML直接抓取(17个Link组件全量)。"
+  },
+  "ai-news-morning": {
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "2026-06-02生成，25条AI新闻（commit 82da826 远程/04d7507本地），覆盖Anthropic S-1/GTC台北/OpenAI机器人/VAST融资等。已远程仓库验证。"
+  },
+  "financial-morning-news": {
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "2026-06-02生成，14条财经新闻（华尔街见闻+金十数据+新浪财经），覆盖Anthropic S-1/谷歌800亿增发/标普纳指八连涨/美光1000美元/慧与暴涨40%/奥特曼专访/伊朗封锁海峡/A股普涨等。14个链接全部200，已git push (04d7507) + 飞书文档54个block已追加。"
+  },
+  "ai-side-hustle-morning": {
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "2026-06-02生成，7条V2EX AI相关真实机会(已逐条验证内容匹配): t/1217172 Agent开发工程师远程招聘、t/1217118 AI Infra SRE内推(vLLM/SGLang)、t/1217050 AI效能工程师多岗位、t/1216999 xAI Grok中文语音数据远程招聘、t/1217109 AI外包offer选择讨论、t/1216894 AI Coding实战感想、t/1216919 AI接管HR简历初筛讨论。已git push + 飞书30个block已追加。"
+  },
+  "web3-morning-news": {
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "2026-06-02生成，12条cointelegraph文章，行情+4条具体文章链接全部200。"
+  },
+  "早请安": {
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "07:20窗口执行（晚20分钟），周二早安。今日任务计划：07:30-08:30 AI新闻早报、08:00经济财经早报、08:00 Web3早报、08:30 AI副业早报、09:00 早报质量核查、10:00/11:30/13:00/15:00/20:00 GitHub趋势榜多时段、21:00 藏经阁修炼。注：07:10文章健康检查已修复经济财经早报WTI原油链接老问题。"
+  },
+  "早报质量核查": {
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "08:55窗口执行(延迟)，4份早报文件均已生成(ai/financial/web3/side-hustle morning news 2026-06-02)，全部git push成功(04d7507)。链接核查：经济财经14条+AI副业7条+AI新闻25条+Web3 12条全部200。"
+  },
+  "文章健康检查": {
+    "lastRun": "2026-06-03",
+    "status": "completed",
+    "note": "00:30窗口检查: 4份早报(2026-06-02) frontmatter全部✓ (date均≤当前时间)，实时链接核查(curl+UA 8s超时,首轮 56/58=200,2个重试后均200 OK—1个cointelegraph 200ERR为curl抖动,1个HN 429为速率限制)，总计58/58可达。整体文章库954篇(news 260/tech 666含子目录/wealth 9/video 12/thoughts 2+5散落)，空文件0、tiny文件2(2026-04-08历史占位 ai-side-hustle+financial, 969B+989B, 之前已标记待优化,本轮不变)。git status干净, origin/main一致, head 1b9bcca。2026-06-03早报未生成(07:30前正常)。系统健康,无紧急问题,本轮无需修复。"
+  }
 }

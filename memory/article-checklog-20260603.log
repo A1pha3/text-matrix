@@ -1,0 +1,31 @@
+[00:30:00] heartbeat触发：文章健康检查 (cron: 850cf6e9)
+- 触发时间: 2026-06-03 00:30 (Asia/Shanghai)
+- 范围: 4 份早报 (2026-06-02) + 系统健康
+
+[00:30:30] 4 份早报实时链接核查 (共 58 个唯一 URL, 串行 curl+UA 8s超时)
+- AI新闻早报 2026-06-02: 25 URLs (13 36kr + 9 HN + 3 qbitai) — 25/25 = 200 ✅
+- 经济财经早报 2026-06-02: 14 URLs (7 wallstreetcn + 4 sina + 3 jin10) — 14/14 = 200 ✅
+- Web3早报 2026-06-02: 12 URLs (12 cointelegraph) — 12/12 = 200 ✅
+- AI副业早报 2026-06-02: 7 URLs (7 v2ex) — 7/7 = 200 ✅
+- 总计: 58/58 = 100% 可达 ✅
+- 备注: 首轮跑出 1 个 200ERR (cointelegraph nydig-ibit) + 1 个 429 (HN 48363447)，重试后均 200 OK
+  - 200ERR: 单纯 curl 偶发抖动，重试 200 (size=132KB)
+  - 429: HN 速率限制，5s 后重试 200 (size=8KB)
+  - 非内容失效，不需修复
+
+[00:31:30] 文件结构 + git 健康
+- 4 份早报 frontmatter 全部 ✓ (title/date/slug/description/draft:false/categories/tags/hiddenFromHomePage)
+- 4 份早报 date 均 ≤ 2026-06-03 00:30 ✅
+- 整体文章库 954 篇 (news 260 / tech 666 / wealth 9 / video 12 / thoughts 2 + 5 散落)
+- 空文件 0；tiny 文件 2 (2026-04-08 历史占位: ai-side-hustle 969B + financial 989B)
+- git status: 干净 ✅
+- 远端: 一致 (origin/main) ✅
+- head: 1b9bcca (最新 = 三篇 AI Agent 技术博客更新)
+
+[00:32:00] 早报生成状态
+- 2026-06-03 早报: 尚未生成 (正常, 07:30 AI 新闻 / 08:00 财经+Web3 / 08:30 AI 副业)
+
+[00:32:30] 心跳结论
+- 状态: ✅ 系统健康, 无紧急问题
+- 行动: 无 (本轮无需修复)
+- 下次检查: 30 分钟后
