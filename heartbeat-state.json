@@ -10,9 +10,9 @@
     "note": "03:00窗口执行失败，Chrome CDP WebSocket连接失败(Chrome未开启remote debugging)，跳过"
   },
   "github-trending-10": {
-    "lastRun": "2026-05-31",
+    "lastRun": "2026-06-02",
     "status": "all_already_covered",
-    "note": "10:00窗口执行，23个趋势项目全部已有文章(content/posts/tech/)覆盖(ECC/FlClash/cursor-plugins/codecrafters/build-your-own-x/train-llm-from-scratch/VoxCPM/MOSS-TTS/anthropics/skills/social-auto-upload/RuView)；无需写文章或push"
+    "note": "10:03窗口执行，curl直连GitHub trending成功(无CDP)，17个趋势项目全部已有文章(content/posts/tech/)覆盖(microsoft/markitdown→markitdown-microsoft-document-to-markdown-guide.md、nesquena/hermes-webui→hermes-webui-hermes-agent-web-interface-guide.md、supermemoryai/supermemory→supermemory-ai-memory-context-engine-guide.md、harry0703/MoneyPrinterTurbo→moneyprinterturbo-ai-short-video-generation-guide.md、D4Vinci/Scrapling→scrapling-adaptive-web-scraping-framework-guide.md、pbakaus/impeccable→impeccable-ai-design-guide.md、p-e-w/heretic→heretic-full-analysis.md、EveryInc/compound-engineering-plugin→compound-engineering-plugin-agent-workflow-guide.md、TauricResearch/TradingAgents→tradingagents-multi-agent-crypto-trading-framework-guide.md、revfactory/harness→harness-claude-code-multi-agent-team-architecture-guide.md、godotengine/godot→godot-engine-cross-platform-game-engine-guide.md、can1357/oh-my-pi→oh-my-pi-ai-coding-agent-guide.md、OpenBMB/VoxCPM→voxcpm2-tokenizer-free-tts-guide.md、FareedKhan-dev/train-llm-from-scratch→fareedkhan-train-llm-from-scratch-guide.md、stefan-jansen/machine-learning-for-trading→stefan-jansen-machine-learning-for-trading-guide.md、dmtrKovalenko/fff→fff.nvim-ai-neovim-file-search-guide.md、codecrafters-io/build-your-own-x→codecrafters-build-your-own-x-programming-guide.md)，无需写文章"
   },
   "github-trending-11": {
     "lastRun": "2026-05-31",
