@@ -75,7 +75,7 @@ REPO_NAME="my-hugo-multi-deploy"
 
 ## 先理解 4 个核心概念
 
-在动手之前，先建立最小认知，后面的步骤会更顺畅。
+动手前先建立最小认知：
 
 - Hugo：静态网站生成器，把 Markdown 和模板编译成 `public/` 目录里的 HTML、CSS、JS
 - GitHub：代码托管平台，你的 Hugo 源码放在这里
@@ -774,12 +774,12 @@ my-hugo-multi-deploy/
 
 ## 13. 可选进阶：双域名分别绑定（GitHub Pages + Cloudflare Pages）
 
-如果你现在是这个场景：
+适用场景：
 
 - `txtmix.com` 给 Cloudflare Pages（主站）
 - `mixtxt.com` 给 GitHub Pages（备用）
 
-按下面顺序执行，最稳妥。
+按下面顺序执行最稳妥。
 
 ### 13.1 先确定主域名与 `baseURL`
 
