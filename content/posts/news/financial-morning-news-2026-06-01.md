@@ -97,7 +97,7 @@ hiddenFromHomePage: true
 **原文链接（已逐条核实，仅列正文实际引用链接）：**
 - ✅ https://wallstreetcn.com/articles/3773514 - 美伊谈判拉锯
 - ✅ https://flash.jin10.com/detail/20260601073922438800 - 中金地产展望
-- ⚠️ ~~https://www.jin10.com/ - WTI原油盘中涨超2%~~（2026-06-02 07:10 已按HEARTBEAT铁律移除该无效链接）
+- ⚠️ ~~https://www.jin10.com/ - WTI原油盘中涨超2%~~（2026-06-02 07:10 已按HEARTBEAT铁律移除该无效链接，保留来源标注）
 - ✅ https://finance.sina.com.cn/jjxw/2026-05-29/doc-inhzqccr7625747.shtml - 黄金猴市
 - ✅ https://wallstreetcn.com/articles/3773499 - MLCC第三大成本项
 - ✅ https://wallstreetcn.com/articles/3773517 - 英伟达PC新时代

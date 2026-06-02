@@ -25,10 +25,15 @@ hiddenFromHomePage: true
 原文: [原文](https://www.36kr.com/p/3834628914295170)
 摘要: 6 月 1 日 GTC 台北大会，黄仁勋一口气发布 RTX Spark 超级芯片（台积电 3nm、128GB 统一内存、1 PetaFLOPS FP4 算力）、DGX Station 桌面超算（748GB 内存、20 PetaFLOPS 算力）、88 核 Vera CPU、面向智能体的 Nemotron 3 Ultra 模型，并开源 Cosmos 3 世界基础模型。Vera CPU 被评价为"x86_64 处理器有史以来最强大对手"，Anthropic、OpenAI、SpaceX 均已率先部署。RTX Spark 已与微软合作"重新发明 PC"，首批笔电今年秋季上市。
 
-### OpenAI 复活机器人团队：奥尔特曼目标"人手一台"，已招揽两位华人学者
+### OpenAI 复活机器人团队：奥尔特曼目标"人手一台"
 来源: 36氪
 原文: [原文](https://www.36kr.com/p/3834443792017285)
-摘要: 解散 6 年后，OpenAI 正式重建 OpenAI Robotics，由 DALL·E 2 共同创造者 Aditya Ramesh 带队，方向为通用机器人与 sim-to-real 迁移；同步宣布四大核心岗位（电气、仿真环境、执行器设计、控制系统），部分岗位年薪 21-31 万美元（约 220 万人民币）。同日 OpenAI 招入两位华人顶尖学者：哈佛物理系正教授尹希（31 岁晋升最年轻华人正教授之一）与沃顿统计系正教授苏炜杰（COPSS Presidents' Award 得主），反映 AI 公司正在从算力/数据竞争转向基础学科人才竞争。
+摘要: 解散 6 年后，OpenAI 正式重建 OpenAI Robotics，由 DALL·E 2 共同创造者 Aditya Ramesh 带队，方向为通用机器人与 sim-to-real 迁移；同步宣布四大核心岗位（电气、仿真环境、执行器设计、控制系统），部分岗位年薪 21-31 万美元（约 220 万人民币）。OpenAI 不走特斯拉/Figure 的"先造身体"路线，而是坚持"先让 AI 理解物理世界"——通过仿真自造数据，再迁移到真机。
+
+### 哈佛最年轻华人教授尹希 + 沃顿苏炜杰加入 OpenAI
+来源: 36氪
+原文: [原文](https://www.36kr.com/p/3834628713902213)
+摘要: 智东西 6 月 1 日消息，两位华人科学家被曝近期加入 OpenAI：哈佛大学物理系教授、中科大校友尹希（31 岁即晋升哈佛正教授、2017 年"科学突破奖"得主）；以及 5 月 30 日官宣加入 OpenAI 的宾大沃顿统计系正教授苏炜杰（2026 年 COPSS Presidents' Award 得主，业内称"统计学诺贝尔奖"）。反映大模型公司正在从算力/数据竞争转向基础学科人才竞争。
 
 ## 🚀 产品发布
 
@@ -69,20 +74,15 @@ hiddenFromHomePage: true
 原文: [原文](https://www.36kr.com/p/3834402892881928)
 摘要: GTC 台北主题演讲中，黄仁勋提出四大金句："实用 AI 时代已经到来"、"AI 现在是利润生成器、GDP 生成器"、"计算即收入"、"买得越多，赚得越多"。AI 工厂每吉瓦成本 200-300 亿美元起步，现已攀升至 500-600 亿美元，2027 年或达 800-1000 亿。Token 已成为盈利的收入单位。
 
-### 解散 6 年，OpenAI 复活机器人团队奥尔特曼目标"人手 1 台"
-来源: 36氪
-原文: [原文](https://www.36kr.com/p/3834443792017285)
-摘要: OpenAI 机器人团队由 Aditya Ramesh 领导，从 Worldsim 世界模拟项目演变而来。OpenAI 不走特斯拉/Figure 的"先造身体"路线，而是坚持"先让 AI 理解物理世界"——通过仿真自造数据，再迁移到真机。2020 年团队解散的原因是大模型路线数据更丰富、迭代更快；如今押注"仿真即数据"卷土重来。
-
-### OpenAI 重返机器人赛道：四大核心岗位开招，年薪超 200 万
+### OpenAI 重返机器人赛道：四大核心岗位开招 + 三大研发主线
 来源: 36氪
 原文: [原文](https://www.36kr.com/p/3834397506185094)
-摘要: 量子位报道，OpenAI Robotics 同步开放电气工程师、仿真环境工程师、执行器设计工程师、控制系统软件工程师四大核心岗位。基础年薪 21-31 万美元（约 150-220 万人民币），外加股权期权。华人研究者林星宇、何泰然、Lawrence Yunliang Chen、李成书、殷航、张鹏川、赵家樑等已成三大研发主线关键力量。
+摘要: 量子位报道，OpenAI Robotics 同步开放电气工程师、仿真环境工程师、执行器设计工程师、控制系统软件工程师四大核心岗位，年薪 21-31 万美元（约 150-220 万人民币）+ 股权期权。团队聚焦三条主线：机器人学习与灵巧操作（林星宇、何泰然等）、仿真评测与数据集（李成书、殷航等）、Worldsim 迁移（张鹏川、赵家樑等）。华人研究者已成核心研发力量。
 
 ### 英伟达 RTX Spark + 微软 Surface Laptop Ultra 重新定义 PC
 来源: Hacker News
-原文: [原文](https://www.36kr.com/p/3834628914295170)
-摘要: HN 8 小时内 119 分、307 条评论。搭载 RTX Spark 的 Surface Laptop Ultra 笔电厚度仅 14mm、重量 3 磅，可 24 小时不间断本地"养龙虾"（运行智能体）。黄仁勋直言"这是 40 年来 PC 产品线首次全面革新"，重要程度不亚于普通手机演变为智能手机。
+原文: [原文](https://news.ycombinator.com/item?id=48355720)
+摘要: 搭载 RTX Spark 的 Microsoft Surface Laptop Ultra 笔电厚度仅 14mm、重量 3 磅，可 24 小时不间断本地运行 AI 智能体。HN 8 小时内 119 分、307 条评论，是 PC 行业近 10 年最受关注的产品发布。黄仁勋直言"这是 40 年来 PC 产品线首次全面革新"，重要程度不亚于普通手机演变为智能手机。
 
 ### 身价 13 亿美元的 OpenRouter，国内学不了？
 来源: 36氪
@@ -156,6 +156,7 @@ hiddenFromHomePage: true
 - ✅ https://news.ycombinator.com/item?id=48358646 - Anthropic S-1 提交
 - ✅ https://www.36kr.com/p/3834628914295170 - GTC 台北 RTX Spark/Vera CPU
 - ✅ https://www.36kr.com/p/3834443792017285 - OpenAI 复活机器人
+- ✅ https://www.36kr.com/p/3834628713902213 - 哈佛尹希+沃顿苏炜杰加入 OpenAI
 - ✅ https://www.36kr.com/p/3834400181741440 - Aippy AI 游戏社区融资
 - ✅ https://www.qbitai.com/2026/06/427516.html - VAST 2 亿美元融资
 - ✅ https://www.qbitai.com/2026/06/427332.html - Agnes AI 全模态 API 免费
@@ -165,6 +166,7 @@ hiddenFromHomePage: true
 - ✅ https://www.36kr.com/p/3834402892881928 - 黄仁勋未来十年
 - ✅ https://www.36kr.com/p/3834397506185094 - OpenAI 招机器人工程师
 - ✅ https://www.36kr.com/p/3834566154920194 - OpenRouter 国内学不了
+- ✅ https://news.ycombinator.com/item?id=48355720 - Surface Laptop Ultra
 - ✅ https://news.ycombinator.com/item?id=48359130 - DuckDuckGo 无 AI
 - ✅ https://news.ycombinator.com/item?id=48356654 - Nvidia Cosmos 3
 - ✅ https://www.36kr.com/p/3834567522726280 - 10 万亿 AI 基建
