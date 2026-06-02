@@ -4,7 +4,8 @@ date: "2026-06-02T15:20:00+08:00"
 slug: "mlcc-industry-deep-analysis-2026"
 description: "从被动元件结构、MLCC 制造工艺、堆叠与共烧两大技术壁垒切入，解读 AI 服务器、车规、人形机器人三大新需求对供需的撕裂，并梳理日韩台陆四股势力的格局变迁，给出国产替代的工程化决策路径。"
 draft: false
-categories: ["技术笔记"]
+categories: ["财富自由"]
+hiddenFromHomePage: true
 tags: ["MLCC", "被动元件", "国产替代", "AI算力", "人形机器人"]
 ---
 

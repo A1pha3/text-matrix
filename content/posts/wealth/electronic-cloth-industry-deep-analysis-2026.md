@@ -4,7 +4,8 @@ date: "2026-06-02T15:25:00+08:00"
 slug: "electronic-cloth-industry-deep-analysis-2026"
 description: "从 PCB 产业链上电子布 26% 的成本占比切入，解读 Low Dk/Df 与 Low CTE 两大技术方向的产业化路径，分析英伟达 GB200/GB300/VR200 对应 M8/M9 材料的演进，以及日东纺 NE/NEZ 系列背后的国产替代窗口。"
 draft: false
-categories: ["技术笔记"]
+categories: ["财富自由"]
+hiddenFromHomePage: true
 tags: ["电子布", "PCB", "覆铜板", "AI算力", "国产替代"]
 ---
 
