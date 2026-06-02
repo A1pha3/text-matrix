@@ -82,6 +82,6 @@
   "文章健康检查": {
     "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "13:59窗口检查(30-min cron)：4份早报(2026-06-02)文件结构稳定(AI 180行/15.2KB、财经 116行/8.9KB、Web3 117行/10.7KB、副业 75行/5.3KB，frontmatter/title/date 全部 ✓)。抽样核查18条文章链接(AI:5 Hacker News、财经:3 sina+wallstreetcn、Web3:4 cointelegraph、副业:3 v2ex / 排除1条非文件内jinshuyun fallback) 全部200 OK；t/1217109首次超时重试3次均200 (v2ex瞬时网络问题)。tech抽查：12:23新增draft mlcc-industry-deep-analysis-2026.md (339行/15.7KB, draft:true未commit)，不影响公开文章健康。无新问题。"
+    "note": "17:36窗口检查(30-min cron)：4份早报(2026-06-02)文件结构稳定(AI 180行25条/财经 116行14条/Web3 117行12条/副业 75行7条,frontmatter/title/date/slug/description 全部 ✓)。链接核查(curl+真实UA):AI 25/25、财经 14/14、Web3 12/12、副业 7/7,总计58/58 全部200 OK。tech抽查5篇随机文章15个外链14/15可达(1个findomain.app返回000ERR,非关键文章)。其他分类wealth 7/video 12/thoughts 2,空文件 0,tiny文件 0。系统健康,无新问题。"
   }
 }
