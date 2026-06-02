@@ -15,9 +15,9 @@
     "note": "10:03窗口执行，curl直连GitHub trending成功(无CDP)，17个趋势项目全部已有文章(content/posts/tech/)覆盖(microsoft/markitdown→markitdown-microsoft-document-to-markdown-guide.md、nesquena/hermes-webui→hermes-webui-hermes-agent-web-interface-guide.md、supermemoryai/supermemory→supermemory-ai-memory-context-engine-guide.md、harry0703/MoneyPrinterTurbo→moneyprinterturbo-ai-short-video-generation-guide.md、D4Vinci/Scrapling→scrapling-adaptive-web-scraping-framework-guide.md、pbakaus/impeccable→impeccable-ai-design-guide.md、p-e-w/heretic→heretic-full-analysis.md、EveryInc/compound-engineering-plugin→compound-engineering-plugin-agent-workflow-guide.md、TauricResearch/TradingAgents→tradingagents-multi-agent-crypto-trading-framework-guide.md、revfactory/harness→harness-claude-code-multi-agent-team-architecture-guide.md、godotengine/godot→godot-engine-cross-platform-game-engine-guide.md、can1357/oh-my-pi→oh-my-pi-ai-coding-agent-guide.md、OpenBMB/VoxCPM→voxcpm2-tokenizer-free-tts-guide.md、FareedKhan-dev/train-llm-from-scratch→fareedkhan-train-llm-from-scratch-guide.md、stefan-jansen/machine-learning-for-trading→stefan-jansen-machine-learning-for-trading-guide.md、dmtrKovalenko/fff→fff.nvim-ai-neovim-file-search-guide.md、codecrafters-io/build-your-own-x→codecrafters-build-your-own-x-programming-guide.md)，无需写文章"
   },
   "github-trending-11": {
-    "lastRun": "2026-05-31",
+    "lastRun": "2026-06-02",
     "status": "all_already_covered",
-    "note": "11:34窗口执行，19个趋势项目(markitdown/MoneyPrinterTurbo/claude-code/plugins/harness/compound-engineering-plugin/ECC/VoxCPM/stable-worldmodel/project-nomad/liteparse/FlClash/train-llm-from-scratch/RuView/data-engineering-zoomcamp/MOSS-TTS/social-auto-upload/anthropics/skills)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
+    "note": "11:30窗口执行，17个趋势项目(microsoft/markitdown/nesquena/hermes-webui/supermemoryai/supermemory/harry0703/MoneyPrinterTurbo/D4Vinci/Scrapling/pbakaus/impeccable/p-e-w/heretic/EveryInc/compound-engineering-plugin/TauricResearch/TradingAgents/revfactory/harness/godotengine/godot/can1357/oh-my-pi/OpenBMB/VoxCPM/FareedKhan-dev/train-llm-from-scratch/stefan-jansen/machine-learning-for-trading/dmtrKovalenko/fff/codecrafters-io/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，对应文章全部本地验证存在。无需写文章或git push"
   },
   "github-trending-15": {
     "lastRun": "2026-05-31",
