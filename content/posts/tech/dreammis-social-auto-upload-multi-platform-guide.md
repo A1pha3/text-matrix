@@ -1,108 +1,172 @@
 ---
-title: "SocialAutoUpload 深拆：7 平台只是覆盖面，4 平台 CLI 主线才是现在能跑稳的核心"
+title: "SocialAutoUpload 深度解析：7 平台是覆盖面，4 平台 CLI 主线才是现在能跑稳的核心"
 date: "2026-05-31T10:20:00+08:00"
 slug: "dreammis-social-auto-upload-multi-platform"
-description: "深拆 SocialAutoUpload 当前主线：7 平台是底层覆盖，真正收敛成统一 CLI 与 Agent skill 的，是抖音、快手、小红书、Bilibili 这 4 条路径，并解释旧 Web、uploader 与 Patchright 各自的角色。"
-summary: "如果你只想知道这项目现在值不值得上手，结论可以先说：7 平台是覆盖面，4 平台 CLI 主线才是当前最稳的部分。先把抖音、快手、小红书、Bilibili 跑顺，再考虑视频号、百家号、TikTok。"
+description: "从 CLI 入口设计、平台实现差异、账号管理机制到 Agent 集成策略，逐层拆解 SocialAutoUpload 当前主线：7 平台是底层覆盖，真正收敛成统一 CLI 与 Agent skill 的，是抖音、快手、小红书、Bilibili 这 4 条路径。"
+summary: "7 平台是覆盖面，4 平台 CLI 主线才是当前最稳的部分。先把抖音、快手、小红书、Bilibili 跑顺，再考虑视频号、百家号、TikTok。"
 draft: false
 categories: ["技术笔记"]
-tags: ["自动化工具", "社交媒体", "视频上传", "Python", "AI Agent", "Browser Automation"]
+tags: ["自动化工具", "社交媒体", "视频上传", "Python", "AI Agent", "Browser Automation", "开源项目深拆"]
+toc: true
 ---
 
-SocialAutoUpload 很容易被误读成一个“已经完整打通 7 个平台”的成品。更准确的说法是：它已经把 7 个平台的底层 uploader 铺开了，但真正收敛成统一 CLI、也最适合交给 Agent 接手的，目前是抖音、快手、小红书、Bilibili 这 4 条主线。
+## 这篇文章在回答什么
 
-这不是抠字眼，而是决定你能不能少走弯路的判断。你如果按“7 平台已经同样成熟”的预期去用它，大概率会混淆主线入口、历史路径和底层能力；如果你先接受“4 条主线先跑稳，其余平台再补”的现实，整个项目反而会变得很清楚。
+SocialAutoUpload 仓库目前 9k+ star，226 次 commit。但如果你只读 README 的前两句，很容易得到一个与实际情况偏差很大的判断：以为它是一个"已经完整打通 7 个平台"的成品。
 
-这篇文章想回答的，就是这三个问题：现在真正能拿来用的是哪一层；为什么项目要把 CLI 和 skill 放到比旧 Web 更靠前的位置；以及如果你只想尽快跑通一条发布链路，第一步该从哪里开始。
+实际状态是：底层的 7 个平台 uploader 确实都铺开了，但真正收敛成统一 CLI（命令行界面）、也最适合交给 Agent 接手的，目前只有抖音、快手、小红书、Bilibili 这 4 条主线。视频号、百家号、TikTok 仍然停留在底层自动化实现和示例脚本阶段，不在 `sau` 统一命令体系的覆盖范围内。
 
-## 先看系统地图
+这篇文章回答三个问题：
 
-先看图，再看表。图里最关键的信息，不是平台数量，而是“谁是当前主线，谁还是底层覆盖，谁只是历史入口”。
+1. 现在真正能拿来用的是哪一层
+2. 项目为什么把 CLI 和 skill 放到比旧 Web 更靠前的位置
+3. 如果你只想尽快跑通一条发布链路，第一步该从哪里开始
+
+这篇文章给不了你"7 平台全能工具"的结论。它能给的，是**当前主线值不值得接入、从哪个平台开始、绕开哪些坑**——这三个问题回答完，你应该对自己要不要用、怎么用有一个清楚的判断。
+
+## 系统地图：先看层次，再看平台
+
+`7 平台` 这个数字本身不提供信息。提供信息的是仓库里这几条容易混在一起的路径怎么分。
 
 ```mermaid
 flowchart LR
   User[运营者 / Agent] --> Bootstrap[Agent Bootstrap Prompt]
-  User --> CLI[sau CLI]
-  Bootstrap --> Skills[skills/]
+  User --> CLI["sau CLI (Click)"]
+  Bootstrap --> Skills["skills/ (4 个平台)"]
   Skills --> CLI
-  CLI --> Uploader[uploader/]
-  Uploader --> Core4[4 个主线平台<br/>抖音 / 快手 / 小红书 / Bilibili]
-  Uploader --> Other3[其余 3 个平台<br/>视频号 / 百家号 / TikTok]
-  Legacy[examples / 历史 Web] -. 旧路径 / 调试入口 .-> Uploader
+  CLI --> Uploader["uploader/ (7 个平台底层)"]
+  Uploader --> Core4["4 个主线平台<br/>抖音 / 快手 / 小红书 / Bilibili"]
+  Uploader --> Other3["其余 3 个平台<br/>视频号 / 百家号 / TikTok"]
+  Legacy["examples/ + 历史 Web"] -. 旧路径 / 调试入口 .-> Uploader
 ```
 
-这张表比“支持 7 平台”更重要，因为它把当前仓库里几条容易混在一起的路径拆开了。
-
-| 层级 | 负责什么 | 当前覆盖 | 什么时候该用 |
+| 层级 | 负责什么 | 当前覆盖 | 该在什么场景下用 |
 | ---- | ---- | ---- | ---- |
-| `uploader/` | 各平台底层自动化实现 | 7 个平台都有对应入口 | 你要研究平台细节、补平台能力、调试底层行为 |
-| `sau` CLI | 当前主线统一命令入口 | 抖音、快手、小红书、Bilibili | 你要稳定执行登录、检查、上传、定时发布 |
-| `skills/` | 给 OpenClaw、Codex、Claude Code 等 Agent 的封装 | 抖音、快手、小红书、Bilibili | 你希望把发布任务交给 Agent，而不是自己手敲命令 |
-| `examples/` 与历史 Web | 旧路径、调试入口、历史实现 | 部分平台仍有示例 | CLI 主线不可用，或你在回看旧实现时再碰 |
+| `uploader/` | 各平台底层自动化实现，封装登录、页面操作和上传流程 | 7 个平台都有入口 | 研究平台细节、补平台能力、调试底层行为 |
+| `sau` CLI | 统一命令入口，基于 Click 实现子命令路由 | 抖音、快手、小红书、Bilibili | 稳定执行登录、检查、上传、定时发布 |
+| `skills/` | 给 OpenClaw、Codex、Claude Code 等 Agent 的平台操作封装 | 抖音、快手、小红书、Bilibili | 把发布任务交给 Agent，不手敲命令 |
+| `examples/` 与历史 Web | 旧路径、调试入口、历史遗留 | 部分平台仍有示例 | 仅当 CLI 主线不可用，或回看旧实现时触碰 |
 
-如果你只记住一句话，可以记这句：**7 平台是底层能力的覆盖面，4 平台才是当前主线真正打磨过的 CLI 和 skill 路径。** 这决定了你该从哪里开始，也决定了你不该误把旧入口当成当前最稳的入口。
+这张表的实质含义：**7 平台是底层能力的覆盖面，4 平台才是当前主线真正打磨过的 CLI 和 skill 路径。** 这个判断决定了你该从哪里开始，也决定了你不会误把旧入口当成当前最稳的入口。
 
-## 能力边界比功能清单更值得先看
+## 能力矩阵：不是每个"✅"都代表同一种实现
 
-README 里的平台矩阵已经说明了能力分层，但把它翻成工程语言之后，会更容易判断项目状态。
+README 的平台矩阵标了不少勾，但把每个勾拆到实现层面，差异会变得很具体。
 
-| 平台 | 视频上传 | 图文上传 | 定时发布 | CLI 主线 | Agent Skill | 当前备注 |
+| 平台 | 视频上传 | 图文上传 | 定时发布 | CLI 主线 | Agent Skill | 实现方式 |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
-| 抖音 | ✅ | ✅ | ✅ | ✅ | ✅ | 当前主线最完整的路径之一 |
-| 快手 | ✅ | ✅ | ✅ | ✅ | ✅ | 已接入 CLI 和 skill，适合主线验证 |
-| 小红书 | ✅ | ✅ | ✅ | ✅ | ✅ | 浏览器自动化路径已收敛到主线 |
-| Bilibili | ✅ | ❌ | ✅ | ✅ | ✅ | 运行时会自动准备 `biliup` |
-| 视频号 | ✅ | ❌ | ✅ | ❌ | ❌ | 底层实现存在，但不在统一 CLI 主线 |
-| 百家号 | ✅ | ❌ | ✅ | ❌ | ❌ | 仍以底层自动化和示例路径为主 |
-| TikTok | ✅ | ❌ | ✅ | ❌ | ❌ | README 明确写了当前示例走 Chrome 路径 |
+| 抖音 | ✅ | ✅ | ✅ | ✅ | ✅ | Patchright 浏览器自动化 |
+| 快手 | ✅ | ✅ | ✅ | ✅ | ✅ | Patchright 浏览器自动化 |
+| 小红书 | ✅ | ✅ | ✅ | ✅ | ✅ | Patchright 浏览器自动化 |
+| Bilibili | ✅ | ❌ | ✅ | ✅ | ✅ | `biliup` CLI 协议上传 |
+| 视频号 | ✅ | ❌ | ✅ | ❌ | ❌ | 浏览器自动化（`tencent_uploader`） |
+| 百家号 | ✅ | ❌ | ✅ | ❌ | ❌ | 浏览器自动化 |
+| TikTok | ✅ | ❌ | ✅ | ❌ | ❌ | Chrome 版实现 |
 
-这张表背后的含义是：如果你的目标是“先把一条可靠流程跑起来”，那就别一上来把 7 个平台都纳入方案。更稳的做法是先围绕已经接入 `sau` 的 4 个平台搭建工作流，等这条主线跑顺了，再决定要不要把视频号、百家号或 TikTok 加进来。
+这里藏着整个项目最重要的架构区分：**Bilibili 走的是协议上传，抖音、快手、小红书走的是浏览器自动化。**
 
-## 它真正收敛的是重复劳动，而不是浏览器本身
+两种路线的适用条件、失败模式和排障方式完全不同。下面展开讨论。
 
-项目作者在 README 里反复强调一点：AI 很强，不代表每次都该让 Agent 临场解析页面、截图、猜 DOM、现写操作逻辑。上传这类动作的特点恰好相反：步骤高度重复，平台页面虽然会改，但任务结构很稳定，无非是登录、选文件、填标题、填描述、带标签、设发布时间、确认提交。
+### Bilibili：唯一走协议路径的主线平台
 
-这类工作一旦被收敛成命令，就会出现三个变化。
+Bilibili 的上传不依赖浏览器。CLI 首次运行时，会自动从 `biliup` 的 GitHub Release 拉取对应平台的二进制文件；后续运行会自动检查上游更新。
 
-1. 你不用每次重新教 Agent “这次要点哪个按钮”。
-2. 你可以把发布动作放进脚本、定时任务或其他流水线里，而不是只停留在交互会话里。
-3. 真正需要人盯的部分，缩小成账号登录、二维码、平台风控和内容本身，而不是整条上传链路。
+Bilibili 这一条路带来的后果很具体：
 
-换句话说，SocialAutoUpload 的价值不在于替你发一条视频，而在于把“多平台发布”这件事从一次性操作，收成一条可复查、可复用、可继续自动化的路径。
+- 不存在页面 DOM 变化导致的脚本失效
+- 不依赖 Patchright / Chromium 的运行环境
+- 但受限于 `biliup` 自身的协议兼容性——B 站接口一变，得等 `biliup` 上游适配
+- 登录走二维码，需要在真实终端里执行，Agent 不能代劳
 
-## 当前主线怎么组织
+Bilibili 的 `--tid`（分区 ID）是第一版必填参数。`--tags` 会映射到 `biliup upload --tag`，`--schedule` 会转成 B 站接口要求的时间戳格式。
 
-如果按最新文档理解项目结构，当前主线可以粗略看成下面这几个部分：
+### 抖音 / 快手 / 小红书：浏览器自动化主线
+
+这三个平台的上传链路结构一致：
 
 ```text
-social-auto-upload/
-├── uploader/      # 各平台底层实现
-├── sau_cli.py     # 当前 CLI 主入口
-├── skills/        # 面向 Agent 的平台 skill
-├── docs/          # 安装、CLI、Bootstrap 等文档
-└── examples/      # 历史示例与调试脚本
+sau <platform> upload-* 
+  → sau_cli.py 解析参数
+    → uploader/<platform>_uploader/
+      → Patchright 启动 Chromium
+        → 加载账号 cookie/状态
+          → 操作页面 DOM：选文件、填标题、设时间、提交
 ```
 
-这里最容易写错的，是把 `skills/` 当成另一套独立能力。实际上它更像“把主线路径翻译成 Agent 更容易遵守的契约”。`agent-bootstrap.md` 并不是在教模型理解所有源码，而是在强制它走一条更少歧义的路线：优先用 `uv` 装环境，优先看 `docs/install.md`、`docs/CLI.md` 和 `skills/`，优先验证 `douyin`、`kuaishou`、`xiaohongshu`、`bilibili` 这 4 个入口，不要先掉进历史 `examples/` 或旧 Web 路径里。
+这里有两个关键设计决策值得单独讲。
 
-这个设计看起来朴素，但很适合 Agent 场景。Agent 最怕的不是命令少，而是入口太多、历史路径太多、文档优先级不清。SocialAutoUpload 的 Bootstrap Prompt 做的事情，本质上就是先把搜索空间砍小，再让 Agent 去执行。
+#### 为什么用 Click 而不是自己手写命令行解析
 
-## 一次真实任务会怎样流过系统
+`sau_cli.py` 基于 Click 框架做子命令路由。选择 Click 不是偶然的——项目需要同时支撑以下诉求：
 
-拿“让 Agent 帮你把视频发到小红书，并设成今晚定时发布”这件事举例，主线通常会经过下面几步：
+1. 每个平台有完全不同的子命令集（抖音有 `upload-note`，Bilibili 没有）
+2. 同一平台的不同操作共享账号上下文（`--account` 在所有子命令间传递）
+3. 参数需要做平台级校验（图文图片数量、Bilibili 的 `--tid` 必填等）
 
-1. 你把仓库和 `docs/agent-bootstrap.md` 一起交给 Agent。
-2. Agent 按文档要求完成环境安装，优先验证 `sau --help` 和 4 个主线平台的子命令入口。
-3. 你给出账号名、素材路径、标题、描述、标签和定时发布时间。
-4. Agent 调用 `sau xiaohongshu upload-video ... --schedule` 这类统一命令，而不是自己现写浏览器脚本。
-5. `sau` 再把动作分发到对应的平台 uploader，由浏览器自动化层去处理页面交互。
-6. 失败时，你看到的是更靠近业务动作的错误，例如账号状态、二维码、文件、参数，而不是一整段临时脚本里某个选择器失效。
+Click 的 nested command group 机制天然适合这种场景。每个平台是一个 group，`login`、`check`、`upload-video`、`upload-note` 是挂在 group 下的子命令。新增一个平台时，只需要加一个新的 group 并注册到 CLI 入口，不用改动已有的命令分发逻辑。
 
-这条路径最重要的收益，不是“省一次点击”，而是把错误也收敛进了统一接口。对批量运营来说，能定位失败位置往往比“理论上全自动”更重要。
+#### 为什么账号状态管理不是简单的 cookie 文件
 
-## 从零到可用，官方文档现在推荐怎么装
+`--account` 参数对应的是 `conf.py` 中配置的账号名。每个账号名映射到一个独立的 cookie/session 持久化路径。登录一次后，状态会保存在对应平台 uploader 约定的路径下，后续 `check` 和 `upload-*` 复用同一份状态。
 
-如果你只想先验证主线，最短路径不是 `requirements.txt`，也不是旧 Web 面板，而是官方安装文档里的这一套：
+这套机制的价值不在"存了一份 cookie"，而在"同一个账号可以同时在不同平台执行不同的自动化任务而不会互相覆盖状态"。对矩阵运营来说，这比单账号单平台的设计实用得多。
+
+## CLI 统一了什么，保留了什么
+
+`sau` 做的不是把 4 个平台强行压成一套参数表，而是把 80% 的公共动作收敛了，同时保留各平台自己特有的参数。
+
+公共约定：
+
+1. 登录与账号检查：`login`、`check` 两组子命令在 4 个主线平台上保持一致
+2. 视频参数：统一围绕 `--file`、`--title`、`--desc`、`--tags`、`--schedule`
+3. 图文参数：统一围绕 `--images`、`--title`、`--note`、`--tags`、`--schedule`
+4. 运行模式：`--headless`、`--headed`、`--debug` 拆成独立维度，不糊成一个开关
+
+平台特有参数只在自己适用的地方出现：
+
+```bash
+# 抖音独有：商品链接
+sau douyin upload-video \
+  --account creator \
+  --file videos/demo.mp4 \
+  --title "示例标题" \
+  --desc "示例简介" \
+  --tags 自动化,内容矩阵 \
+  --product-link https://example.com/item \
+  --product-title 示例商品 \
+  --schedule "2026-06-01 21:30"
+```
+
+```bash
+# Bilibili 独有：分区 ID
+sau bilibili upload-video \
+  --account creator \
+  --file videos/demo.mp4 \
+  --title "示例标题" \
+  --desc "示例简介" \
+  --tid 249 \
+  --tags 自动化,测试 \
+  --schedule "2026-06-01 21:30"
+```
+
+这种设计思路在工程上是对的：统一入口负责收敛公共动作，但不为了表面一致去抹平平台差异。真正做多平台工具时，最容易犯的错误就是"为了统一而丢掉差异"——`sau` 目前没有走那条路。
+
+### 图文上传的各平台限制
+
+CLI 文档对图文上传标的都是 `✅`，但实际限制各不相同：
+
+| 平台 | 最大图片数 | GIF | `--note` | 备注 |
+| ---- | ---- | ---- | ---- | ---- |
+| 抖音 | 35 | 不支持 | 必填 | 图片数超限会直接报参数错误 |
+| 快手 | 未明确上限 | 不支持 | 必填 | 不要传重复路径，会导致上传异常 |
+| 小红书 | 未明确上限 | 不支持 | 可选 | `--title` 建议始终显式传入，不依赖默认值 |
+| Bilibili | 不支持图文 | — | — | 只走视频路径 |
+
+这些限制不是项目本身加的，而是各平台自身的约束。推荐在批量脚本里做好前置校验，避免在浏览器已经打开、文件已经上传到一半时才被平台拒绝。
+
+## 安装路径选择：为什么 `uv` 是现在的主线
+
+当前官方文档的安装链路已经收敛到以下几步：
 
 ```bash
 git clone https://github.com/dreammis/social-auto-upload.git
@@ -122,122 +186,184 @@ sau xiaohongshu --help
 sau bilibili --help
 ```
 
-这里有两个细节值得单独说。
+这里有三个容易忽略的细节。
 
-第一，安装文档已经把主依赖收敛到 `pyproject.toml`，普通用户不该再优先走旧的 `requirements.txt` 路径。第二，当前文档已经把 `patchright install chromium` 写进主线安装步骤里，这说明 Patchright 对这个项目来说已经不只是“未来计划”，而是当前主线的一部分。
+第一，`pyproject.toml` 现在是主依赖声明文件。安装文档已经把依赖收敛到它下面，普通用户不应该再优先走旧的 `requirements.txt`。后者目前只用于历史兼容路径。
 
-## CLI 统一了什么，没有统一什么
+第二，`uv pip install -e .` 不仅仅是装依赖——它会在虚拟环境的 `bin/` 下注册 `sau` 命令入口，指向 `sau_cli.py`。安装后不用每次都敲 `python sau_cli.py`。Windows 下同理，`sau.exe` 是安装后自动生成的包装入口。
 
-`sau` 的好处，不只是把命令变短，而是把几类操作抽成了统一约定。
+第三，`patchright install chromium` 被写进了主线安装步骤，不是作为"可选的未来计划"存在。当前主线的浏览器自动化已经全面切换到 Patchright，旧的 Playwright 路径不再推荐。
 
-1. 登录与账号检查：`login`、`check` 两组子命令在 4 个主线平台上保持一致。
-2. 视频上传参数：统一围绕 `--file`、`--title`、`--desc`、`--tags`、`--schedule` 展开。
-3. 图文上传参数：统一围绕 `--images`、`--title`、`--note`、`--tags`、`--schedule` 展开。
-4. 运行方式：`--headless`、`--headed`、`--debug` 被拆成独立维度，而不是糊成一个开关。
+### 国内网络环境排障
 
-例如，抖音与小红书的视频命令已经非常接近：
+安装过程中最容易卡住的两步：
 
-```bash
-sau douyin upload-video \
-  --account creator \
-  --file videos/demo.mp4 \
-  --title "示例标题" \
-  --desc "示例简介" \
-  --tags 自动化,内容矩阵 \
-  --schedule "2026-06-01 21:30"
+1. **Chromium 下载慢**：`PLAYWRIGHT_DOWNLOAD_HOST` 指向 npmmirror 镜像。如果仍然慢，可以手动指定其他 CDN 源。
+2. **GitHub Release 下载失败（biliup）**：当 `sau bilibili ...` 首次运行时自动从 GitHub 拉取 `biliup` 二进制。如果网络不通，可以在项目文档中找 `gh-proxy` 替代方案。
+
+这两步在 CI/CD 或无 GUI 的服务器上跑时尤其容易翻，建议提前验证。
+
+## Patchright 的正确定位
+
+原始资料里经常把 Patchright 描述为"微软出品的 Playwright 分支"。这不准确，而且会误导预期。
+
+Patchright 官方 README 的表述是：一个基于 Playwright 的 patched（打过补丁的）版本，目标是作为 Playwright 的 drop-in replacement，重点降低浏览器被检测为自动化工具的概率。它只面向 Chromium 系浏览器，不支持 Firefox 和 WebKit。
+
+对 SocialAutoUpload 来说，这里有三件事需要区分清楚：
+
+1. Patchright 提供的是"更不容易被识别为自动化"的浏览器驱动层，不是"绝对检测不到"的免死金牌
+2. 项目重构计划里列的"更隐蔽、更稳定的自动化方案"，实现的路径之一就是把自动化底座从 Playwright 切到 Patchright
+3. 但上传是否稳定，仍然取决于页面结构变化、账号状态、IP 信誉、操作节奏和平台风控策略——Patchright 只解决其中一层
+
+从这个角度理解 Patchright，比把它当成"从此不怕风控"更符合实际。它不是银弹，但让底座更贴近这个场景的实际需求。
+
+## 一次完整任务流过系统的全过程
+
+拿"让 Agent 把一条短视频发到小红书，设为今晚 21:30 定时发布"举例。下面是主线路径上每一步实际发生的事。
+
+```
+1. 用户把仓库 + docs/agent-bootstrap.md 一起交给 Agent
+2. Agent 读 Bootstrap Prompt → 选择 uv 安装 → 走 docs/install.md
+3. 安装完成后验证 sau --help + 4 个主线平台入口
+4. 用户输入：账号名、素材路径、标题、描述、标签、定时时间
+5. Agent 调用：
+   sau xiaohongshu upload-video \
+     --account creator \
+     --file videos/demo.mp4 \
+     --title "测评｜这个工具到底值不值得用" \
+     --desc "用了两周的真实体验" \
+     --tags 自媒体,自动化,工具测评 \
+     --schedule "2026-06-01 21:30"
+6. sau_cli.py 解析参数 → 定位到 xiaohongshu_uploader
+7. uploader 启动 Patchright Chromium → 加载 creator 账号的持久化状态
+8. 浏览器后台打开小红书创作者中心 → 填表单 → 设定时 → 提交
+9. 成功：返回上传确认信息 + 定时发布时间
+10. 失败：错误信息定位到账号状态 / 文件 / 参数 / 页面变化，而不是某段临时脚本的选择器失效
 ```
 
-而 Bilibili 虽然也走统一入口，但它保留了自己的平台特性，比如 `--tid`：
+这条路径最实际的收益不是"省了一次点击"。而是在出错时，你能定位到是账号没登录、文件格式不对、参数非法还是页面改版——而不是对着一段 Agent 现写的临时脚本找哪行 `querySelector` 选不到了。
 
-```bash
-sau bilibili upload-video \
-  --account creator \
-  --file videos/demo.mp4 \
-  --title "示例标题" \
-  --desc "示例简介" \
-  --tid 249 \
-  --tags 自动化,测试 \
-  --schedule "2026-06-01 21:30"
+对批量运营来说，**能定位失败位置**往往比"理论上全自动"更重要。
+
+## Agent 集成：Bootstrap Prompt 把什么砍掉了
+
+这个项目对 AI Agent 用户最有价值的文档，不是 README，是 [Agent Bootstrap Prompt](https://github.com/dreammis/social-auto-upload/blob/main/docs/agent-bootstrap.md)。
+
+它做的事用一句话概括：**先把搜索空间砍小，再让 Agent 去执行。**
+
+具体来说，它定死了 9 条规则：
+
+1. 工作目录 = 仓库根目录
+2. 包管理用 `uv`，不回退到 `requirements.txt`
+3. 命令入口用 `sau` CLI，不走历史 `examples/`
+4. 参考文档优先级：`install.md` → `CLI.md` → `update.md`
+5. 平台操作参考 `skills/` 下的 4 个 skill 文件
+6. 禁止优先探索历史 `examples/` 和旧 Web 路径
+7. 登录二维码必须展示图片，不能只回一个路径
+8. Bilibili 登录不能在非交互环境代理执行
+9. 安装完成后先验证 4 个主线平台入口
+
+Agent 最怕的不是命令少，而是入口太多、历史路径太多、文档优先级不清。这份 Prompt 把"该先做什么"写死在第一条消息里，直接绕过了 Agent 自由探索仓库时期最高的出错概率。
+
+### 为什么不做 4 套独立平台 Prompt
+
+文档里明确解释了：因为项目已经有了统一的 CLI 主线，用户第一次把仓库交给 Agent 时，更优先的需求是"知道主入口在哪、走哪条路、别走错路"，而不是"每个平台分别有一套提示词"。等 bootstrap 完成，再根据实际目标选择平台执行。这个设计比给用户发 4 份 Prompt 维护成本低，也更难用错。
+
+## 第一次验收：先过这 4 个检查点
+
+别上来就传素材。先把下面 4 步跑通，能筛掉大部分"其实还没装好就开始怀疑平台风控"的误判。
+
+1. `sau --help` 和 4 个主线平台的 `--help` 正常返回。这说明环境、入口和可执行脚本对上了。
+2. 先跑 `login` 和 `check`，再跑 `upload-*`。账号状态没校验通过时直接上传，错误只会往后拖。
+3. 第一次上传选最小样本：一条短视频或一组图片，带明确的 `--schedule` 时间。这样更容易分清问题出在参数、账号、页面还是定时逻辑。
+4. Bilibili 登录不要在 SSH 或 Agent 非交互环境里执行——二维码可能渲染不全。直接在本地真实终端跑 `sau bilibili login`，或者扫码当前目录下生成的 `qrcode.png`。
+
+## 常见踩坑与排障思路
+
+以下是实际使用中概率最高的几个问题。
+
+### Chromium 安装失败
+
+```text
+Playwright 无法下载浏览器 → 
+  检查 PLAYWRIGHT_DOWNLOAD_HOST 是否设置 → 
+  尝试 patchright install chromium --force
 ```
 
-这种设计很合理。统一入口负责把 80% 的公共动作收起来，但不会为了表面一致，硬把各平台特有的参数抹平。真正做多平台工具时，最怕的就是为了“统一”而丢掉平台差异；`sau` 目前没有走那条路。
+如果网络环境受限，可以手动下载 Chromium 并解压到 Patchright 约定的缓存目录。
 
-## 第一次验收，先看这 3 个点
+### Bilibili 自动下载 biliup 失败
 
-如果你今天就准备把它跑起来，别急着先传素材，先把下面这 3 个检查点过掉。
+```text
+GitHub Release 拉取超时 → 
+  手动下载 biliup 二进制 → 
+  放到 PATH 或项目根目录 → 
+  重新运行命令
+```
 
-1. `sau --help` 和 4 个主线平台的 `--help` 都能正常返回，这说明环境、入口和可执行脚本已经对上了。
-2. 先做 `login` 和 `check`，再做上传。账号状态没校验通过时，直接上传通常只会把错误往后拖。
-3. 第一次上传优先选一个最小样本：一条短视频或一组图片，外加明确的 `--schedule` 时间。这样你更容易分清问题出在参数、账号、页面还是定时逻辑。
+首次运行 `sau bilibili upload-video` 时触发下载，后续运行会自动检查更新。如果始终不通，说明网络环境无法访问 GitHub Release，需要配置代理或手动安装。
 
-这一步不花太久，但能筛掉大部分“其实还没装好就开始怀疑平台风控”的误判。
+### 登录后 check 失败
 
-## Agent 集成真正省下来的，是“第一次交接成本”
+常见原因：
 
-这套项目对 AI Agent 用户最有价值的文档，不是 README，而是 [Agent Bootstrap Prompt](https://github.com/dreammis/social-auto-upload/blob/main/docs/agent-bootstrap.md)。因为真正麻烦的地方，往往不是“Agent 会不会执行命令”，而是“它第一次接手仓库时，会不会走错路”。
+- 账号状态过期（cookie/session 已失效），需要重新 `login`
+- 平台风控触发验证码，当前 session 被标记——等一段时间再登录，或者切 IP
+- `conf.py` 中账号名与 `--account` 参数不匹配
 
-这份 Prompt 做了几件很务实的事：
+### 上传成功但平台看不到
 
-1. 指定当前工作目录就是仓库根目录。
-2. 指定优先使用 `uv`，不要默认回退到历史依赖路径。
-3. 指定优先走 `sau` CLI，而不是旧 `examples/` 和旧 Web。
-4. 指定安装完成后先验证 4 个主线平台入口是否可用。
-5. 指定遇到二维码时要把图片展示给用户，而不是只回一个路径。
+定时发布的内容不会立即出现在作品列表里，会在设定的时间才公开。先用 `check` 确认发布状态，不要重复上传。
 
-如果你经常把仓库交给 Claude Code、Codex 或 OpenClaw，这类“先收窄路径，再验收结果”的 Bootstrap 文档，比一份很长的功能说明更值钱。它直接减少了 Agent 乱逛仓库、误用历史入口、把错误吞掉的概率。
+### 端口冲突
 
-## Patchright 在这里扮演什么角色
-
-原稿里最需要纠正的一点，是把 Patchright 写成“微软出品的 Playwright 分支”。这不准确。
-
-Patchright 官方 README 的说法是：它是一个基于 Playwright 的 patched、强调降低检测概率的版本，目标是作为 Playwright 的 drop-in replacement 使用。它并不是 Microsoft 官方维护的 Playwright 分支，当前也只面向 Chromium 系浏览器，不支持 Firefox 和 WebKit。
-
-这件事为什么重要？因为它会影响你的预期。
-
-1. 你可以把它理解成“为了自动化场景做过补丁处理的浏览器驱动层”，而不是通用浏览器框架的官方主线。
-2. 它确实解释了项目为什么会把“更隐蔽、更稳定的自动化方案”列为重构重点。
-3. 但你不能从“用了 Patchright”直接推出“平台一定检测不到”或者“风控问题已经彻底解决”。自动化是否稳定，仍然取决于页面变化、账号状态、IP、操作节奏和平台策略。
-
-从 SocialAutoUpload 的角度看，Patchright 的意义更像是把浏览器自动化底座换成了更贴近这个场景的工具，而不是一张免死金牌。
-
-## 你需要留意的几个现实限制
-
-这类项目最容易被宣传口号带跑偏，实际使用时要先记住下面几件事。
-
-1. 旧 Web 相关代码仍然保留，但官方已经明确说明那不是当前主线，也不保证和最新 `uploader/`、`sau_cli.py` 完全同步。
-2. Bilibili 的上传能力依赖 `biliup`，但当前 CLI 会在首次运行时自动准备它，不需要你手工先装一遍。
-3. Bilibili 登录更适合用户自己在本地真实终端执行；如果终端二维码显示不完整，可以直接打开当前目录下的 `qrcode.png` 扫码。
-4. 国内网络环境下，安装浏览器驱动或访问 GitHub Release 可能会慢，文档已经给出了 `PLAYWRIGHT_DOWNLOAD_HOST` 镜像和 `gh-proxy` 这类排障建议。
-
-这些细节看起来不像“技术亮点”，但它们往往决定你第一天能不能跑通。
+某些平台 uploader 在调试模式下会启动本地调试端口。如果同时跑多个平台任务，可能出现端口冲突。逐个执行或指定不同调试端口可以解决。
 
 ## 谁该优先用它，谁可以先等等
 
-如果你符合下面几种情况，SocialAutoUpload 很值得上手：
+符合以下情况的团队，SocialAutoUpload 很值得上手：
 
-1. 你需要把同一条视频或图文分发到多个平台，而且发布动作会重复发生。
-2. 你已经在用 Agent 协助做内容生产，希望把“生成内容”和“分发内容”接成一条链。
-3. 你不满足于一次性脚本，而是想把登录、检查、上传、定时发布沉淀成可复用命令。
+- 同一条视频或图文需要分发到多个平台，且发布动作定期重复
+- 已经在用 Agent（Claude Code、Codex、OpenClaw）做内容生产，想把"生成内容"和"分发内容"接成一条链
+- 不满足于一次性脚本，想把登录、检查、上传、定时发布沉淀成可复用的命令
 
-反过来，如果你只是偶尔在一两个平台手动发内容，或者你当前最关心的是“有没有完整后台管理面板”，那它未必是最先该上的工具。这个项目当下最强的部分，是 CLI 主线和 Agent 集成，而不是一套已经完全收敛的可视化运营后台。
+以下情况可以先观望：
 
-## 更稳的采用顺序
+- 偶尔在一两个平台手动发内容——安装和维护成本高于收益
+- 当前最关心的是"有没有完整后台管理面板"——Web 端不是当前主线，历史代码仍保留但不保证同步
+- 核心需求在视频号、百家号或 TikTok——这三者在底层有实现，但不在统一 CLI 和 skill 覆盖范围，你需要自己踩一遍 uploader 和 example 路径
 
-如果你准备真用，而不是只看热闹，我建议按下面顺序推进：
+## 采用顺序：从最稳的 80% 开始
 
-1. 先按官方文档把 `uv`、`sau` 和 `patchright` 装到可验证状态。
-2. 先验证 `douyin`、`kuaishou`、`xiaohongshu`、`bilibili` 这 4 个主线平台的 CLI 入口。
-3. 先跑登录和账号检查，再跑上传，不要跳过 `check`。
-4. 等主线跑顺，再决定是否研究视频号、百家号、TikTok 的底层路径或历史示例。
-5. 如果你准备交给 Agent，用 Bootstrap Prompt 作为第一条消息，而不是让模型自由探索整个仓库。
+准备真用的话，按下面顺序推进：
 
-这个顺序的好处很直接：你先把最稳定的 80% 路径跑通，再去碰还在演进的 20%。对于自动化项目，这通常比“一次性全打通”更省时间。
+1. 按官方文档把 `uv`、`sau` 和 Patchright 装到可验证状态
+2. 先验证抖音、快手、小红书、Bilibili 这 4 个主线平台的 CLI 入口
+3. 先跑登录和账号检查，再跑上传——不要跳过 `check`
+4. 等主线跑顺后，再决定是否研究视频号、百家号、TikTok 的底层路径或历史示例
+5. 如果准备交给 Agent，用 [Bootstrap Prompt](https://github.com/dreammis/social-auto-upload/blob/main/docs/agent-bootstrap.md) 作为第一条消息，不让模型自由探索整个仓库
+
+这个顺序的收益很直接：先把最稳定的 80% 路径跑通，再去碰还在演进的 20%。对自动化项目来说，这通常比"一次性全打通"省时间。
+
+## 自测清单
+
+读完这篇文章后，如果你准备动手接入，先过一遍下面的检查项：
+
+- [ ] 能说清楚 `uploader/`、`sau` CLI、`skills/`、`examples/` 四层各自的职责和适用场景
+- [ ] 能解释 Bilibili 为什么走协议上传而不是浏览器自动化
+- [ ] 知道 `--account` 参数的账号状态是如何持久化的，以及多账号并发为什么不会互相覆盖
+- [ ] 能独立完成从 clone 到 `sau --help` 验证通过的全过程
+- [ ] 能区分哪些平台有图文上传能力、各平台的图片数量限制是多少
+- [ ] 理解 Patchright 在项目中的定位：降低检测概率，但不解决所有风控问题
+- [ ] 知道 Agent Bootstrap Prompt 的核心逻辑是"先砍小搜索空间，再执行"，而不是"先通读全部源码"
+
+如果上面 7 项中有超过 3 项回答不上来，建议回到对应的章节重新读一遍。
 
 ## 结论
 
-SocialAutoUpload 当前最成熟的地方，不是“支持 7 个平台”这句简介，而是它已经把多平台上传这件事收敛成了一条相对清楚的主线：底层由 `uploader/` 承接，执行由 `sau` CLI 统一，交给 Agent 时再由 `skills/` 和 Bootstrap Prompt 把入口限制住。
+SocialAutoUpload 当前最成熟的地方，不是"支持 7 个平台"这句简介，而是它已经把多平台上传这件事收敛成了一条相对清楚的主线：底层由 `uploader/` 承接，执行由 `sau` CLI 统一，交给 Agent 时再由 `skills/` 和 Bootstrap Prompt 把入口限制住。
 
-如果你把它当成“全平台、全能力、全可视化都已经完工”的产品，会高估它当前的收敛程度；如果你把它当成“围绕 4 个主线平台，把上传动作做成可调用能力”的工程化项目，那它现在的价值就很明确了。对内容矩阵、AI 创作工作流和 Agent 集成场景来说，这条路确实比每次重新写浏览器脚本稳得多。
+如果你把它当成"全平台、全能力、全可视化都已经完工"的产品，会高估它当前的收敛程度。如果你把它当成"围绕 4 个主线平台，把上传动作做成可调用能力"的工程化项目，那它现在的价值就很明确了。对内容矩阵、AI 创作工作流和 Agent 集成场景来说，这条路确实比每次重新写浏览器脚本稳得多。
 
 ## 参考资料
 
@@ -246,4 +372,5 @@ SocialAutoUpload 当前最成熟的地方，不是“支持 7 个平台”这句
 - [CLI 使用说明](https://github.com/dreammis/social-auto-upload/blob/main/docs/CLI.md)
 - [Agent Bootstrap Prompt](https://github.com/dreammis/social-auto-upload/blob/main/docs/agent-bootstrap.md)
 - [历史 Web 版本说明](https://github.com/dreammis/social-auto-upload/blob/main/docs/legacy-web.md)
-- [Patchright README](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright)
+- [Patchright](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright)
+- [biliup](https://github.com/biliup/biliup)
