@@ -10,23 +10,23 @@ tags: ["OpenAI", "多智能体", "Agent", "SDK", "Python", "工作流", "Guardra
 
 # OpenAI Agents SDK：官方多智能体工作流框架
 
-> **目标读者**：LLM应用开发者、AI Agent研究者、企业级AI工作流架构师
-> **前置知识**：Python基础、LLM API使用经验、对Agent概念有基本了解
+OpenAI Agents SDK 真正解决的问题不是"调用模型"，而是把多个 LLM 调用组织成一条可观测、可校验、可交接的流水线。它把 Agent、工具、安全检查、人工介入和会话管理打包成同一套编程模型，目标读者是已经在用 LLM API，但发现单 Agent 架构在复杂任务中不够用的开发者。
+
+> **前置知识**：Python 基础、LLM API 使用经验、对 Agent 概念有基本了解
 > **技术栈**：Python 3.10+ / OpenAI Responses API / MCP / Pydantic v2
-> **难度定位**：⭐⭐⭐⭐ 专家设计
 
 ---
 
-## §1 学习目标
+## §1 阅读地图
 
-完成本篇文章后，你将能够：
+读完这篇文章，你会对以下问题形成判断——不是记住 API 签名，而是理解 SDK 的设计取舍：
 
-1. **理解OpenAI Agents SDK的核心定位**：与LangChain/LangGraph的区别与优势
-2. **掌握Agent、Handoff、Tool三大核心概念**：构建多Agent协作的原子单元
-3. **理解Sandbox Agent的隔离执行机制**：如何在安全环境中执行长时任务
-4. **掌握Guardrails配置**：实现输入输出的安全校验与内容过滤
-5. **理解Human-in-the-loop模式**：如何在自动化流程中引入人工介入
-6. **能够构建生产级多Agent工作流**：使用Tracing监控和调试Agent行为
+1. OpenAI Agents SDK 和 LangChain / LangGraph 的定位差异
+2. Agent、Handoff、Tool 三者的协作关系与各自边界
+3. Sandbox Agent 在什么场景下比普通 Agent 更合适
+4. Guardrails 的拦截时机（输入前 / 输出后）和失败后的行为
+5. Human-in-the-loop 的触发条件设计与动态介入
+6. 用 Tracing 定位 Agent 行为异常的实际步骤
 
 ---
 
@@ -62,22 +62,27 @@ tags: ["OpenAI", "多智能体", "Agent", "SDK", "Python", "工作流", "Guardra
 └─────────────┘               └─────────────┘
 ```
 
-**核心优势**：
-- **角色分离**：每个Agent专注单一职责
-- **可编排**：通过Handoff构建复杂工作流
-- **可观测**：内置Tracing追踪每个步骤
-- **更安全**：Guardrails进行输入输出校验
+多 Agent 架构的核心思路简单：把一个 Agent 的职责拆散，让每个子 Agent 只做一件事，之间通过明确的交接协议协作。这带来三个直接收益：每个 Agent 的指令更短、上下文更干净、出错的爆炸半径更小。同时，Guardrails 在交接边界上做安全检查，Tracing 让每一步都有据可查。
 
-### 2.3 OpenAI Agents SDK的定位
+### 2.3 SDK 定位与机制边界
 
-OpenAI Agents SDK是一个**轻量级但功能强大**的多Agent框架：
+OpenAI Agents SDK 是一个面向多 Agent 协作的 Python 框架，它的设计重心不在链式调用，而在交接与安全：
 
 | 特性 | 说明 |
 |------|------|
-| **Provider Agnostic** | 支持OpenAI API + 100+第三方LLM |
-| **类型安全** | 完整Pydantic v2集成 |
-| **开箱即用** | 内置Sandbox/Tracing/Handoff |
-| **生产可用** | 已在OpenAI内部生产验证 |
+| **Provider Agnostic** | 支持 OpenAI API 及 100+ 第三方 LLM |
+| **类型安全** | 完整 Pydantic v2 集成 |
+| **内置能力** | Sandbox / Tracing / Handoff / Guardrails 全部内置 |
+| **生产验证** | 已用于 OpenAI 内部多个生产级 Agent 系统 |
+
+SDK 内部存在几套容易混淆的并行机制，先明确它们的边界：
+
+| 机制 | 作用 | 触发方式 | 典型场景 |
+|------|------|----------|----------|
+| `tools=[agent]` (Agent as Tool) | 把子 Agent 当工具调用，父 Agent 拿到返回值后继续 | 模型自主决定调用 | 代码生成 → 代码审查（子 Agent 只出结果，不接管会话） |
+| `handoffs=[agent]` | 把会话控制权完整交给另一个 Agent | 父 Agent 指令触发 `handoff_to()` | 路由分发、多轮子任务 |
+| `handoff(agent, context=...)` | 带上下文交接，传递优先级/部门等元信息 | 通过 `handoff()` 包装 | 带紧急标记的任务路由 |
+| 条件 Handoff | 在运行时根据输入动态选择目标 Agent | 自定义函数返回值 | 按用户意图动态分发 |
 
 ---
 
@@ -675,22 +680,30 @@ pip install 'openai-agents[redis]'
 
 ## §13 FAQ
 
-**Q1：OpenAI Agents SDK只能用于OpenAI模型吗？**
-A：不是。它是provider-agnostic的，支持OpenAI、Azure、Anthropic以及100+第三方LLM。
+**Q1：OpenAI Agents SDK 只能用于 OpenAI 模型吗？**
+A：不限于 OpenAI。它是 provider-agnostic 的，支持 OpenAI、Azure、Anthropic 及 100+ 第三方 LLM。
 
 **Q2：Sandbox Agent安全吗？**
 A：Sandbox Agent在隔离环境中执行文件操作和命令，默认只读本地Git仓库。生产环境建议使用Docker或云端沙箱。
 
-**Q3：Guardrails会影响性能吗？**
-A：会有轻微延迟（通常<100ms），但提供了重要的安全保障，值得。
+**Q3：Guardrails 会影响性能吗？**
+A：会有轻微延迟（通常 <100ms），但相比无防护时因有害输出导致的回滚成本，这点开销是合理的。
 
-**Q4：如何调试Agent行为？**
-A：使用内置Tracing，可以查看每个Agent调用、工具执行、Token消耗的详细信息。
+**Q4：如何调试 Agent 行为？**
+A：使用内置 Tracing，可以查看每个 Agent 调用、工具执行、Token 消耗的详细信息。
 
-**Q5：支持语音Agent吗？**
-A：是的，使用Realtime Agent和`gpt-realtime-1.5`模型，可以构建语音交互Agent。
+**Q5：支持语音 Agent 吗？**
+A：支持。使用 Realtime Agent 配合 `gpt-realtime-1.5` 模型即可构建语音交互 Agent。
 
 ---
+
+## 采用顺序与适用边界
+
+**建议先上的团队**：已经在用 OpenAI 生态、需要将单 Agent 拆分为多 Agent 协作的团队；当前工作流中有明确的角色分工（如代码生成 → 审查 → 测试），但缺乏系统化交接机制的团队。
+
+**可以先观望的情况**：团队已深度绑定了 LangGraph 的图编排模式，并且需要更细粒度的状态管理；或者工作流仍以单 Agent + 工具调用为主、暂时不需要多 Agent 交接的场景。
+
+**起步建议**：从 Agent + handoffs 的最小组合开始，先不引入 Sandbox 和 Human-in-the-loop；跑通一条两 Agent 交接链路后，再加入 Guardrails 和 Tracing。
 
 ## 相关资源
 

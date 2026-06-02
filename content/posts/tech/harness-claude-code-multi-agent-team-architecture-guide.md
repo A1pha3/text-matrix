@@ -8,11 +8,11 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "AI Agent", "Multi-Agent", "插件", "工作流自动化"]
 ---
 
-Harness 做的事不复杂：你在 Claude Code 里输入一句「为此项目构建 Harness」，它分析你的领域描述，选定一种团队架构模式，生成一套可运行的 Agent 定义和配套 Skill。它不是某一个具体任务的 Agent，而是一个生成 Agent 团队的工厂——Anthropic 生态里的叫法是 **L3 Meta-Factory，Team-Architecture Factory**。
+一句话说清 Harness：你在 Claude Code 里输入「为此项目构建 Harness」，它读你的领域描述、选一种团队架构模式、生成可运行的 Agent 定义和配套 Skill。它不是某个具体任务的 Agent——它是生成 Agent 团队的工厂，Anthropic 生态里管这个叫 **L3 Meta-Factory, Team-Architecture Factory**。
 
-读完这篇文章，你至少能回答几个问题：
+这篇文章能帮你搞清楚几件事：
 
-- 6 种多 Agent 协作模式各自适合什么场景，怎么选
+- 6 种多 Agent 协作模式各自适合什么场景、怎么选
 - Harness、Archon、ECC 三者在同一层，各自的边界在哪
 - 作者 A/B 实测数据（+60% 质量、-32% 方差、15/15 胜率）在测什么、不能推出什么
 - 拿到手之后第一件事该做什么
@@ -62,7 +62,7 @@ graph TD
     ECC -.->|"L2 覆盖"| Harness
 ```
 
-图上最关键的信息：Harness 和 Archon 同在 L3 层但做不同的事。Archon 生成确定性运行时配置，Harness 生成多 Agent 团队架构。选了 Archon ≠ 不需要 Harness，反之亦然——它们可以串联（Harness 设计架构 → Archon 部署运行时）。
+Harness 和 Archon 同在 L3 层但职责不同：Archon 生成确定性运行时配置，Harness 生成多 Agent 团队架构。选了 Archon ≠ 不需要 Harness，反之亦然——它们可以串联（Harness 设计架构 → Archon 部署运行时）。
 
 ## 系统分层
 
@@ -76,7 +76,7 @@ graph TD
 
 ## 6 种团队架构模式
 
-Harness 预置了 6 种模式，选定逻辑不复杂：看你的任务是有先后依赖，还是可以并行；是需要人工审查，还是需要动态调度。
+Harness 预置了 6 种模式，选择依据：看任务是有先后依赖，还是可以并行；需要人工审查，还是动态调度。
 
 | 模式 | 怎么工作 | 什么时候用 |
 |------|---------|-----------|
@@ -87,7 +87,7 @@ Harness 预置了 6 种模式，选定逻辑不复杂：看你的任务是有先
 | **Supervisor** | 中央调度 Agent 接收任务、拆解、分配给下属 Agent | 任务复杂度高，需要动态决策——比如深度研究、营销策划 |
 | **Hierarchical Delegation** | 父 Agent 拆解任务后递归委托给子 Agent | 任务本身是多层级的——比如数据管道设计（Schema → ETL → 验证 → 监控） |
 
-按复杂度递进：Pipeline 和 Fan-out 最结构化，适合流程明确的任务；Expert Pool 和 Producer-Reviewer 引入了一定的选择逻辑；Supervisor 和 Hierarchical Delegation 适合需要动态决策的开放式任务。
+Pipeline 和 Fan-out 最结构化，适合流程明确的任务；Expert Pool 和 Producer-Reviewer 引入了选择逻辑；Supervisor 和 Hierarchical Delegation 适合需要动态决策的开放式任务。
 
 ## 一次完整任务流
 
@@ -135,7 +135,7 @@ Harness 生成 Agent 后有两种运行方式：
 | **Agent Teams**（默认） | TeamCreate + SendMessage + TaskCreate，Agent 之间可以通信协作 | 2 个以上 Agent 需要协同 |
 | **Subagents** | 直接调用 Agent 工具，无 Agent 间通信 | 一次性任务，不需要跨 Agent 协调 |
 
-选择规则很简单：Agent 之间需要互相传消息 → Agent Teams；只是让不同 Agent 各干各的 → Subagents。
+怎么选：Agent 之间需要互相传消息 → Agent Teams；只是让不同 Agent 各干各的 → Subagents。
 
 ## Skill 的 Progressive Disclosure 设计
 
@@ -202,10 +202,10 @@ Harness 作者在 [claude-code-harness](https://github.com/revfactory/claude-cod
 | 胜率（With > Without） | — | 15/15 | **100%** |
 | 输出方差 | — | — | **-32%** |
 
-几个需要说清楚的地方：
+看待这些数字要注意几点：
 
 1. **n=15，作者自测**。这不是第三方独立评测，样本量也不大。仓库明确标注了「third-party replications pending」。
-2. **效果随任务复杂度递增**。基础任务提升 +23.8，进阶任务 +29.6，专家级任务 +36.2。任务越复杂，结构化 Agent 团队配置的增益越明显。反过来推——如果你的任务本来就简单（单个 Agent 就能搞定），Harness 的边际收益不大。
+2. **效果随任务复杂度递增**。基础任务提升 +23.8，进阶任务 +29.6，专家级任务 +36.2。任务越复杂，结构化 Agent 团队配置的增益越明显。反过来说——如果你的任务本来就简单（单个 Agent 就能搞定），Harness 的边际收益不大。
 3. **测的是「输出质量评分」**，不是开发速度、token 消耗或工程师满意度。做内部试点时，建议补上这些维度。
 
 ## 插件结构
