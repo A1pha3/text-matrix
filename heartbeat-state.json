@@ -82,6 +82,6 @@
   "文章健康检查": {
     "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "12:50窗口检查(30-min cron)：4份早报(2026-06-02) 58/58链接全部200 GET可达，状态稳定无回归。tech文章抽查：stefan-jansen/ml-for-trading 17,747→17,965(+1.2% ✅) / godotengine/godot 111,573→111,712(+0.12% ✅)。无新问题。"
+    "note": "13:59窗口检查(30-min cron)：4份早报(2026-06-02)文件结构稳定(AI 180行/15.2KB、财经 116行/8.9KB、Web3 117行/10.7KB、副业 75行/5.3KB，frontmatter/title/date 全部 ✓)。抽样核查18条文章链接(AI:5 Hacker News、财经:3 sina+wallstreetcn、Web3:4 cointelegraph、副业:3 v2ex / 排除1条非文件内jinshuyun fallback) 全部200 OK；t/1217109首次超时重试3次均200 (v2ex瞬时网络问题)。tech抽查：12:23新增draft mlcc-industry-deep-analysis-2026.md (339行/15.7KB, draft:true未commit)，不影响公开文章健康。无新问题。"
   }
 }
