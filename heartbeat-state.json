@@ -35,9 +35,9 @@
     "note": "23:05窗口执行，14个趋势项目(MoneyPrinterTurbo/markitdown/Scrapling/hermes-webui/compound-engineering-plugin/VoxCPM/harness/train-llm-from-scratch/supermemory/project-nomad/claude-code/pi-subagents/developer-portfolios/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push；push heartbeat c560981→15d2a51"
   },
   "藏经阁修炼": {
-    "lastRun": "2026-05-31",
+    "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "21:05窗口执行，藏经阁5项检查全部通过（500块/61K+字符/4K+行/17表），结构清晰，内容深度充分，分类合理"
+    "note": "21:05窗口执行(验证isolated-HEARTBEAT cron),feishu_wiki get+feishu_doc read成功,主文档(OZWudOLFioz642xHMOIcg24lnVd)500 blocks/61K+字符/4K+行,block类型分布Page×1/Heading1×2/Heading2×25/Heading3×23/Text×182/Table×17/TableCell×130/Divider×30/Ordered×48/Bullet×40/Quote×2,5项检查全部通过(存在✅/非空✅/逻辑✅/深度✅/分类✅),10+主要分类覆盖(入门基础/大模型&Agent/OpenClaw&工具/AI赚钱实战/内容创作/技术教程/AI安全/Polymarket/V2EX赚钱/Superlinear Academy),近期新增(2026-04-27)Cua/TypeScript Go/PostHog/RTK/Free Claude Code/PPT Master/RAG-Anything/OpenSRE/Beads,revision_id=104,日志已追加memory/藏经阁检查日志.md"
   },
   "github-trending-13": {
     "lastRun": "2026-06-02",
@@ -80,8 +80,8 @@
     "note": "08:55窗口执行(延迟)，4份早报文件均已生成(ai/financial/web3/side-hustle morning news 2026-06-02)，全部git push成功(04d7507)。链接核查：经济财经14条+AI副业7条+AI新闻25条+Web3 12条全部200。"
   },
   "文章健康检查": {
-    "lastRun": "2026-06-02",
+    "lastRun": "2026-06-03",
     "status": "completed",
-    "note": "20:41窗口检查(30-min cron)：4份早报(2026-06-02)结构稳定(AI 180行25条/财经 116行14条/Web3 117行12条/副业 75行7条,frontmatter/title/date/draft全部✓)。实时链接核查(curl+真实UA):AI 25/25、财经 14/14、Web3 12/12、副业 7/7,总计58/58 全部200 OK。整体文章库news 260/tech 582/wealth 9/video 12/thoughts 2,空文件 0、tiny文件 0。系统健康,无新问题。"
+    "note": "00:07窗口检查(00:00 cron)：4份早报(2026-06-02)结构稳定(AI 180行25条/财经 116行14条/Web3 117行12条/副业 75行7条,frontmatter title/date/slug/description/draft:false/categories/tags/hiddenFromHomePage 全部✓,date均≤当前时间)。实时链接核查(curl+真实UA,8s超时):AI 25/25、财经 14/14、Web3 12/12、副业 7/7,总计58/58 全部200 OK。整体文章库954篇(news 260/tech 666含子目录quant+tools+llm+ai-agent/wealth 9/video 12/thoughts 2),空文件 0、tiny文件 2(2026-04-08的AI副业+财经早报占位文件,969B+989B,无具体URL,为早期历史遗留,标记待优化)。git status干净已同步origin/main,head ce5c27a。4份今日(2026-06-03)早报尚未生成(07:30前不创建,正常)。系统健康,无紧急问题。"
   }
 }
