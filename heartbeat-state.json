@@ -82,6 +82,6 @@
   "文章健康检查": {
     "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "17:37窗口检查(30-min cron)：4份早报(2026-06-02)文件结构稳定(AI 180行25条/财经 116行14条/Web3 117行12条/副业 75行7条,frontmatter/title/date/slug/description 全部 ✓)。链接核查(curl+真实UA):AI 25/25、财经 14/14、Web3 12/12、副业 7/7,总计58/58 全部200 OK。tech抽查5篇随机文章15个外链14/15可达(1个findomain.app返回000ERR,非关键文章)。其他分类wealth 7/video 12/thoughts 2,空文件 0,tiny文件 0。系统健康,无新问题。"
+    "note": "18:38窗口检查(30-min cron)：4份早报(2026-06-02)结构稳定(AI 180行25条/财经 116行14条/Web3 117行12条/副业 75行7条,frontmatter/title/date/draft全部✓)。实时链接核查(curl+真实UA):AI 25/25、财经 14/14、Web3 12/12、副业 7/7,总计58/58 全部200 OK。整体文章库news 260/tech 698/wealth 9/video 12/thoughts 2,空文件 0、tiny文件 0。系统健康,无新问题。"
   }
 }
