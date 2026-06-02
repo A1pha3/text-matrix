@@ -45,29 +45,29 @@
     "note": "13:00窗口执行，20个趋势项目(markitdown/MoneyPrinterTurbo/claude-code/plugins/harness/compound-engineering-plugin/ECC/stable-worldmodel/project-nomad/VoxCPM/liteparse/FlClash/train-llm-from-scratch/data-engineering-zoomcamp/MOSS-TTS/social-auto-upload/anthropics/skills/codecrafters/build-your-own-x/RuView)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "github-trending-09": {
-    "lastRun": "2026-06-01",
+    "lastRun": "2026-06-02",
     "status": "all_already_covered",
-    "note": "09:05窗口执行，15个趋势项目(MoneyPrinterTurbo/markitdown/Scrapling/hermes-webui/compound-engineering-plugin/github-docs/VoxCPM/harness/train-llm-from-scratch/supermemory/project-nomad/claude-code/pi-subagents/developer-portfolios/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
+    "note": "09:04窗口执行，17个趋势项目(Scrapling/compound-engineering-plugin/train-llm-from-scratch/VoxCPM/TradingAgents/oh-my-pi/build-your-own-x/fff/godot/MoneyPrinterTurbo/markitdown/hermes-webui/heretic/impeccable/harness/machine-learning-for-trading/supermemory)全部已有文章(content/posts/tech/)覆盖：scrapling-adaptive/compound-engineering-plugin-agent/fareedkhan-train/voxcpm2-tokenizer/tradingagents-multi-agent/oh-my-pi/codecrafters/fff.nvim/godot-engine/moneyprinterturbo/markitdown/hermes-webui/heretic/impeccable/harness-claude-code/stefan-jansen/supermemory。已对harness-claude-code(对应revfactory/harness)、voxcpm2、tradingagents、scrapling、markitdown等做内容关键词二次核验，全部对得上对应仓库。无新增文章，无需git push(无文章改动)。web_fetch被挡，使用curl+r.jina.ai+GitHub trending HTML直接抓取(17个Link组件全量)。"
   },
   "ai-news-morning": {
     "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "08:07窗口执行（CDP多次WebSocket错误后改用原生WebSocket连接），采集36kr(30条)+量子位(7条)+HN(15条AI相关)共23条AI新闻：头条Anthropic秘密递交S-1+英伟达GTC台北发布RTX Spark/Vera CPU+OpenAI复活机器人招揽华人学者+VAST近2亿美元融资。每条原文链接均通过Chrome CDP打开验证。Hugo文章content/posts/news/ai-morning-news-2026-06-02.md已生成并push main(commit 8f2b8d3)，远程raw.githubusercontent.com返回200。飞书文档NPp7dG5xDoKFLdxlS3wcOdCFnkg已append 57个块。"
+    "note": "2026-06-02生成，25条AI新闻（commit 82da826 远程/04d7507本地），覆盖Anthropic S-1/GTC台北/OpenAI机器人/VAST融资等。已远程仓库验证。"
   },
   "financial-morning-news": {
-    "lastRun": "2026-06-01",
+    "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "2026-06-01生成，114行，华尔街见闻/金十数据/新浪财经。⚠️jin10首页链接需修复(第34行WTI原油文章)。"
+    "note": "2026-06-02生成，14条财经新闻（华尔街见闻+金十数据+新浪财经），覆盖Anthropic S-1/谷歌800亿增发/标普纳指八连涨/美光1000美元/慧与暴涨40%/奥特曼专访/伊朗封锁海峡/A股普涨等。14个链接全部200，已git push (04d7507) + 飞书文档54个block已追加。"
   },
   "ai-side-hustle-morning": {
-    "lastRun": "2026-06-01",
+    "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "2026-06-01生成，53行，V2EX 2条AI相关招聘帖子，链接全部200。"
+    "note": "2026-06-02生成，7条V2EX AI相关真实机会(已逐条验证内容匹配): t/1217172 Agent开发工程师远程招聘、t/1217118 AI Infra SRE内推(vLLM/SGLang)、t/1217050 AI效能工程师多岗位、t/1216999 xAI Grok中文语音数据远程招聘、t/1217109 AI外包offer选择讨论、t/1216894 AI Coding实战感想、t/1216919 AI接管HR简历初筛讨论。已git push + 飞书30个block已追加。"
   },
   "web3-morning-news": {
-    "lastRun": "2026-06-01",
+    "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "2026-06-01生成，64行，CoinGecko行情+CoinTelegraph新闻，4条具体文章链接全部200。"
+    "note": "2026-06-02生成，12条cointelegraph文章，行情+4条具体文章链接全部200。"
   },
   "早请安": {
     "lastRun": "2026-06-02",
@@ -75,9 +75,9 @@
     "note": "07:20窗口执行（晚20分钟），周二早安。今日任务计划：07:30-08:30 AI新闻早报、08:00经济财经早报、08:00 Web3早报、08:30 AI副业早报、09:00 早报质量核查、10:00/11:30/13:00/15:00/20:00 GitHub趋势榜多时段、21:00 藏经阁修炼。注：07:10文章健康检查已修复经济财经早报WTI原油链接老问题。"
   },
   "早报质量核查": {
-    "lastRun": "2026-06-01",
-    "status": "completed_with_issues",
-    "note": "09:25窗口执行(延迟)，四份早报文件均已生成(ai/financial/web3/side-hustle morning news 2026-06-01)，发现1个需修复问题：经济财经早报第34行WTI原油文章链接(jin10.com首页)应替换为具体文章URL。三份早报(financial/web3/side-hustle)heartbeat-state lastRun仍为05-30，今日已生成文件，已同步更新。"
+    "lastRun": "2026-06-02",
+    "status": "completed",
+    "note": "08:55窗口执行(延迟)，4份早报文件均已生成(ai/financial/web3/side-hustle morning news 2026-06-02)，全部git push成功(04d7507)。链接核查：经济财经14条+AI副业7条+AI新闻25条+Web3 12条全部200。"
   },
   "文章健康检查": {
     "lastRun": "2026-06-02",
