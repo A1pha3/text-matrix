@@ -29,3 +29,45 @@
 - 状态: ✅ 系统健康, 无紧急问题
 - 行动: 无 (本轮无需修复)
 - 下次检查: 30 分钟后
+
+[02:03:00] 02:00 cron 窗口检查
+- 4 份早报 (2026-06-02) frontmatter: 全部 ✓
+  - ai-morning-news: draft=false, date=2026-06-02T08:17:00+08:00
+  - financial-morning-news: draft=false, date=2026-06-02T08:30:00+08:00
+  - web3-morning-news: draft=false, date=2026-06-02T08:00:00+08:00
+  - ai-side-hustle-morning: draft=false, date=2026-06-02T08:30:00+08:00
+
+[02:03:30] 实时链接抽样核查 (curl+UA, 6s 超时)
+- AI 新闻: 8/8 OK (200)
+- 经济财经: 8/8 OK (200)
+- Web3: 8/8 OK (200)
+- AI 副业: 7/7 OK (200)
+- 抽样总计: 31/31 全部 200 OK
+- 覆盖源: 36kr / 华尔街见闻 / 金十 / cointelegraph / V2EX
+
+[02:03:45] 整体文章库统计
+- 总数: 981 篇
+  - news: 260
+  - tech: 698 (含子目录 quant/tools/llm/ai-agent)
+  - wealth: 9
+  - video: 12
+  - thoughts: 2
+- tiny<1.5KB 文件: 7 处 (全部历史遗留, 2026-04~05 期间)
+  - news 5 处: 2026-04-08 AI 副业 + 财经 (969B+989B), 2026-04-21/04-26/05-07 Web3 早报
+  - tech 1 处: fincept-terminal 1.3KB (待重写)
+  - wealth 1 处: _index.md 0.6KB
+- 空文件: 0
+
+[02:04:00] git 状态
+- 远端: 同步 ✅ (rebase 后 head = 2d81c175)
+- 本地未提交: skills/hugo-writer/SKILL.md v2.5.0→v2.6.0 (新增财富自由分类)
+  - 性质: skill 文件版本号 + 分类白名单扩展, 非文章内容损坏
+- 推送: heartbeat commit e6114a69 ✅
+
+[02:04:15] 早报生成状态
+- 2026-06-03 早报: 尚未生成 (正常, 06:10 AI 副业 / 06:30 财经 / 06:50 AI 新闻 / 07:10 Web3 / 07:30 质量核查)
+
+[02:04:30] 心跳结论
+- 状态: ✅ 系统健康, 凌晨低风险窗口
+- 行动: 无 (本轮无需修复)
+- 下次检查: 02:30 cron 窗口
