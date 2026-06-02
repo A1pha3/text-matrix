@@ -50,9 +50,9 @@
     "note": "09:05窗口执行，15个趋势项目(MoneyPrinterTurbo/markitdown/Scrapling/hermes-webui/compound-engineering-plugin/github-docs/VoxCPM/harness/train-llm-from-scratch/supermemory/project-nomad/claude-code/pi-subagents/developer-portfolios/build-your-own-x)全部已有文章(content/posts/tech/)覆盖，无需写文章或push"
   },
   "ai-news-morning": {
-    "lastRun": "2026-06-01",
+    "lastRun": "2026-06-02",
     "status": "completed",
-    "note": "07:49窗口执行，Chrome CDP采集36kr+量子位共12条AI新闻，已推送飞书文档NPp7dG5xDoKFLdxlS3wcOdCFnkg。text-matrix目录不存在，跳过Hugo推送。"
+    "note": "08:07窗口执行（CDP多次WebSocket错误后改用原生WebSocket连接），采集36kr(30条)+量子位(7条)+HN(15条AI相关)共23条AI新闻：头条Anthropic秘密递交S-1+英伟达GTC台北发布RTX Spark/Vera CPU+OpenAI复活机器人招揽华人学者+VAST近2亿美元融资。每条原文链接均通过Chrome CDP打开验证。Hugo文章content/posts/news/ai-morning-news-2026-06-02.md已生成并push main(commit 8f2b8d3)，远程raw.githubusercontent.com返回200。飞书文档NPp7dG5xDoKFLdxlS3wcOdCFnkg已append 57个块。"
   },
   "financial-morning-news": {
     "lastRun": "2026-06-01",
