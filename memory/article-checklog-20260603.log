@@ -71,3 +71,63 @@
 - 状态: ✅ 系统健康, 凌晨低风险窗口
 - 行动: 无 (本轮无需修复)
 - 下次检查: 02:30 cron 窗口
+
+[09:41:00] heartbeat触发：文章健康检查 (cron: 850cf6e9) 09:41窗口
+- 触发时间: 2026-06-03 09:41 (Asia/Shanghai)
+- 距上次: 08:39 → 09:41 = 1h02m
+- 范围: 4 份早报 (2026-06-02) + 系统健康
+
+[09:41:15] 4 份早报实时链接抽样核查 (curl+UA, 5s 超时, 每份 3 条 = 12 条)
+- AI新闻早报 2026-06-02: 50 URLs — 3/3 抽样 = 200 ✅ (HN item 48358646 + 36kr ×2)
+- 经济财经早报 2026-06-02: 28 URLs — 3/3 抽样 = 200 ✅ (wallstreetcn ×3)
+- Web3早报 2026-06-02: 24 URLs — 3/3 抽样 = 200 ✅ (cointelegraph ×3)
+- AI副业早报 2026-06-02: 14 URLs — 3/3 抽样 = 200 ✅ (V2EX ×3)
+- 抽样总计: 12/12 = 100% 可达 ✅
+
+[09:41:30] 4 份早报 frontmatter 验证 (上次 08:30 生成, draft:false 全 ✓)
+- ai-morning-news-2026-06-02: 15247B, draft=false, date=2026-06-02T08:17 ✅
+- financial-morning-news-2026-06-02: 8899B, draft=false, date=2026-06-02T08:30 ✅
+- web3-morning-news-2026-06-02: 10699B, draft=false, date=2026-06-02T08:00 ✅
+- ai-side-hustle-morning-2026-06-02: 5324B, draft=false, date=2026-06-02T08:30 ✅
+
+[09:41:45] 整体文章库统计
+- 总数: 971 篇 (较 08:39 上次 968 增 +3)
+  - news: 260
+  - tech: 668 (含 quant/tools/llm/ai-agent 子目录, 较 08:39 上次 666 增 +2)
+  - wealth/video/thoughts: 43
+- tiny<1.5KB 文件: 6 处 (与上次一致, 全部历史遗留)
+  - news 5 处: 2026-04-08 副业 969B / 2026-04-21 Web3 1151B / 2026-05-07 Web3 1314B / 2026-04-08 财经 989B / 2026-04-26 Web3 1379B
+  - tech 1 处: fincept-terminal 1310B (历史重写遗留)
+- 空文件: 0
+- draft:true 文章: 3 篇 (历史合规) — content/posts/tech/autocli-ai-command-line-generator-guide.md + content/posts/tech/polybot-polymarket-cli-trading-bot-guide.md + content/docs/Hugo使用教程.md
+- 缺 draft 字段文章: 全部 <2026-05-28 历史遗留, Hugo 默认 draft:false, 不影响发布
+
+[09:42:00] 新增文章检查
+- 已 commit: e00b53dd feat: 新增 mathVideoMaker 技术文章 (13507B / content/posts/mathvideomaker-ai-friendly-math-explainer-skill.md)
+- 未 commit 2 篇 tech (本轮新发现, frontmatter 全部 ✓):
+  - content/posts/tech/open-llm-vtuber-voice-llm-live2d-guide.md (27710B / 483行, draft:false, 2026-06-03T09:05, VAD/异步LLM)
+  - content/posts/tech/reconurge-flowsint-graph-osint-guide.md (21854B / 350行, draft:false, 2026-06-03T09:08, OSINT图谱)
+- skills/morning-report/ 新增 5 个未跟踪 helper: _cmc_changes.mjs / _cmc_fetch.mjs / _cmc_news.mjs / _final_link_check.mjs / _verify_articles.mjs (06-03 08:04-08:14, 与早报生成链路相关, 非文章内容损坏)
+
+[09:42:15] git 状态
+- 本地 head: e00b53dd (mathVideoMaker) — 较上次 2e5e068d 推进 1 commit
+- 自 08:39 上次心跳以来: 1 commit (mathVideoMaker 08:41 推入)
+- 工作区未提交: heartbeat-state.json 改动 + content 2 篇新 tech + skills 5 个 helper + 一些 workspace 配置文件
+- 远端同步: 未验证 (本轮仅做健康检查, 不做 push)
+
+[09:42:30] 早报生成状态 ⚠️
+- 2026-06-03 早报: 仍未生成 (09:41 较计划 07:30-08:30 窗口已延迟 1h11m)
+- 上次 08:39 心跳已标记, 本轮仍未启动
+- 计划窗口:
+  - 07:30 AI 新闻早报 → 缺失
+  - 08:00 经济财经早报 → 缺失
+  - 08:00 Web3 早报 → 缺失
+  - 08:30 AI 副业早报 → 缺失
+  - 09:00 早报质量核查 → 缺失
+- 可能性: (a) morning-report cron 链路未触发, (b) 心跳 cron 抢占了 morning-report 时间窗, (c) skills/morning-report/ 5 个新 helper (06-03 08:04-08:14) 改动后尚未推送触发
+- 建议: 下一窗口 (10:00 GitHub trending 窗口) 后补 2026-06-03 早报; 或下个 cron 周期自然触发
+
+[09:42:45] 心跳结论
+- 状态: ⚠️ 文章库健康, 但 2026-06-03 早报延迟 1h+ 仍未生成
+- 行动: 无 (本轮文章健康检查无修复任务; 早报延迟由 morning-report cron 自己处理)
+- 下次检查: 30 分钟后
