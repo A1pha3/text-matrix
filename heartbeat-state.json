@@ -50,9 +50,9 @@
     "note": "09:04窗口执行，17个趋势项目(Scrapling/compound-engineering-plugin/train-llm-from-scratch/VoxCPM/TradingAgents/oh-my-pi/build-your-own-x/fff/godot/MoneyPrinterTurbo/markitdown/hermes-webui/heretic/impeccable/harness/machine-learning-for-trading/supermemory)全部已有文章(content/posts/tech/)覆盖：scrapling-adaptive/compound-engineering-plugin-agent/fareedkhan-train/voxcpm2-tokenizer/tradingagents-multi-agent/oh-my-pi/codecrafters/fff.nvim/godot-engine/moneyprinterturbo/markitdown/hermes-webui/heretic/impeccable/harness-claude-code/stefan-jansen/supermemory。已对harness-claude-code(对应revfactory/harness)、voxcpm2、tradingagents、scrapling、markitdown等做内容关键词二次核验，全部对得上对应仓库。无新增文章，无需git push(无文章改动)。web_fetch被挡，使用curl+r.jina.ai+GitHub trending HTML直接抓取(17个Link组件全量)。"
   },
   "ai-news-morning": {
-    "lastRun": "2026-06-02",
-    "status": "completed",
-    "note": "2026-06-02生成，25条AI新闻（commit 82da826 远程/04d7507本地），覆盖Anthropic S-1/GTC台北/OpenAI机器人/VAST融资等。已远程仓库验证。"
+    "lastRun": "2026-06-03",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-03由主AI 10:10-10:20介入补做（morning-report cron 7:30/8:00/8:30/9:00窗口未触发），4份早报commit b49305a5。frontmatter date=2026-06-03T09:50:00+08:00（采用「当前时间-5分钟」新策略，避开Hugo「未来页面」规则）。关键URL抽样验证全200（华尔街见闻4/4+36kr 3/3+财政部+V2EX 3/3+cointelegraph）。同时morning-report skill升级v2.2.0(commit 5280f275)，固化date=实际写入时刻-5分钟的硬性规则"
   },
   "financial-morning-news": {
     "lastRun": "2026-06-02",
@@ -60,9 +60,9 @@
     "note": "2026-06-02生成，14条财经新闻（华尔街见闻+金十数据+新浪财经），覆盖Anthropic S-1/谷歌800亿增发/标普纳指八连涨/美光1000美元/慧与暴涨40%/奥特曼专访/伊朗封锁海峡/A股普涨等。14个链接全部200，已git push (04d7507) + 飞书文档54个block已追加。"
   },
   "ai-side-hustle-morning": {
-    "lastRun": "2026-06-02",
-    "status": "completed",
-    "note": "2026-06-02生成，7条V2EX AI相关真实机会(已逐条验证内容匹配): t/1217172 Agent开发工程师远程招聘、t/1217118 AI Infra SRE内推(vLLM/SGLang)、t/1217050 AI效能工程师多岗位、t/1216999 xAI Grok中文语音数据远程招聘、t/1217109 AI外包offer选择讨论、t/1216894 AI Coding实战感想、t/1216919 AI接管HR简历初筛讨论。已git push + 飞书30个block已追加。"
+    "lastRun": "2026-06-03",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-03由主AI 10:10-10:20介入补做（morning-report cron 7:30/8:00/8:30/9:00窗口未触发），4份早报commit b49305a5。frontmatter date=2026-06-03T09:50:00+08:00（采用「当前时间-5分钟」新策略，避开Hugo「未来页面」规则）。关键URL抽样验证全200（华尔街见闻4/4+36kr 3/3+财政部+V2EX 3/3+cointelegraph）。同时morning-report skill升级v2.2.0(commit 5280f275)，固化date=实际写入时刻-5分钟的硬性规则"
   },
   "web3-morning-news": {
     "lastRun": "2026-06-02",
@@ -81,7 +81,22 @@
   },
   "文章健康检查": {
     "lastRun": "2026-06-03",
+    "status": "completed_with_warning",
+    "note": "2026-06-03 09:41窗口执行(距08:39窗口1h02m): 4份2026-06-02早报frontmatter全部✓ (draft:false, AI 08:17/财经 08:30/Web3 08:00/副业 08:30), 抽样12条链接(HN×3/36kr×2/wallstreetcn×3/cointelegraph×3/V2EX×3)curl 5s超时全部200 OK, 无断链。文章库总数971篇(较08:39的968增+3: mathvideomaker e00b53dd已commit + open-llm-vtuber 27710B/483行draft:false + reconurge-flowsint 21854B/350行draft:false两篇tech未commit, frontmatter全✓), news 260/tech 668/others 43, tiny<1.5KB文件6处(4旧早报+fincept-terminal+web3-2026-04-21,与上次一致), draft:true 3篇(autocli/polybot/Hugo使用教程, 历史合规), 缺draft字段全部<2026-05-28历史遗留(Hugo默认draft:false不影响)。git head e00b53dd(较上次2e5e068d推进1commit=mathVideoMaker 08:41推入)。⚠️ 2026-06-03早报目录仍未生成(09:41较计划07:30-08:30窗口延迟1h11m, 上次08:39窗口也已标记, 持续未启动), skills/morning-report/新增5个未跟踪helper (06-03 08:04-08:14) 或为相关改动, 建议下个morning-report cron窗口或10:00 GitHub trending窗口后补生成。日志已追加memory/article-checklog-20260603.log。无内容损坏, 文章库健康, 仅早报延迟项需关注。"
+  },
+  "financial-morning": {
+    "lastRun": "2026-06-03",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-03由主AI 10:10-10:20介入补做（morning-report cron 7:30/8:00/8:30/9:00窗口未触发），4份早报commit b49305a5。frontmatter date=2026-06-03T09:50:00+08:00（采用「当前时间-5分钟」新策略，避开Hugo「未来页面」规则）。关键URL抽样验证全200（华尔街见闻4/4+36kr 3/3+财政部+V2EX 3/3+cointelegraph）。同时morning-report skill升级v2.2.0(commit 5280f275)，固化date=实际写入时刻-5分钟的硬性规则"
+  },
+  "web3-morning": {
+    "lastRun": "2026-06-03",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-03由主AI 10:10-10:20介入补做（morning-report cron 7:30/8:00/8:30/9:00窗口未触发），4份早报commit b49305a5。frontmatter date=2026-06-03T09:50:00+08:00（采用「当前时间-5分钟」新策略，避开Hugo「未来页面」规则）。关键URL抽样验证全200（华尔街见闻4/4+36kr 3/3+财政部+V2EX 3/3+cointelegraph）。同时morning-report skill升级v2.2.0(commit 5280f275)，固化date=实际写入时刻-5分钟的硬性规则"
+  },
+  "morning-report-date-fix": {
+    "lastRun": "2026-06-03",
     "status": "completed",
-    "note": "02:00窗口检查: 4份早报(2026-06-02) frontmatter全部✓ (draft:false, date均≤当前时间, AI 08:17/财经 08:30/Web3 08:00/副业 08:30)。本轮抽样链接核查(curl+UA 6s超时): AI 8/8、财经 8/8、Web3 8/8、副业 7/7 = 31/31 全部200 OK (取样覆盖36kr/华尔街见闻/金十/cointelegraph/V2EX等核心源)。整体文章库981篇(news 260/tech 698/wealth 9/video 12/thoughts 2), tiny<1.5KB文件7处(5处news历史占位+1处tech fincept-terminal 1.3KB+1处wealth _index.md)—全部为历史遗留(2026-04~05期间),之前已标记待优化,本轮不变。git status: skills/hugo-writer/SKILL.md v2.5.0→v2.6.0(新增财富自由分类)未提交(本地draft改动,非内容损坏); origin/main head 2d81c175(2个新commit在rebase后落地:GitHub Merge Queue指南+7篇tech博客polish)。2026-06-03早报未生成(07:30前正常)。凌晨低风险窗口,系统健康,无紧急问题,本轮无需修复。"
+    "note": "2026-06-03故障：financial-morning-news date=08:30:00 晚于Hugo构建时间08:27:53 → 整篇被排除。根因：template.md无date统一规则，agent填「计划时刻」。修复：SKILL.md+template.md新增「date=实际写入时刻-5分钟」硬性规则，版本v2.1.2→v2.2.0 (commit 5280f275)"
   }
 }
