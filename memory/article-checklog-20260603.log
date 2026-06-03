@@ -201,3 +201,18 @@
 - 状态: ✅ 文章库健康, 4份早报持续稳定, Hugo未来页面问题未复发
 - 行动: 无 (无内容损坏, 早报URL可达, 仅2篇tech草稿待commit, 不阻塞健康检查)
 - 下次检查: 30分钟后（12:20窗口）
+
+[12:52:50] 文章健康检查 12:51 窗口（cron heartbeat 触发）
+- 状态: ✅ 全部稳定, 4 份 2026-06-03 早报持续可用, Hugo 未来页面问题未复发
+- 早报: ai-morning 14238B/draft:false/date=08:00:00✅ + financial-morning 15670B/draft:false/date=09:50:00✅ + ai-side-hustle 6298B/draft:false/date=08:20:00✅ + web3-morning 10967B/draft:false/date=08:00:00✅
+- 全部 date<12:52:00, 已过 Hugo「未来页面」临界点
+- 源站抽样 6/6 全 200 (wallstreetcn/v2ex/cointelegraph/36kr/jin10/cls.cn 本次 cls 也返回 200 ✅)
+- 文章库: 960 (tech 667 / news 264 / 视频+思想+财富 29)
+- tiny<1.5KB: 7处 (全部 2026-05-28 历史, 1 旧 web3-morning 2026-04-26 1379B 已确认)
+- draft:true: 1 篇 (autocli 合规)
+- TOML frontmatter: 16 文件 (全部 draft:false 合规, 较 11:49 复盘基线无变化)
+- 无 draft 字段: 128 文件 (全部 <2026-05-28 历史遗留)
+- git: HEAD 0e6aeb6c 领先 origin/main 1 commit (11:50 窗口 log)
+- 本地未提交: 2 份 tech 草稿 (open-llm-vtuber 27710B + reconurge-flowsint 21854B, frontmatter ✅) + skills/5个 helper mjs + 工作区配置
+- 行动: 无
+- 下次检查: ~30 分钟后 (13:20 窗口)
