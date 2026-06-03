@@ -82,7 +82,7 @@
   "文章健康检查": {
     "lastRun": "2026-06-03",
     "status": "completed",
-    "note": "2026-06-03 12:51窗口(cron heartbeat触发): 4份2026-06-03早报持续稳定✅ (ai-morning 14238B/draft:false/date=08:00:00✅ + financial-morning 15670B/draft:false/date=09:50:00✅ + ai-side-hustle 6298B/draft:false/date=08:20:00✅ + web3-morning 10967B/draft:false/date=08:00:00✅), 全部date<12:52已过Hugo「未来页面」临界点。源站抽样6/6全200(wallstreetcn/v2ex/cointelegraph/36kr/jin10/cls.cn本次cls也返回200✅)。文章库960篇(tech 667/news 264/视频+思想+财富 29), tiny<1.5KB 7处(全部2026-05-28历史, 1处web3-morning 2026-04-26 1379B已确认), draft:true 1篇(autocli合规, astro-framework正文含draft:true字样但frontmatter为false, 实际不计入), TOML frontmatter 16文件(全部draft:false合规, 11:49复盘基线6实为欠计, 准确基线为16), 缺draft字段128文件(全部<2026-05-28历史遗留)。HEAD 0e6aeb6c领先origin/main 1 commit (11:50窗口log), 本地未提交2份tech草稿(open-llm-vtuber 27710B/483行+reconurge-flowsint 21854B/350行, frontmatter全✅) + 5个morning-report helper mjs。无内容损坏, 文章库健康, 早报稳定+URL可达, Hugo「未来页面」故障持续未复发。日志已追加memory/article-checklog-20260603.log (新+13行)。"
+    "note": "2026-06-03 19:11窗口(cron 850cf6e9 heartbeat 第5次): 4份早报持续稳定(ai-morning 14238B+financial-morning 15670B+ai-side-hustle-morning 6298B+web3-morning 10967B, 全部draft:false, date<19:11已过Hugo「未来页面」临界点), 文章库963(tech 670/news 264/video 12/wealth 9/thoughts 2), draft:false=834/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史), TOML=16合规, Tiny<1.5KB=7(全部历史), 源站抽样3/3全200(v2ex/cointelegraph/wallstreetcn), HEAD=561acdbb本地落后origin/main 1 commit(ce4564b3 16:09 远端推的8篇tech补全, 非本地未推送), content/无untracked/无modified, 与17:05状态完全一致, 无新动作, 仅追加日志。"
   },
   "financial-morning": {
     "lastRun": "2026-06-03",
@@ -113,5 +113,15 @@
     "lastRun": "2026-06-03",
     "status": "completed",
     "note": "2026-06-03 15:57窗口(cron 850cf6e9 heartbeat 第3次): 4份早报持续稳定(ai-morning 14238B+financial-morning 15670B+ai-side-hustle 6298B+web3-morning 10967B, draft:false, date<15:57已过Hugo「未来页面」临界点), 文章库963(tech 670/news 264/video 12/wealth 9/thoughts 2), draft:false=834/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史), TOML=16合替, Tiny<1.5KB=7(全部历史), 源站抽样3/3全200(wallstreetcn/v2ex/cointelegraph), HEAD=2768b63a=origin/main无未推送(较14:55推进2 commit: fab74b17 ai-avatar-system v2精修+2768b63a trending 15:00窗口log), content/无untracked, 与14:55状态完全一致, 无新动作, 仅追加日志(+7行)。"
+  },
+  "文章健康检查-17:05": {
+    "lastRun": "2026-06-03",
+    "status": "completed",
+    "note": "2026-06-03 17:05窗口(cron 850cf6e9 heartbeat 第4次): 4份早报持续稳定(ai-morning 14238B+financial-morning 15670B+ai-side-hustle 6298B+web3-morning 10967B, draft:false, date<17:05已过Hugo「未来页面」临界点), 文章库963(tech 670/news 264/video 12/wealth 9/thoughts 2), draft:false=834/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史), TOML=16合规, Tiny<1.5KB=7(全部历史), 源站抽样4/4全200(wallstreetcn/v2ex/cointelegraph/36kr), HEAD=561acdbb本地落后origin/main 1 commit(ce4564b3 mini 16:09「批量更新技术博客,新增阅读目标与自测内容」, 远端别人推的8篇tech内容补全, 非本地未推送), content/无untracked, 与15:57状态完全一致, 无新动作, 仅追加日志。"
+  },
+  "文章健康检查-19:11": {
+    "lastRun": "2026-06-03",
+    "status": "completed",
+    "note": "2026-06-03 19:11窗口(cron 850cf6e9 heartbeat 第5次): 4份早报持续稳定(ai-morning 14238B+financial-morning 15670B+ai-side-hustle-morning 6298B+web3-morning 10967B, 全部draft:false, date<19:11已过Hugo「未来页面」临界点), 文章库963(tech 670/news 264/video 12/wealth 9/thoughts 2), draft:false=834/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史), TOML=16合规, Tiny<1.5KB=7(全部历史), 源站抽样3/3全200(v2ex/cointelegraph/wallstreetcn), HEAD=561acdbb本地落后origin/main 1 commit(ce4564b3 16:09 远端推的8篇tech补全, 非本地未推送), content/无untracked/无modified, 与17:05状态完全一致, 无新动作, 仅追加日志。"
   }
 }

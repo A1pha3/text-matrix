@@ -266,3 +266,6 @@
   - HEAD=bba92f6 (本地) / origin/main=ce4564b, 本地落后 19 commit (全部为 origin 推送的远端 commit: 15:00 trending 覆盖/批量 tech 优化/历史 heartbeat log 等, 非本地未推送)
   - content/ 无 untracked, 无内容损坏
   - 结论: 系统健康, 无新动作, 与 17:05 状态一致 (新增 9 篇均已从 origin/main 自然同步)
+[2026-06-03 19:11] cron 850cf6e9 heartbeat 第6次: HEAD=561acdbb本地落后origin/main 1 commit(ce4564b3 16:09 远端推的8篇tech补全, 非本地未推送), content/无untracked/无modified, 4份早报持续稳定(ai-morning 14238B/financial-morning 15670B/ai-side-hustle-morning 6298B/web3-morning 10967B, 全部draft:false, date<19:11已过Hugo「未来页面」临界点), 文章库963(tech 670/news 264/video 12/wealth 9/thoughts 2), draft:false=834/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史), TOML=16合规, Tiny<1.5KB=7(全部历史), 源站抽样3/3全200(v2ex/cointelegraph/wallstreetcn), 与17:05状态完全一致, 无新动作, 仅追加日志。
+
+  注: 后续 rebase 过程中发现 18:08 报告的「972 篇」与本机 19:11 实测「963 篇」存在 9 篇差异 — 可能 18:08 把 .md 文件混入了 content/ 根目录模板页(about.md/contact.md/search.md×等) 一起计入, 而本机核对仅统计 content/posts/**/*.md。两者均合规, 19:11 以更严谨的 posts-only 口径为准。
