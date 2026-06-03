@@ -216,3 +216,32 @@
 - 本地未提交: 2 份 tech 草稿 (open-llm-vtuber 27710B + reconurge-flowsint 21854B, frontmatter ✅) + skills/5个 helper mjs + 工作区配置
 - 行动: 无
 - 下次检查: ~30 分钟后 (13:20 窗口)
+
+[14:55] heartbeat 第2次 (cron: 850cf6e9-662e-424e-b561-a40e5f2f0a2b):
+  - 4份早报持续稳定 (14238B/15670B/6298B/10967B, draft:false, date<14:55已过Hugo「未来页面」临界点)
+  - 文章库 963 (tech 670 / news 264 / video 12 / wealth 9 / thoughts 2), 总数稳定
+  - draft:false=834 / draft:true=1 (autocli历史) / 缺draft=128 (全部<2026-05-28历史)
+  - TOML frontmatter=16 (合规)，Tiny<1.5KB=7 (全部历史)
+  - 源站抽样 6/6 全 200 (wallstreetcn/v2ex/cointelegraph/36kr/jin10/cls.cn)
+  - HEAD=14b7c56b = origin/main, 无未推送 commit
+  - content/ 无 untracked，无内容损坏
+  - 与 12:51 检查完全一致，无新动作
+
+[15:00] heartbeat：GitHub trending 15:00 窗口 (cron: fa9a9284)
+- 抓取: r.jina.ai → /tmp/trending-20260603-15.html (326 行)
+- 11 个趋势仓库解析 (按 stars today 排序):
+  1. chopratejas/headroom (Python, 7,397 ★, +1,265 today) → headroom-context-compression-ai-agents.md ✅
+  2. microsoft/markitdown (Python, 141,749 ★, +3,618 today) → markitdown-microsoft-document-to-markdown-guide.md ✅
+  3. affaan-m/ECC (JavaScript, 204,487 ★, +1,533 today) → ecc-agent-harness-performance-optimization-guide.md + ecc-agentic-work-system-for-ai-agents.md ✅
+  4. D4Vinci/Scrapling (Python, 59,457 ★, +1,182 today) → scrapling-adaptive-web-scraping-framework-guide.md ✅
+  5. nesquena/hermes-webui (Python, 12,741 ★, +1,722 today) → hermes-webui-hermes-agent-web-interface-guide.md ✅
+  6. reconurge/flowsint (TypeScript, 4,656 ★, +124 today) → reconurge-flowsint-graph-osint-guide.md ✅
+  7. OpenBMB/VoxCPM (Python, 25,315 ★, +783 today) → voxcpm2-tokenizer-free-tts-guide.md ✅
+  8. stefan-jansen/machine-learning-for-trading (Jupyter, 18,665 ★, +574 today) → stefan-jansen-machine-learning-for-trading-guide.md ✅
+  9. jamwithai/production-agentic-rag-course (Python, 6,492 ★, +30 today) → jamwithai-production-agentic-rag-course.md ✅
+  10. supermemoryai/supermemory (TypeScript, 24,807 ★, +680 today) → supermemory-ai-memory-context-engine-guide.md ✅
+  11. Open-LLM-VTuber/Open-LLM-VTuber (Python, 8,556 ★, +66 today) → open-llm-vtuber-voice-llm-live2d-guide.md ✅
+- 覆盖度: 11/11 = 100% 已覆盖 ✅
+- 新增文章: 0 (无需写作)
+- git push: 无 (无文件改动)
+- 结论: 全部已覆盖, 今日 trending 趋势未引入新仓库, 与 11:30/15:07/20:00 三窗口基线一致
