@@ -164,3 +164,40 @@
 - 状态: ✅ 文章库健康, 4 份 2026-06-03 早报全部到位, Hugo 未来页面问题已解决
 - 行动: 无 (无内容损坏, 早报已自愈, 仅 2 篇 tech 草稿待 commit, 不阻塞健康检查)
 - 下次检查: 30 分钟后
+
+[11:49:30] heartbeat触发：文章健康检查 (cron: 850cf6e9, 距上次10:45窗口+1h04m)
+- 触发时间: 2026-06-03 11:49 (Asia/Shanghai)
+- 范围: 4份2026-06-03早报状态复核 + 文章库整体健康监控
+
+[11:49:35] 4份早报 frontmatter 复核（draft/date 关键字段）
+- ai-morning-news-2026-06-03.md: title✅/date=2026-06-03T08:00:00+08:00✅/draft:false✅ (14238B)
+- financial-morning-news-2026-06-03.md: title✅/date=2026-06-03T09:50:00+08:00✅/draft:false✅ (15670B)
+- ai-side-hustle-morning-2026-06-03.md: title✅/date=2026-06-03T08:20:00+08:00✅/draft:false✅ (6298B)
+- web3-morning-news-2026-06-03.md: title✅/date=2026-06-03T08:00:00+08:00✅/draft:false✅ (10967B)
+- 全部date < 11:49:30 已过Hugo「未来页面」临界点 ✅
+
+[11:49:40] 早报关键源站可达性抽样 (8源/8URL)
+- 200 https://wallstreetcn.com/
+- 200 https://www.v2ex.com/?tab=hot
+- 200 https://cointelegraph.com/
+- 200 https://www.36kr.com/
+- 200 https://www.jin10.com/
+- 418 https://www.cls.cn/ (财联社反爬, 浏览器+UA可正常抓取, 不影响)
+- 早报内具体URL抽样4个全200: 36kr.com/p/3835853624964229 / wallstreetcn.com/articles/3773650 / v2ex.com/t/1217384 / coinmarketcap.com/community/en/articles/6a1ed2a9649c6415f7d2b9a4
+
+[11:49:45] 文章库整体健康（与10:45窗口基线一致）
+- 总数: 960 (tech 667 / news 264 / 视频+思想+财富 29)
+- tiny<1.5KB: 6处 (4旧早报+fincept-terminal+wealth/_index, 历史一致)
+- draft:true: 2篇 (autocli合规+astro-framework 草稿)
+- 无draft字段: 128文件（全部<2026-05-28历史遗留）
+- TOML frontmatter: 6文件 (全部draft:false合规)
+
+[11:49:50] git 状态
+- HEAD: 43790b35 (log: 10:45 窗口) == 领先 origin/main 1 个 commit
+- 本地未提交: 2 份 tech 草稿 (open-llm-vtuber 27710B/483行 + reconurge-flowsint 21854B/350行) + skills 5 个 helper mjs + 工作区配置 (HEARTBEAT.md/IDENTITY.md/SOUL.md 等) + 多个子目录
+- 性质: tech 草稿 frontmatter 全 ✅, 可在下个 git push 窗口一起提交
+
+[11:50:00] 心跳结论
+- 状态: ✅ 文章库健康, 4份早报持续稳定, Hugo未来页面问题未复发
+- 行动: 无 (无内容损坏, 早报URL可达, 仅2篇tech草稿待commit, 不阻塞健康检查)
+- 下次检查: 30分钟后（12:20窗口）
