@@ -50,22 +50,26 @@ flowchart TD
 
 前 3 层（STT、LLM、TTS）独立看都不稀缺，主流 LLM 应用都这么做。仓库作者把差异化押在了第 4 层（Sentence Splitter）和第 5 层（WebSocket 推送）上 —— 这两层在多数同类项目里要么没做，要么做得粗糙，结果就是"能跑但慢"。AvatarAI 把 sentence-level chunking 写成了本能反应，浏览器在每个 chunk 完成后立即播，第 0 帧不等 LLM 完整跑完。
 
-## 4 阶段 Pipeline：每个阶段的瓶颈
+## 流式架构的 3 个支柱
 
-AvatarAI 的端到端对话拆成 4 阶段。每阶段瓶颈不同，不能均匀优化：
+仓库的差异化集中在 3 个工程选择上：4 阶段 pipeline、持久化 worker、句子级流式推送。每一项单看都不复杂，但合起来让 AvatarAI 在 218 stars 里做到了多数同类项目做不到的"实时感"。
 
-| 阶段 | 模型 | 典型耗时 | 瓶颈 | 优化空间 |
+### 支柱 1：4 阶段 pipeline
+
+端到端对话拆成 4 阶段，每阶段瓶颈不同——不是均匀优化：
+
+| 阶段 | 模型 | 典型耗时（来源） | 瓶颈 | 优化选项 |
 |------|------|----------|------|----------|
-| **STT** | Whisper（`faster-whisper`） | 0.3-1.5s（10s 音频，base 模型，GPU） | 模型精度 vs 速度 | `base` 折中；`large-v3` 翻 4 倍 |
-| **LLM** | Claude Sonnet 4 / GPT-4o / Llama 3 | 1-3s（流式，首 token ~300ms） | API 网络延迟 + token 限速 | 切 Ollama 本地免网络延迟 |
-| **TTS** | XTTS v2 | 0.5-1.5s/句 | 0.1-0.3s 合成 + GPU 调度 | multi-GPU 排队 |
-| **唇形同步** | MuseTalk V1.5 | 0.8-1.2s/句（GPU）；30-90s/句（CPU） | **单卡 GPU 串行** | 多 worker 平行 + 批处理 |
+| **STT** | Whisper `faster-whisper` | 0.3-1.5s（10s 音频，base，GPU） | 精度 vs 速度 | `base` 折中；`large-v3` 翻 4 倍 |
+| **LLM** | Claude Sonnet 4 / GPT-4o / Llama 3 | 1-3s（流式，首 token ~300ms） | API 网络 + token 限速 | 切 Ollama 免网络 |
+| **TTS** | XTTS v2 | 0.5-1.5s/句 | 合成 + GPU 调度 | multi-GPU 排队 |
+| **唇形同步** | MuseTalk V1.5 | 0.8-1.2s/句 GPU；30-90s/句 CPU | **单卡串行** | 多 worker 平行 + 批处理 |
 
-**最贵的是唇形同步**。CPU 上 30-90s/句 几乎不可用；GPU 上也要近 1 秒。仓库 README 明说："CPU is 30-50× slower"。**没有 GPU 就没有真"实时"**，这是 AvatarAI 的硬件门槛。
+最贵的是唇形同步：CPU 30-90s/句完全不可用，GPU 也要近 1 秒。README 原话 "CPU is 30-50× slower"——没有 GPU 就没有真"实时"。
 
-## 持久化 MuseTalk Worker
+### 支柱 2：持久化 MuseTalk Worker
 
-仓库 `backend/models/MuseTalk/scripts/musetalk_worker.py` 是这套架构里最值得展开的一个文件：
+`backend/models/MuseTalk/scripts/musetalk_worker.py` 是这套架构里最值得展开的一个文件：
 
 ```python
 # 伪代码：worker.py 核心逻辑
@@ -82,17 +86,13 @@ class MuseTalkWorker:
         return self.lip_sync.generate(audio, face)
 ```
 
-**为什么"持久化 worker"是核心？**
+唇形同步模型加载一次约 60s（GPU）/ 5min（CPU）。HTTP 短调用模式每次对话都得重载 9GB 模型，GPU 显存搬进搬出；持久化 worker 让模型只加载一次、常驻显存，接 WebSocket 接受任务，结果推回主进程。
 
-- 唇形同步模型加载一次 ~60s（GPU）/ ~5min（CPU）
-- 如果用 HTTP 短调用模式，每次对话都得重载，9GB 模型搬进搬出 GPU 显存
-- 持久化 worker 让模型**只加载一次**，常驻显存；接 WebSocket 接受任务，结果直接推回主进程
+这套模式在 LLM serving 圈叫 "model warm pool" 或 "sticky worker"——vLLM、Triton、TensorRT-LLM 都在用同样的思路：模型只加载一次，任务排队进 worker，不让 I/O 拖慢推理。AvatarAI 把同样的思路套到 MuseTalk 上，9GB 模型常驻 A10G 显存，一次加载永久在线。
 
-这套模式在 LLM serving 圈叫 **"model warm pool"** 或 **"sticky worker"**——vLLM、Triton、TensorRT-LLM 都在用同样的思路：模型只加载一次，任务排队进 worker，不让 I/O 拖慢推理。AvatarAI 把同样的思路套到了 MuseTalk 上，9GB 模型常驻 A10G 显存，9GB 一次加载、永久在线。
+### 支柱 3：WebSocket sentence-chunk streaming
 
-## 句子级流式：让"实时感"成立
-
-AvatarAI 把"实时"做出来的关键是 **WebSocket 上的 sentence-chunk streaming**：
+把"实时"做出来的关键是 WebSocket 上的句子级切片推送：
 
 ```json
 // Server → Client WS 消息序列
@@ -122,20 +122,14 @@ AvatarAI 把"实时"做出来的关键是 **WebSocket 上的 sentence-chunk stre
 }
 ```
 
-**关键设计选择**：
+4 个设计选择（来自 README 与源码）：
 
-1. **句子级切片**：LLM 输出完整文本后，按句号/问号/感叹号切分；不是等 LLM 完整跑完再一次性处理
-2. **流式推送**：每个 chunk 完成后立即通过 WebSocket 推到浏览器，浏览器**边下边播**
-3. **首帧 2-4s**：在 `g5.xlarge` 上首视频片段约 2-4 秒完成（README 原话："< 2–4 s first chunk on AWS GPU"）
-4. **空闲动画**：等待时浏览器播 CSS breathing animation（**用户感知不到"卡"**）
+1. **句子级切片**：LLM 输出完整文本后按 `.!?` 切分，不是等 LLM 跑完一次性处理
+2. **流式推送**：每 chunk 完成后立即推 WebSocket，浏览器边下边播
+3. **首帧 2-4s**：g5.xlarge 上首视频片段约 2-4 秒（README 原话："< 2–4 s first chunk on AWS GPU"）
+4. **空闲动画**：等待时浏览器播 CSS breathing animation，**用户感知不到"卡"**
 
-这套设计带来了三个不同层面的改善：
-
-- 用户感知延迟降到首 chunk 时间（2-4s），不再是 LLM 完整响应时间
-- 长答案（3-5 句）的后几句在第 1 句播放时后台跑，端到端不串行
-- chunk 之间播 idle animation，体验上"永远有反馈"
-
-没有 sentence-chunk 的方案需要等所有句子 TTS + 唇形同步完成才能播放首帧，3 句答案通常 10s+。AvatarAI 把这个数字压到 2-4s——同样数量的模型、同样的硬件，只换了"切片 + 流式"的写法。
+这套设计让用户感知延迟降到首 chunk 时间（2-4s），不再卡 LLM 完整响应时间；长答案（3-5 句）后几句在第 1 句播放时后台跑，端到端不串行；chunk 之间播 idle animation，体验上"永远有反馈"。
 
 ## Benchmark 解读：测什么、不能推出什么
 
@@ -255,6 +249,20 @@ T+4.7s: chunk 1 推到浏览器 → 用户看到完整答案
 
 端到端首帧延迟：~3.7s。这个数字看上去比"30 FPS 理论值"还低，但用户实际感知到的是"3-4 秒内 avatar 开始说话"——3-4 秒在心理上已经算"实时"的范围，远低于 10s+ 的同类方案。
 
+## 常见误区（README 没说透的事）
+
+下表 5 个误区都是按 README 字面跑会踩的坑——分事实和原因两层拆开：
+
+| 误区 | 事实 | 原因 | 如何避免 |
+|------|------|------|----------|
+| **"CPU 也能实时"** | README 写"runs 100% locally"，但 MuseTalk CPU 30-90s/句 | 9GB 模型未量化、CPU 指令集未优化 | 必上 GPU；或量化 INT8 验证 |
+| **"30 FPS = 30 FPS 体验"** | MuseTalk 单独 30 FPS；端到端实则更低 | 串行 pipeline 中 TTS/WS 也在用 GPU | 测端到端 FPS，不要只读 MuseTalk 数字 |
+| **"Whisper 越大越准"** | large-v3 精度高但速度翻 4 倍 | 端到端延迟反而高 | 实战用 `base`/`small` 折中 |
+| **"多用户就能多用户"** | 仓库未给并发基准；单 worker 串行 | GPU 显存与 worker 强绑 | 需多 worker 手动起多进程 |
+| **"不需 GPU 就能离线"** | 离线 ≠ 不需 GPU | MuseTalk 模型本身就 9GB | "本地运行"需 GPU，本地非 GPU = 不可用 |
+
+**为什么要拆这层**——README 表达偏营销（"production-ready"、"real-time"），但仓库本身不验证多并发、不解释 CPU 实时伪命题。踩坑 5 个是社区问题列表里高频出现的。
+
 ## 仓库元数据
 
 | 维度 | 取值 | 验证来源 |
@@ -300,6 +308,45 @@ T+4.7s: chunk 1 推到浏览器 → 用户看到完整答案
 8. **生产化**：JWT 鉴权、rate limit、Sentry、Prometheus 都已经内置
 
 **第 3-5 步是做到"100% 离线"的关键**。完成这步后，AvatarAI 才算"数据本地不外发"。
+
+### 部署自检清单
+
+跑通后别开心太早，下面 7 项是常见暗坑，按顺序过：
+
+```bash
+# 1. GPU 可见性
+docker exec avatar-backend python -c "import torch; print(torch.cuda.is_available())"
+# 期望: True (on g5.xlarge)
+
+# 2. MuseTalk 模型完整加载
+ls -lh backend/models/MuseTalk/checkpoints/
+# 期望: musetalk.safetensors 约 2.1GB + 多个 0.1-0.5GB 辅助模型
+
+# 3. WebSocket 联通
+wscat -c ws://localhost:8000/ws/session/test
+> {"type": "text", "text": "Hello"}
+# 期望: transcription + message + video_chunk 序列
+
+# 4. LLM 可用
+docker logs avatar-backend | grep "LLM provider"
+# 期望: LLM_PROVIDER=anthropic 加载成功
+
+# 5. TTS 语音克隆生效
+curl -X POST http://localhost:8000/api/v1/voices/clone \
+  -F "audio=@test.wav" -F "name=test" -F "language=en"
+# 期望: 200 OK + voice_id 返回
+
+# 6. 端到端首帧 < 5s
+# 发送文本后计时到第一个 video_chunk 到达
+docker logs avatar-backend | grep "first_chunk"
+# 期望: first_chunk < 5000ms
+
+# 7. 唇形同步有效
+# 重点检查: 嘴角动与语音同步
+# 如不同步, 检查 AVATAR_ENGINE=musetalk 已设置
+```
+
+**如果 6 超 5s**——多半是 MuseTalk worker 冷启动、GPU 调度、模型未加载完整三种之一，着 `nvidia-smi` 看显存占用是 9GB 还是低于此数。
 
 ## 与同类项目的差异
 
