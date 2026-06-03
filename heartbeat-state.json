@@ -1,8 +1,8 @@
 {
   "github-trending-03": {
-    "lastRun": "2026-06-02",
-    "status": "completed",
-    "note": "03:05窗口执行，17个趋势项目中有15个已有文章覆盖(markitdown/nesquena/hermes-webui/supermemory/MoneyPrinterTurbo/Scrapling/impeccable/heretic/compound-engineering-plugin/TradingAgents/harness/oh-my-pi/VoxCPM/train-llm-from-scoding/fff/build-your-own-x)，2个缺失：godotengine/godot与stefan-jansen/machine-learning-for-trading。已为两者各写1篇技术文章(push commit 0bd0846)，飞书文档：C6tNdEel0o2U1KxrDNSc0Uugnze(Google)与EDB9dOyX0oo3bkxA8RicIuIMnQe(ML4T)"
+    "lastRun": "2026-06-03",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-03由主AI 12:50-13:05介入补做，commit 797a9c3c (2篇未跟踪文章) + 228c879b (2篇新文章: headroom 7K stars + jamwithai 6.5K stars)。12:44拉取GitHub trending daily，识别 12 仓库中 9 个已覆盖，2 个未 commit，2 个新增 (chopratejas/headroom 7034 stars + jamwithai/production-agentic-rag-course 6456 stars)。同时未跟踪文章 Open-LLM-VTuber 483行 + reconurge flowsint 350行一并 commit。"
   },
   "browser-memory-cleanup": {
     "lastRun": "2026-06-01",
@@ -10,9 +10,9 @@
     "note": "03:00窗口执行失败，Chrome CDP WebSocket连接失败(Chrome未开启remote debugging)，跳过"
   },
   "github-trending-10": {
-    "lastRun": "2026-06-02",
-    "status": "all_already_covered",
-    "note": "10:03窗口执行，curl直连GitHub trending成功(无CDP)，17个趋势项目全部已有文章(content/posts/tech/)覆盖(microsoft/markitdown→markitdown-microsoft-document-to-markdown-guide.md、nesquena/hermes-webui→hermes-webui-hermes-agent-web-interface-guide.md、supermemoryai/supermemory→supermemory-ai-memory-context-engine-guide.md、harry0703/MoneyPrinterTurbo→moneyprinterturbo-ai-short-video-generation-guide.md、D4Vinci/Scrapling→scrapling-adaptive-web-scraping-framework-guide.md、pbakaus/impeccable→impeccable-ai-design-guide.md、p-e-w/heretic→heretic-full-analysis.md、EveryInc/compound-engineering-plugin→compound-engineering-plugin-agent-workflow-guide.md、TauricResearch/TradingAgents→tradingagents-multi-agent-crypto-trading-framework-guide.md、revfactory/harness→harness-claude-code-multi-agent-team-architecture-guide.md、godotengine/godot→godot-engine-cross-platform-game-engine-guide.md、can1357/oh-my-pi→oh-my-pi-ai-coding-agent-guide.md、OpenBMB/VoxCPM→voxcpm2-tokenizer-free-tts-guide.md、FareedKhan-dev/train-llm-from-scratch→fareedkhan-train-llm-from-scratch-guide.md、stefan-jansen/machine-learning-for-trading→stefan-jansen-machine-learning-for-trading-guide.md、dmtrKovalenko/fff→fff.nvim-ai-neovim-file-search-guide.md、codecrafters-io/build-your-own-x→codecrafters-build-your-own-x-programming-guide.md)，无需写文章"
+    "lastRun": "2026-06-03",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-03由主AI 12:50-13:05介入补做，commit 797a9c3c (2篇未跟踪文章) + 228c879b (2篇新文章: headroom 7K stars + jamwithai 6.5K stars)。12:44拉取GitHub trending daily，识别 12 仓库中 9 个已覆盖，2 个未 commit，2 个新增 (chopratejas/headroom 7034 stars + jamwithai/production-agentic-rag-course 6456 stars)。同时未跟踪文章 Open-LLM-VTuber 483行 + reconurge flowsint 350行一并 commit。"
   },
   "github-trending-11": {
     "lastRun": "2026-06-02",
@@ -40,14 +40,14 @@
     "note": "21:05窗口执行(验证isolated-HEARTBEAT cron),feishu_wiki get+feishu_doc read成功,主文档(OZWudOLFioz642xHMOIcg24lnVd)500 blocks/61K+字符/4K+行,block类型分布Page×1/Heading1×2/Heading2×25/Heading3×23/Text×182/Table×17/TableCell×130/Divider×30/Ordered×48/Bullet×40/Quote×2,5项检查全部通过(存在✅/非空✅/逻辑✅/深度✅/分类✅),10+主要分类覆盖(入门基础/大模型&Agent/OpenClaw&工具/AI赚钱实战/内容创作/技术教程/AI安全/Polymarket/V2EX赚钱/Superlinear Academy),近期新增(2026-04-27)Cua/TypeScript Go/PostHog/RTK/Free Claude Code/PPT Master/RAG-Anything/OpenSRE/Beads,revision_id=104,日志已追加memory/藏经阁检查日志.md"
   },
   "github-trending-13": {
-    "lastRun": "2026-06-02",
-    "status": "all_already_covered",
-    "note": "13:00窗口执行，curl直连GitHub trending成功(无需CDP)，17个趋势项目全部已有文章(content/posts/tech/)覆盖(microsoft/markitdown→markitdown-microsoft-document-to-markdown-guide.md、nesquena/hermes-webui→hermes-webui-hermes-agent-web-interface-guide.md、supermemoryai/supermemory→supermemory-ai-memory-context-engine-guide.md、harry0703/MoneyPrinterTurbo→moneyprinterturbo-ai-short-video-generation-guide.md、D4Vinci/Scrapling→scrapling-adaptive-web-scraping-framework-guide.md、pbakaus/impeccable→impeccable-ai-design-guide.md、p-e-w/heretic→heretic-full-analysis.md、EveryInc/compound-engineering-plugin→compound-engineering-plugin-agent-workflow-guide.md、TauricResearch/TradingAgents→tradingagents-multi-agent-crypto-trading-framework-guide.md、revfactory/harness→harness-claude-code-multi-agent-team-architecture-guide.md、godotengine/godot→godot-engine-cross-platform-game-engine-guide.md、can1357/oh-my-pi→oh-my-pi-ai-coding-agent-guide.md、OpenBMB/VoxCPM→voxcpm2-tokenizer-free-tts-guide.md、FareedKhan-dev/train-llm-from-scratch→fareedkhan-train-llm-from-scratch-guide.md、stefan-jansen/machine-learning-for-trading→stefan-jansen-machine-learning-for-trading-guide.md、dmtrKovalenko/fff→fff.nvim-ai-neovim-file-search-guide.md、codecrafters-io/build-your-own-x→codecrafters-build-your-own-x-programming-guide.md)，并抽样核验各文章标题/描述均与对应仓库主题一致。无需新增文章或git push(无文件改动)"
+    "lastRun": "2026-06-03",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-03由主AI 12:50-13:05介入补做，commit 797a9c3c (2篇未跟踪文章) + 228c879b (2篇新文章: headroom 7K stars + jamwithai 6.5K stars)。12:44拉取GitHub trending daily，识别 12 仓库中 9 个已覆盖，2 个未 commit，2 个新增 (chopratejas/headroom 7034 stars + jamwithai/production-agentic-rag-course 6456 stars)。同时未跟踪文章 Open-LLM-VTuber 483行 + reconurge flowsint 350行一并 commit。"
   },
   "github-trending-09": {
-    "lastRun": "2026-06-02",
-    "status": "all_already_covered",
-    "note": "09:04窗口执行，17个趋势项目(Scrapling/compound-engineering-plugin/train-llm-from-scratch/VoxCPM/TradingAgents/oh-my-pi/build-your-own-x/fff/godot/MoneyPrinterTurbo/markitdown/hermes-webui/heretic/impeccable/harness/machine-learning-for-trading/supermemory)全部已有文章(content/posts/tech/)覆盖：scrapling-adaptive/compound-engineering-plugin-agent/fareedkhan-train/voxcpm2-tokenizer/tradingagents-multi-agent/oh-my-pi/codecrafters/fff.nvim/godot-engine/moneyprinterturbo/markitdown/hermes-webui/heretic/impeccable/harness-claude-code/stefan-jansen/supermemory。已对harness-claude-code(对应revfactory/harness)、voxcpm2、tradingagents、scrapling、markitdown等做内容关键词二次核验，全部对得上对应仓库。无新增文章，无需git push(无文章改动)。web_fetch被挡，使用curl+r.jina.ai+GitHub trending HTML直接抓取(17个Link组件全量)。"
+    "lastRun": "2026-06-03",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-03由主AI 12:50-13:05介入补做，commit 797a9c3c (2篇未跟踪文章) + 228c879b (2篇新文章: headroom 7K stars + jamwithai 6.5K stars)。12:44拉取GitHub trending daily，识别 12 仓库中 9 个已覆盖，2 个未 commit，2 个新增 (chopratejas/headroom 7034 stars + jamwithai/production-agentic-rag-course 6456 stars)。同时未跟踪文章 Open-LLM-VTuber 483行 + reconurge flowsint 350行一并 commit。"
   },
   "ai-news-morning": {
     "lastRun": "2026-06-03",
@@ -99,9 +99,9 @@
     "status": "completed",
     "note": "2026-06-03故障：financial-morning-news date=08:30:00 晚于Hugo构建时间08:27:53 → 整篇被排除。根因：template.md无date统一规则，agent填「计划时刻」。修复：SKILL.md+template.md新增「date=实际写入时刻-5分钟」硬性规则，版本v2.1.2→v2.2.0 (commit 5280f275)"
   },
-  "github-trending-13": {
+  "trending-2026-06-03-makeup": {
     "lastRun": "2026-06-03",
     "status": "completed",
-    "note": "13:04窗口执行(主AI介入)，curl直连GitHub trending成功(无需CDP)，11个趋势项目(chopratejas/headroom/microsoft/markitdown/affaan-m/ECC/D4Vinci/Scrapling/nesquena/hermes-webui/reconurge/flowsint/OpenBMB/VoxCPM/stefan-jansen/machine-learning-for-trading/jamwithai/production-agentic-rag-course/supermemoryai/supermemory/Open-LLM-VTuber/Open-LLM-VTuber)全部已有文章(content/posts/tech/)覆盖(headroom→headroom-context-compression-ai-agents.md/markitdown→markitdown-microsoft-document-to-markdown-guide.md/ECC→ecc-agent-harness-performance-optimization-guide.md/Scrapling→scrapling-adaptive-web-scraping-framework-guide.md/hermes-webui→hermes-webui-hermes-agent-web-interface-guide.md/flowsint→reconurge-flowsint-graph-osint-guide.md/VoxCPM→voxcpm2-tokenizer-free-tts-guide.md/ML4T→stefan-jansen-machine-learning-for-trading-guide.md/jamwithai→jamwithai-production-agentic-rag-course.md/supermemory→supermemory-ai-memory-context-engine-guide.md/Open-LLM-VTuber→open-llm-vtuber-voice-llm-live2d-guide.md)，并抽样核验各文章frontmatter(title/date/draft)均与对应仓库主题一致、文件体量(155-641行/7-27KB)充足。顺带commit并push 12:55窗口未提交的2篇trending草稿(headroom 249行/12656B + jamwithai 195行/9218B，frontmatter date=2026-06-03T12:55:00+08:00 ✅已过Hugo临界点)。无新增文章需求，git commit提交。"
+    "note": "2026-06-03 12:44 师傅询问 trending 任务状态时发现 cron 链路今日全断（morning-report + github-trending 同时断），主AI 主动补做：2 篇未 commit 文章 + 2 篇新仓库文章共 4 篇，commit 797a9c3c + 228c879b。15:00/18:00/20:00/23:00 后续窗口待 cron 链路自愈后自动执行。"
   }
 }
