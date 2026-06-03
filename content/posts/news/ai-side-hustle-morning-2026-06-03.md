@@ -1,11 +1,11 @@
 ---
 title: "AI副业早报 2026-06-03"
-date: "2026-06-03T09:50:00+08:00"
+date: 2026-06-03T08:20:00+08:00
 slug: ai-side-hustle-morning-2026-06-03
-description: "2026年6月3日 AI 副业早报：V2EX 5条24h内AI相关真实机会（Codex Pro 池Brivionix新站内测、OpenAI账号风控警告、Codex登录需二次验证、Anthropic生态工具讨论、AI应用上线咨询贴）。"
+description: "2026年6月3日 AI 副业早报：V2EX 24h内7条AI副业（AI 交易终端设计师、Agent 远程岗、vLLM 内推、$15 vibecoder 外包、FDE 趋势、远程工作网站案例）。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "Codex", "OpenAI", "远程工作"]
+tags: ["AI副业", "招聘", "V2EX", "远程工作", "AI编程"]
 hiddenFromHomePage: true
 ---
 
@@ -15,68 +15,61 @@ hiddenFromHomePage: true
 
 ## 💼 招聘/求职
 
-### [新站内测] Brivionix（Codex Pro 池）— GPT-5.5 / 5.4 / 5.3，回帖留 ID 送 $10
+### [招聘｜远程全职] Product Designer / UIUX Designer - SmartX AI-powered trading terminal（华人团队）
 来源: V2EX
-发布者: CtrlAltDeleteMe
-原文: [原文](https://www.v2ex.com/t/1217405)
+发布者: amberGuo
+原文: [原文](https://www.v2ex.com/t/1217384)
+摘要: SmartX 是面向预测市场与链上交易的 AI-powered 智能交易终端，正在招一名全职远程 UI/UX 设计师，负责交易页、市场详情、Signal 页、数据看板、AI 分析模块等核心产品体验。JD 写明要 Figma 组件化能力、复杂 Dashboard 设计经验、ChatGPT/Cursor/Lovable/v0 等 AI 工具熟练度，英文可作工作语言，附作品集投递至邮箱或 TG（@AmberKuo_O），2-3 工作日内回复，2-3 轮线上面试。华人加密团队、AI 产品+交易工具双背景加成。
 
-> 站内测的 Codex Pro 池子，集成 GPT-5.5 / 5.4 / 5.3 多个版本供测试。回帖留下你的 V2EX ID 即送 $10 额度。适合重度 Codex 用户体验最新模型、做应用对比测评。
-
-### OpenAI 提升账号风控警告！
+### [上海] 德国 venture builder 招 AI Platform Engineer（团队刚从普吉团建回来）
 来源: V2EX
-发布者: fallimmortal
-原文: [原文](https://www.v2ex.com/t/1217285)
+发布者: thenetcircle
+原文: [原文](https://www.v2ex.com/t/1203427)
+摘要: 总部在 Barcelona/Berlin/Shanghai 的 venture builder 正在招 AI Platform Engineer，要求英文简历投递至 [email protected]。岗位描述里明确写了"we don't just build ventures, we create impact"，团队把 venture 跑通到百万级用户后再扩展。整篇帖子由普吉团建游记+大象保护营地+查龙寺打头,读起来不像硬招聘,更像团队文化宣传——对想"work hard, play harder"的 AI 工程师是稀有信号。
 
-> OpenAI 近期对账号风控全面升级，多个开发者反馈出现"账号被临时冻结""API 密钥失效"等问题。讨论区整理了 5 类常见风控触发场景与 3 套应对方案（多账号隔离、独立 IP 段、企业认证通道）。**做 AI 应用/服务副业需关注**：单账号依赖的副业项目风险上升。
-
-### 天塌了。Codex 登录要二次验证
+### [招聘] ai 方向工程师（Agent 开发工程师，远程办公）
 来源: V2EX
-发布者: frank1256
-原文: [原文](https://www.v2ex.com/t/1217218)
+发布者: freemenL
+原文: [原文](https://www.v2ex.com/t/1217172)
+摘要: 12 条 JD 把岗位拆得很细：负责 AI 智能客服、内部 AI 工具、AI 数字人获客；要求搭建 RAG / 知识库问答 / 工具调用 / 意图识别 / 线索分级,并覆盖 AgenticWorkflows、Multi-agent Orchestration、AgentOps（评估+可观测+成本+延迟监控）等生产级能力。硬性要求 3 年以上开发、熟悉 OpenAI/Claude/Gemini/DeepSeek API、Python/Go 至少一门,加分项包括 LangChain 系生态和 AI 客服/数字人项目经验。
 
-> OpenAI Codex 登录新增二次验证环节，对靠多账号切换刷量的副业玩法是直接打击。讨论区有用户分享**合规替代方案**：用企业账号 + 团队管理后台做权限分配。
+### ai infra sre 内推（vLLM / SGLang 推理引擎）
+来源: V2EX
+发布者: RyanBeta
+原文: [原文](https://www.v2ex.com/t/1217118)
+摘要: 内部 JD 直接外发，要求"深入理解 vLLM/SGLang 等主流引擎机制,优化推理服务稳定性与资源效率",并期望候选人能搭出 Metrics/Profiling/Tracing 一体的性能回归自动化平台。职责还包括高可用架构、故障应急、容量评估、限流降级、OOM/延迟抖动/软死锁闭环。投递走 italent 内推链接（neitui.italent.cn/AIPOWER/sharejobs/detail?shareId=1ebaacf1...），评论区已有候选人追问薪资范围，是当下国内 AI Infra 圈难得的明示岗位。
+
+### [招聘] vibecoder/软件开发人员 - 时薪 $15 美元，按周 USDT 结算
+来源: V2EX
+发布者: alex84852
+原文: [原文](https://www.v2ex.com/t/1216798)
+摘要: 招"无开发背景但熟悉 AI 工具+MCP+GitHub"的 vibecoder，参与网站/应用的设计与 coding，薪资按周 USDT 支付。发帖人是美籍华人，帖子用翻译腔写成，下个月第一个项目是网站设计，候选人最好熟悉 /impeccable /taste-skill 和 GSAP 动画库。评论区已有人贴出 openvid.dev 营销素材工具需求，对想用 vibe coding 接海外小单的人是相对低门槛的入口。
+
+## 💰 赚钱机会 / 行业观察
+
+### AI 做的远程工作网站"远程岛"：有朋友反馈通过它找到了远程工作
+来源: V2EX
+发布者: lovis
+原文: [原文](https://www.v2ex.com/t/1217312)
+摘要: 楼主自述从"自己用"开始做远程工作聚合站"远程岛",核心编码由 AI 完成,但问题排查、细节优化、部署、架构设计、展示效果仍花了大量时间。帖子给出了真实的项目侧写：不需注册、岗位更新频繁、目前偏 IT 程序员方向;已有人通过该站找到远程工作,共同特征是"经常刷、脸皮厚、英语敢说、不怕面试"。对想用 AI 独立做"招聘/岗位聚合"小产品的人来说，是一个可参考的 V2EX 流量+海外远程需求的复刻样本。
+
+### 行业观察：OpenAI 和 Anthropic 开始往客户公司派驻工程师（FDE 模式复活）
+来源: V2EX
+发布者: zengdan2024
+原文: [原文](https://www.v2ex.com/t/1217425)
+摘要: 长文分析 OpenAI/Anthropic 组建 FDE（Forward Deployed Engineer, 前沿部署工程师）团队的趋势——把工程师直接派到客户公司驻场,帮客户搭 AI 系统。核心观点：AI 落地瓶颈不在 API 在"翻译",FDE 用 3 个月驻场把客户业务/数据/合规"翻译"成 agent workflow / RAG / eval 策略;但结构性问题在于 vendor FDE 必然绑定自家模型,本质是一次精心包装的 vendor lock-in。对想切入"AI 落地咨询+驻场实施"赛道的独立工程师,这是当下最值得跟进的行业信号。
 
 ---
 
-## 🛠️ 工具与生态
+🦞 每日09:00自动更新
 
-### Anthropic 生态工具讨论：Claude Code + MCP 实战对比
-来源: V2EX
-发布者: 待补充
-原文: [待补充 V2EX AI 节点]
+**数据来源**：V2EX
 
-> V2EX AI 节点近期高热度话题：用 Claude Code + MCP（Model Context Protocol）做企业级 AI 应用实战。开发者分享了 4 套生产级 MCP server 模板、3 个真实企业落地案例（CRM / BI / DevOps）。
-
----
-
-## 💡 副业机会
-
-### Codex 应用上线咨询：单人 24h 内能否跑通"AI 自动代码审查"产品
-来源: V2EX
-发布者: 待补充
-原文: [待补充 V2EX AI 节点]
-
-> 有开发者咨询：基于 OpenAI Codex + GitHub Action 做"AI 自动代码审查" SaaS，单人团队 24 小时内能否跑通 MVP？讨论区给出 3 套低成本方案（Serverless + GitHub App + Stripe 订阅），最快 6 小时可上线。
-
----
-
-## 📊 今日副业雷达
-
-| 方向 | 信号 | 建议 |
-|------|------|------|
-| Codex Pro 池体验 | 站内测 + 补贴 | 适合重度用户薅羊毛 + 测评内容创作 |
-| AI 风控合规方案 | 多账号依赖风险上升 | 转型企业账号 + 团队管理 |
-| Claude Code + MCP | 企业级应用机会 | 适合 B 端定制开发副业 |
-| Codex 衍生 SaaS | 需求明确、工具成熟 | 单人 MVP 6-24 小时可上线 |
-
----
-
-## ⚠️ 副业风险提示
-
-- **账号风控升级**：OpenAI、Anthropic 都在收紧多账号行为，单账号依赖的副业项目需提前做合规重构
-- **二次验证普及**：Codex 等核心工具新增 2FA，靠自动化脚本批量操作的副业路径基本封死
-- **企业认证通道**：做 To B 副业时，建议优先申请 OpenAI/Anthropic 企业认证，避免被风控误伤
-
----
-
-> 📌 提示：以上机会来自 V2EX 公开讨论，已逐条核验 URL 可达。请结合自身技能与风险偏好评估，量力而行。
+**⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
+- ✅ https://www.v2ex.com/t/1217384 - 2026-06-02 20:58:47 发布，SmartX 远程 UI/UX 招聘，amberGuo
+- ✅ https://www.v2ex.com/t/1203427 - 2026-06-02 14:52:59 发布，德国 venture builder 招 AI Platform Engineer，thenetcircle
+- ✅ https://www.v2ex.com/t/1217172 - 2026-06-02 13:48:46 发布，Agent 开发远程工程师招聘，freemenL
+- ✅ https://www.v2ex.com/t/1217118 - 2026-06-02 12:54:24 发布，AI Infra SRE 内推 vLLM/SGLang，RyanBeta
+- ✅ https://www.v2ex.com/t/1216798 - 2026-06-02 13:16:04 发布，vibecoder 时薪 $15 USDT 招聘，alex84852
+- ✅ https://www.v2ex.com/t/1217312 - 2026-06-02 22:41:44 发布，AI 做的远程工作网站"远程岛"案例，lovis
+- ✅ https://www.v2ex.com/t/1217425 - 2026-06-02 22:43:44 发布，OpenAI/Anthropic FDE 趋势深度文，zengdan2024
