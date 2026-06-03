@@ -131,3 +131,36 @@
 - 状态: ⚠️ 文章库健康, 但 2026-06-03 早报延迟 1h+ 仍未生成
 - 行动: 无 (本轮文章健康检查无修复任务; 早报延迟由 morning-report cron 自己处理)
 - 下次检查: 30 分钟后
+
+[10:45:00] 文章健康检查 (cron heartbeat, 距上次 09:42 = 1h03m)
+- 触发: cron 850cf6e9 heartbeat 唤醒
+- 早报状态: 2026-06-03 4 份已补做完成 ✅ (主 AI 10:10-10:20 介入, commit 1b30838c 补做 → 8b08a6cc revert → 649a5512 date 修正)
+  - ai-morning-news 2026-06-03 (166行, 44链接, draft:false, date=2026-06-03T08:00:00+08:00) ✅
+  - financial-morning-news 2026-06-03 (149行, 34链接, draft:false, date=2026-06-03T09:50:00+08:00 修正后) ✅
+  - web3-morning-news 2026-06-03 (130行, 20链接, draft:false, date=2026-06-03T08:00:00+08:00) ✅
+  - ai-side-hustle-morning 2026-06-03 (75行, 14链接, draft:false, date=2026-06-03T08:20:00+08:00) ✅
+- frontmatter 抽查: 4 份全部 ✓ (title/slug/description/draft:false/categories/tags/hiddenFromHomePage:true)
+- date 校验: 当前 10:45 > 全部 4 份 date, 已过 Hugo 「未来页面」临界点 ✅
+- skills/morning-report v2.2.0 修复 (commit 80425fa8) 已落地, 新增「date=实际写入时刻-5分钟」硬性规则
+
+[10:45:30] 关键 URL 健康抽样 (curl -I -m 5 -L)
+- 7 个源 URL: wallstreetcn 301 ✅, v2ex 200 ✅, cointelegraph 200 ✅, 36kr 200 ✅, cnyes 308 ✅, cls 200 ✅, jin10 200 ✅
+- 4 个早报具体文章 URL: 36kr/p/3835853624964229 200 ✅, v2ex/t/1217384 200 ✅, 其余略
+- 无断链
+
+[10:46:00] 文章库完整性
+- 库总数: 960 (.md)  tech 667 + news 264 + 视频/思想/财富 29
+- tiny<1.5KB: 6 处 (与上次一致, 4 旧早报 + fincept-terminal 1.3KB + wealth/_index.md 0.6KB, 历史遗留)
+- draft:true: 1 篇 (autocli-ai-command-line-generator-guide.md, 历史合规)
+- 缺 draft 字段: 128 文件 (全部 <2026-05-28 历史遗留, Hugo 默认 draft:false 不影响)
+- TOML frontmatter (+++): 6 个文件 (video/ai-agents-jeff-su, web3-morning 2026-05-05/27, tech/leonxlnx-taste, tech/openstock, tech/blender-mcp 等), 全部 draft:false, 格式合规
+
+[10:46:30] git 状态
+- HEAD: 649a5512 (financial-morning-news date 修正) == origin/main ✅ 同步
+- 本地未提交: 2 份 tech 新文章 (open-llm-vtuber 27710B/483行 + reconurge-flowsint 21854B/350行) + skills 5 个 helper mjs (06-03 08:04-08:14) + .openclaw/HEARTBEAT.md/IDENTITY.md/SOUL.md/USER.md/TOOLS.md 工作区配置 + FluxA-AI-Wallet-MCP/SmolML/memU/github/chrome-cdp-skill 等子目录
+- 性质: 2 篇 tech 草稿已写完 frontmatter 全 ✅, 适合在下个 git push 窗口一起提交
+
+[10:47:00] 心跳结论
+- 状态: ✅ 文章库健康, 4 份 2026-06-03 早报全部到位, Hugo 未来页面问题已解决
+- 行动: 无 (无内容损坏, 早报已自愈, 仅 2 篇 tech 草稿待 commit, 不阻塞健康检查)
+- 下次检查: 30 分钟后
