@@ -2,7 +2,7 @@
 name: morning-report
 description: 为 text-matrix 生成四类中文早报:AI 新闻早报、经济财经早报、AI 副业早报、Web3 早报。触发词:"做早报""写早报""morning report""AI 新闻早报""财经早报""副业早报""Web3 早报""加密货币早报"。强制 24h 时间窗、Browser 逐条核链、V2EX 验真、Hugo 快讯 frontmatter 输出。
 metadata:
-   version: 2.1.2
+   version: 2.2.0
    tags: ["morning-report", "news", "hugo", "verification", "workflow"]
 ---
 
@@ -11,6 +11,20 @@ metadata:
 ## 核心原则
 
 与通用聚合器的区别:**每条新闻必须通过 Browser 逐条打开原文页核验**,禁止直接使用列表页、摘要页或猜测 URL。
+
+## ⚠️ frontmatter `date` 硬性规则（2026-06-03 故障后新增）
+
+**绝对禁止**：把「计划发布时刻」（如 08:00 / 08:30 / 09:00）作为 `date` 填入 frontmatter。
+
+**原因**：Hugo 生产构建按 `date` 过滤页面，**`date` 晚于构建时间**的页面会被判为「未来页面」并整篇排除，不会出现在 public/ 输出中。如果实际写入磁盘是 08:27、但 date 填 08:30，Hugo 提前构建会在 08:27 扫到该文件并排除。
+
+**正确做法**：
+
+- `date` = **「实际写入磁盘时刻」 - 5 分钟**（如实际生成 10:00 → date 填 09:55）
+- 公式：`TZ=Asia/Shanghai date -v-5M "+%Y-%m-%dT%H:%M:%S+08:00"`
+- 验证：生成后用 `git log -1 --format=%cd` 确认 commit 实际时间，`frontmatter date < commit 时间` 才算合规
+
+**故障示例（2026-06-03 08:27:53 UTC+8）**：`content/posts/news/financial-morning-news-2026-06-03.md` 的 `date: 2026-06-03T08:30:00+08:00`（计划时刻）晚于 Hugo 构建时间 08:27:53，整篇被排除；该问题已由主 AI 介入补做，date 改为 09:50 修复。
 
 ## 任务路由
 
