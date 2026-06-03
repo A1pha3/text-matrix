@@ -17,11 +17,33 @@ GitHub Merge Queue 解决的不是"怎么合 PR"，而是"多个 PR 同时就绪
 
 <!--more-->
 
+## 读完你会
+
+- [ ] 说清 Merge Queue 三条核心线（Batch、Group Merging、Stack）各自管什么、不管什么
+- [ ] 写一份能同时处理 `pull_request` 和 `merge_group` 事件的 GitHub Actions workflow
+- [ ] 判断自己团队的 PR 量和 CI 形态是否适合上 Merge Queue
+- [ ] 避开 batch 过大、分组误配、auto-merge 互斥这三个最常见的坑
+
+## 目录
+
+1. [先看全景：Merge Queue 里到底发生了什么](#一先看全景merge-queue-里到底发生了什么)
+2. [核心机制：Batch、Merge Group 与合并策略](#二核心机制batchmerge-group-与合并策略)
+3. [一次完整流转：从 PR 入队到合入](#三一次完整流转从-pr-入队到合入)
+4. [GitHub 原生配置](#四github-原生配置)
+5. [GitHub Actions 集成](#五github-actions-集成)
+6. [Group Merging：不同 PR 走不同通道](#六group-merging不同-pr-走不同通道)
+7. [Stack PR 与 Drop 行为](#七stack-pr-与-drop-行为)
+8. [附：github-merge-queue App 增强功能](#八附github-merge-queue-app-增强功能)
+9. [最佳实践](#九最佳实践)
+10. [故障排查](#十故障排查)
+11. [常见问题 (FAQ)](#十一常见问题-faq)
+12. [该不该上 Merge Queue：一份决策指南](#十二该不该上-merge-queue一份决策指南)
+
 ---
 
 ## 一、先看全景：Merge Queue 里到底发生了什么
 
-在深入配置之前，先建立一张系统地图。Merge Queue 的核心机制可以拆成三条线：
+先看一张系统地图，再看怎么配。Merge Queue 的核心机制可以拆成三条线：
 
 ```
                     ┌─────────────┐
@@ -51,8 +73,6 @@ GitHub Merge Queue 解决的不是"怎么合 PR"，而是"多个 PR 同时就绪
 | **Batch（批次）** | 把多个 PR 合并成一个临时 commit 一起跑 CI，减少重复验证 | 不管 PR 之间有没有代码冲突 |
 | **Group Merging（分组）** | 不同类型 PR 走不同验证通道（文档改动不跑 e2e） | 不管分组间的优先级排序 |
 | **Stack（栈式 PR）** | 按依赖顺序逐个合入，不会把依赖链打乱 | 不检测循环依赖，也不自动 rebase 栈中 PR |
-
-接下来逐条展开。
 
 ---
 
@@ -125,7 +145,7 @@ PR #203 (无标签)     → standard 组  → 跑完整 CI
 
 #203 的作者修了迁移脚本，推了新 commit。#203 重新入队，#202 仍在队列中等待。下一轮 batch 重新编组验证，这次两个都通过 → 批量合入。
 
-这个案例说明两件事：batch 共享 CI 结果能省时间，但一个 PR 失败会拖累同 batch 的其他 PR。也是为什么 `max_group_size` 不宜太大。
+这事说明两点：batch 共享 CI 结果能省时间，但一个 PR 失败会拖累同 batch 的其他 PR。也是为什么 `max_group_size` 不宜太大。
 
 ---
 
@@ -227,7 +247,7 @@ jobs:
         run: npm test
 ```
 
-关键点：`ref` 必须指向 `merge_group.sha`，这是包含整个 batch 的临时合并 commit，不是任何一个单独 PR 的 head。
+要点：`ref` 必须指向 `merge_group.sha`，这是包含整个 batch 的临时合并 commit，不是任何一个单独 PR 的 head。
 
 ### 5.2 同一 workflow 同时处理 PR 和 merge group
 
@@ -654,7 +674,70 @@ GitHub App 权限不足。在 App 权限设置中启用：
 
 ---
 
-## 十一、该不该上 Merge Queue：一份决策指南
+## 十一、常见问题 (FAQ)
+
+### Q1：我把一个新 commit 推到了已入队的 PR 上，队列会怎么处理？
+
+假设你的 PR #42 已经进了 merge queue 正在排队，这时你发现一个 typo，`git push` 了一个修正 commit。GitHub 会自动把 #42 从队列中移除，用最新 commit 重新入队——相当于从头排队。这是为了保证 CI 跑的是 PR 最新状态。
+
+如果你用的是 [github-merge-queue](https://github.com/apps/github-merge-queue) App，可以开启 `re-enqueue on push`，让它自动帮你重新加入而不需要手动操作。
+
+### Q2：Merge Queue 的 CI 红了，但我本地跑同样的测试全绿，怎么回事？
+
+CI 跑在 `merge_group_sha` 上——这是一个把 batch 内所有 PR 合并在一起的临时 commit。你本地跑的是自己的 PR 分支，没有和其他人的改动合并。最常见的原因：
+
+1. 你的 PR 和同 batch 里的另一个 PR 在合并后产生了集成问题（比如某个 shared util 被改了签名）
+2. 你的 workflow 在 `merge_group` 事件下 checkout 了错误的 ref
+
+排查方法：在 CI 日志里找到 `merge_group_sha`，本地 `git checkout` 这个 sha，重跑同样的命令。如果复现了，说明是 batch 合入后的冲突问题，需要和同 batch 的 PR 作者协调。
+
+### Q3：能只对部分 PR 启用 Merge Queue 吗？hotfix 我想绕过队列直接合。
+
+可以。Merge Queue 本身通过 label 触发——不给 hotfix PR 加 merge label，它就走传统合入流程。配合 Branch Protection Rules，你可以在 required status checks 里把 merge queue 设为"非强制"，这样不带 label 的 PR 不受队列约束。
+
+但注意：绕过队列直接 push 到 main 之前，确保你的 CI 也跑了——Branch Protection 的 required checks 仍然生效。
+
+### Q4：Merge Queue 和 Branch Protection 的 required_status_checks 打架了——队列过不了，说缺 check，怎么办？
+
+这是最常见的配置陷阱。Branch Protection 要求 provider 返回的 check 名称必须和 workflow 实际发回的名称精确匹配。当 workflow 同时触发 `pull_request` 和 `merge_group` 事件时，同一个 job 可能以不同 check 名称上报。
+
+解决方法：
+```yaml
+# Branch Protection 里配这两个：
+required_status_checks:
+  contexts:
+    - "ci/build"          # PR 事件返回的 check 名
+    - "ci/build (merge_group)"  # merge_group 事件返回的 check 名
+```
+
+或者在 workflow 里显式指定 check 名称：
+```yaml
+- name: Set merge group check status
+  if: github.event_name == 'merge_group'
+  uses: actions/github-script@v7
+  with:
+    script: |
+      github.rest.checks.create({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        name: 'ci/build',
+        head_sha: context.payload.merge_group.head_sha,
+        status: 'completed',
+        conclusion: 'success'
+      });
+```
+
+### Q5：Batch 里一个 PR CI 失败，整个 batch 都回退——能不能只踢掉失败的，保留其他的？
+
+原生 Merge Queue 不支持部分合入——这是一个设计选择，不是 bug。因为 batch 内所有 PR 共享同一个 `merge_group_sha`，CI 在这个合并后的代码上验证，无法简单拆分"谁通过谁不通过"。
+
+两种折中：
+1. 把 `max_group_size` 设小（比如 3），降低单个失败的波及面
+2. 把风险差异大的 PR 分到不同 merge group（比如 security 敏感改动用独立 group，`max_group_size=1`）
+
+---
+
+## 十二、该不该上 Merge Queue：一份决策指南
 
 Merge Queue 不是银弹。它的收益取决于你的团队形态。
 
@@ -678,6 +761,30 @@ Merge Queue 不是银弹。它的收益取决于你的团队形态。
 2. 确认无误后，逐步调大 `min_group_size` 到 2-5
 3. 引入 Group Merging，先把文档类 PR 分到 fast-track 通道
 4. 最后接入监控（队列深度告警、CI 失败率趋势）
+
+---
+
+## 自测：你是否理解了 Merge Queue
+
+1. **Merge Group 到底是什么？** CI 跑在哪个 commit 上——是每个 PR 的 head，还是一次性合并了 batch 内所有 PR 的临时 commit？
+   <details><summary>点击查看答案</summary>
+   Merge Group 是 GitHub 在验证阶段动态创建的临时合并 commit（`merge_group_sha`），把 batch 内所有 PR 合并到目标分支上。CI 跑在这个临时 commit 上，不是任何一个单独 PR 的 head。所以你在 workflow 里要 checkout `merge_group.head_sha` 而不是 `pull_request.head.sha`。
+   </details>
+
+2. **一个 batch 有 5 个 PR，其中第 3 个 CI 失败，会怎样？** 前 2 个会合入吗？后 2 个呢？
+   <details><summary>点击查看答案</summary>
+   整个 batch 标记失败，5 个 PR 都不会合入。这是 Merge Queue 的原子性保证——batch 内所有 PR 共享一次 CI 验证结果。失败后需要修复问题 PR，重新入队、重新编组、重新验证。
+   </details>
+
+3. **Stack PR（有依赖链的 PR 组）在 Merge Queue 中如何合入？** 是先合入底层 PR 还是顶层 PR？一次一个 batch 还是整个链一起？
+   <details><summary>点击查看答案</summary>
+   从底层到顶层，逐个合入。底层 PR（如 `#101: base main`）先单独编为一个 batch 合入 main，然后 `#102: base #101` 的 base 变成 main 后才可以合入，以此类推。一次一个 batch，不会把整个依赖链打乱。
+   </details>
+
+4. **什么情况下 Merge Queue 反而降低效率？** 列举至少两个场景。
+   <details><summary>点击查看答案</summary>
+   （1）团队 PR 量很小（每天 < 5 个），手动合入没有成为瓶颈，引入 Merge Queue 只是多了一套配置要维护。（2）CI 覆盖率低或 CI 不稳定（频繁假阳性），batch 中任意一个 CI 红都会拖累全组，反而比单独合入更慢。（3）`max_group_size` 设得过大（> 10），一个失败回滚成本太高，队列吞吐下降。
+   </details>
 
 ---
 

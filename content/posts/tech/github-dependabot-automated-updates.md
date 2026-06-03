@@ -10,6 +10,13 @@ draft: false
 
 Dependabot 解决的真正问题不是"自动发 PR"——而是把依赖更新的责任从人的记忆力转移到系统上。漏洞出现后小时级响应、版本落后自动追平，这些靠人盯 RSS 或手动 `npm outdated` 做不到。下面先把 Dependabot 的三条机制拆开，再逐条看怎么配、怎么用。
 
+**读完你会：**
+
+- 一眼区分 Dependabot 的三条独立机制——知道什么时候触发的是 Alerts、什么时候是 Version Updates、什么时候是 Security Updates，各自产出什么
+- 为一个真实仓库写出可运行的 `.github/dependabot.yml`，覆盖 schedule、ignore、分组、审查人这些常用配置项
+- 看到 Dependabot PR 时，判断它属于哪条机制、该走什么审查流程、能不能自动合并
+- 判断自己的项目该从哪个优先级开始落地 Dependabot——先开 Alerts、再配 Security Updates、后上 Version Updates
+
 | 机制 | 触发方式 | 产物 | 典型场景 |
 |---|---|---|---|
 | Dependabot Alerts | GitHub Advisory Database 匹配到漏洞 | Security 标签页告警 + 修复建议 | 发现 `lodash` CVE，知道该升到哪个版本 |
@@ -74,7 +81,7 @@ updates:
 
 ### 3. Security Updates
 
-这是 Alerts 和 Version Updates 之间的快速通道。当发现 Critical 或 High 级漏洞时，Dependabot 可以：
+Security Updates 绕过正常 schedule，只在出现 Critical 或 High 级漏洞时触发：
 
 - **自动发起紧急 PR**，不等待 schedule
 - **在 Branch Protection 允许的前提下直接合并**
@@ -281,7 +288,7 @@ updates:
 
 ## 七、一次安全漏洞从发现到修复的完整路径
 
-假设团队维护一个用 Express 4.18 的后端仓库，配置了 Dependabot 且开启了 Security Updates。下面是一次典型流转：
+以 Express 4.18 后端仓库为例，已开启 Security Updates：
 
 1. **漏洞入库**：Express 4.18 的一个 RCE 漏洞被收入 GitHub Advisory Database，标记为 Critical。
 2. **Alerts 触发**：GitHub 扫描仓库的 `package-lock.json`，发现依赖树包含 `express@4.18.2`，在 Security 标签页生成告警，同时通知仓库管理员。
@@ -357,11 +364,13 @@ jobs:
 
 ## 九、常见问题
 
-**Q: Dependabot 创建的 PR 会自动合并吗？**
+**Q: 团队维护 30 个微服务仓库，Dependabot 每周创建 40+ 个 PR——低风险更新能不能自动合入？**
 
-默认不会。Dependabot 只负责创建 PR，合并需要满足 Branch Protection Rules。如果需要自动合并低风险依赖，需要额外配置自动化规则。
+不能直接合入，需要额外配置。Dependabot 只负责把 PR 送到你面前，合并必须过 Branch Protection Rules。想让 patch 级开发依赖自动合入，需要两步：先在 `.github/dependabot.yml` 中用 `allow` 限定范围（比如 `dependency-type: "development"` 且 `update-types: ["version-update:semver-patch"]`），再配 GitHub Actions 或第三方 bot 在 CI 全绿时 auto-merge。生产依赖不建议走自动合并，哪怕 CI 全绿。
 
-**Q: 如何忽略某个依赖的更新？**
+**Q: monorepo 里 `lodash@4.17.20` 被一个 EOL 旧模块锁死了，在找到替代方案前不能动——怎么让 Dependabot 别再提这个 PR？**
+
+用 `ignore` 配置跳过特定版本：
 
 ```yaml
 ignore:
@@ -371,9 +380,11 @@ ignore:
     update-types: ["version-update:semver-major"]
 ```
 
-**Q: Dependabot 能处理私有依赖吗？**
+第一个 rule 按版本号精确跳过，第二个 rule 跳过所有大版本更新。如果你的项目不希望 Dependabot 对某个包提任何 PR，只写 `dependency-name` 不加 `versions` 即可。
 
-可以，但需要配置认证：
+**Q: 公司有私有 npm registry（`npm.mycompany.com`），Dependabot 能扫描里面的内部包吗？**
+
+可以，但需要配 registry 认证：
 
 ```yaml
 registries:
@@ -382,6 +393,16 @@ registries:
     url: "https://npm.mycompany.com"
     token: "${{ secrets.NPM_TOKEN }}"
 ```
+
+前提是私有 registry 实现了 npm registry API（应用程序接口）且包版本遵循 semver。如果内部包不走 semver 或 registry 不兼容标准 API，Dependabot 无法解析版本，需要换 Renovate 或自定义方案。
+
+**Q: Dependabot 和 Renovate 选哪个？**
+
+Dependabot 的优势是零额外服务、GitHub 原生集成、Security Alerts 直接联动——如果你的依赖生态不超过 3 种、不需要跨仓库统一配置、Security Updates 是刚需，Dependabot 就够用。Renovate 在以下场景更强：跨仓库共享 preset 配置、需要细粒度分组规则、依赖仪表盘展示、合并策略高度自定义。简化的判断标准：全在 GitHub 生态内 → Dependabot；跨 GitLab/Bitbucket 或需要统一治理 → Renovate。
+
+**Q: PR 数量太多看不过来怎么办？**
+
+三个手段组合使用：第一，用 `open-pull-requests-limit` 限制同时打开的 PR 数；第二，用 `groups` 把同类依赖打包进一个 PR（比如所有 ESLint 插件合成一个 "update dev tools" PR）；第三，调整 `schedule interval` ——把开发工具从 weekly 降到 monthly，减少噪音。如果 PR 仍然过多，回溯检查是否该用 `ignore` 跳过某些高频但不关键的依赖。
 
 ## 采用的优先级
 
@@ -393,6 +414,13 @@ Dependabot 的配置工作量和收益不是线性的。建议按以下顺序落
 4. **最后加分组和 auto-merge 策略**。前提是 CI 覆盖率够高——如果测试不足以拦住回归，auto-merge 反而引入风险。
 
 如果你的仓库依赖少、更新频率低（比如一个静态站点），Alerts 就够了，不需要配 Version Updates。Dependabot 的价值体现在依赖多、生态杂、安全要求高的项目上——配得越重，回报递减越明显。
+
+## 自测
+
+1. 你的仓库用的是 `requirements.txt`，Dependabot 的 `package-ecosystem` 应该填什么值？`directory` 应该填 `/` 还是 `/backend`？
+2. Dependabot Alerts 和 Security Updates 之间最本质的区别是什么？（不是"一个发告警一个发 PR"——而是时间维度上，Security Updates 绕过了什么？）
+3. 你收到一个标题为 `build(deps): bump express from 4.18.2 to 4.19.0` 的 PR——标题里哪两个前缀让你判断它来自 Dependabot？你能确认它是 Version Update 还是 Security Update 吗？
+4. 团队的一个 Markdown 文档站点没有任何运行时依赖——你应该只开 Alerts 还是配完整的 `.github/dependabot.yml`？给出理由。
 
 **相关资源：**
 
