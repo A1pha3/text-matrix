@@ -100,3 +100,26 @@
   - 最近commit(7d1299a4/1146a6b7/cbf56301)均为github-trending-15窗口,无异常
   - 与14:48状态对比:文章库966→977(+11), git同步维持(皆=origin/main), 无新动作
   - 评估:文章库稳定增长,四份早报健康,git同步,源站V2EX偶发不可达但不致命
+
+[2026-06-04 19:03:32] 文章健康检查 - cron 850cf6e9 heartbeat (18:57窗口, 第7次)
+  - 4份早报全部存在(ai/financial/ai-side-hustle/web3 2026-06-04, draft:false, date=13:20已过Hugo「未来页面」临界点5h+, 描述无内嵌引号)
+  - 文章库977(tech 680/news 268/thoughts 2/video 12/wealth 9, 与16:50的977完全一致)
+  - draft:false=848 / draft:true=1(autocli历史) / 缺draft=128(全部<2026-05-28历史) / TOML=22(包含video/tech历史+content/根md)
+  - 微小文章<1.5KB=7(全部历史,无新增)
+  - 未来日期文章=0
+  - 源站抽样(带UA, --max-time 8s): v2ex=200 / coingecko=200 / binance=200 / wallstreetcn=200 / cointelegraph=200 / 36kr=200 全200
+    * 不带UA时v2ex/coingecko/binance返回000(WAF/anti-bot拦截, v2ex响应含_wafchallengeid aliyun WAF脚本)
+    * 早报采集走web_fetch/带UA agent, 实际不受影响
+  - git 同步: 本地HEAD=a4fb6f12 (16:50日志commit), origin/main=1ca0a9e5
+    * 发现16:50→18:57之间, 师父在origin/main补推4个commit:
+      - 1ca0a9e5 fix(frontmatter): 再次修复 description 内嵌单引号 → 中文引号
+      - b697f4d6 fix(frontmatter): 修复 6 个文件 description 内嵌双引号导致的 Hugo YAML 解析失败
+      - 0a844941 fix(tech): AiToEarn v2 date 修复（17:00→16:53 避 Hugo 未来页面）
+      - 02018147 feat(tech): AiToEarn v2 精修到 S 级（91.5/100）
+    * 已git pull --rebase + git push, 1ca0a9e5..a4fb6f12 推送成功, 同步完成
+    * 验证: 4份早报2026-06-04 description均用中文引号, 无内嵌双/单引号
+  - content/ 无 untracked/modified (除4个.mjs skill脚本, 全部在skills/morning-report/_xxx.mjs, 历史未跟踪)
+  - 最近活动: 17:00 github-trending窗口(师父补做AiToEarn v2精修 + frontmatter批量修复), 18:57本cron
+  - 与16:50状态对比: 文章库977=977, git落后1→0→再领先1(已推送), 描述引号问题已修复
+  - 评估: 文章库稳定, 4份早报健康, git同步, 源站全200(带UA), 描述frontmatter问题已批量修复
+  - 行动: 仅追加日志, 无git commit需求(本窗口仅有日志更新, 与16:50日志无冲突)
