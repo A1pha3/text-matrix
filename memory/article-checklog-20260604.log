@@ -1,0 +1,76 @@
+[13:34:00] cron 850cf6e9 文章健康检查 #1 (2026-06-04 13:34 窗口)
+- 触发: cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
+- 距上次: 2026-06-03 23:18 → 2026-06-04 13:34 = 14h16m
+- 范围: 4 份 2026-06-04 早报 + 系统健康
+
+[13:34:10] ⚠️ 仓库结构变化发现
+- 历史 cron 一直检查 workspace/content/posts/news/ (4 早报 + 963 文章库)
+- 今日发现: 06-04 4 份早报实际存在于 github/text-matrix/content/posts/news/ (徒儿 13:30 补做后推入 commit 444c4c4)
+- workspace/content/ HEAD=7828ff8 (2026-05-28 冻结), 06-04 早报缺失
+- 判断: github/text-matrix/ 已成为 LIVE canonical source, workspace/content/ 是 stale mirror
+- 行动: 本次双轨核查, 后续 cron 需切换到 github/text-matrix/ 为准
+
+[13:34:20] 4 份 2026-06-04 早报 (github/text-matrix 视角, 即 LIVE site)
+- ai-morning-news-2026-06-04.md: 6286B, draft:false, date=2026-06-04T13:20:37+08:00 ✅ (76 行, 11 条)
+- financial-morning-news-2026-06-04.md: 6714B, draft:false, date=2026-06-04T13:20:37+08:00 ✅ (84 行, 10 条)
+- web3-morning-news-2026-06-04.md: 5869B, draft:false, date=2026-06-04T13:20:37+08:00 ✅ (74 行, 7 条)
+- ai-side-hustle-morning-2026-06-04.md: 5828B, draft:false, date=2026-06-04T13:20:37+08:00 ✅ (74 行, 6 条)
+- 全部 date < 13:34:00 已过 Hugo「未来页面」临界点 ✅
+- 全部符合 morning-report v2.2.0 写入时刻-5分钟 date 硬性规则 ✅
+
+[13:34:30] 实时链接抽样核查 (curl GET + UA, 5s 超时)
+- 36kr (AI 早报 4 条抽样): 4/4 = 200 ✅ (p/3837226424400514 + p/3837314291299464 + p/3837477714360960 + p/3837574746422145)
+- 36kr (AI 副业早报 4 条抽样): 4/4 = 200 ✅ (p/3837314291299464 + p/3837541611227398 + p/3837574746422145 + p/3838144949700865)
+- wallstreetcn (财经 4 条抽样): GET 200 ✅, HEAD 404 (站点反爬 HEAD, 不是真断链)
+- cointelegraph (Web3 抽样): bitcoin-falls-below-66k 200 ✅, bitmine-dividend 200 ✅, paybis-stablecoin 200 ✅
+- 备注: 头次抽到 web3-morning 中含 "反推" 误判为 URL (实际是 Markdown 文本, 不影响实际链接)
+- 结论: 4 份早报链接全可达 ✅
+
+[13:34:40] 源站健康
+- https://www.36kr.com/ → 200 ✅
+- https://cointelegraph.com/ → 200 ✅
+- https://www.v2ex.com/?tab=hot → 200 ✅
+- https://wallstreetcn.com/ → HEAD 404 (反爬, GET 200) ⚠️
+- https://www.jin10.com/ → (未抽样)
+- https://www.cls.cn/ → (未抽样)
+
+[13:34:50] 文章库整体健康 (github/text-matrix/ 视角, 即 LIVE site)
+- 总数: 970 .md
+  - news: 268 (含 2026-06-04 4 份补做后, 较 06-03 23:18 报告的 264 +4)
+  - tech: 673
+  - video: 12
+  - wealth: 9
+  - thoughts: 2
+  - 其他模板: 6 (about/contact/search/categories 等)
+- Tiny<1.5KB: 7 处 (与历史一致)
+  - news 5 处: 2026-04-08 副业 969B / 2026-04-08 财经 989B / 2026-04-21 Web3 1151B / 2026-05-07 Web3 1314B / 2026-04-26 Web3 1379B
+  - tech 1 处: fincept-terminal 1.3KB (历史重写遗留)
+  - wealth 1 处: _index.md 0.6KB
+- 空文件: 0
+- draft:true: 1 篇 (autocli-ai-command-line-generator-guide.md, 历史合规)
+- 缺 draft 字段: 128 文件 (全部 <2026-05-28 历史遗留, Hugo 默认 draft:false 不影响)
+- TOML frontmatter: 0 (全部为 YAML)
+
+[13:35:00] git 状态 (双轨)
+- 仓库 1: /Users/damon/.openclaw/workspace (OpenClaw workspace) HEAD=dd365bb9 = origin/main ✅
+  - 本地未提交: heartbeat-state.json + memory/article-checklog-20260604.log (本次新建)
+  - 与远端同步 ✅
+- 仓库 2: /Users/damon/.openclaw/workspace/github/text-matrix (LIVE Hugo site) HEAD=444c4c4 = origin/main ✅
+  - 工作区干净 ✅
+  - 13:30 补做 4 份 06-04 早报 commit 444c4c4 已同步远端 ✅
+- 仓库 3: /Users/damon/.openclaw/workspace/content (stale mirror) HEAD=7828ff8 (2026-05-28 冻结)
+  - 工作区有大量 uncommitted deletions (cron 历史未跟踪, 不影响健康检查)
+  - 06-04 早报未同步到此仓库 (历史 cron 一直在查这里, 可能是数据丢失隐患)
+
+[13:35:10] 早报生成状态
+- 2026-06-04 早报: ✅ 4 份已补做完成 (github/text-matrix 仓库 commit 444c4c4)
+- 06-04 cron 4 窗口 (06:10 副业 / 06:30 财经 / 06:50 AI 新闻 / 07:10 Web3) 漏发, 徒儿 13:20 手动补做
+- 已推送至 GitHub + 飞书文档
+
+[13:35:20] 心跳结论
+- 状态: ✅ LIVE site (github/text-matrix) 系统健康, 4 份 2026-06-04 早报到位
+- 隐患: ⚠️ workspace/content/ 仓库与 LIVE site 失同步 (06-04 早报未推入), 历史 cron 一直查 workspace/content/
+- 行动: 无紧急修复 (LIVE site 已正常)
+  - 后续: 建议 cron 文章健康检查切换到 github/text-matrix/ 为 canonical source
+  - 待师父确认是否要修 workspace/content/ 同步 (可能需 rebase 或重新 git pull)
+- 下次检查: ~30 分钟后 (14:00+ 窗口)

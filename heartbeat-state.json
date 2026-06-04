@@ -50,24 +50,24 @@
     "note": "2026-06-03由主AI 12:50-13:05介入补做，commit 797a9c3c (2篇未跟踪文章) + 228c879b (2篇新文章: headroom 7K stars + jamwithai 6.5K stars)。12:44拉取GitHub trending daily，识别 12 仓库中 9 个已覆盖，2 个未 commit，2 个新增 (chopratejas/headroom 7034 stars + jamwithai/production-agentic-rag-course 6456 stars)。同时未跟踪文章 Open-LLM-VTuber 483行 + reconurge flowsint 350行一并 commit。"
   },
   "ai-news-morning": {
-    "lastRun": "2026-06-03",
+    "lastRun": "2026-06-04",
     "status": "completed_by_main_ai",
-    "note": "2026-06-03由主AI 10:10-10:20介入补做（morning-report cron 7:30/8:00/8:30/9:00窗口未触发），4份早报commit b49305a5。frontmatter date=2026-06-03T09:50:00+08:00（采用「当前时间-5分钟」新策略，避开Hugo「未来页面」规则）。关键URL抽样验证全200（华尔街见闻4/4+36kr 3/3+财政部+V2EX 3/3+cointelegraph）。同时morning-report skill升级v2.2.0(commit 5280f275)，固化date=实际写入时刻-5分钟的硬性规则"
+    "note": "2026-06-04由主AI 13:30介入补做（4个子代理均超时），commit 444c4c4。AI新闻11条+财经10条+Web3 7条+副业6条事件衍生，26条外部链接全部200验证。frontmatter date=2026-06-04T13:20:37+08:00（写入时刻-5分钟）。源站故障：CoinGecko/Binance/CoinIndex价格API全部不可用；V2EX/HN/Reddit/PH直连+Chrome CDP双重不可用，副业采用事件衍生策略不编造社区帖。date 硬性规则通过。遗留：cron 系统性失效根因待排查。"
   },
   "financial-morning-news": {
-    "lastRun": "2026-06-02",
-    "status": "completed",
-    "note": "2026-06-02生成，14条财经新闻（华尔街见闻+金十数据+新浪财经），覆盖Anthropic S-1/谷歌800亿增发/标普纳指八连涨/美光1000美元/慧与暴涨40%/奥特曼专访/伊朗封锁海峡/A股普涨等。14个链接全部200，已git push (04d7507) + 飞书文档54个block已追加。"
+    "lastRun": "2026-06-04",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-04由主AI 13:30介入补做（4个子代理均超时），commit 444c4c4。AI新闻11条+财经10条+Web3 7条+副业6条事件衍生，26条外部链接全部200验证。frontmatter date=2026-06-04T13:20:37+08:00（写入时刻-5分钟）。源站故障：CoinGecko/Binance/CoinIndex价格API全部不可用；V2EX/HN/Reddit/PH直连+Chrome CDP双重不可用，副业采用事件衍生策略不编造社区帖。date 硬性规则通过。遗留：cron 系统性失效根因待排查。"
   },
   "ai-side-hustle-morning": {
-    "lastRun": "2026-06-03",
+    "lastRun": "2026-06-04",
     "status": "completed_by_main_ai",
-    "note": "2026-06-03由主AI 10:10-10:20介入补做（morning-report cron 7:30/8:00/8:30/9:00窗口未触发），4份早报commit b49305a5。frontmatter date=2026-06-03T09:50:00+08:00（采用「当前时间-5分钟」新策略，避开Hugo「未来页面」规则）。关键URL抽样验证全200（华尔街见闻4/4+36kr 3/3+财政部+V2EX 3/3+cointelegraph）。同时morning-report skill升级v2.2.0(commit 5280f275)，固化date=实际写入时刻-5分钟的硬性规则"
+    "note": "2026-06-04由主AI 13:30介入补做（4个子代理均超时），commit 444c4c4。AI新闻11条+财经10条+Web3 7条+副业6条事件衍生，26条外部链接全部200验证。frontmatter date=2026-06-04T13:20:37+08:00（写入时刻-5分钟）。源站故障：CoinGecko/Binance/CoinIndex价格API全部不可用；V2EX/HN/Reddit/PH直连+Chrome CDP双重不可用，副业采用事件衍生策略不编造社区帖。date 硬性规则通过。遗留：cron 系统性失效根因待排查。"
   },
   "web3-morning-news": {
-    "lastRun": "2026-06-02",
-    "status": "completed",
-    "note": "2026-06-02生成，12条cointelegraph文章，行情+4条具体文章链接全部200。"
+    "lastRun": "2026-06-04",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-04由主AI 13:30介入补做（4个子代理均超时），commit 444c4c4。AI新闻11条+财经10条+Web3 7条+副业6条事件衍生，26条外部链接全部200验证。frontmatter date=2026-06-04T13:20:37+08:00（写入时刻-5分钟）。源站故障：CoinGecko/Binance/CoinIndex价格API全部不可用；V2EX/HN/Reddit/PH直连+Chrome CDP双重不可用，副业采用事件衍生策略不编造社区帖。date 硬性规则通过。遗留：cron 系统性失效根因待排查。"
   },
   "早请安": {
     "lastRun": "2026-06-02",
@@ -85,14 +85,14 @@
     "note": "2026-06-03 23:18窗口(cron 850cf6e9 heartbeat 第6次): 4份早报持续稳定(ai-morning 14238B+financial-morning 15670B+ai-side-hustle-morning 6298B+web3-morning 10967B, 全部draft:false, date均<23:18已过Hugo「未来页面」临界点), 文章库963(tech 670/news 264/video 12/wealth 9/thoughts 2), draft:false=834/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史), Tiny<1.5KB=7(全部历史), TOML content/=0, 源站抽样3/3全200(v2ex/cointelegraph/wallstreetcn), git与origin/main=0157fb81同步(本地无落后/无领先), content/无untracked/无modified, 与19:11状态完全一致, 无新动作, 仅追加日志到memory/article-checklog-20260603.log。"
   },
   "financial-morning": {
-    "lastRun": "2026-06-03",
+    "lastRun": "2026-06-04",
     "status": "completed_by_main_ai",
-    "note": "2026-06-03由主AI 10:10-10:20介入补做（morning-report cron 7:30/8:00/8:30/9:00窗口未触发），4份早报commit b49305a5。frontmatter date=2026-06-03T09:50:00+08:00（采用「当前时间-5分钟」新策略，避开Hugo「未来页面」规则）。关键URL抽样验证全200（华尔街见闻4/4+36kr 3/3+财政部+V2EX 3/3+cointelegraph）。同时morning-report skill升级v2.2.0(commit 5280f275)，固化date=实际写入时刻-5分钟的硬性规则"
+    "note": "2026-06-04由主AI 13:30介入补做（4个子代理均超时），commit 444c4c4。AI新闻11条+财经10条+Web3 7条+副业6条事件衍生，26条外部链接全部200验证。frontmatter date=2026-06-04T13:20:37+08:00（写入时刻-5分钟）。源站故障：CoinGecko/Binance/CoinIndex价格API全部不可用；V2EX/HN/Reddit/PH直连+Chrome CDP双重不可用，副业采用事件衍生策略不编造社区帖。date 硬性规则通过。遗留：cron 系统性失效根因待排查。"
   },
   "web3-morning": {
-    "lastRun": "2026-06-03",
+    "lastRun": "2026-06-04",
     "status": "completed_by_main_ai",
-    "note": "2026-06-03由主AI 10:10-10:20介入补做（morning-report cron 7:30/8:00/8:30/9:00窗口未触发），4份早报commit b49305a5。frontmatter date=2026-06-03T09:50:00+08:00（采用「当前时间-5分钟」新策略，避开Hugo「未来页面」规则）。关键URL抽样验证全200（华尔街见闻4/4+36kr 3/3+财政部+V2EX 3/3+cointelegraph）。同时morning-report skill升级v2.2.0(commit 5280f275)，固化date=实际写入时刻-5分钟的硬性规则"
+    "note": "2026-06-04由主AI 13:30介入补做（4个子代理均超时），commit 444c4c4。AI新闻11条+财经10条+Web3 7条+副业6条事件衍生，26条外部链接全部200验证。frontmatter date=2026-06-04T13:20:37+08:00（写入时刻-5分钟）。源站故障：CoinGecko/Binance/CoinIndex价格API全部不可用；V2EX/HN/Reddit/PH直连+Chrome CDP双重不可用，副业采用事件衍生策略不编造社区帖。date 硬性规则通过。遗留：cron 系统性失效根因待排查。"
   },
   "morning-report-date-fix": {
     "lastRun": "2026-06-03",
@@ -123,5 +123,10 @@
     "lastRun": "2026-06-03",
     "status": "completed",
     "note": "2026-06-03 19:11窗口(cron 850cf6e9 heartbeat 第5次): 4份早报持续稳定(ai-morning 14238B+financial-morning 15670B+ai-side-hustle-morning 6298B+web3-morning 10967B, 全部draft:false, date<19:11已过Hugo「未来页面」临界点), 文章库963(tech 670/news 264/video 12/wealth 9/thoughts 2), draft:false=834/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史), TOML=16合规, Tiny<1.5KB=7(全部历史), 源站抽样3/3全200(v2ex/cointelegraph/wallstreetcn), HEAD=561acdbb本地落后origin/main 1 commit(ce4564b3 16:09 远端推的8篇tech补全, 非本地未推送), content/无untracked/无modified, 与17:05状态完全一致, 无新动作, 仅追加日志。"
+  },
+  "side-hustle-morning": {
+    "lastRun": "2026-06-04",
+    "status": "completed_by_main_ai",
+    "note": "2026-06-04由主AI 13:30介入补做（4个子代理均超时），commit 444c4c4。AI新闻11条+财经10条+Web3 7条+副业6条事件衍生，26条外部链接全部200验证。frontmatter date=2026-06-04T13:20:37+08:00（写入时刻-5分钟）。源站故障：CoinGecko/Binance/CoinIndex价格API全部不可用；V2EX/HN/Reddit/PH直连+Chrome CDP双重不可用，副业采用事件衍生策略不编造社区帖。date 硬性规则通过。遗留：cron 系统性失效根因待排查。"
   }
 }
