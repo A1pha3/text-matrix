@@ -1,0 +1,85 @@
+=== 文章健康检查 | 2026-06-05 01:29 (Asia/Shanghai) | cron 850cf6e9 #10 ===
+
+【4 份早报持续稳定】
+- ai-morning-news-2026-06-04.md          6286 B | draft:false | date:2026-06-04T13:20:37+08:00
+- financial-morning-news-2026-06-04.md    6718 B | draft:false | date:2026-06-04T13:20:37+08:00
+- ai-side-hustle-morning-2026-06-04.md    5828 B | draft:false | date:2026-06-04T13:20:37+08:00
+- web3-morning-news-2026-06-04.md         5873 B | draft:false | date:2026-06-04T13:20:37+08:00
+- 时差: 12h 8m 23s (Hugo「未来页面」8h 阈值早过, 安全)
+
+【文章库 981 (delta +4 vs 22:09 977)】
+- tech: 592 | news: 268 | thoughts: 2 | video: 12 | wealth: 9 | total: 981
+- 新增 +4 与 23:00 cron 0bd480a7 提交的 4 篇 (NVIDIA/cosmos + lfnovo/open-notebook + github/copilot-sdk + openclaw/openclaw-windows-node) 吻合
+
+【draft 状态分布】
+- draft:false = 852 (+4 vs 22:09 848, 4 篇新文章全部为 false)
+- draft:true  = 1 (autocli 历史)
+- 缺 draft    = 128 (全部 < 2026-05-28 历史)
+- TOML 头     = 0
+
+【Tiny 文件 7 个 (全部历史)】
+- 661B  wealth/_index.md  (2026-05-0X)
+- 969B  news/ai-side-hustle-morning-2026-04-08.md
+- 1151B news/web3-morning-news-2026-04-21.md
+- 1314B news/web3-morning-news-2026-05-07.md
+- 989B  news/financial-morning-news-2026-04-08.md
+- 1379B news/web3-morning-news-2026-04-26.md
+- 1310B tech/fincept-terminal-...-platform-guide.md (2026-05-2X)
+
+【未来日期文件 0】
+
+【⚠️ 异常发现: content/content/ 本地重复镜像】
+- 路径: content/content/{posts,docs,categories}/ (mtime Jun 4 23:16:12, 与 23:00 cron 重构时间吻合)
+- 占用: 14M, 981 md + 6 docs + 1 categories (完全镜像 content/posts/ + 少量 content/docs/)
+- 状态: 未 gitignore, 未 commit, 远程 origin/main 不存在
+- 来源: 23:00 github-trending-23 cron 路径重构 (posts/tech/ → content/posts/tech/) 时本地残留
+- 影响: 不影响 Hugo 构建 (Hugo 只看 content/posts/), 但会触发 git status untracked 噪音
+- 建议: 师父下个时间窗手动删除 (rm -rf content/content/), 此为 14M 重复数据
+
+【源站抽样 6/5 01:29】
+- 200  https://www.v2ex.com
+- 200  https://cointelegraph.com
+- 200  https://36kr.com
+- 200  https://wallstreetcn.com
+- 404  https://api.coingecko.com  (CoinGecko WAF 仍封)
+- 000  https://api.binance.com   (Binance API 持续不可用, 与 22:09 一致)
+- 较 22:09 对比: v2ex/cointelegraph/36kr/wallstreetcn 仍稳 200, WAF 状态延续
+
+【git 状态】
+- HEAD: 30a1bbf8 (本地)
+- origin/main 22:09 同步时: 30a1bbf8 (= 同步)
+- 01:29 拉取发现 origin/main 已前推 0ba41100 (1 commit: docs: 更新 Hermes Agent 指南的标题/描述/内容, 392+/182-)
+- 已 git pull --rebase → HEAD = 0ba41100 = origin/main, 完全同步
+- content/posts 无 untracked/modified (git status -s content/posts 为空)
+- ⚠️ content/content/ 显示 ?? untracked, 因未 gitignore, 师父可选择 (1) gitignore 排除 (2) 物理 rm
+
+【总结】
+- 早报 4 份稳定, 文章库 +4 正常, draft 正常, 无未来日期, 无新问题
+- 仅 1 项异常: content/content/ 本地镜像 (14M, 23:00 cron 重构残留), 待师父处理
+- 源站 API 持续降级, 但早报源 (v2ex/cointelegraph/36kr/wallstreetcn) 全 200
+- 6/5 01:29 完成第 10 次检查
+[2026-06-05 02:41:04 CST] 文章健康检查 #11 (cron 850cf6e9)
+  早报: 4份稳 (ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, draft:false)
+  文章库: 981 (tech 684/news 268/thoughts 2/video 12/wealth 9 + 根md 6)
+  draft:false=852/draft:true=1(autocli)/缺draft=128(全<2026-05-28历史)/TOML=16/Tiny<1.5KB=7(全历史,git commit时间2026-04-08~05-25)
+  ⚠️ 异常: content/content/ 本地重复镜像14M/995md(远程0行,未gitignore), 师傅未处理
+  git: HEAD=0ba41100=origin/main同步, content/posts 无 untracked/modified
+  源站抽样: v2ex200/cointelegraph200/36kr200/wallstreetcn404/coingecko403/binance202 (4/6稳+API降级延续)
+  delta vs 01:29: 0 (无新文章动作)
+
+=== 文章健康检查 | 2026-06-05 01:29 (Asia/Shanghai) | cron 850cf6e9 #10 ===
+
+【4 份早报持续稳定】
+- ai-morning-news-2026-06-04.md          6286 B | draft:false | date:2026-06-04T13:20:37+08:00
+- financial-morning-news-2026-06-04.md    6718 B | draft:false | date:2026-06-04T13:20:37+08:00
+
+[2026-06-05 03:41:05 CST] 文章健康检查 #12 (cron 850cf6e9)
+  早报: 4份稳 (ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, draft:false)
+  文章库: 981 (tech 684/news 268/thoughts 2/video 12/wealth 9 + 根md 6)  delta=0 vs 02:37
+  draft:false=852/draft:true=1(autocli)/缺draft=128(全<2026-05-28历史)/TOML=981/Tiny<1.5KB=7(全历史)
+  时差: 14h 20m (Hugo「未来页面」8h 阈值早过, 安全)
+  ⚠️ 异常延续: content/content/ 本地重复镜像14M/995md(未gitignore, 师傅仍未处理)
+  git: HEAD=0ba41100=origin/main同步, content/posts 无 untracked/modified
+  源站抽样: v2ex200/cointelegraph200/36kr200/wallstreetcn200/coingecko404/binance000
+    → 早报源 4/4 全 200 稳; API 降级延续 (coingecko WAF封/binance不可用)
+  无新文章动作, 仅追加本条日志
