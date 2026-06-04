@@ -82,12 +82,12 @@
   "文章健康检查": {
     "lastRun": "2026-06-04",
     "status": "completed",
-    "note": "2026-06-04 21:05窗口(cron 850cf6e9 heartbeat 第8次): 4份早报持续稳定(ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, 全部draft:false, date=13:20:37已过Hugo「未来页面」7h45m+), 文章库977(tech 680/news 268/thoughts 2/video 12/wealth 9, 与18:57完全一致), draft:false=848/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史)/TOML=16(历史video/tech+根md), Tiny<1.5KB=7(全部历史), 未来日期=0, 源站抽样6/3(wallstreetcn 200/cointelegraph 200/36kr 200 + v2ex 000/coingecko 000/binance 000, 带UA; 不带UA时全部000), WAF飘忽, 早报13:20:37早已发布不受影响, git本地落后origin 2→已pull --rebase(ce2f9056 AI-Trader v2精修S级, 6f0baea2 AI-Trader v2精修S级, 同一文件2次迭代+292/-625净-333行, 文件大小19952B), HEAD=ce2f9056=origin/main同步, content/无untracked/modified, 无新文章动作, 仅追加日志到memory/article-checklog-20260604.log"
+    "note": "2026-06-04 22:09窗口(cron 850cf6e9 heartbeat 第9次): 4份早报持续稳定(ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, 全部draft:false, date=13:20:37已过Hugo「未来页面」8h49m+), 文章库977(tech 592/news 268/thoughts 2/video 12/wealth 9, 与21:05完全一致), draft:false=848/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史)/TOML=16(历史video/tech+根md), Tiny<1.5KB=7(全部历史), 未来日期=0, 源站抽样6/4 (v2ex 200/cointelegraph 200/36kr 200/wallstreetcn 200 + coingecko 403/binance 202, WAF较21:05回升), git本地落后origin 1→已pull --rebase(534fefe 21:05 log commit, 师父21:05→22:09未推新文章), HEAD=534fefe=origin/main同步, content/无untracked/modified, 无新文章动作, 仅追加日志到memory/article-checklog-20260604.log"
   },
-  "文章健康检查-21:05": {
+  "文章健康检查-22:09": {
     "lastRun": "2026-06-04",
     "status": "completed",
-    "note": "2026-06-04 21:05窗口(cron 850cf6e9 heartbeat 第8次): 4份早报持续稳定(ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, 全部draft:false, date=13:20:37已过Hugo「未来页面」7h45m+), 文章库977(tech 680/news 268/thoughts 2/video 12/wealth 9, 与18:57完全一致), draft:false=848/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史)/TOML=16(历史video/tech+根md), Tiny<1.5KB=7(全部历史), 未来日期=0, 源站抽样6/3(wallstreetcn 200/cointelegraph 200/36kr 200 + v2ex 000/coingecko 000/binance 000, 带UA; 不带UA时全部000), WAF飘忽, 早报13:20:37早已发布不受影响, git本地落后origin 2→已pull --rebase(ce2f9056 AI-Trader v2精修S级, 6f0baea2 AI-Trader v2精修S级, 同一文件2次迭代+292/-625净-333行, 文件大小19952B), HEAD=ce2f9056=origin/main同步, content/无untracked/modified, 无新文章动作, 仅追加日志到memory/article-checklog-20260604.log"
+    "note": "2026-06-04 22:09窗口(cron 850cf6e9 heartbeat 第9次): 4份早报持续稳定(ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, 全部draft:false, date=13:20:37已过Hugo「未来页面」8h49m+), 文章库977(tech 592/news 268/thoughts 2/video 12/wealth 9, 与21:05完全一致), draft:false=848/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史)/TOML=16(历史video/tech+根md), Tiny<1.5KB=7(全部历史), 未来日期=0, 源站抽样6/4 (v2ex 200/cointelegraph 200/36kr 200/wallstreetcn 200 + coingecko 403/binance 202, WAF较21:05回升), git本地落后origin 1→已pull --rebase(534fefe 21:05 log commit, 师父21:05→22:09未推新文章), HEAD=534fefe=origin/main同步, content/无untracked/modified, 无新文章动作, 仅追加日志到memory/article-checklog-20260604.log"
   },
   "financial-morning": {
     "lastRun": "2026-06-04",
