@@ -1,6 +1,6 @@
 ---
 title: "AiToEarn 源码解读：把'一段想法'变成'13 个平台的自动内容流水线'"
-date: 2026-06-04T17:00:00+08:00
+date: 2026-06-04T16:53:00+08:00
 slug: aitoearn-ai-content-marketing-agent-guide
 description: "yikart/AiToEarn 源码级解析：从一段中文创意到 13 平台自动发布+商单撮合的端到端架构。覆盖 MCP 协议、OpenClaw 集成、Monetize/Publish/Engage/Create 四 Agent 拆解、变现结算回路。"
 draft: false
