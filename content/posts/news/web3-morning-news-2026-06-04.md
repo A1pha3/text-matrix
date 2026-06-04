@@ -2,7 +2,7 @@
 title: "Web3早报 2026-06-04"
 date: 2026-06-04T13:20:37+08:00
 slug: web3-morning-news-2026-06-04
-description: "2026年6月4日 Web3 早报：Bitcoin 因美伊冲突跌破 6.6 万美元、Revolut 拟通过美国银行提供稳定币、美国财长推动 CLARITY 法案、CFTC 取消'No-Deny'规则、以色列税务对自愿披露失望。"
+description: "2026年6月4日 Web3 早报：Bitcoin 因美伊冲突跌破 6.6 万美元、Revolut 拟通过美国银行提供稳定币、美国财长推动 CLARITY 法案、CFTC 取消’No-Deny’规则、以色列税务对自愿披露失望。"
 draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "BTC", "稳定币", "监管", "机构"]
