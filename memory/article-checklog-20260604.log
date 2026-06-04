@@ -87,3 +87,16 @@
 - git commit: cbf56301 (4 articles) + 1146a6b7 (heartbeat log)
 - git push: 成功 (eb119b06..cbf56301..1146a6b7)
 - 网络问题: git push 首次连不上 GitHub 443, 重试 + pull --rebase 后成功
+
+[2026-06-04 16:51:13] 文章健康检查 - cron 850cf6e9 heartbeat (16:50窗口)
+  - 4份早报全部存在(ai/financial/web3/ai-side-hustle 2026-06-04, draft:false, date<16:50已过Hugo「未来页面」临界点)
+  - 文章库977(news 268/tech 592/thoughts 2/video 12/wealth 9,较14:48的966+11, news+4/tech+3/thoughts+0/video+0/wealth+0,news增量来自06-04 4份早报+可能历史补全)
+  - draft:false=844 / draft:true=1(autocli历史) / 缺draft=116+16TOML=132(全部<2026-05-28历史合替)
+  - 微小文章<1.5KB=7(全部历史,无新增)
+  - 未来日期文章=0
+  - 源站抽样:v2ex=000(二次重试均失败)+ cointelegraph=200 + wallstreetcn=200 + 36kr=200, V2EX仍存在偶发不可达
+  - git HEAD=7d1299a4 == origin/main, 本地无落后/无领先, content/ 无 untracked/modified
+  - memory/早报核查日志.md 有未提交本地修改(M 标记),与本cron检查动作一致
+  - 最近commit(7d1299a4/1146a6b7/cbf56301)均为github-trending-15窗口,无异常
+  - 与14:48状态对比:文章库966→977(+11), git同步维持(皆=origin/main), 无新动作
+  - 评估:文章库稳定增长,四份早报健康,git同步,源站V2EX偶发不可达但不致命
