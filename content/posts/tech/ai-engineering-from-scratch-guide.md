@@ -5,7 +5,7 @@ slug: "ai-engineering-from-scratch-guide"
 aliases:
   - "/posts/tech/ai-engineering-from-scratch-complete-guide/"
   - "/posts/tech/ai-engineering-from-scratch-complete-curriculum/"
-description: "AI Engineering From Scratch是一个覆盖20个阶段、428节课程的免费AI工程教程，涵盖数学基础、机器学习、深度学习、LLM构建、Agent开发、多Agent系统等完整路径。每课遵循\"从零构建→生产库验证→产出可安装工具\"的闭环，已斩获8973 Stars。本文深入解析其课程架构、核心方法论与快速上手路径。"
+description: "AI Engineering From Scratch是一个覆盖20个阶段、428节课程的免费AI工程教程，涵盖数学基础、机器学习、深度学习、LLM构建、Agent开发、多Agent系统等完整路径。每课遵循‘从零构建→生产库验证→产出可安装工具‘的闭环，已斩获8973 Stars。本文深入解析其课程架构、核心方法论与快速上手路径。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI工程", "Agent开发", "LLM", "MCP", "深度学习", "多智能体系统"]

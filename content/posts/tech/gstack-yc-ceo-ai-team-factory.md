@@ -2,7 +2,7 @@
 title: "gstack 深度解析：YC CEO 的 AI 团队工厂，23 个虚拟角色如何重构 Solo Developer 的生产力边界"
 date: "2026-05-29T12:30:00+08:00"
 slug: "gstack-yc-ceo-ai-team-factory"
-description: "gstack 是 Y Combinator CEO Garry Tan 开源的多智能体工作流编排系统，将 Claude Code 扩展为 23 个虚拟角色的分布式工程团队。本文从架构设计、角色体系、任务流转和适用边界四个维度，系统解析这个\"AI 版一人公司工厂\"的工程哲学与实现路径。"
+description: "gstack 是 Y Combinator CEO Garry Tan 开源的多智能体工作流编排系统，将 Claude Code 扩展为 23 个虚拟角色的分布式工程团队。本文从架构设计、角色体系、任务流转和适用边界四个维度，系统解析这个‘AI 版一人公司工厂‘的工程哲学与实现路径。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI", "Claude", "多智能体", "工作流编排", "gstack", "YC", "工程师生产力"]

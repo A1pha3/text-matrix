@@ -2,7 +2,7 @@
 title: "Understand Anything：让 AI 编码助手读懂任意代码库"
 date: 2026-05-23T09:06:00+08:00
 slug: "understand-anything-interactive-code-knowledge-graph-guide"
-description: "Understand Anything 是一个 Claude Code 插件，通过 5 个专业化 AI Agent 构成的多阶段流水线，将任意代码库转换为可交互的知识图谱。本文详解其核心能力、快速上手方法及多平台支持，帮助 AI 编码助手真正\"看懂\"你的项目。"
+description: "Understand Anything 是一个 Claude Code 插件，通过 5 个专业化 AI Agent 构成的多阶段流水线，将任意代码库转换为可交互的知识图谱。本文详解其核心能力、快速上手方法及多平台支持，帮助 AI 编码助手真正‘看懂‘你的项目。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI 编码助手", "知识图谱", "Claude Code", "代码理解", "多智能体"]

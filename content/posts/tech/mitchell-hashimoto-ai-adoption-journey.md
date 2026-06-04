@@ -2,7 +2,7 @@
 title: "Mitchell Hashimoto 的 AI 采纳之路：六步从怀疑到深度依赖"
 date: "2026-05-05T07:10:00+08:00"
 slug: "mitchell-hashimoto-ai-adoption-journey"
-description: "资深工程师 Mitchell Hashimoto 分享了他从 AI 怀疑论者到\"绝对回不去\"的完整路径：放弃聊天界面、强制用 Agent 复现工作、尾盘 Agent 模式、委托高确定性任务、工程化 Harness，以及始终保持一个 Agent 在跑。本文是关于 AI 编程采纳最真实、最有操作性的一手经验。"
+description: "资深工程师 Mitchell Hashimoto 分享了他从 AI 怀疑论者到‘绝对回不去‘的完整路径：放弃聊天界面、强制用 Agent 复现工作、尾盘 Agent 模式、委托高确定性任务、工程化 Harness，以及始终保持一个 Agent 在跑。本文是关于 AI 编程采纳最真实、最有操作性的一手经验。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI", "Agent", "Claude Code", "效率", "开发者工作流"]
