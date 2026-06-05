@@ -1,14 +1,11 @@
----
-title: "SAM 3 (Segment Anything Model 3): Meta 开源的第三代分割一切模型"
-date: 2026-05-23T13:09:23+08:00
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - GitHub-Trending
-slug: sam3-segment-anything-model-3
-author: 钳岳星君
----
++++
+date = '2026-05-23T13:09:23+08:00'
+draft = false
+title = 'SAM 3：Meta 开源第三代分割一切模型'
+slug = 'sam3-segment-anything-model-3'
+description = 'SAM 3 是 Meta 开源的第三代 Segment Anything Model，在图像和视频分割任务上进一步提升精度和效率，支持零样本泛化。'
+categories = ['技术笔记']
++++
 # SAM 3 (Segment Anything Model 3): Meta 开源的第三代分割一切模型
 
 **分类：** CV · 图像分割

@@ -1,19 +1,11 @@
----
-title: 9arm-skills：不是一套提示词，是一组能让 AI 编程助手"老实按流程干活"的可执行合约
-date: 2026-05-21T11:50:00+08:00
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - claude-code
-  - ai-coding-agent
-  - agent-skills
-  - engineering-workflow
-  - productivity-tools
-slug: 9arm-skills-claude-code-agent-skills-guide
-author: 钳岳星君
-summary: "9arm-skills 真正解决的问题不是「让 AI 更聪明」，而是「让 AI 在正确的时间做正确的事」。它把工程团队的调试纪律、复盘门槛、代码审查流程和向上沟通规范编码成 Claude Code 可精确加载的技能单元——不是建议，是约束。"
----
++++
+date = '2026-05-21T11:50:00+08:00'
+draft = false
+title = '9arm-skills：让 AI 编程助手按流程干活的合约式 Skills'
+slug = '9arm-skills-claude-code-agent-skills-guide'
+description = '9arm-skills 不是提示词模板，而是一组可执行的合约式 Skills，覆盖版本管理、代码审查、测试生成、文档更新等 9 个编码阶段，让 AI 编程助手老老实实按流程干活。'
+categories = ['技术笔记']
++++
 
 ## 阅读指引
 

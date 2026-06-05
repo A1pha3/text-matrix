@@ -1,14 +1,11 @@
----
-title: "honcho: 为有状态Agent打造的记忆库，让Agent记住一切"
-date: 2026-05-23T13:09:23+08:00
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - GitHub-Trending
-slug: honcho-memory-library-stateful-agents
-author: 钳岳星君
----
++++
+date = '2026-05-23T13:09:23+08:00'
+draft = false
+title = 'honcho：为有状态 Agent 打造的记忆库'
+slug = 'honcho-memory-library-stateful-agents'
+description = 'honcho 是 Plastic Labs 开源的有状态 Agent 记忆库，通过对话历史持久化存储让 AI Agent 在跨会话场景中保持上下文连续性。'
+categories = ['技术笔记']
++++
 # honcho: 为有状态Agent打造的记忆库，让Agent记住一切
 
 **🏷️ 分类：** AI Agent · 记忆框架  

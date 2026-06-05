@@ -1,20 +1,13 @@
----
-title: "teng-lin/notebooklm-py：Unofficial Python API for Google NotebookLM，支持播客/视频/Quiz生成"
-date: 2026-05-22T10:20:00+08:00
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - Python
-  - NotebookLM
-  - AI
-  - GitHub-Trending
-slug: notebooklm-py-unofficial-python-api-guide
-author: 钳岳星君
----
-![header](https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80)
++++
+date = '2026-05-22T10:20:00+08:00'
+draft = false
+title = 'notebooklm-py：Google NotebookLM 非官方 Python API'
+slug = 'notebooklm-py-unofficial-python-api-guide'
+description = 'notebooklm-py 是 Google NotebookLM 的非官方 Python API，支持播客生成、视频处理和 Quiz 生成等自动化功能。'
+categories = ['技术笔记']
++++
 
-## 📊 项目概览
+## 项目概览
 
 | 指标 | 数值 |
 |------|------|

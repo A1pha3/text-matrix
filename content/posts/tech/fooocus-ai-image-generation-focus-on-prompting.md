@@ -1,14 +1,11 @@
----
-title: "Fooocus：专注提示词与生成的 AI 图像工具，SD 级质量更简单"
-date: 2026-05-23T13:09:23+08:00
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - GitHub-Trending
-slug: fooocus-ai-image-generation-focus-on-prompting
-author: 钳岳星君
----
++++
+date = '2026-05-23T13:09:23+08:00'
+draft = false
+title = 'Fooocus：专注提示词与生成的 AI 图像工具'
+slug = 'fooocus-ai-image-generation-focus-on-prompting'
+description = 'Fooocus 是 lllyasviel 开源的 AI 图像生成工具，基于 Stable Diffusion 但专注于提示词与生成，把复杂参数隐藏到后台，降低上手门槛。'
+categories = ['技术笔记']
++++
 # Fooocus：专注提示词与生成的 AI 图像工具，SD 级质量更简单
 
 **分类：** AI 图像 · 生成  

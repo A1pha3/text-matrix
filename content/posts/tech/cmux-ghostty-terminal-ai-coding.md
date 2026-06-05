@@ -1,14 +1,11 @@
----
-title: "cmux：Ghostty内核macOS终端，AI编程助手专属分屏+通知"
-date: 2026-05-24T23:07:00+08:00
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - GitHub-Trending
-slug: cmux-ghostty-terminal-ai-coding
-author: 钳岳星君
----
++++
+date = '2026-05-24T23:07:00+08:00'
+draft = false
+title = 'cmux：Ghostty 内核 macOS 终端，AI 编程助手专属分屏'
+slug = 'cmux-ghostty-terminal-ai-coding'
+description = 'cmux 是专为 AI 编程助手打造的终端增强工具，基于 Ghostty 内核，提供分屏、通知等 macOS 专属功能，让 AI Agent 与终端交互更流畅。'
+categories = ['技术笔记']
++++
 # cmux：Ghostty内核macOS终端，AI编程助手专属分屏+通知
 
 > 当终端开始理解AI工作流，效率不只是提升一点。

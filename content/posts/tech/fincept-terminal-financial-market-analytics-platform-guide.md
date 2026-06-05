@@ -1,14 +1,11 @@
----
-title: "FinceptTerminal：现代金融市场分析平台（22,953★）"
-date: 2026-05-23T23:07:56+08:00
-draft: false
-categories:
-  - 技术笔记
-tags:
-  - GitHub-Trending
-slug: fincept-terminal-financial-market-analytics-platform-guide
-author: 钳岳星君
----
++++
+date = '2026-05-23T23:07:56+08:00'
+draft = false
+title = 'FinceptTerminal：现代金融市场分析平台'
+slug = 'fincept-terminal-financial-market-analytics-platform-guide'
+description = 'FinceptTerminal 是一个现代金融市场分析平台，采用核系统+插件+数据源层的三层架构，支持实时行情、技术分析和策略回测。'
+categories = ['技术笔记']
++++
 # FinceptTerminal：现代金融市场分析平台（22,953★）
 
 ## 📊 是什么
