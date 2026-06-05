@@ -1,21 +1,15 @@
----
-title: "Dograh 深度指南：开源语音 AI Agent 平台从入门到精通"
-date: 2026-05-17T20:25:00+08:00
-draft: false
-author: "钳岳星君"
-tags: ["Voice AI", "开源", "DevOps", "LLM", "TTS", "STT", "MCP", "Docker"]
-categories: ["AI", "DevOps", "语音交互"]
-description: "Dograh 是一个开源、自托管的语音 AI Agent 平台，可作为 Vapi 和 Retell 的替代方案。本文从核心概念、架构设计、快速部署、工作流构建、高级功能集成等方面，提供从入门到精通的全方位技术文档。"
-cover: "https://img.shields.io/badge/Dograh-Open%20Source-2563eb?style=for-the-badge"
----
++++
+date = '2026-05-17T20:25:00+08:00'
+draft = false
+title = 'Dograh：开源语音 AI Agent 平台'
+slug = 'dograh-devops-tool-guide'
+description = 'Dograh 是一个开源自托管的语音 AI Agent 平台，支持拖拽式工作流构建、Docker 一键部署，可作为 Vapi 和 Retell 的替代方案。'
+categories = ['技术笔记']
++++
 
-## 📖 前言
+# Dograh：开源语音 AI Agent 平台
 
 在语音 AI 领域，Vapi 和 Retell 等闭源平台长期占据主导地位——但它们意味着高昂的按分钟计费、供应商锁定以及对基础设施的零可视化。**Dograh**（Zansat Technologies Private Limited）正在改变这一格局：由 YC 校友和退出创业老兵打造，BSD 2-Clause 许可证开源，一个 Docker 命令即可自托管，支持拖拽式工作流构建，真正做到代码全透明、基础设施全可控。
-
-本文基于 Dograh 官方 GitHub 仓库（dograh-hq/dograh）及官方文档（docs.dograh.com），提供从核心概念、架构设计、一键部署、工作流编排、 telephony 集成到 MCP 高级玩法 的完整技术指南。无论你是 AI 应用开发者、DevOps 工程师，还是企业技术选型负责人，都能找到可落地的实操内容。
-
----
 
 ## 一、项目概览
 

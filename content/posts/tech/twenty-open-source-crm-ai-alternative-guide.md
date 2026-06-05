@@ -1,18 +1,17 @@
----
-title: "Twenty: Salesforce的开源替代者，AI驱动的现代CRM"
-date: 2026-05-26T23:00:00+08:00
-tags: ["AI", "GitHub", "CRM", "TypeScript"]
-categories: ["技术"]
-description: "Twenty是一个开源的AI优先CRM系统，TypeScript全栈开发，PostgreSQL存储，支持自定义对象和工作流自动化，是Salesforce的强大替代方案。"
-stars: "46.6k"
-repo: "twentyhq/twenty"
----
++++
+date = '2026-05-26T23:00:00+08:00'
+draft = false
+title = 'Twenty：Salesforce 的开源替代'
+slug = 'twenty-open-source-crm-ai-alternative-guide'
+description = 'Twenty 是一个开源的 AI 优先 CRM 系统，TypeScript 全栈开发，PostgreSQL 存储，支持自定义对象和工作流自动化，是 Salesforce 的替代方案。'
+categories = ['技术笔记']
++++
 
-# Twenty: Salesforce的开源替代者，AI驱动的现代CRM
+# Twenty：Salesforce 的开源替代
 
 ## 简介
 
-[Twenty](https://github.com/twentyhq/twenty) 是一个开源的 AI 优先客户关系管理（CRM）系统，旨在成为 Salesforce 的强大替代方案。该项目在 GitHub 上已斩获 **46.6k Stars**，是当前最热门的开源 CRM 项目之一。
+[Twenty](https://github.com/twentyhq/twenty) 是一个开源的 AI 优先客户关系管理（CRM）系统，旨在成为 Salesforce 的强大替代方案。
 
 Twenty 由 TypeScript 构建全栈，采用现代化的技术架构：后端基于 PostgreSQL 数据库，通过 GraphQL API 提供灵活的数据交互，前端则使用 React 打造流畅的用户体验。
 

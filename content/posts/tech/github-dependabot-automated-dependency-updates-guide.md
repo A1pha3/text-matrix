@@ -1,18 +1,13 @@
----
-title: "GitHub Dependabot 完全指南：自动化依赖更新的从入门到精通"
-date: 2026-05-17
-draft: false
-tags: ["GitHub", "DevOps", "依赖管理", "自动化", "Security"]
-categories: ["技术实践"]
-series: ["DevOps 工具链"]
-featured_image: ""
-description: "全面解析 GitHub Dependabot：工作原理、dependabot.yml 完整配置、安全更新、版本更新、最佳实践、常见问题与替代方案"
-keywords: ["Dependabot", "GitHub", "依赖更新", "自动化", "DevOps", "security updates", "version updates"]
----
++++
+date = '2026-05-17T00:00:00+08:00'
+draft = false
+title = 'GitHub Dependabot：自动化依赖更新'
+slug = 'github-dependabot-automated-dependency-updates-guide'
+description = '全面解析 GitHub Dependabot：工作原理、dependabot.yml 完整配置、安全更新、版本更新、最佳实践与常见问题。'
+categories = ['技术笔记']
++++
 
-# GitHub Dependabot 完全指南：自动化依赖更新的从入门到精通
-
-## 引言
+# GitHub Dependabot：自动化依赖更新
 
 现代软件工程中，依赖管理是一项持续但至关重要的负担。每一个第三方库都可能是潜在的漏洞来源，而手动追踪和更新依赖不仅耗时，还容易遗漏——当 Log4Shell 那样级别的漏洞爆发时，谁也不希望自己的项目因为一个遗忘的 `npm audit` 而成为牺牲品。
 

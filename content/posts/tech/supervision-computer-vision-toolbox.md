@@ -1,10 +1,11 @@
----
-title: "supervision：模型无关的计算机视觉工具箱"
-date: "2026-05-14T20:17:49+08:00"
-categories: ["技术笔记"]
-tags: ["computer-vision", "object-detection", "python", "深度学习", "模型推理"]
-description: "supervision 是 Roboflow 团队开源的 Python 计算机视觉工具箱，提供检测结果解析、可视化标注、数据集加载分割和模型无关推理等功能，至今已积累 38.7k Stars，是计算机视觉领域最受欢迎的基础库之一。"
----
++++
+date = '2026-05-14T20:17:49+08:00'
+draft = false
+title = 'supervision：模型无关的计算机视觉工具箱'
+slug = 'supervision-computer-vision-toolbox'
+description = 'supervision 是 Roboflow 团队开源的 Python 计算机视觉工具箱，提供检测结果解析、可视化标注、数据集加载分割和模型无关推理等功能。'
+categories = ['技术笔记']
++++
 
 # supervision：模型无关的计算机视觉工具箱
 
@@ -16,8 +17,8 @@ supervision 是 Roboflow 团队开源的 Python 计算机视觉工具箱（GitHu
 
 | 指标 | 数值 |
 |---|---|
-| Stars | 38.7k |
-| Forks | 3.5k |
+| 仓库 | [roboflow/supervision](https://github.com/roboflow/supervision) |
+| 语言 | Python |
 | Contributors | 149 |
 | Commits | 4,852 |
 | Releases | 36（最新为 v0.28.0） |
