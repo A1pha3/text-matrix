@@ -1,26 +1,18 @@
 +++
 date = '2026-05-16T23:46:24+08:00'
 draft = false
-title = 'Taste-Skill：AI 前端的「反垃圾」框架，让大模型输出不再油腻'
+title = 'Taste-Skill：AI 前端反 slop 框架'
+slug = 'leonxlnx-taste-skill-anti-slop'
+description = 'Taste-Skill 通过结构化的 SKILL.md 规范对抗 LLM 前端生成的 slop 问题，基于控制实验数据系统分析 LazyBench 现象、根因和修复体系，覆盖 12 个细分技能。'
+categories = ['技术笔记']
 +++
 
-# Taste-Skill：AI 前端的「反垃圾」框架，让大模型输出不再油腻
+# Taste-Skill：AI 前端反 slop 框架
 
----
-title: "Taste-Skill：AI 前端的「反垃圾」框架，让大模型输出不再油腻"
-date: "2026-05-13T21:57:00+08:00"
-slug: "leonxlnx-taste-skill-anti-slop"
-description: "Taste-Skill 是 17.1k Stars 的开源项目，通过结构化的 SKILL.md 规范对抗 LLM 前端生成的「油腻」问题。基于 2025 年控制实验数据，系统分析 LazyBench 现象、根因（认知捷径、RLHF 校准、训练数据偏差）和完整的 remediation 体系，覆盖 design-taste-frontend、image-to-code、minimalist-ui 等 12 个细分技能。"
-draft: false
-categories: ["技术笔记"]
-tags: ["AI", "前端", "设计系统", "Claude-Code", "Cursor", "大模型"]
----
+> 如果你用 AI 生成过前端界面，大概率见过这些画面：紫色渐变按钮、居中的 Hero、Inter 字体、`h-screen` 撑满的页面、用 emoji 替代图标——这不是你要求的，但 AI 总能加上。这类产物被社区称为 **slop**。Taste-Skill 就是为了解决这个问题而诞生的。
 
-> 如果你用 AI 生成过前端界面，大概率见过这些画面：紫色渐变按钮、居中的 Hero、Inter 字体、`h-screen` 撑满的页面、用 emoji 替代图标——这不是你要求的，但 AI 总能「贴心」地加上。这类产物被社区讽刺为 **\"slop\"**（垃圾内容）。Taste-Skill 就是为了解决这个问题而诞生的。
-
-**GitHub**: [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)（17.1k Stars）
+**GitHub**: [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)
 **官网**: [tasteskill.dev](https://tasteskill.dev)
-**定位**: 给 AI Agent 用的「品位提升框架」，通过结构化的 SKILL.md 规范让 AI 输出的前端界面从「能用」升级到「专业级」
 
 ---
 

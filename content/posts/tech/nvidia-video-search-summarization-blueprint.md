@@ -1,16 +1,13 @@
----
-title: "NVIDIA AI Blueprint：视频搜索与摘要系统实战"
-date: 2026-05-15T10:25:00+08:00
-categories: ["技术笔记"]
-tags: ["NVIDIA", "AI", "视频分析", "VLM", "LLM", "RAG", "智能监控"]
-draft: false
----
++++
+date = '2026-05-15T10:25:00+08:00'
+draft = false
+title = 'NVIDIA AI Blueprint：视频搜索与摘要系统'
+slug = 'nvidia-video-search-summarization-blueprint'
+description = 'NVIDIA VSS 是一套完整的视频智能分析参考架构，整合加速视觉微服务、VLM 和 LLM，支持自然语言视频搜索、实时监控告警、视频问答和长视频摘要生成。'
+categories = ['技术笔记']
++++
 
-# NVIDIA AI Blueprint：视频搜索与摘要系统实战
-
-> 如果你曾经需要在一万小时的视频里找一个"穿红色衣服的人第三秒做了什么"，而你只有抓狂和快进两种选择——NVIDIA 的视频搜索和摘要（VSS）蓝图，就是为你准备的。
-
-## 一、项目概述
+# NVIDIA AI Blueprint：视频搜索与摘要系统
 
 [NVIDIA AI Blueprint: Video Search and Summarization (VSS)](https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization) 是 NVIDIA 开源的一套完整的视频智能分析参考架构。它将加速视觉微服务、视觉-语言模型（VLM）和大语言模型（LLM）整合在一起，支持：
 
@@ -19,9 +16,7 @@ draft: false
 - **视频问答（VQA）** — 问视频"发生了什么"
 - **长视频摘要生成** — 把几小时的录像浓缩成报告
 
-源码 Stars 活跃，架构清晰，适合 AI 应用开发者、ML 工程师和视频分析师。
-
-## 二、核心架构
+## 一、核心架构
 
 VSS 采用分层架构，从底到顶分为三层：
 
@@ -44,7 +39,7 @@ VSS 采用分层架构，从底到顶分为三层：
 - **协议：** Model Context Protocol (MCP) 统一工具接口
 - **部署：** Docker Compose，支持本地和云端一键部署
 
-## 三、核心 Agent Workflows
+## 二、核心 Agent Workflows
 
 | Workflow | 说明 |
 |---|---|
@@ -54,7 +49,7 @@ VSS 采用分层架构，从底到顶分为三层：
 | **视频搜索** | 视频嵌入向量 → 自然语言检索 → 精准定位片段 |
 | **长视频摘要** | 长视频分块 → 密集字幕聚合 → 生成结构化摘要 |
 
-## 四、快速部署（Docker Compose）
+## 三、快速部署（Docker Compose）
 
 ### 前置条件
 
@@ -108,7 +103,7 @@ docker compose -f deployments/developer-workflow/dev-profile-alerts/compose.yml 
 docker compose -f deployments/developer-workflow/dev-profile-lvs/compose.yml up -d
 ```
 
-## 五、在自有硬件上运行完整 Pipeline
+## 四、在自有硬件上运行完整 Pipeline
 
 如果你有符合硬件要求的 GPU（DGX-SPARK / IGX-THOR / AGX-THOR / x86），可以通过修改配置指向本地 NIM 微服务来离线运行：
 
@@ -124,7 +119,7 @@ export NVIDIA_API_KEY="local-key"
 docker compose -f deployments/developer-workflow/dev-profile-base/compose.yml up -d
 ```
 
-## 六、Agent 层开发：MCP 工具接入
+## 五、Agent 层开发：MCP 工具接入
 
 VSS 的 Agent 层通过 Model Context Protocol 暴露工具接口，以下是接入示例（Python）：
 
@@ -166,7 +161,7 @@ summary = client.tools.call(
 print(f"摘要: {summary['report']}")
 ```
 
-## 七、项目结构一览
+## 六、项目结构一览
 
 ```
 video-search-and-summarization/
@@ -180,7 +175,7 @@ video-search-and-summarization/
 └── ui/                       # Next.js 前端（monorepo）
 ```
 
-## 八、与同类方案对比
+## 七、与同类方案对比
 
 | 特性 | VSS Blueprint | 开源方案（如 LangChain + LLMs） |
 |---|---|---|
@@ -190,14 +185,14 @@ video-search-and-summarization/
 | 部署体验 | ✅ Docker Compose 一键 | ⚠️ 碎片化 |
 | 厂商锁定 | NVIDIA NIM 生态 | ✅ 开放 |
 
-## 九、适用场景
+## 八、适用场景
 
 - **智能监控 / 安防**：工厂、仓库、园区的异常行为检测和告警验证
 - **视频档案检索**：媒体公司的素材库搜索、法务/合规视频审查
 - **SOP 合规验证**：制造业/服务业标准化操作流程的视频核对
 - **自动驾驶数据标注**：大规模视频场景的自动化分析
 
-## 十、限制与注意事项
+## 九、限制与注意事项
 
 1. **硬件门槛高**：完整部署需要 NVIDIA 高端 GPU，建议 RTX PRO 6000 SE 以上
 2. **企业许可要求**：本地部署 NVIDIA NIM 需要 NVIDIA AI Enterprise 许可证

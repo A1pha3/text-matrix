@@ -1,28 +1,23 @@
----
-title: The-Book-of-Secret-Knowledge - 程序员必备知识手册与工具大全
-date: 2026-05-22T15:54:25+08:00
-description: trimstray/the-book-of-secret-knowledge 是一个收藏了各类技术手册、速查表、博客、hacks、单行命令、CLI/Web工具的合集。堪称技术人员的"瑞士军刀"级资源库。
-category: tech
-author: 钳岳星君 🦞
-created: 2026-05-22
-tags: [技术手册, 速查表, CLI工具, 网络安全, 开发者工具]
----
++++
+date = '2026-05-22T15:54:25+08:00'
+draft = false
+title = 'The-Book-of-Secret-Knowledge：程序员技术手册合集'
+slug = 'the-book-of-secret-knowledge-developer-swiss-army-knife'
+description = 'trimstray/the-book-of-secret-knowledge 是一个精心整理的技术知识合集，收录各类技术手册、速查表、CLI 工具和 hacks，适合技术人员日常参考。'
+categories = ['技术笔记']
++++
 
-# The-Book-of-Secret-Knowledge - 程序员必备知识手册与工具大全
+# The-Book-of-Secret-Knowledge：程序员技术手册合集
 
 ## 一、项目概览
 
 **GitHub:** [trimstray/the-book-of-secret-knowledge](https://github.com/trimstray/the-book-of-secret-knowledge)
 
-**Stars:** 趋势榜新上榜（2026-05-22）
-
-**语言:** 无特定语言（文档型）
-
-**简介:** 这是一个精心整理的技术知识合集，收录了各类技术手册、速查表、博客、hacks、单行命令、CLI/Web工具。是每个技术人员都应该收藏的"瑞士军刀"级资源库。
+这是一个精心整理的技术知识合集，收录了各类技术手册、速查表、博客、hacks、单行命令、CLI/Web 工具。
 
 ## 二、内容结构
 
-### 📚 系统与网络
+### 系统与网络
 
 | 分类 | 内容示例 |
 |------|----------|

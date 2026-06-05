@@ -1,23 +1,25 @@
----
-title: Presenton：开源 AI 演示文稿生成器，让每一页都「会说话」
-date: 2026-05-24
-description: presenton/presenton 开源 AI 演示文稿生成器，支持多语言脚本解析、自动排版与实时演示
----
++++
+date = '2026-05-24T00:00:00+08:00'
+draft = false
+title = 'Presenton：开源 AI 演示文稿生成器'
+slug = 'presenton-open-source-ai-presentation-generator'
+description = 'Presenton 是一个开源 AI 驱动的演示文稿生成工具，输入脚本或主题即可自动生成结构化幻灯片，支持实时预览和多格式导出。'
+categories = ['技术笔记']
++++
 
-# Presenton：开源 AI 演示文稿生成器，让每一页都「会说话」
+# Presenton：开源 AI 演示文稿生成器
 
-## 📊 基本信息
+## 基本信息
 
-- **Stars**: 热度新晋
 - **语言**: TypeScript + Node.js
 - **作者**: presenton
 - **链接**: https://github.com/presenton/presenton
 
-## 🎯 这是什么
+## 这是什么
 
-Presenton 是一个开源的 AI 驱动演示文稿生成工具，用户只需提供脚本或主题，AI 即可自动生成结构清晰、设计精美的幻灯片。项目支持实时预览、多格式导出和一键分享，特别适合需要快速制作演示内容的场景。
+Presenton 是一个开源的 AI 驱动演示文稿生成工具，用户只需提供脚本或主题，AI 即可自动生成结构清晰的幻灯片。项目支持实时预览、多格式导出和一键分享。
 
-## 🔧 核心能力
+## 核心能力
 
 ### AI 脚本分析与结构化
 输入任意主题或未整理的演讲稿，Presenton 会自动分析内容逻辑，拆分为多个章节与要点，生成符合演示逻辑的结构化大纲。

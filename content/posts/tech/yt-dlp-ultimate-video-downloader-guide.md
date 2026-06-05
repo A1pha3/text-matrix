@@ -1,24 +1,26 @@
----
-title: yt-dlp：你见过的最强开源视频下载器，支持全球 1500+ 平台
-date: 2026-05-24
-description: yt-dlp/yt-dlp 是最强大的开源视频下载工具，支持 YouTube、Twitter、B站等全球 1500+ 平台，超越 youtube-dl 的存在
----
++++
+date = '2026-05-24T00:00:00+08:00'
+draft = false
+title = 'yt-dlp：开源视频下载器'
+slug = 'yt-dlp-ultimate-video-downloader-guide'
+description = 'yt-dlp 是 youtube-dl 的社区活跃分支，支持 YouTube、Twitter、B站等全球 1500+ 平台，是目前最强大的开源视频音频下载工具。'
+categories = ['技术笔记']
++++
 
-# yt-dlp：你见过的最强开源视频下载器
+# yt-dlp：开源视频下载器
 
-## 📊 基本信息
+## 基本信息
 
-- **Stars**: 🚀 持续热门
 - **语言**: Python
 - **作者**: yt-dlp Team
 - **链接**: https://github.com/yt-dlp/yt-dlp
 - **前身**: youtube-dl（已停止维护）
 
-## 🎯 这是什么
+## 这是什么
 
-yt-dlp 是 youtube-dl 的社区活跃分支，是目前最强大、最活跃的开源视频音频下载工具。项目在 youtube-dl 基础上修复了数百个兼容性问题，新增了大量平台支持，持续高速迭代中，堪称视频下载领域的「一站式解决方案」。
+yt-dlp 是 youtube-dl 的社区活跃分支，是目前最活跃的开源视频音频下载工具。项目在 youtube-dl 基础上修复了大量兼容性问题，新增了平台支持，持续高速迭代。
 
-## 🔧 核心能力
+## 核心能力
 
 ### 海量平台支持
 支持 **1500+** 网站和平台，涵盖：
