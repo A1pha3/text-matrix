@@ -12,8 +12,6 @@ tags: ["AgentScope", "AI Agent", "ReAct", "MCP", "A2A", "多智能体"]
 
 # AgentScope：生产级 AI Agent 框架完全指南
 
-> 预计阅读时间：60分钟 | 难度：⭐⭐⭐⭐
-
 ---
 
 ## 一、AgentScope 解决了什么问题
