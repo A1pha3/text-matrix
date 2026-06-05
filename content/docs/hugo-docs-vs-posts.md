@@ -2,11 +2,12 @@
 title: "Hugo 目录结构解析：docs 与 posts 的区别与最佳实践"
 date: 2026-03-23T10:30:00+08:00
 draft: false
+description: "深入解析 Hugo 中 docs 与 posts 两种内容类型的区别、目录结构、URL 路由和 frontmatter 配置，提供最佳实践建议。"
 tags: ["Hugo", "目录结构", "最佳实践", "LoveIt"]
 categories: ["技术笔记"]
 ---
 
-> **🎯 学习目标**
+> 学习目标
 > 
 > 读完本文，你将了解：
 > 1. Hugo 中 `content/docs` 和 `content/posts` 的核心区别是什么。

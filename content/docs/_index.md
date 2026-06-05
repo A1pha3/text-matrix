@@ -2,6 +2,7 @@
 title: "项目系统文档"
 date: 2026-03-24T12:00:00+08:00
 draft: false
+description: "Text Matrix 项目系统文档索引，包含 Hugo 使用教程、部署指南、搜索方案等。"
 build:
   render: never
   list: never

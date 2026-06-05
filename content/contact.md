@@ -2,6 +2,7 @@
 title: "联系"
 date: 2026-03-30T12:00:00+08:00
 draft: false
+description: "Text Matrix 联系方式与反馈渠道"
 ---
 
 # 联系方式

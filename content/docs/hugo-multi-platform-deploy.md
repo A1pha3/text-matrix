@@ -2,6 +2,7 @@
 date = '2026-03-22T00:10:00+08:00'
 draft = false
 title = 'Hugo 新手多平台上线实战（GitHub Pages、Vercel、Cloudflare）'
+description = 'Hugo 静态网站多平台部署实战教程，覆盖 GitHub Pages、Vercel 和 Cloudflare Pages 三种主流方案，含域名配置与 HTTPS 设置。'
 +++
 
 # Hugo 新手多平台上线实战（GitHub Pages、Vercel、Cloudflare）

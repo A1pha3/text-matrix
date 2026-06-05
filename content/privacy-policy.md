@@ -2,6 +2,7 @@
 title: "隐私政策"
 date: 2026-03-30T12:00:00+08:00
 draft: false
+description: "Text Matrix 隐私政策，说明站点访问、内容展示、流量统计与广告投放中的信息处理方式。"
 ---
 
 # 隐私政策
