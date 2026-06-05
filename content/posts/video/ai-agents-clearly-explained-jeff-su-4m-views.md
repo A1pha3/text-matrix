@@ -1,25 +1,15 @@
 +++
 date = '2026-04-29T17:03:32+08:00'
 draft = false
-title = 'Ai Agents Clearly Explained Jeff Su 4M Views'
+title = 'AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解'
+slug = 'ai-agents-clearly-explained-jeff-su-4m-views'
+description = '基于 Jeff Su 的热门视频与配套文章，系统拆解 AI Agent 的三层进化路径：LLM、AI Workflow、True Agent，并补充 ReAct、RAG、记忆系统、工具调用与生产实践边界。'
+categories = ['技术笔记']
 +++
 
-title: "AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解"
-date: 2026-04-29T15:01:00+08:00
-slug: "ai-agents-clearly-explained-jeff-su-4m-views"
-description: "基于 Jeff Su 的热门视频与配套文章，系统拆解 AI Agent 的三层进化路径：LLM、AI Workflow、True Agent，并补充 ReAct、RAG、记忆系统、工具调用与生产实践边界。"
-draft: false
-categories: ["视频精读"]
-tags: ["AI Agent", "Jeff Su", "ReAct", "RAG", "MCP"]
----
+# AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解
 
-<!-- markdownlint-disable-file MD003 MD041 -->
-
-> 难度：⭐⭐⭐⭐
-> 类型：视频精读
-> 预计阅读时间：18 分钟
-> 适合读者：想弄清楚 “LLM、AI Workflow、AI Agent 到底差在哪” 的产品经理、开发者与重度 AI 用户
-> 核心问题：什么时候只是把模型接上工具，什么时候才算真正的 Agent？
+> 2026 年 4 月，Jeff Su 在 YouTube 发布了 [AI Agents Clearly Explained](https://www.youtube.com/watch?v=HvD2RGJfp6s) 视频，播放量超过 400 万。本文基于该视频及配套文章，系统拆解 AI Agent 的三层进化路径。
 
 ---
 

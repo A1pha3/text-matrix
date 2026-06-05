@@ -3,6 +3,7 @@ title: "财富自由专栏说明：覆盖范围、写作边界与阅读方式"
 date: "2026-05-06T12:10:00+08:00"
 lastmod: 2026-05-06T12:10:00+08:00
 draft: false
+slug: "wealth-freedom-column-intro"
 aliases: ["/posts/investing/investment-analysis-column-intro/"]
 description: "财富自由专栏的起始说明，明确后续内容既覆盖投资分析，也覆盖赚钱方法论、副业路径、个人商业模式与现金流建设。"
 categories: ["财富自由"]
