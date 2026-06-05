@@ -1,6 +1,6 @@
 ---
 title: "Bernini 拆解：字节跳动把 MLLM 语义规划器和 DiT 渲染器拆开，到底在解决什么问题"
-date: "2026-06-05T11:30:00+08:00"
+date: "2026-06-05T09:30:00+08:00"
 lastmod: "2026-06-05T12:30:00+08:00"
 slug: "bytedance-bernini-mllm-dit-video-generation-architecture"
 description: "Bernini 是字节跳动 2026-05-29 开源的视频生成与编辑统一框架。它把 Qwen2.5-VL-7B 当作语义规划器、Wan2.2-T2V-A14B 当作 DiT 渲染器，再叠上 Open-VeOmni 的 Ulysses 序列并行。这篇文章拆解这套三段式架构的工作机制、双专家 DiT 切换边界、源 ID 旋转位置编码，以及在 7 种 guidance mode 下如何处理 6 类视频任务。"
