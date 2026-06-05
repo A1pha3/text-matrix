@@ -83,3 +83,4 @@
   源站抽样: v2ex200/cointelegraph200/36kr200/wallstreetcn200/coingecko404/binance000
     → 早报源 4/4 全 200 稳; API 降级延续 (coingecko WAF封/binance不可用)
   无新文章动作, 仅追加本条日志
+[2026-06-05 20:44] 第20次 heartbeat (cron 850cf6e9): 4早报稳定(ai 4623B/financial 16663B/ai-side-hustle 19400B/web3 9838B, draft:false), 文章库987 delta=+2 vs 14:25(tech 685/news 272/thoughts 2/video 12/wealth 10+根md 6, +2=mSAP文档重构 7a82fd8, 师傅22:09→20:44推1 commit, 本地已pull --rebase 0/0), draft:false=858/draft:true=1(autocli历史)/缺draft=128(全<2026-05-28历史)/YAML--双分隔=971/TOML+++头行=16/Tiny<1.5KB=7(全历史), 未来日期=0, 源站抽样6/5 20:44 5/6 全200(v2ex200/cointelegraph200/36kr200/coingecko200/binance200 + wallstreetcn 404 HEAD但GET-200, 实际可用仅HEAD不支持, 上游文章源已被Markdown GET能拿到, 不影响早报采集), git本地与origin/main同步(HEAD=7a82fd8=origin/main, ahead/behind=0/0), content/posts 无 untracked/modified, memory/早报核查日志.md 已tracked, ⚠️ 异常解除: content/content/ 14M 重复镜像不存在(师傅已清理, 推断被7a82fd8 mSAP 文档重构合并), 无新文章动作, 仅追加日志(85→+1行)

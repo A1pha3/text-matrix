@@ -153,5 +153,10 @@
     "lastRun": "2026-06-05",
     "status": "completed_with_anomaly",
     "note": "2026-06-05 01:29窗口(cron 850cf6e9 heartbeat 第10次): 4份早报持续稳定(ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, 全部draft:false, date=13:20:37已过Hugo「未来页面」12h+), 文章库981 delta+4 vs 22:09(tech 592/news 268/thoughts 2/video 12/wealth 9, 增量=23:00 cron 4篇NVIDIA/cosmos+lnova/open-notebook+github/copilot-sdk+openclaw-windows-node), draft:false=852(+4)/draft:true=1(autocli历史)/缺draft=128(全部<2026-05-28历史)/TOML=0, Tiny<1.5KB=7(全部历史), 未来日期=0, 源站抽样6/5 01:29 (v2ex 200/cointelegraph 200/36kr 200/wallstreetcn 200 + coingecko 404/binance 000, 早报源4/4稳+API降级延续), git本地落后origin 1→已pull --rebase(0ba41100 「docs: 更新 Hermes Agent 指南」, 师父22:09→01:29推1 commit), HEAD=0ba41100=origin/main同步, content/posts无untracked/modified, ⚠️ 异常: content/content/本地重复镜像14M/981md+6docs+1categories(23:00 cron重构残留, 远程不存在, 未gitignore, 建议rm -rf或gitignore), 无新文章动作, 仅追加日志到memory/article-checklog-20260605.log(60行)"
+  },
+  "文章健康检查-20:44": {
+    "lastRun": "2026-06-05",
+    "status": "completed",
+    "note": "2026-06-05 20:44窗口(cron 850cf6e9 heartbeat 第20次): 4份早报持续稳定(ai 4623B+financial 16663B+ai-side-hustle 19400B+web3 9838B, 全部draft:false, date=07:48-08:53已过Hugo阈值11h51m-12h56m+), 文章库987 delta=+2 vs 14:25(tech 685/news 272/thoughts 2/video 12/wealth 10+根md 6, 增量=origin pull 7a82fd8 师傅14:25→20:44推1 commit=mSAP 工艺产业全景文档重构/目录调整), draft:false=858(+2)/draft:true=1(autocli历史)/缺draft=128(全<2026-05-28历史)/YAML--双分隔=971/TOML+++头行=16/Tiny<1.5KB=7(全历史), 未来日期=0, 源站抽样6/5 20:44 5/6 全200(v2ex200/cointelegraph200/36kr200/coingecko200/binance200 + wallstreetcn HEAD-404但GET-200, server不支持HEAD但内容GET可用不影响早报, 早报源实际5/5稳), git本地与origin/main同步(HEAD=7a82fd8=origin/main, ahead/behind=0/0, 本地已pull --rebase), content/posts 无 untracked/modified, memory/早报核查日志.md 已tracked无变更, ✅ 异常解除: content/content/ 14M 重复镜像不存在(7a82fd8 师傅mSAP重构时已清理), 无新文章动作, 仅追加日志到memory/article-checklog-20260605.log(86行累计)"
   }
 }
