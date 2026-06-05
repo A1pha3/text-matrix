@@ -12,9 +12,9 @@ tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 
 # Claude Code Game Studios：11.5K Stars的多Agent游戏开发工作室——49个AI角色、72个技能、12个钩子的完整游戏开发工作流
 
-一个人用 Claude Code 写游戏，开头很快——但做到第三个功能、第六次重构时，问题不是 AI 不够聪明，而是没人帮你在设计、代码、测试、发布之间串起一条不会散架的流水线。Claude Code Game Studios 做的事很直接：不给 AI 堆更多算力，而是把 Claude Code 改造成一个模拟真实工作室的多角色协作系统——49 个 AI 角色各管一摊，72 个命令覆盖从头脑风暴到上线的全流程，12 个钩子在提交、推送、会话切换时自动跑检查。
+一个人用 Claude Code 写游戏，开头很快——但做到第三个功能、第六次重构时，问题不是 AI 不够聪明，而是没人帮你把设计、代码、测试、发布串成一条不会散架的流水线。Claude Code Game Studios 做的事很直接：不给 AI 堆更多算力，而是把 Claude Code 改造成一个模拟真实工作室的多角色协作系统——49 个 AI 角色各管一摊，72 个命令覆盖从头脑风暴到上线的全流程，12 个钩子在提交、推送、会话切换时自动跑检查。
 
-本文适合独立开发者、AI 应用研究者以及对多 Agent 系统感兴趣的团队。阅读约需 45–60 分钟，建议先对 Claude Code 有基本了解。
+本文适合独立开发者、AI 应用研究者以及对多 Agent 系统感兴趣的人。建议先对 Claude Code 有基本了解。
 
 ---
 
@@ -79,6 +79,31 @@ tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 ### 4.1 三层架构
 
 Agents 按三个层级组织，匹配真实工作室的运作方式：
+
+```mermaid
+flowchart BT
+    subgraph TIER3["Tier 3 — 专家层 (Sonnet/Haiku)"]
+        T3P["编程专家：gameplay/engine/AI/network/UI"]
+        T3D["设计专家：systems/level/economy"]
+        T3A["美术专家：technical-artist/ux"]
+        T3O["其他专家：QA/perf/security/devops"]
+    end
+
+    subgraph TIER2["Tier 2 — 部门主管 (Sonnet)"]
+        T2D["game-designer"]
+        T2P["lead-programmer"]
+        T2A["art-director"]
+        T2Q["qa-lead"]
+    end
+
+    subgraph TIER1["Tier 1 — 导演层 (Opus)"]
+        T1C["creative-director"]
+        T1T["technical-director"]
+        T1P["producer"]
+    end
+
+    TIER1 --> TIER2 --> TIER3
+```
 
 ```
 Tier 1 — 导演 (Opus)
@@ -609,27 +634,23 @@ vim .claude/hooks/validate-my-check.sh
 
 **Q1: 这个和普通用 Claude Code 有什么区别？**
 
-A：普通 Claude Code 是一个通用助手。这个项目在上面加了一层工作室结构——角色分工（设计归设计、代码归代码）、规范约束（路径规则禁止跨域修改）、自动化检查（提交和推送时跑验证）、以及跨角色的协作流程。
+普通 Claude Code 是一个通用助手，所有对话挤在一个会话里，设计讨论和代码实现在同一个上下文窗口里混着跑。这个项目在上面加了一层工作室结构：角色分工（设计归设计、代码归代码，每个 Agent 只看到自己域内的上下文）、规范约束（路径规则禁止跨域修改，比如音频 Agent 不能动 UI 代码）、自动化检查（提交和推送时跑验证，拦截违规提交）、以及跨角色的协作流程（通过 `/propagate-design-change` 和 producer Agent 协调跨域变更）。
 
 **Q2: 需要一直运行吗？**
 
-A：不需要。Session 关闭时自动归档状态，下次打开时恢复。
+不需要。Session 关闭时自动归档状态，下次打开时恢复。这意味着你可以在一天的开发结束后关掉 Claude Code，第二天打开时所有 Agent 的状态（包括上次讨论到哪了、哪些变更待审查）都还在。
 
 **Q3: 支持哪些游戏引擎？**
 
-A：Godot 4、Unity、Unreal Engine 5 都有专属 agent set。也支持不使用任何引擎。
+Godot 4、Unity、Unreal Engine 5 都有专属 agent set。每个引擎有对应的主管 Agent（如 `godot-specialist`）和多个专家 Agent（如 `gdscript-expert`、`shader-expert`）。也支持不使用任何引擎的项目。
 
 **Q4: 如何处理跨域变更？**
 
-A：用 `/propagate-design-change` 或让 `producer` 协调。
+跨域变更（比如游戏设计改动影响了 UI 和音频）需要走 `/propagate-design-change` 命令，或者让 producer Agent 协调。producer 的责任是追踪变更影响范围，通知相关 Agent 更新。这是三层架构中 Tier 1 的核心价值——没有导演层，跨域变更的传播就靠开发者自己记住。
 
 **Q5: 可以只用部分功能吗？**
 
-A：可以。这是一个模板，不是锁死框架。完全可自定义。
-
-**Q6: 支持 Windows/Mac/Linux 吗？**
-
-A：支持。主要在 Windows 10 Git Bash 上测试，所有 hooks 使用 POSIX 兼容模式。
+可以。这是一个模板，不是锁死的框架。建议把不玩的引擎对应的 Agent 目录删掉（比如只做 2D 就别留着 UE5 那些），能显著减少无关角色的提问和检查。也可以只启用部分 Hook——比如只开提交验证，关闭推送检查。
 
 ---
 
