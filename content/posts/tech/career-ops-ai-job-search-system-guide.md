@@ -1,33 +1,26 @@
----
-title: "Career-Ops 全面解析：如何用 AI 打造智能化求职流水线"
-date: "2026-04-30T11:30:00+08:00"
-categories: ["技术笔记"]
-tags: ["Claude", "AI-Agent", "求职自动化", "Go", "Playwright"]
-description: "深入解析 41,005 Star 的开源项目 Career-Ops：基于 Claude Code 的 AI 求职系统，涵盖 14 种技能模式、Go Dashboard、PDF 生成、批量处理与多平台支持的完整技术指南。"
----
++++
+date = '2026-04-30T11:30:00+08:00'
+draft = false
+title = 'Career-Ops：用 AI 打造智能化求职流水线'
+slug = 'career-ops-ai-job-search-system-guide'
+description = 'Career-Ops 是基于 Claude Code 的 AI 求职系统，涵盖 14 种技能模式、Go Dashboard、PDF 生成、批量处理与多平台支持，让求职者用 AI 对抗 AI 筛选。'
+categories = ['技术笔记']
++++
 
-![Career-Ops](https://img.shields.io/badge/Claude_Code-000?style=flat&logo=anthropic&logoColor=white)
-![Go](https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=flat&logo=playwright&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)
-![MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+# Career-Ops：用 AI 打造智能化求职流水线
 
-> **项目地址：** [santifer/career-ops](https://github.com/santifer/career-ops) · **41,005 ⭐** · 8,495 Forks · 153 Issues · 创建于 2026-04-04  
-> **官方主页：** [career-ops.org](https://career-ops.org) · ** Discord：** [discord.gg/8pRpHETxa4](https://discord.gg/8pRpHETxa4)
-
----
+> **项目地址：** [santifer/career-ops](https://github.com/santifer/career-ops) · MIT · 创建于 2026-04-04
+> **官方主页：** [career-ops.org](https://career-ops.org) · **Discord：** [discord.gg/8pRpHETxa4](https://discord.gg/8pRpHETxa4)
 
 ## 一、项目背景与核心定位
 
 Career-Ops 诞生于一次真实的求职经历。作者 Santiago 在经历数月的海投之后，厌倦了手动管理电子表格、反复调整简历、被低质量职位浪费时间的恶性循环。于是他决定：**用 AI 来对抗 AI 筛选**，打造一套完整的求职自动化流水线。
 
-该系统最终帮助 Santiago 评估了 **740+ 个职位**，生成了 **100+ 份定制化简历**，并成功拿下 Head of Applied AI 职位。整个系统以开源方式发布，短短数周便积累了超过 4 万颗星，成为 AI + 求职领域最具影响力的开源项目之一。
+该系统最终帮助 Santiago 评估了 740+ 个职位，生成了 100+ 份定制化简历，并成功拿下 Head of Applied AI 职位。整个系统以开源方式发布。
 
-**Career-Ops 的核心哲学：**
+Career-Ops 的核心哲学：
 
-```
-「公司用 AI 过滤候选人 → 我给候选人 AI 来「挑选」公司。」
-```
+> 公司用 AI 过滤候选人 → 候选人用 AI 来挑选公司。
 
 系统并非「撒网式群发工具」，而是一个**高质量过滤器**——帮助用户从成百上千个职位中，快速筛选出真正值得投入时间的少数offer。系统内置规则：**评分低于 4.0/5 的职位，系统会明确建议放弃申请**，避免浪费用户和招聘方双方的时间。
 

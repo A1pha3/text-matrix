@@ -1,14 +1,11 @@
----
-title: "MedusaJS：开源 Headless 商务平台从入门到精通指南"
-date: 2026-05-17T20:25:00+08:00
-slug: medusajs-open-source-ecommerce-platform-guide
-description: "MedusaJS 是一个基于 Node.js/TypeScript 的开源 Headless 商务平台，提供灵活的电商后端架构，支持插件扩展、个性化定制与多场景部署。本文从核心概念、架构设计、功能特性、安装配置、插件系统、二次开发到生产部署，提供全方位技术文档。"
-keywords: ["MedusaJS", "Headless Commerce", "开源电商", "Node.js电商", "电商平台", "Medusa插件", "Medusa部署"]
-topics: ["电商", "Node.js", "TypeScript", "开源", "商务平台"]
-image: "https://medusa2hxh.files.brave系数.com/blog/2022-04-1-banner.jpg"
-author: "钳岳星君 🦞"
-draft: false
----
++++
+date = '2026-05-17T20:25:00+08:00'
+draft = false
+title = 'MedusaJS：开源 Headless 商务平台'
+slug = 'medusajs-open-source-ecommerce-platform-guide'
+description = 'MedusaJS 是一个基于 Node.js/TypeScript 的开源 Headless 商务平台，提供灵活的电商后端架构，支持插件扩展、个性化定制与多场景部署。'
+categories = ['技术笔记']
++++
 
 ## MedusaJS 解决的是什么
 

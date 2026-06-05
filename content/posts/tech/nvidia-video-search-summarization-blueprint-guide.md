@@ -1,14 +1,15 @@
----
-title: "NVIDIA Video Search and Summarization：构建 GPU 加速的视觉智能体"
-date: "2026-05-14T20:17:49+08:00"
-categories: ["技术笔记"]
-tags: ["NVIDIA", "视觉智能体", "视频分析", "NIM", "VLM"]
-description: "深入解析 NVIDIA AI Blueprint：Video Search and Summarization（VSS）项目，涵盖四层架构、五大 Agent 工作流、代码结构与 Docker Compose 部署指南。"
----
++++
+date = '2026-05-14T20:17:49+08:00'
+draft = false
+title = 'NVIDIA VSS：构建 GPU 加速的视觉智能体'
+slug = 'nvidia-video-search-summarization-blueprint-guide'
+description = '深入解析 NVIDIA AI Blueprint：Video Search and Summarization（VSS）项目，涵盖四层架构、五大 Agent 工作流、代码结构与 Docker Compose 部署指南。'
+categories = ['技术笔记']
++++
 
-# NVIDIA Video Search and Summarization：构建 GPU 加速的视觉智能体
+# NVIDIA VSS：构建 GPU 加速的视觉智能体
 
-在视频数据爆发式增长的今天，如何让 AI 系统真正「看懂」视频，并按需检索、摘要、问答，已成为企业智能化升级的核心需求。NVIDIA 给出的答案是 **Video Search and Summarization（VSS）**——一个面向视频搜索与摘要场景的 AI Blueprint（参考架构）。截至 2026 年 5 月，该项目在 GitHub 已获得约 **690 Stars** 和 **239 Forks**，是 NVIDIA AI Blueprints 家族中关注度最高的视觉智能体项目之一。
+在视频数据爆发式增长的今天，如何让 AI 系统真正「看懂」视频，并按需检索、摘要、问答，已成为企业智能化升级的核心需求。NVIDIA 给出的答案是 **Video Search and Summarization（VSS）**——一个面向视频搜索与摘要场景的 AI Blueprint（参考架构）。
 
 本文从架构设计、工作流、代码结构、部署实践四个维度，对该仓库进行系统性解析。
 

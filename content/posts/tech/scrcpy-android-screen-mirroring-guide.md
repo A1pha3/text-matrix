@@ -1,18 +1,17 @@
----
-title: "scrcpy：开源 Android 屏幕投射与设备控制利器"
-date: "2026-05-14T20:17:49+08:00"
-categories: ["技术笔记"]
-tags: ["Android", "屏幕投射", "开源工具", "adb", "设备控制"]
-description: "scrcpy 是 Genymobile 开源的 Android 设备投射工具，通过 USB 或 TCP/IP 将手机屏幕镜像至电脑，并支持键盘鼠标控制设备。无需 root，1 秒启动，30~120fps，低延迟 35~70ms，支持音频转发、录制、虚拟显示、HID 模式等丰富功能。"
----
++++
+date = '2026-05-14T20:17:49+08:00'
+draft = false
+title = 'scrcpy：开源 Android 屏幕投射与设备控制'
+slug = 'scrcpy-android-screen-mirroring-guide'
+description = 'scrcpy 是 Genymobile 开源的 Android 设备投射工具，通过 USB 或 TCP/IP 将手机屏幕镜像至电脑，支持键盘鼠标控制设备，无需 root。'
+categories = ['技术笔记']
++++
 
-# scrcpy：开源 Android 屏幕投射与设备控制利器
+# scrcpy：开源 Android 屏幕投射与设备控制
 
 ## 什么是 scrcpy？
 
 [scrcpy](https://github.com/Genymobile/scrcpy)（发音为 "screen copy"）是 [Genymobile](https://github.com/Genymobile) 团队开源的 Android 设备投射与控制工具。它通过 USB 或 TCP/IP 无线连接，将 Android 设备的屏幕与音频实时投射到电脑，并允许用电脑的键盘和鼠标直接操控设备。整个过程**无需在手机端安装任何 App，无需 root 权限**，做到了真正的零侵入。
-
-截至目前，该项目已累计获得约 **141,000 颗 GitHub Stars**，是 Android 开发与自动化领域最受欢迎的明星项目之一。
 
 ## 核心特性
 

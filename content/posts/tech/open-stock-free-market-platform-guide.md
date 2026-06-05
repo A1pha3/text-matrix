@@ -1,12 +1,11 @@
----
-title: "OpenStock：不只是免费行情看板，更是一套可自部署的股市数据中台"
-date: 2026-05-26T23:00:00+08:00
-tags: ["GitHub", "股票", "Next.js", "开源", "AI"]
-categories: ["技术"]
-description: "OpenStock 用 Next.js 15 + MongoDB + Inngest + Gemini 搭了一套完整的股市数据平台。本文拆解其认证系统、AI 邮件自动化、多源舆情分析和 Docker 部署的完整链路。"
-stars: "11.8k"
-repo: "Open-Dev-Society/OpenStock"
----
++++
+date = '2026-05-26T23:00:00+08:00'
+draft = false
+title = 'OpenStock：不只是免费行情看板，更是一套可自部署的股市数据中台'
+slug = 'open-stock-free-market-platform-guide'
+description = 'OpenStock 用 Next.js 15 + MongoDB + Inngest + Gemini 搭了一套完整的股市数据平台，集认证、AI 邮件自动化、多源舆情分析和 Docker 部署于一体。'
+categories = ['技术笔记']
++++
 
 ## 目录
 
@@ -25,7 +24,7 @@ repo: "Open-Dev-Society/OpenStock"
 
 ## OpenStock 解决什么，不解决什么
 
-[OpenStock](https://github.com/Open-Dev-Society/OpenStock)（11.8k Stars）常被拿来和 TradingView、Yahoo Finance 对比——它确实提供了类似的行情看板和图表，但把它定位成「免费版 TradingView」就低估了它的实际能力。
+[OpenStock](https://github.com/Open-Dev-Society/OpenStock) 常被拿来和 TradingView、Yahoo Finance 对比——它确实提供了类似的行情看板和图表，但把它定位成「免费版 TradingView」就低估了它的实际能力。
 
 OpenStock 真正做的，是**把行情数据、用户认证、个性化监控、AI 邮件推送、多源舆情聚合整合成一套可自部署的平台**。它不是替换你的交易终端，而是替换你散落在 5 个页面上的数据聚合链路。
 

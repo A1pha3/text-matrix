@@ -1,18 +1,17 @@
----
-title: "PPF Contact Solver: 物理仿真利器，处理布料、刚体与杆件碰撞的开源求解器"
-date: 2026-05-26T23:00:00+08:00
-tags: ["GitHub", "Python", "物理仿真", "碰撞检测"]
-categories: ["技术"]
-description: "PPF Contact Solver 是一个Python编写的物理接触求解器，专注于处理布料、固体和杆件的碰撞模拟，适用于游戏开发、机器人仿真和虚拟试衣等场景。"
-stars: "3.3k"
-repo: "st-tech/ppf-contact-solver"
----
++++
+date = '2026-05-26T23:00:00+08:00'
+draft = false
+title = 'PPF Contact Solver：物理碰撞求解器'
+slug = 'ppf-contact-solver-physics-simulation-guide'
+description = 'PPF Contact Solver 是一个 Python 高性能物理接触求解器，专门处理布料、固体和杆件的碰撞模拟，适用于游戏开发、机器人仿真和虚拟试衣等场景。'
+categories = ['技术笔记']
++++
 
-# PPF Contact Solver: 物理仿真利器，处理布料、刚体与杆件碰撞的开源求解器
+# PPF Contact Solver：物理碰撞求解器
 
 ## 简介
 
-[PPF Contact Solver](https://github.com/st-tech/ppf-contact-solver) 是由 st-tech 开源的一个高性能物理接触求解器，专门用于处理涉及 **布料（shells）**、**固体（solids）** 和 **杆件（rods）** 的物理仿真。该项目已获得 **3.3k Stars**，在物理仿真领域具有独特的技术价值。
+[PPF Contact Solver](https://github.com/st-tech/ppf-contact-solver) 是由 st-tech 开源的一个高性能物理接触求解器，专门用于处理涉及**布料（shells）**、**固体（solids）**和**杆件（rods）**的物理仿真。
 
 作为一个 Python 编写的项目，PPF Contact Solver 提供了简洁的 API 和高效的求解性能，适合需要快速原型开发和集成物理仿真的场景。
 
