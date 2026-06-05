@@ -1,11 +1,11 @@
 ---
 title: "AI副业早报 2026-06-05"
-date: 2026-06-05T08:39:00+08:00
+date: 2026-06-05T08:53:00+08:00
 slug: ai-side-hustle-morning-2026-06-05
-description: "2026年6月5日 AI 副业早报：V2EX 酷工作四连发 Agent 岗(25-50K)+ Reddit AI Agent Marketplace 招聘 + 远程 AIGC 全栈 20-35K + n8n+AI 自动化服务。"
+description: "2026年6月5日 AI 副业早报：V2EX 酷工作七连发(4条老 Agent 岗+海外远程 AI 后端+内推+5年+全栈接单)，Reddit AI 外包赛道(AI engineer $45-75/hr / Activepieces / n8n / 17年AI dev / AI 视觉短片)持续白热化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "Agent", "远程工作"]
+tags: ["AI副业", "V2EX", "Reddit", "Agent", "海外远程"]
 hiddenFromHomePage: true
 ---
 
@@ -59,35 +59,68 @@ hiddenFromHomePage: true
 - 难度: ⭐⭐⭐（"胶水层"集成工作为主，不需要自己训练模型）
 - 适合人群: 想接 AI 应用层外包的全栈 / 移动端工程师，远程可接
 
+### 5. [海外远程] AI 后端工程师（Prompt & 多模态视频方向）20-25K · @wzhinan0
+来源: V2EX 酷工作
+发布者: @wzhinan0
+原文: [原文](https://www.v2ex.com/t/1217948)
+发布时间: 2026-06-04 17:25+08:00
+摘要: 一支团队招 AI 后端工程师，明确"将大模型能力真正落地到业务场景"——Prompt 设计 + 多模态 AI / VL 视频处理；岗位职责覆盖 AI 工作流/Agent/RAG 知识库、Prompt 工程、视频问答/视频理解模块；技术栈硬性要求 React/Next.js/Vue 前端 + Node.js/Python/Go/Java 后端 + 大模型 API 集成 + 多模态 AI/VL 实战经验。**加分项列表是"AI 外包能力图谱"**：LangChain / LlamaIndex / LangGraph、pgvector/Qdrant/Pinecone、Ollama / vLLM / 本地模型部署、评测体系。
+- 技能需求: 5 年以上全栈 + LLM API 实战 + RAG/Agent/Prompt Engineering + 多模态 AI/VL 视频处理
+- 报酬: 20K–25K RMB
+- 难度: ⭐⭐⭐（要求 5 年+ 经验 + 多模态 AI 实战）
+- 适合人群: 想从"纯模型调用"切到"多模态 AI 业务落地"的工程师
+
+### 6. 内推：电子/制造业百亿+集团，软件+AI 算法全国多地多岗
+来源: V2EX 酷工作
+发布者: @glhfwp
+原文: [原文](https://www.v2ex.com/t/1218012)
+发布时间: 2026-06-04 22:30+08:00
+摘要: 某电子行业百亿+ 集团内推，**全集团岗位池**而非单一 JD：南京算法 C/matlab/音频算法/端侧语音/信号处理；东莞软件+算法 C#/Java；北京/上海算法/数据分析/ML/CV/NLP/LLM/agent（"能力面广一点，有工业背景最好"）；青岛软件开发 c/c++/c#/java/python（要电路知识）。此外还有供应链/生产/工艺/硬件研发/项目经理等非 IT 岗。**对副业者信号**：内推人明确说"具体细节我也无法弄得特别清楚"——适合先发简历、别在 JD 上死磕，适合算法/AI 方向有工业落地意愿、想进制造业甲方的人。
+- 技能需求: 本科+，应届/社招均可，AI 算法 / 软件开发 / 工业背景优先
+- 报酬: "我觉得还行"，按部门岗位/职级具体面谈
+- 难度: ⭐⭐⭐（要求"务实，能做事"，无明确 KPI 数字）
+- 适合人群: 想进制造业大集团、有算法+工程复合背景、能接受多 base 地的求职者
+
+### 7. [接项目/可全职/远程] 5 年+全栈 + AI Agent 完整项目交付 · @verfallen
+来源: V2EX 酷工作
+发布者: @verfallen
+原文: [原文](https://www.v2ex.com/t/1217744)
+发布时间: 2026-06-04 00:11+08:00
+摘要: 自称"5 年+全栈，曾在某大厂负责复杂前端系统（多维表格、白板等在线协同软件）架构设计与功能实现，也能独立完成后端和 AI Agent 全流程开发"的工程师公开接单。明确交付范围：需求挖掘 → 产品设计 → 前端 + 后端全流程；技术栈 React/Tailwind/Next.js/Nest.js/Electron/Serverless/AI Agent；多年 Remote 经验、英语口语无障碍；**对外展示了一个在线 demo（rostack.vercel.app）**。对副业者来说，这是 V2EX 上"AI Agent + 多维表格/白板" 方向独立开发的标杆帖子，可对标 Upwork/Fiverr 上类似 SaaS 工具类外包的报价（$5K-15K/月订阅制 / $3K-8K/项目）。
+- 技能需求: React + Tailwind + Next.js + Nest.js + Electron + Serverless + AI Agent
+- 报酬: 未公开（联系后议；典型 Remote 全栈接单 $5-15K/月）
+- 难度: ⭐⭐⭐⭐（要求 5 年+ 大厂复杂前端经验 + AI Agent 落地）
+- 适合人群: 有 AI Agent + 协同编辑产品经验的独立开发者、想接中型 SaaS 工具单
+
 ---
 
 ## 💼 Reddit 海外机会
 
-### 5. SF Full-stack / AI Engineer, $45-$75/hr, contract-to-hire
+### 8. SF Full-stack / AI Engineer, $45-$75/hr, contract-to-hire
 来源: Reddit r/forhire
-发布者: /u/[post author]
+发布者: /u/Guilty-Creme-2543
 原文: [原文](https://www.reddit.com/r/forhire/comments/1tx0l72/for_hire_sf_fullstack_ai_engineer_typescript_node/)
 发布时间: 2026-06-04 21:07 UTC (= 2026-06-05 05:07+08:00)
-摘要: SF 工程师自荐：TypeScript/Node.js/Python/Swift 全栈 + macOS 端，full-time 优先但接受短期 paid contract/trial。**对副业者有借鉴价值**：这是 AI 时代海外 freelance 报价基准（$45-75/hr）——有 TS/Python + AI 集成经验的产品工程师可以直接对标这个区间去 Upwork/Toptal/YC WorkAtA-Startup 投简历。Reddit r/forhire 标 [For Hire] 的高质量 AI 工程师基本就是这个档位。
-- 技能需求: TypeScript / Node.js / Python / Swift · macOS / 全栈产品能力 / 多技术栈
+摘要: SF 工程师自荐：TypeScript/Node.js/Python/Swift 全栈 + macOS 端，full-time 优先但接受短期 paid contract/trial；技术亮点是**用 Swift + MCP + accessibility APIs 写了约 12k LOC 的桌面 AI agent**、并交付过面向商业保险经纪人的 AI research agent（FEMA 洪水区查询 + 风险/承保结构化输出）。**对副业者有借鉴价值**：这是 AI 时代海外 freelance 报价基准（$45-75/hr）——有 TS/Python + AI 集成 + MCP 经验的产品工程师，可以直接对标这个区间去 Upwork/Toptal/YC WorkAtA-Startup 投简历。Reddit r/forhire 标 [For Hire] 的高质量 AI 工程师基本就是这个档位。
+- 技能需求: TypeScript / Node.js / Python / Swift · MCP 实战 · AI agent 落地 · 全栈产品
 - 报酬: $45-$75/hr（合约转雇佣）
 - 难度: ⭐⭐⭐（需要"full-stack product work, multi-..."的实际交付能力）
 - 适合人群: 在美国/英语流利、想做 YC 系 startup 短期合约的全栈/AI 工程师
 
-### 6. Gravity 招 Activepieces / Automation Developer（全职远程，AI Agent Marketplace）
+### 9. Gravity 招 Activepieces / Automation Developer（全职远程，AI Agent Marketplace）
 来源: Reddit r/forhire
-发布者: Gravity 团队招聘帖
+发布者: /u/One-Ice7086 (Gravity 团队)
 原文: [原文](https://www.reddit.com/r/forhire/comments/1twmj7r/hiring_activepieces_automation_developer_fulltime/)
 发布时间: 2026-06-04 12:42 UTC (= 2026-06-04 20:42+08:00)
-摘要: Gravity 团队定位是"App Store for AI agents"——用户描述任务，agent 在 60 秒内执行。招聘全职远程 Activepieces 自动化开发者，**硬性要求**：必须有 Activepieces 实操经验（非"听说过"），并用过至少一个 agent framework、构建过 AI agent 或复杂 workflow。**副业信号**：Activepieces（开源 Zapier 替代）从 2025 年底开始变成 indie hacker / 副业圈的标配工具，建议国内独立开发者同步在 Activepieces / n8n / Dify 上搭几个可上 Marketplace 的 agent 模板。
+摘要: Gravity 团队定位是"App Store for AI agents"——用户描述任务，agent 在 60 秒内执行。招聘全职远程 Activepieces 自动化开发者，**硬性要求**：必须有 Activepieces 实操经验（非"听说过"），并用过至少一个 agent framework、构建过 AI agent 或复杂 workflow；薪资区间 300-400 美元/月（"Estimated commercials"，按印度/东南亚远程标价）。**副业信号**：Activepieces（开源 Zapier 替代）从 2025 年底开始变成 indie hacker / 副业圈的标配工具，建议国内独立开发者同步在 Activepieces / n8n / Dify 上搭几个可上 Marketplace 的 agent 模板。
 - 技能需求: Activepieces 硬性要求 + Agent framework（LangChain/LlamaIndex 等）经验 + 复杂 workflow 集成能力
-- 报酬: 未公开（应在 $3-6K/月 全职远程档位）
+- 报酬: 300-400 USD/月（"Estimated commercials"，对标东南亚远程开发者档）
 - 难度: ⭐⭐⭐（要求"硬性 Activepieces 经验"，需提前准备 portfolio）
 - 适合人群: 已经在用 Activepieces/n8n 做自动化的独立开发者，可全职 remote
 
-### 7. n8n Workflows + AI Integration 自荐服务，$15/hr 起
+### 10. n8n Workflows + AI Integration 自荐服务，$15/hr 起
 来源: Reddit r/forhire
-发布者: 阿尔及利亚自动化专员（n8n + Claude Code）
+发布者: /u/Ma_jid（阿尔及利亚自动化专员，n8n + Claude Code）
 原文: [原文](https://www.reddit.com/r/forhire/comments/1twxopf/for_hire_n8n_workflows_and_ai_integration/)
 发布时间: 2026-06-04 19:20 UTC (= 2026-06-05 03:20+08:00)
 摘要: 阿尔及利亚的 Automation Specialist 自荐：用 n8n 搭建基础到中级自动化工作流，用 Claude Code 提供 AI 集成解决方案，**基础报价 $15/hr**（强调愿意协商）。**对国内副业者的核心借鉴**：这是 AI 时代"自动化外包"赛道的国际报价基线——会 n8n/Make/Zapier + 集成 OpenAI/Anthropic API 的工程师，在 Upwork / Fiverr / 国内电鸭 / 程序员客栈上可对外报 $20-50/hr、对应国内 200-500 元/小时。一个月接 80 小时就能 cover 中等工资。
@@ -96,9 +129,9 @@ hiddenFromHomePage: true
 - 难度: ⭐⭐（n8n 入门快，2-4 周可独立接单）
 - 适合人群: 在职程序员想做副业 / 应届生第一份远程单 / 英语可读写的人
 
-### 8. 17-year senior dev 公开接 AI 项目（AI agents / Voice AI / AI receptionists）
+### 11. 17-year senior dev 公开接 AI 项目（AI agents / Voice AI / AI receptionists）
 来源: Reddit r/slavelabour
-发布者: 2005 年入行资深 freelance
+发布者: /u/zontyp（2005 年入行资深 freelance）
 原文: [原文](https://www.reddit.com/r/slavelabour/comments/1twvp2n/offer_17_years_experienced_developer_working_on/)
 发布时间: 2026-06-04 18:11 UTC (= 2026-06-05 02:11+08:00)
 摘要: 自 2005 年写码的资深 freelance dev 在 r/slavelabour 公开接单："目前在做 AI agents、AI receptionists、Voice AI calling。如果项目需要 AI 集成、AI 代理、Voice AI 外呼、OpenClaw/Hermes 定制，我可以接"。**副业信号**：海外 r/slavelabour 上"AI 接单"帖密度明显上升，且 17 年经验的人在公开用 [offer] 标签竞争——意味着 AI 外包市场已从蓝海进入红海，**单纯"会调 API"已不够**，要么做垂直行业（医疗/律所/ HVAC/dental）的 AI receptionist，要么做 voice AI / agent eval 等更深的能力。
@@ -107,15 +140,28 @@ hiddenFromHomePage: true
 - 难度: ⭐⭐⭐⭐（要能交付生产级 AI agent，不是 demo）
 - 适合人群: 已有 3+ 年后端 + LLM 集成经验的工程师，可考虑切 AI receptionist/voice AI 垂直赛道
 
+### 12. USA Creative Assistant：AI Visuals + Short Scripts + Video Editing（project-based）
+来源: Reddit r/forhire
+发布者: /u/PrimeDirective76（美国创意助理，影视背景 + AI 工具）
+原文: [原文](https://www.reddit.com/r/forhire/comments/1tx1y1r/for_hire_usaonline_creative_assistant_ai_visuals/)
+发布时间: 2026-06-04 21:58 UTC (= 2026-06-05 05:58+08:00)
+摘要: 美国自由创意助理自荐：电影学本科，主要能力是 short-form scripts（sci-fi / Twilight Zone 风）、AI image generation with Midjourney、social media campaign briefs、content calendars、Canva/Photoshop graphics、short-form video editing、**AI-assisted shorts（音乐+voiceover+visuals）**、AI-assisted coding 工具做 landing page 实验。明确说"AI 主要用于格式化、proofreading、组织工作流"——本人定位不是 AI 内容农场，而是"AI 加速的传统内容创作者"。**副业信号**：海外正在出现一个新的细分品类 **"AI-assisted creative assistant"**，即"会 AI 工具、但核心还是创意 + 影视"的人，月费 / 项目制在 $500-2K 区间。
+- 技能需求: Short-form scripts · Midjourney · 短视频剪辑 · 社媒策划 · Canva/Photoshop · AI 工具辅助创作
+- 报酬: 项目制（待商议；典型创意助理 $500-2K/月）
+- 难度: ⭐⭐（AI 工具使用门槛低，但创意+剪辑需要功底）
+- 适合人群: 有影视/广告/编剧背景、英语流利的人；可对标小红书"AI 视觉+剪辑"小工作室
+
 ---
 
 ## 📊 今日市场信号
 
-**1. Agent 工程师 / Agent PM 双岗在 V2EX 集中爆发** —— 6 月 4-5 日 V2EX 酷工作板块出现至少 4 个 Agent 方向岗位（t/1217896、t/1217892、t/1217867、t/1218012 部分），开价 20-50K × 14 薪，叠加 RSU，是今年最确定的 AI 招聘方向。
+**1. V2EX 酷工作 24h 出现 7 条 AI 相关帖，是 6 月以来单日峰值** —— Agent PM/工程师 25-50K、AI 架构师 20-40K×14、外企 AI PM 35-45K、远程 AIGC 全栈 20-35K、海外远程 AI 后端 20-25K、电子大厂 AI 算法内推、5年+全栈接单——**这意味着 6 月初是企业级 Agent 招人窗口的尾段**，7 月毕业季/校招前应该还有一波"急招"释放，想换工作的人最好在这两周内投递。
 
-**2. "AI 自动化外包"已成 Reddit r/forhire/r/slavelabour 的高频标签** —— n8n、Activepieces、Voice AI、AI receptionist 等关键词同时出现，**$15-75/hr 是当前合理报价区间**；国内同类岗位（电鸭、程序员客栈、知乎"AI 外包"话题）可对标。
+**2. "AI 自动化外包"已成 Reddit r/forhire/r/slavelabour 的高频标签** —— n8n、Activepieces、Voice AI、AI receptionist、AI-assisted creative assistant 等关键词同时出现，**$15-75/hr 是当前合理报价区间**；国内同类岗位（电鸭、程序员客栈、知乎"AI 外包"话题）可对标。
 
 **3. half 远程 / WLB 外资 AI PM 是 35-50K 价位最舒服的选择** —— t/1217902 Xometry 招聘同时给出"half 远程 + 不卷 + RSU + 工业/SaaS 经验"四个加分项，是 6 月初最值得投递的少数岗位之一。
+
+**4. "电子大厂 AI 算法内推"是制造业 AI 落地的明确信号** —— t/1218012 是今年首条明确给出"南京/东莞/北京/上海/青岛多 base + AI 算法/工业背景"的全集团内推，说明 AI 落地从互联网大厂向制造业/工业大厂扩散，**工业 + AI 的复合背景在 2026 下半年会越来越值钱**。
 
 ---
 
@@ -128,7 +174,11 @@ hiddenFromHomePage: true
 - ✅ https://www.v2ex.com/t/1217896 - Agent PM/工程师 25-50K（已打开帖子，正文匹配标题，发布者 @Gowther，2026-06-04 14:53+08:00）
 - ✅ https://www.v2ex.com/t/1217892 - 塔斯汀 AI 应用架构师 20-40K × 14 薪（已打开帖子，正文匹配标题，发布者 @avenhen，2026-06-04 14:44+08:00）
 - ✅ https://www.v2ex.com/t/1217850 - 远程 AIGC 全栈/Flutter 20-35K（已打开帖子，正文匹配标题，发布者 @Brand001，2026-06-04 12:41+08:00）
-- ✅ https://www.reddit.com/r/forhire/comments/1tx0l72/for_hire_sf_fullstack_ai_engineer_typescript_node/ - SF full-stack AI engineer $45-75/hr（RSS 内容匹配标题，updated 2026-06-04 21:07 UTC）
-- ✅ https://www.reddit.com/r/forhire/comments/1twmj7r/hiring_activepieces_automation_developer_fulltime/ - Gravity AI Agent Marketplace 招 Activepieces dev（RSS 内容匹配标题，updated 2026-06-04 12:42 UTC）
-- ✅ https://www.reddit.com/r/forhire/comments/1twxopf/for_hire_n8n_workflows_and_ai_integration/ - n8n + AI Integration $15/hr（RSS 内容匹配标题，updated 2026-06-04 19:20 UTC）
-- ✅ https://www.reddit.com/r/slavelabour/comments/1twvp2n/offer_17_years_experienced_developer_working_on/ - 17 年资深 AI dev 公开接单（RSS 内容匹配标题，updated 2026-06-04 18:11 UTC）
+- ✅ https://www.v2ex.com/t/1217948 - [海外远程] AI 后端工程师（Prompt & 多模态视频）20-25K（已打开帖子，正文匹配标题，发布者 @wzhinan0，2026-06-04 17:25+08:00）
+- ✅ https://www.v2ex.com/t/1218012 - 内推：电子/制造业百亿+集团，软件+AI 算法全国多岗（已打开帖子，正文匹配标题，发布者 @glhfwp，2026-06-04 22:30+08:00）
+- ✅ https://www.v2ex.com/t/1217744 - [接项目/可全职/远程] 5 年+全栈 + AI Agent 完整项目交付（已打开帖子，正文匹配标题，发布者 @verfallen，2026-06-04 00:11+08:00）
+- ✅ https://www.reddit.com/r/forhire/comments/1tx0l72/for_hire_sf_fullstack_ai_engineer_typescript_node/ - SF full-stack AI engineer $45-75/hr（RSS 内容匹配标题，published 2026-06-04 21:07 UTC）
+- ✅ https://www.reddit.com/r/forhire/comments/1twmj7r/hiring_activepieces_automation_developer_fulltime/ - Gravity AI Agent Marketplace 招 Activepieces dev（RSS 内容匹配标题，published 2026-06-04 12:42 UTC）
+- ✅ https://www.reddit.com/r/forhire/comments/1twxopf/for_hire_n8n_workflows_and_ai_integration/ - n8n + AI Integration $15/hr（RSS 内容匹配标题，published 2026-06-04 19:20 UTC）
+- ✅ https://www.reddit.com/r/slavelabour/comments/1twvp2n/offer_17_years_experienced_developer_working_on/ - 17 年资深 AI dev 公开接单（RSS 内容匹配标题，published 2026-06-04 18:11 UTC）
+- ✅ https://www.reddit.com/r/forhire/comments/1tx1y1r/for_hire_usaonline_creative_assistant_ai_visuals/ - USA Creative Assistant AI Visuals/Short Scripts（RSS 内容匹配标题，published 2026-06-04 21:58 UTC）
