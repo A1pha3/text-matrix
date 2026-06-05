@@ -1,12 +1,11 @@
----
-title: "Web3早报 2026-04-15：BTC $74K/ETH $2.3K/Strategy增持13亿"
-date: "2026-04-15T00:08:00+08:00"
-lastmod: 2026-04-15T13:00:00+08:00
-draft: false
-tags: ["Web3早报"]
-categories: ["行业快讯"]
-hiddenFromHomePage: true
----
++++
+date = '2026-04-15T00:08:00+08:00'
+draft = false
+title = 'Web3早报 2026-04-15：BTC $74K/ETH $2.3K/Strategy增持'
+slug = 'web3-morning-news-2026-04-15'
+description = '2026年4月15日 Web3 早报，涵盖 BTC $74K、ETH $2.3K、Strategy 增持等动态。'
+categories = ['行业快讯']
++++
 
 # Web3早报 2026-04-15
 

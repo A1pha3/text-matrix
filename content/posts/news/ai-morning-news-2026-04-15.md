@@ -1,12 +1,11 @@
----
-title: "AI新闻早报 2026-04-15：Claude Code Rout/字节扣子2.5/斯坦福AI报告"
-date: "2026-04-15T00:08:00+08:00"
-lastmod: 2026-04-15T12:50:00+08:00
-draft: false
-tags: ["AI新闻早报"]
-categories: ["行业快讯"]
-hiddenFromHomePage: true
----
++++
+date = '2026-04-15T00:08:00+08:00'
+draft = false
+title = 'AI新闻早报 2026-04-15：Claude Code Rout/字节扣子2.5/斯坦福AI报告'
+slug = 'ai-morning-news-2026-04-15'
+description = '2026年4月15日 AI 新闻早报，涵盖 Claude Code Rout、字节扣子2.5、斯坦福 AI 报告等热点。'
+categories = ['行业快讯']
++++
 
 # AI新闻早报 2026-04-15
 

@@ -2,6 +2,9 @@
 date = '2026-05-26T16:16:40+08:00'
 draft = false
 title = 'Web3早报 | 2026年5月26日'
+slug = 'web3-morning-news-2026-05-26'
+description = '2026年5月26日 Web3 早报，涵盖加密货币行情与 Web3 行业动态。'
+categories = ['行业快讯']
 +++
 
 # Web3早报 | 2026年5月26日

@@ -1,12 +1,11 @@
----
-title: "Web3早报 2026-04-14：BTC ETF流出$291M/伊朗协议预期推升BTC"
-date: "2026-04-14T08:00:00+08:00"
-lastmod: 2026-04-14T18:30:00+08:00
-draft: false
-tags: ["Web3", "BTC", "ETH", "加密货币", "ETF"]
-categories: ["行业快讯"]
-hiddenFromHomePage: true
----
++++
+date = '2026-04-14T08:00:00+08:00'
+draft = false
+title = 'Web3早报 2026-04-14：BTC ETF流出/伊朗协议预期推升BTC'
+slug = 'web3-morning-news-2026-04-14'
+description = '2026年4月14日 Web3 早报，涵盖 BTC ETF 流出、伊朗协议预期等动态。'
+categories = ['行业快讯']
++++
 
 # Web3早报 2026-04-14
 

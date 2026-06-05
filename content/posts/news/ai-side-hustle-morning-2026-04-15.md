@@ -1,12 +1,11 @@
----
-title: "AI副业早报 2026-04-15：Codex中转站/AI工作流招聘"
-date: "2026-04-15T00:08:00+08:00"
-lastmod: 2026-04-15T12:55:00+08:00
-draft: false
-tags: ["AI副业早报"]
-categories: ["行业快讯"]
-hiddenFromHomePage: true
----
++++
+date = '2026-04-15T00:08:00+08:00'
+draft = false
+title = 'AI副业早报 2026-04-15：Codex中转站/AI工作流招聘'
+slug = 'ai-side-hustle-morning-2026-04-15'
+description = '2026年4月15日 AI 副业早报，涵盖 Codex 中转站、AI 工作流招聘等副业机会。'
+categories = ['行业快讯']
++++
 
 # AI副业早报 2026-04-15
 

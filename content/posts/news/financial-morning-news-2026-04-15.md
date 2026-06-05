@@ -1,12 +1,11 @@
----
-title: "经济财经早报 2026-04-15：美股反弹/伊朗局势/Claude企业版"
-date: "2026-04-15T00:08:00+08:00"
-lastmod: 2026-04-15T11:40:00+08:00
-draft: false
-tags: ["经济财经早报"]
-categories: ["行业快讯"]
-hiddenFromHomePage: true
----
++++
+date = '2026-04-15T00:08:00+08:00'
+draft = false
+title = '经济财经早报 2026-04-15：美股反弹/伊朗局势/Claude企业版'
+slug = 'financial-morning-news-2026-04-15'
+description = '2026年4月15日经济财经早报，涵盖美股反弹、伊朗局势、Claude 企业版等热点。'
+categories = ['行业快讯']
++++
 
 # 经济财经早报 2026-04-15
 

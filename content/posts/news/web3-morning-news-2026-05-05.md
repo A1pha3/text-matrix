@@ -1,10 +1,13 @@
 +++
 date = '2026-05-06T10:43:40+08:00'
 draft = false
-title = '🚀 Web3 早报 | 2026年5月5日'
+title = 'Web3 早报 | 2026年5月5日'
+slug = 'web3-morning-news-2026-05-05'
+description = '2026年5月5日 Web3 早报，涵盖加密货币行情、DeFi、NFT 等动态。'
+categories = ['行业快讯']
 +++
 
-# 🚀 Web3 早报 | 2026年5月5日
+# Web3 早报 | 2026年5月5日
 
 > 数据来源：CoinGecko API（价格）+ CoinGecko News（资讯）
 > 采集时间：2026-05-05 08:00 (Asia/Shanghai)
