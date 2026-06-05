@@ -1,0 +1,11 @@
+[2026-06-06 00:51:37 CST] 文章健康检查 #22 (cron 850cf6e9)
+  早报: 4份稳 (ai 4623B+financial 16663B+ai-side-hustle 19400B+web3 9838B, draft:false)
+  日期: ai=07:48/financial=08:09/ai-side-hustle=08:53/web3=08:45 (已过Hugo阈值 16h+, 安全)
+  文章库: 991 (tech 685/news 272)  delta=-2 vs 21:46#21 (师傅21:46→00:50新推1 commit=4bafcf1 4篇趋势文+1 commit=bf3db0e 日志+1 commit=2753770 日志+1 commit=7a82fd8 mSAP)
+  实际净增: +1 (4bafcf1增加+删除0) 但21:46#21统计993包含未清理的, 现重新清点991=tech685/news272/...
+  draft:false=862/draft:true=1(autocli历史)/缺draft=128(全<2026-05-28历史)/TOML=16/Tiny<1.5KB=7(全历史)/未来日期=0
+  源站抽样 6/6 00:50: v2ex200/cointelegraph200/36kr200/wallstreetcn404/coingecko404/binance200 → 3/6 稳 + wallstreetcn 4月余仍404 HEAD (GET-200与之前一致, 实际可用但HEAD异常)
+  git: HEAD=4bafcf1=origin/main同步 (ahead/behind=0/0), content/posts 无 untracked/modified
+  最近3 commit: 4bafcf1 (4篇6/5趋势文) / bf3db0e (21:46日志) / 2753770 (20:44日志)
+  异常: 无 (content/content/残留已清, 早报核查日志已tracked)
+  无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
