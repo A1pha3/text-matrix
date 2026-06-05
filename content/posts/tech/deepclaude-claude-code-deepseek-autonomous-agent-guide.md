@@ -8,8 +8,6 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "DeepSeek", "AI Agent", "OpenRouter", "API 代理"]
 ---
 
-<!-- markdownlint-disable-file MD003 MD041 -->
-
 deepclaude 做的事情很窄：在 Claude Code 成熟的执行框架外面加一层模型请求链路，让 DeepSeek V4 Pro、OpenRouter 等后端能稳定对接。README 和关键脚本看完，主线就是这一条——文件编辑、Bash、Git、子 Agent 还是原来的那套，变化集中在模型请求怎么走。
 
 README 写了"17 倍更便宜"，但这只是引子。deepclaude 下功夫的地方在兼容层：模型名与档位映射、thinking block 清理、`usage` 修复、Remote Control 下的 bridge 分流。很多同类方案演示一轮问答跑得通，一到长会话和工具循环就开始出错，deepclaude 至少走过这些坑。

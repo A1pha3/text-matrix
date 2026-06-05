@@ -19,7 +19,7 @@ description: "Squad 把 GitHub Copilot 的 Agent 模式扩展成一支多角色 
 
 ---
 
-## §2 项目概述
+## 2. 项目概述
 
 ### 2.1 什么是 Squad
 

@@ -8,11 +8,9 @@ categories: ["技术笔记"]
 tags: ["AI", "LLM", "Agent", "Agentic Workflow", "RAG", "工作流", "Dify", "Python"]
 ---
 
-## 前言
-
 很多团队在 Prompt 调优阶段做得不错，但一把 LLM 接入真实业务流，问题就来了：日志怎么查？多模型怎么切换？RAG 管道怎么管？生产流量怎么限？这些不是换个 Prompt 就能解决的——它们需要一套把模型调用、流程编排、数据管理和可观测性统一起来的平台。
 
-[Dify](https://github.com/langgenius/dify) 正是在这个方向上深耕的开源项目。当前 GitHub Stars 超过 **139,835**，Forks 超过 **21,932**，是 Agentic Workflow 领域最活跃的开源项目之一。它把 AI 工作流、RAG 管道、Agent、模型管理和 LLMOps 整合到一个可视化界面里，让开发者可以从原型一路迭代到生产级应用，不用在基础设施上反复造轮子。
+[Dify](https://github.com/langgenius/dify) 正是在这个方向上深耕的开源项目（139k+ Stars），是 Agentic Workflow 领域最活跃的开源项目之一。它把 AI 工作流、RAG 管道、Agent、模型管理和 LLMOps 整合到一个可视化界面里，让开发者可以从原型一路迭代到生产级应用。
 
 这篇文章讲 Dify 的核心原理、系统架构、安装部署、典型场景实战和二次开发路径。读完能跑通完整示例，也能在生产环境里用起来。
 
