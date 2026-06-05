@@ -1,6 +1,9 @@
 ---
 title: Agent Skills - 安全验证的AI编码智能体技能注册表
 date: 2026-05-18
+slug: agent-skills-secure-agentic-skills-registry
+categories: ["技术笔记"]
+description: "据 Snyk 统计，市场上 13% 以上的智能体技能包含高危漏洞。Agent Skills 通过静态分析、锁定文件完整性和人工审核三重关卡，确保每个技能的代码安全性。"
 tags:
   - AI Agent
   - 安全
@@ -10,8 +13,6 @@ tags:
 ---
 
 # Agent Skills：安全验证的 AI 编码智能体技能注册表
-
-**Stars: 3,838** | **今日: +336** | **TypeScript**
 
 GitHub: [tech-leads-club/agent-skills](https://github.com/tech-leads-club/agent-skills)
 

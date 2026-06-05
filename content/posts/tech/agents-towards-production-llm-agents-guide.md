@@ -1,29 +1,17 @@
 ---
-title: "开源热点：19.7k Stars 的 Agents Towards Production——LLM Agent 开发的工程化实践指南"
+title: "开源热点：Agents Towards Production——LLM Agent 开发工程化实践"
 date: 2026-05-17T20:15:00+08:00
 categories: ["技术笔记"]
+slug: agents-towards-production-llm-agents-guide
 tags: ["LLM Agent", "LangGraph", "RAG", "Multi-agent", "生产级AI"]
-description: "深入解析 NirDiamant/agents-towards-production 项目，19.7k Stars 代码优先的 LLM Agent 生产部署教程仓库，涵盖架构设计与工程实践。"
+description: "Nir Diamant 的 agents-towards-production 提供 28 个配套 Notebook，按工程依赖关系排成从基础到部署的完整 LLM Agent 生产化路径。"
 ---
 
-# 开源热点：Agents Towards Production——LLM Agent 开发的工程化实践指南
+# 开源热点：Agents Towards Production——LLM Agent 开发工程化实践
 
 把 LLM Agent 从原型推到生产，缺的不是调用模型的代码，而是一条从头到尾的工程链：状态管理、记忆系统、工具接入、安全护栏、可观测性、部署与评估。Nir Diamant 的 [agents-towards-production](https://github.com/NirDiamant/agents-towards-production) 给的就是这条链——28 个配套 Notebook，按工程依赖关系排成从基础到部署的完整路径，不是概念清单。
 
-## 项目速览
-
-| 属性 | 值 |
-|---|---|
-| **仓库** | [NirDiamant/agents-towards-production](https://github.com/NirDiamant/agents-towards-production) |
-| **Stars** | 19,732 |
-| **Forks** | 2,634 |
-| **教程数** | 28（持续增加）|
-| **语言** | Jupyter Notebook |
-| **创建时间** | 2025-06-16 |
-| **定位** | End-to-end, code-first tutorials for building production-grade GenAI agents |
-| **作者** | Nir Diamant（DiamantAI Collective）|
-
-这篇文章会先拆开仓库的 5 层架构和一条任务流（一个带记忆的搜索 Agent 从请求到部署的完整链路），再说明它的技术选型逻辑、同类项目的差异，以及不同团队该怎么用。
+这篇文章会先拆开仓库的 5 层架构和一条任务流（一个带记忆的搜索 Agent 从请求到部署的完整链路），再说明它的技术选型逻辑和同类项目的差异。
 
 ---
 

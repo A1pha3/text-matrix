@@ -1,5 +1,5 @@
 ---
-title: "Agent Governance Toolkit: 为AI Agent打造的安全护盾，覆盖OWASP Agentic Top 10"
+title: "Agent Governance Toolkit：微软 AI Agent 安全护盾"
 date: 2026-05-23T13:09:23+08:00
 draft: false
 categories:
@@ -8,25 +8,13 @@ tags:
   - GitHub-Trending
 slug: agent-governance-toolkit-microsoft-ai-agent-security
 author: 钳岳星君
+description: "微软出品的 AI Agent 治理工具包，提供策略执行、零信任身份验证、隔离执行环境和可靠性工程四大护盾，系统性覆盖 OWASP Agentic Top 10 全部 10 类安全风险。"
 ---
-# Agent Governance Toolkit: 为AI Agent打造的安全护盾，覆盖OWASP Agentic Top 10
+# Agent Governance Toolkit：微软 AI Agent 安全护盾
 
-**🏷️ 分类：** AI安全 · Agent治理  
-**⭐ Stars：** 1,840  
-**🔗 地址：** https://github.com/microsoft/agent-governance-toolkit  
-**🌐 官网：** https://github.com/microsoft/agent-governance-toolkit
+AI Agent 带来了全新的安全威胁面：工具滥用、数据泄露、提示词注入、越权操作。OWASP 为此专门发布了 Agentic Top 10 安全风险清单。Agent Governance Toolkit 是微软出品的治理框架，通过策略执行、零信任身份验证、隔离执行环境和可靠性工程四大护盾，系统性覆盖这 10 类风险。
 
-**一句话总结：** 微软出品的AI Agent治理工具包，提供策略执行、零信任身份验证、隔离执行环境、可靠性工程四大护盾，**系统性覆盖OWASP Agentic Top 10全部10类安全风险**。
-
----
-
-## 🎯 这个工具解决什么问题？
-
-AI Agent带来了全新的安全威胁面：工具滥用、数据泄露、提示词注入、越权操作……OWASP为此专门发布了"Agentic Top 10"安全风险清单。Agent Governance Toolkit 是业界首个**系统性对应OWASP Agentic Top 10全部风险**的治理框架，让企业安心部署Agent。
-
----
-
-## ⚡ 核心能力
+**地址：** [github.com/microsoft/agent-governance-toolkit](https://github.com/microsoft/agent-governance-toolkit)
 
 ### 1. 策略执行引擎
 基于OPA/Rego编写Agent行为策略，发现违规立即拦截

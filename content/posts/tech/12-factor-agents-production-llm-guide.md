@@ -1,6 +1,9 @@
 ---
 title: 12-Factor Agents - 构建生产级LLM应用的12条原则
 date: 2026-05-18
+slug: 12-factor-agents-production-llm-guide
+categories: ["技术笔记"]
+description: "12-Factor Agents 不是另一套 Agent 框架，而是一组从生产环境里长出来的工程约束，分布在输入层、执行层、控制层和架构层，解决 LLM 应用中上下文控制、工具设计、安全护栏等核心工程问题。"
 tags:
   - AI Agent
   - LLM应用
