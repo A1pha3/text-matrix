@@ -1,13 +1,12 @@
 ---
 title: "mSAP 工艺产业全景：1.6T 光模块引爆的 PCB 产能争夺战"
 date: "2026-06-05T09:00:00+08:00"
-lastmod: "2026-06-05T12:30:00+08:00"
 slug: "msap-process-16t-optical-module-pcb-capacity-war"
 description: "mSAP（改良型半加成法）一直用于苹果 iPhone 主板，1.6T 光模块让它第一次被 AI 基础设施拉动。系统拆解 HDI/mSAP/SAP 三层工艺阶梯、臻鼎/深南/华通扩产节奏、三井铜箔垄断、设备交期 6-12 个月的瓶颈，以及 2026 全年到 2027Q2 的确定性产能缺口。"
-summary: "基于 2026-06-05 mSAP 机构交流纪要，系统拆解 1.6T 光模块引爆的 PCB 产能争夺战：HDI/mSAP/SAP 工艺边界、臻鼎/深南/华通扩产节奏、三井铜箔垄断、设备交期 6-12 个月的瓶颈，以及 2026 全年到 2027Q2 的确定性产能缺口。"
+tags: ["mSAP", "PCB", "光模块", "1.6T", "AI基础设施", "半导体", "供应链", "投资机会", "国产替代", "供需缺口"]
+categories: ["财富自由"]
+hiddenFromHomePage: true
 draft: false
-categories: ["技术笔记"]
-tags: ["mSAP", "PCB", "光模块", "1.6T", "AI基础设施", "半导体", "供应链", "工艺"]
 ---
 
 > **核心判断**：mSAP（改良型半加成法，Modified Semi-Additive Process）不是新工艺，它一直是苹果 iPhone 主板的成熟方案。2026 年的 1.6T 光模块需求，让大陆 PCB（Printed Circuit Board，印制电路板）厂第一次看见量价齐升的机会——单价是苹果 mSAP 主板的 3 倍，2026 全年到 2027Q2 存在确定性产能缺口。
