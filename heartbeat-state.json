@@ -45,9 +45,9 @@
     "note": "2026-06-04由主AI 13:48介入补做（09:00+10:00两个cron窗口因DNS失败漏发），commit eb119b0。trending抓取：14个trending repo中9个已覆盖，3个新撰写：heygen-com/hyperframes (+393 today) + yikart/AiToEarn (+320 today) + yangshun/tech-interview-handbook (+116 today)。13:48 trending抓取+14:00+ github直连核链时网络抖动（curl 5s timeout 000），但GitHub raw 200同步成功，文章基于真实README撰写。"
   },
   "github-trending-09": {
-    "lastRun": "2026-06-04",
-    "status": "completed_by_main_ai",
-    "note": "2026-06-04由主AI 13:48介入补做（09:00+10:00两个cron窗口因DNS失败漏发），commit eb119b0。trending抓取：14个trending repo中9个已覆盖，3个新撰写：heygen-com/hyperframes (+393 today) + yikart/AiToEarn (+320 today) + yangshun/tech-interview-handbook (+116 today)。13:48 trending抓取+14:00+ github直连核链时网络抖动（curl 5s timeout 000），但GitHub raw 200同步成功，文章基于真实README撰写。"
+    "lastRun": "2026-06-05",
+    "status": "all_already_covered",
+    "note": "2026-06-05 09:09窗口(cron 189b7262触发)GitHub trending日榜,curl UA抓取成功,14个trending repo(NousResearch/hermes-agent 3 files/PaddlePaddle/PaddleOCR 3 files/github/spec-kit 2 files/NVIDIA/cosmos 1 file/lfnovo/open-notebook 1 file/Open-LLM-VTuber/Open-LLM-VTuber 1 file/jwasham/coding-interview-university 1 file/github/copilot-sdk 2 files/aquasecurity/trivy 2 files/openclaw/openclaw-windows-node 1 file/reconurge/flowsint 2 files/mvanhorn/last30days-skill 1 file/chopratejas/headroom 1 file/affaan-m/ECC 3 files)全部已有文章(content/posts/)覆盖,逐个文件路径验证,14/14已覆盖(部分含2-3个不同视角文章),无新增需求。git HEAD=7b6956ca与origin/main同步(ahead/behind=0/0),无untracked content/posts修改,无git push动作,仅更新heartbeat-state.json后推送飞书汇报。"
   },
   "ai-news-morning": {
     "lastRun": "2026-06-04",
@@ -82,7 +82,12 @@
   "文章健康检查": {
     "lastRun": "2026-06-05",
     "status": "completed_with_anomaly",
-    "note": "2026-06-05 03:41窗口(cron 850cf6e9 heartbeat 第12次): 4份早报持续稳定(ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, draft:false, date=13:20:37已过Hugo阈值14h+), 文章库981 delta+0 vs 02:37(tech 684/news 268/thoughts 2/video 12/wealth 9+根md 6=981), draft:false=852/draft:true=1(autocli)/缺draft=128/TOML=981/Tiny<1.5KB=7(全历史), 未来日期=0, 源站抽样6/5 03:41 (v2ex200/cointelegraph200/36kr200/wallstreetcn200+coingecko404/binance000, 早报源4/4全稳+API降级延续), git本地与origin/main同步(HEAD=0ba41100, content/posts无untracked/modified), ⚠️ 异常延续: content/content/本地重复镜像14M/995md(未gitignore,师傅仍未处理), 无新文章动作, 仅追加日志到memory/article-checklog-20260605.log"
+    "note": "2026-06-05 09:04窗口(cron 850cf6e9 heartbeat 第16次): 4份早报持续稳定(ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, draft:false, date=13:20:37已过Hugo阈值19h44m+), 文章库981 delta+0 vs 07:54(tech 684/news 268/thoughts 2/video 12/wealth 9+根md 6=981), draft:false=852/draft:true=1(autocli历史)/缺draft=128(全<2026-05-28历史)/YAML--双分隔=965/TOML+++头行=16/Tiny<1.5KB=7(全历史), 未来日期=0, 源站抽样6/5 09:04 历史性连续 4 窗口 6/6 全200(v2ex200/cointelegraph200/36kr200/wallstreetcn200 + coingecko200/binance200, WAF/防火墙低位延续, API同步恢复稳定), git本地与origin/main同步(HEAD=7b6956ca=origin/main, ahead/behind=0/0, content/posts无untracked/modified, 最近content/posts commit仍是6/4 23:44的0ba41100), ⚠️ 异常延续: content/content/本地重复镜像14M/995md(未gitignore,师傅仍未处理) + memory/早报核查日志.md 41K/948行 untracked(历史mjs生成,非本cron产物), 无新文章动作, 仅追加日志到memory/article-checklog-20260605.log(169行累计)"
+  },
+  "文章健康检查-09:04": {
+    "lastRun": "2026-06-05",
+    "status": "completed_with_anomaly",
+    "note": "2026-06-05 09:04窗口(cron 850cf6e9 heartbeat 第16次): 4份早报持续稳定(ai 6286B+financial 6718B+ai-side-hustle 5828B+web3 5873B, draft:false, date=13:20:37已过Hugo「未来页面」19h44m+), 文章库981 delta+0 vs 07:54(tech 684/news 268/thoughts 2/video 12/wealth 9+根md 6), draft:false=852/draft:true=1(autocli历史)/缺draft=128(全<2026-05-28历史)/YAML--双分隔=965/TOML+++头行=16/Tiny<1.5KB=7(全历史), 未来日期=0, 源站抽样6/5 09:04 (带UA, --max-time 8s) 6/6 全200(v2ex200/cointelegraph200/36kr200/wallstreetcn200 + coingecko200/binance200, WAF/防火墙低位延续, 已连续4窗口6/6全稳), git本地与origin/main同步(HEAD=7b6956ca=origin/main, ahead/behind=0/0), content/posts 无 untracked/modified, ⚠️ 异常延续: content/content/本地重复镜像14M/995md(未gitignore, 师傅仍未处理) + memory/早报核查日志.md 41K/948行 untracked(历史mjs生成), 无新文章动作, 仅追加日志到memory/article-checklog-20260605.log(169行累计)"
   },
   "文章健康检查-22:09": {
     "lastRun": "2026-06-04",
