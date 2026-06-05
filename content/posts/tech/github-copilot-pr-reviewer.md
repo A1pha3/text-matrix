@@ -1,16 +1,18 @@
 ---
-title: "GitHub Copilot Pull Request Reviewer：从入门到精通"
+title: "GitHub Copilot PR Reviewer：AI 代码审查实战指南"
 date: 2026-05-15T10:25:00+08:00
 categories: ["技术笔记"]
 tags: ["GitHub", "Copilot", "PR", "Code Review", "AI", "自动化"]
 draft: false
+slug: github-copilot-pr-reviewer
+description: "GitHub Copilot PR Reviewer 基于 Copilot SDK，自动分析 PR 改动、识别潜在问题和生成审查意见。本文覆盖配置安装、最佳实践和 CI/CD 集成。"
 ---
 
-# GitHub Copilot Pull Request Reviewer：从入门到精通
+# GitHub Copilot PR Reviewer：AI 代码审查实战指南
 
-> 每次 PR 都要花半小时看代码？Copilot PR Reviewer 让 AI 成为你的审查搭档——自动分析改动、发现潜在问题、生成审查意见，帮你把 Code Review 从负担变成生产力。
+Copilot PR Reviewer 基于 GitHub Copilot SDK，每次 PR 自动分析改动、发现潜在问题、生成结构化审查意见。这篇文章覆盖安装配置、最佳实践和 CI/CD 集成全流程。
 
-## 一、什么是 Copilot PR Reviewer
+## 1. 什么是 Copilot PR Reviewer
 
 Copilot PR Reviewer 是 GitHub 官方基于 [GitHub Copilot SDK](https://github.com/github/copilot-sdk) 构建的 AI 代码审查应用。它可以：
 
@@ -21,7 +23,7 @@ Copilot PR Reviewer 是 GitHub 官方基于 [GitHub Copilot SDK](https://github.
 
 它是 GitHub 官方 `apps/` 生态中的重要一员，旨在将 AI 能力深度嵌入代码审查工作流。
 
-## 二、核心能力解析
+## 2. 核心能力解析
 
 ### 1. 语义级代码理解
 
@@ -61,7 +63,7 @@ reviewer:
     - "dist/**"
 ```
 
-## 三、安装与配置
+## 3. 安装与配置
 
 ### 方式一：GitHub Marketplace 安装
 
@@ -117,7 +119,7 @@ jobs:
           severity-threshold: warning
 ```
 
-## 四、实际使用示例
+## 4. 实际使用示例
 
 ### 场景 1：新功能 PR 审查
 
@@ -164,7 +166,7 @@ Copilot PR Reviewer 会识别出：
 - 是否引入了新的边界情况
 - 测试用例是否覆盖了所有场景
 
-## 五、Copilot SDK 扩展：自定义审查 Agent
+## 5. Copilot SDK 扩展：自定义审查 Agent
 
 如果你需要对 PR 审查进行更深度的定制，可以使用 [GitHub Copilot SDK](https://github.com/github/copilot-sdk) 构建自定义审查逻辑：
 
@@ -198,7 +200,7 @@ result = client.run(
 print(result)
 ```
 
-## 六、团队配置最佳实践
+## 6. 团队配置最佳实践
 
 ### 分级审查策略
 

@@ -8,11 +8,12 @@ tags:
   - GitHub-Trending
 slug: timesfm-google-time-series-foundation-model
 author: 钳岳星君
+description: "TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预训练了一个仅 2 亿参数的模型，实现跨领域的零样本时序预测。"
 ---
 
-# TimesFM: 时序预测的"GPT 时刻"
+# TimesFM：时序预测的预训练模型
 
-TimesFM 真正解决的不是"又一个时序模型该怎么做"，而是"时序预测能不能像 NLP（自然语言处理）一样，用一个预训练模型覆盖成百上千种场景，省掉逐场景建模和调参"。Google Research 在 1000 亿真实时间点上预训练了一个仅 2 亿参数的解码器（decoder-only）模型，在零售、金融、IoT（物联网）、医疗等不同领域的零样本预测中，结果接近甚至超过专门训练的监督模型。论文已被 ICML 2024 接收。
+TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预训练了一个仅 2 亿参数的模型，实现跨领域的零样本时序预测。本文拆解 patching、频率指示器和输出分位数机制。
 
 可以这样理解：TimesFM 把时序预测的接口从「每场景一个模型」切换到了「一个模型接不同数据，直接出预测」。
 

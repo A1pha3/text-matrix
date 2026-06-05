@@ -9,14 +9,15 @@ tags:
   - "基础模型"
   - "K线数据"
   - "Transformer"
-description: "Kronos 是首个针对金融K线数据（K-lines）开源的基础模型，基于分层分词器将OHLCV多维连续数据量化为离散Token，再通过大型自回归Transformer统一处理45个全球交易所数据，覆盖从4.1M到499M参数的四档模型规格，已被AAAI 2026收录。"
+description: "Kronos 是首个针对金融 K 线数据的开源基础模型，基于分层分词器将 OHLCV 多维连续数据量化为离散 Token，覆盖 45 个全球交易所数据。AAAI 2026。"
+slug: kronos-financial-market-foundation-model
 ---
 
 # Kronos：金融市场的语言基础模型
 
-在金融量化领域，K线序列（K-line sequences）是一种独特的数据语言——它承载着全球市场的情绪、趋势与波动。然而长期以来，深度学习模型在处理这类数据时往往面临高噪声、不规则间隔、多维耦合等挑战，缺乏一个统一的、通用的基础模型。**Kronos** 正是为解决这一问题而生。
+K 线序列（OHLCV）承载着全球市场的情绪与趋势，但深度学习模型在处理这类数据时面临高噪声、不规则间隔、多维耦合等挑战。Kronos 用一个两阶段框架来应对：分层分词器把连续的多维 K 线数据量化为离散 Token，自回归 Transformer 在 45 个交易所的数据上预训练，覆盖从 4.1M 到 499M 参数的四种规格。
 
-Kronos 由 Yu Shi、Zongliang Fu、Shuo Chen、Bohang Zhao、Wei Xu、Changshui Zhang、Jian Li 等研究者提出，于 2025 年 8 月在 arXiv 发布（[2508.02739](https://arxiv.org/abs/2508.02739)），并已入选 **AAAI 2026**。GitHub 仓库累计获得约 24.5k Stars，成为金融时序领域最受关注开源项目之一。
+论文已被 AAAI 2026 接收（[arXiv:2508.02739](https://arxiv.org/abs/2508.02739)），GitHub 仓库约 24.5k Stars。
 
 ## 核心设计：从 K 线到 Token
 
