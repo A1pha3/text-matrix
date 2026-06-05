@@ -2,19 +2,14 @@
 date = '2026-04-13T23:51:22+08:00'
 draft = false
 title = 'Transfer Learning：迁移学习全栈资源库'
+slug = 'transfer-learning-comprehensive-resource-guide'
+description = '王晋东发起的迁移学习全栈资源库，覆盖 18 个研究领域，包含论文、代码、教程、数据集和学者索引，是迁移学习领域最全面的入门与研究参考。'
 categories = ['技术笔记']
 +++
 
 # Transfer Learning：迁移学习全栈资源库
 
-**Transfer Learning**（迁移学习）是由王晋东（jindongwang）发起的"迁移学习全栈资源库"，涵盖论文、教程、代码、数据集、会议期刊等完整学术生态。被CVPR、 NeurIPS、IJCAI、IEEE TKDE等顶会顶刊广泛引用。
-
-**核心统计：**
-- Stars: 14.3k | Forks: 3.8k | Watchers: 332
-- Contributors: 38 | Deployments: 500+
-- License: MIT
-- 语言: Python 86.4% | MATLAB 4.1% | Jupyter 3.5%
-- 最新提交: Feb 10, 2026 (2 months ago)
+**Transfer Learning**（迁移学习）是由王晋东（jindongwang）发起的"迁移学习全栈资源库"，涵盖论文、教程、代码、数据集、会议期刊等完整学术生态。被 CVPR、NeurIPS、IJCAI、IEEE TKDE 等顶会顶刊广泛引用。
 
 ## 为什么这是迁移学习必读资源？
 

@@ -1,26 +1,17 @@
 +++
 date = '2026-04-13T23:51:22+08:00'
 draft = false
-title = 'BlenderMCP 技术文档：将 Claude AI 引入 Blender 的 Model Context Protocol 解决方案'
+title = 'BlenderMCP：通过 MCP 协议用 Claude 控制 Blender 3D 建模'
+slug = 'blender-mcp-claude-ai-3d-modeling-guide'
+description = 'BlenderMCP 通过 Model Context Protocol 将 Claude AI 与 Blender 对接，实现用自然语言控制 3D 建模、场景创建和对象操作，支持 Poly Haven 资产集成和 Hyper3D Rodin 模型生成。'
 categories = ['技术笔记']
 +++
 
-# BlenderMCP 技术文档：将 Claude AI 引入 Blender 的 Model Context Protocol 解决方案
+# BlenderMCP：通过 MCP 协议用 Claude 控制 Blender 3D 建模
 
 ## 1. 项目概述
 
-BlenderMCP 是一款开源的 Blender 与 AI 连接器，通过 Model Context Protocol（MCP）将 Claude AI 与 Blender 无缝对接，实现通过自然语言提示词直接控制 Blender 进行 3D 建模、场景创建和对象操作[^1]。
-
-**核心价值**：让 AI 成为 3D 艺术家的智能助手，通过对话即可完成复杂的 3D 建模任务，无需手动编写 Python 脚本或记忆大量快捷键。
-
-**GitHub 数据**：
-- Stars：19.2k
-- Forks：1.9k
-- 贡献者：20 人
-- 最新版本：v1.5.5
-- 编程语言：Python 100%
-
-**项目作者**：Siddharth（Twitter @sidahuj）
+BlenderMCP 是一款开源的 Blender 与 AI 连接器，通过 Model Context Protocol（MCP）将 Claude AI 与 Blender 对接，实现通过自然语言直接控制 Blender 进行 3D 建模、场景创建和对象操作[^1]。
 
 ---
 
@@ -239,7 +230,7 @@ DISABLE_TELEMETRY=true uvx blender-mcp
 
 ### 6.2 安全考虑
 
-⚠️ **重要警告**：`execute_blender_code` 工具允许在 Blender 中执行任意 Python 代码，具有潜在危险性。请在生产环境中谨慎使用，并**始终在使用前保存工作**。
+**重要警告**：`execute_blender_code` 工具允许在 Blender 中执行任意 Python 代码，具有潜在危险性。请在生产环境中谨慎使用，并始终在使用前保存工作。
 
 ---
 

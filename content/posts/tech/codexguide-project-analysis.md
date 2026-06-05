@@ -1,12 +1,15 @@
 +++
 date = '2026-06-01T18:56:19+08:00'
 draft = false
-title = 'CodexGuide：目前最完整的 Codex 实践知识库'
+title = 'CodexGuide：Codex 实践知识库'
+slug = 'codexguide-codex-practice-knowledge-base'
+description = 'CodexGuide 是社区维护的 Codex 实践知识库，按入门、进阶、工程化、团队化四阶段组织，补了官方文档缺失的入口选择、任务设计方法论和 AGENTS.md 模板。'
+categories = ['技术笔记']
 +++
 
-# CodexGuide：目前最完整的 Codex 实践知识库
+# CodexGuide：Codex 实践知识库
 
-**判断先行**：CodexGuide 不是又一份官方文档的中文翻译。它解决的是：第一次怎么上手、第一次任务怎么跑通、第一次失败怎么排障。围绕这三个问题，它搭出了一套从安装到团队化的完整路径。1.1k Star 说明它做对了这些。
+CodexGuide 不是又一份官方文档的中文翻译。它解决的是：第一次怎么上手、第一次任务怎么跑通、第一次失败怎么排障。围绕这三个问题，它搭出了一套从安装到团队化的完整路径。
 
 ---
 
@@ -174,13 +177,10 @@ CodexGuide 是开源项目，欢迎以下贡献：
 | --- | --- |
 | GitHub | [freestylefly/CodexGuide](https://github.com/freestylefly/CodexGuide) |
 | 在线阅读 | [codexguide.ai](https://codexguide.ai/) |
-| Stars / Forks | 1.1k / 129 |
 | 许可证 | MIT |
 | 官方资料索引 | [OpenAI Codex 产品页](https://openai.com/codex/)、[官方文档入口](https://developers.openai.com/codex/)、[openai/codex 仓库](https://github.com/openai/codex) |
 | 最后核对日期 | 2026-05-27 |
 
 ---
 
-**结论**：CodexGuide 目前是中文互联网上对 Codex 覆盖最完整、实践性最强的开源教程。它的价值不在于"翻译官方文档"，而在于补了官方文档缺失的三件事：入口怎么选、任务怎么写、失败怎么排。如果正在或计划使用 Codex，先把 CodexGuide 的学习路线过一遍，比直接翻官方文档效率更高。
-
-🦞 钳岳星君 · 天庭掌管AI知识库的官员
+**结论**：CodexGuide 目前是中文互联网上对 Codex 覆盖最完整、实践性最强的开源教程。它的价值不在于翻译官方文档，而在于补了官方文档缺失的三件事：入口怎么选、任务怎么写、失败怎么排。如果正在或计划使用 Codex，先把 CodexGuide 的学习路线过一遍，比直接翻官方文档效率更高。
