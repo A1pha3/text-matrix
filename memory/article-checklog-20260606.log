@@ -21,3 +21,16 @@
   最近3 commit: 05476ee (00:50 #22日志) / 4e467d0 (00:38 师傅refactor daily_stock_analysis S级评分) / 4bafcf1 (23:12 6/5趋势文4篇)
   异常: 无 (content/content/残留已清, 早报核查日志已tracked, WAF低位延续但早报源实际可用)
   无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
+
+[2026-06-06 05:56:09 CST] 文章健康检查 #24 (cron 850cf6e9)
+  早报: 4份稳 (ai 4623B+financial 16663B+ai-side-hustle 19400B+web3 9838B, draft:false)
+  日期: ai=07:48/financial=08:09/ai-side-hustle=08:53/web3=08:45 (已过Hugo阈值 21h06m+, 安全)
+  文章库: 991 (tech 685/news 272/thoughts 2/video 12/wealth 10/rootmd 10)  delta=0 vs 04:54#23 (师傅04:54→05:56无新文章commit, 期间仅本cron #24触发)
+  draft:false=827/draft:true=1(autocli历史)/缺draft=163(全<2026-05-28历史)/YAML---=929/TOML+++=62/Tiny<1.5KB=7(全历史)/未来日期=0
+    (与#23对比: TOML 16→62=YAML→TOML批量转换46篇在commit 54bfba0"修复最后2个非tags警告"前后发生, draft:false 862→827 同步)
+  源站抽样 6/6 05:56: v2ex200/cointelegraph200/36kr200/wallstreetcn404/coingecko103/binance202 → 3/6 稳
+    (与#23对比: coingecko 403→103=Early Hints+link preload, 仍非200但已绕过WAF强封; 其余完全一致)
+  git: HEAD=fdbbf88=origin/main同步 (ahead/behind=0/0), content/posts 无 untracked/modified, memory/无 untracked
+  最近3 commit: fdbbf88 (04:54 #23日志) / 54bfba0 (00:38 师傅refactor 补slug+frontmatter) / b8f2fc0 (00:30 师傅refactor docs 补description)
+  异常: 无 (4早报稳定+991文章库稳定+域名txtmix.com 200+工作区干净, WAF/HEAD异常延续但早报源实际可用)
+  无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
