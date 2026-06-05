@@ -1,20 +1,15 @@
 +++
 date = '2026-04-13T23:51:22+08:00'
 draft = false
-title = 'Domain Check：Universal Domain Availability Checker'
+title = 'Domain Check：通用域名可用性检查引擎'
+slug = 'domain-check-universal-domain-checker-guide'
+description = 'Domain Check 是一个通用域名可用性检查引擎，支持 CLI、Rust 库和 MCP 服务器三种使用方式，覆盖 1200+ TLD。'
 categories = ['技术笔记']
 +++
 
-# Domain Check：Universal Domain Availability Checker
+# Domain Check：通用域名可用性检查引擎
 
-**Domain Check** 是一个通用域名可用性检查引擎，支持CLI、Rust库和MCP服务器三种使用方式。项目地址：[saidutt46/domain-check](https://github.com/saidutt46/domain-check)
-
-**核心统计：**
-- Stars: 261 | Forks: 15 | Watchers: 2
-- Contributors: 2 (saidutt46, martimlobao)
-- 语言: Rust 98.2% | Shell 1.8%
-- 最新版本: v1.0.2 (2026-03-22)
-- 许可证: Undeclared (GitHub API: NOASSERTION，需验证LICENSE文件)
+**Domain Check** 是一个通用域名可用性检查引擎，支持 CLI、Rust 库和 MCP 服务器三种使用方式。项目地址：[saidutt46/domain-check](https://github.com/saidutt46/domain-check)
 
 ## 为什么选择 Domain Check？
 

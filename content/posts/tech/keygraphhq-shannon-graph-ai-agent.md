@@ -1,9 +1,13 @@
----
-title: "Shannon：开源 AI 渗透测试引擎，源码驱动、五阶段自动挖掘漏洞"
-date: 2026-05-17T20:15:00+08:00
-categories:
-  - 技术笔记
----
++++
+date = '2026-05-17T20:15:00+08:00'
+draft = false
+title = 'Shannon：开源 AI 渗透测试引擎'
+slug = 'keygraphhq-shannon-graph-ai-agent'
+description = 'Shannon 是 KeygraphHQ 开源的自主白盒 AI 渗透测试工具，基于源码分析主动执行漏洞利用，采用 No Exploit No Report 策略压低误报率。'
+categories = ['技术笔记']
++++
+
+# Shannon：开源 AI 渗透测试引擎
 
 在软件开发节奏越来越快的今天，渗透测试一年一次的安全差距愈发显眼。KeygraphHQ 开源的 [Shannon](https://github.com/KeygraphHQ/shannon) 正是为填补这个空白而生——一款自主运行的白盒 AI 渗透测试工具，直接分析源码、主动执行漏洞利用，报告里只有经过实战验证的发现。
 
@@ -12,12 +16,9 @@ categories:
 | 项目 | 内容 |
 |------|------|
 | 仓库 | [KeygraphHQ/shannon](https://github.com/KeygraphHQ/shannon) |
-| ⭐ Stars | **42,478** |
 | 语言 | TypeScript |
 | 许可证 | AGPL-3.0（Lite）/ 商业版（Pro）|
 | 开发者 | Keygraph |
-
-截至 2026 年 5 月，这个项目已斩获超过 4.2 万颗星，在 AI + 安全类开源项目中属于头部存在。
 
 ## 核心定位：白盒 + 主动利用
 

@@ -1,18 +1,19 @@
----
-title: "GitHub Actions Importer：自动化迁移 CI/CD 到 GitHub Actions"
-date: 2026-05-15T10:25:00+08:00
-categories: ["技术笔记"]
-tags: ["GitHub", "GitHub Actions", "CI/CD", "DevOps", "迁移", "自动化"]
-draft: false
----
++++
+date = '2026-05-15T10:25:00+08:00'
+draft = false
+title = 'GitHub Actions Importer：自动化迁移 CI/CD 到 GitHub Actions'
+slug = 'github-actions-importer-migration'
+description = 'GitHub Actions Importer 是 GitHub 官方的 CI/CD 迁移工具，自动将 Jenkins、GitLab CI、CircleCI、Travis CI 等流水线转换为 GitHub Actions 工作流。'
+categories = ['技术笔记']
++++
 
 # GitHub Actions Importer：自动化迁移 CI/CD 到 GitHub Actions
 
-> Jenkins、Travis CI、CircleCI、GitLab CI……每个平台都有自己的一套 CI/CD 配置。GitHub Actions Importer 把这个迁移过程自动化——自动转换流水线、验证转换结果、按计划推进迁移，让平台迁移不再是一项痛苦的手工活。
+> Jenkins、Travis CI、CircleCI、GitLab CI……每个平台都有自己的一套 CI/CD 配置。GitHub Actions Importer 把这个迁移过程自动化——自动转换流水线、验证转换结果、按计划推进迁移。
 
 ## 一、项目概述
 
-[GitHub Actions Importer](https://github.com/github/gh-actions-importer)（Stars: 1208+）是 GitHub 官方出品的 CI/CD 迁移工具，用于将现有流水线自动转换为 GitHub Actions 工作流。
+[GitHub Actions Importer](https://github.com/github/gh-actions-importer) 是 GitHub 官方出品的 CI/CD 迁移工具，用于将现有流水线自动转换为 GitHub Actions 工作流。
 
 **支持迁移的平台：**
 

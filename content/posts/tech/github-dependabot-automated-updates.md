@@ -1,21 +1,15 @@
----
-title: "GitHub Dependabot 自动化依赖更新：从配置到最佳实践"
-date: 2026-05-15T10:25:00+08:00
-categories: ["技术笔记"]
-tags: ["GitHub", "Dependabot", "依赖管理", "自动化", "DevOps", "安全"]
-draft: false
----
++++
+date = '2026-05-15T10:25:00+08:00'
+draft = false
+title = 'GitHub Dependabot：自动化依赖更新'
+slug = 'github-dependabot-automated-updates'
+description = 'Dependabot 把依赖更新的责任从人的记忆力转移到系统上，支持 Alerts、Version Updates 和 Security Updates 三条独立机制，覆盖 npm、pip、Go、Cargo 等主流生态。'
+categories = ['技术笔记']
++++
 
-# GitHub Dependabot 自动化依赖更新：从配置到最佳实践
+# GitHub Dependabot：自动化依赖更新
 
 Dependabot 解决的真正问题不是"自动发 PR"——而是把依赖更新的责任从人的记忆力转移到系统上。漏洞出现后小时级响应、版本落后自动追平，这些靠人盯 RSS 或手动 `npm outdated` 做不到。下面先把 Dependabot 的三条机制拆开，再逐条看怎么配、怎么用。
-
-**读完你会：**
-
-- 一眼区分 Dependabot 的三条独立机制——知道什么时候触发的是 Alerts、什么时候是 Version Updates、什么时候是 Security Updates，各自产出什么
-- 为一个真实仓库写出可运行的 `.github/dependabot.yml`，覆盖 schedule、ignore、分组、审查人这些常用配置项
-- 看到 Dependabot PR 时，判断它属于哪条机制、该走什么审查流程、能不能自动合并
-- 判断自己的项目该从哪个优先级开始落地 Dependabot——先开 Alerts、再配 Security Updates、后上 Version Updates
 
 | 机制 | 触发方式 | 产物 | 典型场景 |
 |---|---|---|---|

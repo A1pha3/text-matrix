@@ -1,9 +1,13 @@
----
-title: "HKUDS/CLI-Anything：一个命令让任何软件变成AI Agent可用的CLI"
-date: 2026-05-17T20:15:00+08:00
-categories: ["技术笔记"]
-tags: ["AI", "CLI", "Agent", "HKUDS", "开源"]
----
++++
+date = '2026-05-17T20:15:00+08:00'
+draft = false
+title = 'CLI-Anything：将任意软件变成 AI Agent 可用的 CLI 工具'
+slug = 'hkuds-cli-anything-universal-cli-ai'
+description = 'HKUDS/CLI-Anything 通过 7 阶段管道自动分析软件源代码，为 GIMP、Blender、FreeCAD 等任意软件生成完整的 CLI 接口，让 AI Coding Agent 直接调用。'
+categories = ['技术笔记']
++++
+
+# CLI-Anything：将任意软件变成 AI Agent 可用的 CLI 工具
 
 在 AI coding agent 大行其道的今天，几乎所有主流平台（Claude Code、Pi、OpenClaw、OpenCode……）都在用自然语言理解代码、执行任务。但它们和"真实软件"之间的接口，却始终是个问题。
 
@@ -23,13 +27,13 @@ tags: ["AI", "CLI", "Agent", "HKUDS", "开源"]
 
 背后的 7 相（7-Phase）流程就会自动完成：
 
-1. **🔍 分析（Analyze）** — 扫描源代码和 GUI，映射出可操作的 API 节点
-2. **📐 设计（Design）** — 规划命令分组、状态模型、输出格式
-3. **🔨 实现（Implement）** — 用 Click 构建 CLI，含 REPL、JSON 输出、撤销/重做
-4. **📋 计划测试（Plan Tests）** — 生成 TEST.md，列出单元测试和 E2E 测试方案
-5. **🧪 编写测试（Write Tests）** — 实现完整测试套件
-6. **📝 文档化（Document）** — 将测试结果回填到 TEST.md
-7. **📦 发布（Publish）** — 生成 setup.py，安装到 PATH
+1. **分析（Analyze）** — 扫描源代码和 GUI，映射出可操作的 API 节点
+2. **设计（Design）** — 规划命令分组、状态模型、输出格式
+3. **实现（Implement）** — 用 Click 构建 CLI，含 REPL、JSON 输出、撤销/重做
+4. **计划测试（Plan Tests）** — 生成 TEST.md，列出单元测试和 E2E 测试方案
+5. **编写测试（Write Tests）** — 实现完整测试套件
+6. **文档化（Document）** — 将测试结果回填到 TEST.md
+7. **发布（Publish）** — 生成 setup.py，安装到 PATH
 
 这套流程跑完，你就能拿到一个开箱即用的 `gimp` CLI。
 

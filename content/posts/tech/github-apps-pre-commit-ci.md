@@ -1,12 +1,13 @@
----
-title: "GitHub Apps pre-commit-ci：自动化的代码质量门神"
-date: 2026-05-15T10:25:00+08:00
-categories: ["技术笔记"]
-tags: ["GitHub", "pre-commit", "CI/CD", "DevOps", "代码质量", "自动化"]
-draft: false
----
++++
+date = '2026-05-15T10:25:00+08:00'
+draft = false
+title = 'pre-commit-ci：自动化代码质量检查'
+slug = 'github-apps-pre-commit-ci'
+description = 'pre-commit-ci 是 GitHub 官方出品的代码质量检查 App，在 CI 中自动运行 pre-commit hooks，无需本地配置，确保团队中没人能跳过检查。'
+categories = ['技术笔记']
++++
 
-# GitHub Apps pre-commit-ci：自动化的代码质量门神
+# pre-commit-ci：自动化代码质量检查
 
 > lint、format、type-check……每次提交前要跑一堆检查？pre-commit-ci 把这些全部自动化——不用本地配置，不用担心团队成员跳过检查，每次 PR 都自动跑，在合并之前就堵住代码质量问题。
 
