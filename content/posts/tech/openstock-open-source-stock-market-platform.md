@@ -1,25 +1,17 @@
 +++
 date = '2026-05-28T01:00:36+08:00'
 draft = false
-title = 'Openstock Open Source Stock Market Platform'
+title = 'OpenStock：开源股票工作台'
+slug = 'openstock-open-source-stock-market-platform'
+description = 'OpenStock 把 Finnhub、TradingView、Better Auth、MongoDB 和 Inngest 织成一套能长期使用的开源股票工作台，本文分析它的技术栈、已闭环能力和扩展方向。'
+categories = ['技术笔记']
 +++
 
-title: "OpenStock：一个开源股票工作台，怎么把查询、自选股和邮件摘要串起来"
-date: "2026-05-27T09:25:00+08:00"
-slug: "openstock-open-source-stock-market-platform"
-description: "OpenStock 的价值不在于复刻专业终端，而在于把 Finnhub、TradingView、Better Auth、MongoDB 和 Inngest 织成一套能长期使用的开源股票工作台。"
-draft: false
-categories: ["技术笔记"]
-tags: ["开源", "股票", "Next.js", "MongoDB", "Inngest", "自托管"]
----
-
-<!-- markdownlint-disable-file MD003 MD041 -->
+# OpenStock：开源股票工作台
 
 OpenStock 很容易被看错。有人把它当成“开源版 Bloomberg”，也有人把它当成股票教程换了套更漂亮的 UI。把 README、API 文档和当前主干源码对着读一遍，会发现这两种看法都不准。它真正做成的，是在不自建行情基础设施的前提下，把行情接入、用户状态、异步通知和自部署链路缝成一套能长期使用的股票工作台。
 
-让它真正像产品的，是注册之后那条状态链：系统记住用户偏好，把 watchlist 和 alerts 存下来，再把欢迎邮件、市场周报和后台任务挂到同一条异步平面上。对一个开源 Web 产品来说，这比“首页能搜股票”更接近真实产品。
-
-截至 2026 年 5 月 27 日，OpenStock 的 GitHub 公共页约 12.3k Stars、1.6k Forks，最近一次公开提交距今约 3 周。热度说明它已经越过“玩具仓库”阶段，但更值得看的，还是 README、API_DOCS 和当前源码之间是否一致。
+让它真正像产品的，是注册之后那条状态链：系统记住用户偏好，把 watchlist 和 alerts 存下来，再把欢迎邮件、市场周报和后台任务挂到同一条异步平面上。对一个开源 Web 产品来说，这比"首页能搜股票"更接近真实产品。
 
 ## 先把问题摆在前面
 

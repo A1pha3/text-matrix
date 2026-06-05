@@ -1,21 +1,17 @@
 +++
 date = '2026-04-13T23:51:22+08:00'
 draft = false
-title = 'stb：C/C++单文件公共领域库全集'
+title = 'stb：C/C++ 单文件公共领域库全集'
+slug = 'stb-c-single-file-public-domain-libraries'
+description = 'stb 是 Sean Barrett 发起的单文件 C/C++ 公共领域库项目，包含 21 个精选库，零依赖零配置，支持图像加载、字体渲染、音频处理等场景。'
 categories = ['技术笔记']
 +++
 
 # stb：C/C++单文件公共领域库全集
 
-**stb** 是由 Sean T. Barrett（网名 nothings）发起的单文件公共领域库项目，包含21个精选C/C++库，共51,166行代码。所有库均采用公共领域（Public Domain）或MIT双许可证，无任何归属要求，可任意使用再分发。
+**stb** 是由 Sean T. Barrett（网名 nothings）发起的单文件公共领域库项目，包含 21 个精选 C/C++ 库，共 51,166 行代码。所有库均采用公共领域（Public Domain）或 MIT 双许可证，无任何归属要求，可任意使用再分发。
 
-**核心统计：**
-- Stars: 33.3k | Forks: 8k | Watchers: 637
-- Contributors: 191
-- License: Public Domain OR MIT
-- 语言: C 90.2% | C++ 9.8%
-
-## 为什么选择stb？
+## 为什么选择 stb？
 
 ### 1. 零依赖、零配置
 

@@ -1,14 +1,17 @@
 +++
 date = '2026-05-26T16:16:40+08:00'
 draft = false
-title = 'Taste Skill：给AI的前端注入「审美品味」，告别千篇一律的slop UI'
+title = 'Taste Skill：给 AI 前端注入设计品味，告别千篇一律的 slop UI'
+slug = 'taste-skill-anti-slop-frontend-design'
+description = 'Taste Skill 是一套嵌入 AI 编程工具的设计指导 Skills，通过 9 种 Skill 覆盖从保守到激进的设计意图，让 AI 在生成代码前先建立设计约束，解决前端 slop 问题。'
+categories = ['技术笔记']
 +++
 
 让 AI 写一个登录页，你大概率会得到：居中卡片、渐变按钮、`box-shadow: 0 4px 12px rgba(0,0,0,0.15)`。让 AI 写一个 Dashboard，它给你三列卡片网格配蓝色 CTA。这不是模型不够聪明——你让它写 JSON Schema 它能精确到字段级别的约束，让它写 SQL 它能给出三套优化方案。问题出在**前端设计意图的传递通道是断的**。
 
 代码质量 ≠ 设计质量。LLM 能理解语法，但不理解「这个页面应该有呼吸感」或者「按钮的微交互应该给用户一种可靠的触觉反馈」。你没法用自然语言精确描述设计意图，于是 AI 退回到它见过最多的安全模式：居中、sans-serif、system color scheme。这就是所谓的 **slop**。
 
-[Taste Skill](https://github.com/Leonxlnx/taste-skill) 是 Leonxlnx 开源的答案。不是又一个 UI 组件库，不是 Tailwind 插件，而是一套嵌入 AI 编程工具（Claude Code、Codex CLI、Cursor）的**设计指导 Skills**，让 AI 在生成代码之前先建立起设计约束。项目在 GitHub 上积累了 20K+ Stars，MIT 协议。
+[Taste Skill](https://github.com/Leonxlnx/taste-skill) 是 Leonxlnx 开源的答案。不是又一个 UI 组件库，不是 Tailwind 插件，而是一套嵌入 AI 编程工具（Claude Code、Codex CLI、Cursor）的**设计指导 Skills**，让 AI 在生成代码之前先建立起设计约束。MIT 协议。
 
 > 延伸阅读：[stop-slop：把 AI 写作从套话和模板句里拽出来的 skill]({{< relref "stop-slop-remove-ai-tells-from-prose.md" >}}) 处理文字成稿的 slop；本文聚焦界面生成阶段的 slop。
 

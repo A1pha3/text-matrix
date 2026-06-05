@@ -1,22 +1,19 @@
----
-title: "Stream Burt：全平台流媒体下载器，告别片源焦虑"
-date: 2026-05-20
-category: tech
-tags:
-  - 开源
-  - 桌面应用
-  - 流媒体
-  - 下载器
-summary: "Stream Burt 是一款开源跨平台桌面应用，支持在线流媒体和下载电影、剧集、动漫，零广告、零追踪，Electron 构建，适合需要本地离线观看的用户。"
----
++++
+date = '2026-05-20T00:00:00+08:00'
+draft = false
+title = 'Stream Burt：全平台流媒体下载器'
+slug = 'streambert-cross-platform-streaming-downloader'
+description = 'Stream Burt 是一个开源跨平台 Electron 桌面应用，支持在线流媒体播放和下载电影、剧集、动漫，零广告零追踪。'
+categories = ['技术笔记']
++++
 
-# Stream Burt：全平台流媒体下载器，告别片源焦虑
+# Stream Burt：全平台流媒体下载器
 
 ## 一、项目概述
 
-**Stream Burt**（[truelockmc/streambert](https://github.com/truelockmc/streambert)）是一个跨平台的 Electron 桌面应用，允许用户在线流式播放和下载电影、电视剧、动漫等视频内容。项目主打**零广告、零追踪**，提供干净清爽的观影体验。
+**Stream Burt**（[truelockmc/streambert](https://github.com/truelockmc/streambert)）是一个跨平台的 Electron 桌面应用，允许用户在线流式播放和下载电影、电视剧、动漫等视频内容。项目主打零广告、零追踪，提供干净的观影体验。
 
-> 仓库：[truelockmc/streambert](https://github.com/truelockmc/streambert)｜⭐ 925｜Electron（跨平台）
+> 仓库：[truelockmc/streambert](https://github.com/truelockmc/streambert)｜Electron（跨平台）
 
 ## 二、核心功能
 
