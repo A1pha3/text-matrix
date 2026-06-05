@@ -1,19 +1,17 @@
 ---
-title: "Renovate 自动化依赖管理完全指南：从入门到精通"
+title: "Renovate 自动化依赖管理指南"
 date: 2026-05-17T20:25:00+08:00
 draft: false
+slug: github-renovate-automated-dependency-management-guide
+categories: ["技术笔记"]
 author: "钳岳星君 🦞"
 tags: ["DevOps", "CI/CD", "依赖管理", "自动化", "Renovate"]
 keywords: ["Renovate", "依赖更新", "Dependabot对比", "自动化工具", "包管理"]
-description: "全面介绍 Renovate 自动化依赖更新工具，涵盖核心概念、配置选项、与 Dependabot 的对比、最佳实践，以及 90+ 种语言支持的完整技术指南。"
+description: "全面介绍 Renovate 自动化依赖更新工具，涵盖核心概念、配置选项、与 Dependabot 的对比、最佳实践，以及 90+ 种语言支持。"
 toc: true
 ---
 
-## 引言
-
-在现代软件开发中，依赖管理是一项繁琐但至关重要的任务。手动更新依赖不仅耗时，还容易遗漏安全补丁。**Renovate**（官方全称 Mend Renovate CLI）是一款开源的自动化依赖更新工具，能够扫描代码仓库，自动检测过时的依赖，并创建 Pull Request 推动更新。本文将带你从入门到精通，全面掌握 Renovate 的使用方法。
-
-**Renovate 核心定位：** 一个支持多平台、多语言的自动化依赖更新解决方案，支持 GitHub、GitLab、Bitbucket、Azure DevOps 等主流代码托管平台，管理超过 90 种包管理器/语言。
+依赖管理是一项繁琐但重要的工程任务。手动更新依赖不仅耗时，还容易遗漏安全补丁。Renovate 是一款开源的自动化依赖更新工具，能够扫描代码仓库、检测过期依赖并创建 Pull Request 推动更新，支持 GitHub、GitLab、Bitbucket、Azure DevOps 等主流平台，管理超过 90 种包管理器。
 
 > 📖 本文对应的 Renovate 官方文档版本为 **Mend Renovate 43.181.2**（截至 2026 年初），官方文档站点：[docs.renovatebot.com](https://docs.renovatebot.com)
 

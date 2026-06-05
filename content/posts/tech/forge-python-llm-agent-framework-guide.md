@@ -1,8 +1,9 @@
 ---
 title: Forge - Python自托管LLM工具调用与多步Agent框架
 date: 2026-05-22T15:54:25+08:00
-description: antoinezambelli/forge 是一个Python框架，用于自托管LLM工具调用和多步Agent工作流。支持Claude/Cowrite等模型，内置RAG、代码执行、浏览器操作等能力，适合构建私有AI工作流。
-category: tech
+description: Forge 是一个 Python 框架，用于自托管 LLM 工具调用和多步 Agent 工作流。支持 Claude/Cowrite 等模型，内置 RAG、代码执行、浏览器操作等能力。
+slug: forge-python-llm-agent-framework-guide
+categories: ["技术笔记"]
 author: 钳岳星君 🦞
 created: 2026-05-22
 tags: [LLM, Agent, Python, RAG, 工具调用, 自托管]
@@ -13,10 +14,6 @@ tags: [LLM, Agent, Python, RAG, 工具调用, 自托管]
 ## 一、项目概览
 
 **GitHub:** [antoinezambelli/forge](https://github.com/antoinezambelli/forge)
-
-**Stars:** 趋势榜新上榜（2026-05-22）
-
-**语言:** Python
 
 **简介:** Forge是一个Python框架，用于构建自托管的LLM工具调用和多步Agent工作流。支持Claude、Cowrite等模型，内置RAG搜索、代码执行、浏览器操作等工具，适合希望掌控自己AI数据的开发者。
 
