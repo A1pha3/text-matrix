@@ -1,20 +1,13 @@
 +++
 date = '2026-05-28T16:18:30+08:00'
 draft = false
-title = 'AIRI：自托管 GROK 数字伴侣，把 Neuro-sama 接回家'
+title = 'AIRI：自托管 AI 数字伴侣'
+slug = 'airi-self-hosted-grok-companion-guide'
+description = 'AIRI 是受 Neuro-sama 启发的开源项目，通过 Live2D/VRM 技术将 AI 虚拟角色带到桌面，支持 ChatGPT、Claude 等多款大模型，本地部署，数据完全自持。'
+categories = ['技术笔记']
 +++
 
-title: "AIRI：自托管 GROK 数字伴侣，把 Neuro-sama 接回家"
-date: 2026-05-26T09:35:00+08:00
-slug: "airi-self-hosted-grok-companion-guide"
-aliases:
-	- "/posts/tech/airi-open-source-virtual-companion-platform/"
-description: "AIRI 是受 Neuro-sama 启发诞生的开源项目，通过 Live2D/VRM 技术将 AI 虚拟角色带入现实世界，支持 ChatGPT、Claude 等多款大模型，可本地部署，数据完全自持，适合想拥有专属数字伴侣的用户。"
-draft: false
-categories: ["技术笔记"]
-tags: ["AI Companion", "VRM", "Live2D", "Virtual Character", "Neuro-sama", "开源"]
-
-# AIRI：自托管 GROK 数字伴侣，把 Neuro-sama 接回家
+# AIRI：自托管 AI 数字伴侣
 
 AIRI 是目前开源生态中对 Neuro-sama 复现最完整的项目——通过 Live2D/VRM 技术将 AI 虚拟角色带到桌面，支持 ChatGPT、Claude 等多款大模型，本地部署，数据完全自持。
 
@@ -22,11 +15,11 @@ AIRI 是目前开源生态中对 Neuro-sama 复现最完整的项目——通过
 
 ## 项目概览
 
-[AIRI](https://github.com/moeru-ai/airi)（39.7k Stars）出生于 moeru-ai 组织，定位是"数字灵魂容器"——把 Neuro-sama 这类 AI vtuber 的交互体验带到普通用户手里。
+[AIRI](https://github.com/moeru-ai/airi) 出生于 moeru-ai 组织，定位是"数字灵魂容器"——把 Neuro-sama 这类 AI vtuber 的交互体验带到普通用户手里。
 
 支持平台覆盖 Windows/macOS/Linux，底层依赖 Live2D 和 VRM 两种虚拟角色格式，对话引擎可以接 ChatGPT、Claude 等主流大模型，后端有配套的 `@proj-airi` 组织提供 RAG（检索增强生成）、记忆系统、嵌入式数据库等模块。
 
-核心能力一句话：让 AI 虚拟角色同时具备"看见屏幕内容"和"与用户玩游戏/聊天"的能力，而不是只能打字回复。
+AIRI 让 AI 虚拟角色同时具备"看见屏幕内容"和"与用户玩游戏/聊天"的能力，而不是只能打字回复。
 
 如果把 AIRI 拆开看，它其实是三条链路在同一个调度框架里的汇合：
 

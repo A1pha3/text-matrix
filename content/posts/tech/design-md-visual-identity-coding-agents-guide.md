@@ -1,14 +1,15 @@
----
-title: "DESIGN.md：让 Coding Agents 理解视觉设计的格式规范"
-categories: ["技术笔记"]
-tags: ["design.md", "design-system", "ai-agent", "google-labs-code", "design-token"]
-date: "2026-04-30T11:30:00+08:00"
-draft: false
----
++++
+date = '2026-04-30T11:30:00+08:00'
+draft = false
+title = 'DESIGN.md：让 Coding Agents 理解视觉设计的格式规范'
+slug = 'design-md-visual-identity-coding-agents-guide'
+description = 'DESIGN.md 是 Google Labs Code 开源的设计系统格式规范，通过双层结构（Token 层 + Prose 层）将设计系统以纯文本形式交给 AI Coding Agent，解决 Agent 生成 UI 视觉一致性问题。'
+categories = ['技术笔记']
++++
 
 # DESIGN.md：让 Coding Agents 理解视觉设计的格式规范
 
-> **项目信息**：google-labs-code/design.md ⭐ 10,199 | Apache-2.0 | Created 2026-04-10
+> **项目信息**：google-labs-code/design.md | Apache-2.0 | Created 2026-04-10
 > **官方文档**：[stitch.withgoogle.com/docs/design-md/specification](https://stitch.withgoogle.com/docs/design-md/specification)
 > **npm 包**：`@google/design.md`
 

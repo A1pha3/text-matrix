@@ -1,23 +1,25 @@
----
-title: AnthropicCybersecuritySkills：Claude AI 全套安全分析工具包
-date: 2026-05-24
-description: mukul975/Anthropic-Cybersecurity-Skills 全面解析——Claude AI 驱动的网络安全分析工具包，支持威胁分析、漏洞检测等场景
----
++++
+date = '2026-05-24T00:00:00+08:00'
+draft = false
+title = 'Anthropic Cybersecurity Skills：Claude AI 安全分析工具包'
+slug = 'anthropic-cybersecurity-skills-ai-security-analysis'
+description = 'Anthropic-Cybersecurity-Skills 是一套基于 Claude AI 的网络安全分析工具集，通过预置 Agent Skills 将 Claude 推理能力与安全分析场景结合，覆盖威胁分析、漏洞检测和渗透测试。'
+categories = ['技术笔记']
++++
 
-# AnthropicCybersecuritySkills：Claude AI 全套安全分析工具包
+# Anthropic Cybersecurity Skills：Claude AI 安全分析工具包
 
-## 📊 基本信息
+## 基本信息
 
-- **Stars**: 热度新晋
 - **语言**: Python + Claude API
 - **作者**: mukul975
 - **链接**: https://github.com/mukul975/Anthropic-Cybersecurity-Skills
 
-## 🎯 这是什么
+## 这是什么
 
 Anthropic-Cybersecurity-Skills 是一套基于 Claude AI 的网络安全分析工具集，通过预置的 Agent Skills 将 Claude 的推理能力与安全分析场景深度结合。该项目旨在让安全工程师、渗透测试人员和安全研究员能快速构建 AI 驱动的安全分析流水线。
 
-## 🔧 核心能力
+## 核心能力
 
 ### 威胁分析自动化
 Claude 被训练为安全分析助手，可对日志、流量数据和代码进行自动化威胁建模与风险评估。支持自定义规则引擎，可接入企业 SIEM 系统。

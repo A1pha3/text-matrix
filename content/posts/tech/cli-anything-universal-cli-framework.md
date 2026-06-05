@@ -1,17 +1,15 @@
----
-title: "CLI-Anything：用AI将任何软件变成Agent-Native的命令行工具"
-date: 2026-05-18
-tags: ["AI Agent", "CLI", "开源", "香港大学", "工具生成"]
-categories: ["工具"]
----
++++
+date = '2026-05-18T00:00:00+08:00'
+draft = false
+title = 'CLI-Anything：用 AI 将任何软件变成 Agent-Native CLI 工具'
+slug = 'cli-anything-universal-cli-framework'
+description = 'CLI-Anything 是香港大学 NLP 组开源的项目，通过 7 阶段管道自动分析软件源代码，为任何有代码库的软件生成 Agent 可用的 CLI 接口，支持 OpenClaw、Cursor、Claude Code 等主流 Agent 框架。'
+categories = ['技术笔记']
++++
 
-# CLI-Anything：用AI将任何软件变成Agent-Native的命令行工具
-
-![CLI-Anything](assets/icon.png)
+# CLI-Anything：用 AI 将任何软件变成 Agent-Native CLI 工具
 
 **CLI-Anything** 是香港大学 NLP 组（HKUDS）开源的项目，通过 7 阶段管道自动分析软件源代码，为任何有代码库的软件生成 Agent 可用的 CLI 接口。支持 OpenClaw、nanobot、Cursor、Claude Code 等主流 Agent 框架。已有 18 个专业软件 demos，2,269 个通过测试。
-
-<!-- more -->
 
 ## 核心问题
 

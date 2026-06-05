@@ -1,24 +1,26 @@
----
-title: magic-trace：Jane Street 开源的高性能实时追踪工具
-date: 2026-05-24
-description: janestreet/magic-trace 开源工具解析——OCaml 开发的高性能实时追踪器，适合深度性能分析与调试
----
++++
+date = '2026-05-24T00:00:00+08:00'
+draft = false
+title = 'magic-trace：Jane Street 开源的高性能实时追踪工具'
+slug = 'magic-trace-janestreet-high-resolution-tracing'
+description = 'magic-trace 是 Jane Street 开源的高性能实时追踪工具，基于 Intel Processor Trace 技术，在生产环境中开销极低，可精确到指令级别定位性能问题。'
+categories = ['技术笔记']
++++
 
 # magic-trace：Jane Street 开源的高性能实时追踪工具
 
-## 📊 基本信息
+## 基本信息
 
-- **Stars**: 🚀 今日新晋
 - **语言**: OCaml + C++
 - **作者**: Jane Street
 - **链接**: https://github.com/janestreet/magic-trace
 - **背景**: Jane Street 自用多年后开源的内部工具
 
-## 🎯 这是什么
+## 这是什么
 
 magic-trace 是由量化交易公司 Jane Street（OCaml 语言的最大使用者之一）开源的高性能实时追踪工具。项目最初在 Jane Street 内部使用多年，用于解决生产环境中的复杂性能问题。2020 年正式开源，为 OCaml 和 C++ 开发者提供了一种低开销、精确到指令级别的追踪能力。
 
-## 🔧 核心能力
+## 核心能力
 
 ### 极低开销追踪
 基于 Intel Processor Trace (PT) 技术，在生产环境中开销极低（<1%），可直接在线上环境使用而不会明显影响服务性能。
