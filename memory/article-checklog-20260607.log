@@ -59,3 +59,37 @@
   content/posts 无 untracked/modified
   最近3 commit: 9729608 state+log / 0caa53c log / b1b59ef state+log
   无新文章动作, 仅追加日志+更新state
+
+2026-06-07 04:40 窗口 (cron 850cf6e9 #38, isolated lightContext, 4早报06-06批全稳达19-21h+ + 999文章库 delta=0 vs 03:29#37=999)
+  4早报 06-06 批: ai 7293B+financial 22976B+ai-side-hustle 19136B+web3 11209B (全部draft:false, date=07:36-09:30, 全部draft:false, 4/4 URL线上HTTP/2 200)
+  4早报 06-07 批: 未生成 (04:40凌晨, 早报cron应在07:00-09:00窗口)
+  文章库 999 (与 #37 03:29 完全一致, delta=0)
+  分类: tech 689/news 276/video 12/wealth 10/thoughts 2/根md 10 (与 #37 一致)
+  draft:false=841/draft:true=1(autocli历史)/缺draft=157(全<2026-05-28历史)
+  未来日期=0
+  源站抽样 04:40 (带UA, --max-time 8s, GET -L 3) 8站
+  v2ex=200 / cointelegraph=200 / 36kr=200 / wallstreetcn=HEAD-404 GET-200 (WAF回归拒HEAD, 内容可达) / coingecko=403 ❌ WAF / binance=202 / cls.cn=200 / flash.jin10.com=302→200 ✅
+  GET 汇总: 7/8 200/202/302 + 1/8 403 (coingecko WAF)
+  域名txtmix.com: HTTP/2 200 (持续)
+  4早报 链接抽样 51条 (grep去重, 剔除1条false match=github.com/pplam/prepme+中文被错切)
+  GET 实际有效 51条: 50 OK + 1 jin10 flash 404(延续#29 第14窗口)
+  HEAD 实际有效 51条: 40 OK + 1 jin10 flash 404 + 10 wallstreetcn HEAD-404 (GET=200 资源可达, 已知WAF pattern)
+  关键变化 (vs #37 03:29):
+    1. 恢复: reddit 9条 403 WAF → 200 (WAF lift, GET 全部200, 内容完整)
+       9条: LocalLLaMA×2 + SideProject×3 + forhire×3 + slavelabour×1
+    2. HEAD 模式回归: wallstreetcn 从 #37 GET-200 退化为 HEAD-404 (WAF再次拒HEAD)
+       GET 仍为 200, 9条文章3773946/3773990/3773995/3773997/3773999/3774001/3774002+1条livenews 3114574+根站 全部 GET=200 资源可达
+       (jina reader proxy 仍可读, 副业/财务早报后续批次引用不受影响)
+    3. coingecko 源站: 404 (#37) → 403 (#38) WAF模式轮换
+  持续异常:
+    1. 延续#29 第14窗口: jin10 flash detail子页404 (1条 detail/20260606041131402800)
+    2. 延续: coingecko 403/404 WAF (模式轮换, jina proxy可达)
+    3. 历史已清理#34: content/content/镜像 + workspace/.git 4861 staged (未复发)
+  ai 8条: 8/8 全200 ✅ (blog.google×1 + 36kr×4 + qbitai×3)
+  financial 21条: 12 OK + 1 jin10 flash 404 + 8 wallstreetcn GET-200 (HEAD-404 WAF已知)
+  side-hustle 11条: 11/11 全200 ✅ (v2ex×2 + reddit×9 WAF已恢复, 全部 GET=200)
+  web3 11条: 11/11 全200 ✅ (cointelegraph×3 + coindesk×8)
+  git本地与origin/main同步(HEAD=be54e59=origin/main, ahead/behind=0/0)
+  content/posts 无 untracked/modified
+  最近3 commit: be54e59 state / a7a47c0 log / 9729608 state
+  无新文章动作, 仅追加日志+更新state
