@@ -26,3 +26,36 @@
   content/posts 无 untracked/modified
   最近3 commit: b1b59ef state+log / 03fd105 state / 6cc04fd log
   无新文章动作, 仅追加日志+更新state
+
+2026-06-07 03:29 窗口 (cron 850cf6e9 #37, isolated lightContext, 4早报06-06批全稳达18h+ + 999文章库 delta=0 vs 00:24#36=999)
+  4早报 06-06 批: ai 7293B+financial 22976B+ai-side-hustle 19136B+web3 11209B (全部draft:false, date=07:36-09:30已过Hugo阈值18h53m-19h53m+, 4/4 URL线上验证200)
+  txtmix.com/posts/news/{financial,ai,ai-side-hustle,web3}-morning-2026-06-06/ 全部HTTP/2 200
+  4早报 06-07 批: 未生成 (03:29深夜, 早报cron应在07:00-09:00窗口, 深夜无新文章)
+  文章库 999 (与 #36 00:24 完全一致, delta=0)
+  分类: tech 597+59+21+7+5=689(含ai-agent/tools/quant/llm子目录)/news 276/video 12/wealth 10(含_index)/thoughts 2/根md 10
+  draft:false=841/draft:true=1(autocli历史)/缺draft=157(全<2026-05-28历史)
+  未来日期=0
+  源站抽样 03:29 (带UA, --max-time 8s) 8站 6/8 OK + 1/8 404 + 1/8 302
+  v2ex=200 / cointelegraph=200 / 36kr=200 / wallstreetcn=GET-200 (HTML JS app shell) ✅恢复 / coingecko=404 ❌ / binance=200 / cls.cn=200 / flash.jin10.com=302→200
+  域名txtmix.com: HTTP/2 200 (持续)
+  4早报 链接抽样 51条 (grep去重, 剔除1条false match=github.com/pplam/prepme+中文被错切)
+  实际有效 51条: 41 OK + 1 jin10 flash 404(延续#29 第13窗口) + 9 wallstreetcn 200(升级#33 第4窗口) + 9 reddit 403(WAF回归)
+  关键变化:
+    1. 升级: wallstreetcn #33 第4窗口 全部 200 GET (上次#36 00:24 GET-404 真不可达 → 本次#37 03:29 GET-200 JS app shell资源可达)
+       9条全200: 根站 + 7个articles 3773946/3773990/3773995/3773997/3773999/3774001/3774002 + 1个livenews 3114574
+       (jina reader验证: 也可200, 全文可达) 财务早报后续07:00新批可正常引用
+    2. 新增: reddit 403 WAF 回归 (上次#36 02:13恢复, 本次#37 03:29又403)
+       9条全403: LocalLLaMA×2 + SideProject×3 + forhire×3 + slavelabour×1
+       (jina reader验证: 200, 内容仍可达, 9条副业早报链接通过r.jina.ai代理)
+  持续异常:
+    1. 延续#29 第13窗口: jin10 flash detail子页404 (1条 detail/20260606041131402800)
+    2. 延续: coingecko 404 (持续, 上次#36 403 WAF → 本次#37 404)
+    3. 历史已清理#34: content/content/镜像 + workspace/.git 4861 staged (未复发)
+  ai 8条: 8/8 全200 ✅ (blog.google×1 + 36kr×4 + qbitai×3)
+  financial 21条: 12 OK + 1 jin10 flash 404 + 8 wallstreetcn 全部200 ✅恢复
+  side-hustle 12条: 2 OK (v2ex×2) + 9 reddit 403 (WAF回归, jina reader可达) + 1 false match
+  web3 11条: 11/11 全200 ✅ (cointelegraph×3 + coindesk×8)
+  git本地与origin/main同步(HEAD=9729608=origin/main, ahead/behind=0/0)
+  content/posts 无 untracked/modified
+  最近3 commit: 9729608 state+log / 0caa53c log / b1b59ef state+log
+  无新文章动作, 仅追加日志+更新state
