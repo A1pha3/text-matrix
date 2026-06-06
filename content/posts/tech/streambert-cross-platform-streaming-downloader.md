@@ -5,6 +5,7 @@ title = 'Stream Burt：全平台流媒体下载器'
 slug = 'streambert-cross-platform-streaming-downloader'
 description = 'Stream Burt 是一个开源跨平台 Electron 桌面应用，支持在线流媒体播放和下载电影、剧集、动漫，零广告零追踪。'
 categories = ['技术笔记']
+tags = ['Electron', '开源', '工具', '流媒体']
 +++
 
 # Stream Burt：全平台流媒体下载器

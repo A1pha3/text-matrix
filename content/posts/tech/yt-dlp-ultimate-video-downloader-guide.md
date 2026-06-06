@@ -5,6 +5,7 @@ title = 'yt-dlp：开源视频下载器'
 slug = 'yt-dlp-ultimate-video-downloader-guide'
 description = 'yt-dlp 是 youtube-dl 的社区活跃分支，支持 YouTube、Twitter、B站等全球 1500+ 平台，是目前最强大的开源视频音频下载工具。'
 categories = ['技术笔记']
+tags = ['开源', 'Python', '工具', '视频']
 +++
 
 # yt-dlp：开源视频下载器

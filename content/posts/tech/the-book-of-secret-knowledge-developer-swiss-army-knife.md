@@ -5,6 +5,7 @@ title = 'The-Book-of-Secret-Knowledge：程序员技术手册合集'
 slug = 'the-book-of-secret-knowledge-developer-swiss-army-knife'
 description = 'trimstray/the-book-of-secret-knowledge 是一个精心整理的技术知识合集，收录各类技术手册、速查表、CLI 工具和 hacks，适合技术人员日常参考。'
 categories = ['技术笔记']
+tags = ['DevOps', '工具', '教程', 'Linux']
 +++
 
 # The-Book-of-Secret-Knowledge：程序员技术手册合集

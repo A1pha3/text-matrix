@@ -5,6 +5,7 @@ title = 'Caveman：用山顶洞人语言砍掉 65% Token 消耗'
 slug = 'caveman-claude-code-token-optimization-guide'
 description = 'caveman 系统性去掉 LLM 输出中的填充词、客套话和犹豫词，Token 消耗降 65% 而技术准确性不变，支持 lite/full/ultra 三种强度级别。'
 categories = ['技术笔记']
+tags = ['AI', 'LLM', 'Token优化', '开发工具']
 +++
 
 # Caveman：用山顶洞人语言砍掉 65% Token 消耗

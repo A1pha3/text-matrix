@@ -5,6 +5,7 @@ title = 'OpenStock：开源股票工作台'
 slug = 'openstock-open-source-stock-market-platform'
 description = 'OpenStock 把 Finnhub、TradingView、Better Auth、MongoDB 和 Inngest 织成一套能长期使用的开源股票工作台，本文分析它的技术栈、已闭环能力和扩展方向。'
 categories = ['技术笔记']
+tags = ['金融', '开源', 'Next.js', 'MongoDB']
 +++
 
 # OpenStock：开源股票工作台

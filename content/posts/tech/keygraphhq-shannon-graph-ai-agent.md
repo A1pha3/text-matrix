@@ -5,6 +5,7 @@ title = 'Shannon：开源 AI 渗透测试引擎'
 slug = 'keygraphhq-shannon-graph-ai-agent'
 description = 'Shannon 是 KeygraphHQ 开源的自主白盒 AI 渗透测试工具，基于源码分析主动执行漏洞利用，采用 No Exploit No Report 策略压低误报率。'
 categories = ['技术笔记']
+tags = ['AI', '安全', '渗透测试', '开源']
 +++
 
 # Shannon：开源 AI 渗透测试引擎

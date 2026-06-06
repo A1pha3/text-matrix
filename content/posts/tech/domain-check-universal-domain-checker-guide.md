@@ -5,6 +5,7 @@ title = 'Domain Check：通用域名可用性检查引擎'
 slug = 'domain-check-universal-domain-checker-guide'
 description = 'Domain Check 是一个通用域名可用性检查引擎，支持 CLI、Rust 库和 MCP 服务器三种使用方式，覆盖 1200+ TLD。'
 categories = ['技术笔记']
+tags = ['工具', 'CLI', 'Rust', 'MCP']
 +++
 
 # Domain Check：通用域名可用性检查引擎

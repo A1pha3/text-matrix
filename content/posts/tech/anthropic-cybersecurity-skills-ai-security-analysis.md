@@ -5,6 +5,7 @@ title = 'Anthropic Cybersecurity Skills：Claude AI 安全分析工具包'
 slug = 'anthropic-cybersecurity-skills-ai-security-analysis'
 description = 'Anthropic-Cybersecurity-Skills 是一套基于 Claude AI 的网络安全分析工具集，通过预置 Agent Skills 将 Claude 推理能力与安全分析场景结合，覆盖威胁分析、漏洞检测和渗透测试。'
 categories = ['技术笔记']
+tags = ['AI', '安全', 'Claude', 'Agent']
 +++
 
 # Anthropic Cybersecurity Skills：Claude AI 安全分析工具包

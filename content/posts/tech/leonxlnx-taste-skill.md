@@ -5,6 +5,7 @@ title = 'Taste-Skill：AI 前端反 slop 框架'
 slug = 'leonxlnx-taste-skill-anti-slop'
 description = 'Taste-Skill 通过结构化的 SKILL.md 规范对抗 LLM 前端生成的 slop 问题，基于控制实验数据系统分析 LazyBench 现象、根因和修复体系，覆盖 12 个细分技能。'
 categories = ['技术笔记']
+tags = ['AI', '前端', '设计', '开源']
 +++
 
 # Taste-Skill：AI 前端反 slop 框架

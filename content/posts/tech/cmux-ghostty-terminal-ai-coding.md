@@ -5,6 +5,7 @@ title = 'cmux：Ghostty 内核 macOS 终端，AI 编程助手专属分屏'
 slug = 'cmux-ghostty-terminal-ai-coding'
 description = 'cmux 是专为 AI 编程助手打造的终端增强工具，基于 Ghostty 内核，提供分屏、通知等 macOS 专属功能，让 AI Agent 与终端交互更流畅。'
 categories = ['技术笔记']
+tags = ['终端', 'macOS', 'AI编程', '开发工具']
 +++
 # cmux：Ghostty内核macOS终端，AI编程助手专属分屏+通知
 

@@ -5,6 +5,7 @@ title = 'Memoir：用版本控制思想重构 AI Agent 记忆系统'
 slug = 'memoir-ai-agent-git-versioned-memory'
 description = 'Memoir 把 Git 的版本控制思想引入 AI 记忆管理，用分层语义路径、ProllyTree 存储和 SHA-256 加密签名，解决上下文污染、Token 租费和记忆漂移三大问题。'
 categories = ['技术笔记']
+tags = ['AI', 'Agent', '开源', 'Git']
 +++
 
 # Memoir：AI Agent 的"Git"——用版本控制思想彻底重构 AI 记忆系统

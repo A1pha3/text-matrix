@@ -5,6 +5,7 @@ title = 'GitHub Actions Importer：自动化迁移 CI/CD 到 GitHub Actions'
 slug = 'github-actions-importer-migration'
 description = 'GitHub Actions Importer 是 GitHub 官方的 CI/CD 迁移工具，自动将 Jenkins、GitLab CI、CircleCI、Travis CI 等流水线转换为 GitHub Actions 工作流。'
 categories = ['技术笔记']
+tags = ['GitHub', 'DevOps', 'CI/CD', '工具']
 +++
 
 # GitHub Actions Importer：自动化迁移 CI/CD 到 GitHub Actions

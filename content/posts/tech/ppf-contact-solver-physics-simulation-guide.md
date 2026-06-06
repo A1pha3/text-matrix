@@ -5,6 +5,7 @@ title = 'PPF Contact Solver：物理碰撞求解器'
 slug = 'ppf-contact-solver-physics-simulation-guide'
 description = 'PPF Contact Solver 是一个 Python 高性能物理接触求解器，专门处理布料、固体和杆件的碰撞模拟，适用于游戏开发、机器人仿真和虚拟试衣等场景。'
 categories = ['技术笔记']
+tags = ['Python', '开源', '物理仿真', '游戏开发']
 +++
 
 # PPF Contact Solver：物理碰撞求解器

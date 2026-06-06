@@ -5,6 +5,7 @@ title = 'Taste Skill：给 AI 前端注入设计品味，告别千篇一律的 s
 slug = 'taste-skill-anti-slop-frontend-design'
 description = 'Taste Skill 是一套嵌入 AI 编程工具的设计指导 Skills，通过 9 种 Skill 覆盖从保守到激进的设计意图，让 AI 在生成代码前先建立设计约束，解决前端 slop 问题。'
 categories = ['技术笔记']
+tags = ['AI', '前端', '设计', '开源']
 +++
 
 让 AI 写一个登录页，你大概率会得到：居中卡片、渐变按钮、`box-shadow: 0 4px 12px rgba(0,0,0,0.15)`。让 AI 写一个 Dashboard，它给你三列卡片网格配蓝色 CTA。这不是模型不够聪明——你让它写 JSON Schema 它能精确到字段级别的约束，让它写 SQL 它能给出三套优化方案。问题出在**前端设计意图的传递通道是断的**。

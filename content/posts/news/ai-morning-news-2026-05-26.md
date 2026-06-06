@@ -5,6 +5,7 @@ title = 'AI新闻早报 | 2026-05-26'
 slug = 'ai-morning-news-2026-05-26'
 description = '2026年5月26日 AI 新闻早报，涵盖 AI 大模型、Agent 等前沿动态。'
 categories = ['行业快讯']
+tags = ['AI', '早报']
 +++
 
 # AI 新闻早报 | 2026年5月26日 星期二

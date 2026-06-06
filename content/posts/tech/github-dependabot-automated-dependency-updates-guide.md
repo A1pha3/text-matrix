@@ -5,6 +5,7 @@ title = 'GitHub Dependabot：自动化依赖更新'
 slug = 'github-dependabot-automated-dependency-updates-guide'
 description = '全面解析 GitHub Dependabot：工作原理、dependabot.yml 完整配置、安全更新、版本更新、最佳实践与常见问题。'
 categories = ['技术笔记']
+tags = ['GitHub', 'DevOps', '教程', '依赖管理']
 +++
 
 # GitHub Dependabot：自动化依赖更新

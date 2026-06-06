@@ -5,6 +5,7 @@ title = 'AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解'
 slug = 'ai-agents-clearly-explained-jeff-su-4m-views'
 description = '基于 Jeff Su 的热门视频与配套文章，系统拆解 AI Agent 的三层进化路径：LLM、AI Workflow、True Agent，并补充 ReAct、RAG、记忆系统、工具调用与生产实践边界。'
 categories = ['技术笔记']
+tags = ['AI', 'AI Agents', '视频拆解']
 +++
 
 # AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解

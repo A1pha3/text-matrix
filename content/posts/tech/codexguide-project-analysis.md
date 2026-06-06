@@ -5,6 +5,7 @@ title = 'CodexGuide：Codex 实践知识库'
 slug = 'codexguide-codex-practice-knowledge-base'
 description = 'CodexGuide 是社区维护的 Codex 实践知识库，按入门、进阶、工程化、团队化四阶段组织，补了官方文档缺失的入口选择、任务设计方法论和 AGENTS.md 模板。'
 categories = ['技术笔记']
+tags = ['AI', 'Codex', '教程', 'OpenAI']
 +++
 
 # CodexGuide：Codex 实践知识库

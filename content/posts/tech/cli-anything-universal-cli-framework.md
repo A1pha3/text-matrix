@@ -5,6 +5,7 @@ title = 'CLI-Anything：用 AI 将任何软件变成 Agent-Native CLI 工具'
 slug = 'cli-anything-universal-cli-framework'
 description = 'CLI-Anything 是香港大学 NLP 组开源的项目，通过 7 阶段管道自动分析软件源代码，为任何有代码库的软件生成 Agent 可用的 CLI 接口，支持 OpenClaw、Cursor、Claude Code 等主流 Agent 框架。'
 categories = ['技术笔记']
+tags = ['AI', 'CLI', 'Agent', '开源']
 +++
 
 # CLI-Anything：用 AI 将任何软件变成 Agent-Native CLI 工具

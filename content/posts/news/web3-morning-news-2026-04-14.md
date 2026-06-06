@@ -5,6 +5,7 @@ title = 'Web3早报 2026-04-14：BTC ETF流出/伊朗协议预期推升BTC'
 slug = 'web3-morning-news-2026-04-14'
 description = '2026年4月14日 Web3 早报，涵盖 BTC ETF 流出、伊朗协议预期等动态。'
 categories = ['行业快讯']
+tags = ['Web3', '加密货币', '早报']
 +++
 
 # Web3早报 2026-04-14

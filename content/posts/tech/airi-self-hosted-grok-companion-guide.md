@@ -5,6 +5,7 @@ title = 'AIRI：自托管 AI 数字伴侣'
 slug = 'airi-self-hosted-grok-companion-guide'
 description = 'AIRI 是受 Neuro-sama 启发的开源项目，通过 Live2D/VRM 技术将 AI 虚拟角色带到桌面，支持 ChatGPT、Claude 等多款大模型，本地部署，数据完全自持。'
 categories = ['技术笔记']
+tags = ['AI', '开源', 'Live2D', '自托管']
 +++
 
 # AIRI：自托管 AI 数字伴侣

@@ -5,6 +5,7 @@ title = 'Sana：NVIDIA 高效图像与视频生成框架'
 slug = 'nvlab-sana-efficient-image-video-generation'
 description = 'Sana 是 NVIDIA MVFX 实验室出品的效率优先型图像/视频生成框架，支持 4K 分辨率、1.6B 参数模型可在 8GB GPU 显存运行，ICLR 2025/2026 双 Oral 论文。'
 categories = ['技术笔记']
+tags = ['NVIDIA', 'AI', '图像生成', '视频']
 +++
 
 # Sana：NVIDIA 高效图像与视频生成框架

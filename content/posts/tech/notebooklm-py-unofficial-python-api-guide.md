@@ -5,6 +5,7 @@ title = 'notebooklm-py：Google NotebookLM 非官方 Python API'
 slug = 'notebooklm-py-unofficial-python-api-guide'
 description = 'notebooklm-py 是 Google NotebookLM 的非官方 Python API，支持播客生成、视频处理和 Quiz 生成等自动化功能。'
 categories = ['技术笔记']
+tags = ['AI', 'Python', 'Google', '教程']
 +++
 
 ## 项目概览

@@ -5,6 +5,7 @@ title = 'supervision：模型无关的计算机视觉工具箱'
 slug = 'supervision-computer-vision-toolbox'
 description = 'supervision 是 Roboflow 团队开源的 Python 计算机视觉工具箱，提供检测结果解析、可视化标注、数据集加载分割和模型无关推理等功能。'
 categories = ['技术笔记']
+tags = ['计算机视觉', 'Python', '开源', '工具']
 +++
 
 # supervision：模型无关的计算机视觉工具箱

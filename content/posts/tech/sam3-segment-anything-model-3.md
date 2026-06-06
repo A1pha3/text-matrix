@@ -5,6 +5,7 @@ title = 'SAM 3：Meta 开源第三代分割一切模型'
 slug = 'sam3-segment-anything-model-3'
 description = 'SAM 3 是 Meta 开源的第三代 Segment Anything Model，在图像和视频分割任务上进一步提升精度和效率，支持零样本泛化。'
 categories = ['技术笔记']
+tags = ['AI', '计算机视觉', '开源', '图像分割']
 +++
 # SAM 3 (Segment Anything Model 3): Meta 开源的第三代分割一切模型
 

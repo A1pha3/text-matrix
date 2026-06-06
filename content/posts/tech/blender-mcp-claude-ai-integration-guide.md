@@ -5,6 +5,7 @@ title = 'BlenderMCP：通过 MCP 协议用 Claude 控制 Blender 3D 建模'
 slug = 'blender-mcp-claude-ai-3d-modeling-guide'
 description = 'BlenderMCP 通过 Model Context Protocol 将 Claude AI 与 Blender 对接，实现用自然语言控制 3D 建模、场景创建和对象操作，支持 Poly Haven 资产集成和 Hyper3D Rodin 模型生成。'
 categories = ['技术笔记']
+tags = ['AI', 'Claude', 'MCP', '3D建模']
 +++
 
 # BlenderMCP：通过 MCP 协议用 Claude 控制 Blender 3D 建模

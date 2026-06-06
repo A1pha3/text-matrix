@@ -5,6 +5,7 @@ title = 'NVIDIA AI Blueprint：视频搜索与摘要系统'
 slug = 'nvidia-video-search-summarization-blueprint'
 description = 'NVIDIA VSS 是一套完整的视频智能分析参考架构，整合加速视觉微服务、VLM 和 LLM，支持自然语言视频搜索、实时监控告警、视频问答和长视频摘要生成。'
 categories = ['技术笔记']
+tags = ['NVIDIA', 'AI', '视频', '开源']
 +++
 
 # NVIDIA AI Blueprint：视频搜索与摘要系统

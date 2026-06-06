@@ -5,6 +5,7 @@ title = 'files.md：安静私密的 Markdown 思考空间'
 slug = 'files-md-private-quiet-markdown-notes'
 description = 'files.md 是一款极简开源笔记应用，提供安静私密的 Markdown 写作环境，纯本地存储，无需注册联网，用 Git 管理版本。'
 categories = ['技术笔记']
+tags = ['工具', '开源', 'Markdown', '笔记']
 +++
 
 # files.md：安静私密的 Markdown 思考空间

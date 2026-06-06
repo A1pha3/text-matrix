@@ -5,6 +5,7 @@ title = 'Twenty：Salesforce 的开源替代'
 slug = 'twenty-open-source-crm-ai-alternative-guide'
 description = 'Twenty 是一个开源的 AI 优先 CRM 系统，TypeScript 全栈开发，PostgreSQL 存储，支持自定义对象和工作流自动化，是 Salesforce 的替代方案。'
 categories = ['技术笔记']
+tags = ['开源', 'AI', 'TypeScript', 'CRM']
 +++
 
 # Twenty：Salesforce 的开源替代

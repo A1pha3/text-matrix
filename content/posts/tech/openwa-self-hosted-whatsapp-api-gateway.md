@@ -5,6 +5,7 @@ title = 'OpenWA：免费开源自托管 WhatsApp API 网关'
 slug = 'openwa-self-hosted-whatsapp-api-gateway'
 description = 'OpenWA 是一个免费开源的自托管 WhatsApp API 网关，支持消息收发、群组管理、媒体处理，无需官方商业账号即可接入 WhatsApp 生态。'
 categories = ['技术笔记']
+tags = ['开源', 'API', '自托管', 'WhatsApp']
 +++
 
 # OpenWA：免费开源自托管 WhatsApp API 网关

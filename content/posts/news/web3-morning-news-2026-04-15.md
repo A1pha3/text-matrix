@@ -5,6 +5,7 @@ title = 'Web3早报 2026-04-15：BTC $74K/ETH $2.3K/Strategy增持'
 slug = 'web3-morning-news-2026-04-15'
 description = '2026年4月15日 Web3 早报，涵盖 BTC $74K、ETH $2.3K、Strategy 增持等动态。'
 categories = ['行业快讯']
+tags = ['Web3', '加密货币', '早报']
 +++
 
 # Web3早报 2026-04-15

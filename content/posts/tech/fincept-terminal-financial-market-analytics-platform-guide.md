@@ -5,6 +5,7 @@ title = 'FinceptTerminal：现代金融市场分析平台'
 slug = 'fincept-terminal-financial-market-analytics-platform-guide'
 description = 'FinceptTerminal 是一个现代金融市场分析平台，采用核系统+插件+数据源层的三层架构，支持实时行情、技术分析和策略回测。'
 categories = ['技术笔记']
+tags = ['金融', 'C++', 'Python', '数据可视化']
 +++
 # FinceptTerminal：现代金融市场分析平台（22,953★）
 

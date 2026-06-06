@@ -5,6 +5,7 @@ title = 'Dograh：开源语音 AI Agent 平台'
 slug = 'dograh-devops-tool-guide'
 description = 'Dograh 是一个开源自托管的语音 AI Agent 平台，支持拖拽式工作流构建、Docker 一键部署，可作为 Vapi 和 Retell 的替代方案。'
 categories = ['技术笔记']
+tags = ['AI', '语音', '开源', 'Docker']
 +++
 
 # Dograh：开源语音 AI Agent 平台

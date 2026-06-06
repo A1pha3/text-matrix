@@ -5,6 +5,7 @@ title = 'Transfer Learning：迁移学习全栈资源库'
 slug = 'transfer-learning-comprehensive-resource-guide'
 description = '王晋东发起的迁移学习全栈资源库，覆盖 18 个研究领域，包含论文、代码、教程、数据集和学者索引，是迁移学习领域最全面的入门与研究参考。'
 categories = ['技术笔记']
+tags = ['AI', '教程', '深度学习', '论文']
 +++
 
 # Transfer Learning：迁移学习全栈资源库

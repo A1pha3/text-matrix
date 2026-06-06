@@ -5,6 +5,7 @@ title = 'DESIGN.md：让 Coding Agents 理解视觉设计的格式规范'
 slug = 'design-md-visual-identity-coding-agents-guide'
 description = 'DESIGN.md 是 Google Labs Code 开源的设计系统格式规范，通过双层结构（Token 层 + Prose 层）将设计系统以纯文本形式交给 AI Coding Agent，解决 Agent 生成 UI 视觉一致性问题。'
 categories = ['技术笔记']
+tags = ['AI', '设计系统', '前端', 'Agent']
 +++
 
 # DESIGN.md：让 Coding Agents 理解视觉设计的格式规范

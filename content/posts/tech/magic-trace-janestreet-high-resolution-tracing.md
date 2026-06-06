@@ -5,6 +5,7 @@ title = 'magic-trace：Jane Street 开源的高性能实时追踪工具'
 slug = 'magic-trace-janestreet-high-resolution-tracing'
 description = 'magic-trace 是 Jane Street 开源的高性能实时追踪工具，基于 Intel Processor Trace 技术，在生产环境中开销极低，可精确到指令级别定位性能问题。'
 categories = ['技术笔记']
+tags = ['性能追踪', '开源', 'OCaml', '工具']
 +++
 
 # magic-trace：Jane Street 开源的高性能实时追踪工具

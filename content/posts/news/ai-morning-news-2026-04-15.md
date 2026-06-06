@@ -5,6 +5,7 @@ title = 'AI新闻早报 2026-04-15：Claude Code Rout/字节扣子2.5/斯坦福A
 slug = 'ai-morning-news-2026-04-15'
 description = '2026年4月15日 AI 新闻早报，涵盖 Claude Code Rout、字节扣子2.5、斯坦福 AI 报告等热点。'
 categories = ['行业快讯']
+tags = ['AI', '早报']
 +++
 
 # AI新闻早报 2026-04-15

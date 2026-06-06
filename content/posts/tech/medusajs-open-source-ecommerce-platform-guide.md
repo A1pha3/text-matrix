@@ -5,6 +5,7 @@ title = 'MedusaJS：开源 Headless 商务平台'
 slug = 'medusajs-open-source-ecommerce-platform-guide'
 description = 'MedusaJS 是一个基于 Node.js/TypeScript 的开源 Headless 商务平台，提供灵活的电商后端架构，支持插件扩展、个性化定制与多场景部署。'
 categories = ['技术笔记']
+tags = ['开源', '电商', 'Node.js', 'TypeScript']
 +++
 
 ## MedusaJS 解决的是什么

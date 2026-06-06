@@ -5,6 +5,7 @@ title = 'pre-commit-ci：自动化代码质量检查'
 slug = 'github-apps-pre-commit-ci'
 description = 'pre-commit-ci 是 GitHub 官方出品的代码质量检查 App，在 CI 中自动运行 pre-commit hooks，无需本地配置，确保团队中没人能跳过检查。'
 categories = ['技术笔记']
+tags = ['GitHub', 'DevOps', '代码质量', '工具']
 +++
 
 # pre-commit-ci：自动化代码质量检查

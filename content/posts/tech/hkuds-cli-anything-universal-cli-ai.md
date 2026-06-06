@@ -5,6 +5,7 @@ title = 'CLI-Anything：将任意软件变成 AI Agent 可用的 CLI 工具'
 slug = 'hkuds-cli-anything-universal-cli-ai'
 description = 'HKUDS/CLI-Anything 通过 7 阶段管道自动分析软件源代码，为 GIMP、Blender、FreeCAD 等任意软件生成完整的 CLI 接口，让 AI Coding Agent 直接调用。'
 categories = ['技术笔记']
+tags = ['AI', 'Agent', 'CLI', '开源']
 +++
 
 # CLI-Anything：将任意软件变成 AI Agent 可用的 CLI 工具

@@ -5,6 +5,7 @@ title = 'NVIDIA VSS：构建 GPU 加速的视觉智能体'
 slug = 'nvidia-video-search-summarization-blueprint-guide'
 description = '深入解析 NVIDIA AI Blueprint：Video Search and Summarization（VSS）项目，涵盖四层架构、五大 Agent 工作流、代码结构与 Docker Compose 部署指南。'
 categories = ['技术笔记']
+tags = ['NVIDIA', 'AI', '视频', 'Agent']
 +++
 
 # NVIDIA VSS：构建 GPU 加速的视觉智能体

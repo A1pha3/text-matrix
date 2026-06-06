@@ -5,6 +5,7 @@ title = 'Career-Ops：用 AI 打造智能化求职流水线'
 slug = 'career-ops-ai-job-search-system-guide'
 description = 'Career-Ops 是基于 Claude Code 的 AI 求职系统，涵盖 14 种技能模式、Go Dashboard、PDF 生成、批量处理与多平台支持，让求职者用 AI 对抗 AI 筛选。'
 categories = ['技术笔记']
+tags = ['AI', 'Claude', '自动化', '求职']
 +++
 
 # Career-Ops：用 AI 打造智能化求职流水线

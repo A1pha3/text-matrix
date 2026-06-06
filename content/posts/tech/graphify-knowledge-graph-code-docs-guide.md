@@ -5,6 +5,7 @@ title = 'Graphify：将任意文件夹转化为可查询的知识图谱'
 slug = 'graphify-knowledge-graph-code-docs-guide'
 description = 'Graphify 是一个 Python 本地运行的 AI 编码助手技能，能将代码、文档、PDF、图片甚至视频转化为可查询的知识图谱，无需 Neo4j、无需服务器。'
 categories = ['技术笔记']
+tags = ['AI', '知识图谱', 'Python', '开源']
 +++
 
 # Graphify：将任意文件夹转化为可查询的知识图谱

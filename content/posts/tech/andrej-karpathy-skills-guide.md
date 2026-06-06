@@ -5,6 +5,7 @@ title = 'Andrej Karpathy Skills：AI 编程行为指南'
 slug = 'andrej-karpathy-skills-guide'
 description = 'Karpathy 亲授的 AI 编程行为指南，通过 CLAUDE.md 文件规范 AI Coding Agent 的行为模式，让 AI 从话痨自嗨转向精准执行。'
 categories = ['技术笔记']
+tags = ['AI', 'Claude', 'Agent', '开发工具']
 +++
 
 # Andrej Karpathy Skills：AI 编程行为指南

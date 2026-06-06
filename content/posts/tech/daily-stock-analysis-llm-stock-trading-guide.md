@@ -6,6 +6,7 @@ aliases:
   - "/posts/tech/daily-stock-analysis-llm-stock-trading-system/"
 description: "daily_stock_analysis 的核心价值不在「用 AI 看股票」，而在它把数据采集、多模型编排、策略裁决、多渠道推送这一整条链路跑成了可复现的定时流水线。本文拆解其四层架构、并行数据获取机制、15 种策略 Agent 的裁决逻辑，以及 GitHub Actions 零成本部署的全流程。"
 categories: ["技术笔记"]
+tags: ["AI", "LLM", "金融", "Python"]
 ---
 
 ## 目录

@@ -5,6 +5,7 @@ title = 'Presenton：开源 AI 演示文稿生成器'
 slug = 'presenton-open-source-ai-presentation-generator'
 description = 'Presenton 是一个开源 AI 驱动的演示文稿生成工具，输入脚本或主题即可自动生成结构化幻灯片，支持实时预览和多格式导出。'
 categories = ['技术笔记']
+tags = ['AI', '开源', 'TypeScript', '演示文稿']
 +++
 
 # Presenton：开源 AI 演示文稿生成器

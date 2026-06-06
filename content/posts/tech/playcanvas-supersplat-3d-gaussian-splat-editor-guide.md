@@ -3,6 +3,7 @@ title: "SuperSplat：浏览器里的 3D Gaussian Splat 编辑器完全指南"
 date: 2026-05-10T16:30:00+08:00
 slug: playcanvas-supersplat-3d-gaussian-splat-editor-guide
 categories: ["技术笔记"]
+tags: ["3D", "计算机视觉", "开源", "浏览器"]
 description: "深入解析 PlayCanvas 开源的 SuperSplat——一款完全基于浏览器的 3D Gaussian Splat 编辑器，涵盖技术原理、本地开发环境搭建、多语言支持及实机体验。"
 ---
 

@@ -5,6 +5,7 @@ title = 'AI副业早报 2026-04-15：Codex中转站/AI工作流招聘'
 slug = 'ai-side-hustle-morning-2026-04-15'
 description = '2026年4月15日 AI 副业早报，涵盖 Codex 中转站、AI 工作流招聘等副业机会。'
 categories = ['行业快讯']
+tags = ['AI', '副业', '早报']
 +++
 
 # AI副业早报 2026-04-15

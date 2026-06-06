@@ -5,6 +5,7 @@ title = '9arm-skills：让 AI 编程助手按流程干活的合约式 Skills'
 slug = '9arm-skills-claude-code-agent-skills-guide'
 description = '9arm-skills 不是提示词模板，而是一组可执行的合约式 Skills，覆盖版本管理、代码审查、测试生成、文档更新等 9 个编码阶段，让 AI 编程助手老老实实按流程干活。'
 categories = ['技术笔记']
+tags = ['AI', 'Claude', 'Skills', '开发工具']
 +++
 
 ## 阅读指引

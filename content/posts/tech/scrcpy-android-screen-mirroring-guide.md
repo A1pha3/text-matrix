@@ -5,6 +5,7 @@ title = 'scrcpy：开源 Android 屏幕投射与设备控制'
 slug = 'scrcpy-android-screen-mirroring-guide'
 description = 'scrcpy 是 Genymobile 开源的 Android 设备投射工具，通过 USB 或 TCP/IP 将手机屏幕镜像至电脑，支持键盘鼠标控制设备，无需 root。'
 categories = ['技术笔记']
+tags = ['Android', '开源', '工具']
 +++
 
 # scrcpy：开源 Android 屏幕投射与设备控制

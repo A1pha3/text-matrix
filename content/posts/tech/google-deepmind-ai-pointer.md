@@ -5,6 +5,7 @@ title = 'Google DeepMind AI Pointer：让鼠标指针理解语义'
 slug = 'google-deepmind-ai-pointer-semantic-mouse'
 description = 'Google DeepMind 提出 AI Pointer 概念，让鼠标指针从坐标追踪器进化为语义理解器，通过 Gemini 多模态推理实现保持心流、指即所知、简化语言、像素变实体四大交互原则。'
 categories = ['技术笔记']
+tags = ['AI', 'Google', 'DeepMind', '人机交互']
 +++
 
 # Google DeepMind AI Pointer：让鼠标指针理解语义

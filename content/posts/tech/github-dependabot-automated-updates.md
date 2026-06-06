@@ -5,6 +5,7 @@ title = 'GitHub Dependabot：自动化依赖更新'
 slug = 'github-dependabot-automated-updates'
 description = 'Dependabot 把依赖更新的责任从人的记忆力转移到系统上，支持 Alerts、Version Updates 和 Security Updates 三条独立机制，覆盖 npm、pip、Go、Cargo 等主流生态。'
 categories = ['技术笔记']
+tags = ['GitHub', 'DevOps', '依赖管理', '工具']
 +++
 
 # GitHub Dependabot：自动化依赖更新
