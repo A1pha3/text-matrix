@@ -79,7 +79,11 @@
     "status": "completed",
     "note": "08:55窗口执行(延迟)，4份早报文件均已生成(ai/financial/web3/side-hustle morning news 2026-06-02)，全部git push成功(04d7507)。链接核查：经济财经14条+AI副业7条+AI新闻25条+Web3 12条全部200。"
   },
-  "文章健康检查": {"lastRun": "2026-06-06", "status": "completed", "note": "2026-06-06 04:54窗口(cron 850cf6e9 heartbeat 第23次): 4份早报持续稳定(ai 4623B+financial 16663B+ai-side-hustle 19400B+web3 9838B, 全部draft:false, date=07:48-08:53已过Hugo阈值20h05m+), 文章库991 vs 00:50#22(tech 685/news 272/thoughts 2/video 12/wealth 10/rootmd 10, 师傅00:50→04:54无新文章commit中间仅 4e467d0 00:38 refactor daily_stock_analysis S级评分但article count不变), draft:false=862/draft:true=1(autocli历史)/缺draft=128(全<2026-05-28历史)/YAML---双分隔=975/TOML+++头行=16/Tiny<1.5KB=7(全历史)/未来日期=0, 源站抽样6/6 04:54 (带UA, --max-time 8s) 3/6 200+3异常(v2ex200/cointelegraph200/36kr200/binance202 + wallstreetcn404HEAD但GET-200/coingecko403 WAF封, 与#22对比coingecko 404→403封禁加深, binance 200→202标准响应, 其余一致, 实际早报源GET-200可用不影响早报采集), git本地与origin/main同步(HEAD=05476ee=origin/main, ahead/behind=0/0, content/posts无untracked/modified, memory/无untracked, 最近3 commit=05476ee 00:50 #22日志+4e467d0 00:38 师傅refactor daily_stock_analysis+4bafcf1 23:12 6/5趋势文4篇), 无新文章动作, 仅追加日志到memory/article-checklog-20260606.log(23行累计)"},
+  "文章健康检查": {
+    "lastRun": "2026-06-06",
+    "status": "completed",
+    "note": "2026-06-06 08:50窗口(cron 850cf6e9 heartbeat 第25次): 4份早报(06-05批)持续稳定(ai 4623B+financial 16663B+ai-side-hustle 19400B+web3 9838B, 全部draft:false), 2份早报(06-06批)新增(ai 7293B已commit f772947 07:45:38 + financial 22976B 08:38生成untracked待commit), 2份早报(06-06批)待生成(ai-side-hustle+web3, 后续cron), 文章库993 vs 05:56#24=991 delta=+2 (增量=2份06-06早报), breakdown=news274/tech685/thoughts2/video12/wealth10/rootmd10, 全部有title+description, 未来日期=0, Tiny<1.5KB=7(全历史), YAML=931/TOML=62/无分隔=0, 草稿分布YAML false=835/TOML false=62/YAML true=1(autocli)/真正无draft=95(全历史), git本地与origin/main同步(HEAD=f772947, ahead/behind=0/0, content/posts唯一untracked=financial-morning-news-2026-06-06.md待financial cron自己commit本cron不主动处理), 最近3 commit=f772947(07:45 AI早报08items)/f22081a(06:05 #24日志)/fdbbf88(04:55 #23日志), 源站抽样6/6 08:50(带UA --max-time 8s) 4/6 200(36kr/qbitai/v2ex/cointelegraph)+1/6 GET-200(wallstreetcn HEAD-404延续)+1/6 403(coingecko WAF延续, 与#24对比coingecko仍403未变化, 其余完全一致), 域名txtmix.com 200, ai-morning-news-2026-06-06.md 8/8外部链接全部GET-200, 无新文章动作, 仅追加日志+更新heartbeat-state.json"
+  },
   "文章健康检查-09:04": {
     "lastRun": "2026-06-05",
     "status": "completed_with_anomaly",
