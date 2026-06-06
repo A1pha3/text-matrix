@@ -1,0 +1,28 @@
+2026-06-07 00:24 窗口 (cron 850cf6e9 #36, isolated lightContext, 4早报06-06批全稳达15h+ + 999文章库 delta=0 vs 23:19#35=999)
+  4早报 06-06 批: ai 7293B+financial 22976B+ai-side-hustle 19136B+web3 11209B (全部draft:false, date=07:36-09:30已过Hugo阈值14h54m-16h48m+)
+  4早报 06-07 批: 未生成 (00:24深夜, 早报cron应在07:00-09:00窗口, 深夜无新文章)
+  文章库 999 (与 #35 23:19 完全一致, delta=0)
+  分类: tech 597+59+21+7+5=689(含ai-agent/tools/quant/llm子目录)/news 276/video 12/wealth 10/thoughts 2/根md 10
+  draft:false=841/draft:true=1(autocli历史)/缺draft=157(全<2026-05-28历史)
+  未来日期=0
+  源站抽样 6/7 00:24 (带UA, --max-time 8s) 8站 5/8 OK + 1/8 404 + 1/8 403 + 1/8 202
+  v2ex=200 / cointelegraph=200 / 36kr=200 / wallstreetcn=404 ❌ / coingecko=403 ❌ WAF / binance=202 / cls.cn=200 / flash.jin10.com=200 ✅(根站恢复)
+  域名txtmix.com: HTTP/2 200 (持续)
+  4早报 链接抽样 52条 (grep去重, 剔除1条false match=github.com/pplam/prepme+中文被错切)
+  实际有效 51条: 41 OK + 1 jin10 flash 404(延续#29 第12窗口) + 9 wallstreetcn 404(延续#33 第3窗口)
+  关键变化: wallstreetcn从#35 22:11的HEAD-404(GET-200资源可达)升级为#36 00:24的GET-404(资源真不可达)
+  ai 8条: 8/8 全200 ✅ (blog.google×1 + 36kr×4 + qbitai×3)
+  financial 21条: 12 OK + 1 jin10 flash 404 + 8 wallstreetcn 404
+  side-hustle 12条: 11 OK (reddit×9 全200 WAF恢复! + v2ex×2) + 1 false match
+  web3 11条: 11/11 全200 ✅ (cointelegraph×3 + coindesk×8)
+  异常:
+    1. 延续#29 第12窗口: jin10 flash detail子页404 (1条 detail/20260606041131402800)
+    2. 延续+升级#33 第3窗口: wallstreetcn全站 GET-404 (上次#35 22:11 HEAD-404/GET-200, 本次#36 00:24 GET-404, 真不可达)
+       9条全404: 根站 + 7个articles 3773946/3773990/3773995/3773997/3773999/3774001/3774002 + 1个livenews 3114574
+       财务早报受影响, 已用事件衍生策略规避
+    3. 延续: coingecko 403 WAF
+    4. 历史已清理#34: content/content/镜像 + workspace/.git 4861 staged (未复发)
+  git本地与origin/main同步(HEAD=b1b59ef=origin/main, ahead/behind=0/0)
+  content/posts 无 untracked/modified
+  最近3 commit: b1b59ef state+log / 03fd105 state / 6cc04fd log
+  无新文章动作, 仅追加日志+更新state
