@@ -49,3 +49,16 @@
   ai-morning-news-2026-06-06.md 8/8外部链接全部GET-200 ✓
   异常: 无 (4早报(06-05批)稳定 + 2早报(06-06批)新增 + 文章库单调递增 + 源站4/6稳 + 域名200)
   无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
+
+[2026-06-06 10:07:00 +0800] 文章健康检查 10:00 窗口 (cron 850cf6e9 #26):
+  4份早报(06-05批)持续稳定: ai 4623B + financial 16663B + ai-side-hustle 19400B + web3 9838B, 全部draft:false
+  4份早报(06-06批)全部生成: ai 7293B(commit f772947 07:45) + financial 22976B(08:38, untracked待commit) + ai-side-hustle 19136B(commit 0f5f0b1 09:44) + web3 11209B(commit 3b75f16 09:27) → 3/4已commit, 1/4待financial cron
+  文章库: 999 (news 276/tech 689/thoughts 2/video 12/wealth 10/rootmd 10) delta=+6 vs 08:50#25=993
+    增量明细: tech +4 (cf0334f trending 09:50 4篇) + news +2 (ai-side-hustle 19136B + web3 11209B 06-06批)
+  frontmatter: draft:false=841 / draft:true=1(autocli历史) / 无draft=157(全<2026-05-28历史) / TOML=62 / 未来日期=0 / Tiny<1.5KB=7(全历史)
+  git: HEAD=6681a74=origin/main同步 (ahead/behind=0/0), content/posts 唯一untracked=financial-morning-news-2026-06-06.md (待financial cron, 本cron不主动处理)
+  最近3 commit: 6681a74 (trending 09:50 log) / cf0334f (trending 09:50 4篇) / 0f5f0b1 (AI副业早报 06-06)
+  源站抽样6/6 10:07 (带UA, --max-time 8s): 4/6 200 (v2ex/cointelegraph/36kr/binance) + 1/6 HEAD-404 GET-200 (wallstreetcn延续) + 1/6 403 (coingecko WAF延续)
+  域名txtmix.com: 200 ✓
+  异常: 无 (4早报(06-06批) 3/4已commit+1/4待financial cron自然处理, 文章库单调递增+6, 源站4/6稳+域名200, 师傅08:50→10:07无新手动动作)
+  无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
