@@ -140,9 +140,12 @@
     "note": "2026-06-04由主AI 13:30介入补做（4个子代理均超时），commit 444c4c4。AI新闻11条+财经10条+Web3 7条+副业6条事件衍生，26条外部链接全部200验证。frontmatter date=2026-06-04T13:20:37+08:00（写入时刻-5分钟）。源站故障：CoinGecko/Binance/CoinIndex价格API全部不可用；V2EX/HN/Reddit/PH直连+Chrome CDP双重不可用，副业采用事件衍生策略不编造社区帖。date 硬性规则通过。遗留：cron 系统性失效根因待排查。"
   },
   "article-healthcheck": {
-    "lastRun": "2026-06-04",
-    "status": "all_stable",
-    "note": "2026-06-04 14:48窗口(cron 850cf6e9触发)文章健康检查:content/posts/共966篇markdown文章(news 264 + tech 589 + thoughts/video/wealth等113),git status显示0篇未提交文章改动,文章库稳定(对比13:34窗口966篇完全一致,期间仅github-trending 13:00窗口新增3篇但已commit dd365bb9),最近5次commit均与本cron/github-trending相关,无异常,无需新增文章或git push。"
+    "lastRun": "2026-06-07",
+    "lastWindow": "05:45",
+    "checkNumber": 39,
+    "cronId": "850cf6e9",
+    "status": "completed_with_1_continuing_link_404+1_continuing_waf",
+    "note": "4早报06-06批全稳达22h+ (4/4 URL线上HTTP/2 200) + 999文章库 delta=0 vs 04:40#38=999, 源站7/8 OK+1/8 403(coingecko WAF延续), 链接51条 50 OK+1 jin10 flash 404延续#29 第15窗口, reddit 9条WAF稳定200 ✅, wallstreetcn GET-200稳定 ✅ (从#38 HEAD-404 WAF回归后恢复), HEAD=447cec7=origin/main 同步, 异常延续2项+reddit/wallstreetcn稳定, 无新文章动作"
   },
   "文章健康检查-16:50": {
     "lastRun": "2026-06-04",
