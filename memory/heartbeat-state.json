@@ -80,8 +80,8 @@
     "note": "08:55窗口执行(延迟)，4份早报文件均已生成(ai/financial/web3/side-hustle morning news 2026-06-02)，全部git push成功(04d7507)。链接核查：经济财经14条+AI副业7条+AI新闻25条+Web3 12条全部200。"
   },
   "文章健康检查": {
-    "lastRun": "2026-06-03",
-    "status": "completed",
-    "note": "00:30窗口检查: 4份早报(2026-06-02) frontmatter全部✓ (date均≤当前时间)，实时链接核查(curl+UA 8s超时,首轮 56/58=200,2个重试后均200 OK—1个cointelegraph 200ERR为curl抖动,1个HN 429为速率限制)，总计58/58可达。整体文章库954篇(news 260/tech 666含子目录/wealth 9/video 12/thoughts 2+5散落)，空文件0、tiny文件2(2026-04-08历史占位 ai-side-hustle+financial, 969B+989B, 之前已标记待优化,本轮不变)。git status干净, origin/main一致, head 1b9bcca。2026-06-03早报未生成(07:30前正常)。系统健康,无紧急问题,本轮无需修复。"
+    "lastRun": "2026-06-06",
+    "status": "all_stable",
+    "note": "2026-06-06 15:43窗口(cron 850cf6e9 heartbeat 第30次, isolated lightContext): 4早报06-06批全稳(ai 7293B/financial 22976B/ai-side-hustle 19136B/web3 11209B, 全部draft:false, date=07:36/08:31/09:30/09:20已过Hugo阈值6h13m-8h7m+, 4/4已commit f772947/94d59cc/0f5f0b1/3b75f16), 文章库999 delta=0 vs 14:23#29=999(news 276/tech 689/thoughts 2/video 12/wealth 10/根md 10), draft:false=841/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)/TOML=62, Tiny<1.5KB=7(全历史, 含fincept-terminal 1490B Jun 6写入), 未来日期=0, 源站抽样6/6 15:43 (带UA, --max-time 8s) 6/6 全200(v2ex200/cointelegraph200/36kr200/wallstreetcn200 + coingecko200/binance200, WAF低位延续, 已连续2窗口6/6全稳), 4早报06-06批链接深度核查 42条: ai 8/8 200+financial 20/21 OK(1 jin10 flash detail 404延续#29) + ai-side-hustle 3/12 OK(9 reddit 403 WAF, 与#29延续)+web3 11/11 200, git本地与origin/main同步(HEAD=8c84280=origin/main, push成功57ed3ca..8c84280, 师傅14:23→15:43无新手动commit仅fa9a9284 trending 15:00窗口log commit), content/posts无untracked/modified(4早报06-06批 mtime=07:44/08:38/09:44/09:27 全部已commit), workspace/.git 0 untracked, ⚠️ 异常延续: jin10 flash detail 404(jin10 flash链接部分失效, 早报已用主源华尔街见闻规避) + reddit 403 WAF(社区WAF已用事件衍生策略), 无新文章动作, 仅追加日志到memory/article-checklog-20260606.log(138行累计)"
   }
 }
