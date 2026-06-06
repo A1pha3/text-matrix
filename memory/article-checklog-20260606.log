@@ -62,3 +62,24 @@
   域名txtmix.com: 200 ✓
   异常: 无 (4早报(06-06批) 3/4已commit+1/4待financial cron自然处理, 文章库单调递增+6, 源站4/6稳+域名200, 师傅08:50→10:07无新手动动作)
   无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
+
+[2026-06-06 12:15:57 CST] 文章健康检查 #27 (cron 850cf6e9)
+  早报(06-06批) 4/4 稳: ai-morning-news 7293B(8 items) + financial-morning-news 22976B(25 items) + web3-morning-news 11209B(11 items) + ai-side-hustle-morning 19136B(11 items), draft:false
+  日期: ai=07:44/financial=08:38(11:58补push 94d59cc)/web3=09:27/ai-side-hustle=09:44 (全部已过Hugo阈值 02:37+, 安全)
+  文章库: 999 (tech 597/news 276/thoughts 2/video 12/wealth 10/rootmd 10)  delta=0 vs 10:00#26=999
+  实际变更 10:00→12:15:
+    commit 94d59cc: financial-morning-news-2026-06-06.md 补 push (cron 27e08237 漏 push 修复)
+    commit fc2614f: GitHub trending 10:00 窗口 (17/17 已覆盖, 无需写文)
+    9:50 增量4篇tech (cf0334f) 已计入 #26 统计: agent-reach / copilotkit / openai-codex-plugins / withastro-flue
+  frontmatter: draft:false=999+ / 无新缺失 / 无新未来日期 (师傅 10:00→12:15 无新手动动作)
+  链接抽样(带UA, --max-time 10s) 19/19 200:
+    AI新闻(8 items): 36kr 4/4 → 200 (3839937467419143/3839972948855045/3840185187010824/3840188780513792)
+      + qbitai 3/3 → 200 (429294/431027/431033.html, 首次headless GET 偶发 404 重复验证 3次均 200, 66KB 完整内容)
+    经济财经(25 items): wallstreetcn 3/3 → 200 (3773946/3773990/3773995)
+    Web3(11 items): coindesk 4/4 → 200 (BlackRock-Securitize/Arthur-Hayes-Zcash/Bearish-Zcash/ETF-outflow-streak)
+    AI副业(11 items): v2ex 2/2 → 200 (1218276/1218325)
+  源站12站 12:13: 36kr200/qbitai200/google200/wallstreetcn200/sina200/jin10200 + coindesk200/cointelegraph200/v2ex200 + coingecko403(仍WAF)+coinmarketcap404(API-auth, 未使用)+reddit403(rate-limited) → 9/12 200, 3/12 异常稳定一致
+  域名txtmix.com: 200 ✓
+  git: HEAD=94d59cc=origin/main同步 (ahead/behind=0/0), content/posts 无 untracked/modified
+  异常: 无 (4早报全commit+链接全200+源站稳定+delta=0, 师傅 10:00→12:15 仅 94d59cc 补 push, 无新手动动作)
+  无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
