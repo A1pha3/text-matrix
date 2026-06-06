@@ -10,9 +10,9 @@
     "note": "03:00窗口执行失败，Chrome CDP WebSocket连接失败(Chrome未开启remote debugging)，跳过"
   },
   "github-trending-10": {
-    "lastRun": "2026-06-04",
-    "status": "completed_by_main_ai",
-    "note": "2026-06-04由主AI 13:48介入补做（09:00+10:00两个cron窗口因DNS失败漏发），commit eb119b0。trending抓取：14个trending repo中9个已覆盖，3个新撰写：heygen-com/hyperframes (+393 today) + yikart/AiToEarn (+320 today) + yangshun/tech-interview-handbook (+116 today)。13:48 trending抓取+14:00+ github直连核链时网络抖动（curl 5s timeout 000），但GitHub raw 200同步成功，文章基于真实README撰写。"
+    "lastRun": "2026-06-06",
+    "status": "all_already_covered",
+    "note": "2026-06-06T10:17:59+08:00 窗口(cron 31f9b296触发)GitHub trending日榜,curl UA抓取成功(/tmp/trending.html/4346行),17个trending repo列表与09:50窗口完全一致(NousResearch/hermes-agent +1,845 today/chopratejas/headroom +2,473 today/CopilotKit/CopilotKit +366 today/lfnovo/open-notebook +1,152 today/affaan-m/ECC +1,361 today/Panniantong/Agent-Reach +148 today/NVIDIA/cosmos +479 today/666ghj/MiroFish +320 today/mvanhorn/last30days-skill +731 today/PaddlePaddle/PaddleOCR +747 today/openai/plugins +49 today/MemPalace/mempalace +227 today/withastro/flue +126 today/openclaw/openclaw-windows-node +326 today/aquasecurity/trivy +207 today/jwasham/coding-interview-university +745 today/github/copilot-sdk +309 today)。覆盖检查：17/17全部已有文章(content/posts/路径下)覆盖,逐个find -iname验证,含09:50窗口刚commit的4篇新文(agent-reach-ai-agent-internet-toolkit-guide/copilotkit-agent-native-frontend-framework-guide/openai-codex-plugins-curated-collection-guide/withastro-flue-agent-harness-framework-guide)。无需新增文章或git push(无文件改动),仅更新heartbeat-state.json+推送飞书汇报。本次chopratejas/headroom今日2,473 stars最热,NousResearch/hermes-agent总181K+星持续领跑trending。"
   },
   "github-trending-11": {
     "lastRun": "2026-06-02",
