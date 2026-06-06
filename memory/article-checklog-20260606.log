@@ -165,3 +165,39 @@
     - 决策延续: 暂不自动修复, 仍需师傅确认修复方向 (1) 找 FT 原文永久链接替换 或 (2) 删除引用
     - 风险评估: 1/25 失效率 4% 可控, 文章主体 25 条华尔街见闻/新浪/金十数据均正常, 不影响阅读体验
   无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
+
+# 2026-06-06 22:11 窗口 (cron 850cf6e9 #34, isolated lightContext)
+  4 早报 06-06 批全稳 (与#33完全一致)
+    ai-morning-news-2026-06-06.md: 7293 bytes, date=2026-06-06T07:36:00+08:00 (已过 Hugo 阈值 14h35m+)
+    financial-morning-news-2026-06-06.md: 22976 bytes, date=2026-06-06T08:31:13+08:00 (已过 Hugo 阈值 13h40m+)
+    web3-morning-news-2026-06-06.md: 11209 bytes, date=2026-06-06T09:20:50+08:00 (已过 Hugo 阈值 12h50m+)
+    ai-side-hustle-morning-2026-06-06.md: 19136 bytes, date=2026-06-06T09:30:00+08:00 (已过 Hugo 阈值 12h41m+)
+    全部 draft:false ✓
+  文章库 999 篇 delta=+0 vs 20:08#33=999 (稳定, 20:08→22:11 师傅无新文章动作)
+    分类: news 276/tech 689/thoughts 2/video 12/wealth 10/根md 10
+  frontmatter: draft:false=841/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)/TOML=62/Tiny<1.5KB=7(全历史)/未来日期=0 (与#33完全一致)
+  链接全检(4 早报 06-06 批,带UA -L --max-time 8s) 52 unique = 200:42 + 404:1 + 403:9
+    ai-morning-news (8 unique): 8/8 → 200 ✓ (blog.google 1 + 36kr 4 + qbitai 3)
+    financial-morning-news (21 unique): 20/21 → 200 + 1/21 → 404 (⚠️ 延续 #29, 第10个健康检查窗口, 11h+ 仍未恢复)
+      200: wallstreetcn 10/10 (articles×8 + livenews×2) + sina 7/7 + jin10 1/2 + xnews.jin10 1/1 + flash.jin10 1/2
+      404: https://flash.jin10.com/detail/20260606041131402800 (jin10 flash 短链 11h+ 已过期, L123正文+L166验证清单 均有引用)
+      (1/25 失效率 4%, 同期 flash.jin10.com/detail/20260606041411477800 仍 200 OK)
+    web3-morning-news (11 unique): 11/11 → 200 ✓ (coindesk 8 + cointelegraph 3)
+    ai-side-hustle-morning (12 unique): 3/12 → 200 + 9/12 → 403 ⚠️ (reddit WAF 触发, 较#33的12/12=200 退化9项)
+      200: v2ex 2/2 + github 1/1
+      403: reddit 9/9 (r/LocalLLaMA×2 + r/SideProject×3 + r/forhire×3 + r/slavelabour×1, WAF 反爬已激活)
+      备注: 早报正文中 reddit 9条标题/内容仍可读, 仅 URL 直链 403 阻断, 不影响阅读体验, 已知WAF延续现象
+  源站8站 22:11 (带UA -L --max-time 8s) 5/8 → 200/202 + 1/8 → 302 + 2/8 → 403
+    200/202: v2ex200/cointelegraph200/36kr200/wallstreetcn200/binance202
+    302: flash.jin10.com (根路径 302→www.jin10.com, jin10 域重定向, 与#33 jin10 状态略变 #33 301→#34 302, 已知)
+    403: coingecko403(WAF延续)/reddit403(WAF延续, 与链接全检9项reddit 403 一致)
+  域名txtmix.com: 200 ✓
+  git: HEAD=554d9c0=origin/main同步 (ahead/behind=0/0), content/posts 无 untracked/modified
+  异常清理 ✓ (与历史延续对比):
+    - content/content/ 14M/995md 本地重复镜像: 已删除 ✓ (本窗口检查时 ABSENT, #33 时仍存在)
+    - workspace/.git 4861 staged 长期累积: 已清零 ✓ (#33 报 4861 staged → 本窗口 workspace_staged=0, 师傅已清理)
+  异常延续:
+    - 1 jin10 flash 404 (从#29窗口延续, 第10个健康检查窗口, 11h+ 仍未恢复, 师傅仍未确认修复方向 (1) 找FT原文永久链接替换 或 (2) 删除引用)
+    - reddit WAF 403 (本窗口突发 9/9 全部403, 较#33的12/12=200 退化9项, 但早报正文内容完整可读, 不影响阅读, 已知WAF延续现象)
+    - memory/早报核查日志.md 41K/948行 untracked (历史mjs生成, 非本cron产物, 师傅未处理)
+  无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
