@@ -111,3 +111,27 @@
     - 决策: 暂不自动修复, 需师傅确认 (1) 找 FT 原文永久链接替换 或 (2) 删除引用
     - web_search 工具当前 422 错误 (Brave SUBSCRIPTION_TOKEN_INVALID), 无法在线查找 FT 替代源
   无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
+
+[2026-06-06 14:23:00 CST] 文章健康检查 #29 (cron 850cf6e9)
+  早报(06-06批) 4/4 稳: ai-morning-news 7293B(8 items, commit f772947 07:44) + financial-morning-news 22976B(25 items, commit 94d59cc 11:58补push) + web3-morning-news 11209B(11 items, commit 3b75f16 09:27) + ai-side-hustle-morning 19136B(11 items, commit 0f5f0b1 09:44), 全部draft:false
+  日期: ai=07:44/financial=08:38(11:58补push)/web3=09:27/ai-side-hustle=09:44 (全部已过Hugo阈值 04:39+, 安全)
+  文章库: 999 (news 276/tech 689/thoughts 2/video 12/wealth 10/rootmd 10)  delta=0 vs 13:16#28=999
+  实际变更 13:16→14:23: 无新 commit (师傅未手动操作, heartbeat-only)
+  frontmatter: draft:false=841/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)/TOML=62/Tiny<1.5KB=7(全历史)/未来日期=0 (与#28完全一致)
+  链接全检(4 早报 06-06 批,带UA --max-time 8s) 52 总 = 200:41 + 301:9(reddit重定向) + 404:1 + 000:0
+    ai-morning-news (8 unique): 8/8 → 200 ✓ (blog.google 1 + 36kr 4 + qbitai 3)
+    financial-morning-news (21 unique): 20/21 → 200 + 1/21 → 404 (⚠️ 延续, 与#28一致)
+      200: wallstreetcn 8/8 + sina 7/7 + jin10 1/2 + jin10主页 + xnews.jin10
+      404: https://flash.jin10.com/detail/20260606041131402800 (jin10 flash 短链 ~10h 已过期; L123正文+L166验证清单均有引用)
+      (重测确认 404 延续, 无变化, 1/25 失效率 4%; 另 flash.jin10.com/detail/20260606041411477800 200 OK 无变化)
+    web3-morning-news (11 unique): 11/11 → 200 ✓ (coindesk 8 + cointelegraph 3)
+    ai-side-hustle-morning (12 unique): 12/12 → 200/301 ✓ (v2ex 2/2 + reddit 9/9 301→200(跟随后) + github 1/1)
+  源站12站 14:23 (带UA --max-time 8s) 12/12 → 200 ✓ (全稳, 较#28回升 coingecko 403→200)
+    200: 36kr/qbitai/google/wallstreetcn/sina/jin10/coindesk/cointelegraph/v2ex/coinmarketcap/reddit + coingecko(/api/v3/ping 200 "gecko_says:(V3) To the Moon!" 0.39s/34B, binance /api/v3/ping 200 {} 0.21s/2B)
+    ⚠️ 修正: 之前#26-#28报告 coingecko 403 (WAF) 实为网站根路径被WAF拦, API endpoint 实际一直 200, 本次补测 -sv 确认 TLS握手+SSL verify ok
+  域名txtmix.com: 200 ✓
+  git: HEAD=8d1d59b=origin/main同步 (ahead/behind=0/0), content/posts 无 untracked/modified, memory/无 untracked
+  异常: 1 个 ⚠️ 链接问题延续 (与#28一致, 无新增)
+    - financial-morning-news-2026-06-06.md 中 1 个 jin10 flash 链接 404 (20260606041131402800, ~10h 已过期)
+    - 决策延续: 暂不自动修复, 仍需师傅确认修复方向
+  无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
