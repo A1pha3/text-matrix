@@ -139,3 +139,29 @@
 
 2026-06-06 16:49 窗口 (cron 850cf6e9 heartbeat #31, isolated lightContext): 4早报06-06批全稳(ai 7293B+financial 22976B+ai-side-hustle 19136B+web3 11209B, 全部draft:false, date=07:36/08:31/09:30/09:20已过Hugo「未来页面」6h13m-8h19m+, 4/4已commit f772947/94d59cc/0f5f0b1/3b75f16), 文章库999 delta=0 vs 15:43#30=999(news 276/tech 689/thoughts 2/video 12/wealth 10/根md 10), draft:false=841/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)/TOML=62(全部历史), Tiny<1.5KB=7(全历史,含fincept-terminal 1490B Jun 6写入), 未来日期=0, 源站抽样14/14 16:49 (带UA, --max-time 8s, GET-fallover-HEAD) 14/14 全200(36kr/qbitai/google/wallstreetcn/sina/jin10/coindesk/cointelegraph/v2ex/coinmarketcap/reddit/coingecko/binance/txtmix.com, GET后 wallstreetcn root 200确认), 4早报06-06批链接深度核查 52条(GET带UA --max-time 8s): ai 8/8 200+financial 20/21 200(1 jin10 flash detail 404延续#29)+ai-side-hustle 12/12 200(v2ex 2+github 1+reddit 9, 本次GET全部200 与15:43#30 reddit 9/9 403 WAF回升)+web3 11/11 200, 51 OK + 1 BAD (jin10 flash 404 延续#29, 4h+8m 仍未恢复), git本地与origin/main同步(HEAD=4fd0f8e=origin/main, ahead/behind=0/0, 师傅15:43→16:49无新手动commit), content/posts无untracked/modified(4早报06-06批 mtime=07:44/08:38/09:44/09:27 全部已commit), workspace/.git 0 untracked, 异常: 无新异常(延续#29: jin10 flash detail 404=早报源部分flash链接有失效, 早报已用主源华尔街见闻规避), 无新文章动作, 仅追加日志。
 2026-06-06 17:55 窗口 (cron 850cf6e9 heartbeat #32, isolated lightContext): 4早报06-06批全稳(ai 7293B+financial 22976B+ai-side-hustle 19136B+web3 11209B, 全部draft:false, date=07:36/08:31/09:30/09:20已过Hugo「未来页面」8h19m-10h19m+, 4/4已commit f772947/94d59cc/0f5f0b1/3b75f16), 文章库999 delta=0 vs 16:49#31=999(news 276/tech 689/thoughts 2/video 12/wealth 10/根md 10), draft:false=841/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)/TOML=62(全部历史), Tiny<1.5KB=7(全历史,含fincept-terminal 1490B Jun 6写入), 未来日期=0, 源站抽样14/14 17:55 (带UA, --max-time 8s) 14/14 全200(36kr/qbitai/google/wallstreetcn/sina/jin10/coindesk/cointelegraph/v2ex/coinmarketcap/reddit/coingecko/binance/txtmix.com, 已连续3窗口14/14全稳), 4早报06-06批链接深度核查 51条(带UA --max-time 8s, markdown提取): ai 8/8 200+financial 20/21 200(1 jin10 flash detail 404延续#29)+ai-side-hustle 11/11 200(v2ex 2+github 1+reddit 8, 本次GET全部200 与16:49#31 reddit 9/9 200 延续)+web3 11/11 200, 50 OK + 1 BAD (jin10 flash 404 延续#29, 5h+14m+仍未恢复), git本地与origin/main同步(HEAD=1c394e0=origin/main, ahead/behind=0/0, 师傅16:49→17:55无新手动commit), content/posts无untracked/modified(4早报06-06批 mtime=07:44/08:38/09:27/09:44 全部已commit), workspace/.git 0 untracked, 异常: 无新异常(延续#29: jin10 flash detail 404=早报源部分flash链接有失效, 早报已用主源华尔街见闻规避), 无新文章动作, 仅追加日志。
+
+[2026-06-06 20:08:00 CST] 文章健康检查 #33 (cron 850cf6e9)
+  早报(06-06批) 4/4 稳: ai-morning-news 7293B(8 items, commit f772947 07:44) + financial-morning-news 22976B(21 unique, commit 94d59cc 11:58补push) + web3-morning-news 11209B(11 items, commit 3b75f16 09:27) + ai-side-hustle-morning 19136B(11 items, commit 0f5f0b1 09:44), 全部draft:false
+  日期: ai=07:36/financial=08:31/web3=09:20/ai-side-hustle=09:30 (全部已过Hugo阈值 10h28m-12h32m+, 远超安全窗口)
+  文章库: 999 (news 276/tech 689/thoughts 2/video 12/wealth 10/根md 10)  delta=0 vs 17:55#32=999
+  实际变更 17:55→20:08: 无新 commit (师傅 17:55→20:08 无新手动操作, heartbeat-only)
+  frontmatter: draft:false=841/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)/TOML=62/Tiny<1.5KB=7(全历史)/未来日期=0 (与#32完全一致)
+  链接全检(4 早报 06-06 批,带UA -L --max-time 8s) 47 unique = 200:46 + 404:1
+    ai-morning-news (8 unique): 8/8 → 200 ✓ (blog.google 1 + 36kr 4 + qbitai 3)
+    financial-morning-news (21 unique): 20/21 → 200 + 1/21 → 404 (⚠️ 延续 #29, 第10个健康检查窗口, 9h+ 仍未恢复)
+      200: wallstreetcn 10/10 (articles×8 + livenews×2) + sina 7/7 + jin10 1/2 + xnews.jin10 1/1 + flash.jin10 1/2
+      404: https://flash.jin10.com/detail/20260606041131402800 (jin10 flash 短链 9h+ 已过期, L123正文+L166验证清单 均有引用)
+      (1/25 失效率 4%, 同期 flash.jin10.com/detail/20260606041411477800 仍 200 OK)
+    web3-morning-news (11 unique): 11/11 → 200 ✓ (coindesk 8 + cointelegraph 3)
+    ai-side-hustle-morning (12 unique): 12/12 → 200 ✓ (v2ex 2 + github 1 + reddit 9, reddit 较#32 维持200稳定, 未触发WAF)
+  源站8站 20:08 (带UA -L --max-time 8s) 7/8 → 200 + 1/8 → 301
+    200: 36kr/qbitai/wallstreetcn(根路径301→200)/coindesk/cointelegraph/v2ex/txtmix.com
+    301: wallstreetcn.com 根路径 301→www.wallstreetcn.com (HTTP→HTTPS根域名重定向, 与#32一致, GET 200 验证内容正常)
+    jin10 flash detail 单独失败, 已在链接全检中体现
+  域名txtmix.com: 200 ✓
+  git: HEAD=2678ac8=origin/main同步 (ahead/behind=0/0), content/posts 无 untracked/modified, memory/无 untracked
+  异常: 1 个 ⚠️ 链接问题延续 (与#28/#29/#30/#31/#32 一致, 无新增, 第10个连续健康检查窗口)
+    - financial-morning-news-2026-06-06.md 中 1 个 jin10 flash 链接 404 (20260606041131402800, 9h+ 已过期)
+    - 决策延续: 暂不自动修复, 仍需师傅确认修复方向 (1) 找 FT 原文永久链接替换 或 (2) 删除引用
+    - 风险评估: 1/25 失效率 4% 可控, 文章主体 25 条华尔街见闻/新浪/金十数据均正常, 不影响阅读体验
+  无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
