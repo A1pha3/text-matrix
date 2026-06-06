@@ -83,3 +83,31 @@
   git: HEAD=94d59cc=origin/main同步 (ahead/behind=0/0), content/posts 无 untracked/modified
   异常: 无 (4早报全commit+链接全200+源站稳定+delta=0, 师傅 10:00→12:15 仅 94d59cc 补 push, 无新手动动作)
   无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
+
+[2026-06-06 13:16:00 CST] 文章健康检查 #28 (cron 850cf6e9)
+  早报(06-06批) 4/4 稳: ai-morning-news 7293B(8 items, commit f772947 07:44) + financial-morning-news 22976B(25 items, commit 94d59cc 11:58补push) + web3-morning-news 11209B(11 items, commit 3b75f16 09:27) + ai-side-hustle-morning 19136B(11 items, commit 0f5f0b1 09:44), 全部draft:false
+  日期: ai=07:44/financial=08:38(11:58补push)/web3=09:27/ai-side-hustle=09:44 (全部已过Hugo阈值 03:32+, 安全)
+  文章库: 999 (news 276/tech 689/thoughts 2/video 12/wealth 10/rootmd 10)  delta=0 vs 12:15#27=999
+    (修正#27日志笔误: tech 597→689, 总数仍=999=276+689+2+12+10+10)
+  实际变更 12:15→13:16:
+    commit 9c9d1f6: GitHub trending 13:00 窗口 (cron 4733885d, 17/17已覆盖, 无需写文, 仅更新heartbeat-state.json)
+  frontmatter: draft:false=841/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)/TOML=62/Tiny<1.5KB=7(全历史)/未来日期=0
+  链接全检(4 早报 06-06 批,带UA --max-time 8s) 52 总 = 200:42 + 301:9(reddit重定向) + 404:1 + 000:0
+    ai-morning-news (8 unique): 8/8 → 200 ✓ (blog.google 1 + 36kr 4 + qbitai 3)
+    financial-morning-news (21 unique): 20/21 → 200 + 1/21 → 404 (⚠️)
+      200: wallstreetcn 8/8 + sina 7/7 + jin10 1/2 + jin10主页 + xnews.jin10
+      404: https://flash.jin10.com/detail/20260606041131402800 (jin10 flash 短链 ~9h 已过期; 同时出现在文末✅验证清单)
+      (经3次重复验证+无UA测试+相邻时间戳测试 确认为真实 404, 非HEAD-404的GET-200现象)
+    web3-morning-news (11 unique): 11/11 → 200 ✓ (coindesk 8 + cointelegraph 3)
+    ai-side-hustle-morning (12 unique): 12/12 → 200/301 ✓ (v2ex 2/2 + reddit 9/9 301→canonical + github 1/1)
+  源站12站 13:14 (带UA --max-time 8s) 11/12 → 200 + 1/12 → 403
+    200: 36kr/qbitai/google/wallstreetcn/sina/jin10/coindesk/cointelegraph/v2ex/coinmarketcap/reddit (11 站,较#27回升 coinmarketcap 404→200 + reddit 403→200, 突破此前WAF/rate-limit封禁)
+    403: coingecko (WAF延续,与#27一致)
+  域名txtmix.com: 200 ✓
+  git: HEAD=9c9d1f6=origin/main同步 (ahead/behind=0/0), content/posts 无 untracked/modified, memory/无 untracked
+  异常: 1 个 ⚠️ 链接问题
+    - financial-morning-news-2026-06-06.md 中 1 个 jin10 flash 链接 404 (20260606041131402800, ~9h 已过期)
+    - 影响: 该 link 在文章正文 (L123) 和文末验证清单 (L166) 均有引用, 1/25 失效率 4%
+    - 决策: 暂不自动修复, 需师傅确认 (1) 找 FT 原文永久链接替换 或 (2) 删除引用
+    - web_search 工具当前 422 错误 (Brave SUBSCRIPTION_TOKEN_INVALID), 无法在线查找 FT 替代源
+  无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
