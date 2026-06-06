@@ -167,6 +167,6 @@
   "article-health-check": {
     "lastRun": "2026-06-07",
     "status": "completed_with_3_continuing_anomalies+upgraded_wallstreetcn+new_reddit_waf_regression",
-    "note": "2026-06-07T03:29:00+08:00 窗口(cron 850cf6e9 #37)文章健康检查,isolated lightContext,4早报06-06批全稳达18h+(4/4 URL线上验证200)+999文章库 delta=0 vs 00:24#36=999,源站6/8 OK+1/8 404(coingecko)+1/8 302(jin10 redirect),链接51条 41 OK+1 jin10 flash 404延续#29 第13窗口+9 wallstreetcn 200升级#33 第4窗口(从#36 00:24 GET-404恢复)+9 reddit 403 WAF回归(上次#36 02:13恢复,本次又403, jina reader 200可达),HEAD=9729608=origin/main同步(ahead/behind=0/0),异常3项延续(jin10 flash/coingecko 404/content镜像未复发)+升级wallstreetcn全200+新增reddit WAF回归,无新文章动作,仅追加日志+更新state。wallstreetcn从#36 00:24的GET-404真不可达恢复为GET-200(JS app shell资源可达,jina reader也200),reddit WAF回归但jina reader代理可达,均不影响文章内容完整性,下周早报cron 07:00-09:00窗口将使用jina reader代理绕过WAF。"
+    "note": "2026-06-07T03:29:00+08:00 窗口(cron 850cf6e9 #37)文章健康检查,isolated lightContext,4早报06-06批全稳达18h+(4/4 URL线上验证200)+999文章库 delta=0 vs 00:24#36=999,源站6/8 OK+1/8 404(coingecko)+1/8 302(jin10 redirect),链接51条 41 OK+1 jin10 flash 404延续#29 第13窗口+9 wallstreetcn 200升级#33 第4窗口(从#36 00:24 GET-404恢复)+9 reddit 403 WAF回归(上次#36 02:13恢复,本次又403, jina reader 200可达),HEAD=a7a47c0=origin/main同步(ahead/behind=0/0,已push),异常3项延续(jin10 flash/coingecko 404/content镜像未复发)+升级wallstreetcn全200+新增reddit WAF回归,无新文章动作,仅追加日志+更新state。wallstreetcn从#36 00:24的GET-404真不可达恢复为GET-200(JS app shell资源可达,jina reader也200),reddit WAF回归但jina reader代理可达,均不影响文章内容完整性,下周早报cron 07:00-09:00窗口将使用jina reader代理绕过WAF。"
   }
 }
