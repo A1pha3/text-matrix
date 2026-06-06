@@ -1,5 +1,5 @@
 ---
-title: "paperless-ngx：开源文档管理神器，让你的纸张消失无踪"
+title: "paperless-ngx：开源文档管理系统指南"
 slug: paperless-ngx-document-management-guide
 date: "2026-04-20T11:30:00+08:00"
 description: "全面解析 paperless-ngx：一个强大的开源文档管理系统，支持 OCR 识别、全文搜索、标签分类，通过 Docker 即可快速部署，让你的纸质文档数字化归档变得前所未有的简单。"
@@ -7,7 +7,7 @@ categories: ["技术笔记"]
 tags: ["文档管理", "Python", "Docker", "OCR", "开源"]
 ---
 
-# paperless-ngx：开源文档管理神器，让你的纸张消失无踪
+# paperless-ngx：开源文档管理系统指南
 
 在日常生活中，我们每天都会产生大量的纸质文档——账单、合同、发票、说明书、手写笔记……堆积如山，查找困难，还容易丢失。有没有一种方法，能把这些纸张通通数字化，然后像管理邮件一样管理它们？
 

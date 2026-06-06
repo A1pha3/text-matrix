@@ -336,7 +336,7 @@ packages/
 └── db/                       # Astro DB（边缘数据库）
 ```
 
-值得注意的是 Astro **自研了编译器**（[withastro/compiler](https://github.com/withastro/compiler)），将 `.astro` 文件（HTML 模板 + frontmatter TypeScript）编译为 JavaScript 模块。这使得 Astro 不依赖现有 SSR 框架的编译器，完全掌控构建流水线。
+Astro **自研了编译器**（[withastro/compiler](https://github.com/withastro/compiler)），将 `.astro` 文件（HTML 模板 + frontmatter TypeScript）编译为 JavaScript 模块。这使得 Astro 不依赖现有 SSR 框架的编译器，完全掌控构建流水线。
 
 ---
 

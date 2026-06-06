@@ -86,7 +86,7 @@ crates/
   ...
 ```
 
-值得注意的是 WarpUI 框架采用 **MIT license**，而其余代码采用 AGPL-3.0。这个 license 切割意味着其他人可以在 MIT 条件下复用 WarpUI 框架，而不必开源自己的修改。
+WarpUI 框架采用 **MIT license**，而其余代码采用 AGPL-3.0。这个 license 切割意味着其他人可以在 MIT 条件下复用 WarpUI 框架，而不必开源自己的修改。
 
 ---
 

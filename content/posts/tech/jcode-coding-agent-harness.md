@@ -16,7 +16,7 @@ tags: ["AI Agent", "Rust", "Coding Agent", "多智能体", "开源工具"]
 
 市面上已有 Claude Code、GitHub Copilot CLI、Cursor Agent、OpenCode、pi 等多款编码智能体工具。jcode 的差异化在于，它选择了 Rust 作为实现语言，并在三个方向上做了明确的工程取舍：
 
-**性能优先的架构设计。** jcode 的核心目标之一是在多会话并发场景下保持极低的资源占用。从 README 中披露的基准测试数据来看，在 10 个活跃会话场景下，jcode 的额外 RAM 增量约为 **10.4 MB/会话**，而 Claude Code 约为 **212.7 MB/会话**，差距在 20 倍以上。首次帧渲染时间（Time to first frame）约为 **14 ms**，比 Claude Code 的 3437 ms 快了约 245 倍。值得注意的是，这些数据均来源于项目 README 中的公开声明，未经过独立第三方验证，读者应将其作为参考而非严谨 Benchmark。
+**性能优先的架构设计。** jcode 的核心目标之一是在多会话并发场景下保持极低的资源占用。从 README 中披露的基准测试数据来看，在 10 个活跃会话场景下，jcode 的额外 RAM 增量约为 **10.4 MB/会话**，而 Claude Code 约为 **212.7 MB/会话**，差距在 20 倍以上。首次帧渲染时间（Time to first frame）约为 **14 ms**，比 Claude Code 的 3437 ms 快了约 245 倍。这些数据均来源于项目 README 中的公开声明，未经过独立第三方验证，读者应将其作为参考而非严谨 Benchmark。
 
 **持久化语义记忆系统。** 与大多数编码智能体在每次新会话中"从零开始"不同，jcode 为每个会话维护了一个基于向量嵌入（embedding）的语义记忆图（memory graph）。历史对话内容会按语义漂移程度或会话轮次自动提取并存储，在后续相关话题出现时自动注入上下文，而无需 Agent 主动调用记忆工具。
 

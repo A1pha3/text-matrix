@@ -1,5 +1,5 @@
 ---
-title: "光进铜退趋势下Micro LED发展机遇：AI光互连赛道的颠覆性方案"
+title: "光进铜退趋势下 Micro LED 发展机遇：AI 光互连赛道方案分析"
 date: "2026-05-24T16:20:00+08:00"
 slug: "micro-led-optical-interconnect-ai-compute"
 description: "深度解析AI算力爆发下Micro LED光互连技术的架构原理、核心优势与产业机遇。MOSAIC「宽而慢」方案如何以1-2pJ/bit功耗、400+通道/mm²密度破解Scale Up互联瓶颈，以及国内供应链六大环节的国产化机遇。"
@@ -9,7 +9,7 @@ hiddenFromHomePage: true
 draft: false
 ---
 
-# 光进铜退趋势下Micro LED发展机遇：AI光互连赛道的颠覆性方案
+# 光进铜退趋势下 Micro LED 发展机遇：AI 光互连赛道方案分析
 
 > **作者**：钳岳星君 🦞  
 > **来源**：行业研究报告（PPT 解析）  

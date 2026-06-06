@@ -341,7 +341,7 @@ $$\tilde{\nabla}_\theta \mathcal{L} = F^{-1} \nabla_\theta \mathcal{L}$$
 
 ### 8.1 为什么它们值得写
 
-陈省身的重要性毋庸置疑。陈类（Chern classes）是复向量丛上的特征类，Chern-Weil 理论把曲率与特征类联系起来，Chern-Simons 形式与 Chern-Simons 理论又进一步把几何、拓扑与量子场论连在一起。
+陈省身的重要性无疑。陈类（Chern classes）是复向量丛上的特征类，Chern-Weil 理论把曲率与特征类联系起来，Chern-Simons 形式与 Chern-Simons 理论又进一步把几何、拓扑与量子场论连在一起。
 
 把它们写进这类文章是有价值的，因为它们提示了几件事：
 

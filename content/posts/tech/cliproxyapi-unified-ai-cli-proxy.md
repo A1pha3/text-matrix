@@ -188,7 +188,7 @@ CLIProxyAPI 的控制平面不能裸奔。管理 API 支持远程访问，但是
 
 只看一句“Wrap Gemini CLI, Antigravity, ChatGPT Codex, Claude Code, Grok Build as an API service”，很容易把 CLIProxyAPI 当成一个包装得很完整的代理 README。但从当前公开信息看，它已经不只是一个单点工具。
 
-截至本文写作时，仓库公开页面显示它大约有 33.2k Stars、616 个 Releases、180 名贡献者。更值得注意的是，围绕它已经长出来三类生态：
+截至本文写作时，仓库公开页面显示它大约有 33.2k Stars、616 个 Releases、180 名贡献者。围绕它已经长出来三类生态：
 
 - 桌面与托盘包装层，例如 [vibeproxy](https://github.com/automazeio/vibeproxy)、[Quotio](https://github.com/nguyenphutrong/quotio)、[CodMate](https://github.com/loocor/CodMate)、[霖君](https://github.com/wangdabaoqq/LinJun)
 - 管理与观测层，例如 [CLIProxyAPI Dashboard](https://github.com/itsmylife44/cliproxyapi-dashboard)、[CPA-Manager](https://github.com/seakee/CPA-Manager)

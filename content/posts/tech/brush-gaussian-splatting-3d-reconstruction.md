@@ -47,7 +47,7 @@ Brush 支持输入 [COLMAP](https://colmap.github.io/) 格式数据或 [Nerfstud
 
 ### CLI 工具
 
-Brush 提供了完整的命令行接口，运行 `brush --help` 可查看所有可用命令。值得注意的是，每个 CLI 子命令都支持 `--with-viewer` 参数，在命令行训练的同时打开图形界面辅助调试。
+Brush 提供了完整的命令行接口，运行 `brush --help` 可查看所有可用命令。每个 CLI 子命令都支持 `--with-viewer` 参数，在命令行训练的同时打开图形界面辅助调试。
 
 ### 可视化集成
 

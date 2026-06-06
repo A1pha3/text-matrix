@@ -170,7 +170,7 @@ nodes:
 | `context: fresh` | 强制节点在新上下文里执行 | 避免长链任务上下文污染 |
 | `provider:` / `model:` | 为节点指定 AI provider / model | 需要按任务类型切模型时 |
 
-这里特别值得注意的是 `script:`。从官方 release 信息看，v0.3.3 开始，Archon 已经支持 script node，允许通过 `bun` 或 `uv` 运行内联 TypeScript / Python 或 `.archon/scripts/` 中的脚本。这让它不再只是“YAML + 提示词”的编排器，而更接近一个真正的工程自动化 runtime。
+`script:` 特别值得关注。从官方 release 信息看，v0.3.3 开始，Archon 已经支持 script node，允许通过 `bun` 或 `uv` 运行内联 TypeScript / Python 或 `.archon/scripts/` 中的脚本。这让它不再只是“YAML + 提示词”的编排器，而更接近一个真正的工程自动化 runtime。
 
 ### 3. Human-in-the-loop 不是一个开关，而是两种模式
 

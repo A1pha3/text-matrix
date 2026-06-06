@@ -57,7 +57,7 @@ with torch.inference_mode():
     output = model(**inputs)
 ```
 
-值得注意的是，官方文档明确说明PyPI包「即将发布」，当前需通过`pip install esm@git+https://github.com/Biohub/esm.git@c94ed8d`从GitHub安装。
+官方文档明确说明PyPI包「即将发布」，当前需通过`pip install esm@git+https://github.com/Biohub/esm.git@c94ed8d`从GitHub安装。
 
 ### ESMFold2：融合语言模型的结构预测
 

@@ -1,5 +1,5 @@
 ---
-title: "Chandra OCR：复杂表格、表单与手写内容的终极识别解决方案"
+title: "Chandra OCR：复杂表格、表单与手写内容识别方案"
 slug: chandra-ocr-complex-document-recognition
 aliases:
   - /posts/tech/chandra-ocr-complex-document-recognition/
@@ -10,7 +10,7 @@ date: "2026-03-29T12:00:00+08:00"
 draft: false
 ---
 
-# Chandra OCR：复杂表格、表单与手写内容的终极识别解决方案
+# Chandra OCR：复杂表格、表单与手写内容识别方案
 
 > **难度**：⭐⭐（进阶）
 > **目标读者**：需要处理复杂文档（表格、表单、手写）的开发者与企业用户

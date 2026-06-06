@@ -104,7 +104,7 @@ Syll 的方案不同。它没有向量检索，没有专用工具调用，也没
 
 所有持久状态存储在用户自有的 workspace 目录中（Lora、LLM 不直接接触配置，而是通过配置塑造每次系统提示的内容）。
 
-值得注意的是：Syll 没有用复杂的向量数据库，没有专门的记忆索引，技能以 markdown 格式存储在 workspace 中，支持渐进式加载。`mcp__server__tool` 工具通过 namespace 方式注入 Agent，stdio/SSE/streamable-HTTP 三种 MCP 服务器都可以从 Pet UI 配置。
+Syll 没有用复杂的向量数据库，没有专门的记忆索引，技能以 markdown 格式存储在 workspace 中，支持渐进式加载。`mcp__server__tool` 工具通过 namespace 方式注入 Agent，stdio/SSE/streamable-HTTP 三种 MCP 服务器都可以从 Pet UI 配置。
 
 ---
 
