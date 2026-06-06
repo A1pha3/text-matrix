@@ -201,3 +201,23 @@
     - reddit WAF 403 (本窗口突发 9/9 全部403, 较#33的12/12=200 退化9项, 但早报正文内容完整可读, 不影响阅读, 已知WAF延续现象)
     - memory/早报核查日志.md 41K/948行 untracked (历史mjs生成, 非本cron产物, 师傅未处理)
   无新文章动作, 仅追加本条日志 + 更新 heartbeat-state.json
+[2026-06-06 23:19] cron 850cf6e9 #35 (isolated lightContext) 文章健康检查
+  4早报06-06批: 全稳
+    - ai-morning 7293B (date=2026-06-06T07:36:00+08:00, draft:false, 已过Hugo阈值15h43m+)
+    - financial-morning 22976B (date=2026-06-06T08:31:13+08:00, draft:false, 已过14h47m+)
+    - ai-side-hustle-morning 19136B (date=2026-06-06T09:30:00+08:00, draft:false, 已过13h49m+)
+    - web3-morning 11209B (date=2026-06-06T09:20:50+08:00, draft:false, 已过13h58m+)
+  文章库999 delta=0 vs 22:11#34=999 (tech 689/news 276/thoughts 2/video 12/wealth 10/根md 10)
+  draft:false=841/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)
+  未来日期=0, 无untracked content/posts, 无modified
+  源站抽样8/8 23:19 (UA, --max-time 8s, HEAD):
+    5/8 200/202/301: v2ex200/cointelegraph301/36kr200/binance202/jin10200
+    3/8 403/404: coingecko403(WAF)/wallstreetcn404(HEAD-only, GET=200)/reddit403(WAF)
+  4早报06-06批链接52条(去重) HEAD 测:
+    31 OK (200)
+    9 reddit 403 WAF (#34突发延续, #33=200 退化9项, 早报内容完整可读, 不影响阅读)
+    12 404: 1 jin10 flash 404延续#29 第11窗口 + 10 wallstreetcn HEAD-404(GET=200,资源可达但拒绝HEAD) + 1 false match(github.com/pplam/prepme+中文句被错切)
+  域名txtmix.com: HTTP/2 200 (持续)
+  git本地与origin/main同步(HEAD=03fd105=origin/main, ahead/behind=0/0)
+  异常: 无新增, 延续#34的3项(reddit WAF 403 / jin10 flash 404 / wallstreetcn HEAD-404)
+  无新文章动作, 仅追加日志+更新state
