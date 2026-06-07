@@ -1,6 +1,6 @@
 ---
 title: "Svelte 5 Runes：稳定版一年后，前端响应式范式走到哪一步了"
-date: "2026-06-07T13:05:00+08:00"
+date: "2026-06-07T12:50:00+08:00"
 slug: "svelte-5-runes-stable-frontend-reactivity"
 aliases:
   - "/posts/tech/svelte-5-runes-stable-frontend-reactivity/"

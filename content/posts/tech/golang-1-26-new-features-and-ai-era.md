@@ -1,6 +1,6 @@
 ---
 title: "Go 1.26 新特性解读：AI 时代为什么 Go 又一次上 trending"
-date: "2026-06-07T13:11:00+08:00"
+date: "2026-06-07T12:54:00+08:00"
 slug: "golang-1-26-new-features-and-ai-era"
 aliases:
   - "/posts/tech/golang-1-26-new-features-and-ai-era/"

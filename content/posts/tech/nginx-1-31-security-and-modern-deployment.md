@@ -1,6 +1,6 @@
 ---
 title: "Nginx 1.31 安全修复与现代部署：30 岁反向代理的常青之道"
-date: "2026-06-07T13:14:00+08:00"
+date: "2026-06-07T12:56:00+08:00"
 slug: "nginx-1-31-security-and-modern-deployment"
 aliases:
   - "/posts/tech/nginx-1-31-security-and-modern-deployment/"

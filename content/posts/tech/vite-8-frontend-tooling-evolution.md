@@ -1,6 +1,6 @@
 ---
 title: "Vite 8：前端构建工具之王 2026 年的演化方向"
-date: "2026-06-07T13:08:00+08:00"
+date: "2026-06-07T12:52:00+08:00"
 slug: "vite-8-frontend-tooling-evolution"
 aliases:
   - "/posts/tech/vite-8-frontend-tooling-evolution/"
