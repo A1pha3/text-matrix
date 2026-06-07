@@ -164,3 +164,17 @@
   txtmix.com/posts/tech/microsoft-mxc-sandboxed-code-execution-guide/ HTTP/2 200 ✅
   文章库 1003→1004, delta=+1
   heartbeat-state.json github-trending-09 已更新(2026-06-07 completed, 1499 字 note)
+
+2026-06-07 10:26 窗口 (cron 850cf6e9 #40, isolated lightContext, heartbeat 触发)
+  4早报 06-07 批: ai 7293B+financial 22976B+ai-side-hustle 19136B+web3 11209B (全部draft:false, date=07:36-09:44已过Hugo阈值 32m-2h50m+, 全稳)
+  4早报 06-08 批: 未生成 (10:26早间, 早报cron应在07:00-09:00窗口, 等待晚间)
+  文章库 1004 (vs #39 05:45=999, delta=+5 = 4早报+1MXC tech 微软沙箱执行容器, microsoft/mxc 09:27 trending 唯一新增)
+  分类: tech 689→693 (+4 = 早报date修正/MXC tech)/news 276→280 (+4 = 4早报)/video 12/wealth 10/thoughts 2/根md 10 = 1004
+  源站 8 站: 5/8 200(36kr/qbitai/hackernews/wallstreetcn/www.v2ex.com) + 1/8 000(api.v2ex.com 误用,实际www.v2ex.com=200,下个窗口修正) + 1/8 403(crunchbase WAF延续) + 1/8 403(coingecko WAF延续) + 1/8 403(reddit WAF延续)
+  链接 06-07 早报 57 条: 53 OK + 4 fail → 修复后 54 OK + 3 fail
+    - 修复: web3-2026-06-07.md:82 coindesk typo (stake-in- → stake-into-, 1处) → 200
+    - 延续 #29 第 16 窗口: coindesk 06-02 BTC 算力 (stale 引用, 5天前文章下线, 标记延续)
+    - 2 个 301 重定向: arstechnica S&P500 链接 + ycombinator Mbodi 链接 (跟随重定向后 200, 实际可达)
+  状态: 4早报 06-07 批稳定达 2h50m+ + 1004文章库 + 异常延续1项(06-02 stale 引用) + 1项已修复(coindesk typo)
+  HEAD=0d55c68=origin/main 同步
+  action: fix web3-2026-06-07.md:82 typo + commit log + state commit

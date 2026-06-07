@@ -79,7 +79,7 @@ hiddenFromHomePage: true
 
 ### 加密老炮 James Wo（DFG）再挺 BTC、公开质疑 Tom Lee 的 ETH 25 万美元预测
 来源: CoinDesk
-原文: [原文](https://www.coindesk.com/business/2026/06/06/a-crypto-pioneer-who-turned-a-usd20-million-family-stake-in-a-billion-dollar-fund-doubles-down-on-bitcoin)
+原文: [原文](https://www.coindesk.com/business/2026/06/06/a-crypto-pioneer-who-turned-a-usd20-million-family-stake-into-a-billion-dollar-fund-doubles-down-on-bitcoin)
 摘要: 以母亲 2,000 万美元初始资本起家、目前管理规模达 10 亿美元的 DFG CEO **James Wo** 表示，市场指标不支持 Tom Lee 此前给出的 ETH 25 万美元目标价。Wo 认为 BTC 已经形成"机构共识 + 数字黄金"地位，**ETH 因活动与费用向 L2 迁移而被稀释**，即便 Vitalik Buterin 等人正在讨论的协议层升级也难以在短期推升 ETH 创出新高。Wo 预计 BTC 在修正至约 6 万美元后将跑赢主要股票市场，并于 2027–2028 年间再创新高至约 12.5 万美元。
 
 ### 量化机构大规模入场 Polymarket / Kalshi，做"非事件"套利
