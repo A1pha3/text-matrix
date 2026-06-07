@@ -169,12 +169,20 @@
   },
   "article-health-check": {
     "lastRun": "2026-06-07",
-    "status": "completed_with_1_continuing_anomaly+1_typofix",
-    "note": "2026-06-07T10:26:00+08:00 窗口(cron 850cf6e9 #40, heartbeat 触发)文章健康检查,isolated lightContext,4早报06-07批全稳达2h50m+(ai 07:36+financial 08:31+web3 09:27+ai-side-hustle 09:44, 全部draft:false, 已过Hugo阈值32m-2h50m+)+1004文章库 delta=+5 vs 05:45#39=999(增量=4早报+1MXC tech微软沙箱执行容器microsoft/mxc 09:27 trending唯一新增),源站8站 5/8 200(36kr/qbitai/hackernews/wallstreetcn/www.v2ex.com)+1/8 000(api.v2ex.com源站列表误用,下个窗口修正)+1/8 403 crunchbase WAF延续+1/8 403 coingecko WAF延续+1/8 403 reddit WAF延续,链接06-07 4早报57条: 53 OK + 4 fail → 修复后 54 OK + 3 fail(修复1处coindesk typo stake-in-a-billion → stake-into-a-billion / 延续#29 第16窗口: coindesk 06-02 BTC算力 stale 5天前引用 / 2个301重定向arstechnica S&P500+ycombinator Mbodi跟随可达),HEAD=0d55c68=origin/main同步(ahead/behind=0/0),异常1项延续(06-02 BTC算力stale引用)+1项已修复(coindesk typo web3-2026-06-07.md:82),无新文章动作,仅追加日志+修复typo+commit+push"
+    "lastWindow": "13:37",
+    "checkNumber": 41,
+    "cronId": "850cf6e9",
+    "status": "completed_with_2_continuing_waf+1_site_upgrade",
+    "note": "2026-06-07T13:37:00+08:00 窗口(cron 850cf6e9 #41, heartbeat 触发)文章健康检查,isolated lightContext,4早报06-07批全稳达3h53m-6h01m+(ai 07:36+financial 08:31+web3 09:27+ai-side-hustle 09:44, 全部draft:false, 已过Hugo阈值3h53m-6h01m+)+1008文章库 delta=+4 vs 10:26#40=1004(增量=github-trending-13 13:04窗口 4篇成熟基础项目补全: vite-8-frontend-tooling-evolution/svelte-5-runes-stable-frontend-reactivity/golang-1-26-new-features-and-ai-era/nginx-1-31-security-and-modern-deployment),源站9站 6/9 200(36kr/qbitai/hackernews/wallstreetcn/www.v2ex.com/crunchbase[升级403→200])+1/9 000(api.v2ex.com误用延续)+1/9 403 coingecko WAF延续+1/9 403 reddit WAF延续,新增4 trending tech 11条链接全200,4早报6条wallstreetcn+1条sina抽样全200,HEAD=977ad14=origin/main同步(ahead/behind=0/0),异常延续2项(coingecko/reddit WAF)+异常升级1项(crunchbase 403→200 ✅),无新文章动作,仅追加日志+commit+push"
   },
   "文章健康检查-10:26": {
     "lastRun": "2026-06-07",
     "status": "completed_with_1_continuing_anomaly+1_typofix",
     "note": "2026-06-07 10:26窗口(cron 850cf6e9 heartbeat 第40次): 4份早报持续稳定(ai 7293B+financial 22976B+ai-side-hustle 19136B+web3 11209B, 全部draft:false, date=07:36-09:44已过Hugo阈值32m-2h50m+), 文章库1004(tech 693+news 280+thoughts 2+video 12+wealth 10+根md 10, vs 05:45#39=999 delta=+5=4早报+1MXC tech), 源站8站 5/8 200(36kr/qbitai/hackernews/wallstreetcn/www.v2ex.com)+1/8 000(api.v2ex.com误用)+1/8 403 crunchbase+1/8 403 coingecko+1/8 403 reddit (WAF延续), 4早报链接57条=53 OK+4 fail → 修复后54 OK+3 fail(修复web3-2026-06-07.md:82 coindesk typo stake-in-a-billion→stake-into-a-billion / 延续06-02 BTC算力stale引用 / 2个301重定向实际可达), git本地与origin/main同步(HEAD=0d55c68=origin/main, ahead/behind=0/0), content/posts 无untracked/modified, ✅ 异常1项已修复(coindesk typo), ⚠️ 异常1项延续(06-02 stale 引用), 无新文章动作, 仅追加日志到memory/article-checklog-20260607.log(181行累计) + 修复web3 typo + commit + push"
+  },
+  "文章健康检查-13:37": {
+    "lastRun": "2026-06-07",
+    "status": "completed_with_2_continuing_waf+1_site_upgrade",
+    "note": "2026-06-07 13:37窗口(cron 850cf6e9 heartbeat 第41次): 4份早报持续稳定(ai 8102B+financial 24292B+ai-side-hustle 6997B+web3 13790B, 全部draft:false, date=07:36-09:44已过Hugo阈值3h53m-6h01m+), 文章库1008(tech 697+news 280+thoughts 2+video 12+wealth 10+根md 7, vs 10:26#40=1004 delta=+4=github-trending-13 13:04窗口4篇成熟基础项目补全), 源站9站 6/9 200(36kr/qbitai/hackernews/wallstreetcn/www.v2ex.com/crunchbase[升级!])+1/9 000(api.v2ex.com误用延续)+1/9 403 coingecko+1/9 403 reddit (WAF延续), 链接核查 18 条 (新增4 trending tech 11条+4早报 7条 wallstreetcn+sina): 18/18 全200 ✅, git本地与origin/main同步(HEAD=977ad14=origin/main, ahead/behind=0/0), content/posts 无untracked/modified, ⭐ 异常升级1项: crunchbase 从 #40 的 403 WAF 状态本窗口升级为 200, 源站可用性从 5/8 升至 6/8, ⚠️ 异常延续2项: coingecko 403 WAF + reddit 403 WAF, 无新文章动作, 仅追加日志到memory/article-checklog-20260607.log(218行累计) + 更新heartbeat-state.json + commit + push"
   }
 }

@@ -178,3 +178,22 @@
   状态: 4早报 06-07 批稳定达 2h50m+ + 1004文章库 + 异常延续1项(06-02 stale 引用) + 1项已修复(coindesk typo)
   HEAD=0d55c68=origin/main 同步
   action: fix web3-2026-06-07.md:82 typo + commit log + state commit
+
+2026-06-07 13:37 窗口 (cron 850cf6e9 #41, isolated lightContext, heartbeat 触发, 距 #40 10:26 已 3h11m)
+  4早报 06-07 批: ai 8102B+financial 24292B+ai-side-hustle 6997B+web3 13790B (全部draft:false, date=07:36-09:44已过Hugo阈值 3h53m-6h01m+, 全稳)
+  4早报 06-08 批: 未生成 (13:37午间, 早报cron应在07:00-09:00窗口, 等待次日)
+  文章库 1008 (vs #40 10:26=1004, delta=+4 = github-trending-13 13:04 窗口 4 篇成熟基础项目补全: vite/svelte/golang/nginx)
+  分类: tech 693→697 (+4 = 4 trending tech)/news 280→280/video 12/wealth 10/thoughts 2/根md 10 = 1008
+  源站 9 站: 6/9 200(36kr/qbitai/hackernews/wallstreetcn/www.v2ex.com/crunchbase[升级!403→200]) + 1/9 000(api.v2ex.com 误用延续) + 1/9 403(coingecko WAF延续) + 1/9 403(reddit WAF延续)
+    ⭐ 关键改善: crunchbase 从 #40 的 403 WAF 状态本窗口升级为 200, 源站可用性从 5/8 升至 6/8
+  链接核查 (新增 4 trending tech 抽样 11 条): 11/11 OK 全 200
+    - github.com/vitejs/vite / sveltejs/svelte / golang/go / nginx/nginx: 200
+    - vite.dev/blog / rolldown.rs / go.dev/doc/go1.26 / go.dev/dl / svelte.dev/docs / nginx.org/en/security_advisories.html / openresty.org: 200
+  链接核查 (4 早报 06-07 抽样 7 条 wallstreetcn+sina): 7/7 OK 全 200
+    - wallstreetcn.com/articles/3774007/4008/4010/4006/4016: 200
+    - finance.sina.com.cn/stock/usstock/2026-06-06/doc-iniamnzy7769579.shtml + /wm/2026-06-06/doc-inianqpm0533850.shtml: 200
+  状态: 4早报 06-07 批稳定达 3h53m-6h01m+ + 1008文章库 + 源站可用性升级 (crunchbase 403→200) + coingecko/reddit WAF延续
+  HEAD=977ad14=origin/main 同步 (ahead/behind=0/0)
+  异常延续 2 项: coingecko 403 WAF + reddit 403 WAF
+  异常升级 1 项: crunchbase 从 403 WAF 升级为 200 ✅
+  action: 仅追加日志 + 更新 heartbeat-state.json article-health-check + 提交 (无新文章动作)
