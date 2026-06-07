@@ -55,3 +55,20 @@
   异常延续 #34 清理项 (content/content镜像 4861 staged): 仍 0 staged, 未复发
   ⚠️ 重要方法修正: 本次确认 cron HEAD 检查 wallstreetcn/HN 不可靠, 后续应统一用 GET -L 验证
   无新文章动作, 仅追加日志 + 更新 heartbeat-state.json 文章健康检查
+
+================================================================================
+[2026-06-08 03:36 +0800] 窗口 #48 (cron 850cf6e9, isolated lightContext, heartbeat 触发)
+距 #47 02:32 已 1h04m (凌晨静默窗口, 无提交无早报)
+4 早报 06-07 批: 全部稳定达 19h23m-21h02m+ (ai 8102B 07:38 + financial 24292B 08:14 + ai-side-hustle 6997B 09:23 + web3 13790B 08:50, draft:false, 4/4 部署 URL GET 200)
+4 早报 06-08 批: 0/4 生成 (距早报 cron 07:20-08:20 窗口尚有 3h44m-4h44m, 凌晨静默, 合理)
+文章库 delta=0 vs #47 02:32=1014 (凌晨无提交)
+未来日期文章=0
+git HEAD=867a73c=origin/main 同步 (工作区干净, lastRun 距今 1h04m)
+txtmix.com 域名双条件通过 [dig 198.18.0.19 ∈ 198.18.0.0/15 段 + HTTP 200]
+4 早报 06-07 部署 URL 二次 GET 验证: 4/4 全 200 (news/ai-morning-news-2026-06-07 + news/financial-morning-news-2026-06-07 + news/ai-side-hustle-morning-2026-06-07 + news/web3-morning-news-2026-06-07)
+凌晨未做深度源站抽样 (沿用 #47 数据, 无新提交无新动作)
+异常延续 3 项 [wallstreetcn 根站 HEAD-404/article GET-200 + coingecko 403 WAF + coindesk 1 article 404 #44 新发现]
+异常新增 0 项
+异常修复 0 项
+异常 #34 清理项 (content/content 镜像 4861 staged): 仍 0 staged, 未复发
+无新文章动作, 仅追加日志 + 更新 heartbeat-state.json
