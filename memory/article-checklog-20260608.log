@@ -72,3 +72,21 @@ txtmix.com 域名双条件通过 [dig 198.18.0.19 ∈ 198.18.0.0/15 段 + HTTP 2
 异常修复 0 项
 异常 #34 清理项 (content/content 镜像 4861 staged): 仍 0 staged, 未复发
 无新文章动作, 仅追加日志 + 更新 heartbeat-state.json
+
+2026-06-08 06:40 窗口 (cron 850cf6e9 #49, isolated lightContext, heartbeat 触发, 距 #48 03:36 已 3h04m, 凌晨→清晨过渡)
+  4 早报 06-07 批: ai 8102B+financial 24292B+ai-side-hustle 6997B+web3 13790B (全部 draft:false, 全部部署 URL GET 200, 全部稳态达 20h11m-23h08m+)
+  4 早报 06-08 批: 0/4 生成 (实际 schedule: 07:20 AI新闻 / 07:40 经济财经 / 08:00 Web3 / 08:20 AI副业, 距最早 07:20 还有 40m, 06:40 时刻合理, 尚未到达触发窗口)
+  文章库 1014 (vs #48 03:36=1014, delta=0 凌晨到清晨无新提交)
+  未来日期文章=0
+  无 untracked content/posts / 无 modified (除本 checklog 自身)
+  txtmix.com 域名双条件通过 [dig 198.18.0.19 ∈ 198.18.0.0/15 段 + HTTP 200]
+  4 早报 06-07 部署 URL 二次 GET 验证: 4/4 全 200 (news/ai-morning-news-2026-06-07 + news/financial-morning-news-2026-06-07 + news/ai-side-hustle-morning-2026-06-07 + news/web3-morning-news-2026-06-07)
+  GitHub Actions 最近 5/5 completed success (最新 19:38:55Z = 03:38 CST, 6h+ 前最后一次部署, 无新 push 无新 action 触发)
+  源站抽样: 跳过大流量源站 jina/api 类抽样 (本窗口 06:40 心跳触发, 凌晨静默+清晨过渡, 沿用 #46 01:28 数据 5/9 200 + 1/9 202 + 1/9 404 + 2/9 403)
+  git pull --rebase 已同步 (本地已最新, ahead/behind=0/0)
+  ⚠️ cron 850cf6e9 status=running 长期挂起 + delivery "announce -> last (last -> no route, will fail-closed)" 状态延续: openclaw cron list 显示 status=running 但 last 1h 前, 属反复发作的"running 状态残留标记"模式 (见 2026-06-04 ~06-05 多次同症状诊断), 不影响实际心跳链路
+  异常延续 3 项 [wallstreetcn 根站 HEAD-404/article GET-200 已知模式 + coingecko 403 WAF + coindesk 1 article 404 #44 新发现]
+  异常新增 0 项
+  异常修复 0 项
+  异常 #34 清理项 (content/content 镜像 4861 staged): 仍 0 staged, 未复发
+  无新文章动作, 仅追加日志到 memory/article-checklog-20260608.log + 更新 heartbeat-state.json
