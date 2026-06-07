@@ -26,3 +26,32 @@
   异常修复/恢复: 0 项
   异常延续 #34 清理项 (content/content镜像 4861 staged): 仍 0 staged, 未复发
   无新文章动作, 仅追加日志 + 更新 heartbeat-state.json 文章健康检查
+
+2026-06-08 01:28 窗口 (cron 850cf6e9 #46, isolated lightContext, heartbeat 触发, 距 #45 00:12 已 1h16m)
+  4早报 06-07 批: ai 8102B+financial 24292B+ai-side-hustle 6997B+web3 13790B (全部draft:false, date=07:30-09:13 已过Hugo阈值 17h21m-19h04m+, 全稳)
+  4早报 06-08 批: 未生成 (01:28深夜, 早报cron应在 07:20-08:20 窗口, 深夜无新文章)
+  文章库 1014 (vs #45 00:12=1014, delta=0 凌晨无提交)
+  分类不变: tech 700(含ai-agent 59+tools 21+quant 7+llm 5+root 608)/news 280/video 12/wealth 10/thoughts 2/根md 10
+  未来日期=0
+  无 untracked content/posts / 无 modified
+  txtmix.com 域名永久错误提醒: dig 198.18.0.19 ∈ 198.18.0.0/15 ✅ + HTTP 200 ✅ (双条件通过)
+  源站 9 站 GET 抽样 01:28 (带UA -L --max-time 8s): 5/9 200 + 1/9 202 + 1/9 404 + 2/9 403
+  v2ex=200 / cointelegraph=200 / 36kr=200 / wallstreetcn=404 ❌ (真不可达延续) / coingecko=403 ❌ WAF / binance=202 / cls=200 / flash.jin10=200 ✅ / reddit=200 ✅ (从 #45 00:12 403 WAF 恢复)
+  链接核查 (4早报 06-07 56 unique URLs GET 二次验证): 55 OK + 1 BAD (coindesk 404 延续)
+  ⚠️ 重要发现: #45 00:12 报告里 4 HN + 11 wallstreetcn = 15 条 HEAD-405/404 实为 GET-200 假阳性
+    - HN 4 条: HEAD=405 GET=200 (HN 不允许 HEAD, 需 GET 验证, GET 实际全 200)
+    - wallstreetcn 11 条 articles: HEAD=404 GET=200 (根站 HEAD 可能 404, 但 article GET 实际全 200)
+    - 这是检查方法的修正, 不影响 #45 报告的最终结论 (55 OK + 1 BAD coindesk), 但未来应统一用 GET
+  链接核查 (3 新提交文章 06-07 23:00-00:08 GET 二次验证):
+    - pg-durable (e78cf30): 2 unique URLs → 2/2 OK (github.com/microsoft/pg_durable + microsoft.github.io/pg_durable)
+    - china-textbook (e78cf30): 1 unique URL → 1/1 OK (github.com/TapXWorld/ChinaTextbook)
+    - go-1.27-preview (4e1a26d 师父提交): 24 unique URLs → 22/24 OK + 2/24 BAD 403 (corentings.dev WAF + dl.acm.org 付费墙, 已知)
+  txtmix.com 部署验证 7/7 全 200 ✅ (4 早报 + 3 新文, go-1.27 已部署成功)
+  git 本地与 origin/main 同步 (HEAD=6e4e17a=origin/main, ahead/behind=0/0, 师父 6e4e17a 0:12 log commit 之后无新 push)
+  异常延续 3 项: wallstreetcn 根站 HEAD=404 (article GET=200 实际可用) + coingecko 403 WAF + coindesk 1 article 404
+  异常变化 1 项: reddit 从 #45 00:12 的 403 WAF 恢复为 01:28 的 200 (深夜WAF反复特征)
+  异常新增: 0 项
+  异常修复/恢复: 0 项 (reddit 算 1h 级别 WAF 抖动, 不入账)
+  异常延续 #34 清理项 (content/content镜像 4861 staged): 仍 0 staged, 未复发
+  ⚠️ 重要方法修正: 本次确认 cron HEAD 检查 wallstreetcn/HN 不可靠, 后续应统一用 GET -L 验证
+  无新文章动作, 仅追加日志 + 更新 heartbeat-state.json 文章健康检查
