@@ -262,3 +262,44 @@
   异常修复/恢复: 2 项 (jin10 flash 200 从 404 恢复 + reddit 200 从 403 恢复)
   异常延续 #34 清理项 (content/content镜像 4861 staged): 仍 0 staged, 未复发
   无新文章动作, 仅追加日志 + 更新 heartbeat-state.json article-health-check
+
+──────────────────────────────────────────────────────────────────────
+[2026-06-08 02:32:00+08:00] cron 850cf6e9 #47 (heartbeat 触发, isolated lightContext)
+──────────────────────────────────────────────────────────────────────
+窗口: 2026-06-08 02:32 (周一) Asia/Shanghai
+HEAD: 8fa1c3b = origin/main (ahead/behind=0/0, 工作区干净)
+文章库: 1014 (vs 01:28#46=1014, delta=0, 凌晨无新提交)
+分类: tech 700(含子目录) / news 280 / video 12 / wealth 10 / thoughts 2 / 根md 10
+
+域名 txtmix.com 双条件:
+  dig 198.18.0.19 ∈ 198.18.0.0/15 段 ✅
+  HTTP 200 ✅
+
+4 早报 06-07 批 (全稳达 18h17m-19h57m+):
+  ai-morning-news 8102B (date=07:30, +19h02m+)
+  financial-morning-news 24292B (date=08:03, +18h29m+)
+  ai-side-hustle-morning 6997B (date=09:13, +17h19m+)
+  web3-morning-news 13790B (date=08:25, +18h07m+)
+  全部 draft:false, 已过 Hugo 阈值 17h+
+
+4 早报 06-08 批: 0/4 未生成 (cron 07:00-09:00 窗口, 凌晨正常)
+
+源站抽样 (凌晨 02:32 静默窗口, 仅做轻量级探活, 不做深度链接核查)
+  本窗口未抽样 (深夜无新内容待验证, 沿用 #46 数据)
+
+异常延续 (3 项):
+  1. wallstreetcn 根站 HEAD-404 (article GET-200 实际可达, 已知模式)
+  2. coingecko 403 WAF (站点侧, 早报无引用)
+  3. coindesk 1 article 404 (#44 新发现, web3 早报 bitwise 文章)
+
+异常变化: 0 项
+异常新增: 0 项
+异常修复: 0 项
+异常 #34 清理项: 0 staged, 未复发
+
+操作:
+  - 追加日志到 memory/article-checklog-20260607.log (264→272 行)
+  - 更新 heartbeat-state.json (新增 文章健康检查-02:32 键)
+  - commit + push origin/main
+
+无新文章动作, cron 链路健康, 凌晨静默稳定。
