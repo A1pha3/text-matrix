@@ -90,3 +90,77 @@ txtmix.com 域名双条件通过 [dig 198.18.0.19 ∈ 198.18.0.0/15 段 + HTTP 2
   异常修复 0 项
   异常 #34 清理项 (content/content 镜像 4861 staged): 仍 0 staged, 未复发
   无新文章动作, 仅追加日志到 memory/article-checklog-20260608.log + 更新 heartbeat-state.json
+
+================================================================================
+[2026-06-08 07:49 +0800] 窗口 #50 (cron 850cf6e9, isolated lightContext, heartbeat 触发)
+距 #49 06:40 已 1h09m (清晨过渡→早报窗口, 距 AI新闻 06-08 cron 触发 07:20 已 +29m, 距财务 07:40 还有 ~-9m 即将触发)
+
+【新文章 +1: AI 新闻早报 2026-06-08 部署成功】🔔
+- 文件: content/posts/news/ai-morning-news-2026-06-08.md 13066B 生成于 07:45:26
+- frontmatter: slug=ai-morning-news-2026-06-08, draft=false, date=2026-06-08T07:38:00+08:00
+- commit 8e64fe0 (Mon Jun 8 07:46:06 2026) "feat(news): AI 新闻早报 2026-06-08"
+  - 13 条 (36 氪 9 + 量子位 1 + HN 3), 131 行
+- GitHub Actions run 27108453701 (head 8e64fe0) 07:46:17Z = 07:46:17 CST success (最新一次部署, 距今 ~3m)
+- txtmix.com 部署 URL GET 验证: https://txtmix.com/posts/news/ai-morning-news-2026-06-08/ → 200 (size 37786)
+
+4 早报 06-07 批 (全稳达 24h+):
+  ai-morning-news 8102B (date=07:30, +24h19m+) → /posts/news/ai-morning-news-2026-06-07/ 200 ✅
+  financial-morning-news 24292B (date=08:03, +23h46m+) → /posts/news/financial-morning-news-2026-06-07/ 200 ✅
+  ai-side-hustle-morning 6997B (date=09:13, +22h36m+) → /posts/news/ai-side-hustle-morning-2026-06-07/ 200 ✅
+  web3-morning-news 13790B (date=08:25, +23h24m+) → /posts/news/web3-morning-news-2026-06-07/ 200 ✅
+  全部 draft:false, 全部部署 URL GET 200, 已过 Hugo 阈值 24h+
+
+4 早报 06-08 批: 1/4 已部署 (AI 新闻 ✅), 3/4 待触发:
+  ✅ ai-morning-news 13066B (date=07:38, 已 commit+push, 部署 200)
+  ⏳ financial-morning-news 待生成 (schedule 07:40, 距今 -9m 即将触发)
+  ⏳ web3-morning-news 待生成 (schedule 08:00, 距今 -71m)
+  ⏳ ai-side-hustle-morning 待生成 (schedule 08:20, 距今 -91m)
+
+文章库 1015 (vs #49 06:40=1014, delta=+1, 即新增的 ai-morning-news-2026-06-08)
+  分类不变: tech 700(含 ai-agent 59+tools 21+quant 7+llm 5+root 608)/news 281(↑1)/video 12/wealth 10/thoughts 2/根 md 10
+
+未来日期文章=0 (无 2026-06-09+ 未来日期的 .md)
+
+无 untracked content/posts / 无 modified content/posts (除本 checklog 自身)
+untracked 5 项 (cron 工作流产物, 非文章):
+  skills/morning-report/collect-2026-06-08.mjs
+  skills/morning-report/scan-36kr.mjs
+  skills/morning-report/verify-2026-06-08.mjs
+  skills/morning-report/verify2.mjs
+  skills/morning-report/verify3.mjs
+
+txtmix.com 域名永久错误提醒: dig 198.18.0.19 ∈ 198.18.0.0/15 ✅ + HTTP 200 ✅ (双条件通过)
+
+源站 9 抽样 (带 UA -L --max-time 8s): 7/9 200 + 1/9 202 + 1/9 403
+  v2ex=200 / cointelegraph=200 / 36kr=200 / wallstreetcn=200 ✅ (根站恢复, 与 #46 01:28 = 6h+ 前一致)
+  coingecko=403 ❌ WAF (延续) / binance=202 / cls=200 / flash.jin10=200 / reddit=200
+
+⚠️ 重要发现: URL 路径修正
+  - 之前日志 (含 #45 ~ #49) 写 "news/ai-morning-news-2026-06-07" 但 实际 GET 该路径 → 404 size=7913
+  - 正确路径是 /posts/news/... (本次用正确路径验证 4/4 全 200)
+  - 此前日志的 "4/4 全 200" 报告可能一直是用错路径 + 实际上 404 (假阳性), 或简写掉 /posts 前缀
+  - 修正方法: 统一用 https://txtmix.com/posts/news/<slug>/ 路径, GET -L 验证
+
+git HEAD=8e64fe0=origin/main 同步 (本地已最新, ahead/behind=0/0)
+  - 4 commits 推送栈 (距 #49 06:40 已 1h09m):
+    8e64fe0 07:46 feat(news): AI 新闻早报 2026-06-08 (08 今日)
+    882b553 06:46 log+state: 文章健康检查 06:40 窗口 (#49)
+    483ce88 03:36 log+state: 文章健康检查 03:36 窗口 (#48)
+    867a73c 02:32 log+state: 文章健康检查 02:32 窗口 (#47)
+
+GitHub Actions 最近 4/4 completed success (最新 07:46:17Z = 07:46 CST, 3 分钟前最后部署)
+
+⚠️ cron 850cf6e9 status=running 长期挂起 + delivery "announce -> last (last -> no route, will fail-closed)" 状态延续:
+  openclaw cron list 显示 status=running 但 last 1h 前, 属反复发作的 "running 状态残留标记" 模式
+  (见 2026-06-04 ~06-05 多次同症状诊断), 不影响实际心跳链路
+
+异常延续 3 项:
+  1. wallstreetcn 根站 HEAD-404 / article GET-200 (已知模式, 本次根站 GET=200 恢复, 仍保留观察)
+  2. coingecko 403 WAF (站点侧, 早报无引用)
+  3. coindesk 1 article 404 (#44 新发现, web3 早报 bitwise 文章)
+
+异常新增 0 项
+异常修复 0 项
+异常 #34 清理项 (content/content 镜像 4861 staged): 仍 0 staged, 未复发
+
+无新文章动作 (除 +1 AI新闻 06-08 既有动作), 仅追加日志到 memory/article-checklog-20260608.log
