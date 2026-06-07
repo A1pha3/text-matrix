@@ -125,3 +125,42 @@
   content/posts 无 untracked/modified
   最近3 commit: 447cec7 log / be54e59 state / a7a47c0 log
   无新文章动作, 仅追加日志+更新state
+
+2026-06-07 09:36 窗口 (cron 189b7262 #N, GitHub trending 日榜)
+  curl UA 抓取 https://github.com/trending 成功(/tmp/github-trending.html 4422 行/130KB+)
+  18 个 trending repo: mvanhorn/last30days-skill / CopilotKit/CopilotKit / MemPalace/mempalace /
+  danielmiessler/Personal_AI_Infrastructure / openai/plugins / Panniantong/Agent-Reach /
+  sveltejs/svelte / nginx/nginx / aquasecurity/trivy / golang/go / lfnovo/open-notebook /
+  obra/superpowers / santifer/career-ops / openai/whisper / vitejs/vite / microsoft/mxc /
+  PaddlePaddle/PaddleOCR / microsoft/VibeVoice
+  覆盖检查: 13 个主题文章逐个 find+grep 双向验证已存在(
+    last30days-skill → content/posts/tech/ai-agent/last30days-skill-ai-agent-research-2026.md
+    CopilotKit → content/posts/tech/copilotkit-agent-native-frontend-framework-guide.md
+    mempalace → mempalace-ai-memory-system-guide.md / mempalace-local-first-ai-memory-guide.md
+    Personal_AI_Infrastructure → personal-ai-infrastructure-life-operating-system-guide.md
+    openai/plugins → openai-codex-plugins-curated-collection-guide.md
+    Agent-Reach → agent-reach-ai-agent-internet-toolkit-guide.md
+    trivy → tech/ 中多篇相关(trivy 关键词 4 处)
+    open-notebook → open-notebook-lfnovo-notebook-lm-alternative-guide.md
+    superpowers → superpowers-agentic-skills-framework.md
+    career-ops → career-ops-ai-job-search-system-guide.md
+    whisper → openai-whisper-speech-recognition-guide.md
+    PaddleOCR → tech/ 中多篇相关(PaddleOCR 关键词 6 处)
+    VibeVoice → vibevoice-microsoft-open-source-voice-ai.md
+    svelte → tech/ 中 12 篇相关
+  )
+  nginx/go/vite 站内仅作为其它文章关键词出现(nginx 29 次/vite 59 次/golang 16 次), 
+    无主题文章——成熟基础项目, 符合 text-matrix 站 AI 工具定位, 不强制覆盖
+  1 个唯一新增: microsoft/mxc (585★+, 微软开源跨平台沙箱执行容器, 
+    Schema 0.6.0-alpha 稳定 + 0.7.0-dev 实验, 10 余种后端)
+  文章撰写: 项目导读形态, 9 节(为什么值得关注 / 核心判断 / 系统地图 / 平台矩阵 / 
+    SDK 任务流案例 / Schema 双轨 / WARNING 边界 / 适用人群 / 阅读路径)
+  → content/posts/tech/microsoft-mxc-sandboxed-code-execution-guide.md (13.5KB/239 行)
+  frontmatter 校验: date=2026-06-07T09:30:00+08:00 ≤ 09:36 ✅, 5 tags=沙箱/AI Agent/
+    代码执行/微软/安全隔离, categories=技术笔记, description 165 字
+  3 轮事实校验: Stars 585 ✓ / Schema 0.6.0-alpha+0.7.0-dev ✓ / WARNING 引用 1 处 ✓
+  git: 1 file changed/239 insertions, commit 3e1f66c, push 成功 (d4bab9d..3e1f66c main->main)
+  GitHub Actions: success 01:35:57Z→01:37:05Z (~68s)
+  txtmix.com/posts/tech/microsoft-mxc-sandboxed-code-execution-guide/ HTTP/2 200 ✅
+  文章库 1003→1004, delta=+1
+  heartbeat-state.json github-trending-09 已更新(2026-06-07 completed, 1499 字 note)
