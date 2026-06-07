@@ -1,0 +1,28 @@
+
+2026-06-08 00:12 窗口 (cron 850cf6e9 #45, isolated lightContext, heartbeat 触发, 距 #44 20:56 已 3h16m)
+  4早报 06-07 批: ai 8102B+financial 24292B+ai-side-hustle 6997B+web3 13790B (全部draft:false, date=07:30-09:13 已过Hugo阈值 16h05m-17h48m+, 全稳)
+  4早报 06-08 批: 未生成 (00:12深夜, 早报cron应在 07:20-08:20 窗口, 深夜无新文章)
+  文章库 1014 (vs #44 20:56=1011, delta=+3 来自 2 commit: e78cf30 23:09 AI 提交 pg-durable+china-textbook 2 篇 + 4e1a26d 00:08 师父提交 go-1.27-preview 1 篇)
+  分类: tech 700(含ai-agent 59+tools 21+quant 7+llm 5+root 608)/news 280/video 12/wealth 10/thoughts 2/根md 10
+  draft:false=863/draft:true=2/无draft=163(全<2026-05-28历史+docs/categories/about等) = 1027 总md
+  未来日期=0 (00:12深夜, 早报06-07已过, 无新页面)
+  无 untracked content/posts / 无 modified (除 checklog 自身)
+  txtmix.com 域名永久错误提醒: dig 198.18.0.19 ∈ 198.18.0.0/15 ✅ + HTTP 200 ✅ (双条件通过)
+  源站 9 站 GET 抽样 00:12 (带UA -L --max-time 8s): 5/9 200 + 1/9 202 + 1/9 404 + 2/9 403
+  v2ex=200 / cointelegraph=200 / 36kr=200 / wallstreetcn=404 ❌ (真不可达延续) / coingecko=403 ❌ WAF / binance=202 / cls=200 / flash.jin10=200 ✅ (持续稳定) / reddit=403 ❌ WAF (回归, 20:56 was 200)
+  链接核查 (4早报 06-07 60 unique → 56 real URLs GET): 55 OK + 1 BAD (coindesk 404 延续#44)
+    - coindesk 1 article 404: https://www.coindesk.com/tech/2026/06/02/bitcoin-s-compute-power-dwarfs-top-100-supercomputers-by-600k-times-says-bitwise (web3早报bitwise文章, 9h+未恢复)
+  链接核查 (2 新 trending e78cf30 文章 5 unique → 4 real URLs GET): 4/4 OK ✅ (1 false match = api.openai.com 代码段)
+    - pg-durable: github.com/microsoft/pg_durable + nuget.org + learn.microsoft.com
+    - china-textbook: github.com/TapXWorld/ChinaTextbook + huggingface 镜像
+  链接核查 (1 师父 commit 4e1a26d go-1.27-preview 23 unique URLs GET): 21/23 OK + 2 BAD 403
+    - corentings.dev 403 (个人博客, 已知 WAF)
+    - dl.acm.org/doi/pdf 403 (ACM 学术付费墙, 已知)
+  txtmix.com 部署验证 7/7 全 200 ✅ (首页 + 2 新 trending + 4 早报; go 1.27 部署等待 Actions 跑完)
+  git pull --rebase 后本地与 origin/main 同步 (HEAD=4e1a26d 师父提交后 拉取 同步, ahead/behind=0/0)
+  异常延续 3 项: wallstreetcn 11 articles 404 (财务早报已用事件衍生策略规避) + coingecko 403 WAF + coindesk 1 article 404 (#44新发现延续)
+  异常变化 1 项: reddit 从 #44 20:56 的 200 回归 00:12 的 403 WAF (深夜WAF反复, 已知现象)
+  异常新增: 0 项
+  异常修复/恢复: 0 项
+  异常延续 #34 清理项 (content/content镜像 4861 staged): 仍 0 staged, 未复发
+  无新文章动作, 仅追加日志 + 更新 heartbeat-state.json 文章健康检查
