@@ -243,3 +243,22 @@
   异常新增/升级: 0 项
   异常修复: 0 项 (上窗口 mathvideomaker 修复仍生效, 8/8 链接 200 持续)
   无新文章动作, 仅追加日志 + 更新 heartbeat-state.json article-health-check
+
+2026-06-07 20:56 窗口 (cron 850cf6e9 #44, isolated lightContext, heartbeat 触发, 距 #43 15:47 已 5h09m)
+  4早报 06-07 批: ai 8102B+financial 24292B+ai-side-hustle 6997B+web3 13790B (全部 draft:false, date=07:30-09:13 已过 Hugo 阈值 11h43m-13h26m+, 全稳)
+  4早报 06-08 批: 未生成 (20:56 晚间, 早报 cron 应在次日 07:00-09:00 窗口, 等待)
+  文章库 1011 (vs #43 15:47=1011, delta=0 晚间无新增, 静稳)
+  分类: tech 697(子目录ai-agent+tools)/news 280/video 12/wealth 10/thoughts 2/根md 10 = 1011 ✅
+  draft:false=853/draft:true=1(autocli历史)/无draft=157(全<2026-05-28历史)
+  未来日期=0 (cron 窗口期 20:56, 早报 date 07:30-09:13 已过, 无未来页面风险)
+  无 untracked content/posts / 无 modified (除 checklog 自身)
+  txtmix.com 域名永久错误提醒: dig 198.18.0.18 ∈ 198.18.0.0/15 ✅ + HTTP 200 ✅ (双条件通过)
+  源站 9 站 GET 抽样 20:56: 6/9 200 (v2ex/cointelegraph/36kr/flash.jin10/cls/reddit ✅ jin10+reddit均恢复) + 1/9 404 (wallstreetcn 真不可达延续) + 1/9 403 (coingecko WAF延续) + 1/9 202 (binance 持续)
+  链接核查 (4早报+3新trending 共65条 unique URL GET): 48 OK + 4 HN HEAD-405 (GET 200 真可达, 假阴性) + 11 wallstreetcn 404 (延续) + 1 coindesk 404 (新发现) + 1 arxiv 假匹配 200
+  txtmix.com 部署验证 3/3 全 200 ✅ (3 篇新 trending 持续可达: last30days-skill+openai-plugins+paddleocr-llm-ready)
+  git 本地与 origin/main 同步 (HEAD=b17e8c7=origin/main, ahead/behind=0/0)
+  异常延续 3 项: wallstreetcn 11 articles 404 (财务早报已用事件衍生策略规避) + coingecko 403 WAF + 1 coindesk article 404 (新发现, 早报链接侧)
+  异常新增: 1 项 (coindesk 1 articles 404, web3早报bitwise文章)
+  异常修复/恢复: 2 项 (jin10 flash 200 从 404 恢复 + reddit 200 从 403 恢复)
+  异常延续 #34 清理项 (content/content镜像 4861 staged): 仍 0 staged, 未复发
+  无新文章动作, 仅追加日志 + 更新 heartbeat-state.json article-health-check
