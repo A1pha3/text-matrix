@@ -169,11 +169,11 @@
   },
   "article-health-check": {
     "lastRun": "2026-06-07",
-    "lastWindow": "13:37",
-    "checkNumber": 41,
+    "lastWindow": "14:42",
+    "checkNumber": 42,
     "cronId": "850cf6e9",
-    "status": "completed_with_2_continuing_waf+1_site_upgrade",
-    "note": "2026-06-07T13:37:00+08:00 窗口(cron 850cf6e9 #41, heartbeat 触发)文章健康检查,isolated lightContext,4早报06-07批全稳达3h53m-6h01m+(ai 07:36+financial 08:31+web3 09:27+ai-side-hustle 09:44, 全部draft:false, 已过Hugo阈值3h53m-6h01m+)+1008文章库 delta=+4 vs 10:26#40=1004(增量=github-trending-13 13:04窗口 4篇成熟基础项目补全: vite-8-frontend-tooling-evolution/svelte-5-runes-stable-frontend-reactivity/golang-1-26-new-features-and-ai-era/nginx-1-31-security-and-modern-deployment),源站9站 6/9 200(36kr/qbitai/hackernews/wallstreetcn/www.v2ex.com/crunchbase[升级403→200])+1/9 000(api.v2ex.com误用延续)+1/9 403 coingecko WAF延续+1/9 403 reddit WAF延续,新增4 trending tech 11条链接全200,4早报6条wallstreetcn+1条sina抽样全200,HEAD=977ad14=origin/main同步(ahead/behind=0/0),异常延续2项(coingecko/reddit WAF)+异常升级1项(crunchbase 403→200 ✅),无新文章动作,仅追加日志+commit+push"
+    "status": "completed_with_2_continuing_waf+1_link_fix",
+    "note": "2026-06-07T14:42:00+08:00 窗口(cron 850cf6e9 #42, heartbeat 触发)文章健康检查,isolated lightContext,4早报06-07批全稳达4h58m-7h06m+(ai 07:36+financial 08:31+web3 09:27+ai-side-hustle 09:44, 全部draft:false, 已过Hugo阈值)+1008文章库 delta=0 vs 13:37#41=1008(本窗口无新文章,trending-13 13:04后无新增),源站9站 5/9 200严格采样(36kr/qbitai/hackernews/wallstreetcn/www.v2ex.com)+1/9 000(api.v2ex.com误用延续)+1/9 200(crunchbase延续#41升级状态)+1/9 403 coingecko WAF延续+1/9 403 reddit WAF延续,新增抽样5篇最新文章22条链接: open-notebook/ecc/headroom/hermes-agent/mathvideomaker, 发现mathvideomaker 8条参考资源链接全部404(路径错用.cursor/skills/实际为skills/), 修复后22/22全200 ✅,txtmix.com HTTP/2 200/24862B/0.335s持续可达,GitHub Actions近20次19 success+1 failure(05:10:06一次后已恢复),HEAD=977ad14=origin/main同步(ahead/behind=0/0),异常延续2项(coingecko/reddit WAF)+异常修复1项(mathvideomaker 8链接 404→200), 已commit+push"
   },
   "文章健康检查-10:26": {
     "lastRun": "2026-06-07",
