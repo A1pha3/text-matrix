@@ -1,4 +1,9 @@
 {
+  "文章健康检查": {
+    "lastRun": "2026-06-08T11:41:00+08:00",
+    "status": "all_stable_with_3_continuing_anomalies",
+    "note": "2026-06-08 11:41窗口(cron 850cf6e9 #52, isolated lightContext, heartbeat触发, 距#51 10:19已1h22m, 早高峰后稳态窗口): 4早报06-08批全稳(ai 8178B+financial 16237B+ai-side-hustle 10792B+web3 9748B, 全部draft:false, date=07:38/08:04:40/08:48/08:41已过Hugo「未来页面」2h53m-4h03m+), 4早报06-07批继续稳态(ai 8102B+financial 24292B+ai-side-hustle 6997B+web3 13790B, 已部署26h+), 文章库1022 delta=0 vs #51 10:19=1022(1h22m内无新提交), tech 704(含ai-agent 59+tools 21+quant 7+llm 5+root 612)/news 284/video 12/wealth 10/thoughts 2/根md 8, draft:false=858/draft:true=1(autocli历史)/无draft=163, 未来日期=0, txtmix.com部署4早报06-08 URL GET 4/4全200(ai-news/financial/web3/ai-side-hustle), txtmix.com域名双条件通过 [dig 198.18.0.19 ∈ 198.18.0.0/15段 + HTTP 200], 源站HEAD抽样10站 11:41: 5/10 200(v2ex/jin10/reddit/cls/36kr) + 1/10 202(binance) + 1/10 404(wallstreetcn根站延续#46 已知article GET-200) + 1/10 403(coingecko WAF) + 1/10 405(hnrss HEAD不允许GET 200) + 1/10 000(api.v2ex.com误用), GitHub Actions最近3/3 success(最新02:39:05Z=10:39CST), git本地与origin/main同步(HEAD=71ad215=origin/main, ahead/behind=0/0), content/posts无untracked/modified(1 modified ai-morning-news-2026-06-08.md审计清单已从正文移除+13 untracked skills/morning-report/*-2026-06-08.mjs 早报cron调试脚本残留 编辑清理未提交), 异常: 3项延续(wallstreetcn根站HEAD-404/article GET-200已知 + coingecko 403 WAF + coindesk 1 article 404 #44新发现) + 0项变化 + 0项新增 + 0项修复, 异常#34清理项(4861 staged) 仍0未复发, ⚠️cron 850cf6e9 status=running长期挂起+delivery fail-closed状态延续(属反复发作的running状态残留标记模式 见2026-06-04~06-05多次同症状诊断 不影响实际心跳链路), 无新文章动作, 仅追加日志到memory/article-checklog-20260608.log(214行累计, +48行)"
+  },
   "github-trending-03": {
     "lastRun": "2026-06-03",
     "status": "completed_by_main_ai",
