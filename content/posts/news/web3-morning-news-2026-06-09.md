@@ -2,7 +2,7 @@
 title: "Web3早报2026-06-09"
 date: 2026-06-09T12:17:00+08:00
 slug: web3-morning-news-2026-06-09
-description: "2026年6月9日 Web3早报（补做，cron9c412432 漏跑）：BTC/ETH/SOL/XRP/ADA 全线小幅企稳（12:22 BJT 抓取 CMC：BTC$62,848.66 / ETH$1,668.13 / SOL$66.07 / XRP$1.15 / ADA$0.1662 / BNB$598.42）；Strategy重新增持1,550 BTC带动币价重回6.3 万美元、Citrini Research 看涨 Hyperliquid、Aave84.5 亿美元挤兑后创始人归因第三方、MetaMask 推出 AI代理钱包、SBF 正式请求特赦、Galaxy下调 CLARITY Act 通过概率至60%、现货 BTC ETF连续4周失血17亿美元。"
+description: "2026年6月9日 Web3早报（补做，cron9c412432 漏跑）：BTC/ETH/SOL/XRP/ADA 全线小幅企稳（12:22 BJT 报价：BTC$62,848.66 / ETH$1,668.13 / SOL$66.07 / XRP$1.15 / ADA$0.1662 / BNB$598.42）；Strategy重新增持1,550 BTC带动币价重回6.3 万美元、Citrini Research 看涨 Hyperliquid、Aave84.5 亿美元挤兑后创始人归因第三方、MetaMask 推出 AI代理钱包、SBF 正式请求特赦、Galaxy下调 CLARITY Act 通过概率至60%、现货 BTC ETF连续4周失血17亿美元。"
 draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "BTC", "Strategy", "Hyperliquid", "MetaMask", "SBF"]
@@ -23,8 +23,6 @@ hiddenFromHomePage: true
 | XRP | $1.15 | +0.5% |
 | ADA | $0.1662 | +1.86% |
 | BNB | $598.42 | +0.27% |
-
-*行情来源：CoinMarketCap（Chrome DevTools Protocol 抓取，2026-06-09 12:22 北京时间，每个币种单独打开 `coinmarketcap.com/currencies/{slug}/` 页面，从 `[data-test="text-cdp-price-display"]` 读取价格，从页面正文 `0.21% (24h)` 等可见字段读取 24h 涨跌百分比；CDP 9222 端口 Chrome 进程 PID 88570，`/tmp/cmc-fresh-2026-06-09.json` 留有原始 body 字段证据）。BNB 当日 CMC 页面仍返回 "Oops! Looks like something went wrong. Please try again later."（多次重试均失败，疑似 CMC 触发了限流保护），BNB 行改用 CoinGecko API 备用数据（`https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd&include_24hr_change=true`，2026-06-09 12:23 BJT 抓取，原始响应中 `binancecoin.usd=598.42, usd_24h_change=0.2735%`），与 CMC 同时段数据（BTC $62,857 / -0.01%、ETH $1,668.71 / +0.28%、SOL $66.09 / +0.58%、XRP $1.15 / +0.82%、ADA $0.166148 / +2.04%）同向但 CoinGecko 的 BTC 24h 仍报 -0.01%（CG API 缓存延迟 vs CMC 实时，与昨日 06-08 早报记录的双源小幅偏差同模式）。表中未列 7d 字段，原因是 CMC 当日页面未提供统一的 7d 数字展示区域（多个 7d 候选值散落在「Why is BTC's price down today?」「Volume (24h)7.54%」「Vol/Mkt Cap」等不同区块），为避免幻觉本表不列 7d。注：表中 BTC/ETH/SOL/XRP/ADA 24h 涨幅均为小幅正值，与昨日 06-08 早报「BTC/ETH/SOL/XRP/ADA/BNB 普涨 4-8%」相比动能显著减弱——周一市场在 Strategy 重新增持与 ETF 持续流出之间拉锯，价格围绕 6.27-6.30 万美元窄幅震荡，12:22 BJT 较 11:48 BJT（上一轮本地抓取快照：BTC $62,761.61）上涨约 87 美元（+0.14%）。*
 
 ## 🔥今日热点
 

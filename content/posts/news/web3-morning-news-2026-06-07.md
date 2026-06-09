@@ -107,8 +107,6 @@ hiddenFromHomePage: true
 
 🦞 每日08:00自动更新
 
-**数据来源**：行情：CoinMarketCap（Chrome 抓取，08:21 北京时间）；新闻：CoinDesk（逐篇通过 Chrome DevTools Protocol 打开原文，验证 JSON-LD `datePublished` 处于 2026-06-06 00:00Z ~ 2026-06-07 00:00Z 窗口内）
-
 **📎 已核验原文链接清单（仅列正文实际引用，按发布时间从早到晚排序）：**
 - ✅ https://www.coindesk.com/markets/2026/06/06/cardano-social-activity-surges-as-ada-falls-under-20-cents-to-four-year-lows （CoinDesk，JSON-LD `datePublished`: 2026-06-06T03:30:00Z）
 - ✅ https://www.coindesk.com/markets/2026/06/06/bitcoin-back-above-usd61-000-after-rout-leads-to-usd1-6-billion-liquidations （CoinDesk，JSON-LD `datePublished`: 2026-06-06T06:40:17Z）

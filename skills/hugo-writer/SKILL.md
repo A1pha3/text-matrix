@@ -1,7 +1,7 @@
 ---
 name: "hugo-writer"
 description: "为 Hugo 文章生成/修复 Frontmatter，校验 categories、tags、首页曝光，自动生成 SEO 字段，并转换内部链接。触发词：生成 Frontmatter、修复元数据、分类标签、taxonomy。"
-version: "2.6.0"
+version: "2.7.0"
 tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 ---
 
@@ -63,7 +63,30 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - **严禁**使用 `date: 2026-03-25` 或 `date: 2026-03-25T08:00` 等缺少完整时间的格式。
 - **原因**：Hugo 排序默认按日期降序，缺少时间的日期会被当作 `00:00:00`，导致同一天的文章排序异常（较晚时间发布的文章反而排在前面）。
 
-### 7. 内部链接 (Internal Links)
+### 7. 内容隐私与抓取方法硬约束 (Content Privacy & Method Exposure)
+
+- **⚠️ 硬约束：早报/行业快讯类正文严禁暴露抓取实现细节**：`categories: ["行业快讯"]` 类的文章（包括但不限于 AI/财经/Web3/AI 副业早报）正文、表格脚注、引用块、元数据段中，**严禁**出现以下内容：
+  - 抓取方法、协议名：`Chrome DevTools Protocol`、`CDP`、`Puppeteer`、`Playwright`、`Headless Chrome`、`Selenium`、`WebDriver`、`HTTP HEAD` 等。
+  - 端口、进程、本地路径：`9222`、`PID 12345`、`/tmp/xxx.json`、本地缓存文件路径、原始 body 字段、`evidence` 等。
+  - 第三方 API URL：`api.coingecko.com/api/v3/...`、`coinmarketcap.com/currencies/...`、`r.jina.ai/...`、`localhost:xxxx` 等。
+  - 备用数据、双源比对、缓存延迟等技术描述：`CoinGecko API 备用数据`、`原始响应中 xxx=yyy`、`CG API 缓存延迟 vs CMC 实时`、`双源小幅偏差`、`多次重试均失败`、`触发了限流保护` 等。
+  - 抓取时间戳、轮次、批次：`12:22 BJT 抓取 CMC`、`上一轮本地抓取快照`、`#58 isolated lightContext` 等内部运行痕迹。
+  - 任何类似"行情来源 / 数据来源 / 抓取说明 / 抓取时间 / 抓取方法"的元数据段，无论是否以 `*...*` 引用块或 `**...**` 形式包裹，**一律删除**。
+- **为什么是硬约束**：早报类文章公开发布在 `https://txtmix.com/posts/.../`，任何访客都可访问。暴露 CDP 端口、PID、本地路径、API URL、原始 JSON、备用数据源、限流重试记录等于把内部抓取架构、IP 出口、限流绕过策略公之于众，**会被同行或反爬方针对性利用**。
+- **允许的措辞**（仅限用户能公开看到的合理声明）：
+  - 行情表脚注可写 `*行情（CoinMarketCap 报价，HH:MM BJT）*` —— 只声明来源站点 + 报价时间，不暴露抓取方式。
+  - 引用块可写 `*数据均来源于 CoinMarketCap 公开页面*` —— 声明数据来源合法性即可。
+  - 严禁把 `CoinMarketCap`、`CoinGecko` 等站点名与 `CDP`、`Chrome`、`API`、`抓取`、`备用数据`、`限流` 等技术词写在同一句。
+- **早报之外的文章**：技术笔记、深度分析等内部方法论文章，**允许**在合适位置说明抓取与处理流程（如 `cn-doc-writer` 产出的文章常有此需求），但仍**严禁**暴露 CDP 端口、PID、本地 `/tmp/xxx.json` 路径等真实运行痕迹（用占位符如 `CDP_<port>`、`/tmp/<session>.json`）。
+- **审计命令（写完后必跑）**：
+  ```bash
+  # 1. 隐私关键词扫描（命中即必须清理）
+  grep -nE "Chrome DevTools|CDP|9222|coingecko\.com|simple/price|/tmp/.*\.json|PID [0-9]+|抓取 (CMC|CoinGecko|行情)|备用数据|原始 (body|响应)|限流保护" content/posts/news/*.md
+  # 2. 严格 0 命中才算通过；命中必须删除对应段后才能进入发布
+  ```
+- **历史违规处理**：当发现历史早报存在抓取方法暴露段（如 `*行情来源：...*` 或 `**数据来源**：...`），**必须**在不破坏正文可读性的前提下精准删除该整段，并立即重新部署；不要把违规段"模糊化"或"留作注释"。
+
+### 8. 内部链接 (Internal Links)
 
 - **改写规则**：处理正文时，必须将普通相对路径（如 `[链接](./foo.md)`）改写为 Hugo `relref` 短代码。
 - **格式规范**：使用 `relref` 语法。为避免当前文档被 Hugo 解析报错，此处加了注释符：`[链接]({{</* relref "target.md" */>}})`。**你在实际输出时，必须移除 `/*` 和 `*/`**。
@@ -90,6 +113,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - **禁止 date 值不加双引号**（如 `date: 2026-03-25T08:00:00+08:00`），必须写成 `date: "2026-03-25T08:00:00+08:00"`。
 - **⚠️ 禁止输出不等于（实际写入时刻 - 5 分钟）的 `date`**：必须严格等于 `SYSTEM_NOW - 5min`，北京时间 `+08:00`，单位精度到秒。`SYSTEM_NOW`（当前时间本身）和未来时间**都是 Hugo 排除对象**，写入即 404。
 - **禁止把 `date` 写成 `SYSTEM_NOW + 5min` 或任何未来值**——即便只超 1 秒，Hugo 构建时也会判定为未发布，从产物中剔除。
+- **⚠️ 禁止在 `["行业快讯"]` 早报类正文中暴露抓取实现细节**：严禁出现 `Chrome DevTools Protocol`、`CDP`、`9222`、`PID <数字>`、`/tmp/xxx.json`、`coingecko.com/api/...`、`api.coingecko.com/api/v3/...`、`simple/price`、`备用数据`、`原始 body/响应`、`限流保护`、`实时抓取`、`抓取 CMC` 等技术词。详细规则见第 7 节"内容隐私与抓取方法硬约束"。
 - **禁止输出未闭合的双引号字符串**（尤其是 `title`、`description`、`slug`）。
 - **禁止输出不加引号的字符串值**：所有字符串类型字段值必须用双引号包裹，严禁裸写（如 `slug: my-post` 必须写成 `slug: "my-post"`）。
 - **禁止在字段值中裸写冒号**：值中含 `:` 或 `：` 时必须双引号包裹，否则 YAML 会将冒号后内容解析为新键，导致 `did not find expected key` 构建失败。
@@ -129,6 +153,7 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 - `hiddenFromHomePage` 只能在 `["行业快讯"]` 时出现。
 - **日期格式**：`date` 必须为 `YYYY-MM-DDTHH:MM:SS+08:00` 完整格式，不能缺少时间或时区。
 - **⚠️ 时间硬约束**：`date` 必须严格等于 `SYSTEM_NOW - 5min`（实际写入时刻 - 5 分钟），北京时间 `+08:00`，单位精度到秒。再次执行 `date` 命令做差值校验，确认差值在 5 分钟 ±30 秒以内，且不得晚于当前时间。
+- **⚠️ 早报类正文隐私检查**：用 `grep -nE "Chrome DevTools|CDP|9222|coingecko\.com|simple/price|/tmp/.*\.json|PID [0-9]+|备用数据|原始 (body|响应)|限流保护"` 扫描全篇，严格 0 命中。命中必须删除整段后重新部署。
 - **⚠️ `date` 必须加引号**：`date` 值**必须**用双引号包裹（如 `date: "2026-05-06T08:00:00+08:00"`），否则冒号会导致 YAML 解析失败。
 - **引号完整性**：所有以双引号开始的字段值都已正确闭合，尤其检查 `description` 和 `date`。
 - **⚠️ 字符串值双引号包裹**：所有字符串类型字段值（`title`、`slug`、`description`）是否都用双引号包裹，不存在裸写值。

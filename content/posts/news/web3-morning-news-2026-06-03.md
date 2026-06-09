@@ -24,8 +24,6 @@ hiddenFromHomePage: true
 | ADA | $0.2126 | -7.83% | -11.27% |
 | BNB | $650.44 | -5.95% | -0.73% |
 
-*行情来源：CoinMarketCap 实时报价（价格字段）、CoinGecko market_chart（7d 涨跌）；抓取时间 2026-06-03 08:00 CST。24h 涨跌取 CoinMarketCap 主区报价。*
-
 ## 🔥 今日热点
 
 ### Strive 新购 2,500 BTC，均价 $74,092，机构持仓逼近 1.9 万枚
@@ -124,7 +122,3 @@ hiddenFromHomePage: true
 ---
 
 🦞 每日08:00自动更新
-
-**数据来源**：
-- 行情：CoinMarketCap 实时抓取（https://coinmarketcap.com/currencies/bitcoin/、…/ethereum/、…/solana/、…/xrp/、…/cardano/、…/bnb/）；7d 涨跌基于 CoinGecko market_chart 计算（https://api.coingecko.com/api/v3/coins/{id}/market_chart?days=7）。
-- 新闻：CoinMarketCap 社区专栏（https://coinmarketcap.com/community/ ），原始发布方包括 CryptoPotato、BSC News、BitcoinWorld、The Street、crypto.news、Coinpaper、CoinEagle、Crypto Adventure、CoinPedia News、Cryip。条目均已逐条通过 Chrome CDP 打开原文页验证标题、正文与发布时间。
