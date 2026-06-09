@@ -1,0 +1,97 @@
+========================================
+[2026-06-1003:51:00 CST] 文章健康检查 #67 (cron850cf6e9 heartbeat)
+========================================
+
+时间:2026-06-1003:51 (Wednesday, Asia/Shanghai)
+距 #66 (00:43) 已3h08m (深夜稳态窗口,师父休眠中)
+距 #65 (23:28) 已4h23m
+
+【文章库统计】
+- 总数:1034 篇 (vs #661034 delta=0,3h08m 内0 new commits)
+- tech:712 / news:288 / thoughts:2 / video:12 / wealth:10 +根 md10
+-0 modified content/posts/,0 untracked content/posts/
+
+【4早报06-09 batch稳定度】
+- ai-morning-news-2026-06-09:15732 B, date=10:31:22, draft=false →稳定17h20m+
+- financial-morning-news-2026-06-09:12572 B, date=09:50:07, draft=false →稳定18h01m+
+- ai-side-hustle-morning-2026-06-09:8699 B, date=09:30:00, draft=false →稳定18h21m+
+- web3-morning-news-2026-06-09:9057 B, date=12:17:00, draft=false →稳定15h34m+
+
+【4早报06-10 batch】
+-06:10 ai-side-hustle /06:30 financial /06:50 ai-news /07:10 web3 cron尚未触发
+-预期首批产出 ≥07:00
+
+【TXTmix部署检查】
+-4早报06-09: GET Mozilla UA4/4 全200 ✅
+ - txtmix.com/posts/news/ai-morning-news-2026-06-09/ =200
+ - txtmix.com/posts/news/financial-morning-news-2026-06-09/ =200
+ - txtmix.com/posts/news/ai-side-hustle-morning-2026-06-09/ =200
+ - txtmix.com/posts/news/web3-morning-news-2026-06-09/ =200
+
+【TXTmix域名双条件】
+- dig +short txtmix.com =198.18.0.95 (在198.18.0.0/15段内, ✅)
+- curl https://txtmix.com/ =200 ✅
+- 双条件同时满足 ✅
+- IP较 #66 (198.18.0.x)段内轮换, WARP稳定
+
+【源站抽样10站 (Mozilla UA + curl)】
+- HEAD raw视角:
+ - https://www.v2ex.com/200 ✅
+ - https://flash.jin10.com/200 ✅
+ - https://www.cls.cn/200 ✅
+ - https://36kr.com/200 ✅
+ - https://cointelegraph.com/200 ✅
+ - https://www.reddit.com/200 ✅
+ - https://wallstreetcn.com/404 (HEAD anti-scraping延续 #46)
+ - https://news.ycombinator.com/405 (HEAD method not allowed延续)
+ - https://api.binance.com/api/v3/ping200 ✅
+ - https://www.coingecko.com/403 (WAF延续)
+- HEAD合计:7/10200 +1/10404 +1/10405 +1/10403
+- GET Mozilla UA (真实用户视角):
+ - wallstreetcn.com =200 ✅ (Mozilla UA绕过 HEAD anti-scraping,已知模式)
+ - news.ycombinator.com =200 ✅ (GET method allowed)
+ - www.coingecko.com =403 ❌ (WAF真实拦截)
+- GET合计:9/10200 +1/10403 (coingecko WAF真实拦截)
+
+【git状态】
+- HEAD: e3e5472 = origin/main, ahead/behind =0/0 ✅同步
+-0 staged,0 modified content/posts
+-39 untracked (全在 skills/morning-report/调试脚本: *.mjs/.json/.py,严格隔离 per #55原则)
+- 最近5 commits:
+ - e3e5472 log+state: 文章健康检查00:43窗口 (#66)
+ -8a5856b log+state: 文章健康检查23:28窗口 (#65)
+ -1ca8b58 log+state: 文章健康检查22:21窗口 (#64)
+ -06e7496 feat(tech):3 个未覆盖 GitHub trending 项目深度拆解 [trending21:00 daily]
+ -0f8fe19 feat(tech): pm-skills PM框架 Plugin深度拆解 [trending18:00 daily]
+
+【GitHub Actions】
+-远程未在本地 Actions,跳过 (cron fail-closed延续, 待师父配置)
+
+【异常汇总】
+延续5 项 (无变化):
+1. wallstreetcn根站 HEAD=404 / GET Mozilla=200 (HEAD anti-scraping,真实用户无影响,已知模式)
+2. www.coingecko.com HEAD=403 / GET Mozilla=403 (WAF真实拦截,早报已用事件衍生策略规避)
+3. coindesk1 article404 (#44延续)
+4. openai.com 全站 CDN屏蔽 (Mozilla UA0/0, Wayback快照确认 URL真实)
+5. cron850cf6e9 delivery fail-closed (Feishu target 未配, status=ok 但 not-delivered)
+新增0 项 +变化0 项 +修复0 项
+
+异常 #34清理项 (content/content镜像4861 staged):
+-仍0 staged 未复发 ✅
+
+【uncommitted working state】
+-39 untracked (skills/morning-report/*调试脚本,严格隔离不 add/commit)
+-0 modified
+
+【cron850cf6e9状态】
+- status=ok连续 ≥5 次稳定 ✅ (running残留模式消除)
+- delivery fail-closed延续 (Feishu target 待配)
+-凌晨静默窗口,无人值守
+
+【结论】
+- 无新文章动作
+- 仅追加日志到 memory/article-checklog-20260610.log
+- 更新 memory/heartbeat-state.json
+- commit + push
+
+========================================
