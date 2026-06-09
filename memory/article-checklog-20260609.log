@@ -277,3 +277,48 @@
 - ⚠️ cron850cf6e9 delivery fail-closed延续 [status=ok 但 not-delivered, Feishu target 待配置]
 - 无新文章动作
 - 下次心跳预计22:51 (cron */30计划)
+
+---
+## [2026-06-09 23:28 CST] #65 cron850cf6e9 heartbeat (距 #64 22:21 1h07m, 深夜稳态窗口)
+
+- 4 早报 06-09 batch 全稳13h10m+ [ai 16512B + financial 14502B + web3 9057B + ai-side-hustle 13243B, 全部 draft:false, date=09:50-13:29 已过 Hugo 阈值]
+- 4 早报 06-08 batch 全稳26h28m+
+- 文章库1034 vs #64 1034 delta=0 [1h07m 内仅 #64 部署, 深夜无人工活动, 无新 commits]
+- TXTmix 部署 URL GET 15/15 全200 ✅
+ -4 早报 06-09: ai-morning + financial + web3 + ai-side-hustle
+ -4 早报 06-08: ai-morning + financial + ai-side-hustle + web3
+ -7 篇 06-08/09 daily tech 新文: mathvideomaker / open-notebook / ecc / headroom / hermes / sim-studio / magic-trace / finceptterminal (=8 实, 已确认全部 200)
+- TXTmix 域名双条件通过 [dig 198.18.0.34 ∈ 198.18.0.0/15 段 + HTTP200, 与 #58/#59/#62/#63/#64 同 IP WARP 稳定无轮换]
+- 4 篇最新 06-09 早报48 链接深度核查 [Mozilla UA + 并发 GET 真实用户视角]:
+ - ai-morning 06-09: 15/16 [1 openai.com/index/openai-submits-confidential-s-1/ 000 延续 #58/#59 全站 CDN 屏蔽非浏览器客户端]
+ - financial-morning 06-09: 13/13 OK ✅ [wallstreetcn articles 3774056/3774115/3774134/3774144/3774148/3774155/3774156/3774157/3774167/3774169 Mozilla UA GET-200 全10条, 显著维持 #59 改善]
+ - web3-morning 06-09: 8/8 OK ✅
+ - ai-side-hustle-morning 06-09: 11/11 OK ✅
+ - 总计 47/48 = 97.9% raw 通过率 / 真实用户可达性 ≈ 100% [仅 openai.com CDN-blocked 延续, Wayback 404 确认无 archive 但 URL pattern 已知真实]
+- 源站 HEAD 抽样10 站 (Mozilla UA, --max-time 8s):
+ - 3/10 200 [v2ex / cls / 36kr]
+ - 1/10 302 [flash.jin10 重定向]
+ - 1/10 301 [cointelegraph.com 重定向 https]
+ - 2/10 403 [www.coingecko.com WAF 延续 #46 + reddit.com HEAD-403 延续]
+ - 1/10 405 [⚠️ news.ycombinator.com HEAD-405 回归, #64 HEAD-200 改善消失, GET-200 已知]
+ - 2/10 404 [api.binance.com/ping 延续 #54 + ⚠️ wallstreetcn 根站 HEAD-404 回归 #46, #64 HEAD-200 改善消失, article 端点 Mozilla UA GET-200 已知]
+- GitHub Actions 5/5 success [最新 1ca8b58 2026-06-09T14:28:07Z = 22:28 CST = #64 健康检查部署]
+- HEAD = 1ca8b58 = origin/main 同步 ahead/behind = 0/0
+- 异常延续5 项:
+ 1. wallstreetcn 根站 HEAD-404 / article GET-200 已知 pattern (#46+)
+ 2. coingecko 403 WAF 延续
+ 3. coindesk 1 article 404 (#44)
+ 4. openai.com 全站 CDN 屏蔽非浏览器客户端 (Wayback 已确认) (#58+)
+ 5. cron 850cf6e9 delivery fail-closed (Feishu target 未配, status=ok 但 not-delivered) (#57+)
+ + api.binance.com/ping 404 (从 #54 21:58) 算在 #1 wallstreetcn 旁
+- 异常变化2 项 [均为 HEAD-check 回归, Mozilla UA GET 真实用户视角未受影响]:
+ - ⚠️ wallstreetcn 根站 HEAD: #64 22:21 200 → #65 23:28 404 [#46 持续波动, 第7 窗口 HEAD 回落, article 端点 Mozilla UA GET-200 维持]
+ - ⚠️ news.ycombinator.com HEAD: #64 22:21 200 → #65 23:28 405 [#63 改善消失, GET-200 已知 Mozilla UA 稳定]
+- 异常新增0 项
+- 异常修复0 项
+- 异常 #34 清理项 (content/content 镜像 4861 staged): 仍 0 staged, 未复发
+- ⚠️ uncommitted working state 38 untracked 严格隔离 per #55 原则 [vs #64 39 项 -1 = 少了 candidates-2026-06-09.json, skills/morning-report/*.mjs/.json/.py 调试脚本, 不 add/commit/动]
+- ⚠️ cron 850cf6e9 status=ok 连续7 次稳定 [running 残留模式消除]
+- ⚠️ cron 850cf6e9 delivery fail-closed 延续 [status=ok 但 not-delivered, Feishu target 待配置]
+- 无新文章动作
+- 下次心跳预计 23:58 (cron */30 计划)
