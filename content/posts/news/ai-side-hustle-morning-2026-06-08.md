@@ -84,24 +84,3 @@ hiddenFromHomePage: true
 摘要: 帖子发布于 2026-06-07 11:43:34（北京时间）。楼主因老板嫌国外模型（Claude / GPT）太贵，要求换国内模型（点名 Kimi 2.5 / Qwen）做编程辅助，发帖问哪个效果好。评论里多数 v 友实测后认为「写中等复杂度业务代码 Qwen 性价比最高、深度逻辑 Claude Code 仍领先」。对预算敏感的 AI 副业读者，这是一条「按任务选模型降本」的实用经验。
 
 ---
-
-🦞 每日09:00自动更新
-
-**数据来源**：V2EX（酷工作/接单/AI 工具贴，5 条已逐条打开帖子页验证，1 条历史帖续互动引用）、Hacker News（首页 + Show HN，4 条已逐条打开 item + 外链项目页验证）。Reddit r/Entrepreneur / r/SideProject / r/LocalLLaMA 三个子版 new.json 端点被 Cloudflare 拦截（"You've been blocked by network security"），与昨日 06-07 早报同症状，本份以 V2EX + Hacker News 双源覆盖。
-
-**⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://news.ycombinator.com/item?id=48433756 - HN 帖 + github.com/devenjarvis/lathe README 已访问，标题/正文/发布者匹配
-- ✅ https://news.ycombinator.com/item?id=48431257 - HN 帖 + github.com/las7/TakoVM README 已访问
-- ✅ https://www.ycombinator.com/companies/proliferate/jobs/L3copvK-founding-engineer - YC 招聘页已访问，2026-06-08 01:01:17 +08:00 在 24h 窗口内
-- ✅ https://www.v2ex.com/t/1218506 - V2EX 接单帖已打开，发布者 laojuelv，时间 2026-06-07 09:54:58 +08:00
-- ✅ https://www.v2ex.com/t/1218534 - V2EX Tinker 帖已打开，发布者 Muniu，时间 2026-06-07 13:15:55 +08:00
-- ✅ https://www.v2ex.com/t/1218604 - V2EX ChatGPT Plus 帖已打开，发布者 desdouble，时间 2026-06-07 23:14:21 +08:00
-- ✅ https://www.v2ex.com/t/1218230 - V2EX Claude/Codex 续帖，发布者 emmathoermer，时间 2026-06-07 00:23:59 +08:00 (窗内边缘续互动引用)
-- ✅ https://blog.janestreet.com/i-design-with-claude-code-more-than-figma-now-index/ - Jane Street 博客已访问，标题/正文匹配
-
-**丢弃候选说明（仅记录，不进入正文）：**
-- HN 48440064（The Smallest Brain You Can Build / Perceptron in Python, 2026-06-08 00:28:37 UTC = 08:28 BJT，已超出 08:00 窗口截止）、48437406（Building from zero after addiction / 个人故事）、48437290（Making peace with your unlived dreams / 个人成长）、48437609（How's Linear so fast / 工程类）、48440008（unix lost+found / 工程类）— 与 AI 副业主题不符或超出 24h。
-- V2EX t/1218607「42 岁辞职回家应该做点什么」、t/1218524「老 ios 程序员新东方 22k」、t/1218556「想买键盘」、t/1218561「看佛经困惑」— 标题/正文不匹配 AI 副业主题或纯生活向。
-- V2EX t/1218482/t/1218397/t/1218230/t/1218325 已在 06-07 早报覆盖过原帖，本份只复用 t/1218230 的 24h 续互动作为「副业心态」参考。
-- HN 48434436（Claude Desktop for Linux / 仅 GitHub issue）、48431079/48432722/48434198/48437064/48436024/48436005/48435943/48435677/48435634/48433846/48433619/48429957（多组 Show HN，时间在窗口内但主题为非 AI 副业 / 同质化工具）、48431981/48431257 已收录。
-- Reddit r/Entrepreneur / r/SideProject / r/LocalLLaMA — 三个子版 new.json 端点被 Cloudflare 拦截（已切换 Chrome via CDP 重试仍返回 "You've been blocked by network security"），未能在 24h 窗口内获取稳定原文页，故本份以 V2EX + Hacker News 双源覆盖；Reddit 缺失已记入"来源不足"汇报。

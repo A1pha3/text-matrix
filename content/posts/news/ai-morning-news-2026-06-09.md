@@ -106,12 +106,3 @@ hiddenFromHomePage: true
 摘要: Cognition（Devin 母公司）6 月 8 日发布 FrontierCode，把"AI 工程师"从单一 IDE 助手升级为"代码库级别的协作者"：可以持续跟踪 PR Review、自动重构旧代码、跨仓库调用内部库、给生产事故做 Root-Cause 分析，并支持多人协作同一段代码的"AI 接力"。文章披露 FrontierCode 已接入 Cognition 的 SWE-Agent 2.0 引擎，基准测试中在 12 类企业级代码任务上首次超过资深工程师的中位数水平。Cognition 把 FrontierCode 定位为"从 IDE 走向企业代码基础设施"的产品升级，是 Devin 从开发者工具走向"组织级 AI 员工"的关键一步。（HN 约 5 小时前发布，发布时间约 2026-06-09 05:16 BJT，落在窗口内）
 
 ---
-
-🦞 每日08:00自动更新
-
-**数据来源**：Xiaomi MiMo Blog（HN）、OpenAI（HN）、MacRumors（HN）、TechCrunch、Hacker News、量子位、36 氪（CSDN/新智元/硅基观察Pro）
-
-**⚠️ 严格 24h 窗口已剔除条目**（已越过 2026-06-09 08:00 BJT cutoff）：
-- ❌ 腾讯发布 WorkBuddy 企业版（量子位 432631，发布时间约 2026-06-09 09:22 BJT，超出窗口约 22 分钟）
-- ❌ 李飞飞发"世界模型宣言"（36kr 3845180850391560，发布时间约 2026-06-09 09:16 BJT，超出窗口约 16 分钟）
-- 备注：原 878d492b 漏跑稿包含此 2 条，越窗已剔除；本次补做另增 4 条窗口内高质量新闻：ChatGPT 史上最大改版、Apple 便宜 AI 路线、Sora 核心成员 Gabriel 离职、Kimi 再融 136 亿。

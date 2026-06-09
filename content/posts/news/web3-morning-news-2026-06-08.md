@@ -63,23 +63,3 @@ hiddenFromHomePage: true
 摘要: CoinTelegraph 报道，**Strategy（前 MicroStrategy）执行董事长 Michael Saylor 周末再次通过 X 平台发声，暗示公司即将公布 BTC 持仓变化**，时间点正好在 Strategy 周一股东大会对 STRC 优先股「每月两次派息」方案进行最终表决前数小时。文章回顾了上周 Strategy 宣布回购部分公司债、暂停 BTC 增持后市场一度担心公司会「被迫抛售 BTC 套现」的恐慌情绪，认为 Saylor 此次发声意在稳定预期、为股东投赞成票铺路。议案如获通过，Strategy 将成为首家「按月两次派息」的加密财库公司，对偏好稳定现金流的传统机构资金具有标志性意义。
 
 ---
-
-🦞 每日08:00自动更新
-
-**数据来源**：行情：CoinMarketCap（Chrome DevTools Protocol 抓取，08:25-08:36 北京时间）；新闻：CoinDesk（5 篇，Chrome 逐篇打开原文页，JSON-LD `datePublished` 处于 2026-06-07T13:00:00Z ~ 2026-06-07T20:27:12Z 窗口内，对应 BJT 2026-06-07 21:00 ~ 2026-06-08 04:27），CoinTelegraph（1 篇，curl 抓取 `data-testid="post-article-meta__publish-date"` 字段确认 `Published Jun 7, 2026`）。
-
-**📎 已核验原文链接清单（仅列正文实际引用，按发布时间从早到晚排序）：**
-- ✅ https://www.coindesk.com/tech/2026/06/07/ethereum-foundation-cuts-and-departures-aren-t-a-crisis-joe-lubin-says （CoinDesk，JSON-LD `datePublished`: 2026-06-07T13:00:00Z）
-- ✅ https://www.coindesk.com/business/2026/06/07/abra-s-bill-barhydt-says-wall-street-s-next-crypto-bet-is-tokenization （CoinDesk，JSON-LD `datePublished`: 2026-06-07T15:00:00Z）
-- ✅ https://www.coindesk.com/markets/2026/06/07/bitcoin-s-slide-has-no-single-cause-ai-tech-ipos-quantum-strategy-sale-all-play-a-role-nydig-says （CoinDesk，JSON-LD `datePublished`: 2026-06-07T16:00:00Z）
-- ✅ https://www.coindesk.com/markets/2026/06/07/bitcoin-near-usd60-000-today-vs-february-institutional-mood-is-starkly-different （CoinDesk，JSON-LD `datePublished`: 2026-06-07T16:14:08.224Z）
-- ✅ https://cointelegraph.com/news/strategys-saylor-signals-btc-buy-as-preferred-dividend-pay-date-vote-looms （CoinTelegraph，文章内 `data-testid="post-article-meta__publish-date"` 显示 `Published Jun 7, 2026`，正文段落提及"Sunday...Monday's shareholder meeting"佐证）
-- ✅ https://www.coindesk.com/policy/2026/06/07/a-quick-review-of-the-ways-and-means-tax-bills-state-of-crypto （CoinDesk，JSON-LD `datePublished`: 2026-06-07T20:27:12.683Z）
-
-**已丢弃候选条目说明**：
-- CoinDesk 首页 06-05 / 06-06 文章（如 Saylor 04-部落、Zcash→Monero 审计、America's Banks 代币化存款等）：日期 06-05/06-06 早于 24h 窗口起点 06-07 00:00Z，已在昨日 06-07 早报覆盖，本日不重复收录。
-- CoinTelegraph 06-05 / 06-06 文章（Travala AI、Kraken SpaceX IPO、Strategy 杠杆模型压力测试等）：同日 24h 窗口外丢弃。
-- 「WLD 暴跌 20% 后 Arthur Hayes 立场反转」「James Wo 力挺 BTC 质疑 Tom Lee ETH 25 万美元目标」「JPMorgan/BoA/Citi 代币化存款网络」：均为 06-06 文章，**已在 2026-06-07 早报正文覆盖**（参见 https://txtmix.com/posts/news/web3-morning-news-2026-06-07/），按 24h 窗口约束本日不重复。
-- 7d 涨跌字段：CoinMarketCap 当日页面未提供统一 7d 数字，为避免幻觉本表不列 7d 列。
-
-**Chrome 抓取原始数据快照**：`/tmp/cmp_20260608.json`（CoinMarketCap 6 币种价格 + 24h 涨跌，08:25-08:36 BJT 抓取）；`/tmp/news_check2_20260608.json`（CoinDesk 5 篇 dateP + headline + abstract）；`/tmp/news_20260608.json`（CoinDesk 首页 06-07 候选 URL 列表）。

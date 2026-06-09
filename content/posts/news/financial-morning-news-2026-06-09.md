@@ -107,22 +107,3 @@ hiddenFromHomePage: true
 数据来源: CoinMarketCap
 
 ---
-
-🦞 每日08:30自动更新
-
-**数据来源**：华尔街见闻、证券时报、证券日报、新浪金融研究院、CoinMarketCap
-
-**原文链接（已逐条核实，仅列正文实际引用链接）：**
-- ✅ https://wallstreetcn.com/articles/3774157 - 华尔街见闻早餐FM-Radio｜2026年6月9日
-- ✅ https://wallstreetcn.com/articles/3774056 - 芯片股力撑美股反弹：半导体指数涨超5%、英特尔大涨11% 原油冲高回落
-- ✅ https://wallstreetcn.com/articles/3774169 - 加息预期升温 花旗下调黄金三个月目标价至4000美元
-- ✅ https://wallstreetcn.com/articles/3774115 - 以伊军事冲突升级 特朗普：双方"正寻求"立即停火
-- ✅ https://wallstreetcn.com/articles/3774156 - OpenAI秘密提交IPO申请 "三大超级IPO"考验美股承受力
-- ✅ https://wallstreetcn.com/articles/3774134 - 英特尔盘前涨超14% 谷歌拟下单300万AI芯片、英伟达测试其18A工艺
-- ✅ https://wallstreetcn.com/articles/3774167 - Meta砸1.15亿美元启动"劳动力学院" 培训数据中心建设工人
-- ✅ https://wallstreetcn.com/articles/3774148 - 苹果WWDC 2026：Siri AI姗姗来迟 OS集体迈入"27版" 股价盘中转跌
-- ✅ https://wallstreetcn.com/articles/3774144 - 纽约联储调查：美国求职者前景预期恶化 家庭财务前景创4年最差
-- ✅ https://wallstreetcn.com/articles/3774155 - 美股熊市信号触发70%！美银建议获利了结 大摩坚定看涨
-- ✅ https://finance.sina.com.cn/jjxw/2026-06-09/doc-iniattrh3557516.shtml - 永太科技拿下宁德时代大单 三年供货电解液约47万吨
-- ✅ https://finance.sina.com.cn/jjxw/2026-06-09/doc-iniatpih6880023.shtml - 金融监管总局党委召开扩大会议 加快制定与房地产新模式相适应的融资制度
-- ✅ https://finance.sina.com.cn/jinrong/yh/2026-06-08/doc-iniaswms3894058.shtml - 时隔20余年央行存贷款利率管理制度迎重大调整

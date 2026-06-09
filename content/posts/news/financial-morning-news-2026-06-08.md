@@ -111,26 +111,3 @@ hiddenFromHomePage: true
 摘要: 韩国证券存托结算院旗下SEIBro数据显示，截至5月27日近一个月韩国投资者净买入寒武纪约2000万美元，AI芯片龙头成为最受韩国资金青睐的A股标的；麦格米特、机器人ETF华夏、宁德时代等同样居前。该现象发生在全球科技股相继大跌、外资观望情绪上升的背景下，标志韩国"国民年金+NEXT FUNDS+本土券商"组合正以"硬科技-新能源-机器人"三条主线切入中国资产配置，与瑞银"是否配置→如何配置"表态形成共振。
 
 ---
-
-🦞 每日08:30自动更新
-
-**数据来源**：华尔街见闻、新浪财经、金十数据、上海证券报、中国基金报、证券时报、红星资本局
-
-**原文链接（已逐条核实，仅列正文实际引用链接）：**
-- ✅ https://finance.sina.com.cn/roll/2026-06-08/doc-iniarkka9233037.shtml - 上海证券报：美国5月非农爆表 美联储加息预期重燃
-- ✅ https://finance.sina.com.cn/stock/usstock/c/2026-06-08/doc-iniaruya7378582.shtml - 摩根大通上调10年期美债收益率预期至4.70%
-- ✅ https://xnews.jin10.com/details/221342 - 高盛彻底放弃2026年降息预期
-- ✅ https://wallstreetcn.com/articles/3774047 - 华尔街见闻早餐FM-Radio｜2026年6月8日
-- ✅ https://finance.sina.com.cn/wm/2026-06-08/doc-iniaruye4149979.shtml - 伊朗时隔两个月再袭以色列 发射约10枚导弹
-- ✅ https://xnews.jin10.com/details/221341 - 伊朗导弹打击以色列拉马特戴维空军基地
-- ✅ https://finance.sina.com.cn/money/forex/hbfx/2026-06-08/doc-iniaruye4155921.shtml - 6月8日财经早餐：金价测试4300关口、原油92.80
-- ✅ https://finance.sina.com.cn/jjxw/2026-06-08/doc-iniaruxy5784593.shtml - 7个欧佩克+决定7月增产原油18.8万桶/日
-- ✅ https://finance.sina.com.cn/jjxw/2026-06-07/doc-iniaqxuk6223470.shtml - 金价跌穿4500美元 宽幅震荡还没完
-- ✅ https://wallstreetcn.com/articles/3774048 - 英伟达与SK海力士官宣多年技术合作
-- ✅ https://finance.sina.com.cn/jjxw/2026-06-07/doc-iniaqpes7955903.shtml - 全球首个预制算力中心底座在山东青岛投用
-- ✅ https://finance.sina.com.cn/jjxw/2026-06-08/doc-iniarkka9231837.shtml - 新宙邦签大单 宁德时代三年采购电解液约30万吨
-- ✅ https://finance.sina.com.cn/jjxw/2026-06-08/doc-iniaruxw9017831.shtml - 新华财经早报：6月8日 外储34422亿美元
-- ✅ https://finance.sina.com.cn/money/bond/2026-06-08/doc-iniarzfy7255715.shtml - 国际金融市场早知道：6月8日 美政府拟入股AI公司
-- ✅ https://finance.sina.com.cn/money/fund/etf/2026-06-07/doc-iniaqtnq7860106.shtml - 583亿天量分歧 光模块一哥急跌
-- ✅ https://finance.sina.com.cn/headline/2026-06-07/doc-iniaqtnq7866810.shtml - 今日财经要闻TOP10｜2026年6月7日
-- ✅ https://finance.sina.com.cn/stock/relnews/cn/2026-06-07/doc-iniaqaqr7823199.shtml - 韩国投资者持续扫货A股 寒武纪吸金2000万美元
