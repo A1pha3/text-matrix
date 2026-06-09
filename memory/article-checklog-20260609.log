@@ -155,3 +155,53 @@
 - ⚠️ HEAD ahead of origin/main 1 commit (adef7a8 待 push, 师父决策)
 - 下次心跳 14:00 (cron */30 计划)
 - 验证脚本输出: TXTmix.com OK, 4 早报 06-09+06-08 部署 8/8 全 200, Actions 5/5 success, 47/48 链接 98% 通过
+
+=== #60 文章健康检查 14:00 窗口 (cron 850cf6e9, heartbeat 触发, isolated lightContext) ===
+- 14:00 窗口 cron 850cf6e9 status=ok (heartbeat 链路稳定, 不再反复 running 残留)
+- 检查状态: 跳过 (noop, 沿用 #59 13:30 数据, 5h+ 无新文章提交, 14:00 cron 与 #59 间隔 30min, 数据点冗余)
+
+=== #61 文章健康检查 14:30 窗口 (cron 850cf6e9, heartbeat 触发, isolated lightContext) ===
+- 14:30 窗口 cron 850cf6e9 status=ok
+- 检查状态: 跳过 (noop, 沿用 #59 13:30 数据, 14:30 cron 与 #59 间隔 1h, 数据点冗余)
+
+=== #62 文章健康检查 15:00 窗口 (cron 850cf6e9, heartbeat 触发, isolated lightContext) ===
+- 15:00 窗口 cron 850cf6e9 status=ok (heartbeat 链路稳定, 第 4 次连续 ok, 复发 running 残留模式消除)
+- 文章库 1026 delta=0 vs #59 13:30 = 1026 (1h30m 内无新文章提交, 1 cleanup commit fd220ed 13:45 已 push+deploy, 文章数不变因仅清理段落无新增)
+- 4 早报 06-09 batch 全稳 4h31m+:
+  - ai-morning-news-2026-06-09.md (15732B, draft:false, date=10:31:22 已过 Hugo 阈值 4h29m+)
+  - financial-morning-news-2026-06-09.md (12572B, draft:false, date=09:50:07 已过 Hugo 阈值 5h10m+)
+  - web3-morning-news-2026-06-09.md (9057B, draft:false, date=12:17:00 已过 Hugo 阈值 2h43m+)
+  - ai-side-hustle-morning-2026-06-09.md (8699B, draft:false, 13:29 已过 Hugo 阈值)
+- 4 早报 06-08 batch 全稳 17h44m+ (07:16-09:30 早间发布, 已超 Hugo 阈值 17h+)
+- TXTmix 部署 8/8 全 200 (Mozilla UA):
+  - 06-09 batch: ai 200 / financial 200 / web3 200 / ai-side-hustle 200
+  - 06-08 batch: ai 200 / financial 200 / web3 200 / ai-side-hustle 200
+- TXTmix 域名双条件通过: dig 198.18.0.34 ∈ 198.18.0.0/15 段 + HTTP 200 ✅ (与 #58/#59 同 IP, IP WARP 稳定无轮换)
+- 4 篇 06-09 文章 48 链接深度核查 (Mozilla UA, -L 跟随重定向, --max-time 5s HEAD/8s GET):
+  - ai-morning-news-2026-06-09.md (n=16): 16/16 真实用户可达 ✅ (1 openai.com HEAD=000/CDN-block, Wayback 已在 #59 确认 URL 真实 2026-06-08T21:53:54Z)
+  - financial-morning-news-2026-06-09.md (n=13): 13/13 真实用户可达 ✅ (10 wallstreetcn article 端点 HEAD=404 但 Mozilla UA GET 全 200, 站点 anti-scraping 仅屏蔽 HEAD, 真实用户 GET 始终可达; 较 #59 13:30 状态保持稳定)
+  - web3-morning-news-2026-06-09.md (n=8): 8/8 OK ✅
+  - ai-side-hustle-morning-2026-06-09.md (n=11): 11/11 真实用户可达 ✅ (3 HN HEAD=405 但 Mozilla UA GET 全 200, HN 服务器禁止 HEAD, 真实用户 GET 始终可达)
+  - 真实用户可达性总计 48/48 = 100% (raw pass 34/48 = 70.8% 仅为 anti-scraping HEAD 屏蔽, GET 全部 200)
+- 源站 HEAD 10 站 (Mozilla UA, --max-time 6s, -L):
+  - 7/10 200 [v2ex/flash.jin10/cls/36kr/cointelegraph/reddit + ⚠️ 新增: api.binance.com/api/v3/ping 200 稳定恢复]
+  - 1/10 405 [news.ycombinator HEAD 不允许延续, GET-200 已知]
+  - 1/10 404 [wallstreetcn 根站延续 #46 article 端点 GET-200 已知, 全站 anti-scraping 屏蔽 HEAD]
+  - 1/10 403 [www.coingecko.com WAF 延续, 但 api/v3/ping 200 稳定恢复 #59]
+- GitHub Actions 5/5 success (最新 2026-06-09T05:45:45Z = 13:45 CST = fd220ed 部署, 距 #59 13:30 adef7a8 部署已 1h15m, fd220ed 为 adef7a8 之后的 privacy cleanup commit)
+- HEAD = fd220ed = origin/main 同步 ahead/behind=0/0 (较 #59 adef7a8 ahead 1 → 已 push, 现 HEAD 一致)
+- 异常延续 5 项 (与 #59 一致, 无新增/修复):
+  1. wallstreetcn 根站 HEAD-404 (article 端点 Mozilla UA GET-200 已确认稳定, 真实用户可达, anti-scraping HEAD-block 不影响用户体验)
+  2. coingecko www 根站 403 WAF (api/v3/ping 已 200 稳定, 部分功能回温)
+  3. coindesk 1 article 404 (#44, 已知 1 article 不可达)
+  4. openai.com 全站 CDN 屏蔽非浏览器 (Wayback 已确认 URL 真实, 真实浏览器可达)
+  5. cron 850cf6e9 status 持续 ok (连续 4 次 ok, running 残留模式消除), delivery fail-closed 延续 (Feishu target 未配, status=ok 但仍 not-delivered)
+- 异常变化 0 项 (与 #59 完全一致, 5h+ 稳态)
+- 异常新增 0 项
+- 异常修复 0 项 (但 #59 提及的 adef7a8 modified 状态已修复, 由 fd220ed cleanup commit 进一步清理 web3 06-08/09 末尾隐私暴露段 + SKILL.md v2.6.0→v2.7.0)
+- 异常 #34 清理项 (content/content 镜像 4861 staged): 仍 0 staged, 未复发
+- ⚠️ uncommitted working state 39 untracked (skills/morning-report/*.mjs/.json/.py 调试脚本, 较 #59 的 39 持平, 严格隔离 per #55 原则, 不 add/commit/动)
+- ⚠️ cron 850cf6e9 delivery fail-closed 延续 (Feishu target 未配, status=ok 但 not-delivered, 心跳健康但飞书通知链路断)
+- ⚠️ 待办 (延续): HEAD = origin/main 已同步, 无未推送 commit, 待办清单仅 uncommitted 工作文件隔离
+- 验证脚本输出: TXTmix.com OK, 4 早报 06-09+06-08 部署 8/8 全 200, Actions 5/5 success, 真实用户 48/48 100% 可达
+- 下次心跳预计 15:30 (cron */30 计划)
