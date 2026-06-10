@@ -1,100 +1,152 @@
 ---
-title: "openai/plugins 深度解析：OpenAI 官方维护的 Codex 插件示例集合，Codex 时代的'看这一个仓库就够'模板"
+title: 'openai/plugins：Codex 插件如何打包工作流、应用连接与 MCP'
 date: "2026-06-07T15:03:00+08:00"
 slug: "openai-plugins-codex-plugin-examples"
-description: "2026-06-07 GitHub Trending 当日榜 #5，1,845 stars / 单日 +213。不要被 stars 数字骗了——这是 OpenAI 自己维护的 Codex 插件'官方模板集'，figma/notion/build-ios-apps/build-macos-apps/build-web-apps/expo 等 7 个高质量范例决定了 Codex 插件的'事实标准'长什么样。"
+description: "openai/plugins 是 Codex 插件的官方范例仓库。它展示了如何把 Skills、Apps 和 MCP 配置打包成可安装的工作流，而不只是给 Codex 加一个外部服务入口。"
 draft: false
 categories: ["技术笔记"]
 tags: ["OpenAI", "Codex", "Plugin", "MCP", "AI Agent", "开源项目深拆"]
 toc: true
 ---
 
-## 这篇文章在回答什么
+## 核心判断
 
-`openai/plugins` 在 2026-06-07 出现在 GitHub Trending 当日榜第 5 名（1,845 stars / 单日 +213）。它的 star 数绝对值不大（和今天 trending 榜的其他项目相比），但**它是 OpenAI 官方维护的 Codex 插件示例仓库**——这意味着它定义了 Codex 插件的"事实标准"长什么样。
+`openai/plugins` 值得看，因为它给了 Codex 插件的官方样板。
 
-README 全文只有 100 字，但每个字都重要：
+这个仓库容易被看成"Codex 的应用商店示例"。这样理解不算错，但只看到了一半。Gmail、Binance、Brex 这类插件主要解决外部服务连接；`build-ios-apps`、`build-web-apps`、`notion`、`figma` 这类插件更值得读，它们把 Agent 做事的步骤也写进了插件。
 
-> This repository contains a curated collection of Codex plugin examples. Each plugin lives under `plugins/<name>/` with a required `.codex-plugin/plugin.json` manifest and optional companion surfaces such as `skills/`, `.app.json`, `.mcp.json`, plugin-level `agents/`, `commands/`, `hooks.json`, `assets/`, and other supporting files.
+Codex plugin 打包的是三类东西：
 
-——三件事：
+- **Skills**：遇到某类任务时怎么做。
+- **Apps**：能连接哪些外部应用。
+- **MCP servers**：能调用哪些工具或上下文服务。
 
-1. **结构是约定的**：`plugins/<name>/` + `.codex-plugin/plugin.json` 是 manifest 入口
-2. **能力面是组合的**：单个 plugin 可以挂 skills / agents / commands / hooks / assets / MCP
-3. **OpenAI 自己在写范例**：figma、notion、build-ios-apps、build-macos-apps、build-web-apps、expo、netlify、remotion、google-slides
+如果只是给当前项目加一条本地工作流，写 skill 就够了。需要跨团队分发、绑定 OAuth 应用、附带 MCP 配置时，再做 plugin。
 
-## 为什么这个仓库会 trending
+## 插件结构
 
-`openai/plugins` 跟 Claude Code 的 `anthropics/skills` 仓库是同一种东西——**生态里"插件规范"这件事需要一个被维护的官方范例集**。Star 数小是因为它不解决具体问题，但所有想要做 Codex 插件的开发者都要 fork 它、改 manifest、参考它的目录约定。
+一个插件的入口是：
 
-## 一个 Codex plugin 的最小结构
-
-按 README 描述的目录约定：
-
-```
-plugins/<name>/
-├── .codex-plugin/
-│   └── plugin.json       # required: manifest
-├── skills/               # optional: 行为规范
-├── .app.json             # optional: 配套 app 元数据
-├── .mcp.json             # optional: 挂的 MCP server
-├── agents/               # optional: 插件专属子 agent
-├── commands/             # optional: 斜杠命令
-├── hooks.json            # optional: 生命周期 hook
-└── assets/               # optional: 资源文件
+```text
+.codex-plugin/plugin.json
 ```
 
-这个结构和 Claude Code 的 `anthropics/skills`（`.claude/skills/...`）有强映射关系，也和 OpenClaw 的 `clawhub` 规范兼容。它不是 Codex 独有，而是 OpenAI 在推的"**OpenAI 生态统一插件规范**"。
+它可以只包含 skill，也可以同时带上 App 和 MCP。
 
-## 9 个高信号范例
+| 层 | 管什么 | 常见文件 |
+|---|---|---|
+| Skills | 任务流程、参考文档、脚本 | `skills/*/SKILL.md` |
+| Apps | 外部应用连接和认证 | `.app.json` |
+| MCP | 工具协议配置 | `.mcp.json` |
+| Marketplace | 插件来源、安装和认证策略 | `.agents/plugins/marketplace.json` |
 
-仓库自带 9 个高质量范例，按用途分类：
+这几个部分应该分开看。Skill 写的是方法，App 写的是连接，MCP 写的是工具入口，marketplace 写的是分发策略。把这些边界弄清楚，才知道一个插件到底改变了 Codex 的哪部分行为。
 
-| 范例 | 用途 | 关键能力 |
-|------|------|---------|
-| `figma` | 设计与代码同步 | `use_figma`、Code to Canvas、Code Connect、design system rules |
-| `notion` | 知识管理 | 规划、研究、会议、知识捕获 |
-| `build-ios-apps` | iOS 开发 | SwiftUI 实现、重构、性能、调试 |
-| `build-macos-apps` | macOS 开发 | SwiftUI/AppKit 工作流、build/run/debug 循环、打包 |
-| `build-web-apps` | Web 开发 | 部署、UI、支付、数据库 |
-| `expo` | 跨端移动 | Expo / React Native / SDK 升级 / EAS / Codex Run |
-| `netlify` | 部署 | Netlify 工作流 |
-| `remotion` | 视频生成 | React 视频程序化生成 |
-| `google-slides` | 演示文稿 | 编程化生成 slide |
+## 一个任务怎么流过插件
 
-读这 9 个范例目录就能看出 OpenAI 押的几个方向：**设计协作 + 知识管理 + 全栈应用构建 + 多端开发 + 部署**。基本就是"个人开发者用 AI 写完整产品"的整个链条。
+以 `build-ios-apps` 为例。开发者让 Codex 排查 "SwiftUI 列表卡顿" 时，插件可能这样工作：
 
-## 和 Claude Code / OpenClaw 插件生态的关系
+1. Codex 匹配到 `swiftui-performance-audit` skill。
+2. Skill 先要求阅读 `references/code-smells.md`，从代码层面排查 broad observation、identity churn、复杂布局、主线程图片处理等问题。
+3. 如果代码审查不够，再按 `references/profiling-intake.md` 收集复现步骤、设备、构建模式和 trace 证据。
+4. 需要模拟器、日志或 UI 自动化时，插件通过 `.mcp.json` 启动 `xcodebuildmcp`。
+5. 进入 ETTrace 分析时，再用插件里的脚本处理 dSYM 和火焰图 JSON。
 
-`openai/plugins` 不是孤岛——它和几个生态的对应关系如下：
+这就是 plugin 比普通 prompt 强的地方：流程不再只存在于某个人的经验里，而是被放进可安装、可复用的目录结构里。团队成员装上同一个插件，拿到的是同一套步骤、参考资料和辅助脚本。
 
-| 平台 | 插件规范 | 官方范例仓库 |
-|------|---------|-------------|
-| **Codex** | `.codex-plugin/plugin.json` | `openai/plugins` (本仓库) |
-| **Claude Code** | `SKILL.md` + `.claude-plugin/` | `anthropics/skills` |
-| **OpenClaw** | `clawhub install` | `clawhub` registry |
-| **通用 agent skill** | `agentskills.io` 规范 | `vercel-labs/skills` |
+## 两类插件
 
-OpenAI 这里做了一个值得注意的选择：**把自己规范直接叫 "plugin" 而不是 "skill"**（虽然目录里也有 `skills/`）。这是市场用语差异——Claude Code / OpenClaw 偏 "skill"（技能），OpenAI 偏 "plugin"（插件）。功能上几乎可以 1:1 对应。
+仓库里的插件大致分两类。
 
-## 谁该用这个仓库
+第一类是薄壳连接器，通常只有：
 
-1. **想做 Codex 插件的开发者**：直接 fork，改 `plugin.json` 适配自己的工具，不要从零造结构
-2. **做 AI 工具产品的厂商**：看 figma/notion/expo 这 3 个范例是怎么把 MCP server、design system rules、`use_figma` 组合起来的——这是"AI agent 调用第三方 SaaS"的范式
-3. **跨 agent 平台兼容**：研究 manifest 字段，看你的 plugin 如何同一份代码既能在 Codex 跑也能在 OpenClaw 跑
-
-## 安装 / 使用
-
-仓库本身是"参考实现"，没有 npm install。可直接：
-
-```bash
-git clone https://github.com/openai/plugins
-cd plugins
-ls plugins/
-# 然后挑一个范例进 plugins/<name>/ 读
+```text
+.app.json
+.codex-plugin/plugin.json
+assets/
 ```
+
+它们把 SaaS 放进 Codex 的插件目录，统一 OAuth、权限提示、品牌信息和可发现性。装上之后，Codex 能访问对应服务，但不会自动获得一套新工作流。
+
+第二类是工作流包，通常有：
+
+```text
+skills/
+references/
+scripts/
+agents/openai.yaml
+```
+
+README 里列出的 richer examples 基本都属于这一类：`figma` 管设计稿到代码，`notion` 管计划和知识整理，`build-web-apps` 管前端、浏览器验证、Stripe 和 Supabase，`expo` 管 React Native / EAS / 发布流程，`netlify` 管部署，`remotion` 管 React 视频生成。
+
+一个小坑：README 提到 `google-slides`，但仓库当前的插件目录是 `google-drive`，Slides 只是其中一个 skill。落地时要看实际 `plugin.json` 和目录，不要只看 README 名称。
+
+## manifest 和 marketplace
+
+最小的 `plugin.json` 很短：
+
+```json
+{
+  "name": "my-first-plugin",
+  "version": "1.0.0",
+  "description": "Reusable workflow",
+  "skills": "./skills/"
+}
+```
+
+要挂 App 或 MCP，当前仓库更常见的写法是在 `plugin.json` 里放相对路径：
+
+```json
+{
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "skills": "./skills/",
+  "apps": "./.app.json",
+  "mcpServers": "./.mcp.json"
+}
+```
+
+具体 App 认证写在 `.app.json`，MCP server 写在 `.mcp.json`。Codex 官方文档支持本地 stdio server 和远程 streamable HTTP server，不要把旧文章里的 SSE 示例当成唯一形态。
+
+插件做好后，还要让 Codex 找得到。仓库级目录放在 `$REPO_ROOT/.agents/plugins/marketplace.json`，个人目录放在 `~/.agents/plugins/marketplace.json`。marketplace 条目里最重要的是四个字段：
+
+| 字段 | 作用 |
+|---|---|
+| `source.path` | 插件目录位置 |
+| `policy.installation` | `AVAILABLE`、`INSTALLED_BY_DEFAULT` 或 `NOT_AVAILABLE` |
+| `policy.authentication` | `ON_INSTALL` 或 `ON_USE` |
+| `category` | 插件目录分类 |
+
+团队可以用它做轻量治理：内部工作流默认安装，不适合组织场景的插件设为不可用，需要首次使用再授权的插件设为 `ON_USE`。
+
+## 和其他 Agent 生态的关系
+
+Codex 这里叫 plugin，但里面仍然有 skills。更稳妥的理解是：
+
+- Skill 是工作流作者格式。
+- Plugin 是安装和分发格式。
+- MCP server 是跨 Agent 的工具协议入口。
+
+所以，Codex plugin 不能直接等同于 Claude Code skill。`SKILL.md` 的主体内容可以迁移，但 `.codex-plugin/plugin.json`、marketplace 策略、App 连接和 Codex app 的 `interface` 元数据，都要按目标平台重写。
+
+OpenAI 还维护了 `codex-plugin-cc`，让 Claude Code 用户在 Claude Code 里调用 Codex 做 review 或任务委派。它不属于 `openai/plugins`，但说明了一个趋势：Agent 生态的竞争，不只是谁功能更多，也是谁能进入开发者已经习惯的工作流。
+
+## 谁该看
+
+想写第一个 Codex 插件的人，不要从空目录开始。先 fork `openai/plugins`，选 `notion`、`build-web-apps` 或 `build-ios-apps` 这种结构清楚的插件改。
+
+做 AI 工具产品的厂商，重点看 `figma`、`expo`、`netlify`。它们展示了产品接入 Codex 时，除了提供 API，还要把典型任务的处理方式写清楚。
+
+需要跨平台兼容的团队，重点看 Skills 和 MCP 的分界。MCP server 可以复用，Skill 内容也能复用一部分，但触发描述、权限、UI 元数据和安装策略不能照搬。
+
+如果只是 repo 内部的小流程，先写本地 skill。等流程稳定、需要分发给多人或绑定 App/MCP 时，再打包成 plugin。
+
+## 阅读方式
+
+读仓库时少停留在 README，多看每个插件下面的三类文件：`.codex-plugin/plugin.json`、`skills/*/SKILL.md`、`.mcp.json` 或 `.app.json`。这三处读完，基本就知道一个插件到底在改变 Codex 的哪一部分行为。
 
 ## 参考
 
 - 仓库：[github.com/openai/plugins](https://github.com/openai/plugins)
-- 对照生态：`anthropics/skills`（Claude Code）、`clawhub`（OpenClaw）、`vercel-labs/skills`（通用 agentskills.io）
+- Codex 插件规范：[developers.openai.com/codex/plugins](https://developers.openai.com/codex/plugins)
+- Codex 插件构建指南：[developers.openai.com/codex/plugins/build](https://developers.openai.com/codex/plugins/build)
