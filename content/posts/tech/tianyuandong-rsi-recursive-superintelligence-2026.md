@@ -1,6 +1,6 @@
 ---
 title: "田渊栋谈 RSI：从 Meta FAIR 到 46 亿美元 AI 实验室，递归自我改进、鱼缸里的鱼与 AI 时代的新文复兴"
-date: "2026-06-10T17:40:00+08:00"
+date: "2026-06-10T17:35:00+08:00"
 slug: "tianyuandong-rsi-recursive-superintelligence-2026"
 description: "硅谷 101 x 田渊栋 1.5 小时访谈深度整理：前 Meta FAIR 研究总监、被裁半年后创办 Recursive Superintelligence（RSI，估值 46 亿美元、8 位联创、25 人小团队）。押注 Recursive Self-Improvement（AI 自我进化）、可解释性、自动化研究。同时对 Neolab 生态（4 家头部 AI 实验室）、大公司同质化、员工蒸馏的伦理困境给出犀利判断。最后给出 AI 时代最经典的金句——鱼缸里的鱼与大公司之间跳来跳去的人。"
 tags: ["田渊栋", "RSI", "Recursive Superintelligence", "AI", "递归自我改进", "Anthropic", "Meta FAIR", "Neolab", "AI 实验室", "AI 伦理", "员工蒸馏", "硅谷 101", "访谈"]
