@@ -1,17 +1,17 @@
 ---
-title: "视频精度"
+title: "视频精读"
 date: "2026-06-10T17:56:00+08:00"
 lastmod: 2026-06-10T17:56:00+08:00
 draft: false
 aliases: ["/posts/video-decoding/"]
-description: "视频精度专栏入口。聚焦对中长视频访谈、演讲、教程的逐字稿转录 + 结构化整理 + 关键金句抽取 + 工程级判断。覆盖 AI、消费电子、加密货币、创业方法论等方向。"
+description: "视频精读专栏入口。聚焦对中长视频访谈、演讲、教程的逐字稿转录 + 结构化整理 + 关键金句抽取 + 工程级判断。覆盖 AI、消费电子、加密货币、创业方法论等方向。"
 cascade:
-  categories: ["视频精度"]
+  categories: ["视频精读"]
   target:
     kind: "page"
 ---
 
-这里是视频精度专栏。后续放在 `content/posts/video/` 下的文章均为中长视频（30 分钟到 4 小时）的深度解读产物，由 yt-dlp 拉取音视频、faster-whisper 转录逐字稿、按章节大纲整理核心论点、公开资料补充背景、cn-doc-writer 优化到五维 100 分。
+这里是视频精读专栏。后续放在 `content/posts/video/` 下的文章均为中长视频（30 分钟到 4 小时）的深度解读产物，由 yt-dlp 拉取音视频、faster-whisper 转录逐字稿、按章节大纲整理核心论点、公开资料补充背景、cn-doc-writer 优化到五维 100 分。
 
 来源覆盖（截至 2026-06-10）：
 
