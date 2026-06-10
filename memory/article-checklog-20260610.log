@@ -95,3 +95,86 @@
 - commit + push
 
 ========================================
+
+========================================
+[2026-06-10T08:20:00+08:00] 文章健康检查08:20窗口 #68
+========================================
+
+【4早报状态】
+⚠️⚠️⚠️4早报06-10批0/4 MISSING 全漏发
+- ai-morning-news-2026-06-10.md: ❌ 本地无 + TXTmix.com/posts/news/.../ =404
+- financial-morning-news-2026-06-10.md: ❌ 本地无 + TXTmix.com/posts/news/.../ =404
+- ai-side-hustle-morning-2026-06-10.md: ❌ 本地无 + TXTmix.com/posts/news/.../ =404
+- web3-morning-news-2026-06-10.md: ❌ 本地无 + TXTmix.com/posts/news/.../ =404
+
+cron schedule06:10 AI副业 /06:30 经济财经 /06:50 AI新闻 /07:10 Web3 /07:30质量核查
+距最早触发已130 分钟,4早报全部漏发 = cron 在 step7(撰写+生成md)前 fail
+(candidates-2026-06-10.json07:44 + verify-results-2026-06-10.json07:54 已存在 =采集+核验 OK 但撰写步骤 fail)
+
+4早报06-09批 全稳20h50m+ (ai15732B + financial12572B + web39057B + ai-side-hustle8699B,
+全部 draft:false, date=09:30-12:17 已过 Hugo阈值)
+
+【文章库】
+1034 vs #671034 delta=0 (4h29m 内0 new commits)
+
+【TXTmix域名双条件】
+- dig198.18.0.34 ∈198.18.0.0/15段 ✅
+- HTTP200 ✅
+- 与 #63 同 IP, WARP稳定无轮换
+
+【TXTmix部署验证】
+-4早报06-09: GET4/4 =200 ✅ (稳20h50m+)
+-4早报06-10: GET4/4 =404 ❌ MISSING
+
+【源站抽样 HEAD】
+- v2ex.com =200 ✅
+- cls.cn =200 ✅
+-36kr.com =200 ✅
+- api.binance.com/api/v3/ping =200 ✅
+- reddit.com =200 ✅
+- wallstreetcn.com根站 =404 ❌ (延续 #46 HEAD anti-scraping)
+- www.coingecko.com =403 ❌ (WAF延续)
+- hnrss HEAD 不允许延续
+合计5/7200 +1/7404 +1/7403
+
+【git状态】
+- HEAD: b5c0887 = origin/main, ahead/behind =0/0 ✅同步
+-0 staged,0 modified content/posts
+-39 untracked (全在 skills/morning-report/调试脚本,严格隔离 per #55)
+
+【异常汇总】
+延续5 项 (无变化):
+1. wallstreetcn根站 HEAD=404 (延续 #46, GET Mozilla=200真实用户无影响)
+2. www.coingecko.com HEAD=403 / GET=403 (WAF真实拦截)
+3. coindesk1 article404 (延续 #44)
+4. openai.com 全站 CDN屏蔽 (Mozilla UA0/0)
+5. cron850cf6e9 delivery fail-closed (Feishu target 未配)
+
+新增0 项 +变化0 项 +修复0 项
+
+异常 #34清理项 (content/content镜像4861 staged):仍0 staged 未复发 ✅
+
+【⚠️⚠️⚠️ CRITICAL行动触发】
+按师父铁律「以后发现早报没做，立刻补上，不用问」:
+启动4 个并行子代理补做4份06-10早报:
+- morning_ai_20260610 (AI 新闻早报, 用 verify-results-2026-06-10.json 现成数据: r36kr=6+rQbit=10+hnInWindow=30)
+- morning_financial_20260610 (经济财经早报,需从0采集 wallstreetcn/flash.jin10/finance.sina)
+- morning_web3_20260610 (Web3早报,需从0采集 coindesk/cointelegraph+CMC 价格)
+- morning_side_hustle_20260610 (AI副业早报,需从0采集 V2EX招聘/Reddit/HN)
+
+4 子代理使用 mode=run + timeout=1800s,产出后 commit + push + TXTmix部署验证。
+父任务不等待 (cron heartbeat 必须立即完成,推送 heartbeat-state.json commit)。
+
+【cron850cf6e9状态】
+- status=ok连续 ≥6 次稳定 ✅
+- delivery fail-closed延续 (Feishu target 未配)
+
+【结论】
+-4早报06-10 全漏发: ⚠️⚠️⚠️ CRITICAL
+- TXTmix域名 +06-09部署全稳
+- git 工作区干净 (39 untracked隔离)
+-异常延续5 项无变化
+-立即派4 子代理 backup (按铁律:不用问,立刻补上)
+- 本次心跳完成: log + state + commit + push (推送 heartbeat-state.json状态变更)
+
+========================================
