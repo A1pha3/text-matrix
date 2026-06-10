@@ -16,3 +16,7 @@ themes/LoveIt/exampleSite/resources/
 .vscode/
 .idea/
 .tmp-skill-install-test/
+
+# 临时回滚/备份（不进仓库）
+state/
+
