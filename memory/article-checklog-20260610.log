@@ -178,3 +178,25 @@ cron schedule06:10 AI副业 /06:30 经济财经 /06:50 AI新闻 /07:10 Web3 /07:
 - 本次心跳完成: log + state + commit + push (推送 heartbeat-state.json状态变更)
 
 ========================================
+
+[2026-06-10 12:21:35+08:00] 文章健康检查 cron850cf6e9 heartbeat #69 (距#68 08:20=3h57m, 正午稳态窗口)
+- 发现CRITICAL: #68 启动的 4 子代理 backup 已完成, 4 早报 06-10 本地落盘 11:23-12:01 但未 commit/push, 部署 URL 全 404
+- 立即修复: commit `7106ec3` 推送 4 早报 06-10 (ai 28087B + financial 26050B + web3 7968B + ai-side-hustle 11939B, 总 +595 行)
+- 部署验证: GitHub Actions run #27253112150 success 1m8s ✅
+- TXTmix 部署 URL GET Mozilla UA: 4/4 全 200 ✅
+  - https://txtmix.com/posts/news/ai-morning-news-2026-06-10/ → 200
+  - https://txtmix.com/posts/news/financial-morning-news-2026-06-10/ → 200
+  - https://txtmix.com/posts/news/web3-morning-news-2026-06-10/ → 200
+  - https://txtmix.com/posts/news/ai-side-hustle-morning-news-2026-06-10/ → 200
+- TXTmix 域名双条件通过: dig 198.18.0.36 ∈ 198.18.0.0/15 段 + HTTP 200 ✅ (WARP 轮换, IP 较 #68 198.18.0.34 变化)
+- 文章库 1036 (vs #68 1034, delta=+2 = +4 早报 06-10 -2 历史未commit文章)
+- HEAD = 7106ec3 = origin/main 同步 ahead/behind=0/0
+- 异常延续 5 项无变化
+  1. wallstreetcn 根站 HEAD-404 (article GET-200)
+  2. coingecko www 根站 403 WAF
+  3. coindesk 1 article 404 (#44)
+  4. openai.com 全站 CDN 屏蔽
+  5. cron 850cf6e9 delivery fail-closed (Feishu target 未配)
+- 异常 #34 清理项 (4861 staged) 仍 0 未复发
+- 36 untracked skills/morning-report/* 严格隔离 per #55 原则
+- 本次心跳完成: log + state + commit + push (推送 4 早报 + heartbeat-state.json状态变更)
