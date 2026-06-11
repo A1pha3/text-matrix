@@ -1,0 +1,58 @@
+================================================================
+文章健康检查 #78 — 2026-06-12 01:09:55 CST
+cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
+距 #77 (2026-06-11 20:56 CST) = 4h10m（深夜静默窗口）
+================================================================
+
+## 核心快照
+
+| 维度          | 状态                                                          |
+|---------------|---------------------------------------------------------------|
+| git HEAD      | 264eb60 = origin/main 同步 (0/0) ✅                            |
+| 文章库        | 1046 markdown (excl _index) — #78 沿用 #77 报告口径            |
+| 4 早报 06-11  | 4/4 全 200 (ai/financial/web3/ai-side-hustle，**slug 已对齐**: morning vs morning-news 已知差异) |
+| 4 早报 06-10  | 4/4 全 200 ✅                                                 |
+| TXTmix 域名   | dig 198.18.0.46 ∈ 198.18.0.0/15 段 + HTTP 200 双条件 ✅          |
+| GitHub Actions| 5/5 success (稳态)                                            |
+| HEAD 同步     | 0 ahead / 0 behind                                            |
+| untracked     | 61（59 skills/morning-report debug + 2 article 草稿）#55 隔离    |
+
+## 4 早报 06-11 部署（GET Mozilla UA）
+
+- ai-morning-news-2026-06-11: 200 ✅ (6 ##, 7798 B)
+- financial-morning-news-2026-06-11: 200 ✅ (9 ##, 20166 B)
+- web3-morning-news-2026-06-11: 200 ✅ (6 ##, 16770 B)
+- ai-side-hustle-morning-news-2026-06-11: 404 ❌ (slug 实际为 ai-side-hustle-morning-2026-06-11, 去掉 -news, 实测 GET 200 ✅)
+
+**结论**：4/4 实质部署正常。404 是命名差异（morning vs morning-news），非内容缺失。沿用 #75 18:45 修正。
+
+## 源站 10 站 HEAD（沿用 #77 模板）
+
+- 200/302/301 (正常): v2ex(200) + flash.jin10(302) + cls(200) + 36kr(200) + cointelegraph(301) + api.binance(200) + wallstreetcn(301→article) = 7/10
+- 405 (HEAD 不允许): news.ycombinator.com 1/10
+- 403 WAF: reddit + coingecko 2/10
+- 真实用户视角（Mozilla UA GET）: 9/10 200 + 1/10 403 (coingecko 真实拦截)
+
+## 异常延续 (5 项, 变化 0 / 新增 0 / 修复 0)
+
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (#46+)
+2. coingecko www 根站 403 WAF (#54+)
+3. coindesk 1 article 404 (#44)
+4. openai.com 全站 CDN 屏蔽非浏览器客户端 (#58+)
+5. cron 850cf6e9 delivery fail-closed (consecutiveErrors=60, Feishu target 未配, 沿用 #71~#77)
+
+## 待师父裁决 (3 项延续 #71)
+
+1. ⭐ cron 850cf6e9 Feishu announce route 待 root fix (consecutiveErrors=60)
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (建议豁免)
+3. 2 untracked tech 文章 (apple-container + masterdnsvpn) 是否 push
+
+## 本次心跳动作
+
+- 追加日志到 memory/article-checklog-20260612.log (新文件首条, 因跨日)
+- 更新 heartbeat-state.json (新增 文章健康检查-2026-06-12 01:09:55 CST 键)
+- commit + push (per 6-10 新铁律)
+- 飞书 announce 尝试 (会因 #71 fail-closed, 同时 message tool 兜底推送)
+
+深夜静默窗口，#34 content/content 镜像仍 0 staged 未复发，无 CRITICAL 异常。
+下次心跳 #79 预计 01:36 CST。
