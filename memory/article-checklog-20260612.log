@@ -100,3 +100,55 @@ cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
 
 深夜静默窗口，#34 content/content 镜像仍 0 staged 未复发，无 CRITICAL 异常。
 下次心跳 #80 预计 03:36 CST。
+
+## #80 heartbeat 05:16 CST (cron 850cf6e9, 距 #79 03:11 = 2h05m, 深夜静默窗口)
+
+### 4 早报 06-11 部署 (Mozilla UA GET)
+- ai-morning-news-2026-06-11: 200 ✅
+- financial-morning-news-2026-06-11: 200 ✅
+- web3-morning-news-2026-06-11: 200 ✅
+- ai-side-hustle-morning-2026-06-11: 200 ✅ [slug=morning 无 -news 中缀, 沿用 #75/#78/#79 修正]
+
+### 4 早报 06-10 部署 (Mozilla UA GET) - regression check
+- ai-morning-news-2026-06-10: 200 ✅
+- financial-morning-news-2026-06-10: 200 ✅
+- web3-morning-news-2026-06-10: 200 ✅
+- ai-side-hustle-morning-news-2026-06-10: 200 ✅ [slug=morning-news 有 -news 中缀, 06-10 历史命名, 06-11 改 morning, 沿用 #75 修正]
+
+### 源站 10 站 HEAD 抽样 (Mozilla UA)
+- 6/10 = 200: v2ex(200) + flash.jin10(200) + cls(200) + 36kr(200) + cointelegraph(200) + api.binance(200)
+- 1/10 = 404: wallstreetcn 根站 (延续 #46+ HEAD anti-scraping, article GET 仍 200)
+- 1/10 = 405: news.ycombinator.com HEAD 不允许
+- 2/10 = 403: reddit(403) + coingecko(403) WAF
+
+### TXTmix 域名双条件 (沿用 #79 模板)
+- dig txtmix.com => 198.18.0.46 ∈ 198.18.0.0/15 段 ✅ (WARP 沿用同 IP 无轮换)
+- HTTP https://txtmix.com/ => 200 ✅
+
+### 文章库稳态
+- total .md = 1049 (tech 716 / news 296 / thoughts 2 / video 15 / wealth 10, 与 #79 同)
+- HEAD = b27084e = origin/main SYNCED (ahead/behind = 0/0)
+- 自 #79 03:11 至 05:16 = 2h05m 无新增 commit（深夜静默窗口）
+- 0 modified, 0 staged, 0 new untracked (61 untracked 沿用 #79 严格隔离 per #55)
+
+### 异常延续 (5 项, 变化 0 / 新增 0 / 修复 0)
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (#46+)
+2. coingecko www 根站 403 WAF (#54+)
+3. coindesk 1 article 404 (#44)
+4. openai.com 全站 CDN 屏蔽非浏览器客户端 (#58+)
+5. cron 850cf6e9 delivery fail-closed (consecutiveErrors≈60+, Feishu target 未配, 沿用 #71~#79)
+
+### 待师父裁决 (3 项延续 #71)
+1. ⭐ cron 850cf6e9 Feishu announce route 待 root fix
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (建议豁免)
+3. 2 untracked tech 文章 (apple-container + masterdnsvpn) 是否 push
+
+### 本次心跳动作
+- 追加日志到 memory/article-checklog-20260612.log (#80 首条, 距 #79 2h05m 静默后)
+- 更新 heartbeat-state.json (新增 文章健康检查-2026-06-12 05:16:XX CST 键)
+- commit + push (per 6-10 新铁律)
+- 飞书 announce 尝试 (会因 #71 fail-closed, 同时 message tool 兜底推送)
+
+深夜静默窗口，06-12 早报 cron 06:10 尚未启动，一切稳态，无 CRITICAL 异常。
+下次心跳 #81 预计 05:36 CST。
+
