@@ -56,3 +56,47 @@ cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
 
 深夜静默窗口，#34 content/content 镜像仍 0 staged 未复发，无 CRITICAL 异常。
 下次心跳 #79 预计 01:36 CST。
+
+## #79 heartbeat 03:11 CST (cron 850cf6e9, 距 #78 01:06 = 2h05m, 深夜静默窗口)
+
+### 4 早报 06-11 部署 (Mozilla UA GET)
+- ai-morning-news-2026-06-11: 200 ✅ (23 h-tags, 33672 B)
+- financial-morning-news-2026-06-11: 200 ✅ (33 h-tags, 51228 B)
+- web3-morning-news-2026-06-11: 200 ✅ (31 h-tags, 42794 B)
+- ai-side-hustle-morning-2026-06-11: 200 ✅ (26 h-tags, 40362 B) [slug=morning 无 -news 中缀，与 #78 同]
+
+### 源站 10 站 Mozilla UA GET
+- 8/10 = 200: v2ex(200) + flash.jin10(200) + cls(200) + 36kr(200) + cointelegraph(200) + api.binance(200) + wallstreetcn(200) + news.ycombinator.com(200)
+- 2/10 = 403: reddit(403) + coingecko(403)
+- HEAD vs GET 差异: wallstreetcn HEAD-404/GET-200 (延续 #46+), HN HEAD-405/GET-200 (延续), reddit 403/403, coingecko 403/403
+
+### TXTmix 域名双条件 (沿用模板)
+- dig txtmix.com => 198.18.0.46 ∈ 198.18.0.0/15 段 ✅
+- HTTP https://txtmix.com/ => 200 ✅
+
+### 文章库稳态
+- total .md = 1049 (tech 716 / news 296 / thoughts 2 / video 15 / wealth 10, 与 #78 同)
+- draft:false = 882 + draft:true = 1 + 未来日期 = 0
+- HEAD = 24cfe37 = origin/main SYNCED (ahead/behind = 0/0)
+- 自 #78 01:06 至 03:11 = 2h05m 无新增文章 commit（深夜静默）
+
+### 异常延续 (5 项, 变化 0 / 新增 0 / 修复 0)
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (#46+)
+2. coingecko www 根站 403 WAF (#54+)
+3. coindesk 1 article 404 (#44)
+4. openai.com 全站 CDN 屏蔽非浏览器客户端 (#58+)
+5. cron 850cf6e9 delivery fail-closed (consecutiveErrors≈60+, Feishu target 未配, 沿用 #71~#78)
+
+### 待师父裁决 (3 项延续 #71)
+1. ⭐ cron 850cf6e9 Feishu announce route 待 root fix
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (建议豁免)
+3. 2 untracked tech 文章 (apple-container + masterdnsvpn) 是否 push
+
+### 本次心跳动作
+- 追加日志到 memory/article-checklog-20260612.log (2h05m 静默后 #79 首条)
+- 更新 heartbeat-state.json (新增 文章健康检查-2026-06-12 03:11:24 CST 键)
+- commit + push (per 6-10 新铁律)
+- 飞书 announce 尝试 (会因 #71 fail-closed, 同时 message tool 兜底推送)
+
+深夜静默窗口，#34 content/content 镜像仍 0 staged 未复发，无 CRITICAL 异常。
+下次心跳 #80 预计 03:36 CST。
