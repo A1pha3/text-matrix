@@ -5,7 +5,7 @@ draft: false
 slug: web3-morning-news-2026-06-11
 description: "Web3 行业日报：5 月 CPI 4.2% 落地比特币回升、Raydium 遭 134 万美元漏洞攻击、日本三大行确认 2027 财年联合发稳定币、Tether 牵头 14 亿美元投资人形机器人 NEURA、Botanix 比特币 L2 7 月关停"
 tags: ["Web3", "加密货币", "区块链", "早报"]
-categories: ["新闻"]
+categories: ["行业快讯"]
 summary: "Web3 行业日报：5 月 CPI 4.2% 落地比特币回升、Raydium 遭 134 万美元漏洞攻击、日本三大行确认 2027 财年联合发稳定币、Tether 牵头 14 亿美元投资人形机器人 NEURA、Botanix 比特币 L2 7 月关停"
 ---
 
