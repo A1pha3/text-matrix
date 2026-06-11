@@ -281,3 +281,73 @@
 - commit + push (per 6-10 新铁律, 等同 log+state 模式)
 - 无新异常, 无新文章, 无早报补做需求
 - 尝试飞书 announce (会因 #71 fail-closed 重现, 仍按惯例 attempt 一次)
+
+# 文章健康检查 #77 — 20:56 窗口 (cron 850cf6e9 heartbeat)
+
+**时间**: 2026-06-11T21:04:22+08:00 (周四)
+**距 #76 (19:50)**: ~1h06m
+**窗口性质**: 晚间稳态 (evening stable, 4 早报 06-11 已稳 13h+)
+
+## 4 早报 06-11 批: ✅ ALL DONE (verify gate 复跑)
+
+| 类别 | 文件 | 大小 | ## 数 | draft | 状态 |
+|------|------|------|-------|-------|------|
+| AI 新闻 | ai-morning-news-2026-06-11.md | 7798 B | 6 | false | ✅ 稳 13h20m+ |
+| 经济财经 | financial-morning-news-2026-06-11.md | 20166 B | 9 | false | ✅ 稳 10h32m+ |
+| Web3 | web3-morning-news-2026-06-11.md | 16770 B | 6 | false | ✅ 稳 10h37m+ |
+| AI 副业 | ai-side-hustle-morning-2026-06-11.md | 13158 B | 6 | false | ✅ 稳 11h37m+ |
+
+→ 4/4 全部 ≥6 ## 标题 (满足 verify.sh 阈值) + draft:false, 稳态运行
+
+## 4 早报 06-10 批: 稳 34h+
+
+- 8/8 部署 URL GET 200 (ai/financial/web3/ai-side-hustle 4 篇 × 2 部署)
+- web3 c8260d1 categories 修正 + c8260d1 slug/description 修复持续生效
+
+## TXTmix 部署验证
+
+- 4 早报 06-11: 4/4 = 200 ✅
+- 4 早报 06-10: 4/4 = 200 ✅
+- 共 8/8 全 200
+
+## TXTmix 域名双条件
+
+- dig: txtmix.com → 198.18.0.46 ∈ 198.18.0.0/15 段 ✅ (与 #76 同 IP, WARP 无轮换)
+- HTTP 根域: 200 ✅
+- 沿用 #76 验证, 本窗口未重复
+
+## GitHub Actions
+
+- 自 #76 (19:50) 以来 0 new commits → 0 new Actions
+- Actions 5/5 completed/success (稳态)
+- 最新 96f33f4 (17:45 CST, Dario Amodei 部署, 3h+ ago)
+
+## 文章库 + Git
+
+- 文章库: 1049 markdown (vs #76=1049, delta=0, 1h+ 晚间稳态无新提交)
+- 0 modified ✅
+- 61 untracked 严格隔离: 59 skills/morning-report/*.mjs/.json/.py debug + 2 article 草稿 (apple-container + masterdnsvpn) per #55 原则不 add/commit/动
+- HEAD = 7149967 = origin/main ✅ SYNCED (0/0)
+- #34 content/content 镜像: ✅ 仍 0 staged, 未复发
+
+## 异常延续 (5 项, 变化 0/新增 0/修复 0)
+
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (#46+)
+2. coingecko www 根站 403 WAF (#54+)
+3. coindesk 1 article 404 (#44)
+4. openai.com 全站 CDN 屏蔽非浏览器客户端 (#58+)
+5. cron 850cf6e9 delivery fail-closed (Feishu target 未配, 累计 ~56+ errors 延续 #76)
+
+## 待师父裁决 (3 项延续 #71, 无新增)
+
+1. cron 850cf6e9 Feishu announce route 待修复 (delivery fail-closed 累计 56+ errors, 待 root fix)
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (已 pushed history, 无法重做, 建议豁免说明)
+3. 2 untracked tech 文章 (apple-container / masterdnsvpn) 是否 push (待师父 review 后定夺)
+
+## 本次心跳动作
+
+- 追加日志到 memory/article-checklog-20260611.log
+- 更新 heartbeat-state.json (新增 文章健康检查-20:56 键)
+- commit + push (per 6-10 新铁律)
+- 飞书 announce 尝试 (会因 #71 fail-closed 重现, 同时 message tool 兜底推送)
+
