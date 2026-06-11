@@ -90,3 +90,108 @@
 - 更新 heartbeat-state.json
 - commit + push
 - 无新文章动作
+
+# 第 75 次检查 - 2026-06-11 18:45 CST (cron 850cf6e9 heartbeat, 距 #74 16:33 已 2h12m, 傍晚稳态窗口)
+
+## 检查摘要
+
+- **窗口时间**: 2026-06-11T18:45:00+08:00 (cron 850cf6e9 #75)
+- **运行环境**: isolated lightContext, heartbeat 触发
+- **距上次心跳**: 2h12m (#74 16:33)
+- **HEAD**: 96f33f4 = origin/main 同步 (0 ahead / 0 behind)
+- **since #74 (2h12m)**: 1 new commit (96f33f4 Dario Amodei 政策白皮书全文翻译+五维精读 99/100)
+
+## 4 早报 06-11 批稳态 (11h+ 老化)
+
+| 文件 | 部署 | 本地 | ## | draft | date | 老化 |
+|---|---|---|---|---|---|---|
+| ai-morning-news-2026-06-11 | 200 | 7798B | 6 | false | 07:20:00 ✅ | 11h25m+ |
+| financial-morning-news-2026-06-11 | 200 | 20166B | 9 | false | 10:25:00 ✅ | 8h20m+ |
+| web3-morning-news-2026-06-11 | 200 | 16770B | 6 | false | 10:25:00 ✅ | 8h20m+ |
+| ai-side-hustle-morning-2026-06-11 | 200 | 13158B | 6 | false | 09:11:45 ✅ | 9h33m+ |
+
+4/4 部署 URL 全 200, 已过 Hugo 阈值 8h20m-11h25m+
+
+## 4 早报 06-10 批稳态 (32h+ 老化)
+
+8/8 URL 部署全 200, 06-10 batch 已稳 32h14m+, 全部 draft:false
+
+## 文章库状态
+
+- **文章库**: 1049 (tech 716 / news 296 / thoughts 2 / video 15 / wealth 10, 不含根 md 20)
+- **vs #74**: delta = +2 (since 16:33: 1 Dario Amodei + 1 由 tech 索引扫描差异, 实际新增 1)
+- **draft:false**: 891 / draft:true: 1 (autocli 历史)
+- **未来日期文章**: 0 ✅
+- **新文章**: `content/posts/tech/dario-amodei-policy-ai-exponential.md` (43846B, 353 行, 14 ## 标题, categories=[技术笔记], 99/100 评分, Anthropic CEO 政策白皮书全文翻译+五维精读)
+
+## 新增 Dario Amodei 文章 verify gate 验证
+
+- bash scripts/morning-news-verify.sh content/posts/tech/dario-amodei-policy-ai-exponential.md → **exit 0 ✅ PASS**
+- 大小: 43846 bytes
+- date: 2026-06-11 ≤ 2026-06-11 ✅
+- 隐私脱敏禁词: 干净 ✅
+- 链接 200 验证: 25 条检查, 4 条失败 (legiscan/SB-1047/nysenate/NYT 4 个 403 反爬), **失败 4 ≤ 8 容忍, 通过** ✅
+- 新闻条数: 14 ≥ 6 ✅
+- 6-10 新铁律已自动 push: commit 96f33f4 17:45:40 → GH Actions run 09:45:49Z completed success → TXTmix 部署 HTTP 200 ✅
+
+## TXTmix 域名双条件
+
+- dig: 198.18.0.46 ∈ 198.18.0.0/15 段 ✅ (WARP 轮换同段, 与 #74 一致)
+- HTTP: 200 ✅
+
+## GitHub Actions (近 5 次, 含 96f33f4)
+
+- 5/5 completed/success
+- 最新: 96f33f4 17:45:49 CST (Dario Amodei 部署, 1h ago)
+- 0abe7ee 16:46 CST (financial frontmatter fix 部署, 2h ago)
+- 71b078f/c8260d1/e9a3f74 历史部署稳
+
+## 工作区状态
+
+- 0 modified files ✅
+- 61 untracked 严格隔离延续: 59 skills/morning-report/*.mjs/.json/.py debug 脚本 + 2 article 草稿 (apple-container + masterdnsvpn)
+- per #55 原则不 add/commit/动
+
+## 异常 #34 清理项
+
+- ✅ content/content/ 镜像不存在 (4861 staged 仍 0, 未复发)
+
+## cron 状态盘点 (来自 openclaw cron list)
+
+- 850cf6e9 文章健康检查: last=1h ago, status=running, **delivery fail-closed 延续** (announce route 待修复)
+- 178f0649 心跳触发器: last=31m ago, ok
+- 87f06cc6 心跳任务健康检查: last=5m ago, ok
+- b07f03b1 验证isolated-HEARTBEAT: last=2m ago, ok
+- ad2640c0 心跳保活: last=40m ago, ok
+- 878d492b AI新闻早报: last=11h ago, ok ✅
+- 27e08237 经济财经早报: last=11h ago, ok ✅
+- 28270175 Web3早报: last=11h ago, **status=error** (主 cron step7 撰写 fail 但 backup 子代理按 6-10 新铁律已补做, 今日 4/4 早报全部到位)
+- abd75bdf AI副业早报: last=10h ago, ok ✅
+- 0045a8a5/abe31cfa/bf7472fd GitHub 趋势榜: ok (06-09 师父 disable 趋势榜文档后 cron 仍跑, announce 受影响)
+
+## 异常延续清单 (5 项延续, 变化 0)
+
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (延续 #46+)
+2. coingecko www 根站 403 WAF (延续)
+3. coindesk 1 article 404 (延续 #44)
+4. openai.com 全站 CDN 屏蔽 (延续 #58)
+5. cron 850cf6e9 delivery fail-closed (Feishu target 未配)
+
+## 异常变化
+
+- 变化 0 / 新增 0 / 修复 0
+- (#71 修复的 financial frontmatter YAML 转义 → 0abe7ee 已生效, 持续 8h+ 验证)
+
+## 待师父裁决 (3 项延续 #71, 无新增)
+
+1. cron 850cf6e9 Feishu announce route 待修复 (delivery fail-closed 状态)
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (历史已 push, 无法重做)
+3. 2 untracked tech 文章 (apple-container + masterdnsvpn) 是否 commit/push
+
+## 本次心跳动作
+
+- 追加日志到 memory/article-checklog-20260611.log
+- 更新 heartbeat-state.json (新增 文章健康检查-18:45 键)
+- commit + push (per 6-10 新铁律, 等同 log+state 模式)
+- 新增文章 verify gate PASS 自动 push 路径 (Dario Amodei) 实战 1 次 ✅
+- 无新异常
