@@ -195,3 +195,89 @@
 - commit + push (per 6-10 新铁律, 等同 log+state 模式)
 - 新增文章 verify gate PASS 自动 push 路径 (Dario Amodei) 实战 1 次 ✅
 - 无新异常
+
+========================================
+[2026-06-11 19:52+08:00] 文章健康检查 cron850cf6e9 heartbeat #76 (距#75 18:50=1h02m, 晚间稳态窗口)
+
+## 文章库状态
+
+- **文章库**: 1049 (tech 716 / news 296 / thoughts 2 / video 15 / wealth 10, 不含根 md 20)
+- **vs #75** (18:45): delta = 0 (晚间稳态, 无新增, 距 Dario Amodei 18:45 已 1h7m)
+- **draft:false**: 891 / draft:true: 1 (autocli 历史)
+
+## 4 早报 06-11 部署验证 (cron TXTmix 200 OK 全稳)
+
+- ai-morning-news-2026-06-11: 7798B / HTTP 200 ✅
+- financial-morning-news-2026-06-11: 20166B / HTTP 200 ✅ (slug YAML 引号包裹, fallback 正常)
+- web3-morning-news-2026-06-11: 16770B / HTTP 200 ✅ (c8260d1 categories 修正持续生效)
+- ai-side-hustle-morning-2026-06-11: 13158B / HTTP 200 ✅ (slug=ai-side-hustle-morning-2026-06-11, 无 -news-)
+
+## 4 早报 06-10 部署回归验证 (regression check)
+
+- ai-morning-news-2026-06-10: 28087B / HTTP 200 ✅
+- financial-morning-news-2026-06-10: 26050B / HTTP 200 ✅
+- web3-morning-news-2026-06-10: 7974B / HTTP 200 ✅ (slug 字段缺失, fallback 到文件名, 部署正确)
+- ai-side-hustle-morning-news-2026-06-10: 11939B / HTTP 200 ✅ (历史欠账 5## 仍存, 无 push 计划)
+
+## 今日所有 cron 状态 (来自 jobs-state.json)
+
+- 850cf6e9 文章健康检查: last=1h02m ago, **consecutiveErrors=55** ⚠️ (delivery fail-closed 延续)
+- 178f0649 心跳触发器: ok
+- 87f06cc6 心跳任务健康检查: ok
+- b07f03b1 验证isolated-HEARTBEAT: ok
+- ad2640c0 心跳保活: ok
+- 878d492b AI新闻早报: last=12h32m ago, status=ok (07:20 完成)
+- 27e08237 经济财经早报: last=12h12m ago, status=ok (07:40 完成)
+- 28270175 Web3早报: last=11h49m ago, status=error 累计 3 次 (08:03 cron step7 撰写 fail, backup 子代理按 6-10 新铁律已补做完成)
+- abd75bdf AI副业早报: last=10h44m ago, status=ok (09:08 完成, 4/4 早报 06-11 全到位)
+- 0045a8a5/abe31cfa/bf7472fd GitHub 趋势榜: ok (06-09 师父 disable 趋势榜文档后 cron 仍跑, announce 受影响)
+
+## TXTmix 域名双条件
+
+- dig: 198.18.0.46 ∈ 198.18.0.0/15 段 ✅ (WARP 轮换同段, 与 #75 一致)
+- HTTP 根域: 200 ✅
+
+## GitHub Actions (近 5 次, 自 #75 18:50 以来无新部署)
+
+- 5/5 completed/success (稳态)
+- 最新: 96f33f4 17:45:49 CST (Dario Amodei 部署, 2h ago)
+- 0abe7ee 16:46 CST (financial frontmatter fix 部署, 3h ago)
+
+## 工作区状态
+
+- 0 modified files ✅
+- 61 untracked 严格隔离延续: 59 skills/morning-report/* debug 脚本 + 2 article 草稿 (apple-container + masterdnsvpn)
+- per #55 原则不 add/commit/动
+
+## 异常 #34 清理项
+
+- ✅ content/content/ 镜像不存在 (4861 staged 仍 0, 未复发)
+
+## 异常延续清单 (5 项延续, 变化 0)
+
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (延续 #46+)
+2. coingecko www 根站 403 WAF (延续)
+3. coindesk 1 article 404 (延续 #44)
+4. openai.com 全站 CDN 屏蔽 (延续 #58)
+5. cron 850cf6e9 delivery fail-closed (Feishu target 未配, 累计 55 errors)
+
+## 异常变化 (vs #75)
+
+- 变化 0 / 新增 0 / 修复 0
+- (#71 修复的 financial frontmatter YAML 转义 → 0abe7ee 已生效, 持续 10h+ 验证)
+- 新发现 minor: web3 06-10 slug 字段缺失 (fallback 正常, 无需修复)
+- 新发现 minor: financial 06-11 slug YAML 引号包裹 (fallback 正常, 无需修复)
+
+## 待师父裁决 (3 项延续 #71, 无新增)
+
+1. cron 850cf6e9 Feishu announce route 待修复 (delivery fail-closed 状态, 累计 55 errors)
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (历史已 push, 无法重做)
+3. 2 untracked tech 文章 (apple-container + masterdnsvpn) 是否 commit/push
+
+## 本次心跳动作
+
+- 追加日志到 memory/article-checklog-20260611.log
+- 更新 heartbeat-state.json (新增 文章健康检查-19:50 键)
+- commit + push (per 6-10 新铁律, 等同 log+state 模式)
+- 无新异常, 无新文章, 无早报补做需求
+- 尝试飞书 announce (会因 #71 fail-closed 重现, 仍按惯例 attempt 一次)
