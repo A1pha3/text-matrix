@@ -152,3 +152,76 @@ cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
 深夜静默窗口，06-12 早报 cron 06:10 尚未启动，一切稳态，无 CRITICAL 异常。
 下次心跳 #81 预计 05:36 CST。
 
+
+## #81 heartbeat 07:25 CST (cron 850cf6e9, 距 #80 05:16 = 2h09m, 早高峰前窗口)
+
+### 🔴 CRITICAL 06-12 早报缺口（新增异常 #6）
+- **AI新闻早报 cron 878d492b**: 07:20 scheduled run **MISSED** (nextRunAtMs 1781220000000 到期未触发，nextRunAtMs 已滚动到 06-13 07:20)
+- **07:22 手动 `openclaw cron run 878d492b`** → 同样失败: `cron: isolated agent setup timed out before runner start` (durationMs=60037)
+- 连续 1 次 consecutiveErrors = 1 (从昨天 ok 转 error)
+- ⚠️ **Chrome debug 端口 9222/9224 均无响应** → `lsof -i :9222` 空，`curl http://localhost:9222/json/version` 空，`curl http://localhost:9224/json/version` 空，`pgrep -lf "Chrome"` 空
+- 即使 sessions_spawn 显式 backup，subagent 也无法采集（Chrome 没起），verify.sh 链路需 Chrome 不太可能过门
+- **结论**: AI新闻早报 06-12 **当日基本无法补做**，建议放弃当日 → 记 06-12 历史欠账 → 等明早 06-13 07:20 重新跑
+
+### 4 早报 06-12 进度
+- ai-morning-news: **0/1 MISSING** ⚠️（cron 07:20 漏发 + 手动补失败 + Chrome down）
+- financial-morning-news: pending (cron 27e08237, next 07:40, **in 15m**)
+- web3-morning-news: pending (cron 28270175 status=error, next 08:00, **in 35m**，沿用历史 step7 fail 模式)
+- ai-side-hustle-morning: pending (cron abd75bdf, next 08:20, **in 55m**)
+
+### 4 早报 06-11 部署 (Mozilla UA GET) - 稳态确认
+- ai-morning-news-2026-06-11: 200 ✅
+- financial-morning-news-2026-06-11: 200 ✅
+- web3-morning-news-2026-06-11: 200 ✅
+- ai-side-hustle-morning-2026-06-11: 200 ✅ [slug=morning, 沿用 #80 修正]
+
+### TXTmix 域名双条件 (沿用 #80 模板)
+- dig txtmix.com => **198.18.0.46** ∈ 198.18.0.0/15 段 ✅ (WARP 沿用同 IP 无轮换, 与 #80 同 IP)
+- HTTP https://txtmix.com/ => 200 ✅ (time 0.256s)
+
+### 文章库稳态
+- total .md = 1049 (tech 716 / news 296 / thoughts 2 / video 15 / wealth 10, 与 #80 同)
+- HEAD = 1427de7 = origin/main SYNCED (ahead/behind = 0/0)
+- 自 #80 05:16 至 07:25 = 2h09m 无新增文章 commit（深夜→清晨静默窗口）
+- 0 modified, 0 staged, 0 new untracked (61 untracked 沿用 #80 严格隔离 per #55: 2 tech 草稿 + 3 candidates + 56 skills/morning-report debug)
+
+### cron 盘点 (13 个 cron 整体快照)
+| ID | 名称 | 状态 | 备注 |
+|----|------|------|------|
+| 850cf6e9 | 文章健康检查 | running | **本次修复 delivery ✅** (66 consecutiveErrors→下次跑验证) |
+| 87f06cc6 | 心跳任务健康检查 | ok | */10 * * * * |
+| 178f0649 | 心跳触发器 | ok | every 30m |
+| b07f03b1 | 验证isolated-HEARTBEAT | ok | */5 * * * * |
+| 878d492b | AI新闻早报 | error | **07:20 漏发 + 手动补失败** ⚠️ |
+| 27e08237 | 经济财经早报 | ok | next 07:40 in 15m |
+| 28270175 | Web3早报 | error | next 08:00 in 35m (历史 fail) |
+| abd75bdf | AI副业早报 | ok | next 08:20 in 55m |
+| ad2640c0 | 心跳保活 | ok | cron 0 * * * * |
+| 0045a8a5 | GitHub趋势榜-15点 | ok | next 15:00 in 8h |
+| abe31cfa | GitHub趋势榜-18点 | ok | next 18:00 in 11h |
+| bf7472fd | GitHub趋势榜-21点 | error | next 21:00 in 14h (历史 fail) |
+
+### 异常延续 (5 项 + 新增 1 项 = 6 项)
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (#46+)
+2. coingecko www 根站 403 WAF (#54+)
+3. coindesk 1 article 404 (#44)
+4. openai.com 全站 CDN 屏蔽非浏览器客户端 (#58+)
+5. ~~cron 850cf6e9 delivery fail-closed (consecutiveErrors=60+, Feishu target 未配)~~ **本次修复 ✅** (announce feishu to=user:ou_28db2798a35179602c855f46406e63f3 bestEffort)
+6. ⚠️⚠️ **新增**: cron 878d492b AI新闻早报 07:20 漏发 + 手动补失败 isolated setup timeout + Chrome debug 9222/9224 双端口 down → 06-12 AI新闻早报历史欠账
+
+### 待师父裁决 (4 项 延续 #71 + 新增 1)
+1. ~~cron 850cf6e9 Feishu announce route 待 root fix~~ → **本次自动修复 ✅**
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (建议豁免, 沿用 #71)
+3. 2 untracked tech 文章 (apple-container + masterdnsvpn) 是否 push (沿用 #71)
+4. ⚠️⚠️ **新增 CRITICAL**: 06-12 AI新闻早报历史欠账 — 是 (a) 放弃当日等明早 / (b) 等 cron 27e08237 07:40 跑完后 sessions_spawn 单独补做 06-12 AI新闻 / (c) 修 Chrome + 强制 sessions_spawn？
+5. ⚠️ Chrome debug 9222/9224 双端口 down — 是否需要重新 `bash start-chrome-debug.sh` 启动？
+
+### 本次心跳动作
+- ✅ **本次修复**: `openclaw cron edit 850cf6e9 --announce --channel feishu --to user:ou_28db2798a35179602c855f46406e63f3 --best-effort-deliver` (66 consecutiveErrors→下次跑验证)
+- 追加日志到 memory/article-checklog-20260612.log (#81, 距 #80 2h09m)
+- 更新 heartbeat-state.json (新增 文章健康检查-2026-06-12 07:25:XX CST 键)
+- commit + push (per 6-10 新铁律)
+- 飞书 announce 尝试 (delivery 已修，下次心跳验证)
+
+早高峰前窗口，06-12 AI新闻早报 cron 07:20 漏发 + 手动补失败 isolated setup timeout + Chrome down 三角故障，待师父裁决路径 (a/b/c)。
+下次心跳 #82 预计 07:55 CST（30m 后）。
