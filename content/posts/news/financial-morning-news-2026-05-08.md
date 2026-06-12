@@ -3,6 +3,7 @@ title: "经济财经早报 2026-05-08"
 date: 2026-05-08T08:00:00+08:00
 draft: false
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 description: "每日经济财经要闻速览，涵盖宏观经济、公司财报、行业动态"
 slug: financial-morning-news-2026-05-08
 tags: ["财经", "早报", "宏观经济", "财报", "股市"]

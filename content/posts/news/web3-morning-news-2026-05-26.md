@@ -6,6 +6,7 @@ slug = 'web3-morning-news-2026-05-26'
 description = '2026年5月26日 Web3 早报，涵盖加密货币行情与 Web3 行业动态。'
 categories = ['行业快讯']
 tags = ['Web3', '加密货币', '早报']
+aliases = ["/categories/news/"]
 +++
 
 # Web3早报 | 2026年5月26日

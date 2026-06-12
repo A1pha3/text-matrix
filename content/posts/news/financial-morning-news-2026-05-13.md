@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "股市", "大宗商品", "地缘政治", "韩股"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

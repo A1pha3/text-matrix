@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["BTC", "ETH", "SOL", "XRP", "加密货币", "Web3"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # Web3早报 | 2026年4月17日

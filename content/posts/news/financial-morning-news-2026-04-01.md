@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["伊朗战争", "美联储", "OpenAI", "AI芯片", "中国经济", "英国经济"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报：2026年4月1日

@@ -6,6 +6,7 @@ categories: ["行业快讯"]
 tags: ["Web3", "加密货币", "区块链", "DeFi", "比特币", "以太坊"]
 description: "每日 Web3、区块链、加密货币市场最新动态，涵盖 BTC、ETH、DeFi、监管政策"
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # Web3 加密市场早报 2026-04-04

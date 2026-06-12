@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "美股", "A股", "CPI", "美联储", "SpaceX", "英伟达", "黄金", "原油", "伊朗"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

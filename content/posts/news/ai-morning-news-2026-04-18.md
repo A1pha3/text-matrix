@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "人形机器人", "智元机器人", "具身智能", "纳指", "Sora", "OpenAI"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # AI新闻早报｜2026年4月18日

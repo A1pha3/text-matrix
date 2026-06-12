@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Claude Code", "OpenAI", "DeepSeek", "AI安全", "具身智能", "Hacker News"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # AI新闻早报：2026年4月1日

@@ -3,6 +3,7 @@ title: "AI新闻早报 2026-05-08"
 date: 2026-05-08T07:38:00+08:00
 draft: false
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 description: "每日AI行业新闻速览，涵盖产品发布、技术进展、学术成果、行业动态"
 slug: ai-morning-news-2026-05-08
 tags: ["AI", "早报", "大模型", "AI视频", "Agent"]

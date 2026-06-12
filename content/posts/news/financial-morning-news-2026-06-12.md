@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "美股", "黄金", "原油", "欧央行", "美联储", "伊朗", "KOSPI", "黄金ETF", "小麦", "PCB"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

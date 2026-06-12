@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "加密货币", "BTC", "ETH", "DeFi"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # Web3早报：2026年4月6日

@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "BTC", "ETH", "SEC", "监管", "ETF"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

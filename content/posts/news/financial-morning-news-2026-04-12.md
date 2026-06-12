@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["经济", "中东战争", "石油", "AI", "美联储"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报 2026-04-12

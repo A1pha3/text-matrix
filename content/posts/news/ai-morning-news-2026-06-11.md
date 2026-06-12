@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Anthropic", "DarioAmodei", "Google", "DiffusionGemma", "Apache", "Burr", "36kr", "量子位", "抖音", "虚拟细胞", "百曜科技", "小鹏", "机器人", "Mythos", "Fable"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

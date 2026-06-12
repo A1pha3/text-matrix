@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "大模型", "Anthropic", "Agent", "OpenAI", "安全治理"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报 | 2026年5月14日

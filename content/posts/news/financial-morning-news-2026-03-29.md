@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["伊朗战争", "美联储", "油价", "SpaceX", "滞胀"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # 金融时报（2026-03-29）

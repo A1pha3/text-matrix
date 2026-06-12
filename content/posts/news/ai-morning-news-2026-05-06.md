@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "OpenAI", "豆包", "xAI", "高通"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

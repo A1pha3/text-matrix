@@ -6,6 +6,7 @@ slug = 'web3-morning-news-2026-05-05'
 description = '2026年5月5日 Web3 早报，涵盖加密货币行情、DeFi、NFT 等动态。'
 categories = ['行业快讯']
 tags = ['Web3', '加密货币', '早报']
+aliases = ["/categories/news/"]
 +++
 
 # Web3 早报 | 2026年5月5日

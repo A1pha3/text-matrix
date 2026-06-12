@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "美股", "A股", "CPI", "美联储", "霍尔木兹", "原油", "人民币", "SpaceX", "黄金", "SK海力士", "中际旭创"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

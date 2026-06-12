@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美股", "A股", "港股", "大宗商品", "外汇"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

@@ -8,6 +8,7 @@ tags: ["经济", "金融", "投资", "美股", "A股"]
 description: "经济财经早报，汇总重要财经资讯和市场动态。"
 draft: false
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报 2026-04-08

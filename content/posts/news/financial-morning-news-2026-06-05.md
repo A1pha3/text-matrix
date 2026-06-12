@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "美股", "A股", "日银加息", "原油", "SpaceX", "Anthropic"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

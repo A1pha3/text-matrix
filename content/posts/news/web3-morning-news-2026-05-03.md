@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["比特币", "以太坊", "Web3", "稳定币", "DeFi"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

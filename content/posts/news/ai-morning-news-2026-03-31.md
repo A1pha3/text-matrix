@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Qwen", "Claude", "Kimi", "Mistral", "GitHub", "开源", "大模型"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # AI新闻早报：2026年3月31日

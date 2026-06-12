@@ -6,6 +6,7 @@ slug = 'financial-morning-news-2026-04-14'
 description = '2026年4月14日经济财经早报，涵盖中美谈判进展、伊朗局势、A股回购等热点。'
 categories = ['行业快讯']
 tags = ['财经', '早报']
+aliases = ["/categories/news/"]
 +++
 
 # 经济财经早报 2026-04-14

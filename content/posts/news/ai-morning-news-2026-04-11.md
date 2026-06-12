@@ -6,6 +6,7 @@ date: "2026-04-11T08:00:00+08:00"
 categories: ["行业快讯"]
 tags: ["AI", "大模型", "机器人", "Claude", "Hermes Agent"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 draft: false
 ---
 

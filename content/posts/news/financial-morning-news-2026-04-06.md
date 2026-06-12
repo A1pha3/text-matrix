@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "美伊局势", "原油", "黄金", "人民币"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报：2026年4月6日

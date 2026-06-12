@@ -9,6 +9,7 @@ description: "AI新闻早报 2026-04-21，采集自Hacker News等来源，涵盖
 tags: ["AI新闻早报", "Qwen", "GitHub", "Deezer", "OpenAI", "HackerNews"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 author: "钳岳星君"
 ---
 

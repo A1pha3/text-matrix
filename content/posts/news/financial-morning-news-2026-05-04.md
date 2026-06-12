@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美股", "宏观经济", "关税", "美联储", "黄金"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

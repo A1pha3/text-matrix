@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "经济", "金融", "投资", "特朗普", "伊朗", "黄金", "美股"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报｜2026-03-31

@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "加密货币", "BTC", "ETH", "区块链"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

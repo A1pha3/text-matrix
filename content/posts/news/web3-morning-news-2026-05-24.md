@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["比特币", "以太坊", "CoinMarketCap", "Hyperliquid", "Solana", "CoinDesk", "Cointelegraph"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # Web3早报：2026年5月24日

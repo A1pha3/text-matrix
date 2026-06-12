@@ -6,6 +6,7 @@ slug = 'web3-morning-news-2026-05-27'
 description = '2026年5月27日 Web3 早报，涵盖 BTC、ETH、SOL 行情与 Web3 行业动态。'
 categories = ['行业快讯']
 tags = ['Web3', '加密货币', '早报']
+aliases = ["/categories/news/"]
 +++
 
 # Web3 早报 | 2026 年 5 月 27 日

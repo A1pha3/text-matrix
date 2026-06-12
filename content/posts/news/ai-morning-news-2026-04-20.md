@@ -6,6 +6,7 @@ description: "2026年4月20日AI领域最新动态：Claude Opus 4.7与4.6版本
 categories: ["行业快讯"]
 tags: ["Claude", "AI编程", "HackerNews", "大模型", "GPU"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # AI新闻早报 2026-04-20

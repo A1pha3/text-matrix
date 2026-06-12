@@ -5,6 +5,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "加密货币", "Bitcoin", "Ethereum", "DeFi"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 slug: web3-morning-news-2026-04-13
 description: "Web3加密货币市场每日早报，涵盖比特币、以太坊、DeFi、NFT、Layer2等最新动态。"
 ---

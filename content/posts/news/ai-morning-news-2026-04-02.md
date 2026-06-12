@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "早报", "大模型", "Claude", "OpenAI", "智谱"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报 2026-04-02

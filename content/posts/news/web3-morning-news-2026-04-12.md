@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "比特币", "以太坊", "Hyperliquid", "加密货币"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # Web3早报 2026-04-12

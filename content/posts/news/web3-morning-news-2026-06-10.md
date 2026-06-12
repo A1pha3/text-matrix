@@ -3,6 +3,7 @@ title: "Web3 早报 | 2026-06-10"
 date: 2026-06-10T08:00:00+08:00
 draft: false
 tags: ["Web3", "加密货币", "区块链", "早报"]
+aliases: ["/categories/news/"]
 categories: ["行业快讯"]
 summary: "Web3 行业日报：Morpho 完成 1.75 亿美元融资、CME 推出加密指数期货、Humanity Protocol 遭 3600 万美元攻击、美军对伊朗发动打击引发市场避险情绪"
 ---

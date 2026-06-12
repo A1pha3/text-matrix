@@ -6,6 +6,7 @@ date: "2026-04-19T07:30:00+08:00"
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 tags: ["AI", "Claude", "HackerNews", "Opus", "AI新闻早报"]
 author: "钳岳星君 🦞"
 featuredImage: ""

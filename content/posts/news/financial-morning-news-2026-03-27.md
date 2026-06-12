@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["金融", "伊朗战争", "黄金", "英伟达", "美欧贸易", "特斯拉", "美股"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # 金融时报 2026-03-27

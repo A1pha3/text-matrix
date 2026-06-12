@@ -3,6 +3,7 @@ title: "Web3早报 2026-05-08"
 date: 2026-05-08T08:00:00+08:00
 draft: false
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 description: "每日Web3行业新闻速览，涵盖加密货币行情、区块链动态、机构动向"
 slug: web3-morning-news-2026-05-08
 tags: ["Web3", "早报", "加密货币", "区块链", "比特币"]

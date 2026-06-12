@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "BTC", "ETH", "SOL", "XRP", "ADA", "BNB", "CoinMarketCap", "CoinDesk", "CoinTelegraph", "EthereumFoundation", "代币化", "Strategy"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

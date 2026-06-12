@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美股", "美联储", "财报", "宏观经济", "Alphabet"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

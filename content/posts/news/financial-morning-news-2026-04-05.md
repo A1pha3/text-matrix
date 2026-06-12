@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["经济", "美联储", "原油", "中东战争", "SpaceX", "信贷市场"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报：2026年4月5日

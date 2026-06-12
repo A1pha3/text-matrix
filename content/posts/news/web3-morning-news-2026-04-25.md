@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["BTC", "ETH", "ETF", "监管", "量子计算"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

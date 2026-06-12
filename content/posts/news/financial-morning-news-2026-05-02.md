@@ -7,6 +7,7 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美股", "财报", " Cerebras", "云厂商", "原油", "伯克希尔"]
 hiddenFromHomePage: true
+aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新
