@@ -1,8 +1,8 @@
 ---
-title: "灵巧手"不可能三角"：从 Shadow Robot 24 自由度到 300 美元开源手，机器人最后一公里的 6 大门派与开源 + AI 大模型拐点"
+title: "灵巧手「不可能三角」：从 Shadow Robot 24 自由度到 300 美元开源手，机器人最后一公里的 6 大门派与开源 + AI 大模型拐点"
 date: "2026-06-12T15:45:00+08:00"
 slug: "dexterous-hand-six-schools-impossible-triangle-2026"
-description: "硅谷 101《当机器人学会开可乐：深聊灵巧手的"不可能三角"与六大技术门派》整理 + TetherIA（Tesla + Waymo 老兵创业）AeroHand Open 300 美元开源手 + Tesla Optimus Gen 3 22 自由度腱绳驱动 + Shadow Robot 24 自由度 + 国产星际机器人 Gaia Hand 999 元单关节，把灵巧手"性能 / 成本 / 可靠性"不可能三角、6 大门派（直驱 / 谐波 / 液压 / 连杆 / 混合 / 开源）、4 个 Demo 真实操作拆开，看开源 + AI 大模型怎么把灵巧手价格从 30 万美元打到 300 美元，以及为什么这是机器人走进家庭的真正分水岭。"
+description: "硅谷 101《当机器人学会开可乐：深聊灵巧手的「不可能三角」与六大技术门派》整理 + TetherIA（Tesla + Waymo 老兵创业）AeroHand Open 300 美元开源手 + Tesla Optimus Gen 3 22 自由度腱绳驱动 + Shadow Robot 24 自由度 + 国产星际机器人 Gaia Hand 999 元单关节，把灵巧手「性能 / 成本 / 可靠性」不可能三角、6 大门派（直驱 / 谐波 / 液压 / 连杆 / 混合 / 开源）、4 个 Demo 真实操作拆开，看开源 + AI 大模型怎么把灵巧手价格从 30 万美元打到 300 美元，以及为什么这是机器人走进家庭的真正分水岭。"
 draft: false
 categories: ["技术笔记"]
 tags: ["灵巧手", "机器人", "TetherIA", "AeroHand", "Tesla Optimus", "Shadow Robot", "不可能三角", "6 大门派", "开源硬件", "VLA", "硅谷101"]
