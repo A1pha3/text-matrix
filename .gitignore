@@ -20,3 +20,37 @@ themes/LoveIt/exampleSite/resources/
 # 临时回滚/备份（不进仓库）
 state/
 
+
+# === 本地运行日志（不进仓库，per 2026-06-12 20:33 师父裁决）===
+# 文章健康检查心跳日志
+log-article-health-check-*.md
+# 心跳状态文件
+heartbeat-state.json
+memory/heartbeat-state.json
+# memory/ 目录全为本地会话/心跳数据，不进仓库
+memory/article-checklog-*.log
+memory/早报核查日志.md
+
+# A. 仓库根临时文件
+article-checklog-*.md
+log-article-health-check-*.md
+heartbeat-state.json
+# B. memory/ 目录全为本地会话/心跳数据
+memory/
+# C. state/ 目录全为本地状态/备份（state cron 备份等）
+state/
+# D. skills/morning-report/ 临时诊断脚本（collect / verify / candidates / cdp-helper / deep-verify / peek / retry / test / scan / diag / clean）
+skills/morning-report/collect-*.mjs
+skills/morning-report/verify-*.mjs
+skills/morning-report/candidates-*.json
+skills/morning-report/cdp-helper*.mjs
+skills/morning-report/clean_*.py
+skills/morning-report/deep*.mjs
+skills/morning-report/peek-*.mjs
+skills/morning-report/retry-*.mjs
+skills/morning-report/test-*.mjs
+skills/morning-report/scan-*.mjs
+skills/morning-report/diag-*.mjs
+skills/morning-report/cmc-*.mjs
+skills/morning-report/try-*.mjs
+skills/morning-report/recmp.mjs
