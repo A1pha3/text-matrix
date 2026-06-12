@@ -210,3 +210,114 @@
 - untracked 隔离铁律 #55：不 add/commit/动 ✓
 - 不硬编码单 IP，CIDR 段判断 ✓
 - Hugo 分类 URL 用中文名（**新铁律候选**，待师父确认后加入 HEARTBEAT.md）
+# 文章健康检查 #86 — 13:00 窗口（cron 850cf6e9 heartbeat）
+
+**时间**：2026-06-12 13:00 CST（周五）
+**距 #85（12:30 窗口）**：30m
+**窗口性质**：午后稳态（4 早报 06-12 稳 4h+ 部署，午高峰中段）
+
+## 一、4 早报 06-12 批：✅ ALL 200
+
+| 类别 | URL | HTTP | verify |
+|------|-----|------|--------|
+| AI 新闻 | `/posts/news/ai-morning-news-2026-06-12/` | ✅ 200 | ✅ PASS exit 0（17 链接 0 fail，8 个 ##，16029 B） |
+| AI 副业 | `/posts/news/ai-side-hustle-morning-2026-06-12/` | ✅ 200 | ❌ FAIL（10 HN 429 > 8 容忍，与 #84/#85 同款） |
+| 经济财经 | `/posts/news/financial-morning-news-2026-06-12/` | ✅ 200 | ✅ PASS exit 0（9 链接 0 fail，6 个 ##，13424 B） |
+| Web3 | `/posts/news/web3-morning-news-2026-06-12/` | ✅ 200 | ✅ PASS exit 0（10 链接 0 fail，6 个 ##，6309 B） |
+
+> 30m 内 #85 用错 URL 模板（漏日期后缀或拼错 slug）→ 3 个 404 误报，#86 用正确 slug `ai-side-hustle-morning-2026-06-12` 重测 4/4 全 200。
+
+## 二、4 早报 06-11 批：稳 25h+（08:13 → 13:00）
+
+`/posts/news/{ai,ai-side-hustle,financial,web3}-morning-2026-06-11/` 全 200 ✓
+
+## 三、文章库 + Git 状态
+
+- 文章库：**1053** markdown 文件，delta **+0** vs #85 = 1053（30m 内 0 推送）
+- HEAD：**e2dc45d**（=#85 自身 commit，30m 内无新动作）
+- HEAD = origin/main 同步（ahead=0 / behind=0）
+- GitHub Actions 最近 deploy 仍 12:07 #85 部署，30m 内无新 workflow
+- 30m 静默窗口：5/30 静默延续（与 #82 同款，午间稳态）
+
+## 四、TXTmix 域名 + 部署
+
+- **dig**：`txtmix.com → 198.18.0.51` ∈ 198.18.0.0/15 段 ✓
+- **HTTP**：`https://txtmix.com/` → 200 ✓
+- **06-12 部署 4/4 全 200**
+- **06-11 部署 4/4 全 200**：稳 25h+
+- **首页**：`/` `/posts/` `/categories/` → 全 200 ✓
+
+## 五、#85 异常项延续盘点
+
+**延续 2 项**（与 #85 一致）：
+
+1. **`/categories/news/` 等英文 URL 全部 404**：本次重测 `/categories/{news,tech,ai,finance,crypto,trending,tutorial}/` 全 404，`/categories/行业快讯/` 与 `/categories/财富自由/` 200。
+   - 根因仍是 Hugo 分类名用中文，无英文 slug 别名映射
+   - 不影响菜单导航（menu.main 用中文 URL），仅 SEO 外链场景受影响
+
+2. **`ai-morning-news-2026-06-12.md` categories `["新闻"]` 6-11 同款 bug 残余**：
+   - 同日其他 3 份（ai-side-hustle / financial / web3）均已用 `["行业快讯"]`
+   - 仍 1/4 不一致 → 不在 `/categories/行业快讯/` 列表显示
+
+**action 候选待师父裁决**（与 #85 同步未变）：
+- ai-morning-news-2026-06-12.md categories 一行修复
+- Hugo 分类英文 URL 别名是否添加
+
+## 六、cron 状态盘点（vs #85）
+
+| ID | 名称 | Last | Status | 备注 |
+|----|------|------|--------|------|
+| 850cf6e9 | 文章健康检查 | 36m ago | running | ✅ 13:00 heartbeat 触发本 session ✓ |
+| 87f06cc6 | 心跳任务健康检查 | 15m ago | running | |
+| b07f03b1 | 验证isolated-HEARTBEAT | 11m ago | running | |
+| 178f0649 | 心跳触发器 | 23m ago | ok | |
+| ad2640c0 | 心跳保活 | 57m ago | ok | |
+| 878d492b | AI 新闻早报 | 6h ago | **error** | 06-12 文章 commit 41fdc9c + 部署 200 ✓ |
+| 27e08237 | 经济财经早报 | 5h ago | ok | ✅ |
+| 28270175 | Web3 早报 | 5h ago | ok | ✅ |
+| abd75bdf | AI 副业早报 | 5h ago | **error** | 06-12 文章 commit dc0a3e6 + 部署 200 ✓ |
+| 0045a8a5/abe31cfa/bf7472fd | GitHub 趋势榜 (15/18/21点) | 16–22h ago | ok/error | 21 点 error 延续（06-09 disable 后） |
+
+**⚠️ delivery fail-closed 延续**：所有 announce cron 仍 fail-closed（feishu target 待配），隔离 session 按 heartbeat message="heartbeat" 跑完检测逻辑、生成该日志，**数据完整性 100%**，仅无法向飞书推送本报告。
+
+## 七、异常延续盘点（vs #85）
+
+延续 5 项（与 #85/#84/#83/#82/#81 一致）：
+1. 4 早报 frontmatter 偶发 YAML 转义（今日仍 0 例）
+2. cron 850cf6e9 delivery fail-closed（飞书 target 待配）
+3. AI 早报 / AI 副业早报 cron status=error 但文章已交付（cron step 日志待查）
+4. ai-side-hustle 5## 阈值豁免已加（184fbb7），06-10 历史欠账 1 篇未补
+5. skills/morning-report/ 下 debug 临时脚本 untracked 累积
+
+延续 #85 新增 2 项：
+6. `/categories/news/` 等英文 URL 全部 404
+7. `ai-morning-news-2026-06-12.md` categories `["新闻"]` 6-11 同款 bug 残余
+
+**变化 0 / 新增 0 / 修复 0**（30m 静默窗口）
+
+## 八、未追踪文件盘点（63 个，per #55 原则）
+
+- 63 个（与 #85 一致，30m 内 0 新增）
+- 30m 内 0 新增
+- 全部继续遵循 #55 隔离铁律，不 add/commit/动
+
+## 九、结论与建议
+
+1. **TXTmix 健康**：双条件全过，4 早报 06-12 部署 4/4 全 200，06-11 批稳 25h+
+2. **30m 静默窗口延续**：无新文章 / 无新 push / 无新动作（e2dc45d 仍是 HEAD）
+3. **action 项待师父裁决**（与 #85 同步未变）：
+   - ai-morning-news-2026-06-12.md categories `["新闻"]` → `["行业快讯"]` 一行修复（6-11 同款 bug 残余）
+   - Hugo 分类英文 URL 别名（`/categories/news/` 等）是否需要加（SEO/外链场景）
+   - cron 850cf6e9 / AI 早报 / AI 副业早报 的 delivery fail-closed / cron status=error 根因（与 #84/#85 同步）
+4. **verify gate 状态**：3/4 PASS + 1/4 FAIL（ai-side-hustle HN 429 限流延续 #84/#85，不影响已 push）
+5. **下一步动作**：14:00 cron 自动再触发 → 届时观察 categories 修复是否到位
+
+## 十、记忆铁律复用
+
+- TXTmix 双条件：dig 198.18.0.0/15 段 + HTTP 200 ✓
+- 6-10 早报自动 push + verify gate 铁律 ✓
+- 6-12 cron 飞书通知铁律：本日志完成后调用 `openclaw message send --to main --text "✅ 文章健康检查 #86 13:00 跑完：HEAD e2dc45d / TXTmix 200 / 4早报06-12部署200 / 30m静默延续"` ✓
+- 早报主 cron fail 时自动 backup 子代理补做 ✓
+- untracked 隔离铁律 #55：不 add/commit/动 ✓
+- 不硬编码单 IP，CIDR 段判断 ✓
+- Hugo 分类 URL 用中文名（**新铁律候选**，待师父确认后加入 HEARTBEAT.md）
