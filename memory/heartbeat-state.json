@@ -1,8 +1,13 @@
 {
   "文章健康检查": {
-    "lastRun": "2026-06-12T10:34:55+08:00",
-    "status": "all_06-12_morning_reports_closed_5_commits_3h09m",
-    "note": "2026-06-12T10:34:55+08:00 cron850cf6e9 heartbeat #82 (距 #81 2026-06-12T07:25 = 3h09m, 异常长静默窗口, 早高峰→午前稳态): ✅ 06-12 早报全闭环 (4/4 部署全 200) + CRITICAL #6 异常解除 (41fdc9c 07:51 自动补做 06-12 AI新闻) + web3 28270175 历史 fail 首次 status=ok 突破 (8cb5eb0 + 8405465), 4 早报 06-11 部署 4/4 全 200 稳态回归, 4 早报 06-10 部署 4/4 全 200 稳态回归, TXTmix 域名双条件通过 (dig 198.18.0.51 ∈ 198.18.0.0/15段 + HTTP 200, WARP 段内 +5 IP 轮换), git HEAD 8405465 = origin/main 同步 (0/0), 文章库 1053 vs #81=1049 delta=+4 (news 4 早报 06-12), 自 #81 07:25 至 10:34 = 3h09m 中间 commit 5 (b9b1a6c/41fdc9c/dc0a3e6/8cb5eb0/8405465), 0 modified, 61 untracked 严格隔离 per #55, 异常延续 4 项 + 已修复 2 项, 本次心跳完成: log + state + commit + push, 下次心跳 #83 预计 11:04 CST (30m 后, 恢复常规节奏), 待师父裁决 2 项 延续 #71 (ai-side-hustle 5## 豁免 + 2 untracked tech 文章)"
+    "lastRun": "2026-06-12T11:33:00+08:00",
+    "status": "all_stable_59m_silent_window_0_commits",
+    "note": "2026-06-12T11:33 CST cron850cf6e9 heartbeat #83 (距 #82 2026-06-12T10:34 = 59m, 恢复常规节奏, 午前稳态窗口): ✅ 4 早报 06-12 部署 4/4 全 200 持续稳态 (ai/financial/web3/ai-side-hustle 全部 /posts/news/<slug>/ 200, 3h+ 已过 Hugo 阈值), 4 早报 06-11 回归 4/4 全 200, TXTmix 域名双条件通过 (dig 198.18.0.51 ∈ 198.18.0.0/15 段 + HTTP 200, WARP 段内 IP 轮换 #82=198.18.0.51=#83=198.18.0.51 同 IP 稳定), git HEAD e5847c8 = origin/main 同步 (0/0), 文章库 1053 vs #82=1053 delta=0 (59m 静默窗口内 0 commit, 稳态), 0 modified, 61 untracked 严格隔离 per #55, 异常延续 4 项无变化 (沿用 #82: wallstreetcn根404+coingecko www 403+coindesk 1 404+openai.com CDN屏蔽, 0 新增 0 修复), 已修复 2 项维持 (#81: cron 850cf6e9 delivery announce feishu best-effort 验证 + #82: 06-12 AI新闻 CRITICAL 异常解除), 本次心跳完成: log + state + commit + push, 下次心跳 #84 预计 12:03 CST (30m 后), 待师父裁决 2 项延续 #71/#82 (ai-side-hustle 5## 豁免 + 2 untracked tech 文章 apple-container + masterdnsvpn 是否 push)"
+  },
+  "文章健康检查-11:33": {
+    "lastRun": "2026-06-12T11:33:00+08:00",
+    "status": "all_stable_59m_silent_window_0_commits",
+    "note": "2026-06-12T11:33 CST cron850cf6e9 heartbeat #83 (距 #82 2026-06-12T10:34 = 59m, 恢复常规节奏, 午前稳态窗口): ✅ 4 早报 06-12 部署 4/4 全 200 持续稳态 (ai/financial/web3/ai-side-hustle 全部 /posts/news/<slug>/ 200, 3h+ 已过 Hugo 阈值), 4 早报 06-11 回归 4/4 全 200, TXTmix 域名双条件通过 (dig 198.18.0.51 ∈ 198.18.0.0/15 段 + HTTP 200, WARP 段内 IP 稳定), git HEAD e5847c8 = origin/main 同步 (0/0), 文章库 1053 vs #82=1053 delta=0 (59m 静默窗口内 0 commit, 稳态), 0 modified, 61 untracked 严格隔离 per #55, 异常延续 4 项无变化 (沿用 #82: wallstreetcn根404+coingecko www 403+coindesk 1 404+openai.com CDN屏蔽, 0 新增 0 修复), 已修复 2 项维持 (#81: cron 850cf6e9 delivery announce feishu best-effort 验证 + #82: 06-12 AI新闻 CRITICAL 异常解除), 本次心跳完成: log + state + commit + push, 下次心跳 #84 预计 12:03 CST (30m 后), 待师父裁决 2 项延续 #71/#82 (ai-side-hustle 5## 豁免 + 2 untracked tech 文章 apple-container + masterdnsvpn 是否 push)"
   },
   "文章健康检查-10:34": {
     "lastRun": "2026-06-12T10:34:55+08:00",

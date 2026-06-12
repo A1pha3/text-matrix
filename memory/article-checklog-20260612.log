@@ -307,3 +307,80 @@ cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
 06-12 早报全闭环稳态，3h09m 长静默窗口内 4 早报 06-12 全部 commit + 部署完成 (含 1 次 web3 行情补丁 8405465)。
 下次心跳 #83 预计 11:04 CST (30m 后, 恢复常规节奏) 或更早 (cron 850cf6e9 every 30m)。
 
+
+================================================================
+文章健康检查 #83 — 2026-06-12 11:33 CST
+cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
+距 #82 (2026-06-12 10:34 CST) = 59m（恢复常规节奏）
+================================================================
+
+## 核心快照
+
+| 维度 | 状态 |
+|------|------|
+| git HEAD | e5847c8 = origin/main 同步 (0/0) ✅ |
+| 文章库 | **1053 markdown** (excl _index) — 与 #82 持平 delta=0 |
+| 4 早报 06-12 | 4/4 全 200 (/posts/news/ai|financial|web3|ai-side-hustle-morning-2026-06-12/) ✅ |
+| 4 早报 06-11 | 4/4 全 200 (regression check) ✅ |
+| TXTmix 域名 | dig 198.18.0.51 ∈ 198.18.0.0/15 段 + HTTP 200 双条件 ✅ |
+| 0 modified | 严格隔离 per #55 |
+| 61 untracked | (59 skills/morning-report debug + 2 tech 草稿) 不 add/commit/动 |
+
+## 4 早报 06-12 部署复核 (Mozilla UA GET)
+
+- /posts/news/ai-morning-news-2026-06-12/: **200** ✅ (16029 B, mtime 07:50)
+- /posts/news/financial-morning-news-2026-06-12/: **200** ✅ (13424 B, mtime 07:50)
+- /posts/news/web3-morning-news-2026-06-12/: **200** ✅ (6309 B, mtime 08:12, 含 8405465 CMC 行情补丁)
+- /posts/news/ai-side-hustle-morning-2026-06-12/: **200** ✅ (21104 B, mtime 07:52, slug 沿用 morning- 无 -news)
+  - 误拼路径 /posts/news/ai-side-hustle-morning-news-2026-06-12/: 404 (沿用 #78 已知 slug 差异)
+
+## 4 早报 06-11 回归 (Mozilla UA GET)
+
+- /posts/news/ai-morning-news-2026-06-11/: 200 ✅
+- /posts/news/financial-morning-news-2026-06-11/: 200 ✅
+- /posts/news/web3-morning-news-2026-06-11/: 200 ✅
+- /posts/news/ai-side-hustle-morning-2026-06-11/: 200 ✅
+
+## TXTmix 域名双条件 (沿用 #82 模板)
+
+- dig +short txtmix.com => **198.18.0.51** ∈ 198.18.0.0/15 段 ✅
+- HTTP https://txtmix.com/ => **200** ✅ (curl 2.85s, retry 0.28s)
+- WARP 段内 IP 轮换: #81=198.18.0.46 → #82=198.18.0.51 (同段)
+
+## 文章库稳态
+
+- total .md = **1053** (tech 716 / news 300 / thoughts 2 / video 15 / wealth 10 + 1 root md)
+- delta vs #82 (1053) = **0** (59m 静默窗口内无新 commit)
+- HEAD = e5847c8 = origin/main SYNCED (ahead/behind = 0/0)
+- 自 #82 10:34 至 11:33 = 59m 内 commit 数: **0** (稳态静默，符合预期)
+- 0 modified, 0 staged, 61 untracked 严格隔离 per #55 (沿用 #82 口径)
+- 0 future-dated (>11:33), 1 draft:true (历史), 71 TOML (历史), 8 tiny <1.5KB (历史)
+
+## 异常延续 (4 项, 沿用 #82 — 变化 0 / 新增 0 / 修复 0)
+
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (#46+)
+2. coingecko www 根站 403 WAF (#54+)
+3. coindesk 1 article 404 (#44)
+4. openai.com 全站 CDN 屏蔽非浏览器客户端 (#58+)
+5. ~~cron 850cf6e9 delivery fail-closed~~ → **#81 修复 ✅ 持续**
+6. ~~06-12 AI新闻早报 cron 07:20 漏发 + 三角故障~~ → **#82 异常解除 ✅**
+
+## 待师父裁决 (2 项 延续 #71/#82)
+
+1. ~~cron 850cf6e9 Feishu announce route~~ → ✅ #81 修复
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (建议豁免, 沿用 #71/#82)
+3. 2 untracked tech 文章 (apple-container + masterdnsvpn) 是否 push (沿用 #71/#82)
+
+## 本次心跳动作
+
+- ✅ **4 早报 06-12 部署持续稳态**: 4/4 全 200 (3h+ 已过 Hugo 阈值)
+- ✅ **4 早报 06-11 回归稳态**: 4/4 全 200
+- ✅ **TXTmix 域名双条件通过**: dig 198.18.0.51 + HTTP 200
+- ✅ **HEAD 同步**: e5847c8 = origin/main (0/0)
+- ✅ **59m 静默窗口无异常**: 文章库 1053 delta=0, 0 modified
+- 追加日志到 memory/article-checklog-20260612.log (#83)
+- 更新 heartbeat-state.json (新增 文章健康检查-11:33 键)
+- commit + push (per 6-10 新铁律)
+- 飞书 announce 尝试 (本次 #83 best-effort)
+
+06-12 早报全闭环稳态维持，下次心跳 #84 预计 12:03 CST (30m 后) 或更早 (cron 850cf6e9 every 30m)。
