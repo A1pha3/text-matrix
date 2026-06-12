@@ -104,12 +104,19 @@ if [[ $fail_count -gt 8 ]]; then
 fi
 echo "  ✅ 链接验证通过（失败 $fail_count ≤ 8 容忍，约 16% 容忍度应对反爬）"
 
-# ---------- 4. 新闻条数 ≥ 6 ----------
+# ---------- 4. 新闻条数 ≥ 6 (AI 副业早报豁免至 ≥ 5) ----------
 echo ""
-echo "→ [4/4] 新闻条数检查（≥6）..."
+echo "→ [4/4] 新闻条数检查（≥6，AI 副业早报豁免至 ≥ 5）..."
 n=$(grep -cE '^## ' "$FILE" || true)
-if [[ $n -lt 6 ]]; then
-  echo "❌ FAIL: 新闻条数 < 6（实际 $n）"
+# 6-12 师父裁决：ai-side-hustle-morning 5## 豁免（cron 850cf6e9 heartbeat #83）
+if [[ "$FILE" == *ai-side-hustle-morning* ]]; then
+  MIN_HEADLINES=5
+  echo "  ℹ️  AI 副业早报豁免阈值：≥ 5（6-12 师父裁决）"
+else
+  MIN_HEADLINES=6
+fi
+if [[ $n -lt $MIN_HEADLINES ]]; then
+  echo "❌ FAIL: 新闻条数 < $MIN_HEADLINES（实际 $n）"
   exit 1
 fi
 echo "  ✅ 新闻条数: $n"
