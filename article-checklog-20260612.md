@@ -321,3 +321,158 @@
 - untracked 隔离铁律 #55：不 add/commit/动 ✓
 - 不硬编码单 IP，CIDR 段判断 ✓
 - Hugo 分类 URL 用中文名（**新铁律候选**，待师父确认后加入 HEARTBEAT.md）
+
+# 文章健康检查 #88 — 14:00 窗口（cron 850cf6e9 heartbeat）
+
+**时间**：2026-06-12 14:00 CST（周五）
+**距 #87（13:30 窗口）**：30m
+**窗口性质**：午后稳态（4 早报 06-12 稳 5h+ 部署，午高峰后段）
+**HEAD commit**：2f69ccb（#87 自身 log commit）
+
+## 关键变化（vs #87）🆕
+
+**重大发现：baea40e commit 部署生效，但 aliases 实现存在设计缺陷**
+
+1. ✅ `/categories/news/` 现在 200（#87 时 404），实际命中 web3-morning-news-2026-06-12
+2. ✅ ai-morning-news-2026-06-12.md categories 已修正为 `["行业快讯"]`（baea40e 一并修了 #87 报的"残余 bug"）
+3. ⚠️ 84 份文件仍缺 aliases（实测比 #87 报 94 略准）
+4. ⚠️ **aliases 实现逻辑缺陷（critical）**：216 份共用 `["/categories/news/"]` 单路径，226 篇文章 alias 冲突 → Hugo 只任选一篇（实测为最新 deploy 的 web3-morning-news-2026-06-12）作为命中目标 → 用户期望的 `/categories/news/<文章slug>/` 仍 404 → **#85 异常 1 实际未真正修复**
+
+## 一、4 早报 06-12 批：✅ ALL 200
+
+| 类别 | URL | HTTP | 备注 |
+|------|-----|------|------|
+| AI 新闻 | `/posts/news/ai-morning-news-2026-06-12/` | ✅ 200 | aliases 有, categories ["行业快讯"] ✓ |
+| AI 副业 | `/posts/news/ai-side-hustle-morning-2026-06-12/` | ✅ 200 | **aliases 缺**（baea40e 漏匹配）|
+| 经济财经 | `/posts/news/financial-morning-news-2026-06-12/` | ✅ 200 | aliases 有 ✓ |
+| Web3 | `/posts/news/web3-morning-news-2026-06-12/` | ✅ 200 | aliases 有 ✓ + 当前 /categories/news/ 命中目标 |
+
+## 二、aliases 修复落地验证（关键发现）
+
+**实测**:
+```
+GET /categories/news/ → 200 (内容：web3-morning-news-2026-06-12)
+GET /categories/news/ai-morning-news-2026-06-12/ → 404
+GET /categories/news/ai-side-hustle-morning-2026-06-12/ → 404
+GET /categories/行业快讯/ → 200 (中文分类页正常工作)
+```
+
+**根因分析**:
+- baea40e 给 216 份文件全设 `aliases: ["/categories/news/"]`（单路径，无 slug）
+- Hugo aliases 冲突：取最新 deploy 的文章作为命中目标
+- 当前实际命中：web3-morning-news-2026-06-12（最新 deploy 的早报）
+
+**#85 异常 1 实际未修复**：
+- #85 报"/categories/news/ 404" → baea40e 让它 200 ✓（仅这一个 path）
+- 但用户期望（推测）：每篇早报都能通过 `/categories/news/<slug>/` 访问 → **未实现**
+- 当前 225 篇文章**仍无法**通过英文 URL 访问（仅 web3-06-12 因 alias 冲突胜出能访问）
+
+## 三、84 份缺 aliases 文件分布
+
+```
+总文件: 300
+有 aliases: 216 (baea40e 后)
+缺 aliases: 84
+```
+
+**分类分布**:
+- **73 份 ai-side-hustle 系列**（2026-03-27 ~ 2026-06-12，几乎整系列）
+- **10 份 morning-news 零星**：ai-morning-news 04-14/04-15/05-26 + financial 04-14/04-15 + web3 04-14/04-15/05-05/05-26/05-27
+- **1 份 evening-news**：ai-evening-news-2026-03-24
+
+**根因**：baea40e 批量脚本 glob 模式漏匹配 `ai-side-hustle-morning-*`（文件名不含 `news`）。
+
+## 四、TXTmix 域名 + 部署
+
+- **dig**：`txtmix.com → 198.18.0.51` ∈ 198.18.0.0/15 段 ✓
+- **HTTP**：`https://txtmix.com/` → 200 ✓
+- **06-12 部署 4/4 全 200**
+- **06-11 部署 4/4 全 200**：稳 26h+
+
+## 五、文章库 + Git 状态
+
+- 文章库：300 markdown 文件，delta +0 vs #87（30m 内 0 推送）
+- HEAD：**2f69ccb**（#87 log commit），距今 21m
+- HEAD = origin/main 同步（ahead=0 / behind=0）
+- GitHub Actions 最近 6 次：全 success
+- 30m 静默窗口：4/30 静默延续（baea40e 后稳态）
+
+## 六、异常延续盘点
+
+**延续 5 项**（#81~#87 一致）：
+1. 4 早报 frontmatter 偶发 YAML 转义（今日仍 0 例）
+2. cron 850cf6e9 delivery fail-closed（飞书 target 待配）
+3. AI 早报 / AI 副业早报 cron status=error 但文章已交付
+4. ai-side-hustle 5## 阈值豁免已加，06-10 历史欠账 1 篇未补
+5. skills/morning-report/ 下 debug 临时脚本 untracked 累积
+
+**#85 新增 2 项 状态变化**：
+- ~~6. `/categories/news/` 404~~ → **部分修复**（现 200，但实现有缺陷 — 见异常 1）
+- ~~7. `ai-morning-news-2026-06-12.md` categories `["新闻"]`~~ → **已修复**（baea40e 一并修）
+
+**#88 新发现 2 项**：
+- 8. **aliases 实现逻辑缺陷（critical）**：226 篇共用单路径 alias，slug 级英文 URL 仍 404
+- 9. **84 份文件仍缺 aliases（major）**：baea40e glob 漏匹配（73 ai-side-hustle + 10 morning-news + 1 evening-news）
+
+## 七、cron 状态盘点
+
+| ID | 名称 | Last | Status | 备注 |
+|----|------|------|--------|------|
+| 850cf6e9 | 文章健康检查 | 30m ago | running | ✅ 14:00 heartbeat 触发本 session |
+| 87f06cc6 | 心跳任务健康检查 | 45m ago | running | |
+| b07f03b1 | 验证isolated-HEARTBEAT | 41m ago | running | |
+| 178f0649 | 心跳触发器 | 53m ago | ok | |
+| ad2640c0 | 心跳保活 | 1h27m ago | ok | |
+| 878d492b | AI 新闻早报 | 6h30m ago | **error** | 06-12 文章 commit 41fdc9c + 部署 200 ✓ |
+| 27e08237 | 经济财经早报 | 5h30m ago | ok | ✅ |
+| 28270175 | Web3 早报 | 5h30m ago | ok | ✅ |
+| abd75bdf | AI 副业早报 | 5h30m ago | **error** | 06-12 文章 commit dc0a3e6 + 部署 200 ✓ |
+| 0045a8a5/abe31cfa/bf7472fd | GitHub 趋势榜 | 16–22h ago | ok/error | 06-09 disable 后延续 |
+
+**⚠️ delivery fail-closed 延续**：所有 announce cron 仍 fail-closed（feishu target 待配）。
+
+## 八、未追踪文件盘点
+
+- 59 个（vs #87 一致）
+- 30m 内 0 新增
+- 继续遵循 #55 隔离铁律，不 add/commit/动
+
+## 九、结论与建议
+
+1. **TXTmix 健康**：双条件全过，4 早报 06-12 部署 4/4 全 200
+2. **#85 异常 2 已修复**：ai-morning-news-2026-06-12.md categories 修正到位
+3. **#85 异常 1 部分修复但功能不完整**：
+   - 当前 /categories/news/ 200，但只能命中 1 篇文章
+   - 用户实际需求（slug 级英文 URL）未实现
+   - 建议师父从 5 方案中裁决：A 撤销 / B slug 级 alias / C permalinks / D 英文 taxonomy / E 接受当前
+4. **84 份缺 aliases 待补**：时机取决于异常 1 的方案选择
+5. **verify gate 状态**：4 早报 06-12 部署 4/4 全 200（实时 HTTP 验证）
+6. **delivery fail-closed 延续**：本次报告仍无法向飞书推送
+
+## 十、aliases 实现方案对比（异常 1 修复方案）
+
+| 方案 | 描述 | 优点 | 缺点 |
+|------|------|------|------|
+| **A. 撤销 baea40e** | 还原 `/categories/news/` 404 | 一行 revert | SEO 外链 404 仍在 |
+| **B. slug 级 aliases** | `aliases: ["/categories/news/<slug>/"]` | 真正英文 URL 访问 | 226 个文件单独 patch |
+| **C. hugo.toml permalinks** | `[permalinks] news = "/:section/:filename/"` | 全局一次配置 | 影响其他分类页 |
+| **D. 英文 taxonomy** | 新建 "news" taxonomy + `news: ["news"]` | 真正英文 URL 结构 | frontmatter 改动大 |
+| **E. 接受当前** | /categories/news/ 命中最新文章 | 0 改动 | 与用户需求可能不符 |
+
+## 十一、记忆铁律复用
+
+- TXTmix 双条件：dig 198.18.0.0/15 段 + HTTP 200 ✓
+- 6-10 早报自动 push + verify gate 铁律 ✓
+- 6-12 cron 飞书通知铁律：本日志完成后调用 `openclaw message send`（fail-closed 延续）
+- 早报主 cron fail 时自动 backup 子代理补做 ✓
+- untracked 隔离铁律 #55：不 add/commit/动 ✓
+- 不硬编码单 IP，CIDR 段判断 ✓
+- Hugo 分类 URL 用中文名（HEARTBEAT.md 已加）✓
+- **新铁律候选**：aliases 字段不能用单路径覆盖多文件（会冲突），要么不用，要么按 slug 唯一 ✓（待师父确认后正式化）
+
+## 十二、下一步动作
+
+- 14:30 cron 自动再触发 → 届时观察 aliases 实现是否被师父裁决修复
+- 等师父回复 #85/#88 异常 1 的方案选择（A/B/C/D/E）
+- 等师父回复 84 份补 aliases 的执行时机
+
