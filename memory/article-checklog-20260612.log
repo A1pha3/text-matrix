@@ -225,3 +225,85 @@ cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
 
 早高峰前窗口，06-12 AI新闻早报 cron 07:20 漏发 + 手动补失败 isolated setup timeout + Chrome down 三角故障，待师父裁决路径 (a/b/c)。
 下次心跳 #82 预计 07:55 CST（30m 后）。
+
+================================================================
+文章健康检查 #82 — 2026-06-12 10:34:55 CST
+cron 850cf6e9-662e-424e-b561-a40e5f2f0a2b heartbeat
+距 #81 (2026-06-12 07:25 CST) = 3h09m（异常长静默窗口，常规 1-2h）
+================================================================
+
+## #82 heartbeat 10:34 CST (cron 850cf6e9, 距 #81 07:25 = 3h09m, 早高峰→午前稳态窗口)
+
+### ✅ 06-12 早报全闭环 (CRITICAL #6 异常解除)
+- **ai-morning-news-2026-06-12.md** (16029B / 116L / date=07:46:00+08:00 / draft=false) → commit 41fdc9c (07:51) ✅
+- **financial-morning-news-2026-06-12.md** (13424B / 103L / date=07:43:51+08:00 / draft=false) → commit b9b1a6c (07:50) ✅
+- **web3-morning-news-2026-06-12.md** (6309B / 91L / date=08:06:00+08:00 / draft=false) → commit 8cb5eb0 (08:??) + 8405465 (CMC 行情补丁) ✅
+- **ai-side-hustle-morning-2026-06-12.md** (21104B / 172L / date=07:50:00+08:00 / draft=false) → commit dc0a3e6 (07:53) ✅
+- **CRITICAL #6 (06-12 AI新闻 漏发)** → 41fdc9c 自动补做成功 → **异常解除** ✅
+- **web3 28270175 历史 fail 模式** → 本次 status=ok → **历史首次突破** ✅
+- 4 早报 06-12 部署 GET 4/4 全 200 (Mozilla UA), date 07:43-08:06 均已过 2h28m+ Hugo 「未来页面」阈值
+
+### 4 早报 06-11 部署 (Mozilla UA GET) - 稳态回归
+- ai-morning-news-2026-06-11: 200 ✅
+- financial-morning-news-2026-06-11: 200 ✅
+- web3-morning-news-2026-06-11: 200 ✅
+- ai-side-hustle-morning-2026-06-11: 200 ✅
+
+### 4 早报 06-10 部署 (Mozilla UA GET) - 稳态回归
+- ai-morning-news-2026-06-10: 200 ✅
+- financial-morning-news-2026-06-10: 200 ✅
+- web3-morning-news-2026-06-10: 200 ✅
+- ai-side-hustle-morning-2026-06-10: 200 ✅
+
+### TXTmix 域名双条件 (沿用 #81 模板)
+- dig txtmix.com => **198.18.0.51** ∈ 198.18.0.0/15 段 ✅ (WARP 仍在 198.18.0.0/15 段内, IP 微变 #81=198.18.0.46→#82=198.18.0.51 = +5 IP 段内轮换)
+- HTTP https://txtmix.com/ => 200 ✅
+
+### 文章库稳态
+- total .md = **1053** (tech 716 / news 300 / thoughts 2 / video 15 / wealth 10 + 10 root md)
+- delta vs #81 (1049) = **+4** (news 4 早报 06-12)
+- HEAD = 8405465 = origin/main SYNCED (ahead/behind = 0/0)
+- 自 #81 07:25 至 10:34 = 3h09m 内 commit 数: **5** (b9b1a6c/41fdc9c/dc0a3e6/8cb5eb0 + 8405465 web3 行情补丁)
+- 0 modified, 0 staged, 61 untracked 严格隔离 per #55 (沿用 #81 口径)
+- 0 future-dated (>10:34), 1 draft:true (历史), 71 TOML (历史), 8 tiny <1.5KB (历史)
+
+### cron 盘点 (12 个 cron 整体快照, 沿用 #81 模板微调)
+| ID | 名称 | 状态 | 备注 |
+|----|------|------|------|
+| 850cf6e9 | 文章健康检查 | running | delivery feishu best-effort (本次验证) |
+| 87f06cc6 | 心跳任务健康检查 | ok | */10 * * * *, next 2m |
+| 178f0649 | 心跳触发器 | ok | every 30m, next 4m |
+| b07f03b1 | 验证isolated-HEARTBEAT | error | */5 * * * *, last 42m ago (历史 fail) |
+| 878d492b | AI新闻早报 | error | last 3h ago, **06-12 已通过 41fdc9c 补做 ✅** (cron 状态仍 error 因原始 07:20 fail) |
+| 27e08237 | 经济财经早报 | ok | last 3h ago, 06-12 一次过 ✅ |
+| 28270175 | Web3早报 | **ok** | last 3h ago, **历史首次 status=ok 突破** ✅ (8cb5eb0 + 8405465) |
+| abd75bdf | AI副业早报 | error | last 2h ago, **06-12 已通过 dc0a3e6 补做 ✅** (cron 状态 error) |
+| ad2640c0 | 心跳保活 | ok | cron 0 * * * * |
+| 0045a8a5 | GitHub趋势榜-15点 | ok | next 4h |
+| abe31cfa | GitHub趋势榜-18点 | ok | next 7h |
+| bf7472fd | GitHub趋势榜-21点 | error | next 10h (历史 fail) |
+
+### 异常延续 (4 项, #81 6 项中 2 项已修复)
+1. wallstreetcn 根站 HEAD-404 / article GET-200 已知模式 (#46+)
+2. coingecko www 根站 403 WAF (#54+)
+3. coindesk 1 article 404 (#44)
+4. openai.com 全站 CDN 屏蔽非浏览器客户端 (#58+)
+5. ~~cron 850cf6e9 delivery fail-closed~~ → **#81 修复 ✅ 持续** (本次 announce feishu 验证)
+6. ~~06-12 AI新闻早报 cron 07:20 漏发 + 三角故障~~ → **41fdc9c 自动补做成功 ✅ 异常解除**
+
+### 待师父裁决 (2 项 延续 #71)
+1. ~~cron 850cf6e9 Feishu announce route~~ → ✅ #81 修复 (本次验证)
+2. ai-side-hustle-morning-news-2026-06-10.md 历史欠账 5## < 6 阈值 (建议豁免, 沿用 #71)
+3. 2 untracked tech 文章 (apple-container + masterdnsvpn) 是否 push (沿用 #71)
+
+### 本次心跳动作
+- ✅ **06-12 AI新闻 CRITICAL 异常解除**: 41fdc9c (07:51) 自动补做成功 + 4 早报 06-12 部署 4/4 全 200
+- ✅ **web3 28270175 历史 fail 突破**: 首次 status=ok (8cb5eb0 + 8405465)
+- 追加日志到 memory/article-checklog-20260612.log (#82, 距 #81 3h09m, 异常长静默)
+- 更新 heartbeat-state.json (新增 文章健康检查-2026-06-12 10:34:XX CST 键)
+- commit + push (per 6-10 新铁律)
+- 飞书 announce 尝试 (本次 #82 验证 delivery OK, 累计 best-effort)
+
+06-12 早报全闭环稳态，3h09m 长静默窗口内 4 早报 06-12 全部 commit + 部署完成 (含 1 次 web3 行情补丁 8405465)。
+下次心跳 #83 预计 11:04 CST (30m 后, 恢复常规节奏) 或更早 (cron 850cf6e9 every 30m)。
+
