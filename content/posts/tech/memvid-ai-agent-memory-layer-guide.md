@@ -54,7 +54,7 @@ Memvid（Memory Video）是一个**单文件记忆层**，为 AI 智能体提供
 
 > **官方定义**："Memvid is a single-file memory layer for AI agents with instant retrieval and long-term memory. Persistent, versioned, and portable memory, without databases."
 
-**核心价值主张**：传统向量数据库需要复杂的部署架构（向量库 + 嵌入服务 + API 服务器），而 Memvid 用单文件替代了这一切——拷贝即迁移，零配置启动，毫秒级检索。
+**关键价值主张**：传统向量数据库需要复杂的部署架构（向量库 + 嵌入服务 + API 服务器），而 Memvid 用单文件替代了这一切——拷贝即迁移，零配置启动，毫秒级检索。
 
 ### 1.2 核心数据
 
@@ -73,7 +73,7 @@ Memvid（Memory Video）是一个**单文件记忆层**，为 AI 智能体提供
 | 维度 | 说明 |
 |------|------|
 | 📦 **单文件** | 所有数据、嵌入向量（Embedding）、索引都在一个 `.mv2` 文件中 |
-| 🗄️ **无数据库** | 服务器less（Serverless），无需运维 |
+| 🗄️ **无数据库** | 服务器 less（Serverless），无需运维 |
 | 🤖 **模型无关** | 支持任意 AI 模型（OpenAI / Claude / Llama 等） |
 | 🌐 **离线优先** | 完全本地运行，无需网络 |
 | 🔄 **版本化** | 支持时间旅行调试（Time-Travel Debugging） |
@@ -672,8 +672,8 @@ let embedding = embedder.embed_text("hello world")?;
 
 | 场景 | 原因 | 替代方案 |
 |------|------|----------|
-| **超大规模数据（PB级）** | 单文件设计不适合超大规模 | 使用专用向量数据库（Pinecone、Qdrant） |
-| **需要强一致性（CP系统）** | Memvid 采用最终一致性模型 | 使用 etcd、Consul 等强一致性存储 |
+| **超大规模数据（PB 级）** | 单文件设计不适合超大规模 | 使用专用向量数据库（Pinecone、Qdrant） |
+| **需要强一致性（CP 系统）** | Memvid 采用最终一致性模型 | 使用 etcd、Consul 等强一致性存储 |
 | **需要复杂事务（ACID）** | 单文件 Append-only 不支持事务回滚 | 使用传统数据库 |
 | **需要实时多人协作写入** | 多进程并发写入受限 | 使用 PostgreSQL + 向量扩展 |
 
@@ -696,7 +696,7 @@ echo "$(date): Re-encrypted phi-data" >> audit.log
 
 ---
 
-## 十、最佳实践
+## 十、实践建议
 
 ### 10.1 摄入优化
 
@@ -1030,7 +1030,7 @@ memvid-cli recover knowledge.mv2 --output recovered.mv2
 | `Memory threshold exceeded` | 内存使用超限 | 调用 `compact()` 压缩或增加系统内存 |
 | `Version mismatch detected` | 文件版本与 SDK 不匹配 | 升级到最新版本的 Memvid SDK |
 
-### 13.5 错误处理最佳实践
+### 13.5 错误处理实践建议
 
 ```rust
 use memvid_core::{Memvid, PutOptions, SearchRequest, Error};
@@ -1204,7 +1204,7 @@ Memvid 是**AI 智能体的记忆革命**：
 
 **适用场景**：AI 智能体记忆、企业知识库、离线优先系统、合规数据管理
 
-**不适用场景**：超大规模数据（PB级）、强一致性需求、实时多人协作写入
+**不适用场景**：超大规模数据（PB 级）、强一致性需求、实时多人协作写入
 
 ---
 

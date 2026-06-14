@@ -7,7 +7,7 @@ categories: ["技术笔记"]
 tags: ["RAG", "多模态", "LightRAG", "RAG框架", "文档处理", "知识图谱"]
 ---
 
-# RAG-Anything：港大开源多模态RAG框架，一站式处理文本/图像/表格/公式
+# RAG-Anything：港大开源多模态 RAG 框架，一站式处理文本/图像/表格/公式
 
 ## 🎯 概述
 

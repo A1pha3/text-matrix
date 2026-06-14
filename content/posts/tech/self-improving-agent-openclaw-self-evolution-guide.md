@@ -29,7 +29,7 @@ tags: ["AI", "OpenClaw", "自进化", "持续学习", "技能框架"]
 
 - **重复错误**：同样的问题在不同会话中反复出现
 - **知识断层**：一个会话中学到的教训在另一个会话中丢失
-- **效率低下**：每次都要重新探索已知的最佳实践
+- **效率低下**：每次都要重新探索已知的实践建议
 
 **Self-Improving-Agent** 的出现解决了这个问题。它是一套结构化的自进化技能框架，让 AI 能够：
 
@@ -74,7 +74,7 @@ Self-Improving-Agent 基于三个核心原则：
 - `correction` - 用户的纠正（「不，应该这样做...」）
 - `insight` - 发现的洞察或技巧
 - `knowledge_gap` - 知识差距或过时信息
-- `best_practice` - 发现的最佳实践
+- `best_practice` - 发现的实践建议
 
 **标准格式**：
 ```markdown
@@ -216,7 +216,7 @@ mkdir -p ~/.openclaw/workspace/.learnings
 # FEATURE_REQUESTS.md — 用户请求的功能
 ```
 
-### 4.3 OpenClaw工作区结构
+### 4.3 OpenClaw 工作区结构
 
 ```
 ~/.openclaw/workspace/
@@ -232,9 +232,9 @@ mkdir -p ~/.openclaw/workspace/.learnings
     └── FEATURE_REQUESTS.md
 ```
 
-### 4.4 Hook集成（可选）
+### 4.4 Hook 集成（可选）
 
-Hook可以实现在特定触发器下自动提醒记录学习。
+Hook 可以实现在特定触发器下自动提醒记录学习。
 
 **快速设置（Claude Code / Codex）**：
 
@@ -275,9 +275,9 @@ Hook可以实现在特定触发器下自动提醒记录学习。
 }
 ```
 
-**可用Hook脚本**：
+**可用 Hook 脚本**：
 
-| 脚本 | Hook类型 | 用途 |
+| 脚本 | Hook 类型 | 用途 |
 |------|---------|------|
 | `scripts/activator.sh` | UserPromptSubmit | 任务后提醒评估学习 |
 | `scripts/error-detector.sh` | PostToolUse (Bash) | 命令错误时触发 |
@@ -286,11 +286,11 @@ Hook可以实现在特定触发器下自动提醒记录学习。
 
 ## §5 使用场景与示例
 
-### 5.1 场景一：用户纠正AI
+### 5.1 场景一：用户纠正 AI
 
-**场景**：用户说"不，应该用React Query，不是Redux"
+**场景**：用户说"不，应该用 React Query，不是 Redux"
 
-**记录到LEARNINGS.md**：
+**记录到 LEARNINGS.md**：
 ```markdown
 ## [LRN-20260410-A1B] correction
 
@@ -320,9 +320,9 @@ Hook可以实现在特定触发器下自动提醒记录学习。
 
 ### 5.2 场景二：命令执行失败
 
-**场景**：`pnpm install` 失败，因为项目用的是npm
+**场景**：`pnpm install` 失败，因为项目用的是 npm
 
-**记录到ERRORS.md**：
+**记录到 ERRORS.md**：
 ```markdown
 ## [ERR-20260410-C3D] package_manager
 
@@ -357,7 +357,7 @@ ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY
 
 **场景**：发现一个之前用循环的地方可以用`array.flatMap()`一行解决
 
-**记录到LEARNINGS.md**：
+**记录到 LEARNINGS.md**：
 ```markdown
 ## [LRN-20260410-E5F] insight
 
@@ -381,11 +381,11 @@ ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY
 - Tags: array, functional-programming
 ```
 
-### 5.4 场景四：晋升到CLAUDE.md
+### 5.4 场景四：晋升到 CLAUDE.md
 
-**场景**：同一个包管理器的错误出现了3次
+**场景**：同一个包管理器的错误出现了 3 次
 
-**晋升到CLAUDE.md**：
+**晋升到 CLAUDE.md**：
 ```markdown
 ## Build & Dependencies
 
@@ -429,16 +429,16 @@ grep -l "**Area**: backend" .learnings/*.md
    grep -n "keyword" .learnings/
    ```
 
-2. **链接条目**：在Metadata中添加`See Also: LRN-20250110-001`
+2. **链接条目**：在 Metadata 中添加`See Also: LRN-20250110-001`
 
 3. **提升优先级**：如果问题持续出现
 
 4. **考虑系统性修复**：重复问题通常表示：
-   - 缺少文档（→ 晋升到CLAUDE.md）
-   - 缺少自动化（→ 添加到AGENTS.md）
+   - 缺少文档（→ 晋升到 CLAUDE.md）
+   - 缺少自动化（→ 添加到 AGENTS.md）
    - 架构问题（→ 创建技术债务工单）
 
-### 6.3 从Simplify & Harden Feed摄取
+### 6.3 从 Simplify & Harden Feed 摄取
 
 `simplify-and-harden`技能会生成一个`simplify_and_harden.learning_loop.candidates`文件，用于追踪重复模式：
 
@@ -454,8 +454,8 @@ grep -l "**Area**: backend" .learnings/*.md
 当学习足够有价值时，可以提取为可复用的技能。
 
 **提取标准**（满足任一即可）：
-- **重复性**：有2+相关条目的`See Also`链接
-- **验证性**：`Status`为resolved且有有效的修复
+- **重复性**：有 2+相关条目的`See Also`链接
+- **验证性**：`Status`为 resolved 且有有效的修复
 - **非显而易见性**：需要实际调试/调查才能发现
 - **通用性**：非项目特定，跨代码库有用
 - **用户标记**：用户说"把这个保存为技能"
@@ -473,7 +473,7 @@ mkdir skills/<skill-name>/
 
 ---
 
-## §7 最佳实践
+## §7 实践建议
 
 ### 7.1 记录时机
 
@@ -498,13 +498,13 @@ mkdir skills/<skill-name>/
 - 问题的本质而非原始输出
 - 脱敏的上下文
 
-### 7.3 ID生成规则
+### 7.3 ID 生成规则
 
 格式：`TYPE-YYYYMMDD-XXX`
 
 - `TYPE`：`LRN`（learning）、`ERR`（error）、`FEAT`（feature）
 - `YYYYMMDD`：当前日期
-- `XXX`：序号或随机3位字符（如`001`、`A7B`）
+- `XXX`：序号或随机 3 位字符（如`001`、`A7B`）
 
 示例：`LRN-20260410-001`、`ERR-20260410-A3F`、`FEAT-20260410-002`
 
@@ -519,25 +519,25 @@ pending → wont_fix     # 决定不处理（需在Resolution中说明原因）
 
 ---
 
-## §8 多Agent支持
+## §8 多 Agent 支持
 
-### 8.1 Agent对比
+### 8.1 Agent 对比
 
 | Agent | 激活方式 | 设置 | 检测 |
 |-------|---------|------|------|
-| **OpenClaw** | 工作区注入+Agent间消息 | 见"OpenClaw安装" | 通过会话工具和工作区文件 |
-| **Claude Code** | Hooks (UserPromptSubmit, PostToolUse) | `.claude/settings.json` | 通过hook脚本自动 |
-| **Codex CLI** | Hooks（与Claude Code相同） | `.codex/settings.json` | 通过hook脚本自动 |
-| **GitHub Copilot** | 手动（不支持hook） | 添加到`.github/copilot-instructions.md` | 会话结束手动回顾 |
+| **OpenClaw** | 工作区注入+Agent 间消息 | 见"OpenClaw 安装" | 通过会话工具和工作区文件 |
+| **Claude Code** | Hooks (UserPromptSubmit, PostToolUse) | `.claude/settings.json` | 通过 hook 脚本自动 |
+| **Codex CLI** | Hooks（与 Claude Code 相同） | `.codex/settings.json` | 通过 hook 脚本自动 |
+| **GitHub Copilot** | 手动（不支持 hook） | 添加到`.github/copilot-instructions.md` | 会话结束手动回顾 |
 
-### 8.2 OpenClaw特有功能
+### 8.2 OpenClaw 特有功能
 
-OpenClaw提供了跨会话通信工具：
+OpenClaw 提供了跨会话通信工具：
 
 - `sessions_list` - 查看活跃/最近会话
 - `sessions_history` - 读取另一个会话的记录
 - `sessions_send` - 向另一个会话发送学习
-- `sessions_spawn` - 生成子Agent进行后台工作
+- `sessions_spawn` - 生成子 Agent 进行后台工作
 
 **使用注意**：
 - 仅在可信环境中使用
@@ -550,40 +550,40 @@ OpenClaw提供了跨会话通信工具：
 
 **Q1：学习文件太多会不会难以维护？**
 
-A1：定期（每周或每个阶段）进行回顾，将过时的条目标记为resolved，将通用的学习晋升到CLAUDE.md等规范文件。
+A1：定期（每周或每个阶段）进行回顾，将过时的条目标记为 resolved，将通用的学习晋升到 CLAUDE.md 等规范文件。
 
 **Q2：如何在团队中共享学习？**
 
 A2：将`.learnings/`目录纳入版本控制（不添加到.gitignore），这样团队成员都能看到历史学习。
 
-**Q3：如果不同Agent记录了冲突的学习怎么办？**
+**Q3：如果不同 Agent 记录了冲突的学习怎么办？**
 
-A3：在记录中标记冲突，晋升到CLAUDE.md时取最通用的规则，保留不同Agent的特定学习。
+A3：在记录中标记冲突，晋升到 CLAUDE.md 时取最通用的规则，保留不同 Agent 的特定学习。
 
-**Q4：Hook会影响AI响应速度吗？**
+**Q4：Hook 会影响 AI 响应速度吗？**
 
-A4：UserPromptSubmit的hook开销约50-100 tokens，PostToolUse的error-detector仅在Bash命令失败时触发。整体影响很小。
+A4：UserPromptSubmit 的 hook 开销约 50-100 tokens，PostToolUse 的 error-detector 仅在 Bash 命令失败时触发。整体影响很小。
 
 **Q5：如何在已有项目中引入这个技能？**
 
 A5：
-1. 安装技能到Agent的skills目录
+1. 安装技能到 Agent 的 skills 目录
 2. 创建`.learnings/`目录和三个日志文件
-3. （可选）配置Hook
+3. （可选）配置 Hook
 4. 从下一个错误/纠正开始自然积累
 
 ---
 
 ## §10 总结
 
-Self-Improving-Agent代表了AI编程的一个范式转变——从"每次会话从零开始"到"跨会话持续进化"。它的核心价值在于：
+Self-Improving-Agent 代表了 AI 编程的一个范式转变——从"每次会话从零开始"到"跨会话持续进化"。它的关键价值在于：
 
 1. **系统性**：结构化的日志格式和晋升机制
-2. **自动化**：可选的Hook实现自动检测和提醒
-3. **多Agent支持**：不同的AI工具可以共享学习
+2. **自动化**：可选的 Hook 实现自动检测和提醒
+3. **多 Agent 支持**：不同的 AI 工具可以共享学习
 4. **隐私保护**：内置的敏感信息保护机制
 
-通过掌握这个技能框架，开发者可以构建一个真正"学习型"的AI编程环境，让AI每次都在前一次的基础上变得更好。
+通过掌握这个技能框架，开发者可以构建一个真正"学习型"的 AI 编程环境，让 AI 每次都在前一次的基础上变得更好。
 
 ---
 
@@ -595,7 +595,7 @@ Self-Improving-Agent代表了AI编程的一个范式转变——从"每次会话
 |---------|------------|---------|
 | **纠正** | "不，那不对..."、"其实应该..."、"你错了..."、"过时了..." | LEARNINGS.md (correction) |
 | **功能请求** | "你能...吗？"、"我希望你能..."、"有没有办法...？"、"为什么不能...？" | FEATURE_REQUESTS.md |
-| **知识差距** | 用户提供你不知道的信息、你参考的文档已过时、API行为与你的理解不符 | LEARNINGS.md (knowledge_gap) |
+| **知识差距** | 用户提供你不知道的信息、你参考的文档已过时、API 行为与你的理解不符 | LEARNINGS.md (knowledge_gap) |
 | **错误** | 命令返回非零退出码、异常或堆栈跟踪、超时或连接失败 | ERRORS.md |
 
 ### 优先级指南
@@ -620,4 +620,4 @@ Self-Improving-Agent代表了AI编程的一个范式转变——从"每次会话
 
 ---
 
-*🦞 本文由钳岳星君基于 [peterskoett/self-improving-agent](https://github.com/peterskoett/self-improving-agent) 项目撰写，遵循Agent Skills规范。*
+*🦞 本文由钳岳星君基于 [peterskoett/self-improving-agent](https://github.com/peterskoett/self-improving-agent) 项目撰写，遵循 Agent Skills 规范。*

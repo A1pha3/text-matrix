@@ -20,7 +20,7 @@ Stars 8,192，Apache-2.0 License，2026-05-05 最新推送，支持 Python 3.10-
 
 ## 1. 核心概念：Target = F(Source)
 
-CocoIndex 的mental model 可以用 React 的状态管理来类比：
+CocoIndex 的 mental model 可以用 React 的状态管理来类比：
 
 **传统数据管道**：你写一次性脚本处理数据，每次运行都重新处理全部数据。
 

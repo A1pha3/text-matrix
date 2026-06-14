@@ -35,7 +35,7 @@ tags: ["NEAR Protocol", "NEAR", "nearcore", "区块链", "智能合约", "Rust",
 
 > NEAR's purpose is to enable community-driven innovation to benefit people around the world. NEAR provides a developer platform where developers and entrepreneurs can create apps that put users back in control of their data and assets, which is the foundation of "Open Web" movement. NEAR Protocol is an infrastructure for server-less applications and smart contracts powered by a blockchain. NEAR Protocol is built to deliver usability and scalability of modern PaaS like Firebase at fraction of the prices that blockchains like Ethereum charge.
 
-**NEAR 的核心价值主张**：
+**NEAR 的关键价值主张**：
 
 | 价值 | 说明 |
 |------|------|

@@ -14,7 +14,7 @@ tags: ["Claude Code", "Claude插件", "MCP", "Agent SDK", "AI工作流", "Anthro
 
 **claude-plugins-official** 是 Anthropic 官方维护的 Claude Code 插件市场与开发工具包，不是普通代码仓库——它是 Claude Code 的扩展生态核心。仓库目前积累 **24,497 Stars / 2,743 Forks**，包含 **35 个内部插件**（Anthropic 官方维护）和 **数百个第三方插件**，覆盖语言服务器、数据库连接、云平台集成、安全扫描、代码审查、开发工作流等几乎所有工程场景。
 
-这篇文章的核心价值：帮助读者建立对 Claude Code 插件体系的完整认知——插件是什么、怎么用、怎么开发、以及哪些场景值得用。
+这篇文章的关键价值：帮助读者建立对 Claude Code 插件体系的完整认知——插件是什么、怎么用、怎么开发、以及哪些场景值得用。
 
 ---
 
@@ -247,7 +247,7 @@ version: "1.0.0"
 | `has_undisclosed_telemetry` | 是否有未声明的外向网络调用 |
 | `description_matches_behavior` | README 描述是否与实际行为一致 |
 
-这意味着第三方插件在进入市场前，需要经过 Hook 作用域和隐式Telemetry 的审查。
+这意味着第三方插件在进入市场前，需要经过 Hook 作用域和隐式 Telemetry 的审查。
 
 ---
 

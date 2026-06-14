@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Linux", "服务器安全", "SSH", "防火墙", "Fail2Ban", "安全加固"]
 ---
 
-# How-To-Secure-A-Linux-Server：持续演进的中文版Linux服务器安全加固指南
+# How-To-Secure-A-Linux-Server：持续演进的中文版 Linux 服务器安全加固指南
 
 ## 项目概览
 

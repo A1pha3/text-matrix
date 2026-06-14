@@ -256,7 +256,7 @@ graph TB
 5. **公式重算**：openpyxl 只写入公式字符串不计算结果，涉及公式时需用独立脚本重算
 6. **错误校验与修复**：Skill 返回 JSON 格式的错误报告，标明类型和位置，便于自动修复
 
-最佳实践总结：
+实践建议总结：
 
 - 输入输出样例文件放在 `references/` 目录中
 - 所有脚本包含异常处理与错误报告能力，便于 Agent 自动修复
@@ -405,7 +405,7 @@ Datawhale 课程侧重**概念教学**和**自定义 Skill 开发流程**，以 
 | 3. Why Use Skills II | 从 Agent 视角理解 Skills、协作模式 |
 | 4. Skills vs Tools/MCP/Subagents | 生态系统全景、各组件对比与协作 |
 | 5. Exploring Pre-Built Skills | 官方预置 Skills 的探索与使用 |
-| 6. Creating Custom Skills | 自定义 Skill 创建流程与最佳实践 |
+| 6. Creating Custom Skills | 自定义 Skill 创建流程与实践建议 |
 | 7. Skills with Claude API | 在 Messages API 中使用 Skills |
 | 8. Skills with Claude Code | Claude Code 中 Skills 的安装、配置、调试 |
 | 9. Skills with Agent SDK | 在 Claude Agent SDK 中集成 Skills |
@@ -431,7 +431,7 @@ System Prompt 是单次对话级别的指令，每次新建对话都需要重新
 
 **Q5：多个 Skills 可以同时激活吗？它们之间会冲突吗？**
 
-可以同时激活多个 Skills。Claude 会自动根据任务需求加载所有相关的 Skills，并协调它们的执行。Skills 之间可能产生冲突——例如两个 Skill 给出了矛盾的操作指令。最佳实践是将每个 Skill 保持专注且单一职责，避免功能重叠。
+可以同时激活多个 Skills。Claude 会自动根据任务需求加载所有相关的 Skills，并协调它们的执行。Skills 之间可能产生冲突——例如两个 Skill 给出了矛盾的操作指令。实践建议是将每个 Skill 保持专注且单一职责，避免功能重叠。
 
 **Q6：Skills 中的脚本安全吗？如何审核第三方 Skill？**
 

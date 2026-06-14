@@ -124,7 +124,7 @@ plugin-name/
 **流程**:
 
 1. **Command 启动**：`/analyze` 启动分析流程。
-2. **Skill 激活**：`sql-queries` 技能注入——它携带了多数据库方言的最佳实践（Snowflake 的 partition pruning、BigQuery 的 slot 优化）、常见查询模式、反模式清单。AI 先写 SQL，再通过 Snowflake 连接器执行。
+2. **Skill 激活**：`sql-queries` 技能注入——它携带了多数据库方言的实践建议（Snowflake 的 partition pruning、BigQuery 的 slot 优化）、常见查询模式、反模式清单。AI 先写 SQL，再通过 Snowflake 连接器执行。
 3. **结果处理**：`data-exploration` 技能介入，做描述统计和异常检测。发现产品线 A 在 3 月有一个不正常的低谷后，自动标注并建议检查是否有数据管道问题。
 4. **可视化**：`data-visualization` 技能生成趋势图代码。
 5. **验证**：`/validate` 可选，`data-validation` 技能做 sanity check——分母是否包含了不该包含的数据、聚合逻辑是否有偏、解释是否有 survivorship bias。

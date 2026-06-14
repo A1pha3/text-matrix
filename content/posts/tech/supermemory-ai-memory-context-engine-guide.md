@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI记忆", "Supermemory", "RAG", "MCP", "上下文管理"]
 ---
 
-# Supermemory：AI时代的记忆与上下文引擎完全指南
+# Supermemory：AI 时代的记忆与上下文引擎完全指南
 
 当前几乎所有 AI 工具——ChatGPT、Claude、Cursor——在每次新对话时都会"失忆"。用户不得不反复解释自己的偏好、正在做的项目、过往讨论的背景。**Supermemory** 试图解决这个问题：让 AI 在跨会话中积累、检索和利用个人上下文，成为真正的"第二大脑"。
 

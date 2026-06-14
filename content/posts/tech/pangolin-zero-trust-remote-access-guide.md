@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["WireGuard", "VPN", "零信任", "网络安全", "远程访问"]
 ---
 
-# Pangolin：20K Stars·零信任远程访问平台·基于WireGuard的身份感知VPN
+# Pangolin：20K Stars·零信任远程访问平台·基于 WireGuard 的身份感知 VPN
 
 ## 一、项目概述
 
@@ -362,7 +362,7 @@ docker-compose up -d
 | 版本 | 许可证 | 费用 |
 |------|---------|------|
 | **社区版** | AGPL-3.0 | 免费 |
-| **企业版** | Fossorial Commercial License | 免费（年收入<$10万）|
+| **企业版** | Fossorial Commercial License | 免费（年收入<$10 万）|
 
 ### 11.2 AGPL-3.0 要求
 
@@ -402,7 +402,7 @@ Pangolin 是**新一代零信任远程访问平台**：
 | 🌐 **浏览器访问** | 无需 VPN 客户端，浏览器直接访问 |
 | 📡 **无需公网 IP** | Site Connector 出站连接即可 |
 | 🔑 **身份感知** | 基于身份和上下文的访问控制 |
-| 🆓 **免费选项** | 社区版免费，企业版年收入<$10万免费 |
+| 🆓 **免费选项** | 社区版免费，企业版年收入<$10 万免费 |
 
 ---
 

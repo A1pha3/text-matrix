@@ -18,8 +18,8 @@ tags: ["文档管理", "Python", "Docker", "OCR", "开源"]
 paperless-ngx 是一个强大的开源文档管理解决方案，它可以将你的纸质文档数字化，并通过标签、日期、全文搜索等方式进行高效管理。
 
 > GitHub: [https://github.com/paperless-ngx/paperless-ngx](https://github.com/paperless-ngx/paperless-ngx)  
-> 官方文档: [https://docs.paperless-ngx.com/](https://docs.paperless-ngx.com/)  
-> 在线体验: [https://demo.paperless-ngx.com](https://demo.paperless-ngx.com)（账号: demo / 密码: demo）
+> 官方文档： [https://docs.paperless-ngx.com/](https://docs.paperless-ngx.com/)  
+> 在线体验： [https://demo.paperless-ngx.com](https://demo.paperless-ngx.com)（账号： demo / 密码： demo）
 
 ### 项目数据
 
@@ -165,7 +165,7 @@ paperless-ngx 的组织体系分为三层：
 
 文档的日期可以：
 
-- **自动提取**：从文件名（如 `2024-01-15_账单.pdf`）或 OCR 文本中识别
+- **自动提取**：从文件名（如  PROTECTED_24 ）或 OCR 文本中识别
 - **手动指定**：上传时手动设置
 - **自动归档**：按日期自动生成年度/月度归档视图
 
@@ -182,18 +182,7 @@ paperless-ngx 内置完整的用户管理系统：
 
 完整的 RESTful API 支持所有功能：
 
-```
-GET    /api/documents/          # 获取文档列表
-POST   /api/documents/          # 上传新文档
-GET    /api/documents/{id}/     # 获取文档详情
-PUT    /api/documents/{id}/     # 更新文档
-DELETE /api/documents/{id}/     # 删除文档
-GET    /api/tags/               # 获取标签列表
-POST   /api/tags/               # 创建标签
-GET    /api/correspondents/    # 获取通讯者列表
-GET    /api/search/             # 全文搜索
-POST   /api/documents/bulk_edit/ # 批量编辑
-```
+ PROTECTED_1 
 
 所有 API 请求需要携带 Token 认证，可在设置页面生成。
 
@@ -207,38 +196,25 @@ POST   /api/documents/bulk_edit/ # 批量编辑
 
 **1. 创建目录结构**
 
-```bash
-mkdir -p /opt/paperless
-cd /opt/paperless
-```
+ PROTECTED_2 
 
 **2. 下载 docker-compose.yml**
 
-```bash
-curl -O https://raw.githubusercontent.com/paperless-ngx/paperless-ngx/main/docker/compose.yml
-mv compose.yml docker-compose.yml
-```
+ PROTECTED_3 
 
 **3. 创建数据目录**
 
-```bash
-mkdir -p data/consume
-```
+ PROTECTED_4 
 
 **4. 配置（可选）**
 
-```bash
-cp .env.example .env
-# 编辑 .env 文件设置管理员账号、密码、时区等
-```
+ PROTECTED_5 
 
 **5. 启动服务**
 
-```bash
-docker-compose up -d
-```
+ PROTECTED_6 
 
-访问 `http://localhost:8000`，使用管理员账号登录即可。
+访问  PROTECTED_25 ，使用管理员账号登录即可。
 
 > 💡 **提示**：首次启动建议配置 `PAPERLESS_ADMIN_USER` 和 `PAPERLESS_ADMIN_PASSWORD` 环境变量，否则需通过初始化流程创建管理员。
 
@@ -289,7 +265,7 @@ cd paperless-ngx
 docker-compose -f docker/compose.yml up -d
 ```
 
-> ⚠️ **性能注意**：OCR 是 CPU 密集型任务，树莓派 4B（4GB 内存）可流畅处理日常文档量。如需提速，可考虑使用 `PAPERLESS_OCR_MODE=skip` 跳过纯PDF的OCR，或使用远程 Tesseract 容器。
+> ⚠️ **性能注意**：OCR 是 CPU 密集型任务，树莓派 4B（4GB 内存）可流畅处理日常文档量。如需提速，可考虑使用 `PAPERLESS_OCR_MODE=skip` 跳过纯 PDF 的 OCR，或使用远程 Tesseract 容器。
 
 ### 群晖 NAS 部署
 

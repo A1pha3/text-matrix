@@ -7,7 +7,7 @@ categories: ["技术笔记"]
 tags: ["Thunderbird", "AI客户端", "开源", "跨平台", "本地部署", "企业级"]
 ---
 
-# thunderbird/thunderbolt：Mozilla邮件客户端的AI扩展，开源跨平台AI客户端
+# thunderbird/thunderbolt：Mozilla 邮件客户端的 AI 扩展，开源跨平台 AI 客户端
 
 ## 🎯 概述
 

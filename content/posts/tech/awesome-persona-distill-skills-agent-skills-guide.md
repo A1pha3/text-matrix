@@ -8,17 +8,17 @@ categories: ["技术笔记"]
 tags: ["Agent Skills", "人格蒸馏", "数字人格", "AI助手", "记忆系统", "ChatGPT", "Claude"]
 ---
 
-# Awesome Persona Distill Skills：人格蒸馏Agent Skills的完整指南
+# Awesome Persona Distill Skills：人格蒸馏 Agent Skills 的完整指南
 
 ## §1 学习目标
 
 通过本文，你将掌握：
 
 - 人格蒸馏的核心概念与边界
-- Awesome Persona Distill Skills的完整分类体系
-- 每类Skills的设计思路与典型实现
+- Awesome Persona Distill Skills 的完整分类体系
+- 每类 Skills 的设计思路与典型实现
 - 如何构建属于自己的数字人格助手
-- Agent Skills的开放标准与贡献流程
+- Agent Skills 的开放标准与贡献流程
 
 ## §2 概念解析：什么是人格蒸馏
 
@@ -49,7 +49,7 @@ tags: ["Agent Skills", "人格蒸馏", "数字人格", "AI助手", "记忆系统
 
 ### 2.2 为什么需要人格蒸馏
 
-| 需求 | 场景 | Skills价值 |
+| 需求 | 场景 | Skills 价值 |
 |------|------|-----------|
 | **职场沟通** | 向上管理、跨部门协作 | 理解老板/同事的决策风格 |
 | **亲密关系** | 情感整理、关系回顾 | 数字化保存共同记忆 |
@@ -57,23 +57,23 @@ tags: ["Agent Skills", "人格蒸馏", "数字人格", "AI助手", "记忆系统
 | **创作辅助** | 角色扮演、内容创作 | 构建虚拟人格助手 |
 | **纪念意义** | 数字遗产、亲情保存 | 留住与逝者的对话可能 |
 
-### 2.3 与传统AI助手的区别
+### 2.3 与传统 AI 助手的区别
 
-| 维度 | 传统AI助手 | 人格蒸馏助手 |
+| 维度 | 传统 AI 助手 | 人格蒸馏助手 |
 |------|------------|--------------|
 | **知识来源** | 通用语料 | 个体化数据 |
 | **交互风格** | 中立、通用 | 模拟特定人格 |
-| **决策逻辑** | RLHF对齐 | 人格框架驱动 |
+| **决策逻辑** | RLHF 对齐 | 人格框架驱动 |
 | **记忆方式** | 知识图谱 | 情感记忆+方法论 |
-| **核心价值** | 回答问题 | 风格重现 |
+| **关键价值** | 回答问题 | 风格重现 |
 
-## §3 Skills分类全景
+## §3 Skills 分类全景
 
 ### 3.1 分类总览
 
-Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
+Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 
-| 类别 | Skills数量 | 核心场景 |
+| 类别 | Skills 数量 | 核心场景 |
 |------|------------|----------|
 | 自我蒸馏与元工具 | 6 | 个人数字化、记忆整理 |
 | 职场与学术关系 | 7 | 工作协作、学术传承 |
@@ -112,7 +112,7 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 - 自我镜像与反思
 - 与他人协作时的风格说明
 
-### 4.2 核心Skills详解
+### 4.2 核心 Skills 详解
 
 #### 4.2.1 自己.skill
 
@@ -174,7 +174,7 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 - 家族记忆保存
 - 个人品牌延续
 
-### 4.3 元工具Skills
+### 4.3 元工具 Skills
 
 #### 4.3.1 Forge Skill
 
@@ -218,12 +218,12 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 
 ### 5.1 概述
 
-职场与学术关系Skills帮助我们：
+职场与学术关系 Skills 帮助我们：
 - 理解上司/同事/导师的决策风格
 - 传承资深成员的经验与判断框架
 - 优化跨角色沟通效率
 
-### 5.2 核心Skills详解
+### 5.2 核心 Skills 详解
 
 #### 5.2.1 同事.skill
 
@@ -262,7 +262,7 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 
 **功能**：将导师的指导风格整理为面向学生与教育工作者的导师助手
 
-**核心价值**：
+**关键价值**：
 - 帮助新学生快速适应导师风格
 - 提炼导师的指导方法论
 - 形成可复制的教育智慧
@@ -285,12 +285,12 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 
 ### 6.1 概述
 
-亲密关系Skills用于：
+亲密关系 Skills 用于：
 - 情感整理与关系回顾
 - 家庭记忆的数字化保存
 - 特殊场景（纪念、追忆）的数字陪伴
 
-### 6.2 核心Skills详解
+### 6.2 核心 Skills 详解
 
 #### 6.2.1 暗恋对象.skill
 
@@ -323,7 +323,7 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 
 **功能**：从私人记录中整理说话方式与共同记忆
 
-**核心价值**：
+**关键价值**：
 - 关系回顾与成长反思
 - 理解沟通模式中的问题根源
 - 保留珍贵的共同记忆
@@ -354,7 +354,7 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 
 ### 7.1 概述
 
-这是数量最多的类别（24个），涵盖全球知名人物的方法论蒸馏：
+这是数量最多的类别（24 个），涵盖全球知名人物的方法论蒸馏：
 
 | 领域 | 代表人物 | 核心框架 |
 |------|----------|----------|
@@ -385,7 +385,7 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 **核心框架**：
 - 跨学科心智模型
 - 逆向思考（想要成功先避免失败）
-- Lollapalooza效应
+- Lollapalooza 效应
 
 #### 7.2.3 塔勒布.skill
 
@@ -420,14 +420,14 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 - 压缩迭代：快速失败、快速学习
 - 目标导向：10%原则（效率提升）
 
-### 7.4 AI与科技
+### 7.4 AI 与科技
 
 #### 7.4.1 Karpathy.skill
 
 **仓库**：alchaincyf/karpathy-skill
 
 **核心提炼**：
-- AI教育：直观解释复杂概念
+- AI 教育：直观解释复杂概念
 - 工程思维：从原理到实现
 - 研究品味：简单、通用、可扩展
 
@@ -438,7 +438,7 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 **核心框架**：
 - 规模化假设：模型能力随规模涌现
 - 研究品味：重视实证、质疑直觉
-- 长期思考：10年视角做研究
+- 长期思考：10 年视角做研究
 
 ### 7.5 中国人物
 
@@ -481,16 +481,16 @@ Awesome Persona Distill Skills收录了**5大类、50+ Skills**：
 
 **功能**：基于佛教经典文献整理汉传佛教的教学风格与讲解视角
 
-**核心价值**：
+**关键价值**：
 - 教学方法论传承
 - 佛学智慧现代化
 - 修行指导个性化
 
-## §9 技术实现与Agent Skills标准
+## §9 技术实现与 Agent Skills 标准
 
-### 9.1 Agent Skills开放标准
+### 9.1 Agent Skills 开放标准
 
-所有Skills遵循Agent Skills规范：
+所有 Skills 遵循 Agent Skills 规范：
 
 ```
 skill-name/
@@ -501,7 +501,7 @@ skill-name/
 └── assets/           # 静态资源
 ```
 
-### 9.2 SKILL.md结构
+### 9.2 SKILL.md 结构
 
 ```markdown
 ---
@@ -544,13 +544,13 @@ compatibiity:
 ```
 
 **提交要求**：
-- Issue表单包含：技能名称、描述、应用场景
+- Issue 表单包含：技能名称、描述、应用场景
 - 禁止侵犯隐私或未经授权的人格复制
-- 修复现有条目可直接提交PR
+- 修复现有条目可直接提交 PR
 
-## §10 最佳实践
+## §10 实践建议
 
-### 10.1 构建个人Skills
+### 10.1 构建个人 Skills
 
 ```markdown
 # 个人Skills构建检查清单
@@ -601,14 +601,14 @@ persona-distill import --source chat-history.json --to-cloud  # ❌
 
 ## §11 总结
 
-Awesome Persona Distill Skills提供了：
+Awesome Persona Distill Skills 提供了：
 
-- ✅ **50+可复用的Agent Skills**：覆盖自我、职场、亲密关系、公众人物
+- ✅ **50+可复用的 Agent Skills**：覆盖自我、职场、亲密关系、公众人物
 - ✅ **系统性方法论**：人格蒸馏的完整框架与流程
-- ✅ **开放标准**：遵循Agent Skills规范，易于贡献与扩展
+- ✅ **开放标准**：遵循 Agent Skills 规范，易于贡献与扩展
 - ✅ **隐私优先**：强调本地运行、伦理边界
 
-**核心价值**：不是复制人格，而是提炼方法论；不是取代关系，而是增强理解。
+**关键价值**：不是复制人格，而是提炼方法论；不是取代关系，而是增强理解。
 
 **官方资源**：
 

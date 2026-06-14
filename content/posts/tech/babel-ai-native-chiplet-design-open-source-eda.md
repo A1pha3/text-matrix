@@ -8,9 +8,9 @@ categories: ["技术笔记"]
 tags: ["Chiplet", "EDA", "开源工具链", "AI Agent", "芯片设计"]
 ---
 
-# Babel：开源EDA工具链驱动的AI原生Chiplet设计流程
+# Babel：开源 EDA 工具链驱动的 AI 原生 Chiplet 设计流程
 
-Babel 是一个 AI 原生 Chiplet 设计流程，基于开源 EDA 工具链，用 5-agent 流水线处理从产品需求到 GDSII 的完整设计。2026-05-22创建，20星。
+Babel 是一个 AI 原生 Chiplet 设计流程，基于开源 EDA 工具链，用 5-agent 流水线处理从产品需求到 GDSII 的完整设计。2026-05-22 创建，20 星。
 
 ## 核心判断
 
@@ -26,7 +26,7 @@ Babel 的核心创新不是 EDA 工具本身（Yosys/Magic 这些都是成熟工
 | Agent | 触发方式 | 职责 |
 |-------|----------|------|
 | `/bba-architect` | 新设计想法 / `arch-needs-fix` | PRD → arch_spec → MAS，架构设计流程负责人 |
-| `/bba-guru-rtl` | `ready-for-rtl` / `rtl-needs-fix` | MAS → lint-clean SystemVerilog，RTL生成专家 |
+| `/bba-guru-rtl` | `ready-for-rtl` / `rtl-needs-fix` | MAS → lint-clean SystemVerilog，RTL 生成专家 |
 | `/bba-guru-verification` | `ready-for-verification` | 100% 覆盖率验证，验证专家 |
 | `/bba-guru-synthesis` | `ready-for-synth` / `synth-needs-fix` | SDC + CDC + 并行综合 → timing closure |
 | `/bba-guru-pd` | `ready-for-pd` / `pd-rework` | Floorplan → Place → Route → DRC/LVS → GDSII |
@@ -63,7 +63,7 @@ Agent 间通过 labeled issue 协作：
 
 | 类别 | Skill | 用途 |
 |------|-------|------|
-| **EDA 工具** | `/bb-invoke-yosys` | 并行综合 (LLM驱动5-Phase) |
+| **EDA 工具** | `/bb-invoke-yosys` | 并行综合 (LLM 驱动 5-Phase) |
 | | `/bb-invoke-verilator` | 仿真 + 覆盖率收集 |
 | | `/bb-invoke-opensta` | 静态时序分析 |
 | | `/bb-invoke-magic` | Placement + DRC |

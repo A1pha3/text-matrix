@@ -215,7 +215,7 @@ docker compose up -d
 |------|------|------|
 | `DATABASE_URL` | PostgreSQL 连接串 | `postgresql://user:pass@host:5432/cal` |
 | `NEXTAUTH_SECRET` | Cookie 加密密钥 | `openssl rand -base64 32` 生成 |
-| `CALENDSO_ENCRYPTION_KEY` | 数据加密密钥（32字节） | `openssl rand -base64 24` 生成 |
+| `CALENDSO_ENCRYPTION_KEY` | 数据加密密钥（32 字节） | `openssl rand -base64 24` 生成 |
 | `NEXT_PUBLIC_WEBAPP_URL` | 站点基础 URL | `https://schedule.example.com` |
 
 **可选变量**：

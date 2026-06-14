@@ -7,7 +7,7 @@ categories: ["技术笔记"]
 tags: ["MCP", "Claude Code", "语义搜索", "向量数据库", "Zilliz"]
 ---
 
-# zilliztech/claude-context：MCP语义代码搜索插件，让Claude理解整个代码库
+# zilliztech/claude-context：MCP 语义代码搜索插件，让 Claude 理解整个代码库
 
 ## 🎯 概述
 

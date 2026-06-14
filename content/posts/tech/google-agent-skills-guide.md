@@ -222,7 +222,7 @@ npx skills add google/skills/bigquery-basics
 | 技能 | 说明 |
 |------|------|
 | **Onboarding Recipe** | Google Cloud 新账号初始化检查清单 |
-| **Auth Recipe** | Google Cloud 认证配置最佳实践 |
+| **Auth Recipe** | Google Cloud 认证配置实践建议 |
 | **Network Observability Recipe** | 网络可观测性配置 |
 
 ### 架构框架技能

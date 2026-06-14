@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "Hermes", "WebUI", "自托管", "NousResearch"]
 ---
 
-# Hermes WebUI：自托管AI Agent的网页界面完全指南
+# Hermes WebUI：自托管 AI Agent 的网页界面完全指南
 
 Hermes WebUI 是一个专为 [Hermes Agent](https://hermes-agent.nousresearch.com/) 设计的网页界面，可以在浏览器中完成 CLI 上的所有操作。它不需要任何构建步骤、不依赖前端框架、不需要打包工具——核心只需 Python 和原生 JavaScript。对于已经在服务器上运行 Hermes Agent 的用户来说，这是从任何设备安全访问 Agent 最便捷的方案。
 
@@ -24,7 +24,7 @@ Hermes WebUI 是一个专为 [Hermes Agent](https://hermes-agent.nousresearch.co
 
 ## 为什么值得看
 
-大多数 AI Agent 工具都重度依赖终端或桌面客户端，一旦离开本地环境就很难继续使用上下文。Hermes WebUI 的核心价值在于：**将一个功能完整的自托管 Agent 变成可以在任何浏览器访问的网页应用**，而不引入额外的复杂度或供应商绑定。
+大多数 AI Agent 工具都重度依赖终端或桌面客户端，一旦离开本地环境就很难继续使用上下文。Hermes WebUI 的关键价值在于：**将一个功能完整的自托管 Agent 变成可以在任何浏览器访问的网页应用**，而不引入额外的复杂度或供应商绑定。
 
 ## 核心能力
 

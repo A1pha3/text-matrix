@@ -86,7 +86,7 @@ Stage 2 是这套课程最实用、也最容易被低估的一部分。它并没
 
 如果说 Stage 1 教的是“怎么开始”，Stage 2 教的是“怎么把东西做完整”，那么 Stage 3 处理的就是“怎么把 AI 真正纳入开发流程”。
 
-这一阶段的核心已经不再是简单的提示词，而是围绕 Claude Code 展开的工程化能力，包括安装与基础用法、MCP、Skills、Long-Running Tasks、Agent Teams、Spec Coding、工作流最佳实践、移动端远程开发，以及 Claude Agent SDK。它讨论的问题不再是“AI 会不会写代码”，而是“AI 在复杂任务里怎样稳定地持续工作”。
+这一阶段的核心已经不再是简单的提示词，而是围绕 Claude Code 展开的工程化能力，包括安装与基础用法、MCP、Skills、Long-Running Tasks、Agent Teams、Spec Coding、工作流实践建议、移动端远程开发，以及 Claude Agent SDK。它讨论的问题不再是“AI 会不会写代码”，而是“AI 在复杂任务里怎样稳定地持续工作”。
 
 这背后其实是工程方法的变化：怎样组织上下文，怎样把任务切小，怎样用规格先行减少返工，怎样在多 Agent 协作下控制质量，怎样让 AI 不只会补几段代码，而是能参与长期任务。对于已经在用 Claude Code、Cursor 或类似工具的人，这一部分更像一套系统化工作方法，而不只是工具功能介绍。
 

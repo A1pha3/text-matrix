@@ -10,31 +10,31 @@ tags: ["开源", "电子签名", "PDF", "文档处理", "DocuSign替代", "Docke
 
 ## 项目概览
 
-[DocuSeal](https://github.com/docusealco/docuseal) 是一个开源电子文档签署和处理平台，可作为DocuSign的替代方案。用户可以通过直观的Web界面创建PDF表单、收集填写内容、数字签名，并在任何设备上完成签署流程。
+[DocuSeal](https://github.com/docusealco/docuseal) 是一个开源电子文档签署和处理平台，可作为 DocuSign 的替代方案。用户可以通过直观的 Web 界面创建 PDF 表单、收集填写内容、数字签名，并在任何设备上完成签署流程。
 
 **核心数据：**
 - GitHub Stars：535
 - 技术栈：Ruby
 - 部署方式：Docker、Railway、Heroku、DigitalOcean、Render
 - License：AGPLv3 + Section 7(b) Additional Terms
-- 支持语言：7种UI语言，签署支持14种语言
+- 支持语言：7 种 UI 语言，签署支持 14 种语言
 
 **核心功能：**
-- PDF表单构建器（WYSIWYG）
-- 12种字段类型（签名、日期、文件、复选框等）
+- PDF 表单构建器（WYSIWYG）
+- 12 种字段类型（签名、日期、文件、复选框等）
 - 多签署方支持
 - 自动化邮件通知
 - 本地存储或云存储（S3、Google Storage、Azure）
-- API和Webhook集成
-- Docker一键部署
+- API 和 Webhook 集成
+- Docker 一键部署
 
 ---
 
 ## 核心功能详解
 
-### 1. PDF表单构建器
+### 1. PDF 表单构建器
 
-DocuSeal提供所见即所得的表单编辑器，无需编程即可创建专业级PDF表单：
+DocuSeal 提供所见即所得的表单编辑器，无需编程即可创建专业级 PDF 表单：
 
 **支持的字段类型：**
 | 字段类型 | 说明 |
@@ -67,18 +67,18 @@ DocuSeal提供所见即所得的表单编辑器，无需编程即可创建专业
 
 | 存储方式 | 说明 |
 |---------|------|
-| 本地磁盘 | 默认SQLite，适合小规模使用 |
+| 本地磁盘 | 默认 SQLite，适合小规模使用 |
 | AWS S3 | 企业级对象存储 |
-| Google Cloud Storage | GCP生态集成 |
+| Google Cloud Storage | GCP 生态集成 |
 | Azure Blob Storage | 微软云生态集成 |
 | PostgreSQL | 关系型数据库（可选） |
 | MySQL | 关系型数据库（可选） |
 
-### 4. API与Webhook
+### 4. API 与 Webhook
 
-DocuSeal提供完整的REST API和Webhook，支持与企业系统深度集成：
+DocuSeal 提供完整的 REST API 和 Webhook，支持与企业系统深度集成：
 
-**API端点示例：**
+**API 端点示例：**
 ```
 POST /api/v1/templates          # 创建模板
 POST /api/v1/documents          # 创建待签署文档
@@ -87,7 +87,7 @@ POST /api/v1/documents/:id/send # 发送签署邀请
 GET  /api/v1/documents/:id/file # 下载已签署文档
 ```
 
-**Webhook事件：**
+**Webhook 事件：**
 - document.completed — 文档签署完成
 - document.signed — 有人完成签署
 - template.created — 模板创建成功
@@ -103,9 +103,9 @@ GET  /api/v1/documents/:id/file # 下载已签署文档
 docker run --name docuseal -p 3000:3000 -v .:/data docuseal/docuseal
 ```
 
-默认使用SQLite数据库存储在`/data`目录。
+默认使用 SQLite 数据库存储在`/data`目录。
 
-### Docker Compose（生产级部署，支持HTTPS）
+### Docker Compose（生产级部署，支持 HTTPS）
 
 ```bash
 # 下载docker-compose配置
@@ -128,41 +128,41 @@ sudo HOST=your-domain-name.com docker compose up
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `DATABASE_URL` | 数据库连接串 | SQLite本地文件 |
-| `SMTP_ADDRESS` | SMTP服务器地址 | - |
-| `SMTP_PORT` | SMTP端口 | 587 |
-| `SMTP_USERNAME` | SMTP用户名 | - |
-| `SMTP_PASSWORD` | SMTP密码 | - |
+| `DATABASE_URL` | 数据库连接串 | SQLite 本地文件 |
+| `SMTP_ADDRESS` | SMTP 服务器地址 | - |
+| `SMTP_PORT` | SMTP 端口 | 587 |
+| `SMTP_USERNAME` | SMTP 用户名 | - |
+| `SMTP_PASSWORD` | SMTP 密码 | - |
 | `SMTP_FROM` | 发件人地址 | - |
-| `AWS_BUCKET` | S3桶名称 | - |
-| `AWS_REGION` | AWS区域 | - |
-| `AWS_ACCESS_KEY_ID` | AWS访问密钥 | - |
-| `AWS_SECRET_ACCESS_KEY` | AWS秘密密钥 | - |
+| `AWS_BUCKET` | S3 桶名称 | - |
+| `AWS_REGION` | AWS 区域 | - |
+| `AWS_ACCESS_KEY_ID` | AWS 访问密钥 | - |
+| `AWS_SECRET_ACCESS_KEY` | AWS 秘密密钥 | - |
 
 ---
 
-## Pro版功能
+## Pro 版功能
 
-DocuSeal分为开源版和Pro版，Pro版提供更高级功能：
+DocuSeal 分为开源版和 Pro 版，Pro 版提供更高级功能：
 
-| 功能 | 开源版 | Pro版 |
+| 功能 | 开源版 | Pro 版 |
 |------|--------|-------|
 | 基础表单字段 | ✅ | ✅ |
 | 多签署方 | ✅ | ✅ |
-| PDF导出 | ✅ | ✅ |
-| Logo定制 | ❌ | ✅ |
+| PDF 导出 | ✅ | ✅ |
+| Logo 定制 | ❌ | ✅ |
 | 白标 | ❌ | ✅ |
 | 用户角色管理 | ❌ | ✅ |
 | 自动提醒 | ❌ | ✅ |
-| SMS身份验证 | ❌ | ✅ |
+| SMS 身份验证 | ❌ | ✅ |
 | 条件字段和公式 | ❌ | ✅ |
-| CSV/XLSX批量发送 | ❌ | ✅ |
+| CSV/XLSX 批量发送 | ❌ | ✅ |
 | SSO/SAML | ❌ | ✅ |
-| HTML API模板创建 | 基础 | 完整 |
+| HTML API 模板创建 | 基础 | 完整 |
 
-### HTML API创建模板
+### HTML API 创建模板
 
-Pro版支持通过HTML创建模板，精确控制表单布局：
+Pro 版支持通过 HTML 创建模板，精确控制表单布局：
 
 ```bash
 curl -X POST https://your-docuseal.com/api/v1/templates \
@@ -177,9 +177,9 @@ curl -X POST https://your-docuseal.com/api/v1/templates \
 
 ## 集成示例
 
-### React集成
+### React 集成
 
-DocuSeal提供官方React组件，支持嵌入式签署表单：
+DocuSeal 提供官方 React 组件，支持嵌入式签署表单：
 
 ```bash
 npm install @docuseal/react
@@ -201,9 +201,9 @@ function App() {
 }
 ```
 
-类似的还有Vue和Angular官方组件。
+类似的还有 Vue 和 Angular 官方组件。
 
-### Webhook处理示例
+### Webhook 处理示例
 
 ```python
 # Python Flask示例
@@ -232,39 +232,39 @@ def handle_webhook():
 - 企业内部合同签署流程数字化
 - 需要多签署方的协议、合同
 - 需要与现有业务系统（CRM、ERP）集成的文档签署
-- 对数据主权有要求，不能使用SaaS服务的场景
+- 对数据主权有要求，不能使用 SaaS 服务的场景
 
 ### 边界与局限
 - 电子签名合规性因国家/地区而异，需确认当地法律认可度
-- AGPLv3协议要求开源，介意者需购买Pro版
-- 复杂表单（如嵌套条件逻辑）需要Pro版
+- AGPLv3 协议要求开源，介意者需购买 Pro 版
+- 复杂表单（如嵌套条件逻辑）需要 Pro 版
 
 ---
 
-## 与DocuSign对比
+## 与 DocuSign 对比
 
 | 维度 | DocuSeal | DocuSign |
 |------|----------|----------|
-| 部署方式 | 自托管或SaaS | 仅SaaS |
-| 价格 | 开源免费/Pro付费 | 按发送次数收费 |
+| 部署方式 | 自托管或 SaaS | 仅 SaaS |
+| 价格 | 开源免费/Pro 付费 | 按发送次数收费 |
 | 数据控制 | 完全自主 | 依赖第三方 |
-| API | 完整REST API | 完整API |
+| API | 完整 REST API | 完整 API |
 | 集成方式 | 自托管灵活 | 云端集成 |
-| 合规认证 | 基础 | 高级（SOX、HIPAA等） |
+| 合规认证 | 基础 | 高级（SOX、HIPAA 等） |
 
 ---
 
 ## 总结
 
-DocuSeal是一个功能完整的开源电子签名解决方案，适合需要：
-1. **数据自主**：不愿将敏感文档放到第三方SaaS
-2. **成本控制**：开源版免费使用，节省DocuSign按次计费成本
+DocuSeal 是一个功能完整的开源电子签名解决方案，适合需要：
+1. **数据自主**：不愿将敏感文档放到第三方 SaaS
+2. **成本控制**：开源版免费使用，节省 DocuSign 按次计费成本
 3. **深度定制**：需要与内部系统深度集成的企业
 
-其Docker一键部署、完整的API和Webhook支持，使得它既能作为小型团队的独立工具，也能嵌入到大型企业的数字化流程中。
+其 Docker 一键部署、完整的 API 和 Webhook 支持，使得它既能作为小型团队的独立工具，也能嵌入到大型企业的数字化流程中。
 
 **参考链接：**
 - GitHub：https://github.com/docusealco/docuseal
 - 官方文档：https://docuseal.com
 - 在线演示：https://demo.docuseal.tech
-- 官方文档（Pro功能）：https://docuseal.com/pricing
+- 官方文档（Pro 功能）：https://docuseal.com/pricing

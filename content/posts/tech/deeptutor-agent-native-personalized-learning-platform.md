@@ -14,9 +14,9 @@ tags: ["AI", "Agent", "学习", "教育", "个性化"]
 
 ### 1.1 DeepTutor 是什么
 
-**DeepTutor** 是香港大学数据科学实验室（HKUDS）开发的**Agent-Native 个性化学习平台**。它不仅仅是一个聊天机器人，而是一个**持久自主的AI导师系统**，具备独立记忆、多实例TutorBot，以及深度知识库集成能力。
+**DeepTutor** 是香港大学数据科学实验室（HKUDS）开发的**Agent-Native 个性化学习平台**。它不仅仅是一个聊天机器人，而是一个**持久自主的 AI 导师系统**，具备独立记忆、多实例 TutorBot，以及深度知识库集成能力。
 
-作为新一代 AI 辅助教育平台，DeepTutor 通过多Agent协作、持久记忆和 RAG 技术，为每个学习者提供真正个性化的学习体验。
+作为新一代 AI 辅助教育平台，DeepTutor 通过多 Agent 协作、持久记忆和 RAG 技术，为每个学习者提供真正个性化的学习体验。
 
 ### 1.2 核心数据
 
@@ -77,7 +77,7 @@ tags: ["AI", "Agent", "学习", "教育", "个性化"]
 
 ### 2.2 核心技术组件
 
-**LlamaIndex（RAG管道）：**
+**LlamaIndex（RAG 管道）：**
 
 ```python
 from llama_index import VectorStoreIndex, SimpleDirectoryReader
@@ -91,7 +91,7 @@ retriever = index.as_retriever()
 context = retriever.retrieve("梯度下降")
 ```
 
-**nanobot（Agent引擎）：**
+**nanobot（Agent 引擎）：**
 
 ```python
 from nanobot import Agent
@@ -112,10 +112,10 @@ tutor.run()
 
 | 模式 | 功能 | 核心能力 |
 |------|------|----------|
-| **Chat** | 流式对话 | RAG检索 / 网页搜索 / 代码执行 / 深度推理 |
-| **Deep Solve** | 多Agent问题解决 | Plan / Investigate / Solve / Verify + 引用溯源 |
+| **Chat** | 流式对话 | RAG 检索 / 网页搜索 / 代码执行 / 深度推理 |
+| **Deep Solve** | 多 Agent 问题解决 | Plan / Investigate / Solve / Verify + 引用溯源 |
 | **Quiz Generation** | 测验生成 | 基于知识库生成评估题目 |
-| **Deep Research** | 深度研究 | 分解主题 → 并行研究Agent → 生成报告 |
+| **Deep Research** | 深度研究 | 分解主题 → 并行研究 Agent → 生成报告 |
 | **Math Animator** | 数学动画 | Manim 驱动的可视化数学概念 |
 
 ---
@@ -124,7 +124,7 @@ tutor.run()
 
 ### 3.1 TutorBot（持久自主导师）
 
-TutorBot 是 DeepTutor 的核心创新——它不是聊天机器人，而是**持久的多实例Agent**：
+TutorBot 是 DeepTutor 的核心创新——它不是聊天机器人，而是**持久的多实例 Agent**：
 
 ```python
 # 创建专属导师
@@ -143,7 +143,7 @@ deeptutor bot list
 | 特性 | 说明 |
 |------|------|
 | Soul Templates | 通过 Soul 文件定义人格、语调和教学理念 |
-| Independent Workspace | 每个Bot独立目录，隔离的记忆、会话和配置 |
+| Independent Workspace | 每个 Bot 独立目录，隔离的记忆、会话和配置 |
 | Proactive Heartbeat | 主动发起学习检查、复习提醒和定时任务 |
 | Full Tool Access | 完整访问 RAG / 代码执行 / 网页搜索 / 学术搜索 |
 | Skill Learning | 通过添加 Skill 文件扩展能力 |
@@ -247,7 +247,7 @@ EMBEDDING_API_KEY=sk-xxx
 EMBEDDING_DIMENSION=3072
 ```
 
-### 4.3 方式三：Docker部署
+### 4.3 方式三：Docker 部署
 
 ```bash
 git clone https://github.com/HKUDS/DeepTutor.git
@@ -377,7 +377,7 @@ ws.send(JSON.stringify({
 
 ### 6.3 SKILL.md 集成
 
-将项目根目录的 `SKILL.md` 交给任何工具调用Agent，它就能自主配置和操作 DeepTutor：
+将项目根目录的 `SKILL.md` 交给任何工具调用 Agent，它就能自主配置和操作 DeepTutor：
 
 ```markdown
 # SKILL.md
@@ -391,7 +391,7 @@ ws.send(JSON.stringify({
 
 ---
 
-## 七、最佳实践
+## 七、实践建议
 
 ### 7.1 构建有效的知识库
 
@@ -449,14 +449,14 @@ deeptutor bot configure feishu --app-id ID --app-secret SECRET
 
 | 项目 | 特点 | 适用场景 |
 |------|------|----------|
-| **DeepTutor** | Agent-Native、持久记忆、多Bot | 个性化学习、导师系统 |
-| **Khanmigo** | Khan Academy官方AI导师 | 在线教育平台 |
+| **DeepTutor** | Agent-Native、持久记忆、多 Bot | 个性化学习、导师系统 |
+| **Khanmigo** | Khan Academy 官方 AI 导师 | 在线教育平台 |
 | **MathGPT** | 数学专项、逐步解答 | 数学作业辅助 |
 | **ChatGPT Tutor** | 通用对话辅导 | 通用知识问答 |
 
 DeepTutor 的优势：
 - ✅ 开源可自托管
-- ✅ 多Agent协作
+- ✅ 多 Agent 协作
 - ✅ 持久化记忆
 - ✅ 多渠道部署
 - ✅ 完全定制化
@@ -476,17 +476,17 @@ DeepTutor 的优势：
 
 ## 十、总结
 
-DeepTutor 代表了**AI辅助教育的下一代范式**：
+DeepTutor 代表了**AI 辅助教育的下一代范式**：
 
 | 维度 | 传统平台 | DeepTutor |
 |------|----------|-----------|
 | 对话 | 一次性问答 | 持久上下文 |
 | 记忆 | 无 | Summary + Profile |
-| 导师 | 通用Bot | 多实例独立Bot |
+| 导师 | 通用 Bot | 多实例独立 Bot |
 | 知识 | 封闭 | RAG + 知识库 |
 | 渠道 | Web | 多渠道主动触达 |
 
-无论你是教育科技开发者、AI Agent研究者，还是独立学习者，DeepTutor 都提供了一个强大的开源框架来构建个性化学习体验。
+无论你是教育科技开发者、AI Agent 研究者，还是独立学习者，DeepTutor 都提供了一个强大的开源框架来构建个性化学习体验。
 
 ---
 

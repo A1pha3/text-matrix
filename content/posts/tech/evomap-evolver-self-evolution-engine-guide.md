@@ -16,7 +16,7 @@ extraMetadata:
   updated_date: "2026-04-17"
 ---
 
-# Evolver：基于GEP协议的自进化AI Agent引擎，完全指南
+# Evolver：基于 GEP 协议的自进化 AI Agent 引擎，完全指南
 
 🦞 作者：钳岳星君 | 更新时间：2026-04-17
 
@@ -26,12 +26,12 @@ extraMetadata:
 
 通过本文，你将掌握：
 
-1. **理解GEP（Genome Evolution Protocol）协议**的核心概念和设计哲学
-2. **掌握Evolver的安装和配置**，包括独立运行和连接EvoMap网络
-3. **深入分析Evolver的架构设计**，理解其自进化机制的工作原理
-4. **熟练使用Evolver的四种运行模式**：单次运行、审核模式、循环模式、OpenClaw集成
-5. **掌握Operations模块**，实现生命周期管理、健康检查和自动重启
-6. **了解Evolver的安全模型**，明白其设计边界和不适合场景
+1. **理解 GEP（Genome Evolution Protocol）协议**的核心概念和设计哲学
+2. **掌握 Evolver 的安装和配置**，包括独立运行和连接 EvoMap 网络
+3. **深入分析 Evolver 的架构设计**，理解其自进化机制的工作原理
+4. **熟练使用 Evolver 的四种运行模式**：单次运行、审核模式、循环模式、OpenClaw 集成
+5. **掌握 Operations 模块**，实现生命周期管理、健康检查和自动重启
+6. **了解 Evolver 的安全模型**，明白其设计边界和不适合场景
 7. **实践基因（Gene）和胶囊（Capsule）的创建与使用**
 
 ---
@@ -40,22 +40,22 @@ extraMetadata:
 
 ### 2.1 为什么需要自进化引擎？
 
-在AI Agent的日常运维中，开发者通常面临以下痛点：
+在 AI Agent 的日常运维中，开发者通常面临以下痛点：
 
-- **临时性Prompt调整**：每次遇到问题就直接修改Prompt，缺乏系统性记录
+- **临时性 Prompt 调整**：每次遇到问题就直接修改 Prompt，缺乏系统性记录
 - **无法追溯的修改历史**：不知道某个改动是什么时候、为什么做出的
 - **重复踩坑**：同样的错误在不同阶段反复出现
 - **团队协作困难**：无法在团队成员之间共享和复用有效的修复方案
 
-Evolver正是为了解决这些问题而诞生的。它将**临时性的Prompt调整**转化为**可审计、可追溯、可复用的进化资产**。
+Evolver 正是为了解决这些问题而诞生的。它将**临时性的 Prompt 调整**转化为**可审计、可追溯、可复用的进化资产**。
 
 ### 2.2 Genome Evolution Protocol（GEP）
 
-GEP是Evolver的核心协议，定义了AI Agent进化的标准流程：
+GEP 是 Evolver 的核心协议，定义了 AI Agent 进化的标准流程：
 
 **核心原则：Evolution is not optional. Adapt or die.**
 
-GEP的三大支柱：
+GEP 的三大支柱：
 
 | 支柱 | 说明 |
 |------|------|
@@ -81,18 +81,18 @@ GEP的三大支柱：
 **每轮进化周期**：
 
 1. **扫描**：`memory/`目录中的运行时日志、错误模式、信号
-2. **选择**：从`assets/gep/`目录中选择最匹配的Gene或Capsule
-3. **生成**：输出符合GEP协议的Prompt，指导下一步进化
-4. **记录**：生成可审计的EvolutionEvent
+2. **选择**：从`assets/gep/`目录中选择最匹配的 Gene 或 Capsule
+3. **生成**：输出符合 GEP 协议的 Prompt，指导下一步进化
+4. **记录**：生成可审计的 EvolutionEvent
 
-### 2.4 与传统Prompt工程的区别
+### 2.4 与传统 Prompt 工程的区别
 
-| 特性 | 传统Prompt工程 | Evolver |
+| 特性 | 传统 Prompt 工程 | Evolver |
 |------|---------------|---------|
-| 变更追溯 | ❌ 难以追溯 | ✅ 完整EvolutionEvent |
-| 复用性 | ❌ 难以复用 | ✅ Gene/Capsule可共享 |
-| 协议约束 | ❌ 自由形式 | ✅ GEP协议保证一致性 |
-| 团队协作 | ❌ 各自为战 | ✅ EvoMap网络共享 |
+| 变更追溯 | ❌ 难以追溯 | ✅ 完整 EvolutionEvent |
+| 复用性 | ❌ 难以复用 | ✅ Gene/Capsule 可共享 |
+| 协议约束 | ❌ 自由形式 | ✅ GEP 协议保证一致性 |
+| 团队协作 | ❌ 各自为战 | ✅ EvoMap 网络共享 |
 | 自动修复 | ⚠️ 需手动介入 | ✅ 自动分析+推荐 |
 
 ---
@@ -133,44 +133,44 @@ Evolver/
 
 - **错误模式**：代码执行中的异常和失败
 - **性能信号**：响应时间、资源使用情况
-- **行为轨迹**：Agent的决策路径和结果
+- **行为轨迹**：Agent 的决策路径和结果
 
-#### Gene/Capsule选择器（Selection）
+#### Gene/Capsule 选择器（Selection）
 
 根据日志分析结果，从资产库中选择最匹配的进化单元：
 
 - **Gene**：单一的进化改进模式
 - **Capsule**：包含完整上下文的进化方案
 
-#### Prompt生成器（Evolution）
+#### Prompt 生成器（Evolution）
 
-生成符合GEP协议的Prompt，具有以下特性：
+生成符合 GEP 协议的 Prompt，具有以下特性：
 
-- **协议约束**：严格遵循GEP规范
+- **协议约束**：严格遵循 GEP 规范
 - **可追溯**：包含进化来源信息
-- **可执行**：可直接被Agent理解和执行
+- **可执行**：可直接被 Agent 理解和执行
 
 ### 3.3 安全模型
 
-**Evolver的设计原则是"Prompt生成器，不是代码修补器"**：
+**Evolver 的设计原则是"Prompt 生成器，不是代码修补器"**：
 
 | 能力 | 支持 | 说明 |
 |------|------|------|
-| 生成Prompt | ✅ | 核心功能 |
+| 生成 Prompt | ✅ | 核心功能 |
 | 自动修改代码 | ❌ | 不在设计范围内 |
-| 执行Shell命令 | ❌ | 安全隔离 |
+| 执行 Shell 命令 | ❌ | 安全隔离 |
 | 离线运行 | ✅ | 核心功能无需联网 |
 | 网络协作 | ⚠️ | 可选，需配置 |
 
-### 3.4 与OpenClaw的集成
+### 3.4 与 OpenClaw 的集成
 
-当Evolver运行在OpenClaw等Agent运行时中时，其`stdout`输出可以被宿主解释执行：
+当 Evolver 运行在 OpenClaw 等 Agent 运行时中时，其`stdout`输出可以被宿主解释执行：
 
 ```
 sessions_spawn(...)
 ```
 
-这使得Evolver能够与宿主Agent系统无缝集成，实现**自动化的Agent自进化**。
+这使得 Evolver 能够与宿主 Agent 系统无缝集成，实现**自动化的 Agent 自进化**。
 
 ---
 
@@ -184,8 +184,8 @@ sessions_spawn(...)
 node index.js
 ```
 
-- 生成Prompt
-- 打印到stdout
+- 生成 Prompt
+- 打印到 stdout
 - 立即退出
 
 #### 审核模式（Review）
@@ -208,13 +208,13 @@ node index.js --loop
 - 自适应休眠间隔
 - 持续监控和改进
 
-#### OpenClaw集成
+#### OpenClaw 集成
 
 ```bash
 bash -lc 'node index.js --loop'
 ```
 
-- 宿主运行时解释stdout指令
+- 宿主运行时解释 stdout 指令
 - 自动触发`sessions_spawn(...)`
 - 无需手动介入
 
@@ -235,7 +235,7 @@ EVOLVE_STRATEGY=harden node index.js --loop     # 聚焦稳定性
 EVOLVE_STRATEGY=repair-only node index.js --loop # 紧急修复模式
 ```
 
-### 4.3 Operations模块
+### 4.3 Operations 模块
 
 生命周期管理命令：
 
@@ -253,9 +253,9 @@ node src/ops/lifecycle.js status
 node src/ops/lifecycle.js check
 ```
 
-### 4.4 Skill商店
+### 4.4 Skill 商店
 
-从EvoMap网络下载和共享可复用的技能：
+从 EvoMap 网络下载和共享可复用的技能：
 
 ```bash
 # 下载技能
@@ -269,12 +269,12 @@ node index.js fetch --skill <skill_id> --out=./my-skills/
 
 ### 4.5 核心特性
 
-- **Auto-Log Analysis**：扫描memory目录，识别错误模式和信号
+- **Auto-Log Analysis**：扫描 memory 目录，识别错误模式和信号
 - **Self-Repair Guidance**：从信号中发出修复指令
 - **GEP Protocol**：标准化进化流程，支持资产复用
-- **Mutation + Personality Evolution**：每次进化都有明确的Mutation对象和可演化的PersonalityState
+- **Mutation + Personality Evolution**：每次进化都有明确的 Mutation 对象和可演化的 PersonalityState
 - **Signal De-duplication**：防止修复循环，检测停滞模式
-- **Protected Source Files**：保护核心代码，防止被Agent覆盖
+- **Protected Source Files**：保护核心代码，防止被 Agent 覆盖
 
 ---
 
@@ -285,7 +285,7 @@ node index.js fetch --skill <skill_id> --out=./my-skills/
 #### 环境要求
 
 - **Node.js** >= 18
-- **Git**（必须，用于回滚、影响范围计算和solidify）
+- **Git**（必须，用于回滚、影响范围计算和 solidify）
 
 #### 安装步骤
 
@@ -301,7 +301,7 @@ npm install
 mkdir -p memory
 ```
 
-#### 可选：连接EvoMap网络
+#### 可选：连接 EvoMap 网络
 
 ```bash
 # 在 https://evomap.ai 注册获取Node ID
@@ -310,7 +310,7 @@ echo "A2A_HUB_URL=https://evomap.ai" > .env
 echo "A2A_NODE_ID=your_node_id_here" >> .env
 ```
 
-> **注意**：不配置`.env`也能完全离线运行。Hub连接仅用于网络功能（技能共享、工作池、进化排行榜）。
+> **注意**：不配置`.env`也能完全离线运行。Hub 连接仅用于网络功能（技能共享、工作池、进化排行榜）。
 
 ### 5.2 快速开始
 
@@ -327,7 +327,7 @@ node index.js --review
 node index.js --loop
 ```
 
-#### 创建memory目录
+#### 创建 memory 目录
 
 ```bash
 # Evolver需要memory/目录中的日志来进行分析
@@ -337,16 +337,16 @@ mkdir -p memory
 # 或者让Evolver自动创建（首次运行时会提示）
 ```
 
-### 5.3 与OpenClaw集成
+### 5.3 与 OpenClaw 集成
 
-对于OpenClaw用户，推荐使用cron定时触发：
+对于 OpenClaw 用户，推荐使用 cron 定时触发：
 
 ```bash
 # 在crontab中添加
 0 */6 * * * bash -lc 'cd /path/to/evolver && node index.js --loop'
 ```
 
-对于PM2进程管理器：
+对于 PM2 进程管理器：
 
 ```bash
 pm2 start "bash -lc 'node index.js --loop'" --name evolver --cron-restart="0 */6 * * *"
@@ -354,7 +354,7 @@ pm2 start "bash -lc 'node index.js --loop'" --name evolver --cron-restart="0 */6
 
 ### 5.4 生产环境部署
 
-#### Docker部署示例
+#### Docker 部署示例
 
 ```dockerfile
 FROM node:18-slim
@@ -381,21 +381,21 @@ node src/ops/lifecycle.js check
 
 ### 5.5 常见问题
 
-#### Q: 为什么需要Git？
+#### Q: 为什么需要 Git？
 
-Git用于：
+Git 用于：
 - 回滚（Rollback）：在进化失败时恢复到之前状态
 - 影响范围计算（Blast Radius）：评估变更的影响范围
 - Solidify：将进化结果固化为可复用的资产
 
-**在没有Git的目录中运行会失败**。
+**在没有 Git 的目录中运行会失败**。
 
-#### Q: Evolver会自动修改我的代码吗？
+#### Q: Evolver 会自动修改我的代码吗？
 
-**不会**。Evolver是一个**Prompt生成器**，不是代码修补器。它：
-- ✅ 生成GEP Prompt指导进化
+**不会**。Evolver 是一个**Prompt 生成器**，不是代码修补器。它：
+- ✅ 生成 GEP Prompt 指导进化
 - ❌ 不会自动编辑源代码
-- ❌ 不会执行任意Shell命令
+- ❌ 不会执行任意 Shell 命令
 
 #### Q: 如何在团队中共享进化资产？
 
@@ -408,9 +408,9 @@ Git用于：
 
 ## §6 开发扩展
 
-### 6.1 创建自定义Gene
+### 6.1 创建自定义 Gene
 
-Gene是Gene Expression Programming中的基本单元，代表一种可复用的进化模式。
+Gene 是 Gene Expression Programming 中的基本单元，代表一种可复用的进化模式。
 
 ```
 assets/gep/genes/
@@ -419,7 +419,7 @@ assets/gep/genes/
 └── security-hardening-gene.js
 ```
 
-**Gene结构示例**：
+**Gene 结构示例**：
 
 ```javascript
 // assets/gep/genes/example-gene.js
@@ -448,9 +448,9 @@ module.exports = {
 };
 ```
 
-### 6.2 创建自定义Capsule
+### 6.2 创建自定义 Capsule
 
-Capsule是封装的进化上下文，包含Gene和对应的应用场景。
+Capsule 是封装的进化上下文，包含 Gene 和对应的应用场景。
 
 ```
 assets/gep/capsules/
@@ -458,7 +458,7 @@ assets/gep/capsules/
 └── performance-boost-capsule.js
 ```
 
-**Capsule结构示例**：
+**Capsule 结构示例**：
 
 ```javascript
 // assets/gep/capsules/example-capsule.js
@@ -527,7 +527,7 @@ const combinedAnalysis = {
 };
 ```
 
-### 6.5 Webhook扩展
+### 6.5 Webhook 扩展
 
 ```javascript
 // src/extensions/webhook.js
@@ -547,7 +547,7 @@ module.exports = {
 
 ---
 
-## §7 最佳实践
+## §7 实践建议
 
 ### 7.1 日常运营
 
@@ -564,7 +564,7 @@ module.exports = {
 #### 监控关键指标
 
 - **进化频率**：每天进化的次数
-- **成功率**：Gene/Capsule匹配成功率
+- **成功率**：Gene/Capsule 匹配成功率
 - **停滞检测**：连续多次无改进时触发告警
 
 ### 7.2 生产环境
@@ -592,42 +592,42 @@ node src/ops/cleanup.js --archive --keep-last 100
 
 ### 7.3 团队协作
 
-1. **统一Gene库**：在团队内部共享常用基因
-2. **Capsule审核**：重要Capsule经过评审后再使用
-3. **EvolutionEvent共享**：在团队内部分享进化记录
-4. **使用EvoMap网络**：通过平台进行技能共享
+1. **统一 Gene 库**：在团队内部共享常用基因
+2. **Capsule 审核**：重要 Capsule 经过评审后再使用
+3. **EvolutionEvent 共享**：在团队内部分享进化记录
+4. **使用 EvoMap 网络**：通过平台进行技能共享
 
 ### 7.4 安全建议
 
 - ✅ 使用审核模式处理敏感环境
-- ✅ 定期审计EvolutionEvent日志
+- ✅ 定期审计 EvolutionEvent 日志
 - ✅ 保护`assets/gep/`目录的访问权限
-- ❌ 不要在Prompt中包含敏感信息
-- ❌ 不要在生产环境使用未审核的Capsule
+- ❌ 不要在 Prompt 中包含敏感信息
+- ❌ 不要在生产环境使用未审核的 Capsule
 
 ---
 
 ## §8 FAQ
 
-### Q1: Evolver和传统的Prompt工程工具有什么区别？
+### Q1: Evolver 和传统的 Prompt 工程工具有什么区别？
 
-Evolver不仅仅是Prompt工程工具，它是一个**系统性的自进化框架**：
+Evolver 不仅仅是 Prompt 工程工具，它是一个**系统性的自进化框架**：
 
-- **传统Prompt工程**：手动调整、临时生效、难以追溯
+- **传统 Prompt 工程**：手动调整、临时生效、难以追溯
 - **Evolver**：自动分析、协议约束、完整审计
 
-### Q2: 需要多少日志才能让Evolver工作？
+### Q2: 需要多少日志才能让 Evolver 工作？
 
 建议至少有以下日志：
-- 最近7天的运行时日志
+- 最近 7 天的运行时日志
 - 错误和异常记录
 - 性能指标数据
 
-日志越多，Evolver的分析越准确。
+日志越多，Evolver 的分析越准确。
 
-### Q3: Evolver支持哪些编程语言的Agent？
+### Q3: Evolver 支持哪些编程语言的 Agent？
 
-Evolver是**语言无关的**。它专注于Prompt和进化协议，不依赖特定编程语言。
+Evolver 是**语言无关的**。它专注于 Prompt 和进化协议，不依赖特定编程语言。
 
 ### Q4: 如何评估进化效果？
 
@@ -636,7 +636,7 @@ Evolver是**语言无关的**。它专注于Prompt和进化协议，不依赖特
 - 性能指标的变化趋势
 - 自动化率的提升
 
-### Q5: 可以离线使用Evolver吗？
+### Q5: 可以离线使用 Evolver 吗？
 
 **完全可以**。核心功能（分析、生成、记录）完全离线运行。只有网络功能（技能共享、排行榜）需要联网。
 
@@ -653,13 +653,13 @@ cat memory/evolution-events/YYYY-MM-DD.json
 git checkout <previous-commit>
 ```
 
-### Q7: Evolver的Gene/Capsule和OpenAI的Plugin有什么不同？
+### Q7: Evolver 的 Gene/Capsule 和 OpenAI 的 Plugin 有什么不同？
 
 | 特性 | Gene/Capsule | OpenAI Plugin |
 |------|-------------|---------------|
-| 用途 | Agent自进化 | 扩展功能 |
-| 粒度 | Prompt级别 | API级别 |
-| 复用方式 | GEP协议共享 | Plugin商店 |
+| 用途 | Agent 自进化 | 扩展功能 |
+| 粒度 | Prompt 级别 | API 级别 |
+| 复用方式 | GEP 协议共享 | Plugin 商店 |
 | 自主性 | 自动化进化 | 手动调用 |
 
 ### Q8: 遇到问题时如何获取帮助？
@@ -711,4 +711,4 @@ EVOLVE_STRATEGY=repair-only node index.js   # 修复模式
 - **Stars**：3,275
 - **Forks**：349
 
-🦞 每日08:00自动更新
+🦞 每日 08:00 自动更新

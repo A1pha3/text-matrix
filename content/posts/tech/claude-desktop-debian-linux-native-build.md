@@ -8,11 +8,11 @@ categories: ["技术笔记"]
 tags: ["Claude", "Linux", "MCP", "跨平台", "沙箱"]
 ---
 
-# claude-desktop-debian：3496 Stars的Claude Desktop Linux原生移植——从入门到精通
+# claude-desktop-debian：3496 Stars 的 Claude Desktop Linux 原生移植——从入门到精通
 
-> **目标读者**：Linux开发者、AI应用使用者、跨平台移植爱好者、系统管理员
-> **预计阅读时间**：40-50分钟
-> **前置知识**：Linux命令行基础、了解包管理器概念、有一定的桌面应用使用经验
+> **目标读者**：Linux 开发者、AI 应用使用者、跨平台移植爱好者、系统管理员
+> **预计阅读时间**：40-50 分钟
+> **前置知识**：Linux 命令行基础、了解包管理器概念、有一定的桌面应用使用经验
 > **难度定位**：⭐⭐⭐⭐ 专家设计
 
 ---
@@ -32,27 +32,27 @@ tags: ["Claude", "Linux", "MCP", "跨平台", "沙箱"]
 
 ### 1.2 项目定位
 
-这是一个**非官方**的Claude Desktop Linux移植项目。它通过重新打包官方Windows应用，让Claude Desktop能够在Linux发行版上原生运行，而无需虚拟机或Wine兼容层。
+这是一个**非官方**的 Claude Desktop Linux 移植项目。它通过重新打包官方 Windows 应用，让 Claude Desktop 能够在 Linux 发行版上原生运行，而无需虚拟机或 Wine 兼容层。
 
-> ⚠️ **官方声明**：这是非官方构建脚本，官方支持请访问Anthropic官网。构建脚本或Linux实现问题请在GitHub仓库提交Issue。
+> ⚠️ **官方声明**：这是非官方构建脚本，官方支持请访问 Anthropic 官网。构建脚本或 Linux 实现问题请在 GitHub 仓库提交 Issue。
 
 ### 1.3 支持的发行版
 
 | 发行版 | 包格式 | 安装方式 |
 |--------|--------|----------|
-| **Debian/Ubuntu** | .deb | APT仓库（推荐） |
-| **Fedora/RHEL** | .rpm | DNF仓库（推荐） |
-| **Arch Linux** | AppImage | AUR包 |
+| **Debian/Ubuntu** | .deb | APT 仓库（推荐） |
+| **Fedora/RHEL** | .rpm | DNF 仓库（推荐） |
+| **Arch Linux** | AppImage | AUR 包 |
 | **NixOS** | Nix Flake | nix profile install |
-| **通用Linux** | AppImage | 直接下载 |
+| **通用 Linux** | AppImage | 直接下载 |
 
 ---
 
-## §2 技术架构：从Windows到Linux的跨越
+## §2 技术架构：从 Windows 到 Linux 的跨越
 
 ### 2.1 移植原理
 
-Claude Desktop原生是为Windows和macOS设计的Electron应用。将其移植到Linux面临几个核心挑战：
+Claude Desktop 原生是为 Windows 和 macOS 设计的 Electron 应用。将其移植到 Linux 面临几个核心挑战：
 
 ```mermaid
 flowchart TD
@@ -90,25 +90,25 @@ flowchart TD
 
 | 挑战 | 原因 | 解决方案 |
 |------|------|----------|
-| **Win32 API调用** | Windows特有 | Linux等价替代 |
+| **Win32 API 调用** | Windows 特有 | Linux 等价替代 |
 | **系统托盘** | 平台差异 | AppIndicator/KStatusNotifierItem |
-| **全局快捷键** | X11/Wayland差异 | lib keybinder |
+| **全局快捷键** | X11/Wayland 差异 | lib keybinder |
 | **沙箱隔离** | Windows/Sandboxie | bubblewrap/KVM |
 
 ### 2.2 核心技术组件
 
 | 组件 | 作用 | 移植难点 |
 |------|------|----------|
-| **Electron Runtime** | 跨平台应用框架 | 需要适配Linux桌面环境 |
-| **Native Bindings** | Node.js原生模块调用 | Windows/macOS API在Linux上不可用 |
-| **MCP Protocol** | Model Context Protocol集成 | 跨平台兼容性良好 |
-| **System Tray** | 桌面通知区域 | 需要适配Linux桌面环境 |
-| **Global Hotkey** | 全局快捷键 | 需要X11/Wayland支持 |
-| **Cowork Mode** | 隔离执行环境 | 需要KVM/bubblewrap支持 |
+| **Electron Runtime** | 跨平台应用框架 | 需要适配 Linux 桌面环境 |
+| **Native Bindings** | Node.js 原生模块调用 | Windows/macOS API 在 Linux 上不可用 |
+| **MCP Protocol** | Model Context Protocol 集成 | 跨平台兼容性良好 |
+| **System Tray** | 桌面通知区域 | 需要适配 Linux 桌面环境 |
+| **Global Hotkey** | 全局快捷键 | 需要 X11/Wayland 支持 |
+| **Cowork Mode** | 隔离执行环境 | 需要 KVM/bubblewrap 支持 |
 
 ### 2.3 关键移植文件
 
-项目对Claude Desktop进行了多项补丁以适配Linux：
+项目对 Claude Desktop 进行了多项补丁以适配 Linux：
 
 ```bash
 # 典型的移植补丁文件结构
@@ -150,9 +150,9 @@ flowchart TD
 
 | 方式 | 适用用户 | 权限要求 | 自动更新 | 隔离性 |
 |------|----------|----------|---------|--------|
-| **APT/DNF仓库** | 企业/技术用户 | sudo | ✅ | 系统级 |
-| **AUR** | Arch用户 | yay/paru | ✅(yay) | 系统级 |
-| **Nix Flake** | NixOS用户 | nix | ✅ | 用户级/隔离 |
+| **APT/DNF 仓库** | 企业/技术用户 | sudo | ✅ | 系统级 |
+| **AUR** | Arch 用户 | yay/paru | ✅(yay) | 系统级 |
+| **Nix Flake** | NixOS 用户 | nix | ✅ | 用户级/隔离 |
 | **AppImage** | 通用/尝鲜 | 无 | ❌手动 | 便携 |
 
 **快速安装命令**：
@@ -167,7 +167,7 @@ sudo dnf install -y dnf-plugins-core && sudo rpm --import https://aaddrick.githu
 
 ### 3.2 Debian/Ubuntu（推荐方式）
 
-**通过APT仓库安装**：
+**通过 APT 仓库安装**：
 
 ```bash
 # 1. 添加GPG密钥
@@ -189,7 +189,7 @@ sudo apt upgrade
 
 ### 3.2 Fedora/RHEL
 
-**通过DNF仓库安装**：
+**通过 DNF 仓库安装**：
 
 ```bash
 # 1. 添加仓库
@@ -206,7 +206,7 @@ sudo dnf upgrade
 
 ### 3.3 Arch Linux
 
-**通过AUR安装**：
+**通过 AUR 安装**：
 
 ```bash
 # 使用yay
@@ -218,7 +218,7 @@ paru -S claude-desktop-appimage
 
 ### 3.4 NixOS
 
-**通过Flake安装**：
+**通过 Flake 安装**：
 
 ```bash
 # 基础安装
@@ -228,7 +228,7 @@ nix profile install github:aaddrick/claude-desktop-debian
 nix profile install github:aaddrick/claude-desktop-debian#claude-desktop-fhs
 ```
 
-或在NixOS配置中：
+或在 NixOS 配置中：
 
 ```nix
 # flake.nix
@@ -248,9 +248,9 @@ nix profile install github:aaddrick/claude-desktop-debian#claude-desktop-fhs
 }
 ```
 
-### 3.5 通用Linux（AppImage）
+### 3.5 通用 Linux（AppImage）
 
-直接下载最新的AppImage文件：
+直接下载最新的 AppImage 文件：
 
 ```bash
 # 下载最新版本
@@ -267,16 +267,16 @@ chmod +x Claude-Desktop.AppImage
 
 ## §4 核心功能详解
 
-### 4.1 MCP支持
+### 4.1 MCP 支持
 
-Model Context Protocol（MCP）是Anthropic推出的AI工具集成协议。claude-desktop-debian完全支持MCP。
+Model Context Protocol（MCP）是 Anthropic 推出的 AI 工具集成协议。claude-desktop-debian 完全支持 MCP。
 
 **配置文件位置**：
 ```
 ~/.config/Claude/claude_desktop_config.json
 ```
 
-**MCP配置示例**：
+**MCP 配置示例**：
 
 ```json
 {
@@ -295,38 +295,38 @@ Model Context Protocol（MCP）是Anthropic推出的AI工具集成协议。claud
 
 ### 4.2 Cowork Mode（实验性隔离模式）
 
-Cowork Mode是Claude Desktop的沙箱隔离功能，在Linux上通过以下后端实现：
+Cowork Mode 是 Claude Desktop 的沙箱隔离功能，在 Linux 上通过以下后端实现：
 
 | 后端 | 隔离级别 | 依赖 | 状态 |
 |------|----------|------|------|
-| **bubblewrap** | Namespace沙箱 | `bwrap` | 默认 |
+| **bubblewrap** | Namespace 沙箱 | `bwrap` | 默认 |
 | **host** | 无隔离 | 无 | 回退 |
 
-#### bubblewrap后端
+#### bubblewrap 后端
 
-bubblewrap（bwrap）是Linux命名空间沙箱工具，提供：
+bubblewrap（bwrap）是 Linux 命名空间沙箱工具，提供：
 
 - **用户命名空间隔离**
 - **文件系统只读挂载**（仅项目目录可写）
 - **网络访问控制**
 
-**安全说明**：bubblewrap后端将家目录挂载为只读，只有当前工作目录可写。这防止了潜在的恶意代码访问敏感文件。
+**安全说明**：bubblewrap 后端将家目录挂载为只读，只有当前工作目录可写。这防止了潜在的恶意代码访问敏感文件。
 
-#### KVM/QEMU后端（开发中）
+#### KVM/QEMU 后端（开发中）
 
-代码存在但**功能不可用**。在Linux上禁用了VM文件下载以防止校验和循环（#337问题）。
+代码存在但**功能不可用**。在 Linux 上禁用了 VM 文件下载以防止校验和循环（#337 问题）。
 
 ### 4.3 系统集成
 
 | 功能 | 实现方式 | 兼容性 |
 |------|----------|--------|
 | **全局快捷键** | Ctrl+Alt+Space | X11 + Wayland (XWayland) |
-| **系统托盘** | AppIndicator | GNOME/KDE等主流桌面 |
-| **桌面环境集成** | XDG标准 | 符合freedesktop.org规范 |
+| **系统托盘** | AppIndicator | GNOME/KDE 等主流桌面 |
+| **桌面环境集成** | XDG 标准 | 符合 freedesktop.org 规范 |
 
-### 4.4 Wayland支持
+### 4.4 Wayland 支持
 
-项目支持Wayland compositor：
+项目支持 Wayland compositor：
 
 ```bash
 # 使用Wayland运行
@@ -378,9 +378,9 @@ flowchart TD
 | 问题 | 快速解决方案 | 命令 |
 |------|--------------|------|
 | 无法启动 | 检查显示服务器 | `echo $DISPLAY` |
-| MCP不工作 | 验证JSON语法 | `cat ~/.config/Claude/claude_desktop_config.json | jq` |
-| Cowork报错 | 安装bwrap | `sudo apt install bubblewrap` |
-| P2P失败 | 使用Relay模式 | 设置relay服务器 |
+| MCP 不工作 | 验证 JSON 语法 | `cat ~/.config/Claude/claude_desktop_config.json | jq` |
+| Cowork 报错 | 安装 bwrap | `sudo apt install bubblewrap` |
+| P2P 失败 | 使用 Relay 模式 | 设置 relay 服务器 |
 | 端口占用 | 检查端口 | `ss -tlnp | grep 2111` |
 | 版本过旧 | 卸载重装 | `sudo apt remove claude-desktop && sudo apt install claude-desktop` |
 
@@ -390,9 +390,9 @@ flowchart TD
 
 - ✅ 显示服务器状态（X11/Wayland）
 - ✅ 沙箱权限配置
-- ✅ MCP配置文件
+- ✅ MCP 配置文件
 - ✅ 陈旧的锁文件
-- ✅ Cowork Mode就绪状态
+- ✅ Cowork Mode 就绪状态
 - ✅ 各后端依赖是否满足
 
 **示例输出**：
@@ -426,11 +426,11 @@ Dependencies:
 
 | 问题 | 原因 | 解决方案 |
 |------|------|----------|
-| 无法启动 | 显示服务器问题 | 检查DISPLAY/WAYLAND_DISPLAY环境变量 |
-| MCP服务器不工作 | 配置文件格式错误 | 验证JSON语法 |
-| Cowork Mode报错 | bwrap未安装 | `sudo apt install bubblewrap` |
+| 无法启动 | 显示服务器问题 | 检查 DISPLAY/WAYLAND_DISPLAY 环境变量 |
+| MCP 服务器不工作 | 配置文件格式错误 | 验证 JSON 语法 |
+| Cowork Mode 报错 | bwrap 未安装 | `sudo apt install bubblewrap` |
 | 托盘图标空白 | 桌面环境兼容性问题 | 设置`CLAUDE_MENU_BAR=0`禁用菜单栏 |
-| 窗口标题栏异常 | Chromium缓存问题 | 删除`~/.config/Claude`缓存 |
+| 窗口标题栏异常 | Chromium 缓存问题 | 删除`~/.config/Claude`缓存 |
 
 ### 5.3 日志位置
 
@@ -438,7 +438,7 @@ Dependencies:
 |----------|------|
 | **应用日志** | `~/.cache/Claude/logs/` |
 | **渲染进程日志** | `~/.config/Claude/logs/` |
-| **Cowork VM日志** | `~/.config/Claude/cowork/logs/` |
+| **Cowork VM 日志** | `~/.config/Claude/cowork/logs/` |
 
 ### 5.4 卸载
 
@@ -466,12 +466,12 @@ rm -rf ~/.cache/Claude
 | 变量 | 作用 | 值 |
 |------|------|-----|
 | `CLAUDE_MENU_BAR` | 菜单栏可见性 | `0`=隐藏 |
-| `WAYLAND_DISPLAY` | Wayland会话 | 自动检测 |
+| `WAYLAND_DISPLAY` | Wayland 会话 | 自动检测 |
 | `ELECTRON_OVERRIDE_DIST_PATH` | 覆盖安装路径 | 自定义路径 |
 
-### 6.2 bwrap自定义挂载点
+### 6.2 bwrap 自定义挂载点
 
-通过Linux配置文件可以自定义bwrap挂载点：
+通过 Linux 配置文件可以自定义 bwrap 挂载点：
 
 ```json
 {
@@ -523,7 +523,7 @@ claude-desktop --exe /path/to/Claude-Setup.exe
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 bwrap沙箱机制
+### 7.2 bwrap 沙箱机制
 
 ```bash
 # bwrap典型调用参数
@@ -538,7 +538,7 @@ bwrap \
   claude-desktop
 ```
 
-### 7.3 与Windows/macOS安全对比
+### 7.3 与 Windows/macOS 安全对比
 
 | 平台 | 隔离机制 | 成熟度 |
 |------|----------|--------|
@@ -546,7 +546,7 @@ bwrap \
 | **macOS** | 苹果沙箱 | 官方支持，非常成熟 |
 | **Linux** | bubblewrap (本项目) | 社区支持，实验性 |
 
-> ⚠️ Linux版本的Cowork Mode隔离级别相对较低，适合一般开发使用。对于高安全需求场景，建议使用官方Windows/macOS版本。
+> ⚠️ Linux 版本的 Cowork Mode 隔离级别相对较低，适合一般开发使用。对于高安全需求场景，建议使用官方 Windows/macOS 版本。
 
 ---
 
@@ -556,42 +556,42 @@ bwrap \
 
 | 贡献者 | 主要贡献 |
 |--------|----------|
-| **k3d3** | 原始NixOS实现，native bindings洞察 |
+| **k3d3** | 原始 NixOS 实现，native bindings 洞察 |
 | **emsi** | 标题栏修复 |
-| **leobuskin** | Playwright URL解析方法 |
-| **chukfinley** | 实验性Cowork Mode支持 |
-| **cbonnissent** | Cowork VM RPC协议逆向工程 |
-| **typedrat** | NixOS flake集成，CI自动更新 |
-| **RayCharlisted** | HostBackend自动内存路径转换 |
+| **leobuskin** | Playwright URL 解析方法 |
+| **chukfinley** | 实验性 Cowork Mode 支持 |
+| **cbonnissent** | Cowork VM RPC 协议逆向工程 |
+| **typedrat** | NixOS flake 集成，CI 自动更新 |
+| **RayCharlisted** | HostBackend 自动内存路径转换 |
 
 ### 8.2 发布说明自动生成
 
-作者提供了一个创新的解决方案：使用Claude API自动分析Electron应用的代码变更来生成发布说明。
+作者提供了一个创新的解决方案：使用 Claude API 自动分析 Electron 应用的代码变更来生成发布说明。
 
-> 💡 每次发布的成本在**$3.36到$76.16**之间，取决于更新大小。
+> 💡 每次发布的成本在**$3.36 到$76.16**之间，取决于更新大小。
 
 ---
 
-## §9 最佳实践
+## §9 实践建议
 
 ### 9.1 安装后检查清单
 
 - [ ] 运行 `claude-desktop --doctor` 确认环境就绪
-- [ ] 验证MCP配置文件语法正确
+- [ ] 验证 MCP 配置文件语法正确
 - [ ] 测试全局快捷键（Ctrl+Alt+Space）
 - [ ] 确认系统托盘图标正常显示
-- [ ] 测试Cowork Mode隔离是否生效
+- [ ] 测试 Cowork Mode 隔离是否生效
 
 ### 9.2 安全使用建议
 
-1. **最小权限**：在bwrap模式下，只在项目目录操作
-2. **网络隔离**：Cowork Mode会启用网络命名空间
-3. **敏感数据**：避免在Claude工作目录存放密钥等敏感文件
+1. **最小权限**：在 bwrap 模式下，只在项目目录操作
+2. **网络隔离**：Cowork Mode 会启用网络命名空间
+3. **敏感数据**：避免在 Claude 工作目录存放密钥等敏感文件
 4. **定期更新**：跟进最新版本以获得安全修复
 
 ### 9.3 故障报告指南
 
-提交Issue时，请包含：
+提交 Issue 时，请包含：
 
 ```bash
 # 1. 诊断信息
@@ -614,7 +614,7 @@ echo $XDG_CURRENT_DESKTOP
 
 ## §10 总结与展望
 
-### 10.1 vs 虚拟机/Wine方案对比
+### 10.1 vs 虚拟机/Wine 方案对比
 
 ```mermaid
 flowchart LR
@@ -648,23 +648,23 @@ flowchart LR
 
 | 维度 | Claude Desktop Debian | 虚拟机(Windows) | Wine/Crossover |
 |------|---------------------|-----------------|----------------|
-| **性能** | ⭐⭐⭐⭐⭐原生 | ⭐⭐⭐损失20-30% | ⭐⭐⭐损失不定 |
+| **性能** | ⭐⭐⭐⭐⭐原生 | ⭐⭐⭐损失 20-30% | ⭐⭐⭐损失不定 |
 | **资源占用** | ~200MB | ~2-4GB | ~300-500MB |
-| **许可证** | 不需要Windows | 需要Windows许可 | 不需要 |
+| **许可证** | 不需要 Windows | 需要 Windows 许可 | 不需要 |
 | **功能完整性** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
 | **稳定性** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ |
-| **维护成本** | 低(自动更新) | 高(VM维护) | 中(依赖Wine更新) |
-| **离线支持** | ✅ | ⚠️需要VM镜像 | ✅ |
-| **安全隔离** | ⭐⭐⭐(bwrap) | ⭐⭐⭐⭐⭐(VM完全隔离) | ⭐⭐ |
+| **维护成本** | 低（自动更新） | 高（VM 维护） | 中（依赖 Wine 更新） |
+| **离线支持** | ✅ | ⚠️需要 VM 镜像 | ✅ |
+| **安全隔离** | ⭐⭐⭐(bwrap) | ⭐⭐⭐⭐⭐(VM 完全隔离) | ⭐⭐ |
 
 **推荐场景**：
 
 | 场景 | 推荐方案 | 理由 |
 |------|----------|------|
-| Linux日常开发 | ✅本项目 | 最佳性能体验 |
+| Linux 日常开发 | ✅本项目 | 最佳性能体验 |
 | 高安全环境 | 虚拟机 | 完全隔离 |
 | 临时使用 | AppImage | 即开即用 |
-| 兼容性优先 | 虚拟机 | Windows完全兼容 |
+| 兼容性优先 | 虚拟机 | Windows 完全兼容 |
 
 ### 10.2 项目成就
 
@@ -680,11 +680,11 @@ flowchart LR
 
 | 场景 | 推荐版本 |
 |------|----------|
-| Linux日常开发 | ✅ 推荐使用 |
+| Linux 日常开发 | ✅ 推荐使用 |
 | 处理敏感数据 | ⚠️ 注意安全边界 |
-| 高安全要求环境 | ❌ 建议使用官方Windows/macOS |
-| NixOS用户 | ✅ Nix Flake支持 |
-| 离线环境 | ✅ AppImage支持 |
+| 高安全要求环境 | ❌ 建议使用官方 Windows/macOS |
+| NixOS 用户 | ✅ Nix Flake 支持 |
+| 离线环境 | ✅ AppImage 支持 |
 
 ### 10.3 未来发展方向
 
@@ -716,8 +716,8 @@ flowchart LR
 
 | 功能 | 社区需求 | 技术难度 | 优先级 |
 |------|----------|---------|--------|
-| **Wayland原生支持** | 高 | 中 | ⭐⭐⭐⭐⭐ |
-| **KVM后端完善** | 中 | 高 | ⭐⭐⭐ |
+| **Wayland 原生支持** | 高 | 中 | ⭐⭐⭐⭐⭐ |
+| **KVM 后端完善** | 中 | 高 | ⭐⭐⭐ |
 | **自动更新优化** | 高 | 低 | ⭐⭐⭐⭐⭐ |
 | **移动端(iOS/Android)** | 低 | 高 | ⭐⭐ |
 | **插件系统** | 中 | 中 | ⭐⭐⭐⭐ |
@@ -743,7 +743,7 @@ flowchart LR
 
 
 
-### 🛡️ 安全最佳实践
+### 🛡️ 安全实践建议
 
 ```mermaid
 flowchart TD
@@ -782,8 +782,8 @@ flowchart TD
 
 | 检查项 | 推荐配置 | 原因 |
 |--------|----------|------|
-| **Cowork Mode** | 启用 | 隔离AI执行环境 |
-| **bwrap权限** | 最小权限 | 限制系统访问 |
+| **Cowork Mode** | 启用 | 隔离 AI 执行环境 |
+| **bwrap 权限** | 最小权限 | 限制系统访问 |
 | **文件访问** | 按需授权 | 防止数据泄露 |
 | **网络隔离** | VPN+防火墙 | 防止网络攻击 |
 | **数据加密** | LUKS/dm-crypt | 防止物理访问 |
@@ -793,7 +793,7 @@ flowchart TD
 
 **资源占用对比**：
 
-| 配置 | 内存占用 | CPU占用 | 启动时间 |
+| 配置 | 内存占用 | CPU 占用 | 启动时间 |
 |------|----------|---------|----------|
 | **标准模式** | 800MB-1.5GB | 2-5% | 10-15s |
 | **轻量模式** | 400-600MB | 1-3% | 8-10s |
@@ -804,8 +804,8 @@ flowchart TD
 | 场景 | 优化措施 | 效果 |
 |------|----------|------|
 | 低配机器 | 禁用动画、降低画质 | 内存-30% |
-| 快速启动 | 禁用不必要的MCP | 启动+30% |
-| 大文件处理 | 增加bwrap内存限制 | 避免OOM |
+| 快速启动 | 禁用不必要的 MCP | 启动+30% |
+| 大文件处理 | 增加 bwrap 内存限制 | 避免 OOM |
 | 长时间运行 | 定期重启清理缓存 | 内存稳定 |
 
 ### 📦 各发行版安装速查
@@ -837,11 +837,11 @@ sudo zypper install claude-desktop
 
 ## 相关资源
 
-- **GitHub仓库**：https://github.com/aaddrick/claude-desktop-debian
+- **GitHub 仓库**：https://github.com/aaddrick/claude-desktop-debian
 - **官方文档**：https://github.com/aaddrick/claude-desktop-debian#readme
 - **发布页**：https://github.com/aaddrick/claude-desktop-debian/releases
 - **问题反馈**：https://github.com/aaddrick/claude-desktop-debian/issues
 
 ---
 
-*🦞 撰写于2026年4月19日*
+*🦞 撰写于 2026 年 4 月 19 日*

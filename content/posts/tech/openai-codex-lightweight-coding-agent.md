@@ -65,7 +65,7 @@ tags: ["OpenAI", "Codex", "AI编程", "智能体", "终端工具"]
 - 不是所有网上流传的命令都属于官方稳定接口。
 - 公开文档强调的是 **CLI / TUI、配置、安全、非交互执行、MCP、Apps/Connectors** 等能力，而不是“任意本地 REST API 服务器”或“随意插件市场命令”。
 
-> 本文会刻意避开 `codex serve`、`codex plugin install` 一类在当前公开官方文档中没有作为稳定用户接口明确说明的说法，以免把猜测写成事实。
+> 下面会刻意避开 `codex serve`、`codex plugin install` 一类在当前公开官方文档中没有作为稳定用户接口明确说明的说法，以免把猜测写成事实。
 
 ## 三、安装与认证
 
@@ -462,13 +462,13 @@ OpenAI Codex CLI 的真正价值，不在于“它会不会生成代码”，而
 
 ## 参考资料
 
-- OpenAI Codex 首页：<https://developers.openai.com/codex>
-- OpenAI Codex CLI Slash Commands：<https://developers.openai.com/codex/cli/slash-commands>
-- OpenAI Codex 基础配置：<https://developers.openai.com/codex/config-basic>
-- OpenAI Codex 非交互模式：<https://developers.openai.com/codex/noninteractive>
-- OpenAI Codex GitHub 仓库：<https://github.com/openai/codex>
-- OpenAI Codex 安装与构建文档：<https://github.com/openai/codex/blob/main/docs/install.md>
-- OpenAI Codex 配置说明：<https://github.com/openai/codex/blob/main/docs/config.md>
+- OpenAI Codex 首页：< PROTECTED_117 >
+- OpenAI Codex CLI Slash Commands：< PROTECTED_118 >
+- OpenAI Codex 基础配置：< PROTECTED_119 >
+- OpenAI Codex 非交互模式：< PROTECTED_120 >
+- OpenAI Codex GitHub 仓库：< PROTECTED_121 >
+- OpenAI Codex 安装与构建文档：< PROTECTED_122 >
+- OpenAI Codex 配置说明：< PROTECTED_123 >
 
 ---
 

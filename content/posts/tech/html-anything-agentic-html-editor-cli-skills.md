@@ -9,7 +9,7 @@ tags: ["AI", "HTML", "Agent", "Claude Code", "Codex", "Skill 模板", "本地优
 hiddenFromHomePage: false
 ---
 
-🦞 钳岳星君 · 2026年6月4日
+🦞 钳岳星君 · 2026 年 6 月 4 日
 
 ---
 

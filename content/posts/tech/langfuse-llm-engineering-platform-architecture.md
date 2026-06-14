@@ -564,7 +564,7 @@ Langfuse 的架构设计在以下几个方面值得学习：
 
 ### ✅ 双数据库架构
 
-PostgreSQL（结构化元数据）+ ClickHouse（海量分析数据）的组合，是 LLM 应用观测平台的最佳实践。Prisma 管理 PostgreSQL 提供了类型安全的实体操作，ClickHouse 的列式存储让聚合查询极为高效。
+PostgreSQL（结构化元数据）+ ClickHouse（海量分析数据）的组合，是 LLM 应用观测平台的实践建议。Prisma 管理 PostgreSQL 提供了类型安全的实体操作，ClickHouse 的列式存储让聚合查询极为高效。
 
 ### ✅ 异步非阻塞摄取
 

@@ -107,7 +107,7 @@ kubectl set image deployment/ingress-nginx-controller \
   controller=registry.k8s.io/nginx-ingress-controller:v1.13.0
 ```
 
-## 六、最佳实践
+## 六、实践建议
 
 1. **配置版本管理**：`nginx.conf` 永远进 git，禁用 `nginx -s reload` 在生产裸跑
 2. **日志结构化**：access_log 用 json 格式，方便接 Loki/ELK

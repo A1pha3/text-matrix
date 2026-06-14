@@ -287,10 +287,10 @@ MA 不是"又一款音乐 App"。它是**一个把外部异构音乐世界翻译
 
 ## 参考链接
 
-- 仓库主页：<https://github.com/music-assistant/server>
-- 官方文档：<https://music-assistant.io>
-- Beta 文档：<https://beta.music-assistant.io>
-- Home Assistant Add-on：<https://github.com/music-assistant/home-assistant-addon>
-- Python SDK：<https://github.com/music-assistant/client>
-- Issue tracker：<https://github.com/music-assistant/support/issues>
-- Open Home Foundation 项目页：<https://www.openhomefoundation.org/>
+- 仓库主页：< PROTECTED_206 >
+- 官方文档：< PROTECTED_207 >
+- Beta 文档：< PROTECTED_208 >
+- Home Assistant Add-on：< PROTECTED_209 >
+- Python SDK：< PROTECTED_210 >
+- Issue tracker：< PROTECTED_211 >
+- Open Home Foundation 项目页：< PROTECTED_212 >

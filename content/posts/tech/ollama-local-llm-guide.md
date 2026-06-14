@@ -666,7 +666,7 @@ curl --max-time 300 http://localhost:11434/v1/chat/completions
 
 ---
 
-## 11. 最佳实践
+## 11. 实践建议
 
 ### 11.1 开发环境配置
 

@@ -538,7 +538,7 @@ class MyProvider(BaseProvider):
 
 ---
 
-## 7. 最佳实践
+## 7. 实践建议
 
 ### 7.1 生产环境部署
 

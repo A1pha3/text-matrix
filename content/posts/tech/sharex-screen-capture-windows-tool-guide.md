@@ -96,7 +96,7 @@ protected override void OnMouseUp(MouseEventArgs e)
 - **文本上传器**：Pastebin、 hastebin、dpaste 等
 - **短链接服务**：Bit.ly、tinyurl、tny.im 等
 
-所有上传器共享一套 `UploadResult` 数据结构，包含 URL、删除URL、文件名、文件大小等信息。任务完成后，结果通过 `NotificationForm`（通知气泡）或主界面任务列表呈现给用户。
+所有上传器共享一套 `UploadResult` 数据结构，包含 URL、删除 URL、文件名、文件大小等信息。任务完成后，结果通过 `NotificationForm`（通知气泡）或主界面任务列表呈现给用户。
 
 ### 2.4 自定义 Uploader 机制
 
@@ -211,7 +211,7 @@ ShareX 支持将同一文件**同时上传到多个上传器**。在「Destinati
 - 使用**文字工具**添加注释
 - 使用**裁剪工具**调整画面范围
 
-编辑完成后，点击「上传」或「保存」完成后续流程。编辑器支持高DPI 缩放，界面在 4K 显示器上也能清晰显示。
+编辑完成后，点击「上传」或「保存」完成后续流程。编辑器支持高 DPI 缩放，界面在 4K 显示器上也能清晰显示。
 
 ## 🚀 五、高级配置与定制
 
@@ -337,7 +337,7 @@ namespace ShareX.UploadersLib.FileUploaders
 
 如果需要新增快捷键功能，应在 `HotkeySettings.cs` 中定义枚举值，并在 `HotkeyManager.cs` 的消息分发逻辑中添加对应的处理分支。
 
-## 📋 七、配置清单与最佳实践
+## 📋 七、配置清单与实践建议
 
 | 场景 | 推荐配置 |
 |------|------|

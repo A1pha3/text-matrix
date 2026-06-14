@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Claude", "Agent", "Composio", "桌面应用", "AI"]
 ---
 
-# Open Claude Cowork：3.8K Stars·开源桌面AI助手·Claude Agent SDK·Composio工具路由·500+应用集成
+# Open Claude Cowork：3.8K Stars·开源桌面 AI 助手·Claude Agent SDK·Composio 工具路由·500+应用集成
 
 ## 一、项目概述
 
@@ -319,7 +319,7 @@ npm install
 node cli.js
 ```
 
-启动后选择:
+启动后选择：
 - `Terminal chat` - 测试聊天
 - `Start gateway` - 连接 WhatsApp/Telegram/Signal/iMessage
 

@@ -37,7 +37,7 @@ tags: ["Plannotator", "AI Agent", "Claude Code", "Codex", "OpenCode", "代码审
 
 **翻译**：Plannotator 为 AI 编码 Agent 提供交互式计划与代码审查。使用可视化 UI 标记和完善计划或代码差异，与团队协作分享，并与 Claude Code、OpenCode、Pi 和 Codex 无缝集成。
 
-### 2.2 核心价值主张
+### 2.2 关键价值主张
 
 | 价值 | 说明 |
 |------|------|

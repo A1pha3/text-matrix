@@ -10,7 +10,7 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 ---
 
-# Claude Code Game Studios：11.5K Stars的多Agent游戏开发工作室——49个AI角色、72个技能、12个钩子的完整游戏开发工作流
+# Claude Code Game Studios：11.5K Stars 的多 Agent 游戏开发工作室——49 个 AI 角色、72 个技能、12 个钩子的完整游戏开发工作流
 
 一个人用 Claude Code 写游戏，开头很快——但做到第三个功能、第六次重构时，问题不是 AI 不够聪明，而是没人帮你把设计、代码、测试、发布串成一条不会散架的流水线。Claude Code Game Studios 做的事很直接：不给 AI 堆更多算力，而是把 Claude Code 改造成一个模拟真实工作室的多角色协作系统——49 个 AI 角色各管一摊，72 个命令覆盖从头脑风暴到上线的全流程，12 个钩子在提交、推送、会话切换时自动跑检查。
 
@@ -58,7 +58,7 @@ tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 |------|------|
 | **Stars** | 11,142 ⭐ |
 | **类型** | Claude Code 模板/工具包 |
-| **语言** | Shell（项目本身）+ Markdown（agents配置） |
+| **语言** | Shell（项目本身）+ Markdown（agents 配置） |
 | **许可证** | MIT |
 | **平台** | Windows/macOS/Linux |
 
@@ -168,7 +168,7 @@ Tier 3 — 专家 (Sonnet/Haiku)
 
 | Agent | 职责 |
 |-------|------|
-| **technical-artist** | 技术美术（Shader等） |
+| **technical-artist** | 技术美术（Shader 等） |
 | **ux-designer** | 用户体验设计 |
 
 **其他专家**：
@@ -206,7 +206,7 @@ Tier 3 — 专家 (Sonnet/Haiku)
 | **架构** | 4 | /create-architecture, /architecture-decision |
 | **故事与冲刺** | 7 | /create-epics, /create-stories, /dev-story |
 | **评审与分析** | 10 | /design-review, /code-review, /balance-check |
-| **QA与测试** | 10 | /qa-plan, /smoke-check, /regression-suite |
+| **QA 与测试** | 10 | /qa-plan, /smoke-check, /regression-suite |
 | **生产** | 8 | /milestone-review, /bug-report |
 | **发布** | 5 | /release-checklist, /launch-checklist |
 | **团队协作** | 10+ | /team-combat, /team-narrative, /team-ui |
@@ -366,7 +366,7 @@ post-compact.sh → 从 active.md 恢复状态
 
 ---
 
-## §7 11个路径规则
+## §7 11 个路径规则
 
 ### 7.1 规则总览
 
@@ -379,7 +379,7 @@ post-compact.sh → 从 active.md 恢复状态
 | `src/ai/**` | 性能预算、可调试性 |
 | `src/networking/**` | 服务器权威、版本化消息 |
 | `src/ui/**` | 无游戏状态拥有权、本地化就绪 |
-| `design/gdd/**` | 必须8章节、公式格式 |
+| `design/gdd/**` | 必须 8 章节、公式格式 |
 | `tests/**` | 测试命名、覆盖率要求 |
 | `prototypes/**` | 宽松标准、需 README |
 
@@ -646,7 +646,7 @@ Godot 4、Unity、Unreal Engine 5 都有专属 agent set。每个引擎有对应
 
 **Q4: 如何处理跨域变更？**
 
-跨域变更（比如游戏设计改动影响了 UI 和音频）需要走 `/propagate-design-change` 命令，或者让 producer Agent 协调。producer 的责任是追踪变更影响范围，通知相关 Agent 更新。这是三层架构中 Tier 1 的核心价值——没有导演层，跨域变更的传播就靠开发者自己记住。
+跨域变更（比如游戏设计改动影响了 UI 和音频）需要走 `/propagate-design-change` 命令，或者让 producer Agent 协调。producer 的责任是追踪变更影响范围，通知相关 Agent 更新。这是三层架构中 Tier 1 的关键价值——没有导演层，跨域变更的传播就靠开发者自己记住。
 
 **Q5: 可以只用部分功能吗？**
 

@@ -136,7 +136,7 @@ Dimillian/Skills 的设计遵循以下原则：
 
 **文件夹**: `macos-spm-app-packaging`
 
-**功能**: 搭建、构建、打包、签名和可选地公证 SwiftPM基础的 macOS 应用。
+**功能**: 搭建、构建、打包、签名和可选地公证 SwiftPM 基础的 macOS 应用。
 
 **优势**: 无需 Xcode 项目即可完成打包。
 
@@ -297,7 +297,7 @@ Dimillian/Skills 的设计遵循以下原则：
 
 **文件夹**: `swiftui-ui-patterns`
 
-**功能**: 为构建 SwiftUI 屏幕和组件提供最佳实践和示例驱动的指导。
+**功能**: 为构建 SwiftUI 屏幕和组件提供实践建议和示例驱动的指导。
 
 **覆盖范围**:
 - 导航（Navigation）
@@ -470,7 +470,7 @@ skill-name/
 |------|------|
 | SwiftUI Liquid Glass | iOS 26+ 新 API |
 | SwiftUI Performance Audit | 性能诊断 |
-| SwiftUI UI Patterns | 最佳实践 |
+| SwiftUI UI Patterns | 实践建议 |
 | SwiftUI View Refactor | 代码重构 |
 | Swift Concurrency Expert | 并发问题 |
 
@@ -523,7 +523,7 @@ skill-name/
 
 ---
 
-## §10 最佳实践
+## §10 实践建议
 
 ### 10.1 技能选择
 

@@ -16,7 +16,7 @@ tags = ['工具', 'CLI', 'Rust', 'MCP']
 
 ### 1,200+ TLDs 开箱即用
 
-IANA自动引导加载完整注册表，无需任何配置。32个硬编码TLD可在离线环境下作为备用：
+IANA 自动引导加载完整注册表，无需任何配置。32 个硬编码 TLD 可在离线环境下作为备用：
 
 ```bash
 # 检查单个域名
@@ -28,16 +28,16 @@ domain-check mystartup -t com,org,io,dev
 
 ### 双协议引擎：RDAP + WHOIS
 
-采用RDAP优先策略，自动回退到WHOIS。覆盖约189个缺乏RDAP支持的ccTLD（如`.es`、`.co`、`.eu`、`.jp`）：
+采用 RDAP 优先策略，自动回退到 WHOIS。覆盖约 189 个缺乏 RDAP 支持的 ccTLD（如`.es`、`.co`、`.eu`、`.jp`）：
 
 | 协议 | 优先级 | 覆盖率 |
 |------|--------|--------|
 | RDAP | 首选 | ~85% TLDs |
-| WHOIS | 备用 | 覆盖RDAP缺失的ccTLDs |
+| WHOIS | 备用 | 覆盖 RDAP 缺失的 ccTLDs |
 
-### 高性能：100并发检查
+### 高性能：100 并发检查
 
-最多支持100个并发检查，流式输出结果，2.7MB二进制文件：
+最多支持 100 个并发检查，流式输出结果，2.7MB 二进制文件：
 
 ```bash
 # 高并发批量检查
@@ -46,7 +46,7 @@ domain-check --file domains.txt --concurrency 100 --streaming
 
 ### 域名生成与模式扩展
 
-支持正则模式生成、前缀/后缀组合，dry-run预览：
+支持正则模式生成、前缀/后缀组合，dry-run 预览：
 
 ```bash
 # 预览生成的域名（不执行检查）
@@ -56,13 +56,13 @@ domain-check --pattern "app\d" -t com --dry-run
 domain-check myapp --prefix get,try --suffix hub,ly -t com,io
 ```
 
-## 11个精选预设
+## 11 个精选预设
 
 | 预设 | TLDs | 适用场景 |
 |------|------|----------|
 | startup | com, org, io, ai, tech, app, dev, xyz | 科技创业公司 |
 | popular | com, net, org, io, ai, app, dev, tech, me, co, xyz | 通用覆盖 |
-| classic | com, net, org, info, biz | 传统gTLD |
+| classic | com, net, org, info, biz | 传统 gTLD |
 | enterprise | com, org, net, info, biz, us | 企业和政府 |
 | tech | io, ai, app, dev, tech, cloud, software +5 | 开发者工具 |
 | creative | design, art, studio, media, photography +5 | 创意和媒体 |
@@ -87,7 +87,7 @@ myapp.io AVAILABLE
 myapp.dev TAKEN
 ```
 
-### 2. Pretty格式（分组展示）
+### 2. Pretty 格式（分组展示）
 ```
 domain-check v0.9.1 — Checking 8 domains
 Preset: startup | Concurrency: 20
@@ -103,7 +103,7 @@ rustcloud.io
 8 domains in 0.8s | 3 available | 5 taken | 0 unknown
 ```
 
-### 3. JSON格式（供脚本处理）
+### 3. JSON 格式（供脚本处理）
 ```json
 [
   { "domain": "myapp.com", "available": false, "method": "RDAP" },
@@ -111,14 +111,14 @@ rustcloud.io
 ]
 ```
 
-### 4. CSV格式（导入数据库）
+### 4. CSV 格式（导入数据库）
 ```csv
 domain,status,method
 myapp.com,TAKEN,RDAP
 myapp.io,AVAILABLE,RDAP
 ```
 
-### 5. Info格式（注册信息）
+### 5. Info 格式（注册信息）
 ```bash
 domain-check target.com --info
 # 输出：
@@ -131,7 +131,7 @@ domain-check target.com --info
 
 ## 配置文件与环境变量
 
-### TOML配置
+### TOML 配置
 ```toml
 [defaults]
 concurrency = 25
@@ -176,10 +176,10 @@ domain-check --pattern "app\d" -t com --yes --json \
 domain-check --file huge-list.txt --all --force --yes --csv > results.csv
 ```
 
-**CI友好特性：**
+**CI 友好特性：**
 - `--yes`/`--force` 跳过所有确认提示
-- 非TTY环境自动不弹出提示
-- `spinner`输出到stderr，stdout保持干净
+- 非 TTY 环境自动不弹出提示
+- `spinner`输出到 stderr，stdout 保持干净
 
 ## 三种使用方式
 
@@ -196,7 +196,7 @@ domain-check example.com
 domain-check myapp --preset startup --pretty
 ```
 
-### 2. Rust库 (domain-check-lib)
+### 2. Rust 库 (domain-check-lib)
 
 ```toml
 [dependencies]
@@ -215,9 +215,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### 3. MCP服务器 (domain-check-mcp)
+### 3. MCP 服务器 (domain-check-mcp)
 
-为AI Coding Agent提供域名检查工具，支持Claude Code、Codex、Cursor、VS Code Copilot等：
+为 AI Coding Agent 提供域名检查工具，支持 Claude Code、Codex、Cursor、VS Code Copilot 等：
 
 ```bash
 # 安装
@@ -227,7 +227,7 @@ cargo install domain-check-mcp
 claude mcp add domain-check -- domain-check-mcp
 ```
 
-**6个可用工具：**
+**6 个可用工具：**
 - `check_domain` - 检查单个域名
 - `check_domains` - 批量检查
 - `check_with_preset` - 使用预设检查
@@ -266,8 +266,8 @@ domain-check --file ideas.txt --preset tech --csv > results.csv
 
 域名状态依赖网络和注册表响应。临时错误可能导致`UNKNOWN`状态。
 
-- WHOIS输出标准化程度不如RDAP，解析质量因注册表而异
-- 建议CI工作流中使用明确标志固定行为：`--batch`、`--json`、`--no-bootstrap`、`--concurrency`
+- WHOIS 输出标准化程度不如 RDAP，解析质量因注册表而异
+- 建议 CI 工作流中使用明确标志固定行为：`--batch`、`--json`、`--no-bootstrap`、`--concurrency`
 
 ## 项目结构
 
@@ -288,10 +288,10 @@ Domain Check 是一个生产级的域名检查工具，核心优势：
 
 | 特性 | 说明 |
 |------|------|
-| **覆盖率** | 1200+ TLDs，RDAP+WHOIS双协议 |
-| **性能** | 100并发，流式输出，2.7MB二进制 |
-| **灵活性** | 预设+自定义，4种输出格式 |
-| **AI原生** | MCP服务器支持所有主流AI Coding Agent |
-| **可靠性** | 离线备用32 TLD，CI友好 |
+| **覆盖率** | 1200+ TLDs，RDAP+WHOIS 双协议 |
+| **性能** | 100 并发，流式输出，2.7MB 二进制 |
+| **灵活性** | 预设+自定义，4 种输出格式 |
+| **AI 原生** | MCP 服务器支持所有主流 AI Coding Agent |
+| **可靠性** | 离线备用 32 TLD，CI 友好 |
 
-无论是手动命名研究、品牌保护审计，还是自动化流水线，Domain Check都能提供高效可靠的域名可用性检查能力。
+无论是手动命名研究、品牌保护审计，还是自动化流水线，Domain Check 都能提供高效可靠的域名可用性检查能力。

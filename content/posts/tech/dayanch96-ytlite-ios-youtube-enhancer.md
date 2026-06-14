@@ -7,7 +7,7 @@ categories: ["技术笔记"]
 tags: ["iOS", "YouTube", "越狱", "Tweak", "下载工具"]
 ---
 
-# dayanch96/YTLite：iOS版YouTube增强工具，支持下载视频/音频、自定义界面
+# dayanch96/YTLite：iOS 版 YouTube 增强工具，支持下载视频/音频、自定义界面
 
 ## 🎯 概述
 
@@ -27,7 +27,7 @@ tags: ["iOS", "YouTube", "越狱", "Tweak", "下载工具"]
 | **多媒体下载** | 视频、音频（可选择音轨）、缩略图、帖子、个人资料图片 |
 | **界面定制** | 移除 Feed 元素、重新排序标签、启用 OLED 模式、Shorts 仅限模式 |
 | **播放器设置** | 手势、默认质量、首选音轨 |
-| **内置SponsorBlock** | 自动跳过赞助内容 |
+| **内置 SponsorBlock** | 自动跳过赞助内容 |
 | **画中画** | YouPiP tweak 支持画中画功能 |
 
 ---

@@ -22,7 +22,7 @@ tags = ['DevOps', '工具', '教程', 'Linux']
 
 | 分类 | 内容示例 |
 |------|----------|
-| **Linux命令** | 系统管理、网络配置、性能监控 |
+| **Linux 命令** | 系统管理、网络配置、性能监控 |
 | **网络安全** | 端口扫描、流量分析、渗透测试命令 |
 | **容器编排** | Docker/K8s 常用命令速查 |
 | **云服务** | AWS/GCP/Azure CLI 备忘 |
@@ -40,13 +40,13 @@ tags = ['DevOps', '工具', '教程', 'Linux']
 
 - **Nmap 扫描技巧** - 全面端口发现与服务识别
 - **Metasploit 框架** - 漏洞利用与后渗透
-- **Burp Suite** - Web安全测试配置
+- **Burp Suite** - Web 安全测试配置
 - **Wireshark** - 流量抓包与协议分析
 
 ### ☁️ 云原生
 
 - Kubernetes 故障排查指南
-- Terraform 模块化最佳实践
+- Terraform 模块化实践建议
 - Prometheus+Grafana 监控体系
 
 ## 三、亮点特色

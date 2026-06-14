@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["GraphQL", "API Gateway", "Rust", "TypeScript", "微服务"]
 ---
 
-# Tailcall ForgeCode：19.3K Stars·API Gateway + GraphQL平台·TypeScript+Rust双引擎·Schema Stitching
+# Tailcall ForgeCode：19.3K Stars·API Gateway + GraphQL 平台·TypeScript+Rust 双引擎·Schema Stitching
 
 ## 一、项目概述
 

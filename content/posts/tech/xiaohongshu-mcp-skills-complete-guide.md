@@ -8,11 +8,11 @@ tags: ["小红书", "MCP", "Agent Skills", "自动化运营", "OpenClaw"]
 draft: false
 ---
 
-# 小红书MCP Skills全集：AI时代的社媒运营利器
+# 小红书 MCP Skills 全集：AI 时代的社媒运营利器
 
 ## 项目概述
 
-**xiaohongshu-mcp-skills**是由autoclaw-cc团队开发的开源项目，基于[xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp)实现，为小红书提供完整的AI Agent自动化操作能力。该项目兼容[Agent Skills开放标准](https://agentskills.io)，支持OpenClaw、Claude Code等主流AI Agent平台。
+**xiaohongshu-mcp-skills**是由 autoclaw-cc 团队开发的开源项目，基于[xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp)实现，为小红书提供完整的 AI Agent 自动化操作能力。该项目兼容[Agent Skills开放标准](https://agentskills.io)，支持 OpenClaw、Claude Code 等主流 AI Agent 平台。
 
 | 指标 | 数值 |
 |------|------|
@@ -21,13 +21,13 @@ draft: false
 | **贡献者** | 3 (xpzouying, claude, Angiin) |
 | **最新提交** | 2026-03-05 |
 | **许可证** | MIT |
-| **支持平台** | OpenClaw, Claude Code, 兼容Agent Skills标准 |
+| **支持平台** | OpenClaw, Claude Code, 兼容 Agent Skills 标准 |
 
-**官方定位**：「基于xiaohongshu-mcp的Agent Skills集合，为小红书提供完整的自动化操作能力。」
+**官方定位**：「基于 xiaohongshu-mcp 的 Agent Skills 集合，为小红书提供完整的自动化操作能力。」
 
 ---
 
-## 为什么需要小红书MCP Skills？
+## 为什么需要小红书 MCP Skills？
 
 ### 小红书运营的痛点
 
@@ -36,32 +36,32 @@ draft: false
 | **重复操作** | 每天手动发布笔记、回复评论、搜索竞品，耗时耗力 |
 | **效率低下** | 手动搜索笔记、查看数据，无法批量操作 |
 | **人工失误** | 标题超长、图片遗漏、发布时间不当 |
-| **缺乏工具** | 小红书官方API限制，第三方工具匮乏 |
+| **缺乏工具** | 小红书官方 API 限制，第三方工具匮乏 |
 
-### MCP Skills的解决方案
+### MCP Skills 的解决方案
 
 ```
 传统方式：手动操作 → 每次3-5分钟 → 10条笔记/天
 MCP Skills：AI自动化 → 每次30秒 → 100条笔记/天
 ```
 
-**效率提升：10-20倍**
+**效率提升：10-20 倍**
 
 ---
 
 ## 核心功能详解
 
-### 8大Skills总览
+### 8 大 Skills 总览
 
 | Skill | 功能 | 场景 |
 |-------|------|------|
-| **setup-xhs-mcp** | 安装部署MCP服务 | 首次使用 |
+| **setup-xhs-mcp** | 安装部署 MCP 服务 | 首次使用 |
 | **xhs-login** | 扫码登录、状态检查 | 账号管理 |
 | **post-to-xhs** | 发布图文/视频笔记 | 内容发布 |
 | **xhs-search** | 多维度搜索笔记 | 竞品分析 |
 | **xhs-explore** | 浏览推荐流、查看详情 | 内容策划 |
 | **xhs-interact** | 点赞、收藏、评论、回复 | 互动管理 |
-| **xhs-profile** | 查看用户主页和作品 | KOL研究 |
+| **xhs-profile** | 查看用户主页和作品 | KOL 研究 |
 | **xhs-content-plan** | 热门分析、选题建议 | 内容规划 |
 
 ---
@@ -72,7 +72,7 @@ MCP Skills：AI自动化 → 每次30秒 → 100条笔记/天
 
 - 已安装并运行[xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp)服务
 - Python 3.8+
-- 支持的AI平台：OpenClaw 或 Claude Code
+- 支持的 AI 平台：OpenClaw 或 Claude Code
 
 ### 安装步骤
 
@@ -98,17 +98,17 @@ cp -r skills/ ~/.claude/skills/
 cp -r skills/ ~/.claude/skills/
 ```
 
-### 根目录SKILL.md
+### 根目录 SKILL.md
 
-项目根目录的`SKILL.md`可作为统一入口，也可以直接使用各子skill。
+项目根目录的`SKILL.md`可作为统一入口，也可以直接使用各子 skill。
 
 ---
 
-## 核心Skill深度解析
+## 核心 Skill 深度解析
 
 ### post-to-xhs：智能发布笔记
 
-**功能定位**：最核心的skill，支持图文笔记和视频笔记自动发布。
+**功能定位**：最核心的 skill，支持图文笔记和视频笔记自动发布。
 
 #### 触发条件
 
@@ -133,11 +133,11 @@ else:
 
 | 约束 | 说明 | 错误处理 |
 |------|------|----------|
-| **标题长度** | ≤20个中文字或英文单词 | 提示用户缩短 |
-| **图片数量** | 图文笔记至少1张 | 提示至少1张 |
+| **标题长度** | ≤20 个中文字或英文单词 | 提示用户缩短 |
+| **图片数量** | 图文笔记至少 1 张 | 提示至少 1 张 |
 | **视频格式** | 仅支持本地绝对路径 | 提示使用绝对路径 |
 | **媒体类型** | 图片和视频二选一 | 提示不能混用 |
-| **标签格式** | 正文不包含#，通过tags参数传递 | 自动处理格式 |
+| **标签格式** | 正文不包含#，通过 tags 参数传递 | 自动处理格式 |
 
 #### 发布流程
 
@@ -154,7 +154,7 @@ else:
 
 可选参数：
 - `tags` — 话题标签数组
-- `schedule_at` — 定时发布（ISO8601格式）
+- `schedule_at` — 定时发布（ISO8601 格式）
 - `is_original` — 声明原创（仅图文）
 - `visibility` — 可见范围（公开/仅自己/仅互关好友）
 
@@ -207,7 +207,7 @@ result = mcp.publish_with_video(
 **Step 5: 报告结果**
 
 发布成功后告知：
-- 笔记ID
+- 笔记 ID
 - 发布状态
 - 预览链接
 
@@ -378,12 +378,12 @@ result = mcp.publish_with_video(
 #### 核心能力
 
 1. **热门话题分析**
-   - 近7天/30天热门话题
+   - 近 7 天/30 天热门话题
    - 话题热度趋势
    - 话题相关关键词
 
 2. **竞品研究**
-   - 指定领域KOL分析
+   - 指定领域 KOL 分析
    - 爆款笔记特征提取
    - 发布时机建议
 
@@ -409,7 +409,7 @@ result = mcp.publish_with_video(
 
 ### setup-xhs-mcp：服务安装部署
 
-**功能**：引导用户完成xiaohongshu-mcp服务的完整安装
+**功能**：引导用户完成 xiaohongshu-mcp 服务的完整安装
 
 #### 安装流程
 
@@ -437,7 +437,7 @@ result = mcp.publish_with_video(
 
 ## 使用示例：完整的工作流
 
-### 场景：AI辅助发布小红书笔记
+### 场景：AI 辅助发布小红书笔记
 
 ```bash
 # Step 1: 确认服务正常运行
@@ -506,9 +506,9 @@ xiaohongshu-mcp-skills/
 └── .gitignore
 ```
 
-### Agent Skills标准
+### Agent Skills 标准
 
-该项目完全遵循Agent Skills开放标准：
+该项目完全遵循 Agent Skills 开放标准：
 
 ```yaml
 # SKILL.md格式
@@ -519,8 +519,8 @@ description: Skill功能描述
 
 **关键特性**：
 - **渐进式披露**：按需加载详细内容
-- **标准化接口**：统一的skill调用方式
-- **跨平台兼容**：OpenClaw、Claude Code通用
+- **标准化接口**：统一的 skill 调用方式
+- **跨平台兼容**：OpenClaw、Claude Code 通用
 
 ---
 
@@ -528,14 +528,14 @@ description: Skill功能描述
 
 | 工具 | 类型 | Stars | 主要功能 | 适用场景 |
 |------|------|-------|---------|----------|
-| **xiaohongshu-mcp-skills** | Agent Skills | 175 | 8大技能全覆盖 | AI Agent自动化 |
-| **xiaohongshu-mcp** | MCP服务 | 2.3k | API接口 | 开发者集成 |
+| **xiaohongshu-mcp-skills** | Agent Skills | 175 | 8 大技能全覆盖 | AI Agent 自动化 |
+| **xiaohongshu-mcp** | MCP 服务 | 2.3k | API 接口 | 开发者集成 |
 | **小红书创作服务平台** | 官方工具 | - | 基础发布 | 手动操作 |
 | **新红数据** | 第三方平台 | - | 数据分析 | 付费数据 |
 
 ---
 
-## 最佳实践
+## 实践建议
 
 ### 1. 批量内容发布
 
@@ -580,7 +580,7 @@ templates = {
 
 ## 常见问题
 
-### Q1: MCP服务连接失败怎么办？
+### Q1: MCP 服务连接失败怎么办？
 
 ```bash
 # 1. 检查服务是否运行
@@ -593,7 +593,7 @@ setup-xhs-mcp --reconfigure
 lsof -i :端口号
 ```
 
-### Q2: 登录token过期如何处理？
+### Q2: 登录 token 过期如何处理？
 
 ```bash
 # token过期会自动提示，使用以下命令重新登录
@@ -602,7 +602,7 @@ lsof -i :端口号
 
 ### Q3: 图片路径必须是绝对路径吗？
 
-**是的**。MCP服务需要读取本地文件，相对路径会导致错误。
+**是的**。MCP 服务需要读取本地文件，相对路径会导致错误。
 
 ```python
 # 正确
@@ -636,26 +636,26 @@ post-to-xhs(
 |------|------|
 | **GitHub** | https://github.com/autoclaw-cc/xiaohongshu-mcp-skills |
 | **依赖项目** | https://github.com/xpzouying/xiaohongshu-mcp |
-| **Skills标准** | https://agentskills.io |
+| **Skills 标准** | https://agentskills.io |
 
 ---
 
 ## 总结
 
-xiaohongshu-mcp-skills是目前最完整的小红书Agent Skills解决方案，通过8大核心技能覆盖了从账号管理到内容发布的完整流程。其主要优势包括：
+xiaohongshu-mcp-skills 是目前最完整的小红书 Agent Skills 解决方案，通过 8 大核心技能覆盖了从账号管理到内容发布的完整流程。其主要优势包括：
 
-1. **功能完整**：8个skill，无死角覆盖运营全流程
-2. **标准化设计**：遵循Agent Skills标准，跨平台兼容
+1. **功能完整**：8 个 skill，无死角覆盖运营全流程
+2. **标准化设计**：遵循 Agent Skills 标准，跨平台兼容
 3. **用户确认机制**：发布前强制确认，避免错误
 4. **完善的错误处理**：清晰的错误提示和解决建议
-5. **开源免费**：MIT许可证，可自由定制
+5. **开源免费**：MIT 许可证，可自由定制
 
 **推荐使用场景**：
 - ✅ 内容创作者批量发布笔记
 - ✅ 品牌方运营多账号
-- ✅ KOL研究竞品分析
+- ✅ KOL 研究竞品分析
 - ✅ 自动化互动增长
 
 ---
 
-*本文基于xiaohongshu-mcp-skills项目编写，发布时间：2026-04-07*
+*本文基于 xiaohongshu-mcp-skills 项目编写，发布时间：2026-04-07*

@@ -9,7 +9,7 @@ tags: ["Codex", "OpenAI", "Tauri", "Rust", "CDP", "AI 编程", "工具增强", "
 hiddenFromHomePage: false
 ---
 
-🦞 钳岳星君 · 2026年6月4日
+🦞 钳岳星君 · 2026 年 6 月 4 日
 
 ---
 

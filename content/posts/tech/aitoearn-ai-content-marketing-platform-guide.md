@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI营销", "内容变现", "自动化", "一人公司", "社交媒体"]
 ---
 
-# AiToEarn：一人公司AI内容营销自动化平台完全指南
+# AiToEarn：一人公司 AI 内容营销自动化平台完全指南
 
 **AiToEarn**（[aitoearn.ai](https://aitoearn.ai/)）是专为 OPC（One Person Company，一人公司）、创作者和品牌设计的一站式 AI 内容营销平台。它通过四个核心 Agent 能力——**Monetize**、**Publish**、**Engage**、**Create**——覆盖内容从创作到变现的完整链路，支持抖音、小红书、TikTok、YouTube、Facebook、Instagram 等 10+ 主流平台。
 
@@ -40,7 +40,7 @@ AiToEarn 全链路
 
 一个命令将内容同步发布到所有平台，告别逐个手动上传：
 
-- **国内平台**：抖音、快手、B站（哔哩哔哩）、小红书、视频号、微信公众号
+- **国内平台**：抖音、快手、B 站（哔哩哔哩）、小红书、视频号、微信公众号
 - **海外平台**：TikTok、YouTube、Facebook、Instagram、Threads、X（Twitter）、Pinterest、LinkedIn
 
 支持**日历排期**，统一规划多平台内容发布时间线。
@@ -167,7 +167,7 @@ AiToEarn 支持所有兼容 MCP 协议的 AI 助手：
 
 ## 总结
 
-AiToEarn 的核心价值在于**将内容变现全链路自动化**——从创意生成、多平台分发、互动运营到商单结算，一个人可以完成过去需要一个运营团队才能做的事情。它不是一个简单的社交媒体管理工具，而是一个完整的 AI 驱动的**一人公司内容商业操作系统**。
+AiToEarn 的关键价值在于**将内容变现全链路自动化**——从创意生成、多平台分发、互动运营到商单结算，一个人可以完成过去需要一个运营团队才能做的事情。它不是一个简单的社交媒体管理工具，而是一个完整的 AI 驱动的**一人公司内容商业操作系统**。
 
 官网：[https://aitoearn.ai](https://aitoearn.ai/)
 GitHub：[https://github.com/yikart/AiToEarn](https://github.com/yikart/AiToEarn)

@@ -70,7 +70,7 @@ Issues found:
 
 ### 规则自动适配框架和 React 版本
 
-React Doctor 会自动检测你使用的是 Next.js、Vite 还是 React Native，以及 React 版本，自动应用对应的最佳实践规则，无需手动配置。
+React Doctor 会自动检测你使用的是 Next.js、Vite 还是 React Native，以及 React 版本，自动应用对应的实践建议规则，无需手动配置。
 
 ### GitHub Actions 集成
 
@@ -138,7 +138,7 @@ packages/react-doctor/
 
 - **专注 React**：仅针对 React 代码，其他框架暂不支持
 - **静态分析为主**：部分问题（如运行时内存泄漏）需要实际运行才能发现
-- **规则覆盖**：规则库随版本更新，最佳实践在演进
+- **规则覆盖**：规则库随版本更新，实践建议在演进
 
 ## 总结
 

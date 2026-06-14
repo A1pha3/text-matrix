@@ -483,10 +483,10 @@ edit these into a launch video
 
 ## 相关资源
 
-- GitHub：[`browser-use/video-use`](https://github.com/browser-use/video-use)
-- 公开技能说明：[`SKILL.md`](https://github.com/browser-use/video-use/blob/main/SKILL.md)
-- 转录能力说明：[`ElevenLabs Speech to Text`](https://elevenlabs.io/docs/speech-to-text)
-- 视频处理基础工具：[`FFmpeg`](https://ffmpeg.org/)
+- GitHub：[ PROTECTED_97 ](https://github.com/browser-use/video-use)
+- 公开技能说明：[ PROTECTED_98 ](https://github.com/browser-use/video-use/blob/main/SKILL.md)
+- 转录能力说明：[ PROTECTED_99 ](https://elevenlabs.io/docs/speech-to-text)
+- 视频处理基础工具：[ PROTECTED_100 ](https://ffmpeg.org/)
 
 ---
 

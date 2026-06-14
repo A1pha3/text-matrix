@@ -10,7 +10,7 @@ tags: ["RL", "强化学习", "Bellman方程", "Q-Learning", "Policy Gradient", "
 
 # Mathematical Foundations of Reinforcement Learning：强化学习的数学基石
 
-> **目标读者**：计算机科学/人工智能研究生、RL研究者、工程师
+> **目标读者**：计算机科学/人工智能研究生、RL 研究者、工程师
 > **前置知识**：概率论、线性代数基础
 > **特色**：网格世界（Grid World）贯穿全书的统一示例，数学严谨但叙述友好
 > **难度定位**：⭐⭐⭐⭐ 专家设计
@@ -21,12 +21,12 @@ tags: ["RL", "强化学习", "Bellman方程", "Q-Learning", "Policy Gradient", "
 
 完成本篇文章后，你将能够：
 
-1. **理解RL数学框架**：从数学角度掌握策略、状态值、动作值等核心概念
-2. **掌握Bellman方程**：推导和应用Bellman方程与Bellman最优方程
-3. **理解经典算法**：Value Iteration、Policy Iteration、Q-Learning、Sarsa等
-4. **掌握Monte Carlo与TD方法**：两种无模型学习方法的核心原理与对比
-5. **理解深度RL基础**：DQN、Experience Replay、Policy Gradient、Actor-Critic
-6. **理解随机近似与SGD**：理解RL算法的优化理论根基
+1. **理解 RL 数学框架**：从数学角度掌握策略、状态值、动作值等核心概念
+2. **掌握 Bellman 方程**：推导和应用 Bellman 方程与 Bellman 最优方程
+3. **理解经典算法**：Value Iteration、Policy Iteration、Q-Learning、Sarsa 等
+4. **掌握 Monte Carlo 与 TD 方法**：两种无模型学习方法的核心原理与对比
+5. **理解深度 RL 基础**：DQN、Experience Replay、Policy Gradient、Actor-Critic
+6. **理解随机近似与 SGD**：理解 RL 算法的优化理论根基
 
 ---
 
@@ -36,18 +36,18 @@ tags: ["RL", "强化学习", "Bellman方程", "Q-Learning", "Policy Gradient", "
 
 | 教材类型 | 代表作 | 局限 |
 |----------|--------|------|
-| 工程实现派 | Sutton & Barto《RL导论》 | 数学推导较少，直觉多于证明 |
-| 理论数学派 | Bertsekas《RL与最优控制》 | 数学要求过高，对初学者不友好 |
-| 深度学习派 | Spinning Up (OpenAI) | 侧重深度RL，缺乏理论基础 |
+| 工程实现派 | Sutton & Barto《RL 导论》 | 数学推导较少，直觉多于证明 |
+| 理论数学派 | Bertsekas《RL 与最优控制》 | 数学要求过高，对初学者不友好 |
+| 深度学习派 | Spinning Up (OpenAI) | 侧重深度 RL，缺乏理论基础 |
 
 ### 2.2 本书的独特定位
 
-**《Mathematical Foundations of Reinforcement Learning》** 由西湖大学施若石（ShiYuzhao）教授编写，于2025年由Springer出版。本书定位：
+**《Mathematical Foundations of Reinforcement Learning》** 由西湖大学施若石（ShiYuzhao）教授编写，于 2025 年由 Springer 出版。本书定位：
 
 - **数学严谨但叙述友好**：不是"显然可得"，而是逐步推导
 - **统一示例贯穿全书**：所有概念和算法都用网格世界（Grid World）阐释
-- **从基础到算法系统覆盖**：10章内容形成完整知识体系
-- **配套资源丰富**：54节配套视频（B站210万+播放）、PDF完整版、代码实现
+- **从基础到算法系统覆盖**：10 章内容形成完整知识体系
+- **配套资源丰富**：54 节配套视频（B 站 210 万+播放）、PDF 完整版、代码实现
 
 ### 2.3 影响力
 
@@ -55,13 +55,13 @@ tags: ["RL", "强化学习", "Bellman方程", "Q-Learning", "Policy Gradient", "
 |------|------|
 | GitHub Stars | 15,384 |
 | Forks | 1,443 |
-| B站播放量 | 210万+ |
-| YouTube视频 | 54节（英/中双语） |
+| B 站播放量 | 210 万+ |
+| YouTube 视频 | 54 节（英/中双语） |
 | 第三方代码 | Python、MATLAB、R、C++ |
 
 ---
 
-## §3 核心概念：RL的数学基础
+## §3 核心概念：RL 的数学基础
 
 ### 3.1 网格世界（Grid World）
 
@@ -80,14 +80,14 @@ Agent在4×3网格中移动
 ```
 
 **网格世界特性**：
-- 状态空间 S = {0, 1, ..., 11}（12个格子）
-- 动作空间 A = {上, 下, 左, 右}
+- 状态空间 S = {0, 1, ..., 11}（12 个格子）
+- 动作空间 A = {上， 下， 左， 右}
 - 奖励：每步-1（鼓励快速到达目标）
-- 终止条件：到达目标G
+- 终止条件：到达目标 G
 
 ### 3.2 马尔夫决策过程（MDP）
 
-RL问题建模为MDP：$(S, A, P, R, \gamma)$
+RL 问题建模为 MDP：$(S, A, P, R, \gamma)$
 
 ```python
 # MDP五元组
@@ -101,12 +101,12 @@ class MDP:
 
 **核心关系**：
 - **策略** $\pi(a|s) = P(a_t|a_{t-1},...)$：状态到动作的概率分布
-- **状态值函数** $V^\pi(s) = E_\pi[G_t|S_t=s]$：从状态s出发的期望累积奖励
-- **动作值函数** $Q^\pi(s,a) = E_\pi[G_t|S_t=s, A_t=a]$：在状态s执行动作a的期望累积奖励
+- **状态值函数** $V^\pi(s) = E_\pi[G_t|S_t=s]$：从状态 s 出发的期望累积奖励
+- **动作值函数** $Q^\pi(s,a) = E_\pi[G_t|S_t=s, A_t=a]$：在状态 s 执行动作 a 的期望累积奖励
 
 ---
 
-## §4 核心方程：Bellman方程体系
+## §4 核心方程：Bellman 方程体系
 
 ### 4.1 回报（Return）与折扣因子
 
@@ -118,19 +118,19 @@ $$G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + ... = \sum_{k=0}^{\infty} 
 - $\gamma \to 0$：只关注立即奖励（短视）
 - $\gamma \to 1$：平等对待近期和远期奖励（长期规划）
 
-### 4.2 Bellman方程
+### 4.2 Bellman 方程
 
-**状态值函数的Bellman方程**：
+**状态值函数的 Bellman 方程**：
 
 $$V^\pi(s) = \sum_{a \in A} \pi(a|s) \sum_{s' \in S} P(s'|s,a)[R(s,a,s') + \gamma V^\pi(s')]$$
 
 **含义**：当前状态值 = 所有可能动作的加权平均（立即奖励 + 折扣未来值）
 
-**动作值函数的Bellman方程**：
+**动作值函数的 Bellman 方程**：
 
 $$Q^\pi(s,a) = \sum_{s' \in S} P(s'|s,a)[R(s,a,s') + \gamma \sum_{a' \in A} \pi(a'|s')Q^\pi(s',a')]$$
 
-### 4.3 Bellman最优方程
+### 4.3 Bellman 最优方程
 
 **最优状态值**：
 
@@ -221,9 +221,9 @@ def policy_iteration(mdp, gamma=0.9):
 
 ## §6 无模型方法：与环境交互学习
 
-### 6.1 Monte Carlo方法
+### 6.1 Monte Carlo 方法
 
-**核心思想**：通过完整episode采样估计值函数
+**核心思想**：通过完整 episode 采样估计值函数
 
 ```python
 def first_visit_mc(env, num_episodes, gamma=0.9, epsilon=0.1):
@@ -257,19 +257,19 @@ def first_visit_mc(env, num_episodes, gamma=0.9, epsilon=0.1):
 ```
 
 **MC vs DP**：
-- DP需要完整环境模型（P和R）
-- MC通过采样学习，无需环境模型
-- MC适用于episodic任务，DP适用于连续任务
+- DP 需要完整环境模型（P 和 R）
+- MC 通过采样学习，无需环境模型
+- MC 适用于 episodic 任务，DP 适用于连续任务
 
 ### 6.2 Temporal-Difference (TD) Learning
 
-**核心思想**：结合MC和DP的思想，通过bootstrapping逐步更新
+**核心思想**：结合 MC 和 DP 的思想，通过 bootstrapping 逐步更新
 
 **TD(0)算法**：
 
 $$V(s_t) \leftarrow V(s_t) + \alpha[R_{t+1} + \gamma V(s_{t+1}) - V(s_t)]$$
 
-括号内为TD误差：$\delta_t = R_{t+1} + \gamma V(s_{t+1}) - V(s_t)$
+括号内为 TD 误差：$\delta_t = R_{t+1} + \gamma V(s_{t+1}) - V(s_t)$
 
 ```python
 def td_zero(env, num_steps, alpha=0.1, gamma=0.9, epsilon=0.1):
@@ -288,9 +288,9 @@ def td_zero(env, num_steps, alpha=0.1, gamma=0.9, epsilon=0.1):
     return V
 ```
 
-### 6.3 Sarsa与Q-Learning
+### 6.3 Sarsa 与 Q-Learning
 
-**Sarsa（On-policy TD控制）**：
+**Sarsa（On-policy TD 控制）**：
 
 $$Q(s,a) \leftarrow Q(s,a) + \alpha[R + \gamma Q(s',a') - Q(s,a)]$$
 
@@ -321,7 +321,7 @@ def sarsa(env, num_episodes, alpha=0.1, gamma=0.9, epsilon=0.1):
     return Q
 ```
 
-**Q-Learning（Off-policy TD控制）**：
+**Q-Learning（Off-policy TD 控制）**：
 
 $$Q(s,a) \leftarrow Q(s,a) + \alpha[R + \gamma \max_{a'} Q(s',a') - Q(s,a)]$$
 
@@ -361,9 +361,9 @@ $$\Delta w = \alpha (V^\pi(s) - \hat{V}(s; w)) \nabla_w \hat{V}(s; w)$$
 
 ### 7.2 Deep Q-Network (DQN)
 
-DQN的核心创新：
+DQN 的核心创新：
 
-1. **Experience Replay（经验回放）**：存储到replay buffer，随机采样打破相关性
+1. **Experience Replay（经验回放）**：存储到 replay buffer，随机采样打破相关性
 2. **Target Network（目标网络）**：分离目标计算，提高稳定性
 
 ```python
@@ -395,18 +395,18 @@ class DQN:
         self.target_network.load_state_dict(self.q_network.state_dict())
 ```
 
-### 7.3 DQN变种概览
+### 7.3 DQN 变种概览
 
 | 变种 | 核心改进 |
 |------|----------|
-| Double DQN | 使用Double Q解决Q值过估计问题 |
-| Dueling DQN | 分离V(s)和A(s,a)估计 |
-| Prioritized Replay | 优先回放TD误差大的样本 |
-| Noisy Nets | 用噪声替代epsilon-greedy探索 |
+| Double DQN | 使用 Double Q 解决 Q 值过估计问题 |
+| Dueling DQN | 分离 V(s)和 A(s,a)估计 |
+| Prioritized Replay | 优先回放 TD 误差大的样本 |
+| Noisy Nets | 用噪声替代 epsilon-greedy 探索 |
 
 ---
 
-## §8 策略梯度与Actor-Critic
+## §8 策略梯度与 Actor-Critic
 
 ### 8.1 策略梯度基础
 
@@ -418,7 +418,7 @@ $$J(\theta) = V^{\pi_\theta}(s_0)$$
 
 $$\nabla_\theta J(\theta) = E_{\tau \sim \pi_\theta}[\sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t|s_t) G_t]$$
 
-### 8.2 REINFORCE算法
+### 8.2 REINFORCE 算法
 
 ```python
 def reinforce(env, num_episodes, gamma=0.99, lr=0.001):
@@ -454,9 +454,9 @@ def reinforce(env, num_episodes, gamma=0.99, lr=0.001):
         optimizer.step()
 ```
 
-### 8.3 Actor-Critic架构
+### 8.3 Actor-Critic 架构
 
-Actor（策略）和Critic（值函数）结合：
+Actor（策略）和 Critic（值函数）结合：
 
 ```python
 class ActorCritic:
@@ -493,27 +493,27 @@ class ActorCritic:
 
 | 部分 | 章节 | 核心内容 |
 |------|------|----------|
-| **第一部分：基础工具** | 第1章 | 基本概念（状态、动作、策略、奖励） |
-| | 第2章 | Bellman方程（状态值与动作值） |
-| | 第3章 | Bellman最优方程 |
-| **第二部分：算法** | 第4章 | Value Iteration与Policy Iteration |
-| | 第5章 | Monte Carlo方法 |
-| | 第6章 | 随机近似与SGD |
-| | 第7章 | TD学习（Sarsa、Q-Learning） |
-| | 第8章 | 值函数逼近与DQN |
-| | 第9章 | 策略梯度方法 |
-| | 第10章 | Actor-Critic方法 |
+| **第一部分：基础工具** | 第 1 章 | 基本概念（状态、动作、策略、奖励） |
+| | 第 2 章 | Bellman 方程（状态值与动作值） |
+| | 第 3 章 | Bellman 最优方程 |
+| **第二部分：算法** | 第 4 章 | Value Iteration 与 Policy Iteration |
+| | 第 5 章 | Monte Carlo 方法 |
+| | 第 6 章 | 随机近似与 SGD |
+| | 第 7 章 | TD 学习（Sarsa、Q-Learning） |
+| | 第 8 章 | 值函数逼近与 DQN |
+| | 第 9 章 | 策略梯度方法 |
+| | 第 10 章 | Actor-Critic 方法 |
 
 ### 9.2 配套资源
 
 | 资源 | 链接 | 说明 |
 |------|------|------|
-| **英文视频** | YouTube Playlist | 54节全套课程 |
-| **中文视频** | B站（210万+播放） | 施老师原版授课 |
-| **PDF全文** | GitHub仓库 | 免费下载 |
-| **代码实现** | 第三方Python/MATLAB | 见GitHub仓库 |
+| **英文视频** | YouTube Playlist | 54 节全套课程 |
+| **中文视频** | B 站（210 万+播放） | 施老师原版授课 |
+| **PDF 全文** | GitHub 仓库 | 免费下载 |
+| **代码实现** | 第三方 Python/MATLAB | 见 GitHub 仓库 |
 
-**B站视频链接**：
+**B 站视频链接**：
 - [RL overview 30分钟速览](https://www.bilibili.com/video/BV1HX4y1H7uR)
 - [第1章：基本概念](https://www.bilibili.com/video/BV1fW421w7NH)
 - [第7章：TD学习与Q-Learning](https://www.bilibili.com/video/BV1Ne411m7GX)
@@ -521,16 +521,16 @@ class ActorCritic:
 ### 9.3 学习建议
 
 **入门路径**：
-1. 先看施老师B站视频，建立直觉
-2. 阅读第1-3章，理解数学框架
+1. 先看施老师 B 站视频，建立直觉
+2. 阅读第 1-3 章，理解数学框架
 3. 实现网格世界上的各种算法
-4. 学习第7章TD方法，掌握Q-Learning
-5. 进阶第8-10章，理解深度RL基础
+4. 学习第 7 章 TD 方法，掌握 Q-Learning
+5. 进阶第 8-10 章，理解深度 RL 基础
 
 **代码实践**：
 - 官方提供网格世界环境（Python/MATLAB）
-- 第三方Python实现：zhoubay/Code-for-Mathematical-Foundations-of-Reinforcement-Learning
-- 建议先跑通网格世界实验，再尝试CartPole等 Gym 环境
+- 第三方 Python 实现：zhoubay/Code-for-Mathematical-Foundations-of-Reinforcement-Learning
+- 建议先跑通网格世界实验，再尝试 CartPole 等 Gym 环境
 
 ---
 
@@ -539,20 +539,20 @@ class ActorCritic:
 **Q1：需要多少数学基础？**
 A：概率论（期望、方差、条件概率）和线性代数（矩阵运算）即可。附录包含基础知识回顾。
 
-**Q2：和Sutton的书相比有什么区别？**
-A：本书更强调数学推导和算法设计动机，Sutton的书更注重直觉和应用。本书可作为Sutton的"数学补充"。
+**Q2：和 Sutton 的书相比有什么区别？**
+A：本书更强调数学推导和算法设计动机，Sutton 的书更注重直觉和应用。本书可作为 Sutton 的"数学补充"。
 
 **Q3：代码在哪里？**
-A：官方不提供算法代码（作业需要自己实现），但GitHub有多个第三方实现。
+A：官方不提供算法代码（作业需要自己实现），但 GitHub 有多个第三方实现。
 
-**Q4：如何获取PDF？**
-A：直接从GitHub仓库下载，或购买Springer印刷版。
+**Q4：如何获取 PDF？**
+A：直接从 GitHub 仓库下载，或购买 Springer 印刷版。
 
 ---
 
 ## 相关资源
 
-- **GitHub仓库**：https://github.com/MathFoundationRL/Book-Mathematical-Foundation-of-Reinforcement-Learning
+- **GitHub 仓库**：https://github.com/MathFoundationRL/Book-Mathematical-Foundation-of-Reinforcement-Learning
 - **作者主页**：https://www.shiyuzhao.net
-- **B站视频**：https://space.bilibili.com/2044042934
-- **Springer书籍页面**：https://link.springer.com/book/9789819739431
+- **B 站视频**：https://space.bilibili.com/2044042934
+- **Springer 书籍页面**：https://link.springer.com/book/9789819739431

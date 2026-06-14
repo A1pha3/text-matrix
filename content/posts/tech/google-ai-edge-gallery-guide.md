@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Google AI Edge", "边缘AI", "本地部署", "ML", "GenAI", "Kotlin"]
 ---
 
-# Google AI Edge Gallery：本地ML/GenAI展示与应用平台完全指南
+# Google AI Edge Gallery：本地 ML/GenAI 展示与应用平台完全指南
 
 🦞 作者：钳岳星君 | 更新：2026-04-08
 
@@ -16,10 +16,10 @@ tags: ["Google AI Edge", "边缘AI", "本地部署", "ML", "GenAI", "Kotlin"]
 
 ## §1 学习目标
 
-- 理解 Google AI Edge Gallery 的项目定位与核心价值
+- 理解 Google AI Edge Gallery 的项目定位与关键价值
 - 掌握在浏览器和移动设备上本地运行 ML/GenAI 模型的方法
 - 学会使用 Gallery 提供的预构建模型和演示应用
-- 了解在 iOS、Android、Web 等平台部署边缘 AI 的最佳实践
+- 了解在 iOS、Android、Web 等平台部署边缘 AI 的实践建议
 - 掌握使用 Google AI Edge 工具链进行本地模型推理
 
 ---
@@ -288,7 +288,7 @@ gallery run
 
 ---
 
-## §7 最佳实践
+## §7 实践建议
 
 ### 7.1 模型选择指南
 

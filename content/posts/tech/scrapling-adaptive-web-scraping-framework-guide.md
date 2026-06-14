@@ -437,7 +437,7 @@ class DevSpider(Spider):
 
 ---
 
-## 十、最佳实践
+## 十、实践建议
 
 ### 10.1 选择合适的 Fetcher
 

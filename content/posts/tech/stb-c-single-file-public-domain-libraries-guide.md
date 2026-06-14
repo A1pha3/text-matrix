@@ -24,7 +24,7 @@ tags = ['C/C++', '开源', '工具', '库']
 #include "stb_image.h"
 ```
 
-无需cmake、无需下载多个文件、无需配置Include路径。Windows开发者的痛点在这里得到彻底解决。
+无需 cmake、无需下载多个文件、无需配置 Include 路径。Windows 开发者的痛点在这里得到彻底解决。
 
 ### 2. 公共领域许可证
 
@@ -33,11 +33,11 @@ tags = ['C/C++', '开源', '工具', '库']
 - 开源修改版本
 - 支付任何费用
 
-### 3. 51,166行代码覆盖21个领域
+### 3. 51,166 行代码覆盖 21 个领域
 
-从图像加载到3D渲染，从音频解码到游戏开发，一个项目解决大部分基础需求。
+从图像加载到 3D 渲染，从音频解码到游戏开发，一个项目解决大部分基础需求。
 
-## 图形图像（7个库）
+## 图形图像（7 个库）
 
 ### stb_image.h — 图像加载
 
@@ -58,7 +58,7 @@ float *hdr_data = stbi_loadf("scene.hdr", &w, &h, &comp, 0);
 stbi_uc *img = stbi_load_from_memory(buffer, buffer_len, &w, &h, &c, 0);
 ```
 
-**版本2.30 | 7,988行代码**
+**版本 2.30 | 7,988 行代码**
 
 ### stb_image_write.h — 图像保存
 
@@ -79,7 +79,7 @@ stbi_write_tga("output.tga", width, height, channels, image_data);
 stbi_write_bmp("output.bmp", width, height, channels, image_data);
 ```
 
-**版本1.16 | 1,724行代码**
+**版本 1.16 | 1,724 行代码**
 
 ### stb_image_resize2.h — 图像缩放
 
@@ -96,7 +96,7 @@ stbir_resize2d(
 );
 ```
 
-**版本2.18b | 10,679行代码**
+**版本 2.18b | 10,679 行代码**
 
 ### stb_truetype.h — 字体解析
 
@@ -114,18 +114,18 @@ int baseline = ...;
 stbtt_GetCodepointBitmap(&font, scale, scale, 'A', &w, &h, &xoff, &yoff);
 ```
 
-**版本1.26 | 5,079行代码**
+**版本 1.26 | 5,079 行代码**
 
 ### 其他图形库
 
 | 库 | 版本 | 行数 | 功能 |
 |----|------|------|------|
-| stb_rect_pack.h | 1.01 | 623 | 2D矩形装箱打包 |
-| stb_perlin.h | 0.5 | 428 | Perlin噪声生成 |
+| stb_rect_pack.h | 1.01 | 623 | 2D 矩形装箱打包 |
+| stb_perlin.h | 0.5 | 428 | Perlin 噪声生成 |
 
-## 音频（2个库）
+## 音频（2 个库）
 
-### stb_vorbis.c — Ogg Vorbis解码
+### stb_vorbis.c — Ogg Vorbis 解码
 
 ```c
 #define STB_VORBIS_INCLUDE_READ_WORST_ERROR
@@ -139,7 +139,7 @@ float **output;
 int samples = stb_vorbis_get_samples_float(v, info.channels, output);
 ```
 
-**版本1.22 | 5,584行代码**
+**版本 1.22 | 5,584 行代码**
 
 ### stb_hexwave.h — 音频波形合成
 
@@ -153,13 +153,13 @@ stbhw_generate_squarewave(&ctx, 440.0, 0.5); // A4, 50%占空比
 short *samples = stbhw_generate_end(&ctx, &num_samples);
 ```
 
-**版本0.5 | 680行代码**
+**版本 0.5 | 680 行代码**
 
-## 3D图形（3个库）
+## 3D 图形（3 个库）
 
 ### stb_voxel_render.h — 体素渲染引擎
 
-类似Minecraft的体素渲染系统：
+类似 Minecraft 的体素渲染系统：
 
 ```c
 #define STB_VOXEL_RENDER_IMPLEMENTATION
@@ -176,11 +176,11 @@ stbvox_build_meshes(&q);
 stbvox_get_vertices(&q, &vertices, &num_vertices);
 ```
 
-**版本0.89 | 3,807行代码**
+**版本 0.89 | 3,807 行代码**
 
-### stb_dxt.h — DXT纹理压缩
+### stb_dxt.h — DXT 纹理压缩
 
-Fabian "ryg" Giesen编写的实时DXT压缩器：
+Fabian "ryg" Giesen 编写的实时 DXT 压缩器：
 
 ```c
 #define STB_DXT_IMPLEMENTATION
@@ -193,7 +193,7 @@ stb CompressBlockDXT1(
 );
 ```
 
-**版本1.12 | 719行代码**
+**版本 1.12 | 719 行代码**
 
 ### stb_easy_font.h — 简易位图字体
 
@@ -207,9 +207,9 @@ char buffer[100];
 stb_easy_font_print(x, y, stb_sprintf(buffer, "FPS: %d", fps), NULL, &vertices);
 ```
 
-**版本1.1 | 305行代码**
+**版本 1.1 | 305 行代码**
 
-## 游戏开发（2个库）
+## 游戏开发（2 个库）
 
 ### stb_tilemap_editor.h — 可嵌入瓦片地图编辑器
 
@@ -223,13 +223,13 @@ stbte_undo();
 stbte_redo();
 ```
 
-**版本0.42 | 4,187行代码**
+**版本 0.42 | 4,187 行代码**
 
-### stb_herringbone_wang_tile.h — Herringbone Wang Tile生成器
+### stb_herringbone_wang_tile.h — Herringbone Wang Tile 生成器
 
-**版本0.7 | 1,221行代码**
+**版本 0.7 | 1,221 行代码**
 
-## 实用工具（2个库）
+## 实用工具（2 个库）
 
 ### stb_ds.h — 类型安全容器
 
@@ -252,7 +252,7 @@ stb_dt str_table = NULL;
 hmput(str_table, "name", "Alice");
 ```
 
-**版本0.67 | 1,895行代码**
+**版本 0.67 | 1,895 行代码**
 
 ### stb_sprintf.h — 快速字符串格式化
 
@@ -265,9 +265,9 @@ stbsp_sprintf(buffer, "%0.6f %s %d", 3.14159, "hello", 42);
 stbsp_snprintf(buffer, 100, "%.2f", 2.71828f);
 ```
 
-**版本1.10 | 1,906行代码**
+**版本 1.10 | 1,906 行代码**
 
-## UI（1个库）
+## UI（1 个库）
 
 ### stb_textedit.h — 文本编辑器内核
 
@@ -283,17 +283,17 @@ stb_textedit_initialize_state(&state, ...);
 stb_textedit_key(...);
 ```
 
-**版本1.14 | 1,429行代码**
+**版本 1.14 | 1,429 行代码**
 
 ## 其他库
 
 | 库 | 版本 | 分类 | 行数 | 功能 |
 |----|------|------|------|------|
-| stb_c_lexer.h | 0.12 | parsing | 941 | C类语言词法分析 |
-| stb_divide.h | 0.94 | math | 433 | 32位模数和欧几里得除法 |
+| stb_c_lexer.h | 0.12 | parsing | 941 | C 类语言词法分析 |
+| stb_divide.h | 0.94 | math | 433 | 32 位模数和欧几里得除法 |
 | stb_connected_components.h | 0.96 | misc | 1,049 | 网格可达性计算 |
 | stb_leakcheck.h | 0.6 | misc | 194 | 内存泄漏检查 |
-| stb_include.h | 0.02 | misc | 295 | 递归#include支持 |
+| stb_include.h | 0.02 | misc | 295 | 递归#include 支持 |
 
 ## 项目结构
 
@@ -322,30 +322,30 @@ stb/
 ## FAQ
 
 **Q: 如何选择使用哪个库？**
-A: 文档详细且在README中有完整表格列出所有库的功能和代码行数。
+A: 文档详细且在 README 中有完整表格列出所有库的功能和代码行数。
 
 **Q: 为什么是单文件设计？**
-A: 避免Windows上部署库的痛苦，无需配置标准库目录，无需处理运行时冲突。
+A: 避免 Windows 上部署库的痛苦，无需配置标准库目录，无需处理运行时冲突。
 
 **Q: 支持哪些编译器？**
-A: GCC、Clang、MSVC等主流编译器。由于使用MSVC 6作为开发环境，确保了良好的兼容性。
+A: GCC、Clang、MSVC 等主流编译器。由于使用 MSVC 6 作为开发环境，确保了良好的兼容性。
 
-**Q: 为什么不用C99标准？**
-A: 为兼容MSVC 6所以使用C89/C90标准编写。
+**Q: 为什么不用 C99 标准？**
+A: 为兼容 MSVC 6 所以使用 C89/C90 标准编写。
 
 **Q: 可以闭源项目中使用吗？**
-A: 可以。公共领域或MIT许可证都允许闭源使用，无任何传染性。
+A: 可以。公共领域或 MIT 许可证都允许闭源使用，无任何传染性。
 
 ## 总结
 
-stb是C/C++开发者的瑞士军刀，核心优势：
+stb 是 C/C++开发者的瑞士军刀，核心优势：
 
 | 特性 | 说明 |
 |------|------|
 | **零依赖** | 单文件头文件，无需外部库 |
 | **零限制** | 公共领域许可证，随便用 |
-| **覆盖广** | 21个库，51,166行代码 |
+| **覆盖广** | 21 个库，51,166 行代码 |
 | **易部署** | 扔进项目即可编译 |
-| **可移植** | GCC/Clang/MSVC全支持 |
+| **可移植** | GCC/Clang/MSVC 全支持 |
 
-无论是独立游戏开发者、嵌入式工程师还是Windows桌面应用开发者，stb都能提供可靠的基础工具集。
+无论是独立游戏开发者、嵌入式工程师还是 Windows 桌面应用开发者，stb 都能提供可靠的基础工具集。

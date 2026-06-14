@@ -14,7 +14,7 @@ hiddenFromHomePage: true
 Tech Interview Handbook 是前 Facebook / Quora / Grab 工程师 **yangshun** 维护的 **免费技术面试准备手册**，覆盖从简历、算法、行为面试到薪资谈判的**全流程**。超过 100 万人从中受益，**Blind 75**（最经典 75 题）就是出自作者之手。
 
 > GitHub: https://github.com/yangshun/tech-interview-handbook
-> 官网: https://www.techinterviewhandbook.org/
+> 官网： https://www.techinterviewhandbook.org/
 > 6 月 4 日 trending +116 stars
 
 ---
@@ -177,7 +177,7 @@ Tech Interview Handbook 已经发展成"系列项目"：
 
 ## 链接
 
-- GitHub 仓库: https://github.com/yangshun/tech-interview-handbook
+- GitHub 仓库： https://github.com/yangshun/tech-interview-handbook
 - 官网（推荐阅读）：https://www.techinterviewhandbook.org/
 - Grind 75 题库：https://www.techinterviewhandbook.org/grind75/
 - 简历指南：https://www.techinterviewhandbook.org/resume/

@@ -37,7 +37,7 @@ tags: ["AI", "LLM", "MoE", "DeepSeek", "开源模型"]
 
 ## 二、原理分析：为什么 MoE 是必由之路
 
-### 2.1 稠密模型的Scaling Law瓶颈
+### 2.1 稠密模型的 Scaling Law 瓶颈
 
 在 Transformer 诞生后的几年里，"增大模型"几乎是提升能力的代名词。GPT-3（175B）、PaLM（540B）、Llama 3.1（405B）均采用**稠密（Dense）Transformer**架构——每个 Token 流经每一层、每一个 FFN（Feed-Forward Network）块。
 
@@ -65,7 +65,7 @@ y = Σ(g_i(x) * E_i(x))
 
 这意味着每次前向，**约 14/72 ≈ 19.4%** 的专家被激活（相比完全稀疏的 MoE 有更高的参数利用效率）。
 
-### 2.3 Multi-Token Prediction：不止预测一个Token
+### 2.3 Multi-Token Prediction：不止预测一个 Token
 
 传统语言模型的训练目标是预测**下一个 Token**（Next Token Prediction, NTP）。DeepSeek-V3 引入了 Multi-Token Prediction（MTP）目标，同时预测接下来的多个 Token。
 
@@ -121,13 +121,13 @@ DeepSeek-V3 采用的是**MoE + Attention**的堆叠式结构，整体遵循 Pre
 # k, v = kv_proj(latent_kv) 恢复到 [batch, seq, heads, head_dim]
 ```
 
-### 3.3 DeepSeekMoE：细粒度专家与辅助损失-free负载均衡
+### 3.3 DeepSeekMoE：细粒度专家与辅助损失-free 负载均衡
 
 传统 MoE 有一个长期困扰研究者的问题：**负载均衡（Load Balancing）**。如果路由总是把 Token 分发给少数几个"明星专家"，其他专家就沦为摆设，模型容量严重浪费。
 
 此前的主流解法是给 Router 加上**辅助损失（Auxiliary Loss）**，强制让 Token 均匀分配。但辅助损失本身是一个超参数，需要仔细调教——太小没用，太大又干扰主训练目标。
 
-DeepSeek-V3 提出了**辅助损失-free的负载均衡策略**，其核心思想是：**为每个专家引入一个可学习的偏置项（bias），在路由时直接加到对应的亲和度分数上**。
+DeepSeek-V3 提出了**辅助损失-free 的负载均衡策略**，其核心思想是：**为每个专家引入一个可学习的偏置项（bias），在路由时直接加到对应的亲和度分数上**。
 
 数学上，路由选择变为：
 
@@ -144,7 +144,7 @@ top-k = argmax(score_i)
 
 在工程层面，DeepSeek-V3 能以 2.788M H800 GPU 小时完成训练，离不开两项关键优化：
 
-**FP8 混合精度训练**：大多数计算用 FP8（8位浮点）进行，关键梯度用 BF16 存储，在精度与速度间取得平衡。这需要在框架层面做大量数值稳定性验证。
+**FP8 混合精度训练**：大多数计算用 FP8（8 位浮点）进行，关键梯度用 BF16 存储，在精度与速度间取得平衡。这需要在框架层面做大量数值稳定性验证。
 
 **通信-计算重叠**：MoE 的路由机制引入了跨节点的通信（不同专家可能分布在不同 GPU/节点上）。DeepSeek 实现了计算与通信流水重叠，几乎消除了等待时间。
 

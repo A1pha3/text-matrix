@@ -46,7 +46,7 @@ tags: ["代码代理", "AI Agent", "Ollama", "Sebastian Raschka", "Python", "LLM
 **Sebastian Raschka** 是知名的机器学习专家：
 - 前 PyTorch 核心贡献者
 - 《Python Machine Learning》作者
-- 专注AI教育，擅长把复杂概念简单化
+- 专注 AI 教育，擅长把复杂概念简单化
 
 ### 1.4 设计哲学
 
@@ -389,7 +389,7 @@ $ uv run mini-coding-agent --cwd ./buggy-project --resume latest
 | **Claude Code** | - | 闭源 | 生产级 |
 
 **Mini-Coding-Agent 的独特价值**：
-- 代码量小（~500行 vs LangChain 的~10万行）
+- 代码量小（~500 行 vs LangChain 的~10 万行）
 - 适合学习原理
 - 无隐藏魔法
 
@@ -436,7 +436,7 @@ TOOLS = {
 
 | 维度 | 评价 |
 |------|------|
-| **可读性** | ⭐⭐⭐⭐⭐ ~500行纯 Python |
+| **可读性** | ⭐⭐⭐⭐⭐ ~500 行纯 Python |
 | **教学价值** | ⭐⭐⭐⭐⭐ 清晰解释六大组件 |
 | **功能完整** | ⭐⭐⭐ 基础功能齐全 |
 | **生产可用** | ⭐⭐ 仅为教学设计 |

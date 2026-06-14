@@ -10,9 +10,9 @@ tags: ["Rust", "LLM优化", "CLI工具", "Token压缩", "开发效率"]
 
 ## 先给判断
 
-RTK解决的是一个实际的经济问题：LLM按Token计费，而开发中大量命令输出（`ls`、`git diff`、`pytest`）都是冗长的模板文本，浪费大量Token。这个项目在命令输出进入LLM之前做压缩，保留关键信息、去掉模板噪音。
+RTK 解决的是一个实际的经济问题：LLM 按 Token 计费，而开发中大量命令输出（`ls`、`git diff`、`pytest`）都是冗长的模板文本，浪费大量 Token。这个项目在命令输出进入 LLM 之前做压缩，保留关键信息、去掉模板噪音。
 
-对于重度使用AI coding工具（Claude Code、Cursor等）的开发者，RTK是一个值得考虑的工具；它不改变你的工作流，但能显著降低Token账单。
+对于重度使用 AI coding 工具（Claude Code、Cursor 等）的开发者，RTK 是一个值得考虑的工具；它不改变你的工作流，但能显著降低 Token 账单。
 
 <!--more-->
 
@@ -45,11 +45,11 @@ RTK解决的是一个实际的经济问题：LLM按Token计费，而开发中大
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Token节省实测
+## Token 节省实测
 
-基于中等规模TypeScript/Rust项目的30分钟Claude Code会话：
+基于中等规模 TypeScript/Rust 项目的 30 分钟 Claude Code 会话：
 
-| 操作 | 频率 | 标准输出 | RTK输出 | 节省 |
+| 操作 | 频率 | 标准输出 | RTK 输出 | 节省 |
 |------|------|---------|---------|------|
 | `ls` / `tree` | 10x | 2,000 | 400 | -80% |
 | `cat` / `read` | 20x | 40,000 | 12,000 | -70% |
@@ -69,7 +69,7 @@ RTK解决的是一个实际的经济问题：LLM按Token计费，而开发中大
 
 ### 1. 命令覆盖
 
-RTK支持100+常用开发命令，按类型分类：
+RTK 支持 100+常用开发命令，按类型分类：
 
 - **文件系统**：`ls`、`tree`、`find`、`cat`、`read`
 - **Git**：`status`、`diff`、`log`、`add`、`commit`、`push`
@@ -80,7 +80,7 @@ RTK支持100+常用开发命令，按类型分类：
 
 ### 2. 智能压缩
 
-对每种命令类型，RTK知道哪些信息是关键的、哪些是模板噪音：
+对每种命令类型，RTK 知道哪些信息是关键的、哪些是模板噪音：
 
 ```bash
 # pytest 原始输出（示例，500行）
@@ -99,11 +99,11 @@ RTK支持100+常用开发命令，按类型分类：
 
 ### 3. 极低延迟
 
-Rust编写，单一二进制，<10ms处理延迟。对于交互式CLI，不会感知到RTK的存在。
+Rust 编写，单一二进制，<10ms 处理延迟。对于交互式 CLI，不会感知到 RTK 的存在。
 
 ### 4. 零依赖
 
-一个Rust二进制文件，不依赖Node.js、Python或其他运行时。
+一个 Rust 二进制文件，不依赖 Node.js、Python 或其他运行时。
 
 ## 安装
 
@@ -119,7 +119,7 @@ brew install rtk
 curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
 ```
 
-安装到`~/.local/bin`，需要手动添加到PATH：
+安装到`~/.local/bin`，需要手动添加到 PATH：
 
 ```bash
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc  # 或 ~/.zshrc
@@ -133,7 +133,7 @@ cargo install --git https://github.com/rtk-ai/rtk
 
 ## 使用方式
 
-RTK作为代理运行在你和LLM之间：
+RTK 作为代理运行在你和 LLM 之间：
 
 ```bash
 # 方式1：透明代理（自动拦截命令输出）
@@ -146,14 +146,14 @@ command | rtk process | llm
 ## 适用边界
 
 **该用：**
-- 重度使用AI coding工具（Claude Code、Cursor等）
-- Token账单较高，想降低费用
-- 技术栈包含大量Git、测试、代码检查命令
+- 重度使用 AI coding 工具（Claude Code、Cursor 等）
+- Token 账单较高，想降低费用
+- 技术栈包含大量 Git、测试、代码检查命令
 
 **不该用：**
-- 不使用AI coding工具——RTK只对AI场景有价值
-- 需要完整命令输出给人类——RTK会压缩掉一些人类可读的信息
-- 追求100%信息保留——压缩会有信息损失
+- 不使用 AI coding 工具——RTK 只对 AI 场景有价值
+- 需要完整命令输出给人类——RTK 会压缩掉一些人类可读的信息
+- 追求 100%信息保留——压缩会有信息损失
 
 ## 技术细节
 
@@ -165,19 +165,19 @@ command | rtk process | llm
 
 ### 安全考虑
 
-项目有CI安全检查，针对：
+项目有 CI 安全检查，针对：
 - 内存安全漏洞
 - 供应链依赖风险
 - 代码注入
 
 ## 结论
 
-RTK是一个针对AI coding场景的精准工具。它的价值主张很清晰：帮你省钱——不是省开发时间，而是省Token费用。
+RTK 是一个针对 AI coding 场景的精准工具。它的价值主张很清晰：帮你省钱——不是省开发时间，而是省 Token 费用。
 
-80%的Token节省意味着30分钟的Claude Code会话从~118K Token降到~24K，按GPT-4o的定价约节省$1.5-2。对于重度用户，这是一个可观的数字。
+80%的 Token 节省意味着 30 分钟的 Claude Code 会话从~118K Token 降到~24K，按 GPT-4o 的定价约节省$1.5-2。对于重度用户，这是一个可观的数字。
 
-如果你已经在用AI coding工具，RTK是那种"装上就不用管"的工具；如果还没用AI coding工具，RTK的价值有限。
+如果你已经在用 AI coding 工具，RTK 是那种"装上就不用管"的工具；如果还没用 AI coding 工具，RTK 的价值有限。
 
 ---
 
-**仓库信息**：https://github.com/rtk-ai/rtk | Stars: 50,374 | License: MIT | 语言: Rust
+**仓库信息**：https://github.com/rtk-ai/rtk | Stars: 50,374 | License: MIT | 语言： Rust

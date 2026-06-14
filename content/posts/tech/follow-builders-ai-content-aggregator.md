@@ -88,7 +88,7 @@ tags: ["AI资讯", "信息聚合", "OpenClaw", "SKILL", "Twitter"]
 
 ## 三、默认信息源
 
-### 3.1 播客来源（5个）
+### 3.1 播客来源（5 个）
 
 | 播客名称 | 说明 |
 |---------|------|
@@ -98,7 +98,7 @@ tags: ["AI资讯", "信息聚合", "OpenClaw", "SKILL", "Twitter"]
 | [Unsupervised Learning](https://www.youtube.com/@RedpointAI) | AI 和技术深度分析 |
 | [Data Driven NYC](https://www.youtube.com/@DataDrivenNYC) | 数据驱动文化和创业 |
 
-### 3.2 X/Twitter AI 建造者（25位）
+### 3.2 X/Twitter AI 建造者（25 位）
 
 | 类别 | 建造者列表 |
 |------|-----------|
@@ -109,7 +109,7 @@ tags: ["AI资讯", "信息聚合", "OpenClaw", "SKILL", "Twitter"]
 | Google/AI Lab | Kevin Weil、Google Labs |
 | Others | Cat Wu、Thariq、Amjad Masad、Ryo Lu、Dan Shipper、Peter Steinberger、Zara Zhang、Claude |
 
-### 3.3 官方博客（2个）
+### 3.3 官方博客（2 个）
 
 | 博客 | 说明 |
 |------|------|
@@ -334,7 +334,7 @@ Follow Builders 本身就是一个 **OpenClaw SKILL**。安装后，它会：
 
 Follow Builders 提供了一种**AI 时代的信息筛选新范式**：
 
-| 核心价值 | 说明 |
+| 关键价值 | 说明 |
 |---------|------|
 | 质量优先 | 追踪建造者，而非搬运网红 |
 | 中心化抓取 | 中心化抓取，本地 AI 处理 |
@@ -363,6 +363,6 @@ Follow Builders 提供了一种**AI 时代的信息筛选新范式**：
 | SKILL.md | 项目内 SKILL.md 文件 |
 | 示例摘要 | examples/sample-digest.md |
 
-**附：精选建造者完整名单（25位 X 账号）**
+**附：精选建造者完整名单（25 位 X 账号）**
 
 Andrej Karpathy、Swyx、Josh Woodward、Kevin Weil、Peter Yang、Nan Yu、Madhu Guru、Amanda Askell、Cat Wu、Thariq、Google Labs、Amjad Masad、Guillermo Rauch、Alex Albert、Aaron Levie、Ryo Lu、Garry Tan、Matt Turck、Zara Zhang、Nikunj Kothari、Peter Steinberger、Dan Shipper、Aditya Agarwal、Sam Altman、Claude

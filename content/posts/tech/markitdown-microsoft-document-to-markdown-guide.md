@@ -13,19 +13,19 @@ tags: ["Python", "Markdown", "文档转换", "RAG", "LLM", "PDF", "Microsoft", "
 
 通过本文，您将掌握：
 
-1. **理解MarkItDown的核心价值**：为什么将文档转换为Markdown是LLM最优方案
-2. **掌握全部支持格式**：PDF、Word、Excel、PowerPoint、图片OCR、音频转录等
-3. **熟练使用CLI和Python API**：命令行和Python两种使用方式
-4. **理解插件生态**：MCP服务器、OCR插件、Azure Document Intelligence
-5. **掌握进阶用法**：流式转换、自定义LLM提示词、插件开发
+1. **理解 MarkItDown 的关键价值**：为什么将文档转换为 Markdown 是 LLM 最优方案
+2. **掌握全部支持格式**：PDF、Word、Excel、PowerPoint、图片 OCR、音频转录等
+3. **熟练使用 CLI 和 Python API**：命令行和 Python 两种使用方式
+4. **理解插件生态**：MCP 服务器、OCR 插件、Azure Document Intelligence
+5. **掌握进阶用法**：流式转换、自定义 LLM 提示词、插件开发
 
 ---
 
 ## §2 项目概述
 
-### 2.1 什么是MarkItDown？
+### 2.1 什么是 MarkItDown？
 
-**MarkItDown**是微软AutoGen团队开源的轻量级Python工具，用于将各种格式的文档转换为**Markdown**，专为LLM及相关文本分析管道设计。
+**MarkItDown**是微软 AutoGen 团队开源的轻量级 Python 工具，用于将各种格式的文档转换为**Markdown**，专为 LLM 及相关文本分析管道设计。
 
 | 项目 | 信息 |
 |------|------|
@@ -34,18 +34,18 @@ tags: ["Python", "Markdown", "文档转换", "RAG", "LLM", "PDF", "Microsoft", "
 | **官方仓库** | [microsoft/markitdown](https://github.com/microsoft/markitdown) |
 | **最新版本** | v0.1.5 (Feb 21, 2026) |
 | **语言** | Python 99.7% |
-| **贡献者** | 74人 |
+| **贡献者** | 74 人 |
 | **许可证** | MIT |
 
-### 2.2 为什么选择Markdown？
+### 2.2 为什么选择 Markdown？
 
-**核心洞察**：主流LLM（如GPT-4o）原生"说"Markdown。
+**核心洞察**：主流 LLM（如 GPT-4o）原生"说"Markdown。
 
 这意味着：
 
-- **Token效率高**：Markdown约定极其精简
+- **Token 效率高**：Markdown 约定极其精简
 - **结构保留**：标题、列表、表格、链接等格式都能保留
-- **训练数据丰富**：LLM在海量Markdown格式文本上训练，对Markdown理解深刻
+- **训练数据丰富**：LLM 在海量 Markdown 格式文本上训练，对 Markdown 理解深刻
 
 ### 2.3 MarkItDown vs Textract
 
@@ -53,7 +53,7 @@ tags: ["Python", "Markdown", "文档转换", "RAG", "LLM", "PDF", "Microsoft", "
 |---------|----------|-------------|
 | **输出格式** | 纯文本 | Markdown（保留结构） |
 | **文档结构** | 可能丢失 | 保留标题、列表、表格、链接 |
-| **使用场景** | 通用文本提取 | **LLM/RAG管道优化** |
+| **使用场景** | 通用文本提取 | **LLM/RAG 管道优化** |
 | **依赖** | 较重 | 轻量 |
 
 ---
@@ -62,22 +62,22 @@ tags: ["Python", "Markdown", "文档转换", "RAG", "LLM", "PDF", "Microsoft", "
 
 ### 3.1 完整格式列表
 
-MarkItDown目前支持以下格式的转换：
+MarkItDown 目前支持以下格式的转换：
 
 | 格式类型 | 说明 | 依赖 |
 |---------|------|------|
-| **PDF** | PDF文档转换 | `pip install 'markitdown[pdf]'` |
-| **PowerPoint** | .pptx文件 | `pip install 'markitdown[pptx]'` |
-| **Word** | .docx文件 | `pip install 'markitdown[docx]'` |
-| **Excel** | .xlsx/.xls文件 | `pip install 'markitdown[xlsx]'` |
-| **图片** | EXIF元数据+OCR | 内置+可选OCR插件 |
-| **音频** | EXIF元数据+语音转录 | `pip install 'markitdown[audio-transcription]'` |
+| **PDF** | PDF 文档转换 | `pip install 'markitdown[pdf]'` |
+| **PowerPoint** | .pptx 文件 | `pip install 'markitdown[pptx]'` |
+| **Word** | .docx 文件 | `pip install 'markitdown[docx]'` |
+| **Excel** | .xlsx/.xls 文件 | `pip install 'markitdown[xlsx]'` |
+| **图片** | EXIF 元数据+OCR | 内置+可选 OCR 插件 |
+| **音频** | EXIF 元数据+语音转录 | `pip install 'markitdown[audio-transcription]'` |
 | **HTML** | 网页内容 | 内置支持 |
 | **CSV/JSON/XML** | 文本格式 | 内置支持 |
-| **ZIP文件** | 遍历内容 | 内置支持 |
+| **ZIP 文件** | 遍历内容 | 内置支持 |
 | **YouTube** | 视频转录 | `pip install 'markitdown[youtube-transcription]'` |
 | **EPub** | 电子书 | 内置支持 |
-| **Outlook** | .msg文件 | `pip install 'markitdown[outlook]'` |
+| **Outlook** | .msg 文件 | `pip install 'markitdown[outlook]'` |
 
 ### 3.2 全量安装
 
@@ -105,7 +105,7 @@ pip install 'markitdown[pdf,docx,pptx]'
 
 ### 4.1 环境准备
 
-MarkItDown要求**Python 3.10+**。
+MarkItDown 要求**Python 3.10+**。
 
 **创建虚拟环境（推荐）**：
 
@@ -121,7 +121,7 @@ uv venv --python=3.12 .venv
 source .venv/bin/activate
 ```
 
-### 4.2 CLI使用
+### 4.2 CLI 使用
 
 **基础用法**：
 
@@ -136,14 +136,14 @@ markitdown path-to-file.pdf -o document.md
 cat path-to-file.pdf | markitdown
 ```
 
-**Docker运行**：
+**Docker 运行**：
 
 ```bash
 docker build -t markitdown:latest .
 docker run --rm -i markitdown:latest < ~/your-file.pdf > output.md
 ```
 
-### 4.3 Python API使用
+### 4.3 Python API 使用
 
 **基础用法**：
 
@@ -181,9 +181,9 @@ print(result.text_content)
 
 ### 5.1 插件架构
 
-MarkItDown采用插件化设计，支持3rd-party扩展。
+MarkItDown 采用插件化设计，支持 3rd-party 扩展。
 
-**查找插件**：在GitHub上搜索 `#markitdown-plugin`
+**查找插件**：在 GitHub 上搜索 `#markitdown-plugin`
 
 **查看已安装插件**：
 
@@ -201,13 +201,13 @@ markitdown --use-plugins path-to-file.pdf
 
 | 插件 | 功能 | 安装 |
 |------|------|------|
-| **markitdown-ocr** | 图片OCR（LLM Vision） | `pip install markitdown-ocr` |
-| **markitdown-mcp** | MCP服务器 | 内置/独立安装 |
+| **markitdown-ocr** | 图片 OCR（LLM Vision） | `pip install markitdown-ocr` |
+| **markitdown-mcp** | MCP 服务器 | 内置/独立安装 |
 | **markitdown-sample-plugin** | 插件开发模板 | `packages/markitdown-sample-plugin` |
 
-### 5.3 MCP服务器（重点！）
+### 5.3 MCP 服务器（重点！）
 
-**MCP（Model Context Protocol）**是连接LLM应用的标准协议。MarkItDown提供MCP服务器，可与Claude Desktop等应用集成。
+**MCP（Model Context Protocol）**是连接 LLM 应用的标准协议。MarkItDown 提供 MCP 服务器，可与 Claude Desktop 等应用集成。
 
 **快速使用**：
 
@@ -216,9 +216,9 @@ markitdown --use-plugins path-to-file.pdf
 markitdown --help  # 或查看 packages/markitdown-mcp
 ```
 
-### 5.4 OCR插件详解
+### 5.4 OCR 插件详解
 
-**markitdown-ocr**插件为PDF/DOCX/PPTX/XLSX中的嵌入图片添加OCR支持。
+**markitdown-ocr**插件为 PDF/DOCX/PPTX/XLSX 中的嵌入图片添加 OCR 支持。
 
 **安装**：
 
@@ -248,11 +248,11 @@ print(result.text_content)
 
 ---
 
-## §6 Azure Document Intelligence集成
+## §6 Azure Document Intelligence 集成
 
-### 6.1 什么是Azure Document Intelligence？
+### 6.1 什么是 Azure Document Intelligence？
 
-微软Azure提供的文档分析服务，可实现高精度的文档转换。
+微软 Azure 提供的文档分析服务，可实现高精度的文档转换。
 
 ### 6.2 配置方法
 
@@ -261,7 +261,7 @@ print(result.text_content)
 markitdown path-to-file.pdf -o document.md -d -e "<document_intelligence_endpoint>"
 ```
 
-### 6.3 Python API使用
+### 6.3 Python API 使用
 
 ```python
 from markitdown import MarkItDown
@@ -273,11 +273,11 @@ print(result.text_content)
 
 ---
 
-## §7 LLM图像描述集成
+## §7 LLM 图像描述集成
 
 ### 7.1 功能说明
 
-MarkItDown支持使用LLM Vision为PPT和图片生成描述。
+MarkItDown 支持使用 LLM Vision 为 PPT 和图片生成描述。
 
 ### 7.2 配置方法
 
@@ -328,32 +328,32 @@ Markdown输出
 标准Markdown
 ```
 
-### 8.3 可用Converter
+### 8.3 可用 Converter
 
 | Converter | 支持格式 | 特点 |
 |-----------|---------|------|
 | **PdfConverter** | .pdf | 保留文本结构、表格 |
 | **PptxConverter** | .pptx | 提取幻灯片内容 |
-| **DocxConverter** | .docx | Word文档解析 |
-| **XlsxConverter** | .xlsx/.xls | Excel表格 |
-| **ImageConverter** | .jpg/.png等 | EXIF+可选OCR |
+| **DocxConverter** | .docx | Word 文档解析 |
+| **XlsxConverter** | .xlsx/.xls | Excel 表格 |
+| **ImageConverter** | .jpg/.png 等 | EXIF+可选 OCR |
 | **AudioConverter** | .mp3/.wav | 元数据+转录 |
 | **HtmlConverter** | .html | 网页解析 |
-| **CsvConverter** | .csv | CSV数据 |
-| **JsonConverter** | .json | JSON结构 |
-| **XmlConverter** | .xml | XML结构 |
+| **CsvConverter** | .csv | CSV 数据 |
+| **JsonConverter** | .json | JSON 结构 |
+| **XmlConverter** | .xml | XML 结构 |
 | **YoutubeConverter** | YouTube URL | 视频转录 |
 | **EpubConverter** | .epub | 电子书解析 |
-| **OutlookConverter** | .msg | Outlook邮件 |
+| **OutlookConverter** | .msg | Outlook 邮件 |
 | **ZipConverter** | .zip | 遍历解压内容 |
 
 ---
 
-## §9 最佳实践
+## §9 实践建议
 
-### 9.1 RAG管道集成
+### 9.1 RAG 管道集成
 
-MarkItDown是RAG管道的理想前置步骤：
+MarkItDown 是 RAG 管道的理想前置步骤：
 
 ```python
 from markitdown import MarkItDown
@@ -408,7 +408,7 @@ with open("document.pdf", "rb") as f:
     print(result.text_content)
 ```
 
-### 9.4 自定义LLM提示词
+### 9.4 自定义 LLM 提示词
 
 ```python
 from markitdown import MarkItDown
@@ -428,14 +428,14 @@ print(result.text_content)
 
 ---
 
-## §10 FAQ与故障排除
+## §10 FAQ 与故障排除
 
 ### 10.1 常见问题
 
 **Q1：转换后内容不完整？**
 A1：可能是临时文件被删除。v0.1.0+已移除临时文件机制，确保所有内容正确返回。
 
-**Q2：Python API报错？**
+**Q2：Python API 报错？**
 A2：v0.1.0+接口变更：
 - `convert_stream()` 现在需要二进制文件对象（如`open(file, "rb")`）
 - `DocumentConverter`类现在接收文件流而非文件路径
@@ -443,8 +443,8 @@ A2：v0.1.0+接口变更：
 **Q3：如何只安装特定格式支持？**
 A3：使用可选依赖安装，如`pip install 'markitdown[pdf,docx,pptx]'`
 
-**Q4：Azure Document Intelligence如何配置端点？**
-A4：在Azure门户创建Document Intelligence资源，获取端点URL后通过`docintel_endpoint`参数传入。
+**Q4：Azure Document Intelligence 如何配置端点？**
+A4：在 Azure 门户创建 Document Intelligence 资源，获取端点 URL 后通过`docintel_endpoint`参数传入。
 
 ### 10.2 开发调试
 
@@ -464,13 +464,13 @@ print(f"Text Content: {result.text_content[:500]}...")
 
 ## §11 总结
 
-MarkItDown将各种格式的文档统一转换为Markdown，为LLM和RAG管道提供了标准化的输入格式。其核心优势在于：
+MarkItDown 将各种格式的文档统一转换为 Markdown，为 LLM 和 RAG 管道提供了标准化的输入格式。其核心优势在于：
 
-1. **格式全面**：覆盖PDF、Office、图片、音频等主流格式
-2. **结构保留**：Markdown输出保留标题、列表、表格、链接
-3. **LLM原生**：输出格式天然适配GPT-4o等主流LLM
-4. **插件生态**：MCP服务器、OCR插件等扩展能力
-5. **微软品质**：AutoGen团队维护，质量有保障
+1. **格式全面**：覆盖 PDF、Office、图片、音频等主流格式
+2. **结构保留**：Markdown 输出保留标题、列表、表格、链接
+3. **LLM 原生**：输出格式天然适配 GPT-4o 等主流 LLM
+4. **插件生态**：MCP 服务器、OCR 插件等扩展能力
+5. **微软品质**：AutoGen 团队维护，质量有保障
 
 ---
 
@@ -492,4 +492,4 @@ pip install 'markitdown[youtube-transcription]'
 
 ---
 
-*🦞 本文由钳岳星君基于 [microsoft/markitdown](https://github.com/microsoft/markitdown) 项目撰写，MIT许可证。*
+*🦞 本文由钳岳星君基于 [microsoft/markitdown](https://github.com/microsoft/markitdown) 项目撰写，MIT 许可证。*

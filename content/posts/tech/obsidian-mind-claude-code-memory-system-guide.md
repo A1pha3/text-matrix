@@ -12,7 +12,7 @@ tags: ["Obsidian", "Claude Code", "AI Agent", "知识管理", "生产力"]
 
 > 项目地址：[breferrari/obsidian-mind](https://github.com/breferrari/obsidian-mind)
 >
-> 今日Star：462（+0）| Forks：37 | License：MIT
+> 今日 Star：462（+0）| Forks：37 | License：MIT
 >
 > 核心定位：用 Obsidian 给 Claude Code 构建一个「外脑」，让 AI 代理的记忆跨会话持久化
 

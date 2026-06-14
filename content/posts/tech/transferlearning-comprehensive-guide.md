@@ -14,7 +14,7 @@ tags = ['AI', '教程', '深度学习', '论文']
 
 ## 为什么这是迁移学习必读资源？
 
-### 1. 覆盖18个研究领域
+### 1. 覆盖 18 个研究领域
 
 从传统方法到深度学习，从理论到实践：
 
@@ -52,7 +52,7 @@ tags = ['AI', '教程', '深度学习', '论文']
 - 《迁移学习导论》（王晋东、陈益强）
 
 **Video Tutorials (视频教程):**
-- B站《迁移学习》系列（中文）
+- B 站《迁移学习》系列（中文）
 - Hung-yi Lee @ NTU 课程
 - Recent Advances of Transfer Learning 2022
 
@@ -76,11 +76,11 @@ tags = ['AI', '教程', '深度学习', '论文']
 
 无需目标域数据，模型泛化到未知域。
 
-**最新Survey:** IJCAI-21 第一篇Domain Generalization综述
+**最新 Survey:** IJCAI-21 第一篇 Domain Generalization 综述
 
 ### Knowledge Distillation
 
-知识蒸馏综述：2020年最新Survey
+知识蒸馏综述：2020 年最新 Survey
 
 ### Federated Transfer Learning
 
@@ -103,7 +103,7 @@ https://github.dev/jindongwang/transferlearning
 https://colab.research.google.com/drive/1MVuk95mMg4ecGyUAIG94vedF81HtWQAr
 ```
 
-**PyTorch微调教程:**
+**PyTorch 微调教程:**
 ```python
 import torchvision.models as models
 
@@ -121,13 +121,13 @@ for param in model.fc.parameters():
     param.requires_grad = True
 ```
 
-## 数据集与Benchmark
+## 数据集与 Benchmark
 
 收录常用迁移学习数据集及论文结果：
 
-- Office-Home (4个域)
+- Office-Home (4 个域)
 - VisDA (合成→真实)
-- DomainNet (6个域)
+- DomainNet (6 个域)
 - DIGITS
 - USPS→MNIST
 
@@ -137,7 +137,7 @@ for param in model.fc.parameters():
 |------|------|
 | llm-eval | 大语言模型评测 |
 | llm-enhance | 大语言模型增强 |
-| promptbench | LLM基准评测 |
+| promptbench | LLM 基准评测 |
 | Semi-supervised Learning | 半监督学习 |
 | Activity Recognition | 行为识别 |
 
@@ -151,7 +151,7 @@ for param in model.fc.parameters():
 - NIPS-08: Learning Bounds for Domain Adaptation
 - COLT-09: Learning Bounds for Domain Adaptation
 
-**MMD度量:**
+**MMD 度量:**
 - A Hilbert Space Embedding for Distributions
 - Optimal Kernel Choice for Large-scale Two-sample Tests
 
@@ -159,7 +159,7 @@ for param in model.fc.parameters():
 
 收录迁移学习领域的核心学者及其代表工作，详见 `doc/scholar_TL.md`
 
-包括: 杨强(Qiang Yang)、Mingsheng Long (THU)、Sinno Jialin Pan等
+包括： 杨强(Qiang Yang)、Mingsheng Long (THU)、Sinno Jialin Pan 等
 
 ## 应用领域
 
@@ -192,15 +192,15 @@ transferlearning/
 ## 使用建议
 
 **入门路径:**
-1. 阅读Tutorials中的书籍和视频
-2. 运行PyTorch微调教程
+1. 阅读 Tutorials 中的书籍和视频
+2. 运行 PyTorch 微调教程
 3. 在代码库中选择对应方法
 4. 使用数据集进行实验
 
 **研究路径:**
-1. 阅读Survey了解各领域最新进展
-2. 精读Theory论文理解理论基础
-3. 复现state-of-the-art结果
+1. 阅读 Survey 了解各领域最新进展
+2. 精读 Theory 论文理解理论基础
+3. 复现 state-of-the-art 结果
 
 ## 引用
 
@@ -214,14 +214,14 @@ transferlearning/
 
 ## 总结
 
-Transfer Learning是迁移学习领域最全面的开源资源：
+Transfer Learning 是迁移学习领域最全面的开源资源：
 
 | 资源类型 | 内容 |
 |----------|------|
-| 论文 | 18个领域，覆盖1996-2024 |
-| 教程 | 书籍+视频+B站+PPT |
+| 论文 | 18 个领域，覆盖 1996-2024 |
+| 教程 | 书籍+视频+B 站+PPT |
 | 代码 | 统一代码基线 |
-| 数据集 | 常用Benchmark及结果 |
+| 数据集 | 常用 Benchmark 及结果 |
 | 学者 | 领域核心研究者 |
 
 无论是入门还是做研究，这都是不可替代的资源库。

@@ -16,7 +16,7 @@ tags: ["AI", "Google", "移动端", "Agent Skills", "大模型"]
 
 通过本文，你将掌握以下核心能力：
 
-- 理解 Google AI Edge Gallery 的定位与核心价值
+- 理解 Google AI Edge Gallery 的定位与关键价值
 - 掌握在移动设备上本地运行大模型的技术原理
 - 学会安装、配置并使用 AI Edge Gallery 应用
 - 深入理解 Agent Skills 扩展系统的工作原理
@@ -400,7 +400,7 @@ adb push my-js-skill/ /sdcard/Download/
 
 ---
 
-## 7. 最佳实践
+## 7. 实践建议
 
 ### 7.1 SKILL.md 编写规范
 

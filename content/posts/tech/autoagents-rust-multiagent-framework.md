@@ -436,6 +436,6 @@ Python bindings 的核心逻辑跑在 Rust 编译后的原生代码中，比纯 
 
 ---
 
-🦞 每日08:00自动更新
+🦞 每日 08:00 自动更新
 
 **数据来源**：liquidos-ai/AutoAgents GitHub 仓库、README.md、README.zh-CN.md、Cargo.toml workspace

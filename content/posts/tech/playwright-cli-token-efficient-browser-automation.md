@@ -8,10 +8,10 @@ categories: ["技术笔记"]
 tags: ["Playwright", "浏览器自动化", "CLI", "AI", "Coding Agent", "TypeScript"]
 ---
 
-# Playwright CLI：Microsoft出品的Token高效浏览器自动化利器——8.3K Stars的AI Coding Agent首选
+# Playwright CLI：Microsoft 出品的 Token 高效浏览器自动化利器——8.3K Stars 的 AI Coding Agent 首选
 
 > **目标读者**：AI Coding Agent 开发者、浏览器自动化工程师、需要在 AI 助手中集成浏览器操作的开发者
-> **预计阅读时间**：45-60分钟
+> **预计阅读时间**：45-60 分钟
 > **前置知识**：Node.js 基础、命令行工具使用经验、对 AI Agent 有基本了解
 > **难度定位**：⭐⭐⭐⭐ 专家设计
 
@@ -475,7 +475,7 @@ playwright-cli --config path/to/config.json open example.com
 
 ---
 
-## §9 最佳实践
+## §9 实践建议
 
 ### 9.1 元素定位策略
 
@@ -572,7 +572,7 @@ playwright-cli goto https://example.com/dashboard
 
 **Q5: Playwright CLI 支持哪些浏览器？**
 
-A：支持 Chromium、Firefox、WebKit三大浏览器引擎：
+A：支持 Chromium、Firefox、WebKit 三大浏览器引擎：
 
 ```bash
 playwright-cli open --browser=chromium  # 默认

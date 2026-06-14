@@ -11,7 +11,7 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "Computer-Use", "沙箱", "Benchmark", "macOS"]
 ---
 
-# Cua：开源计算机控制Agent基础设施完全指南
+# Cua：开源计算机控制 Agent 基础设施完全指南
 
 **Cua**（Computer-Use Agent）是当前最完整的开源 Computer-Use Agent 基础设施项目，由 trycua 团队开发。它提供三大核心组件——**Cua Driver**（后台桌面控制）、**Cua Sandbox**（跨平台隔离执行环境）和 **Cua Bench**（标准化评估基准），让开发者可以训练和评估能够操控完整桌面的 AI Agent。
 

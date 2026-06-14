@@ -10,9 +10,9 @@ tags: ["yt-dlp", "视频下载", "ffmpeg", "Python", "开源工具"]
 
 # yt-dlp：最强大的命令行视频下载工具完全指南
 
-**如果你需要下载互联网上几乎任何视频，yt-dlp几乎是唯一的选择。**
+**如果你需要下载互联网上几乎任何视频，yt-dlp 几乎是唯一的选择。**
 
-这是一款命令行工具，支持超过一千个视频网站，从YouTube、TikTok到各种小众站点通吃。它从youtube-dl fork而来，目前GitHub Stars已超过16万，是同类工具中最活跃的分支。本文覆盖安装、核心用法、格式选择、元数据处理、插件开发，并深入解析其架构设计，帮助你从入门走向精通。
+这是一款命令行工具，支持超过一千个视频网站，从 YouTube、TikTok 到各种小众站点通吃。它从 youtube-dl fork 而来，目前 GitHub Stars 已超过 16 万，是同类工具中最活跃的分支。本文覆盖安装、核心用法、格式选择、元数据处理、插件开发，并深入解析其架构设计，帮助你从入门走向精通。
 
 ---
 
@@ -21,12 +21,12 @@ tags: ["yt-dlp", "视频下载", "ffmpeg", "Python", "开源工具"]
 | 指标 | 值 |
 |------|------|
 | GitHub | [yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp) |
-| Stars / Forks | 164,198 / 13,806（2026年5月） |
+| Stars / Forks | 164,198 / 13,806（2026 年 5 月） |
 | 语言 | Python（3.10+） |
 | 许可证 | Unlicense（源码） |
 | 最新提交 | 2026-05-22 |
 
-yt-dlp是一个**功能丰富的命令行音视频下载器**（feature-rich command-line audio/video downloader），核心能力包括：
+yt-dlp 是一个**功能丰富的命令行音视频下载器**（feature-rich command-line audio/video downloader），核心能力包括：
 
 - 支持**超过一千个网站**的视频提取
 - 丰富的格式选择与排序机制
@@ -35,7 +35,7 @@ yt-dlp是一个**功能丰富的命令行音视频下载器**（feature-rich com
 - 支持插件扩展
 - 内置自动更新机制
 
-它从youtube-dl fork，并持续合并社区上游的改进。相比原版youtube-dl，yt-dlp在维护活跃度、功能深度和反封锁能力上都领先一个身位。
+它从 youtube-dl fork，并持续合并社区上游的改进。相比原版 youtube-dl，yt-dlp 在维护活跃度、功能深度和反封锁能力上都领先一个身位。
 
 ---
 
@@ -43,7 +43,7 @@ yt-dlp是一个**功能丰富的命令行音视频下载器**（feature-rich com
 
 ### 2.1 二进制文件（推荐）
 
-直接下载对应平台的二进制文件，无需安装Python：
+直接下载对应平台的二进制文件，无需安装 Python：
 
 ```bash
 # Linux/macOS
@@ -58,13 +58,13 @@ sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_ma
 sudo chmod a+rx /usr/local/bin/yt-dlp
 ```
 
-### 2.2 pip安装
+### 2.2 pip 安装
 
 ```bash
 python -m pip install -U yt-dlp
 ```
 
-通过pip安装后，更新命令为：
+通过 pip 安装后，更新命令为：
 
 ```bash
 python -m pip install -U --pre yt-dlp
@@ -72,7 +72,7 @@ python -m pip install -U --pre yt-dlp
 
 ### 2.3 依赖：ffmpeg（必须）
 
-yt-dlp的绝大多数能力都依赖外部工具**ffmpeg**，包括：
+yt-dlp 的绝大多数能力都依赖外部工具**ffmpeg**，包括：
 
 - 合并分离的视频和音频流
 - 转换容器格式
@@ -81,17 +81,17 @@ yt-dlp的绝大多数能力都依赖外部工具**ffmpeg**，包括：
 
 建议直接从 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds) 下载预编译版本。安装后在终端输入 `yt-dlp --version` 确认安装成功即可。
 
-> ⚠️ 注意：PyPI上有个名为`ffmpeg`的Python包，和ffmpeg命令行工具不是同一个东西，别装错了。
+> ⚠️ 注意：PyPI 上有个名为`ffmpeg`的 Python 包，和 ffmpeg 命令行工具不是同一个东西，别装错了。
 
 ### 2.4 更新通道
 
-yt-dlp提供三个发布通道：
+yt-dlp 提供三个发布通道：
 
 | 通道 | 特点 | 适用场景 |
 |------|------|----------|
 | `stable` | 每月一次正式发布 | 一般用户 |
 | `nightly` | 每日构建，推荐日常使用 | 多数用户首选 |
-| `master` | 每次push触发构建 | 追求最新功能的开发者 |
+| `master` | 每次 push 触发构建 | 追求最新功能的开发者 |
 
 ```bash
 # 更新到nightly（推荐）
@@ -104,7 +104,7 @@ yt-dlp --update-to master
 yt-dlp --update-to stable
 ```
 
-超过90天未更新的版本会提示更新警告，可用 `--no-update` 抑制。
+超过 90 天未更新的版本会提示更新警告，可用 `--no-update` 抑制。
 
 ---
 
@@ -130,7 +130,7 @@ yt-dlp -f "bv*+ba/b" "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 ### 4.1 格式选择
 
-yt-dlp的格式选择机制极为灵活，是其最强大的能力之一。
+yt-dlp 的格式选择机制极为灵活，是其最强大的能力之一。
 
 #### 列出可用格式
 
@@ -244,7 +244,7 @@ yt-dlp --download-archive archive.txt "PLAYLIST_URL"
 
 ## 5. 输出模板与文件组织
 
-yt-dlp的输出文件名完全可定制，这是其最受高级用户喜爱的功能之一。
+yt-dlp 的输出文件名完全可定制，这是其最受高级用户喜爱的功能之一。
 
 ### 5.1 基本模板
 
@@ -264,13 +264,13 @@ yt-dlp -o "%(upload_date>%Y/%m/%d)s/%(title)s.%(ext)s" "URL"
 | 字段 | 说明 |
 |------|------|
 | `%(title)s` | 视频标题 |
-| `%(id)s` | 视频ID |
+| `%(id)s` | 视频 ID |
 | `%(uploader)s` | 上传者 |
 | `%(upload_date)s` | 上传日期（YYYYMMDD） |
 | `%(resolution)s` | 分辨率 |
 | `%(ext)s` | 扩展名 |
 | `%(playlist_title)s` | 播放列表标题 |
-| `%(playlist_index)03d` | 播放列表序号（补零3位）|
+| `%(playlist_index)03d` | 播放列表序号（补零 3 位）|
 
 ### 5.3 多路径配置
 
@@ -298,7 +298,7 @@ yt-dlp --proxy "socks5://user:pass@127.0.0.1:1080"
 
 ### 6.2 伪装客户端（Impersonation）
 
-部分网站通过TLS指纹识别机器人流量。yt-dlp支持伪装成主流浏览器：
+部分网站通过 TLS 指纹识别机器人流量。yt-dlp 支持伪装成主流浏览器：
 
 ```bash
 # 伪装成Chrome
@@ -311,7 +311,7 @@ yt-dlp --impersonate "chrome:windows-10" "URL"
 yt-dlp --list-impersonate-targets
 ```
 
-底层使用 [curl_cffi](https://github.com/lexiforest/curl_cffi)（curl-impersonate的Python绑定）实现TLS指纹伪装。
+底层使用 [curl_cffi](https://github.com/lexiforest/curl_cffi)（curl-impersonate 的 Python 绑定）实现 TLS 指纹伪装。
 
 ### 6.3 地理限制绕过
 
@@ -329,7 +329,7 @@ yt-dlp --geo-verification-proxy "http://proxy.example.com:8080" "URL"
 
 ### 7.1 批量文件
 
-将URL写入文件，每行一个：
+将 URL 写入文件，每行一个：
 
 ```
 # urls.txt
@@ -377,7 +377,7 @@ yt-dlp --progress-template "[%(playlist_index)d/%(playlist_count)d] %(title)s" "
 
 ## 8. Python API：嵌入到代码中
 
-yt-dlp不仅是命令行工具，还是一个功能完整的Python库。
+yt-dlp 不仅是命令行工具，还是一个功能完整的 Python 库。
 
 ### 8.1 基础调用
 
@@ -479,7 +479,7 @@ class MySiteIE(GenericIE):
 
 ## 10. 架构解析
 
-理解yt-dlp的架构，有助于在复杂场景下排错和自定义扩展。
+理解 yt-dlp 的架构，有助于在复杂场景下排错和自定义扩展。
 
 ### 10.1 模块结构
 
@@ -518,30 +518,30 @@ URL输入 → Extractor.match_id()   # 匹配URL，确定使用哪个提取器
        → Output
 ```
 
-### 10.3 Extractor机制
+### 10.3 Extractor 机制
 
-每个支持的网站都有一个对应的Extractor类，核心职责：
+每个支持的网站都有一个对应的 Extractor 类，核心职责：
 
-1. `match_id()`：从URL中提取视频ID
+1. `match_id()`：从 URL 中提取视频 ID
 2. `_real_extract()`：向目标网站发起请求，解析页面/API，返回视频信息字典
 3. `url_result()`：将提取结果转换为标准化格式
 
-以YouTube为例，其Extractor还需要处理signature（签名）解密、n-sig（下一代签名）反混淆等复杂逻辑——这也是yt-dlp持续维护工作量最大的部分之一。
+以 YouTube 为例，其 Extractor 还需要处理 signature（签名）解密、n-sig（下一代签名）反混淆等复杂逻辑——这也是 yt-dlp 持续维护工作量最大的部分之一。
 
-### 10.4 Downloader分层
+### 10.4 Downloader 分层
 
-yt-dlp支持多协议和多层并发：
+yt-dlp 支持多协议和多层并发：
 
 | 下载层 | 说明 |
 |--------|------|
-| HTTP Downloader | 基础HTTP下载，支持断点续传 |
-| HLS Downloader | 下载`.m3u8`清单文件，按TS分片下载 |
-| DASH Downloader | 下载`.mpd`清单文件，按segment下载 |
+| HTTP Downloader | 基础 HTTP 下载，支持断点续传 |
+| HLS Downloader | 下载`.m3u8`清单文件，按 TS 分片下载 |
+| DASH Downloader | 下载`.mpd`清单文件，按 segment 下载 |
 | Fragment Downloader | 并发下载多个分片（`-N`参数控制并发数）|
 
-默认`-N 1`（单线程），对于HLS/DASH流可提升到4-8以加快速度。
+默认`-N 1`（单线程），对于 HLS/DASH 流可提升到 4-8 以加快速度。
 
-### 10.5 PostProcessor链路
+### 10.5 PostProcessor 链路
 
 后处理在下载完成后串行执行，典型链路：
 
@@ -556,7 +556,7 @@ FFmpegMergeDownloader  # 合并视频+音频流（若有）
   → SponsorBlock          # 标记/移除赞助段落
 ```
 
-每一步都是可插拔的PostProcessor，通过 `postprocessors` 参数可以添加、移除或调整顺序。
+每一步都是可插拔的 PostProcessor，通过 `postprocessors` 参数可以添加、移除或调整顺序。
 
 ---
 
@@ -576,7 +576,7 @@ yt-dlp --impersonate "chrome" --geo-verification-proxy "http://proxy:port" "URL"
 yt-dlp -x --audio-format mp3 "URL"
 ```
 
-### Q: PyInstaller打包的exe启动太慢？
+### Q: PyInstaller 打包的 exe 启动太慢？
 
 构建时启用懒加载提取器：
 
@@ -601,17 +601,17 @@ yt-dlp --list-extractors
 
 ---
 
-## 12. 与youtube-dl的核心差异
+## 12. 与 youtube-dl 的核心差异
 
-yt-dlp相比原版youtube-dl的主要改进（来自官方README）：
+yt-dlp 相比原版 youtube-dl 的主要改进（来自官方 README）：
 
 | 差异 | yt-dlp | youtube-dl |
 |------|--------|-------------|
-| Python版本 | 3.10+ | 2.6+/3.2+ |
+| Python 版本 | 3.10+ | 2.6+/3.2+ |
 | 格式排序 | 默认按分辨率/codec | 默认按比特率 |
 | 默认容错 | `--no-abort-on-error` | 中断 |
-| YouTube支持 | n-sig反混淆+Clips+Shorts | 基础 |
-| 浏览器Cookie | 支持所有主流浏览器 | 有限 |
+| YouTube 支持 | n-sig 反混淆+Clips+Shorts | 基础 |
+| 浏览器 Cookie | 支持所有主流浏览器 | 有限 |
 | 章节分割 | `--split-chapters` | 不支持 |
 | 多线程下载 | `--concurrent-fragments` | 不支持 |
 | 插件系统 | 支持 | 不支持 |
@@ -620,14 +620,14 @@ yt-dlp相比原版youtube-dl的主要改进（来自官方README）：
 
 ## 结语
 
-yt-dlp是命令行视频下载领域最成熟、维护最活跃的工具。它的强大来自于：超过一千个Extractor支撑的网站覆盖、极其精细的格式选择机制、灵活的后处理管道，以及一个始终跟得上网站反爬更新的维护团队。
+yt-dlp 是命令行视频下载领域最成熟、维护最活跃的工具。它的强大来自于：超过一千个 Extractor 支撑的网站覆盖、极其精细的格式选择机制、灵活的后处理管道，以及一个始终跟得上网站反爬更新的维护团队。
 
 掌握本文内容后，你应该能够：
 
 - 独立完成各平台的视频下载
 - 根据质量、编码、文件大小精确筛选格式
-- 使用Python API将yt-dlp嵌入自己的工具
-- 编写自定义Extractor插件
+- 使用 Python API 将 yt-dlp 嵌入自己的工具
+- 编写自定义 Extractor 插件
 - 在复杂网络环境下稳定下载
 
-如果遇到某个网站无法下载，建议先查阅 [yt-dlp Supported Sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) 确认是否在支持列表中，并检查是否有已知的Issue或Workaround。
+如果遇到某个网站无法下载，建议先查阅 [yt-dlp Supported Sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) 确认是否在支持列表中，并检查是否有已知的 Issue 或 Workaround。

@@ -12,7 +12,7 @@ tags: ["AI平台", "RAG", "Deep Research", "Agent", "开源"]
 
 > 项目地址：[onyx-dot-app / onyx](https://github.com/onyx-dot-app/onyx)
 >
-> 今日Star：23,499（今日 +1,852）| Forks：3,151 | 最新版本：v3.1.1
+> 今日 Star：23,499（今日 +1,852）| Forks：3,151 | 最新版本：v3.1.1
 >
 > 🌟 如果你需要一个可以私有化部署的 ChatGPT 替代品，Onyx 值得一看
 

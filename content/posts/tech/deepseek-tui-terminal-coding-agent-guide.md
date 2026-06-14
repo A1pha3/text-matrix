@@ -29,7 +29,7 @@ DeepSeek-TUI 给自己的定位是一句话：**「A terminal-native coding agen
 | `deepseek-v4-pro` | 1M | $0.003625 / 1M | $0.435 / 1M | $0.87 / 1M |
 | `deepseek-v4-flash` | 1M | $0.0028 / 1M | $0.14 / 1M | $0.28 / 1M |
 
-DeepSeek 官方标注 Pro 价格为限时五折（有效期至 2026-05-05），TUI 内置了按时间fallback 的成本估算器。除了默认的 DeepSeek 平台外，项目还支持 NVIDIA NIM、Fireworks AI 和自托管 SGLang 多种 Provider 接入。
+DeepSeek 官方标注 Pro 价格为限时五折（有效期至 2026-05-05），TUI 内置了按时间 fallback 的成本估算器。除了默认的 DeepSeek 平台外，项目还支持 NVIDIA NIM、Fireworks AI 和自托管 SGLang 多种 Provider 接入。
 
 ### 核心功能一览
 
@@ -52,7 +52,7 @@ DeepSeek 官方标注 Pro 价格为限时五折（有效期至 2026-05-05），T
 
 ### 版本现状
 
-当前最新正式版为 **v0.8.8**（发布于 2026-05-03），是一个以稳定性修复和 UX 打磨为主的版本，主要变更包括：TUI 重试Banner、MCP 健康状态芯片、工具输出溢出路由（32 KiB 头部可见 + 文件完整保存）、OSC 8 超链接支持（Cmd+Click 可在主流终端打开链接）、内联 Diff 渲染、Composer 草稿暂存（`Ctrl+S`）等。该版本同时修复了 v0.8.7 中 self-updater 平台字符串映射错误和 Linux ARM64 预编译包缺失两个已知问题。
+当前最新正式版为 **v0.8.8**（发布于 2026-05-03），是一个以稳定性修复和 UX 打磨为主的版本，主要变更包括：TUI 重试 Banner、MCP 健康状态芯片、工具输出溢出路由（32 KiB 头部可见 + 文件完整保存）、OSC 8 超链接支持（Cmd+Click 可在主流终端打开链接）、内联 Diff 渲染、Composer 草稿暂存（`Ctrl+S`）等。该版本同时修复了 v0.8.7 中 self-updater 平台字符串映射错误和 Linux ARM64 预编译包缺失两个已知问题。
 
 ## 架构解析：dispatcher → TUI → engine → tools
 

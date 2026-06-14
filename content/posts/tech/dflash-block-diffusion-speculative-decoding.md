@@ -8,10 +8,10 @@ categories: ["技术笔记"]
 tags: ["LLM", "推理加速", "投机解码", "扩散模型", "Python", "vLLM", "SGLang", "Transformers"]
 ---
 
-# DFlash：块扩散模型加速LLM推理
+# DFlash：块扩散模型加速 LLM 推理
 
-> **目标读者**：LLM推理优化工程师、ML平台架构师、MLOps实践者
-> **前置知识**：深度学习基础、LLM原理、对投机解码有基本了解
+> **目标读者**：LLM 推理优化工程师、ML 平台架构师、MLOps 实践者
+> **前置知识**：深度学习基础、LLM 原理、对投机解码有基本了解
 > **技术栈**：Python / PyTorch / vLLM / SGLang / Transformers / MLX
 > **难度定位**：⭐⭐⭐⭐ 专家设计
 
@@ -21,20 +21,20 @@ tags: ["LLM", "推理加速", "投机解码", "扩散模型", "Python", "vLLM", 
 
 完成本篇文章后，你将能够：
 
-1. **理解投机解码的原理**：为何能加速LLM推理
-2. **掌握DFlash的创新点**：块扩散模型 vs 传统自回归解码
-3. **理解DFlash的架构设计**：如何用扩散模型做draft
-4. **能够部署DFlash**：在vLLM/SGLang/Transformers/MLX上运行
+1. **理解投机解码的原理**：为何能加速 LLM 推理
+2. **掌握 DFlash 的创新点**：块扩散模型 vs 传统自回归解码
+3. **理解 DFlash 的架构设计**：如何用扩散模型做 draft
+4. **能够部署 DFlash**：在 vLLM/SGLang/Transformers/MLX 上运行
 5. **选择合适的模型配置**：根据硬件和延迟需求选型
 6. **评估加速效果**：理解加速比的影响因素
 
 ---
 
-## §2 背景与动机：LLM推理的瓶颈
+## §2 背景与动机：LLM 推理的瓶颈
 
 ### 2.1 自回归解码的痛点
 
-LLM推理采用自回归方式生成token：
+LLM 推理采用自回归方式生成 token：
 
 ```
 Token_1 → Token_2 → Token_3 → ... → Token_n
@@ -44,11 +44,11 @@ Token_1 → Token_2 → Token_3 → ... → Token_n
   GEMM      GEMM      GEMM           GEMM
 ```
 
-**问题**：每个token生成都需要一次完整的矩阵运算，即使是小模型也要走完整个计算图。
+**问题**：每个 token 生成都需要一次完整的矩阵运算，即使是小模型也要走完整个计算图。
 
 ### 2.2 投机解码的原理
 
-投机解码使用"小模型draft + 大模型verify"：
+投机解码使用"小模型 draft + 大模型 verify"：
 
 ```
 传统方式：
@@ -63,9 +63,9 @@ Target模型验证：  T  T  T  T  T   (大模型，1次验证即可)
 ```
 
 **关键洞察**：
-- Draft模型虽小但能快速生成多个token
-- Target模型一次性验证多个token（批量推理，更高效）
-- 大部分token被接受时加速效果显著
+- Draft 模型虽小但能快速生成多个 token
+- Target 模型一次性验证多个 token（批量推理，更高效）
+- 大部分 token 被接受时加速效果显著
 
 ### 2.3 现有方案的局限
 
@@ -76,7 +76,7 @@ Target模型验证：  T  T  T  T  T   (大模型，1次验证即可)
 | **Self-Speculative** | 需要模型结构修改 |
 | **脉冲网络** | 训练不稳定 |
 
-### 2.4 DFlash的创新
+### 2.4 DFlash 的创新
 
 **核心创新**：块扩散模型（Block Diffusion）用于投机解码
 
@@ -95,12 +95,12 @@ DFlash Draft：块扩散生成（并行生成多个token）
 **优势**：
 - 块级别生成，并行度高
 - 无需修改模型结构
-- 支持任意LLM
+- 支持任意 LLM
 - 训练稳定
 
 ---
 
-## §3 DFlash架构详解
+## §3 DFlash 架构详解
 
 ### 3.1 整体架构
 
@@ -135,7 +135,7 @@ DFlash Draft：块扩散生成（并行生成多个token）
 
 ### 3.2 块扩散原理
 
-**扩散模型**通常用于图像生成，DFlash创新性地将其应用于文本生成：
+**扩散模型**通常用于图像生成，DFlash 创新性地将其应用于文本生成：
 
 ```python
 class BlockDiffusionDraft:
@@ -164,7 +164,7 @@ class BlockDiffusionDraft:
         return draft_tokens  # 返回一个block的token
 ```
 
-### 3.3 与Eagle/Medusa的区别
+### 3.3 与 Eagle/Medusa 的区别
 
 | 特性 | Eagle | Medusa | DFlash |
 |------|-------|--------|--------|
@@ -180,7 +180,7 @@ class BlockDiffusionDraft:
 
 ### 4.1 模型列表
 
-| 模型 | DFlash Draft模型 | 状态 |
+| 模型 | DFlash Draft 模型 | 状态 |
 |------|------------------|------|
 | **Qwen3.6-35B-A3B** | z-lab/Qwen3.6-35B-A3B-DFlash | Preview |
 | **Kimi-K2.5** | z-lab/Kimi-K2.5-DFlash | 可用 |
@@ -201,9 +201,9 @@ class BlockDiffusionDraft:
 | 场景 | 推荐模型 | 原因 |
 |------|----------|------|
 | **通用对话** | Qwen3.5-9B-DFlash | 平衡速度与质量 |
-| **代码生成** | Qwen3-Coder-Next-DFlash | 专优化代码token |
+| **代码生成** | Qwen3-Coder-Next-DFlash | 专优化代码 token |
 | **长文本** | Qwen3.5-35B-A3B-DFlash | 更大上下文 |
-| **Apple Silicon** | Qwen3.5-4B-DFlash (MLX) | 适配Mac M系列 |
+| **Apple Silicon** | Qwen3.5-4B-DFlash (MLX) | 适配 Mac M 系列 |
 
 ---
 
@@ -226,7 +226,7 @@ uv pip install -U vllm --torch-backend=auto --extra-index-url https://wheels.vll
 pip install -e ".[mlx]"
 ```
 
-### 5.2 vLLM部署
+### 5.2 vLLM 部署
 
 ```bash
 vllm serve Qwen/Qwen3.5-27B \
@@ -240,11 +240,11 @@ vllm serve Qwen/Qwen3.5-27B \
 ```
 
 **参数说明**：
-- `method: "dflash"`：使用DFlash作为speculative decoding方法
-- `num_speculative_tokens: 15`：每次draft生成15个token
-- `max-num-batched-tokens`：批处理最大token数
+- `method: "dflash"`：使用 DFlash 作为 speculative decoding 方法
+- `num_speculative_tokens: 15`：每次 draft 生成 15 个 token
+- `max-num-batched-tokens`：批处理最大 token 数
 
-### 5.3 SGLang部署
+### 5.3 SGLang 部署
 
 ```bash
 export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
@@ -267,7 +267,7 @@ python -m sglang.launch_server \
     --trust-remote-code
 ```
 
-### 5.4 Transformers部署
+### 5.4 Transformers 部署
 
 ```python
 from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
@@ -347,13 +347,13 @@ print(f"\nThroughput: {tps:.2f} tok/s")
 
 ## §6 性能评估
 
-### 6.1 Benchmark配置
+### 6.1 Benchmark 配置
 
-所有benchmark使用相同数据集：
+所有 benchmark 使用相同数据集：
 - **gsm8k**：小学数学题
 - **math500**：数学竞赛题
 - **humaneval**：代码生成
-- **mbpp**：Python编程
+- **mbpp**：Python 编程
 - **mt-bench**：多轮对话
 
 数据集会在首次运行时自动下载并缓存到`cache/`目录。
@@ -399,16 +399,16 @@ torchrun --nproc_per_node=8 -m dflash.benchmark \
 
 | 场景 | 加速比 | 说明 |
 |------|--------|------|
-| **代码生成** | 2-3x | token接受率高 |
-| **数学推理** | 1.8-2.5x | thinking模式token多 |
+| **代码生成** | 2-3x | token 接受率高 |
+| **数学推理** | 1.8-2.5x | thinking 模式 token 多 |
 | **通用对话** | 1.5-2x | 取决于内容类型 |
-| **短回复** | 1.2-1.5x |  draft开销占比高 |
+| **短回复** | 1.2-1.5x |  draft 开销占比高 |
 
 ---
 
 ## §7 内部实现细节
 
-### 7.1 DFlash训练流程
+### 7.1 DFlash 训练流程
 
 ```python
 class DFlashTrainer:
@@ -466,7 +466,7 @@ def verify(draft_tokens, target_logits, temperature=0.0):
     return accepted[:len(draft_tokens)]
 ```
 
-### 7.3 Block Size选择
+### 7.3 Block Size 选择
 
 | Block Size | 适用场景 | 显存占用 | 加速潜力 |
 |------------|----------|----------|----------|
@@ -499,7 +499,7 @@ LLM推理优化
 
 ### 8.2 DFlash vs 其他投机解码方案
 
-| 方案 | Draft模型 | 训练需求 | 通用性 | 加速比 |
+| 方案 | Draft 模型 | 训练需求 | 通用性 | 加速比 |
 |------|-----------|----------|--------|--------|
 | **DFlash** | 块扩散 | 需要训练 | 高 | 2-3x |
 | **Eagle** | 自回归 | 需要训练 | 低 | 2-3x |
@@ -511,18 +511,18 @@ LLM推理优化
 
 ## §9 实际应用建议
 
-### 9.1 何时使用DFlash
+### 9.1 何时使用 DFlash
 
 **适合场景**：
 - 高并发场景（多个并发请求）
 - 长序列生成（代码/文档）
 - 延迟敏感场景（实时对话）
-- 成本敏感场景（减少GPU时间）
+- 成本敏感场景（减少 GPU 时间）
 
 **不适合场景**：
-- 低延迟单次请求（draft开销不值得）
+- 低延迟单次请求（draft 开销不值得）
 - 极短回复（<10 tokens）
-- 特定领域（无对应DFlash模型）
+- 特定领域（无对应 DFlash 模型）
 
 ### 9.2 硬件配置建议
 
@@ -571,27 +571,27 @@ python -m dflash.benchmark --backend vllm ...
 
 ## §11 FAQ
 
-**Q1：DFlash需要额外的训练吗？**
-A：是的，DFlash模型需要针对目标模型进行训练。但作者提供了预训练好的模型，直接使用即可。
+**Q1：DFlash 需要额外的训练吗？**
+A：是的，DFlash 模型需要针对目标模型进行训练。但作者提供了预训练好的模型，直接使用即可。
 
 **Q2：接受率受哪些因素影响？**
-A：主要因素包括：draft模型质量、block_size设置、输入内容类型（代码/数学接受率更高）。
+A：主要因素包括：draft 模型质量、block_size 设置、输入内容类型（代码/数学接受率更高）。
 
 **Q3：支持哪些推理框架？**
-A：支持vLLM、SGLang、Transformers（原装）、MLX（Apple Silicon）。
+A：支持 vLLM、SGLang、Transformers（原装）、MLX（Apple Silicon）。
 
-**Q4：如何选择num_speculative_tokens？**
-A：建议从16开始测试。太大增加显存占用，太小加速效果不明显。
+**Q4：如何选择 num_speculative_tokens？**
+A：建议从 16 开始测试。太大增加显存占用，太小加速效果不明显。
 
-**Q5：可以训练自己的DFlash模型吗？**
-A：可以，作者承诺会开源训练recipe。
+**Q5：可以训练自己的 DFlash 模型吗？**
+A：可以，作者承诺会开源训练 recipe。
 
 ---
 
 ## 相关资源
 
-- **GitHub仓库**：https://github.com/z-lab/dflash
+- **GitHub 仓库**：https://github.com/z-lab/dflash
 - **论文链接**：https://arxiv.org/abs/2602.06036
 - **官网博客**：https://z-lab.ai/projects/dflash/
-- **HuggingFace模型**：https://huggingface.co/collections/z-lab/dflash
+- **HuggingFace 模型**：https://huggingface.co/collections/z-lab/dflash
 - **反馈表单**：https://forms.gle/4YNwfqb4nJdqn6hq9

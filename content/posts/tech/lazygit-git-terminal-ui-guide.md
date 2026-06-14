@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Git", "Go", "终端", "TUI", "版本控制"]
 ---
 
-# LazyGit：76K Stars·Go语言编写·Git终端UI·可视化版本控制·交互式Rebase·冲突解决
+# LazyGit：76K Stars·Go 语言编写·Git 终端 UI·可视化版本控制·交互式 Rebase·冲突解决
 
 ## 一，项目概述
 
@@ -386,7 +386,7 @@ promptToSquashWithinFirstCommit: true
     lga = lazygit --all
 ```
 
-## 八，最佳实践
+## 八，实践建议
 
 ### 8.1 日常工作流
 

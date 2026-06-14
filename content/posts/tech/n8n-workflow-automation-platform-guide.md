@@ -244,7 +244,7 @@ n8n
 | `DB_POSTGRESDB_DATABASE` | 数据库名 | `n8n` |
 | `DB_POSTGRESDB_USER` | 数据库用户 | `n8n` |
 | `DB_POSTGRESDB_PASSWORD` | 数据库密码 | `***` |
-| `N8N_ENCRYPTION_KEY` | 加密密钥（32字符） | `xxx` |
+| `N8N_ENCRYPTION_KEY` | 加密密钥（32 字符） | `xxx` |
 | `GENERIC_TIMEZONE` | 时区 | `Asia/Shanghai` |
 | `EXECUTIONS_MODE` | 执行模式 | `regular` / `queue` |
 | `N8N_HIRING_IN_ASIA` | 允许亚洲节点 | `true` |
@@ -806,7 +806,7 @@ n8n 支持将工作流导出为 JSON 模板，便于团队复用和分发：
 
 **版本管理**：建议将工作流 JSON 文件存入 Git 管理，配合 CI/CD 实现工作流的 "基础设施即代码" 管理。
 
-### 7.4 生产环境最佳实践
+### 7.4 生产环境实践建议
 
 **监控与告警**：
 

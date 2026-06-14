@@ -8,7 +8,7 @@ categories: ["视频精读"]
 tags: ["AI Agent", "Nick Saraev", "Multi-Agent", "LangChain", "生产部署"]
 ---
 
-> **难度**：⭐⭐⭐⭐ | **类型**：视频深度解读 | **预计阅读时间**：30分钟
+> **难度**：⭐⭐⭐⭐ | **类型**：视频深度解读 | **预计阅读时间**：30 分钟
 > **目标读者**：想系统掌握 AI Agent 技术的开发者
 > **前置知识**：Python 基础，熟悉 LLM API 调用
 
@@ -30,7 +30,7 @@ tags: ["AI Agent", "Nick Saraev", "Multi-Agent", "LangChain", "生产部署"]
 
 ### 为什么这是目前最全面的 Agent 课程？
 
-Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的 AI Agent 系统课程之一。2小时的时长覆盖了从入门到进阶的完整路径。
+Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的 AI Agent 系统课程之一。2 小时的时长覆盖了从入门到进阶的完整路径。
 
 **视频的独特价值：**
 
@@ -38,7 +38,7 @@ Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的
 |--------|------|
 | **系统性强** | 不是零散知识点，而是完整技术体系 |
 | **深度适中** | 既有概念讲解，也有代码实战 |
-| **时效性新** | 2026年更新，包含最新工具和框架 |
+| **时效性新** | 2026 年更新，包含最新工具和框架 |
 | **实操性强** | 每个概念都配有可运行的代码示例 |
 
 ### 视频完整内容地图
@@ -173,7 +173,7 @@ class ReActAgent:
         return "任务执行超时"
 ```
 
-### Tool Use 最佳实践
+### Tool Use 实践建议
 
 **Tool 设计的原则：**
 
@@ -383,7 +383,7 @@ class RAGAgent:
 
 ### Multi-Agent 架构模式
 
-**模式1：Supervisor 模式**
+**模式 1：Supervisor 模式**
 
 ```
 用户输入
@@ -428,7 +428,7 @@ class SupervisorAgent:
         return self._synthesize(task, results)
 ```
 
-**模式2：Crew 模式（多 Agent 平等协作）**
+**模式 2：Crew 模式（多 Agent 平等协作）**
 
 ```python
 from crewai import Agent, Task, Crew
@@ -488,7 +488,7 @@ result = crew.kickoff()
 |----------|----------|------|
 | **延迟优化** | 流式输出、异步调用 | TTFT 降低 50% |
 | **成本优化** | 使用小模型处理简单任务 | 成本降低 80% |
-| **吞吐优化** | 并发请求、批量处理 | QPS 提升 3倍 |
+| **吞吐优化** | 并发请求、批量处理 | QPS 提升 3 倍 |
 
 ```python
 # 生产级 Agent 优化示例

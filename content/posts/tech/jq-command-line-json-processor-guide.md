@@ -13,17 +13,17 @@ tags: ["JSON", "命令行", "数据处理", "C语言", "工具", "sed", "awk", "
 
 通过本文，您将掌握：
 
-1. **理解jq的核心价值**：为什么JSON处理需要专门的命令行工具
+1. **理解 jq 的关键价值**：为什么 JSON 处理需要专门的命令行工具
 2. **掌握全部过滤器**：选择、映射、转换、聚合
-3. **熟练使用管道**：与shell命令的完美结合
+3. **熟练使用管道**：与 shell 命令的完美结合
 4. **理解高级特性**：函数、模块、条件逻辑
-5. **掌握实战技巧**：日志处理、API响应解析、配置文件操作
+5. **掌握实战技巧**：日志处理、API 响应解析、配置文件操作
 
 ---
 
 ## §2 项目概述
 
-### 2.1 什么是jq？
+### 2.1 什么是 jq？
 
 > jq is a lightweight and flexible command-line JSON processor akin to sed, awk, grep, and friends for JSON data.
 
@@ -34,20 +34,20 @@ tags: ["JSON", "命令行", "数据处理", "C语言", "工具", "sed", "awk", "
 | **语言** | C 79.0%, M4 6.7%, Shell 5.3% |
 | **许可证** | MIT |
 | **最新版本** | jq 1.8.1 (2025-07-01) |
-| **最新提交** | Apr 8, 2026 (2天前) |
+| **最新提交** | Apr 8, 2026 (2 天前) |
 | **Commits** | 1,897 |
 | **贡献者** | 231 |
 
 ### 2.2 核心特点
 
 **零运行时依赖**
-- 纯C编写，无需任何外部库
+- 纯 C 编写，无需任何外部库
 - 下载即用，无环境配置烦恼
 
-**类sed/awk/grep体验**
-- 熟悉Unix哲学
+**类 sed/awk/grep 体验**
+- 熟悉 Unix 哲学
 - 管道友好
-- 文本处理者的JSON利器
+- 文本处理者的 JSON 利器
 
 **轻量快速**
 - 二进制文件极小
@@ -58,9 +58,9 @@ tags: ["JSON", "命令行", "数据处理", "C语言", "工具", "sed", "awk", "
 
 | 工具 | 定位 | 学习曲线 |
 |------|------|---------|
-| **jq** | JSON专用 | 中等 |
-| **yq** | YAML处理 | 简单 |
-| **python -m json.tool** | Python内置 | 简单 |
+| **jq** | JSON 专用 | 中等 |
+| **yq** | YAML 处理 | 简单 |
+| **python -m json.tool** | Python 内置 | 简单 |
 | **sed/awk** | 通用文本 | 陡峭 |
 | **Node.js** | 通用编程 | 陡峭 |
 
@@ -91,11 +91,11 @@ docker run --rm -i ghcr.io/jqlang/jq < input.json
 ```
 
 **Windows:**
-下载预编译二进制文件，加入PATH即可。
+下载预编译二进制文件，加入 PATH 即可。
 
 ### 3.2 在线体验
 
-访问 [play.jqlang.org](https://play.jqlang.org) 即可在浏览器中试用jq！
+访问 [play.jqlang.org](https://play.jqlang.org) 即可在浏览器中试用 jq！
 
 ### 3.3 第一个命令
 
@@ -306,7 +306,7 @@ echo '[true,false,false]' | jq 'all'  # false
 
 ## §6 实战技巧
 
-### 6.1 API响应解析
+### 6.1 API 响应解析
 
 ```bash
 # GitHub API响应
@@ -374,13 +374,13 @@ curl -s https://api.github.com/repos/jqlang/jq/commits | \
 |------|------|
 | `-c` | 紧凑输出（单行） |
 | `-r` | 原始输出（无引号） |
-| `-n` | null输入模式 |
+| `-n` | null 输入模式 |
 | `-f` | 从文件读取过滤程序 |
 | `-e` | 根据输出设置退出码 |
 | `-M` | 单色输出 |
 | `-S` | 对象键排序 |
-| `--arg` | 传入Shell变量 |
-| `--argjson` | 传入JSON值 |
+| `--arg` | 传入 Shell 变量 |
+| `--argjson` | 传入 JSON 值 |
 
 ```bash
 # 紧凑JSON输出
@@ -452,7 +452,7 @@ echo '"item123price456"' | jq '[match("[0-9]+"; "g")] | map(.string)'
 |------|-----|-----|
 | **处理对象** | JSON | YAML |
 | **性能** | 更快 | 中等 |
-| **语法** | 过滤器 | YAML原生 |
+| **语法** | 过滤器 | YAML 原生 |
 | **学习曲线** | 中等 | 简单 |
 
 ### 9.2 jq vs Python
@@ -469,18 +469,18 @@ python3 -c "import json,sys; print(json.load(sys.stdin)['name'])"
 
 ## §10 总结
 
-### 10.1 核心价值
+### 10.1 关键价值
 
-1. **轻量快速**：纯C编写，零依赖
-2. **管道友好**：Unix哲学，Shell无缝集成
-3. **功能强大**：完整的JSON处理能力
-4. **学习曲线平缓**：类sed/awk体验
+1. **轻量快速**：纯 C 编写，零依赖
+2. **管道友好**：Unix 哲学，Shell 无缝集成
+3. **功能强大**：完整的 JSON 处理能力
+4. **学习曲线平缓**：类 sed/awk 体验
 
 ### 10.2 常用场景
 
 | 场景 | 常用命令 |
 |------|---------|
-| **API调试** | `curl -s API_URL \| jq '.'` |
+| **API 调试** | `curl -s API_URL \| jq '.'` |
 | **日志分析** | `cat log.json \| jq 'select(.level=="ERROR")'` |
 | **配置读取** | `cat config.json \| jq '.key'` |
 | **数据转换** | `jq -s '.[0] * .[1]'` |
@@ -495,4 +495,4 @@ python3 -c "import json,sys; print(json.load(sys.stdin)['name'])"
 
 ---
 
-*🦞 本文由钳岳星君基于 [jqlang/jq](https://github.com/jqlang/jq) 项目撰写，MIT许可证。*
+*🦞 本文由钳岳星君基于 [jqlang/jq](https://github.com/jqlang/jq) 项目撰写，MIT 许可证。*

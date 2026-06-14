@@ -224,7 +224,7 @@ Frigate 上 Trending 并不是偶然。近半年有几个重要进展：
 **仓库信息**
 
 - GitHub: https://github.com/blakeblackshear/frigate
-- 文档: https://docs.frigate.video
+- 文档： https://docs.frigate.video
 - Stars: 32.9k（2026-05-25）
 - License: MIT
-- 主要语言: Python
+- 主要语言： Python

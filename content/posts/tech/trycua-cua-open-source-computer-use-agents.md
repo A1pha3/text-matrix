@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "计算机控制", "沙箱", "QEMU", "macOS", "AI编程", "开源"]
 ---
 
-# CUA：开源计算机控制AI Agent基础设施，支持macOS/Linux/Windows全平台
+# CUA：开源计算机控制 AI Agent 基础设施，支持 macOS/Linux/Windows 全平台
 
 ## 项目概览
 

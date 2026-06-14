@@ -430,7 +430,7 @@ graph TD
 - [何时停止、何时追问、何时承认未知]
 ```
 
-这份骨架的价值,在于它把「好 prompt」从玄学拆成几个明确字段。等这几个字段稳定以后，再决定是否叠加 Expert Panel、Compression Protocol 或 ReAct——比一上来就堆技巧更可控。
+这份骨架的价值，在于它把「好 prompt」从玄学拆成几个明确字段。等这几个字段稳定以后，再决定是否叠加 Expert Panel、Compression Protocol 或 ReAct——比一上来就堆技巧更可控。
 
 ### 8.1 不算代价就上策略，和不算成本就上架构一样危险
 

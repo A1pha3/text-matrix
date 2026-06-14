@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "营销", "SEO", "内容创作", "Agent"]
 ---
 
-# Marketing Skills：21.8K Stars·40+营销技能·AI Agent营销助手·转化优化·SEO·内容创作
+# Marketing Skills：21.8K Stars·40+营销技能·AI Agent 营销助手·转化优化·SEO·内容创作
 
 ## 一、项目概述
 
@@ -117,7 +117,7 @@ product-marketing-context（基础上下文）
 
 | 技能 | 触发场景 |
 |------|----------|
-| `seo-audit` | 技术SEO审计与诊断 |
+| `seo-audit` | 技术 SEO 审计与诊断 |
 | `ai-seo` | 优化 AI 搜索引擎（GEO/AEO/LLMO） |
 | `programmatic-seo` | 规模化页面生成 |
 | `site-architecture` | 网站结构、导航、URL 规划 |
@@ -392,7 +392,7 @@ description: 当用户想写 B2B 冷启动邮件时使用
 4. CTA（行动）- 明确下一步
 ```
 
-## 七、最佳实践
+## 七、实践建议
 
 ### 7.1 技能组合使用
 

@@ -8,34 +8,34 @@ categories: ["技术笔记"]
 tags: ["TensorLogic", "神经符号推理", "知识图谱", "RESCAL", "Transformer"]
 ---
 
-# TensorLogic：Pedro Domingos论文实现·神经符号统一推理框架·FB15k-237基准MRR 0.347
+# TensorLogic：Pedro Domingos 论文实现·神经符号统一推理框架·FB15k-237 基准 MRR 0.347
 
 <!-- truncate -->
 
 ## 一、项目概述
 
-### 1.1 TensorLogic是什么
+### 1.1 TensorLogic 是什么
 
-**TensorLogic** 是一个基于 **"Tensor Logic: The Language of AI"** 论文（Pedro Domingos, arXiv:2510.12269）的 **Python实现**，旨在通过 **Tensor方程** 统一 **神经推理** 和 **符号推理**，为AI提供一种结合神经网络学习能力与逻辑推理可解释性的新范式。
+**TensorLogic** 是一个基于 **"Tensor Logic: The Language of AI"** 论文（Pedro Domingos, arXiv:2510.12269）的 **Python 实现**，旨在通过 **Tensor 方程** 统一 **神经推理** 和 **符号推理**，为 AI 提供一种结合神经网络学习能力与逻辑推理可解释性的新范式。
 
 > 原文：`"A unified programming language for AI that combines neural and symbolic reasoning through tensor equations."`
 
-**核心定位**：不是又一个LLM替代品，而是**神经+符号混合推理**的基础设施——在需要可解释性、零幻觉、或高效小模型的场景下，提供清晰的技术路径。
+**核心定位**：不是又一个 LLM 替代品，而是**神经+符号混合推理**的基础设施——在需要可解释性、零幻觉、或高效小模型的场景下，提供清晰的技术路径。
 
 ### 1.2 核心数据
 
 | 指标 | 数值 | 说明 |
 |------|------|------|
 | **Stars** | **43** ⭐ | 学术型项目，小而精 |
-| **组织** | Kocoro-lab | 与ShanClaw同组织 |
-| **语言** | Python 100% | PyTorch生态 |
+| **组织** | Kocoro-lab | 与 ShanClaw 同组织 |
+| **语言** | Python 100% | PyTorch 生态 |
 | **创建时间** | 2025-10-16 | 较新项目 |
 | **最新提交** | 2026-04-24 | 活跃维护中 |
 | **论文引用** | arXiv:2510.12269 | 学术支撑扎实 |
 
-### 1.3 为什么需要TensorLogic
+### 1.3 为什么需要 TensorLogic
 
-**传统AI的困境**：
+**传统 AI 的困境**：
 
 | 类型 | 优势 | 困境 |
 |------|------|------|
@@ -43,7 +43,7 @@ tags: ["TensorLogic", "神经符号推理", "知识图谱", "RESCAL", "Transform
 | **纯符号系统** | 逻辑严谨、可解释 | 缺乏学习能力、知识获取困难 |
 | **知识图谱嵌入** | 知识结构化、可推理 | 无法处理复杂逻辑链 |
 
-**TensorLogic的解决思路**：
+**TensorLogic 的解决思路**：
 
 ```
 ✅ Tensor方程 = 统一的计算原语（神经+符号都用）
@@ -53,14 +53,14 @@ tags: ["TensorLogic", "神经符号推理", "知识图谱", "RESCAL", "Transform
 ✅ 模型极小 = 10-500KB vs LLM的GB级
 ```
 
-### 1.4 与Kocoro-lab其他项目的关系
+### 1.4 与 Kocoro-lab 其他项目的关系
 
-TensorLogic与同组织的 **ShanClaw**（macOS原生AI Agent CLI）形成互补：
+TensorLogic 与同组织的 **ShanClaw**（macOS 原生 AI Agent CLI）形成互补：
 
 | 项目 | 定位 | 技术栈 |
 |------|------|--------|
 | **TensorLogic** | 推理引擎/底层框架 | Python + PyTorch |
-| **ShanClaw** | Agent上层应用 | macOS原生CLI + Shannon Gateway |
+| **ShanClaw** | Agent 上层应用 | macOS 原生 CLI + Shannon Gateway |
 
 ```
 ShanClaw (Agent应用)
@@ -74,36 +74,36 @@ TensorLogic (推理引擎) ←→ 知识图谱/规则库
 
 ### 2.1 Tensor Programs（张量程序）
 
-Tensor Programs是TensorLogic的核心抽象——用**Tensor方程**同时表达**数据**（facts, relations, weights）和**规则**（equations）。
+Tensor Programs 是 TensorLogic 的核心抽象——用**Tensor 方程**同时表达**数据**（facts, relations, weights）和**规则**（equations）。
 
 **核心思想**：
-- 万物皆Tensor：实体、关系、权重都是多维数组
-- 计算即方程：所有操作都表示为tensor equation
-- 前向/后向链：推理过程是tensor的传播
+- 万物皆 Tensor：实体、关系、权重都是多维数组
+- 计算即方程：所有操作都表示为 tensor equation
+- 前向/后向链：推理过程是 tensor 的传播
 
-**与标准PyTorch的区别**：
+**与标准 PyTorch 的区别**：
 
 | 维度 | PyTorch | TensorLogic |
 |------|---------|-------------|
 | **目标** | 通用深度学习 | 神经+符号统一推理 |
 | **核心抽象** | Layer/Module | TensorProgram + Equation |
 | **推理模式** | 概率输出 | Boolean(0/1) + Continuous(概率) |
-| **可解释性** | 黑盒梯度 | 符号化的tensor方程 |
+| **可解释性** | 黑盒梯度 | 符号化的 tensor 方程 |
 
-### 2.2 Boolean模式 vs Continuous模式
+### 2.2 Boolean 模式 vs Continuous 模式
 
-TensorLogic支持两种推理模式，适用不同场景：
+TensorLogic 支持两种推理模式，适用不同场景：
 
-#### 2.2.1 Boolean模式（符号推理）
+#### 2.2.1 Boolean 模式（符号推理）
 
 **特点**：
-- 输出严格0/1，无概率模糊
+- 输出严格 0/1，无概率模糊
 - 前向链/后向链推理
 - **零幻觉**：逻辑保证的正确性
 - 无需训练，直接使用规则
 
 **适用场景**：
-| 场景 | 示例 | 为什么选Boolean |
+| 场景 | 示例 | 为什么选 Boolean |
 |------|------|----------------|
 | **规则推理** | 税收规则、法律合规 | 逻辑严密、不可出错 |
 | **家族关系** | grandparent = parent ∘ parent | 确定性推导 |
@@ -118,17 +118,17 @@ TensorLogic支持两种推理模式，适用不同场景：
 查询: grandparent(Alice, ?) → 前向链追踪 → Bob
 ```
 
-#### 2.2.2 Continuous模式（概率推理）
+#### 2.2.2 Continuous 模式（概率推理）
 
 **特点**：
-- 输出概率值（0-1之间）
+- 输出概率值（0-1 之间）
 - 可学习的嵌入和关系矩阵
-- 完全可微，可纳入神经网络pipeline
-- 支持temperature控制确定性
+- 完全可微，可纳入神经网络 pipeline
+- 支持 temperature 控制确定性
 
 **适用场景**：
 
-| 场景 | 示例 | 为什么选Continuous |
+| 场景 | 示例 | 为什么选 Continuous |
 |------|------|-------------------|
 | **知识图谱补全** | 预测缺失的实体关系 | 从已知三元组学习 |
 | **相似度推理** | 找相似的实体 | 向量空间运算 |
@@ -145,13 +145,13 @@ score(subject, relation, object) = subject^T × relation_matrix × object
 
 ### 2.3 Embedding Space（嵌入空间推理）
 
-Embedding Space是Continuous模式的核心——将**实体**编码为向量，**关系**编码为矩阵。
+Embedding Space 是 Continuous 模式的核心——将**实体**编码为向量，**关系**编码为矩阵。
 
 **表示学习**：
 
-| 元素 | Tensor形式 | 维度 | 说明 |
+| 元素 | Tensor 形式 | 维度 | 说明 |
 |------|-----------|------|------|
-| **实体** | 向量 e ∈ R^d | d维 | 编码实体身份 |
+| **实体** | 向量 e ∈ R^d | d 维 | 编码实体身份 |
 | **关系** | 矩阵 W_r ∈ R^{d×d} | d×d | 编码关系变换 |
 | **三元组** | (e_s, W_r, e_o) | - | 头实体、关系矩阵、尾实体 |
 
@@ -183,7 +183,7 @@ W_grandparent = W_parent @ W_parent
 
 ### 2.4 Predicate Invention（谓词自动发明）
 
-这是TensorLogic最独特的特性——通过 **RESCAL张量分解** 自动发现**隐藏关系**，无需人工标签。
+这是 TensorLogic 最独特的特性——通过 **RESCAL 张量分解** 自动发现**隐藏关系**，无需人工标签。
 
 **传统方式 vs TensorLogic**：
 
@@ -191,10 +191,10 @@ W_grandparent = W_parent @ W_parent
 |------|----------|-------------|
 | **特征工程** | 人工定义 | ❌ |
 | **标签获取** | 需要标注数据 | ❌ |
-| **隐含关系** | 无法自动发现 | ✅ RESCAL分解 |
+| **隐含关系** | 无法自动发现 | ✅ RESCAL 分解 |
 | **可解释性** | 取决于人工设计 | ✅ 关系矩阵可查看 |
 
-**RESCAL分解原理**：
+**RESCAL 分解原理**：
 ```
 输入：知识图谱 → 三维张量 X ∈ R^{n×n×m}
      n = 实体数，m = 关系数
@@ -263,7 +263,7 @@ W_grandparent = W_parent @ W_parent
 
 #### 3.2.1 core/program.py — TensorProgram
 
-`TensorProgram`是所有tensor程序的基类，封装了前向计算和反向传播。
+`TensorProgram`是所有 tensor 程序的基类，封装了前向计算和反向传播。
 
 **核心接口**：
 ```python
@@ -356,7 +356,7 @@ gate_output = sigmoid(W_gate @ [e_s; W_r1 @ e_s; ...])
 e_final = Σ_i gate_i * (W_ri @ e_s)
 ```
 
-#### 3.2.4 reasoning/predicate_invention/ — RESCAL谓词发明
+#### 3.2.4 reasoning/predicate_invention/ — RESCAL 谓词发明
 
 通过张量分解自动发现隐藏关系。
 
@@ -397,9 +397,9 @@ invented_predicates = invent_and_register_rescal(
 # 这些谓词不是人工定义的，而是从数据中自动学习到的
 ```
 
-### 3.3 Transformer与RNN实现
+### 3.3 Transformer 与 RNN 实现
 
-TensorLogic的一个独特之处是将Transformer和RNN也用**tensor方程**重新实现，实现**神经+符号的统一**。
+TensorLogic 的一个独特之处是将 Transformer 和 RNN 也用**tensor 方程**重新实现，实现**神经+符号的统一**。
 
 #### 3.3.1 Transformer as Tensor Equations
 
@@ -428,7 +428,7 @@ for eq in equations:
 **核心特点**：
 - **Multi-head Attention** = `Q×K^T/√d → softmax → ×V`
 - 编码器-解码器架构，带交叉注意力
-- 可添加知识图谱约束的符号mask
+- 可添加知识图谱约束的符号 mask
 - 完全可微，可与符号推理模块联合训练
 
 #### 3.3.2 RNN/LSTM as Tensor Equations
@@ -445,7 +445,7 @@ lstm_bool = LSTM(input_size=128, hidden_size=256, mode='boolean')
 # 可解释性强，适合符号逻辑与神经的混合系统
 ```
 
-**Boolean LSTM的应用**：
+**Boolean LSTM 的应用**：
 ```python
 # 场景：时序推理 + 逻辑约束
 # 例如：监控网络入侵，要求：
@@ -474,9 +474,9 @@ PYTHONPATH=. python3 examples/shakespeare/train_shakespeare.py
 generated = lm.generate(prompt, max_new_tokens=100)
 ```
 
-**Shakespeare模型效果**：
-- ~1.5的验证loss（可与nanoGPT对比）
-- TensorLogic特有：用tensor方程解释生成过程
+**Shakespeare 模型效果**：
+- ~1.5 的验证 loss（可与 nanoGPT 对比）
+- TensorLogic 特有：用 tensor 方程解释生成过程
 
 ---
 
@@ -519,7 +519,7 @@ PYTHONPATH=. python3 examples/family_tree_symbolic.py
 
 ### 4.3 示例运行
 
-#### 4.3.1 Boolean模式（家族关系推理）
+#### 4.3.1 Boolean 模式（家族关系推理）
 
 ```bash
 python3 examples/family_tree_symbolic.py
@@ -541,7 +541,7 @@ Queries:
 
 **无训练，零成本推理**——规则即程序。
 
-#### 4.3.2 Embedding模式（家族关系学习）
+#### 4.3.2 Embedding 模式（家族关系学习）
 
 ```bash
 python3 examples/family_tree_embedding.py
@@ -575,7 +575,7 @@ Training: 10 epochs
 # 模型学会了组合关系：parent @ parent → grandparent
 ```
 
-#### 4.3.4 RESCAL谓词发明
+#### 4.3.4 RESCAL 谓词发明
 
 ```bash
 python3 examples/predicate_invention_demo.py
@@ -594,7 +594,7 @@ Invented predicates:
 这些关系没有人工标签，是从数据中自动发现的！
 ```
 
-### 4.4 API最小使用
+### 4.4 API 最小使用
 
 ```python
 from tensorlogic import TensorProgram
@@ -620,9 +620,9 @@ prediction = composer.predict(head=e1, relation_path=[r1, r2])
 
 ## 五、基准测试与性能分析
 
-### 5.1 FB15k-237知识图谱基准
+### 5.1 FB15k-237 知识图谱基准
 
-FB15k-237是标准的知识图谱链接预测基准：
+FB15k-237 是标准的知识图谱链接预测基准：
 - **实体数**：14,541
 - **关系数**：237
 - **三元组**：310,116
@@ -633,7 +633,7 @@ FB15k-237是标准的知识图谱链接预测基准：
 python3 examples/fb15k237_benchmark.py
 ```
 
-使用RESCAL模型 + 1vsAll评分 + filtered MRR/Hits@K评估。
+使用 RESCAL 模型 + 1vsAll 评分 + filtered MRR/Hits@K 评估。
 
 #### 5.1.2 结果对比
 
@@ -645,7 +645,7 @@ python3 examples/fb15k237_benchmark.py
 | ComplEx | 0.247 | 0.158 | 0.275 | 0.428 |
 | RotatE | 0.338 | 0.241 | 0.375 | 0.533 |
 
-**结论**：TensorLogic RESCAL在所有指标上显著超越LibKGE参考实现（+14% MRR），且与RotatE等复杂模型竞争力相当。
+**结论**：TensorLogic RESCAL 在所有指标上显著超越 LibKGE 参考实现（+14% MRR），且与 RotatE 等复杂模型竞争力相当。
 
 ### 5.2 内部基准测试套件
 
@@ -662,7 +662,7 @@ python3 examples/benchmark_suite.py
 | 指标 | 说明 |
 |------|------|
 | **AUC** | 分类/预测质量 |
-| **Hits@K** | Top-K准确率 |
+| **Hits@K** | Top-K 准确率 |
 | **F1** | 精确率/召回率平衡 |
 | **训练时间** | 收敛速度 |
 | **查询速度** | 推理延迟 |
@@ -672,11 +672,11 @@ python3 examples/benchmark_suite.py
 
 | 维度 | TensorLogic | 大模型 (LLM) |
 |------|-------------|--------------|
-| **模型大小** | 10-500 KB | GB级 |
+| **模型大小** | 10-500 KB | GB 级 |
 | **训练时间** | 秒-分钟 | 小时-天 |
 | **推理延迟** | <10ms | >100ms (API) |
-| **幻觉** | Boolean模式=零 | 普遍存在 |
-| **可解释性** | Tensor方程可见 | 黑盒 |
+| **幻觉** | Boolean 模式=零 | 普遍存在 |
+| **可解释性** | Tensor 方程可见 | 黑盒 |
 
 ---
 
@@ -684,7 +684,7 @@ python3 examples/benchmark_suite.py
 
 ### 6.1 混合推理（神经+符号）
 
-TensorLogic可以将符号约束注入神经网络：
+TensorLogic 可以将符号约束注入神经网络：
 
 ```python
 from tensorlogic.transformers import Transformer
@@ -724,7 +724,7 @@ lstm = LSTM(
 # - 符号部分：状态转换规则（如：SYN→ESTABLISHED→CLOSED）
 ```
 
-### 6.3 Shakespeare语言模型
+### 6.3 Shakespeare 语言模型
 
 ```bash
 # 训练
@@ -735,7 +735,7 @@ PYTHONPATH=. python3 examples/shakespeare/generate_shakespeare.py \
     --checkpoint checkpoints/shakespeare/best.pt
 ```
 
-**TensorLogic特色**：可以用tensor方程解释生成过程：
+**TensorLogic 特色**：可以用 tensor 方程解释生成过程：
 ```bash
 PYTHONPATH=. python3 examples/shakespeare/generate_tensorlogic_shakespeare.py
 
@@ -753,12 +753,12 @@ PYTHONPATH=. python3 examples/shakespeare/generate_tensorlogic_shakespeare.py
 | **TensorLogic** | 双线性 + 多种 | ✅ | ✅ GatedMultiHop | ✅ RESCAL |
 | PyKEEN | 多种 | ✅ | ❌ | ❌ |
 | LibKGE | 多种 | ✅ | ❌ | ❌ |
-| AmpliGraph | 仅TransE | ✅ | ❌ | ❌ |
+| AmpliGraph | 仅 TransE | ✅ | ❌ | ❌ |
 | Datalog Reasoners | 逻辑规则 | ❌ | ✅ | ❌ |
 
-### 7.2 与LLM的互补关系
+### 7.2 与 LLM 的互补关系
 
-TensorLogic**不**是LLM替代品，而是互补工具：
+TensorLogic**不**是 LLM 替代品，而是互补工具：
 
 | 场景 | 推荐方案 |
 |------|----------|
@@ -788,35 +788,35 @@ LLM生成自然语言回答
 
 | 局限 | 说明 | 变通方案 |
 |------|------|----------|
-| CNN/PGM未实现 | 卷积和概率图模型 | 期待后续 |
-| Typed嵌入不完整 | 目前是方阵关系矩阵 | 计划支持矩形矩阵 |
-| 非1:N/N:M关系 | 目前仅支持1:1 | 未来扩展 |
-| GPU稀疏优化不足 | 当前实现未充分优化 | 期待GPU kernel |
+| CNN/PGM 未实现 | 卷积和概率图模型 | 期待后续 |
+| Typed 嵌入不完整 | 目前是方阵关系矩阵 | 计划支持矩形矩阵 |
+| 非 1:N/N:M 关系 | 目前仅支持 1:1 | 未来扩展 |
+| GPU 稀疏优化不足 | 当前实现未充分优化 | 期待 GPU kernel |
 
 ### 8.2 未来规划
 
 | 功能 | 状态 | 说明 |
 |------|------|------|
-| Tucker/CP分解 | 计划中 | 更高效的分解 |
-| GPU稀疏kernel | 计划中 | 加速大规模KG |
-| Datalog完整支持 | 计划中 | 后向链+溯因推理 |
-| Typed嵌入 | 计划中 | 实体/关系类型系统 |
+| Tucker/CP 分解 | 计划中 | 更高效的分解 |
+| GPU 稀疏 kernel | 计划中 | 加速大规模 KG |
+| Datalog 完整支持 | 计划中 | 后向链+溯因推理 |
+| Typed 嵌入 | 计划中 | 实体/关系类型系统 |
 
 ---
 
 ## 九、总结
 
-### 9.1 核心价值
+### 9.1 关键价值
 
-TensorLogic代表了**神经符号AI**的一个重要方向：
+TensorLogic 代表了**神经符号 AI**的一个重要方向：
 
 | 价值 | 说明 |
 |------|------|
-| **统一抽象** | Tensor方程同时表达神经+符号计算 |
-| **零幻觉** | Boolean模式提供逻辑保证 |
-| **自动发现** | RESCAL无需标签即可发明新谓词 |
+| **统一抽象** | Tensor 方程同时表达神经+符号计算 |
+| **零幻觉** | Boolean 模式提供逻辑保证 |
+| **自动发现** | RESCAL 无需标签即可发明新谓词 |
 | **极小模型** | 10-500KB，适合边缘部署 |
-| **学术支撑** | 基于Domingos的论文，可复现可追溯 |
+| **学术支撑** | 基于 Domingos 的论文，可复现可追溯 |
 
 ### 9.2 适用场景
 
@@ -834,5 +834,5 @@ TensorLogic代表了**神经符号AI**的一个重要方向：
 - 🌐 项目主页：https://github.com/Kocoro-lab/tensorlogic
 - 📄 论文：https://arxiv.org/abs/2510.12269
 - 🐍 PyPI：`pip install git+https://github.com/Kocoro-lab/tensorlogic.git`
-- 📖 文档：项目README + examples/
+- 📖 文档：项目 README + examples/
 - 🧪 基准测试：`examples/fb15k237_benchmark.py`

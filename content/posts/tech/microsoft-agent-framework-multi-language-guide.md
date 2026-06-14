@@ -553,16 +553,16 @@ from agent_framework import Agent
 
 ---
 
-## 十六、最佳实践
+## 十六、实践建议
 
-### 16.1 开发最佳实践
+### 16.1 开发实践建议
 
 1. **使用 ManagedIdentityCredential** 在生产环境
 2. **配置 OpenTelemetry** 以便调试和监控
 3. **使用 Middleware** 处理横切关注点
 4. **利用 DevUI** 进行交互式测试
 
-### 16.2 生产最佳实践
+### 16.2 生产实践建议
 
 1. **使用特定凭据** 而不是 DefaultAzureCredential
 2. **配置检查点** 以支持恢复

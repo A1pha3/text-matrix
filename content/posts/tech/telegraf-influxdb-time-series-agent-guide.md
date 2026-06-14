@@ -277,7 +277,7 @@ telegraf --config telegraf.conf --test | head -20
     urls = ["http://node1:8086", "http://node2:8086", "http://node3:8086"]
 ```
 
-## 配置文件规范与最佳实践
+## 配置文件规范与实践建议
 
 ### TOML 语法要点
 
@@ -478,7 +478,7 @@ Prometheus 抓取规则：
 
 ## 常见问题排查
 
-### 问题1：指标数据丢失
+### 问题 1：指标数据丢失
 
 **症状**：InfluxDB 中数据不连续，存在丢点数情况。
 
@@ -496,7 +496,7 @@ curl -s localhost:9273/metrics | grep telegraf_metrics_dropped
   metric_buffering = 200000
 ```
 
-### 问题2：插件启动失败
+### 问题 2：插件启动失败
 
 **症状**：`Error: plugin inputs.xxx: not found`
 
@@ -510,7 +510,7 @@ telegraf --test --config /dev/null 2>&1 | grep "inputs\."
 telegraf --test --config <(cat telegraf.conf) 2>&1
 ```
 
-### 问题3：Kafka Consumer 重复消费
+### 问题 3：Kafka Consumer 重复消费
 
 **排查**：确认 consumer group 配置唯一。
 
@@ -522,7 +522,7 @@ telegraf --test --config <(cat telegraf.conf) 2>&1
   offset = "oldest"
 ```
 
-### 问题4：时间戳偏差
+### 问题 4：时间戳偏差
 
 **症状**：指标时间与实际时间偏差几分钟。
 

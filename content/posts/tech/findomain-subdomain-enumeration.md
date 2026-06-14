@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["安全", "BugBounty", "OSINT", "子域名枚举", "Findomain", "Rust"]
 ---
 
-# Findomain：5秒挖掘8万子域名——域名发现与监控从入门到精通
+# Findomain：5 秒挖掘 8 万子域名——域名发现与监控从入门到精通
 
 > **目标读者**：安全研究员、Bug Bounty 猎人、渗透测试工程师、对 OSINT 感兴趣的开发者
 > **预计阅读时间**：40-50 分钟

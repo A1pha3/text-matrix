@@ -8,15 +8,15 @@ categories: ["技术笔记"]
 tags: ["量化交易", "Python", "A股", "机器学习", "金融"]
 ---
 
-# Rockyzsu/stock：7.5K Stars·Python量化交易系统·A股/港股/基金/转债全覆盖·机器学习+技术分析
+# Rockyzsu/stock：7.5K Stars·Python 量化交易系统·A 股/港股/基金/转债全覆盖·机器学习+技术分析
 
 ## 一，项目概述
 
 ### 1.1 项目定位
 
-**Rockyzsu/stock** 是一个**面向中文市场的Python量化交易系统**，作者署名Rocky Chen，slogan是"更好的帮助自己炒股(亏钱-。-)"。
+**Rockyzsu/stock** 是一个**面向中文市场的 Python 量化交易系统**，作者署名 Rocky Chen，slogan 是"更好的帮助自己炒股（亏钱-。-）"。
 
-> "码农的量化交易，把经历写成代码推送到github。"
+> "码农的量化交易，把经历写成代码推送到 github。"
 
 **核心定位**：用代码实现股票、基金、可转债的自动化分析、监控与交易。
 
@@ -84,8 +84,8 @@ tags: ["量化交易", "Python", "A股", "机器学习", "金融"]
 | **条件选股** | `filter_stock.py` | 市盈率、流通量、股东数、基金持股数等因子 |
 | **技术选股** | `select_stock.py` | 根据经验自定义策略 |
 | **新股分析** | `new_stock_break.py` | 新股开板后多少天回到开板价 |
-| **50日新高** | `get_break_high.py` | 获取当天破50天新高的股票 |
-| **热门股** | `fetch_each_day.py` | 每天换手率前50的热门股 |
+| **50 日新高** | `get_break_high.py` | 获取当天破 50 天新高的股票 |
+| **热门股** | `fetch_each_day.py` | 每天换手率前 50 的热门股 |
 
 ```python
 # filter_stock.py 示例：多因子选股
@@ -112,10 +112,10 @@ def filter_stock(factors):
 
 | 功能 | 文件 | 说明 |
 |------|------|------|
-| **LOF监控** | `LOFShareDection.py` | LOF、ETF场内份额变动 |
-| **ARK ETF** | `ark_funds.py` | ARK ETF每日持仓数据 |
+| **LOF 监控** | `LOFShareDection.py` | LOF、ETF 场内份额变动 |
+| **ARK ETF** | `ark_funds.py` | ARK ETF 每日持仓数据 |
 | **基金份额** | `fund_share_monitor.py` | 上交所/深交所基金份额 |
-| **ETF持仓** | `etf_info.py` | 市场指数基金的持仓股监控 |
+| **ETF 持仓** | `etf_info.py` | 市场指数基金的持仓股监控 |
 | **天天基金** | `ttjj.py` | 天天基金数据获取 |
 | **蛋卷基金** | `danjuan_fund.py` | 雪球蛋卷基金数据 |
 
@@ -175,12 +175,12 @@ def fetch_jisilu_bonds():
     return None
 ```
 
-### 2.4 K线技术形态识别
+### 2.4 K 线技术形态识别
 
 | 功能 | 文件 | 说明 |
 |------|------|------|
-| **形态识别** | `recognize_form.py` | 通过talib识别常见形态 |
-| **K线时态** | `k_line.py` | K线时态数据 |
+| **形态识别** | `recognize_form.py` | 通过 talib 识别常见形态 |
+| **K 线时态** | `k_line.py` | K 线时态数据 |
 
 ```python
 # recognize_form.py 示例：识别K线形态
@@ -251,7 +251,7 @@ def train_stock_predictor(features, labels):
 
 | 功能 | 文件 | 说明 |
 |------|------|------|
-| **大单监控** | `big_deal.py` | 每天A股大单交易 |
+| **大单监控** | `big_deal.py` | 每天 A 股大单交易 |
 | **涨停监控** | `ceiling_break.py` | 涨停板封榜 |
 | **股价提醒** | `push_msn.py` | 短信/微信价格提醒 |
 | **新股监控** | `new_stock_fund.py` | 打新基金 |
@@ -601,12 +601,12 @@ def diagnose_stock(stock_code):
 
 ### 8.2 券商接口
 
-项目提供**P-trade自动交易接口**，支持：
+项目提供**P-trade 自动交易接口**，支持：
 
 | 券商 | 门槛 | 费率 |
 |------|------|------|
-| 券商一 | 入金1W | 股票万一 |
-| 券商二 | 入金2W | 可转债万0.4 |
+| 券商一 | 入金 1W | 股票万一 |
+| 券商二 | 入金 2W | 可转债万 0.4 |
 
 接口文档：https://github.com/Rockyzsu/stock/blob/master/ptrade/API文档地址
 
@@ -618,7 +618,7 @@ Rockyzsu/stock 是**中文量化交易的优秀开源项目**：
 |------|------|
 | 📊 **数据全面** | 股票、基金、可转债、港股全覆盖 |
 | 🤖 **机器学习** | 贝叶斯等预测模型 |
-| 📈 **技术分析** | K线形态识别、MACD、RSI等 |
+| 📈 **技术分析** | K 线形态识别、MACD、RSI 等 |
 | 💰 **自动交易** | P-trade、富途实盘接口 |
 | 🔔 **实时监控** | 大单、涨停、价格提醒 |
 | 🛠️ **工具完善** | 回测、选股、数据采集 |

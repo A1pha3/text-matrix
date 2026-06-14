@@ -12,7 +12,7 @@ tags: ["TON", "智能合约", "Rust", "区块链开发", "Web3"]
 
 Acton 是 ton-blockchain 组织推出的 TON 智能合约全生命周期开发工具链，使用 Rust 编写，GitHub 今日新增约 18 星。TON（The Open Network）是由 Telegram 团队设计的区块链项目，其智能合约使用 FunC 语言（类 C 语法）编写，运行在 TON Virtual Machine（TVM）上。Acton 将这一生态中原本分散在多个工具中的能力统一到了一条 CLI 命令下。
 
-对于 TON 智能合约开发者来说，Acton 的核心价值在于消除工具链碎片化问题：不需要同时管理 `func`（FunC 编译器）、`fift`（TVM 字节码工具）、`tonos-cli`（钱包操作）和第三方测试框架，而是通过统一的 `acton` 命令行工具完成从创建项目到部署上线的全部流程。
+对于 TON 智能合约开发者来说，Acton 的关键价值在于消除工具链碎片化问题：不需要同时管理 `func`（FunC 编译器）、`fift`（TVM 字节码工具）、`tonos-cli`（钱包操作）和第三方测试框架，而是通过统一的 `acton` 命令行工具完成从创建项目到部署上线的全部流程。
 
 ## 核心能力
 

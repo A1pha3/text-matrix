@@ -90,8 +90,8 @@ flowchart TB
 | [Shadow Dexterous Hand](https://shadowrobot.com/dexterous-hand-series/) | 官方页面写明：20 个电机、腱绳驱动、20 个主动 DOF 加 4 个欠驱动运动 / 24 关节、100+ 传感器，控制和传感最高到 1 kHz，旗舰手重约 4.3 kg | 高端研究工具。它代表“性能和传感密度”这一端，不代表消费级成本 |
 | Tesla Optimus 新手 / 前臂 | 2024-11-28 公开演示中，Optimus 工程负责人 Milan Kovac 提到手部 22 DOF、腕 / 前臂 3 DOF；报道同时注明演示为实时遥操作 | 量产意图强，但公开资料仍有限。可以讨论路线，不能把未公开精度和成本当事实 |
 | [TetherIA Aero Hand Open](https://tetheria.github.io/aero-hand-open/) | 官方项目页写明：314 美元级、<400 g；GitHub README 写明 7 DOF、16 joints、389 g、开源硬件与固件；商店页写明约 10 N 指尖力、开合约 1 Hz | 低成本、可复现、适合研究和教育的数据底座 |
-| [GaiaHand / Gaia Hand 20](https://github.com/Stella-robot/GaiaHand) | GaiaHand 开源仓库强调五指、模块化、低成本、MIT；星际光年产品页给出 Gaia Hand 20 的 20 DOF、基础版 9,998 元早鸟价 / 16,999 元日常价；媒体报道提到单关节模组 999 元 | 中国供应链把“可维修、模块化、低成本”推向产品化 |
-| [Sharpa Wave](https://www.sharpa.com/) | 官方页写明 22 DOF，强调人手尺寸、结构和触觉敏感度；Wave 页面强调单指 >20 N 与 >4 Hz 手势速度的组合 | 触觉和高动态操作路线，适合观察“触觉 + VLA/VTLA”如何进入整机参考设计 |
+|  PROTECTED_4  | GaiaHand 开源仓库强调五指、模块化、低成本、MIT；星际光年产品页给出 Gaia Hand 20 的 20 DOF、基础版 9,998 元早鸟价 / 16,999 元日常价；媒体报道提到单关节模组 999 元 | 中国供应链把“可维修、模块化、低成本”推向产品化 |
+|  PROTECTED_5  | 官方页写明 22 DOF，强调人手尺寸、结构和触觉敏感度；Wave 页面强调单指 >20 N 与 >4 Hz 手势速度的组合 | 触觉和高动态操作路线，适合观察“触觉 + VLA/VTLA”如何进入整机参考设计 |
 
 再补一个学术开源坐标：[LEAP Hand](https://leaphand.com/) 在 2023 年已经把 16 DOF 低成本灵巧手做到约 2,000 美元，并强调 4 小时可组装、可用于遥操作、被动视频学习和 Sim2Real。TetherIA 把价格继续压低，GaiaHand 把模块化和中国供应链放进同一套叙事里。2026 年的变化不是某一家突然“发明了灵巧手”，而是低价可复现硬件开始扎堆出现。
 

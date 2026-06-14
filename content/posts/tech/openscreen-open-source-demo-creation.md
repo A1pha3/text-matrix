@@ -14,41 +14,41 @@ tags: ["TypeScript", "demo工具", "开源", "录屏", "屏幕录制"]
 
 学完本文后，你将掌握：
 
-- 理解openscreen的核心定位和适用场景
-- 掌握openscreen的安装和配置方法
-- 能够使用openscreen创建专业级的产品演示视频
-- 了解openscreen的技术架构和扩展开发方法
-- 能够在项目中集成openscreen进行自动化demo生成
+- 理解 openscreen 的核心定位和适用场景
+- 掌握 openscreen 的安装和配置方法
+- 能够使用 openscreen 创建专业级的产品演示视频
+- 了解 openscreen 的技术架构和扩展开发方法
+- 能够在项目中集成 openscreen 进行自动化 demo 生成
 
 ## §2 原理分析
 
 ### 2.1 项目解决什么问题
 
-在产品开发过程中，录制高质量的demo视频一直是开发者的痛点。商业工具如Screen Studio价格昂贵，且存在水印和使用限制。openscreen正是为了解决这一问题而诞生的开源替代方案。
+在产品开发过程中，录制高质量的 demo 视频一直是开发者的痛点。商业工具如 Screen Studio 价格昂贵，且存在水印和使用限制。openscreen 正是为了解决这一问题而诞生的开源替代方案。
 
-**核心定位**：免费、开源、无水印、商用友好的专业demo录制工具
+**核心定位**：免费、开源、无水印、商用友好的专业 demo 录制工具
 
 **解决的核心问题**：
-- 录屏工具价格高昂（Screen Studio每月$29起）
+- 录屏工具价格高昂（Screen Studio 每月$29 起）
 - 商业工具存在水印，影响专业形象
-- 缺乏自动化录制API，难以集成到CI/CD流程
+- 缺乏自动化录制 API，难以集成到 CI/CD 流程
 - 导出格式单一，缺乏灵活性
 
 ### 2.2 竞品对比
 
 | 特性 | openscreen | Screen Studio | Camtasia | OBS |
 |------|-----------|---------------|----------|-----|
-| 价格 | 免费开源 | $29/月 | $249一次性 | 免费 |
+| 价格 | 免费开源 | $29/月 | $249 一次性 | 免费 |
 | 水印 | 无 | 无 | 无 | 无 |
 | 商用 | 友好 | 付费 | 付费 | 免费 |
-| 自动化API | 支持 | 部分 | 不支持 | 支持 |
-| AI辅助 | 待定 | 是 | 否 | 否 |
+| 自动化 API | 支持 | 部分 | 不支持 | 支持 |
+| AI 辅助 | 待定 | 是 | 否 | 否 |
 | 平台 | 全平台 | macOS | Windows | 全平台 |
 
 ### 2.3 目标用户
 
-- 开源项目维护者，需要为GitHub项目录制演示
-- SaaS产品团队，制作产品演示视频
+- 开源项目维护者，需要为 GitHub 项目录制演示
+- SaaS 产品团队，制作产品演示视频
 - 技术博主，录制教程和演示
 - 独立开发者，展示项目功能
 - 市场营销团队，制作产品宣传片
@@ -82,10 +82,10 @@ graph TB
 
 ### 3.3 数据流
 
-1. **屏幕捕获**：通过Electron的desktopCapturer API获取屏幕流
+1. **屏幕捕获**：通过 Electron 的 desktopCapturer API 获取屏幕流
 2. **帧处理**：对捕获的帧进行缩放、裁剪、添加水印等处理
 3. **音频混合**：混合系统音频和麦克风输入
-4. **编码输出**：使用FFmpeg进行最终编码，输出MP4/WebM格式
+4. **编码输出**：使用 FFmpeg 进行最终编码，输出 MP4/WebM 格式
 
 ## §4 功能详解
 
@@ -93,14 +93,14 @@ graph TB
 
 #### 4.1.1 智能帧率控制
 
-openscreen能够根据屏幕内容变化自动调整录制帧率：
+openscreen 能够根据屏幕内容变化自动调整录制帧率：
 - 静态内容：降低帧率以减小文件体积
 - 动态内容：自动提升帧率保证流畅度
 - 用户可手动设置目标帧率（24/30/60fps）
 
 #### 4.1.2 自动聚焦
 
-录制过程中，openscreen会自动识别鼠标位置和屏幕变化区域，智能调整录制窗口，确保关键内容始终在画面中心。
+录制过程中，openscreen 会自动识别鼠标位置和屏幕变化区域，智能调整录制窗口，确保关键内容始终在画面中心。
 
 #### 4.1.3 丰富的视觉标注
 
@@ -203,30 +203,30 @@ chmod +x openscreen.AppImage
 
 ### 5.2 快速入门
 
-**步骤1：启动应用**
+**步骤 1：启动应用**
 
 安装完成后，在应用列表中找到"OpenScreen"并启动。
 
-**步骤2：选择录制源**
+**步骤 2：选择录制源**
 
 - 点击"新建录制"
 - 选择要录制的屏幕/窗口/区域
 - 启用音频（系统音频+麦克风）
 
-**步骤3：开始录制**
+**步骤 3：开始录制**
 
 - 点击红色录制按钮
-- 应用会显示3秒倒计时
+- 应用会显示 3 秒倒计时
 - 倒计时结束后开始录制
 
-**步骤4：添加标注（可选）**
+**步骤 4：添加标注（可选）**
 
 录制过程中，可以：
 - 按`Space`暂停/恢复
 - 按`M`添加标注
 - 按`F`全屏切换
 
-**步骤5：结束导出**
+**步骤 5：结束导出**
 
 - 按`Ctrl+E`（Mac: `Cmd+E`）结束录制
 - 选择输出格式和质量
@@ -244,9 +244,9 @@ chmod +x openscreen.AppImage
 
 ## §6 开发扩展
 
-### 6.1 API接口
+### 6.1 API 接口
 
-openscreen提供了完整的JavaScript API，可以在其他应用中进行集成调用。
+openscreen 提供了完整的 JavaScript API，可以在其他应用中进行集成调用。
 
 ```typescript
 interface OpenScreenOptions {
@@ -275,7 +275,7 @@ class OpenScreen {
 
 ### 6.2 插件开发
 
-openscreen支持插件扩展，可以添加自定义功能。
+openscreen 支持插件扩展，可以添加自定义功能。
 
 ```typescript
 // my-plugin.ts
@@ -303,7 +303,7 @@ export default {
 };
 ```
 
-### 6.3 CI/CD集成
+### 6.3 CI/CD 集成
 
 ```yaml
 # .github/workflows/demo.yml
@@ -336,13 +336,13 @@ jobs:
           path: demo.mp4
 ```
 
-## §7 最佳实践
+## §7 实践建议
 
 ### 7.1 性能优化
 
-1. **合理设置帧率**：一般30fps足够，代码演示可用24fps
-2. **选择合适分辨率**：1080p是最佳平衡点
-3. **控制录制时长**：单个demo建议控制在2-5分钟
+1. **合理设置帧率**：一般 30fps 足够，代码演示可用 24fps
+2. **选择合适分辨率**：1080p 是最佳平衡点
+3. **控制录制时长**：单个 demo 建议控制在 2-5 分钟
 4. **关闭后台应用**：减少干扰和性能开销
 
 ### 7.2 安全生产
@@ -353,7 +353,7 @@ jobs:
 
 ### 7.3 生产环境部署
 
-对于需要批量生成demo的场景，建议使用命令行版本：
+对于需要批量生成 demo 的场景，建议使用命令行版本：
 
 ```bash
 # 批量生成多个demo
@@ -369,35 +369,35 @@ done
 
 ## §8 FAQ
 
-**Q: openscreen是否真的完全免费？**
-A: 是的，openscreen采用MIT许可证，完全免费，商用友好，无任何隐藏费用。
+**Q: openscreen 是否真的完全免费？**
+A: 是的，openscreen 采用 MIT 许可证，完全免费，商用友好，无任何隐藏费用。
 
 **Q: 录制的视频有水印吗？**
 A: 完全无水印，可以直接用于商业用途。
 
-**Q: 支持Linux吗？**
-A: 支持，可通过Snap或AppImage在Linux上安装使用。
+**Q: 支持 Linux 吗？**
+A: 支持，可通过 Snap 或 AppImage 在 Linux 上安装使用。
 
 **Q: 如何实现自动化录制？**
-A: 使用CLI版本或JavaScript API，可编写脚本实现自动化录制流程。
+A: 使用 CLI 版本或 JavaScript API，可编写脚本实现自动化录制流程。
 
 **Q: 导出格式支持哪些？**
-A: 支持MP4 (H.264)、WebM (VP9) 和GIF格式。
+A: 支持 MP4 (H.264)、WebM (VP9) 和 GIF 格式。
 
 **Q: 可以录制系统音频吗？**
-A: 可以，macOS需要授予屏幕录制和音频权限，Windows/Linux直接支持。
+A: 可以，macOS 需要授予屏幕录制和音频权限，Windows/Linux 直接支持。
 
-**Q: 如何在CI/CD中集成？**
-A: 提供openscreen-cli工具，可在任何CI/CD平台中使用，具体见本文第6.3节。
+**Q: 如何在 CI/CD 中集成？**
+A: 提供 openscreen-cli 工具，可在任何 CI/CD 平台中使用，具体见本文第 6.3 节。
 
 ---
 
 ## 📚 更多资源
 
-- **GitHub仓库**：[siddharthvaddem/openscreen](https://github.com/siddharthvaddem/openscreen)
+- **GitHub 仓库**：[siddharthvaddem/openscreen](https://github.com/siddharthvaddem/openscreen)
 - **官方文档**：[openscreen.dev](https://openscreen.dev)
 - **社区讨论**：[GitHub Discussions](https://github.com/siddharthvaddem/openscreen/discussions)
 
 ---
 
-*本文由钳岳星君🦞撰写于2026年4月4日*
+*本文由钳岳星君🦞撰写于 2026 年 4 月 4 日*

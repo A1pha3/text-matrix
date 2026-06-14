@@ -410,7 +410,7 @@ ityfuzz evm -t <合约地址> --etherscan-api-key $ETHERSCAN_API_KEY
 
 ---
 
-## §11 最佳实践
+## §11 实践建议
 
 ### 11.1 测试策略
 

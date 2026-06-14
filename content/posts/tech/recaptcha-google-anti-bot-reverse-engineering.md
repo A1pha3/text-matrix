@@ -8,13 +8,13 @@ categories: ["技术笔记"]
 tags: ["reCAPTCHA", "逆向工程", "JavaScript", "反爬虫", "安全研究"]
 ---
 
-# reCAPTCHA逆向工程：Google反爬虫机制的技术剖析
+# reCAPTCHA 逆向工程：Google 反爬虫机制的技术剖析
 
-elelysiox/recaptcha 是一个 reCAPTCHA 逆向工程文档，记录了 Google reCAPTCHA v2/v3 的内部机制。2026-05-22创建，30星。
+elelysiox/recaptcha 是一个 reCAPTCHA 逆向工程文档，记录了 Google reCAPTCHA v2/v3 的内部机制。2026-05-22 创建，30 星。
 
 ## 核心判断
 
-reCAPTCHA 是目前最复杂的浏览器反机器人系统之一。它的防护不靠单一技术，而是多层混淆叠加：代码混淆（AST级）、控制流扁平化、加密字符串池、状态机逃逸、异步生成器链、运行时值加密。每层都可以被单独分析，但组合在一起使得静态分析和 LLM-based 反向工程变得极其困难。
+reCAPTCHA 是目前最复杂的浏览器反机器人系统之一。它的防护不靠单一技术，而是多层混淆叠加：代码混淆（AST 级）、控制流扁平化、加密字符串池、状态机逃逸、异步生成器链、运行时值加密。每层都可以被单独分析，但组合在一起使得静态分析和 LLM-based 反向工程变得极其困难。
 
 ## 混淆技术全景
 
@@ -138,7 +138,7 @@ Z[23](66, 4, 54961, 103)()  // → "addEventListener"
 
 ### 10. 有状态值迭代器
 
-一个带状态迭代器按固定顺序返回运行时对象，调用sequence或超时都会导致状态损坏：
+一个带状态迭代器按固定顺序返回运行时对象，调用 sequence 或超时都会导致状态损坏：
 
 ```javascript
 c()  // → window

@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
 ---
 
-# Antigravity Tools 🚀：专业级AI账号管理与协议代理系统
+# Antigravity Tools 🚀：专业级 AI 账号管理与协议代理系统
 
 ## 📋 学习目标
 
@@ -18,7 +18,7 @@ tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
 - 理解三大协议转换原理（OpenAI / Anthropic / Gemini）
 - 掌握模型路由配置与智能分级策略
 - 完成 Claude Code、OpenCode 等工具的接入配置
-- 了解 Docker 部署与安全加固最佳实践
+- 了解 Docker 部署与安全加固实践建议
 
 ---
 
@@ -118,7 +118,7 @@ docker compose up -d
 ```
 
 **访问地址：**
-- 管理后台: http://localhost:8045
+- 管理后台： http://localhost:8045
 - API Base: http://localhost:8045/v1
 
 **系统要求：**
@@ -337,7 +337,7 @@ brew install --cask --no-quarantine antigravity-tools
 
 ## ✅ 总结
 
-Antigravity Tools 是一个功能完善的 **AI 账号管理与协议代理系统**，其核心价值在于：
+Antigravity Tools 是一个功能完善的 **AI 账号管理与协议代理系统**，其关键价值在于：
 
 1. **一站式管理**：统一管理多个 AI 平台的账号配额
 2. **协议转换**：消除不同厂商间的协议差异，一个端点对接所有服务

@@ -37,7 +37,7 @@ tags: ["Rivet", "Actor", "持久化运行时", "AI Agent", "Rust", "TypeScript",
 
 **官方网站**：https://www.rivet.dev
 
-### 2.2 核心价值主张
+### 2.2 关键价值主张
 
 | 价值 | 说明 |
 |------|------|
@@ -571,7 +571,7 @@ logger.error("Error processing", { error });
 
 ---
 
-## §12 最佳实践
+## §12 实践建议
 
 ### 12.1 Actor 设计原则
 

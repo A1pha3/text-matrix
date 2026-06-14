@@ -19,7 +19,7 @@ tags: ["AI Agent", "Microsoft", "入门教程", "Azure AI Foundry", "Agent Frame
 
 微软用一份开源课程填补了这个空白——[microsoft/ai-agents-for-beginners](https://github.com/microsoft/ai-agents-for-beginners)，一个收录了 **57,904 Stars** 和 **19,892 Forks** 的 MIT 许可证项目。它以 Jupyter Notebook + Python 为载体，基于 Microsoft Agent Framework 和 Azure AI Foundry Agent Service V2，提供了一条从概念到生产的完整学习路径。
 
-本文将从原理分析、架构设计、使用说明、开发扩展四个维度，系统性地解读这份课程的设计思路与核心内容。
+下面从原理分析、架构设计、使用说明、开发扩展四个维度，系统性地解读这份课程的设计思路与核心内容。
 
 ---
 

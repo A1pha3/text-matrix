@@ -16,7 +16,7 @@ tags: ["Material UI", "React", "Material Design", "前端组件库", "CSS-in-JS"
 - 掌握 Material UI 的核心组件体系和高级特性
 - 学会在 React 项目中安装、配置和定制 Material UI
 - 掌握主题定制、CSS-in-JS 和组件变体的高级用法
-- 理解从旧版本（v4/v5）升级到最新版本的最佳实践
+- 理解从旧版本（v4/v5）升级到最新版本的实践建议
 - 学会参与 Material UI 开源贡献的流程
 
 ---
@@ -34,7 +34,7 @@ Material UI 是一个**全面的 React 组件库**，独立实现了 Google 的 
 | GitHub Stars | **98k** |
 | GitHub Forks | **32.7k** |
 | 贡献者 | **3,091** |
-| 被使用数 | **200万+** 仓库 |
+| 被使用数 | **200 万+** 仓库 |
 | 发布版本 | **562** 个 |
 | 最新稳定版 | **v7.3.9** |
 | 最新预发布 | **v9.0.0-beta.1** |

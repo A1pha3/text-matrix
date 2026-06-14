@@ -304,7 +304,7 @@ for path in gm.ckpts.CheckpointPath:
 
 ---
 
-## 九、最佳实践
+## 九、实践建议
 
 ### 9.1 推理优化
 

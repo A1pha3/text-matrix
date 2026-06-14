@@ -173,7 +173,7 @@ Agent 扫描软件代码库，理解：
 - 命令行参数的可行性
 - 输出格式和错误处理
 
-**产出**：Capability Map，列出所有可CLI化的功能。
+**产出**：Capability Map，列出所有可 CLI 化的功能。
 
 ### Phase 2：设计（Design）
 
@@ -181,7 +181,7 @@ Agent 扫描软件代码库，理解：
 
 - **命令分组**：按功能领域组织（如 GIMP 分 layer、filter、export 等组）
 - **状态模型**：如何跟踪项目/会话状态
-- **输出格式**：JSON（Agent友好）+ 人类可读双轨输出
+- **输出格式**：JSON（Agent 友好）+ 人类可读双轨输出
 
 **设计文档**保存在 `HARNESS.md`。
 
@@ -234,8 +234,8 @@ cli-anything-gimp --test
 **测试覆盖**：
 
 - 单元测试：合成数据，验证命令逻辑
-- E2E测试：真实文件和软件，验证集成
-- CLI子进程验证：`which cli-anything-gimp` 确认PATH安装
+- E2E 测试：真实文件和软件，验证集成
+- CLI 子进程验证：`which cli-anything-gimp` 确认 PATH 安装
 
 ### Phase 7：发布（Publish）
 
@@ -270,7 +270,7 @@ twine upload dist/*
 
 **Refine 的行为**：
 
-1. 对比软件完整能力 vs 当前CLI覆盖范围
+1. 对比软件完整能力 vs 当前 CLI 覆盖范围
 2. 识别未覆盖的命令/选项/场景
 3. 实现新命令、测试、文档
 4. 每次运行增量、不破坏已有命令
@@ -281,7 +281,7 @@ twine upload dist/*
 
 ## 🔌 CLI-Hub：AI Agent 的应用商店
 
-CLI-Hub 是 CLI-Anything 的元技能（meta-skill），让 Agent 能够**自主发现和安装**社区构建的CLI。
+CLI-Hub 是 CLI-Anything 的元技能（meta-skill），让 Agent 能够**自主发现和安装**社区构建的 CLI。
 
 ### 安装
 
@@ -327,39 +327,39 @@ commands:
 
 ## 📊 已支持的软件生态
 
-截至2026年4月，CLI-Anything 社区已为以下软件生成CLI：
+截至 2026 年 4 月，CLI-Anything 社区已为以下软件生成 CLI：
 
 | 类别 | 软件 |
 | ---- | ---- |
-| **3D建模** | Blender、FreeCAD、Godot Engine |
+| **3D 建模** | Blender、FreeCAD、Godot Engine |
 | **图像处理** | GIMP、Inkscape、Krita、Darktable |
 | **视频编辑** | Kdenlive、Shotcut、OBS Studio |
 | **办公套件** | LibreOffice |
 | **开发工具** | iTerm2、Jenkins、Gitea、Portainer |
 | **科研工具** | ImageJ、QGIS、ParaView、KiCad |
-| **AI/ML平台** | Stable Diffusion WebUI、ComfyUI、Ollama |
+| **AI/ML 平台** | Stable Diffusion WebUI、ComfyUI、Ollama |
 | **浏览器** | Safari（via safari-mcp） |
 | **游戏引擎** | Godot、s&box |
 | **其他** | Zotero、Obsidian、Draw.io、Zoom |
 
-**总计**：18个主要应用，2269个测试通过，覆盖率在持续增长。
+**总计**：18 个主要应用，2269 个测试通过，覆盖率在持续增长。
 
 ---
 
 ## ⚠️ 常见误区
 
-### 误区1：生成的CLI不如手写的好
+### 误区 1：生成的 CLI 不如手写的好
 
-**实际情况**：生成流水线使用经过18个应用验证的同一套方法论，产出的 CLI 在结构、测试覆盖、文档完整性上都经过质量门禁。手写一个完整 CLI 往往需要数日，生成只需数分钟。
+**实际情况**：生成流水线使用经过 18 个应用验证的同一套方法论，产出的 CLI 在结构、测试覆盖、文档完整性上都经过质量门禁。手写一个完整 CLI 往往需要数日，生成只需数分钟。
 
-### 误区2：只能处理开源软件
+### 误区 2：只能处理开源软件
 
-**实际情况**：CLI-Anything 最擅长处理有源码的软件（分析源码映射API），但也支持：
+**实际情况**：CLI-Anything 最擅长处理有源码的软件（分析源码映射 API），但也支持：
 - GitHub 仓库：`/cli-anything https://github.com/blender/blender`
-- 闭源软件的命令行接口（如果软件暴露CLI）
-- API 文档和SDK代码（生成封装CLI）
+- 闭源软件的命令行接口（如果软件暴露 CLI）
+- API 文档和 SDK 代码（生成封装 CLI）
 
-### 误区3：Refine会破坏已有命令
+### 误区 3：Refine 会破坏已有命令
 
 **实际情况**：Refine 设计为增量、非破坏性。每次运行只添加新命令，不修改已有命令。已有测试持续通过。
 

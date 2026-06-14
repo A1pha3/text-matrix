@@ -526,7 +526,7 @@ multica daemon logs -f
 
 - 你能区分 Runtime、Daemon 和 Agent 的职责。
 - 你知道自托管时为什么必须先设置 MULTICA_APP_URL 和 MULTICA_SERVER_URL，再执行登录。
-- 你知道为什么 Multica 的核心价值不是“替代编码 Agent”，而是“管理编码 Agent”。
+- 你知道为什么 Multica 的关键价值不是“替代编码 Agent”，而是“管理编码 Agent”。
 - 你知道如何查看某个任务的执行历史，而不是只看最终状态。
 - 你知道什么时候该直接用单个 Agent，什么时候该上 Multica。
 

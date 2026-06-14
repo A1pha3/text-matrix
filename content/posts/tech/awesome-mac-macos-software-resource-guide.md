@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["macOS", "Homebrew", "开发工具", "效率工具", "软件"]
 ---
 
-# awesome-mac：17K Stars·macOS软件资源大全·开发者工具/设计/媒体/效率工具·Homebrew/Mac App Store
+# awesome-mac：17K Stars·macOS 软件资源大全·开发者工具/设计/媒体/效率工具·Homebrew/Mac App Store
 
 ## 一，项目概述
 

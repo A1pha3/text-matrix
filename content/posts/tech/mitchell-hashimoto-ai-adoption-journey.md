@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "Agent", "Claude Code", "效率", "开发者工作流"]
 ---
 
-> **原文**：[My AI Adoption Journey](https://mitchellh.com/writing/my-ai-adoption-journey) — Mitchell Hashimoto，2026年2月5日  
+> **原文**：[My AI Adoption Journey](https://mitchellh.com/writing/my-ai-adoption-journey) — Mitchell Hashimoto，2026 年 2 月 5 日  
 > **说明**：本文为全手工撰写（作者本人声明），是关于 AI 编程采纳最真实的一手经验。
 
 ## 前言：工具采纳的三个阶段
@@ -161,4 +161,4 @@ Hashimoto 尝试了一种新模式：每天工作快结束时（大约最后 30 
 
 原文链接：[My AI Adoption Journey – Mitchell Hashimoto](https://mitchellh.com/writing/my-ai-adoption-journey)
 
-🦞 每日08:00自动更新
+🦞 每日 08:00 自动更新

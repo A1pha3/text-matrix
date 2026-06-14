@@ -63,8 +63,8 @@ Hub 支持 pip、npm、brew 等多种安装源，已收录大量公共 CLI。
 
 - GitHub: https://github.com/HKUDS/CLI-Anything
 - CLI-Hub: https://hkuds.github.io/CLI-Anything/
-- 文档: `cli-anything-plugin/HARNESS.md`（方法论 SOP）
-- 中文文档: `README_CN.md`
-- 日语文档: `README_JA.md`
+- 文档： `cli-anything-plugin/HARNESS.md`（方法论 SOP）
+- 中文文档： `README_CN.md`
+- 日语文档： `README_JA.md`
 
 > ⭐ 开源 Apache 2.0，欢迎贡献！

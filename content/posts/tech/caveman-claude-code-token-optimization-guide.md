@@ -5,7 +5,7 @@ title = 'Caveman：用山顶洞人语言砍掉 65% Token 消耗'
 slug = 'caveman-claude-code-token-optimization-guide'
 description = 'caveman 系统性去掉 LLM 输出中的填充词、客套话和犹豫词，Token 消耗降 65% 而技术准确性不变，支持 lite/full/ultra 三种强度级别。'
 categories = ['技术笔记']
-tags = ['AI', 'LLM', 'Token优化', '开发工具']
+tags = ['AI', 'LLM', 'Token 优化', '开发工具']
 +++
 
 # Caveman：用山顶洞人语言砍掉 65% Token 消耗
@@ -254,7 +254,7 @@ caveman 的解决方案（`safeWriteFlag` / `readFlag`）：
 | 级别 | 示例 |
 |------|------|
 | **wenyan-lite** | "組件頻重繪，以每繪新生對象參照故。以 useMemo 包之。" |
-| **wenyan-full** | "物出新參照，致重繪。useMemo Wrap之。" |
+| **wenyan-full** | "物出新參照，致重繪。useMemo Wrap 之。" |
 | **wenyan-ultra** | "新參照→重繪。useMemo Wrap。" |
 
 ### 2.4 caveman-compress：输入端的 Token 压缩
@@ -667,6 +667,6 @@ caveman 适合这些场景：
 
 > **相关资源**
 > - GitHub: [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (50,544 ⭐)
-> - 官网: [getcaveman.dev](https://getcaveman.dev/)
-> - 关联项目: [cavemem](https://github.com/JuliusBrussee/cavemem) · [cavekit](https://github.com/JuliusBrussee/cavekit)
-> - 论文: [Brevity Constraints Reverse Performance Hierarchies (arXiv:2604.00025)](https://arxiv.org/abs/2604.00025)
+> - 官网： [getcaveman.dev](https://getcaveman.dev/)
+> - 关联项目： [cavemem](https://github.com/JuliusBrussee/cavemem) · [cavekit](https://github.com/JuliusBrussee/cavekit)
+> - 论文： [Brevity Constraints Reverse Performance Hierarchies (arXiv:2604.00025)](https://arxiv.org/abs/2604.00025)

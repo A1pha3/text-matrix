@@ -19,7 +19,7 @@ tags: ["AI Agent", "Anthropic", "Skill 扩展", "开放规范", "渐进式披露
 3. **能够创建生产级 Skill**：从零创建一个功能完整的 Skill，包括指令、脚本和参考资料
 4. **理解 Skill 工作原理**：深入理解 discovery、activation、progressive disclosure 的内部机制
 5. **集成到 AI Agent 系统**：学会在任何兼容 Agent Skills 的系统中添加 Skill 支持
-6. **遵循最佳实践**：掌握 Skill 描述优化、评估和迭代的方法论
+6. **遵循实践建议**：掌握 Skill 描述优化、评估和迭代的方法论
 
 ---
 
@@ -167,7 +167,7 @@ name: -pdf                # 不能以连字符开头
 name: pdf--processing     # 不能有连续连字符
 ```
 
-#### description 字段最佳实践
+#### description 字段实践建议
 
 ```yaml
 # ✅ 优秀描述：包含功能+激活时机+关键词
@@ -548,7 +548,7 @@ compatibility: 需要 Docker daemon 运行、docker 和 docker-compose 命令可
 
 ---
 
-## 七、最佳实践
+## 七、实践建议
 
 ### 7.1 Skill 描述优化
 

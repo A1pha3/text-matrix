@@ -10,8 +10,8 @@ tags: ["AI", "视频剪辑", "多智能体", "Gemini", "FFmpeg", "Python", "LLM"
 
 # Agentic Video Editor：用多智能体架构重新定义视频剪辑
 
-> **目标读者**：AI应用开发者、视频内容创作者、对多智能体系统感兴趣的研究者
-> **前置知识**：Python基础、对LLM和AI Agent有基本了解
+> **目标读者**：AI 应用开发者、视频内容创作者、对多智能体系统感兴趣的研究者
+> **前置知识**：Python 基础、对 LLM 和 AI Agent 有基本了解
 > **技术栈**：Python 3.11+ / Google Gemini ADK / FFmpeg
 > **难度定位**：⭐⭐⭐⭐ 专家设计
 
@@ -21,12 +21,12 @@ tags: ["AI", "视频剪辑", "多智能体", "Gemini", "FFmpeg", "Python", "LLM"
 
 完成本篇文章后，你将能够：
 
-1. **理解多智能体视频编辑的核心理念**：为何需要多个专用Agent协作完成复杂任务
-2. **掌握Agentic Video Editor架构**：Director、Trim Refiner、Editor、Reviewer四大Agent的职责与交互
-3. **理解Pipeline流水线系统**：YAML定义的流水线如何实现任务自动化
-4. **掌握Style Template机制**：如何通过结构化模板控制剪辑风格
-5. **理解Reviewer评分循环**：如何通过反馈机制实现自我改进
-6. **能够部署和使用AVE**：基于FFmpeg和Gemini的本地AI视频剪辑工作流
+1. **理解多智能体视频编辑的核心理念**：为何需要多个专用 Agent 协作完成复杂任务
+2. **掌握 Agentic Video Editor 架构**：Director、Trim Refiner、Editor、Reviewer 四大 Agent 的职责与交互
+3. **理解 Pipeline 流水线系统**：YAML 定义的流水线如何实现任务自动化
+4. **掌握 Style Template 机制**：如何通过结构化模板控制剪辑风格
+5. **理解 Reviewer 评分循环**：如何通过反馈机制实现自我改进
+6. **能够部署和使用 AVE**：基于 FFmpeg 和 Gemini 的本地 AI 视频剪辑工作流
 
 ---
 
@@ -39,16 +39,16 @@ tags: ["AI", "视频剪辑", "多智能体", "Gemini", "FFmpeg", "Python", "LLM"
 | 素材浏览 | 人工逐个查看 | 30%-50%工作时间 | 低效、易遗漏 |
 | 镜头选择 | 凭直觉判断 | 主观性强 | 难以规模化 |
 | 脚本撰写 | 人工编写 | 需要专业技能 | 效率低 |
-| 质量评估 | 完成后Review | 返工成本高 | 发现问题太晚 |
+| 质量评估 | 完成后 Review | 返工成本高 | 发现问题太晚 |
 
-### 2.2 AI单智能体的瓶颈
+### 2.2 AI 单智能体的瓶颈
 
-现有的AI视频工具（如Runway、Pika）大多是"一键生成"模式：
+现有的 AI 视频工具（如 Runway、Pika）大多是"一键生成"模式：
 - 用户输入 prompt → AI 生成视频
 - 问题：无法精细控制、不适合"我的素材我做主"
 
 单智能体的问题：
-- 一个Agent负责所有决策 → 决策质量不稳定
+- 一个 Agent 负责所有决策 → 决策质量不稳定
 - 缺乏质量门控 → 成品可能不达标
 - 无法迭代改进 → 没有反馈循环
 
@@ -56,17 +56,17 @@ tags: ["AI", "视频剪辑", "多智能体", "Gemini", "FFmpeg", "Python", "LLM"
 
 **Agentic Video Editor（AVE）** 的核心洞察：
 
-> 将视频剪辑拆分为多个专业子任务，每个子任务由专用Agent负责，通过结构化流水线串联，引入Reviewer作为质量门控，实现"创意简报→成品广告"的端到端自动化。
+> 将视频剪辑拆分为多个专业子任务，每个子任务由专用 Agent 负责，通过结构化流水线串联，引入 Reviewer 作为质量门控，实现"创意简报→成品广告"的端到端自动化。
 
 **关键创新**：
-1. **角色分离**：每个Agent专注单一职责
-2. **流水线编排**：YAML定义的任务流程
-3. **反馈循环**：Reviewer评分驱动重试
-4. **版本管理**：每次重试保存为v1/v2/v3
+1. **角色分离**：每个 Agent 专注单一职责
+2. **流水线编排**：YAML 定义的任务流程
+3. **反馈循环**：Reviewer 评分驱动重试
+4. **版本管理**：每次重试保存为 v1/v2/v3
 
 ---
 
-## §3 核心架构：四大Agent体系
+## §3 核心架构：四大 Agent 体系
 
 ### 3.1 整体架构图
 
@@ -109,7 +109,7 @@ tags: ["AI", "视频剪辑", "多智能体", "Gemini", "FFmpeg", "Python", "LLM"
                       最终成品 + 评分报告
 ```
 
-### 3.2 Director Agent（AI导演）
+### 3.2 Director Agent（AI 导演）
 
 **核心职责**：
 - 理解创意简报（产品、受众、基调、时长）
@@ -148,7 +148,7 @@ class DirectorAgent:
         return edit_plan
 ```
 
-**EditPlan数据结构**：
+**EditPlan 数据结构**：
 
 ```python
 class EditPlan(BaseModel):
@@ -167,7 +167,7 @@ class Shot(BaseModel):
 ### 3.3 Trim Refiner Agent（裁剪优化）
 
 **核心职责**：
-- 接收Director的EditPlan
+- 接收 Director 的 EditPlan
 - 对每个镜头的起止时间进行微调
 - 使剪辑点更精准、节奏更紧凑
 
@@ -205,7 +205,7 @@ class TrimRefinerAgent:
 ### 3.4 Editor Agent（视频渲染）
 
 **核心职责**：
-- 将EditPlan渲染为实际MP4文件
+- 将 EditPlan 渲染为实际 MP4 文件
 - 应用转场、特效、文字叠加
 - 输出符合目标格式的视频
 
@@ -240,7 +240,7 @@ class EditorAgent:
 
 **核心职责**：
 - 观看渲染完成的视频
-- 从5个维度打分（0-1标准化）
+- 从 5 个维度打分（0-1 标准化）
 - 判断是否需要重试
 
 **评分维度**：
@@ -278,11 +278,11 @@ class ReviewerAgent:
 
 ---
 
-## §4 流水线系统：YAML定义的多Agent协作
+## §4 流水线系统：YAML 定义的多 Agent 协作
 
 ### 4.1 流水线架构
 
-Pipeline是AVE的核心编排机制，用YAML定义：
+Pipeline 是 AVE 的核心编排机制，用 YAML 定义：
 
 ```yaml
 # pipelines/ugc-ad.yaml
@@ -329,7 +329,7 @@ steps:
 - 第一次重试：`{name}_v2.mp4`
 - 第二次重试：`{name}_v3.mp4`
 
-### 4.3 自定义Pipeline示例
+### 4.3 自定义 Pipeline 示例
 
 ```yaml
 # pipelines/fast-promo.yaml
@@ -346,21 +346,21 @@ steps:
       max_retries: 1
 ```
 
-**可用的Agent类型**：
+**可用的 Agent 类型**：
 | Agent | 说明 | 必需？ |
 |-------|------|--------|
 | `director` | 镜头选择与脚本生成 | 是 |
 | `trim_refiner` | 裁剪边界优化 | 否 |
-| `editor` | FFmpeg渲染 | 是 |
+| `editor` | FFmpeg 渲染 | 是 |
 | `reviewer` | 质量评分 | 否（但建议保留） |
 
 ---
 
 ## §5 Style Template：结构化的创意控制
 
-### 5.1 Style Template机制
+### 5.1 Style Template 机制
 
-Style Template解决"如何让AI理解我的风格偏好"问题：
+Style Template 解决"如何让 AI 理解我的风格偏好"问题：
 
 ```yaml
 # styles/dtc-testimonial.yaml
@@ -434,9 +434,9 @@ rules:
 
 ## §6 预处理系统：素材理解与索引
 
-### 6.1 Preprocessor职责
+### 6.1 Preprocessor 职责
 
-在Director工作之前，Preprocessor完成素材理解：
+在 Director 工作之前，Preprocessor 完成素材理解：
 
 ```
 原始素材文件夹
@@ -464,7 +464,7 @@ rules:
 footage_index.json
 ```
 
-### 6.2 footage_index.json结构
+### 6.2 footage_index.json 结构
 
 ```json
 {
@@ -494,7 +494,7 @@ footage_index.json
 
 ### 6.3 缓存机制
 
-Preprocessor结果会被缓存：
+Preprocessor 结果会被缓存：
 
 ```python
 # 只有素材变化时才重新处理
@@ -514,8 +514,8 @@ else:
 
 **前置条件**：
 - Python 3.11+
-- FFmpeg（必须安装并在PATH中）
-- Google AI API Key（用于Gemini）
+- FFmpeg（必须安装并在 PATH 中）
+- Google AI API Key（用于 Gemini）
 
 **安装步骤**：
 
@@ -561,7 +561,7 @@ output/
 
 ### 7.3 Web UI（AVE Studio）
 
-实验性功能，仍处于pre-alpha阶段：
+实验性功能，仍处于 pre-alpha 阶段：
 
 ```bash
 # 终端1：启动FastAPI后端
@@ -575,7 +575,7 @@ pnpm install  # 首次需要安装依赖
 pnpm dev --port 3000
 ```
 
-**Web UI功能预览**：
+**Web UI 功能预览**：
 - 项目浏览器（Project Picker）
 - 源视频/节目监视器（Source/Program Monitor）
 - 拖拽式时间线（Drag-and-drop Timeline）
@@ -629,22 +629,22 @@ agentic-video-editor/
 
 | 组件 | 技术选型 | 说明 |
 |------|----------|------|
-| **AI框架** | Google ADK | Agent Development Kit |
+| **AI 框架** | Google ADK | Agent Development Kit |
 | **LLM** | Gemini 2.0 Flash | 多模态理解 |
 | **视频处理** | FFmpeg | 底层渲染 |
-| **视频编辑** | MoviePy | Pythonic封装 |
+| **视频编辑** | MoviePy | Pythonic 封装 |
 | **数据验证** | Pydantic | 类型安全 |
-| **Web后端** | FastAPI | 异步API |
-| **Web前端** | Next.js | React框架 |
-| **项目构建** | uv | 现代化Python包管理 |
+| **Web 后端** | FastAPI | 异步 API |
+| **Web 前端** | Next.js | React 框架 |
+| **项目构建** | uv | 现代化 Python 包管理 |
 
 ---
 
 ## §9 扩展与开发
 
-### 9.1 自定义Agent开发
+### 9.1 自定义 Agent 开发
 
-添加新的Agent只需：
+添加新的 Agent 只需：
 
 ```python
 # src/agents/my_agent.py
@@ -660,7 +660,7 @@ class MyCustomAgent(BaseAgent):
         return result
 ```
 
-### 9.2 Gemini工具函数扩展
+### 9.2 Gemini 工具函数扩展
 
 ```python
 # src/tools/my_tools.py
@@ -677,35 +677,35 @@ def search_footage_by_emotion(footage_index: dict, emotion: str) -> list:
 
 | 集成方向 | 方案 | 场景 |
 |----------|------|------|
-| **素材管理** | 连接Pexels/Unsplash API | 云端素材库 |
-| **自动字幕** | Whisper API集成 | 全球化内容 |
-| **配音** | ElevenLabs API | AI配音生成 |
+| **素材管理** | 连接 Pexels/Unsplash API | 云端素材库 |
+| **自动字幕** | Whisper API 集成 | 全球化内容 |
+| **配音** | ElevenLabs API | AI 配音生成 |
 | **社交发布** | YouTube/TikTok API | 一键发布 |
 
 ---
 
 ## §10 FAQ
 
-**Q1：需要多少费用的API Key？**
-A：使用Gemini 2.0 Flash，价格相对低廉。一次30秒广告视频的典型消耗约$0.1-0.3。
+**Q1：需要多少费用的 API Key？**
+A：使用 Gemini 2.0 Flash，价格相对低廉。一次 30 秒广告视频的典型消耗约$0.1-0.3。
 
 **Q2：支持哪些视频格式输入？**
-A：FFmpeg支持的所有格式（MP4、MOV、AVI、MKV等）。
+A：FFmpeg 支持的所有格式（MP4、MOV、AVI、MKV 等）。
 
 **Q3：可以处理长视频吗？**
-A：可以，但建议素材时长在5分钟内效果最佳。太长的素材会增加处理时间和成本。
+A：可以，但建议素材时长在 5 分钟内效果最佳。太长的素材会增加处理时间和成本。
 
-**Q4：Reviewer的重试次数可以无限吗？**
-A：建议设置2-3次。过多重试会显著增加成本，且收益递减。
+**Q4：Reviewer 的重试次数可以无限吗？**
+A：建议设置 2-3 次。过多重试会显著增加成本，且收益递减。
 
-**Q5：Web UI什么时候能用？**
-A：目前是pre-alpha状态，生产使用建议用CLI。Web UI预计在后续版本完善。
+**Q5：Web UI 什么时候能用？**
+A：目前是 pre-alpha 状态，生产使用建议用 CLI。Web UI 预计在后续版本完善。
 
 ---
 
 ## 相关资源
 
-- **GitHub仓库**：https://github.com/poseljacob/agentic-video-editor
-- **Google ADK文档**：https://google.github.io/adk-docs/
+- **GitHub 仓库**：https://github.com/poseljacob/agentic-video-editor
+- **Google ADK 文档**：https://google.github.io/adk-docs/
 - **Gemini API Key**：https://aistudio.google.com/apikey
-- **FFmpeg官网**：https://ffmpeg.org/
+- **FFmpeg 官网**：https://ffmpeg.org/

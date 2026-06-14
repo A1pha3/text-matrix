@@ -28,7 +28,7 @@ tags: ["AI绘图", "GPT-Image-2", "提示词工程", "图像生成", "OpenAI"]
 
 如果你只想先拿到一个可执行结论，可以先看下面这张表。
 
-| 仓库 | 当前 GitHub 页面显示 | 核心价值 | 最适合先看的场景 |
+| 仓库 | 当前 GitHub 页面显示 | 关键价值 | 最适合先看的场景 |
 | ------ | ------ | ------ | ------ |
 | [EvoLinkAI/awesome-gpt-image-2-prompts](https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts) | 约 11k+ stars，160+ 公开案例 | 精选案例密度高，广告、电商、产品图都比较“能直接参考” | 电商主图、广告 KV、产品摄影、写实人像 |
 | [YouMind-OpenLab/awesome-gpt-image-2](https://github.com/YouMind-OpenLab/awesome-gpt-image-2) | 约 4.1k+ stars，仓库页显示超过 3600 条提示词，支持 17 种语言 | 规模最大，检索与筛选友好，适合先找相似任务 | 找灵感、找同类案例、做多语言检索、快速浏览趋势 |

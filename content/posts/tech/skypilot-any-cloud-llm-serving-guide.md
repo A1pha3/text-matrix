@@ -8,20 +8,20 @@ categories: ["技术笔记"]
 tags: ["LLM", "云服务", "GPU", "成本优化", "Kubernetes"]
 ---
 
-# SkyPilot：9.8K Stars·任意云LLM服务框架·自动故障转移·Spot实例节省70%·1000+任务/天·$10M+成本节省
+# SkyPilot：9.8K Stars·任意云 LLM 服务框架·自动故障转移·Spot 实例节省 70%·1000+任务/天·$10M+成本节省
 
 ## 一，项目概述
 
 ### 1.1 SkyPilot 是什么
 
-**SkyPilot** 是一个**任意云LLM和AI服务框架**，可以在任何云（AWS、GCP、Azure、Lambda、Cloudflare等）上运行LLM、AI模型和批处理任务。
+**SkyPilot** 是一个**任意云 LLM 和 AI 服务框架**，可以在任何云（AWS、GCP、Azure、Lambda、Cloudflare 等）上运行 LLM、AI 模型和批处理任务。
 
 > "SkyPilot: Unified AI & LLM Serving on Any Cloud"
 
-**核心价值**：
+**关键价值**：
 - ☁️ **任意云**：AWS、GCP、Azure、Lambda、Cloudflare 等统一接口
 - 💰 **成本节省**：托管 Spot 实例，节省 70%+ 成本
-- 🔄 **自动故障转移**：某云无可用GPU时自动切换到其他云
+- 🔄 **自动故障转移**：某云无可用 GPU 时自动切换到其他云
 - 🚀 **快速部署**：一行代码启动 LLM 服务
 
 ### 1.2 核心数据
@@ -468,7 +468,7 @@ sky logs my-cluster --job 1
 sky.start.tensorboard(my-cluster, log_dir='~/logs')
 ```
 
-## 七，最佳实践
+## 七，实践建议
 
 ### 7.1 成本优化
 
@@ -520,7 +520,7 @@ python -c "from transformers import AutoModel; AutoModel.from_pretrained('bert-b
 '''
 ```
 
-### 7.3 安全最佳实践
+### 7.3 安全实践建议
 
 ```python
 import sky

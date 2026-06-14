@@ -270,7 +270,7 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 - 把 pitch、研究 note、估值底稿、KYC 缺口表、月结差异说明先起出第一版
 - 把分散在数据终端、文档库、Excel 和规则表里的信息拼到同一条工作流里
-- 用一致的 prompt、skills 和 connectors 把团队的最佳实践固化下来
+- 用一致的 prompt、skills 和 connectors 把团队的实践建议固化下来
 
 它不适合做的事：
 

@@ -8,11 +8,11 @@ categories: ["技术笔记"]
 tags: ["LangChain", "LangGraph", "Agent", "RAG", "大模型"]
 ---
 
-# easy-langent：Datawhale出品LangChain/LangGraph大模型应用开发教程——从入门到精通
+# easy-langent：Datawhale 出品 LangChain/LangGraph 大模型应用开发教程——从入门到精通
 
-> **目标读者**：具备Python基础、想入门大模型应用开发的开发者
-> **预计阅读时间**：60-80分钟
-> **前置知识**：Python基础、了解LLM基本概念
+> **目标读者**：具备 Python 基础、想入门大模型应用开发的开发者
+> **预计阅读时间**：60-80 分钟
+> **前置知识**：Python 基础、了解 LLM 基本概念
 > **项目地址**：[datawhalechina/easy-langent](https://github.com/datawhalechina/easy-langent)
 
 ---
@@ -21,7 +21,7 @@ tags: ["LangChain", "LangGraph", "Agent", "RAG", "大模型"]
 
 ### 一句话定义
 
-**easy-langent**是由Datawhale社区维护的**LangChain/LangGraph大模型应用开发实战教程**，以「langent」（lang + agent）为名，聚焦“从概念到落地”的学习路径，帮助开发者在短时间内掌握基于LangChain和LangGraph构建智能体应用的核心能力。
+**easy-langent**是由 Datawhale 社区维护的**LangChain/LangGraph 大模型应用开发实战教程**，以「langent」（lang + agent）为名，聚焦“从概念到落地”的学习路径，帮助开发者在短时间内掌握基于 LangChain 和 LangGraph 构建智能体应用的核心能力。
 
 ### 核心定位
 
@@ -31,9 +31,9 @@ tags: ["LangChain", "LangGraph", "Agent", "RAG", "大模型"]
 |------|------|------|
 | **框架概念繁杂** | LangChain、LangGraph、LangServe...一堆框架不知从何入手 | 学习效率低，容易放弃 |
 | **实操无从下手** | 看了概念却不知道如何在真实项目中使用 | 眼高手低，无法落地 |
-| **技术与应用脱节** | 会调API但不知道怎么设计完整的AI应用 | 只能做demo，无法做产品 |
+| **技术与应用脱节** | 会调 API 但不知道怎么设计完整的 AI 应用 | 只能做 demo，无法做产品 |
 
-easy-langent的核心目标就是打破这三大壁垒：**让读者在系统掌握智能体核心逻辑的同时，真正学会运用LangChain、LangGraph框架解决实际开发问题**。
+easy-langent 的核心目标就是打破这三大壁垒：**让读者在系统掌握智能体核心逻辑的同时，真正学会运用 LangChain、LangGraph 框架解决实际开发问题**。
 
 ### 学习路径设计
 
@@ -62,18 +62,18 @@ graph LR
 
 | 项目 | 核心技术栈 | 功能亮点 |
 |------|-----------|----------|
-| **狼人杀AI游戏** | LangGraph | 9 AI玩家自动对局、上帝视角观测、完整游戏日志 |
+| **狼人杀 AI 游戏** | LangGraph | 9 AI 玩家自动对局、上帝视角观测、完整游戏日志 |
 | **Agentic RAG** | LangChain + FAISS | 智能检索、动态工具调用、可溯源引用 |
-| **MCPChat** | LangChain + MCP协议 | 流式对话、MCP工具管理、会话历史 |
-| **Data Agent** | LangChain + Pandas | CSV分析、Python代码执行、图表生成 |
+| **MCPChat** | LangChain + MCP 协议 | 流式对话、MCP 工具管理、会话历史 |
+| **Data Agent** | LangChain + Pandas | CSV 分析、Python 代码执行、图表生成 |
 
 ---
 
-## 📝 第一章：LangChain与LangGraph框架认知
+## 📝 第一章：LangChain 与 LangGraph 框架认知
 
 ### 1.1 为什么需要这两个框架
 
-在正式学习前，我们先理解一个核心问题：**为什么需要LangChain和LangGraph？**
+在正式学习前，我们先理解一个核心问题：**为什么需要 LangChain 和 LangGraph？**
 
 考虑一个常见场景——开发一个「智能论文助手」，功能包括总结论文内容、解答论文疑问。如果没有任何框架，你会遇到这些挑战：
 
@@ -100,11 +100,11 @@ graph TD
 2. **流程管控复杂**：多步骤任务的状态流转、错误处理都需要自己实现
 3. **状态维护困难**：中间数据难以保存和传递，导致代码耦合度高
 
-LangChain和LangGraph就是为解决这些痛点而生的工具。
+LangChain 和 LangGraph 就是为解决这些痛点而生的工具。
 
 ### 1.2 LangChain：快速搭建简单到中等复杂度的应用
 
-LangChain的定位是**大模型应用的「基础设施工具箱」**，其核心价值是**降低入门门槛、提高开发效率**。
+LangChain 的定位是**大模型应用的「基础设施工具箱」**，其关键价值是**降低入门门槛、提高开发效率**。
 
 ```mermaid
 graph LR
@@ -133,26 +133,26 @@ graph LR
 
 **为什么分层？**
 
-1. **核心团队更专注**：只需维护langchain-core的稳定性和抽象能力，不必陷入海量第三方API变更
+1. **核心团队更专注**：只需维护 langchain-core 的稳定性和抽象能力，不必陷入海量第三方 API 变更
 2. **社区共建更开放**：任何第三方都可以按规范开发自己的集成包
 3. **开发者更灵活**：按需安装，避免安装一个庞大的单体包
 
 **适用场景**：
 
-- 简单的LLM调用（文本生成、翻译）
-- 基础的RAG应用
+- 简单的 LLM 调用（文本生成、翻译）
+- 基础的 RAG 应用
 - 单步骤的工具调用
 - 快速验证想法（原型开发）
 
 ### 1.3 LangGraph：复杂应用的结构化设计框架
 
-如果说LangChain是「乐高积木」，那LangGraph就是「建筑设计图」。
+如果说 LangChain 是「乐高积木」，那 LangGraph 就是「建筑设计图」。
 
-LangGraph基于LangChain构建，专门处理**多步骤、需要状态管理、复杂流程协作**的场景。其核心价值：
+LangGraph 基于 LangChain 构建，专门处理**多步骤、需要状态管理、复杂流程协作**的场景。其关键价值：
 
 - **支持状态管理**：统一状态对象，跨节点数据共享
 - **支持复杂流程管控**：分支、循环、并行
-- **支持多智能体协作**：多个Agent协同工作
+- **支持多智能体协作**：多个 Agent 协同工作
 
 ```mermaid
 graph TD
@@ -177,12 +177,12 @@ graph TD
 
 - 多步骤流程（论文总结：提取观点→整理逻辑→生成摘要）
 - 需要保存中间结果的场景
-- 多智能体协作（检索Agent + 分析Agent + 协调Agent）
+- 多智能体协作（检索 Agent + 分析 Agent + 协调 Agent）
 - 需要人机交互的流程（某步需要用户确认）
 
 ### 1.4 两个框架的核心关系
 
-**从属关系**：LangGraph不是独立于LangChain的，它是LangChain生态的进阶扩展，依赖LangChain的核心组件。
+**从属关系**：LangGraph 不是独立于 LangChain 的，它是 LangChain 生态的进阶扩展，依赖 LangChain 的核心组件。
 
 **互补关系**：
 
@@ -196,16 +196,16 @@ graph TD
 
 **实战选择建议**：
 
-- 快速搭建原型、任务流程固定 → **选LangChain**
-- 任务流程复杂（分支/循环/并行）、需要状态追溯、生产级稳定性 → **选LangGraph**
+- 快速搭建原型、任务流程固定 → **选 LangChain**
+- 任务流程复杂（分支/循环/并行）、需要状态追溯、生产级稳定性 → **选 LangGraph**
 
 ---
 
-## 🏛️ 第二章：LangGraph核心概念详解
+## 🏛️ 第二章：LangGraph 核心概念详解
 
 ### 2.1 状态（State）：工作流的「共享黑板」
 
-状态是LangGraph工作流的**数据中枢**，所有节点的输入、输出都围绕它展开。
+状态是 LangGraph 工作流的**数据中枢**，所有节点的输入、输出都围绕它展开。
 
 ```mermaid
 graph LR
@@ -223,7 +223,7 @@ graph LR
 
 #### 状态定义规范
 
-LangGraph 1.0+推荐使用Python的TypedDict定义状态结构：
+LangGraph 1.0+推荐使用 Python 的 TypedDict 定义状态结构：
 
 ```python
 from typing import TypedDict, NotRequired
@@ -243,7 +243,7 @@ class WorkflowState(TypedDict):
 
 #### 状态传递机制
 
-LangGraph采用「**不可变更新**」原则：
+LangGraph 采用「**不可变更新**」原则：
 
 ```mermaid
 sequenceDiagram
@@ -311,8 +311,8 @@ classDiagram
 
 | 节点类型 | 职责 | 示例 |
 |----------|------|------|
-| **LLM调用节点** | 调用大模型生成内容 | 根据用户查询生成回答 |
-| **工具调用节点** | 调用外部工具 | Elasticsearch检索、天气API |
+| **LLM 调用节点** | 调用大模型生成内容 | 根据用户查询生成回答 |
+| **工具调用节点** | 调用外部工具 | Elasticsearch 检索、天气 API |
 | **数据处理节点** | 数据转换、校验、格式化 | 格式化输出、结果校验 |
 
 ```python
@@ -351,7 +351,7 @@ graph TD
 
 | 边类型 | 说明 | 使用场景 |
 |--------|------|----------|
-| **普通边** | 无条件执行，节点A完成后必然执行节点B | 线性流程 |
+| **普通边** | 无条件执行，节点 A 完成后必然执行节点 B | 线性流程 |
 | **条件边** | 根据条件判断选择下一个节点 | 分支流程 |
 | **循环边** | 满足条件时返回之前的节点 | 迭代流程 |
 
@@ -471,11 +471,11 @@ print(result["final_answer"])
 
 ---
 
-## 🔧 第三章：LangChain核心组件实操
+## 🔧 第三章：LangChain 核心组件实操
 
 ### 3.1 模型调用（ChatModel）
 
-LangChain封装的统一模型调用接口，支持OpenAI、DeepSeek、Claude等多种模型：
+LangChain 封装的统一模型调用接口，支持 OpenAI、DeepSeek、Claude 等多种模型：
 
 ```python
 from langchain_openai import ChatOpenAI
@@ -592,9 +592,9 @@ llm_with_tools = llm.bind_tools(tools)
 
 ## 🚀 第四章：实战项目架构分析
 
-### 4.1 狼人杀AI游戏（Werewolf Game AI）
+### 4.1 狼人杀 AI 游戏（Werewolf Game AI）
 
-基于LangGraph构建的9人狼人杀AI对局系统，是教程的综合实战项目。
+基于 LangGraph 构建的 9 人狼人杀 AI 对局系统，是教程的综合实战项目。
 
 **项目架构**：
 
@@ -637,11 +637,11 @@ class WerewolfState(TypedDict):
 
 1. **上帝视角模式**：用户作为观察者，不参与游戏操作，只控制开始/投票/下一轮
 2. **随机身份分配**：每局游戏角色随机生成，增加可玩性
-3. **完整日志记录**：JSON格式存储所有对局数据，便于复盘分析
+3. **完整日志记录**：JSON 格式存储所有对局数据，便于复盘分析
 
-### 4.2 Agentic RAG系统
+### 4.2 Agentic RAG 系统
 
-基于LangChain 1.1和FAISS的智能检索增强生成系统。
+基于 LangChain 1.1 和 FAISS 的智能检索增强生成系统。
 
 **技术架构**：
 
@@ -661,18 +661,18 @@ graph LR
 
 **双层文档切分策略**：
 
-1. **Markdown章节识别**：按`#`标题切分，保留语义完整性
+1. **Markdown 章节识别**：按`#`标题切分，保留语义完整性
 2. **递归字符切分**：对长章节进一步切分，兼顾检索精度
 
-**Agentic特性**：
+**Agentic 特性**：
 
-- **动态工具选择**：Agent根据查询决定调用哪些工具
+- **动态工具选择**：Agent 根据查询决定调用哪些工具
 - **可溯源引用**：返回`content_and_artifact`，前端展示来源和相关性分数
-- **动态System Prompt**：根据知识库元数据自动组装场景化提示词
+- **动态 System Prompt**：根据知识库元数据自动组装场景化提示词
 
-### 4.3 Data Agent数据分析助手
+### 4.3 Data Agent 数据分析助手
 
-基于LangChain和Pandas的AI数据分析应用，支持CSV上传和对话式分析。
+基于 LangChain 和 Pandas 的 AI 数据分析应用，支持 CSV 上传和对话式分析。
 
 **核心能力**：
 
@@ -697,15 +697,15 @@ graph TD
 
 | 工具 | 功能 |
 |------|------|
-| `python_executor` | 安全执行用户生成的Python代码 |
-| `data_visualizer` | 生成Matplotlib/Seaborn图表 |
+| `python_executor` | 安全执行用户生成的 Python 代码 |
+| `data_visualizer` | 生成 Matplotlib/Seaborn 图表 |
 | `correlation_calculator` | 计算变量间相关系数 |
 
 ---
 
-## 🧠 第五章：设计原则与最佳实践
+## 🧠 第五章：设计原则与实践建议
 
-### 5.1 LangChain vs LangGraph决策树
+### 5.1 LangChain vs LangGraph 决策树
 
 ```mermaid
 graph TD
@@ -722,7 +722,7 @@ graph TD
     G --> J["复杂生产级"]
 ```
 
-### 5.2 状态设计最佳实践
+### 5.2 状态设计实践建议
 
 **好的状态设计**：
 
@@ -832,41 +832,41 @@ graph TD
 
 | 资源 | 类型 | 链接 |
 |------|------|------|
-| LangChain官方文档 | 官方 | https://python.langchain.com/ |
-| LangGraph官方文档 | 官方 | https://langchain-ai.github.io/langgraph/ |
+| LangChain 官方文档 | 官方 | https://python.langchain.com/ |
+| LangGraph 官方文档 | 官方 | https://langchain-ai.github.io/langgraph/ |
 | Happy-LLM | 前置课程 | datawhalechina/happy-llm |
 | Hello-Agents | 前置课程 | datawhalechina/hello-agents |
 
 ### 6.3 下一步实践建议
 
-1. **夯实基础**：完成教程前五章，理解LangChain核心组件
-2. **深入原理**：重点学习第六章LangGraph状态机设计
-3. **实战项目**：选择一个配套项目（如狼人杀AI）进行二次开发
+1. **夯实基础**：完成教程前五章，理解 LangChain 核心组件
+2. **深入原理**：重点学习第六章 LangGraph 状态机设计
+3. **实战项目**：选择一个配套项目（如狼人杀 AI）进行二次开发
 4. **持续迭代**：将所学应用到实际项目中，边做边学
 
 ---
 
 ## 📋 总结
 
-easy-langent作为Datawhale出品的LangChain/LangGraph学习教程，具有以下特点：
+easy-langent 作为 Datawhale 出品的 LangChain/LangGraph 学习教程，具有以下特点：
 
 | 维度 | 评价 |
 |------|------|
 | **内容质量** | ⭐⭐⭐⭐⭐ 系统全面，从基础到实战 |
 | **学习路径** | ⭐⭐⭐⭐⭐ 循序渐进，环环相扣 |
-| **实战项目** | ⭐⭐⭐⭐⭐ 4个完整项目，覆盖主流场景 |
-| **社区支持** | ⭐⭐⭐⭐ Datawhale背书，持续更新 |
-| **适用人群** | 具备Python基础的AI应用开发者 |
+| **实战项目** | ⭐⭐⭐⭐⭐ 4 个完整项目，覆盖主流场景 |
+| **社区支持** | ⭐⭐⭐⭐ Datawhale 背书，持续更新 |
+| **适用人群** | 具备 Python 基础的 AI 应用开发者 |
 
 **核心收获**：
 
-1. **理解LangChain和LangGraph的定位差异**：前者适合简单快速开发，后者适合复杂生产级应用
-2. **掌握LangGraph三大核心概念**：状态（State）、节点（Nodes）、边（Edges）
+1. **理解 LangChain 和 LangGraph 的定位差异**：前者适合简单快速开发，后者适合复杂生产级应用
+2. **掌握 LangGraph 三大核心概念**：状态（State）、节点（Nodes）、边（Edges）
 3. **学会设计智能体工作流**：状态传递、节点编排、条件分支、循环迭代
-4. **具备实战能力**：能够独立完成RAG、数据分析、多智能体协作等实际项目
+4. **具备实战能力**：能够独立完成 RAG、数据分析、多智能体协作等实际项目
 
 ---
 
-**🦞 每日08:00自动更新**
+**🦞 每日 08:00 自动更新**
 
 **原文**：https://github.com/datawhalechina/easy-langent

@@ -118,7 +118,7 @@ build-your-own-x 的学习方式：
 | 项目 | Stars | 语言 | 难度 | 核心收获 |
 |------|-------|------|------|----------|
 | **Build your own React** | 15k+ | JavaScript | ⭐⭐⭐ | 虚拟 DOM diff 算法、Fiber 架构 |
-| **Build your own Redux** | 10k+ | JavaScript | ⭐⭐⭐ | 状态管理、纯函数Reducer、中间件 |
+| **Build your own Redux** | 10k+ | JavaScript | ⭐⭐⭐ | 状态管理、纯函数 Reducer、中间件 |
 | **Build your own Webpack** | 18k+ | JavaScript | ⭐⭐⭐ | 模块打包、Loader/Plugin 机制 |
 | **Build your own Vue** | 8k+ | JavaScript | ⭐⭐⭐ | 响应式原理、虚拟 DOM、模板编译 |
 
@@ -586,9 +586,9 @@ class BitTorrentClient:
 
 ### 6.3 关键实现要点
 
-**1. B编码解析**
+**1. B 编码解析**
 
-BitTorrent 使用 B编码（Bencode）格式：
+BitTorrent 使用 B 编码（Bencode）格式：
 ```
 字符串：4:spam → "spam"
 整数： i3e    → 3

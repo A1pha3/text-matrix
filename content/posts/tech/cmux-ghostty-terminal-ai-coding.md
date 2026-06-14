@@ -5,11 +5,11 @@ title = 'cmux：Ghostty 内核 macOS 终端，AI 编程助手专属分屏'
 slug = 'cmux-ghostty-terminal-ai-coding'
 description = 'cmux 是专为 AI 编程助手打造的终端增强工具，基于 Ghostty 内核，提供分屏、通知等 macOS 专属功能，让 AI Agent 与终端交互更流畅。'
 categories = ['技术笔记']
-tags = ['终端', 'macOS', 'AI编程', '开发工具']
+tags = ['终端', 'macOS', 'AI 编程', '开发工具']
 +++
-# cmux：Ghostty内核macOS终端，AI编程助手专属分屏+通知
+# cmux：Ghostty 内核 macOS 终端，AI 编程助手专属分屏+通知
 
-> 当终端开始理解AI工作流，效率不只是提升一点。
+> 当终端开始理解 AI 工作流，效率不只是提升一点。
 
 ## 📌 一句话概括
 
@@ -78,8 +78,8 @@ make build && cmux-notify "构建完成！"
 ## 🔗 相关链接
 
 - GitHub: https://github.com/manaflow-ai/cmux
-- 官网: https://manaflow.ai/cmux
+- 官网： https://manaflow.ai/cmux
 
 ---
 
-*Tags: #终端 #macOS #Ghostty #AI编程 #分屏 #效率工具*
+*Tags: #终端 #macOS #Ghostty #AI 编程 #分屏 #效率工具*

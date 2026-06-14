@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Git", "Rust", "语法高亮", "分页器", "终端"]
 ---
 
-# Delta：30.1K Stars·Git语法高亮分页器·Rust高性能·语法高亮主题·Side-by-Side对比
+# Delta：30.1K Stars·Git 语法高亮分页器·Rust 高性能·语法高亮主题·Side-by-Side 对比
 
 ## 一、项目概述
 
@@ -44,7 +44,7 @@ tags: ["Git", "Rust", "语法高亮", "分页器", "终端"]
 | 特性 | 说明 |
 |------|------|
 | ✅ **语法高亮** | 与 bat 相同主题 |
-| ✅ **词级别Diff** | Levenshtein 编辑推断 |
+| ✅ **词级别 Diff** | Levenshtein 编辑推断 |
 | ✅ **Side-by-Side** | 双栏对比视图 |
 | ✅ **行号** | 代码行号导航 |
 | ✅ **导航** | n/N 键跳转文件 |
@@ -330,7 +330,7 @@ export DELTA_CACHE_DIR=~/.cache/delta
 | diff-highlight | ❌ | ❌ | ❌ | 🐢 Perl |
 | bat | ✅ | ❌ | ❌ | ⚡ |
 
-## 十、最佳实践
+## 十、实践建议
 
 ### 10.1 完整配置示例
 

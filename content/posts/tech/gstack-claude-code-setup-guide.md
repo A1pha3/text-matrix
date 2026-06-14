@@ -75,7 +75,7 @@ gstack 的 CLI 和 Server 均采用 Bun 构建。选择 Bun 有四个原因：
 
 **第一，编译为独立二进制文件。** `bun build --compile` 输出一个 ~58MB 的可执行文件，运行时不依赖 `node_modules`，不依赖 npx，不修改 PATH。这对于安装到 `~/.claude/skills/` 这种用户目录的工具来说，非常重要。
 
-**第二，原生 SQLite 支持。** 浏览器 Cookie  decryption需要直接读取 Chromium 的 SQLite 数据库。Bun 内置 `new Database()`，无需 `better-sqlite3`，无需 native addon 编译，没有跨平台编译的痛苦。
+**第二，原生 SQLite 支持。** 浏览器 Cookie  decryption 需要直接读取 Chromium 的 SQLite 数据库。Bun 内置 `new Database()`，无需 `better-sqlite3`，无需 native addon 编译，没有跨平台编译的痛苦。
 
 **第三，原生 TypeScript 开发。** 服务器代码以 `bun run server.ts` 运行，开发时无需编译步骤。
 

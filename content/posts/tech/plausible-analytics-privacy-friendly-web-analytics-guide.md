@@ -15,7 +15,7 @@ slug: plausible-analytics-privacy-friendly-web-analytics-guide
 
 在数据隐私日益受到关注的今天，网站分析领域正在经历一场范式 shift。Google Analytics 因其复杂的隐私政策、数据收集范围过宽以及严格的 GDPR 合规要求，正在被越来越多的开发者和企业弃用。**Plausible Analytics** 作为一款以隐私为核心设计的开源网站统计平台，凭借其轻量、简洁、合规的特性，迅速成为自托管网站分析的主流选择。
 
-本文将从入门到精通，全面解析 Plausible Analytics 的架构理念、核心功能、安装部署、配置调优，以及它与 Google Analytics 的深度对比，帮助你在项目中做出明智的分析平台选型决策。
+下面从入门到精通，全面解析 Plausible Analytics 的架构理念、核心功能、安装部署、配置调优，以及它与 Google Analytics 的深度对比，帮助你在项目中做出明智的分析平台选型决策。
 
 ---
 

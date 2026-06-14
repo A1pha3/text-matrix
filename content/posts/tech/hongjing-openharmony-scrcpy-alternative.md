@@ -50,7 +50,7 @@ tags: ["OpenHarmony", "Flutter", "投屏", "调试工具", "Scrcpy", "H.264"]
 
 ### 技术选型说明
 
-Flutter 的跨平台能力在这里发挥了作用——桌面端只需写一次，就能覆盖 macOS 和 Windows（Linux 规划中）。H.264 硬件编解码的思路也保证了低延迟：设备端用硬件编码避免 CPU 压力，PC 端同样用平台原生硬件解码来保证流畅播放。`hdc fport` 端口转发是 OpenHarmony 官方工具提供的ADB-like 能力，项目不需要自己实现 USB/网络传输层。
+Flutter 的跨平台能力在这里发挥了作用——桌面端只需写一次，就能覆盖 macOS 和 Windows（Linux 规划中）。H.264 硬件编解码的思路也保证了低延迟：设备端用硬件编码避免 CPU 压力，PC 端同样用平台原生硬件解码来保证流畅播放。`hdc fport` 端口转发是 OpenHarmony 官方工具提供的 ADB-like 能力，项目不需要自己实现 USB/网络传输层。
 
 ## 支持平台
 

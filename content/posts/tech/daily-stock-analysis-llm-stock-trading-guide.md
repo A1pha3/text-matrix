@@ -111,7 +111,7 @@ flowchart TB
 | 数据源挂了就报错退出 | 多数据源降级：AkShare 挂了自动切 Baostock，Yahoo Finance 超时切 Longbridge。单数据源失败不影响其他股票 |
 | 非交易日也跑，输出空报告 | 逐市场交易日历检查，自动跳过休市股票。A/H/US 三市场混配时，各自独立判断 |
 | Prompt 输出不稳定，偶尔丢字段 | 结构化 JSON 约束 + 完整性校验 + 重试机制。缺失字段用占位值补全，保证推送不中断 |
-| 推送渠道各自适配，格式混乱 | 统一消息抽象层，飞书/企微/Telegram/Discord/Slack/邮件/PushPlus/Server酱/ntfy/Gotify/自定义 Webhook 共享同一套渲染管线 |
+| 推送渠道各自适配，格式混乱 | 统一消息抽象层，飞书/企微/Telegram/Discord/Slack/邮件/PushPlus/Server 酱/ntfy/Gotify/自定义 Webhook 共享同一套渲染管线 |
 | 没有历史记录，无法复盘 | 每次分析结果写入 SQLite 数据库，Web 工作台可回溯历史报告、比较信号变化 |
 | 回测靠 Excel 手动拉 | 内建回测框架，对历史分析结果做评估，输出胜率、盈亏比、最大回撤 |
 
@@ -331,7 +331,7 @@ Agent 的底层是一个有状态的多轮对话系统：
 | Slack | Bot / Webhook | Bot 模式支持图片上传 |
 | 邮件 | HTML + PDF 附件 | 支持分组邮箱、合并推送 |
 | PushPlus | 纯文本 | 国内推送服务 |
-| Server酱³ | 纯文本 | 手机 APP 推送 |
+| Server 酱³ | 纯文本 | 手机 APP 推送 |
 | AstrBot | Webhook | 带 Bearer Token 认证 |
 | ntfy | HTTP | 自建推送服务 |
 | Gotify | HTTP | 自建推送服务 |

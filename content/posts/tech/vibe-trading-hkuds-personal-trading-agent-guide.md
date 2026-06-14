@@ -200,7 +200,7 @@ Robinhood 是**实盘**支持的代表。它的安全设计是**"显式承诺 + 
 
 ## 典型场景
 
-### 场景 A：A股 quant researcher
+### 场景 A：A 股 quant researcher
 
 ```bash
 # 1. bench 整个 191 个 GTJA 因子在 CSI300 的有效性

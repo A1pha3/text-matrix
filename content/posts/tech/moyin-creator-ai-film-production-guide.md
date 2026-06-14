@@ -8,13 +8,13 @@ categories: ["技术笔记"]
 tags: ["Moyin Creator", "AI影视", "视频生成", "Seedance", "角色一致性", "分镜系统", "批量化生产"]
 ---
 
-# 魔因漫创 Moyin Creator：AI影视生产级工具的完整技术指南
+# 魔因漫创 Moyin Creator：AI 影视生产级工具的完整技术指南
 
 ## §1 项目概述
 
 ### 1.1 核心定位
 
-**魔因漫创**是一款面向AI影视创作者的生产级工具，logo为一只卡通狐狸，寓意"魔因"（Magic Factor）。
+**魔因漫创**是一款面向 AI 影视创作者的生产级工具，logo 为一只卡通狐狸，寓意"魔因"（Magic Factor）。
 
 > 🎬 AI 影视生产级工具 · 支持 Seedance 2.0 · 剧本到成片全流程批量化
 
@@ -40,7 +40,7 @@ tags: ["Moyin Creator", "AI影视", "视频生成", "Seedance", "角色一致性
 | 维度 | 魔因漫创 | Runway | Pika | Stable Video |
 |------|----------|--------|------|--------------|
 | **剧本解析** | ✅ 智能拆解 | ❌ | ❌ | ❌ |
-| **角色一致性** | ✅ 6层锚点 | ⚠️ 有限 | ⚠️ 有限 | ❌ |
+| **角色一致性** | ✅ 6 层锚点 | ⚠️ 有限 | ⚠️ 有限 | ❌ |
 | **批量化生产** | ✅ 全链路 | ❌ | ❌ | ❌ |
 | **分镜系统** | ✅ 专业级 | ❌ | ❌ | ❌ |
 | **多模态输入** | ✅ 图文音视频 | ✅ | ✅ | ⚠️ |
@@ -54,12 +54,12 @@ tags: ["Moyin Creator", "AI影视", "视频生成", "Seedance", "角色一致性
 | **前端框架** | React 18 + TypeScript |
 | **构建工具** | electron-vite (Vite 5) |
 | **状态管理** | Zustand 5 |
-| **UI组件** | Radix UI + Tailwind CSS 4 |
-| **AI核心** | @opencut/ai-core（提示词编译、角色圣经、任务轮询） |
+| **UI 组件** | Radix UI + Tailwind CSS 4 |
+| **AI 核心** | @opencut/ai-core（提示词编译、角色圣经、任务轮询） |
 
 ## §2 五大功能模块详解
 
-### 2.1 S级板块 — Seedance 2.0 多模态创作
+### 2.1 S 级板块 — Seedance 2.0 多模态创作
 
 **核心能力**：
 
@@ -69,7 +69,7 @@ tags: ["Moyin Creator", "AI影视", "视频生成", "Seedance", "角色一致性
 | **多模态引用** | @Image/@Video/@Audio 角色参考图、场景图、首帧图自动收集 |
 | **三层融合提示词** | 动作 + 镜头语言 + 对白/唇形同步 |
 | **首帧图网格拼接** | N×N 策略自动拼接 |
-| **参数校验** | Seedance 2.0 ≤9图 + ≤3视频 + ≤3音频，prompt≤5000字符 |
+| **参数校验** | Seedance 2.0 ≤9 图 + ≤3 视频 + ≤3 音频，prompt≤5000 字符 |
 
 **技术流程**：
 
@@ -114,7 +114,7 @@ tags: ["Moyin Creator", "AI影视", "视频生成", "Seedance", "角色一致性
 
 ### 2.3 角色一致性系统
 
-**6层身份锚点架构**：
+**6 层身份锚点架构**：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -234,16 +234,16 @@ moyin-creator/
 └── scripts/                  # 工具脚本
 ```
 
-### 3.2 AI核心引擎 @opencut/ai-core
+### 3.2 AI 核心引擎 @opencut/ai-core
 
 **核心职责**：
 
 | 职责 | 说明 |
 |------|------|
-| **提示词编译** | 将场景描述转换为AI模型可理解的提示词 |
+| **提示词编译** | 将场景描述转换为 AI 模型可理解的提示词 |
 | **角色圣经管理** | 存储和加载角色一致性参数 |
-| **任务轮询** | 监控AI生成任务状态，自动重试 |
-| **多供应商调度** | API Key轮询、负载均衡 |
+| **任务轮询** | 监控 AI 生成任务状态，自动重试 |
+| **多供应商调度** | API Key 轮询、负载均衡 |
 
 ### 3.3 状态管理 Zustand 5
 
@@ -336,18 +336,18 @@ interface TaskQueue {
 }
 ```
 
-## §5 多供应商AI调度
+## §5 多供应商 AI 调度
 
-### 5.1 支持的AI服务商
+### 5.1 支持的 AI 服务商
 
 | 类型 | 支持的服务商 |
 |------|-------------|
 | **图像生成** | Midjourney, DALL-E, Stable Diffusion, Firefly |
 | **视频生成** | Seedance 2.0, Pika, Runway, Sora |
 | **音频生成** | ElevenLabs, Azure TTS |
-| **GPT模型** | OpenAI GPT-4, Claude, Gemini |
+| **GPT 模型** | OpenAI GPT-4, Claude, Gemini |
 
-### 5.2 API Key轮询负载均衡
+### 5.2 API Key 轮询负载均衡
 
 ```typescript
 interface AIRouter {
@@ -435,7 +435,7 @@ npx electron-vite build
 - [ ] 获得闭源使用授权
 ```
 
-## §8 最佳实践
+## §8 实践建议
 
 ### 8.1 角色一致性维护
 
@@ -486,22 +486,22 @@ const batchSubmit = async (scenes: Scene[]) => {
 [主体描述] + [场景环境] + [镜头语言] + [情绪氛围] + [风格标签]
 
 ### 示例
-人物: young Chinese woman in traditional martial arts costume
-场景: moonlight, bamboo forest, misty atmosphere
-镜头: medium shot, slight low angle, gentle push-in
-情绪: nostalgic, serene, longing
-风格: cinematic, 4K, wuxia fantasy aesthetic
+人物： young Chinese woman in traditional martial arts costume
+场景： moonlight, bamboo forest, misty atmosphere
+镜头： medium shot, slight low angle, gentle push-in
+情绪： nostalgic, serene, longing
+风格： cinematic, 4K, wuxia fantasy aesthetic
 ```
 
 ## §9 总结
 
-魔因漫创作为AI影视生产级工具，提供了：
+魔因漫创作为 AI 影视生产级工具，提供了：
 
 - ✅ **完整创作链路**：从剧本到成片的端到端自动化
-- ✅ **角色一致性**：6层身份锚点确保角色外观统一
+- ✅ **角色一致性**：6 层身份锚点确保角色外观统一
 - ✅ **专业分镜系统**：电影级摄影参数支持
 - ✅ **批量化生产**：多任务并行队列 + 自动重试
-- ✅ **多供应商调度**：API Key轮询 + 熔断器保护
+- ✅ **多供应商调度**：API Key 轮询 + 熔断器保护
 - ✅ **开源可扩展**：AGPL-3.0 + 商业许可双模式
 
 **适用场景**：

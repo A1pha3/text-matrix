@@ -5,7 +5,7 @@ title = 'x1xhlol/system-prompts-and-models-of-ai-tools 深度导读：30+ 主流
 slug = 'x1xhlol-system-prompts-ai-tools-leak-archive'
 description = 'x1xhlol/system-prompts-and-models-of-ai-tools 是 2026-06 GitHub 日榜上最“特殊”的项目——它没有可运行的代码，而是把 Claude Code、Cursor、Devin、Lovable、Replit、Windsurf、Trae、Manus 等 30+ 主流 AI 编程/Agent 产品的 system prompt、Tools JSON、Agent Loop 原样归档，star 数突破 13.9 万，是观察 AI 编程工具设计演化的最佳资料库。'
 categories = ['技术笔记']
-tags = ['system-prompt', 'AI编程工具', 'Agent', 'Claude Code', 'Cursor', 'Devin', 'Lovable', '资源集合', 'prompt-engineering', '开源']
+tags = ['system-prompt', 'AI 编程工具', 'Agent', 'Claude Code', 'Cursor', 'Devin', 'Lovable', '资源集合', 'prompt-engineering', '开源']
 +++
 
 # x1xhlol/system-prompts-and-models-of-ai-tools 深度导读：30+ 主流 AI 编程工具的 system prompt 与工具定义大合集

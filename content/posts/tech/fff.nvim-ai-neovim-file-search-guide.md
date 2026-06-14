@@ -537,7 +537,7 @@ require('fff').live_grep({ query = "search term" })
 
 ## 9. 总结
 
-FFF.nvim 是一个**专注于文件搜索的极致工具**，它的核心价值在于：
+FFF.nvim 是一个**专注于文件搜索的极致工具**，它的关键价值在于：
 
 **为什么选择 FFF：**
 

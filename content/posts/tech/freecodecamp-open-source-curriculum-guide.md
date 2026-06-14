@@ -34,7 +34,7 @@ tags: ["freeCodeCamp", "编程学习", "Web开发", "全栈", "开源"]
 
 ### 1.1 什么是 freeCodeCamp？
 
-freeCodeCamp（[freeCodeCamp/freeCodeCamp](https://github.com/freeCodeCamp/freeCodeCamp)）是全球最大的免费编程学习开源项目，由 **donor-supported 501(c)(3) charity**（捐赠者支持的美国501(c)(3)慈善机构）运营。
+freeCodeCamp（[freeCodeCamp/freeCodeCamp](https://github.com/freeCodeCamp/freeCodeCamp)）是全球最大的免费编程学习开源项目，由 **donor-supported 501(c)(3) charity**（捐赠者支持的美国 501(c)(3)慈善机构）运营。
 
 **核心使命**：帮助数百万忙碌的成年人转型进入科技行业。
 
@@ -580,7 +580,7 @@ freeCodeCamp 是编程学习领域的标杆项目，它的价值在于：
 |------|------|
 | 🎓 **完全免费** | 一切皆免费，无隐藏收费 |
 | 🏆 **权威认证** | 获得可验证的技能证书 |
-| 💼 **就业导向** | 10万+ 学员成功入职 |
+| 💼 **就业导向** | 10 万+ 学员成功入职 |
 | 👥 **庞大社区** | Discord/论坛/YouTube 全面覆盖 |
 | 🔄 **持续更新** | 5,000+ 贡献者维护 |
 | 🌍 **多语言支持** | 课程支持多语言翻译 |

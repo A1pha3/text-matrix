@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Cloudflare", "邮箱", "Rust", "WASM", "AI"]
 ---
 
-# Cloudflare 临时邮箱：8.3K Stars·零成本临时邮件服务·Rust WASM解析·AI智能识别
+# Cloudflare 临时邮箱：8.3K Stars·零成本临时邮件服务·Rust WASM 解析·AI 智能识别
 
 ## 一、项目概述
 
@@ -431,7 +431,7 @@ docker compose up
 docker run -p 8080:8080 cloudflare_temp_email
 ```
 
-## 十四、最佳实践
+## 十四、实践建议
 
 ### 14.1 部署建议
 

@@ -318,5 +318,5 @@ restic 在 README 里没有给出统一 benchmark 数字——这是有意的，
 **延伸阅读**：
 
 - [restic 官方文档](https://restic.readthedocs.io/en/latest/)：设计、命令参考、协议规范的权威来源。
-- [restic Design 文档（仓库内 `doc/Design.md`）](https://github.com/restic/restic/blob/master/doc/Design.md)：包结构、数据流、加密细节的源头。
+- [restic Design 文档（仓库内  PROTECTED_113 ）](https://github.com/restic/restic/blob/master/doc/Design.md)：包结构、数据流、加密细节的源头。
 - [restic/rest-server](https://github.com/restic/rest-server)：与后端协议对应的独立 server 实现，可以从零跑通一遍「client + 自托管 server」最小链路。

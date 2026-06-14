@@ -36,7 +36,7 @@ tags: ["VoltAgent", "Agent Skills", "Claude Code", "Codex", "GitHub Copilot", "A
 2. 区分 README 的 “1100+” 与 officialskills.sh 首页可见的约 581 条目分别代表什么。
 3. 看懂“兼容多工具”真正指向的是 skills 路径约定，而不是功能完全对等。
 4. 用一套简单框架判断某个 skill 是否值得装、是否适合当前任务。
-5. 知道为什么 skill 的核心价值不是“提供信息”，而是“约束 agent 的工作方式”。
+5. 知道为什么 skill 的关键价值不是“提供信息”，而是“约束 agent 的工作方式”。
 
 ### 2.1 阅读指引
 
@@ -152,7 +152,7 @@ README 提供了多种 AI 编码助手的 skills 路径，例如：
 | Anthropic | 文档、PDF、PPT、前端设计、MCP 构建 | `anthropics/docx`、`anthropics/pptx`、`anthropics/pdf`、`anthropics/mcp-builder` |
 | OpenAI | 浏览器自动化、Figma、部署、文档、Sentry | `openai/playwright`、`openai/figma`、`openai/vercel-deploy` |
 | Cloudflare | Workers、Durable Objects、Wrangler、Web 性能 | `cloudflare/agents-sdk`、`cloudflare/wrangler` |
-| Vercel | React / Next.js 最佳实践 | `vercel-labs/react-best-practices`、`vercel-labs/next-best-practices` |
+| Vercel | React / Next.js 实践建议 | `vercel-labs/react-best-practices`、`vercel-labs/next-best-practices` |
 | Trail of Bits | 安全审计、变体分析、静态分析 | `trailofbits/differential-review`、`trailofbits/variant-analysis` |
 | Sentry | 各语言 SDK 接入与问题修复 | `getsentry/sentry-sdk-setup`、`getsentry/sentry-fix-issues` |
 | Microsoft | Azure SDK、Foundry、Copilot SDK、前端模板 | `microsoft/copilot-sdk`、`microsoft/agent-framework-azure-ai-py` |
@@ -250,7 +250,7 @@ README 单独给了 Security Notice，这一点非常重要。它明确提醒：
 
 | 坑 | 实际问题 | 规避方式 |
 | ---- | -------- | -------- |
-| 只看名字就装 | skill 名称听起来像最佳实践，但内部可能依赖你没装的 CLI 或 MCP | 先看说明和依赖 |
+| 只看名字就装 | skill 名称听起来像实践建议，但内部可能依赖你没装的 CLI 或 MCP | 先看说明和依赖 |
 | 看到“兼容”就默认通用 | 不同 agent 的发现机制、工具权限、系统提示并不完全一样 | 先按目标 agent 小范围验证 |
 | 只看官方出处，不看权限 | 官方 skill 也可能涉及高权限操作或昂贵调用 | 先做权限和成本评估 |
 

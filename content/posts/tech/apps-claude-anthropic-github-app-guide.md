@@ -98,4 +98,4 @@ Claude GitHub App 申请了以下权限：
 
 Claude GitHub App 是 Anthropic 官方将 Claude Code 编码能力延伸进 GitHub PR 工作流的产品。它不是简单的 LLM 评论机器人，而是真正能在代码层面执行修改的智能体嵌入方案。
 
-核心价值：一键安装、官方背书、基于 Claude Code SDK 的代码理解能力。边界：需要有效订阅、按 App 身份 commit、对长上下文任务有限制。是否采用，关键看你的团队在 PR 流程里有多少"AI 能直接动手做"而非"AI 给个建议"的场景。
+关键价值：一键安装、官方背书、基于 Claude Code SDK 的代码理解能力。边界：需要有效订阅、按 App 身份 commit、对长上下文任务有限制。是否采用，关键看你的团队在 PR 流程里有多少"AI 能直接动手做"而非"AI 给个建议"的场景。

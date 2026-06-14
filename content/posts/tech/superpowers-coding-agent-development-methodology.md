@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI Coding Agent", "Superpowers", "开发方法论", "TDD", "Claude Code"]
 ---
 
-# Superpowers：让Coding Agent拥有完整开发方法论的插件系统
+# Superpowers：让 Coding Agent 拥有完整开发方法论的插件系统
 
 2025 年 10 月 9 日，Anthropic 正式发布 Claude Code 插件系统。同一天，Jesse Vincent 发布了 Superpowers 的第一个版本。截至 2026 年 5 月，这个项目在 GitHub 上积累了超过 199,000 个 Star，成为 Claude Code 生态中安装量仅次于 Anthropic 官方插件的第三方项目。
 

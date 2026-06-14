@@ -222,7 +222,7 @@ jobs:
 关键点：
 
 1. **默认 workflow token 只有 read 权限**，需要写入时切换到 **GitHub App Token**（`tibdex/github-app-token`），Token 的 scope 由 App 本身决定，最小化授权。
-2. **`gh act` 本地调试路径**：所有 step 都加了 `if: ${{ !env.ACT }}`，意味着用 [`nektos/act`](https://github.com/nektos/act) 在本地跑 workflow 时会自动跳过 token 切换，方便开发者本地复现。
+2. **`gh act` 本地调试路径**：所有 step 都加了 `if: ${{ !env.ACT }}`，意味着用 [ PROTECTED_69 ](https://github.com/nektos/act) 在本地跑 workflow 时会自动跳过 token 切换，方便开发者本地复现。
 3. **commit 作者固定为 `iptv-bot[bot]`**：保证审计一致性，不会出现"是谁提交了这一批流"的多人歧义。
 4. **只在有变更时才 commit**：`if: steps.playlist-update.outputs.processed_issues != 0` 避免每天空 commit。
 

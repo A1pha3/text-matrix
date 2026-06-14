@@ -215,11 +215,11 @@ python -c "import cv2; print(cv2.__version__)"  # 5.0.0
 
 ## 八、参考链接
 
-- **GitHub**: <https://github.com/opencv/opencv>
-- **5.0 公告**: <https://opencv.org/opencv-5>
-- **4.x → 5.x 迁移指南**: <https://github.com/opencv/opencv/wiki/OpenCV-4-to-5-migration>
-- **官方文档（4.x LTS 保留）**: <https://docs.opencv.org/4.x/>
-- **讨论区**: <https://forum.opencv.org>
+- **GitHub**: < PROTECTED_56 >
+- **5.0 公告**: < PROTECTED_57 >
+- **4.x → 5.x 迁移指南**: < PROTECTED_58 >
+- **官方文档（4.x LTS 保留）**: < PROTECTED_59 >
+- **讨论区**: < PROTECTED_60 >
 - **许可**: Apache-2.0
 
 ---

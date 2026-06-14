@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "Anthropic", "AI Agent", "架构分析", "MCP"]
 ---
 
-# Claude Code from Source：18章深度拆解Anthropic最畅销AI编程工具的架构精髓
+# Claude Code from Source：18 章深度拆解 Anthropic 最畅销 AI 编程工具的架构精髓
 
 2025 年 4 月，一本名为 *Claude Code from Source* 的技术书籍在 GitHub 上获得了 1,552 颗星。它不来自 Anthropic 官方，而是一个叫 Alejandro Balderas 的开发者带着 36 个 AI Agent，花了 6 个小时写出来的。
 

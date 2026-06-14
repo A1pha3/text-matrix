@@ -8,13 +8,13 @@ categories: ["技术笔记"]
 tags: ["SymPy", "Python", "符号计算", "数学", "科学计算"]
 ---
 
-# SymPy：14.6K Stars·纯Python符号计算系统·科学Python生态系统核心·数学/物理/工程
+# SymPy：14.6K Stars·纯 Python 符号计算系统·科学 Python 生态系统核心·数学/物理/工程
 
 ## 一，项目概述
 
 ### 1.1 SymPy 是什么
 
-**SymPy** 是一个**纯Python编写的计算机代数系统（Computer Algebra System, CAS）**，用于**符号数学计算**。
+**SymPy** 是一个**纯 Python 编写的计算机代数系统（Computer Algebra System, CAS）**，用于**符号数学计算**。
 
 > "SymPy is an open-source computer algebra system written in pure Python."
 
@@ -63,12 +63,12 @@ tags: ["SymPy", "Python", "符号计算", "数学", "科学计算"]
 
 | 特性 | 说明 |
 |------|------|
-| **纯Python** | 无外部依赖，仅需Python标准库 |
+| **纯 Python** | 无外部依赖，仅需 Python 标准库 |
 | **符号计算** | 符号表达式、展开、简化、导数、积分 |
 | **矩阵运算** | 矩阵运算、特征值、行列式 |
 | **求解器** | 方程求解、微分方程求解 |
 | **物理学** | 经典力学、量子力学、张量 |
-| **打印** | LaTeX、ASCII、Unicode数学符号 |
+| **打印** | LaTeX、ASCII、Unicode 数学符号 |
 
 ## 二，安装与配置
 
@@ -298,7 +298,7 @@ sympy/
 | `sympy.expand` | `expand(expr)` | 展开 |
 | `sympy.simplify` | `simplify(expr)` | 化简 |
 | `sympy.subs` | `subs(x, y)` | 替换 |
-| `sympy.lambdify` | `lambdify(x, expr)` | 转Lambda |
+| `sympy.lambdify` | `lambdify(x, expr)` | 转 Lambda |
 
 ## 五，高级功能
 
@@ -615,11 +615,11 @@ bin/test sympy/core/tests/test_arit.py
 
 ## 十二，总结
 
-SymPy 是**纯Python符号计算的标杆项目**：
+SymPy 是**纯 Python 符号计算的标杆项目**：
 
 | 维度 | 说明 |
 |------|------|
-| 🐍 **纯Python** | 无外部依赖，易于部署 |
+| 🐍 **纯 Python** | 无外部依赖，易于部署 |
 | 📐 **符号计算** | 导数、积分、极限、方程求解 |
 | 🔢 **矩阵运算** | 特征值、行列式、矩阵分解 |
 | ⚛️ **物理学** | 经典力学、量子力学模块 |

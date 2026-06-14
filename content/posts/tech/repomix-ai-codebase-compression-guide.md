@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "代码压缩", "Claude", "LLM", "Git"]
 ---
 
-# Repomix：把代码库压缩成AI可读的单一文件
+# Repomix：把代码库压缩成 AI 可读的单一文件
 
 ## 读完这篇你会
 
@@ -604,7 +604,7 @@ Repomix 催生了多个社区项目：
 - [Codebase MCP](https://github.com/DeDeveloper23/codebase-mcp)：MCP 服务器，提供 AI 代码库分析
 - [vibe-tools](https://github.com/eastlondoner/vibe-tools)：CLI 工具集，包含 Web 搜索、仓库分析、浏览器自动化
 
-## 最佳实践
+## 实践建议
 
 ### 与 Claude 配合
 
@@ -615,7 +615,7 @@ This file contains all the files in the repository combined into one.
 I want to refactor the code, so please review it first.
 ```
 
-把仓库内容放在提示顶部（指令之前），Claude 的响应质量可以提升最高 30% — 这在 Anthropic 的长上下文最佳实践中也有对应建议。
+把仓库内容放在提示顶部（指令之前），Claude 的响应质量可以提升最高 30% — 这在 Anthropic 的长上下文实践建议中也有对应建议。
 
 ### 仓库太大怎么办
 

@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["TikTok", "抖音", "下载", "爬虫", "Python"]
 ---
 
-# TikTokDownloader：14K Stars·抖音/TikTok数据采集与下载工具
+# TikTokDownloader：14K Stars·抖音/TikTok 数据采集与下载工具
 
 ## 一，这篇文章要解决什么
 

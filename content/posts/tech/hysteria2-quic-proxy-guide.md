@@ -10,7 +10,7 @@ categories: ["技术笔记"]
 tags: ["代理", "QUIC", "抗审查", "Go", "网络工具"]
 ---
 
-# Hysteria 2：QUIC协议加持的抗审查代理工具完全指南
+# Hysteria 2：QUIC 协议加持的抗审查代理工具完全指南
 
 Hysteria（也称 Hysteria 2）是一个基于 **QUIC 协议**的高速、抗审查代理工具，由 Go 语言实现，编译为单一静态二进制文件，部署极简。与传统 Shadowsocks、V2Ray 等代理方案不同，Hysteria 从协议层面将流量伪装为标准 HTTP/3，从而在深度包检测（DPI）环境下也能保持连接畅通，同时借助 QUIC 的多路复用与丢包恢复机制，即使在不稳定网络下也能维持高吞吐。
 

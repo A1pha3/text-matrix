@@ -280,7 +280,7 @@ MCP 模式暴露 6 个工具：
 | `search_bilibili` | 搜索 B 站视频 |
 | `search_xiaohongshu` | 搜索小红书笔记 |
 
-MCP 模式的关键区别在于：**Agent 不需要读 SKILL.md 就知道有哪些能力可用**。任何 MCP-aware 的 Agent（Claude Desktop、Cursor、VS Code 等）都能自动发现并调用这些工具。社区还封装了 npm 包 [`@bsbofmusic/agent-reach-mcp`](https://www.npmjs.com/package/@bsbofmusic/agent-reach-mcp)，提供自动更新和自愈能力。
+MCP 模式的关键区别在于：**Agent 不需要读 SKILL.md 就知道有哪些能力可用**。任何 MCP-aware 的 Agent（Claude Desktop、Cursor、VS Code 等）都能自动发现并调用这些工具。社区还封装了 npm 包 [ PROTECTED_34 ](https://www.npmjs.com/package/@bsbofmusic/agent-reach-mcp)，提供自动更新和自愈能力。
 
 ## 快速上手
 

@@ -441,5 +441,5 @@ mimo2codex --model generic
 **相关链接**：
 
 - GitHub: https://github.com/7as0nch/mimo2codex
-- 通用 Provider 文档: https://github.com/7as0nch/mimo2codex/blob/main/doc/generic-providers.zh.md
-- mimoskill 扩展: https://github.com/7as0nch/mimo2codex/blob/main/doc/mimoskill.zh.md
+- 通用 Provider 文档： https://github.com/7as0nch/mimo2codex/blob/main/doc/generic-providers.zh.md
+- mimoskill 扩展： https://github.com/7as0nch/mimo2codex/blob/main/doc/mimoskill.zh.md

@@ -31,7 +31,7 @@ tags: ["AI Agent", "科学研究", "生物信息学", "药物发现", "开源工
 
 ## 解决的问题
 
-AI 编码助手本身具备执行任意 Python 代码的能力，但在面对专业科研场景时，往往缺乏针对特定领域工具链的可靠调用经验。Scientific Agent Skills 的做法是为这些领域提供经过验证的技能文档（SKILL.md），包含该领域常用 Python 包或 API 的使用模式、最佳实践和代码示例，让 AI 助手在这些场景下表现得更可靠、更高效。
+AI 编码助手本身具备执行任意 Python 代码的能力，但在面对专业科研场景时，往往缺乏针对特定领域工具链的可靠调用经验。Scientific Agent Skills 的做法是为这些领域提供经过验证的技能文档（SKILL.md），包含该领域常用 Python 包或 API 的使用模式、实践建议和代码示例，让 AI 助手在这些场景下表现得更可靠、更高效。
 
 ## 核心能力一览
 
@@ -81,7 +81,7 @@ gh skill install K-Dense-AI/scientific-agent-skills --pin v1.0.0
 
 - **SKILL.md** — 完整的技能文档
 - **Practical code examples** — 可运行的代码示例
-- **Use cases and best practices** — 适用场景与最佳实践
+- **Use cases and best practices** — 适用场景与实践建议
 - **Integration guides** — 集成指南
 - **Reference materials** — 参考资料
 
@@ -103,7 +103,7 @@ gh skill install K-Dense-AI/scientific-agent-skills --pin v1.0.0
 - 跳过各工具的 API 文档研究，直接获得经过验证的调用路径
 - 每个技能提供测试过的代码示例，减少 AI"幻觉"代码的概率
 - 支持多步骤复杂科研工作流的自动化编排
-- 活跃维护，持续新增技能并更新依赖包的最佳实践
+- 活跃维护，持续新增技能并更新依赖包的实践建议
 
 ## 安全注意事项
 

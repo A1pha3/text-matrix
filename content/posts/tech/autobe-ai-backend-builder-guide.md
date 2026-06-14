@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
 ---
 
-# AutoBE：1.2K Stars·AI后端构建器·从需求到生产的完整解决方案
+# AutoBE：1.2K Stars·AI 后端构建器·从需求到生产的完整解决方案
 
 ## 一、项目概述
 

@@ -16,7 +16,7 @@ tags: ["AutoCLI", "AI Agent", "浏览器自动化", "Rust", "OpenClaw", "Claude 
 > **GitHub**: [nashsu/autocli-skill](https://github.com/nashsu/autocli-skill)  
 > **Stars**: 582 ⭐  
 > **Forks**: 62  
-> **核心特性**: 55+平台支持 | 零API Key | Chrome登录态复用 | Rust编写 | 4.7MB二进制
+> **核心特性**: 55+平台支持 | 零 API Key | Chrome 登录态复用 | Rust 编写 | 4.7MB 二进制
 
 ### 一句话定位
 
@@ -109,55 +109,55 @@ graph TB
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
-| **Twitter/X** | Browser | 24个 | trending, timeline, post, reply, search, bookmarks, profile |
-| **Bilibili (B站)** | Browser | 12个 | hot, search, me, favorite, history, feed, subtitle, download |
-| **Zhihu (知乎)** | Browser | 4个 | hot, search, question, download |
-| **Weibo (微博)** | Browser | 2个 | hot, search |
-| **Reddit** | Browser | 15个 | hot, frontpage, popular, search, subreddit, upvote, comment |
-| **Facebook** | Browser | 10个 | feed, profile, search, friends, groups, events |
-| **Instagram** | Browser | 14个 | explore, profile, search, follow, like, comment |
-| **TikTok** | Browser | 15个 | explore, search, profile, follow, like, comment |
-| **Jike (即刻)** | Browser | 10个 | feed, search, create, like, comment, repost |
+| **Twitter/X** | Browser | 24 个 | trending, timeline, post, reply, search, bookmarks, profile |
+| **Bilibili (B 站)** | Browser | 12 个 | hot, search, me, favorite, history, feed, subtitle, download |
+| **Zhihu (知乎)** | Browser | 4 个 | hot, search, question, download |
+| **Weibo (微博)** | Browser | 2 个 | hot, search |
+| **Reddit** | Browser | 15 个 | hot, frontpage, popular, search, subreddit, upvote, comment |
+| **Facebook** | Browser | 10 个 | feed, profile, search, friends, groups, events |
+| **Instagram** | Browser | 14 个 | explore, profile, search, follow, like, comment |
+| **TikTok** | Browser | 15 个 | explore, search, profile, follow, like, comment |
+| **Jike (即刻)** | Browser | 10 个 | feed, search, create, like, comment, repost |
 
 ### 视频与内容平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
-| **YouTube** | Browser | 3个 | search, video, transcript |
-| **小红书** | Browser | 11个 | search, feed, user, publish, creator-notes |
-| **Douban (豆瓣)** | Browser | 7个 | search, top250, subject, movie-hot, book-hot |
-| **Medium** | Browser | 3个 | feed, search, user |
-| **Substack** | Browser | 3个 | feed, search, publication |
+| **YouTube** | Browser | 3 个 | search, video, transcript |
+| **小红书** | Browser | 11 个 | search, feed, user, publish, creator-notes |
+| **Douban (豆瓣)** | Browser | 7 个 | search, top250, subject, movie-hot, book-hot |
+| **Medium** | Browser | 3 个 | feed, search, user |
+| **Substack** | Browser | 3 个 | feed, search, publication |
 
 ### 桌面应用控制
 
 | 应用 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
-| **Cursor** | Desktop | 12个 | status, send, read, new, dump, composer, model, ask |
-| **Notion** | Desktop | 8个 | status, search, read, new, write, sidebar, favorites, export |
-| **ChatGPT** | Desktop | 5个 | status, new, send, read, ask |
-| **Discord** | Desktop | 6个 | status, send, read, channels, servers, search, members |
-| **Codex** | Desktop | 11个 | status, send, read, new, dump, model, ask |
+| **Cursor** | Desktop | 12 个 | status, send, read, new, dump, composer, model, ask |
+| **Notion** | Desktop | 8 个 | status, search, read, new, write, sidebar, favorites, export |
+| **ChatGPT** | Desktop | 5 个 | status, new, send, read, ask |
+| **Discord** | Desktop | 6 个 | status, send, read, channels, servers, search, members |
+| **Codex** | Desktop | 11 个 | status, send, read, new, dump, model, ask |
 
 ### 金融数据平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
-| **Yahoo Finance** | Browser | 1个 | quote |
-| **Xueqiu (雪球)** | Browser | 7个 | feed, hot-stock, hot, search, stock, watchlist |
-| **Bloomberg** | Public/Browser | 10个 | main, markets, economics, tech, politics |
+| **Yahoo Finance** | Browser | 1 个 | quote |
+| **Xueqiu (雪球)** | Browser | 7 个 | feed, hot-stock, hot, search, stock, watchlist |
+| **Bloomberg** | Public/Browser | 10 个 | main, markets, economics, tech, politics |
 
 ### 开发者平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
-| **HackerNews** | Public | 8个 | top, new, best, ask, show, jobs, search, user |
-| **StackOverflow** | Public | 4个 | hot, search, bounties, unanswered |
-| **Dev.to** | Public | 3个 | top, tag, user |
-| **Lobsters** | Public | 4个 | hot, newest, active, tag |
-| **Wikipedia** | Public | 4个 | search, summary, random, trending |
-| **Arxiv** | Public | 2个 | search, paper |
-| **V2EX** | Public/Browser | 11个 | hot, latest, topic, node, user, daily, me |
+| **HackerNews** | Public | 8 个 | top, new, best, ask, show, jobs, search, user |
+| **StackOverflow** | Public | 4 个 | hot, search, bounties, unanswered |
+| **Dev.to** | Public | 3 个 | top, tag, user |
+| **Lobsters** | Public | 4 个 | hot, newest, active, tag |
+| **Wikipedia** | Public | 4 个 | search, summary, random, trending |
+| **Arxiv** | Public | 2 个 | search, paper |
+| **V2EX** | Public/Browser | 11 个 | hot, latest, topic, node, user, daily, me |
 
 ### 命令行工具集成
 
@@ -278,7 +278,7 @@ autocli notion new --title "New Page"
 
 ## 🔧 命令参考
 
-### Twitter/X 命令（24个）
+### Twitter/X 命令（24 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -291,7 +291,7 @@ autocli notion new --title "New Page"
 | `twitter profile` | 获取用户信息 | `autocli twitter profile --user username` |
 | `twitter article` | 获取推文文章 | `autocli twitter article --id 123` |
 
-### Bilibili 命令（12个）
+### Bilibili 命令（12 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -304,7 +304,7 @@ autocli notion new --title "New Page"
 | `bilibili subtitle` | 获取字幕 | `autocli bilibili subtitle --avid 123` |
 | `bilibili download` | 下载视频 | `autocli bilibili download --avid 123` |
 
-### HackerNews 命令（8个）
+### HackerNews 命令（8 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -317,7 +317,7 @@ autocli notion new --title "New Page"
 | `hackernews search` | 搜索 | `autocli hackernews search "keyword"` |
 | `hackernews user` | 用户信息 | `autocli hackernews user --name username` |
 
-### Cursor 控制命令（12个）
+### Cursor 控制命令（12 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -330,7 +330,7 @@ autocli notion new --title "New Page"
 | `cursor model` | 切换模型 | `autocli cursor model` |
 | `cursor ask` | 提问 | `autocli cursor ask --text "How do I..."` |
 
-### Notion 控制命令（8个）
+### Notion 控制命令（8 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -380,7 +380,7 @@ autocli --debug twitter trending
 | **登录态管理** | ✅ 自动复用 Chrome | ❌ 需手动处理 | ❌ 需手动处理 | ❌ 需手动处理 |
 | **API Key** | ❌ 不需要 | N/A | N/A | N/A |
 | **跨平台支持** | ✅ 55+ | ❌ 需单独配置 | ❌ 需单独配置 | ❌ 需单独配置 |
-| **桌面应用控制** | ✅ Cursor/Notion等 | ❌ 不支持 | ❌ 不支持 | ❌ 不支持 |
+| **桌面应用控制** | ✅ Cursor/Notion 等 | ❌ 不支持 | ❌ 不支持 | ❌ 不支持 |
 | **二进制大小** | ✅ 4.7MB | ❌ Node.js 依赖 | ❌ Node.js 依赖 | ❌ Java 依赖 |
 | **AI 集成** | ✅ 原生支持 | ❌ 需包装 | ❌ 需包装 | ❌ 需包装 |
 
@@ -402,7 +402,7 @@ autocli --debug twitter trending
 | **复用而非重建** | 当平台已有完善认证时，复用是最快路径 |
 | **CLI 作为桥梁** | CLI 是 AI 与系统交互的最佳界面 |
 | **三重模式覆盖** | Public API → Browser → Desktop，覆盖所有场景 |
-| **单二进制分发** | 4.7MB 零依赖 vs Node.js 数百MB依赖 |
+| **单二进制分发** | 4.7MB 零依赖 vs Node.js 数百 MB 依赖 |
 
 ### 常见陷阱
 

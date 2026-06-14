@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "Agent", "记忆系统", "机器学习", "向量数据库"]
 ---
 
-# Hindsight：Agent记忆系统·最准确的记忆系统·SOTA性能·8.9K Stars
+# Hindsight：Agent 记忆系统·最准确的记忆系统·SOTA 性能·8.9K Stars
 
 ## 一、项目概述
 
@@ -435,7 +435,7 @@ wrapper = HindsightWrapper(
 )
 ```
 
-## 十一、最佳实践
+## 十一、实践建议
 
 ### 11.1 记忆组织
 

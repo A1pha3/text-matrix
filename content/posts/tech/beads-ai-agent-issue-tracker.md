@@ -229,4 +229,4 @@ Beads 解决的是 AI Coding Agent 的记忆问题——当任务变多、时间
 - npm：https://www.npmjs.com/package/@beads/bd
 - PyPI：https://pypi.org/project/beads-mcp/
 
-🦞 每日08:00自动更新
+🦞 每日 08:00 自动更新

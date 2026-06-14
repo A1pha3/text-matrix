@@ -9,7 +9,7 @@ categories: ["技术笔记"]
 tags: ["Claude-Mem", "AI记忆", "Claude Code", "向量数据库", "TypeScript", "OpenClaw"]
 ---
 
-# Claude-Mem：65K Stars的Claude Code持久记忆系统，从架构到实战的全面解析
+# Claude-Mem：65K Stars 的 Claude Code 持久记忆系统，从架构到实战的全面解析
 
 ## 概述
 
@@ -28,7 +28,7 @@ tags: ["Claude-Mem", "AI记忆", "Claude Code", "向量数据库", "TypeScript",
 |------|---------|-----------|
 | 会话结束上下文丢失 | 手动复制粘贴摘要 | 自动捕获、自动注入 |
 | 新会话缺乏背景 | 每次重新解释项目 | 记忆自动传承 |
-| 长项目上下文膨胀 | Token 成本高昂 | 3层渐进式披露，节省 10x Token |
+| 长项目上下文膨胀 | Token 成本高昂 | 3 层渐进式披露，节省 10x Token |
 | 跨会话搜索困难 | grep 历史记录 | 自然语言语义搜索 |
 | 隐私敏感内容 | 难以区分 | `<private>` 标签保护 |
 
@@ -73,7 +73,7 @@ graph TB
     Chroma --> Vec[(Vector<br/>Search)]
 ```
 
-### 5个生命周期钩子
+### 5 个生命周期钩子
 
 Claude-Mem 通过 5 个生命周期钩子自动捕获会话上下文：
 
@@ -114,9 +114,9 @@ CREATE VIRTUAL TABLE observations_fts USING fts5(
 
 ---
 
-## 3层搜索工作流
+## 3 层搜索工作流
 
-Claude-Mem 提供了独特的 **3层渐进式披露** 搜索模式，避免一次性加载所有记忆，节省约 **10x Token**：
+Claude-Mem 提供了独特的 **3 层渐进式披露** 搜索模式，避免一次性加载所有记忆，节省约 **10x Token**：
 
 ### 工作流设计
 
@@ -148,7 +148,7 @@ sequenceDiagram
 | **timeline** | 获取观察周围的时间上下文 | ~100-200 tokens | 理解上下文发展 |
 | **get_observations** | 获取完整观察详情 | ~500-1000 tokens/result | 深入分析、具体引用 |
 
-### 10种搜索类型
+### 10 种搜索类型
 
 | 搜索类型 | 命令 | 功能 |
 |---------|------|------|
@@ -157,7 +157,7 @@ sequenceDiagram
 | 提示搜索 | `search_prompts` | 搜索原始用户请求 |
 | 概念搜索 | `search_by_concept` | 按概念标签查找 |
 | 文件搜索 | `search_by_file` | 查找引用特定文件的观察 |
-| 类型搜索 | `search_by_type` | 按类型查找（决策/bug修复/功能） |
+| 类型搜索 | `search_by_type` | 按类型查找（决策/bug 修复/功能） |
 | 最近上下文 | `recent_context` | 获取项目的最近会话上下文 |
 | 时间线 | `timeline` | 获取特定时间点周围的时间线 |
 | API 帮助 | `api_help` | 获取搜索 API 文档 |
@@ -409,9 +409,9 @@ Claude-Mem: Found 1 observation:
 | 维度 | Claude-Mem | AgentMemory |
 |------|------------|-------------|
 | **定位** | Claude Code 专用持久记忆 | 通用 Agent 记忆框架 |
-| **集成方式** | 5个生命周期钩子自动注入 | Python SDK，手动集成到 Agent 代码 |
+| **集成方式** | 5 个生命周期钩子自动注入 | Python SDK，手动集成到 Agent 代码 |
 | **存储** | SQLite + Chroma（本地优先） | SQLite + Qdrant/Chroma（可切换） |
-| **搜索策略** | 3层渐进式披露，Token 感知 | 统一向量检索，无分层 |
+| **搜索策略** | 3 层渐进式披露，Token 感知 | 统一向量检索，无分层 |
 | **Token 优化** | 内置 10x Token 节省 | 需用户自行控制返回量 |
 | **多 Agent 支持** | 单一 Claude 会话 | 原生支持多 Agent 隔离 |
 | **安装复杂度** | 一行 `npx` 命令 | 需编写集成代码 |
@@ -426,7 +426,7 @@ Claude-Mem: Found 1 observation:
 | **定位** | Claude Code 会话记忆 | 通用用户级个性化记忆 |
 | **记忆粒度** | 会话级（工具调用、代码变更） | 用户级（偏好、历史交互） |
 | **更新策略** | 会话结束时批量归档 | 实时增量更新（每条交互后） |
-| **记忆类型** | 决策、bug修复、文件变更 | 用户偏好、事实、事件 |
+| **记忆类型** | 决策、bug 修复、文件变更 | 用户偏好、事实、事件 |
 | **搜索接口** | MCP 工具（search/timeline/get_observations） | REST API + Python/JS SDK |
 | **云端支持** | 纯本地 | 本地 + Mem0 Cloud（托管） |
 | **隐私模型** | `<private>` 标签本地过滤 | 云端加密 + 用户级隔离 |
@@ -441,9 +441,9 @@ Claude-Mem: Found 1 observation:
 | **Stars** | 65k | 20k | 12k |
 | **目标** | Claude Code | 通用知识管理 | 通用 Agent |
 | **存储** | SQLite + Chroma | PGlite | SQLite |
-| **搜索** | 3层渐进式 | 全文+向量 | 全文 |
+| **搜索** | 3 层渐进式 | 全文+向量 | 全文 |
 | **Token 优化** | 10x 节省 | 无 | 无 |
-| **Hook 架构** | 5个钩子 | 无 | 无 |
+| **Hook 架构** | 5 个钩子 | 无 | 无 |
 | **Web UI** | 有 | 无 | 无 |
 | **OpenClaw** | 支持 | 不支持 | 不支持 |
 | **许可证** | AGPL-3.0 | MIT | MIT |
@@ -456,9 +456,9 @@ Claude-Mem: Found 1 observation:
 
 | 决策 | 权衡 | 选择理由 |
 |------|------|---------|
-| **3层工作流** | 额外 API 调用 vs Token 节省 | 10x Token 节省，显著降低成本 |
+| **3 层工作流** | 额外 API 调用 vs Token 节省 | 10x Token 节省，显著降低成本 |
 | **SQLite + Chroma** | 双存储复杂度 vs 搜索质量 | 关键词+语义双重保障 |
-| **Hook 架构** | 侵入性 vs 自动捕获 | 零人工干预是核心价值 |
+| **Hook 架构** | 侵入性 vs 自动捕获 | 零人工干预是关键价值 |
 | **AGPL-3.0** | 商业限制 vs 开源精神 | 确保社区贡献可见 |
 
 ### 可复用的架构经验
@@ -493,7 +493,7 @@ Claude-Mem: Found 1 observation:
 
 **Q3：Claude-Mem 如何处理大型代码仓库（1000+ 文件）？**
 
-3层搜索工作流正是为此设计的。第1层只返回紧凑索引（~50-100 tokens/条），不会因为项目文件数量而膨胀。但注意，记忆质量取决于会话中实际操作的代码范围——如果你只修改过 5 个文件，记忆也只会覆盖这 5 个文件，而不是整个仓库。建议在涉及新模块时，主动在会话中解释模块结构，帮助 Claude-Mem 建立更完整的项目知识图谱。
+3 层搜索工作流正是为此设计的。第 1 层只返回紧凑索引（~50-100 tokens/条），不会因为项目文件数量而膨胀。但注意，记忆质量取决于会话中实际操作的代码范围——如果你只修改过 5 个文件，记忆也只会覆盖这 5 个文件，而不是整个仓库。建议在涉及新模块时，主动在会话中解释模块结构，帮助 Claude-Mem 建立更完整的项目知识图谱。
 
 **Q4：AGPL-3.0 许可证影响商业使用吗？**
 

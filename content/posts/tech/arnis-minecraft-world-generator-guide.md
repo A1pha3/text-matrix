@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Minecraft", "Rust", "OpenStreetMap", "地理数据", "游戏"]
 ---
 
-# Arnis：14.8K Stars·Minecraft真实世界地图生成器·OpenStreetMap地理数据·Rust高性能
+# Arnis：14.8K Stars·Minecraft 真实世界地图生成器·OpenStreetMap 地理数据·Rust 高性能
 
 ## 一、项目概述
 
@@ -349,7 +349,7 @@ fn map_building_height(levels: u32) -> u32 {
 | Cargo | 最新稳定版 |
 | Minecraft | Java 1.17+ 或 Bedrock |
 
-## 十、最佳实践
+## 十、实践建议
 
 ### 10.1 大型世界生成
 

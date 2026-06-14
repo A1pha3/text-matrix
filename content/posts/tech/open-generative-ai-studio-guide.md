@@ -99,12 +99,12 @@ Windows SmartScreen 可能会显示警告，因为安装程序未经代码签名
 
 | 模型 | 类型 | 大小 | 速度 |
 |------|------|------|------|
-| **Z-Image Turbo** ⚡ | Diffusion Transformer | 2.5 GB + 2.7 GB aux | 8步 turbo |
-| **Z-Image Base** ⚡ | Diffusion Transformer | 3.5 GB + 2.7 GB aux | 50步高质量 |
-| **Dreamshaper 8** | SD 1.5 | 2.1 GB | 20步通用 |
-| **Realistic Vision v5.1** | SD 1.5 | 2.1 GB | 25步逼真 |
-| **Anything v5** | SD 1.5 | 2.1 GB | 20步动漫/插画 |
-| **SDXL Base 1.0** | SDXL | 6.9 GB | 30步高分辨率 |
+| **Z-Image Turbo** ⚡ | Diffusion Transformer | 2.5 GB + 2.7 GB aux | 8 步 turbo |
+| **Z-Image Base** ⚡ | Diffusion Transformer | 3.5 GB + 2.7 GB aux | 50 步高质量 |
+| **Dreamshaper 8** | SD 1.5 | 2.1 GB | 20 步通用 |
+| **Realistic Vision v5.1** | SD 1.5 | 2.1 GB | 25 步逼真 |
+| **Anything v5** | SD 1.5 | 2.1 GB | 20 步动漫/插画 |
+| **SDXL Base 1.0** | SDXL | 6.9 GB | 30 步高分辨率 |
 
 > **Z-Image 模型**需要两个共享辅助文件（下载一次，多个模型共享）：
 > - **Qwen3-4B 文本编码器** — 2.4 GB

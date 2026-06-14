@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "模型路由", "OpenClaw", "成本优化", "API"]
 ---
 
-# Manifest：4.3K Stars·OpenClaw智能模型路由器·节省70%成本·23维度评分算法·2ms路由决策·300+模型支持
+# Manifest：4.3K Stars·OpenClaw 智能模型路由器·节省 70%成本·23 维度评分算法·2ms 路由决策·300+模型支持
 
 ## 一，项目概述
 
@@ -446,7 +446,7 @@ manifest.set_fallback_chain([
 ])
 ```
 
-## 十，最佳实践
+## 十，实践建议
 
 ### 10.1 成本优化
 

@@ -314,4 +314,4 @@ PostHog 不是一个简单的"分析工具"，它是一个**产品工程平台**
 - 公司手册（开源）：https://posthog.com/handbook
 - posthog-foss（全开源版）：https://github.com/PostHog/posthog-foss
 
-🦞 每日08:00自动更新
+🦞 每日 08:00 自动更新

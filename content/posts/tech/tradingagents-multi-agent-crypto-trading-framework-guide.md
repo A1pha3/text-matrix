@@ -328,14 +328,14 @@ print(decision)
 | `max_risk_discuss_rounds` | `1` | 风控讨论轮数 |
 | `checkpoint_enabled` | `False` | 是否启用检查点恢复 |
 | `output_language` | `"English"` | 分析师报告与最终决策的输出语言（内部辩论保持英文） |
-| `memory_log_max_entries` | `None` | 决策日志resolved条目的上限，`None`表示不限制 |
+| `memory_log_max_entries` | `None` | 决策日志 resolved 条目的上限，`None`表示不限制 |
 | `data_vendors` | yfinance | 各数据类别的来源（Alpha Vantage / yfinance） |
 
 ---
 
 ## §8 持久化与恢复：Checkpoint Resume 与 Decision Log
 
-这是 TradingAgents 区别于其他开源交易框架最重要的工程特性之一，也是研究用途下的核心价值——每次运行的经验不会因为中断而丢失，而是自动积累到下一次分析中。
+这是 TradingAgents 区别于其他开源交易框架最重要的工程特性之一，也是研究用途下的关键价值——每次运行的经验不会因为中断而丢失，而是自动积累到下一次分析中。
 
 ### 8.1 决策日志（Decision Log）
 
@@ -570,7 +570,7 @@ v0.2.4 提供了诊断脚本用于验证三个结构化输出 Agent 在任意 Pr
 python scripts/smoke_structured_output.py
 ```
 
-这是Contributor验证自己环境配置是否正确的最快捷方式。
+这是 Contributor 验证自己环境配置是否正确的最快捷方式。
 
 ---
 
@@ -614,7 +614,7 @@ A：可通过 `memory_log_max_entries` 配置上限。超过上限后最旧的 r
 
 ## §16 总结与进阶路径
 
-TradingAgents 提供了一套**从分析师到风控的完整多 Agent 协作框架**，核心价值体现在三个方面：
+TradingAgents 提供了一套**从分析师到风控的完整多 Agent 协作框架**，关键价值体现在三个方面：
 
 1. **架构层面**：用 LangGraph 将真实交易公司的组织逻辑翻译为可运行的工作流，辩论机制强制暴露多空分歧，避免单一视角主导。
 2. **工程层面**：结构化输出解决了 LLM 决策解析难题，检查点恢复与决策日志让研究过程真正可积累、可复现。

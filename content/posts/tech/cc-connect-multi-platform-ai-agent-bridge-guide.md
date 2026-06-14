@@ -8,13 +8,13 @@ categories: ["技术笔记"]
 tags: ["AI", "Agent", "Telegram", "Discord", "Slack"]
 ---
 
-# CC-Connect：将AI coding agent连接到任意聊天平台
+# CC-Connect：将 AI coding agent 连接到任意聊天平台
 
 ## 一、项目概述
 
 ### 1.1 CC-Connect 是什么
 
-**CC-Connect** 是一个开源的**AI Agent桥接器**，让你的本地AI编程助手（Claude Code、Cursor Agent、Gemini CLI等）连接到常用的聊天平台（飞书、Telegram、Discord、Slack、微信等），随时随地通过手机或平板与AI助手对话。
+**CC-Connect** 是一个开源的**AI Agent 桥接器**，让你的本地 AI 编程助手（Claude Code、Cursor Agent、Gemini CLI 等）连接到常用的聊天平台（飞书、Telegram、Discord、Slack、微信等），随时随地通过手机或平板与 AI 助手对话。
 
 ### 1.2 核心数据
 
@@ -32,11 +32,11 @@ tags: ["AI", "Agent", "Telegram", "Discord", "Slack"]
 
 | 特点 | 说明 |
 |------|------|
-| 🤖 多Agent支持 | Claude Code、Codex、Cursor Agent、Gemini CLI 等 7 种 |
+| 🤖 多 Agent 支持 | Claude Code、Codex、Cursor Agent、Gemini CLI 等 7 种 |
 | 📱 多平台支持 | 飞书、Telegram、Discord、Slack、微信等 10 个平台 |
-| 🛡️ 无需公网IP | 大部分平台 WebSocket 长连接，无需公网IP |
+| 🛡️ 无需公网 IP | 大部分平台 WebSocket 长连接，无需公网 IP |
 | ⚡ 实时响应 | 流式输出，Markdown/卡片消息 |
-| 🔄 多Bot协作 | 群聊中多个Bot互相通信 |
+| 🔄 多 Bot 协作 | 群聊中多个 Bot 互相通信 |
 | 💬 自然语言控制 | /model、/dir、/cron 等 Slash 命令 |
 
 ---
@@ -71,23 +71,23 @@ tags: ["AI", "Agent", "Telegram", "Discord", "Slack"]
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 支持的AI Agent（7种）
+### 2.2 支持的 AI Agent（7 种）
 
 | Agent | 状态 | 说明 |
 |-------|------|------|
-| **Claude Code** | ✅ 稳定 | Anthropic官方CLI |
-| **Codex** | ✅ 稳定 | OpenAI官方CLI |
-| **Cursor Agent** | ✅ 稳定 | Cursor IDE内置 |
-| **Gemini CLI** | ✅ 稳定 | Google官方CLI |
+| **Claude Code** | ✅ 稳定 | Anthropic 官方 CLI |
+| **Codex** | ✅ 稳定 | OpenAI 官方 CLI |
+| **Cursor Agent** | ✅ 稳定 | Cursor IDE 内置 |
+| **Gemini CLI** | ✅ 稳定 | Google 官方 CLI |
 | **Qoder CLI** | ✅ 稳定 | Qoder CLI |
 | **OpenCode** | ✅ 稳定 | Crush/OpenCode |
 | **iFlow CLI** | ✅ 稳定 | iFlow CLI |
-| **Goose** | 🔜 计划中 | Block官方 |
+| **Goose** | 🔜 计划中 | Block 官方 |
 | **Aider** | 🔜 计划中 | Aider |
 
-### 2.3 支持的聊天平台（10个）
+### 2.3 支持的聊天平台（10 个）
 
-| 平台 | 连接方式 | 公网IP需求 | 状态 |
+| 平台 | 连接方式 | 公网 IP 需求 | 状态 |
 |------|----------|------------|------|
 | **飞书** | WebSocket | ❌ 不需要 | ✅ 稳定 |
 | **钉钉** | Stream | ❌ 不需要 | ✅ 稳定 |
@@ -95,8 +95,8 @@ tags: ["AI", "Agent", "Telegram", "Discord", "Slack"]
 | **Slack** | Socket Mode | ❌ 不需要 | ✅ 稳定 |
 | **Discord** | Gateway | ❌ 不需要 | ✅ 稳定 |
 | **LINE** | Webhook | ⚠️ 需要 | ✅ 稳定 |
-| **企业微信** | WebSocket/Webhook | ⚠️ WS不需要 | ✅ 稳定 |
-| **微信（个人）** | HTTP长轮询 | ❌ 不需要 | ✅ Beta |
+| **企业微信** | WebSocket/Webhook | ⚠️ WS 不需要 | ✅ 稳定 |
+| **微信（个人）** | HTTP 长轮询 | ❌ 不需要 | ✅ Beta |
 | **QQ (NapCat)** | WebSocket | ❌ 不需要 | ✅ Beta |
 | **QQ Bot (官方)** | WebSocket | ❌ 不需要 | ✅ 稳定 |
 
@@ -104,7 +104,7 @@ tags: ["AI", "Agent", "Telegram", "Discord", "Slack"]
 
 ## 三、快速开始
 
-### 3.1 一键AI安装（推荐）
+### 3.1 一键 AI 安装（推荐）
 
 将以下内容发给 Claude Code，它会自动完成整个安装和配置：
 
@@ -254,7 +254,7 @@ cc-connect doctor user-isolation
 **定时任务特点：**
 - 🌅 每次在新会话中运行
 - ⏱️ 可设置单任务超时
-- 🔄 隔离执行，不影响主Bot
+- 🔄 隔离执行，不影响主 Bot
 
 ---
 
@@ -270,7 +270,7 @@ app_secret = "xxxxxxxxxxxxxxxx"
 ```
 
 **特点：**
-- ✅ WebSocket 连接，无需公网IP
+- ✅ WebSocket 连接，无需公网 IP
 - ✅ 支持 Markdown/卡片
 - ✅ 支持流式输出
 - ✅ 支持图片/文件发送
@@ -284,9 +284,9 @@ bot_token = "123456:ABC-DEF"
 ```
 
 **特点：**
-- ✅ Long Polling，无需公网IP
+- ✅ Long Polling，无需公网 IP
 - ✅ 支持 Markdown
-- ✅ 支持语音消息（需要TTS配置）
+- ✅ 支持语音消息（需要 TTS 配置）
 - ✅ 支持 /new、/dir 等 Slash 命令
 
 ### 5.3 Discord 配置
@@ -299,7 +299,7 @@ guild_id = "123456789"
 ```
 
 **特点：**
-- ✅ Gateway 连接，无需公网IP
+- ✅ Gateway 连接，无需公网 IP
 - ✅ 支持 @everyone/@here 提及
 - ✅ 支持嵌入式消息
 
@@ -314,16 +314,16 @@ agent_id = "1000001"
 ```
 
 **支持两种模式：**
-- WebSocket（推荐，无需公网IP）
-- Webhook（需要公网IP）
+- WebSocket（推荐，无需公网 IP）
+- Webhook（需要公网 IP）
 
 ---
 
 ## 六、高级特性
 
-### 6.1 多Bot协作
+### 6.1 多 Bot 协作
 
-在群聊中部署多个Bot，让它们互相通信：
+在群聊中部署多个 Bot，让它们互相通信：
 
 ```
 群聊:
@@ -334,7 +334,7 @@ agent_id = "1000001"
 
 ### 6.2 附件回传
 
-当Agent生成了截图、PDF或其他文件时，可以直接发送到聊天：
+当 Agent 生成了截图、PDF 或其他文件时，可以直接发送到聊天：
 
 ```bash
 # 发送图片
@@ -347,7 +347,7 @@ cc-connect send --file /path/to/report.pdf
 cc-connect send --file /path/to/report.pdf --image /path/to/chart.png
 ```
 
-**在Agent中启用此功能：**
+**在 Agent 中启用此功能：**
 
 首次升级后在聊天中运行：
 
@@ -363,7 +363,7 @@ attachment_send = "on"  # "off" 禁用
 
 ### 6.3 内存管理
 
-Agent可以读写内存文件，不离开终端：
+Agent 可以读写内存文件，不离开终端：
 
 ```bash
 /memory read    # 读取当前内存
@@ -396,7 +396,7 @@ Agent可以读写内存文件，不离开终端：
 
 ---
 
-## 八、最佳实践
+## 八、实践建议
 
 ### 8.1 安全建议
 
@@ -408,7 +408,7 @@ admin_from = "alice,bob"  # 只有这些用户可以执行特权命令
 
 2. **OS-User 隔离**
 
-对于不受信任的会话，使用不同的Unix用户：
+对于不受信任的会话，使用不同的 Unix 用户：
 
 ```toml
 [[projects]]
@@ -458,9 +458,9 @@ cc-connect logs --platform feishu
 
 ## 九、常见问题
 
-**Q: 需要公网IP吗？**
+**Q: 需要公网 IP 吗？**
 
-A: 大部分平台（飞书、钉钉、Telegram、Slack、Discord、企业微信）使用 WebSocket/长轮询，**不需要公网IP**。只有 LINE 的 Webhook 模式需要。
+A: 大部分平台（飞书、钉钉、Telegram、Slack、Discord、企业微信）使用 WebSocket/长轮询，**不需要公网 IP**。只有 LINE 的 Webhook 模式需要。
 
 **Q: 支持微信个人号吗？**
 
@@ -470,9 +470,9 @@ A: 支持，但需要安装 **Beta 版本**：
 npm install -g cc-connect@beta
 ```
 
-**Q: 如何让多个Bot在群聊中协作？**
+**Q: 如何让多个 Bot 在群聊中协作？**
 
-A: 在群聊中同时加入多个Bot，它们可以通过 @mention 互相调用。
+A: 在群聊中同时加入多个 Bot，它们可以通过 @mention 互相调用。
 
 **Q: 如何实现定时任务？**
 
@@ -497,17 +497,17 @@ A: 使用 `/cron add` 命令：
 
 ## 十一、总结
 
-CC-Connect 是 AI 编程助手的多平台扩展方案，让你可以在任何设备、任何平台上与AI助手对话：
+CC-Connect 是 AI 编程助手的多平台扩展方案，让你可以在任何设备、任何平台上与 AI 助手对话：
 
 | 维度 | 说明 |
 |------|------|
-| 🤖 Agent支持 | 7种主流AI编程助手 |
-| 📱 平台支持 | 10个常用聊天平台 |
-| 🛡️ 安全性 | OS-User隔离 + 管理员白名单 |
-| ⚡ 性能 | WebSocket长连接，无需公网IP |
-| 🔄 扩展性 | 多Bot协作 + 定时任务 |
+| 🤖 Agent 支持 | 7 种主流 AI 编程助手 |
+| 📱 平台支持 | 10 个常用聊天平台 |
+| 🛡️ 安全性 | OS-User 隔离 + 管理员白名单 |
+| ⚡ 性能 | WebSocket 长连接，无需公网 IP |
+| 🔄 扩展性 | 多 Bot 协作 + 定时任务 |
 
-无论你在哪里，只要有聊天应用，就能使用Claude Code、Cursor等AI助手进行编程、代码审查、数据分析等工作。
+无论你在哪里，只要有聊天应用，就能使用 Claude Code、Cursor 等 AI 助手进行编程、代码审查、数据分析等工作。
 
 ---
 

@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "Coding Agent", "Local LLM", "JavaScript", "Node.js"]
 ---
 
-# SmallCode: 为本地小模型打造的AI Coding Agent深度解析
+# SmallCode: 为本地小模型打造的 AI Coding Agent 深度解析
 
 ## 一句话判断
 

@@ -10,9 +10,9 @@ tags: ["React Three Fiber", "WebGPU", "3D编辑器", "TypeScript", "Next.js"]
 
 ## 先给判断
 
-Pascal Editor是一个面向3D建筑/场景编辑场景的技术demo，而不是一个开箱即用的产品。它的核心价值在于**展示了如何用现代Web技术栈构建3D编辑器**：React Three Fiber做渲染，Zustand做状态管理，Turborepo做工程结构。
+Pascal Editor 是一个面向 3D 建筑/场景编辑场景的技术 demo，而不是一个开箱即用的产品。它的关键价值在于**展示了如何用现代 Web 技术栈构建 3D 编辑器**：React Three Fiber 做渲染，Zustand 做状态管理，Turborepo 做工程结构。
 
-如果你在研究WebGPU时代的3D Web应用，它值得一看；如果你需要一个能直接使用的3D编辑器，它还不到那个成熟度。
+如果你在研究 WebGPU 时代的 3D Web 应用，它值得一看；如果你需要一个能直接使用的 3D 编辑器，它还不到那个成熟度。
 
 <!--more-->
 
@@ -45,15 +45,15 @@ Pascal Editor (Turborepo Monorepo)
 
 ### 1. 状态管理（Zustand）
 
-项目用Zustand做状态管理，分三个独立store：
+项目用 Zustand 做状态管理，分三个独立 store：
 
-**useScene（core包）：**
+**useScene（core 包）：**
 - 管理场景数据：nodes、root IDs、dirty nodes
-- CRUD操作
-- 持久化到IndexedDB
-- undo/redo支持（通过Zundo）
+- CRUD 操作
+- 持久化到 IndexedDB
+- undo/redo 支持（通过 Zundo）
 
-**useViewer（viewer包）：**
+**useViewer（viewer 包）：**
 - 查看器状态：当前选择、层级显示模式、相机模式
 
 **useEditor（apps/editor）：**
@@ -87,9 +87,9 @@ interface BaseNode {
 
 | 包 | 职责 | 可独立使用 |
 |----|------|-----------|
-| **@pascal-app/core** | 节点Schema、场景状态、系统（几何生成、空间查询、事件总线） | ✅ 可以 |
-| **@pascal-app/viewer** | 3D渲染、默认相机/控制、后处理 | ✅ 可以（已有默认设置） |
-| **apps/editor** | UI组件、工具、编辑器特定行为 | ❌ 依赖core和viewer |
+| **@pascal-app/core** | 节点 Schema、场景状态、系统（几何生成、空间查询、事件总线） | ✅ 可以 |
+| **@pascal-app/viewer** | 3D 渲染、默认相机/控制、后处理 | ✅ 可以（已有默认设置） |
+| **apps/editor** | UI 组件、工具、编辑器特定行为 | ❌ 依赖 core 和 viewer |
 
 ### 4. 技术栈
 
@@ -103,18 +103,18 @@ interface BaseNode {
 ## 适用边界
 
 **该用：**
-- 研究React Three Fiber + Zustand的3D应用架构
-- 学习如何设计可复用的3D渲染包
-- 构建需要模块化拆分的复杂3D应用
+- 研究 React Three Fiber + Zustand 的 3D 应用架构
+- 学习如何设计可复用的 3D 渲染包
+- 构建需要模块化拆分的复杂 3D 应用
 
 **不该用：**
-- 需要直接可用的3D建筑编辑器——它更多是技术demo
-- 没有React/TypeScript经验——代码阅读门槛较高
+- 需要直接可用的 3D 建筑编辑器——它更多是技术 demo
+- 没有 React/TypeScript 经验——代码阅读门槛较高
 - 生产环境——项目成熟度不足以支撑生产
 
-## npm包
+## npm 包
 
-项目发布了两独立的npm包：
+项目发布了两独立的 npm 包：
 
 ```bash
 # 核心逻辑
@@ -126,10 +126,10 @@ npm install @pascal-app/viewer
 
 ## 结论
 
-Pascal Editor是一个有技术含量的3D Web应用示例。它的价值不在于"这是一个好用的编辑器"，而在于**展示了如何用现代工程实践构建复杂的3D Web应用**：monorepo结构、模块化包设计、Zustand状态管理、React Three Fiber渲染。
+Pascal Editor 是一个有技术含量的 3D Web 应用示例。它的价值不在于"这是一个好用的编辑器"，而在于**展示了如何用现代工程实践构建复杂的 3D Web 应用**：monorepo 结构、模块化包设计、Zustand 状态管理、React Three Fiber 渲染。
 
-如果你在研究3D Web应用的技术架构，这个项目的代码结构值得参考；如果你只是在找一个能用的3D编辑器，等项目更成熟再说。
+如果你在研究 3D Web 应用的技术架构，这个项目的代码结构值得参考；如果你只是在找一个能用的 3D 编辑器，等项目更成熟再说。
 
 ---
 
-**仓库信息**：https://github.com/pascalorg/editor | Stars: 15,716 | License: MIT | 语言: TypeScript
+**仓库信息**：https://github.com/pascalorg/editor | Stars: 15,716 | License: MIT | 语言： TypeScript

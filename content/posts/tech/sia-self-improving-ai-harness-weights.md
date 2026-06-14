@@ -258,9 +258,9 @@ python evaluate.py --gen-dir runs/run_1/gen_1
 
 ## 九、参考链接
 
-- 仓库：<https://github.com/hexo-ai/sia>
-- 论文：<https://arxiv.org/abs/2605.27276>
-- 架构文档：<https://github.com/hexo-ai/sia/blob/main/docs/architecture.md>
-- 自定义任务走查：<https://github.com/hexo-ai/sia/blob/main/docs/walkthrough.md>
-- 评估契约：<https://github.com/hexo-ai/sia/blob/main/EVALUATION_GUIDE.md>
-- 排错手册：<https://github.com/hexo-ai/sia/blob/main/docs/troubleshooting.md>
+- 仓库：< PROTECTED_65 >
+- 论文：< PROTECTED_66 >
+- 架构文档：< PROTECTED_67 >
+- 自定义任务走查：< PROTECTED_68 >
+- 评估契约：< PROTECTED_69 >
+- 排错手册：< PROTECTED_70 >

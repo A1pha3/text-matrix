@@ -124,12 +124,12 @@ frawk 官方 benchmark 在两个数据集上测试：
 
 | 程序 | 耗时 | 吞吐量 |
 |------|------|--------|
-| Python（csv 库） | 2分48秒 | 53 MB/s |
-| Rust（csv crate） | 25.9秒 | 346 MB/s |
-| frawk (Cranelift) | 19.9秒 | 450 MB/s |
-| **frawk (Cranelift, 并行)** | **4.9秒** | **1828 MB/s** |
-| frawk (LLVM) | 19.6秒 | 457 MB/s |
-| **frawk (LLVM, 并行)** | **4.9秒** | **1843 MB/s** |
+| Python（csv 库） | 2 分 48 秒 | 53 MB/s |
+| Rust（csv crate） | 25.9 秒 | 346 MB/s |
+| frawk (Cranelift) | 19.9 秒 | 450 MB/s |
+| **frawk (Cranelift, 并行)** | **4.9 秒** | **1828 MB/s** |
+| frawk (LLVM) | 19.6 秒 | 457 MB/s |
+| **frawk (LLVM, 并行)** | **4.9 秒** | **1843 MB/s** |
 
 Python 慢 34 倍。Rust 手写代码慢 5 倍。并行 frawk 快到受限于内存带宽。
 
@@ -137,10 +137,10 @@ Python 慢 34 倍。Rust 手写代码慢 5 倍。并行 frawk 快到受限于内
 
 | 程序 | 耗时 | 吞吐量 |
 |------|------|--------|
-| mawk | 42.0秒 | 188 MB/s |
-| gawk | 14.0秒 | 563 MB/s |
-| tsv-utils | 5.6秒 | 1397 MB/s |
-| **frawk (并行)** | **4.3秒** | **1843 MB/s** |
+| mawk | 42.0 秒 | 188 MB/s |
+| gawk | 14.0 秒 | 563 MB/s |
+| tsv-utils | 5.6 秒 | 1397 MB/s |
+| **frawk (并行)** | **4.3 秒** | **1843 MB/s** |
 
 frawk 并行模式超过 tsv-utils 这个专为 TSV 设计的高度优化工具。
 

@@ -136,12 +136,12 @@ npx hyperframes render   # 输出 my-first-video.mp4
 
 ## 链接
 
-- GitHub 仓库: https://github.com/heygen-com/hyperframes
-- 官方文档: https://hyperframes.heygen.com/introduction
+- GitHub 仓库： https://github.com/heygen-com/hyperframes
+- 官方文档： https://hyperframes.heygen.com/introduction
 - Showcase（成品案例）: https://hyperframes.heygen.com/showcase
 - Playground（在线试用）: https://www.hyperframes.dev/
-- npm 包: https://www.npmjs.com/package/hyperframes
-- Discord 社区: https://discord.gg/EbK98HBPdk
+- npm 包： https://www.npmjs.com/package/hyperframes
+- Discord 社区： https://discord.gg/EbK98HBPdk
 
 **开源协议**：Apache 2.0（商用友好）
 **主要语言**：TypeScript

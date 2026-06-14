@@ -3,7 +3,7 @@ date = '2026-05-17T00:00:00+08:00'
 draft = false
 title = 'GitHub Dependabot：自动化依赖更新'
 slug = 'github-dependabot-automated-dependency-updates-guide'
-description = '全面解析 GitHub Dependabot：工作原理、dependabot.yml 完整配置、安全更新、版本更新、最佳实践与常见问题。'
+description = '全面解析 GitHub Dependabot：工作原理、dependabot.yml 完整配置、安全更新、版本更新、实践建议与常见问题。'
 categories = ['技术笔记']
 tags = ['GitHub', 'DevOps', '教程', '依赖管理']
 +++
@@ -14,7 +14,7 @@ tags = ['GitHub', 'DevOps', '教程', '依赖管理']
 
 GitHub Dependabot（[github.com/apps/dependabot](https://github.com/apps/dependabot)）正是为解决这一痛点而生的官方工具。它由 GitHub 原生集成，以 Pull Request 的形式自动为项目提出依赖更新建议，让安全和版本维护变成一个流畅的签到流程。
 
-本文将从**是什么、怎么工作、如何配置、进阶技巧、常见问题到替代方案**，提供一份全方位的技术文档，适合从刚接触依赖管理的新手到希望优化企业级流水线的资深工程师。
+下面从**是什么、怎么工作、如何配置、进阶技巧、常见问题到替代方案**，提供一份全方位的技术文档，适合从刚接触依赖管理的新手到希望优化企业级流水线的资深工程师。
 
 ---
 
@@ -303,7 +303,7 @@ registries:
 
 ---
 
-## 5. Version Updates 最佳实践
+## 5. Version Updates 实践建议
 
 ### 5.1 分组策略
 

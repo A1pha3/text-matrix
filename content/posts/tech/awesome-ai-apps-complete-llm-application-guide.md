@@ -8,13 +8,13 @@ categories: ["技术笔记"]
 tags: ["LLM", "AI", "Agent", "RAG", "开源项目"]
 ---
 
-# Awesome AI Apps：80+LLM应用实战项目合集
+# Awesome AI Apps：80+LLM 应用实战项目合集
 
 ## 一、项目概述
 
 ### 1.1 Awesome AI Apps 是什么
 
-**Awesome AI Apps** 是一个全面的 **LLM应用实战项目集合**，收录了 80+ 个实用的 AI 应用示例，涵盖文本 Agent、语音助手、RAG 应用、MCP 工具等。项目按难度分层，从入门级 Starter 到生产级 Advanced，助你从零掌握各种 AI 框架和技术栈。
+**Awesome AI Apps** 是一个全面的 **LLM 应用实战项目集合**，收录了 80+ 个实用的 AI 应用示例，涵盖文本 Agent、语音助手、RAG 应用、MCP 工具等。项目按难度分层，从入门级 Starter 到生产级 Advanced，助你从零掌握各种 AI 框架和技术栈。
 
 ### 1.2 核心数据
 

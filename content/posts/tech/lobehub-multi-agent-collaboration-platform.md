@@ -180,14 +180,14 @@ docker run --rm -e OPENAI_API_KEY=your_key cloakhq/cloakbrowser cloaktest
 ### 局限
 
 - **依赖 API**：需要 OpenAI API 或兼容模型，非完全本地化方案
-- **学习成本**：多 Agent 协作的最佳实践需要一定探索
+- **学习成本**：多 Agent 协作的实践建议需要一定探索
 - **复杂任务拆解**：对于边界模糊的任务，Agent 之间的职责划分可能需要人工调整
 
 ---
 
 ## 6. 总结与延伸
 
-LobeHub 代表了 AI Agent 从「单点工具」向「协作平台」的演进。它的核心价值在于将多 Agent 协作的复杂性封装为易于使用的接口，让非技术用户也能构建和管理 AI 团队。
+LobeHub 代表了 AI Agent 从「单点工具」向「协作平台」的演进。它的关键价值在于将多 Agent 协作的复杂性封装为易于使用的接口，让非技术用户也能构建和管理 AI 团队。
 
 **核心要点回顾**：
 

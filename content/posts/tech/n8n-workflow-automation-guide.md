@@ -598,7 +598,7 @@ npm publish --access public
 
 ---
 
-## 9. 最佳实践
+## 9. 实践建议
 
 ### 9.1 工作流设计
 

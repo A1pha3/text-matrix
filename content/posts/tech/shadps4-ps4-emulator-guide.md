@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["C++", "模拟器", "PS4", "PlayStation", "游戏"]
 ---
 
-# shadPS4：30.7K Stars·开源PlayStation 4模拟器·C++重写的跨平台PS4模拟器
+# shadPS4：30.7K Stars·开源 PlayStation 4 模拟器·C++重写的跨平台 PS4 模拟器
 
 ## 项目概述
 

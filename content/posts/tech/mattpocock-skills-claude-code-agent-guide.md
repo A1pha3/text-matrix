@@ -737,7 +737,7 @@ A: 完全支持。你可以：
 
 Matt Pocock Skills 代表了 Claude Code 技能生态的一个重要方向——不是简单地提供提示词模板，而是提供**完整的开发方法论**。
 
-**核心价值回顾**：
+**关键价值回顾**：
 
 - **Planning & Design**：从需求到实现的完整规划体系
 - **Development**：TDD、问题诊断、架构改进的开发实践
@@ -763,7 +763,7 @@ npx skills@latest add mattpocock/skills/tdd
 > tdd
 ```
 
-随着 Claude Code 技能的生态发展，Matt Pocock Skills 为我们展示了如何将 AI 能力与工程最佳实践结合，打造真正提升生产力的开发体验。
+随着 Claude Code 技能的生态发展，Matt Pocock Skills 为我们展示了如何将 AI 能力与工程实践建议结合，打造真正提升生产力的开发体验。
 
 ---
 

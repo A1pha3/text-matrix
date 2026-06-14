@@ -38,7 +38,7 @@ tags: ["MLX", "Apple Silicon", "VLM", "视觉语言模型", "本地AI"]
 | GitHub Stars | 4.1k |
 | GitHub Forks | 430 |
 | 贡献者 | 86 位 |
-| 最新版本 | v0.4.4（2026年4月4日）|
+| 最新版本 | v0.4.4（2026 年 4 月 4 日）|
 | 发布版本数 | 62 个 |
 | License | MIT |
 
@@ -636,7 +636,7 @@ mlx_vlm.generate --model mlx-community/Qwen2-VL-2B-Instruct-4bit --help
 
 ---
 
-## 11. 最佳实践
+## 11. 实践建议
 
 ### 11.1 内存管理
 

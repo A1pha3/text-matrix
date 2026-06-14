@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Rust", "Shell", "历史管理", "SQLite", "加密"]
 ---
 
-# Atuin：29.1K Stars·加密同步的Shell历史管理器·Rust编写
+# Atuin：29.1K Stars·加密同步的 Shell 历史管理器·Rust 编写
 
 ## 项目概述
 

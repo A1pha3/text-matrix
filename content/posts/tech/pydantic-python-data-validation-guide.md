@@ -19,7 +19,7 @@ tags: ["Pydantic", "Python", "数据验证", "类型提示", "FastAPI"]
 - 掌握常用字段类型、验证器和自定义验证器
 - 学会使用 pydantic-settings 管理应用配置
 - 理解 pydantic-core（Rust 实现）的性能优势
-- 掌握常见使用模式和最佳实践
+- 掌握常见使用模式和实践建议
 
 ---
 
@@ -48,7 +48,7 @@ tags: ["Pydantic", "Python", "数据验证", "类型提示", "FastAPI"]
 | 特性 | 说明 |
 |------|------|
 | **类型安全** | 完全基于 Python 类型提示，与 mypy/pyright 无缝配合 |
-| **性能卓越** | Rust 编写的 pydantic-core核心，验证速度极快 |
+| **性能卓越** | Rust 编写的 pydantic-core 核心，验证速度极快 |
 | **易于使用** | 声明式 API，简单直观 |
 | **功能完备** | 验证、序列化、JSON Schema 生成、配置管理 |
 | **生态丰富** | pydantic-settings、FastAPI 等周边完善 |

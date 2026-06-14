@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Linux", "安全加固", "SSH", "防火墙", "DevOps"]
 ---
 
-# Linux服务器安全加固实战指南：从SSH到防火墙的完整清单
+# Linux 服务器安全加固实战指南：从 SSH 到防火墙的完整清单
 
 **How-To-Secure-A-Linux-Server**（GitHub: imthenachoman/How-To-Secure-A-Linux-Server）是一份由社区共建的 Linux 服务器安全加固指南，涵盖从系统安装到日常运维的全链路安全措施。该项目在 GitHub 拥有 27,000+ Stars，内容持续更新，涵盖 SSH 加固、防火墙配置、入侵检测、安全审计等多个维度。
 

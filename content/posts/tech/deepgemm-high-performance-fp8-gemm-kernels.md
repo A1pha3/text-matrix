@@ -8,11 +8,11 @@ categories: ["技术笔记"]
 tags: ["GPU", "CUDA", "FP8", "高性能计算", "LLM"]
 ---
 
-# DeepGEMM：深势科技6577 Stars的高性能FP8 GEMM内核库——从入门到精通
+# DeepGEMM：深势科技 6577 Stars 的高性能 FP8 GEMM 内核库——从入门到精通
 
-> **目标读者**：GPU内核工程师、深度学习框架开发者、高性能计算研究员、LLM推理优化工程师
-> **预计阅读时间**：60-80分钟
-> **前置知识**：CUDA编程基础、GEMM计算原理、深度学习训练/推理流程
+> **目标读者**：GPU 内核工程师、深度学习框架开发者、高性能计算研究员、LLM 推理优化工程师
+> **预计阅读时间**：60-80 分钟
+> **前置知识**：CUDA 编程基础、GEMM 计算原理、深度学习训练/推理流程
 > **难度定位**：⭐⭐⭐⭐ 专家设计
 
 ---
@@ -28,33 +28,33 @@ tags: ["GPU", "CUDA", "FP8", "高性能计算", "LLM"]
 | **Forks** | 879 |
 | **语言** | CUDA (C++) |
 | **许可证** | MIT License |
-| **发布** | 2025年 |
+| **发布** | 2025 年 |
 
 ### 1.2 项目定位
 
-DeepGEMM是一个统一的高性能Tensor Core内核库，将现代大语言模型的核心计算原语集成到一个内聚的CUDA代码库中：
+DeepGEMM 是一个统一的高性能 Tensor Core 内核库，将现代大语言模型的核心计算原语集成到一个内聚的 CUDA 代码库中：
 
-- **GEMM运算**：FP8、FP4、BF16格式
-- **融合MoE**：支持通信与计算重叠的Mega MoE
-- **MQA评分**：Lightning索引器的高速评分
+- **GEMM 运算**：FP8、FP4、BF16 格式
+- **融合 MoE**：支持通信与计算重叠的 Mega MoE
+- **MQA 评分**：Lightning 索引器的高速评分
 - **HyperConnection**：超连接支持
-- **JIT编译**：运行时轻量级即时编译
+- **JIT 编译**：运行时轻量级即时编译
 
 ### 1.3 核心特性
 
 | 特性 | 说明 |
 |------|------|
 | **轻量级设计** | 仅少量核心内核函数，代码清晰易懂 |
-| **无模板依赖** | 不依赖CUTLASS的重模板或代数库 |
-| **JIT编译** | 运行时编译，无需安装时CUDA编译 |
-| **双精度支持** | SM90（Hopper）和SM100（Blackwell） |
-| **极致性能** | H800上达到1550 TFLOPS |
+| **无模板依赖** | 不依赖 CUTLASS 的重模板或代数库 |
+| **JIT 编译** | 运行时编译，无需安装时 CUDA 编译 |
+| **双精度支持** | SM90（Hopper）和 SM100（Blackwell） |
+| **极致性能** | H800 上达到 1550 TFLOPS |
 
 ---
 
-## §2 技术背景：GEMM与FP8计算
+## §2 技术背景：GEMM 与 FP8 计算
 
-### 2.1 什么是GEMM
+### 2.1 什么是 GEMM
 
 GEMM（General Matrix Multiply）是深度学习最核心的计算操作：
 
@@ -68,7 +68,7 @@ C = α · (A @ B) + β · C
   @: 矩阵乘法
 ```
 
-在Transformer架构中，GEMM操作占据了绝大部分计算时间：
+在 Transformer 架构中，GEMM 操作占据了绝大部分计算时间：
 
 ```mermaid
 flowchart LR
@@ -104,18 +104,18 @@ flowchart LR
     style OV fill:#fecaca,stroke:#ef4444
 ```
 
-**GEMM在Transformer中的占比**：
+**GEMM 在 Transformer 中的占比**：
 
-| 操作 | 计算类型 | GEMM占比 |
+| 操作 | 计算类型 | GEMM 占比 |
 |------|----------|----------|
-| Q/K/V投影 | GEMM | 40-50% |
+| Q/K/V 投影 | GEMM | 40-50% |
 | Attention scores | GEMM | 10-15% |
 | Output projection | GEMM | 5-10% |
-| FFN (2层GEMM) | GEMM | 30-40% |
+| FFN (2 层 GEMM) | GEMM | 30-40% |
 
-### 2.2 为什么需要FP8
+### 2.2 为什么需要 FP8
 
-FP8（8位浮点）是NVIDIA Hopper架构推出的新精度格式，在性能和精度之间取得平衡：
+FP8（8 位浮点）是 NVIDIA Hopper 架构推出的新精度格式，在性能和精度之间取得平衡：
 
 | 格式 | 位宽 | 动态范围 | 适用场景 |
 |------|------|----------|----------|
@@ -164,7 +164,7 @@ flowchart LR
 
 ### 2.3 细粒度缩放的重要性
 
-FP8计算的关键挑战是**动态范围有限**，需要精细的缩放策略：
+FP8 计算的关键挑战是**动态范围有限**，需要精细的缩放策略：
 
 ```python
 # 粗粒度缩放（低效）
@@ -174,7 +174,7 @@ A_fp8 = quantize(A, scale=global_scale)  # 全局缩放
 A_fp8 = quantize(A, scale=per_block_scale)  # 每块独立缩放
 ```
 
-DeepGEMM的**fine-grained scaling**确保每个计算块都有最优的缩放因子，最大化精度同时利用FP8的性能优势。
+DeepGEMM 的**fine-grained scaling**确保每个计算块都有最优的缩放因子，最大化精度同时利用 FP8 的性能优势。
 
 ---
 
@@ -224,17 +224,17 @@ flowchart TB
 
 **关键设计决策**：
 
-| 设计点 | DeepGEMM选择 | 对比CUTLASS |
+| 设计点 | DeepGEMM 选择 | 对比 CUTLASS |
 |--------|-------------|-------------|
 | 模板复杂度 | 简化设计 | 复杂多层模板 |
 | 学习曲线 | 平缓，文档清晰 | 陡峭 |
-| 编译方式 | JIT运行时编译 | 预编译 |
-| 代码量 | ~10K行 | ~100K+行 |
+| 编译方式 | JIT 运行时编译 | 预编译 |
+| 代码量 | ~10K 行 | ~100K+行 |
 | 性能 | 匹敌或超越 | 专家级调优 |
 
-### 3.2 与CUTLASS的关系
+### 3.2 与 CUTLASS 的关系
 
-DeepGEMM借鉴了CUTLASS的设计理念，但做了重大简化：
+DeepGEMM 借鉴了 CUTLASS 的设计理念，但做了重大简化：
 
 | 方面 | CUTLASS | DeepGEMM |
 |------|---------|----------|
@@ -244,7 +244,7 @@ DeepGEMM借鉴了CUTLASS的设计理念，但做了重大简化：
 | **代码量** | 庞大 | 轻量 |
 | **扩展性** | 高 | 中等 |
 
-### 3.3 JIT编译流程
+### 3.3 JIT 编译流程
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -277,16 +277,16 @@ DeepGEMM借鉴了CUTLASS的设计理念，但做了重大简化：
 
 ## §4 核心内核详解
 
-### 4.1 普通GEMM（Normal Dense GEMMs）
+### 4.1 普通 GEMM（Normal Dense GEMMs）
 
 **命名规范**：`D = C + A @ B`
 
 | 函数 | 说明 | 内存布局 |
 |------|------|----------|
-| `fp8_gemm_nt` | 非转置A，转置B | row-major A, col-major B |
-| `fp8_gemm_nn` | 非转置A，非转置B | row-major A, row-major B |
-| `fp8_gemm_tn` | 转置A，非转置B | col-major A, row-major B |
-| `fp8_gemm_tt` | 转置A，转置B | col-major A, col-major B |
+| `fp8_gemm_nt` | 非转置 A，转置 B | row-major A, col-major B |
+| `fp8_gemm_nn` | 非转置 A，非转置 B | row-major A, row-major B |
+| `fp8_gemm_tn` | 转置 A，非转置 B | col-major A, row-major B |
+| `fp8_gemm_tt` | 转置 A，转置 B | col-major A, col-major B |
 
 **使用示例**：
 
@@ -312,9 +312,9 @@ D = deep_gemm.fp8_gemm_nt(
 )
 ```
 
-### 4.2 分组GEMM（Grouped GEMMs）
+### 4.2 分组 GEMM（Grouped GEMMs）
 
-分组GEMM用于MoE（Mixture of Experts）场景，其中多个专家共享形状但处理不同数据：
+分组 GEMM 用于 MoE（Mixture of Experts）场景，其中多个专家共享形状但处理不同数据：
 
 ```python
 # 连续布局分组GEMM
@@ -327,9 +327,9 @@ m_grouped_fp8_gemm_nt_contiguous(
 )
 ```
 
-### 4.3 Mega MoE融合内核
+### 4.3 Mega MoE 融合内核
 
-Mega MoE是DeepGEMM最复杂的内核，将MoE推理的计算和通信完全融合：
+Mega MoE 是 DeepGEMM 最复杂的内核，将 MoE 推理的计算和通信完全融合：
 
 ```mermaid
 flowchart LR
@@ -351,21 +351,21 @@ flowchart LR
     style Communication fill:#fef3c7,stroke:#f59e0b
 ```
 
-**Mega MoE融合优势**：
+**Mega MoE 融合优势**：
 
-| 指标 | 非融合方案 | Mega MoE融合 |
+| 指标 | 非融合方案 | Mega MoE 融合 |
 |------|-----------|-------------|
-| **内存访问** | 多次读写HBM | 单次融合 |
+| **内存访问** | 多次读写 HBM | 单次融合 |
 | **同步开销** | 层间同步 | 零等待 |
-| **NVLink利用** | 低效 | 通信计算重叠 |
-| **功耗** | 高 | 降低20-30% |
-| **延迟** | 高 | 降低40-50% |
+| **NVLink 利用** | 低效 | 通信计算重叠 |
+| **功耗** | 高 | 降低 20-30% |
+| **延迟** | 高 | 降低 40-50% |
 
 **支持的融合操作**：
 - EP Dispatch（专家并行分发）
-- Linear 1（FP8×FP4矩阵乘法）
+- Linear 1（FP8×FP4 矩阵乘法）
 - SwiGLU（激活函数融合）
-- Linear 2（FP8×FP4矩阵乘法）
+- Linear 2（FP8×FP4 矩阵乘法）
 - EP Combine（专家并行合并）
 
 **使用示例**：
@@ -392,9 +392,9 @@ y = torch.empty((num_tokens, hidden), dtype=torch.bfloat16, device='cuda')
 deep_gemm.fp8_fp4_mega_moe(y, transformed_l1, transformed_l2, buffer)
 ```
 
-### 4.4 MQA评分内核
+### 4.4 MQA 评分内核
 
-用于DeepSeek V3.2的Lightning索引器加速：
+用于 DeepSeek V3.2 的 Lightning 索引器加速：
 
 ```python
 # MQA (Multi-Query Attention) 评分
@@ -408,9 +408,9 @@ output = deep_gemm.fp8_mqa_logits(
 )
 ```
 
-### 4.5 FP4支持
+### 4.5 FP4 支持
 
-DeepGEMM是少数支持FP4矩阵乘法的库之一：
+DeepGEMM 是少数支持 FP4 矩阵乘法的库之一：
 
 ```python
 # FP8 × FP4 GEMM（超低精度推理）
@@ -425,9 +425,9 @@ fp8_fp4_gemm_nt(
 
 ## §5 性能分析
 
-### 5.1 H800/H100性能基准
+### 5.1 H800/H100 性能基准
 
-DeepGEMM在H800（Hopper架构，80GB HBM3）上的峰值性能：
+DeepGEMM 在 H800（Hopper 架构，80GB HBM3）上的峰值性能：
 
 ```mermaid
 gantt
@@ -445,11 +445,11 @@ gantt
 
 | 操作 | 精度 | CUTLASS | DeepGEMM | 提升幅度 |
 |------|------|---------|----------|----------|
-| **普通GEMM (1024,4096,4096)** | FP8 | 1,420 TFLOPS | **1,550 TFLOPS** | +9.1% |
-| **普通GEMM (8192,4096,4096)** | FP8 | 1,480 TFLOPS | **1,540 TFLOPS** | +4.1% |
-| **普通GEMM (16384,4096,4096)** | FP8 | 1,500 TFLOPS | **1,550 TFLOPS** | +3.3% |
-| **Mega MoE (8专家)** | FP8×FP4 | 1,180 TFLOPS | **1,350 TFLOPS** | +14.4% |
-| **Grouped GEMM (16组)** | FP8 | 1,290 TFLOPS | **1,400 TFLOPS** | +8.5% |
+| **普通 GEMM (1024,4096,4096)** | FP8 | 1,420 TFLOPS | **1,550 TFLOPS** | +9.1% |
+| **普通 GEMM (8192,4096,4096)** | FP8 | 1,480 TFLOPS | **1,540 TFLOPS** | +4.1% |
+| **普通 GEMM (16384,4096,4096)** | FP8 | 1,500 TFLOPS | **1,550 TFLOPS** | +3.3% |
+| **Mega MoE (8 专家)** | FP8×FP4 | 1,180 TFLOPS | **1,350 TFLOPS** | +14.4% |
+| **Grouped GEMM (16 组)** | FP8 | 1,290 TFLOPS | **1,400 TFLOPS** | +8.5% |
 
 **性能提升来源**：
 
@@ -479,13 +479,13 @@ flowchart LR
 |----------|------|------|
 | **Fine-grained Scaling** | 每块独立缩放因子 | 精度损失 < 0.1% |
 | **TMA (Tensor Memory Access)** | 硬件级内存访问加速 | 带宽利用率 > 90% |
-| **Warp Specialization** | warp级并行策略 | 隐藏延迟 |
-| **JIT配置选择** | 运行时选择最优配置 | 自适应形状 |
+| **Warp Specialization** | warp 级并行策略 | 隐藏延迟 |
+| **JIT 配置选择** | 运行时选择最优配置 | 自适应形状 |
 | **PDL (Programmatic Dependent Launch)** | 依赖内核调度优化 | 减少同步开销 |
 
-### 5.3 JIT编译性能
+### 5.3 JIT 编译性能
 
-启用NVRTC可实现10倍编译加速：
+启用 NVRTC 可实现 10 倍编译加速：
 
 ```bash
 # 启用NVRTC（编译快10倍，可能有少量性能损失）
@@ -509,7 +509,7 @@ export DG_JIT_USE_NVRTC=0
 | **PyTorch** | 2.1+ |
 | **CUTLASS** | 4.0+ |
 | **{fmt}** | 最新版 |
-| **编译器** | C++20支持 |
+| **编译器** | C++20 支持 |
 
 ### 6.2 安装步骤
 
@@ -562,13 +562,13 @@ print(f"Output shape: {D.shape}")  # [1024, 4096]
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `DG_JIT_DEBUG` | 0 | 打印JIT调试信息 |
-| `DG_JIT_USE_NVRTC` | 0 | 使用NVRTC编译（10x加速） |
-| `DG_JIT_CACHE_DIR` | ~/.deep_gemm | JIT缓存目录 |
+| `DG_JIT_DEBUG` | 0 | 打印 JIT 调试信息 |
+| `DG_JIT_USE_NVRTC` | 0 | 使用 NVRTC 编译（10x 加速） |
+| `DG_JIT_CACHE_DIR` | ~/.deep_gemm | JIT 缓存目录 |
 | `DG_PRINT_CONFIGS` | 0 | 打印内核配置 |
-| `DG_SET_NUM_SMS` | 0 | 最大SM数量 |
-| `DG_SET_TC_UTIL` | 1.0 | Tensor Core利用率 |
-| `DG_SET_PDL` | 0 | 启用PDL |
+| `DG_SET_NUM_SMS` | 0 | 最大 SM 数量 |
+| `DG_SET_TC_UTIL` | 1.0 | Tensor Core 利用率 |
+| `DG_SET_PDL` | 0 | 启用 PDL |
 
 ### 7.2 性能调优
 
@@ -586,7 +586,7 @@ deep_gemm.set_pdl(1)  # 启用依赖内核调度优化
 alignment = deep_gemm.get_theoretical_mk_alignment_for_contiguous_layout()
 ```
 
-### 7.3 调试与profiling
+### 7.3 调试与 profiling
 
 ```bash
 # 启用line info（用于nsys/nsysd分析）
@@ -639,15 +639,15 @@ flowchart TD
 
 | 场景 | 推荐内核 | 精度 | 性能提升 |
 |------|----------|------|----------|
-| **LLM预训练** | bf16_gemm_* | BF16 | 标准 |
-| **LLM推理(Prefill)** | fp8_gemm_nt | FP8 | 2-4x |
-| **LLM推理(Decode)** | fp8_gemm_nn | FP8 | 2-4x |
+| **LLM 预训练** | bf16_gemm_* | BF16 | 标准 |
+| **LLM 推理(Prefill)** | fp8_gemm_nt | FP8 | 2-4x |
+| **LLM 推理(Decode)** | fp8_gemm_nn | FP8 | 2-4x |
 | **极致延迟优化** | fp8_fp4_gemm_* | FP4 | 3-5x |
-| **MoE(8+专家)** | fp8_fp4_mega_moe | FP8×FP4 | 1.5x vs非融合 |
-| **动态Batch** | m_grouped_fp8_gemm_contiguous | FP8 | 高效利用GPU |
-| **稀疏专家** | fp8_fp4_mega_moe | FP8×FP4 | 1.3x vs密集 |
+| **MoE(8+专家)** | fp8_fp4_mega_moe | FP8×FP4 | 1.5x vs 非融合 |
+| **动态 Batch** | m_grouped_fp8_gemm_contiguous | FP8 | 高效利用 GPU |
+| **稀疏专家** | fp8_fp4_mega_moe | FP8×FP4 | 1.3x vs 密集 |
 
-### 8.2 LLM训练
+### 8.2 LLM 训练
 
 ```python
 # 混合精度训练中的FP8 GEMM
@@ -667,7 +667,7 @@ class FP8Linear(torch.nn.Module):
         )
 ```
 
-### 8.2 LLM推理
+### 8.2 LLM 推理
 
 ```python
 # Prefill阶段的高效FP8推理
@@ -690,7 +690,7 @@ def prefill_with_fp8(model, input_ids):
         ) * torch.nn.functional.silu(q)  # SwiGLU
 ```
 
-### 8.3 MoE推理
+### 8.3 MoE 推理
 
 ```python
 # DeepSeek V3风格的MoE推理
@@ -720,15 +720,15 @@ def moe_forward_with_deepgemm(router_output, expert_weights, expert_biases):
 |------|----------|--------|-------|---------|
 | FP8 GEMM | ✅ | ✅ | ✅ | ✅ |
 | FP4 GEMM | ✅ | ❌ | ❌ | ❌ |
-| 分组GEMM | ✅ | ❌ | ❌ | ✅ |
-| Mega MoE融合 | ✅ | ❌ | ❌ | ❌ |
-| JIT编译 | ✅ | ❌ | ❌ | ❌ |
+| 分组 GEMM | ✅ | ❌ | ❌ | ✅ |
+| Mega MoE 融合 | ✅ | ❌ | ❌ | ❌ |
+| JIT 编译 | ✅ | ❌ | ❌ | ❌ |
 | 代码简洁度 | ⭐⭐⭐⭐⭐ | N/A | N/A | ⭐⭐ |
 | 学习曲线 | 平缓 | N/A | N/A | 陡峭 |
 
 ### 9.2 性能对比
 
-在标准GEMM shapes下与CUTLASS对比：
+在标准 GEMM shapes 下与 CUTLASS 对比：
 
 | Shape (M,N,K) | CUTLASS | DeepGEMM | 提升 |
 |-----------------|---------|----------|------|
@@ -812,24 +812,24 @@ torch::Tensor my_new_kernel(
 | Stars | 6,577 |
 | Forks | 879 |
 | 峰值性能 | 1550 TFLOPS (H800) |
-| 支持GPU | SM90, SM100 |
+| 支持 GPU | SM90, SM100 |
 | 精度格式 | FP8, FP4, BF16, FP32 |
 
 ### 11.2 适用场景
 
 | 场景 | 推荐配置 |
 |------|----------|
-| LLM训练 | FP8前向 + BF16反向 |
-| LLM推理（Prefill） | FP8 GEMM |
-| MoE推理 | Mega MoE融合内核 |
+| LLM 训练 | FP8 前向 + BF16 反向 |
+| LLM 推理（Prefill） | FP8 GEMM |
+| MoE 推理 | Mega MoE 融合内核 |
 | 极致压缩推理 | FP4 GEMM |
 | 科学研究 | BF16/FP32 |
 
 ### 11.3 未来方向
 
-- NVRTC性能优化
+- NVRTC 性能优化
 - 更多精度格式支持
-- 扩展到SM80（早期Hopper）
+- 扩展到 SM80（早期 Hopper）
 - 更深入的融合操作
 
 ---
@@ -873,7 +873,7 @@ Hopper优化"]
 
 ### ⚡ 性能基准参考
 
-**H800 vs A100 FP8 GEMM性能对比**：
+**H800 vs A100 FP8 GEMM 性能对比**：
 
 | 配置 | H800 (DeepGEMM) | A100 (cuBLAS) | 加速比 |
 |------|-----------------|----------------|--------|
@@ -882,17 +882,17 @@ Hopper优化"]
 | **BF16 8192×8192×8192** | 900 TFLOPS | 350 TFLOPS | 2.6× |
 | **FP32 8192×8192×8192** | 450 TFLOPS | 160 TFLOPS | 2.8× |
 
-**MoE配置性能**：
+**MoE 配置性能**：
 
 | 配置 | 专家数 | Hidden Dim | 吞吐量 | 备注 |
 |------|--------|------------|--------|------|
-| **Mega MoE-L** | 16 | 2048 | 1420 TFLOPS | 大规模MoE |
+| **Mega MoE-L** | 16 | 2048 | 1420 TFLOPS | 大规模 MoE |
 | **Mega MoE-M** | 8 | 2048 | 1350 TFLOPS | 中等规模 |
 | **Mega MoE-S** | 4 | 2048 | 1200 TFLOPS | 小规模 |
 
 ### 📊 使用快速参考
 
-**C++ API调用模板**：
+**C++ API 调用模板**：
 
 ```cpp
 #include <deepgemm/gemm.h>
@@ -941,10 +941,10 @@ assert C.dtype == torch.bfloat16
 
 ## 相关资源
 
-- **GitHub仓库**：https://github.com/deepseek-ai/DeepGEMM
+- **GitHub 仓库**：https://github.com/deepseek-ai/DeepGEMM
 - **官方文档**：https://github.com/deepseek-ai/DeepGEMM#readme
 - **问题反馈**：https://github.com/deepseek-ai/DeepGEMM/issues
 
 ---
 
-*🦞 撰写于2026年4月19日*
+*🦞 撰写于 2026 年 4 月 19 日*

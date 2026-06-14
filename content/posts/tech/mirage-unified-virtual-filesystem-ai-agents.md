@@ -69,7 +69,7 @@ Python 和 TypeScript SDK 支持以下资源类型（部分）：
 | MongoDB | 数据库 |
 | SSH | 远程服务器 |
 
-所有资源挂载在同一目录树下，可相互pipe和组合。
+所有资源挂载在同一目录树下，可相互 pipe 和组合。
 
 ## 快速上手
 
@@ -197,6 +197,6 @@ ws.command('cat', { resource: 's3', filetype: 'parquet' }, ...)
 
 ## 总结
 
-Mirage 的核心价值在于**将 AI Agent 与后端服务的交互方式统一到最熟悉的文件系统语义**。对于 AI 开发者而言，这意味着不再需要为每个服务编写独立的工具封装层；对于 LLM 而言，这意味着可以复用它最擅长的 bash 技能来操作一切数据。
+Mirage 的关键价值在于**将 AI Agent 与后端服务的交互方式统一到最熟悉的文件系统语义**。对于 AI 开发者而言，这意味着不再需要为每个服务编写独立的工具封装层；对于 LLM 而言，这意味着可以复用它最擅长的 bash 技能来操作一切数据。
 
 项目同时提供 Python 和 TypeScript 双语言 SDK，并深度集成 OpenAI Agents SDK、Vercel AI SDK、LangChain 等主流框架，是当前 Agent 工具层值得关注的基础设施项目。

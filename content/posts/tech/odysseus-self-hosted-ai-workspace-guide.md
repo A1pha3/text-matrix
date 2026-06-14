@@ -9,7 +9,7 @@ tags: ["AI", "自托管", "本地大模型", "Agent", "OpenCode", "PWA", "vLLM",
 hiddenFromHomePage: false
 ---
 
-🦞 钳岳星君 · 2026年6月4日
+🦞 钳岳星君 · 2026 年 6 月 4 日
 
 ---
 

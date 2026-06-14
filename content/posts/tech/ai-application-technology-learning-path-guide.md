@@ -619,7 +619,7 @@ for doc in results:
 
 ## §5 Function Calling 与 MCP ⭐⭐⭐
 
-> **学习目标**：理解 Function Calling 的工作机制，掌握 MCP 协议的核心价值，能够实现基础的工具调用功能。
+> **学习目标**：理解 Function Calling 的工作机制，掌握 MCP 协议的关键价值，能够实现基础的工具调用功能。
 
 ### 5.1 Function Calling：让 LLM 调用工具
 
@@ -1068,7 +1068,7 @@ result = crew.kickoff()
 **延伸阅读**：
 
 - [Lost in the Middle 论文](https://arxiv.org/abs/2307.03172) — 斯坦福大学关于长上下文信息检索的研究
-- [Claude Prompt Engineering Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) — Claude 提示词最佳实践
+- [Claude Prompt Engineering Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) — Claude 提示词实践建议
 
 ⬆️ [返回目录](#目录) | ⬆️ [上一节：Workflow Engineering](#8-workflow-engineering工作流编排-) | ⬇️ [下一节：Agent Skill](#10-agent-skill智能体技能-)
 
@@ -1363,7 +1363,7 @@ openclaw dashboard
  发布
 ```
 
-> 💡 **最佳实践**：在修改任何提示词或智能体配置之前，先确保评估集能反映当前系统的表现。修改后立即运行评估，量化改进效果。没有评估集的优化，就像没有指南针的航行。
+> 💡 **实践建议**：在修改任何提示词或智能体配置之前，先确保评估集能反映当前系统的表现。修改后立即运行评估，量化改进效果。没有评估集的优化，就像没有指南针的航行。
 
 ### 12.4 练习
 
@@ -1652,7 +1652,7 @@ LangChain 是一个**开发库**，提供构建智能体的工具和抽象；Ope
 
 深入理解 AI 产品的设计和用户体验：
 
-1. **AI 产品设计**：学习人机交互设计、AI UX 最佳实践
+1. **AI 产品设计**：学习人机交互设计、AI UX 实践建议
 2. **多模态应用**：学习视觉、语音等多模态 AI 应用开发
 3. **AI 安全与对齐**：学习 RLHF、Constitutional AI 等对齐技术
 

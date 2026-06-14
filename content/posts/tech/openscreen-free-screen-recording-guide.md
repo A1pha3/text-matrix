@@ -47,7 +47,7 @@ tags: ["OpenScreen", "屏幕录制", "Electron", "PixiJS", "开源工具"]
 | GitHub Stars | 23.2k |
 | GitHub Forks | 1.6k |
 | 贡献者 | 39 位 |
-| 最新版本 | v1.3.0（2026年4月2日）|
+| 最新版本 | v1.3.0（2026 年 4 月 2 日）|
 | 发布版本数 | 11 个 |
 | License | MIT |
 | 主要语言 | TypeScript 97.7% |

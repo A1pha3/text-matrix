@@ -10,13 +10,13 @@ categories: ["技术笔记"]
 tags: ["C#", ".NET", "AI Agent", "Agent Skills", "智能体", "微软", "Copilot", "Claude Code"]
 ---
 
-# dotnet/skills：.NET官方AI编码智能体技能库完全指南
+# dotnet/skills：.NET 官方 AI 编码智能体技能库完全指南
 
 ## 项目概览
 
-**dotnet/skills**（https://github.com/dotnet/skills）是微软官方 `.NET` 团队维护的AI编码智能体技能库，为主流AI编程工具提供针对 .NET 生态的专项能力扩展。截至目前仓库拥有 **2,575 Stars**、**202 Forks**，持续活跃维护中。
+**dotnet/skills**（https://github.com/dotnet/skills）是微软官方 `.NET` 团队维护的 AI 编码智能体技能库，为主流 AI 编程工具提供针对 .NET 生态的专项能力扩展。截至目前仓库拥有 **2,575 Stars**、**202 Forks**，持续活跃维护中。
 
-该仓库的核心价值在于：它将 `.NET` 开发中的专业知识封装为标准化的"技能"（Skills），使 AI 编码智能体能够准确处理 `.NET` 特有的工程问题——而不是给出泛泛的通用建议。
+该仓库的关键价值在于：它将 `.NET` 开发中的专业知识封装为标准化的"技能"（Skills），使 AI 编码智能体能够准确处理 `.NET` 特有的工程问题——而不是给出泛泛的通用建议。
 
 ### 关键元数据
 
@@ -37,11 +37,11 @@ tags: ["C#", ".NET", "AI Agent", "Agent Skills", "智能体", "微软", "Copilot
 
 `.NET` 生态拥有大量特有的工程模式和工具链——MSBuild 项目结构、NuGet 包管理、.NET 升级迁移、ASP.NET Core 中间件、Entity Framework 数据访问——这些场景中通用 AI 建议往往不够精确甚至误导。`dotnet/skills` 的出现改变了这一局面。
 
-微软 `.NET` 团队将多年的工程经验和最佳实践封装为可被 AI 理解的技能文档，使 AI 编码智能体能够在 .NET 项目中给出真正专业级的指导。对于在 .NET 环境中使用 Copilot CLI、Claude Code、Cursor 等工具的开发者，这是目前最权威、最系统的专项技能扩展。
+微软 `.NET` 团队将多年的工程经验和实践建议封装为可被 AI 理解的技能文档，使 AI 编码智能体能够在 .NET 项目中给出真正专业级的指导。对于在 .NET 环境中使用 Copilot CLI、Claude Code、Cursor 等工具的开发者，这是目前最权威、最系统的专项技能扩展。
 
 ---
 
-## 核心能力：12个专项插件
+## 核心能力：12 个专项插件
 
 ### 插件一览
 
@@ -53,14 +53,14 @@ tags: ["C#", ".NET", "AI Agent", "Agent Skills", "智能体", "微软", "Copilot
 | `dotnet-msbuild` | 构建系统 | MSBuild 失败诊断、构建优化、代码质量 |
 | `dotnet-nuget` | 包管理 | NuGet 依赖管理和现代化 |
 | `dotnet-upgrade` | 迁移升级 | .NET 版本迁移、语言特性升级 |
-| `dotnet-maui` | 跨平台UI | .NET MAUI 环境配置和故障排查 |
-| `dotnet-ai` | AI/ML集成 | LLM集成、智能体工作流、RAG、MCP、ML.NET |
+| `dotnet-maui` | 跨平台 UI | .NET MAUI 环境配置和故障排查 |
+| `dotnet-ai` | AI/ML 集成 | LLM 集成、智能体工作流、RAG、MCP、ML.NET |
 | `dotnet-template-engine` | 模板引擎 | 模板发现、项目脚手架、模板创作 |
 | `dotnet-test` | 测试 | 测试执行、诊断和迁移（MSTest 为主） |
-| `dotnet-aspnet` | Web开发 | ASP.NET Core 中间件、端点、实时通信、API 模式 |
+| `dotnet-aspnet` | Web 开发 | ASP.NET Core 中间件、端点、实时通信、API 模式 |
 | `dotnet11` | 新版特性 | .NET 11 新 API 和语言特性 |
 
-### dotnet-ai：AI与ML专项技能
+### dotnet-ai：AI 与 ML 专项技能
 
 `dotnet-ai` 是与 AI 技术最直接相关的插件，其下包含 5 个技能：
 

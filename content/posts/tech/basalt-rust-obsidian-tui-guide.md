@@ -306,7 +306,7 @@ Basalt 对这三个路径分别处理，解析 JSON 获取 vault 列表。
 
 ## 总结
 
-Basalt 是一个定位清晰、小而美的 Rust TUI 项目。它的核心价值不是替代 Obsidian，而是给终端用户提供了一个**极简的 Obsidian 保险库浏览器**。
+Basalt 是一个定位清晰、小而美的 Rust TUI 项目。它的关键价值不是替代 Obsidian，而是给终端用户提供了一个**极简的 Obsidian 保险库浏览器**。
 
 对于已经重度使用 Obsidian、又希望减少 GUI 切换的开发者来说，Basalt 是一个自然的效率工具。它的 ratatui 实现也是学习 Rust TUI 开发的优秀参考。
 

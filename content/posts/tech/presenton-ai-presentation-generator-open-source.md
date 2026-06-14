@@ -58,7 +58,7 @@ docker run -d -p 3000:3000 \
 
 支持 macOS（Apple Silicon + Intel）、Windows、Linux，有桌面客户端。可以本地配置 API key 和模型，界面和 Web 版一致。
 
-安装步骤（macOS/Linux/Windows通用）：
+安装步骤（macOS/Linux/Windows 通用）：
 
 ```bash
 git clone https://github.com/presenton/presenton.git

@@ -395,7 +395,7 @@ await pageAgent.execute(`填写订单：${productInfo}`);
 
 ---
 
-## 8. 最佳实践
+## 8. 实践建议
 
 ### 8.1 集成建议
 

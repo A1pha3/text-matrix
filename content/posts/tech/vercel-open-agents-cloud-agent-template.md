@@ -8,10 +8,10 @@ categories: ["技术笔记"]
 tags: ["Vercel", "Agent", "TypeScript", "云端", "GitHub集成"]
 ---
 
-# Vercel Open Agents：2.4K Stars的云端Agent部署模板——Web/Workflow/Sandbox三层架构、GitHub集成、Session共享
+# Vercel Open Agents：2.4K Stars 的云端 Agent 部署模板——Web/Workflow/Sandbox 三层架构、GitHub 集成、Session 共享
 
-> **目标读者**：后端开发者、AI应用架构师、对云端Agent部署感兴趣的工程师
-> **预计阅读时间**：40-55分钟
+> **目标读者**：后端开发者、AI 应用架构师、对云端 Agent 部署感兴趣的工程师
+> **预计阅读时间**：40-55 分钟
 > **前置知识**：TypeScript/Next.js 基础、了解 Agent 基本概念
 > **难度定位**：⭐⭐⭐⭐ 专家设计
 

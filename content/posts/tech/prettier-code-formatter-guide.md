@@ -472,7 +472,7 @@ function greet({ name, age }: Props): string {
 A B C
 ```
 
-## 八、最佳实践
+## 八、实践建议
 
 ### 8.1 与 ESLint 配合
 

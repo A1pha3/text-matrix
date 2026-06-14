@@ -13,7 +13,7 @@ tags: ["AI", "Coding", "Matt Pocock", "Workflow", "Software Fundamentals"]
 > 📺 **视频来源**：
 > - [Software Fundamentals Matter More Than Ever](https://www.youtube.com/watch?v=v4F1gFy-hqg)
 > - [Full Walkthrough: Workflow for AI Coding](https://www.youtube.com/watch?v=-QFHIoCo-Ko)
-> 📺 **频道**：[AI Engineer](https://www.youtube.com/@aiengineer_xyz) (43.3万订阅者)
+> 📺 **频道**：[AI Engineer](https://www.youtube.com/@aiengineer_xyz) (43.3 万订阅者)
 > 🎯 **适合人群**：所有使用或考虑使用 AI 编程工具的开发者
 
 ---
@@ -86,7 +86,7 @@ Matt Pocock 在第一个视频中指出了一个被忽视的事实：
 > 「帮我写个用户模块」→ AI 生成一套混乱的 CRUD
 
 **有基础功的开发者**：
-> 「帮我实现一个用户注册流程，包含邮箱验证、密码强度校验（8位以上，大小写+数字），使用 Strategy 模式支持多种验证方式，Repository 模式隔离数据访问」→ AI 生成一套清晰的领域驱动设计
+> 「帮我实现一个用户注册流程，包含邮箱验证、密码强度校验（8 位以上，大小写+数字），使用 Strategy 模式支持多种验证方式，Repository 模式隔离数据访问」→ AI 生成一套清晰的领域驱动设计
 
 **差异的来源不是 AI，是人类工程师的概念能力和抽象思维。**
 
@@ -233,7 +233,7 @@ AI 生成的代码往往看起来正确，但可能有：
 
 **解法**：每段 AI 代码都要经过理解后才能提交。
 
-### 陷阱三：让 AI替你做决策
+### 陷阱三：让 AI 替你做决策
 
 架构、技术选型、设计模式——这些是人类的职责。
 

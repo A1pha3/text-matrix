@@ -512,8 +512,8 @@ CLI 本身提供 `chat` 命令和 dashboard 内置聊天面板，但前提是先
 
 ## 参考资料
 
-- GitHub 仓库：<https://github.com/vercel-labs/agent-browser>
-- Chrome DevTools Protocol：<https://chromedevtools.dev/protocol/>
+- GitHub 仓库：< PROTECTED_184 >
+- Chrome DevTools Protocol：< PROTECTED_185 >
 
 ## 文档信息
 

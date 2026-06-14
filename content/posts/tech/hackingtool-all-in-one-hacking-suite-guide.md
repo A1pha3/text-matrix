@@ -8,13 +8,13 @@ categories: ["技术笔记"]
 tags: ["安全", "渗透测试", "黑客工具", "网络安全", "Python"]
 ---
 
-# HackingTool：56K Stars·全功能黑客工具箱·9大模块·社工/渗透/SQL注入/无线攻击/钓鱼·安全研究人员必备
+# HackingTool：56K Stars·全功能黑客工具箱·9 大模块·社工/渗透/SQL 注入/无线攻击/钓鱼·安全研究人员必备
 
 ## 一，项目概述
 
 ### 1.1 HackingTool 是什么
 
-**HackingTool** 是一个**全功能黑客工具箱**，专为安全研究人员和渗透测试人员设计。它整合了 9 大类黑客工具，覆盖社交媒体、网页、WordPress、信息收集、密码攻击、无线网络、SQL注入、网络钓鱼等多个攻击向量。
+**HackingTool** 是一个**全功能黑客工具箱**，专为安全研究人员和渗透测试人员设计。它整合了 9 大类黑客工具，覆盖社交媒体、网页、WordPress、信息收集、密码攻击、无线网络、SQL 注入、网络钓鱼等多个攻击向量。
 
 > ⚠️ **警告**：本工具仅供教育和授权安全测试使用。请勿用于未授权的非法入侵活动！
 
@@ -361,7 +361,7 @@ xsltproc report.xml -o report.html
 | 攻击类型 | 防御措施 |
 |----------|----------|
 | 社工攻击 | 员工安全意识培训、多因素认证 |
-| SQL注入 | 参数化查询、输入过滤、WAF |
+| SQL 注入 | 参数化查询、输入过滤、WAF |
 | 无线攻击 | WPA3、强密码、定期更换 |
 | 钓鱼攻击 | 邮件过滤、链接检查、安全意识 |
 | 暴力破解 | 限速、账户锁定、验证码 |
@@ -399,14 +399,14 @@ HackingTool 是 **56.8k Stars 的全功能黑客工具箱**：
 | 分类 | 工具数量 | 主要功能 |
 |------|----------|----------|
 | 社工攻击 | 6+ | Facebook, Instagram, Twitter 等 |
-| 网站渗透 | 8+ | SQL注入, Web Finder, Crawler |
+| 网站渗透 | 8+ | SQL 注入， Web Finder, Crawler |
 | WordPress | 5+ | WPScan, 插件/主题扫描 |
 | 信息收集 | 7+ | Nmap, DNS, Whois, Traceroute |
 | 密码攻击 | 4+ | Cupp, Hash Buster, Hydra |
 | 无线攻击 | 5+ | Wifite, Wifi Pumpkin |
-| SQL注入 | 5+ | SQLMap, NoSQLMap |
+| SQL 注入 | 5+ | SQLMap, NoSQLMap |
 | 网络钓鱼 | 5+ | HiddenEye, ShellPhish |
-| Web攻击 | 4+ | Slowloris, DDoS |
+| Web 攻击 | 4+ | Slowloris, DDoS |
 
 ---
 

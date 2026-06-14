@@ -249,7 +249,7 @@ export GITHUB_ACTIONS_IMPORTER_IMAGE="ghcr.io/github/actions-importer:latest"
 gh actions-importer audit jenkins ...
 ```
 
-## 八、最佳实践
+## 八、实践建议
 
 ### 1. 审计优先
 

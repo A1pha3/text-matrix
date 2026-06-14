@@ -8,13 +8,13 @@ categories: ["技术笔记"]
 tags: ["OpenDataLoader", "PDF处理", "数据基础设施", "LLM训练数据", "表格检测", "异步处理", "开源"]
 ---
 
-# OpenDataLoader-PDF：面向大规模PDF数据集构建的开源数据处理基础设施
+# OpenDataLoader-PDF：面向大规模 PDF 数据集构建的开源数据处理基础设施
 
 ## §1 项目概述
 
 ### 1.1 核心定位
 
-**OpenDataLoader-PDF**是一个开源的数据处理基础设施，专为构建大规模PDF数据集而设计。
+**OpenDataLoader-PDF**是一个开源的数据处理基础设施，专为构建大规模 PDF 数据集而设计。
 
 > "An open-source data processing infrastructure for building PDF-based datasets"
 
@@ -45,16 +45,16 @@ tags: ["OpenDataLoader", "PDF处理", "数据基础设施", "LLM训练数据", "
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 与传统PDF工具的对比
+### 1.2 与传统 PDF 工具的对比
 
 | 维度 | 传统工具 | OpenDataLoader-PDF |
 |------|----------|-------------------|
 | **处理规模** | 单文档/小批量 | 任意规模（单机到数十亿） |
-| **性能** | 逐文档处理 | 10倍性能提升（Rust核心） |
+| **性能** | 逐文档处理 | 10 倍性能提升（Rust 核心） |
 | **隐私** | 云端处理，数据外泄风险 | 本地处理，隐私优先 |
 | **表格处理** | 简单文本提取 | 智能表格检测与结构化 |
-| **API设计** | 分散/不一致 | 统一Python API |
-| **部署** | 复杂依赖 | pip一键安装 |
+| **API 设计** | 分散/不一致 | 统一 Python API |
+| **部署** | 复杂依赖 | pip 一键安装 |
 
 ### 1.3 项目统计
 
@@ -70,7 +70,7 @@ tags: ["OpenDataLoader", "PDF处理", "数据基础设施", "LLM训练数据", "
 
 ### 2.1 核心设计原则
 
-**Rust + Python混合架构**：
+**Rust + Python 混合架构**：
 
 ```python
 # OpenDataLoader-PDF 技术栈
@@ -96,14 +96,14 @@ Python绑定层: PyO3
 
 ### 2.2 多后端支持
 
-OpenDataLoader-PDF支持多种PDF处理后端，确保灵活性和健壮性：
+OpenDataLoader-PDF 支持多种 PDF 处理后端，确保灵活性和健壮性：
 
 | 后端 | 特点 | 适用场景 |
 |------|------|----------|
 | **PyMuPDF (fitz)** | 速度快，功能丰富 | 通用首选 |
 | **PyPDF2** | 轻量，依赖少 | 简单文本提取 |
 | **unstructured** | 智能布局分析 | 复杂文档结构 |
-| **pypdf** | 纯Python，跨平台 | 特殊环境要求 |
+| **pypdf** | 纯 Python，跨平台 | 特殊环境要求 |
 
 **后端选择策略**：
 
@@ -356,7 +356,7 @@ for page_result in loader.stream_pages('huge_document.pdf'):
 
 ## §5 知识库构建应用
 
-### 5.1 LLM训练数据提取
+### 5.1 LLM 训练数据提取
 
 ```python
 from opendataloader import PDFLoader, DatasetBuilder
@@ -446,7 +446,7 @@ pip install opendataloader-pdf[unstructured] # unstructured后端
 pip install opendataloader-pdf[all]       # 所有后端
 ```
 
-## §7 最佳实践
+## §7 实践建议
 
 ### 7.1 性能优化
 
@@ -549,31 +549,31 @@ for pdf_file in pdf_files:
 
 | 优势 | 说明 |
 |------|------|
-| **规模无关** | 从单文档到数十亿文档，同一套API |
-| **性能卓越** | Rust核心实现，10倍速度提升 |
+| **规模无关** | 从单文档到数十亿文档，同一套 API |
+| **性能卓越** | Rust 核心实现，10 倍速度提升 |
 | **隐私优先** | 所有处理本地完成，数据不外泄 |
 | **表格智能** | 内置表格检测，无需额外工具 |
-| **部署简单** | pip一键安装，无需复杂依赖 |
+| **部署简单** | pip 一键安装，无需复杂依赖 |
 | **可扩展** | 模块化设计，支持自定义后端 |
 
 ## §9 总结
 
-### 9.1 核心价值
+### 9.1 关键价值
 
-OpenDataLoader-PDF为PDF数据集构建提供了：
+OpenDataLoader-PDF 为 PDF 数据集构建提供了：
 
 - ✅ **任意规模处理**：单机到数十亿文档的统一方案
-- ✅ **10倍性能提升**：Rust核心 + Python绑定的混合架构
+- ✅ **10 倍性能提升**：Rust 核心 + Python 绑定的混合架构
 - ✅ **隐私优先**：所有处理本地完成
 - ✅ **智能表格检测**：结构化数据提取
-- ✅ **统一API**：简洁Python接口
+- ✅ **统一 API**：简洁 Python 接口
 - ✅ **生产就绪**：错误处理、进度追踪、缓存支持
 
 ### 9.2 适用场景
 
 | 场景 | 使用价值 |
 |------|----------|
-| **LLM训练数据** | 高效构建大规模训练语料 |
+| **LLM 训练数据** | 高效构建大规模训练语料 |
 | **学术论文处理** | 批量提取论文内容与结构 |
 | **知识图谱构建** | 结构化实体与关系抽取 |
 | **文档数字化** | 历史文档批量处理 |

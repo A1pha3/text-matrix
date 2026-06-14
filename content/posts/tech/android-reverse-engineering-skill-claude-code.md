@@ -8,10 +8,10 @@ categories: ["技术笔记"]
 tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit", "OkHttp", "安全研究"]
 ---
 
-# Android逆向工程Skill：2.5K Stars的Claude Code智能体
+# Android 逆向工程 Skill：2.5K Stars 的 Claude Code 智能体
 
-> **目标读者**：移动安全工程师、渗透测试工程师、Android开发者、安全研究者
-> **前置知识**：Android基础、HTTP协议、命令行操作
+> **目标读者**：移动安全工程师、渗透测试工程师、Android 开发者、安全研究者
+> **前置知识**：Android 基础、HTTP 协议、命令行操作
 > **技术栈**：Java JDK 17+ / jadx / Vineflower / dex2jar
 > **难度定位**：⭐⭐⭐⭐ 专家设计
 
@@ -21,16 +21,16 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 
 完成本篇文章后，你将能够：
 
-1. **理解Android逆向工程的基本原理**：DEX→Java反编译流程
-2. **掌握jadx和Vineflower两大引擎**：各自优势和适用场景
-3. **能够使用Claude Code Skill**：一句话完成APK反编译和API提取
-4. **理解API提取模式**：Retrofit/OkHttp/Volley的特征识别
-5. **掌握调用链追踪技术**：从UI到网络请求的完整追踪
+1. **理解 Android 逆向工程的基本原理**：DEX→Java 反编译流程
+2. **掌握 jadx 和 Vineflower 两大引擎**：各自优势和适用场景
+3. **能够使用 Claude Code Skill**：一句话完成 APK 反编译和 API 提取
+4. **理解 API 提取模式**：Retrofit/OkHttp/Volley 的特征识别
+5. **掌握调用链追踪技术**：从 UI 到网络请求的完整追踪
 6. **了解法律合规边界**：确保逆向工程行为合法
 
 ---
 
-## §2 背景与动机：为何需要Android逆向工程
+## §2 背景与动机：为何需要 Android 逆向工程
 
 ### 2.1 应用场景
 
@@ -38,10 +38,10 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 |------|------|
 | **安全研究** | 分析应用安全性，发现潜在漏洞 |
 | **渗透测试** | 验证授权安全测试的深度 |
-| **API文档** | 复现没有文档的API接口 |
-| **兼容性分析** | 理解第三方SDK的调用行为 |
-| **恶意软件分析** | Malware分析应急响应 |
-| **互操作性研究** | EU指令1201(f)/DMCA豁免分析 |
+| **API 文档** | 复现没有文档的 API 接口 |
+| **兼容性分析** | 理解第三方 SDK 的调用行为 |
+| **恶意软件分析** | Malware 分析应急响应 |
+| **互操作性研究** | EU 指令 1201(f)/DMCA 豁免分析 |
 
 ### 2.2 传统逆向工程的痛点
 
@@ -62,7 +62,7 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 # - 无法批量处理
 ```
 
-### 2.3 Claude Code Skill的解决
+### 2.3 Claude Code Skill 的解决
 
 **一句话完成全流程**：
 
@@ -117,13 +117,13 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 
 ### 3.2 支持的文件格式
 
-| 格式 | 说明 | jadx直接支持 | Fernflower支持 |
+| 格式 | 说明 | jadx 直接支持 | Fernflower 支持 |
 |------|------|-------------|---------------|
-| **APK** | Android应用包 | ✅ | ✅（需dex2jar） |
-| **XAPK** | APKs应用包（含多APK） | ✅（自动拆分） | ❌ |
-| **JAR** | Java库 | ✅ | ✅ |
-| **AAR** | Android库 | ✅ | ✅（需dex2jar） |
-| **DEX** | Dalvik字节码 | ✅ | ✅（需dex2jar） |
+| **APK** | Android 应用包 | ✅ | ✅（需 dex2jar） |
+| **XAPK** | APKs 应用包（含多 APK） | ✅（自动拆分） | ❌ |
+| **JAR** | Java 库 | ✅ | ✅ |
+| **AAR** | Android 库 | ✅ | ✅（需 dex2jar） |
+| **DEX** | Dalvik 字节码 | ✅ | ✅（需 dex2jar） |
 
 ---
 
@@ -132,7 +132,7 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 ### 4.1 jadx - 首选反编译器
 
 **优势**：
-- 直接处理APK/DEX，无需中间转换
+- 直接处理 APK/DEX，无需中间转换
 - 社区活跃，持续更新
 - 支持代码混淆（deobfuscation）
 
@@ -161,11 +161,11 @@ jadx -r -d output app.apk
 ### 4.2 Vineflower - 更强的反编译器
 
 **优势**：
-- JetBrains自研，分析能力更强
-- 对复杂Java结构（lambda/泛型）支持更好
+- JetBrains 自研，分析能力更强
+- 对复杂 Java 结构（lambda/泛型）支持更好
 - 生成的代码更接近原始源码
 
-**工作流程**（需要dex2jar）：
+**工作流程**（需要 dex2jar）：
 
 ```bash
 # Step 1: DEX → JAR
@@ -203,7 +203,7 @@ apktool d app.apk -o resources/
 # 输出：AndroidManifest.xml、布局XML、字符串资源等
 ```
 
-**adb** - 从设备拉取APK：
+**adb** - 从设备拉取 APK：
 ```bash
 # 查找包名
 adb shell pm list packages | grep <keyword>
@@ -217,11 +217,11 @@ adb pull /data/app/com.example.app-xxxx/base.apk ./app.apk
 
 ---
 
-## §5 API提取模式
+## §5 API 提取模式
 
-### 5.1 Retrofit接口识别
+### 5.1 Retrofit 接口识别
 
-Retrofit是最常见的Android HTTP客户端，接口以注解方式声明：
+Retrofit 是最常见的 Android HTTP 客户端，接口以注解方式声明：
 
 ```java
 // 特征代码
@@ -248,9 +248,9 @@ grep -rn '@Query\|@QueryMap\|@Path\|@Body\|@Field\|@Header' sources/
 grep -rn 'baseUrl\|\.baseUrl(' sources/
 ```
 
-### 5.2 OkHttp调用识别
+### 5.2 OkHttp 调用识别
 
-OkHttp通常直接构建请求：
+OkHttp 通常直接构建请求：
 
 ```java
 // 特征代码
@@ -276,7 +276,7 @@ grep -rn 'Interceptor\|addInterceptor\|addNetworkInterceptor' sources/
 grep -rn '\.execute()\|\.enqueue(' sources/
 ```
 
-### 5.3 硬编码URL和密钥
+### 5.3 硬编码 URL 和密钥
 
 ```bash
 # HTTP/HTTPS URL
@@ -289,7 +289,7 @@ grep -rni 'api[_-]\?key\|api[_-]\?secret\|auth[_-]\?token\|bearer' sources/
 grep -rni 'BASE_URL\|API_URL\|SERVER_URL\|ENDPOINT' sources/
 ```
 
-### 5.4 API文档模板
+### 5.4 API 文档模板
 
 对每个发现的端点，记录：
 
@@ -373,11 +373,11 @@ grep -rn 'observe\|LiveData\|StateFlow\|MutableLiveData' sources/
 
 **推荐**：
 - Vineflower（更好的反编译质量）
-- dex2jar（使用Fernflower处理APK时必需）
+- dex2jar（使用 Fernflower 处理 APK 时必需）
 - apktool（资源解码）
-- adb（从设备拉取APK）
+- adb（从设备拉取 APK）
 
-### 7.2 Claude Code安装
+### 7.2 Claude Code 安装
 
 ```bash
 # 从GitHub安装（推荐）
@@ -420,11 +420,11 @@ bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scri
 
 ---
 
-## §8 实际案例：提取某App的登录API
+## §8 实际案例：提取某 App 的登录 API
 
 ### 8.1 场景描述
 
-目标：提取某Android应用的登录API，用于安全测试。
+目标：提取某 Android 应用的登录 API，用于安全测试。
 
 ### 8.2 执行流程
 
@@ -489,12 +489,12 @@ LoginActivity.onLoginClicked()
 ✅ **DMCA §1201(f) 允许的互操作性分析**
 ✅ **EU Directive 2009/24/EC 允许的逆向工程**
 ✅ **恶意软件分析和应急响应**
-✅ **CTF比赛和教育用途**
+✅ **CTF 比赛和教育用途**
 
 ### 9.2 禁止使用场景
 
 ❌ **未经授权分析他人应用**
-❌ **绕过付费墙或DRM**
+❌ **绕过付费墙或 DRM**
 ❌ **窃取知识产权或商业机密**
 ❌ **开发侵权应用**
 
@@ -502,7 +502,7 @@ LoginActivity.onLoginClicked()
 
 1. **仅分析你拥有或被授权分析的应用**
 2. **不传播反编译后的源代码**
-3. **发现的漏洞遵循responsible disclosure**
+3. **发现的漏洞遵循 responsible disclosure**
 4. **遵守应用的服务条款**
 
 ---
@@ -511,19 +511,19 @@ LoginActivity.onLoginClicked()
 
 | 问题 | 解决方案 |
 |------|----------|
-| `jadx: command not found` | 确保jadx的`bin/`目录在`$PATH`中 |
-| `Could not find or load main class` | Java缺失或版本不对，运行`java -version`检查 |
-| 大APK内存不足 | 增加堆：`jadx -Xmx4g -d output app.apk` |
+| `jadx: command not found` | 确保 jadx 的`bin/`目录在`$PATH`中 |
+| `Could not find or load main class` | Java 缺失或版本不对，运行`java -version`检查 |
+| 大 APK 内存不足 | 增加堆：`jadx -Xmx4g -d output app.apk` |
 | 反编译代码多`// Error`注释 | 使用`--show-bad-code`或`--deobf`选项 |
-| Fernflower方法超时 | 使用`-mpm=60`设置60秒超时 |
-| Fernflower JAR找不到 | 设置`FERNFLOWER_JAR_PATH`环境变量 |
-| dex2jar失败(ZipException) | APK可能非标准ZIP结构，尝试jadx |
+| Fernflower 方法超时 | 使用`-mpm=60`设置 60 秒超时 |
+| Fernflower JAR 找不到 | 设置`FERNFLOWER_JAR_PATH`环境变量 |
+| dex2jar 失败(ZipException) | APK 可能非标准 ZIP 结构，尝试 jadx |
 
 ---
 
 ## 相关资源
 
-- **GitHub仓库**：https://github.com/SimoneAvogadro/android-reverse-engineering-skill
+- **GitHub 仓库**：https://github.com/SimoneAvogadro/android-reverse-engineering-skill
 - **jadx**：https://github.com/skylot/jadx
 - **Vineflower**：https://github.com/Vineflower/vineflower
 - **dex2jar**：https://github.com/pxb1988/dex2jar

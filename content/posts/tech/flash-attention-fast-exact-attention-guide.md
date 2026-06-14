@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Flash Attention", "Transformer", "注意力机制", "深度学习", "GPU"]
 ---
 
-# Flash Attention：40K Stars·Tri Dao发明·2-4倍加速·O(N)内存·Transformer标配·Llama/Mistral/CodeLlama内置
+# Flash Attention：40K Stars·Tri Dao 发明·2-4 倍加速·O(N)内存·Transformer 标配·Llama/Mistral/CodeLlama 内置
 
 ## 一，项目概述
 
@@ -18,7 +18,7 @@ tags: ["Flash Attention", "Transformer", "注意力机制", "深度学习", "GPU
 
 > "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"
 
-**核心创新**：通过**IO感知**的 tiling 技术，将注意力计算的内存复杂度从 **O(N²)** 降低到 **O(N)**，同时实现 **2-4倍加速**，且结果**数学上完全等价**于标准注意力（不是近似！）。
+**核心创新**：通过**IO 感知**的 tiling 技术，将注意力计算的内存复杂度从 **O(N²)** 降低到 **O(N)**，同时实现 **2-4 倍加速**，且结果**数学上完全等价**于标准注意力（不是近似！）。
 
 ### 1.2 核心数据
 

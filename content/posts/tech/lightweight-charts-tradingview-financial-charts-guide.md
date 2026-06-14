@@ -8,16 +8,16 @@ categories: ["技术笔记"]
 tags: ["JavaScript", "TypeScript", "金融", "图表", "TradingView"]
 ---
 
-# Lightweight Charts™：14.9K Stars·TradingView开源轻量级金融图表库
+# Lightweight Charts™：14.9K Stars·TradingView 开源轻量级金融图表库
 
 ## 学习目标
 
 - 理解 Lightweight Charts 的核心特点和技术优势
 - 掌握在网页中集成轻量级图表的方法
-- 学会配置不同类型的图表（K线、折线、柱状图等）
+- 学会配置不同类型的图表（K 线、折线、柱状图等）
 - 掌握图表样式定制和数据更新
 - 了解插件系统和扩展开发
-- 学会性能优化和最佳实践
+- 学会性能优化和实践建议
 
 ## 项目概述
 
@@ -158,9 +158,9 @@ lineSeries.setData([
 ]);
 ```
 
-### K线图（CandlestickSeries）
+### K 线图（CandlestickSeries）
 
-K线图是金融领域最常用的图表类型，能够同时展示开盘价、收盘价、最高价和最低价：
+K 线图是金融领域最常用的图表类型，能够同时展示开盘价、收盘价、最高价和最低价：
 
 ```javascript
 const candlestickSeries = chart.addSeries(CandlestickSeries, {
@@ -192,7 +192,7 @@ candlestickSeries.setData([
 
 ### 柱状图（HistogramSeries）
 
-柱状图适合展示成交量或MACD等指标：
+柱状图适合展示成交量或 MACD 等指标：
 
 ```javascript
 const histogramSeries = chart.addSeries(HistogramSeries, {

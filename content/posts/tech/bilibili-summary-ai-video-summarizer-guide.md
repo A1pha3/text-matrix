@@ -9,34 +9,34 @@ description: "BiliSummary 是一个桌面优先的 B站视频 AI 摘要工具，
 draft: false
 ---
 
-# BiliSummary：B站视频AI摘要与知识管理工具
+# BiliSummary：B 站视频 AI 摘要与知识管理工具
 
 ## 1. 学习目标
 
 通过本文你将掌握：
 
-- 理解 BiliSummary 的设计理念和核心价值
+- 理解 BiliSummary 的设计理念和关键价值
 - 熟练安装和配置工具
-- 掌握各种使用模式（URL、UP主、收藏夹）
+- 掌握各种使用模式（URL、UP 主、收藏夹）
 - 理解 AI 摘要生成和 ASR 降级策略
 - 定制和扩展工具功能
-- 最佳实践和常见问题解决
+- 实践建议和常见问题解决
 
 ## 2. 项目概述
 
 ### 2.1 什么是 BiliSummary
 
-BiliSummary 是一个桌面优先的 B站视频摘要工具：
+BiliSummary 是一个桌面优先的 B 站视频摘要工具：
 
 > **"Desktop-first Bilibili summarizer with AI-generated Markdown output, favorites workflow, and unified browse/reading UX."**
 
-**一句话解释**：输入 B站视频 URL 或 UP主，获取 AI 生成的 Markdown 摘要，支持收藏夹批量管理。
+**一句话解释**：输入 B 站视频 URL 或 UP 主，获取 AI 生成的 Markdown 摘要，支持收藏夹批量管理。
 
-### 2.2 核心价值
+### 2.2 关键价值
 
 | 痛点 | 解决方案 |
 |------|---------|
-| B站视频信息难以沉淀 | 转换为本地 Markdown 文件 |
+| B 站视频信息难以沉淀 | 转换为本地 Markdown 文件 |
 | 批量视频处理繁琐 | 收藏夹批量摘要功能 |
 | 视频没有字幕 | ASR 语音识别降级处理 |
 | 分散的观看体验 | 统一卡片式阅读界面 |
@@ -58,7 +58,7 @@ BiliSummary 是一个桌面优先的 B站视频摘要工具：
 | 后端 | FastAPI + Uvicorn |
 | 前端 | Vanilla JS + CSS（令牌化设计系统） |
 | 桌面壳 | pywebview |
-| B站集成 | bilibili-api-python |
+| B 站集成 | bilibili-api-python |
 | AI 摘要 | Anthropic 兼容 API |
 | ASR | GLM ASR 集成 |
 | 音频处理 | PyAV |
@@ -247,7 +247,7 @@ model = "glm-asr"          # ASR 模型
 
 **功能**：
 
-- 按 UP主名称或 UID 获取近期视频
+- 按 UP 主名称或 UID 获取近期视频
 - 批量生成摘要
 - 增量更新（只处理新视频）
 
@@ -265,7 +265,7 @@ model = "glm-asr"          # ASR 模型
 
 **功能**：
 
-- 二维码登录 B站账号
+- 二维码登录 B 站账号
 - 加载收藏夹和视频
 - 批量摘要未处理视频
 - 短期撤销取消收藏
@@ -352,7 +352,7 @@ else:
 
 | 格式 | 说明 |
 |------|------|
-| DASH | B站默认格式 |
+| DASH | B 站默认格式 |
 | FLV | 备用格式 |
 | MP4 | 部分视频支持 |
 
@@ -464,7 +464,7 @@ python -m http.server 8080
 const API_BASE = "http://localhost:8000"
 ```
 
-## 8. 最佳实践
+## 8. 实践建议
 
 ### 8.1 批量处理
 
@@ -570,8 +570,8 @@ python -m summarize --delay 2
 
 | 工具 | 平台 | AI 摘要 | ASR | 收藏夹 |
 |------|------|---------|-----|--------|
-| BiliSummary | B站 | ✅ | ✅ | ✅ |
-| B站助手 | 浏览器插件 | ❌ | ❌ | 部分 |
+| BiliSummary | B 站 | ✅ | ✅ | ✅ |
+| B 站助手 | 浏览器插件 | ❌ | ❌ | 部分 |
 | 视频笔记 | 移动端 | ✅ | ❌ | ❌ |
 
 **BiliSummary 优势**：
@@ -583,7 +583,7 @@ python -m summarize --delay 2
 
 ## 11. 总结
 
-BiliSummary 是 B站视频知识管理的利器：
+BiliSummary 是 B 站视频知识管理的利器：
 
 | 特性 | 说明 |
 |------|------|
@@ -594,11 +594,11 @@ BiliSummary 是 B站视频知识管理的利器：
 | 开源免费 | 无许可证 (NOASSERTION) |
 
 **适用场景**：
-- B站视频学习笔记
+- B 站视频学习笔记
 - 批量视频内容沉淀
-- UP主视频跟踪
+- UP 主视频跟踪
 - 知识库建设
 
 ---
 
-*🦞 每日08:00自动更新*
+*🦞 每日 08:00 自动更新*

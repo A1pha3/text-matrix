@@ -10,15 +10,15 @@ slug: vibevoice-microsoft-voice-ai
 author: ""
 ---
 
-# VibeVoice：微软开源前沿语音AI模型家族，ASR支持60分钟长音频
+# VibeVoice：微软开源前沿语音 AI 模型家族，ASR 支持 60 分钟长音频
 
 ## 概述
 
-**VibeVoice** 是微软开源的**前沿语音AI模型家族**，包含语音识别（ASR）和语音合成（TTS）两大核心模型。与传统短片段处理的ASR不同，VibeVoice-ASR支持**单次通过处理60分钟连续音频**，保留完整的说话人跟踪和语义连贯性。
+**VibeVoice** 是微软开源的**前沿语音 AI 模型家族**，包含语音识别（ASR）和语音合成（TTS）两大核心模型。与传统短片段处理的 ASR 不同，VibeVoice-ASR 支持**单次通过处理 60 分钟连续音频**，保留完整的说话人跟踪和语义连贯性。
 
-该项目的核心技术亮点是**7.5 Hz超低帧率音频分词器**，结合 Next-token Diffusion 框架，显著提升长序列处理效率。VibeVoice-ASR-7B 已于2026年3月正式进入 Hugging Face Transformers 版本，意味着可以直接通过 Transformers 库调用。
+该项目的核心技术亮点是**7.5 Hz 超低帧率音频分词器**，结合 Next-token Diffusion 框架，显著提升长序列处理效率。VibeVoice-ASR-7B 已于 2026 年 3 月正式进入 Hugging Face Transformers 版本，意味着可以直接通过 Transformers 库调用。
 
-> 🔥 **VibeVoice-TTS** 已于2025年9月从本仓库移除（因发现被滥用于不一致的目的），但 VibeVoice-ASR 和 VibeVoice-Realtime 仍在活跃维护中。
+> 🔥 **VibeVoice-TTS** 已于 2025 年 9 月从本仓库移除（因发现被滥用于不一致的目的），但 VibeVoice-ASR 和 VibeVoice-Realtime 仍在活跃维护中。
 
 **GitHub**: [microsoft/VibeVoice](https://github.com/microsoft/VibeVoice)  
 **项目主页**: [microsoft.github.io/VibeVoice](https://microsoft.github.io/VibeVoice)  
@@ -49,9 +49,9 @@ VibeVoice 采用 **Next-token Diffusion** 架构：
 2. Diffusion Head 生成高保真 acoustic details
 3. 两者结合实现流畅的语音合成和识别
 
-### 60分钟长音频单次处理
+### 60 分钟长音频单次处理
 
-传统ASR模型将音频切分为短片段（通常丢失全局上下文），VibeVoice-ASR可在 **64K token 长度内**单次处理**最长60分钟**的连续音频，确保全时段说话人跟踪和语义一致性。
+传统 ASR 模型将音频切分为短片段（通常丢失全局上下文），VibeVoice-ASR 可在 **64K token 长度内**单次处理**最长 60 分钟**的连续音频，确保全时段说话人跟踪和语义一致性。
 
 ---
 
@@ -59,7 +59,7 @@ VibeVoice 采用 **Next-token Diffusion** 架构：
 
 **VibeVoice-ASR** 是统一的多语言语音转文本模型，核心能力：
 
-- 🕒 **60分钟单次处理**：突破传统ASR的片段切割限制
+- 🕒 **60 分钟单次处理**：突破传统 ASR 的片段切割限制
 - 👤 **自定义热词（Customized Hotwords）**：支持用户添加人名、术语、背景信息，显著提升垂直领域识别准确率
 - 🌍 **原生多语言**：支持**50+语言**的语音识别
 - 📝 **结构化输出**：生成包含 Who（说话人）、When（时间戳）、What（内容）的格式化转录文本
@@ -69,7 +69,7 @@ VibeVoice 采用 **Next-token Diffusion** 架构：
 
 ### 支持的语言（部分）
 
-英语、中文、日语、韩语、法语、德语、西班牙语、意大利语、葡萄牙语、俄语、阿拉伯语、印地语、越南语、泰语等50余种语言。
+英语、中文、日语、韩语、法语、德语、西班牙语、意大利语、葡萄牙语、俄语、阿拉伯语、印地语、越南语、泰语等 50 余种语言。
 
 ---
 
@@ -78,8 +78,8 @@ VibeVoice 采用 **Next-token Diffusion** 架构：
 **VibeVoice-Realtime-0.5B** 是参数量仅 **0.5B** 的实时语音合成模型：
 
 - ⚡ **流式文本输入**：支持流式输入，实时输出语音
-- 🌍 **多语言支持**：已支持英语、德语、法语、意大利语、日语、韩语、荷兰语、波兰语、葡萄牙语、西班牙语等10种语言
-- 🎭 **多风格人声**：已上线11种不同风格的英语语音，以及9种语言的多语言语音
+- 🌍 **多语言支持**：已支持英语、德语、法语、意大利语、日语、韩语、荷兰语、波兰语、葡萄牙语、西班牙语等 10 种语言
+- 🎭 **多风格人声**：已上线 11 种不同风格的英语语音，以及 9 种语言的多语言语音
 - 📄 **长文本合成**：robust long-form speech generation
 
 **Colab 体验**：[VibeVoice-Realtime Colab](https://colab.research.google.com/github/microsoft/VibeVoice/blob/main/demo/vibevoice_realtime_colab.ipynb)
@@ -90,7 +90,7 @@ VibeVoice 采用 **Next-token Diffusion** 架构：
 
 VibeVoice-TTS 论文已被 **ICLR 2026** 接纳为 **Oral（口头报告）** 论文，论文发表在 OpenReview：[VibeVoice-TTS Paper](https://openreview.net/forum?id=FihSkzyxdv)
 
-这是开源语音合成领域的重要里程碑，表明微软在语音AI研究方向获得国际顶级学术会议认可。
+这是开源语音合成领域的重要里程碑，表明微软在语音 AI 研究方向获得国际顶级学术会议认可。
 
 ---
 
@@ -140,7 +140,7 @@ VibeVoice-ASR 的微调代码已开源，参考 [finetuning-asr/README.md](finet
 
 | 特性 | VibeVoice-ASR | Whisper | FunAudioLLM |
 |------|--------------|---------|-------------|
-| 最长输入 | 60分钟 | 30分钟 | 未知 |
+| 最长输入 | 60 分钟 | 30 分钟 | 未知 |
 | 帧率 | 7.5 Hz | 50 Hz | 未知 |
 | 多语言 | 50+ | 100+ | 有限 |
 | vLLM 支持 | ✅ | ❌ | ❌ |
@@ -151,7 +151,7 @@ VibeVoice-ASR 的微调代码已开源，参考 [finetuning-asr/README.md](finet
 
 ## 应用场景
 
-1. **会议记录与转写**：60分钟单次处理，告别片段拼接
+1. **会议记录与转写**：60 分钟单次处理，告别片段拼接
 2. **播客/视频字幕**：长音频一键转文字，支持多语言
 3. **客服语音分析**：结构化输出便于检索和分析
 4. **语音助手**：实时语音合成，低延迟交互
@@ -161,19 +161,19 @@ VibeVoice-ASR 的微调代码已开源，参考 [finetuning-asr/README.md](finet
 
 ## 总结
 
-VibeVoice 作为微软开源的语音AI模型家族，在**长音频处理**和**超低帧率分词**方面有显著技术创新。VibeVoice-ASR 的60分钟单次处理能力、50+语言支持、vLLM加速、以及ICLR 2026 Oral的学术认可，使其成为当前开源语音识别领域的重要玩家。
+VibeVoice 作为微软开源的语音 AI 模型家族，在**长音频处理**和**超低帧率分词**方面有显著技术创新。VibeVoice-ASR 的 60 分钟单次处理能力、50+语言支持、vLLM 加速、以及 ICLR 2026 Oral 的学术认可，使其成为当前开源语音识别领域的重要玩家。
 
-VibeVoice-Realtime 的0.5B实时TTS模型也为需要低延迟语音合成的应用提供了新选择。
+VibeVoice-Realtime 的 0.5B 实时 TTS 模型也为需要低延迟语音合成的应用提供了新选择。
 
 **推荐指数**：⭐⭐⭐⭐⭐
 
-**适用人群**：语音AI研究者、长音频处理开发者、多语言语音应用工程师
+**适用人群**：语音 AI 研究者、长音频处理开发者、多语言语音应用工程师
 
 ---
 
 > 📌 **更多信息**
 > - GitHub: [microsoft/VibeVoice](https://github.com/microsoft/VibeVoice)
-> - 项目主页: [microsoft.github.io/VibeVoice](https://microsoft.github.io/VibeVoice)
+> - 项目主页： [microsoft.github.io/VibeVoice](https://microsoft.github.io/VibeVoice)
 > - HuggingFace: [hf.co/microsoft/VibeVoice-ASR](https://huggingface.co/microsoft/VibeVoice-ASR)
-> - ASR技术报告: [arXiv:2601.18184](https://arxiv.org/pdf/2601.18184)
-> - ICLR 2026 论文: [OpenReview](https://openreview.net/forum?id=FihSkzyxdv)
+> - ASR 技术报告： [arXiv:2601.18184](https://arxiv.org/pdf/2601.18184)
+> - ICLR 2026 论文： [OpenReview](https://openreview.net/forum?id=FihSkzyxdv)

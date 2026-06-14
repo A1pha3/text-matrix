@@ -11,7 +11,7 @@ tags: ["AI", "Agent", "Jeff Su", "YouTube", "2026"]
 # AI Agents 完全指南：Jeff Su 爆款视频深度解读
 
 > 📺 **视频来源**：[YouTube - AI Agents, Clearly Explained](https://www.youtube.com/watch?v=sTiQ9ck26Qk) by **Jeff Su**  
-> 👁️ **观看量**：421万+ | 📅 **发布时间**：2025年  
+> 👁️ **观看量**：421 万+ | 📅 **发布时间**：2025 年  
 > 🎯 **适合人群**：AI 初学者、想了解 Agentic AI 的所有读者
 
 ---
@@ -57,12 +57,12 @@ Jeff Su 指出三个关键拐点：
 
 1. **上下文窗口爆炸**：从 4K → 200K，Agent 能处理整本书籍
 2. **工具调用标准化**：OpenAI、Google、Anthropic 统一 Tool Use API
-3. **多Agent协作**：CrewAI、AutoGen、LangGraph 让多Agent协作成为标配
+3. **多 Agent 协作**：CrewAI、AutoGen、LangGraph 让多 Agent 协作成为标配
 
 ### 真实数据
 
-- **GitHub**: 2025年 AI Agent 项目增长 **470%**
-- **Hugging Face**: Agent 相关模型下载量突破 **1亿次**
+- **GitHub**: 2025 年 AI Agent 项目增长 **470%**
+- **Hugging Face**: Agent 相关模型下载量突破 **1 亿次**
 - **OpenAI**: GPT-4o 演示的 Agent 能力让全世界震撼
 
 ---
@@ -129,26 +129,26 @@ result = executor.invoke({"input": "帮我规划深圳三日游，预算5000元"
 | 框架 | 特点 | 适合场景 |
 |------|------|---------|
 | **LangGraph** | 图结构，状态管理强 | 复杂工作流 |
-| **CrewAI** | 多Agent协作，角色扮演 | 团队协作任务 |
+| **CrewAI** | 多 Agent 协作，角色扮演 | 团队协作任务 |
 | **AutoGen** | 微软出品，对话式 | 研究实验 |
-| **SmolAgents** | 轻量级，10行代码上手 | 快速原型 |
-| **Mastra** | Next.js集成，生产可用 | Web应用 |
+| **SmolAgents** | 轻量级，10 行代码上手 | 快速原型 |
+| **Mastra** | Next.js 集成，生产可用 | Web 应用 |
 
 ---
 
 ## 六、学习路径建议
 
-### 入门（1-2周）
+### 入门（1-2 周）
 1. 看完 Jeff Su 的视频 ✅
 2. 跑通 LangChain Quickstart
 3. 用 SmolAgents 写第一个 Agent
 
-### 进阶（1个月）
+### 进阶（1 个月）
 1. 学习 LangGraph 状态机
 2. 掌握 Tool Use API
 3. 部署到云端 (Railway/Vercel)
 
-### 高手（3个月+）
+### 高手（3 个月+）
 1. 研究 Multi-Agent 协作
 2. Fine-tune 专用 Agent
 3. 参与开源贡献
@@ -164,14 +164,14 @@ result = executor.invoke({"input": "帮我规划深圳三日游，预算5000元"
 > 错。至少目前阶段，Agent 需要**人类监督**，特别是关键决策。
 
 > ❌ **「Agent 很复杂，需要学很久」**  
-> 错。用 SmolAgents，**10行代码**就能跑起来。
+> 错。用 SmolAgents，**10 行代码**就能跑起来。
 
 ---
 
 ## 八、资源推荐
 
 ### 视频
-- [Jeff Su - AI Agents, Clearly Explained](https://www.youtube.com/watch?v=sTiQ9ck26Qk)（本文来源，421万观看）
+- [Jeff Su - AI Agents, Clearly Explained](https://www.youtube.com/watch?v=sTiQ9ck26Qk)（本文来源，421 万观看）
 - [Two Minutes Papers - AI Agent 最新进展](https://www.youtube.com/@TwoMinutePapers)
 
 ### 课程
@@ -190,8 +190,8 @@ Jeff Su 在视频结尾说：
 
 > **「AI Agent 不是要取代你，而是放大你的能力。」**
 
-2026年，Agent 将从「概念验证」走向「千家万户」。现在入场，正是最佳时机。
+2026 年，Agent 将从「概念验证」走向「千家万户」。现在入场，正是最佳时机。
 
 ---
 
-*🦞 文章整理：钳岳星君 | 数据来源：YouTube Jeff Su 爆款视频 & 2026年最新行业调研*
+*🦞 文章整理：钳岳星君 | 数据来源：YouTube Jeff Su 爆款视频 & 2026 年最新行业调研*

@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["TON", "智能合约", "Rust", "区块链开发", "FunC"]
 ---
 
-# Acton：TON智能合约开发一站式工具链完全指南
+# Acton：TON 智能合约开发一站式工具链完全指南
 
 **Acton**（[ton-blockchain/acton](https://github.com/ton-blockchain/acton)）是 TON 官方推出的 Rust 编写的智能合约开发工具链，覆盖从项目创建、编译、测试、调试到部署的完整生命周期。它将原本分散在多个工具（FunC 编译器、Tolk、TON OS 等）中的能力整合为一个统一的 CLI，极大降低了 TON 智能合约的开发门槛。
 
