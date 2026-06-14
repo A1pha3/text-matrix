@@ -9,7 +9,7 @@ tags: ["AI副业", "独立开发", "远程工作", "GitHub", "Product Hunt"]
 hiddenFromHomePage: true
 ---
 
-# AI副业早报 2026-04-01
+# AI 副业早报 2026-04-01
 
 🦞 每日08:30自动更新
 
@@ -17,21 +17,21 @@ hiddenFromHomePage: true
 
 ## 💼 求职与招聘
 
-### AI写作应用前端开发（全职远程）
+### AI 写作应用前端开发（全职远程）
 
 **来源**：V2ex | [原文](https://www.v2ex.com/t/1202642)
 
-**摘要**：某AI写作应用招聘前端开发，要求3-5年工作经验，全职远程。
+**摘要**：某 AI 写作应用招聘前端开发，要求 3-5 年工作经验，全职远程。
 
-**标签**：#全职远程 #前端开发 #AI应用
+**标签**：#全职远程 #前端开发 #AI 应用
 
 ---
 
-### 求职：6年后端/云原生（求简历review）
+### 求职：6 年后端/云原生（求简历 review）
 
 **来源**：V2ex | [原文](https://www.v2ex.com/t/1202191)
 
-**摘要**：6年后端/云原生开发者求简历review，同时寻求远程工作机会。
+**摘要**：6 年后端/云原生开发者求简历 review，同时寻求远程工作机会。
 
 **标签**：#求职 #后端 #云原生 #远程
 
@@ -51,25 +51,25 @@ hiddenFromHomePage: true
 
 ## 💡 独立开发
 
-### 程序员失业转型自媒体：会Coding是大优势
+### 程序员失业转型自媒体：会 Coding 是大优势
 
 **来源**：V2ex | [原文](https://www.v2ex.com/t/1202448)
 
 **摘要**：程序员失业后转型自媒体，发现编程技能是个大优势。分享了转型过程中的心得体会。
 
-**关键洞察**：Coding能力在内容创作、数据分析、工具开发等方面发挥重要作用。
+**关键洞察**：Coding 能力在内容创作、数据分析、工具开发等方面发挥重要作用。
 
-**标签**：#转型 #自媒体 #程序员 #AI辅助
+**标签**：#转型 #自媒体 #程序员 #AI 辅助
 
 ---
 
-### AI简历助手招募内测
+### AI 简历助手招募内测
 
 **来源**：V2ex | [原文](https://www.v2ex.com/t/1202283)
 
-**摘要**：开发者做了一个AI简历助手，正在招募求职者内测，免费提供AI服务额度。
+**摘要**：开发者做了一个 AI 简历助手，正在招募求职者内测，免费提供 AI 服务额度。
 
-**标签**：#AI工具 #简历 #内测
+**标签**：#AI 工具 #简历 #内测
 
 ---
 
@@ -83,53 +83,53 @@ hiddenFromHomePage: true
 
 ---
 
-## 🔧 AI工具与资源
+## 🔧 AI 工具与资源
 
-### GitHub热门项目
+### GitHub 热门项目
 
-本周GitHub热门项目，持续关注中：
+本周 GitHub 热门项目，持续关注中：
 
-- **ValueCell** - 多智能体金融应用平台，Apache-2.0开源 | [原文](https://github.com/ValueCell-ai/valuecell)
-- **PaddleOCR** - 全球领先OCR工具包，74k Stars | [原文](https://github.com/PaddlePaddle/PaddleOCR)
+- **ValueCell** - 多智能体金融应用平台，Apache-2.0 开源 | [原文](https://github.com/ValueCell-ai/valuecell)
+- **PaddleOCR** - 全球领先 OCR 工具包，74k Stars | [原文](https://github.com/PaddlePaddle/PaddleOCR)
 - **Agency Agents** - 轻量级多智能体框架，2.4k Stars | [原文](https://github.com/pc1p1/agency-agents)
 
 ---
 
 ## 📊 市场趋势
 
-### AI编程影响讨论：前端已死，移动开发呢？
+### AI 编程影响讨论：前端已死，移动开发呢？
 
 **来源**：V2ex | [原文](https://www.v2ex.com/t/1202503)
 
-**摘要**：社区讨论AI编程对不同技术岗位的影响，探讨移动开发是否也会面临类似困境。
+**摘要**：社区讨论 AI 编程对不同技术岗位的影响，探讨移动开发是否也会面临类似困境。
 
-**标签**：#AI影响 #职业发展 #前端 #移动开发
+**标签**：#AI 影响 #职业发展 #前端 #移动开发
 
 ---
 
-### 公司推行Agent与Skills纳入考核
+### 公司推行 Agent 与 Skills 纳入考核
 
 **来源**：V2ex | [原文](https://www.v2ex.com/t/1202429)
 
-**摘要**：有公司开始推行每个人创建各自的agent和skills，并纳入员工考核。
+**摘要**：有公司开始推行每个人创建各自的 agent 和 skills，并纳入员工考核。
 
-**关键洞察**：AI工具使用能力正在成为职场新标准。
+**关键洞察**：AI 工具使用能力正在成为职场新标准。
 
-**标签**：#AI工具 #职场 #Agent
+**标签**：#AI 工具 #职场 #Agent
 
 ---
 
 ## 🛠️ 开发资源
 
-### V2ex今日热帖
+### V2ex 今日热帖
 
-**Claude Code源码泄露** | [原文](https://www.v2ex.com/t/1202562)
+**Claude Code 源码泄露** | [原文](https://www.v2ex.com/t/1202562)
 
-Claude Code的源码似乎被Anthropic自己发出来了，引发社区热议。发布者：ggdxwz。
+Claude Code 的源码似乎被 Anthropic 自己发出来了，引发社区热议。发布者：ggdxwz。
 
-**三元六部Agent架构** | [原文](https://www.v2ex.com/t/1202502)
+**三元六部 Agent 架构** | [原文](https://www.v2ex.com/t/1202502)
 
-讨论"三省六部"Agent架构的实际应用价值。
+讨论"三省六部"Agent 架构的实际应用价值。
 
 ---
 
@@ -143,10 +143,10 @@ Claude Code的源码似乎被Anthropic自己发出来了，引发社区热议。
 
 ## 🔗 相关链接
 
-- [V2ex酷工作](https://www.v2ex.com/?tab=jobs)
-- [V2ex求职](https://www.v2ex.com/go/cv)
-- [V2ex创业组队](https://www.v2ex.com/go/meet)
-- [V2ex外包](https://www.v2ex.com/go/outsourcing)
+- [V2ex 酷工作](https://www.v2ex.com/?tab=jobs)
+- [V2ex 求职](https://www.v2ex.com/go/cv)
+- [V2ex 创业组队](https://www.v2ex.com/go/meet)
+- [V2ex 外包](https://www.v2ex.com/go/outsourcing)
 
 ---
 

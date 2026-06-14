@@ -25,7 +25,7 @@ tags: ["cmux", "终端", "Claude", "多路复用器", "macOS", "Ghostty", "AI工
 
 ## 一句话理解 cmux
 
-cmux（[manaflow-ai/cmux](https://github.com/manaflow-ai/cmux)，11k Stars）是 **mana flow.ai** 打造的下一代 AI 终端。核心理念：
+cmux（[manaflow-ai/cmux](https://github.com/manaflow-ai/cmux)，11k Stars）是 **mana flow.ai** 打造的下一代 AI 终端。核心思路：
 
 ```
 传统终端：输入命令 → 输出文本 → 纯文本交互
@@ -423,7 +423,7 @@ cmux 支持 26+ 种语言，README 有多个语言版本：
 
 ## 总结
 
-### 核心价值
+### 价值总结
 
 | 维度 | 传统终端 | cmux 终端 |
 |------|----------|-----------|

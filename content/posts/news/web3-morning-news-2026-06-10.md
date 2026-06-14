@@ -26,7 +26,7 @@ summary: "Web3 行业日报：Morpho 完成 1.75 亿美元融资、CME 推出加
 
 ### 3. Humanity Protocol 遭遇 3600 万美元攻击，代币暴跌 73%
 
-去中心化身份协议 Humanity Protocol 因员工笔记本电脑被入侵，攻击者获取了多签钱包私钥，控制了跨链桥并在两条链上铸造代币。该事件导致项目损失约 3600 万美元，代币价格暴跌 73%。该项目曾获 Pantera 和 Jump Crypto 支持。
+去中心化身份协议 Humanity Protocol 因员工笔记本电脑被入侵，攻击者获取了多签钱包私钥，控制了跨链桥并在两条链上铸造代币。事件导致项目损失约 3600 万美元，代币价格暴跌 73%。项目曾获 Pantera 和 Jump Crypto 支持。
 
 - 来源：[Decrypt](https://decrypt.co/370485/humanity-protocol-loses-36m-after-private-keys-compromised-token-crashes-73) / [CoinDesk](https://www.coindesk.com/tech/2026/06/09/humanity-s-usd36-million-exploit-happened-because-a-multisig-wallet-lived-on-one-laptop)
 

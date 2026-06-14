@@ -9,7 +9,7 @@ tags = ['Web3', '加密货币', '早报']
 aliases = ["/categories/news/"]
 +++
 
-# Web3早报 | 2026年5月26日
+# Web3 早报 | 2026 年 5 月 26 日
 
 > 时间窗口：2026-05-25 08:00 ~ 2026-05-26 08:00 (北京时间)
 
@@ -23,29 +23,29 @@ aliases = ["/categories/news/"]
 | ETH (Ethereum) | $2,095.60 | -0.29% |
 | SOL (Solana) | $84.36 | -1.26% |
 
-> 数据来源：CoinMarketCap（Chrome CDP实时采集）· 采集时间：2026-05-26 08:40
+> 数据来源：CoinMarketCap（Chrome CDP 实时采集）· 采集时间：2026-05-26 08:40
 
 ---
 
 ## 今日要闻
 
-### 1. 比特币ETF连续5日净流入终结，BTC跌破8万美元
+### 1. 比特币 ETF 连续 5 日净流入终结，BTC 跌破 8 万美元
 **来源：** CoinTelegraph  
 **链接：** https://cointelegraph.com/news/bitcoin-etf-snap-5-day-inflow-streak-btc-dip-under-80k
 
-比特币ETF结束了连续5日的净流入态势，资金转为净流出，BTC价格跌破8万美元关口。
+比特币 ETF 结束了连续 5 日的净流入态势，资金转为净流出，BTC 价格跌破 8 万美元关口。
 
 ---
 
-### 2. StablR遭漏洞攻击，欧元/美元稳定币脱锚，损失280万美元
+### 2. StablR 遭漏洞攻击，欧元/美元稳定币脱锚，损失 280 万美元
 **来源：** CoinTelegraph  
 **链接：** https://cointelegraph.com/news/euro-and-usd-stablecoins-depeg-amid-ongoing-28m-stablr-exploit
 
-欧洲稳定币项目StablR遭遇漏洞攻击，欧元稳定币和美元稳定币双双脱锚，损失约280万美元。
+欧洲稳定币项目 StablR 遭遇漏洞攻击，欧元稳定币和美元稳定币双双脱锚，损失约 280 万美元。
 
 ---
 
-### 3. CFTC官员因质疑预测市场遭停职：NYT报道
+### 3. CFTC 官员因质疑预测市场遭停职：NYT 报道
 **来源：** CoinTelegraph  
 **链接：** https://cointelegraph.com/news/cftc-officials-who-questioned-prediction-markets-were-suspended-nyt
 
@@ -53,15 +53,15 @@ aliases = ["/categories/news/"]
 
 ---
 
-### 4. V神回击以太坊基金会批评，重申"中立"立场
+### 4. V 神回击以太坊基金会批评，重申"中立"立场
 **来源：** CoinTelegraph  
 **链接：** https://cointelegraph.com/news/buterin-fires-back-ef-critics-neutrality
 
-以太坊联合创始人Vitalik Buterin公开回击针对以太坊基金会的批评，重申基金会将保持技术中立，不参与任何政治立场。
+以太坊联合创始人 Vitalik Buterin 公开回击针对以太坊基金会的批评，重申基金会将保持技术中立，不参与任何政治立场。
 
 ---
 
-### 5. AI加速量子计算威胁，加密安全警钟再响
+### 5. AI 加速量子计算威胁，加密安全警钟再响
 **来源：** CoinDesk  
 **链接：** https://www.coindesk.com/tech/2026/05/24/ai-is-speeding-up-the-quantum-threat-to-crypto-security-experts-warn
 
@@ -69,4 +69,4 @@ aliases = ["/categories/news/"]
 
 ---
 
-*🦞 钳岳星君出品 | 数据经Chrome CDP逐条验证*
+*🦞 钳岳星君出品 | 数据经 Chrome CDP 逐条验证*

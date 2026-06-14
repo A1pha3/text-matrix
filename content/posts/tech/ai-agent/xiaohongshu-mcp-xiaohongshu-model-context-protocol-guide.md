@@ -43,7 +43,7 @@ description: "全面解析 xiaohongshu-mcp (12.4k Stars)：小红书Model Contex
 
 **翻译**：xiaohongshu-mcp 是一个 MCP 协议服务端，用于小红书平台。它允许 AI 助手（如 Claude Code、Cursor 等）直接操作用户的小红书账号，包括发布内容、搜索、评论、获取用户信息等功能。
 
-### 2.2 核心价值主张
+### 2.2 价值定位
 
 | 价值 | 说明 |
 |------|------|
@@ -513,7 +513,7 @@ npx @modelcontextprotocol/inspector
 
 ## §10 总结
 
-### 10.1 核心优势
+### 10.1 优势
 
 | 优势 | 说明 |
 |------|------|

@@ -21,9 +21,9 @@ aliases = ["/categories/news/"]
 
 美国总统特朗普在白宫椭圆形办公室表示与中国的贸易谈判"99%完成"，双方正就贸易协议进行最终磋商。这一消息缓解了市场对中美贸易战的担忧。([ftchinese.com](https://www.ftchinese.com))
 
-### 伊朗战争进入第44天，霍尔木兹海峡仍关闭
+### 伊朗战争进入第 44 天，霍尔木兹海峡仍关闭
 
-中东局势持续紧张，伊朗战争已持续44天。霍尔木兹海峡仍处于关闭状态，全球能源运输受到严重干扰。沙特和阿联酋正在讨论绕过霍尔木兹的新管道方案。([ftchinese.com](https://www.ftchinese.com))
+中东局势持续紧张，伊朗战争已持续 44 天。霍尔木兹海峡仍处于关闭状态，全球能源运输受到严重干扰。沙特和阿联酋正在讨论绕过霍尔木兹的新管道方案。([ftchinese.com](https://www.ftchinese.com))
 
 ### 英国加入美国主导的霍尔木兹海峡护航联盟
 
@@ -35,11 +35,11 @@ aliases = ["/categories/news/"]
 
 ### 大宗商品交易商因伊朗战争损失数十亿美元
 
-全球顶级大宗商品交易商因伊朗战争持续而损失数十亿美元。石油、天然气价格剧烈波动导致多家机构录得重大亏损。布伦特原油价格在过去44天上涨逾60%。([ftchinese.com](https://www.ftchinese.com))
+全球顶级大宗商品交易商因伊朗战争持续而损失数十亿美元。石油、天然气价格剧烈波动导致多家机构录得重大亏损。布伦特原油价格在过去 44 天上涨逾 60%。([ftchinese.com](https://www.ftchinese.com))
 
-### 中国PPI连续第三个月上涨
+### 中国 PPI 连续第三个月上涨
 
-中国3月生产者出厂价格指数(PPI)同比下降2.5%，但环比上涨0.1%，为连续第三个月环比上涨。中国经济显现企稳迹象。([ftchinese.com](https://www.ftchinese.com))
+中国 3 月生产者出厂价格指数（PPI）同比下降 2.5%，但环比上涨 0.1%，为连续第三个月环比上涨。中国经济显现企稳迹象。([ftchinese.com](https://www.ftchinese.com))
 
 ---
 
@@ -47,31 +47,31 @@ aliases = ["/categories/news/"]
 
 ### 中国出口引擎重新加速
 
-在经历了年初的低迷后，中国3月出口同比增长4.5%，显示出强劲反弹迹象。电子产品、汽车和纺织品出口领涨。([ftchinese.com](https://www.ftchinese.com))
+在经历了年初的低迷后，中国 3 月出口同比增长 4.5%，显示出强劲反弹迹象。电子产品、汽车和纺织品出口领涨。([ftchinese.com](https://www.ftchinese.com))
 
-### 中国A股回购首次超越美国
+### 中国 A 股回购首次超越美国
 
-2026年第一季度，中国A股上市公司回购金额首次超越美国，达到约280亿美元。科技和消费板块回购最为活跃。([ftchinese.com](https://www.ftchinese.com))
+2026 年第一季度，中国 A 股上市公司回购金额首次超越美国，达到约 280 亿美元。科技和消费板块回购最为活跃。([ftchinese.com](https://www.ftchinese.com))
 
-### 中国在AI芯片竞赛中加速追赶
+### 中国在 AI 芯片竞赛中加速追赶
 
-尽管面临美国出口管制，中国AI芯片产业正在加速追赶。华为Ascend系列芯片性能持续提升，国内互联网巨头增加对国产芯片的采购。([ftchinese.com](https://www.ftchinese.com))
+尽管面临美国出口管制，中国 AI 芯片产业正在加速追赶。华为 Ascend 系列芯片性能持续提升，国内互联网巨头增加对国产芯片的采购。([ftchinese.com](https://www.ftchinese.com))
 
 ---
 
 ## 四、行业动态
 
-### 美光削减AI服务器DRAM产能
+### 美光削减 AI 服务器 DRAM 产能
 
-美光科技宣布削减数据中心DRAM产能，转而聚焦AI服务器用HBM内存。传统服务器DRAM需求疲软导致公司做出战略调整。([ftchinese.com](https://www.ftchinese.com))
+美光科技宣布削减数据中心 DRAM 产能，转而聚焦 AI 服务器用 HBM 内存。传统服务器 DRAM 需求疲软导致公司做出战略调整。([ftchinese.com](https://www.ftchinese.com))
 
-### 中国AI服务器需求推动SK海力士业绩大涨
+### 中国 AI 服务器需求推动 SK 海力士业绩大涨
 
-受益于中国AI服务器需求激增，SK海力士第一季度利润超出预期。中国客户占其HBM内存销售比重升至45%。([ftchinese.com](https://www.ftchinese.com))
+受益于中国 AI 服务器需求激增，SK 海力士第一季度利润超出预期。中国客户占其 HBM 内存销售比重升至 45%。([ftchinese.com](https://www.ftchinese.com))
 
-### 阿斯麦股价大涨因AI服务器需求持续
+### 阿斯麦股价大涨因 AI 服务器需求持续
 
-光刻机巨头阿斯麦(ASML)股价大涨6%，因AI服务器芯片需求持续强劲。公司上调全年营收预期。([ftchinese.com](https://www.ftchinese.com))
+光刻机巨头阿斯麦（ASML）股价大涨 6%，因 AI 服务器芯片需求持续强劲。公司上调全年营收预期。([ftchinese.com](https://www.ftchinese.com))
 
 ---
 
@@ -79,11 +79,11 @@ aliases = ["/categories/news/"]
 
 ### 美股涨跌互现
 
-美国股市周一涨跌互现，标普500指数基本持平。能源股因中东局势承压，科技股则因AI相关利好小幅上涨。([ftchinese.com](https://www.ftchinese.com))
+美国股市周一涨跌互现，标普 500 指数基本持平。能源股因中东局势承压，科技股则因 AI 相关利好小幅上涨。([ftchinese.com](https://www.ftchinese.com))
 
 ### 港股科技股大幅反弹
 
-恒生科技指数周一上涨3.2%，受益于AI概念股反弹和南向资金流入。阿里巴巴、腾讯等科技巨头领涨。([ftchinese.com](https://www.ftchinese.com))
+恒生科技指数周一上涨 3.2%，受益于 AI 概念股反弹和南向资金流入。阿里巴巴、腾讯等科技巨头领涨。([ftchinese.com](https://www.ftchinese.com))
 
 ---
 

@@ -9,7 +9,7 @@ tags: ["AI副业", "V2EX", "Claude Code", "API"]
 hiddenFromHomePage: true
 ---
 
-# AI副业早报 2026-04-14
+# AI 副业早报 2026-04-14
 
 🦞 每日08:30自动更新
 
@@ -23,21 +23,21 @@ hiddenFromHomePage: true
 **发布者**: hu1e
 **原文**: [原文](https://www.v2ex.com/t/1205340)
 
-**摘要**: 继 GPT-4o 突然发布、Gemini 2.0 Flash 试验、Grok 订阅号之后，Anthropic 的 Claude Code token 燃烧了 2599 亿美元。分析认为，整个 AI 圈已经变成一个比谁烧钱更多的游戏。值得注意的是，Anthropic 燃烧的代币可能比他们的收入还多。
+**摘要**: 继 GPT-4o 突然发布、Gemini 2.0 Flash 试验、Grok 订阅号之后，Anthropic 的 Claude Code token 燃烧了 2599 亿美元。分析认为，整个 AI 圈已经变成一个比谁烧钱更多的游戏。Anthropic 燃烧的代币可能比他们的收入还多。
 
-**标签**: #AI投资 #Claude Code #Token燃烧
+**标签**: #AI 投资 #Claude Code #Token 燃烧
 
 ---
 
 ### 2. Claude API 低价推广服务
 
 **来源**: V2EX
-**发布者**: aicodingsh (PRO会员)
+**发布者**: aicodingsh (PRO 会员)
 **原文**: [原文](https://www.v2ex.com/t/1205435)
 
 **摘要**: 有开发者推出 aicoding.sh 服务，走号池模式按量扣费，提供极便宜的 Claude API 价格，并且国内直连无需翻墙。这是一种 AI 副业变现思路——利用信息差和本地化服务优势，为国内用户提供方便的 AI API 接入服务。
 
-**标签**: #Claude API #副业 #API变现 #国内直连
+**标签**: #Claude API #副业 #API 变现 #国内直连
 
 ---
 

@@ -16,7 +16,7 @@ aliases: ["/categories/news/"]
 
 ## 📊 今日行情
 
-> 市场今日整体横盘，主要币种24h涨跌幅均不足1%，观望情绪浓厚。
+> 市场今日整体横盘，主要币种 24h 涨跌幅均不足 1%，观望情绪浓厚。
 
 | 币种 | 价格 | 24h涨跌 | 7d涨跌 |
 | ------ | ------ | ------ | ------ |
@@ -39,22 +39,22 @@ aliases: ["/categories/news/"]
 
 ## 🔥 今日热点
 
-### 特朗普媒体科技集团Q1加密持仓亏损4.05亿美元
+### 特朗普媒体科技集团 Q1 加密持仓亏损 4.05 亿美元
 
-来源: CoinDesk
-原文: [原文](https://www.coindesk.com/business/2026/05/09/trump-media-s-q1-loss-widens-to-usd406-million-on-bitcoin-cro-markdowns)
-摘要: 特朗普媒体科技集团（Trump Media & Technology Group）披露第一季度财报，净亏损达4.05亿美元，主要因持有的比特币及其他加密资产市值缩水。集团表示仍看好加密资产作为长期储备的策略。此披露再度引发市场对机构持仓风险和加密资产波动性的讨论。
+来源：CoinDesk
+原文：[原文](https://www.coindesk.com/business/2026/05/09/trump-media-s-q1-loss-widens-to-usd406-million-on-bitcoin-cro-markdowns)
+摘要：特朗普媒体科技集团（Trump Media & Technology Group）披露第一季度财报，净亏损达 4.05 亿美元，主要因持有的比特币及其他加密资产市值缩水。集团表示仍看好加密资产作为长期储备的策略。此披露再度引发市场对机构持仓风险和加密资产波动性的讨论。
 
 ### 伊朗革命卫队警告：侵犯伊朗船只将引发猛烈打击
 
-来源: 华尔街见闻
-摘要: 伊朗革命卫队就地区局势发出强硬警告，表示任何侵犯伊朗船只的行为将遭到"猛烈打击"。该消息推动国际油价波动，并引发市场对地缘风险的关注。加密市场受避险情绪影响，短时出现小幅资金轮动，比特币等主流资产价格在消息发酵期间保持相对稳定。
+来源：华尔街见闻
+摘要：伊朗革命卫队就地区局势发出强硬警告，表示任何侵犯伊朗船只的行为将遭到"猛烈打击"。该消息推动国际油价波动，并引发市场对地缘风险的关注。加密市场受避险情绪影响，短时出现小幅资金轮动，比特币等主流资产价格在消息发酵期间保持相对稳定。
 
 ---
 
 ## 📈 市况简评
 
-今日加密市场整体平淡，主流币种普遍微幅上扬。TON和Hyperliquid（HYPE）相对活跃，分别上涨0.70%和0.60%，但整体波动幅度有限。稳定币（USDT/USDC）锚定美元保持稳定，市场未出现明显趋势性方向，资金以观望为主。
+今日加密市场整体平淡，主流币种普遍微幅上扬。TON 和 Hyperliquid（HYPE）相对活跃，分别上涨 0.70%和 0.60%，但整体波动幅度有限。稳定币（USDT/USDC）锚定美元保持稳定，市场未出现明显趋势性方向，资金以观望为主。
 
 ---
 
@@ -63,4 +63,4 @@ aliases: ["/categories/news/"]
 **数据来源**：CoinMarketCap、CoinDesk
 
 **原文链接（已逐条核实）：**
-- ✅ https://www.coindesk.com/business/2026/05/09/trump-media-s-q1-loss-widens-to-usd406-million-on-bitcoin-cro-markdowns - 特朗普媒体Q1亏损报道
+- ✅ https://www.coindesk.com/business/2026/05/09/trump-media-s-q1-loss-widens-to-usd406-million-on-bitcoin-cro-markdowns - 特朗普媒体 Q1 亏损报道

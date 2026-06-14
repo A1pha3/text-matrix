@@ -42,7 +42,7 @@ description: "ShanClaw 是由 Kocoro-lab 开发的 macOS 原生交互式 AI Agen
 
 ShanClaw 不是又一个聊天机器人，而是一个**有名字、有记忆、能操控电脑的 AI Agent 运行时**。您可以创建多个命名 Agent，每个 Agent 拥有独立的指令系统、记忆存储和工具权限，通过 TUI 与之交互，也可以让 Agent 在后台运行，通过 Telegram、Slack、LINE 等渠道发送消息。
 
-### 1.2 核心定位
+### 1.2 定位
 
 | 特性 | 描述 |
 |------|------|

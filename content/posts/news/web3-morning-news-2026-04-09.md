@@ -10,11 +10,11 @@ hiddenFromHomePage: true
 aliases: ["/categories/news/"]
 ---
 
-# Web3早报 2026-04-09
+# Web3 早报 2026-04-09
 
 ## 📊 市场行情
 
-**全球加密货币市值**: $2.41T（24小时 -1.30%）
+**全球加密货币市值**: $2.41T（24 小时 -1.30%）
 
 ### Top 15 加密货币
 
@@ -40,14 +40,14 @@ aliases: ["/categories/news/"]
 
 ## 🔥 今日热点
 
-### 美伊停火引发600M强平
+### 美伊停火引发 600M 强平
 
 **来源**: [CoinMarketCap](https://coinmarketcap.com/)
-**摘要**: 美伊达成停火协议后，加密市场出现大幅波动。6000万美元仓位被强平，多空博弈激烈。
+**摘要**: 美伊达成停火协议后，加密市场出现大幅波动。6000 万美元仓位被强平，多空博弈激烈。
 
 ---
 
-### 摩根士丹利推出首只银行BTC ETF
+### 摩根士丹利推出首只银行 BTC ETF
 
 **来源**: [CoinMarketCap](https://coinmarketcap.com/)
 **摘要**: 传统银行业进军加密货币，机构投资者对比特币的投资渠道进一步拓宽。
@@ -70,21 +70,21 @@ aliases: ["/categories/news/"]
 ### Chainlink (LINK) 24h +5.52%
 
 **来源**: [CoinMarketCap](https://coinmarketcap.com/currencies/chainlink/)
-**摘要**: Chainlink涨幅领先主流加密货币，预言机需求持续增长。
+**摘要**: Chainlink 涨幅领先主流加密货币，预言机需求持续增长。
 
 ---
 
 ### Hyperliquid (HYPE) 7d +7.80%
 
 **来源**: [CoinMarketCap](https://coinmarketcap.com/currencies/hyperliquid/)
-**摘要**: Hyperliquid保持强劲表现，7日涨幅达7.80%，去中心化永续合约交易所龙头地位稳固。
+**摘要**: Hyperliquid 保持强劲表现，7 日涨幅达 7.80%，去中心化永续合约交易所龙头地位稳固。
 
 ---
 
 ### Solana (SOL) 24h +3.29%
 
 **来源**: [CoinMarketCap](https://coinmarketcap.com/currencies/solana/)
-**摘要**: Solana网络活跃度持续增长，生态发展强劲。
+**摘要**: Solana 网络活跃度持续增长，生态发展强劲。
 
 ---
 

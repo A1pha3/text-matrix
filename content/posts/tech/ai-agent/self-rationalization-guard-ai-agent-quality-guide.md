@@ -21,7 +21,7 @@ description: "OpenClaw AgentSkill 自我合理化防护指南，识别和反制 
 
 ### 1.1 什么是 Self-Rationalization Guard
 
-**Self-Rationalization Guard** 是 OpenClaw AgentSkill，核心理念是**识别和反制 AI Agent 常见的偷懒、逃避和自我欺骗模式**。当 Agent 即将跳过步骤、简化问题、或用"看起来对"替代"运行验证"时触发防护。
+**Self-Rationalization Guard** 是 OpenClaw AgentSkill，核心思路是**识别和反制 AI Agent 常见的偷懒、逃避和自我欺骗模式**。当 Agent 即将跳过步骤、简化问题、或用"看起来对"替代"运行验证"时触发防护。
 
 灵感源自 Claude Code Verification Agent 的 Rationalization Detection。
 
@@ -35,7 +35,7 @@ description: "OpenClaw AgentSkill 自我合理化防护指南，识别和反制 
 | **作者** | Arxchibobo |
 | **类型** | OpenClaw AgentSkill |
 
-### 1.3 核心定位
+### 1.3 定位
 
 > "你会想走捷径。识别这些冲动，然后做相反的事。"
 

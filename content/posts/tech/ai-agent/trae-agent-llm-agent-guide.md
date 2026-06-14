@@ -366,7 +366,7 @@ trae-cli run "Optimize database queries" --trajectory-file optimization_debug.js
 
 ### 10.1 研究导向设计
 
-Trae Agent 的核心设计理念是**透明、模块化架构**：
+Trae Agent 的核心设计思路是**透明、模块化架构**：
 
 > 研究导向设计使得学术和开源社区能够为基础智能体框架做出贡献并在其上构建。
 
@@ -489,7 +489,7 @@ trae-cli run "Your task" --trajectory-file debug.json
 
 ## §15 总结
 
-### 15.1 核心优势
+### 15.1 优势
 
 | 优势 | 说明 |
 |------|------|

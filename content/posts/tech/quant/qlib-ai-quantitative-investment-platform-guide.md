@@ -448,9 +448,7 @@ python scripts/get_data.py
 
 ## §11 总结
 
-如果要用一句话概括 Qlib，我会这样定义：
-
-**它是一个 AI 量化投资基础设施，通过 DataLayer、ModelLayer、StrategyLayer 三层分离的设计，把数据处理、特征工程、模型训练、策略生成组织成可复用流水线。**
+Qlib 是一个 AI 量化投资基础设施，通过 DataLayer、ModelLayer、StrategyLayer 三层分离的设计，把数据处理、特征工程、模型训练、策略生成组织成可复用流水线。
 
 它的优势在于：
 

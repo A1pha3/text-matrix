@@ -9,35 +9,35 @@ tags: ["AI工作", "创业组队", "远程工作", "V2EX", "大模型"]
 hiddenFromHomePage: true
 ---
 
-# AI副业早报：2026年4月6日
+# AI 副业早报：2026 年 4 月 6 日
 
 > 🦞 每日09:00自动更新
 
 ---
 
-## 💼 AI相关工作机会
+## 💼 AI 相关工作机会
 
 ### AI OPC 创业寻找基石共建成员
-来源: V2EX | 发布者: neo2020 | 11 小时 25 分钟前
-原文: [https://www.v2ex.com/t/1203682](https://www.v2ex.com/t/1203682)
+来源：V2EX | 发布者：neo2020 | 11 小时 25 分钟前
+原文：[https://www.v2ex.com/t/1203682](https://www.v2ex.com/t/1203682)
 
 【创业组队】neo2020 发起 AI OPC（Operator-Prompt-Code）创业项目，寻找基石共建成员。已有初步产品方向，希望招募有 AI Agent 开发经验的合伙人。要求：对 AI 编程有实践经验，并形成自己的方法论。
 
-### 找一个把AI玩透了的人：模型封装+产品定义
-来源: V2EX | 发布者: photoloft9996 | 11 小时 55 分钟前
-原文: [https://www.v2ex.com/t/1203559](https://www.v2ex.com/t/1203559)
+### 找一个把 AI 玩透了的人：模型封装+产品定义
+来源：V2EX | 发布者：photoloft9996 | 11 小时 55 分钟前
+原文：[https://www.v2ex.com/t/1203559](https://www.v2ex.com/t/1203559)
 
 【全职/远程】招聘 AI 专家，负责模型封装 + 产品定义。要求：全职、远程办公，薪资开放。有 AI 落地经验者优先。这是一个成熟团队寻找 AI 负责人的机会。
 
-### [上海] 德国小而美公司招AI Platform Engineer
-来源: V2EX | 发布者: thenetcircle PRO | 1 天前
-原文: [https://www.v2ex.com/t/1203427](https://www.v2ex.com/t/1203427)
+### [上海] 德国小而美公司招 AI Platform Engineer
+来源：V2EX | 发布者：thenetcircle PRO | 1 天前
+原文：[https://www.v2ex.com/t/1203427](https://www.v2ex.com/t/1203427)
 
 【全职/上海】德国小而美公司招聘 AI Platform Engineer，提供 Relocation 支持。公司氛围好，刚从普吉团建回来。要求：有 AI Platform 相关经验，英文可工作沟通。
 
-### [内推] Ai/Agent/AiOps等岗位，200+岗位
-来源: V2EX | 发布者: joesph | 2 天前
-原文: [https://www.v2ex.com/t/1203439](https://www.v2ex.com/t/1203439)
+### [内推] Ai/Agent/AiOps 等岗位，200+岗位
+来源：V2EX | 发布者：joesph | 2 天前
+原文：[https://www.v2ex.com/t/1203439](https://www.v2ex.com/t/1203439)
 
 【远程/内推】200+ 岗位，包括研发、产品、运营。特别推荐：AI / Agent / AI Ops 相关岗位。接受国内外候选人，远程优先。
 
@@ -45,27 +45,27 @@ hiddenFromHomePage: true
 
 ## 🔥 热门职场讨论
 
-### 程序员们，AI出现后你们觉得自己变得更强还是要被淘汰了？
-来源: V2EX | 发布者: webgeekman | 11 分钟前 | 25 回复
-原文: [https://www.v2ex.com/t/1203662](https://www.v2ex.com/t/1203662)
+### 程序员们，AI 出现后你们觉得自己变得更强还是要被淘汰了？
+来源：V2EX | 发布者：webgeekman | 11 分钟前 | 25 回复
+原文：[https://www.v2ex.com/t/1203662](https://www.v2ex.com/t/1203662)
 
 【职场话题】webgeekman 发起讨论：AI 出现后，程序员是变得更强还是即将被淘汰？热议中。多数观点认为：会用 AI 的程序员正在淘汰不会用 AI 的人，但核心编程能力依然重要。
 
-### 尴尬了，可能招聘了一个不会手写代码的AI工程师
-来源: V2EX | 发布者: hoky | 15 小时 32 分钟前 | 136 回复
-原文: [https://www.v2ex.com/t/1203210](https://www.v2ex.com/t/1203210)
+### 尴尬了，可能招聘了一个不会手写代码的 AI 工程师
+来源：V2EX | 发布者：hoky | 15 小时 32 分钟前 | 136 回复
+原文：[https://www.v2ex.com/t/1203210](https://www.v2ex.com/t/1203210)
 
 【职场话题】hoky 分享：面试了一位 "AI 工程师"，但对方居然不会手写代码，引发 136 条回复热议。有人指出，这是 AI 时代的新矛盾：会用 AI 工具，但不掌握基础技能。
 
-### 高强度使用AI以后，编程水平一泻千里
-来源: V2EX | 发布者: MajestySolor | 5 小时 26 分钟前 | 2 回复
-原文: [https://www.v2ex.com/t/1203673](https://www.v2ex.com/t/1203673)
+### 高强度使用 AI 以后，编程水平一泻千里
+来源：V2EX | 发布者：MajestySolor | 5 小时 26 分钟前 | 2 回复
+原文：[https://www.v2ex.com/t/1203673](https://www.v2ex.com/t/1203673)
 
 【职场话题】MajestySolor 吐槽：高强度使用 AI 以后，编程水平“不能说是毫无长进，也至少是一泻千里”，反倒是组织文字遣词造句的能力突飞猛进。自嘲背后，也反映出 AI 对程序员能力结构的潜移默化影响。
 
-### 现在加入AI Agent初创公司如何？
-来源: V2EX | 发布者: sunxf66 | 41 分钟前 | 10 回复
-原文: [https://www.v2ex.com/t/1203637](https://www.v2ex.com/t/1203637)
+### 现在加入 AI Agent 初创公司如何？
+来源：V2EX | 发布者：sunxf66 | 41 分钟前 | 10 回复
+原文：[https://www.v2ex.com/t/1203637](https://www.v2ex.com/t/1203637)
 
 【职场话题】sunxf66 真诚求问：现在加入 AI Agent 初创公司如何？10 条回复中，有人看好，也有人提醒注意风险。关键仍在于团队背景和融资情况。
 
@@ -73,13 +73,13 @@ hiddenFromHomePage: true
 
 ## 💡 洞察与趋势
 
-### AI时代编程新范式
+### AI 时代编程新范式
 
-最近V2EX热门讨论揭示了几个重要趋势：
+最近 V2EX 热门讨论揭示了几个重要趋势：
 
-1. **"会用AI"≠"会编程"**：多位坛友指出，AI工具的便捷反而让一些程序员忽视了基础编码能力的培养。面试手写算法仍是检验真本事的有效方式。
+1. **"会用 AI"≠"会编程"**：多位坛友指出，AI 工具的便捷反而让一些程序员忽视了基础编码能力的培养。面试手写算法仍是检验真本事的有效方式。
 
-2. **AI Agent创业窗口期**：越来越多的创业者开始探索AI Agent方向的创业机会，从模型封装到产品定义，需要跨界人才。
+2. **AI Agent 创业窗口期**：越来越多的创业者开始探索 AI Agent 方向的创业机会，从模型封装到产品定义，需要跨界人才。
 
 3. **远程 AI 岗位增多**：随着 AI 工具的普及，越来越多的公司开始接受远程 AI 相关岗位，特别是 AI Platform、AI Ops 等新兴方向。
 

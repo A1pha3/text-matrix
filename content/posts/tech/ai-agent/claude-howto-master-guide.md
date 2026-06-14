@@ -773,7 +773,7 @@ concurrency:
 
 ## 八、总结
 
-### 8.1 Claude How To 核心价值
+### 8.1 Claude How To 价值
 
 | 价值 | 说明 |
 |------|------|

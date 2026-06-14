@@ -26,11 +26,11 @@ aliases: ["/categories/news/"]
 | AVAX | $9.56 | — | — |
 | DOT | $1.31 | — | — |
 
-来源: CoinGecko（实时行情API）
-原文: [CoinGecko BTC页面](https://www.coingecko.com/zh/%E5%B8%81%E5%85%8A%E5%B8%81%E5%90%91/bitcoin)
+来源：CoinGecko（实时行情 API）
+原文：[CoinGecko BTC 页面](https://www.coingecko.com/zh/%E5%B8%81%E5%85%8A%E5%B8%81%E5%90%91/bitcoin)
 
 ### 市场简评
-BTC 过去24小时微涨0.11%，7日累计涨幅达6.84%，表明短期动能有所恢复。ETH 小幅回调0.78%，但7日仍录得3.81%涨幅。SOL 是本期最大亮点，24小时涨2.61%，7日涨6.68%，验证了近期生态币强于BTC 的结构特征。XRP、ADA、AVAX、DOT 当日波动相对平稳。
+BTC 过去 24 小时微涨 0.11%，7 日累计涨幅达 6.84%，表明短期动能有所恢复。ETH 小幅回调 0.78%，但 7 日仍录得 3.81%涨幅。SOL 是本期最大亮点，24 小时涨 2.61%，7 日涨 6.68%，验证了近期生态币强于 BTC 的结构特征。XRP、ADA、AVAX、DOT 当日波动相对平稳。
 
 ---
 
@@ -50,6 +50,6 @@ BTC 过去24小时微涨0.11%，7日累计涨幅达6.84%，表明短期动能有
 
 ## 📰 数据来源
 
-- 行情数据：CoinGecko（实时API）
+- 行情数据：CoinGecko（实时 API）
 
 🦞 每日08:30自动更新

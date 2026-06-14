@@ -21,9 +21,9 @@ hiddenFromHomePage: true
 
 ## ⚠️ 今日情况说明
 
-**V2EX 酷工作板块**：过去24小时内（4月2日-4月3日）无 AI 相关新帖子。最近的 AI 相关帖子是 3月31日发布的 Panda Video Generator（已超过72小时）。
+**V2EX 酷工作板块**：过去 24 小时内（4 月 2 日-4 月 3 日）无 AI 相关新帖子。最近的 AI 相关帖子是 3 月 31 日发布的 Panda Video Generator（已超过 72 小时）。
 
-**Reddit 来源**：已检查 r/Entrepreneur、r/SideProject 等板块，过去24小时内无 AI 副业相关热门帖子。
+**Reddit 来源**：已检查 r/Entrepreneur、r/SideProject 等板块，过去 24 小时内无 AI 副业相关热门帖子。
 
 ---
 
@@ -32,7 +32,7 @@ hiddenFromHomePage: true
 **Panda Video Generator — AI 视频自动化** [原文](https://www.v2ex.com/t/1202448)
 程序员用 AI + Remotion 做自媒体自动化的开源项目：
 - 一键文章转视频（文稿→语音→渲染→发布）
-- 使用 Deepseek 整理文稿（成本极低：40个视频只花 0.73CNY）
+- 使用 Deepseek 整理文稿（成本极低：40 个视频只花 0.73CNY）
 - 技术栈：React + Remotion + TTS + 多平台 API
 
 **讨论热点**：「会 Coding 是优势」——就像会英语一样

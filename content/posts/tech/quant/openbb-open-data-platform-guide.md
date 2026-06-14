@@ -619,9 +619,7 @@ obb.equity.price.historical(
 
 ## §11 总结
 
-如果要用一句话概括 OpenBB，我会这样定义：
-
-**它是一个开源金融数据平台，通过"连接一次，到处使用"的设计哲学，把散落的金融数据源统一成标准化接口，暴露给 Python/CLI/Terminal/Workspace/MCP/REST API 等多种消费端。**
+OpenBB 是一个开源金融数据平台，通过"连接一次，到处使用"的设计哲学，把散落的金融数据源统一成标准化接口，暴露给 Python/CLI/Terminal/Workspace/MCP/REST API 等多种消费端。
 
 它的优势在于：
 

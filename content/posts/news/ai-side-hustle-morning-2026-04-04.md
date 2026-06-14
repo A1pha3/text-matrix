@@ -9,7 +9,7 @@ tags: ["AI副业", "独立开发", "远程工作", "AI工具", "创业"]
 hiddenFromHomePage: true
 ---
 
-# AI副业早报 2026-04-04
+# AI 副业早报 2026-04-04
 
 **采集时间：2026-04-04 09:10 GMT+8**
 **数据来源：** V2EX、Reddit
@@ -18,7 +18,7 @@ hiddenFromHomePage: true
 
 ## 📊 今日概况
 
-过去24小时内，V2EX酷工作和Reddit平台上AI副业相关帖子较少。以下为主要发现：
+过去 24 小时内，V2EX 酷工作和 Reddit 平台上 AI 副业相关帖子较少。以下为主要发现：
 
 ---
 
@@ -26,14 +26,14 @@ hiddenFromHomePage: true
 
 **来源：** [V2EX](https://www.v2ex.com/?tab=jobs)
 
-今日V2EX酷工作板块以常规技术职位为主，未发现明显的AI副业/赚钱相关帖子。热门话题包括：
+今日 V2EX 酷工作板块以常规技术职位为主，未发现明显的 AI 副业/赚钱相关帖子。热门话题包括：
 
 | 帖子标题 | 类型 | 备注 |
 |----------|------|------|
 | 9万买一个人防车位划得来么 | 房产讨论 | 非AI相关 |
 | Casbin开源社区远程研发招募 | 开源社区 | 非AI专项 |
 
-**结论：** 今日V2EX暂无突出的AI副业相关机会。
+**结论：** 今日 V2EX 暂无突出的 AI 副业相关机会。
 
 ---
 
@@ -45,27 +45,27 @@ Reddit Side Project 社区有一些值得关注的项目：
 
 ### 1. "Launched a tool to convert tweets to newsletter, hit Product Hunt"
 
-**发布时间：** 4天前  
-**主要内容：** 开发者分享如何将Twitter内容转换为 newsletter 的工具，上线 Product Hunt 后获得关注。  
-**AI相关度：** 中等（工具化流程，可能用到AI辅助写作）  
-** monetization角度：** 工具型产品，有变现潜力
+**发布时间：** 4 天前  
+**主要内容：** 开发者分享如何将 Twitter 内容转换为 newsletter 的工具，上线 Product Hunt 后获得关注。  
+**AI 相关度：** 中等（工具化流程，可能用到 AI 辅助写作）  
+** monetization 角度：** 工具型产品，有变现潜力
 
 **原文链接：** https://www.reddit.com/r/SideProject/comments/1k2jmd/launched_a_tool_to_convert_tweets_to_newsletter_hit/
 
 ### 2. "Sharing my Notion system for running a newsletter with AI"
 
-**发布时间：** 4天前  
+**发布时间：** 4 天前  
 **主要内容：** 分享如何使用 Notion 系统配合 AI 运营 newsletter 的方法。  
-**AI相关度：** 高（明确使用 AI 辅助）  
-** monetization角度：** 知识付费/效率工具
+**AI 相关度：** 高（明确使用 AI 辅助）  
+** monetization 角度：** 知识付费/效率工具
 
 **原文链接：** https://www.reddit.com/r/SideProject/comments/1k3g9d/sharing_my_notion_system_for_running_a_newsletter/
 
 ---
 
-## 🤖 AI工具观察
+## 🤖 AI 工具观察
 
-过去24小时值得关注的AI工具/产品动态：
+过去 24 小时值得关注的 AI 工具/产品动态：
 
 ### 产品发布
 
@@ -81,7 +81,7 @@ Reddit Side Project 社区有一些值得关注的项目：
 基于当前社区动态，以下方向值得关注：
 
 1. **内容自动化工具** - 将社交媒体内容转换为其他格式（tweet→newsletter）
-2. **AI辅助创作系统** - 用 Notion + AI 提升内容生产效率
+2. **AI 辅助创作系统** - 用 Notion + AI 提升内容生产效率
 3. **开源社区参与** - 为开源项目贡献代码，建立影响力
 
 ---

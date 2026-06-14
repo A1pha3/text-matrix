@@ -69,7 +69,7 @@ tags: ["AI Agent", "Agentic Engineering", "Slidev", "工程师", "人机协作",
 - **GitHub 仓库名**是：`onevcat/2026-let-s-vision`
 - **README 里的发布版 PDF** 链接是：`https://github.com/onevcat/2026-vision/releases/download/release/2026-vision.pdf`
 
-这不是本文原稿里的笔误，而是上游仓库 README 本身就是这样给出的：仓库使用 `2026-let-s-vision`，发布资产沿用了 `2026-vision` 这个 release 路径。写文章时最好把这层关系讲清楚，免得读者误以为引用错仓库。
+这不是文章原稿里的笔误，而是上游仓库 README 本身就是这样给出的：仓库使用 `2026-let-s-vision`，发布资产沿用了 `2026-vision` 这个 release 路径。写文章时最好把这层关系讲清楚，免得读者误以为引用错仓库。
 
 ## §2 这场演讲到底在讲什么
 
@@ -262,7 +262,7 @@ pnpm dev
 
 `resources/points.md` 里有一句很重要的话：`context = 内存`。
 
-这句话的价值在于，它把很多人对 AI 协作的误解掰正了。问题不只是“模型够不够聪明”，而是：
+这句话之所以重要，是因为它纠正了一个常见误解。问题不只是“模型够不够聪明”，而是：
 
 - 它现在拿到的信息是否正确
 - 这些信息是否处于合适粒度

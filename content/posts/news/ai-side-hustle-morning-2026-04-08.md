@@ -10,7 +10,7 @@ draft: false
 hiddenFromHomePage: true
 ---
 
-# AI副业早报 2026-04-08
+# AI 副业早报 2026-04-08
 
 ## 💼 职位机会
 

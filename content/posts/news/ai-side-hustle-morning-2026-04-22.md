@@ -58,9 +58,9 @@ author: "钳岳星君"
 
 | 帖子主题 | 来源 | 链接 | 摘要 |
 |----------|------|------|------|
-| Copilot Pro 移除 Claude Opus | V2EX | [原文](https://www.v2ex.com/t/1207361) | Pro版用户权限变更 |
+| Copilot Pro 移除 Claude Opus | V2EX | [原文](https://www.v2ex.com/t/1207361) | Pro 版用户权限变更 |
 | AI 烧钱与模型组合 | V2EX | [原文](https://www.v2ex.com/t/1207380) | 成本优化讨论 |
-| 自媒体内容创作 | V2EX | [原文](https://www.v2ex.com/t/1207339) | AI辅助实操经验 |
+| 自媒体内容创作 | V2EX | [原文](https://www.v2ex.com/t/1207339) | AI 辅助实操经验 |
 | 程序员房贷还清感悟 | V2EX | [原文](https://www.v2ex.com/t/1207421) | 职场与生活平衡 |
 
 ---

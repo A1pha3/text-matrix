@@ -155,7 +155,7 @@ JSON Lines 官方规范只讲三件事：
 2. 第二行虽然是用户消息，但通常不直接携带最终 usage。
 3. 第三行已经包含这一轮模型响应对应的输入、输出、缓存与费用信息。
 
-换句话说，用户消息不是“不重要”，而是它的成本通常已经体现在随后那条 assistant 消息的 `input` 字段里。
+用户消息不是“不重要”，而是它的成本通常已经体现在随后那条 assistant 消息的 `input` 字段里。
 
 ### 3.2 归一化字段是多工具统计的起点
 
@@ -571,7 +571,7 @@ function halfHourBucketKey(date) {
 | JSONL | OpenClaw、Claude Code、Copilot CLI | 逐行读取，按事件类型和 usage 字段提取 |
 | SQLite | OpenCode、Hermes | 用 SQL 查询抽取所需字段，再映射成 canonical entry |
 
-Claude Code 就是一个很好的反例。它不仅有 `projects` 目录，还会把会话转录写到 `transcripts`；前者更适合提 Token，后者更适合补会话元数据。换句话说，多工具支持不是“多扫几个目录”，而是“搞清这个工具把什么信息拆到了哪里”。
+Claude Code 就是一个很好的反例。它不仅有 `projects` 目录，还会把会话转录写到 `transcripts`；前者更适合提 Token，后者更适合补会话元数据。所以多工具支持不是“多扫几个目录”，而是“搞清这个工具把什么信息拆到了哪里”。
 
 ### 5.3 三个最容易踩的坑
 

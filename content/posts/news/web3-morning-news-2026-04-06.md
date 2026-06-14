@@ -10,7 +10,7 @@ hiddenFromHomePage: true
 aliases: ["/categories/news/"]
 ---
 
-# Web3早报：2026年4月6日
+# Web3 早报：2026 年 4 月 6 日
 
 > 🦞 每日08:00自动更新（Browser实时采集）
 
@@ -35,49 +35,49 @@ aliases: ["/categories/news/"]
 ## 🔥 今日热点新闻
 
 ### 【安全事件】Drift 2.7 亿美元攻击被指与朝鲜黑客有关
-来源: CoinDesk | 时间: 4月5日 12:17 PM | 情绪: 负面
-原文: [https://www.coindesk.com/markets/2026/04/05/drift-says-usd270-million-exploit-was-a-six-month-north-korean-intelligence-operation](https://www.coindesk.com/markets/2026/04/05/drift-says-usd270-million-exploit-was-a-six-month-north-korean-intelligence-operation)
+来源：CoinDesk | 时间: 4 月 5 日 12:17 PM | 情绪：负面
+原文：[https://www.coindesk.com/markets/2026/04/05/drift-says-usd270-million-exploit-was-a-six-month-north-korean-intelligence-operation](https://www.coindesk.com/markets/2026/04/05/drift-says-usd270-million-exploit-was-a-six-month-north-korean-intelligence-operation)
 
 **核心内容：** 
 - 攻击者伪装成交易公司（trading firm），在多个国家与 Drift 团队成员线下接触
 - 存入 100 万美元自有资金建立信任
 - 等待半年后才执行攻击
-- CoinDesk本周早些时候已详细报道此事件
+- CoinDesk 本周早些时候已详细报道此事件
 - CoinDesk 引述链上安全公司判断称，此类手法与朝鲜黑客惯用模式一致
 
-### 【监管动态】Polymarket删除伊朗救援市场引发强烈反对
-来源: CoinDesk | 时间: 4月5日 7:20 PM | 情绪: 负面
-原文: [https://www.coindesk.com/policy/2026/04/05/polymarket-pulls-controversial-iran-rescue-markets-after-intense-backlash](https://www.coindesk.com/policy/2026/04/05/polymarket-pulls-controversial-iran-rescue-markets-after-intense-backlash)
+### 【监管动态】Polymarket 删除伊朗救援市场引发强烈反对
+来源：CoinDesk | 时间: 4 月 5 日 7:20 PM | 情绪：负面
+原文：[https://www.coindesk.com/policy/2026/04/05/polymarket-pulls-controversial-iran-rescue-markets-after-intense-backlash](https://www.coindesk.com/policy/2026/04/05/polymarket-pulls-controversial-iran-rescue-markets-after-intense-backlash)
 
 **核心内容：** 
 - 预测市场面临越来越大监管压力
 - 国会民主党人提议立法禁止与选举、战争和政府行为相关的合约
-- Polymarket删除了引发争议的伊朗救援市场
+- Polymarket 删除了引发争议的伊朗救援市场
 
-### 【市场分析】BTC现在领先Fed而非反应Fed
-来源: CoinDesk | 时间: 4月5日 4:00 PM | 情绪: 中性
-原文: [https://www.coindesk.com/markets/2026/04/05/bitcoin-is-now-front-running-the-fed-rather-than-reacting-to-it-etfs-are-the-cause](https://www.coindesk.com/markets/2026/04/05/bitcoin-is-now-front-running-the-fed-rather-than-reacting-to-it-etfs-are-the-cause)
-
-**核心内容：** 
-- 自2024年以来BTC与全球央行宽松的相关性转为强烈负相关
-- 表明BTC现在引领而非滞后货币政策信号
-- ETF是这一变化的根本原因
-
-### 【安全警告】Ledger CTO：AI正在加剧加密货币安全问题
-来源: CoinDesk | 时间: 4月5日 2:00 PM | 情绪: 负面
-原文: [https://www.coindesk.com/tech/2026/04/05/ai-is-making-crypto-s-security-problem-even-worse-ledger-cto-warns](https://www.coindesk.com/tech/2026/04/05/ai-is-making-crypto-s-security-problem-even-worse-ledger-cto-warns)
+### 【市场分析】BTC 现在领先 Fed 而非反应 Fed
+来源：CoinDesk | 时间: 4 月 5 日 4:00 PM | 情绪：中性
+原文：[https://www.coindesk.com/markets/2026/04/05/bitcoin-is-now-front-running-the-fed-rather-than-reacting-to-it-etfs-are-the-cause](https://www.coindesk.com/markets/2026/04/05/bitcoin-is-now-front-running-the-fed-rather-than-reacting-to-it-etfs-are-the-cause)
 
 **核心内容：** 
-- Ledger首席技术官Charles Guillemet警告AI正在使黑客攻击更便宜、更快速
+- 自 2024 年以来 BTC 与全球央行宽松的相关性转为强烈负相关
+- 表明 BTC 现在引领而非滞后货币政策信号
+- ETF 是这一变化的根本原因
+
+### 【安全警告】Ledger CTO：AI 正在加剧加密货币安全问题
+来源：CoinDesk | 时间: 4 月 5 日 2:00 PM | 情绪：负面
+原文：[https://www.coindesk.com/tech/2026/04/05/ai-is-making-crypto-s-security-problem-even-worse-ledger-cto-warns](https://www.coindesk.com/tech/2026/04/05/ai-is-making-crypto-s-security-problem-even-worse-ledger-cto-warns)
+
+**核心内容：** 
+- Ledger 首席技术官 Charles Guillemet 警告 AI 正在使黑客攻击更便宜、更快速
 - 迫使业界重新思考加密系统如何保持安全
 - 量子计算威胁也日益逼近
 
-### 【市场情绪】BTC进入4月以来市场情绪降至伊朗战争以来最差
-来源: CoinDesk | 时间: 4月5日 11:54 AM | 情绪: 负面
-原文: [https://www.coindesk.com/markets/2026/04/05/bitcoin-enters-april-at-its-most-hated-level-since-the-war-began](https://www.coindesk.com/markets/2026/04/05/bitcoin-enters-april-at-its-most-hated-level-since-the-war-began)
+### 【市场情绪】BTC 进入 4 月以来市场情绪降至伊朗战争以来最差
+来源：CoinDesk | 时间: 4 月 5 日 11:54 AM | 情绪：负面
+原文：[https://www.coindesk.com/markets/2026/04/05/bitcoin-enters-april-at-its-most-hated-level-since-the-war-began](https://www.coindesk.com/markets/2026/04/05/bitcoin-enters-april-at-its-most-hated-level-since-the-war-began)
 
 **核心内容：** 
-- 社交情绪、链上数据和定位指标均触及2月底以来极端水平
+- 社交情绪、链上数据和定位指标均触及 2 月底以来极端水平
 - 尽管机构购买保持高位
 - 聪明钱仍在买入，散户情绪极度悲观
 
@@ -85,47 +85,47 @@ aliases: ["/categories/news/"]
 
 ## 💼 机构动态
 
-### 【重磅消息】Schwab计划2026上半年推出BTC/ETH现货交易
-来源: CoinDesk | 时间: 4月3日 7:18 PM | 情绪: 正面
-原文: [https://www.coindesk.com/business/2026/04/03/schwab-plans-spot-bitcoin-ether-trading-launch-in-first-half-of-2026](https://www.coindesk.com/business/2026/04/03/schwab-plans-spot-bitcoin-ether-trading-launch-in-first-half-of-2026)
+### 【重磅消息】Schwab 计划 2026 上半年推出 BTC/ETH 现货交易
+来源：CoinDesk | 时间: 4 月 3 日 7:18 PM | 情绪：正面
+原文：[https://www.coindesk.com/business/2026/04/03/schwab-plans-spot-bitcoin-ether-trading-launch-in-first-half-of-2026](https://www.coindesk.com/business/2026/04/03/schwab-plans-spot-bitcoin-ether-trading-launch-in-first-half-of-2026)
 
 **核心内容：** 
-- 该金融服务巨头管理近$12万亿客户资产
+- 该金融服务巨头管理近$12 万亿客户资产
 - 即将推出直接加密交易服务
-- 提供Schwab Crypto账户提前访问订阅
+- 提供 Schwab Crypto 账户提前访问订阅
 
 ### 【稳定币动态】Circle 因 Drift 2.85 亿美元黑客事件中的 USDC 冻结问题受到质疑
-来源: CoinDesk | 时间: 4月3日 7:02 PM | 情绪: 负面
-原文: [https://www.coindesk.com/business/2026/04/03/circle-under-fire-after-usd285-million-drift-hack-over-inaction-to-freeze-stolen-usdc](https://www.coindesk.com/business/2026/04/03/circle-under-fire-after-usd285-million-drift-hack-over-inaction-to-freeze-stolen-usdc)
+来源：CoinDesk | 时间: 4 月 3 日 7:02 PM | 情绪：负面
+原文：[https://www.coindesk.com/business/2026/04/03/circle-under-fire-after-usd285-million-drift-hack-over-inaction-to-freeze-stolen-usdc](https://www.coindesk.com/business/2026/04/03/circle-under-fire-after-usd285-million-drift-hack-over-inaction-to-freeze-stolen-usdc)
 
 **核心内容：** 
 - ZachXBT 认为，如果 Circle 反应更快，理论上可能减少部分损失
 - CoinDesk 指出，未经法院或执法授权就冻结资产，也会给发行方带来法律风险
 
-### 【机构布局】Ant Group区块链部门推出AI Agent交易平台
-来源: CoinDesk | 时间: 4月2日 12:00 PM | 情绪: 正面
-原文: [https://www.coindesk.com/business/2026/04/02/ant-group-s-blockchain-arm-unveils-platform-for-ai-agents-to-transact-on-crypto-rails](https://www.coindesk.com/business/2026/04/02/ant-group-s-blockchain-arm-unveils-platform-for-ai-agents-to-transact-on-crypto-rails)
+### 【机构布局】Ant Group 区块链部门推出 AI Agent 交易平台
+来源：CoinDesk | 时间: 4 月 2 日 12:00 PM | 情绪：正面
+原文：[https://www.coindesk.com/business/2026/04/02/ant-group-s-blockchain-arm-unveils-platform-for-ai-agents-to-transact-on-crypto-rails](https://www.coindesk.com/business/2026/04/02/ant-group-s-blockchain-arm-unveils-platform-for-ai-agents-to-transact-on-crypto-rails)
 
 **核心内容：** 
-- Ant Group旗下Anvita包含代币化服务
-- Agent协调任务并使用稳定币实时结算支付
-- 传统机构加速布局AI+Crypto融合
+- Ant Group 旗下 Anvita 包含代币化服务
+- Agent 协调任务并使用稳定币实时结算支付
+- 传统机构加速布局 AI+Crypto 融合
 
 ---
 
 ## 🔬 技术前沿
 
 ### 【量子安全】Bitcoin 的 1.3 万亿美元安全竞赛：量子防护正在推进
-来源: CoinDesk | 时间: 4月4日 3:31 AM | 情绪: 中性
-原文: [https://www.coindesk.com/tech/2026/04/04/bitcoin-s-usd1-3-trillion-security-race-key-initiatives-aimed-at-quantum-proofing-the-world-s-largest-blockchain](https://www.coindesk.com/tech/2026/04/04/bitcoin-s-usd1-3-trillion-security-race-key-initiatives-aimed-at-quantum-proofing-the-world-s-largest-blockchain)
+来源：CoinDesk | 时间: 4 月 4 日 3:31 AM | 情绪：中性
+原文：[https://www.coindesk.com/tech/2026/04/04/bitcoin-s-usd1-3-trillion-security-race-key-initiatives-aimed-at-quantum-proofing-the-world-s-largest-blockchain](https://www.coindesk.com/tech/2026/04/04/bitcoin-s-usd1-3-trillion-security-race-key-initiatives-aimed-at-quantum-proofing-the-world-s-largest-blockchain)
 
 **核心内容：** 
 - 开发者正在讨论如何为 Bitcoin 网络引入抗量子升级
 - CoinDesk 认为，量子计算带来的威胁已不再只是纯理论问题
 
 ### 【公链安全】Solana 的量子威胁准备揭示安全和速度的艰难权衡
-来源: CoinDesk | 时间: 4月4日 12:00 PM | 情绪: 中性
-原文: [https://www.coindesk.com/tech/2026/04/04/solana-s-quantum-threat-readiness-reveals-harsh-tradeoff-security-vs-speed](https://www.coindesk.com/tech/2026/04/04/solana-s-quantum-threat-readiness-reveals-harsh-tradeoff-security-vs-speed)
+来源：CoinDesk | 时间: 4 月 4 日 12:00 PM | 情绪：中性
+原文：[https://www.coindesk.com/tech/2026/04/04/solana-s-quantum-threat-readiness-reveals-harsh-tradeoff-security-vs-speed](https://www.coindesk.com/tech/2026/04/04/solana-s-quantum-threat-readiness-reveals-harsh-tradeoff-security-vs-speed)
 
 **核心内容：** 
 - Bitcoin 开发者仍在寻找系统级方案
@@ -136,16 +136,16 @@ aliases: ["/categories/news/"]
 
 ## 📈 今日关注
 
-1. **BTC能否守住$69,000支撑位？** - 市场情绪极度悲观但机构买入持续
-2. **AI+区块链安全** - Ledger警告引发业界关注
-3. **量子计算威胁** - 多篇文章聚焦，BTC和Solana均在准备
-4. **ETF资金流向** - BTC现在引领Fed而非反应Fed
+1. **BTC 能否守住$69,000 支撑位？** - 市场情绪极度悲观但机构买入持续
+2. **AI+区块链安全** - Ledger 警告引发业界关注
+3. **量子计算威胁** - 多篇文章聚焦，BTC 和 Solana 均在准备
+4. **ETF 资金流向** - BTC 现在引领 Fed 而非反应 Fed
 
 ---
 
 ## ⚠️ 风险提示
 
-- Drift黑客事件持续发酵，朝鲜黑客威胁值得关注
+- Drift 黑客事件持续发酵，朝鲜黑客威胁值得关注
 - 监管压力加大，预测市场面临更严格审查
 - 量子计算威胁日益逼近，避险情绪浓厚
 

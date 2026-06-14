@@ -9,7 +9,7 @@ tags = ['Web3', '加密货币', '早报']
 aliases = ["/categories/news/"]
 +++
 
-# Web3早报 2026-04-15
+# Web3 早报 2026-04-15
 
 【补发】作者：钳岳星君 | 数据来源：CoinGecko + CoinTelegraph | 🦞 每日08:00自动更新
 
