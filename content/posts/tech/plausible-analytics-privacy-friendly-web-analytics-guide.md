@@ -13,9 +13,9 @@ slug: plausible-analytics-privacy-friendly-web-analytics-guide
 
 ## 引言
 
-在数据隐私日益受到关注的今天，网站分析领域正在经历一场范式 shift。Google Analytics 因其复杂的隐私政策、数据收集范围过宽以及严格的 GDPR 合规要求，正在被越来越多的开发者和企业弃用。**Plausible Analytics** 作为一款以隐私为核心设计的开源网站统计平台，凭借其轻量、简洁、合规的特性，迅速成为自托管网站分析的主流选择。
+在数据隐私日益受到关注的今天，网站分析领域正在发生变化。Google Analytics 因其复杂的隐私政策、数据收集范围过宽以及严格的 GDPR 合规要求，正在被越来越多的开发者和企业弃用。**Plausible Analytics** 作为一款以隐私为核心设计的开源网站统计平台，凭借轻量、简洁、合规的特性，成为自托管网站分析的主流选择。
 
-下面从入门到精通，全面解析 Plausible Analytics 的架构理念、核心功能、安装部署、配置调优，以及它与 Google Analytics 的深度对比，帮助你在项目中做出明智的分析平台选型决策。
+下面从入门到精通，解析 Plausible Analytics 的架构理念、功能、安装部署、配置调优，以及它与 Google Analytics 的深度对比，帮助你在项目中做出分析平台选型决策。
 
 ---
 
@@ -23,9 +23,9 @@ slug: plausible-analytics-privacy-friendly-web-analytics-guide
 
 Plausible Analytics 是一款由 [Uku Täht](https://twitter.com/ukutaht) 和 [Marko Saric](https://twitter.com/markosaric) 主导开发的**隐私优先、轻量级、开源网站统计工具**。它于 2019 年正式发布，旨在为网站提供一种与 Google Analytics 完全不同的分析体验——不追踪个人用户、不使用 Cookie、不需要烦人的隐私弹窗，同时提供所有你最关心的网站访问数据。
 
-### 1.1 核心理念
+### 1.1 设计原则
 
-Plausible 的设计哲学围绕三个核心原则：
+Plausible 的设计围绕三个原则：
 
 | 原则 | 说明 |
 |------|------|
@@ -44,7 +44,7 @@ Plausible 提供两个版本：
 
 ---
 
-## 二、核心功能详解
+## 二、功能详解
 
 Plausible Analytics 提供了一套精简但足够强大的分析功能集，所有数据均为**聚合统计**，不涉及个人用户追踪。
 
@@ -466,7 +466,7 @@ docker-compose logs plausible | grep "migration"
 
 ## 八、总结
 
-Plausible Analytics 代表了网站分析领域的一种**返璞归真**思路：与其追求对用户行为的全方位监控，不如专注于**真正重要的聚合指标**，同时在隐私合规上做到极致。它不适合需要复杂用户行为分析的场景，但对于大多数个人网站、企业官网和中小型应用来说，它的指标集已经足够完整。
+Plausible Analytics 代表了网站分析领域的一种思路：与其追求对用户行为的全方位监控，不如专注于**真正重要的聚合指标**，同时在隐私合规上做到极致。它不适合需要复杂用户行为分析的场景，但对于大多数个人网站、企业官网和中小型应用来说，指标集已经足够完整。
 
 开源 self-hosted 版本的存在，使得 Plausible 成为那些**数据必须留存在自有基础设施内**的场景（如政务、金融、医疗、教育）的理想选择。配合 Docker 的轻量化部署，任何人都能在 10 分钟内搭建起一个完全私有的网站分析平台。
 

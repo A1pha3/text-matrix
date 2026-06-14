@@ -65,14 +65,14 @@ AutoCLI 的系统架构分为三层：
 
 ```
 ┌─────────────────────────────────────┐
-│     User Interface (CLI)              │
-│  自然语言输入 + 命令执行输出          │
+│ User Interface (CLI) │
+│ 自然语言输入 + 命令执行输出 │
 ├─────────────────────────────────────┤
-│     AI Processing Layer              │
-│  Prompt Engineering + Provider API   │
+│ AI Processing Layer │
+│ Prompt Engineering + Provider API │
 ├─────────────────────────────────────┤
-│     Code Generation Layer            │
-│  Go 代码模板 + Cobra 集成           │
+│ Code Generation Layer │
+│ Go 代码模板 + Cobra 集成 │
 └─────────────────────────────────────┘
 ```
 
@@ -146,15 +146,15 @@ goernal 是 AutoCLI 使用的 CLI 框架，基于 Cobra：
 import "github.com/nashsu/goernal"
 
 func main() {
-    root := goernal.New("myapp", "A sample CLI")
-    root.AddCommand("greet", "Greet someone", greetHandler)
-    root.Execute()
+ root := goernal.New("myapp", "A sample CLI")
+ root.AddCommand("greet", "Greet someone", greetHandler)
+ root.Execute()
 }
 
 func greetHandler(ctx *goernal.Context) error {
-    name := ctx.Flags.String("name", "World", "Name to greet")
-    ctx.Println("Hello, " + name + "!")
-    return nil
+ name := ctx.Flags.String("name", "World", "Name to greet")
+ ctx.Println("Hello, " + name + "!")
+ return nil
 }
 ```
 
@@ -199,8 +199,8 @@ go install
 
 ```bash
 docker run -it --rm \
-    -e OPENAI_API_KEY=$OPENAI_API_KEY \
-    nashsu/autocli generate "Create a tool to convert JSON to YAML"
+ -e OPENAI_API_KEY=$OPENAI_API_KEY \
+ nashsu/autocli generate "Create a tool to convert JSON to YAML"
 ```
 
 . 配置 AI 提供商
@@ -227,16 +227,16 @@ AutoCLI 支持 YAML 配置文件 `~/.autocli/config.yaml`：
 
 ```yaml
 providers:
-  openai:
-    api_key: ${OPENAI_API_KEY}
-    model: gpt-4o
-  anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
-    model: claude-3-5-sonnet-20241022
+ openai:
+ api_key: ${OPENAI_API_KEY}
+ model: gpt-4o
+ anthropic:
+ api_key: ${ANTHROPIC_API_KEY}
+ model: claude-3-5-sonnet-20241022
 
 defaults:
-  provider: openai
-  output_dir: ./cli-output
+ provider: openai
+ output_dir: ./cli-output
 ```
 
 . 使用指南
@@ -298,24 +298,24 @@ autocli providers list
 package main
 
 import (
-    "github.com/spf13/cobra"
-    "github.com/nashsu/goernal"
+ "github.com/spf13/cobra"
+ "github.com/nashsu/goernal"
 )
 
 // {{.CommandName}} command
 var {{.CommandName}}Cmd = &cobra.Command{
-    Use:   "{{.Use}}",
-    Short: "{{.Short}}",
-    Long:  `{{.Long}}`,
-    RunE: func(cmd *cobra.Command, args []string) error {
-        // TODO: Implement {{.CommandName}}
-        return nil
-    },
+ Use: "{{.Use}}",
+ Short: "{{.Short}}",
+ Long: `{{.Long}}`,
+ RunE: func(cmd *cobra.Command, args []string) error {
+ // TODO: Implement {{.CommandName}}
+ return nil
+ },
 }
 
 func init() {
-    rootCmd.AddCommand({{.CommandName}}Cmd)
-    // {{.CommandName}}Cmd.Flags()...
+ rootCmd.AddCommand({{.CommandName}}Cmd)
+ // {{.CommandName}}Cmd.Flags()...
 }
 ```
 
@@ -325,28 +325,28 @@ func init() {
 package main
 
 import (
-    "github.com/nashsu/autocli/generator"
-    "github.com/nashsu/goernal"
+ "github.com/nashsu/autocli/generator"
+ "github.com/nashsu/goernal"
 )
 
 func main() {
-    g := generator.New()
-    
-    // 自定义 Prompt
-    g.WithSystemPrompt("You are an expert Go CLI developer")
-    
-    // 添加约束
-    g.AddConstraint("Use Cobra for CLI framework")
-    g.AddConstraint("Follow Go code style guidelines")
-    
-    // 生成
-    code, err := g.Generate("Create a tool to backup databases")
-    if err != nil {
-        panic(err)
-    }
-    
-    // 保存
-    goernal.SaveFile("cmd/backup.go", code)
+ g := generator.New()
+ 
+ // 自定义 Prompt
+ g.WithSystemPrompt("You are an expert Go CLI developer")
+ 
+ // 添加约束
+ g.AddConstraint("Use Cobra for CLI framework")
+ g.AddConstraint("Follow Go code style guidelines")
+ 
+ // 生成
+ code, err := g.Generate("Create a tool to backup databases")
+ if err != nil {
+ panic(err)
+ }
+ 
+ // 保存
+ goernal.SaveFile("cmd/backup.go", code)
 }
 ```
 
@@ -372,19 +372,19 @@ import "github.com/nashsu/autocli"
 type MyPlugin struct{}
 
 func (p *MyPlugin) Name() string {
-    return "my-plugin"
+ return "my-plugin"
 }
 
 func (p *MyPlugin) OnGenerate(req *autocli.Request) (*autocli.Response, error) {
-    // 自定义生成逻辑
-    return &autocli.Response{
-        Code: "// Custom generated code",
-    }, nil
+ // 自定义生成逻辑
+ return &autocli.Response{
+ Code: "// Custom generated code",
+ }, nil
 }
 
 // 注册插件
 func init() {
-    autocli.RegisterPlugin(&MyPlugin{})
+ autocli.RegisterPlugin(&MyPlugin{})
 }
 ```
 
@@ -397,14 +397,14 @@ func init() {
 ```
 myproject/
 ├── cmd/
-│   ├── root.go
-│   └── commands/
-│       ├── init.go
-│       ├── build.go
-│       └── deploy.go
+│ ├── root.go
+│ └── commands/
+│ ├── init.go
+│ ├── build.go
+│ └── deploy.go
 ├── internal/
-│   ├── handlers/
-│   └── utils/
+│ ├── handlers/
+│ └── utils/
 ├── go.mod
 ├── go.sum
 └── Makefile

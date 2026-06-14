@@ -11,7 +11,7 @@ tags: ["英语学习", "AI学习", "Gemini", "ChatGPT", "Claude", "学习方法"
 2026 年过半，用 AI 学英语这件事终于不再是“找个翻译 prompt 丢给 ChatGPT”的水平了。[离谱的英语学习指南](https://github.com/byoungd/English-level-up-tips)（English-level-up-tips）2026 版把 Gemini 的 Live / Guided Learning / Canvas / Quiz / Flashcards 五个模块串成了一条完整训练回路，同时给出了 ChatGPT、Claude、Perplexity、DeepL Write 的分工方案。读完之后你至少能回答几个问题：
 
 - 为什么今年应该把 Gemini 作为英语学习主引擎，而不是继续用 ChatGPT 做一切
-- Gemini 五个模块如何构成一条从输入到巩固的闭环回路，每个环节解决什么具体问题
+- Gemini 五个模块如何构成一条从输入到巩固的训练回路，每个环节解决什么具体问题
 - 多工具分工方案怎么配——什么时候用 Claude、什么时候切 Perplexity、DeepL Write 管写作的哪个环节
 - CEFR 六个等级到底代表什么能力，怎么自测定位当前水平
 - 听说读写四项技能各自的训练方法，以及 AI 在每一项里的具体介入点

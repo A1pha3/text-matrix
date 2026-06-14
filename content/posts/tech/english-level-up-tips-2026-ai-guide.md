@@ -4,7 +4,7 @@ date: "2026-05-28T10:30:00+08:00"
 slug: "english-level-up-tips-2026-ai-guide"
 aliases:
   - "/posts/english-level-up-tips-ai-learning-guide/"
-description: "English Level Up Tips 是一份面向中文学习者的英语进阶指南，2026 版新增 AI 学习章节，系统讲解 Gemini、ChatGPT、Claude 等工具如何串联听说读写训练闭环。"
+description: "English Level Up Tips 是一份面向中文学习者的英语进阶指南，2026 版新增 AI 学习章节，系统讲解 Gemini、ChatGPT、Claude 等工具如何串联听说读写训练回路。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI", "英语学习", "Gemini", "ChatGPT", "Claude"]
@@ -34,13 +34,13 @@ tags: ["AI", "英语学习", "Gemini", "ChatGPT", "Claude"]
 新版指南最大的变化是 **AI 章节的全面重写**，不再只是通用 Prompt，而是系统地回答：
 
 1. **为什么现在更推荐把 Gemini 作为英语学习主引擎** - 性价比与效果的最佳平衡点
-2. **如何把 Gemini / Live / Guided Learning / Canvas / Quiz / Flashcards 串成完整训练回路** - 真正形成学习闭环
+2. **如何把 Gemini / Live / Guided Learning / Canvas / Quiz / Flashcards 串成完整训练回路** - 真正形成学习循环
 3. **ChatGPT / Claude / Perplexity / DeepL Write 如何分工** - 各司其职不浪费
 4. **怎样设计真正能长期起作用的听说读写训练回路** - 而不只是偶尔翻译两句
 
 ## 特色章节
 
-指南涵盖英语学习的六个核心维度，每个维度都配有对应的 AI 训练方案：
+指南涵盖英语学习的六个维度，每个维度都配有对应的 AI 训练方案：
 
 | 维度 | 内容重点 |
 |------|---------|
@@ -52,7 +52,7 @@ tags: ["AI", "英语学习", "Gemini", "ChatGPT", "Claude"]
 | **写作（Writing）** | 结构化写作、AI 辅助润色 |
 | **AI** | 2026 版核心，工具链串联 |
 
-## 核心特色
+## 主要特色
 
 - **CEFR 标准对齐**：参照欧洲语言共同参考框架制定学习路径
 - **科学依据**：综合主观经验与语言学/认知科学依据

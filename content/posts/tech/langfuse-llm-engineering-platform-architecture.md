@@ -1,20 +1,20 @@
 ---
-title: "Langfuse：25K Stars 开源 LLM 工程平台，架构设计与集成实践全面解析"
+title: "Langfuse：25K Stars 开源 LLM 工程平台，架构设计与集成实践解析"
 date: "2026-04-23T14:00:00+08:00"
 slug: "langfuse-llm-engineering-platform-architecture"
-description: "YC W23 孵化的 25K+ Stars 开源 LLM 工程平台。本文深度解析：Monorepo 架构、PostgreSQL+ClickHouse 双数据库、OpenTelemetry 追踪模型、事件摄取流水线及主流框架集成。"
+description: "YC W23 孵化的 25K+ Stars 开源 LLM 工程平台。本文解析：Monorepo 架构、PostgreSQL+ClickHouse 双数据库、OpenTelemetry 追踪模型、事件摄取流水线及主流框架集成。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Langfuse", "LLMOps", "LLM Observability", "OpenTelemetry", "ClickHouse", "PostgreSQL", "LangChain", "Traces", "Evals"]
 ---
 
-# Langfuse：25K Stars 开源 LLM 工程平台，架构设计与集成实践全面解析
+# Langfuse：25K Stars 开源 LLM 工程平台，架构设计与集成实践解析
 
 ## 一、为什么需要 Langfuse？
 
 LLM 应用开发与传统软件有本质区别：AI 输出的不确定性、多步骤 Agent 的复杂调用链路、海量 Prompt 版本迭代需求，以及"效果到底好不好"这个难以量化的问题。
 
-Langfuse 解决的是 **LLM 工程的可见性与可迭代性**：
+Langfuse 解决的是 LLM 工程中四个具体问题：
 
 - **观测（Observability）**：LLM 调用长什么样？Token 消耗多少？延迟多长？哪一步出错了？
 - **评估（Evaluation）**：上线前后的效果对比如何量化？用户反馈如何自动化收集？
@@ -534,7 +534,7 @@ Langfuse 的架构设计在以下几个方面值得学习：
 
 ### ✅ 双数据库架构
 
-PostgreSQL（结构化元数据）+ ClickHouse（海量分析数据）的组合，是 LLM 应用观测平台的实践建议。Prisma 管理 PostgreSQL 提供了类型安全的实体操作，ClickHouse 的列式存储让聚合查询极为高效。
+PostgreSQL（结构化元数据）+ ClickHouse（海量分析数据）的组合，是 LLM 应用观测平台的常见实践。Prisma 管理 PostgreSQL 提供了类型安全的实体操作，ClickHouse 的列式存储让聚合查询极快。
 
 ### ✅ 异步非阻塞摄取
 
@@ -563,4 +563,4 @@ Langfuse 的追踪模型与 OpenTelemetry 语义完全兼容，：
 - **Self-Hosting 指南**：https://langfuse.com/docs/deployment/self-host
 - **GitHub Stars**：25,757 ⭐（持续增长中）
 
-🦞 钳岳星君 · 每日自动更新
+🦞 钳岳星君

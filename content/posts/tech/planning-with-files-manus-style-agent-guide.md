@@ -449,6 +449,6 @@ planning-with-files/
 | Skills Playground | https://skillsplayground.com/skills/othmanadi-planning-with-files-planning-with-files |
 | Loaditout 安全评级 | https://loaditout.ai/skills/OthmanAdi/planning-with-files |
 
-Planning with Files 解决的并不是 Agent"不够聪明"的问题，而是一个更底层的架构缺陷：我们给了 Agent 一个强大的推理引擎，却只给它配了"易失内存"，然后惊讶于它在复杂任务中迷失方向。Manus 的 20 亿美元估值，本质上是对这个架构洞察的定价——文件系统作为外存的思路朴素得近乎显而易见，但把它做成 Hook 强制的工程规范，并覆盖 16+ 个平台，才是真功夫。
+Planning with Files 解决的并不是 Agent"不够聪明"的问题，而是一个更底层的架构缺陷：我们给了 Agent 一个强大的推理引擎，却只给它配了"易失内存"，然后惊讶于它在复杂任务中迷失方向。Manus 的 20 亿美元估值，实际上是对这个架构洞察的定价——文件系统作为外存的思路朴素得近乎，但把它做成 Hook 强制的工程规范，并覆盖 16+ 个平台，才是真功夫。
 
 96.7% vs 6.7% 的基准测试差距不是营销话术。它说明了一件事：在当前的 Agent 架构下，把规划写进磁盘不是可选项，是生存条件。

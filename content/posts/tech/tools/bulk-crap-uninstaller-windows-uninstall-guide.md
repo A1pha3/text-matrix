@@ -9,7 +9,7 @@ tags: ["BCUninstaller", "Windows", "卸载工具", "批量卸载", "系统清理
 description: "全面解析 Bulk Crap Uninstaller (BCU)：18.1k Stars 的免费开源 Windows 程序卸载器。支持 NSIS、InnoSetup、MSI、Steam、Windows Store Apps 等多种卸载系统，批量卸载、自动清理残留、检测孤儿应用。Apache-2.0 开源许可证。"
 ---
 
-# Bulk Crap Uninstaller：Windows 批量程序卸载完全指南
+# Bulk Crap Uninstaller：Windows 批量程序卸载使用指南
 
 ## §1 学习目标
 
@@ -108,7 +108,7 @@ Forks:     792
 
 ---
 
-## §3 技术架构深度解析
+## §3 技术架构详细分析
 
 ### 3.1 支持的卸载系统
 
@@ -503,7 +503,7 @@ BCU-Console.exe --set-feature "Hyper-V" --disable
 
 ---
 
-## §8 卸载系统深度解析
+## §8 卸载系统详细分析
 
 ### 8.1 NSIS 卸载
 
@@ -566,7 +566,7 @@ BCU 的残留清理包括：
 
 ---
 
-## §9 最佳实践
+## §9 推荐做法
 
 ### 9.1 IT 专业人员使用场景
 
@@ -684,7 +684,7 @@ https://github.com/Klocman/Bulk-Crap-Uninstaller/actions/workflows/ci.yaml
 
 ## §11 总结
 
-### 11.1 核心优势
+### 11.1 主要优势
 
 | 优势 | 说明 |
 |------|------|

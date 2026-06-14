@@ -1,5 +1,5 @@
 ---
-title: "SuperSplat：浏览器里的 3D Gaussian Splat 编辑器完全指南"
+title: "SuperSplat：浏览器里的 3D Gaussian Splat 编辑器指南"
 date: 2026-05-10T16:30:00+08:00
 slug: playcanvas-supersplat-3d-gaussian-splat-editor-guide
 categories: ["技术笔记"]

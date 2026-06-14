@@ -65,7 +65,7 @@ Think Before Coding
 ```markdown
 Think Before Coding
 - State assumptions explicitly — If uncertain, ask rather than guess
-- Present multiple interpretations — Don't pick silently when ambiguity exists  
+- Present multiple interpretations — Don't pick silently when ambiguity exists 
 - Push back when warranted — If a simpler approach exists, say so
 - Stop when confused — Name what's unclear and ask for clarification
 ```
@@ -137,15 +137,15 @@ Goal-Driven Execution
 
 ```mermaid
 flowchart TD
-    A["收到任务指令"] --> B["Think Before Coding<br/>澄清假设、呈现歧义"]
-    B --> C{"理解是否明确？"}
-    C -->|否| B
-    C -->|是| D["Simplicity First<br/>用最少代码解决问题"]
-    D --> E["Surgical Changes<br/>只改必须改的，不碰无关代码"]
-    E --> F["Goal-Driven Execution<br/>定义成功标准，循环验证"]
-    F --> G{"验证是否通过？"}
-    G -->|否| E
-    G -->|是| H["交付"]
+ A["收到任务指令"] --> B["Think Before Coding<br/>澄清假设、呈现歧义"]
+ B --> C{"理解是否明确？"}
+ C -->|否| B
+ C -->|是| D["Simplicity First<br/>用最少代码解决问题"]
+ D --> E["Surgical Changes<br/>只改必须改的，不碰无关代码"]
+ E --> F["Goal-Driven Execution<br/>定义成功标准，循环验证"]
+ F --> G{"验证是否通过？"}
+ G -->|否| E
+ G -->|是| H["交付"]
 ```
 
 Think Before Coding 是入口哨兵——模糊的任务进不来。Simplicity First 和 Surgical Changes 形成了双轨约束：一个控制代码的*产出量*，一个控制代码的*影响范围*。Goal-Driven Execution 是出口检验——不达标的交付出不去。

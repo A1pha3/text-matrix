@@ -87,9 +87,9 @@ Beads 支持一种特殊的 issue 类型——**Message**：
 Beads 支持层级 ID，用于表达 epic-task-subtask 的结构：
 
 ```
-bd-a3f8        # Epic（史诗级大任务）
-bd-a3f8.1      # Task（Epic 下的子任务）
-bd-a3f8.1.1    # Sub-task（再下一级）
+bd-a3f8 # Epic（史诗级大任务）
+bd-a3f8.1 # Task（Epic 下的子任务）
+bd-a3f8.1.1 # Sub-task（再下一级）
 ```
 
 ---

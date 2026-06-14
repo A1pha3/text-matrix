@@ -102,12 +102,12 @@ tags: ["Cloudflare", "邮箱", "Rust", "WASM", "AI"]
 name: Deploy
 on: [push]
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy
-        uses: cloudflare/pages-action@v1
+ deploy:
+ runs-on: ubuntu-latest
+ steps:
+ - uses: actions/checkout@v4
+ - name: Deploy
+ uses: cloudflare/pages-action@v1
 ```
 
 详细部署文档：https://temp-mail-docs.awsl.uk/zh/guide/actions/github-action.html
@@ -135,22 +135,22 @@ pnpm build
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Cloudflare 临时邮箱                      │
+│ Cloudflare 临时邮箱 │
 ├─────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │
-│  │   Frontend  │  │  Workers    │  │   Pages      │   │
-│  │   (Vue)     │  │  (Python)   │  │  (Static)   │   │
-│  └──────┬──────┘  └──────┬──────┘  └─────────────┘   │
-│         │                  │                             │
-│  ┌──────▼──────┐  ┌──────▼──────┐                     │
-│  │   IMAP      │  │  Rust WASM  │                     │
-│  │  SMTP Proxy │  │  Mail Parse │                     │
-│  └─────────────┘  └─────────────┘                     │
-│         │                  │                             │
-│  ┌──────▼─────────────────▼──────┐                     │
-│  │       Cloudflare Workers AI      │                     │
-│  │     (AI 邮件识别 / 验证码提取)    │                     │
-│  └────────────────────────────────┘                     │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
+│ │ Frontend │ │ Workers │ │ Pages │ │
+│ │ (Vue) │ │ (Python) │ │ (Static) │ │
+│ └──────┬──────┘ └──────┬──────┘ └─────────────┘ │
+│ │ │ │
+│ ┌──────▼──────┐ ┌──────▼──────┐ │
+│ │ IMAP │ │ Rust WASM │ │
+│ │ SMTP Proxy │ │ Mail Parse │ │
+│ └─────────────┘ └─────────────┘ │
+│ │ │ │
+│ ┌──────▼─────────────────▼──────┐ │
+│ │ Cloudflare Workers AI │ │
+│ │ (AI 邮件识别 / 验证码提取) │ │
+│ └────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
 ```
 

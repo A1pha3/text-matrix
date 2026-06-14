@@ -1,5 +1,5 @@
 ---
-title: "Memvid：14.8K Stars · AI 智能体记忆层完全指南"
+title: "Memvid：14.8K Stars · AI 智能体记忆层指南"
 date: "2026-04-12T02:31:39+08:00"
 slug: memvid-ai-agent-memory-layer-guide
 description: "Memvid 是一个 AI 智能体记忆层，提供单文件持久化功能，无需数据库，支持极速检索。"
@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "Agent", "记忆系统", "向量数据库", "Rust"]
 ---
 
-# Memvid：14.8K Stars · AI 智能体记忆层完全指南
+# Memvid：14.8K Stars · AI 智能体记忆层指南
 
 > 单文件持久化 · 无数据库 · 零运维 · 极速检索 · 时间旅行调试
 
@@ -23,7 +23,7 @@ tags: ["AI", "Agent", "记忆系统", "向量数据库", "Rust"]
 - [七、Feature Flags](#七feature-flags)
 - [八、多模态支持](#八多模态支持)
 - [九、使用场景](#九使用场景)
-- [十、最佳实践](#十最佳实践)
+- [十、建议做法](#十建议做法)
 - [十一、API 参考](#十一api-参考)
 - [十二、VS 其他方案](#十二vs-其他方案)
 - [十三、故障排除](#十三故障排除)
@@ -39,7 +39,7 @@ Memvid（Memory Video）是一个**单文件记忆层**，为 AI 智能体提供
 
 > **官方定义**："Memvid is a single-file memory layer for AI agents with instant retrieval and long-term memory. Persistent, versioned, and portable memory, without databases."
 
-**关键价值主张**：传统向量数据库需要复杂的部署架构（向量库 + 嵌入服务 + API 服务器），而 Memvid 用单文件替代了这一切——拷贝即迁移，零配置启动，毫秒级检索。
+Memvid 解决的问题是：传统向量数据库需要复杂的部署架构（向量库 + 嵌入服务 + API 服务器），而 Memvid 用单文件替代了这一切——拷贝即迁移，零配置启动，毫秒级检索。
 
 ### 1.2 项目数据
 
@@ -53,7 +53,7 @@ Memvid（Memory Video）是一个**单文件记忆层**，为 AI 智能体提供
 | **核心语言** | **Rust 98.5%** |
 | **发布包** | CLI / Node.js / Python / Rust |
 
-### 1.3 核心定位
+### 1.3 定位
 
 | 维度 | 说明 |
 |------|------|

@@ -9,7 +9,7 @@ tags: ["Ripgrep", "rg", "Rust", "PCRE2", "代码搜索"]
 description: "基于 Ripgrep 官方 README、GUIDE、FAQ、CHANGELOG 与 15.1.0 帮助信息整理，系统讲解 rg 的默认行为、性能原理、工程架构、扩展方式与常见误区。"
 ---
 
-# Ripgrep 完全指南：从入门到原理、架构与扩展
+# Ripgrep 使用指南：从入门到原理、架构与扩展
 
 ## §1 学习目标
 
@@ -305,7 +305,7 @@ rg --type-list
 rg --type-add 'web:*.{html,css,js}' -tweb 'title'
 ```
 
-文件类型本质上是“类型名 → 若干 glob”的映射。它的优势不是功能更强，而是更容易复用和记忆。
+文件类型实际上是“类型名 → 若干 glob”的映射。它的优势不是功能更强，而是更容易复用和记忆。
 
 ### 5.4 输出控制：既适合人看，也适合机器处理
 

@@ -2,7 +2,7 @@
 title: "MLX-VLM：Apple Silicon 上的视觉语言模型推理与微调框架"
 date: "2026-04-06T17:30:00+08:00"
 slug: "mlx-vlm-apple-silicon-vlm-inference-guide"
-description: "全面介绍 MLX-VLM 技术框架，涵盖架构解析、支持模型、视觉特征缓存、TurboQuant KV Cache、LoRA微调等核心功能。"
+description: "介绍 MLX-VLM 技术框架，涵盖架构解析、支持模型、视觉特征缓存、TurboQuant KV Cache、LoRA微调等核心功能。"
 draft: false
 categories: ["技术笔记"]
 tags: ["MLX", "Apple Silicon", "VLM", "视觉语言模型", "本地AI"]
@@ -49,7 +49,7 @@ paligemma · pixtral · molmo
 
 **本地隐私**：所有推理都在本地执行，数据不会离开你的设备。
 
-## 2. 技术架构深度解析
+## 2. 技术架构解析
 
 ### 2.1 MLX 框架简介
 

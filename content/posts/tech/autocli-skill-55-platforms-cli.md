@@ -13,9 +13,9 @@ AutoCLI Skill：AI Agent 多平台浏览器自动化工具
 
 **AutoCLI Skill** 是一个为 Claude Code/OpenClaw/AI Agent 打造的终极平台集成工具，让 AI 能够像人一样操控 55+ 个主流平台——无需 API Key、无需复杂配置、直接复用你 Chrome 浏览器里已有的登录态。
 
-> **GitHub**: [nashsu/autocli-skill](https://github.com/nashsu/autocli-skill)  
-> **Stars**: 582 ⭐  
-> **Forks**: 62  
+> **GitHub**: [nashsu/autocli-skill](https://github.com/nashsu/autocli-skill) 
+> **Stars**: 582 ⭐ 
+> **Forks**: 62 
 > **核心特性**: 55+平台支持 | 零 API Key | Chrome 登录态复用 | Rust 编写 | 4.7MB 二进制
 
 一句话定位
@@ -42,46 +42,46 @@ AutoCLI Skill 的架构设计围绕三种不同的平台访问模式展开，确
 
 ```mermaid
 graph TB
-    subgraph Public_API["Public API 模式（无需浏览器）"]
-        HN[HackerNews]
-        SO[StackOverflow]
-        WIKI[Wikipedia]
-        ARXIV[Arxiv]
-        BBC[BBC News]
-        DEV[Dev.to]
-    end
+ subgraph Public_API["Public API 模式（无需浏览器）"]
+ HN[HackerNews]
+ SO[StackOverflow]
+ WIKI[Wikipedia]
+ ARXIV[Arxiv]
+ BBC[BBC News]
+ DEV[Dev.to]
+ end
 
-    subgraph Browser_Mode["Browser 模式（Chrome + 扩展）"]
-        TW[Twitter/X]
-        BB[Bilibili]
-        ZH[Zhihu]
-        WB[Weibo]
-        YT[YouTube]
-        RD[Reddit]
-        FB[Facebook]
-        IG[Instagram]
-        TT[TikTok]
-        JK[Jike]
-        DB[Douban]
-        WR[WeRead]
-        XQ[Xueqiu]
-        BH[小红书]
-    end
+ subgraph Browser_Mode["Browser 模式（Chrome + 扩展）"]
+ TW[Twitter/X]
+ BB[Bilibili]
+ ZH[Zhihu]
+ WB[Weibo]
+ YT[YouTube]
+ RD[Reddit]
+ FB[Facebook]
+ IG[Instagram]
+ TT[TikTok]
+ JK[Jike]
+ DB[Douban]
+ WR[WeRead]
+ XQ[Xueqiu]
+ BH[小红书]
+ end
 
-    subgraph Desktop_Mode["Desktop App 模式（桌面应用）"]
-        CU[Cursor]
-        NT[Notion]
-        CG[ChatGPT]
-        DC[Discord]
-        CX[Codex]
-    end
+ subgraph Desktop_Mode["Desktop App 模式（桌面应用）"]
+ CU[Cursor]
+ NT[Notion]
+ CG[ChatGPT]
+ DC[Discord]
+ CX[Codex]
+ end
 
-    CLI[autocli CLI] --> Public_API
-    CLI --> Browser_Mode
-    CLI --> Desktop_Mode
+ CLI[autocli CLI] --> Public_API
+ CLI --> Browser_Mode
+ CLI --> Desktop_Mode
 
-    Browser_Mode --> Chrome[Chrome Browser]
-    Chrome --> Extension[autocli Extension]
+ Browser_Mode --> Chrome[Chrome Browser]
+ Chrome --> Extension[autocli Extension]
 ```
 
 三种模式的对比
@@ -259,8 +259,8 @@ Yahoo Finance
 autocli yahoo-finance quote --symbol AAPL
 
 雪球
-autocli xueqiu stock --symbol SH600519   # 茅台行情
-autocli xueqiu watchlist                  # 我的自选股
+autocli xueqiu stock --symbol SH600519 # 茅台行情
+autocli xueqiu watchlist # 我的自选股
 
 豆瓣
 autocli douban top250 --format json

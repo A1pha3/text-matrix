@@ -1,27 +1,25 @@
 ---
-title: "LiteRT-LM：Google 生产级边缘设备 LLM 推理框架完全指南"
+title: "LiteRT-LM：Google 生产级边缘设备 LLM 推理框架指南"
 date: "2026-04-06T20:00:00+08:00"
 slug: "litert-lm-google-edge-llm-inference-guide"
-description: "全面介绍 Google LiteRT-LM 边缘设备 LLM 推理框架，涵盖核心特性、技术架构、多语言API、工具调用、多模态能力和全平台部署实践。"
+description: "介绍 Google LiteRT-LM 边缘设备 LLM 推理框架，涵盖核心特性、技术架构、多语言API、工具调用、多模态能力和全平台部署实践。"
 draft: false
 categories: ["技术笔记"]
 tags: ["LiteRT-LM", "Google AI Edge", "LLM推理", "边缘计算", "Android", "Gemma"]
 ---
 
-# LiteRT-LM：Google 生产级边缘设备 LLM 推理框架完全指南
+# LiteRT-LM：Google 生产级边缘设备 LLM 推理框架指南
 
-## 学习目标
+## 这篇文章覆盖什么
 
-通过本文，你将全面掌握以下核心能力：
-
-- 深入理解 LiteRT-LM 的项目定位与边缘 AI 推理的技术价值
-- 掌握 LiteRT-LM 的核心特性、技术架构和支持的模型
-- 学会在 Android、iOS、Web、桌面端和 IoT 设备上部署 LLM
-- 掌握 LiteRT-LM 的多语言 API（Kotlin、Python、C++、Swift）
-- 理解 Tool Use / Function Calling 在边缘设备上的实现方式
-- 学会使用 LiteRT-LM CLI 进行快速原型开发和测试
-- 掌握从源码编译和定制优化的方法
-- 了解 Gemma、Llama、Phi-4、Qwen 等模型的部署实践
+- LiteRT-LM 的项目定位与边缘 AI 推理的技术背景
+- 核心特性、技术架构和支持的模型
+- 在 Android、iOS、Web、桌面端和 IoT 设备上部署 LLM
+- 多语言 API（Kotlin、Python、C++、Swift）
+- Tool Use / Function Calling 在边缘设备上的实现方式
+- LiteRT-LM CLI 快速原型开发和测试
+- 从源码编译和定制优化
+- Gemma、Llama、Phi-4、Qwen 等模型的部署实践
 
 ---
 
@@ -31,7 +29,7 @@ tags: ["LiteRT-LM", "Google AI Edge", "LLM推理", "边缘计算", "Android", "G
 
 **LiteRT-LM** 是 Google AI Edge 推出的**生产级、高性能、开源边缘设备 LLM 推理框架**。它专为在资源受限的边缘设备上部署大型语言模型而设计，覆盖 Android、iOS、Web、桌面端和 IoT（如树莓派）等全平台。
 
-LiteRT-LM 已集成到 Google 的多个产品中，包括 **Chrome、Chromebook Plus、Pixel Watch** 等。这意味着它经过了大量真实用户场景的验证，不是实验性项目。
+LiteRT-LM 已集成到 Google 的多个产品中，包括 **Chrome、Chromebook Plus、Pixel Watch** 等。也就是说它经过了大量真实用户场景的验证，不是实验性项目。
 
 ### 1.2 核心数据
 
@@ -130,7 +128,7 @@ LiteRT-LM 广泛支持主流开源大模型：
 
 ---
 
-## 3. 技术架构深度解析
+## 3. 技术架构解析
 
 ### 3.1 整体架构
 

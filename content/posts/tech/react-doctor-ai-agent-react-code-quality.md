@@ -14,7 +14,7 @@ tags: ["React", "AI Agent", "代码质量", "TypeScript", "自动化"]
 
 [millionco/react-doctor](https://github.com/millionco/react-doctor) 是一款专门给 AI 编码智能体「把脉」的 React 代码质量工具，当前已获得约 **9,348 颗 Stars** 和 291 个 Forks，采用 MIT 许可证，主要语言为 TypeScript。
 
-核心定位一句话：**你的 AI 编码智能体写的 React 代码很烂，React Doctor 来抓问题。**
+核心定位一句话：**AI 编码智能体写的 React 代码容易出问题，React Doctor 来抓。**
 
 官网：https://react.doctor
 
@@ -27,7 +27,7 @@ tags: ["React", "AI Agent", "代码质量", "TypeScript", "自动化"]
 
 ## 痛点背景
 
-随着 Claude Code、Cursor、Codex 等 AI 编码智能体在 React 开发中的大规模使用，一个新问题浮现：AI 生成代码速度快，但质量参差不齐，常见问题包括：
+随着 Claude Code、Cursor、Codex 等 AI 编码智能体在 React 开发中大规模使用，一个新问题浮现：AI 生成代码速度快，但质量参差不齐，常见问题包括：
 
 - 不安全的 `useEffect` 依赖
 - 未处理的边缘情况
@@ -142,7 +142,7 @@ packages/react-doctor/
 
 ## 总结
 
-随着 AI 编码智能体成为开发工作流的一部分，「AI 生成代码的质量保障」成为一个新需求。React Doctor 填补了这个空白——不是替代 AI，而是给 AI 的输出做质检。对于大量使用 AI 智能体开发 React 项目的团队，这个工具值得一试。
+随着 AI 编码智能体成为开发工作流的一部分，「AI 生成代码的质量保障」成了一个新需求。React Doctor 填补了这个空白——给 AI 的输出做质检。大量使用 AI 智能体开发 React 项目的团队，可以试试。
 
 仓库：https://github.com/millionco/react-doctor  
 官网：https://react.doctor

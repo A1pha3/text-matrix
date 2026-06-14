@@ -79,34 +79,34 @@ Android 逆向工程 Skill：.K Stars 的 Claude Code 智能体
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│            Android Reverse Engineering Skill                  │
+│ Android Reverse Engineering Skill │
 ├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Phase 1: 依赖检查                                           │
-│  ├── jadx 是否安装？                                         │
-│  ├── Vineflower 是否安装？                                   │
-│  └── Java JDK 17+ 是否可用？                                  │
-│                                                              │
-│  Phase 2: 反编译                                             │
-│  ├── jadx（默认）→ DEX/DEX→Java                             │
-│  ├── Vineflower → DEX→JAR→Java（需 dex2jar 转换）             │
-│  └── 双引擎对比 → 输出两个版本供比较                         │
-│                                                              │
-│  Phase 3: 结构分析                                           │
-│  ├── AndroidManifest.xml 解析                               │
-│  ├── 包名/Activity/Service/Receiver 提取                    │
-│  └── 架构模式识别（MVC/MVVM/Clean）                          │
-│                                                              │
-│  Phase 4: API 提取                                           │
-│  ├── Retrofit 接口识别                                        │
-│  ├── OkHttp 调用识别                                         │
-│  ├── 硬编码 URL 提取                                          │
-│  └── 认证头/Token 识别                                        │
-│                                                              │
-│  Phase 5: 调用链追踪                                         │
-│  ├── Activity → ViewModel → Repository → API                │
-│  └── 完整调用路径输出                                        │
-│                                                              │
+│ │
+│ Phase 1: 依赖检查 │
+│ ├── jadx 是否安装？ │
+│ ├── Vineflower 是否安装？ │
+│ └── Java JDK 17+ 是否可用？ │
+│ │
+│ Phase 2: 反编译 │
+│ ├── jadx（默认）→ DEX/DEX→Java │
+│ ├── Vineflower → DEX→JAR→Java（需 dex2jar 转换） │
+│ └── 双引擎对比 → 输出两个版本供比较 │
+│ │
+│ Phase 3: 结构分析 │
+│ ├── AndroidManifest.xml 解析 │
+│ ├── 包名/Activity/Service/Receiver 提取 │
+│ └── 架构模式识别（MVC/MVVM/Clean） │
+│ │
+│ Phase 4: API 提取 │
+│ ├── Retrofit 接口识别 │
+│ ├── OkHttp 调用识别 │
+│ ├── 硬编码 URL 提取 │
+│ └── 认证头/Token 识别 │
+│ │
+│ Phase 5: 调用链追踪 │
+│ ├── Activity → ViewModel → Repository → API │
+│ └── 完整调用路径输出 │
+│ │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -221,12 +221,12 @@ Retrofit 是最常见的 Android HTTP 客户端，接口以注解方式声明：
 ```java
 // 特征代码
 public interface ApiService {
-    @GET("users/{id}")
-    Call<User> getUser(@Path("id") String userId);
+ @GET("users/{id}")
+ Call<User> getUser(@Path("id") String userId);
 
-    @POST("auth/login")
-    @Headers({"Content-Type: application/json"})
-    Call<LoginResponse> login(@Body LoginRequest request);
+ @POST("auth/login")
+ @Headers({"Content-Type: application/json"})
+ Call<LoginResponse> login(@Body LoginRequest request);
 }
 ```
 
@@ -250,9 +250,9 @@ OkHttp 通常直接构建请求：
 ```java
 // 特征代码
 Request request = new Request.Builder()
-    .url("https://api.example.com/v1/users")
-    .addHeader("Authorization", "Bearer " + token)
-    .build();
+ .url("https://api.example.com/v1/users")
+ .addHeader("Authorization", "Bearer " + token)
+ .build();
 
 OkHttpClient client = new OkHttpClient();
 client.newCall(request).enqueue(callback);
@@ -297,7 +297,7 @@ grep -rni 'BASE_URL\|API_URL\|SERVER_URL\|ENDPOINT' sources/
 - **Path 参数**: 无
 - **Query 参数**: 无
 - **Headers**:
-  - `Content-Type: application/json`
+ - `Content-Type: application/json`
 - **Request Body**: `LoginRequest { email: String, password: String }`
 - **Response**: `ApiResponse<TokenResponse>`
 - **调用来源**: `LoginActivity.onLoginClicked()` → `AuthViewModel.login()`
@@ -311,23 +311,23 @@ grep -rni 'BASE_URL\|API_URL\|SERVER_URL\|ENDPOINT' sources/
 
 ```
 用户交互 (点击按钮)
-    │
-    ▼
+ │
+ ▼
 Activity / Fragment
-    │ onClick()
-    ▼
+ │ onClick()
+ ▼
 ViewModel
-    │ login(email, password)
-    ▼
+ │ login(email, password)
+ ▼
 Repository
-    │ authApi.login(request)
-    ▼
+ │ authApi.login(request)
+ ▼
 ApiService (Retrofit Interface)
-    │ @POST("auth/login")
-    ▼
+ │ @POST("auth/login")
+ ▼
 OkHttpClient
-    │ 发起 HTTP 请求
-    ▼
+ │ 发起 HTTP 请求
+ ▼
 网络响应
 ```
 
@@ -448,23 +448,23 @@ Base URL: https://api.target-app.com/v2
 === Endpoints ===
 
 [POST] /auth/login
-  Source: com.target.app.data.api.AuthApi (AuthApi.java:23)
-  Headers: Content-Type: application/json, X-App-Version: 1.0.0
-  Body: { email: String, password: String, device_id: String }
-  Response: { access_token: String, refresh_token: String, expires_in: Int }
+ Source: com.target.app.data.api.AuthApi (AuthApi.java:23)
+ Headers: Content-Type: application/json, X-App-Version: 1.0.0
+ Body: { email: String, password: String, device_id: String }
+ Response: { access_token: String, refresh_token: String, expires_in: Int }
 
 [GET] /users/me
-  Source: com.target.app.data.api.UserApi (UserApi.java:15)
-  Headers: Authorization: Bearer <token>
-  Response: { id: String, email: String, name: String, avatar: String }
+ Source: com.target.app.data.api.UserApi (UserApi.java:15)
+ Headers: Authorization: Bearer <token>
+ Response: { id: String, email: String, name: String, avatar: String }
 
 === Call Chain ===
 
 LoginActivity.onLoginClicked()
-  → LoginViewModel.login(email, password)
-    → AuthRepository.login(request)
-      → AuthApi.login(request)
-        → OkHttpClient.newCall(request).enqueue(callback)
+ → LoginViewModel.login(email, password)
+ → AuthRepository.login(request)
+ → AuthApi.login(request)
+ → OkHttpClient.newCall(request).enqueue(callback)
 
 === Security Notes ===
 

@@ -77,7 +77,7 @@ cargo --version
 
 ```bash
 ln -s $(pwd)/rust/target/debug/claw /usr/local/bin/claw
-claw --help   # 全局可用
+claw --help # 全局可用
 ```
 
 ### 方式二：`cargo install --path`
@@ -85,7 +85,7 @@ claw --help   # 全局可用
 ```bash
 # 从 rust/ 目录执行
 cargo install --path . --force
-claw --help   # 安装到 ~/.cargo/bin/
+claw --help # 安装到 ~/.cargo/bin/
 ```
 
 ---
@@ -96,15 +96,15 @@ Claw Code 的代码组织如下：
 
 ```
 claw-code/
-├── rust/                    # canonical Rust workspace + claw CLI 二进制
-│   ├── src/
-│   └── Cargo.toml
-├── src/ + tests/            # 配套 Python 参考工作区（非主运行时）
-├── USAGE.md                 # 任务导向的使用指南（推荐优先阅读）
-├── PARITY.md                # Rust 移植进度与迁移说明
-├── ROADMAP.md               # 路线图与待办事项
-├── PHILOSOPHY.md            # 项目定位与设计哲学
-└── docs/container.md        # 容器优先工作流文档
+├── rust/ # canonical Rust workspace + claw CLI 二进制
+│ ├── src/
+│ └── Cargo.toml
+├── src/ + tests/ # 配套 Python 参考工作区（非主运行时）
+├── USAGE.md # 任务导向的使用指南（推荐优先阅读）
+├── PARITY.md # Rust 移植进度与迁移说明
+├── ROADMAP.md # 路线图与待办事项
+├── PHILOSOPHY.md # 项目定位与设计哲学
+└── docs/container.md # 容器优先工作流文档
 ```
 
 ### 文档地图

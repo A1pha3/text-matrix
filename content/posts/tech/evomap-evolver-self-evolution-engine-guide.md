@@ -2,7 +2,7 @@
 title: "Evolver：基于GEP协议的自进化AI Agent引擎，完全指南"
 date: "2026-04-17T11:36:00+08:00"
 slug: "evomap-evolver-self-evolution-engine-guide"
-description: "Evolver是一款基于Genome Evolution Protocol（GEP）的自进化引擎，专为AI Agent设计，将临时性的Prompt调整转化为可审计、可复用的进化资产。本文全面介绍Evolver的安装、核心概念、架构设计、使用方法和开发扩展。"
+description: "Evolver是一款基于Genome Evolution Protocol（GEP）的自进化引擎，专为AI Agent设计，将临时性的Prompt调整转化为可审计、可复用的进化资产。本文全面介绍Evolver的安装、基本概念、架构设计、使用方法和开发扩展。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "自进化", "GEP协议", "Prompt工程", "Node.js", "Evolver"]
@@ -22,17 +22,15 @@ extraMetadata:
 
 ---
 
-## §1 学习目标
+## §1 这篇文章讲什么
 
-通过本文，你将掌握：
-
-1. **理解 GEP（Genome Evolution Protocol）协议**的核心概念和设计哲学
-2. **掌握 Evolver 的安装和配置**，包括独立运行和连接 EvoMap 网络
-3. **深入分析 Evolver 的架构设计**，理解其自进化机制的工作原理
-4. **熟练使用 Evolver 的四种运行模式**：单次运行、审核模式、循环模式、OpenClaw 集成
-5. **掌握 Operations 模块**，实现生命周期管理、健康检查和自动重启
-6. **了解 Evolver 的安全模型**，明白其设计边界和不适合场景
-7. **实践基因（Gene）和胶囊（Capsule）的创建与使用**
+1. GEP（Genome Evolution Protocol）协议的概念和设计思路
+2. Evolver 的安装和配置，包括独立运行和连接 EvoMap 网络
+3. Evolver 的架构设计，以及自进化机制的工作原理
+4. 四种运行模式：单次运行、审核模式、循环模式、OpenClaw 集成
+5. Operations 模块：生命周期管理、健康检查和自动重启
+6. Evolver 的安全模型和适用边界
+7. 基因（Gene）和胶囊（Capsule）的创建与使用
 
 ---
 
@@ -51,7 +49,7 @@ Evolver 正是为了解决这些问题而诞生的。它将**临时性的 Prompt
 
 ### 2.2 Genome Evolution Protocol（GEP）
 
-GEP 是 Evolver 的核心协议，定义了 AI Agent 进化的标准流程：
+GEP 是 Evolver 的基础协议，定义了 AI Agent 进化的标准流程：
 
 **核心原则：Evolution is not optional. Adapt or die.**
 
@@ -267,14 +265,14 @@ node index.js fetch --skill <skill_id> --out=./my-skills/
 
 需要配置`A2A_HUB_URL`环境变量。
 
-### 4.5 根本特性
+### 4.5 主要特性
 
 - **Auto-Log Analysis**：扫描 memory 目录，识别错误模式和信号
 - **Self-Repair Guidance**：从信号中发出修复指令
 - **GEP Protocol**：标准化进化流程，支持资产复用
 - **Mutation + Personality Evolution**：每次进化都有明确的 Mutation 对象和可演化的 PersonalityState
 - **Signal De-duplication**：防止修复循环，检测停滞模式
-- **Protected Source Files**：保护本质代码，防止被 Agent 覆盖
+- **Protected Source Files**：保护关键代码，防止被 Agent 覆盖
 
 ---
 

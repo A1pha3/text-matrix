@@ -1,5 +1,5 @@
 ---
-title: "MarkItDown 完全指南：微软开源的文档转 Markdown 工具"
+title: "MarkItDown 指南：微软开源的文档转 Markdown 工具"
 slug: "markitdown-microsoft-document-to-markdown-guide"
 description: "深入解析Microsoft MarkItDown——98.7k Stars的文档转换工具，将PDF/Word/Excel/PowerPoint等格式统一转换为Markdown，专为LLM和RAG场景优化。"
 date: "2026-04-10T23:50:00+08:00"
@@ -7,7 +7,7 @@ categories: ["技术笔记"]
 tags: ["Python", "Markdown", "文档转换", "RAG", "LLM", "PDF", "Microsoft", "AutoGen"]
 ---
 
-# MarkItDown 完全指南：微软开源的文档转 Markdown 工具
+# MarkItDown 指南：微软开源的文档转 Markdown 工具
 
 ## §2 项目概述
 
@@ -25,11 +25,9 @@ tags: ["Python", "Markdown", "文档转换", "RAG", "LLM", "PDF", "Microsoft", "
 | **贡献者** | 74 人 |
 | **许可证** | MIT |
 
-### 2.2 为什么选择 Markdown？
+### 2.2 为什么转成 Markdown？
 
-**核心洞察**：主流 LLM（如 GPT-4o）原生"说"Markdown。
-
-：
+主流 LLM（如 GPT-4o）原生"说"Markdown。
 
 - **Token 效率高**：Markdown 约定极其精简
 - **结构保留**：标题、列表、表格、链接等格式都能保留

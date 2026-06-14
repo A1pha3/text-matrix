@@ -13,7 +13,7 @@ tags:
 categories:
   - 技术
 slug: ghostcms-open-source-publishing-platform-guide
-description: "深入解析 Ghost CMS 的架构设计、核心功能、安装配置、自定义开发、API 使用和部署方案，与主流替代方案全面对比。"
+description: "深入解析 Ghost CMS 的架构设计、主要功能、安装配置、自定义开发、API 使用和部署方案，与主流替代方案全面对比。"
 keywords:
   - Ghost CMS
   - Ghost 开源
@@ -27,7 +27,7 @@ cover: ""
 
 Ghost 是一个专为专业内容创作者设计的开源 publishing 平台，由 Hugo 框架的作者 John O'Nolan 于 2013 年发起。与 WordPress 的全能型定位不同，Ghost 从一开始就走"小而美"路线——只做好一件事：让高质量内容的创作和发布体验做到极致。
 
-下面全面解析 Ghost 的架构设计、核心功能、安装配置、自定义开发、API 使用和部署方案。
+下面全面解析 Ghost 的架构设计、主要功能、安装配置、自定义开发、API 使用和部署方案。
 
 ## 什么是 Ghost？
 

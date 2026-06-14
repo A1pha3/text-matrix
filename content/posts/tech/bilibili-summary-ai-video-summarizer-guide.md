@@ -69,26 +69,26 @@ BiliSummary 是一个桌面优先的 B 站视频摘要工具：
 
 ```
 ┌─────────────────────────────────────┐
-│           桌面应用层 (pywebview)           │
-│  用户界面 ←→ 窗口管理 ←→ 系统集成          │
+│ 桌面应用层 (pywebview) │
+│ 用户界面 ←→ 窗口管理 ←→ 系统集成 │
 └─────────────────────────────────────┘
-                    │
-                    ▼
+ │
+ ▼
 ┌─────────────────────────────────────┐
-│           前端层 (Vanilla JS/CSS)          │
-│  卡片系统 ←→ 阅读界面 ←→ 收藏夹管理        │
+│ 前端层 (Vanilla JS/CSS) │
+│ 卡片系统 ←→ 阅读界面 ←→ 收藏夹管理 │
 └─────────────────────────────────────┘
-                    │
-                    ▼
+ │
+ ▼
 ┌─────────────────────────────────────┐
-│           后端层 (FastAPI)                 │
-│  /routes/ ←→ /summarize.py ←→ AI API    │
+│ 后端层 (FastAPI) │
+│ /routes/ ←→ /summarize.py ←→ AI API │
 └─────────────────────────────────────┘
-                    │
-                    ▼
+ │
+ ▼
 ┌─────────────────────────────────────┐
-│           服务集成层                      │
-│  bilibili-api-python ←→ GLM ASR        │
+│ 服务集成层 │
+│ bilibili-api-python ←→ GLM ASR │
 └─────────────────────────────────────┘
 ```
 
@@ -98,21 +98,21 @@ BiliSummary 是一个桌面优先的 B 站视频摘要工具：
 
 ```
 bilibili-summary/
-├── app.py              # 桌面应用入口 (pywebview)
-├── server.py           # FastAPI 应用
-├── summarize.py        # 摘要生成管道
-├── routes/             # API 路由模块
-│   ├── __init__.py
-│   ├── favorites.py    # 收藏夹相关
-│   ├── video.py        # 视频相关
-│   └── asr.py          # ASR 相关
-├── static/             # 前端资源
-│   ├── index.html
-│   ├── app.js
-│   └── style.css
-├── docs/                # 设计文档
-├── config.toml         # 配置文件
-└── requirements.txt    # 依赖
+├── app.py # 桌面应用入口 (pywebview)
+├── server.py # FastAPI 应用
+├── summarize.py # 摘要生成管道
+├── routes/ # API 路由模块
+│ ├── __init__.py
+│ ├── favorites.py # 收藏夹相关
+│ ├── video.py # 视频相关
+│ └── asr.py # ASR 相关
+├── static/ # 前端资源
+│ ├── index.html
+│ ├── app.js
+│ └── style.css
+├── docs/ # 设计文档
+├── config.toml # 配置文件
+└── requirements.txt # 依赖
 ```
 
 . 工作流程
@@ -121,17 +121,17 @@ bilibili-summary/
 
 ```
 1. 用户粘贴 B 站视频 URL
-   ↓
+ ↓
 2. 后端解析 URL，提取视频 ID
-   ↓
+ ↓
 3. 调用 bilibili-api-python 获取视频信息
-   ↓
+ ↓
 4. 检查字幕：
-   - 有字幕 → 直接提取字幕文本
-   - 无字幕 → 触发 ASR 降级流程
-   ↓
+ - 有字幕 → 直接提取字幕文本
+ - 无字幕 → 触发 ASR 降级流程
+ ↓
 5. 将字幕发送给 AI API 生成摘要
-   ↓
+ ↓
 6. 输出 Markdown 文件
 ```
 
@@ -139,15 +139,15 @@ bilibili-summary/
 
 ```
 1. 检测视频无字幕
-   ↓
+ ↓
 2. 下载视频音频流（DASH/FLV/MP4）
-   ↓
+ ↓
 3. 提取音频片段
-   ↓
+ ↓
 4. 调用 GLM ASR 进行语音识别
-   ↓
+ ↓
 5. 将识别结果发送 AI API 生成摘要
-   ↓
+ ↓
 6. 输出 Markdown 文件
 ```
 
@@ -172,9 +172,9 @@ cd bilibili-summary
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # Linux/macOS
+source venv/bin/activate # Linux/macOS
 或
-.\venv\Scripts\activate   # Windows
+.\venv\Scripts\activate # Windows
 ```
 
 **安装依赖**：
@@ -205,21 +205,21 @@ python app.py
 
 ```toml
 [app]
-mode = "desktop"           # desktop / server
-port = 8000               # 服务端口
+mode = "desktop" # desktop / server
+port = 8000 # 服务端口
 
 [bilibili]
-cookie = ""               # 可选，登录态 Cookie
-quality = "follow_page"    # 视频画质
+cookie = "" # 可选，登录态 Cookie
+quality = "follow_page" # 视频画质
 
 [ai]
-model = "glm-4"           # AI 模型
-temperature = 0.7           # 创造性
-max_tokens = 2000           # 最大输出
+model = "glm-4" # AI 模型
+temperature = 0.7 # 创造性
+max_tokens = 2000 # 最大输出
 
 [asr]
-enabled = true             # 启用 ASR 降级
-model = "glm-asr"          # ASR 模型
+enabled = true # 启用 ASR 降级
+model = "glm-asr" # ASR 模型
 ```
 
 . 使用指南
@@ -292,12 +292,12 @@ python -m summarize --mode favorites --uid 12345678
 
 ```
 ┌─────────────────────────────────────┐
-│ [缩略图]                        │
-│ 视频标题                        │
-│ UP 主 · 播放量 · 时长            │
-│ [摘要预览...]                   │
-│                                │
-│ [查看摘要] [原始视频]           │
+│ [缩略图] │
+│ 视频标题 │
+│ UP 主 · 播放量 · 时长 │
+│ [摘要预览...] │
+│ │
+│ [查看摘要] [原始视频] │
 └─────────────────────────────────────┘
 ```
 
@@ -317,7 +317,7 @@ python -m summarize --mode favorites --uid 12345678
 ```python
 summarize.py
 async def generate_summary(text: str, model: str = "glm-4") -> str:
-    prompt = f"""请为以下内容生成简洁的摘要：
+ prompt = f"""请为以下内容生成简洁的摘要：
 
 {text}
 
@@ -327,9 +327,9 @@ async def generate_summary(text: str, model: str = "glm-4") -> str:
 3. 保留关键细节
 4. 输出 Markdown 格式
 """
-    
-    response = await ai_client.chat(prompt, model=model)
-    return response
+ 
+ response = await ai_client.chat(prompt, model=model)
+ return response
 ```
 
 . 字幕处理
@@ -340,10 +340,10 @@ async def generate_summary(text: str, model: str = "glm-4") -> str:
 检查字幕可用性
 subtitle = video.get_subtitle()
 if subtitle:
-    text = subtitle.extract_text()
+ text = subtitle.extract_text()
 else:
-    # 触发 ASR 降级
-    text = await asr_process(video)
+ # 触发 ASR 降级
+ text = await asr_process(video)
 ```
 
 . ASR 降级
@@ -360,19 +360,19 @@ else:
 
 ```python
 async def asr_process(video):
-    # 1. 获取音频流
-    audio_url = video.get_audio_url(format="mp4")
-    
-    # 2. 下载音频
-    audio_data = await download_audio(audio_url)
-    
-    # 3. ASR 识别
-    text = await gl_asr.recognize(audio_data)
-    
-    # 4. 生成摘要
-    summary = await generate_summary(text)
-    
-    return summary
+ # 1. 获取音频流
+ audio_url = video.get_audio_url(format="mp4")
+ 
+ # 2. 下载音频
+ audio_data = await download_audio(audio_url)
+ 
+ # 3. ASR 识别
+ text = await gl_asr.recognize(audio_data)
+ 
+ # 4. 生成摘要
+ summary = await generate_summary(text)
+ 
+ return summary
 ```
 
 . 开发指南
@@ -382,18 +382,18 @@ async def asr_process(video):
 ```python
 routes/ai.py
 class AIProvider:
-    async def chat(self, prompt: str, model: str) -> str:
-        raise NotImplementedError
+ async def chat(self, prompt: str, model: str) -> str:
+ raise NotImplementedError
 
 class AnthropicProvider(AIProvider):
-    async def chat(self, prompt: str, model: str) -> str:
-        # 调用 Anthropic API
-        ...
+ async def chat(self, prompt: str, model: str) -> str:
+ # 调用 Anthropic API
+ ...
 
 class OpenA IProvider(AIProvider):
-    async def chat(self, prompt: str, model: str) -> str:
-        # 调用 OpenAI API
-        ...
+ async def chat(self, prompt: str, model: str) -> str:
+ # 调用 OpenAI API
+ ...
 
 注册提供商
 ai_registry.register("anthropic", AnthropicProvider())
@@ -405,13 +405,13 @@ ai_registry.register("openai", OpenAIProvider())
 ```python
 routes/asr.py
 class ASRProvider:
-    async def recognize(self, audio_data: bytes) -> str:
-        raise NotImplementedError
+ async def recognize(self, audio_data: bytes) -> str:
+ raise NotImplementedError
 
 class GLMProvider(ASRProvider):
-    async def recognize(self, audio_data: bytes) -> str:
-        # 调用 GLM ASR
-        ...
+ async def recognize(self, audio_data: bytes) -> str:
+ # 调用 GLM ASR
+ ...
 
 注册提供商
 asr_registry.register("glm", GLMProvider())
@@ -427,17 +427,17 @@ router = APIRouter()
 
 @router.get("/favorites/{uid}")
 async def get_favorites(uid: str):
-    favorites = await bilibili.get_favorites(uid)
-    return favorites
+ favorites = await bilibili.get_favorites(uid)
+ return favorites
 
 @router.post("/favorites/{fid}/summarize")
 async def summarize_favorite(fid: str):
-    videos = await bilibili.get_favorite_videos(fid)
-    results = []
-    for video in videos:
-        summary = await summarize.generate_summary(video)
-        results.append(summary)
-    return results
+ videos = await bilibili.get_favorite_videos(fid)
+ results = []
+ for video in videos:
+ summary = await summarize.generate_summary(video)
+ results.append(summary)
+ return results
 ```
 
 . 前端开发
@@ -446,10 +446,10 @@ async def summarize_favorite(fid: str):
 
 ```
 static/
-├── index.html    # 主页面
-├── app.js       # 应用逻辑
-├── style.css    # 样式
-└── components/  # 组件
+├── index.html # 主页面
+├── app.js # 应用逻辑
+├── style.css # 样式
+└── components/ # 组件
 ```
 
 **本地开发服务器**：
@@ -477,7 +477,7 @@ const API_BASE = "http://localhost:8000"
 ```bash
 批量摘要收藏夹（限速 并发）
 python -m summarize --mode favorites --uid 12345678 \
-    --concurrency 12 --favorite
+ --concurrency 12 --favorite
 ```
 
 . 性能优化
@@ -493,15 +493,15 @@ python -m summarize --mode favorites --uid 12345678 \
 
 ```python
 try:
-    summary = await summarize(video)
+ summary = await summarize(video)
 except VideoNotFoundError:
-    return {"error": "视频不存在或已被删除"}
+ return {"error": "视频不存在或已被删除"}
 except SubtitleUnavailableError:
-    # 触发 ASR 降级
-    summary = await asr_summarize(video)
+ # 触发 ASR 降级
+ summary = await asr_summarize(video)
 except AIAPIError as e:
-    # 重试或降级到备用 API
-    summary = await summarize_with_backup(video)
+ # 重试或降级到备用 API
+ summary = await summarize_with_backup(video)
 ```
 
 . 登录状态
@@ -512,7 +512,7 @@ bilibili = BilibiliAPI(cookie=os.getenv("BILIBILI_COOKIE"))
 
 刷新登录态
 if not bilibili.is_logged_in():
-    bilibili.refresh_login()
+ bilibili.refresh_login()
 ```
 
 . 常见问题
@@ -552,8 +552,8 @@ bilibili.upload_subtitle(video_id, "subtitle.srt")
 
 ```bash
 调整参数
-summarize.set_temperature(0.5)   # 降低创造性
-summarize.set_max_tokens(3000)     # 增加输出
+summarize.set_temperature(0.5) # 降低创造性
+summarize.set_max_tokens(3000) # 增加输出
 ```
 
 **Q: 批量处理被限流？**

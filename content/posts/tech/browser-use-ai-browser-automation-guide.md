@@ -104,13 +104,13 @@ browser = Browser()
 
 配置选项
 browser = Browser(
-    # headless=False,  # 显示浏览器窗口
-    # timeout=30,       # 超时时间（秒）
+ # headless=False, # 显示浏览器窗口
+ # timeout=30, # 超时时间（秒）
 )
 
 云浏览器（推荐生产环境）
 browser = Browser(
-    use_cloud=True,  # 使用 Browser Use Cloud 托管浏览器
+ use_cloud=True, # 使用 Browser Use Cloud 托管浏览器
 )
 ```
 
@@ -172,21 +172,21 @@ from browser_use import Agent, Browser, ChatBrowserUse
 import asyncio
 
 async def main():
-    # 创建浏览器实例
-    browser = Browser()
+ # 创建浏览器实例
+ browser = Browser()
 
-    # 创建 Agent
-    agent = Agent(
-        task="Find the number of stars of the browser-use repo",
-        llm=ChatBrowserUse(),
-        browser=browser,
-    )
+ # 创建 Agent
+ agent = Agent(
+ task="Find the number of stars of the browser-use repo",
+ llm=ChatBrowserUse(),
+ browser=browser,
+ )
 
-    # 运行任务
-    await agent.run()
+ # 运行任务
+ await agent.run()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+ asyncio.run(main())
 ```
 
 ---
@@ -202,17 +202,17 @@ from browser_use import Agent, Browser, ChatBrowserUse
 import asyncio
 
 async def main():
-    browser = Browser()
-    agent = Agent(
-        task="""Fill in this job application:
-        - Name: John Doe
-        - Email: john@example.com
-        - Position: Software Engineer
-        - Resume: upload resume.pdf""",
-        llm=ChatBrowserUse(),
-        browser=browser,
-    )
-    await agent.run()
+ browser = Browser()
+ agent = Agent(
+ task="""Fill in this job application:
+ - Name: John Doe
+ - Email: john@example.com
+ - Position: Software Engineer
+ - Resume: upload resume.pdf""",
+ llm=ChatBrowserUse(),
+ browser=browser,
+ )
+ await agent.run()
 
 asyncio.run(main())
 ```
@@ -223,18 +223,18 @@ asyncio.run(main())
 
 ```python
 async def main():
-    browser = Browser()
-    agent = Agent(
-        task="""Shop for these groceries:
-        - Milk
-        - Bread
-        - Eggs
-        - Butter
-        Add to my cart on instacart.com""",
-        llm=ChatBrowserUse(),
-        browser=browser,
-    )
-    await agent.run()
+ browser = Browser()
+ agent = Agent(
+ task="""Shop for these groceries:
+ - Milk
+ - Bread
+ - Eggs
+ - Butter
+ Add to my cart on instacart.com""",
+ llm=ChatBrowserUse(),
+ browser=browser,
+ )
+ await agent.run()
 ```
 
 . 个人助手
@@ -243,17 +243,17 @@ async def main():
 
 ```python
 async def main():
-    browser = Browser()
-    agent = Agent(
-        task="""Find these PC parts on pcpartpicker.com:
-        - NVIDIA RTX 4090
-        - AMD Ryzen 9 7950X
-        - 64GB DDR5 RAM
-        Compare prices and show me the best deals""",
-        llm=ChatBrowserUse(),
-        browser=browser,
-    )
-    await agent.run()
+ browser = Browser()
+ agent = Agent(
+ task="""Find these PC parts on pcpartpicker.com:
+ - NVIDIA RTX 4090
+ - AMD Ryzen 9 7950X
+ - 64GB DDR5 RAM
+ Compare prices and show me the best deals""",
+ llm=ChatBrowserUse(),
+ browser=browser,
+ )
+ await agent.run()
 ```
 
 ---
@@ -328,7 +328,7 @@ mkdir -p ~/.claude/skills/browser-use
 
 . 下载 SKILL.md
 curl -o ~/.claude/skills/browser-use/SKILL.md \
-  https://raw.githubusercontent.com/browser-use/browser-use/main/skills/browser-use/SKILL.md
+ https://raw.githubusercontent.com/browser-use/browser-use/main/skills/browser-use/SKILL.md
 ```
 
 . 使用方式
@@ -355,17 +355,17 @@ tools = Tools()
 定义自定义工具
 @tools.action(description='Get the current weather for a city')
 def get_weather(city: str) -> str:
-    """获取城市天气"""
-    import requests
-    response = requests.get(f"https://api.weather.com/v3/wx/conditions", params={"city": city})
-    return response.json()
+ """获取城市天气"""
+ import requests
+ response = requests.get(f"https://api.weather.com/v3/wx/conditions", params={"city": city})
+ return response.json()
 
 使用自定义工具
 agent = Agent(
-    task="Find the weather in Tokyo and then book a flight there",
-    llm=llm,
-    browser=browser,
-    tools=tools,
+ task="Find the weather in Tokyo and then book a flight there",
+ llm=llm,
+ browser=browser,
+ tools=tools,
 )
 ```
 
@@ -391,7 +391,7 @@ from browser_use import Browser
 
 使用已登录的 Chrome 配置文件
 browser = Browser(
-    profile_dir="~/.config/google-chrome/Default"
+ profile_dir="~/.config/google-chrome/Default"
 )
 ```
 
@@ -399,7 +399,7 @@ browser = Browser(
 
 ```bash
 curl -fsSL https://browser-use.com/profile.sh | \
-  BROWSER_USE_API_KEY=XXXX sh
+ BROWSER_USE_API_KEY=XXXX sh
 ```
 
 . 代理配置
@@ -408,8 +408,8 @@ curl -fsSL https://browser-use.com/profile.sh | \
 from browser_use import Browser
 
 browser = Browser(
-    use_cloud=True,
-    proxy="http://my-proxy:8080"  # 代理地址
+ use_cloud=True,
+ proxy="http://my-proxy:8080" # 代理地址
 )
 ```
 
@@ -417,13 +417,13 @@ browser = Browser(
 
 ```python
 browser = Browser(
-    timeout=60,  # 单个操作超时（秒）
+ timeout=60, # 单个操作超时（秒）
 )
 
 agent = Agent(
-    task="...",
-    browser=browser,
-    max_steps=50,  # 最大步数限制
+ task="...",
+ browser=browser,
+ max_steps=50, # 最大步数限制
 )
 ```
 
@@ -454,10 +454,10 @@ agent = Agent(
 ```python
 使用开源库 + 云浏览器
 agent = Agent(
-    task="...",
-    llm=ChatOpenAI(model='gpt-4o'),
-    browser=Browser(use_cloud=True),  # 云浏览器
-    tools=custom_tools,  # 自定义工具
+ task="...",
+ llm=ChatOpenAI(model='gpt-4o'),
+ browser=Browser(use_cloud=True), # 云浏览器
+ tools=custom_tools, # 自定义工具
 )
 ```
 

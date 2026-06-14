@@ -31,7 +31,7 @@ Invidious 不仅仅是一个"去掉广告的 YouTube"，它还是一个完整的
 
 ---
 
-## 核心特点
+## 主要特点
 
 ### 无追踪、无广告、无 JavaScript
 
@@ -160,7 +160,7 @@ crystal build --release src/invidious.cr -o invidious
 
 ---
 
-## 适用场景与优势
+## 适用场景
 
 ### 适合使用 Invidious 的场景
 
@@ -179,7 +179,7 @@ crystal build --release src/invidious.cr -o invidious
 
 ## 总结
 
-Invidious 是开源社区在"去大公司化"方向上一个有代表性的实践。它用 Crystal 语言实现了一个功能完整的 YouTube 替代前端，在不依赖 Google 服务的情况下提供了还算完整的观看体验。
+Invidious 是开源社区在"去大公司化"方向上的一个有代表性的实践。它用 Crystal 语言实现了一个功能完整的 YouTube 替代前端，在不依赖 Google 服务的情况下提供了还算完整的观看体验。
 
 如果你对隐私有要求，或者只是想找一个更轻量的方式看 YouTube 视频，公共 Invidious 实例已经足够好用。如果你是开发者，想研究如何解析 YouTube 数据，或者想自建私有实例，那么这个仓库的源码值得一看。
 

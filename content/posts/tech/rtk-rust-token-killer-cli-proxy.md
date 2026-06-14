@@ -172,7 +172,7 @@ command | rtk process | llm
 
 ## 结论
 
-RTK 是一个针对 AI coding 场景的精准工具。它的价值主张很清晰：帮你省钱——不是省开发时间，而是省 Token 费用。
+RTK 是一个针对 AI coding 场景的精准工具。它的定位很清晰：帮你省钱——省的是 Token 费用，不是开发时间。
 
 80%的 Token 节省意味着 30 分钟的 Claude Code 会话从~118K Token 降到~24K，按 GPT-4o 的定价约节省$1.5-2。对于重度用户，这是一个可观的数字。
 

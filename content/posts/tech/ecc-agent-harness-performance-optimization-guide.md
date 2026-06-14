@@ -87,7 +87,7 @@ graph TD
 | Harness 支持 | 12+ 个 |
 | 贡献者 | 170+ |
 
-### 核心工作流五条线
+### 工作流五条线
 
 这五条线是 ECC 区别于普通配置合集的关键：
 
@@ -115,7 +115,7 @@ Commands 是给 skills 提供的快捷入口。`/refactor-clean` 背后是一个
 # Skill 的标准结构
 ~/.claude/skills/
   pmx-guidelines.md      # 项目级模式约定
-  coding-standards.md    # 语言最佳实践
+  coding-standards.md    # 语言实践建议
   tdd-workflow/          # 多文件 skill（含 SKILL.md）
   security-review/       # checklist 式 skill
 ```

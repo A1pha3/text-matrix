@@ -18,9 +18,9 @@ tags: ["Flash Attention", "Transformer", "注意力机制", "深度学习", "GPU
 
 > "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"
 
-**核心创新**：通过**IO 感知**的 tiling 技术，将注意力计算的内存复杂度从 **O(N²)** 降低到 **O(N)**，同时实现 **2-4 倍加速**，且结果**数学上完全等价**于标准注意力（不是近似！）。
+**核心创新**：通过 IO 感知的 tiling 技术，将注意力计算的内存复杂度从 **O(N²)** 降低到 **O(N)**，同时实现 **2-4 倍加速**，且结果数学上完全等价于标准注意力（不是近似！）。
 
-### 1.2 核心数据
+### 1.2 项目数据
 
 | 指标 | 数值 |
 |------|------|
@@ -66,7 +66,7 @@ tags: ["Flash Attention", "Transformer", "注意力机制", "深度学习", "GPU
 | **Flash Attention-2** | 1.5-2x vs FA1 | 进一步优化 |
 | **Flash Attention-3** | 6x vs FA2 | 近似算法 |
 
-## 二，核心原理
+## 二，基本原理
 
 ### 2.1 标准 Attention 计算
 
@@ -100,7 +100,7 @@ def standard_attention(Q, K, V, scale=None):
 ### 2.2 Flash Attention 的 IO 优化
 
 ```python
-# Flash Attention 的核心思想
+# Flash Attention 的设计思路
 def flash_attention_tiled(Q, K, V, block_size=64):
     """
     Flash Attention 使用 Tiling 技术:
@@ -572,15 +572,15 @@ A: 可以，但通常不需要，因为核函数已经高度优化。
 
 ## 十二，总结
 
-Flash Attention 是**现代 Transformer 的标配优化**：
+Flash Attention 已经是现代 Transformer 的标配优化：
 
 | 维度 | 说明 |
 |------|------|
-| ⚡ **速度** | 2-4x 加速 (FA1), 6x+ 加速 (FA2/FA3) |
-| 💾 **内存** | O(N²) → O(N)，支持更长序列 |
-| ✅ **精确** | 数学上与标准 Attention 完全等价 |
-| 🌍 **广泛使用** | LLaMA, Mistral, CodeLlama, Falcon 等 |
-| 🔧 **易集成** | Hugging Face, xFormers, Megatron-LM |
+| ⚡ 速度 | 2-4x 加速 (FA1), 6x+ 加速 (FA2/FA3) |
+| 💾 内存 | O(N²) → O(N)，支持更长序列 |
+| ✅ 精确 | 数学上与标准 Attention 完全等价 |
+| 🌍 广泛使用 | LLaMA, Mistral, CodeLlama, Falcon 等 |
+| 🔧 易集成 | Hugging Face, xFormers, Megatron-LM |
 
 ---
 

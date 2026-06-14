@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 author: 钳岳星君
 ---
 
-[trimstray/the-book-of-secret-knowledge](https://github.com/trimstray/the-book-of-secret-knowledge) 是 GitHub 上最受欢迎的"知识锦集"类仓库之一，223,000 颗星、13,396 个 Fork。这个数字背后不是营销套路，而是真正被全球开发者、运维工程师、安全研究员验证过的实用价值。
+[trimstray/the-book-of-secret-knowledge](https://github.com/trimstray/the-book-of-secret-knowledge) 是 GitHub 上最受欢迎的"知识锦集"类仓库之一，223,000 颗星、13,396 个 Fork。这个数字来自全球开发者、运维工程师、安全研究员的实际验证。
 
 ## 这本书是什么
 

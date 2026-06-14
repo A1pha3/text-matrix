@@ -20,7 +20,7 @@ Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的
 
 | 价值点 | 说明 |
 |--------|------|
-| **系统性强** | 不是零散知识点，而是完整技术体系 |
+| **系统性强** | 完整技术体系，不是零散知识点 |
 | **深度适中** | 既有概念讲解，也有代码实战 |
 | **时效性新** | 2026 年更新，包含最新工具和框架 |
 | **实操性强** | 每个概念都配有可运行的代码示例 |
@@ -65,7 +65,7 @@ Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的
 
 ### 什么是 Agentic AI？
 
-**Agentic AI（自主智能体）** 是指能够自主规划、执行和迭代的 AI 系统。与传统 AI 不同，Agentic AI 不只是「回答问题」，而是能够「完成任务」。
+**Agentic AI（自主智能体）** 是指能够自主规划、执行和迭代的 AI 系统。传统 AI 回答问题，Agentic AI 完成任务。
 
 **关键特征：**
 
@@ -555,29 +555,17 @@ class MonitoredAgent:
 
 ## 学习路径总结
 
-### 入门（第一周）
+入门阶段（第一周）：理解 Agent 基本概念，掌握 ReAct 框架，能运行简单 Agent。
 
-- ✅ 理解 Agent 基本概念
-- ✅ 掌握 ReAct 框架
-- ✅ 能运行简单 Agent
+进阶阶段（第二周）：实现 Tool Use，添加 Memory，用 LangChain 开发。
 
-### 进阶（第二周）
-
-- ✅ 实现 Tool Use
-- ✅ 添加 Memory
-- ✅ 使用 LangChain 开发
-
-### 专家（第三周及以后）
-
-- ✅ Multi-Agent 架构
-- ✅ 生产级部署
-- ✅ 性能优化与监控
+专家阶段（第三周及以后）：Multi-Agent 架构，生产级部署，性能优化与监控。
 
 ---
 
 ## 知识关联
 
-- **前置**：[AI Agent 核心概念](ai-agents-clearly-explained-jeff-su-4m-views) ⭐⭐⭐⭐
+- **前置**：[AI Agent 基本概念](ai-agents-clearly-explained-jeff-su-4m-views) ⭐⭐⭐⭐
 - **相关**：[25 分钟实战教程](zero-to-ai-agent-25-minutes-futurepedia-3m-views) ⭐⭐⭐⭐
 - **进阶**：[Multi-Agent 系统设计]() ⭐⭐⭐⭐⭐ | [生产级 Agent 优化]() ⭐⭐⭐⭐
 

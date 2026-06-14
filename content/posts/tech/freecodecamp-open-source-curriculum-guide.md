@@ -16,17 +16,15 @@ tags: ["freeCodeCamp", "编程学习", "Web开发", "全栈", "开源"]
 
 ---
 
-## 🎯 学习目标
+## 🎯 这篇文章覆盖什么
 
-完成本文档后，你将掌握：
-
-- ✅ 理解 freeCodeCamp 的使命、教育理念与慈善性质
-- ✅ 掌握 freeCodeCamp 提供的完整学习路径（10+ 认证课程）
-- ✅ 从零开始完成全栈开发认证（Web Design → JavaScript → Back-End）
-- ✅ 配置本地开发环境并参与平台开发
-- ✅ 理解 freeCodeCamp 的技术架构（React/Node.js/MongoDB）
-- ✅ 为开源课程贡献内容（翻译、勘误、新挑战）
-- ✅ 利用平台资源准备技术面试
+- freeCodeCamp 的使命、教育理念与慈善性质
+- 完整学习路径（10+ 认证课程）
+- 从零开始完成全栈开发认证（Web Design → JavaScript → Back-End）
+- 配置本地开发环境并参与平台开发
+- 技术架构（React/Node.js/MongoDB）
+- 为开源课程贡献内容（翻译、勘误、新挑战）
+- 利用平台资源准备技术面试
 
 ---
 
@@ -36,7 +34,7 @@ tags: ["freeCodeCamp", "编程学习", "Web开发", "全栈", "开源"]
 
 freeCodeCamp（[freeCodeCamp/freeCodeCamp](https://github.com/freeCodeCamp/freeCodeCamp)）是全球最大的免费编程学习开源项目，由 **donor-supported 501(c)(3) charity**（捐赠者支持的美国 501(c)(3)慈善机构）运营。
 
-**核心使命**：帮助数百万忙碌的成年人转型进入科技行业。
+**使命**：帮助数百万忙碌的成年人转型进入科技行业。
 
 ```mermaid
 graph TB
@@ -77,7 +75,7 @@ graph TB
 
 > "Our community has already helped more than **100,000 people get their first developer job**."
 
-这是 freeCodeCamp 最核心的价值主张 —— 不是给你一堆教程，而是真正帮助你找到第一份开发工作。
+这是 freeCodeCamp 最根本的价值主张 —— 不是给你一堆教程，而是真正帮助你找到第一份开发工作。
 
 ### 1.4 免费资源矩阵
 
@@ -93,7 +91,7 @@ graph TB
 
 ## 二、认证课程体系
 
-### 2.1 全栈开发者认证（核心）
+### 2.1 全栈开发者认证（主路径）
 
 freeCodeCamp 提供完整的 **Full-Stack Developer Curriculum**，包含 6 大认证：
 

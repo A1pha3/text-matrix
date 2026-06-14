@@ -9,7 +9,7 @@ tags: ["PaddleOCR", "OCR", "文档识别", "文本识别", "PP-OCR", "PaddleOCR-
 description: "深度解析 PaddleOCR (74k Stars)：百度飞桨开源的全球领先OCR工具包和文档AI引擎，支持PDF/图像转JSON/Markdown、PaddleOCR-VL-1.5 (0.9B VLM, 94.5%准确率)、PP-StructureV3表格识别、PP-OCRv5（100+语言），深度集成Dify、RAGFlow、Cherry Studio等主流RAG和Agent平台，采用Python+C++技术栈，支持TensorRT/ONNX高性能推理。"
 ---
 
-# PaddleOCR：全球领先 OCR 工具包与文档 AI 引擎完全指南
+# PaddleOCR：全球领先 OCR 工具包与文档 AI 引擎使用指南
 
 ## §1 学习目标
 
@@ -642,7 +642,7 @@ python tools/add_lang.py \
 
 ---
 
-## §10 最佳实践
+## §10 推荐做法
 
 ### 10.1 性能优化
 
@@ -717,7 +717,7 @@ docs = splitter.split_documents(documents)
 
 ## §12 总结
 
-### 12.1 核心优势
+### 12.1 主要优势
 
 | 优势 | 说明 |
 |------|------|

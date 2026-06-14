@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
 ---
 
-Antigravity Tools ：专业级 AI 账号管理与协议代理系统
+Antigravity Tools：专业级 AI 账号管理与协议代理系统
 
 学习目标
 
@@ -44,21 +44,21 @@ Antigravity Tools ：专业级 AI 账号管理与协议代理系统
 
 ```
 外部应用: Claude Code / NextChat / Kilo Code
-        ↓
+ ↓
 Antigravity Axum Server (Rust 高性能网络层)
-        ↓
+ ↓
 中间件: 鉴权 / 限流 / 日志
-        ↓
+ ↓
 Model Router (模型路由: ID 映射 / 正则重定向 / 分级路由)
-        ↓
+ ↓
 账号分发器: 轮询 / 权重分配
-        ↓
+ ↓
 协议转换器: Request Mapper (请求转换)
-        ↓
+ ↓
 上游请求: Google Gemini API / Anthropic API
-        ↓
+ ↓
 响应转换器: Response Mapper (响应转换)
-        ↓
+ ↓
 返回给外部应用
 ```
 
@@ -105,12 +105,12 @@ brew install --cask --no-quarantine antigravity-tools
 ```bash
 方式: 直接运行 (推荐)
 docker run -d --name antigravity-manager \
-  -p 8045:8045 \
-  -e API_KEY=sk-your-api-key \
-  -e WEB_PASSWORD=your-login-password \
-  -e ABV_MAX_BODY_SIZE=104857600 \
-  -v ~/.antigravity_tools:/root/.antigravity_tools \
-  lbjlaq/antigravity-manager:latest
+ -p 8045:8045 \
+ -e API_KEY=sk-your-api-key \
+ -e WEB_PASSWORD=your-login-password \
+ -e ABV_MAX_BODY_SIZE=104857600 \
+ -v ~/.antigravity_tools:/root/.antigravity_tools \
+ lbjlaq/antigravity-manager:latest
 
 方式: Docker Compose
 cd docker

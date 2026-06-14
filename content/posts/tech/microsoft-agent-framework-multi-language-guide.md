@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Microsoft", "Agent", "Python", ".NET", "工作流"]
 ---
 
-# Microsoft Agent Framework：微软官方·双语言支持·图工作流·多 Provider 支持完全指南
+# Microsoft Agent Framework：微软官方·双语言支持·图工作流·多 Provider 支持指南
 
 ## 一、项目概述
 
@@ -30,7 +30,7 @@ tags: ["Microsoft", "Agent", "Python", ".NET", "工作流"]
 | 许可证 | MIT |
 | 语言 | Python 50.5%, C# 45.3%, TypeScript 3.7% |
 
-### 1.3 核心定位
+### 1.3 定位
 
 | 维度 | 说明 |
 |------|------|

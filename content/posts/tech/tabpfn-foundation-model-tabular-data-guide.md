@@ -10,13 +10,13 @@ tags: ["AutoML", "表格数据", "机器学习", "Transformer", "TabPFN"]
 
 ## 学习目标
 
-读完这篇文章后，你应该能够：
+读完这篇文章后，你将了解：
 
-1. 理解 TabPFN 作为"表格数据基础模型"的设计理念，以及它与传统 AutoML 管道的本质区别。
-2. 解释 TabPFN 如何通过 In-Context Learning 在不更新参数的情况下完成新任务。
-3. 掌握 TabPFN 的 Python API 使用方法，能够在真实数据集上快速完成分类/回归任务。
-4. 判断 TabPFN 与传统 AutoML（如 AutoGluon、FLAML）以及深度学习表格模型（如 FT-Transformer）的各自适用场景。
-5. 了解 TabPFN 的当前限制和团队的未来路线图。
+1. TabPFN 作为"表格数据基础模型"的设计理念，以及它与传统 AutoML 管道的区别。
+2. TabPFN 如何通过 In-Context Learning 在不更新参数的情况下完成新任务。
+3. TabPFN 的 Python API 使用方法，在真实数据集上完成分类/回归任务。
+4. TabPFN 与传统 AutoML（如 AutoGluon、FLAML）以及深度学习表格模型（如 FT-Transformer）的各自适用场景。
+5. TabPFN 的当前限制和团队的未来路线图。
 
 ---
 

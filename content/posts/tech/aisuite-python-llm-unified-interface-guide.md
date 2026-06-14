@@ -61,31 +61,31 @@ client = ai.Client()
 models = ["openai:gpt-4o", "anthropic:claude-3-5-sonnet-20240620"]
 
 messages = [
-    {"role": "system", "content": "Respond in Pirate English."},
-    {"role": "user", "content": "Tell me a joke."},
+ {"role": "system", "content": "Respond in Pirate English."},
+ {"role": "user", "content": "Tell me a joke."},
 ]
 
 for model in models:
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=0.75,
-    )
-    print(response.choices[0].message.content)
+ response = client.chat.completions.create(
+ model=model,
+ messages=messages,
+ temperature=0.75,
+ )
+ print(response.choices[0].message.content)
 ```textpython
 def will_it_rain(location: str, time_of_day: str):
-    """Check if it will rain in a location at a given time today."""
-    return "YES"
+ """Check if it will rain in a location at a given time today."""
+ return "YES"
 
 client = ai.Client()
 response = client.chat.completions.create(
-    model="openai:gpt-4o",
-    messages=[{
-        "role": "user",
-        "content": "Can you check the weather and plan an outdoor picnic for me at 2pm in SF?"
-    }],
-    tools=[will_it_rain],
-    max_turns=2,
+ model="openai:gpt-4o",
+ messages=[{
+ "role": "user",
+ "content": "Can you check the weather and plan an outdoor picnic for me at 2pm in SF?"
+ }],
+ tools=[will_it_rain],
+ max_turns=2,
 )
 print(response.choices[0].message.content)
 ```textpython
@@ -93,10 +93,10 @@ import aisuite as ai
 from aisuite import Agent, Runner
 
 agent = Agent(
-    name="repo-helper",
-    model="anthropic:claude-sonnet-4-6",
-    instructions="You are a careful repo assistant. Use your tools to answer from the code.",
-    tools=[*ai.toolkits.files(root="."), *ai.toolkits.git(root=".")],
+ name="repo-helper",
+ model="anthropic:claude-sonnet-4-6",
+ instructions="You are a careful repo assistant. Use your tools to answer from the code.",
+ tools=[*ai.toolkits.files(root="."), *ai.toolkits.git(root=".")],
 )
 
 result = Runner.run(agent, "What changed in the last commit? Summarize in 3 bullets.")
@@ -111,9 +111,9 @@ from aisuite import RequireApprovalPolicy
 policy = RequireApprovalPolicy(tools=["shell.run", "git.push"])
 ```textpython
 def my_policy(tool_name, args):
-    if tool_name == "shell.run" and "rm" in args.get("command", ""):
-        return False
-    return True
+ if tool_name == "shell.run" and "rm" in args.get("command", ""):
+ return False
+ return True
 
 agent = Agent(name="safe-bot", model="...", tools=[...], tool_policy=my_policy)
 ```textpython
@@ -123,24 +123,24 @@ result = Runner.resume("run-id-xxx", "continue with the second part")
 ```textpython
 client = ai.Client()
 response = client.chat.completions.create(
-    model="openai:gpt-4o",
-    messages=[{"role": "user", "content": "List the files in the current directory"}],
-    tools=[{
-        "type": "mcp",
-        "name": "filesystem",
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/directory"]
-    }],
-    max_turns=3
+ model="openai:gpt-4o",
+ messages=[{"role": "user", "content": "List the files in the current directory"}],
+ tools=[{
+ "type": "mcp",
+ "name": "filesystem",
+ "command": "npx",
+ "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/directory"]
+ }],
+ max_turns=3
 )
 ```textpython
 async with MCPClient(server_command) as client:
-    tools = client.get_tools()
-    # ... 把这些 tools 喂给 Agent
+ tools = client.get_tools()
+ # ... 把这些 tools 喂给 Agent
 ```textbash
-pip install aisuite               # 仅基础包（不含任何 provider SDK）
-pip install 'aisuite[anthropic]'  # 加单个 provider
-pip install 'aisuite[all]'        # 装齐全部 provider
+pip install aisuite # 仅基础包（不含任何 provider SDK）
+pip install 'aisuite[anthropic]' # 加单个 provider
+pip install 'aisuite[all]' # 装齐全部 provider
 ```textbash
 pip install 'aisuite[mcp]'
 ```

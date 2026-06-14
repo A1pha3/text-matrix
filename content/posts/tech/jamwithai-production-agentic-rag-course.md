@@ -10,16 +10,16 @@ tags: ["RAG", "LangGraph", "BM25", "教学项目", "FastAPI"]
 
 # Mother of AI Project：7 周渐进式 RAG 教学，反 AI-first 潮流的「先 BM25 后向量」路线
 
-## 核心判断
+## 这项目在回答什么
 
 `jamwithai/production-agentic-rag-course`（仓库 [jamwithai/production-agentic-rag-course](https://github.com/jamwithai/production-agentic-rag-course)）在 6.5K stars 的热度下，回答的不是"怎么搭 RAG"——它回答的是一个更根本的工程问题：**"RAG 应该从哪里开始？"**
 
-当前 AI-first 潮流的答案是"先向量数据库"——任何教程都从 Pinecone / Weaviate / Qdrant 开始。但这个项目的核心理念是反潮流的：
+当前 AI-first 潮流的答案是"先向量数据库"——任何教程都从 Pinecone / Weaviate / Qdrant 开始。但这个项目走了一条反潮流的路：
 
 > **"先 BM25 关键词搜索打牢基础，再用向量做混合检索"**
 > ——[The Professional Difference] 段落原话
 
-这个**反 AI-first 教学主张**才是项目的真正价值。在 7 周渐进式课程里，你会看到一条清晰的能力递进：
+这个反 AI-first 的教学主张，是项目区别于其他 RAG 教程的地方。在 7 周渐进式课程里，你会看到一条清晰的能力递进：
 
 1. Week 1：基础设施（Docker + FastAPI + OpenSearch + Airflow）
 2. Week 2：arXiv 论文自动抓取
@@ -73,7 +73,7 @@ Week 4：在 BM25 之上加向量做混合检索
   → 学员理解"什么时候该用哪种"
 ```
 
-**为什么反潮流更对？**
+**为什么先 BM25 更稳？**
 
 | 场景 | 纯 BM25 | 纯向量 | 混合 |
 |------|:-------:|:------:|:----:|
@@ -103,7 +103,7 @@ Week 4：在 BM25 之上加向量做混合检索
 - **不用云 LLM**（Week 5 强调 local LLM）—— 隐私 + 成本可控
 - **不用大模型评测框架**——用 Langfuse 做真实 trace
 
-这套栈是**严肃生产项目的栈**，不是 demo 项目的栈。学员学完具备直接迁移到生产的能力。
+这套栈是给严肃生产项目用的，不是 demo 项目。学员学完具备直接迁移到生产的能力。
 
 ## Week 7 的 Agentic RAG 创新
 
@@ -132,7 +132,7 @@ flowchart TD
 4. **Telegram Bot 接入**：把 RAG 能力带到移动端
 5. **Full Trace 透明**：每步决策可调试、可审计、可重放
 
-这套设计把"标准 RAG 链"升级成了"**带反思的 RAG Agent**"——能识别自己能力边界，能在能力不足时主动求助（重新检索），能在不能回答时坦诚说不。
+这套设计把"标准 RAG 链"升级成了带反思的 RAG Agent——能识别自己能力边界，在能力不足时重新检索，在不能回答时坦诚说不。
 
 ## 适合谁、不适合谁
 

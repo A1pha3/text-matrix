@@ -20,7 +20,7 @@ description: "Promptfoo 是开源 LLM 评测与 Red Teaming 工具，支持 60+ 
 
 Promptfoo（[promptfoo/promptfoo](https://github.com/promptfoo/promptfoo)）是一个开源的 LLM 评测和 Red Teaming 工具。它帮助开发者通过测试套件评估 Prompts、Models 和 RAG 系统，并扫描 LLM 应用的安全漏洞。
 
-**核心定位**：从"调 Prompt 靠猜"到"用测试驱动开发"。
+**定位**：从"调 Prompt 靠猜"到"用测试驱动开发"。
 
 2026 年 Promptfoo 已加入 OpenAI，但项目仍保持 MIT 开源协议。
 

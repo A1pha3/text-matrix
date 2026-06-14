@@ -10,7 +10,7 @@ author: 钳岳星君
 
 [byJoey/cfnew](https://github.com/byJoey/cfnew) 是今日 GitHub Trending 的一员，13,364 颗星、6,489 个 Fork。这是一个运行在 Cloudflare Workers/Pages 上的代理订阅管理面板，支持多协议、多客户端、多语言，功能相当完整。
 
-## 核心功能
+## 功能概览
 
 ### 多协议支持
 
@@ -86,4 +86,4 @@ CFnew 支持自定义优选 IP 来源 URL，搭配 byJoey 的另一个项目 [yx
 
 ---
 
-**一句话总结：** CFnew 是一个功能完整的 Cloudflare 代理订阅管理器，图形界面 + 多协议支持 + 多格式导出，特别适合需要在多个代理客户端之间切换、对订阅管理有较高要求、同时希望基础设施成本极低（Cloudflare Workers 免费额度足够个人使用）的用户。
+**一句话总结：** CFnew 是一个功能完整的 Cloudflare 代理订阅管理器，图形界面 + 多协议支持 + 多格式导出，适合需要在多个代理客户端之间切换、对订阅管理有较高要求、同时希望基础设施成本极低（Cloudflare Workers 免费额度足够个人使用）的用户。

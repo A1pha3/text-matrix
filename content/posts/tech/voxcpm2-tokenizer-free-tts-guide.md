@@ -27,7 +27,7 @@ tags: ["TTS", "语音合成", "多语言", "VoxCPM", "OpenBMB", "扩散模型"]
 
 ### 2.2 VoxCPM2 的创新设计
 
-VoxCPM2 提出了 **Tokenizer-Free** 设计理念：
+VoxCPM2 提出了 **Tokenizer-Free** 设计：
 
 ```python
 # 传统 TTS 流程

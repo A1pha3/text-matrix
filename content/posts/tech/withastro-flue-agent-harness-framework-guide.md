@@ -62,7 +62,7 @@ Flue 默认用 [just-bash](https://github.com/vercel-labs/just-bash) 做 virtual
 
 ### Skills 是 Markdown
 
-Flue 的 skills 可以直接从 Markdown 导入。Skill 不是 TypeScript callback，而是一份 agent 能直接读懂的操作说明。它支持静态导入和运行时发现；静态导入会在打包时校验 `SKILL.md`，运行时可通过 `session.skill('name')` 调用 workspace skills。构建阶段会拒绝 `.env*`、`.ssh/`、`.aws/` 等敏感文件进入 skill 包。
+Flue 的 skills 可以直接从 Markdown 导入。Skill 是一份 agent 能直接读懂的操作说明，不是 TypeScript callback。它支持静态导入和运行时发现；静态导入会在打包时校验 `SKILL.md`，运行时可通过 `session.skill('name')` 调用 workspace skills。构建阶段会拒绝 `.env*`、`.ssh/`、`.aws/` 等敏感文件进入 skill 包。
 
 ### Durable execution 和 persistence
 

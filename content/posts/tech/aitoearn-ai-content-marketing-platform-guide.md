@@ -18,10 +18,10 @@ AiToEarn：一人公司 AI 内容营销自动化平台完全指南
 
 ```
 AiToEarn 全链路
-├── 💰 Monetize  —— 内容赚钱（cps/cpe/cpm）
-├── 📢 Publish    —— 全网一键分发
-├── 💬 Engage    —— 自动化互动运营
-└── 🎨 Create    —— AI 批量内容生成
+├── 💰 Monetize —— 内容赚钱（cps/cpe/cpm）
+├── 📢 Publish —— 全网一键分发
+├── 💬 Engage —— 自动化互动运营
+└── 🎨 Create —— AI 批量内容生成
 ```
 
 Monetize — 内容赚钱
@@ -88,8 +88,8 @@ docker pull aitoearn/aitoearn:latest
 
 运行（需配置 API Key）
 docker run -d -p 3000:3000 \
-  -e API_KEY=your-api-key \
-  aitoearn/aitoearn:latest
+ -e API_KEY=your-api-key \
+ aitoearn/aitoearn:latest
 ```
 
 方式四：源码部署
@@ -118,12 +118,12 @@ AiToEarn 支持所有兼容 MCP 协议的 AI 助手：
 
 ```json
 {
-  "mcpServers": {
-    "aitoearn": {
-      "command": "npx",
-      "args": ["-y", "@aitoearn/mcp"]
-    }
-  }
+ "mcpServers": {
+ "aitoearn": {
+ "command": "npx",
+ "args": ["-y", "@aitoearn/mcp"]
+ }
+ }
 }
 ```
 

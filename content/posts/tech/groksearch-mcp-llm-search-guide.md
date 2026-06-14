@@ -62,7 +62,7 @@ Claude ──MCP──► Grok Search Server
 
 ## 八个 MCP 工具
 
-| 工具 | 功能 | 核心参数 |
+| 工具 | 功能 | 关键参数 |
 |------|------|----------|
 | `web_search` | AI 网络搜索 | `query`, `platform`, `model`, `extra_sources` |
 | `get_sources` | 获取搜索信源 | `session_id` |

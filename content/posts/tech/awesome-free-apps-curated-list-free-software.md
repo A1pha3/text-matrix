@@ -3,7 +3,7 @@ title: "awesome-free-apps：每个平台最值得收藏的免费软件清单"
 date: "2026-05-25T20:16:19+08:00"
 slug: "awesome-free-apps-curated-list-free-software"
 aliases:
-  - "/posts/tech/axorax-awesome-free-apps-guide/"
+ - "/posts/tech/axorax-awesome-free-apps-guide/"
 description: "awesome-free-apps 是一个按平台和场景分类的免费软件精选清单，覆盖 Windows、macOS、Linux 三大桌面平台和 Android、iOS 两大移动端，按音频、浏览器、开发工具、文档、图像、安全等场景组织，每个条目标注平台兼容性和开源状态。"
 draft: false
 categories: ["技术笔记"]
@@ -22,15 +22,15 @@ awesome-free-apps 不只是一个软件列表，而是一套**经过筛选的免
 
 ```
 awesome-free-apps/
-├── README.md              # 主列表（桌面平台）
-├── MOBILE.md              # 移动端专项
+├── README.md # 主列表（桌面平台）
+├── MOBILE.md # 移动端专项
 ├── filter/
-│   ├── windows-only.md   # 仅 Windows
-│   ├── macos-only.md     # 仅 macOS
-│   ├── linux-only.md     # 仅 Linux
-│   ├── open-source-only.md # 仅开源
-│   └── recommended-only.md # 仅推荐项
-└── assets/               # 封面和图标资源
+│ ├── windows-only.md # 仅 Windows
+│ ├── macos-only.md # 仅 macOS
+│ ├── linux-only.md # 仅 Linux
+│ ├── open-source-only.md # 仅开源
+│ └── recommended-only.md # 仅推荐项
+└── assets/ # 封面和图标资源
 ```
 
 ---

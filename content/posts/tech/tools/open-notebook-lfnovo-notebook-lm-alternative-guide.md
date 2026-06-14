@@ -131,7 +131,7 @@ curl -X POST http://localhost:5055/api/podcasts \
 
 - 想要 NotebookLM 那种「引用直接跳转到原 PDF 高亮」的体验：Open Notebook 引用还是基础级别
 - 只想要「PDF → Markdown」单条管线：直接用 Marker / Docling 性价比更高
-- 极简 CLI 用户：Open Notebook 的核心价值在 Web UI + API，纯 CLI 用例不如直接调 LangChain
+- 极简 CLI 用户：Open Notebook 的作用在 Web UI + API，纯 CLI 用例不如直接调 LangChain
 
 ## 已知边界
 

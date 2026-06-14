@@ -50,15 +50,15 @@ autofix.ci 的思路是：**在 CI 里运行你已有的格式化工具，然后
 
 ```
 开发者 push 代码
-    ↓
+ ↓
 CI 流水线运行（包含格式化工序）
-    ↓
+ ↓
 autofix-ci/action 在流水线末端被调用
-    ↓
+ ↓
 收集 staged changes，构建 artifact
-    ↓
+ ↓
 上报到 autofix.ci 后端 API
-    ↓
+ ↓
 后端处理修复，生成 commit 并 push 回 PR
 ```
 
@@ -71,7 +71,7 @@ Action 源码托管于 [autofix-ci/action](https://github.com/autofix-ci/action)
 ```typescript
 // 出于安全考虑，工作流必须命名为 "autofix.ci"
 if (process.env.GITHUB_WORKFLOW !== "autofix.ci") {
-  throw `For security reasons, the workflow in which the autofix.ci action is used must be named "autofix.ci".`;
+ throw `For security reasons, the workflow in which the autofix.ci action is used must be named "autofix.ci".`;
 }
 ```
 
@@ -84,13 +84,13 @@ await exec("git", ["-c", "core.fileMode=false", "add", "--all"]);
 
 // 提取文件列表（禁用路径转义，支持中文路径）
 let { stdout } = await getExecOutput("git", [
-  "-c", "core.quotepath=false",
-  "diff", "--name-only", "--staged", "--no-renames",
+ "-c", "core.quotepath=false",
+ "diff", "--name-only", "--staged", "--no-renames",
 ]);
 
 // 安全检查：禁止修改 .github 目录
 if (changes.some((path) => path.includes(".github"))) {
-  throw "The autofix.ci action is not allowed to modify the .github directory.";
+ throw "The autofix.ci action is not allowed to modify the .github directory.";
 }
 ```
 
@@ -100,17 +100,17 @@ if (changes.some((path) => path.includes(".github"))) {
 
 ```typescript
 if (event.pull_request) {
-  // 创建修复 commit
-  await exec("git", ["config", "user.name", "autofix.ci"]);
-  await exec("git", ["config", "user.email", "noreply@autofix.ci"]);
-  await exec("git", ["commit", "--no-verify", "-m", "autofix"]);
+ // 创建修复 commit
+ await exec("git", ["config", "user.name", "autofix.ci"]);
+ await exec("git", ["config", "user.email", "noreply@autofix.ci"]);
+ await exec("git", ["commit", "--no-verify", "-m", "autofix"]);
 
-  // 拉取并 checkout PR head
-  await exec("git", ["fetch", "--depth=1", "origin", event.pull_request.head.sha]);
-  await exec("git", ["checkout", "--force", "FETCH_HEAD"]);
+ // 拉取并 checkout PR head
+ await exec("git", ["fetch", "--depth=1", "origin", event.pull_request.head.sha]);
+ await exec("git", ["checkout", "--force", "FETCH_HEAD"]);
 
-  // 将修复以 cherry-pick 方式应用到 PR head
-  await exec("git", ["cherry-pick", "--no-commit", commit_hash]);
+ // 将修复以 cherry-pick 方式应用到 PR head
+ await exec("git", ["cherry-pick", "--no-commit", commit_hash]);
 }
 ```
 
@@ -126,9 +126,9 @@ await client.uploadArtifact("autofix.ci", [filename], ".", { retentionDays: 1 })
 
 // 通知后端处理
 const url =
-  "https://autofix-api.maximilianhils.com/fix" +
-  "?owner=" + encodeURIComponent(event.repository.owner.login) +
-  "&repo=" + encodeURIComponent(event.repository.name);
+ "https://autofix-api.maximilianhils.com/fix" +
+ "?owner=" + encodeURIComponent(event.repository.owner.login) +
+ "&repo=" + encodeURIComponent(event.repository.name);
 ```
 
 真正的代码修复逻辑运行在云端后端（Rust 编写），Action 本身只负责收集变更并触发任务，不做实际修复。
@@ -154,25 +154,25 @@ const url =
 name: autofix.ci
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
+ push:
+ branches: [main, master]
+ pull_request:
 
 jobs:
-  autofix:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+ autofix:
+ runs-on: ubuntu-latest
+ steps:
+ - uses: actions/checkout@v4
+ with:
+ ref: ${{ github.event.pull_request.head.sha }}
 
-      # ↓ 这里放你自己的格式化工序 ↓
-      - run: cargo fmt
+ # ↓ 这里放你自己的格式化工序 ↓
+ - run: cargo fmt
 
-      # ↓ Action 必须在格式化工序之后调用 ↓
-      - uses: autofix-ci/action@v1
-        with:
-          fail-fast: false
+ # ↓ Action 必须在格式化工序之后调用 ↓
+ - uses: autofix-ci/action@v1
+ with:
+ fail-fast: false
 ```
 
 > **安全加固建议**：将 Action 固定到特定 commit hash 而非 tag，例如 `autofix-ci/action@8bc06253bec489732e5f9c52884c7cace15c0160`，以降低供应链攻击风险。
@@ -189,10 +189,10 @@ jobs:
 
 ```yaml
 - uses: autofix-ci/action@v1
-  with:
-    fail-fast: false
-    commit-message: "style: auto-format code"
-    comment: "autofix.ci 已自动修复格式问题"
+ with:
+ fail-fast: false
+ commit-message: "style: auto-format code"
+ comment: "autofix.ci 已自动修复格式问题"
 ```
 
 ---

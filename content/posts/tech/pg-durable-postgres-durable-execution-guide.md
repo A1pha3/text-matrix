@@ -1,14 +1,14 @@
 +++
 date = '2026-06-07T23:03:00+08:00'
 draft = false
-title = 'pg_durable 深度解析：把 durable execution 直接搬进 PostgreSQL，Microsoft 给后端工程师的零基础设施工作流'
+title = 'pg_durable 解析：把 durable execution 直接搬进 PostgreSQL，Microsoft 给后端工程师的零基础设施工作流'
 slug = 'pg-durable-postgres-durable-execution-guide'
 description = '微软开源的 PostgreSQL 扩展 pg_durable，把 durable execution 模式从 Temporal / Airflow / Step Functions 收回到 SQL 内：长跑、容错、检查点、并行 fan-out 全部用 df.start(~> 和 |=> 表达，零基础设施，深度对比传统方案。'
 categories = ['技术笔记']
 tags = ['PostgreSQL', 'pg_durable', 'durable execution', '数据库', '工作流', 'Azure HorizonDB', 'Microsoft']
 +++
 
-# pg_durable 深度解析：把 durable execution 直接搬进 PostgreSQL，Microsoft 给后端工程师的零基础设施工作流
+# pg_durable 解析：把 durable execution 直接搬进 PostgreSQL，Microsoft 给后端工程师的零基础设施工作流
 
 > **目标读者**：负责后台数据流水线、AI 嵌入管道、运维 runbook 的后端 / 数据工程师和 DBA
 > **核心问题**：能不能不引入 Temporal、Airflow、Step Functions、pg_cron+worker，就在 PostgreSQL 内部跑出可恢复、可检查点、并行 fan-out 的长跑工作流？
@@ -39,7 +39,7 @@ durable execution（持久化执行）作为一种「行业默认模式」，就
 
 `microsoft/pg_durable` 的设计目标是：**让 durable execution 直接在 PostgreSQL 内部跑**，作为一个 PG 扩展，状态、checkpoint、调度、可见性全在 `df.*` 表里。配合微软同期的 Azure HorizonDB（cloud PostgreSQL 服务）一起发布，已经预装在生产环境里。
 
-GitHub Trending 把它推上来，本质上是因为：后端工程师已经被「Temporal 自托管」「Airflow 升级」折磨太久了，突然看到一个「零基础设施、纯 SQL、原生 PG 扩展」的方案，情绪被点燃。
+GitHub Trending 把它推上来，实际上是因为：后端工程师已经被「Temporal 自托管」「Airflow 升级」折磨太久了，突然看到一个「零基础设施、纯 SQL、原生 PG 扩展」的方案，情绪被点燃。
 
 ---
 
@@ -127,7 +127,7 @@ README 也明确列了「不适合」的边界：
 - 你要的是亚毫秒级同步请求处理（pg_durable 是**后台执行**）
 - 环境不允许装扩展或起 background worker
 - workflow 跨很多非 PG 异构系统
-- 业务逻辑本质上是任意代码、不容易映射到 SQL step / 分支 / 循环 / HTTP
+- 业务逻辑实际上是任意代码、不容易映射到 SQL step / 分支 / 循环 / HTTP
 
 实际工程判断建议：
 

@@ -1,20 +1,20 @@
 ---
-title: "NEAR Protocol 核心节点完全指南"
+title: "NEAR Protocol 核心节点指南"
 date: "2026-03-31T14:45:00+08:00"
 slug: "nearcore-near-protocol-guide"
-description: "全面解析 NEAR Protocol (nearcore)：2.6k Stars 的去中心化应用平台。NEAR 是以太坊竞争对手，采用 Nightshade 分片和 PoS 共识，支持 Rust/JavaScript 智能合约开发。"
+description: "解析 NEAR Protocol (nearcore)：2.6k Stars 的去中心化应用平台。NEAR 是以太坊竞争对手，采用 Nightshade 分片和 PoS 共识，支持 Rust/JavaScript 智能合约开发。"
 draft: false
 categories: ["技术笔记"]
 tags: ["NEAR Protocol", "NEAR", "nearcore", "区块链", "智能合约", "Rust", "Web3"]
 ---
 
-# NEAR Protocol 核心节点完全指南
+# NEAR Protocol 核心节点指南
 
 ## §1 学习目标
 
 完成本文档后，你将能够：
 
-- ✅ 理解 NEAR Protocol 的核心定位与技术架构
+- ✅ 理解 NEAR Protocol 的定位与技术架构
 - ✅ 掌握 nearcore 作为参考实现的角色与价值
 - ✅ 理解 NEAR 的共识机制与分片设计
 - ✅ 熟练构建和运行 nearcore 节点
@@ -35,7 +35,7 @@ tags: ["NEAR Protocol", "NEAR", "nearcore", "区块链", "智能合约", "Rust",
 
 > NEAR's purpose is to enable community-driven innovation to benefit people around the world. NEAR provides a developer platform where developers and entrepreneurs can create apps that put users back in control of their data and assets, which is the foundation of "Open Web" movement. NEAR Protocol is an infrastructure for server-less applications and smart contracts powered by a blockchain. NEAR Protocol is built to deliver usability and scalability of modern PaaS like Firebase at fraction of the prices that blockchains like Ethereum charge.
 
-**NEAR 的关键价值主张**：
+**NEAR 的解决的问题**：
 
 | 价值 | 说明 |
 |------|------|
@@ -87,7 +87,7 @@ Watchers:  76
 
 ---
 
-## §3 技术架构深度解析
+## §3 技术架构解析
 
 ### 3.1 协议架构
 

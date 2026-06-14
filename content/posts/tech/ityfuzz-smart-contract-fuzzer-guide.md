@@ -1,14 +1,14 @@
 ---
-title: "ItyFuzz：极速智能合约混合模糊测试器完全指南"
+title: "ItyFuzz：极速智能合约混合模糊测试器指南"
 date: "2026-04-01T01:03:00+08:00"
 slug: "ityfuzz-smart-contract-fuzzer-guide"
-description: "深度解析 ItyFuzz (1.1k Stars)：极速 EVM/MoveVM 智能合约混合模糊测试器，结合符号执行和模糊测试技术，在大型项目上发现126个漏洞（vs Echidna 0个），支持链上分叉/闪电贷/重入攻击自动利用。"
+description: "解析 ItyFuzz (1.1k Stars)：极速 EVM/MoveVM 智能合约混合模糊测试器，结合符号执行和模糊测试技术，在大型项目上发现126个漏洞（vs Echidna 0个），支持链上分叉/闪电贷/重入攻击自动利用。"
 draft: false
 categories: ["技术笔记"]
 tags: ["ItyFuzz", "智能合约", "模糊测试", "符号执行", "EVM", "MoveVM", "漏洞挖掘", "安全审计", "LibAFL", "区块链安全"]
 ---
 
-# ItyFuzz：极速智能合约混合模糊测试器完全指南
+# ItyFuzz：极速智能合约混合模糊测试器指南
 
 ## §2 项目概述
 
@@ -20,7 +20,7 @@ tags: ["ItyFuzz", "智能合约", "模糊测试", "符号执行", "EVM", "MoveVM
 
 > ItyFuzz is a blazing-fast EVM and MoveVM smart contract hybrid fuzzer that combines symbolic execution and fuzzing to find bugs in smart contracts offchain and onchain.
 
-**核心定位**：为智能合约安全审计提供高效、自动化的漏洞发现工具。
+它解决的问题是：智能合约安全审计中，人工逐行审查耗时且容易遗漏，纯模糊测试又难以触发深层逻辑漏洞。ItyFuzz 把符号执行和模糊测试拼在一起，前者负责构造精确输入触发复杂路径，后者负责快速撒网覆盖基本路径。
 
 ### 2.2 核心数据
 
@@ -480,4 +480,6 @@ ItyFuzz 使用混合方法（模糊测试 + 符号执行），在大型项目上
 | **Invariant（不变量）** | 合约应始终满足的条件 |
 | **LibAFL** | Advanced Fuzzing Library，最先进的模糊测试框架 |
 
-*文档版本 1.0 | 撰写日期：2026-04-01 | 基于 ItyFuzz (1.1k Stars) | 性能数据来源：官方基准测试*
+---
+
+*基于 ItyFuzz (1.1k Stars) | 性能数据来源：官方基准测试*

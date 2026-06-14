@@ -10,7 +10,7 @@ categories: ["技术笔记"]
 tags: ["Project NOMAD", "离线AI", "Ollama", "RAG", "Kolibri"]
 ---
 
-# Project N.O.M.A.D.：离线优先的 AI 知识与教育服务器从入门到精通
+# Project N.O.M.A.D.：离线优先的 AI 知识与教育服务器使用指南
 
 > **目标读者**：希望构建离线 AI 知识库、在无网络环境下使用 AI 教育资源、或者需要自托管 AI 工具的开发者与研究者
 > **核心问题**：如何构建一个完全离线、无遥测、可以离线使用 Wikipedia/Khan Academy/AI 聊天/地图的"生存服务器"？
@@ -31,7 +31,7 @@ tags: ["Project NOMAD", "离线AI", "Ollama", "RAG", "Kolibri"]
 
 **网络限制**：在偏远地区、灾害场景、网络封锁环境下，云端 AI 完全不可用。
 
-### 1.2 N.O.M.A.D. 的核心思想
+### 1.2 N.O.M.A.D. 的基本思想
 
 Project N.O.M.A.D. (Node for Offline Media, Archives, and Data) 提出了**离线优先**的理念：
 
@@ -355,7 +355,7 @@ curl -fsSL https://1.1.1.1/cdn-cgi/trace
 
 ## 八、总结
 
-### 8.1 核心要点
+### 8.1 要点
 
 | 维度 | 要点 |
 |------|------|

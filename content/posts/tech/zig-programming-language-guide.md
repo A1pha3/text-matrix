@@ -682,7 +682,7 @@ const file = openFile("data.txt") catch |err| {
 
 ## 十四，总结
 
-Zig 是** 现代系统级编程语言**：
+Zig 是一门系统级编程语言：
 
 | 维度 | 说明 |
 |------|------|

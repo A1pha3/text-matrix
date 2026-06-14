@@ -1,7 +1,7 @@
 ---
-title: "Multica 完全指南：开源 Agent 管理平台，统一调度 Claude Code 与 Codex"
+title: "Multica 指南：开源 Agent 管理平台，统一调度 Claude Code 与 Codex"
 slug: "multica-agent-management-platform-guide"
-description: "开源 Agent 管理平台 Multica 完全指南，系统拆解 Claude Code、Codex、Runtime、daemon、Skills、自托管部署与团队协作边界，帮助你判断何时该用 Managed Agents。"
+description: "开源 Agent 管理平台 Multica 指南，系统拆解 Claude Code、Codex、Runtime、daemon、Skills、自托管部署与团队协作边界，帮助你判断何时该用 Managed Agents。"
 date: "2026-04-11T00:15:00+08:00"
 draft: false
 categories: ["技术笔记"]
@@ -19,7 +19,7 @@ tags: ["Multica", "AI Agent", "Claude Code", "Codex", "Self-Hosting"]
 ## 导读
 
 - 如果你想先判断 Multica 值不值得用，先看“先说结论”和“你该不该现在用 Multica”。
-- 如果你只想尽快跑通一次，直接跳到“5 分钟上手”。
+- 如果只想尽快跑通一次，直接跳到“5 分钟上手”。
 - 如果你准备部署生产环境，重点看“自托管”和“CLI 与 daemon”。
 - 如果你更关心技术实现和架构边界，重点看“架构拆解”。
 

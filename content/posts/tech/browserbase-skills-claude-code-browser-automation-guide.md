@@ -10,14 +10,14 @@ tags: ["AI Agent", "Claude Code", "浏览器自动化", "Browserbase", "开源"]
 
 # Browserbase Skills：让 Claude Code 拥有浏览器自动化能力
 
-## 📋 学习目标
+## 📋 本文覆盖内容
 
-- 理解 Browserbase Skills 的核心定位——将浏览器自动化能力注入 Claude Code
-- 掌握 10 个核心技能的用途与协作关系
-- 学会在 Claude Code 中安装和配置 Browserbase Skills
-- 理解本地模式与远程 Browserbase 云端模式的切换方式
-- 掌握 site-debugger 和 browser-trace 的调试工作流
-- 理解 cookie-sync 和 ui-test 在实际场景中的应用
+- Browserbase Skills 的定位——将浏览器自动化能力注入 Claude Code
+- 10 个技能的用途与协作关系
+- 在 Claude Code 中安装和配置 Browserbase Skills
+- 本地模式与远程 Browserbase 云端模式的切换方式
+- site-debugger 和 browser-trace 的调试工作流
+- cookie-sync 和 ui-test 在实际场景中的应用
 
 ---
 
@@ -26,10 +26,6 @@ tags: ["AI Agent", "Claude Code", "浏览器自动化", "Browserbase", "开源"]
 ### 什么是 Browserbase Skills
 
 **Browserbase Skills** 是一个开源的 **Claude Agent SDK**，通过官方 `bb` CLI 和一组结构化技能，让 Claude Code 能够与浏览器进行深度交互。与传统的无头浏览器方案不同，Browserbase Skills 构建在 Browserbase 云服务之上，提供了反爬虫规避、CAPTCHA 自动解决、住宅代理轮换等开箱即用的能力。
-
-官方描述：
-
-> "A set of skills for enabling Claude Code to work with Browserbase through browser automation and the official `bb` CLI."
 
 ### 核心数据
 
@@ -495,14 +491,7 @@ ui-test 是对抗式的、AI 驱动的端到端测试，不需要预先编写测
 
 ## 📚 总结与延伸阅读
 
-Browserbase Skills 为 Claude Code 提供了一套完整的浏览器自动化工具链，从基础的页面交互到高级的反爬虫对抗、云端无服务器函数部署，形成了完整的开发生态。其模块化设计使得各个技能可以独立使用，也可以组合成复杂的工作流。
-
-**核心优势：**
-
-- 将 Browserbase 云端的基础设施能力无缝注入 Claude Code
-- 10 个技能覆盖了从简单抓取到复杂调试的完整场景
-- site-debugger 和 ui-test 体现了 AI 原生调试的思路
-- 本地/云端模式自由切换，兼顾开发效率和生产稳定性
+Browserbase Skills 为 Claude Code 提供了一套完整的浏览器自动化工具链，从基础的页面交互到高级的反爬虫对抗、云端无服务器函数部署。各个技能可以独立使用，也可以组合成复杂的工作流。
 
 **延伸阅读：**
 

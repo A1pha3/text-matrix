@@ -18,11 +18,11 @@ draft: false
 
 **PaddleOCR** 是百度飞桨（PaddlePaddle）团队开源的OCR工具箱，主打"Turn any PDF or image document into structured data for your AI"。全球star数已突破 **74,000+**，是OCR领域最受欢迎的开源项目之一。
 
-### 核心定位
+### 定位
 
 - **解决什么问题**：将PDF、图片中的文字和表格识别为结构化数据，直接喂给大模型
 - **竞品对比**：相比Tesseract（Google）、EasyOCR，PaddleOCR支持更多语言、更高精度、更丰富的输出格式
-- **核心优势**：支持100+语言、内置表格识别、版面分析、OCR+语义分离
+- **主要优势**：支持100+语言、内置表格识别、版面分析、OCR+语义分离
 
 ### 技术特色
 
@@ -303,7 +303,7 @@ texts = text_splitter.split_text(pdf_text)
 # ... (接RAG管道)
 ```
 
-## 七、最佳实践
+## 七、推荐做法
 
 ### 精度优化
 

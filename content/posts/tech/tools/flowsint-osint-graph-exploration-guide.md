@@ -221,7 +221,7 @@ Tool 关心“怎么拿数据”，Enricher 关心“拿到数据后怎么落成
 
 Flows 文档给出的定义非常直接：**Flow 就是多个 enrichers 的链式连接，前一个输出作为后一个输入**。
 
-这意味着 Flowsint 不只是做“一跳 enrich”，还支持把调查过程沉淀成可复用的 pipeline。
+Flowsint 不只是做“一跳 enrich”，还支持把调查过程沉淀成可复用的 pipeline。
 
 ## 五、整体架构：模块划分与运行路径
 
@@ -261,7 +261,7 @@ flowsint-types
 → 前端刷新图视图
 ```
 
-README 同时说明，核心模块还负责 PostgreSQL、Neo4j、认证、日志和配置管理，因此它本质上是系统的“编排层”。
+README 同时说明，核心模块还负责 PostgreSQL、Neo4j、认证、日志和配置管理，因此它实际上是系统的“编排层”。
 
 ### 5.2 为什么这种架构合理
 
@@ -292,7 +292,7 @@ README 同时说明，核心模块还负责 PostgreSQL、Neo4j、认证、日志
 
 ### 6.1 每个类型都继承 `FlowsintType`
 
-类型系统的基础不是裸 `BaseModel`，而是 Flowsint 自己封装的 `FlowsintType`。这意味着它除了拥有 Pydantic 的校验、序列化能力之外，还内建了面向图和 UI 的约束。
+类型系统的基础不是裸 `BaseModel`，而是 Flowsint 自己封装的 `FlowsintType`。它除了拥有 Pydantic 的校验、序列化能力之外，还内建了面向图和 UI 的约束。
 
 ### 6.2 primary field 决定节点唯一性
 
@@ -430,7 +430,7 @@ InputType = DomainToIpEnricher.InputType
 OutputType = DomainToIpEnricher.OutputType
 ```
 
-这段代码可以提炼出 Flowsint 的 enricher 设计哲学：
+这段代码可以提炼出 Flowsint 的 enricher 设计思路：
 
 - 输入输出必须是明确类型，而不是随意的字典
 - metadata 不是可选项，而是框架自动发现的一部分
@@ -440,7 +440,7 @@ OutputType = DomainToIpEnricher.OutputType
 
 官方文档还提到 enricher 可以通过 `get_params_schema()` 暴露参数，并使用 `vaultSecret` 类型对接凭证存储。
 
-这意味着 Flowsint 不只是“写死逻辑”，而是支持：
+Flowsint 不只是“写死逻辑”，而是支持：
 
 - UI 可配置参数
 - 加密保存 API key
@@ -479,7 +479,7 @@ Tool 不关心：
 - environment 注入
 - 超时与清理
 
-这意味着像 `subfinder`、`asnmap`、`dnsx` 这一类工具，可以被更稳定地纳入平台，而不必在每个 enricher 里重复写容器细节。
+像 `subfinder`、`asnmap`、`dnsx` 这一类工具，可以被更稳定地纳入平台，而不必在每个 enricher 里重复写容器细节。
 
 ### 8.3 Tool 和 Enricher 的职责边界
 
@@ -783,13 +783,13 @@ README 明确列出不得用于：
 
 ### 14.3 为什么这部分不是“免责声明装饰品”
 
-因为 Flowsint 天生适合“把碎片信息连成关系图”，而这种能力既可以用于合法调查，也可能被滥用。项目把伦理边界写在最前面，本质上是在提醒你：
+因为 Flowsint 天生适合“把碎片信息连成关系图”，而这种能力既可以用于合法调查，也可能被滥用。项目把伦理边界写在最前面，实际上是在提醒你：
 
 - 图能力越强，越要克制使用范围
 - 数据越容易串联，越要重视最小必要原则
 - 工具越方便，越不能替代授权判断
 
-## 十五、从入门到精通的建议学习路径
+## 十五、使用指南的建议学习路径
 
 如果你真想把 Flowsint 学透，建议按下面的顺序走。
 
@@ -883,7 +883,7 @@ README 明确列出不得用于：
 - 如何建 Enricher
 - 如何做参数、日志、关系、测试
 
-这意味着它不仅能“拿来用”，也适合“拿来学平台设计”。
+它不仅能“拿来用”，也适合“拿来学平台设计”。
 
 ## 十七、总结：如何评价 Flowsint
 

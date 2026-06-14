@@ -68,34 +68,34 @@ OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    OpenSandbox 架构                          │
+│ OpenSandbox 架构 │
 ├─────────────────────────────────────────────────────────────┤
-│  SDK 层（多语言）                                            │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
-│  │ Python   │ │ Java/    │ │ JS/TS    │ │ C#/.NET  │       │
-│  │          │ │ Kotlin   │ │          │ │          │       │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
+│ SDK 层（多语言） │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │ Python │ │ Java/ │ │ JS/TS │ │ C#/.NET │ │
+│ │ │ │ Kotlin │ │ │ │ │ │
+│ └──────────┘ └──────────┘ └──────────┘ └──────────┘ │
 ├─────────────────────────────────────────────────────────────┤
-│  沙箱协议层（Specs）                                         │
-│  生命周期管理 API + 执行 API                                   │
+│ 沙箱协议层（Specs） │
+│ 生命周期管理 API + 执行 API │
 ├─────────────────────────────────────────────────────────────┤
-│  运行时层（Server + Components）                              │
-│  ┌─────────┐ ┌──────────┐ ┌─────────┐ ┌──────────┐         │
-│  │ execd   │ │ ingress  │ │ egress  │ │ server   │         │
-│  │ 命令/文件│ │ 入口代理  │ │ 出口控制 │ │ FastAPI  │         │
-│  └─────────┘ └──────────┘ └─────────┘ └──────────┘         │
+│ 运行时层（Server + Components） │
+│ ┌─────────┐ ┌──────────┐ ┌─────────┐ ┌──────────┐ │
+│ │ execd │ │ ingress │ │ egress │ │ server │ │
+│ │ 命令/文件│ │ 入口代理 │ │ 出口控制 │ │ FastAPI │ │
+│ └─────────┘ └──────────┘ └─────────┘ └──────────┘ │
 ├─────────────────────────────────────────────────────────────┤
-│  沙箱环境层（Sandboxes）                                     │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
-│  │ Code     │ │ Chrome   │ │ Playwright│ │ Desktop  │       │
-│  │ Interpreter│ │ Browser │ │ 自动化   │ │ VNC     │       │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
+│ 沙箱环境层（Sandboxes） │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │ Code │ │ Chrome │ │ Playwright│ │ Desktop │ │
+│ │ Interpreter│ │ Browser │ │ 自动化 │ │ VNC │ │
+│ └──────────┘ └──────────┘ └──────────┘ └──────────┘ │
 ├─────────────────────────────────────────────────────────────┤
-│  容器运行时（Secure Container）                               │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐                    │
-│  │ gVisor   │ │ Kata     │ │ Firecracker│                   │
-│  │          │ │ Containers│ │ 微虚拟机  │                    │
-│  └──────────┘ └──────────┘ └──────────┘                    │
+│ 容器运行时（Secure Container） │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │ gVisor │ │ Kata │ │ Firecracker│ │
+│ │ │ │ Containers│ │ 微虚拟机 │ │
+│ └──────────┘ └──────────┘ └──────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -113,32 +113,32 @@ OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
 
 ```
 OpenSandbox/
-├── sdks/                      # 多语言 SDK
-│   ├── sandbox/               # Sandbox 基础 SDK
-│   │   ├── python/            # Python Sandbox SDK
-│   │   ├── kotlin/            # Java/Kotlin Sandbox SDK
-│   │   ├── javascript/        # JS/TS Sandbox SDK
-│   │   └── csharp/            # C#/.NET Sandbox SDK
-│   └── code-interpreter/      # Code Interpreter SDK
-├── specs/                     # OpenAPI 规范
-├── server/                    # Python FastAPI 沙箱生命周期服务器
-├── kubernetes/                # Kubernetes 部署
+├── sdks/ # 多语言 SDK
+│ ├── sandbox/ # Sandbox 基础 SDK
+│ │ ├── python/ # Python Sandbox SDK
+│ │ ├── kotlin/ # Java/Kotlin Sandbox SDK
+│ │ ├── javascript/ # JS/TS Sandbox SDK
+│ │ └── csharp/ # C#/.NET Sandbox SDK
+│ └── code-interpreter/ # Code Interpreter SDK
+├── specs/ # OpenAPI 规范
+├── server/ # Python FastAPI 沙箱生命周期服务器
+├── kubernetes/ # Kubernetes 部署
 ├── components/
-│   ├── execd/                 # 沙箱执行守护进程（命令/文件操作）
-│   ├── ingress/               # 入口流量代理
-│   └── egress/                # 出口网络控制
+│ ├── execd/ # 沙箱执行守护进程（命令/文件操作）
+│ ├── ingress/ # 入口流量代理
+│ └── egress/ # 出口网络控制
 ├── sandboxes/
-│   └── code-interpreter/      # Code Interpreter 沙箱实现
-├── examples/                  # 示例代码
-│   ├── claude-code/           # Claude Code 集成
-│   ├── langgraph/             # LangGraph 集成
-│   ├── chrome/                # Chrome 浏览器自动化
-│   ├── playwright/            # Playwright 自动化
-│   ├── desktop/               # 桌面 VNC 环境
-│   └── rl-training/           # 强化学习训练
-├── oseps/                     # OpenSandbox 增强提案
-├── docs/                      # 架构文档
-└── tests/                     # E2E 测试
+│ └── code-interpreter/ # Code Interpreter 沙箱实现
+├── examples/ # 示例代码
+│ ├── claude-code/ # Claude Code 集成
+│ ├── langgraph/ # LangGraph 集成
+│ ├── chrome/ # Chrome 浏览器自动化
+│ ├── playwright/ # Playwright 自动化
+│ ├── desktop/ # 桌面 VNC 环境
+│ └── rl-training/ # 强化学习训练
+├── oseps/ # OpenSandbox 增强提案
+├── docs/ # 架构文档
+└── tests/ # E2E 测试
 ```
 
 ---
@@ -266,51 +266,51 @@ from opensandbox import Sandbox
 from opensandbox.models import WriteEntry
 
 async def main() -> None:
-    # 1. 创建沙箱
-    sandbox = await Sandbox.create(
-        "opensandbox/code-interpreter:v1.0.2",
-        entrypoint=["/opt/opensandbox/code-interpreter.sh"],
-        env={"PYTHON_VERSION": "3.11"},
-        timeout=timedelta(minutes=10),
-    )
+ # 1. 创建沙箱
+ sandbox = await Sandbox.create(
+ "opensandbox/code-interpreter:v1.0.2",
+ entrypoint=["/opt/opensandbox/code-interpreter.sh"],
+ env={"PYTHON_VERSION": "3.11"},
+ timeout=timedelta(minutes=10),
+ )
 
-    async with sandbox:
-        # 2. 执行 Shell 命令
-        execution = await sandbox.commands.run("echo 'Hello OpenSandbox!'")
-        print(execution.logs.stdout[0].text)
-        # Hello OpenSandbox!
+ async with sandbox:
+ # 2. 执行 Shell 命令
+ execution = await sandbox.commands.run("echo 'Hello OpenSandbox!'")
+ print(execution.logs.stdout[0].text)
+ # Hello OpenSandbox!
 
-        # 3. 写文件
-        await sandbox.files.write_files([
-            WriteEntry(path="/tmp/hello.txt", data="Hello World", mode=644)
-        ])
+ # 3. 写文件
+ await sandbox.files.write_files([
+ WriteEntry(path="/tmp/hello.txt", data="Hello World", mode=644)
+ ])
 
-        # 4. 读文件
-        content = await sandbox.files.read_file("/tmp/hello.txt")
-        print(f"Content: {content}")
-        # Content: Hello World
+ # 4. 读文件
+ content = await sandbox.files.read_file("/tmp/hello.txt")
+ print(f"Content: {content}")
+ # Content: Hello World
 
-        # 5. 创建代码解释器
-        interpreter = await CodeInterpreter.create(sandbox)
+ # 5. 创建代码解释器
+ interpreter = await CodeInterpreter.create(sandbox)
 
-        # 6. 执行 Python 代码
-        result = await interpreter.codes.run(
-            """
-            import sys
-            print(sys.version)
-            result = 2 + 2
-            result
-            """,
-            language=SupportedLanguage.PYTHON,
-        )
-        print(result.result[0].text)  # 4
-        print(result.logs.stdout[0].text)  # 3.11.14
+ # 6. 执行 Python 代码
+ result = await interpreter.codes.run(
+ """
+ import sys
+ print(sys.version)
+ result = 2 + 2
+ result
+ """,
+ language=SupportedLanguage.PYTHON,
+ )
+ print(result.result[0].text) # 4
+ print(result.logs.stdout[0].text) # 3.11.14
 
-        # 7. 清理沙箱
-        await sandbox.kill()
+ # 7. 清理沙箱
+ await sandbox.kill()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+ asyncio.run(main())
 ```
 
 ---

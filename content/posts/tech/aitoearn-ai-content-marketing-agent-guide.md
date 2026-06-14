@@ -15,7 +15,7 @@ hiddenFromHomePage: true
 
 AiToEarn 不是又一个"AI 写文章工具"，也不是 Buffer / Hootsuite 那种"多平台定时发布器"。它把 **AI 内容生成、平台分发适配、商单撮合结算** 三件事做在同一个仓库里，并且把这套能力同时以 **SaaS 网页、OpenClaw 原生调用、MCP 协议、Claude/Cursor 接入、Docker 自部署** 五种形态暴露给调用方。
 
-也就是说，：**当一个 Agent（比如 Claude Code）写完一段产品介绍，它可以直接调 AiToEarn 的 MCP server，让这段介绍在 13 个平台（抖音、小红书、YouTube、TikTok、X、Threads、Instagram、Pinterest、LinkedIn、Facebook、哔哩哔哩、视频号、快手）上以各自原生格式自动出现，并在内容交易市场里接变现任务。** 真正落地的"写完即发布、发布即变现"。
+也就是说，**当一个 Agent（比如 Claude Code）写完一段产品介绍，它可以直接调 AiToEarn 的 MCP server，让这段介绍在 13 个平台（抖音、小红书、YouTube、TikTok、X、Threads、Instagram、Pinterest、LinkedIn、Facebook、哔哩哔哩、视频号、快手）上以各自原生格式自动出现，并在内容交易市场里接变现任务。** 真正落地的"写完即发布、发布即变现"。
 
 截至 2026-06-04，仓库在 GitHub Trending 单日 +320 stars，MIT 协议，中英日三语 README。本文基于 2026-05-21 发布的 v2.4.0 源码与 README 整理。
 
@@ -122,13 +122,13 @@ export AITOEAEN_API_KEY=your_key_here
 # 1. 在 AiToEarn 后台获取 API Key
 # 2. 在 OpenClaw MCP 配置中加：
 {
-  "mcpServers": {
-    "aitoearn": {
-      "command": "npx",
-      "args": ["-y", "@aitoearn/mcp-server"],
-      "env": { "AITOEAEN_API_KEY": "<your_key>" }
-    }
-  }
+ "mcpServers": {
+ "aitoearn": {
+ "command": "npx",
+ "args": ["-y", "@aitoearn/mcp-server"],
+ "env": { "AITOEAEN_API_KEY": "<your_key>" }
+ }
+ }
 }
 ```textbash
 git clone https://github.com/yikart/AiToEarn.git

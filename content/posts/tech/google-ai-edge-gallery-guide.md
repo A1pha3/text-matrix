@@ -14,13 +14,13 @@ tags: ["Google AI Edge", "边缘AI", "本地部署", "ML", "GenAI", "Kotlin"]
 
 ---
 
-## §1 学习目标
+## §1 本文覆盖内容
 
-- 理解 Google AI Edge Gallery 的项目定位与关键价值
-- 掌握在浏览器和移动设备上本地运行 ML/GenAI 模型的方法
-- 学会使用 Gallery 提供的预构建模型和演示应用
-- 了解在 iOS、Android、Web 等平台部署边缘 AI 的实践建议
-- 掌握使用 Google AI Edge 工具链进行本地模型推理
+- Google AI Edge Gallery 的项目定位与关键能力
+- 在浏览器和移动设备上本地运行 ML/GenAI 模型的方法
+- Gallery 提供的预构建模型和演示应用
+- 在 iOS、Android、Web 等平台部署边缘 AI 的实践建议
+- 使用 Google AI Edge 工具链进行本地模型推理
 
 ---
 
@@ -32,7 +32,7 @@ tags: ["Google AI Edge", "边缘AI", "本地部署", "ML", "GenAI", "Kotlin"]
 
 该项目由 Google AI Edge 团队维护，展示了 Google 在边缘设备 AI 推理方面的最新能力。用户可以直接试用各种模型，理解其工作原理，并在自己的应用中复现这些功能。
 
-### 核心特点
+### 主要特点
 
 | 特性 | 说明 |
 |------|------|
@@ -40,7 +40,7 @@ tags: ["Google AI Edge", "边缘AI", "本地部署", "ML", "GenAI", "Kotlin"]
 | **多平台支持** | iOS、Android、Web、桌面端全覆盖 |
 | **预构建演示** | 提供可直接运行的示例应用 |
 | **开源可扩展** | 基于主流开源协议，允许开发者二次开发 |
-| **隐私友好** | 数据不离开设备，保护用户隐私 |
+| **隐私友好** | 数据不离开设备 |
 
 ---
 
@@ -299,9 +299,9 @@ gallery run
 | Web (GPU) | Gemma 2B | ~2GB |
 | Web (CPU) | Phi-3 mini | ~800MB |
 
-### 7.2 隐私保护
+### 7.2 隐私相关
 
-Gallery 设计遵循隐私优先原则：
+Gallery 的隐私设计：
 
 1. **数据最小化**：只收集必要的模型使用统计
 2. **本地处理**：所有 AI 推理在设备端完成

@@ -1,5 +1,5 @@
 ---
-title: "last30days-skill 深度解析：一个 AI agent skill 如何把 Reddit / X / YouTube / Polymarket 跨 13 个平台的事实拼成一份 30 天简报"
+title: "last30days-skill 解析：一个 AI agent skill 如何把 Reddit / X / YouTube / Polymarket 跨 13 个平台的事实拼成一份 30 天简报"
 date: "2026-06-07T15:03:00+08:00"
 slug: "last30days-ai-agent-cross-platform-research-skill"
 description: "2026-06-07 GitHub Trending 当日榜 #1，29,164 stars / 单日 +439。它不是一个 search 工具，而是把'人投票过的事'——Reddit upvote、X like、YouTube view、Polymarket 真金白银——做成交叉信号源，给 agent 喂事实。"
@@ -113,7 +113,7 @@ v2 把同一个故事在 Reddit + X + YouTube 上报成 3 条，v3 用 entity-ba
 
 ## "为什么能 #1"——和当前 agent 生态的契合点
 
-把时间线拉长看，`last30days-skill` 持续占据 trending 榜首不靠单点创新，靠的是**踩中了 2026 年 agent 生态的几个转折点**：
+把时间线拉长看，`last30days-skill` 持续占据 trending 榜首靠的不是单点创新，而是**踩中了 2026 年 agent 生态的几个转折点**：
 
 - **agent skill marketplace 标准化**：`agentskills.io` 规范被 Claude Code / Codex / Cursor / Gemini CLI 等 50+ harness 采纳，让"一个 skill 一次写、跨平台用"成为可能
 - **数据墙花园被自有 cookie / key 攻破**：X 不开放 API 但用户可以登入浏览器，agent 用 vendored Bird 客户端（项目里直接 vendored Node.js 包）拿 X 数据，这是合规的灰色但合法区域

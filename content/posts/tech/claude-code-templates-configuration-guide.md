@@ -19,59 +19,59 @@ Templates 的六类组件不是平铺的列表，它们在 Claude Code 的运行
 
 ```mermaid
 flowchart TB
-    subgraph 入口层
-        CLI["npx claude-code-templates"] 
-        WebUI["aitmpl.com Web UI"]
-    end
+ subgraph 入口层
+ CLI["npx claude-code-templates"] 
+ WebUI["aitmpl.com Web UI"]
+ end
 
-    subgraph 组件矩阵
-        Agents["🤖 Agents<br/>领域专家角色"]
-        Commands["⚡ Commands<br/>自定义斜杠命令"]
-        Hooks["🪝 Hooks<br/>事件触发器"]
-        Settings["⚙️ Settings<br/>配置项"]
-        MCPs["🔌 MCPs<br/>外部服务集成"]
-        Skills["🎨 Skills<br/>可复用技能"]
-    end
+ subgraph 组件矩阵
+ Agents["🤖 Agents<br/>领域专家角色"]
+ Commands["⚡ Commands<br/>自定义斜杠命令"]
+ Hooks["🪝 Hooks<br/>事件触发器"]
+ Settings["⚙️ Settings<br/>配置项"]
+ MCPs["🔌 MCPs<br/>外部服务集成"]
+ Skills["🎨 Skills<br/>可复用技能"]
+ end
 
-    subgraph 运行时
-        CC["Claude Code"]
-    end
+ subgraph 运行时
+ CC["Claude Code"]
+ end
 
-    subgraph 监控层
-        Analytics["📊 Analytics<br/>实时监控"]
-        ConvMonitor["💬 Conversation Monitor<br/>对话查看器"]
-        HealthCheck["🔍 Health Check<br/>环境诊断"]
-        Plugins["🔌 Plugin Dashboard<br/>插件管理"]
-    end
+ subgraph 监控层
+ Analytics["📊 Analytics<br/>实时监控"]
+ ConvMonitor["💬 Conversation Monitor<br/>对话查看器"]
+ HealthCheck["🔍 Health Check<br/>环境诊断"]
+ Plugins["🔌 Plugin Dashboard<br/>插件管理"]
+ end
 
-    CLI --> Agents
-    CLI --> Commands
-    CLI --> Hooks
-    CLI --> Settings
-    CLI --> MCPs
-    CLI --> Skills
-    WebUI --> Agents
-    WebUI --> Commands
-    WebUI --> Hooks
-    WebUI --> Settings
-    WebUI --> MCPs
-    WebUI --> Skills
+ CLI --> Agents
+ CLI --> Commands
+ CLI --> Hooks
+ CLI --> Settings
+ CLI --> MCPs
+ CLI --> Skills
+ WebUI --> Agents
+ WebUI --> Commands
+ WebUI --> Hooks
+ WebUI --> Settings
+ WebUI --> MCPs
+ WebUI --> Skills
 
-    Agents --> CC
-    Commands --> CC
-    Hooks --> CC
-    Settings --> CC
-    MCPs --> CC
-    Skills --> CC
+ Agents --> CC
+ Commands --> CC
+ Hooks --> CC
+ Settings --> CC
+ MCPs --> CC
+ Skills --> CC
 
-    CC --> Analytics
-    CC --> ConvMonitor
-    CC --> HealthCheck
-    CC --> Plugins
+ CC --> Analytics
+ CC --> ConvMonitor
+ CC --> HealthCheck
+ CC --> Plugins
 
-    Agents -.->|事件触发| Hooks
-    Commands -.->|调用| MCPs
-    Skills -.->|嵌入| Agents
+ Agents -.->|事件触发| Hooks
+ Commands -.->|调用| MCPs
+ Skills -.->|嵌入| Agents
 ```
 
 入口层有两扇门：CLI 适合脚本化和自动化，Web UI 适合浏览发现。组件矩阵里的六类组件全部注入到 Claude Code 运行时，运行时再通过监控层的四个工具反向暴露状态、性能和诊断信息。
@@ -202,15 +202,15 @@ npx claude-code-templates@latest --mcp database/postgresql-integration --yes
 
 ```json
 {
-  "mcpServers": {
-    "postgresql": {
-      "command": "npx",
-      "args": ["-y", "@anthropic/mcp-server-postgresql"],
-      "env": {
-        "DATABASE_URL": "postgresql://user:password@localhost:5432/mydb"
-      }
-    }
-  }
+ "mcpServers": {
+ "postgresql": {
+ "command": "npx",
+ "args": ["-y", "@anthropic/mcp-server-postgresql"],
+ "env": {
+ "DATABASE_URL": "postgresql://user:password@localhost:5432/mydb"
+ }
+ }
+ }
 }
 ```
 

@@ -22,7 +22,7 @@ NeMo Skills（[NVIDIA-NeMo/Skills](https://github.com/NVIDIA-NeMo/Skills)）是 
 
 > 免责声明：此项目仅用于研究目的，非 NVIDIA 官方产品。
 
-### 1.2 核心能力
+### 1.2 主要能力
 
 | 能力 | 说明 |
 |------|------|
@@ -46,7 +46,7 @@ NeMo Skills（[NVIDIA-NeMo/Skills](https://github.com/NVIDIA-NeMo/Skills)）是 
 
 ## 二、评估基准体系
 
-NeMo Skills 支持广泛的评估基准，覆盖 LLM 的核心能力维度：
+NeMo Skills 支持广泛的评估基准，覆盖 LLM 的主要能力维度：
 
 | 类别 | 基准示例 | 说明 |
 |------|----------|------|

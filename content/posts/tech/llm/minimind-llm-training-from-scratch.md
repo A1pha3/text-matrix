@@ -18,7 +18,7 @@ tags: ["LLM", "大模型训练", "PyTorch", "MoE", "RLHF", "GRPO", "强化学习
 
 该项目在 GitHub 上获得了 **44.4k Stars** 和 **5.3k Forks**，成为开源 LLM 训练领域的标杆项目。
 
-### 1.1 核心定位
+### 1.1 定位
 
 大语言模型（Large Language Model, LLM）的出现引发了全球范围内对 AI 的空前关注。然而，动辄数百亿参数的模型规模使得它们对个人设备而言不仅难以训练，甚至连部署都显得遥不可及。
 
@@ -54,7 +54,7 @@ MiniMind 的诞生正是为了打破这一困境：
 
 ## 二、核心功能
 
-### 2.1 全链路训练流程覆盖
+### 2.1 完整训练流程覆盖
 
 MiniMind 提供了从预训练到强化学习的完整训练链路：
 
@@ -309,7 +309,7 @@ MiniMind 的 RL 训练覆盖 DPO、PPO、GRPO、CISPO 和 Agentic RL。这些算
 
 ### 7.1 统一框架
 
-所有 Policy Optimization (PO) 算法本质上都在优化同一个期望：
+所有 Policy Optimization (PO) 算法实际上都在优化同一个期望：
 
 $$\mathcal{J}_{PO} = \mathbb{E}_{q \sim P(Q), o \sim \pi(O|q)} \left[ \underbrace{f(r_t)}_{\text{策略项}} \cdot \underbrace{g(A_t)}_{\text{优势项}} - \underbrace{h(KL_t)}_{\text{正则项}} \right]$$
 
@@ -540,7 +540,7 @@ curl http://localhost:8998/v1/chat/completions \
 
 接口额外支持 `reasoning_content`、`tool_calls`、`open_thinking` 等字段。
 
-## 十二、最佳实践
+## 十二、推荐做法
 
 ### 12.1 训练稳定性
 
@@ -590,7 +590,7 @@ MiniMind 代表了开源 LLM 训练的新范式：
 
 - ✅ **从零开始**：真正从零训练，不是简单的微调
 - ✅ **极低门槛**：3 元钱、2 小时即可完成训练
-- ✅ **全链路覆盖**：预训练、SFT、LoRA、RLHF、工具调用全覆盖
+- ✅ **完整覆盖**：预训练、SFT、LoRA、RLHF、工具调用全覆盖
 - ✅ **纯 PyTorch**：所有核心算法从 0 实现，透明可控
 - ✅ **生态兼容**：无缝对接 transformers、ollama、vllm 等主流框架
 

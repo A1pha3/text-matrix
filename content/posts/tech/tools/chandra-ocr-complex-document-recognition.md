@@ -58,7 +58,7 @@ draft: false
 
 Chandra 是由 Datalab 团队开源的 OCR 项目，它的核心设计目标就是解决上述"复杂文档"问题。
 
-Chandra 的三大核心能力：
+Chandra 的三大主要能力：
 
 1. **全文档布局理解**：不只识别文字，还理解文档的整体结构（标题、段落、表格、图片等）
 2. **复杂表格识别**：准确处理合并单元格、不规则边框、多层表头等复杂表格
@@ -196,7 +196,7 @@ chandra.config.hw_recognition = {
 
 ---
 
-## 3. 功能详解：Chandra 的核心能力
+## 3. 功能详解：Chandra 的主要能力
 
 ### 3.1 复杂表格识别
 
@@ -511,7 +511,7 @@ processor.process_directory(
 
 ---
 
-## 7. 性能优化与最佳实践
+## 7. 性能优化与推荐做法
 
 ### 7.1 GPU 加速
 
@@ -676,7 +676,7 @@ Chandra 通过：
 
 **相关文章**
 
-- [Superpowers 深度解析：把 AI 编程助手纳入软件工程流程](/posts/tech/superpowers-agentic-skills-framework/)
+- [Superpowers 详细分析：把 AI 编程助手纳入软件工程流程](/posts/tech/superpowers-agentic-skills-framework/)
 - [Deep-Live-Cam 实战：实时换脸技术的正确打开方式](/posts/tech/deep-live-cam-realtime-faceswap/)
 
 ---

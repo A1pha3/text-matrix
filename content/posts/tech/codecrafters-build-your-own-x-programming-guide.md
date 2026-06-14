@@ -4,7 +4,7 @@ date: "2026-04-25T11:20:00+08:00"
 lastmod: 2026-04-25T11:20:00+08:00
 slug: codecrafters-build-your-own-x-programming-guide
 aliases:
-  - /posts/tech/build-your-own-x-programming-by-rebuilding/
+ - /posts/tech/build-your-own-x-programming-by-rebuilding/
 description: "深入解析 Codecrafters build-your-own-x 项目：近50万星的教育圣地，通过从零重构 BitTorrent、Git、Docker 等核心技术，帮助程序员理解底层原理，构建完整知识体系。"
 draft: false
 categories: ["技术笔记"]
@@ -168,23 +168,23 @@ Build your own Redis
 
 ```
 ┌─────────────────────────────────────────┐
-│           User Interface Layer          │
-│  (命令行参数解析、帮助信息、用户交互)      │
+│ User Interface Layer │
+│ (命令行参数解析、帮助信息、用户交互) │
 ├─────────────────────────────────────────┤
-│           Porcelain Commands Layer       │
-│  (commit / push / pull / branch 等)     │
+│ Porcelain Commands Layer │
+│ (commit / push / pull / branch 等) │
 ├─────────────────────────────────────────┤
-│           Plumbing Commands Layer        │
-│  (cat-file / hash-object / ls-tree 等)  │
+│ Plumbing Commands Layer │
+│ (cat-file / hash-object / ls-tree 等) │
 ├─────────────────────────────────────────┤
-│           Object Model Layer             │
-│  (Blob / Tree / Commit / Tag 对象)       │
+│ Object Model Layer │
+│ (Blob / Tree / Commit / Tag 对象) │
 ├─────────────────────────────────────────┤
-│           Repository Layer              │
-│  (.git 目录结构、索引、配置)              │
+│ Repository Layer │
+│ (.git 目录结构、索引、配置) │
 ├─────────────────────────────────────────┤
-│           Packfile & Delta Layer         │
-│  (压缩存储、增量传输)                     │
+│ Packfile & Delta Layer │
+│ (压缩存储、增量传输) │
 └─────────────────────────────────────────┘
 ```
 
@@ -199,28 +199,28 @@ Build your own Redis
 
 ```
 传统虚拟机：
-┌─────────┐  ┌─────────┐  ┌─────────┐
-│  App A  │  │  App B  │  │  App C  │
-├─────────┤  ├─────────┤  ├─────────┤
-│  Guest  │  │  Guest  │  │  Guest  │
-│   OS    │  │   OS    │  │   OS    │
-├─────────┤  ├─────────┤  ├─────────┤
-│        Hypervisor (硬件抽象层)           │
+┌─────────┐ ┌─────────┐ ┌─────────┐
+│ App A │ │ App B │ │ App C │
+├─────────┤ ├─────────┤ ├─────────┤
+│ Guest │ │ Guest │ │ Guest │
+│ OS │ │ OS │ │ OS │
+├─────────┤ ├─────────┤ ├─────────┤
+│ Hypervisor (硬件抽象层) │
 ├─────────────────────────────────────────┤
-│           Host Hardware                 │
+│ Host Hardware │
 └─────────────────────────────────────────┘
 
 容器化：
-┌─────────┐  ┌─────────┐  ┌─────────┐
-│  App A  │  │  App B  │  │  App C  │
-├─────────┤  ├─────────┤  ├─────────┤
-│  Libs   │  │  Libs   │  │  Libs   │
-├─────────┤  ├─────────┤  ├─────────┤
-│  Namespaces (PID/Net/Mount/...)        │
+┌─────────┐ ┌─────────┐ ┌─────────┐
+│ App A │ │ App B │ │ App C │
+├─────────┤ ├─────────┤ ├─────────┤
+│ Libs │ │ Libs │ │ Libs │
+├─────────┤ ├─────────┤ ├─────────┤
+│ Namespaces (PID/Net/Mount/...) │
 ├─────────────────────────────────────────┤
-│        Cgroups (资源限制)               │
+│ Cgroups (资源限制) │
 ├─────────────────────────────────────────┤
-│           Host Kernel                   │
+│ Host Kernel │
 └─────────────────────────────────────────┘
 ```
 
@@ -309,12 +309,12 @@ Build your own Redis
 
 完成自己的实现后，一定要去对比官方源码：
 ```
-你的实现                    官方实现
-┌─────────────────┐       ┌─────────────────┐
-│ 为什么这样设计？ │  ←→   │ 他们考虑了哪些   │
-│ 我的设计缺陷？  │       │ 我没考虑到的case？│
-│ 性能差异在哪？  │       │ 权衡取舍是什么？ │
-└─────────────────┘       └─────────────────┘
+你的实现 官方实现
+┌─────────────────┐ ┌─────────────────┐
+│ 为什么这样设计？ │ ←→ │ 他们考虑了哪些 │
+│ 我的设计缺陷？ │ │ 我没考虑到的case？│
+│ 性能差异在哪？ │ │ 权衡取舍是什么？ │
+└─────────────────┘ └─────────────────┘
 ```
 
 **3. 写学习笔记**
@@ -324,15 +324,15 @@ Build your own Redis
 项目名称：Build your own Git
 完成时间：YYYY-MM-DD
 核心收获：
-  1. Git 的对象模型（blob/tree/commit/tag）
-  2. DAG 结构如何支持分支
-  3. ref 和 HEAD 的关系
+ 1. Git 的对象模型（blob/tree/commit/tag）
+ 2. DAG 结构如何支持分支
+ 3. ref 和 HEAD 的关系
 关键洞察：
-  - Git 的设计哲学是「内容寻址」而非「文件差异」
-  - branch 只是一个 41 字节的文件
-  - push 的本质是传输 packfile
+ - Git 的设计哲学是「内容寻址」而非「文件差异」
+ - branch 只是一个 41 字节的文件
+ - push 的本质是传输 packfile
 延伸思考：
-  - 如果我要设计一个分布式配置中心，参考 Git 的哪些设计？
+ - 如果我要设计一个分布式配置中心，参考 Git 的哪些设计？
 ```
 
 ---
@@ -350,9 +350,9 @@ git --version
 docker --version
 
 # 你选择的编程语言环境
-python3 --version  # 或
-go version         # 或
-rustc --version    # 或
+python3 --version # 或
+go version # 或
+rustc --version # 或
 node --version
 ```
 
@@ -370,11 +370,11 @@ git clone https://github.com/git/git
 克隆仓库后，你会看到如下结构：
 ```
 build-your-own-x/
-├── CONTRIBUTING.md          # 贡献指南
-├── README.md                # 项目总览
+├── CONTRIBUTING.md # 贡献指南
+├── README.md # 项目总览
 ├── .github/
-│   └── workflows/           # CI/CD 配置
-├── build-your-own-actor/    # 每个技术方向一个目录
+│ └── workflows/ # CI/CD 配置
+├── build-your-own-actor/ # 每个技术方向一个目录
 ├── build-your-own-api/
 ├── build-your-own-bittorrent/
 ├── build-your-own-blockchain/
@@ -407,12 +407,12 @@ build-your-own-x/
 ```
 build-your-own-git/
 ├── README.md
-├── REQUIREMENTS.md          # 需求规范
-├── TESTED_VERSION.md        # 测试环境版本
-├── solutions/               # 参考实现（按语言分组）
-│   ├── python/
-│   ├── go/
-│   └── ...
+├── REQUIREMENTS.md # 需求规范
+├── TESTED_VERSION.md # 测试环境版本
+├── solutions/ # 参考实现（按语言分组）
+│ ├── python/
+│ ├── go/
+│ └── ...
 └── .gitignore
 ```
 
@@ -491,13 +491,13 @@ cd solutions/python
 **BitTorrent 文件结构（.torrent）**
 ```
 {
-  "announce": "http://tracker.example.com:6969/announce",  // tracker 地址
-  "info": {
-    "name": "ubuntu-22.04.iso",                              // 文件名
-    "length": 3758096384,                                    // 文件大小
-    "piece length": 524288,                                  // 每个 piece 512KB
-    "pieces": "a8f3e2d1..."                                   // 所有 piece 的 SHA-1 哈希
-  }
+ "announce": "http://tracker.example.com:6969/announce", // tracker 地址
+ "info": {
+ "name": "ubuntu-22.04.iso", // 文件名
+ "length": 3758096384, // 文件大小
+ "piece length": 524288, // 每个 piece 512KB
+ "pieces": "a8f3e2d1..." // 所有 piece 的 SHA-1 哈希
+ }
 }
 ```
 
@@ -519,65 +519,65 @@ cd solutions/python
 ```python
 import hashlib
 import socket
-import bencodepy  # bencode 编码库
+import bencodepy # bencode 编码库
 
 class BitTorrentClient:
-    def __init__(self, torrent_path):
-        # 读取 .torrent 文件
-        with open(torrent_path, 'rb') as f:
-            self.torrent = bencodepy.decode(f.read())
-        
-        self.peer_id = self._generate_peer_id()
-        self.peers = []
-    
-    def _generate_peer_id(self):
-        # 生成 20 字节的 peer_id
-        import random
-        return '-PY0001-' + ''.join([str(random.randint(0, 9)) for _ in range(12)])
-    
-    def get_peers(self):
-        """向 tracker 注册并获取 peers 列表"""
-        info_hash = hashlib.sha1(bencodepy.encode(self.torrent[b'info'])).digest()
-        
-        # 构建 HTTP GET 请求到 tracker
-        params = {
-            'info_hash': info_hash,
-            'peer_id': self.peer_id.encode(),
-            'port': 6881,
-            'uploaded': 0,
-            'downloaded': 0,
-            'left': self.torrent[b'info'][b'length'],
-            'compact': 1
-        }
-        
-        # 发送请求并解析响应
-        # ...
-        return self.peers
-    
-    def download_piece(self, peer, piece_index):
-        """从指定 peer 下载指定 piece"""
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((peer['ip'], peer['port']))
-        
-        # 1. 握手
-        protocol = b'BitTorrent protocol'
-        handshake = protocol + (b'\x00' * 8) + info_hash + self.peer_id.encode()
-        sock.send(handshake)
-        
-        # 2. 接收握手响应
-        response = sock.recv(68)
-        
-        # 3. 下载 piece
-        # ... 实现 BitTorrent 协议的消息交互
-        
-        sock.close()
-        return piece_data
-    
-    def verify_piece(self, piece_index, data):
-        """验证 piece 的 SHA-1 哈希"""
-        expected_hash = self.torrent[b'info'][b'pieces'][piece_index * 20:(piece_index + 1) * 20]
-        actual_hash = hashlib.sha1(data).digest()
-        return expected_hash == actual_hash
+ def __init__(self, torrent_path):
+ # 读取 .torrent 文件
+ with open(torrent_path, 'rb') as f:
+ self.torrent = bencodepy.decode(f.read())
+ 
+ self.peer_id = self._generate_peer_id()
+ self.peers = []
+ 
+ def _generate_peer_id(self):
+ # 生成 20 字节的 peer_id
+ import random
+ return '-PY0001-' + ''.join([str(random.randint(0, 9)) for _ in range(12)])
+ 
+ def get_peers(self):
+ """向 tracker 注册并获取 peers 列表"""
+ info_hash = hashlib.sha1(bencodepy.encode(self.torrent[b'info'])).digest()
+ 
+ # 构建 HTTP GET 请求到 tracker
+ params = {
+ 'info_hash': info_hash,
+ 'peer_id': self.peer_id.encode(),
+ 'port': 6881,
+ 'uploaded': 0,
+ 'downloaded': 0,
+ 'left': self.torrent[b'info'][b'length'],
+ 'compact': 1
+ }
+ 
+ # 发送请求并解析响应
+ # ...
+ return self.peers
+ 
+ def download_piece(self, peer, piece_index):
+ """从指定 peer 下载指定 piece"""
+ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+ sock.connect((peer['ip'], peer['port']))
+ 
+ # 1. 握手
+ protocol = b'BitTorrent protocol'
+ handshake = protocol + (b'\x00' * 8) + info_hash + self.peer_id.encode()
+ sock.send(handshake)
+ 
+ # 2. 接收握手响应
+ response = sock.recv(68)
+ 
+ # 3. 下载 piece
+ # ... 实现 BitTorrent 协议的消息交互
+ 
+ sock.close()
+ return piece_data
+ 
+ def verify_piece(self, piece_index, data):
+ """验证 piece 的 SHA-1 哈希"""
+ expected_hash = self.torrent[b'info'][b'pieces'][piece_index * 20:(piece_index + 1) * 20]
+ actual_hash = hashlib.sha1(data).digest()
+ return expected_hash == actual_hash
 ```
 
 ### 6.3 关键实现要点
@@ -587,7 +587,7 @@ class BitTorrentClient:
 BitTorrent 使用 B 编码（Bencode）格式：
 ```
 字符串：4:spam → "spam"
-整数： i3e    → 3
+整数： i3e → 3
 列表： li3e4:spame → [3, "spam"]
 字典： d3:foo3:bare → {"foo": "bar"}
 ```
@@ -596,18 +596,18 @@ BitTorrent 使用 B 编码（Bencode）格式：
 
 ```python
 def select_piece_to_download(self, available_pieces, peer_pieces):
-    """
-    Rarest First 策略：
-    1. 统计每个 piece 在所有 peers 中的分布
-    2. 优先下载 rarity（稀有度）最低的 piece
-    """
-    piece_rarity = Counter()
-    for peer in peer_pieces:
-        for piece in peer:
-            piece_rarity[piece] += 1
-    
-    # 选择 rarity 最小的 piece
-    return min(available_pieces, key=lambda p: piece_rarity.get(p, float('inf')))
+ """
+ Rarest First 策略：
+ 1. 统计每个 piece 在所有 peers 中的分布
+ 2. 优先下载 rarity（稀有度）最低的 piece
+ """
+ piece_rarity = Counter()
+ for peer in peer_pieces:
+ for piece in peer:
+ piece_rarity[piece] += 1
+ 
+ # 选择 rarity 最小的 piece
+ return min(available_pieces, key=lambda p: piece_rarity.get(p, float('inf')))
 ```
 
 **3. 磁盘 I/O 优化**

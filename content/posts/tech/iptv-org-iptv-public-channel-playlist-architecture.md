@@ -11,7 +11,6 @@ tags: ["GitHub", "TypeScript", "IPTV", "GitHub Actions", "开源"]
 # iptv-org/iptv 架构拆解：一个 12 万星仓库如何用 GitHub Issues + Actions 当 CMS
 
 > 一句话核心判断：**iptv-org/iptv 把 GitHub Issues 当作无服务器 CMS，用 GitHub Actions 当 ETL（Extract-Transform-Load）引擎，每天自动生成 600+ 个公开 m3u 播放列表，整个仓库不存任何视频文件，只存频道链接元数据**。这是一个用 Git 原生能力拼出"自动化内容运营"的典型案例，比传统 CMS 方案轻量得多，但代价是把"数据完整性"和"链接存活率"全部押注在社区贡献者的提交习惯上。
-
 ## 一、项目坐标
 
 | 字段 | 值 |

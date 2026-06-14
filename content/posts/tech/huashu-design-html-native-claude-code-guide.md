@@ -16,9 +16,9 @@ tags: ["Claude Code", "HTML设计", "AI设计工具", "原型设计", "设计系
 
 **Huashu Design**（花叔 Design）是目前 AI Agent 设计工具领域最具影响力的开源 skill 之一，由独立开发者花生（花叔）创建，于 2026-04-19 公开，不到两周时间即斩获超过 10,000 star，fork 数高达 1,478，成为 GitHub Trending 榜上的现象级项目。
 
-### 核心理念：一句话 prompt，换一份能交付的设计
+### 设计理念：一句话 prompt，换一份能交付的设计
 
-传统设计工具（Figma、Sketch、Adobe XD）依赖 GUI 操作，需要设计师手动排版、调色、添加动画。Huashu Design 的核心创新在于**将设计能力封装为 Agent 可调用的 skill**，用户只需在 Claude Code（或其他支持 skills 的 AI Agent）中描述需求，Agent 即可自动完成从设计方向选择、品牌资产采集、高保真原型制作到视频导出的全流程。
+传统设计工具（Figma、Sketch、Adobe XD）依赖 GUI 操作，需要设计师手动排版、调色、添加动画。Huashu Design 把设计能力封装为 Agent 可调用的 skill，用户只需在 Claude Code（或其他支持 skills 的 AI Agent）中描述需求，Agent 即可自动完成从设计方向选择、品牌资产采集、高保真原型制作到视频导出的全流程。
 
 ### 与 Claude Design 的定位差异
 
@@ -31,7 +31,7 @@ tags: ["Claude Code", "HTML设计", "AI设计工具", "原型设计", "设计系
 | **跨 Agent** | 专属 Claude.ai | 任意 agent 通用（Claude Code / Cursor / Codex / OpenClaw） |
 | **配额限制** | 订阅 quota | API 消耗，并行 agent 不受限 |
 
-Huashu Design 的本质不是「更好的图形工具」，而是「**让图形工具这层消失**」——用户不再需要打开任何设计软件，直接用自然语言驱动 AI 完成设计工作。
+Huashu Design 做的事情不是「更好的图形工具」，而是「**让图形工具这层消失**」——用户不再需要打开任何设计软件，直接用自然语言驱动 AI 完成设计工作。
 
 ## 二、原理分析：HTML 原生设计理念
 
@@ -54,7 +54,7 @@ AI Agent 的工作介质是代码（而非图形界面）。HTML 作为纯文本
 
 Huashu Design 通过以下机制对抗 AI slop：
 
-**核心资产协议**：涉及具体品牌时，强制执行 5 步硬流程——问用户资产清单 → 搜官方渠道 → 下载 Logo/产品图/UI 截图 → grep 提取色值 → 固化 `brand-spec.md`。这个协议直接决定了输出质量是 40 分还是 90 分。
+**品牌资产协议**：涉及具体品牌时，强制执行 5 步硬流程——问用户资产清单 → 搜官方渠道 → 下载 Logo/产品图/UI 截图 → grep 提取色值 → 固化 `brand-spec.md`。这个协议直接决定了输出质量是 40 分还是 90 分。
 
 **禁止清单**：
 
@@ -79,7 +79,7 @@ Huashu Design 通过以下机制对抗 AI slop：
 
 ```
 huashu-design/
-├── SKILL.md                 # 主文档（给 agent 读，核心工作流定义）
+├── SKILL.md                 # 主文档（给 agent 读，工作流定义）
 ├── README.md                # 本文件（给用户读）
 ├── assets/                  # Starter Components
 │   ├── animations.jsx       # Stage + Sprite + Easing + interpolate 动画引擎
@@ -419,9 +419,9 @@ npx skills add alchaincyf/huashu-design
 - **OpenClaw**
 - **Hermes**
 
-### 7.2 核心工作流：Junior Designer 模式
+### 7.2 主要工作流：Junior Designer 模式
 
-Huashu Design 默认采用 Junior Designer 工作流，核心理念是**「理解错了早改比晚改便宜 100 倍」**：
+Huashu Design 默认采用 Junior Designer 工作流，设计理念是**「理解错了早改比晚改便宜 100 倍」**：
 
 **Step 1 · 开工前先展示假设**
 HTML 文件开头写下 assumptions + reasoning + placeholders，尽早 show 给用户确认方向。
@@ -458,7 +458,7 @@ React 组件填 placeholder，再 show 一次让用户看进度。
 #### 场景二：交互原型（App/Web）
 
 ```
-「做个 AI 番茄钟 iOS 原型，4 个核心屏幕要真能点击」
+「做个 AI 番茄钟 iOS 原型，4 个主要屏幕要真能点击」
 ```
 
 **专属守则**：
@@ -507,7 +507,7 @@ React 组件填 placeholder，再 show 一次让用户看进度。
 
 ## 八、开发扩展：API、插件与二次开发
 
-### 8.1 核心 API
+### 8.1 主要 API
 
 #### 动画引擎 API
 
@@ -600,7 +600,7 @@ New Style aesthetic:
 
 ### 8.4 品牌资产协议的二次开发扩展
 
-核心资产协议支持扩展新的资产类型：
+品牌资产协议支持扩展新的资产类型：
 
 ```javascript
 // 在 SKILL.md 的 Step 2 增加新资产搜索路径

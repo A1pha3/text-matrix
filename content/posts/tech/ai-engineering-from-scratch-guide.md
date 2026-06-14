@@ -3,8 +3,8 @@ title: "AI Engineering From Scratch：一份从\"会调用API\"到\"能独立构
 date: "2026-05-20T20:25:00+08:00"
 slug: "ai-engineering-from-scratch-guide"
 aliases:
-  - "/posts/tech/ai-engineering-from-scratch-complete-guide/"
-  - "/posts/tech/ai-engineering-from-scratch-complete-curriculum/"
+ - "/posts/tech/ai-engineering-from-scratch-complete-guide/"
+ - "/posts/tech/ai-engineering-from-scratch-complete-curriculum/"
 description: "AI Engineering From Scratch是一个覆盖20个阶段、428节课程的免费AI工程教程，涵盖数学基础、机器学习、深度学习、LLM构建、Agent开发、多Agent系统等完整路径。每课遵循‘从零构建→生产库验证→产出可安装工具‘的闭环，已斩获8973 Stars。本文深入解析其课程架构、核心方法论与快速上手路径。"
 draft: false
 categories: ["技术笔记"]
@@ -27,46 +27,46 @@ AI 学习材料的最大问题是，不是太少碎片化。一篇论文解读�
 
 ```mermaid
 flowchart TB
-  P0["Phase 0<br/>Setup & Tooling"] --> P1["Phase 1<br/>Math Foundations"]
-  P1 --> P2["Phase 2<br/>ML Fundamentals"]
-  P2 --> P3["Phase 3<br/>Deep Learning Core"]
-  P3 --> P4["Phase 4<br/>Vision"]
-  P3 --> P5["Phase 5<br/>NLP"]
-  P3 --> P6["Phase 6<br/>Speech & Audio"]
-  P3 --> P9["Phase 9<br/>RL"]
-  P5 --> P7["Phase 7<br/>Transformers"]
-  P7 --> P8["Phase 8<br/>GenAI"]
-  P7 --> P10["Phase 10<br/>LLMs from Scratch"]
-  P10 --> P11["Phase 11<br/>LLM Engineering"]
-  P10 --> P12["Phase 12<br/>Multimodal"]
-  P11 --> P13["Phase 13<br/>Tools & Protocols"]
-  P13 --> P14["Phase 14<br/>Agent Engineering"]
-  P14 --> P15["Phase 15<br/>Autonomous Systems"]
-  P15 --> P16["Phase 16<br/>Multi-Agent & Swarms"]
-  P14 --> P17["Phase 17<br/>Infrastructure & Production"]
-  P15 --> P18["Phase 18<br/>Ethics & Alignment"]
-  P16 --> P19["Phase 19<br/>Capstone Projects"]
-  P17 --> P19
-  P18 --> P19
+ P0["Phase 0<br/>Setup & Tooling"] --> P1["Phase 1<br/>Math Foundations"]
+ P1 --> P2["Phase 2<br/>ML Fundamentals"]
+ P2 --> P3["Phase 3<br/>Deep Learning Core"]
+ P3 --> P4["Phase 4<br/>Vision"]
+ P3 --> P5["Phase 5<br/>NLP"]
+ P3 --> P6["Phase 6<br/>Speech & Audio"]
+ P3 --> P9["Phase 9<br/>RL"]
+ P5 --> P7["Phase 7<br/>Transformers"]
+ P7 --> P8["Phase 8<br/>GenAI"]
+ P7 --> P10["Phase 10<br/>LLMs from Scratch"]
+ P10 --> P11["Phase 11<br/>LLM Engineering"]
+ P10 --> P12["Phase 12<br/>Multimodal"]
+ P11 --> P13["Phase 13<br/>Tools & Protocols"]
+ P13 --> P14["Phase 14<br/>Agent Engineering"]
+ P14 --> P15["Phase 15<br/>Autonomous Systems"]
+ P15 --> P16["Phase 16<br/>Multi-Agent & Swarms"]
+ P14 --> P17["Phase 17<br/>Infrastructure & Production"]
+ P15 --> P18["Phase 18<br/>Ethics & Alignment"]
+ P16 --> P19["Phase 19<br/>Capstone Projects"]
+ P17 --> P19
+ P18 --> P19
 ```textpython
 def run(query, tools):
-    history = [user(query)]
-    for step in range(MAX_STEPS):
-        msg = llm(history)
-        if msg.tool_calls:
-            for call in msg.tool_calls:
-                result = tools[call.name](**call.args)
-                history.append(tool_result(call.id, result))
-            continue
-        return msg.content
-    raise StepLimitExceeded
+ history = [user(query)]
+ for step in range(MAX_STEPS):
+ msg = llm(history)
+ if msg.tool_calls:
+ for call in msg.tool_calls:
+ result = tools[call.name](**call.args)
+ history.append(tool_result(call.id, result))
+ continue
+ return msg.content
+ raise StepLimitExceeded
 ```textmermaid
 flowchart LR
-  M["MOTTO<br/><sub>核心一句话</sub>"] --> Pr["PROBLEM<br/><sub>具体痛点</sub>"]
-  Pr --> C["CONCEPT<br/><sub>图示与直觉</sub>"]
-  C --> B["BUILD IT<br/><sub>纯数学，不用框架</sub>"]
-  B --> U["USE IT<br/><sub>同概念在PyTorch/sklearn里</sub>"]
-  U --> S["SHIP IT<br/><sub>产出prompt·skill·agent·MCP</sub>"]
+ M["MOTTO<br/><sub>核心一句话</sub>"] --> Pr["PROBLEM<br/><sub>具体痛点</sub>"]
+ Pr --> C["CONCEPT<br/><sub>图示与直觉</sub>"]
+ C --> B["BUILD IT<br/><sub>纯数学，不用框架</sub>"]
+ B --> U["USE IT<br/><sub>同概念在PyTorch/sklearn里</sub>"]
+ U --> S["SHIP IT<br/><sub>产出prompt·skill·agent·MCP</sub>"]
 ```textbash
 git clone https://github.com/rohitg00/ai-engineering-from-scratch.git
 cd ai-engineering-from-scratch
@@ -75,16 +75,16 @@ python phases/01-math-foundations/01-linear-algebra-intuition/code/vectors.py
 /find-your-level
 ```textpython
 def run(query, tools):
-    history = [user(query)]
-    for step in range(MAX_STEPS):
-        msg = llm(history)          # 步骤A
-        if msg.tool_calls:
-            for call in msg.tool_calls:
-                result = tools[call.name](**call.args)  # 步骤B
-                history.append(tool_result(call.id, result))
-            continue
-        return msg.content           # 步骤C
-    raise StepLimitExceeded
+ history = [user(query)]
+ for step in range(MAX_STEPS):
+ msg = llm(history) # 步骤A
+ if msg.tool_calls:
+ for call in msg.tool_calls:
+ result = tools[call.name](**call.args) # 步骤B
+ history.append(tool_result(call.id, result))
+ continue
+ return msg.content # 步骤C
+ raise StepLimitExceeded
 ```
 
 <details>

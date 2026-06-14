@@ -55,15 +55,15 @@ tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Voice AI", "Google ADK",
 
 ```
 awesome-llm-apps/
-├── starter_ai_agents/         # 🌱 入门级 AI Agent
-├── advanced_ai_agents/       # 🚀 进阶 AI Agent
-├── advanced_llm_apps/          # 💾 LLM 应用 + Memory
-├── ai_agent_framework_crash_course/  # 🧑‍🏫 Agent 框架课程
-├── awesome_agent_skills/      # 🧩 Agent Skills
-├── mcp_ai_agents/            # 🤖 MCP AI Agents
-├── rag_tutorials/            # 📀 RAG 教程
-├── voice_ai_agents/          # 🗣️ 语音 AI Agents
-└── docs/                     # 文档资源
+├── starter_ai_agents/ # 🌱 入门级 AI Agent
+├── advanced_ai_agents/ # 🚀 进阶 AI Agent
+├── advanced_llm_apps/ # 💾 LLM 应用 + Memory
+├── ai_agent_framework_crash_course/ # 🧑‍🏫 Agent 框架课程
+├── awesome_agent_skills/ # 🧩 Agent Skills
+├── mcp_ai_agents/ # 🤖 MCP AI Agents
+├── rag_tutorials/ # 📀 RAG 教程
+├── voice_ai_agents/ # 🗣️ 语音 AI Agents
+└── docs/ # 文档资源
 ```
 
 . 项目分类
@@ -108,24 +108,24 @@ awesome-llm-apps/
 ```python
 AI Travel Agent 核心架构
 class TravelAgent:
-    def __init__(self, llm, search_tool, booking_tool):
-        self.llm = llm
-        self.search = search_tool
-        self.booking = booking_tool
+ def __init__(self, llm, search_tool, booking_tool):
+ self.llm = llm
+ self.search = search_tool
+ self.booking = booking_tool
 
-    def plan_trip(self, destination, dates, budget):
-        # 1. 搜索目的地信息
-        info = self.search.search(destination)
+ def plan_trip(self, destination, dates, budget):
+ # 1. 搜索目的地信息
+ info = self.search.search(destination)
 
-        # 2. 制定行程
-        itinerary = self.llm.generate(
-            f"根据信息 {info} 制定 {dates} 的行程，预算 {budget}"
-        )
+ # 2. 制定行程
+ itinerary = self.llm.generate(
+ f"根据信息 {info} 制定 {dates} 的行程，预算 {budget}"
+ )
 
-        # 3. 预订机票酒店
-        bookings = self.booking.book(itinerary)
+ # 3. 预订机票酒店
+ bookings = self.booking.book(itinerary)
 
-        return {"itinerary": itinerary, "bookings": bookings}
+ return {"itinerary": itinerary, "bookings": bookings}
 ```
 
 . AI Data Analysis Agent
@@ -137,18 +137,18 @@ from langchain.tools import PythonREPLTool
 
 创建数据分析 Agent
 data_agent = Agent(
-    llm=llm,
-    tools=[
-        PythonREPLTool(),  # 执行 Python 代码
-        DataLoader(),      # 加载数据集
-        VisualizationTool() # 生成可视化
-    ],
-    prompt="你是一个专业的数据分析师，可以加载、清洗、分析数据并生成可视化"
+ llm=llm,
+ tools=[
+ PythonREPLTool(), # 执行 Python 代码
+ DataLoader(), # 加载数据集
+ VisualizationTool() # 生成可视化
+ ],
+ prompt="你是一个专业的数据分析师，可以加载、清洗、分析数据并生成可视化"
 )
 
 分析数据
 result = data_agent.run(
-    "加载 sales.csv，计算月环比增长率，生成趋势图"
+ "加载 sales.csv，计算月环比增长率，生成趋势图"
 )
 ```
 
@@ -192,28 +192,28 @@ from crewai import Agent, Task, Crew
 
 创建多个专业 Agent
 market_agent = Agent(
-    role="Market Analyst",
-    goal="分析目标公司的市场份额和竞争格局",
-    backstory="你是一名资深的行业分析师"
+ role="Market Analyst",
+ goal="分析目标公司的市场份额和竞争格局",
+ backstory="你是一名资深的行业分析师"
 )
 
 financial_agent = Agent(
-    role="Financial Analyst",
-    goal="评估公司的财务健康状况",
-    backstory="你是一名资深的财务分析师"
+ role="Financial Analyst",
+ goal="评估公司的财务健康状况",
+ backstory="你是一名资深的财务分析师"
 )
 
 legal_agent = Agent(
-    role="Legal Analyst",
-    goal="识别潜在的法律风险",
-    backstory="你是一名资深律师"
+ role="Legal Analyst",
+ goal="识别潜在的法律风险",
+ backstory="你是一名资深律师"
 )
 
 组建团队
 crew = Crew(
-    agents=[market_agent, financial_agent, legal_agent],
-    tasks=[market_task, financial_task, legal_task],
-    process="hierarchical"  # 层级协作
+ agents=[market_agent, financial_agent, legal_agent],
+ tasks=[market_task, financial_task, legal_task],
+ process="hierarchical" # 层级协作
 )
 
 执行任务
@@ -225,41 +225,41 @@ result = crew.kickoff()
 ```python
 自我进化 Agent 核心机制
 class SelfEvolvingAgent:
-    def __init__(self, llm):
-        self.llm = llm
-        self.performance_history = []
-        self.skills = {}
+ def __init__(self, llm):
+ self.llm = llm
+ self.performance_history = []
+ self.skills = {}
 
-    def execute_task(self, task):
-        result = self.llm.execute(task)
+ def execute_task(self, task):
+ result = self.llm.execute(task)
 
-        # 1. 评估表现
-        score = self.evaluate_performance(result)
+ # 1. 评估表现
+ score = self.evaluate_performance(result)
 
-        # 2. 记录经验
-        self.performance_history.append({
-            "task": task,
-            "result": result,
-            "score": score
-        })
+ # 2. 记录经验
+ self.performance_history.append({
+ "task": task,
+ "result": result,
+ "score": score
+ })
 
-        # 3. 如果表现不佳，改进策略
-        if score < threshold:
-            self.improve_strategy(task, result)
+ # 3. 如果表现不佳，改进策略
+ if score < threshold:
+ self.improve_strategy(task, result)
 
-        return result
+ return result
 
-    def improve_strategy(self, task, result):
-        # 分析失败原因
-        failure_analysis = self.analyze_failure(task, result)
+ def improve_strategy(self, task, result):
+ # 分析失败原因
+ failure_analysis = self.analyze_failure(task, result)
 
-        # 生成改进建议
-        improvement = self.llm.generate(
-            f"分析以下失败案例并提出改进建议：{failure_analysis}"
-        )
+ # 生成改进建议
+ improvement = self.llm.generate(
+ f"分析以下失败案例并提出改进建议：{failure_analysis}"
+ )
 
-        # 更新 Agent 策略
-        self.update_strategy(improvement)
+ # 更新 Agent 策略
+ self.update_strategy(improvement)
 ```
 
 ---
@@ -282,23 +282,23 @@ from langchain.agents import Agent
 
 创建棋类 Agent
 chess_agent = Agent(
-    llm=llm,
-    tools=[chess_ai_engine],
-    prompt="你是一名国际象棋大师，可以分析棋局并制定最优策略"
+ llm=llm,
+ tools=[chess_ai_engine],
+ prompt="你是一名国际象棋大师，可以分析棋局并制定最优策略"
 )
 
 对弈
 board = chess.Board()
 while not board.is_game_over():
-    # Agent 思考下一步
-    move = chess_agent.execute(
-        f"当前棋局：{board.fen()}，请给出下一步棋"
-    )
+ # Agent 思考下一步
+ move = chess_agent.execute(
+ f"当前棋局：{board.fen()}，请给出下一步棋"
+ )
 
-    # 执行棋步
-    board.push_san(move)
+ # 执行棋步
+ board.push_san(move)
 
-    print(f"Agent 走棋：{move}")
+ print(f"Agent 走棋：{move}")
 ```
 
 ---
@@ -319,22 +319,22 @@ while not board.is_game_over():
 ```python
 Voice RAG Agent 核心流程
 class VoiceRAGAgent:
-    def __init__(self):
-        self.stt = WhisperSTT()        # 语音转文字
-        self.rag = RAGPipeline()       # RAG 检索
-        self.tts = ElevenLabsTTS()     # 文字转语音
+ def __init__(self):
+ self.stt = WhisperSTT() # 语音转文字
+ self.rag = RAGPipeline() # RAG 检索
+ self.tts = ElevenLabsTTS() # 文字转语音
 
-    def handle_voice_query(self, audio):
-        # 1. 语音转文字
-        query = self.stt.transcribe(audio)
+ def handle_voice_query(self, audio):
+ # 1. 语音转文字
+ query = self.stt.transcribe(audio)
 
-        # 2. RAG 检索答案
-        answer = self.rag.retrieve_and_generate(query)
+ # 2. RAG 检索答案
+ answer = self.rag.retrieve_and_generate(query)
 
-        # 3. 文字转语音
-        response_audio = self.tts.speak(answer)
+ # 3. 文字转语音
+ response_audio = self.tts.speak(answer)
 
-        return response_audio
+ return response_audio
 ```
 
 ---
@@ -366,19 +366,19 @@ browser_mcp = MCPClient("http://localhost:3000")
 
 创建 Browser Agent
 browser_agent = Agent(
-    llm=llm,
-    tools=[
-        browser_mcp.navigate(url),      # 导航到 URL
-        browser_mcp.screenshot(),         # 截图
-        browser_mcp.click(selector),      # 点击元素
-        browser_mcp.type_text(text),     # 输入文本
-        browser_mcp.get_content(),       # 获取页面内容
-    ]
+ llm=llm,
+ tools=[
+ browser_mcp.navigate(url), # 导航到 URL
+ browser_mcp.screenshot(), # 截图
+ browser_mcp.click(selector), # 点击元素
+ browser_mcp.type_text(text), # 输入文本
+ browser_mcp.get_content(), # 获取页面内容
+ ]
 )
 
 执行任务
 result = browser_agent.run(
-    "访问 GitHub，搜索 awesome-llm-apps 仓库，获取 star 数量"
+ "访问 GitHub，搜索 awesome-llm-apps 仓库，获取 star 数量"
 )
 ```
 
@@ -387,26 +387,26 @@ result = browser_agent.run(
 ```python
 Multi-MCP Agent Router
 class MultiMCPRouter:
-    def __init__(self, mcps):
-        self.mcps = mcps
+ def __init__(self, mcps):
+ self.mcps = mcps
 
-    async def route(self, query):
-        # 分析查询类型
-        intent = self.classify_intent(query)
+ async def route(self, query):
+ # 分析查询类型
+ intent = self.classify_intent(query)
 
-        # 选择合适的 MCP
-        if "github" in intent:
-            return await self.mcps["github"].process(query)
-        elif "notion" in intent:
-            return await self.mcps["notion"].process(query)
-        elif "web" in intent:
-            return await self.mcps["browser"].process(query)
-        else:
-            # 多 MCP 协作
-            results = await asyncio.gather(*[
-                mcp.process(query) for mcp in self.mcps.values()
-            ])
-            return self.synthesize(results)
+ # 选择合适的 MCP
+ if "github" in intent:
+ return await self.mcps["github"].process(query)
+ elif "notion" in intent:
+ return await self.mcps["notion"].process(query)
+ elif "web" in intent:
+ return await self.mcps["browser"].process(query)
+ else:
+ # 多 MCP 协作
+ results = await asyncio.gather(*[
+ mcp.process(query) for mcp in self.mcps.values()
+ ])
+ return self.synthesize(results)
 ```
 
 ---
@@ -439,22 +439,22 @@ from langchain.retrievers import VectorStoreRetriever
 
 创建 Agentic RAG
 agentic_rag = Agent(
-    llm=llm,
-    tools=[
-        VectorStoreRetriever(vectorstore),  # 向量检索
-        WebSearchTool(),                     # 网络搜索
-        KnowledgeGraphTool(),                # 知识图谱
-    ],
-    prompt="""你是一个研究助手。当用户提问时：
-    1. 先检索向量数据库
-    2. 如需最新信息，使用网络搜索
-    3. 如需关系信息，查询知识图谱
-    4. 综合所有来源生成答案"""
+ llm=llm,
+ tools=[
+ VectorStoreRetriever(vectorstore), # 向量检索
+ WebSearchTool(), # 网络搜索
+ KnowledgeGraphTool(), # 知识图谱
+ ],
+ prompt="""你是一个研究助手。当用户提问时：
+ 1. 先检索向量数据库
+ 2. 如需最新信息，使用网络搜索
+ 3. 如需关系信息，查询知识图谱
+ 4. 综合所有来源生成答案"""
 )
 
 检索增强生成
 result = agentic_rag.run(
-    "查找 2024 年 AI Agent 领域的最新研究进展"
+ "查找 2024 年 AI Agent 领域的最新研究进展"
 )
 ```
 
@@ -471,29 +471,29 @@ vectorstore = Chroma(persist_directory="./chroma_db")
 
 知识图谱增强检索
 def kg_enhanced_retrieval(query, top_k=5):
-    # 1. 向量相似度检索
-    vector_results = vectorstore.similarity_search(query, k=top_k)
+ # 1. 向量相似度检索
+ vector_results = vectorstore.similarity_search(query, k=top_k)
 
-    # 2. 知识图谱关系检索
-    entities = extract_entities(query)
-    kg_results = []
-    for entity in entities:
-        kg_results.extend(graph.query(f"""
-            MATCH (e)-[r]-(related)
-            WHERE e.name = '{entity}'
-            RETURN e, r, related
-            LIMIT 5
-        """))
+ # 2. 知识图谱关系检索
+ entities = extract_entities(query)
+ kg_results = []
+ for entity in entities:
+ kg_results.extend(graph.query(f"""
+ MATCH (e)-[r]-(related)
+ WHERE e.name = '{entity}'
+ RETURN e, r, related
+ LIMIT 5
+ """))
 
-    # 3. 合并结果并去重
-    combined = merge_results(vector_results, kg_results)
+ # 3. 合并结果并去重
+ combined = merge_results(vector_results, kg_results)
 
-    # 4. 生成带引用的答案
-    answer = llm.generate(
-        f"基于以下上下文回答：{combined}\n\n 问题：{query}"
-    )
+ # 4. 生成带引用的答案
+ answer = llm.generate(
+ f"基于以下上下文回答：{combined}\n\n 问题：{query}"
+ )
 
-    return answer
+ return answer
 ```
 
 ---
@@ -516,37 +516,37 @@ def kg_enhanced_retrieval(query, top_k=5):
 ```python
 LLM App with Personalized Memory
 class PersonalizedMemory:
-    def __init__(self, llm, vectorstore):
-        self.llm = llm
-        self.memory_store = vectorstore
-        self.user_profile = {}
+ def __init__(self, llm, vectorstore):
+ self.llm = llm
+ self.memory_store = vectorstore
+ self.user_profile = {}
 
-    def update_memory(self, interaction):
-        # 1. 提取关键信息
-        key_info = self.extract_key_info(interaction)
+ def update_memory(self, interaction):
+ # 1. 提取关键信息
+ key_info = self.extract_key_info(interaction)
 
-        # 2. 存储到向量数据库
-        self.memory_store.add_documents(key_info)
+ # 2. 存储到向量数据库
+ self.memory_store.add_documents(key_info)
 
-        # 3. 更新用户画像
-        self.user_profile.update(self.infer_preferences(interaction))
+ # 3. 更新用户画像
+ self.user_profile.update(self.infer_preferences(interaction))
 
-    def generate_response(self, query):
-        # 1. 检索相关记忆
-        relevant_memory = self.memory_store.similarity_search(
-            query,
-            filter={"user_id": self.user_id}
-        )
+ def generate_response(self, query):
+ # 1. 检索相关记忆
+ relevant_memory = self.memory_store.similarity_search(
+ query,
+ filter={"user_id": self.user_id}
+ )
 
-        # 2. 构建个性化提示
-        personalized_prompt = self.build_prompt(
-            query=query,
-            memory=relevant_memory,
-            profile=self.user_profile
-        )
+ # 2. 构建个性化提示
+ personalized_prompt = self.build_prompt(
+ query=query,
+ memory=relevant_memory,
+ profile=self.user_profile
+ )
 
-        # 3. 生成响应
-        return self.llm.generate(personalized_prompt)
+ # 3. 生成响应
+ return self.llm.generate(personalized_prompt)
 ```
 
 ---
@@ -569,26 +569,26 @@ class PersonalizedMemory:
 ```python
 Chat with GitHub 核心功能
 class ChatWithGitHub:
-    def __init__(self, llm, github_token):
-        self.github = GitHubAPI(token=github_token)
-        self.llm = llm
+ def __init__(self, llm, github_token):
+ self.github = GitHubAPI(token=github_token)
+ self.llm = llm
 
-    def chat_about_repo(self, repo_url, question):
-        # 1. 获取仓库信息
-        repo_info = self.github.get_repo_info(repo_url)
+ def chat_about_repo(self, repo_url, question):
+ # 1. 获取仓库信息
+ repo_info = self.github.get_repo_info(repo_url)
 
-        # 2. 获取相关代码
-        code_snippets = self.github.search_code(
-            repo=repo_url,
-            query=question
-        )
+ # 2. 获取相关代码
+ code_snippets = self.github.search_code(
+ repo=repo_url,
+ query=question
+ )
 
-        # 3. 生成答案
-        answer = self.llm.generate(
-            f"仓库信息：{repo_info}\n\n 相关代码：{code_snippets}\n\n 问题：{question}"
-        )
+ # 3. 生成答案
+ answer = self.llm.generate(
+ f"仓库信息：{repo_info}\n\n 相关代码：{code_snippets}\n\n 问题：{question}"
+ )
 
-        return answer
+ return answer
 ```
 
 ---
@@ -632,18 +632,18 @@ from google.adk.tools import google_search, python_repl
 
 创建 Agent
 research_agent = Agent(
-    name="research_agent",
-    model="gemini-2.0-flash",
-    description="专业的研究助手",
-    tools=[google_search, python_repl]
+ name="research_agent",
+ model="gemini-2.0-flash",
+ description="专业的研究助手",
+ tools=[google_search, python_repl]
 )
 
 创建 App
 app = Agent(
-    name="research_team",
-    model="gemini-2.0-flash",
-    agents=[research_agent],
-    instruction="你是一个研究团队，可以协调多个专业研究员完成任务"
+ name="research_team",
+ model="gemini-2.0-flash",
+ agents=[research_agent],
+ instruction="你是一个研究团队，可以协调多个专业研究员完成任务"
 )
 
 运行
@@ -689,14 +689,14 @@ Headroom Context 优化
 from headroom import HeadroomOptimizer
 
 optimizer = HeadroomOptimizer(
-    max_tokens=8192,
-    strategy="importance_based"  # 基于重要性的保留策略
+ max_tokens=8192,
+ strategy="importance_based" # 基于重要性的保留策略
 )
 
 优化上下文
 optimized_context = optimizer.optimize(
-    full_context=long_context,
-    query=current_query
+ full_context=long_context,
+ query=current_query
 )
 
 只保留与当前查询最相关的上下文

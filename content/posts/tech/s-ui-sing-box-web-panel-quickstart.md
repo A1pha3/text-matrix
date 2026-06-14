@@ -20,7 +20,7 @@ S-UI 是一个构建在 SagerNet/Sing-Box 之上的高级 Web 管理面板，目
 
 S-UI 本质上是一个**前端交互层 + 后端 Go 服务**，它调用 Sing-Box 的 API 来管理节点配置和收集流量数据。Sing-Box 负责底层代理能力，S-UI 负责把这些能力暴露成可操作的图形界面。
 
-所以 S-UI 不是另一个代理协议实现，而是 Sing-Box 的可视化管控工具。它的主要价值在于：
+所以 S-UI 是 Sing-Box 的可视化管控工具，不是代理协议实现。它的主要能力在于：
 
 - **多协议统一接入**：一个面板管理 VLESS、VMess、Trojan、Shadowsocks、Hysteria、TUIC 等多种协议节点。
 - **多客户端/ inbound 管理**：同面板下管理多个客户端，每个客户端可以单独设置流量限额和过期时间。
