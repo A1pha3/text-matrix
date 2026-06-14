@@ -10,25 +10,6 @@ tags: ["安全", "BugBounty", "OSINT", "子域名枚举", "Findomain", "Rust"]
 
 # Findomain：5 秒挖掘 8 万子域名——域名发现与监控从入门到精通
 
-> **目标读者**：安全研究员、Bug Bounty 猎人、渗透测试工程师、对 OSINT 感兴趣的开发者
-> **预计阅读时间**：40-50 分钟
-> **前置知识**：DNS 基础概念、HTTP 协议、了解过子域名枚举工具
-> **难度定位**：⭐⭐⭐⭐ 专家设计
-
----
-
-## §1 学习目标
-
-完成本篇文章后，你将能够：
-
-1. **理解子域名枚举的核心原理**：证书透明日志（Certificate Transparency）vs 暴力枚举
-2. **掌握 Findomain 的技术架构**：Rust 实现的高性能设计
-3. **理解 14+ 数据源的整合策略**：各 API 的优缺点
-4. **能够完成生产级部署**：从安装到配置
-5. **掌握子域名监控**：Webhook 告警配置
-
----
-
 ## §2 原理分析：子域名枚举的技术本质
 
 ### 2.1 证书透明日志（CT）
@@ -55,16 +36,12 @@ Findomain 主要依赖 Certificate Transparency 日志：
    └─ 作为补充手段
 ```
 
----
-
 ## §3 性能对比
 
 | 工具 | 耗时 | 发现数量 | CPU | 内存 |
 |------|------|----------|-----|------|
 | **Findomain** | **5.5 秒** | **84,110** | 极低 | 极低 |
 | 其他工具 | 显著更长 | 少很多 | 高 | 高 |
-
----
 
 ## §4 功能详解
 
@@ -86,8 +63,6 @@ findomain -t example.com --monitoring \
 | **Certspotter** | CT 日志 API | 否 |
 | **Virustotal** | 威胁情报 | 免费 Key 可用 |
 | **SecurityTrails** | 历史 DNS | 付费 Key |
-
----
 
 ## §5 安装与使用
 
@@ -129,8 +104,6 @@ dnsgen subdomains.txt > mutations.txt
 massdns -r resolvers.txt -t A -o S mutations.txt
 ```
 
----
-
 ## §6 相关资源
 
 | 资源 | 链接 |
@@ -138,8 +111,6 @@ massdns -r resolvers.txt -t A -o S mutations.txt
 | **官网** | [findomain.app](https://findomain.app) |
 | **GitHub** | [github.com/Findomain/Findomain](https://github.com/Findomain/Findomain) |
 | **Discord** | [discord.gg/y5JaRbX](https://discord.gg/y5JaRbX) |
-
----
 
 **文档信息**
 难度：⭐⭐⭐⭐ | 类型：专家设计 | 更新日期：2026-04-14 | 预计阅读时间：40-50 分钟

@@ -97,7 +97,7 @@ description: "Nir Diamant 的 agents-towards-production 提供 28 个配套 Note
 
 ### 3. 厂商直接参与
 
-LangChain、Redis、Contextual AI、Tavily、Arcade、Mem0、RunPod 等厂商参与了对应教程的编写。这意味着教程里的 API 调用方式、参数选择和架构假设与这些工具的实际版本对齐，而不是基于文档推导的想象。
+LangChain、Redis、Contextual AI、Tavily、Arcade、Mem0、RunPod 等厂商参与了对应教程的编写。教程里的 API 调用方式、参数选择和架构假设与这些工具的实际版本对齐，而不是基于文档推导的想象。
 
 ### 4. 覆盖 Agent 的完整生命周期
 

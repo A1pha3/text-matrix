@@ -7,9 +7,9 @@ categories: ["技术笔记"]
 tags: ["AutoCLI", "AI Agent", "浏览器自动化", "Rust", "OpenClaw", "Claude Code"]
 ---
 
-# AutoCLI Skill：AI Agent 多平台浏览器自动化工具
+AutoCLI Skill：AI Agent 多平台浏览器自动化工具
 
-## 🎯 概述
+概述
 
 **AutoCLI Skill** 是一个为 Claude Code/OpenClaw/AI Agent 打造的终极平台集成工具，让 AI 能够像人一样操控 55+ 个主流平台——无需 API Key、无需复杂配置、直接复用你 Chrome 浏览器里已有的登录态。
 
@@ -18,11 +18,11 @@ tags: ["AutoCLI", "AI Agent", "浏览器自动化", "Rust", "OpenClaw", "Claude 
 > **Forks**: 62  
 > **核心特性**: 55+平台支持 | 零 API Key | Chrome 登录态复用 | Rust 编写 | 4.7MB 二进制
 
-### 一句话定位
+一句话定位
 
 **"Give your AI Agent the ability to reach information across the entire web"** —— 让 AI Agent 能够像人一样浏览整个互联网。
 
-### 解决的核心痛点
+解决的核心痛点
 
 | 痛点 | 传统方案 | AutoCLI Skill |
 |------|---------|--------------|
@@ -34,9 +34,9 @@ tags: ["AutoCLI", "AI Agent", "浏览器自动化", "Rust", "OpenClaw", "Claude 
 
 ---
 
-## 🏛️ 系统架构
+系统架构
 
-### 核心设计：三重模式覆盖
+核心设计：三重模式覆盖
 
 AutoCLI Skill 的架构设计围绕三种不同的平台访问模式展开，确保对 55+ 平台的全覆盖：
 
@@ -84,7 +84,7 @@ graph TB
     Chrome --> Extension[autocli Extension]
 ```
 
-### 三种模式的对比
+三种模式的对比
 
 | 模式 | 是否需要 Chrome | 是否需要扩展 | 是否需要桌面应用 | 代表平台 |
 |------|----------------|-------------|----------------|---------|
@@ -92,7 +92,7 @@ graph TB
 | **Browser** | ✅ 是 | ✅ 是 | ❌ 否 | Twitter/X, Bilibili, Zhihu, YouTube, Reddit |
 | **Desktop App** | ❌ 否 | ❌ 否 | ✅ 是 | Cursor, Notion, ChatGPT, Discord, Codex |
 
-### 技术选型分析
+技术选型分析
 
 | 技术选型 | 理由 | 权衡 |
 |---------|------|------|
@@ -103,9 +103,9 @@ graph TB
 
 ---
 
-## 🔌 55+平台支持详解
++平台支持详解
 
-### 社交媒体矩阵
+社交媒体矩阵
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -119,7 +119,7 @@ graph TB
 | **TikTok** | Browser | 15 个 | explore, search, profile, follow, like, comment |
 | **Jike (即刻)** | Browser | 10 个 | feed, search, create, like, comment, repost |
 
-### 视频与内容平台
+视频与内容平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -129,7 +129,7 @@ graph TB
 | **Medium** | Browser | 3 个 | feed, search, user |
 | **Substack** | Browser | 3 个 | feed, search, publication |
 
-### 桌面应用控制
+桌面应用控制
 
 | 应用 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -139,7 +139,7 @@ graph TB
 | **Discord** | Desktop | 6 个 | status, send, read, channels, servers, search, members |
 | **Codex** | Desktop | 11 个 | status, send, read, new, dump, model, ask |
 
-### 金融数据平台
+金融数据平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -147,7 +147,7 @@ graph TB
 | **Xueqiu (雪球)** | Browser | 7 个 | feed, hot-stock, hot, search, stock, watchlist |
 | **Bloomberg** | Public/Browser | 10 个 | main, markets, economics, tech, politics |
 
-### 开发者平台
+开发者平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -159,7 +159,7 @@ graph TB
 | **Arxiv** | Public | 2 个 | search, paper |
 | **V2EX** | Public/Browser | 11 个 | hot, latest, topic, node, user, daily, me |
 
-### 命令行工具集成
+命令行工具集成
 
 | 工具 | 模式 | 功能 |
 |------|------|------|
@@ -169,53 +169,53 @@ graph TB
 
 ---
 
-## 🚀 安装与配置
+安装与配置
 
-### 前置条件
+前置条件
 
 安装 AutoCLI Skill 前，需要确认以下条件：
 
 - [ ] **Chrome 浏览器** 已打开，并已登录目标网站
 - [ ] **autocli Chrome 扩展** 已安装（从 [GitHub Releases](https://github.com/nashsu/AutoCLI/releases/latest) 下载）
 
-### 安装步骤
+安装步骤
 
-#### 方式一：让 AI Agent 帮你安装（推荐）
+方式一：让 AI Agent 帮你安装（推荐）
 
 ```
 Help me install this skill: https://github.com/nashsu/AutoCLI-skill
 ```
 
-#### 方式二：手动安装
+方式二：手动安装
 
 ```bash
-# 1. 安装 autocli CLI 工具
-# 参考：https://github.com/nashsu/AutoCLI
+. 安装 autocli CLI 工具
+参考：https://github.com/nashsu/AutoCLI
 
-# 2. 安装本 Skill
+. 安装本 Skill
 npx skills add https://github.com/nashsu/AutoCLI-skill
 
-# 3. 重启 Claude Code 激活 Skill
+. 重启 Claude Code 激活 Skill
 ```
 
-### 验证安装
+验证安装
 
 ```bash
-# 检查 autocli 是否安装成功
+检查 autocli 是否安装成功
 autocli --version
 
-# 查看所有可用命令
+查看所有可用命令
 autocli --help
 
-# 运行诊断
+运行诊断
 autocli doctor
 ```
 
 ---
 
-## 📖 使用方法
+使用方法
 
-### 自然语言交互示例
+自然语言交互示例
 
 确保 Chrome 已打开且已登录目标网站，然后对 Claude Code 说：
 
@@ -233,52 +233,52 @@ autocli doctor
 
 Claude 会自动调用正确的 autocli 命令，运行后以表格形式展示结果，英文标题附带中文翻译。
 
-### 命令行直接调用
+命令行直接调用
 
 ```bash
-# Bilibili
+Bilibili
 autocli bilibili hot --limit 10 --format json
 autocli bilibili search --keyword "AI"
 
-# Twitter/X
+Twitter/X
 autocli twitter timeline --format json
 autocli twitter post --text "Hello from Claude!"
 autocli twitter search "claude AI" --limit 10
 
-# YouTube
+YouTube
 autocli youtube search --query "LLM tutorial"
 autocli youtube transcript --video-id YOUR_VIDEO_ID
 
-# HackerNews
+HackerNews
 autocli hackernews top --limit 20 --format json
 
-# Reddit
+Reddit
 autocli reddit hot --subreddit MachineLearning
 
-# Yahoo Finance
+Yahoo Finance
 autocli yahoo-finance quote --symbol AAPL
 
-# 雪球
+雪球
 autocli xueqiu stock --symbol SH600519   # 茅台行情
 autocli xueqiu watchlist                  # 我的自选股
 
-# 豆瓣
+豆瓣
 autocli douban top250 --format json
 
-# Cursor
+Cursor
 autocli cursor status
 autocli cursor send --text "Write a function to..."
 
-# Notion
+Notion
 autocli notion search "会议记录"
 autocli notion new --title "New Page"
 ```
 
 ---
 
-## 🔧 命令参考
+命令参考
 
-### Twitter/X 命令（24 个）
+Twitter/X 命令（ 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -291,7 +291,7 @@ autocli notion new --title "New Page"
 | `twitter profile` | 获取用户信息 | `autocli twitter profile --user username` |
 | `twitter article` | 获取推文文章 | `autocli twitter article --id 123` |
 
-### Bilibili 命令（12 个）
+Bilibili 命令（ 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -304,7 +304,7 @@ autocli notion new --title "New Page"
 | `bilibili subtitle` | 获取字幕 | `autocli bilibili subtitle --avid 123` |
 | `bilibili download` | 下载视频 | `autocli bilibili download --avid 123` |
 
-### HackerNews 命令（8 个）
+HackerNews 命令（ 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -317,7 +317,7 @@ autocli notion new --title "New Page"
 | `hackernews search` | 搜索 | `autocli hackernews search "keyword"` |
 | `hackernews user` | 用户信息 | `autocli hackernews user --name username` |
 
-### Cursor 控制命令（12 个）
+Cursor 控制命令（ 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -330,7 +330,7 @@ autocli notion new --title "New Page"
 | `cursor model` | 切换模型 | `autocli cursor model` |
 | `cursor ask` | 提问 | `autocli cursor ask --text "How do I..."` |
 
-### Notion 控制命令（8 个）
+Notion 控制命令（ 个）
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -345,9 +345,9 @@ autocli notion new --title "New Page"
 
 ---
 
-## 🐛 故障排除
+故障排除
 
-### 常见问题与解决方案
+常见问题与解决方案
 
 | 问题 | 原因 | 解决方案 |
 |------|------|---------|
@@ -357,22 +357,22 @@ autocli notion new --title "New Page"
 | Browser 命令超时 | 网络问题 | 运行 `autocli doctor` 进行诊断 |
 | 扩展未加载 | 扩展未启用 | 检查 Chrome 扩展管理器 |
 
-### 诊断命令
+诊断命令
 
 ```bash
-# 运行完整诊断
+运行完整诊断
 autocli doctor
 
-# 检查特定平台
+检查特定平台
 autocli doctor --platform twitter
 
-# 查看详细日志
+查看详细日志
 autocli --debug twitter trending
 ```
 
 ---
 
-## 🆚 与同类工具对比
+🆚 与同类工具对比
 
 | 特性 | AutoCLI Skill | Playwright | Puppeteer | Selenium |
 |------|---------------|-------------|------------|----------|
@@ -386,16 +386,16 @@ autocli --debug twitter trending
 
 ---
 
-## 🎓 设计原则总结
+设计原则总结
 
-### 核心设计理念
+核心设计理念
 
 1. **复用优于重造**：不重新发明轮子，直接复用用户已有的 Chrome 登录态
 2. **CLI 优先**：轻量、可组合、易于 AI 调用
 3. **零配置**：下载即用，无需复杂配置
 4. **统一接口**：55+ 平台，统一的 CLI 接口
 
-### 可复用的架构经验
+可复用的架构经验
 
 | 经验 | 应用场景 |
 |------|---------|
@@ -404,7 +404,7 @@ autocli --debug twitter trending
 | **三重模式覆盖** | Public API → Browser → Desktop，覆盖所有场景 |
 | **单二进制分发** | 4.7MB 零依赖 vs Node.js 数百 MB 依赖 |
 
-### 常见陷阱
+常见陷阱
 
 | 陷阱 | 避免方法 |
 |------|---------|
@@ -414,18 +414,18 @@ autocli --debug twitter trending
 
 ---
 
-## 🔗 资源链接
+资源链接
 
 | 资源 | 链接 |
 |------|------|
 | GitHub 仓库 | [nashsu/autocli-skill](https://github.com/nashsu/autocli-skill) |
 | AutoCLI 核心 | [nashsu/AutoCLI](https://github.com/nashsu/AutoCLI) |
 | Chrome 扩展下载 | [AutoCLI Releases](https://github.com/nashsu/AutoCLI/releases/latest) |
-| 相关项目 | [nashsu/autocli-skill (Skill版)](https://github.com/nashsu/autocli-skill) |
+| 相关项目 | [nashsu/autocli-skill (Skill 版)](https://github.com/nashsu/autocli-skill) |
 
 ---
 
-## 📊 平台覆盖一览
+平台覆盖一览
 
 ```
 社交媒体 (8)

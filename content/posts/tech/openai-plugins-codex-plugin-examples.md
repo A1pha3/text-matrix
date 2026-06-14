@@ -108,7 +108,7 @@ README 里列出的 richer examples 基本都属于这一类：`figma` 管设计
 
 具体 App 认证写在 `.app.json`，MCP server 写在 `.mcp.json`。Codex 官方文档支持本地 stdio server 和远程 streamable HTTP server，不要把旧文章里的 SSE 示例当成唯一形态。
 
-插件做好后，还要让 Codex 找得到。仓库级目录放在 `$REPO_ROOT/.agents/plugins/marketplace.json`，个人目录放在 `~/.agents/plugins/marketplace.json`。marketplace 条目里最重要的是四个字段：
+插件做好后，还要让 Codex 找得到。仓库级目录放在 `$REPO_ROOT/.agents/plugins/marketplace.json`，个人目录放在 `~/.agents/plugins/marketplace.json`。marketplace 条目里四个字段：
 
 | 字段 | 作用 |
 |---|---|

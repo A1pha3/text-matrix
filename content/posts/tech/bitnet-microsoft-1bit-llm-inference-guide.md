@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["BitNet", "1-bit LLM", "微软", "量化推理", "llama.cpp", "CPU 推理"]
 ---
 
-## 学习目标
+学习目标
 
 通过本文，你将全面掌握以下核心能力：
 
@@ -21,15 +21,15 @@ tags: ["BitNet", "1-bit LLM", "微软", "量化推理", "llama.cpp", "CPU 推理
 
 ---
 
-## 1. 项目概述
+. 项目概述
 
-### 1.1 是什么
+. 是什么
 
 BitNet 是微软官方发布的 **1-bit LLM 推理框架**，核心理念是让 1-bit 大语言模型（如 BitNet b1.58）能够在 CPU 和 GPU 上实现**快速、无损**的推理。
 
 它提供了一套优化的内核（kernels），支持在各种硬件平台上高效运行 1-bit 模型。
 
-### 1.2 核心数据
+. 核心数据
 
 | 指标 | 数值 |
 |------|------|
@@ -38,7 +38,7 @@ BitNet 是微软官方发布的 **1-bit LLM 推理框架**，核心理念是让 
 | 贡献者 | **16** |
 | License | **MIT** |
 
-### 1.3 技术栈
+. 技术栈
 
 | 语言 | 占比 |
 |------|------|
@@ -46,7 +46,7 @@ BitNet 是微软官方发布的 **1-bit LLM 推理框架**，核心理念是让 
 | C++ | 45.9% |
 | Shell | 2.9% |
 
-### 1.4 性能亮点
+. 性能亮点
 
 BitNet 在各类 CPU 上实现了显著的加速和能耗降低：
 
@@ -59,9 +59,9 @@ BitNet 在各类 CPU 上实现了显著的加速和能耗降低：
 
 ---
 
-## 2. 1-bit LLM 原理
+. -bit LLM 原理
 
-### 2.1 什么是 1-bit LLM
+. 什么是 -bit LLM
 
 传统 LLM 使用 16-bit 或 32-bit 浮点数存储权重，而 **1-bit LLM 将权重限制为三个值：-1、0、+1**。
 
@@ -73,7 +73,7 @@ BitNet 在各类 CPU 上实现了显著的加速和能耗降低：
 
 > 注意：BitNet b1.58 实际上是 **1.58 bits/参数**，因为 -1 和 +1 比 0 更频繁。
 
-### 2.2 为什么使用 1-bit
+. 为什么使用 -bit
 
 | 优势 | 说明 |
 |------|------|
@@ -82,12 +82,12 @@ BitNet 在各类 CPU 上实现了显著的加速和能耗降低：
 | **能耗降低** | 硬件友好，显著节能 |
 | **推理速速快** | 优化内核实现高速推理 |
 
-### 2.3 BitNet b1.58 架构
+. BitNet b. 架构
 
 BitNet b1.58 基于 Transformer 架构，但权重使用三元量化：
 
 ```python
-# 伪代码示例
+伪代码示例
 def bitnet_linear(x, weight):
     # weight 是三元张量 (-1, 0, +1)
     # 计算变为符号运算
@@ -98,9 +98,9 @@ def bitnet_linear(x, weight):
 
 ---
 
-## 3. 核心特性详解
+. 核心特性详解
 
-### 3.1 多后端支持
+. 多后端支持
 
 | 后端 | 支持情况 | 说明 |
 |------|---------|------|
@@ -109,7 +109,7 @@ def bitnet_linear(x, weight):
 | **NVIDIA GPU** | ✅ 全面支持 | CUDA 加速 |
 | **NPU** | ⏳ 开发中 | 敬请期待 |
 
-### 3.2 量化内核类型
+. 量化内核类型
 
 BitNet 支持多种量化内核：
 
@@ -119,7 +119,7 @@ BitNet 支持多种量化内核：
 | **TL1** | Token-level INT8 | 低延迟 |
 | **TL2** | Token-level INT8 v2 | 优化吞吐量 |
 
-### 3.3 最新优化（2026 年 1 月）
+. 最新优化（ 年 月）
 
 最新版本引入了**并行内核实现**和**可配置平铺**：
 
@@ -127,7 +127,7 @@ BitNet 支持多种量化内核：
 - 嵌入量化支持：进一步降低内存
 - **额外加速 1.15x - 2.1x**
 
-### 3.4 与 llama.cpp 的关系
+. 与 llama.cpp 的关系
 
 BitNet 基于 **llama.cpp** 框架构建，但专注于 1-bit LLM 的优化：
 
@@ -142,15 +142,15 @@ BitNet（1-bit 专用）
 
 ---
 
-## 4. 官方模型
+. 官方模型
 
-### 4.1 官方发布模型
+. 官方发布模型
 
 | 模型 | 参数 | CPU 支持 | GPU 支持 |
 |------|------|---------|---------|
 | **BitNet-b1.58-2B-4T** | 2.4B | ✅ x86, ARM | ✅ |
 
-### 4.2 支持的第三方模型
+. 支持的第三方模型
 
 | 模型 | 参数 | x86 CPU | ARM CPU | GPU |
 |------|------|---------|---------|-----|
@@ -162,19 +162,19 @@ BitNet（1-bit 专用）
 | Falcon3-7B | 7B | ✅ | ✅ | ✅ |
 | Falcon3-10B | 10B | ✅ | ✅ | ✅ |
 
-### 4.3 模型下载
+. 模型下载
 
 ```bash
-# 使用 huggingface-cli 下载模型
+使用 huggingface-cli 下载模型
 huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf \
     --local-dir models/BitNet-b1.58-2B-4T
 ```
 
 ---
 
-## 5. 安装与构建
+. 安装与构建
 
-### 5.1 环境要求
+. 环境要求
 
 | 依赖 | 版本要求 |
 |------|---------|
@@ -183,7 +183,7 @@ huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf \
 | Clang | >= 18 |
 | conda | 推荐使用 |
 
-### 5.2 安装步骤
+. 安装步骤
 
 **1. 克隆仓库**
 
@@ -195,7 +195,7 @@ cd BitNet
 **2. 创建 conda 环境**
 
 ```bash
-# 推荐：创建新环境
+推荐：创建新环境
 conda create -n bitnet-cpp python=3.9
 conda activate bitnet-cpp
 pip install -r requirements.txt
@@ -219,30 +219,30 @@ bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
 ---
 
-## 6. 快速上手
+. 快速上手
 
-### 6.1 下载并量化模型
+. 下载并量化模型
 
 ```bash
-# 下载官方模型
+下载官方模型
 huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf \
     --local-dir models/BitNet-b1.58-2B-4T
 
-# 或者使用脚本下载
+或者使用脚本下载
 python setup_env.py -md models/BitNet-b1.58-2B-4T -q i2_s
 ```
 
-### 6.2 运行推理
+. 运行推理
 
 ```bash
-# 基本推理
+基本推理
 python run_inference.py \
     -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf \
     -p "You are a helpful assistant" \
     -cnv
 ```
 
-### 6.3 参数说明
+. 参数说明
 
 | 参数 | 说明 | 默认值 |
 |------|------|---------|
@@ -253,10 +253,10 @@ python run_inference.py \
 | `-c` | 上下文大小 | -1 |
 | `-cnv` | 启用对话模式 | False |
 
-### 6.4 对话模式
+. 对话模式
 
 ```bash
-# 启用对话模式（用于 instruct 模型）
+启用对话模式（用于 instruct 模型）
 python run_inference.py \
     -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf \
     -p "You are a helpful assistant." \
@@ -265,16 +265,16 @@ python run_inference.py \
 
 ---
 
-## 7. GPU 推理
+. GPU 推理
 
-### 7.1 构建 GPU 版本
+. 构建 GPU 版本
 
 参考 `gpu/README.md` 构建支持 CUDA 的版本。
 
-### 7.2 GPU 推理示例
+. GPU 推理示例
 
 ```bash
-# 使用 GPU 运行
+使用 GPU 运行
 python run_inference.py \
     -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf \
     -p "Explain quantum computing in simple terms" \
@@ -283,12 +283,12 @@ python run_inference.py \
 
 ---
 
-## 8. 性能基准测试
+. 性能基准测试
 
-### 8.1 基准测试脚本
+. 基准测试脚本
 
 ```bash
-# 运行基准测试
+运行基准测试
 python utils/e2e_benchmark.py \
     -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf \
     -n 200 \
@@ -296,7 +296,7 @@ python utils/e2e_benchmark.py \
     -t 4
 ```
 
-### 8.2 参数说明
+. 参数说明
 
 | 参数 | 说明 | 默认值 |
 |------|------|---------|
@@ -305,19 +305,19 @@ python utils/e2e_benchmark.py \
 | `-p` | 提示词 token 数 | 512 |
 | `-t` | 线程数 | 2 |
 
-### 8.3 生成虚拟模型测试
+. 生成虚拟模型测试
 
 对于不支持公开模型的布局，可以生成虚拟模型进行测试：
 
 ```bash
-# 生成虚拟模型
+生成虚拟模型
 python utils/generate-dummy-bitnet-model.py \
     models/bitnet_b1_58-large \
     --outfile models/dummy-bitnet-125m.tl1.gguf \
     --outtype tl1 \
     --model-size 125M
 
-# 运行基准测试
+运行基准测试
 python utils/e2e_benchmark.py \
     -m models/dummy-bitnet-125m.tl1.gguf \
     -p 512 \
@@ -326,21 +326,21 @@ python utils/e2e_benchmark.py \
 
 ---
 
-## 9. 模型转换
+. 模型转换
 
-### 9.1 从 safetensors 转换
+. 从 safetensors 转换
 
 ```bash
-# 1. 下载 bf16 模型
+. 下载 bf 模型
 huggingface-cli download microsoft/bitnet-b1.58-2B-4T-bf16 \
     --local-dir ./models/bitnet-b1.58-2B-4T-bf16
 
-# 2. 转换为 gguf 格式
+. 转换为 gguf 格式
 python ./utils/convert-helper-bitnet.py \
     ./models/bitnet-b1.58-2B-4T-bf16
 ```
 
-### 9.2 量化选项
+. 量化选项
 
 | 量化类型 | 命令参数 | 说明 |
 |----------|---------|------|
@@ -350,9 +350,9 @@ python ./utils/convert-helper-bitnet.py \
 
 ---
 
-## 10. 技术架构深度解析
+. 技术架构深度解析
 
-### 10.1 整体架构
+. 整体架构
 
 ```
 BitNet 推理框架
@@ -368,7 +368,7 @@ BitNet 推理框架
 └── utils/              # 工具脚本
 ```
 
-### 10.2 I2_S 内核原理
+. I_S 内核原理
 
 I2_S（INT8 激活 + 符号权重）是 BitNet 的核心量化方案：
 
@@ -388,7 +388,7 @@ void i2_s_kernel(const float* x, const int8_t* w, float* y) {
 }
 ```
 
-### 10.3 并行优化
+. 并行优化
 
 最新版本引入了并行内核实现：
 
@@ -403,37 +403,37 @@ for (int i = 0; i < batch_size; i++) {
 
 ---
 
-## 11. 常见问题
+. 常见问题
 
-### 11.1 编译错误：std::chrono
+. 编译错误：std::chrono
 
 **问题**：构建时出现 `std::chrono` 相关错误。
 
 **解决**：这是 llama.cpp 最新版本引入的问题，参考此 commit 修复：
 
 ```bash
-# 查看修复讨论
-# https://github.com/abetlen/llama-cpp-python/issues/1942
+查看修复讨论
+https://github.com/abetlen/llama-cpp-python/issues/
 ```
 
-### 11.2 Windows conda 环境 clang 问题
+. Windows conda 环境 clang 问题
 
 **问题**：Windows 下 conda 环境找不到 clang。
 
 **解决**：确保 Visual Studio Tools 已正确初始化：
 
 ```powershell
-# Command Prompt
+Command Prompt
 "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\VsDevCmd.bat" -startdir:none -arch=x64 -host_arch=x64
 
-# PowerShell
+PowerShell
 Import-Module "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
 Enter-VsDevShell 3f0e31ad -SkipAutomaticLocation -DevCmdArguments "-arch=x64 -host_arch=x64"
 ```
 
 ---
 
-## 12. 总结
+. 总结
 
 BitNet 是微软官方发布的 1-bit LLM 推理框架，代表了高效 LLM 推理的重要方向：
 

@@ -10,7 +10,7 @@ categories: ["技术笔记"]
 tags: ["免费软件", "Windows", "macOS", "Linux", "开源", "工具推荐"]
 ---
 
-## 核心判断
+核心判断
 
 awesome-free-apps 不只是一个软件列表，而是一套**经过筛选的免费工具清单**。它解决的是"这个场景该用什么免费软件"的问题——不是搜索引擎里的广告排名，也不是应用商店的算法推荐，而是真实维护者手动挑选的、去广告的、无营销套路的工具推荐。按当前仓库页面，它大约在 **6.1k Stars / 304 Forks** 的量级，说明这个清单已经形成稳定社区，而不是一次性整理后就无人维护的静态列表。
 
@@ -18,7 +18,7 @@ awesome-free-apps 不只是一个软件列表，而是一套**经过筛选的免
 
 ---
 
-## 内容结构
+内容结构
 
 ```
 awesome-free-apps/
@@ -35,9 +35,9 @@ awesome-free-apps/
 
 ---
 
-## 各分类精选
+各分类精选
 
-### 音频与音乐制作
+音频与音乐制作
 
 | 软件 | 平台 | 类型 | 推荐理由 |
 |------|------|------|----------|
@@ -47,7 +47,7 @@ awesome-free-apps/
 | Ardour | Win/Mac/Linux | 专业 DAW | 录音、编辑、混音，专业功能开源 |
 | Furnace | Win/Mac/Linux | 开源 chiptune tracker | 复古芯片音乐制作 |
 
-### 浏览器
+浏览器
 
 | 软件 | 平台 | 特性 |
 |------|------|------|
@@ -58,7 +58,7 @@ awesome-free-apps/
 | qutebrowser | 全平台 | 键盘驱动，Vim 风格操作 |
 | Zen Browser | 全平台 | 设计精美的隐私浏览器 |
 
-### 开发工具
+开发工具
 
 | 软件 | 平台 | 特性 |
 |------|------|------|
@@ -68,7 +68,7 @@ awesome-free-apps/
 | Docker | 全平台 | 容器化平台 |
 | VirtualBox | 全平台 | 开源虚拟机 |
 
-### 文档与办公
+文档与办公
 
 | 软件 | 平台 | 类型 |
 |------|------|------|
@@ -78,7 +78,7 @@ awesome-free-apps/
 | Pandoc | 全平台 | 文档格式转换 |
 | draw.io | 全平台 | 在线流程图工具 |
 
-### 安全工具
+安全工具
 
 | 软件 | 平台 | 特性 |
 |------|------|------|
@@ -87,7 +87,7 @@ awesome-free-apps/
 | 7-Zip | Windows | 开源压缩工具 |
 | BleachBit | 全平台 | 磁盘清理，隐私保护 |
 
-### 系统定制（按平台）
+系统定制（按平台）
 
 | 场景 | Windows | macOS | Linux |
 |------|---------|-------|-------|
@@ -98,13 +98,13 @@ awesome-free-apps/
 
 ---
 
-## 如何使用
+如何使用
 
-### 直接浏览主列表
+直接浏览主列表
 
 打开 [README.md](https://github.com/Axorax/awesome-free-apps)，按分类找自己需要的软件。
 
-### 用过滤器精准定位
+用过滤器精准定位
 
 只想看某个平台的软件？打开 `filter/` 目录下的对应文件：
 
@@ -113,20 +113,20 @@ awesome-free-apps/
 - [open-source-only.md](https://github.com/Axorax/awesome-free-apps/blob/main/filter/open-source-only.md) — 只收录开源项目
 - [recommended-only.md](https://github.com/Axorax/awesome-free-apps/blob/main/filter/recommended-only.md) — 维护者特别推荐的
 
-### 移动端专项
+移动端专项
 
 Android 和 iOS 的免费软件清单单独维护在 [MOBILE.md](https://github.com/Axorax/awesome-free-apps/blob/main/MOBILE.md)。
 
 ---
 
-## 贡献与维护
+贡献与维护
 
 发现了好软件想加上？阅读 [contributing.md](https://github.com/Axorax/awesome-free-apps/blob/main/contributing.md) 了解提交格式。想成为维护者？查看 [相关 Issue](https://github.com/Axorax/awesome-free-apps/issues/28)。
 
 ---
 
-## 总结
+总结
 
-awesome-free-apps 是一个可靠的开源软件精选清单，它的价值在于**有人帮你筛选过**，而不是让你在搜索引擎结果里被广告和套壳软件淹没。按平台、按场景、按开源/闭源过滤的设计，让找工具的效率比大多数软件推荐博客高出一截。每个月维护者还在更新，适合收藏下来定期翻翻。
+awesome-free-apps 是一个可靠的开源软件精选清单，它**有人帮你筛选过**，而不是让你在搜索引擎结果里被广告和套壳软件淹没。按平台、按场景、按开源/闭源过滤的设计，让找工具的效率比大多数软件推荐博客高出一截。每个月维护者还在更新，适合收藏下来定期翻翻。
 
 GitHub：[Axorax/awesome-free-apps](https://github.com/Axorax/awesome-free-apps)。

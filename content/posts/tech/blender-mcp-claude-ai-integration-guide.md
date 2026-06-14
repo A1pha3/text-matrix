@@ -8,17 +8,17 @@ categories = ['技术笔记']
 tags = ['AI', 'Claude', 'MCP', '3D 建模']
 +++
 
-# BlenderMCP：通过 MCP 协议用 Claude 控制 Blender 3D 建模
+BlenderMCP：通过 MCP 协议用 Claude 控制 Blender D 建模
 
-## 1. 项目概述
+. 项目概述
 
 BlenderMCP 是一款开源的 Blender 与 AI 连接器，通过 Model Context Protocol（MCP）将 Claude AI 与 Blender 对接，实现通过自然语言直接控制 Blender 进行 3D 建模、场景创建和对象操作[^1]。
 
 ---
 
-## 2. 核心架构
+. 核心架构
 
-### 2.1 系统组成
+. 系统组成
 
 BlenderMCP 由两个核心组件构成：
 
@@ -27,7 +27,7 @@ BlenderMCP 由两个核心组件构成：
 | Blender 插件 | `addon.py` | 在 Blender 内部创建 Socket 服务器，接收并执行命令 |
 | MCP 服务器 | `src/blender_mcp/server.py` | 实现 Model Context Protocol，与 Blender 插件通信 |
 
-### 2.2 通信协议
+. 通信协议
 
 系统采用基于 TCP Socket 的 JSON 协议进行双向通信：
 
@@ -54,9 +54,9 @@ Claude Desktop ←→ MCP Server ←→ Socket ←→ Blender Addon ←→ Blend
 
 ---
 
-## 3. 功能特性
+. 功能特性
 
-### 3.1 五大核心能力
+. 五大核心能力
 
 | 能力 | 说明 |
 |------|------|
@@ -66,14 +66,14 @@ Claude Desktop ←→ MCP Server ←→ Socket ←→ Blender Addon ←→ Blend
 | **场景检查** | 获取当前 Blender 场景的详细信息 |
 | **代码执行** | 在 Blender 中执行任意 Python 代码 |
 
-### 3.2 高级能力
+. 高级能力
 
 - **Poly Haven 资产集成**：搜索并下载 Sketchfab 和 Poly Haven 的 3D 模型、纹理、HDRI
 - **Hyper3D Rodin 支持**：通过 AI 生成 3D 模型
 - **远程运行**：支持在远程主机上运行 Blender MCP
 - **远端 Blender 支持**：通过 `BLENDER_HOST` 环境变量连接远程 Blender 实例
 
-### 3.3 示例命令
+. 示例命令
 
 以下是官方示例中展示的一些可用指令：
 
@@ -90,9 +90,9 @@ Claude Desktop ←→ MCP Server ←→ Socket ←→ Blender Addon ←→ Blend
 
 ---
 
-## 4. 安装配置
+. 安装配置
 
-### 4.1 前置要求
+. 前置要求
 
 - Blender 3.0 或更高版本
 - Python 3.10 或更高版本
@@ -110,14 +110,14 @@ Windows：
 irm https://astral.sh/uv/install.ps1 | iex
 ```
 
-### 4.2 Blender 插件安装
+. Blender 插件安装
 
 1. 从 GitHub 下载 `addon.py` 文件
 2. 打开 Blender，进入 `Edit > Preferences > Add-ons`
 3. 点击 `Install...` 并选择下载的 `addon.py` 文件
 4. 勾选 `Interface: Blender MCP` 启用插件
 
-### 4.3 Claude Desktop 配置
+. Claude Desktop 配置
 
 在 `~/Library/Application Support/Claude/claude_desktop_config.json` 中添加：
 
@@ -132,7 +132,7 @@ irm https://astral.sh/uv/install.ps1 | iex
 }
 ```
 
-### 4.4 Cursor 配置
+. Cursor 配置
 
 Settings > MCP > Add New Global Server：
 
@@ -160,7 +160,7 @@ Windows 用户需使用：
 }
 ```
 
-### 4.5 环境变量
+. 环境变量
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
@@ -177,9 +177,9 @@ uvx blender-mcp
 
 ---
 
-## 5. 使用方法
+. 使用方法
 
-### 5.1 启动连接
+. 启动连接
 
 1. 在 Blender 中，按 `N` 打开 3D View 侧边栏
 2. 找到 `BlenderMCP` 标签页
@@ -187,7 +187,7 @@ uvx blender-mcp
 4. 点击 `Connect to Claude`
 5. 确保终端中 MCP 服务器正在运行
 
-### 5.2 在 Claude 中使用
+. 在 Claude 中使用
 
 配置完成后，Claude Desktop 将显示 Blender MCP 的工具图标，提供以下能力：
 
@@ -200,9 +200,9 @@ uvx blender-mcp
 
 ---
 
-## 6. 技术细节
+. 技术细节
 
-### 6.1 匿名遥测
+. 匿名遥测
 
 BlenderMCP 默认收集匿名使用数据以帮助改进工具。用户可通过以下方式控制：
 
@@ -229,13 +229,13 @@ DISABLE_TELEMETRY=true uvx blender-mcp
 }
 ```
 
-### 6.2 安全考虑
+. 安全考虑
 
 **重要警告**：`execute_blender_code` 工具允许在 Blender 中执行任意 Python 代码，具有潜在危险性。请在生产环境中谨慎使用，并始终在使用前保存工作。
 
 ---
 
-## 7. 故障排除
+. 故障排除
 
 | 问题 | 解决方案 |
 |------|----------|
@@ -246,7 +246,7 @@ DISABLE_TELEMETRY=true uvx blender-mcp
 
 ---
 
-## 8. v1.5.5 最新功能
+. v.. 最新功能
 
 - Hunyuan3D 支持
 - Blender 视口截图，更好地理解场景
@@ -258,7 +258,7 @@ DISABLE_TELEMETRY=true uvx blender-mcp
 
 ---
 
-## 9. 相关资源
+. 相关资源
 
 - **完整教程视频**：[YouTube 教程](https://www.youtube.com/watch?v=lCyQ717DuzQ)
 - **官方 Discord**：[加入社区](https://discord.gg/z5apgR8TFU)
@@ -266,7 +266,7 @@ DISABLE_TELEMETRY=true uvx blender-mcp
 
 ---
 
-## 10. 总结
+. 总结
 
 BlenderMCP 为 3D 艺术家和 AI 爱好者提供了一个强大的工具，将 Claude AI 的自然语言处理能力与 Blender 的专业 3D 建模功能相结合。通过 MCP 协议的标准实现，它不仅支持 Claude，还能与 Cursor、VS Code 等其他支持 MCP 的编辑器无缝集成。
 

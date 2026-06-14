@@ -98,7 +98,7 @@ cd agency-agents
 openclaw gateway restart
 ```
 
-Agent 会以独立 workspace 形式出现在`~/.openclaw/agency-agents/`下，每个 Agent 拥有自己的`SOUL.md`、`AGENTS.md`和`IDENTITY.md`。
+Agent 会以独立 workspace 形式出现在 `~/.openclaw/agency-agents/` 下，每个 Agent 拥有自己的 `SOUL.md`、`AGENTS.md` 和 `IDENTITY.md`。
 
 ### 方式三：接入 Cursor
 
@@ -107,7 +107,7 @@ cd your-project
 /path/to/agency-agents/scripts/install.sh --tool cursor
 ```
 
-Agent 转化为`.mdc`规则文件存于`.cursor/rules/`目录。
+Agent 转化为 `.mdc` 规则文件存于 `.cursor/rules/` 目录。
 
 ---
 
@@ -156,7 +156,7 @@ Agent 转化为`.mdc`规则文件存于`.cursor/rules/`目录。
 
 ## 多工具集成架构
 
-The Agency 的集成脚本支持 11 种工具，通过`convert.sh`和`install.sh`两个脚本统一管理：
+The Agency 的集成脚本支持 11 种工具，通过 `convert.sh` 和 `install.sh` 两个脚本统一管理：
 
 ```bash
 # Step 1: 生成各工具对应的格式文件

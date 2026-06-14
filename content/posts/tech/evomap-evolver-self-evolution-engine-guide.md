@@ -125,7 +125,7 @@ Evolver/
 └── memory/               # 用户运行时日志（需手动创建）
 ```
 
-### 3.2 核心模块
+### 3.2 关键模块
 
 #### 日志分析器（Analysis）
 
@@ -156,10 +156,10 @@ Evolver/
 
 | 能力 | 支持 | 说明 |
 |------|------|------|
-| 生成 Prompt | ✅ | 核心功能 |
+| 生成 Prompt | ✅ | 主要功能 |
 | 自动修改代码 | ❌ | 不在设计范围内 |
 | 执行 Shell 命令 | ❌ | 安全隔离 |
-| 离线运行 | ✅ | 核心功能无需联网 |
+| 离线运行 | ✅ | 重点功能无需联网 |
 | 网络协作 | ⚠️ | 可选，需配置 |
 
 ### 3.4 与 OpenClaw 的集成
@@ -267,14 +267,14 @@ node index.js fetch --skill <skill_id> --out=./my-skills/
 
 需要配置`A2A_HUB_URL`环境变量。
 
-### 4.5 核心特性
+### 4.5 根本特性
 
 - **Auto-Log Analysis**：扫描 memory 目录，识别错误模式和信号
 - **Self-Repair Guidance**：从信号中发出修复指令
 - **GEP Protocol**：标准化进化流程，支持资产复用
 - **Mutation + Personality Evolution**：每次进化都有明确的 Mutation 对象和可演化的 PersonalityState
 - **Signal De-duplication**：防止修复循环，检测停滞模式
-- **Protected Source Files**：保护核心代码，防止被 Agent 覆盖
+- **Protected Source Files**：保护本质代码，防止被 Agent 覆盖
 
 ---
 
@@ -638,7 +638,7 @@ Evolver 是**语言无关的**。它专注于 Prompt 和进化协议，不依赖
 
 ### Q5: 可以离线使用 Evolver 吗？
 
-**完全可以**。核心功能（分析、生成、记录）完全离线运行。只有网络功能（技能共享、排行榜）需要联网。
+**完全可以**。关键功能（分析、生成、记录）完全离线运行。只有网络功能（技能共享、排行榜）需要联网。
 
 ### Q6: 如何回滚到之前的版本？
 

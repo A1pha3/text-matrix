@@ -315,7 +315,7 @@ python launch_scientist_bfts.py \
 
 > "This manuscript was autonomously generated using The AI Scientist."
 
-## 七、最佳实践
+## 七、推荐做法
 
 ### 7.1 研究主题设计
 
@@ -357,7 +357,7 @@ A: 可以跳过引用阶段，或者使用 `S2_API_KEY` 提高 API 限额。
 
 ## 九、总结与建议
 
-AI Scientist-v2 把"跑实验"从一条直线变成了可搜索、可调试、可并行的树。它的核心价值不在"生成论文"这个结果，而在"把实验设计本身变成可被智能体探索的问题"这个方向。
+AI Scientist-v2 把"跑实验"从一条直线变成了可搜索、可调试、可并行的树。它的不在"生成论文"这个结果，而在"把实验设计本身变成可被智能体探索的问题"这个方向。
 
 **适用场景**：
 

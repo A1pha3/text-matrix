@@ -23,7 +23,7 @@ tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
 
 ## §1 学习目标
 
-完成本文后，你应该能够：
+完成本文后，可以 
 
 - 理解 `agent-browser` 的定位，以及它和 Playwright 这类 SDK 方案的边界差异
 - 掌握官方推荐的 `snapshot + ref` 交互模式，而不是一上来就堆 CSS 选择器

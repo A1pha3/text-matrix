@@ -2,7 +2,7 @@
 title: "yt-dlp：最强大的命令行视频下载工具完全指南"
 date: 2026-05-23T03:05:00+08:00
 slug: "yt-dlp-video-download-tool-guide"
-description: "yt-dlp是一款开源命令行音视频下载工具，支持数千个网站，基于youtube-dl活跃fork而来。本文从安装、基础用法、格式选择、元数据处理、插件开发到架构设计全面解析，覆盖从入门到精通的全部核心知识。"
+description: "yt-dlp是一款开源命令行音视频下载工具，支持数千个网站，基于youtube-dl活跃fork而来。本文从安装、基础用法、格式选择、元数据处理、插件开发到架构设计全面解析，覆盖从入门到精通的全部关键知识。"
 draft: false
 categories: ["技术笔记"]
 tags: ["yt-dlp", "视频下载", "ffmpeg", "Python", "开源工具"]
@@ -12,7 +12,7 @@ tags: ["yt-dlp", "视频下载", "ffmpeg", "Python", "开源工具"]
 
 **如果你需要下载互联网上几乎任何视频，yt-dlp 几乎是唯一的选择。**
 
-这是一款命令行工具，支持超过一千个视频网站，从 YouTube、TikTok 到各种小众站点通吃。它从 youtube-dl fork 而来，目前 GitHub Stars 已超过 16 万，是同类工具中最活跃的分支。本文覆盖安装、核心用法、格式选择、元数据处理、插件开发，并深入解析其架构设计，帮助你从入门走向精通。
+这是一款命令行工具，支持超过一千个视频网站，从 YouTube、TikTok 到各种小众站点通吃。它从 youtube-dl fork 而来，目前 GitHub Stars 已超过 16 万，是同类工具中最活跃的分支。下面覆盖安装、主要用法、格式选择、元数据处理、插件开发，并深入解析其架构设计，帮助你从入门走向精通。
 
 ---
 
@@ -26,7 +26,7 @@ tags: ["yt-dlp", "视频下载", "ffmpeg", "Python", "开源工具"]
 | 许可证 | Unlicense（源码） |
 | 最新提交 | 2026-05-22 |
 
-yt-dlp 是一个**功能丰富的命令行音视频下载器**（feature-rich command-line audio/video downloader），核心能力包括：
+yt-dlp 是一个**功能丰富的命令行音视频下载器**（feature-rich command-line audio/video downloader），主要能力包括：
 
 - 支持**超过一千个网站**的视频提取
 - 丰富的格式选择与排序机制
@@ -126,7 +126,7 @@ yt-dlp -f "bv*+ba/b" "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 ---
 
-## 4. 核心功能详解
+## 4. 功能详解
 
 ### 4.1 格式选择
 
@@ -485,7 +485,7 @@ class MySiteIE(GenericIE):
 
 ```
 yt_dlp/
-├── YoutubeDL.py       # 核心引擎：调度下载流程
+├── YoutubeDL.py       # 主引擎：调度下载流程
 ├── extractor/         # 1000+ 网站提取器
 │   ├── _extractors.py # 所有提取器的注册表
 │   ├── youtube.py     # YouTube专用提取器
@@ -520,7 +520,7 @@ URL输入 → Extractor.match_id()   # 匹配URL，确定使用哪个提取器
 
 ### 10.3 Extractor 机制
 
-每个支持的网站都有一个对应的 Extractor 类，核心职责：
+每个支持的网站都有一个对应的 Extractor 类，主要职责：
 
 1. `match_id()`：从 URL 中提取视频 ID
 2. `_real_extract()`：向目标网站发起请求，解析页面/API，返回视频信息字典
@@ -601,7 +601,7 @@ yt-dlp --list-extractors
 
 ---
 
-## 12. 与 youtube-dl 的核心差异
+## 12. 与 youtube-dl 的主要差异
 
 yt-dlp 相比原版 youtube-dl 的主要改进（来自官方 README）：
 
@@ -621,13 +621,5 @@ yt-dlp 相比原版 youtube-dl 的主要改进（来自官方 README）：
 ## 结语
 
 yt-dlp 是命令行视频下载领域最成熟、维护最活跃的工具。它的强大来自于：超过一千个 Extractor 支撑的网站覆盖、极其精细的格式选择机制、灵活的后处理管道，以及一个始终跟得上网站反爬更新的维护团队。
-
-掌握本文内容后，你应该能够：
-
-- 独立完成各平台的视频下载
-- 根据质量、编码、文件大小精确筛选格式
-- 使用 Python API 将 yt-dlp 嵌入自己的工具
-- 编写自定义 Extractor 插件
-- 在复杂网络环境下稳定下载
 
 如果遇到某个网站无法下载，建议先查阅 [yt-dlp Supported Sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) 确认是否在支持列表中，并检查是否有已知的 Issue 或 Workaround。

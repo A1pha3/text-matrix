@@ -12,7 +12,7 @@ tags: ["OpenViking", "上下文数据库", "AI Agent", "记忆管理", "RAG"]
 
 # OpenViking：字节跳动开源的 19.6k Stars AI Agent 上下文数据库
 
-> 预计阅读时间：25分钟 | 难度：⭐⭐⭐⭐
+> 预计阅读时间：25 分钟 | 难度：⭐⭐⭐⭐
 
 ---
 
@@ -75,19 +75,7 @@ tags: ["OpenViking", "上下文数据库", "AI Agent", "记忆管理", "RAG"]
 
 OpenViking 借鉴 Linux 文件系统的设计理念：
 
-```
-viking://                              # 根目录
-├── memories/                          # 记忆目录
-│   ├── sessions/                      # 会话记忆
-│   └── long_term/                    # 长期记忆
-├── resources/                          # 资源目录
-│   ├── code/                          # 代码资源
-│   ├── docs/                          # 文档资源
-│   └── data/                          # 数据资源
-└── skills/                            # 技能目录
-    ├── builtin/                       # 内置技能
-    └── custom/                        # 自定义技能
-```
+```text
 
 ### 2.2 分层上下文加载（L0/L1/L2）
 
@@ -117,38 +105,7 @@ viking://                              # 根目录
 
 ### 3.1 整体架构
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    OpenViking 架构                              │
-├─────────────────────────────────────────────────────────────┤
-│  SDK 层（多语言）                                            │
-│  ┌──────────────┐  ┌──────────────┐                         │
-│  │ Python SDK  │  │ Rust CLI     │                         │
-│  │ openviking  │  │ ov_cli       │                         │
-│  └──────────────┘  └──────────────┘                         │
-├─────────────────────────────────────────────────────────────┤
-│  VikingBot（AI Agent 框架）                                  │
-│  基于 OpenViking 构建的 AI Agent 框架                        │
-├─────────────────────────────────────────────────────────────┤
-│  核心引擎层                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │ Context      │  │ Retrieval    │  │ Memory       │       │
-│  │ Engine      │  │ Engine       │  │ Engine       │       │
-│  └──────────────┘  └──────────────┘  └──────────────┘       │
-├─────────────────────────────────────────────────────────────┤
-│  存储层                                                      │
-│  ┌──────────────┐  ┌──────────────┐                         │
-│  │ File System  │  │ Vector Store │                         │
-│  │ Paradigm    │  │ (Embedding) │                         │
-│  └──────────────┘  └──────────────┘                         │
-├─────────────────────────────────────────────────────────────┤
-│  模型层                                                      │
-│  ┌──────────────┐  ┌──────────────┐                         │
-│  │ VLM Model   │  │ Embedding    │                         │
-│  │ (视觉理解)  │  │ Model (向量化)│                         │
-│  └──────────────┘  └──────────────┘                         │
-└─────────────────────────────────────────────────────────────┘
-```
+```text
 
 ### 3.2 支持的模型提供商
 
@@ -174,20 +131,7 @@ viking://                              # 根目录
 
 ### 3.3 核心目录结构
 
-```
-OpenViking/
-├── bot/                      # VikingBot（AI Agent 框架）
-├── build_support/           # 构建支持
-├── crates/ov_cli/           # Rust CLI 工具
-├── deploy/helm/             # Helm 部署
-├── docs/                    # 文档
-├── examples/                # 示例
-├── openviking/              # 核心 Python 包
-├── openviking_cli/          # Python CLI
-├── src/                     # 核心源代码
-├── tests/                   # 测试
-└── third_party/             # 第三方依赖
-```
+```text
 
 ---
 
@@ -208,32 +152,13 @@ OpenViking/
 
 ```bash
 pip install openviking --upgrade --force-reinstall
-```
-
-**Rust CLI（可选）：**
-
-```bash
+```textbash
 # 方式一：安装脚本
 curl -fsSL https://raw.githubusercontent.com/volcengine/OpenViking/main/crates/ov_cli/install.sh | bash
 
 # 方式二：从源码构建
 cargo install --git https://github.com/volcengine/OpenViking ov_cli
-```
-
-### 4.3 模型配置
-
-OpenViking 需要以下模型能力：
-
-| 模型类型 | 说明 |
-|----------|------|
-| **VLM 模型**（视觉语言模型） | 用于图像和内容理解 |
-| **Embedding 模型**（嵌入向量） | 用于向量化和语义检索 |
-
-### 4.4 配置示例
-
-**服务端配置 `~/.openviking/ov.conf`：**
-
-```json
+```textjson
 {
   "storage": {
     "workspace": "/home/your-name/openviking_workspace"
@@ -252,34 +177,18 @@ OpenViking 需要以下模型能力：
     "model": "doubao-seed-2-0-pro-260215"
   }
 }
-```
-
-### 4.5 运行示例
-
-**启动服务器：**
-
-```bash
+```textbash
 openviking-server
 # 或后台运行
 nohup openviking-server > /data/log/openviking.log 2>&1 &
-```
-
-**运行 CLI：**
-
-```bash
+```textbash
 ov status                          # 查看状态
 ov add-resource https://github.com/volcengine/OpenViking  # 添加资源
 ov ls                              # 列出内容
 ov tree viking://resources/        # 树形结构
 ov find "what is openviking"      # 语义搜索
 ov grep "openviking" --uri viking://resources/volcengine/OpenViking/docs/zh  # grep 搜索
-```
-
-### 4.6 VikingBot 快速开始
-
-VikingBot 是基于 OpenViking 构建的 AI Agent 框架：
-
-```bash
+```textbash
 # 安装 VikingBot（推荐方式）
 pip install "openviking[bot]"
 

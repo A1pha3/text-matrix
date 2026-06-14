@@ -10,13 +10,6 @@ tags: ["curl", "libcurl", "HTTP", "URL解析", "C语言", "开源"]
 
 # curl 与 libcurl：互联网数据传输基石的架构解析
 
-## 学习目标
-
-- 理解 curl 命令行工具与 libcurl 库的分层设计
-- 掌握 libcurl 三种编程接口（easy / multi / share）的适用场景
-- 了解 curl_url 组件在 URL 解析与标准化中的作用
-- 认识 curl 如何通过协议分层实现 26+ 协议支持
-
 ---
 
 ## 1. 项目概览

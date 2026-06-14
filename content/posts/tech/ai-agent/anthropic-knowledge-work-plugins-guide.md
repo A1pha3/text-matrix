@@ -12,7 +12,7 @@ tags: ["Claude", "MCP", "工作流", "AI工具"]
 
 # Anthropic Knowledge Work Plugins：把 Claude 变成岗位专家的完整指南
 
-> 预计阅读时间：25分钟 | 难度：⭐⭐⭐
+> 预计阅读时间：25 分钟 | 难度：⭐⭐⭐
 
 ---
 

@@ -11,13 +11,13 @@ description: "全面解析 xiaohongshu-mcp (12.4k Stars)：小红书Model Contex
 
 # xiaohongshu-mcp：小红书 MCP 服务完全指南
 
-> 预计阅读时间：20分钟 | 难度：⭐⭐⭐
+> 预计阅读时间：20 分钟 | 难度：⭐⭐⭐
 
 ---
 
 ## 学习目标
 
-完成本文档后，你将能够：
+完成本文档后，可以：
 
 - ✅ 理解 xiaohongshu-mcp 的核心定位与设计理念
 - ✅ 掌握 xiaohongshu-mcp 的完整功能体系
@@ -56,20 +56,11 @@ description: "全面解析 xiaohongshu-mcp (12.4k Stars)：小红书Model Contex
 
 ### 2.3 核心数据
 
-```
-Stars:     12,400 (12.4k)
-Forks:     1,900 (1.9k)
-Watchers:  33
-贡献者:    33 人
-提交数:   340+ 次
-发布版本:  90 个
-最新版本:  v2026.03.09.0605-0e16f4b (2026-03-09)
-语言:     Go 71.3%, Python 27.5%
-```
+```yaml
 
 ### 2.4 项目定位
 
-xiaohongshu-mcp 填补了 AI 助手与小红书平台之间的Gap。通过 MCP 协议，AI 助手可以像人类一样操作小红书账号，实现自动化运营、内容发布、社群互动等功能。
+xiaohongshu-mcp 填补了 AI 助手与小红书平台之间的 Gap。通过 MCP 协议，AI 助手可以像人类一样操作小红书账号，实现自动化运营、内容发布、社群互动等功能。
 
 ---
 
@@ -255,25 +246,13 @@ chmod +x xiaohongshu-login-darwin-arm64
 
 # 4. 或者启动 MCP 服务（非无头模式，有浏览器界面）
 ./xiaohongshu-mcp-darwin-arm64 -headless=false
-```
-
-**⚠️ 重要提示**：首次运行时会自动下载无头浏览器（约 150MB），请确保网络连接正常。
-
-#### 4.1.3 配置代理（可选）
-
-如果需要通过代理访问小红书，可以设置 `XHS_PROXY` 环境变量：
-
-```bash
+```textbash
 # 设置代理后启动
 XHS_PROXY=http://user:pass@proxy:port ./xiaohongshu-mcp-darwin-arm64
 
 # 支持 HTTP/HTTPS/SOCKS5 代理
 # 日志中会自动隐藏代理的认证信息
-```
-
-### 4.2 方案 B：源码编译
-
-```bash
+```textbash
 # 克隆仓库
 git clone https://github.com/xpzouying/xiaohongshu-mcp.git
 cd xiaohongshu-mcp
@@ -289,11 +268,7 @@ go build -o xiaohongshu-login ./cmd/login
 
 # 运行 MCP 服务
 ./xiaohongshu-mcp
-```
-
-### 4.3 方案 C：Docker 部署（最简单）
-
-```bash
+```textbash
 # 拉取镜像
 docker pull xpzouying/xiaohongshu-mcp:latest
 
@@ -309,104 +284,30 @@ docker run -d \
   -p 18060:18060 \
   xpzouying/xiaohongshu-mcp:latest \
   -headless=false
-```
-
-**⚠️ Docker 环境提示**：在 Docker 环境下，请使用 `http://host.docker.internal:18060/mcp` 而非 `http://localhost:18060/mcp`。
-
-### 4.4 方案 D：OpenClaw 深度集成
-
-对于已部署本项目的用户，可以使用 OpenClaw 集成：
-
-| 版本 | 仓库 | 说明 |
-|------|------|------|
-| xiaohongshu-mcp-skills | [autoclaw-cc/xiaohongshu-mcp-skills](https://github.com/autoclaw-cc/xiaohongshu-mcp-skills) | 适用于已部署完本项目的用户 |
-| xiaohongshu-skills | [autoclaw-cc/xiaohongshu-skills](https://github.com/autoclaw-cc/xiaohongshu-skills) | 开箱即用版 |
-
----
-
-## §5 客户端接入
-
-### 5.1 Claude Code CLI 接入
-
-```bash
+```textbash
 # 添加 HTTP MCP 服务器
 claude mcp add --transport http xiaohongshu-mcp http://localhost:18060/mcp
 
 # 检查 MCP 是否添加成功
 claude mcp list
-```
-
-### 5.2 Cursor 接入
-
-参考 [.cursor](https://github.com/xpzouying/xiaohongshu-mcp/tree/main/.cursor) 目录配置。
-
-### 5.3 Cline 接入
-
-在 Cline 设置中添加 MCP 服务器配置。
-
-### 5.4 验证 MCP 连接
-
-使用 MCP Inspector 验证连接：
-
-```bash
+```textbash
 npx @modelcontextprotocol/inspector
-```
-
-打开 Inspector 后，配置 MCP endpoint 为 `http://localhost:18060/mcp`，点击 Connect，然后点击 List Tools 查看所有可用工具。
-
-### 5.5 支持的客户端一览
-
-| 客户端 | 支持情况 | 说明 |
-|--------|----------|------|
-| Claude Code CLI | ✅ 官方推荐 | 最稳定 |
-| Cursor | ✅ 支持 | MCP Streamable HTTP |
-| Cline | ✅ 支持 | MCP 协议 |
-| OpenClaw | ✅ 支持 | 深度集成 |
-| n8n | ✅ 社区教程 | 工作流自动化 |
-| Cherry Studio | ✅ 社区教程 | AI 客户端 |
-| AnythingLLM | ✅ 社区教程 | 多模态 AI |
-| Kimi K2 | ✅ 社区教程 | Claude Code 门槛太高时的替代 |
-
----
-
-## §6 使用示例
-
-### 6.1 使用 Claude Code 发布图文
-
-**示例 1：使用 HTTP 图片链接**
-
-```
+```text
 帮我写一篇帖子发布到小红书上，配图为：https://cn.bing.com/th?id=OHR.MaoriRock_EN-US6499689741_UHD.jpg&w=3840
 图片是："纽西兰陶波湖的Ngātoroirangi矿湾毛利岩雕（© Joppi Getty Images）"
 使用 xiaohongshu-mcp 进行发布。
-```
-
-**示例 2：使用本地图片路径（推荐）**
-
-```
+```text
 帮我写一篇关于春天的帖子发布到小红书上，使用这些本地图片：
 - /Users/username/Pictures/spring_flowers.jpg
 - /Users/username/Pictures/cherry_blossom.jpg
 使用 xiaohongshu-mcp 进行发布。
-```
-
-### 6.2 使用 Claude Code 发布视频
-
-```
+```text
 帮我写一篇关于美食制作的视频发布到小红书上，使用这个本地视频文件：
 - /Users/username/Videos/cooking_tutorial.mp4
 使用 xiaohongshu-mcp 的视频发布功能。
-```
-
-### 6.3 搜索小红书内容
-
-```
+```text
 帮我搜索一下最近关于 AI 写作的小红书帖子，看看有哪些热门内容。
-```
-
-### 6.4 评论互动
-
-```
+```text
 帮我给我刚发布的那篇小红书帖子添加一条评论："写得真好，收藏了！"
 ```
 

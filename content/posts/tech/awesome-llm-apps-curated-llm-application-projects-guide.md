@@ -8,27 +8,15 @@ categories: ["技术笔记"]
 tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Voice AI", "Google ADK", "OpenAI Agents SDK"]
 ---
 
-## 学习目标
-
-通过本文，你将全面掌握以下核心能力：
-
-- 深入理解 awesome-llm-apps 的项目定位和收录范围
-- 学会构建各类 AI Agent（starter 级、advanced 级）
-- 掌握多 Agent 团队协作开发模式
-- 理解 MCP（Model Context Protocol）的原理和应用
-- 学会构建 RAG、知识库、向量检索等实际应用
-- 掌握语音 AI Agent 开发技术
-- 理解 AI Agent 框架（Google ADK、OpenAI Agents SDK）
-
 ---
 
-## 1. 项目概述
+. 项目概述
 
-### 1.1 是什么
+. 是什么
 
 **awesome-llm-apps** 是一个精心策划的 LLM 应用精选合集，收录了大量基于 RAG、AI Agents、Multi-agent Teams、MCP、Voice Agents 等技术构建的 AI 应用。项目作者 Shubhamsaboo 来自 The Unwind AI 团队。
 
-### 1.2 核心数据
+. 核心数据
 
 | 指标 | 数值 |
 |------|------|
@@ -39,7 +27,7 @@ tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Voice AI", "Google ADK",
 | License | **Apache-2.0** |
 | 最新更新 | **2026-03-28** |
 
-### 1.3 技术栈
+. 技术栈
 
 | 语言 | 占比 |
 |------|------|
@@ -47,7 +35,7 @@ tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Voice AI", "Google ADK",
 | JavaScript | **21.9%** |
 | TypeScript | **8.1%** |
 
-### 1.4 支持的模型
+. 支持的模型
 
 | 厂商 | 模型 |
 |------|------|
@@ -61,9 +49,9 @@ tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Voice AI", "Google ADK",
 
 ---
 
-## 2. 项目架构
+. 项目架构
 
-### 2.1 目录结构
+. 目录结构
 
 ```
 awesome-llm-apps/
@@ -78,7 +66,7 @@ awesome-llm-apps/
 └── docs/                     # 文档资源
 ```
 
-### 2.2 项目分类
+. 项目分类
 
 | 类别 | 说明 | 项目数量 |
 |------|------|----------|
@@ -96,9 +84,9 @@ awesome-llm-apps/
 
 ---
 
-## 3. 🌱 Starter AI Agents（入门级）
+. Starter AI Agents（入门级）
 
-### 3.1 项目列表
+. 项目列表
 
 | Agent | 功能 | 特点 |
 |-------|------|------|
@@ -115,10 +103,10 @@ awesome-llm-apps/
 | **OpenAI Research Agent** | 科研助手 | ArXiv 论文分析 |
 | **Web Scraping AI Agent** | 网页爬虫 | 本地+云端 SDK |
 
-### 3.2 AI Travel Agent 详解
+. AI Travel Agent 详解
 
 ```python
-# AI Travel Agent 核心架构
+AI Travel Agent 核心架构
 class TravelAgent:
     def __init__(self, llm, search_tool, booking_tool):
         self.llm = llm
@@ -140,14 +128,14 @@ class TravelAgent:
         return {"itinerary": itinerary, "bookings": bookings}
 ```
 
-### 3.3 AI Data Analysis Agent
+. AI Data Analysis Agent
 
 ```python
-# AI Data Analysis Agent 核心流程
+AI Data Analysis Agent 核心流程
 from langchain.agents import Agent
 from langchain.tools import PythonREPLTool
 
-# 创建数据分析 Agent
+创建数据分析 Agent
 data_agent = Agent(
     llm=llm,
     tools=[
@@ -158,7 +146,7 @@ data_agent = Agent(
     prompt="你是一个专业的数据分析师，可以加载、清洗、分析数据并生成可视化"
 )
 
-# 分析数据
+分析数据
 result = data_agent.run(
     "加载 sales.csv，计算月环比增长率，生成趋势图"
 )
@@ -166,9 +154,9 @@ result = data_agent.run(
 
 ---
 
-## 4. 🚀 Advanced AI Agents（进阶级）
+. Advanced AI Agents（进阶级）
 
-### 4.1 Single Agent 应用
+. Single Agent 应用
 
 | Agent | 功能 | 场景 |
 |-------|------|------|
@@ -183,7 +171,7 @@ result = data_agent.run(
 | **AI Meeting Agent** | 会议助手 | 会议记录、总结 |
 | **AI Self-Evolving Agent** | 自我进化 | 持续学习改进 |
 
-### 4.2 Multi-Agent Teams（多 Agent 协作）
+. Multi-Agent Teams（多 Agent 协作）
 
 | Agent Team | 功能 | Agent 数量 |
 |------------|------|-----------|
@@ -196,13 +184,13 @@ result = data_agent.run(
 | **AI Competitor Intelligence Team** | 竞情分析 | 3+ |
 | **AG2 Adaptive Research Team** | 自适应研究 | 3+ |
 
-### 4.3 AI VC Due Diligence Agent Team
+. AI VC Due Diligence Agent Team
 
 ```python
-# 多 Agent 协作架构
+多 Agent 协作架构
 from crewai import Agent, Task, Crew
 
-# 创建多个专业 Agent
+创建多个专业 Agent
 market_agent = Agent(
     role="Market Analyst",
     goal="分析目标公司的市场份额和竞争格局",
@@ -221,21 +209,21 @@ legal_agent = Agent(
     backstory="你是一名资深律师"
 )
 
-# 组建团队
+组建团队
 crew = Crew(
     agents=[market_agent, financial_agent, legal_agent],
     tasks=[market_task, financial_task, legal_task],
     process="hierarchical"  # 层级协作
 )
 
-# 执行任务
+执行任务
 result = crew.kickoff()
 ```
 
-### 4.4 AI Self-Evolving Agent
+. AI Self-Evolving Agent
 
 ```python
-# 自我进化 Agent 核心机制
+自我进化 Agent 核心机制
 class SelfEvolvingAgent:
     def __init__(self, llm):
         self.llm = llm
@@ -276,9 +264,9 @@ class SelfEvolvingAgent:
 
 ---
 
-## 5. 🎮 Autonomous Game Playing Agents
+. Autonomous Game Playing Agents
 
-### 5.1 游戏 Agent 列表
+. 游戏 Agent 列表
 
 | Agent | 游戏 | 难度 |
 |-------|------|------|
@@ -286,20 +274,20 @@ class SelfEvolvingAgent:
 | **AI Chess Agent** | 国际象棋 | 中 |
 | **AI Tic-Tac-Toe Agent** | 三子棋 | 低 |
 
-### 5.2 AI Chess Agent 核心逻辑
+. AI Chess Agent 核心逻辑
 
 ```python
 import chess
 from langchain.agents import Agent
 
-# 创建棋类 Agent
+创建棋类 Agent
 chess_agent = Agent(
     llm=llm,
     tools=[chess_ai_engine],
     prompt="你是一名国际象棋大师，可以分析棋局并制定最优策略"
 )
 
-# 对弈
+对弈
 board = chess.Board()
 while not board.is_game_over():
     # Agent 思考下一步
@@ -315,9 +303,9 @@ while not board.is_game_over():
 
 ---
 
-## 6. 🗣️ Voice AI Agents
+. Voice AI Agents
 
-### 6.1 语音 Agent 项目
+. 语音 Agent 项目
 
 | Agent | 功能 | 技术栈 |
 |-------|------|--------|
@@ -326,10 +314,10 @@ while not board.is_game_over():
 | **Voice RAG Agent** | 语音问答 | OpenAI Realtime API |
 | **OpenSource Voice Dictation** | 开源语音输入 | Whisper + .jarvis-ai-assistant |
 
-### 6.2 Voice RAG Agent 架构
+. Voice RAG Agent 架构
 
 ```python
-# Voice RAG Agent 核心流程
+Voice RAG Agent 核心流程
 class VoiceRAGAgent:
     def __init__(self):
         self.stt = WhisperSTT()        # 语音转文字
@@ -351,13 +339,13 @@ class VoiceRAGAgent:
 
 ---
 
-## 7. 🤖 MCP AI Agents
+. MCP AI Agents
 
-### 7.1 MCP 概述
+. MCP 概述
 
 **MCP（Model Context Protocol）** 是一种开放协议，允许 AI Agent 与外部工具和数据源连接。
 
-### 7.2 MCP Agent 列表
+. MCP Agent 列表
 
 | Agent | 数据源 | 功能 |
 |-------|--------|------|
@@ -367,16 +355,16 @@ class VoiceRAGAgent:
 | **AI Travel Planner MCP Agent** | 旅行数据 | 智能规划 |
 | **Multi-MCP Agent Router** | 多数据源 | 智能路由 |
 
-### 7.3 Browser MCP Agent
+. Browser MCP Agent
 
 ```python
-# Browser MCP Agent 示例
+Browser MCP Agent 示例
 from mcp.client import MCPClient
 
-# 连接浏览器 MCP 服务器
+连接浏览器 MCP 服务器
 browser_mcp = MCPClient("http://localhost:3000")
 
-# 创建 Browser Agent
+创建 Browser Agent
 browser_agent = Agent(
     llm=llm,
     tools=[
@@ -388,16 +376,16 @@ browser_agent = Agent(
     ]
 )
 
-# 执行任务
+执行任务
 result = browser_agent.run(
     "访问 GitHub，搜索 awesome-llm-apps 仓库，获取 star 数量"
 )
 ```
 
-### 7.4 Multi-MCP Agent Router
+. Multi-MCP Agent Router
 
 ```python
-# Multi-MCP Agent Router
+Multi-MCP Agent Router
 class MultiMCPRouter:
     def __init__(self, mcps):
         self.mcps = mcps
@@ -423,9 +411,9 @@ class MultiMCPRouter:
 
 ---
 
-## 8. 📀 RAG 检索增强生成
+. RAG 检索增强生成
 
-### 8.1 RAG 项目列表（20+）
+. RAG 项目列表（+）
 
 | 项目 | 模型 | 特点 |
 |------|------|------|
@@ -442,14 +430,14 @@ class MultiMCPRouter:
 | **Vision RAG** | GPT-4V | 图像问答 |
 | **RAG with Database Routing** | GPT-4 | 多数据库 |
 
-### 8.2 Agentic RAG 架构
+. Agentic RAG 架构
 
 ```python
-# Agentic RAG 核心流程
+Agentic RAG 核心流程
 from langchain.agents import Agent
 from langchain.retrievers import VectorStoreRetriever
 
-# 创建 Agentic RAG
+创建 Agentic RAG
 agentic_rag = Agent(
     llm=llm,
     tools=[
@@ -464,24 +452,24 @@ agentic_rag = Agent(
     4. 综合所有来源生成答案"""
 )
 
-# 检索增强生成
+检索增强生成
 result = agentic_rag.run(
     "查找 2024 年 AI Agent 领域的最新研究进展"
 )
 ```
 
-### 8.3 Knowledge Graph RAG
+. Knowledge Graph RAG
 
 ```python
-# Knowledge Graph RAG with Citations
+Knowledge Graph RAG with Citations
 from langchain_community.graphs import Neo4jGraph
 from langchain_community.vectorstores import Chroma
 
-# 初始化知识图谱和向量数据库
+初始化知识图谱和向量数据库
 graph = Neo4jGraph(url="bolt://localhost:7687", username="neo4j", password="password")
 vectorstore = Chroma(persist_directory="./chroma_db")
 
-# 知识图谱增强检索
+知识图谱增强检索
 def kg_enhanced_retrieval(query, top_k=5):
     # 1. 向量相似度检索
     vector_results = vectorstore.similarity_search(query, k=top_k)
@@ -502,7 +490,7 @@ def kg_enhanced_retrieval(query, top_k=5):
 
     # 4. 生成带引用的答案
     answer = llm.generate(
-        f"基于以下上下文回答：{combined}\n\n问题：{query}"
+        f"基于以下上下文回答：{combined}\n\n 问题：{query}"
     )
 
     return answer
@@ -510,9 +498,9 @@ def kg_enhanced_retrieval(query, top_k=5):
 
 ---
 
-## 9. 💾 LLM Apps with Memory
+. LLM Apps with Memory
 
-### 9.1 Memory 应用列表
+. Memory 应用列表
 
 | 应用 | 功能 | 记忆类型 |
 |------|------|----------|
@@ -523,10 +511,10 @@ def kg_enhanced_retrieval(query, top_k=5):
 | **Local ChatGPT Clone with Memory** | 本地 ChatGPT | 全历史 |
 | **Multi-LLM with Shared Memory** | 多模型共享 | 团队记忆 |
 
-### 9.2 个性化记忆系统
+. 个性化记忆系统
 
 ```python
-# LLM App with Personalized Memory
+LLM App with Personalized Memory
 class PersonalizedMemory:
     def __init__(self, llm, vectorstore):
         self.llm = llm
@@ -563,9 +551,9 @@ class PersonalizedMemory:
 
 ---
 
-## 10. 💬 Chat with X 应用
+. Chat with X 应用
 
-### 10.1 对话式应用列表
+. 对话式应用列表
 
 | 应用 | 数据源 | 功能 |
 |------|--------|------|
@@ -576,10 +564,10 @@ class PersonalizedMemory:
 | **Chat with Substack** | Substack | 文章订阅 |
 | **Chat with YouTube** | YouTube | 视频摘要 |
 
-### 10.2 Chat with GitHub
+. Chat with GitHub
 
 ```python
-# Chat with GitHub 核心功能
+Chat with GitHub 核心功能
 class ChatWithGitHub:
     def __init__(self, llm, github_token):
         self.github = GitHubAPI(token=github_token)
@@ -597,7 +585,7 @@ class ChatWithGitHub:
 
         # 3. 生成答案
         answer = self.llm.generate(
-            f"仓库信息：{repo_info}\n\n相关代码：{code_snippets}\n\n问题：{question}"
+            f"仓库信息：{repo_info}\n\n 相关代码：{code_snippets}\n\n 问题：{question}"
         )
 
         return answer
@@ -605,9 +593,9 @@ class ChatWithGitHub:
 
 ---
 
-## 11. 🔧 AI Agent 框架课程
+. AI Agent 框架课程
 
-### 11.1 Google ADK Crash Course
+. Google ADK Crash Course
 
 | 模块 | 内容 |
 |------|------|
@@ -621,7 +609,7 @@ class ChatWithGitHub:
 | **Plugins** | 插件开发 |
 | **Multi-agent Patterns** | 多 Agent 模式 |
 
-### 11.2 OpenAI Agents SDK Crash Course
+. OpenAI Agents SDK Crash Course
 
 | 模块 | 内容 |
 |------|------|
@@ -635,14 +623,14 @@ class ChatWithGitHub:
 | **Swarm Orchestration** | Swarm 编排 |
 | **Routing Logic** | 路由逻辑 |
 
-### 11.3 ADK 开发示例
+. ADK 开发示例
 
 ```python
-# Google ADK 开发示例
+Google ADK 开发示例
 from google.adk.agents import Agent
 from google.adk.tools import google_search, python_repl
 
-# 创建 Agent
+创建 Agent
 research_agent = Agent(
     name="research_agent",
     model="gemini-2.0-flash",
@@ -650,7 +638,7 @@ research_agent = Agent(
     tools=[google_search, python_repl]
 )
 
-# 创建 App
+创建 App
 app = Agent(
     name="research_team",
     model="gemini-2.0-flash",
@@ -658,25 +646,25 @@ app = Agent(
     instruction="你是一个研究团队，可以协调多个专业研究员完成任务"
 )
 
-# 运行
+运行
 result = app.run("研究 2024 年 AI Agent 领域的最新进展")
 ```
 
 ---
 
-## 12. 🎯 LLM 优化工具
+. LLM 优化工具
 
-### 12.1 Toonify Token 优化
+. Toonify Token 优化
 
 **Toonify** 可以将文本转换为更紧凑的格式，降低 30-60% 的 API 成本：
 
 ```python
-# Toonify Token 优化
+Toonify Token 优化
 from toonify import Toonifier
 
 toonifier = Toonifier()
 
-# 原始文本
+原始文本
 original = """
 The user wants to create a new machine learning project.
 We need to set up the environment, install dependencies,
@@ -684,20 +672,20 @@ configure the model, train the model, evaluate the results,
 and deploy to production.
 """
 
-# Toonify 压缩
+Toonify 压缩
 compressed = toonifier.compress(original)
-# 输出：USER→ML_PROJECT→ENV+DEPS+MODEL+TRAIN+EVAL+DEPLOY
+输出：USER→ML_PROJECT→ENV+DEPS+MODEL+TRAIN+EVAL+DEPLOY
 
-# 恢复
+恢复
 restored = toonifier.restore(compressed)
 ```
 
-### 12.2 Headroom Context 优化
+. Headroom Context 优化
 
 **Headroom** 通过智能上下文管理，可降低 50-90% 的 API 成本：
 
 ```python
-# Headroom Context 优化
+Headroom Context 优化
 from headroom import HeadroomOptimizer
 
 optimizer = HeadroomOptimizer(
@@ -705,21 +693,21 @@ optimizer = HeadroomOptimizer(
     strategy="importance_based"  # 基于重要性的保留策略
 )
 
-# 优化上下文
+优化上下文
 optimized_context = optimizer.optimize(
     full_context=long_context,
     query=current_query
 )
 
-# 只保留与当前查询最相关的上下文
+只保留与当前查询最相关的上下文
 response = llm.generate(optimized_context)
 ```
 
 ---
 
-## 13. 常见问题
+. 常见问题
 
-### 13.1 如何选择合适的 Agent 类型
+. 如何选择合适的 Agent 类型
 
 | 场景 | 推荐 |
 |------|------|
@@ -730,26 +718,26 @@ response = llm.generate(optimized_context)
 | 数据检索 | RAG Tutorials |
 | 本地部署 | Local RAG + Ollama |
 
-### 13.2 如何本地运行
+. 如何本地运行
 
 ```bash
-# 1. 克隆仓库
+. 克隆仓库
 git clone https://github.com/Shubhamsaboo/awesome-llm-apps.git
 cd awesome-llm-apps
 
-# 2. 安装依赖
+. 安装依赖
 pip install -r requirements.txt
 
-# 3. 设置环境变量
+. 设置环境变量
 export OPENAI_API_KEY="your-key"
 export ANTHROPIC_API_KEY="your-key"
 
-# 4. 运行示例
+. 运行示例
 cd starter_ai_agents/ai_travel_agent
 python app.py
 ```
 
-### 13.3 如何贡献
+. 如何贡献
 
 1. Fork 仓库
 2. 创建新分支：`git checkout -b feature/new-agent`
@@ -759,7 +747,7 @@ python app.py
 
 ---
 
-## 14. 总结
+. 总结
 
 **awesome-llm-apps** 是 LLM 应用开发的优秀资源库：
 

@@ -10,23 +10,6 @@ tags: ["AI编程", "Codex", "Claude", "GUI", "Web界面", "编程工具"]
 
 # T3 Code：9K Stars 的极简 AI 编程 GUI——支持 Codex 和 Claude 的 Web 界面
 
-> **目标读者**：AI 编程助手用户、偏好 GUI 而非 CLI 的开发者、想快速体验 AI 编程的初学者
-> **预计阅读时间**：25-35 分钟
-> **前置知识**：了解 AI 编程助手基本概念
-> **难度定位**：⭐⭐⭐ 进阶
-
----
-
-## §1 学习目标
-
-1. **理解 T3 Code 的定位**：极简 Web GUI for AI coding agents
-2. **掌握安装和配置**：npx/桌面安装/认证
-3. **了解支持的多提供商**：Codex 和 Claude
-4. **能够进行开发调试**
-5. **理解 T3 Code 与 Cursor/Copilot 的区别**
-
----
-
 ## §2 背景与动机：为何需要 T3 Code
 
 ### 2.1 CLI vs GUI 的权衡
@@ -277,12 +260,10 @@ npx t3 --help
 
 ---
 
-## §7 FAQ
+## §7 常见问题
 
 ### Q1: T3 Code 免费吗？
-T3 Code 开源免费。AI 提供商（Codex/Claude）的使用费用需自行承担：
-- Claude：按使用量计费
-- Codex：可能需要 OpenAI API 费用
+T3 Code 开源免费。AI 提供商（Codex/Claude）的使用费用需自行承担。
 
 ### Q2: 支持 Windows 吗？
 支持。通过`winget`或直接从 GitHub Releases 下载`.exe`安装包。

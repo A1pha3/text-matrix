@@ -8,22 +8,22 @@ categories: ["技术笔记"]
 tags: ["量化交易", "Python", "R", "金融", "算法"]
 ---
 
-## 目录
+目录
 
 - [这个仓库怎么用](#这个仓库怎么用)
 - [资源分类总览](#资源分类总览)
 - [五大策略方向：核心论文与代码示例](#五大策略方向核心论文与代码示例)
 - [数据集与数据源](#数据集与数据源)
-- [代码库：Python / R / Julia](#代码库python--r--julia)
+- [代码库：Python / R / Julia](#代码库 python--r--julia)
 - [书籍推荐](#书籍推荐)
 - [学习路径：从零到量化策略开发](#学习路径从零到量化策略开发)
 - [相关资源](#相关资源)
 
 ---
 
-## 这个仓库怎么用
+这个仓库怎么用
 
-[awesome-systematic-trading](https://github.com/paperswithbacktest/awesome-systematic-trading)（8.4k Stars）本质上是一个按策略分类的论文导航 + 工具链清单。它不提供交易信号，也不提供回测平台——它提供的是**知识地图**：哪些论文定义了某个策略方向，哪些库可以跑回测，哪些数据源能拿到市场数据。
+[awesome-systematic-trading](https://github.com/paperswithbacktest/awesome-systematic-trading)（8.4k Stars）说到底是一个按策略分类的论文导航 + 工具链清单。它不提供交易信号，也不提供回测平台——它提供的是**知识地图**：哪些论文定义了某个策略方向，哪些库可以跑回测，哪些数据源能拿到市场数据。
 
 对正在从零学量化的人来说，这个仓库的价值在于**缩短了「不知道从哪篇论文开始」的时间**。量化交易的论文数量巨大，但真正值得读的经典论文不超过 50 篇——这个仓库帮你筛出了这些。
 
@@ -31,7 +31,7 @@ tags: ["量化交易", "Python", "R", "金融", "算法"]
 
 ---
 
-## 资源分类总览
+资源分类总览
 
 ```mermaid
 mindmap
@@ -58,9 +58,9 @@ mindmap
 
 ---
 
-## 五大策略方向：核心论文与代码示例
+五大策略方向：核心论文与代码示例
 
-### 动量策略 (Momentum / Trend Following)
+动量策略 (Momentum / Trend Following)
 
 动量策略是量化交易中研究最多、证据最充分的方向之一。Jegadeesh & Titman (1993) 的经典论文发现：过去 3-12 个月表现好的股票，在未来 3-12 个月继续跑赢的概率显著高于随机游走。Asness et al. (2013) 进一步证明动量效应在全球 8 个资产类别中都存在。
 
@@ -79,7 +79,7 @@ def momentum_strategy(prices, lookback=12, holding=1):
     return signal.apply(lambda x: 1 if x > 0 else -1)
 ```
 
-### 均值回归 (Mean Reversion)
+均值回归 (Mean Reversion)
 
 均值回归策略基于一个假设：资产价格在短期会偏离均值，但长期会回归。配对交易（Pairs Trading）是最经典的均值回归实现——找两只高度相关的股票，当价差扩大时做空强势股、做多弱势股，等价差回归后平仓。
 
@@ -102,7 +102,7 @@ def pairs_trading(stock1, stock2, lookback=60, entry_threshold=2.0):
     return 0
 ```
 
-### 统计套利 (Statistical Arbitrage)
+统计套利 (Statistical Arbitrage)
 
 统计套利比均值回归更进一步——它不只依赖两只股票的关系，而是构建一个多资产组合，利用协方差矩阵做优化。Avellaneda & Lee (2010) 的论文是统计套利的标准框架。
 
@@ -126,7 +126,7 @@ class StatisticalArbitrage:
         return self.weights
 ```
 
-### 机器学习交易 (Machine Learning Trading)
+机器学习交易 (Machine Learning Trading)
 
 ML 在量化交易中的应用集中在两个方向：价格预测（LSTM/Transformer）和因子挖掘（树模型）。Fischer & Krauss (2018) 用 LSTM 预测 S&P 500 成分股，证明深度学习在选股上优于传统模型。
 
@@ -135,7 +135,7 @@ ML 在量化交易中的应用集中在两个方向：价格预测（LSTM/Transf
 - Fischer & Krauss (2018) — LSTM 股票预测
 - Kolm & Ritter (2019) — 机器学习在金融中的现代视角
 
-### 加密货币交易 (Crypto Trading)
+加密货币交易 (Crypto Trading)
 
 加密货币市场的微观结构与传统市场不同——24/7 交易、无涨跌停、跨交易所价差大。Makarov & Schoar (2020) 系统研究了加密货币的跨交易所套利。
 
@@ -145,9 +145,9 @@ ML 在量化交易中的应用集中在两个方向：价格预测（LSTM/Transf
 
 ---
 
-## 数据集与数据源
+数据集与数据源
 
-### 市场数据（免费 + 付费）
+市场数据（免费 + 付费）
 
 | 数据源 | 类型 | 免费额度 | 适合场景 |
 | ------ | ------ | ------ | ------ |
@@ -165,7 +165,7 @@ def get_market_data(tickers, start='2010-01-01', end='2024-12-31'):
     return data['Adj Close']
 ```
 
-### 另类数据
+另类数据
 
 | 数据源 | 类型 | 用途 |
 | ------ | ------ | ------ |
@@ -176,9 +176,9 @@ def get_market_data(tickers, start='2010-01-01', end='2024-12-31'):
 
 ---
 
-## 代码库：Python / R / Julia
+代码库：Python / R / Julia
 
-### Python 量化生态
+Python 量化生态
 
 | 库 | 用途 | 替代方案 |
 | ------ | ------ | ------ |
@@ -202,14 +202,14 @@ class MovingAverageStrategy(bt.Strategy):
             self.sell()
 ```
 
-### R 量化生态
+R 量化生态
 
 R 在学术量化社区中仍然活跃，quantstrat 是 R 生态中最成熟的回测框架。
 
 ```r
 library(quantstrat)
 
-# 创建策略
+创建策略
 strategy("ma_cross") <- function() {
     add.indicator(name = "SMA",
                   arguments = list(x = quote(mktdata), n = 20),
@@ -217,7 +217,7 @@ strategy("ma_cross") <- function() {
 }
 ```
 
-### Julia 量化生态
+Julia 量化生态
 
 Julia 在金融工程中增长最快，JuMP.jl 是数学优化领域的事实标准，Flux.jl 是纯 Julia 实现的深度学习框架。
 
@@ -232,15 +232,15 @@ end
 
 ---
 
-## 书籍推荐
+书籍推荐
 
-### 入门必读（按顺序）
+入门必读（按顺序）
 
 1. **Quantitative Trading** — Ernest Chan：从零到实盘的最短路径，适合有编程基础但没做过量化的人
 2. **Machine Learning for Algorithmic Trading** — Stefan Jansen：把 ML 和交易结合得最系统的一本书
 3. **Advances in Financial Machine Learning** — Marcos López de Prado：金融 ML 的进阶读物，关注过拟合和样本偏差
 
-### 专题深入
+专题深入
 
 | 方向 | 推荐书籍 | 作者 |
 | ------ | ------ | ------ |
@@ -250,7 +250,7 @@ end
 
 ---
 
-## 学习路径：从零到量化策略开发
+学习路径：从零到量化策略开发
 
 ```mermaid
 flowchart LR
@@ -272,7 +272,7 @@ flowchart LR
 
 ---
 
-## 相关资源
+相关资源
 
 | 资源 | 用途 |
 | ------ | ------ |

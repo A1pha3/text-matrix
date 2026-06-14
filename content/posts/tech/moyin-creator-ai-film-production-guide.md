@@ -61,7 +61,7 @@ tags: ["Moyin Creator", "AI影视", "视频生成", "Seedance", "角色一致性
 
 ### 2.1 S 级板块 — Seedance 2.0 多模态创作
 
-**核心能力**：
+**主要能力**：
 
 | 功能 | 说明 |
 |------|------|
@@ -90,7 +90,7 @@ tags: ["Moyin Creator", "AI影视", "视频生成", "Seedance", "角色一致性
 
 ### 2.2 剧本解析引擎
 
-**核心能力**：
+**主要能力**：
 
 ```markdown
 ## 智能拆解维度
@@ -519,7 +519,5 @@ const batchSubmit = async (scenes: Scene[]) => {
 - 官网：moyincreator.com
 - 教程：哔哩哔哩视频
 - 交流群：微信群二维码
-
----
 
 🦞 文档版本：v1.0 | 写作日期：2026-04-09

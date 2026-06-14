@@ -8,15 +8,15 @@ categories: ["技术笔记"]
 tags: ["Chiplet", "EDA", "开源工具链", "AI Agent", "芯片设计"]
 ---
 
-# Babel：开源 EDA 工具链驱动的 AI 原生 Chiplet 设计流程
+Babel：开源 EDA 工具链驱动的 AI 原生 Chiplet 设计流程
 
 Babel 是一个 AI 原生 Chiplet 设计流程，基于开源 EDA 工具链，用 5-agent 流水线处理从产品需求到 GDSII 的完整设计。2026-05-22 创建，20 星。
 
-## 核心判断
+核心判断
 
-Babel 的核心创新不是 EDA 工具本身（Yosys/Magic 这些都是成熟工具），而是把 AI coding agent（Claude Code）引入芯片设计流程：让 agent 以 issue handoff 的方式协作，每个 agent 专注特定设计阶段，用 labeled issue 做状态机驱动。这本质上是把"设计师 → RTL → 验证 → 综合 → PD"的人工流程 AI 化。
+Babel 的核心创新不是 EDA 工具本身（Yosys/Magic 这些都是成熟工具），而是把 AI coding agent（Claude Code）引入芯片设计流程：让 agent 以 issue handoff 的方式协作，每个 agent 专注特定设计阶段，用 labeled issue 做状态机驱动。这说到底是把"设计师 → RTL → 验证 → 综合 → PD"的人工流程 AI 化。
 
-## Agent 流水线架构
+Agent 流水线架构
 
 ```
 用户需求 → [bba-architect] → bba-guru-rtl → bba-guru-verification → bba-guru-synthesis → bba-guru-pd → signoff
@@ -31,7 +31,7 @@ Babel 的核心创新不是 EDA 工具本身（Yosys/Magic 这些都是成熟工
 | `/bba-guru-synthesis` | `ready-for-synth` / `synth-needs-fix` | SDC + CDC + 并行综合 → timing closure |
 | `/bba-guru-pd` | `ready-for-pd` / `pd-rework` | Floorplan → Place → Route → DRC/LVS → GDSII |
 
-## Issue Handoff 协议
+Issue Handoff 协议
 
 Agent 间通过 labeled issue 协作：
 
@@ -47,7 +47,7 @@ Agent 间通过 labeled issue 协作：
 | `synth-needs-fix` | 综合问题，回流 synthesis guru |
 | `escalate-user` | 超出迭代限制，需用户决策 |
 
-## 迭代限制
+迭代限制
 
 | Agent | 单阶段迭代限制 | 全局限制 |
 |-------|----------------|----------|
@@ -59,7 +59,7 @@ Agent 间通过 labeled issue 协作：
 
 超限自动触发 `escalate-user`，停止并等待用户决策。
 
-## Skill 体系
+Skill 体系
 
 | 类别 | Skill | 用途 |
 |------|-------|------|
@@ -85,7 +85,7 @@ Agent 间通过 labeled issue 协作：
 | | `/bb-gate-synth-quality` | 综合交付检查 |
 | | `/bb-gate-pd-quality` | PD 交付检查 |
 
-## 设计产物目录结构
+设计产物目录结构
 
 ```
 designs/<name>/
@@ -136,7 +136,7 @@ designs/<name>/
     └ *.md                    # 架构决策记录
 ```
 
-## 技术栈
+技术栈
 
 | 工具 | 版本 | 用途 |
 |------|------|------|
@@ -148,35 +148,35 @@ designs/<name>/
 | QRouter | 1.4 | 详细布线 |
 | KLayout | 0.30.8 | GDSII 查看/DRC |
 
-## 快速开始
+快速开始
 
 ```bash
-# 1. 在 Claude Code 中描述设计需求
+. 在 Claude Code 中描述设计需求
 claude-code
 
-# 2. 描述设计需求
-> 设计一个 AI 推理处理器 主频1Ghz，能运行主流大模型，使用 ASAP7 PDK
+. 描述设计需求
+> 设计一个 AI 推理处理器 主频 1Ghz，能运行主流大模型，使用 ASAP7 PDK
 
-# 3. 或显式触发 architect
+. 或显式触发 architect
 > /bba-architect
 
-# 4. architect 依次生成 PRD → arch_spec → MAS
-#    每阶段完成后暂停，等待用户确认
+. architect 依次生成 PRD → arch_spec → MAS
+每阶段完成后暂停，等待用户确认
 
-# 5. 确认后继续，直到 ready-for-rtl 开启
+. 确认后继续，直到 ready-for-rtl 开启
 
-# 6. 触发 RTL 生成
+. 触发 RTL 生成
 > /bba-guru-rtl
 
-# 7. 依次触发后续阶段...
+. 依次触发后续阶段...
 ```
 
-## 环境设置
+环境设置
 
 ```bash
 source ~/wrk/eda_opensources/eda_env.sh
 ```
 
-## 结论
+结论
 
-Babel 把 Claude Code agent 引入芯片设计流程，用 labeled issue 做状态机，每个阶段有明确的质量门控和迭代限制。它的价值在于把 AI coding agent 的能力迁移到硬件设计领域，而不是重新发明 EDA 工具。
+Babel 把 Claude Code agent 引入芯片设计流程，用 labeled issue 做状态机，每个阶段有明确的质量门控和迭代限制。它把 AI coding agent 的能力迁移到硬件设计领域，而不是重新发明 EDA 工具。

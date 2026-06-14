@@ -12,7 +12,7 @@ tags: ["Claude Code", "Claude HUD", "AI编程", "状态监控", "终端工具"]
 
 # Claude HUD：实时显示 Claude Code 状态的智能仪表盘
 
-> 预计阅读时间：15分钟 | 难度：⭐⭐
+> 预计阅读时间：15 分钟 | 难度：⭐⭐
 
 ---
 
@@ -59,9 +59,7 @@ Claude HUD 提供五大核心信息显示：
 
 ### 2.2 默认显示（2 行）
 
-```
-[Opus] │ my-project git:(main*) Context █████░░░░░ 45% │ Usage ██░░░░░░░░ 25% (1h 30m / 5h)
-```
+```json
 
 **第一行**：模型名称、提供商/认证标签（如 Bedrock 或 API）、项目路径、Git 分支
 
@@ -69,11 +67,7 @@ Claude HUD 提供五大核心信息显示：
 
 ### 2.3 可选显示线（通过 `/claude-hud:configure` 启用）
 
-```
-◐ Edit: auth.ts | ✓ Read ×3 | ✓ Grep ×2 ← 工具活动
-◐ explore [haiku]: Finding auth code (2m 15s) ← 智能体状态
-▸ Fix authentication bug (2/5) ← 待办进度
-```
+```text
 
 ## 三、工作原理
 
@@ -81,10 +75,7 @@ Claude HUD 提供五大核心信息显示：
 
 Claude HUD 利用 Claude Code 原生的 **statusline API** 实现，无需独立窗口、不需要 tmux、在任何终端都能工作。
 
-```
-Claude Code → stdin JSON → claude-hud → stdout → 终端显示
-                        ↘ transcript JSONL（工具、智能体、待办数据）
-```
+```text
 
 ### 3.2 核心特性
 
@@ -106,23 +97,17 @@ Claude HUD 解析两类数据：
 
 **第一步：添加插件市场**
 
-```
-/plugin marketplace add jarrodwatts/claude-hud
-```
+```text
 
 **第二步：安装插件**
 
 > ⚠️ Linux 用户：点击此处先行操作
 
-```
-/plugin install claude-hud
-```
+```text
 
 **第三步：配置状态栏**
 
-```
-/claude-hud:setup
-```
+```text
 
 **第四步：重启 Claude Code**
 
@@ -146,9 +131,7 @@ Claude HUD 提供三种预设：
 
 高级配置直接编辑配置文件：
 
-```
-~/.claude/plugins/claude-hud/config.json
-```
+```text
 
 运行 `/claude-hud:configure` 会保留手动设置，只更新布局和显示选项。
 
@@ -227,9 +210,7 @@ Claude HUD 提供三种预设：
 
 显示子智能体的运行状态：
 
-```
-◐ explore [haiku]: Finding auth code (2m 15s)
-```
+```text
 
 格式：`◐ 智能体名 [模型]: 当前任务 (运行时长)`
 
@@ -237,19 +218,7 @@ Claude HUD 提供三种预设：
 
 **显示级别**：
 
-```
-# 仅分支名
-[Opus] │ my-project git:(main)
-
-# 带脏标记（有待提交更改）
-[Opus] │ my-project git:(main*)
-
-# 带 Ahead/Behind
-[Opus] │ my-project git:(main ↑2 ↓1)
-
-# 带文件统计
-[Opus] │ my-project git:(main* !3 +1 ?2)
-```
+```text
 
 标记说明：`!` = 已修改，`+` = 已添加/已暂存，`✘` = 已删除，`?` = 未跟踪
 
@@ -283,7 +252,7 @@ Claude HUD 提供三种预设：
 - AWS Bedrock 模型（使用 AWS 管理限制）
 - 旧版 Claude Code（不发送 `rate_limits`）
 
-## 八、最佳实践
+## 八、推荐做法
 
 ### 8.1 工作流程优化
 
@@ -305,11 +274,7 @@ Claude HUD 提供三种预设：
     "showDuration": true
   }
 }
-```
-
-**简洁主义者（最小干扰）**：
-
-```json
+```textjson
 {
   "lineLayout": "compact",
   "pathLevels": 1,

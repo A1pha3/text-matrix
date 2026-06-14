@@ -385,18 +385,6 @@ npx claude-code-templates@latest --config .claude-templates --yes
 
 Templates CLI 会检测当前 Claude Code 版本，并安装兼容的组件版本。如果遇到不兼容的情况，健康检查会提示。Claude Code 大版本升级后，建议重新运行一次安装命令，确保组件版本匹配。
 
-## 自检测试
-
-安装完 Templates 后，按以下检查项逐项验证，确保环境正确配置：
-
-- [ ] **CLI 可用**：`npx claude-code-templates@latest --version` 正常输出版本号
-- [ ] **Agent 加载**：启动 Claude Code 后，Agent 角色描述与预期一致（比如 code-reviewer 会以审查专家视角回应）
-- [ ] **Command 注册**：`/help` 命令列表中能看到新安装的自定义命令
-- [ ] **Hook 触发**：执行一次 git commit，pre-commit hook 实际运行并输出结果
-- [ ] **MCP 连通**：`npx claude-code-templates@latest --health-check` 中 MCP 检查项全部通过
-- [ ] **Analytics 采集**：访问 `http://localhost:3456`，面板显示当前会话的实时数据
-- [ ] **组件卸载干净**：`npx claude-code-templates@latest --remove` 后，健康检查确认组件已完全移除
-
 ---
 
 项目当前在 GitHub 上有 25,839 Stars 和 2,595 Forks，社区活跃，持续更新。浏览全部可用组件：[aitmpl.com](https://aitmpl.com)。查阅完整文档：[docs.aitmpl.com](https://docs.aitmpl.com)。

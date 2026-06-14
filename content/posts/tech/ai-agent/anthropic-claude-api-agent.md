@@ -10,9 +10,9 @@ categories: ["技术笔记"]
 tags: ["Claude", "Agent", "并行执行", "链式调用", "Python"]
 ---
 
-# Claude API基础专题（七）：Agent架构与智能体设计
+# Claude API 基础专题（七）：Agent 架构与智能体设计
 
-> 预计阅读时间：45分钟 | 难度：⭐⭐⭐⭐
+> 预计阅读时间：45 分钟 | 难度：⭐⭐⭐⭐
 
 ---
 
@@ -26,14 +26,14 @@ tags: ["Claude", "Agent", "并行执行", "链式调用", "Python"]
 
 | 小节 | 主题 | 重要程度 |
 |------|------|----------|
-| 7.1 | 从工具调用到Agent：跨越的关键一步 | ⭐⭐⭐⭐⭐ |
-| 7.2 | 单Agent系统架构 | ⭐⭐⭐⭐⭐ |
-| 7.3 | 多Agent协作系统 | ⭐⭐⭐⭐⭐ |
+| 7.1 | 从工具调用到 Agent：跨越的关键一步 | ⭐⭐⭐⭐⭐ |
+| 7.2 | 单 Agent 系统架构 | ⭐⭐⭐⭐⭐ |
+| 7.3 | 多 Agent 协作系统 | ⭐⭐⭐⭐⭐ |
 | 7.4 | 执行模式：并行与链式 | ⭐⭐⭐⭐⭐ |
 | 7.5 | 状态管理与上下文 | ⭐⭐⭐⭐⭐ |
 | 7.6 | 错误处理与容错机制 | ⭐⭐⭐⭐⭐ |
 | 7.7 | 安全与权限管理 | ⭐⭐⭐⭐ |
-| 7.8 | 生产环境最佳实践 | ⭐⭐⭐⭐⭐ |
+| 7.8 | 生产环境推荐做法 | ⭐⭐⭐⭐⭐ |
 
 ---
 
@@ -129,11 +129,11 @@ result = await client.messages.create(
 
 ---
 
-## 7.2 单Agent系统架构
+## 7.2 单 Agent 系统架构
 
-### 最小可运行Agent
+### 最小可运行 Agent
 
-让我们从一个最简单的Agent开始，逐步理解其架构：
+让我们从一个最简单的 Agent 开始，逐步理解其架构：
 
 ```python
 from anthropic import Anthropic
@@ -145,7 +145,7 @@ import asyncio
 class AgentState:
     """
     Agent状态容器
-    
+
     为什么需要专门的状态类？
     1. 封装所有状态，边界清晰
     2. 便于序列化和持久化
@@ -161,21 +161,21 @@ class AgentState:
 class SimpleAgent:
     """
     最小可运行Agent
-    
+
     设计原则：
     - 简单性：先让它跑起来
     - 可观测性：每个步骤都记录
     - 可停止：明确的终止条件
     """
-    
+
     def __init__(self, api_key: str, tools: list[dict]):
         self.client = Anthropic(api_key=api_key)
         self.tools = tools
-    
+
     async def run(self, goal: str) -> dict[str, Any]:
         """
         Agent主循环
-        
+
         流程：
         1. 初始化状态
         2. 进入执行循环
@@ -183,13 +183,13 @@ class SimpleAgent:
         4. 达到终止条件时退出
         """
         state = AgentState(goal=goal)
-        
+
         while not self._should_terminate(state):
             state.iterations += 1
-            
+
             # 步骤1：LLM推理
             response = await self._think(state)
-            
+
             # 步骤2：检查是否需要调用工具
             if response.content[0].type == "tool_use":
                 tool_result = await self._execute_tool(response)
@@ -204,14 +204,14 @@ class SimpleAgent:
                     "result": response.content[0].text,
                     "iterations": state.iterations
                 }
-        
+
         return {
             "status": "terminated",
             "goal": goal,
             "reason": "max_iterations_reached",
             "iterations": state.iterations
         }
-    
+
     def _should_terminate(self, state: AgentState) -> bool:
         """判断是否应该终止"""
         # 达到最大迭代次数
@@ -219,7 +219,7 @@ class SimpleAgent:
             return True
         # 其他终止条件可以在这里添加
         return False
-    
+
     async def _think(self, state: AgentState) -> Any:
         """LLM推理"""
         response = self.client.messages.create(
@@ -232,13 +232,13 @@ class SimpleAgent:
             tools=self.tools
         )
         return response
-    
+
     async def _execute_tool(self, response: Any) -> dict:
         """执行工具调用"""
         tool_use = response.content[0]
         tool_name = tool_use.name
         tool_args = tool_use.input
-        
+
         # 这里应该调用实际的工具
         # 为了简化，省略具体实现
         return {
@@ -249,7 +249,7 @@ class SimpleAgent:
 
 ### 为什么要设计成这样的架构？
 
-**1. 状态外部化（AgentState类）**
+**1. 状态外部化（AgentState 类）**
 
 ```python
 # 好：状态外部化
@@ -266,7 +266,7 @@ while self.iterations < self.max_iterations:
 **原因**：
 - 状态外部化后，可以**序列化保存**（断点续跑）
 - 状态外部化后，可以**热切换**（修改状态不影响逻辑）
-- 状态外部化后，可以**并行运行多个Agent实例**
+- 状态外部化后，可以**并行运行多个 Agent 实例**
 
 **2. 终止条件前置判断**
 
@@ -293,7 +293,7 @@ state.messages.append(response)
 state.messages.append(tool_result)  # 工具结果也加入上下文
 ```
 
-**原因**：保持完整的对话历史，让LLM能够理解完整的执行脉络。
+**原因**：保持完整的对话历史，让 LLM 能够理解完整的执行脉络。
 
 ---
 
@@ -340,30 +340,30 @@ state.messages.append(tool_result)  # 工具结果也加入上下文
 class MasterAgent:
     """
     星型架构主Agent
-    
+
     特点：
     - 主Agent负责任务分解和结果汇总
     - 子Agent只做特定领域的任务
     - 主Agent和子Agent之间通过消息传递
     """
-    
+
     def __init__(self):
         self.sub_agents = {
             "hotel": HotelAgent(),
             "weather": WeatherAgent(),
             "budget": BudgetAgent()
         }
-    
+
     async def run(self, task: str) -> dict:
         # 1. 分解任务
         subtasks = await self._decompose_task(task)
-        
+
         # 2. 并行派发子任务
         results = await asyncio.gather(*[
             self._run_subagent(name, subtask)
             for name, subtask in subtasks.items()
         ])
-        
+
         # 3. 汇总结果
         return await self._aggregate_results(results)
 ```
@@ -381,13 +381,13 @@ class MasterAgent:
 class ChainAgent:
     """
     链式架构Agent
-    
+
     特点：
     - 每个Agent有明确的职责（预处理/核心/验证/输出）
     - 输出层层传递，形成处理流水线
     - 适合有明确处理步骤的任务
     """
-    
+
     def __init__(self):
         self.chain = [
             PreprocessAgent(),
@@ -395,17 +395,17 @@ class ChainAgent:
             ValidationAgent(),
             OutputAgent()
         ]
-    
+
     async def run(self, input_data: Any) -> Any:
         current = input_data
-        
+
         for agent in self.chain:
             current = await agent.process(current)
-            
+
             if not self._is_valid(current):
                 # 验证失败，触发错误处理
                 return await self._handle_error(current, agent)
-        
+
         return current
 ```
 
@@ -429,28 +429,28 @@ class ChainAgent:
 class PeerNetwork:
     """
     网状架构（对等模式）
-    
+
     特点：
     - 没有中心协调者
     - Agent之间可以直接通信
     - 适合需要横向协作的场景
     - 复杂度高，需要好的协调机制
     """
-    
+
     async def run(self, task: str) -> dict:
         # 使用消息队列进行Agent间通信
         queue = MessageQueue()
-        
+
         # 启动所有Agent
         agents = [Agent(i) for i in range(3)]
         tasks = [agent.run(queue) for agent in agents]
-        
+
         # 发送初始任务
         await queue.publish("task", task)
-        
+
         # 等待所有Agent完成
         results = await asyncio.gather(*tasks)
-        
+
         return self._merge_results(results)
 ```
 
@@ -469,18 +469,18 @@ class PeerNetwork:
 
 ### 并行执行
 
-并行执行是提升Agent效率的关键技术：
+并行执行是提升 Agent 效率的关键技术：
 
 ```python
 async def parallel_execution(tasks: list[dict]) -> list[dict]:
     """
     并行执行多个任务
-    
+
     为什么并行能提升效率？
     假设每个任务需要3秒：
     - 串行：3 * N 秒
     - 并行：约3秒（理想情况）
-    
+
     注意：
     - 并行任务之间不能有依赖
     - 需要处理好并发竞争问题
@@ -489,12 +489,12 @@ async def parallel_execution(tasks: list[dict]) -> list[dict]:
         agent = create_agent(task["type"])
         result = await agent.run(task["input"])
         return {"task_id": task["id"], "result": result}
-    
+
     # 使用asyncio.gather实现真正并行
     results = await asyncio.gather(*[
         execute_single(task) for task in tasks
     ])
-    
+
     return results
 ```
 
@@ -524,32 +524,32 @@ sequential_tasks = [
 async def chain_execution(tasks: list[dict]) -> dict:
     """
     链式执行（串行依赖）
-    
+
     执行流程：
     Task1 → Task2 → Task3 → ... → TaskN
-    
+
     每个任务接收前一个任务的输出作为输入
     """
     context = {}
-    
+
     for i, task in enumerate(tasks):
         # 构建当前任务的输入
         task_input = await self._prepare_input(task, context)
-        
+
         # 执行当前任务
         agent = create_agent(task["type"])
         result = await agent.run(task_input)
-        
+
         # 保存结果到上下文，供后续任务使用
         context[task["id"]] = result
-        
+
         # 检查是否需要错误恢复
         if not self._is_success(result):
             if task.get("retry"):
                 result = await self._retry(task, context)
             else:
                 raise ExecutionError(f"Task {task['id']} failed")
-    
+
     return context  # 返回完整的上下文（包含所有任务的结果）
 ```
 
@@ -559,39 +559,39 @@ async def chain_execution(tasks: list[dict]) -> dict:
 class HybridExecutor:
     """
     混合执行器：并行 + 链式的结合
-    
+
     适用场景：
     - 部分任务可以并行
     - 部分任务有依赖关系
-    
+
     示例：旅行规划
     1. 并行：同时查询 酒店、景点、天气
     2. 链式：基于查询结果生成行程 → 审核行程 → 输出最终方案
     """
-    
+
     async def run(self, workflow: dict) -> dict:
         # 阶段1：并行执行独立任务
         parallel_results = await self._parallel_phase(workflow["parallel_tasks"])
-        
+
         # 阶段2：基于并行结果执行链式任务
         context = {"parallel": parallel_results}
         chain_result = await self._chain_phase(
             workflow["chain_tasks"], 
             context
         )
-        
+
         return {
             "parallel_results": parallel_results,
             "chain_result": chain_result
         }
-    
+
     async def _parallel_phase(self, tasks: list[dict]) -> dict:
         """并行阶段"""
         results = await asyncio.gather(*[
             self._execute(task) for task in tasks
         ])
         return {task["id"]: result for task, result in zip(tasks, results)}
-    
+
     async def _chain_phase(self, tasks: list[dict], context: dict) -> dict:
         """链式阶段"""
         for task in tasks:
@@ -628,18 +628,18 @@ messages = [
 class StateManager:
     """
     状态管理器
-    
+
     核心功能：
     1. 压缩对话历史
     2. 提取关键信息
     3. 维护工作上下文
     """
-    
+
     def __init__(self, max_history: int = 10):
         self.max_history = max_history  # 保留最近N轮对话
         self.summaries = []            # 压缩后的摘要
         self.working_memory = {}       # 当前工作内存
-    
+
     def add_interaction(self, user_msg: str, assistant_msg: str):
         """添加一轮交互"""
         # 1. 加入历史
@@ -648,15 +648,15 @@ class StateManager:
             "assistant": assistant_msg,
             "timestamp": now()
         })
-        
+
         # 2. 检查是否需要压缩
         if len(self.summaries) > self.max_history:
             self._compress()
-    
+
     def _compress(self):
         """
         压缩历史
-        
+
         压缩策略：
         1. 保留最近N轮完整对话
         2. 更早的对话压缩成摘要
@@ -664,41 +664,41 @@ class StateManager:
         """
         recent = self.summaries[-self.max_history:]
         older = self.summaries[:-self.max_history]
-        
+
         # 用LLM生成摘要
         summary_prompt = f"""
         请总结以下对话的关键信息：
         {self._format_conversation(older)}
-        
+
         提取：
         1. 用户的主要目标
         2. 已完成的关键步骤
         3. 当前状态
         4. 重要的中间结果
         """
-        
+
         summary = self.client.messages.create(
             model="claude-opus-4-20241120",
             messages=[{"role": "user", "content": summary_prompt}]
         )
-        
+
         # 保存摘要，清空旧历史
         self.working_memory["conversation_summary"] = summary.content[0].text
         self.summaries = recent
-    
+
     def get_context_for_llm(self) -> str:
         """构建发送给LLM的上下文"""
         parts = []
-        
+
         # 1. 添加摘要（如果有）
         if "conversation_summary" in self.working_memory:
             parts.append(f"对话摘要：{self.working_memory['conversation_summary']}")
-        
+
         # 2. 添加最近N轮对话
         for item in self.summaries[-self.max_history:]:
             parts.append(f"用户：{item['user']}")
             parts.append(f"助手：{item['assistant']}")
-        
+
         return "\n".join(parts)
 ```
 
@@ -708,12 +708,12 @@ class StateManager:
 class SmartContextManager:
     """
     智能上下文管理器
-    
+
     核心思想：
     - 不是简单截断，而是智能选择
     - 保留与当前任务最相关的上下文
     """
-    
+
     def __init__(self, max_tokens: int = 150000):
         self.max_tokens = max_tokens
         self.priority_levels = {
@@ -722,41 +722,41 @@ class SmartContextManager:
             "normal": ["一般对话", "解释说明"],
             "discardable": ["问候", "重复确认"]
         }
-    
+
     def build_context(self, all_items: list[dict], current_task: str) -> str:
         """
         构建当前任务所需的上下文
-        
+
         算法：
         1. 为每个上下文项计算相关性分数
         2. 按分数排序
         3. 从最高分开始选取，直到达到token限制
         """
         scored_items = []
-        
+
         for item in all_items:
             relevance = self._calculate_relevance(item, current_task)
             priority = self._get_priority(item)
-            
+
             # 综合分数 = 相关性 * 优先级权重
             weight = {"critical": 1.0, "important": 0.7, "normal": 0.4, "discardable": 0.0}
             score = relevance * weight.get(priority, 0.5)
-            
+
             scored_items.append((score, item))
-        
+
         # 按分数降序排序
         scored_items.sort(key=lambda x: x[0], reverse=True)
-        
+
         # 选取项直到达到token限制
         selected = []
         total_tokens = 0
-        
+
         for score, item in scored_items:
             item_tokens = self._estimate_tokens(item)
             if total_tokens + item_tokens <= self.max_tokens:
                 selected.append(item)
                 total_tokens += item_tokens
-        
+
         return self._format_selected(selected)
 ```
 
@@ -769,21 +769,21 @@ class SmartContextManager:
 ```python
 class ErrorType(Enum):
     """Agent可能遇到的错误类型"""
-    
+
     # LLM相关错误
     LLM_TIMEOUT = "llm_timeout"           # LLM响应超时
     LLM_RATE_LIMIT = "llm_rate_limit"     # API限流
     LLM_INVALID_RESPONSE = "llm_invalid"  # LLM返回无效响应
-    
+
     # 工具相关错误
     TOOL_NOT_FOUND = "tool_not_found"     # 工具不存在
     TOOL_EXECUTION_FAILED = "tool_failed" # 工具执行失败
     TOOL_TIMEOUT = "tool_timeout"        # 工具执行超时
-    
+
     # 状态相关错误
     STATE_CORRUPTED = "state_corrupted"  # 状态损坏
     CONTEXT_OVERFLOW = "context_overflow" # 上下文溢出
-    
+
     # 业务相关错误
     MAX_ITERATIONS = "max_iterations"    # 达到最大迭代
     USER_CANCELLED = "user_cancelled"    # 用户取消
@@ -791,25 +791,25 @@ class ErrorType(Enum):
 class ErrorHandler:
     """
     错误处理器
-    
+
     设计原则：
     1. 不同错误类型采用不同的处理策略
     2. 记录错误日志便于调试
     3. 在适当时候回退或重试
     """
-    
+
     def __init__(self):
         self.error_counts = {}
-    
+
     async def handle(self, error: Exception, state: AgentState) -> ErrorAction:
         """
         处理错误，返回处理动作
         """
         error_type = self._classify(error)
-        
+
         # 记录错误
         self._log_error(error_type, error, state)
-        
+
         # 根据错误类型决定动作
         handlers = {
             ErrorType.LLM_TIMEOUT: self._handle_timeout,
@@ -818,37 +818,37 @@ class ErrorHandler:
             ErrorType.CONTEXT_OVERFLOW: self._handle_context_overflow,
             ErrorType.MAX_ITERATIONS: self._handle_max_iterations,
         }
-        
+
         handler = handlers.get(error_type, self._handle_unknown)
         return await handler(error, state)
-    
+
     async def _handle_timeout(self, error, state):
         """超时处理：等待后重试"""
         state.context["retry_count"] = state.context.get("retry_count", 0) + 1
-        
+
         if state.context["retry_count"] < 3:
             await asyncio.sleep(2 ** state.context["retry_count"])  # 指数退避
             return ErrorAction.RETRY
         else:
             return ErrorAction.FAIL
-    
+
     async def _handle_rate_limit(self, error, state):
         """限流处理：等待指定时间"""
         retry_after = getattr(error, "retry_after", 60)
         await asyncio.sleep(retry_after)
         return ErrorAction.RETRY
-    
+
     async def _handle_tool_failure(self, error, state):
         """工具失败处理：尝试备用方案"""
         tool_name = getattr(error, "tool_name", None)
-        
+
         # 检查是否有备用工具
         if self._has_fallback(tool_name):
             state.context["using_fallback"] = True
             return ErrorAction.RETRY_WITH_FALLBACK
-        
+
         return ErrorAction.FAIL
-    
+
     async def _handle_context_overflow(self, error, state):
         """上下文溢出处理：压缩历史"""
         # 调用状态管理器压缩历史
@@ -858,7 +858,7 @@ class ErrorHandler:
             return ErrorAction.RETRY
         else:
             return ErrorAction.FAIL
-    
+
     async def _handle_max_iterations(self, error, state):
         """达到最大迭代：返回当前最佳结果"""
         return ErrorAction.RETURN_BEST_RESULT
@@ -870,13 +870,13 @@ class ErrorHandler:
 class RetryPolicy:
     """
     重试策略
-    
+
     为什么需要重试策略？
     1. 瞬时故障（网络抖动）可能自行恢复
     2. 限流错误等待后通常可以继续
     3. 合理重试能提高系统稳定性
     """
-    
+
     def __init__(
         self,
         max_retries: int = 3,
@@ -890,30 +890,30 @@ class RetryPolicy:
         self.exponential_base = exponential_base
         self.max_delay = max_delay
         self.jitter = jitter
-    
+
     def get_delay(self, attempt: int) -> float:
         """计算重试延迟"""
         # 指数退避
         delay = self.base_delay * (self.exponential_base ** attempt)
         delay = min(delay, self.max_delay)
-        
+
         # 添加随机抖动，避免惊群效应
         if self.jitter:
             import random
             delay = delay * (0.5 + random.random())
-        
+
         return delay
 
 class FallbackManager:
     """
     备用方案管理器
-    
+
     核心思想：
     - 每个主工具可以有多个备用工具
     - 主工具失败时，自动尝试备用工具
     - 记录使用情况，便于优化
     """
-    
+
     def __init__(self):
         self.fallback_map = {
             "primary_search": ["fallback_search_1", "fallback_search_2"],
@@ -921,11 +921,11 @@ class FallbackManager:
             "primary_code_exec": ["fallback_sandbox"]
         }
         self.usage_stats = {}
-    
+
     async def execute_with_fallback(self, primary_tool: str, args: dict) -> Any:
         """执行主工具，失败时尝试备用方案"""
         tools_to_try = [primary_tool] + self.fallback_map.get(primary_tool, [])
-        
+
         last_error = None
         for tool in tools_to_try:
             try:
@@ -936,7 +936,7 @@ class FallbackManager:
                 last_error = e
                 self._record_failure(tool, e)
                 continue
-        
+
         # 所有工具都失败
         raise AllToolsFailedError(tools_to_try, last_error)
 ```
@@ -959,13 +959,13 @@ class PermissionScope(Enum):
 class Permission:
     """
     权限定义
-    
+
     为什么需要权限系统？
     1. 防止Agent执行危险操作
     2. 限制资源访问范围
     3. 满足合规审计要求
     """
-    
+
     def __init__(
         self,
         file_paths: list[str] = [],      # 允许访问的文件路径
@@ -983,44 +983,44 @@ class Permission:
 class SecurityManager:
     """
     安全管理器
-    
+
     核心功能：
     1. 验证操作权限
     2. 拦截危险操作
     3. 记录所有操作日志
     """
-    
+
     def __init__(self, permission: Permission):
         self.permission = permission
         self.audit_log = []
-    
+
     def check_file_access(self, path: str, mode: str) -> bool:
         """检查文件访问权限"""
         # 如果是只读权限但要求写操作
         if mode == "write" and PermissionScope.WRITE not in self.permission.scopes:
             return False
-        
+
         # 检查路径是否在允许范围内
         import os
         real_path = os.path.realpath(path)
-        
+
         for allowed_path in self.permission.file_paths:
             if real_path.startswith(os.path.realpath(allowed_path)):
                 return True
-        
+
         return False
-    
+
     def check_tool_usage(self, tool_name: str) -> bool:
         """检查工具使用权限"""
         return tool_name in self.permission.allowed_tools
-    
+
     def check_network_access(self, domain: str) -> bool:
         """检查网络访问权限"""
         for allowed in self.permission.allowed_domains:
             if domain.endswith(allowed) or domain == allowed:
                 return True
         return False
-    
+
     def audit(self, operation: str, details: dict):
         """记录审计日志"""
         self.audit_log.append({
@@ -1036,12 +1036,12 @@ class SecurityManager:
 class SandboxConfig:
     """
     沙箱配置
-    
+
     为什么需要沙箱？
     即使Agent出错，也只会影响沙箱内的模拟环境
     不会影响真实系统
     """
-    
+
     def __init__(
         self,
         use_sandbox: bool = True,
@@ -1056,27 +1056,27 @@ class SandboxConfig:
 
 class SandboxExecutor:
     """沙箱执行器"""
-    
+
     def __init__(self, config: SandboxConfig):
         self.config = config
-    
+
     async def execute(self, code: str, language: str) -> Any:
         """在沙箱中执行代码"""
         if self.config.use_sandbox:
             return await self._execute_in_sandbox(code, language)
         else:
             return await self._execute_direct(code, language)
-    
+
     async def _execute_in_sandbox(self, code: str, language: str) -> Any:
         """在沙箱中执行"""
         # 1. 准备沙箱环境
         sandbox = await self._prepare_sandbox()
-        
+
         # 2. 设置资源限制
         sandbox.set_memory_limit(self.config.memory_limit)
         sandbox.set_network隔离(self.config.network_isolation)
         sandbox.set_filesystem_boundary(self.config.filesystem_boundary)
-        
+
         # 3. 执行代码
         try:
             result = await sandbox.run(code, language)
@@ -1088,7 +1088,7 @@ class SandboxExecutor:
 
 ---
 
-## 7.8 生产环境最佳实践
+## 7.8 生产环境推荐做法
 
 ### 架构设计原则
 
@@ -1130,7 +1130,7 @@ class AgentMonitor:
     """
     Agent监控指标
     """
-    
+
     metrics = {
         "requests_total": "总请求数",
         "requests_success": "成功请求数",
@@ -1146,7 +1146,7 @@ class AlertManager:
     """
     告警管理
     """
-    
+
     alert_rules = {
         "high_error_rate": {
             "condition": "error_rate > 0.05",  # 错误率超过5%
@@ -1199,11 +1199,11 @@ class AlertManager:
 
 | 优化项 | 方法 | 效果 |
 |--------|------|------|
-| 缓存LLM响应 | 对相同输入缓存响应 | 减少API调用 |
+| 缓存 LLM 响应 | 对相同输入缓存响应 | 减少 API 调用 |
 | 并行工具调用 | 不依赖结果的工具并行执行 | 降低延迟 |
-| 状态压缩 | 对话历史压缩摘要 | 减少token消耗 |
+| 状态压缩 | 对话历史压缩摘要 | 减少 token 消耗 |
 | 预热机制 | 定期预加载模型 | 降低冷启动延迟 |
-| 连接池复用 | 复用HTTP/数据库连接 | 提高吞吐 |
+| 连接池复用 | 复用 HTTP/数据库连接 | 提高吞吐 |
 
 ---
 
@@ -1245,4 +1245,4 @@ class AlertManager:
 ---
 
 **文档元信息**
-难度：⭐⭐⭐⭐ | 类型：专家设计 | 更新日期：2026-03-25 | 预计阅读时间：60分钟 | 字数：约8000字
+难度：⭐⭐⭐⭐ | 类型：专家设计 | 更新日期：2026-03-25 | 预计阅读时间：60 分钟 | 字数：约 8000 字

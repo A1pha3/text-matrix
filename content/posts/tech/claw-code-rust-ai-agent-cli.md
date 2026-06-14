@@ -121,7 +121,7 @@ claw-code/
 
 ## 会话管理与工具生态
 
-Claw Code 支持会话持久化和多工具调用，这是其区别于简单 CLI chat 的核心能力。具体功能包括：
+Claw Code 支持会话持久化和多工具调用，这是其区别于简单 CLI chat 的关键能力。具体功能包括：
 
 - **会话管理**：保存和恢复多轮对话上下文
 - **多后端兼容**：Anthropic（Claude）、OpenAI 等 API 可切换
@@ -189,4 +189,4 @@ Claw Code 代表了开源 AI Agent 工具链的一个重要方向——用 Rust 
 
 ---
 
-*本文基于 ultraworkers/claw-code 公开仓库信息撰写，核心功能描述以 README 和官方文档为准。*
+*本文基于 ultraworkers/claw-code 公开仓库信息撰写，主要功能描述以 README 和官方文档为准。*

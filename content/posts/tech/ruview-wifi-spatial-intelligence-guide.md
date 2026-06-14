@@ -6,7 +6,7 @@ aliases:
      - "/posts/tech/ruview-wifi-presence-respiration-detection/"
      - "/posts/tech/ruview-wifi-spatial-intelligence-platform/"
      - "/posts/tech/ruvnet-ruview-wifi-densepose-guide/"
-description: "RuView 是一个基于 WiFi CSI（信道状态信息）的空间智能平台，无需摄像头即可实现人体存在检测、呼吸心率监测、姿态估计和穿墙感知。本文深入解析其技术原理、架构设计、安装配置与核心应用场景。"
+description: "RuView 是一个基于 WiFi CSI（信道状态信息）的空间智能平台，无需摄像头即可实现人体存在检测、呼吸心率监测、姿态估计和穿墙感知。本文深入解析其技术原理、架构设计、安装配置与主要应用场景。"
 draft: false
 categories: ["技术笔记"]
 tags: ["WiFi感知", "CSI", "ESP32", "Rust", "空间智能", "人体感知"]
@@ -16,7 +16,7 @@ tags: ["WiFi感知", "CSI", "ESP32", "Rust", "空间智能", "人体感知"]
 
 想象一个不再需要摄像头的世界——在这个世界里，你能感知房间里是否有人，能测量呼吸频率和心率，能追踪人在空间中的移动，甚至能隔墙探测生命迹象。这一切，只需要你家中已有的 WiFi 路由器。
 
-**RuView**（[https://github.com/ruvnet/RuView](https://github.com/ruvnet/RuView)）正是这样一个项目。它将普通的 WiFi 信号转化为实时空间智能，核心能力包括：
+**RuView**（[https://github.com/ruvnet/RuView](https://github.com/ruvnet/RuView)）正是这样一个项目。它将普通的 WiFi 信号转化为实时空间智能，主要能力包括：
 
 - **存在感知**：检测人员在场、计数、追踪出入
 - **生命体征**：无接触式呼吸频率与心率监测
@@ -25,7 +25,7 @@ tags: ["WiFi感知", "CSI", "ESP32", "Rust", "空间智能", "人体感知"]
 
 该项目在 GitHub 上已获得约 55,000 颗星，以 Rust 语言编写，基于 [RuVector](https://github.com/ruvnet/ruvector/) 和 Cognitum Seed 构建，完全运行在边缘硬件上——不需要云端，不需要摄像头，不需要互联网连接。
 
-## 1. 核心原理：WiFi 信号如何"看见"人
+## 1. 原理：WiFi 信号如何"看见"人
 
 WiFi 感知的基础是 **CSI（Channel State Information，信道状态信息）**。当你使用 WiFi 时，数据以无线电波的形式在路由器和设备之间传输。当有人移动、甚至是呼吸时，他们的身体会散射和吸收这些无线电波，导致信号发生变化。CSI 正是对这些变化的高精度测量。
 
@@ -88,7 +88,7 @@ RuView 支持多种硬件配置，从零成本到完整系统：
 
 ### 2.2 软件架构
 
-RuView 的核心用 Rust 编写，关键组件包括：
+RuView 用 Rust 编写，关键组件包括：
 
 - **wifi-densepose-ruvector**：AI 骨干，基于注意力机制的图神经网络
 - **wifi-densepose-wasm-edge**：60 个边缘 WASM 模块，编译为 `wasm32-unknown-unknown`，在 ESP32-S3 上通过 WASM3 运行
@@ -170,7 +170,7 @@ python -m sensing.server --port 5006
 
 连接 ESP32-S3 节点后，打开 [姿态融合演示](https://ruvnet.github.io/RuView/pose-fusion.html)，可实现实时双模态姿态估计（网络摄像头 + WiFi CSI）。详细说明参见 [ADR-059](https://github.com/ruvnet/RuView/blob/main/docs/adr/ADR-059-live-esp32-csi-pipeline.md)。
 
-## 4. 核心能力详解
+## 4. 能力详解
 
 ### 4.1 呼吸与心率监测
 

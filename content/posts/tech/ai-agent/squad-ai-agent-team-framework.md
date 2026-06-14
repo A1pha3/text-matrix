@@ -25,20 +25,11 @@ description: "Squad 把 GitHub Copilot 的 Agent 模式扩展成一支多角色 
 
 Squad（官方仓库：[bradygaster/squad](https://github.com/bradygaster/squad)）是一个**AI 智能体团队协作框架**，通过 GitHub Copilot 的 Agent 模式，让你拥有一个**完整的 AI 开发团队**——包括前端、后端、测试、架构师等多个专业角色。
 
-Squad 的做法不是把 Copilot 当成一个聊天窗口来用，而是在项目里部署一支带角色分工的 AI 团队——这条团队的信息存在 `.squad/` 目录下，跨会话保留，下次打开项目时它还记得之前做过什么决策、写过什么代码。
+Squad 的做法是，不是把 Copilot 当成一个聊天窗口来用在项目里部署一支带角色分工的 AI 团队——这条团队的信息存在 `.squad/` 目录下，跨会话保留，下次打开项目时它还记得之前做过什么决策、写过什么代码。
 
 ### 2.2 核心数据
 
-```
-Stars:     1,532（1.5k）
-Forks:     200
-贡献者:    11 人
-提交:     1,362 次
-分支:     36 branches
-标签:     38 tags
-许可证:   MIT
-主要语言: TypeScript 58.5%, JavaScript 34.2%
-```
+```yaml
 
 ### 2.3 版本与发布
 
@@ -77,20 +68,7 @@ Squad 的核心是**协调式多智能体系统**（Coordinated Multi-Agent Syst
 
 **智能体间的消息路由**
 
-```
-用户消息
-    │
-    ▼
-┌─────────────────┐
-│   Coordinator    │  ← 路由智能体
-│  (协调者)        │
-└────────┬────────┘
-         │
-    ┌────┴────┬─────────┬─────────┐
-    ▼         ▼         ▼         ▼
- Frontend   Backend   Tester   Architect
- (前端)    (后端)    (测试)   (架构)
-```
+```text
 
 协调者（Coordinator）接收用户消息，分析任务类型，将任务路由到最合适的智能体，必要时协调多个智能体协作。
 
@@ -100,27 +78,7 @@ Squad 将智能体的"记忆"存储在项目文件中，实现跨会话知识积
 
 **核心文件结构**
 
-```
-.squad/
-├── team.md              # 团队配置和成员信息
-├── routing.md           # 消息路由规则
-├── decisions.md          # 团队决策日志
-├── casting/             # 团队角色定义
-│   ├── roster.md       # 成员列表
-│   └── policy.md       # 协作策略
-├── agents/             # 各智能体的上下文
-│   ├── frontend/       # 前端智能体的工作区
-│   ├── backend/        # 后端智能体的工作区
-│   ├── tester/        # 测试智能体的工作区
-│   └── architect/      # 架构师的工作区
-├── skills/             # 技能/知识积累
-│   └── compressed/    # 压缩后的技能知识
-├── identity/           # 智能体身份
-│   ├── current.md     # 当前焦点
-│   └── patterns.md    # 通用模式
-└── history/            # 历史会话
-    └── sessions/       # 过往会话记录
-```
+```text
 
 **决策日志（decisions.md）**
 
@@ -139,33 +97,7 @@ Squad 将智能体的"记忆"存储在项目文件中，实现跨会话知识积
 - 交易数据需要 ACID 保证
 - 团队对 SQL 更熟悉
 **影响**: 后端 API 需要适配 Prisma ORM
-```
-
-### 3.3 GitHub Copilot Agent 模式
-
-Squad 基于 GitHub Copilot 的 **Agent 模式**实现。Copilot Agent 允许 AI 模型主动执行多步骤任务，而非简单补全代码。
-
-**Agent vs Chat 模式对比**
-
-| 维度 | Chat 模式 | Agent 模式 |
-|------|----------|-----------|
-| 交互方式 | 问答 | 自主执行 |
-| 任务范围 | 单次操作 | 多步骤任务 |
-| 工具使用 | 有限 | 完整工具集 |
-| Squad 集成 | 不支持 | 原生支持 |
-
-**Copilot Agent 的能力**
-
-- 文件系统操作：读取、创建、修改文件
-- Git 操作：提交、分支、合并
-- Shell 命令：运行测试、构建项目
-- 搜索和导航：理解代码结构
-
-### 3.4 SDK-First 团队定义模式
-
-Squad 支持用 **TypeScript 定义团队**，而非纯 Markdown 配置：
-
-```typescript
+```texttypescript
 // team.ts - Squad 团队定义
 import { Squad, Agent, Skill } from '@bradygaster/squad-sdk';
 
@@ -198,28 +130,7 @@ const team = new Squad({
 });
 
 export default team;
-```
-
-### 3.5 一条任务如何流过系统
-
-以"给项目加一个用户注册 API"为例，走一遍完整链路：
-
-1. 用户在 `squad shell` 里输入 `实现一个用户注册 API`。
-2. Coordinator 解析任务描述，识别关键词"API"，从 `routing.md` 查表，路由到 Backend Dev。
-3. Backend Dev 读取 `.squad/agents/backend/` 下的工作区上下文（项目结构、已有代码风格），生成 API 代码。
-4. 如果 API 涉及数据库变更，Backend Dev 会先查 `decisions.md` 看之前是否有过数据库选型决策（比如 AD-001 选了 PostgreSQL），然后基于已有决策继续。
-5. 如果路由规则中标记该任务需要协作（如涉及前端调用），Coordinator 会通知 Frontend Dev 同步更新调用代码。
-6. 任务完成后，Backend Dev 更新 `decisions.md` 记录本次 API 设计决策，并把关键经验压缩到 `skills/compressed/`。
-
-这条链路串联了 Squad 的四个核心机制：路由、持久化上下文、决策复用和技能压缩。
-
----
-
-## §4 架构分析
-
-### 4.1 系统架构
-
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                         Squad CLI                           │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
@@ -244,44 +155,7 @@ export default team;
 │  │ Agent   │  │ Agent   │  │  Agent  │  │  Agent  │      │
 │  └─────────┘  └─────────┘  └─────────┘  └─────────┘      │
 └─────────────────────────────────────────────────────────────┘
-```
-
-### 4.2 核心模块
-
-**CLI 模块**
-
-| 模块 | 功能 | 入口命令 |
-|------|------|---------|
-| **init** | 初始化 Squad | `squad init` |
-| **upgrade** | 更新 Squad 文件 | `squad upgrade` |
-| **status** | 查看团队状态 | `squad status` |
-| **triage** | 自动分类 Issues | `squad triage` |
-| **copilot** | 管理 Copilot 代理 | `squad copilot add/remove` |
-| **doctor** | 检查设置 | `squad doctor` |
-| **link** | 连接远程团队 | `squad link` |
-| **shell** | 交互式 Shell | `squad shell` |
-| **export/import** | 导入导出 | `squad export/import` |
-| **plugin** | 插件市场 | `squad plugin marketplace` |
-| **upstream** | 上游管理 | `squad upstream` |
-| **nap** | 上下文清理 | `squad nap` |
-| **aspire** | Aspire 仪表盘 | `squad aspire` |
-| **scrub-emails** | 清理邮箱 | `squad scrub-emails` |
-
-**文件系统模块**
-
-| 模块 | 功能 | 位置 |
-|------|------|------|
-| **casting** | 团队角色 | `.squad/casting/` |
-| **agents** | 智能体上下文 | `.squad/agents/` |
-| **skills** | 技能压缩 | `.squad/skills/` |
-| **identity** | 身份管理 | `.squad/identity/` |
-| **history** | 会话历史 | `.squad/history/` |
-
-### 4.3 路由机制
-
-Squad 的消息路由由 `routing.md` 定义：
-
-```markdown
+```textmarkdown
 # Squad 路由规则
 
 ## 任务类型 → 智能体映射
@@ -301,13 +175,7 @@ Squad 的消息路由由 `routing.md` 定义：
 - **代码审查** → Lead + 相关智能体
 - **任务分配** → Lead
 - **进度报告** → Lead
-```
-
-### 4.4 协作策略
-
-Squad 的协作策略由 `casting/policy.md` 定义：
-
-```markdown
+```textmarkdown
 # 协作策略
 
 ## 决策机制
@@ -323,17 +191,7 @@ Squad 的协作策略由 `casting/policy.md` 定义：
 - 每次会话结束后更新 skills/
 - 重要发现记录到 decisions.md
 - 通用模式记录到 identity/patterns.md
-```
-
----
-
-## §5 功能详解
-
-### 5.1 初始化与配置
-
-**快速开始**
-
-```bash
+```textbash
 # 1. 创建项目目录
 mkdir my-project && cd my-project
 git init
@@ -349,11 +207,7 @@ squad init
 
 # 5. 启动 Copilot Agent
 copilot --agent squad --yolo
-```
-
-**squad init 做了什么**
-
-```bash
+```textbash
 $ squad init
 
 ✓ 创建 .squad/ 目录结构
@@ -362,27 +216,7 @@ $ squad init
 ✓ 配置 casting/roster.md
 ✓ 初始化 decisions.md
 ✓ 完成！运行 'squad status' 查看团队
-```
-
-### 5.2 交互式 Shell
-
-`squad shell` 启动交互式 Shell，支持以下命令：
-
-| 命令 | 功能 |
-|------|------|
-| `/status` | 显示团队状态 |
-| `/history` | 查看会话历史 |
-| `/agents` | 列出所有智能体 |
-| `/sessions` | 查看会话列表 |
-| `/resume` | 恢复历史会话 |
-| `/version` | 显示版本 |
-| `/clear` | 清除当前会话 |
-| `/help` | 显示帮助 |
-| `/quit` | 退出 Shell |
-
-**使用示例**
-
-```bash
+```textbash
 $ squad shell
 
 🤖 Squad Shell v1.0.0
@@ -403,23 +237,13 @@ squad > 实现一个用户登录 API
 ✓ 已路由到 Backend Dev
 ✓ Backend Dev 正在实现...
 ✓ 完成！决策已记录到 decisions.md
-```
-
-### 5.3 自动 Issue 分类
-
-`squad triage` 监听 GitHub Issues，自动分类和分配：
-
-```bash
+```textbash
 # 启动自动分类
 squad triage --watch
 
 # 手动分类
 squad triage classify --issue 123
-```
-
-**分类规则**
-
-```yaml
+```textyaml
 # .squad/triage-rules.yaml
 rules:
   - pattern: "前端|UI|组件|样式"
@@ -437,22 +261,12 @@ rules:
   - pattern: "架构|性能|安全"
     assignee: architect
     priority: medium
-```
-
-### 5.4 Copilot 代理管理
-
-**添加前端开发代理**
-
-```bash
+```textbash
 squad copilot add frontend \
   --name "frontend-dev" \
   --role "React/TypeScript 专家" \
   --instructions "你专注于 React 组件、样式优化和用户体验改进"
-```
-
-**查看当前代理**
-
-```bash
+```textbash
 $ squad status
 
 👥 Squad 团队配置
@@ -465,92 +279,44 @@ $ squad status
 │ tester         │ Tester           │ ✅ 活跃    │
 │ architect      │ Architect        │ ✅ 活跃    │
 └────────────────┴──────────────────┴────────────┘
-```
-
-### 5.5 知识管理
-
-**技能压缩**
-
-Squad 会定期将智能体的学习压缩到 `skills/compressed/`：
-
-```bash
+```textbash
 # 手动压缩
 squad skills compress
 
 # 查看技能列表
 squad skills list
-```
-
-**上下文清理（nap）**
-
-```bash
+```textbash
 # 查看上下文使用情况
 squad nap --stats
 
 # 清理不必要的上下文
 squad nap --aggressive
-```
-
-### 5.6 团队协作
-
-**连接远程团队**
-
-```bash
+```textbash
 # 连接到远程团队
 squad link https://github.com/org/remote-squad
 
 # 同步知识
 squad link --sync
-```
-
-**导出/导入团队配置**
-
-```bash
+```textbash
 # 导出
 squad export --output team-config.zip
 
 # 导入
 squad import team-config.zip
-```
-
----
-
-## §6 使用说明
-
-### 6.1 环境要求
-
-- **Node.js** 18+
-- **Git** 2.30+
-- **GitHub CLI** (gh) 已认证
-- **GitHub Copilot** 订阅
-- **npm** 或 **yarn**
-
-### 6.2 安装步骤
-
-**方式一：npm 全局安装（推荐）**
-
-```bash
+```textbash
 npm install -g @bradygaster/squad-cli squad
 
 # 验证安装
 squad --version
 # Squad CLI v1.0.0
-```
-
-**方式二：使用 npx**
-
-```bash
+```textbash
 # 初始化项目
 npx @bradygaster/squad-cli init my-project
 cd my-project
 
 # 启动 shell
 npx squad shell
-```
-
-**方式三：Docker 运行**
-
-```bash
+```textbash
 # 拉取镜像
 docker pull bradygaster/squad:latest
 
@@ -559,11 +325,7 @@ docker run -it --rm \
   -v $(pwd):/workspace \
   -w /workspace \
   bradygaster/squad:latest squad shell
-```
-
-### 6.3 GitHub 认证
-
-```bash
+```textbash
 # 交互式登录
 gh auth login
 
@@ -571,13 +333,7 @@ gh auth login
 gh auth status
 # ✓ Authenticated as Brady Gaster
 #   Token scope: repo, copilot, read:org
-```
-
-### 6.4 团队配置
-
-**手动编辑 team.md**
-
-```markdown
+```textmarkdown
 # .squad/team.md
 
 ## 团队信息
@@ -604,13 +360,7 @@ members:
       - PostgreSQL
       - Prisma
     status: active
-```
-
-### 6.5 常用工作流
-
-**日常开发**
-
-```bash
+```textbash
 # 1. 启动团队
 cd my-project
 squad shell
@@ -623,11 +373,7 @@ squad > /status
 
 # 4. 退出
 squad > /quit
-```
-
-**处理 Issue**
-
-```bash
+```textbash
 # 1. 启动 Issue 分类
 squad triage --watch
 
@@ -637,17 +383,7 @@ squad status --issues
 # 3. 解决 Issue
 squad shell
 squad > 修复 #123 登录问题
-```
-
----
-
-## §7 开发扩展
-
-### 7.1 创建自定义智能体
-
-创建 `.squad/agents/custom-agent/` 目录并添加配置文件：
-
-```markdown
+```textmarkdown
 # .squad/agents/custom-agent/agent.md
 
 ## 智能体信息
@@ -667,13 +403,7 @@ created: 2026-03-30
 ### 2026-03-30
 - 初始创建
 - 定义专业领域为 Go + K8s
-```
-
-### 7.2 插件开发
-
-Squad 支持插件扩展。创建插件：
-
-```typescript
+```texttypescript
 // plugins/my-plugin/index.ts
 import { SquadPlugin } from '@bradygaster/squad-sdk';
 
@@ -690,23 +420,13 @@ export default class MyPlugin implements SquadPlugin {
     console.log('My custom command:', args);
   }
 }
-```
-
-**发布插件**
-
-```bash
+```textbash
 # 在 plugins 目录创建插件
 mkdir -p .squad/plugins/my-plugin
 cd .squad/plugins/my-plugin
 npm init -y
 # 添加插件代码...
-```
-
-### 7.3 自定义路由规则
-
-修改 `.squad/routing.md` 添加自定义路由：
-
-```markdown
+```textmarkdown
 ## 自定义路由规则
 
 ### Go 相关任务
@@ -724,13 +444,7 @@ npm init -y
 - "部署"
 
 路由到: custom-agent (K8s 专家)
-```
-
-### 7.4 与 GitHub Actions 集成
-
-创建 `.github/workflows/squad.yml`：
-
-```yaml
+```textyaml
 name: Squad CI
 
 on:
@@ -758,23 +472,7 @@ jobs:
           squad doctor
           squad copilot add tester --name "ci-tester"
           copilot --agent squad -- non-interactive-test
-```
-
----
-
-## §8 最佳实践
-
-### 8.1 团队配置最佳实践
-
-**智能体数量控制**
-
-- **建议**: 3-5 个核心智能体
-- **原因**: 过多智能体会增加协调成本
-- **示例**: Frontend + Backend + Tester + Architect(可选) + Lead(可选)
-
-**技能清晰定义**
-
-```markdown
+```textmarkdown
 ## Good Example
 skills:
   - React 18 (5年经验)
@@ -786,27 +484,7 @@ skills:
 skills:
   - 前端
   - 会写代码
-```
-
-### 8.2 决策日志记录
-
-**应记录的决策**
-
-- 技术选型（数据库、框架、语言）
-- 架构变更
-- API 设计决策
-- 安全相关决策
-- 性能优化方案
-
-**不应记录的决策**
-
-- 日常任务分配
-- 个人偏好（除非影响团队）
-- 临时性实验
-
-### 8.3 知识压缩策略
-
-```bash
+```textbash
 # 每周压缩一次
 squad skills compress --weekly
 
@@ -815,13 +493,7 @@ squad skills prune --keep 10
 
 # 查看压缩率
 squad skills stats
-```
-
-### 8.4 故障排查
-
-**Copilot Agent 无响应**
-
-```bash
+```textbash
 # 1. 检查认证状态
 gh auth status
 
@@ -830,11 +502,7 @@ squad doctor
 
 # 3. 重启 Shell
 squad shell --fresh
-```
-
-**路由不准确**
-
-```bash
+```textbash
 # 查看当前路由规则
 cat .squad/routing.md
 

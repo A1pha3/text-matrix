@@ -8,25 +8,9 @@ categories: ["视频精读"]
 tags: ["AI Agent", "Nick Saraev", "Multi-Agent", "LangChain", "生产部署"]
 ---
 
-> **难度**：⭐⭐⭐⭐ | **类型**：视频深度解读 | **预计阅读时间**：30 分钟
-> **目标读者**：想系统掌握 AI Agent 技术的开发者
-> **前置知识**：Python 基础，熟悉 LLM API 调用
-
 ---
 
-## 🎯 学习目标
-
-完成本文后，你将能够：
-
-- [ ] 理解 Agentic AI 的完整技术栈
-- [ ] 掌握从单体 Agent 到 Multi-Agent 的架构演进
-- [ ] 使用 LangChain、AutoGen 等框架开发复杂 Agent 系统
-- [ ] 设计生产级别的 Agent 应用
-- [ ] 评估不同 Agent 架构的优劣与适用场景
-
----
-
-## 📺 视频概述
+## 视频概述
 
 ### 为什么这是目前最全面的 Agent 课程？
 
@@ -77,7 +61,7 @@ Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的
 
 ---
 
-## 🎓 第一部分：Agentic AI 基础
+## 第一部分：Agentic AI 基础
 
 ### 什么是 Agentic AI？
 
@@ -99,7 +83,7 @@ Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的
 
 | 对比维度 | Chatbot | RAG | Agent |
 |----------|---------|-----|-------|
-| **核心能力** | 对话 | 知识检索 | 任务执行 |
+| **关键能力** | 对话 | 知识检索 | 任务执行 |
 | **执行模式** | 问答 | 检索+生成 | 规划+执行 |
 | **工具调用** | ❌ | ❌ | ✅ |
 | **多步骤任务** | ❌ | ❌ | ✅ |
@@ -108,11 +92,11 @@ Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的
 
 ---
 
-## 🛠️ 第二部分：ReAct 与 Tool Use
+## 第二部分：ReAct 与 Tool Use
 
 ### ReAct 框架深度剖析
 
-ReAct（Reasoning + Acting）是 Agent 最核心的推理框架。其核心思想是「边推理边执行，边执行边反思」。
+ReAct（Reasoning + Acting）是 Agent 最重要的推理框架。其思想是「边推理边执行，边执行边反思」。
 
 ```python
 from typing import List, Dict, Any
@@ -234,7 +218,7 @@ web_search_tool = Tool(
 
 ---
 
-## 🧠 第三部分：Memory 与 Knowledge
+## 第三部分：Memory 与 Knowledge
 
 ### Agent 记忆系统架构
 
@@ -325,7 +309,7 @@ class AgentMemory:
 
 ### RAG 增强 Agent
 
-RAG（检索增强生成）是提升 Agent 知识能力的核心技术：
+RAG（检索增强生成）是提升 Agent 知识能力的关键技术：
 
 ```python
 from langchain.chains import RetrievalQA
@@ -368,7 +352,7 @@ class RAGAgent:
 
 ---
 
-## 🏛️ 第四部分：Multi-Agent 系统
+## 第四部分：Multi-Agent 系统
 
 ### 何时需要 Multi-Agent？
 
@@ -480,7 +464,7 @@ result = crew.kickoff()
 
 ---
 
-## 🚀 第五部分：生产级部署
+## 第五部分：生产级部署
 
 ### 性能优化
 
@@ -557,7 +541,7 @@ class MonitoredAgent:
 
 ---
 
-## 📊 架构选型指南
+## 架构选型指南
 
 | 架构 | 适用场景 | 复杂度 | 扩展性 |
 |------|----------|--------|--------|
@@ -569,7 +553,7 @@ class MonitoredAgent:
 
 ---
 
-## 📚 学习路径总结
+## 学习路径总结
 
 ### 入门（第一周）
 
@@ -591,10 +575,10 @@ class MonitoredAgent:
 
 ---
 
-## 🔗 知识关联
+## 知识关联
 
 - **前置**：[AI Agent 核心概念](ai-agents-clearly-explained-jeff-su-4m-views) ⭐⭐⭐⭐
-- **相关**：[25分钟实战教程](zero-to-ai-agent-25-minutes-futurepedia-3m-views) ⭐⭐⭐⭐
+- **相关**：[25 分钟实战教程](zero-to-ai-agent-25-minutes-futurepedia-3m-views) ⭐⭐⭐⭐
 - **进阶**：[Multi-Agent 系统设计]() ⭐⭐⭐⭐⭐ | [生产级 Agent 优化]() ⭐⭐⭐⭐
 
 ---

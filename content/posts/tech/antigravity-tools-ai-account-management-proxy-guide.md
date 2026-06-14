@@ -8,9 +8,9 @@ categories: ["技术笔记"]
 tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
 ---
 
-# Antigravity Tools 🚀：专业级 AI 账号管理与协议代理系统
+Antigravity Tools ：专业级 AI 账号管理与协议代理系统
 
-## 📋 学习目标
+学习目标
 
 - 理解 Antigravity Tools 的核心定位与适用场景
 - 掌握多平台安装部署方法（终端脚本/Homebrew/Docker）
@@ -22,15 +22,15 @@ tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
 
 ---
 
-## 📖 项目概述
+项目概述
 
-### 什么是 Antigravity Tools
+什么是 Antigravity Tools
 
 **Antigravity Tools**（曾用名 Antigravity Manager）是一个专为开发者和 AI 爱好者设计的**全功能桌面应用**，它将多账号管理、协议转换和智能请求调度完美结合，提供一个稳定、极速且成本低廉的**本地 AI 中转站**。
 
 通过本应用，用户可以将常见的 Web 端 Session（Google Gemini / Anthropic Claude）转化为标准化的 API 接口，消除不同厂商间的协议鸿沟。
 
-### 核心数据
+核心数据
 
 | 指标 | 数值 |
 |------|------|
@@ -40,7 +40,7 @@ tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
 | 提交数 | 570+ commits |
 | 技术栈 | Tauri + React + Rust |
 
-### 技术架构
+技术架构
 
 ```
 外部应用: Claude Code / NextChat / Kilo Code
@@ -49,7 +49,7 @@ Antigravity Axum Server (Rust 高性能网络层)
         ↓
 中间件: 鉴权 / 限流 / 日志
         ↓
-Model Router (模型路由: ID映射 / 正则重定向 / 分级路由)
+Model Router (模型路由: ID 映射 / 正则重定向 / 分级路由)
         ↓
 账号分发器: 轮询 / 权重分配
         ↓
@@ -64,9 +64,9 @@ Model Router (模型路由: ID映射 / 正则重定向 / 分级路由)
 
 ---
 
-## 🛠️ 安装指南
+安装指南
 
-### 方式一：终端一键安装（推荐）
+方式一：终端一键安装（推荐）
 
 **Linux / macOS：**
 ```bash
@@ -80,30 +80,30 @@ irm https://raw.githubusercontent.com/lbjlaq/Antigravity-Manager/main/install.ps
 
 **高级用法：**
 ```bash
-# 安装指定版本
+安装指定版本
 curl -fsSL ... | bash -s -- --version 4.1.31
 
-# 预览模式（不实际安装）
+预览模式（不实际安装）
 curl -fsSL ... | bash -s -- --dry-run
 ```
 
-### 方式二：Homebrew (macOS)
+方式二：Homebrew (macOS)
 
 ```bash
-# 1. 订阅 Tap
+. 订阅 Tap
 brew tap lbjlaq/antigravity-manager https://github.com/lbjlaq/Antigravity-Manager
 
-# 2. 安装应用
+. 安装应用
 brew install --cask antigravity-tools
 
-# 提示：遇到权限问题添加 --no-quarantine 参数
+提示：遇到权限问题添加 --no-quarantine 参数
 brew install --cask --no-quarantine antigravity-tools
 ```
 
-### 方式三：Docker 部署（推荐用于 NAS/服务器）
+方式三：Docker 部署（推荐用于 NAS/服务器）
 
 ```bash
-# 方式1: 直接运行 (推荐)
+方式: 直接运行 (推荐)
 docker run -d --name antigravity-manager \
   -p 8045:8045 \
   -e API_KEY=sk-your-api-key \
@@ -112,7 +112,7 @@ docker run -d --name antigravity-manager \
   -v ~/.antigravity_tools:/root/.antigravity_tools \
   lbjlaq/antigravity-manager:latest
 
-# 方式2: Docker Compose
+方式: Docker Compose
 cd docker
 docker compose up -d
 ```
@@ -125,7 +125,7 @@ docker compose up -d
 - 内存：建议 1GB（最小 256MB）
 - 架构：支持 x86_64 和 ARM64
 
-### 方式四：手动下载
+方式四：手动下载
 
 前往 [GitHub Releases](https://github.com/lbjlaq/Antigravity-Manager/releases) 下载对应系统的包：
 
@@ -137,9 +137,9 @@ docker compose up -d
 
 ---
 
-## 🎛️ 核心功能详解
+核心功能详解
 
-### 1. 智能账号仪表盘
+. 智能账号仪表盘
 
 **全局实时监控：**
 一眼洞察所有账号的健康状况，包括 Gemini Pro、Gemini Flash、Claude 以及 Gemini 绘图的**平均剩余配额**。
@@ -150,7 +150,7 @@ docker compose up -d
 **活跃账号快照：**
 直观显示当前活跃账号的具体配额百分比及最后同步时间。
 
-### 2. 强大的账号管家
+. 强大的账号管家
 
 **OAuth 2.0 授权（自动/手动）：**
 添加账号时会提前生成可复制的授权链接，支持在任意浏览器完成授权；回调成功后应用会自动完成并保存（必要时可点击"我已授权，继续"手动收尾）。
@@ -163,7 +163,7 @@ docker compose up -d
 **网关级视图：**
 支持"列表"与"网格"双视图切换。提供 403 封禁检测，自动标注并跳过权限异常的账号。
 
-### 3. 协议转换与中继
+. 协议转换与中继
 
 **全协议适配 (Multi-Sink)：**
 
@@ -176,7 +176,7 @@ docker compose up -d
 **智能状态自愈：**
 当请求遇到 `429 (Too Many Requests)` 或 `401 (Expire)` 时，后端会毫秒级触发**自动重试与静默轮换**，确保业务不中断。
 
-### 4. 模型路由中心
+. 模型路由中心
 
 **系列化映射：**
 您可以将复杂的原始模型 ID 归类到"规格家族"（如将所有 GPT-4 请求统一路由到 `gemini-3-pro-high`）。
@@ -190,7 +190,7 @@ docker compose up -d
 **后台任务静默降级：**
 自动识别 Claude CLI 等工具生成的后台请求（如标题生成），智能重定向至 Flash 模型，保护高级模型配额不被浪费。
 
-### 5. 多模态与 Imagen 3 支持
+. 多模态与 Imagen 支持
 
 **高级画质控制：**
 支持通过 OpenAI `size` 参数（如 `1024x1024`、`16:9`）自动映射到 Imagen 3 的相应规格。
@@ -200,48 +200,48 @@ docker compose up -d
 
 ---
 
-## 🔌 快速接入示例
+快速接入示例
 
-### 接入 Claude Code CLI
+接入 Claude Code CLI
 
 ```bash
-# 1. 启动 Antigravity，并在"API 反代"页面开启服务
+. 启动 Antigravity，并在"API 反代"页面开启服务
 
-# 2. 在终端配置环境变量
+. 在终端配置环境变量
 export ANTHROPIC_API_KEY="sk-antigravity"
 export ANTHROPIC_BASE_URL="http://127.0.0.1:8045"
 
-# 3. 启动 Claude Code
+. 启动 Claude Code
 claude
 ```
 
-### 接入 OpenCode
+接入 OpenCode
 
 ```bash
-# 配置方式与 Claude Code 类似
+配置方式与 Claude Code 类似
 export ANTHROPIC_API_KEY="sk-antigravity"
 export ANTHROPIC_BASE_URL="http://127.0.0.1:8045"
 
-# 启动 OpenCode
+启动 OpenCode
 opencode
 ```
 
-### 接入 Cherry Studio
+接入 Cherry Studio
 
 1. 打开 Cherry Studio 设置
 2. 添加自定义 API 路径：`http://127.0.0.1:8045/v1`
 3. 输入 API Key：`sk-antigravity`
 4. 选择模型即可使用
 
-### 接入 Kilo Code
+接入 Kilo Code
 
 配置方式与其他工具类似，通过环境变量指定 `ANTHROPIC_BASE_URL` 即可实现多账号极速轮换与模型穿透。
 
 ---
 
-## 🐳 Docker 部署详解
+Docker 部署详解
 
-### 鉴权逻辑说明
+鉴权逻辑说明
 
 **场景 A：仅设置 `API_KEY`**
 - **Web 登录**：使用 `API_KEY` 进入后台
@@ -251,7 +251,7 @@ opencode
 - **Web 登录**：必须使用 `WEB_PASSWORD`，使用 API Key 将被拒绝（更安全）
 - **API 调用**：统一使用 `API_KEY`
 
-### 密码优先级
+密码优先级
 
 | 优先级 | 来源 | 说明 |
 |--------|------|------|
@@ -259,7 +259,7 @@ opencode
 | 第二 | 配置文件 `gui_config.json` | UI 的"保存"操作会更新此值 |
 | 保底 | `API_KEY` | 若上述均未设置，则回退使用 |
 
-### 旧版本升级指引
+旧版本升级指引
 
 从 v4.0.1 及更早版本升级时，系统默认未设置 `WEB_PASSWORD`。可通过以下任一方式设置：
 
@@ -271,9 +271,9 @@ opencode
 
 ---
 
-## 🔧 常见问题排查
+常见问题排查
 
-### macOS 提示"应用已损坏，无法打开"？
+macOS 提示"应用已损坏，无法打开"？
 
 由于 macOS 的安全机制，非 App Store 下载的应用可能会触发此提示：
 
@@ -289,7 +289,7 @@ brew install --cask --no-quarantine antigravity-tools
 
 ---
 
-## 🆕 v4.x 新特性
+🆕 v.x 新特性
 
 根据 v4.0.0 及后续版本的更新日志：
 
@@ -302,7 +302,7 @@ brew install --cask --no-quarantine antigravity-tools
 
 ---
 
-## 📊 竞品对比
+竞品对比
 
 | 功能 | Antigravity Tools | 传统方案 |
 |------|----------------|----------|
@@ -315,7 +315,7 @@ brew install --cask --no-quarantine antigravity-tools
 
 ---
 
-## 🎯 适用人群
+适用人群
 
 - **开发者**：需要频繁切换 AI 账号进行开发调试
 - **AI 爱好者**：使用 Claude Code、OpenCode 等 CLI 工具
@@ -325,7 +325,7 @@ brew install --cask --no-quarantine antigravity-tools
 
 ---
 
-## 📚 资源链接
+资源链接
 
 | 资源 | 链接 |
 |------|------|
@@ -335,9 +335,9 @@ brew install --cask --no-quarantine antigravity-tools
 
 ---
 
-## ✅ 总结
+总结
 
-Antigravity Tools 是一个功能完善的 **AI 账号管理与协议代理系统**，其关键价值在于：
+Antigravity Tools 是一个功能完善的 **AI 账号管理与协议代理系统**，其关键在于：
 
 1. **一站式管理**：统一管理多个 AI 平台的账号配额
 2. **协议转换**：消除不同厂商间的协议差异，一个端点对接所有服务

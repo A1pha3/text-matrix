@@ -9,25 +9,25 @@ tags: ["AutoAgents", "Rust", "多智能体", "LLM框架", "ReAct", "WASM", "Pyda
 hiddenFromHomePage: true
 ---
 
-## 目录
+目录
 
 - [为什么用 Rust 写 Agent 框架](#为什么用-rust-写-agent-框架)
-- [架构总览：13 个 crate 的模块边界](#架构总览13-个-crate-的模块边界)
+- [架构总览：13 个 crate 的模块边界](#架构总览 13-个-crate-的模块边界)
 - [智能体抽象：从 trait 到 derive 宏](#智能体抽象从-trait-到-derive-宏)
-- [工具系统：WASM 沙盒与结构化调用](#工具系统wasm-沙盒与结构化调用)
+- [工具系统：WASM 沙盒与结构化调用](#工具系统 wasm-沙盒与结构化调用)
 - [记忆系统：滑动窗口与可扩展后端](#记忆系统滑动窗口与可扩展后端)
 - [LLM 后端：统一接口与灵活接入](#llm-后端统一接口与灵活接入)
 - [Guardrails 与 LLM 优化层](#guardrails-与-llm-优化层)
 - [多智能体编排：类型化通信与环境管理](#多智能体编排类型化通信与环境管理)
-- [Python 绑定：PyPI 安装与使用](#python-绑定pypi-安装与使用)
-- [可观测性：OpenTelemetry 集成](#可观测性opentelemetry-集成)
+- [Python 绑定：PyPI 安装与使用](#python-绑定 pypi-安装与使用)
+- [可观测性：OpenTelemetry 集成](#可观测性 opentelemetry-集成)
 - [安装与快速上手](#安装与快速上手)
 - [适用场景与决策建议](#适用场景与决策建议)
 - [常见问题](#常见问题)
 
 ---
 
-## 为什么用 Rust 写 Agent 框架
+为什么用 Rust 写 Agent 框架
 
 Python 生态有 LangChain、LlamaIndex 等成熟的 Agent 框架。但如果对性能、类型安全和内存占用有更严格的要求，Rust 正在成为一个值得关注的选择。
 
@@ -37,7 +37,7 @@ AutoAgents 没有重复造轮子——它复用 Rust 生态中已有的优秀库
 
 项目地址：[liquidos-ai/AutoAgents](https://github.com/liquidos-ai/AutoAgents)（628 Stars，70 Forks）
 
-## 架构总览：13 个 crate 的模块边界
+架构总览： 个 crate 的模块边界
 
 AutoAgents 采用 workspace 结构，将功能拆分为 13 个独立 crate，每个 crate 有明确的职责边界：
 
@@ -87,9 +87,9 @@ flowchart TB
 
 这种拆分方式带来的实际好处是**按需依赖**——如果只需要核心的 Agent 功能，不需要引入 Speech 或 Qdrant；如果只需要本地推理，不需要云端 provider 的依赖传递。
 
-## 智能体抽象：从 trait 到 derive 宏
+智能体抽象：从 trait 到 derive 宏
 
-### 核心 trait 设计
+核心 trait 设计
 
 AutoAgents 的核心抽象围绕三个 trait 展开：
 
@@ -114,7 +114,7 @@ pub trait Memory: Send + Sync {
 
 这三个 trait 覆盖了智能体系统的核心要素：**做什么**（Agent）、**怎么做**（Tool）、**记得什么**（Memory）。所有具体实现都围绕这三个 trait 展开。
 
-### 派生宏：减少样板代码
+派生宏：减少样板代码
 
 手写实现这些 trait 需要大量样板代码。AutoAgents 通过 `#[derive]` 宏大幅简化了这个过程：
 
@@ -147,7 +147,7 @@ impl ToolRuntime for Addition {
 
 `#[tool]` 宏自动处理了工具注册、参数解析和 JSON Schema 生成。类似地，`#[agent]` 宏用于定义智能体，`#[agent_output]` 用于定义结构化输出。
 
-### ReAct 执行器
+ReAct 执行器
 
 AutoAgents 内置了两种执行器，其中最核心的是 **ReAct（Reasoning + Acting）** 执行器：
 
@@ -168,17 +168,17 @@ pub async fn simple_agent(llm: Arc<dyn LLMProvider>) -> Result<(), Error> {
 
 ReAct 执行器的执行循环：**思考（Thought）→ 行动（Action）→ 观察（Observation）** 持续迭代，直到智能体输出最终答案或达到最大步数限制。这种模式特别适合需要调用工具的多步骤推理任务。
 
-## 工具系统：WASM 沙盒与结构化调用
+工具系统：WASM 沙盒与结构化调用
 
-### 工具调用的结构化设计
+工具调用的结构化设计
 
-AutoAgents 的工具调用是**类型安全**的——不是用自然语言描述工具参数，而是通过 Rust 结构体 + serde 序列化来定义工具输入。这意味着：
+AutoAgents 的工具调用是**类型安全**的——不是用自然语言描述工具参数，而是通过 Rust 结构体 + serde 序列化来定义工具输入。也就是：
 
 - 工具参数在编译期就有类型检查
 - LLM 输出通过 serde 自动反序列化到正确的结构体
 - 不存在传统「字符串模板 + 正则匹配」模式的脆弱性
 
-### WASM 沙盒隔离
+WASM 沙盒隔离
 
 AutoAgents 支持将工具执行在 **WASM 沙盒**中运行，这是安全性要求较高场景的关键特性：
 
@@ -195,11 +195,11 @@ impl ToolRuntime for SandboxedTool {
 
 当智能体调用不可信的工具代码时（如用户提供的自定义工具），WASM 沙盒可以防止工具代码对主进程造成损害。
 
-### 内置工具包（Toolkit）
+内置工具包（Toolkit）
 
 `autoagents-toolkit` 提供了开箱即用的内置工具：文件系统操作（读、写、搜索文件）、网络请求（HTTP GET/POST）、Shell 命令执行等。这些工具都经过了安全审计，可以直接集成到工作流中。
 
-## 记忆系统：滑动窗口与可扩展后端
+记忆系统：滑动窗口与可扩展后端
 
 记忆是智能体保持上下文连贯性的关键。AutoAgents 的记忆抽象：
 
@@ -216,9 +216,9 @@ pub trait Memory: Send + Sync {
 
 对于需要长期记忆的场景，`autoagents-qdrant` crate 提供了 Qdrant 向量存储后端，支持语义检索和持久化存储。
 
-## LLM 后端：统一接口与灵活接入
+LLM 后端：统一接口与灵活接入
 
-### 统一 Provider 接口
+统一 Provider 接口
 
 AutoAgents 的 LLM 层通过 `LLMProvider` trait 抽象了所有后端：
 
@@ -242,7 +242,7 @@ let llm: Arc<OpenAI> = LLMBuilder::<OpenAI>::new()
 // 业务代码完全不用改，换成 Ollama 也一样
 ```
 
-### 支持的 Provider 生态
+支持的 Provider 生态
 
 **云端 Provider（10+）：** OpenAI、Anthropic、DeepSeek、xAI、Groq、Google Gemini、Azure OpenAI、MiniMax、OpenRouter、Phind
 
@@ -252,9 +252,9 @@ let llm: Arc<OpenAI> = LLMBuilder::<OpenAI>::new()
 
 对于中国开发者而言，直接支持 MiniMax 是一个实用的细节。
 
-## Guardrails 与 LLM 优化层
+Guardrails 与 LLM 优化层
 
-### Guardrails
+Guardrails
 
 Guardrails（护栏）是在 LLM 输入/输出层增加的安全检查机制。AutoAgents 支持三种策略：
 
@@ -273,7 +273,7 @@ let pipeline = LLMBuilder::new()
     .build()?;
 ```
 
-### LLM 优化层
+LLM 优化层
 
 除了安全性，AutoAgents 还提供了两种性能优化：
 
@@ -283,7 +283,7 @@ let pipeline = LLMBuilder::new()
 
 这两种优化都通过 `LLMLayer` 接口实现，属于同一套可插拔架构。
 
-## 多智能体编排：类型化通信与环境管理
+多智能体编排：类型化通信与环境管理
 
 AutoAgents 的多智能体系统通过 **typed pub/sub 协议**实现通信：
 
@@ -310,7 +310,7 @@ agent.publish(AgentMessage { ... });
 
 **环境管理**（Environment）是多智能体编排的另一个核心概念。每个智能体可以在一个共享的「环境」中运行，环境负责维护全局状态、管理智能体之间的依赖关系、提供共享工具。
 
-## Python 绑定：PyPI 安装与使用
+Python 绑定：PyPI 安装与使用
 
 Rust 框架最大的门槛是 Rust 本身的上手成本。AutoAgents 通过 PyPI bindings 解决了这个问题——不需要写 Rust，用 Python 也能使用 AutoAgents 的核心功能：
 
@@ -327,19 +327,19 @@ Python API 与 Rust API 保持了概念上的一致性：
 from autoagents import Agent, Task
 from autoagents.llm import OpenAI
 
-# 初始化 LLM
+初始化 LLM
 llm = OpenAI(api_key="sk-...", model="gpt-4o")
 
-# 创建智能体
+创建智能体
 agent = Agent(llm=llm)
 
-# 运行任务
+运行任务
 result = agent.run(Task("What is 1 + 1?"))
 ```
 
 Python 绑定使用 maturin 构建，支持 CUDA 加速（通过 PyO3 绑定 Rust 原生实现），性能远优于纯 Python 实现的多智能体框架。
 
-## 可观测性：OpenTelemetry 集成
+可观测性：OpenTelemetry 集成
 
 生产环境中的调试和监控至关重要。AutoAgents 内置了 OpenTelemetry 支持：
 
@@ -358,37 +358,37 @@ let agent = AgentBuilder::new()
 
 追踪数据包括每次 LLM 调用的延迟、工具执行的耗时、智能体状态转换等关键指标。导出器支持多种后端（Console、Jaeger、OTLP 等）。
 
-## 安装与快速上手
+安装与快速上手
 
-### Rust 原生安装
+Rust 原生安装
 
 ```bash
-# 安装系统依赖（Linux）
+安装系统依赖（Linux）
 sudo apt update && sudo apt install build-essential libasound2-dev alsa-utils pkg-config libssl-dev -y
 
-# 克隆并构建
+克隆并构建
 git clone https://github.com/liquidos-ai/AutoAgents.git
 cd AutoAgents
 cargo build --workspace --all-features
 
-# 运行测试
+运行测试
 cargo test --features "full" --workspace
 ```
 
-### Python 安装
+Python 安装
 
 ```bash
-# 基础安装
+基础安装
 pip install autoagents-py
 
-# 开发环境（需要 Rust 编译环境）
+开发环境（需要 Rust 编译环境）
 uv venv --python=3.12
 source .venv/bin/activate
 uv pip install maturin pytest pytest-asyncio pytest-cov
 make python-bindings-build
 ```
 
-## 适用场景与决策建议
+适用场景与决策建议
 
 **适合的场景：**
 
@@ -412,7 +412,7 @@ make python-bindings-build
 4. **Burn + Mistral-rs + Llama-Cpp 本地推理三路并存**——满足不同硬件条件的本地部署需求
 5. **Python bindings + maturin 构建**——Rust 性能 + Python 生态两全其美
 
-## 常见问题
+常见问题
 
 **Q: AutoAgents 和 LangChain 怎么选？**
 

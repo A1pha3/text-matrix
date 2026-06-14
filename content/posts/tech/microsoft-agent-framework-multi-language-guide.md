@@ -41,8 +41,6 @@ tags: ["Microsoft", "Agent", "Python", ".NET", "工作流"]
 | 📊 **可观测** | 内置 OpenTelemetry 分布式追踪 |
 | 🛠️ **DevUI** | 交互式开发者 UI |
 
----
-
 ## 二、核心功能
 
 ### 2.1 完整功能矩阵
@@ -68,8 +66,6 @@ tags: ["Microsoft", "Agent", "Python", ".NET", "工作流"]
 | 🔌 **多 LLM** | Azure OpenAI、OpenAI、Anthropic 等多提供商 |
 | 🖥️ **DevUI** | 可视化调试和测试，提升开发效率 |
 | 📚 **丰富文档** | 官方文档、迁移指南、示例代码 |
-
----
 
 ## 三、快速开始
 
@@ -145,8 +141,6 @@ var agent = new OpenAIClient("<your-api-key>")
 Console.WriteLine(await agent.RunAsync("Write a haiku about Microsoft Agent Framework."));
 ```
 
----
-
 ## 四、Python 示例项目
 
 ### 4.1 示例列表
@@ -188,8 +182,6 @@ agent = Agent(provider=AzureOpenAI(endpoint="...", key="..."))
 agent = Agent(provider=Anthropic(api_key="..."))
 ```
 
----
-
 ## 五、.NET 示例项目
 
 ### 5.1 示例列表
@@ -216,11 +208,9 @@ var azureAgent = new AIProjectClient(new Uri(endpoint), new DefaultAzureCredenti
     .AsAIAgent(model: "gpt-4", name: "Assistant", instructions: "...");
 ```
 
----
-
 ## 六、图工作流（Graph-based Workflows）
 
-### 6.1 核心概念
+### 6.1 关键概念
 
 **Graph-based Workflows** 是 Microsoft Agent Framework 的核心特性，允许连接 Agent 和确定性函数，使用数据流进行编排。
 
@@ -257,8 +247,6 @@ classify.output >> support_agent.input
 result = await workflow.run(ticket)
 ```
 
----
-
 ## 七、DevUI - 交互式开发者 UI
 
 ### 7.1 DevUI 是什么
@@ -282,8 +270,6 @@ pip install agent-framework[devui]
 python -m agent_framework.devui
 # 访问 http://localhost:8080
 ```
-
----
 
 ## 八、可观测性（Observability）
 
@@ -320,8 +306,6 @@ var agent = new AIProjectClient(new Uri(endpoint), new DefaultAzureCredential())
 
 var result = await agent.RunAsync("What's the weather?");
 ```
-
----
 
 ## 九、中间件（Middleware）
 
@@ -372,8 +356,6 @@ agent.Use(async (context, next) =>
 });
 ```
 
----
-
 ## 十、多 Provider 支持
 
 ### 10.1 支持的 Provider
@@ -406,8 +388,6 @@ agent2 = Agent(provider=AzureOpenAI(
 agent3 = Agent(provider=Anthropic(api_key="sk-ant-..."))
 ```
 
----
-
 ## 十一、AF Labs - 实验性功能
 
 ### 11.1 AF Labs 是什么
@@ -429,8 +409,6 @@ pip install agent-framework[lab]
 # 使用实验性功能
 from agent_framework.lab import Benchmarking, ReinforcementLearning
 ```
-
----
 
 ## 十二、托管选项（Hosting）
 
@@ -470,8 +448,6 @@ var instanceId = await agent.StartAsync();
 await agent.WaitAsync();
 ```
 
----
-
 ## 十三、故障排除
 
 ### 13.1 认证问题
@@ -494,8 +470,6 @@ await agent.WaitAsync();
 ### 13.3 提示
 
 > ⚠️ **Tip:** `DefaultAzureCredential` 适合开发，但在生产环境中考虑使用特定凭据（如 `ManagedIdentityCredential`）以避免延迟问题、未预期的凭据探测和潜在安全风险。
-
----
 
 ## 十四、迁移指南
 
@@ -530,8 +504,6 @@ from agent_framework import Agent
 | 3 | 迁移工作流 |
 | 4 | 测试验证 |
 
----
-
 ## 十五、文档资源
 
 ### 15.1 完整文档链接
@@ -551,8 +523,6 @@ from agent_framework import Agent
 | 📅 **Office Hours** | 每周社区会议 |
 | 🐛 **GitHub Issues** | https://github.com/microsoft/agent-framework/issues |
 
----
-
 ## 十六、实践建议
 
 ### 16.1 开发实践建议
@@ -569,8 +539,6 @@ from agent_framework import Agent
 3. **启用人在回路** 用于关键决策
 4. **监控和追踪** 使用 OpenTelemetry
 
----
-
 ## 十七、总结
 
 Microsoft Agent Framework 是**微软官方的多语言 Agent 开发框架**：
@@ -585,8 +553,6 @@ Microsoft Agent Framework 是**微软官方的多语言 Agent 开发框架**：
 | 🖥️ **DevUI** | 可视化开发和调试 |
 | 📚 **文档完善** | 官方文档 + 迁移指南 + 示例 |
 
----
-
 **🔗 相关资源：**
 
 | 资源 | 链接 |
@@ -597,7 +563,5 @@ Microsoft Agent Framework 是**微软官方的多语言 Agent 开发框架**：
 | NuGet | https://www.nuget.org/profiles/MicrosoftAgentFramework |
 | Discord | https://discord.gg/b5zjErwbQM |
 | 视频介绍 | https://www.youtube.com/watch?v=AAgdMhftj8w |
-
----
 
 _🦞 本文由钳岳星君撰写，基于 Microsoft Agent Framework (9.3k Stars)_

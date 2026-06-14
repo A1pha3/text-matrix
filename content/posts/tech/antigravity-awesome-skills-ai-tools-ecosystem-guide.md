@@ -8,9 +8,9 @@ categories: ["技术笔记"]
 tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航"]
 ---
 
-# Antigravity Awesome Skills：1,400+ AI 工具插件生态系统完全指南
+Antigravity Awesome Skills：,+ AI 工具插件生态系统完全指南
 
-## 📋 学习目标
+学习目标
 
 - 理解 Antigravity Awesome Skills 的定位——AI 工具的百科全书
 - 掌握 Antigravity Tools 官方 26 个插件的功能与用途
@@ -20,17 +20,17 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 📖 项目概述
+项目概述
 
-### 什么是 Antigravity Awesome Skills
+什么是 Antigravity Awesome Skills
 
 **Antigravity Awesome Skills**是一个精心策划的**AI 工具生态系统专辑**，收录了 Antigravity Tools 官方插件以及 1,400+社区精选 AI 工具。
 
-简而言之：
+：
 - **Antigravity Tools** = 底层代理平台（负责 API 路由和账号管理）
 - **Antigravity Awesome Skills** = 上层应用市场（收录 1,400+工具的使用技巧和资源链接）
 
-### 核心数据
+核心数据
 
 | 指标 | 数值 |
 |------|------|
@@ -43,9 +43,9 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🧩 Antigravity Tools 官方插件
+Antigravity Tools 官方插件
 
-### 26 个官方插件一览
+个官方插件一览
 
 | 插件名称 | Stars | 下载量 | 核心功能 |
 |----------|-------|--------|----------|
@@ -58,24 +58,24 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | gemini-studio | ⭐ 2.5k | 低 | Gemini Studio |
 | ... | ... | ... | ... |
 
-### 插件安装方法
+插件安装方法
 
 ```bash
-# 通过 Antigravity Tools 内置商店安装
-# 1. 打开 Antigravity Tools
-# 2. 进入插件市场
-# 3. 搜索插件名称
-# 4. 点击安装
+通过 Antigravity Tools 内置商店安装
+. 打开 Antigravity Tools
+. 进入插件市场
+. 搜索插件名称
+. 点击安装
 
-# 或手动安装
-# 将插件文件夹放入 ~/.antigravity/skills/
+或手动安装
+将插件文件夹放入 ~/.antigravity/skills/
 ```
 
 ---
 
-## 🤖 AI 编程工具生态
+AI 编程工具生态
 
-### 核心编程助手
+核心编程助手
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -86,7 +86,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | **GoCode** | 6.7k | Go 语言专用 |
 | **Devin** | 16k | autonomous coder |
 
-### 多 Agent 系统
+多 Agent 系统
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -96,7 +96,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | **AutoGen** | 32k | 微软多 Agent 框架 |
 | **LangGraph** | 18k | 状态机 Agent |
 
-### Autonomous Research
+Autonomous Research
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -107,9 +107,9 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🔍 AI 搜索工具
+AI 搜索工具
 
-### 开源替代方案
+开源替代方案
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -119,7 +119,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | **Khoj** | 11k | 私有 AI 搜索 |
 | **GPT Researcher** | 21k | 研究助手 |
 
-### API 代理支持
+API 代理支持
 
 | 工具 | 支持协议 | 备注 |
 |------|----------|------|
@@ -129,9 +129,9 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 💬 AI 对话助手
+AI 对话助手
 
-### 主流平台
+主流平台
 
 | 平台 | 特色功能 |
 |------|----------|
@@ -142,7 +142,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | **Meta AI** | Facebook |
 | **Poe** | 聚合平台 |
 
-### 本地部署方案
+本地部署方案
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -153,7 +153,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🎵 AI 音乐创作
+AI 音乐创作
 
 | 平台 | 特色功能 |
 |------|----------|
@@ -165,9 +165,9 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🎬 AI 视频制作
+AI 视频制作
 
-### 视频生成
+视频生成
 
 | 平台 | Stars | 特色功能 |
 |------|-------|----------|
@@ -177,7 +177,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | **Sora** | OpenAI | 视频生成 |
 | **Hai** | 精选 | 新兴工具 |
 
-### 视频处理
+视频处理
 
 | 工具 | 特色功能 |
 |------|----------|
@@ -187,7 +187,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 📊 AI 数据分析
+AI 数据分析
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -197,7 +197,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 📝 AI 写作助手
+AI 写作助手
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -208,7 +208,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🧠 AI 思维导图
+AI 思维导图
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -218,7 +218,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🎯 工作流自动化
+工作流自动化
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -230,9 +230,9 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🔧 开发工具
+开发工具
 
-### 版本控制与 CI/CD
+版本控制与 CI/CD
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -240,7 +240,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | **GitLab Duo** | 集成 | GitLab AI |
 | **Dependabot** | 集成 | 依赖更新 |
 
-### 数据库与 API
+数据库与 API
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -250,7 +250,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🛡️ 安全与隐私
+安全与隐私
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -260,9 +260,9 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🌐 AI 基础设施
+AI 基础设施
 
-### 向量数据库
+向量数据库
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -271,7 +271,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | **Qdrant** | 32k | Rust 向量 DB |
 | **Weaviate** | 25k | 混合搜索 |
 
-### LLM 网关
+LLM 网关
 
 | 工具 | Stars | 特色功能 |
 |------|-------|----------|
@@ -281,9 +281,9 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 💡 精选资源导航
+精选资源导航
 
-### 学习资源
+学习资源
 
 | 资源 | 特色内容 |
 |------|----------|
@@ -291,7 +291,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 | **Prompt 工程** | 提示词技巧、模板库 |
 | **AI 法规** | 全球 AI 政策追踪 |
 
-### 社区资源
+社区资源
 
 | 社区 | 特色内容 |
 |------|----------|
@@ -301,9 +301,9 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 📊 资源统计总览
+资源统计总览
 
-### 分类分布
+分类分布
 
 | 分类 | 工具数量 | 代表项目 |
 |------|----------|----------|
@@ -317,16 +317,16 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## 🎯 实用技巧
+实用技巧
 
-### 如何选择 AI 工具
+如何选择 AI 工具
 
 1. **明确需求**：编程/搜索/创作/自动化
 2. **检查兼容性**：是否支持 Antigravity 代理
 3. **评估成本**：免费额度 vs 付费
 4. **考虑隐私**：本地部署 vs 云服务
 
-### Antigravity 集成推荐组合
+Antigravity 集成推荐组合
 
 | 场景 | 推荐组合 |
 |------|----------|
@@ -337,7 +337,7 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 
 ---
 
-## ✅ 总结
+总结
 
 Antigravity Awesome Skills 是 AI 工具生态的**一站式资源库**：
 

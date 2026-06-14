@@ -11,7 +11,7 @@ description: "智能体依赖图编排框架，支持并行扇出、迭代循环
 
 # AgentFlow：智能体依赖图编排框架完全指南
 
-> 预计阅读时间：30分钟 | 难度：⭐⭐⭐
+> 预计阅读时间：30 分钟 | 难度：⭐⭐⭐
 
 ---
 
@@ -73,9 +73,9 @@ with Graph("my-pipeline", concurrency=3) as g:
     plan = codex(task_id="plan", prompt="Inspect the repo and plan the work.", tools="read_only")
     impl = claude(task_id="impl", prompt="Implement the plan:\n{{ nodes.plan.output }}", tools="read_write")
     review = codex(task_id="review", prompt="Review:\n{{ nodes.impl.output }}")
-    
+
     plan >> impl >> review  # 依赖链
-    
+
 print(g.to_json())
 ```
 
@@ -167,17 +167,17 @@ from agentflow import Graph, codex, fanout, merge
 
 with Graph("code-review", concurrency=8) as g:
     scan = codex(task_id="scan", prompt="List the top 5 files to review.")
-    
+
     review = fanout(
         codex(task_id="review", prompt="Review {{ item.file }}:\n{{ nodes.scan.output }}"),
         [{"file": "api.py"}, {"file": "auth.py"}, {"file": "db.py"}]
     )
-    
+
     summary = codex(
         task_id="summary",
         prompt="Merge findings:\n{% for r in fanouts.review.nodes %}{{ r.output }}\n{% endfor %}"
     )
-    
+
     scan >> review >> summary
 ```
 
@@ -212,13 +212,13 @@ with Graph("iterative-impl", max_iterations=5) as g:
         prompt="Write a Python email validator.\n{% if nodes.review.output %}Fix: {{ nodes.review.output }}{% endif %}",
         tools="read_write"
     )
-    
+
     review = claude(
         task_id="review",
         prompt="Review:\n{{ nodes.write.output }}\nIf complete, say LGTM. Otherwise list issues.",
         success_criteria=[{"kind": "output_contains", "value": "LGTM"}]
     )
-    
+
     write >> review
     review.on_failure >> write  # 失败时循环回 write
 
@@ -446,7 +446,7 @@ agentflow/
 
 ---
 
-## §12 最佳实践
+## §12 推荐做法
 
 ### 12.1 管道设计
 

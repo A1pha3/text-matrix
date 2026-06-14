@@ -10,11 +10,6 @@ tags = ['system-prompt', 'AI 编程工具', 'Agent', 'Claude Code', 'Cursor', 'D
 
 # x1xhlol/system-prompts-and-models-of-ai-tools 深度导读：30+ 主流 AI 编程工具的 system prompt 与工具定义大合集
 
-> **目标读者**：做 AI 编程工具、Agent 框架、Prompt Engineering、模型评测的研究者与产品经理
-> **核心问题**：现在 30 多个 AI 编程/Agent 产品（Claude Code、Cursor、Devin、Replit Agent、Lovable、Windsurf、Trae、Manus…）到底用 prompt 把模型“训”成了什么形状？它们的工具定义、Agent 循环、能力边界到底有多不同？
-> **难度**：⭐⭐（入门；不要求写代码）
-> **预计阅读时间**：15 分钟
-
 ---
 
 ## 一、这个仓库是什么

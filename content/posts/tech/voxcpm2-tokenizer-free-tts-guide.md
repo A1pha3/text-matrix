@@ -10,22 +10,6 @@ tags: ["TTS", "语音合成", "多语言", "VoxCPM", "OpenBMB", "扩散模型"]
 
 # VoxCPM2：Tokenizer-Free TTS 多语言语音合成指南 ⭐⭐⭐
 
-> **目标读者**：AI 语音开发者、研究人员，对 TTS 系统有一定了解
-> **核心问题**：如何实现高质量、多语言、可控的语音合成？
-
----
-
-## §1 学习目标
-
-完成本文档后，你将掌握：
-
-- ✅ 理解 VoxCPM2 的 Tokenizer-Free 设计理念
-- ✅ 掌握 VoxCPM2 的三种语音合成模式
-- ✅ 熟练使用 Python API 进行语音生成
-- ✅ 了解 Voice Design 和 Voice Cloning 的实现方式
-- ✅ 掌握本地部署和微调方法
-- ✅ 对比传统 TTS 方案的架构差异
-
 ---
 
 ## §2 背景与问题动机
@@ -55,7 +39,7 @@ Text → LocDiT Model → Audio
      ↑ 无需tokenizer，直接建模
 ```
 
-**核心优势**：
+**主要优势**：
 
 - **简化流程**：去掉 tokenizer，降低系统复杂度
 - **原生多语言**：统一模型支持 30 种语言
@@ -73,7 +57,7 @@ Text → LocDiT Model → Audio
 
 ---
 
-## §3 核心架构解析
+## §3 架构解析
 
 ### 3.1 VoxCPM2 技术架构
 
@@ -516,7 +500,7 @@ let audio = try model.generate(
 
 ## §9 API 参考
 
-### 9.1 核心类
+### 9.1 主要类
 
 | 类 | 说明 | 主要方法 |
 |---|------|---------|
@@ -605,7 +589,7 @@ LANGUAGES = ["zh", "en", "ja", "ko", "fr", "de", "es", "it", "ru", ...]
 
 ## §11 总结
 
-### 11.1 VoxCPM2 核心优势
+### 11.1 VoxCPM2 主要优势
 
 1. **Tokenizer-Free 设计**：简化 TTS 流程，降低系统复杂度
 2. **原生多语言**：30+ 语言统一建模

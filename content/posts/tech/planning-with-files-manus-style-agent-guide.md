@@ -139,7 +139,7 @@ flowchart TD
 | PostToolUse | 每次工具调用后 | 检查是否有新发现未写入 findings.md；提醒更新 progress.md |
 | Stop | 会话结束前 | 遍历 task_plan.md 所有 checklist；未完成的阶段阻止退出 |
 
-PreToolUse 的重读阈值默认是 10 次工具调用——这意味着每 10 步操作后，Agent 会被强制重新读取计划文件，用磁盘上的真实状态覆盖上下文中的过期记忆。这个设计直接解决了目标漂移问题。
+PreToolUse 的重读阈值默认是 10 次工具调用——每 10 步操作后，Agent 会被强制重新读取计划文件，用磁盘上的真实状态覆盖上下文中的过期记忆。这个设计直接解决了目标漂移问题。
 
 ### 自定义 Hook 行为
 
@@ -448,8 +448,6 @@ planning-with-files/
 | 基准测试报告 | https://github.com/OthmanAdi/planning-with-files/blob/master/docs/evals.md |
 | Skills Playground | https://skillsplayground.com/skills/othmanadi-planning-with-files-planning-with-files |
 | Loaditout 安全评级 | https://loaditout.ai/skills/OthmanAdi/planning-with-files |
-
----
 
 Planning with Files 解决的并不是 Agent"不够聪明"的问题，而是一个更底层的架构缺陷：我们给了 Agent 一个强大的推理引擎，却只给它配了"易失内存"，然后惊讶于它在复杂任务中迷失方向。Manus 的 20 亿美元估值，本质上是对这个架构洞察的定价——文件系统作为外存的思路朴素得近乎显而易见，但把它做成 Hook 强制的工程规范，并覆盖 16+ 个平台，才是真功夫。
 

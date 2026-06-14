@@ -21,8 +21,6 @@ tags: ["Pydantic", "Python", "数据验证", "类型提示", "FastAPI"]
 - 理解 pydantic-core（Rust 实现）的性能优势
 - 掌握常见使用模式和实践建议
 
----
-
 ## 1. 项目概述
 
 ### 1.1 是什么
@@ -31,7 +29,7 @@ tags: ["Pydantic", "Python", "数据验证", "类型提示", "FastAPI"]
 
 核心理念：用**类型提示**描述数据，用**Pydantic** 验证数据。
 
-### 1.2 核心数据
+### 1.2 项目数据
 
 | 指标 | 数值 |
 |------|------|
@@ -62,8 +60,6 @@ tags: ["Pydantic", "Python", "数据验证", "类型提示", "FastAPI"]
 | **性能** | 较慢 | 显著提升（10-100x） |
 | **API** | 略有不同 | 重新设计，更一致 |
 | **兼容性** | - | 内置 V1 兼容层 |
-
----
 
 ## 2. 快速开始
 
@@ -142,8 +138,6 @@ print(example.bool_field)  # True (bool)
 print(example.list_field)   # [1, 2, 3] (all int)
 ```
 
----
-
 ## 3. 字段类型详解
 
 ### 3.1 基础类型
@@ -221,8 +215,6 @@ class ComplexTypes(BaseModel):
     secret: Any                   # 任意类型，不验证
     processor: Callable            # 可调用对象
 ```
-
----
 
 ## 4. 验证器与约束
 
@@ -325,8 +317,6 @@ class Event(BaseModel):
         return self
 ```
 
----
-
 ## 5. JSON Schema 生成
 
 ### 5.1 自动生成 JSON Schema
@@ -386,8 +376,6 @@ class User(BaseModel):
         }
     }
 ```
-
----
 
 ## 6. 序列化与反序列化
 
@@ -461,8 +449,6 @@ person = Person.model_validate(data)
 print(person.address.city)  # "NYC"
 ```
 
----
-
 ## 7. pydantic-settings 配置管理
 
 ### 7.1 基本用法
@@ -528,8 +514,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="APP_")
 ```
 
----
-
 ## 8. pydantic-core 性能优化
 
 ### 8.1 什么是 pydantic-core
@@ -583,8 +567,6 @@ class BadModel(BaseModel):
 class OptimizedModel(BaseModel):
     name: str = Field(min_length=1, max_length=100)  # 内置约束，Rust 优化
 ```
-
----
 
 ## 9. 常见使用模式
 
@@ -652,8 +634,6 @@ class GitHubWebhook(BaseModel):
         return cls.model_validate(payload)
 ```
 
----
-
 ## 10. 常见问题与解决方案
 
 ### 10.1 验证失败处理
@@ -709,11 +689,9 @@ class User(BaseModel):
 schema = User.model_json_schema()
 ```
 
----
-
 ## 11. 总结
 
-Pydantic 是 Python 生态中**最流行的数据验证库**，具有以下核心优势：
+Pydantic 是 Python 生态中**最流行的数据验证库**，具有以下主要优势：
 
 **为什么选择 Pydantic：**
 

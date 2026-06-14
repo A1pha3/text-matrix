@@ -369,7 +369,7 @@ localStorage.setItem('language', 'zh')
 
 ## 十二、API 参考
 
-### 12.1 核心 API
+### 12.1 关键 API
 
 | 端点 | 方法 | 说明 |
 |------|------|------|

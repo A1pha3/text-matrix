@@ -11,19 +11,19 @@ description: "深度解析 Trae Agent (11.2k Stars)：字节跳动开发的 LLM 
 
 # Trae Agent：字节跳动 LLM 智能体完全指南
 
-> 预计阅读时间：30分钟 | 难度：⭐⭐⭐⭐
+> 预计阅读时间：30 分钟 | 难度：⭐⭐⭐⭐
 
 ---
 
 ## 学习目标
 
-完成本文档后，你将能够：
+完成本文档后，可以：
 
 - ✅ 理解 Trae Agent 的核心定位与研究导向设计理念
 - ✅ 掌握 Trae Agent 的安装与配置方法
 - ✅ 理解 Trae Agent 的架构设计与模块化思想
 - ✅ 使用 Trae Agent 执行各类软件工程任务
-- ✅ 配置多种 LLM 提供商（OpenAI/Anthropic/Doubao等）
+- ✅ 配置多种 LLM 提供商（OpenAI/Anthropic/Doubao 等）
 - ✅ 使用交互模式和 Docker 模式
 - ✅ 利用轨迹录制进行调试和分析
 
@@ -101,19 +101,9 @@ uv sync --all-extras
 
 # 激活虚拟环境
 source .venv/bin/activate
-```
-
-### 3.3 YAML 配置（推荐）
-
-复制示例配置文件：
-
-```bash
+```textbash
 cp trae_config.yaml.example trae_config.yaml
-```
-
-编辑 `trae_config.yaml`：
-
-```yaml
+```textyaml
 agents:
   trae_agent:
     enable_lakeview: true
@@ -134,22 +124,12 @@ models:
     model: claude-sonnet-4-20250514
     max_tokens: 4096
     temperature: 0.5
-```
-
-### 3.4 使用 Base URL
-
-在某些情况下需要使用自定义 URL：
-
-```yaml
+```textyaml
 openai:
   api_key: your_openrouter_api_key
   provider: openai
   base_url: https://openrouter.ai/api/v1
-```
-
-### 3.5 环境变量配置（备选）
-
-```bash
+```textbash
 # OpenAI
 export OPENAI_API_KEY="your-openai-api-key"
 export OPENAI_BASE_URL="your-openai-base-url"
@@ -169,41 +149,15 @@ export OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
 # Doubao
 export DOUBAO_API_KEY="your-doubao-api-key"
 export DOUBAO_BASE_URL="https://ark.cn-beijing.volces.com/api/v3/"
-```
-
-### 3.6 MCP 服务配置（可选）
-
-启用 Model Context Protocol 服务：
-
-```yaml
+```textyaml
 mcp_servers:
   playwright:
     command: npx
     args:
       - "@playwright/mcp@0.0.27"
-```
-
-### 3.7 配置优先级
-
-```
+```text
 命令行参数 > 配置文件 > 环境变量 > 默认值
-```
-
----
-
-## §4 基本使用
-
-### 4.1 核心命令
-
-| 命令 | 说明 |
-|------|------|
-| `trae-cli run "<task>"` | 执行简单任务 |
-| `trae-cli show-config` | 检查配置 |
-| `trae-cli interactive` | 交互模式 |
-
-### 4.2 基本示例
-
-```bash
+```textbash
 # 简单任务执行
 trae-cli run "Create a hello world Python script"
 
@@ -212,11 +166,7 @@ trae-cli show-config
 
 # 交互模式
 trae-cli interactive
-```
-
-### 4.3 提供商特定示例
-
-```bash
+```textbash
 # OpenAI
 trae-cli run "Fix the bug in main.py" --provider openai --model gpt-4o
 
@@ -234,26 +184,7 @@ trae-cli run "Refactor the database module" --provider doubao --model doubao-see
 
 # Ollama（本地模型）
 trae-cli run "Comment this code" --provider ollama --model qwen3
-```
-
----
-
-## §5 高级选项
-
-### 5.1 常用选项
-
-| 选项 | 说明 |
-|------|------|
-| `--working-dir <path>` | 指定工作目录 |
-| `--trajectory-file <file>` | 保存执行轨迹 |
-| `--must-patch` | 强制生成补丁 |
-| `--max-steps <n>` | 最大步数 |
-| `--provider <name>` | LLM 提供商 |
-| `--model <name>` | 模型名称 |
-
-### 5.2 高级示例
-
-```bash
+```textbash
 # 自定义工作目录
 trae-cli run "Add tests for utils module" --working-dir /path/to/project
 
@@ -265,19 +196,7 @@ trae-cli run "Update API endpoints" --must-patch
 
 # 交互模式自定义设置
 trae-cli interactive --provider openai --model gpt-4o --max-steps 30
-```
-
----
-
-## §6 Docker 模式
-
-### 6.1 Docker 准备
-
-确保 Docker 已正确配置。
-
-### 6.2 Docker 命令
-
-```bash
+```textbash
 # 在新容器中运行任务
 trae-cli run "Add tests for utils module" --docker-image python:3.11
 
@@ -295,109 +214,20 @@ trae-cli run "Fix the bug in main.py" --docker-image-file test_workspace/trae_ag
 
 # 任务完成后删除容器
 trae-cli run "Add tests for utils module" --docker-image python:3.11 --docker-keep false
-```
-
----
-
-## §7 交互模式
-
-### 7.1 进入交互模式
-
-```bash
+```textbash
 trae-cli interactive
-```
-
-### 7.2 交互命令
-
-| 命令 | 说明 |
-|------|------|
-| 输入任务描述 | 执行任务 |
-| `status` | 显示智能体信息 |
-| `help` | 显示可用命令 |
-| `clear` | 清屏 |
-| `exit` / `quit` | 结束会话 |
-
----
-
-## §8 Lakeview 特性
-
-### 8.1 Lakeview 概述
-
-**Lakeview** 是 Trae Agent 提供的特性，为智能体步骤提供简短摘要。
-
-### 8.2 启用 Lakeview
-
-```yaml
+```textyaml
 agents:
   trae_agent:
     enable_lakeview: true
-```
-
----
-
-## §9 轨迹录制
-
-### 9.1 轨迹录制概述
-
-Trae Agent 自动记录详细的执行轨迹，用于调试和分析。
-
-### 9.2 轨迹文件内容
-
-轨迹文件包含：
-- LLM 交互
-- 智能体步骤
-- 工具使用
-- 执行元数据
-
-### 9.3 使用轨迹录制
-
-```bash
+```textbash
 # 自动生成轨迹文件
 trae-cli run "Debug the authentication module"
 # 保存到: trajectories/trajectory_YYYYMMDD_HHMMSS.json
 
 # 自定义轨迹文件
 trae-cli run "Optimize database queries" --trajectory-file optimization_debug.json
-```
-
----
-
-## §10 架构分析
-
-### 10.1 研究导向设计
-
-Trae Agent 的核心设计思路是**透明、模块化架构**：
-
-> 研究导向设计使得学术和开源社区能够为基础智能体框架做出贡献并在其上构建。
-
-### 10.2 核心模块
-
-| 模块 | 说明 |
-|------|------|
-| **trae_agent/** | 核心智能体逻辑 |
-| **server/** | 服务器组件 |
-| **evaluation/** | 评估框架 |
-| **tests/** | 测试套件 |
-| **docs/** | 文档 |
-
-### 10.3 工具生态
-
-Trae Agent 提供丰富的工具集：
-
-| 工具 | 说明 |
-|------|------|
-| **bash** | Bash 命令执行 |
-| **str_replace_based_edit_tool** | 文件编辑 |
-| **sequentialthinking** | 顺序思考 |
-| **task_done** | 任务完成 |
-
----
-
-## §11 项目结构
-
-### 11.1 目录结构
-
-```
+```text
 trae-agent/
 ├── .github/              # GitHub 配置
 ├── .vscode/              # VS Code 配置
@@ -411,149 +241,26 @@ trae-agent/
 ├── trae_config.yaml.example  # 配置示例
 ├── trae_config.json.example # JSON 配置示例
 └── uv.lock              # 依赖锁定
-```
-
-### 11.2 核心文件
-
-| 文件 | 说明 |
-|------|------|
-| **trae_config.yaml.example** | YAML 配置示例 |
-| **trae_config.json.example** | JSON 配置示例（遗留格式） |
-| **docs/tools.md** | 工具详细文档 |
-| **docs/TRAJECTORY_RECORDING.md** | 轨迹录制文档 |
-| **docs/roadmap.md** | 路线图 |
-
----
-
-## §12 故障排除
-
-### 12.1 常见问题
-
-| 问题 | 解决方案 |
-|------|----------|
-| **导入错误** | `PYTHONPATH=. trae-cli run "your task"` |
-| **API Key 问题** | `echo $OPENAI_API_KEY` 验证 |
-| **命令未找到** | `uv run trae-cli run "your task"` |
-| **权限错误** | `chmod +x /path/to/your/project` |
-
-### 12.2 配置检查
-
-```bash
+```textbash
 # 验证 API keys
 trae-cli show-config
-```
-
----
-
-## §13 开发与贡献
-
-### 13.1 贡献指南
-
-参考 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何为项目做贡献。
-
-### 13.2 开发命令
-
-```bash
+```textbash
 # 查看 CONTRIBUTING
 cat CONTRIBUTING.md
-```
-
----
-
-## §14 常见问题
-
-### Q1：如何选择 LLM 提供商？
-
-| 提供商 | 适用场景 |
-|--------|----------|
-| **OpenAI** | 通用任务 |
-| **Anthropic** | 复杂推理 |
-| **Google Gemini** | 高速响应 |
-| **OpenRouter** | 多提供商访问 |
-| **Doubao** | 国内用户 |
-| **Ollama** | 本地模型 |
-
-### Q2：如何调试问题？
-
-使用轨迹录制功能：
-
-```bash
+```textbash
 trae-cli run "Your task" --trajectory-file debug.json
-```
-
-### Q3：如何扩展工具？
-
-参考 `docs/tools.md` 了解工具扩展方法。
-
----
-
-## §15 总结
-
-### 15.1 优势
-
-| 优势 | 说明 |
-|------|------|
-| **研究导向** | 透明模块化，适合研究 |
-| **多提供商** | 灵活切换 LLM |
-| **丰富工具** | 覆盖软件工程任务 |
-| **轨迹录制** | 便于调试分析 |
-| **Docker 支持** | 隔离执行环境 |
-
-### 15.2 适用场景
-
-| 场景 | 适用性 |
-|------|--------|
-| **代码修复** | 自动修复 bug |
-| **测试生成** | 添加单元测试 |
-| **代码审查** | 代码审查 |
-| **重构** | 模块重构 |
-| **研究** | 智能体架构研究 |
-
-### 15.3 项目信息
-
-| 项目 | 信息 |
-|------|------|
-| **Stars** | 11.2k |
-| **Forks** | 1.2k |
-| **许可证** | MIT |
-| **语言** | Python 99.4% |
-| **官网** | www.trae.ai/ |
-
-### 15.4 相关链接
-
-| 资源 | 链接 |
-|------|------|
-| **GitHub** | https://github.com/bytedance/trae-agent |
-| **官网** | https://www.trae.ai/ |
-| **论文** | arXiv:2507.23370 |
-| **Discord** | https://discord.gg/VwaQ4ZBHvC |
-
----
-
-## §16 附录：命令参考
-
-### 16.1 基本命令
-
-```bash
+```textbash
 trae-cli run "<task>"           # 执行任务
 trae-cli show-config            # 显示配置
 trae-cli interactive            # 交互模式
-```
-
-### 16.2 高级选项
-
-```bash
+```textbash
 --working-dir <path>            # 工作目录
 --trajectory-file <file>        # 轨迹文件
 --must-patch                    # 强制补丁
 --max-steps <n>                 # 最大步数
 --provider <name>               # 提供商
 --model <name>                  # 模型
-```
-
-### 16.3 Docker 选项
-
-```bash
+```textbash
 --docker-image <image>          # Docker 镜像
 --docker-container-id <id>      # 容器 ID
 --dockerfile-path <path>         # Dockerfile 路径

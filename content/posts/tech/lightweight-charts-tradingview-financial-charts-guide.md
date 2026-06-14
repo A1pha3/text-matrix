@@ -10,15 +10,6 @@ tags: ["JavaScript", "TypeScript", "金融", "图表", "TradingView"]
 
 # Lightweight Charts™：14.9K Stars·TradingView 开源轻量级金融图表库
 
-## 学习目标
-
-- 理解 Lightweight Charts 的核心特点和技术优势
-- 掌握在网页中集成轻量级图表的方法
-- 学会配置不同类型的图表（K 线、折线、柱状图等）
-- 掌握图表样式定制和数据更新
-- 了解插件系统和扩展开发
-- 学会性能优化和实践建议
-
 ## 项目概述
 
 Lightweight Charts™ 是由 TradingView 开发的开源轻量级金融图表库，专门为网页端的金融数据可视化而设计。它是同类中最小且最快的 HTML5 金融图表解决方案之一，核心优势在于极小的包体积和卓越的渲染性能。

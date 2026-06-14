@@ -11,10 +11,6 @@ categories: ["技术笔记"]
 tags: ["编程学习", "系统架构", "开源教育", "底层原理", "Codecrafters"]
 ---
 
-> **目标读者**：希望深入理解系统底层、提升架构能力的工程师。
-> **核心问题**：如何通过「手写一个 BitTorrent 客户端」「用 Rust 重写 Docker」「从零实现一个 Git」等方式，真正掌握核心技术的工作原理？
-> **事实边界**：本文基于 `codecrafters-io/build-your-own-x` 公开 README 与仓库信息整理。
-
 ## 阅读导航
 
 - 只想快速了解项目：直接看 `§1 项目概述`
@@ -67,7 +63,7 @@ build-your-own-x 的学习方式：
 
 ### 2.2 网络与协议类（Networking）
 
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
+| 项目 | Stars | 语言 | 难度 | 关键收获 |
 |------|-------|------|------|----------|
 | **Build your own BitTorrent** | 22k+ | Python | ⭐⭐⭐ | P2P 协议、tracker 通信、piece 选择算法 |
 | **Build your own IRC client** | 10k+ | Python | ⭐⭐ | IRC 协议、状态机、消息解析 |
@@ -77,7 +73,7 @@ build-your-own-x 的学习方式：
 
 ### 2.3 数据库类（Databases）
 
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
+| 项目 | Stars | 语言 | 难度 | 主要收获 |
 |------|-------|------|------|----------|
 | **Build your own Redis** | 35k+ | C | ⭐⭐⭐⭐⭐ | 内存存储、SDS/跳表/压缩列表、 RESP 协议 |
 | **Build your own ORM** | 18k+ | Python | ⭐⭐⭐ | SQL 解析、关系映射、查询构建器 |
@@ -87,7 +83,7 @@ build-your-own-x 的学习方式：
 
 ### 2.4 游戏引擎类（Gaming）
 
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
+| 项目 | Stars | 语言 | 难度 | 重点收获 |
 |------|-------|------|------|----------|
 | **Build your own Game Boy Emulator** | 25k+ | C++ | ⭐⭐⭐⭐ | 指令集仿真、图形渲染、循环调度 |
 | **Build your own Voxel Engine** | 18k+ | C++ | ⭐⭐⭐⭐ | 3D 渲染、内存布局、性能优化 |
@@ -97,7 +93,7 @@ build-your-own-x 的学习方式：
 
 ### 2.5 编程语言类（Languages）
 
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
+| 项目 | Stars | 语言 | 难度 | 根本收获 |
 |------|-------|------|------|----------|
 | **Build your own Lisp** | 22k+ | Python | ⭐⭐⭐⭐ | 词法分析、解析器、字节码虚拟机 |
 | **Build your own TypeScript** | 25k+ | TypeScript | ⭐⭐⭐⭐ | 编译器前端、类型检查、AST 变换 |
@@ -106,7 +102,7 @@ build-your-own-x 的学习方式：
 
 ### 2.6 基础设施类（Infrastructure）
 
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
+| 项目 | Stars | 语言 | 难度 | 本质收获 |
 |------|-------|------|------|----------|
 | **Build your own Load Balancer** | 15k+ | Go | ⭐⭐⭐ | 轮询/最少连接算法、健康检查、Kubernetes Ingress |
 | **Build your own Docker** | 见 Dev Tools | Go | ⭐⭐⭐⭐ | 容器运行时、镜像构建、存储驱动 |
@@ -115,7 +111,7 @@ build-your-own-x 的学习方式：
 
 ### 2.7 前端类（Frontend）
 
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
+| 项目 | Stars | 语言 | 难度 | 关键收获 |
 |------|-------|------|------|----------|
 | **Build your own React** | 15k+ | JavaScript | ⭐⭐⭐ | 虚拟 DOM diff 算法、Fiber 架构 |
 | **Build your own Redux** | 10k+ | JavaScript | ⭐⭐⭐ | 状态管理、纯函数 Reducer、中间件 |
@@ -124,7 +120,7 @@ build-your-own-x 的学习方式：
 
 ### 2.8 加密与安全类（Crypto & Security）
 
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
+| 项目 | Stars | 语言 | 难度 | 主要收获 |
 |------|-------|------|------|----------|
 | **Build your own Blockchain** | 40k+ | Python | ⭐⭐⭐ | 共识算法、Merkle 树、钱包地址 |
 | **Build your own Cryptocurrency** | 25k+ | Python | ⭐⭐⭐ | Token 标准、智能合约、DEX |
@@ -133,7 +129,7 @@ build-your-own-x 的学习方式：
 
 ---
 
-## §3 核心架构分析
+## §3 重点架构分析
 
 ### 3.1 项目的设计哲学
 
@@ -199,7 +195,7 @@ Build your own Redis
 
 ### 3.3 容器化技术的架构演进
 
-「Build your own Docker」项目揭示了容器化技术的核心原理：
+「Build your own Docker」项目揭示了容器化技术的根本原理：
 
 ```
 传统虚拟机：
@@ -228,11 +224,11 @@ Build your own Redis
 └─────────────────────────────────────────┘
 ```
 
-**核心区别**：
+**本质区别**：
 - 虚拟机：完整 OS + 虚拟硬件 → 重、慢、隔离强
 - 容器：共享 Host Kernel + 命名空间隔离 → 轻、快、隔离弱
 
-**Build your own Docker 需要实现的核心功能**：
+**Build your own Docker 需要实现的关键功能**：
 1. 创建隔离的文件系统（chroot / pivot_root）
 2. 实现资源限制（cgroups CPU/内存控制）
 3. 实现进程隔离（unshare / namespaces）
@@ -488,9 +484,9 @@ cd solutions/python
 
 ## §6 实践案例：实现一个简易 BitTorrent 客户端
 
-### 6.1 BitTorrent 协议核心概念
+### 6.1 BitTorrent 协议主要概念
 
-在开始实现之前，需要理解以下核心概念：
+在开始实现之前，需要理解以下重点概念：
 
 **BitTorrent 文件结构（.torrent）**
 ```
@@ -625,7 +621,7 @@ def select_piece_to_download(self, available_pieces, peer_pieces):
 
 ## §7 总结与延伸
 
-### 7.1 核心收获
+### 7.1 根本收获
 
 通过 build-your-own-x 的学习，你将获得：
 

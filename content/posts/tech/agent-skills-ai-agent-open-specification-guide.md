@@ -156,12 +156,12 @@ allowed-tools: Bash(python:*) Read
 #### name 字段规则
 
 ```yaml
-# ✅ 合法示例
+# 合法示例
 name: pdf-processing
 name: data-analysis
 name: code-review
 
-# ❌ 非法示例
+# 非法示例
 name: PDF-Processing      # 不能大写
 name: -pdf                # 不能以连字符开头
 name: pdf--processing     # 不能有连续连字符
@@ -170,10 +170,10 @@ name: pdf--processing     # 不能有连续连字符
 #### description 字段实践建议
 
 ```yaml
-# ✅ 优秀描述：包含功能+激活时机+关键词
+# 优秀描述：包含功能+激活时机+关键词
 description: 提取 PDF 文本和表格、填写表单、合并多个 PDF。当处理 PDF 文档、填写表单或文档提取时使用。
 
-# ❌ 差劲描述：信息不足
+# 差劲描述：信息不足
 description: Helps with PDFs.
 ```
 
@@ -555,22 +555,22 @@ compatibility: 需要 Docker daemon 运行、docker 和 docker-compose 命令可
 **原则 1：包含触发关键词**
 
 ```yaml
-# ✅ 包含多种触发方式
+# 包含多种触发方式
 description: 提取 PDF 文本和表格、填写 PDF 表单、合并多个 PDF。
              当用户提到 PDF、表单、文档提取、文本提取时激活。
 
-# ❌ 缺少触发词
+# 缺少触发词
 description: 提取文档内容。
 ```
 
 **原则 2：明确激活时机**
 
 ```yaml
-# ✅ 清晰说明使用场景
+# 清晰说明使用场景
 description: 当需要创建符合公司品牌规范的文档（报告、备忘录、邮件）时使用。
              包含公司徽标、配色方案、字体要求。
 
-# ❌ 模糊不清
+# 模糊不清
 description: 帮助创建文档。
 ```
 
@@ -579,11 +579,11 @@ description: 帮助创建文档。
 description 应控制在 1024 字符以内，优先使用主动语态：
 
 ```yaml
-# ✅ 简洁主动
+# 简洁主动
 description: 验证 API 响应是否符合 OpenAPI 规范。当需要测试 API、
              验证 JSON 响应或检查 REST 端点时使用。
 
-# ❌ 冗长被动
+# 冗长被动
 description: 这个 Skill 可以被用来进行 API 相关的验证工作，
              它将会检查输入的 JSON 数据是否...
 ```
@@ -593,7 +593,7 @@ description: 这个 Skill 可以被用来进行 API 相关的验证工作，
 **保持 SKILL.md 在 500 行以内**
 
 ```markdown
-# ✅ 精简指令（< 500 行）
+# 精简指令（< 500 行）
 
 ## 核心功能
 [2-3 句话概括]
@@ -608,7 +608,7 @@ description: 这个 Skill 可以被用来进行 API 相关的验证工作，
 ## 注意事项
 [关键边界情况]
 
-# ❌ 冗长指令
+# 冗长指令
 [将详细参考全部写入 SKILL.md]
 ```
 

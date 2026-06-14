@@ -8,9 +8,9 @@ categories: ["技术笔记"]
 tags: ["Agent Skills", "人格蒸馏", "数字人格", "AI助手", "记忆系统", "ChatGPT", "Claude"]
 ---
 
-# Awesome Persona Distill Skills：人格蒸馏 Agent Skills 的完整指南
+Awesome Persona Distill Skills：人格蒸馏 Agent Skills 的完整指南
 
-## §1 学习目标
+§ 学习目标
 
 通过本文，你将掌握：
 
@@ -20,9 +20,9 @@ tags: ["Agent Skills", "人格蒸馏", "数字人格", "AI助手", "记忆系统
 - 如何构建属于自己的数字人格助手
 - Agent Skills 的开放标准与贡献流程
 
-## §2 概念解析：什么是人格蒸馏
+§ 概念解析：什么是人格蒸馏
 
-### 2.1 核心定义
+. 核心定义
 
 **人格蒸馏（Persona Distill）是什么？**
 
@@ -47,7 +47,7 @@ tags: ["Agent Skills", "人格蒸馏", "数字人格", "AI助手", "记忆系统
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 为什么需要人格蒸馏
+. 为什么需要人格蒸馏
 
 | 需求 | 场景 | Skills 价值 |
 |------|------|-----------|
@@ -57,7 +57,7 @@ tags: ["Agent Skills", "人格蒸馏", "数字人格", "AI助手", "记忆系统
 | **创作辅助** | 角色扮演、内容创作 | 构建虚拟人格助手 |
 | **纪念意义** | 数字遗产、亲情保存 | 留住与逝者的对话可能 |
 
-### 2.3 与传统 AI 助手的区别
+. 与传统 AI 助手的区别
 
 | 维度 | 传统 AI 助手 | 人格蒸馏助手 |
 |------|------------|--------------|
@@ -67,9 +67,9 @@ tags: ["Agent Skills", "人格蒸馏", "数字人格", "AI助手", "记忆系统
 | **记忆方式** | 知识图谱 | 情感记忆+方法论 |
 | **关键价值** | 回答问题 | 风格重现 |
 
-## §3 Skills 分类全景
+§ Skills 分类全景
 
-### 3.1 分类总览
+. 分类总览
 
 Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 
@@ -81,7 +81,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 | 公众人物与方法论 | 24 | 智慧传承、方法学习 |
 | 精神性与专门化主题 | 4 | 传统文化、专业领域 |
 
-### 3.2 分类关系图
+. 分类关系图
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -103,18 +103,18 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## §4 自我蒸馏与元工具
+§ 自我蒸馏与元工具
 
-### 4.1 概述
+. 概述
 
 自我蒸馏是从自身数据中提炼结构化自我画像，用于：
 - 记忆整理与个人知识管理
 - 自我镜像与反思
 - 与他人协作时的风格说明
 
-### 4.2 核心 Skills 详解
+. 核心 Skills 详解
 
-#### 4.2.1 自己.skill
+.. 自己.skill
 
 **仓库**：notdog1998/yourself-skill
 
@@ -122,7 +122,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 
 **使用场景**：
 ```markdown
-# 当你需要自我反思时
+当你需要自我反思时
 用户：我最近在项目中和同事有分歧
 助手（自己.skill）：根据你过去的沟通风格，
 你倾向于先理性分析再表达情绪。
@@ -134,7 +134,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 提炼表达模式（理性/感性、主动/被动）
 - 构建个人方法论框架
 
-#### 4.2.2 数字人生.skill
+.. 数字人生.skill
 
 **仓库**：wildbyteai/digital-life
 
@@ -148,7 +148,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 | 购物记录 | 消费偏好 | 价值观映射 |
 | 音乐播放 | 情绪状态 | 情感模式 |
 
-#### 4.2.3 女娲.skill
+.. 女娲.skill
 
 **仓库**：alchaincyf/nuwa-skill
 
@@ -156,14 +156,14 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 
 **核心方法论**：
 ```python
-# 女娲蒸馏流程
+女娲蒸馏流程
 1. 收集：广泛收集个人产出（文章、代码、决策记录）
 2. 抽象：从具体决策中提炼通用原则
 3. 验证：在新场景中测试原则有效性
 4. 固化：形成可复用的启发式清单
 ```
 
-#### 4.2.4 永生.skill
+.. 永生.skill
 
 **仓库**：agenmod/immortal-skill
 
@@ -174,9 +174,9 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 家族记忆保存
 - 个人品牌延续
 
-### 4.3 元工具 Skills
+. 元工具 Skills
 
-#### 4.3.1 Forge Skill
+.. Forge Skill
 
 **仓库**：YIKUAIBANZI/forge-skill
 
@@ -204,7 +204,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### 4.3.2 反蒸馏 Skill
+.. 反蒸馏 Skill
 
 **仓库**：leilei926524-tech/anti-distill
 
@@ -214,18 +214,18 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 技能模板（公开）：通用方法论、标准化流程
 - 私有备份（加密）：个人经验、敏感数据
 
-## §5 职场与学术关系
+§ 职场与学术关系
 
-### 5.1 概述
+. 概述
 
 职场与学术关系 Skills 帮助我们：
 - 理解上司/同事/导师的决策风格
 - 传承资深成员的经验与判断框架
 - 优化跨角色沟通效率
 
-### 5.2 核心 Skills 详解
+. 核心 Skills 详解
 
-#### 5.2.1 同事.skill
+.. 同事.skill
 
 **仓库**：titanwings/colleague-skill
 
@@ -239,7 +239,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 | 专业强项 | 技术领域、问题类型 | 精准求助 |
 | 协作模式 | 主动/被动、独立/协作 | 任务分配 |
 
-#### 5.2.2 老板.skill
+.. 老板.skill
 
 **仓库**：vogtsw/boss-skills
 
@@ -253,10 +253,10 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 关注点：风险 > 进度 > 细节
 - 汇报顺序：结论 → 原因 → 解决方案
 - 预期：需要你有备选方案
-建议：准备好A/B两套方案再去汇报
+建议：准备好 A/B 两套方案再去汇报
 ```
 
-#### 5.2.3 导师.skill
+.. 导师.skill
 
 **仓库**：ybq22/supervisor
 
@@ -267,7 +267,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 提炼导师的指导方法论
 - 形成可复制的教育智慧
 
-#### 5.2.4 大学老师.skill
+.. 大学老师.skill
 
 **仓库**：CommitHu502Craft/professor-skill
 
@@ -281,18 +281,18 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 | 评分标准 | 分步得分、关键词采分 |
 | 复习策略 | 碎片时间利用、重点突破 |
 
-## §6 亲密关系与家庭记忆
+§ 亲密关系与家庭记忆
 
-### 6.1 概述
+. 概述
 
 亲密关系 Skills 用于：
 - 情感整理与关系回顾
 - 家庭记忆的数字化保存
 - 特殊场景（纪念、追忆）的数字陪伴
 
-### 6.2 核心 Skills 详解
+. 核心 Skills 详解
 
-#### 6.2.1 暗恋对象.skill
+.. 暗恋对象.skill
 
 **仓库**：xiaoheizi8/crush-skills
 
@@ -306,7 +306,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 尊重对方隐私与意愿
 ```
 
-#### 6.2.2 恋爱训练营.skill
+.. 恋爱训练营.skill
 
 **仓库**：TammyTan516/relationship-training-skill
 
@@ -317,7 +317,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 模拟邀约与关系修复对话
 - 理解沟通风格差异
 
-#### 6.2.3 前任.skill
+.. 前任.skill
 
 **仓库**：therealXiaomanChu/ex-skill
 
@@ -328,7 +328,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 理解沟通模式中的问题根源
 - 保留珍贵的共同记忆
 
-#### 6.2.4 父母.skill
+.. 父母.skill
 
 **仓库**：xiaoheizi8/parents-skills
 
@@ -339,7 +339,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 理解代际沟通差异
 - 家庭故事的数字化保存
 
-#### 6.2.5 Reunion Skill
+.. Reunion Skill
 
 **仓库**：yangdongchen66-boop/reunion-skill
 
@@ -350,9 +350,9 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 多模态输入（照片、语音、文字）
 - 情感记忆图谱构建
 
-## §7 公众人物与方法论
+§ 公众人物与方法论
 
-### 7.1 概述
+. 概述
 
 这是数量最多的类别（24 个），涵盖全球知名人物的方法论蒸馏：
 
@@ -364,9 +364,9 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 | 产品 | 乔布斯、张一鸣 | 产品判断、延迟满足 |
 | 内容 | MrBeast、张雪峰 | 流量运营、实用主义 |
 
-### 7.2 投资与决策框架
+. 投资与决策框架
 
-#### 7.2.1 巴菲特思维操作系统
+.. 巴菲特思维操作系统
 
 **仓库**：will2025btc/buffett-perspective
 
@@ -378,7 +378,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 | 能力圈 | 只投自己懂的 |
 | 长期主义 | 不想持有一辈子就不持有一分钟 |
 
-#### 7.2.2 芒格.skill
+.. 芒格.skill
 
 **仓库**：alchaincyf/munger-skill
 
@@ -387,7 +387,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 逆向思考（想要成功先避免失败）
 - Lollapalooza 效应
 
-#### 7.2.3 塔勒布.skill
+.. 塔勒布.skill
 
 **仓库**：alchaincyf/taleb-skill
 
@@ -396,9 +396,9 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 杠铃策略：极度保守+极度冒险
 - 尾部风险：黑天鹅不可预测但可应对
 
-### 7.3 创业与创新
+. 创业与创新
 
-#### 7.3.1 PG.skill
+.. PG.skill
 
 **仓库**：alchaincyf/paul-graham-skill
 
@@ -410,7 +410,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 | 独立思考 | 拒绝共识、质疑假设 |
 | 创意 | 好的创意是明显又困难的 |
 
-#### 7.3.2 马斯克.skill
+.. 马斯克.skill
 
 **仓库**：alchaincyf/elon-musk-skill
 
@@ -420,9 +420,9 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 压缩迭代：快速失败、快速学习
 - 目标导向：10%原则（效率提升）
 
-### 7.4 AI 与科技
+. AI 与科技
 
-#### 7.4.1 Karpathy.skill
+.. Karpathy.skill
 
 **仓库**：alchaincyf/karpathy-skill
 
@@ -431,7 +431,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 工程思维：从原理到实现
 - 研究品味：简单、通用、可扩展
 
-#### 7.4.2 Ilya.skill
+.. Ilya.skill
 
 **仓库**：alchaincyf/ilya-sutskever-skill
 
@@ -440,7 +440,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 研究品味：重视实证、质疑直觉
 - 长期思考：10 年视角做研究
 
-### 7.5 中国人物
+. 中国人物
 
 | 人物 | 仓库 | 核心领域 |
 |------|------|----------|
@@ -449,11 +449,11 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 | 张雪峰 | alchaincyf/zhangxuefeng-skill | 升学、职业、实用主义 |
 | 马斯克 | alchaincyf/elon-musk-skill | 创新、压缩迭代 |
 
-## §8 精神性与专门化主题
+§ 精神性与专门化主题
 
-### 8.1 传统文化
+. 传统文化
 
-#### 8.1.1 赛博算命 Skill
+.. 赛博算命 Skill
 
 **仓库**：jinchenma94/bazi-skill
 
@@ -464,7 +464,7 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 结构化知识库构建
 - 命理规则引擎
 
-#### 8.1.2 月老·姻缘测算 Skills
+.. 月老·姻缘测算 Skills
 
 **仓库**：Ming-H/yinyuan-skills
 
@@ -473,9 +473,9 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 求签系统
 - 桃花运势
 
-### 8.2 佛教与精神性
+. 佛教与精神性
 
-#### 8.2.1 Master-skill
+.. Master-skill
 
 **仓库**：xr843/Master-skill
 
@@ -486,9 +486,9 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 - 佛学智慧现代化
 - 修行指导个性化
 
-## §9 技术实现与 Agent Skills 标准
+§ 技术实现与 Agent Skills 标准
 
-### 9.1 Agent Skills 开放标准
+. Agent Skills 开放标准
 
 所有 Skills 遵循 Agent Skills 规范：
 
@@ -496,12 +496,12 @@ Awesome Persona Distill Skills 收录了**5 大类、50+ Skills**：
 skill-name/
 ├── SKILL.md           # 核心定义（必需）
 ├── scripts/           # 可执行脚本
-│   └── index.html     # JavaScript技能入口
+│   └── index.html     # JavaScript 技能入口
 ├── references/        # 参考文档
 └── assets/           # 静态资源
 ```
 
-### 9.2 SKILL.md 结构
+. SKILL.md 结构
 
 ```markdown
 ---
@@ -513,32 +513,32 @@ compatibiity:
   - codex
 ---
 
-# 触发条件
+触发条件
 当用户请求[具体场景]时触发本技能
 
-# 核心指令
+核心指令
 [详细的技能执行流程]
 
-# 渐进式披露
+渐进式披露
 [进阶用法，按需加载]
 ```
 
-### 9.3 贡献流程
+. 贡献流程
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   Skills贡献流程                            │
+│                   Skills 贡献流程                            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│   1. 提交Issue申请收录                                     │
+│   1. 提交 Issue 申请收录                                     │
 │          ↓                                                   │
 │   2. 维护者审核并添加 approved 标签                         │
 │          ↓                                                   │
-│   3. GitHub Actions自动生成PR                               │
+│   3. GitHub Actions 自动生成 PR                               │
 │          ↓                                                   │
-│   4. 合并到main分支                                        │
+│   4. 合并到 main 分支                                        │
 │          ↓                                                   │
-│   5. Skills上线                                             │
+│   5. Skills 上线                                             │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -548,35 +548,35 @@ compatibiity:
 - 禁止侵犯隐私或未经授权的人格复制
 - 修复现有条目可直接提交 PR
 
-## §10 实践建议
+§ 实践建议
 
-### 10.1 构建个人 Skills
+. 构建个人 Skills
 
 ```markdown
-# 个人Skills构建检查清单
+个人 Skills 构建检查清单
 
-## 1. 数据收集
+. 数据收集
 - [ ] 确定数据来源（聊天记录、文章、作品）
 - [ ] 获得数据主体授权（如适用）
 - [ ] 建立本地存储（保护隐私）
 
-## 2. 提炼维度
+. 提炼维度
 - [ ] 表达风格：词汇、句式、语气
 - [ ] 决策框架：判断标准、优先级
 - [ ] 交互模式：响应方式、话题边界
 
-## 3. 验证测试
+. 验证测试
 - [ ] 与熟悉该人格的人对话测试
 - [ ] 在新场景中验证框架有效性
 - [ ] 迭代优化提炼结果
 
-## 4. 部署上线
-- [ ] 遵循Agent Skills标准格式
+. 部署上线
+- [ ] 遵循 Agent Skills 标准格式
 - [ ] 本地运行（敏感数据不上云）
 - [ ] 定期更新与维护
 ```
 
-### 10.2 伦理边界
+. 伦理边界
 
 | ✅ 正确使用 | ❌ 错误使用 |
 |------------|------------|
@@ -585,21 +585,21 @@ compatibiity:
 | 方法论传承 | 冒充真实人物 |
 | 纪念与追忆 | 侵犯隐私 |
 
-### 10.3 技术建议
+. 技术建议
 
 ```bash
-# 推荐：本地运行的个人蒸馏
+推荐：本地运行的个人蒸馏
 pip install persona-distill-tools
 persona-distill init my-persona
 persona-distill import --source chat-history.json
 persona-distill distill --model local-model
 persona-distill serve --port 8080
 
-# 避免：敏感数据上传云端
+避免：敏感数据上传云端
 persona-distill import --source chat-history.json --to-cloud  # ❌
 ```
 
-## §11 总结
+§ 总结
 
 Awesome Persona Distill Skills 提供了：
 

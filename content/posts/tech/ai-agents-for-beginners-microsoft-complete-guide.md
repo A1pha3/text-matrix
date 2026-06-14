@@ -33,7 +33,7 @@ tags: ["AI Agent", "Microsoft", "入门教程", "Azure AI Foundry", "Agent Frame
 
 ### 1.2 目标导向行为（Goal-Directed）
 
-Agent 不是根据固定指令执行单一步骤，而是能够将复杂目标拆解为多个子任务，并动态规划执行路径。课程第 7 节"Planning Design Pattern"深入探讨了这一设计模式。
+Agent 是，不是根据固定指令执行单一步骤能够将复杂目标拆解为多个子任务，并动态规划执行路径。课程第 7 节"Planning Design Pattern"深入探讨了这一设计模式。
 
 ### 1.3 记忆与上下文管理（Memory & Context）
 
@@ -57,132 +57,11 @@ class AIAgent:
         # 4. 更新记忆
         self.memory.store(task, result)
         return result
-```
-
----
-
-## 二、架构分析：Microsoft Agent Framework 与 Azure AI Foundry
-
-### 2.1 技术栈概览
-
-课程代码基于以下核心技术构建：
-
-| 组件 | 技术选型 | 说明 |
-|------|----------|------|
-| 基础模型 | Azure AI Foundry / OpenAI Compatible | 支持 MiniMax（最大 204K 上下文）等 |
-| Agent 框架 | Microsoft Agent Framework (MAF) | 微软官方 Agent 开发框架 |
-| 服务层 | Azure AI Foundry Agent Service V2 | 云端 Agent 运行时 |
-| 代码示例 | Jupyter Notebook + Python | 交互式学习体验 |
-
-### 2.2 Microsoft Agent Framework 核心组件
-
-MAF 将 Agent 系统拆解为以下几个核心组件：
-
-**Agent**：核心实体，由基础模型、工具集和指令模板组成。
-**Tools**：Agent 可调用的外部能力，包括：
-- 代码执行工具（Code Executor）
-- 文件操作工具（File operations）
-- 搜索工具（Web search）
-- API 调用工具（REST API calls）
-**Memory**：分为短期记忆（对话上下文）和长期记忆（向量存储/键值存储）。
-**Orchestrator**：多 Agent 场景下的协调器，负责任务分发和结果聚合。
-
-### 2.3 Azure AI Foundry Agent Service V2
-
-Azure AI Foundry 是微软的 AI 应用平台，其 Agent Service V2 提供了企业级的 Agent 运行环境：
-
-- **规模化部署**：支持高并发、多租户场景
-- **安全隔离**：基于 Azure 沙箱的运行时隔离
-- **可观测性**：内置日志、追踪和指标采集
-- **模型网关**：统一的模型接入层，支持多家提供商
-
----
-
-## 三、课程结构详解：14 节核心课程全景图
-
-课程采用模块化设计，每一节都可以独立学习。以下是完整的课程大纲：
-
-| 课程 | 主题 | 核心要点 |
-|------|------|----------|
-| 01 | Intro to AI Agents and Agent Use Cases | AI Agent 定义、典型应用场景、行业现状 |
-| 02 | Exploring AI Agentic Frameworks | 主流 Agent 框架对比、微软 MAF 设计理念 |
-| 03 | Understanding AI Agentic Design Patterns | ReAct、Plan-and-Execute、Human-in-the-loop 等模式 |
-| 04 | Tool Use Design Pattern | 工具定义、工具绑定、工具结果处理 |
-| 05 | Agentic RAG | Agent 与 RAG 系统的深度整合架构 |
-| 06 | Building Trustworthy AI Agents | 安全对齐、幻觉缓解、输出验证 |
-| 07 | Planning Design Pattern | 任务分解、动态规划、执行监控 |
-| 08 | Multi-Agent Design Pattern | 多 Agent 协作、角色分工、通信协议 |
-| 09 | Metacognition Design Pattern | Agent 自我反思、自我纠正能力设计 |
-| 10 | AI Agents in Production | 生产环境部署、监控、日志管理 |
-| 11 | Using Agentic Protocols (MCP, A2A, NLWeb) | 协议层标准化、MCP 服务发现、A2A 通信 |
-| 12 | Context Engineering for AI Agents | 上下文压缩、主题提取、对话状态管理 |
-| 13 | Managing Agentic Memory | 短期/长期记忆架构、向量存储、记忆检索 |
-| 14 | Exploring Microsoft Agent Framework | MAF 深度解析、API 概览、高级用法 |
-
-此外还有三节即将上线：
-- **15 - Building Computer Use Agents (CUA)**：计算机使用型 Agent，可操控浏览器和桌面应用
-- **16 - Deploying Scalable Agents**：可扩展 Agent 部署
-- **17 - Creating Local AI Agents**：本地化 AI Agent 构建
-
-### 3.1 设计模式：课程的灵魂
-
-课程第 3 节系统讲解了 6 个核心 Agent 设计模式：
-
-**ReAct 模式**（Reasoning + Acting）：让 Agent 在推理过程中交替执行思考和行动，适用于复杂决策场景。
-
-**Plan-and-Execute 模式**：先规划后执行，将任务拆解为清晰的步骤序列再依次执行。
-
-**Human-in-the-Loop**：在关键决策节点引入人工审核，适用于高风险操作场景。
-
-**Tool Use**：工具调用模式，Agent 通过函数调用与外部系统交互。
-
-**Memory-Augmented**：记忆增强模式，结合短期上下文和长期知识库。
-
-**Meta-Cognitive**：元认知模式，Agent 对自己的推理过程进行监控和纠正。
-
-### 3.2 安全与信任：被低估的课程章节
-
-第 6 节"Building Trustworthy AI Agents"是课程中最具实践价值的章节之一。它覆盖了：
-
-- **输出验证**：如何对 Agent 输出进行事实性校验
-- **幻觉缓解**：通过检索增强和交叉验证降低幻觉率
-- **权限控制**：最小权限原则在 Agent 工具调用中的应用
-- **审计日志**：完整的操作链路记录与回放
-
----
-
-## 四、多语言支持：全球开发者的选择
-
-课程提供了令人印象深刻的国际化支持——**50+ 种语言的 README 翻译**，包括中文（简体、繁体台湾、繁体香港、繁体澳门）。这通过 GitHub Action 自动化完成，确保翻译与英文原版保持同步。
-
-对于想要本地运行课程的开发者，课程还提供了稀疏克隆（sparse checkout）方案，避免下载巨大的翻译文件：
-
-```bash
+```textbash
 git clone --filter=blob:none --sparse https://github.com/microsoft/ai-agents-for-beginners.git
 cd ai-agents-for-beginners
 git sparse-checkout set --no-cone '/*' '!translations' '!translated_images'
-```
-
----
-
-## 五、原理分析：Agent 系统如何工作
-
-### 5.1 Agent 执行循环
-
-Agent 的核心是一个"感知-规划-行动"循环：
-
-1. **输入处理**：接收用户任务和历史上下文
-2. **推理引擎**：调用 LLM 分析任务、确定行动步骤
-3. **工具调用**：通过定义的工具集执行具体操作
-4. **结果处理**：解析工具返回结果，可能触发下一轮推理
-5. **记忆更新**：将本轮结果写入记忆系统
-6. **输出生成**：将最终结果返回给用户
-
-### 5.2 Tool Use 的技术细节
-
-课程第 4 节详细讲解了工具调用的实现：
-
-```python
+```textpython
 # 工具定义示例（来自课程）
 tools = [
     {
@@ -208,37 +87,10 @@ tools = [
         }
     }
 ]
-```
-
-工具通过 JSON Schema 定义，Agent 根据任务需求动态选择合适的工具。工具返回结果后，Agent 会将其作为上下文继续推理，直到任务完成。
-
-### 5.3 Multi-Agent 架构
-
-课程第 8 节探讨了多 Agent 系统的设计。当单一 Agent 无法高效处理复杂任务时，可以引入多个专业 Agent：
-
-- **规划 Agent**：负责任务分解和流程编排
-- **执行 Agent**：负责具体工具调用和操作执行
-- **审核 Agent**：负责结果验证和质量把控
-- **记忆 Agent**：负责跨对话知识管理
-
-Agent 之间通过标准协议通信（课程第 11 节详细介绍了 MCP 和 A2A 协议），形成松耦合的协作系统。
-
----
-
-## 六、使用说明：如何开始学习
-
-### 6.1 环境准备
-
-1. **Fork 课程仓库**：
-   ```bash
+```textbash
    git clone https://github.com/microsoft/ai-agents-for-beginners.git
    cd ai-agents-for-beginners
-   ```
-
-2. **配置 Azure AI Foundry**：课程需要 Azure 账号，可在 [Azure AI Foundry](https://aka.ms/ai-agents-beginners/ai-foundry) 获取免费额度。
-
-3. **运行课程设置**：
-   ```bash
+   ```textbash
    cd 00-course-setup
    # 按照 README 指引配置 API 密钥和模型参数
    ```

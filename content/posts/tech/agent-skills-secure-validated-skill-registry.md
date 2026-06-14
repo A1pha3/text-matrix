@@ -9,7 +9,7 @@ tags: ["AI智能体", "技能注册表", "TypeScript", "Claude Code", "Cursor", 
 
 ## 当你的 AI 编程助手在运行一个带漏洞的技能
 
-Snyk Agent Scan 2026 年报告给出了一组刺眼的数据：**市场上超过 13% 的 AI Agent 技能包包含关键级（critical）漏洞**。这意味着每安装 8 个技能，统计上就有一个可能在你的本地文件系统上制造后门——这是 AI coding 生态当前最被低估的攻击面。
+Snyk Agent Scan 2026 年报告给出了一组刺眼的数据：**市场上超过 13% 的 AI Agent 技能包包含关键级（critical）漏洞**。每安装 8 个技能，统计上就有一个可能在你的本地文件系统上制造后门——这是 AI coding 生态当前最被低估的攻击面。
 
 [agent-skills](https://github.com/tech-leads-club/agent-skills) 正面对抗这个问题。它不是一个"技能越多越好"的集市，而是一个面向安全敏感型团队的**经过验证的技能注册表**。项目由 Tech Leads Club 维护，核心技术栈：Nx Cloud 多包管理、TypeScript 100%、MIT/CC-BY-4.0 双许可证。GitHub 星标约 3,800，社区持续增长。
 
@@ -281,7 +281,7 @@ agent-skills 提供了一个独立的 MCP 服务器 `@tech-leads-club/agent-skil
 
 **Q7：项目使用的是什么开源许可证？对商业使用有限制吗？**
 
-技能注册表本身使用 MIT 许可证，技能内容（SKILL.md、templates、references）使用 CC-BY-4.0。两者均允许商业使用，CC-BY-4.0 只要求署名。这意味着你可以将 agent-skills 集成到企业内部的 AI 开发工作流中，无需额外授权。
+技能注册表本身使用 MIT 许可证，技能内容（SKILL.md、templates、references）使用 CC-BY-4.0。两者均允许商业使用，CC-BY-4.0 只要求署名。你可以将 agent-skills 集成到企业内部的 AI 开发工作流中，无需额外授权。
 
 ## 自检测试
 

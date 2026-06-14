@@ -8,17 +8,17 @@ categories: ["技术笔记"]
 tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
 ---
 
-# AutoBE：1.2K Stars·AI 后端构建器·从需求到生产的完整解决方案
+AutoBE：.K Stars·AI 后端构建器·从需求到生产的完整解决方案
 
-## 一、项目概述
+一、项目概述
 
-### 1.1 AutoBE 是什么
+. AutoBE 是什么
 
 **AutoBE** 是一个**AI 后端构建器**，通过自然语言描述需求，AI 会分析需求并构建完整的后端应用程序。生成的后端应用专为 AI 友好编译器设计，通过强大的端到端测试函数确保稳定性。
 
 > "AutoBE - AI backend builder for prototype to production"
 
-### 1.2 核心数据
+. 核心数据
 
 | 指标 | 数值 |
 |------|------|
@@ -30,7 +30,7 @@ tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
 | 许可证 | AGPL-3.0 |
 | 语言 | TypeScript 86.7%, MDX 10.0% |
 
-### 1.3 核心定位
+. 核心定位
 
 | 维度 | 说明 |
 |------|------|
@@ -40,7 +40,7 @@ tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
 | 🔗 **类型安全 SDK** | 自动生成前端集成 SDK |
 | 📊 **Benchmark** | 评估 13+ LLM 模型表现 |
 
-### 1.4 在线资源
+. 在线资源
 
 | 资源 | 链接 |
 |------|------|
@@ -50,9 +50,9 @@ tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
 | 💬 **Discord** | https://discord.gg/aMhRmzkqCx |
 | 📦 **npm** | https://www.npmjs.com/package/@autobe/agent |
 
-## 二、为什么需要 AutoBE
+二、为什么需要 AutoBE
 
-### 2.1 传统开发痛点
+. 传统开发痛点
 
 ```
 ❌ 需求分析 → 设计和实现分离
@@ -62,7 +62,7 @@ tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
 ❌ 多人协作时代码风格不一致
 ```
 
-### 2.2 AutoBE 的解决方案
+. AutoBE 的解决方案
 
 ```
 ✅ 端到端 AI 驱动
@@ -72,9 +72,9 @@ tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
 ✅ 内置 Benchmark 评估模型表现
 ```
 
-## 三、核心功能详解
+三、核心功能详解
 
-### 3.1 瀑布式开发方法论
+. 瀑布式开发方法论
 
 AutoBE 采用**瀑布式方法论**，将后端构建分为多个阶段：
 
@@ -86,7 +86,7 @@ AutoBE 采用**瀑布式方法论**，将后端构建分为多个阶段：
 | 4️⃣ **测试生成** | Test Agent | E2E 测试函数 |
 | 5️⃣ **实现** | Implementation Agent | TypeScript/NestJS 代码 |
 
-### 3.2 40+ 专业 AI Agent
+. + 专业 AI Agent
 
 AutoBE 包含 **40+ 专业 AI Agent**：
 
@@ -100,7 +100,7 @@ AutoBE 包含 **40+ 专业 AI Agent**：
 | **Validation Agent** | 类型安全验证 |
 | **Documentation Agent** | 文档生成 |
 
-### 3.3 AI 友好编译器策略
+. AI 友好编译器策略
 
 **核心创新**：AutoBE 不直接生成代码，而是先生成**语言中立的抽象语法树（AST）**：
 
@@ -117,7 +117,7 @@ AutoBE 方式：
 - 支持未来扩展到其他语言（Java/Spring 正在开发）
 - 保证最终生成的 TypeScript/Prisma 代码 100% 可编译
 
-### 3.4 类型安全客户端 SDK
+. 类型安全客户端 SDK
 
 每个 AutoBE 生成的后端都包含**类型安全 SDK**：
 
@@ -147,9 +147,9 @@ const post: IPost = await api.functional.posts.create(connection, {
 | 🌐 **框架无关** | 支持 React/Vue/Angular/任何 TS 项目 |
 | 🧪 **E2E 测试集成** | 用同一 SDK 生成测试用例 |
 
-## 四、快速开始
+四、快速开始
 
-### 4.1 一键启动
+. 一键启动
 
 ```bash
 git clone https://github.com/wrtnlabs/autobe --depth=1
@@ -158,7 +158,7 @@ pnpm install
 pnpm run playground
 ```
 
-### 4.2 访问 Playground
+. 访问 Playground
 
 启动后访问：**http://localhost:5713**
 
@@ -167,7 +167,7 @@ Playground 提供：
 - 📊 编译成功仪表盘
 - 🎬 Replay 功能查看历史会话
 
-### 4.3 对话示例
+. 对话示例
 
 ```
 👤 需求分析：
@@ -186,9 +186,9 @@ Playground 提供：
 "实现 API 函数。"
 ```
 
-## 五、完整示例项目
+五、完整示例项目
 
-### 5.1 内置示例
+. 内置示例
 
 AutoBE 提供多个完整后端示例：
 
@@ -199,7 +199,7 @@ AutoBE 提供多个完整后端示例：
 | **E-Commerce** | 电商平台 | `shopping` |
 | **ERP System** | 企业资源规划 | `erp` |
 
-### 5.2 ERP 系统示例结构
+. ERP 系统示例结构
 
 ```bash
 erp/
@@ -218,9 +218,9 @@ erp/
         └── api/           # E2E 测试函数
 ```
 
-## 六、Benchmark 评估系统
+六、Benchmark 评估系统
 
-### 6.1 评估维度
+. 评估维度
 
 | 维度 | 说明 |
 |------|------|
@@ -232,7 +232,7 @@ erp/
 | 🔌 **API Completeness** | API 完整性 |
 | 🤖 **AI Analysis** | AI 分析（安全性、幻觉、代码质量）|
 
-### 6.2 模型对比表
+. 模型对比表
 
 | 模型 | Todo | Reddit | Shopping | ERP | 平均 |
 |------|------|--------|---------|-----|------|
@@ -243,19 +243,19 @@ erp/
 | **qwen3-coder-next** | 86 (B) | 76 (C) | 75 (C) | 88 (B) | **81** |
 | **qwen3.5-27b** | 88 (B) | 81 (B) | 77 (C) | 78 (C) | **81** |
 
-### 6.3 运行 Benchmark
+. 运行 Benchmark
 
 ```bash
-# 评估所有模型
+评估所有模型
 pnpm estimate
 
-# 评估单个模型
+评估单个模型
 pnpm estimate -- --model kimi-k2.5
 
-# 评估单个项目
+评估单个项目
 pnpm estimate -- --project todo
 
-# 评估指定组合
+评估指定组合
 pnpm estimate -- --model glm-5 --project shopping
 ```
 
@@ -264,9 +264,9 @@ pnpm estimate -- --model glm-5 --project shopping
 packages/estimate/reports/benchmark/{model}/{project}/estimate-report.json
 ```
 
-## 七、技术架构
+七、技术架构
 
-### 7.1 系统架构
+. 系统架构
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -292,7 +292,7 @@ packages/estimate/reports/benchmark/{model}/{project}/estimate-report.json
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 核心技术栈
+. 核心技术栈
 
 | 层次 | 技术 |
 |------|------|
@@ -303,7 +303,7 @@ packages/estimate/reports/benchmark/{model}/{project}/estimate-report.json
 | **协议** | WebSocket (RPC) |
 | **CLI** | pnpm |
 
-### 7.3 目录结构
+. 目录结构
 
 ```
 autobe/
@@ -322,9 +322,9 @@ autobe/
 └── deploy/           # 部署配置
 ```
 
-## 八、当前局限性
+八、当前局限性
 
-### 8.1 已知的限制
+. 已知的限制
 
 | 限制 | 说明 | 解决方案 |
 |------|------|----------|
@@ -333,7 +333,7 @@ autobe/
 | ⚠️ **Token 消耗** | 复杂项目需要 30M-250M+ tokens | 正在优化 RAG |
 | ⚠️ **维护能力** | 不提供长期维护功能 | 结合 Claude Code 维护 |
 
-### 8.2 Token 消耗参考
+. Token 消耗参考
 
 | 项目类型 | Token 消耗 |
 |----------|-----------|
@@ -342,9 +342,9 @@ autobe/
 | 复杂 E-commerce | ~100M-150M tokens |
 | 超大型 ERP | ~250M+ tokens |
 
-## 九、发展路线图
+九、发展路线图
 
-### 9.1 版本历程
+. 版本历程
 
 | 版本 | 状态 | 核心成就 |
 |------|------|----------|
@@ -353,7 +353,7 @@ autobe/
 | **Gamma** | ✅ 完成 | 快速迭代功能上线 |
 | **Delta** | 🔄 进行中 | 稳定性优先，深度优化 |
 
-### 9.2 Delta 阶段重点
+. Delta 阶段重点
 
 | 方向 | 说明 |
 |------|------|
@@ -364,16 +364,16 @@ autobe/
 | 🌐 **多语言支持** | Java/Spring 代码生成（进行中） |
 | ✏️ **人工修改支持** | 解析用户修改代码回写 AST |
 
-## 十、许可证说明
+十、许可证说明
 
-### 10.1 许可证结构
+. 许可证结构
 
 | 组件 | 许可证 | 说明 |
 |------|---------|------|
 | **AutoBE 本身** | AGPL-3.0 | 修改后必须开源 |
 | **生成的后端应用** | 可自由选择 | MIT/商业等均可 |
 
-### 10.2 AGPL-3.0 要求
+. AGPL-. 要求
 
 - ✅ 自由使用和修改
 - ✅ 自由分发
@@ -382,9 +382,9 @@ autobe/
 
 **重要**：用 AutoBE 生成的后端应用可以自由选择许可证，不受 AGPL 约束。
 
-## 十一、资源链接
+十一、资源链接
 
-### 11.1 官方资源
+. 官方资源
 
 | 资源 | 链接 |
 |------|------|
@@ -395,7 +395,7 @@ autobe/
 | 📦 **npm** | https://www.npmjs.com/package/@autobe/agent |
 | 🔧 **API** | https://autobe.dev/api |
 
-### 11.2 快速链接
+. 快速链接
 
 | 链接 | 说明 |
 |------|------|
@@ -404,7 +404,7 @@ autobe/
 | [Replay](http://localhost:5713/replay/index.html) | 历史会话回放 |
 | [Benchmark](https://autobe.dev/benchmark) | 模型表现对比 |
 
-## 十二、总结
+十二、总结
 
 AutoBE 是**新一代 AI 后端构建工具**：
 

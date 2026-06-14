@@ -33,7 +33,7 @@ CocoIndex 的 mental model 可以用 React 的状态管理来类比：
 - **代码变化感知**：当转换函数 F 从 v1 改为 v2 时，只重新执行依赖该函数的节点
 - **端到端血缘**：每个目标 dot 都可以追溯到源字节
 
-## 2. 核心场景：CocoIndex-code（MCP Server for AI 编程）
+## 2. 关键场景：CocoIndex-code（MCP Server for AI 编程）
 
 CocoIndex-code 是其旗舰级 MCP Server，专为 AI 编程 Agent 设计（Claude Code、Cursor 等）：
 
@@ -139,14 +139,14 @@ CocoIndex 提供 Claude Code Skill（`skills/cocoindex/`），帮助 AI coding a
 
 ## 8. 局限性与注意事项
 
-1. **核心依赖 Python 环境**：虽然核心是 Rust，但声明式 API 和 connectors 都是 Python
+1. **主要依赖 Python 环境**：虽然重点是 Rust，但声明式 API 和 connectors 都是 Python
 2. **需要理解声明式模型**：习惯了传统脚本式 ETL 的开发者需要适应声明式思维
 3. **向量数据库需自备**：不内置向量数据库服务，需要连接外部服务
 4. **v1 阶段**：仍处于快速迭代期，生产环境使用前建议评估
 
 ## 9. 总结
 
-CocoIndex 的增量索引机制解决了企业级 AI Agent 的核心痛点：数据新鲜度。通过将数据管道声明为 `Target = F(Source)` 并由引擎维护增量同步，它让 AI Agent 可以在任何规模下获得持续新鲜的数据。
+CocoIndex 的增量索引机制解决了企业级 AI Agent 的根本痛点：数据新鲜度。通过将数据管道声明为 `Target = F(Source)` 并由引擎维护增量同步，它让 AI Agent 可以在任何规模下获得持续新鲜的数据。
 
 对于需要处理持续变化数据源的企业 AI 应用，或者长时间运行的 AI coding agent，CocoIndex 提供了目前最完整的增量索引方案。
 
@@ -156,7 +156,7 @@ CocoIndex 的增量索引机制解决了企业级 AI Agent 的核心痛点：数
 
 - GitHub：[cocoindex-io/cocoindex](https://github.com/cocoindex-io/cocoindex)
 - Stars：8,192
-- 语言：Python（核心）+ Rust（核心引擎）
+- 语言：Python（本质）+ Rust（关键引擎）
 - License：Apache-2.0
 - Python 版本：3.10-3.13
 - 官网：[cocoindex.io](https://cocoindex.io)

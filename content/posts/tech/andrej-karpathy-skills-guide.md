@@ -8,11 +8,11 @@ categories = ['技术笔记']
 tags = ['AI', 'Claude', 'Agent', '开发工具']
 +++
 
-# Andrej Karpathy Skills：AI 编程行为指南
+Andrej Karpathy Skills：AI 编程行为指南
 
 ---
 
-## 🔥 为什么这个项目炸了？
+为什么这个项目炸了？
 
 2026 年，AI 编程助手已经无处不在。但 Andrej Karpathy 在一条推文里点破了一个根本性问题：
 
@@ -26,11 +26,11 @@ Karpathy 还犀利地补充：
 
 ---
 
-## 🧠 核心理念：四项原则
+核心理念：四项原则
 
 这个项目只做了一件事：把 Karpathy 的观察变成一套可操作的 AI 行为准则。准则浓缩为四句话：
 
-### 1️⃣ Think Before Coding（三思而后行）
+Think Before Coding（三思而后行）
 
 > **不要假设。不要隐藏困惑。要呈现权衡。**
 
@@ -41,7 +41,7 @@ AI 常见的毛病是：用户说"加个功能"，它就默默选了一个解释
 - **遇到多种解释时，列出选项**，不要默默选一个
 - **发现不清晰的地方，立即停下来问清楚**，而不是靠猜继续
 
-### 2️⃣ Simplicity First（简单优先）
+Simplicity First（简单优先）
 
 > **最小代码解决当下问题，不要 speculative。**
 
@@ -53,7 +53,7 @@ Karpathy 最痛恨的，就是 AI 动不动搞一套 Strategy Pattern、Abstract
 - 没有被要求的"灵活性"和"可配置性"不要加
 - 200 行能搞定的，不要写到 2000 行
 
-### 3️⃣ Surgical Changes（精准改代码）
+Surgical Changes（精准改代码）
 
 > **只动你必须动的，清理干净你自己的烂摊子。**
 
@@ -65,7 +65,7 @@ AI 经常"顺便"改一堆不相关的东西——改格式、调注释、甚至
 - 你引入了未使用的 import/变量？**自己删掉**
 - 之前就有的死代码？不主动删，除非被要求
 
-### 4️⃣ Goal-Driven Execution（目标导向执行）
+Goal-Driven Execution（目标导向执行）
 
 > **定义成功标准，循环验证直到达成。**
 
@@ -87,44 +87,44 @@ Karpathy 说过：*"AI 极其擅长循环执行直到满足特定目标。不要
 
 ---
 
-## 🚀 入门指南：5 分钟让你的 AI 脱胎换骨
+入门指南： 分钟让你的 AI 脱胎换骨
 
-### 方式一：Claude Code 插件（推荐 ⭐）
+方式一：Claude Code 插件（推荐 ）
 
 Claude Code 用户一行命令搞定：
 
 ```bash
-# 添加市场插件
+添加市场插件
 /plugin marketplace add forrestchang/andrej-karpathy-skills
 
-# 安装插件
+安装插件
 /plugin install andrej-karpathy-skills@karpathy-skills
 ```
 
 安装后，这个指南会跨所有项目生效。
 
-### 方式二：项目级 CLAUDE.md（新项目）
+方式二：项目级 CLAUDE.md（新项目）
 
 ```bash
 curl -o CLAUDE.md https://raw.githubusercontent.com/multica-ai/andrej-karpathy-skills/main/CLAUDE.md
 ```
 
-### 方式三：追加到现有项目（已有 CLAUDE.md）
+方式三：追加到现有项目（已有 CLAUDE.md）
 
 ```bash
 echo "" >> CLAUDE.md
 curl https://raw.githubusercontent.com/multica-ai/andrej-karpathy-skills/main/CLAUDE.md >> CLAUDE.md
 ```
 
-### 方式四：Cursor 用户
+方式四：Cursor 用户
 
 项目内置了 Cursor 规则 `.cursor/rules/karpathy-guidelines.mdc`，打开项目即可自动生效，无需额外配置。
 
 ---
 
-## 📖 实战案例：AI 以前怎么错，现在怎么改
+实战案例：AI 以前怎么错，现在怎么改
 
-### 案例 1：隐藏假设
+案例 ：隐藏假设
 
 **用户要求：** "加个导出用户数据的功能"
 
@@ -162,7 +162,7 @@ def export_users(format='json'):
 您倾向哪种方案？
 ```
 
-### 案例 2：过度工程
+案例 ：过度工程
 
 **用户要求：** "加个计算折扣的函数"
 
@@ -207,14 +207,14 @@ def calculate_discount(amount: float, percent: float) -> float:
     """计算折扣金额。percent 传入 0-100。"""
     return amount * (percent / 100)
 
-# 用法
-discount = calculate_discount(100.0, 10.0)  # 减10元
+用法
+discount = calculate_discount(100.0, 10.0)  # 减 10 元
 ```
 > 记住：只有当你真正需要多种折扣策略时，才需要引入抽象。需求还没来，不要预建。
 
 ---
 
-## 🔍 与同类项目横向对比
+与同类项目横向对比
 
 | 项目 | 定位 | Stars | 特点 |
 |------|------|-------|------|
@@ -224,13 +224,13 @@ discount = calculate_discount(100.0, 10.0)  # 减10元
 | [microsoft/AI-App-Accelerator](https://github.com/microsoft/AI-App-Accelerator) | 企业 AI 应用 | 11k | 面向企业场景，偏架构和流程，重量级 |
 | [OpenInterpreter/open-interpreter](https://github.com/OpenInterpreter/open-interpreter) | 本地 AI 编程 | 48k | 让 AI 在本地电脑上执行代码，工具类项目 |
 
-**差异化定位：** andrej-karpathy-skills 是唯一一个**直接给 AI 看、约束 AI 行为**的项目，而非给人看的教程或 Prompt 集合。它的价值在于**在 AI 的决策环节介入**，而不是事后补救。
+**差异化定位：** andrej-karpathy-skills 是唯一一个**直接给 AI 看、约束 AI 行为**的项目，而非给人看的教程或 Prompt 集合。它**在 AI 的决策环节介入**，而不是事后补救。
 
 ---
 
-## 💡 为什么这对开发者很重要？
+为什么这对开发者很重要？
 
-### 传统工作流的问题
+传统工作流的问题
 
 ```
 用户 → AI → 代码 → Code Review → 发现问题 → 打回 → AI 修改 → 再次 Review → ...
@@ -238,7 +238,7 @@ discount = calculate_discount(100.0, 10.0)  # 减10元
 
 AI 埋头写，开发者埋头审，循环往复，效率极低。
 
-### 使用该准则后的工作流
+使用该准则后的工作流
 
 ```
 用户 → AI 提问（Clarification） → AI 执行 → 验证通过 → PR → Review 通过 ✅
@@ -246,7 +246,7 @@ AI 埋头写，开发者埋头审，循环往复，效率极低。
 
 把沟通成本前置，消除了大量的返工。
 
-### Karpathy 的核心洞察
+Karpathy 的核心洞察
 
 > *"LLM 在满足特定目标方面极其擅长。不要告诉它要做什么，给它成功标准，然后放手让它跑。"*
 
@@ -254,7 +254,7 @@ AI 埋头写，开发者埋头审，循环往复，效率极低。
 
 ---
 
-## 🏗️ 项目架构一览
+项目架构一览
 
 ```
 andrej-karpathy-skills/
@@ -274,21 +274,21 @@ andrej-karpathy-skills/
 
 ---
 
-## ⚖️ 局限性与注意事项
+局限性与注意事项
 
-### ⚠️ 权衡说明
+权衡说明
 
 准则本身有一个重要的 tradeoff 标注：
 
 > *"这些准则偏向谨慎而非速度。对于简单任务（改个错字、明显的一行代码），请自行判断——不是每个改动都需要完整走一遍流程。"*
 
-### 何时使用完整流程：
+何时使用完整流程：
 - 新功能开发
 - 复杂逻辑修改
 - 多文件改动
 - 涉及外部依赖或 API
 
-### 何时简化：
+何时简化：
 - 打字修正（typo）
 - 简单的单行代码改动
 - 明显的格式化调整
@@ -296,7 +296,7 @@ andrej-karpathy-skills/
 
 ---
 
-## 🌟 为什么它今天冲上了趋势榜？
+为什么它今天冲上了趋势榜？
 
 1. **Karpathy 效应**：Karpathy 的一句话引发了这个项目的诞生，他的背书让这个项目自带流量
 2. **AI 编程的普遍痛点**：几乎每个使用 AI 编程助手的人都经历过 AI 自顾自写代码、越改越乱的痛苦
@@ -306,7 +306,7 @@ andrej-karpathy-skills/
 
 ---
 
-## 📚 延伸阅读与资源
+延伸阅读与资源
 
 - 🔗 [Andrej Karpathy 原推](https://x.com/karpathy/status/2015883857489522876) — 项目灵感来源
 - 🔗 [Multica 平台](https://github.com/multica-ai/multica) — 29k Stars，开源 AI 代理管理平台
@@ -316,7 +316,7 @@ andrej-karpathy-skills/
 
 ---
 
-## 结语
+结语
 
 **andrej-karpathy-skills** 成功的本质，是把 Karpathy 对 AI 编程失误的深度观察，转化为一套 AI 可执行、开发者可复用的行为准则。它不需要任何新的技术发明，不需要训练模型，不需要复杂的系统——只是改变了一个 Prompt 文件的内容。
 

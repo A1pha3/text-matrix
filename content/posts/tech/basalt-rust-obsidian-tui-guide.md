@@ -13,7 +13,7 @@ hiddenFromHomePage: true
 
 ---
 
-## 一句话定位
+一句话定位
 
 [Basalt](https://github.com/erikjuhani/basalt) 是一个用 **Rust** 构建的 **Obsidian 笔记终端管理器**。它不是一个全功能的笔记软件，而是专注做好一件事：在终端里以三窗格布局（Explorer + Note Editor + Outline）浏览和管理 Obsidian 保险库。
 
@@ -21,9 +21,9 @@ hiddenFromHomePage: true
 
 ---
 
-## 核心架构：ratatui 驱动的三窗格 TUI
+核心架构：ratatui 驱动的三窗格 TUI
 
-### 技术栈
+技术栈
 
 | 层级 | 技术选型 | 说明 |
 |------|----------|------|
@@ -33,7 +33,7 @@ hiddenFromHomePage: true
 | 包管理 | Cargo | `cargo install basalt-tui` |
 | 包管理器（可选） | aqua | 日本开发者常用的 CLI 工具管理器 |
 
-### 三窗格布局
+三窗格布局
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -59,9 +59,9 @@ hiddenFromHomePage: true
 
 ---
 
-## Markdown 渲染：pulldown-cmark 的支持边界
+Markdown 渲染：pulldown-cmark 的支持边界
 
-### 已支持
+已支持
 
 | 元素 | 渲染方式 |
 |------|----------|
@@ -72,7 +72,7 @@ hiddenFromHomePage: true
 | Callouts | Obsidian 风格的 `>[!NOTE]` 等语法 |
 | Wiki-links | `[[Note]]` / `[[Note#Heading]]` 解析 |
 
-### 尚未支持
+尚未支持
 
 | 元素 | 状态 |
 |------|------|
@@ -90,22 +90,22 @@ README 明确标注了这些限制，对于追求完整 Obsidian 体验的用户
 
 ---
 
-## 核心功能
+核心功能
 
-### 1. 保险库自动发现
+. 保险库自动发现
 
 Basalt 启动时会在启动屏（Splash Screen）显示所有自动发现的 Obsidian 保险库。保险库发现机制读取 Obsidian 的配置文件 `obsidian.json`，列出本地所有保险库路径。
 
 ```
 basalt
-# → 启动屏显示保险库列表
-# → 用 j/k 或方向键导航
-# → Enter 打开保险库
+→ 启动屏显示保险库列表
+→ 用 j/k 或方向键导航
+→ Enter 打开保险库
 ```
 
 `Ctrl+G` 随时呼出保险库选择器切换保险库。
 
-### 2. WYSIWYG Markdown 渲染
+. WYSIWYG Markdown 渲染
 
 Basalt 的渲染策略是**替换语法字符为视觉样式**，而非简单地将纯文本显示出来：
 
@@ -115,19 +115,19 @@ Basalt 的渲染策略是**替换语法字符为视觉样式**，而非简单地
 
 这种渲染方式在终端的约束下最大化了可读性。
 
-### 3. 重命名自动更新 Wiki-links
+. 重命名自动更新 Wiki-links
 
 在 Explorer 中按 `r` 重命名笔记或文件夹时，Basalt 会自动扫描并更新保险库中所有引用该笔记的 Wiki-links。
 
 ```
-# 假设有笔记 A.md 内容为：参见 [[B]] 和 [[C]]
-# 将 B.md 重命名为 D.md 后
-# A.md 自动更新为：参见 [[D]] 和 [[C]]
+假设有笔记 A.md 内容为：参见 [[B]] 和 [[C]]
+将 B.md 重命名为 D.md 后
+A.md 自动更新为：参见 [[D]] 和 [[C]]
 ```
 
 这是 Obsidian 用户最常用的功能之一，Basalt 正确实现了它。
 
-### 4. Vim 模式
+. Vim 模式
 
 配置 `vim_mode = true` 启用一套模拟 Vim 的按键预设：
 
@@ -141,7 +141,7 @@ Basalt 的渲染策略是**替换语法字符为视觉样式**，而非简单地
 
 Vim 模式下，Note Editor 引入 Normal/Insert 子模式：`i` 进入 Insert 模式编辑，`Esc` 返回 Normal 模式导航，再按一次 Esc 退出到 READ 模式。
 
-### 5. 实验性内置编辑器
+. 实验性内置编辑器
 
 Basalt 内置了一个**实验性编辑器**，默认关闭，需在配置中启用：
 
@@ -167,7 +167,7 @@ experimental_editor = true
 
 官方推荐：**使用外部编辑器**（如 Vim、VS Code）进行实际编辑，Basalt 的实验性编辑器仅作为轻量补充。
 
-### 6. 自定义命令
+. 自定义命令
 
 支持配置外部命令调用，通过 `%note_path`、`%vault` 等占位符注入上下文：
 
@@ -183,36 +183,36 @@ key_bindings = [
 
 ---
 
-## 安装与配置
+安装与配置
 
-### 安装方式
+安装方式
 
 ```bash
-# 方式1：Cargo（推荐）
+方式：Cargo（推荐）
 cargo install basalt-tui
 
-# 方式2：aqua
+方式：aqua
 aqua g -i erikjuhani/basalt
 
-# 方式3：下载预编译二进制
-# 从 GitHub Releases 下载，解压后移到 PATH
+方式：下载预编译二进制
+从 GitHub Releases 下载，解压后移到 PATH
 ```
 
-### 配置文件位置
+配置文件位置
 
 ```toml
-# macOS / Linux
+macOS / Linux
 $HOME/.basalt.toml
 $XDG_CONFIG_HOME/basalt/config.toml
 
-# Windows
+Windows
 %USERPROFILE%\.basalt.toml
 %APPDATA%\basalt\config.toml
 ```
 
 配置文件采用 **merge 策略**：只需定义要覆盖的按键，所有其他默认值保持有效。
 
-### 符号预设
+符号预设
 
 内置三套符号预设：
 
@@ -234,7 +234,7 @@ file = "📄"
 
 ---
 
-## 与 Obsidian 的边界
+与 Obsidian 的边界
 
 README 明确说：**Basalt 不是 Obsidian 的替代品**。
 
@@ -254,7 +254,7 @@ Basalt 的定位是：**用终端方式快速浏览和导航 Obsidian 保险库*
 
 ---
 
-## 适用场景
+适用场景
 
 **✅ 强项场景：**
 - **终端重度用户**：日常在终端工作，不需要切换到 GUI
@@ -270,9 +270,9 @@ Basalt 的定位是：**用终端方式快速浏览和导航 Obsidian 保险库*
 
 ---
 
-## 技术实现亮点
+技术实现亮点
 
-### ratatui 的实战应用
+ratatui 的实战应用
 
 Basalt 是学习 ratatui 的优秀参考项目。它的实现展示了：
 
@@ -281,7 +281,7 @@ Basalt 是学习 ratatui 的优秀参考项目。它的实现展示了：
 3. **StatefulWidget**：Explorer 和 Outline 需要维护选中/滚动状态，通过 `StatefulWidget` 实现
 4. **事件处理**：`EventListener` 模式处理键盘事件
 
-### pulldown-cmark 的扩展解析
+pulldown-cmark 的扩展解析
 
 Basalt 在 pulldown-cmark 的基础上扩展了 Obsidian 特有的语法：
 
@@ -290,7 +290,7 @@ Basalt 在 pulldown-cmark 的基础上扩展了 Obsidian 特有的语法：
 
 这种在通用解析器上叠加自定义语法的模式，是处理 Markdown 方言的标准做法。
 
-### 跨平台文件发现
+跨平台文件发现
 
 保险库自动发现需要读取 Obsidian 的配置文件（跨平台路径处理）：
 
@@ -304,7 +304,7 @@ Basalt 对这三个路径分别处理，解析 JSON 获取 vault 列表。
 
 ---
 
-## 总结
+总结
 
 Basalt 是一个定位清晰、小而美的 Rust TUI 项目。它的关键价值不是替代 Obsidian，而是给终端用户提供了一个**极简的 Obsidian 保险库浏览器**。
 

@@ -8,9 +8,9 @@ categories: ["技术笔记"]
 tags: ["GitHub Actions", "自动化修复", "CI 流水线", "代码格式化", "Pull Request"]
 ---
 
-# autofix.ci：让 Pull Request 自动化修复成为流水线标配
+autofix.ci：让 Pull Request 自动化修复成为流水线标配
 
-## 项目概览
+项目概览
 
 **autofix.ci**（[github.com/apps/autofix-ci](https://github.com/apps/autofix-ci)）是一个面向 GitHub 的自动化修复服务，核心定位很明确：**把 Pull Request 里因为代码格式、import 残留、风格不一致这类琐碎问题而产生的人工等待消除掉**。
 
@@ -30,7 +30,7 @@ tags: ["GitHub Actions", "自动化修复", "CI 流水线", "代码格式化", "
 
 ---
 
-## 解决了什么问题
+解决了什么问题
 
  Pull Request 经常因为以下原因被阻塞：
 
@@ -44,9 +44,9 @@ autofix.ci 的思路是：**在 CI 里运行你已有的格式化工具，然后
 
 ---
 
-## 核心工作原理
+核心工作原理
 
-### 整体流程
+整体流程
 
 ```
 开发者 push 代码
@@ -62,7 +62,7 @@ autofix-ci/action 在流水线末端被调用
 后端处理修复，生成 commit 并 push 回 PR
 ```
 
-### Action 源码关键路径（v3 版本）
+Action 源码关键路径（v 版本）
 
 Action 源码托管于 [autofix-ci/action](https://github.com/autofix-ci/action)，核心逻辑在 `index.ts`，关键流程如下：
 
@@ -135,9 +135,9 @@ const url =
 
 ---
 
-## 快速上手
+快速上手
 
-### 第一步：安装 GitHub App
+第一步：安装 GitHub App
 
 访问 [autofix.ci](https://autofix.ci) 并安装应用到目标仓库。安装时会提示授权以下权限：
 
@@ -146,7 +146,7 @@ const url =
 - `contents: write`——写入 commit
 - `pull_requests: write`——更新 PR
 
-### 第二步：创建 workflow 文件
+第二步：创建 workflow 文件
 
 在仓库根目录创建 `.github/workflows/autofix.yml`：
 
@@ -177,7 +177,7 @@ jobs:
 
 > **安全加固建议**：将 Action 固定到特定 commit hash 而非 tag，例如 `autofix-ci/action@8bc06253bec489732e5f9c52884c7cace15c0160`，以降低供应链攻击风险。
 
-### 第三步：配置参数（可选）
+第三步：配置参数（可选）
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
@@ -197,11 +197,11 @@ jobs:
 
 ---
 
-## 多语言场景示例
+多语言场景示例
 
 官方 setup 页面（[autofix.ci/setup](https://autofix.ci/setup)）提供了大量开箱即用的 YAML 片段，以下是几个典型语言生态的示例：
 
-### Python + ruff
+Python + ruff
 
 ```yaml
 - uses: actions/checkout@v4
@@ -210,7 +210,7 @@ jobs:
 - uses: autofix-ci/action@v1
 ```
 
-### TypeScript / JavaScript + Prettier
+TypeScript / JavaScript + Prettier
 
 ```yaml
 - uses: actions/checkout@v4
@@ -218,7 +218,7 @@ jobs:
 - uses: autofix-ci/action@v1
 ```
 
-### Rust + rustfmt
+Rust + rustfmt
 
 ```yaml
 - uses: actions/checkout@v4
@@ -226,7 +226,7 @@ jobs:
 - uses: autofix-ci/action@v1
 ```
 
-### Go + gofmt
+Go + gofmt
 
 ```yaml
 - uses: actions/checkout@v4
@@ -234,27 +234,27 @@ jobs:
 - uses: autofix-ci/action@v1
 ```
 
-所有示例的核心逻辑都一样：**先运行本地格式化工具，再调用 autofix.ci**。
+所有示例的关键逻辑都一样：**先运行本地格式化工具，再调用 autofix.ci**。
 
 ---
 
-## 适用场景与优势
+适用场景与优势
 
-### 适合的场景
+适合的场景
 
 - **格式强制统一**：团队对 code style 有明确要求，不想在 review 中纠结格式化问题
 - **减少 PR 轮次**：避免"CI 失败→修复→再 review"的琐碎等待
 - **多语言项目**：同一个 workflow 可以串联多种格式化工具（如 Python 用 ruff、JS 用 prettier、Rust 用 rustfmt）
 - **PR 贡献引导**：开源项目可以用 autofix.ci 降低外部贡献者的格式门槛
 
-### 优势
+优势
 
 - **零侵入**：不需要改代码，不需要 pre-commit hook，不需要额外的本地配置
 - **安全边界清晰**：Action 明确禁止修改 `.github` 目录，防止误操作 workflow 配置
 - **PR 专用**：对 Push 到分支和 PR 两种触发场景做了不同处理（rebase onto PR head）
 - **隐私友好**：官方声明不收集、不传输、不出售任何个人数据（见[隐私政策](https://autofix.ci/privacy)）
 
-### 局限与注意事项
+局限与注意事项
 
 - **后端非开源**：真正的修复逻辑运行在 `autofix-api.maximilianhils.com`，无法自托管
 - **不修改 `.github`**：workflow 配置文件本身不会被 autofix.ci 修复（安全限制）
@@ -264,33 +264,33 @@ jobs:
 
 ---
 
-## 常见问题
+常见问题
 
-### Q: 修复 commit 会不会和我的原始 commit 混在一起造成历史污染？
+Q: 修复 commit 会不会和我的原始 commit 混在一起造成历史污染？
 
 不会。autofix.ci 的修复以独立 commit 形式 push 到 PR 分支，消息默认为 `autofix`（可自定义）。最终合并时可以 squash 或 rebase，保持干净的 master 历史。
 
-### Q: 可以指定只对特定文件类型自动修复吗？
+Q: 可以指定只对特定文件类型自动修复吗？
 
 这是 CI 层面的设计选择。你可以在 workflow 中只对特定目录或文件类型运行格式化工具，autofix.ci 会自动收集该步骤产生的 staged changes。
 
-### Q: 如何禁用 autofix.ci 对某个 PR 的自动修复？
+Q: 如何禁用 autofix.ci 对某个 PR 的自动修复？
 
 暂时没有 per-PR 的开关。如果需要临时禁用，可以将对应 workflow 的 `autofix-ci/action` step 注释掉，或在 workflow 中加入条件判断。
 
-### Q: 修复失败怎么办？
+Q: 修复失败怎么办？
 
 后端处理失败时，Action 会输出错误信息并将 workflow 标为失败，同时打印需要手动修复的内容。
 
 ---
 
-## 总结
+总结
 
 autofix.ci 用最小的工程成本解决了 PR 中格式问题导致的摩擦：**一条 GitHub Actions workflow + 一行 Action 调用**，即可将琐碎的 style 修复从人工流程中剥离。
 
 它不是一个代码质量工具，而是一个 **CI 末端的自动化修复管道**——你决定要检查什么，它负责把能修的修掉并 push 回来。对于追求流水线索整性和降低 review 成本的项目，这是一个值得考虑的基础设施层选项。
 
-### 延伸链接
+延伸链接
 
 - autofix.ci 官网：https://autofix.ci
 - GitHub Action 仓库：https://github.com/autofix-ci/action

@@ -8,16 +8,11 @@ categories: ["技术笔记"]
 tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit", "OkHttp", "安全研究"]
 ---
 
-# Android 逆向工程 Skill：2.5K Stars 的 Claude Code 智能体
-
-> **目标读者**：移动安全工程师、渗透测试工程师、Android 开发者、安全研究者
-> **前置知识**：Android 基础、HTTP 协议、命令行操作
-> **技术栈**：Java JDK 17+ / jadx / Vineflower / dex2jar
-> **难度定位**：⭐⭐⭐⭐ 专家设计
+Android 逆向工程 Skill：.K Stars 的 Claude Code 智能体
 
 ---
 
-## §1 学习目标
+§ 学习目标
 
 完成本篇文章后，你将能够：
 
@@ -30,9 +25,9 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 
 ---
 
-## §2 背景与动机：为何需要 Android 逆向工程
+§ 背景与动机：为何需要 Android 逆向工程
 
-### 2.1 应用场景
+. 应用场景
 
 | 场景 | 说明 |
 |------|------|
@@ -43,44 +38,44 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 | **恶意软件分析** | Malware 分析应急响应 |
 | **互操作性研究** | EU 指令 1201(f)/DMCA 豁免分析 |
 
-### 2.2 传统逆向工程的痛点
+. 传统逆向工程的痛点
 
 ```bash
-# 传统方式：手动一步步操作
-1. 下载APK
+传统方式：手动一步步操作
+1. 下载 APK
 2. 解压（unzip）
-3. 使用apktool反编译资源
-4. 使用dex2jar转换DEX→JAR
-5. 使用jadx或Fernflower反编译JAR→Java
-6. 手动搜索API端点
+3. 使用 apktool 反编译资源
+4. 使用 dex2jar 转换 DEX→JAR
+5. 使用 jadx 或 Fernflower 反编译 JAR→Java
+6. 手动搜索 API 端点
 7. 手动追踪调用链
 
-# 问题：
-# - 命令繁多，难以记忆
-# - 多引擎切换复杂
-# - 调用链追踪困难
-# - 无法批量处理
+问题：
+- 命令繁多，难以记忆
+- 多引擎切换复杂
+- 调用链追踪困难
+- 无法批量处理
 ```
 
-### 2.3 Claude Code Skill 的解决
+. Claude Code Skill 的解决
 
 **一句话完成全流程**：
 
 ```bash
 /decompile app.apk
-# 自动执行：
-# 1. 依赖检查（jadx/Vineflower）
-# 2. 反编译（jadx或双引擎对比）
-# 3. 结构分析（包名/Activity/ViewModel）
-# 4. API提取（Retrofit/OkHttp/URL）
-# 5. 调用链追踪（Activity→HTTP）
+自动执行：
+. 依赖检查（jadx/Vineflower）
+. 反编译（jadx 或双引擎对比）
+. 结构分析（包名/Activity/ViewModel）
+. API 提取（Retrofit/OkHttp/URL）
+. 调用链追踪（Activity→HTTP）
 ```
 
 ---
 
-## §3 核心功能：五阶段工作流
+§ 核心功能：五阶段工作流
 
-### 3.1 整体架构
+. 整体架构
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -94,7 +89,7 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 │                                                              │
 │  Phase 2: 反编译                                             │
 │  ├── jadx（默认）→ DEX/DEX→Java                             │
-│  ├── Vineflower → DEX→JAR→Java（需dex2jar转换）             │
+│  ├── Vineflower → DEX→JAR→Java（需 dex2jar 转换）             │
 │  └── 双引擎对比 → 输出两个版本供比较                         │
 │                                                              │
 │  Phase 3: 结构分析                                           │
@@ -102,11 +97,11 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 │  ├── 包名/Activity/Service/Receiver 提取                    │
 │  └── 架构模式识别（MVC/MVVM/Clean）                          │
 │                                                              │
-│  Phase 4: API提取                                           │
+│  Phase 4: API 提取                                           │
 │  ├── Retrofit 接口识别                                        │
 │  ├── OkHttp 调用识别                                         │
-│  ├── 硬编码URL提取                                          │
-│  └── 认证头/Token识别                                        │
+│  ├── 硬编码 URL 提取                                          │
+│  └── 认证头/Token 识别                                        │
 │                                                              │
 │  Phase 5: 调用链追踪                                         │
 │  ├── Activity → ViewModel → Repository → API                │
@@ -115,7 +110,7 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 支持的文件格式
+. 支持的文件格式
 
 | 格式 | 说明 | jadx 直接支持 | Fernflower 支持 |
 |------|------|-------------|---------------|
@@ -127,9 +122,9 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 
 ---
 
-## §4 工具链详解
+§ 工具链详解
 
-### 4.1 jadx - 首选反编译器
+. jadx - 首选反编译器
 
 **优势**：
 - 直接处理 APK/DEX，无需中间转换
@@ -139,26 +134,26 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 **常用选项**：
 
 ```bash
-# 基本用法
+基本用法
 jadx -d output app.apk
 
-# 指定线程数（加速）
+指定线程数（加速）
 jadx -j 8 -d output app.apk
 
-# 增加堆内存（大APK）
+增加堆内存（大 APK）
 jadx -Xmx4g -d output app.apk
 
-# 显示"坏代码"（混淆严重时的残缺代码）
+显示"坏代码"（混淆严重时的残缺代码）
 jadx --show-bad-code -d output app.apk
 
-# 开启反混淆
+开启反混淆
 jadx --deobf -d output app.apk
 
-# 导出资源（XML/AndroidManifest）
+导出资源（XML/AndroidManifest）
 jadx -r -d output app.apk
 ```
 
-### 4.2 Vineflower - 更强的反编译器
+. Vineflower - 更强的反编译器
 
 **优势**：
 - JetBrains 自研，分析能力更强
@@ -168,26 +163,26 @@ jadx -r -d output app.apk
 **工作流程**（需要 dex2jar）：
 
 ```bash
-# Step 1: DEX → JAR
+Step : DEX → JAR
 d2j-dex2jar -f -o output.jar app.apk
 
-# Step 2: JAR → Java
+Step : JAR → Java
 java -jar ~/vineflower/vineflower.jar output.jar decompiled/
 
-# 参数调优
+参数调优
 java -Xmx4g -jar vineflower.jar -mpm=60 output.jar decompiled/
-# -mpm=60：每个方法超时60秒
+-mpm=：每个方法超时秒
 ```
 
-### 4.3 双引擎对比
+. 双引擎对比
 
 ```bash
-# 使用双引擎并对比输出
+使用双引擎并对比输出
 bash decompile.sh --engine both --deobf app.apk
 
-# 输出：
-# output/jadx/    ← jadx版本
-# output/vineflower/  ← Vineflower版本
+输出：
+output/jadx/ ← jadx 版本
+output/vineflower/ ← Vineflower 版本
 ```
 
 **何时用双引擎**：
@@ -195,31 +190,31 @@ bash decompile.sh --engine both --deobf app.apk
 - 需要对比反编译质量
 - 混淆严重需交叉验证
 
-### 4.4 辅助工具
+. 辅助工具
 
 **apktool** - 资源解码：
 ```bash
 apktool d app.apk -o resources/
-# 输出：AndroidManifest.xml、布局XML、字符串资源等
+输出：AndroidManifest.xml、布局 XML、字符串资源等
 ```
 
 **adb** - 从设备拉取 APK：
 ```bash
-# 查找包名
+查找包名
 adb shell pm list packages | grep <keyword>
 
-# 获取APK路径
+获取 APK 路径
 adb shell pm path com.example.app
 
-# 拉取APK
+拉取 APK
 adb pull /data/app/com.example.app-xxxx/base.apk ./app.apk
 ```
 
 ---
 
-## §5 API 提取模式
+§ API 提取模式
 
-### 5.1 Retrofit 接口识别
+. Retrofit 接口识别
 
 Retrofit 是最常见的 Android HTTP 客户端，接口以注解方式声明：
 
@@ -238,17 +233,17 @@ public interface ApiService {
 **提取命令**：
 
 ```bash
-# HTTP方法注解
+HTTP 方法注解
 grep -rn '@GET\|@POST\|@PUT\|@DELETE\|@PATCH\|@HEAD' sources/
 
-# 参数注解
+参数注解
 grep -rn '@Query\|@QueryMap\|@Path\|@Body\|@Field\|@Header' sources/
 
-# Base URL配置
+Base URL 配置
 grep -rn 'baseUrl\|\.baseUrl(' sources/
 ```
 
-### 5.2 OkHttp 调用识别
+. OkHttp 调用识别
 
 OkHttp 通常直接构建请求：
 
@@ -266,41 +261,41 @@ client.newCall(request).enqueue(callback);
 **提取命令**：
 
 ```bash
-# Request构建
+Request 构建
 grep -rn 'Request\.Builder\|Request.Builder\|\.url(\|\.post(' sources/
 
-# Interceptors（常含认证逻辑）
+Interceptors（常含认证逻辑）
 grep -rn 'Interceptor\|addInterceptor\|addNetworkInterceptor' sources/
 
-# 执行方式
+执行方式
 grep -rn '\.execute()\|\.enqueue(' sources/
 ```
 
-### 5.3 硬编码 URL 和密钥
+. 硬编码 URL 和密钥
 
 ```bash
-# HTTP/HTTPS URL
+HTTP/HTTPS URL
 grep -rn '"https\?://[^"]*"' sources/
 
-# API密钥/Token
+API 密钥/Token
 grep -rni 'api[_-]\?key\|api[_-]\?secret\|auth[_-]\?token\|bearer' sources/
 
-# Base URL常量
+Base URL 常量
 grep -rni 'BASE_URL\|API_URL\|SERVER_URL\|ENDPOINT' sources/
 ```
 
-### 5.4 API 文档模板
+. API 文档模板
 
 对每个发现的端点，记录：
 
 ```markdown
-### `POST /v1/auth/login`
+`POST /v/auth/login`
 
 - **Source**: `com.example.app.api.AuthService` (AuthService.java:42)
 - **Base URL**: `https://api.example.com`
 - **Full URL**: `https://api.example.com/v1/auth/login`
-- **Path参数**: 无
-- **Query参数**: 无
+- **Path 参数**: 无
+- **Query 参数**: 无
 - **Headers**:
   - `Content-Type: application/json`
 - **Request Body**: `LoginRequest { email: String, password: String }`
@@ -310,9 +305,9 @@ grep -rni 'BASE_URL\|API_URL\|SERVER_URL\|ENDPOINT' sources/
 
 ---
 
-## §6 调用链追踪
+§ 调用链追踪
 
-### 6.1 追踪原理
+. 追踪原理
 
 ```
 用户交互 (点击按钮)
@@ -331,41 +326,41 @@ ApiService (Retrofit Interface)
     │ @POST("auth/login")
     ▼
 OkHttpClient
-    │ 发起HTTP请求
+    │ 发起 HTTP 请求
     ▼
 网络响应
 ```
 
-### 6.2 追踪命令
+. 追踪命令
 
 ```bash
-# 追踪从LoginActivity开始的完整调用链
+追踪从 LoginActivity 开始的完整调用链
 /decompile app.apk
-# 然后使用Skill的对话式追踪
+然后使用 Skill 的对话式追踪
 "Follow the call flow from LoginActivity"
 ```
 
-### 6.3 代码结构分析
+. 代码结构分析
 
 ```bash
-# 列出所有Activity
+列出所有 Activity
 grep -rn 'extends Activity\|extends AppCompatActivity' sources/ | head -20
 
-# 列出所有ViewModel
+列出所有 ViewModel
 grep -rn 'extends ViewModel\|class.*ViewModel' sources/ | head -20
 
-# 列出所有Repository
+列出所有 Repository
 grep -rn 'class.*Repository' sources/ | head -20
 
-# 查找LiveData/StateFlow观察
+查找 LiveData/StateFlow 观察
 grep -rn 'observe\|LiveData\|StateFlow\|MutableLiveData' sources/
 ```
 
 ---
 
-## §7 安装与配置
+§ 安装与配置
 
-### 7.1 环境要求
+. 环境要求
 
 **必需**：
 - Java JDK 17+
@@ -377,42 +372,42 @@ grep -rn 'observe\|LiveData\|StateFlow\|MutableLiveData' sources/
 - apktool（资源解码）
 - adb（从设备拉取 APK）
 
-### 7.2 Claude Code 安装
+. Claude Code 安装
 
 ```bash
-# 从GitHub安装（推荐）
+从 GitHub 安装（推荐）
 /plugin marketplace add SimoneAvogadro/android-reverse-engineering-skill
 /plugin install android-reverse-engineering@android-reverse-engineering-skill
 
-# 从本地克隆安装
+从本地克隆安装
 git clone https://github.com/SimoneAvogadro/android-reverse-engineering-skill.git
 /plugin marketplace add /path/to/android-reverse-engineering-skill
 /plugin install android-reverse-engineering@android-reverse-engineering-skill
 ```
 
-### 7.3 手动脚本使用
+. 手动脚本使用
 
 ```bash
-# 检查依赖
+检查依赖
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/check-deps.sh
 
-# 安装缺失依赖（自动检测OS和包管理器）
+安装缺失依赖（自动检测 OS 和包管理器）
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/install-dep.sh jadx
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/install-dep.sh vineflower
 
-# 反编译APK（jadx默认）
+反编译 APK（jadx 默认）
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/decompile.sh app.apk
 
-# 反编译XAPK（自动处理多APK）
+反编译 XAPK（自动处理多 APK）
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/decompile.sh app.xapk
 
-# 使用Fernflower
+使用 Fernflower
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/decompile.sh --engine fernflower library.aar
 
-# 双引擎对比
+双引擎对比
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/decompile.sh --engine both --deobf app.apk
 
-# 查找API调用
+查找 API 调用
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/find-api-calls.sh output/sources/
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/find-api-calls.sh output/sources/ --retrofit
 bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scripts/find-api-calls.sh output/sources/ --urls
@@ -420,30 +415,30 @@ bash plugins/android-reverse-engineering/skills/android-reverse-engineering/scri
 
 ---
 
-## §8 实际案例：提取某 App 的登录 API
+§ 实际案例：提取某 App 的登录 API
 
-### 8.1 场景描述
+. 场景描述
 
 目标：提取某 Android 应用的登录 API，用于安全测试。
 
-### 8.2 执行流程
+. 执行流程
 
 ```bash
-# Step 1: 一句话反编译
+Step : 一句话反编译
 /decompile target-app.apk
 
-# Step 2: 查找Retrofit接口
+Step : 查找 Retrofit 接口
 /decompile target-app.apk
 "Find all Retrofit interfaces and their endpoints"
 
-# Step 3: 追踪登录调用链
+Step : 追踪登录调用链
 "Follow the call flow from LoginActivity to the HTTP request"
 
-# Step 4: 提取认证信息
+Step : 提取认证信息
 "Find all authentication headers and token patterns"
 ```
 
-### 8.3 输出示例
+. 输出示例
 
 ```
 === API Extraction Report ===
@@ -481,24 +476,17 @@ LoginActivity.onLoginClicked()
 
 ---
 
-## §9 法律合规
+§ 法律合规
 
-### 9.1 合法使用场景
+. 合法使用场景
 
-✅ **安全研究和授权渗透测试**
-✅ **DMCA §1201(f) 允许的互操作性分析**
-✅ **EU Directive 2009/24/EC 允许的逆向工程**
-✅ **恶意软件分析和应急响应**
-✅ **CTF 比赛和教育用途**
+✅ **安全研究和授权渗透测试** ✅ **DMCA §1201(f) 允许的互操作性分析** ✅ **EU Directive 2009/24/EC 允许的逆向工程** ✅ **恶意软件分析和应急响应** ✅ **CTF 比赛和教育用途**
 
-### 9.2 禁止使用场景
+. 禁止使用场景
 
-❌ **未经授权分析他人应用**
-❌ **绕过付费墙或 DRM**
-❌ **窃取知识产权或商业机密**
-❌ **开发侵权应用**
+❌ **未经授权分析他人应用** ❌ **绕过付费墙或 DRM** ❌ **窃取知识产权或商业机密** ❌ **开发侵权应用**
 
-### 9.3 合规建议
+. 合规建议
 
 1. **仅分析你拥有或被授权分析的应用**
 2. **不传播反编译后的源代码**
@@ -507,7 +495,7 @@ LoginActivity.onLoginClicked()
 
 ---
 
-## §10 故障排除
+§ 故障排除
 
 | 问题 | 解决方案 |
 |------|----------|
@@ -521,7 +509,7 @@ LoginActivity.onLoginClicked()
 
 ---
 
-## 相关资源
+相关资源
 
 - **GitHub 仓库**：https://github.com/SimoneAvogadro/android-reverse-engineering-skill
 - **jadx**：https://github.com/skylot/jadx

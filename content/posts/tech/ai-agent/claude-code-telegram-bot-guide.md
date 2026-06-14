@@ -11,13 +11,13 @@ description: "深度解析 Claude Code Telegram Bot (2.3k Stars)：通过 Telegr
 
 # Claude Code Telegram Bot：远程访问 AI 编程助手的完全指南
 
-> 预计阅读时间：25分钟 | 难度：⭐⭐⭐
+> 预计阅读时间：25 分钟 | 难度：⭐⭐⭐
 
 ---
 
 ## 学习目标
 
-完成本文档后，你将能够：
+完成本文档后，可以：
 
 - ✅ 理解 Claude Code Telegram Bot 的核心定位与设计理念
 - ✅ 掌握 Claude Code Telegram Bot 的安装与配置方法
@@ -149,105 +149,30 @@ description: "深度解析 Claude Code Telegram Bot (2.3k Stars)：通过 Telegr
 
 ```bash
 uv tool install git+https://github.com/RichardAtCT/claude-code-telegram@v1.3.0
-```
-
-#### 方式二：使用 pip 安装
-
-```bash
+```textbash
 pip install git+https://github.com/RichardAtCT/claude-code-telegram@v1.3.0
-```
-
-#### 方式三：从源码安装（开发用）
-
-```bash
+```textbash
 git clone https://github.com/RichardAtCT/claude-code-telegram.git
 cd claude-code-telegram
 make dev
-```
-
-### 4.3 配置
-
-```bash
+```textbash
 # 复制示例配置
 cp .env.example .env
 
 # 编辑配置
 nano .env
-```
-
-**必需配置**：
-
-```env
+```textenv
 TELEGRAM_BOT_TOKEN=1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
 TELEGRAM_BOT_USERNAME=my_claude_bot
 APPROVED_DIRECTORY=/Users/yourname/projects
 ALLOWED_USERS=123456789
-```
-
-### 4.4 运行
-
-```bash
+```textbash
 # 生产环境运行
 make run
 
 # 调试模式运行
 make run-debug
-```
-
----
-
-## §5 配置详解
-
-### 5.1 必需配置
-
-| 配置项 | 说明 |
-|--------|------|
-| `TELEGRAM_BOT_TOKEN` | Telegram Bot 令牌（从 @BotFather 获取） |
-| `TELEGRAM_BOT_USERNAME` | Bot 用户名 |
-| `APPROVED_DIRECTORY` | 允许访问的基础目录 |
-| `ALLOWED_USERS` | 允许使用的用户 ID（逗号分隔） |
-
-### 5.2 Claude 配置
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `ANTHROPIC_API_KEY` | Anthropic API 密钥 | 从 CLI 认证继承 |
-| `CLAUDE_MAX_COST_PER_USER` | 每用户最大消费（美元） | 无限制 |
-| `CLAUDE_TIMEOUT_SECONDS` | 操作超时时间 | 300 |
-| `CLAUDE_ALLOWED_TOOLS` | 允许的工具列表 | 全部允许 |
-
-### 5.3 模式配置
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `AGENTIC_MODE` | 启用智能体模式 | true |
-| `VERBOSE_LEVEL` | 详细级别 | 1 |
-
-### 5.4 速率限制
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `RATE_LIMIT_REQUESTS` | 每窗口请求数 | 10 |
-| `RATE_LIMIT_WINDOW` | 窗口大小（秒） | 60 |
-
-### 5.5 Webhook 和调度器
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `ENABLE_API_SERVER` | 启用 Webhook 服务器 | false |
-| `API_SERVER_PORT` | 服务器端口 | 8080 |
-| `ENABLE_SCHEDULER` | 启用定时任务 | false |
-| `NOTIFICATION_CHAT_IDS` | 通知聊天 ID | 无 |
-
----
-
-## §6 核心功能详解
-
-### 6.1 自然语言交互
-
-在智能体模式下，直接用自然语言与 Claude 交流：
-
-```
+```text
 You: Can you help me add error handling to src/api.py?
 Bot: I'll analyze src/api.py and add error handling...
 Claude: [分析代码并提出改进建议]
@@ -255,25 +180,7 @@ Claude: [分析代码并提出改进建议]
 You: Looks good. Now run the tests.
 Bot: Running pytest...
 Claude: All 47 tests passed.
-```
-
-### 6.2 会话持久化
-
-自动为每个用户/项目目录保持会话上下文。切换项目时 Claude 会自动恢复相关会话。
-
-### 6.3 文件上传与处理
-
-| 功能 | 说明 |
-|------|------|
-| **文件上传** | 支持压缩包自动解压 |
-| **图片分析** | 支持截图和问题图片上传 |
-| **语音转录** | 支持 Mistral Voxtral / OpenAI Whisper / 本地 whisper.cpp |
-
-### 6.4 GitHub 集成
-
-Claude Code 已经熟悉 `gh` CLI 和 `git`。配置认证后，可以对话操作仓库：
-
-```bash
+```textbash
 # 服务器上认证
 gh auth login
 
@@ -283,113 +190,18 @@ Claude: [运行 gh repo list]
 
 You: Clone the uptime one
 Claude: [克隆到 workspace]
-```
-
-### 6.5 项目线程模式
-
-支持按项目自动路由到对应的 Telegram 话题：
-
-```env
+```textenv
 ENABLE_PROJECT_THREADS=true
 PROJECT_THREADS_MODE=private
 PROJECTS_CONFIG_PATH=config/projects.yaml
-```
-
----
-
-## §7 事件驱动自动化
-
-### 7.1 Webhook 接收
-
-```env
+```textenv
 ENABLE_API_SERVER=true
 GITHUB_WEBHOOK_SECRET=your_secret
-```
-
-支持的触发事件：
-- GitHub push、PR、issues
-- 自定义 Webhook 提供商
-
-### 7.2 定时任务
-
-```env
+```textenv
 ENABLE_SCHEDULER=true
-```
-
-使用 cron 表达式配置定时任务，例如每日代码健康检查。
-
-### 7.3 主动通知
-
-```env
+```textenv
 NOTIFICATION_CHAT_IDS=123,456
-```
-
-向配置的聊天 ID 主动推送通知。
-
----
-
-## §8 安全机制
-
-### 8.1 安全层次
-
-| 层次 | 功能 | 说明 |
-|------|------|------|
-| **访问控制** | 白名单认证 | 仅允许授权用户访问 |
-| **目录隔离** | 沙箱限制 | 限制在批准目录内操作 |
-| **速率限制** | 请求/成本限制 | 防止滥用 |
-| **输入验证** | 注入防护 | 防止注入和路径穿越攻击 |
-| **Webhook 认证** | HMAC-SHA256 | GitHub HMAC 验证 |
-| **审计日志** | 完整追踪 | 记录所有用户操作 |
-
-### 8.2 目录隔离
-
-- 所有文件操作限制在 `APPROVED_DIRECTORY` 内
-- 自动阻止路径穿越攻击（`../` 等）
-- 项目目录独立隔离
-
-### 8.3 速率限制
-
-使用令牌桶算法实现：
-- 请求速率限制
-- 每用户成本限制
-
----
-
-## §9 开发与贡献
-
-### 9.1 开发命令
-
-| 命令 | 说明 |
-|------|------|
-| `make dev` | 安装所有依赖 |
-| `make test` | 运行测试（含覆盖率） |
-| `make lint` | Black + isort + flake8 + mypy |
-| `make format` | 自动格式化代码 |
-| `make run-debug` | 调试模式运行 |
-| `make run-watch` | 代码变更自动重启 |
-
-### 9.2 版本管理
-
-| 命令 | 说明 |
-|------|------|
-| `make bump-patch` | 补丁版本 (1.2.0 → 1.2.1) |
-| `make bump-minor` | 次版本 (1.2.0 → 1.3.0) |
-| `make bump-major` | 主版本 (1.2.0 → 2.0.0) |
-
-### 9.3 代码标准
-
-- Python 3.11+
-- Black 格式化（88 字符）
-- 类型提示必需
-- pytest 覆盖率 >85%
-
----
-
-## §10 项目结构
-
-### 10.1 目录结构
-
-```
+```text
 claude-code-telegram/
 ├── src/                    # 源代码
 ├── tests/                  # 测试
@@ -401,32 +213,7 @@ claude-code-telegram/
 ├── poetry.lock              # 依赖锁定
 ├── Makefile                # 构建脚本
 └── README.md              # 项目文档
-```
-
-### 10.2 核心模块
-
-| 模块 | 说明 |
-|------|------|
-| **src/** | 核心 Bot 逻辑 |
-| **tests/** | 测试套件 |
-| **docs/** | 详细文档 |
-| **config/** | 配置文件 |
-
----
-
-## §11 常见问题
-
-### Q1：Bot 不响应怎么办？
-
-检查项：
-- `TELEGRAM_BOT_TOKEN` 是否正确
-- 用户 ID 是否在 `ALLOWED_USERS` 中
-- Claude Code CLI 是否已安装
-- 调试模式运行：`make run-debug`
-
-### Q2：Claude 集成不工作？
-
-```bash
+```textbash
 # SDK 模式（默认）
 claude auth status
 # 或检查 ANTHROPIC_API_KEY
@@ -434,11 +221,7 @@ claude auth status
 # CLI 模式
 claude --version
 claude auth status
-```
-
-### Q3：如何控制成本？
-
-```env
+```textenv
 CLAUDE_MAX_COST_PER_USER=10.0  # 每用户 10 美元上限
 ```
 

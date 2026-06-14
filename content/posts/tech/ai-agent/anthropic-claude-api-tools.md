@@ -10,9 +10,9 @@ categories: ["技术笔记"]
 tags: ["Claude", "工具调用", "MCP", "Python"]
 ---
 
-# Claude API基础专题（三）：工具调用
+# Claude API 基础专题（三）：工具调用
 
-> 预计阅读时间：35分钟 | 难度：⭐⭐⭐
+> 预计阅读时间：35 分钟 | 难度：⭐⭐⭐
 
 ---
 
@@ -31,7 +31,7 @@ tags: ["Claude", "工具调用", "MCP", "Python"]
 | 3.3 | 处理工具调用 | ⭐⭐⭐⭐⭐ |
 | 3.4 | 多轮工具调用 | ⭐⭐⭐⭐⭐ |
 | 3.5 | 代码执行工具 | ⭐⭐⭐⭐ |
-| 3.6 | 工具调用的最佳实践 | ⭐⭐⭐⭐ |
+| 3.6 | 工具调用的推荐做法 | ⭐⭐⭐⭐ |
 
 ---
 
@@ -127,43 +127,43 @@ tool = {
 ### 工具名称规范
 
 ```python
-# ✅ 正确：清晰、小写、下划线分隔
+# 正确：清晰、小写、下划线分隔
 tools = [{
     "name": "get_weather",
     "description": "获取指定城市的天气信息"
 }]
 
-# ✅ 正确：描述性名称
+# 正确：描述性名称
 tools = [{
     "name": "search_database",
     "description": "从数据库搜索用户信息"
 }]
 
-# ❌ 错误：包含空格或特殊字符
+# 错误：包含空格或特殊字符
 tools = [{
     "name": "get weather",
     "description": "获取天气"
 }]
 
-# ❌ 错误：名称过于简短
+# 错误：名称过于简短
 tools = [{
     "name": "calc",
     "description": "计算"
 }]
 ```
 
-### 描述的最佳实践
+### 描述的推荐做法
 
-工具描述是Claude决定是否调用该工具的关键依据。
+工具描述是 Claude 决定是否调用该工具的关键依据。
 
 ```python
-# ❌ 描述太模糊 - Claude不知道何时该用
+# 描述太模糊 - Claude不知道何时该用
 {
     "name": "search",
     "description": "搜索功能"
 }
 
-# ✅ 描述清晰具体 - 包含使用场景和参数说明
+# 描述清晰具体 - 包含使用场景和参数说明
 {
     "name": "search_products",
     "description": """在产品数据库中搜索商品。
@@ -217,7 +217,7 @@ tools = [{
 }]
 ```
 
-### 支持的JSON Schema类型
+### 支持的 JSON Schema 类型
 
 | 类型 | 说明 | 示例 |
 |------|------|------|
@@ -305,11 +305,11 @@ for content in response.content:
         tool_name = content.name
         tool_input = content.input
         tool_id = content.id
-        
+
         # 执行工具
         if tool_name == "get_weather":
             result = get_weather(tool_input["city"])
-        
+
         # 保存工具结果
         tool_results.append({
             "type": "tool_result",
@@ -363,7 +363,7 @@ tool_result = {
 
 ### 连续工具调用
 
-Claude可以连续调用多个工具：
+Claude 可以连续调用多个工具：
 
 ```python
 tools = [
@@ -425,21 +425,21 @@ def process_message_with_tools(user_message, tools):
     messages = [{"role": "user", "content": user_message}]
     max_iterations = 10  # 防止无限循环
     iteration = 0
-    
+
     while iteration < max_iterations:
         iteration += 1
-        
+
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=1024,
             tools=tools,
             messages=messages
         )
-        
+
         # 如果不是工具调用，说明是最终响应
         if response.stop_reason != "tool_use":
             return response.content[0].text
-        
+
         # 处理工具调用
         tool_results = []
         for content in response.content:
@@ -451,7 +451,7 @@ def process_message_with_tools(user_message, tools):
                     "tool_use_id": content.id,
                     "content": str(result)
                 })
-        
+
         # 添加到消息历史
         messages.append(response)
         messages.append({
@@ -459,7 +459,7 @@ def process_message_with_tools(user_message, tools):
             "content": "",  # 空内容，因为有tool_results
             "tool_results": tool_results
         })
-    
+
     return "达到最大迭代次数"
 
 def execute_tool(tool_name, tool_input):
@@ -483,7 +483,7 @@ def execute_tool_with_timeout(tool_name, tool_input, timeout=30):
     """带超时的工具执行"""
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(timeout)
-    
+
     try:
         result = execute_tool(tool_name, tool_input)
         signal.alarm(0)  # 取消闹钟
@@ -505,16 +505,16 @@ import os
 
 class CodeExecutor:
     """安全的代码执行器"""
-    
+
     def __init__(self, allowed_languages=["python", "javascript"]):
         self.allowed_languages = allowed_languages
         self.timeout = 10  # 10秒超时
-    
+
     def execute(self, code, language="python"):
         """执行代码并返回结果"""
         if language not in self.allowed_languages:
             return f"Error: 不支持的语言 {language}"
-        
+
         # 创建临时文件
         with tempfile.NamedTemporaryFile(
             mode='w',
@@ -523,7 +523,7 @@ class CodeExecutor:
         ) as f:
             f.write(code)
             temp_file = f.name
-        
+
         try:
             if language == "python":
                 result = subprocess.run(
@@ -539,7 +539,7 @@ class CodeExecutor:
                     text=True,
                     timeout=self.timeout
                 )
-            
+
             if result.returncode == 0:
                 return result.stdout
             else:
@@ -596,10 +596,10 @@ from typing import Optional
 
 class DatabaseTool:
     """SQL查询工具"""
-    
+
     def __init__(self, db_path=":memory:"):
         self.conn = sqlite3.connect(db_path)
-    
+
     def execute_query(self, query: str) -> str:
         """执行SQL查询"""
         try:
@@ -607,7 +607,7 @@ class DatabaseTool:
             query = query.strip().upper()
             if not query.startswith("SELECT"):
                 return "Error: 只允许SELECT查询"
-            
+
             df = pd.read_sql_query(query, self.conn)
             return df.to_string()
         except Exception as e:
@@ -662,16 +662,16 @@ from typing import Dict, Any
 
 class WebSearchTool:
     """网页搜索工具"""
-    
+
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.environ.get("SEARCH_API_KEY")
         self.base_url = "https://api.search.com/v1/search"
-    
+
     def search(self, query: str, num_results: int = 5) -> str:
         """搜索网页并返回结果"""
         if not self.api_key:
             return "Error: 未配置搜索API密钥"
-        
+
         try:
             response = requests.get(
                 self.base_url,
@@ -683,11 +683,11 @@ class WebSearchTool:
                 timeout=10
             )
             data = response.json()
-            
+
             results = []
             for item in data.get("results", []):
                 results.append(f"标题: {item['title']}\n链接: {item['url']}\n摘要: {item['snippet']}\n")
-            
+
             return "\n".join(results) if results else "未找到结果"
         except Exception as e:
             return f"Error: 搜索失败 - {str(e)}"
@@ -710,12 +710,12 @@ tools = [{
 
 ---
 
-## 3.6 工具调用的最佳实践
+## 3.6 工具调用的推荐做法
 
 ### 工具命名规范
 
 ```python
-# ✅ 好的命名：动词_名词，清晰表达功能
+# 好的命名：动词_名词，清晰表达功能
 tools = [
     {"name": "get_user_info"},
     {"name": "search_products"},
@@ -724,7 +724,7 @@ tools = [
     {"name": "create_task"},
 ]
 
-# ❌ 差的命名：过于简短或模糊
+# 差的命名：过于简短或模糊
 tools = [
     {"name": "user"},      # 名词，不知道做什么
     {"name": "do"},        # 太模糊
@@ -735,7 +735,7 @@ tools = [
 ### 描述的编写技巧
 
 ```python
-# ✅ 好的描述：具体、包含使用场景
+# 好的描述：具体、包含使用场景
 {
     "name": "get_order_status",
     "description": """获取订单配送状态。
@@ -748,7 +748,7 @@ tools = [
 返回：订单状态、当前位置、预计送达时间"""
 }
 
-# ❌ 差的描述：过于笼统
+# 差的描述：过于笼统
 {
     "name": "get_order_status",
     "description": "获取订单状态"
@@ -774,7 +774,7 @@ def safe_execute_tool(tool_name, tool_input):
 for content in response.content:
     if content.type == "tool_use":
         result = safe_execute_tool(content.name, content.input)
-        
+
         if result["success"]:
             tool_results.append({
                 "type": "tool_result",
@@ -792,11 +792,11 @@ for content in response.content:
 ### 工具选择的优化
 
 ```python
-# ❌ 所有工具都传，让Claude自己判断
+# 所有工具都传，让Claude自己判断
 tools = [get_weather, search_db, send_email, create_calendar_event, ...]
 # 问题：工具太多，Claude选择错误率增加
 
-# ✅ 只传递相关的工具
+# 只传递相关的工具
 relevant_tools = [get_weather, get_time]  # 用户问天气时只给天气工具
 
 response = client.messages.create(
@@ -806,7 +806,7 @@ response = client.messages.create(
     messages=messages
 )
 
-# ✅ 或在系统提示词中指定使用场景
+# 或在系统提示词中指定使用场景
 response = client.messages.create(
     model="claude-sonnet-4-20250514",
     max_tokens=1024,
@@ -827,7 +827,7 @@ def process_with_max_tools(user_message, tools, max_calls=5):
     """处理消息，最多调用工具N次"""
     messages = [{"role": "user", "content": user_message}]
     tool_call_count = 0
-    
+
     while tool_call_count < max_calls:
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
@@ -835,10 +835,10 @@ def process_with_max_tools(user_message, tools, max_calls=5):
             tools=tools,
             messages=messages
         )
-        
+
         if response.stop_reason != "tool_use":
             return response.content[0].text
-        
+
         # 处理工具调用
         tool_results = []
         for content in response.content:
@@ -850,10 +850,10 @@ def process_with_max_tools(user_message, tools, max_calls=5):
                     "tool_use_id": content.id,
                     "content": str(result)
                 })
-        
+
         messages.append(response)
         messages.append({"role": "user", "content": "", "tool_results": tool_results})
-    
+
     return "处理超时，请简化您的问题"
 ```
 
@@ -870,7 +870,7 @@ def process_with_max_tools(user_message, tools, max_calls=5):
 | 处理工具调用 | ⭐⭐⭐⭐⭐ | tool_use、tool_result |
 | 多轮工具调用 | ⭐⭐⭐⭐⭐ | 循环处理、超时控制 |
 | 代码执行 | ⭐⭐⭐⭐ | 安全沙箱、超时限制 |
-| 最佳实践 | ⭐⭐⭐⭐ | 命名规范、错误处理 |
+| 推荐做法 | ⭐⭐⭐⭐ | 命名规范、错误处理 |
 
 ### 常用工具模板
 
@@ -891,4 +891,4 @@ def process_with_max_tools(user_message, tools, max_calls=5):
 ---
 
 **文档元信息**
-难度：⭐⭐⭐⭐ | 类型：专家设计 | 更新日期：2026-03-25 | 预计阅读时间：45分钟 | 字数：约5500字
+难度：⭐⭐⭐⭐ | 类型：专家设计 | 更新日期：2026-03-25 | 预计阅读时间：45 分钟 | 字数：约 5500 字

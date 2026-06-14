@@ -229,7 +229,7 @@ curl -X POST http://localhost:3111/agentmemory/smart-search \
 
 很多介绍文章都会突出“51 个 MCP tools”，但只停在这个数字，很容易把它误读成一份工具清单。README 更完整的表述是：**51 tools、6 resources、3 prompts、4 skills**。
 
-这意味着 agentmemory 暴露给客户端的并不只是函数调用接口，还包括面向上下文注入、状态读取和工作流协作的附加能力。
+agentmemory 暴露给客户端的并不只是函数调用接口，还包括面向上下文注入、状态读取和工作流协作的附加能力。
 
 对大多数人来说，最先用到的通常是下面几类：
 

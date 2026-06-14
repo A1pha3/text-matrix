@@ -2,7 +2,7 @@
 title: "Sniffnet：Rust 跨平台网络流量监控工具架构解析"
 date: "2026-04-27T19:40:00+08:00"
 slug: sniffnet-network-traffic-monitor
-description: "Sniffnet 是一款使用 Rust 和 iced 框架构建的跨平台网络流量监控工具，支持 PCAP 导入导出、实时流量图表、地理定位、协议识别等功能。本文从架构设计角度深入解析其核心模块、技术选型和性能优化策略。"
+description: "Sniffnet 是一款使用 Rust 和 iced 框架构建的跨平台网络流量监控工具，支持 PCAP 导入导出、实时流量图表、地理定位、协议识别等功能。本文从架构设计角度深入解析其主要模块、技术选型和性能优化策略。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Rust", "网络监控", "流量分析", "iced", "pcap", "跨平台"]
@@ -12,11 +12,11 @@ tags: ["Rust", "网络监控", "流量分析", "iced", "pcap", "跨平台"]
 
 ## 项目背景与定位
 
-Sniffnet 是一款开源的网络流量监控应用，GitHub 标星数超过 36,000，Fork 数超过 1,400，是 Rust 在网络监控领域最具代表性的项目之一。其核心定位是"舒适地监控你的网络流量"——不是面向安全专家的渗透测试工具，而是为普通用户提供直观、可靠的网络流量可视化。
+Sniffnet 是一款开源的网络流量监控应用，GitHub 标星数超过 36,000，Fork 数超过 1,400，是 Rust 在网络监控领域最具代表性的项目之一。其定位是"舒适地监控你的网络流量"——面向普通用户提供直观、可靠的网络流量可视化。
 
 项目由意大利开发者 Giuliano Bellini 创建，采用 Rust 语言编写，GUI 部分基于 iced 框架构建，支持 Windows、macOS、Linux 三大主流操作系统，已被翻译成超过 20 种语言。
 
-**核心能力一览：**
+**能力一览：**
 
 | 功能 | 说明 |
 |------|------|
@@ -50,7 +50,7 @@ Rust 生态中存在多个 GUI 框架：egui、Iced、relm4、dioxus。Sniffnet 
 **声明式 UI 与响应式模型。** iced 借鉴了 Elm 架构，采用"State → View → Message"单向数据流。应用状态（State）经过纯函数渲染为视图（View），用户交互产生消息（Message），消息触发状态更新并重新渲染视图。这种模型天然避免了 GTK/Qt 中复杂的信号槽回调。
 
 ```rust
-// iced 的核心编程模型
+// iced 的编程模型
 fn view(&self) -> Element<Message> {
     Column::new()
         .push(Text::new(&self.status))
@@ -70,7 +70,7 @@ fn update(&mut self, message: Message) {
 
 **平台适配层抽象。** iced 为按钮、文本框、下拉菜单等常用控件提供了跨平台实现。开发者编写一套代码，iced 负责在各个平台渲染原生外观。Sniffnet 无需为 macOS 和 Windows 分别编写界面代码。
 
-### 核心依赖分析
+### 关键依赖分析
 
 **pcap crate（网络抓包）**
 
@@ -161,7 +161,7 @@ src/
 | notifications | 规则匹配、告警触发 | Rule, Notification |
 | report | PCAP 文件读写 | pcap::Writer, pcap::Reader |
 
-### 核心数据流
+### 数据流
 
 Sniffnet 的数据流遵循典型的生产-消费模型：
 
@@ -179,7 +179,7 @@ Sniffnet 的数据流遵循典型的生产-消费模型：
 
 ---
 
-## 核心模块深度解析
+## 主要模块深度解析
 
 ### 网络抓包流程
 

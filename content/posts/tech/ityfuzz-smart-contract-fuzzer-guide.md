@@ -10,21 +10,6 @@ tags: ["ItyFuzz", "智能合约", "模糊测试", "符号执行", "EVM", "MoveVM
 
 # ItyFuzz：极速智能合约混合模糊测试器完全指南
 
-## §1 学习目标
-
-完成本文档后，你将能够：
-
-- ✅ 理解 ItyFuzz 的核心定位与设计理念
-- ✅ 掌握 ItyFuzz 的安装与基本使用方法
-- ✅ 理解 ItyFuzz 的混合模糊测试技术原理
-- ✅ 掌握 ItyFuzz 对 EVM 和 MoveVM 合约的测试方法
-- ✅ 使用 ItyFuzz 进行链上合约模糊测试
-- ✅ 使用 ItyFuzz 运行 Foundry  invariant 测试
-- ✅ 理解 ItyFuzz 的性能调度与符号执行技术
-- ✅ 扩展 ItyFuzz 进行定制化测试
-
----
-
 ## §2 项目概述
 
 ### 2.1 什么是 ItyFuzz？
@@ -85,8 +70,6 @@ tags: ["ItyFuzz", "智能合约", "模糊测试", "符号执行", "EVM", "MoveVM
 | **漏洞赏金** | 自动化生成漏洞利用代码 |
 | **回归测试** | 确保合约升级不引入新漏洞 |
 
----
-
 ## §3 性能基准
 
 ### 3.1 大型真实项目对比
@@ -114,8 +97,6 @@ tags: ["ItyFuzz", "智能合约", "模糊测试", "符号执行", "EVM", "MoveVM
 | **比 Foundry 发现更多漏洞** | +31% |
 | **速度比 Echidna 快** | 2.5x |
 | **速度比 Foundry 快** | 1.5x |
-
----
 
 ## §4 安装与部署
 
@@ -148,8 +129,6 @@ docker build -t ityfuzz .
 # 运行容器
 docker run -it ityfuzz
 ```
-
----
 
 ## §5 使用指南
 
@@ -206,8 +185,6 @@ ityfuzz evm \
 | `-m` | 模块/测试文件 | `-m test/Invariant.sol:Invariant` |
 | `--forge` | 运行 Foundry 测试 | `-- forge test` |
 
----
-
 ## §6 核心特性详解
 
 ### 6.1 链上分叉（Chain Forking）
@@ -263,8 +240,6 @@ ityfuzz evm \
     --decompile
 ```
 
----
-
 ## §7 工作原理
 
 ### 7.1 混合模糊测试架构
@@ -305,8 +280,6 @@ fn schedule_power(corpus, coverage, vulnerabilities) {
 }
 ```
 
----
-
 ## §8 已发现漏洞
 
 ### 8.1 精选新漏洞
@@ -324,8 +297,6 @@ fn schedule_power(corpus, coverage, vulnerabilities) {
 ### 8.2 漏洞利用自动生成
 
 ItyFuzz 可以自动生成超过 80% 历史黑客事件的漏洞利用代码，无需了解具体攻击细节。
-
----
 
 ## §9 项目结构
 
@@ -349,17 +320,15 @@ ityfuzz/
 └── README.md              # 项目文档
 ```
 
-### 9.2 核心模块
+### 9.2 主要模块
 
 | 模块 | 说明 |
 |------|------|
-| **src/** | 模糊测试核心逻辑、符号执行、EVM/MoveVM 执行器 |
+| **src/** | 模糊测试基本逻辑、符号执行、EVM/MoveVM 执行器 |
 | **benches/** | 性能基准测试套件 |
 | **solidity_utils/** | Solidity 合约解析和处理工具 |
 | **server/** | Web 服务器和 API |
 | **ui/** | 命令行界面组件 |
-
----
 
 ## §10 集成与扩展
 
@@ -408,8 +377,6 @@ export ETHERSCAN_API_KEY=your_api_key
 ityfuzz evm -t <合约地址> --etherscan-api-key $ETHERSCAN_API_KEY
 ```
 
----
-
 ## §11 实践建议
 
 ### 11.1 测试策略
@@ -437,8 +404,6 @@ ityfuzz evm -t <合约地址> --etherscan-api-key $ETHERSCAN_API_KEY
 - ⚠️ 定期更新到最新版本
 - ⚠️ 结合人工代码审计
 
----
-
 ## §12 常见问题
 
 ### Q1：ItyFuzz 与 Echidna 有何区别？
@@ -461,11 +426,9 @@ ItyFuzz 使用混合方法（模糊测试 + 符号执行），在大型项目上
 
 不能。ItyFuzz 是强大的自动化工具，但人工审计仍不可替代。两者结合效果最佳。
 
----
-
 ## §13 总结
 
-### 13.1 核心优势
+### 13.1 主要优势
 
 | 优势 | 说明 |
 |------|------|
@@ -504,8 +467,6 @@ ItyFuzz 使用混合方法（模糊测试 + 符号执行），在大型项目上
 | **Twitter** | https://twitter.com/fuzzland_ |
 | **Discord** | https://discord.com/invite/qQa436VEwt |
 
----
-
 ## §14 附录：术语表
 
 | 术语 | 说明 |
@@ -518,7 +479,5 @@ ItyFuzz 使用混合方法（模糊测试 + 符号执行），在大型项目上
 | **Reentrancy（重入）** | 合约调用自身时的攻击向量 |
 | **Invariant（不变量）** | 合约应始终满足的条件 |
 | **LibAFL** | Advanced Fuzzing Library，最先进的模糊测试框架 |
-
----
 
 *文档版本 1.0 | 撰写日期：2026-04-01 | 基于 ItyFuzz (1.1k Stars) | 性能数据来源：官方基准测试*

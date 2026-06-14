@@ -12,14 +12,14 @@ tags: ["cmux", "终端", "Claude", "多路复用器", "macOS", "Ghostty", "AI工
 
 # cmux：11k Stars 的 AI 终端多路复用器，让终端成为 AI 工作流中心
 
-> 预计阅读时间：25分钟 | 难度：⭐⭐⭐
+> 预计阅读时间：25 分钟 | 难度：⭐⭐⭐
 
 ---
 
 > **目标读者**：希望将终端升级为 AI 工作流中心的开发者
 > **前置知识**：终端基础、命令行操作、了解 Claude API 基本概念
 > **预计阅读时间**：18 分钟
-> **核心价值**：把 Claude AI 能力装进终端，实现工作流自动化
+> **核心能力**：把 Claude AI 能力装进终端，实现工作流自动化
 
 ---
 
@@ -27,10 +27,7 @@ tags: ["cmux", "终端", "Claude", "多路复用器", "macOS", "Ghostty", "AI工
 
 cmux（[manaflow-ai/cmux](https://github.com/manaflow-ai/cmux)，11k Stars）是 **mana flow.ai** 打造的下一代 AI 终端。核心思路：
 
-```
-传统终端：输入命令 → 输出文本 → 纯文本交互
-cmux 终端：输入命令 → AI 增强 → 智能自动化 → 跨设备同步
-```
+```text
 
 **简单说**：把 Claude AI 装进终端，加上多路复用和远程 SSH，让终端成为真正的 AI 工作流中心。
 
@@ -75,31 +72,7 @@ cmux 终端：输入命令 → AI 增强 → 智能自动化 → 跨设备同步
 
 ### 核心架构
 
-```
-┌─────────────────────────────────────────────────────┐
-│                    macOS 桌面                         │
-│  ┌─────────────────────────────────────────────┐     │
-│  │  cmux App (Swift + libghostty)              │     │
-│  │  ┌─────────────────────────────────────┐    │     │
-│  │  │  GhosttyTabs: 垂直标签页管理        │    │     │
-│  │  │  Claude Integration: AI 能力嵌入     │    │     │
-│  │  │  Skills System: 可扩展技能框架        │    │     │
-│  │  └─────────────────────────────────────┘    │     │
-│  └─────────────────────────────────────────────┘     │
-├─────────────────────────────────────────────────────┤
-│                    CLI 层                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │
-│  │ cmux CLI     │  │ Remote SSH   │  │ omo      │  │
-│  │ 命令行工具    │  │ 远程终端     │  │ Agent集成│  │
-│  └──────────────┘  └──────────────┘  └──────────┘  │
-├─────────────────────────────────────────────────────┤
-│                   Skills 层                          │
-│  ┌──────────────┐  ┌──────────────┐                  │
-│  │ Claude      │  │ Custom       │                  │
-│  │ Commands    │  │ Skills       │                  │
-│  └──────────────┘  └──────────────┘                  │
-└─────────────────────────────────────────────────────┘
-```
+```text
 
 **关键技术选型**：
 
@@ -138,28 +111,14 @@ cmux claude --analyze .
 
 # 自动化代码审查
 cmux claude --review src/
-```
-
-**上下文感知**：cmux 能感知当前终端上下文（所在目录、Git 状态、最近命令），生成更准确的响应。
-
-### 3. Skills 系统
-
-Skills 是 cmux 的扩展框架，允许自定义 AI 能力：
-
-**目录结构**：
-
-```
+```text
 skills/
 ├── git-helper/
 │   └── SKILL.md          # Git 辅助技能
 ├── code-review/
 │   └── SKILL.md          # 代码审查技能
 └── ...
-```
-
-**创建自定义 Skill**：
-
-```markdown
+```textmarkdown
 # skills/my-skill/SKILL.md
 
 # My Skill
@@ -176,13 +135,7 @@ skills/
 - api_key: API 密钥
 - model: 使用哪个模型
 - temperature: 创造性程度
-```
-
-### 4. 远程 SSH 支持
-
-**远程 Daemon**（Go 实现）：
-
-```bash
+```textbash
 # 远程服务器上启动
 cmux daemon start --port 8080
 
@@ -191,13 +144,7 @@ ssh -L 8080:localhost:8080 user@remote-server
 
 # 本地连接远程
 /cmux connect user@remote-server:8080
-```
-
-**omo 集成**：与 oh-my-openagent 对接，支持现有 Agent 工作流。
-
-### 5. CLI 工具
-
-```bash
+```textbash
 # 安装
 brew install manaflow-ai/tap/cmux
 
@@ -207,25 +154,13 @@ cmux launch            # 启动 GUI
 cmux claude "prompt"   # 直接调用 Claude
 cmux omo               # oh-my-openagent 集成
 cmux daemon            # 远程 daemon 管理
-```
-
----
-
-## 安装与快速开始
-
-### macOS 安装
-
-```bash
+```textbash
 # Homebrew（推荐）
 brew install manaflow-ai/tap/cmux
 
 # 或下载预编译包
 # https://github.com/manaflow-ai/cmux/releases
-```
-
-### 源码构建
-
-```bash
+```textbash
 # 克隆仓库
 git clone https://github.com/manaflow-ai/cmux.git
 cd cmux
@@ -235,33 +170,13 @@ open GhosttyTabs.xcodeproj
 
 # 或命令行构建
 swift build
-```
-
-### 配置
-
-**环境变量**：
-
-```bash
+```textbash
 # Claude API（必需）
 export CLAUDE_API_KEY=sk-ant-...
 
 # 远程 daemon 端口
 export CMUX_DAEMON_PORT=8080
-```
-
-**配置文件**：
-
-`~/.cmux/` 目录下：
-- `config.toml` - 主配置
-- `themes/` - 主题文件
-- `skills/` - 自定义 Skills
-- `commands/` - 自定义命令
-
----
-
-## 项目结构
-
-```
+```text
 cmux/
 ├── AppIcon.icon/           # 应用图标
 ├── Assets.xcassets/        # 资产目录
@@ -280,37 +195,13 @@ cmux/
 ├── .claude/commands/        # Claude 命令
 ├── scripts/                # 构建脚本
 └── vendor/                # 第三方依赖
-```
-
----
-
-## 快速使用指南
-
-### 基本操作
-
-**启动应用**：
-
-```bash
+```textbash
 # 启动 GUI
 cmux launch
 
 # 或直接打开
 open -a cmux
-```
-
-**终端快捷键**：
-
-| 快捷键 | 功能 |
-|--------|------|
-| `Cmd+T` | 新建标签页 |
-| `Cmd+D` | 垂直分屏 |
-| `Cmd+[` | 水平分屏 |
-| `Cmd+W` | 关闭当前 pane |
-| `Cmd+,` | 偏好设置 |
-
-### Claude 命令使用
-
-```bash
+```textbash
 # 解释代码
 cmux claude "解释这个函数的逻辑"
 
@@ -322,20 +213,10 @@ cmux claude --analyze .
 
 # 自动生成测试
 cmux claude --generate-tests ./tests
-```
-
-### 远程工作流
-
-**1. 在远程服务器启动 daemon**：
-
-```bash
+```textbash
 ssh user@remote-server
 cmux daemon start --port 8080
-```
-
-**2. 本地连接**：
-
-```bash
+```textbash
 # SSH 隧道
 ssh -L 8080:localhost:8080 user@remote-server
 

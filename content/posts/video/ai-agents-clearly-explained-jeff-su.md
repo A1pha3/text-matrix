@@ -11,8 +11,7 @@ tags: ["AI", "Agent", "Jeff Su", "YouTube", "2026"]
 # AI Agents 完全指南：Jeff Su 爆款视频深度解读
 
 > 📺 **视频来源**：[YouTube - AI Agents, Clearly Explained](https://www.youtube.com/watch?v=sTiQ9ck26Qk) by **Jeff Su**  
-> 👁️ **观看量**：421 万+ | 📅 **发布时间**：2025 年  
-> 🎯 **适合人群**：AI 初学者、想了解 Agentic AI 的所有读者
+> 👁️ **观看量**：421 万+ | 📅 **发布时间**：2025 年
 
 ---
 
@@ -20,7 +19,7 @@ tags: ["AI", "Agent", "Jeff Su", "YouTube", "2026"]
 
 如果你刷到 Jeff Su 的「AI Agents, Clearly Explained」并被 421 万播放量震撼到，那这篇解读就是为你准备的。
 
-这不是一堂课，而是一次**认知升级**。
+这篇文章想帮你把视频里的概念框清楚，不是只看一遍热闹。
 
 ---
 
@@ -36,7 +35,7 @@ Jeff Su 在视频中用「自动驾驶」做了类比：
 | 回答问题 | 规划路径 → 执行 → 反思 → 迭代 |
 | 被动响应 | 主动行动 |
 
-**AI Agent 的四大核心能力**：
+**AI Agent 需要具备的能力**：
 
 1. **Perception（感知）**：理解输入，理解环境
 2. **Planning（规划）**：拆解目标，制定步骤
@@ -69,7 +68,7 @@ Jeff Su 指出三个关键拐点：
 
 ## 三、AI Agent 的三种类型
 
-### 1. 🔧 ReAct Agent（反应式）
+### 1. ReAct Agent（反应式）
 ```python
 while not done:
     thought = model.think(task)
@@ -79,7 +78,7 @@ while not done:
 ```
 **代表**：LangChain ReAct, AutoGPT
 
-### 2. 🎯 Plan-and-Execute Agent（计划执行式）
+### 2. Plan-and-Execute Agent（计划执行式）
 ```
 Planner: 将大任务拆解为子任务
 Executor: 逐个执行子任务
@@ -87,7 +86,7 @@ Supervisor: 监控并处理异常
 ```
 **代表**：OpenAI Swarm, LangGraph
 
-### 3. 🔄 Autonomous Agent（自主式）
+### 3. Autonomous Agent（自主式）
 - 无需人工干预
 - 自我评估、迭代优化
 - 适用于复杂长任务
@@ -171,7 +170,7 @@ result = executor.invoke({"input": "帮我规划深圳三日游，预算5000元"
 ## 八、资源推荐
 
 ### 视频
-- [Jeff Su - AI Agents, Clearly Explained](https://www.youtube.com/watch?v=sTiQ9ck26Qk)（本文来源，421 万观看）
+- [Jeff Su - AI Agents, Clearly Explained](https://www.youtube.com/watch?v=sTiQ9ck26Qk)（421 万观看）
 - [Two Minutes Papers - AI Agent 最新进展](https://www.youtube.com/@TwoMinutePapers)
 
 ### 课程
@@ -190,7 +189,7 @@ Jeff Su 在视频结尾说：
 
 > **「AI Agent 不是要取代你，而是放大你的能力。」**
 
-2026 年，Agent 将从「概念验证」走向「千家万户」。现在入场，正是最佳时机。
+2026 年，Agent 将从「概念验证」走向规模化落地。现在入场还不算晚。
 
 ---
 

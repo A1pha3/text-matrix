@@ -8,9 +8,9 @@ categories: ["技术笔记"]
 tags: ["Botan", "密码学", "C++", "TLS", "加密", "PKI", "后量子密码学"]
 ---
 
-# Botan：C++ 密码学库完全指南
+Botan：C++ 密码学库完全指南
 
-## §1 学习目标
+§ 学习目标
 
 学完本文档后，你将能够：
 
@@ -25,15 +25,15 @@ tags: ["Botan", "密码学", "C++", "TLS", "加密", "PKI", "后量子密码学"
 
 ---
 
-## §2 项目概述
+§ 项目概述
 
-### 2.1 什么是 Botan
+. 什么是 Botan
 
 Botan（官方仓库：[randombit/botan](https://github.com/randombit/botan)）是一个**功能全面的 C++ 密码学库**，采用宽松的 BSD-2-Clause 许可证开源。它的设计目标是成为**生产级密码学的最佳选择**，为开发者提供实现实用系统（如 TLSv1.3、X.509 PKI、现代 AEAD 加密、后量子密码学）所需的全部工具。
 
 Botan 的核心理念：**安全不应该妥协**。通过全面的测试套件（包括自动侧信道检测）确保代码安全可靠，同时保持 API 的易用性和代码的可维护性。
 
-### 2.2 核心数据
+. 核心数据
 
 ```
 Stars:     3,197（3.2k）
@@ -46,7 +46,7 @@ Forks:     644
 语言:     C++ 91.2%, Python 6.6%, C 1.9%
 ```
 
-### 2.3 版本体系
+. 版本体系
 
 | 版本 | 状态 | 最新版本 | 发布时间 |
 |------|------|---------|---------|
@@ -57,7 +57,7 @@ Forks:     644
 
 **Botan 2** 已于 2025-01-01 停止维护，不再提供更新。
 
-### 2.4 为什么选择 Botan
+. 为什么选择 Botan
 
 **完整的功能覆盖**：从 TLS 协议到 X.509 证书，从对称加密到后量子密码学，一个库解决所有密码学需求。
 
@@ -71,9 +71,9 @@ Forks:     644
 
 ---
 
-## §3 原理分析
+§ 原理分析
 
-### 3.1 密码学基础概念
+. 密码学基础概念
 
 在深入 Botan 之前，理解几个核心密码学概念至关重要：
 
@@ -95,7 +95,7 @@ Forks:     644
 
 同时提供加密和完整性保护，是现代密码学通信的标准模式。代表算法：AES-GCM、ChaCha20-Poly1305、AES-SIV。
 
-### 3.2 TLS 协议原理
+. TLS 协议原理
 
 TLS（Transport Layer Security）是保护互联网通信的核心协议。Botan 支持 TLSv1.2、TLSv1.3 和 DTLSv1.2。
 
@@ -121,7 +121,7 @@ ClientHello（支持密码套件列表）
    应用数据加密传输
 ```
 
-### 3.3 X.509 PKI 原理
+. X. PKI 原理
 
 公钥基础设施（PKI）通过证书将公钥绑定到身份，实现可信的身份认证。
 
@@ -149,7 +149,7 @@ ClientHello（支持密码套件列表）
 - 访问 Windows、macOS、Unix 系统证书存储
 - SQL 数据库支持的证书存储
 
-### 3.4 后量子密码学
+. 后量子密码学
 
 量子计算机威胁当前 RSA/ECDSA 的安全性。NIST 已标准化的后量子算法：
 
@@ -173,9 +173,9 @@ Botan TLS 1.3 已支持使用 ML-KEM 或 FrodoKEM 的混合后量子密钥交换
 
 ---
 
-## §4 架构分析
+§ 架构分析
 
-### 4.1 代码结构
+. 代码结构
 
 ```
 botan/
@@ -196,7 +196,7 @@ botan/
 └── README.rst             # 项目说明
 ```
 
-### 4.2 功能模块
+. 功能模块
 
 **核心模块组织**
 
@@ -214,18 +214,18 @@ botan/
 | **pkcs11** | PKCS#11 接口 | PKCS11::Module, PKCS11::Session |
 | **tpm2** | TPM 2.0 接口 | TPM2::Context |
 
-### 4.3 构建系统
+. 构建系统
 
 Botan 使用 Python 编写的 `configure.py` 作为配置系统（类似 autoconf）：
 
 ```bash
-# 配置构建（启用所有功能）
+配置构建（启用所有功能）
 python3 configure.py --with-zlib --with-bzip2 --with-lzma
 
-# 配置构建（最小化构建）
+配置构建（最小化构建）
 python3 configure.py --without-documentation
 
-# 使用 CMake（实验性）
+使用 CMake（实验性）
 mkdir build && cd build
 cmake .. -DBOTAN_WITH_TLS=ON -DBOTAN_WITH_X509=ON
 ```
@@ -241,7 +241,7 @@ cmake .. -DBOTAN_WITH_TLS=ON -DBOTAN_WITH_X509=ON
 | sqlite | 证书存储 | `--with-sqlite3` |
 | tpm2 | TPM 支持 | `--with-tpm2` |
 
-### 4.4 跨平台支持
+. 跨平台支持
 
 Botan 经过测试可在以下平台构建：
 
@@ -260,9 +260,9 @@ Botan 经过测试可在以下平台构建：
 
 ---
 
-## §5 功能详解
+§ 功能详解
 
-### 5.1 TLS 协议
+. TLS 协议
 
 Botan 提供完整的 TLS 实现，支持 TLSv1.2、TLSv1.3、DTLSv1.2。
 
@@ -318,7 +318,7 @@ public:
 };
 ```
 
-### 5.2 公钥密码学
+. 公钥密码学
 
 **RSA 签名与验证**
 
@@ -375,7 +375,7 @@ mldsa_signer.update(message);
 std::vector<uint8_t> mldsa_sig = mldsa_signer.signature();
 ```
 
-### 5.3 对称加密
+. 对称加密
 
 **AES-GCM 认证加密（推荐）**
 
@@ -406,7 +406,7 @@ chacha->start(iv);
 chacha->finish(plaintext, 0);
 ```
 
-### 5.4 哈希函数
+. 哈希函数
 
 **基本使用**
 
@@ -424,7 +424,7 @@ blake2b->update(data);
 std::vector<uint8_t> hash512 = blake2b->final();
 ```
 
-### 5.5 密码哈希（适合存储密码）
+. 密码哈希（适合存储密码）
 
 **Argon2（目前最佳）**
 
@@ -447,7 +447,7 @@ std::string hash = Botan::argon2_generate_pbkdf(
 bool ok = Botan::argon2_check_pbkdf(hash, password);
 ```
 
-### 5.6 X.509 证书处理
+. X. 证书处理
 
 **证书验证**
 
@@ -477,49 +477,49 @@ if (result.successful_validation()) {
 
 ---
 
-## §6 使用说明
+§ 使用说明
 
-### 6.1 环境要求
+. 环境要求
 
 - **C++ 编译器**：GCC 7+、Clang 6+、MSVC 2019+
 - **Python 3.8+**：用于配置脚本
 - **可选依赖**：zlib、bzip2、lzma、OpenSSL、SQLite 等
 
-### 6.2 安装方式
+. 安装方式
 
 **方式一：从包管理器安装**
 
 ```bash
-# Ubuntu/Debian
+Ubuntu/Debian
 sudo apt install botanist libbotan-3-dev
 
-# Fedora
+Fedora
 sudo dnf install botan3 botan3-devel
 
-# macOS (Homebrew)
+macOS (Homebrew)
 brew install botan
 
-# Arch Linux
+Arch Linux
 sudo pacman -S botan
 ```
 
 **方式二：从源码构建（推荐最新版本）**
 
 ```bash
-# 克隆仓库
+克隆仓库
 git clone https://github.com/randombit/botan.git
 cd botan
 
-# 配置构建
+配置构建
 python3 configure.py --with-zlib --with-bzip2 --with-lzma
 
-# 编译
+编译
 make -j$(nproc)
 
-# 安装
+安装
 sudo make install
 
-# 更新库缓存
+更新库缓存
 sudo ldconfig
 ```
 
@@ -529,17 +529,17 @@ sudo ldconfig
 
 ```bash
 python3 configure.py --amalgamation
-# 生成 botan_all.h 和 botan_all.cpp
+生成 botan_all.h 和 botan_all.cpp
 g++ -o botan_app botan_all.cpp -lz -lbz2 -llzma -pthread
 ```
 
-### 6.3 Python API 安装
+. Python API 安装
 
 ```bash
-# 使用 pip（需要先构建库）
+使用 pip（需要先构建库）
 pip3 install botan3
 
-# 或从源码安装 Python 绑定
+或从源码安装 Python 绑定
 cd botan
 python3 setup.py install
 ```
@@ -549,20 +549,20 @@ python3 setup.py install
 ```python
 from botan import HashFunction, Cipher, PK Signer, TLS
 
-# SHA-256 哈希
+SHA- 哈希
 sha256 = HashFunction.create("SHA-256")
 sha256.update(b"hello world")
 digest = sha256.final()
 print(digest.hex())
 
-# AES-256-GCM 加密
+AES--GCM 加密
 key = Cipher.generate_key("AES-256")
 enc = Cipher.create("AES-256/GCM/NoPadding")
 enc.set_key(key)
 ct, tag = enc.encrypt(b"secret message", nonce)
 ```
 
-### 6.4 C API 使用
+. C API 使用
 
 Botan 提供 C 绑定（`botan.h`），适合 C 项目或 FFI 集成：
 
@@ -580,33 +580,33 @@ botan_hash_final(hash, hash_out);
 botan_hash_destroy(hash);
 ```
 
-### 6.5 命令行工具
+. 命令行工具
 
 Botan 提供功能丰富的 CLI（需在构建时启用）：
 
 ```bash
-# 哈希计算
+哈希计算
 botan hash SHA-256 data.txt
 
-# 加密文件
+加密文件
 botan encrypt AES-256/GCM key.txt plaintext.bin ciphertext.bin
 
-# 生成随机数
+生成随机数
 botan rng 32 > random.bin
 
-# 密钥生成
+密钥生成
 botan keygen RSA --bits 3072 --output rsa.pem
 botan keygen Ed25519 --output ed25519.pem
 
-# 证书验证
+证书验证
 botan verify server.pem --ca-certs ca.pem --hostname example.com
 ```
 
 ---
 
-## §7 开发扩展
+§ 开发扩展
 
-### 7.1 集成 PKCS#11 硬件安全模块
+. 集成 PKCS 硬件安全模块
 
 PKCS#11 是访问加密硬件（如 HSM、智能卡）的标准接口。
 
@@ -631,7 +631,7 @@ signer.update(data);
 auto signature = signer.signature();
 ```
 
-### 7.2 集成 TPM 2.0
+. 集成 TPM .
 
 TPM（可信平台模块）是硬件级的安全芯片。
 
@@ -648,7 +648,7 @@ auto ek = tpm.load_public_key("ek.pub");
 auto srk = tpm.create_srk(rng, "AES-256");
 ```
 
-### 7.3 自定义密码套件
+. 自定义密码套件
 
 扩展 Botan 支持新的算法或密码套件：
 
@@ -662,7 +662,7 @@ Botan::HashFunction::register_algorithm("MyHash", [](size_t out_len) {
 auto my_hash = Botan::HashFunction::create("MyHash");
 ```
 
-### 7.4 与 Boost.Asio 集成
+. 与 Boost.Asio 集成
 
 Botan TLS 可与 Boost.Asio 异步 I/O 配合使用：
 
@@ -686,9 +686,9 @@ public:
 
 ---
 
-## §8 实践建议
+§ 实践建议
 
-### 8.1 密钥管理
+. 密钥管理
 
 **生成强密钥**
 
@@ -710,7 +710,7 @@ Botan::ECDSA_PrivateKey ecdsa_key(rng, secp256r1);
 - 硬件保护：PKCS#11、TPM
 - 定期轮换：建立密钥更新流程
 
-### 8.2 TLS 配置
+. TLS 配置
 
 **推荐的安全策略（TLS 1.3）**
 
@@ -736,7 +736,7 @@ public:
 };
 ```
 
-### 8.3 密码学参数选择
+. 密码学参数选择
 
 **对称加密**
 
@@ -762,7 +762,7 @@ public:
 | **Scrypt** | 2^20 iterations, 8 MiB | 中 |
 | **bcrypt** | cost=12 | 低 |
 
-### 8.4 错误处理
+. 错误处理
 
 ```cpp
 try {
@@ -782,9 +782,9 @@ if (!hash) {
 
 ---
 
-## §9 常见问题
+§ 常见问题
 
-### Q1：Botan 与 OpenSSL 比较如何？
+Q：Botan 与 OpenSSL 比较如何？
 
 | 维度 | Botan | OpenSSL |
 |------|-------|---------|
@@ -794,46 +794,46 @@ if (!hash) {
 | 代码质量 | 测试覆盖率更高 | 历史更久 |
 | 维护活跃度 | 活跃 | 非常活跃 |
 
-### Q2：如何验证 Botan 安装正确？
+Q：如何验证 Botan 安装正确？
 
 ```bash
-# 命令行测试
+命令行测试
 botan version
 botan hash SHA-256 < /dev/urandom | head -c 64
 
-# C++ 测试
+C++ 测试
 echo '#include <botan/version.h>
 int main(){ printf("%s\n", Botan::version_string()); }' | \
 g++ -x c++ -I/usr/include/botan-3 -lbotan-3 -o version - && ./version
 
-# Python 测试
+Python 测试
 python3 -c "from botan import version; print(version)"
 ```
 
-### Q3：Botan 支持 Android/iOS 吗？
+Q：Botan 支持 Android/iOS 吗？
 
 是的。Android NDK 和 iOS SDK 都经过测试。使用 `configure.py` 交叉编译：
 
 ```bash
-# Android NDK
+Android NDK
 ./configure.py --os=android --cpu=arm64
 ```
 
-### Q4：如何贡献代码？
+Q：如何贡献代码？
 
 1. 阅读 [CONTRIBUTING.md](https://github.com/randombit/botan/blob/master/CONTRIBUTING.md)
 2. Fork 仓库并创建功能分支
 3. 确保通过所有测试：`python3 validate.py`
 4. 提交 Pull Request
 
-### Q5：遇到编译错误怎么办？
+Q：遇到编译错误怎么办？
 
 1. 确保使用支持的编译器版本（GCC 7+、Clang 6+）
 2. 检查是否安装了所有必需依赖
 3. 查看 [GitHub Issues](https://github.com/randombit/botan/issues)
 4. 使用 `configure.py --with-debug-info` 获取详细调试信息
 
-### Q6：Botan 的安全响应流程是什么？
+Q：Botan 的安全响应流程是什么？
 
 发现安全漏洞请联系：security@randombit.net
 
@@ -841,7 +841,7 @@ python3 -c "from botan import version; print(version)"
 
 ---
 
-## §10 总结
+§ 总结
 
 Botan 是目前最全面的 C++ 密码学库，通过 BSD-2 许可证允许在商业产品中使用。
 
