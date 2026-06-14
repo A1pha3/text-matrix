@@ -4,7 +4,7 @@ date: "2026-06-12T15:00:00+08:00"
 slug: "qualcomm-on-device-ai-physical-ai-6g-2026"
 description: "硅谷 101《对话高通：智能体爆发、6G 与 Physical AI 背后的大赢家》整理 + 高通骁友会 5 周年（2025-05-23 北京）现场 4 个端侧 AI 体验 + CES 2026 / MWC 2026 高通布局 + 公开的 Snapdragon X/8 Elite NPU 数据，拆为什么 2026 年是端侧 AI「智能体元年」，高通押注 Physical AI 的工程逻辑，以及「算力 / 内存 / 功耗不可能三角」怎么破。"
 draft: false
-categories: ["技术笔记"]
+categories: ["视频精读"]
 tags: ["高通", "端侧 AI", "6G", "Physical AI", "智能体", "Snapdragon", "NPU", "徐晧", "骁友会", "硅谷101"]
 hiddenFromHomePage: false
 ---

@@ -4,7 +4,7 @@ date: "2026-06-12T16:30:00+08:00"
 slug: "embodied-robotics-hardware-supply-chain-2026"
 description: "硅谷101《空翻之后，它还要学会接住一片落叶？》拆机器人「肉身」一文写清：宇树 H1 半马 50 分 26 秒破纪录、智元 AgiBot 量产 1000+、特斯拉 Optimus Gen 2 工厂部署、人形机器人每摔一次都在撞接近车祸级别冲击还能站稳的工程难度。本文按电机/减速器/丝杠/力矩传感器四条供应链主线拆，告诉你为什么机器人过去两年进化这么快，又为什么单点技术领先已经不够用。"
 draft: false
-categories: ["技术笔记"]
+categories: ["视频精读"]
 tags: ["机器人", "宇树", "智元", "特斯拉 Optimus", "具身智能", "供应链", "量产", "硅谷101"]
 hiddenFromHomePage: false
 ---

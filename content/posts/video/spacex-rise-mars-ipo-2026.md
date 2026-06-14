@@ -4,7 +4,7 @@ date: "2026-06-12T15:00:00+08:00"
 slug: "spacex-rise-mars-ipo-2026"
 description: "硅谷101 与张小珺两期 SpaceX 前首席制造工程师洪力德（Lewis Hong）的深度访谈拼出一张 24 年拼图：猎鹰 1 号三连败命悬一线、NASA 16 亿美元 COTS 救命、猎鹰 9 号两次爆炸、筷子夹星舰、2026 年 750 亿美元史上最大 IPO、收购 x.AI、把星链和星盾并成基础设施。这篇文章拆 SpaceX 真正跑通的三条主线：复用、订单和生态。"
 draft: false
-categories: ["技术笔记"]
+categories: ["视频精读"]
 tags: ["SpaceX", "Falcon", "Starship", "Starlink", "Lewis Hong", "硅谷101", "IPO", "可回收火箭", "马斯克"]
 hiddenFromHomePage: false
 ---

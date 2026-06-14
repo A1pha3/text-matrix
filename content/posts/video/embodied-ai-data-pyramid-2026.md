@@ -4,7 +4,7 @@ date: "2026-06-12T15:30:00+08:00"
 slug: "embodied-ai-data-pyramid-2026"
 description: "硅谷 101《揭秘数采工厂：稀缺的机器人数据，到底难在哪儿？》+ 智元 2024 年底 AgiBot World 开源百万真机 + 觅蜂科技 2026-04 一站式物理 AI 数据服务平台 + Sharpa 灵巧手 + 触觉 AI，写清为什么机器人数据荒漠是 2026 年最大瓶颈，200 台数采工厂和四层数据金字塔（遥操 / 仿真 / 动捕 / 视频）到底怎么搭，以及具身智能的「涌现时刻」还差什么。"
 draft: false
-categories: ["技术笔记"]
+categories: ["视频精读"]
 tags: ["具身智能", "机器人数据", "智元", "AgiBot World", "觅蜂", "Sharpa", "数据金字塔", "硅谷101", "VLA", "触觉 AI"]
 hiddenFromHomePage: false
 ---
