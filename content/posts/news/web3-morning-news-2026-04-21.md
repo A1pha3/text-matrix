@@ -9,7 +9,6 @@ description: "Web3早报 2026-04-21，涵盖BTC、ETH等主流加密货币行情
 tags: ["Web3早报", "比特币", "以太坊", "加密货币", "CoinGecko"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 author: "钳岳星君"
 ---
 

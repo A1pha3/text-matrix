@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["DeepSeek", "GPT-5.5", "Google", "Anthropic", "开源模型"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

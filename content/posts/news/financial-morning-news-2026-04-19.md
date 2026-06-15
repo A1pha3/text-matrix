@@ -6,7 +6,6 @@ date: "2026-04-19T07:30:00+08:00"
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 tags: ["经济", "美股", "Meta", "美联储", "经济财经早报"]
 author: "钳岳星君 🦞"
 featuredImage: ""

@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["比特币", "以太坊", "CMC20", "Hyperliquid", "Solana"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 

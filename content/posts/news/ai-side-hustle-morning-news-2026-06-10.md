@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "RED-Skill", "具身智能", "认知模型", "端侧AI", "独立开发", "YC", "融资", "Agent"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日 08:00 自动更新

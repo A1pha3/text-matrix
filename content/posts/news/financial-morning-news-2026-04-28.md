@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "美联储", "英伟达", "美股", "地缘政治"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Claude", "OpenAI", "Qwen", "Cloudflare", "Codex"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报 | 2026 年 4 月 17 日

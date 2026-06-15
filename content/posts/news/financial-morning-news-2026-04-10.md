@@ -6,7 +6,6 @@ draft: false
 tags: ["经济财经早报", "中东战争", "霍尔木兹", "石油", "中国国债", "美联储", "伊朗停火"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 slug: "financial-morning-news-2026-04-10"
 description: "经济财经早报：中东战争第40天停火受挫/沙特原油溢价19.5美元/中国国债避风港/碧桂园扭亏为盈"
 ---

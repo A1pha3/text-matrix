@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "OpenAI", "Apple", "Gemini", "Xiaomi", "Anthropic", "蚂蚁集团", "高德", "WWDC2026", "Bun", "Claude"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

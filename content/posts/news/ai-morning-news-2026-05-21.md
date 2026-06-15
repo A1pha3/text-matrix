@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "英伟达", "OpenAI", "阿里巴巴", "SpaceX", "量子位", "AIGC", "HackerNews"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "BTC", "ETH", "加密货币", "俄罗斯", "Binance", "Polymarket"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # Web3 早报｜2026 年 4 月 18 日

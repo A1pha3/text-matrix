@@ -6,7 +6,6 @@ draft: false
 tags: ["经济财经早报", "美股", "美联储", "黄金", "特朗普"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 description: "每日全球宏观经济与金融市场速递，涵盖美股、外汇、大宗商品等。"
 slug: financial-morning-news-2026-04-29
 author: ""

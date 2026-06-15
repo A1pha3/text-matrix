@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "比特币", "Tokenization", "预测市场", "监管"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

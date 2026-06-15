@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "招聘", "远程工作", "外包"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日09:00自动更新

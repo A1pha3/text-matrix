@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美股", "纳指", "Netflix", "中东局势", "美联储", "黄金", "原油"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报 | 2026 年 4 月 17 日

@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "大模型", "机器人", "开源", "AI商业化"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报：2026 年 4 月 6 日（补发）

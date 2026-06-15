@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美股", "华尔街见闻", "SpaceX", "马斯克", "亚洲大米"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

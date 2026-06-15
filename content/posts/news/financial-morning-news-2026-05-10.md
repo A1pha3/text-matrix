@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美联储", "美股", "黄金", "人民币", "大宗商品", "地缘政治"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

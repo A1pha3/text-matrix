@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "人工智能", "大模型", "行业动态"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报 2026-04-09

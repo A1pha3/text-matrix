@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["经济", "金融", "市场", "华尔街见闻"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报 2026-04-09

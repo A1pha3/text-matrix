@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "早报", "美股", "原油", "黄金", "地缘政治"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

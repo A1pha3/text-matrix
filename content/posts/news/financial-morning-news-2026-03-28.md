@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["伊朗战争", "美股", "美联储", "SpaceX", "滞胀"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报：2026 年 3 月 28 日

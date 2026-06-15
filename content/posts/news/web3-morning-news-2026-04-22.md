@@ -7,7 +7,6 @@ lastmod: 2026-04-22T15:55:00+08:00
 categories: ["行业快讯"]
 tags: ["Web3", "Crypto", "BTC", "ETH", "Solana", "DeFi"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 author: "钳岳星君"
 ---
 

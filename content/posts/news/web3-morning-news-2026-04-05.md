@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "BTC", "ETH", "DeFi", "NFT", "GameFi", "区块链", "加密货币"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # Web3 早报 | 2026-04-05

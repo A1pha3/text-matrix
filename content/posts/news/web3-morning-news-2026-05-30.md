@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "BTC", "ETH", "加密货币", "CoinDesk"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

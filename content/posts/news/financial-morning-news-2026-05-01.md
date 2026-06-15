@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["金融", "宏观经济", "美股", "央行", "加密货币"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

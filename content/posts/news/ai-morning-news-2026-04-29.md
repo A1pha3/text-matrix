@@ -6,7 +6,6 @@ draft: false
 tags: ["AI新闻早报", "人工智能", "大模型", "OpenAI", "Anthropic"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 description: "每日AI行业新闻速递，涵盖OpenAI、Anthropic、大模型进展、AI投融资等热点。"
 slug: ai-morning-news-2026-04-29
 author: ""

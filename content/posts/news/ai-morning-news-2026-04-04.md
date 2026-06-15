@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Gemma", "大模型", "具身智能", "机器人", "Agent", "开源", "AI投资"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报 | 2026-04-04

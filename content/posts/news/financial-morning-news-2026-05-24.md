@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "早报", "美股", "美联储", "美伊谈判", "原油"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

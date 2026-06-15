@@ -8,7 +8,6 @@ tags: ["AI", "大模型", "Anthropic", "OpenAI", "Google", "视频生成", "Agen
 description: "AI新闻早报汇总，涵盖模型发布、行业动态、技术突破等重要AI资讯。"
 draft: false
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报 2026-04-08

@@ -7,7 +7,6 @@ lastmod: 2026-04-22T08:00:00+08:00
 categories: ["行业快讯"]
 tags: ["AI", "ChatGPT", "OpenAI", "GitHub Copilot", "Meta", "Claude"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 author: "钳岳星君"
 ---
 

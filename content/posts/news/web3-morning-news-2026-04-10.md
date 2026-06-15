@@ -6,7 +6,6 @@ draft: false
 tags: ["Web3早报", "BTC", "ETH", "Hyperliquid", "CoinMarketCap"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 slug: "web3-morning-news-2026-04-10"
 description: "Web3早报：BTC $71798上涨7日新高/Hyperliquid $39.45周涨12%/ETH $2189企稳/市场$2.44T"
 ---

@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "美股", "A股", "非农", "黄金", "SpaceX", "日银加息", "半导体"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

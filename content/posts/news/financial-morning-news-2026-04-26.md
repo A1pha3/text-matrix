@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["经济", "金融", "美股", "美联储", "地缘政治"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

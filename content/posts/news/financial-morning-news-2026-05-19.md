@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美股", "原油", "黄金", "日债", "港股", "A股", "英伟达", "美伊局势"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

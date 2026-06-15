@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "美股", "市场", "宏观"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["宏观经济", "伯克希尔", "美联储", "伊朗", "制裁"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

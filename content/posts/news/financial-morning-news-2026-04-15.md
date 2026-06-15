@@ -6,7 +6,6 @@ slug = 'financial-morning-news-2026-04-15'
 description = '2026年4月15日经济财经早报，涵盖美股反弹、伊朗局势、Claude 企业版等热点。'
 categories = ['行业快讯']
 tags = ['财经', '早报']
-aliases = ["/categories/news/"]
 +++
 
 # 经济财经早报 2026-04-15

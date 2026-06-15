@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["比特币", "以太坊", "Solana", "XRP", "ADA", "AVAX", "DOT", "SUI"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 

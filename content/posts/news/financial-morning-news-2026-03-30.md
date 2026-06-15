@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["伊朗战争", "美联储", "AI", "石油", "中美贸易", "中国经济"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报 2026-03-30

@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Kimi", "英伟达", "DeepSeek", "OpenAI", "Agent", "具身智能", "AI视频", "AI音乐", "开源模型"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报 2026-03-27

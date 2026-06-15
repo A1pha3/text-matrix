@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["财经", "A股", "美股", "特斯拉", "原油"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报 | 2026-04-03

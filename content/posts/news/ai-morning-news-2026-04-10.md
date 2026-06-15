@@ -6,7 +6,6 @@ draft: false
 tags: ["AI新闻早报", "DeepMind", "AGI", "Claude", "OpenClaw", "GPT-5", "人形机器人", "HackerNews"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 slug: "ai-morning-news-2026-04-10"
 description: "AI新闻早报：DeepMind创始人称AGI或5年内实现（规模是工业革命10倍），六大国有银行1300亿AI投资，Claude Opus 4.6差评如潮，$5养个AI打工人"
 ---

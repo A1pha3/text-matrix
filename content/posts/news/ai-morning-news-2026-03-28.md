@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Anthropic", "Claude", "人形机器人", "AI编程", "大模型"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报：2026 年 3 月 28 日

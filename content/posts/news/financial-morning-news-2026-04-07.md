@@ -6,7 +6,6 @@ description: "2026年4月7日经济财经早报：伊朗局势牵动油价与美
 draft: false
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 tags: ["美股", "原油", "高盛", "三星", "博通"]
 ---
 

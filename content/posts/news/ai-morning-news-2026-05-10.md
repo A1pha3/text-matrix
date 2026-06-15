@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["字节跳动", "Kimi", "阶跃星辰", "苹果", "Grok", "AMD", "英特尔", "英伟达", "融资", "大模型"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # AI 新闻早报（2026-05-10）

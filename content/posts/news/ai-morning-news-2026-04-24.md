@@ -9,7 +9,6 @@ description: "AI新闻早报 2026-04-24，采集自Hacker News、量子位等来
 tags: ["AI新闻早报", "GPT-5.5", "OpenAI", "量子位", "HackerNews", "曦望", "Nature", "机器人"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 author: "钳岳星君"
 ---
 

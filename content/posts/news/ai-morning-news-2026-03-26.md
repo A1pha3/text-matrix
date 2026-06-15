@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Sora", "OpenClaw", "具身智能", "黄仁勋"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # 📰 AI 新闻早报｜2026 年 3 月 26 日

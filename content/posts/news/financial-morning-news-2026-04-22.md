@@ -7,7 +7,6 @@ lastmod: 2026-04-22T15:55:00+08:00
 categories: ["行业快讯"]
 tags: ["宏观经济", "美股", "美联储", "美股", "财政", "能源"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 author: "钳岳星君"
 ---
 

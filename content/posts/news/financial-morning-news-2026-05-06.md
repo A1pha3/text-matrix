@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["美股", "标普500", "原油", "AMD", "SEC"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:30自动更新

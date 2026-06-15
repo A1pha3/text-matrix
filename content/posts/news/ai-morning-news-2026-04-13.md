@@ -5,7 +5,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Anthropic", "Claude", "大模型"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 slug: ai-morning-news-2026-04-13
 description: "AI新闻早报：个人提效10倍公司颗粒无收的电力悖论、Anthropic缓存降级引众怒、欧洲发布AI独立宣言、Claude Code用户工具更新"
 ---

@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["经济", "水利投资", "纳指", "房价", "消费补贴", "财报"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # 经济财经早报｜2026 年 4 月 18 日

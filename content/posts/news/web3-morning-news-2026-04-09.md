@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["Web3", "Crypto", "DeFi", "区块链"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 # Web3 早报 2026-04-09
