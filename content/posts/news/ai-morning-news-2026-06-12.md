@@ -4,7 +4,7 @@ date: 2026-06-12T07:46:00+08:00
 slug: ai-morning-news-2026-06-12
 description: "2026年6月12日 AI 新闻早报，严格采集 06-11 08:00 至 06-12 08:00 窗口，覆盖 Anthropic Fable 5 / Mythos 5 正式发布、Anthropic 反蒸馏与安全护栏争议、谷歌开源扩散语言模型 DiffusionGemma 4 倍加速、OpenAI 拟发起 Token 价格战、阿里千问发布免费高考志愿 Agent、AI 短剧工具赛道年度最大单笔融资、陶哲轩 First Proof 二期 AI 解出 7 道论文级数学题、周星驰 + 字节腾讯押注 AI 互动影游等关键事件。"
 draft: false
-categories: ["新闻"]
+categories: ["行业快讯"]
 tags: ["AI", "Anthropic", "Fable", "Mythos", "OpenAI", "NoamBrown", "Google", "DiffusionGemma", "阿里千问", "高考", "AI短剧", "八点八数字", "AniShort", "陶哲轩", "FirstProof", "字节跳动", "腾讯", "互动影游", "小米", "MiMo", "36kr", "量子位"]
 hiddenFromHomePage: true
 ---
