@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Anthropic", "Fable5", "智能体", "ALE", "GPT-5.5", "Kimi", "MiMo", "字节跳动", "阿里巴巴", "腾讯", "高考志愿", "具身智能", "BEV", "递归自我改进", "RSI", "OpenAI", "AI安全", "AI游戏", "AI泡沫", "MiniMax", "36kr", "量子位", "HackerNews"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

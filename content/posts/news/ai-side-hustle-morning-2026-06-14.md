@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "V2EX", "Reddit", "远程工作", "独立开发", "AI招聘", "AI Agent", "独立工程师"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日 08:00 自动更新

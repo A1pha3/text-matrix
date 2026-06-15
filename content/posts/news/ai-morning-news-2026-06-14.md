@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Anthropic", "Claude5", "Fable5", "Mythos", "智谱", "GLM5", "开源", "HuggingFace", "HRM", "Bengio", "Kimi", "月之暗面", "估值", "ARR", "通义", "周靖人", "阿里", "TokenFoundry", "智源", "Physis", "世界模型", "具身智能", "Symbiosis", "Jiuwen", "OpenJiuwen", "TensorZero", "新通教育", "留学", "白皮书", "36kr", "量子位", "HackerNews"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新

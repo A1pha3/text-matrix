@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "V2EX", "HackerNews", "ShowHN", "远程工作", "独立开发", "AI Agent", "AI招聘", "独立工程师"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日 09:00 自动更新

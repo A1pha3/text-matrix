@@ -7,7 +7,6 @@ draft: false
 categories: ["行业快讯"]
 tags: ["AI", "Claude", "Fable5", "Anthropic", "美国出口管制", "Mythos", "阿里", "周靖人", "通义", "TokenFoundry", "Neura", "人形机器人", "舍弗勒", "博世", "英伟达", "宝马", "DeepMind", "ASI", "ShaneLegg", "MarcusHutter", "高瓴", "柔性机器人", "SoulX", "MoYa", "睡眠", "具身智能", "Nex-N2", "Qwen", "开源", "AI安全", "jqwik", "TheRegister", "Linux", "反爬"]
 hiddenFromHomePage: true
-aliases: ["/categories/news/"]
 ---
 
 🦞 每日08:00自动更新
