@@ -2,13 +2,13 @@
 title: "AI Agents 完全指南：Jeff Su 爆款视频深度解读"
 date: "2026-04-29T20:37:00+08:00"
 slug: "ai-agents-clearly-explained-jeff-su"
-description: "基于 Jeff Su 的 421万播放爆款视频，系统解析 AI Agent 的核心概念、工作原理、三种类型，以及 2026 年学习路径和实战框架推荐。"
+description: "基于 Jeff Su 的 421万播放爆款视频，拆解 AI Agent 的概念、工作原理、三种类型，以及 2026 年学习路径和实战框架推荐。"
 draft: false
 categories: ["视频精读"]
 tags: ["AI", "Agent", "Jeff Su", "YouTube", "2026"]
 ---
 
-# AI Agents 完全指南：Jeff Su 爆款视频深度解读
+# AI Agents 完全指南：Jeff Su 爆款视频解读
 
 > 📺 **视频来源**：[YouTube - AI Agents, Clearly Explained](https://www.youtube.com/watch?v=sTiQ9ck26Qk) by **Jeff Su**  
 > 👁️ **观看量**：421 万+ | 📅 **发布时间**：2025 年
@@ -44,7 +44,7 @@ Jeff Su 在视频中用「自动驾驶」做了类比：
 
 ## 二、为什么 2026 是 AI Agent 爆发年？
 
-### 技术成熟度曲线
+### 技术拐点
 
 ```
 2023: LLM横空出世 → 2024: RAG爆发 → 2025: Agent探索 → 2026: Agent落地
@@ -52,7 +52,7 @@ Jeff Su 在视频中用「自动驾驶」做了类比：
 
 Jeff Su 指出三个拐点：上下文窗口从 4K 到 200K，Agent 能处理整本书籍；OpenAI、Google、Anthropic 统一了 Tool Use API；CrewAI、AutoGen、LangGraph 让多 Agent 协作成为标配。
 
-### 真实数据
+### 实际数据
 
 - **GitHub**: 2025 年 AI Agent 项目增长 **470%**
 - **Hugging Face**: Agent 相关模型下载量突破 **1 亿次**
@@ -129,7 +129,7 @@ result = executor.invoke({"input": "帮我规划深圳三日游，预算5000元"
 
 ---
 
-## 六、学习路径建议
+## 六、学习路径
 
 ### 入门（1-2 周）
 1. 看完 Jeff Su 的视频 ✅
@@ -148,7 +148,7 @@ result = executor.invoke({"input": "帮我规划深圳三日游，预算5000元"
 
 ---
 
-## 七、常见误区
+## 七、三个常见误解
 
 > ❌ **「Agent 就是套壳 GPT」**  
 > 错。Agent 的关键是**规划+工具调用+记忆**，LLM 只是大脑。
@@ -183,7 +183,7 @@ Jeff Su 在视频结尾说：
 
 > **「AI Agent 不是要取代你，是放大你的能力。」**
 
-2026 年，Agent 正在从概念验证走向大批量部署。
+2026 年，Agent 正在从 demo 走向批量部署。
 
 ---
 
