@@ -77,7 +77,7 @@ packages/skills-catalog/skills/
       references/
 ```
 
-这种约束并非为了形式统一——它确保 CLI 和 MCP 服务器的路径解析永远是确定性的。没有 `../../` 逃逸，没有隐式依赖。
+这种约束不是为了形式统一——它让 CLI 和 MCP 服务器的路径解析永远是确定性的。没有 `../../` 逃逸，没有隐式依赖。
 
 ## 安全模型：五层防御
 
@@ -229,7 +229,7 @@ agent-skills remove aws-advisor
 
 ## MCP 服务器：让 AI 自己发现技能
 
-agent-skills 提供了一个独立的 MCP 服务器 `@tech-leads-club/agent-skills-mcp`，让 AI 智能体在运行时自行查询技能目录。核心设计理念是渐进式披露（progressive disclosure）——先搜索，确需时再拉取完整内容，避免上下文污染。
+agent-skills 提供了一个独立的 MCP 服务器 `@tech-leads-club/agent-skills-mcp`，让 AI 智能体在运行时自行查询技能目录。设计思路是渐进式披露（progressive disclosure）——先搜索，确需时再拉取完整内容，避免上下文污染。
 
 ```json
 {
@@ -296,8 +296,8 @@ agent-skills 提供了一个独立的 MCP 服务器 `@tech-leads-club/agent-skil
 
 全部通过后，你的 agent-skills 部署即处于生产就绪状态。
 
-## 不止是技能库，是一条信任链
+## 信任链才是核心
 
-大多数 AI 技能市场的逻辑是"降低贡献门槛→扩大技能数量→网络效应"。agent-skills 走了另一条路：用 CI/CD 流水线 + 人工策展 + CLI 纵深防御，在技能的每一步流转中嵌入可验证的安全锚点。它的护城河不是技能数量——是每一个技能包上那枚可验证的完整性哈希。
+大多数 AI 技能市场的逻辑是"降低贡献门槛→扩大技能数量→网络效应"。agent-skills 走了另一条路：用 CI/CD 流水线 + 人工策展 + CLI 纵深防御，在技能的每一步流转中嵌入可验证的安全锚点。它的护城河不是技能数量——是每个技能包上那枚可验证的完整性哈希。
 
-对于正在将 AI coding 智能体引入生产流水线的团队，供应链安全不是锦上添花，是前置条件。agent-skills 把这条前置条件变成了一个可执行的 CLI 命令。
+对于正在将 AI coding 智能体引入生产流水线的团队，供应链安全是前置条件。agent-skills 让这个前置条件可以通过一条 CLI 命令落地。

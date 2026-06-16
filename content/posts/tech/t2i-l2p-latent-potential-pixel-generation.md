@@ -44,13 +44,13 @@ L2P 训练流程的第一步，是将已训练好的 latent-space DiT（Diffusio
 
 初始化之后，L2P 采用的是典型的 delta 学习策略：学生模型在 pixel-init 权重基础上进行微调，训练的是两者之间的差值（delta）。训练完成后，推理时需要将训练得到的 delta 与 pixel-init 权重合并，生成最终的 merged checkpoint。
 
-这种做法的好处是：训练阶段只需要优化 delta 部分，对算力和显存的要求大幅降低；合并后的权重可以直接替换原始 pixel-init 用于推理，不需要修改模型结构。
+这种做法的实际效果是：训练阶段只需要优化 delta 部分，对算力和显存的要求大幅降低；合并后的权重可以直接替换原始 pixel-init 用于推理，不需要修改模型结构。
 
 ### 推理：配合 Z-Image-Turbo 的文本编码器
 
 L2P 的推理流程需要两个部分：合并后的 pixel-space 主模型，以及 Z-Image-Turbo 的文本编码器和 tokenizer。README 中的示例使用了 `diffsynth` 库的 `ZImagePipeline`，配合 `torch.bfloat16` 和 CUDA 设备，30 步推理生成 1024×1024 图像，cfg_scale 为 2.0。
 
-也就是说，L2P 训练只负责 pixel-space 主模型的权重，而文本编码侧直接复用了 Z-Image-Turbo 的部分，这体现了 latent-space 模型在文本理解侧的优势已经通过蒸馏或迁移被 L2P 学生模型吸收。
+也就是说，L2P 训练只负责 pixel-space 主模型的权重，而文本编码侧直接复用了 Z-Image-Turbo 的部分，latent-space 模型在文本理解侧的优势已经通过蒸馏或迁移被 L2P 学生模型吸收。
 
 ---
 

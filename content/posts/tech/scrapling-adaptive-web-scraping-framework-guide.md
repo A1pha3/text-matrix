@@ -40,7 +40,7 @@ tags: ["爬虫", "Python", "网页抓取", "反反爬", "并发"]
 |------|------|
 | 🤖 自适应解析 | 网站改版后自动重新定位元素 |
 | 🛡️ 反反爬 | 绕过 Cloudflare Turnstile |
-| ⚡ 性能卓越 | 文本提取 2.02ms（比 MechanicalSoup 快 767 倍）|
+| ⚡ 性能 | 文本提取 2.02ms（比 MechanicalSoup 快 767 倍）|
 | 🕷️ Spider 框架 | Scrapy 风格，支持并发、暂停/恢复 |
 | 🔌 AI 集成 | MCP Server，AI 辅助数据提取 |
 | 🐳 Docker 支持 | 一键部署，含所有浏览器 |
@@ -505,7 +505,7 @@ scrapling shell
 
 ## 十二、总结
 
-Scrapling 是现代网页爬虫的完整解决方案：
+Scrapling 的定位：
 
 | 维度 | 传统爬虫 | Scrapling |
 |------|----------|-----------|
@@ -515,11 +515,11 @@ Scrapling 是现代网页爬虫的完整解决方案：
 | 规模 | 单线程 | 并发+暂停恢复 |
 | AI 集成 | 无 | MCP Server |
 
-无论你是数据工程师、AI 开发者还是安全研究员，Scrapling 都能让你**高效、稳定、合法**地获取网页数据。
+数据工程师、AI 开发者和安全研究员都可以用 Scrapling 处理网页数据抓取任务。
 
 ---
 
-**🚀 立即开始：**
+**安装：**
 
 ```bash
 pip install "scrapling[fetchers]"

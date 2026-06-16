@@ -12,7 +12,7 @@ tags = ['工具', 'CLI', 'Rust', 'MCP']
 
 **Domain Check** 是一个通用域名可用性检查引擎，支持 CLI、Rust 库和 MCP 服务器三种使用方式。项目地址：[saidutt46/domain-check](https://github.com/saidutt46/domain-check)
 
-## 为什么选择 Domain Check？
+## 核心特性
 
 ### 1,200+ TLDs 开箱即用
 

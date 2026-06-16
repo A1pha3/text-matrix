@@ -149,13 +149,13 @@ description: "深度解析 Claude Code Telegram Bot (2.3k Stars)：通过 Telegr
 
 ```bash
 uv tool install git+https://github.com/RichardAtCT/claude-code-telegram@v1.3.0
-```textbash
+```bash
 pip install git+https://github.com/RichardAtCT/claude-code-telegram@v1.3.0
-```textbash
+```bash
 git clone https://github.com/RichardAtCT/claude-code-telegram.git
 cd claude-code-telegram
 make dev
-```textbash
+```bash
 # 复制示例配置
 cp .env.example .env
 
@@ -166,7 +166,7 @@ TELEGRAM_BOT_TOKEN=1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
 TELEGRAM_BOT_USERNAME=my_claude_bot
 APPROVED_DIRECTORY=/Users/yourname/projects
 ALLOWED_USERS=123456789
-```textbash
+```bash
 # 生产环境运行
 make run
 
@@ -180,7 +180,7 @@ Claude: [分析代码并提出改进建议]
 You: Looks good. Now run the tests.
 Bot: Running pytest...
 Claude: All 47 tests passed.
-```textbash
+```bash
 # 服务器上认证
 gh auth login
 
@@ -213,7 +213,7 @@ claude-code-telegram/
 ├── poetry.lock              # 依赖锁定
 ├── Makefile                # 构建脚本
 └── README.md              # 项目文档
-```textbash
+```bash
 # SDK 模式（默认）
 claude auth status
 # 或检查 ANTHROPIC_API_KEY

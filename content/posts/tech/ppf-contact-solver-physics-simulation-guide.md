@@ -94,6 +94,6 @@ for step in range(1000):
 
 ## 总结
 
-PPF Contact Solver 填补了 Python 生态中物理接触求解器的空白。虽然商业软件如 PhysX、Bullet 提供了更完善的功能，但 PPF 的开源特性和 Python 原生设计使其成为快速原型和教学研究的理想选择。对于需要处理布料、刚体和杆件混合碰撞的场景，这是一个值得关注的开源工具。
+PPF Contact Solver 在 Python 生态里提供了一个可用的物理接触求解器。商业软件如 PhysX、Bullet 功能更完善，但 PPF 开源且 Python 原生，适合快速原型和教学研究。需要处理布料、刚体和杆件混合碰撞的场景，可以试试。
 
 👉 **GitHub**: https://github.com/st-tech/ppf-contact-solver

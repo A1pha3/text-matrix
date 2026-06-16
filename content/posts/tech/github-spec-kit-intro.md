@@ -12,7 +12,7 @@ tags: ["GitHub", "Spec-Driven Development", "AI Agent", "SDD", "Python"]
 
 [github/spec-kit](https://github.com/github/spec-kit) 是 GitHub 官方开源的一款**规格驱动开发（Spec-Driven Development，SDD）**工具包，当前已获得约 **98,500 颗 Stars** 和 **8,581 个 Fork**，采用 MIT 许可证，主要语言为 Python。
 
-核心定位一句话概括：**让规格文档成为可执行产出物，直接生成可工作的实现代码，而不是停留在"仅供参考"的阶段。**
+核心定位一句话概括：**让规格文档成为可执行产出物，直接生成可工作的实现代码，不再停留在"仅供参考"的阶段。**
 
 | 指标 | 数值 |
 |------|------|
@@ -156,7 +156,7 @@ specify preset add <preset-name>
 
 ## 总结
 
-Spec Kit 是 GitHub 在 AI 原生开发工作流上的重要实践。它没有试图让 AI 凭空生成代码，而是提供了一套**以规格为中心、人机协作的结构化方法论**。对于希望用 AI 智能体做系统性开发而非"vibe coding"的团队，这是一个值得关注的项目。
+Spec Kit 是 GitHub 在 AI 原生开发工作流上的重要实践。它没有让 AI 凭空生成代码，而是提供了一套**以规格为中心、人机协作的结构化方法论**。对于希望用 AI 智能体做系统性开发而非"vibe coding"的团队，可以关注这个项目。
 
 **延伸阅读：**
 

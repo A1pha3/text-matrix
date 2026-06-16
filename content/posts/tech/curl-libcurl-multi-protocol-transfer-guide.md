@@ -14,7 +14,7 @@ tags: ["curl", "libcurl", "HTTP", "URL解析", "C语言", "开源"]
 
 ## 1. 项目概览
 
-**curl**（读作 "see-you-are-el"）是由瑞典开发者 Daniel Stenberg 于 1998 年创立的命令行工具，用于从或向服务器传输数据。二十多年过去，curl 已经成为互联网基础设施级别的存在——它存在于几乎每一台服务器、每一个开发者的工具链，以及无数自动化脚本之中。
+**curl**（读作 "see-you-are-el"）由瑞典开发者 Daniel Stenberg 于 1998 年创立，用于从或向服务器传输数据。二十多年过去，curl 存在于几乎每一台服务器、每一个开发者的工具链，以及无数自动化脚本之中。
 
 curl 项目的核心数据：
 
@@ -27,7 +27,7 @@ curl 项目的核心数据：
 | 维护者 | Daniel Stenberg 主导，全球贡献者 |
 | 支持协议 | 26+（DICT, FILE, FTP, FTPS, GOPHER, GOPHERS, HTTP, HTTPS, IMAP, IMAPS, LDAP, LDAPS, MQTT, MQTTS, POP3, POP3S, RTMP, RTMPS, RTSP, SCP, SFTP, SMB, SMBS, SMTP, SMTPS, TELNET, TFTP, WS, WSS）|
 
-很多人只知道 `curl` 是一个发 HTTP 请求的命令，却不了解它背后有一套精密的库架构——**libcurl**。理解 curl 的架构，对于网络编程、协议调试、嵌入式开发都有直接价值。
+很多人只知道 `curl` 是一个发 HTTP 请求的命令，却不了解它背后有一套精密的库架构——**libcurl**。理解 curl 的架构，对网络编程、协议调试、嵌入式开发都有直接帮助。
 
 ---
 
@@ -78,7 +78,7 @@ int main(void) {
 }
 ```
 
-libcurl 的价值在于：它是**跨平台、跨协议、经过无数次生产验证**的网络传输库。从 iOS/Android 应用到服务器端程序，从 curl 自身到 wget、Git、npm 等工具，都依赖 libcurl。
+curl 的命令行工具只是冰山一角。libcurl 作为底层库，支撑了 iOS/Android 应用、服务器端程序、wget、Git、npm 等无数工具的网络传输。
 
 ---
 
@@ -185,7 +185,7 @@ curl_url 的设计遵循最小惊讶原则：给定一个 URL 字符串，可以
 
 ## 5. 协议支持：26+ 协议是如何实现的
 
-curl 支持 26+ 协议，这不是简单的 if-else 切换，而是通过协议插件式的架构实现的。
+curl 支持 26+ 协议，靠的是协议插件式架构，不是简单的 if-else 切换。
 
 ### 5.1 协议注册机制
 
@@ -309,7 +309,7 @@ seq 10 | parallel -j 10 'curl -s -o /dev/null -w "%{http_code}\n" https://exampl
 
 ## 9. 总结与延伸阅读
 
-curl 的价值远不止一个 `curl` 命令。它代表了一种**重视互操作性、重视兼容性、重视安全**的软件工程哲学。libcurl 作为底层库，让无数应用程序受益于 decades of network protocol engineering.
+curl 的命令行工具只是 libcurl 的前端。libcurl 作为底层库，让无数应用程序受益于 decades of network protocol engineering.
 
 延伸资源：
 - [curl 官方文档](https://curl.se/docs/)

@@ -11,13 +11,13 @@ slug: github-merge-queue-automated-pr-merging-guide
 
 # GitHub Merge Queue 自动化 PR 合入完全指南
 
-GitHub Merge Queue 解决的不是"怎么合 PR"，而是"多个 PR 同时就绪时，怎么避免每次合入都重新排队等 CI、重新解决冲突"。它把合入从单次手动操作变成批量自动验证流水线——理解这一点，后面所有配置才有意义。
+GitHub Merge Queue 解决的不是"怎么合 PR"，而是"多个 PR 同时就绪时，怎么避免每次合入都重新排队等 CI、重新解决冲突"。它把合入从单次手动操作变成批量自动验证流水线。
 
-本文覆盖 GitHub 原生 Merge Queue 的完整配置链路，以及 [github-merge-queue](https://github.com/apps/github-merge-queue) App 的增强能力。读完你会知道：这套机制在什么场景下省时间、在什么场景下反而添乱，以及怎么配才能让它真正跑起来。
+本文覆盖 GitHub 原生 Merge Queue 的完整配置链路，以及 [github-merge-queue](https://github.com/apps/github-merge-queue) App 的增强能力：这套机制在什么场景下省时间、在什么场景下反而添乱，以及怎么配才能让它真正跑起来。
 
 <!--more-->
 
-## 读完你会
+## 本文覆盖
 
 - [ ] 说清 Merge Queue 三条核心线（Batch、Group Merging、Stack）各自管什么、不管什么
 - [ ] 写一份能同时处理 `pull_request` 和 `merge_group` 事件的 GitHub Actions workflow
@@ -69,7 +69,7 @@ flowchart TB
     B -.-> G
 ```
 
-三条线各自独立，但共享同一个队列。理解它们的边界比记住所有配置参数更重要：
+三条线各自独立，但共享同一个队列：
 
 | 机制 | 解决的问题 | 不负责的事 |
 |------|-----------|-----------|

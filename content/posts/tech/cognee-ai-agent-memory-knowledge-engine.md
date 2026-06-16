@@ -12,16 +12,9 @@ tags: ["AI", "Agent", "记忆系统", "知识图谱", "向量搜索", "LLM", "Py
 
 ---
 
-## §1 学习目标
+## §1 项目定位
 
-完成本篇文章后，你将能够：
-
-1. **理解 AI Agent 记忆系统的必要性**：为何长期记忆对 Agent 至关重要
-2. **掌握 Cognee 的核心架构**：向量搜索+知识图谱的双轨机制
-3. **理解四大核心操作**：remember、recall、forget、improve
-4. **掌握 Cognee 的部署方式**：本地部署 vs 云端托管
-5. **能够集成 Cognee 到 AI Agent**：使用 Python SDK 实现持久记忆
-6. **了解 Cognee 的研究基础**：知识图谱与 LLM 推理优化
+Cognee 是一个 AI Agent 记忆引擎，做四件事：**remember / recall / forget / improve**，底层用向量搜索 + 知识图谱双轨检索。本文覆盖：架构设计、四大操作详解、双轨搜索原理、部署方案、Agent 集成方式。
 
 ---
 
@@ -51,7 +44,7 @@ tags: ["AI", "Agent", "记忆系统", "知识图谱", "向量搜索", "LLM", "Py
 
 **Cognee 的设计灵感**：模拟人类记忆的层次结构
 
-### 2.3 Cognee 的核心定位
+### 2.3 Cognee 的定位
 
 > **Cognee = Knowledge Engine for AI Agent Memory**
 

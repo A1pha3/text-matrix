@@ -25,7 +25,7 @@ description: "Squad 把 GitHub Copilot 的 Agent 模式扩展成一支多角色 
 
 Squad（官方仓库：[bradygaster/squad](https://github.com/bradygaster/squad)）是一个**AI 智能体团队协作框架**，通过 GitHub Copilot 的 Agent 模式，让你拥有一个**完整的 AI 开发团队**——包括前端、后端、测试、架构师等多个专业角色。
 
-Squad 的做法是，不是把 Copilot 当成一个聊天窗口来用在项目里部署一支带角色分工的 AI 团队——这条团队的信息存在 `.squad/` 目录下，跨会话保留，下次打开项目时它还记得之前做过什么决策、写过什么代码。
+Squad 的做法不是把 Copilot 当成一个聊天窗口来用，而是在项目里部署一支带角色分工的 AI 团队——这条团队的信息存在 `.squad/` 目录下，跨会话保留，下次打开项目时它还记得之前做过什么决策、写过什么代码。
 
 ### 2.2 核心数据
 

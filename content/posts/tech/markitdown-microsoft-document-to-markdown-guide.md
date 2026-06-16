@@ -432,13 +432,9 @@ print(f"Text Content: {result.text_content[:500]}...")
 
 ## §11 总结
 
-MarkItDown 将各种格式的文档统一转换为 Markdown，为 LLM 和 RAG 管道提供了标准化的输入格式。其主要优势在于：
+MarkItDown 解决的核心问题是：**把 PDF/Office/图片/音频等异构文档统一转成 Markdown，直接喂给 LLM 或 RAG 管道**。它的优势在于格式覆盖广（12 种）、依赖轻（按格式按需安装）、输出保留结构（标题/列表/表格/链接不丢）。局限也很明显：复杂排版的 PDF 转换精度不如 Azure Document Intelligence 付费服务；OCR 依赖外部 LLM，有额外成本和延迟。
 
-1. **格式全面**：覆盖 PDF、Office、图片、音频等主流格式
-2. **结构保留**：Markdown 输出保留标题、列表、表格、链接
-3. **LLM 原生**：输出格式天然适配 GPT-4o 等主流 LLM
-4. **插件生态**：MCP 服务器、OCR 插件等扩展能力
-5. **微软品质**：AutoGen 团队维护，质量有保障
+如果你的场景是「批量文档 → Markdown → LLM 处理」，MarkItDown 是目前最轻量的选择。如果对转换精度要求高，建议配合 Azure Document Intelligence 使用。
 
 ## 附录：安装速查表
 
@@ -456,4 +452,4 @@ pip install 'markitdown[pdf]' markitdown-ocr openai
 pip install 'markitdown[youtube-transcription]'
 ```
 
-*🦞 本文由钳岳星君基于 [microsoft/markitdown](https://github.com/microsoft/markitdown) 项目撰写，MIT 许可证。*
+*本文基于 [microsoft/markitdown](https://github.com/microsoft/markitdown) 项目撰写，MIT 许可证。*

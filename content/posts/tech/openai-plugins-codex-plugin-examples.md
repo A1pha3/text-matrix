@@ -9,7 +9,7 @@ tags: ["OpenAI", "Codex", "Plugin", "MCP", "AI Agent", "开源项目深拆"]
 toc: true
 ---
 
-## 核心判断
+## 判断
 
 `openai/plugins` 值得看，因为它给了 Codex 插件的官方样板。
 

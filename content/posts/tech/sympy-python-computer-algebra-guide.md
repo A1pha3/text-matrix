@@ -14,11 +14,11 @@ tags: ["SymPy", "Python", "符号计算", "数学", "科学计算"]
 
 ### 1.1 SymPy 是什么
 
-**SymPy** 是一个**纯 Python 编写的计算机代数系统（Computer Algebra System, CAS）**，用于**符号数学计算**。
+**SymPy** 是一个纯 Python 编写的计算机代数系统（Computer Algebra System, CAS），用于符号数学计算。
 
 > "SymPy is an open-source computer algebra system written in pure Python."
 
-**核心定位**：不依赖外部库的轻量级符号计算库，适合教学、科研和工程应用。
+不依赖外部库，适合教学、科研和工程应用。
 
 ### 1.2 核心数据
 
@@ -615,16 +615,16 @@ bin/test sympy/core/tests/test_arit.py
 
 ## 十二，总结
 
-SymPy 是**纯 Python 符号计算的标杆项目**：
+SymPy 是纯 Python 符号计算项目：
 
 | 维度 | 说明 |
 |------|------|
-| 🐍 **纯 Python** | 无外部依赖，易于部署 |
-| 📐 **符号计算** | 导数、积分、极限、方程求解 |
-| 🔢 **矩阵运算** | 特征值、行列式、矩阵分解 |
-| ⚛️ **物理学** | 经典力学、量子力学模块 |
-| 📊 **高性能** | 自动简化、记忆化优化 |
-| 🤝 **易集成** | NumPy、SciPy、Matplotlib |
+| 纯 Python | 无外部依赖，易于部署 |
+| 符号计算 | 导数、积分、极限、方程求解 |
+| 矩阵运算 | 特征值、行列式、矩阵分解 |
+| 物理学 | 经典力学、量子力学模块 |
+| 高性能 | 自动简化、记忆化优化 |
+| 易集成 | NumPy、SciPy、Matplotlib |
 
 ---
 

@@ -19,7 +19,7 @@ toc: true
 
 > Google aggregates editors. /last30days searches people.
 
-——它在和 Google 抢的不是"搜索"，是**信号源**。每个平台都是 walled garden：Google 不抓 Reddit 评论、ChatGPT 拿了 Reddit 数据但看不到 X、TikTok 永远是黑洞。但 agent 可以**带着你自己的 cookie / API key** 一次性跨过这些墙，把"人们在哪儿投票"这件事变成可计算的。
+——它在和 Google 抢的不是"搜索"，是**信号源**。每个平台都是 walled garden：Google 不抓 Reddit 评论、ChatGPT 拿了 Reddit 数据但看不到 X、TikTok 永远是黑洞。但 agent 可以带着你自己的 cookie / API key 一次性跨过这些墙，让"人们在哪儿投票"这件事可以被交叉比对和量化。
 
 这篇文章回答三个问题：
 
@@ -97,7 +97,7 @@ README 给了几个反例，差异是戏剧性的：
 
 ## Cross-source cluster merging
 
-v2 把同一个故事在 Reddit + X + YouTube 上报成 3 条，v3 用 entity-based overlap detection 合并成 1 个 cluster。这是它和"搜 13 个平台然后 paste 13 个结果"的关键区别。
+v2 把同一个故事在 Reddit + X + YouTube 上报成 3 条，v3 用 entity-based overlap detection 合并成 1 个 cluster。这和"搜 13 个平台然后 paste 13 个结果"是两套逻辑。
 
 `/last30days "Iran vs USA"` 实际输出形式是：
 
@@ -113,7 +113,7 @@ v2 把同一个故事在 Reddit + X + YouTube 上报成 3 条，v3 用 entity-ba
 
 ## "为什么能 #1"——和当前 agent 生态的契合点
 
-把时间线拉长看，`last30days-skill` 持续占据 trending 榜首靠的不是单点创新，而是**踩中了 2026 年 agent 生态的几个转折点**：
+把时间线拉长看，`last30days-skill` 持续占据 trending 榜首，背后踩中了 2026 年 agent 生态的几个转折点：
 
 - **agent skill marketplace 标准化**：`agentskills.io` 规范被 Claude Code / Codex / Cursor / Gemini CLI 等 50+ harness 采纳，让"一个 skill 一次写、跨平台用"成为可能
 - **数据墙花园被自有 cookie / key 攻破**：X 不开放 API 但用户可以登入浏览器，agent 用 vendored Bird 客户端（项目里直接 vendored Node.js 包）拿 X 数据，这是合规的灰色但合法区域

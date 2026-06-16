@@ -10,20 +10,6 @@ tags: ["fff.nvim", "Neovim", "MCP", "AI Agent", "文件搜索", "Fuzzy"]
 
 # FFF.nvim：让 AI 和 Neovim 拥有极速文件搜索与记忆能力
 
-## 学习目标
-
-通过本文，你将全面掌握以下核心能力：
-
-- 深入理解 FFF.nvim 的项目定位与设计理念
-- 掌握在 AI Agent（Claude Code、Codex、OpenCode）中集成 FFF MCP 服务的方法
-- 学会在 Neovim 中安装、配置和使用 FFF.nvim
-- 理解 Frecency（频率+时效）排序算法的原理
-- 掌握多种搜索模式（Plain/Regex/Fuzzy）的使用场景
-- 熟练运用 Git 状态高亮、多选、Quickfix 集成等高级功能
-- 学会故障排除和日志查看方法
-
----
-
 ## 1. 项目概述
 
 ### 1.1 是什么

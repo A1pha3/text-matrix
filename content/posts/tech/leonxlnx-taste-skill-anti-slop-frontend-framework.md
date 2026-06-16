@@ -12,7 +12,7 @@ tags = ['AI', '前端', '设计', '开源']
 
 代码质量 ≠ 设计质量。LLM 能理解语法，但不理解「这个页面应该有呼吸感」或者「按钮的微交互应该给用户一种可靠的触觉反馈」。你没法用自然语言精确描述设计意图，于是 AI 退回到它见过最多的安全模式：居中、sans-serif、system color scheme。这就是所谓的 **slop**。
 
-[Taste Skill](https://github.com/Leonxlnx/taste-skill) 是 Leonxlnx 开源的答案。不是又一个 UI 组件库，不是 Tailwind 插件，而是一套嵌入 AI 编程工具（Claude Code、Codex CLI、Cursor）的**设计指导 Skills**，让 AI 在生成代码之前先建立起设计约束。MIT 协议。
+[Taste Skill](https://github.com/Leonxlnx/taste-skill) 是 Leonxlnx 开源的答案。它走的是另一条路：不提供组件，不提供 CSS 工具类，而是把设计约束以 Skill 形式注入 AI 编程工具（Claude Code、Codex CLI、Cursor），让模型在写代码之前先确定设计方向。MIT 协议。
 
 > 延伸阅读：[stop-slop：把 AI 写作从套话和模板句里拽出来的 skill]({{< relref "stop-slop-remove-ai-tells-from-prose.md" >}}) 处理文字成稿的 slop；本文聚焦界面生成阶段的 slop。
 
@@ -40,7 +40,7 @@ tags = ['AI', '前端', '设计', '开源']
 
 ## 三个旋钮控制设计输出：VARIANCE / MOTION / DENSITY
 
-Taste Skill v2 的灵魂不在规则列表里，而在三个连续刻度上。每个参数 1-10，不同组合产生完全不同的设计语言。这不是简单的「高更好」或「低更好」——一组好的参数取决于你要构建什么。
+Taste Skill v2 的灵魂不在规则列表里，而在三个连续刻度上。每个参数 1-10，不同组合产生完全不同的设计语言。参数没有简单的"高更好"或"低更好"——一组好的参数取决于你要构建什么。
 
 ### DESIGN_VARIANCE（布局实验度，1-10）
 
@@ -136,7 +136,7 @@ AI 生成的设计特征：
 
 ---
 
-## 完整工作流：从零到可上线 UI 的闭环
+## 完整工作流：从零到可上线 UI
 
 ```mermaid
 flowchart TD
@@ -251,6 +251,6 @@ Figma 设计稿是像素级精确的，但制作成本高、迭代慢。Taste Sk
 
 ---
 
-20K+ Stars 不是偶然。AI 编程从"能不能写"走到"写得好不好"的阶段，设计质量会像代码质量一样成为刚需。Taste Skill 目前是这个方向上最完整的开源方案。
+20K+ Stars 背后是一个正在发生的变化：AI 编程从"能不能写"走到"写得好不好"，设计质量正在变成和代码质量同等级的刚需。Taste Skill 目前是这个方向上最完整的开源方案。
 
-建议从 `design-taste-frontend`（v2）开始，花 15 分钟用三个不同参数组合生成同一个页面——你会直观感受到「给 AI 注入品味」到底意味着什么。
+从 `design-taste-frontend`（v2）开始，花 15 分钟用三个不同参数组合生成同一个页面——参数调一下、输出变一截，这件事试过就明白了。

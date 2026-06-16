@@ -14,7 +14,7 @@ Awesome AI Apps：+LLM 应用实战项目合集
 
 . Awesome AI Apps 是什么
 
-**Awesome AI Apps** 是一个全面的 **LLM 应用实战项目集合**，收录了 80+ 个实用的 AI 应用示例，涵盖文本 Agent、语音助手、RAG 应用、MCP 工具等。项目按难度分层，从入门级 Starter 到生产级 Advanced，助你从零掌握各种 AI 框架和技术栈。
+**Awesome AI Apps** 收录了 80+ 个 LLM 应用实战项目，涵盖文本 Agent、语音助手、RAG 应用、MCP 工具等。项目按难度分层，从入门级 Starter 到生产级 Advanced。
 
 . 核心数据
 
@@ -497,17 +497,7 @@ Week 3: 高级特性
 
 十二、总结
 
-Awesome AI Apps 是 **AI 应用开发的实战宝库**：
-
-| 维度 | 说明 |
-|------|------|
-| 📚 内容丰富 | 80+ 项目，覆盖所有主流场景 |
-| 🎯 分层清晰 | Starter → Simple → Advanced，循序渐进 |
-| 🛠️ 框架全面 | Agno、CrewAI、LangChain、DSPy 等全覆盖 |
-| 🏢 企业级 | 包含生产级 RAG、Agent 流水线 |
-| 🤝 社区活跃 | 50+ 贡献者，持续更新 |
-
-无论你是 AI 初学者还是资深工程师，都能在这里找到有价值的参考实现。
+Awesome AI Apps 收录了 80+ 个 LLM 应用项目，从 Starter 到 Advanced 分层排列，覆盖 Agno、CrewAI、LangChain、DSPy 等主流框架，包含生产级 RAG 和 Agent 流水线。50+ 贡献者持续更新。
 
 ---
 

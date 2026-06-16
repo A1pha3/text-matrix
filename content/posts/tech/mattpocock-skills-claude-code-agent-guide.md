@@ -10,17 +10,15 @@ tags: ["Claude Code", "Agent Skills", "Matt Pocock", "TDD", "PRD"]
 
 # Matt Pocock Skills：Claude Code Agent 技能集合完全指南
 
-## 学习目标
+## 本文覆盖范围
 
-通过本文，你将全面掌握以下核心能力：
-
-- 深入理解 Matt Pocock Skills 的设计理念与架构
-- 掌握全部 17 个技能的定位、使用场景和调用方式
-- 学会在 Planning & Design 阶段使用 PRD、计划分解、接口设计等技能
-- 掌握 TDD、问题诊断、代码架构改进等开发技能
-- 熟练运用 Git 保护、预提交钩子等工具链技能
-- 学会构建技能写作、知识管理的工作流
-- 理解 Agent Skills 的安装、配置与管理方法
+- Matt Pocock Skills 的设计理念与架构
+- 全部 17 个技能的定位、使用场景和调用方式
+- Planning & Design 阶段的 PRD、计划分解、接口设计等技能
+- TDD、问题诊断、代码架构改进等开发技能
+- Git 保护、预提交钩子等工具链技能
+- 技能写作、知识管理的工作流
+- Agent Skills 的安装、配置与管理方法
 
 ---
 
@@ -44,9 +42,9 @@ tags: ["Claude Code", "Agent Skills", "Matt Pocock", "TDD", "PRD"]
 | 语言 | Shell 100% |
 | 最新提交 | 2026-04-01 |
 
-### 1.3 设计哲学
+### 1.3 设计原则
 
-Matt Pocock Skills 的设计遵循以下核心原则：
+Matt Pocock Skills 的设计遵循以下原则：
 
 **渐进式披露**：每个技能的说明文档分为多个层级——元数据（名称、描述）始终在上下文 (~100 tokens)，完整指令在技能触发时加载，bundled resources 按需使用。
 
@@ -560,7 +558,7 @@ Matt Pocock Skills 遵循**渐进式披露**原则：
 ├─────────────────────────────────────────┤
 │  指令层（技能触发时加载 <500 lines）   │
 │  - 详细使用说明                        │
-│  - 最佳实践                            │
+│  - 推荐做法                            │
 ├─────────────────────────────────────────┤
 │  Resources 层（按需加载）              │
 │  - scripts/                            │
@@ -735,9 +733,9 @@ A: 完全支持。你可以：
 
 ## 10. 总结
 
-Matt Pocock Skills 代表了 Claude Code 技能生态的一个重要方向——不是简单地提供提示词模板，而是提供**完整的开发方法论**。
+Matt Pocock Skills 代表了 Claude Code 技能生态的一个重要方向——提供**完整的开发方法论**，而非简单的提示词模板。
 
-**关键价值回顾**：
+**价值回顾**：
 
 - **Planning & Design**：从需求到实现的完整规划体系
 - **Development**：TDD、问题诊断、架构改进的开发实践
@@ -763,7 +761,7 @@ npx skills@latest add mattpocock/skills/tdd
 > tdd
 ```
 
-随着 Claude Code 技能的生态发展，Matt Pocock Skills 为我们展示了如何将 AI 能力与工程实践建议结合，打造真正提升生产力的开发体验。
+随着 Claude Code 技能的生态发展，Matt Pocock Skills 展示了如何将 AI 能力与工程实践结合，打造提升生产力的开发体验。
 
 ---
 

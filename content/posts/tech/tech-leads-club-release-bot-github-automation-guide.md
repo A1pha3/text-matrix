@@ -170,7 +170,7 @@ if: |
   !startsWith(github.event.head_commit.message, 'chore(release):')  # ← 非 release commit
 ```
 
-这意味着：
+具体效果：
 - 人工 push 到 main → 触发 approve-release + security-scan
 - Bot push release commit → 两个 job 都不触发，release job 的 `needs` 得不到满足，自然不会发布
 - PR labeled with `action: snapshot` → 走独立的 snapshot job，不走 main 分支流程
@@ -354,6 +354,6 @@ Critical: 0 | High: 2 | Medium: 3
 
 tech-leads-club-release-bot 是一个**高度定位于 Nx Monorepo 生态的发布自动化解决方案**，它通过 GitHub App 身份精控权限、Nx Release 分组发布、Snyk 安全扫描前置和环境审批 Gate，构建了一套适合多包 AI 工具库（CLI + Skills Catalog + MCP Server）的安全发布流水线。
 
-其最值得关注的设计细节是**防自触发机制**——通过 `github.actor` 和 commit message 双重检查，确保 Bot push 的 release commit 不会触发二次发布，形成了一个优雅的死循环防护。这对于任何以 bot 身份操作 git 的自动化系统都是值得借鉴的思路。
+其中最值得留意的设计细节是**防自触发机制**——通过 `github.actor` 和 commit message 双重检查，确保 Bot push 的 release commit 不会触发二次发布，形成了一个可靠的死循环防护。这对于任何以 bot 身份操作 git 的自动化系统都有借鉴意义。
 
-如果你的项目使用 Nx 管理多包发布、对安全性有高要求、且需要在发布前强制通过安全扫描，tech-leads-club-release-bot 的架构是一个值得参考的范本。
+如果你的项目使用 Nx 管理多包发布、对安全性有高要求、且需要在发布前强制通过安全扫描，可以参考这套架构。

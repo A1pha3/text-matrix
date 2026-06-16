@@ -1,8 +1,8 @@
 ---
-title: "TensorLogic：Pedro Domingos论文实现·神经符号统一推理框架·FB15k-237基准MRR 0.347"
+title: "TensorLogic：Pedro Domingos 论文实现·神经符号统一推理框架·FB15k-237 基准 MRR 0.347"
 date: "2026-04-24T19:10:00+08:00"
 slug: "tensorlogic-ai-unified-reasoning-guide"
-description: "TensorLogic是基于Pedro Domingos论文的Python实现，通过Tensor方程统一神经推理和符号推理。Boolean模式零幻觉、RESCAL自动谓词发明、Transformer/RNN全部用Tensor方程表达，FB15k-237 MRR 0.347超越LibKGE参考实现。"
+description: "TensorLogic 是基于 Pedro Domingos 论文的 Python 实现，通过 Tensor 方程统一神经推理和符号推理。Boolean 模式零幻觉、RESCAL 自动谓词发明、Transformer/RNN 全部用 Tensor 方程表达，FB15k-237 MRR 0.347 超越 LibKGE 参考实现。"
 draft: false
 categories: ["技术笔记"]
 tags: ["TensorLogic", "神经符号推理", "知识图谱", "RESCAL", "Transformer"]
@@ -20,7 +20,7 @@ tags: ["TensorLogic", "神经符号推理", "知识图谱", "RESCAL", "Transform
 
 > 原文：`"A unified programming language for AI that combines neural and symbolic reasoning through tensor equations."`
 
-**定位**：不是又一个 LLM 替代品，而是**神经+符号混合推理**的基础设施——在需要可解释性、零幻觉、或高效小模型的场景下，提供一条清晰的技术路径。
+**定位**：**神经+符号混合推理**的基础设施——在需要可解释性、零幻觉、或高效小模型的场景下，提供一条清晰的技术路径。它不是 LLM 替代品。
 
 ### 1.2 关键数据
 
@@ -31,7 +31,7 @@ tags: ["TensorLogic", "神经符号推理", "知识图谱", "RESCAL", "Transform
 | **语言** | Python 100% | PyTorch 生态 |
 | **创建时间** | 2025-10-16 | 较新项目 |
 | **最新提交** | 2026-04-24 | 活跃维护中 |
-| **论文引用** | arXiv:2510.12269 | 学术支撑扎实 |
+| **论文引用** | arXiv:2510.12269 | 有论文支撑 |
 
 ### 1.3 TensorLogic 解决什么问题
 
@@ -45,13 +45,11 @@ tags: ["TensorLogic", "神经符号推理", "知识图谱", "RESCAL", "Transform
 
 **TensorLogic 的应对**：
 
-```
-✅ Tensor方程 = 统一的计算原语（神经+符号都用）
-✅ Boolean模式 = 零幻觉的符号推理（严格逻辑）
-✅ Continuous模式 = 可学习的嵌入推理（概率化）
-✅ Predicate Invention = 自动发现隐藏关系（无需标签）
-✅ 模型极小 = 10-500KB vs LLM的GB级
-```
+- Tensor 方程 = 统一的计算原语（神经+符号都用）
+- Boolean 模式 = 零幻觉的符号推理（严格逻辑）
+- Continuous 模式 = 可学习的嵌入推理（概率化）
+- Predicate Invention = 自动发现隐藏关系（无需标签）
+- 模型极小 = 10-500KB vs LLM 的 GB 级
 
 ### 1.4 与 Kocoro-lab 其他项目的关系
 
@@ -77,9 +75,9 @@ TensorLogic (推理引擎) ←→ 知识图谱/规则库
 Tensor Programs 是 TensorLogic 的基础抽象——用**Tensor 方程**同时表达**数据**（facts, relations, weights）和**规则**（equations）。
 
 **基本思路**：
-- 万物皆 Tensor：实体、关系、权重都是多维数组
-- 计算即方程：所有操作都表示为 tensor equation
-- 前向/后向链：推理过程是 tensor 的传播
+- 实体、关系、权重都是多维数组
+- 所有操作都表示为 tensor equation
+- 推理过程是 tensor 的传播
 
 **与标准 PyTorch 的区别**：
 
@@ -758,7 +756,7 @@ PYTHONPATH=. python3 examples/shakespeare/generate_tensorlogic_shakespeare.py
 
 ### 7.2 与 LLM 的互补关系
 
-TensorLogic**不**是 LLM 替代品，而是互补工具：
+TensorLogic 是 LLM 的互补工具，不是替代品：
 
 | 场景 | 推荐方案 |
 |------|----------|
@@ -806,19 +804,9 @@ LLM生成自然语言回答
 
 ## 九、总结
 
-### 9.1 关键要点
+TensorLogic 把神经推理和符号推理统一到 Tensor 方程这一种计算原语下。Boolean 模式提供零幻觉的确定性推理，Continuous 模式提供可学习的概率推理，RESCAL 谓词发明能在无标签条件下发现隐藏关系。FB15k-237 上 MRR 0.347 超过 LibKGE 参考实现 14%，模型体积只有 10-500KB——在需要可解释性、零幻觉或边缘部署的场景下，这是一条值得评估的技术路径。
 
-TensorLogic 代表了**神经符号 AI**的一个重要方向：
-
-| 要点 | 说明 |
-|------|------|
-| **统一抽象** | Tensor 方程同时表达神经+符号计算 |
-| **零幻觉** | Boolean 模式提供逻辑保证 |
-| **自动发现** | RESCAL 无需标签即可发明新谓词 |
-| **极小模型** | 10-500KB，适合边缘部署 |
-| **学术支撑** | 基于 Domingos 的论文，可复现可追溯 |
-
-### 9.2 适用场景
+### 9.1 适用场景
 
 | 场景 | 推荐模式 |
 |------|----------|

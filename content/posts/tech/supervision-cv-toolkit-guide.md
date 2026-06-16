@@ -18,7 +18,7 @@ tags: ["计算机视觉", "Python", "目标检测", "Roboflow", "开源工具"]
 
 计算机视觉应用开发的常见困境：模型本身日臻成熟，但数据后处理、可视化和业务逻辑的工程代码往往冗长且重复。Supervision 的核心设计理念是**模型无关（model agnostic）**——无论你使用 Ultralytics YOLO、Transformers、MMDection 还是 Roboflow 自研的 rfdetr，统一使用 `sv.Detections` 数据结构承接推理结果，再调用统一 API 完成后续处理。
 
-## 核心能力
+## 主要功能
 
 ### 检测后处理
 
@@ -70,8 +70,8 @@ pip install pillow rfdetr
 
 ## 模块化设计优势
 
-Supervision 的定位介于底层库和端到端框架之间——它不提供模型训练能力，而是专注于「模型输出之后」的工程问题。对于已掌握模型训练流程、需要在业务系统中集成视觉能力的团队，Supervision 可以显著减少重复轮子。同时，由于其与 Roboflow 生态深度绑定，搭配 [Autodistill](https://github.com/autodistill/autodistill)（自动标注）和 [Inference](https://github.com/roboflow/inference)（推理服务器）可形成完整的本地化视觉模型开发和部署闭环。
+Supervision 的定位介于底层库和端到端框架之间——它不提供模型训练能力，而是专注于「模型输出之后」的工程问题。对于已掌握模型训练流程、需要在业务系统中集成视觉能力的团队，Supervision 可以显著减少重复轮子。同时，由于其与 Roboflow 生态深度绑定，搭配 [Autodistill](https://github.com/autodistill/autodistill)（自动标注）和 [Inference](https://github.com/roboflow/inference)（推理服务器）可形成从标注、训练到推理部署的完整本地化工作流。
 
 ## 总结
 
-Supervision 的关键价值在于将计算机视觉工程中的高频操作抽象为可组合的工具函数，让开发者专注于业务逻辑而非重复的工程实现。38,718 颗星和持续活跃的社区维护说明了其在视觉开发生态中的实用定位。对于需要在项目中快速集成视觉检测能力、又不希望被特定框架绑定的团队，这是一个值得纳入工具箱的选项。
+Supervision 将计算机视觉工程中的高频操作抽象为可组合的工具函数，让开发者专注业务逻辑而非重复的工程实现。38,718 颗星和持续活跃的社区维护表明它在视觉开发生态中有实际需求。需要在项目中集成视觉检测能力、又不想绑定特定框架的团队可以纳入工具箱。

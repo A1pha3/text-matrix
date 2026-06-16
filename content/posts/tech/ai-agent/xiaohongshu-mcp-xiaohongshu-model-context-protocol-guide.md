@@ -17,7 +17,7 @@ description: "全面解析 xiaohongshu-mcp (12.4k Stars)：小红书Model Contex
 
 ## 学习目标
 
-完成本文档后，可以：
+本文档覆盖以下内容：
 
 - ✅ 理解 xiaohongshu-mcp 的核心定位与设计理念
 - ✅ 掌握 xiaohongshu-mcp 的完整功能体系

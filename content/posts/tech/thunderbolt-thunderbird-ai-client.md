@@ -32,7 +32,7 @@ tags: ["AI", "Tauri", "MCP", "端到端加密", "自托管"]
 
 ### 1.2 项目定位
 
-Thunderbolt 是 Mozilla Thunderbird（著名开源邮件客户端）团队打造的**企业级 AI 客户端**，核心理念：
+Thunderbolt 是 Mozilla Thunderbird（著名开源邮件客户端）团队打造的**企业级 AI 客户端**，
 
 > **"AI You Control: Choose your models. Own your data. Eliminate vendor lock-in."**
 > "AI 由你掌控：选择你的模型，拥有你的数据，消除供应商锁定。"
@@ -862,7 +862,7 @@ stateDiagram-v2
 
 ### 9.4 社区贡献
 
-Thunderbolt 欢迎所有形式的贡献：
+贡献指南见仓库 docs/CONTRIBUTING.md：
 
 ```bash
 # 查看贡献指南
@@ -879,13 +879,13 @@ cat docs/architecture.md
 
 ## §10 总结
 
-### 10.1 项目价值
+### 10.1 核心定位
 
-Thunderbolt 代表了 AI 客户端的一种新范式：
+Thunderbolt 走了一条与闭源 AI 客户端不同的路：
 
 ```mermaid
 flowchart TD
-    subgraph Value[Thunderbolt核心价值]
+    subgraph Value[Thunderbolt核心定位]
         S1[用户主权]
         S2[隐私保护]
         S3[灵活性]
@@ -933,17 +933,17 @@ flowchart TD
 
 ### 10.3 与 Thunderbird 的关系
 
-Thunderbolt 由 Mozilla Thunderbird 团队开发，继承了 Thunderbird 的核心理念：
+Thunderbolt 由 Mozilla Thunderbird 团队开发，继承了 Thunderbird 的
 
 > **"Take back your inbox"** → **"Take back your AI"**
 
-从邮件主权延伸到 AI 主权，Thunderbird 正在构建用户控制的 AI 未来。
+从邮件到 AI，Thunderbird 的思路一致：用户数据由用户控制。
 
 ---
 
 
 
-### 🚀 快速配置决策树
+### 快速配置决策树
 
 ```mermaid
 flowchart TD
@@ -973,7 +973,7 @@ flowchart TD
     style LOW fill:#fef3c7,stroke:#f59e0b
 ```
 
-### ⚙️ 配置参考表
+### 配置参考表
 
 **API 提供商配置**：
 
@@ -1000,7 +1000,7 @@ flowchart TD
 | `e2e.key_sharing` | `direct/indirect` | 密钥共享方式 |
 | `e2e.key_rotation` | `30d/90d/1y` | 密钥轮换周期 |
 
-### 🔧 故障排除
+### 故障排除
 
 ```mermaid
 flowchart TD
@@ -1049,4 +1049,4 @@ flowchart TD
 
 ---
 
-*🦞 撰写于 2026 年 4 月 19 日*
+*撰写于 2026 年 4 月 19 日*

@@ -19,14 +19,12 @@ tags: ["RL", "强化学习", "Bellman方程", "Q-Learning", "Policy Gradient", "
 
 ## §1 学习目标
 
-完成本篇文章后，你将能够：
-
-1. **理解 RL 数学框架**：从数学角度掌握策略、状态值、动作值等核心概念
-2. **掌握 Bellman 方程**：推导和应用 Bellman 方程与 Bellman 最优方程
-3. **理解经典算法**：Value Iteration、Policy Iteration、Q-Learning、Sarsa 等
-4. **掌握 Monte Carlo 与 TD 方法**：两种无模型学习方法的核心原理与对比
-5. **理解深度 RL 基础**：DQN、Experience Replay、Policy Gradient、Actor-Critic
-6. **理解随机近似与 SGD**：理解 RL 算法的优化理论根基
+1. 从数学角度掌握策略、状态值、动作值等核心概念
+2. 推导和应用 Bellman 方程与 Bellman 最优方程
+3. 理解 Value Iteration、Policy Iteration、Q-Learning、Sarsa 等经典算法
+4. 掌握 Monte Carlo 与 TD 两种无模型学习方法的核心原理与对比
+5. 理解 DQN、Experience Replay、Policy Gradient、Actor-Critic 等深度 RL 基础
+6. 理解 RL 算法的优化理论根基：随机近似与 SGD
 
 ---
 

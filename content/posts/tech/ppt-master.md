@@ -10,7 +10,7 @@ tags: ["PPT", "AI", "PowerPoint", "Claude Code", "Python", "开源工具"]
 
 # PPT Master：AI 从 PDF/DOCX/URL/Markdown 生成真正可编辑的 PPTX（不是图片）
 
-做 PPT 这件事，AI 工具已经很多了——Gamma、Copilot、各种生成式 PPT 产品。但它们有一个共同的问题：**输出的不是真正的 PPTX，而是图片或网页截图**。
+做 PPT 这件事，AI 工具已经很多了——Gamma、Copilot、各种生成式 PPT 产品。但它们有一个共同的问题：**输出的是图片或网页截图，不是真正的 PPTX**。
 
 PPT Master 解决了这个问题。
 
@@ -20,7 +20,7 @@ GitHub 8.2k stars，MIT 协议，一个运行在 AI IDE 里的工作流技能，
 
 ---
 
-## 一、核心问题：为什么现有 AI PPT 工具不够用
+## 一、问题：为什么现有 AI PPT 工具不够用
 
 AI PPT 工具有四类：
 
@@ -33,13 +33,13 @@ AI PPT 工具有四类：
 
 前三种工具更快更便宜，但如果你做完 PPT 后还需要：**合并到正式材料、做 pitch deck、写报告、做定制化修改**——图片式输出就无法满足需求。
 
-PPT Master 面向的是：**需要在生成后继续编辑 PowerPoint 的场景**。这意味着输出本身就是一个更昂贵的工件（更复杂的结构、更精细的排版），生成成本自然比模板填充高。
+PPT Master 面向的是：**需要在生成后继续编辑 PowerPoint 的场景**。输出本身就是一个更昂贵的工件（更复杂的结构、更精细的排版），生成成本自然比模板填充高。
 
 ---
 
 ## 二、工作原理：在 AI IDE 里跑一个工作流
 
-PPT Master 不是一个独立的 Web 应用，而是一个"skill"（工作流），运行在具备 agent 能力的 AI IDE 里：
+PPT Master 是一个运行在 AI IDE 里的"skill"（工作流），不是独立的 Web 应用：
 
 ```
 你 → 告诉 AI："请根据这个 PDF 生成 PPT"

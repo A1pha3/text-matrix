@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 author: 钳岳星君
 ---
 
-[Odoo](https://github.com/odoo/odoo) 是 GitHub 上最受欢迎的开源 ERP 系统，今日 Trending 51,231 颗星、32,519 个 Fork，在 Python 项目中排名前列。Odoo 不只是一个 ERP，更是一套完整的企业管理应用生态。
+[Odoo](https://github.com/odoo/odoo) 是 GitHub 上最受欢迎的开源 ERP 系统，今日 Trending 51,231 颗星、32,519 个 Fork，在 Python 项目中排名前列。Odoo 是一套完整的企业管理应用生态，远不止一个 ERP。
 
 ## Odoo 是什么
 
@@ -98,4 +98,4 @@ Odoo 使用自己的 ORM、字段类型和继承机制，与标准 Django/Flask 
 
 ---
 
-**一句话总结：** Odoo 是开源 ERP 领域最成熟、模块最丰富的选择，51k stars 和 32k forks 验证了其社区认可度。如果你的公司需要一个覆盖销售、CRM、库存、财务、项目的一体化管理平台，Odoo 社区版是值得优先评估的方案。
+**一句话总结：** Odoo 是开源 ERP 领域最成熟、模块最丰富的选择，51k stars 和 32k forks 验证了其社区认可度。如果你的公司需要一个覆盖销售、CRM、库存、财务、项目的一体化管理平台，Odoo 社区版可以优先评估。

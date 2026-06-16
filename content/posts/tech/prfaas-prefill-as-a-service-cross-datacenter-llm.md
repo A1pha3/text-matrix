@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["LLM", "KVCache", "Prefill-Decode", "分布式系统", "AIInfra", "模型服务化"]
 ---
 
-# PrfaaS：跨数据中心 LLM 服务的革命性架构——KVCache 新时代
+# PrfaaS：跨数据中心 LLM 服务架构——KVCache 传输与选择性 Offload
 
 > **目标读者**：AI Infra 工程师、分布式系统研究员、对大模型服务化有兴趣的开发者
 > **预计阅读时间**：50-70 分钟
@@ -103,13 +103,13 @@ Attention(Q, K, V) = softmax(QK^T / √d) × V
 
 ---
 
-## §3 PrfaaS 核心设计
+## §3 PrfaaS 设计
 
 ### 3.1 设计理念
 
-PrfaaS（Prefill-as-a-Service）的核心洞察：
+PrfaaS（Prefill-as-a-Service）的关键判断：
 
-> **不是把 KVCache 变小就够了，而是要让系统变得"聪明"——选择性地决定哪些 prefill 应该 offload。**
+> **光把 KVCache 压小不够，系统还得知道哪些 prefill 该 offload、哪些该本地处理。**
 
 ### 3.2 整体架构
 
@@ -130,13 +130,13 @@ PrfaaS（Prefill-as-a-Service）的核心洞察：
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.3 四大核心机制
+### 3.3 四大机制
 
 PrfaaS 通过四项核心技术实现跨数据中心服务：
 
 #### 3.3.1 模型侧 KV 效率优化
 
-**核心思想**：在模型层面优化 KVCache 的生成和利用效率。
+在模型层面优化 KVCache 的生成和利用效率。
 
 - **Hybrid Attention**：混合使用 MQA（Multi-Query Attention）、GQA（Group-Query Attention）和 MHA（Multi-Head Attention）
 - **KVCache 量化**：对 KV 向量进行 INT8/FP8 量化，进一步压缩传输量
@@ -144,7 +144,7 @@ PrfaaS 通过四项核心技术实现跨数据中心服务：
 
 #### 3.3.2 选择性 Offloading
 
-**核心思想**：不是所有 prefill 都需要 offload，系统智能决策。
+不是所有 prefill 都需要 offload，系统智能决策。
 
 ```python
 # 决策逻辑示例
@@ -166,7 +166,7 @@ def should_offload(request):
 
 #### 3.3.3 带宽感知调度
 
-**核心思想**：根据实时带宽状况动态调整 offload 策略。
+根据实时带宽状况动态调整 offload 策略。
 
 | 带宽状态 | 策略 |
 |----------|------|
@@ -176,7 +176,7 @@ def should_offload(request):
 
 #### 3.3.4 缓存感知请求放置
 
-**核心思想**：将请求路由到 KVCache 命中率最高的集群。
+将请求路由到 KVCache 命中率最高的集群。
 
 ```python
 # 请求放置策略
@@ -260,7 +260,7 @@ class KVCacheConsistency:
 | Decode 集群 | 64×H100 |
 | 跨数据中心带宽 | 10 Gbps |
 
-### 5.2 核心结果
+### 5.2 实验结果
 
 PrfaaS 在三种配置下进行对比：
 
@@ -286,9 +286,7 @@ PrfaaS 在三种配置下进行对比：
 
 ---
 
-## §6 设计原则总结
-
-### 6.1 可复用的经验
+## §6 可复用的经验
 
 1. **选择性优于全量**：不是所有操作都需要 offload，智能选择是关键
 2. **观察者模式**：持续监控带宽、负载、缓存状态，动态调整策略

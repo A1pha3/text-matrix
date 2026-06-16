@@ -63,10 +63,10 @@ for entity in result.entities:
 
 在展开细节之前，先给出我对这个项目的判断：
 
-1. **它不是“又一个医疗 LLM”**。仓库主语言是 Python，但底层模型大多是 100M–500M 级别的**专用 NER Transformer**（多数是 BERT 系/RoBERTa 系/domain-adapted encoder），不是生成式 LLM。**这意味着它在医疗 NLP 任务上能跑出接近 GPT 级别的精度，但推理成本低 10–100 倍**。
+1. **它不是"又一个医疗 LLM"**。仓库主语言是 Python，但底层模型大多是 100M–500M 级别的**专用 NER Transformer**（多数是 BERT 系/RoBERTa 系/domain-adapted encoder），不是生成式 LLM。在医疗 NLP 任务上能跑出接近 GPT 级别的精度，推理成本低 10–100 倍。
 2. **它是“医疗 NLP 的 Hugging Face”**。1000+ 模型 + 247 个 PII checkpoint + 12 种语言 + Python / FastAPI / Swift 多种接口形态，本质上把分散在 HuggingFace 上的医疗模型**统一管理、统一接口、统一部署**。
-3. **它的真正杀手锏是“端到端本地 + 多后端路由”**。同样的 `extract_pii(text, model_name=...)` 调用，在 MacBook（M 系列）上自动走 MLX 后端，在 Linux 服务器上自动走 PyTorch + CUDA，在 iPhone 上换成 Swift OpenMedKit——**用户只关心业务逻辑，硬件后端自动切换**。
-4. **它不是万能的**。它专做**结构化抽取 + 反识别**，不做自由文本生成、问诊推理、影像识别。如果你想做一个“AI 医生”问诊助手，它**不适合**；但如果你想给现有 EHR 文本流加一层“实体抽取 + 脱敏”管道，它**几乎是最省心的开源方案**。
+3. **它的杀手锏是"端到端本地 + 多后端路由"**。同样的 `extract_pii(text, model_name=...)` 调用，在 MacBook（M 系列）上自动走 MLX 后端，在 Linux 服务器上自动走 PyTorch + CUDA，在 iPhone 上换成 Swift OpenMedKit——用户只关心业务逻辑，硬件后端自动切换。
+4. **它不是万能的**。它专做**结构化抽取 + 反识别**，不做自由文本生成、问诊推理、影像识别。想做“AI 医生”问诊助手，它不适合；但给现有 EHR 文本流加一层“实体抽取 + 脱敏”管道，它几乎是最省心的开源方案。
 
 ---
 
@@ -376,7 +376,7 @@ portuguese = extract_pii(
 
 ## 九、适用边界与不适用场景
 
-读到这里你可能已经感受到 openmed 的能力边界。最后给一份明确判断：
+读到这里，openmed 的能力边界已经比较清晰了。最后给一份明确判断：
 
 ### 9.1 适合用 openmed 的场景
 
@@ -419,6 +419,6 @@ portuguese = extract_pii(
 
 ## 十一、结语
 
-`openmed` 这个项目的真正价值不在于它有几个 star，而在于它把**“医疗 NLP 必须云端 + 必须付费 API”**这个十几年的行业默认假设打破了。在 2026 年这个数据隐私法规越来越严、本地硬件越来越强、开源模型越来越准的交汇点上，它提供了一个**“Apache-2.0 + 1000+ 模型 + 12 种语言 + 5 种后端 + iOS Swift”**的完整栈。
+`openmed` 的意义不在 star 数——它把**"医疗 NLP 必须云端 + 必须付费 API"**这个十几年的行业默认假设打破了。在 2026 年这个数据隐私法规越来越严、本地硬件越来越强、开源模型越来越准的交汇点上，它提供了一个**“Apache-2.0 + 1000+ 模型 + 12 种语言 + 5 种后端 + iOS Swift”**的完整栈。
 
-如果你正在做医疗 / 保险 / 律所 / EHR 集成相关项目，**强烈建议花一个下午跑一遍它的 README 30-second example 和 Swift OpenMedKit 演示工程**。很可能你会发现——原来 80% 的工作早就有人替你做好了。
+如果你正在做医疗 / 保险 / 律所 / EHR 集成相关项目，建议花一个下午跑一遍它的 README 30-second example 和 Swift OpenMedKit 演示工程。很可能你会发现——原来 80% 的工作早就有人替你做好了。

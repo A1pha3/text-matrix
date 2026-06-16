@@ -2,7 +2,7 @@
 title: "Hermes WebUI：自托管AI Agent的网页界面完全指南"
 date: "2026-05-31T20:07:02+08:00"
 slug: "hermes-webui-self-hosted-agent-web-interface-guide"
-description: "Hermes WebUI是Hermes Agent的轻量级网页界面，三栏布局、无需构建步骤、原生Python实现。本文详细解析其核心能力、与CLI的完整功能对等性、安装方式、与OpenClaw/Claude Code的横向对比，以及自托管AI Agent网页化访问的最佳实践。"
+description: "Hermes WebUI是Hermes Agent的轻量级网页界面，三栏布局、无需构建步骤、原生Python实现。本文解析其核心能力、与CLI的完整功能对等性、安装方式、与OpenClaw/Claude Code的横向对比，以及自托管AI Agent网页化访问的部署建议。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Hermes", "WebUI", "自托管", "NousResearch"]

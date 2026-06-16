@@ -20,7 +20,7 @@ tags: ["AI", "Agent", "Google Cloud", "GKE", "BigQuery", "Gemini", "标准化"]
 
 ## 🎯 问题背景：AI Agent 的知识困境
 
-### AI Agent 开发的核心挑战
+### AI Agent 开发面临的困境
 
 在构建专业 AI Agent 时，开发者常常面临一个困境：
 
@@ -38,9 +38,9 @@ tags: ["AI", "Agent", "Google Cloud", "GKE", "BigQuery", "Gemini", "标准化"]
 | 分散的博客/论坛查询 | 权威性低、格式不统一、难以自动化 |
 | 每个项目维护一套文档 | 重复劳动、知识孤岛、难以复用 |
 
-### Google Agent Skills 的破局思路
+### Google Agent Skills 的思路
 
-Google Agent Skills 的核心思路是：**把专业技能封装成标准化的可复用单元，让 Agent 按需加载、精确调用**。
+Google Agent Skills 的思路是：**把专业技能封装成标准化的可复用单元，让 Agent 按需加载、精确调用**。
 
 ---
 
@@ -108,7 +108,7 @@ Core Directives 是技能的硬性规则，Agent 必须遵守：
 
 ## 🔄 渐进式加载：避免上下文膨胀
 
-### 核心设计思想
+### 核心设计思路
 
 传统的 RAG 会一次性加载所有相关文档，导致：
 - 上下文窗口被大量低相关度内容占据
@@ -130,7 +130,7 @@ skills/cloud/gke-basics/
 ├── SKILL.md                    # 技能主文件
 └── references/
     ├── core-concepts.md       # 核心概念
-    ├── gke-golden-path.md     # 最佳实践路径
+    ├── gke-golden-path.md     # 推荐做法路径
     ├── gke-cluster-creation.md # 集群创建
     ├── gke-networking.md      # 网络配置
     ├── gke-security.md        # 安全加固
@@ -222,7 +222,7 @@ npx skills add google/skills/bigquery-basics
 | 技能 | 说明 |
 |------|------|
 | **Onboarding Recipe** | Google Cloud 新账号初始化检查清单 |
-| **Auth Recipe** | Google Cloud 认证配置实践建议 |
+| **Auth Recipe** | Google Cloud 认证配置方法 |
 | **Network Observability Recipe** | 网络可观测性配置 |
 
 ### 架构框架技能
@@ -370,7 +370,7 @@ bigquery-basics/
 
 ## 🎓 设计原则总结
 
-### 可复用的设计思想
+### 设计要点回顾
 
 1. **描述驱动激活**：通过精确的 description 匹配实现智能路由
 2. **渐进式加载**：首层轻量匹配，按需加载详细内容

@@ -10,7 +10,7 @@ tags: ["Linux", "安全加固", "SSH", "防火墙", "DevOps"]
 
 # Linux 服务器安全加固实战指南：从 SSH 到防火墙的完整清单
 
-**How-To-Secure-A-Linux-Server**（GitHub: imthenachoman/How-To-Secure-A-Linux-Server）是一份由社区共建的 Linux 服务器安全加固指南，涵盖从系统安装到日常运维的全链路安全措施。该项目在 GitHub 拥有 27,000+ Stars，内容持续更新，涵盖 SSH 加固、防火墙配置、入侵检测、安全审计等多个维度。
+**How-To-Secure-A-Linux-Server**（GitHub: imthenachoman/How-To-Secure-A-Linux-Server）是一份由社区共建的 Linux 服务器安全加固指南，涵盖从系统安装到日常运维的各环节安全措施。该项目在 GitHub 拥有 27,000+ Stars，内容持续更新，涵盖 SSH 加固、防火墙配置、入侵检测、安全审计等多个维度。
 
 ## 安全加固全景图
 
@@ -308,6 +308,6 @@ sudo systemctl enable fail2ban && sudo systemctl start fail2ban
 
 ## 总结
 
-Linux 服务器安全是一个**分层防御**的过程，从网络层（防火墙）、传输层（SSH 加密）、应用层（入侵检测）到系统层（PAM、特权管理），每一层都有对应的加固手段。本指南覆盖了生产环境中最实用的链路，适合作为运维工程师的**安全加固 Checklist**。
+Linux 服务器安全是分层防御的过程——网络层（防火墙）、传输层（SSH 加密）、应用层（入侵检测）到系统层（PAM、特权管理），每层都有对应的加固手段。本指南覆盖了生产环境中最实用的链路，可作为运维工程师的安全加固 Checklist。
 
 Ansible 自动化版本：[moltenbit/How-To-Secure-A-Linux-Server-With-Ansible](https://github.com/moltenbit/How-To-Secure-A-Linux-Server-With-Ansible)

@@ -19,7 +19,7 @@ hiddenFromHomePage: true
 
 vLLM 是当前开源社区最流行的 LLM 推理框架之一，其核心技术——PagedAttention——源自 UVA 苏立德实验室的 [vLLM 论文](https://arxiv.org/abs/2309.06119)，通过操作系统式内存管理将 KV Cache 的显存占用大幅降低。然而 vLLM 本身的代码经过多年工程优化，理解门槛较高。
 
-MinivLLM 的关键价值在于**将 vLLM 的实现路径还原为学习路径**。作者在仓库中提供了配套文档 [HowToApproachvLLM_zh.md](https://github.com/Wenyueh/MinivLLM/blob/main/HowToApproachvLLM_zh.md)，从层组件讲起，一路讲到 Scheduler 和 Engine，按步骤逐一构建出一个可运行的推理系统。
+MinivLLM 做的事很明确：**把 vLLM 的实现路径还原为学习路径**。作者在仓库中提供了配套文档 [HowToApproachvLLM_zh.md](https://github.com/Wenyueh/MinivLLM/blob/main/HowToApproachvLLM_zh.md)，从层组件讲起，一路讲到 Scheduler 和 Engine，按步骤逐一构建出一个可运行的推理系统。
 
 项目包含三个基准测试脚本，可以直接对比不同注意力实现方案的性能差异：
 

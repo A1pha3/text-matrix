@@ -14,7 +14,7 @@ tags = ['DevOps', '工具', '教程', 'Linux']
 
 **GitHub:** [trimstray/the-book-of-secret-knowledge](https://github.com/trimstray/the-book-of-secret-knowledge)
 
-这是一个精心整理的技术知识合集，收录了各类技术手册、速查表、博客、hacks、单行命令、CLI/Web 工具。
+这是一个技术知识合集，收录了各类技术手册、速查表、博客、hacks、单行命令、CLI/Web 工具。
 
 ## 二、内容结构
 
@@ -52,7 +52,7 @@ tags = ['DevOps', '工具', '教程', 'Linux']
 ## 三、亮点特色
 
 ### 1. 实用导向
-每个条目都是**实战验证过的**，不是理论堆砌：
+每个条目侧重可直接执行的命令和配置：
 
 ```bash
 # 快速检查服务器对外开放端口
@@ -100,6 +100,4 @@ grep -r "nmap" . --include="*.md"
 
 ## 六、总结
 
-The-Book-of-Secret-Knowledge 最大的价值在于**系统性**：它把散落在互联网各处的技术碎片整理成册，省去你大量搜索时间。无论是紧急故障排查还是系统性学习，这都是一份值得收藏的宝库。
-
-👉 **强烈建议：** 将此仓库加入书签，并在每次遇到不熟悉的命令时先来这里查找。
+The-Book-of-Secret-Knowledge 的价值在于系统性：把散落在互联网各处的技术碎片整理成册。无论是紧急故障排查还是系统性学习，都可以当作参考手册。

@@ -19,9 +19,7 @@ OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
 
 一、项目概览
 
-. 为什么这个项目值得关注
-
-[OpenSandbox](https://github.com/alibaba/OpenSandbox) 是阿里巴巴开源的**通用 AI 应用沙箱平台**，提供多语言 SDK、统一沙箱 API、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、Agent 评估、AI 代码执行、强化学习训练等场景。
+[OpenSandbox](https://github.com/alibaba/OpenSandbox) 是阿里巴巴开源的通用 AI 应用沙箱平台，提供多语言 SDK、统一沙箱 API、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、Agent 评估、AI 代码执行、强化学习训练等场景。
 
 **核心数据：**
 
@@ -33,7 +31,7 @@ OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
 | 最新版本 | python/code-interpreter 0.1.2 |
 | 官方文档 | https://open-sandbox.ai/ |
 
-**CNCF Landscape 已收录！**
+**CNCF Landscape 已收录**
 
 . 项目定位
 
@@ -50,7 +48,7 @@ OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
 | **AI 代码执行** | Code Interpreter 实现 |
 | **强化学习训练** | RL CartPole 等训练任务 |
 
-. 核心特色
+. 主要特色
 
 | 特色 | 说明 |
 |------|------|
@@ -434,26 +432,9 @@ DQN CartPole 训练 + checkpoints + summary 输出
 
 ---
 
-九、总结与展望
+九、总结
 
-. 关键价值
-
-OpenSandbox 的关键在于**为 AI 应用提供统一、安全、可扩展的沙箱执行环境**。
-
-| 传统方式 | OpenSandbox 方式 |
-|----------|------------------|
-| 各自实现沙箱 | 统一沙箱协议 + 多语言 SDK |
-| 本地开发 | Docker/Kubernetes 双模式 |
-| 不安全 | gVisor/Kata/Firecracker 强隔离 |
-| 单一日语 | 编程 Agent/GUI Agent/RL 多种场景 |
-
-. 技术亮点
-
-1. **多语言 SDK**：覆盖 Python/Java/JS/C#，统一 API
-2. **Kubernetes 原生**：大规模分布式调度的生产级支持
-3. **强隔离**：gVisor/Kata/Firecracker 多层安全
-4. **丰富环境**：Code Interpreter/Chrome/Playwright/Desktop
-5. **CNCF 收录**：企业级开源项目的认可
+OpenSandbox 为 AI 应用提供统一沙箱执行环境：多语言 SDK 覆盖 Python/Java/JS/C#，Docker/Kubernetes 双模式运行，gVisor/Kata/Firecracker 三层隔离，内置 Code Interpreter/Chrome/Playwright/Desktop 环境模板。
 
 . 资源链接
 

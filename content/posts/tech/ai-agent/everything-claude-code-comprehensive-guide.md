@@ -19,7 +19,7 @@ description: "基于 affaan-m/everything-claude-code 当前公开仓库状态，
 
 ## 一、学习目标
 
-读完本文后，你可以：
+本文覆盖以下内容：
 
 - 自己完成 Claude Code 的安装与配置
 - 说清 Claude Code 的四个核心概念（对话上下文、工具使用、文件操作、项目上下文）
@@ -31,7 +31,7 @@ description: "基于 affaan-m/everything-claude-code 当前公开仓库状态，
 
 ## 二、先说结论：这个仓库已经不只是“Claude Code 新手教程”
 
-如果你只记住一句话，那就是：**Everything Claude Code 已经不再只是一个“怎么安装和怎么用”的资料仓库，而更像一个围绕 Claude Code、Agent Harness、安全和工作流设计展开的综合系统。**
+一句话结论：**Everything Claude Code 已经从"怎么安装和怎么用"的资料仓库，演进成一个围绕 Claude Code、Agent Harness、安全和工作流设计展开的综合系统。**
 
 这也是为什么旧的“2.8k Stars 的全面指南”式写法已经不够准确。当前公开仓库描述更强调：
 
@@ -71,7 +71,7 @@ Everything Claude Code（[affaan-m/everything-claude-code](https://github.com/af
 
 **定位正在演进**：不只作为 Claude Code 入门资料，也在吸收更广泛的 Agent / harness 方法论。
 
-**实践导向**：每个概念都配有实际使用示例，不空谈原则。
+**实践导向**：每个概念都配有实际使用示例。
 
 **社区驱动**：持续更新，吸收社区推荐做法。
 
@@ -443,7 +443,7 @@ Everything Claude Code 最值得看的地方，是，不是内容多它把 Claud
 
 ## 十三、自测清单
 
-下面按三个难度层级列出自测项。每一条都不是"记住了吗"而是"做过吗"——动手验证比回忆定义有用得多。
+下面按三个难度层级列出自测项。每一条的检验标准是"做过吗"而非"记住了吗"——动手验证比回忆定义有用得多。
 
 ### 基础（⭐）
 
@@ -463,7 +463,7 @@ Everything Claude Code 最值得看的地方，是，不是内容多它把 Claud
 
 ### 高级（⭐⭐⭐）
 
-- [ ] 设计过一套自己的工作流资产组合（比如 `CLAUDE.md` + 自定义命令 + 项目级指令），不是零散配置而是互相配合
+- [ ] 设计过一套自己的工作流资产组合（比如 `CLAUDE.md` + 自定义命令 + 项目级指令），各部分互相配合而非零散堆砌
 - [ ] 在 CI/CD 中集成过 Claude Code（比如 PR 审查流水线），并能在失败时定位问题
 - [ ] 能从 Everything Claude Code 仓库中独立挑选资产，迁移到自己的项目里，并说明为什么选这几个而不是全量复制
 - [ ] 遇到过 Claude Code 的上下文限制问题，并知道至少两种应对策略（分步任务 / `/clear` 后重新注入上下文 / 用 `CLAUDE.md` 减少重复说明）

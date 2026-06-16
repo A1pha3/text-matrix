@@ -2,7 +2,7 @@
 title: "Axios：Promise HTTP 客户端完全指南"
 date: "2026-04-03T01:25:00+08:00"
 slug: "axios-promise-http-client-guide"
-description: "Axios 是基于 Promise 的 HTTP 客户端，支持浏览器和 Node.js 环境。本文覆盖安装配置、基本使用、拦截器、错误处理、请求取消、数据序列化、最佳实践和常见问题。"
+description: "Axios 是基于 Promise 的 HTTP 客户端，支持浏览器和 Node.js 环境。本文覆盖安装配置、基本使用、拦截器、错误处理、请求取消、数据序列化、推荐做法和常见问题。"
 draft: false
 categories: ["技术笔记"]
 tags: ["JavaScript", "HTTP", "Axios", "Node.js", "前端开发"]
@@ -10,18 +10,18 @@ tags: ["JavaScript", "HTTP", "Axios", "Node.js", "前端开发"]
 
 Axios：Promise HTTP 客户端完全指南
 
-学习目标
+本文覆盖范围
 
-学完本指南后，你将掌握以下核心技能：
+读完本指南，你会了解：
 
-1. **理解 Axios 的核心概念**：理解什么是 Promise-based HTTP 客户端、为什么选择 Axios、以及它与 fetch API 的区别
-2. **掌握 Axios 的安装和配置**：能够根据不同环境（浏览器、Node.js）选择合适的安装方式，并完成基础配置
-3. **熟练使用 Axios 发送各类请求**：掌握 GET、POST、PUT、PATCH、DELETE 等请求方法，以及如何传递参数和请求体
-4. **理解和使用拦截器**：掌握请求拦截器和响应拦截器的使用场景和用法
-5. **处理错误和超时**：理解 Axios 的错误处理机制，能够正确处理网络错误和超时情况
-6. **掌握取消请求的方法**：理解 AbortController 和 CancelToken 的用法
-7. **理解请求配置选项**：掌握常用的请求配置项，理解配置优先级的规则
-8. **二次开发和扩展**：能够创建 Axios 实例、编写自定义适配器、实现请求限流等功能
+1. 什么是 Promise-based HTTP 客户端、为什么选 Axios、以及它与 fetch API 的区别
+2. Axios 的安装和配置方式（浏览器、Node.js）
+3. GET、POST、PUT、PATCH、DELETE 等请求方法，以及参数和请求体的传递
+4. 请求拦截器和响应拦截器的使用场景和用法
+5. Axios 的错误处理机制，网络错误和超时的处理
+6. AbortController 和 CancelToken 的用法
+7. 常用的请求配置项和配置优先级规则
+8. 创建 Axios 实例、编写自定义适配器、实现请求限流等扩展
 
 ---
 
@@ -34,7 +34,7 @@ Axios：Promise HTTP 客户端完全指南
 **官方网站**：[https://axios-http.com](https://axios-http.com)
 **GitHub 仓库**：[https://github.com/axios/axios](https://github.com/axios/axios)
 
-. 核心特性
+. 主要特性
 
 | 特性 | 说明 |
 |------|------|
@@ -818,12 +818,12 @@ axios.get('/user', {
 
 十四、总结
 
-核心要点
+要点
 
 1. **Axios 是基于 Promise 的 HTTP 客户端**，同时支持浏览器和 Node.js 环境
 2. **安装简单**：支持 npm、yarn、pnpm、bun 等包管理器，也可用 CDN 引入
 3. **API 设计优雅**：支持请求方法别名（get、post、put 等）和通用请求方式
-4. **拦截器强大**：可以全局拦截请求和响应，统一添加认证、日志等逻辑
+4. **拦截器**：可以全局拦截请求和响应，统一添加认证、日志等逻辑
 5. **错误处理完善**：区分网络错误和服务器错误，isCancel 判断请求是否被取消
 6. **配置灵活**：支持全局默认配置、实例配置、请求级配置，优先级明确
 7. **生态丰富**：拥有大量配套工具和中间件

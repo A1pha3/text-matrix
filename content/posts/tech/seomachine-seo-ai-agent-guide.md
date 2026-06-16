@@ -11,16 +11,13 @@ draft: false
 
 # SEOMachine：AI 驱动的 SEO 优化与内容生成智能体
 
-## 1. 学习目标
+## 1. 覆盖范围
 
-通过本文你将掌握：
-
-- 理解 SEOMachine 的关键价值和设计理念
-- 熟练安装和配置工具
-- 掌握 SEO 分析与内容生成的完整管道
-- 理解多 AI 提供商和多爬虫的架构设计
+- SEOMachine 的设计思路和核心能力
+- 安装和配置方法
+- SEO 分析与内容生成管道
+- 多 AI 提供商和多爬虫的架构设计
 - 定制和扩展 SEO 自动化功能
-- 实践建议和常见问题解决
 
 ## 2. 项目概述
 
@@ -35,7 +32,7 @@ SEOMachine 是一个开源的 SEO AI Agent，能够：
 - 竞品分析
 - 排名追踪
 
-**关键价值**：
+**SEOMachine 能做什么**：
 
 | 痛点 | 解决方案 |
 |------|---------|
@@ -637,21 +634,20 @@ seomachine batch --file projects.csv --parallel 5
 
 | 工具 | 平台 | AI 生成 | 多爬虫 | 多提供商 |
 |------|------|---------|--------|---------|
-| SEOMachine | CLI/API | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| Semrush | SaaS | ⭐⭐⭐ | ❌ | ❌ |
-| Ahrefs | SaaS | ⭐⭐⭐ | ❌ | ❌ |
-| SurferSEO | Web | ⭐⭐⭐⭐ | ❌ | ❌ |
+| SEOMachine | CLI/API | ✅ | ✅ | ✅ |
+| Semrush | SaaS | ⚠️ | ❌ | ❌ |
+| Ahrefs | SaaS | ⚠️ | ❌ | ❌ |
+| SurferSEO | Web | ✅ | ❌ | ❌ |
 
-**SEOMachine 优势**：
-- 完全开源可定制
+**SEOMachine 与同类工具的区别**：
+- 开源可定制
 - 支持自托管
-- 多 AI 提供商灵活切换
-- 多爬虫适应性强
-- 开源社区活跃
+- 多 AI 提供商切换
+- 多爬虫适配
 
 ## 12. 总结
 
-SEOMachine 是 SEO 智能自动化的利器：
+SEOMachine 定位：
 
 | 特性 | 说明 |
 |------|------|

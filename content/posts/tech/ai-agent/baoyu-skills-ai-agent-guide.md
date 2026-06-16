@@ -17,17 +17,12 @@ description: "全面解析 baoyu-skills (1.8k Stars)：AI Coding Agent 技能套
 
 ## 学习目标
 
-完成本文档后，你将能够：
+本文档覆盖以下内容：
 
-- ✅ 理解 baoyu-skills 的核心定位与设计理念
-- ✅ 掌握 baoyu-skills 的七个核心技能
-- ✅ 熟练安装和配置 baoyu-skills
-- ✅ 使用 /baoyu-research 进行深度研究
-- ✅ 使用 /baoyu-financial 获取实时股票数据
-- ✅ 使用 /baoyu-market-analyze 分析市场动态
-- ✅ 使用 /baoyu-linkedin 优化 LinkedIn 内容
-- ✅ 使用 /baoyu-stocks 和 /baoyu-ticker 获取股票报价
-- ✅ 使用 /baoyu-x 分析 Twitter/X 趋势
+- baoyu-skills 的定位与设计理念
+- 七个技能的功能和适用场景
+- 安装和配置方法
+- 各技能的使用示例
 
 ---
 
@@ -45,11 +40,11 @@ description: "全面解析 baoyu-skills (1.8k Stars)：AI Coding Agent 技能套
 
 > Like calling a domain expert into the room.
 
-翻译：就像请一位领域专家进入房间。每个技能就像一位专业领域的专家，处理内部的复杂性，让用户只需简单调用。
+翻译：就像请一位领域专家进入房间。每个技能封装了特定领域的复杂逻辑，对外暴露简单调用接口。
 
-### 2.2 价值定位
+### 2.2 能做什么
 
-| 价值 | 说明 |
+| 能力 | 说明 |
 |------|------|
 | **深度研究** | 全面研究话题、趋势和技术 |
 | **实时数据** | 股票数据、财务指标、SEC 文件 |
@@ -443,7 +438,7 @@ skills info baoyu-skills
 
 ### 7.1 设计出发点
 
-baoyu-skills 的设计出发点**"像请一位领域专家进入房间"**：
+baoyu-skills 的思路是**"像请一位领域专家进入房间"**：
 
 | 传统方式 | baoyu-skills 方式 |
 |----------|-------------------|
@@ -454,7 +449,7 @@ baoyu-skills 的设计出发点**"像请一位领域专家进入房间"**：
 
 ### 7.2 技能作为专家
 
-每个 baoyu 技能就像一位专业领域的专家：
+每个 baoyu 技能封装了特定领域的专业逻辑：
 
 | 技能 | 专家角色 |
 |------|----------|
@@ -468,7 +463,7 @@ baoyu-skills 的设计出发点**"像请一位领域专家进入房间"**：
 
 ### 7.3 与 Coding Agent 的集成
 
-baoyu-skills 无缝集成到你的 Coding Agent 工作流中：
+baoyu-skills 集成到 Coding Agent 工作流中：
 
 ```
 你：通过 /baoyu-research 研究新市场
@@ -491,7 +486,7 @@ baoyu-skills：执行深度研究
 | **深度** | 综合分析，结构化报告 | 零散信息 |
 | **专业性** | 领域专家级分析 | 需人工筛选 |
 | **格式** | 预格式化，可直接使用 | 原始网页，需整理 |
-| **集成** | 与 Coding Agent 无缝 | 需手动复制粘贴 |
+| **集成** | 与 Coding Agent 直接集成 | 需手动复制粘贴 |
 
 ### Q2：支持哪些 Coding Agent？
 
@@ -531,7 +526,7 @@ baoyu-skills：执行深度研究
 
 ## §9 总结
 
-### 9.1 核心优势
+### 9.1 主要优势
 
 | 优势 | 说明 |
 |------|------|
@@ -539,7 +534,7 @@ baoyu-skills：执行深度研究
 | **实时金融数据** | 股票报价、财务指标、SEC 文件 |
 | **专业市场分析** | 使用结构化框架 |
 | **多平台支持** | LinkedIn、X/Twitter |
-| **无缝集成** | 与 Coding Agent 工作流融合 |
+| **集成** | 与 Coding Agent 工作流融合 |
 | **开源免费** | MIT 许可证 |
 
 ### 9.2 适用场景

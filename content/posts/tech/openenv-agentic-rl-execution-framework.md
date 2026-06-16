@@ -10,7 +10,7 @@ tags: ["Agent", "RL", "Docker", "HuggingFace", "Gymnasium"]
 
 # huggingface/OpenEnv 架构拆解：Agentic RL 训练环境的 Gymnasium 化标准（WebSocket + Docker + HF Spaces）
 
-> 一句话核心判断：**OpenEnv 把 Farama Foundation 的 Gymnasium 接口（`step()` / `reset()` / `state()`）平移到 Agentic RL 场景，再通过 WebSocket + Docker 把"环境"变成可远程调用的标准化服务。它的本质不是"又一个 RL 库"，而是"环境侧的协议标准 + 部署工具链"——一旦 RL 框架（TRL / torchforge / SkyRL / ART / Oumi）和环境提供方都遵守这个标准，双方就可以解耦地组合，不需要为每对组合重写 adapter**。
+> 一句话核心判断：**OpenEnv 把 Farama Foundation 的 Gymnasium 接口（`step()` / `reset()` / `state()`）平移到 Agentic RL 场景，再通过 WebSocket + Docker 把"环境"变成可远程调用的标准化服务。它的定位是"环境侧的协议标准 + 部署工具链"——一旦 RL 框架（TRL / torchforge / SkyRL / ART / Oumi）和环境提供方都遵守这个标准，双方就可以解耦地组合，不需要为每对组合重写 adapter**。
 
 ## 一、项目坐标
 

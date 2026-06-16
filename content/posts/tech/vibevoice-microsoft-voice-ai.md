@@ -40,7 +40,7 @@ author: ""
 
 ### 7.5 Hz 超低帧率音频分词器
 
-VibeVoice 的核心创新之一是**连续音频分词器**（Acoustic Tokenizer 和 Semantic Tokenizer），以仅 **7.5 Hz** 的超低帧率运行。相比传统分词器，这显著降低了计算复杂度，同时保留了高保真音频特征。
+VibeVoice 的核心设计之一是**连续音频分词器**（Acoustic Tokenizer 和 Semantic Tokenizer），以仅 **7.5 Hz** 的超低帧率运行。相比传统分词器，这降低了计算复杂度，同时保留了高保真音频特征。
 
 ### Next-token Diffusion 框架
 
@@ -57,7 +57,7 @@ VibeVoice 采用 **Next-token Diffusion** 架构：
 
 ## VibeVoice-ASR：长音频语音识别
 
-**VibeVoice-ASR** 是统一的多语言语音转文本模型，核心能力：
+**VibeVoice-ASR** 是统一的多语言语音转文本模型，主要功能：
 
 - 🕒 **60 分钟单次处理**：突破传统 ASR 的片段切割限制
 - 👤 **自定义热词（Customized Hotwords）**：支持用户添加人名、术语、背景信息，显著提升垂直领域识别准确率
@@ -89,8 +89,6 @@ VibeVoice 采用 **Next-token Diffusion** 架构：
 ## 学术认可：ICLR 2026 Oral
 
 VibeVoice-TTS 论文已被 **ICLR 2026** 接纳为 **Oral（口头报告）** 论文，论文发表在 OpenReview：[VibeVoice-TTS Paper](https://openreview.net/forum?id=FihSkzyxdv)
-
-这是开源语音合成领域的重要里程碑，表明微软在语音 AI 研究方向获得国际顶级学术会议认可。
 
 ---
 
@@ -161,11 +159,7 @@ VibeVoice-ASR 的微调代码已开源，参考 [finetuning-asr/README.md](finet
 
 ## 总结
 
-VibeVoice 作为微软开源的语音 AI 模型家族，在**长音频处理**和**超低帧率分词**方面有显著技术创新。VibeVoice-ASR 的 60 分钟单次处理能力、50+语言支持、vLLM 加速、以及 ICLR 2026 Oral 的学术认可，使其成为当前开源语音识别领域的重要玩家。
-
-VibeVoice-Realtime 的 0.5B 实时 TTS 模型也为需要低延迟语音合成的应用提供了新选择。
-
-**推荐指数**：⭐⭐⭐⭐⭐
+VibeVoice 在长音频处理和超低帧率分词上有明确的技术差异。VibeVoice-ASR 的 60 分钟单次处理、50+ 语言支持、vLLM 加速，以及 ICLR 2026 Oral 认可，使其在开源语音识别领域占一席之地。VibeVoice-Realtime 的 0.5B 实时 TTS 模型为低延迟语音合成提供了新选项。
 
 **适用人群**：语音 AI 研究者、长音频处理开发者、多语言语音应用工程师
 

@@ -17,15 +17,15 @@ tags: ["Python", "爬虫", "Cloudflare", "cloudscraper", "反爬", "JavaScript"]
 
 ---
 
-## §1 学习目标
+## §1 本文覆盖范围
 
-完成本篇文章后，你将能够：
+读完本文，你会了解：
 
-1. **理解 Cloudflare 反爬机制**：为何 Cloudflare 的 JavaScript 检查能挡住大多数爬虫
-2. **掌握 cloudscraper 的核心原理**：如何用 JavaScript 解释器绕过反爬
-3. **理解四种 Cloudflare 挑战类型**：v1、v2、v3（JS VM）和 Turnstile
-4. **能够完成生产级爬虫开发**：会话管理、代理轮换、Stealth Mode 配置
-5. **掌握可执行文件打包**：PyInstaller 打包 cloudscraper 应用
+1. Cloudflare 反爬机制的工作原理——为何 JavaScript 检查能挡住大多数爬虫
+2. cloudscraper 的原理——如何用 JavaScript 解释器绕过反爬
+3. 四种 Cloudflare 挑战类型：v1、v2、v3（JS VM）和 Turnstile
+4. 生产级爬虫开发：会话管理、代理轮换、Stealth Mode 配置
+5. 可执行文件打包：PyInstaller 打包 cloudscraper 应用
 
 ---
 

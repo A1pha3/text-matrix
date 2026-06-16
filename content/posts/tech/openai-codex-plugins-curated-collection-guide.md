@@ -21,7 +21,7 @@ tags: ["Codex", "OpenAI", "Plugin", "MCP", "AI Agent"]
 
 ## 一、核心判断
 
-[openai/plugins](https://github.com/openai/plugins) 不是单一工具，而是 **OpenAI 官方维护的 Codex 插件精选合集（curated collection）**。它把已经在生产场景中被验证过的 Codex 插件集中托管，**省去你自己写 plugin.json 和挂载 skills 的工作**。
+[openai/plugins](https://github.com/openai/plugins) 不是单一工具，而是 **OpenAI 官方维护的 Codex 插件精选合集（curated collection）**。它把已经在生产场景中被验证过的 Codex 插件集中托管，省去了你自己写 plugin.json 和挂载 skills 的工作。
 
 每个插件对应一个真实工作流：
 
@@ -108,7 +108,7 @@ plugins/<name>/
 | **remotion** | 用 React 写视频 | — | 内容创作/视频自动化 |
 | **google-slides** | 自动化生成 Google Slides | Google Slides API | 商务/营销自动化 |
 
-> 📌 这些都是 **OpenAI 自己选过的"生产级"插件**——不是个人作品，质量有保证。
+> 📌 这些都是 **OpenAI 自己选过的"生产级"插件**——不是个人作品，质量有保障。
 
 ---
 

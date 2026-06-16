@@ -11,15 +11,15 @@ description: "Awesome Claude Code 是 Claude Code 资源精选列表，34.4k Sta
 
 # Awesome Claude Code 资源指南：从看过到用起来
 
-Claude Code 生态里不缺工具列表，缺的是搞清楚 **这些扩展在你的工作流里分别解决什么问题，以及按什么顺序把它们串起来**。本文基于 34.4k Stars 的 [Awesome Claude Code](https://github.com/hesreallyhim/awesome-claude-code) 资源合集，从 Skills、Workflows、Hooks（钩子）到 Tooling（工具链），梳理一条能用起来的路径。
+Claude Code 生态里不缺工具列表，缺的是搞清楚 **这些扩展在你的工作流里分别解决什么问题，以及按什么顺序把它们串起来**。基于 34.4k Stars 的 [Awesome Claude Code](https://github.com/hesreallyhim/awesome-claude-code) 资源合集，从 Skills、Workflows、Hooks（钩子）到 Tooling（工具链），梳理一条能用起来的路径。
 
-如果你已经用过 Claude Code 的基础功能、写过一两份 `CLAUDE.md`，这篇文章会帮你在几十个项目里挑出真正对你管用的那几个。
+帮你在几十个项目里挑出真正对你管用的那几个。
 
 ---
 
 ## 学习目标
 
-读完本文，你应该能回答这几个问题：
+读完本文，你可以回答这几个问题：
 
 - Skills 和 Slash Commands（斜杠命令）到底有什么区别？什么时候该用哪个？
 - 怎么把 Hooks 嵌到自己的开发流程里，而不是装完就忘？
@@ -54,7 +54,7 @@ graph TD
     TL -->|依赖| HK
 ```
 
-这张图的核心含义是：Skills、Hooks、CLAUDE.md 是基础构件，Workflows 把它们打包成可复用的流程，Tooling 则是在整个 Claude Code 之上做应用层的封装。Slash Commands 是你和 Agent 之间的交互入口，既可以调用 Skill，也可以独立运行。
+这张图说的是：Skills、Hooks、CLAUDE.md 是基础构件，Workflows 把它们打包成可复用的流程，Tooling 则是在整个 Claude Code 之上做应用层的封装。Slash Commands 是你和 Agent 之间的交互入口，既可以调用 Skill，也可以独立运行。
 
 如果你刚开始接触，记住一条就够了：**Skill 教 Agent 怎么做事，Hook 决定什么时候自动做事，Workflow 把多个 Skill 和 Hook 编成一套流程。**
 

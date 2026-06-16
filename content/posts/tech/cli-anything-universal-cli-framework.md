@@ -12,9 +12,9 @@ tags = ['AI', 'CLI', 'Agent', '开源']
 
 **CLI-Anything** 是香港大学 NLP 组（HKUDS）开源的项目，通过 7 阶段管道自动分析软件源代码，为任何有代码库的软件生成 Agent 可用的 CLI 接口。支持 OpenClaw、nanobot、Cursor、Claude Code 等主流 Agent 框架。已有 18 个专业软件 demos，2,269 个通过测试。
 
-## 核心问题
+## 解决什么问题
 
-当前软件面向人类用户设计，但 AI Agent 无法直接操控复杂软件（CAD、DAW、IDE、EDA、科学工具等）。CLI-Anything 通过生成标准化 CLI 来弥合这一 gap，让 Agent 能够以编程方式控制任何有代码库的软件。
+当前软件面向人类用户设计，但 AI Agent 无法直接操控复杂软件（CAD、DAW、IDE、EDA、科学工具等）。CLI-Anything 通过生成标准化 CLI 来填补这个空缺，让 Agent 能够以编程方式控制任何有代码库的软件。
 
 ## 技术架构：7 阶段管道
 

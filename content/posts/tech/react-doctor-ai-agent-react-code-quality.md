@@ -14,7 +14,7 @@ tags: ["React", "AI Agent", "代码质量", "TypeScript", "自动化"]
 
 [millionco/react-doctor](https://github.com/millionco/react-doctor) 是一款专门给 AI 编码智能体「把脉」的 React 代码质量工具，当前已获得约 **9,348 颗 Stars** 和 291 个 Forks，采用 MIT 许可证，主要语言为 TypeScript。
 
-核心定位一句话：**AI 编码智能体写的 React 代码容易出问题，React Doctor 来抓。**
+核心定位：AI 编码智能体写的 React 代码容易出问题，React Doctor 来抓。
 
 官网：https://react.doctor
 
@@ -36,7 +36,7 @@ tags: ["React", "AI Agent", "代码质量", "TypeScript", "自动化"]
 - 缺失的错误边界
 - React 18/19 新版 API 的误用
 
-React Doctor 正是为解决这个痛点而生。
+React Doctor 就是针对这个问题做的。
 
 ## 核心功能
 

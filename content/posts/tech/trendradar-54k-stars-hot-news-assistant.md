@@ -23,7 +23,7 @@ tags: ["TrendRadar", "AI新闻", "MCP", "飞书", "多渠道推送", "Python"]
 
 **"Say goodbye to endless scrolling, only see the news you truly care about"** —— 告别无效刷屏，只看真正关心的新闻资讯。
 
-### 解决的核心痛点
+### 解决的痛点
 
 | 痛点 | 传统方案 | TrendRadar |
 |------|---------|------------|
@@ -320,7 +320,7 @@ timeline:
 
 ## 🎓 设计原则总结
 
-### 核心设计理念
+### 核心设计
 
 1. **AI First**：用 AI 替代硬编码关键词匹配
 2. **零成本部署**：GitHub Actions 托管，无需服务器

@@ -12,7 +12,7 @@ tags: ["AI Agent", "Rust", "Claude", "MCP协议", "命令行工具"]
 
 [Claw Code](https://github.com/ultraworkers/claw-code) 是 ultraworkers 团队开源的 AI Agent（人工智能代理）开发框架，采用 Rust 语言实现，是 `claw` CLI agent harness 的公开参考实现。截至 2026 年初，该项目已在 GitHub 获得接近 19 万颗星，成为 AI Agent 开源领域最受关注的 CLI 工具之一。
 
-项目的核心定位是：**为开发者提供一个生产级的 Rust CLI 运行环境，用于构建、运行和调试多工具调用的 AI Agent**。canonical 实现位于仓库的 `rust/` 目录，是当前真正的代码基线。
+项目的定位是：**为开发者提供一个生产级的 Rust CLI 运行环境，用于构建、运行和调试多工具调用的 AI Agent**。canonical 实现位于仓库的 `rust/` 目录，是当前真正的代码基线。
 
 ### 关键背景：不是 `cargo install claw-code`
 
@@ -179,7 +179,7 @@ cargo build --workspace --release
 
 ## 总结
 
-Claw Code 代表了开源 AI Agent 工具链的一个重要方向——用 Rust 实现生产级 CLI harness，兼顾性能和跨平台能力。其设计思路强调本地化、工具化和可审计性，适合开发者构建自己的 AI Agent 工作流。
+Claw Code 用 Rust 实现了一个生产级 CLI harness，兼顾启动速度、低内存占用和跨平台能力。设计上强调本地化、工具化和可审计性。
 
 如果你是 AI 应用开发者，建议从 `claw doctor` 开始验证环境，再结合 USAGE.md 深入探索会话管理和 MCP 集成能力。项目仍处于活跃开发阶段，ACP/Zed 完整支持的进展值得持续关注。
 

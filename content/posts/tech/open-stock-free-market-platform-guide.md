@@ -1,7 +1,7 @@
 +++
 date = '2026-05-26T23:00:00+08:00'
 draft = false
-title = 'OpenStock：不只是免费行情看板，更是一套可自部署的股市数据中台'
+title = 'OpenStock：一套可自部署的股市数据中台，免费行情看板只是入口'
 slug = 'open-stock-free-market-platform-guide'
 description = 'OpenStock 用 Next.js 15 + MongoDB + Inngest + Gemini 搭了一套完整的股市数据平台，集认证、AI 邮件自动化、多源舆情分析和 Docker 部署于一体。'
 categories = ['技术笔记']
@@ -27,7 +27,7 @@ tags = ['金融', '开源', 'AI', 'Next.js']
 
 [OpenStock](https://github.com/Open-Dev-Society/OpenStock) 常被拿来和 TradingView、Yahoo Finance 对比——它确实提供了类似的行情看板和图表，但把它定位成「免费版 TradingView」就低估了它的实际能力。
 
-OpenStock 真正做的，是**把行情数据、用户认证、个性化监控、AI 邮件推送、多源舆情聚合整合成一套可自部署的平台**。它不是替换你的交易终端，而是替换你散落在 5 个页面上的数据聚合链路。
+OpenStock 真正做的是**把行情数据、用户认证、个性化监控、AI 邮件推送、多源舆情聚合整合成一套可自部署的平台**。它替换的不是你的交易终端，而是你散落在 5 个页面上的数据聚合链路。
 
 具体来说，它解决的是：
 
@@ -312,7 +312,7 @@ TradingView Widget 的图片域名 `i.ibb.co` 需要加入 `next.config.ts` 的 
 
 ## 结语
 
-OpenStock 的工程设计值得关注的点不在于「它用了 Next.js 15」，而在于它把认证、数据、自动化、AI 四层串联成了一个完整的用户路径——从注册的那一刻起，系统就开始根据你的投资偏好生成个性化内容，而不是等你手动配置。
+OpenStock 的工程设计里，Next.js 15 只是选型；更值得看的是它把认证、数据、自动化、AI 四层串联成了一个完整的用户路径——从注册的那一刻起，系统就开始根据你的投资偏好生成个性化内容，而不是等你手动配置。
 
 如果你在找一个能自部署、数据源可控、带 AI 邮件推送的股市数据平台，OpenStock 是当前开源生态里最接近「开箱即用」的选择。
 

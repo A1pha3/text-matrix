@@ -9,7 +9,7 @@ tags: ["Rust", "ORM", "数据库", "MySQL", "PostgreSQL", "MongoDB", "异步", "
 hiddenFromHomePage: true
 ---
 
-> Rust ORM 的困境不是缺选择，而是缺一个同时做好三件事的方案：多数据库适配、声明式 Schema、以及贯穿读写操作的数据处理管道。TEO 0.4 用完全重写的 Rust 内核把这三件事拼到了一起。它比 SQLx 更"ORM"，比 Diesel 更 async，而且是目前唯一在 SQL 和 MongoDB 上提供同一套 API 的 Rust ORM。
+> Rust ORM 的困境在于缺一个同时做好三件事的方案：多数据库适配、声明式 Schema、以及贯穿读写操作的数据处理管道。TEO 0.4 用完全重写的 Rust 内核把这三件事拼到了一起。它比 SQLx 更"ORM"，比 Diesel 更 async，而且是目前唯一在 SQL 和 MongoDB 上提供同一套 API 的 Rust ORM。
 
 ---
 
@@ -50,7 +50,7 @@ Rust 生态已有的 ORM / SQL 工具各走一路：
 | SeaORM | 异步 ORM | MySQL/PG/SQLite | ActiveRecord 风格 |
 | **TEO** | **高性能 ORM** | **全部 + MongoDB** | **Pipeline 中间件 + 自动迁移 + 多语言 SDK** |
 
-TEO 真正的差异点不在"又一个异步 ORM"，而在以下四件事：
+TEO 拉开差距的地方在以下四件事：
 
 1. **Pipeline**：类似 Express.js 中间件的数据处理管道，贯穿 save / find / create 等操作。你可以把密码哈希、日志记录、数据校验串成链，而不是在每个 handler 里重复写。
 2. **自动迁移**：Schema 即数据库版本控制，`cargo teo migrate` 一条命令搞定增量 DDL。

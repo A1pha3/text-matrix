@@ -23,15 +23,15 @@ tags: ["AI", "Agent", "Dexter", "金融工具", "多模型路由", "研究代理
 
 ## 概述：Dexter 不只是一个聊天机器人
 
-当你第一次看到 Dexter 的介绍时，你可能会想：“又一个 CLI 聊天工具？”
+当你第一次看到 Dexter 的介绍时，你可能会想："又一个 CLI 聊天工具？"
 
 不。Dexter 的野心比这大得多。
 
 Dexter 是香港大学开发的一个**运行在终端的 AI 研究代理平台**。
 
-它的目标非常清晰：**是，不是生成「看起来像答案」的文本把你的问题转成一组研究动作，再调用金融、网页、文件、技能、记忆等工具完成任务。**
+它的目标非常清晰：**把你的问题转成一组研究动作，再调用金融、网页、文件、技能、记忆等工具完成任务，而不是生成"看起来像答案"的文本。**
 
-也就是说， Dexter 的价值不在于「会聊天」，而在于「会做研究」。
+也就是说，Dexter 的价值不在于"会聊天"，而在于"会做研究"。
 
 ---
 
@@ -76,12 +76,20 @@ Dexter 的能力可以分成 8 大系统：
 │                      扩展能力层                              │
 │           技能系统、记忆系统、网关系统、调度系统             │
 └─────────────────────────────────────────────────────────────┘
-```texttext
+```
+
+### 技能系统工作流
+
+```text
 1. 发现   → 扫描包含 SKILL.md 的目录
 2. 暴露   → 仅注入技能名称和描述到系统提示
 3. 按需   → Agent 匹配后调用 skill 工具
 4. 执行   → 返回技能正文，解析相对路径
-```textjson
+```
+
+### 定时任务配置格式
+
+```json
 // 一次性时间点
 { "kind": "at", "at": "2026-04-01T14:00:00Z" }
 
@@ -90,7 +98,11 @@ Dexter 的能力可以分成 8 大系统：
 
 // Cron 表达式
 { "kind": "cron", "expr": "0 9 * * 1-5", "tz": "America/New_York" }
-```texttext
+```
+
+### Agent 循环机制
+
+```text
 用户输入 → CLI 接收 → Agent.create() 初始化
     ↓
 构建系统提示（工具 + SOUL.md + 记忆 + 技能元数据）
@@ -104,7 +116,11 @@ Dexter 的能力可以分成 8 大系统：
 更高压力？→ 触发 memory flush
     ↓
 收敛后生成最终答案 → 返回给用户
-```textbash
+```
+
+### 快速启动
+
+```bash
 # 1. 安装依赖（包含 playwright chromium）
 bun install
 
@@ -117,15 +133,29 @@ cp env.example .env
 
 # 3. 启动 CLI
 bun run start
-```texttext
+```
+
+### 金融研究提示词模板
+
+```text
 Compare Apple and Microsoft on revenue growth, operating margin, and free cash flow trend over the last 5 years.
-```texttext
+```
+
+```text
 对象 + 时间范围 + 比较维度 + 目标判断 + 期望输出格式
-```texttext
+```
+
+```text
 What is Tesla's latest revenue?
-```texttext
+```
+
+```text
 What does Tesla's latest revenue, gross margin, and operating income suggest about demand quality and pricing power?
-```texttext
+```
+
+### 故障排查步骤
+
+```text
 1. 检查 .env
 2. 重新运行 bun install
 3. 重新启动 CLI 或网关
@@ -139,7 +169,7 @@ What does Tesla's latest revenue, gross margin, and operating income suggest abo
 
 ### 一句话定义
 
-> **Dexter 是一个以研究为导向的 AI 代理平台，通过多模型路由、工具协同、技能复用、持久记忆、WhatsApp 网关和自动化监控的完整架构，让 AI 是，不是「会说」「能查、能做、能监控、能进化」。**
+> **Dexter 是一个以研究为导向的 AI 代理平台，通过多模型路由、工具协同、技能复用、持久记忆、WhatsApp 网关和自动化监控的完整架构，让 AI 能查、能做、能监控、能进化，而不只是会说。**
 
 ### 核心能力矩阵
 

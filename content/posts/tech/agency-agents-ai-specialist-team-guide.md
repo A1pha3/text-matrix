@@ -14,7 +14,7 @@ tags: ["AI Agent", "Claude Code", "Cursor", "多工具集成", "AI团队", "Open
 
 ## 项目概览
 
-[The Agency](https://github.com/msitarzewski/agency-agents) 源于一个 Reddit 帖子，经数月迭代发展为一个包含**147 个专业化 AI Agent**的开源项目。每个 Agent 不是泛泛的提示词模板，而是拥有独特人格、沟通风格、专业流程和可衡量产出的专家级角色。
+[The Agency](https://github.com/msitarzewski/agency-agents) 源于一个 Reddit 帖子，经数月迭代发展为一个包含**147 个专业化 AI Agent**的开源项目。每个 Agent 拥有独特人格、沟通风格、专业流程和可衡量产出，不是泛泛的提示词模板。
 
 **核心数据：**
 - GitHub Stars：1,189

@@ -112,14 +112,14 @@ Slash Commands 允许你通过 `/` 前缀快速触发预定义命令。
 
 # 修复错误
 /fix
-```textmarkdown
+```markdown
 <!-- .claude/commands/custom.md -->
 # Custom Slash Command
 
 This command does something useful.
 
 @slack.notify "Task completed: {{task}}"
-```textmarkdown
+```markdown
 # Project Context
 
 ## 技术栈
@@ -143,7 +143,7 @@ This command does something useful.
               │  Memory   │
               │  (向量存储) │
               └───────────┘
-```textbash
+```bash
 # 保存检查点
 /checkpoint save "完成模块A开发"
 
@@ -152,7 +152,7 @@ This command does something useful.
 
 # 恢复到检查点
 /checkpoint restore "完成模块A开发"
-```textbash
+```bash
 # 启动会话
 claude
 
@@ -172,7 +172,7 @@ claude --help
 │   └── tools/             # 关联工具
 └── security-audit/
     └── ...
-```textyaml
+```yaml
 name: code-review
 description: Perform comprehensive code review
 triggers:
@@ -188,7 +188,7 @@ instructions: |
   2. Security vulnerabilities
   3. Performance issues
   4. Style consistency
-```texttypescript
+```typescript
 // hooks/pre-tool-use.ts
 import { HookRegistry } from '@claude-code/hooks';
 
@@ -203,7 +203,7 @@ export const preToolUse: HookRegistry['preToolUse'] = async (tool, input) => {
   
   return { allowed: true };
 };
-```textyaml
+```yaml
 # .claude/mcp.yaml
 mcp_servers:
   github:
@@ -225,7 +225,7 @@ mcp_servers:
            ├──► 子 Agent 2（安全扫描）
            │
            └──► 子 Agent 3（文档生成）
-```texttypescript
+```typescript
 // 创建子 Agent 处理代码审查
 const reviewer = await claude.spawnAgent({
   name: 'code-reviewer',
@@ -238,7 +238,7 @@ const reviewer = await claude.spawnAgent({
 const task = await reviewer.review(pullRequest);
 await task.waitForCompletion();
 const results = await task.getResults();
-```textyaml
+```yaml
 # .claude/config.yaml
 performance:
   context_window: 200000
@@ -249,7 +249,7 @@ cache:
   enabled: true
   ttl: 3600
   max_size: 1000
-```textyaml
+```yaml
 security:
   read_only_mode: false
   allowed_paths:
@@ -269,7 +269,7 @@ my-plugin/
 ├── hooks/               # 钩子
 ├── commands/            # 命令
 └── resources/           # 资源文件
-```textjson
+```json
 {
   "name": "my-code-review-plugin",
   "version": "1.0.0",
@@ -279,7 +279,7 @@ my-plugin/
   "hooks": ["./hooks/security-scanner"],
   "commands": ["./commands/review"]
 }
-```textyaml
+```yaml
 # .claude/commands/code-review.md
 # /code-review - 自动代码审查工作流
 
@@ -288,7 +288,7 @@ my-plugin/
 2. 使用 code-review skill 进行基础审查
 3. 启动 security-subagent 进行安全扫描
 4. 汇总结果并输出报告
-```textmarkdown
+```markdown
 # CLAUDE.md - 团队入职助手
 
 ## 团队信息
@@ -300,14 +300,14 @@ my-plugin/
 1. 环境配置 → 参考 docs/setup.md
 2. 代码规范 → 参考 .eslintrc.js
 3. 提交流程 → 使用 /git-workflow 命令
-```textbash
+```bash
 # Git hook 配置
 # .git/hooks/pre-commit
 claude --command "lint-and-test"
 
 # 自动部署
 claude --background --watch "src/**/*.ts" "npm run build && deploy.sh"
-```texttypescript
+```typescript
 // 安全审计子 Agent
 const securityAuditor = await claude.spawnAgent({
   name: 'security-auditor',
@@ -322,7 +322,7 @@ const securityAuditor = await claude.spawnAgent({
     }
   }]
 });
-```textbash
+```bash
 # 保存检查点
 /checkpoint save "重构前状态"
 
@@ -333,7 +333,7 @@ const securityAuditor = await claude.spawnAgent({
 
 # 验证后保存新检查点
 /checkpoint save "重构完成"
-```textbash
+```bash
 # 1. 克隆指南仓库
 git clone https://github.com/luongnv89/claude-howto.git
 cd claude-howto
@@ -350,7 +350,7 @@ cp 02-memory/project-CLAUDE.md /path/to/your-project/CLAUDE.md
 
 # 5. 安装一个 Skill
 cp -r 03-skills/code-review ~/.claude/skills/
-```textbash
+```bash
 # Slash Commands (15 分钟)
 cp 01-slash-commands/*.md ~/.claude/commands/
 
@@ -379,7 +379,7 @@ project/
 ├── CLAUDE.md              # 项目上下文（重要！）
 ├── CLAUDE.local.md        # 本地特定配置
 └── .claudeignore          # 忽略文件
-```textyaml
+```yaml
 <!-- .claude/skills/my-skill/SKILL.md -->
 name: my-custom-skill
 description: Custom skill for project-specific tasks
@@ -412,7 +412,7 @@ instructions: |
   2. Check relevant documentation in docs/
   3. Follow the coding standards in STYLE_GUIDE.md
   4. Output results in the standard format
-```texttypescript
+```typescript
 // .claude/hooks/notification-hook.ts
 import { Hook, HookContext, HookResult } from '@claude-code/hooks';
 
@@ -428,7 +428,7 @@ export const postMessage: Hook = async (
 
   return { success: true };
 };
-```texttypescript
+```typescript
 // 自定义 MCP 服务器
 import { MCPServer, Tool } from '@modelcontextprotocol/server';
 
@@ -454,7 +454,7 @@ server.addTool({
 });
 
 server.listen();
-```textmarkdown
+```markdown
 <!-- 推荐的 CLAUDE.md 结构 -->
 
 # [项目名称]
@@ -484,7 +484,7 @@ server.listen();
 ## 联系人
 - 技术负责人: [邮箱]
 - 文档维护: [邮箱]
-```texttypescript
+```typescript
 // 生产环境 Hooks 安全配置
 const secureHooks = {
   preToolUse: async (tool, input) => {
@@ -512,7 +512,7 @@ const secureHooks = {
     return { filtered, wasModified: filtered !== message };
   },
 };
-```textyaml
+```yaml
 # .claude/config.yaml - 性能优化配置
 
 # 上下文管理
@@ -533,7 +533,7 @@ concurrency:
   max_parallel_tools: 5
   max_parallel_subagents: 3
   queue_timeout: 300
-```textbash
+```bash
 # 1. 立即开始（15分钟）
 git clone https://github.com/luongnv89/claude-howto.git
 cd claude-howto

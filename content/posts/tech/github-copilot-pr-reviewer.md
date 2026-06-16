@@ -5,7 +5,7 @@ categories: ["技术笔记"]
 tags: ["GitHub", "Copilot", "PR", "Code Review", "AI", "自动化"]
 draft: false
 slug: github-copilot-pr-reviewer
-description: "GitHub Copilot PR Reviewer 基于 Copilot SDK，自动分析 PR 改动、识别潜在问题和生成审查意见。本文覆盖配置安装、最佳实践和 CI/CD 集成。"
+description: "GitHub Copilot PR Reviewer 基于 Copilot SDK，自动分析 PR 改动、识别潜在问题和生成审查意见。本文覆盖配置安装、实践建议和 CI/CD 集成。"
 ---
 
 # GitHub Copilot PR Reviewer：AI 代码审查实战指南
@@ -27,7 +27,7 @@ Copilot PR Reviewer 是 GitHub 官方基于 [GitHub Copilot SDK](https://github.
 
 ### 1. 语义级代码理解
 
-Copilot 不只是做字符串匹配，它理解：
+Copilot 不止做字符串匹配，它理解：
 - 代码的业务逻辑（你在做什么）
 - 上下文依赖（改这个会影响什么）
 - 代码风格一致性（是否符合项目规范）
@@ -249,7 +249,7 @@ jobs:
 
 ## 小结
 
-Copilot PR Reviewer 让 Code Review 从"被动等待人工审查"变成"AI 先审、人类复审"的高效模式。它不替代人，而是把人从重复性的机械审查中解放出来，去做更高价值的架构设计和业务判断。
+Copilot PR Reviewer 让 Code Review 从"被动等待人工审查"变成"AI 先审、人类复审"的高效模式。它把人从重复性的机械审查中解放出来，去做更高价值的架构设计和业务判断。
 
 **项目地址：** https://github.com/github/copilot-sdk
 

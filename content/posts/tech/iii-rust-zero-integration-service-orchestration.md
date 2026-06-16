@@ -83,7 +83,7 @@ iii 特别适合 AI Agent 场景：
 
 > 当一个任务需要系统不具备的能力时，Agent 可以直接添加一个 Worker，发现它的 Function，调用它，并追踪发生了什么，而开发者使用的也是同一个接口。
 
-这意味着 Agent 和人类开发者使用完全相同的接口，天然实现了人机协作。
+Agent 和人类开发者使用完全相同的接口，人机协作不需要额外的适配层。
 
 ## 多语言 SDK
 
@@ -100,7 +100,7 @@ iii 官方维护了一个公开的 Workers 目录：[workers.iii.dev](https://wo
 
 ## 结语
 
-iii 用 Rust 实现了一个极简但强大的服务编排运行时。Worker/Function/Trigger 三大原语将过去需要大量集成配置的工作压缩为几行声明。AI Agent 可以在运行时动态扩展系统，而人类开发者与 Agent 使用完全相同的接口。
+iii 用 Rust 实现了一个轻量的服务编排运行时。Worker/Function/Trigger 三大原语将过去需要大量集成配置的工作压缩为几行声明。AI Agent 可以在运行时动态扩展系统，而人类开发者与 Agent 使用完全相同的接口。
 
 ---
 

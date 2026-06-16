@@ -75,7 +75,7 @@ caveman 在 `benchmarks/` 目录中提供了可复现的 Token 计数结果：
 
 范围：22% – 87% 节省。
 
-> ⚠️ **关键说明**：Caveman 只影响输出 token（LLM 回复），思考/reasoning token 不受影响。Caveman 不是让 AI 变笨，而是让 AI「闭嘴说重点」。
+> ⚠️ **关键说明**：Caveman 只影响输出 token（LLM 回复），思考/reasoning token 不受影响。Caveman 不影响 AI 判断力，只压缩输出形式——让 AI「闭嘴说重点」。
 
 ### 1.4 为什么「简洁」不等于「信息丢失」
 

@@ -18,7 +18,7 @@ tags: ["Senparc.Weixin", "微信SDK", ".NET", "CSharp", "微信公众号"]
 
 ## 🎯 学习目标
 
-完成本文档后，你将掌握：
+完成本文档后，你能做到：
 
 - ✅ 理解 Senparc.Weixin 的设计哲学与核心架构
 - ✅ 能够快速配置并运行第一个微信公众号应用
@@ -37,7 +37,7 @@ tags: ["Senparc.Weixin", "微信SDK", ".NET", "CSharp", "微信公众号"]
 
 Senparc.Weixin（曾用名 WeiXinMPSDK）是一款开源的微信 .NET SDK，由盛派网络（Senparc）团队开发和维护。**这是目前使用率最高的微信 .NET SDK，也是国内最受欢迎的 .NET 开源项目之一**。
 
-**核心定位**：帮助 .NET 开发者快速、简单地集成微信全平台能力，无需深入理解微信复杂的 API 细节和签名机制。
+**定位**：帮助 .NET 开发者快速集成微信全平台能力，不用深入理解微信复杂的 API 细节和签名机制。
 
 ```mermaid
 graph LR
@@ -217,7 +217,7 @@ dotnet add package Senparc.Weixin.TenPayV3
 
 ### 3.4 三行代码开启微信开发
 
-Senparc.Weixin 的核心理念是**用最少的代码完成最多的功能**。
+Senparc.Weixin 的设计思路是**用最少的代码完成最多的功能**。
 
 #### 第一步：注册服务（1 行）
 
@@ -358,7 +358,7 @@ sequenceDiagram
     Weixin->>SDK: 返回新 AccessToken
 ```
 
-**Senparc.Weixin 的优势**：开发者**无需关心** AccessToken 的获取、刷新和存储。SDK 会自动在后台完成这一切。
+**Senparc.Weixin 的做法**：开发者**无需关心** AccessToken 的获取、刷新和存储。SDK 会自动在后台完成这一切。
 
 ```csharp
 // 开发者只需这样调用
@@ -863,9 +863,9 @@ public override async Task<IResponseMessageBase> OnTextRequestAsync(
 
 ## 总结
 
-Senparc.Weixin 是 .NET 开发者集成微信能力的不二之选。**12 年的持续维护、简洁的 API 设计、完善的文档**，让它成为国内最具影响力的 .NET 开源项目之一。
+Senparc.Weixin 是 .NET 开发者集成微信能力的主流选择。**12 年的持续维护、简洁的 API 设计、完善的文档**，让它成为国内最具影响力的 .NET 开源项目之一。
 
-**核心优势回顾**：
+**优势回顾**：
 
 | 优势 | 说明 |
 |------|------|

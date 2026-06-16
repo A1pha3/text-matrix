@@ -17,7 +17,7 @@ description: "深度解析 Trae Agent (11.2k Stars)：字节跳动开发的 LLM 
 
 ## 学习目标
 
-完成本文档后，可以：
+本文档覆盖以下内容：
 
 - ✅ 理解 Trae Agent 的核心定位与研究导向设计理念
 - ✅ 掌握 Trae Agent 的安装与配置方法

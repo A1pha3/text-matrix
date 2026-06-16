@@ -10,15 +10,13 @@ tags: ["手柄映射", "DualShock 4", "DualSense", "Windows", "游戏工具"]
 
 # DS4Windows：让你的 PS 手柄在 Windows 上当成 Xbox 手柄用
 
-对于同时玩 PC 游戏和 PlayStation 主机的玩家来说，手柄兼容性问题一直是个痛点。很多 PC 游戏原生只支持 Xbox 手柄，而索尼的 DualShock 4（PS4）和 DualSense（PS5）手感更熟悉，生态也更成熟。DS4Windows 正是为解决这个需求而生的开源工具。
-
-DS4Windows 是一个非官方的 DS4Windows 分支，由社区维护。它的核心功能是把 PlayStation 手柄模拟成 Xbox 360 / Xbox One 控制器，让你在 Windows 10 或 Windows 11 上无差别地使用 PS 手柄打游戏，同时保留 PS 手柄特有的陀螺仪（Gyro）、自适应扳机（Adaptive Trigger）和触控板（Touchpad）功能。
+很多 PC 游戏原生只支持 Xbox 手柄，而索尼的 DualShock 4（PS4）和 DualSense（PS5）手感更熟悉，生态也更成熟。DS4Windows 解决的就是这个问题：把 PlayStation 手柄模拟成 Xbox 360 / Xbox One 控制器，在 Windows 10/11 上直接用 PS 手柄打游戏，同时保留陀螺仪（Gyro）、自适应扳机（Adaptive Trigger）和触控板（Touchpad）。
 
 ## 核心能力
 
 **手柄模拟与兼容**
 
-DS4Windows 通过 ViGEmBus 驱动将 PS 手柄模拟为 Xbox 控制器，PC 游戏无需任何额外补丁就能识别。这意味着你可以在任何支持 Xbox 手柄的游戏里直接使用 PS4 或 PS5 手柄，包括《Forza Horizon 6》这类 Xbox 独占生态的作品。
+DS4Windows 通过 ViGEmBus 驱动将 PS 手柄模拟为 Xbox 控制器，PC 游戏无需任何额外补丁就能识别。你可以在任何支持 Xbox 手柄的游戏里直接使用 PS4 或 PS5 手柄，包括《Forza Horizon 6》这类 Xbox 独占生态的作品。
 
 **完整功能支持**
 
@@ -108,6 +106,6 @@ DS4Windows 最适合以下场景：
 
 ## 总结
 
-DS4Windows 的价值在于消除手柄生态的隔阂。对索尼玩家而言，无需额外购买 Xbox 手柄就能在 PC 上获得完整的游戏手柄体验，且保留了陀螺仪和自适应扳机这些 PS 手柄独有的交互维度。配置完成后，日常使用几乎透明——打开游戏，手柄即用。
+DS4Windows 消除了手柄生态的隔阂。对索尼玩家而言，无需额外购买 Xbox 手柄就能在 PC 上获得完整的游戏手柄体验，且保留了陀螺仪和自适应扳机这些 PS 手柄独有的交互维度。配置完成后，日常使用几乎透明——打开游戏，手柄即用。
 
-如果你在 PC 上玩《Forza Horizon 6》这类 Xbox 独占游戏，DS4Windows 是目前最成熟的 PS 手柄映射方案，值得一试。
+如果你在 PC 上玩《Forza Horizon 6》这类 Xbox 独占游戏，DS4Windows 是目前最成熟的 PS 手柄映射方案。

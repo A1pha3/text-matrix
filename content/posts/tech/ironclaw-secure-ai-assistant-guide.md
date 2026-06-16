@@ -8,27 +8,11 @@ categories: ["技术笔记"]
 tags: ["IronClaw", "AI助手", "安全隐私", "WASM", "Rust", "PostgreSQL"]
 ---
 
-# IronClaw：安全私密个人 AI 助手完全指南
+# IronClaw：安全私密个人 AI 助手
 
-## §1 学习目标
+## §1 项目概述
 
-完成本文档后，你将能够：
-
-- ✅ 理解 IronClaw 的核心定位与安全理念
-- ✅ 掌握 IronClaw 的技术架构与核心组件
-- ✅ 熟练部署 IronClaw（从源码编译 + Docker）
-- ✅ 熟练使用 REPL、Web Gateway、Telegram 等多种渠道
-- ✅ 配置多种 LLM Provider（Anthropic、OpenAI、GitHub Copilot、MiniMax 等）
-- ✅ 理解 WASM Sandbox 安全机制
-- ✅ 使用 Routines 实现定时任务和自动化
-- ✅ 掌握 Hybrid Search 混合搜索的使用
-- ✅ 理解 IronClaw 与 OpenClaw 的区别
-
----
-
-## §2 项目概述
-
-### 2.1 什么是 IronClaw？
+### 1.1 什么是 IronClaw？
 
 **IronClaw**（官方仓库：[nearai/ironclaw](https://github.com/nearai/ironclaw)）是一款**安全私密的个人 AI 助手**，核心理念是"Your data stays yours"。
 
@@ -45,7 +29,7 @@ tags: ["IronClaw", "AI助手", "安全隐私", "WASM", "Rust", "PostgreSQL"]
 | **Self-expanding capabilities** | 随时构建新工具，无需等待供应商更新 |
 | **Defense in depth** | 多层安全防护，抵御提示注入和数据泄露 |
 
-### 2.2 核心数据
+### 1.2 核心数据
 
 ```
 Stars:     11,200 (11.2k)
@@ -59,7 +43,7 @@ Watchers:  78
 主要语言: Rust 90.5%, Shell 2.8%, JavaScript 2.8%, Python 2.5%
 ```
 
-### 2.3 与 OpenClaw 的关系
+### 1.3 与 OpenClaw 的关系
 
 IronClaw 是受 [OpenClaw](https://github.com/openclaw/openclaw) 启发、用 **Rust 语言重写的实现**，专注于隐私和安全。
 
@@ -73,7 +57,7 @@ IronClaw 是受 [OpenClaw](https://github.com/openclaw/openclaw) 启发、用 **
 | 安全设计 | 安全优先，多层防御 | 安全优先 |
 | 部署 | 单二进制文件 | Node.js 运行时 |
 
-### 2.4 技术栈
+### 1.4 技术栈
 
 | 组件 | 技术 |
 |------|------|
@@ -85,9 +69,9 @@ IronClaw 是受 [OpenClaw](https://github.com/openclaw/openclaw) 启发、用 **
 
 ---
 
-## §3 核心特性详解
+## §2 核心特性详解
 
-### 3.1 安全优先（Security First）
+### 2.1 安全优先（Security First）
 
 **WASM 沙箱**
 
@@ -123,7 +107,7 @@ WASM ──► Allowlist ──► Leak Scan ──► Credential ──► Exec
 - 无遥测、分析或数据共享
 - 完整的工具执行审计日志
 
-### 3.2 随时可用（Always Available）
+### 2.2 随时可用（Always Available）
 
 **多渠道支持**
 
@@ -147,7 +131,7 @@ WASM ──► Allowlist ──► Leak Scan ──► Credential ──► Exec
 - **Parallel Jobs**: 隔离上下文中并发处理多个请求
 - **Self-repair**: 自动检测和恢复卡住的操作
 
-### 3.3 自我扩展（Self-Expanding）
+### 2.3 自我扩展（Self-Expanding）
 
 **动态工具构建**
 
@@ -161,7 +145,7 @@ WASM ──► Allowlist ──► Leak Scan ──► Credential ──► Exec
 
 无需重启，即可插入新的 WASM 工具和渠道。
 
-### 3.4 持久化记忆（Persistent Memory）
+### 2.4 持久化记忆（Persistent Memory）
 
 **混合搜索**
 
@@ -177,9 +161,9 @@ WASM ──► Allowlist ──► Leak Scan ──► Credential ──► Exec
 
 ---
 
-## §4 技术架构深度解析
+## §3 技术架构深度解析
 
-### 4.1 系统架构图
+### 3.1 系统架构图
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -223,7 +207,7 @@ WASM ──► Allowlist ──► Leak Scan ──► Credential ──► Exec
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 核心组件详解
+### 3.2 核心组件详解
 
 | 组件 | 功能 |
 |------|------|
@@ -237,7 +221,7 @@ WASM ──► Allowlist ──► Leak Scan ──► Credential ──► Exec
 | **Workspace** | 带混合搜索的持久化记忆 |
 | **Safety Layer** | 提示注入防御和内容清理 |
 
-### 4.3 目录结构
+### 3.3 目录结构
 
 | 目录 | 说明 |
 |------|------|
@@ -262,9 +246,9 @@ WASM ──► Allowlist ──► Leak Scan ──► Credential ──► Exec
 
 ---
 
-## §5 安装与配置
+## §4 安装与配置
 
-### 5.1 环境要求
+### 4.1 环境要求
 
 | 要求 | 版本 |
 |------|------|
@@ -272,7 +256,7 @@ WASM ──► Allowlist ──► Leak Scan ──► Credential ──► Exec
 | PostgreSQL | 15+ (with pgvector extension) |
 | NEAR AI 账号 | 用于认证（通过设置向导处理）|
 
-### 5.2 数据库设置
+### 4.2 数据库设置
 
 ```bash
 # 创建数据库
@@ -282,7 +266,7 @@ createdb ironclaw
 psql ironclaw -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
-### 5.3 安装方式
+### 4.3 安装方式
 
 **方式一：下载预构建版本**
 
@@ -301,7 +285,7 @@ cargo build --release
 # 二进制文件位于 target/release/ironclaw
 ```
 
-### 5.4 配置向导
+### 4.4 配置向导
 
 首次设置时，运行设置向导配置 IronClaw：
 
@@ -314,7 +298,7 @@ ironclaw onboard
 2. NEAR AI 认证（通过浏览器 OAuth）
 3. 凭证加密（使用系统密钥链）
 
-### 5.5 LLM Provider 配置
+### 4.5 LLM Provider 配置
 
 IronClaw 默认使用 NEAR AI，但支持多种 LLM Provider。
 
@@ -353,9 +337,9 @@ LLM_MODEL=anthropic/claude-sonnet-4
 
 ---
 
-## §6 使用说明
+## §5 使用说明
 
-### 6.1 REPL 交互
+### 5.1 REPL 交互
 
 ```bash
 # 首次设置（配置数据库、认证等）
@@ -368,7 +352,7 @@ cargo run
 RUST_LOG=ironclaw=debug cargo run
 ```
 
-### 6.2 Web Gateway
+### 5.2 Web Gateway
 
 Web Gateway 提供浏览器 UI，支持：
 
@@ -379,11 +363,11 @@ Web Gateway 提供浏览器 UI，支持：
 - 扩展管理
 - Routines 配置
 
-### 6.3 Telegram 渠道
+### 5.3 Telegram 渠道
 
 设置和 DM 配对请参考 [docs/TELEGRAM_SETUP.md](https://github.com/nearai/ironclaw/blob/staging/docs/TELEGRAM_SETUP.md)。
 
-### 6.4 开发命令
+### 5.4 开发命令
 
 ```bash
 # 格式化代码
@@ -402,9 +386,9 @@ cargo test test_name
 
 ---
 
-## §7 安全机制详解
+## §6 安全机制详解
 
-### 7.1 WASM 沙箱工作流程
+### 6.1 WASM 沙箱工作流程
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -418,7 +402,7 @@ cargo test test_name
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 提示注入防御
+### 6.2 提示注入防御
 
 外部内容通过多层处理：
 
@@ -429,7 +413,7 @@ cargo test test_name
 | **策略规则** | 严重级别（Block/Warn/Review/Sanitize）|
 | **输出包装** | 工具输出安全包装用于 LLM 上下文注入 |
 
-### 7.3 凭证保护
+### 6.3 凭证保护
 
 - 凭证在主机边界注入
 - WASM 代码永远看不到凭证
@@ -437,9 +421,9 @@ cargo test test_name
 
 ---
 
-## §8 Routines 自动化
+## §7 Routines 自动化
 
-### 8.1 Routines 引擎
+### 7.1 Routines 引擎
 
 Routines 引擎支持：
 
@@ -447,19 +431,19 @@ Routines 引擎支持：
 - **事件触发**: 响应系统事件
 - **Webhook 处理器**: HTTP 回调
 
-### 8.2 Heartbeat System
+### 7.2 Heartbeat System
 
 主动后台执行监控和维护任务。
 
-### 8.3 Self-repair
+### 7.3 Self-repair
 
 自动检测和恢复卡住的操作。
 
 ---
 
-## §9 Hybrid Search 混合搜索
+## §8 Hybrid Search 混合搜索
 
-### 9.1 工作原理
+### 8.1 工作原理
 
 Hybrid Search 结合：
 
@@ -468,7 +452,7 @@ Hybrid Search 结合：
 
 使用 **Reciprocal Rank Fusion** 融合两种搜索结果。
 
-### 9.2 Workspace 文件系统
+### 8.2 Workspace 文件系统
 
 基于路径的灵活存储：
 
@@ -476,15 +460,15 @@ Hybrid Search 结合：
 - 日志
 - 上下文
 
-### 9.3 身份文件
+### 8.3 身份文件
 
 跨会话保持一致的人格和偏好设置。
 
 ---
 
-## §10 实践建议
+## §9 实践建议
 
-### 10.1 部署建议
+### 9.1 部署建议
 
 **生产环境部署**
 
@@ -507,7 +491,7 @@ cargo clippy --all --benches --tests --examples --all-features
 cargo test
 ```
 
-### 10.2 安全建议
+### 9.2 安全建议
 
 - 保持 Rust 和依赖更新
 - 使用强密码和密钥管理
@@ -515,7 +499,7 @@ cargo test
 - 限制网络暴露
 - 使用 WASM 沙箱隔离不受信任的工具
 
-### 10.3 性能优化
+### 9.3 性能优化
 
 - 使用 Docker 沙箱隔离重操作
 - 配置适当的超时和资源限制
@@ -524,7 +508,7 @@ cargo test
 
 ---
 
-## §11 常见问题
+## §10 常见问题
 
 ### Q1：IronClaw 和 OpenClaw 有什么区别？
 
@@ -568,9 +552,9 @@ IronClaw 是用 Rust 重写的版本，专注于：
 
 ---
 
-## §12 总结
+## §11 总结
 
-### 12.1 核心优势
+### 11.1 核心优势
 
 | 优势 | 说明 |
 |------|------|
@@ -582,7 +566,7 @@ IronClaw 是用 Rust 重写的版本，专注于：
 | **自动化** | Routines、Heartbeat、Self-repair |
 | **Rust 性能** | 原生速度、内存安全、单二进制 |
 
-### 12.2 相关资源
+### 11.2 相关资源
 
 | 资源 | 链接 |
 |------|------|
@@ -594,7 +578,7 @@ IronClaw 是用 Rust 重写的版本，专注于：
 | LLM Provider 文档 | docs/LLM_PROVIDERS.md |
 | Telegram 设置 | docs/TELEGRAM_SETUP.md |
 
-### 12.3 项目信息
+### 11.3 项目信息
 
 - 最新版本：v0.23.0 (2026-03-27)
 - Stars：11.2k
@@ -604,4 +588,4 @@ IronClaw 是用 Rust 重写的版本，专注于：
 
 ---
 
-*文档版本 1.0 | 撰写日期：2026-03-31 | 基于 v0.23.0 (2026-03-27) | Stars: 11.2k ⭐*
+*文档版本 1.0 | 撰写日期：2026-03-31 | 基于 v0.23.0 (2026-03-27) | Stars: 11.2k*

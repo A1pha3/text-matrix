@@ -82,7 +82,7 @@ TencentDB Agent Memory 的解法是把记忆**结构化**：
 | L0 Conversation | Markdown 文件 | 全量留存，体量大，靠文件系统足够 |
 | 短期 Mermaid canvas + refs/*.md | Markdown / 文件系统 | 同上，符号图给人 + LLM 共读 |
 
-**上层保留结构，下层保留证据**。这就是 README 里那句话的工程落地——"Lower layers preserve evidence; upper layers preserve structure"。
+**上层保留结构，下层保留证据**。这就是 README 里那句话——"Lower layers preserve evidence; upper layers preserve structure"——在工程上的具体体现。
 
 ### 3.2 渐进式披露（Progressive Disclosure）
 

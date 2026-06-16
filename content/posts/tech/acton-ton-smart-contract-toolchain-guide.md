@@ -10,7 +10,7 @@ tags: ["TON", "智能合约", "Rust", "区块链开发", "FunC"]
 
 # Acton：TON 智能合约开发一站式工具链完全指南
 
-**Acton**（[ton-blockchain/acton](https://github.com/ton-blockchain/acton)）是 TON 官方推出的 Rust 编写的智能合约开发工具链，覆盖从项目创建、编译、测试、调试到部署的完整生命周期。它将原本分散在多个工具（FunC 编译器、Tolk、TON OS 等）中的能力整合为一个统一的 CLI，极大降低了 TON 智能合约的开发门槛。
+**Acton**（[ton-blockchain/acton](https://github.com/ton-blockchain/acton)）是 TON 官方推出的 Rust 编写的智能合约开发工具链，覆盖从项目创建、编译、测试、调试到部署的完整生命周期。它把原本分散在多个工具（FunC 编译器、Tolk、TON OS 等）中的能力整合为一个统一的 CLI，省掉了多工具切换和配置的成本。
 
 核心特点：
 - **单一 CLI**：一个命令完成合约全生命周期
@@ -242,6 +242,6 @@ acton new my-dao --template dao
 
 ## 总结
 
-Acton 将 TON 智能合约开发的全流程整合为一套工具链，显著降低了开发复杂度和工具学习成本。其 Rust 原生实现保证了性能，而 Fork 模式、Gas 快照、覆盖率分析等高级测试功能则让它成为专业合约开发的利器。对于任何想要进入 TON 生态的开发者，Acton 都是绕不开的第一站。
+Acton 把 TON 智能合约开发的全流程收进一套 CLI，省掉了多工具切换和配置的成本。Rust 原生实现保证了编译和测试速度，Fork 模式、Gas 快照、覆盖率分析等测试功能让合约审计有据可查。对想进 TON 生态的开发者，Acton 是绕不开的第一站。
 
 官方文档：[https://ton-blockchain.github.io/acton/docs/welcome](https://ton-blockchain.github.io/acton/docs/welcome)

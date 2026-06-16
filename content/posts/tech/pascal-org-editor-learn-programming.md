@@ -16,17 +16,15 @@ tags: ["Pascal", "编程入门", "在线IDE", "Web开发", "教育"]
 
 ---
 
-## 🎯 学习目标
+## 学习目标
 
-完成本文档后，你将掌握：
-
-- ✅ 理解 Pascal.org Editor 的定位与功能
-- ✅ 掌握使用 Pascal.org 进行在线编程的方法
-- ✅ 从零开始学习 Pascal 编程基础
-- ✅ 利用平台资源完成编程入门到进阶
-- ✅ 理解 Web 端 Pascal 解释器的工作原理
-- ✅ 了解项目目录结构和技术栈
-- ✅ 为开源项目做贡献
+- 了解 Pascal.org Editor 的定位与功能
+- 使用 Pascal.org 进行在线编程
+- 从零开始学习 Pascal 编程基础
+- 利用平台资源完成编程入门到进阶
+- 了解 Web 端 Pascal 解释器的工作原理
+- 了解项目目录结构和技术栈
+- 为开源项目做贡献
 
 ---
 
@@ -34,9 +32,9 @@ tags: ["Pascal", "编程入门", "在线IDE", "Web开发", "教育"]
 
 ### 1.1 什么是 Pascal.org Editor？
 
-Pascal.org Editor（[pascalorg/editor](https://github.com/pascalorg/editor)）是 Pascal.org 平台的**在线 Pascal 编辑器和学习环境**，让你可以直接在浏览器中编写、编译和运行 Pascal 代码，无需安装任何开发环境。
+Pascal.org Editor（[pascalorg/editor](https://github.com/pascalorg/editor)）是 Pascal.org 平台的在线 Pascal 编辑器和学习环境，直接在浏览器中编写、编译和运行 Pascal 代码，无需安装开发环境。
 
-**核心定位**：为零基础学习者提供零门槛的 Pascal 编程入门体验。
+面向零基础学习者，省掉环境配置这一步。
 
 ```mermaid
 graph LR
@@ -728,15 +726,15 @@ end;
 
 ## 十三、总结
 
-Pascal.org Editor 是一款简洁高效的在线 Pascal 学习工具：
+Pascal.org Editor 是一个在线 Pascal 学习工具：
 
 | 优势 | 说明 |
 |------|------|
-| 🎯 **零门槛** | 无需安装，直接浏览器编程 |
-| 📚 **专注教学** | Pascal 语言适合入门 |
-| ⚡ **即时反馈** | 实时编译运行 |
-| 📱 **响应式** | 支持移动设备 |
-| 🔓 **开源** | 可自由贡献改进 |
+| 零门槛 | 无需安装，直接浏览器编程 |
+| 专注教学 | Pascal 语言适合入门 |
+| 即时反馈 | 实时编译运行 |
+| 响应式 | 支持移动设备 |
+| 开源 | 可自由贡献改进 |
 
 **下一步推荐**：
 

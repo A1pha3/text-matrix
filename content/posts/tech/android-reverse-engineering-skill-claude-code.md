@@ -12,16 +12,14 @@ Android 逆向工程 Skill：.K Stars 的 Claude Code 智能体
 
 ---
 
-§ 学习目标
+§ 本文覆盖
 
-完成本篇文章后，你将能够：
-
-1. **理解 Android 逆向工程的基本原理**：DEX→Java 反编译流程
-2. **掌握 jadx 和 Vineflower 两大引擎**：各自优势和适用场景
-3. **能够使用 Claude Code Skill**：一句话完成 APK 反编译和 API 提取
-4. **理解 API 提取模式**：Retrofit/OkHttp/Volley 的特征识别
-5. **掌握调用链追踪技术**：从 UI 到网络请求的完整追踪
-6. **了解法律合规边界**：确保逆向工程行为合法
+1. Android 逆向工程的 DEX→Java 反编译流程
+2. jadx 和 Vineflower 两大引擎的差异与适用场景
+3. Claude Code Skill 一句话完成 APK 反编译和 API 提取
+4. Retrofit/OkHttp/Volley 的 API 提取特征识别
+5. 从 UI 到网络请求的调用链追踪
+6. 逆向工程的法律合规边界
 
 ---
 

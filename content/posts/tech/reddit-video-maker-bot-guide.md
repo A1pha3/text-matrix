@@ -11,9 +11,7 @@ draft: false
 
 # RedditVideoMakerBot：一键自动化 Reddit 内容视频生成工具
 
-## 1. 学习目标
-
-通过本文你将了解：
+## 1. 本文覆盖
 
 - RedditVideoMakerBot 解决什么问题、怎么设计的
 - 安装和配置方法
@@ -615,9 +613,9 @@ pip install ffmpeg-python
 
 | 工具 | 平台 | 自动化程度 | 定制性 |
 |------|------|-----------|--------|
-| RedditVideoMakerBot | 全平台 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| Revolver | TikTok | ⭐⭐⭐ | ⭐⭐ |
-| 手动制作 | - | ⭐ | ⭐⭐⭐⭐⭐ |
+| RedditVideoMakerBot | 全平台 | 高 | 中 |
+| Revolver | TikTok | 中 | 低 |
+| 手动制作 | - | 低 | 高 |
 
 **RedditVideoMakerBot 优势**：
 - 完全开源可定制
@@ -627,21 +625,9 @@ pip install ffmpeg-python
 
 ## 11. 总结
 
-RedditVideoMakerBot 是 Reddit 内容视频化的工具：
+RedditVideoMakerBot 将 Reddit 帖子自动转换为视频：一条命令完成内容获取、TTS 语音合成、标题卡片生成、FFmpeg 视频合成，支持自定义背景/语音/音乐，GPL-3.0 开源，94 贡献者，11.4k Stars。
 
-| 特性 | 说明 |
-|------|------|
-| 一键生成 | `python main.py` 即可 |
-| 完全自动化 | 无需视频剪辑 |
-| 开源免费 | GPL-3.0 许可证 |
-| 高度可定制 | 背景/语音/音乐可选 |
-| 社区活跃 | 94 贡献者，11.4k Stars |
-
-**适用场景**：
-- 社媒内容批量生产
-- Reddit 内容搬运
-- 自动化视频流水线
-- 内容创业套件
+适合社媒内容批量生产和自动化视频流水线场景。
 
 ---
 

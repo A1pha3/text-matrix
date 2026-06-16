@@ -8,27 +8,15 @@ categories: ["技术笔记"]
 tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
 ---
 
-Antigravity Tools：专业级 AI 账号管理与协议代理系统
-
-学习目标
-
-- 理解 Antigravity Tools 的核心定位与适用场景
-- 掌握多平台安装部署方法（终端脚本/Homebrew/Docker）
-- 熟悉 OAuth 2.0 授权流程与账号导入导出
-- 理解三大协议转换原理（OpenAI / Anthropic / Gemini）
-- 掌握模型路由配置与智能分级策略
-- 完成 Claude Code、OpenCode 等工具的接入配置
-- 了解 Docker 部署与安全加固实践建议
+Antigravity Tools：AI 账号管理与协议代理系统
 
 ---
 
-项目概述
+## 项目概述
 
-什么是 Antigravity Tools
+### 什么是 Antigravity Tools
 
-**Antigravity Tools**（曾用名 Antigravity Manager）是一个专为开发者和 AI 爱好者设计的**全功能桌面应用**，它将多账号管理、协议转换和智能请求调度完美结合，提供一个稳定、极速且成本低廉的**本地 AI 中转站**。
-
-通过本应用，用户可以将常见的 Web 端 Session（Google Gemini / Anthropic Claude）转化为标准化的 API 接口，消除不同厂商间的协议鸿沟。
+**Antigravity Tools**（曾用名 Antigravity Manager）是一个桌面应用，核心功能是把 Web 端 Session（Google Gemini / Anthropic Claude）转化为标准化的 API 接口，同时管理多账号配额和协议转换。技术栈是 Tauri + React + Rust，本地运行，不需要自建服务器。
 
 核心数据
 
@@ -139,18 +127,11 @@ docker compose up -d
 
 核心功能详解
 
-. 智能账号仪表盘
+1. 智能账号仪表盘
 
-**全局实时监控：**
-一眼洞察所有账号的健康状况，包括 Gemini Pro、Gemini Flash、Claude 以及 Gemini 绘图的**平均剩余配额**。
+显示所有账号的平均剩余配额（Gemini Pro、Gemini Flash、Claude 等），根据配额冗余度推荐当前最佳账号，支持一键切换。活跃账号显示具体配额百分比和最后同步时间。
 
-**最佳账号推荐 (Smart Recommendation)：**
-系统会根据当前所有账号的配额冗余度，实时算法筛选并推荐"最佳账号"，支持**一键切换**。
-
-**活跃账号快照：**
-直观显示当前活跃账号的具体配额百分比及最后同步时间。
-
-. 强大的账号管家
+2. 账号管理
 
 **OAuth 2.0 授权（自动/手动）：**
 添加账号时会提前生成可复制的授权链接，支持在任意浏览器完成授权；回调成功后应用会自动完成并保存（必要时可点击"我已授权，继续"手动收尾）。
@@ -163,7 +144,7 @@ docker compose up -d
 **网关级视图：**
 支持"列表"与"网格"双视图切换。提供 403 封禁检测，自动标注并跳过权限异常的账号。
 
-. 协议转换与中继
+3. 协议转换与中继
 
 **全协议适配 (Multi-Sink)：**
 
@@ -176,13 +157,13 @@ docker compose up -d
 **智能状态自愈：**
 当请求遇到 `429 (Too Many Requests)` 或 `401 (Expire)` 时，后端会毫秒级触发**自动重试与静默轮换**，确保业务不中断。
 
-. 模型路由中心
+4. 模型路由中心
 
 **系列化映射：**
 您可以将复杂的原始模型 ID 归类到"规格家族"（如将所有 GPT-4 请求统一路由到 `gemini-3-pro-high`）。
 
-**专家级重定向：**
-支持自定义正则表达式级模型映射，精准控制每一个请求的落地模型。
+**正则重定向：**
+支持自定义正则表达式级模型映射，控制每一个请求的落地模型。
 
 **智能分级路由 (Tiered Routing)：**
 系统根据账号类型（Ultra/Pro/Free）和配额重置频率自动优先级排序，优先消耗高速重置账号，确保高频调用下的服务稳定性。
@@ -190,13 +171,13 @@ docker compose up -d
 **后台任务静默降级：**
 自动识别 Claude CLI 等工具生成的后台请求（如标题生成），智能重定向至 Flash 模型，保护高级模型配额不被浪费。
 
-. 多模态与 Imagen 支持
+5. 多模态与 Imagen 支持
 
-**高级画质控制：**
+**画质控制：**
 支持通过 OpenAI `size` 参数（如 `1024x1024`、`16:9`）自动映射到 Imagen 3 的相应规格。
 
-**超强 Body 支持：**
-后端支持高达 **100MB**（可配置）的 Payload，处理 4K 高清图识别绰绰有余。
+**大 Body 支持：**
+后端支持高达 **100MB**（可配置）的 Payload。
 
 ---
 
@@ -304,14 +285,13 @@ brew install --cask --no-quarantine antigravity-tools
 
 竞品对比
 
-| 功能 | Antigravity Tools | 传统方案 |
+| 功能 | Antigravity Tools | 传统方案（手动切换 API Key） |
 |------|----------------|----------|
-| 多账号管理 | ✅ 统一仪表盘 | ❌ 分散管理 |
-| 协议转换 | ✅ OpenAI/Anthropic/Gemini | ❌ 单一协议 |
-| 智能路由 | ✅ 自动分级轮换 | ❌ 手动切换 |
-| 状态自愈 | ✅ 429/401 自动重试 | ❌ 需人工干预 |
-| 配额监控 | ✅ 实时可视化 | ❌ 需手动查询 |
-| Docker 支持 | ✅ 原生支持 | ❌ 需额外配置 |
+| 多账号管理 | 统一仪表盘 + 自动轮换 | 分散管理，手动切换 |
+| 协议转换 | OpenAI/Anthropic/Gemini 三协议 | 单一协议或需多个代理 |
+| 429/401 处理 | 自动重试 + 静默轮换 | 需人工干预 |
+| 配额监控 | 实时可视化 | 需手动查询各平台 |
+| 部署方式 | 桌面应用 + Docker | 通常需要自建服务 |
 
 ---
 
@@ -337,14 +317,6 @@ brew install --cask --no-quarantine antigravity-tools
 
 总结
 
-Antigravity Tools 是一个功能完善的 **AI 账号管理与协议代理系统**，其关键在于：
+Antigravity Tools 解决的问题是：**把 Web 端 AI Session 转成标准 API 接口，同时管理多账号配额**。它的协议转换能力（OpenAI/Anthropic/Gemini 三合一）和 429 自动轮换是主要卖点。
 
-1. **一站式管理**：统一管理多个 AI 平台的账号配额
-2. **协议转换**：消除不同厂商间的协议差异，一个端点对接所有服务
-3. **智能调度**：自动选择最佳账号，保护高配额账号
-4. **稳定可靠**：自动重试与状态自愈，确保业务不中断
-5. **部署灵活**：支持桌面应用和 Docker 部署
-
-无论您是个人开发者还是团队管理员，Antigravity Tools 都能有效提升 AI 服务的使用效率和稳定性。
-
-🦞
+需要注意的风险：把 Web Session 转成 API 调用，本质上是在绕过厂商的 API 付费通道，可能违反服务条款。如果你的使用场景是个人开发调试，风险可控；如果是团队生产环境，建议评估合规性后再决定。

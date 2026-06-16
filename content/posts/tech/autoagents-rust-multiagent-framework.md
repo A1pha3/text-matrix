@@ -85,7 +85,7 @@ flowchart TB
 | `autoagents-mistral-rs` | Mistral-rs 本地推理后端 | 可选 |
 | `autoagents` | 顶层入口包 | ✅ |
 
-这种拆分方式带来的实际好处是**按需依赖**——如果只需要核心的 Agent 功能，不需要引入 Speech 或 Qdrant；如果只需要本地推理，不需要云端 provider 的依赖传递。
+这种拆分方式的实际效果是**按需依赖**——如果只需要核心的 Agent 功能，不需要引入 Speech 或 Qdrant；如果只需要本地推理，不需要云端 provider 的依赖传递。
 
 智能体抽象：从 trait 到 derive 宏
 
@@ -230,7 +230,7 @@ pub trait LLMProvider: Send + Sync {
 }
 ```
 
-这个设计的好处是**切换 LLM 后端不需要修改业务代码**。只需要在初始化时注入不同的 Provider 实例：
+切换 LLM 后端不需要修改业务代码。只需要在初始化时注入不同的 Provider 实例：
 
 ```rust
 // 使用 OpenAI
@@ -306,7 +306,7 @@ agent.subscribe::<AgentMessage>(|msg| {
 agent.publish(AgentMessage { ... });
 ```
 
-类型化的好处在于：编译期就能确保消息发送方和接收方对消息结构的共识，避免运行时才发现字段不匹配。
+类型化的价值在于：编译期就能确保消息发送方和接收方对消息结构的共识，避免运行时才发现字段不匹配。
 
 **环境管理**（Environment）是多智能体编排的另一个核心概念。每个智能体可以在一个共享的「环境」中运行，环境负责维护全局状态、管理智能体之间的依赖关系、提供共享工具。
 

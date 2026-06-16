@@ -17,7 +17,7 @@ tags: ["ShadowBroker", "OSINT", "威胁情报", "Python", "Next.js", "FastAPI", 
 
 ## 学习目标
 
-- 了解 ShadowBroker 的项目定位与核心理念
+- 了解 ShadowBroker 的项目定位与设计思路
 - 掌握其 60+ 数据层功能特性（航空、航海、卫星、冲突、无线电等）
 - 理解 ShadowBroker 的整体技术架构
 - 熟练通过 Docker 和 Kubernetes/Helm 部署 ShadowBroker
@@ -30,7 +30,7 @@ tags: ["ShadowBroker", "OSINT", "威胁情报", "Python", "Next.js", "FastAPI", 
 
 **ShadowBroker**（GitHub: [BigBodyCobain/Shadowbroker](https://github.com/BigBodyCobain/Shadowbroker)，Star: 6,706，Fork: 1,077）是一个去中心化实时地理空间情报平台，将来自全球的公共 OSINT（开源情报）遥测数据聚合到同一个暗色作战地图界面中。
 
-**核心理念：** 大量全球遥测数据已经是公开的——飞机 ADS-B 广播、海事 AIS 信号、卫星轨道数据、地震传感器、网格无线电网络、警察扫描仪信号、环境监测站、互联网基础设施遥测数据——这些数据散布在数十种工具和 API 中，ShadowBroker 将它们全部整合到一个界面里。
+**设计思路：** 大量全球遥测数据已经是公开的——飞机 ADS-B 广播、海事 AIS 信号、卫星轨道数据、地震传感器、网格无线电网络、警察扫描仪信号、环境监测站、互联网基础设施遥测数据——这些数据散布在数十种工具和 API 中，ShadowBroker 将它们全部整合到一个界面里。
 
 **关键约束：** ShadowBroker 不引入新的监控能力，它只聚合和可视化已有的公开数据集。完全开源，任何人都可以审计具体访问了哪些数据、如何访问的。仪表板完全在浏览器中运行，对接自托管后端。不收集也不传输任何用户数据，无遥测、无分析、无账号。
 
@@ -346,10 +346,9 @@ helm install shadowbroker ./helm/chart --create-namespace --namespace shadowbrok
 
 ## 9. 总结
 
-ShadowBroker 是一个令人印象深刻的开源 OSINT 平台，通过聚合 60+ 公共数据源将原本分散的各种情报数据统一到一个交互式地图界面中。它不仅是一个可视化工具，更是一个功能完备的**地理空间情报操作系统**，支持 AI 智能体协作（Sovereign Shell 治理）、时间机器回放、去中心化通信网络以及多种高级数据层（SAR、DNS 干扰检测、航母打击群追踪等）。
+ShadowBroker 是一个功能完备的开源 OSINT 平台，通过聚合 60+ 公共数据源将原本分散的各种情报数据统一到一个交互式地图界面中。它不仅是一个可视化工具，更是一个**地理空间情报操作系统**，支持 AI 智能体协作（Sovereign Shell 治理）、时间机器回放、去中心化通信网络以及多种高级数据层（SAR、DNS 干扰检测、航母打击群追踪等）。
 
 **核心优势**：
-
 - 全部数据均为公开来源，无隐私争议
 - 完全开源，可自托管，无遥测
 - 35+ 数据层，一站式整合
@@ -363,7 +362,7 @@ ShadowBroker 是一个令人印象深刻的开源 OSINT 平台，通过聚合 60
 - 后端建议 4GB+ 内存运行
 - SAR 完整模式需要 NASA Earthdata 免费账号
 
-如果你对全球实时态势感知、开源情报收集或 AI 辅助分析感兴趣，ShadowBroker 是一个值得深入研究的项目。
+如果你对全球实时态势感知、开源情报收集或 AI 辅助分析有兴趣，ShadowBroker 值得深入研究。
 
 ---
 

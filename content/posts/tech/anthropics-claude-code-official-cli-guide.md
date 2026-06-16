@@ -10,7 +10,7 @@ tags: ["Claude Code", "Anthropic", "AI编程", "CLI", "MCP"]
 
 Anthropic Claude Code：官方 AI 编程 CLI 从入门到精通完全指南
 
-Claude Code 是 Anthropic 官方推出的终端编程助手，基于 Claude Sonnet 模型工作。它不是 IDE 插件，不是 Web 界面，而是一个在终端里运行的独立 CLI 工具——打开终端，敲一行命令，就能让 AI 帮你读代码、改文件、跑测试、写提交信息。
+Claude Code 是 Anthropic 官方推出的终端编程助手，基于 Claude Sonnet 模型工作。它是一个在终端里运行的独立 CLI 工具，不是 IDE 插件，也不是 Web 界面——打开终端，敲一行命令，就能让 AI 帮你读代码、改文件、跑测试、写提交信息。
 
 相比在 IDE 里装插件，CLI 方式的好处是**不受编辑器限制**：Vim、Emacs、nano、ssh 远程服务器，只要终端能跑，就能用 Claude Code。
 
@@ -20,7 +20,7 @@ Claude Code 是 Anthropic 官方推出的终端编程助手，基于 Claude Sonn
 
 一、项目定位与能力边界
 
-Claude Code 解决的不是"帮我想算法"这种单点问题，而是**在真实代码库里完成多步任务**的问题。它把读文件、改文件、执行命令、Git 操作串成一条可观测的工作流，并在每一步保留变更记录，让人类可以中途审查、纠正或终止。
+Claude Code 解决的是**在真实代码库里完成多步任务**的问题，不是"帮我想算法"这种单点问题。它把读文件、改文件、执行命令、Git 操作串成一条可观测的工作流，并在每一步保留变更记录，让人类可以中途审查、纠正或终止。
 
 核心能力一览：
 

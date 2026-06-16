@@ -10,7 +10,7 @@ tags: ["AI", "Agent", "工作流", "自动化", "Python"]
 
 # gbrain：开源 AI Agent 与工作流自动化平台
 
-**读完你会：**
+**读完可以判断：**
 
 - 用一句话讲清 gbrain 和 LangChain / CrewAI 各自在什么位置，什么场景选哪个
 - 画出 gbrain 三条主线（模型网关、Agent 编排、RAG（检索增强生成））的数据流，解释它们怎么组合、怎么独立使用

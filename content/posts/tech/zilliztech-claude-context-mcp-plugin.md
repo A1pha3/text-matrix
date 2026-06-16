@@ -9,9 +9,9 @@ tags: ["MCP", "Claude Code", "语义搜索", "向量数据库", "Zilliz"]
 
 # zilliztech/claude-context：MCP 语义代码搜索插件，让 Claude 理解整个代码库
 
-## 🎯 概述
+## 概述
 
-**zilliztech/claude-context** 是一个 MCP（Model Context Protocol）插件，为 Claude Code 和其他 AI 编码助手提供**语义代码搜索**功能，将整个代码库作为上下文提供给 AI。
+**zilliztech/claude-context** 是一个 MCP（Model Context Protocol）插件，为 Claude Code 和其他 AI 编码助手提供语义代码搜索功能，将整个代码库作为上下文提供给 AI。
 
 > **GitHub**: [zilliztech/claude-context](https://github.com/zilliztech/claude-context)  
 > **Stars**: 6,906 ⭐  
@@ -29,7 +29,7 @@ tags: ["MCP", "Claude Code", "语义搜索", "向量数据库", "Zilliz"]
 
 ---
 
-## ⚡ 快速开始
+## 快速开始
 
 ### 1. 配置 Zilliz Cloud
 
@@ -56,7 +56,7 @@ claude "这段代码的架构是怎样的？"
 
 ---
 
-## 💡 工作原理
+## 工作原理
 
 ```
 代码库 → 向量化存储(Zilliz Cloud) → 语义搜索 → 上下文注入 → Claude 回答
@@ -69,7 +69,7 @@ claude "这段代码的架构是怎样的？"
 
 ---
 
-## 🔗 资源链接
+## 资源链接
 
 | 资源 | 链接 |
 |------|------|
@@ -79,4 +79,4 @@ claude "这段代码的架构是怎样的？"
 
 ---
 
-*🦞 zilliztech/claude-context：让 AI Agent 真正理解整个代码库。*
+*zilliztech/claude-context：MCP 语义代码搜索插件，为 Claude Code 提供跨代码库的语义检索能力。*

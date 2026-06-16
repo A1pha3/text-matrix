@@ -66,7 +66,7 @@ tags: ["Onyx", "RAG", "AI Agent", "MCP", "自托管"]
 - **工具联动**：AI 需要能够查邮件、操作数据库、搜索内网、调用内部 API——这远超出纯对话的范畴
 - **多模型切换**：不同场景需要不同的模型（有的任务用 GPT-4 性价比更高，有的用 Claude，有的用开源模型）
 
-于是，如何让 AI 真正「接入」真实世界，成了下一个核心问题。**Onyx 就是这个问题的答案之一**——一个可以自托管、功能完备、扩展性强的 AI 对话与智能体平台。
+于是，如何让 AI 真正「接入」真实世界，成了下一个核心问题。**Onyx 就是针对这个问题的一个解法**——一个可以自托管、功能完备、扩展性强的 AI 对话与智能体平台。
 
 ### 2.2 Onyx 解决了什么问题
 
@@ -92,7 +92,7 @@ Onyx 的官方定位是：
 
 ### 2.4 竞品对比
 
-在同类自托管 AI 平台中，Onyx 的差异化优势非常明显：
+在同类自托管 AI 平台中，Onyx 的差异化主要体现在：
 
 | 特性 | Onyx | LangFlow | Dify | Flowise |
 |------|------|----------|------|---------|
@@ -171,7 +171,7 @@ graph TD
     Action_Executor --> External
     Postgres --> Redis
     Postgres --> S3
-```texttext
+```
 用户: "帮我分析过去一周的销售数据，并画一张趋势图"
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -216,12 +216,12 @@ graph TD
 └─────────────────────────────────────────────────────────────┘
                             ↓
 用户 ← 最终回答（含图表）
-```textbash
+```
 # 在 Onyx 配置文件中设置
 WEB_SEARCH_PROVIDER=google_pse
 GOOGLE_PSE_API_KEY=your_api_key
 GOOGLE_PSE_ENGINE_ID=your_engine_id
-```textpython
+```
 # 伪代码：混合搜索融合逻辑
 def hybrid_search(query, top_k=10, alpha=0.7):
     # alpha 控制向量检索权重（1-alpha 控制 BM25 权重）
@@ -231,6 +231,8 @@ def hybrid_search(query, top_k=10, alpha=0.7):
     # Reciprocal Rank Fusion（RRF）融合
     fused_results = rrf_fusion(vector_results, bm25_results, alpha=alpha)
     return fused_results[:top_k]
+```
+
 ```text
 Score(d) = Σ 1 / (k + rank_i(d))
 
@@ -238,7 +240,7 @@ Score(d) = Σ 1 / (k + rank_i(d))
 - d = 文档
 - k = 平滑因子（通常为 60）
 - rank_i(d) = 该文档在第 i 个检索结果列表中的排名
-```textbash
+```
 # 环境变量配置
 CONNECTOR_POSTGRES_ENABLED=true
 CONNECTOR_POSTGRES_HOST=localhost
@@ -246,7 +248,7 @@ CONNECTOR_POSTGRES_PORT=5432
 CONNECTOR_POSTGRES_DB=mydb
 CONNECTOR_POSTGRES_USER=onyx_user
 CONNECTOR_POSTGRES_PASSWORD=secure_password
-```textyaml
+```
 # Action 定义示例
 name: "查询销售数据"
 description: "从 PostgreSQL 查询指定时间范围的销售记录"
@@ -258,7 +260,7 @@ params:
 output:
   type: "table"
   format: "json"
-```texttypescript
+```
 // MCP Server 配置示例
 {
   "mcpServers": {
@@ -274,6 +276,8 @@ output:
     }
   }
 }
+```
+
 ```text
 用户：分析 sales_data.csv 并绘制月度趋势图
 
@@ -288,7 +292,7 @@ Onyx 内部：
    monthly = df.groupby(df['date'].dt.to_period('M'))['amount'].sum()
    monthly.plot(kind='bar')
    plt.savefig('/tmp/monthly_sales.png')
-   ```text
+   ```
 
 ### 4.8 Image Generation（图像生成）
 
@@ -298,18 +302,18 @@ Onyx 集成了主流图像生成模型（支持 DALL-E、Stable Diffusion 等）
 # 配置图像生成
 IMAGE_GENERATION_PROVIDER=openai  # 或 stable-diffusion, anthropic
 IMAGE_GENERATION_API_KEY=your_api_key
-```textbash
+```
 curl -fsSL https://onyx.app/install_onyx.sh | bash
-```textbash
+```
 git clone https://github.com/onyx-dot-app/onyx.git
 cd onyx
-```textbash
+```
 # 复制配置文件
 cp .env.example .env
 
 # 编辑配置文件
 vim .env
-```textbash
+```
 # ===== 基础配置 =====
 POSTGRES_PASSWORD=your_secure_password
 REDIS_PASSWORD=your_redis_password
@@ -336,7 +340,7 @@ S3_ENDPOINT=http://localhost:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
 S3_BUCKET=onyx
-```textbash
+```
 # 启动所有服务（后台运行）
 docker-compose up -d
 
@@ -345,7 +349,7 @@ docker-compose ps
 
 # 查看日志
 docker-compose logs -f onyx-backend
-```textbash
+```
 # 添加 Helm 仓库
 helm repo add onyx https://charts.onyx.app
 helm repo update
@@ -355,7 +359,7 @@ helm install onyx onyx/onyx \
   --namespace onyx \
   --create-namespace \
   --values values.yaml
-```textyaml
+```
 # values.yaml
 replicaCount: 3
 
@@ -416,7 +420,7 @@ config:
   s3Endpoint: "http://minio:9000"
   s3AccessKey: "minioadmin"
   s3SecretKey: "minioadmin"
-```texthcl
+```
 # main.tf
 module "onyx" {
   source  = "onyx-dot-app/onyx/aws"
@@ -437,6 +441,8 @@ module "onyx" {
 
   # 外部 LLM（不推荐在 Terraform 中硬编码密钥，建议使用 Secrets Manager）
 }
+```
+
 ```text
 首次使用向导
 ├── 1. 创建管理员账户
@@ -449,26 +455,26 @@ module "onyx" {
 ├── 4. 配置文件存储（S3/MinIO）
 ├── 5. 测试连接
 └── 6. 开始使用
-```textbash
+```
 # .env
 LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-...
 OPENAI_DEFAULT_MODEL=gpt-4o
-```textbash
+```
 LLM_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-ant-...
 ANTHROPIC_DEFAULT_MODEL=claude-sonnet-4-20250514
-```textbash
+```
 LLM_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_DEFAULT_MODEL=llama3.3:latest
-```textbash
+```
 LLM_PROVIDER=azure
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
 AZURE_OPENAI_API_KEY=your_api_key
 AZURE_OPENAI_DEPLOYMENT=gpt-4o
 AZURE_OPENAI_API_VERSION=2024-06-01
-```textmarkdown
+```
    你是一个专业的技术支持助手，名为「技术支持助手」。
 
    你的职责：
@@ -480,7 +486,7 @@ AZURE_OPENAI_API_VERSION=2024-06-01
    - 简洁清晰，直接给出答案
    - 如需更多信息，先明确告知用户缺少什么
    - 如果不确定，坦诚说明，不要编造答案
-   ```textpython
+   ```
 # /onyx/backend/onyx/actions/weather.py
 from onyx.actions.base import Action, ActionConfig, ActionResult
 from typing import Optional
@@ -533,7 +539,7 @@ class WeatherAction(Action):
             },
             message=f"已获取 {city} 的天气信息",
         )
-```textpython
+```
 # /onyx/backend/onyx/actions/__init__.py
 from onyx.actions.weather import WeatherAction
 
@@ -541,9 +547,9 @@ ACTION_REGISTRY = {
     "weather_query": WeatherAction,
     # ... 其他 actions
 }
-```textbash
+```
 npm install -g @modelcontextprotocol/server-brave-search
-```textjson
+```
 {
   "mcpServers": {
     "brave-search": {
@@ -563,10 +569,13 @@ npm install -g @modelcontextprotocol/server-brave-search
     }
   }
 }
+```
+
 ```text
 请搜索「Onyx AI 最新版本」并告诉我结果
-```textpython
-# /onyx/backend/onyx/connectors/custom_jira.py
+```
+
+```python
 from onyx.connectors.base import Connector, Document, Credentials
 
 class CustomJiraConnector(Connector):
@@ -622,14 +631,14 @@ class CustomJiraConnector(Connector):
                 return r.status_code == 200
         except Exception:
             return False
-```textpython
+```
 from onyx.connectors.custom_jira import CustomJiraConnector
 
 CONNECTOR_REGISTRY = {
     # ... 官方 connectors
     "custom_jira": CustomJiraConnector,
 }
-```textyaml
+```
 # Webhook 配置示例
 webhooks:
   - name: "notification_to_slack"
@@ -648,7 +657,7 @@ webhooks:
           "text": "{{ response_summary }}"
         }
       }
-```textmermaid
+```mermaid
 graph TD
     User1["用户 A"] --> LB["负载均衡器"]
     User2["用户 B"] --> LB
@@ -675,7 +684,7 @@ graph TD
 
     Postgres -.-> Backup["备份存储 S3"]
     VectorDB -.-> Backup
-```textmarkdown
+```
 # ❌ 模糊不清
 你是一个 AI，帮助用户完成任务。
 
@@ -684,23 +693,23 @@ graph TD
 - 只回答产品功能、配置和故障排除相关问题
 - 如果问题超出产品范围，明确告知「这个问题我无法回答」
 - 需要重启服务时，先告知用户影响范围，再给出步骤
-```textmarkdown
+```
 回答时遵循以下格式：
 1. 直接回答问题（1-2 句话）
 2. 如需详细说明，用编号列表
 3. 涉及操作步骤时，每步单独一行
 4. 结尾附上「需要进一步帮助请说『继续』」
-```textmarkdown
+```
 当用户询问产品功能时，优先从知识库中检索相关信息。
 检索不到时，基于你的知识回答，但明确告知「此信息来自通用知识，未在官方文档中确认」。
-```textpython
+```
 # 在 Onyx 配置中启用 PII 过滤
 PII_FILTER_ENABLED=true
 PII_FILTER_STRENGTH=high  # high / medium / low
 
 # 过滤类型
 PII_TYPES=email,phone,id_card,credit_card,bank_account
-```textbash
+```
 # Docker Compose 升级
 docker-compose pull
 docker-compose up -d
@@ -711,7 +720,7 @@ docker-compose exec onyx-backend onyx --version
 helm upgrade onyx onyx/onyx --version 3.0.6
 
 # 重要：升级前请阅读 Release Notes，确认是否有破坏性变更
-```textyaml
+```
 # 模型路由配置示例
 model_routing:
   - condition: "intent == 'quick_question'"

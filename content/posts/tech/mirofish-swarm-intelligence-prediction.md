@@ -4,7 +4,7 @@ date: "2026-03-28T20:10:00+08:00"
 slug: "mirofish-swarm-intelligence-prediction"
 aliases:
   - "/posts/tech/mirofish-swarm-intelligence-prediction-engine/"
-description: "深度解读盛大集团MiroFish：55.7k Stars的群体智能预测引擎，通过构建高保真数字平行世界，让AI智能体自主演化推演，实现万物预测的愿景。"
+description: "解读盛大集团 MiroFish：55.7k Stars 的群体智能预测引擎，通过构建高保真数字平行世界，让 AI 智能体自主演化推演，实现按需预测。"
 draft: false
 categories: ["技术笔记"]
 tags: ["MiroFish", "群体智能", "多智能体", "预测引擎", "OASIS"]
@@ -25,7 +25,7 @@ tags: ["MiroFish", "群体智能", "多智能体", "预测引擎", "OASIS"]
 
 [MiroFish](https://github.com/666ghj/MiroFish) 是盛大集团孵化的新一代 AI 预测引擎，基于多智能体技术构建群体智能仿真系统。与传统预测工具不同，MiroFish 不依赖历史数据统计，而是通过**构建高保真的数字平行世界**，让数千个具有独立人格、长期记忆和行为逻辑的 AI 智能体在仿真环境中自由交互演化。
 
-**核心数据：**
+**数据：**
 
 | 指标 | 数值 |
 |------|------|
@@ -39,12 +39,12 @@ tags: ["MiroFish", "群体智能", "多智能体", "预测引擎", "OASIS"]
 
 **项目定位：**
 
-> 简洁通用的群体智能引擎，预测万物
-> A Simple and Universal Swarm Intelligence Engine, Predicting Anything
+> 简洁通用的群体智能引擎
+> A Simple and Universal Swarm Intelligence Engine
 
-### 1.2 核心理念
+### 1.2 理念
 
-MiroFish 的核心创新在于**不是预测单一结果，而是推演无限可能**。
+MiroFish 的做法是**推演多种可能，而非给出单一预测结果**。
 
 **传统预测 vs MiroFish：**
 
@@ -53,7 +53,7 @@ MiroFish 的核心创新在于**不是预测单一结果，而是推演无限可
 | 数据来源 | 历史数据统计 | 现实种子 + 智能体自主演化 |
 | 输出形式 | 单一概率结果 | 平行数字世界 + 多路径演化 |
 | 交互能力 | 无 | 可与任意智能体深度对话 |
-| 适用场景 | 有限 | 万物皆可预测 |
+| 适用场景 | 有限 | 按需定义 |
 
 ### 1.3 适用场景
 
@@ -334,9 +334,9 @@ MiroFish/
 
 ## 八、总结与展望
 
-### 8.1 关键价值
+### 8.1 一句话概括
 
-MiroFish 的关键价值在于**将「预测」从概率计算转变为仿真推演**：
+MiroFish 做的事：**把「预测」从概率计算变成仿真推演**——
 
 | 传统方法 | MiroFish 方法 |
 |----------|--------------|

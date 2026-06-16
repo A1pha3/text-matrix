@@ -274,7 +274,7 @@ Claude HUD 提供三种预设：
     "showDuration": true
   }
 }
-```textjson
+```json
 {
   "lineLayout": "compact",
   "pathLevels": 1,

@@ -12,18 +12,9 @@ tags: ["AI Agent", "Nick Saraev", "Multi-Agent", "LangChain", "生产部署"]
 
 ## 视频概述
 
-### 为什么这是目前最全面的 Agent 课程？
+### 为什么这套课程值得关注
 
 Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的 AI Agent 系统课程之一。2 小时的时长覆盖了从入门到进阶的完整路径。
-
-**视频的独特价值：**
-
-| 价值点 | 说明 |
-|--------|------|
-| **系统性强** | 完整技术体系，不是零散知识点 |
-| **深度适中** | 既有概念讲解，也有代码实战 |
-| **时效性新** | 2026 年更新，包含最新工具和框架 |
-| **实操性强** | 每个概念都配有可运行的代码示例 |
 
 ### 视频完整内容地图
 
@@ -65,21 +56,9 @@ Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的
 
 ### 什么是 Agentic AI？
 
-**Agentic AI（自主智能体）** 是指能够自主规划、执行和迭代的 AI 系统。传统 AI 回答问题，Agentic AI 完成任务。
+**Agentic AI（自主智能体）** 是指能够自主规划、执行和迭代的 AI 系统。传统 AI 回答问题，Agentic AI 完成任务。它的特征：自主规划（将复杂目标分解为可执行步骤）、持续执行（多步骤循环直到达成目标）、工具使用（调用外部工具扩展能力）、自我反思（评估执行结果并调整策略）、记忆积累（从历史经验中学习改进）。
 
-**关键特征：**
-
-| 特征 | 说明 |
-|------|------|
-| **自主规划** | 能够将复杂目标分解为可执行步骤 |
-| **持续执行** | 能够多步骤循环直到达成目标 |
-| **工具使用** | 能够调用外部工具扩展能力 |
-| **自我反思** | 能够评估执行结果并调整策略 |
-| **记忆积累** | 能够从历史经验中学习改进 |
-
-### Agent vs Chatbot vs RAG
-
-很多人分不清这三者的区别：
+很多人分不清 Chatbot、RAG 和 Agent：
 
 | 对比维度 | Chatbot | RAG | Agent |
 |----------|---------|-----|-------|
@@ -159,15 +138,9 @@ class ReActAgent:
 
 ### Tool Use 实践建议
 
-**Tool 设计的原则：**
-
-1. **单一职责** - 每个 Tool 只做一件事，做得好
-2. **清晰的描述** - Tool description 要让 LLM 理解何时使用
-3. **完善的错误处理** - 考虑网络超时、权限问题等
-4. **一致的返回格式** - 便于 LLM 解析和后续处理
+**Tool 设计的原则：** 单一职责（每个 Tool 只做一件事）、清晰的描述（Tool description 要让 LLM 理解何时使用）、完善的错误处理（考虑网络超时、权限问题等）、一致的返回格式（便于 LLM 解析和后续处理）。
 
 ```python
-from langchain.tools import Tool
 from typing import Optional
 
 class WebSearchTool:
@@ -222,7 +195,7 @@ web_search_tool = Tool(
 
 ### Agent 记忆系统架构
 
-Nick Saraev 详细讲解了 Agent 的记忆系统。这是实现「智能」的关键：
+Nick Saraev 详细讲解了 Agent 的记忆系统。记忆系统决定了 Agent 能不能"记住之前做过什么"：
 
 ```
 记忆系统架构
@@ -555,13 +528,7 @@ class MonitoredAgent:
 
 ## 学习路径总结
 
-入门阶段（第一周）：理解 Agent 基本概念，掌握 ReAct 框架，能运行简单 Agent。
-
-进阶阶段（第二周）：实现 Tool Use，添加 Memory，用 LangChain 开发。
-
-专家阶段（第三周及以后）：Multi-Agent 架构，生产级部署，性能优化与监控。
-
----
+入门阶段（第一周）：理解 Agent 基本概念，掌握 ReAct 框架，能运行简单 Agent。进阶阶段（第二周）：实现 Tool Use，添加 Memory，用 LangChain 开发。专家阶段（第三周及以后）：Multi-Agent 架构，生产级部署，性能优化与监控。
 
 ## 知识关联
 

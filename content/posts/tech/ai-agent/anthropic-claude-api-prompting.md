@@ -4,7 +4,7 @@ date: "2026-03-25T10:30:00+08:00"
 slug: "claude-api-prompting-engineering"
 aliases:
   - /posts/tech/claude-api-prompting-engineering/
-description: "本文系统讲解了Claude API的提示词工程技巧，涵盖提示词原则、系统提示词、Few-shot学习、温度参数调节、链式思考等核心主题，帮助开发者掌握高效提示词设计方法。"
+description: "本文系统讲解了Claude API的提示词工程技巧，涵盖提示词原则、系统提示词、Few-shot学习、温度参数调节、链式思考等主要主题，帮助开发者掌握高效提示词设计方法。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "提示词", "Python"]
@@ -36,7 +36,7 @@ tags: ["Claude", "提示词", "Python"]
 
 ---
 
-## 2.1 提示词核心原则
+## 2.1 提示词基本原则
 
 ### 什么是好的提示词
 
@@ -139,7 +139,7 @@ response = client.messages.create(
 - 安全性（OWASP Top 10）
 - 性能（时间/空间复杂度）
 - 可读性（命名、注释、格式）
-- 最佳实践（设计模式、语言特性）
+- 推荐做法（设计模式、语言特性）
 
 回复格式：
 ## 总体评价
@@ -163,7 +163,7 @@ response = client.messages.create(
 # 角色定义
 你是一位[专业领域]的[具体角色]。
 
-# 核心职责
+# 主要职责
 你的主要职责是：
 1. [职责1]
 2. [职责2]
@@ -872,7 +872,7 @@ response = client.messages.create(
 
 ## 本章总结
 
-### 核心知识点
+### 知识点
 
 | 知识点 | 掌握程度 | 关键点 |
 |--------|----------|--------|

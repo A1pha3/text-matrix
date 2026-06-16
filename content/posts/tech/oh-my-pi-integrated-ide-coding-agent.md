@@ -193,9 +193,9 @@ omp 的编辑格式针对不同模型做了优化调整：
 
 ## 总结
 
-oh-my-pi 将终端 AI Coding Agent 提升到新高度：不是简单调用 bash，而是**将 IDE 完整集成**，让 Agent 真正理解代码结构。Rust 核心（约 27k 行）保证了性能，TypeScript 生态保证了可扩展性。
+oh-my-pi 把终端 AI Coding Agent 往前推了一步：**把 IDE 完整集成进来**，而不只是包一层 bash。Rust 核心（约 27k 行）保证了性能，TypeScript 生态保证了可扩展性。
 
-**关键价值：**
+**核心差异：**
 - Hashline 编辑让 AI 第一次就做对，节省 token 提高效率
 - LSP + DAP 完整集成，真实调试能力而非 print 大法
 - 子 Agent 并行 + 类型化结果，复杂任务分解简单

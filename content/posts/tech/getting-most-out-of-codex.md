@@ -14,14 +14,14 @@ draft: false
 > 本文基于 [Getting the most out of Codex](https://x.com/jxnlco/status/2057153744630890620) 一文，并结合 [OpenAI Codex 官方页面](https://openai.com/codex/) 与相关开发者文档整理。文章不按功能菜单介绍 Codex，而是沿着一条真实工作流看它怎样把上下文、纠偏、长任务和审查放进同一条线程。
 > **延伸阅读**：[OpenAI Codex：轻量级终端编程智能体完全指南]({{< relref "openai-codex-lightweight-coding-agent.md" >}}) ｜ [Superpowers 深度解析：把 AI 编程助手纳入软件工程流程]({{< relref "superpowers-agentic-skills-framework.md" >}}) ｜ [agentmemory：为 AI Agent 打造可搜索的持久化记忆系统]({{< relref "agentmemory-persistent-memory-agents-guide.md" >}})
 
-## 读完这篇文章你会知道
+## 读完这篇文章会有答案
 
 - Codex 的五层能力模型分别对应团队流程里的哪一段，以及少了哪一层会出什么问题。
 - 持久线程、Steering（行进中纠偏）、Queuing（任务排队）和 Side Panel（产物审查）如何配合，把长任务留在同一条工作线上。
 - 什么时候该上 automation 和 Goals，什么时候反而该先把手动流程跑稳。
 - 一条真实的发布任务怎样依次穿过线程、工具、验证器和审查层。
 
-如果你正在评估是否把 Codex 引入团队流程，或者已经用了但觉得"它好像只是个高级补丁工具"，这篇文章会帮你把视角从"改代码"切到"托住一整条工作线"。
+如果你正在评估是否把 Codex 引入团队流程，或者已经用了但觉得"它好像只是个高级补丁工具"，下面的内容会把视角从"改代码"切到"托住一整条工作线"。
 
 ## 先看它在补哪一段
 

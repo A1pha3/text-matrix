@@ -10,7 +10,7 @@ tags: ["半导体", "摩尔定律", "先进封装", "华为", "光互连"]
 
 # τ 缩放理论深度解读：华为如何重新定义后摩尔时代的半导体 scaling 范式
 
-## 一、核心判断
+## 一、判断
 
 2026 年 5 月，华为研究员 Tingbo He 发表论文《A Time Scaling Theory for Multi-Layer Electronic Systems》。论文的工程落点是 Kirin 2026：固定设备节点下，晶体管密度从 155 提升到 238 MTr/mm²（+55%），性能核心能效 +41%，CPU 主频恢复到 3.1 GHz（+13%）。
 

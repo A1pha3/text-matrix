@@ -13,9 +13,9 @@ slug: plausible-analytics-privacy-friendly-web-analytics-guide
 
 ## 引言
 
-在数据隐私日益受到关注的今天，网站分析领域正在发生变化。Google Analytics 因其复杂的隐私政策、数据收集范围过宽以及严格的 GDPR 合规要求，正在被越来越多的开发者和企业弃用。**Plausible Analytics** 作为一款以隐私为核心设计的开源网站统计平台，凭借轻量、简洁、合规的特性，成为自托管网站分析的主流选择。
+Google Analytics 因隐私政策复杂、数据收集范围过宽以及 GDPR 合规要求严格，正在被越来越多的开发者和企业弃用。**Plausible Analytics** 是一款以隐私为核心设计的开源网站统计平台，轻量、简洁、合规，已成为自托管网站分析的主流选择。
 
-下面从入门到精通，解析 Plausible Analytics 的架构理念、功能、安装部署、配置调优，以及它与 Google Analytics 的深度对比，帮助你在项目中做出分析平台选型决策。
+下文解析 Plausible Analytics 的架构理念、功能、安装部署、配置调优，以及与 Google Analytics 的对比，帮助做出分析平台选型决策。
 
 ---
 
@@ -466,15 +466,11 @@ docker-compose logs plausible | grep "migration"
 
 ## 八、总结
 
-Plausible Analytics 代表了网站分析领域的一种思路：与其追求对用户行为的全方位监控，不如专注于**真正重要的聚合指标**，同时在隐私合规上做到极致。它不适合需要复杂用户行为分析的场景，但对于大多数个人网站、企业官网和中小型应用来说，指标集已经足够完整。
+Plausible Analytics 的思路是：放弃对用户行为的全方位监控，专注于**聚合指标**，同时在隐私合规上做到极致。它不适合需要复杂用户行为分析的场景，但对于大多数个人网站、企业官网和中小型应用来说，指标集已经足够。
 
-开源 self-hosted 版本的存在，使得 Plausible 成为那些**数据必须留存在自有基础设施内**的场景（如政务、金融、医疗、教育）的理想选择。配合 Docker 的轻量化部署，任何人都能在 10 分钟内搭建起一个完全私有的网站分析平台。
+开源 self-hosted 版本使得 Plausible 成为**数据必须留存在自有基础设施内**的场景（如政务、金融、医疗、教育）的可行选择。配合 Docker 部署，10 分钟内可以搭建起一个完全私有的网站分析平台。
 
-如果你对 Plausible 的技术细节或部署过程有任何疑问，欢迎通过 Issues 或 Pull Requests 参与社区讨论。
-
----
-
-**参考链接：**
+**参考链接**：
 - 官网：https://plausible.io
 - GitHub：https://github.com/plausible/analytics
 - 官方文档：https://plausible.io/docs

@@ -8,16 +8,16 @@ categories: ["技术笔记"]
 tags: ["Generative AI", "LLM", "提示工程", "RAG", "AI Agent", "微软", "Azure OpenAI", "OpenAI API"]
 ---
 
-## 学习目标
+## 阅读前提
 
-通过本文，你将全面掌握以下核心能力：
+本文覆盖以下内容：
 
-- 深入理解生成式 AI 和大语言模型（LLM）的工作原理
-- 学会在不同平台上运行 AI 应用（Azure OpenAI、GitHub Models、OpenAI API）
-- 掌握提示工程的核心技巧和进阶方法
-- 能够构建文本生成、聊天、搜索、图片生成等实际应用
-- 理解 RAG、Agent、微调等高级主题
-- 学会保护 AI 应用安全
+- 生成式 AI 和大语言模型（LLM）的工作原理
+- 在不同平台上运行 AI 应用（Azure OpenAI、GitHub Models、OpenAI API）
+- 提示工程的核心技巧和进阶方法
+- 构建文本生成、聊天、搜索、图片生成等实际应用
+- RAG、Agent、微调等高级主题
+- AI 应用安全
 
 ---
 
@@ -25,7 +25,7 @@ tags: ["Generative AI", "LLM", "提示工程", "RAG", "AI Agent", "微软", "Azu
 
 ### 1.1 是什么
 
-**microsoft/generative-ai-for-beginners** 是微软官方推出的生成式 AI 入门课程，通过 **21 节精心设计的课程**，帮助零基础学习者掌握生成式 AI 应用开发。
+**microsoft/generative-ai-for-beginners** 是微软官方推出的生成式 AI 入门课程，21 节课程覆盖从基础到实战。
 
 ### 1.2 核心数据
 
@@ -546,29 +546,11 @@ model = get_peft_model(base_model, config)
 
 ## 9. 总结
 
-**microsoft/generative-ai-for-beginners** 是目前最完整的生成式 AI 入门课程：
+**microsoft/generative-ai-for-beginners** 是目前最完整的生成式 AI 入门课程之一：21 节课程、Python + TypeScript 双代码示例、Azure OpenAI / GitHub Models / OpenAI API 三种平台、50+ 语言翻译、MIT 协议、109k stars。
 
-| 维度 | 评价 |
-|------|------|
-| **内容质量** | ⭐⭐⭐⭐⭐ 微软官方出品 |
-| **课程设计** | ⭐⭐⭐⭐⭐ 循序渐进 |
-| **实战程度** | ⭐⭐⭐⭐⭐ 21 个实战项目 |
-| **多语言** | ⭐⭐⭐⭐⭐ 50+ 语言 |
-| **社区支持** | ⭐⭐⭐⭐⭐ Discord + Forum |
+**适用人群**：想入门生成式 AI 的开发者、准备 AI 相关面试的求职者、想了解 AI 应用的企业人员、对 AI 感兴趣的学生。
 
-**适用人群**：
-
-- 想入门生成式 AI 的开发者
-- 准备 AI 相关面试的求职者
-- 想了解 AI 应用的企业人员
-- 对 AI 感兴趣的学生
-
-**学习建议**：
-
-1. 按顺序学习，每节课程都要动手实践
-2. 善用视频讲解加深理解
-3. 加入 Discord 社区提问交流
-4. 完成课程后尝试构建自己的项目
+**学习建议**：按顺序学习并动手实践，善用视频讲解，加入 Discord 社区提问交流，完成课程后尝试构建自己的项目。
 
 **官方资源**：
 

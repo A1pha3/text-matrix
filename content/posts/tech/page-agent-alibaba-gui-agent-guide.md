@@ -10,14 +10,12 @@ tags: ["Page Agent", "GUI Agent", "阿里巴巴", "浏览器自动化", "MCP", "
 
 ## 学习目标
 
-通过本文，你将全面掌握以下核心能力：
-
-- 深入理解 Page Agent 的项目定位、技术架构和设计理念
-- 掌握在网页中集成 Page Agent 的两种方式（CDN 一行代码 + NPM）
-- 学会使用文本化 DOM 操作进行自然语言浏览器控制
-- 理解 MCP Server 的架构和外部控制能力
-- 掌握 Chrome 扩展实现多页面 Agent 的方法
-- 理解与 browser-use 的差异化定位
+- Page Agent 的项目定位、技术架构和设计理念
+- 在网页中集成 Page Agent 的两种方式（CDN 一行代码 + NPM）
+- 文本化 DOM 操作进行自然语言浏览器控制
+- MCP Server 的架构和外部控制能力
+- Chrome 扩展实现多页面 Agent 的方法
+- 与 browser-use 的差异化定位
 
 ---
 
@@ -458,23 +456,23 @@ await agent.execute(`
 
 ## 9. 总结
 
-Page Agent 是前端 AI Agent 领域的一个创新解决方案：
+Page Agent 的核心卖点是**零后端改动、纯前端实现**——一行 CDN 代码注入 AI Agent，用文本化 DOM 替代截图和多模态 LLM，同时支持 MCP Server 和 Chrome 扩展扩展能力边界。
 
-**为什么选择 Page Agent：**
+**选 Page Agent 的理由：**
 
 | 优势 | 说明 |
 |------|------|
-| **零后端重写** | 只需前端集成，不改变现有架构 |
-| **文本化 DOM** | 不需要截图，不需要多模态 LLM |
-| **轻量快速** | 纯前端实现，加载即用 |
-| **MCP 支持** | 可与外部 Agent 集成 |
-| **阿里背书** | 阿里巴巴开源，品质保证 |
+| 零后端重写 | 只需前端集成，不改变现有架构 |
+| 文本化 DOM | 不需要截图，不需要多模态 LLM |
+| 轻量快速 | 纯前端实现，加载即用 |
+| MCP 支持 | 可与外部 Agent 集成 |
+| 阿里背书 | 阿里巴巴开源，品质保证 |
 
 **不适用的场景：**
 
-- 需要深度浏览器控制的自动化任务（使用 browser-use）
-- 纯后端的网页抓取（使用 Playwright/Puppeteer）
-- 需要截图和视觉理解的复杂任务（使用 GPT-4V）
+- 需要深度浏览器控制的自动化任务（用 browser-use）
+- 纯后端的网页抓取（用 Playwright/Puppeteer）
+- 需要截图和视觉理解的复杂任务（用 GPT-4V）
 
 ---
 

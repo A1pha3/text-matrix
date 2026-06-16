@@ -118,7 +118,7 @@ skills/
 ├── code-review/
 │   └── SKILL.md          # 代码审查技能
 └── ...
-```textmarkdown
+```markdown
 # skills/my-skill/SKILL.md
 
 # My Skill
@@ -135,7 +135,7 @@ skills/
 - api_key: API 密钥
 - model: 使用哪个模型
 - temperature: 创造性程度
-```textbash
+```bash
 # 远程服务器上启动
 cmux daemon start --port 8080
 
@@ -144,7 +144,7 @@ ssh -L 8080:localhost:8080 user@remote-server
 
 # 本地连接远程
 /cmux connect user@remote-server:8080
-```textbash
+```bash
 # 安装
 brew install manaflow-ai/tap/cmux
 
@@ -154,13 +154,13 @@ cmux launch            # 启动 GUI
 cmux claude "prompt"   # 直接调用 Claude
 cmux omo               # oh-my-openagent 集成
 cmux daemon            # 远程 daemon 管理
-```textbash
+```bash
 # Homebrew（推荐）
 brew install manaflow-ai/tap/cmux
 
 # 或下载预编译包
 # https://github.com/manaflow-ai/cmux/releases
-```textbash
+```bash
 # 克隆仓库
 git clone https://github.com/manaflow-ai/cmux.git
 cd cmux
@@ -170,7 +170,7 @@ open GhosttyTabs.xcodeproj
 
 # 或命令行构建
 swift build
-```textbash
+```bash
 # Claude API（必需）
 export CLAUDE_API_KEY=sk-ant-...
 
@@ -195,13 +195,13 @@ cmux/
 ├── .claude/commands/        # Claude 命令
 ├── scripts/                # 构建脚本
 └── vendor/                # 第三方依赖
-```textbash
+```bash
 # 启动 GUI
 cmux launch
 
 # 或直接打开
 open -a cmux
-```textbash
+```bash
 # 解释代码
 cmux claude "解释这个函数的逻辑"
 
@@ -213,10 +213,10 @@ cmux claude --analyze .
 
 # 自动生成测试
 cmux claude --generate-tests ./tests
-```textbash
+```bash
 ssh user@remote-server
 cmux daemon start --port 8080
-```textbash
+```bash
 # SSH 隧道
 ssh -L 8080:localhost:8080 user@remote-server
 

@@ -19,10 +19,10 @@ tags: ["Playwright", "浏览器自动化", "CLI", "AI", "Coding Agent", "TypeScr
 
 ## §1 学习目标
 
-完成本篇文章后，你将能够：
+完成本篇文章后，你能做到：
 
-1. **理解 Playwright CLI 的核心定位**：为何它是 coding agents 的首选浏览器自动化工具
-2. **掌握 CLI vs MCP 的架构取舍**：Token 效率背后的设计哲学
+1. **理解 Playwright CLI 的定位**：为何它是 coding agents 的首选浏览器自动化工具
+2. **掌握 CLI vs MCP 的架构取舍**：Token 效率背后的设计思路
 3. **熟练使用核心命令**：snapshot、click、type、eval 等原子操作
 4. **理解 Sessions 隔离机制**：内存会话与持久化配置
 5. **集成到 AI 助手**：Claude Code、GitHub Copilot 的 skills 集成方式
@@ -41,11 +41,11 @@ tags: ["Playwright", "浏览器自动化", "CLI", "AI", "Coding Agent", "TypeScr
 - 页面数据量庞大，消耗大量 Token
 - 在高吞吐量场景下，上下文窗口很快被撑满
 
-### 2.2 Playwright CLI 的设计哲学
+### 2.2 Playwright CLI 的设计思路
 
 Microsoft 提出了不同的思路：**让 CLI 成为 Agent 与浏览器之间的桥梁，而不是把浏览器塞进 Agent 的脑子**。
 
-**核心理念**：
+**设计原则**：
 - CLI 调用是**命令式的、紧凑的**：`playwright-cli click e15`
 - Agent 只需要理解**命令返回的结果**，不需要理解整个页面结构
 - 页面数据按需获取，**不在每次调用时强制加载**

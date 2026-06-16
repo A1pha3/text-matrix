@@ -10,18 +10,15 @@ tags: ["Rivet", "Actor", "持久化运行时", "AI Agent", "Rust", "TypeScript",
 
 # Rivet：新一代 Actor 持久化运行时完全指南
 
-## §1 学习目标
+## §1 这篇文章覆盖什么
 
-完成本文档后，你将能够：
-
-- ✅ 理解 Rivet Actor 模型的核心思想与价值主张
-- ✅ 掌握 Rivet 的技术架构（Engine + RivetKit）
-- ✅ 理解 Actor 与传统基础设施的对比优势
-- ✅ 熟练使用 RivetKit TypeScript/Python/Rust 客户端
-- ✅ 构建 AI Agent 应用
-- ✅ 实现多人协作应用
-- ✅ 部署到 Self-Host 或 Rivet Cloud
-- ✅ 理解 Rivet 的适用场景与选型建议
+- Rivet Actor 模型的设计思路
+- 技术架构（Engine + RivetKit）
+- Actor 与传统基础设施的对比
+- RivetKit TypeScript/Python/Rust 客户端的使用
+- AI Agent 应用和多人协作应用的构建
+- Self-Host 和 Rivet Cloud 部署
+- 适用场景与选型建议
 
 ---
 
@@ -37,14 +34,14 @@ tags: ["Rivet", "Actor", "持久化运行时", "AI Agent", "Rust", "TypeScript",
 
 **官方网站**：https://www.rivet.dev
 
-### 2.2 关键价值主张
+### 2.2 关键指标
 
-| 价值 | 说明 |
+| 指标 | 说明 |
 |------|------|
-| **内存状态** | 状态与计算共置，实现即时读写。支持 SQLite 或自选数据库持久化 |
+| **内存状态** | 状态与计算共置，即时读写，支持 SQLite 或自选数据库持久化 |
 | **持久运行** | 活跃时长期运行，空闲时休眠 |
 | **无限扩展** | 支持突发工作负载，零成本空闲 |
-| **全球边缘网络** | 部署在用户附近或特定法律管辖区，无需复杂配置 |
+| **全球边缘网络** | 部署在用户附近或特定法律管辖区 |
 
 ### 2.3 核心数据
 

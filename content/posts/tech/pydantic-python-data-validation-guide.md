@@ -39,16 +39,16 @@ tags: ["Pydantic", "Python", "数据验证", "类型提示", "FastAPI"]
 | License | **MIT** |
 | 语言 | **Python 82.6%**，**Rust 17.2%** |
 
-### 1.3 为什么选 Pydantic
+### 1.3 核心特性
 
 | 特性 | 说明 |
 |------|------|
-| **类型安全** | 完全基于 Python 类型提示，与 mypy/pyright 无缝配合 |
-| **性能** | Rust 编写的 pydantic-core 核心，验证速度极快 |
-| **易用** | 声明式 API，简单直观 |
-| **功能完备** | 验证、序列化、JSON Schema 生成、配置管理 |
-| **生态** | pydantic-settings、FastAPI 等周边完善 |
-| **活跃维护** | 27k stars，193 releases，持续活跃 |
+| **类型安全** | 基于 Python 类型提示，与 mypy/pyright 配合 |
+| **性能** | pydantic-core 用 Rust 编写，V2 比 V1 快 10-100x |
+| **声明式 API** | 用类型注解定义数据结构，自动验证和转换 |
+| **功能覆盖** | 验证、序列化、JSON Schema 生成、配置管理 |
+| **生态** | pydantic-settings、FastAPI 等周边 |
+| **V1 兼容** | V2 内置 V1 兼容层 |
 
 ### 1.4 Pydantic V1 vs V2
 
@@ -689,25 +689,9 @@ schema = User.model_json_schema()
 
 ## 11. 总结
 
-Pydantic 是 Python 生态中**最流行的数据验证库**：
+Pydantic 在 Python 数据验证领域的地位接近事实标准——FastAPI、SQLModel、LangChain 等主流框架都依赖它。V2 用 Rust 重写核心后性能提升显著，但 API 变化也带来了迁移成本（虽然内置了 V1 兼容层）。
 
-| 优势 | 说明 |
-|------|------|
-| **类型安全** | 完全基于类型提示，与类型检查器无缝配合 |
-| **性能** | Rust 编写的核心，验证速度极快 |
-| **易用** | 声明式 API，几行代码完成验证 |
-| **功能完备** | 验证、序列化、JSON Schema、配置管理 |
-| **生态成熟** | FastAPI 等主流框架首选 |
-| **活跃社区** | 27k stars，持续维护 |
-
-**适用场景：**
-
-- API 请求/响应验证
-- 配置文件解析
-- 数据库模型定义
-- Webhook 验证
-- CLI 参数验证
-- 任何需要数据验证的场景
+如果你的项目已经在用 V1，迁移时重点关注 `@validator` → `@field_validator`、`.dict()` → `.model_dump()`、`.parse_obj()` → `.model_validate()` 这几个 API 变更。新项目直接用 V2 即可，没有理由再从 V1 开始。
 
 **官方资源：**
 

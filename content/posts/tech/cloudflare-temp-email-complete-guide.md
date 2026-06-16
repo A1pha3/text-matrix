@@ -8,13 +8,13 @@ categories: ["技术笔记"]
 tags: ["Cloudflare", "邮箱", "Rust", "WASM", "AI"]
 ---
 
-# Cloudflare 临时邮箱：8.3K Stars·零成本临时邮件服务·Rust WASM 解析·AI 智能识别
+# Cloudflare 临时邮箱：8.3K Stars 零成本临时邮件服务
 
 ## 一、项目概述
 
 ### 1.1 Cloudflare 临时邮箱是什么
 
-**Cloudflare 临时邮箱**是一个基于 Cloudflare 免费服务构建的**临时邮箱系统**，完全免费、性能极高、功能完整。
+**Cloudflare 临时邮箱**是一个基于 Cloudflare 免费服务构建的临时邮箱系统，邮件解析用 Rust WASM 实现，AI 识别用 Cloudflare Workers AI。
 
 > "一个功能完整的临时邮箱服务！完全免费 - 基于 Cloudflare 免费服务构建，零成本运行"
 
@@ -30,15 +30,15 @@ tags: ["Cloudflare", "邮箱", "Rust", "WASM", "AI"]
 | 许可证 | MIT |
 | 语言 | TypeScript 48.4%, Vue 42.7%, Python 4.3% |
 
-### 1.3 核心定位
+### 1.3 关键特性
 
 | 维度 | 说明 |
 |------|------|
-| 💰 **零成本** | 基于 Cloudflare 免费服务 |
-| ⚡ **高性能** | Rust WASM 邮件解析 |
-| 🤖 **AI 智能** | Cloudflare Workers AI 自动识别 |
-| 📨 **完整功能** | 收发邮件、IMAP、SMTP |
-| 🤖 **多集成** | Telegram Bot、Webhook、OAuth2 |
+| **零成本** | 基于 Cloudflare 免费服务 |
+| **Rust WASM** | 邮件解析 |
+| **Workers AI** | 自动识别验证码/认证链接 |
+| **完整功能** | 收发邮件、IMAP、SMTP |
+| **多集成** | Telegram Bot、Webhook、OAuth2 |
 
 ### 1.4 在线体验
 
@@ -50,44 +50,44 @@ tags: ["Cloudflare", "邮箱", "Rust", "WASM", "AI"]
 
 | 类别 | 功能 |
 |------|------|
-| 📨 **邮件处理** | Rust WASM 解析、AI 识别、随机域名、发送邮件、附件 |
-| 👤 **用户管理** | 注册登录、OAuth2、Passkey、角色管理 |
-| ⚙️ **管理功能** | Admin 控制台、定时清理、IP 白名单 |
-| 🌍 **多语言** | 中英双语、响应式 UI |
-| 🔗 **集成** | Telegram Bot、SMTP Proxy、IMAP、Webhook |
+| **邮件处理** | Rust WASM 解析、AI 识别、随机域名、发送邮件、附件 |
+| **用户管理** | 注册登录、OAuth2、Passkey、角色管理 |
+| **管理功能** | Admin 控制台、定时清理、IP 白名单 |
+| **多语言** | 中英双语、响应式 UI |
+| **集成** | Telegram Bot、SMTP Proxy、IMAP、Webhook |
 
 ### 2.2 邮件处理功能
 
 | 功能 | 说明 |
 |------|------|
-| 🦀 **Rust WASM 解析** | 解析速度极快，Node.js 解析失败的也能解析 |
-| 🤖 **AI 邮件识别** | 自动提取验证码、认证链接、服务链接 |
-| 🎲 **随机二级域名** | 支持为邮箱地址创建随机二级域名 |
-| 📤 **发送邮件** | 支持 DKIM 验证、SMTP 和 Resend |
-| 📎 **附件支持** | 附件图片显示、S3 存储 |
-| 🛡️ **安全** | 垃圾邮件检测、黑白名单 |
-| 🔄 **转发** | 全局转发地址 |
+| **Rust WASM 解析** | Node.js 解析失败的邮件也能解析 |
+| **AI 邮件识别** | 自动提取验证码、认证链接、服务链接 |
+| **随机二级域名** | 支持为邮箱地址创建随机二级域名 |
+| **发送邮件** | 支持 DKIM 验证、SMTP 和 Resend |
+| **附件支持** | 附件图片显示、S3 存储 |
+| **安全** | 垃圾邮件检测、黑白名单 |
+| **转发** | 全局转发地址 |
 
 ### 2.3 用户管理功能
 
 | 功能 | 说明 |
 |------|------|
-| 🔑 **凭证登录** | 使用凭证重新登录之前的邮箱 |
-| 📝 **注册登录** | 完整用户系统，绑定邮箱获取 JWT |
-| 🔐 **OAuth2** | 支持 Github、Authentik 等第三方登录 |
-| 🔑 **Passkey** | 无密码登录支持 |
-| 👥 **角色管理** | 多角色域名和前缀配置 |
-| 📬 **收件箱** | 地址和关键词过滤 |
+| **凭证登录** | 使用凭证重新登录之前的邮箱 |
+| **注册登录** | 完整用户系统，绑定邮箱获取 JWT |
+| **OAuth2** | 支持 Github、Authentik 等第三方登录 |
+| **Passkey** | 无密码登录支持 |
+| **角色管理** | 多角色域名和前缀配置 |
+| **收件箱** | 地址和关键词过滤 |
 
 ### 2.4 管理功能
 
 | 功能 | 说明 |
 |------|------|
-| 🖥️ **Admin 控制台** | 完整后台管理界面 |
-| ➕ **创建邮箱** | Admin 可创建无前缀邮箱 |
-| 🧹 **定时清理** | 多种清理策略 |
-| 🌐 **IP 白名单** | 严格访问控制模式 |
-| 🔒 **访问密码** | 可作为私人站点 |
+| **Admin 控制台** | 完整后台管理界面 |
+| **创建邮箱** | Admin 可创建无前缀邮箱 |
+| **定时清理** | 多种清理策略 |
+| **IP 白名单** | 严格访问控制模式 |
+| **访问密码** | 可作为私人站点 |
 
 ## 三、快速开始
 
@@ -269,9 +269,9 @@ const token = localStorage.getItem('jwt')
 
 | 功能 | 说明 |
 |------|------|
-| 📬 **邮件推送** | 新邮件推送到 Telegram |
-| 📋 **命令** | /new 生成新邮箱、/list 查看邮箱 |
-| 🔔 **通知** | 自定义通知规则 |
+| **邮件推送** | 新邮件推送到 Telegram |
+| **命令** | /new 生成新邮箱、/list 查看邮箱 |
+| **通知** | 自定义通知规则 |
 
 ### 8.2 配置
 
@@ -298,10 +298,10 @@ TELEGRAM_CHAT_ID=xxx
 
 | 功能 | 说明 |
 |------|------|
-| 👥 **用户管理** | 查看/编辑/删除用户 |
-| 📬 **邮箱管理** | 创建/删除邮箱 |
-| 📊 **统计** | 使用统计、活跃度 |
-| ⚙️ **设置** | 系统配置 |
+| **用户管理** | 查看/编辑/删除用户 |
+| **邮箱管理** | 创建/删除邮箱 |
+| **统计** | 使用统计、活跃度 |
+| **设置** | 系统配置 |
 
 ### 9.2 IP 白名单
 
@@ -354,10 +354,10 @@ EMAIL_DOMAIN_WHITELIST=["example.com"]
 
 | 语言 | 代码 |
 |------|------|
-| 🇨🇳 **简体中文** | zh |
-| 🇺🇸 **English** | en |
-| 🇯🇵 **日本語** | ja |
-| 🇰🇷 **한국어** | ko |
+| **简体中文** | zh |
+| **English** | en |
+| **日本語** | ja |
+| **한국어** | ko |
 
 ### 11.2 切换语言
 
@@ -451,9 +451,9 @@ docker run -p 8080:8080 cloudflare_temp_email
 
 | 优化项 | 说明 |
 |--------|------|
-| 🦀 **Rust WASM** | 邮件解析使用 WASM，极快 |
-| 📦 **缓存** | 使用 Cloudflare Cache |
-| 🌐 **边缘** | Workers 全球边缘部署 |
+| **Rust WASM** | 邮件解析使用 WASM |
+| **缓存** | 使用 Cloudflare Cache |
+| **边缘** | Workers 全球边缘部署 |
 
 ## 十五、文档资源
 
@@ -461,29 +461,22 @@ docker run -p 8080:8080 cloudflare_temp_email
 
 | 资源 | 链接 |
 |------|------|
-| 📚 **中文文档** | https://temp-mail-docs.awsl.uk |
-| 📖 **部署文档** | https://temp-mail-docs.awsl.uk/zh/guide/actions/github-action.html |
-| 💬 **Telegram** | https://t.me/cloudflare_temp_email |
-| 🐛 **问题反馈** | https://github.com/dreamhunter2333/cloudflare_temp_email/issues |
+| **中文文档** | https://temp-mail-docs.awsl.uk |
+| **部署文档** | https://temp-mail-docs.awsl.uk/zh/guide/actions/github-action.html |
+| **Telegram** | https://t.me/cloudflare_temp_email |
+| **问题反馈** | https://github.com/dreamhunter2333/cloudflare_temp_email/issues |
 
 ### 15.2 在线体验
 
 | 体验 | 链接 |
 |------|------|
-| 🌐 **在线演示** | https://mail.awsl.uk/ |
+| **在线演示** | https://mail.awsl.uk/ |
 
 ## 十六、总结
 
-Cloudflare 临时邮箱是**当今最完整的临时邮箱解决方案**：
+Cloudflare 临时邮箱的最大优势是**零成本**——整个系统跑在 Cloudflare 免费额度上（Workers + D1 + R2 + Pages），邮件解析用 Rust WASM 保证性能，Workers AI 做验证码自动提取。功能覆盖收发、IMAP/SMTP、Telegram Bot、OAuth2 登录、Admin 后台，在临时邮箱方案里算比较完整的。
 
-| 维度 | 说明 |
-|------|------|
-| 💰 **零成本** | 基于 Cloudflare 免费服务 |
-| ⚡ **高性能** | Rust WASM 邮件解析 |
-| 🤖 **AI 智能** | Workers AI 自动识别验证码 |
-| 📨 **完整功能** | 收发邮件、IMAP、SMTP、Telegram |
-| 🔐 **安全** | OAuth2、Passkey、IP 白名单、限流 |
-| 🌍 **全球** | Cloudflare 边缘部署 |
+局限：Cloudflare 免费额度有请求限制（Workers 10 万次/天），高流量场景需要评估是否够用；Workers AI 的验证码识别准确率取决于邮件格式，复杂场景可能需要人工确认。
 
 ---
 
@@ -498,4 +491,4 @@ Cloudflare 临时邮箱是**当今最完整的临时邮箱解决方案**：
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 Cloudflare 临时邮箱 (8.3k Stars)_
+_本文基于 Cloudflare 临时邮箱 (8.3k Stars)_

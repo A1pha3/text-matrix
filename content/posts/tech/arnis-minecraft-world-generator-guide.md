@@ -419,7 +419,7 @@ scp target/release/arnis user@server:/path/to/minecraft/
 
 十三、总结
 
-Arnis 是** Minecraft 地图生成的革命性工具**：
+Arnis 将 OpenStreetMap 地理数据转换为 Minecraft 世界：
 
 | 维度 | 说明 |
 |------|------|

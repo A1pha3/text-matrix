@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["域名", "RDAP", "WHOIS", "Rust", "MCP", "域名检查", "品牌保护"]
 ---
 
-# domain-check：极速域名可用性检查——1,200+ TLDs + AI 代理支持的从入门到精通
+# domain-check：极速域名可用性检查——1,200+ TLDs + AI 代理支持
 
 ---
 
@@ -146,4 +146,4 @@ claude mcp add domain-check -- domain-check-mcp
 ---
 
 **文档信息**
-难度：⭐⭐⭐⭐ | 类型：专家设计 | 更新日期：2026-04-14 | 预计阅读时间：30-40 分钟
+类型：专家设计 | 更新日期：2026-04-14

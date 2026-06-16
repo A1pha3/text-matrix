@@ -18,7 +18,7 @@ hiddenFromHomePage: false
 
 [helloianneo/ian-xiaohei-scenes](https://github.com/helloianneo/ian-xiaohei-scenes)(以下简称 ian-xiaohei-scenes 2.0)是 Ian (伊恩) 在 2026-06-04 发布的 Codex Skill,MIT 协议。它做的事情很聚焦:把"小黑 IP + 真实物件 + 物理动作"做成了**一套可学习、可防御、可复用的中文章节配图视觉语言**。
 
-这套 Skill 的真正价值不在于"小黑这个 IP 画得可爱",而在于它把"AI 配图"从"碰运气"工程化成了"按规则可控"。读完它的 SKILL.md 和 7 个 references,我看到的不是 7 张示例图,而是 4 个不变量 + 3 个变异规则 + 1 个事实锚定 + 18 项 QA 必过项 + 18 项失败信号的完整防御体系。
+这套 Skill 的价值不在"小黑这个 IP 画得可爱",而在于它把"AI 配图"从"碰运气"工程化成了"按规则可控"。读完它的 SKILL.md 和 7 个 references,我看到的不是 7 张示例图,而是 4 个不变量 + 3 个变异规则 + 1 个事实锚定 + 18 项 QA 必过项 + 18 项失败信号的完整防御体系。
 
 先给结论,再展开:
 
@@ -358,7 +358,7 @@ Xiaohei is being pressed by paper strips bursting out of an AI chat window, hold
 
 ## 结尾:中文内容创作的下一道分水岭
 
-ian-xiaohei-scenes 2.0 真正解决的问题,不是"AI 配图变好看了",而是把"AI 配图"从"碰运气"工程化成了"按规则可拦截"——具体的拦截机制是 4 不变量 + 3 变异 + 1B 锚定 + 18 QA 项 + 18 失败信号。
+ian-xiaohei-scenes 2.0 解决的问题,不是"AI 配图变好看了",而是把"AI 配图"从"碰运气"工程化成了"按规则可拦截"——具体的拦截机制是 4 不变量 + 3 变异 + 1B 锚定 + 18 QA 项 + 18 失败信号。
 
 4 个不变量(母版锚点、小黑承重、真实物件、3 秒读懂)+ 3 个变异规则(主物件/空间/动作)+ 1B 事实锚定 + 18 项 QA 必过项 + 18 项失败信号——这套防御体系,把"中文内容创作者的视觉语言"从"凭感觉"变成了"可教学"。
 

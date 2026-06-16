@@ -11,28 +11,15 @@ draft: false
 
 BiliSummary：B 站视频 AI 摘要与知识管理工具
 
-. 学习目标
-
-通过本文你将掌握：
-
-- 理解 BiliSummary 的设计理念和关键价值
-- 熟练安装和配置工具
-- 掌握各种使用模式（URL、UP 主、收藏夹）
-- 理解 AI 摘要生成和 ASR 降级策略
-- 定制和扩展工具功能
-- 实践建议和常见问题解决
-
-. 项目概述
-
-. 什么是 BiliSummary
+## 项目概述
 
 BiliSummary 是一个桌面优先的 B 站视频摘要工具：
 
 > **"Desktop-first Bilibili summarizer with AI-generated Markdown output, favorites workflow, and unified browse/reading UX."**
 
-**一句话解释**：输入 B 站视频 URL 或 UP 主，获取 AI 生成的 Markdown 摘要，支持收藏夹批量管理。
+输入 B 站视频 URL 或 UP 主，获取 AI 生成的 Markdown 摘要，支持收藏夹批量管理。
 
-. 关键价值
+## 痛点与方案
 
 | 痛点 | 解决方案 |
 |------|---------|
@@ -581,9 +568,9 @@ python -m summarize --delay 2
 - 收藏夹批量管理
 - 开源可扩展
 
-. 总结
+## 总结
 
-BiliSummary 是 B 站视频知识管理的利器：
+BiliSummary 能做什么：
 
 | 特性 | 说明 |
 |------|------|
@@ -593,11 +580,7 @@ BiliSummary 是 B 站视频知识管理的利器：
 | 收藏夹 | 批量管理，一键摘要 |
 | 开源免费 | 无许可证 (NOASSERTION) |
 
-**适用场景**：
-- B 站视频学习笔记
-- 批量视频内容沉淀
-- UP 主视频跟踪
-- 知识库建设
+适合需要从 B 站视频批量提取文字内容、构建本地知识库的场景。
 
 ---
 

@@ -10,17 +10,17 @@ tags: ["CAR", "Codex", "Opencode", "AI智能体", "自动化", "Tickets", "PMA"]
 
 # CAR Codex Auto-Runner：AI 编程智能体协作框架完全指南
 
-## §1 学习目标
+## §1 本文覆盖范围
 
-学完本文档后，你将能够：
+读完本文，你会了解：
 
-- 理解 CAR（Codex Auto-Runner）的核心概念与设计哲学
-- 掌握 CAR 的三种交互方式：Web UI、CLI、聊天应用（Telegram/Discord）
-- 了解 Tickets 作为控制平面的工作原理
-- 学会在项目中安装、配置和运行 CAR
-- 掌握创建和管理 CAR Tickets 的方法
-- 理解 Project Manager Agent（PMA）的使用场景
-- 能够在团队中推广和应用 CAR 协作工作流
+- CAR（Codex Auto-Runner）的设计思路与工作方式
+- CAR 的三种交互方式：Web UI、CLI、聊天应用（Telegram/Discord）
+- Tickets 作为控制平面的工作原理
+- 在项目中安装、配置和运行 CAR
+- 创建和管理 CAR Tickets 的方法
+- Project Manager Agent（PMA）的使用场景
+- 在团队中推广 CAR 协作工作流
 
 ---
 
@@ -30,7 +30,7 @@ tags: ["CAR", "Codex", "Opencode", "AI智能体", "自动化", "Tickets", "PMA"]
 
 CAR（Codex Auto-Runner，官方仓库：[Git-on-my-level/codex-autorunner](https://github.com/Git-on-my-level/codex-autorunner)）是一个**AI 编程智能体元协调框架**（meta-harness for coding agents）。它不是另一个编码智能体，而是为已有的 AI 编程工具（如 Codex、Opencode）提供协调能力，让它们能够**长时间运行复杂任务**，而无需人工持续监督。
 
-CAR 的核心理念：**让智能体做它们最擅长的事，不要挡路**（CAR is very bitter-lesson-pilled）。随着模型能力增强，CAR 应该充当放大器，而非约束器。
+CAR 的设计原则：**让智能体做它们最擅长的事，不要挡路**（CAR is very bitter-lesson-pilled）。随着模型能力增强，CAR 应该充当放大器，而非约束器。
 
 ### 2.2 核心数据
 
@@ -83,7 +83,7 @@ CAR 通过**Tickets 控制平面**和**状态机架构**解决了这些问题：
 
 ### 3.1 系统架构：Tickets 即控制平面
 
-CAR 的核心设计理念是：**Tickets 是控制平面，模型是执行层**。
+CAR 的设计思路是：**Tickets 是控制平面，模型是执行层**。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -854,9 +854,9 @@ CAR 经过测试可在以下系统运行：
 
 ## §10 总结
 
-CAR（Codex Auto-Runner）是一个创新的 AI 编程智能体协作框架，通过 **Tickets 即控制平面** 的设计，让 AI 智能体能够长时间、无人值守地运行复杂任务。
+CAR（Codex Auto-Runner）是一个 AI 编程智能体协调框架，通过 **Tickets 即控制平面** 的设计，让 AI 智能体能够长时间、无人值守地运行复杂任务。
 
-**关键价值**：
+**要点**：
 
 - **无需盯守**：智能体完成后主动通知
 - **状态持久化**：任务状态不丢失

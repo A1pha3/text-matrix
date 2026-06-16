@@ -88,7 +88,7 @@ cssclasses: [highlight]
 ---
 ```
 
-实际工作中这技能的价值不是帮你写语法，而是帮你**批量修正和补全**。比如你有两百篇缺少 properties 的笔记，直接告诉 Agent："给所有 `projects/` 目录下的笔记补齐 `tags: [项目]`，并生成 `created` 日期"，它就能扫完文件夹逐篇处理。
+实际工作中这技能的价值在于帮你**批量修正和补全**，写语法只是附带。比如你有两百篇缺少 properties 的笔记，直接告诉 Agent："给所有 `projects/` 目录下的笔记补齐 `tags: [项目]`，并生成 `created` 日期"，它就能扫完文件夹逐篇处理。
 
 ## obsidian-bases：把笔记变成数据库
 
@@ -189,7 +189,7 @@ obsidian dev reload
 
 ## defuddle：省 token 的内容提取器
 
-Defuddle 是一个独立的网页内容提取工具，专为 AI 场景优化。它不是简单的 HTML-to-Markdown 转换——它会识别并剥离导航栏、侧边栏、广告、页脚这些对 AI 无意义的噪声区块，只保留正文结构。对大模型来说，这意味着同样的网页，喂进去的 token 数可能减少 60% 以上。
+Defuddle 是一个独立的网页内容提取工具，专为 AI 场景优化。它比简单的 HTML-to-Markdown 转换多了一步——识别并剥离导航栏、侧边栏、广告、页脚这些对 AI 无意义的噪声区块，只保留正文结构。同样的网页，喂进去的 token 数可能减少 60% 以上。
 
 ```bash
 defuddle https://example.com/article
@@ -250,7 +250,7 @@ npx skills add git@github.com:kepano/obsidian-skills.git
 
 ## 实战：用 Agent 从零搭建项目知识库
 
-下面是一个完整的真实场景——不是演示语法，而是展示五个技能如何在实际工作流中串联起来。
+下面是一个完整的真实场景——展示五个技能如何在实际工作流中串联起来，不只是演示语法。
 
 ### 背景
 
@@ -338,6 +338,6 @@ Agent Skills 规范（[agentskills.io/specification](https://agentskills.io/spec
 
 ---
 
-Obsidian 的真正威力不在某个单独功能，而在于所有数据都以明文文件存在本地——这意味着任何工具只要理解文件格式，就能成为你的知识库的"外脑"。Obsidian Skills 把这扇门彻底打开了。
+Obsidian 的威力来自所有数据都以明文文件存在本地——任何工具只要理解文件格式，就能成为你的知识库的"外脑"。Obsidian Skills 把这扇门彻底打开了。
 
 [GitHub 仓库](https://github.com/kepano/obsidian-skills) | [Agent Skills 规范](https://agentskills.io/specification) | [Obsidian 官网](https://obsidian.md)

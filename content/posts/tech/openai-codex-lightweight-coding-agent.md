@@ -10,15 +10,15 @@ tags: ["OpenAI", "Codex", "AI编程", "智能体", "终端工具"]
 
 # OpenAI Codex：轻量级终端编程智能体完全指南
 
-## 学习目标
+## 阅读前提
 
-学完本文后，你应该能够：
+本文覆盖以下内容：
 
-1. **说清 Codex CLI 的定位**：理解它与 IDE 内联补全、云端编程代理的差异。
-2. **完成安装、认证和基础配置**：知道官方推荐的安装方式、配置层级和常见安全选项。
-3. **掌握交互式与非交互式两种用法**：会在本地终端使用 `codex`，也会在脚本或 CI 中使用 `codex exec`。
-4. **理解公开可证实的架构边界**：知道它公开暴露了哪些能力，哪些能力不应被写成“已稳定支持”。
-5. **建立从入门到熟练的实践路径**：把 Codex 放进代码理解、代码审查、自动化修复和团队工作流中。
+1. Codex CLI 的定位：它与 IDE 内联补全、云端编程代理的差异。
+2. 安装、认证和基础配置：官方推荐的安装方式、配置层级和常见安全选项。
+3. 交互式与非交互式两种用法：本地终端使用 `codex`，脚本或 CI 中使用 `codex exec`。
+4. 公开可证实的架构边界：它暴露了哪些能力，哪些能力不应被写成"已稳定支持"。
+5. 实践路径：把 Codex 放进代码理解、代码审查、自动化修复和团队工作流中。
 
 ---
 
@@ -34,11 +34,11 @@ tags: ["OpenAI", "Codex", "AI编程", "智能体", "终端工具"]
 | **Codex IDE 集成** | 编辑器中的 Codex 体验 | 已经在 VS Code、Cursor、Windsurf 等编辑器内工作 |
 | **Codex Web / App** | ChatGPT / Web 入口中的云端体验 | 想从更高层入口使用 Codex，而不是直接在终端里操作 |
 
-### 为什么需要它
+### 终端形态的定位
 
-终端是开发者最接近代码库、构建系统、测试工具和 Git 工作流的地方。Codex CLI 的意义，不是替代编辑器，而是把“理解仓库 + 规划步骤 + 调用工具 + 输出结果”这一整条链路放到本地开发环境里完成。
+终端是开发者最接近代码库、构建系统、测试工具和 Git 工作流的地方。Codex CLI 把"理解仓库 + 规划步骤 + 调用工具 + 输出结果"这一整条链路放到本地开发环境里完成。
 
-如果你的主要诉求是**边写边补全**，IDE 插件通常更顺手；如果你的诉求是**围绕仓库执行一段完整任务**，终端形态更自然。
+如果主要诉求是**边写边补全**，IDE 插件更顺手；如果诉求是**围绕仓库执行一段完整任务**，终端形态更自然。
 
 ## 二、核心能力、适用场景与边界
 
@@ -54,8 +54,8 @@ tags: ["OpenAI", "Codex", "AI编程", "智能体", "终端工具"]
 
 ### 更适合用 Codex 的场景
 
-1. **仓库导向任务**：例如“解释这个服务怎么处理认证”“找出最危险的几个模块”。
-2. **多步工程动作**：例如“先跑测试，再定位失败，再修最小改动”。
+1. **仓库导向任务**：例如"解释这个服务怎么处理认证""找出最危险的几个模块"。
+2. **多步工程动作**：例如"先跑测试，再定位失败，再修最小改动"。
 3. **脚本化流水线**：例如在 CI 中生成风险摘要、发布说明、失败原因分析。
 4. **需要终端上下文的操作**：例如配合 Git diff、shell 命令、配置文件、日志目录一起工作。
 
@@ -206,7 +206,7 @@ codex
 | `/agent` | 切换活跃的 agent 线程 | 使用了子代理协作时 |
 | `/quit` / `/exit` | 退出 CLI | 结束当前会话 |
 
-### 5.3 更靠谱的提示方式
+### 5.3 提示写法
 
 Codex 不是读心工具。想让它在仓库里稳定工作，提示越具体越好。
 
@@ -263,10 +263,9 @@ codex exec --full-auto --sandbox workspace-write \
   "Read the repository, run the test suite, identify the minimal change needed to make all tests pass, implement only that change, and stop."
 ```
 
-### 6.3 为什么自动化里要格外小心
+### 6.3 自动化场景的安全注意
 
-官方文档明确建议：如果你要给 `danger-full-access`，请把它放在受控环境里，比如隔离的 CI runner 或容器里。  
-这说明 Codex 的自动化能力很强，但**越强的能力越需要更严格的运行边界**。
+官方文档明确建议：如果要给 `danger-full-access`，请把它放在受控环境里，比如隔离的 CI runner 或容器里。能力越强，运行边界越要收紧。
 
 ## 七、MCP、Apps 与扩展能力
 
@@ -278,10 +277,9 @@ codex exec --full-auto --sandbox workspace-write \
 2. **Apps / Connectors**：通过 `$` 插入 ChatGPT connector，并用 `/apps` 查看可用项。
 3. **Hooks / features**：通过配置和特性开关打开一些可选能力。
 
-### 7.2 MCP 的价值是什么
+### 7.2 MCP 的作用
 
-MCP（Model Context Protocol）的意义，在于把“模型理解任务”与“外部系统能力”连接起来。  
-如果没有 MCP，Codex 主要依赖本地仓库、shell、Git 和内置工具；有了 MCP，它可以在受控前提下接入更多外部能力。
+MCP（Model Context Protocol）把"模型理解任务"与"外部系统能力"连接起来。没有 MCP 时，Codex 主要依赖本地仓库、shell、Git 和内置工具；有了 MCP，它可以在受控前提下接入更多外部能力。
 
 ### 7.3 不要把仓库内部 crate 直接当成用户功能
 
@@ -311,9 +309,9 @@ OpenAI 在 `openai/codex` 仓库中公开了 Rust workspace。仅从 `codex-rs/C
 
 ### 8.2 这套架构说明了什么
 
-1. **Codex 不是“一个会说话的命令包装器”**。它的工程重点之一，就是把模型、工具、权限和状态管理拆开。
-2. **安全不是附属功能**。从 crate 命名就能看出，sandbox、process hardening、approval 这类能力是架构层面的组成部分。
-3. **扩展不是临时拼接**。MCP、connectors、skills 都是独立模块，说明它面向的是可组合的开发工作流。
+1. Codex 不是"一个会说话的命令包装器"，它的工程重点之一是把模型、工具、权限和状态管理拆开。
+2. 安全是架构层面的组成部分——从 crate 命名就能看出 sandbox、process hardening、approval 是一等公民。
+3. 扩展不是临时拼接——MCP、connectors、skills 都是独立模块，面向可组合的开发工作流。
 
 ### 8.3 源码分析应该写到什么程度才算负责
 
@@ -350,14 +348,13 @@ codex "Review my working tree and only call out correctness, reliability, or sec
 2. 结合 `--json` 或 `--output-schema` 输出机器可消费结果。
 3. 在受控权限下决定是否允许自动修复。
 
-### 场景四：让它代替你“全自动改一切”
+### 场景四：让它代替你"全自动改一切"
 
-这通常不是最佳使用姿势。  
-只要任务范围失控、审批边界过宽、测试约束不明确，任何编程智能体都会更容易偏离你的真实目标。
+这通常不是最佳使用姿势。只要任务范围失控、审批边界过宽、测试约束不明确，编程智能体都会偏离真实目标。
 
-## 十、从入门到精通的学习路径
+## 十、实践路径
 
-### Level 1：先把它跑起来
+### Level 1：跑起来
 
 目标：
 
@@ -366,7 +363,7 @@ codex "Review my working tree and only call out correctness, reliability, or sec
 - 理解 `codex` 与 `codex exec` 的区别
 - 学会 `/model`、`/status`、`/diff`
 
-### Level 2：让它帮你理解和审查代码
+### Level 2：理解和审查代码
 
 目标：
 
@@ -375,7 +372,7 @@ codex "Review my working tree and only call out correctness, reliability, or sec
 - 学会把任务范围限定清楚
 - 知道什么时候应该只给只读权限
 
-### Level 3：把它接进自动化流程
+### Level 3：接入自动化流程
 
 目标：
 
@@ -383,7 +380,7 @@ codex "Review my working tree and only call out correctness, reliability, or sec
 - 使用 `--json`、`--ephemeral`、`resume`
 - 根据任务设置合适的 `approval_policy` 和 `sandbox_mode`
 
-### Level 4：能评估它的工程边界
+### Level 4：评估工程边界
 
 目标：
 
@@ -448,15 +445,11 @@ codex exec --json "Summarize the repository structure and identify the top 3 ope
 
 ## 十三、总结
 
-OpenAI Codex CLI 的真正价值，不在于“它会不会生成代码”，而在于它把**终端、仓库、权限边界、自动化和模型能力**放进了同一条工作流里。
+Codex CLI 把终端、仓库、权限边界、自动化和模型能力放进同一条工作流里。让它成为日常可依赖的工程工具，关键在三件事：
 
-如果你希望它成为日常可依赖的工程工具，最重要的不是背命令，而是掌握三件事：
-
-1. **任务边界要清楚**
-2. **权限边界要保守**
-3. **事实边界要尊重官方文档**
-
-做到这三点，Codex 才会从“一个能聊天的 CLI”变成“一个能真正参与开发流程的编程智能体”。
+1. 任务边界要清楚
+2. 权限边界要保守
+3. 事实边界要尊重官方文档
 
 ---
 

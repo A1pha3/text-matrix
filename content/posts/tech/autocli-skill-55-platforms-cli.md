@@ -11,16 +11,16 @@ AutoCLI Skill：AI Agent 多平台浏览器自动化工具
 
 概述
 
-**AutoCLI Skill** 是一个为 Claude Code/OpenClaw/AI Agent 打造的终极平台集成工具，让 AI 能够像人一样操控 55+ 个主流平台——无需 API Key、无需复杂配置、直接复用你 Chrome 浏览器里已有的登录态。
+**AutoCLI Skill** 是一个为 Claude Code/OpenClaw/AI Agent 打造的平台集成工具，让 AI 能够操控 55+ 个主流平台——无需 API Key、无需复杂配置、直接复用 Chrome 浏览器已有的登录态。
 
 > **GitHub**: [nashsu/autocli-skill](https://github.com/nashsu/autocli-skill) 
 > **Stars**: 582 ⭐ 
 > **Forks**: 62 
 > **核心特性**: 55+平台支持 | 零 API Key | Chrome 登录态复用 | Rust 编写 | 4.7MB 二进制
 
-一句话定位
+定位
 
-**"Give your AI Agent the ability to reach information across the entire web"** —— 让 AI Agent 能够像人一样浏览整个互联网。
+**"Give your AI Agent the ability to reach information across the entire web"** —— 让 AI Agent 能够浏览整个互联网。
 
 解决的核心痛点
 
@@ -388,14 +388,14 @@ autocli --debug twitter trending
 
 设计原则总结
 
-核心设计理念
+设计原则
 
-1. **复用优于重造**：不重新发明轮子，直接复用用户已有的 Chrome 登录态
+1. **复用优于重造**：直接复用用户已有的 Chrome 登录态，不走 OAuth 流程
 2. **CLI 优先**：轻量、可组合、易于 AI 调用
-3. **零配置**：下载即用，无需复杂配置
+3. **零配置**：下载即用
 4. **统一接口**：55+ 平台，统一的 CLI 接口
 
-可复用的架构经验
+架构经验
 
 | 经验 | 应用场景 |
 |------|---------|
@@ -474,4 +474,4 @@ autocli --debug twitter trending
 
 ---
 
-*🦞 AutoCLI Skill：让 AI Agent 真正掌控互联网，55+ 平台，一个命令搞定。*
+*🦞 AutoCLI Skill：55+ 平台 CLI 控制，复用 Chrome 登录态，4.7MB 零依赖。*

@@ -157,7 +157,7 @@ jcode 的主体使用 **Rust** 编写，核心依赖通过 Cargo 管理。项目
 
 ## jcode 的核心优势
 
-基于项目 README 和架构文档，jcode 的差异化竞争力可以归结为以下四个维度：
+基于项目 README 和架构文档，jcode 的差异化体现在以下四个维度：
 
 **性能与资源效率。** Rust 实现带来的内存管理和启动速度优势，在多会话并发场景下尤为突出。README 中披露的基准测试数据显示 jcode 的 RAM 增量（~10.4 MB/会话）和启动延迟（~14 ms）均显著低于主流竞品。
 
@@ -185,9 +185,9 @@ jcode 的主体使用 **Rust** 编写，核心依赖通过 Cargo 管理。项目
 
 ## 总结
 
-jcode 是一个在工程实现上有明确目标的项目：做一款在性能（Rust）、记忆持久化（向量语义图）、多 Agent 协作（Swarm）三个方向上都有差异化的编码智能体 Harness。它的多 Provider 支持和 OAuth 登录流程降低了上手门槛，内置的浏览器自动化和 Self-Dev 模式则拓宽了使用边界。
+jcode 是一个在工程实现上有明确目标的项目：做一款在性能（Rust）、记忆持久化（向量语义图）、多 Agent 协作（Swarm）三个方向上都有差异的编码智能体 Harness。它的多 Provider 支持和 OAuth 登录流程降低了上手门槛，内置的浏览器自动化和 Self-Dev 模式则拓宽了使用边界。
 
-对于已经在使用 Claude Code 或 Copilot CLI 的开发者，jcode 不是一个简单的替代品，而是一个在多会话管理、Agent 间协作和记忆复用上有独特价值网络的竞品。建议先通过 `jcode run "say hello"` 完成首次启动，再根据自身工作流判断是否需要迁移或补充使用。
+对于已经在使用 Claude Code 或 Copilot CLI 的开发者，jcode 不是一个简单的替代品，而是一个在多会话管理、Agent 间协作和记忆复用上有独特优势的竞品。建议先通过 `jcode run "say hello"` 完成首次启动，再根据自身工作流判断是否需要迁移或补充使用。
 
 **延伸阅读：**
 - 项目 GitHub：https://github.com/1jehuang/jcode

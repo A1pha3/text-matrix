@@ -68,7 +68,7 @@ tags: ["Prompt Master", "提示词工程", "Claude", "AI工具", "效率优化"]
 **核心思路：**
 
 > "The best prompt is not the longest. It's the one where every word is load-bearing."
-> 最好的提示词是，不是最长的**每个词都承载意义的**。
+> 最好的提示词每个词都承载意义，而不是最长。
 
 ---
 
@@ -175,26 +175,40 @@ tags: ["Prompt Master", "提示词工程", "Claude", "AI工具", "效率优化"]
 - Component naming convention: PascalCase, no default exports
 - Design system: Tailwind only, no custom CSS files
 - Architecture: no Redux, context API only
-```textbash
+```
+
+**Web UI 安装：**
+
+```text
 1. 下载此仓库为 ZIP
 2. 前往 claude.ai → 侧边栏 → 自定义 → Skills → 上传 Skill
-```textbash
+```
+
+**CLI 安装：**
+
+```bash
 mkdir -p ~/.claude/skills
 git clone https://github.com/nidhinjs/prompt-master.git ~/.claude/skills/prompt-master
+```
+
+### 使用示例
+
 ```text
 Write me a prompt for Cursor to refactor my auth module
 ```
 
-```
+```text
 I need a prompt for Claude Code to build a REST API — ask me what you need to know
 ```
 
-```
+```text
 Here's a bad prompt I wrote for GPT-4o, fix it: [paste prompt]
 ```
 
-```
+```text
 Generate a Midjourney prompt for a cyberpunk city at night
+```
+
 ```text
 /prompt-master I want to ask Claude Code to build a todo app with React and Supabase
 ```
@@ -248,7 +262,7 @@ Prompt Master 会静默路由，用户永远看不到框架名称，只看到最
 
 ### 10.1 价值总结
 
-Prompt Master 的价值在于**将提示词工程从艺术变成科学**，通过系统化的管道确保每次都能一次到位。
+Prompt Master 通过系统化的管道确保每次都能一次到位，把提示词工程从凭感觉变成可复现的流程。
 
 | 传统方式 | Prompt Master 方式 |
 |----------|-------------------|

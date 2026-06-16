@@ -14,7 +14,7 @@ tags: ["安全扫描", "CVE", "容器安全", "DevSecOps", "Kubernetes", "SBOM"]
 
 `Trivy`（仓库 [aquasecurity/trivy](https://github.com/aquasecurity/trivy)）不是"又一款"漏洞扫描器，而是把 **CVE 漏洞、SBOM 软件物料清单、IaC 错误配置、敏感密钥、License 风险** 五类扫描压进同一把 CLI 刀的工具。它能在容器镜像、文件系统、Git 远程仓库、虚拟机镜像、Kubernetes 集群这 5 种目标上做同一种事——告诉你哪儿不安全、为什么、怎么修。
 
-它的护城河不在某一个扫描器比 Snyk/Trivy/Clair 强 20%，而在三件别家没拼齐的事：
+它拉开差距的地方在三件别家没拼齐的事：
 
 1. **「All-in-one」产品形态**：漏洞、配置、密钥、SBOM 一个二进制搞定，CI 不需要塞一堆 tool
 2. **运行时无关**：静态二进制 + 容器化分发，不依赖 daemon、数据库或服务发现
@@ -116,7 +116,7 @@ trivy image --format spdx-json --output sbom.spdx.json python:3.12
 trivy image --format spdx --output sbom.spdx python:3.12
 ```
 
-> 这意味着你不需要在 CI 里再跑一个 `syft`——`trivy image` 顺手就出 SBOM。
+> 这意味着 CI 里不再需要额外跑 `syft`——`trivy image` 顺手就出 SBOM。
 
 ### 3. IaC 错误配置
 
@@ -263,7 +263,7 @@ done
 | Kubescape | ❌ | ❌ | ✅ | ❌ | ✅ | ARMOscaler 生态 |
 | Checkov | ❌ | ❌ | ✅ | ✅ | ❌ | Bridgecrew 生态 |
 
-> Trivy 的真正价值是**一个二进制替代多个工具**——CI 不需要拼 Grype + Syft + Checkov + gitleaks。代价是「每一项都不一定是最强」。
+> Trivy 的优势是**一个二进制替代多个工具**——CI 不需要拼 Grype + Syft + Checkov + gitleaks。代价是「每一项都不一定是最强」。
 
 ## 边界与盲点
 

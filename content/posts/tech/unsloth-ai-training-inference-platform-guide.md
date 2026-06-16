@@ -1,5 +1,5 @@
 ---
-title: "Unsloth：61k Stars 的本地 AI 训练与推理平台——它能省掉的不是时间，是显存焦虑"
+title: "Unsloth：61k Stars 的本地 AI 训练与推理平台——省的是显存，不是时间"
 date: "2026-04-12T02:31:39+08:00"
 slug: unsloth-ai-training-inference-platform-guide
 description: "Unsloth 是一个本地 AI 训练与推理平台，可实现 2 倍速度和 70% 显存节省，支持多种开源模型。"
@@ -330,7 +330,7 @@ unsloth studio -H 0.0.0.0 -p 8888
 
 ## 上游合作
 
-Unsloth 跟模型团队的协作不是"提 issue 等 merge"这种松散模式，而是直接修 bug——发现模型在 GGUF 转换、128K 上下文或特定硬件上的问题后，把修复推到上游。这解释了为什么它的内核适配能跟模型发布几乎同步：
+Unsloth 跟模型团队的协作不是"提 issue 等 merge"这种松散模式，而是直接修 bug——发现模型在 GGUF 转换、128K 上下文或特定硬件上的问题后，把修复推到上游。所以它的内核适配能跟模型发布几乎同步：
 
 - **gpt-oss**：联合修复 bug，提升复现准确性
 - **Qwen3**：修复动态 GGUF 128K 上下文的截断 bug

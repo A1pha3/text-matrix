@@ -14,7 +14,7 @@ tags: ["AI Agent", "Context Engineering", "MCP", "RAG", "Token Optimization"]
 
 `headroom`（仓库 [chopratejas/headroom](https://github.com/chopratejas/headroom)）在 7K stars 的热度下，回答了一个被很多人忽略的工程问题：**当 AI Agent 每天要读几千次工具输出和 RAG 结果，token 账单到底花在了哪里？**
 
-headroom 的真正价值不是"又一个压缩库"——它是一个 **Agent 时代的中间件范式**：在 LLM 看到之前把所有 context 拦下来，分类型走不同压缩器（JSON 走 SmartCrusher、代码走 AST-aware CodeCompressor、散文走自训练模型 Kompress-base），再用 CCR（可逆压缩）+ CacheAligner（KV cache 对齐）保住精度的同时把 token 砍掉 47-92%。
+headroom 不是一个普通的压缩库——它是一个 **Agent 时代的中间件范式**：在 LLM 看到之前把所有 context 拦下来，分类型走不同压缩器（JSON 走 SmartCrusher、代码走 AST-aware CodeCompressor、散文走自训练模型 Kompress-base），再用 CCR（可逆压缩）+ CacheAligner（KV cache 对齐）保住精度的同时把 token 砍掉 47-92%。
 
 它的护城河在三件别家没做到的事：
 

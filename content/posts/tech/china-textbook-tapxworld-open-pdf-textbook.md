@@ -190,7 +190,7 @@ git lfs pull
 - **中国大学 MOOC（icourse163.org）**：大学课程资源
 - **ChinaTextbook**：GitHub 上一站式目录，**适合做镜像、做训练集、做海外分发**
 
-它们之间不是竞争关系，是**互补关系**。
+它们之间是**互补关系**。
 
 ---
 
@@ -213,7 +213,7 @@ ChinaTextbook 是一个「看起来不像技术项目、但实质上是一次完
 - ✅ **合规**：基于国家已免费提供的内容重新组织
 - ✅ **可作训练集**：图、文、公式密度极高的真实教材 PDF
 
-它上 GitHub Trending 的真正原因不是技术多炫，而是**「在最朴素的需求上做最扎实的开源」**。
+它上 GitHub Trending 跟技术炫不炫无关——**「在最朴素的需求上做最扎实的开源」**。
 
 **GitHub**: [TapXWorld/ChinaTextbook](https://github.com/TapXWorld/ChinaTextbook)
 **许可**: 仓库内容为公开 PDF 集合；使用请遵守国家教材使用与版权规定

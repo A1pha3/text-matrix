@@ -13,7 +13,7 @@ tags: ["BitTorrent", "P2P", "C++", "Qt", "开源", "qBittorrent", "libtorrent"]
 > **目标读者**：有网络基础、了解 P2P 概念，想搭建私有种子下载环境的开发者或高级用户
 > **预计阅读时间**：18 分钟
 > **前置知识**：命令行基础、CMake 编译环境、Docker 基本概念
-> **GitHub**：https://github.com/qbittorrent/qBittorrent | **Stars**：37,113 ⭐
+> **GitHub**：https://github.com/qbittorrent/qBittorrent | **Stars**：37,113
 
 ---
 

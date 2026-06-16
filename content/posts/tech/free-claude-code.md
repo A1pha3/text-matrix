@@ -15,17 +15,17 @@ tags: ["Claude Code", "Anthropic", "API", "免费", "本地部署", "OpenRouter"
 
 # Free Claude Code：用免费提供商替代 Anthropic API，让 Claude Code 零成本运行
 
-Claude Code 是 Anthropic 官方的命令行 AI 编程助手，默认只接受 Anthropic API 调用——这意味着每次对话都要按 token 付费，对个人开发者持续使用成本不低。Free Claude Code 做的事很直接：用两个环境变量把 Claude Code 的 API 请求拦截下来，透明转发到免费或本地模型。Claude Code 不知道自己连的不是 Anthropic 的服务器。
+Claude Code 是 Anthropic 官方的命令行 AI 编程助手，默认只接受 Anthropic API 调用——每次对话都要按 token 付费，对个人开发者持续使用成本不低。Free Claude Code 做的事很直接：用两个环境变量把 Claude Code 的 API 请求拦截下来，透明转发到免费或本地模型。Claude Code 不知道自己连的不是 Anthropic 的服务器。
 
 GitHub 12.9k stars，MIT 协议，Python 3.14 + uv + Ty + Ruff + Loguru 技术栈。核心是一个 FastAPI 代理，本地监听 `:8082`，支持 NVIDIA NIM（40 req/min 免费）、OpenRouter（大量免费模型）、DeepSeek 直接 API，以及完全本地的 LM Studio / llama.cpp / Ollama。
 
-**读完本文你会知道：怎么用两个环境变量让 Claude Code 走免费模型；六大提供商分别适合什么场景；代理在后台做了哪些转换；以及这个方案的能力边界在哪里。**
+**本文覆盖：怎么用两个环境变量让 Claude Code 走免费模型；六大提供商分别适合什么场景；代理在后台做了哪些转换；以及这个方案的能力边界在哪里。**
 
 ---
 
 ## 一、系统地图：三层结构
 
-在进入原理之前，先看清代理的职责边界——它不负责推理，只负责"让 Claude Code 以为自己在跟 Anthropic 对话"：
+代理的职责边界——它不负责推理，只负责"让 Claude Code 以为自己在跟 Anthropic 对话"：
 
 | 层次 | 做什么 | 不做什么 |
 |------|--------|---------|

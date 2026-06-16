@@ -92,7 +92,7 @@ tags = ['system-prompt', 'AI 编程工具', 'Agent', 'Claude Code', 'Cursor', 'D
 
 ---
 
-## 三、它不是工具，是"行业标本库"
+## 三、"行业标本库"
 
 理解了它是什么之后，问题就变了：**为什么 13.9 万 star？它在被谁、用在什么场景？**
 
@@ -140,7 +140,7 @@ tags = ['system-prompt', 'AI 编程工具', 'Agent', 'Claude Code', 'Cursor', 'D
 
 ## 四、值得专门读的 5 个文件
 
-如果你只想花 30 分钟入门，下面这 5 个文件能让你快速建立“AI 编程工具 prompt 设计”的整体认知：
+时间有限的话，下面 5 个文件能帮你快速建立“AI 编程工具 prompt 设计”的整体认知：
 
 1. **`Anthropic/Claude Code 2.0.txt`**（57 KB）—— 当前最强 AI 编程 Agent 的完整 system prompt。读完你就知道 Claude Code 行为里“反思 + 主动询问 + 工具组合”的具体写法。
 2. **`Cursor Prompts/Agent Prompt 2.0.txt`**（38 KB）—— Cursor Agent 的第二代 prompt。与 Claude Code 对比读，能看出“同一赛道、不同产品哲学”的差异。
@@ -187,8 +187,8 @@ tags = ['system-prompt', 'AI 编程工具', 'Agent', 'Claude Code', 'Cursor', 'D
 
 ## 七、结语
 
-`x1xhlol/system-prompts-and-models-of-ai-tools` 这个仓库的特殊之处在于：**它不生产任何新东西，它只是把已经存在但分散在各家博客、泄露、devtools 输出里的“AI 产品 prompt 真容”集中归档**。
+`x1xhlol/system-prompts-and-models-of-ai-tools` 这个仓库的特殊之处在于：**它只做归档——把已经存在但分散在各家博客、泄露、devtools 输出里的“AI 产品 prompt 真容”集中起来**。
 
-在 AI 编程工具同质化越来越严重的 2026 年，它的存在有点像互联网早期的“搜索引擎快照”——你不一定能从它身上直接获得商业价值，但你**能从一个集中窗口看清整个赛道的设计哲学与演进节奏**。
+在 AI 编程工具同质化越来越严重的 2026 年，它的存在有点像互联网早期的“搜索引擎快照”——你不一定能从它身上直接获得商业价值，但**能从一个集中窗口看清整个赛道的设计思路与演进节奏**。
 
 如果你是认真在做 AI 编程 / Agent 的人，建议把它 star 起来，每周刷一次 `git log` 看看谁家又发了新版 prompt。这比追 30 个 changelog 博客省事多了。

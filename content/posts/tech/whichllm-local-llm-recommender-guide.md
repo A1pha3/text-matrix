@@ -15,7 +15,7 @@ tags: ["whichllm", "LocalLLM", "HuggingFace", "GGUF", "Ollama", "LLM Benchmark",
 
 本地跑大模型时，最容易问错的问题是：这张卡能不能塞下某个模型？更麻烦的是下一步：塞得下的模型通常不止一个，量化格式不止一种，benchmark 新旧不一，HuggingFace 上还混着官方仓库、社区量化、微调分支和缺 metadata 的重打包版本。
 
-whichllm 站在推理后端前面做选型：先读你的硬件，再从 HuggingFace 拉候选模型，把 benchmark 证据、显存估算、速度估算、量化惩罚和来源可信度放进同一套排序里。它不追求“最大能跑哪个”，而是把“当前这台机器上，哪个候选最值得先试”变成一张可复查的排序表。
+whichllm 站在推理后端前面做选型：先读你的硬件，再从 HuggingFace 拉候选模型，把 benchmark 证据、显存估算、速度估算、量化惩罚和来源可信度放进同一套排序里。它把“当前这台机器上，哪个候选最值得先试”变成一张可复查的排序表。
 
 > 资料依据：[Andyyyy64/whichllm](https://github.com/Andyyyy64/whichllm) README、官方文档与 PyPI 信息；核验时间为 2026-06-14。GitHub 页面显示约 4.7k stars；PyPI 最新版本为 0.5.10，发布时间为 2026-06-11。
 

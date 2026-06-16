@@ -109,7 +109,7 @@ create_deep_agent(
         ...
     ],
 )
-```textbash
+```bash
 # 1. 克隆仓库
 git clone https://github.com/langchain-ai/open-swe.git
 cd open-swe
@@ -123,7 +123,7 @@ cp .env.example .env
 
 # 4. 运行
 make run
-```textpython
+```python
 from open_swe.middleware import CustomMiddleware
 
 class MyMiddleware(CustomMiddleware):

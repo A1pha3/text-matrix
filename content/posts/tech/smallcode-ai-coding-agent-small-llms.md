@@ -231,6 +231,6 @@ agent.on('tool_end', ({ name, ms }) => console.log(`Done: ${name} (${ms}ms)`));
 
 ## 总结
 
-SmallCode 代表了一条重要的技术路径：**在硬件约束不变的条件下，通过工程手段让小模型可靠工作**。它不是另一个"把所有文件都扔给大模型"的 coding agent，而是一整套针对小模型弱点设计的工程解决方案——从认知层声明（MarrowScript）到编辑原语（patch-first）到观测能力（tracing/budget），每个模块都有明确的问题指向。
+SmallCode 的技术路径很明确：**在硬件约束不变的条件下，通过工程手段让小模型可靠工作**。它不是另一个"把所有文件都扔给大模型"的 coding agent，而是一整套针对小模型弱点设计的工程解决方案——从认知层声明（MarrowScript）到编辑原语（patch-first）到观测能力（tracing/budget），每个模块都有明确的问题指向。
 
 对于在消费级硬件上构建本地 AI 编程工作流的开发者，SmallCode 提供了目前最完整、专门的工具箱。

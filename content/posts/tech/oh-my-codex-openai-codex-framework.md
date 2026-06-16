@@ -18,9 +18,7 @@ tags: ["OpenAI Codex", "AI编程", "Agent框架", "TypeScript", "开发者工具
 
 ## 一、项目简介
 
-**OmX (Oh My codeX)** 是一个开源的 OpenAI Codex 增强框架，由开发者 [Yeachan Heo](https://github.com/Yeachan-Heo) 创建。该项目旨在解决 OpenAI Codex 在实际使用中的痛点，通过模块化的 Hook 系统、Agent 团队协作和可视化界面，让 AI 编程变得更加高效和可控。
-
-用通俗的话说：**OpenAI Codex** 就像一台性能强劲的跑车，而 OmX 就是给它加装的涡轮增压器、GPS 导航和仪表盘。
+**OmX (Oh My codeX)** 是一个开源的 OpenAI Codex 增强框架，由开发者 [Yeachan Heo](https://github.com/Yeachan-Heo) 创建。它通过模块化的 Hook 系统、Agent 团队协作和可视化界面，给 Codex 补上了工作流编排和状态管理。
 
 > ⚠️ **重要澄清**：OmX 是针对 **OpenAI Codex CLI** 的增强框架，不是 Claude Code (Anthropic)。OpenAI Codex 是 GitHub Copilot 背后的模型，由 OpenAI 开发。
 
@@ -28,7 +26,7 @@ tags: ["OpenAI Codex", "AI编程", "Agent框架", "TypeScript", "开发者工具
 
 ### 2.1 Hook 系统 — 自定义你的 AI 行为
 
-OmX 提供了强大的 Hook 系统，开发者可以在 AI 编程的不同阶段插入自定义逻辑：
+OmX 的 Hook 系统允许在 AI 编程的不同阶段插入自定义逻辑：
 
 ```typescript
 // 创建一个 pre-run hook
@@ -191,7 +189,7 @@ A: 支持。使用 `psmux` 作为 Windows 上的 tmux 替代品。
 
 ## 八、总结
 
-OmX 为 OpenAI Codex 用户提供了一个强大的工作流增强框架。通过 Hook 系统、Agent Teams 和标准化的开发流程，它让 AI 编程变得更加可控和高效。如果你正在使用 OpenAI Codex，OmX 值得一试。
+OmX 在 Codex 之上加了 Hook 系统、Agent Teams 和标准化开发流程。正在用 OpenAI Codex 且需要更可控的工程工作流，可以试试。
 
 **相关链接：**
 - GitHub: https://github.com/Yeachan-Heo/oh-my-codex

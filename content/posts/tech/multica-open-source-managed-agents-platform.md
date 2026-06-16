@@ -12,13 +12,13 @@ tags: ["AI", "Claude Code", "多代理", "MCP", "开源"]
 
 ![Multica: humans and agents, side by side](docs/assets/banner.jpg)
 
-**Multica 真正做的事情不是"让 AI 帮你写代码"——Claude Code、Codex 已经在做这个了。它做的是把一群 AI 代理变成能接 issue、报进度、复用技能、互相协调的团队成员，而不是跑完就消失的一次性脚本。**
+**Multica 做的事情更接近把一群 AI 代理变成能接 issue、报进度、复用技能、互相协调的团队成员，而不是跑完就消失的一次性脚本——Claude Code、Codex 已经在"帮你写代码"了，但它们跑完就没了。**
 
 [![CI](https://github.com/multica-ai/multica/actions/workflows/ci.yml/badge.svg)](https://github.com/multica-ai/multica/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/multica-ai/multica?style=flat)](https://github.com/multica-ai/multica/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-读完这篇文章你会知道：Multica 在代理协作这个链条上到底补了哪一环、它的核心机制怎么配合、以及你的团队适合从哪里开始用。
+读完这篇文章会有答案：Multica 在代理协作链条上到底补了哪一环、核心机制怎么配合、以及你的团队适合从哪里开始用。
 
 ## 五分钟总览
 
@@ -62,7 +62,7 @@ Multica 提供了四样基础设施：
                                 阻塞（blocked）→ 解阻 → 继续
 ```
 
-这意味着代理在 Multica 眼里是一个**有状态的成员**。它可以在 issue 下评论报告进度、主动标注阻塞、提交 PR 后自动更新状态。每个状态变化通过 WebSocket 实时推给客户端——不是等你刷新页面才知道代理卡住了。
+代理在 Multica 眼里是一个**有状态的成员**。它可以在 issue 下评论报告进度、主动标注阻塞、提交 PR 后自动更新状态。每个状态变化通过 WebSocket 实时推给客户端——不是等你刷新页面才知道代理卡住了。
 
 注册代理的命令行操作：
 
@@ -126,7 +126,7 @@ multica squad add-member EcommerceFrontendTeam --agent cart-agent --role "购物
 
 Multica 把常见流程抽象为技能（Skill），存进技能仓库。部署流程、数据库迁移脚本、代码审查模板——做一次，下次新代理加入时直接调用，不必重新描述上下文。
 
-技能仓库对接的是代理适配层，不同代理（Claude Code、Codex 等）通过统一的适配接口调用同一个技能。这意味着换代理不需要重写技能。
+技能仓库对接的是代理适配层，不同代理（Claude Code、Codex 等）通过统一的适配接口调用同一个技能。换代理不需要重写技能。
 
 ---
 
@@ -283,7 +283,7 @@ Multica 不做模型调用、不做对话编排——这些 LangChain 和 AutoGe
 
 ## 该从哪里开始
 
-Multica 解决的不是"AI 能不能写代码"，而是"多个 AI 代理能不能像团队一样协作"。如果你已经在用 Claude Code 或 Codex 做日常开发，下一步想做的事是让代理互相配合而不是各自为战，Multica 是目前为数不多的开源选项之一。
+Multica 的核心问题是"多个 AI 代理能不能像团队一样协作"。如果你已经在用 Claude Code 或 Codex 做日常开发，下一步想做的事是让代理互相配合而不是各自为战，Multica 是目前为数不多的开源选项之一。
 
 可以先从注册一个代理、让它接一个真实 issue 开始。这比读文档更容易理解它到底改了什么工作流。
 

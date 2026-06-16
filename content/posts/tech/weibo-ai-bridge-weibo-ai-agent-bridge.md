@@ -9,9 +9,9 @@ tags: ["Go", "微博", "AI Agent", "WebSocket"]
 
 # kangjinshan/weibo-ai-bridge：微博私信与 AI Agent 的桥接服务，支持 Claude/Codex 多 Agent
 
-## 🎯 项目概述
+## 项目概述
 
-**weibo-ai-bridge** 是由开发者 [kangjinshan](https://github.com/kangjinshan) 开源的 Go 语言项目，实现了**微博私信与 AI Agent 的桥接服务**。通过微博开放平台的 WebSocket API，项目能够实时接收微博私信消息，并转发给配置的 AI Agent（Claude 或 Codex）进行处理，最终将 AI 的回复以流式方式返回给微博用户。
+**weibo-ai-bridge** 是开发者 [kangjinshan](https://github.com/kangjinshan) 开源的 Go 语言项目，实现微博私信与 AI Agent 的桥接服务。通过微博开放平台的 WebSocket API，项目实时接收微博私信消息，转发给配置的 AI Agent（Claude 或 Codex）处理，再将 AI 的回复以流式方式返回给微博用户。
 
 > **GitHub**: [kangjinshan/weibo-ai-bridge](https://github.com/kangjinshan/weibo-ai-bridge)  
 > **Stars**: 2 ⭐  
@@ -21,11 +21,11 @@ tags: ["Go", "微博", "AI Agent", "WebSocket"]
 
 ---
 
-## 🏗️ 核心架构
+## 核心架构
 
-### 模块化设计
+### 五层模块化设计
 
-项目采用清晰的**五层模块化架构**，每层职责明确，便于扩展和维护：
+项目拆成五层，每层职责独立：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -58,7 +58,7 @@ Session Manager → ~/.cc-connect/sessions/
 
 ---
 
-## ⚡ 核心特性
+## 核心特性
 
 ### 1. 微博私信桥接
 
@@ -104,7 +104,7 @@ Session Manager → ~/.cc-connect/sessions/
 
 ---
 
-## 📁 项目结构
+## 项目结构
 
 ```
 weibo-ai-bridge/
@@ -138,7 +138,7 @@ weibo-ai-bridge/
 
 ---
 
-## 🛠️ 快速开始
+## 快速开始
 
 ### 环境要求
 
@@ -229,7 +229,7 @@ journalctl -u weibo-ai-bridge.service -f
 
 ---
 
-## 🔧 配置详解
+## 配置详解
 
 ### 微博平台配置
 
@@ -267,7 +267,7 @@ journalctl -u weibo-ai-bridge.service -f
 
 ---
 
-## 🌐 HTTP 接口
+## HTTP 接口
 
 服务启动后监听 **5533 端口**（可通过 `SERVER_PORT` 修改）：
 
@@ -303,7 +303,7 @@ GET /chat/stream
 
 ---
 
-## 🔍 命令系统
+## 命令系统
 
 用户在微博私信中发送命令：
 
@@ -316,7 +316,7 @@ GET /chat/stream
 
 ---
 
-## 🧪 测试与质量保障
+## 测试与质量保障
 
 ### 运行测试
 
@@ -346,7 +346,7 @@ make clean
 
 ---
 
-## 🐛 常见问题
+## 常见问题
 
 ### WebSocket 连接断开
 
@@ -377,7 +377,7 @@ go mod tidy
 
 ---
 
-## 🔮 开发扩展
+## 开发扩展
 
 ### 添加新的 AI Agent
 
@@ -411,7 +411,7 @@ type Agent interface {
 
 ---
 
-## 📚 相关资源
+## 相关资源
 
 | 资源 | 链接 |
 |------|------|
@@ -422,4 +422,4 @@ type Agent interface {
 
 ---
 
-*🦞 weibo-ai-bridge：让微博私信遇见 AI Agent，开启智能对话新时代。*
+*weibo-ai-bridge：微博私信到 AI Agent 的桥接服务。*

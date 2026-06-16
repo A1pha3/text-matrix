@@ -11,7 +11,7 @@ hiddenFromHomePage: true
 
 ## 学习目标
 
-读完之后你应该能回答：
+读完之后能回答：
 
 - AI-Trader 在 agent 经济里占住了什么位置？它解决的是**协议层**还是**撮合层**问题？
 - 7 个 Skill Files 之间的边界怎么拆？为什么 `ai4trade` 必须是主入口、其余 6 个必须按需 fetch？

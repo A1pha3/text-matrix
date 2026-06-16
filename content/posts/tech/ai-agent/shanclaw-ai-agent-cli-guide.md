@@ -15,19 +15,19 @@ description: "ShanClaw 是由 Kocoro-lab 开发的 macOS 原生交互式 AI Agen
 
 ---
 
-## 学习目标
+## 本文覆盖范围
 
-阅读本文后，您将能够：
+阅读本文后，你会了解：
 
-- ✅ 理解 ShanClaw 的核心定位与设计理念
-- ✅ 掌握 ShanClaw 的本地工具集（18 类 + 50+工具）
-- ✅ 熟练使用命名 Agent 与独立指令/记忆机制
-- ✅ 配置 MCP 客户端连接第三方服务（GitHub、Slack、数据库等）
-- ✅ 使用 Daemon 模式实现跨平台消息通道（Telegram、Slack、LINE）
-- ✅ 配置定时任务与心跳保持机制
-- ✅ 通过 /research 和 /swarm 命令进行远程研究与多智能体协作
-- ✅ 理解 ShanClaw 的技术架构与源码结构
-- ✅ 完成从安装到生产环境部署的完整流程
+- ✅ ShanClaw 的定位与设计思路
+- ✅ ShanClaw 的本地工具集（18 类 + 50+工具）
+- ✅ 命名 Agent 与独立指令/记忆机制
+- ✅ MCP 客户端连接第三方服务（GitHub、Slack、数据库等）
+- ✅ Daemon 模式实现跨平台消息通道（Telegram、Slack、LINE）
+- ✅ 定时任务与心跳保持机制
+- ✅ /research 和 /swarm 命令进行远程研究与多智能体协作
+- ✅ ShanClaw 的技术架构与源码结构
+- ✅ 从安装到生产环境部署的完整流程
 - ✅ 开发自定义 Skills 与 MCP 工具集成
 
 ---
@@ -40,7 +40,7 @@ description: "ShanClaw 是由 Kocoro-lab 开发的 macOS 原生交互式 AI Agen
 
 > 官网：https://shan.run
 
-ShanClaw 是，不是又一个聊天机器人一个**有名字、有记忆、能操控电脑的 AI Agent 运行时**。您可以创建多个命名 Agent，每个 Agent 拥有独立的指令系统、记忆存储和工具权限，通过 TUI 与之交互，也可以让 Agent 在后台运行，通过 Telegram、Slack、LINE 等渠道发送消息。
+ShanClaw 不是又一个聊天机器人，而是一个**有名字、有记忆、能操控电脑的 AI Agent 运行时**。您可以创建多个命名 Agent，每个 Agent 拥有独立的指令系统、记忆存储和工具权限，通过 TUI 与之交互，也可以让 Agent 在后台运行，通过 Telegram、Slack、LINE 等渠道发送消息。
 
 ### 1.2 定位
 
@@ -81,7 +81,7 @@ ShanClaw 是，不是又一个聊天机器人一个**有名字、有记忆、能
 
 ---
 
-## 二、核心概念与原理分析
+## 二、概念与原理分析
 
 ### 2.1 Agent 是什么
 
@@ -157,7 +157,7 @@ ShanClaw Agent → MCP Client → MCP Server → 第三方 API
 ShanClaw/
 ├── cmd/                    # CLI 入口
 ├── internal/
-│   ├── agent/            # Agent 核心引擎
+│   ├── agent/            # Agent 主引擎
 │   ├── agents/          # 多 Agent 管理
 │   ├── audit/            # 审计日志
 │   ├── client/          # Shannon Gateway 客户端
@@ -183,7 +183,7 @@ ShanClaw/
 ├── go.mod               # Go 模块定义
 └── install.sh           # 安装脚本
 ```textgo
-// Agent Engine 核心流程（伪代码）
+// Agent Engine 主流程（伪代码）
 func (a *Agent) Run(ctx context.Context, input string) error {
     // 1. 加载 Agent 指令
     instructions := a.LoadInstructions()
@@ -228,7 +228,7 @@ func (r *ToolRegistry) Register(tool Tool) error
 func (r *ToolRegistry) Get(name string) (Tool, error)
 func (r *ToolRegistry) List() []Tool
 ```textgo
-// MCP 客户端核心
+// MCP 客户端主体
 type MCPClient struct {
     servers  map[string]*MCPConnection
     session  *MCPSession
@@ -400,7 +400,7 @@ shan --agent dev "部署到生产环境"
 /swarm dev:实现用户登录功能 qa:review 代码逻辑
 
 # 示例 2：研究 + 实现
-/swarm research:调研支付系统最佳实践 dev:实现支付模块
+/swarm research:调研支付系统推荐做法 dev:实现支付模块
 
 # 示例 3：数据 + 分析
 /swarm data:收集竞品数据 analyst:生成对比报告
@@ -734,7 +734,7 @@ tar -xzvf shanclaw-backup.tar.gz -C ~/
 
 ShanClaw 是一个专为 macOS 设计的**交互式 AI Agent CLI**，它不仅仅是另一个聊天机器人，而是一个**有名字、有记忆、能操控电脑的多功能 Agent 运行时**。
 
-**核心优势：**
+**主要优势：**
 - 🎯 **多 Agent 系统**：每个 Agent 独立指令/记忆，可同时运行多个专业 Agent
 - 🔧 **丰富工具集**：50+ 本地工具 + MCP 扩展，覆盖文件操作、系统控制、自动化
 - 💬 **多渠道消息**：支持 Telegram/Slack/LINE，Agent 可以随时响应

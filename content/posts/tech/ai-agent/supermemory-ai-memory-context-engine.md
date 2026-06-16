@@ -11,7 +11,7 @@ description: "Supermemory 在 LongMemEval/LoCoMo/ConvoMem 三大 AI 记忆基准
 
 # Supermemory：从入门到精通 AI 记忆与上下文引擎
 
-AI 记忆系统的核心矛盾是，不是"存不下""存了之后查不出来该用的那条"。Supermemory 在这件事上做对了一件事：把记忆检索和用户画像维护合并成一条通路，而不是让开发者在 RAG 和 Memory 两套系统之间来回切换。
+AI 记忆系统的核心矛盾不是"存不下"，而是"存了之后查不出来该用的那条"。Supermemory 在这件事上做对了一件事：把记忆检索和用户画像维护合并成一条通路，而不是让开发者在 RAG 和 Memory 两套系统之间来回切换。
 
 本文假设你已有 AI 应用开发经验，预计阅读 30 分钟。读完你会理解 Supermemory 各子系统如何协作，以及它在什么场景下比传统 RAG 更合适。
 

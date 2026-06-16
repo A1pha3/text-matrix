@@ -14,7 +14,7 @@ tags: ["Claude Code", "Anthropic", "插件系统", "MCP", "AI工具"]
 
 **Claude Plugins Official**（`anthropics/claude-plugins-official`）是 Anthropic 官方维护和管理的 Claude Code 插件目录，目前已有 **20.2k Stars**。该目录旨在为 Claude Code 用户提供一个经过官方审核的高质量插件市场，涵盖内部插件（Internal Plugins）和外部插件（External Plugins）两大类别。
 
-**核心判断**：这是一套经过官方把关的 Claude Code 插件生态体系，适合希望扩展 Claude Code 能力的开发者快速找到可信赖的插件，同时为社区贡献者提供了清晰的插件提交规范。
+这套目录经过官方审核，适合想扩展 Claude Code 能力的开发者找可信插件，也给社区贡献者提供了清晰的提交规范。
 
 ## 为什么值得看
 
@@ -22,7 +22,7 @@ Claude Code 的插件机制允许第三方开发者通过标准结构扩展 Clau
 
 此外，该目录本身也是一个高质量的插件开发参考实现仓库，包含了完整的插件结构、实践建议和安全规范，是学习如何正确开发 Claude Code 插件的最佳范本。
 
-## 核心能力
+## 目录结构与插件机制
 
 ### 目录结构
 

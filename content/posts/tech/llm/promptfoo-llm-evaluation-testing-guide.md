@@ -10,7 +10,7 @@ description: "Promptfoo 是开源 LLM 评测与 Red Teaming 工具，支持 60+ 
 ---
 
 > **目标读者**：AI 应用开发者、Prompt 工程师、测试工程师
-> **核心问题**：如何用测试驱动开发替代"调 Prompt 靠猜"？
+> **关键问题**：如何用测试驱动开发替代"调 Prompt 靠猜"？
 > **难度**：⭐⭐⭐（中级）
 > **事实边界**：本文所有配置示例和 API 均来自 promptfoo 官方文档和 GitHub 仓库，未经验证的功能不做展开。
 
@@ -104,7 +104,7 @@ export ANTHROPIC_API_KEY=sk-ant-xxx
 
 ## 三、配置详解
 
-Promptfoo 使用 `promptfooconfig.yaml` 作为核心配置文件。
+Promptfoo 使用 `promptfooconfig.yaml` 作为主配置文件。
 
 ### 3.1 最小配置
 
@@ -284,7 +284,7 @@ Agent 评测关注任务完成度和轨迹正确性（trajectory）。
 
 ## 五、断言系统
 
-断言是 Promptfoo 的核心机制，用于自动检查 LLM 输出是否满足预期。
+断言是 Promptfoo 的关键机制，用于自动检查 LLM 输出是否满足预期。
 
 ### 5.1 常用断言类型
 
@@ -427,7 +427,7 @@ npx promptfoo@latest view
 npx promptfoo@latest eval setup
 ```
 
-### 7.2 核心功能
+### 7.2 主要功能
 
 | 功能 | 说明 |
 |------|------|

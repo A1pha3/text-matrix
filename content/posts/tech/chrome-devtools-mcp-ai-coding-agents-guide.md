@@ -29,16 +29,16 @@ tags: ["MCP", "Chrome DevTools", "Puppeteer", "AI Agent", "浏览器自动化", 
 
 ---
 
-## §1 学习目标
+## §1 本文覆盖范围
 
-完成本文后，你应该能够：
+读完本文，你会了解：
 
-1. **理解原理**：说清楚 MCP 协议是什么、`chrome-devtools-mcp` 如何通过 Puppeteer 控制 Chrome，以及 CDP（Chrome DevTools Protocol）在这一链路中的角色。
-2. **掌握全貌**：列举出 `chrome-devtools-mcp` 提供的所有工具函数，知道每个函数的输入输出语义。
-3. **正确安装**：在 Node.js v20.19+ 环境下成功安装、启动并验证 `chrome-devtools-mcp`。
-4. **集成使用**：将 MCP server 配置到 Claude Desktop（或其他 MCP 客户端），并完成一次完整的浏览器自动化任务（截图、抓控制台日志、监听网络请求）。
-5. **安全扩展**：理解该项目的权限边界，知道如何在开发分支上添加自定义工具函数，以及如何安全地控制 AI 的浏览器操作权限。
-6. **规避陷阱**：了解常见安装失败原因、连接问题和安全注意事项。
+1. MCP 协议是什么、`chrome-devtools-mcp` 如何通过 Puppeteer 控制 Chrome，以及 CDP（Chrome DevTools Protocol）在这一链路中的角色。
+2. `chrome-devtools-mcp` 提供的所有工具函数，每个函数的输入输出语义。
+3. 在 Node.js v20.19+ 环境下安装、启动并验证 `chrome-devtools-mcp`。
+4. 将 MCP server 配置到 Claude Desktop（或其他 MCP 客户端），完成一次完整的浏览器自动化任务（截图、抓控制台日志、监听网络请求）。
+5. 该项目的权限边界，如何在开发分支上添加自定义工具函数，以及如何控制 AI 的浏览器操作权限。
+6. 常见安装失败原因、连接问题和安全注意事项。
 
 ---
 
@@ -99,7 +99,7 @@ MCP 基于 JSON-RPC 2.0 规范，消息格式如下：
 }
 ```
 
-MCP 的核心设计哲学是**工具即函数**：每个工具函数有明确的名称、参数 schema 和返回值格式。AI Agent 通过理解工具描述（tool description）自主决定调用哪个工具——不需要人工介入路由逻辑。
+MCP 的设计思路是**工具即函数**：每个工具函数有明确的名称、参数 schema 和返回值格式。AI Agent 通过理解工具描述（tool description）自主决定调用哪个工具——不需要人工介入路由逻辑。
 
 ### 2.3 Puppeteer 如何桥接到 CDP
 
@@ -113,7 +113,7 @@ MCP 的核心设计哲学是**工具即函数**：每个工具函数有明确的
 
 ### 2.4 关键设计决策：自动等待机制
 
-Puppeteer 区别于 raw CDP 的一个核心特性是**自动等待**（Auto-Waiting）。例如，`page.click(selector)` 不会立即发送点击命令，而是：
+Puppeteer 区别于 raw CDP 的一个关键特性是**自动等待**（Auto-Waiting）。例如，`page.click(selector)` 不会立即发送点击命令，而是：
 
 ```
 等待策略：
@@ -123,7 +123,7 @@ Puppeteer 区别于 raw CDP 的一个核心特性是**自动等待**（Auto-Wait
 4. 触发 click
 ```
 
-这对于 AI Agent 尤为重要——AI 不会写显式的 `sleep`，自动等待机制使 AI 的"自然语言动作"能够可靠地在页面上落地。
+这对 AI Agent 很关键——AI 不会写显式的 `sleep`，自动等待机制让 AI 的"自然语言动作"能可靠地在页面上执行。
 
 ---
 
@@ -178,7 +178,7 @@ server.setRequestHandler("tools/call", async (request) => {
 });
 ```
 
-这种模式的优势在于：新增工具只需要在 `tools/` 目录下新增文件，在 `index.ts` 中注册 case 分支即可，不需要改动 MCP 框架层。
+这样做的效果是：新增工具只需要在 `tools/` 目录下新增文件，在 `index.ts` 中注册 case 分支即可，不需要改动 MCP 框架层。
 
 ### 3.3 浏览器生命周期管理
 
@@ -273,7 +273,7 @@ Source Map 还原链路：
 3. 还原为框架/库的原始源码位置
 ```
 
-这意味着 AI Agent 可以在处理线上报错时，直接看到原始 TypeScript/React 源码位置，而不是压缩后的行号——大幅提升 AI 辅助调试的准确度。
+于是 AI Agent 可以在处理线上报错时，直接看到原始 TypeScript/React 源码位置，而不是压缩后的行号——辅助调试的准确度提升很大。
 
 ### 4.3 网络拦截与 API Mock
 
@@ -421,7 +421,7 @@ npx chrome-devtools-mcp launch --headless false --args "--window-size=1440,900"
 
 ### 6.1 扩展思路
 
-`chrome-devtools-mcp` 的工具函数层设计得相当薄，扩展新工具的成本很低。常见的扩展方向包括：
+`chrome-devtools-mcp` 的工具函数层设计得相当薄，扩展新工具的成本很低。几个常见的扩展方向：
 
 1. **新增工具函数**：针对特定业务场景（如登录、表单填写、PDF 导出）封装新工具。
 2. **自定义 CDP 调用**：访问 Puppeteer 尚未封装但 CDP 支持的底层能力。
@@ -557,7 +557,7 @@ git push origin feature/export-pdf
 
 **⚠️ AI Agent + 浏览器 = 需要审慎的权限控制**
 
-AI Agent 接收自然语言指令，这意味着恶意指令（如"访问 `file:///etc/passwd`"）可能被意外执行。以下是安全配置建议：
+AI Agent 接收自然语言指令，恶意指令（如"访问 `file:///etc/passwd`"）可能被意外执行。安全配置建议：
 
 1. **网络隔离**：通过 `--args "--host-rules=MAP example.com 127.0.0.1"` 限制 AI 可访问的域名。
 2. **禁止自动化下载**：默认配置下 Puppeteer 会自动下载文件，设置 `--args "--download-restrictions=3"` 禁止之。

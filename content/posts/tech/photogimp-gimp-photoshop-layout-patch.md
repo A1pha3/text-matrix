@@ -14,9 +14,9 @@ tags: ["GIMP", "Photoshop", "开源", "图像处理", "UI定制", "Linux"]
 
 **PhotoGIMP**（`Diolinux/PhotoGIMP`，**10.8k Stars**）是一个完全免费、社区驱动的补丁项目，作用是将 GIMP（GNU Image Manipulation Program）改造为接近 Adobe Photoshop 的界面布局和操作体验。
 
-**核心判断**：PhotoGIMP 实际上是一个 GIMP 配置文件和资源包，而非 GIMP 的分支或重写。它解决的是 Photoshop 用户迁移到 GIMP 时的"肌肉记忆"问题——工具布局、快捷键、默认设置都尽量与 Photoshop 对齐，让用户无需重新学习就能免费使用强大的开源图像编辑工具。
+**判断**：PhotoGIMP 实际上是一个 GIMP 配置文件和资源包，而非 GIMP 的分支或重写。它解决的是 Photoshop 用户迁移到 GIMP 时的"肌肉记忆"问题——工具布局、快捷键、默认设置都尽量与 Photoshop 对齐，让用户无需重新学习就能免费使用强大的开源图像编辑工具。
 
-## 核心特性
+## 功能特性
 
 ### Photoshop 风格的工具布局
 

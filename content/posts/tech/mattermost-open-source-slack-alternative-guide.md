@@ -21,7 +21,7 @@ Mattermost 占据的是一个很具体的位置:**当团队需要把协作平台
 
 但 Mattermost 不是银弹。它真正的强项在自托管、数据主权、与现有 DevOps 工具链(Jira/Jenkins/Prometheus/GitLab)的双向集成；它的代价是 SaaS 模式下"开箱即用 + 大量托管功能"的省心。你想用免费 SaaS,Slack/Teams/Discord 不会消失；你想把数据、消息、文件、审计都握在自己手里,Mattermost 才是那个最不像实验项目的选项。
 
-本文不展开插件开发，也不讨论源码细节，只回答三件事:**怎么部署、怎么从 Slack 迁过来、什么情况下应该选它**。
+本文只回答三件事：**怎么部署、怎么从 Slack 迁过来、什么情况下应该选它**。
 
 ---
 
@@ -211,7 +211,7 @@ Mattermost 不实现 Slack 协议，也不兼容 Matrix / IRC;但它的 REST API
 
 ## §5 集成生态：为什么 DevSecOps 团队特别爱它
 
-Mattermost 仓库 README 直接点名了 3 个典型场景:DevSecOps、Incident Resolution、IT Service Desk。这不是营销话术——它的开箱集成覆盖了 SRE/DevOps 的主流工具链：
+Mattermost 仓库 README 点名了 3 个典型场景:DevSecOps、Incident Resolution、IT Service Desk。它的开箱集成覆盖了 SRE/DevOps 的主流工具链：
 
 | 集成 | 作用 | 典型使用 |
 |------|------|----------|
@@ -223,13 +223,13 @@ Mattermost 仓库 README 直接点名了 3 个典型场景:DevSecOps、Incident 
 | **Zoom / Webex** | 会议链接自动生成 | 临时拉会 |
 | **Copilot / 自托管 LLM** | 会议总结、问题分类 | AI 辅助 |
 
-700+ 集成的真实含义是:**新团队 80% 的"能不能接入"问题，在 Mattermost 里已经回答了**。剩下 20% 通常用 Webhook + 自定义 Slash Command 在一天内补完。
+700+ 集成的实际效果：**新团队 80% 的"能不能接入"问题，在 Mattermost 里已经回答了**。剩下 20% 通常用 Webhook + 自定义 Slash Command 在一天内补完。
 
 ---
 
 ## §6 什么场景应该选，什么场景不要选
 
-这是本文最重要的一节——Mattermost 不是"通用替代品"。
+Mattermost 不是"通用替代品"。
 
 ### §6.1 适合选
 
@@ -283,7 +283,7 @@ Mattermost 仓库 README 直接点名了 3 个典型场景:DevSecOps、Incident 
 - **性能 benchmark**:Mattermost 团队在官方文档里有数字，但与硬件/部署强相关，本文不引用
 - **与其他 IM 平台(Rocket.Chat、Zulip、Element)的横向对比**:超出本文范围
 
-如果读者需要的是这些内容，建议直接看 Mattermost 官方文档([docs.mattermost.com](https://docs.mattermost.com/))和 release notes。
+需要这些内容的读者，建议直接看 Mattermost 官方文档([docs.mattermost.com](https://docs.mattermost.com/))和 release notes。
 
 ---
 

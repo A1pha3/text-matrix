@@ -8,25 +8,11 @@ categories: ["技术笔记"]
 tags: ["GPU加速", "物理仿真", "NVIDIA Warp", "机器人仿真", "Python", "CUDA", "Isaac Sim"]
 ---
 
-# Newton：Disney+Google+NVIDIA 联手打造的 GPU 加速物理仿真引擎
+# Newton：基于 NVIDIA Warp 的 GPU 加速物理仿真引擎
 
-## §1 学习目标
+## §1 背景与项目定位
 
-通过本文，你将掌握：
-
-- Newton 的核心设计理念与技术架构
-- NVIDIA Warp 与 MuJoCo Warp 的继承关系
-- 完整的仿真功能分类（12 大类 50+示例）
-- GPU 加速的底层原理与 CUDA 调度机制
-- 机器人仿真完整工作流程（URDF 导入、控制器、IK 求解）
-- 柔体与软体物理仿真（Cloth/Cable/Softbody）
-- 多物理场耦合仿真（MPM + 刚体）
-- 自定义扩展与二次开发方法
-- 性能优化与实践建议
-
-## §2 背景与项目定位
-
-### 2.1 物理仿真引擎生态
+### 1.1 物理仿真引擎生态
 
 当前主流物理仿真引擎可分为三类：
 
@@ -36,13 +22,13 @@ tags: ["GPU加速", "物理仿真", "NVIDIA Warp", "机器人仿真", "Python", 
 | **研究级** | NVIDIA Warp, Newton | GPU 加速、可微分化 | 机器人控制、RL 训练 |
 | **游戏引擎** | Unity, Unreal | 实时性、渲染 | 游戏、VR |
 
-### 2.2 Newton 的独特定位
+### 1.2 Newton 的定位
 
 **Newton 是什么？**
 
 > Newton is a GPU-accelerated physics simulation engine built upon NVIDIA Warp, specifically targeting roboticists and simulation researchers.
 
-**三位一体发起方：**
+**发起方：**
 
 | 发起方 | 贡献领域 |
 |--------|----------|
@@ -50,16 +36,16 @@ tags: ["GPU加速", "物理仿真", "NVIDIA Warp", "机器人仿真", "Python", 
 | **Google DeepMind** | 强化学习、策略优化 |
 | **NVIDIA** | Warp 核心、GPU 加速 |
 
-**核心设计哲学：**
+**核心设计：**
 
 1. **GPU-First**：所有计算在 GPU 上完成，充分利用并行计算优势
 2. **可微分化**：支持 JIT 自动微分，天然适配强化学习
 3. **OpenUSD 支持**：与工业仿真数据格式无缝对接
 4. **用户可扩展**：开放的 Python API，支持自定义物理场
 
-## §3 技术架构深度解析
+## §2 技术架构深度解析
 
-### 3.1 与 NVIDIA Warp 的关系
+### 2.1 与 NVIDIA Warp 的关系
 
 Newton 构建于 NVIDIA Warp 之上，继承了 Warp 的核心优势：
 
@@ -88,7 +74,7 @@ Newton 构建于 NVIDIA Warp 之上，继承了 Warp 的核心优势：
 | SDF 距离场 | 符号距离函数 | ✅ 全部 |
 | Warp Device Abstraction | 统一 CPU/GPU 接口 | ✅ 全部 |
 
-### 3.2 系统需求
+### 2.2 系统需求
 
 | 组件 | 要求 |
 |------|------|
@@ -100,9 +86,9 @@ Newton 构建于 NVIDIA Warp 之上，继承了 Warp 的核心优势：
 
 **重要说明**：macOS 仅支持 CPU 计算，无 GPU 加速。
 
-## §4 功能分类详解
+## §3 功能分类详解
 
-### 4.1 功能总览
+### 3.1 功能总览
 
 Newton 提供**12 大类**仿真功能，覆盖机器人学主要场景：
 
@@ -121,7 +107,7 @@ Newton 提供**12 大类**仿真功能，覆盖机器人学主要场景：
 | Contacts（接触） | 6+ | 精密装配 |
 | Softbody（软体） | 2+ | 软体操作 |
 
-### 4.2 基础功能（Basic）
+### 3.2 基础功能（Basic）
 
 基础示例是 Newton 的入门必读，包含 10+示例：
 
@@ -138,11 +124,11 @@ Newton 提供**12 大类**仿真功能，覆盖机器人学主要场景：
 | Replay Viewer | `python -m newton.examples replay_viewer` | 回放可视化 |
 | Plotting | `python -m newton.examples basic_plotting` | 数据绘图 |
 
-### 4.3 机器人仿真（Robot）
+### 3.3 机器人仿真（Robot）
 
 机器人仿真是 Newton 的核心应用场景：
 
-#### 4.3.1 足式机器人
+#### 3.3.1 足式机器人
 
 | 机器人 | 示例命令 | 说明 |
 |--------|----------|------|
@@ -150,14 +136,14 @@ Newton 提供**12 大类**仿真功能，覆盖机器人学主要场景：
 | **G1** | `python -m newton.examples robot_g1` | 宇树 H1 人形机器人 |
 | **H1** | `python -m newton.examples robot_h1` | 华为盘古人形机器人 |
 
-#### 4.3.2 四足机器人
+#### 3.3.2 四足机器人
 
 | 机器人 | 示例命令 | 说明 |
 |--------|----------|------|
 | **Anymal D** | `python -m newton.examples robot_anymal_d` | ANYbotics 四足 D 型 |
 | **Anymal C Walk** | `python -m newton.examples robot_anymal_c_walk` | ANYbotics 四足 C 型 |
 
-#### 4.3.3 机械臂
+#### 3.3.3 机械臂
 
 | 机械臂 | 示例命令 | 说明 |
 |--------|----------|------|
@@ -165,14 +151,14 @@ Newton 提供**12 大类**仿真功能，覆盖机器人学主要场景：
 | **Panda + Hydro** | `python -m newton.examples robot_panda_hydro` | Franka Panda + Hydro |
 | **Allegro Hand** | `python -m newton.examples robot_allegro_hand` | 灵巧手仿真 |
 
-#### 4.3.4 控制器与策略
+#### 3.3.4 控制器与策略
 
 ```bash
 # 运行预训练策略
 python -m newton.examples robot_policy
 ```
 
-### 4.4 布料仿真（Cloth）
+### 3.4 布料仿真（Cloth）
 
 布料仿真是柔体物理的核心应用：
 
@@ -187,7 +173,7 @@ python -m newton.examples robot_policy
 | Cloth Rollers | `python -m newton.examples cloth_rollers` | 辊压布料 |
 | Cloth Poker Cards | `python -m newton.examples cloth_poker_cards` | 扑克牌+布料 |
 
-### 4.5 电缆仿真（Cable）
+### 3.5 电缆仿真（Cable）
 
 电缆仿真用于线缆操作和布线分析：
 
@@ -198,7 +184,7 @@ python -m newton.examples robot_policy
 | Cable Bundle Hysteresis | `python -m newton.examples cable_bundle_hysteresis` | 电缆束滞后 |
 | Cable Pile | `python -m newton.examples cable_pile` | 电缆堆叠 |
 
-### 4.6 可微仿真（DiffSim）
+### 3.6 可微仿真（DiffSim）
 
 DiffSim 是 Newton 的特色功能，支持物理仿真过程的自动微分：
 
@@ -211,7 +197,7 @@ DiffSim 是 Newton 的特色功能，支持物理仿真过程的自动微分：
 | DiffSim Soft Body | `python -m newton.examples diffsim_soft_body` | 可微软体 |
 | DiffSim Quadruped | `python -m newton.examples diffsim_bear` | 可微四足 |
 
-**DiffSim 的关键价值**：
+**DiffSim 的工程价值**：
 
 ```python
 # 传统仿真：前向计算
@@ -221,7 +207,7 @@ state = simulator.forward(params)
 state, grad = simulator.forward_and_backward(params)
 ```
 
-### 4.7 传感器仿真（Sensors）
+### 3.7 传感器仿真（Sensors）
 
 | 示例 | 命令 | 传感器类型 |
 |------|------|------------|
@@ -229,9 +215,9 @@ state, grad = simulator.forward_and_backward(params)
 | Sensor Tiled Camera | `python -m newton.examples sensor_tiled_camera` | 相机感知 |
 | Sensor IMU | `python -m newton.examples sensor_imu` | IMU 惯性测量 |
 
-## §5 快速开始
+## §4 快速开始
 
-### 5.1 安装
+### 4.1 安装
 
 ```bash
 # 安装Newton（包含示例）
@@ -241,21 +227,21 @@ pip install "newton[examples]"
 python -m newton.examples --help
 ```
 
-### 5.2 运行第一个示例
+### 4.2 运行第一个示例
 
 ```bash
 # 运行基础单摆示例
 python -m newton.examples basic_pendulum
 ```
 
-### 5.3 查看所有示例
+### 4.3 查看所有示例
 
 ```bash
 # 列出所有可用示例
 python -m newton.examples
 ```
 
-### 5.4 USD 格式输出
+### 4.4 USD 格式输出
 
 ```bash
 # 运行并输出为USD文件
@@ -264,9 +250,9 @@ python -m newton.examples basic_viewer \
     --output-path my_output.usd
 ```
 
-## §6 命令行参数详解
+## §5 命令行参数详解
 
-### 6.1 全局参数
+### 5.1 全局参数
 
 | 参数 | 说明 | 默认值 |
 |------|------|---------|
@@ -275,7 +261,7 @@ python -m newton.examples basic_viewer \
 | `--num-frames` | 仿真帧数 | 100 |
 | `--output-path` | USD 输出路径 | - |
 
-### 6.2 Viewer 类型
+### 5.2 Viewer 类型
 
 | 类型 | 说明 | 适用场景 |
 |------|------|----------|
@@ -284,7 +270,7 @@ python -m newton.examples basic_viewer \
 | `rerun` | ReRun 可视化 | 云端查看 |
 | `null` | 无可视化 | 纯计算 |
 
-### 6.3 Device 选择
+### 5.3 Device 选择
 
 ```bash
 # 使用特定GPU
@@ -294,9 +280,9 @@ python -m newton.examples basic_pendulum --device cuda:0
 python -m newton.examples basic_pendulum --device cpu
 ```
 
-## §7 机器人仿真进阶
+## §6 机器人仿真进阶
 
-### 7.1 URDF 模型导入
+### 6.1 URDF 模型导入
 
 Newton 支持直接导入 URDF 格式的机器人模型：
 
@@ -315,7 +301,7 @@ python -m newton.examples basic_urdf
 | H1 | 人形机器人 | 华为 |
 | Anymal D/C | 四足机器人 | ANYbotics |
 
-### 7.2 逆运动学（IK）求解
+### 6.2 逆运动学（IK）求解
 
 Newton 提供多种 IK 求解器：
 
@@ -329,7 +315,7 @@ python -m newton.examples ik_custom    # 自定义IK
 python -m newton.examples ik_cube_stacking  # 立方体堆叠IK
 ```
 
-### 7.3 控制器与策略
+### 6.3 控制器与策略
 
 ```python
 # 运行预训练策略
@@ -341,9 +327,9 @@ python -m newton.examples robot_policy
 # - tracking (跟踪)
 ```
 
-## §8 物理场详解
+## §7 物理场详解
 
-### 8.1 刚体动力学
+### 7.1 刚体动力学
 
 Newton 的刚体求解器支持：
 
@@ -353,7 +339,7 @@ Newton 的刚体求解器支持：
 | 关节约束 | Revolute, Prismatic, Ball, Fixed |
 | 外力 | 重力、接触力、电机力矩 |
 
-### 8.2 柔体物理（Cloth/Cable）
+### 7.2 柔体物理（Cloth/Cable）
 
 | 求解器 | 方法 | 适用场景 |
 |--------|------|----------|
@@ -361,7 +347,7 @@ Newton 的刚体求解器支持：
 | PBD | Projective Dynamics | 实时仿真 |
 | MPM | Material Point Method | 颗粒材料 |
 
-### 8.3 软体物理（Softbody/MPM）
+### 7.3 软体物理（Softbody/MPM）
 
 ```bash
 # 软体仿真示例
@@ -373,9 +359,9 @@ python -m newton.examples mpm_granular        # 颗粒材料
 python -m newton.examples mpm_snow_ball       # 雪球破碎
 ```
 
-## §9 多物理场耦合
+## §8 多物理场耦合
 
-### 9.1 耦合仿真示例
+### 8.1 耦合仿真示例
 
 | 示例 | 命令 | 耦合类型 |
 |------|------|----------|
@@ -383,7 +369,7 @@ python -m newton.examples mpm_snow_ball       # 雪球破碎
 | Dropping to Cloth | `python -m newton.examples softbody_dropping_to_cloth` | 软体+布料 |
 | MPM Two-Way Coupling | `python -m newton.examples mpm_twoway_coupling` | MPM+刚体 |
 
-### 9.2 耦合仿真原理
+### 8.2 耦合仿真原理
 
 ```python
 # Newton的多物理场耦合通过统一的时间步长实现
@@ -402,9 +388,9 @@ for t in range(num_frames):
     soft_body.apply(-contact_forces)
 ```
 
-## §10 性能优化
+## §9 性能优化
 
-### 10.1 GPU 利用率
+### 9.1 GPU 利用率
 
 | 场景 | 建议 GPU | 性能提升 |
 |------|--------|----------|
@@ -412,7 +398,7 @@ for t in range(num_frames):
 | 高保真仿真 | A100 | 200x+ vs CPU |
 | 批量仿真 | 多卡并行 | 线性扩展 |
 
-### 10.2 仿真参数调优
+### 9.2 仿真参数调优
 
 | 参数 | 影响 | 建议 |
 |------|------|------|
@@ -420,7 +406,7 @@ for t in range(num_frames):
 | `--device` | 计算速度 | 优先使用 GPU |
 | 子步数 | 数值稳定性 | 复杂接触增加 |
 
-### 10.3 实践建议
+### 9.3 实践建议
 
 ```bash
 # 推荐的工作流
@@ -436,9 +422,9 @@ python -m newton.examples robot_g1 \
     --output-path gait.usd
 ```
 
-## §11 与竞品对比
+## §10 与竞品对比
 
-### 11.1 Newton vs MuJoCo
+### 10.1 Newton vs MuJoCo
 
 | 维度 | Newton | MuJoCo |
 |------|--------|--------|
@@ -449,7 +435,7 @@ python -m newton.examples robot_g1 \
 | **机器人模型** | ⭐⭐⭐⭐ 主流支持 | ⭐⭐⭐⭐⭐ 全覆盖 |
 | **许可** | Apache-2.0 | Apache-2.0 |
 
-### 11.2 Newton vs Isaac Sim
+### 10.2 Newton vs Isaac Sim
 
 | 维度 | Newton | Isaac Sim |
 |------|--------|----------|
@@ -459,9 +445,9 @@ python -m newton.examples robot_g1 \
 | **实时仿真** | ⭐⭐⭐⭐ 佳 | ⭐⭐⭐⭐⭐ 极佳 |
 | **成本** | 免费开源 | 需要 Omniverse |
 
-## §12 应用场景
+## §11 应用场景
 
-### 12.1 机器人学
+### 11.1 机器人学
 
 | 应用 | Newton 优势 |
 |------|-----------|
@@ -469,7 +455,7 @@ python -m newton.examples robot_g1 \
 | **运动控制** | 实时仿真 + IK 求解器 |
 | **灵巧操作** | 柔体/软体 + 多指手 |
 
-### 12.2 自动驾驶
+### 11.2 自动驾驶
 
 | 应用 | Newton 优势 |
 |------|-----------|
@@ -477,7 +463,7 @@ python -m newton.examples robot_g1 \
 | **车辆动力学** | 高保真轮胎模型 |
 | **场景生成** | OpenUSD 导出 |
 
-### 12.3 内容创作
+### 11.3 内容创作
 
 | 应用 | Newton 优势 |
 |------|-----------|
@@ -485,16 +471,16 @@ python -m newton.examples robot_g1 \
 | **游戏开发** | 实时物理 |
 | **VR/AR** | 低延迟交互 |
 
-## §13 总结
+## §12 总结
 
-Newton 是由 Disney Research、Google DeepMind 和 NVIDIA 三大科技巨头联手打造的新一代物理仿真引擎，它：
+Newton 由 Disney Research、Google DeepMind 和 NVIDIA 联合开发，核心特征：
 
-- ✅ **基于 NVIDIA Warp**：继承 CUDA 加速、自动微分等核心能力
-- ✅ **覆盖 12 大仿真领域**：刚体、柔体、软体、机器人、IK 等
-- ✅ **GPU 加速**：50-100x 性能提升
-- ✅ **可微分化**：天然支持强化学习
-- ✅ **OpenUSD 原生**：与工业仿真无缝对接
-- ✅ **开源 Apache-2.0**：社区驱动，开放生态
+- **基于 NVIDIA Warp**：继承 CUDA 加速、自动微分等能力
+- **覆盖 12 大仿真领域**：刚体、柔体、软体、机器人、IK 等
+- **GPU 加速**：50-100x 性能提升
+- **可微分化**：天然支持强化学习
+- **OpenUSD 原生**：与工业仿真无缝对接
+- **开源 Apache-2.0**：社区驱动，开放生态
 
 **官方资源**：
 

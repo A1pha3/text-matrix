@@ -13,14 +13,12 @@ draft: false
 
 ## 1. 学习目标
 
-通过本文你将掌握：
-
-- 理解 Open-Antigravity 的设计理念和关键价值
-- 熟练安装和配置 Open-Antigravity
+- Open-Antigravity 的设计理念和解决的问题
+- 安装和配置 Open-Antigravity
 - 使用 OpenAI 和 Anthropic 格式调用 API
 - 集成到 Claude Code、Cursor、Continue 等客户端
-- 理解底层架构和通信机制
-- 掌握高级用法（workspace 选择、对话复用）
+- 底层架构和通信机制
+- 高级用法（workspace 选择、对话复用）
 
 ## 2. 项目概述
 
@@ -32,7 +30,7 @@ Open-Antigravity 是一个开源的 API 代理工具：
 
 **一句话解释**：通过 `base_url + key`，让任何兼容 OpenAI/Anthropic API 的客户端都能调用 Antigravity。
 
-**关键价值**：
+**解决的问题**：
 
 | 痛点 | 解决方案 |
 |------|---------|

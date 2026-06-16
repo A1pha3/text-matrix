@@ -14,11 +14,11 @@ tags: ["Flash Attention", "Transformer", "注意力机制", "深度学习", "GPU
 
 ### 1.1 Flash Attention 是什么
 
-**Flash Attention** 是由 **Tri Dao**（斯坦福大学）发明的**快速、内存高效、精确的注意力机制算法**。
+**Flash Attention** 由 **Tri Dao**（斯坦福大学）发明，是一种 IO 感知的注意力机制加速算法。
 
 > "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"
 
-**核心创新**：通过 IO 感知的 tiling 技术，将注意力计算的内存复杂度从 **O(N²)** 降低到 **O(N)**，同时实现 **2-4 倍加速**，且结果数学上完全等价于标准注意力（不是近似！）。
+通过 tiling 技术，将注意力计算的内存复杂度从 **O(N²)** 降到 **O(N)**，实现 **2-4 倍加速**，且结果数学上与标准注意力完全等价（不是近似）。
 
 ### 1.2 项目数据
 
@@ -572,15 +572,7 @@ A: 可以，但通常不需要，因为核函数已经高度优化。
 
 ## 十二，总结
 
-Flash Attention 已经是现代 Transformer 的标配优化：
-
-| 维度 | 说明 |
-|------|------|
-| ⚡ 速度 | 2-4x 加速 (FA1), 6x+ 加速 (FA2/FA3) |
-| 💾 内存 | O(N²) → O(N)，支持更长序列 |
-| ✅ 精确 | 数学上与标准 Attention 完全等价 |
-| 🌍 广泛使用 | LLaMA, Mistral, CodeLlama, Falcon 等 |
-| 🔧 易集成 | Hugging Face, xFormers, Megatron-LM |
+Flash Attention 已是 Transformer 训练和推理的标配优化：内存从 O(N²) 降到 O(N)，速度提升 2-4 倍（FA1）/ 6 倍+（FA2/FA3），数学结果与标准 Attention 完全等价。LLaMA、Mistral、CodeLlama、Falcon 等模型均已内置，Hugging Face/xFormers/Megatron-LM 均可直接集成。
 
 ---
 

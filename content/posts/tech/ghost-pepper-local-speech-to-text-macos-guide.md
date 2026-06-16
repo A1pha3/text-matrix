@@ -298,7 +298,7 @@ week. Third, update the documentation."
 
 ## 总结
 
-Ghost Pepper 代表了**本地 AI 应用**的一个优秀范例：
+Ghost Pepper 体现了本地 AI 应用的几个关键设计决策：
 
 1. **隐私优先**：100%本地运行，数据从不离开设备
 2. **直觉交互**：Hold-to-Talk 比点击录音更自然

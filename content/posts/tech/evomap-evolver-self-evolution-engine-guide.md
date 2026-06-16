@@ -45,7 +45,7 @@ extraMetadata:
 - **重复踩坑**：同样的错误在不同阶段反复出现
 - **团队协作困难**：无法在团队成员之间共享和复用有效的修复方案
 
-Evolver 正是为了解决这些问题而诞生的。它将**临时性的 Prompt 调整**转化为**可审计、可追溯、可复用的进化资产**。
+Evolver 将**临时性的 Prompt 调整**转化为**可审计、可追溯、可复用的进化资产**。
 
 ### 2.2 Genome Evolution Protocol（GEP）
 
@@ -53,9 +53,9 @@ GEP 是 Evolver 的基础协议，定义了 AI Agent 进化的标准流程：
 
 **核心原则：Evolution is not optional. Adapt or die.**
 
-GEP 的三大支柱：
+GEP 的三个基础概念：
 
-| 支柱 | 说明 |
+| 概念 | 说明 |
 |------|------|
 | **Gene（基因）** | 可复用的进化单元，记录某种特定类型的改进模式 |
 | **Capsule（胶囊）** | 封装完整的进化上下文，包含基因和对应的应用场景 |
@@ -609,7 +609,7 @@ node src/ops/cleanup.js --archive --keep-last 100
 
 ### Q1: Evolver 和传统的 Prompt 工程工具有什么区别？
 
-Evolver 不仅仅是 Prompt 工程工具，它是一个**系统性的自进化框架**：
+Evolver 和传统 Prompt 工程工具的区别在于：它是一个**系统性的自进化框架**，而非手动调参工具：
 
 - **传统 Prompt 工程**：手动调整、临时生效、难以追溯
 - **Evolver**：自动分析、协议约束、完整审计

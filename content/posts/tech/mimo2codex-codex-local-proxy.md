@@ -211,7 +211,7 @@ export function respToResponses(
 
 ### 4.3 解决方案：encrypted_content 透传
 
-mimo2codex 的解决方案精妙：
+mimo2codex 的解决方案：
 
 ```
 第一轮请求：

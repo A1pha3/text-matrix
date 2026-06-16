@@ -16,7 +16,7 @@ Twenty 给自己的定位很直接：**The #1 Open-Source CRM**，同时也是 S
 
 ## 核心判断
 
-Twenty 的核心差异在于：它的所有配置（Object 定义、字段、视图、工作流、AI Agent）都可以通过 TypeScript 代码描述，并通过 CLI 发布到工作区。这意味着 CRM 的变更可以走 Git，可以做 Code Review，可以回滚——这是传统 SaaS CRM 做不到的事。
+Twenty 的核心差异在于：它的所有配置（Object 定义、字段、视图、工作流、AI Agent）都可以通过 TypeScript 代码描述，并通过 CLI 发布到工作区。CRM 的变更可以走 Git，可以做 Code Review，可以回滚——这是传统 SaaS CRM 做不到的事。
 
 ## 系统地图
 

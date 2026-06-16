@@ -14,7 +14,7 @@ Andrej Karpathy 的 [Neural Networks: Zero to Hero](https://github.com/karpathy/
 
 ## 学习目标
 
-读完这篇文章，你应该能回答以下问题：
+读完这篇文章，下面几个问题应该有答案：
 
 - 这 8 个 Lecture 各自解决什么问题，它们之间怎么串成一条线
 - 为什么 L5（手动反向传播）是整门课最关键的一讲

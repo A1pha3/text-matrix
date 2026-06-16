@@ -18,7 +18,7 @@ tags: ["AI平台", "RAG", "Deep Research", "Agent", "开源"]
 
 ## 学习目标
 
-读完本文后，你应该能够：
+读完本文，你会拿到：
 
 1. 理解 Onyx 作为 LLM 应用层平台的核心定位。
 2. 掌握 Onyx 的核心功能模块（RAG、Deep Research、Agent 等）。

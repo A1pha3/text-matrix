@@ -23,9 +23,7 @@ tags: ["AI Agent", "Claude Code", "浏览器自动化", "Browserbase", "开源"]
 
 ## 📖 项目概述
 
-### 什么是 Browserbase Skills
-
-**Browserbase Skills** 是一个开源的 **Claude Agent SDK**，通过官方 `bb` CLI 和一组结构化技能，让 Claude Code 能够与浏览器进行深度交互。与传统的无头浏览器方案不同，Browserbase Skills 构建在 Browserbase 云服务之上，提供了反爬虫规避、CAPTCHA 自动解决、住宅代理轮换等开箱即用的能力。
+**Browserbase Skills** 是一个开源的 Claude Agent SDK，通过官方 `bb` CLI 和一组结构化技能，让 Claude Code 能够与浏览器进行深度交互。与传统的无头浏览器方案不同，Browserbase Skills 构建在 Browserbase 云服务之上，提供了反爬虫规避、CAPTCHA 自动解决、住宅代理轮换等能力。
 
 ### 核心数据
 
@@ -40,14 +38,14 @@ tags: ["AI Agent", "Claude Code", "浏览器自动化", "Browserbase", "开源"]
 
 ### 解决的问题
 
-大多数 AI Agent 在处理网页操作时只能完成简单的页面读取，无法应对：
+AI Agent 处理网页操作时，常遇到以下障碍：
 
 - **反爬虫机制**：Cloudflare、Distil Networks 等平台的 Bot 检测
 - **需要登录态的操作**：Cookie、Session 维护
 - **复杂交互**：CAPTCHA、多步表单、无头浏览器无法渲染的内容
 - **性能与资源**：本地浏览器占用大量内存，远程云端浏览器按需调用
 
-Browserbase Skills 通过 Browserbase 云端浏览器基础设施解决了以上问题，同时保留了本地开发的便捷性。
+Browserbase Skills 通过 Browserbase 云端浏览器基础设施解决以上问题，同时保留本地开发的便捷性。
 
 ---
 
@@ -250,7 +248,7 @@ bb functions invoke <function-name>
 
 ### 4. site-debugger —— Bot 检测诊断
 
-这是 Browserbase Skills 中最有特色的技能之一。给定一个 URL，site-debugger 会自动：
+这是 Browserbase Skills 中最值得单独讲的技能。给定一个 URL，site-debugger 会自动：
 
 1. 访问目标站点，分析 Bot 检测机制
 2. 检查 selectors（选择器）稳定性
@@ -489,9 +487,9 @@ ui-test 是对抗式的、AI 驱动的端到端测试，不需要预先编写测
 
 ---
 
-## 📚 总结与延伸阅读
+## 📚 总结
 
-Browserbase Skills 为 Claude Code 提供了一套完整的浏览器自动化工具链，从基础的页面交互到高级的反爬虫对抗、云端无服务器函数部署。各个技能可以独立使用，也可以组合成复杂的工作流。
+Browserbase Skills 为 Claude Code 提供浏览器自动化工具链：核心 browser 技能处理页面交互，site-debugger 诊断反爬机制，browser-trace 做 CDP 全量追踪，cookie-sync 同步登录态，fetch/search 做轻量抓取，ui-test 做 AI 对抗式测试，functions 支持无服务器部署。各技能可独立使用，也可组合成复杂工作流。
 
 **延伸阅读：**
 

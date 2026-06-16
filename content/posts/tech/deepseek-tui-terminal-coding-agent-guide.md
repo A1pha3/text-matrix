@@ -14,7 +14,7 @@ tags: ["AI Agent", "DeepSeek", "Rust", "TUI", "Coding Agent"]
 
 这是一个由 Rust 编写的终端原生智能体项目（Repository：[Hmbown/DeepSeek-TUI](https://github.com/Hmbown/DeepSeek-TUI)，截至 2026 年 5 月 3 日共收获 2,213 Stars、129 Forks，MIT 许可证），它将 DeepSeek 的长上下文能力与一套完整的工具生态打包进了一个轻量的 TUI（Terminal User Interface）界面。不同于浏览器端或 IDE 插件的方案，DeepSeek-TUI 从一开始就被设计为「键盘驱动」——熟悉终端操作的开发者上手会非常自然。
 
-本文将围绕项目概览、核心架构、安装配置、交互模式、代码结构、进阶用法和适用边界几个维度，完整解析这个项目。
+围绕项目概览、核心架构、安装配置、交互模式、代码结构、进阶用法和适用边界几个维度，完整解析这个项目。
 
 ## 项目概览与核心能力
 
@@ -434,7 +434,7 @@ DeepSeek-TUI 是一个将 DeepSeek V4 的超长上下文能力转化为终端编
 
 从架构角度看，dispatcher → TUI → engine → tools 的分层设计让各层职责清晰，便于独立演进；workspace crates 的拆分（config、secrets、state、mcp、hooks 等）意味着这些模块在未来可以单独被其他 Rust 项目复用。从功能角度看，1M-token 上下文 + Thinking-mode 流式输出 + LSP 后编辑诊断 + RLM 并行推理构成了一个完整的编程智能体工作台。
 
-如果你是重度 DeepSeek 用户，同时希望 AI 编程助手完全运行在你自己控制的终端环境里，DeepSeek-TUI 值得花一个下午体验一下它的完整安装和初始配置过程——上手门槛不高，收益会在第一次用它处理一个需要横跨多个文件的复杂重构任务时显现。
+如果你是重度 DeepSeek 用户，同时希望 AI 编程助手完全运行在你自己控制的终端环境里，可以花一个下午体验一下 DeepSeek-TUI 的完整安装和初始配置过程——上手门槛不高，收益会在第一次用它处理一个需要横跨多个文件的复杂重构任务时显现。
 
 **官方资源**
 

@@ -1,5 +1,5 @@
 ---
-title: "SkyPilot：9.8K Stars·任意云LLM服务框架·自动故障转移"
+title: "SkyPilot：9.8K Stars·任意云 LLM 服务框架·自动故障转移"
 date: "2026-04-12T02:31:39+08:00"
 slug: skypilot-any-cloud-llm-serving-guide
 description: "SkyPilot 是一个任意云 LLM 服务框架，支持自动故障转移和 Spot 实例，可节省高达 70% 的成本，每天处理 1000+ 任务。"
@@ -18,11 +18,11 @@ tags: ["LLM", "云服务", "GPU", "成本优化", "Kubernetes"]
 
 > "SkyPilot: Unified AI & LLM Serving on Any Cloud"
 
-**关键价值**：
-- ☁️ **任意云**：AWS、GCP、Azure、Lambda、Cloudflare 等统一接口
-- 💰 **成本节省**：托管 Spot 实例，节省 70%+ 成本
-- 🔄 **自动故障转移**：某云无可用 GPU 时自动切换到其他云
-- 🚀 **快速部署**：一行代码启动 LLM 服务
+**SkyPilot 做什么**：
+- 任意云统一接口：AWS、GCP、Azure、Lambda、Cloudflare 等
+- Spot 实例托管，节省 70%+ 成本
+- 某云无可用 GPU 时自动切换到其他云
+- 一行代码启动 LLM 服务
 
 ### 1.2 核心数据
 
@@ -36,20 +36,14 @@ tags: ["LLM", "云服务", "GPU", "成本优化", "Kubernetes"]
 | 许可证 | **Apache-2.0** |
 | 语言 | **Python 98.2%** |
 
-### 1.3 成绩单
+### 1.3 关键指标
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    SkyPilot 成绩单                                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   📊 每日任务: 1000+ 任务/天                                     │
-│   💰 成本节省: $10M+ (已为用户节省)                              │
-│   ☁️ 支持云: AWS / GCP / Azure / Lambda / Cloudflare / ...     │
-│   🎯 GPU 类型: A100 / H100 / H200 / T4 / L4 / ...            │
-│   ⏱️ 最新版本: v0.6.0 (2026-04-11)                            │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+每日任务: 1000+ 任务/天
+成本节省: $10M+ (已为用户节省)
+支持云: AWS / GCP / Azure / Lambda / Cloudflare / ...
+GPU 类型: A100 / H100 / H200 / T4 / L4 / ...
+最新版本: v0.6.0 (2026-04-11)
 ```
 
 ## 二，核心原理
@@ -629,7 +623,7 @@ port: 8000
 | **TGI** | 量化优化 | 推理优化 |
 
 ```python
-# SkyPilot + vLLM 组合（最佳实践）
+# SkyPilot + vLLM 组合（推荐做法）
 @sky.serve
 def vllm_service():
     return sky.Task(
@@ -705,15 +699,7 @@ task.set_resources(sky.Resources(
 
 ## 十一，总结
 
-SkyPilot 是**任意云 LLM 服务的最佳选择**：
-
-| 维度 | 说明 |
-|------|------|
-| ☁️ **任意云** | AWS / GCP / Azure / Lambda / Cloudflare 统一接口 |
-| 💰 **成本** | Spot 实例节省 70%+，累计节省 $10M+ |
-| 🔄 **可靠** | 自动故障转移，托管 Spot 自动恢复 |
-| 🚀 **快速** | 一行代码启动 LLM 服务 |
-| 📊 **规模** | 1000+ 任务/天 |
+SkyPilot 解决的问题：多云统一接口、Spot 实例节省 70%+ 成本、自动故障转移、1000+ 任务/天的运行规模。
 
 ---
 

@@ -17,16 +17,14 @@ tags: ["文件检测", "AI", "深度学习", "安全", "Google", "Python", "Rust
 
 ---
 
-## §1 学习目标
+## §1 本文覆盖内容
 
-完成本篇文章后，你将能够：
-
-1. **理解 Magika 的核心原理**：为何深度学习比传统 magic bytes 更适合文件类型检测
-2. **掌握 200+ 文件类型的检测能力**：覆盖 binary 和 text 格式
-3. **熟练使用 CLI 和 Python API**：批量检测、递归扫描、JSON 输出
-4. **理解预测分数和阈值机制**：high-confidence、medium-confidence、best-guess 模式
+1. **Magika 的核心原理**：为何深度学习比传统 magic bytes 更适合文件类型检测
+2. **200+ 文件类型的检测能力**：覆盖 binary 和 text 格式
+3. **CLI 和 Python API 用法**：批量检测、递归扫描、JSON 输出
+4. **预测分数和阈值机制**：high-confidence、medium-confidence、best-guess 模式
 5. **集成到自己的项目**：Python/JavaScript/Go/Rust 多语言绑定
-6. **理解生产级部署**：Google 内部的规模化应用经验
+6. **生产级部署**：Google 内部的规模化应用经验
 
 ---
 

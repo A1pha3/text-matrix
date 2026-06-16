@@ -40,22 +40,28 @@ tags: ["AI", "安全", "大模型", "合规"]
 
 ```python
 # 简化版RLHF
-from transformers import RLHF Trainer
+from transformers import RLHFTrainer
 
-trainer = RLHF Trainer(
+trainer = RLHFTrainer(
     model=base_model,
     reward_model=reward_model,
     train_dataset=preference_data
 )
 trainer.train()
-```text
+```
+
+Loss 函数：
+
+```
 Loss = -log(σ(r(x,y+) - r(x,y-)))
-```textpython
+```
+
+```python
 # 简化的对抗训练
 for batch in data:
     # 生成对抗样本
     adversarial = fgsm_attack(model, batch)
-    
+
     # 混合训练
     loss = ce_loss(model, batch) + ce_loss(model, adversarial)
     loss.backward()
@@ -191,14 +197,10 @@ for batch in data:
 
 ## 十、总结
 
-**核心要点：**
+- AI 安全是系统工程，对齐技术持续演进
+- 评估与部署同样重要，治理需要多方协作
 
-- AI 安全是系统工程
-- 对齐技术持续演进
-- 评估与部署同样重要
-- 治理需要多方协作
-
-**行动计划：**
+**后续方向：**
 
 1. 深入理解 RLHF/DPO
 2. 学习安全评估方法

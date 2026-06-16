@@ -27,7 +27,7 @@ Hermes Desktop 做的事情在产品形态上很明确：
 2. **远端模式**：填 API URL + Key，桌面端直接连远端 Hermes 服务，跳过本地安装
 3. **外壳功能**：安装引导、Provider 配置、Profile 切换、Skill 管理、记忆系统可视化、Persona 编辑、调度任务、IM 网关、Settings
 
-它不是"另一个 AI 聊天客户端"，而是 **Hermes Agent 的官方 GUI 包装**——把命令行里需要编辑 YAML / 跑 cron 表达式 / 配 webhook 的活，全部变成按钮 + 表单。
+它就是 **Hermes Agent 的官方 GUI 包装**——把命令行里需要编辑 YAML / 跑 cron 表达式 / 配 webhook 的活，全部变成按钮 + 表单。
 
 ---
 

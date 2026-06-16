@@ -21,7 +21,7 @@ tags: ["Claude Code", "AI编程", "Anthropic", "最佳实践", "Agent工作流"]
 
 ## 这篇文章在做什么
 
-[Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice) 是 GitHub 上 Claude Code 实践资料最集中的仓库之一（31.4k Stars）。它不是官方手册，也不是入门教程——它真正解决的问题是：Claude Code 概念多、配置项杂、新特性更新快，开发者容易迷失在功能名词里。
+[Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice) 是 GitHub 上 Claude Code 实践资料最集中的仓库之一（31.4k Stars）。它既非官方手册，也非入门教程——它解决的具体问题是：Claude Code 概念多、配置项杂、新特性更新快，开发者容易迷失在功能名词里。
 
 这篇文章不会把仓库内容逐页翻译，而是按三条主线帮你建立判断框架：
 1. **概念分层**：Subagents、Commands、Skills、Hooks、MCP、Plugins 各自管什么，什么时候用哪个
@@ -38,7 +38,7 @@ tags: ["Claude Code", "AI编程", "Anthropic", "最佳实践", "Agent工作流"]
 
 完成本文后，就能：
 
-1. **说出这个仓库在 Claude Code 生态中的位置**：是，不是官方手册，也不是入门教程方法地图
+1. **说出这个仓库在 Claude Code 生态中的位置**：是方法地图，不是官方手册，也不是入门教程
 2. **区分六个关键概念的边界**：Subagents、Commands、Skills、Hooks、MCP、Plugins 各自管什么范围
 3. **判断哪些特性适合现在就用**：区分稳定收益项、进阶组合项和时间敏感的新特性
 4. **把知识迁移到自己的项目**：个人开发者和团队负责人分别从什么模块开始落地
@@ -298,7 +298,7 @@ User invokes /command
 
 ### Q4：对于团队负责人，这个仓库最大的价值是什么？
 
-是，不是"知道更多功能名词"学会把个人经验沉淀为共享的 `.claude/` 资产。团队在上下文入口、命令入口、校验规则和分工上形成一致的工作流，比每个人各用各的配置更可靠。
+学会把个人经验沉淀为共享的 `.claude/` 资产，比"知道更多功能名词"有用得多。团队在上下文入口、命令入口、校验规则和分工上形成一致的工作流，比每个人各用各的配置更可靠。
 
 ---
 

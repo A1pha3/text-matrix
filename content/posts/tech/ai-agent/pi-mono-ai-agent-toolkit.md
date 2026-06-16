@@ -176,7 +176,7 @@ pi-mono/
 ├── biome.json            # Biome 配置
 ├── package.json          # Workspace 根配置
 └── tsconfig.base.json   # TypeScript 基础配置
-```textmermaid
+```mermaid
 sequenceDiagram
     participant User as 用户代码
     participant API as pi-ai
@@ -192,7 +192,7 @@ sequenceDiagram
     API-->>User: { content, usage, model }
 
     Note over User,LLM: 同理支持 claude-3, gemini-pro 等
-```texttypescript
+```typescript
 import { createLLM } from '@mariozechner/pi-ai';
 
 // 创建 OpenAI 模型
@@ -226,7 +226,7 @@ const response = await openai.chat({
 
 console.log(response.content);  // 模型输出
 console.log(response.usage);  // Token 使用量
-```texttypescript
+```typescript
 import { Agent } from '@mariozechner/pi-agent-core';
 import { createLLM } from '@mariozechner/pi-ai';
 import { ReadFileTool, WriteFileTool, BashTool } from '@mariozechner/pi-agent-core/tools';
@@ -253,7 +253,7 @@ const response = await agent.run({
 });
 
 console.log(response.content);
-```textbash
+```bash
 # 安装
 npm install -g @mariozechner/pi-coding-agent
 
@@ -262,7 +262,7 @@ npm install -g @mariozechner/pi-coding-agent
 
 # 或直接运行编译后的 CLI
 pi
-```textbash
+```bash
 # 安装
 npm install -g @mariozechner/pi-mom
 
@@ -273,7 +273,7 @@ export PI_CODING_AGENT_URL=http://localhost:3000
 
 # 运行
 pi-mom
-```texttypescript
+```typescript
 import { render, Box, Text } from '@mariozechner/pi-tui';
 
 // 简单示例
@@ -301,7 +301,7 @@ render((
   </script>
 </body>
 </html>
-```textbash
+```bash
 # 安装
 npm install -g @mariozechner/pi-pods
 
@@ -319,7 +319,7 @@ pi-pods status
 
 # 删除部署
 pi-pods delete --model llama2
-```textbash
+```bash
 # 1. 克隆代码仓库
 git clone https://github.com/badlogic/pi-mono.git
 cd pi-mono
@@ -338,12 +338,12 @@ npm run check
 
 # 6. 运行 Coding Agent（交互模式）
 ./pi-test.sh
-```textbash
+```bash
 # 安装核心包
 npm install @mariozechner/pi-ai
 npm install @mariozechner/pi-agent-core
 npm install @mariozechner/pi-tui
-```textbash
+```bash
 # 克隆代码仓库
 git clone https://github.com/badlogic/pi-mono.git
 cd pi-mono
@@ -356,7 +356,7 @@ docker compose -f docker-compose.dev.yml up
     ├── config.json      # Agent 配置
     ├── prompts/         # 自定义提示词
     └── memory/          # 记忆存储
-```textjson
+```json
 {
   "model": "gpt-4",
   "temperature": 0.7,
@@ -369,7 +369,7 @@ docker compose -f docker-compose.dev.yml up
   ],
   "systemPrompt": "你是一个专业的程序员助手。"
 }
-```textbash
+```bash
 # 1. 创建新分支
 git checkout -b feature/my-feature
 
@@ -387,7 +387,7 @@ git commit -m "feat: add new feature"
 
 # 6. 推送并创建 PR
 git push origin feature/my-feature
-```textbash
+```bash
 # .env 文件
 OPENAI_API_KEY=sk-xxx
 ANTHROPIC_API_KEY=sk-ant-xxx
@@ -402,7 +402,7 @@ SLACK_SIGNING_SECRET=xxx
 
 # vLLM 集群
 VLLM_API_BASE=http://gpu-pod:8000
-```texttypescript
+```typescript
 // packages/ai/src/providers/my-provider.ts
 import { createProvider, type ProviderConfig } from '../types';
 
@@ -441,7 +441,7 @@ export const myProvider = createProvider({
     };
   }
 });
-```texttypescript
+```typescript
 // packages/agent/src/tools/database-tool.ts
 import { Tool, type ToolResult } from '../types';
 
@@ -479,7 +479,7 @@ const agent = new Agent({
     new WriteFileTool()
   ]
 });
-```texttypescript
+```typescript
 import { Memory, type MemoryEntry } from '@mariozechner/pi-agent-core';
 
 class PostgresMemory extends Memory {
@@ -510,7 +510,7 @@ const agent = new Agent({
   llm,
   memory: new PostgresMemory()
 });
-```texttypescript
+```typescript
 const agent = new Agent({
   llm,
   webhook: {
@@ -521,7 +521,7 @@ const agent = new Agent({
     }
   }
 });
-```textbash
+```bash
 # 安装 PM2
 npm install -g pm2
 
@@ -551,7 +551,7 @@ server {
         proxy_set_header Host $host;
     }
 }
-```textbash
+```bash
 # .env.production
 NODE_ENV=production
 
@@ -564,7 +564,7 @@ ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 AGENT_MAX_BUDGET=1000      # 最大 Token 预算
 AGENT_TIMEOUT=300000       # 超时 5 分钟
 AGENT_ALLOWED_COMMANDS=git,node,npm  # 允许的命令白名单
-```texttypescript
+```typescript
 const stream = await openai.chat({
   messages: [{ role: 'user', content: '讲个故事' }],
   stream: true
@@ -573,13 +573,13 @@ const stream = await openai.chat({
 for await (const chunk of stream) {
   process.stdout.write(chunk.content);
 }
-```textbash
+```bash
 # 开启调试日志
 DEBUG=pi-* ./pi-test.sh
 
 # 查看特定模块
 DEBUG=pi-agent ./pi-test.sh
-```texttypescript
+```typescript
 const tui = new TUI({
   locale: 'zh-CN',
   translations: {

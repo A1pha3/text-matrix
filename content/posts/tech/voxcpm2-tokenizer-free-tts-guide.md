@@ -25,9 +25,9 @@ tags: ["TTS", "语音合成", "多语言", "VoxCPM", "OpenBMB", "扩散模型"]
 | 韵律控制 | 难以精确控制语速、语调、情感 | 合成结果不够自然 |
 | 资源消耗 | 大模型推理资源需求高 | 难以在端侧部署 |
 
-### 2.2 VoxCPM2 的创新设计
+### 2.2 VoxCPM2 的设计
 
-VoxCPM2 提出了 **Tokenizer-Free** 设计：
+VoxCPM2 提出 **Tokenizer-Free** 设计：
 
 ```python
 # 传统 TTS 流程
@@ -39,13 +39,13 @@ Text → LocDiT Model → Audio
      ↑ 无需tokenizer，直接建模
 ```
 
-**主要优势**：
+**去掉 tokenizer 带来的变化**：
 
-- **简化流程**：去掉 tokenizer，降低系统复杂度
-- **原生多语言**：统一模型支持 30 种语言
-- **高质量输出**：48kHz 采样率，专业级音质
-- **灵活控制**：Voice Design 支持自然语言描述控制
-- **轻量推理**：支持多种量化方案（INT4/INT8）
+- 去掉 tokenizer，系统复杂度直接降一档
+- 统一模型覆盖 30 种语言，不需要为每种语言单独训练
+- 48kHz 采样率输出，专业级音质
+- Voice Design 支持自然语言描述控制音色
+- 推理端支持 INT4/INT8 量化，显存压力更小
 
 ### 2.3 VoxCPM2 产品线
 
@@ -61,7 +61,7 @@ Text → LocDiT Model → Audio
 
 ### 3.1 VoxCPM2 技术架构
 
-VoxCPM2 采用创新的 **LocDiT** 扩散架构：
+VoxCPM2 采用 **LocDiT** 扩散架构：
 
 ```mermaid
 graph LR
@@ -589,13 +589,13 @@ LANGUAGES = ["zh", "en", "ja", "ko", "fr", "de", "es", "it", "ru", ...]
 
 ## §11 总结
 
-### 11.1 VoxCPM2 主要优势
+### 11.1 关键特性
 
-1. **Tokenizer-Free 设计**：简化 TTS 流程，降低系统复杂度
-2. **原生多语言**：30+ 语言统一建模
-3. **高质量输出**：48kHz 专业级音质
-4. **灵活控制**：Voice Design + Voice Cloning
-5. **高效推理**：优化的 LocDiT 架构
+1. Tokenizer-Free 设计，TTS 流程少一层依赖
+2. 30+ 语言统一建模，不需要切换模型
+3. 48kHz 专业级音质输出
+4. Voice Design + Voice Cloning 两种音色控制方式
+5. LocDiT 架构优化推理速度
 
 ### 11.2 适用场景
 

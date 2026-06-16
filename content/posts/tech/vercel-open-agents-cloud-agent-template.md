@@ -17,16 +17,14 @@ tags: ["Vercel", "Agent", "TypeScript", "云端", "GitHub集成"]
 
 ---
 
-## §1 学习目标
+## §1 这篇文章覆盖什么
 
-完成本篇文章后，你将能够：
-
-1. **理解 Open Agents 的三层架构**：Web / Agent Workflow / Sandbox VM
-2. **掌握关键设计决策**：为何 Agent 不运行在 Sandbox 内
-3. **部署自己的 Open Agents 实例**：从 Fork 到完整运行
-4. **理解 GitHub 集成**：如何实现 repo 访问、commit 和 PR
-5. **使用 Session 共享和声音输入**：增强用户体验
-6. **根据需求定制**：fork 后如何修改和适配
+1. Open Agents 的三层架构：Web / Agent Workflow / Sandbox VM
+2. 关键设计决策：为什么 Agent 不运行在 Sandbox 内
+3. 从 Fork 到完整运行的部署流程
+4. GitHub 集成：repo 访问、commit 和 PR
+5. Session 共享和声音输入
+6. Fork 后的定制方向
 
 ---
 
@@ -77,9 +75,9 @@ tags: ["Vercel", "Agent", "TypeScript", "云端", "GitHub集成"]
 
 ## §3 核心设计决策：Agent 不在 Sandbox 内
 
-### 3.1 这是最重要的设计决策
+### 3.1 Agent 不在 Sandbox 内——这是最关键的设计决策
 
-Open Agents 的核心理念：
+Open Agents 的架构原则：
 
 > **Agent does not run inside the VM. It runs outside the sandbox and interacts with it through tools.**
 

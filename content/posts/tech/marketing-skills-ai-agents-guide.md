@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["AI", "营销", "SEO", "内容创作", "Agent"]
 ---
 
-# Marketing Skills：21.8K Stars·40+营销技能·AI Agent 营销助手·转化优化·SEO·内容创作
+# Marketing Skills：21.8K Stars AI Agent 营销技能库
 
 ## 一、项目概述
 
@@ -33,10 +33,10 @@ tags: ["AI", "营销", "SEO", "内容创作", "Agent"]
 
 | 维度 | 说明 |
 |------|------|
-| 🎯 **营销技能** | 转化优化、文案、SEO |
-| 🤖 **AI Agent** | 适配 Claude Code、Codex 等 |
-| 📊 **数据分析** | 分析、实验、指标追踪 |
-| 🚀 **增长工程** | 引流、裂变、留存 |
+| **营销技能** | 转化优化、文案、SEO |
+| **AI Agent 适配** | 适配 Claude Code、Codex 等 |
+| **数据分析** | 分析、实验、指标追踪 |
+| **增长工程** | 引流、裂变、留存 |
 
 ### 1.4 支持的 AI 平台
 
@@ -468,15 +468,9 @@ mv .claude/product-marketing-context.md .agents/product-marketing-context.md
 
 ## 十、总结
 
-Marketing Skills 是**AI Agent 营销助手技能库**：
+Marketing Skills 的本质是一组**预写好的营销 prompt 模板**，以 SKILL.md 文件形式存在，被 AI Agent 在执行营销任务时自动加载。它的价值在于「不用从零写 prompt」——40+ 技能覆盖了从转化优化到定价策略的常见营销场景，且技能之间有依赖关系（如 `copywriting` 依赖 `product-marketing-context`）。
 
-| 维度 | 说明 |
-|------|------|
-| 📊 **40+ 技能** | 覆盖营销全链路 |
-| 🤖 **AI Native** | 原生适配 AI Agent |
-| 🔗 **技能联动** | 相互引用、协同工作 |
-| 📈 **增长导向** | 转化优化、留存、裂变 |
-| 🛠️ **开箱即用** | 多种安装方式 |
+局限：技能质量参差不齐，部分技能（如 `marketing-psychology`）更像是概念清单而非可执行的 prompt；项目只有一位核心贡献者，更新节奏取决于个人精力。如果你的营销需求比较标准化（SaaS 转化、SEO 审计），它是个不错的起点；如果需要深度定制，建议 fork 后按自己的业务场景改写 SKILL.md。
 
 ---
 
@@ -489,4 +483,4 @@ Marketing Skills 是**AI Agent 营销助手技能库**：
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 Marketing Skills (21.8K Stars)_
+_本文基于 Marketing Skills (21.8K Stars)_

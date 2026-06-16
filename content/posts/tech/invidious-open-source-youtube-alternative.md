@@ -10,7 +10,7 @@ tags: ["开源", "YouTube", "隐私保护", "Crystal", "Web"]
 
 说起在浏览器里看 YouTube 视频，大多数人的第一反应是打开 youtube.com，登录 Google 账号，接受所有 cookie，然后忍受贴片广告和推荐算法。如果不想被 Google 追踪，又不想装浏览器插件，有什么开源方案？
 
-Invidious（https://github.com/iv-org/invidious）就是答案。这是一个用 Crystal 语言编写的 YouTube 替代前端，核心理念是：**不依赖 Google 官方 API，不追踪用户数据，不展示广告**。用户无需 Google 账号即可观看视频、订阅频道、管理播放列表。
+Invidious（https://github.com/iv-org/invidious）就是其中之一。这是一个用 Crystal 语言编写的 YouTube 替代前端，核心理念是：**不依赖 Google 官方 API，不追踪用户数据，不展示广告**。用户无需 Google 账号即可观看视频、订阅频道、管理播放列表。
 
 ---
 
@@ -27,7 +27,7 @@ Invidious（https://github.com/iv-org/invidious）就是答案。这是一个用
 | 最新提交 | afea61bb8f1aa74f107f82cb69b999a235c5858f（2026-04-28） |
 | 官方文档 | https://docs.invidious.io |
 
-Invidious 不仅仅是一个"去掉广告的 YouTube"，它还是一个完整的、去 Google 化的视频平台前端。用户可以搜索内容、浏览频道、查看趋势视频、管理订阅导入/导出——全程无需与 Google 服务交互。
+Invidious 是一个完整的、去 Google 化的视频平台前端，远不止"去掉广告的 YouTube"。用户可以搜索内容、浏览频道、查看趋势视频、管理订阅导入/导出——全程无需与 Google 服务交互。
 
 ---
 
@@ -109,7 +109,7 @@ Invidious 使用两层数据库策略：
 
 ### 无 API 依赖的代价
 
-YouTube 官方提供了稳定的公开 API，但 Invidious 选择了一条更难的路：不使用任何 Google 官方服务。这意味着：
+YouTube 官方提供了稳定的公开 API，但 Invidious 选择了一条更难的路：不使用任何 Google 官方服务，代价如下：
 
 1. **维护成本高**：YouTube 每次改版都可能破坏解析逻辑，需要快速响应
 2. **功能受限**：部分需要登录才能获取的内容（如地区限制视频的完整描述）无法获取
@@ -179,7 +179,7 @@ crystal build --release src/invidious.cr -o invidious
 
 ## 总结
 
-Invidious 是开源社区在"去大公司化"方向上的一个有代表性的实践。它用 Crystal 语言实现了一个功能完整的 YouTube 替代前端，在不依赖 Google 服务的情况下提供了还算完整的观看体验。
+Invidious 用 Crystal 语言实现了一个功能完整的 YouTube 替代前端，在不依赖 Google 服务的情况下提供了还算完整的观看体验——这在"去大公司化"方向上是一个可跑通的实践。
 
 如果你对隐私有要求，或者只是想找一个更轻量的方式看 YouTube 视频，公共 Invidious 实例已经足够好用。如果你是开发者，想研究如何解析 YouTube 数据，或者想自建私有实例，那么这个仓库的源码值得一看。
 

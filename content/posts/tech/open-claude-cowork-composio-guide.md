@@ -553,20 +553,16 @@ curl -X POST http://localhost:3001/api/chat \
 
 ## 九、总结
 
-Open Claude Cowork 是**开源的桌面 AI 助手解决方案**：
+Open Claude Cowork 是开源桌面 AI 助手，包含两个产品：
 
-| 维度 | 说明 |
-|------|------|
-| 💬 **双产品** | 桌面聊天 + 消息平台助手 |
-| 🤖 **多 Provider** | Claude Agent SDK + Opencode |
-| 🔗 **工具集成** | 500+ Composio 应用 |
-| 💼 **工作自动化** | 跨应用工作流 |
-| 🔒 **安全** | 本地处理、API Key 保护 |
-| 🌐 **跨平台** | macOS/Windows/Linux |
+- **桌面聊天应用**：基于 Electron + Node.js，集成 Claude Agent SDK 和 Composio Tool Router，支持 500+ 应用集成
+- **Secure Clawdbot**：消息平台个人 AI 助手，支持 WhatsApp / Telegram / Signal / iMessage
+
+跨平台（macOS / Windows / Linux），MIT 协议，3.8k stars。
 
 ---
 
-**🔗 相关资源：**
+**相关资源：**
 
 | 资源 | 链接 |
 |------|------|
@@ -576,4 +572,4 @@ Open Claude Cowork 是**开源的桌面 AI 助手解决方案**：
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 Open Claude Cowork (3.8k Stars)_
+_本文基于 Open Claude Cowork (3.8k Stars)_

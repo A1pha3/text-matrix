@@ -2,10 +2,10 @@
 title: "Superpowers：给编程智能体装上一套完整开发方法论"
 date: 2026-05-14T11:40:00+08:00
 slug: "superpowers-agentic-development-methodology"
-description: "Superpowers是由Jesse Vincent开发的开源项目，通过可组合的技能库让主流AI编程工具自动遵循TDD、设计优先、子智能体驱动等开发原则，实现数小时自主工作不偏离计划。本文解析其核心理念、工作流与技能体系。"
+description: "Superpowers 是由 Jesse Vincent 开发的开源项目，通过可组合的技能库让主流 AI 编程工具自动遵循 TDD、设计优先、子智能体驱动等开发原则，实现数小时自主工作不偏离计划。本文解析其核心理念、工作流与技能体系。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI编程", "智能体开发", "TDD", "Superpowers", "开源工具"]
+tags: ["AI 编程", "智能体开发", "TDD", "Superpowers", "开源工具"]
 ---
 
 # Superpowers：给编程智能体装上一套完整开发方法论
@@ -29,7 +29,7 @@ tags: ["AI编程", "智能体开发", "TDD", "Superpowers", "开源工具"]
 | License | MIT |
 | 首次发布 | 2025 年 10 月 |
 
-Superpowers 的定位是"面向编程智能体的完整软件开发方法论"（a complete software development methodology for your coding agents）。它不是一个新模型，也不是 GUI 工具，而是一组可以在主流 AI 编程工具中自动激活的技能（skills）。
+Superpowers 的定位是"面向编程智能体的完整软件开发方法论"（a complete software development methodology for your coding agents）。它是一组可以在主流 AI 编程工具中自动激活的技能（skills），不是新模型，也不是 GUI 工具。
 
 ---
 
@@ -42,13 +42,13 @@ Superpowers 的定位是"面向编程智能体的完整软件开发方法论"（
 - **测试缺失**：代码写完没有测试，或者测试后补，违反 TDD 原则
 - **质量不一**：每次生成的代码质量波动大，缺乏统一审查流程
 
-Superpowers 的解决思路是：不给智能体更多 prompt，而是预先植入一套**强制性工作流**，让它在**任何任务开始前**自动检查是否有相关技能需要激活。
+Superpowers 的解决思路是：预先植入一套**强制性工作流**，而不是给智能体更多 prompt，让它在**任何任务开始前**自动检查是否有相关技能需要激活。
 
 ---
 
 ## 工作流程：七步强制触发
 
-Superpowers 将软件开发拆解为七个阶段，每个阶段对应一个可自动触发的技能。**强制执行，不是建议**——智能体在任意任务前都会先检查是否有适用的技能。
+Superpowers 将软件开发拆解为七个阶段，每个阶段对应一个可自动触发的技能。**强制执行**——智能体在任意任务前都会先检查是否有适用的技能。
 
 ### 1. brainstorming（设计前阶段）
 
@@ -118,7 +118,7 @@ Superpowers 支持主流 AI 编程工具，安装方式各异：
 
 ---
 
-## 设计哲学
+## 设计原则
 
 README 明确列出了四个原则：
 
@@ -127,7 +127,7 @@ README 明确列出了四个原则：
 - **Complexity reduction**：简单性是首要目标
 - **Evidence over claims**：验证后再宣告成功
 
-这些不是写在墙上的标语，而是通过强制触发的技能嵌入到每个任务的执行路径中。
+这四条通过强制触发的技能嵌入到每个任务的执行路径中，不是写在墙上的标语。
 
 ---
 
@@ -149,9 +149,9 @@ README 明确列出了四个原则：
 
 ## 总结
 
-Superpowers 的关键价值在于**把软件开发中积累的实践建议自动化**，让 AI 编程工具从"随时可能偏离计划的代码生成器"变成"遵循强制工作流的开发搭档"。189k Stars 的关注度说明这个方向击中了大量开发者的痛点。
+Superpowers 做了一件事：**把软件开发中积累的实践建议自动化**，让 AI 编程工具从"随时可能偏离计划的代码生成器"变成"遵循强制工作流的开发搭档"。189k Stars 的关注度说明这个方向击中了大量开发者的痛点。
 
-如果你用 Claude Code 或类似工具，尝试安装 Superpowers，观察它如何改变智能体的行为模式——可能比任何新模型都更有立竿见影的效果。
+如果你用 Claude Code 或类似工具，装上 Superpowers 观察它如何改变智能体的行为模式——约束工作流对产出质量的提升，往往比换一个更强的模型更直接。
 
 **官网**：[https://superpowers.github.io](https://superpowers.github.io)（文中未直接提供，从 repo 推断）  
 **Discord 社区**：https://discord.gg/35wsABTejz  

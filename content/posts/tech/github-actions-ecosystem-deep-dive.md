@@ -10,7 +10,7 @@ description: "GitHub Actions 把仓库事件变成自动化触发器。本文拆
 
 # GitHub Actions 生态：从基础工作流到自定义 Action 开发
 
-> GitHub Actions 把 GitHub 仓库事件（push、PR、release）变成了自动化触发器。它的设计核心不是"能跑脚本"，而是把自动化拆成了三层可组合的抽象——事件触发层、Job 编排层、Action 组件层——每一层解决不同的可靠性问题。读完这篇文章，你应该能判断：什么时候用社区 Action、什么时候自己写、以及 Actions 和 GitHub Apps 的边界在哪里。
+> GitHub Actions 把 GitHub 仓库事件（push、PR、release）变成了自动化触发器。它的设计核心是把自动化拆成三层可组合的抽象，而非简单的脚本执行——事件触发层、Job 编排层、Action 组件层——每一层解决不同的可靠性问题。读完这篇文章，可以判断：什么时候用社区 Action、什么时候自己写、以及 Actions 和 GitHub Apps 的边界在哪里。
 
 ## 1. 什么是 GitHub Actions
 
@@ -477,7 +477,7 @@ GitHub Actions 的上手路径取决于你当前的需求：
 2. **`needs` 不传文件**——Job 之间的文件共享靠 `upload-artifact` / `download-artifact`，别指望上一个 Job 的文件系统残留。
 3. **OIDC 比长期 Token 安全得多**——如果你用 AWS/GCP/Azure，优先配 OIDC 联邦而不是手动塞 Access Key。
 
-最后，Actions 和 GitHub Apps 的分工值得再强调一遍：**Actions 适合"仓库内事件驱动的自动化"**，GitHub Apps 适合"跨仓库、需要持久状态的集成"。如果你发现自己在一个 workflow 里维护大量跨仓库逻辑或需要长期运行的 Webhook 服务，那可能是 GitHub Apps 的地盘。
+最后，Actions 和 GitHub Apps 的分工需要区分清楚：**Actions 适合"仓库内事件驱动的自动化"**，GitHub Apps 适合"跨仓库、需要持久状态的集成"。如果你发现自己在一个 workflow 里维护大量跨仓库逻辑或需要长期运行的 Webhook 服务，那可能是 GitHub Apps 的地盘。
 
 **相关资源：**
 - [GitHub Actions 官方文档](https://docs.github.com/en/actions)

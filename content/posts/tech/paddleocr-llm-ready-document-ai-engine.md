@@ -23,14 +23,14 @@ toc: true
 
 > PaddleOCR converts PDF documents and images into structured, LLM-ready data (JSON/Markdown) with industry-leading accuracy. With 70k+ Stars and trusted by top-tier projects like Dify, RAGFlow, and Cherry Studio, PaddleOCR is the bedrock for building intelligent RAG and Agentic applications.
 
-——"**bedrock for RAG and Agentic applications**"。这不是 OCR 工具，这是 RAG 数据预处理层。
+——"**bedrock for RAG and Agentic applications**"。它不是单纯的 OCR 工具，而是 RAG 数据预处理层。
 
-## PaddleOCR 3.6.0（2026.05.28 发布）核心变化
+## PaddleOCR 3.6.0（2026.05.28 发布）主要变化
 
 PaddleOCR-VL-1.6 highlights 是这次大版本的灵魂：
 
 - **新 SOTA 准确率**：OmniDocBench v1.6 上 96.3%，同时在 v1.5 和 Real5-OmniDocBench 上 SOTA，文本/公式/表格三项全领先
-- **能力全面升级**：表格、古籍、罕见字、印章识别显著增强，跨场景鲁棒性更好
+- **表格、古籍、罕见字、印章识别增强**，跨场景鲁棒性更好
 - **架构向后兼容**：和 PaddleOCR-VL-1.5 架构完全一致，**零成本迁移**——换模型权重即可
 
 向后兼容这个点对生产环境极重要：很多 RAG 系统跑的是 1.5，1.6 直接 drop-in。
@@ -91,7 +91,7 @@ PaddleOCR README 的"Awesome Projects"部分直接列了：
 - **OmniParser**（微软的 GUI Agent 屏幕解析）
 - **QAnything**（网易有道的"问万物"）
 
-**它已经是中文 RAG / Agent 生态的事实标准数据预处理层**。理由：
+**它已经是中文 RAG / Agent 生态的事实标准数据预处理层**。原因：
 
 1. **Apache 2.0 + 中文社区主导**：商业友好，对国内 RAG 项目几乎无授权成本
 2. **100+ 语言、繁体/简体/日语/韩语/俄语/阿拉伯/印地/泰卢固/泰米尔全支持**——PaddleOCR-VL-1.0 起步就 109 种语言

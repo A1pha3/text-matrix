@@ -10,9 +10,9 @@ tags = ['计算机视觉', 'Python', '开源', '工具']
 
 # supervision：模型无关的计算机视觉工具箱
 
-如果你厌倦了在每个计算机视觉项目里重复写检测框解析、结果可视化、数据集格式转换这些"样板代码"，supervision 值得你关注。
+检测框解析、结果可视化、数据集格式转换——这些样板代码在每个计算机视觉项目里都会重复出现。
 
-supervision 是 Roboflow 团队开源的 Python 计算机视觉工具箱（GitHub：https://github.com/roboflow/supervision）。它把自己定位为"你 reusable 的计算机视觉工具"，意思是：不管你用 YOLO、Transformers、MMDetection 还是 Roboflow Inference，supervision 都能无缝对接，把你从重复劳动中解放出来。
+supervision 是 Roboflow 团队开源的 Python 计算机视觉工具箱（GitHub：https://github.com/roboflow/supervision），定位是模型无关的通用工具层：不管你用 YOLO、Transformers、MMDetection 还是 Roboflow Inference，supervision 都能对接。
 
 ## 基本信息
 
@@ -144,8 +144,6 @@ sv.DetectionDataset.from_yolo(...).as_pascal_voc(...)
 - 在线 Notebook：https://colab.research.google.com/github/roboflow/supervision/blob/main/demo.ipynb
 - 官方 Discord：https://discord.gg/GbfgXGJ8Bk
 
-## 写在最后
+## 总结
 
-supervision 的设计哲学很清晰：不追求替代任何一个模型库，而是做好"胶水层"和"工具层"的工作。它让你在切换模型时不需要重写可视化代码，在处理数据集时不需要重复造轮子。对于需要快速原型验证的计算机视觉项目，supervision 是一个值得收入工具箱的选择。
-
-如果你需要构建生产级的视觉 pipeline，supervision 可以作为核心依赖之一；如果你只是想验证一个想法，几行代码就能跑起来——这正是它受欢迎的原因。
+supervision 的定位很清晰：不替代模型库，做好胶水层和工具层。切换模型时不需要重写可视化代码，处理数据集时不需要重复造轮子。构建生产级视觉 pipeline 时可以作为核心依赖，验证想法时几行代码就能跑起来。

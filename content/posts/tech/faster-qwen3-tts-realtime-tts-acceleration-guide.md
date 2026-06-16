@@ -10,19 +10,19 @@ tags: ["Faster Qwen3-TTS", "TTS", "CUDA Graph", "语音合成", "Qwen3"]
 
 # Faster Qwen3-TTS：实时语音合成加速完全指南
 
-## §1 学习目标
+## §1 阅读前提
 
-完成本文档后，你将能够：
+本文覆盖以下内容：
 
-- ✅ 理解 Faster Qwen3-TTS 的核心定位与加速原理
-- ✅ 掌握 CUDA Graph 加速技术的工作机制
-- ✅ 熟练使用 Python API 进行语音克隆和生成
-- ✅ 熟练使用 CLI 工具进行语音生成
-- ✅ 部署 Demo UI 实时体验语音合成
-- ✅ 部署 OpenAI 兼容 API 服务器
-- ✅ 在不同硬件上进行基准测试
-- ✅ 优化流式生成的 chunk_size 参数
-- ✅ 理解语音克隆的质量模式和原理解析
+- Faster Qwen3-TTS 做了什么、怎么加速的
+- CUDA Graph 加速技术的工作机制
+- Python API 语音克隆和生成
+- CLI 工具语音生成
+- Demo UI 实时语音合成
+- OpenAI 兼容 API 服务器部署
+- 不同硬件上的基准测试
+- 流式生成的 chunk_size 参数优化
+- 语音克隆的质量模式和原理解析
 
 ---
 
@@ -632,15 +632,13 @@ CUDA-graph capture 在 `torch<=2.5.0` 上不可靠，捕获可能失败并显示
 
 ## §11 总结
 
-### 11.1 核心优势
+### 11.1 关键特性
 
-| 优势 | 说明 |
-|------|------|
-| **零依赖** | 不需要 Flash Attention、vLLM、Triton |
-| **高性能** | RTX 4090 上实现 5-6 倍加速 |
-| **流式支持** | 完整的实时流式音频输出 |
-| **多模式** | Voice Clone、CustomVoice、VoiceDesign |
-| **OpenAI 兼容** | 易于集成到现有系统 |
+- 零依赖：不需要 Flash Attention、vLLM、Triton
+- RTX 4090 上实现 5-6 倍加速
+- 完整的实时流式音频输出
+- 支持 Voice Clone、CustomVoice、VoiceDesign 三种模式
+- OpenAI 兼容 API，易于集成到现有系统
 
 ### 11.2 性能总结
 
@@ -651,13 +649,13 @@ CUDA-graph capture 在 `torch<=2.5.0` 上不可靠，捕获可能失败并显示
 | 1.7B | RTX 4090 | 4.22 | 174ms | 5.1x / 4.9x |
 | 1.7B | H100 | 3.304 | 241ms | 7.5x / 6.3x |
 
-### 11.3 下一步建议
+### 11.3 下一步
 
 1. **快速体验**：使用 Demo UI 体验实时语音合成
-2. **Python 开发**：参考 examples/ 中的代码进行集成
+2. 集成到自己的项目：参考 `examples/` 中的代码
 3. **API 部署**：部署 OpenAI 兼容 API 服务
-4. **性能测试**：在目标硬件上运行基准测试
-5. **生产集成**：使用预计算 speaker embedding 进行生产部署
+4. 在目标硬件上跑基准测试，确认加速比
+5. 生产环境用预计算 speaker embedding 减少冷启动
 
 ### 11.4 相关资源
 
@@ -670,4 +668,4 @@ CUDA-graph capture 在 `torch<=2.5.0` 上不可靠，捕获可能失败并显示
 
 ---
 
-*文档版本 1.0 | 撰写日期：2026-03-31 | 基于 commit 3ee3496 (2026-03-28) | Stars: 865 ⭐*
+*文档版本 1.0 | 2026-03-31 | 基于 commit 3ee3496 (2026-03-28) | Stars: 865*

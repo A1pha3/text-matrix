@@ -18,12 +18,12 @@ tags: ["Obsidian", "Claude Code", "AI Agent", "知识管理", "生产力"]
 
 ## 学习目标
 
-读完本文后，你应该能够：
+读完本文后，你会了解：
 
-1. 理解 Claude Code「遗忘问题」的本质及其对 AI 协作效率的影响
-2. 掌握 Obsidian Mind 的核心设计理念：Vault-first Memory + 生命周期钩子
-3. 熟练使用 15+ Slash 命令完成日常工作流（晨会、复盘、1:1 记录等）
-4. 理解 9 个子代理的分工与协作机制
+1. Claude Code「遗忘问题」的本质及其对 AI 协作效率的影响
+2. Obsidian Mind 的核心设计理念：Vault-first Memory + 生命周期钩子
+3. 15+ Slash 命令完成日常工作流（晨会、复盘、1:1 记录等）
+4. 9 个子代理的分工与协作机制
 5. 搭建个人 Performance Graph，将工作笔记链接到能力框架
 6. 使用 /vault-upgrade 从旧保险库迁移内容
 
@@ -317,16 +317,16 @@ qmd update && qmd embed
 
 ## 十二、总结
 
-Obsidian Mind 解决了一个根本问题：**AI 代理的上下文窗口是有限的，而人类的知识和经验是连续递增的**。
+Obsidian Mind 解决了一个根本问题：AI 代理的上下文窗口是有限的，而人类的知识和经验是连续递增的。
 
-通过将 Claude Code 的「记忆」外部化到 Obsidian 保险库，结合 5 个生命周期钩子的自动化路由、15+ Slash 命令的便捷操作、以及 9 个子代理的专业分工，Obsidian Mind 构建了一个：
+通过将 Claude Code 的「记忆」外部化到 Obsidian 保险库，结合 5 个生命周期钩子的自动化路由、15+ Slash 命令的便捷操作、以及 9 个子代理的专业分工，Obsidian Mind 构建了：
 
 1. **持久化记忆系统**——跨会话无缝衔接
 2. **自动分类引擎**——自然语言输入，自动路由到正确位置
 3. **绩效追踪图谱**——工作笔记自动链接到能力框架
 4. **团队知识库**——人物、团队、决策、事件全面关联
 
-如果你重度使用 Claude Code，Obsidian Mind 是将 AI 协作效率提升一个数量级的关键工具。
+重度使用 Claude Code 的话，Obsidian Mind 能把 AI 协作效率提升一个量级。
 
 ---
 

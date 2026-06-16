@@ -8,7 +8,7 @@ tags: ["AI记忆", "记忆宫殿", "知识图谱", "MCP", "本地向量数据库
 draft: false
 ---
 
-# MemPalace：47.3k Stars 史上最高分 AI 记忆系统
+# MemPalace：47.3k Stars 的 AI 记忆系统，96.6% R@5 零 API 调用
 
 ## 项目概述
 
@@ -26,22 +26,11 @@ draft: false
 
 **官方 Slogan：** "The highest-scoring AI memory system ever benchmarked. And it's free."
 
-**核心优势：**
-- 🏆 **史上最高分**：96.6% LongMemEval R@5（零 API 调用，Raw 模式）
-- 💰 **完全免费**：无需 API Key，无需订阅，本地运行
-- 🔒 **隐私优先**：所有数据本地存储，无需云端
-- ⚡ **极速唤醒**：~170 tokens wake-up 上下文
-
-**学习目标：**
-- 理解记忆宫殿（Method of Loci）原理如何应用于 AI 记忆系统
-- 掌握 Wings/Halls/Rooms 三级结构的组织方式
-- 学会使用 MCP 工具与 AI 进行有记忆的对话
-- 能够在本地部署完整的 MemPalace 记忆系统
-
-**读者收益：**
-- 获得一个可完全私有部署的 AI 记忆解决方案
-- 节约每年数百美元的 API 摘要费用
-- 拥有一个跨会话持久化的 AI 协作者
+**核心特点：**
+- **96.6% LongMemEval R@5**：零 API 调用，Raw 模式
+- **完全免费**：无需 API Key，无需订阅，本地运行
+- **隐私优先**：所有数据本地存储，无需云端
+- **极速唤醒**：~170 tokens wake-up 上下文
 
 ---
 
@@ -202,7 +191,7 @@ AAAK（Ant Asset Keyword）是一种**有损**的简化语言，专为 AI 上下
 
 ---
 
-## Benchmarks：96.6%史上最高分
+## Benchmarks：96.6% R@5
 
 ### 标准基准测试
 
@@ -1057,21 +1046,21 @@ pip install mempalace
 
 ## 总结
 
-MemPalace 代表了 AI 记忆系统的范式转变：
+MemPalace 的核心特征：
 
 1. **Raw verbatim 存储**：96.6%成绩来自 ChromaDB 直存，不做摘要
 2. **Palace 结构**：Wings/Halls/Rooms 的组织方式，配合 ChromaDB metadata filtering 实现+34%检索提升
 3. **AAAK 压缩层**：有损压缩，用于上下文加载，不是存储格式
 4. **完全本地**：SQLite/ChromaDB 存储，无需云端，隐私优先
-5. **史上最高分**：96.6% LongMemEval R@5，零 API 调用
+5. **96.6% LongMemEval R@5**：零 API 调用
 6. **MCP 原生**：19 个工具，与 Claude/Cursor/Gemini 无缝集成
 7. **免费开源**：MIT 许可证，无隐藏成本
 
 **适用场景：**
-- ✅ 独立开发者管理多个项目记忆
-- ✅ 团队负责人管理产品和人员上下文
-- ✅ AI Agent 的长期记忆
-- ✅ 本地优先的隐私敏感场景
+- 独立开发者管理多个项目记忆
+- 团队负责人管理产品和人员上下文
+- AI Agent 的长期记忆
+- 本地优先的隐私敏感场景
 
 **MemPalace 让你记住一切，但只加载 AI 需要的。**
 

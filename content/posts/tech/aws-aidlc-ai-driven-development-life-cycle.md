@@ -4,7 +4,7 @@ date: "2026-05-09T03:25:00+08:00"
 slug: "aws-aidlc-ai-driven-development-life-cycle"
 aliases:
   - "/posts/tech/aidlc-workflows-ai-driven-lifecycle-automation/"
-description: "AI-DLC（AI-Driven Development Life Cycle）是 AWS Labs 推出的自适应编码工作流规范，通过结构化的三阶段流程引导 AI 编码助手遵循开发最佳实践。它不是工具，而是一套可以在 Kiro、Amazon Q、Cursor、Cline、Claude Code 等主流 IDE 中使用的「方向盘规则」。"
+description: "AI-DLC（AI-Driven Development Life Cycle）是 AWS Labs 推出的自适应编码工作流规范，通过结构化的三阶段流程引导 AI 编码助手遵循开发流程规范。它不是工具，而是一套可以在 Kiro、Amazon Q、Cursor、Cline、Claude Code 等主流 IDE 中使用的「方向盘规则」。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AWS", "AI编码", "工作流", "Claude Code", "Cursor"]
@@ -133,7 +133,7 @@ AI-DLC 的规则分两层：
 
 与其他工具的关系
 
-AI-DLC 不替代任何 AI 编码工具，它工作在工具之上——约束工具的行为，而不是提供编码能力。
+AI-DLC 不替代任何 AI 编码工具，它工作在工具之上——约束工具的行为，不提供编码能力。
 
 | 层级 | 代表 | 做什么 |
 |------|------|--------|

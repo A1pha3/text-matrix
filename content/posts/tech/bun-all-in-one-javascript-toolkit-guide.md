@@ -12,7 +12,7 @@ tags: ["JavaScript", "Bun", "Rust", "Node.js", "TypeScript", "打包工具"]
 
 Bun 近期再度冲上 GitHub Trending。**90,566 Stars**、最新版本 v1.3.14（2026-05-13），90K 的体量加上持续活跃的更新，让这个项目早已越过「实验性玩具」的阶段，成为生产级工具链的有力竞争者。
 
-本文不堆砌官方 README，而是从实际开发场景出发，解析 Bun 解决了什么问题、优势在哪里、以及它与 Node.js / Deno 的本质差异。
+从实际开发场景出发，解析 Bun 解决了什么问题、优势在哪里、以及它与 Node.js / Deno 的本质差异。
 
 ---
 
@@ -25,7 +25,7 @@ Bun 官方对自己的定义是「all-in-one toolkit for JavaScript and TypeScri
 - **测试运行器**：内置 test runner，对标 Jest / Vitest
 - **包管理器**：内置 npm/pnpm/yarn 兼容实现
 
-换句话说，以前一个项目需要 `node` + `esbuild` + `jest` + `npm`，现在只需要一个 `bun`。
+以前一个项目需要 `node` + `esbuild` + `jest` + `npm`，现在只需要一个 `bun`。
 
 ### 三者对比
 
@@ -201,7 +201,7 @@ bun upgrade
 
 ## 总结
 
-Bun 的关键价值不是「比 Node.js 快一点」，而是把 JavaScript 工具链的四个工具合为一个，去掉了每个项目都要配置的 npm + esbuild + jest + ts-node 组合。对于新项目或个人工具来说，零配置就能跑起来是真实的效率提升。
+Bun 的关键在于把 JavaScript 工具链的四个工具合为一个，去掉了每个项目都要配置的 npm + esbuild + jest + ts-node 组合——"比 Node.js 快一点"只是附带效果。对于新项目或个人工具来说，零配置就能跑起来是真实的效率提升。
 
 随着 v1.3.x 持续迭代、TypeScript 6 支持落地、Bun.build 能力增强，这个 90K Stars 的项目已经越过了「值得关注」的阶段，到了「值得实际试试」的时候。
 

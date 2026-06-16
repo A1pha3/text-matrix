@@ -38,7 +38,7 @@ tags: ["AI", "LLM", "推理增强", "测试时Scaling", "Agent", "Claude Code"]
 
 **Self-Consistency**：对 CoT 的改进，通过采样多条推理路径并聚合。但多数投票的聚合方式丢失了推理过程中的关键信息，无法进行真正的「深思」。
 
-HeavySkill 的核心创新在于：不只是生成多条推理轨迹，而是通过**顺序深思（Sequential Deliberation）**对所有轨迹进行批判性分析，从而产生真正优于任何单条轨迹的合成答案。
+HeavySkill 的核心创新在于：生成多条推理轨迹之后，通过**顺序深思（Sequential Deliberation）**对所有轨迹进行批判性分析，从而产生真正优于任何单条轨迹的合成答案。
 
 ---
 
@@ -767,7 +767,7 @@ python scripts/evaluate.py \
 
 ## 总结
 
-HeavySkill 代表了测试时计算 Scaling 的新范式：不只是生成更多轨迹，而是通过深思将多条推理轨迹合成真正优越的答案。
+HeavySkill 代表了测试时计算 Scaling 的新范式：生成多条推理轨迹之后，通过深思将它们合成真正优越的答案，而非简单投票。
 
 **核心优势**：
 

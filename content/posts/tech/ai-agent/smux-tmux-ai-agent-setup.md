@@ -20,7 +20,7 @@ tags: ["tmux", "终端", "AI Agent", "自动化", "Claude Code"]
 
 **学习目标**
 
-学完本文后，你将掌握：
+本文覆盖以下内容：
 - 理解 smux 的核心设计理念：为什么需要一个 AI 与人类共用的终端配置
 - 掌握 smux 的安装与基本使用方法
 - 熟练使用 tmux-bridge 实现 AI Agent 间的跨窗格通信
@@ -33,7 +33,7 @@ tags: ["tmux", "终端", "AI Agent", "自动化", "Claude Code"]
 
 ### 1.1 是什么
 
-[smux](https://github.com/ShawnPana/smux) 是一个**一键安装的 tmux 配置**，专门为 AI Agent 时代设计。它不仅仅是给人类用的终端配置，更重要的是**让 AI Agent 能够读、写、控制终端**。
+[smux](https://github.com/ShawnPana/smux) 是一个**一键安装的 tmux 配置**，专门为 AI Agent 时代设计。它既是给人类用的终端配置，也**让 AI Agent 能够读、写、控制终端**。
 
 ### 1.2 价值
 

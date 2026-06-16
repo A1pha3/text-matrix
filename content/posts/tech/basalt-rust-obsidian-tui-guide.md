@@ -9,7 +9,7 @@ tags: ["Rust", "TUI", "Obsidian", "ratatui", "Markdown", "终端", "笔记工具
 hiddenFromHomePage: true
 ---
 
-> "Basalt 不是 Obsidian 的替代品，而是一个提供极简主义终端界面和 WYSIWYG Markdown 体验的工具。"——README 开篇声明
+> "Basalt 不是 Obsidian 的替代品，它提供极简主义终端界面和 WYSIWYG Markdown 体验。"——README 开篇声明
 
 ---
 
@@ -306,9 +306,9 @@ Basalt 对这三个路径分别处理，解析 JSON 获取 vault 列表。
 
 总结
 
-Basalt 是一个定位清晰、小而美的 Rust TUI 项目。它的关键价值不是替代 Obsidian，而是给终端用户提供了一个**极简的 Obsidian 保险库浏览器**。
+Basalt 是一个定位清晰的 Rust TUI 项目。它给终端用户提供了一个极简的 Obsidian 保险库浏览器，不试图替代 Obsidian。
 
-对于已经重度使用 Obsidian、又希望减少 GUI 切换的开发者来说，Basalt 是一个自然的效率工具。它的 ratatui 实现也是学习 Rust TUI 开发的优秀参考。
+对于已经重度使用 Obsidian、又希望减少 GUI 切换的开发者来说，Basalt 是一个自然的效率工具。它的 ratatui 实现也适合作为 Rust TUI 开发的参考。
 
 但它的局限性也很明确：编辑功能实验性、缺少搜索、不支持富媒体。如果你需要的是完整的笔记管理，Obsidian GUI 仍是必备；Basalt 是终端里的一个快速查阅层。
 

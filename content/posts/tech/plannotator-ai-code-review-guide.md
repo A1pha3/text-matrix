@@ -8,26 +8,11 @@ categories: ["技术笔记"]
 tags: ["Plannotator", "AI Agent", "Claude Code", "Codex", "OpenCode", "代码审查", "计划审查"]
 ---
 
-# Plannotator：AI 编码 Agent 交互式计划与代码审查工具完全指南
+# Plannotator：AI 编码 Agent 交互式计划与代码审查工具
 
-## §1 学习目标
+## §1 项目概述
 
-完成本文档后，你将能够：
-
-- ✅ 理解 Plannotator 的核心定位与设计理念
-- ✅ 掌握 Plannotator 的五大核心功能
-- ✅ 熟练安装和配置 Plannotator（支持 Claude Code、Copilot CLI、OpenCode、Pi、Codex）
-- ✅ 使用 Visual Plan Review 审核 Agent 计划
-- ✅ 使用 Code Review 功能审查代码差异
-- ✅ 配置团队协作与分享功能
-- ✅ 理解端到端加密原理
-- ✅ 为 Plannotator 贡献代码
-
----
-
-## §2 项目概述
-
-### 2.1 什么是 Plannotator？
+### 1.1 什么是 Plannotator？
 
 **Plannotator**（官方仓库：[backnotprop/plannotator](https://github.com/backnotprop/plannotator)）是一个**交互式计划与代码审查工具**，专门为 AI 编码 Agent 设计。
 
@@ -37,7 +22,7 @@ tags: ["Plannotator", "AI Agent", "Claude Code", "Codex", "OpenCode", "代码审
 
 **翻译**：Plannotator 为 AI 编码 Agent 提供交互式计划与代码审查。使用可视化 UI 标记和完善计划或代码差异，与团队协作分享，并与 Claude Code、OpenCode、Pi 和 Codex 无缝集成。
 
-### 2.2 关键价值主张
+### 1.2 关键价值
 
 | 价值 | 说明 |
 |------|------|
@@ -48,7 +33,7 @@ tags: ["Plannotator", "AI Agent", "Claude Code", "Codex", "OpenCode", "代码审
 | **团队协作** | 分享计划给同事，收集反馈意见 |
 | **隐私安全** | 端到端加密，服务器无法读取内容 |
 
-### 2.3 核心数据
+### 1.3 核心数据
 
 ```
 Stars:     3,700 (3.7k)
@@ -63,7 +48,7 @@ Watchers:  15
 许可证:    MIT OR Apache-2.0 (双许可证)
 ```
 
-### 2.4 支持的 AI 平台
+### 1.4 支持的 AI 平台
 
 | 平台 | 支持情况 |
 |------|----------|
@@ -75,9 +60,9 @@ Watchers:  15
 
 ---
 
-## §3 核心功能详解
+## §2 核心功能详解
 
-### 3.1 Visual Plan Review（可视化计划审查）
+### 2.1 Visual Plan Review（可视化计划审查）
 
 **功能说明**
 
@@ -109,13 +94,13 @@ Plannotator 打开浏览器 UI
               发送给 Agent
 ```
 
-### 3.2 Plan Diff（计划差异对比）
+### 2.2 Plan Diff（计划差异对比）
 
 **功能说明**
 
 当 Agent 修订计划时，自动显示变更内容，让你看到修改了什么。
 
-### 3.3 Code Review（代码审查）
+### 2.3 Code Review（代码审查）
 
 **命令**：`/plannotator-review`
 
@@ -139,7 +124,7 @@ Plannotator 打开浏览器 UI
 !plannotator last
 ```
 
-### 3.4 Annotate Any File（标注任意文件）
+### 2.4 Annotate Any File（标注任意文件）
 
 **命令**：`/plannotator-annotate`
 
@@ -147,7 +132,7 @@ Plannotator 打开浏览器 UI
 
 标注任意 Markdown 文件，并将反馈发送给 Agent。
 
-### 3.5 Annotate Last Message（标注最后消息）
+### 2.5 Annotate Last Message（标注最后消息）
 
 **命令**：`/plannotator-last`
 
@@ -157,9 +142,9 @@ Plannotator 打开浏览器 UI
 
 ---
 
-## §4 工作原理
+## §3 工作原理
 
-### 4.1 工作流程
+### 3.1 工作流程
 
 **当 AI Agent 完成计划时，Plannotator 执行以下步骤：**
 
@@ -173,7 +158,7 @@ Plannotator 打开浏览器 UI
 
 - 在代码差异的具体行上评论
 
-### 4.2 计划分享机制
+### 3.2 计划分享机制
 
 **小型计划**
 
@@ -201,9 +186,9 @@ Plannotator 打开浏览器 UI
 
 ---
 
-## §5 安装与配置
+## §4 安装与配置
 
-### 5.1 Claude Code 安装
+### 4.1 Claude Code 安装
 
 **安装 plannotator 命令**
 
@@ -228,7 +213,7 @@ irm https://plannotator.ai/install.ps1 | iex
 # 重要：安装插件后重启 Claude Code
 ```
 
-### 5.2 Copilot CLI 安装
+### 4.2 Copilot CLI 安装
 
 **安装 plannotator 命令**
 
@@ -243,7 +228,7 @@ irm https://plannotator.ai/install.ps1 | iex
 
 重启 Copilot CLI。计划审查在你使用计划模式时自动激活（`Shift+Tab` 进入计划模式）。
 
-### 5.3 OpenCode 安装
+### 4.3 OpenCode 安装
 
 **添加到 opencode.json：**
 
@@ -267,7 +252,7 @@ irm https://plannotator.ai/install.ps1 | iex
 
 重启 OpenCode。
 
-### 5.4 Pi 安装
+### 4.4 Pi 安装
 
 ```bash
 pi install npm:@plannotator/pi-extension
@@ -275,7 +260,7 @@ pi install npm:@plannotator/pi-extension
 
 使用 `--plan` 参数启动 Pi 进入计划模式，或在会话中用 `/plannotator` 切换。
 
-### 5.5 Codex 安装
+### 4.5 Codex 安装
 
 **安装 plannotator 命令**
 
@@ -294,9 +279,9 @@ pi install npm:@plannotator/pi-extension
 
 ---
 
-## §6 团队协作
+## §5 团队协作
 
-### 6.1 协作流程
+### 5.1 协作流程
 
 Plannotator 允许你与同事私下分享计划、标注和反馈：
 
@@ -305,7 +290,7 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 3. 同事查看并添加反馈
 4. 你导入反馈并发送给编码 Agent
 
-### 6.2 安全机制
+### 5.2 安全机制
 
 | 计划类型 | 安全机制 |
 |----------|----------|
@@ -315,9 +300,9 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 
 ---
 
-## §7 项目架构
+## §6 项目架构
 
-### 7.1 Monorepo 结构
+### 6.1 Monorepo 结构
 
 | 目录 | 说明 |
 |------|------|
@@ -332,7 +317,7 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 | `.agents/skills/` | Agent Skills |
 | `.claude-plugin/` | Claude 插件配置 |
 
-### 7.2 配置文件
+### 6.2 配置文件
 
 | 文件 | 说明 |
 |------|------|
@@ -341,7 +326,7 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 | `openpackage.yml` | 开源包配置 |
 | `AGENTS.md` | Agent 说明文档 |
 
-### 7.3 技术栈
+### 6.3 技术栈
 
 | 语言 | 占比 |
 |------|------|
@@ -354,7 +339,7 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 
 ---
 
-## §8 常见问题
+## §7 常见问题
 
 ### Q1：Plannotator 和普通代码审查工具有什么区别？
 
@@ -400,9 +385,9 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 
 ---
 
-## §9 总结
+## §8 总结
 
-### 9.1 核心优势
+### 8.1 核心优势
 
 | 优势 | 说明 |
 |------|------|
@@ -413,16 +398,16 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 | **团队协作** | 分享计划，收集同事反馈 |
 | **开源免费** | MIT/Apache-2.0 双许可证 |
 
-### 9.2 适用场景
+### 8.2 适用场景
 
-| 场景 | 推荐指数 |
+| 场景 | 适合程度 |
 |------|----------|
-| AI Agent 开发监督 | ⭐⭐⭐⭐⭐ |
-| 团队代码审查 | ⭐⭐⭐⭐⭐ |
-| 计划审核批准 | ⭐⭐⭐⭐⭐ |
-| 多人协作 | ⭐⭐⭐⭐ |
+| AI Agent 开发监督 | 高 |
+| 团队代码审查 | 高 |
+| 计划审核批准 | 高 |
+| 多人协作 | 中 |
 
-### 9.3 项目信息
+### 8.3 项目信息
 
 - Stars：3.7k
 - Forks：233
@@ -430,7 +415,7 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 - 最新版本：v0.16.2 (2026-03-31)
 - 许可证：MIT OR Apache-2.0
 
-### 9.4 相关资源
+### 8.4 相关资源
 
 | 资源 | 链接 |
 |------|------|
@@ -441,4 +426,4 @@ Plannotator 允许你与同事私下分享计划、标注和反馈：
 
 ---
 
-*文档版本 1.0 | 撰写日期：2026-03-31 | 基于 v0.16.2 (2026-03-31) | Stars: 3.7k ⭐*
+*文档版本 1.0 | 撰写日期：2026-03-31 | 基于 v0.16.2 (2026-03-31) | Stars: 3.7k*

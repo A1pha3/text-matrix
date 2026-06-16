@@ -12,9 +12,9 @@ tags: ["DPI", "Windows", "Discord", "YouTube", "网络代理", "zapret", "WinDiv
 
 ## 学习目标
 
-读完本文后，你将能够：
+读完本文后，你将掌握：
 
-1. **理解 DPI（深度包检测）的运作机制**以及它为何能阻断特定网络连接
+1. **DPI（深度包检测）的运作机制**以及它为何能阻断特定网络连接
 2. **掌握 zapret 的 DPI Desync（去同步）原理**，了解 fake、multisplit 等攻击手法的本质区别
 3. **正确安装并配置 zapret-discord-youtube**，包括 Secure DNS 的必要性
 4. **根据实际网络环境选择合适的策略文件**（ALT 系列、FAKE TLS 系列等）
@@ -478,7 +478,7 @@ work-internal.example.com
 
 ## 八、总结
 
-zapret-discord-youtube 并不是一个"科学上网"工具，而是一个**精准的 DPI 对抗工具**。它的关键价值在于：
+zapret-discord-youtube 并不是一个"科学上网"工具，而是一个**精准的 DPI 对抗工具**。它做到三件事：
 
 1. **不需要代理服务器**，纯本地处理，对网络延迟的影响极小
 2. **高度可配置**，通过策略组合和用户列表扩展，可以适应不同国家和地区的 DPI 实现差异

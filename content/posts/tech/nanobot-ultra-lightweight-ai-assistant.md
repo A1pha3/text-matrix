@@ -8,35 +8,20 @@ categories: ["技术笔记"]
 tags: ["Nanobot", "AI助手", "LLM", "ChatBot", "多平台"]
 ---
 
-# Nanobot：超轻量级个人 AI 助手专家级技术文档
+# Nanobot：超轻量级个人 AI 助手
 
 > **目标读者**：想要掌握 Nanobot 的开发者、AI 爱好者和技术决策者
 > **核心问题**：Nanobot 是什么？如何设计架构？如何定制和扩展？
 
 ---
 
-## 1. 学习目标
+## 1. 项目定位
 
-完成本文档后，你将掌握：
-
-- ✅ 理解 Nanobot 作为超轻量级 AI 助手的核心定位与适用场景
-- ✅ 掌握 Nanobot 的模块化架构（Channel 层、Agent 层、Tool 层）
-- ✅ 能够独立完成本地安装和配置
-- ✅ 学会连接各种聊天平台（Telegram、Discord、微信等）
-- ✅ 掌握 Agent 社交网络的使用方法
-- ✅ 了解 Nanobot 与 OpenClaw、LangChain 等竞品的核心差异
-
----
-
-## 2. 原理分析
-
-### 2.1 什么是 Nanobot？
+### 1.1 什么是 Nanobot？
 
 **Nanobot** 是一个**超轻量级的个人 AI 助手**，灵感来源于 OpenClaw。与 OpenClaw 相比，Nanobot 代码量减少了 **99%**，但保留了核心的 Agent 功能。
 
-> 💡 **类比理解**：把 Nanobot 想象成一个「精简版的 AI 助手」——它没有 OpenClaw 那么多功能，但核心的对话、工具调用、记忆能力一样不少。就像从瑞士军刀精简到了一把小刀，但关键功能都在。
-
-### 2.2 Nanobot 的核心定位
+### 1.2 Nanobot 的核心定位
 
 | 维度 | Nanobot | OpenClaw | LangChain | AutoGPT |
 |------|----------|-----------|------------|----------|
@@ -49,22 +34,18 @@ tags: ["Nanobot", "AI助手", "LLM", "ChatBot", "多平台"]
 | **学习门槛** | 低 | 高 | 中 | 高 |
 | **许可证** | MIT | MIT | MIT | MIT |
 
-### 2.3 为什么选择 Nanobot？
+### 1.3 为什么选择 Nanobot？
 
-**Nanobot 解决的核心问题**：
+Nanobot 解决的实际问题：
 
-1. **OpenClaw 太复杂**：OpenClaw 功能强大但代码量大，学习曲线陡峭。Nanobot 保留了核心功能，代码量减少 99%。
-2. **部署困难**：Nanobot 支持一键部署，安装配置简单，2 分钟即可运行。
-3. **多平台需求**：现代人使用多个聊天平台，Nanobot 支持 10+ 主流平台，一个 AI 助手搞定所有。
+1. **OpenClaw 太复杂**：功能强大但代码量大，学习曲线陡峭。Nanobot 保留核心功能，代码量减少 99%。
+2. **部署困难**：支持一键部署，安装配置简单。
+3. **多平台需求**：支持 10+ 主流聊天平台，一个 AI 助手覆盖所有。
 4. **研究友好**：代码简洁易懂，方便修改和扩展，适合学术研究和二次开发。
 
-**Nanobot 的设计哲学**：
+Nanobot 坚持「少即是多」——用最少的代码实现最核心的功能，每个模块职责清晰。
 
-> "Ultra-Lightweight Personal AI Assistant" — 超轻量级，专注核心，简单易用
-
-Nanobot 坚持「少即是多」的设计原则，用最少的代码实现最核心的功能。每个模块职责清晰，便于理解和修改。
-
-### 2.4 Nanobot 的技术边界
+### 1.4 Nanobot 的技术边界
 
 | 能力 | Nanobot 支持 | Nanobot 不支持 |
 |------|-------------|---------------|
@@ -77,9 +58,9 @@ Nanobot 坚持「少即是多」的设计原则，用最少的代码实现最核
 
 ---
 
-## 3. 架构分析
+## 2. 架构分析
 
-### 3.1 整体架构
+### 2.1 整体架构
 
 Nanobot 采用经典的**分层架构**：
 
@@ -143,7 +124,7 @@ graph TD
     ProviderMgr --> vLLM
 ```
 
-### 3.2 核心技术栈
+### 2.2 核心技术栈
 
 | 组件 | 技术选型 | 说明 |
 |------|---------|------|
@@ -153,7 +134,7 @@ graph TD
 | **协议** | MQTT / WebSocket | Channel 通信 |
 | **配置** | JSON | `~/.nanobot/config.json` |
 
-### 3.3 目录结构
+### 2.3 目录结构
 
 ```
 nanobot/
@@ -184,7 +165,7 @@ nanobot/
 └── docker-compose.yml    # Docker Compose
 ```
 
-### 3.4 数据流
+### 2.4 数据流
 
 ```mermaid
 sequenceDiagram
@@ -208,9 +189,9 @@ sequenceDiagram
 
 ---
 
-## 4. 功能详解
+## 3. 功能详解
 
-### 4.1 Channel 层：多平台支持
+### 3.1 Channel 层：多平台支持
 
 Nanobot 支持 10+ 主流聊天平台：
 
@@ -242,7 +223,7 @@ Nanobot 支持 10+ 主流聊天平台：
 }
 ```
 
-### 4.2 Agent 层：核心智能
+### 3.2 Agent 层：核心智能
 
 **Agent** 是 Nanobot 的核心，负责：
 
@@ -266,7 +247,7 @@ Nanobot 支持 10+ 主流聊天平台：
 }
 ```
 
-### 4.3 Tool 层：扩展能力
+### 3.3 Tool 层：扩展能力
 
 Nanobot 内置多种工具：
 
@@ -292,7 +273,7 @@ Nanobot 内置多种工具：
 }
 ```
 
-### 4.4 LLM 层：多 Provider 支持
+### 3.4 LLM 层：多 Provider 支持
 
 Nanobot 支持 20+ LLM Provider：
 
@@ -316,9 +297,9 @@ Nanobot 支持 20+ LLM Provider：
 
 ---
 
-## 5. 使用说明
+## 4. 使用说明
 
-### 5.1 环境准备
+### 4.1 环境准备
 
 **前置要求**：
 
@@ -327,7 +308,7 @@ Nanobot 支持 20+ LLM Provider：
 | Python | ≥3.10 | 推荐 3.11+ |
 | pip | ≥20.x | 包管理器 |
 
-### 5.2 安装方式
+### 4.2 安装方式
 
 **方式一：从源码安装（推荐）**：
 
@@ -349,7 +330,7 @@ uv tool install nanobot-ai
 pip install nanobot-ai
 ```
 
-### 5.3 快速开始
+### 4.3 快速开始
 
 **第一步：初始化**：
 
@@ -387,9 +368,7 @@ nanobot onboard --wizard
 nanobot agent
 ```
 
-**2 分钟即可运行！**
-
-### 5.4 聊天平台连接
+### 4.4 聊天平台连接
 
 **Telegram（推荐）**：
 
@@ -443,7 +422,7 @@ nanobot agent
 }
 ```
 
-### 5.5 Web 搜索配置
+### 4.5 Web 搜索配置
 
 ```json
 {
@@ -465,9 +444,9 @@ nanobot agent
 
 ---
 
-## 6. 开发扩展
+## 5. 开发扩展
 
-### 6.1 自定义 Channel
+### 5.1 自定义 Channel
 
 创建新的聊天平台支持：
 
@@ -499,7 +478,7 @@ class MyPlatformChannel(BaseChannel):
         self.on_message(self.handle_message)
 ```
 
-### 6.2 自定义 Tool
+### 5.2 自定义 Tool
 
 创建新的工具：
 
@@ -517,7 +496,7 @@ class MyTool(BaseTool):
         return "执行结果"
 ```
 
-### 6.3 自定义 Provider
+### 5.3 自定义 Provider
 
 添加新的 LLM Provider：
 
@@ -538,9 +517,9 @@ class MyProvider(BaseProvider):
 
 ---
 
-## 7. 实践建议
+## 6. 实践建议
 
-### 7.1 生产环境部署
+### 6.1 生产环境部署
 
 **使用 Docker**：
 
@@ -587,7 +566,7 @@ sudo systemctl enable nanobot
 sudo systemctl start nanobot
 ```
 
-### 7.2 安全配置
+### 6.2 安全配置
 
 ```json
 {
@@ -609,7 +588,7 @@ sudo systemctl start nanobot
 - [ ] 启用速率限制防止滥用
 - [ ] 定期更新 Nanobot 到最新版本
 
-### 7.3 性能优化
+### 6.3 性能优化
 
 | 优化项 | 建议 | 实现方式 |
 |--------|------|----------|
@@ -619,7 +598,7 @@ sudo systemctl start nanobot
 
 ---
 
-## 8. 常见问题
+## 7. 常见问题
 
 ### Q1: Nanobot 和 OpenClaw 有什么区别？
 
@@ -657,15 +636,15 @@ nanobot config show
 
 ---
 
-## 9. 总结
+## 8. 总结
 
 ### 核心要点
 
-1. **超轻量级**：代码量减少 99%，但核心功能完整
-2. **多平台支持**：10+ 主流聊天平台，一个 AI 搞定所有
-3. **模块化架构**：Channel 层、Agent 层、Tool 层、LLM 层层层解耦
-4. **多 Provider**：支持 20+ LLM Provider，一键切换
-5. **简单易用**：2 分钟安装配置，即刻运行
+1. **超轻量级**：代码量减少 99%，核心功能完整
+2. **多平台支持**：10+ 主流聊天平台
+3. **模块化架构**：Channel 层、Agent 层、Tool 层、LLM 层解耦
+4. **多 Provider**：支持 20+ LLM Provider
+5. **简单易用**：安装配置快捷
 
 ### 资源链接
 
@@ -679,4 +658,4 @@ nanobot config show
 
 ---
 
-*文档信息：Nanobot v0.1.4.post6 | 更新日期：2026-03-30 | 难度：⭐⭐⭐*
+*文档信息：Nanobot v0.1.4.post6 | 更新日期：2026-03-30*

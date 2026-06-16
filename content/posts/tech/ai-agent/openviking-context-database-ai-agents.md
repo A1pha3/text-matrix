@@ -4,7 +4,7 @@ date: "2026-03-28T21:15:00+08:00"
 slug: "openviking-context-database-ai-agents"
 aliases:
   - /posts/tech/openviking-context-database-ai-agents/
-description: "深度解读字节跳动开源的 OpenViking：19.6k Stars 的 AI Agent 上下文数据库，创新采用「文件系统 paradigm」统一管理记忆、资源和技能。"
+description: "深度解读字节跳动开源的 OpenViking：19.6k Stars 的 AI Agent 上下文数据库，采用「文件系统 paradigm」统一管理记忆、资源和技能。"
 draft: false
 categories: ["技术笔记"]
 tags: ["OpenViking", "上下文数据库", "AI Agent", "记忆管理", "RAG"]
@@ -27,7 +27,7 @@ tags: ["OpenViking", "上下文数据库", "AI Agent", "记忆管理", "RAG"]
 
 ### 1.1 为什么这个项目值得关注
 
-[OpenViking](https://github.com/volcengine/OpenViking) 是字节跳动开源的 **AI Agent 上下文数据库**，创新采用「文件系统 paradigm」统一管理 AI Agent 的记忆（Memories）、资源（Resources）和技能（Skills）。
+[OpenViking](https://github.com/volcengine/OpenViking) 是字节跳动开源的 **AI Agent 上下文数据库**，采用「文件系统 paradigm」统一管理 AI Agent 的记忆（Memories）、资源（Resources）和技能（Skills）。
 
 **核心数据：**
 
@@ -55,7 +55,7 @@ tags: ["OpenViking", "上下文数据库", "AI Agent", "记忆管理", "RAG"]
 
 ### 1.3 OpenViking 的解决方案
 
-> OpenViking 重新定义 Agent 的上下文交互范式，告别上下文管理的繁琐。
+OpenViking 用「文件系统 paradigm（范式）」统一管理 Agent 的记忆、资源和技能，解决上下文碎片化问题。
 
 **核心思路：「文件系统 paradigm（范式）」**
 
@@ -76,6 +76,19 @@ tags: ["OpenViking", "上下文数据库", "AI Agent", "记忆管理", "RAG"]
 OpenViking 借鉴 Linux 文件系统的设计理念：
 
 ```text
+viking://
+├── memories/          # 记忆
+│   ├── sessions/      # 会话记忆
+│   ├── long_term/     # 长期记忆
+│   └── skills/        # 技能记忆
+├── resources/         # 资源
+│   ├── documents/     # 文档
+│   ├── code/          # 代码
+│   └── web/           # 网页
+└── skills/            # 技能
+    ├── builtin/       # 内置技能
+    └── custom/        # 自定义技能
+```
 
 ### 2.2 分层上下文加载（L0/L1/L2）
 
@@ -106,6 +119,16 @@ OpenViking 借鉴 Linux 文件系统的设计理念：
 ### 3.1 整体架构
 
 ```text
+┌─────────────────────────────────────────────────────────────┐
+│                      Viking Gateway                         │
+├─────────────────────────────────────────────────────────────┤
+│   VikingFS (AGFS)  │  VikingDB  │  VikingBot  │  VikingCLI │
+├─────────────────────────────────────────────────────────────┤
+│   L0/L1/L2 Loader  │  RAG Engine  │  Memory Manager         │
+├─────────────────────────────────────────────────────────────┤
+│   VLM Provider  │  Embedding Provider  │  Vector Store       │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### 3.2 支持的模型提供商
 
@@ -132,6 +155,15 @@ OpenViking 借鉴 Linux 文件系统的设计理念：
 ### 3.3 核心目录结构
 
 ```text
+openviking/
+├── crates/
+│   ├── ov_cli/         # CLI 工具
+│   └── agfs/           # AGFS 文件系统
+├── python/
+│   └── openviking/     # Python SDK
+├── docs/               # 文档
+└── examples/           # 示例
+```
 
 ---
 
@@ -152,13 +184,21 @@ OpenViking 借鉴 Linux 文件系统的设计理念：
 
 ```bash
 pip install openviking --upgrade --force-reinstall
-```textbash
+```
+
+**CLI 工具：**
+
+```bash
 # 方式一：安装脚本
 curl -fsSL https://raw.githubusercontent.com/volcengine/OpenViking/main/crates/ov_cli/install.sh | bash
 
 # 方式二：从源码构建
 cargo install --git https://github.com/volcengine/OpenViking ov_cli
-```textjson
+```
+
+### 4.3 配置
+
+```json
 {
   "storage": {
     "workspace": "/home/your-name/openviking_workspace"
@@ -177,18 +217,30 @@ cargo install --git https://github.com/volcengine/OpenViking ov_cli
     "model": "doubao-seed-2-0-pro-260215"
   }
 }
-```textbash
+```
+
+### 4.4 启动服务
+
+```bash
 openviking-server
 # 或后台运行
 nohup openviking-server > /data/log/openviking.log 2>&1 &
-```textbash
+```
+
+### 4.5 基本操作
+
+```bash
 ov status                          # 查看状态
 ov add-resource https://github.com/volcengine/OpenViking  # 添加资源
 ov ls                              # 列出内容
 ov tree viking://resources/        # 树形结构
 ov find "what is openviking"      # 语义搜索
 ov grep "openviking" --uri viking://resources/volcengine/OpenViking/docs/zh  # grep 搜索
-```textbash
+```
+
+### 4.6 使用 VikingBot
+
+```bash
 # 安装 VikingBot（推荐方式）
 pip install "openviking[bot]"
 
@@ -242,7 +294,7 @@ ov chat
 
 ### 8.1 价值总结
 
-OpenViking 的价值在于**为 AI Agent 提供企业级的上下文管理能力**，让开发者可以像管理本地文件一样管理 Agent 的脑。
+OpenViking 用文件系统范式统一管理 Agent 的记忆、资源和技能，让开发者可以像管理本地文件一样管理 Agent 的上下文。
 
 | 传统方式 | OpenViking 方式 |
 |----------|----------------|
@@ -253,7 +305,7 @@ OpenViking 的价值在于**为 AI Agent 提供企业级的上下文管理能力
 
 ### 8.2 技术亮点
 
-1. **文件系统范式**：创新的上下文组织方式
+1. **文件系统范式**：用目录结构组织上下文
 2. **分层加载**：L0/L1/L2 按需加载，显著节省 Token
 3. **递归检索**：结合目录定位和语义搜索
 4. **多模型支持**：支持 volcengine、OpenAI、LiteLLM 等多种提供商

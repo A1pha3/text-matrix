@@ -595,7 +595,7 @@ Bun 解决的根本问题是：**现代 JavaScript 工具链太碎片化了。**
 
 做一个新项目，你需要 node、npm、typescript、vite、jest、eslint、prettier……每一个都需要安装、配置、维护。Bun 把这些全部整合到一个可执行文件里，启动速度还快 10 倍。
 
-它的成功不是偶然的：
+它之所以能走到这一步，有几个具体原因：
 - **Jarred Sumner**（创始人）是前 Stripe 工程师，深知大型项目里 npm 的痛点
 - 用 Zig 编写给了团队对性能的极致控制
 - JavaScriptCore 的选择避开了 V8 的许可问题，同时获得了更好的启动性能

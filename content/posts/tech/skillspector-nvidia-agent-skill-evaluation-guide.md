@@ -16,7 +16,7 @@ GitHub: [NVIDIA/SkillSpector](https://github.com/NVIDIA/SkillSpector)（Apache 2
 
 SkillSpector 不是 linter，是把 **64 条漏洞规则 + AST 行为分析 + 污点追踪（taint tracking，数据流从污染源到危险汇入点的传播路径） + YARA 签名 + OSV.dev 实时 CVE 查询 + 可选 LLM 语义评估** 拼成一条可解释的风险流水线。它对每个 skill 输出一份 0-100 分、四级严重度（LOW / CAUTION / DO NOT INSTALL）的可决策报告，价值不在黑名单，而在于把"该不该装"这个判断从经验拍脑袋变成可重放、可审计的工序。
 
-学完本指南，你将建立三个具体判断：
+读完这篇拆解，三个判断会变得明确：
 
 1. SkillSpector 的两阶段流水线到底谁负责什么、谁负责兜底，什么时候能跳过 LLM。
 2. 它的 0-100 分公式怎么把"严重度 × 数量 × 可执行性"压成一个数，以及这个数能决策什么、不能决策什么。

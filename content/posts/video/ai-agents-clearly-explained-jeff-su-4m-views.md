@@ -175,4 +175,4 @@ Jeff Su 这支视频最值得肯定的地方在于它把概念压缩得足够清
 - [OpenViking：字节跳动开源的 AI Agent 上下文数据库](../tech/ai-agent/openviking-context-database-ai-agents.md)
 - [awesome-llm-apps：LLM 应用与 Agent 项目清单](../tech/awesome-llm-apps-curated-llm-application-projects-guide.md)
 
-Jeff Su 这支视频最有用的提醒，其实非常简单：从 LLM 到 workflow，再到真正的 agent，变化最大的是"下一步应该怎么做"的决策权从人手里逐渐转移到模型手里。看清这件事，再去看市面上的各种"AI Agent"产品，很多概念噪音都会立刻消失。
+Jeff Su 这支视频最有用的提醒，其实非常简单：从 LLM 到 workflow，再到真正的 agent，变化最大的是"下一步应该怎么做"的决策权从人手里逐渐转移到模型手里。看清这件事，再去看市面上的各种"AI Agent"产品，很多概念噪音会立刻消失。

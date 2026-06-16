@@ -17,15 +17,13 @@ tags: ["AI", "Agent", "Jeff Su", "YouTube", "2026"]
 
 ## 前言
 
-如果你刷到 Jeff Su 的「AI Agents, Clearly Explained」并被 421 万播放量震撼到，那这篇解读就是为你准备的。
-
-这篇文章想帮你把视频里的概念框清楚，不只是看一遍热闹。
+Jeff Su 的「AI Agents, Clearly Explained」播放量超过 421 万，这篇解读把视频里的概念框清楚，不只是看一遍热闹。
 
 ---
 
 ## 一、什么是 AI Agent？
 
-**一句话**：AI Agent = 大脑 + 工具 + 记忆
+AI Agent = 大脑 + 工具 + 记忆
 
 Jeff Su 在视频中用「自动驾驶」做了类比：
 
@@ -52,11 +50,7 @@ Jeff Su 在视频中用「自动驾驶」做了类比：
 2023: LLM横空出世 → 2024: RAG爆发 → 2025: Agent探索 → 2026: Agent落地
 ```
 
-Jeff Su 指出三个关键拐点：
-
-1. **上下文窗口爆炸**：从 4K → 200K，Agent 能处理整本书籍
-2. **工具调用标准化**：OpenAI、Google、Anthropic 统一 Tool Use API
-3. **多 Agent 协作**：CrewAI、AutoGen、LangGraph 让多 Agent 协作成为标配
+Jeff Su 指出三个拐点：上下文窗口从 4K 到 200K，Agent 能处理整本书籍；OpenAI、Google、Anthropic 统一了 Tool Use API；CrewAI、AutoGen、LangGraph 让多 Agent 协作成为标配。
 
 ### 真实数据
 
@@ -189,7 +183,7 @@ Jeff Su 在视频结尾说：
 
 > **「AI Agent 不是要取代你，是放大你的能力。」**
 
-2026 年，Agent 正在从「概念验证」走向规模化落地。现在入场还不算晚。
+2026 年，Agent 正在从概念验证走向大批量部署。
 
 ---
 

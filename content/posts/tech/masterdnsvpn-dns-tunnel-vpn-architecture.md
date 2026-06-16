@@ -23,9 +23,7 @@ tags: ["Go", "DNS隧道", "网络审查", "ARQ", "抗丢包"]
 
 ---
 
-## §1 学习目标
-
-读完这篇，你应该能回答这几个问题：
+## §1 读完能回答什么
 
 - MasterDnsVPN 的"5–7 字节传输头"对比 DNSTT 的 59 字节 / SlipStream 的 24 字节，节省的部分到底省在哪一层？
 - 为什么它在协议栈里需要一个独立的 **Deferred Session Runtime**，普通的 Reactor 模型为什么不够用？

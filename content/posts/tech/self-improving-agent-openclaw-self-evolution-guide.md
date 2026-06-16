@@ -9,14 +9,12 @@ tags: ["AI", "OpenClaw", "自进化", "持续学习", "技能框架"]
 
 # Self-Improving-Agent：从入门到精通的自进化 AI 技能框架
 
-## §1 学习目标
+## §1 本文覆盖范围
 
-通过本文，您将掌握：
-
-1. **理解自进化机制**：了解 AI 编程中「自进化」的核心概念——让 AI 从错误中学习、持续改进
-2. **掌握三大日志系统**：LEARNINGS.md、ERRORS.md、FEATURE_REQUESTS.md 的用法和格式
-3. **学会智能晋升**：将通用学习内容晋升到 CLAUDE.md、AGENTS.md、SOUL.md、TOOLS.md
-4. **配置 Hook 集成**：实现自动提醒和错误检测
+1. **自进化机制**：AI 编程中「自进化」的核心概念——让 AI 从错误中学习、持续改进
+2. **三大日志系统**：LEARNINGS.md、ERRORS.md、FEATURE_REQUESTS.md 的用法和格式
+3. **智能晋升**：将通用学习内容晋升到 CLAUDE.md、AGENTS.md、SOUL.md、TOOLS.md
+4. **Hook 集成**：实现自动提醒和错误检测
 5. **多 Agent 协作**：在 Claude Code、Codex、GitHub Copilot、OpenClaw 之间共享学习
 
 ---
@@ -37,9 +35,9 @@ tags: ["AI", "OpenClaw", "自进化", "持续学习", "技能框架"]
 - 🔄 **跨会话记忆**：通过文件持久化，让未来的会话能够读取历史教训
 - 📈 **持续改进**：从错误中学习，将通用知识晋升为项目规范
 
-### 2.2 核心设计理念
+### 2.2 设计原则
 
-Self-Improving-Agent 基于三个核心原则：
+Self-Improving-Agent 基于三个原则：
 
 **1. 即时记录（Log Immediately）**
 > 上下文越新鲜，记录越准确。在错误发生或用户纠正后立即记录。
@@ -211,7 +209,7 @@ git clone https://github.com/peterskoett/self-improving-agent.git ~/.openclaw/sk
 mkdir -p ~/.openclaw/workspace/.learnings
 
 # 创建日志文件（从assets目录复制模板）
-# LEARNINGS.md — 纠正、洞察、最佳实践
+# LEARNINGS.md — 纠正、洞察、推荐做法
 # ERRORS.md — 命令失败、异常
 # FEATURE_REQUESTS.md — 用户请求的功能
 ```
@@ -576,14 +574,14 @@ A5：
 
 ## §10 总结
 
-Self-Improving-Agent 代表了 AI 编程的一个范式转变——从"每次会话从零开始"到"跨会话持续进化"。它的关键价值在于：
+Self-Improving-Agent 让 AI 编程从"每次会话从零开始"走向"跨会话持续进化"。它解决的问题：
 
 1. **系统性**：结构化的日志格式和晋升机制
 2. **自动化**：可选的 Hook 实现自动检测和提醒
 3. **多 Agent 支持**：不同的 AI 工具可以共享学习
 4. **隐私保护**：内置的敏感信息保护机制
 
-通过掌握这个技能框架，开发者可以构建一个真正"学习型"的 AI 编程环境，让 AI 每次都在前一次的基础上变得更好。
+通过掌握这个技能框架，开发者可以构建一个"学习型"的 AI 编程环境，让 AI 每次都在前一次的基础上变得更好。
 
 ---
 

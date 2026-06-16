@@ -30,7 +30,7 @@ tags: ["AI Agent", "CLI", "Claude Code", "OpenClaw", "Python", "自动化工具"
 
 AI Agent 很擅长推理，但在实际使用专业软件时存在根本障碍：GUI 自动化脆弱、需要 API 的软件受限于接口、没有 API 的软件完全无法控制。
 
-CLI-Anything 给出了第三条路——不需要 API，不需要截图，点击一下就生成生产级的 CLI 层，把专业软件的能力完整暴露给 Agent。
+CLI-Anything 给出了第三条路——不需要 API，不需要截图，点击一下就生成生产级的 CLI 层，把专业软件的能力暴露给 Agent。
 
 ---
 

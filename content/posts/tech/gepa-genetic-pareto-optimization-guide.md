@@ -5,7 +5,7 @@ slug: "gepa-genetic-pareto-optimization-guide"
 description: "深度解析 GEPA (3.1k Stars)：基于 LLM 反射和 Pareto 高效进化搜索的 AI 系统优化框架。比 RL 快 35 倍，只需 100-500 次评估即可超越 5000-25000 次的 RL 效果。开源模型+GEPA 以 1/90 成本击败 Claude Opus 4.1。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GEPA", "Pareto优化", "AI优化", "提示词工程", "DSPy", "反射式进化", "MLflow", "智能体架构", "文本优化", "机器学习"]
+tags: ["GEPA", "Pareto 优化", "AI 优化", "提示词工程", "DSPy", "反射式进化", "MLflow", "智能体架构", "文本优化", "机器学习"]
 ---
 
 # GEPA：基于反射式文本进化的 AI 系统优化框架完全指南
@@ -32,7 +32,7 @@ tags: ["GEPA", "Pareto优化", "AI优化", "提示词工程", "DSPy", "反射式
 
 > GEPA (Genetic-Pareto) is a framework for optimizing any system with textual parameters against any evaluation metric. Unlike RL or gradient-based methods that collapse execution traces into a single scalar reward, GEPA uses LLMs to read full execution traces — error messages, profiling data, reasoning logs — to diagnose why a candidate failed and propose targeted fixes. Through iterative reflection, mutation, and Pareto-aware selection, GEPA evolves high-performing variants with minimal evaluations.
 
-**核心哲学**：如果你能测量它，你就能优化它。
+**设计前提**：只要一个系统能被评估，GEPA 就能尝试优化它。
 
 ### 2.2 项目数据
 
@@ -108,11 +108,11 @@ tags: ["GEPA", "Pareto优化", "AI优化", "提示词工程", "DSPy", "反射式
 
 ### 4.1 传统优化器的局限
 
-传统优化器知道候选方案**失败**（that），但不知道**为什么**失败（why）。它们将执行轨迹压缩成单一标量奖励，无法提供具体的改进方向。
+传统优化器知道候选方案**失败**（that），却丢掉了**为什么**失败（why）的信息——把执行轨迹压缩成单一标量奖励，给不出具体的改进方向。
 
 ### 4.2 GEPA 的解决思路
 
-GEPA 采用**反射式进化**方法，核心五步：
+GEPA 采用**反射式进化**方法，分五步：
 
 1. **Select（选择）**：从 Pareto 前沿中选择候选方案（在不同任务子集上表现出色的方案）
 
@@ -126,7 +126,7 @@ GEPA 采用**反射式进化**方法，核心五步：
 
 ### 4.3 Actionable Side Information (ASI)
 
-**关键概念**：由评估器返回的诊断反馈，作为文本优化的梯度类比。
+**ASI 是什么**：由评估器返回的诊断反馈，作为文本优化的梯度类比。
 
 ASI 使得 GEPA 能够：
 - 理解**为什么**候选方案失败
@@ -216,7 +216,7 @@ optimized_program = optimizer.compile(
 
 ### 6.3 optimize_anything：超越提示词
 
-`optimize_anything` API 可以优化**任何**文本产物，不仅仅是提示词：
+`optimize_anything` API 可以优化**任何**文本产物，提示词只是其中之一：
 
 ```python
 from gepa.optimize_anything import optimize_anything, GEPAConfig, EngineConfig
@@ -479,33 +479,18 @@ config = GEPAConfig(
 
 ## §13 总结
 
-### 13.1 主要优势
+GEPA 做了三件事：用反射式进化替代 RL 的大量评估（100-500 次 vs 5000-25000+ 次）、用 ASI 提供可操作的改进方向、用 Pareto 前沿做多目标平衡。开源模型 + GEPA 以 1/90 成本击败 Claude Opus 4.1 的结果说明，在提示词和系统配置优化这个场景下，反射式进化比暴力 RL 更划算。
 
-| 优势 | 说明 |
-|------|------|
-| **成本效率** | 1/90 成本击败 Claude Opus 4.1 |
-| **速度** | 比 RL 快 35 倍 |
-| **数据效率** | 只需 3 个样本 |
-| **通用性** | 优化任何文本内容 |
-| **可解释性** | 清晰的优化轨迹 |
+### 13.1 适用场景速查
 
-### 13.2 适用对象
-
-| 对象 | 使用场景 |
+| 场景 | 推荐模式 |
 |------|----------|
-| **AI 研究员** | 提示词和智能体架构优化 |
-| **开发团队** | 生产级 AI 系统优化 |
-| **数据科学家** | 快速原型和迭代 |
-| **企业** | 定制化 AI 解决方案 |
-
-### 13.3 项目信息
-
-| 项目 | 信息 |
-|------|------|
-| **Stars** | 3.1k |
-| **Forks** | 262 |
-| **许可证** | MIT |
-| **最新版本** | v0.1.1 |
+| 提示词优化 | DefaultAdapter |
+| AI 流水线优化 | DSPy Full Program |
+| RAG 检索优化 | Generic RAG |
+| MCP 工具描述优化 | MCP Adapter |
+| 数学推理优化 | AnyMaths |
+| 终端智能体优化 | TerminalBench |
 
 ### 13.4 相关链接
 

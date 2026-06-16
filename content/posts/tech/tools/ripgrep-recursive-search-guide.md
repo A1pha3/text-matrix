@@ -13,7 +13,7 @@ description: "基于 Ripgrep 官方 README、GUIDE、FAQ、CHANGELOG 与 15.1.0 
 
 ## §1 学习目标
 
-完成本文档后，你将能够：
+读完本文，你会拿到：
 
 - ✅ 理解 Ripgrep 的定位、默认行为与适用边界
 - ✅ 从入门命令一路掌握到常见高级用法
@@ -33,7 +33,7 @@ description: "基于 Ripgrep 官方 README、GUIDE、FAQ、CHANGELOG 与 15.1.0 
 
 > ripgrep is a line-oriented search tool that recursively searches the current directory for a regex pattern.
 
-翻成更容易落地的话，可以理解成：
+更落地的理解：
 
 - 它默认递归搜索目录；
 - 它默认把输入当成“按行匹配”的搜索任务；
@@ -78,7 +78,7 @@ description: "基于 Ripgrep 官方 README、GUIDE、FAQ、CHANGELOG 与 15.1.0 
 - 搜得更快；
 - 输出更好看。
 
-这当然没错，但不够本质。Ripgrep 真正的设计重点是：
+这当然没错，但 Ripgrep 真正的设计重点是：
 
 1. **把代码仓库搜索当成默认任务**  
    所以它天然重视忽略规则、文件类型、并行遍历和输出可读性。
@@ -717,7 +717,7 @@ rg --trace pattern
 | `crates/globset` | glob 模式匹配 |
 | `crates/grep` | 对外整合搜索能力的 façade 风格 crate |
 
-最值得你建立的理解是：**Ripgrep 的“快”不是只来自一个超强 regex engine，而是来自遍历、过滤、匹配、输出这四层协同优化。**
+理解到这一层就够了：**Ripgrep 的"快"不是只来自一个超强 regex engine，而是来自遍历、过滤、匹配、输出这四层协同优化。**
 
 ### 9.3 一次搜索的大致执行流水线
 
@@ -733,7 +733,7 @@ rg --trace pattern
 8. 输出标准文本、JSON 或其他格式；
 9. 根据是否命中、是否报错决定退出码。
 
-这个流水线解释了两个经常被忽略的事实：
+这个流水线暴露了两个经常被忽略的事实：
 
 - 文件发现本身就是性能关键路径；
 - 输出策略本身也会显著影响性能和行为。
@@ -747,7 +747,7 @@ rg --trace pattern
 - **输出** 不是散落在逻辑各处，而是集中管理；
 - **CLI 只是装配层，不是所有逻辑都塞在 main 里**。
 
-如果你正在设计自己的代码搜索、日志搜索、文本扫描类工具，这种分层很值得学习。
+如果你正在设计自己的代码搜索、日志搜索、文本扫描类工具，这种分层可以参考。
 
 ---
 
@@ -1007,7 +1007,7 @@ rg --files
 - **扩展层**：配置文件、类型系统、预处理器、JSON 输出，把“可定制”留给用户；
 - **边界层**：明确承认自己不是 POSIX grep，也不是就地替换工具，更不是归档浏览器。
 
-这也是为什么 Ripgrep 常常被认为不只是“一个很好用的命令”，而是 CLI 工具设计的一个优秀范例。
+Ripgrep 因此常被认为不只是"一个很好用的命令"，而是 CLI 工具设计的一个优秀范例。
 
 ---
 

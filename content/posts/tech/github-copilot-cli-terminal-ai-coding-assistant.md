@@ -208,7 +208,7 @@ GitHub Copilot CLI、Anthropic Claude Code、OpenAI Codex CLI 是三条并行的
 
 ## v1.0.52 最新变化
 
-2026-05-23 发布的 v1.0.52 包含以下值得关注的更新：
+2026-05-23 发布的 v1.0.52 包含以下更新：
 
 - 非交互式子命令（plugin list、mcp list、help、version）不再消耗 stdin，解决了管道输入场景下的兼容性问题
 - 新增垂直滚动条，支持鼠标拖拽浏览长对话
@@ -218,6 +218,6 @@ GitHub Copilot CLI、Anthropic Claude Code、OpenAI Codex CLI 是三条并行的
 
 ## 结语
 
-GitHub Copilot CLI 把 Copilot 编码代理的体验带到了终端，对于已经在 GitHub 生态内的团队，这是一个值得评估的效率工具。它的核心竞争力在于：开箱即用的 GitHub 上下文、每步预览确认机制、以及内置 MCP 扩展支持。
+GitHub Copilot CLI 把 Copilot 编码代理的体验带到了终端，对于已经在 GitHub 生态内的团队，可以评估一下是否适合纳入日常工作流。它的核心竞争力在于：开箱即用的 GitHub 上下文、每步预览确认机制、以及内置 MCP 扩展支持。
 
-但它不是通用解。如果你需要的是跨平台、跨云服务的通用编码智能体，或者偏好 Claude 系列模型的能力，Claude Code 值得并行了解。工具选型没有唯一答案，摸清楚自己的场景约束再决定，比追新更有价值。
+但它不是通用解。如果你需要的是跨平台、跨云服务的通用编码智能体，或者偏好 Claude 系列模型的能力，Claude Code 值得并行了解。工具选型没有唯一答案，摸清楚自己的场景约束再决定，比追新更实际。

@@ -77,12 +77,12 @@ npm install rolldown-vite -D
 
 ## 四、对 AI 辅助开发的影响
 
-Vite 8 在 AI 时代有两个关键属性让它更适合 Agent 工作流：
+Vite 8 在 AI 时代有两个属性让它更适合 Agent 工作流：
 
 1. **配置可读性高**。`vite.config.ts` 是普通 TS 文件，AI 工具能直接读取、修改、加 plugin。比 webpack 的 `webpack.config.js` 对 LLM 友好得多。
 2. **启动快、错误清晰**。AI 生成代码 → Vite HMR → 立刻看到结果，这个循环是 Agent 测试代码的最低延迟。webpack 几秒到几十秒的启动延迟对 Agent 是致命的。
 
-所以**Vite 8 在 2026 年也是 AI 编程工具的事实标准前端栈**——Cursor、Claude Code 生成的 demo 90% 默认是 Vite + React/Vue。
+所以 Vite 8 在 2026 年也是 AI 编程工具默认的前端栈——Cursor、Claude Code 生成的 demo 90% 默认是 Vite + React/Vue。
 
 ## 五、升级建议
 

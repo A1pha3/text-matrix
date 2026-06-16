@@ -528,31 +528,31 @@ export function maskPII(event: TraceEvent): TraceEvent {
 
 企业版通过 `eeLICENSE_CHECK` 机制验证部署的合法性，确保在无 Internet 连接的环境中也能完成授权校验。
 
-## 十、架构亮点总结
+## 十、架构亮点
 
-Langfuse 的架构设计在以下几个方面值得学习：
+Langfuse 的架构设计有几个值得注意的点：
 
-### ✅ 双数据库架构
+### 双数据库架构
 
 PostgreSQL（结构化元数据）+ ClickHouse（海量分析数据）的组合，是 LLM 应用观测平台的常见实践。Prisma 管理 PostgreSQL 提供了类型安全的实体操作，ClickHouse 的列式存储让聚合查询极快。
 
-### ✅ 异步非阻塞摄取
+### 异步非阻塞摄取
 
 应用发起的 LLM 调用不应被观测平台拖慢。Langfuse 通过异步队列 + 快速响应的设计，实现了 < 10ms 的摄取延迟，对主流程零影响。
 
-### ✅ OpenTelemetry 原生支持
+### OpenTelemetry 原生支持
 
-Langfuse 的追踪模型与 OpenTelemetry 语义完全兼容，：
+Langfuse 的追踪模型与 OpenTelemetry 语义完全兼容：
 - 可以用标准 OTLP 协议将数据导出到其他观测平台（如 Grafana Tempo）
 - 可以用 OpenTelemetry SDK 的跨语言支持对接非 JS/TS 应用
 
-### ✅ 框架集成深度
+### 框架集成深度
 
-不仅支持 LangChain、LlamaIndex，还支持 DSPy、Instructor、AutoGen 等新兴框架，形成了完整的 LLM 工程工具链生态。
+不仅支持 LangChain、LlamaIndex，还支持 DSPy、Instructor、AutoGen 等新兴框架，覆盖了主流 LLM 工程工具链。
 
-### ✅ Prompt 即代码
+### Prompt 即代码
 
-将 Prompt 的版本管理、模板变量、热更新与 Git 工作流结合，是 LLM 应用工程化的关键一步。
+将 Prompt 的版本管理、模板变量、热更新与 Git 工作流结合，解决了 LLM 应用中 Prompt 难以版本化和协作的问题。
 
 ## 参考链接
 

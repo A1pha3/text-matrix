@@ -12,7 +12,7 @@ tags: ["代码代理", "AI Agent", "Ollama", "Sebastian Raschka", "Python", "LLM
 
 ## 学习目标
 
-通过本文，你将全面掌握以下核心能力：
+读完本文，你会拿到：
 
 - 深入理解 Mini-Coding-Agent 的设计哲学和极简架构
 - 学会安装配置 Ollama 环境和依赖

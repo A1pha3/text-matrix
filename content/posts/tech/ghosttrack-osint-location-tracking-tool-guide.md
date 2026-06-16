@@ -129,7 +129,7 @@ GhostTrack 作为 OSINT 工具，在以下合法场景中具有重要价值：
 
 ### 安全研究价值
 
-从安全研究角度看，GhostTrack 代表了一类典型的 OSINT 工具的发展方向：
+从安全研究角度看，GhostTrack 是一类典型的 OSINT 工具：
 
 - 将多种信息收集能力整合到统一界面
 - 支持多平台部署（桌面 Linux、移动 Termux）

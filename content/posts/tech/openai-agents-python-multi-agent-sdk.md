@@ -19,7 +19,7 @@ OpenAI Agents SDK 真正解决的问题不是"调用模型"，而是把多个 LL
 
 ## §1 阅读地图
 
-读完这篇文章，你会对以下问题形成判断——不是记住 API 签名，而是理解 SDK 的设计取舍：
+读完这篇文章，你会对以下问题形成判断——重点在 SDK 的设计取舍，不在 API 签名：
 
 1. OpenAI Agents SDK 和 LangChain / LangGraph 的定位差异
 2. Agent、Handoff、Tool 三者的协作关系与各自边界

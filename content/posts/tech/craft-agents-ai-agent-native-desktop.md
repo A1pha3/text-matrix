@@ -17,13 +17,13 @@ tags: ["AI Agent", "桌面应用", "MCP", "多LLM", "Craft", "工作流自动化
 
 ---
 
-## §1 学习目标
+## §1 读完能做什么
 
-1. **理解 Agent Native 软件原则**：什么是，为何重要
-2. **掌握 Craft Agents 核心功能**：多会话、Sources、Skills、MCP 集成
-3. **能够连接外部服务**：Linear/Slack/Gmail 等
-4. **理解多 LLM 支持**：Google AI Studio/Copilot/OpenAI API 等
-5. **能够进行自定义开发**：Skills 创建和自动化配置
+1. 说清 Agent Native 软件原则和传统软件的区别
+2. 用 Craft Agents 的多会话、Sources、Skills、MCP 集成跑通一个工作流
+3. 连接 Linear/Slack/Gmail 等外部服务
+4. 切换不同 LLM 提供商
+5. 自己创建 Skills 和自动化配置
 
 ---
 
@@ -36,13 +36,13 @@ tags: ["AI Agent", "桌面应用", "MCP", "多LLM", "Craft", "工作流自动化
 - 需要维护上下文状态
 - 需要处理错误恢复
 
-### 2.2 Agent Native 的定义
+### 2.2 Agent Native 的做法
 
-**Agent Native 软件**的设计原则：
+Agent Native 软件的设计出发点：
 - **自然语言优先**：用户描述目标，AI 理解意图并执行
 - **工具即服务**：外部能力通过 Skills/Sources 即插即用
-- **无配置体验**：无需编辑配置文件，无需重启
-- **实时响应**：变更即时生效
+- **无配置体验**：不用编辑配置文件，不用重启
+- **变更即时生效**
 
 ### 2.3 Craft Agents 的实践
 

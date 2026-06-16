@@ -16,14 +16,14 @@ tags = ['GitHub', 'DevOps', '代码质量', '工具']
 
 [pre-commit-ci](https://github.com/apps/pre-commit-ci) 是 GitHub 官方出品的 GitHub App，专门为 [pre-commit](https://pre-commit.com/) 生态提供云端 CI 执行能力。
 
-核心逻辑很简单：
+工作流程：
 
 1. 你在仓库配置 `.pre-commit-config.yaml`
 2. 开发者本地运行 `git commit` 时触发 pre-commit hooks（可选）
 3. **pre-commit-ci 在 CI 中自动运行所有 hooks**，不依赖本地配置
 4. PR 必须在所有检查通过后才能合并
 
-这样做的好处是：**团队里没人能跳过检查**。哪怕有人本地没装 pre-commit，或者 `.pre-commit-config.yaml` 更新后本地没同步，CI 里都会跑最新的配置。
+团队里没人能跳过检查——哪怕有人本地没装 pre-commit，或者 `.pre-commit-config.yaml` 更新后本地没同步，CI 里都会跑最新的配置。
 
 ## 二、主要功能
 
@@ -257,7 +257,7 @@ pre-commit-ci 对公开仓库免费，私有仓库需要付费计划。具体定
 
 ## 小结
 
-pre-commit-ci 是代码质量自动化的利器——把 pre-commit hooks 的执行从本地搬到云端，确保每次 PR 都经过一致的检查，且 hook 版本始终保持最新。对于追求代码一致性和质量门禁的团队，这是不可或缺的工具。
+pre-commit-ci 把 pre-commit hooks 的执行从本地搬到云端，确保每次 PR 都经过一致的检查，且 hook 版本始终保持最新。
 
 **相关资源：**
 - [pre-commit CI App](https://github.com/apps/pre-commit-ci)
