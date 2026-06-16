@@ -45,9 +45,38 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 
 ## 3. 执行流程
 
+### Step 0: 去重兜底（trending 类任务强制，普通写作按需）
+
+**触发条件**：用户给的是 GitHub Trending 抓取结果（owner/repo 列表），或子代理从 trending 榜单挑 repo 写文章。
+
+**强制流程**：
+
+1. 在动笔写任何一篇文章之前，**必须**先跑仓库根目录下的 `scripts/trending-dedup-check.sh`，传入本轮要写的 owner/repo 列表：
+   ```bash
+   cd ~/.openclaw/workspace/github/text-matrix
+   bash scripts/trending-dedup-check.sh owner1/repo1 owner2/repo2 ...
+   # 或从 trending JSON 喂入：
+   jq -r '.repos[].full_name' .cache/github-trending/trending-raw.json | \
+     bash scripts/trending-dedup-check.sh
+   ```
+2. 脚本返回 `exit 0`（全部未写）→ 正常进入 Step 1。
+3. 脚本返回 `exit 1`（有已写）→ stdout 会列出"已写"的 repo + 命中文件路径，**必须**把这些 repo 从本轮写文章清单中**剔除**，只对脚本标记的"🆕 未写"列表动笔。
+4. 脚本返回 `exit 2`（路径错）→ 立即停下来检查工作区是否在 text-matrix 仓库内，不要在错误目录里继续。
+
+**3 重 grep 兜底原理**（`music-assistant/server` 漏判复盘，2026-06-16 23:20 师父拍板）：
+
+- **A 重 - owner 段模糊匹配**：`music-assistant` → 命中 `music-assistant-server-*.md`（处理 `/` vs `-` 不匹配）
+- **B 重 - owner-repo 拼接形式**：同时试 `music-assistant-server` 和大小写保留版
+- **C 重 - git log --grep**：按 `owner/repo` 查 commit 标题
+- **D 重 - git log --grep owner 段**：补"模糊 commit 标题"（如 `LMCache + music-assistant`）
+
+任一命中即视为"已写过"，从本轮清单剔除。
+
+**历史教训**（2026-06-16 复盘）：6-13 trending daily 15:00 写过 `music-assistant/server`（`unified-music-hub-guide.md`），6-16 trending daily+weekly 15:00 **又**把它当"新 repo"写了一遍（`media-orchestration-guide.md`）。根因：6-16 子代理只查 git log，没在 `content/posts/tech/` 做全量 grep 兜底；`/` vs `-` 不匹配让 owner/repo grep 漏判。本 Step + 脚本彻底封死此类问题。
+
 ### Step 1: 仓库取证
 
-先从 GitHub 页面、README、docs、示例、发行记录中收集证据，再决定文章结构。
+先从 GitHub 页面、README、docs、示例、发行记录中收集证据，再决定文章结构。**如果是 trending 类任务**，取证前先确认 `scripts/trending-dedup-check.sh` 已经跑过且本 repo 在"未写"列表里。
 
 如果用户提供的是仓库内子页面链接，先提取并记录：
 
@@ -195,6 +224,7 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 - 默认保留英文术语，并在首次出现时加中文括注
 - 发布前完成三轮事实校验
 - 多子系统、并行机制、benchmark 密集的仓库，优先按“原理拆解 / 架构分析”处理
+- **trending 类任务必须在动笔前跑 `scripts/trending-dedup-check.sh` 去重；脚本返回 exit 1 时只能写"未写"列表里的 repo，脚本标记的"已写"必须从本轮清单剔除**
 
 ### 禁止
 
@@ -206,6 +236,7 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 - 禁止在未获明确指令时执行 git push、创建飞书文档、更新索引
 - 禁止依赖固定机器路径；始终以当前工作区或用户指定路径为准
 - 禁止为了凑结构补写“最佳实践”“FAQ”“性能优化”之类空章节
+- **禁止 trending 类任务未跑 `scripts/trending-dedup-check.sh` 就动笔写文章**（2026-06-16 复盘：music-assistant/server 6-13/6-16 写重 2 篇的根因）
 
 ## 6. 异常处理
 
