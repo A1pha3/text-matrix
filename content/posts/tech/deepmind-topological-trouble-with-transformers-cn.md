@@ -1,6 +1,6 @@
 ---
 title: "循环回来：DeepMind 一篇论文说 Transformer 的「思维链」是治标不治本"
-date: "2026-06-18T09:05:00+08:00"
+date: "2026-06-18T08:50:00+08:00"
 slug: "deepmind-topological-trouble-with-transformers-cn"
 description: "DeepMind 2026 年的论文《The Topological Trouble With Transformers》给出了一个不讨喜的判断：Transformer 的纯前馈架构天然不擅长追踪状态，CoT 只是给结构性缺陷打补丁。真正的出路在循环。"
 draft: false
