@@ -2,10 +2,10 @@
 title: "Web3早报 2026-06-19"
 date: 2026-06-19T08:10:00+08:00
 slug: web3-morning-news-2026-06-19
-description: "2026年6月19日 Web3 早报，主流币 24h 普跌 2-7%、AVAX 领跌 -7%，XLM/NEAR/HYPE 7d 累涨 8-22%；Strategy 再增持 1,587 BTC、CME 起诉 CFTC 争永续期货管辖权、Bitmine ETH 持仓达 4.59% supply。"
+description: "2026年6月19日 Web3 早报，主流币 24h 普跌 2-7%、AVAX 领跌 -7%，XLM/NEAR/HYPE 7d 累涨 8-22%；CME 起诉 CFTC 争永续期货管辖权、Hyperliquid OI 突破 $100 亿、Arthur Hayes 清仓 HYPE/NEAR。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "监管", "Strategy"]
+tags: ["Web3", "BTC", "ETH", "监管", "Hyperliquid"]
 hiddenFromHomePage: true
 ---
 
@@ -38,12 +38,12 @@ hiddenFromHomePage: true
 原文: [行情总览](https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc)
 摘要: 6 月 19 日 08:11 北京时间行情显示，市值前十主流币 24h 普跌 2-7%，AVAX（-7.02%）、HYPE（-5.28%）、BNB（-4.06%）、SOL（-3.68%）领跌，BTC 报 $62,827（-2.72%）；与之相对，XLM（+2.42%）、NEAR（+1.86%）逆势上涨，七日累涨分别达 +21.45%、+8.26%，延续 Stellar 与 Near Protocol 协议 AI 与跨链叙事的资金流入逻辑。
 
-## 🔥 今日热点
+### HYPE 单日跌 5.28% 但 7d 累涨 15%，Arthur Hayes 抛售冲击被买盘消化
+来源: CoinGecko
+原文: [行情总览](https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=hyperliquid,stellar,near-protocol)
+摘要: Hyperliquid 平台币 HYPE 在 6 月 18 日 Arthur Hayes 公开清仓消息下挫 5.28% 至 $67.89，但 7d 仍累涨 +15.15%，表明"聪明钱"抛售信号被市场视为短期事件；同期 Stellar（XLM）报 $0.2324、近 7 日累涨 +21.45%，Near Protocol（NEAR）报 $2.23、近 7 日累涨 +8.26%，三者构成 6-19 加密板块最强 alpha 三角。XLM 上涨主要受 MoneyGram 跨境支付合作扩区传闻催化，NEAR 上涨则与 Intents 协议主网升级倒计时相关。
 
-### Strategy 再增持 1,587 BTC，$100M 通过 MSTR 股票销售完成
-来源: CoinTelegraph
-原文: [原文](https://cointelegraph.com/news/strategy-michael-saylor-1587-btc-buy-100-million)
-摘要: Michael Saylor 旗下 Strategy 周一披露上周新增 1,587 BTC，平均成本约 $63,000/枚，合计 $100M，全部通过 MSTR 普通股增发募资。该笔交易后 Strategy BTC 总持仓已超 60 万枚，但市场仍担忧其 STRC 优先股（跌至 $91 附近）的可持续性。
+## 🔥 今日热点
 
 ### CME Group 起诉 CFTC，就加密永续期货管辖权对簿公堂
 来源: CoinTelegraph
@@ -57,37 +57,27 @@ hiddenFromHomePage: true
 
 ## 💼 机构动态
 
-### Bitmine Immersion ETH 持仓升至 5.54M ETH，控制 4.59% 全网供应
-来源: CoinTelegraph
-原文: [原文](https://cointelegraph.com/news/bitmine-boosts-ethereum-treasury-to-554m-eth-nearing-5-supply-target)
-摘要: Bitmine Immersion Technologies 周三宣布增持 ETH 至 5,540,000 枚，按现价 $1,708 折合市值约 $94.6 亿，已控制 Ethereum 全网流通量的 4.59%，并接近公司宣称的"5% supply"长期战略目标；其中超过 470 万枚 ETH 处于质押状态。该持仓规模使 Bitmine 成为仅次于 Strategy 的第二大加密财库公司。
-
 ### Capital B 获股东批准最高 $120B 融资能力，加速 BTC 收购
 来源: CoinTelegraph
 原文: [原文](https://cointelegraph.com/news/capital-b-shareholders-approve-120b-capital)
 摘要: 法国上市比特币财库公司 Capital B 在股东大会上获批最高 $120 亿美元融资授权，覆盖股权与债权工具，用于持续 BTC 收购。该额度相当于其当前市值（约 $5.8 亿）的 20 倍，为欧洲上市公司中最大规模 BTC 财库融资额度，反映美/欧比特币财库军备竞赛正从美股向泛欧 STO 板块蔓延。
 
-### FG Nexus 再抛售 10,000 ETH，累计亏损突破 $1 亿
+### Hyperliquid 未平仓合约突破 $100 亿，Talos：跨资产扩张显著
 来源: CoinTelegraph
-原文: [原文](https://cointelegraph.com/news/fg-nexus-offloads-additional-178m-ether-as-treasury-losses-top-100m)
-摘要: 前 Fundamental Global 改名而来的 FG Nexus 周二宣布出售额外 10,000 ETH，是过去 30 天内第 5 次大规模减持 ETH，累计亏损已突破 $1 亿。该公司 CEO Kyle Manchester 表示将"重新评估资本配置"，市场担忧其 ETH 财库模式可能被迫提前终止，与 Bitmine 增持路径形成鲜明对照。
+原文: [原文](https://cointelegraph.com/news/hyperliquids-10b-open-interest-growth-equities-commodities)
+摘要: 机构加密做市商 Talos 在最新周报中披露，去中心化永续交易所 Hyperliquid 全网未平仓合约（OI）已突破 $100 亿里程碑，且非 BTC/ETH 标的（股票、贵金属、原油代币化合约）占比快速上升至 22%。Talos 指出 24/7 全天候跨资产永续赛道已从加密原生场景外溢至传统大宗商品，Hyperliquid 正成为 CME 之外的对冲基金"影子衍生品交易所"。
 
 ## 🔬 技术前沿
-
-### 以太坊基金会研究员：账户级量子抗性方案成本仅 $0.07，无需硬分叉
-来源: CoinTelegraph
-原文: [原文](https://cointelegraph.com/news/ethereum-quantum-proof-accounts-7-cents-researcher)
-摘要: 以太坊基金会研究员 Nicolas Consigny 提交 EIP 草案，提议引入"中期后量子签名系统"（基于 Lamport + Merkle 树混合方案），可在不进行硬分叉前提下为每个以太坊账户启用量子安全保护，单账户实施成本约 $0.07。该方案面向 NIST 2024 年发布的 ML-DSA / SLH-DSA 标准，旨在防御"先收割后解密"（harvest-now-decrypt-later）攻击。
 
 ### Custodia Bank 联手 Vantage 推出"双形态代币" Hazel Network
 来源: CoinTelegraph
 原文: [原文](https://cointelegraph.com/news/custodia-vantage-unveil-token-that-shifts-between-bank-deposits-and-stablecoins)
 摘要: Caitlin Long 旗下 Custodia Bank 与德州 Vantage Bank 联合发布 Hazel Network，允许同一枚代币化美元在银行联盟内作为受 FDIC 保险的存款凭证、在联盟外自动切换为符合 GENIUS Act 的稳定币形态，意图打通"银行账户 ↔ 稳定币"双向通道。该方案如获监管放行，将成为美国本土首个 bank-backed stablecoin 双轨发行范例。
 
-### Hyperliquid 未平仓合约突破 $100 亿，Talos：跨资产扩张显著
+### 以太坊基金会研究员：账户级量子抗性方案成本仅 $0.07，无需硬分叉
 来源: CoinTelegraph
-原文: [原文](https://cointelegraph.com/news/hyperliquids-10b-open-interest-growth-equities-commodities)
-摘要: 机构加密做市商 Talos 在最新周报中披露，去中心化永续交易所 Hyperliquid 全网未平仓合约（OI）已突破 $100 亿里程碑，且非 BTC/ETH 标的（股票、贵金属、原油代币化合约）占比快速上升至 22%。Talos 指出 24/7 全天候跨资产永续赛道已从加密原生场景外溢至传统大宗商品，Hyperliquid 正成为 CME 之外的对冲基金"影子衍生品交易所"。
+原文: [原文](https://cointelegraph.com/news/ethereum-quantum-proof-accounts-7-cents-researcher)
+摘要: 以太坊基金会研究员 Nicolas Consigny 提交 EIP 草案，提议引入"中期后量子签名系统"（基于 Lamport + Merkle 树混合方案），可在不进行硬分叉前提下为每个以太坊账户启用量子安全保护，单账户实施成本约 $0.07。该方案面向 NIST 2024 年发布的 ML-DSA / SLH-DSA 标准，旨在防御"先收割后解密"（harvest-now-decrypt-later）攻击。
 
 ## ⚠️ 风险提示
 

@@ -1,14 +1,34 @@
 # Web3早报数据源
 
+## ⚠️ 必读：事件级去重（2026-06-19 师父拍板 C 方案）
+
+**Web3 早报在采集到候选 URL 后、动笔前，必须先跑 `scripts/morning-news-web3-dedup.sh` 去重。**
+
+详见 `web3-event-dedup.md`：
+
+```bash
+cd ~/.openclaw/workspace/github/text-matrix
+bash scripts/morning-news-web3-dedup.sh --threshold 3 --window 14 <url1> <url2> ...
+# exit 0 = 可动笔
+# exit 1 = 有严重复用 URL，丢弃后动笔
+```
+
+**为什么**：CoinTelegraph 大量"持续更新型"文章（同一 URL 内容被作者持续更新），仅 URL 级去重会反复抓到同一事件。2026-06-19 早报 3 条 URL 跨 3-14 天复用即为典型案例。
+
 ## 核心来源
 
 | 来源 | 网址 | 特色 | 状态 |
 | ------ | ------ | ------ | ------ |
 | CoinIndex | [https://coinindex.top/](https://coinindex.top/) | 实时加密货币价格、行情数据 | ⚠️ 备用 |
 | CoinGecko API | [https://api.coingecko.com/api/v3/](https://api.coingecko.com/api/v3/) | 主流币种价格、24h/7d涨跌 | ✅ **主用** |
-| CoinDesk | [https://www.coindesk.com/](https://www.coindesk.com/) | 权威加密货币新闻 | ⚠️ 备用 |
+| CoinDesk | [https://www.coindesk.com/](https://www.coindesk.com/) | 权威加密货币新闻 | 🟡 辅用（补充多元来源） |
 | CoinTelegraph | [https://cointelegraph.com/](https://cointelegraph.com/) | 英文加密货币新闻 | ✅ **主用** |
+| Decrypt | [https://decrypt.co/](https://decrypt.co/) | 加密货币新闻 | 🟡 辅用（补充多元来源） |
+| The Block | [https://www.theblock.co/](https://www.theblock.co/) | 加密货币深度报道 | 🟡 辅用 |
+| PANews 中文 | [https://www.panewslab.com/](https://www.panewslab.com/) | 中文加密货币快讯 | 🟡 辅用 |
 | 华尔街见闻Crypto | [https://wallstreetcn.com/](https://wallstreetcn.com/) | 中文加密货币快讯 | ⚠️ 备用 |
+
+**多元化要求**（2026-06-19 强化）：web3 早报应**尽量覆盖 ≥ 2 个来源**（CoinTelegraph + CoinDesk / Decrypt / The Block / PANews），避免单一来源 + 持续更新型文章造成的"假新闻"问题。
 
 ## 价格数据采集（API优先）
 

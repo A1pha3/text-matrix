@@ -1,10 +1,20 @@
 ---
 name: morning-report
-description: 为 text-matrix 生成四类中文早报:AI 新闻早报、经济财经早报、AI 副业早报、Web3 早报。触发词:"做早报""写早报""morning report""AI 新闻早报""财经早报""副业早报""Web3 早报""加密货币早报"。强制 24h 时间窗、Browser 逐条核链、V2EX 验真、Hugo 快讯 frontmatter 输出。
+description: 为 text-matrix 生成四类中文早报:AI 新闻早报、经济财经早报、AI 副业早报、Web3 早报。触发词:"做早报""写早报""morning report""AI 新闻早报""财经早报""副业早报""Web3 早报""加密货币早报"。强制 24h 时间窗、Browser 逐条核链、V2EX 验真、Web3 事件级去重、Hugo 快讯 frontmatter 输出。
 metadata:
-   version: 2.2.0
-   tags: ["morning-report", "news", "hugo", "verification", "workflow"]
+   version: 2.3.0
+   tags: ["morning-report", "news", "hugo", "verification", "workflow", "web3-dedup"]
 ---
+
+# Morning Report Skill
+
+## ⚠️ 2026-06-19 重要变更：Web3 早报事件级去重（师父拍板 C 方案）
+
+**新增 Step 2.5 - 事件级去重（仅 Web3 早报任务触发）**：
+- Web3 早报历史曾发生 3 条"持续更新型"URL 跨 3-14 天复用问题（2026-06-19 早报 6-05 fg-nexus、6-14 bitmine、6-16 strategy 三条 URL 被 cron 反复抓取）
+- 根因：CoinTelegraph 大量"持续更新"型文章（同一 URL 内容持续被作者更新）+ cron prompt 缺"已用 URL 黑名单"约束
+- **修复**：所有 web3 早报任务在动笔前**必须**先跑 `scripts/morning-news-web3-dedup.sh` 去重，命中严重复用（跨 ≥ 3 天）的 URL 直接丢弃
+- 详见 `references/web3-event-dedup.md` + 下方 Step 2.5 强制流程
 
 # Morning Report Skill
 
@@ -36,7 +46,7 @@ metadata:
 | "AI 新闻""AI 早报""模型新闻" | 仅 AI 新闻早报 | template.md + ai-news-sources.md | 其余来源文件 |
 | "财经早报""经济早报""市场早报" | 仅经济财经早报 | template.md + finance-sources.md | 其余来源文件 |
 | "副业早报""招聘早报""赚钱机会" | 仅 AI 副业早报 | template.md + side-hustle-sources.md | 其余来源文件 |
-| "Web3""加密货币""币圈""BTC""ETH" | 仅 Web3 早报 | template.md + web3-sources.md | 其余来源文件 |
+| "Web3""加密货币""币圈""BTC""ETH" | 仅 Web3 早报 | template.md + web3-sources.md + web3-event-dedup.md | 其余来源文件 |
 | "做早报""写早报""morning report" | 全部 4 份 | template.md;逐份加载对应来源文件 | 不要一次全量预加载 |
 
 未指定日期 → 使用今天;指定日期 → 仍只采集该日期回溯 24h 内容。
@@ -51,6 +61,24 @@ metadata:
    确认早报类型；加载相应 references 文件。
 2. **采集**（输入：来源站点 → 输出：候选 URL + 发布时间列表）
    逐条记录文章 URL；禁止用栏目页更新时间替代文章发布时间。
+2.5. **🆕 Web3 事件级去重（仅 Web3 任务触发，强约束）**
+   - **触发条件**：早报类型 = Web3
+   - **强制流程**：
+     1. 采集到候选 URL 列表后、动笔前，**必须**先跑仓库根目录下的 `scripts/morning-news-web3-dedup.sh`：
+        ```bash
+        cd ~/.openclaw/workspace/github/text-matrix
+        bash scripts/morning-news-web3-dedup.sh --threshold 3 --window 14 <url1> <url2> ...
+        # 或从候选文件读：
+        cat /tmp/web3-candidates.txt | bash scripts/morning-news-web3-dedup.sh
+        ```
+     2. 脚本返回 `exit 0`（无严重复用）→ 正常进入 Step 3。
+     3. 脚本返回 `exit 1`（有严重复用）→ stdout 会列出"严重复用"的 URL + 命中历史，**必须**把这些 URL 从本轮写文章清单中**剔除**，只对脚本标记的"✅ 新事件"列表动笔。
+     4. 严重复用 URL（跨 ≥ 3 天）一律丢弃，不允许"复用 + 改写时间副词"。
+   - **3 重判定**（任一命中即视为"已用"）：
+     - **A 重 - state file**：`~/.openclaw/workspace/state/web3-event-fingerprint.json`（本地，不入 GitHub）
+     - **B 重 - 文件系统**：扫 `content/posts/news/web3-morning-news-*.md` 全部历史早报（自动排除"今天"避免自我命中）
+     - **C 重 - 持续更新型标记**：state 中 `is_continuously_updated=true` 的 URL + 跨 ≥ 3 天 → 🔴 强制丢弃
+   - **历史教训**（2026-06-19 复盘）：6-19 web3 早报 11 条 URL 中 3 条严重复用（fg-nexus 14 天、bitmine 5 天、strategy 3 天），均为 CoinTelegraph "持续更新"型文章，AI 用新时间副词包装旧事件制造"新事件"假象。根因：cron prompt 只有"24h 时间窗口"无"已用 URL 黑名单"。本 Step + 脚本彻底封死此类问题。
 3. **核验**（输入：候选列表 → 输出：通过验证的条目）
    逐条打开原文页，确认发布时间在 24h 内、正文主题与标题吻合；**V2EX 条目必须打开帖子页验证标题、正文和发布者**。
 4. **筛选**（输入：核验结果 → 输出：精简条目列表）
