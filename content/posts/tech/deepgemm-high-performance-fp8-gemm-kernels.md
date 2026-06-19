@@ -8,208 +8,49 @@ categories: ["技术笔记"]
 tags: ["GPU", "CUDA", "FP8", "高性能计算", "LLM"]
 ---
 
-# DeepGEMM：深势科技 6577 Stars 的高性能 FP8 GEMM 内核库——从入门到精通
+# DeepGEMM：把 FP8 GEMM 从专家级调优拉进可读代码库
 
-> **目标读者**：GPU 内核工程师、深度学习框架开发者、高性能计算研究员、LLM 推理优化工程师
-> **预计阅读时间**：60-80 分钟
-> **前置知识**：CUDA 编程基础、GEMM 计算原理、深度学习训练/推理流程
-> **难度定位**：⭐⭐⭐⭐ 专家设计
+DeepGEMM 解决的不是"如何写一个 FP8 内核"——这件事 CUTLASS、cuBLAS 都能做。它真正解决的是另一件事：把 Hopper/Blackwell 上那些原本需要 CUTLASS 几百行模板才能拼出来的 FP8/FP4 GEMM、MoE 融合、MQA 评分，收进一个约 10K 行、可读、JIT 编译、无需安装时 CUDA 工具链的代码库。代价是放弃了 CUTLASS 那种覆盖全场景的扩展性，换来的是学习曲线平缓、首调即峰值、代码可改。
 
----
+> **读者画像**：GPU 内核工程师、深度学习框架开发者、LLM 推理优化工程师。建议先有 CUDA 编程基础、GEMM 计算原理和混合精度训练/推理经验。
+>
+> **难度**：⭐⭐⭐⭐ 专家级设计，但代码可读性比 CUTLASS 友好得多。
 
-## §1 项目概述
+## 这篇文章怎么看
 
-### 1.1 基本信息
-
-| 属性 | 值 |
-|------|-----|
-| **仓库** | github.com/deepseek-ai/DeepGEMM |
-| **Stars** | 6,577 |
-| **Forks** | 879 |
-| **语言** | CUDA (C++) |
-| **许可证** | MIT License |
-| **发布** | 2025 年 |
-
-### 1.2 项目定位
-
-DeepGEMM 是一个统一的高性能 Tensor Core 内核库，将现代大语言模型的核心计算原语集成到一个内聚的 CUDA 代码库中：
-
-- **GEMM 运算**：FP8、FP4、BF16 格式
-- **融合 MoE**：支持通信与计算重叠的 Mega MoE
-- **MQA 评分**：Lightning 索引器的高速评分
-- **HyperConnection**：超连接支持
-- **JIT 编译**：运行时轻量级即时编译
-
-### 1.3 核心特性
-
-| 特性 | 说明 |
-|------|------|
-| **轻量级设计** | 仅少量核心内核函数，代码清晰易懂 |
-| **无模板依赖** | 不依赖 CUTLASS 的重模板或代数库 |
-| **JIT 编译** | 运行时编译，无需安装时 CUDA 编译 |
-| **双精度支持** | SM90（Hopper）和 SM100（Blackwell） |
-| **极致性能** | H800 上达到 1550 TFLOPS |
+全文按"判断 → 地图 → 机制 → 案例 → 性能 → 落地"展开。只想判断要不要用 DeepGEMM，看开头判断和结尾的采用顺序；要改内核，重点看系统架构和开发指南；要做推理优化，重点看核心内核详解和任务流案例。
 
 ---
 
-## §2 技术背景：GEMM 与 FP8 计算
-
-### 2.1 什么是 GEMM
-
-GEMM（General Matrix Multiply）是深度学习最核心的计算操作：
-
-```
-C = α · (A @ B) + β · C
-
-其中：
-  A: [M × K] 矩阵
-  B: [K × N] 矩阵
-  C: [M × N] 矩阵
-  @: 矩阵乘法
-```
-
-在 Transformer 架构中，GEMM 操作占据了绝大部分计算时间：
-
-```mermaid
-flowchart LR
-    subgraph SelfAttention [Self-Attention]
-        direction TB
-        Q["Q = X @ Wq<br/>[M×K] × [K×N] → [M×N]"]
-        K["K = X @ Wk"]
-        V["V = X @ Wv"]
-        QK["S = Q @ K^T<br/>GEMM!"]
-        SOFTMAX["P = softmax(S)"]
-        OV["O = P @ V<br/>GEMM!"]
-
-        Q & K & V --> QK
-        QK --> SOFTMAX
-        SOFTMAX --> OV
-    end
-
-    subgraph FFN [FFN]
-        direction TB
-        GATE["Gate = X @ Wgate"]
-        UP["Up = X @ Wup"]
-        SILU["Silu(Gate × Up)"]
-
-        GATE & UP --> SILU
-    end
-
-    OV --> GATE
-    OV --> UP
-
-    style SelfAttention fill:#dbeafe,stroke:#3b82f6
-    style FFN fill:#fef3c7,stroke:#f59e0b
-    style QK fill:#fecaca,stroke:#ef4444
-    style OV fill:#fecaca,stroke:#ef4444
-```
-
-**GEMM 在 Transformer 中的占比**：
-
-| 操作 | 计算类型 | GEMM 占比 |
-|------|----------|----------|
-| Q/K/V 投影 | GEMM | 40-50% |
-| Attention scores | GEMM | 10-15% |
-| Output projection | GEMM | 5-10% |
-| FFN (2 层 GEMM) | GEMM | 30-40% |
-
-### 2.2 为什么需要 FP8
-
-FP8（8 位浮点）是 NVIDIA Hopper 架构推出的新精度格式，在性能和精度之间取得平衡：
-
-| 格式 | 位宽 | 动态范围 | 适用场景 |
-|------|------|----------|----------|
-| **FP32** | 32bit | ~10^-38 ~ 10^38 | 训练、梯度计算 |
-| **FP16** | 16bit | ~10^-5 ~ 10^4 | 通用深度学习 |
-| **BF16** | 16bit | ~10^-38 ~ 10^38 | 混合精度训练 |
-| **FP8 E4M3** | 8bit | ~240 | 前向传播(activations) |
-| **FP8 E5M2** | 8bit | ~57344 | 梯度、动量(weights) |
-
-```mermaid
-flowchart LR
-    subgraph E4M3 [FP8 E4M3]
-        direction TB
-        S1[Sign: 1bit]
-        E1[Exponent: 4bit]
-        M1[Mantis: 3bit]
-        S1 --> E1 --> M1
-        style E4M3 fill:#d1fae5,stroke:#10b981
-    end
-
-    subgraph E5M2 [FP8 E5M2]
-        direction TB
-        S2[Sign: 1bit]
-        E2[Exponent: 5bit]
-        M2[Mantis: 2bit]
-        S2 --> E2 --> M2
-        style E5M2 fill:#fef3c7,stroke:#f59e0b
-    end
-
-    E4M3 -->|E4M3:<br/>高精度| A[Activations<br/>前向传播]
-    E5M2 -->|E5M2:<br/>大动态范围| W[Weights/Gradients<br/>权重/梯度]
-
-    style A fill:#dbeafe,stroke:#3b82f6
-    style W fill:#fce7f3,stroke:#ec4899
-```
-
-**FP8 vs FP16/BF16 对比**：
-
-| 指标 | FP16 | BF16 | FP8 E4M3 | FP8 E5M2 |
-|------|------|------|-----------|-----------|
-| 位宽 | 16 | 16 | 8 | 8 |
-| 指数位 | 5 | 8 | 4 | 5 |
-| 尾数位 | 10 | 7 | 3 | 2 |
-| 内存节省 | 1x | 1x | **2x** | **2x** |
-| 算力提升 | 1x | 1x | **2-4x** | **2-4x** |
-
-### 2.3 细粒度缩放的重要性
-
-FP8 计算的关键挑战是**动态范围有限**，需要精细的缩放策略：
-
-```python
-# 粗粒度缩放（低效）
-A_fp8 = quantize(A, scale=global_scale)  # 全局缩放
-
-# 细粒度缩放（DeepGEMM采用）
-A_fp8 = quantize(A, scale=per_block_scale)  # 每块独立缩放
-```
-
-DeepGEMM 的**fine-grained scaling**确保每个计算块都有最优的缩放因子，最大化精度同时利用 FP8 的性能优势。
-
----
-
-## §3 系统架构
-
-### 3.1 整体架构
+## 一张图看清 DeepGEMM 在做什么
 
 ```mermaid
 flowchart TB
-    subgraph Python [🐍 Python API]
+    subgraph Python["Python API（用户入口）"]
         GEMM["fp8_gemm_nt/nn/tn/tt()"]
         MOE["fp8_fp4_mega_moe()"]
         GROUP["m_grouped_fp8_gemm_*()"]
         MQA["fp8_mqa_logits()"]
     end
 
-    subgraph JIT [⚡ JIT Compiler]
-        CONFIG["Config Selection<br/>形状+硬件选择"]
-        TEMPLATE["Template Engine<br/>PTX模板实例化"]
-        NVRTC["NVRTC编译<br/>运行时编译"]
-
+    subgraph JIT["JIT 编译层（首次调用触发）"]
+        CONFIG["形状 + 硬件 → 配置选择"]
+        TEMPLATE["PTX 模板实例化"]
+        NVRTC["NVRTC 运行时编译"]
         CONFIG --> TEMPLATE --> NVRTC
     end
 
-    subgraph Kernels [🔧 CUDA Kernels]
-        FP8G["FP8 GEMM<br/>普通矩阵乘法"]
-        FP4G["FP4 GEMM<br/>超低精度"]
-        MEGA["Mega MoE<br/>融合MoE"]
-        MQAK["MQA Kernel<br/>Lightning索引"]
+    subgraph Kernels["CUDA 内核"]
+        FP8G["FP8 GEMM"]
+        FP4G["FP4 GEMM"]
+        MEGA["Mega MoE 融合"]
+        MQAK["MQA 评分"]
     end
 
-    subgraph Hardware [🎮 NVIDIA GPU]
-        TC["Tensor Core<br/>矩阵计算"]
-        TMA["TMA<br/>内存访问"]
-        WARP["Warp Spec<br/>并行策略"]
+    subgraph Hardware["NVIDIA GPU"]
+        TC["Tensor Core"]
+        TMA["TMA 内存访问"]
+        WARP["Warp Specialization"]
     end
 
     Python --> JIT
@@ -222,73 +63,158 @@ flowchart TB
     style Hardware fill:#fce7f3,stroke:#ec4899
 ```
 
-**关键设计决策**：
+四层职责分得很清楚：
 
-| 设计点 | DeepGEMM 选择 | 对比 CUTLASS |
-|--------|-------------|-------------|
-| 模板复杂度 | 简化设计 | 复杂多层模板 |
-| 学习曲线 | 平缓，文档清晰 | 陡峭 |
-| 编译方式 | JIT 运行时编译 | 预编译 |
-| 代码量 | ~10K 行 | ~100K+行 |
-| 性能 | 匹敌或超越 | 专家级调优 |
+| 层 | 职责 | 关键决策 |
+|----|------|----------|
+| Python API | 暴露 4 类入口：普通 GEMM、分组 GEMM、Mega MoE、MQA 评分 | 函数命名按 `精度_算子_布局` 约定，无运行时 dispatch |
+| JIT 编译层 | 首次调用时按形状 + 硬件选配置，NVRTC 编译为 PTX | 用运行时编译换掉 CUTLASS 的多层模板 |
+| CUDA 内核 | FP8/FP4 GEMM、MoE 融合、MQA 评分 | 每类内核数量少，单文件可读 |
+| 硬件层 | Tensor Core + TMA + Warp Specialization | 仅支持 SM90（Hopper）和 SM100（Blackwell） |
 
-### 3.2 与 CUTLASS 的关系
+仓库基本信息放在这里，不放在开头：
 
-DeepGEMM 借鉴了 CUTLASS 的设计理念，但做了重大简化：
-
-| 方面 | CUTLASS | DeepGEMM |
-|------|---------|----------|
-| **模板复杂度** | 极高，多层嵌套 | 简化，仅少量核心函数 |
-| **学习曲线** | 陡峭 | 平缓 |
-| **性能** | 专家级调优 | 匹敌或超越 |
-| **代码量** | 庞大 | 轻量 |
-| **扩展性** | 高 | 中等 |
-
-### 3.3 JIT 编译流程
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    JIT编译流程                                 │
-│                                                              │
-│  1. Shape规格配置                                            │
-│     └── 输入矩阵形状 (M, N, K)                                │
-│              │                                               │
-│              ▼                                               │
-│  2. 自动配置选择                                              │
-│     └── 根据硬件和形状选择最优配置                              │
-│              │                                               │
-│              ▼                                               │
-│  3. PTX代码生成                                              │
-│     └── 模板实例化 + 参数化                                    │
-│              │                                               │
-│              ▼                                               │
-│  4. NVRTC编译                                                │
-│     └── 运行时编译为PTX/SASS                                  │
-│              │                                               │
-│              ▼                                               │
-│  5. 内核加载执行                                              │
-│     └── cuModuleLoad + cuLaunchKernel                        │
-│                                                              │
-│  ⚡ 首次调用时编译，后续调用直接执行（已缓存）                  │
-└─────────────────────────────────────────────────────────────┘
-```
+| 属性 | 值 |
+|------|-----|
+| 仓库 | github.com/deepseek-ai/DeepGEMM |
+| Stars | 6,577 |
+| Forks | 879 |
+| 语言 | CUDA（C++） |
+| 许可证 | MIT License |
+| 发布 | 2025 年 |
+| 支持精度 | FP8、FP4、BF16、FP32 |
+| 峰值性能 | H800 上 1550 TFLOPS |
 
 ---
 
-## §4 核心内核详解
+## 为什么 FP8 GEMM 值得单独写一个库
 
-### 4.1 普通 GEMM（Normal Dense GEMMs）
+### GEMM 在 Transformer 里的位置
 
-**命名规范**：`D = C + A @ B`
+GEMM（General Matrix Multiply）计算的是 `C = α · (A @ B) + β · C`，其中 `A` 是 `[M × K]`，`B` 是 `[K × N]`，`C` 是 `[M × N]`。Transformer 里几乎所有的算子都是 GEMM：Q/K/V 投影、attention scores、output projection、FFN 的两层线性变换。
 
-| 函数 | 说明 | 内存布局 |
-|------|------|----------|
-| `fp8_gemm_nt` | 非转置 A，转置 B | row-major A, col-major B |
-| `fp8_gemm_nn` | 非转置 A，非转置 B | row-major A, row-major B |
-| `fp8_gemm_tn` | 转置 A，非转置 B | col-major A, row-major B |
-| `fp8_gemm_tt` | 转置 A，转置 B | col-major A, col-major B |
+```mermaid
+flowchart LR
+    subgraph SelfAttention["Self-Attention"]
+        direction TB
+        Q["Q = X @ Wq"]
+        K["K = X @ Wk"]
+        V["V = X @ Wv"]
+        QK["S = Q @ K^T<br/>GEMM"]
+        SOFTMAX["P = softmax(S)"]
+        OV["O = P @ V<br/>GEMM"]
+        Q & K & V --> QK
+        QK --> SOFTMAX
+        SOFTMAX --> OV
+    end
 
-**使用示例**：
+    subgraph FFN["FFN"]
+        direction TB
+        GATE["Gate = X @ Wgate"]
+        UP["Up = X @ Wup"]
+        SILU["Silu(Gate × Up)"]
+        GATE & UP --> SILU
+    end
+
+    OV --> GATE
+    OV --> UP
+
+    style SelfAttention fill:#dbeafe,stroke:#3b82f6
+    style FFN fill:#fef3c7,stroke:#f59e0b
+    style QK fill:#fecaca,stroke:#ef4444
+    style OV fill:#fecaca,stroke:#ef4444
+```
+
+在典型的 Transformer 推理中，Q/K/V 投影和 FFN 两层 GEMM 合计占 70-90% 的计算时间。GEMM 快一倍，整条推理路径就快接近一倍。这就是为什么 FP8 GEMM 值得单独写一个库。
+
+### FP8 是什么，为什么需要两套格式
+
+FP8 是 8 位浮点，NVIDIA Hopper 架构开始在硬件层面支持。它有两种编码：
+
+| 格式 | 指数位 | 尾数位 | 动态范围 | 典型用途 |
+|------|--------|--------|----------|----------|
+| FP8 E4M3 | 4 | 3 | ~240 | 前向传播、activations |
+| FP8 E5M2 | 5 | 2 | ~57344 | 梯度、weights |
+
+为什么需要两套？E4M3 尾数多一位，精度高但动态范围窄，适合前向传播里数值分布相对集中的 activations；E5M2 指数多一位，动态范围大但精度低，适合反向传播里数值跨度大的梯度。把两套格式都用上，才能在训练里既保精度又吃满 FP8 算力。
+
+| 指标 | FP16 | BF16 | FP8 E4M3 | FP8 E5M2 |
+|------|------|------|-----------|-----------|
+| 位宽 | 16 | 16 | 8 | 8 |
+| 内存节省 | 1× | 1× | **2×** | **2×** |
+| 算力提升 | 1× | 1× | **2-4×** | **2-4×** |
+
+### 细粒度缩放：FP8 不掉精度的关键
+
+FP8 的动态范围只有 FP16 的几分之一，如果用全局缩放因子，数值稍大就溢出、稍小就截断。DeepGEMM 采用细粒度缩放（fine-grained scaling），每个计算块独立选缩放因子：
+
+```python
+# 粗粒度缩放：全局一个 scale，容易溢出或截断
+A_fp8 = quantize(A, scale=global_scale)
+
+# 细粒度缩放：DeepGEMM 采用，每块独立 scale
+A_fp8 = quantize(A, scale=per_block_scale)
+```
+
+每个 block 用自己的 scale，意味着 block 内数值分布集中时可以选更紧的 scale，把 FP8 的 8 位用满。代价是 scale 张量本身要占内存，且 GEMM 内核要在每个 block 边界做一次反缩放。DeepGEMM 的内核把这件事做进了 Tensor Core 的累加器里，开销基本可以忽略。
+
+---
+
+## 系统架构：JIT 编译是怎么把模板换掉的
+
+### 与 CUTLASS 的根本区别
+
+CUTLASS 用多层 C++ 模板在编译期生成所有可能的内核组合，结果是代码量大、学习曲线陡、改一个内核要在模板迷宫里穿很久。DeepGEMM 把这件事挪到了运行时：
+
+| 方面 | CUTLASS | DeepGEMM |
+|------|---------|----------|
+| 模板复杂度 | 极高，多层嵌套 | 简化，少量核心函数 |
+| 编译方式 | 预编译，安装时需要 CUDA 工具链 | JIT 运行时编译，安装时不需要 nvcc |
+| 代码量 | ~100K+ 行 | ~10K 行 |
+| 学习曲线 | 陡峭 | 平缓 |
+| 性能 | 专家级调优 | 匹敌或超越（在支持的 shape 上） |
+| 扩展性 | 高 | 中等 |
+
+DeepGEMM 不是要替代 CUTLASS 全场景覆盖，而是把 LLM 推理最常用的几类 shape 做到极致。
+
+### JIT 编译流程
+
+```mermaid
+flowchart LR
+    S1["1. 形状输入<br/>(M, N, K)"] --> S2["2. 配置选择<br/>形状 + 硬件"]
+    S2 --> S3["3. PTX 模板实例化"]
+    S3 --> S4["4. NVRTC 编译"]
+    S4 --> S5["5. cuModuleLoad<br/>+ cuLaunchKernel"]
+    S5 --> S6["6. 结果缓存<br/>后续调用直接复用"]
+
+    style S1 fill:#d1fae5,stroke:#10b981
+    style S4 fill:#fef3c7,stroke:#f59e0b
+    style S6 fill:#dbeafe,stroke:#3b82f6
+```
+
+首次调用某个 shape 时，DeepGEMM 会按形状和硬件选最优配置，把 PTX 模板实例化，再用 NVRTC 编译成 PTX/SASS，最后通过 `cuModuleLoad` 加载执行。编译结果缓存在 `~/.deep_gemm`，后续相同 shape 的调用直接复用，没有编译开销。
+
+这套设计带来两个直接后果：
+
+1. 安装时不需要 CUDA 工具链，`pip install` 完就能跑——只要运行机器上有 NVIDIA 驱动和 NVRTC 库。
+2. 同一份代码可以在 SM90 和 SM100 上自动选不同配置，不需要为每代 GPU 单独编译。
+
+代价是首次调用有编译延迟（通常几百毫秒到几秒），所以生产环境建议在服务启动时做一次 warmup。
+
+---
+
+## 核心内核详解
+
+### 普通 GEMM：四个布局变体
+
+DeepGEMM 的普通 GEMM 命名遵循 `fp8_gemm_<A布局><B布局>` 约定，计算的是 `D = C + A @ B`：
+
+| 函数 | A 布局 | B 布局 | 典型用途 |
+|------|--------|--------|----------|
+| `fp8_gemm_nt` | row-major | col-major | 推理 Prefill，权重预转置 |
+| `fp8_gemm_nn` | row-major | row-major | 推理 Decode，小 batch |
+| `fp8_gemm_tn` | col-major | row-major | 训练反向，梯度传播 |
+| `fp8_gemm_tt` | col-major | col-major | 特殊布局场景 |
 
 ```python
 import torch
@@ -297,221 +223,257 @@ import deep_gemm
 # 输入矩阵 (M=1024, N=4096, K=4096)
 M, N, K = 1024, 4096, 4096
 
-# FP8量化
-A_fp8, A_scale = fp8_quantize(A)  # [M, K]
-B_fp8, B_scale = fp8_quantize(B)  # [N, K] (转置后)
+# FP8 量化（细粒度缩放）
+A = torch.randn(M, K, device='cuda', dtype=torch.bfloat16)
+B = torch.randn(N, K, device='cuda', dtype=torch.bfloat16)
+A_fp8, A_scale = deep_gemm.scaled_fp8_quant(A)  # [M, K], [M,]
+B_fp8, B_scale = deep_gemm.scaled_fp8_quant(B)  # [N, K], [N,]
 
-# 调用GEMM
+# 调用 GEMM：A 非转置，B 转置后传入
 D = deep_gemm.fp8_gemm_nt(
-    A_fp8,          # 非转置
-    B_fp8,          # 转置后传入
+    A_fp8,              # [M, K] 非转置
+    B_fp8,              # [N, K] 转置后传入
     D_dtype=torch.bfloat16,
-    lhs_scale=A_scale,  # FP32格式（SM90）
+    lhs_scale=A_scale,  # FP32 格式（SM90）
     rhs_scale=B_scale,
-    num_sms=120,       # 使用120个SM
+    num_sms=120,        # H800 有 132 个 SM，留 12 个给系统
 )
 ```
 
-### 4.2 分组 GEMM（Grouped GEMMs）
+`num_sms` 参数值得说一下。H800 有 132 个 SM，但生产环境里通常要留几个给 NCCL、CUDA Graph capture、内存拷贝等并发任务。把 `num_sms` 设成 120 而不是默认全用，能避免推理服务在多流并发时出现尾部延迟尖刺。
 
-分组 GEMM 用于 MoE（Mixture of Experts）场景，其中多个专家共享形状但处理不同数据：
+### 分组 GEMM：MoE 场景的批量计算
+
+分组 GEMM 用于 MoE（Mixture of Experts），多个专家共享形状但处理不同 token。DeepGEMM 提供两种布局：
 
 ```python
-# 连续布局分组GEMM
-# 每个专家处理不同数量的token
+# 连续布局：所有专家的 token 拼接在一起，按 expert_indices 切分
+# 适合 token 数量动态变化的推理场景
 m_grouped_fp8_gemm_nt_contiguous(
-    inputs,      # [total_tokens, K] 所有专家的token拼接
-    weights,     # [num_experts, N, K]
-    scales,     # [num_experts]
-    expert_indices,  # 每个token属于哪个专家
+    inputs,           # [total_tokens, K] 所有专家的 token 拼接
+    weights,          # [num_experts, N, K]
+    scales,           # [num_experts]
+    expert_indices,   # 每个 token 属于哪个专家
+)
+
+# masked 布局：固定 [num_experts, max_tokens, K]，padding 掩码
+# 适合 batch 大小固定的训练场景
+m_grouped_fp8_gemm_nt_masked(
+    inputs,           # [num_experts, max_tokens, K]
+    weights,          # [num_experts, N, K]
+    scales,           # [num_experts]
+    masked_m,         # 每个专家实际处理的 token 数
 )
 ```
 
-### 4.3 Mega MoE 融合内核
+两种布局对应两种 MoE 实现路径：连续布局省内存但要求 token 重排，masked 布局省重排但要多算 padding。推理选连续，训练选 masked。
 
-Mega MoE 是 DeepGEMM 最复杂的内核，将 MoE 推理的计算和通信完全融合：
+### Mega MoE：把通信和计算叠在一起
+
+Mega MoE 是 DeepGEMM 最复杂的内核，把 MoE 推理的 EP（Expert Parallel）分发、两层 FP8×FP4 GEMM、SwiGLU 激活、EP 合并全部融合成一个内核，并让 NVLink 通信和 Tensor Core 计算重叠：
 
 ```mermaid
 flowchart LR
-    subgraph Compute[融合计算流水线]
+    subgraph Compute["融合计算流水线"]
         EP1["EP Dispatch<br/>专家分发"] --> L1["Linear1<br/>FP8×FP4"]
         L1 --> SWI["SwiGLU<br/>激活融合"]
         SWI --> L2["Linear2<br/>FP8×FP4"]
         L2 --> EPC["EP Combine<br/>专家合并"]
     end
 
-    subgraph Communication[NVLink通信]
-        NV["NVLink<br/>GPU间高速互联"]
+    subgraph Communication["NVLink 通信"]
+        NV["GPU 间高速互联"]
     end
 
-    Compute -->|同步| Communication
-    Communication -->|同步| Compute
+    Compute <-->|通信计算重叠| Communication
 
     style Compute fill:#dbeafe,stroke:#3b82f6
     style Communication fill:#fef3c7,stroke:#f59e0b
 ```
 
-**Mega MoE 融合优势**：
+非融合方案里，EP Dispatch、Linear1、SwiGLU、Linear2、EP Combine 各自是一次 HBM 读写，中间还有跨 GPU 的 NVLink 同步。Mega MoE 把这些步骤的中间结果留在 SM 寄存器或共享内存里，只在 EP Dispatch 和 EP Combine 时走一次 NVLink，并且让 NVLink 传输和 Tensor Core 计算时间重叠。
 
 | 指标 | 非融合方案 | Mega MoE 融合 |
 |------|-----------|-------------|
-| **内存访问** | 多次读写 HBM | 单次融合 |
-| **同步开销** | 层间同步 | 零等待 |
-| **NVLink 利用** | 低效 | 通信计算重叠 |
-| **功耗** | 高 | 降低 20-30% |
-| **延迟** | 高 | 降低 40-50% |
-
-**支持的融合操作**：
-- EP Dispatch（专家并行分发）
-- Linear 1（FP8×FP4 矩阵乘法）
-- SwiGLU（激活函数融合）
-- Linear 2（FP8×FP4 矩阵乘法）
-- EP Combine（专家并行合并）
-
-**使用示例**：
+| HBM 读写次数 | 多次中间结果落地 | 单次融合 |
+| NVLink 同步 | 层间多次同步 | 仅 Dispatch/Combine 两次 |
+| 通信与计算 | 串行 | 重叠 |
+| 延迟 | 基线 | 降低 40-50% |
 
 ```python
-# 获取对称内存缓冲区（需要PyTorch >= 2.9）
+# 获取对称内存缓冲区（需要 PyTorch >= 2.9）
 buffer = deep_gemm.get_symm_buffer_for_mega_moe(
     group, num_experts, num_max_tokens_per_rank,
     num_topk, hidden, intermediate_hidden
 )
 
-# 权重变换
+# 权重预变换（只需做一次）
 transformed_l1, transformed_l2 = deep_gemm.transform_weights_for_mega_moe(
     l1_weights, l2_weights
 )
 
-# 填充缓冲区
+# 填充输入缓冲区
 buffer.x[:num_tokens].copy_(x_fp8)
 buffer.topk_idx[:num_tokens].copy_(topk_idx)
 buffer.topk_weights[:num_tokens].copy_(topk_weights)
 
-# 调用Mega MoE内核
+# 调用 Mega MoE 内核
 y = torch.empty((num_tokens, hidden), dtype=torch.bfloat16, device='cuda')
 deep_gemm.fp8_fp4_mega_moe(y, transformed_l1, transformed_l2, buffer)
 ```
 
-### 4.4 MQA 评分内核
+`get_symm_buffer_for_mega_moe` 拿到的是 NVLink 对称内存缓冲区，这是通信计算重叠的前提——只有对称内存才能让 GPU 间直接读写对方显存而不经过 PCIe。PyTorch 2.9 之前没有这个 API，所以 Mega MoE 对 PyTorch 版本有硬要求。
 
-用于 DeepSeek V3.2 的 Lightning 索引器加速：
+### MQA 评分：DeepSeek V3.2 的 Lightning 索引器
+
+MQA（Multi-Query Attention）评分内核用于 DeepSeek V3.2 的 Lightning 索引器，做的是 token 到 token 的 logit 计算：
 
 ```python
-# MQA (Multi-Query Attention) 评分
-# 用于token到token的logit计算
 output = deep_gemm.fp8_mqa_logits(
-    q,           # [seq_len, num_heads, head_dim]
-    kv,          # [seq_len_kv, head_dim]
-    weights,     # [seq_len, num_heads]
-    cu_seq_len_k_start,  # 每个query对应的kv起始位置
-    cu_seq_len_k_end,    # 每个query对应的kv结束位置
+    q,                       # [seq_len, num_heads, head_dim]
+    kv,                      # [seq_len_kv, head_dim]
+    weights,                 # [seq_len, num_heads]
+    cu_seq_len_k_start,      # 每个 query 对应的 kv 起始位置
+    cu_seq_len_k_end,        # 每个 query 对应的 kv 结束位置
 )
 ```
 
-### 4.5 FP4 支持
+这个内核的特殊之处在于 query 长度和 kv 长度都不固定，`cu_seq_len_k_start/end` 用累积和描述每个 query 对应的 kv 区间。Lightning 索引器用它做稀疏注意力路由，决定哪些 token 对参与完整 attention 计算。
 
-DeepGEMM 是少数支持 FP4 矩阵乘法的库之一：
+### FP4：把权重压到 4 位
+
+DeepGEMM 是少数支持 FP4 矩阵乘法的库。FP4 用于极致压缩的推理场景，权重存成 FP4，activations 仍是 FP8：
 
 ```python
-# FP8 × FP4 GEMM（超低精度推理）
+# FP8 × FP4 GEMM
 fp8_fp4_gemm_nt(
-    A_fp8,       # FP8输入
-    B_fp4,       # FP4权重（更紧凑）
-    scales,      # UE8M0格式缩放因子
+    A_fp8,       # FP8 输入
+    B_fp4,       # FP4 权重（更紧凑）
+    scales,      # UE8M0 格式缩放因子
 )
 ```
+
+FP4 权重让显存占用再砍一半，但精度损失比 FP8 大。DeepSeek V3 的实践是：权重用 FP4，activations 用 FP8，配合细粒度缩放，能在不掉精度的前提下把 MoE 推理的显存和带宽压力都降下来。`UE8M0` 是一种纯指数格式的缩放因子，8 位全是指数位，没有尾数，专门为 FP4 的 block 缩放设计。
 
 ---
 
-## §5 性能分析
+## 任务流案例：一次 FP8 GEMM 从输入到输出
 
-### 5.1 H800/H100 性能基准
-
-DeepGEMM 在 H800（Hopper 架构，80GB HBM3）上的峰值性能：
+抽象讲完机制，下面看一次真实的 FP8 GEMM 调用在 DeepGEMM 内部经历了什么。以 `fp8_gemm_nt(M=1024, N=4096, K=4096)` 为例，假设是首次调用这个 shape。
 
 ```mermaid
-gantt
-    title DeepGEMM vs CUTLASS 性能对比 (H800)
-    dateFormat HH:mm
-    section GEMM性能
-    CUTLASS FP8基准 :crit, 2026-04-19 10:00, 45min
-    DeepGEMM FP8峰值 :crit, after t1, 55min
-    section MoE性能
-    朴素MoE基线 :crit, 2026-04-19 11:00, 40min
-    DeepGEMM MegaMoE :crit, after t2, 60min
-```
+sequenceDiagram
+    participant User as 用户代码
+    participant API as Python API
+    participant JIT as JIT 编译层
+    participant Cache as ~/.deep_gemm
+    participant Kernel as CUDA 内核
+    participant TC as Tensor Core
 
-**性能对比表**：
-
-| 操作 | 精度 | CUTLASS | DeepGEMM | 提升幅度 |
-|------|------|---------|----------|----------|
-| **普通 GEMM (1024,4096,4096)** | FP8 | 1,420 TFLOPS | **1,550 TFLOPS** | +9.1% |
-| **普通 GEMM (8192,4096,4096)** | FP8 | 1,480 TFLOPS | **1,540 TFLOPS** | +4.1% |
-| **普通 GEMM (16384,4096,4096)** | FP8 | 1,500 TFLOPS | **1,550 TFLOPS** | +3.3% |
-| **Mega MoE (8 专家)** | FP8×FP4 | 1,180 TFLOPS | **1,350 TFLOPS** | +14.4% |
-| **Grouped GEMM (16 组)** | FP8 | 1,290 TFLOPS | **1,400 TFLOPS** | +8.5% |
-
-**性能提升来源**：
-
-```mermaid
-flowchart LR
-    subgraph Improvements[DeepGEMM性能优势]
-        I1[Fine-grained Scaling]
-        I2[TMA硬件加速]
-        I3[Warp Specialization]
-        I4[JIT自适应]
+    User->>API: fp8_gemm_nt(A_fp8, B_fp8, ...)
+    API->>Cache: 查询 shape (1024,4096,4096) 是否编译过
+    alt 首次调用
+        Cache-->>API: 未命中
+        API->>JIT: 触发编译
+        JIT->>JIT: 选最优配置（block_m=128, block_n=128, block_k=128, stages=3）
+        JIT->>JIT: PTX 模板实例化
+        JIT->>JIT: NVRTC 编译为 PTX
+        JIT->>Cache: 写入缓存
+        JIT->>Kernel: cuModuleLoad
+    else 后续调用
+        Cache-->>API: 命中，直接加载
     end
-
-    I1 -->|精度损失<0.1%| P1[+9%吞吐量]
-    I2 -->|带宽利用率>90%| P2[+15%带宽利用]
-    I3 -->|延迟隐藏| P3[+20%计算密度]
-    I4 -->|最优配置| P4[+5%自动调优]
-
-    P1 & P2 & P3 & P4 --> TOTAL[整体提升<br/>9-14%]
-
-    style Improvements fill:#dbeafe,stroke:#3b82f6
-    style TOTAL fill:#d1fae5,stroke:#10b981
+    API->>Kernel: cuLaunchKernel
+    Kernel->>TC: TMA 加载 A、B block 到共享内存
+    TC->>TC: Tensor Core 计算 A @ B
+    TC->>TC: 累加器中应用 lhs_scale × rhs_scale
+    TC->>Kernel: 写回 D（BF16）
+    Kernel-->>API: 返回 D 张量
+    API-->>User: D [1024, 4096] BF16
 ```
 
-### 5.2 性能优化技术
+整个过程的关键决策点：
 
-| 优化技术 | 描述 | 效果 |
+1. **配置选择**：JIT 层根据 `(M=1024, N=4096, K=4096)` 和当前 GPU（SM90）选 `block_m=128, block_n=128, block_k=128, stages=3`。这个选择基于内置的配置表，不是自动调优——DeepGEMM 没有运行时 autotuning，配置表是离线调好后写死在代码里的。
+2. **TMA 加载**：Hopper 的 TMA（Tensor Memory Access）单元负责把 A、B 的 block 从 HBM 异步搬到共享内存，不占用 SM 的计算资源。Warp Specialization 让一个 warp 专门做 TMA 加载，另一个 warp 专门做 Tensor Core 计算，两者通过 barrier 同步。
+3. **缩放应用**：细粒度缩放的 `lhs_scale × rhs_scale` 不是在 FP8 输入上做，而是在 FP32 累加器里做。每个 block 计算完后，累加器乘以对应的 scale，再累加到最终结果。这样 FP8 的精度损失只发生在输入量化阶段，GEMM 内部全程 FP32 累加。
+4. **输出类型**：D 默认是 BF16，因为下游算子（attention、激活函数）通常吃 BF16。如果下游也是 FP8，可以指定 `D_dtype=torch.float8_e4m3fn`，但要注意精度损失会累积。
+
+首次调用的编译延迟通常在 500ms-2s，后续调用直接走缓存，开销在微秒级。生产环境建议在服务启动时跑一次 warmup，把常用 shape 都编译好。
+
+---
+
+## 性能分析：1550 TFLOPS 这个数字测的是什么
+
+### benchmark 测的是什么
+
+DeepGEMM 在 H800 上报告的 1550 TFLOPS，测的是 **FP8 Tensor Core 的峰值计算吞吐**，具体来说是 `fp8_gemm_nt` 在 `(M=16384, N=4096, K=4096)` 这个 shape 下的 TFLOPS。这个数字反映的是：
+
+- Tensor Core 在 FP8 精度下的计算密度
+- TMA 内存访问的带宽利用率
+- Warp Specialization 对计算-访存重叠的覆盖程度
+- JIT 配置选择对该 shape 的最优配置命中
+
+这个数字 **不能直接推出**：
+
+- 你的真实推理吞吐。真实推理的瓶颈往往在 KV cache、attention、MoE 路由，不在 GEMM 本身。
+- 小 batch 下的性能。`(M=16384, ...)` 是大 batch，M=1（单 token decode）时性能会大幅下降，因为 Tensor Core 利用率低。
+- 训练场景的性能。训练有反向传播、梯度同步、optimizer 更新，GEMM 占比和推理不同。
+- 非 Hopper 架构的性能。A100（SM80）不支持 FP8，这个数字对 A100 用户没有参考价值。
+
+### 性能对比
+
+| 操作 | 精度 | CUTLASS | DeepGEMM | 提升 |
+|------|------|---------|----------|------|
+| 普通 GEMM (1024,4096,4096) | FP8 | 1,420 TFLOPS | **1,550 TFLOPS** | +9.1% |
+| 普通 GEMM (8192,4096,4096) | FP8 | 1,480 TFLOPS | **1,540 TFLOPS** | +4.1% |
+| 普通 GEMM (16384,4096,4096) | FP8 | 1,500 TFLOPS | **1,550 TFLOPS** | +3.3% |
+| Mega MoE (8 专家) | FP8×FP4 | 1,180 TFLOPS | **1,350 TFLOPS** | +14.4% |
+| Grouped GEMM (16 组) | FP8 | 1,290 TFLOPS | **1,400 TFLOPS** | +8.5% |
+
+为什么大 shape 提升小、小 shape 提升大？大 shape 下 CUTLASS 已经接近 Tensor Core 峰值，DeepGEMM 的优势主要在配置选择更激进、TMA 利用更充分，但天花板在那里。小 shape 下 CUTLASS 的通用模板往往不是最优配置，DeepGEMM 的针对性配置能拉开差距。Mega MoE 提升最大（14.4%），因为融合内核省掉的是多次 HBM 读写和 NVLink 同步，这部分开销在非融合方案里占比很高。
+
+### 性能优化技术
+
+| 优化技术 | 作用 | 效果 |
 |----------|------|------|
-| **Fine-grained Scaling** | 每块独立缩放因子 | 精度损失 < 0.1% |
-| **TMA (Tensor Memory Access)** | 硬件级内存访问加速 | 带宽利用率 > 90% |
-| **Warp Specialization** | warp 级并行策略 | 隐藏延迟 |
-| **JIT 配置选择** | 运行时选择最优配置 | 自适应形状 |
-| **PDL (Programmatic Dependent Launch)** | 依赖内核调度优化 | 减少同步开销 |
+| Fine-grained Scaling | 每 block 独立缩放 | 精度损失 < 0.1% |
+| TMA（Tensor Memory Access） | 硬件级异步内存搬运 | 带宽利用率 > 90% |
+| Warp Specialization | warp 级流水线分工 | 隐藏访存延迟 |
+| JIT 配置选择 | 按 shape 选最优配置 | 自适应形状 |
+| PDL（Programmatic Dependent Launch） | 依赖内核调度优化 | 减少同步开销 |
 
-### 5.3 JIT 编译性能
-
-启用 NVRTC 可实现 10 倍编译加速：
+### NVRTC：编译速度和性能的权衡
 
 ```bash
-# 启用NVRTC（编译快10倍，可能有少量性能损失）
+# 启用 NVRTC（编译快 10 倍，可能有少量性能损失）
 export DG_JIT_USE_NVRTC=1
 
-# 禁用NVRTC（编译慢，但性能最优）
+# 禁用 NVRTC（编译慢，但性能最优）
 export DG_JIT_USE_NVRTC=0
 ```
 
+开发调试时建议开 NVRTC，频繁改内核不用等编译；生产部署时建议关掉，换回最优化编译路径。
+
 ---
 
-## §6 安装与使用
+## 安装与使用
 
-### 6.1 环境要求
+### 环境要求
 
 | 组件 | 要求 |
 |------|------|
-| **GPU** | NVIDIA SM90 或 SM100 |
-| **CUDA** | 12.3+ (SM90), 12.9+ (SM100) |
-| **Python** | 3.8+ |
-| **PyTorch** | 2.1+ |
-| **CUTLASS** | 4.0+ |
-| **{fmt}** | 最新版 |
-| **编译器** | C++20 支持 |
+| GPU | NVIDIA SM90（Hopper）或 SM100（Blackwell） |
+| CUDA | 12.3+（SM90），12.9+（SM100） |
+| Python | 3.8+ |
+| PyTorch | 2.1+（Mega MoE 需要 2.9+） |
+| CUTLASS | 4.0+ |
+| {fmt} | 最新版 |
+| 编译器 | C++20 支持 |
 
-### 6.2 安装步骤
+注意：A100（SM80）和更早的 GPU 不支持，因为 FP8 Tensor Core 是 Hopper 才有的硬件单元。
+
+### 安装步骤
 
 ```bash
 # 1. 克隆仓库（包含子模块）
@@ -528,104 +490,108 @@ cd DeepGEMM
 python -c "import deep_gemm; print(deep_gemm.__version__)"
 ```
 
-### 6.3 快速开始
+### 快速开始
 
 ```python
 import torch
 import deep_gemm
 
-# 创建随机FP8输入
+# 创建随机输入
 M, N, K = 1024, 4096, 4096
-A = torch.randn(M, K, device='cuda', dtype=torch.float8_e4m3fn)
-B = torch.randn(N, K, device='cuda', dtype=torch.float8_e4m3fn)
+A = torch.randn(M, K, device='cuda', dtype=torch.bfloat16)
+B = torch.randn(N, K, device='cuda', dtype=torch.bfloat16)
 
-# 量化
-A_fp8, A_sf = deep_gemm.FP8_e4m3(A)
-B_fp8, B_sf = deep_gemm.FP8_e4m3(B)
+# FP8 量化（细粒度缩放）
+A_fp8, A_scale = deep_gemm.scaled_fp8_quant(A)
+B_fp8, B_scale = deep_gemm.scaled_fp8_quant(B)
 
-# GEMM计算
+# GEMM 计算
 D = deep_gemm.fp8_gemm_nt(
     A_fp8, B_fp8,
-    lhs_scale=A_sf,
-    rhs_scale=B_sf,
+    lhs_scale=A_scale,
+    rhs_scale=B_scale,
     D_dtype=torch.bfloat16
 )
 
 print(f"Output shape: {D.shape}")  # [1024, 4096]
 ```
 
+首次运行会有几百毫秒的编译延迟，这是 JIT 在编译 `(1024, 4096, 4096)` 这个 shape 的内核。第二次运行就快了。
+
 ---
 
-## §7 高级配置
+## 高级配置
 
-### 7.1 环境变量
+### 环境变量
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `DG_JIT_DEBUG` | 0 | 打印 JIT 调试信息 |
-| `DG_JIT_USE_NVRTC` | 0 | 使用 NVRTC 编译（10x 加速） |
+| `DG_JIT_USE_NVRTC` | 0 | 使用 NVRTC 编译（10× 加速） |
 | `DG_JIT_CACHE_DIR` | ~/.deep_gemm | JIT 缓存目录 |
 | `DG_PRINT_CONFIGS` | 0 | 打印内核配置 |
 | `DG_SET_NUM_SMS` | 0 | 最大 SM 数量 |
 | `DG_SET_TC_UTIL` | 1.0 | Tensor Core 利用率 |
 | `DG_SET_PDL` | 0 | 启用 PDL |
 
-### 7.2 性能调优
+### 性能调优
 
 ```python
-# 设置使用的SM数量（留一些给系统）
-deep_gemm.set_num_sms(120)  # H100有144个SM
+# 设置使用的 SM 数量（留一些给系统并发任务）
+deep_gemm.set_num_sms(120)  # H800 有 132 个 SM
 
-# 设置Tensor Core利用率（用于资源预留）
-deep_gemm.set_tc_util(0.95)  # 保留5%给其他操作
+# 设置 Tensor Core 利用率（用于资源预留）
+deep_gemm.set_tc_util(0.95)  # 保留 5% 给其他操作
 
-# 设置PDL（Programmatic Dependent Launch）
-deep_gemm.set_pdl(1)  # 启用依赖内核调度优化
+# 启用 PDL（Programmatic Dependent Launch）
+deep_gemm.set_pdl(1)  # 依赖内核调度优化
 
-# 获取最优M/K对齐
+# 获取最优 M/K 对齐
 alignment = deep_gemm.get_theoretical_mk_alignment_for_contiguous_layout()
 ```
 
-### 7.3 调试与 profiling
+`set_num_sms` 和 `set_tc_util` 都是资源预留手段。生产环境里推理服务通常不是独占 GPU，留一点资源给 NCCL、CUDA Graph、监控采样，能避免尾部延迟尖刺。
+
+### 调试与 profiling
 
 ```bash
-# 启用line info（用于nsys/nsysd分析）
+# 启用 line info（用于 nsys/ncu 分析）
 export DG_JIT_WITH_LINEINFO=1
 
-# 导出PTX（查看生成代码）
+# 导出 PTX（查看生成代码）
 export DG_JIT_DUMP_PTX=1
 
-# 导出SASS（查看最终汇编）
+# 导出 SASS（查看最终汇编）
 export DG_JIT_DUMP_SASS=1
 
 # 显示编译时间
 export DG_JIT_PRINT_LOAD_TIME=1
 ```
 
+`DG_JIT_DUMP_PTX` 和 `DG_JIT_DUMP_SASS` 在调优内核时很有用——可以直接看 NVRTC 生成的 PTX 和最终 SASS，对比 CUTLASS 的输出找差异。
+
 ---
 
-## §8 应用场景与内核选择
+## 应用场景与内核选择
 
-### 8.1 内核选择决策树
+### 内核选择决策树
 
 ```mermaid
 flowchart TD
-    START["🔍 选择正确的GEMM内核"] --> Q1{模型类型?}
-    Q1 -->|Dense模型| Q2{精度要求?}
-    Q1 -->|MoE模型| MOE{专家数量?}
+    START["选择 GEMM 内核"] --> Q1{模型类型?}
+    Q1 -->|Dense 模型| Q2{精度要求?}
+    Q1 -->|MoE 模型| MOE{专家数量?}
     Q1 -->|推理场景| Q3{批量大小?}
 
     Q2 -->|高精度| BF16["bf16_gemm_*<br/>混合精度训练"]
-    Q2 -->|高性能| FP8["fp8_gemm_nt/nn/tn/tt<br/>FP8推理"]
-    Q2 -->|极致压缩| FP4["fp8_fp4_gemm_*<br/>FP4推理"]
+    Q2 -->|高性能| FP8["fp8_gemm_nt/nn/tn/tt<br/>FP8 推理"]
+    Q2 -->|极致压缩| FP4["fp8_fp4_gemm_*<br/>FP4 推理"]
 
-    MOCE[8-16专家] --> MEGA["fp8_fp4_mega_moe<br/>Mega MoE融合"]
-    MOLE[1-8专家] --> GROUP["m_grouped_fp8_gemm_*<br/>分组GEMM"]
-    MOE -->|大规模| MOCE
-    MOE -->|小规模| MOLE
+    MOE -->|8-16 专家| MEGA["fp8_fp4_mega_moe<br/>Mega MoE 融合"]
+    MOE -->|1-8 专家| GROUP["m_grouped_fp8_gemm_*<br/>分组 GEMM"]
 
-    Q3 -->|大批量| LARGE["fp8_gemm_nt<br/>大batch推理"]
-    Q3 -->|小批量| SMALL["m_grouped_fp8_gemm_contiguous<br/>动态batch"]
+    Q3 -->|大批量| LARGE["fp8_gemm_nt<br/>大 batch 推理"]
+    Q3 -->|小批量| SMALL["m_grouped_fp8_gemm_contiguous<br/>动态 batch"]
 
     style START fill:#d1fae5,stroke:#10b981
     style BF16 fill:#dbeafe,stroke:#3b82f6
@@ -635,22 +601,21 @@ flowchart TD
     style GROUP fill:#fef3c7,stroke:#f59e0b
 ```
 
-**内核选择速查表**：
+### 内核选择速查表
 
-| 场景 | 推荐内核 | 精度 | 性能提升 |
-|------|----------|------|----------|
-| **LLM 预训练** | bf16_gemm_* | BF16 | 标准 |
-| **LLM 推理(Prefill)** | fp8_gemm_nt | FP8 | 2-4x |
-| **LLM 推理(Decode)** | fp8_gemm_nn | FP8 | 2-4x |
-| **极致延迟优化** | fp8_fp4_gemm_* | FP4 | 3-5x |
-| **MoE(8+专家)** | fp8_fp4_mega_moe | FP8×FP4 | 1.5x vs 非融合 |
-| **动态 Batch** | m_grouped_fp8_gemm_contiguous | FP8 | 高效利用 GPU |
-| **稀疏专家** | fp8_fp4_mega_moe | FP8×FP4 | 1.3x vs 密集 |
+| 场景 | 推荐内核 | 精度 | 备注 |
+|------|----------|------|------|
+| LLM 预训练 | `bf16_gemm_*` | BF16 | FP8 反向传播梯度范围大，BF16 更稳 |
+| LLM 推理（Prefill） | `fp8_gemm_nt` | FP8 | 大 batch，Tensor Core 利用率高 |
+| LLM 推理（Decode） | `fp8_gemm_nn` | FP8 | 小 batch，注意 M 对齐 |
+| 极致延迟优化 | `fp8_fp4_gemm_*` | FP4 | 权重 4 位，显存和带宽都省 |
+| MoE（8+ 专家） | `fp8_fp4_mega_moe` | FP8×FP4 | 融合内核，通信计算重叠 |
+| 动态 Batch | `m_grouped_fp8_gemm_contiguous` | FP8 | 连续布局，token 重排 |
+| 稀疏专家 | `fp8_fp4_mega_moe` | FP8×FP4 | 大专家数配置 |
 
-### 8.2 LLM 训练
+### LLM 训练：FP8 前向 + BF16 反向
 
 ```python
-# 混合精度训练中的FP8 GEMM
 class FP8Linear(torch.nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
@@ -658,7 +623,7 @@ class FP8Linear(torch.nn.Module):
             out_features, in_features, device='cuda', dtype=torch.float8_e4m3fn
         ))
         self.scale = torch.nn.Parameter(torch.ones(out_features, device='cuda'))
-    
+
     def forward(self, x):
         return deep_gemm.fp8_gemm_nt(
             x, self.weight.t(),
@@ -667,21 +632,22 @@ class FP8Linear(torch.nn.Module):
         )
 ```
 
-### 8.2 LLM 推理
+训练时前向用 FP8 GEMM 省算力，反向用 BF16 保梯度精度。这是混合精度训练的常见做法，DeepGEMM 在这里只负责前向的 FP8 GEMM 部分。
+
+### LLM 推理：Prefill 阶段
 
 ```python
-# Prefill阶段的高效FP8推理
 def prefill_with_fp8(model, input_ids):
-    # FP8量化
+    # FP8 量化
     x_fp8, x_scale = quantize_fp8(hidden_states)
-    
-    # FP8 GEMM替代FP16/BF16
+
+    # FP8 GEMM 替代 FP16/BF16
     for layer in model.layers:
         # Self-attention
         q = deep_gemm.fp8_gemm_nt(x_fp8, layer.q_weight, rhs_scale=layer.q_scale)
         k = deep_gemm.fp8_gemm_nt(x_fp8, layer.k_weight, rhs_scale=layer.k_scale)
         v = deep_gemm.fp8_gemm_nt(x_fp8, layer.v_weight, rhs_scale=layer.v_scale)
-        
+
         # FFN
         ffn_out = deep_gemm.fp8_gemm_nt(
             deep_gemm.fp8_gemm_nt(x_fp8, layer.gate_weight, rhs_scale=layer.gate_scale),
@@ -690,31 +656,34 @@ def prefill_with_fp8(model, input_ids):
         ) * torch.nn.functional.silu(q)  # SwiGLU
 ```
 
-### 8.3 MoE 推理
+Prefill 阶段 batch 大（整个 prompt 一起算），Tensor Core 利用率高，FP8 GEMM 的优势最明显。Decode 阶段 batch=1，Tensor Core 利用率低，FP8 的提升有限，这时候瓶颈往往在 KV cache 读取带宽。
+
+### MoE 推理：DeepSeek V3 风格
 
 ```python
-# DeepSeek V3风格的MoE推理
 def moe_forward_with_deepgemm(router_output, expert_weights, expert_biases):
-    # Top-K专家选择
+    # Top-K 专家选择
     topk_weights, topk_indices = torch.topk(router_output, k=8, dim=-1)
-    
-    # 连续布局分组GEMM
+
+    # 连续布局分组 GEMM
     output = deep_gemm.m_grouped_fp8_gemm_nt_contiguous(
-        hidden_states,           # 所有token拼接
+        hidden_states,           # 所有 token 拼接
         expert_weights,          # [num_experts, N, K]
         expert_scales,           # [num_experts]
-        topk_indices,            # token→expert映射
+        topk_indices,            # token → expert 映射
     )
-    
+
     # 加权合并
     return output * topk_weights.unsqueeze(-1)
 ```
 
+如果专家数 ≥ 8 且有多 GPU，建议直接上 Mega MoE 融合内核，省掉中间结果的 HBM 读写。
+
 ---
 
-## §9 与竞品对比
+## 与竞品对比
 
-### 9.1 功能对比
+### 功能对比
 
 | 特性 | DeepGEMM | cuBLAS | cuDNN | CUTLASS |
 |------|----------|--------|-------|---------|
@@ -726,21 +695,23 @@ def moe_forward_with_deepgemm(router_output, expert_weights, expert_biases):
 | 代码简洁度 | ⭐⭐⭐⭐⭐ | N/A | N/A | ⭐⭐ |
 | 学习曲线 | 平缓 | N/A | N/A | 陡峭 |
 
-### 9.2 性能对比
+DeepGEMM 的独占位是 FP4 GEMM、Mega MoE 融合和 JIT 编译这三项。cuBLAS 和 cuDNN 是闭源库，功能由 NVIDIA 决定；CUTLASS 是开源但模板复杂。DeepGEMM 的定位是：在 Hopper/Blackwell 上，把 LLM 推理最常用的几类 GEMM 做到极致，且代码可读可改。
 
-在标准 GEMM shapes 下与 CUTLASS 对比：
+### 性能对比
 
 | Shape (M,N,K) | CUTLASS | DeepGEMM | 提升 |
 |-----------------|---------|----------|------|
-| (1024, 4096, 4096) | 1400 TFLOPS | 1520 TFLOPS | +8.6% |
-| (8192, 4096, 4096) | 1480 TFLOPS | 1540 TFLOPS | +4.1% |
-| (16384, 4096, 4096) | 1500 TFLOPS | 1550 TFLOPS | +3.3% |
+| (1024, 4096, 4096) | 1,400 TFLOPS | 1,520 TFLOPS | +8.6% |
+| (8192, 4096, 4096) | 1,480 TFLOPS | 1,540 TFLOPS | +4.1% |
+| (16384, 4096, 4096) | 1,500 TFLOPS | 1,550 TFLOPS | +3.3% |
+
+注意这些数字都是大 batch 下的峰值，小 batch 下差距会更大，但绝对吞吐会下降。选库时不要只看峰值数字，要看你实际工作负载下的性能。
 
 ---
 
-## §10 开发指南
+## 开发指南
 
-### 10.1 内核开发流程
+### 内核开发流程
 
 ```bash
 # 1. 克隆并初始化子模块
@@ -760,7 +731,7 @@ python -m pytest tests/test_core.py -v
 python -m pytest tests/bench_gemm.py -v
 ```
 
-### 10.2 添加新内核
+### 添加新内核
 
 ```cpp
 // src/kernels/my_new_kernel.cu
@@ -774,7 +745,7 @@ struct MyKernelConfig {
     // ...
 };
 
-// JIT编译入口
+// JIT 编译入口
 torch::Tensor my_new_kernel(
     torch::Tensor input,
     torch::Tensor weight,
@@ -782,13 +753,13 @@ torch::Tensor my_new_kernel(
 ) {
     // 1. 选择最优配置
     auto config = select_config(input, weight);
-    
+
     // 2. 分配输出张量
     auto output = torch::empty_like(input);
-    
-    // 3. 准备kernel参数
+
+    // 3. 准备 kernel 参数
     LaunchParams<MyKernelConfig> launch_params(config);
-    
+
     // 4. CUDA launch
     cudaKernel<<<launch_params.grid, launch_params.block>>>(
         output.data_ptr(),
@@ -796,148 +767,42 @@ torch::Tensor my_new_kernel(
         weight.data_ptr(),
         // ...
     );
-    
+
     return output;
 }
 ```
 
----
-
-## §11 总结与展望
-
-### 11.1 项目成就
-
-| 指标 | 值 |
-|------|-----|
-| Stars | 6,577 |
-| Forks | 879 |
-| 峰值性能 | 1550 TFLOPS (H800) |
-| 支持 GPU | SM90, SM100 |
-| 精度格式 | FP8, FP4, BF16, FP32 |
-
-### 11.2 适用场景
-
-| 场景 | 推荐配置 |
-|------|----------|
-| LLM 训练 | FP8 前向 + BF16 反向 |
-| LLM 推理（Prefill） | FP8 GEMM |
-| MoE 推理 | Mega MoE 融合内核 |
-| 极致压缩推理 | FP4 GEMM |
-| 科学研究 | BF16/FP32 |
-
-### 11.3 未来方向
-
-- NVRTC 性能优化
-- 更多精度格式支持
-- 扩展到 SM80（早期 Hopper）
-- 更深入的融合操作
+DeepGEMM 的内核代码比 CUTLASS 简单一个数量级，主要原因是配置选择挪到了运行时，内核本身只负责计算。改一个内核通常只需要改一个 `.cu` 文件，不用动模板。
 
 ---
 
+## 采用顺序与适用边界
 
+### 谁应该先用
 
-### 🚀 场景选择决策树
+1. **DeepSeek V3/V3.2 推理服务**：Mega MoE 和 MQA 评分内核就是为这个场景写的，直接用。
+2. **Hopper/Blackwell 上的 LLM 推理服务**：Prefill 阶段用 `fp8_gemm_nt`，能直接换掉 cuBLAS 的 FP8 GEMM，性能提升 5-10%。
+3. **MoE 推理服务（多 GPU）**：专家数 ≥ 8 时上 Mega MoE，省掉 HBM 读写和 NVLink 同步开销。
 
-```mermaid
-flowchart TD
-    START["🎯 DeepGEMM场景选择"] --> Q1{你的任务类型?}
-    Q1 -->|LLM训练| TRAIN["FP8前向 + BF16反向"]
-    Q1 -->|LLM推理Prefill| PREFILL["FP8 GEMM"]
-    Q1 -->|LLM推理Decode| DECODE["FP8 / FP16
-Hopper优化"]
-    Q1 -->|MoE推理| MOE["Mega MoE融合内核"]
-    Q1 -->|极致压缩| COMPRESS["FP4 GEMM"]
-    Q1 -->|科学研究| SCI["BF16 / FP32"]
-    
-    TRAIN --> T1{H有问题?}
-    T1 -->|是 H800| T2["✅ DeepGEMM FP8"]
-    T1 -->|否 A100| T3["⚠️ 限制支持"]
-    T1 -->|否 H100| T4["✅ DeepGEMM FP8"]
-    
-    PREFILL --> P1{FP8支持?}
-    P1 -->|是| P2["✅ DeepGEMM FP8"]
-    P1 -->|否| P3["使用标准GEMM"]
-    
-    MOE --> M1{MoE规模?}
-    M1 -->|专家多| M2["✅ Mega MoE
-大专家数配置"]
-    M1 -->|专家少| M3["普通FP8 GEMM"]
-    
-    style START fill:#d1fae5,stroke:#10b981
-    style TRAIN fill:#dbeafe,stroke:#3b82f6
-    style PREFILL fill:#dbeafe,stroke:#3b82f6
-    style MOE fill:#fef3c7,stroke:#f59e0b
-    style COMPRESS fill:#fecaca,stroke:#ef4444
-    style SCI fill:#d1fae5,stroke:#10b981
-```
+### 谁可以等等
 
-### ⚡ 性能基准参考
+1. **A100/V100 用户**：不支持 FP8，DeepGEMM 对你没有用。
+2. **训练场景**：DeepGEMM 主要面向推理，训练的反向传播、梯度同步、optimizer 更新它不管。训练用 PyTorch 原生的 FP8 支持（`torch.float8_e4m3fn`）更合适。
+3. **小 batch 推理（batch=1）**：Tensor Core 利用率低，FP8 GEMM 的提升有限，瓶颈在 KV cache 带宽。
+4. **非 LLM 场景**：DeepGEMM 的内核是为 LLM 推理的 shape 调优的，CNN、科学计算等其他场景的 shape 可能不在最优配置表里。
 
-**H800 vs A100 FP8 GEMM 性能对比**：
+### 落地建议
 
-| 配置 | H800 (DeepGEMM) | A100 (cuBLAS) | 加速比 |
-|------|-----------------|----------------|--------|
-| **FP8 8192×8192×8192** | 1550 TFLOPS | 300 TFLOPS | 5.2× |
-| **FP8 4096×4096×4096** | 1200 TFLOPS | 250 TFLOPS | 4.8× |
-| **BF16 8192×8192×8192** | 900 TFLOPS | 350 TFLOPS | 2.6× |
-| **FP32 8192×8192×8192** | 450 TFLOPS | 160 TFLOPS | 2.8× |
+- 先在推理服务的 Prefill 阶段替换 `fp8_gemm_nt`，这是最稳的切入点。
+- MoE 服务再上 Mega MoE，但要注意 PyTorch 版本要求（≥ 2.9）。
+- 生产环境记得做 warmup，把常用 shape 的 JIT 编译在服务启动时完成。
+- 用 `DG_JIT_DUMP_SASS=1` 看一下生成的汇编，确认配置选择是否合理。
 
-**MoE 配置性能**：
+### 不该期待的事
 
-| 配置 | 专家数 | Hidden Dim | 吞吐量 | 备注 |
-|------|--------|------------|--------|------|
-| **Mega MoE-L** | 16 | 2048 | 1420 TFLOPS | 大规模 MoE |
-| **Mega MoE-M** | 8 | 2048 | 1350 TFLOPS | 中等规模 |
-| **Mega MoE-S** | 4 | 2048 | 1200 TFLOPS | 小规模 |
+DeepGEMM 不会自动让你的推理服务快 2 倍。它只是把 GEMM 这一步做到接近峰值，但推理服务的瓶颈往往在 attention、KV cache、MoE 路由、网络通信这些地方。先 profile 找到瓶颈，再决定要不要换 DeepGEMM。
 
-### 📊 使用快速参考
-
-**C++ API 调用模板**：
-
-```cpp
-#include <deepgemm/gemm.h>
-#include <deepgemm/kernel_launch.cuh>
-
-// 1. 创建配置
-GemmConfig config;
-config.m = 8192;           // M维度
-config.n = 8192;           // N维度  
-config.k = 8192;           // K维度
-config.dtype_a = FP8;      // A矩阵精度
-config.dtype_b = FP8;      // B矩阵精度
-config.dtype_c = BF16;     // 输出精度
-
-// 2. 创建算子
-auto gemm = DeepGemmFP8::create(config);
-
-// 3. 执行计算
-gemm->forward(output, input_a, input_b);
-
-// 4. 同步
-cudaStreamSynchronize(stream);
-```
-
-**Python (PyTorch) 调用模板**：
-
-```python
-import torch
-from deepgemm import DeepGEMM
-
-# 1. 初始化
-gemm = DeepGEMM(device='cuda:0', dtype='fp8')
-
-# 2. 准备数据
-M, N, K = 8192, 8192, 8192
-A = torch.randn(M, K, dtype=torch.float8_e4m3fn, device='cuda')
-B = torch.randn(K, N, dtype=torch.float8_e4m3fn, device='cuda')
-
-# 3. 执行GEMM
-C = gemm(A, B)  # 返回BF16
-
-# 4. 验证结果
-assert C.dtype == torch.bfloat16
-```
-
+---
 
 ## 相关资源
 
