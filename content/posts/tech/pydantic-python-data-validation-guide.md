@@ -10,7 +10,7 @@ tags: ["Pydantic", "Python", "数据验证", "类型提示", "FastAPI"]
 
 Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAPI、SQLModel、LangChain 这些下游框架的验证瓶颈被打开了。V1 时代，一个高 QPS 接口里 30%-50% 的 CPU 可能花在 Python 层的字典遍历和类型检查上；V2 把这部分压到 Rust 后，下游框架可以放心地把请求模型做得更复杂，而不必担心验证开销吃掉吞吐。迁移文档里能看到的是 API 表面更一致，看不到的是验证开销从"必须优化掉的成本"变成了"可以放心使用的基建"。
 
-本文按"为什么这样设计 → 怎么用 → 怎么踩坑 → 怎么取舍"展开，覆盖 BaseModel、字段约束、验证器分层、严格模式、JSON Schema 生成、pydantic-settings 配置管理，以及 FastAPI 集成、ORM 模型、Webhook 验证等场景。读者读完应能回答三个问题：类型提示如何被翻译成验证规则、验证与序列化为什么必须成对设计、Rust 核心对 Python 生态意味着什么。
+本文按"为什么这样设计 → 怎么用 → 怎么踩坑 → 怎么取舍"展开，覆盖 BaseModel、字段约束、验证器分层、严格模式、JSON Schema 生成、pydantic-settings 配置管理，以及 FastAPI 集成、ORM 模型、Webhook 验证等场景。重点回答三个问题：类型注解怎么变成 Rust 侧的派发表、验证和序列化为什么要成对设计、Rust 核心对 Python 生态的实际影响。如果你正在从 V1 迁移到 V2，或者在 FastAPI 项目里纠结验证器该挂在哪一层，可以直接跳到"常见踩坑"和"任务流案例"两节。
 
 ## 本文地图
 
@@ -72,7 +72,7 @@ print(get_type_hints(User))
 
 这套翻译在类定义时完成一次，运行时验证直接走编译后的 schema，不再重复解析类型注解。V1 每次验证都要在 Python 层走一遍字段循环和类型判断；V2 把这些编译成 Rust 的派发表，运行时只查表不解析。这也是为什么 V2 的"类定义"比 V1 稍慢——编译 schema 有一次性开销，但这个开销在类定义时付一次，后续每次验证都受益。
 
-类型注解被翻译成 Rust 侧规则后，几个日常使用中高频出现的困惑就有了依据。它们都源于宽松模式这个默认行为——宽松模式为了适配 HTTP 输入做了很多隐式转换，转换规则和 Python 原生行为不完全一致：
+类型注解被翻译成 Rust 侧规则后，下面几个日常使用中常被问到的困惑就有了依据。它们都源于宽松模式这个默认行为——宽松模式为了适配 HTTP 输入做了很多隐式转换，转换规则和 Python 原生行为不完全一致：
 
 - **为什么 `bool_field="yes"` 会被转成 `True`**：Pydantic 的 `bool` 规则默认接受 `"yes"/"on"/"true"/"1"` 等常见真值字符串，这是"宽松模式"下的转换约定，不是 Python `bool()` 的行为。Python 的 `bool("yes")` 永远是 `True`（非空字符串），但 Pydantic 会识别字面量。
 - **为什么 `id: int` 接受 `"123"`**：默认模式下 `int` 规则会尝试字符串到整数的转换，转换失败才报错。这是为了适配 HTTP 表单、URL 参数这些天然是字符串的输入源——如果默认严格，每个字符串字段都要先手动转成目标类型再传给 Pydantic。
@@ -128,7 +128,7 @@ print(user.tags)        # [1, 2, 3]
 
 这个例子展示了 Pydantic 的核心行为：传入字典，拿到验证过的 Python 对象，类型转换在验证过程中完成。`"123"` 变成 `123`，`"2017-06-01 12:22"` 变成 `datetime`，`[1, "2", b"3"]` 变成 `[1, 2, 3]`——这些都是宽松模式下的隐式转换。
 
-几个容易被忽略的细节，前两个是 V1 → V2 迁移时容易踩的，后一个是 API 重命名。其中 `dict()` 和 `model_dump()` 行为不一致会导致序列化结果和预期不同，迁移时建议全局替换，不要新旧 API 混用：
+几个容易被忽略的细节。可变默认值的拷贝行为和 `model_validate` 的入口合并是 V1 → V2 迁移时容易踩的，`model_dump` 替代 `dict()` 则是 API 重命名——`dict()` 和 `model_dump()` 行为不一致会导致序列化结果和预期不同，迁移时建议全局替换，不要新旧 API 混用：
 
 - **可变默认值可以直接写**：`tags: list[int] = []` 在 Pydantic 里是安全的，因为 `BaseModel` 会深拷贝默认值，不像 `dataclasses` 需要 `field(default_factory=list)`。这是 Pydantic 比 `dataclasses` 更"宽容"的地方，但也意味着默认值会在每次实例化时拷贝，大对象上要注意——一个默认值是 1000 元素字典的字段，每次实例化都会深拷贝一次。
 - **`model_validate` 是 V2 的统一入口**：V1 的 `parse_obj` / `parse_raw` / `parse_file` 都被合并进来，分别对应 `model_validate(dict)` / `model_validate_json(str)` / 显式读文件后调用。迁移时按这个对照表替换即可。
@@ -215,7 +215,7 @@ Pydantic 的验证能力分三层，按"作用范围"递增。选错层会导致
 | 字段级验证器 | `@field_validator` | 单个字段 | Python 侧 |
 | 模型级验证器 | `@model_validator` | 整个模型 | Python 侧 |
 
-**优先用 `Field`，不够时再用 `field_validator`，最后才用 `model_validator`**。这是性能事实：`Field` 约束在 Rust 侧执行，没有 Python 调用开销；`field_validator` 和 `model_validator` 是 Python 函数，每次验证都要从 Rust 回到 Python。一个挂满 10 个 `field_validator` 的模型，提速效果会显著低于全用 `Field` 约束的模型。判断标准是：能用 `Field` 参数表达的约束（范围、长度、正则）就用 `Field`，需要自定义逻辑（比如"密码必须包含大写字母"）才用 `field_validator`，需要跨字段（比如"结束时间晚于开始时间"）才用 `model_validator`。
+**优先用 `Field`，不够时再用 `field_validator`，最后才用 `model_validator`**。原因在执行位置：`Field` 约束在 Rust 侧执行，没有 Python 调用开销；`field_validator` 和 `model_validator` 是 Python 函数，每次验证都要从 Rust 回到 Python。一个挂满 10 个 `field_validator` 的模型，提速效果会显著低于全用 `Field` 约束的模型。判断标准是：能用 `Field` 参数表达的约束（范围、长度、正则）就用 `Field`，需要自定义逻辑（比如"密码必须包含大写字母"）才用 `field_validator`，需要跨字段（比如"结束时间晚于开始时间"）才用 `model_validator`。
 
 ### field_validator：单字段自定义逻辑
 
@@ -259,7 +259,7 @@ class User(BaseModel):
         return v
 ```
 
-三个高频踩坑点，前两个是装饰器使用问题，第三个是验证器返回值语义。第三个尤其隐蔽——验证器"忘记 return"会导致字段值变成 `None`，且不会报错，这类 bug 在测试覆盖不全时容易漏到生产：
+这里有几个高频踩坑点。装饰器顺序和异常类型是使用问题，返回值替换字段值这条尤其隐蔽——验证器"忘记 return"会导致字段值变成 `None`，且不会报错，这类 bug 在测试覆盖不全时容易漏到生产：
 
 - **`@classmethod` 必须在 `@field_validator` 下面**：装饰器从下往上执行，先 `field_validator` 把函数标记为验证器，再 `classmethod` 把它变成类方法。顺序反了会拿到实例而不是类，且报错信息不直观。
 - **`ValueError` 会被自动包装成 `ValidationError`**：不要自己抛 `ValidationError`，抛 `ValueError` 即可，Pydantic 会收集所有字段的错误一次性返回。这条规则也适用于 `AssertionError`——`assert x > 0` 抛出的异常同样会被收集。
@@ -394,7 +394,7 @@ user.model_dump(include={"id", "name"})
 user.model_dump(exclude={"created_at": True})
 ```
 
-`model_dump` 在 API 开发中的常见用法，共同点是"同一个模型需要不同的序列化结果"。脱敏、过滤、格式转换都可以在序列化层一次性处理，不必在业务层写一堆 if-else 来控制字段暴露。按出现频率从高到低：
+`model_dump` 在 API 开发中的常见用法，共同点是"同一个模型需要不同的序列化结果"。脱敏、过滤、格式转换都可以在序列化层一次性处理，不必在业务层写一堆 if-else 来控制字段暴露。几种典型场景：
 
 - **API 响应里去掉密码字段**：用 `exclude={"password_hash"}`，或在字段上声明 `Field(exclude=True)` 让它默认不序列化。后者更安全——即使有人忘了在 `model_dump` 里加 `exclude`，字段也不会泄漏。
 - **日志里脱敏**：定义一个 `to_log_dict()` 方法，调用 `model_dump(exclude={"password_hash", "token", "secret"})`，避免敏感字段进日志。日志框架的默认序列化不会走 Pydantic，所以要在打印前显式转成脱敏 dict。

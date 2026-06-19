@@ -8,59 +8,118 @@ categories: ["技术笔记"]
 tags: ["Browser-Use", "AI Agent", "浏览器自动化", "Playwright", "Web Scraping"]
 ---
 
-. 项目概述
+# Browser-Use：让 AI Agent 控制浏览器完成任何任务
 
-. 是什么
+Browser-Use 把"用自然语言指挥浏览器干活"这件事做成了可用的开源库。它的价值不在概念新颖，而在于把 LLM 的任务理解、Playwright 的页面控制和可扩展工具集拼成了一条能跑通的链路——填表单、比价、抓数据这些过去要写专属脚本的任务，现在一句自然语言就能驱动。
 
-Browser-Use 是一个**开源的 AI 浏览器自动化库**，它的基本理念是：**Tell your computer what to do, and it gets it done**——告诉计算机要做什么，它就能完成。
+但选它之前要先想清楚一件事：Browser-Use 有开源库和云服务两条产品线，能力边界不一样。开源库给你完全控制和自定义空间，云服务替你扛内存、反爬、CAPTCHA 这些工程难题。本文先拆这两条线的边界，再展开机制细节，最后给一个任务从输入到完成的完整流程，以及什么场景该用哪条线。
 
-它让 AI Agent（GPT、Claude、Gemini 等）能够像人类一样控制浏览器，填写表单、点击按钮、搜索信息、完成各种网页操作。
+## 本文覆盖内容
 
-. 定位
-
-Browser-Use 有两种使用模式：
-
-- **开源库**：自主托管，完全控制。适合需要自定义工具和深度集成的场景。
-- **云服务**：托管浏览器基础设施。适合快速启动、规模化和抗检测场景。
-
-. 技术架构
-
-Browser-Use 的核心组件：
-
-| 组件 | 说明 |
-|------|------|
-| **Agent** | AI 代理，理解任务并控制浏览器 |
-| **Browser** | 浏览器实例管理 |
-| **LLM Adapter** | 支持 OpenAI/Google/Anthropic 等 |
-| **Tools** | 可扩展的工具集 |
-| **CLI** | 命令行界面 |
-
-. 支持的模型
-
-| 提供商 | 模型示例 |
-|--------|---------|
-| **Browser-Use Cloud** | `ChatBrowserUse()` 优化模型 |
-| **OpenAI** | GPT-4o, GPT-4o-mini |
-| **Google** | Gemini 3-flash-preview |
-| **Anthropic** | Claude Sonnet 4, Claude Opus |
-| **本地模型** | 通过 Ollama 支持 |
+- Browser-Use 开源库与云服务的边界划分
+- Agent / Browser / LLM Adapter / Tools 四个核心组件的协作方式
+- 用 uv 安装、配置 API Key、跑通最简示例
+- 表单填写、在线购物、个人助手三个实战用例
+- CLI 工具的快速迭代工作流
+- Claude Code Skill 集成与自定义工具扩展
+- 生产环境的内存、反爬、CAPTCHA 排查指引
+- 何时选开源库、何时选云服务、何时混合使用
 
 ---
 
-. 核心特性详解
+## 全景地图：两条产品线与四个组件
 
-. LLM 优化的浏览器代理
+Browser-Use 的所有能力都围绕一个核心问题展开：怎么让 LLM 看懂页面、做出决策、执行操作。它用四个组件回答这个问题，再用两条产品线把这些组件部署到不同环境。
 
-Browser-Use 对 LLM 进行了专门优化：
+```mermaid
+graph TB
+    subgraph "两条产品线"
+        OSS["开源库<br/>自主托管"]
+        Cloud["云服务<br/>Browser Use Cloud"]
+    end
 
-| 特性 | 说明 |
-|------|------|
-| **任务理解** | LLM 解析自然语言任务为可执行步骤 |
-| **元素识别** | 智能识别网页可交互元素 |
-| **状态追踪** | 跟踪页面状态变化 |
-| **错误恢复** | 自动从错误中恢复重试 |
+    subgraph "四个核心组件"
+        Agent["Agent<br/>理解任务 + 控制流程"]
+        Browser["Browser<br/>浏览器实例管理"]
+        LLM["LLM Adapter<br/>OpenAI / Google / Anthropic / Ollama"]
+        Tools["Tools<br/>可扩展工具集"]
+    end
 
-. 基准测试表现
+    OSS --> Agent
+    Cloud --> Browser
+    Agent --> LLM
+    Agent --> Browser
+    Agent --> Tools
+```
+
+| 组件 | 职责 | 关键接口 |
+|------|------|----------|
+| **Agent** | 解析自然语言任务为可执行步骤，控制浏览器完成操作 | `Agent(task=..., llm=..., browser=...)` |
+| **Browser** | 管理浏览器实例，支持本地 Chromium 和云端托管 | `Browser()` / `Browser(use_cloud=True)` |
+| **LLM Adapter** | 适配多家模型提供商，统一调用接口 | `ChatOpenAI` / `ChatAnthropic` / `ChatBrowserUse` |
+| **Tools** | 注册自定义工具，扩展 Agent 能力范围 | `@tools.action(description=...)` |
+
+两条产品线的核心差异在 Browser 组件的部署位置：开源库把浏览器跑在你自己的机器上，云服务把浏览器跑在 Browser Use Cloud 上。Agent 和 LLM Adapter 在两条线里都一样，Tools 只在开源库里需要手动注册。
+
+### 开源库：自主托管，完全控制
+
+开源库适合三类场景：需要自定义工具扩展功能、要在现有应用里深度嵌入浏览器自动化、数据安全要求不允许把页面内容传给第三方。代价是你得自己处理 Chrome 的内存占用、反爬检测、CAPTCHA 这些工程问题。
+
+### 云服务：托管基础设施，抗检测
+
+云服务把浏览器基础设施整个托管出去，重点解决开源库在生产环境最难扛的几件事：并行扩缩容、stealth 浏览器指纹、CAPTCHA 自动解决、代理轮换。适合快速启动、规模化运行、对抗性网站抓取。代价是按用量付费，且页面内容要经过云服务。
+
+### 混合使用：开源库 + 云浏览器
+
+两条线不是二选一。最常见的生产部署是混合模式：用开源库的 Agent 和 Tools 控制逻辑，把 Browser 指向云端的托管浏览器。这样既保留了自定义工具的灵活性，又甩掉了本地浏览器的运维负担。
+
+---
+
+## 核心机制：任务如何流过系统
+
+理解 Browser-Use 最快的方式是跟踪一个具体任务从输入到完成的完整流程。以"查找 browser-use 仓库的 Star 数"为例：
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant A as Agent
+    participant L as LLM
+    participant B as Browser
+    participant P as 页面
+
+    U->>A: task="Find the number of stars<br/>of the browser-use repo"
+    A->>L: 任务 + 当前页面状态
+    L-->>A: 决策：打开 GitHub 搜索
+    A->>B: 导航到 github.com
+    B->>P: 加载页面
+    P-->>B: 返回可交互元素列表
+    B-->>A: 页面状态 + 元素索引
+    A->>L: 新状态 + 元素列表
+    L-->>A: 决策：在搜索框输入
+    A->>B: click(搜索框索引) + type("browser-use")
+    B->>P: 执行交互
+    P-->>B: 搜索结果页
+    B-->>A: 新状态
+    A->>L: 新状态
+    L-->>A: 决策：点击第一个结果
+    A->>B: click(结果索引)
+    B->>P: 跳转仓库页
+    P-->>B: 仓库页元素
+    B-->>A: 含 Star 数的状态
+    A->>L: 最终状态
+    L-->>A: 提取 Star 数，任务完成
+    A-->>U: 返回结果
+```
+
+这个流程里有三个关键机制在起作用：
+
+**任务理解**。Agent 把自然语言任务拆成可执行步骤，依赖 LLM 的推理能力。任务描述越具体，拆解越准确——"Find the number of stars of the browser-use repo"比"查一下那个仓库的星"效果好，因为前者明确指出了目标字段。
+
+**元素识别**。Browser 把当前页面的可交互元素提取成带索引的列表返回给 Agent，Agent 通过索引引用元素而非 CSS 选择器。这是 Browser-Use 区别于传统 Playwright 脚本的核心设计——LLM 不需要写选择器，只需要说"点击第 5 个元素"。
+
+**状态追踪与错误恢复**。每一步执行后 Agent 都会拿到新的页面状态，如果某步失败（元素不存在、页面没加载完），Agent 会重新评估状态并调整策略。这就是为什么 Browser-Use 能处理动态页面和意外弹窗——它不是按固定脚本执行，而是持续感知环境。
+
+### 基准测试表现
 
 根据官方基准测试（BU Bench V1），Browser-Use 在 100 个真实浏览器任务上的表现：
 
@@ -71,76 +130,35 @@ Browser-Use 对 LLM 进行了专门优化：
 | **Claude Sonnet** | 高 | 推理能力强 |
 | **Gemini** | 中高 | 性价比好 |
 
-. 多 LLM 提供商支持
-
-```python
-Browser-Use 优化模型
-from browser_use import ChatBrowserUse
-
-OpenAI
-from browser_use import ChatOpenAI
-llm = ChatOpenAI(model='gpt-4o')
-
-Google
-from browser_use import ChatGoogle
-llm = ChatGoogle(model='gemini-3-flash-preview')
-
-Anthropic
-from browser_use import ChatAnthropic
-llm = ChatAnthropic(model='claude-sonnet-4-6')
-
-本地模型（Ollama）
-from browser_use import ChatOllama
-llm = ChatOllama(model='llama3')
-```
-
-. 浏览器管理
-
-```python
-from browser_use import Browser, BrowserConfig
-
-本地浏览器
-browser = Browser()
-
-配置选项
-browser = Browser(
- # headless=False, # 显示浏览器窗口
- # timeout=30, # 超时时间（秒）
-)
-
-云浏览器（推荐生产环境）
-browser = Browser(
- use_cloud=True, # 使用 Browser Use Cloud 托管浏览器
-)
-```
+ChatBrowserUse 是云服务配套的优化模型，针对浏览器操作场景做了专门训练，速度和成功率都优于通用模型。开源库搭配 GPT-4o 或 Claude Sonnet 也能拿到高成功率，但单次任务耗时更长。
 
 ---
 
-. 安装与快速上手
+## 安装与快速上手
 
-. 环境要求
+### 环境要求
 
 - Python >= 3.11
 - uv 包管理器（推荐）
 - Chromium 浏览器（自动安装或手动安装）
 
-. 使用 uv 安装
+### 使用 uv 安装
 
 ```bash
-. 创建项目
+# 创建项目
 uv init
 
-. 添加 browser-use
+# 添加 browser-use
 uv add browser-use
 
-. 同步环境
+# 同步环境
 uv sync
 
-. 安装 Chromium（如果没有）
+# 安装 Chromium（如果没有）
 uvx browser-use install
 ```
 
-. 获取 API Key
+### 获取 API Key
 
 **方式一：Browser Use Cloud（推荐）**
 
@@ -149,7 +167,7 @@ uvx browser-use install
 3. 配置环境变量：
 
 ```bash
-.env
+# .env
 BROWSER_USE_API_KEY=your-key
 GOOGLE_API_KEY=your-key
 ANTHROPIC_API_KEY=your-key
@@ -158,180 +176,254 @@ ANTHROPIC_API_KEY=your-key
 **方式二：使用本地模型**
 
 ```bash
-安装 Ollama
+# 安装 Ollama
 curl -fsSL https://ollama.com/install.sh | sh
 
-拉取模型
+# 拉取模型
 ollama pull llama3
 ```
 
-. 最简示例
+本地模型适合离线场景和成本敏感任务，但浏览器操作的成功率明显低于 GPT-4o 或 Claude。建议先用云端模型验证流程，再切本地模型调优。
+
+### 最简示例
 
 ```python
 from browser_use import Agent, Browser, ChatBrowserUse
 import asyncio
 
 async def main():
- # 创建浏览器实例
- browser = Browser()
+    # 创建浏览器实例
+    browser = Browser()
 
- # 创建 Agent
- agent = Agent(
- task="Find the number of stars of the browser-use repo",
- llm=ChatBrowserUse(),
- browser=browser,
- )
+    # 创建 Agent
+    agent = Agent(
+        task="Find the number of stars of the browser-use repo",
+        llm=ChatBrowserUse(),
+        browser=browser,
+    )
 
- # 运行任务
- await agent.run()
+    # 运行任务
+    await agent.run()
 
 if __name__ == "__main__":
- asyncio.run(main())
+    asyncio.run(main())
 ```
+
+跑通这个示例需要确认两件事：`BROWSER_USE_API_KEY` 已经配置，Chromium 已经安装。如果报 `Browser not found`，运行 `uvx browser-use install`；如果报认证失败，检查 `.env` 是否被正确加载。
 
 ---
 
-. 实战用例
+## 多 LLM 提供商支持
 
-. 表单填写
+Browser-Use 通过 LLM Adapter 适配多家模型提供商，接口统一：
 
-**任务**: "Fill in this job application with my resume and information"
+```python
+# Browser-Use 优化模型
+from browser_use import ChatBrowserUse
+
+# OpenAI
+from browser_use import ChatOpenAI
+llm = ChatOpenAI(model='gpt-4o')
+
+# Google
+from browser_use import ChatGoogle
+llm = ChatGoogle(model='gemini-3-flash-preview')
+
+# Anthropic
+from browser_use import ChatAnthropic
+llm = ChatAnthropic(model='claude-sonnet-4-6')
+
+# 本地模型（Ollama）
+from browser_use import ChatOllama
+llm = ChatOllama(model='llama3')
+```
+
+选型上没有标准答案，看任务复杂度和成本预算。简单任务用 Gemini 性价比好，复杂推理任务用 Claude Sonnet，需要稳定生产表现用 ChatBrowserUse。本地模型适合开发调试和数据敏感场景，但不要指望它处理多步表单或动态页面。
+
+### 浏览器管理
+
+```python
+from browser_use import Browser, BrowserConfig
+
+# 本地浏览器
+browser = Browser()
+
+# 配置选项
+browser = Browser(
+    # headless=False,  # 显示浏览器窗口
+    # timeout=30,      # 超时时间（秒）
+)
+
+# 云浏览器（推荐生产环境）
+browser = Browser(
+    use_cloud=True,  # 使用 Browser Use Cloud 托管浏览器
+)
+```
+
+`headless=False` 在调试时很有用——能直接看到 Agent 在页面上点了什么、输入了什么。生产环境用 `use_cloud=True` 把浏览器托管出去，本地不用扛 Chrome 的内存。
+
+---
+
+## 实战用例
+
+### 表单填写
+
+**任务**："Fill in this job application with my resume and information"
 
 ```python
 from browser_use import Agent, Browser, ChatBrowserUse
 import asyncio
 
 async def main():
- browser = Browser()
- agent = Agent(
- task="""Fill in this job application:
+    browser = Browser()
+    agent = Agent(
+        task="""Fill in this job application:
  - Name: John Doe
  - Email: john@example.com
  - Position: Software Engineer
  - Resume: upload resume.pdf""",
- llm=ChatBrowserUse(),
- browser=browser,
- )
- await agent.run()
+        llm=ChatBrowserUse(),
+        browser=browser,
+    )
+    await agent.run()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-. 在线购物
+表单填写的难点不在字段本身，而在文件上传——`upload resume.pdf` 这种指令需要 Agent 能定位到文件路径并触发文件选择对话框。如果文件路径是相对路径，确保脚本运行时的工作目录正确。
 
-**任务**: "Put this list of items into my instacart"
+### 在线购物
+
+**任务**："Put this list of items into my instacart"
 
 ```python
+from browser_use import Agent, Browser, ChatBrowserUse
+import asyncio
+
 async def main():
- browser = Browser()
- agent = Agent(
- task="""Shop for these groceries:
+    browser = Browser()
+    agent = Agent(
+        task="""Shop for these groceries:
  - Milk
  - Bread
  - Eggs
  - Butter
  Add to my cart on instacart.com""",
- llm=ChatBrowserUse(),
- browser=browser,
- )
- await agent.run()
+        llm=ChatBrowserUse(),
+        browser=browser,
+    )
+    await agent.run()
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-. 个人助手
+购物任务通常需要登录态。如果 Instacart 要求登录，Agent 会卡在登录页——这种场景用 `profile_dir` 复用已登录的 Chrome 配置文件，或者用云浏览器的同步配置功能。
 
-**任务**: "Help me find parts for a custom PC"
+### 个人助手
+
+**任务**："Help me find parts for a custom PC"
 
 ```python
+from browser_use import Agent, Browser, ChatBrowserUse
+import asyncio
+
 async def main():
- browser = Browser()
- agent = Agent(
- task="""Find these PC parts on pcpartpicker.com:
+    browser = Browser()
+    agent = Agent(
+        task="""Find these PC parts on pcpartpicker.com:
  - NVIDIA RTX 4090
  - AMD Ryzen 9 7950X
  - 64GB DDR5 RAM
  Compare prices and show me the best deals""",
- llm=ChatBrowserUse(),
- browser=browser,
- )
- await agent.run()
+        llm=ChatBrowserUse(),
+        browser=browser,
+    )
+    await agent.run()
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
+
+比价任务涉及多页面跳转和信息聚合，对 Agent 的状态追踪能力要求较高。如果结果不稳定，把任务拆成多个小任务分别执行往往比一个长任务更可靠。
 
 ---
 
-. CLI 工具详解
+## CLI 工具详解
 
-. 安装 CLI
+CLI 适合快速调试和探索页面结构，不用每次写完整脚本。
+
+### 安装 CLI
 
 CLI 随 browser-use 包一起安装：
 
 ```bash
-验证安装
+# 验证安装
 browser-use --version
 ```
 
-. 常用命令
+### 常用命令
 
 ```bash
-打开网页
+# 打开网页
 browser-use open https://example.com
 
-查看可点击元素
+# 查看可点击元素
 browser-use state
 
-点击元素（通过索引）
+# 点击元素（通过索引）
 browser-use click 5
 
-输入文本
+# 输入文本
 browser-use type "Hello World"
 
-截图
+# 截图
 browser-use screenshot page.png
 
-关闭浏览器
+# 关闭浏览器
 browser-use close
 ```
 
-. 快速迭代工作流
+### 快速迭代工作流
 
 ```bash
-. 打开目标页面
+# 打开目标页面
 browser-use open https://example.com
 
-. 查看页面元素
+# 查看页面元素
 browser-use state
 
-. 点击第个元素
+# 点击第 5 个元素
 browser-use click 5
 
-. 输入搜索词
+# 输入搜索词
 browser-use type "search term"
 
-. 截图确认
+# 截图确认
 browser-use screenshot result.png
 ```
 
-CLI 保持浏览器实例运行，可以快速迭代调试。
+CLI 保持浏览器实例运行，可以快速迭代调试。写脚本前先用 CLI 验证页面结构和元素索引，能省掉大量试错时间。
 
 ---
 
-. Claude Code Skill 集成
+## Claude Code Skill 集成
 
-. 为什么集成
+为 Claude Code 安装 Browser-Use Skill 后，可以直接用自然语言让 AI 控制浏览器完成各种任务，无需编写代码。适合一次性任务和探索性操作——重复性任务还是写成脚本更可控。
 
-为 Claude Code 安装 Browser-Use Skill 后，可以直接用自然语言让 AI 控制浏览器完成各种任务，无需编写代码。
-
-. 安装步骤
+### 安装步骤
 
 ```bash
-. 创建 skill 目录
+# 创建 skill 目录
 mkdir -p ~/.claude/skills/browser-use
 
-. 下载 SKILL.md
+# 下载 SKILL.md
 curl -o ~/.claude/skills/browser-use/SKILL.md \
- https://raw.githubusercontent.com/browser-use/browser-use/main/skills/browser-use/SKILL.md
+  https://raw.githubusercontent.com/browser-use/browser-use/main/skills/browser-use/SKILL.md
 ```
 
-. 使用方式
+### 使用方式
 
 安装后，直接在 Claude Code 中告诉它要做什么：
 
@@ -339,193 +431,244 @@ curl -o ~/.claude/skills/browser-use/SKILL.md \
 Use browser-use to search for the cheapest RTX 4090 on Amazon and tell me the price.
 ```
 
+Claude Code 会自动调用 Browser-Use Skill，执行浏览器操作并返回结果。整个过程不需要写代码，但需要 Browser-Use 的环境已经配好——Skill 本身不包含运行时。
+
 ---
 
-. 自定义工具扩展
+## 自定义工具扩展
 
-. 创建自定义工具
+Agent 自带的浏览器操作能力有限，遇到"查天气""调内部 API""读数据库"这类需求时，需要注册自定义工具。
+
+### 创建自定义工具
 
 ```python
-from browser_use import Agent, Browser, Tools
+from browser_use import Agent, Browser
 from browser_use.tools import Tools
 
-创建工具实例
+# 创建工具实例
 tools = Tools()
 
-定义自定义工具
+# 定义自定义工具
 @tools.action(description='Get the current weather for a city')
 def get_weather(city: str) -> str:
- """获取城市天气"""
- import requests
- response = requests.get(f"https://api.weather.com/v3/wx/conditions", params={"city": city})
- return response.json()
+    """获取城市天气"""
+    import requests
+    response = requests.get(f"https://api.weather.com/v3/wx/conditions", params={"city": city})
+    return response.json()
 
-使用自定义工具
+# 使用自定义工具
 agent = Agent(
- task="Find the weather in Tokyo and then book a flight there",
- llm=llm,
- browser=browser,
- tools=tools,
+    task="Find the weather in Tokyo and then book a flight there",
+    llm=llm,
+    browser=browser,
+    tools=tools,
 )
 ```
 
-.### 工具设计建议
+`description` 是 LLM 决定是否调用这个工具的依据，写清楚工具做什么、参数含义、返回格式。类型注解不仅给开发者看，也会被框架解析后传给 LLM。
 
-| 原则 | 说明 |
-|------|------|
-| **清晰描述** | description 要明确工具做什么 |
-| **类型提示** | 使用 Python 类型注解 |
-| **错误处理** | 返回有意义的错误信息 |
-| **幂等性** | 同一调用总是返回相同结果 |
+### 工具设计要点
+
+- **description 要具体**：写"获取指定城市的当前温度和天气状况"，不写"获取天气"
+- **参数类型明确**：用 `str` / `int` / `bool` 等基础类型，避免 `Any` 或复杂嵌套
+- **返回值可读**：返回字符串或 JSON 字符串，LLM 能直接理解
+- **幂等性**：同一参数多次调用应返回相同结果，避免 Agent 重试时产生副作用
+- **错误信息有意义**：返回错误描述而非抛异常，让 Agent 能判断下一步
 
 ---
 
-. 高级配置
+## 高级配置
 
-. 认证处理
+### 认证处理
 
 **复用 Chrome 配置**：
 
 ```python
 from browser_use import Browser
 
-使用已登录的 Chrome 配置文件
+# 使用已登录的 Chrome 配置文件
 browser = Browser(
- profile_dir="~/.config/google-chrome/Default"
+    profile_dir="~/.config/google-chrome/Default"
 )
 ```
+
+`profile_dir` 指向已登录目标网站的 Chrome 用户目录，Agent 启动时直接复用登录态。注意 Chrome 必须先关闭——同一个 profile 不能被两个 Chrome 实例同时占用。
 
 **云浏览器同步配置**：
 
 ```bash
 curl -fsSL https://browser-use.com/profile.sh | \
- BROWSER_USE_API_KEY=XXXX sh
+  BROWSER_USE_API_KEY=XXXX sh
 ```
 
-. 代理配置
+这个脚本把本地 Chrome 的登录态同步到云端，之后云浏览器实例能直接使用已登录状态。
+
+### 代理配置
 
 ```python
 from browser_use import Browser
 
 browser = Browser(
- use_cloud=True,
- proxy="http://my-proxy:8080" # 代理地址
+    use_cloud=True,
+    proxy="http://my-proxy:8080"  # 代理地址
 )
 ```
 
-. 超时配置
+代理配置在抓取地域限制内容时必需。云服务自带代理轮换，本地浏览器需要自己维护代理池。
+
+### 超时与步数限制
 
 ```python
 browser = Browser(
- timeout=60, # 单个操作超时（秒）
+    timeout=60,  # 单个操作超时（秒）
 )
 
 agent = Agent(
- task="...",
- browser=browser,
- max_steps=50, # 最大步数限制
+    task="...",
+    browser=browser,
+    max_steps=50,  # 最大步数限制
 )
 ```
 
+`max_steps` 是成本控制的关键参数。Agent 每一步都要调 LLM，步数越多成本越高。复杂任务设 50-100 步，简单任务设 20 步以内，避免 Agent 陷入死循环烧钱。
+
 ---
 
-. Open Source vs Cloud
+## 生产环境部署
 
-. 何时使用开源库
+### 常见挑战与应对
 
-| 场景 | 说明 |
-|------|------|
-| **需要自定义工具** | 添加专用工具扩展功能 |
-| **深度代码集成** | 在现有应用中嵌入浏览器自动化 |
-| **完全自主托管** | 数据安全要求，不适合云服务 |
+| 挑战 | 开源库方案 | 云服务方案 |
+|------|-----------|-----------|
+| **内存占用** | 单实例限制并发数，定期重启 | 云端托管，无需管理 |
+| **并行管理** | 自己维护浏览器池 | 云服务自动扩缩容 |
+| **反爬检测** | 配置代理 + 修改指纹 | 内置 stealth 浏览器 |
+| **CAPTCHA** | 接第三方解决服务 | 内置解决方案 |
+| **状态管理** | 自己实现持久化 | 提供持久化文件系统和记忆 |
 
-. 何时使用云服务
+开源库上生产最大的坑是内存——Chrome 实例长时间运行会泄漏内存，必须配合进程监控和定期重启。云服务把这些都封装好了，但按用量计费，跑量大任务前先估算成本。
 
-| 场景 | 说明 |
-|------|------|
-| **快速启动** | 无需搭建基础设施 |
-| **规模化** | 并行运行多个浏览器实例 |
-| **抗检测** | 代理轮换、指纹伪装 |
-| **CAPTCHA 处理** | 内置 CAPTCHA 解决 |
-| **内存管理** | 无需担心内存泄漏 |
+### 云服务能力清单
 
-. 混合使用
+Browser Use Cloud 在开源库能力之上补充了：
+
+- 可扩展的浏览器基础设施
+- 内存管理
+- 代理轮换
+- Stealth 浏览器指纹
+- 高性能并行执行
+- 1000+ 集成（Gmail、Slack、Notion 等）
+
+1000+ 集成指的是云服务预置了常见 SaaS 的操作模板，不需要从零写浏览器操作脚本。如果目标网站在这些集成里，直接调模板比让 Agent 自由探索更稳定。
+
+---
+
+## 故障排除
+
+### 常见问题
+
+**Q: 报 `Chromium not found` 怎么办？**
+
+运行 `uvx browser-use install` 安装 Chromium。如果已经安装但仍报错，检查 `CHROME_PATH` 环境变量是否指向正确路径。
+
+**Q: 页面加载超时怎么处理？**
+
+增加 `Browser(timeout=60)` 参数，单位是秒。如果是特定页面超时，可能是页面资源太大或网络问题，用 `browser-use open <url>` 在 CLI 里手动测试加载时间。
+
+**Q: 元素点击失败怎么办？**
+
+用 `browser-use state` 查看当前页面的实际元素列表和索引。Agent 通过索引引用元素，如果页面在 Agent 决策后发生了变化（动态加载、弹窗），索引可能失效。解决方法是降低任务粒度，让 Agent 更频繁地感知页面状态。
+
+**Q: 登录态丢失怎么办？**
+
+用 `profile_dir` 复用 Chrome 配置文件，或用云浏览器的同步配置功能。注意 `profile_dir` 指向的 Chrome 实例必须先关闭。
+
+**Q: 遇到 CAPTCHA 怎么办？**
+
+开源库没有内置 CAPTCHA 解决能力，需要接第三方服务（如 2Captcha、Anti-Captcha）。云服务内置 CAPTCHA 解决，但成功率不是 100%——复杂验证码仍可能失败。
+
+### 调试技巧
 
 ```python
-使用开源库 + 云浏览器
-agent = Agent(
- task="...",
- llm=ChatOpenAI(model='gpt-4o'),
- browser=Browser(use_cloud=True), # 云浏览器
- tools=custom_tools, # 自定义工具
-)
-```
-
----
-
-. 生产环境部署
-
-. 常见挑战
-
-| 挑战 | 解决方案 |
-|------|---------|
-| **内存占用** | Chrome 消耗大量内存，使用云服务 |
-| **并行管理** | 云服务处理扩缩容 |
-| **反爬检测** | 使用 Browser Use Cloud 的 stealth 浏览器 |
-| **CAPTCHA** | 使用云服务内置解决方案 |
-| **状态管理** | 云服务提供持久化文件系统和记忆 |
-
-. 云服务优势
-
-Browser Use Cloud 提供：
-
-- **可扩展的浏览器基础设施**
-- **内存管理**
-- **代理轮换**
-- **Stealth 浏览器指纹**
-- **高性能并行执行**
-- **1000+ 集成**（Gmail、Slack、Notion 等）
-
----
-
-. 故障排除
-
-. 常见问题
-
-| 问题 | 解决方案 |
-|------|---------|
-| **Chromium 未安装** | 运行 `uvx browser-use install` |
-| **页面加载超时** | 增加 `timeout` 参数 |
-| **元素点击失败** | 使用 `browser-use state` 查看实际元素 |
-| **认证丢失** | 使用 `profile_dir` 复用 Chrome 配置 |
-| **CAPTCHA 阻止** | 使用 Browser Use Cloud 的 stealth 模式 |
-
-. 调试技巧
-
-```python
-启用详细日志
+# 启用详细日志
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-截图查看状态
+# 截图查看状态
 browser.screenshot("debug.png")
 
-打印页面 HTML
+# 打印页面 HTML
 html = browser.get_page_content()
 print(html)
 ```
 
----
-
-. 总结
-
-Browser-Use 是一个开源的 AI 浏览器自动化库，支持 OpenAI、Google、Anthropic 及本地模型，可通过 Claude Code Skill 实现自然语言控制浏览器。MIT License 开源免费，云服务提供企业级抗检测和规模化补充。
-
-适用场景包括网页数据采集、自动填表、在线购物比价、浏览器测试自动化和个人效率助手。不适合需要人类视觉验证的复杂任务或对抗性网站（这些场景可考虑云服务的 stealth 模式），极简单的任务直接调 API 往往更快。
+`logging.DEBUG` 会打印 Agent 每一步的决策过程，包括 LLM 的完整 prompt 和响应。这是定位"Agent 为什么这么决策"的最直接方式——日志里能看到 LLM 看到的页面状态和它给出的下一步动作。
 
 ---
 
-**附录：相关资源**
+## 何时选开源库，何时选云服务
+
+### 选开源库的场景
+
+- 需要自定义工具扩展 Agent 能力
+- 在现有应用里深度嵌入浏览器自动化
+- 数据安全要求不允许页面内容经过第三方
+- 任务量小，不值得为云服务付费
+- 需要完全控制浏览器配置和运行环境
+
+### 选云服务的场景
+
+- 需要并行运行大量浏览器实例
+- 目标网站有反爬检测或 CAPTCHA
+- 不想维护 Chrome 运维
+- 需要快速启动，不想搭基础设施
+- 任务涉及 1000+ 预置集成中的 SaaS
+
+### 混合使用
+
+```python
+# 使用开源库 + 云浏览器
+agent = Agent(
+    task="...",
+    llm=ChatOpenAI(model='gpt-4o'),
+    browser=Browser(use_cloud=True),  # 云浏览器
+    tools=custom_tools,               # 自定义工具
+)
+```
+
+混合模式是生产环境最常见的部署方式：Agent 和 Tools 跑在本地，Browser 托管在云端。这样既保留了自定义工具的灵活性，又甩掉了本地浏览器的运维负担。LLM 也可以混用——用 ChatOpenAI 做任务理解，用 ChatBrowserUse 做浏览器操作优化。
+
+---
+
+## 从哪里开始落地
+
+**第一步：用最简示例验证环境**。跑通"查找仓库 Star 数"这个示例，确认 API Key、Chromium、Python 环境都正常。这一步解决的是环境问题——环境不通，后面所有调试都是白费。
+
+**第二步：用 CLI 探索目标页面**。在 CLI 里手动 `open` 目标网站，用 `state` 查看元素结构，确认 Agent 能识别的关键元素。这一步能提前发现页面结构问题，避免写脚本时反复试错。
+
+**第三步：写最简任务脚本**。把任务拆成最小可验证单元，先跑通单步操作（如"打开页面""点击某个按钮"），再组合成完整任务。不要一上来就写复杂任务——Agent 在长任务里的失败率明显高于短任务。
+
+**第四步：加自定义工具**。当 Agent 自带能力不够时，注册自定义工具扩展。工具的 `description` 要写清楚，参数类型要明确，返回值要可读。
+
+**第五步：评估是否上云**。本地跑通后，如果遇到内存、反爬、CAPTCHA 问题，考虑切到云浏览器或混合模式。不要过早优化——本地能跑通就先本地跑，遇到具体问题再迁移。
+
+团队刚开始评估 Browser-Use 时，先把第一步和第二步走通。这两步的成本最低，但能帮你判断 Browser-Use 是否适合你的目标网站——有些网站的反爬机制连云服务都扛不住，这种场景要尽早放弃，换其他方案。
+
+---
+
+## 自测题
+
+1. Agent 通过什么方式引用页面元素？为什么不用 CSS 选择器？
+2. `max_steps` 参数设太大和设太小分别会有什么问题？
+3. 开源库和云服务在 Browser 组件上的核心差异是什么？
+4. 自定义工具的 `description` 写得模糊会导致什么后果？
+5. 任务执行中 Agent 卡在登录页，有哪两种解决方式？
+
+答案要点：1. 通过索引引用，因为 LLM 不擅长生成稳定的选择器；2. 太大烧钱且可能死循环，太小任务完不成；3. 部署位置，开源库本地跑，云服务云端跑；4. LLM 无法判断何时调用该工具，或调用参数错误；5. 用 `profile_dir` 复用登录态，或用云浏览器同步配置。
+
+---
+
+## 相关资源
 
 - GitHub：https://github.com/browser-use/browser-use
 - 官方文档：https://docs.browser-use.com
