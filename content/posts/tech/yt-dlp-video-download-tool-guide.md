@@ -12,7 +12,19 @@ tags: ["yt-dlp", "视频下载", "ffmpeg", "Python", "开源工具"]
 
 需要从 YouTube、Bilibili、TikTok 等站点批量下载视频、提取音频、嵌入字幕或写元数据时，命令行工具比图形界面更可控、可脚本化、可复现。yt-dlp 是这一场景下维护最活跃的开源实现，覆盖超过一千个站点，从 youtube-dl fork 而来并持续合并上游修复。
 
-本文覆盖安装、常用用法、格式选择、元数据处理、Python API、插件开发，并拆解其内部架构，便于在下载失败、需要自定义提取器或嵌入到自动化流水线时定位问题。读完应能选择合适的安装与更新通道，用 `-f`/`-S` 精确控制下载格式，用输出模板组织文件结构，用 Python API 把下载能力嵌入到代码，并理解 Extractor/Downloader/PostProcessor 三层如何协作——从而判断某个站点失败时该改哪一层。
+本文覆盖安装、常用用法、格式选择、元数据处理、Python API、插件开发，并拆解其内部架构，便于在下载失败、需要自定义提取器或嵌入到自动化流水线时定位问题。读完应能选择合适的安装与更新通道，用 `-f`/`-S` 精确控制下载格式，用输出模板组织文件结构，用 Python API 把下载能力嵌入到代码，并理解 Extractor/Downloader/PostProcessor 三层如何协作——从而判断某个站点失败时该改哪层。
+
+文章按使用深度组织，建议按顺序阅读：
+
+| 阶段 | 章节 | 目标 |
+|------|------|------|
+| 入门 | 安装、最小示例 | 跑通第一次下载 |
+| 进阶 | 功能详解、输出模板、网络与反封锁 | 控制格式、组织文件、绕过封锁 |
+| 自动化 | 批量下载、Python API | 嵌入脚本和流水线 |
+| 扩展 | 插件系统、架构解析 | 自定义提取器、定位失败层 |
+| 排查 | 常见问题、适用边界 | 解决失败、判断是否选型正确 |
+
+只想快速上手的读者，看完「安装」和「最小示例」即可开始；遇到具体问题再回到对应章节。
 
 ## 项目概览
 
@@ -24,7 +36,7 @@ tags: ["yt-dlp", "视频下载", "ffmpeg", "Python", "开源工具"]
 | 许可证 | Unlicense（源码） |
 | 最新提交 | 2026-05-22 |
 
-yt-dlp 是一个 feature-rich command-line audio/video downloader，主要能力包括：
+yt-dlp 是一款功能丰富的命令行音视频下载器，主要能力包括：
 
 - 支持超过一千个站点的视频提取，每个站点对应一个 Extractor 类
 - 格式选择与多维度排序（`-f` 按格式 ID，`-S` 按分辨率/codec/文件大小等维度）
@@ -77,6 +89,8 @@ yt-dlp 的多数能力依赖外部工具 ffmpeg，包括：
 - 提取和嵌入字幕
 - 缩略图转换
 
+之所以依赖外部 ffmpeg 而非内置，是因为 ffmpeg 本身体积大（数十 MB）、维护独立、且涉及大量编解码专利问题，作为独立进程调用更利于各自升级。yt-dlp 只负责抓取和调度，编解码与容器操作全部交给 ffmpeg，两者通过子进程通信。
+
 建议从 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds) 下载预编译版本。安装后运行 `yt-dlp --version` 确认安装成功。
 
 > ⚠️ 注意：PyPI 上有个名为 `ffmpeg` 的 Python 包，和 ffmpeg 命令行工具不是同一个东西，别装错了。
@@ -122,7 +136,7 @@ yt-dlp "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 yt-dlp -f "bv*+ba/b" "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
-`bv*` 匹配最佳视频流（含纯视频和音视频合一），`ba` 匹配最佳音频流，`/b` 是兜底选项。YouTube 等站点的高码率流通常是视频和音频分离的，需要 ffmpeg 在下载后合并。
+`bv*` 匹配最佳视频流（含纯视频和音视频合一），`ba` 匹配最佳音频流，`/b` 是兜底选项。YouTube 等站点的高码率流通常是视频和音频分离的——这是 DASH（Dynamic Adaptive Streaming over HTTP）和 HLS 自适应流媒体的标准做法：分离后客户端可以根据带宽单独选择视频清晰度和音频码率，避免低带宽用户被迫下载高码率音频。代价是下载后需要 ffmpeg 把两条流合并成单个文件。
 
 ## 功能详解
 
@@ -138,7 +152,7 @@ yt-dlp -F "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 输出示例（截取部分）：
 
-```
+```text
 ID  EXT   RESOLUTION │   FPS │   CODECS    │   BR    │   SIZE
 ────────────────────────────────────────────────────────────
 sb2 mhtml   images                │         │ unknown
@@ -163,7 +177,7 @@ yt-dlp -f "bv" "URL"
 
 #### 格式排序（Format Sorting）
 
-yt-dlp 3.0+ 引入格式排序机制，用 `-S` 参数按多个维度排序：
+yt-dlp 在 `-S` 参数上提供格式排序机制，按多个维度排序后取最优：
 
 ```bash
 # 优先选择分辨率高、codec 新的格式
@@ -349,7 +363,7 @@ yt-dlp --geo-verification-proxy "http://proxy.example.com:8080" "URL"
 
 将 URL 写入文件，每行一个：
 
-```
+```text
 # urls.txt
 https://www.youtube.com/watch?v=video1
 https://www.youtube.com/watch?v=video2
@@ -474,7 +488,9 @@ with YoutubeDL(ydl_opts) as ydl:
 
 ## 插件系统
 
-yt-dlp 3.0+ 支持通过插件扩展功能，可加载自定义的 Extractor（提取器）和 PostProcessor（后处理器）。插件机制让自定义逻辑不必修改 yt-dlp 主仓库，便于在团队内分发和版本管理。
+yt-dlp 支持通过插件扩展功能，可加载自定义的 Extractor（提取器）和 PostProcessor（后处理器）。插件机制让自定义逻辑不必修改 yt-dlp 主仓库，便于在团队内分发和版本管理。
+
+在插件系统出现之前，要支持一个新站点只能 fork 主仓库改代码再提 PR，等合并发版周期长，企业内部分站点的提取逻辑也不适合公开。插件系统把扩展点开放出来：自定义代码放在独立目录，yt-dlp 启动时自动扫描注册，主仓库升级不会覆盖插件，团队内部站点支持可以独立维护。
 
 ### 插件目录
 
@@ -515,7 +531,7 @@ class MySiteIE(GenericIE):
 
 ### 模块结构
 
-```
+```text
 yt_dlp/
 ├── YoutubeDL.py       # 主引擎：调度下载流程
 ├── extractor/         # 1000+ 网站提取器
@@ -541,7 +557,7 @@ yt_dlp/
 
 一次完整的下载请求流经以下阶段：
 
-```
+```text
 URL 输入 → Extractor.match_id()    # 匹配 URL，确定使用哪个提取器
         → Extractor._real_extract() # 向网站请求数据，解析视频信息
         → YoutubeDL.extract_info()  # 获取视频元数据（formats、字幕等）
@@ -581,7 +597,7 @@ yt-dlp 支持多协议和多层并发：
 
 后处理在下载完成后串行执行，典型链路：
 
-```
+```text
 FFmpegMergeDownloader  # 合并视频+音频流（若有）
   → FFmpegFixupStretched  # 修复拉伸的流
   → FFmpegFixupM4a        # 修复 M4a 元数据
@@ -651,6 +667,24 @@ yt-dlp --list-extractors
 ```
 
 输出包含所有已注册 Extractor 的名称和匹配的 URL 模式。完整列表也可在 [yt-dlp Supported Sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) 查看。
+
+### Q: 文件名带特殊字符导致报错？
+
+视频标题里的 `/`、`:`、`|` 等字符在文件系统中非法，默认输出模板会自动替换为 `#`。需要更精细控制时加 `--restrict-filenames` 把所有非 ASCII 字符和空格也替换掉，或用 `--windows-filenames` 强制兼容 Windows 命名规则。
+
+```bash
+yt-dlp --restrict-filenames -o "%(title)s.%(ext)s" "URL"
+```
+
+### Q: 批量下载到一半被站点限速？
+
+先降低并发再加重试。`-N` 控制分片并发，`--retries` 控制重试次数，`--sleep-requests` 在请求间加随机延迟：
+
+```bash
+yt-dlp -N 2 --retries 10 --sleep-requests 1 -a urls.txt
+```
+
+配合 `--download-archive` 跳过已下载项，可以安全地多次重跑同一批 URL 直到全部完成。
 
 ## 与 youtube-dl 的主要差异
 
