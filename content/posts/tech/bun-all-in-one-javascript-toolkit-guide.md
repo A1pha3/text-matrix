@@ -10,7 +10,7 @@ tags: ["JavaScript", "Bun", "Rust", "Node.js", "TypeScript", "打包工具"]
 
 # Bun v1.3.14：90K Stars 的 all-in-one JavaScript 工具链完整指南
 
-Bun 真正改变 JavaScript 工具链的点，是把运行时、打包器、测试运行器、包管理器四件事压进同一个二进制。这套合并带来的工程含义，比「启动快 4 倍」更值得拆开看：它改变了 JS 工具链的依赖管理方式——以前一个项目要 `node` + `esbuild` + `jest` + `npm` 四个独立工具各自升级、各自报错、各自锁版本，现在只有一个版本号要追。代价是 Node.js 兼容性不是 100%，部分原生模块仍要回退到 Node。
+Bun 真正改变 JavaScript 工具链的点，是把运行时、打包器、测试运行器、包管理器四件事压进同一个二进制。这套合并带来的工程含义，比「启动快 4 倍」更值得拆开看：它改变了 JS 工具链的依赖管理方式——以前一个项目要 `node` + `esbuild` + `jest` + `npm` 四个独立工具，升级节奏对不齐、报错栈跨工具、锁版本要分别管，现在只有一个版本号要追。代价是 Node.js 兼容性不是 100%，部分原生模块仍要回退到 Node。
 
 下文按「为什么这样选 → 四合一怎么落地 → 一次执行怎么流过去 → 什么时候该用什么时候该等」的顺序展开。版本基线 v1.3.14（2026-05-13），90,566 Stars，已越过实验阶段，进入生产可用区间，但生产可用不等于零风险——文末给出具体的迁移边界。
 
@@ -42,9 +42,9 @@ Bun 官方对自己的定义是「all-in-one toolkit for JavaScript and TypeScri
 | 测试运行器 | Jest / Vitest | API 与 Jest 高度相似，迁移成本低 |
 | 包管理器 | npm / yarn / pnpm | 全局缓存 + 硬链接，安装路径与 pnpm 思路接近 |
 
-以前一个项目要 `node` + `esbuild` + `jest` + `npm`，现在只需要一个 `bun`。少装几个工具只是表面收益，更实质的变化在版本对齐和配置共享——`bun build` 出来的产物和 `bun run` 跑的代码用同一个 transpiler，`bun test` 和 `bun run` 共享同一份模块解析逻辑。Node.js 生态里，esbuild 升级破坏 Jest snapshot、ts-node 和 Vite 的 TypeScript 配置不一致这类问题，在 Bun 里不会出现，因为四个工具共用同一套底层实现。
+以前一个项目要 `node` + `esbuild` + `jest` + `npm`，现在只需要一个 `bun`。少装几个工具是直观收益，但真正改变开发体验的是版本对齐和配置共享——`bun build` 出来的产物和 `bun run` 跑的代码用同一个 transpiler，`bun test` 和 `bun run` 共享同一份模块解析逻辑。Node.js 生态里，esbuild 升级破坏 Jest snapshot、ts-node 和 Vite 的 TypeScript 配置不一致这类问题，在 Bun 里不会出现，因为四个工具共用同一套底层实现。
 
-合并也有代价。Node.js 生态里 esbuild 出问题，可以换 swc 或 Vite；Bun 的打包器出问题，只能等官方修。这是单二进制架构的固有 trade-off——灵活性换一致性。
+合并也有代价。Node.js 生态里 esbuild 出问题，可以换 swc 或 Vite；Bun 的打包器出问题，只能等官方修。这是单二进制架构的固有 trade-off：工具出问题不能换，但四个工具的行为永远对齐。
 
 ### 与 Node.js / Deno 的对照
 
@@ -64,13 +64,13 @@ Bun 官方对自己的定义是「all-in-one toolkit for JavaScript and TypeScri
 
 ## 为什么是 JavaScriptCore，以及代价是什么
 
-Bun 与 Deno 最大的技术分歧是引擎选型。Deno 选 V8，是因为 V8 最成熟、性能上限最高，且 Deno 团队有 V8 经验。Bun 选 JavaScriptCore（WebKit 的 JS 引擎），原因更具体，围绕"冷启动"和"内存占用"两个目标：
+Bun 与 Deno 最大的技术分歧是引擎选型。Deno 选 V8，是因为 V8 最成熟、性能上限最高，且 Deno 团队有 V8 经验。Bun 选 JavaScriptCore（WebKit 的 JS 引擎），盯着的是两个具体目标：冷启动和内存占用。
 
-**冷启动开销低**。JavaScriptCore 的初始化路径比 V8 短。V8 启动时要构建完整的 isolate、初始化 JIT 编译器、加载内置库，这套开销在长期运行的服务端进程里被摊薄，但在 CLI 工具、Serverless 函数、脚本这类「跑一次就退出」的场景里占比很高。Bun 的目标场景里冷启动是常态，JSC 的这个特性刚好对上——Serverless 函数的冷启动延迟直接影响用户体验，CLI 工具的启动延迟影响开发效率。
+**冷启动开销低**。JavaScriptCore 的初始化路径比 V8 短。V8 启动时要构建完整的 isolate、初始化 JIT 编译器、加载内置库，这套开销在长期运行的服务端进程里被摊薄，但在 CLI 工具、Serverless 函数、脚本这类「跑一次就退出」的场景里占比很高。Bun 的目标场景里冷启动是常态，JSC 的这个特性刚好对上——Serverless 函数的冷启动延迟直接进用户感知的 P99，CLI 工具的启动延迟则卡在开发者每一次保存-运行的循环里。
 
 **内存占用更紧凑**。JSC 的内存模型对短生命周期进程更友好。同样跑一个 Hello World HTTP 服务，Bun 的常驻内存通常比 Node.js 低 30-50%。在容器化部署、函数计算场景里，这直接影响实例密度——同样的内存预算下，能跑更多 Bun 实例，单位成本更低。
 
-**Zig 与 JSC 的协同**。Bun 团队用 Zig 直接调用 JSC 的 C API，绕过了 V8 的 C++ 抽象层。Zig 的手动内存管理和 comptime 特性让 Bun 能在编译期做更多检查，运行时开销更低。这是 Bun 团队的技术判断，行业里没有共识——Deno 团队认为 V8 + Rust 的组合更稳，因为 V8 的成熟度和 Rust 的内存安全各有保障。
+**Zig 在这里扮演的角色**。Bun 团队用 Zig 直接调用 JSC 的 C API，绕过了 V8 的 C++ 抽象层。Zig 的手动内存管理和 comptime 特性让 Bun 能在编译期做更多检查，运行时开销更低。这是 Bun 团队的技术判断，行业里没有共识——Deno 团队认为 V8 + Rust 的组合更稳，因为 V8 的成熟度和 Rust 的内存安全各有保障。
 
 代价是兼容性。Node.js 生态里有一批包直接调用了 V8 的内部 API（典型的有 `node-bindings`、部分 native addon、用了 `v8.h` 的包），这些在 Bun 上跑不起来。Bun 通过 `node:` 模块兼容层覆盖了 `fs`、`path`、`process`、`Buffer` 等常用模块，但涉及 V8 内部接口的包需要 polyfill 或替代方案。具体的兼容性状态可以查 [Bun 的 Node.js 兼容性列表](https://bun.com/docs/runtime/nodejs-compat)——迁移前先跑一遍现有测试套件，比看文档更可靠。
 
@@ -125,7 +125,7 @@ bun
 
 内置 Web API 覆盖 `fetch`、`WebSocket`、`Streams`、`Crypto`，以及 Bun 特有的 `Bun.sql`、`Bun.redis`、`Bun.serve`、`Bun.file`。`node:` 模块兼容层覆盖了 `fs`、`path`、`process`、`Buffer`、`events` 等常用模块，但仍有少量缺失——遇到不兼容的包，先查兼容性列表，再决定是 polyfill 还是回退 Node。
 
-一个容易踩的点：Bun 的 transpiler 不做类型检查。`bun run` 会愉快地跑过有类型错误的代码，只要语法能转换。这是工程取舍，不是疏漏——类型检查是静态分析，transpile 是语法转换，两件事分开做能让运行时路径更短。代价是类型错误不会在运行时暴露，生产构建前要单独跑 `tsc --noEmit` 或在 CI 里加类型检查步骤。一个可操作的配置是在 `package.json` 的 `prebuild` 脚本里挂 `tsc --noEmit`，让构建前自动检查一次。
+一个容易踩的点：Bun 的 transpiler 不做类型检查。`bun run` 会愉快地跑过有类型错误的代码，只要语法能转换。这是有意的工程取舍——类型检查是静态分析，transpile 是语法转换，两件事分开做能让运行时路径更短。代价是类型错误不会在运行时暴露，生产构建前要单独跑 `tsc --noEmit` 或在 CI 里加类型检查步骤。一个可操作的配置是在 `package.json` 的 `prebuild` 脚本里挂 `tsc --noEmit`，让构建前自动检查一次。
 
 ### 打包器：Bun.build 与单文件可执行文件
 
@@ -261,7 +261,7 @@ Bun 官方和社区的基准测试数据（因环境而异，仅供参考）：
 - **Windows arm64 生产环境**：Bun 在这块的稳定版支持相对较新，生产环境建议再观察一两个版本。
 - **强依赖 Jest 生态**：`jest-styled-components`、`jest-image-snapshot` 这类深度集成 Jest 的包，迁移到 `bun:test` 可能要改 mock 注入方式。
 
-两个列表的判断标准可以归到一条：**项目对 Node.js 生态的耦合度有多深**。耦合度低（新项目、标准 API、少量原生依赖）→ Bun 收益直接；耦合度高（企业中间件、native addon、深度 Jest 集成）→ 迁移成本会吃掉速度收益。中间地带的项目，按下面的排查指引做一次试运行，比看文档判断更准。
+两个列表看似在列场景，背后其实只有一个判断变量：**项目对 Node.js 生态的耦合度有多深**。耦合度低（新项目、标准 API、少量原生依赖）→ Bun 收益直接；耦合度高（企业中间件、native addon、深度 Jest 集成）→ 迁移成本会吃掉速度收益。中间地带的项目，按下面的排查指引做一次试运行，比看文档判断更准。
 
 ### 迁移排查指引
 
@@ -317,7 +317,7 @@ bun upgrade
 3. **现有项目灰度**：先跑测试套件，再灰度非核心服务。观察 1-2 个版本周期。
 4. **企业核心系统**：再等等。等 Node.js 兼容性进一步收敛、APM / Service Mesh 集成更成熟后再评估。
 
-Bun 把 JavaScript 工具链的四个工具合为一个，去掉了每个项目都要配置的 npm + esbuild + jest + ts-node 组合。对新项目或个人工具来说，零配置就能跑起来是真实的效率提升，速度收益是附带效果。
+四个工具合到一个二进制里，省掉的不只是 npm + esbuild + jest + ts-node 这套配置组合，还有它们之间对不齐的成本。对新项目或个人工具来说，零配置就能跑起来是真实的效率提升，速度收益是附带效果。
 
 v1.3.x 持续迭代、TypeScript 6 支持到位、Bun.build 能力增强——这个 90K Stars 的项目已经越过了「值得关注」的阶段，到了「值得实际试试」的时候。「试试」和「全量切换」之间，隔着完整的测试套件跑通和灰度观察，这两步省不掉。
 
