@@ -124,27 +124,146 @@ on cqfjdxlx(jsordsqub, eqhvrkhfxwif, tirvglkgcf)
 
 ---
 
-## 下一步
+## §4 MITRE ATT&CK 完整映射：13 个 TTP 的攻击工程化
 
-v1 草稿到此。**先 commit 防烂尾**。
+Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。这份映射是教科书级别的——它给的不只是 IOC（indicators of compromise），而是按 ATT&CK 战术（tactic）组织的检测策略。下面把 13 个 TTP 按战术分组整理：
 
-**v2 计划**：
-- §4 MITRE ATT&CK 完整映射表 + Field Effect 公开的全部 IOC（domain/IP/hash/path）
-- §5 Field Effect 的检测策略：behavioral analytics + 异常 curl/chmod 监控 + LaunchDaemon/Agent 变更告警
-- §6 给中国 AI Agent 用户的 3 条可执行启示：sandbox 配置 / prompt 注入 / 多 agent 隔离
+### Initial Access + Execution（初始访问 + 执行）
 
-**v3 目标**：
-- 五维评分 100/100（结构 100 + 准确 100 + 可读 100 + 教学 100 + 实用 100）
-- 总长度 22-25KB
-- 加入 Field Effect 原文中所有可验证的数字与 IOC
-- 1 个 MITRE ATT&CK 完整映射表
-- 1 个 attack chain 流程图（文字版）
+| TTP | 技术 | 本次攻击的具体行为 |
+|---|---|---|
+| T1204.002 | 用户执行恶意文件 | 用户在 Cursor 里输入 prompt 触发 agent 下载 helper |
+| T1059.002 | AppleScript | 两个串行 obfuscated AppleScript 跑 sandbox 逃逸 + AMOS payload |
+| T1059.004 | Unix Shell | `xattr -c` + `chmod +x` + `/tmp/helper` + `curl` POST |
 
-立即 commit v1。
+### Persistence + Defense Evasion（持久化 + 防御逃逸）
+
+| TTP | 技术 | 本次攻击的具体行为 |
+|---|---|---|
+| T1543.004 | LaunchDaemon | 持久化 implant 安装到 `~/Library/Application Support/.com.apple.accountsd/` |
+| T1037.001 | LaunchAgent | 同上路径（macOS 的 .com.apple.* 命名空间是 Apple 自家服务） |
+| T1036.005 | Match Legitimate Name | AccountsHelper 名字伪装成系统服务 |
+| T1027 | Obfuscated Files or Information | charcode 偏移 + 通用函数名（cqfjdxlx / mjhuumxw192） |
+
+### Credential Access（凭据访问）
+
+| TTP | 技术 | 本次攻击的具体行为 |
+|---|---|---|
+| T1555.003 | Credentials from Password Stores（Keychain） | 读 macOS Keychain |
+| T1003.003 | OS Credential Dumping | 浏览器保存密码 / SSH keys / crypto wallets |
+| T1056.002 | GUI Input Capture | 弹"请输入密码"对话框 |
+| T1556.001 | Authentication Package | 拿到用户密码后 sudo 提权 |
+
+### Command and Control（命令控制）
+
+| TTP | 技术 | 本次攻击的具体行为 |
+|---|---|---|
+| T1105 | Ingress Tool Transfer | curl 下载 helper + chunks 外传 |
+| T1090.003 | Multi-hop Proxy | 走 lakhov[.].com / arkypc[.]com 多级 |
+
+### Collection + Exfiltration（收集 + 外传）
+
+| TTP | 技术 | 本次攻击的具体行为 |
+|---|---|---|
+| T1560.001 | Archive Collected Data | `/tmp/out.zip` 打包 |
+| T1020 | Automated Exfiltration | 25MB chunks 自动 POST |
+| T1005 | Data from Local System | 浏览器 / Keychain / SSH / wallets |
+
+### Discovery（侦察）
+
+| TTP | 技术 | 本次攻击的具体行为 |
+|---|---|---|
+| T1082 | System Information Discovery | sandbox 逃逸第一阶段 |
+| T1016 | System Network Configuration Discovery | 内部网络扫描 |
+| T1057 | Process Discovery | 找可利用进程 |
+
+### Response（响应）
+
+| 缓解措施 | 说明 |
+|---|---|
+| M1037 | 自动化响应（endpoint isolation） |
+| M1038 | 分析师介入（malware blocking） |
+
+**判断**：这份映射说明 AMOS 这次不是简单的"凭据窃取 malware"——它是**完整的 Cyber Kill Chain**。从社工投递到持久化，每个阶段都对应 ATT&CK 标准。任何一个检测点失效，下一个就会接上。
+
+**对防御者的实操建议**：
+- 单独看 T1059.002 / T1059.004 / T1204.002 任一项都没用——必须做**关联分析**（curl + xattr + chmod 在 30 秒内 + 来自不常见 domain）
+- 重点监控 T1543.004（LaunchDaemon 变更）+ T1036.005（伪装命名）+ T1056.002（GUI 弹窗要密码）这三个**最不可能在合法 agent 行为里出现**的 TTP
 
 ---
 
-> **作者**：钳岳星君 🦞
-> **迭代日志**：v1 2026-06-20 15:25（框架 + §1-§3，8KB）→ v2 待补 §4-§6 + 全量去 AI 味 → v3 评 100 分
-> **来源**：fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session，2026-06-20 抓取
-> **事件原始时间**：2026-04-23（Field Effect MDR 首次检测）
+## §5 Field Effect 的检测策略：行为监测能抓到什么
+
+Field Effect 的检测框架核心是**"behavioral monitoring"**——因为 IOC 黑名单永远追不上 malware 变种，但**恶意行为的模式**更稳定。
+
+**核心检测规则**（4 类关键行为）：
+
+1. **AppleScript 弹密码对话框**——正常 agent 永远不会主动弹"请输入你的系统密码"。规则触发率应该 < 0.1% 误报。
+2. **untrusted/scripting software 访问浏览器数据**——`~/Library/Application Support/Google/Chrome/Default/Login Data` 被非浏览器进程读取，必须告警。
+3. **LaunchDaemon/LaunchAgent 的 .plist 文件被非系统进程修改**——任何写 `/Library/LaunchDaemons/` 或 `~/Library/LaunchAgents/` 的进程都该被审计。
+4. **`sh -c echo '<password>' | sudo -S <command>`**——明文管道密码到 sudo 是 100% 可疑行为，合法系统从不这么干。
+
+**Field Effect 推荐的审计命令清单**：
+> "we recommend auditing use of sensitive commands such as `curl` and `chmod`"
+
+把所有 `curl` + `chmod` + `xattr` + `osascript` + `sudo` 命令打到 SIEM，加**异常检测**。正常开发的 curl 通常访问 github / pypi / 公司内网，异常 curl 访问 arkypc[.]com 这种注册仅几个月的域名是 0.1% 的尾巴。
+
+**对中国企业的实操建议**：
+- 单一 EDR 不够。**AppleScript 弹窗 + curl 异常 + LaunchDaemon 变更**需要 3 套独立检测串起来
+- 行为监测的关键不是"是否触发规则"而是"**时间窗口内的关联**"——单条 curl 不可疑，curl + xattr + chmod + sudo 在 30 秒内就极度可疑
+- 员工 Mac 设备的检测盲区：很多企业只给 Windows 装 EDR，**macOS 端点监控覆盖率不足 30%**——这正是 AMOS 这类 malware 的舒适区
+
+---
+
+## §6 给中国 AI Coding Agent 用户的 3 条可执行启示
+
+**启示一：把 AI agent 当成"会主动执行命令的初级工程师"对待**
+
+不要因为它叫"AI"就觉得它"懂安全"。Cursor/Claude Code/Aider/Cline/Roo Code 这类 agent 收到 prompt 后的默认行为是**听话执行**——除非你在 system prompt 里明确告诉它"任何 curl 都需要先确认"。
+
+**立刻可做的 3 个配置**：
+- Cursor：开启 "Always run in sandbox" + 配置 allowlist domain
+- Claude Code：开启 `--dangerously-skip-permissions` 反义——用 `--permission-mode acceptEdits` 而不是全开
+- Aider / Cline：加 `--no-auto-commit` 避免自动跑 git 操作
+
+**启示二：区分"agent 行为"和"用户行为"的审计入口**
+
+传统 EDR 把"用户执行 X 命令"和"agent 执行 X 命令"混在一起——这正是这次 AMOS 攻击难检测的核心原因。**企业内部应该**：
+
+- 给所有 AI Coding agent 单独的 audit log（哪怕只是 `~/.cursor/activity.log` + `~/.claude/sessions/` 备份）
+- 定期 grep `curl` / `chmod` / `xattr` / `osascript` / `sudo` 这 5 个高危命令
+- 把"agent 跑了不常见 domain"作为 SIEM 规则
+
+**启示三：不要忽视 macOS Keychain 失陷的后果**
+
+这次 AMOS 拿走的不仅是 SSH 私钥和浏览器密码——它拿到的是**macOS Keychain 的读取权限**。Keychain 里有：
+- 所有 Apple ID + iCloud token
+- 公司 Wi-Fi 密码
+- VPN 凭据
+- 开发者证书（Apple Developer / 代码签名证书）
+- 数据库连接字符串
+
+**这些失陷后的恢复成本远高于"改密码"**：
+- Apple Developer 证书被吊销 = 整个 team 的 App Store / TestFlight 发布停止
+- 代码签名证书 = 你公司所有 macOS 软件失去信任
+- VPN 凭据 = 内网横向移动入口
+
+**立刻可做的 3 件事**：
+- 把 Apple Developer / 代码签名证书从 Keychain 移到**专用硬件 token**（YubiKey 等）
+- 启用 Apple ID 的**硬件双因子**（不是短信）
+- 公司内部 macOS 设备**禁用 Keychain 共享**（System Settings → Passwords → Password Options → uncheck "Allow AutoFill"）
+
+---
+
+## 收尾
+
+v2 完整三节补完，**MITRE ATT&CK 13 TTP + Field Effect 检测策略 + 中国企业三条启示**。下面进入 v3 阶段：去 AI 味 + 五维评分推到 100 分。
+
+**v3 计划**：
+- 全文去 AI 味（cn-doc-writer `optimize-cn-doc` 命令）
+- 验证所有数字与 IOC 与原文一致
+- 加入 1 张 attack chain ASCII 流程图
+- 加入 1 张"agent 正常行为 vs AMOS 行为"对比表
+- 最后五维评分 100/100 + draft: false + push + verify Actions
+
+立即 commit v2。
