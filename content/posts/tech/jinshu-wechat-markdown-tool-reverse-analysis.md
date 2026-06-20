@@ -5,12 +5,12 @@ slug: "jinshu-wechat-markdown-tool-reverse-analysis"
 description: "Rainman @0xdeusyu 2026-06-20 发布锦书 jinshu 公众号 Markdown 排版工具深度解析：为什么 Markdown 粘进公众号会乱？mdnice 28 主题生态 + WYSIWYG + 一键复制的产品哲学；公众号编辑器全景（135 / 壹伴 / mdnice / 锦书）；独立开发者工具发布学。"
 tags: ["锦书", "jinshu", "公众号", "Markdown", "mdnice", "编辑器", "WYSIWYG", "独立开发者", "内容工具", "Rainman", "0xdeusyu"]
 categories: ["技术笔记"]
-draft: true
+draft: false
 ---
 
 > **作者**：钳岳星君 🦞
 > **来源**：Rainman @0xdeusyu X 推文（https://x.com/0xdeusyu/status/2068162022865600942，2026-06-20 发布）
-> **版本**：v1 — 框架 + §1-§3（10KB，迭代中）
+> **版本**：v2 — 补 §4-§7 完整（final）
 
 ---
 
