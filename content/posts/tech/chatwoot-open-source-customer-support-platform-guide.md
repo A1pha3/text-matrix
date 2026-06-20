@@ -8,9 +8,32 @@ categories: ["技术笔记"]
 tags: ["开源", "Rails", "Vue", "全渠道客服", "AI Agent"]
 ---
 
+## 学习目标
+
+读完本文后，你应能：
+
+- 说清 Chatwoot 把"多渠道对话归一化"做到什么程度，以及它和 Twenty、Odoo 这类相邻项目的边界在哪里。
+- 对照 Rails + Sidekiq + PostgreSQL + Redis 这套后端组合，判断自部署时哪个组件会成为瓶颈，并知道 pgvector 在 Captain AI Agent 里扮演什么角色。
+- 跟着一次"客户从网站 Widget 发消息到坐席回复"的完整链路，定位路由、实时分发、报表聚合分别落在哪段代码、哪个进程。
+- 在 Heroku、DigitalOcean Kubernetes、自建 Docker Compose 三条部署路径里做出取舍，并知道落地前必须自检的合规、凭证、本地化三件事。
+
+## 目录
+
+- [一句话判断](#一句话判断)
+- [项目位置](#项目位置)
+- [系统地图](#系统地图)
+- [一次会话从客户敲第一行字到坐席回复](#一次会话从客户敲第一行字到坐席回复)
+- [Captain：值得单独看的 AI Agent](#captain值得单独看的-ai-agent)
+- [部署与落地](#部署与落地)
+- [谁该用、谁可以等](#谁该用谁可以等)
+- [边界与未覆盖](#边界与未覆盖)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [FAQ](#faq)
+
 ## 一句话判断
 
-Chatwoot 做的事很简单：把分散在十几种渠道里的客户对话统一收进一个可自托管的工单系统，同时把 AI 助手、Help Center、报表、自动化打包在一起。它不是 Intercom 的功能克隆，但已经覆盖 80% 的中型团队实际会用到的客服场景，剩下的 20% 需要靠 enterprise 版或自研补齐。
+Chatwoot 把分散在十几种渠道里的客户对话统一收进一个可自托管的工单系统，同时把 AI 助手、Help Center、报表、自动化打包在一起。它不是 Intercom 的功能克隆，但已经覆盖 80% 的中型团队实际会用到的客服场景，剩下的 20% 需要靠 enterprise 版或自研补齐。
 
 ## 项目位置
 
@@ -127,3 +150,116 @@ README 列了三条主要部署路径：
 - 没有跑 benchmark。README 没给出"每秒能处理多少条会话"这种数据，自部署规模评估只能结合自己的压测；不要直接套用其它 Rails 应用的通用经验。
 
 Chatwoot 是一份"成熟但不完美"的开源答案：核心场景够用、扩展接口清晰、迁移路径明确，剩下的工程取舍在你这一侧。
+
+## 自测题
+
+下面 5 道题用来检验你是否真的把上面的架构和落地路径串起来了。先自己答，再点开参考答案对照。
+
+### 1. 为什么 Chatwoot 在 `docker-compose.production.yaml` 里用的是 `pgvector/pgvector:pg16` 而不是普通的 `postgres:16`？
+
+<details>
+<summary>参考答案</summary>
+
+`pgvector` 镜像在原生 PostgreSQL 之上加了 vector 类型与 ANN 索引扩展。Captain AI Agent 做检索增强生成（RAG）时，要把 Help Center 文章和上传文档的 embedding 存进数据库，再按相似度检索。换成普通 `postgres:16` 镜像，Captain 的向量检索路径会直接报错或退化到不可用。这是"AI 能力已经下沉到存储层"的信号，部署时不能按传统 Rails 应用的依赖来理解。
+</details>
+
+### 2. 客户先在网站 Widget 发了一条消息，半小时后又从 WhatsApp 发来一条。系统会新开一张工单还是合进原会话？依据是什么？
+
+<details>
+<summary>参考答案</summary>
+
+会合进原会话。WhatsApp 渠道的 incoming-message 服务按 `contact_id` 把新消息挂到已有的 `Conversation` 上，而不是新开一张。前提是两条渠道都关联到同一个 `Contact`——这通常靠邮箱或手机号匹配。如果客户在两个渠道用了完全不同的身份信息，系统就无法自动合并，需要坐席手工 merge contact。
+</details>
+
+### 3. Sidekiq 在这套架构里承担了哪些异步任务？如果 Redis 挂了 5 分钟，哪些功能会先坏？
+
+<details>
+<summary>参考答案</summary>
+
+Sidekiq 主要承担：消息归一化后的入库、报表 `reporting_event` 异步聚合、Captain 的草稿生成与自动回复 worker、邮件入站出站、跨渠道 webhook 重试。Redis 挂掉后，实时分发（ActionCable 也会用 Redis 做 pubsub）和异步任务会同时停摆——坐席 UI 不再实时收到新消息，自动回复不再触发，报表聚合堆积。但已落库的会话不会丢，PostgreSQL 仍是唯一真源；Redis 恢复后积压任务会按队列重放。
+</details>
+
+### 4. 一个 5 人小团队日均 80 条对话，要不要上 Chatwoot 自部署？给出判断依据。
+
+<details>
+<summary>参考答案</summary>
+
+不建议。这个量级用免费版 Intercom 或 Crisp 更划算。自部署 Chatwoot 的运维成本（Rails + Sidekiq + PostgreSQL + Redis + pgvector + 渠道凭证维护 + 升级跟进）远高于 SaaS 月费。Chatwoot 的甜区是"按坐席付费已经压不住成本"的中型团队——通常坐席数 20+ 或对话量日均 500+ 才能看到明显 ROI。5 人团队更应该把工程时间花在产品本身。
+</details>
+
+### 5. Captain 的"挂件式"接入设计对换模型这件事意味着什么？如果要换 vLLM 自托管，改动会落在哪一层？
+
+<details>
+<summary>参考答案</summary>
+
+意味着换模型不需要动 UI 或前端，改动集中在 Captain 的 service object 层和 `llm` 配置项。具体说，要改的是负责构造 prompt、调用 LLM API、解析返回的那组 service 对象——把对 OpenAI/Anthropic 的 HTTP 调用换成对 vLLM 自托管端点的调用，并调整 embedding 模型以匹配 pgvector 里已有的向量维度。如果原 embedding 维度和新模型不一致，还需要重算全量文档的 embedding 并重建索引，这是落地时最容易低估的工作量。
+</details>
+
+## 进阶路径
+
+把上面这些读完，只是把 Chatwoot 当作"可用的开源客服"看清楚了。要把它真正用顺、改顺，建议按下面这条顺序继续走：
+
+### 1. 源码阅读顺序
+
+1. **先读 `app/models/`**：`Conversation`、`Message`、`Contact`、`Inbox` 这四个核心模型是整套系统的语义骨架。看完它们的关系，再读其它表都是"挂在哪个外键上"。
+2. **再读 `lib/` 下的渠道适配器**：挑 WhatsApp 和 Email 两个对比看，理解 `Channel::Api` 抽象怎么把不同协议的消息归一到 `Message` 表。
+3. **接着读 `app/jobs/` 与 Sidekiq 队列配置**：搞清 `reporting_event`、`webhooks`、Captain 相关 worker 各自跑在哪个队列，便于后续按队列做隔离与限流。
+4. **最后读 `app/services/`**：会话路由、自动分配、Captain 调用入口都在这里，是二开改动最频繁的一层。
+
+### 2. Captain PoC 步骤
+
+如果团队打算用 Captain 替代部分一线坐席，建议先做一次小范围 PoC，而不是直接全量上线：
+
+1. 选一个高频 FAQ 主题（如"营业时间""退订邮件""物流查询"），把对应 Help Center 文章写齐。
+2. 在一个低峰 inbox 上打开 Captain 自动回复，其它 inbox 保持人工。
+3. 跑两周后看三个指标：自动回复解决率、坐席改写率、CSAT 评分变化。
+4. 如果 CSAT 没掉、解决率 > 30%，再扩到第二个主题；如果 CSAT 掉了 5 分以上，先回到知识库质量而不是调模型。
+
+### 3. 自部署压测
+
+README 没给吞吐数据，自部署前必须自己压。最小压测脚本可以这么写：
+
+- 用 `k6` 或 `locust` 模拟 200 个并发客户从 Widget 发消息；
+- 监控 PostgreSQL 的 `pg_stat_activity`、Redis 的 `INFO clients`、Sidekiq Web UI 的队列堆积；
+- 重点看 `messages` 表的写入延迟和 ActionCable 的广播延迟——这两个先涨起来，就是瓶颈所在。
+
+### 4. 升级与迁移
+
+Chatwoot 的 `develop` 分支活跃，minor 版本之间会有 schema 迁移。升级前先看 `db/migrate/` 里新增的迁移文件，在 staging 跑一次 `db:chatwoot_prepare`，确认回滚路径再上生产。从 Intercom/Zendesk 迁移时，官方提供了 CSV 导入工具，但历史会话的 `contact_id` 映射需要自己写脚本对齐。
+
+## FAQ
+
+### Q1：自部署后，Captain 的 LLM 调用是走 Chatwoot 的云服务还是我自己配的 endpoint？
+
+A：默认走 Chatwoot 官方的 LLM 服务（需要 enterprise 版授权），但企业版可以配置成走自托管的 vLLM/TGI 或第三方 API。具体配置项在 `InstallationConfig` 表的 `llm` 相关 key 里。如果你用的是社区版（非 enterprise），Captain 的高级功能会受限，建议先确认 license 再决定 PoC 范围。
+
+### Q2：WhatsApp Business API 接入一直报 401，怎么排查？
+
+A：按这个顺序查：
+
+1. Meta Business 后台的 WhatsApp Business Account 是否已通过验证，Phone Number ID 是否正确。
+2. `InstallationConfig` 里 `whatsapp_app_id`、`whatsapp_app_secret`、`whatsapp_phone_number_id` 是否都填了，且没有多余空格。
+3. Webhook 校验 token 是否和 Meta 后台配置的一致。
+4. 如果是刚申请的号码，24 小时内只能发模板消息，不能发自由文本——这是 Meta 的限制，不是 Chatwoot 的 bug。
+
+### Q3：Sidekiq 队列堆积越来越长，坐席 UI 收新消息有延迟，怎么定位？
+
+A：先看 Sidekiq Web UI（默认 `/sidekiq`）的队列分布。常见原因有三个：
+
+1. **Captain worker 慢**：LLM 调用超时堆积，把 default 队列堵住。解法是把 Captain 相关 worker 拆到独立队列，并在 `config/sidekiq.yml` 里给它单独的并发数。
+2. **报表聚合任务跑全表**：`reporting_event` 在大表上跑聚合时锁住写入。解法是给 `reporting_event` 加按天分区，或把聚合任务挪到只读副本。
+3. **Redis 内存打满**：`INFO memory` 看 `used_memory` 是否接近 `maxmemory`。打满后 Sidekiq 会拒绝新任务，需要扩容或调短任务保留时间。
+
+### Q4：从 Intercom 迁移，历史会话能完整迁过来吗？
+
+A：不能完整迁。Intercom 的导出 API 只提供最近 90 天的会话，且不包含附件原文件。Chatwoot 官方的 CSV 导入工具能把文本会话迁过来，但 `contact_id` 需要自己写映射脚本对齐。建议迁移策略是：历史会话留在 Intercom 只读访问 6 个月，新会话从切换日起在 Chatwoot 走，避免一次性迁移的脏数据风险。
+
+### Q5：pgvector 的索引该用 IVFFlat 还是 HNSW？
+
+A：取决于数据规模和召回精度要求。Chatwoot 默认不强制选哪种，自部署时需要自己定。经验值：
+
+- 文档量 < 10 万条：HNSW，召回精度高，构建慢但查询快。
+- 文档量 10 万 - 100 万条：HNSW 仍可用，注意 `ef_construction` 调到 200 以上。
+- 文档量 > 100 万条：需要做 A/B，IVFFlat 在大表上构建更快，但召回精度需要调 `lists` 和 `probes` 参数。
+
+无论选哪种，embedding 模型一旦换，索引必须重建——这是 Captain PoC 里最容易踩的坑。

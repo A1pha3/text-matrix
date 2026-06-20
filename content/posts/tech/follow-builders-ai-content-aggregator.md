@@ -10,17 +10,42 @@ tags: ["AI 资讯", "信息聚合", "OpenClaw", "SKILL", "Twitter"]
 
 # Follow Builders：追踪 AI 建造者的信息聚合工具
 
-> 追踪一线建造者，而非搬运信息的网红
+Follow Builders 是一个 OpenClaw SKILL 形式的信息聚合工具，订阅 AI 领域一线研究员、创始人、产品经理和工程师的公开内容（X 帖子、播客、官方博客），由本地 AI Agent 按用户偏好生成摘要，推送到 Telegram、Discord、WhatsApp 或聊天对话中。项目地址：https://github.com/zarazhangrui/follow-builders
 
----
+## 目录
 
-## 一、项目概述
+- [为什么需要这个工具](#为什么需要这个工具)
+- [学习目标](#学习目标)
+- [项目概览](#项目概览)
+- [你会得到什么](#你会得到什么)
+- [默认信息源](#默认信息源)
+- [快速开始](#快速开始)
+- [自定义配置](#自定义配置)
+- [工作原理](#工作原理)
+- [端到端案例](#端到端案例)
+- [隐私保护](#隐私保护)
+- [错误排查](#错误排查)
+- [常见问题](#常见问题)
+- [采用顺序与决策建议](#采用顺序与决策建议)
+- [资源链接](#资源链接)
 
-### 1.1 是什么
+## 为什么需要这个工具
 
-[Follow Builders](https://github.com/zarazhangrui/follow-builders) 是一个 **AI 驱动的信息聚合工具**。它做的事情是追踪 AI 领域最顶尖的建造者——研究员、创始人、产品经理和工程师——并将他们的最新动态整理成易于消化的摘要推送给你。
+AI 领域的信息源有两个特征：数量爆炸，质量参差。技术博客、播客、X 帖子、论文解读每天产生数百条更新，但其中大部分是二手转发和标题党。直接订阅所有源头会陷入信息过载，靠算法推荐又会把时间花在热度高但价值低的内容上。
 
-### 1.2 项目信息
+Follow Builders 的做法是固定订阅 25 位一线建造者和 5 个顶级播客，由中心化服务统一抓取公开内容，再由本地 AI Agent 按用户偏好生成摘要。两个直接收益：信息源质量由人工筛选保证，摘要风格可定制而不被推荐算法带偏。
+
+## 学习目标
+
+读完本文后，你能够：
+
+- 说出 Follow Builders 与传统 RSS 阅读器、算法资讯工具在选源和处理方式上的差异
+- 完成 OpenClaw 或 Claude Code 下的安装与初始化配置
+- 通过对话指令调整推送频率、语言和摘要风格
+- 解释中心化抓取与本地处理分离带来的隐私优势
+- 识别并处理常见的安装与推送失败问题
+
+## 项目概览
 
 | 项目 | 内容 |
 |------|------|
@@ -29,57 +54,23 @@ tags: ["AI 资讯", "信息聚合", "OpenClaw", "SKILL", "Twitter"]
 | 许可证 | MIT |
 | 最新更新 | 2026-03-25 |
 
-### 1.3 设计理念
+Follow Builders 与传统资讯工具的差异体现在选源标准和处理方式上。传统工具按热度或算法推荐筛选内容，来源随机，摘要由通用模型生成，质量参差；Follow Builders 按建造者质量选源，固定追踪一线人员，摘要由本地 Agent 按用户偏好定制。信息源由中心化服务统一更新，用户无需自己维护 feed 列表。
 
-> **追踪那些真正在做产品、有独立见解的人，而非只会搬运信息的网红。**
+## 你会得到什么
 
-在信息爆炸的环境里，Follow Builders 只追踪真正在一线做产品的人——他们分享的是第一手经验和独立判断，不是二手转发和标题党。
+每日或每周推送到你常用的通讯工具，内容包括：
 
-### 1.4 与其他资讯工具的区别
+- **播客摘要**：5 个 AI 顶级播客新节目的精华摘要
+- **X/Twitter 观点**：25 位 AI 建造者的关键帖子和洞察
+- **官方博客**：Anthropic Engineering、Claude Blog 的完整文章
+- **原始链接**：所有内容的原始链接，方便深入阅读
+- **多语言支持**：英文、中文或双语版本
 
-| 维度 | 传统资讯工具 | Follow Builders |
-|------|--------------|----------------|
-| 筛选标准 | 热度/算法推荐 | 建造者质量 |
-| 内容来源 | 随机/爬虫 | 精选建造者第一手内容 |
-| 摘要方式 | 机器生成（质量差） | AI 根据偏好定制 |
-| 信息源 | 需要自己维护 | 中心化统一更新 |
-| API Key | 多个平台需要多个 Key | 无需任何 API Key |
+推送渠道支持 Telegram、Discord、WhatsApp 和直接在 AI Agent 对话中显示。推送频率分为每日和每周两档：每日适合紧跟行业动态，每周适合系统化学习、降低信息焦虑。
 
----
+## 默认信息源
 
-## 二、功能详解
-
-### 2.1 你会得到什么
-
-每日或每周推送到你常用的通讯工具（Telegram、Discord、WhatsApp 等），包含：
-
-| 内容类型 | 说明 |
-|---------|------|
-| 播客摘要 | 5 个顶级 AI 播客新节目的精华摘要 |
-| X/Twitter 观点 | 25 位精选 AI 建造者的关键观点和洞察 |
-| 官方博客 | AI 公司官方博客的完整文章（Anthropic Engineering、Claude Blog） |
-| 原始链接 | 所有原始内容的链接，方便深入阅读 |
-| 多语言支持 | 英文、中文或双语版本 |
-
-### 2.2 推送方式
-
-| 方式 | 说明 |
-|------|------|
-| Telegram | 即时推送，适合高信息密度用户 |
-| Discord | 适合社区内分享和讨论 |
-| WhatsApp | 私密性强，适合个人使用 |
-| 直接聊天 | 直接在 AI Agent 对话中显示 |
-
-### 2.3 推送频率
-
-- **每日推送**：适合需要紧跟行业动态的用户
-- **每周推送**：适合希望系统化学习、不被信息焦虑的用户
-
----
-
-## 三、默认信息源
-
-### 3.1 播客来源（5 个）
+### 播客来源（5 个）
 
 | 播客名称 | 说明 |
 |---------|------|
@@ -89,38 +80,36 @@ tags: ["AI 资讯", "信息聚合", "OpenClaw", "SKILL", "Twitter"]
 | [Unsupervised Learning](https://www.youtube.com/@RedpointAI) | AI 和技术深度分析 |
 | [Data Driven NYC](https://www.youtube.com/@DataDrivenNYC) | 数据驱动文化和创业 |
 
-### 3.2 X/Twitter AI 建造者（25 位）
+### X/Twitter AI 建造者（25 位）
 
-| 类别 | 建造者列表 |
-|------|-----------|
+名单按角色分组，包含个人账号和少量组织账号（如 Google Labs、Claude 官方账号）：
+
+| 类别 | 建造者 |
+|------|--------|
 | LLM 大牛 | Andrej Karpathy、Sam Altman、Amanda Askell |
 | AI 工程师 | Swyx、Josh Woodward、Guillermo Rauch、Alex Albert |
 | 产品/创始人 | Garry Tan、Aaron Levie、Peter Yang、Nikunj Kothari |
-| 投资人大佬 | Matt Turck、Aditya Agarwal |
+| 投资人 | Matt Turck、Aditya Agarwal |
 | Google/AI Lab | Kevin Weil、Google Labs |
-| Others | Cat Wu、Thariq、Amjad Masad、Ryo Lu、Dan Shipper、Peter Steinberger、Zara Zhang、Claude |
+| 其他 | Cat Wu、Thariq、Amjad Masad、Ryo Lu、Dan Shipper、Peter Steinberger、Zara Zhang、Claude |
 
-### 3.3 官方博客（2 个）
+> 注：名单中的 "Claude" 指 Claude 官方 X 账号，"Google Labs" 指组织账号，二者用于追踪官方动态而非个人观点。
 
-| 博客 | 说明 |
-|------|------|
-| [Anthropic Engineering](https://www.anthropic.com/engineering) | Anthropic 团队的技术深度文章 |
-| [Claude Blog](https://claude.com/blog) | Claude 的产品公告与更新 |
+### 官方博客（2 个）
 
----
+- [Anthropic Engineering](https://www.anthropic.com/engineering)：Anthropic 团队的技术深度文章
+- [Claude Blog](https://claude.com/blog)：Claude 的产品公告与更新
 
-## 四、快速开始
+## 快速开始
 
-### 4.1 前置要求
+### 前置要求
 
-| 要求 | 说明 |
-|------|------|
-| AI Agent | OpenClaw、Claude Code 或类似工具 |
-| 网络连接 | 用于获取中心化 feed |
+- 已安装 OpenClaw 或 Claude Code（或其他兼容 SKILL 格式的 AI Agent）
+- 网络可访问中心化 feed 服务
 
-### 4.2 安装步骤
+### 安装步骤
 
-#### OpenClaw 安装
+OpenClaw 安装：
 
 ```bash
 # 从 ClawhHub 安装（即将上线）
@@ -131,72 +120,50 @@ git clone https://github.com/zarazhangrui/follow-builders.git ~/skills/follow-bu
 cd ~/skills/follow-builders/scripts && npm install
 ```
 
-#### Claude Code 安装
+Claude Code 安装：
 
 ```bash
 git clone https://github.com/zarazhangrui/follow-builders.git ~/.claude/skills/follow-builders
 cd ~/.claude/skills/follow-builders/scripts && npm install
 ```
 
-### 4.3 初始化配置
+### 初始化配置
 
-1. 在你的 AI Agent 中输入 `"set up follow builders"` 或执行 `/follow-builders`
-2. Agent 会以对话方式引导你完成设置——**不需要手动编辑任何配置文件**
+1. 在 AI Agent 中输入 `"set up follow builders"` 或执行 `/follow-builders`
+2. Agent 以对话方式引导你完成设置，无需手动编辑配置文件
 
-Agent 会询问你：
-- 推送频率（每日或每周）和时间
-- 语言偏好（英文、中文或双语）
-- 推送方式（Telegram、邮件或直接在聊天中显示）
+Agent 会询问三项偏好：推送频率（每日或每周）和时间、语言偏好（英文、中文或双语）、推送方式（Telegram、邮件或直接在聊天中显示）。设置完成后，第一期摘要会立即推送。
 
-**设置完成后，你的第一期摘要会立即推送。**
+## 自定义配置
 
----
+### 通过对话修改偏好
 
-## 五、自定义配置
+直接告诉 Agent 即可，例如：
 
-### 5.1 通过对话修改偏好
+- "改成每周一早上推送"
+- "语言换成中文"
+- "把摘要写得更简短一些"
+- "显示我当前的设置"
 
-直接告诉你的 Agent：
+### 自定义摘要风格
 
-| 示例指令 | 说明 |
-|---------|------|
-| "改成每周一早上推送" | 修改推送频率和时间 |
-| "语言换成中文" | 修改语言偏好 |
-| "把摘要写得更简短一些" | 修改摘要详细程度 |
-| "显示我当前的设置" | 查看当前配置 |
+摘要方式由 `prompts/` 目录下的纯文本 prompt 文件控制，不是代码。两种修改方式：
 
-### 5.2 自定义摘要风格
+**通过对话（推荐）**：直接告诉 Agent "摘要写得更简练一些"、"多关注可操作的洞察"、"用更轻松的语气"，Agent 会自动更新 prompt。
 
-Skill 使用纯文本 prompt 文件来控制内容的摘要方式。你可以通过两种方式自定义：
+**直接编辑（高级用户）**：修改 `prompts/` 下的文件：
 
-#### 通过对话（推荐）
-
-直接告诉你的 Agent——
-- "摘要写得更简练一些"
-- "多关注可操作的洞察"
-- "用更轻松的语气"
-
-Agent 会自动帮你更新 prompt。
-
-#### 直接编辑（高级用户）
-
-编辑 `prompts/` 文件夹中的文件：
-
-| 文件 | 说明 |
-|------|------|
+| 文件 | 控制内容 |
+|------|---------|
 | `summarize-podcast.md` | 播客节目的摘要方式 |
 | `summarize-tweets.md` | X/Twitter 帖子的摘要方式 |
 | `summarize-blogs.md` | 博客文章的摘要方式 |
 | `digest-intro.md` | 整体摘要的格式和语气 |
 | `translate.md` | 英文内容翻译为中文的方式 |
 
-这些都是**纯文本指令，不是代码**。修改后下次推送即生效。
+修改后下次推送即生效。
 
----
-
-## 六、工作原理
-
-### 6.1 架构流程
+## 工作原理
 
 ```
 ┌─────────────────┐
@@ -223,119 +190,86 @@ Agent 会自动帮你更新 prompt。
 └─────────────────┘
 ```
 
-### 6.2 技术细节
+各环节的技术实现：
 
-| 环节 | 技术实现 |
-|------|---------|
-| 博客抓取 | 网页抓取 |
-| YouTube 字幕 | Supadata |
-| X/Twitter 帖子 | 官方 API |
-| Feed 更新 | 中心化服务每日抓取 |
-| 摘要生成 | 本地 AI Agent |
+- **博客抓取**：网页抓取，由中心化服务完成
+- **YouTube 字幕**：通过 Supadata 获取
+- **X/Twitter 帖子**：中心化服务通过官方 API 抓取，用户侧无需 X API Key
+- **Feed 更新**：中心化服务每日抓取并打包
+- **摘要生成**：本地 AI Agent 按 prompt 模板处理
 
----
+> 关于 "无需 API Key" 的澄清：用户侧无需 X/Twitter、YouTube 等平台的 API Key，因为抓取由中心化服务统一完成。用户只需配置推送渠道的凭证（如 Telegram Bot Token），这些凭证仅保存在本地。
 
-## 七、隐私保护
+## 端到端案例
 
-Follow Builders 的隐私设计：
+以一个完整的每日推送流程为例，展示任务如何流过系统：
 
-| 保护措施 | 说明 |
-|---------|------|
-| 无 API Key 外发 | 不发送任何 API Key——所有内容由中心化服务获取 |
-| 本地存储 | Telegram/邮件等 Key 仅存储在本地 ~/.follow-builders/.env |
-| 只读公开内容 | Skill 只读取公开内容（公开博客、YouTube 视频、X 帖子） |
-| 配置本地保存 | 你的配置、偏好和阅读记录都保留在自己设备上 |
+1. **早上 08:00**：中心化服务抓取过去 24 小时内 25 位建造者的新帖子、5 个播客的新节目、2 个官方博客的新文章
+2. **08:05**：抓取结果打包成 feed，发布到中心化端点
+3. **08:10**：你的本地 AI Agent 按计划发起一次 HTTP 请求，拉取当日 feed
+4. **08:11**：Agent 按 `prompts/summarize-tweets.md` 处理 X 帖子，按 `summarize-podcast.md` 处理播客字幕，按 `summarize-blogs.md` 处理博客
+5. **08:13**：Agent 按 `digest-intro.md` 组装整体摘要，按 `translate.md` 将英文部分翻译为中文（如已配置双语）
+6. **08:14**：Agent 通过 Telegram Bot Token 将摘要推送到你配置的聊天
+7. **08:15**：你在 Telegram 收到一份包含播客精华、建造者观点、博客链接的中文摘要
 
----
+整个过程只需配置一次，之后每天自动执行。
 
-## 八、与 OpenClaw SKILL 生态
+## 隐私保护
 
-### 8.1 SKILL 文件结构
+Follow Builders 的隐私设计基于一个原则：用户侧不外发任何平台 API Key，所有内容获取由中心化服务完成。
 
-```
-follow-builders/
-├── .github/           # GitHub Actions CI/CD
-├── config/            # 配置文件
-├── examples/          # 示例输出
-├── prompts/           # 摘要风格配置（可自定义）
-├── scripts/           # 安装脚本
-├── SKILL.md          # SKILL 定义文件
-└── README.zh-CN.md   # 中文说明
-```
+具体措施：
 
-### 8.2 如何集成到 OpenClaw
+- **无 API Key 外发**：不发送任何 API Key 到中心化服务，所有内容由中心化服务自行获取
+- **本地存储**：Telegram Bot Token、邮件配置等仅存储在本地 `~/.follow-builders/.env`
+- **只读公开内容**：Skill 只读取公开博客、YouTube 视频、X 帖子
+- **配置本地保存**：偏好和阅读记录保留在自己设备上
 
-Follow Builders 本身就是一个 **OpenClaw SKILL**。安装后，它会：
+## 错误排查
 
-1. **监听设置命令**：响应 `"set up follow builders"` 或 `/follow-builders`
-2. **引导配置**：通过对话方式收集用户偏好
-3. **生成摘要**：调用 AI 能力根据 prompt 模板生成摘要
-4. **执行推送**：根据用户选择的渠道推送内容
+| 错误现象 | 可能原因 | 处理方式 |
+|---------|---------|---------|
+| 安装后 `/follow-builders` 无响应 | SKILL 未被 Agent 识别 | 检查克隆路径是否正确，重启 Agent |
+| `npm install` 失败 | 网络或 Node 版本问题 | 确认 Node 版本 ≥ 18，使用代理重试 |
+| 推送未到达 | Telegram Bot Token 错误或网络问题 | 在 Agent 中执行 "显示我当前的设置" 核对配置 |
+| 摘要内容为空 | 中心化 feed 当日无更新 | 等待下一周期，或检查网络连接 |
+| 摘要质量下降 | prompt 文件被误改 | 用 `git diff prompts/` 查看改动，`git checkout` 恢复 |
+| 双语翻译缺失 | `translate.md` 配置异常 | 检查语言偏好设置，确认 prompt 文件存在 |
 
----
-
-## 九、使用场景
-
-### 9.1 典型使用场景
-
-| 场景 | 使用方式 |
-|------|---------|
-| 晨间学习 | 每天早上收到一份 AI 资讯摘要，30 分钟了解行业动态 |
-| 周末深度 | 每周一收到一份深度摘要，系统化学习 |
-| 项目调研 | 追踪特定建造者，获取第一手技术洞察 |
-| 行业洞察 | 关注创始人视角，了解 AI 创业趋势 |
-
-### 9.2 与其他工具的协同
-
-| 工具 | 协同方式 |
-|------|---------|
-| Hacker News | HN 提供技术讨论，Follow Builders 提供建造者洞察 |
-| Twitter/X | 互补——HN 是社区讨论，FB 是精选建造者视角 |
-| AI 新闻早报 | 互补——早报是媒体视角，FB 是建造者第一手视角 |
-
----
-
-## 十、常见问题
+## 常见问题
 
 ### Q: 为什么不需要 API Key？
 
-**A**: 所有内容（博客文章 + YouTube 字幕 + X/Twitter 帖子）由**中心化服务统一抓取**。你的 Agent 只需要一次 HTTP 请求获取 feed，不需要对接各个平台的 API。
+所有内容（博客文章、YouTube 字幕、X/Twitter 帖子）由中心化服务统一抓取。你的 Agent 只需一次 HTTP 请求获取 feed，不需要对接各个平台的 API。用户侧只需配置推送渠道的凭证（如 Telegram Bot Token）。
 
 ### Q: 如何添加更多的信息源？
 
-**A**: 目前信息源由中心化统一管理和更新，你无需操作即可获得最新的信息源。如需自定义，可以编辑 `prompts/` 中的配置文件来调整摘要风格。
+信息源由中心化统一管理和更新，用户无需操作即可获得最新信息源。如需调整摘要风格，可编辑 `prompts/` 中的配置文件。
 
 ### Q: 支持哪些 AI Agent？
 
-**A**: 目前支持 OpenClaw 和 Claude Code。其他 Agent 可以参考 SKILL.md 的格式进行适配。
+目前支持 OpenClaw 和 Claude Code。其他 Agent 可参考 SKILL.md 的格式进行适配。
 
 ### Q: 推送频率可以自定义吗？
 
-**A**: 可以。通过对话告诉 Agent 你想要的频率和时间，例如"每周三晚上推送"。
+可以。通过对话告诉 Agent 你想要的频率和时间，例如 "每周三晚上推送"。
 
 ### Q: 如何确保内容质量？
 
-**A**: Follow Builders 通过**人工精选建造者名单**来保证质量。25 位 X 建造者和 5 个播客都是 AI 领域真正有影响力的一线人员，而非随机抓取的网红。
+Follow Builders 通过人工精选建造者名单保证质量。25 位 X 建造者和 5 个播客都是 AI 领域有影响力的一线人员或组织，而非随机抓取的网红账号。
 
----
+## 采用顺序与决策建议
 
-## 十一、总结
+如果你打算接入 Follow Builders，建议按以下顺序：
 
-Follow Builders 把信息筛选这件事做成了：按建造者质量选源、中心化抓取本地处理、无需暴露 API Key、摘要风格可定制。
+1. **先评估信息源名单**：查看 25 位建造者和 5 个播客是否覆盖你关心的领域，若重叠度低则收益有限
+2. **在 OpenClaw 或 Claude Code 中安装**：按快速开始步骤完成克隆和依赖安装
+3. **先用每日推送试跑一周**：评估摘要质量和信息密度，确认是否符合你的阅读习惯
+4. **调整摘要风格**：通过对话指令调整详细程度和语气，找到最适合自己的格式
+5. **切换到每周推送（可选）**：如果每日信息量过大，切换到每周以降低信息焦虑
+6. **定期回看名单更新**：中心化服务会更新信息源，关注仓库 commit 了解变化
 
-**适合用户：**
-- AI 研究者和工程师
-- AI 创业者和技术管理者
-- 对 AI 行业有深度学习需求的用户
-- 希望获取第一手行业洞察的投资者
-
-**不适合用户：**
-- 需要实时新闻的用户（FB 是精选+摘要，非实时）
-- 喜欢刷信息的用户（设计理念是少而精）
-
----
-
-## 十二、资源链接
+## 资源链接
 
 | 资源 | 链接 |
 |------|------|

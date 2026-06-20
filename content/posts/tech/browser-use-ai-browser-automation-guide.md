@@ -10,26 +10,45 @@ tags: ["Browser-Use", "AI Agent", "浏览器自动化", "Playwright", "Web Scrap
 
 # Browser-Use：让 AI Agent 控制浏览器完成任何任务
 
-Browser-Use 把"用自然语言指挥浏览器干活"这件事做成了可用的开源库。它的价值不在概念新颖，而在于把 LLM 的任务理解、Playwright 的页面控制和可扩展工具集拼成了一条能跑通的链路——填表单、比价、抓数据这些过去要写专属脚本的任务，现在一句自然语言就能驱动。
+Browser-Use 把"用自然语言指挥浏览器干活"这件事做成了可用的开源库。它把 LLM 的任务理解、Playwright 的页面控制和可扩展工具集组合起来：过去要写专属脚本才能做的填表单、比价、抓数据，现在用自然语言描述任务就能跑。
 
-但选它之前要先想清楚一件事：Browser-Use 有开源库和云服务两条产品线，能力边界不一样。开源库给你完全控制和自定义空间，云服务替你扛内存、反爬、CAPTCHA 这些工程难题。本文先拆这两条线的边界，再展开机制细节，最后给一个任务从输入到完成的完整流程，以及什么场景该用哪条线。
+Browser-Use 有开源库和云服务两条产品线，能力边界不一样。开源库给你完全控制和自定义空间，云服务替你扛内存、反爬、CAPTCHA 这些工程难题。下面的内容面向已经写过 Python、用过 Playwright 或 Selenium、想用 LLM 替代固定脚本的工程师；只想快速跑通一次性任务的读者，可以直接跳到 Claude Code Skill 集成一节。
 
-## 本文覆盖内容
+读完后你能：
 
-- Browser-Use 开源库与云服务的边界划分
-- Agent / Browser / LLM Adapter / Tools 四个核心组件的协作方式
-- 用 uv 安装、配置 API Key、跑通最简示例
-- 表单填写、在线购物、个人助手三个实战用例
-- CLI 工具的快速迭代工作流
-- Claude Code Skill 集成与自定义工具扩展
-- 生产环境的内存、反爬、CAPTCHA 排查指引
-- 何时选开源库、何时选云服务、何时混合使用
+- 区分开源库与云服务的能力边界，判断自己的场景该走哪条线
+- 用 uv 跑通最简示例，定位环境问题
+- 画出 Agent / Browser / LLM Adapter / Tools 四个组件的数据流向图
+- 给 Agent 注册自定义工具，扩展查天气、调内部 API 这类能力
+- 在生产环境识别内存、反爬、CAPTCHA 三类常见坑并选对应方案
+- 用 CLI 快速探索页面结构，再决定是否写完整脚本
+
+---
+
+## 目录
+
+- [全景地图：两条产品线与四个组件](#全景地图两条产品线与四个组件)
+- [核心机制：任务如何流过系统](#核心机制任务如何流过系统)
+- [安装与快速上手](#安装与快速上手)
+- [多 LLM 提供商支持](#多-llm-提供商支持)
+- [实战用例：三类任务的 task 模板](#实战用例三类任务的-task-模板)
+- [CLI 工具详解](#cli-工具详解)
+- [Claude Code Skill 集成](#claude-code-skill-集成)
+- [自定义工具扩展](#自定义工具扩展)
+- [高级配置](#高级配置)
+- [生产环境部署](#生产环境部署)
+- [故障排除](#故障排除)
+- [何时选开源库，何时选云服务](#何时选开源库何时选云服务)
+- [从哪里开始落地](#从哪里开始落地)
+- [自测题](#自测题)
+- [进阶方向](#进阶方向)
+- [相关资源](#相关资源)
 
 ---
 
 ## 全景地图：两条产品线与四个组件
 
-Browser-Use 的所有能力都围绕一个核心问题展开：怎么让 LLM 看懂页面、做出决策、执行操作。它用四个组件回答这个问题，再用两条产品线把这些组件部署到不同环境。
+Browser-Use 用四个组件让 LLM 看懂页面、做出决策、执行操作，再通过两条产品线部署到不同环境。
 
 ```mermaid
 graph TB
@@ -59,7 +78,7 @@ graph TB
 | **LLM Adapter** | 适配多家模型提供商，统一调用接口 | `ChatOpenAI` / `ChatAnthropic` / `ChatBrowserUse` |
 | **Tools** | 注册自定义工具，扩展 Agent 能力范围 | `@tools.action(description=...)` |
 
-两条产品线的核心差异在 Browser 组件的部署位置：开源库把浏览器跑在你自己的机器上，云服务把浏览器跑在 Browser Use Cloud 上。Agent 和 LLM Adapter 在两条线里都一样，Tools 只在开源库里需要手动注册。
+两条产品线的主要差别在 Browser 组件的部署位置：开源库把浏览器跑在你自己的机器上，云服务把浏览器跑在 Browser Use Cloud 上。Agent 和 LLM Adapter 在两条线里都一样，Tools 只在开源库里需要手动注册。
 
 ### 开源库：自主托管，完全控制
 
@@ -67,17 +86,17 @@ graph TB
 
 ### 云服务：托管基础设施，抗检测
 
-云服务把浏览器基础设施整个托管出去，重点解决开源库在生产环境最难扛的几件事：并行扩缩容、stealth 浏览器指纹、CAPTCHA 自动解决、代理轮换。适合快速启动、规模化运行、对抗性网站抓取。代价是按用量付费，且页面内容要经过云服务。
+云服务把浏览器基础设施整个托管出去，重点解决开源库在生产环境最难扛的几件事：并行扩缩容、stealth 浏览器指纹、CAPTCHA 自动解决、代理轮换。适合快速启动、规模化运行、对抗性网站抓取。但按用量付费，且页面内容要经过云服务。
 
 ### 混合使用：开源库 + 云浏览器
 
-两条线不是二选一。最常见的生产部署是混合模式：用开源库的 Agent 和 Tools 控制逻辑，把 Browser 指向云端的托管浏览器。这样既保留了自定义工具的灵活性，又甩掉了本地浏览器的运维负担。
+两条线不是二选一。最常见的生产部署是混合模式：用开源库的 Agent 和 Tools 控制逻辑，把 Browser 指向云端的托管浏览器。自定义工具的灵活性留在自己手里，本地浏览器的运维交给云服务。
 
 ---
 
 ## 核心机制：任务如何流过系统
 
-理解 Browser-Use 最快的方式是跟踪一个具体任务从输入到完成的完整流程。以"查找 browser-use 仓库的 Star 数"为例：
+以"查找 browser-use 仓库的 Star 数"为例：
 
 ```mermaid
 sequenceDiagram
@@ -111,26 +130,26 @@ sequenceDiagram
     A-->>U: 返回结果
 ```
 
-这个流程里有三个关键机制在起作用：
-
 **任务理解**。Agent 把自然语言任务拆成可执行步骤，依赖 LLM 的推理能力。任务描述越具体，拆解越准确——"Find the number of stars of the browser-use repo"比"查一下那个仓库的星"效果好，因为前者明确指出了目标字段。
 
-**元素识别**。Browser 把当前页面的可交互元素提取成带索引的列表返回给 Agent，Agent 通过索引引用元素而非 CSS 选择器。这是 Browser-Use 区别于传统 Playwright 脚本的核心设计——LLM 不需要写选择器，只需要说"点击第 5 个元素"。
+**元素识别**。Browser 把当前页面的可交互元素提取成带索引的列表返回给 Agent，Agent 通过索引引用元素而非 CSS 选择器。这是 Browser-Use 区别于传统 Playwright 脚本的关键设计——LLM 不需要写选择器，只需要说"点击第 5 个元素"。
 
-**状态追踪与错误恢复**。每一步执行后 Agent 都会拿到新的页面状态，如果某步失败（元素不存在、页面没加载完），Agent 会重新评估状态并调整策略。这就是为什么 Browser-Use 能处理动态页面和意外弹窗——它不是按固定脚本执行，而是持续感知环境。
+**状态追踪与错误恢复**。每一步执行后 Agent 都会拿到新的页面状态，如果某步失败（元素不存在、页面没加载完），Agent 会重新评估状态并调整策略。它持续感知页面状态，每一步都重新评估，所以能处理动态页面和意外弹窗。
 
 ### 基准测试表现
 
-根据官方基准测试（BU Bench V1），Browser-Use 在 100 个真实浏览器任务上的表现：
+Browser-Use 官方基准测试 BU Bench V1（用于评估 LLM 在真实浏览器任务上的完成能力）在 100 个真实浏览器任务上比较了不同 LLM 的表现。先说清楚这个数字测的是什么：任务集覆盖搜索信息、表单填写、多页面导航、数据提取等常见浏览器操作，每个任务有明确的完成判定（比如"返回正确的 Star 数""表单提交成功跳转"），成功率指任务完整完成的百分比，部分完成不算。
 
 | 模型 | 成功率 | 特点 |
 |------|--------|------|
-| **ChatBrowserUse** | 最高 | 专门优化，3-5x 更快 |
+| **ChatBrowserUse** | 最高 | 专门优化，单步耗时约为通用模型的 1/3 到 1/5 |
 | **GPT-4o** | 高 | 通用能力强 |
 | **Claude Sonnet** | 高 | 推理能力强 |
 | **Gemini** | 中高 | 性价比好 |
 
-ChatBrowserUse 是云服务配套的优化模型，针对浏览器操作场景做了专门训练，速度和成功率都优于通用模型。开源库搭配 GPT-4o 或 Claude Sonnet 也能拿到高成功率，但单次任务耗时更长。
+表中只给相对排名用于选型参考，具体成功率数字以 BU Bench V1 仓库公布的数据为准。
+
+也不能从这里推出"ChatBrowserUse 在所有 Agent 场景都更强"：它只针对浏览器操作做了优化，离开这个框架的纯推理或代码任务不适用。开源库搭配 GPT-4o 或 Claude Sonnet 能拿到接近的成绩，但单步推理耗时更长，整体任务时间会拉长 3-5 倍。
 
 ---
 
@@ -215,26 +234,26 @@ if __name__ == "__main__":
 
 ## 多 LLM 提供商支持
 
-Browser-Use 通过 LLM Adapter 适配多家模型提供商，接口统一：
+Browser-Use 通过 LLM Adapter 适配多家模型提供商，接口统一。`ChatBrowserUse` 是框架自带的云服务配套模型适配器，其他模型走 LangChain 的标准适配器：
 
 ```python
-# Browser-Use 优化模型
+# Browser-Use 自带的云服务优化模型
 from browser_use import ChatBrowserUse
 
-# OpenAI
-from browser_use import ChatOpenAI
+# OpenAI（需要 pip install langchain-openai）
+from langchain_openai import ChatOpenAI
 llm = ChatOpenAI(model='gpt-4o')
 
-# Google
-from browser_use import ChatGoogle
-llm = ChatGoogle(model='gemini-3-flash-preview')
+# Google（需要 pip install langchain-google-genai）
+from langchain_google_genai import ChatGoogleGenerativeAI
+llm = ChatGoogleGenerativeAI(model='gemini-2.5-flash')
 
-# Anthropic
-from browser_use import ChatAnthropic
-llm = ChatAnthropic(model='claude-sonnet-4-6')
+# Anthropic（需要 pip install langchain-anthropic）
+from langchain_anthropic import ChatAnthropic
+llm = ChatAnthropic(model='claude-sonnet-4-20250514')
 
-# 本地模型（Ollama）
-from browser_use import ChatOllama
+# 本地模型（需要 pip install langchain-ollama）
+from langchain_ollama import ChatOllama
 llm = ChatOllama(model='llama3')
 ```
 
@@ -264,11 +283,9 @@ browser = Browser(
 
 ---
 
-## 实战用例
+## 实战用例：三类任务的 task 模板
 
-### 表单填写
-
-**任务**："Fill in this job application with my resume and information"
+表单填写、在线购物、个人助手这三类任务的代码骨架完全一致，差别只在 `task` 字符串和各自的难点。下面以表单填写为例展示完整骨架，其余两类任务只需替换 `task` 内容：
 
 ```python
 from browser_use import Agent, Browser, ChatBrowserUse
@@ -291,62 +308,13 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-表单填写的难点不在字段本身，而在文件上传——`upload resume.pdf` 这种指令需要 Agent 能定位到文件路径并触发文件选择对话框。如果文件路径是相对路径，确保脚本运行时的工作目录正确。
+三类任务的 task 模板与难点：
 
-### 在线购物
-
-**任务**："Put this list of items into my instacart"
-
-```python
-from browser_use import Agent, Browser, ChatBrowserUse
-import asyncio
-
-async def main():
-    browser = Browser()
-    agent = Agent(
-        task="""Shop for these groceries:
- - Milk
- - Bread
- - Eggs
- - Butter
- Add to my cart on instacart.com""",
-        llm=ChatBrowserUse(),
-        browser=browser,
-    )
-    await agent.run()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-购物任务通常需要登录态。如果 Instacart 要求登录，Agent 会卡在登录页——这种场景用 `profile_dir` 复用已登录的 Chrome 配置文件，或者用云浏览器的同步配置功能。
-
-### 个人助手
-
-**任务**："Help me find parts for a custom PC"
-
-```python
-from browser_use import Agent, Browser, ChatBrowserUse
-import asyncio
-
-async def main():
-    browser = Browser()
-    agent = Agent(
-        task="""Find these PC parts on pcpartpicker.com:
- - NVIDIA RTX 4090
- - AMD Ryzen 9 7950X
- - 64GB DDR5 RAM
- Compare prices and show me the best deals""",
-        llm=ChatBrowserUse(),
-        browser=browser,
-    )
-    await agent.run()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-比价任务涉及多页面跳转和信息聚合，对 Agent 的状态追踪能力要求较高。如果结果不稳定，把任务拆成多个小任务分别执行往往比一个长任务更可靠。
+| 任务类型 | task 模板 | 难点 |
+|---------|----------|------|
+| 表单填写 | `Fill in this job application: - Name: John Doe - Email: john@example.com - Position: Software Engineer - Resume: upload resume.pdf` | 字段本身不难，难点在文件上传——`upload resume.pdf` 这种指令需要 Agent 能定位到文件路径并触发文件选择对话框。如果文件路径是相对路径，确保脚本运行时的工作目录正确。 |
+| 在线购物 | `Shop for these groceries: - Milk - Bread - Eggs - Butter - Add to my cart on instacart.com` | 购物任务通常需要登录态。如果 Instacart 要求登录，Agent 会卡在登录页——这种场景用 `profile_dir` 复用已登录的 Chrome 配置文件，或者用云浏览器的同步配置功能。 |
+| 个人助手 | `Find these PC parts on pcpartpicker.com: - NVIDIA RTX 4090 - AMD Ryzen 9 7950X - 64GB DDR5 RAM - Compare prices and show me the best deals` | 比价任务涉及多页面跳转和信息聚合，对 Agent 的状态追踪能力要求较高。如果结果不稳定，把任务拆成多个小任务分别执行往往比一个长任务更可靠。 |
 
 ---
 
@@ -453,8 +421,28 @@ tools = Tools()
 def get_weather(city: str) -> str:
     """获取城市天气"""
     import requests
-    response = requests.get(f"https://api.weather.com/v3/wx/conditions", params={"city": city})
-    return response.json()
+    # 使用 Open-Meteo 的免费 API（无需 API Key）
+    # 先通过 geocoding 接口把城市名转成经纬度
+    geo_resp = requests.get(
+        "https://geocoding-api.open-meteo.com/v1/search",
+        params={"name": city, "count": 1},
+        timeout=10,
+    )
+    geo_data = geo_resp.json()
+    if not geo_data.get("results"):
+        return f"未找到城市：{city}"
+    location = geo_data["results"][0]
+    # 再查当前天气
+    weather_resp = requests.get(
+        "https://api.open-meteo.com/v1/forecast",
+        params={
+            "latitude": location["latitude"],
+            "longitude": location["longitude"],
+            "current": "temperature_2m,wind_speed_10m",
+        },
+        timeout=10,
+    )
+    return weather_resp.json()
 
 # 使用自定义工具
 agent = Agent(
@@ -497,11 +485,12 @@ browser = Browser(
 **云浏览器同步配置**：
 
 ```bash
+# 示意命令，实际脚本地址以官方文档为准
 curl -fsSL https://browser-use.com/profile.sh | \
   BROWSER_USE_API_KEY=XXXX sh
 ```
 
-这个脚本把本地 Chrome 的登录态同步到云端，之后云浏览器实例能直接使用已登录状态。
+这类脚本的作用是把本地 Chrome 的登录态同步到云端，之后云浏览器实例能直接使用已登录状态。具体脚本地址和参数请以 [Browser Use 官方文档](https://docs.browser-use.com) 为准，避免使用来源不明的脚本泄露本地 Cookie。
 
 ### 代理配置
 
@@ -557,7 +546,7 @@ Browser Use Cloud 在开源库能力之上补充了：
 - 代理轮换
 - Stealth 浏览器指纹
 - 高性能并行执行
-- 1000+ 集成（Gmail、Slack、Notion 等）
+- 官方宣称的 1000+ 集成（Gmail、Slack、Notion 等，具体列表见 Browser Use 官方文档）
 
 1000+ 集成指的是云服务预置了常见 SaaS 的操作模板，不需要从零写浏览器操作脚本。如果目标网站在这些集成里，直接调模板比让 Agent 自由探索更稳定。
 
@@ -636,7 +625,7 @@ agent = Agent(
 )
 ```
 
-混合模式是生产环境最常见的部署方式：Agent 和 Tools 跑在本地，Browser 托管在云端。这样既保留了自定义工具的灵活性，又甩掉了本地浏览器的运维负担。LLM 也可以混用——用 ChatOpenAI 做任务理解，用 ChatBrowserUse 做浏览器操作优化。
+混合模式是生产环境最常见的部署方式：Agent 和 Tools 跑在本地，Browser 托管在云端，自定义工具的灵活性留在自己手里，本地浏览器的运维甩给云服务。LLM 也可以混用——用 ChatOpenAI 做任务理解，用 ChatBrowserUse 做浏览器操作优化。
 
 ---
 
@@ -644,7 +633,7 @@ agent = Agent(
 
 **第一步：用最简示例验证环境**。跑通"查找仓库 Star 数"这个示例，确认 API Key、Chromium、Python 环境都正常。这一步解决的是环境问题——环境不通，后面所有调试都是白费。
 
-**第二步：用 CLI 探索目标页面**。在 CLI 里手动 `open` 目标网站，用 `state` 查看元素结构，确认 Agent 能识别的关键元素。这一步能提前发现页面结构问题，避免写脚本时反复试错。
+**第二步：用 CLI 探索目标页面**。在 CLI 里手动 `open` 目标网站，用 `state` 查看元素结构，确认 Agent 能识别的关键元素。提前发现页面结构问题，能避免写脚本时反复试错。
 
 **第三步：写最简任务脚本**。把任务拆成最小可验证单元，先跑通单步操作（如"打开页面""点击某个按钮"），再组合成完整任务。不要一上来就写复杂任务——Agent 在长任务里的失败率明显高于短任务。
 
@@ -664,7 +653,27 @@ agent = Agent(
 4. 自定义工具的 `description` 写得模糊会导致什么后果？
 5. 任务执行中 Agent 卡在登录页，有哪两种解决方式？
 
-答案要点：1. 通过索引引用，因为 LLM 不擅长生成稳定的选择器；2. 太大烧钱且可能死循环，太小任务完不成；3. 部署位置，开源库本地跑，云服务云端跑；4. LLM 无法判断何时调用该工具，或调用参数错误；5. 用 `profile_dir` 复用登录态，或用云浏览器同步配置。
+### 参考答案
+
+**第 1 题**。Agent 通过整数索引引用页面元素（如"点击第 5 个元素"），不用 CSS 选择器。判断依据是 LLM 生成稳定 CSS 选择器的能力很弱——页面结构稍变，选择器就失效；而索引引用由 Browser 层在每一步重新提取并维护，LLM 只需要做"点哪个"的决策，不需要关心 DOM 结构。代价是索引依赖当前页面快照，页面动态变化时索引可能错位，所以 Agent 每步都要重新拿状态。
+
+**第 2 题**。`max_steps` 设太大：每一步都要调一次 LLM，步数多直接烧钱；更糟的是 Agent 可能陷入死循环反复尝试同一操作，把预算耗光。设太小：复杂任务在到达目标前就被截断，返回不完整结果，调试时还容易误判为"Agent 能力不够"。经验值是简单任务 20 步以内，复杂任务 50-100 步，先观察再调。
+
+**第 3 题**。核心差异是 Browser 组件的部署位置：开源库把 Chromium 跑在你自己的机器上，要自己扛内存、反爬、CAPTCHA；云服务把浏览器跑在 Browser Use Cloud 上，内置 stealth 指纹和 CAPTCHA 解决。Agent 和 LLM Adapter 在两条线里接口一致，Tools 只在开源库需要手动注册。混合模式就是把本地 Agent 接云端 Browser。
+
+**第 4 题**。`description` 是 LLM 决定是否调用工具的唯一依据。写得模糊会有两种后果：一是 LLM 该调用时没识别出来，Agent 转而用浏览器硬爬，效率低且容易失败；二是 LLM 在不该调用时误调用，或参数填错，返回无用结果污染上下文。判断标准是：把 description 单独给一个不了解你项目的人看，他能否准确说出工具做什么、参数含义、返回什么。
+
+**第 5 题**。两种方式：一是用 `profile_dir` 指向已登录目标网站的 Chrome 用户目录，Agent 启动时复用本地登录态，前提是 Chrome 必须先关闭（同一 profile 不能被两个实例占用）；二是用云浏览器的同步配置功能，把本地登录态同步到云端，之后云浏览器实例直接带登录态启动。前者适合本地开发调试，后者适合生产环境。
+
+---
+
+## 进阶方向
+
+- **多 Agent 协作**。复杂任务拆成多个 Agent，比如一个负责信息收集、一个负责决策、一个负责执行，通过共享状态协调。Browser-Use 的 Tools 机制可以作为 Agent 间通信的入口。
+- **持久化记忆**。长任务跨会话续跑需要把中间状态（已访问页面、已提取数据、已执行操作）写进文件或数据库，下次启动时加载。Agent 自带的 `max_steps` 截断后，记忆是恢复进度的关键。
+- **成本治理**。生产环境最大的变量是 LLM 调用成本。监控每步的 token 消耗、用更便宜的模型做简单判断步、对重复页面做状态缓存，都能显著降本。
+- **反爬对抗**。目标网站升级反爬机制时，需要持续调整指纹、代理、节奏。云服务的 stealth 能力是基线，遇到 Akamai、Cloudflare 这类强反爬仍可能需要人工介入或换方案。
+- **集成到现有工程**。把 Browser-Use 作为子模块嵌入到数据管线、RAG 系统、客服后台里，关键设计是任务队列、超时熔断和结果校验——Agent 返回的结果不能直接信任，要有独立校验层。
 
 ---
 

@@ -22,9 +22,13 @@ extraMetadata:
 
 ---
 
-## §1 这篇文章讲什么
+## §1 Evolver 解决的核心问题
 
-1. GEP（Genome Evolution Protocol）协议的概念和设计思路
+Evolver 把 AI Agent 的临时 Prompt 调整改造成可审计、可复用的进化资产。它定位为 Prompt 生成器，基于 GEP（Genome Evolution Protocol）协议运行：扫描 `memory/` 目录的运行时日志，从 `assets/gep/` 选择匹配的 Gene 或 Capsule，输出协议化的 Prompt，并把每次变更记录为 EvolutionEvent。Agent 的改进方式因此从"凭经验手动调"变成"按协议自动迭代"，同时严格不触碰代码编辑和 Shell 执行——这条边界是它安全模型的基础。
+
+本文覆盖以下内容：
+
+1. GEP 协议的概念和设计思路
 2. Evolver 的安装和配置，包括独立运行和连接 EvoMap 网络
 3. Evolver 的架构设计，以及自进化机制的工作原理
 4. 四种运行模式：单次运行、审核模式、循环模式、OpenClaw 集成
@@ -34,9 +38,53 @@ extraMetadata:
 
 ---
 
-## §2 原理分析
+## §2 学习目标
 
-### 2.1 为什么需要自进化引擎？
+读完本文后，你应当能够：
+
+1. 说清 GEP 协议的三个基础概念（Gene、Capsule、EvolutionEvent）以及它们在一次进化周期里各自承担的职责
+2. 区分 Evolver 的四种运行模式（Standalone、Review、Loop、OpenClaw 集成），并能为不同环境选择合适的模式
+3. 解释日志分析器、选择器、Prompt 生成器三个模块如何串联成一条完整的进化流水线
+4. 根据系统状态选择 `EVOLVE_STRATEGY` 的四种策略（balanced、innovate、harden、repair-only）
+5. 编写一个自定义 Gene 或 Capsule，并说明它的信号匹配规则和触发条件
+6. 判断 Evolver 是否适合你的场景——哪些团队应该先用，哪些场景暂时不必引入
+
+---
+
+## §3 系统总览
+
+Evolver 由四个核心模块组成，按数据流向串联。下图展示了从日志输入到 Prompt 输出的完整路径，以及 EvolutionEvent 的记录回路：
+
+```
+┌─────────────┐     扫描      ┌──────────────┐     选择      ┌─────────────┐
+│ memory/目录  │ ──────────> │ Analysis     │ ──────────> │ Selection   │
+│ (运行时日志) │              │ (日志分析器)  │              │ (Gene/Capsule│
+└─────────────┘              └──────────────┘              │  选择器)     │
+                                                            └─────────────┘
+                                                                  │
+                                                                  v
+┌─────────────┐     记录      ┌──────────────┐     输出      ┌─────────────┐
+│ Evolution   │ <────────── │ Evolution    │ <───────── │ Evolution   │
+│ Event日志   │             │ (事件记录器)  │             │ (Prompt生成器)│
+└─────────────┘             └──────────────┘             └─────────────┘
+```
+
+四个模块的职责边界如下表。理解边界比理解功能更重要——Evolver 的安全模型就建立在这些边界之上：
+
+| 模块 | 目录 | 输入 | 输出 | 边界 |
+|------|------|------|------|------|
+| Analysis（日志分析器） | `src/analysis/` | `memory/` 目录的运行时日志 | 错误模式、性能信号、行为轨迹 | 只读，不修改源码 |
+| Selection（选择器） | `src/selection/` | Analysis 的输出 | 匹配的 Gene 或 Capsule | 不生成 Prompt，只做匹配 |
+| Evolution（进化引擎） | `src/evolution/` | 选中的 Gene/Capsule | GEP 协议化的 Prompt | 不执行 Prompt，只输出到 stdout |
+| Operations（运维模块） | `src/ops/` | 进程状态、健康指标 | 启停、重启、清理动作 | 不参与进化逻辑，只管进程生命周期 |
+
+关键边界：Evolver 全程不编辑源代码、不执行 Shell 命令。它只生成 Prompt 并记录事件，由宿主（如 OpenClaw）决定是否执行。完整目录结构见 §5 架构分析。
+
+---
+
+## §4 原理分析
+
+### 4.1 为什么需要自进化引擎？
 
 在 AI Agent 的日常运维中，开发者通常面临以下痛点：
 
@@ -45,9 +93,9 @@ extraMetadata:
 - **重复踩坑**：同样的错误在不同阶段反复出现
 - **团队协作困难**：无法在团队成员之间共享和复用有效的修复方案
 
-Evolver 将**临时性的 Prompt 调整**转化为**可审计、可追溯、可复用的进化资产**。
+Evolver 把这些临时性的 Prompt 调整转化为可审计、可追溯、可复用的进化资产——每次变更都有 EvolutionEvent 记录，每个修复模式都可以封装成 Gene 在团队间共享。
 
-### 2.2 Genome Evolution Protocol（GEP）
+### 4.2 Genome Evolution Protocol（GEP）
 
 GEP 是 Evolver 的基础协议，定义了 AI Agent 进化的标准流程：
 
@@ -61,7 +109,7 @@ GEP 的三个基础概念：
 | **Capsule（胶囊）** | 封装完整的进化上下文，包含基因和对应的应用场景 |
 | **EvolutionEvent（进化事件）** | 每次进化的审计记录，包含时间、原因、结果 |
 
-### 2.3 自进化的工作流程
+### 4.3 自进化的工作流程
 
 ```
 ┌─────────────┐     分析      ┌──────────────┐     选择      ┌─────────────┐
@@ -83,7 +131,7 @@ GEP 的三个基础概念：
 3. **生成**：输出符合 GEP 协议的 Prompt，指导下一步进化
 4. **记录**：生成可审计的 EvolutionEvent
 
-### 2.4 与传统 Prompt 工程的区别
+### 4.4 与传统 Prompt 工程的区别
 
 | 特性 | 传统 Prompt 工程 | Evolver |
 |------|---------------|---------|
@@ -95,9 +143,11 @@ GEP 的三个基础概念：
 
 ---
 
-## §3 架构分析
+## §5 架构分析
 
-### 3.1 整体架构
+### 5.1 整体架构
+
+Evolver 的目录结构对应 §3 系统总览中的四个模块，每个模块有明确的职责划分：
 
 ```
 Evolver/
@@ -123,7 +173,7 @@ Evolver/
 └── memory/               # 用户运行时日志（需手动创建）
 ```
 
-### 3.2 关键模块
+### 5.2 关键模块
 
 #### 日志分析器（Analysis）
 
@@ -148,9 +198,9 @@ Evolver/
 - **可追溯**：包含进化来源信息
 - **可执行**：可直接被 Agent 理解和执行
 
-### 3.3 安全模型
+### 5.3 安全模型
 
-**Evolver 的设计原则是"Prompt 生成器，不是代码修补器"**：
+Evolver 的设计原则是"Prompt 生成器，不触碰代码"——它只输出文本指令，代码编辑和命令执行都由宿主决定：
 
 | 能力 | 支持 | 说明 |
 |------|------|------|
@@ -160,21 +210,64 @@ Evolver/
 | 离线运行 | ✅ | 重点功能无需联网 |
 | 网络协作 | ⚠️ | 可选，需配置 |
 
-### 3.4 与 OpenClaw 的集成
+### 5.4 与 OpenClaw 的集成
 
-当 Evolver 运行在 OpenClaw 等 Agent 运行时中时，其`stdout`输出可以被宿主解释执行：
+当 Evolver 运行在 OpenClaw 等 Agent 运行时中时，其 `stdout` 输出可以被宿主解释执行：
 
 ```
 sessions_spawn(...)
 ```
 
-这使得 Evolver 能够与宿主 Agent 系统无缝集成，实现**自动化的 Agent 自进化**。
+宿主负责把 Evolver 生成的 Prompt 转化为实际动作，Evolver 本身不执行任何命令。这种分工让进化逻辑和执行逻辑解耦——Evolver 专注于"该进化什么"，宿主专注于"怎么执行"。
 
 ---
 
-## §4 功能详解
+## §6 完整进化周期走查
 
-### 4.1 四种运行模式
+为了把抽象的模块串联起来，下面走查一次完整的进化周期。假设场景：你的 Agent 在生产环境中反复遇到 API 调用超时后没有重试的问题。
+
+**第 1 步：日志写入 memory/**
+
+Agent 运行时把错误日志写入 `memory/` 目录，日志中包含 `timeout`、`retry-failed`、`api-call-error` 等信号。
+
+**第 2 步：Analysis 模块扫描**
+
+`src/analysis/scanner.js` 扫描 `memory/` 目录，`pattern.js` 识别出错误模式：API 调用超时后直接失败，没有重试逻辑。输出结构化信号：`{ type: 'error', pattern: 'missing-retry', severity: 'high' }`。
+
+**第 3 步：Selection 模块匹配**
+
+`src/selection/gene.js` 根据信号 `missing-retry` 在 `assets/gep/genes/` 中查找匹配的 Gene。假设找到 `error-recovery-gene.js`，它的 `signals` 字段包含 `['error', 'timeout', 'retry']`，匹配成功。如果问题涉及多个信号，`capsule.js` 会匹配一个包含多个 Gene 的 Capsule。
+
+**第 4 步：Evolution 模块生成 Prompt**
+
+`src/evolution/emitter.js` 读取选中的 Gene，生成符合 GEP 协议的 Prompt，输出到 stdout：
+
+```text
+当检测到 API 调用超时信号时，执行以下修复策略：
+1. 分析错误上下文，确认超时原因（网络、服务端、客户端）
+2. 应用标准化修复流程：指数退避重试，最多 3 次
+3. 记录进化事件，包含重试结果和最终状态
+```
+
+**第 5 步：EvolutionEvent 记录**
+
+`src/evolution/recorder.js` 把这次进化记录到 `memory/evolution-events/` 目录，包含时间戳、触发信号、选中的 Gene、生成的 Prompt 摘要。
+
+**第 6 步：宿主执行（如果集成 OpenClaw）**
+
+如果运行在 OpenClaw 中，宿主读取 stdout 的 Prompt，通过 `sessions_spawn(...)` 触发实际的代码修改。如果是 Standalone 模式，开发者手动查看 Prompt 并决定如何应用。
+
+**第 7 步：下一轮进化**
+
+修复后的 Agent 重新运行，新的日志写入 `memory/`。下一轮扫描时，如果 `missing-retry` 信号消失，Evolver 会选择其他 Gene 处理剩余问题；如果信号仍在，Signal De-duplication 机制会检测到停滞并触发告警。
+
+这个走查展示了 Evolver 的实际作用：把"发现错误→分析原因→应用修复→记录结果"这个原本依赖人工的过程，固化成可审计、可复用的协议化流程。
+
+---
+
+## §7 功能详解
+
+### 7.1 四种运行模式
 
 #### 独立运行（Standalone）
 
@@ -216,7 +309,7 @@ bash -lc 'node index.js --loop'
 - 自动触发`sessions_spawn(...)`
 - 无需手动介入
 
-### 4.2 策略预设
+### 7.2 策略预设
 
 通过`EVOLVE_STRATEGY`环境变量控制进化策略：
 
@@ -233,7 +326,7 @@ EVOLVE_STRATEGY=harden node index.js --loop     # 聚焦稳定性
 EVOLVE_STRATEGY=repair-only node index.js --loop # 紧急修复模式
 ```
 
-### 4.3 Operations 模块
+### 7.3 Operations 模块
 
 生命周期管理命令：
 
@@ -251,7 +344,7 @@ node src/ops/lifecycle.js status
 node src/ops/lifecycle.js check
 ```
 
-### 4.4 Skill 商店
+### 7.4 Skill 商店
 
 从 EvoMap 网络下载和共享可复用的技能：
 
@@ -265,7 +358,7 @@ node index.js fetch --skill <skill_id> --out=./my-skills/
 
 需要配置`A2A_HUB_URL`环境变量。
 
-### 4.5 主要特性
+### 7.5 主要特性
 
 - **Auto-Log Analysis**：扫描 memory 目录，识别错误模式和信号
 - **Self-Repair Guidance**：从信号中发出修复指令
@@ -276,9 +369,9 @@ node index.js fetch --skill <skill_id> --out=./my-skills/
 
 ---
 
-## §5 使用说明
+## §8 使用说明
 
-### 5.1 安装
+### 8.1 安装
 
 #### 环境要求
 
@@ -310,7 +403,7 @@ echo "A2A_NODE_ID=your_node_id_here" >> .env
 
 > **注意**：不配置`.env`也能完全离线运行。Hub 连接仅用于网络功能（技能共享、工作池、进化排行榜）。
 
-### 5.2 快速开始
+### 8.2 快速开始
 
 #### 基础使用
 
@@ -335,7 +428,7 @@ mkdir -p memory
 # 或者让Evolver自动创建（首次运行时会提示）
 ```
 
-### 5.3 与 OpenClaw 集成
+### 8.3 与 OpenClaw 集成
 
 对于 OpenClaw 用户，推荐使用 cron 定时触发：
 
@@ -350,7 +443,7 @@ mkdir -p memory
 pm2 start "bash -lc 'node index.js --loop'" --name evolver --cron-restart="0 */6 * * *"
 ```
 
-### 5.4 生产环境部署
+### 8.4 生产环境部署
 
 #### Docker 部署示例
 
@@ -377,7 +470,7 @@ CMD ["node", "index.js", "--loop"]
 node src/ops/lifecycle.js check
 ```
 
-### 5.5 常见问题
+### 8.5 常见问题
 
 #### Q: 为什么需要 Git？
 
@@ -404,9 +497,9 @@ Git 用于：
 
 ---
 
-## §6 开发扩展
+## §9 开发扩展
 
-### 6.1 创建自定义 Gene
+### 9.1 创建自定义 Gene
 
 Gene 是 Gene Expression Programming 中的基本单元，代表一种可复用的进化模式。
 
@@ -417,7 +510,7 @@ assets/gep/genes/
 └── security-hardening-gene.js
 ```
 
-**Gene 结构示例**：
+Gene 结构示例（完整可运行的 CommonJS 模块）：
 
 ```javascript
 // assets/gep/genes/example-gene.js
@@ -446,7 +539,7 @@ module.exports = {
 };
 ```
 
-### 6.2 创建自定义 Capsule
+### 9.2 创建自定义 Capsule
 
 Capsule 是封装的进化上下文，包含 Gene 和对应的应用场景。
 
@@ -456,7 +549,7 @@ assets/gep/capsules/
 └── performance-boost-capsule.js
 ```
 
-**Capsule 结构示例**：
+Capsule 结构示例（完整可运行的 CommonJS 模块）：
 
 ```javascript
 // assets/gep/capsules/example-capsule.js
@@ -488,12 +581,15 @@ module.exports = {
 };
 ```
 
-### 6.3 扩展日志分析器
+### 9.3 扩展日志分析器
 
-在`src/analysis/`中添加自定义分析器：
+在 `src/analysis/` 中添加自定义分析器。下面是结构示例，`readLogs` 和 `analyzePatterns` 需要根据你的日志格式自行实现：
 
 ```javascript
 // src/analysis/custom-scanner.js
+const fs = require('fs');
+const path = require('path');
+
 module.exports = {
   name: 'custom-scanner',
   
@@ -506,12 +602,25 @@ module.exports = {
   // 支持的分析类型
   supportedTypes: ['error', 'performance', 'security']
 };
+
+// 读取 memory 目录下的日志文件
+function readLogs(memoryDir) {
+  const files = fs.readdirSync(memoryDir).filter(f => f.endsWith('.json'));
+  return files.map(f => JSON.parse(fs.readFileSync(path.join(memoryDir, f), 'utf-8')));
+}
+
+// 识别日志中的错误模式
+function analyzePatterns(logs) {
+  return logs.flatMap(log => log.errors || []);
+}
 ```
 
-### 6.4 集成外部数据源
+### 9.4 集成外部数据源
+
+下面是节选示例，`fetchExternalLogs` 需要根据你的数据源 SDK 自行实现，`nativeAnalysis` 来自 Evolver 内置分析器的输出：
 
 ```javascript
-// 自定义数据源集成
+// 自定义数据源集成（节选）
 const externalLogs = await fetchExternalLogs({
   source: 'datadog',
   apiKey: process.env.DD_API_KEY,
@@ -525,10 +634,12 @@ const combinedAnalysis = {
 };
 ```
 
-### 6.5 Webhook 扩展
+### 9.5 Webhook 扩展
+
+下面是节选示例，`updateMonitoring` 需要根据你的监控系统 API 自行实现：
 
 ```javascript
-// src/extensions/webhook.js
+// src/extensions/webhook.js（节选）
 module.exports = {
   async onEvolutionComplete(event) {
     // 发送通知
@@ -545,9 +656,9 @@ module.exports = {
 
 ---
 
-## §7 实践建议
+## §10 实践建议
 
-### 7.1 日常运营
+### 10.1 日常运营
 
 #### 推荐的日常使用方式
 
@@ -565,7 +676,7 @@ module.exports = {
 - **成功率**：Gene/Capsule 匹配成功率
 - **停滞检测**：连续多次无改进时触发告警
 
-### 7.2 生产环境
+### 10.2 生产环境
 
 #### 故障恢复
 
@@ -588,14 +699,14 @@ node src/ops/cleanup.js --older-than 7d
 node src/ops/cleanup.js --archive --keep-last 100
 ```
 
-### 7.3 团队协作
+### 10.3 团队协作
 
 1. **统一 Gene 库**：在团队内部共享常用基因
 2. **Capsule 审核**：重要 Capsule 经过评审后再使用
 3. **EvolutionEvent 共享**：在团队内部分享进化记录
 4. **使用 EvoMap 网络**：通过平台进行技能共享
 
-### 7.4 安全建议
+### 10.4 安全建议
 
 - ✅ 使用审核模式处理敏感环境
 - ✅ 定期审计 EvolutionEvent 日志
@@ -605,11 +716,11 @@ node src/ops/cleanup.js --archive --keep-last 100
 
 ---
 
-## §8 FAQ
+## §11 FAQ
 
 ### Q1: Evolver 和传统的 Prompt 工程工具有什么区别？
 
-Evolver 和传统 Prompt 工程工具的区别在于：它是一个**系统性的自进化框架**，而非手动调参工具：
+Evolver 是系统性的自进化框架，传统 Prompt 工程是手动调参工具。两者的关键差异在变更是否可追溯、修复模式是否可复用：
 
 - **传统 Prompt 工程**：手动调整、临时生效、难以追溯
 - **Evolver**：自动分析、协议约束、完整审计
@@ -668,6 +779,36 @@ git checkout <previous-commit>
 
 ---
 
+## §12 采用顺序与决策建议
+
+### 适合先用的团队
+
+- **已有 OpenClaw 等 Agent 运行时的团队**：Evolver 的 stdout 输出可以直接被宿主解释执行，集成成本最低，收益最直接。
+- **Agent 已上线且有稳定日志输出的团队**：`memory/` 目录有内容可分析，Evolver 才能发挥作用。如果 Agent 还在开发阶段、没有运行时日志，先不要引入。
+- **多人协作维护同一套 Agent Prompt 的团队**：Gene/Capsule 的共享机制能解决"修复方案散落在各人本地"的问题。
+
+### 暂时不必引入的场景
+
+- **Agent 还在原型验证阶段**：此时 Prompt 变动频繁且不需要审计，引入 Evolver 会增加流程开销。
+- **单人维护、Prompt 数量很少的项目**：手动维护 Git 历史已经够用，GEP 协议的收益不明显。
+- **没有 Git 仓库的环境**：Evolver 依赖 Git 做回滚、影响范围计算和 solidify，没有 Git 会直接失败。
+
+### 推荐的采用顺序
+
+1. **先跑 Standalone 模式**：`node index.js` 单次运行，观察生成的 Prompt 质量是否符合预期。这一步不接入宿主，零风险。
+2. **积累 Gene 库**：把团队里反复出现的修复模式写成 Gene，放到 `assets/gep/genes/`。先有资产，再谈自动化。
+3. **切换到 Review 模式**：`node index.js --review` 在应用变更前等待人工确认，适合生产环境逐步建立信任。
+4. **接入 OpenClaw 跑 Loop 模式**：确认 Gene 库覆盖主要错误模式后，再让宿主自动执行 Prompt，实现端到端的自进化。
+5. **连接 EvoMap 网络**：最后才考虑网络功能（技能共享、排行榜）。离线功能已经覆盖核心场景，网络是锦上添花。
+
+### 进阶路径
+
+- 想深入定制进化逻辑：阅读 §9 开发扩展，从自定义 Gene 开始，逐步扩展到自定义分析器和 Webhook。
+- 想做团队级进化资产管理：把 `assets/gep/` 纳入 Git 仓库管理，配合 EvoMap 网络做跨团队共享。
+- 想评估进化效果：定期检查 `memory/evolution-events/` 目录，对比修复前后的错误率和性能指标。
+
+---
+
 ## 附录：快速命令参考
 
 ```bash
@@ -706,7 +847,7 @@ EVOLVE_STRATEGY=repair-only node index.js   # 修复模式
 - **文档**：[evomap.ai/wiki](https://evomap.ai/wiki)
 - **语言**：JavaScript (Node.js >= 18)
 - **许可**：MIT
-- **Stars**：3,275
-- **Forks**：349
+- **Stars**：3,862
+- **Forks**：392
 
 🦞 每日 08:00 自动更新

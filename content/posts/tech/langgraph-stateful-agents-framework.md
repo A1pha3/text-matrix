@@ -14,8 +14,6 @@ LangGraph 解决的问题和 LangChain 不同。LangChain 回答「如何调用 
 
 一个典型的 Agent 失败场景：用户问「帮我订下周去上海的机票并通知同事」，Agent 调了 5 个工具，第 6 步调用邮件 API 时网络抖动。在传统链式实现里，前 5 步的中间结果全部丢失，用户只能从头再来。生产环境里这种体验直接等于流失。LangGraph 把链式执行拆成节点和边，每个节点执行完都把状态写进 Checkpoint，下一次恢复时从最近的成功节点继续——Agent 从「一次性脚本」变成了「可断点续传的状态机」。
 
-本文先拆开 LangGraph 的五个核心抽象和三项关键能力，再用一条完整的 Checkpoint 恢复流程把它们串起来，最后说明它和 LangChain Agent、CrewAI、AutoGen 的真实工程取舍，以及什么样的场景该用、什么样的场景不该用。
-
 ## 学习目标
 
 读完后你应该能够：
@@ -87,19 +85,17 @@ graph TB
 - **Human-in-the-Loop**：通过 `NodeInterrupt` 暂停执行，等待人工输入后继续
 - **Comprehensive Memory**：Working Memory 由 Checkpoint 管理，Persistent Memory 接外部存储
 
-下面把每个抽象放进真实场景，重点看用错会出什么问题。
-
 ## 为什么 Agent 需要图形模型而不是线性链
 
 LangChain 的 `AgentExecutor` 是一条链：模型决定下一步 → 执行工具 → 把结果塞回 prompt → 再问模型。这条链在 demo 阶段够用，但生产环境会撞上三堵墙。
 
-第一堵墙是**控制流不可见**。链式执行里，「先查数据库还是先调外部 API」「失败后是重试还是降级」这些决策全部塞在 prompt 里，由模型决定。出了问题，你拿到的只有一段对话历史，看不到执行路径。LangGraph 把这些决策外化成 Edge，每条边的选择都被记录在 Checkpoint 里，调试时能精确看到「第 3 步为什么走了 search 节点而不是 recall 节点」。
+第一堵墙在控制流。链式执行里，「先查数据库还是先调外部 API」「失败后是重试还是降级」这些决策全部塞在 prompt 里，由模型决定。出了问题，你拿到的只有一段对话历史，看不到执行路径。LangGraph 把这些决策外化成 Edge，每条边的选择都被记录在 Checkpoint 里，调试时能精确看到「第 3 步为什么走了 search 节点而不是 recall 节点」。
 
 第二堵墙在状态层。链式执行的状态留在内存里，进程崩了就没了。LangGraph 的每个节点返回一个 State delta，框架合并进全量 State 后写入 Checkpointer。PostgresSaver 把状态写进数据库，进程重启后用同一个 `thread_id` 调用 `invoke(None, config)` 就能从断点继续。
 
-第三堵墙是人工介入插不进来。链式执行一旦启动就跑到底，中间想暂停等人工确认，得自己造一套暂停-恢复机制。LangGraph 的 `NodeInterrupt` 是框架级原语：节点抛出这个异常，框架把当前状态写进 Checkpoint，外部审核完成后调 `update_state` 修改状态，再 `invoke(None)` 继续——图的其它节点感知不到暂停发生过。
+第三堵墙在人工介入。链式执行一旦启动就跑到底，中间想暂停等人工确认，得自己造一套暂停-恢复机制。LangGraph 的 `NodeInterrupt` 是框架级原语：节点抛出这个异常，框架把当前状态写进 Checkpoint，外部审核完成后调 `update_state` 修改状态，再 `invoke(None)` 继续——图的其它节点感知不到暂停发生过。
 
-三堵墙的根子是同一处：链式模型把「执行」「状态」「控制流」耦合在一起，图形模型把它们拆开。Node 算，Edge 路由，State 承载数据，Checkpoint 持久化，四者互不依赖。这种正交分解（orthogonal decomposition，把系统拆成相互独立的维度）让任何一部分出问题都能独立定位和修复，不用牵一发动全身。
+三堵墙的根子相同：链式模型把执行、状态、控制流耦合在一起，图形模型把它们拆开。Node 负责计算，Edge 负责路由，State 承载数据，Checkpoint 负责持久化——四者互不依赖，任何一部分出问题都能独立定位。
 
 ## 五个抽象的工程用法
 
@@ -181,6 +177,8 @@ app = graph.compile(checkpointer=checkpointer)
 config = {"configurable": {"thread_id": "user_123_session_456"}}
 result = app.invoke({"messages": [HumanMessage(content="你好")]}, config=config)
 ```
+
+注意 `from_conn_string` 在异步场景下需要配合 `async with` 使用，具体见 LangGraph 官方文档。
 
 `thread_id` 是会话维度的标识。同一个用户的多次请求用同一个 `thread_id`，Agent 自动延续上下文；不同用户用不同 `thread_id`，状态互相隔离。这种设计让多租户场景天然支持，不需要自己在业务层做状态分桶。
 
@@ -317,7 +315,7 @@ app.update_state(config, {"status": "rejected_by_reviewer"})
 # 不再 invoke，流程终止
 ```
 
-这三种路径覆盖了生产环境 HITL 的绝大部分场景。暂停和恢复都是框架级行为，业务代码不用自己实现状态保存和恢复——把 HITL 做成原语，省掉的就是这一整块自建工作。
+框架级原语意味着业务代码不用自己实现状态保存和恢复。
 
 ## Memory：Working Memory 与 Persistent Memory 的边界
 
@@ -374,7 +372,7 @@ Agent 框架不止 LangGraph 一个，选型时需要清楚每个框架的定位
 
 ## 适用边界：什么时候不该用 LangGraph
 
-LangGraph 不是银弹，下面这些场景用它属于过度设计。
+下面这些场景用 LangGraph 属于过度设计。
 
 **单步工具调用**。用户问一句话、调一个工具、返回结果，这种场景用 LangChain 的 `chain` 或直接调 LLM API 就够了。引入 StateGraph 反而增加心智负担。
 
@@ -394,7 +392,7 @@ LangGraph 不是银弹，下面这些场景用它属于过度设计。
 
 ## 三个真实场景的架构形态
 
-前面讲了抽象和机制，这里用三个典型场景看 LangGraph 在真实业务里怎么落地。每个场景对应一种常见的图结构：单图多节点 + HITL、ReAct 循环、Supervisor 多 Agent 协作。
+每个场景对应一种常见的图结构：单图多节点 + HITL、ReAct 循环、Supervisor 多 Agent 协作。
 
 ### 客服 Agent：单图多节点 + HITL
 
@@ -492,7 +490,7 @@ os.environ["LANGCHAIN_PROJECT"] = "my-agent-prod"
 app.invoke(input, config=config)
 ```
 
-生产环境强烈建议开启。线上 Agent 出问题时，没有 LangSmith 你只能看日志猜；有 LangSmith 可以直接看到「第 3 步的 LLM 调用花了 8 秒，返回的 tool_calls 字段格式不对，导致第 4 步解析失败」这种级别的细节。可观测性是后续所有优化的前提——看不到执行路径，性能调优和 bug 定位都无从谈起。
+生产环境强烈建议开启。线上 Agent 出问题时，没有 LangSmith 你只能看日志猜；有 LangSmith 可以直接看到「第 3 步的 LLM 调用花了 8 秒，返回的 tool_calls 字段格式不对，导致第 4 步解析失败」这种级别的细节。可观测性贯穿优化全过程：执行路径看不到，性能调优和 bug 定位都缺依据。
 
 ### LangGraph Platform：部署的三种形态
 
@@ -532,7 +530,7 @@ Node 必须设计成幂等。写数据库用 upsert，调外部 API 传幂等键
 
 ### Q5：能用于生产环境吗？
 
-可以。Klarna（电商客服）、Replit（代码生成）、Elastic（搜索增强）等公司在生产环境使用。LangGraph Platform 提供企业级部署支持。
+可以。据 LangGraph 官方文档，Klarna（电商客服）、Replit（代码生成）、Elastic（搜索增强）等公司在生产环境使用。LangGraph Platform 提供企业级部署支持。
 
 ### Q6：有 JavaScript 版本吗？
 
@@ -601,7 +599,7 @@ LangGraph 默认对同一个 `thread_id` 加锁，保证状态写入的顺序一
 
 **第五步：考虑多 Agent 协作**。单 Agent 稳定运行后，再拆分出子 Agent 用 Supervisor 模式协作。不要一开始就上多 Agent——单 Agent 都没跑稳，多 Agent 的调试复杂度会指数级上升。
 
-团队还在选框架阶段、Agent 还没上线时，先把第一步和第二步走通。这两步的价值在生产环境第一次遇到故障时才会显出来——进程能从断点恢复，用户不用从头再来一次。
+选框架阶段先把第一步和第二步走通。这两步的价值在生产环境第一次遇到故障时才会显出来——进程能从断点恢复，用户不用从头再来一次。
 
 ## 相关资源
 

@@ -11,6 +11,11 @@ theme = "LoveIt"
 enableGitInfo = true
 enableRobotsTXT = true
 
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
 [taxonomies]
   category = "categories"
   tag = "tags"

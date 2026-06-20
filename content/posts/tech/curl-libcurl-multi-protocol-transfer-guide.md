@@ -12,7 +12,21 @@ tags: ["curl", "libcurl", "HTTP", "URL解析", "C语言", "开源"]
 
 ---
 
+## 学习目标
+
+读完本文，可以掌握以下能力：
+
+- 区分 curl 命令行工具与 libcurl 库的职责边界，知道何时用命令行、何时嵌入库
+- 说出 easy / multi / share 三种接口各自的并发模型与适用场景
+- 解释 curl_url 独立实现 URL 解析的工程原因
+- 看懂协议 handler 注册机制，能定位新协议的接入点
+- 在 SSL 证书、代理、超时等常见网络问题上用 curl 的调试选项定位问题
+
+---
+
 ## 1. 项目概览
+
+curl 的价值不在命令行本身，而在它把 26+ 协议的传输逻辑收敛到一套可复用的 C 库里。命令行工具只是这套库的最薄前端，真正被 iOS/Android 应用、Git、npm 等工具依赖的是底层的 libcurl。理解这套分层，对网络编程、协议调试、嵌入式开发都有直接帮助。
 
 **curl**（读作 "see-you-are-el"）由瑞典开发者 Daniel Stenberg 于 1998 年创立，用于从或向服务器传输数据。二十多年过去，curl 存在于几乎每一台服务器、每一个开发者的工具链，以及无数自动化脚本之中。
 
@@ -27,7 +41,16 @@ curl 项目的核心数据：
 | 维护者 | Daniel Stenberg 主导，全球贡献者 |
 | 支持协议 | 26+（DICT, FILE, FTP, FTPS, GOPHER, GOPHERS, HTTP, HTTPS, IMAP, IMAPS, LDAP, LDAPS, MQTT, MQTTS, POP3, POP3S, RTMP, RTMPS, RTSP, SCP, SFTP, SMB, SMBS, SMTP, SMTPS, TELNET, TFTP, WS, WSS）|
 
-很多人只知道 `curl` 是一个发 HTTP 请求的命令，却不了解它背后有一套精密的库架构——**libcurl**。理解 curl 的架构，对网络编程、协议调试、嵌入式开发都有直接帮助。
+### 架构总览
+
+curl 项目分两层：上层是命令行工具 `curl`，下层是 C 库 `libcurl`。libcurl 内部又拆成三个正交子系统——传输接口（easy / multi / share）、协议 handler 表、URL 解析引擎（curl_url）。命令行工具不直接处理协议，它把参数翻译成 libcurl API 调用，所有传输逻辑都走 handler 表分发。
+
+| 层级 | 组件 | 职责 |
+|------|------|------|
+| 前端 | curl 命令行 | 参数解析、输出格式化 |
+| 传输接口 | easy / multi / share | 同步、并发、共享三种编程模型 |
+| 协议层 | handler 注册表 | 26+ 协议的插件式实现 |
+| 工具层 | curl_url | 独立的 URL 解析与构建 |
 
 ---
 
@@ -61,7 +84,7 @@ curl -L -o output.bin https://example.com/file.bin
 
 ### 2.2 库 libcurl
 
-libcurl 是真正干活的部分。它提供 C 语言 API，可以嵌入到任何应用程序中。
+libcurl 是承担传输逻辑的底层库。它提供 C 语言 API，可以嵌入到任何应用程序中。
 
 ```c
 #include <curl/curl.h>
@@ -78,7 +101,7 @@ int main(void) {
 }
 ```
 
-curl 的命令行工具只是冰山一角。libcurl 作为底层库，支撑了 iOS/Android 应用、服务器端程序、wget、Git、npm 等无数工具的网络传输。
+curl 的命令行工具只是 libcurl 的前端。libcurl 作为底层库，支撑了 iOS/Android 应用、服务器端程序、wget、Git、npm 等工具的网络传输——这些工具不重新实现协议，而是直接链接 libcurl。
 
 ---
 
@@ -185,7 +208,7 @@ curl_url 的设计遵循最小惊讶原则：给定一个 URL 字符串，可以
 
 ## 5. 协议支持：26+ 协议是如何实现的
 
-curl 支持 26+ 协议，靠的是协议插件式架构，不是简单的 if-else 切换。
+curl 支持 26+ 协议，靠的是协议插件式架构：每个协议实现一组函数指针，注册到全局 handler 表，传输时按 scheme 查表分发。
 
 ### 5.1 协议注册机制
 
@@ -202,11 +225,11 @@ struct Curl_protocol {
 };
 ```
 
-添加新协议只需要实现一组函数指针，注册到全局表即可。这种设计让 curl 的协议扩展门槛相对较低。
+添加新协议只需要实现这组函数指针并注册到全局表，不需要改动传输主循环。新协议的接入点明确，维护边界清晰。
 
 ### 5.2 协议选择与降级
 
-对于 HTTP，curl 还支持协议降级（HTTPS → HTTP）和各类代理协议（SOCKS4/5, HTTP Proxy）。理解这些对调试网络问题很有帮助：
+对于 HTTP，curl 还支持协议降级（HTTPS → HTTP）和各类代理协议（SOCKS4/5, HTTP Proxy）。调试代理链路或强制锁定 HTTP 版本时常用：
 
 ```bash
 # 使用 HTTP 代理
@@ -307,11 +330,20 @@ seq 10 | parallel -j 10 'curl -s -o /dev/null -w "%{http_code}\n" https://exampl
 
 ---
 
-## 9. 总结与延伸阅读
+## 9. 采用顺序与延伸阅读
 
-curl 的命令行工具只是 libcurl 的前端。libcurl 作为底层库，让无数应用程序受益于 decades of network protocol engineering.
+curl 的命令行工具只是 libcurl 的前端。libcurl 作为底层库，让无数应用程序直接复用了 curl 二十多年积累的协议实现，不必各自重写传输逻辑。
 
-延伸资源：
+### 采用顺序建议
+
+1. **命令行调试**：直接用 `curl -v` 排查 HTTP 请求、证书、代理问题，零成本上手
+2. **脚本化传输**：在 shell 脚本里用 curl 做定时下载、API 调用、健康检查
+3. **嵌入 libcurl**：在 C/C++ 应用里链接 libcurl，从 easy interface 起步，需要并发再上 multi interface
+4. **多线程共享**：多线程场景下用 share interface 共享 DNS 和 SSL session，避免重复初始化
+5. **独立 URL 解析**：需要 URL 解析但不需要传输时，单独使用 curl_url，不引入完整传输栈
+
+### 延伸资源
+
 - [curl 官方文档](https://curl.se/docs/)
 - [Everything curl（免费在线书）](https://everything.curl.dev/)
 - [libcurl API 参考](https://curl.se/libcurl/c/)

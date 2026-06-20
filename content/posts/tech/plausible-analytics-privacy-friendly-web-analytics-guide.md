@@ -13,9 +13,18 @@ slug: plausible-analytics-privacy-friendly-web-analytics-guide
 
 ## 引言
 
-Google Analytics 因隐私政策复杂、数据收集范围过宽以及 GDPR 合规要求严格，正在被越来越多的开发者和企业弃用。**Plausible Analytics** 是一款以隐私为核心设计的开源网站统计平台，轻量、简洁、合规，已成为自托管网站分析的主流选择。
+Plausible Analytics 的取舍很直接：放弃跨会话用户画像、放弃复杂维度报表、放弃与广告平台的深度集成，换来无 Cookie、无 PII、无隐私弹窗的聚合统计。这个取舍决定了它的适用边界——个人博客、企业官网、政务医疗教育类网站这类"只需要知道访问量和来源"的场景，Plausible 的指标集已经够用；需要漏斗分析、用户级留存、BigQuery 导出的场景，仍然得回到 Google Analytics 4。
 
-下文解析 Plausible Analytics 的架构理念、功能、安装部署、配置调优，以及与 Google Analytics 的对比，帮助做出分析平台选型决策。
+Google Analytics 因隐私政策复杂、数据收集范围过宽以及 GDPR 合规要求严格，正在被越来越多的开发者和企业弃用。Plausible 作为自托管网站分析的主流选择，技术栈是 Elixir/Phoenix + PostgreSQL + ClickHouse，脚本体积 ~1KB，部署形态是 Docker Compose 单机起。
+
+## 学习目标
+
+读完本文后，你应能：
+
+- 说清 Plausible "无 Cookie + 聚合统计" 这个设计放弃了哪些 GA 能力，又换来了哪些合规和性能优势。
+- 跟着一次页面访问走完 script.js 加载、事件上报、PostgreSQL 写元数据、ClickHouse 写事件、仪表盘查询的完整链路。
+- 用 Docker Compose 在 10 分钟内起一套生产可用的 Plausible，包括 PostgreSQL、ClickHouse、Nginx 反代和 SMTP。
+- 在 Plausible 和 GA4 之间做选型时，能列出 14 个维度的差异并判断自己的需求落在哪一侧。
 
 ---
 
@@ -99,6 +108,18 @@ window.plausible("Purchase", {
 ### 2.6 分享与嵌入（Shared Links）
 
 可以生成只读的公开链接，嵌入到 Notion、Obsidian 或其他文档中，无需登录即可查看实时数据，适合向客户或团队展示网站状态。
+
+### 2.7 一次页面访问如何流过系统
+
+以一个用户打开 `https://your-site.com/page` 为例，数据从浏览器到仪表盘的流转路径：
+
+1. 浏览器加载页面 HTML，遇到 `<script defer data-domain="your-site.com" src="https://analytics.your-domain.com/js/script.js">`，异步下载 ~1KB 的追踪脚本。
+2. 脚本执行后，构造一个 `POST /api/event` 请求，body 里只有聚合字段：`domain`、`url`、`referrer`、`screen_width`，不携带 Cookie，不发送任何用户标识。
+3. Plausible 后端（Elixir/Phoenix）收到请求，先校验 `domain` 是否在已注册站点列表里（PostgreSQL 查询），再写入一条事件记录。
+4. 事件明细写入 ClickHouse（时间序列存储），站点元数据、用户账号、目标配置留在 PostgreSQL。
+5. 用户打开仪表盘时，Phoenix 查询 ClickHouse 聚合出独特访客数、浏览量、来源分布等指标，渲染成 JSON 返回前端。
+
+这条链路里有两个设计要点：第一，脚本不上传 Cookie，后端也不下发 Cookie，所以不需要 Cookie Consent 弹窗；第二，ClickHouse 只存聚合事件，没有 user_id 字段，从数据模型层面就排除了跨会话追踪的可能。这也是 Plausible 能在 GDPR 合规上做到"开箱即用"的根因——不是配置出来的，是 schema 决定的。
 
 ---
 
@@ -464,11 +485,15 @@ docker-compose logs plausible | grep "migration"
 
 ---
 
-## 八、总结
+## 八、采用顺序与选型决策
 
-Plausible Analytics 的思路是：放弃对用户行为的全方位监控，专注于**聚合指标**，同时在隐私合规上做到极致。它不适合需要复杂用户行为分析的场景，但对于大多数个人网站、企业官网和中小型应用来说，指标集已经足够。
+Plausible 的采用顺序建议从 Cloud 版试用起步，再过渡到自托管，最后才考虑深度定制：
 
-开源 self-hosted 版本使得 Plausible 成为**数据必须留存在自有基础设施内**的场景（如政务、金融、医疗、教育）的可行选择。配合 Docker 部署，10 分钟内可以搭建起一个完全私有的网站分析平台。
+- **只想验证指标集是否够用**：先开 plausible.io 的 Cloud 版（$9/月），把追踪脚本挂到网站上跑两周。这一步零运维成本，能快速判断 Plausible 的指标集是否覆盖你的需求。
+- **数据必须留在自有基础设施**：用本文第三节的 Docker Compose 配置起一套自托管，PostgreSQL + ClickHouse + Nginx 反代 + SMTP 四件套。运维成本集中在 ClickHouse 的磁盘监控和 PostgreSQL 的备份。
+- **需要定制追踪逻辑或对接内部系统**：基于自托管版本扩展自定义事件、Webhook 集成、GeoIP 数据库。这一步开始接触源码，注意 Plausible 是 AGPL 许可证，修改后的代码如果对外提供服务需要开源。
+
+回到 Plausible 和 GA4 的选型：如果你的需求是"知道每天有多少人来、从哪来、看了什么页面"，Plausible 的指标集已经够用，且合规成本远低于 GA4；如果你需要漏斗分析、用户级留存、与 Google Ads 联动的归因数据，Plausible 目前给不了，仍然得用 GA4。两者并不互斥——很多站点同时挂 Plausible 看实时流量，挂 GA4 做深度分析，按需取用。
 
 **参考链接**：
 - 官网：https://plausible.io

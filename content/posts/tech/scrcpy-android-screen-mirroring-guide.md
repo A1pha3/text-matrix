@@ -10,13 +10,25 @@ tags = ['Android', '开源', '工具']
 
 # scrcpy：开源 Android 屏幕投射与设备控制
 
+## 学习目标
+
+读完本文，可以掌握以下能力：
+
+- 说出 scrcpy 客户端 / scrcpy-server 两端架构的职责分工与通信方式
+- 区分 USB 调试模式、OTG HID 模式、V4L2 模式的适用场景
+- 用命令行参数调整分辨率、帧率、编码格式以平衡画质与延迟
+- 在 Linux / Windows / macOS 上完成安装并解决常见连接问题
+- 判断 scrcpy 相比 Vysor、Samsung Flow 等工具的取舍依据
+
+---
+
 ## 什么是 scrcpy？
 
-[scrcpy](https://github.com/Genymobile/scrcpy)（发音为 "screen copy"）是 [Genymobile](https://github.com/Genymobile) 团队开源的 Android 设备投射与控制工具。它通过 USB 或 TCP/IP 无线连接，将 Android 设备的屏幕与音频实时投射到电脑，并允许用电脑的键盘和鼠标直接操控设备。整个过程**无需在手机端安装任何 App，无需 root 权限**，做到了真正的零侵入。
+[scrcpy](https://github.com/Genymobile/scrcpy)（发音为 "screen copy"）是 [Genymobile](https://github.com/Genymobile) 团队开源的 Android 设备投射与控制工具。它通过 USB 或 TCP/IP 无线连接，将 Android 设备的屏幕与音频实时投射到电脑，并允许用电脑的键盘和鼠标直接操控设备。整个过程**无需在手机端安装任何 App，无需 root 权限**——只依赖 Android 自带的 ADB 调试通道，断开后设备上不留任何痕迹。
 
 ## 核心特性
 
-根据仓库 README 描述，scrcpy 的设计目标与能力如下：
+scrcpy 的设计目标与能力如下：
 
 | 特性 | 描述 |
 |------|------|
@@ -30,7 +42,7 @@ tags = ['Android', '开源', '工具']
 
 ## 功能一览
 
-scrcpy 提供的功能非常丰富，覆盖了日常开发、测试自动化、游戏操控等多种场景：
+scrcpy 覆盖了日常开发、测试自动化、游戏操控等多种场景：
 
 ### 基础投射与控制
 - **音频转发**（Android 11+ 即 API 30+）
@@ -116,7 +128,7 @@ scrcpy 由两部分组成：
 1. **scrcpy 客户端**（运行在电脑端）：采用 C 语言编写，基于 SDL2 渲染，配合 FFmpeg 处理音视频流。
 2. **scrcpy-server**（运行在 Android 设备端）：一个部署在设备上的微型 Java 服务，负责采集屏幕帧和音频数据，通过 socket 发送给客户端。
 
-通信协议本质上是一个自定义的二进制协议，视频帧通过 protobuf 序列化，延迟控制得很好。
+通信协议是自定义的二进制协议，视频帧通过 protobuf 序列化。延迟主要来自编码、传输、解码三段，scrcpy 用 Android 硬件编码器（MediaCodec）和电脑端 FFmpeg 硬件解码把每段延迟压到毫秒级，整体延迟在 35～70ms 之间，取决于设备性能和网络状况。
 
 ## 与同类工具的差异
 
@@ -128,8 +140,18 @@ scrcpy 相比 Vysor、Samsung Flow 等工具的差异：
 - 从基础投射到 HID 模拟，覆盖几乎所有投射控制需求
 - 项目长期维护，版本迭代稳定
 
-## 总结
+## 采用顺序与适用边界
 
-scrcpy 轻量、快速、功能丰富且完全免费。App 演示、自动化测试、游戏操控、日常办公投射都能胜任。开源属性和低延迟使其在同类工具中脱颖而出，是 GitHub 上最受欢迎的 Android 相关项目之一。
+### 采用顺序建议
+
+1. **USB 连接投射**：先用 `scrcpy` 默认参数跑通 USB 投射，确认设备兼容性和基础体验
+2. **调整画质参数**：根据设备性能用 `-m`、`--max-fps`、`--video-codec` 平衡画质与延迟
+3. **无线连接**：USB 稳定后再切 TCP/IP 无线模式，适合需要移动设备的场景
+4. **高级模式**：有特定需求时再启用 OTG HID、V4L2、虚拟显示等模式
+
+### 适用边界
+
+- **适合**：开发调试、自动化测试、屏幕录制、演示投影、需要键盘鼠标操控 Android 的场景
+- **不适合**：需要长期后台监控（scrcpy 是前台工具）、需要 root 专属功能（如修改系统设置）、对延迟极度敏感的实时游戏（35～70ms 仍有感知）
 
 > **官方仓库**：https://github.com/Genymobile/scrcpy

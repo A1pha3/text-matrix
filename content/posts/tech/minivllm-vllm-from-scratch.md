@@ -86,7 +86,7 @@ flowchart TB
 
 ## 3. 一次推理请求如何流过系统
 
-光看模块分工还难以建立动态理解。下面跟踪一次完整请求，看抽象机制如何配合。假设用户输入 `"中国的首都是"`，期望引擎生成 `"北京"`。
+假设用户输入 `"中国的首都是"`，期望引擎生成 `"北京"`。一次完整请求的流转如下。
 
 **第 1 步：请求进入。** 用户调用 `engine.add_request("中国的首都是")`。Engine 把字符串 tokenize 成 token id 列表，包装成 `Sequence` 对象，状态标记为 `waiting`，推入 waiting 队列。此时还没有任何 KV Cache 被分配。
 
@@ -152,6 +152,40 @@ PagedAttention 的核心基础在这一步落地。三个关键类：
 - `allocate_with_cache()`：尝试复用已缓存块，只为未命中的 token 分配新空间
 - `deallocate()`：递减 ref_count，为 0 时释放 block
 
+下面是 `BlockManager` 的核心接口示意，对照上面的方法名看职责边界：
+
+```python
+class BlockManager:
+    def __init__(self, num_blocks: int, block_size: int):
+        # num_blocks: GPU 上可分配的 block 总数
+        # block_size: 每个 block 容纳多少个 token 的 K/V
+        self.free_blocks: list[Block] = [Block(i) for i in range(num_blocks)]
+        self.used_blocks: dict[int, Block] = {}
+
+    def can_append(self, seq: Sequence) -> bool:
+        # 判断是否还有空闲 block 容纳 seq 即将新增的 token
+        return len(self.free_blocks) > 0
+
+    def allocate_with_cache(self, token_ids: list[int], prefix_hash: int) -> list[Block]:
+        # 前缀缓存命中则复用，未命中部分从 free_blocks 取新 block
+        cached_blocks, missed_count = self._lookup_cache(prefix_hash, token_ids)
+        new_blocks: list[Block] = []
+        for _ in range(missed_count):
+            block = self.free_blocks.pop()
+            self.used_blocks[block.id] = block
+            new_blocks.append(block)
+        return cached_blocks + new_blocks
+
+    def deallocate(self, block: Block) -> None:
+        # 引用计数减 1，归零才真正归还到 free_blocks
+        block.ref_count -= 1
+        if block.ref_count == 0:
+            self.free_blocks.append(block)
+            del self.used_blocks[block.id]
+```
+
+`can_append` 只看 free_blocks 是否非空，`allocate_with_cache` 才真正动账本——这两个方法分开是为了让调度器先做一次轻量检查再决定是否把序列选入批次，避免选进来又分配不出的尴尬。
+
 **前缀缓存**（prefix caching）机制值得展开：当两个序列有相同的前缀 prompt 时，它们的 KV Cache 可以复用。BlockManager 通过计算 token 序列的哈希值来快速检测前缀是否已缓存。哈希设计上有一个细节——block 哈希时包含 prefix 参数，即使 tokens 序列相同，不同前缀上下文也产生不同哈希值，避免跨会话的哈希碰撞。在多轮对话或系统提示词固定的场景下，这个优化能直接省掉重复的 prefill 计算。
 
 ### Step 4：模型运行器（Model Runner）
@@ -159,6 +193,40 @@ PagedAttention 的核心基础在这一步落地。三个关键类：
 推理引擎中最复杂的组件，对应 `src/myvllm/engine/model_runner.py`，包含六个核心子系统。
 
 **数据准备**：`prepare_prefill()` 将多个序列的 token 合并为一个扁平列表，通过 `cu_seqlens_q/k` 累计序列长度标记边界——FlashAttention 要求单次 kernel launch 处理所有序列。`slot_mapping` 跟踪"哪个序列的哪个 token"写入哪个位置，是 PagedAttention 的关键数据结构，把 BlockManager 的账本翻译成 kernel 能用的索引。
+
+`prepare_prefill` 和 `prepare_decode` 的输入形状差异是后续切换注意力实现的根因，对照看更清楚：
+
+```python
+def prepare_prefill(self, seqs: list[Sequence]) -> PrefillInputs:
+    # 多个序列的 prompt 拍平成一维张量，单次 kernel launch 处理
+    flat_tokens: list[int] = []
+    cu_seqlens_q: list[int] = [0]
+    slot_mapping: list[int] = []
+    for seq in seqs:
+        flat_tokens.extend(seq.token_ids)
+        cu_seqlens_q.append(cu_seqlens_q[-1] + len(seq.token_ids))
+        # 把每个 token 映射到 BlockManager 分配的 (block_id, slot_in_block)
+        slot_mapping.extend(self._compute_slots(seq))
+    return PrefillInputs(
+        tokens=tensor(flat_tokens, pin_memory=True),  # pinned memory 异步拷贝
+        cu_seqlens_q=tensor(cu_seqlens_q),
+        slot_mapping=tensor(slot_mapping),
+    )
+
+def prepare_decode(self, seqs: list[Sequence]) -> DecodeInputs:
+    # 每个序列只输入上一步生成的 1 个 token，但需要读取全部历史 K/V
+    last_tokens: list[int] = [seq.token_ids[-1] for seq in seqs]
+    slot_mapping: list[int] = [self._compute_slots(seq)[-1] for seq in seqs]
+    # block_table: 每个序列的 KV Cache 散落在哪些 block，按顺序索引
+    block_table: list[list[int]] = [seq.block_ids for seq in seqs]
+    return DecodeInputs(
+        tokens=tensor(last_tokens, pin_memory=True),
+        slot_mapping=tensor(slot_mapping),
+        block_table=tensor(block_table),
+    )
+```
+
+`prepare_prefill` 输出 `cu_seqlens_q` 给 FlashAttention 切分序列边界，`prepare_decode` 输出 `block_table` 给 PagedAttention 索引离散存储的 K/V——这两份输入决定了后续 kernel 走哪条路径。
 
 **Pinned Memory**：在 `prepare_prefill()` 中使用 `pin_memory=True`。这是一种将物理内存页锁定（禁止 swap 到磁盘）的机制，使得 CPU 到 GPU 的 DMA 传输只需一次拷贝，而普通 pageable memory 需要两次。配合 `non_blocking=True` 实现异步传输，CPU 和 GPU 可以并行工作。
 
@@ -171,6 +239,39 @@ PagedAttention 的核心基础在这一步落地。三个关键类：
 调度逻辑在 `src/myvllm/engine/scheduler.py` 中实现。核心策略是 **Prefill 优先于 Decode**：调度器总是先尝试处理 waiting 队列中的新序列进行 prefill，只有当没有新 prefill 可加入时才调度 decode。
 
 这个优先级背后是 TTFT（Time To First Token，首个 token 响应时间）的考量。Prefill 的计算量远大于 decode，如果让 decode 先占满 GPU，prefill 会一直被推迟，用户感受到的延迟就是首字响应时间变长。在交互式场景下，TTFT 比 decode 吞吐更重要。
+
+调度主循环的核心判断如下，对照"Prefill 优先"看更直观：
+
+```python
+def schedule(self) -> SchedulerOutputs:
+    # 1. 先看 waiting 队列有没有新序列，且显存够不够做 prefill
+    if self.waiting and self.block_manager.can_append(self._next_prefill_seq()):
+        seq = self.waiting.popleft()
+        seq.status = SequenceStatus.RUNNING
+        self.running.append(seq)
+        return SchedulerOutputs(
+            scheduled=seq,
+            stage="prefill",
+            blocks_to_allocate=self.block_manager.allocate_with_cache(
+                seq.token_ids, seq.prefix_hash
+            ),
+        )
+
+    # 2. waiting 为空或显存不够，转 decode 批次
+    if self.running:
+        return SchedulerOutputs(
+            scheduled=list(self.running),
+            stage="decode",
+        )
+
+    # 3. 显存不够容纳新 prefill，且 running 队列也吃满了——抢占优先级最低的
+    if self.waiting and not self.block_manager.can_append(self._next_prefill_seq()):
+        victim = self._pick_victim()  # 通常选 decode 时间最长的
+        self._preempt(victim)  # recompute 或 swap，MinivLLM 是简化版
+        return self.schedule()  # 抢占后重试
+```
+
+`can_append` 是调度器和 BlockManager 之间的握手协议——调度器不直接看显存数字，只问"能不能塞下"，由 BlockManager 根据自己的账本回答。这种解耦让调度器可以专注于策略（先 prefill 还是先 decode、抢谁），把显存细节留给 BlockManager。
 
 当 GPU 显存不足以容纳更多序列时，调度器会**抢占**优先级最低的序列（通常是 decode 时间最长的）。被抢占的序列有两种处理方式：重新计算（recompute）或换出（swap），MinivLLM 这里实现的是简化版。
 
@@ -313,7 +414,7 @@ MinivLLM/
 - [FlashAttention 论文](https://arxiv.org/abs/2205.14135)——分块在线 softmax 的理论证明，理解为什么分块不会损失精度
 - [HazyResearch FlashAttention 实现](https://github.com/HazyState/Flash-Attention)——Triton 版本的具体优化思路
 
-读完 MinivLLM 再回头看 vLLM 本体，会发现很多原本看不懂的工程优化其实是为了处理生产场景的边界情况——比如多租户隔离、动态批大小、量化兼容性。MinivLLM 把这些边界剥掉，留下的是 vLLM 设计的主干。
+读完 MinivLLM 后，建议对照 vLLM 本体的 `scheduler.py` 和 `block_manager.py` 阅读生产场景的边界处理——多租户隔离、动态批大小、量化兼容性这些工程优化在 vLLM 中有完整实现，可以按需挑选模块深入。如果要做定制引擎，先从 Step 3 和 Step 5 入手改起，这两块是 vLLM 调度的核心，也是定制最常发生的位置。
 
 ---
 

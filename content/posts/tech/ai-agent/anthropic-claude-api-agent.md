@@ -48,7 +48,7 @@ tags: ["Claude", "Agent", "并行执行", "链式调用", "Python"]
 ```python
 # 工具调用的工作模式
 result = await client.messages.create(
-    model="claude-opus-4-20241120",
+    model="claude-opus-4-20250514",
     messages=[{
         "role": "user",
         "content": "帮我查一下北京天气"
@@ -223,7 +223,7 @@ class SimpleAgent:
     async def _think(self, state: AgentState) -> Any:
         """LLM推理"""
         response = self.client.messages.create(
-            model="claude-opus-4-20241120",
+            model="claude-opus-4-20250514",
             max_tokens=4096,
             messages=[{
                 "role": "user",
@@ -678,7 +678,7 @@ class StateManager:
         """
 
         summary = self.client.messages.create(
-            model="claude-opus-4-20241120",
+            model="claude-opus-4-20250514",
             messages=[{"role": "user", "content": summary_prompt}]
         )
 
@@ -787,6 +787,15 @@ class ErrorType(Enum):
     # 业务相关错误
     MAX_ITERATIONS = "max_iterations"    # 达到最大迭代
     USER_CANCELLED = "user_cancelled"    # 用户取消
+
+class ErrorAction(Enum):
+    """错误处理动作：决定错误发生后Agent的下一步行为"""
+
+    RETRY = "retry"                       # 重试当前操作
+    RETRY_WITH_FALLBACK = "retry_fallback"  # 使用备用方案重试
+    FAIL = "fail"                         # 终止任务并上报错误
+    RETURN_BEST_RESULT = "return_best"    # 返回当前最佳结果
+    ESCALATE = "escalate"                 # 上报给上层处理者
 
 class ErrorHandler:
     """
@@ -968,12 +977,14 @@ class Permission:
 
     def __init__(
         self,
+        scopes: list[PermissionScope] = None,  # 权限范围列表
         file_paths: list[str] = [],      # 允许访问的文件路径
         allowed_tools: list[str] = [],   # 允许使用的工具
         allowed_domains: list[str] = [], # 允许访问的网络域名
         max_execution_time: int = 300,   # 最大执行时间（秒）
         max_api_calls: int = 100         # 最大API调用次数
     ):
+        self.scopes = scopes if scopes is not None else [PermissionScope.READ]
         self.file_paths = file_paths
         self.allowed_tools = allowed_tools
         self.allowed_domains = allowed_domains
@@ -1074,7 +1085,7 @@ class SandboxExecutor:
 
         # 2. 设置资源限制
         sandbox.set_memory_limit(self.config.memory_limit)
-        sandbox.set_network隔离(self.config.network_isolation)
+        sandbox.set_network_isolation(self.config.network_isolation)
         sandbox.set_filesystem_boundary(self.config.filesystem_boundary)
 
         # 3. 执行代码
@@ -1092,34 +1103,32 @@ class SandboxExecutor:
 
 ### 架构设计原则
 
-```python
-# 生产环境 Agent 系统架构原则
-1. 分离关注点（Separation of Concerns）
-   - Agent核心逻辑与工具实现分离
+生产环境 Agent 系统的架构原则可以归纳为五条：
+
+1. **分离关注点（Separation of Concerns）**
+   - Agent 核心逻辑与工具实现分离
    - 状态管理与执行逻辑分离
    - 安全检查与业务逻辑分离
 
-2. 失败设计（Design for Failure）
+2. **失败设计（Design for Failure）**
    - 每个组件都可能失败
    - 优雅降级，而非整体崩溃
    - 快速失败，便于诊断
 
-3. 可观测性（Observability）
+3. **可观测性（Observability）**
    - 日志：记录每个关键步骤
    - 指标：QPS、延迟、错误率
    - 追踪：请求全链路追踪
 
-4. 资源管理（Resource Management）
+4. **资源管理（Resource Management）**
    - 限制并发请求数
    - 控制内存使用
    - 防止资源泄漏
 
-5. 安全第一（Security First）
+5. **安全第一（Security First）**
    - 最小权限原则
    - 纵深防御
    - 审计追踪
-"""
-```
 
 ### 监控与告警
 

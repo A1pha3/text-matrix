@@ -12,6 +12,29 @@ description: "GitHub Actions 把仓库事件变成自动化触发器。本文拆
 
 > GitHub Actions 把仓库事件（push、PR、release）变成自动化触发器。它把自动化拆成三层抽象：事件触发层决定"什么时候跑"，Job 编排层决定"在哪跑、按什么顺序跑"，Action 组件层决定"每一步具体做什么"。三层各解决一类可靠性问题——触发层管事件匹配的确定性，编排层管执行环境隔离与依赖顺序，组件层管逻辑复用与供应链安全。读完这篇文章，你能判断什么时候用社区 Action、什么时候自己写，以及 Actions 和 GitHub Apps 的边界划在哪里。
 
+## 学习目标
+
+读完本文后，你应能：
+
+- 说清 Workflow / Job / Step / Action 四类对象的边界，以及 `needs` 控制执行顺序但不传文件这个设计背后的隔离意图。
+- 跟着一条 `push` 事件走完触发匹配、Job 分配、Step 执行、产物上传的完整链路，定位每一步失败时该看哪层日志。
+- 在 `@v4` / `@master` / SHA 固定三种引用粒度里做选择，说出各自对应的供应链风险等级。
+- 判断自己的自动化需求该用 Composite Action、JavaScript Action 还是 Docker Action，以及什么时候该迁移到 GitHub Apps 而不是继续堆 workflow。
+
+## 目录
+
+1. [什么是 GitHub Actions](#1-什么是-github-actions)
+2. [快速上手：一个完整工作流](#2-快速上手一个完整工作流)
+3. [GitHub Actions Marketplace](#3-github-actions-marketplace)
+4. [自定义 Action 开发](#4-自定义-action-开发)
+5. [GitHub Agentic Workflows 中的 Actions](#5-github-agentic-workflows-中的-actions)
+6. [高级特性](#6-高级特性)
+7. [GitHub Actions 与 GitHub Apps 的区别](#7-github-actions-与-github-apps-的区别)
+8. [从哪里开始](#8-从哪里开始)
+9. [常见问题排查](#常见问题排查)
+10. [自测题](#自测题)
+11. [进阶路径](#进阶路径)
+
 ## 1. 什么是 GitHub Actions
 
 [GitHub Actions](https://github.com/features/actions) 是 GitHub 内置的 CI/CD 和自动化平台。它通过 YAML 工作流文件定义自动化任务，响应仓库中的事件（push、PR、release、issue 等）。
@@ -137,8 +160,11 @@ on:
 | `actions/setup-python@v5` | 配置 Python 环境 |
 | `actions/upload-artifact@v4` | 上传构建产物 |
 | `actions/download-artifact@v4` | 下载构建产物 |
-| `actions/create-release@v1` | 创建 GitHub Release |
-| `github/dependabot-action@v2` | 运行 Dependabot 更新 |
+| `actions/cache@v4` | 缓存依赖与构建产物 |
+| `actions/github-script@v7` | 在 Step 中直接调用 GitHub API |
+| `softprops/action-gh-release@v2` | 创建 GitHub Release（社区维护，事实标准） |
+
+> 注：Dependabot 不是 Action，而是 GitHub 内置功能，通过仓库根目录的 `.github/dependabot.yml` 配置文件启用，无需在 workflow 里 `uses:`。早期的 `actions/create-release@v1` 已被官方归档，发布 Release 改用 `softprops/action-gh-release@v2` 或 `actions/github-script@v7` 直接调用 Releases API。
 
 ### 版本锁定策略
 
@@ -150,13 +176,13 @@ on:
 # - uses: actions/checkout@master
 
 # ✅ 推荐：指定版本范围
-- uses: actions/checkout@bypass-clean
+- uses: actions/checkout@v4.1.0
 
 # ✅ 推荐：使用 SHA 固定版本（最高安全级别）
 - uses: actions/checkout@11c0af8e7a0da7e71dbb23e6a26b5d31c4a21b15
 ```
 
-引用 Action 有三种粒度：`@v4` 这类 major tag 跟随大版本更新，兼容性可控；`@master` / `@latest` 跟随分支或最新 tag，行为不可预测，供应链攻击面最大；SHA 固定最严格，任何改动都会在 commit 历史里显式体现。生产环境建议至少用 major tag，对安全敏感的流水线（如发布、部署）用 SHA 固定。上例中的 `@bypass-clean` 是分支引用，稳定性介于 major tag 和 `@master` 之间，仅在该分支确实维护了稳定语义时才适合使用。
+引用 Action 有三种粒度：`@v4` 这类 major tag 跟随大版本更新，兼容性可控；`@master` / `@latest` 跟随分支或最新 tag，行为不可预测，供应链攻击面最大；SHA 固定最严格，任何改动都会在 commit 历史里显式体现。生产环境建议至少用 major tag，对安全敏感的流水线（如发布、部署）用 SHA 固定。介于两者之间的 `@v4.1.0` 这类 minor/patch tag 兼顾稳定性和可读性，适合需要明确版本但又不打算每次提交都更新 SHA 的场景。
 
 ## 4. 自定义 Action 开发
 
@@ -484,13 +510,127 @@ GitHub Actions 的采用顺序建议从现成 Action 起步，再过渡到 Compo
 - **需要和外部系统交互或复杂逻辑**：用 JavaScript/TypeScript Action 调 GitHub API 或第三方服务，把编译后的 `dist/index.js` 提交到仓库。维护成本包括依赖升级和 dist 同步。
 - **需要隔离的工具链或特殊运行时**：用 Docker 容器 Action。维护成本最高，每次运行都要拉镜像，且只能在 Linux Runner 上跑。
 
-三个容易踩的坑：
+三个容易踩的坑会在下面「常见问题排查」一节展开，这里先列结论：
 
 1. **不要把 Secret 写进 workflow YAML**——用 `${{ secrets.XXX }}` 注入，Runner 会自动脱敏日志。但 secret 一旦被拼进命令行参数或写进文件，脱敏就失效了。
 2. **`needs` 不传文件**——Job 之间的文件共享靠 `upload-artifact` / `download-artifact`，别指望上一个 Job 的文件系统残留。每个 Job 跑在独立 Runner 上，文件系统天然隔离。
 3. **OIDC 比长期 Token 安全得多**——用 AWS/GCP/Azure 时，优先配 OIDC 联邦而不是手动塞 Access Key。长期 Key 一旦泄露，轮换和审计的成本远高于一次性配 OIDC。
 
 最后回到 Actions 和 GitHub Apps 的分工：Actions 适合仓库内事件驱动的自动化，GitHub Apps 适合跨仓库、需要持久状态的集成。如果发现自己在一个 workflow 里维护大量跨仓库逻辑或长期运行的 Webhook 服务，该考虑迁移到 GitHub Apps。
+
+## 常见问题排查
+
+### Job 一直卡在 queued 不进 in_progress
+
+最常见的原因是 Runner 槽位耗尽。GitHub 托管 Runner 对免费账号有并发额度（通常 20 个并发 Job），自托管 Runner 池容量不足时也会排队。先看仓库 Settings → Actions → Runners 列表里有没有 idle 的 Runner，再确认账号的并发额度。Matrix 策略 3×3×3 = 27 个 Job 是常见的爆量来源，必要时用 `max-parallel` 限流：
+
+```yaml
+strategy:
+  max-parallel: 5
+  matrix:
+    # ...
+```
+
+另一个隐蔽原因是 `environment` 字段绑定了 required reviewers，Job 会停在 queued 等审批。检查 workflow 里的 `environment:` 配置和仓库 Settings → Environments 的审批规则。
+
+### artifact 下载失败或为空
+
+`actions/upload-artifact@v4` 与 `@v3` 不兼容，跨大版本无法互传产物。确认上传和下载用同一个 major 版本。`path` 必须是 Runner 工作目录下的相对路径，绝对路径或 `..` 跳出工作目录都会失败。空目录上传会被静默丢弃，下载时报 "no artifact found"。默认保留期 90 天，仓库可改短到 1 天，过期后 `download-artifact` 直接 404。
+
+跨 Job 共享时还要注意 `name` 必须一致：
+
+```yaml
+# 上传 Job
+- uses: actions/upload-artifact@v4
+  with:
+    name: build-output        # 这个名字
+    path: dist/
+
+# 下载 Job
+- uses: actions/download-artifact@v4
+  with:
+    name: build-output        # 必须对上
+```
+
+### Secret 在日志里没有脱敏成 `***`
+
+Runner 的脱敏只对**完整匹配 secret 字面值**的日志行生效。一旦 secret 被拆开、拼接、转码或写进文件再 cat 出来，脱敏就失效。典型踩坑场景：
+
+```bash
+# ❌ 拼进命令行参数，ps 可见，脱敏失效
+./deploy.sh --token ${{ secrets.DEPLOY_TOKEN }}
+
+# ❌ 写进文件再输出，文件内容不是 secret 字面值
+echo "token=${{ secrets.DEPLOY_TOKEN }}" > .env
+cat .env
+
+# ✅ 通过环境变量传递，Runner 仍能脱敏
+env:
+  DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+run: ./deploy.sh --token "$DEPLOY_TOKEN"
+```
+
+如果 secret 是 JSON 或包含特殊字符，先用 `base64` 编码再注入，运行时解码，避免 shell 转义把字面值打散。
+
+### Runner 并发额度耗尽
+
+GitHub 托管 Runner 的并发额度按账号计费档位分配，免费档通常 20 个。Matrix 笛卡尔积是主要爆量来源，3 维度各 3 值就是 27 个 Job，单次 push 直接超限。处理方式按场景选：
+
+- **测试矩阵**：用 `max-parallel` 限流，或把低频组合挪到 nightly schedule。
+- **多服务构建**：拆成多个 workflow，按服务粒度触发（paths 过滤），避免一次 push 触发全量。
+- **长期高并发**：上自托管 Runner 或 Larger Runner（付费档），自托管 Runner 不占托管额度。
+
+### workflow 触发了但 Job 没跑
+
+先看 `on` 字段的事件过滤是否命中。`push.branches` 和 `pull_request.branches` 的语义不同：`push` 看的是**推送目标分支**，`pull_request` 看的是**PR 的 base 分支**。`paths` 过滤只对 `push` 和 `pull_request` 生效，`workflow_dispatch` 和 `schedule` 不看 paths。Tag 触发用 `push.tags`，写错成 `push.branches` 是常见误用。
+
+另一个原因是 workflow 文件在默认分支上不存在。GitHub 只从默认分支读取 workflow 定义，feature 分支上改 workflow 不会生效，必须先合并到 main/master。
+
+## 自测题
+
+<details>
+<summary>1. `needs: [lint, test]` 声明后，`build` Job 能直接读到 `test` Job 里 `npm test` 生成的 `coverage/` 目录吗？为什么？</summary>
+
+不能。`needs` 只控制执行顺序，不传递文件。每个 Job 跑在独立 Runner 上，文件系统天然隔离。跨 Job 共享产物必须用 `actions/upload-artifact` 上传、`actions/download-artifact` 下载。
+</details>
+
+<details>
+<summary>2. 同一个 Action 引用，`@v4`、`@master`、SHA 固定三种方式在供应链安全上的差异是什么？生产环境发布流水线该选哪种？</summary>
+
+`@v4` 跟随 major tag，维护者可以在 v4 下推送任意 commit，兼容性可控但存在被篡改风险；`@master` 跟随分支，行为完全不可预测，供应链攻击面最大；SHA 固定最严格，任何改动都会在 commit 历史里显式体现，但更新需要手动改 SHA。生产发布流水线建议用 SHA 固定，配合 Dependabot 自动提 PR 升级 SHA，兼顾安全和可维护性。
+</details>
+
+<details>
+<summary>3. 为什么把 `${{ secrets.API_KEY }}` 直接拼进 `run: ./call-api --key ${{ secrets.API_KEY }}` 会导致日志脱敏失效？正确写法是什么？</summary>
+
+Runner 的脱敏只对日志中完整匹配 secret 字面值的字符串生效。直接拼进命令行参数后，`ps`、shell 错误信息或子进程的 stderr 可能输出被截断、转义或重组的 token 片段，不再完整匹配字面值，脱敏失效。正确写法是通过 `env` 注入环境变量，子进程读环境变量而不是命令行参数：
+
+```yaml
+env:
+  API_KEY: ${{ secrets.API_KEY }}
+run: ./call-api --key "$API_KEY"
+```
+</details>
+
+<details>
+<summary>4. Matrix 策略 `node-version: [18, 20, 22]` × `os: [ubuntu-latest, windows-latest, macos-latest]` 会生成多少个 Job？如果免费账号并发额度是 20，会发生什么？</summary>
+
+9 个 Job（3×3 笛卡尔积）。如果账号并发额度是 20，单次触发不会超限，但叠加其他 workflow 同时触发就可能排队。如果加上 `exclude` 排除 1 个组合就是 8 个。如果再加一个维度（如 `arch: [x64, arm64]`）就变成 18 个，接近上限。建议用 `max-parallel` 限流，避免单次 push 占满全部额度影响其他 workflow。
+</details>
+
+<details>
+<summary>5. Dependabot 应该在 workflow 里 `uses: github/dependabot-action@v2` 调用，还是在仓库根目录放 `.github/dependabot.yml`？为什么？</summary>
+
+放 `.github/dependabot.yml`。Dependabot 是 GitHub 内置功能，由 GitHub 服务端按配置文件定期扫描，不需要在 workflow 里 `uses:` 调用。`github/dependabot-action` 这个引用本身不准确，Dependabot 的运行不依赖 Actions Runner。配置文件方式还能享受 GitHub 的内置 PR 模板、安全公告关联和 rate limit 豁免。
+</details>
+
+## 进阶路径
+
+读完本文后，可以按以下方向继续深入：
+
+- **Self-hosted Runner 安全治理**：自托管 Runner 拿到仓库代码和 secret，在 PR 触发场景下存在被恶意 fork 提交代码执行的风险。需要理解 `pull_request_target` 与 `pull_request` 的权限差异、Runner 标签隔离、ephemeral Runner（容器化、用完即销毁）的部署模式。生产环境推荐用 ARC（Actions Runner Controller）在 Kubernetes 上跑 ephemeral Runner。
+- **Reusable Workflow**：当多个仓库的 CI 流程趋同时，把 workflow 定义抽到一个中央仓库，其他仓库用 `uses: org/repo/.github/workflows/ci.yml@v1` 引用。配合 `workflow_call` 的 `inputs` 和 `secrets` 传参，可以实现组织级 CI 标准化，避免每个仓库维护一份雷同的 YAML。注意 reusable workflow 的权限继承和 secret 传递规则与普通 workflow 不同。
+- **Organization-level Secrets 治理**：组织级 secret 可以按仓库或环境分发，配合 required reviewers 和 deployment branch 限制实现细粒度访问控制。进阶玩法包括用 OIDC 联邦把云厂商凭证完全从 secret 里移除、用 GitHub API 自动轮换 secret、用 audit log 追踪 secret 访问记录。组织级 secret 的访问策略（all repositories / selected repositories）需要和团队边界对齐，避免过度暴露。
 
 **相关资源：**
 - [GitHub Actions 官方文档](https://docs.github.com/en/actions)
