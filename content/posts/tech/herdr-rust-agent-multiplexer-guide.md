@@ -1,609 +1,525 @@
 ---
-title: "herdr 深度解析：tmux 的持久 pane 加上 agent 状态感知与编排"
+title: "herdr 深度解析：它不是 tmux 替代品，而是多 Agent 终端的状态层"
 date: "2026-06-15T21:08:29+08:00"
 slug: herdr-rust-agent-multiplexer-guide
-description: "当你在终端里同时跑多个 AI coding agent 时，tmux 不知道谁在等你、GUI 客户端不给你真实终端输出。herdr 用两条并行检测路径、一套 socket API 和四层抽象填上这个空位。本文拆解它的架构、设计原则和落地路径。"
-tags: ["herdr", "tmux", "终端复用器", "AI Agent", "Rust"]
+description: "Herdr 把持久化 pane、agent 状态感知和本地编排接口放进同一个 Rust TUI。真正值得看的，不是它像 tmux，而是它让多 Agent 终端工作流第一次有了统一的状态层。"
+tags: ["herdr", "tmux", "终端复用器", "AI Agent", "Rust", "TUI"]
 categories: ["技术笔记"]
 author: 钳岳星君
 ---
 
-# herdr 深度解析：tmux 的持久 pane 加上 agent 状态感知与编排
+# herdr 深度解析：它不是 tmux 替代品，而是多 Agent 终端的状态层
 
-## 目录
+如果只看截图，很多人会把 herdr 当成“更懂 AI Agent 的 tmux”。这个判断不算错，但不够准。
 
-- [开场：到底缺了什么](#开场到底缺了什么)
-- [tmux 够吗？GUI 行吗？](#tmux-够吗gui-行吗)
-- [系统总览：两条并行机制先拆开](#系统总览两条并行机制先拆开)
-- [一次真实任务流：agent 修 bug 的完整路径](#一次真实任务流agent-修-bug-的完整路径)
-- [核心模型：server / workspace / tab / pane](#核心模型server--workspace--tab--pane)
-- [agent 状态识别：两条路径，一套侧栏](#agent-状态识别两条路径一套侧栏)
-- [socket API：让 agent 彼此编排](#socket-api让-agent-彼此编排)
-- [架构拆解：从 AGENTS.md 看设计原则](#架构拆解从-agentsmd-看设计原则)
-- [Cargo 依赖全景](#cargo-依赖全景)
-- [安装与更新](#安装与更新)
-- [快速上手：从安装到第一个 workspace](#快速上手从安装到第一个-workspace)
-- [远程 attach](#远程-attach)
-- [配置文件与主题](#配置文件与主题)
-- [扩展点](#扩展点)
-- [适合谁，不适合谁](#适合谁不适合谁)
-- [常见问题排查](#常见问题排查)
-- [采用顺序建议](#采用顺序建议)
-- [风险与边界](#风险与边界)
-- [总结](#总结)
+更贴切的说法是：**herdr 不是重新发明终端，而是在终端里补上一层长期缺失的状态系统。**  
+tmux 很擅长保存 pane、拆分布局、断线重连；GUI 客户端很擅长把“这个 Agent 在等你批准”高亮出来。herdr 的价值，恰恰在于把这两件事放回同一个终端工作流里，而且不改写 Agent 自己的终端界面。
 
----
+这件事在多 Agent 并行时特别重要。你同时开着 Claude Code、Codex、Cursor Agent CLI，可能还在旁边跑测试、dev server 和日志 tail。真正耗人的并不是“怎么多开几个 pane”，而是下面这些细碎但高频的判断：
 
-## 开场：到底缺了什么
+- 哪个 Agent 现在卡在需要我批准的地方。
+- 哪个 pane 其实已经跑完，只是我还没去看。
+- 哪个项目当前最值得切过去，而不是继续盲扫所有终端。
+- 能不能让 Agent A 等 Agent B 完成测试，再继续下一步，而不是全靠 prompt 里瞎猜。
 
-herdr 只解决一个具体场景：在终端里同时跑多个 AI coding agent 时，让你不用逐个切 pane 就知道谁在等你回复、谁跑完了、谁还在跑，同时给 agent 一套本地 socket 让它们彼此编排。
+herdr 针对的正是这个空位。
 
-这个场景在 2026 年 3 月 27 日之前没有专门工具。三个月后 herdr 在 GitHub 上拿到 5,695 stars、796 commits、54 个 release。同时跑多个 agent 的工程师群体已经大到足以撑起一个独立工具品类。
+## 这篇文章适合谁
 
-这篇分析面向三类读者：每天在终端里同时开 2 个以上 Claude Code / Codex / Cursor Agent 的人，写过"让 agent A 等 agent B 跑完再继续"脚本的人，以及想看 ratatui + crossterm + tokio + portable-pty + interprocess 怎么拼成生产级 TUI 应用的 Rust 开发者。最后一类读者可以直接跳到[架构拆解](#架构拆解从-agentsmd-看设计原则)一节，`AGENTS.md` 里的 7 条设计原则比单独读 ratatui 文档更接近工程现场。
+这篇文章主要写给三类读者：
 
----
+- 终端重度用户：每天同时跑 2 个以上 coding agent，希望降低来回切 pane 的成本。
+- Agent 编排实践者：已经在写“一个 agent 带另一个 agent 跑活”的脚本，想要更稳定的控制面。
+- Rust TUI 开发者：想看一个生产级 `ratatui + crossterm + tokio + portable-pty + interprocess` 项目，怎么把交互、状态和进程生命周期收拢起来。
 
-## tmux 够吗？GUI 行吗？
+读完后，最好能回答 4 个问题：
 
-把当前几类方案放到同一张表里，空位就是 herdr 要填的位置：
+1. herdr 到底补上了 tmux 和 GUI 分别缺的哪一块。
+2. 它的 Agent 状态为什么不是“识别到了就完了”，而是要区分谁对状态有最终解释权。
+3. 它为什么不是只有“一种持久化”，而是有多条会话恢复路径。
+4. 这套架构为什么值得 Rust TUI 开发者认真读一遍。
 
-| 方案 | 持久会话 | pane / 切分 | 真实终端视图 | agent 状态可视化 | 留在终端里 | 轻量 |
-|------|----------|------------|--------------|-------------------|------------|------|
-| tmux | 是 | 是 | 是 | 否 | 是 | 是 |
-| Warp / Wave Terminal | 部分 | 是 | 否（自带模拟） | 部分 | 否（自带外壳） | 否 |
-| Cursor / Claude Desktop | 否 | 否 | 否 | 是 | 否 | 否 |
-| VS Code + Copilot | 否 | 否 | 否 | 是 | 否 | 否 |
-| **herdr** | 是 | 是 | 是 | 是 | 是 | 是 |
+## 先给结论
 
-README 里那句原话拆开看有三层痛点，每层对应一个具体场景。
+如果你没有时间通读全文，可以先记住这 4 个判断：
 
-**第一层：tmux 分不清 pane 里跑的是什么。** `tmux ls` 只看进程名。Claude Code / Codex / Droid 这类 TUI agent 跑起来后，进程名都是 `node` / `python` / `bash`，tmux 完全区分不出谁是谁。你只能逐个切到每个 pane 确认。同时跑 3 个 agent 时，一天切几十次，认知负担迅速累积。
+1. **herdr 的核心不是 pane，而是状态。**  
+   pane、tab、workspace 这些概念并不新，真正的新东西是它把 `blocked / working / done / idle` 变成了整个终端会话的一等信号。
+2. **它不是 GUI 套皮，而是真实终端。**  
+   官方文档反复强调的一点是：pane 里跑的是“真实终端进程”，不是改写后的 Agent 视图。你看到的是 Agent 自己的 TUI，而不是某个中间层的再渲染。
+3. **它不是只有一条恢复路径。**  
+   detach、server 重启、pane 历史回放、原生 Agent 会话恢复、live handoff，这几件事解决的是不同问题，混在一起看会把产品边界看错。
+4. **它对 Agent 的支持也不是一个维度。**  
+   有些集成负责上报生命周期状态，有些只负责提供原生会话身份用于恢复，还有些仍然依赖屏幕检测。理解这点，比背支持列表更重要。
 
-**第二层：GUI 客户端拦截了终端输出。** 你看到的不是 agent 自己 TUI 的真实字符流，而是 GUI 重新渲染的结果。ANSI 转义序列、progressive rendering、diff 高亮、progress bar 在 GUI 嵌入式终端里会不同程度失真，被重新排版、截断或丢失颜色信息。Claude Code 在真实终端里逐行渲染的 diff，在 GUI 里可能被折叠成一段摘要。
+## 为什么 tmux 和 GUI 都没把这件事做完
 
-**第三层：多个 agent 同时跑时，"哪个先好了"在 tmux 和 GUI 里都不直观。** tmux 没侧栏，GUI 多窗口切来切去累。herdr 的侧栏把 workspace 级别的状态聚合到一行，只要有一个 pane 里 agent blocked，整个 workspace 标红，不用展开每个 workspace 就知道该去哪个项目回复。
+把几类常见方案放到同一张表里，herdr 的位置会清楚很多：
 
-herdr 没有重新实现终端模拟器，它把三件事拼进同一个进程：tmux 风格的 PTY 负责跑 agent，GUI 风格的侧栏负责聚合状态，再加一个本地 Unix socket 让 agent 自己也能参与编排。
+| 方案 | 持久会话 | pane / 切分 | 真实终端视图 | Agent 状态可视化 | 可编排性 | 主要短板 |
+| --- | --- | --- | --- | --- | --- | --- |
+| tmux | 是 | 是 | 是 | 否 | 弱 | 看得到 pane，看不到 Agent 语义 |
+| GUI Agent 客户端 | 否或部分 | 弱 | 否 | 是 | 弱 | 有状态，没有真实终端和持久布局 |
+| VS Code 类工作流 | 否 | 弱 | 否 | 部分 | 部分 | 工具链全，但终端不是核心抽象 |
+| **herdr** | 是 | 是 | 是 | 是 | 是 | 学习成本和生态仍在爬坡 |
 
----
+tmux 的问题不在“不能多开”，而在它不知道 pane 里到底是谁。对 tmux 来说，一个 pane 里跑的是 `node`、`python` 还是 `bash` 并不重要；对多 Agent 工作流来说，这正是最重要的信息。
 
-## 系统总览：两条并行机制先拆开
+GUI 客户端则走了另一个方向。它们通常能看懂“当前 Agent 在思考”还是“当前 Agent 需要确认”，但代价是你离开了原生终端。输出被重新包装，交互被重新定义，可编排性也往往停留在产品内，而不是一个开放的本地控制面。
 
-herdr 内部边界可以用一张图覆盖，后文讨论会反复回到这张图：
+herdr 的思路更克制：**不改写终端，不接管 Agent，只在终端旁边补一层状态与控制。**
+
+## 阅读地图：先把三组概念拆开
+
+原始资料里最容易混淆的，不是某个命令怎么用，而是下面三组概念：
+
+- **布局模型**：server / workspace / tab / pane。
+- **状态来源**：screen manifest 检测，还是 integration 主动上报。
+- **会话恢复**：detach 保活、重启后快照恢复、原生 Agent 会话恢复、live handoff。
+
+只要这三组概念混在一起，文章就很容易越写越像“功能清单”。先看一张总览图：
 
 ```mermaid
 graph TB
-    subgraph "用户终端"
-        CLI["herdr CLI<br/>（命令行客户端）"]
-        TUI["herdr TUI<br/>（ratatui 渲染）"]
+    subgraph "Client"
+        TUI["Herdr TUI"]
+        CLI["Herdr CLI"]
     end
 
-    subgraph "herdr Server（后台常驻进程）"
-        IPC["Unix Socket IPC<br/>（interprocess 2.4.2）"]
-        SM["Session Manager<br/>会话生命周期"]
-        PM["Pane Manager<br/>PTY 进程管理"]
-        DM["Detect Module<br/>agent 状态识别"]
-        INT["Integration Module<br/>官方 agent 集成"]
-        PERSIST["Persist Module<br/>会话持久化 + 恢复"]
-        HANDOFF["Handoff Runtime<br/>live 进程迁移（实验性）"]
+    subgraph "Server"
+        IPC["Local Socket API"]
+        SESSION["Session / Workspace State"]
+        PANE["PTY + Pane Runtime"]
+        DETECT["Screen Detection"]
+        INTEG["Integrations"]
+        RESTORE["Restore Paths"]
     end
 
-    subgraph "Workspace 层"
-        W1["Workspace 1<br/>（项目 A，git repo）"]
-        W2["Workspace 2<br/>（项目 B）"]
+    subgraph "Workspace"
+        W["Workspace"]
+        TAB1["Tab"]
+        TAB2["Tab"]
+        P1["Pane: Claude Code"]
+        P2["Pane: Codex"]
+        P3["Pane: tests / logs"]
     end
 
-    subgraph "Workspace 1 内部"
-        T1["Tab 1:1<br/>（frontend）"]
-        T2["Tab 1:2<br/>（backend）"]
-        P1["Pane 1-1<br/>Claude Code"]
-        P2["Pane 1-2<br/>dev server"]
-        P3["Pane 1-3<br/>pytest"]
-    end
-
-    CLI -->|"JSON-RPC over socket"| IPC
-    TUI -->|"JSON-RPC over socket"| IPC
-    IPC --> SM
-    SM --> PM
-    PM --> P1
-    PM --> P2
-    PM --> P3
-    DM -.->|"读 foreground 进程名 + 终端输出"| P1
-    DM -.->|"读 foreground 进程名 + 终端输出"| P2
-    INT -.->|"session identity / semantic state"| P1
-    PERSIST --> SM
-    HANDOFF --> SM
-    W1 --> T1
-    W1 --> T2
-    T1 --> P1
-    T1 --> P2
-    T2 --> P3
+    CLI --> IPC
+    TUI --> IPC
+    IPC --> SESSION
+    SESSION --> PANE
+    DETECT -.-> P1
+    DETECT -.-> P2
+    INTEG -.-> P1
+    INTEG -.-> P2
+    RESTORE --> SESSION
+    W --> TAB1
+    W --> TAB2
+    TAB1 --> P1
+    TAB1 --> P2
+    TAB2 --> P3
 ```
 
-图里有两条容易混在一起的并行机制，先拆清楚再展开。
+这张图里真正该先读懂的是两条主线：
 
-**机制一：agent 状态检测有两条路径。** 默认走 `detect/` 模块的启发式——读 foreground 进程名 + 终端底部 buffer 输出特征。装了官方 integration 后可以升级到语义层——session identity 恢复 + semantic state 主动报告。两条路径可以同时生效，也可以只走一条。启发式路径不需要 agent 配合，准确度依赖 manifest 规则的覆盖面；语义层路径准确度高，但需要 agent 端实现集成协议。
+- **主线一：状态主线。**  
+  一个 pane 到底是 `blocked`、`working`、`done` 还是 `idle`，由谁来判定，决定了侧栏是否可信，也决定了 Agent 编排是否能建立在稳定信号上。
+- **主线二：恢复主线。**  
+  detach 后进程继续活着，和 server 重启后重新拉起布局，根本不是一回事；把 Agent 会话恢复回来，又是另一回事。
 
-**机制二：会话持久化有两条路径。** 常规路径是 `persist/` 模块的 session 序列化，server 重启后恢复 pane 布局和进程。实验性路径是 `handoff_runtime.rs` 的 live handoff——把旧 server 上的 PTY 进程（包括 dev server 这种前台进程）迁移到新 server，不杀进程。
+## 一次真实任务流：herdr 在实际工作里怎么用
 
-live handoff 的技术实现要单独说一下：旧 server 持有的 PTY master fd 需要通过 Unix socket 传给新 server。Linux 上这走 `SCM_RIGHTS` 辅助消息——`sendmsg` 把 fd 作为 ancillary data 发出去，新 server 用 `recvmsg` 接收后获得一个有效的 fd 副本。fd 传递完成后，新 server 接管 PTY 输出读取，旧 server 退出。难点不在 fd 传递本身，而在迁移期间不能丢输出、PTY 的窗口尺寸（`TIOCSWINSZ`）和进程组要在新 server 上重建、信号转发链路要接上。这段代码目前还在实验通道，生产环境用之前建议先在自己的 agent 组合上跑一轮 soak test。
+抽象结构讲太久，读者会失去手感。下面用一个最常见的场景把它串起来。
 
----
+假设你在 `~/code/api-server` 修一个线上 bug：
 
-## 一次真实任务流：agent 修 bug 的完整路径
+- 左侧 pane 跑 Claude Code 改业务逻辑。
+- 右侧 pane 跑 Codex 执行测试。
+- 下面另一个 pane 跑 dev server 或日志。
 
-server / workspace / tab / pane 四层抽象、agent 状态切换、socket API 编排，单看定义难以建立整体感。下面这个案例把它们串起来看。
+这时侧栏不是“附加 UI”，而是你做调度的主界面：
 
-**场景**：你在 `~/code/api-server` 项目里修 bug。开了两个 agent——Claude Code 在 pane 1-1 修代码，Codex 在 pane 1-2 跑测试。
+1. Claude Code 开始改代码，pane 状态变成 `working`。
+2. Codex 跑测试，另一个 pane 也变成 `working`。
+3. Codex 先完成，但你还没切过去看，状态会停在 `done`，而不是直接变回 `idle`。
+4. Claude Code 产出 diff，等待你批准，状态变成 `blocked`。
+5. workspace 汇总状态随之变成 `blocked`。你不用扫所有 pane，只需要先处理这个项目。
 
-```text
-时间线：
-00:00  打开 herdr，自动 attach 到后台 server
-00:01  herdr 检测到当前目录是 git repo，创建 workspace "api-server"
-00:02  按 prefix+v 竖切 pane，右边 pane 跑 Codex，左边继续 Claude Code
-00:05  Claude Code 开始改代码 → 侧栏 pane 1-1 显示 🟡 working
-00:05  Codex 开始跑测试 → 侧栏 pane 1-2 显示 🟡 working
-00:08  Codex 跑完测试，exit code 0 → 侧栏 pane 1-2 显示 🔵 done
-       （你还没切过去看，所以是 done 不是 idle）
-00:10  Claude Code 改完代码，等你 review diff → 侧栏 pane 1-1 显示 🔴 blocked
-       侧栏 workspace "api-server" 聚合到最紧急状态：🔴
-00:11  看侧栏发现 🔴 blocked + 🔵 done
-       → 切到 pane 1-1 批准 Claude Code 的 diff
-       → 切到 pane 1-2 看 Codex 的测试结果 → pane 1-2 变为 🟢 idle
-00:12  Claude Code 收到批准，继续跑 → 侧栏 pane 1-1 变为 🟡 working
-00:15  Claude Code 完成 → 侧栏 pane 1-1 变为 🔵 done
-00:16  切过去看结果 → pane 1-1 变为 🟢 idle
-```
+这看起来像一点 UI 小聪明，但它改变的是注意力分配方式。tmux 的世界里，你靠记忆和轮询确认“谁先需要我”；herdr 的世界里，系统把这个顺序显式化了。
 
-这个流程里 herdr 同时在做三件事：跑 agent 的 PTY 终端（你看到的是 Claude Code / Codex 的原生 TUI 输出，不被改写）、实时追踪状态（从进程名 + 终端底部 buffer 推断 blocked / working / done / idle）、提供编排入口（用 socket API 让 agent A 等 agent B 跑完再继续）。
-
-把"等 agent B 跑完"这一步自动化，CLI 写法：
+如果再往前走一步，让 Agent 自己参与编排，事情会更明显：
 
 ```bash
-# agent A 在 pane 1-1 里，想知道 agent B（pane 1-2）什么时候跑完
-herdr wait agent-status 1-2 --status done --timeout 120000
+# 读取另一个 pane 的最近输出
+herdr pane read 1-2 --source recent --lines 50
 
-# 拿到 done 信号后，读 agent B 的输出
-herdr pane read 1-2 --source recent --lines 100
+# 等待某个 Agent 进入 done 状态
+herdr wait agent-status 1-2 --status done --timeout 60000
 
-# 然后 agent A 继续自己的逻辑
+# 或者等待输出里出现特定模式
+herdr wait output 1-3 --match "server.*ready" --regex --timeout 30000
 ```
 
-底层走的是同一条 Unix socket，JSON-RPC 风格的消息。`herdr wait agent-status` 不是单个 socket 方法，而是 CLI 封装——它先解析 agent target 拿到 pane id，再通过 `events.subscribe` 订阅该 pane 的状态变更事件，客户端侧过滤直到目标状态出现或超时。订阅请求大致长这样：
-
-```json
-{
-  "method": "events.subscribe",
-  "params": {
-    "events": ["pane.state_changed"]
-  },
-  "id": 42
-}
-```
-
-server 在 pane 状态变化时推送事件，客户端收到后检查 `pane_id` 和 `new_state`，匹配则返回，超时则报错。agent 拿到响应后可以接着发 `pane.read` 拿输出。tmux 能跑多个进程，但进程之间互相不知道对方的状态——herdr 给每个 pane 一个可查询的状态机和可读的输出流，agent 之间才能彼此编排。
-
----
+这几条命令的价值不在“能不能写出 shell 脚本”，而在**脚本终于拿到了一个系统认可的状态面**。  
+如果没有这个状态面，所谓多 Agent 编排通常只能退化成睡眠、轮询和脆弱的字符串匹配。
 
 ## 核心模型：server / workspace / tab / pane
 
-后文命令都对应这四层抽象。
+官方文档里的概念并不复杂，但它们的边界很重要。
 
-### 1. server（后台服务进程）
+### server：后台常驻的运行时
 
-`herdr` 启动时默认 attach 到一个**后台 server**。`prefix q`（detach client）只关掉客户端，不关 server。这和 tmux 的关键区别在于：
+`herdr` 默认会 attach 到一个后台 server。  
+`ctrl+b q` 只是断开当前 client，不会停掉 server，更不会停掉 pane 里的进程。
 
-- tmux：session 既是 server 又是 client，`tmux kill-session` 会杀掉所有 pane。
-- herdr：server 是常驻进程，client 可以是多个终端窗口同时 attach 到同一个 server。
+这意味着：
 
-关掉终端窗口不等于关掉 agent 进程。只有 `herdr server stop` 才会真正停掉 server 并杀掉所有 pane。
+- 你可以关掉当前终端窗口，稍后再 `herdr` 重新连回去。
+- 你可以在多个终端窗口同时 attach 到同一个 server。
+- 只有 `herdr server stop` 或 `herdr session stop <name>` 这类操作才会真正结束对应 server。
 
-命名 session 是**独立的 server namespace**——你可以有一个主 session 跑日常、一个 work session 跑长任务、一个 review session 跑 review agent，互不干扰：
+对于 tmux 用户，这是最容易迁移的一层：持久性依旧在，只是 session namespace 的表达更明确。
 
-```bash
-herdr session attach work    # attach 命名 session
-herdr session stop work      # 停命名 session
-herdr session list           # 列出所有 session
-```
+### workspace：项目级容器
 
-### 2. workspace（项目级容器）
-
-workspace 围绕 **git 仓库或文件夹** 组织，默认按第一个 tab 的根 pane 命名（通常是 repo 名）。一个 workspace 对应一个项目。
+workspace 更像“一个项目的工作上下文”，通常围绕 git 仓库或某个目录组织。
 
 ```bash
+herdr workspace create --cwd ~/project --label api
 herdr workspace list
-herdr workspace create --cwd /path/to/project --label "api server"
 ```
 
-### 3. tab（workspace 内子上下文）
+herdr 的很多设计，都在强化这个“项目级”视角。侧栏不是简单列 pane，而是先汇总到 workspace，再展开到 tab 和 pane。对多项目并行的人来说，这比传统终端复用器更贴近真实工作方式。
 
-tab 在 workspace 内部做语义分组。例如一个 repo 里有 frontend / backend / infra 三个方向，可以建 3 个 tab，每个 tab 独立 pane 树。tab 是 socket API 和 CLI 的一等公民，有完整的 create / list / focus / rename / close 操作。
+### tab：workspace 内的子上下文
 
-```bash
-herdr tab create --workspace 1 --label backend
-herdr tab list --workspace 1
-```
+tab 用来做项目内分组。比如同一个仓库里，你可能单独开：
 
-### 4. pane（真实终端进程）
+- 一个 tab 跑主 Agent。
+- 一个 tab 跑测试和日志。
+- 一个 tab 放 review 或文档任务。
 
-pane 是真正跑 shell / agent / server / log tail 的终端。herdr 在这里给了一个硬承诺：
+这比把所有进程平铺到一个 pane 树上更容易管理，也更适合被 API 编排。
 
-> Panes are real terminal processes, not rewritten agent views.
+### pane：真实终端，不是改写后的 Agent 视图
 
-herdr 用 `portable-pty` 跑 PTY 进程，**不解析也不改写 agent 的 ANSI 输出**。你看到的就是 agent 自己的 TUI。Claude Code 的 diff 渲染、Codex 的 progress bar、Droid 的 inline tool call 结果，都依赖真实的 ANSI 控制序列——这些在 GUI 嵌入式终端里会不同程度失真。
+这是 herdr 最关键的承诺之一：**pane 里跑的是原生终端进程。**
 
-PTY（pseudo-terminal）的工作方式决定了这条边界：agent 进程写到 slave 端，herdr 从 master 端读到的就是 agent 输出的原始字节流，包括 ANSI 转义序列、光标移动、颜色码、alternate screen 切换。herdr 要在 TUI 里显示这些内容，需要自己跑一个终端模拟器（vendor 进来的 `libghostty-vt`）把字节流渲染成屏幕 cell 矩阵。但渲染归渲染，herdr 不会把渲染结果回写给 agent——agent 看到的还是它自己以为在写的那个终端。agent 的输入输出链路没有被中间层截断，这是"真实终端视图"的字面含义。
+这一点听起来像产品文案，实际上是架构边界。  
+Agent 输出的 ANSI 序列、光标移动、alternate screen、progress bar、diff 高亮，herdr 都必须尊重，而不是把它们抽象成某种统一的 GUI 小部件。
 
-### ID 编码与陷阱
+从 Rust 工程视角看，这意味着它得同时做好几件事：
 
-写 orchestrator 的人必须记住 SKILL.md 里的这段警告：
+- 用 `portable-pty` 跑跨平台 PTY。
+- 用终端兼容层把字节流渲染成屏幕 cell。
+- 在不篡改原始交互的前提下，额外做状态识别和 UI 聚合。
 
-> ids can compact when tabs, panes, or workspaces are closed. do not treat them as durable ids. re-read ids from `workspace list`, `tab list`, `pane list`, or create/split responses when you need a current id. do not guess that an older `1-3` is still the same pane later.
+这也是为什么“真实终端视图”不是一句空话，而是整个产品的基础假设。
 
-ID 格式：
+### 一个容易踩坑的细节：ID 不是永久主键
 
-- workspace: `1`, `2`, `3`...
-- tab: `1:1`, `1:2`...
-- pane: `1-1`, `1-2`...
+官方 Agent Skill 明确提醒过一点：workspace、tab、pane 的公共 ID 会在关闭后压缩和复用，不应该被当成 durable id。
 
-这是**会话内紧凑 ID**，关掉中间的 tab/pane 会让后续 ID 复用。写 orchestrator 时每次操作前必须重新 `list`，不能缓存旧 ID。
+也就是说：
 
----
+- `1-2` 这种 pane id 只是当前会话里的紧凑编号。
+- 你不能默认“上次看到的 `1-2` 现在还是同一个 pane”。
+- 写脚本或 orchestrator 时，应该在关键操作前重新 `list`。
 
-## agent 状态识别：两条路径，一套侧栏
+这是很多终端自动化脚本不稳定的根源之一。herdr 没有回避这个问题，而是把它写进了官方约束。
 
-herdr 把 pane 里的进程按 4 个状态归类：
+## Agent 状态识别：关键不是“识别谁”，而是谁对状态有解释权
 
-| 状态 | 颜色 | 含义 |
-|------|------|------|
-| `blocked` | 🔴 | agent 等待你输入或批准 |
-| `working` | 🟡 | agent 正在跑 |
-| `done` | 🔵 | agent 跑完但你还没看 |
-| `idle` | 🟢 | 跑完且已看过 |
+很多人第一次看 herdr，会把它理解成“一个更懂 Agent 的检测器”。这还是说浅了。
 
-`done` 和 `idle` 的区别取决于你有没有切到那个 pane 看过——这是一个基于注意力（attention）的状态，不是纯进程状态。tmux 的"进程在不在跑"只有两层语义，herdr 多了"你看过没有"这一层。
+更准确的理解是：**Herdr 先识别 pane 里跑的是谁，再决定谁有资格 author 这个 pane 的状态。**
 
-### 路径一：默认启发式检测（零配置）
+截至 2026-06，官方文档里的支持模型大致可以分成 3 类：
 
-不装任何 integration 时，herdr 的 `detect/` 模块通过两个信号推断状态：
+| 类别 | 代表 Agent | 状态来源 | 会话恢复能力 |
+| --- | --- | --- | --- |
+| 生命周期 authority | Pi、OMP、Kimi Code CLI、OpenCode、Kilo Code CLI、Hermes Agent | 安装 integration 后由 hook / plugin 主动上报 `idle / working / blocked` | 多数同时支持原生 session 恢复 |
+| 屏幕检测 + session identity | Claude Code、Codex、GitHub Copilot CLI、Devin CLI、Droid、Qoder CLI、Cursor Agent CLI | 状态仍由 screen manifest 判定 | integration 提供原生会话身份，用于重启后恢复 |
+| 仅屏幕检测 | Amp、Grok CLI、Antigravity CLI、Kiro CLI | 依赖前台进程名和底部屏幕快照 | 无官方原生恢复 |
 
-1. **foreground 进程名**：PTY 的前台进程是什么（`claude`、`codex`、`node` 等）
-2. **终端输出特征**：屏幕底部 buffer 里出现的特定 ANSI 序列和文本模式
+另外，Gemini CLI 和 Cline 目前属于“能识别，但测试没那么充分”的那一类。
 
-AGENTS.md 里有一段关于检测哲学的约束：
+这套划分很重要，因为它说明 herdr 不是“装了 integration 就全都更聪明”。不同 integration 解决的是不同问题：
 
-> Screen detection is evidence-based. Decide which visible controls are invariant, which are alternatives, and encode them as explicit AND/OR gates. Do not match whole-pane incidental text, and do not use the user-visible viewport for agent status because users can scroll it.
+- 有些 integration 负责**状态权威**。
+- 有些 integration 只负责**会话身份**。
+- 两者并不总是同时存在。
 
-检测不看用户滚动的 viewport（用户可能滚到历史输出里去了），看的是 agent 自己的"底部 buffer"——agent 当前渲染的屏幕状态。每个 agent 的检测规则写在 `src/detect/manifests/<agent>.toml` 里，用 AND/OR gate 表达"哪些屏幕特征组合等于哪个状态"。
+### 为什么 screen manifest 不是低配方案
 
-为什么不用 LLM 做状态识别？AGENTS.md 的 evidence-based 原则已经回答了这个问题。LLM 方案有三个硬伤——延迟（每次状态判断要跑一次推理，几百毫秒起步，而 herdr 的状态切换需要毫秒级响应）、成本（每个 pane 每秒可能触发多次检测，LLM 调用费用会迅速失控）、不可复现（同一个屏幕状态两次跑 LLM 可能给出不同判断，orchestrator 没法依赖）。AND/OR gate 方案的代价是规则需要人工维护、新 agent 需要写新 manifest，但换来的是确定性、零延迟、零成本和可测试性。在 agent 状态识别这个场景里，状态空间有限（4 个状态）、特征相对稳定（agent 的 TUI 布局不会天天变）、误判代价高（orchestrator 会基于状态做决策），用规则比用模型更合适。
+官方文档和 `AGENTS.md` 里有一个一以贯之的原则：**screen detection 必须是 evidence-based。**
 
-一条规则会声明几个 region（屏幕上的固定区域，比如底部一行或右下角），每个 region 里放若干 matcher（正则或字面量），再用 `all_of` / `any_of` 组合。一个 `blocked` 判断可能长这样：底部出现 `❯` 提示符 AND（出现 `Do you want to proceed?` OR 出现 `Press enter to continue`）。
+翻成工程语言就是：
 
-manifest 文件的结构大致如下（以某个假想 agent 为例）：
+- 看底部 live buffer，不看用户滚动后的 viewport。
+- 不做模糊“猜测”，只匹配明确可见的控件和文本模式。
+- 用显式的 AND / OR 规则组合，而不是把整屏文本扔给一个黑箱。
+
+这么做不是保守，而是为了可测试、可复现、低延迟。  
+状态信号一旦要被等待、被订阅、被拿去做自动化，误判成本就会迅速高过“看起来不够智能”的那点遗憾。
+
+### `blocked` 为什么通常做得更严格
+
+官方文档专门提到，screen-manifest Agent 的 `blocked` 检测会故意收紧。  
+只有当底部缓冲区出现明确的确认、批准、提问或权限 UI 时，Herdr 才会标成 `blocked`。
+
+这背后的取舍很务实：
+
+- 误把普通输出判成 `blocked`，会打乱人的注意力。
+- 误把不稳定状态拿去做自动化等待，更危险。
+
+因此对未知或新变种界面，Herdr 宁可回退到保守状态，也不愿意强行“猜对”。这类设计，看似不那么炫，反而更像面向生产环境的工程判断。
+
+### 侧栏汇总为什么是 herdr 的真正工作流
+
+单个 pane 的状态当然重要，但 herdr 真正改变的是汇总后的工作流：
+
+- 某个 pane `blocked`，对应 tab 和 workspace 也会表现为需要关注。
+- 某个 pane `done`，它会保持可见，直到你真的去看过。
+- 多个项目并行时，你先看 workspace 汇总，再决定切到哪个 pane。
+
+这就是它和 tmux 的根本差异：tmux 帮你管理终端，herdr 帮你管理注意力。
+
+## 会话状态：herdr 其实有不止一条“恢复路径”
+
+这是原始资料里最容易被说糊的部分。  
+很多文章会把“持久化”“恢复”“热更新”“断线重连”混成一句话，但官方文档把它们拆得很清楚。
+
+最实用的看法是下面这张表：
+
+| 场景 | 进程是否继续运行 | 布局是否回来 | 最近屏幕是否回来 | Agent 会话是否恢复 |
+| --- | --- | --- | --- | --- |
+| detach / reattach | 是 | 是 | 是，来自 live terminal | 是，因为进程根本没停 |
+| server 重启 | 否 | 是 | 只有启用 pane history 才会回来 | 只有支持原生 session restore 的 Agent 才会回来 |
+| `herdr update`（无 `--handoff`） | 取决于更新路径，常见情况需要停旧 server | 是 | 依赖 pane history | 依赖原生 session restore |
+| `herdr update --handoff` | 尝试保活当前进程 | 是 | 成功时保留 live terminal | 成功时保留当前会话 |
+
+把这张表读懂，很多概念就不容易串台了。
+
+### 1. live persistence：最强的持久性
+
+detach 是最“硬”的持久化，因为原始进程根本没有停。  
+这时：
+
+- 你的 shell 还在。
+- 你的 Agent 还在。
+- 你的 dev server、测试、日志 tail 也都还在。
+
+这不是“恢复”，而是**继续活着**。
+
+### 2. snapshot restore：恢复的是形状，不是旧进程
+
+server 停掉再起来之后，Herdr 能恢复 workspace、tab、pane、cwd、布局和焦点，但不能凭空让原来的普通进程复活。
+
+这是很多人最容易误解的一点：  
+**快照恢复恢复的是会话形状，不是进程本体。**
+
+### 3. pane screen history replay：恢复的是可见上下文
+
+官方文档把 pane history 说得很诚实：  
+它恢复的是“Herdr 能展示给你看的最近输出”，不是旧进程本身。
+
+而且它默认关闭，因为终端输出里经常带着 token、日志、prompt 和敏感数据。
 
 ```toml
-# src/detect/manifests/example-agent.toml
-[agent]
-name = "example-agent"
-process_names = ["example-agent", "ea"]
-
-[[states]]
-name = "blocked"
-
-  [[states.gates]]
-  type = "all_of"
-  [[states.gates.regions]]
-  location = "bottom_line"
-  matchers = [{ kind = "literal", value = "❯" }]
-
-  [[states.gates]]
-  type = "any_of"
-  [[states.gates.regions]]
-  location = "bottom_area"
-  rows = 5
-  matchers = [
-    { kind = "literal", value = "Do you want to proceed?" },
-    { kind = "literal", value = "Press enter to continue" },
-  ]
-
-[[states]]
-name = "working"
-# ... working 状态的 gate 定义
+[experimental]
+pane_history = true
 ```
 
-规则可以单独测试：`herdr agent explain <pane> --json` 能看到当前屏幕匹配了哪几条 region、命中了哪个 gate、最终落到哪个状态。agent 检测 manifest 还支持远程更新（`herdr server update-agent-manifests`），新 agent 的识别规则不必等 herdr 发版就能下发。
+这个功能对日志、shell、长跑任务很有用，但也确实引入了本地敏感信息留存的问题。
 
-添加检测规则的流程在 AGENTS.md 里有完整说明：先用 `herdr agent read <pane> --source detection --format text` 抓屏幕快照，再用 `herdr agent explain <pane> --json` 看匹配结果，然后把规则写成 `src/detect/manifests/<agent>.toml` 里的 AND/OR gate。复制到 `~/.config/herdr/agent-detection/<agent>.toml` 后 `herdr server reload-agent-manifests` 热加载，验证通过后删掉本地 override，让 bundled manifest 作为唯一来源。
+### 4. native agent session restore：恢复的是 Agent 自己的上下文
 
-### 路径二：官方 integration（语义层升级）
+这条路径才是 herdr 在 AI Agent 场景里最像“专用工具”的地方。
 
-`herdr integration install <agent>` 安装后，状态识别会升级：
+如果 integration 能报告原生 session reference，Herdr 就能在 server 重启后用 Agent 自己的恢复命令把会话接回来。例如文档列出的恢复命令包括：
 
-- **session identity**：知道这个 pane 对应的是哪次 agent session，server 重启后能恢复上下文
-- **semantic state**：agent 直接通过 socket 主动报告自己的状态（"我现在 blocked"），而不是 herdr 从输出猜
+- `claude --resume <id>`
+- `codex resume <id>`
+- `copilot --resume=<id>`
+- `cursor-agent --resume <id>`
+- `devin --resume <id>`
 
-官方 integration 覆盖 8 个 agent，按能力分三档：
+这和 pane 快照恢复完全不是一个层级。  
+前者恢复的是“这个 Agent 之前在聊什么、做到哪一步”，后者恢复的是“这个 pane 长什么样”。
 
-| 能力层次 | agent | 说明 |
-|---------|-------|------|
-| 双向（semantic state + session identity） | pi、github copilot cli、hermes | agent 主动报告状态，server 重启后恢复 session |
-| session identity only | claude code、codex、opencode | 能恢复 session，状态仍从屏幕检测 |
-| semantic state only（无 session restore） | omp、qodercli | agent 主动报告状态，但不恢复 native session |
-| 默认检测 only | droid、amp、grok cli、kilo code cli、cursor agent、antigravity cli、kimi code cli、kiro cli | 纯启发式，无 integration |
+### 5. live handoff：最冒险，也最诱人的那条路
 
-> gemini cli 和 cline 当前标记为"detected but not fully tested"，能被识别但未充分测试。
+`herdr update --handoff` 的目标，是在替换 server 的同时尽量不杀掉当前 pane 进程。  
+这件事很吸引人，因为它瞄准的是最痛的升级场景：长跑 Agent、前台 dev server、需要连续交互的终端任务。
 
-安装 integration 用短名：`herdr integration install pi`、`herdr integration install omp`、`herdr integration install claude`、`herdr integration install codex`、`herdr integration install copilot`、`herdr integration install opencode`、`herdr integration install hermes`、`herdr integration install qodercli`。
+但官方文档写得很清楚：**它是 experimental，且是 opt-in。**
 
-对未在 integration 列表里的 agent，herdr 仍然能当终端复用器用，只是状态识别会回退到进程名 + 输出启发式，准确性会下降。
+这类功能最该用的态度不是“酷，默认打开”，而是“先在自己的 Agent 组合上跑一轮真实验证”。它属于高价值，也属于高风险。
 
-### 状态聚合
+## Socket API：Herdr 真正给 Agent 暴露的是控制面
 
-侧栏不只显示单个 pane 的状态，还会把 workspace 级别的状态聚合到最紧急的那一个。只要一个 workspace 里有任何一个 pane 是 `blocked`，整个 workspace 就显示 🔴——你不用展开每个 workspace 就能知道哪个项目需要你回复。聚合优先级是 `blocked` > `working` > `done` > `idle`，和人的注意力分配顺序一致：先处理需要回复的，再看在跑的，最后扫完成的。
+只把 herdr 当成一个“会显示状态的终端复用器”，会低估它的另一半能力。
 
----
+官方文档把对外集成面拆成 3 层：
 
-## socket API：让 agent 彼此编排
+| 层级 | 适合场景 |
+| --- | --- |
+| Agent skill | 教 coding agent 如何在 pane 内使用 herdr |
+| CLI wrappers | shell 脚本、简单编排、人工调试 |
+| Raw socket API | 自定义客户端、协议级控制、长连接订阅 |
 
-侧栏解决的是"人怎么看 agent"，socket API 解决的是"agent 怎么看 agent"。herdr 给 agent 暴露了一个**本地 Unix socket**，让 agent 能通过 CLI 控制 herdr。这是 tmux 没有提供的能力——tmux 的 IPC 主要面向人，herdr 的 IPC 同时面向人和 agent。
+这 3 层共享的是同一个控制面。  
+差别不在“能做什么”，而在“你要不要自己处理协议和订阅生命周期”。
 
-### 三层集成体系
+### 这套控制面能做什么
 
-socket API 文档区分了三个集成层：
+从官方 `socket API` 文档看，Herdr 至少把下面这些动作开放出来了：
 
-| 层 | 适用场景 |
-|---|---------|
-| Agent Skill（SKILL.md） | 教 coding agent 怎么在 herdr pane 里用 herdr CLI |
-| CLI Wrappers | shell 脚本、简单编排、人工调试 |
-| Raw Socket API | 自定义工具、协议客户端、事件订阅 |
+- 创建、列出、聚焦、关闭 workspace 和 tab。
+- split、读取、发送输入、关闭 pane。
+- 启动 Agent，读取 Agent，等待状态变化。
+- 订阅事件，等待输出，安装 integration。
+- 重载配置，停止 server。
 
-三层共享同一套控制面。Socket 使用 JSON-RPC 风格的点号方法名（`workspace.create`、`pane.split`、`pane.wait_for_output`），传输层是本地 Unix socket。CLI 命令是对 socket 方法的封装，所以用 CLI 还是直接发 socket 消息，能力上没有差别——CLI 更适合脚本和 agent prompt，raw socket 更适合需要事件订阅或批量请求的场景。
+这意味着 Agent 不只是“跑在 pane 里”，而是能把 Herdr 当成自己的局部操作系统。
 
-### agent 能做什么
+### 为什么这比单纯的“capture pane”更重要
 
-SKILL.md 和 socket API 文档里的核心能力：
+很多脚本系统都能做到“读一点别的终端输出”。  
+Herdr 关键的增强在于，它让 Agent 能同时拿到：
+
+- 布局控制。
+- 输出读取。
+- 状态等待。
+- 事件订阅。
+
+当这四样东西同时存在时，你才能比较像样地写出这样的工作流：
 
 ```bash
-# 发现自己当前在哪个 pane
-herdr pane list
+# 在当前项目里起一个专门跑测试的 pane
+herdr pane split 1-1 --direction right --no-focus
+herdr pane run 1-2 "cargo test"
 
-# 读另一个 pane 的屏幕内容（最近 N 行）
-herdr pane read 1-1 --source recent --lines 50
+# 等测试跑完
+herdr wait agent-status 1-2 --status done --timeout 120000
 
-# 在当前 workspace 开新 tab
-herdr tab create --workspace 1 --label "test-runner"
-
-# 竖切 pane 跑命令
-herdr pane split 1-2 --direction right --no-focus
-herdr pane run 1-3 -- "pytest -x"
-
-# 等另一个 agent 跑完
-herdr wait agent-status 1-1 --status done --timeout 60000
-
-# 等 pane 里出现特定输出
-herdr wait output 1-3 --match "server.*ready" --regex --timeout 30000
-
-# 发送按键到另一个 pane
-herdr pane send-keys 1-2 Enter
+# 读结果，再决定下一步
+herdr pane read 1-2 --source recent --lines 80
 ```
 
-有了这些命令，agent 就能：起后台 test runner pane → 读它的输出 → 等它完成 → 继续自己的逻辑。tmux 做不到这件事，GUI 客户端也不开放这种能力。
+tmux 也能拼出一部分，但它缺少面向 Agent 语义的那层状态与等待接口。  
+这就是 herdr 的“multiplexer”为什么不是传统意义上的 session multiplexer，而更像 Agent workflow 的 control plane。
 
-### 关键设计约束
+### 写自动化时要记住的约束
 
-写 orchestrator 的人需要注意的约束，来自 SKILL.md 和 AGENTS.md：
+官方文档和 Agent skill 里，有几条约束值得直接记住：
 
-1. **ID 不持久**：关掉 tab/pane 后 ID 会被复用，每次使用前必须重新 `list`。
-2. **`HERDR_ENV=1`**：herdr 为每个 managed pane 注入环境变量，agent 可以用这个判断自己是否在 herdr 里运行。同时注入的还有 `HERDR_SOCKET_PATH`、`HERDR_WORKSPACE_ID`、`HERDR_TAB_ID`、`HERDR_PANE_ID`。
-3. **`--no-focus` 模式**：split / tab create / workspace create 都支持 `--no-focus`，保持当前终端焦点不变——这对 agent 的自动化编排很重要，否则 agent 起一个新 pane 会把自己的焦点切走。
-4. **`wait output` 使用 unwrapped text**：`--source recent` 匹配时会去掉软换行，pane 宽度变化不会影响匹配。orchestrator 的匹配规则因此不会被终端宽度抖动破坏。
-5. **`pane move` 跨 workspace 迁移**：运行中的 pane 可以在 workspace 之间迁移，内部 PTY 保持存活，只是分配新的 public pane id。AGENTS.md 里提到跨 workspace 迁移不会发伪造的 pane close/create 事件，订阅者直接收 `pane.moved`——订阅者不会误判 pane 重启。
-6. **`pane.swap` 同 tab 内交换**：支持 directional 和 explicit 两种形式，保持 split 形状、比例、pane id 和运行中的进程。zoom 状态下 swap 操作的是隐藏的全 tab 布局。
-7. **`layout.export` / `layout.apply`**：声明式布局。export 返回 BSP 树结构的 pane 和 split 节点，apply 创建新 tab 恢复结构、标签、cwd、env 和 argv 命令，但不保留 live PTY、scrollback 或运行中的进程——它恢复的是"怎么重建这个布局"，不是"把这个布局原样搬过来"。
+1. **不要把 pane id 当永久身份。**
+2. **`HERDR_ENV=1`、`HERDR_SOCKET_PATH`、`HERDR_WORKSPACE_ID`、`HERDR_TAB_ID`、`HERDR_PANE_ID` 会注入到受管进程里。**
+3. **能用 `--no-focus` 的地方尽量用，避免自动化脚本把焦点切乱。**
+4. **等输出和等状态优先走官方等待接口，不要自己写脆弱轮询。**
 
-`layout.export` 返回的 BSP 树大致长这样（一个竖切两 pane 的 tab）：
+这些限制并不性感，但决定了自动化是“看起来能跑”，还是“能在第二周继续跑”。
 
-```json
-{
-  "type": "split",
-  "direction": "right",
-  "ratio": 0.65,
-  "first": {
-    "type": "pane",
-    "label": "claude",
-    "cwd": "/home/user/api-server",
-    "command": ["claude"],
-    "env": { "HERDR_ENV": "1" }
-  },
-  "second": {
-    "type": "pane",
-    "label": "tests",
-    "cwd": "/home/user/api-server",
-    "command": ["pytest", "-x"],
-    "env": { "HERDR_ENV": "1" }
-  }
-}
+## Rust 工程视角：为什么这个仓库值得读
+
+如果你把 herdr 当成一个普通命令行工具，可能会忽略它在工程组织上的价值。  
+从仓库的 `AGENTS.md` 和 `Cargo.toml` 看，它其实是一个很适合学习的 Rust TUI 样本。
+
+截至当前，`Cargo.toml` 标出来的版本是：
+
+```toml
+[package]
+name = "herdr"
+version = "0.7.0"
+description = "terminal workspace manager for AI coding agents"
+license = "AGPL-3.0-or-later"
 ```
 
-`layout.apply` 接收这棵树，按 split 节点递归切分，在每个 pane 节点按 `command` 起进程。split 节点用 `direction`（`right` 或 `down`）、`ratio`、`first`、`second` 四个字段表达；pane 节点可以带 `label`、`cwd`、`command`、`env`。布局可以版本化、可以 diff、可以在不同机器间同步——tmux 的 `display-message` + `source-file` 方案做不到这种声明式重建。
+### 一组很值得抄走的设计原则
 
-### 事件订阅
+`AGENTS.md` 里最重要的不是流程，而是那几条短原则：
 
-socket API 支持事件订阅。客户端通过 `events.subscribe` 注册感兴趣的事件类型（如 `pane.state_changed`、`workspace.created`、`agent.status`），server 在事件发生时主动推送 JSON 消息。写 orchestrator 时不用轮询 `pane list`，等 server 推"pane 1-2 刚变成 done"就行。
+1. **State is separated from runtime**  
+   状态数据和实际 PTY / async runtime 分开，意味着很多逻辑可以脱离真实终端做测试。
+2. **Render is pure**  
+   渲染函数只画，不偷改状态。这是 TUI 应用稳定下来的基本功。
+3. **No god objects**  
+   模块一旦开始包山包海，就继续拆。
+4. **Platform code is isolated**  
+   平台差异收拢到专门目录，核心逻辑不被 `#[cfg(...)]` 污染。
+5. **Detection is decoupled**  
+   检测器只吃屏幕快照，不和 viewport、parser 或 UI 状态缠在一起。
+6. **Screen detection is evidence-based**  
+   状态识别必须基于可验证证据，而不是模糊猜测。
+7. **UI patterns should be reused**  
+   既然是 mouse-first TUI，就别给每个新功能都发明一套新交互。
 
-订阅请求和推送消息的格式大致如下：
+这几条原则单看并不新鲜，但能在一个同时涉及 PTY、TUI、IPC、状态机和恢复路径的项目里持续执行，含金量就很高了。
 
-```json
-// 客户端订阅
-{
-  "method": "events.subscribe",
-  "params": {
-    "events": ["pane.state_changed", "agent.status"]
-  },
-  "id": 1
-}
+### 依赖栈为什么搭得顺
 
-// server 推送（异步，不带 id）
-{
-  "event": "pane.state_changed",
-  "data": {
-    "pane_id": "1-2",
-    "old_state": "working",
-    "new_state": "done",
-    "timestamp": 1718464800
-  }
-}
-```
+从 `Cargo.toml` 看，最核心的依赖栈大概是这几项：
 
-事件消息包含 pane id、新状态和时间戳，格式和 raw socket API 的响应一致。订阅者需要注意：事件可能乱序到达（尤其是跨 workspace 的事件），orchestrator 侧要做幂等处理。
+| 依赖 | 版本 | 角色 |
+| --- | --- | --- |
+| `ratatui` | `0.30` | TUI 渲染 |
+| `crossterm` | `0.29` | 跨平台终端事件和控制 |
+| `tokio` | `1` | 异步调度 |
+| `portable-pty` | `0.9` | 跨平台 PTY |
+| `interprocess` | `2.4.2` | 本地 IPC |
+| `serde` / `serde_json` / `bincode` | `1` / `1` / `2` | 配置与协议序列化 |
+| `regex` | `1` | 检测规则 |
+| `tracing` / `tracing-subscriber` | `0.1.44` / `0.3.23` | 可观测性 |
 
-### 通知系统
+这套组合之所以舒服，是因为分工比较清楚：
 
-socket API 支持程序化通知：
+- `ratatui` 负责“画什么”。
+- `crossterm` 负责“终端能做什么”。
+- `portable-pty` 负责“谁在终端里跑”。
+- `tokio` 负责“这些事情怎么并发地跑起来”。
+- `interprocess` 负责“client 和 server 怎么本地说话”。
 
-```bash
-herdr notification show "build failed" --body "api workspace" --position top-left --sound request
-```
+你很少能在一个项目里看到这几类能力以这么直接的方式拼在一起。
 
-通知可以走 herdr 内置 toast、终端 bell 或系统通知，取决于 `ui.toast.delivery` 配置。`busy` 状态下不会覆盖已有 toast。`title` 清理后截断到 80 字符，`body` 截断到 240 字符。
+### 它为什么比很多 demo 更值得看
 
-### 插件系统（v1 早期）
+很多 Rust TUI 示例项目的问题，不是功能少，而是复杂度太低，学不到真实取舍。  
+herdr 的难点刚好都是真实的：
 
-socket API 里还有一个插件系统，通过 `herdr-plugin.toml` manifest 声明 action、event hook 和 terminal pane entrypoint。`plugin.link`、`plugin.enable`、`plugin.disable` 操作持久化到 `plugins.json`，server 重启后自动加载。目前还是早期 host surface，事件驱动的扩展入口已经能跑。event hook 的 `on` 值在 link 时校验，未知事件名不会报错，但会在 `plugin.list` 响应的 `warnings` 字段里标注。
+- 终端输出不能乱改，但你又要做状态判断。
+- 进程生命周期和 UI 生命周期不是同一件事。
+- 恢复路径不是一条，而是多条并行策略。
+- 你既要服务人，也要服务 Agent。
 
----
+这类项目读完，能学到的不是一个组件怎么用，而是**复杂边界应该怎么被拆开。**
 
-## 架构拆解：从 AGENTS.md 看设计原则
+## 安装、上手和第一次有效体验
 
-`src/` 目录按职责切分，大约 50 个文件：
+官方目前给了几条主流安装路径。
 
-```text
-src/
-├── main.rs              # 入口
-├── cli.rs / cli/        # CLI 解析 + 子命令
-├── server/              # 后台 server：会话、pane 进程管理
-├── client/              # TUI 客户端（ratatui 渲染）
-├── pane/                # pane 抽象 + 进程生命周期
-├── persist.rs / persist/  # 会话持久化 + pane 状态恢复
-├── detect/              # agent 状态识别启发式（核心差异化）
-├── integration/         # 官方 agent 集成
-├── protocol/            # socket 协议定义
-├── ipc.rs               # Unix socket IPC
-├── api/                 # socket API 实现
-├── config.rs / config/  # 配置文件 + 主题
-├── input/               # 键盘 / 鼠标输入
-├── render_prof.rs       # 渲染性能分析
-├── remote.rs / remote/  # SSH remote attach
-├── update.rs            # 自更新 + channel 管理
-├── handoff_runtime.rs   # live handoff（旧 server → 新 server，实验性）
-├── agent_resume.rs      # agent session resume
-├── worktree.rs          # git worktree 集成
-├── workspace.rs / workspace/  # workspace 模型
-├── ghostty/             # Ghostty 终端兼容层
-├── terminal/            # 终端能力探测
-├── terminal_theme.rs    # 主题解析
-├── terminal_notify.rs   # 系统通知
-├── sound.rs             # 声音事件
-├── selection.rs         # 文本选择 / 复制
-├── plugin_command.rs / plugin_paths.rs  # 插件命令系统
-├── product_announcements.rs / release_notes.rs  # 公告 / release notes
-└── ...
-```
+### 安装
 
-AGENTS.md 里的 7 条设计原则，每条都对应具体的工程决策。这些原则在代码评审时是硬性约束——`just check` 会跑相关检查，违反原则的 PR 会被要求重写。
-
-**1. State is separated from runtime。** `AppState` 是纯数据，不依赖 PTY 或 async 就能测试。`PaneState` 和 `PaneRuntime` 分开。Workspace 逻辑不需要真实终端。AGENTS.md 里明确写了 `AppState::test_new()` 和 `Workspace::test_new()` 可以在无 PTY 环境下构造测试状态，对重构风险高的改动还有 `AppState::assert_invariants_for_test()` 和 `AppState::test_with_adversarial_identity_state()` 做对抗性状态测试。
-
-状态机测试不需要起 PTY、不需要 async runtime、不需要真实终端，单测可以跑到毫秒级。`PaneRuntime` 持有 PTY master fd 和读取 task，是异步且有副作用的；`PaneState` 只持有"这个 pane 当前是什么状态、cwd 是什么、label 是什么"这类纯数据。检测逻辑、布局逻辑、状态聚合逻辑都只依赖 `PaneState`，可以密集测试。
-
-**2. Render is pure。** `compute_view()` 处理几何和变更，`render()` 只画不写。渲染期间绝不修改状态。这是 ratatui 应用的常见模式，但 herdr 在 AGENTS.md 里把它写成了硬性约束——`render()` 里如果出现 `&mut self`，代码评审会打回。
-
-**3. No god objects。** 模块职责单一。`app/` 已经拆成 state、actions、input 三块。AGENTS.md 里说"如果模块做了太多事，就拆"——`pane/` 模块就经历了从单文件到目录的拆分，把进程生命周期、PTY 管理、输出 buffer 分到不同子模块。
-
-**4. Platform code is isolated。** OS 特定行为在 `src/platform/`，核心模块里没有 `#[cfg(target_os)]`。AGENTS.md 补充了更严格的约定：跨平台代码必须用 `#[cfg(windows)]`、`#[cfg(unix)]` 编译门控，`cfg!()` 只用于跨平台都能编译的策略常量。读 `server/` 或 `pane/` 的代码时不需要担心平台分支；所有平台差异集中在一个目录里，移植到新平台时改动范围可控。
-
-**5. Detection is decoupled。** 检测器只读屏幕快照，不碰 parser 或 viewport 状态。给一个屏幕 cell 矩阵就能跑检测规则，不需要起完整 PTY。
-
-**6. Screen detection is evidence-based。** 每条检测规则基于显式 AND/OR gate，不看用户可滚动的 viewport，只看 agent 自己的底部 buffer。检测器不能猜，必须有显式证据。如果某个 agent 的 blocked 状态没有稳定特征，宁可标 `unknown` 也不能用模糊匹配硬判。
-
-**7. UI patterns should be reused。** herdr 是 mouse-first TUI，新 dialog、onboarding、settings 等应复用现有模式。新功能不能自己造一套交互模式，必须走已有的 dialog / menu / toast 组件。
-
-几个关键模块单独说一下：
-
-- **`persist/` + `persist.rs`**：session 持久化，server 重启后 pane 能恢复。支持 opt-in 恢复最近屏幕历史。持久化的内容是 pane 布局、cwd、env、argv 和 label，不持久化 PTY 进程本身——进程需要重新启动。
-- **`handoff_runtime.rs`**：实验性 live handoff——`herdr update --handoff` 尝试把旧 server 上的 pane 进程迁移到新 server，不杀进程。这是 tmux 一直想做但没做好的功能，目前放在实验通道，生产环境用之前建议先在自己的 agent 组合上跑一轮 soak test。
-- **`agent_resume.rs`**：配合 integration 的 session identity 实现，server 重启或更新后，agent pane 能从 native session 恢复上下文。这个模块和 `persist/` 的区别是：`persist/` 恢复的是 herdr 自己的 pane 状态，`agent_resume.rs` 恢复的是 agent 自己的 session（比如 Claude Code 的 conversation id）。
-- **`detect/`**：状态识别启发式的核心。规则文件在 `src/detect/manifests/<agent>.toml`，支持热加载和远程更新。
-- **`protocol/` + `ipc.rs`**：socket 协议实现。`PROTOCOL_VERSION` 只在源协议高于最新 release tag 时才 bump——协议版本向后兼容，旧 client 能连新 server。
-- **`worktree.rs`**：git worktree 集成。`worktree.create` 从已有 workspace 创建 git worktree，`worktree.open` 打开已有 checkout，`worktree.remove` 删除 linked checkout（不删分支）。AGENTS.md 里还规定了多 agent 隔离的工作树布局：共享 checkout 在 `../herdr`，任务 worktree 在 `../herdr-worktrees/<task-slug>`，任务分支命名 `issue/<id>-<slug>`。这个布局让多个 agent 可以在同一个 repo 上并行工作而不互相踩 git index。
-
----
-
-## Cargo 依赖全景
-
-`Cargo.toml` 关键依赖：
-
-| 依赖 | 版本 | 用途 |
-|------|------|------|
-| `ratatui` | 0.30 | TUI 渲染（带 `unstable-rendered-line-info` feature） |
-| `crossterm` | 0.29 | 跨平台终端操作 |
-| `tokio` | 1 | async runtime（`rt-multi-thread` + `macros` + `sync` + `time`） |
-| `portable-pty` | 0.9 | 跨平台 PTY |
-| `interprocess` | 2.4.2 | 跨平台 IPC（含 Unix socket、named pipe） |
-| `serde` + `serde_json` + `bincode` | 1 / 1 / 2 | 序列化（bincode 走 socket 协议，json 走配置） |
-| `toml` | 0.8 | 配置文件 |
-| `png` | 0.17 | kitty graphics protocol（图片渲染） |
-| `sha2` | 0.10 | checksum（自更新校验） |
-| `base64` | 0.22.1 | 编码 |
-| `regex` | 1 | 状态识别 |
-| `ctrlc` | 3 | SIGINT 处理 |
-| `libc` | 0.2 | Unix 系统调用 |
-| `tracing` + `tracing-subscriber` | 0.1.44 / 0.3.23 | 结构化日志（AGENTS.md 禁止 production code 用 `println!`） |
-| `bytes` | 1 | buffer 处理（PTY 输出流） |
-| `unicode-width` | 0.2 | Unicode 字符宽度（终端 cell 对齐） |
-| `windows-sys` | 0.61.2 | Windows 系统调用（`#[cfg(windows)]` 门控，含 Threading、ToolHelp 等） |
-
-`ratatui` + `crossterm` + `tokio` + `portable-pty` + `interprocess` 这 5 个是核心，其余依赖围绕它们补足功能。选型逻辑可以这样看：`ratatui` 负责"把 cell 矩阵画到终端"，`crossterm` 负责"跨平台终端原语（光标、颜色、事件）"，`tokio` 负责"异步调度 PTY 读取和 socket 监听"，`portable-pty` 负责"跨平台起 PTY 进程"，`interprocess` 负责"跨平台本地 socket 通信"。这五个维度正好覆盖了 TUI + PTY + IPC 的全部需求，没有重叠。
-
-`ratatui` 用了 `unstable-rendered-line-info` 这个 unstable feature，未来 ratatui 大版本升级时可能需要适配。fork 维护者要留意 ratatui 的 changelog。
-
-序列化策略是双轨制：socket 协议用 `bincode`（二进制，紧凑，适合高频 IPC），配置文件用 `serde_json` + `toml`（人类可读，适合手写）。这个选择避开了"一个格式打天下"的常见坑：bincode 不适合人写，toml 不适合机器高频传。
-
-`windows-sys` 只在 `#[cfg(windows)]` 下编译，Unix 构建不会带入 Windows 代码，这正是 AGENTS.md 里"platform code is isolated"原则的落地。额外依赖包括 `libghostty-vt`（vendor 到 `vendor/` 目录，用于 Ghostty 终端兼容层），本地 patch 必须记录在 `vendor/libghostty-vt.patches.md` 里，`just check` 会跑维护测试验证 patch 索引和反向 apply。AGENTS.md 明确要求生产代码用 `tracing` 而非 `println!`，且禁止在 production code 里使用 `unwrap()`，这两条约定保证了线上问题的可观测性和稳定性。
-
----
-
-## 安装与更新
-
-macOS / Linux 上有 4 种主流安装通道，Windows 走 preview beta。
-
-### 1. 一键安装（macOS / Linux）
+直接安装：
 
 ```bash
 curl -fsSL https://herdr.dev/install.sh | sh
 ```
 
-### 2. Homebrew
+Homebrew：
 
 ```bash
 brew install herdr
 ```
 
-### 3. mise
+mise：
 
 ```bash
 mise use -g herdr
 ```
 
-如果 mise 报 `herdr not found in mise tool registry`，更新 mise 再重试——老版本 mise 的 herdr registry 条目不存在。临时回退：
-
-```bash
-mise use -g github:ogulcancelik/herdr
-```
-
-### 4. 源码构建
+源码构建：
 
 ```bash
 git clone https://github.com/ogulcancelik/herdr
@@ -612,166 +528,58 @@ cargo build --release
 ./target/release/herdr
 ```
 
-仓库根目录有 `justfile`，提供：
+如果你打算看源码，顺手记住仓库提供的检查命令：
 
 ```bash
-just test    # cargo nextest + maintenance script tests
-just check   # formatting check + cargo nextest + maintenance script tests
+just test
+just check
 ```
 
-AGENTS.md 要求提交前跑 `just check`，不允许绕过失败的检查。
+### 第一次上手，最值得试的不是“切 pane”，而是“看状态是否靠谱”
 
-### 5. Windows
+建议第一次体验这样做：
 
-preview-only beta。PowerShell：
-
-```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://herdr.dev/install.ps1 | iex"
-```
-
-目前没有原生稳定 Windows 版。
-
-### 6. 更新
-
-直接装的用自更新：
+1. 在项目目录里直接运行 `herdr`。
+2. 用 `ctrl+b` 加 `v` 或 `minus` 分出两个 pane。
+3. 左边跑常用 Agent，右边跑测试或第二个 Agent。
+4. 再安装你最常用的 integration，比如：
 
 ```bash
-herdr update
+herdr integration install claude
+herdr integration install codex
+herdr integration status
 ```
 
-但 README 里有一句关键约束：
+第一次验证最值得看的不是键位，而是两件事：
 
-> a running server keeps using the old process until it is stopped or handed off.
+- 你的 Agent 状态切换是否足够准。
+- 你的工作流是否真的从“轮询每个 pane”变成了“按侧栏优先级处理”。
 
-`herdr update` 只替换二进制文件，正在运行的 server 进程还是旧版本。要真正切到新版本，必须先停 server 再重启：
+如果这两件事没发生，herdr 对你就还只是另一个 multiplexer；如果发生了，它才开始显出产品价值。
 
-```bash
-herdr server stop
-herdr          # 重启 attach，新 server
-```
+### tmux 用户怎么迁
 
-或者用实验性的 live handoff（见[架构拆解](#架构拆解从-agentsmd-看设计原则)一节的风险说明）：
+tmux 用户迁移 herdr 时，最容易接受的是：
 
-```bash
-herdr update --handoff
-```
+- 前缀仍然是 `ctrl+b`。
+- detach / reattach 的直觉依旧成立。
+- pane / tab 的基本操作没有太大违和。
 
-Homebrew / mise / Nix 装的不走 herdr 自己的 updater，要用 `brew upgrade herdr` / `mise upgrade herdr` / `nix upgrade`。
+最需要重新建立认知的是：
 
-### 7. Preview channel
+- workspace 是更强的项目级容器。
+- 侧栏状态是第一层入口，而不是附属显示。
+- Agent 等待与输出读取，可以正式交给控制面处理。
 
-直接装的可以切预览版：
+换句话说，迁移成本主要不在手，而在脑。
 
-```bash
-herdr channel set preview   # 切到 master 分支构建
-herdr channel set stable    # 切回稳定
-```
+## 配置、远程和插件：第二周才需要关心的内容
 
-Preview 和 stable 都从 `master` 分支构建，没有长期存在的 preview 分支。Preview release 由 GitHub Actions 在周三和周五自动触发。Homebrew / mise / Nix 仍走稳定版。
+如果你只是想先把 herdr 用起来，这一节其实可以先略读。
 
----
+### 配置文件和日志
 
-## 快速上手：从安装到第一个 workspace
-
-```bash
-# 在你的项目根目录
-cd ~/code/my-project
-herdr
-```
-
-启动后：
-
-- 默认 attach 后台 server
-- 没有 workspace 时自动开一个
-- 根 pane 跑你当前的 shell
-
-切 pane / workspace 用 `ctrl+b` 前缀：
-
-| 键 | 动作 |
-|----|------|
-| `prefix c` | 新 tab |
-| `prefix n` / `prefix p` | 下/上一个 tab |
-| `prefix 1..9` | 直接跳 tab |
-| `prefix shift+n` | 新 workspace |
-| `prefix shift+g` | 新 worktree |
-| `prefix shift+w` | 重命名 workspace |
-| `prefix shift+d` | 关闭 workspace |
-| `prefix h/j/k/l` | 切 pane 焦点 |
-| `prefix shift+h/j/k/l` | 交换 pane |
-| `prefix v` / `prefix minus` | 竖/横切 pane |
-| `prefix x` | 关 pane |
-| `prefix b` | 切侧栏 |
-| `prefix z` | zoom pane（最大化当前 pane） |
-| `prefix r` | resize 模式 |
-| `prefix w` | workspace 导航 |
-| `prefix g` | session 导航 |
-| `prefix q` | **detach client**（server 继续跑） |
-
-herdr 是 mouse-first TUI——支持鼠标点击切换 pane、拖拽调整分割比、双击选词。Copy mode 用 `prefix+[` 进入，`h/j/k/l` 移动，`v` 或 Space 开始选择，`y` 或 Enter 复制，`q` 或 Esc 退出。
-
-### tmux 用户迁移对照
-
-从 tmux 迁过来的用户，下面这张表能帮你建立键位映射。键位大部分兼容，差异主要在 workspace 和 agent 相关操作上：
-
-| 操作 | tmux | herdr |
-|------|------|-------|
-| 新建会话 | `tmux new -s name` | `herdr session attach name`（不存在则创建） |
-| 列出会话 | `tmux ls` | `herdr session list` |
-| detach | `prefix d` | `prefix q` |
-| 新窗口 | `prefix c` | `prefix c`（tab） |
-| 新项目空间 | 无对应概念 | `prefix shift+n`（workspace） |
-| 竖切 pane | `prefix %` | `prefix v` |
-| 横切 pane | `prefix "` | `prefix minus` |
-| 切 pane 焦点 | `prefix 方向键` | `prefix h/j/k/l` |
-| 交换 pane | `prefix {` / `prefix }` | `prefix shift+h/j/k/l` |
-| zoom pane | `prefix z` | `prefix z` |
-| 关 pane | `prefix x` | `prefix x` |
-| copy mode | `prefix [` | `prefix [` |
-| 列出 pane | `tmux list-panes` | `herdr pane list` |
-| 发送按键 | `tmux send-keys -t pane` | `herdr pane send-keys <id>` |
-| 读取输出 | `tmux capture-pane -p` | `herdr pane read <id>` |
-| agent 状态 | 无 | 侧栏自动显示 / `herdr agent explain <id>` |
-| 跨 pane 编排 | 需要外部脚本 | `herdr wait agent-status` / socket API |
-
-tmux 的 `prefix` 默认是 `ctrl+b`，herdr 也是 `ctrl+b`，迁移时肌肉记忆可以直接复用。主要差异在 workspace 概念（tmux 没有）和 agent 状态感知（tmux 没有）——这两块是 herdr 的增量能力，不是替换。
-
----
-
-## 远程 attach
-
-README 给的 SSH 用法：
-
-```bash
-ssh you@yourserver
-herdr
-```
-
-本地直接 attach 远端：
-
-```bash
-herdr --remote workbox
-herdr --remote ssh://you@yourserver:2222
-```
-
-实现细节在 `src/remote.rs` + `src/remote/`，通过 SSH keepalive 维持连接，默认会 fallback 管理 SSH config，可用配置项关闭：
-
-```toml
-[remote]
-manage_ssh_config = false
-```
-
-直接 attach 到 server-owned terminal：
-
-```bash
-herdr agent attach <target>
-herdr terminal attach <terminal_id>
-```
-
-适合"远端跑 dev server、本地看输出"的场景。
-
----
-
-## 配置文件与主题
+配置文件路径：
 
 ```text
 ~/.config/herdr/config.toml
@@ -783,137 +591,124 @@ herdr terminal attach <terminal_id>
 herdr --default-config
 ```
 
-主题内置 18 种：catppuccin、terminal、tokyo night、gruvbox、one、solarized、kanagawa、rosé pine、vesper，加上 light 变体。In-app 还能切 theme / sound / toast 偏好。
-
-日志：
+最常用的日志文件：
 
 ```text
 ~/.config/herdr/herdr-client.log
 ~/.config/herdr/herdr-server.log
 ```
 
-持久 session 模式下，这俩是最常用的排查文件。
+一旦你开始依赖持久 server、integration 或 socket API，这两个日志基本就是第一排查入口。
 
----
+### 远程 attach
 
-## 扩展点
+官方支持远程 attach：
 
-- **主题系统**：18 个内置主题（catppuccin、tokyo night、gruvbox、solarized、kanagawa、rosé pine、vesper 等），支持 light 变体。主题解析在 `terminal_theme.rs`，会探测终端能力（truecolor 支持、颜色数）后选择合适的色板。
-- **keybindings 配置**：完全自定义。AGENTS.md 里说明：`prefix+n` 表示先按前缀再按 n；`ctrl+alt+n` 是直接终端快捷键，不需要前缀。纯可打印字符（如 `n`）会吞掉正常输入，所以除非特意想要 modifier-gated direct binding，否则用 `prefix+n`。
-- **plugin commands**：`plugin_command.rs` 暴露的扩展点，通过 `herdr-plugin.toml` manifest 声明 action、event hook 和 terminal pane entrypoint。插件可以注册自己的命令、订阅 server 事件、在 pane 里跑自定义 entrypoint。
-- **integration 系统**：`herdr integration install <agent>` 是给 agent 添加 session identity / semantic state 的官方通道。integration 协议是开放的，agent 端实现后可以主动报告状态而不依赖屏幕检测。
-- **git worktree 集成**：`worktree.rs` 支持 `worktree.create` 从已有 workspace 创建 git worktree，`worktree.open` 打开已有 checkout，`worktree.remove` 删除 linked checkout（不删分支）。配合 AGENTS.md 规定的工作树布局，多个 agent 可以在同一个 repo 上并行工作而不互相踩 git index。布局约定：共享 checkout 在 `../herdr`，任务 worktree 在 `../herdr-worktrees/<task-slug>`，任务分支命名 `issue/<id>-<slug>`。工作流是：在任务 worktree 里做代码编辑、测试和验证，提交到任务分支，完成后 fast-forward 共享 checkout 到任务分支 commit，再从 `../herdr` push `origin/master`——任务分支不是最终落地分支。
-- **agent detection manifest**：`src/detect/manifests/<agent>.toml` 是开放的规则格式，用户可以写 override 规则放到 `~/.config/herdr/agent-detection/` 下热加载，验证通过后可以贡献回上游。
+```bash
+herdr --remote workbox
+herdr --remote ssh://you@yourserver:2222
+```
 
----
+这类模式对“远端跑服务，本地盯状态和输出”的场景很有吸引力。  
+但要注意，它和本地使用的复杂度不是一个量级，尤其一旦再叠加 handoff、integration 和自定义 SSH 行为，排错成本会明显上升。
+
+### 插件和自定义状态标签
+
+从文档看，Herdr 已经有早期插件系统，也支持通过 socket API 上报自定义状态标签。  
+这意味着它未来不只是“支持哪些官方 Agent”，而是有机会长成一个可扩展的本地 Agent orchestration 平台。
+
+不过在今天这个阶段，我更建议把它当“有扩展潜力的控制面”，而不是已经成熟的插件生态。
 
 ## 适合谁，不适合谁
 
-**适合的场景：**
+### 适合
 
-- 同时在终端里跑 2 个以上 Claude Code / Codex / Droid / Cursor Agent，需要 `blocked / working / done` 侧栏来减少切换成本。
-- 想要 tmux 的 pane + persist，同时需要 agent 状态感知。
-- 想给 agent 写 orchestrator（开 tab、起 pane、等状态、读输出）。
-- macOS / Linux 终端重度用户，每天 8 小时以上在 TUI 里。
-- 必须让 agent 跑在真实终端、不接受 GUI 改写输出的人。
-- Rust TUI 开发者，想看 ratatui + crossterm + tokio + portable-pty + interprocess 怎么拼成生产级应用。
+- 同时跑多个 coding agent，而且经常因为切 pane 和盲扫状态浪费注意力的人。
+- 想保留终端工作流，不想被 GUI 改写输出的人。
+- 需要脚本化或 Agent 化编排 terminal tasks 的人。
+- 想研究 Rust TUI、PTY、IPC 和状态恢复怎么放进一个产品的开发者。
 
-**不适合的场景：**
+### 不适合
 
-- 只跑单个 agent、不在乎多 pane 状态，直接用 Claude Code / Codex CLI 就够了。
-- Windows 用户想要稳定版，目前只有 preview beta。
-- 不能接受 AGPL-3.0 又不愿意买商业证的组织，双许可明确写了这种限制。
-- 想要"零学习成本"的 GUI 党，herdr 是 prefix + 键位驱动的，必须接受 tmux 风格键位。
-- 期望"开箱即用支持所有 agent"，目前官方 integration 覆盖 8 个（pi、omp、claude code、codex、copilot、opencode、hermes、qodercli），另有 7 个 agent 走默认启发式检测，gemini cli / cline 还没充分测试。
+- 你长期只跑一个 Agent，几乎没有并行调度需求。
+- 你根本不想留在终端里，希望一切都在 GUI 中完成。
+- 你所在团队对许可证约束非常敏感，而又不打算接受相应的开源或商业授权路径。
+- 你需要的是稳定 Windows 体验，而不是 preview beta。
 
----
+## 风险和边界
 
-## 常见问题排查
+讨论这类工具，最好不要只写“优点很多”。下面这些边界，才是真实使用时会碰到的东西。
 
-**看不到侧栏？**
-
-按 `prefix b` 切换。如果还是看不到，检查 `~/.config/herdr/config.toml` 里 `ui.sidebar` 相关配置。
-
-**agent 状态一直显示 `unknown`**
-
-`detect/` 模块没匹配到已知 agent。先确认 agent 进程在前台运行（不是后台），然后用 `herdr agent list` 看 herdr 是否识别到了进程。agent 不在官方列表里的话，只能走默认启发式，准确性会下降。
-
-**agent 状态识别不准（比如 blocked 时显示 working）**
-
-先跑 `herdr agent explain <pane> --json` 看当前屏幕匹配了哪几条 region、命中了哪个 gate。如果没命中，说明 manifest 规则和你的 agent 版本不匹配——agent 升级后 TUI 布局变了，旧规则会失效。可以试 `herdr server update-agent-manifests` 拉远程更新，或者按[agent 状态识别](#agent-状态识别两条路径一套侧栏)一节的流程自己写 override 规则。
-
-**`herdr update` 之后还是旧版本**
-
-正常现象。`herdr update` 只更新二进制，正在运行的 server 还是旧进程。先 `herdr server stop` 再 `herdr` 重新 attach，或者用实验性的 `herdr update --handoff`。
-
-**远程 attach 断开后 pane 里的进程还在吗？**
-
-在。herdr 的 server 是后台常驻进程，detach 只关客户端。只要不执行 `herdr server stop`，pane 进程持续运行。
-
-**多个终端窗口能同时 attach 到同一个 server 吗？**
-
-能。每个终端窗口是一个独立的 client，共享同一个 server 的状态。"一个显示器看代码、另一个显示器看日志"的场景下很有用。
-
-**socket API 调用报 `pane not found`**
-
-大概率是 ID 复用陷阱。你缓存的 pane id 在某个时刻被关掉并复用给了另一个 pane。每次操作前重新 `herdr pane list` 拿当前 ID，不要缓存。
-
-**live handoff 失败后怎么恢复**
-
-`herdr update --handoff` 失败时，旧 server 通常还在运行（handoff 是原子性的，要么完全成功要么完全回滚）。检查 `~/.config/herdr/herdr-server.log` 里的 handoff 相关日志。如果旧 server 也挂了，`herdr server stop && herdr` 重启即可——pane 进程会丢，但 workspace 布局能从 persist 恢复。
-
----
+- **状态识别不是魔法。**  
+  对纯 screen-manifest Agent 来说，新版 UI 或特殊交互一旦偏离已知规则，识别准确率就会下降。
+- **pane history 有安全代价。**  
+  它恢复的是最近可见输出，也可能顺手把敏感信息留在本地状态目录。
+- **live handoff 仍是实验功能。**  
+  它很吸引人，但不该在关键生产环境里“想当然地可靠”。
+- **ID 压缩会坑自动化。**  
+  只要你的脚本缓存旧 pane id，就迟早会踩到复用问题。
+- **tmux inside herdr 会影响检测。**  
+  如果你在 Herdr 管理的 pane 里再自动进入 tmux，Herdr 看到的前台进程可能只剩 `tmux`，而不是后面的 Agent。
+- **更新路径和安装方式有关。**  
+  官方文档明确写了：`herdr update` 只适用于 Herdr 自己管理的安装方式，Homebrew、mise、Nix 走各自的包管理路径。
 
 ## 采用顺序建议
 
-三条路径，按用户类型选：
+如果你准备真的把它纳入日常工作流，我更建议按下面的顺序来，而不是一上来就“全面迁移”。
 
 ### 路径 A：终端重度用户
 
-1. 装上：`curl -fsSL https://herdr.dev/install.sh | sh`
-2. `cd` 到项目根跑 `herdr` 试一下默认 session
-3. 安装 1-2 个最常用的 agent integration：`herdr integration install claude` / `codex`
-4. 把手头 tmux session 逐步迁过来，对比 blocked / working / done 状态识别准确度。先在真实环境跑一天验证状态切换，尤其是你的 agent 用了哪些 TUI 框架、输出模式是否和 herdr 的检测规则匹配
-5. 读 `SKILL.md`，试着自己用 `herdr pane run` 跑后台 test runner，然后 `herdr wait agent-status` 等它完成
+1. 安装 herdr，直接在现有项目目录里跑一次。
+2. 装最常用的 1 到 2 个 integration。
+3. 用一天真实工作量验证状态切换。
+4. 确认侧栏真的改变了你的切换顺序，再考虑替代 tmux 的部分会话。
 
-### 路径 B：AI agent 编排工程师
+### 路径 B：Agent 编排实践者
 
-1. 装上 herdr
-2. 读 [SKILL.md](https://github.com/ogulcancelik/herdr/blob/master/SKILL.md) 全文——这是给 agent 看的入口文档，包含所有 CLI 命令和 recipe
-3. 看 [socket API 文档](https://herdr.dev/docs/socket-api/)，重点看事件订阅（`events.subscribe`）、状态机、`pane.move` 跨 workspace 迁移、`layout.export` / `layout.apply` 声明式布局
-4. 在自己的 agent prompt 里加入"开新 pane → 起后台任务 → 等 done → 读输出"的工作流。注意 ID 复用：每次使用前必须重新 `list`
-5. 跑 `herdr update --handoff` 试一下 live handoff 是否对你的 agent 稳定——目前还是实验性的
+1. 先读官方 [Socket API](https://herdr.dev/docs/socket-api/)。
+2. 再读官方 [Agents](https://herdr.dev/docs/agents/) 和 [Integrations](https://herdr.dev/docs/integrations/)。
+3. 先做“起一个 pane、等一个状态、读一段输出”这种最小可验证流程。
+4. 稳定后再碰事件订阅、远程 attach 和 handoff。
 
-### 路径 C：Rust TUI 应用开发者
+### 路径 C：Rust TUI 开发者
 
-1. `git clone` 仓库
-2. 读 `Cargo.toml` 确认依赖面
-3. 从 `src/main.rs` 顺到 `src/server/`、`src/client/`、`src/pane/` 三块
-4. 看 `src/protocol/` + `src/ipc.rs` 学 Unix socket 协议设计——JSON-RPC 风格点号方法名、事件订阅、响应 shape
-5. 看 `AGENTS.md` 里的 7 条设计原则，理解 state/runtime 分离、render 纯函数、platform 隔离、detection 解耦这些决策是怎么落地的
-6. 看 `src/agent_resume.rs` + `src/handoff_runtime.rs` 学 server 升级时的进程迁移
-7. 看 `AGENTS.md` 的测试约定：`just check` 提交前必跑，`AppState::test_new()` 不依赖 PTY 就能测试
+1. 先看 `Cargo.toml`，确认依赖面。
+2. 再看 `AGENTS.md`，理解工程约束。
+3. 最后顺着 client / server / pane / detection / restore 这几条主线读源码。
 
----
+如果反过来，一开始就扎进实现细节，很容易读成一个“功能很多的 TUI 项目”，而错过它真正有价值的架构边界。
 
-## 风险与边界
+## 自测问题
 
-- **AGPL-3.0-or-later 商业分发限制**：如果你的产品集成 herdr 源码并通过网络对外提供服务，AGPL-3.0 要求你也开源。这种情况必须买商业证。README 末尾留了 `hey@herdr.dev` 联系方式。
-- **Windows 仅 preview**：生产用 Windows 必须自己测稳定性。
-- **agent 状态识别依赖 heuristic**：未在官方 integration 列表里的 agent，blocked / working / done 准确度会下降。写关键工作流前，先在真实环境跑一天验证状态切换。
-- **live handoff 是实验性**：`herdr update --handoff` 文档明确写了 experimental，生产环境慎用。
-- **PTY 输出不被改写**：这是优势也是边界——某些 agent 在 GUI 客户端里会用到 `kitty graphics protocol` 显示图片，herdr 的 `kitty_graphics.rs` 是支持的但有版本限制，老的 agent 可能显示异常。
-- **ratatui unstable feature 风险**：herdr 用了 `unstable-rendered-line-info`，未来 ratatui 大版本升级时可能需要适配。fork 维护者要注意这一点。
-- **ID 复用陷阱**：写 orchestrator 时如果缓存了旧的 pane id，关掉中间的 pane 后 id 会被复用，导致操作指向错误的 pane。必须每次重新 `list`。
+如果你准备把这篇文章当成入门或内部分享材料，下面 5 个问题可以当作自测：
 
----
+1. herdr 和 tmux 的根本差异，为什么不是“多了侧栏”这么简单？
+2. 为什么说 integration 不等于统一增强，而要区分 lifecycle authority 和 session identity？
+3. pane history 和 native agent session restore 的恢复对象分别是什么？
+4. 为什么 herdr 的 screen detection 强调 evidence-based，而不是“更智能地猜”？
+5. 对需要写 Agent 编排的人来说，为什么状态等待接口比单纯读屏更关键？
+
+如果这 5 个问题能回答得比较顺，说明你已经抓到了 herdr 的主线。
+
+## 延伸阅读
+
+如果你准备继续往下挖，最值得配套阅读的是这些官方资料：
+
+- [Herdr 文档首页](https://herdr.dev/docs/)
+- [Agents](https://herdr.dev/docs/agents/)
+- [Integrations](https://herdr.dev/docs/integrations/)
+- [Socket API](https://herdr.dev/docs/socket-api/)
+- [Session state and restore](https://herdr.dev/docs/session-state/)
+- [GitHub 仓库](https://github.com/ogulcancelik/herdr)
+- [给 Agent 的 guide](https://herdr.dev/agent-guide.md)
 
 ## 总结
 
-herdr 解决的问题很具体：在终端里同时跑多个 AI coding agent 时，怎么知道谁在等你、谁跑完了、谁还在跑。它在 tmux 的持久 pane 基础上，加了一层 agent 状态感知和 agent 自我编排能力。
+herdr 真正解决的问题，不是“终端里怎么多开几个 pane”，而是**多 Agent 并行之后，状态终于有了统一落点**。
 
-切到每个 pane 看 agent 跑完了没——这件事对同时跑 2 个以上 agent 的工程师来说，一天发生几十次。herdr 把主动轮询变成被动感知，侧栏的 workspace 聚合状态直接告诉你该去哪个项目回复。tmux 没有这层语义，GUI 客户端有状态感知但不开放编排接口，herdr 把这两件事拼到了同一个进程里。
+它保留了终端工作流最宝贵的东西：真实进程、真实输出、持久会话；又补上了传统终端复用器最缺的那一层：Agent 状态、项目级汇总、可等待的控制信号，以及一个能被脚本和 Agent 利用的本地控制面。
 
-落地建议分三步：先用 30 分钟装上，体验侧栏状态识别的准确度；再花 1 小时读 `SKILL.md` + `socket-api` 文档，判断自己的工作流能不能接上；最后再决定要不要把 tmux session 迁过来。如果你的 agent 组合里有不在官方 integration 列表里的，第一步尤其重要——启发式检测的准确度需要在自己的环境里验证。
+如果你只跑一个 Agent，它未必是刚需。  
+如果你已经开始同时跑多个 Agent、多个测试任务、多个项目，herdr 的意义就不止是“更方便”，而是把原本靠人脑兜底的调度，第一次收敛成了一个可见、可控、可自动化的系统。
 
-对 Rust TUI 开发者，这套代码值得读的原因在于它把 state/runtime 分离、render 纯函数、platform 隔离、detection 解耦这些原则落到了一个 50+ 文件的生产级代码库里。`AGENTS.md` 里的 7 条设计原则和测试约定（`AppState::test_new()` 不依赖 PTY 就能测试、`just check` 提交前必跑），展示了 ratatui 应用从 demo 走向生产的关键工程决策。
+对 Rust 开发者来说，这个项目同样值得看。它把 TUI、PTY、IPC、状态机和恢复路径放进了一个真正有产品压力的场景里。读这样的代码，比读十个玩具 demo 更接近工程现场。
