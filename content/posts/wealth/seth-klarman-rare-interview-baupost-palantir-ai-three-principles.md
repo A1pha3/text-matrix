@@ -1,6 +1,6 @@
 ---
 title: "「安全边际之父」Seth Klarman 罕见对话全文精读：错失 Palantir 百亿真相、Baupost 跨资产方法论与 AI 时代的三个原则"
-date: "2026-06-20T17:00:00+08:00"
+date: "2026-06-20T15:30:00+08:00"
 slug: "seth-klarman-rare-interview-baupost-palantir-ai-three-principles"
 description: "聪明投资者 2026-04 翻译整理的卡拉曼 CNBC 访谈全文精读：Baupost 44 年只亏 5 年的工程化方法、跨资产 + 不加杠杆 + 重视下行保护；当下市场泡沫特征与 AI 三原则；信用 / 商业地产 / 数据中心土地的当下偏好；错过 Palantir 15-20 年前 4000-5000 万美元风险投资份额的真实故事；美国 100% GDP 债务与"无风险资产"风险。"
 tags: ["Seth Klarman", "Baupost", "价值投资", "安全边际", "Palantir", "AI投资", "投资策略", "财富自由", "投资原则", "跨资产", "信用市场", "商业地产"]
