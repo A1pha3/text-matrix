@@ -1,12 +1,12 @@
 ---
-title: 12-Factor Agents - 构建生产级LLM应用的12条原则
+title: 12-Factor Agents - 构建生产级 LLM 应用的 12 条原则
 date: 2026-05-18
 slug: 12-factor-agents-production-llm-guide
 categories: ["技术笔记"]
-description: "12-Factor Agents 不是另一套 Agent 框架，而是一组从生产环境里长出来的工程约束，分布在输入层、执行层、控制层和架构层，解决 LLM 应用中上下文控制、工具设计、安全护栏等核心工程问题。"
+description: "12-Factor Agents 是一组从生产环境里长出来的工程约束，分布在输入层、执行层、控制层和架构层，解决 LLM 应用中上下文控制、工具设计、安全护栏等工程问题。"
 tags:
   - AI Agent
-  - LLM应用
+  - LLM 应用
   - 工程实践
   - 架构设计
 ---
@@ -42,6 +42,7 @@ tags:
 - [常见问题](#常见问题)
 - [自测清单](#自测清单)
 - [实战练习](#实战练习)
+- [适用边界与决策建议](#适用边界与决策建议)
 - [参考资源](#参考资源)
 
 ## 先看全景：12 条原则的分层地图
@@ -67,9 +68,7 @@ tags:
 
 ### Factor 1 — 自然语言 → 工具调用
 
-工具的本质是结构化输出。Agent 调用工具跟调用 API 没有本质区别——输入自然语言描述、输出结构化结果。把工具当「魔法能力」来设计，反而会让调用链路变得不透明。
-
-**工程动机**：LLM 自由文本输出在下游代码里是灾难——你要写正则提取、处理转义、应对模型偶尔加一句解释。把工具调用约束成 JSON schema，下游代码就能用现成的解析器，失败也能在 schema 校验层统一拦截。
+Agent 调用工具跟调用 API 没有本质区别——输入自然语言描述、输出结构化结果。如果工具返回的是自由文本，下游代码就得写正则去提取、处理转义、应对模型偶尔加一句解释；如果工具返回的是 JSON，下游直接用现成的解析器，失败也能在 schema 校验层统一拦截。把工具当「魔法能力」来设计、让它吐自由文本，调用链路就会变得不透明。
 
 **边界判断**：如果某个「工具」的输出只给人看、不进下游代码（比如生成一段给用户读的摘要），可以保留自由文本。只要输出要被代码消费，就必须走结构化格式。
 
@@ -77,13 +76,22 @@ tags:
 
 ```python
 # pip install pydantic openai
+import logging
+import time
+from typing import Literal
 from pydantic import BaseModel, ValidationError
 from openai import OpenAI
 
+logger = logging.getLogger(__name__)
+
 class CodeReviewDecision(BaseModel):
-    """代码审查 Agent 的结构化输出。"""
-    intent: str  # "approve" | "request_changes" | "ask_human"
-    severity: str  # "info" | "warning" | "critical"
+    """代码审查 Agent 的结构化输出。
+
+    用 Literal 而非 str + 注释，让非法取值在 schema 校验阶段就被拦截，
+    下游代码无需再写 if intent not in {...} 的防御性判断。
+    """
+    intent: Literal["approve", "request_changes", "ask_human"]
+    severity: Literal["info", "warning", "critical"]
     comment: str
 
 client = OpenAI()
@@ -92,22 +100,52 @@ def review_code(diff: str) -> CodeReviewDecision:
     """调用 LLM 审查 diff，返回结构化结果。
 
     输出不符合 schema 时走重试，重试仍失败则降级为 ask_human。
+    生产环境有三个工程细节需要单独处理：
+    - 超时：OpenAI 调用默认超时偏长，显式设置 timeout，避免单个慢请求
+      把 Agent 调用链拖垮。
+    - 重试退避：重试间隔按 2^attempt 秒递增，给上游留恢复窗口，避免雪崩。
+    - 可观测性：每次校验失败打一条结构化日志（含 attempt、错误类型、原始
+      输出），事后能统计 schema 失败率，定位是提示词漂移还是模型本身问题。
     """
     prompt = f"""审查以下 diff，按 JSON schema 返回结论：
 {diff}
 
 只返回 JSON，字段：intent, severity, comment。"""
     for attempt in range(3):
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"},
-        )
+        try:
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                timeout=30,  # 显式超时，避免默认值拖垮调用链
+            )
+        except Exception as err:
+            # 网络层失败：埋点后按指数退避重试
+            logger.warning(
+                "llm_call_error", extra={"attempt": attempt, "error": str(err)}
+            )
+            if attempt == 2:
+                return CodeReviewDecision(
+                    intent="ask_human",
+                    severity="warning",
+                    comment=f"LLM 调用失败：{err}",
+                )
+            time.sleep(2 ** attempt)  # 1s, 2s, 4s 退避
+            continue
         try:
             return CodeReviewDecision.model_validate_json(
                 resp.choices[0].message.content
             )
         except ValidationError as err:
+            # 校验失败：埋点记录原始输出，用于后续分析提示词漂移
+            logger.warning(
+                "schema_validation_failed",
+                extra={
+                    "attempt": attempt,
+                    "raw_output": resp.choices[0].message.content,
+                    "error": str(err),
+                },
+            )
             if attempt == 2:
                 # 降级：交给人工
                 return CodeReviewDecision(
@@ -115,6 +153,7 @@ def review_code(diff: str) -> CodeReviewDecision:
                     severity="warning",
                     comment=f"LLM 输出校验失败：{err}",
                 )
+            time.sleep(2 ** attempt)
             continue
     raise RuntimeError("unreachable")
 
@@ -123,13 +162,11 @@ decision = review_code("diff --git a/main.py b/main.py\n+eval(user_input)")
 print(decision.intent, decision.severity)
 ```
 
-这段代码体现了 Factor 1 和 Factor 4 的合流：工具调用就是结构化输出，结构化输出靠 schema 校验兜底。
+这段代码把 Factor 1 和 Factor 4 接在了一起：LLM 的输出被 Pydantic schema 约束成结构化 JSON，校验失败时走重试和降级，下游代码拿到的是确定类型而不是自由文本。
 
 ### Factor 2 — 掌控你的提示词
 
-提示词是代码，应该和代码一起进版本管理。散落在配置文件、环境变量或聊天界面里的提示词，会在调试时变成灾难。
-
-**工程动机**：提示词的微小改动会让模型行为发生漂移。如果不进版本管理，你无法回答「上次审查通过率高，这次为什么变低了」——因为没人记得提示词改过什么。把提示词写成 `.md` 或 `.jinja` 文件放在仓库里，每次改动走 code review，行为变化就有迹可循。
+散落在配置文件、环境变量或聊天界面里的提示词，会在调试时变成灾难。提示词的微小改动会让模型行为发生漂移，如果不进版本管理，你无法回答「上次审查通过率高，这次为什么变低了」——因为没人记得提示词改过什么。把提示词写成 `.md` 或 `.jinja` 文件放在仓库里，每次改动走 code review，行为变化就有迹可循。
 
 **边界判断**：实验阶段允许提示词散落，方便快速迭代。一旦 Agent 进了生产环境或被多人共享，必须收敛到版本管理。一个可操作的判断点：当有人开始问「这个提示词是谁改的」时，就该进仓库了。
 
@@ -153,11 +190,11 @@ print(decision.intent, decision.severity)
 
 ### Factor 5 — 执行状态 = 业务状态
 
-消除双重状态带来的同步复杂度。Agent 当前的执行进度，应该就是业务系统里的真实状态。不存在「Agent 内部状态」和「业务状态」两套东西需要对齐。
+一个真实场景：代码审查 Agent 跑完一轮，Agent 内部计数器记「已审查 3 个文件」，但 PR 上的 review 状态只更新了 2 个。有人问「到底审了几个」，你查 Agent 内存是一套数，查 GitHub 是另一套数。这种对不上的情况一旦出现，就要写同步逻辑去对齐两边，而同步逻辑本身又会引入新的 bug。
 
-**工程动机**：双重状态是 bug 温床。Agent 内部记「已审查 3 个文件」，业务系统记「已审查 2 个文件」，一旦对不上就要写同步逻辑，同步逻辑本身又会出错。把 Agent 状态直接落到业务系统的真实状态（数据库行、PR review 状态、工单状态），就只有一份事实来源。
+问题出在「Agent 内部状态」和「业务状态」被拆成了两份。Factor 5 的做法是不要两份：Agent 当前的执行进度，直接就是业务系统里的真实状态——数据库行、PR review 状态、工单状态。Agent 不另起一套私有计数器，业务系统也不需要被同步。
 
-**边界判断**：Agent 内部允许有临时变量（当前这次调用的中间结果），但这些变量不应该跨调用持久化。跨调用的状态必须落到业务系统，而不是 Agent 自己的内存或私有存储。
+边界在于「跨调用」这三个字。Agent 内部允许有临时变量（当前这次调用的中间结果），但这些变量不应该跨调用持久化。跨调用的状态必须落到业务系统，而不是 Agent 自己的内存或私有存储。判断标准是：如果这个状态在服务重启后还要用，它就该在业务系统里，而不是在 Agent 内存里。
 
 ### Factor 6 — 简单 API 的启动 / 暂停 / 恢复
 
@@ -237,21 +274,19 @@ for path, decision in report.items():
 
 ### Factor 9 — 将错误压缩进上下文窗口
 
-错误信息是上下文燃料，不是需要隐藏的异常。把工具调用失败的原因、堆栈信息、重试次数写进上下文窗口，模型下一次推理会比任何 prompt 告诉它「注意错误处理」更有效。
+模型不知道发生了什么，就没法调整策略。如果上一次调用 `fetch_git_tags` 超时了，模型却看不到这个信息，下一次它还会走同一条路径；把错误写进上下文窗口，模型下一次推理就能换路径或降级——这比任何 prompt 告诉它「注意错误处理」都有效。隐藏错误等于让模型蒙眼走路。
 
-**工程动机**：模型不知道发生了什么，就没法调整策略。把错误写进上下文，模型能看到「上次调用 `fetch_git_tags` 超时了」，下一次就会换路径或降级。隐藏错误等于让模型蒙眼走路。
-
-**边界判断**：写进上下文的是「模型能用来的错误」——失败原因、影响范围、已尝试的方案。完整的堆栈可能太长，需要压缩。敏感信息（密钥、内部路径）要脱敏后再写入。
+**边界判断**：写进上下文的是「模型能用上的错误」——失败原因、影响范围、已尝试的方案。完整的堆栈可能太长，需要压缩。敏感信息（密钥、内部路径）要脱敏后再写入。
 
 ## 架构层：粒度、触发与无状态化
 
 ### Factor 10 — 小而专注的 Agent
 
-一个 Agent 做一件事。大模型当工具来用，而不是把所有逻辑塞进一个巨型 Agent 的提示词里。
+对比两种做法。第一种：把代码审查、生成 release notes、打标签、更新 changelog 全塞进一个 Agent 的提示词。提示词越加越长，模型每次推理都要扫一遍所有职责的说明，注意力被稀释——结果每件事都做得马虎。改一个职责的提示词，还可能影响其他职责的输出。
 
-**工程动机**：巨型 Agent 的提示词会越来越长，模型注意力被稀释，每个功能的输出质量都在下降。拆成多个小 Agent，每个 Agent 的上下文窗口只装自己那件事需要的信息，输出质量更稳。小 Agent 也更容易测试和复用。
+第二种：拆成四个小 Agent，各自只管一件事。代码审查 Agent 的上下文窗口只装 diff 和规范文档，release notes Agent 只装 commit 历史。每个 Agent 的提示词短、专注，输出质量更稳，也更容易单独测试和复用。
 
-**边界判断**：拆分粒度不是越细越好。每个 Agent 之间有协调成本（上下文传递、状态同步）。判断标准是「这两个 Agent 是否经常需要彼此的上下文」——如果经常需要，合并可能更好；如果基本独立，拆开。
+拆分的代价是协调成本——Agent 之间要传上下文、同步状态。所以拆分粒度不是越细越好。判断标准是「这两个 Agent 是否经常需要彼此的上下文」：如果经常需要，合并可能更好；如果基本独立，拆开。一个可操作的信号是：如果你发现两个 Agent 之间频繁互调、互相传大段上下文，说明它们其实该合成一个。
 
 ### Factor 11 — 触发无处不在，用户在哪就在哪
 
@@ -263,9 +298,9 @@ for path, decision in report.items():
 
 ### Factor 12 — 让 Agent 成为无状态 Reducer
 
-每次 Agent 调用 = `f(当前状态, 新输入)` → `新状态`。没有副作用，没有隐式状态累积。纯函数式的推理模型让测试和调试都回到可复现的轨道上。
+每次 Agent 调用 = `f(当前状态, 新输入)` → `新状态`。没有副作用，没有隐式状态累积。写成纯函数后，同样的输入永远得到同样的输出，测试和调试都能从任意状态重放。
 
-**工程动机**：有副作用的 Agent 难测试——同样的输入跑两次结果不同，因为内部状态变了。写成 reducer，测试只需要构造 `(状态, 输入)` 对，断言输出状态。调试时也能从任意状态重放。
+**工程动机**：有副作用的 Agent 难测试——同样的输入跑两次结果不同，因为内部状态变了。写成 reducer，测试只要构造 `(状态, 输入)` 对，断言输出状态，不需要 mock 外部依赖。
 
 **边界判断**：reducer 本身无副作用，但 Agent 系统整体可以有副作用（写数据库、调外部 API）。原则是「副作用发生在 reducer 之外」——reducer 计算出新状态，外部代码根据新状态执行副作用。
 
@@ -277,10 +312,30 @@ from pydantic import BaseModel
 from typing import Literal
 
 class AgentState(BaseModel):
-    """Agent 的全部状态，显式、可序列化。"""
+    """Agent 的全部状态，显式、可序列化。
+
+    状态序列化存储后端选型：
+    - Redis / 内存 KV：适合短任务、高频读写、可容忍丢失的场景（如会话级
+      中间状态）。延迟低，但持久化要额外配置。
+    - 关系型数据库（PostgreSQL 等）：适合需要事务、审计、跨 Agent 共享的
+      长任务状态。延迟略高，但能和业务状态写在同一事务里，避免 Factor 5
+      说的双重状态对齐问题。
+    - 对象存储 / 文件系统：适合状态体积大、读写频率低的场景（如完整对话
+      历史、大块中间产物）。成本最低，但不适合做实时查询。
+    选型时主要看三点：状态体积、读写频率、是否需要和业务数据同事务提交。
+    """
     reviewed_files: list[str] = []
     issues_found: int = 0
     status: Literal["running", "done", "blocked"] = "running"
+
+    def serialize(self) -> str:
+        """序列化为 JSON 字符串，供持久化层存储。"""
+        return self.model_dump_json()
+
+    @classmethod
+    def deserialize(cls, raw: str) -> "AgentState":
+        """从持久化层恢复状态。"""
+        return cls.model_validate_json(raw)
 
 class AgentInput(BaseModel):
     """单次输入。"""
@@ -323,6 +378,11 @@ print(result.new_state.status)        # running
 print(result.new_state.issues_found)  # 1
 print(result.side_effects)            # ['post_comment:main.py']
 
+# 持久化：把新状态序列化后写入存储后端，下次恢复时反序列化
+raw = result.new_state.serialize()         # 写入 Redis / Postgres / 文件
+restored = AgentState.deserialize(raw)      # 下次调用前恢复
+assert restored == result.new_state
+
 # 同样的输入永远返回同样的输出，可复现
 assert review_reducer(state, inp) == review_reducer(state, inp)
 ```
@@ -331,7 +391,7 @@ assert review_reducer(state, inp) == review_reducer(state, inp)
 
 ## 荣誉提及：Factor 13 — 预取上下文
 
-Factor 13 是官方仓库的附录（appendix-13-pre-fetch），不在正式 12 条里，但工程价值不低。核心一句话：**如果你已经知道模型大概率会调用某个工具，就直接在代码里预先调用，把结果塞进上下文，别浪费一次 token 往返让模型自己 fetch。**
+Factor 13 是官方仓库的附录（appendix-13-pre-fetch），不在正式 12 条里，但工程价值不低。思路一句话能说清：如果你已经知道模型大概率会调用某个工具，就直接在代码里预先调用，把结果塞进上下文，别浪费一次 token 往返让模型自己 fetch。
 
 **工程动机**：每次 LLM 调用都是一次网络往返 + 推理耗时。如果模型 90% 的概率会调 `list_git_tags`，让模型先返回「我要调 list_git_tags」、代码再执行、再把结果回传给模型，多了一次往返。直接在代码里 fetch 好，把结果放进上下文，模型一次推理就能用上。
 
@@ -473,49 +533,49 @@ print(decision.intent, decision.tag)
 
 ## 自测清单
 
-逐条过一遍，诚实回答「是」或「否」。答「否」的条目，就是你下一步该动手的地方。
+逐条过一遍，诚实回答「是」或「否」。答「否」的条目，就是你下一步该动手的地方——最后一列标了该回看哪条 Factor。
 
 ### 输入层
 
-| 自测项 | 是/否 |
-|--------|-------|
-| Agent 调用的每个工具是否都有明确的结构化输出定义？ | |
-| 提示词模板是否和代码一起进了版本管理？ | |
-| 上下文窗口的内容布局是否有设计原则——什么在前、什么在后、什么可以压缩？ | |
+| 自测项 | 是/否 | 答否时回看 |
+|--------|-------|------------|
+| Agent 调用的每个工具是否都有明确的结构化输出定义？ | | Factor 1 |
+| 提示词模板是否和代码一起进了版本管理？ | | Factor 2 |
+| 上下文窗口的内容布局是否有设计原则——什么在前、什么在后、什么可以压缩？ | | Factor 3 |
 
 ### 执行层
 
-| 自测项 | 是/否 |
-|--------|-------|
-| 下游代码是否需要「猜」LLM 返回的是什么格式？ | |
-| Agent 的执行状态是否就是业务系统的真实状态，不存在两套状态需要对齐？ | |
-| 长任务中断后能否从保存点恢复，而不是从头重跑？ | |
+| 自测项 | 是/否 | 答否时回看 |
+|--------|-------|------------|
+| 下游代码是否需要「猜」LLM 返回的是什么格式？ | | Factor 4 |
+| Agent 的执行状态是否就是业务系统的真实状态，不存在两套状态需要对齐？ | | Factor 5 |
+| 长任务中断后能否从保存点恢复，而不是从头重跑？ | | Factor 6 |
 
 ### 控制层
 
-| 自测项 | 是/否 |
-|--------|-------|
-| Agent 需要人工介入时，是通过标准化的工具调用机制还是靠日志里打一句话？ | |
-| 业务流程的编排权在代码手里还是模型手里？ | |
-| 工具调用失败的错误信息是否写进了上下文窗口，供下一次推理使用？ | |
+| 自测项 | 是/否 | 答否时回看 |
+|--------|-------|------------|
+| Agent 需要人工介入时，是通过标准化的工具调用机制还是靠日志里打一句话？ | | Factor 7 |
+| 业务流程的编排权在代码手里还是模型手里？ | | Factor 8 |
+| 工具调用失败的错误信息是否写进了上下文窗口，供下一次推理使用？ | | Factor 9 |
 
 ### 架构层
 
-| 自测项 | 是/否 |
-|--------|-------|
-| 每个 Agent 是否只做一件事？ | |
-| Agent 的触发方式是否只有 HTTP 一种？ | |
-| 每次 Agent 调用是否可以写成 f(state, input) → new_state，输出只依赖输入而不是隐式状态？ | |
+| 自测项 | 是/否 | 答否时回看 |
+|--------|-------|------------|
+| 每个 Agent 是否只做一件事？ | | Factor 10 |
+| Agent 的触发方式是否只有 HTTP 一种？ | | Factor 11 |
+| 每次 Agent 调用是否可以写成 f(state, input) → new_state，输出只依赖输入而不是隐式状态？ | | Factor 12 |
 
 ### 荣誉提及
 
-| 自测项 | 是/否 |
-|--------|-------|
-| 是否统计过 Agent 的工具调用频率，把高频工具改成代码预取？ | |
+| 自测项 | 是/否 | 答否时回看 |
+|--------|-------|------------|
+| 是否统计过 Agent 的工具调用频率，把高频工具改成代码预取？ | | Factor 13 |
 
 ## 实战练习
 
-以下三个练习难度递增。第一个半小时内能做完，第三个可能需要一个下午——做完第三个之后，12 条原则就不再只是读过的文字，而是你实际用过的工程约束。
+以下四个练习难度递增。第一个半小时内能做完，第四个可能需要一个下午——做完第四个之后，12 条原则就不再只是读过的文字，而是你实际用过的工程约束。
 
 ### 审计一个现有 Agent
 
@@ -532,6 +592,60 @@ print(decision.intent, decision.tag)
 
 完成后用同样的测试用例跑一遍，对比改动前后的输出稳定性。你会直观感受到「把控制权交给代码」和「把控制权交给模型」在实际运行中到底差在哪里。
 
+### 实现一个最小 Reducer 并写测试
+
+这个练习介于审计和从零设计之间——你要动手写代码，但范围收窄到 Factor 12 一条原则。场景：一个工单分流 Agent，每次收到一条工单，reducer 根据工单类型更新状态，并返回要执行的副作用。
+
+要求：
+
+1. 用 Pydantic 定义 `TicketState`（含 `pending_count`、`resolved_count`、`escalated_count` 三个字段）和 `TicketInput`（含 `ticket_id`、`category`、`priority` 三个字段）。
+2. 写一个 `ticket_reducer(state, inp) -> (new_state, side_effects)` 纯函数。规则：`priority == "critical"` 时 `escalated_count` 加 1 并追加 `notify_human` 副作用；其余情况 `resolved_count` 加 1。
+3. 用 `pytest` 写至少 4 个测试：普通工单、critical 工单、连续处理多个工单的状态累加、同样的输入跑两次结果一致（可复现性）。
+4. 额外挑战：给 `TicketState` 加 `serialize` / `deserialize` 方法，写一个测试验证「序列化 → 反序列化」后状态不变。
+
+下面是测试的起手骨架，reducer 实现留给你写：
+
+```python
+# pip install pydantic pytest
+from typing import Literal
+from pydantic import BaseModel
+
+# TODO: 定义 TicketState、TicketInput、TicketOutput
+# TODO: 实现 ticket_reducer
+
+def test_normal_ticket_increments_resolved():
+    state = TicketState()
+    inp = TicketInput(ticket_id="T-1", category="billing", priority="normal")
+    out = ticket_reducer(state, inp)
+    assert out.new_state.resolved_count == 1
+    assert out.new_state.escalated_count == 0
+    assert out.side_effects == []
+
+def test_critical_ticket_escalates():
+    state = TicketState()
+    inp = TicketInput(ticket_id="T-2", category="security", priority="critical")
+    out = ticket_reducer(state, inp)
+    assert out.new_state.escalated_count == 1
+    assert "notify_human" in out.side_effects[0]
+
+def test_state_accumulates_across_calls():
+    state = TicketState()
+    for tid, cat, pri in [("T-1", "billing", "normal"),
+                          ("T-2", "security", "critical"),
+                          ("T-3", "usage", "normal")]:
+        out = ticket_reducer(state, TicketInput(ticket_id=tid, category=cat, priority=pri))
+        state = out.new_state
+    assert state.resolved_count == 2
+    assert state.escalated_count == 1
+
+def test_reducer_is_deterministic():
+    state = TicketState()
+    inp = TicketInput(ticket_id="T-1", category="billing", priority="normal")
+    assert ticket_reducer(state, inp) == ticket_reducer(state, inp)
+```
+
+这个练习的重点是体会「reducer 是纯函数」带来的测试便利——你不需要 mock 任何外部依赖，构造 `(state, input)` 对就能断言输出。如果你发现测试里要 mock 数据库或 LLM 调用，说明 reducer 里混进了副作用，回去检查。
+
 ### 从零设计一个符合 12 条原则的 Agent
 
 挑一个你熟悉的业务场景——代码审查、客服分流、数据标注质检都可以——从零设计一个 Agent。要求：
@@ -543,12 +657,22 @@ print(decision.intent, decision.tag)
 
 这个练习不要求写代码，重点是设计。难的是在一个具体场景里同时满足它们时，不同原则之间的取舍和优先级。
 
+## 适用边界与决策建议
+
+12-Factor Agents 不是所有 LLM 应用的标配。它解决的是「LLM 参与多步业务流程时如何保持可控、可复现、可恢复」这个问题，所以适用范围有明确边界。
+
+适合用的场景有三类。第一类是 SaaS 后端 Agent——比如自动处理工单、自动配置资源、自动跑数据管道，这类场景里 Agent 要跨多次调用、要和业务系统状态对齐、要支持人工审批，Factor 5、6、7、12 直接命中。第二类是客服 Agent——需要调用多个工具查订单、改状态、转人工，Factor 1、4、8 让工具调用和控制流可控。第三类是数据处理 Agent——批量跑、中途可能断、跑完要能复现，Factor 6、12 的中断恢复和无状态 reducer 正好对应。
+
+不适合用的场景也有两类。一类是纯对话式聊天机器人——用户问一句答一句，没有多步流程、没有业务状态、没有人工介入节点，硬套 12 条会增加不必要的架构复杂度。另一类是单次 LLM 调用的简单功能——比如一段文案润色、一次情感分类，输入输出都是一次性的，Factor 6 的中断恢复、Factor 12 的 reducer 在这里没有收益。
+
+团队该不该采用，取决于你的 Agent 是否满足两个条件：会跨多次调用，且每次调用的结果会影响下一步。两个都满足，12 条值得认真落地；只满足一个，挑相关的几条做就够了；两个都不满足，可能根本不需要 Agent 框架，直接调一次 LLM API 就行。从哪条 Factor 开始，参考前面「从哪里开始」一节——Factor 8、9、4 是收益最大、改动最小的起点。
+
 ## 参考资源
 
-GitHub: [humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)（Stars: 20,277 | TypeScript）
+GitHub: [humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)（截至 2026-05，Stars 约 2 万，参见 GitHub 仓库 | TypeScript）
 
-- [演讲视频：AI Engineer World's Fair](https://www.youtube.com/watch?v=8kMaTybvDUw)
-- [深度解读视频](https://www.youtube.com/watch?v=yxJDyQ8v6P0)
+- [演讲视频：AI Engineer World's Fair](https://www.youtube.com/watch?v=8kMaTybvDUw)（链接有效性以发布时为准）
+- [深度解读视频](https://www.youtube.com/watch?v=yxJDyQ8v6P0)（链接有效性以发布时为准）
 - [Factor 3：掌控上下文窗口（完整原文）](https://github.com/humanlayer/12-factor-agents/blob/main/content/factor-03-own-your-context-window.md)
 - [Factor 13：预取上下文（附录原文）](https://github.com/humanlayer/12-factor-agents/blob/main/content/appendix-13-pre-fetch.md)
 - [npx 脚手架工具](https://github.com/humanlayer/12-factor-agents/discussions/61)：快速创建一个符合 12-Factor 的 Agent 项目

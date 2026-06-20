@@ -17,13 +17,15 @@ tags: ["GenAI", "LLM", "学习路线", "awesome", "课程"]
 - [适合谁用](#适合谁用)
 - [使用建议](#使用建议)
 - [任务流案例：用这个仓库完成一次 RAG 入门](#任务流案例用这个仓库完成一次-rag-入门)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
 - [适用边界](#适用边界)
 - [常见问题](#常见问题)
 - [采用顺序与决策建议](#采用顺序与决策建议)
 
 ## 仓库定位
 
-[aishwaryanr/awesome-generative-ai-guide](https://github.com/aishwaryanr/awesome-generative-ai-guide) 把 `awesome-xxx` 仓库的形态往前推了一步：除了分类链接，还维护月度论文榜、系统化免费课程、面试题和路线图四类资源，并自带更新机制。仓库由 Aishwarya Naresh Reganti（与 Kiriti Badam 合作）维护，长期出现在 GitHub 趋势榜上。
+[aishwaryanr/awesome-generative-ai-guide](https://github.com/aishwaryanr/awesome-generative-ai-guide) 在 `awesome-xxx` 仓库的常见形态（分类链接列表）基础上，额外维护月度论文榜、系统化免费课程、面试题和路线图四类资源，并自带更新机制。仓库由 Aishwarya Naresh Reganti（与 Kiriti Badam 合作）维护，长期出现在 GitHub 趋势榜上。
 
 四类资源各自承担不同角色：
 
@@ -44,7 +46,7 @@ tags: ["GenAI", "LLM", "学习路线", "awesome", "课程"]
 
 ## 仓库结构
 
-```
+```text
 awesome-generative-ai-guide/
 ├── free_courses/
 │   ├── Applied_LLMs_Mastery_2024/   # 10 周课表
@@ -64,7 +66,7 @@ awesome-generative-ai-guide/
 
 ## 四类资源的边界与职责
 
-仓库里四类资源不是一条流水线，而是四条独立的更新轨道，对应不同的学习动作。把它们混用，会出现"想系统学却去刷论文榜""想面试速成却去啃 10 周课表"这类错配。
+仓库里四类资源是四条独立的更新轨道，对应不同的学习动作。把它们混用，会出现"想系统学却去刷论文榜""想面试速成却去啃 10 周课表"这类错配。
 
 | 资源类型 | 更新频率 | 主要载体 | 解决的问题 | 不解决的问题 |
 | --- | --- | --- | --- | --- |
@@ -84,10 +86,10 @@ awesome-generative-ai-guide/
 
 ## 使用建议
 
-1. **先选路线图**，别直接看课程：仓库的 `resources/genai_roadmap.md` / `RAG_roadmap.md` / `agents_roadmap.md` 是入口，能省 70% 选课时间。
-2. **月度论文榜当"GitHub Trending 的 LLM 版"**：每月扫一次，标注自己感兴趣的论文加入阅读清单。
-3. **课程配套 Notion**：README 链接到 Notion 课程页（`areganti.notion.site`），比 GitHub Markdown 渲染体验更好，建议两者一起用。
-4. **认证机制**：AI Evals for Everyone 与 OpenClaw Mastery 提供完成证书，作为学习证明可附在 LinkedIn。
+1. **先选路线图，别直接看课程。** 仓库的 `resources/genai_roadmap.md` / `RAG_roadmap.md` / `agents_roadmap.md` 是入口。原因：10 周课表覆盖面广，新人直接进课程容易在第 2 周就迷失方向；路线图用 3–5 天给出最小必读集，先建立全局视图再回到课程补细节，能省掉大量选课时间。
+2. **月度论文榜当"GitHub Trending 的 LLM 版"。** 每月扫一次，标注自己感兴趣的论文加入阅读清单。论文榜的价值在于过滤——它已经替你从当月 arXiv 海量论文里挑出了一小撮，比自己刷 arXiv 列表效率高。
+3. **课程配套 Notion 一起用。** README 链接到 Notion 课程页（`areganti.notion.site`），比 GitHub Markdown 渲染体验更好（表格、嵌入代码块更清晰）。建议在 Notion 读原理，回 GitHub 仓库跑 `notebooks/` 下的代码，两边分工。
+4. **认证机制。** AI Evals for Everyone 与 OpenClaw Mastery 提供完成证书，作为学习证明可附在 LinkedIn。证书本身不替代项目经验，但能作为跟完课程的客观标记。
 
 ## 任务流案例：用这个仓库完成一次 RAG 入门
 
@@ -97,11 +99,45 @@ awesome-generative-ai-guide/
 
 **第 4–7 天：课程补原理。** 进入 `free_courses/Applied_LLMs_Mastery_2024/`，找到 RAG 相关的周次（通常在第 6–8 周）。课程配套 Notion 页（`areganti.notion.site`）渲染更清晰，建议在那里读原理，再回到 GitHub 仓库跑 `notebooks/` 下的配套代码。这一步把"知道 RAG 是什么"变成"能跑通一个 RAG pipeline"。
 
-**第 8–10 天：面试题查漏。** 翻 `interview_prep/60_gen_ai_questions.md` 里 RAG 相关的题目（召回评估、chunk 策略、上下文窗口冲突）。能答出来的跳过，答不出来的回去补课程对应章节。这一步不是为面试，而是用题目逼出知识盲点。
+**第 8–10 天：面试题查漏。** 翻 `interview_prep/60_gen_ai_questions.md` 里 RAG 相关的题目（召回评估、chunk 策略、上下文窗口冲突）。能答出来的跳过，答不出来的回去补课程对应章节。这一步用题目逼出知识盲点，比单纯复述课程内容更能暴露薄弱环节。
 
 **第 11–14 天：论文榜补趋势。** 看最近 2–3 个月的月度论文榜，挑 RAG 分类下 3–5 篇论文读 abstract + intro。课程是 2024 年的，论文榜能补上 2025–2026 年的新做法（如 hybrid retrieval 的新变体、long-context 对 RAG 的冲击）。
 
 这条路径里，四类资源的出场顺序是**路线图 → 课程 → 面试题 → 论文榜**，对应"建立地图 → 补原理 → 查盲点 → 补趋势"四个动作。换一个学习目标（比如学 Agent），顺序不变，只是替换对应的路线图和课程周次。
+
+## 自测题
+
+用下面 5 道题检查对仓库结构和资源边界的掌握程度。答案紧跟每题。
+
+**Q1：仓库的四类资源里，哪一类是唯一带"时间窗"的？为什么？**
+
+A：月度论文榜。它每月清零重选，错过当月只能在历史归档里翻。课程、路线图、面试题库都是静态的，没有时间窗——2024 年的课表到 2026 年仍是同一份，需要自己判断哪些章节过时。
+
+**Q2：你想用 3 天入门 RAG，应该先打开哪个文件？为什么不是直接进 `free_courses/`？**
+
+A：`resources/RAG_roadmap.md`。它是仓库为 RAG 准备的短周期路线图，按天拆分必读链接。直接进 `free_courses/Applied_LLMs_Mastery_2024/` 会陷进 10 周课表，选课成本远高于路线图——路线图的作用就是省掉这层选课时间。
+
+**Q3：Notion 课程页和 GitHub 仓库里的 `free_courses/*/README.md` 是什么关系？**
+
+A：Notion 页（`areganti.notion.site`）是主载体，GitHub Markdown 是同步镜像。内容基本一致，Notion 渲染体验更好（表格、代码块排版更清晰），GitHub 在 Notion 加载慢或不可达时作为备用。
+
+**Q4：*Applied LLMs Mastery 2024* 课表到 2026 年还能直接跟吗？哪些部分需要警惕？**
+
+A：原理部分（Transformer、注意力、RAG 基础流程、Eval 方法论）仍适用。需要警惕的是工具链与模型 API 部分——2024 年课程里用的 LangChain 版本、OpenAI API 调用方式可能已经过时，跑代码时以官方当前文档为准。
+
+**Q5：任务流案例里四类资源的出场顺序是什么？为什么是这个顺序？**
+
+A：路线图 → 课程 → 面试题 → 论文榜。先建立术语地图，再补原理，再用题目查盲点，最后用论文榜补趋势。这个顺序保证"先有框架再填细节"，避免一上来就钻进论文细节却缺少判断论文价值的上下文。
+
+## 进阶路径
+
+跟完入门档或系统档后，下面三条路径可以往深度走。
+
+**路径一：从课程到论文精读。** 仓库的月度论文榜只给标题与摘要，要做深度阅读需要回到 arXiv 原文。建议从论文榜里挑 3 篇 RAG 或 Agent 论文，按"动机 → 方法 → 实验 → 局限"四段拆解，每篇写一份 1 页笔记。这一步把"知道有这篇论文"变成"能复述它的核心贡献"。
+
+**路径二：从面试题到系统设计。** 60 道面试题偏概念，不覆盖系统设计。要补这一块，建议自己设计一个"百万级文档的 RAG 系统"：画出检索、嵌入、重排、生成四个环节的组件选型，标注每一步的延迟与成本估算，再对照公开的工程博客（如 LlamaIndex、LangChain 官方案例）查漏。
+
+**路径三：从 fork 到内训改造。** fork 仓库后，把 *Applied LLMs Mastery 2024* 的 10 周课表替换成公司内部技术栈：把 LangChain 换成内部 SDK，把 OpenAI API 换成内部模型网关，把 `notebooks/` 下的示例换成业务数据。改造时保留课程结构（按周拆分 + 配套代码），只换内容。
 
 ## 适用边界
 
