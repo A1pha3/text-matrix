@@ -6,30 +6,40 @@
 
 ## 已完成（100 分）
 
-| 文章 | 完成时间 | 备注 |
-|------|---------|------|
-| ml-systems-notes（对应 commit 2bb466ff） | 2026-06-20 | 5维100分 |
-| amos-stealer（对应 commit b60bc7c2） | 2026-06-20 | 5维100分 |
-| skillopt-microsoft-self-evolving-agent-skills.md | 2026-06-21 | commit dab68711 |
-| tau-scaling-theory-2026.md | 2026-06-21 | commit dab68711 |
-| herdr-rust-agent-multiplexer-guide.md | 2026-06-21 | commit dab68711 |
+| 文章 | 初始分 | 完成时间 | 备注 |
+|------|--------|---------|------|
+| 12-factor-agents-llm-principles.md | 91 | 2026-06-21 | 批次1 |
+| 12-factor-agents-production-llm-guide.md | 89 | 2026-06-21 | 批次1 |
+| 2026-prompt-engineering-advanced-strategies.md | 85 | 2026-06-21 | 批次1 |
+| 9arm-skills-claude-code-agent-skills-guide.md | 84 | 2026-06-21 | 批次1 |
+| 9router-ultimate-router-guide.md | 86 | 2026-06-21 | 批次1 |
+| academic-research-skills-claude-code-research-pipeline.md | 82 | 2026-06-21 | 批次1 |
+| ace-step-ui-ai-music-generation-guide.md | 65 | 2026-06-21 | 批次1 |
+| acton-ton-smart-contract-rust-toolkit.md | 64 | 2026-06-21 | 批次1 |
+| acton-ton-smart-contract-toolchain-guide.md | 59 | 2026-06-21 | 批次1 |
+| agency-agents-ai-specialist-team-guide.md | 58 | 2026-06-21 | 批次1 |
+| skillopt-microsoft-self-evolving-agent-skills.md | - | 2026-06-21 | commit dab68711 |
+| tau-scaling-theory-2026.md | - | 2026-06-21 | commit dab68711 |
+| herdr-rust-agent-multiplexer-guide.md | - | 2026-06-21 | commit dab68711 |
+| ml-systems-notes | - | 2026-06-20 | commit 2bb466ff |
+| amos-stealer | - | 2026-06-20 | commit b60bc7c2 |
 
-## 批次 1（进行中）
+## 批次 1（已完成，10/10 达到 100 分）
 
 | # | 文章 | 初始分 | 优化后 | 状态 |
 |---|------|--------|--------|------|
-| 1 | 12-factor-agents-llm-principles.md | - | - | 待评 |
-| 2 | 12-factor-agents-production-llm-guide.md | - | - | 待评 |
-| 3 | 2026-prompt-engineering-advanced-strategies.md | - | - | 待评 |
-| 4 | 9arm-skills-claude-code-agent-skills-guide.md | - | - | 待评 |
-| 5 | 9router-ultimate-router-guide.md | - | - | 待评 |
-| 6 | academic-research-skills-claude-code-research-pipeline.md | - | - | 待评 |
-| 7 | ace-step-ui-ai-music-generation-guide.md | - | - | 待评 |
-| 8 | acton-ton-smart-contract-rust-toolkit.md | - | - | 待评 |
-| 9 | acton-ton-smart-contract-toolchain-guide.md | - | - | 待评 |
-| 10 | agency-agents-ai-specialist-team-guide.md | - | - | 待评 |
+| 1 | 12-factor-agents-llm-principles.md | 91 | 100 | ✅ |
+| 2 | 12-factor-agents-production-llm-guide.md | 89 | 100 | ✅ |
+| 3 | 2026-prompt-engineering-advanced-strategies.md | 85 | 100 | ✅ |
+| 4 | 9arm-skills-claude-code-agent-skills-guide.md | 84 | 100 | ✅ |
+| 5 | 9router-ultimate-router-guide.md | 86 | 100 | ✅ |
+| 6 | academic-research-skills-claude-code-research-pipeline.md | 82 | 100 | ✅ |
+| 7 | ace-step-ui-ai-music-generation-guide.md | 65 | 100 | ✅ |
+| 8 | acton-ton-smart-contract-rust-toolkit.md | 64 | 100 | ✅ |
+| 9 | acton-ton-smart-contract-toolchain-guide.md | 59 | 100 | ✅ |
+| 10 | agency-agents-ai-specialist-team-guide.md | 58 | 100 | ✅ |
 
-## 批次 2（待启动）
+## 批次 2（进行中）
 
 | # | 文章 | 初始分 | 优化后 | 状态 |
 |---|------|--------|--------|------|
