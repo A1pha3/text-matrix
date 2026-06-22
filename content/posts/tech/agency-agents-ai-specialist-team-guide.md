@@ -43,18 +43,16 @@ tags: ["AI Agent", "Claude Code", "Cursor", "多工具集成", "AI团队", "Open
 
 ## 项目判断
 
-[The Agency](https://github.com/msitarzewski/agency-agents) 把 AI Agent（人工智能智能体）从"一个通用助手"拆成 147 个岗位，每个岗位是一份 Markdown 文件，定义人格、使命、工作流、交付物和记忆策略。它不解决模型能力问题，解决的是"如何让同一个底层模型在不同专业场景里稳定输出符合该岗位预期的结果"。
+[The Agency](https://github.com/msitarzewski/agency-agents) 做了一件事：把 AI Agent 从"一个通用助手"拆成 147 个岗位，每个岗位是一份 Markdown 文件，定义人格、使命、工作流、交付物和记忆策略。它不解决模型能力问题——同一个 Claude Opus，挂了 Frontend Developer 的 Agent 文件和挂了 Backend Architect 的 Agent 文件，输出会走两条完全不同的路，但底层模型没变。
 
-这套仓库的实际用法不是一次装满 147 个 Agent，而是按团队职能挑几个岗位，让它们独立运行或按 pipeline（流水线）串联，再通过配置文件替换模型、输出目录和外部凭据。把它理解成一组可组合的岗位库更贴近真实用法——"超大号提示词包"的标签会让人忽略它的工程约束。
+这套仓库的实际用法不是一次装 147 个 Agent，而是按团队职能挑几个岗位单独跑或按 pipeline 串联，再通过配置文件替换模型、输出目录和外部凭据。把它理解成一组可组合的岗位库比理解成"超大号提示词包"更接近真实用法——后者会让人忽略它里面的工程约束（工作流步骤、交付物格式、退出条件）。
 
 **项目数据（截至 2026 年 5 月）：**
 - GitHub Stars：1,189
-- Agent 总数：147 个
-- 覆盖领域：12 个（工程、设计、销售、营销、产品、项目管理、测试、支持、空间计算、专业化、财务、游戏开发）
-- 支持工具：Claude Code、GitHub Copilot、Antigravity、OpenClaw、Cursor、Aider、Windsurf 等 11 种主流 AI 工具
+- Agent 总数：147 个（去重后），按部门计数约 172
+- 覆盖领域：12 个部门
+- 支持工具：Claude Code、GitHub Copilot、Antigravity、OpenClaw、Cursor、Aider、Windsurf 等 11 种
 - 开源协议：MIT
-
-本文面向已经在用 AI 编程工具、想把 Agent 能力按职能拆开使用的开发者、产品经理和技术负责人。
 
 ---
 
@@ -198,24 +196,24 @@ Agent 转化为 `.mdc` 规则文件存于 `.cursor/rules/` 目录。
 
 ## 多工具集成架构
 
-The Agency 的集成脚本支持 11 种工具，通过 `convert.sh` 和 `install.sh` 两个脚本统一管理：
+The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种工具的接入：
 
 ```bash
-# Step 1: 生成各工具对应的格式文件
+# 第一步：生成各工具对应的格式文件
 ./scripts/convert.sh              # 串行生成
-./scripts/convert.sh --parallel  # 并行生成（更快）
+./scripts/convert.sh --parallel   # 并行生成（更快）
 
-# Step 2: 安装（交互式，auto-detect已安装的工具）
+# 第二步：安装（交互式，自动检测已安装的工具）
 ./scripts/install.sh
 ```
 
-安装脚本会扫描系统，自动检测已安装的工具，以复选框 UI 呈现。`convert.sh` 负责把统一的 Agent 定义转换成各工具需要的格式（Claude Code 用 `.md`，Cursor 用 `.mdc`，OpenClaw 用 `SOUL.md` + `AGENTS.md`），`install.sh` 负责把转换后的文件落到对应工具的配置目录。两层分离的好处是新增工具支持只需要写一个新的 converter，不用动安装逻辑。
+安装脚本扫描系统，自动检测已安装的工具，以复选框 UI 呈现。`convert.sh` 把统一的 Agent 定义转换成各工具需要的格式（Claude Code 用 `.md`，Cursor 用 `.mdc`，OpenClaw 用 `SOUL.md` + `AGENTS.md`），`install.sh` 把转换后的文件落到对应工具的配置目录。两层分离的设计意味着新增工具支持只需要写一个新的 converter，不用动安装逻辑。
 
 ---
 
 ## 任务如何流过系统：一次 PR 审查的完整路径
 
-为了说明 Agent 之间如何配合，下面用一个具体任务串起来：用工程部 Agent 审查一个新增支付接口的 PR。
+说清 Agent 之间怎么配合，比列举每个 Agent 的功能更有用。下面用一个具体任务——审查一个新增支付接口的 PR——串起 5 个 Agent 的完整链路。
 
 ```text
 任务：审查 PR #142（新增 /api/checkout 支付接口）
@@ -246,7 +244,11 @@ The Agency 的集成脚本支持 11 种工具，通过 `convert.sh` 和 `install
   动作：列出 3 个必须修复的阻断项和 5 个建议项
 ```
 
-这个流程里每个 Agent 的输入都来自上游的交付物，输出又成为下游的输入。Agent 之间不直接通信，靠 Markdown 文件传递上下文。这意味着你可以只挑其中两三个 Agent 用，也可以把整条链路跑完；中间任何一步的输出都可以单独存档，留作后续审计。
+每个 Agent 的输入都来自上游的交付物，输出又成为下游的输入。Agent 之间不直接通信——靠 Markdown 文件传递上下文。这意味着三条实际的使用方式：
+
+- **只用两三个 Agent**：你不需要把整条链路跑完。如果只是想审查 API 设计，只跑 Backend Architect 就够了。
+- **跑整条链路**：从 Codebase Onboarding 到 Reality Checker，每一步的输出都可以单独存档——六个月后审计这个 PR 为什么通过了某处改动，你能追溯到当时哪个 Agent 给出了什么判断。
+- **中间任何一步断了**：如果 Security Engineer 的输入里缺了 Backend Architect 的评审结论，它仍然能工作——但会重复做一些 Backend Architect 已经做过的判断。这是 pipeline 模式的通病：上下文传递靠文件，上游更新了下游文件不会自动刷新。解决方式是在 pipeline 脚本里加一条规则：下游 Agent 启动前检查上游产出文件的修改时间，如果比自己的输入文件旧，先重新读取。
 
 ---
 
@@ -278,16 +280,24 @@ The Agency 的集成脚本支持 11 种工具，通过 `convert.sh` 和 `install
 ## 适用场景与边界
 
 ### 适合的场景
-- 需要在不同专业领域快速获得专家级 AI 辅助
-- 已使用 Claude Code/Cursor/Windsurf 等 AI 编程工具，希望按职能拆分 Agent 能力
-- 需要组建临时 AI 团队完成特定项目
-- 希望 AI 输出更专业化，减少泛泛建议
+
+- 在同一个模型上跑不同任务时输出质量波动大——同一个 Claude Opus，写 React 组件时表现不错，审 SQL 查询时漏掉索引问题。The Agency 的工作流字段把"怎么审 SQL"写成固定步骤，模型只负责在步骤内做判断。
+- 已用 Claude Code/Cursor/Windsurf 等工具，但每次要手动写长篇提示词才能让 AI 按特定角色工作——Agent 文件把这套东西固化下来，下次直接加载。
+- 需要给不同职能的同事（前端、后端、安全）各配一套 AI 辅助，但不想让每个人从零写提示词——装对应的 Agent 文件即可。
+- 希望团队共享一套"AI 辅助标准"——所有人用的 Frontend Developer Agent 是同一份文件，产出格式一致。
+
+### 不适合的场景
+
+- 你对单个通用提示词的输出已经满意——不需要拆 147 个岗位。
+- 你的任务只需要一个角色连续工作——比如纯写前端页面，一个 Frontend Developer 就够了。装 147 个 Agent 只会让 token 消耗无意义膨胀。
+- 你需要 Agent 自己写代码执行——The Agency 的 Agent 是 Markdown 定义的人格和工作流，不包含可执行代码。Agent 输出的"代码建议"仍然需要人来落地。
 
 ### 边界与局限
-- Agent 本身是 Markdown 文件定义的人格和工作流，不含实际执行代码
-- 输出质量依赖底层 AI 模型能力，需自备 API Key
-- 部分细分 Agent（如法律、医疗）仅作参考，不能替代专业咨询
-- 147 个 Agent 全部安装会带来较大的 token（令牌）消耗，建议按需安装
+
+- Agent 文件里写的是"怎么想""怎么做"，不包含实际的代码执行能力——它不能替你部署、不能替你跑测试。
+- 输出质量绑定底层模型——Agent 文件约束的是行为规范，不是模型能力。Claude Haiku 跑的 Backend Architect 和 Claude Opus 跑的 Backend Architect，产出质量会有差距。
+- 部分细分 Agent（法律、医疗）只是参考性质的岗位描述，不能替代专业咨询。
+- 147 个 Agent 全部安装会带来 token 消耗——每个 Agent 的定义文件平均 500-2000 字，全部加载到上下文是额外的 token 开销。建议按需装，不要一键全装。
 
 ---
 
@@ -316,7 +326,87 @@ The Agency 的集成脚本支持 11 种工具，通过 `convert.sh` 和 `install
 
 ### Q4：能否自定义 Agent
 
-可以。Agent 本质是 Markdown 文件，复制一份现有 Agent，修改人格、使命、工作流和交付物字段即可。建议从相近岗位改起，例如从 Backend Architect 改出 Platform Engineer，比从零写一份更稳。
+可以。Agent 本质是 Markdown 文件，复制一份现有 Agent，修改人格、使命、工作流和交付物字段即可。建议从相近岗位改起——例如从 Backend Architect 改出 Platform Engineer，比从零写一份更稳。改完后放到对应部门的目录下，重跑 `convert.sh && install.sh` 即可生效。
+
+## 动手练习
+
+下面三个练习从浅到深，建议按顺序做——第一个验证基本使用，第二个验证协调链路，第三个训练你定义合规约束。
+
+### 练习一：装三个工程部 Agent 跑一次代码审查
+
+1. 用 `./scripts/install.sh --tool claude-code` 装三个 Agent：Backend Architect、Security Engineer、Reality Checker
+2. 找一段你最近写的 API 代码（没有的话用下面这段模拟）：
+
+```python
+# checkout.py
+def create_checkout(user_id, items, total):
+    # 直接操作数据库，无认证检查
+    order = db.insert("orders", {"user_id": user_id, "total": total})
+    for item in items:
+        db.insert("order_items", {"order_id": order.id, **item})
+    return {"order_id": order.id, "status": "created"}
+```
+
+3. 依次让 Backend Architect 审查 API 设计 → Security Engineer 审查安全漏洞 → Reality Checker 做最后的阻断判断
+4. 记录每个 Agent 产出的交付物格式和时间。回答：
+   - Backend Architect 有没有指出缺少幂等性保护？
+   - Security Engineer 有没有标记 `user_id` 未校验？
+   - Reality Checker 列出的阻断项中有几条是你没注意到的？
+
+### 练习二：用 pipeline 串联三个 Agent 做一次 PR 审查
+
+按本文"任务如何流过系统：一次 PR 审查的完整路径"一节跑一遍：Codebase Onboarding Engineer → Backend Architect → Security Engineer。要求：
+
+1. 每一步的产出写入 Markdown 文件（例如 `01-onboarding.md`、`02-architecture.md`、`03-security.md`）
+2. 下游 Agent 读取上游产出文件作为输入——不能在 prompt 里手动复述上游结论
+3. 跑完后对比：整条 pipeline 的最终输出和单独跑三个 Agent 各给结论相比，pipeline 版本多发现了什么问题？少了什么问题？
+
+这个练习的重点不是"pipeline 一定比单独跑好"，而是感受 Agent 之间通过文件传递上下文时会丢什么信息、会保留什么偏见。上游 Agent 的某个错误假设，下游 Agent 会不会把它当成事实继续推理——这是多 Agent 协调里最难防的一类 bug。
+
+### 练习三：基于 Backend Architect 改一个你团队专属的 Code Reviewer
+
+1. 复制 Backend Architect 的 Markdown 文件
+2. 修改 5 个字段，让它适配你团队的代码规范：
+   - **人格**：改成你们团队 code review 的风格（直接/委婉、逐行批注/汇总评论）
+   - **使命**：加上你团队特有的关注点（例如"所有 SQL 必须有 EXPLAIN 注释""所有 API 返回必须带 request_id"）
+   - **工作流**：把你们团队的 review checklist 写成步骤
+   - **交付物**：定义输出格式——例如"必须在每个问题后标注文件路径和行号"
+   - **记忆**：指定记忆存储位置和回溯策略
+3. 用同一段代码分别跑你改过的 Agent 和原版 Backend Architect，对比两版输出的差异。记录哪些差异是团队定制带来的、哪些是模型带来的随机性。
+
+## 自测清单
+
+用"能/不能"回答下面 7 题，答"不能"就回对应章节重读。
+
+| # | 自测项 | 答"不能"时回看 |
+|---|--------|---------------|
+| 1 | 能说出 The Agency 与通用提示词模板在 5 个字段上的差异 | [核心设计理念](#核心设计理念) |
+| 2 | 能列出 12 个部门，并指出你团队职能对应哪 3 个以内的部门 | [12 个专业部门一览](#12-个专业部门一览) |
+| 3 | 能解释为什么 12 个部门 Agent 数量之和大于 147——以及哪些 Agent 被重复计数 | [12 个专业部门一览](#12-个专业部门一览) |
+| 4 | 能在 Claude Code、Cursor、OpenClaw 中选一种完成从安装到跑通一个 Agent 的完整流程 | [快速开始](#快速开始) |
+| 5 | 能描述一次 PR 审查 pipeline 中上游产出如何传递给下游、断在中间会发生什么 | [任务如何流过系统](#任务如何流过系统一次-pr-审查的完整路径) |
+| 6 | 能根据团队规模和现有工具栈给出分阶段采用顺序 | [采用顺序与决策建议](#采用顺序与决策建议) |
+| 7 | 能基于现有 Agent 文件自定义一个团队专属 Agent，并验证它比通用版本更贴合自己的规范 | [动手练习](#动手练习) |
+
+## 进阶路径
+
+读完本文后，按下面的顺序深化：
+
+1. **挑一个部门深读**：不是读概括表，是打开仓库里该部门的每个 Agent 文件。重点关注工作流（Workflow）字段——它直接决定 Agent 的产出稳定性。你会发现同一个部门下不同 Agent 的工作流颗粒度差别很大：有的写死了 5 步检查，有的只写了"分析问题并给出建议"。前者更稳但更僵，后者更灵活但更随模型能力波动。
+2. **读 `convert.sh` 和 `install.sh` 源码**：理解 Agent Markdown → 工具配置文件的转换逻辑。这对你之后批量管理 Agent（比如"只装市场部 Agent 到 Cursor、只装工程部到 Claude Code"）是必要的。
+3. **设计一个"Agent 间协议"**：当你需要 3 个以上 Agent 协同工作时，靠口头约定传递上下文迟早出问题。定义一个最小协议——例如"每个 Agent 的交付物必须包含 `输入源`、`关键假设`、`结论`、`不确定项` 四个字段"——然后修改 Agent 的交付物字段来执行这个协议。
+4. **跟踪 The Agency 仓库的 releases 页面**：作者 Msitarzewski 在持续增加新 Agent 和优化工作流。关注 `CHANGELOG.md` 里工作流变更的条目——这些变更往往反映了"某个 Agent 的旧工作流在生产中暴露了什么缺陷"。
+
+## Codex 集成（高级选项）
+
+除了 Claude Code、Cursor 和 OpenClaw，The Agency 也支持 OpenAI Codex CLI。Codex 的 Agent 格式不同于前三者，需要额外的权限声明文件：
+
+```bash
+./scripts/convert.sh --tool codex
+./scripts/install.sh --tool codex
+```
+
+生成的文件在 `.codex/agents/` 下。Codex 模式下，Agent 的"人格"字段被映射到 Codex 的 `AGENTS.md` 角色描述，"工作流"被映射到 `CODEBUDDY.md` 的步骤约束。如果你在用 Codex 做长会话开发任务，这套映射让你不用在 Codex 和 Claude Code 之间维护两套 Agent 描述。
 
 ---
 
@@ -335,29 +425,41 @@ The Agency 的集成脚本支持 11 种工具，通过 `convert.sh` 和 `install
 
 ## 采用顺序与决策建议
 
-如果你打算在团队里用 The Agency，建议按以下顺序推进。
+### 分阶段采用路线
 
-**第一阶段：验证流程（1-2 周）**
-- 装工程部的 3 个核心 Agent：Frontend Developer、Backend Architect、Codebase Onboarding Engineer
-- 在一个真实小项目上跑通"读代码 → 写代码 → 审代码"的闭环
-- 目标是确认 Agent 文件格式和你的工具链能配合，而不是看产出质量
+**第一阶段：验证（第 1-2 周）**
 
-**第二阶段：按职能扩展（2-4 周）**
-- 根据团队职能补 Agent：有测试团队就装测试部，有增长需求就装市场部
-- 把 pipeline 串起来，让 Agent 之间能传递交付物
-- 这阶段开始关注产出质量，调整 Agent 定义里的工作流步骤
+装工程部 3 个核心 Agent：Frontend Developer、Backend Architect、Codebase Onboarding Engineer。在一个真实小项目上跑"读代码 → 写代码 → 审代码"的闭环。这阶段的目标不是看产出质量，而是确认 Agent 文件格式和你的工具链能配合——命令能不能安装成功、Agent 能不能被加载、输出有没有落到预期格式。
 
-**第三阶段：定制化（4 周以后）**
-- 基于现有 Agent 改造出团队专属岗位
-- 用 Autonomous Optimization Architect 做模型路由，控制成本
-- 把记忆策略接上团队的知识库
+**第二阶段：按需扩展（第 3-4 周）**
 
-**谁该先用、谁可以等等：**
-- 已经在用 Claude Code 或 Cursor 的团队：可以直接进第一阶段
-- 还在用通用提示词、没有固定 AI 编程工具的团队：先选定工具，再考虑 The Agency
-- 只有非工程需求（纯营销、纯财务）的团队：可以只装对应部门的 Agent，不必装工程部
+根据团队职能补 Agent：有测试团队就装测试部，有增长需求装市场部。把 pipeline 串起来，让上下游 Agent 通过 Markdown 文件传递交付物。这阶段开始盯产出质量——Agent 是否稳定输出了交付物字段要求的格式、上下游之间的信息有没有丢失。
 
-如果你团队的痛点是同一个模型在不同任务上表现波动大，The Agency 的岗位拆分思路值得试一试。
+**第三阶段：定制化（第 5 周以后）**
+
+从现有 Agent 改出团队专属版本。把 Autonomous Optimization Architect 用起来做模型路由，控制 token 成本。把记忆策略接上团队的知识库（wiki、设计文档、post-mortem）。
+
+### 谁该先上，谁可以等等
+
+**现在该上的：**
+- 已在用 Claude Code 或 Cursor 的团队：Agent 文件直接落到工具目录下，没有额外工程门槛。
+- 同一模型在不同任务上输出波动大的团队：The Agency 的工作流约束是直接对症的解法。
+- 需要团队共享一套 AI 辅助标准的组：Agent 文件的版本管理（Git）让所有人都加载同一版约束。
+
+**可以等等的：**
+- 还在用通用提示词、没有固定 AI 编程工具的团队：先选定工具（建议从 Claude Code 起步），再考虑 The Agency。
+- 只有非工程需求（纯营销、纯财务）的团队：可以直接装对应部门的 Agent，不用装工程部。但如果你连一个固定 AI 工具都没选定，先把工具选好再说。
+- 团队不满 3 人且没有跨职能需求：单人项目里 Agent 协调的成本（文件管理、pipeline 维护）可能超过收益。
+
+### 决策检查清单
+
+回答下面三个问题，答"是"越多，The Agency 越值得试：
+
+- 你是不是经常在同一个 AI 工具里反复写"你现在是 XXX 角色，请按以下步骤..."这类提示词？
+- 你的团队有没有跨职能的 AI 使用需求（前端、后端、测试、安全各要一套）？
+- 你需不需要让不同人使用同一套 AI 辅助标准（统一输出格式、统一审查步骤）？
+
+三个都答"是"的话，这周装三个 Agent 跑一次练习一的代码审查，感受一下统一约束带来的输出一致性变化。
 
 ---
 
