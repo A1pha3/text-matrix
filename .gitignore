@@ -56,3 +56,5 @@ skills/morning-report/try-*.mjs
 skills/morning-report/recmp.mjs
 optimize-report.md
 .cache/
+.workbuddy/
+
