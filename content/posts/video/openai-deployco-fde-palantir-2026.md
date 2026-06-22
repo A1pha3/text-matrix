@@ -1,6 +1,6 @@
 ---
 title: "OpenAI 砸 40 亿美元成立 Deployment Company：FDE 这个硅谷最火新职位的 Palantir 起源、三大 AI 巨头军备竞赛与「组织深处」的真实战场"
-date: "2026-06-23T00:55:00+08:00"
+date: "2026-06-23T00:45:00+08:00"
 slug: "openai-deployco-fde-palantir-2026"
 description: "硅谷 101《OpenAI 联手 PE 砸下 40 亿美元，聊聊硅谷最火新职位 FDE》整理。2026 年 5 月初 OpenAI Deployment Company ($10Bn 估值 / $4Bn PE 注资) + Anthropic + Blackstone + Hellman & Friedman + Goldman Sachs $1.5B JV + 谷歌云 GenAI FDE 同步落地，三大 AI 巨头押注同一件事：把 AI 从 demo 推进企业组织深处。拆解 FDE（前线部署工程师）的 Palantir 军方渊源、4 项工作方法、AI 原生组织的 5 层嵌入、Anthropic 5 类内部组织变化、SaaS 公司转型路径，以及 Salesforce Agentforce / ServiceNow AI Agents 等成功案例。"
 draft: false
