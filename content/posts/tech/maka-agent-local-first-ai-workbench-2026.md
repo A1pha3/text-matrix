@@ -1,5 +1,5 @@
 ---
-title: "Maka：本地优先的 AI 桌面工作台，比 Cursor 更彻底的本地化与 6 组件 Runtime Kernel 演进"
+title: "Maka：把 AI Agent 的执行、记忆和凭据真正留在本地"
 date: "2026-06-23T18:32:23+08:00"
 slug: "maka-agent-local-first-ai-workbench-2026"
 description: "Maka 是一个 Electron 桌面 AI 工作台，把模型连接、会话、工具权限、文件读写、终端执行、搜索、机器人入口、开放网关和运行恢复放在一个本地优先的应用里。最近合并的 Runtime Kernel Extraction 把原来集中的 SessionManager / AiSdkBackend 拆成 6 个内部组件（ToolRuntime / ModelAdapter / RunTrace / AgentRun types & store / AgentRun execution / Startup recovery），同时保持了所有用户可见的会话/渲染/IPC/JSONL 兼容性。本文拆开它的 monorepo 拓扑、6 组件拆分、9 个 Memory Privacy Gates、凭据保护（Electron safeStorage）和多模型 / 多机器人接入架构，附上对独立 AI Agent 项目作者可复用的 5 条工程经验。"
@@ -9,9 +9,17 @@ tags: ["Maka", "Local-First", "Electron", "AI Agent", "Runtime Kernel", "Vercel 
 hiddenFromHomePage: false
 ---
 
-# Maka：本地优先的 AI 桌面工作台，比 Cursor 更彻底的本地化与 6 组件 Runtime Kernel 演进
+# Maka：把 AI Agent 的执行、记忆和凭据真正留在本地
 
-## §1 项目定位
+## §1 先给判断
+
+Maka 解决的一个具体问题是：当你在本地跑一个 AI coding agent 时，你的代码、会话历史、记忆条目和 API 凭据分别存在哪里、谁有权读、中断后能不能恢复。
+
+很多"本地优先"的 AI 工具只做到了"模型响应在本地渲染"，但会话存在云端、记忆走远程嵌入、凭据放明文配置文件。Maka 的做法是把这四件事全部放在用户文件系统里，并且用 9 个 privacy gates 约束"AI 主动写记忆"的边界。
+
+这篇文章拆开 Maka 的 Runtime Kernel 拆分（为什么要把 SessionManager 拆成 6 个组件）、Memory Privacy Gates 的具体设计（为什么"默认关 + 手动确认"不够，需要 9 层）、凭据保护（Electron safeStorage 怎么用）、以及多模型接入的 provider 抽象。最后给出对独立 AI Agent 项目作者可复用的 5 条工程经验。
+
+## §2 项目定位与系统边界
 
 | 项目 | 内容 |
 |------|------|
@@ -19,16 +27,43 @@ hiddenFromHomePage: false
 | **当前版本** | 0.1.0（活跃开发中） |
 | **架构** | Electron + npm workspaces monorepo，5 个 packages + 1 个 desktop app |
 | **目标用户** | 想在自己的电脑上跑一个可观察、可控、可持续恢复的 agent 的开发者 |
-| **核心哲学** | 本地优先：模型连接元数据 / 会话 JSONL / 凭据加密 / 记忆文件 / 工具产物全部在用户文件系统里 |
+| **数据位置** | 模型连接元数据 / 会话 JSONL / 凭据加密 / 记忆文件 / 工具产物全部在用户文件系统里 |
 | **接入模型** | 海外 3（Anthropic、OpenAI、Google Gemini）+ 国内 4（DeepSeek、Moonshot、Z.AI Coding Plan、Kimi Coding Plan）+ 本地 Ollama + 自定义 OpenAI Compatible + 账号订阅 3（Claude/Codex/Gemini CLI） |
 | **机器人入口** | Telegram、飞书、企业微信、微信 iLink、Discord、钉钉、QQ |
 | **设计文档** | 10 个 design docs（共 4888 行），其中 design-system.md 单文件 1622 行 |
 
 Maka 不是另一个 chat demo，也不是 Cursor 的开源克隆。它的产品定位是**"本地优先的 AI 工作台"**——把模型供应商、工具执行、文件读取、终端命令、搜索、机器人消息、开放网关、运行恢复这 8 件事装进一个 Electron 桌面 app，让用户的数据**默认全部留在本地文件系统**。
 
-这种定位决定了它的工程取舍：**不在云端提供"AI 服务"，而是在本地提供一个"AI 控制器"**。所以它的很多设计——凭据走 Electron `safeStorage`、Renderer 不拿明文密钥、9 个 memory privacy gates、Provider 状态真实呈现而不是假装可用——都不是"功能"，是**这套定位的必然推论**。
+这决定了它的工程取舍：**不在云端提供"AI 服务"，而是在本地提供一个"AI 控制器"**。所以它的很多设计——凭据走 Electron `safeStorage`、Renderer 不拿明文密钥、9 个 memory privacy gates、Provider 状态真实呈现而不是假装可用——都不是额外功能，是这套定位的直接后果。
 
-## §2 一张总览图
+### 本文阅读路径
+
+- **只想看架构**：读 §3 总览图 → §4 Runtime Kernel 拆分 → §5 Runtime v2 演进
+- **只想看隐私设计**：读 §6 9个 Privacy Gates → §7 凭据保护
+- **想看工程经验**：读 §10 5条工程经验
+- **第一次读**：按顺序读，§6 和 §10 是最值得细读的两节
+
+## §3 一张总览图：Maka 的东西怎么分
+
+在深入 Runtime Kernel 拆分之前，先给一个系统地图。Maka 的代码分两只：
+
+```
+Maka 分两只
+│
+├── 用户面（Desktop App）
+│   ├── Renderer：React 渲染会话、设置、记忆管理
+│   ├── Main：Electron main process，管窗口、IPC、safeStorage
+│   └── Preload：暴露受限 API 给 renderer（不暴露明文密钥）
+│
+└── 运行时面（Packages）
+    ├── core：类型、contracts、领域模型（最纯的领域层）
+    ├── storage：文件持久化（JSONL / settings / credentials / run store）
+    ├── runtime：Runtime 内核（ToolRuntime / ModelAdapter / AgentRun / RunTrace）
+    ├── headless：无桌面入口（CLI / CI / bot bridge / OpenGateway）
+    └── ui：渲染端通用组件库
+```
+
+关键边界：**renderer 不直接拿明文密钥，preload 只暴露操作接口不暴露读取接口**。这是"本地优先"和"凭据保护"的第一道边界。
 
 ```
 Maka
@@ -58,22 +93,22 @@ Maka
 
 仓库**只有 1 个 commit**（根目录 init commit），但**内容密度很高**——645 个文件、10 个 design docs、5 个 packages。代码组织遵循**"领域层在 core / 持久化在 storage / 运行时在 runtime / UI 通用组件在 ui / 入口在 apps"**的清晰分层。
 
-## §3 Runtime Kernel Extraction：把大块拆成 6 个组件
+## §4 Runtime Kernel Extraction：把大块拆成 6 个组件
 
-### 3.1 改之前：所有事都在 `SessionManager` 和 `AiSdkBackend`
+### 4.1 改之前：所有事都在 `SessionManager` 和 `AiSdkBackend`
 
-CHANGELOG 把这件事说得很清楚：
+CHANGELOG 描述了这个问题：
 
 > "Maka already had the pieces of a local desktop coding agent: sessions, model streams, tool calls, permission prompts, abort handling, usage telemetry, bot and gateway entry points, and persisted session messages. The problem was that the core execution responsibilities were still concentrated in a few large runtime paths, especially `AiSdkBackend` and `SessionManager.sendMessage()`."
 
 **症状**：每个用户 turn 的执行路径穿过 `SessionManager` → `AiSdkBackend` → 模型流 → 工具调用 → 权限检查 → abort → telemetry → RunTrace 写入，所有事交织在两个类里。
 
-**问题**：
-- 难推理——一次 turn 触发的边界太多，bug 经常不在你以为的地方
-- 难恢复——中断后续启动要回放多个数据结构，没有单一 source of truth
-- 难扩展——再加一个 provider 就要在 `AiSdkBackend` 里复制一遍 permission / tool / run / session-state 行为
+**具体问题**：
+- 难推理——一次 turn 触发的边界太多，bug 经常不在你以为的地方。比如工具权限检查和模型流错误处理混在一起，出了问题要同时看两个地方。
+- 难恢复——中断后续启动要回放多个数据结构，没有单一 source of truth。如果 `SessionManager` 的状态和 `AiSdkBackend` 的流式状态不一致，恢复逻辑要同时处理两边。
+- 难扩展——再加一个 provider 就要在 `AiSdkBackend` 里复制一遍 permission / tool / run / session-state 行为。每个新 provider 都要改同一个大文件，冲突概率高。
 
-### 3.2 改之后：6 个内部组件
+### 4.2 改之后：6 个内部组件
 
 ```
 SessionManager
@@ -96,7 +131,7 @@ SessionManager
 | **AgentRunStore** | 文件后端 run store（`sessions/<sid>/runs/<rid>/run.json` + `events.jsonl`） | 不在原 message 流上做 |
 | **AgentRun execution** | 把重 turn 执行生命周期从 `SessionManager.sendMessage()` 移到 `AgentRun.execute()`（user message append / backend stream drive / 状态投影 / abort / 失败 / 持久化 trace 写入） | 不在 `SessionManager` |
 
-### 3.3 这次改动的设计约束
+### 4.3 这次改动的设计约束
 
 CHANGELOG 明确写：
 
@@ -109,15 +144,15 @@ CHANGELOG 明确写：
 3. **启动恢复走 AgentRun ledger 优先**——`recoverInterruptedSessions()` 优先用 AgentRun ledger 修复 stale non-terminal runs，老 session 仍走 legacy message/turn-state 兜底
 4. **RunTrace 是 best-effort**——trace 写入失败不能修改 model 或 tool 的执行结果
 
-### 3.4 一句话总结这次改动
+### 4.4 一句话总结这次改动
 
 把"什么都在两个类里"的状态，拆成"6 个明确边界的内部组件 + 1 个文件后端 run store"，**用户面 0 改动、底层 6 倍清晰度**。
 
-## §4 Runtime v2：下一阶段的中心是 Invocation + RuntimeEvent + AgentFlow
+## §5 Runtime v2：下一阶段的中心是 Invocation + RuntimeEvent + AgentFlow
 
-### 4.1 当前架构的不够
+### 5.1 当前架构的不够
 
-`docs/runtime-v2-architecture-evolution.md` 把"为什么还要继续改"说得很坦白：
+`docs/runtime-v2-architecture-evolution.md` 解释了为什么要继续改：
 
 > "The current architecture is better than the original monolithic path, but the runtime still lacks one stable center of gravity. The same run is currently represented through several related but separate structures:
 > - `StoredMessage` in the session JSONL
@@ -135,7 +170,9 @@ CHANGELOG 明确写：
 
 **核心问题**：同一个 run 被 5 个结构并行表示，5 个结构各自是"局部真相"——`StoredMessage` 是历史、`SessionEvent` 是 UI 投影、`AgentRunEvent` 是 ledger 事件、`RunTraceEvent` 是诊断、telemetry 是指标。当你要回答"哪些事件该回放到下一次模型请求"时，要在 5 个结构里交叉过滤。
 
-### 4.2 参考 Google ADK Go 的分层
+这个问题不是理论上的。举个具体例子：如果用户中途 abort 一次 run，哪些结构要更新？`StoredMessage` 要标记 abort、`SessionEvent` 要推送 abort 状态给 renderer、`AgentRunEvent` 要记录 abort 原因、`RunTraceEvent` 要写入 abort 事件、telemetry 要记录 abort 延迟。5 个地方都要改，而且改法不一定一样。
+
+### 5.2 参考 Google ADK Go 的分层
 
 作者从 Google ADK Go 的 `Runner → Agent → Flow → Model/Tool → Event → Session` 分层里学到一条：
 
@@ -147,9 +184,9 @@ CHANGELOG 明确写：
 > - `Session` stores durable history and scoped state.
 > - tool, callback, plugin, instruction, workflow, entrypoint, and telemetry layers attach around that axis without becoming the axis themselves."
 
-**关键洞察**：ADK 的分层是"围绕一条中心轴挂能力"，不是"每个能力自己一个轴"。Maka 的当前架构更像后者。
+**关键洞察**：ADK 的分层是"围绕一条中心轴挂能力"，不是"每个能力自己一个轴"。Maka 的当前架构更像后者——tool 有自己的事件、permission 有自己的事件、model 有自己的事件，没有一个统一的事件流让它们都挂上去。
 
-### 4.3 目标架构
+### 5.3 目标架构
 
 ```
 RuntimeRunner                         # invocation shell + persistence boundary
@@ -172,7 +209,9 @@ RuntimeRunner                         # invocation shell + persistence boundary
   全部变成"投影 / ledger"，从 canonical 事件派生
 ```
 
-### 4.4 迁移的 5 条边界
+这个 shift 的具体好处：abort 只要写一次 `RuntimeEvent { type: 'abort' }`，然后 5 个投影各自决定怎么处理这个事件。不用在 5 个地方重复写 abort 逻辑。
+
+### 5.4 迁移的 5 条边界
 
 文档显式声明的迁移约束：
 
@@ -184,11 +223,13 @@ RuntimeRunner                         # invocation shell + persistence boundary
 
 **一句话总结 Runtime v2**：把"5 个并列真相"收敛为"1 个 canonical 事件 + 5 个投影"，迁移以"复用 + 渐进"为底线。
 
-## §5 9 个 Memory Privacy Gates：本地记忆的隐私设计
+## §6 9 个 Memory Privacy Gates：本地记忆的隐私设计
 
-`docs/memory-threat-model.md` 是 Maka 最值得读的设计文档之一。PR-MEMORY-1 标注为 **contract-only**——只定义类型和 validator，不加 IPC、storage、UI、settings。
+`docs/memory-threat-model.md` 比大多数 AI Agent 项目的隐私设计都更具体。PR-MEMORY-1 标注为 **contract-only**——只定义类型和 validator，不加 IPC、storage、UI、settings。
 
-### 5.1 源分离（gate #8 + 类型系统）
+这一节回答了一个具体问题：当 AI agent 开始"记住"用户时，怎么防止它记住不该记住的东西。
+
+### 6.1 源分离（gate #8 + 类型系统）
 
 Memory 不是一个 surface，contract types 把它们分开，避免"准记忆观察"通过类型变成"持久记忆条目"：
 
@@ -207,7 +248,9 @@ interface DraftMemoryEntry    { source: MemoryCandidateSource; ... }
 
 `MemorySource` 和 `MemoryCandidateSource` 是**不相交的两个 enum**。语音转写稿永远 type-check 不进 `DurableMemoryEntry`，连 validator 都走不到。
 
-### 5.2 9 个 Privacy Gates 全表
+这个设计的关键点：**不是靠"自觉"或"文档约定"来防止语音转写稿变成持久记忆，而是靠类型系统让这件事在编译期就不可能**。这是"防御式编程"在隐私设计上的应用。
+
+### 6.2 9 个 Privacy Gates 全表
 
 | # | Gate | 落实位置 |
 |---|------|----------|
@@ -221,7 +264,7 @@ interface DraftMemoryEntry    { source: MemoryCandidateSource; ... }
 | 8 | **provider+embedding leakage boundary** | `MemoryCapabilitySnapshot.embeddingProvider` 硬编码 `'disabled'`；下游 wiring provider 必须扩 snapshot type |
 | 9 | **renderer cannot forge provenance/readiness** | `MemoryWriteRequestContext.originatedFromRenderer=true` 直接拒 durable `'active'` 写——即使 `confirmedAt` 合法 |
 
-### 5.3 准记忆的 exclusion list
+### 6.3 准记忆的 exclusion list
 
 这 9 个 surface 都含**用户相关数据**，但都不能被当成 `MemorySource`、不能自动升级：
 
@@ -237,26 +280,34 @@ interface DraftMemoryEntry    { source: MemoryCandidateSource; ... }
 - Voice transcripts
 - CU / Activity observations
 
-### 5.4 关键洞察：9 个 gate 是 design decision，不是 feature
+### 6.4 关键洞察：9 个 gate 是设计决策，不是功能开关
 
-这 9 个 gate 不是"实现一个安全开关"那种 feature——是**对"AI 主动学用户"这件事的边界声明**。每一条都在说：AI 不能在你不知道的时候把信息写进它的记忆。
+这 9 个 gate 不是"实现一个安全开关"那种功能——是**对"AI 主动学用户"这件事的边界声明**。每一条都在说：AI 不能在你不知道的时候把信息写进它的记忆。
 
 具体说：
 
-- **Gate 1 + 2**：默认关 + 手动确认。意味着用户**主动打开** + **逐条确认**才能加 memory，不是开了就持续写
-- **Gate 4**：隐身模式下连 read 都要 disable。意味着隐身不是"读但不写"，是"完全无状态"
-- **Gate 5**：无自动睡眠合并。意味着不会半夜偷偷合并你的 memory entry
-- **Gate 6**：没有 silent 引用。意味着 agent 引用 memory 时一定 visible 标注
-- **Gate 8**：embedding provider 硬编码 disabled。意味着 v1 不会偷偷把 memory 发到 OpenAI 做 embedding
-- **Gate 9**：renderer 端不能伪造 provenance。意味着恶意扩展不能"代表用户"加 memory
+- **Gate 1 + 2**：默认关 + 手动确认。意味着用户**主动打开** + **逐条确认**才能加 memory，不是开了就持续写。对比：很多 AI 工具的 memory 功能是"开了就持续写，用户可以删"。
+- **Gate 4**：隐身模式下连 read 都要 disable。意味着隐身不是"读但不写"，是"完全无状态"。对比：浏览器的隐身模式仍然有 session storage。
+- **Gate 5**：无自动睡眠合并。意味着不会半夜偷偷合并你的 memory entry。对比：有些工具的记忆合并是全自动的。
+- **Gate 6**：没有 silent 引用。意味着 agent 引用 memory 时一定 visible 标注。对比：有些 AI 助手会在回复里"默默用"记忆但不标注。
+- **Gate 8**：embedding provider 硬编码 disabled。意味着 v1 不会偷偷把 memory 发到 OpenAI 做 embedding。对比：很多 AI 工具的记忆功能依赖远程 embedding。
+- **Gate 9**：renderer 端不能伪造 provenance。意味着恶意扩展不能"代表用户"加 memory。
 
-## §6 凭据保护：4 类密钥走 Electron safeStorage
+### 自测：如果你在做类似项目
+
+1. 你的 AI agent 的 memory 功能，是"默认关 + 手动确认"，还是"默认开 + 可以删"？
+2. 如果你的 renderer 被 XSS 攻击，攻击者能拿到用户的 API key 吗？
+3. 如果你的 agent 中途 crash，下次启动能恢复到哪个状态？是"丢光了重来"，还是"从最后一个完整的 turn 边界继续"？
+
+如果这 3 个问题的答案你不确定，§6 和 §7 值得细读。对比：浏览器扩展可以读写 localStorage。
+
+## §7 凭据保护：4 类密钥走 Electron safeStorage
 
 README 把凭据保护说得很直白：
 
 > "Provider 连接元数据和 session JSONL 在本地文件系统。**API key、OAuth token、bot token、proxy password、gateway token、Tavily key 等敏感值走 Electron `safeStorage` 加密后写入 `credentials.json`**。Renderer 不直接拿明文密钥；Settings 只显示 masked 状态和测试结果。"
 
-### 6.1 4 类密钥的处理路径
+### 7.1 4 类密钥的处理路径
 
 | 密钥类型 | 加密 | 存储位置 | Renderer 可见性 |
 |----------|------|----------|-----------------|
@@ -270,16 +321,16 @@ README 把凭据保护说得很直白：
 | Session JSONL | 不加密 | `sessions/` | 完整 |
 | 用户 settings | 不加密 | `settings.json` | 完整 |
 
-### 6.2 设计意图
+### 7.2 设计意图
 
-- **凭据分层**——secret 和 metadata 分离：metadata 让用户能查"我接了哪些 provider"，secret 让 renderer 只能问"这个连接能不能用"
-- **Renderer 不持密**——preload 暴露的是 "test connection" 这种操作接口，不是 "read api key" 这种读取接口
-- **Settings 只显示 masked**——比如 `sk-••••••••••••••••••abcd`，不显示明文
-- **测试结果可读**——连接成功/失败、延迟、错误类别可读，方便用户排查
+- **凭据分层**——secret 和 metadata 分离：metadata 让用户能查"我接了哪些 provider"，secret 让 renderer 只能问"这个连接能不能用"。这个分层的关键：即使 renderer 被 XSS 攻击，攻击者拿不到明文密钥。
+- **Renderer 不持密**——preload 暴露的是 "test connection" 这种操作接口，不是 "read api key" 这种读取接口。具体实现：preload 里的 `invoke` 方法只接受操作名和参数，不接受"读凭据"操作。
+- **Settings 只显示 masked**——比如 `sk-••••••••••••••••••abcd`，不显示明文。这个看似简单，但很多 Electron 应用的设置页面会不小心把 API key 显示在 HTML 里（比如为了"方便用户复制"）。
+- **测试结果可读**——连接成功/失败、延迟、错误类别可读，方便用户排查。这个设计平衡了安全和可用性：用户需要知道连接状态，但不需要知道密钥内容。
 
-**这是"本地优先"的必然推论**——既然数据全在本地，凭据就是最大风险源。把凭据做对了，本地优先的隐私承诺才真正成立。
+**这是"本地优先"的必然推论**——既然数据全在本地，凭据就是最大风险源。把凭据做对了，本地优先的隐私承诺才真正成立。如果凭据明文存在 `settings.json` 里，"本地优先"只是把风险从云端移到了本地文件系统，没有实质提升。
 
-## §7 多模型接入：13 个入口的 provider 抽象
+## §8 多模型接入：13 个入口的 provider 抽象
 
 README 列出已接入的模型类型：
 
@@ -293,21 +344,25 @@ README 列出已接入的模型类型：
 
 13 个入口的接入方式在 `packages/core/src/llm-connections.ts` 和 `packages/runtime/src/model-factory.ts` 实现，关键设计：
 
-### 7.1 真实连接状态 vs 伪装可用
+### 8.1 真实连接状态 vs 伪装可用
 
 README 反复强调一件事：
 
 > "账号订阅入口：Claude Subscription、Codex Subscription、Gemini CLI 等**仍按实验/可用状态分开呈现，未接入发送链路的入口不会伪装成可用**。"
 
+这个设计选择值得注意。很多 AI 工具会在 UI 上显示"支持 Anthropic/OpenAI/Google"，但实际上只接了 Anthropic 的发送链路，OpenAI 和 Google 只是"占位符"。Maka 的做法是：**没接通发送链路的入口，UI 显示"实验/不可用"**，不伪装成可用。
+
 落到 UI 上：用户看到的"已接入"列表和实际能用的列表必须严格一致。如果某个 provider 接了 OAuth 但还没接通消息发送链路，UI 必须显示"实验/不可用"——不能为了让界面好看而伪装修好了。
 
-### 7.2 首跑引导根据真实连接状态
+这个选择的代价：首屏用户体验可能更差（看到"不可用"比看到"已接入"更让人失望）。这个选择的好处：用户不会因为"以为能用"而浪费时间配置，也不会因为"配好了但不能用"而失去信任。
+
+### 8.2 首跑引导根据真实连接状态
 
 > "首次进入 Maka 时，如果还没有可用模型连接，首屏会引导你完成 AI 配置，而不是直接给一个不能发送的空聊天框。推荐路径是：打开 设置 → 模型 → 选择一个真实模型供应商，填写 API key 或完成已接入的账号登录 → 测试连接并选择默认模型 → 回到首屏。"
 
 **关键设计**：首屏不是空 chat box + 错误提示，而是**主动引导补配置**。这是 CLI/桌面工具的标准做法，但很多 AI 工具反而在 web 端养成了"空 chat box + 错误"的坏习惯。
 
-### 7.3 Provider error mapping 走 ModelAdapter
+### 8.3 Provider error mapping 走 ModelAdapter
 
 CHANGELOG 把 `ModelAdapter` 的职责明确：
 
@@ -315,9 +370,11 @@ CHANGELOG 把 `ModelAdapter` 的职责明确：
 
 **关键设计**：provider 错误归一化（rate limit / auth fail / timeout / model overloaded）都在 `ModelAdapter` 收口。**未来加新 provider 不会污染 `AiSdkBackend` 的 orchestration**。
 
-## §8 OpenGateway + 多机器人入口：让 AI 工作台接入既有消息流
+具体例子：Anthropic 的 rate limit 错误格式是 `{ "error": { "type": "rate_limit_error" } }`，OpenAI 的是 `{ "error": { "code": "rate_limit_exceeded" } }`，Google 的是 `{ "error": { "status": "RESOURCE_EXHAUSTED" } }`。`ModelAdapter` 把这 3 种格式归一化成统一的 `ProviderError { type: 'rate_limit' }`，上层不用关心是哪个 provider 报的错。
 
-### 8.1 OpenGateway
+## §9 OpenGateway + 多机器人入口：让 AI 工作台接入既有消息流
+
+### 9.1 OpenGateway
 
 README 描述：
 
@@ -325,11 +382,17 @@ README 描述：
 
 这是一个**本地 HTTP/SSE 入口**——其他程序可以通过 token 读取 Maka 的会话状态、事件、能力、健康摘要。
 
+**具体用例**：
+
+1. **IDE 集成**：VSCode 扩展可以读 Maka 的会话状态，在编辑器侧边栏显示当前 agent 在做什么。不用让用户切换到 Maka 窗口。
+2. **CI/CD 集成**：CI pipeline 可以查询 Maka 的健康状态，决定是否触发自动化任务。
+3. **自定义脚本**：用户可以写脚本定期导出会话摘要，或者根据会话状态触发通知。
+
 **关键设计意图**：让 Maka 不只是"一个 Electron app"，而是"一个本地 AI 控制器"——其他工具（IDE、CI、自定义脚本）能**只读**地观察它的状态。
 
 **和 memory threat model 的一致性**：本地 HTTP 入口需要 token 保护，token 走 safeStorage 加密。这与"memory 不允许 unauthenticated local route"是同一条隐私规则。
 
-### 8.2 7 个机器人入口
+### 9.2 7 个机器人入口
 
 ```
 Telegram、飞书、企业微信、微信 iLink、Discord、钉钉、QQ
@@ -339,57 +402,110 @@ Telegram、飞书、企业微信、微信 iLink、Discord、钉钉、QQ
 
 设计意图：用户在 Telegram 上的对话和 UI 内的对话**共享同一套 session 存储**——`sessions/*/session.jsonl` 是不分入口的。bot 入口只是"消息来源"不同。
 
-## §9 启示：给独立 AI Agent 项目作者的 5 条工程经验
+这个设计的具体好处：用户在 Telegram 上让 agent 改了一个文件，回到桌面 UI 能看到这个修改的记录。不用在 Telegram 和桌面 UI 之间同步状态。
+
+**实现细节**：每个 bot 入口都是一个 headless 进程，读同一个 `sessions/` 目录。并发控制靠文件锁，不靠数据库事务。这是"本地优先"的代价之一——没有集中式数据库来做并发控制。
+
+## §10 启示：给独立 AI Agent 项目作者的 5 条工程经验
 
 读完 Maka 的代码和文档，5 条对独立项目作者可复用的工程经验：
 
-### 9.1 Runtime 不要"以 SessionManager 为中心"
+### 10.1 Runtime 不要"以 SessionManager 为中心"
 
 Migrating from "所有事在一个大类里"到"6 个边界清晰的内部组件"，用户面 0 改动——这是 6 月所有 AI Agent 项目都应该走的路。
 
-**反模式**：在 `SessionManager` / `BotManager` / `Agent` 这种"大管家"类里塞所有逻辑
-**正路**：把 runtime 拆成 6+ 个内部组件（ToolRuntime / ModelAdapter / RunTrace / AgentRun types & store / AgentRun execution / Startup recovery），让一个用户 turn 沿一条明确的边界链执行
+**反模式**：在 `SessionManager` / `BotManager` / `Agent` 这种"大管家"类里塞所有逻辑。具体表现：一个类超过 500 行、一个方法超过 50 行、改一个功能要同时改好几个地方。
 
-### 9.2 把"5 个并列真相"收敛成"1 canonical + N 投影"
+**正路**：把 runtime 拆成 6+ 个内部组件（ToolRuntime / ModelAdapter / RunTrace / AgentRun types & store / AgentRun execution / Startup recovery），让一个用户 turn 沿一条明确的边界链执行。每个组件控制在 100-200 行以内。
+
+**什么时候该拆**：不是"代码行数超了"就该拆，是"同一个 bug 要同时改好几个地方"就该拆。Maka 的触发点是"加一个新 provider 要复制一遍 permission / tool / run / session-state 行为"。
+
+### 10.2 把"5 个并列真相"收敛成"1 canonical + N 投影"
 
 Runtime v2 演进的核心是把 `StoredMessage` / `SessionEvent` / `AgentRunEvent` / `RunTraceEvent` / `telemetry` 5 个结构收敛成一个 `RuntimeEvent` 中心 + 5 个投影。
 
-**反模式**：5 个数据结构并行存在，每次改一个就要同步改 5 个
-**正路**：先识别 1 个 canonical 事件流，再决定哪些字段进哪个投影
+**反模式**：5 个数据结构并行存在，每次改一个就要同步改 5 个。具体表现：abort 要在 5 个地方写逻辑、加一个新事件类型要改 5 个文件。
 
-### 9.3 隐私设计靠"9 个 gate"，不靠"1 个开关"
+**正路**：先识别 1 个 canonical 事件流，再决定哪些字段进哪个投影。canonical 事件流是"运行时真相"，投影是"不同消费者的视图"。
+
+**具体做法**：找一个"要改 5 个地方"的场景，把它做成"只改 1 个地方"。Maka 的做法是：abort 只写一次 `RuntimeEvent { type: 'abort' }`，然后 5 个投影各自决定怎么处理。
+
+### 10.3 隐私设计靠"9 个 gate"，不靠"1 个开关"
 
 大多数 AI Agent 项目用 1 个 "memory on/off" 开关来假装有隐私。Maka 拆成 9 个独立可验证的 gate（default-off / manual confirm / reversible / incognito / no auto consolidation / visible citation / no hidden promotion / embedding provider disabled / renderer can't forge）。
 
-**反模式**：1 个总开关 → 内部随便写
-**正路**：9 个独立 gate → 每个 gate 单独 validator 拒绝特定情况，类型系统 + 校验器双层防护
+**反模式**：1 个总开关 → 内部随便写。具体表现：memory 开关是"on"，然后 AI 自动把聊天记录里的信息写成记忆条目。
 
-### 9.4 凭据分层 + Renderer 不持密
+**正路**：9 个独立 gate → 每个 gate 单独 validator 拒绝特定情况，类型系统 + 校验器双层防护。即使 8 个 gate 都过了，第 9 个 gate 也能拦住。
+
+**具体做法**：列一下你的 AI agent 能拿到哪些用户数据（聊天记录、文件内容、设置、使用历史），然后给每一类数据设计"它不能怎么用"的规则。
+
+### 10.4 凭据分层 + Renderer 不持密
 
 凭据走 `safeStorage` 加密，Renderer 不持明文，Settings 只显示 masked。
 
-**反模式**：把 API key 存在 localStorage / settings.json / window 对象里
-**正路**：secret 走 OS 级加密（safeStorage / Keychain / libsecret），metadata 走普通存储，Renderer 只暴露"操作接口"不暴露"读取接口"
+**反模式**：把 API key 存在 localStorage / settings.json / window 对象里。具体表现：打开 DevTools，在 Application → Local Storage 里能看到 API key。
 
-### 9.5 Provider 真实可用 vs 伪装可用
+**正路**：secret 走 OS 级加密（safeStorage / Keychain / libsecret），metadata 走普通存储，Renderer 只暴露"操作接口"不暴露"读取接口"。
+
+**具体做法**：Electron 应用用 `safeStorage` 加密敏感值，preload 只暴露操作接口（比如 `testConnection(providerId)`），不暴露读取接口（比如 `getApiKey(providerId)`）。
+
+### 10.5 Provider 真实可用 vs 伪装可用
 
 UI 上"已接入"的 provider 必须和"实际能用"的 provider 严格一致。
 
-**反模式**：为了让界面好看显示"已接入 OpenAI"但实际没接通
-**正路**：provider 接通链路有明确状态（实验 / 可用 / 不可用），UI 必须按真实状态显示
+**反模式**：为了让界面好看显示"已接入 OpenAI"但实际没接通。具体表现：用户选了 OpenAI，点"发送"，然后报错"未接入"。
 
-## §10 关联阅读
+**正路**：provider 接通链路有明确状态（实验 / 可用 / 不可用），UI 必须按真实状态显示。代价：首屏用户体验可能更差。好处：用户不会因为"以为能用"而浪费时间。
 
-| 主题 | 推荐阅读顺序 |
-|------|--------------|
-| **想看完整 Runtime Kernel 改动** | `docs/runtime-kernel.md`（277 行）→ `CHANGELOG.md` |
-| **想看 Runtime v2 演化方向** | `docs/runtime-v2-architecture-evolution.md`（660 行）→ `docs/runtime-v2-implementation-notes.md` |
-| **想看 Memory 隐私设计** | `docs/memory-threat-model.md`（119 行）→ `docs/workspace-privacy-context.md`（142 行） |
-| **想看设计系统** | `docs/design-system.md`（1622 行）→ `docs/ui-quality-plan.md` |
-| **想看测试计划** | `docs/full-product-test-plan.md`（544 行） |
-| **想看能力清单** | `docs/maka-capability-audit-v1.md`（734 行） |
+**具体做法**：给每个 provider 加一个 `status` 字段（`'experimental'` / `'available'` / `'unavailable'`），UI 按 `status` 显示，不按"有没有配置"显示。
 
-仓库只 commit 1 次（根 init），但 645 个文件 + 4888 行 design docs + 5 个 package + 1 个 desktop app 的内容密度，是值得反复读的工程样例。
+### 自测：5 条经验对照
+
+1. 你的 runtime 里有没有"大管家"类（一个类超过 500 行）？有没有想过怎么拆？
+2. 你的系统里有没有"5 个并列真相"的问题（同一件事被多个数据结构表示）？
+3. 你的 AI agent 的隐私设计，是"1 个开关"还是"多层 gate"？
+4. 你的凭据存在哪里？renderer 能拿到明文吗？
+5. 你的 UI 上"已接入"的列表，和实际能用的列表一致吗？
+
+如果任何一道题的答案是"没有"或"不一致"，对应的那节值得回头细读。
+
+## §11 谁该先用 Maka，谁可以等等
+
+读完代码和文档，给一个直接的判断：
+
+**该现在就试 Maka 的团队**：
+- 已经在本地跑 AI coding agent，但担心代码和会话历史存在云端
+- 需要接多个模型供应商，但不想每个供应商写一套错误处理
+- 关心 AI agent 的隐私边界，想看一个"把隐私做成 9 个 gate"的具体实现
+
+**可以等等再看的团队**：
+- 只需要一个 chat interface，不需要工具执行、文件读写、终端命令
+- 不需要本地优先，数据放云端没问题
+- 团队里没有人熟悉 Electron 或 TypeScript
+
+**如果想把 Maka 的设计思路用到自己的项目**：
+
+1. 先读 `docs/memory-threat-model.md`——看看怎么用类型系统+validator 做隐私边界
+2. 再读 `docs/runtime-kernel.md`——看看怎么把大块运行时拆成小组件
+3. 最后读 `CHANGELOG.md`——看看"用户面 0 改动"的运行时重构怎么做
+
+### 进阶路径
+
+**如果你是想做 AI Agent 产品的开发者**：
+- 第一步：把 §6（9个 Privacy Gates）的设计思路用到你的 memory 功能里
+- 第二步：把 §7（凭据保护）的实现用到你的 Electron 应用里
+- 第三步：读 Maka 的 `packages/runtime` 源码，看看 6 个组件怎么拆
+
+**如果你是想理解 AI Agent 架构的研究者**：
+- 第一步：读 §4（Runtime Kernel Extraction）和 §5（Runtime v2）
+- 第二步：对比 Maka 的架构和 Google ADK Go 的分层
+- 第三步：思考"1个 canonical 事件 + N 个投影"在你的系统里怎么落地
+
+**如果你是想用 Maka 的用户**：
+- 第一步：按 §2 的表格检查你的需求是否匹配
+- 第二步：按 §8 的引导完成首次配置
+- 第三步：用 §9 的 OpenGateway 把 Maka 集成到你的工作流
 
 ---
 

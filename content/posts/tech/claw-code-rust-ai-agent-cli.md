@@ -8,6 +8,18 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "Rust", "Claude", "MCP协议", "命令行工具"]
 ---
 
+## 学习目标
+
+读完本文后，你应该能够：
+
+- 理解 Claw Code 的项目定位与核心能力，判断它是否适合你的场景
+- 从源码成功构建并运行 `claw` CLI，完成环境验证
+- 配置 PATH 使 `claw` 命令全局可用
+- 理解 Claw Code 的架构设计与会话管理能力
+- 针对常见问题独立完成排查
+
+---
+
 ## 项目概览
 
 [Claw Code](https://github.com/ultraworkers/claw-code) 是 ultraworkers 团队开源的 AI Agent（人工智能代理）开发框架，采用 Rust 语言实现，是 `claw` CLI agent harness 的公开参考实现。截至 2026 年初，该项目已在 GitHub 获得接近 19 万颗星，成为 AI Agent 开源领域最受关注的 CLI 工具之一。
@@ -174,6 +186,27 @@ cargo build --workspace --release
 ### Q: 支持 Windows 吗？
 
 支持。推荐使用 PowerShell，Git Bash 和 WSL 也是可行替代方案。唯一需要注意的是路径和后缀名差异（`.exe`）。
+
+---
+
+## 练习与进阶路径
+
+### 自测练习
+
+1. **环境搭建**：从源码克隆并构建 Claw Code，运行 `claw doctor` 验证环境。尝试故意不设置 `ANTHROPIC_API_KEY`，观察错误信息是什么。
+
+2. **PATH 配置对比**：分别用软链接和 `cargo install --path` 两种方式配置 PATH，比较哪种方式更适合你的工作流。
+
+3. **会话管理实验**：启动一个多轮对话，然后用 `--help` 查看会话相关命令，尝试保存和恢复会话。
+
+4. **MCP 协议探索**：阅读 `docs/container.md`，理解容器化部署的流程。尝试在一个隔离环境中运行 Claw Code。
+
+### 进阶方向
+
+- **深入 Rust 实现**：阅读 `rust/README.md` 和 `rust/src/` 下的代码，理解 CLI 的实现细节
+- **MCP 协议开发**：基于 Claw Code 的 MCP 支持，开发自定义工具或数据源连接器
+- **贡献社区**：查看 `ROADMAP.md` 中的待办事项，选择一个感兴趣的功能参与贡献
+- **对比研究**：将 Claw Code 与其他 AI Agent CLI 工具（如 Claude Code、Aider）对比，分析各自的优缺点
 
 ---
 
