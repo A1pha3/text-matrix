@@ -23,7 +23,7 @@ Babel 把 Claude Code 这类 AI coding agent 引入芯片设计流程，用 labe
 
 ## 总览地图
 
-Babel 的系统边界可以拆成三层：上层是 agent 编排层，用 Claude Code 的 slash command 和 labeled issue 驱动；中层是 skill 层，把 EDA 工具调用、质量检查、流程生成、质量门控封装成可复用 skill；下层是开源 EDA 工具层，Yosys/OpenSTA/Magic 等工具直接执行综合、时序分析、物理设计。
+Babel 的系统边界分三层：上层是 agent 编排层，用 Claude Code 的 slash command 和 labeled issue 驱动；中层是 skill 层，把 EDA 工具调用、质量检查、流程生成、质量门控封装成可复用 skill；下层是开源 EDA 工具层，Yosys/OpenSTA/Magic 等工具直接执行综合、时序分析、物理设计。
 
 ```text
 用户需求 → [bba-architect] → bba-guru-rtl → bba-guru-verification → bba-guru-synthesis → bba-guru-pd → signoff
@@ -46,7 +46,7 @@ Babel 的系统边界可以拆成三层：上层是 agent 编排层，用 Claude
 
 ### 为什么用 issue handoff
 
-芯片设计流程本质是多阶段接力：架构师交付 MAS（微架构规范）后，RTL 工程师才能开始编码；RTL 通过 lint 后，验证工程师才能跑仿真。Babel 把这种接力关系映射成 GitHub issue 的 label 状态机，每个 agent 监听自己负责的 label，处理完后打上下一个 label。
+芯片设计流程是多阶段接力：架构师交付 MAS（微架构规范）后，RTL 工程师才能开始编码；RTL 通过 lint 后，验证工程师才能跑仿真。Babel 把这种接力关系映射成 GitHub issue 的 label 状态机，每个 agent 监听自己负责的 label，处理完后打上下一个 label。
 
 选 issue handoff 而不是函数调用或消息队列，是因为 issue 自带评论、附件、关联 PR，能承载设计产物的元数据；label 状态机对人类可读，设计师可以随时介入修改 label 强制回流；agent 间不共享内存状态，issue 充当持久化的消息队列，崩溃后可恢复。
 
@@ -94,7 +94,7 @@ Babel 的系统边界可以拆成三层：上层是 agent 编排层，用 Claude
 | synthesis | timing 6 次 | 10 |
 | pd | total 8 次（DRC 3 / LVS 2 / STA 3） | 10 |
 
-超限自动触发 `escalate-user`，停止并等待用户决策。这个设计承认 AI agent 在硬件设计上无法 100% 自主收敛——Babel 把"何时放弃"做成可观察的 label，避免 agent 在死循环中耗尽配额。
+超限自动触发 `escalate-user`，停止并等待用户决策。Babel 承认 AI agent 在硬件设计上无法 100% 自主收敛——把"何时放弃"做成可观察的 label，避免 agent 在死循环中耗尽配额。
 
 ## Skill 体系
 
@@ -216,7 +216,7 @@ designs/<name>/
 
 7. **用户审核**：`signoff` label 触发用户审核 GDSII。用户可强制打 `*-needs-fix` label 回流到任意阶段。
 
-agent 间没有共享内存或直接调用，状态只通过文件系统和 issue label 传递。这种解耦让单个 agent 失败时可以单独重试，不必回滚整条流水线。
+agent 间没有共享内存或直接调用，状态只通过文件系统和 issue label 传递。单个 agent 失败时可以单独重试，不必回滚整条流水线。
 
 ## 技术栈
 
@@ -240,7 +240,7 @@ agent 间没有共享内存或直接调用，状态只通过文件系统和 issu
 source ~/wrk/eda_opensources/eda_env.sh
 ```
 
-这个脚本设置 Yosys、OpenSTA、Magic 等工具的 PATH 和环境变量。路径来自项目作者的环境，使用前需要按自己的安装位置调整。
+脚本设置 Yosys、OpenSTA、Magic 等工具的 PATH 和环境变量。路径来自项目作者的环境，使用前需要按自己的安装位置调整。
 
 ### 启动设计流程
 
@@ -272,7 +272,7 @@ claude-code
 ### 适合的场景
 
 - **教学和原型验证**：Babel 把完整芯片设计流程串成可复现的 agent 流水线，适合用来理解从 PRD 到 GDSII 的每个阶段产出什么、检查什么。
-- **开源 EDA 工具链练手**：如果想在真实设计任务中熟悉 Yosys/OpenSTA/Magic，Babel 提供了现成的调用封装和质量门控。
+- **开源 EDA 工具链练手**：想在真实设计任务中熟悉 Yosys/OpenSTA/Magic 时，Babel 提供了现成的调用封装和质量门控。
 - **AI agent 流程编排参考**：issue handoff + labeled state machine 的模式可以迁移到其他多阶段接力场景，如编译器开发、形式化验证流程。
 
 ### 需要注意的风险
