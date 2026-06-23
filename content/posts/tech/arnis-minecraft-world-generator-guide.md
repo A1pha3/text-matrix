@@ -8,51 +8,40 @@ categories: ["技术笔记"]
 tags: ["Minecraft", "Rust", "OpenStreetMap", "地理数据", "游戏"]
 ---
 
-Arnis：.K Stars·Minecraft 真实世界地图生成器·OpenStreetMap 地理数据·Rust 高性能
+# Arnis：用 OpenStreetMap 把真实城市搬进 Minecraft
 
-一、项目概述
-
-. Arnis 是什么
-
-**Arnis** 是一个将**真实世界地理位置**转换为**Minecraft 世界**的开源工具。
+Arnis 把 OpenStreetMap（OSM）的矢量地理数据转换成 Minecraft 方块世界，覆盖 Java 1.17+ 和 Bedrock Edition。它把 OSM 的 `building`、`highway`、`waterway` 标签稳定地映射成可进入、可踩、可挖的方块，并叠加 SRTM/DEM 高程数据让地形起伏可信。仓库用 Rust 写成，主分支编译产物同时提供 Tauri GUI 和无 GUI 的 CLI 两种入口，桌面探索和服务器批量生成都能覆盖。
 
 > "Arnis creates complex and accurate Minecraft Java Edition (1.17+) and Bedrock Edition worlds that reflect real-world geography, topography, and architecture."
+> —— Arnis README
 
-. 核心数据
+## 项目速览
 
-| 指标 | 数值 |
-|------|------|
-| Stars | **14.8k** ⭐ |
-| Forks | 1.2k |
-| 贡献者 | 49 |
-| 最新版本 | **v2.6.0** (2026-04-07) |
-| 许可证 | Apache-2.0 |
-| 语言 | Rust 99.8% |
+| 指标 | 数值 | 备注 |
+|------|------|------|
+| Stars | 14.8k ⭐ | 截至 2026-04-07 仓库公开数据 |
+| Forks | 1.2k | 同上 |
+| 贡献者 | 49 | 同上 |
+| 最新版本 | v2.6.0 (2026-04-07) | 发布页见文末资源链接 |
+| 许可证 | Apache-2.0 | 商业友好 |
+| 主语言 | Rust 99.8% | GUI 通过 Tauri 桥接 |
 
-. 核心定位
+**能力边界一览**：
 
-| 维度 | 说明 |
-|------|------|
-| 🎮 **Minecraft 生成** | Java 1.17+ 和 Bedrock Edition |
-| 🗺️ **真实地理** | OpenStreetMap 数据 |
-| 🏔️ **地形还原** | 高程数据 |
-| 🏠 **建筑还原** | 真实世界建筑 |
-| 🌐 **跨平台** | Windows/macOS/Linux |
+| 维度 | 支持情况 |
+|------|----------|
+| Minecraft 版本 | Java 1.17 / 1.18 / 1.19 / 1.20 / 1.21+，Bedrock 最新版 |
+| 地理数据 | OpenStreetMap（建筑、道路、水体、土地利用） |
+| 高程数据 | SRTM / DEM（山脉、峡谷） |
+| 建筑还原 | 按 OSM `building:levels` 标签分层拉伸 |
+| 平台 | Windows / macOS / Linux |
+| 入口 | GUI（Tauri）+ CLI + Nix flake |
 
-. 核心特性
+下面按安装、数据流、架构、调优、对比的顺序展开。
 
-| 特性 | 说明 |
-|------|------|
-| ✅ **开源免费** | Apache-2.0 许可证 |
-| ✅ **多版本支持** | Minecraft Java 1.17+ / Bedrock |
-| ✅ **地理数据** | OpenStreetMap |
-| ✅ **高程数据** | 真实地形 |
-| ✅ **跨平台** | Windows/macOS/Linux |
-| ✅ **GUI + CLI** | 图形界面和命令行 |
+## 快速上手
 
-二、快速开始
-
-. 下载安装
+### 三种安装方式
 
 **方式一：下载预编译版本**
 
@@ -63,14 +52,14 @@ Arnis：.K Stars·Minecraft 真实世界地图生成器·OpenStreetMap 地理数
 **方式二：源码编译**
 
 ```bash
-克隆仓库
+# 克隆仓库
 git clone https://github.com/louis-e/arnis.git
 cd arnis
 
-编译（无 GUI）
+# 编译（无 GUI）
 cargo build --release --no-default-features
 
-或编译（有 GUI）
+# 或编译（有 GUI）
 cargo build --release
 ```
 
@@ -80,230 +69,128 @@ cargo build --release
 nix run github:louis-e/arnis -- --terrain --path="YOUR_PATH/.minecraft/saves/worldname" --bbox="min_lat,min_lng,max_lat,max_lng"
 ```
 
-. GUI 使用
+源码编译需要 Rust 1.70+ 和 Cargo 最新稳定版。无 GUI 版本适合服务器和无显示器的 Linux 主机，编译产物更小、依赖更少，可以避开 Tauri 的 WebKit 依赖。
+
+### GUI 流程：选区即生成
 
 ```bash
-启动图形界面
+# 启动图形界面
 cargo run
 ```
 
-操作步骤：
-1. 在地图上使用矩形工具选择区域
-2. 选择 Minecraft 世界
+GUI 操作三步：
+
+1. 在地图上用矩形工具框选目标区域
+2. 选择一个已存在的 Minecraft 存档目录
 3. 点击 "Start Generation" 开始生成
 
-. CLI 使用
+GUI 适合首次探索和小范围验证。一旦需要批量生成或脚本化，切到 CLI 更合适。
 
-**命令行生成地形**：
+### CLI 流程：参数化生成
 
 ```bash
 cargo run --no-default-features -- \
- --terrain \
- --path="C:/YOUR_PATH/.minecraft/saves/worldname" \
- --bbox="40.7128,-74.0060,40.7580,-73.9855"
+  --terrain \
+  --path="C:/YOUR_PATH/.minecraft/saves/worldname" \
+  --bbox="40.7128,-74.0060,40.7580,-73.9855"
 ```
 
-参数说明：
+核心参数：
+
 | 参数 | 说明 | 示例 |
 |------|------|------|
-| `--terrain` | 生成地形 | 必填 |
+| `--terrain` | 启用地形高程生成 | 必填 |
 | `--path` | Minecraft 存档路径 | `~/.minecraft/saves/` |
-| `--bbox` | 边界框坐标 | `min_lat,min_lng,max_lat,max_lng` |
+| `--bbox` | 边界框坐标 `min_lat,min_lng,max_lat,max_lng` | `40.7128,-74.0060,40.7580,-73.9855` |
 
-三、数据源
+`--bbox` 的四个值按 `min_lat,min_lng,max_lat,max_lng` 排列，对应矩形区域的左下和右上两个角。坐标可以从 OpenStreetMap 网站右键复制，也可以用 [bboxfinder](http://bboxfinder.com/) 交互式框选。
 
-. OpenStreetMap
+## 数据流：从 OSM 标签到 Minecraft 方块
 
-Arnis 使用 **OpenStreetMap (OSM)** 作为主要地理数据源。
+Arnis 的核心是一条数据流水线：OSM 矢量 + DEM 高程 → 坐标投影 → 方块映射 → 世界写入。下面以生成纽约曼哈顿一小块区域为例，把这条流水线串起来。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ OpenStreetMap 数据处理流程 │
-├─────────────────────────────────────────────────────────────┤
-│ │
-│ 1. 区域选择 │
-│ └─► 用户在地图上选择矩形区域 │
-│ │
-│ 2. Overpass API 查询 │
-│ └─► 获取 OSM 建筑、道路、水体等数据 │
-│ │
-│ 3. 数据处理 │
-│ └─► 转换为 Minecraft 方块 │
-│ │
-│ 4. 世界生成 │
-│ └─► 输出 .minecraft 存档 │
-│ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-. 高程数据
-
-| 数据类型 | 来源 | 用途 |
-|----------|------|------|
-| 地形高度 | SRTM / DEM | 山脉、峡谷 |
-| 水体 | OSM | 海洋、湖泊 |
-| 建筑高度 | OSM tags | 建筑物高度 |
-
-四、支持的 Minecraft 版本
-
-. Java Edition
-
-| 版本 | 支持状态 |
-|------|----------|
-| 1.17 | ✅ |
-| 1.18 | ✅ |
-| 1.19 | ✅ |
-| 1.20 | ✅ |
-| 1.21+ | ✅ |
-
-. Bedrock Edition
-
-| 版本 | 支持状态 |
-|------|----------|
-| 最新 Bedrock | ✅ |
-
-五、高级配置
-
-. 生成选项
-
-```bash
-完整参数示例
-cargo run --no-default-features -- \
- --terrain \
- --path="~/.minecraft/saves/MyWorld" \
- --bbox="40.7128,-74.0060,40.7580,-73.9855" \
- --scale=1.0 \ # 世界缩放比例
- --spawn-point="40.73,-73.99" \ # 出生点
- --interior=true \ # 生成室内
- --water-level=62 # 水位高度
-```
-
-. 配置参数表
-
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `--scale` | 1.0 | 地形缩放比例 |
-| `--spawn-point` | 中心点 | 出生点坐标 |
-| `--interior` | false | 是否生成建筑室内 |
-| `--water-level` | 62 | 水位高度 |
-| `--tree-density` | 0.5 | 树木密度 |
-| `--biome` | auto | 生物群系 |
-
-. 自定义区域
-
-```bash
-指定纽约曼哈顿
---bbox="40.7000,-74.0200,40.7800,-73.9500"
-
-指定伦敦市中心
---bbox="51.5000,-0.1500,51.5200,-0.1000"
-
-指定东京涩谷
---bbox="35.6500,139.7000,35.6700,139.7200"
-```
-
-六、架构设计
-
-. 系统架构
+### 任务流案例：生成曼哈顿片段
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ Arnis 系统架构 │
-├─────────────────────────────────────────────────────────────┤
-│ │
-│ ┌─────────────────────────────────────────────────────┐ │
-│ │ 用户界面层 │ │
-│ │ ┌─────────┐ ┌─────────┐ ┌─────────┐ │ │
-│ │ │ GUI │ │ CLI │ │ Nix │ │ │
-│ │ │ (Tauri) │ │ (args) │ │ flakes │ │ │
-│ │ └────┬────┘ └────┬────┘ └────┬────┘ │ │
-│ └───────┼────────────┼────────────┼──────────────────────┘ │
-│ │ │ │ │
-│ ┌───────▼────────────▼────────────▼───────────────────────┐ │
-│ │ 核心引擎层 │ │
-│ │ ┌─────────────────────────────────────────────┐ │ │
-│ │ │ World Generator │ │ │
-│ │ │ • Terrain Generation │ │ │
-│ │ │ • Building Transpilation │ │ │
-│ │ │ • Infrastructure (roads, water) │ │ │
-│ │ └─────────────────────────────────────────────┘ │ │
-│ │ ┌─────────────────────────────────────────────┐ │ │
-│ │ │ Data Processor │ │ │
-│ │ │ • OSM Parser │ │ │
-│ │ │ • Elevation Handler │ │ │
-│ │ │ • Block Mapper │ │ │
-│ │ └─────────────────────────────────────────────┘ │ │
-│ └───────────────────────────┬─────────────────────────────┘ │
-│ │ │
-│ ┌───────────────────────────▼─────────────────────────────┐ │
-│ │ 数据源层 │ │
-│ │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │ │
-│ │ │ Overpass │ │ DEM │ │ OSM │ │ │
-│ │ │ API │ │ (高程) │ │ (地图) │ │ │
-│ │ └─────────────┘ └─────────────┘ └─────────────┘ │ │
-│ └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+用户框选 bbox (40.7128,-74.0060,40.7580,-73.9855)
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│ 1. Overpass API 查询                                    │
+│    按 bbox 拉取 OSM 节点/路径/关系                       │
+│    产出：building、highway、waterway 等要素              │
+└─────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│ 2. 高程数据查询                                         │
+│    按 bbox 拉取 SRTM/DEM 栅格                            │
+│    产出：每个经纬度对应的海拔高度                        │
+└─────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│ 3. 坐标投影与缩放                                       │
+│    经纬度 → Minecraft XZ 平面                            │
+│    海拔    → Minecraft Y 轴                              │
+│    按 --scale 调整比例                                   │
+└─────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│ 4. 方块映射                                             │
+│    building  → 石砖/木材按层数拉伸                       │
+│    highway   → 按等级铺路                                │
+│    waterway  → 水方块填充                                │
+│    landuse=forest → 树木生成                             │
+└─────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│ 5. 世界写入                                             │
+│    生成 region 文件、level.dat                           │
+│    写入 --path 指定的存档目录                            │
+└─────────────────────────────────────────────────────────┘
 ```
 
-. 关键模块
+这条流水线里有三个并行机制，瓶颈各不相同：
 
-| 模块 | 说明 |
-|------|------|
-| `world_gen` | Minecraft 世界生成器 |
-| `osm_parser` | OpenStreetMap 数据解析 |
-| `elevation` | 高程数据处理 |
-| `block_mapper` | 方块映射器 |
-| `gui` | Tauri 图形界面 |
+- **OSM 矢量数据拉取**：受 Overpass API 限流和区域大小约束，bbox 越大等待越久，超限会被服务端拒绝。
+- **高程栅格拉取**：独立于 OSM，走 DEM 服务，瓶颈在网络带宽和栅格分辨率。
+- **方块写入**：CPU 密集，受 `--jobs` 控制的线程数影响，瓶颈在磁盘 I/O 和 Minecraft region 文件格式。
 
-. 项目结构
+前两者是网络等待，后者是计算和 I/O，三者耗时不在同一个维度上。所以大区域生成时，分块拉取 + 分块写入比一次性拉取更稳。
 
-```
-arnis/
-├── src/
-│ ├── main.rs # 入口
-│ ├── world_gen/ # 世界生成
-│ │ ├── terrain.rs # 地形生成
-│ │ ├── buildings.rs # 建筑转换
-│ │ └── infrastructure.rs # 基础设施
-│ ├── data/
-│ │ ├── osm.rs # OSM 解析
-│ │ └── elevation.rs # 高程处理
-│ └── gui/ # GUI 界面
-├── capabilities/ # Tauri 能力
-├── Cargo.toml
-└── tauri.conf.json
-```
+### OSM 元素到方块的映射规则
 
-七、OpenStreetMap 数据处理
-
-. 支持的 OSM 元素
+Arnis 把 OSM 标签翻译成 Minecraft 方块，规则集中在 `block_mapper` 模块：
 
 | OSM 元素 | Minecraft 对应 |
 |----------|----------------|
-| `building=yes` | 石砖/木材建筑 |
-| `highway` | 道路 |
-| `waterway` | 河流/运河 |
-| `landuse=forest` | 森林 |
-| `landuse=farm` | 农田 |
-| `leisure=park` | 公园 |
-| `natural=water` | 湖泊/海洋 |
+| `building=yes` | 石砖/木材建筑，按 `building:levels` 拉伸 |
+| `highway` | 道路，按等级选方块 |
+| `waterway` | 河流/运河，水方块 |
+| `landuse=forest` | 森林，树木生成 |
+| `landuse=farm` | 农田，耕地方块 |
+| `leisure=park` | 公园，草地 |
+| `natural=water` | 湖泊/海洋，水方块 |
 
-. 建筑映射规则
+建筑高度按 OSM 的 `building:levels` 标签分层拉伸，映射逻辑大致如下：
 
 ```rust
 // 建筑高度映射
 fn map_building_height(levels: u32) -> u32 {
- match levels {
- 1 => 4, // 1 层 → 4 格高
- 2 => 7, // 2 层 → 7 格高
- 3 => 10, // 3 层 → 10 格高
- 4..=10 => 13, // 4-10 层 → 13 格高
- _ => 20, // 超高层 → 20 格高
- }
+    match levels {
+        1 => 4, // 1 层 → 4 格高
+        2 => 7, // 2 层 → 7 格高
+        3 => 10, // 3 层 → 10 格高
+        4..=10 => 13, // 4-10 层 → 13 格高
+        _ => 20, // 超高层 → 20 格高
+    }
 }
 ```
 
-. 道路生成
+道路方块按 `highway` 等级区分：
 
 | OSM highway 类型 | Minecraft 方块 |
 |-----------------|----------------|
@@ -313,133 +200,228 @@ fn map_building_height(levels: u32) -> u32 {
 | residential | 泥土 |
 | footway | 砂土 |
 
-八、学术与媒体认可
+OSM 标签质量直接决定生成效果。大城市的建筑层数标签完整，生成出来层次分明；小城镇标签稀疏，建筑会塌成一两层。这是 OSM 数据本身的局限，Arnis 只能按标签拉伸，无法凭空补全。
 
-. 媒体报道
+## 架构与模块
 
-| 来源 | 标题 |
+### 分层结构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Arnis 系统架构                                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ 用户界面层                                           │   │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐              │   │
+│  │  │ GUI     │  │ CLI     │  │ Nix     │              │   │
+│  │  │ (Tauri) │  │ (args)  │  │ flakes  │              │   │
+│  │  └────┬────┘  └────┬────┘  └────┬────┘              │   │
+│  └───────┼────────────┼────────────┼────────────────────┘   │
+│          │            │            │                         │
+│  ┌───────▼────────────▼────────────▼────────────────────┐   │
+│  │ 核心引擎层                                           │   │
+│  │  ┌─────────────────────────────────────────────┐     │   │
+│  │  │ World Generator                              │     │   │
+│  │  │  • Terrain Generation                        │     │   │
+│  │  │  • Building Transpilation                    │     │   │
+│  │  │  • Infrastructure (roads, water)             │     │   │
+│  │  └─────────────────────────────────────────────┘     │   │
+│  │  ┌─────────────────────────────────────────────┐     │   │
+│  │  │ Data Processor                              │     │   │
+│  │  │  • OSM Parser                                │     │   │
+│  │  │  • Elevation Handler                         │     │   │
+│  │  │  • Block Mapper                              │     │   │
+│  │  └─────────────────────────────────────────────┘     │   │
+│  └───────────────────────────┬─────────────────────────┘   │
+│                              │                              │
+│  ┌───────────────────────────▼─────────────────────────┐   │
+│  │ 数据源层                                             │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │   │
+│  │  │ Overpass    │  │ DEM         │  │ OSM         │   │   │
+│  │  │ API         │  │ (高程)      │  │ (地图)      │   │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘   │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+三层各管一件事：
+
+- **用户界面层**：Tauri GUI、CLI args、Nix flake 三种入口共享同一套核心引擎，差异只在参数收集方式。
+- **核心引擎层**：World Generator 负责把数据变成方块，Data Processor 负责把外部数据解析成内部结构。两者通过内部数据结构解耦，不直接调用网络。
+- **数据源层**：Overpass API 拉 OSM 矢量，DEM 服务拉高程栅格，OSM 文件作为离线兜底。三者可独立替换。
+
+### 关键模块与项目结构
+
+| 模块 | 职责 |
 |------|------|
-| **AWS Blog** | Building Realistic Minecraft Worlds with Open Data |
-| **Hackaday** | Bringing OpenStreetMap Data into Minecraft |
-| **Tom's Hardware** | Minecraft Tool Lets You Create Scale Replicas of Real-World Locations |
-| **XDA Developers** | Hometown Minecraft Map: Arnis |
+| `world_gen` | Minecraft 世界生成主流程 |
+| `osm_parser` | OpenStreetMap 数据解析 |
+| `elevation` | 高程数据处理 |
+| `block_mapper` | OSM 标签 → Minecraft 方块映射 |
+| `gui` | Tauri 图形界面 |
 
-. 学术论文
+```
+arnis/
+├── src/
+│   ├── main.rs              # 入口
+│   ├── world_gen/           # 世界生成
+│   │   ├── terrain.rs       # 地形生成
+│   │   ├── buildings.rs     # 建筑转换
+│   │   └── infrastructure.rs # 基础设施
+│   ├── data/
+│   │   ├── osm.rs           # OSM 解析
+│   │   └── elevation.rs     # 高程处理
+│   └── gui/                 # GUI 界面
+├── capabilities/            # Tauri 能力
+├── Cargo.toml
+└── tauri.conf.json
+```
 
-| 论文 | 发表 |
-|------|------|
-| **Floodcraft** | Game-based Interactive Learning Environment using Minecraft for Flood Mitigation |
+`world_gen` 是热点路径，地形、建筑、基础设施三个子模块按顺序执行：先铺地形，再立建筑，最后接道路和水体。这个顺序保证了建筑不会浮空、道路不会被建筑覆盖。
 
-九、安装方式对比
+## 配置与调优
 
-. 各平台安装
-
-| 平台 | 推荐方式 |
-|------|----------|
-| **Windows** | 下载 .exe 或 `cargo build` |
-| **macOS** | 下载 .app 或 `cargo build` |
-| **Linux** | 下载二进制或 Nix |
-| **NixOS** | `nix run github:louis-e/arnis` |
-
-. 依赖要求
-
-| 依赖 | 版本要求 |
-|------|----------|
-| Rust | 1.70+ |
-| Cargo | 最新稳定版 |
-| Minecraft | Java 1.17+ 或 Bedrock |
-
-十、实践建议
-
-. 大型世界生成
+### 完整参数示例
 
 ```bash
-分块生成大区域
-区块
+# 完整参数示例
+cargo run --no-default-features -- \
+  --terrain \
+  --path="~/.minecraft/saves/MyWorld" \
+  --bbox="40.7128,-74.0060,40.7580,-73.9855" \
+  --scale=1.0 \                  # 世界缩放比例
+  --spawn-point="40.73,-73.99" \ # 出生点
+  --interior=true \              # 生成室内
+  --water-level=62               # 水位高度
+```
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `--scale` | 1.0 | 地形缩放比例，调大让地形更平缓 |
+| `--spawn-point` | 中心点 | 出生点坐标 |
+| `--interior` | false | 是否生成建筑室内 |
+| `--water-level` | 62 | 水位高度，影响海岸线和湖泊 |
+| `--tree-density` | 0.5 | 树木密度 |
+| `--biome` | auto | 生物群系 |
+
+参数默认值以仓库 README 和 `--help` 输出为准，不同版本可能有差异。
+
+`--scale` 是最容易被忽略的参数。真实世界的经纬度差对应到 Minecraft 方块时，1:1 会让城市显得空旷（一栋楼在 Minecraft 里只有几格宽），调大到 2.0-3.0 更接近游戏内可探索的尺度。
+
+### 常见区域 bbox
+
+```bash
+# 指定纽约曼哈顿
+--bbox="40.7000,-74.0200,40.7800,-73.9500"
+
+# 指定伦敦市中心
+--bbox="51.5000,-0.1500,51.5200,-0.1000"
+
+# 指定东京涩谷
+--bbox="35.6500,139.7000,35.6700,139.7200"
+```
+
+### 大区域分块生成
+
+bbox 过大会触发 Overpass API 限流，分块生成更稳：
+
+```bash
+# 区块 1
 cargo run -- --terrain --path="~/minecraft/saves/World_Part1" \
- --bbox="40.7000,-74.0200,40.7400,-73.9800"
+  --bbox="40.7000,-74.0200,40.7400,-73.9800"
 
-区块
+# 区块 2
 cargo run -- --terrain --path="~/minecraft/saves/World_Part2" \
- --bbox="40.7400,-74.0200,40.7800,-73.9800"
+  --bbox="40.7400,-74.0200,40.7800,-73.9800"
 ```
 
-. 生成优化
+分块时让相邻区块的 bbox 有少量重叠（约 0.001 度），避免边界建筑被切断。
+
+### 多线程与服务器部署
 
 ```bash
-启用多线程
+# 启用多线程
 cargo run --release -- \
- --terrain \
- --jobs=8 \ # 8 线程
- --bbox="40.71,-74.01,40.76,-73.96"
+  --terrain \
+  --jobs=8 \                  # 8 线程
+  --bbox="40.71,-74.01,40.76,-73.96"
 ```
 
-. 服务器部署
-
 ```bash
-编译为无 GUI 版本
+# 编译为无 GUI 版本
 cargo build --release --no-default-features
 
-部署到服务器
+# 部署到服务器
 scp target/release/arnis user@server:/path/to/minecraft/
 ```
 
-十一、VS 其他方案
+服务器部署用 `--no-default-features` 编译，可以避开 Tauri 的 WebKit 依赖，在无桌面环境的 Linux 上也能跑。`--jobs` 参数的具体取值范围和默认值以仓库 README 和 `--help` 输出为准。
 
-| 工具 | 数据源 | Minecraft 版本 | 许可证 |
-|------|--------|---------------|--------|
-| **Arnis** | OSM | Java + Bedrock | Apache-2.0 |
-| **EarthMC** | 专有 | Java | 专有 |
-| **MineOS** | 自定义 | Java | 开源 |
+## 横向对比与采用建议
 
-十二、资源链接
+### 与其他方案对比
 
-. 官方资源
+| 工具 | 数据源 | Minecraft 版本 | 许可证 | 适用场景 |
+|------|--------|---------------|--------|----------|
+| **Arnis** | OSM | Java + Bedrock | Apache-2.0 | 真实城市还原 |
+| **EarthMC** | 专有 | Java | 专有 | 在线社区地图 |
+| **MineOS** | 自定义 | Java | 开源 | 教学实验 |
+
+Arnis 的优势是数据源开放（OSM 任何人可查可改）和双版本支持（Java + Bedrock）。EarthMC 偏社区玩法，MineOS 偏教学，定位不同。对比信息以各项目仓库当前 README 为准。
+
+### 采用建议
+
+按场景给采用顺序：
+
+1. **想快速看一眼自己家在 Minecraft 里长什么样**：用 GUI，框选小区块，5 分钟出结果。
+2. **要做城市级还原或教学项目**：用 CLI，分块生成，提前规划 bbox 和 `--scale`。
+3. **要部署到服务器批量生成**：用 `--no-default-features` 编译，配合 `--jobs` 调线程数，注意 Overpass API 限流。
+4. **要二次开发或定制映射规则**：fork 仓库，改 `block_mapper` 模块，OSM 标签到方块的映射规则集中在这里。
+
+不适合的场景：实时多人联机（生成是离线批处理，不做实时同步）、超大面积国家版图（Overpass API 和内存都会顶不住）。
+
+## 媒体与学术引用
+
+Arnis 被多家技术媒体报道，并出现在洪水教育的学术论文中：
+
+| 来源 | 标题 |
+|------|------|
+| AWS Blog | Building Realistic Minecraft Worlds with Open Data |
+| Hackaday | Bringing OpenStreetMap Data into Minecraft |
+| Tom's Hardware | Minecraft Tool Lets You Create Scale Replicas of Real-World Locations |
+| XDA Developers | Hometown Minecraft Map: Arnis |
+| Floodcraft 论文 | Game-based Interactive Learning Environment using Minecraft for Flood Mitigation |
+
+媒体报道和论文标题来自 Arnis 仓库 README，原始链接请到仓库查看。
+
+## 资源链接
+
+### 官方资源
 
 | 资源 | 链接 |
 |------|------|
-| 🌐 **官网** | https://arnismc.com |
-| 📖 **文档** | https://github.com/louis-e/arnis/wiki |
-| 💬 **Discord** | https://discord.gg/mA2g69Fhxq |
-| 🐛 **问题反馈** | https://github.com/louis-e/arnis/issues |
-| 📦 **发布页** | https://github.com/louis-e/arnis/releases |
+| 官网 | https://arnismc.com |
+| GitHub 仓库 | https://github.com/louis-e/arnis |
+| 文档 | https://github.com/louis-e/arnis/wiki |
+| Discord | https://discord.gg/mA2g69Fhxq |
+| 问题反馈 | https://github.com/louis-e/arnis/issues |
+| 发布页 | https://github.com/louis-e/arnis/releases |
+| MapSmith（浏览器版） | https://arnismc.com/mapsmith/ |
 
-. 相关项目
+### 相关项目
 
 | 项目 | 说明 |
 |------|------|
-| **MapSmith** | 浏览器版在线生成 |
-| **Floodcraft** | 洪水教育游戏 |
+| MapSmith | 浏览器版在线生成 |
+| Floodcraft | 洪水教育游戏，基于 Minecraft |
 
-. 下载地址
+### 下载地址
 
 ⚠️ **安全提示**：请仅从以下地址下载：
+
 - https://arnismc.com
 - https://github.com/louis-e/arnis/releases
-
-十三、总结
-
-Arnis 将 OpenStreetMap 地理数据转换为 Minecraft 世界：
-
-| 维度 | 说明 |
-|------|------|
-| 🗺️ **真实地理** | OpenStreetMap 精确还原 |
-| 🏔️ **地形高程** | 真实地形起伏 |
-| 🏠 **建筑** | 真实世界建筑 |
-| ⚡ **高性能** | Rust 语言驱动 |
-| 🌐 **跨平台** | Windows/macOS/Linux |
-| 📖 **开源** | Apache-2.0 许可证 |
-
----
-
-**🔗 相关资源：**
-
-| 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/louis-e/arnis |
-| 官网 | https://arnismc.com |
-| Discord | https://discord.gg/mA2g69Fhxq |
-| MapSmith | https://arnismc.com/mapsmith/ |
 
 ---
 

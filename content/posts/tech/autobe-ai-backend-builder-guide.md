@@ -8,148 +8,73 @@ categories: ["技术笔记"]
 tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
 ---
 
-AutoBE：.K Stars·AI 后端构建器·从需求到生产的完整解决方案
+# AutoBE：用 AST 兜底的 AI 后端生成器，能交付到什么程度
 
-一、项目概述
+AutoBE 把"自然语言到可编译后端"这件事做成了一个可复现的工程问题：用 40 多个专职 Agent 按瀑布式流水线推进，先生成语言中立的 AST，再由编译管道转成 TypeScript/Prisma 代码并保证编译通过。价值边界明确——保证编译成功，不保证运行时正确；适合做原型和 MVP，不适合直接当作生产后端交付。
 
-. AutoBE 是什么
+本文先给系统地图和适用判断，再拆开三条并行机制（Agent 流水线、AST 编译管道、Benchmark 评估），最后用一个 ERP 任务流案例串起整条链路，并给出采用建议。
 
-**AutoBE** 是一个 AI 后端构建器：用自然语言描述需求，AI 分析需求并生成完整的后端应用程序。生成的后端专为 AI 友好编译器设计，通过端到端测试函数保证编译通过。
+## 一、它是什么，适合谁用
 
-> "AutoBE - AI backend builder for prototype to production"
+AutoBE 由韩国团队 wrtnlabs 开源（GitHub 仓库 `wrtnlabs/autobe`），定位是"AI backend builder"：输入自然语言需求，输出包含数据库 Schema、API 控制器、DTO、E2E 测试和 NestJS 实现的完整后端工程。生成物自带类型安全的前端 SDK，前端可以直接 `import` 调用。
 
-. 核心数据
+截至 2026-04-10（v0.31.1），仓库数据如下，来源为 GitHub 仓库 README 与官网：
 
 | 指标 | 数值 |
 |------|------|
-| Stars | **1.2k** ⭐ |
+| Stars | 1.2k |
 | Forks | 141 |
-| 贡献者 | 15 (含 AI) |
-| 最新版本 | v0.31.1 (2026-04-10) |
+| 贡献者 | 15（含 AI 协作者） |
+| 最新版本 | v0.31.1（2026-04-10） |
 | 提交数 | 1,651 commits |
-| 许可证 | AGPL-3.0 |
-| 语言 | TypeScript 86.7%, MDX 10.0% |
+| 许可证 | AGPL-3.0（生成代码不受约束，见后文） |
+| 主语言 | TypeScript 86.7%，MDX 10.0% |
 
-### 项目定位
+**适合的场景**：快速验证一个后端想法、生成 MVP 骨架、给前端联调提供可编译的 mock 后端、对比不同 LLM 在代码生成任务上的表现。
 
-| 维度 | 说明 |
-|------|------|
-| 🤖 **AI 驱动** | 40+ 专业 AI Agent 协作构建 |
-| ✅ **100% 可编译** | AI 友好编译器保证类型安全 |
-| 📦 **完整应用** | 规格说明 + 数据库 + API + 测试 + 实现 |
-| 🔗 **类型安全 SDK** | 自动生成前端集成 SDK |
-| 📊 **Benchmark** | 评估 13+ LLM 模型表现 |
+**不适合的场景**：直接作为生产后端、需要长期演进的业务系统、对运行时正确性要求高的金融/交易场景。官方路线图把"100% 运行时成功"列为 v1.0 目标，当前版本未达到。
 
-. 在线资源
+## 二、系统地图：三条并行机制
 
-| 资源 | 链接 |
-|------|------|
-| 🌐 **官网** | https://autobe.dev |
-| 📚 **文档** | https://autobe.dev/docs |
-| 📈 **Benchmark** | https://autobe.dev/benchmark |
-| 💬 **Discord** | https://discord.gg/aMhRmzkqCx |
-| 📦 **npm** | https://www.npmjs.com/package/@autobe/agent |
+理解 AutoBE 需要先拆开三条互相独立但协作的机制，避免把它们看成一条单线故事。
 
-二、为什么需要 AutoBE
+### 2.1 Agent 流水线（业务推进）
 
-. 传统开发痛点
+按瀑布式方法论分阶段推进，每个阶段由专职 Agent 负责，前一阶段产物作为下一阶段输入：
 
-```
-❌ 需求分析 → 设计和实现分离
-❌ API 文档手动编写，容易过时
-❌ 前端后端联调耗时
-❌ 测试覆盖率低，上线风险高
-❌ 多人协作时代码风格不一致
-```
+| 阶段 | 主导 Agent | 产物 |
+|------|-----------|------|
+| 需求分析 | Requirements Agent | 需求分析报告 |
+| 数据库设计 | Database Agent | ERD + Prisma Schema |
+| API 设计 | API Agent | 控制器 + DTO |
+| 测试生成 | Test Agent | E2E 测试函数 |
+| 实现 | Implementation Agent | NestJS 代码 |
 
-. AutoBE 的解决方案
+瀑布式在这里的工程意义是降低 LLM 上下文负担：每个 Agent 只需要看前一阶段的结构化产物，不需要把整个项目塞进上下文。代价是阶段间反馈慢——如果需求阶段出错，要等到测试阶段才会暴露。
+
+### 2.2 AST 编译管道（质量兜底）
+
+这是 AutoBE 区别于"直接让 LLM 吐代码"的关键。LLM 产出的是语言中立的 AST，再由确定性编译器转成 TypeScript/Prisma 源码：
 
 ```
-✅ 端到端 AI 驱动
-✅ 规格 → 设计 → 测试 → 实现 全流程自动化
-✅ 自动生成类型安全 SDK，前端无缝集成
-✅ 100% 编译保证
-✅ 内置 Benchmark 评估模型表现
+需求 → Agent 产出 AST（语言中立）→ 类型验证 → 代码生成 → 编译检查
 ```
 
-三、核心功能详解
+为什么走 AST 这一层：结构错误在概念阶段就能捕获，不依赖 LLM 自己写对 TypeScript 语法；同时为多语言扩展留出口子——Java/Spring 生成正在开发中。代价是 Agent 产出受 AST 表达能力约束，复杂业务逻辑可能需要 Implementation Agent 在源码层补齐。
 
-. 瀑布式开发方法论
+### 2.3 Benchmark 评估系统（模型选型）
 
-AutoBE 采用**瀑布式方法论**，将后端构建分为多个阶段：
+`packages/estimate` 内置一套评估流程，跑同一组项目（todo、reddit、shopping、erp）对比不同 LLM 的生成质量。这套系统服务两类用户：AutoBE 团队用它回归验证 Agent 改动，使用者用它判断当前该选哪个模型。
 
-| 阶段 | AI Agent | 输出 |
-|------|----------|------|
-| 1️⃣ **需求分析** | Requirements Agent | 需求分析报告 |
-| 2️⃣ **数据库设计** | Database Agent | ERD + Prisma Schema |
-| 3️⃣ **API 设计** | API Agent | API 控制器 + DTO |
-| 4️⃣ **测试生成** | Test Agent | E2E 测试函数 |
-| 5️⃣ **实现** | Implementation Agent | TypeScript/NestJS 代码 |
+三条机制的关系：Agent 流水线决定"能不能跑通"，AST 管道决定"产物能不能编译"，Benchmark 决定"换模型后质量会不会塌"。
 
-. + 专业 AI Agent
+## 三、为什么是 AST，为什么是 40+ Agent
 
-AutoBE 包含 **40+ 专业 AI Agent**：
+**为什么 AST 兜底**。LLM 直接生成源码的主要失败模式是语法和类型错误，靠反复 prompt 修正成本高且不稳定。AutoBE 把"语法正确性"从 LLM 能力中剥离出来，交给确定性编译器处理，LLM 只负责"结构和语义"。这种切分让 100% 编译成功率成为可工程化保证的指标，不再依赖模型运气。
 
-| Agent 类型 | 说明 |
-|-----------|------|
-| **Requirements Agent** | 需求分析和规格说明 |
-| **Database Agent** | 数据库 Schema 设计 |
-| **API Agent** | RESTful API 设计 |
-| **Test Agent** | 端到端测试生成 |
-| **Implementation Agent** | 代码实现 |
-| **Validation Agent** | 类型安全验证 |
-| **Documentation Agent** | 文档生成 |
+**为什么 40+ Agent**。单个 Agent 处理全流程会撞上下文窗口上限，且职责混杂导致 prompt 难以稳定。AutoBE 把任务切成细粒度角色（Requirements、Database、API、Test、Implementation、Validation、Documentation 等），每个 Agent 的 prompt 短、输入结构化、输出可校验。这种切法的代价是 Agent 间协议复杂，新增阶段需要同时改上下游。
 
-. AI 友好编译器策略
-
-**做法**：AutoBE 不直接生成代码，而是先生成**语言中立的抽象语法树（AST）**：
-
-```
-传统方式：
-需求 → 直接生成代码 → 编译错误 → 反复修改
-
-AutoBE 方式：
-需求 → AST（语言中立）→ 类型验证 → 代码生成 → 100% 可编译
-```
-
-**优势**：
-- 在概念层面捕获结构错误，而非编译时
-- 支持未来扩展到其他语言（Java/Spring 正在开发）
-- 保证最终生成的 TypeScript/Prisma 代码 100% 可编译
-
-. 类型安全客户端 SDK
-
-每个 AutoBE 生成的后端都包含**类型安全 SDK**：
-
-```typescript
-import api, { IPost } from "autobe-generated-sdk";
-
-// 类型安全的 API 调用
-const connection: api.IConnection = {
-  host: "http://localhost:1234",
-};
-
-// TypeScript 在编译时捕获错误
-const post: IPost = await api.functional.posts.create(connection, {
-  body: {
-    title: "Hello World",
-    content: "My first post",
-    // authorId: "123" <- 如果缺少必填字段，TypeScript 会报错！
-  },
-});
-```
-
-**SDK 特性**：
-| 特性 | 说明 |
-|------|------|
-| 🔧 **零配置** | SDK 与后端同步自动生成 |
-| 🛡️ **100% 类型安全** | 全 TypeScript 支持，智能提示 |
-| 🌐 **框架无关** | 支持 React/Vue/Angular/任何 TS 项目 |
-| 🧪 **E2E 测试集成** | 用同一 SDK 生成测试用例 |
-
-四、快速开始
-
-. 一键启动
+## 四、快速启动
 
 ```bash
 git clone https://github.com/wrtnlabs/autobe --depth=1
@@ -158,158 +83,156 @@ pnpm install
 pnpm run playground
 ```
 
-. 访问 Playground
+启动后访问 `http://localhost:5713`，Playground 提供 Chat 界面、编译成功仪表盘和会话 Replay 功能。
 
-启动后访问：**http://localhost:5713**
-
-Playground 提供：
-- 🤖 Chat 界面与 AI Agent 对话
-- 📊 编译成功仪表盘
-- 🎬 Replay 功能查看历史会话
-
-. 对话示例
+典型对话流如下，每一步对应一个 Agent 阶段：
 
 ```
-👤 需求分析：
-"我想创建一个经济/政治讨论板。由于我不熟悉编程，请帮我撰写需求分析报告。"
-
-📐 数据库设计：
-"设计数据库 Schema。"
-
-🔌 API 规范：
-"创建 API 接口规范。"
-
-🧪 测试：
-"生成 E2E 测试函数。"
-
-⚙️ 实现：
-"实现 API 函数。"
+需求分析："我想创建一个经济/政治讨论板。由于我不熟悉编程，请帮我撰写需求分析报告。"
+数据库设计："设计数据库 Schema。"
+API 规范："创建 API 接口规范。"
+测试："生成 E2E 测试函数。"
+实现："实现 API 函数。"
 ```
 
-五、完整示例项目
+## 五、任务流案例：ERP 项目如何从需求走到代码
 
-. 内置示例
+以仓库内置的 `erp` 示例为例，跟踪一次完整生成。ERP 之所以有代表性，是因为它涉及多实体关联、复杂权限和大量 API，能暴露出 Agent 协作中的典型问题。
 
-AutoBE 提供多个完整后端示例：
+**阶段 1：需求分析**。Requirements Agent 读取自然语言描述，产出结构化分析报告，存放在 `docs/analysis/`。报告内容包含领域实体清单、业务规则、用例列表。
 
-| 示例 | 说明 | GitHub |
-|------|------|--------|
-| **To Do List** | 任务管理 | `todo` |
-| **Reddit Community** | 社区论坛 | `reddit` |
-| **E-Commerce** | 电商平台 | `shopping` |
-| **ERP System** | 企业资源规划 | `erp` |
+**阶段 2：数据库设计**。Database Agent 基于分析报告生成 ERD（`docs/ERD.md`）和 Prisma Schema（`prisma/schema/`）。这一步的产物是后续 API 设计的契约来源。
 
-. ERP 系统示例结构
+**阶段 3：API 设计**。API Agent 产出控制器声明和 DTO（`src/controllers/`、`src/api/structures/`），DTO 字段类型来自 Prisma Schema。
 
-```bash
+**阶段 4：测试生成**。Test Agent 基于控制器签名生成 E2E 测试函数（`test/features/api/`），测试用例同时充当验收标准。
+
+**阶段 5：实现**。Implementation Agent 在 `src/providers/` 下补全控制器逻辑，编译管道验证类型安全。
+
+```
 erp/
 ├── docs/
-│   ├── analysis/          # 需求分析报告
-│   └── ERD.md             # 实体关系图
+│   ├── analysis/          # 阶段 1 产物
+│   └── ERD.md             # 阶段 2 产物
 ├── prisma/
-│   └── schema/            # Prisma 数据库 Schema
+│   └── schema/            # 阶段 2 产物
 ├── src/
-│   ├── controllers/        # API 控制器
+│   ├── controllers/        # 阶段 3 产物
 │   ├── api/
-│   │   └── structures/    # DTO 数据传输对象
-│   └── providers/          # API 实现
+│   │   └── structures/    # 阶段 3 产物（DTO）
+│   └── providers/          # 阶段 5 产物
 └── test/
     └── features/
-        └── api/           # E2E 测试函数
+        └── api/           # 阶段 4 产物
 ```
 
-六、Benchmark 评估系统
+整个流程中，AST 管道在每个阶段产物生成后做类型验证，失败会回退给 Agent 重试。这是"100% 编译保证"的实际含义——保证最终落盘的代码能通过 `tsc`，不保证运行时行为符合预期。
 
-. 评估维度
+## 六、类型安全 SDK：前端如何消费
 
-| 维度 | 说明 |
-|------|------|
-| 📝 **Compilation** | 代码可编译性 |
-| 📚 **Documentation** | 文档质量 |
-| ✅ **Requirements Coverage** | 需求覆盖率 |
-| 🧪 **Test Coverage** | 测试覆盖率 |
-| ⚙️ **Logic Completeness** | 逻辑完整性 |
-| 🔌 **API Completeness** | API 完整性 |
-| 🤖 **AI Analysis** | AI 分析（安全性、幻觉、代码质量）|
+每个生成后端自带 TypeScript SDK，前端无需手写接口定义：
 
-. 模型对比表
+```typescript
+import api, { IPost } from "autobe-generated-sdk";
+
+const connection: api.IConnection = {
+  host: "http://localhost:1234",
+};
+
+const post: IPost = await api.functional.posts.create(connection, {
+  body: {
+    title: "Hello World",
+    content: "My first post",
+    // authorId: "123" <- 缺少必填字段时 TypeScript 编译报错
+  },
+});
+```
+
+SDK 由 AST 编译管道同步生成，字段类型与后端 DTO 完全一致。前端框架无关，React/Vue/Angular 或任意 TS 项目均可消费。E2E 测试也用同一份 SDK 编写，保证测试与前端调用路径一致。
+
+## 七、Benchmark：测的是什么，能推出什么
+
+评估覆盖 7 个维度：Compilation（编译通过）、Documentation（文档质量）、Requirements Coverage（需求覆盖率）、Test Coverage（测试覆盖率）、Logic Completeness（逻辑完整性）、API Completeness（API 完整性）、AI Analysis（安全性、幻觉、代码质量的 LLM 评审）。
+
+**测的是什么**：在固定 4 个项目（todo、reddit、shopping、erp）上，给定相同需求输入，比较各 LLM 生成产物的工程完整度。数字反映的是"在该项目规模下，模型能产出多完整的可编译后端"。
+
+**不能推出什么**：不能直接外推到自定义业务场景的表现——4 个项目覆盖的实体关系和 API 模式有限；不能推出运行时正确性——Compilation 维度只检查 `tsc` 通过；不能推出长期维护成本——评估只看首次生成质量。
+
+截至 2026-04 的部分模型对比（来源：官网 benchmark 页面）：
 
 | 模型 | Todo | Reddit | Shopping | ERP | 平均 |
 |------|------|--------|---------|-----|------|
-| **minimax-m2.7** | 90 (A) | 71 (C) | 77 (C) | 79 (C) | **79** |
-| **glm-5** | 88 (B) | 87 (B) | 82 (B) | 87 (B) | **86** |
-| **claude-sonnet-4.6** | 87 (B) | 85 (B) | 72 (C) | 85 (B) | **82** |
-| **gpt-5.4-mini** | 89 (B) | 87 (B) | 74 (C) | 78 (C) | **82** |
-| **qwen3-coder-next** | 86 (B) | 76 (C) | 75 (C) | 88 (B) | **81** |
-| **qwen3.5-27b** | 88 (B) | 81 (B) | 77 (C) | 78 (C) | **81** |
+| minimax-m2.7 | 90 (A) | 71 (C) | 77 (C) | 79 (C) | 79 |
+| glm-5 | 88 (B) | 87 (B) | 82 (B) | 87 (B) | 86 |
+| claude-sonnet-4.6 | 87 (B) | 85 (B) | 72 (C) | 85 (B) | 82 |
+| gpt-5.4-mini | 89 (B) | 87 (B) | 74 (C) | 78 (C) | 82 |
+| qwen3-coder-next | 86 (B) | 76 (C) | 75 (C) | 88 (B) | 81 |
+| qwen3.5-27b | 88 (B) | 81 (B) | 77 (C) | 78 (C) | 81 |
 
-. 运行 Benchmark
+观察：glm-5 在四个项目上表现最稳定；ERP 这种复杂场景下 qwen3-coder-next 和 glm-5 领先；Shopping 是所有模型的弱项，可能与电商领域实体关系复杂度有关。选模型时优先看与目标项目复杂度最接近的那一列，不要只看平均分。
+
+运行 Benchmark 的命令：
 
 ```bash
-评估所有模型
+# 评估所有模型
 pnpm estimate
 
-评估单个模型
+# 评估单个模型
 pnpm estimate -- --model kimi-k2.5
 
-评估单个项目
+# 评估单个项目
 pnpm estimate -- --project todo
 
-评估指定组合
+# 评估指定组合
 pnpm estimate -- --model glm-5 --project shopping
 ```
 
-**评估报告保存在**：
-```
-packages/estimate/reports/benchmark/{model}/{project}/estimate-report.json
-```
+报告保存在 `packages/estimate/reports/benchmark/{model}/{project}/estimate-report.json`。
 
-七、技术架构
-
-. 系统架构
+## 八、技术架构
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    AutoBE 系统架构                                   │
+│                    AutoBE 系统架构                          │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   │
-│  │   Chat     │    │   40+      │    │  Playground │   │
-│  │   UI       │───▶│   AI       │───▶│   Web       │   │
-│  │            │    │   Agents   │    │   Server    │   │
-│  └─────────────┘    └──────┬──────┘    └─────────────┘   │
-│                             │                                 │
-│  ┌─────────────┐    ┌──────▼──────┐    ┌─────────────┐   │
-│  │   Type-    │◀───│   AST      │───▶│  Compiler   │   │
-│  │   Safe     │    │   Builder  │    │  Pipeline   │   │
-│  │   SDK      │    └─────────────┘    └─────────────┘   │
-│  └─────────────┘                                        │
-│                             │                            │
-│  ┌─────────────┐    ┌──────▼──────┐                   │
-│  │  E2E Test  │◀───│ Validation │                   │
-│  │  Generator │    │   Engine   │                      │
-│  └─────────────┘    └─────────────┘                   │
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
+│  │   Chat      │    │   40+       │    │  Playground │     │
+│  │   UI        │───▶│   AI        │───▶│   Web       │     │
+│  │             │    │   Agents    │    │   Server    │     │
+│  └─────────────┘    └──────┬──────┘    └─────────────┘     │
+│                             │                               │
+│  ┌─────────────┐    ┌──────▼──────┐    ┌─────────────┐     │
+│  │   Type-     │◀───│   AST       │───▶│  Compiler   │     │
+│  │   Safe      │    │   Builder   │    │  Pipeline   │     │
+│  │   SDK       │    └─────────────┘    └─────────────┘     │
+│  └─────────────┘                                            │
+│                             │                               │
+│  ┌─────────────┐    ┌──────▼──────┐                        │
+│  │  E2E Test   │◀───│ Validation  │                        │
+│  │  Generator  │    │   Engine    │                        │
+│  └─────────────┘    └─────────────┘                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-. 核心技术栈
+技术栈分层：
 
 | 层次 | 技术 |
 |------|------|
-| **前端** | TypeScript, React (Playground) |
-| **后端** | NestJS, TypeScript |
-| **数据库** | Prisma ORM |
-| **AI** | 多 LLM 支持（OpenAI, Anthropic, Google, 开源模型） |
-| **协议** | WebSocket (RPC) |
-| **CLI** | pnpm |
+| 前端 | TypeScript，React（Playground） |
+| 后端 | NestJS，TypeScript |
+| 数据库 | Prisma ORM |
+| AI | 多 LLM 支持（OpenAI、Anthropic、Google、开源模型） |
+| 协议 | WebSocket（RPC） |
+| CLI | pnpm |
 
-. 目录结构
+目录结构：
 
 ```
 autobe/
 ├── apps/              # 应用目录
 │   └── playground/    # Web 界面
-├── internals/        # 内部核心
+├── internals/         # 内部核心
 │   ├── agent/         # AI Agent 实现
 │   ├── compiler/      # AST 编译管道
 │   └── estimate/      # Benchmark 系统
@@ -317,109 +240,79 @@ autobe/
 │   ├── api/           # API 定义
 │   ├── protocol/      # 通信协议
 │   └── validate/      # 验证引擎
-├── test/             # 测试
+├── test/              # 测试
 ├── website/           # 官网
-└── deploy/           # 部署配置
+└── deploy/            # 部署配置
 ```
 
-八、当前局限性
+## 九、当前局限性
 
-. 已知的限制
-
-| 限制 | 说明 | 解决方案 |
+| 限制 | 说明 | 官方应对 |
 |------|------|----------|
-| ⚠️ **运行时行为** | 编译成功但运行时可能出错 | v1.0 目标 100% 运行时成功 |
-| ⚠️ **设计理解** | AI 生成的设计可能与预期不同 | 仔细审查生成规格 |
-| ⚠️ **Token 消耗** | 复杂项目需要 30M-250M+ tokens | 正在优化 RAG |
-| ⚠️ **维护能力** | 不提供长期维护功能 | 结合 Claude Code 维护 |
+| 运行时行为 | 编译通过不等于运行正确 | v1.0 目标 100% 运行时成功 |
+| 设计理解偏差 | AI 生成的设计可能与预期不同 | 需要人工审查规格 |
+| Token 消耗 | 复杂项目 Token 开销大 | 正在优化 RAG |
+| 维护能力 | 不提供长期维护功能 | 建议结合 Claude Code 维护 |
 
-. Token 消耗参考
+Token 消耗参考（来源：官方文档，复杂度越高开销越大）：
 
 | 项目类型 | Token 消耗 |
 |----------|-----------|
-| 简单 To Do | ~4M tokens |
-| 中等 Reddit | ~30M-50M tokens |
-| 复杂 E-commerce | ~100M-150M tokens |
-| 超大型 ERP | ~250M+ tokens |
+| 简单 To Do | 约 4M tokens |
+| 中等 Reddit | 约 30M-50M tokens |
+| 复杂 E-commerce | 约 100M-150M tokens |
+| 超大型 ERP | 约 250M+ tokens |
 
-九、发展路线图
+复杂项目的 Token 成本需要纳入选型评估。ERP 级别生成按当前主流模型定价计算，单次完整生成可能消耗数十美元。
 
-. 版本历程
+## 十、发展路线图
 
 | 版本 | 状态 | 核心成就 |
 |------|------|----------|
-| **Alpha** | ✅ 完成 | 基础架构，100% 编译成功率 |
-| **Beta** | ✅ 完成 | RAG、模块化、补充机制 |
-| **Gamma** | ✅ 完成 | 快速迭代功能上线 |
-| **Delta** | 🔄 进行中 | 稳定性优先，深度优化 |
+| Alpha | 完成 | 基础架构，100% 编译成功率 |
+| Beta | 完成 | RAG、模块化、补充机制 |
+| Gamma | 完成 | 快速迭代功能上线 |
+| Delta | 进行中 | 稳定性优先，深度优化 |
 
-. Delta 阶段重点
+Delta 阶段重点方向：
 
 | 方向 | 说明 |
 |------|------|
-| 🧪 **Local LLM Benchmark** | 用开源模型发现隐蔽缺陷 |
-| ✅ **验证逻辑增强** | 动态函数调用 Schema，JSON Schema 验证器 |
-| 📚 **RAG 优化** | 混合搜索（Vector + BM25），动态 K 检索 |
-| 🎨 **设计完整性** | Database ↔ Interface 阶段设计一致性 |
-| 🌐 **多语言支持** | Java/Spring 代码生成（进行中） |
-| ✏️ **人工修改支持** | 解析用户修改代码回写 AST |
+| Local LLM Benchmark | 用开源模型发现隐蔽缺陷 |
+| 验证逻辑增强 | 动态函数调用 Schema，JSON Schema 验证器 |
+| RAG 优化 | 混合搜索（Vector + BM25），动态 K 检索 |
+| 设计完整性 | Database ↔ Interface 阶段设计一致性 |
+| 多语言支持 | Java/Spring 代码生成（进行中） |
+| 人工修改支持 | 解析用户修改代码回写 AST |
 
-十、许可证说明
+## 十一、许可证
 
-. 许可证结构
+AutoBE 本身采用 AGPL-3.0，修改后分发或网络服务化都需要开源。生成的后端应用可以自由选择许可证（MIT、Apache、商业闭源均可），不受 AGPL 约束。这是 AutoBE 推广的关键设计——工具链强 copyleft，产物不约束。
 
-| 组件 | 许可证 | 说明 |
-|------|---------|------|
-| **AutoBE 本身** | AGPL-3.0 | 修改后必须开源 |
-| **生成的后端应用** | 可自由选择 | MIT/商业等均可 |
+## 十二、采用建议
 
-. AGPL-. 要求
+**何时用 AutoBE**：
 
-- ✅ 自由使用和修改
-- ✅ 自由分发
-- 🔗 网络使用必须开源
-- 🔗 衍生作品必须开源
+- 需要在数小时内拿到一个可编译、带测试的后端骨架，用于验证产品想法
+- 前端团队需要可联调的 mock 后端，且希望类型对齐
+- 想对比不同 LLM 在结构化代码生成任务上的工程能力
 
-**重要**：用 AutoBE 生成的后端应用可以自由选择许可证，不受 AGPL 约束。
+**何时不用**：
 
-十一、资源链接
+- 目标是生产后端，且对运行时正确性有硬性要求（金融、交易、医疗）
+- 业务领域高度定制，4 个内置示例无法覆盖，且没有预算做 Token 消耗验证
+- 团队已经有一套成熟的 DDD/Clean Architecture 范式，AutoBE 生成的 NestJS 结构与之差异大
 
-. 官方资源
+**采用顺序建议**：
 
-| 资源 | 链接 |
-|------|------|
-| 🌐 **官网** | https://autobe.dev |
-| 📚 **文档** | https://autobe.dev/docs |
-| 📈 **Benchmark** | https://autobe.dev/benchmark |
-| 💬 **Discord** | https://discord.gg/aMhRmzkqCx |
-| 📦 **npm** | https://www.npmjs.com/package/@autobe/agent |
-| 🔧 **API** | https://autobe.dev/api |
+1. 先跑 `todo` 示例熟悉 Playground 和 Agent 阶段产物
+2. 用一个内部小项目试跑，重点看 Requirements Agent 产出的分析报告是否符合预期
+3. 跑 Benchmark 选定当前性价比最高的模型
+4. 把生成产物当作起点，用 Claude Code 或人工补齐运行时逻辑和边界用例
 
-. 快速链接
+AutoBE 当前的工程价值在于把"AI 生成后端"从一次性 demo 推进到可复现的工程流程。边界明确——编译保证不等于运行保证，复杂项目 Token 成本不低，长期维护仍需人工介入。把它当作"快速拿到可编译骨架的流水线"用，比把它当作"替代后端工程师的方案"用更符合当前版本的实际能力。
 
-| 链接 | 说明 |
-|------|------|
-| [AutoBE GitHub](https://github.com/wrtnlabs/autobe) | 源码仓库 |
-| [Playground](http://localhost:5713) | 本地 AI 对话界面 |
-| [Replay](http://localhost:5713/replay/index.html) | 历史会话回放 |
-| [Benchmark](https://autobe.dev/benchmark) | 模型表现对比 |
-
-十二、总结
-
-AutoBE 的定位：
-
-| 维度 | 说明 |
-|------|------|
-| 🤖 **AI 驱动** | 40+ 专业 Agent 协作，瀑布式开发 |
-| ✅ **100% 可编译** | AST → 验证 → 代码，保证编译成功 |
-| 📦 **完整交付** | 规格 + 数据库 + API + 测试 + SDK |
-| 🔗 **类型安全** | 自动生成 TypeScript SDK，前端无缝集成 |
-| 📊 **Benchmark** | 13+ 模型对比，选择最适合的 LLM |
-| 🌐 **开源免费** | AGPL-3.0，生成代码可自由商用 |
-
----
-
-**🔗 相关资源：**
+## 资源链接
 
 | 资源 | 链接 |
 |------|------|
@@ -427,7 +320,12 @@ AutoBE 的定位：
 | 官网 | https://autobe.dev |
 | 文档 | https://autobe.dev/docs |
 | Benchmark | https://autobe.dev/benchmark |
+| API | https://autobe.dev/api |
+| Discord | https://discord.gg/aMhRmzkqCx |
+| npm | https://www.npmjs.com/package/@autobe/agent |
+| Playground | http://localhost:5713 |
+| Replay | http://localhost:5713/replay/index.html |
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 AutoBE (1.2k Stars)_
+_本文基于 AutoBE v0.31.1（2026-04-10）撰写，仓库数据与 Benchmark 数字均以该时间点为准。_

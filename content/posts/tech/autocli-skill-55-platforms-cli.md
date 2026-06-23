@@ -7,38 +7,31 @@ categories: ["技术笔记"]
 tags: ["AutoCLI", "AI Agent", "浏览器自动化", "Rust", "OpenClaw", "Claude Code"]
 ---
 
-AutoCLI Skill：AI Agent 多平台浏览器自动化工具
+# AutoCLI Skill：AI Agent 多平台浏览器自动化工具
 
-概述
+## 一句话判断
 
-**AutoCLI Skill** 是一个为 Claude Code/OpenClaw/AI Agent 打造的平台集成工具，让 AI 能够操控 55+ 个主流平台——无需 API Key、无需复杂配置、直接复用 Chrome 浏览器已有的登录态。
+AutoCLI Skill 把"AI Agent 操控 55+ 平台"这件事压成一个 4.7MB 的 Rust 二进制加一个 Chrome 扩展，靠复用浏览器已有登录态绕开 OAuth 与 API Key 申请，代价是必须保持 Chrome 在前台运行、且依赖平台 DOM 结构稳定。它适合个人开发者快速搭建跨平台信息流助手，不适合做生产级多租户服务。
 
-> **GitHub**: [nashsu/autocli-skill](https://github.com/nashsu/autocli-skill) 
-> **Stars**: 582 ⭐ 
-> **Forks**: 62 
-> **核心特性**: 55+平台支持 | 零 API Key | Chrome 登录态复用 | Rust 编写 | 4.7MB 二进制
+> 本文数据基于 2026 年 4 月公开仓库状态，Stars/Forks/二进制大小均可能随版本变化，请以仓库主页为准。
 
-定位
+## 它解决什么问题
 
-**"Give your AI Agent the ability to reach information across the entire web"** —— 让 AI Agent 能够浏览整个互联网。
+让 AI Agent 跨平台获取信息或执行动作，传统路径有三条，每条都有明显成本：
 
-解决的核心痛点
+| 痛点 | 传统方案 | 实际成本 |
+|------|---------|---------|
+| AI 无法访问社交媒体 | 手动复制粘贴 | 上下文断裂，无法批量 |
+| 各平台 API 申请复杂 | 申请 API Key | Twitter/X 等平台已关闭免费 API，部分平台需企业资质 |
+| Playwright 自动化门槛高 | 自行处理 Cookie、UA、指纹 | 每个平台单独写选择器，维护成本高 |
+| 跨平台数据采集困难 | 每个平台单独写爬虫 | 反爬升级即失效 |
+| 桌面应用控制复杂 | 各 App API 不互通 | Cursor/Notion 无统一接口 |
 
-| 痛点 | 传统方案 | AutoCLI Skill |
-|------|---------|--------------|
-| AI 无法访问社交媒体 | 手动复制粘贴 | 自然语言控制 |
-| 各平台 API 申请复杂 | API Key 申请流程繁琐 | 零配置，复用 Chrome 登录态 |
-| Playwright 自动化门槛高 | 需要处理 Cookie、UA、指纹 | 一条命令搞定 |
-| 跨平台数据采集困难 | 每个平台单独写爬虫 | 统一 CLI 接口 |
-| 桌面应用控制复杂 | App API 各不相同 | 标准化命令控制 |
+AutoCLI Skill 的取舍是：放弃多租户与并发能力，换"零配置 + 复用登录态 + 统一 CLI 接口"。这套取舍成立的前提是单用户、单机、Chrome 常驻。
 
----
+## 总览地图：三重模式如何分工
 
-系统架构
-
-核心设计：三重模式覆盖
-
-AutoCLI Skill 的架构设计围绕三种不同的平台访问模式展开，确保对 55+ 平台的全覆盖：
+AutoCLI Skill 的 55+ 平台按访问方式分成三组互不重叠的模式。理解这三组的边界，是判断某个平台能否被支持、以及为什么命令数量差异巨大的关键。
 
 ```mermaid
 graph TB
@@ -84,28 +77,32 @@ graph TB
  Chrome --> Extension[autocli Extension]
 ```
 
-三种模式的对比
+三种模式的边界如下表。是否需要 Chrome、是否需要扩展、是否需要桌面应用，决定了同一套 CLI 在不同平台上的运行前提。
 
-| 模式 | 是否需要 Chrome | 是否需要扩展 | 是否需要桌面应用 | 代表平台 |
-|------|----------------|-------------|----------------|---------|
-| **Public API** | ❌ 否 | ❌ 否 | ❌ 否 | HackerNews, Wikipedia, Arxiv, BBC |
-| **Browser** | ✅ 是 | ✅ 是 | ❌ 否 | Twitter/X, Bilibili, Zhihu, YouTube, Reddit |
-| **Desktop App** | ❌ 否 | ❌ 否 | ✅ 是 | Cursor, Notion, ChatGPT, Discord, Codex |
+| 模式 | 是否需要 Chrome | 是否需要扩展 | 是否需要桌面应用 | 代表平台 | 命令延迟量级 |
+|------|----------------|-------------|----------------|---------|------------|
+| **Public API** | 否 | 否 | 否 | HackerNews, Wikipedia, Arxiv, BBC | 百毫秒级 |
+| **Browser** | 是 | 是 | 否 | Twitter/X, Bilibili, Zhihu, YouTube, Reddit | 秒级，受页面加载影响 |
+| **Desktop App** | 否 | 否 | 是 | Cursor, Notion, ChatGPT, Discord, Codex | 秒级，受应用响应影响 |
 
-技术选型分析
+为什么这样切分？Public API 模式走平台开放接口，最稳定也最快，但能覆盖的平台有限（多数社交平台已关闭公开 API）；Browser 模式靠 Chrome 扩展注入脚本操作 DOM，覆盖面最广，但受平台前端改版影响；Desktop App 模式通过操作系统级窗口控制操作桌面应用，填补了 Cursor/Notion 这类无 Web API 的工具空白。三条路径互补，缺哪一条都会留下覆盖盲区。
 
-| 技术选型 | 理由 | 权衡 |
+## 技术选型背后的取舍
+
+| 技术选型 | 理由 | 代价 |
 |---------|------|------|
-| **Rust 编写** | 极致性能、内存安全、零依赖 | 学习曲线较陡 |
-| **复用 Chrome 登录态** | 绕过 OAuth、API Key 申请流程 | 依赖 Chrome 环境 |
-| **CLI 优先** | 轻量、可脚本化、易于 AI 调用 | 无原生 GUI |
-| **单一二进制** | 4.7MB、下载即用 | 功能复杂度受限于 CLI |
+| **Rust 编写** | 单二进制分发，启动快，内存安全 | 贡献门槛高于 Node.js/Python |
+| **复用 Chrome 登录态** | 绕过 OAuth 申请与 API Key 配置 | 强依赖 Chrome 进程常驻，无法多用户隔离 |
+| **CLI 优先** | 文本输入输出天然适配 LLM | 无原生 GUI，非技术用户上手需借助 AI Agent |
+| **Chrome 扩展注入** | 直接操作已登录页面的 DOM | 平台前端改版即失效，需维护选择器 |
 
----
+4.7MB 二进制大小是相对于 Playwright（Node.js 运行时 + 浏览器内核数百 MB）的对比结论。这个数字来自项目 README，实测会随平台命令增加而增长，建议以仓库 Releases 页最新版本为准。
 
-+平台支持详解
+## 平台支持矩阵
 
-社交媒体矩阵
+下表按平台类型分组，列出每个平台的访问模式、声明命令数与核心功能。命令数为项目 README 声明值，实际可用命令以 `autocli --help` 输出为准。
+
+### 社交媒体
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -119,7 +116,7 @@ graph TB
 | **TikTok** | Browser | 15 个 | explore, search, profile, follow, like, comment |
 | **Jike (即刻)** | Browser | 10 个 | feed, search, create, like, comment, repost |
 
-视频与内容平台
+### 视频与内容平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -129,7 +126,7 @@ graph TB
 | **Medium** | Browser | 3 个 | feed, search, user |
 | **Substack** | Browser | 3 个 | feed, search, publication |
 
-桌面应用控制
+### 桌面应用控制
 
 | 应用 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -139,7 +136,7 @@ graph TB
 | **Discord** | Desktop | 6 个 | status, send, read, channels, servers, search, members |
 | **Codex** | Desktop | 11 个 | status, send, read, new, dump, model, ask |
 
-金融数据平台
+### 金融数据平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -147,7 +144,7 @@ graph TB
 | **Xueqiu (雪球)** | Browser | 7 个 | feed, hot-stock, hot, search, stock, watchlist |
 | **Bloomberg** | Public/Browser | 10 个 | main, markets, economics, tech, politics |
 
-开发者平台
+### 开发者平台
 
 | 平台 | 模式 | 命令数量 | 核心功能 |
 |------|------|---------|---------|
@@ -159,7 +156,7 @@ graph TB
 | **Arxiv** | Public | 2 个 | search, paper |
 | **V2EX** | Public/Browser | 11 个 | hot, latest, topic, node, user, daily, me |
 
-命令行工具集成
+### 命令行工具集成
 
 | 工具 | 模式 | 功能 |
 |------|------|------|
@@ -167,55 +164,71 @@ graph TB
 | **Docker** | Desktop | ps, images, run, logs |
 | **kubectl** | Desktop | get, describe, logs, exec |
 
----
+## 安装与配置
 
-安装与配置
+### 前置条件
 
-前置条件
+- Chrome 浏览器已打开，并已登录目标网站
+- autocli Chrome 扩展已安装（从 [GitHub Releases](https://github.com/nashsu/AutoCLI/releases/latest) 下载）
 
-安装 AutoCLI Skill 前，需要确认以下条件：
+### 安装步骤
 
-- [ ] **Chrome 浏览器** 已打开，并已登录目标网站
-- [ ] **autocli Chrome 扩展** 已安装（从 [GitHub Releases](https://github.com/nashsu/AutoCLI/releases/latest) 下载）
-
-安装步骤
-
-方式一：让 AI Agent 帮你安装（推荐）
+**方式一：让 AI Agent 帮你安装（推荐）**
 
 ```
 Help me install this skill: https://github.com/nashsu/AutoCLI-skill
 ```
 
-方式二：手动安装
+**方式二：手动安装**
 
 ```bash
-. 安装 autocli CLI 工具
-参考：https://github.com/nashsu/AutoCLI
+# 安装 autocli CLI 工具
+# 参考：https://github.com/nashsu/AutoCLI
 
-. 安装本 Skill
+# 安装本 Skill
 npx skills add https://github.com/nashsu/AutoCLI-skill
 
-. 重启 Claude Code 激活 Skill
+# 重启 Claude Code 激活 Skill
 ```
 
-验证安装
+### 验证安装
 
 ```bash
-检查 autocli 是否安装成功
+# 检查 autocli 是否安装成功
 autocli --version
 
-查看所有可用命令
+# 查看所有可用命令
 autocli --help
 
-运行诊断
+# 运行诊断
 autocli doctor
 ```
 
----
+## 任务流案例：从自然语言到平台动作
 
-使用方法
+下面用一个完整任务流串起三重模式的差异。假设用户对 Claude Code 说："查一下今天 HackerNews 头条和 Twitter 热搜，把结果整理成 Markdown"。
 
-自然语言交互示例
+**步骤 1：AI Agent 解析意图**
+
+Claude Code 收到自然语言后，识别出两个子任务：HackerNews 头条（Public API 模式）和 Twitter 热搜（Browser 模式）。
+
+**步骤 2：分别调用 autocli 命令**
+
+```bash
+# Public API 模式：无需 Chrome，直接走 HTTP
+autocli hackernews top --limit 10 --format json
+
+# Browser 模式：需要 Chrome 已打开且已登录 Twitter
+autocli twitter trending --format json
+```
+
+**步骤 3：模式差异体现与结果聚合**
+
+两条命令的返回路径完全不同：HackerNews 走官方 Firebase API，百毫秒级返回 JSON；Twitter 需要 Chrome 扩展注入脚本到已打开的标签页，秒级返回，且依赖 Twitter 前端 DOM 结构未改版。AI Agent 拿到两份 JSON 后，按用户要求整理成 Markdown 表格返回。用户全程无需关心两种模式的底层差异，CLI 接口统一了输入输出格式——这正是 AutoCLI Skill 把 55+ 平台压成一套 CLI 的实际效果。
+
+## 使用方法
+
+### 自然语言交互示例
 
 确保 Chrome 已打开且已登录目标网站，然后对 Claude Code 说：
 
@@ -233,52 +246,52 @@ autocli doctor
 
 Claude 会自动调用正确的 autocli 命令，运行后以表格形式展示结果，英文标题附带中文翻译。
 
-命令行直接调用
+### 命令行直接调用
 
 ```bash
-Bilibili
+# Bilibili
 autocli bilibili hot --limit 10 --format json
 autocli bilibili search --keyword "AI"
 
-Twitter/X
+# Twitter/X
 autocli twitter timeline --format json
 autocli twitter post --text "Hello from Claude!"
 autocli twitter search "claude AI" --limit 10
 
-YouTube
+# YouTube
 autocli youtube search --query "LLM tutorial"
 autocli youtube transcript --video-id YOUR_VIDEO_ID
 
-HackerNews
+# HackerNews
 autocli hackernews top --limit 20 --format json
 
-Reddit
+# Reddit
 autocli reddit hot --subreddit MachineLearning
 
-Yahoo Finance
+# Yahoo Finance
 autocli yahoo-finance quote --symbol AAPL
 
-雪球
+# 雪球
 autocli xueqiu stock --symbol SH600519 # 茅台行情
 autocli xueqiu watchlist # 我的自选股
 
-豆瓣
+# 豆瓣
 autocli douban top250 --format json
 
-Cursor
+# Cursor
 autocli cursor status
 autocli cursor send --text "Write a function to..."
 
-Notion
+# Notion
 autocli notion search "会议记录"
 autocli notion new --title "New Page"
 ```
 
----
+## 命令参考
 
-命令参考
+下表列出各平台常用命令。受篇幅限制，此处仅展示部分高频命令，完整命令列表请运行 `autocli --help` 或查阅仓库 README。
 
-Twitter/X 命令（ 个）
+### Twitter/X 常用命令
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -291,7 +304,7 @@ Twitter/X 命令（ 个）
 | `twitter profile` | 获取用户信息 | `autocli twitter profile --user username` |
 | `twitter article` | 获取推文文章 | `autocli twitter article --id 123` |
 
-Bilibili 命令（ 个）
+### Bilibili 常用命令
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -304,7 +317,7 @@ Bilibili 命令（ 个）
 | `bilibili subtitle` | 获取字幕 | `autocli bilibili subtitle --avid 123` |
 | `bilibili download` | 下载视频 | `autocli bilibili download --avid 123` |
 
-HackerNews 命令（ 个）
+### HackerNews 命令
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -317,7 +330,7 @@ HackerNews 命令（ 个）
 | `hackernews search` | 搜索 | `autocli hackernews search "keyword"` |
 | `hackernews user` | 用户信息 | `autocli hackernews user --name username` |
 
-Cursor 控制命令（ 个）
+### Cursor 控制命令
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -330,7 +343,7 @@ Cursor 控制命令（ 个）
 | `cursor model` | 切换模型 | `autocli cursor model` |
 | `cursor ask` | 提问 | `autocli cursor ask --text "How do I..."` |
 
-Notion 控制命令（ 个）
+### Notion 控制命令
 
 | 命令 | 功能 | 示例 |
 |------|------|------|
@@ -343,11 +356,9 @@ Notion 控制命令（ 个）
 | `notion favorites` | 收藏页面 | `autocli notion favorites` |
 | `notion export` | 导出页面 | `autocli notion export --page-id xxx` |
 
----
+## 故障排除
 
-故障排除
-
-常见问题与解决方案
+### 常见问题与解决方案
 
 | 问题 | 原因 | 解决方案 |
 |------|------|---------|
@@ -356,122 +367,73 @@ Notion 控制命令（ 个）
 | 登录态未识别 | 未在 Chrome 中登录 | 在 Chrome 中手动登录目标网站 |
 | Browser 命令超时 | 网络问题 | 运行 `autocli doctor` 进行诊断 |
 | 扩展未加载 | 扩展未启用 | 检查 Chrome 扩展管理器 |
+| Browser 命令返回空 | 平台前端改版 | 关注仓库 issue，等待选择器更新 |
 
-诊断命令
+### 诊断命令
 
 ```bash
-运行完整诊断
+# 运行完整诊断
 autocli doctor
 
-检查特定平台
+# 检查特定平台
 autocli doctor --platform twitter
 
-查看详细日志
+# 查看详细日志
 autocli --debug twitter trending
 ```
 
----
-
-🆚 与同类工具对比
+## 与同类工具对比
 
 | 特性 | AutoCLI Skill | Playwright | Puppeteer | Selenium |
 |------|---------------|-------------|------------|----------|
-| **安装复杂度** | ⭐ 极简（一条命令） | ⭐ 简单 | ⭐ 简单 | ⭐⭐ 中等 |
-| **登录态管理** | ✅ 自动复用 Chrome | ❌ 需手动处理 | ❌ 需手动处理 | ❌ 需手动处理 |
-| **API Key** | ❌ 不需要 | N/A | N/A | N/A |
-| **跨平台支持** | ✅ 55+ | ❌ 需单独配置 | ❌ 需单独配置 | ❌ 需单独配置 |
-| **桌面应用控制** | ✅ Cursor/Notion 等 | ❌ 不支持 | ❌ 不支持 | ❌ 不支持 |
-| **二进制大小** | ✅ 4.7MB | ❌ Node.js 依赖 | ❌ Node.js 依赖 | ❌ Java 依赖 |
-| **AI 集成** | ✅ 原生支持 | ❌ 需包装 | ❌ 需包装 | ❌ 需包装 |
+| **安装复杂度** | 极简（一条命令） | 简单 | 简单 | 中等 |
+| **登录态管理** | 自动复用 Chrome | 需手动处理 | 需手动处理 | 需手动处理 |
+| **API Key** | 不需要 | 不适用 | 不适用 | 不适用 |
+| **跨平台支持** | 55+ 平台预置 | 需单独配置 | 需单独配置 | 需单独配置 |
+| **桌面应用控制** | 支持 Cursor/Notion 等 | 不支持 | 不支持 | 不支持 |
+| **二进制大小** | 4.7MB | Node.js 依赖 | Node.js 依赖 | Java 依赖 |
+| **AI 集成** | 原生支持 | 需包装 | 需包装 | 需包装 |
+| **多用户隔离** | 不支持 | 支持 | 支持 | 支持 |
+| **生产级稳定性** | 依赖平台 DOM | 高 | 高 | 高 |
 
----
+从对比表可以看出，AutoCLI Skill 牺牲了多用户隔离与生产级稳定性，换来"零配置 + 55+ 平台预置 + 桌面应用控制"三项独有能力。个人单机场景下，这些能力直接可用；多用户、高并发场景下，仍需回到 Playwright/Puppeteer 自行搭建登录态管理与并发控制层。
 
-设计原则总结
+## 采用建议
 
-设计原则
+### 适合的场景
 
-1. **复用优于重造**：直接复用用户已有的 Chrome 登录态，不走 OAuth 流程
-2. **CLI 优先**：轻量、可组合、易于 AI 调用
-3. **零配置**：下载即用
-4. **统一接口**：55+ 平台，统一的 CLI 接口
+- **个人开发者构建信息流助手**：聚合 HackerNews、Twitter、Bilibili 等平台的热门内容
+- **AI Agent 跨平台操作**：让 Claude Code/Cursor 统一操控多个已登录平台
+- **快速原型验证**：无需申请 API Key 即可测试跨平台数据获取可行性
+- **桌面应用自动化**：统一操控 Cursor/Notion/ChatGPT 等桌面工具
 
-架构经验
+### 不适合的场景
 
-| 经验 | 应用场景 |
-|------|---------|
-| **复用而非重建** | 当平台已有完善认证时，复用是最快路径 |
-| **CLI 作为桥梁** | CLI 是 AI 与系统交互的最佳界面 |
-| **三重模式覆盖** | Public API → Browser → Desktop，覆盖所有场景 |
-| **单二进制分发** | 4.7MB 零依赖 vs Node.js 数百 MB 依赖 |
+- **多租户 SaaS 服务**：Chrome 登录态无法隔离，存在账号安全风险
+- **高并发采集**：Browser 模式受 Chrome 单实例性能限制
+- **长期稳定生产环境**：平台前端改版会导致 Browser 模式命令失效
+- **需要严格审计的场景**：CLI 操作直接复用用户登录态，缺乏操作日志与权限分级
 
-常见陷阱
+### 采用顺序建议
 
-| 陷阱 | 避免方法 |
-|------|---------|
-| **过度依赖浏览器** | Public API 优先，减少依赖 |
-| **登录态失效** | 定期验证 Chrome 登录状态 |
-| **平台变更** | 关注平台 UI 变化，及时更新选择器 |
+1. **先试 Public API 模式**：HackerNews、Wikipedia 等平台无需 Chrome，验证 AI Agent 与 autocli 的协作链路
+2. **再试 Browser 模式**：选 1-2 个已登录平台（如 Bilibili、知乎），测试 DOM 操作稳定性
+3. **最后试 Desktop App 模式**：在 Cursor/Notion 等高频桌面应用上验证自动化价值
+4. **关注仓库 issue**：平台改版后及时更新扩展，避免命令失效
 
----
+### 风险与限制
 
-资源链接
+- **平台依赖风险**：Browser 模式依赖平台 DOM 结构，前端改版即失效
+- **登录态共享风险**：所有命令共享 Chrome 登录态，无账号隔离
+- **并发限制**：Chrome 单实例无法高并发，多任务需排队
+- **合规风险**：自动化操作可能违反部分平台 ToS，使用前请查阅目标平台条款
+
+## 资源链接
 
 | 资源 | 链接 |
 |------|------|
-| GitHub 仓库 | [nashsu/autocli-skill](https://github.com/nashsu/autocli-skill) |
+| GitHub 仓库（Skill） | [nashsu/autocli-skill](https://github.com/nashsu/autocli-skill) |
 | AutoCLI 核心 | [nashsu/AutoCLI](https://github.com/nashsu/AutoCLI) |
 | Chrome 扩展下载 | [AutoCLI Releases](https://github.com/nashsu/AutoCLI/releases/latest) |
-| 相关项目 | [nashsu/autocli-skill (Skill 版)](https://github.com/nashsu/autocli-skill) |
 
----
-
-平台覆盖一览
-
-```
-社交媒体 (8)
-├── Twitter/X (24 commands)
-├── Bilibili (12 commands)
-├── Zhihu (4 commands)
-├── Weibo (2 commands)
-├── Reddit (15 commands)
-├── Facebook (10 commands)
-├── Instagram (14 commands)
-└── TikTok (15 commands)
-
-视频内容 (5)
-├── YouTube (3 commands)
-├── 小红书 (11 commands)
-├── Douban (7 commands)
-├── Medium (3 commands)
-└── Substack (3 commands)
-
-桌面应用 (5)
-├── Cursor (12 commands)
-├── Notion (8 commands)
-├── ChatGPT (5 commands)
-├── Discord (6 commands)
-└── Codex (11 commands)
-
-开发者平台 (6)
-├── HackerNews (8 commands)
-├── StackOverflow (4 commands)
-├── Dev.to (3 commands)
-├── Lobsters (4 commands)
-├── Wikipedia (4 commands)
-└── Arxiv (2 commands)
-
-金融数据 (3)
-├── Yahoo Finance (1 command)
-├── Xueqiu (7 commands)
-└── Bloomberg (10 commands)
-
-其他平台 (4)
-├── V2EX (11 commands)
-├── GitHub CLI
-├── Docker
-└── kubectl
-```
-
----
-
-*🦞 AutoCLI Skill：55+ 平台 CLI 控制，复用 Chrome 登录态，4.7MB 零依赖。*
+> 本文 Stars/Forks 数据基于 2026 年 4 月仓库快照（582 Stars / 62 Forks），后续可能变化，请以仓库主页实时数据为准。4.7MB 二进制大小为项目 README 声明值，实测会随版本迭代变化。

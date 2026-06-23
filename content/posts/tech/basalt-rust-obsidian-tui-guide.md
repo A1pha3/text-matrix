@@ -11,31 +11,43 @@ hiddenFromHomePage: true
 
 > "Basalt 不是 Obsidian 的替代品，它提供极简主义终端界面和 WYSIWYG Markdown 体验。"——README 开篇声明
 
----
+## 这篇文章的判断
 
-一句话定位
+Basalt 给出的承诺很窄：在终端里浏览和导航 Obsidian 保险库，不做编辑、不做搜索、不做 Graph View。1.2k 星（截至 2026-05-11）的关注度来自这种窄定位——它把终端能做好的部分（键盘导航、文本渲染、快速启动）和做不好的部分（富文本编辑、图形化视图）干净地切开了。
 
-[Basalt](https://github.com/erikjuhani/basalt) 是一个用 **Rust** 构建的 **Obsidian 笔记终端管理器**。它不是一个全功能的笔记软件，而是专注做好一件事：在终端里以三窗格布局（Explorer + Note Editor + Outline）浏览和管理 Obsidian 保险库。
+如果你已经重度使用 Obsidian，又经常在终端里工作，Basalt 适合作为快速查阅层叠加在 Obsidian 之上。如果你还没有 Obsidian 保险库，或者主要需求是写笔记，Basalt 帮不上忙。
 
-当前 GitHub ⭐ **1.2k**，Rust 实现，MIT 许可证。
+阅读本文后，你可以：
 
----
+- 说清 Basalt 三窗格架构的职责划分和切换方式
+- 判断 Basalt 的 Markdown 渲染边界是否满足你的笔记结构
+- 完成一次"启动 → 选保险库 → 浏览 → 跳转标题 → 呼出外部编辑器"的完整任务
+- 评估是否要把 Basalt 加入日常工作流
 
-核心架构：ratatui 驱动的三窗格 TUI
+[Basalt](https://github.com/erikjuhani/basalt) 由 Rust 实现，MIT 许可证，通过 `cargo install basalt-tui` 安装。
 
-技术栈
+## 总览：三窗格与能力边界
 
-| 层级 | 技术选型 | 说明 |
-|------|----------|------|
-| TUI 框架 | [ratatui](https://github.com/ratatui-org/ratatui) | Rust 最流行的 TUI 库，继承自 tui-rs |
-| Markdown 解析 | [pulldown-cmark](https://github.com/pulldown-cmark/pulldown-cmark) | CommonMark + GFM 兼容解析器 |
-| 跨平台 | 原生实现 | Windows / macOS / Linux |
-| 包管理 | Cargo | `cargo install basalt-tui` |
-| 包管理器（可选） | aqua | 日本开发者常用的 CLI 工具管理器 |
+在读细节之前，先看 Basalt 把哪些职责留给自己、哪些留给 Obsidian 或外部编辑器。
 
-三窗格布局
+| 职责 | 归属 | 说明 |
+|------|------|------|
+| 保险库发现 | Basalt | 读取 `obsidian.json` 列出本地保险库 |
+| 文件浏览 | Basalt | Explorer 窗格，键盘导航 |
+| Markdown 渲染 | Basalt | WYSIWYG 风格，但图片/表格/语法高亮不渲染 |
+| 标题大纲跳转 | Basalt | Outline 窗格 |
+| Wiki-links 重命名同步 | Basalt | 重命名笔记时自动更新引用 |
+| 笔记编辑 | 外部编辑器 | 实验性内置编辑器仅做轻量补丁 |
+| 搜索、Graph View、Backlinks | Obsidian GUI | Basalt 不实现 |
+| 创建保险库、创建/删除笔记 | Obsidian GUI | Basalt 不实现 |
 
-```
+技术栈层面，Basalt 用 [ratatui](https://github.com/ratatui-org/ratatui) 做 TUI 渲染（ratatui 是 tui-rs 停止维护后的社区继承者，目前是 Rust 生态最活跃的 TUI 库），用 [pulldown-cmark](https://github.com/pulldown-cmark/pulldown-cmark) 做 Markdown 解析（CommonMark + GFM 兼容的流式解析器），跨平台支持 Windows / macOS / Linux。
+
+## 三窗格架构与渲染策略
+
+### 三窗格布局
+
+```text
 ┌─────────────────────────────────────────────────────────┐
 │  ┌──────────┐  ┌─────────────────────┐  ┌───────────┐  │
 │  │ Explorer │  │   Note Editor        │  │  Outline  │  │
@@ -51,83 +63,83 @@ hiddenFromHomePage: true
 └─────────────────────────────────────────────────────────┘
 ```
 
-- **Explorer（左侧）**：浏览保险库的文件和文件夹
-- **Note Editor（中央）**：以 WYSIWYG 风格渲染 Markdown 内容
-- **Outline（右侧）**：当前笔记的标题大纲，支持跳转
+三个窗格各管一件事：
 
-窗格之间用 `Tab` / `Shift+Tab` 切换焦点，底部状态栏显示当前焦点窗格和字数统计。
+- **Explorer（左侧）**：保险库的文件和文件夹树
+- **Note Editor（中央）**：以 WYSIWYG 风格渲染当前笔记
+- **Outline（右侧）**：当前笔记的标题大纲，选中后跳转
 
----
+`Tab` / `Shift+Tab` 在三个窗格间切换焦点，底部状态栏显示当前焦点窗格和字数统计。这种布局把"找文件—读内容—跳标题"三步压缩到一屏内，省掉了 GUI 里反复点切面板的操作。
 
-Markdown 渲染：pulldown-cmark 的支持边界
+### Markdown 渲染边界
 
-已支持
+Basalt 的渲染策略是把语法字符替换成视觉样式：`#` 变成彩色指示条，`>` 变成左侧垂直条，代码块用背景色区分。这种做法在终端字符网格的约束下保留了 Markdown 的结构感。
+
+已支持的元素：
 
 | 元素 | 渲染方式 |
 |------|----------|
 | 标题 H1-H6 | 隐藏 `#` 符号，显示彩色指示条 |
 | 段落/列表/引用 | 标准渲染，引用用垂直条代替 `>` |
-| 代码块 | 带背景样式（**尚无语法高亮**） |
+| 代码块 | 带背景样式（尚无语法高亮） |
 | 任务列表 `[ ]` / `[x]` | 视觉化复选框 |
 | Callouts | Obsidian 风格的 `>[!NOTE]` 等语法 |
 | Wiki-links | `[[Note]]` / `[[Note#Heading]]` 解析 |
 
-尚未支持
+尚未支持的元素：
 
 | 元素 | 状态 |
 |------|------|
-| 图片 | ❌ 不渲染 |
-| 表格 | ❌ 不渲染 |
-| 分割线 `---` | ❌ 不渲染 |
-| 语法高亮 | ❌ 代码块统一样式 |
+| 图片 | 不渲染 |
+| 表格 | 不渲染 |
+| 分割线 `---` | 不渲染 |
+| 语法高亮 | 代码块统一样式 |
 | 粗体/斜体/删除线 | 解析但不视觉化 |
-| 数学公式 `$...$` / `$$...$$` | ❌ 不支持 |
-| 脚注 | ❌ 不支持 |
-| HTML 内容 | ❌ 不支持 |
-| 外链点击 | ❌ 不可点击 |
+| 数学公式 `$...$` / `$$...$$` | 不支持 |
+| 脚注 | 不支持 |
+| HTML 内容 | 不支持 |
+| 外链点击 | 不可点击 |
 
-README 明确标注了这些限制，对于追求完整 Obsidian 体验的用户，这是重要的预期管理。
+图片、表格、数学公式这些元素在终端字符网格里没有自然的渲染方式——图片需要像素定位，表格需要动态列宽计算，公式需要 LaTeX 排版引擎。Basalt 选择直接不支持，避免做半成品渲染导致读者误判笔记内容。如果你的笔记重度依赖这些元素，Basalt 只能做文件树导航用。
 
----
+## 核心功能与一次完整浏览任务
 
-核心功能
+### 保险库自动发现
 
-. 保险库自动发现
+Basalt 启动时读取 Obsidian 的配置文件 `obsidian.json`，列出本地所有保险库路径，在启动屏显示：
 
-Basalt 启动时会在启动屏（Splash Screen）显示所有自动发现的 Obsidian 保险库。保险库发现机制读取 Obsidian 的配置文件 `obsidian.json`，列出本地所有保险库路径。
-
-```
+```text
 basalt
 → 启动屏显示保险库列表
 → 用 j/k 或方向键导航
 → Enter 打开保险库
 ```
 
-`Ctrl+G` 随时呼出保险库选择器切换保险库。
+`Ctrl+G` 随时呼出保险库选择器切换保险库。这个机制依赖 Obsidian 已经在本机配置过保险库；如果 `obsidian.json` 不存在，Basalt 无法手动指定路径。
 
-. WYSIWYG Markdown 渲染
+### WYSIWYG 渲染细节
 
-Basalt 的渲染策略是**替换语法字符为视觉样式**，而非简单地将纯文本显示出来：
+渲染层把 Markdown 语法字符替换成视觉样式：
 
 - 标题 `#` 符号被彩色指示条替代
 - 引用块 `>` 被左侧垂直条替代
 - 代码块用背景色区分
 
-这种渲染方式在终端的约束下最大化了可读性。
+这种渲染只读不写——编辑操作留给外部编辑器或实验性内置编辑器。
 
-. 重命名自动更新 Wiki-links
+### 重命名自动更新 Wiki-links
 
-在 Explorer 中按 `r` 重命名笔记或文件夹时，Basalt 会自动扫描并更新保险库中所有引用该笔记的 Wiki-links。
+在 Explorer 中按 `r` 重命名笔记或文件夹时，Basalt 会扫描保险库中所有引用该笔记的 Wiki-links 并更新：
 
-```
+```text
 假设有笔记 A.md 内容为：参见 [[B]] 和 [[C]]
 将 B.md 重命名为 D.md 后
 A.md 自动更新为：参见 [[D]] 和 [[C]]
 ```
 
-这是 Obsidian 用户最常用的功能之一，Basalt 正确实现了它。
+Wiki-links 是 Obsidian 笔记图的核心连接方式，重命名时如果不同步更新引用，链接会断成悬空指针。Basalt 把这件事做对了，这是它能作为 Obsidian 配套工具的基础门槛。
 
-. Vim 模式
+### Vim 模式
 
 配置 `vim_mode = true` 启用一套模拟 Vim 的按键预设：
 
@@ -141,33 +153,35 @@ A.md 自动更新为：参见 [[D]] 和 [[C]]
 
 Vim 模式下，Note Editor 引入 Normal/Insert 子模式：`i` 进入 Insert 模式编辑，`Esc` 返回 Normal 模式导航，再按一次 Esc 退出到 READ 模式。
 
-. 实验性内置编辑器
+### 实验性内置编辑器
 
-Basalt 内置了一个**实验性编辑器**，默认关闭，需在配置中启用：
+内置编辑器默认关闭，需在配置中启用：
 
 ```toml
 experimental_editor = true
 ```
 
-启用后按 `i` 进入编辑模式。但当前能力非常有限：
+启用后按 `i` 进入编辑模式。当前能力有限：
 
 **支持的编辑操作：**
+
 - 光标左右移动（`h`/`l` 或方向键）
 - 按词移动（`Alt+f` / `Alt+b`）
 - Backspace 删除
 - `Ctrl+x` 保存，`Esc` 退出
 
 **尚不支持的编辑操作：**
-- ❌ 撤销/重做
-- ❌ 复制/剪切/粘贴
-- ❌ 文本选择
-- ❌ 多行删除
-- ❌ 跳转到行首/行尾
-- ❌ 整行删除
 
-官方推荐：**使用外部编辑器**（如 Vim、VS Code）进行实际编辑，Basalt 的实验性编辑器仅作为轻量补充。
+- 撤销/重做
+- 复制/剪切/粘贴
+- 文本选择
+- 多行删除
+- 跳转到行首/行尾
+- 整行删除
 
-. 自定义命令
+终端文本编辑涉及光标管理、选择状态、剪贴板、撤销栈等复杂状态机，从零实现成本很高。Basalt 把这件事标记为实验性，官方推荐用外部编辑器（Vim、VS Code 等）做实际编辑，内置编辑器仅作轻量补丁。
+
+### 自定义命令
 
 支持配置外部命令调用，通过 `%note_path`、`%vault` 等占位符注入上下文：
 
@@ -181,26 +195,41 @@ key_bindings = [
 ]
 ```
 
----
+这个机制让 Basalt 能把编辑操作委托给任意外部工具，弥补了内置编辑器的不足。
 
-安装与配置
+### 任务流案例：从启动到跳转
 
-安装方式
+把上面的功能串起来，看一次完整的浏览任务如何在 Basalt 里流转：
+
+1. 终端运行 `basalt`，启动屏列出本机所有保险库
+2. 用 `j/k` 选中工作保险库，按 `Enter` 进入
+3. 三窗格界面出现，焦点默认在 Explorer
+4. 用 `j/k` 在文件树里定位到 `daily/2026-05-11.md`，按 `Enter` 打开
+5. Note Editor 渲染笔记内容，Outline 右侧列出标题大纲
+6. 按 `Tab` 切到 Outline，用 `j/k` 选中某个 H2，按 `Enter` 跳转到对应位置
+7. 发现需要改一处文字，按 `Ctrl+Alt+E`（自定义命令）呼出 Vim 编辑
+8. 在 Vim 里保存退出，Basalt 自动重新渲染更新后的内容
+9. 按 `Ctrl+G` 切到另一个保险库继续查阅
+
+整个流程里 Basalt 只负责浏览和导航，编辑委托给外部编辑器，搜索和 Graph View 留给 Obsidian GUI。
+
+## 安装与配置
+
+### 安装
 
 ```bash
-方式：Cargo（推荐）
+# Cargo（推荐）
 cargo install basalt-tui
 
-方式：aqua
+# aqua
 aqua g -i erikjuhani/basalt
 
-方式：下载预编译二进制
-从 GitHub Releases 下载，解压后移到 PATH
+# 下载预编译二进制：从 GitHub Releases 下载，解压后移到 PATH
 ```
 
-配置文件位置
+### 配置文件位置
 
-```toml
+```text
 macOS / Linux
 $HOME/.basalt.toml
 $XDG_CONFIG_HOME/basalt/config.toml
@@ -210,9 +239,9 @@ Windows
 %APPDATA%\basalt\config.toml
 ```
 
-配置文件采用 **merge 策略**：只需定义要覆盖的按键，所有其他默认值保持有效。
+配置文件采用 merge 策略：只需定义要覆盖的按键，所有其他默认值保持有效。这意味着你可以从空配置开始，按需添加覆盖项，不必复制整份默认配置。
 
-符号预设
+### 符号预设
 
 内置三套符号预设：
 
@@ -232,67 +261,56 @@ folder = "📂"
 file = "📄"
 ```
 
----
+## 适用边界与采用建议
 
-与 Obsidian 的边界
+Basalt 的能力边界由"终端能做什么"决定。终端是字符网格，擅长文本渲染和键盘导航，不擅长像素定位和富文本编辑——上文"Markdown 渲染边界"一节列出的不支持元素，根源都在这里。Basalt 把自己的职责收缩到前者，把后者留给 Obsidian GUI 和外部编辑器。
 
-README 明确说：**Basalt 不是 Obsidian 的替代品**。
+**适合用 Basalt 的场景：**
 
-这一定位很重要，因为 Basalt 不支持的功能很多：
+- 日常在终端工作，切换到 GUI 查笔记会打断节奏
+- 用 Obsidian 管理开发者文档或技术笔记，主要需求是快速查阅
+- 习惯 Vim 按键，希望用 `j/k` 导航文件树和标题
+- 同时管理多个保险库，需要快速切换
 
-| Obsidian 功能 | Basalt 支持 |
-|---------------|-------------|
-| Graph View | ❌ |
-| Backlinks Panel | ❌ |
-| Obsidian 插件 | ❌ |
-| 创建保险库 | ❌ |
-| 创建/删除/移动笔记 | ❌ |
-| 搜索笔记 | ❌ |
-| 完整 Markdown 渲染 | 部分 |
+**不适合用 Basalt 的场景：**
 
-Basalt 的定位是：**用终端方式快速浏览和导航 Obsidian 保险库**，而非完整的笔记管理。
+- 主要需求在写笔记这一侧——内置编辑器实验性，重度编辑该用外部编辑器
+- 笔记重度依赖图片、表格、数学公式——Basalt 不渲染这些元素
+- 需要全文搜索、Graph View、Backlinks 面板——这些是 Obsidian GUI 的能力
 
----
+**采用顺序建议：**
 
-适用场景
+1. 先用 `cargo install basalt-tui` 安装，运行 `basalt` 看能否发现你的保险库
+2. 在最常用的保险库里试一次"启动 → 浏览 → 跳转标题"流程，确认渲染边界可接受
+3. 配置 `vim_mode = true` 和外部编辑器快捷键（如 `Ctrl+Alt+E` 呼出 Vim）
+4. 如果你的笔记里 Wiki-links 密集，测试一次重命名同步是否正常
+5. 上述任一步不满足预期，Basalt 先放观望；都满足，可以把它加入日常终端工作流
 
-**✅ 强项场景：**
-- **终端重度用户**：日常在终端工作，不需要切换到 GUI
-- **快速笔记浏览**：快速定位和浏览笔记，不做编辑
-- **键盘导航爱好者**：Vim 模式 + 快捷键，0 鼠标操作
-- **多保险库管理**：同时管理多个 Obsidian 保险库
-- **开发者文档站**：用 Obsidian 管理开发文档，用 Basalt 快速查阅
+## 技术实现参考
 
-**❌ 局限：**
-- 编辑功能非常基础（实验性），重度编辑建议用外部编辑器
-- 不支持图片、表格等非纯文本内容渲染
-- 不支持搜索（这是 Obsidian 的核心功能之一）
+### ratatui 实战要点
 
----
-
-技术实现亮点
-
-ratatui 的实战应用
-
-Basalt 是学习 ratatui 的优秀参考项目。它的实现展示了：
+Basalt 是学习 ratatui 的参考项目，它的实现展示了几个关键模式：
 
 1. **Block + Flex 布局**：三窗格通过 `Layout` 和 `Flex` 实现灵活的窗格分割
 2. **Style 组合**：`Style::from()` 链式调用实现复杂的文本样式
 3. **StatefulWidget**：Explorer 和 Outline 需要维护选中/滚动状态，通过 `StatefulWidget` 实现
 4. **事件处理**：`EventListener` 模式处理键盘事件
 
-pulldown-cmark 的扩展解析
+为什么选 ratatui？tui-rs 停止维护后，ratatui 是社区维护的继承者，API 兼容且活跃更新。对于需要长期维护的 TUI 项目，选活跃维护的库能减少未来的迁移成本。
+
+### pulldown-cmark 扩展解析
 
 Basalt 在 pulldown-cmark 的基础上扩展了 Obsidian 特有的语法：
 
 - Wiki-links `[[Note]]` 的自定义解析
 - Callout blocks `>[!NOTE]` 的正则识别和渲染
 
-这种在通用解析器上叠加自定义语法的模式，是处理 Markdown 方言的标准做法。
+为什么选 pulldown-cmark？它是 CommonMark 兼容的流式解析器，性能好且易于扩展。Obsidian 的语法扩展（Wiki-links、Callouts）可以作为 pulldown-cmark 事件流的额外处理层实现，不需要重写解析器。这种在通用解析器上叠加自定义语法的做法，比从零写解析器维护成本低得多。
 
-跨平台文件发现
+### 跨平台保险库发现
 
-保险库自动发现需要读取 Obsidian 的配置文件（跨平台路径处理）：
+保险库自动发现需要读取 Obsidian 的配置文件，三个平台的路径不同：
 
 ```rust
 // macOS: ~/Library/Application Support/obsidian/obsidian.json
@@ -300,23 +318,13 @@ Basalt 在 pulldown-cmark 的基础上扩展了 Obsidian 特有的语法：
 // Windows: %APPDATA%\obsidian\obsidian.json
 ```
 
-Basalt 对这三个路径分别处理，解析 JSON 获取 vault 列表。
-
----
-
-总结
-
-Basalt 是一个定位清晰的 Rust TUI 项目。它给终端用户提供了一个极简的 Obsidian 保险库浏览器，不试图替代 Obsidian。
-
-对于已经重度使用 Obsidian、又希望减少 GUI 切换的开发者来说，Basalt 是一个自然的效率工具。它的 ratatui 实现也适合作为 Rust TUI 开发的参考。
-
-但它的局限性也很明确：编辑功能实验性、缺少搜索、不支持富媒体。如果你需要的是完整的笔记管理，Obsidian GUI 仍是必备；Basalt 是终端里的一个快速查阅层。
+Basalt 对这三个路径分别处理，解析 JSON 获取 vault 列表。跨平台路径处理是 TUI 工具常见的负担——没有统一的配置目录约定，每个平台都要单独适配。
 
 ---
 
 **项目信息**
 
-- GitHub：[erikjuhani/basalt](https://github.com/erikjuhani/basalt) ⭐ 1.2k
+- GitHub：[erikjuhani/basalt](https://github.com/erikjuhani/basalt) ⭐ 1.2k（截至 2026-05-11）
 - 语言：Rust
 - 框架：ratatui + pulldown-cmark
 - 许可证：MIT

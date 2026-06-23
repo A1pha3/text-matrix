@@ -12,9 +12,11 @@ tags: ["AI Agent", "MCP", "脚手架", "工具链", "Python"]
 
 # Agent Reach：一个让 CLI Agent 联网的脚手架，不是又一层框架
 
-> CLI Agent 联网的真正瓶颈不是"怎么调 API"——答案显而易见——而是"怎么用最低成本覆盖最多平台"。Agent Reach 把选型、装配、状态检测三件事打包，把实际调用完全留给上游工具。你不需要学新的抽象层，装好就能用。
+> CLI Agent 联网的真正瓶颈不在"怎么调 API"——这部分各平台文档都写得清楚——而在"怎么用最低成本覆盖最多平台"。Agent Reach 把选型、装配、状态检测三件事打包，实际调用完全留给上游工具。装好之后不需要学新的抽象层，Agent 直接调原有命令。
 >
 > 前置知识：用过至少一种 CLI Agent（Claude Code、Cursor、Windsurf 等），知道 MCP 是什么。
+>
+> 读完这篇文章，你能判断 Agent Reach 是否适合自己的场景，区分零配置渠道和 Cookie 渠道，并按采用顺序在本地环境装好验证。
 >
 > 来源：GitHub [Panniantong/Agent-Reach](https://github.com/Panniantong/Agent-Reach)，MIT 协议，249 次提交
 
@@ -22,7 +24,7 @@ tags: ["AI Agent", "MCP", "脚手架", "工具链", "Python"]
 
 ## 这套系统解决的是什么
 
-CLI Agent 写代码、改文档、管项目都没问题，但让它去网上找点东西就卡住了——推特 API 要付费（Basic 档 $100/月），Reddit 2024 年起强制认证，小红书必须登录，YouTube 字幕要单独抓，B 站海外 IP 被封。每个平台都有各自的门槛，光让 Agent 能读个推文就得折腾半天。
+CLI Agent 写代码、改文档、管项目都没问题，但让它去网上找点东西就卡住了——推特 API 要付费（Basic 档 $100/月），Reddit 2024 年起强制认证，小红书必须登录，YouTube 字幕要单独抓，B 站海外 IP 被封。每个平台都有各自的门槛，让 Agent 读一条推文就要先解决认证、抓取、解析三件事。
 
 Agent Reach 做的事情很窄：**选哪个工具、怎么装、装完能不能用**。装好之后，Agent 直接调上游工具，不经过 Agent Reach 的任何包装层。
 
@@ -85,7 +87,7 @@ Agent Reach 自身只做三件事：`install`（装工具 + 配环境 + 注册 S
 
 ## 16 个平台：哪些装好即用，哪些要配
 
-Agent Reach 把平台分成两类：**零配置**和**需要 Cookie 或额外配置**。判断依据很简单——平台有没有反爬或登录墙。
+Agent Reach 把平台分成两类：**零配置**和**需要 Cookie 或额外配置**。判断依据是平台有没有反爬或登录墙。
 
 ### 零配置（装完直接用）
 
@@ -117,7 +119,7 @@ Cookie 导出流程统一：浏览器登录 → 用 Chrome 插件 [Cookie-Editor
 
 ### 为什么这样选
 
-每个平台的选型不是随便挑的，背后有具体的取舍：
+每个平台的选型背后有具体的取舍：
 
 - **推特不用官方 API**（Basic 档 $100/月，1 万次读取），用 twitter-cli + Cookie。代价是 Cookie 会过期，需要定期重新导出。对于日均搜索量不到 100 次的个人用户，免费方案足够。
 - **Reddit 不用 PRAW**（Python 官方库，2024 年后被大量 403），用 rdt-cli + Cookie 认证。Reddit 的 JSON API 对未认证请求直接拒绝，Cookie 是目前最稳定的绕行方式。
@@ -129,7 +131,7 @@ Cookie 导出流程统一：浏览器登录 → 用 Chrome 插件 [Cookie-Editor
 
 ## 渠道即文件：架构拆解
 
-Agent Reach 的代码结构很薄，核心逻辑集中在 `channels/` 目录：
+Agent Reach 的代码结构精简，核心逻辑集中在 `channels/` 目录：
 
 ```text
 agent_reach/
@@ -152,7 +154,7 @@ agent_reach/
 └── skill/ → SKILL.md 模板（注册到 Agent 的使用指南）
 ```
 
-每个渠道文件只做一件事：**检测对应上游工具是否可用**（`check()` 方法），给 `agent-reach doctor` 提供状态信息。以 `channels/twitter.py` 为例，它的核心逻辑大致是：
+每个渠道文件只做一件事：**检测对应上游工具是否可用**（`check()` 方法），给 `agent-reach doctor` 提供状态信息。以 `channels/twitter.py` 为例，核心逻辑的骨架如下（具体实现以仓库为准）：
 
 ```python
 class TwitterChannel:
@@ -208,7 +210,7 @@ Agent 拿到指令后的执行路径：
  → 小红书侧：产品经理讨论多，关注使用体验和替代品
 ```
 
-注意第 2、3 步——Agent 直接调上游工具，Agent Reach 本身不参与数据传输。如果 `twitter search` 返回空，Agent 会先跑 `agent-reach doctor` 看 Twitter 渠道状态，再决定是重新配 Cookie 还是换搜索词。
+第 2、3 步里 Agent 直接调上游工具，Agent Reach 本身不参与数据传输。如果 `twitter search` 返回空，Agent 会先跑 `agent-reach doctor` 看 Twitter 渠道状态，再决定是重新配 Cookie 还是换搜索词。
 
 ### 更多工作流
 
@@ -246,7 +248,7 @@ Agent 执行路径：
 3. 综合输出，按"技术相关"和"非技术"分类
 ```
 
-三个场景里，你都不需要告诉 Agent 用什么命令——SKILL.md 里已经写好了，你只需要描述需求。
+三个场景里都不需要告诉 Agent 用什么命令——SKILL.md 里已经写好，描述需求即可。
 
 ## MCP 模式：让 Agent 自动发现能力
 
@@ -280,7 +282,7 @@ MCP 模式暴露 6 个工具：
 | `search_bilibili` | 搜索 B 站视频 |
 | `search_xiaohongshu` | 搜索小红书笔记 |
 
-MCP 模式的关键区别在于：**Agent 不需要读 SKILL.md 就知道有哪些能力可用**。任何 MCP-aware 的 Agent（Claude Desktop、Cursor、VS Code 等）都能自动发现并调用这些工具。社区还封装了 npm 包 [ PROTECTED_34 ](https://www.npmjs.com/package/@bsbofmusic/agent-reach-mcp)，提供自动更新和自愈能力。
+MCP 模式的关键区别在于：**Agent 不需要读 SKILL.md 就知道有哪些能力可用**。任何 MCP-aware 的 Agent（Claude Desktop、Cursor、VS Code 等）都能自动发现并调用这些工具。社区还封装了 npm 包 [@bsbofmusic/agent-reach-mcp](https://www.npmjs.com/package/@bsbofmusic/agent-reach-mcp)，提供自动更新和自愈能力。
 
 ## 快速上手
 
@@ -369,15 +371,15 @@ Agent Reach 不是唯一解决"Agent 联网"问题的工具，但它的定位和
 | [Firecrawl](https://github.com/mendableai/firecrawl) | 仅网页 | 免费层有限额 | 否 | 生产级网页抓取，需反爬处理 |
 | [Stagehand](https://github.com/browserbase/stagehand) | 浏览器自动化 | 付费 | 否 | 复杂交互场景，用视觉 LLM 理解页面 |
 
-Agent Reach 覆盖面广、零 API 费用、Agent 原生，但代价是每个平台连接器依赖上游工具，当平台改接口时可能需要等上游修复。这是 cookie-based 方案的固有脆弱性——如果你需要生产级稳定性，应该考虑官方 API 方案。
+Agent Reach 覆盖面广、零 API 费用、Agent 原生，但代价是每个平台连接器依赖上游工具，当平台改接口时可能需要等上游修复。这是 cookie-based 方案的固有脆弱性——需要生产级稳定性时，应该考虑官方 API 方案。
 
-具体来说，cookie-based 方案有三层风险：
+cookie-based 方案有三层风险：
 
 1. **平台改接口**：Twitter 改了 DOM 结构或 API 路径，twitter-cli 就会返回空或报错，需要等上游发版修复。yt-dlp 因为社区大（154K ★），修复速度通常在 24 小时内；小众工具可能要等几天。
-2. **Cookie 过期**：Twitter 的 Cookie 有效期大约 7-14 天，小红书更短。过期后 Agent 会报错，你需要重新用 Cookie-Editor 导出。如果你每天用 Agent 查推特，大约每周要手动导出一次。
+2. **Cookie 过期**：Twitter 的 Cookie 有效期大约 7-14 天，小红书更短。过期后 Agent 会报错，需要重新用 Cookie-Editor 导出。每天用 Agent 查推特时，大约每周要手动导出一次。
 3. **反爬升级**：平台检测到非浏览器流量后可能封 IP 或封号。用专用小号 + 控制频率可以降低风险，但不能完全消除。
 
-如果你的使用场景是"每天让 Agent 查几次推特、看几个 YouTube 视频"，这些风险可以接受。如果你需要 7×24 不间断运行的数据采集管线，应该用官方 API。
+使用场景是"每天让 Agent 查几次推特、看几个 YouTube 视频"时，这些风险可以接受。需要 7×24 不间断运行的数据采集管线时，应该用官方 API。
 
 ## 适用边界与采用顺序
 
@@ -397,14 +399,14 @@ Agent Reach 覆盖面广、零 API 费用、Agent 原生，但代价是每个平
 
 ### 采用顺序建议
 
-如果你在犹豫要不要装，按这个顺序判断：
+犹豫要不要装时，按这个顺序判断：
 
 1. **先用零配置渠道**：装好 Agent Reach 后，先用网页阅读（Jina Reader）、YouTube 字幕、GitHub 搜索、微博热搜这几个零配置渠道。这些不需要 Cookie，没有封号风险，装完就能用。
-2. **再配 Twitter Cookie**：如果你经常需要让 Agent 搜推特，用专用小号配一次 Cookie。Twitter 是 Agent Reach 价值最高的渠道——官方 API 要 $100/月，这里免费。
+2. **再配 Twitter Cookie**：经常需要让 Agent 搜推特时，用专用小号配一次 Cookie。Twitter 是 Agent Reach 价值最高的渠道——官方 API 要 $100/月，这里免费。
 3. **按需加其他渠道**：小红书、Reddit、抖音按需配置。每个渠道的配置都是独立的，不需要一次性全配。
-4. **最后考虑 MCP 模式**：如果你用 Claude Desktop 或其他 MCP 客户端，MCP 模式让 Agent 自动发现能力，不需要读 SKILL.md。
+4. **最后考虑 MCP 模式**：用 Claude Desktop 或其他 MCP 客户端时，MCP 模式让 Agent 自动发现能力，不需要读 SKILL.md。
 
-回头看，Agent Reach 的价值不在覆盖了多少平台，而在让你用最低试错成本判断"Agent 联网"这件事值不值得做。零配置渠道装完就能验证，Cookie 渠道按需加，不满意随时换掉对应 channel 文件——这个试错成本比买任何 API 都低。
+Agent Reach 的价值不在覆盖了多少平台，而在让你用最低试错成本判断"Agent 联网"这件事值不值得做。零配置渠道装完就能验证，Cookie 渠道按需加，不满意随时换掉对应 channel 文件——这个试错成本比买任何 API 都低。
 
 ## 常见问题
 

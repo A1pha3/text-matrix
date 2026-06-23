@@ -8,20 +8,38 @@ categories: ["技术笔记"]
 tags: ["OpenSandbox", "沙箱", "AI平台", "Docker", "Kubernetes"]
 ---
 
-OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
-
 > **目标读者**：构建 AI 应用（编程 Agent、GUI Agent、代码执行、RL 训练）的开发者
 > **核心问题**：如何为 AI 应用提供安全、可扩展的隔离执行环境？
 > **难度**：⭐⭐⭐⭐（专家设计）
-> **来源**：GitHub alibaba/OpenSandbox，2026-03-28
+> **来源**：GitHub alibaba/OpenSandbox，访问于 2026-03-28
 
 ---
 
-一、项目概览
+## 一句话判断
+
+OpenSandbox 把"为 AI 应用提供隔离执行环境"这件事做成了平台级产品：上层用多语言 SDK 屏蔽差异，下层用 Docker/Kubernetes 调度资源，中间用 gVisor/Kata/Firecracker 三种安全容器适配不同隔离强度。它解决的核心矛盾是 AI Agent 需要执行任意代码、访问浏览器和桌面，又不能让这些操作污染宿主环境或逃逸到公网。
+
+## 总览地图
+
+OpenSandbox 分五层，每层职责独立，可以单独替换：
+
+| 层 | 职责 | 关键组件 | 可替换点 |
+|---|---|---|---|
+| SDK 层 | 给开发者用的客户端 | Python / Java / Kotlin / JS / TS / C# | Go SDK 规划中 |
+| 协议层 | 定义沙箱能做什么 | 生命周期 API + 执行 API | OpenAPI 规范在 `specs/` |
+| 运行时层 | 管理沙箱进程 | `server`（FastAPI）+ `execd` + `ingress` + `egress` | 可自托管 |
+| 沙箱环境层 | 预置的执行镜像 | Code Interpreter / Chrome / Playwright / Desktop / VS Code | 可自定义镜像 |
+| 容器运行时层 | 提供隔离边界 | gVisor / Kata / Firecracker | 按安全强度选择 |
+
+阅读建议：先看"技术架构"理解各层边界，再看"任务流案例"理解一次代码执行如何穿过这五层，最后按"采用建议"判断是否适合自己的场景。
+
+---
+
+## 一、项目概览
 
 [OpenSandbox](https://github.com/alibaba/OpenSandbox) 是阿里巴巴开源的通用 AI 应用沙箱平台，提供多语言 SDK、统一沙箱 API、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、Agent 评估、AI 代码执行、强化学习训练等场景。
 
-**核心数据：**
+**核心数据（截至 2026-03-28，数据来自 GitHub 仓库主页快照）：**
 
 | 指标 | 数值 |
 |------|------|
@@ -31,9 +49,11 @@ OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
 | 最新版本 | python/code-interpreter 0.1.2 |
 | 官方文档 | https://open-sandbox.ai/ |
 
-**CNCF Landscape 已收录**
+> 时效说明：Stars 和 Forks 为访问时快照，可能已变化；版本号以仓库 release 页为准。
 
-. 项目定位
+**CNCF Landscape 已收录**（来源：[CNCF Landscape](https://landscape.cncf.io/)，访问于 2026-03-28）
+
+### 1.1 项目定位
 
 > OpenSandbox is a general-purpose sandbox platform for AI applications.
 > 通用 AI 应用沙箱平台
@@ -42,13 +62,13 @@ OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
 
 | 场景 | 说明 |
 |------|------|
-| **编程 Agent** | Claude Code、OpenAI Codex CLI 等 |
-| **GUI Agent** | 浏览器自动化、桌面环境 |
-| **Agent 评估** | 沙箱环境下评估 Agent 能力 |
-| **AI 代码执行** | Code Interpreter 实现 |
+| **编程 Agent** | Claude Code、OpenAI Codex CLI 等 CLI Agent 在沙箱内运行 |
+| **GUI Agent** | 浏览器自动化、桌面环境操作 |
+| **Agent 评估** | 在受控沙箱中评估 Agent 能力 |
+| **AI 代码执行** | 实现 Code Interpreter 功能 |
 | **强化学习训练** | RL CartPole 等训练任务 |
 
-. 主要特色
+### 1.2 主要特色
 
 | 特色 | 说明 |
 |------|------|
@@ -60,90 +80,96 @@ OpenSandbox：阿里巴巴开源的 .k Stars 通用 AI 应用沙箱平台
 
 ---
 
-二、技术架构
+## 二、技术架构
 
-. 整体架构
+### 2.1 整体架构
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ OpenSandbox 架构 │
+│ OpenSandbox 架构                                            │
 ├─────────────────────────────────────────────────────────────┤
-│ SDK 层（多语言） │
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
-│ │ Python │ │ Java/ │ │ JS/TS │ │ C#/.NET │ │
-│ │ │ │ Kotlin │ │ │ │ │ │
-│ └──────────┘ └──────────┘ └──────────┘ └──────────┘ │
+│ SDK 层（多语言）                                            │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐        │
+│ │ Python   │ │ Java/    │ │ JS/TS    │ │ C#/.NET  │        │
+│ │          │ │ Kotlin   │ │          │ │          │        │
+│ └──────────┘ └──────────┘ └──────────┘ └──────────┘        │
 ├─────────────────────────────────────────────────────────────┤
-│ 沙箱协议层（Specs） │
-│ 生命周期管理 API + 执行 API │
+│ 沙箱协议层（Specs）                                         │
+│ 生命周期管理 API + 执行 API                                 │
 ├─────────────────────────────────────────────────────────────┤
-│ 运行时层（Server + Components） │
-│ ┌─────────┐ ┌──────────┐ ┌─────────┐ ┌──────────┐ │
-│ │ execd │ │ ingress │ │ egress │ │ server │ │
-│ │ 命令/文件│ │ 入口代理 │ │ 出口控制 │ │ FastAPI │ │
-│ └─────────┘ └──────────┘ └─────────┘ └──────────┘ │
+│ 运行时层（Server + Components）                             │
+│ ┌─────────┐ ┌──────────┐ ┌─────────┐ ┌──────────┐         │
+│ │ execd   │ │ ingress  │ │ egress  │ │ server   │         │
+│ │ 命令/文件│ │ 入口代理 │ │ 出口控制 │ │ FastAPI  │         │
+│ └─────────┘ └──────────┘ └─────────┘ └──────────┘         │
 ├─────────────────────────────────────────────────────────────┤
-│ 沙箱环境层（Sandboxes） │
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
-│ │ Code │ │ Chrome │ │ Playwright│ │ Desktop │ │
-│ │ Interpreter│ │ Browser │ │ 自动化 │ │ VNC │ │
-│ └──────────┘ └──────────┘ └──────────┘ └──────────┘ │
+│ 沙箱环境层（Sandboxes）                                     │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐        │
+│ │ Code     │ │ Chrome   │ │ Playwright│ │ Desktop  │        │
+│ │ Interpreter│ │ Browser │ │ 自动化    │ │ VNC      │        │
+│ └──────────┘ └──────────┘ └──────────┘ └──────────┘        │
 ├─────────────────────────────────────────────────────────────┤
-│ 容器运行时（Secure Container） │
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
-│ │ gVisor │ │ Kata │ │ Firecracker│ │
-│ │ │ │ Containers│ │ 微虚拟机 │ │
-│ └──────────┘ └──────────┘ └──────────┘ │
+│ 容器运行时（Secure Container）                              │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐                     │
+│ │ gVisor   │ │ Kata     │ │ Firecracker│                    │
+│ │          │ │ Containers│ │ 微虚拟机  │                    │
+│ └──────────┘ └──────────┘ └──────────┘                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-. 技术栈
+### 2.2 各层职责拆解
+
+理解 OpenSandbox 的关键在于看清五层之间的边界：SDK 层只负责把请求发给运行时层，不直接接触容器；协议层用 OpenAPI 规范定义接口，让多语言 SDK 能保持一致行为；运行时层是控制面，负责创建、销毁、调度沙箱；沙箱环境层是数据面，提供预置镜像；容器运行时层是隔离边界，决定安全强度。
+
+这种分层带来的实际收益：替换容器运行时不需要改 SDK 代码；新增一种沙箱环境（比如加一个 Rust 工具链镜像）不需要动协议层；从 Docker 切到 Kubernetes 只影响运行时层。
+
+### 2.3 技术栈
 
 | 组件 | 技术选型 | 说明 |
 |------|---------|------|
 | SDK 语言 | Python/Java/Kotlin/JS/TS/C# | 多语言支持 |
-| 后端 | Go 21.6% | 核心组件 |
+| 后端 | Go 21.6%（来源：GitHub 语言统计，访问于 2026-03-28） | 核心组件 |
 | 服务端 | Python FastAPI | 沙箱生命周期服务 |
 | 容器 | Docker/Kubernetes | 运行时环境 |
 | 安全容器 | gVisor/Kata/Firecracker | 强隔离 |
 
-. 核心目录结构
+### 2.4 核心目录结构
 
 ```
 OpenSandbox/
-├── sdks/ # 多语言 SDK
-│ ├── sandbox/ # Sandbox 基础 SDK
-│ │ ├── python/ # Python Sandbox SDK
-│ │ ├── kotlin/ # Java/Kotlin Sandbox SDK
-│ │ ├── javascript/ # JS/TS Sandbox SDK
-│ │ └── csharp/ # C#/.NET Sandbox SDK
-│ └── code-interpreter/ # Code Interpreter SDK
-├── specs/ # OpenAPI 规范
-├── server/ # Python FastAPI 沙箱生命周期服务器
-├── kubernetes/ # Kubernetes 部署
+├── sdks/                # 多语言 SDK
+│   ├── sandbox/         # Sandbox 基础 SDK
+│   │   ├── python/      # Python Sandbox SDK
+│   │   ├── kotlin/      # Java/Kotlin Sandbox SDK
+│   │   ├── javascript/  # JS/TS Sandbox SDK
+│   │   └── csharp/      # C#/.NET Sandbox SDK
+│   └── code-interpreter/  # Code Interpreter SDK
+├── specs/               # OpenAPI 规范
+├── server/              # Python FastAPI 沙箱生命周期服务器
+├── kubernetes/          # Kubernetes 部署
 ├── components/
-│ ├── execd/ # 沙箱执行守护进程（命令/文件操作）
-│ ├── ingress/ # 入口流量代理
-│ └── egress/ # 出口网络控制
+│   ├── execd/           # 沙箱执行守护进程（命令/文件操作）
+│   ├── ingress/         # 入口流量代理
+│   └── egress/          # 出口网络控制
 ├── sandboxes/
-│ └── code-interpreter/ # Code Interpreter 沙箱实现
-├── examples/ # 示例代码
-│ ├── claude-code/ # Claude Code 集成
-│ ├── langgraph/ # LangGraph 集成
-│ ├── chrome/ # Chrome 浏览器自动化
-│ ├── playwright/ # Playwright 自动化
-│ ├── desktop/ # 桌面 VNC 环境
-│ └── rl-training/ # 强化学习训练
-├── oseps/ # OpenSandbox 增强提案
-├── docs/ # 架构文档
-└── tests/ # E2E 测试
+│   └── code-interpreter/  # Code Interpreter 沙箱实现
+├── examples/            # 示例代码
+│   ├── claude-code/     # Claude Code 集成
+│   ├── langgraph/       # LangGraph 集成
+│   ├── chrome/          # Chrome 浏览器自动化
+│   ├── playwright/      # Playwright 自动化
+│   ├── desktop/         # 桌面 VNC 环境
+│   └── rl-training/     # 强化学习训练
+├── oseps/               # OpenSandbox 增强提案
+├── docs/                # 架构文档
+└── tests/               # E2E 测试
 ```
 
 ---
 
-三、核心功能详解
+## 三、核心机制详解
 
-. 多语言 SDK
+### 3.1 多语言 SDK
 
 OpenSandbox 提供**多语言 SDK**，覆盖主流开发语言：
 
@@ -160,9 +186,11 @@ OpenSandbox 提供**多语言 SDK**，覆盖主流开发语言：
 
 **规划中：** Go SDK
 
-. 沙箱协议
+为什么需要多语言 SDK？只提供 REST API 不够吗？因为不同语言的类型系统、异步模型、错误处理差异很大，直接调 REST 会让每个语言的用户都重复处理序列化和重试逻辑。SDK 把这些封装掉，让 Python 用户用 `async with sandbox`，Java 用户用 try-with-resources，各自符合本语言习惯。
 
-OpenSandbox 定义了两套核心 API：
+### 3.2 沙箱协议
+
+OpenSandbox 定义了两套核心 API，对应沙箱的两类操作：
 
 **生命周期管理 API：**
 - 创建/销毁沙箱
@@ -174,23 +202,27 @@ OpenSandbox 定义了两套核心 API：
 - 文件操作（读写）
 - 代码解释器调用
 
-. 沙箱运行时
+为什么分成两套？因为生命周期操作是控制面，频率低但必须可靠；执行操作是数据面，频率高但允许失败重试。分开后可以独立演进，比如执行 API 可以加流式输出，生命周期 API 可以加预热池，互不影响。
+
+### 3.3 沙箱运行时
 
 支持两种部署模式：
 
-| 模式 | 说明 |
-|------|------|
-| **Docker** | 本地快速开发测试 |
-| **Kubernetes** | 大规模分布式调度 |
+| 模式 | 适用场景 | 说明 |
+|------|---------|------|
+| **Docker** | 本地开发测试 | 单机快速启动 |
+| **Kubernetes** | 生产环境 | 大规模分布式调度 |
 
 **Kubernetes 高性能运行时特性：**
-- 预热池（Pre-warmed pools）
-- 自动扩缩容
-- 资源隔离
+- 预热池（Pre-warmed pools）：提前创建好沙箱实例，请求来时直接分配，省去冷启动
+- 自动扩缩容：根据负载调整沙箱数量
+- 资源隔离：通过 Kubernetes 的 ResourceQuota 和 LimitRange 控制
 
-. 沙箱环境
+为什么需要预热池？因为创建一个沙箱要拉镜像、起容器、初始化运行时，冷启动可能要几秒到几十秒。AI Agent 的代码执行通常是高频短任务，如果每次都冷启动，用户体验会非常差。预热池把这部分延迟摊到空闲期。
 
-OpenSandbox 内置多种沙箱环境：
+### 3.4 沙箱环境
+
+OpenSandbox 内置多种沙箱环境，每种环境是一个预置镜像：
 
 | 环境 | 说明 | 示例 |
 |------|------|------|
@@ -200,7 +232,9 @@ OpenSandbox 内置多种沙箱环境：
 | **Desktop** | 完整桌面环境 | VNC 远程桌面 |
 | **VS Code** | 云端 IDE | code-server Web IDE |
 
-. 网络安全策略
+为什么预置这些环境？因为 AI Agent 的需求高度集中：要么执行代码，要么操作浏览器，要么操作桌面。预置镜像省去用户自己装 Chrome、配 VNC、装 Python 依赖的工作，启动即可用。
+
+### 3.5 网络安全策略
 
 **Ingress 网关（入口流量）：**
 - 统一入口流量管理
@@ -210,28 +244,48 @@ OpenSandbox 内置多种沙箱环境：
 - 沙箱级出口控制
 - 网络隔离
 
-. 强隔离机制
+为什么需要 Egress 控制？因为 AI Agent 执行的代码可能来自用户输入，也可能来自模型生成。如果沙箱能自由访问公网，恶意代码可以把宿主数据外传，或者攻击外部服务。Egress 控制让管理员能限定沙箱只能访问白名单域名，把攻击面收窄。
 
-支持三种安全容器运行时：
+### 3.6 强隔离机制
 
-| 运行时 | 说明 | 隔离级别 |
-|--------|------|----------|
-| **gVisor**（Google 沙箱运行时） | Google 沙箱运行时 | 用户内核隔离 |
-| **Kata Containers**（硬件虚拟化容器） | 硬件虚拟化容器 | VM 级隔离 |
-| **Firecracker**（AWS 微虚拟机） | AWS 开源微虚拟机 | 轻量级 VM |
+支持三种安全容器运行时，对应不同隔离强度：
+
+| 运行时 | 隔离方式 | 隔离级别 | 适用场景 |
+|--------|---------|----------|---------|
+| **gVisor** | 用户态内核拦截系统调用 | 用户内核隔离 | 中等安全，性能损失小 |
+| **Kata Containers** | 硬件虚拟化 | VM 级隔离 | 高安全，性能损失中等 |
+| **Firecracker** | AWS 开源微虚拟机 | 轻量级 VM | 高密度，启动快 |
+
+为什么提供三种安全容器运行时？因为隔离强度和性能是权衡关系。gVisor 性能损失最小但隔离弱；Kata 隔离最强但启动慢；Firecracker 介于两者之间，适合多租户高密度场景。用户根据自己威胁模型选择：内部可信环境用 gVisor，公网多租户用 Firecracker，强合规场景用 Kata。
 
 ---
 
-四、快速开始
+## 四、任务流案例：一次代码执行如何穿过五层
 
-. 环境要求
+为了把抽象的分层讲清楚，跟踪一次"用户调用 Python SDK 执行 `2+2`"的完整流程：
+
+1. **SDK 层**：Python SDK 把 `interpreter.codes.run("2+2")` 序列化为 HTTP 请求，发往 `server`
+2. **协议层**：请求符合 `specs/` 中的 OpenAPI 规范，`server` 校验参数
+3. **运行时层**：`server` 找到对应的沙箱实例（预热池中已创建），把执行请求转发给 `execd`
+4. **沙箱环境层**：`execd` 在 Code Interpreter 镜像内启动 Python 进程，执行代码，捕获 stdout 和返回值
+5. **容器运行时层**：整个沙箱进程跑在 gVisor/Kata/Firecracker 之一中，系统调用被拦截或虚拟化
+
+返回路径相反：`execd` 把结果回传给 `server`，`server` 按 OpenAPI 规范封装响应，Python SDK 反序列化为 `result` 对象，用户拿到 `result.result[0].text` 即 `4`。
+
+这个流程的关键点：每一层都可以独立替换。把 gVisor 换成 Firecracker，上层 SDK 代码完全不变；把 Code Interpreter 镜像换成自定义的 Rust 工具链镜像，`server` 和 `execd` 也不需要改。
+
+---
+
+## 五、快速开始
+
+### 5.1 环境要求
 
 | 工具 | 要求 |
 |------|------|
 | Docker | 必需（本地执行） |
 | Python | 3.10+（运行示例和本地运行时） |
 
-. 安装步骤
+### 5.2 安装步骤
 
 **1. 安装 Sandbox Server：**
 
@@ -244,7 +298,7 @@ opensandbox-server init-config ~/.sandbox.toml --example docker
 
 ```bash
 opensandbox-server
-显示帮助
+# 显示帮助
 opensandbox-server -h
 ```
 
@@ -254,7 +308,7 @@ opensandbox-server -h
 uv pip install opensandbox-code-interpreter
 ```
 
-. 基本使用示例
+### 5.3 基本使用示例
 
 ```python
 import asyncio
@@ -264,58 +318,58 @@ from opensandbox import Sandbox
 from opensandbox.models import WriteEntry
 
 async def main() -> None:
- # 1. 创建沙箱
- sandbox = await Sandbox.create(
- "opensandbox/code-interpreter:v1.0.2",
- entrypoint=["/opt/opensandbox/code-interpreter.sh"],
- env={"PYTHON_VERSION": "3.11"},
- timeout=timedelta(minutes=10),
- )
+    # 1. 创建沙箱
+    sandbox = await Sandbox.create(
+        "opensandbox/code-interpreter:v1.0.2",
+        entrypoint=["/opt/opensandbox/code-interpreter.sh"],
+        env={"PYTHON_VERSION": "3.11"},
+        timeout=timedelta(minutes=10),
+    )
 
- async with sandbox:
- # 2. 执行 Shell 命令
- execution = await sandbox.commands.run("echo 'Hello OpenSandbox!'")
- print(execution.logs.stdout[0].text)
- # Hello OpenSandbox!
+    async with sandbox:
+        # 2. 执行 Shell 命令
+        execution = await sandbox.commands.run("echo 'Hello OpenSandbox!'")
+        print(execution.logs.stdout[0].text)
+        # Hello OpenSandbox!
 
- # 3. 写文件
- await sandbox.files.write_files([
- WriteEntry(path="/tmp/hello.txt", data="Hello World", mode=644)
- ])
+        # 3. 写文件
+        await sandbox.files.write_files([
+            WriteEntry(path="/tmp/hello.txt", data="Hello World", mode=644)
+        ])
 
- # 4. 读文件
- content = await sandbox.files.read_file("/tmp/hello.txt")
- print(f"Content: {content}")
- # Content: Hello World
+        # 4. 读文件
+        content = await sandbox.files.read_file("/tmp/hello.txt")
+        print(f"Content: {content}")
+        # Content: Hello World
 
- # 5. 创建代码解释器
- interpreter = await CodeInterpreter.create(sandbox)
+        # 5. 创建代码解释器
+        interpreter = await CodeInterpreter.create(sandbox)
 
- # 6. 执行 Python 代码
- result = await interpreter.codes.run(
- """
- import sys
- print(sys.version)
- result = 2 + 2
- result
- """,
- language=SupportedLanguage.PYTHON,
- )
- print(result.result[0].text) # 4
- print(result.logs.stdout[0].text) # 3.11.14
+        # 6. 执行 Python 代码
+        result = await interpreter.codes.run(
+            """
+            import sys
+            print(sys.version)
+            result = 2 + 2
+            result
+            """,
+            language=SupportedLanguage.PYTHON,
+        )
+        print(result.result[0].text) # 4
+        print(result.logs.stdout[0].text) # 3.11.14
 
- # 7. 清理沙箱
- await sandbox.kill()
+        # 7. 清理沙箱
+        await sandbox.kill()
 
 if __name__ == "__main__":
- asyncio.run(main())
+    asyncio.run(main())
 ```
 
 ---
 
-五、集成示例
+## 六、集成示例
 
-. 编程 Agent 集成
+### 6.1 编程 Agent 集成
 
 OpenSandbox 支持主流编程 Agent CLI：
 
@@ -330,58 +384,58 @@ OpenSandbox 支持主流编程 Agent CLI：
 **示例：Claude Code 集成**
 
 ```bash
-克隆仓库
+# 克隆仓库
 git clone https://github.com/alibaba/OpenSandbox.git
 cd OpenSandbox/examples/claude-code
-查看 README 了解详细集成方式
+# 查看 README 了解详细集成方式
 ```
 
-. LangGraph 集成
+### 6.2 LangGraph 集成
 
 OpenSandbox 提供 LangGraph 状态机工作流集成：
 
 ```python
-LangGraph 集成示例
-见 examples/langgraph/README.md
+# LangGraph 集成示例
+# 见 examples/langgraph/README.md
 ```
 
-. 浏览器自动化
+### 6.3 浏览器自动化
 
 **Chrome 示例：**
 
 ```bash
-浏览器自动化 + VNC + DevTools
-见 examples/chrome/README.md
+# 浏览器自动化 + VNC + DevTools
+# 见 examples/chrome/README.md
 ```
 
 **Playwright 示例：**
 
 ```bash
-Playwright + Chromium 无头抓取和测试
-见 examples/playwright/README.md
+# Playwright + Chromium 无头抓取和测试
+# 见 examples/playwright/README.md
 ```
 
-. 桌面环境
+### 6.4 桌面环境
 
 **Desktop 示例：**
 
 ```bash
-完整桌面环境 + VNC 访问
-见 examples/desktop/README.md
+# 完整桌面环境 + VNC 访问
+# 见 examples/desktop/README.md
 ```
 
-. 强化学习训练
+### 6.5 强化学习训练
 
 **RL Training 示例：**
 
 ```bash
-DQN CartPole 训练 + checkpoints + summary 输出
-见 examples/rl-training/README.md
+# DQN CartPole 训练 + checkpoints + summary 输出
+# 见 examples/rl-training/README.md
 ```
 
 ---
 
-六、与同类项目对比
+## 七、与同类项目对比
 
 | 特性 | OpenSandbox | E2B | Docker API | Kata Containers |
 |------|-------------|-----|------------|-----------------|
@@ -392,9 +446,11 @@ DQN CartPole 训练 + checkpoints + summary 输出
 | **代码解释器** | ✅ | ✅ | ❌ | ❌ |
 | **CNCF 收录** | ✅ | ❌ | ❌ | ✅ |
 
+对比说明：E2B 是商业化的代码执行沙箱，SDK 以 Python 为主，浏览器环境支持较弱；Docker API 只提供容器原语，需要自己封装沙箱协议和预热池；Kata Containers 只解决隔离层，不提供 SDK 和运行时管理。OpenSandbox 的差异点在于把 SDK、协议、运行时、环境、隔离五层打包成完整平台。
+
 ---
 
-七、适用场景
+## 八、适用场景
 
 | 场景 | 说明 |
 |------|------|
@@ -407,16 +463,16 @@ DQN CartPole 训练 + checkpoints + summary 输出
 
 ---
 
-八、Roadmap .
+## 九、Roadmap
 
-. SDK
+### 9.1 SDK
 
 | 功能 | 说明 |
 |------|------|
 | **客户端连接池** | 预配置沙箱，Xms 获取环境 |
 | **Go SDK** | Go 语言客户端 SDK |
 
-. 沙箱运行时
+### 9.2 沙箱运行时
 
 | 功能 | 说明 |
 |------|------|
@@ -424,7 +480,7 @@ DQN CartPole 训练 + checkpoints + summary 输出
 | **轻量级沙箱** | PC 直接运行的 AI 工具沙箱 |
 | **安全容器** | AI Agent 容器内安全沙箱 |
 
-. 部署
+### 9.3 部署
 
 | 功能 | 说明 |
 |------|------|
@@ -432,11 +488,20 @@ DQN CartPole 训练 + checkpoints + summary 输出
 
 ---
 
-九、总结
+## 十、采用建议
 
-OpenSandbox 为 AI 应用提供统一沙箱执行环境：多语言 SDK 覆盖 Python/Java/JS/C#，Docker/Kubernetes 双模式运行，gVisor/Kata/Firecracker 三层隔离，内置 Code Interpreter/Chrome/Playwright/Desktop 环境模板。
+根据场景给出采用顺序：
 
-. 资源链接
+1. **先试**：本地用 Docker 模式跑通 `examples/claude-code` 或基本使用示例，验证沙箱能起来、代码能执行
+2. **再选隔离层**：内部可信环境用 gVisor，公网多租户用 Firecracker，强合规场景用 Kata
+3. **再上 Kubernetes**：单机 Docker 模式只适合开发测试，生产环境必须用 Kubernetes 模式才能用预热池和自动扩缩容
+4. **最后自定义镜像**：预置环境不够用时，基于 `sandboxes/code-interpreter/` 自定义镜像，保持 entrypoint 协议不变
+
+**适用边界：**
+- 适合：需要执行任意代码、操作浏览器或桌面的 AI 应用；多租户代码执行平台；Agent 评估基准
+- 不适合：纯 API 调用型 Agent（不需要沙箱）；对启动延迟极敏感的实时交互场景（预热池也救不了冷启动）；不需要隔离的内部工具
+
+### 资源链接
 
 | 资源 | 链接 |
 |------|------|
@@ -454,7 +519,8 @@ OpenSandbox 为 AI 应用提供统一沙箱执行环境：多语言 SDK 覆盖 P
 **来源**
 
 - GitHub：https://github.com/alibaba/OpenSandbox
+- CNCF Landscape：https://landscape.cncf.io/
 
 ---
 
-*OpenSandbox 由阿里巴巴开源，采用 Apache-2.0 许可证，已被 CNCF Landscape 收录。*
+*OpenSandbox 由阿里巴巴开源，采用 Apache-2.0 许可证，已被 CNCF Landscape 收录。数据截至 2026-03-28，以仓库实际状态为准。*

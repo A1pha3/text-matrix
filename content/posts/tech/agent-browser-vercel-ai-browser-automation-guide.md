@@ -11,7 +11,7 @@ tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
 ---
 
 > **目标读者**：希望为 AI Agent、命令行工具或自动化流程补充浏览器能力的工程师。
-> **核心问题**：让 Agent 直接在终端里"打开页面 -> 识别元素 -> 执行动作 -> 取回结果"，而不必先写一层完整 SDK 代码——`agent-browser` 是否是一条更短路径？
+> **核心问题**：让 Agent 直接在终端里"打开页面 -> 识别元素 -> 执行动作 -> 取回结果"，不必先写一层完整 SDK 代码——`agent-browser` 能否缩短这条路径？
 > **事实边界**：本文基于 `vercel-labs/agent-browser` 仓库 README 与公开 CLI 帮助信息整理；未公开的内部实现、未验证的性能数字和未出现于官方文档的命令不写成事实。
 
 ## 阅读导航
@@ -69,7 +69,7 @@ tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
 完成本文后，可以
 
 - 理解 `agent-browser` 的定位，以及它和 Playwright 这类 SDK（软件开发工具包）方案的边界差异
-- 掌握官方推荐的 `snapshot + ref` 交互模式，而不是一上来就堆 CSS（层叠样式表）选择器
+- 掌握官方推荐的 `snapshot + ref` 交互模式，避免一上来就堆 CSS（层叠样式表）选择器
 - 正确完成安装、浏览器准备与最小验证
 - 使用常见命令完成打开页面、等待、点击、填充、抓取、截图、批量执行
 - 在真实项目中处理会话隔离、认证复用、安全限制和调试排障
@@ -79,9 +79,9 @@ tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
 
 ### 2.1 它是什么
 
-`agent-browser` 是一个用 Rust 编写的浏览器自动化 CLI（命令行接口），面向 Agent 工作流设计。它把命令行作为统一入口：终端里连续执行 `open`、`snapshot`、`click`、`fill`、`wait`、`get` 等命令，浏览器状态由后台进程持续复用。
+`agent-browser` 是一个用 Rust 编写的浏览器自动化 CLI（命令行接口），面向 Agent 工作流设计。命令行是它的统一入口：终端里连续执行 `open`、`snapshot`、`click`、`fill`、`wait`、`get` 等命令，浏览器状态由后台进程持续复用。
 
-AI Agent 任务通常不必先搭测试项目，也不必围绕 SDK 写胶水代码。Agent 拿到任务后，更短的路径是：
+AI Agent 任务通常不必先搭测试项目，也不必围绕 SDK 写胶水代码。Agent 拿到任务后，通常这样走：
 
 1. 打开页面
 2. 获取结构化快照
@@ -91,7 +91,7 @@ AI Agent 任务通常不必先搭测试项目，也不必围绕 SDK 写胶水代
 
 ### 2.2 为什么它对 AI Agent 友好
 
-官方资料里值得关注的几条设计取向：
+官方资料里能看到这些设计取向：
 
 | 设计点 | 对 Agent 的意义 |
 | ------ | ------ |
@@ -99,7 +99,7 @@ AI Agent 任务通常不必先搭测试项目，也不必围绕 SDK 写胶水代
 | `snapshot` 输出元素引用 | Agent 可以围绕 `@e1`、`@e2` 这类稳定引用操作，降低脆弱选择器带来的误点风险 |
 | 后台 daemon 持续复用浏览器 | 多次命令之间不需要每一步都重新拉起浏览器 |
 | `batch` 批量执行 | 多步流程可以合并成一次调用，降低进程往返开销 |
-| 会话、状态、安全开关较完整 | 更适合进入真实任务，而不是只做演示 |
+| 会话、状态、安全开关较完整 | 能支撑真实任务，演示之外也能用 |
 | `chat`、dashboard、streaming 等能力 | 便于把 CLI 工作流延伸到可视化调试或 AI 辅助交互 |
 
 ### 2.3 什么时候适合选它
@@ -110,7 +110,7 @@ AI Agent 任务通常不必先搭测试项目，也不必围绕 SDK 写胶水代
 | 快速做页面巡检、截图、抓文本、检查网络请求 | 很适合 | 不必先搭测试框架 |
 | 在 CI 或 Serverless 环境跑浏览器任务 | 适合 | 支持本地浏览器、CDP（Chrome DevTools Protocol，Chrome 开发者工具协议）连接和多种云浏览器 provider |
 | 编写大型端到端测试套件 | 视情况而定 | 需要复杂断言、fixture、报告体系时，SDK 型方案通常更稳 |
-| 做重度 DOM（文档对象模型）断言和应用级测试组织 | 不太适合单独承担 | CLI 擅长操作与提取，不是完整测试框架替代品 |
+| 做重度 DOM（文档对象模型）断言和应用级测试组织 | 不太适合单独承担 | CLI 擅长操作与提取，完整测试框架仍需 SDK 承担 |
 
 ### 2.4 和 Playwright 的关系
 
@@ -136,7 +136,7 @@ graph TD
     F --> G[get / screenshot / network]
 ```
 
-这套模式比直接堆 CSS 选择器更稳，原因有三：
+这套模式比直接堆 CSS 选择器更稳，关键在三处：
 
 - "识别元素"和"执行动作"被拆成两步，Agent 先观察再行动，误点率明显下降
 - `ref` 是快照上下文里的确定性引用，不会因为页面重渲染而漂移，比临时猜 CSS 选择器可靠
@@ -163,6 +163,8 @@ agent-browser screenshot ./example.png
 agent-browser close
 ```
 
+这个示例展示了完整工作流的五步；§4.2 会给出更简短的安装验证流程，两者侧重不同。
+
 ### 3.3 `ref` 与传统选择器的取舍
 
 | 方式 | 适合场景 | 说明 |
@@ -170,7 +172,7 @@ agent-browser close
 | `@e2` 这类 ref | Agent 自动化首选 | 来自 `snapshot` 输出，最适合 LLM 决策 |
 | CSS 选择器 | 已知稳定 DOM 结构 | 如 `"#submit"`、`".item > a"` |
 | `find role`、`find text` | 语义化定位 | 对可访问性良好的页面尤其有效 |
-| XPath（XML 路径语言）/ `text=` | 兼容性补位 | 可用，但不是官方最推荐的 Agent 工作流 |
+| XPath（XML 路径语言）/ `text=` | 兼容性补位 | 可用，官方 Agent 工作流里优先级较低 |
 
 ## §4 快速开始
 
@@ -232,7 +234,7 @@ agent-browser wait --load networkidle
 agent-browser screenshot ./hn-new.png
 ```
 
-这个示例体现两个实践点：
+这个示例有两个实践点：
 
 - 先 `snapshot -i --urls`，把页面可交互元素和 URL 摸清楚
 - 再通过 `find role` 这样的语义化命令执行动作，减少硬编码选择器
@@ -249,7 +251,7 @@ agent-browser screenshot ./hn-new.png
 | `close --all` | 关闭所有活动会话 | `agent-browser close --all` |
 | `wait` | 等待元素、文本、URL 或加载状态 | `agent-browser wait --load networkidle` |
 
-这里要优先掌握 `wait`。大多数失败的根源是"页面还没稳定就开始点"——Agent 拿到的快照里元素还没出现，后续 `click` 或 `fill` 自然落空。显式等待是降低这类误操作的第一手段。
+这里要优先掌握 `wait`。大多数失败的根源是"页面还没稳定就开始点"——Agent 拿到的快照里元素还没出现，后续 `click` 或 `fill` 自然落空。显式等待是降低这类误操作的主要手段。
 
 ### 5.2 交互命令
 
@@ -266,7 +268,7 @@ agent-browser screenshot ./hn-new.png
 | `upload <sel> <files>` | 上传文件 | `agent-browser upload @e7 ./report.pdf` |
 | `drag <src> <tgt>` | 拖拽元素 | `agent-browser drag @e8 @e9` |
 
-`type` 和 `fill` 的区别值得注意：
+`type` 和 `fill` 的区别：
 
 - `type` 更接近真实按键输入，会触发 keydown、keyup 等事件
 - `fill` 直接把输入框的值改成目标值，跳过逐键输入
@@ -286,7 +288,7 @@ agent-browser screenshot ./hn-new.png
 | `screenshot [path]` | 截图 | `agent-browser screenshot ./page.png` |
 | `pdf <path>` | 导出 PDF | `agent-browser pdf ./page.pdf` |
 
-给 LLM 使用时，`snapshot --json` 和 `screenshot --annotate` 都有价值：
+给 LLM 使用时，`snapshot --json` 和 `screenshot --annotate` 各有用途：
 
 - `snapshot --json` 输出结构化数据，适合文本推理
 - `screenshot --annotate` 在截图上标注元素 ref，适合视觉模型或人工复核页面布局
@@ -344,7 +346,7 @@ Agent Browser 提供多种状态复用方式，最常用的几类如下：
 | `state save/load` | 显式导出与回放状态 | `agent-browser state save ./auth.json` |
 | `auth save/login` | 本地加密存凭据并触发登录 | `echo "pass" \| agent-browser auth save github --url https://github.com/login --username user --password-stdin` |
 
-选错策略会导致登录态丢失或状态污染，几条经验：
+选错策略会导致登录态丢失或状态污染，按场景选：
 
 - 临时复用自己的浏览器登录态，`--profile` 上手最快
 - 脚本多次执行后都自动保留状态，`--session-name` 更省心
@@ -355,31 +357,28 @@ Agent Browser 提供多种状态复用方式，最常用的几类如下：
 ```bash
 agent-browser connect 9222
 agent-browser snapshot -i
-
-# 或自动发现已开启远程调试的 Chrome
-agent-browser --auto-connect snapshot
 ```
 
-这在两类场景中很有用：
+`connect <port>` 接管已经开启远程调试端口的 Chrome 实例。这在两类场景中常用：
 
 - 接管已经登录好的浏览器，省去重新登录
-- 连接远程 CDP 端点，而不是本地新开实例
+- 连接远程 CDP 端点，不在本地新开实例
 
-安全边界要注意：远程调试端口意味着本机其他进程可能拿到完整浏览器控制权，只应在可信环境里使用。
+安全边界要注意：远程调试端口意味着本机其他进程可能拿到完整浏览器控制权，只应在可信环境里使用。是否提供自动发现已开启远程调试 Chrome 的选项，以 `agent-browser --help` 输出为准。
 
 ### 6.4 面向 Agent 的安全控制
 
-官方文档给出的安全开关值得在生产环境里启用：
+CLI 帮助信息里列出的安全开关，生产环境建议逐项确认（以 `agent-browser --help` 实际输出为准）：
 
 | 选项 | 作用 |
 | ------ | ------ |
 | `--allowed-domains` | 限制只允许访问可信域名 |
 | `--content-boundaries` | 给页面内容加边界标记，降低 LLM 把页面内容和系统输出混淆的风险 |
-| `--action-policy` | 用策略文件限制敏感动作 |
 | `--confirm-actions` | 对 `eval`、下载等高风险动作要求确认 |
-| `--max-output` | 限制输出长度，防止页面内容淹没上下文 |
+| `--action-policy` | 用策略文件限制敏感动作（如 CLI 帮助信息所示） |
+| `--max-output` | 限制输出长度，防止页面内容淹没上下文（如 CLI 帮助信息所示） |
 
-浏览器自动化事故里，命令失败反而容易排查，真正难防的是命令成功但越界——比如 Agent 误点删除按钮、误下载文件、误把页面内容当成系统指令执行。把 `agent-browser` 放进真实 Agent 系统前，上面这些开关建议逐项过一遍。
+浏览器自动化事故里，命令失败留下报错堆栈，排查路径通常清晰；真正难防的是命令成功但越界——Agent 误点删除按钮、误下载文件、误把页面内容当成系统指令执行。把 `agent-browser` 放进真实 Agent 系统前，上面这些开关需要逐项确认。
 
 ## §7 调试与观测
 
@@ -427,7 +426,7 @@ agent-browser profiler stop ./profile.json
 agent-browser dashboard start
 ```
 
-Trace、Profiler、Dashboard 三者各有所长：Trace 文件可以发给同事复现，Profiler 数据能定位哪一步耗时最长，Dashboard 方便实时观察 Agent 的操作。排查偶发问题、复盘错误路径、多人协作时都能用上。
+Trace、Profiler、Dashboard 各有侧重：Trace 文件可以发给同事复现，Profiler 数据能定位哪一步耗时最长，Dashboard 方便实时观察 Agent 的操作。排查偶发问题、复盘错误路径、多人协作时都能用上。
 
 ## §8 两个实战示例
 
@@ -493,7 +492,7 @@ agent-browser wait --load networkidle
 agent-browser snapshot -i
 ```
 
-这里已经失败的话，问题多半不在业务操作，而在网络、浏览器或页面本身。官方还提到默认操作超时是 `25000 ms`，通过 `AGENT_BROWSER_DEFAULT_TIMEOUT` 提高超时不要盲目超过 `30000 ms`，否则 CLI 侧可能先触发读超时。
+这里已经失败的话，问题多半不在业务操作，而在网络、浏览器或页面本身。CLI 帮助信息提到默认操作超时是 `25000 ms`（来源：`agent-browser --help` 输出），可通过 `AGENT_BROWSER_DEFAULT_TIMEOUT` 环境变量调整。调大超时能容忍慢页面，但也会让卡死的流程拖得更久，需要结合实际页面响应时间权衡。
 
 ### 9.3 页面内容太长，把 Agent 上下文撑爆了
 
@@ -502,12 +501,12 @@ agent-browser snapshot -i
 - `snapshot -i` 只看交互元素
 - `snapshot -c` 移除空结构元素
 - `snapshot -d 3` 限制深度
-- `--max-output` 限制输出体积
+- `--max-output` 限制输出体积（如 CLI 帮助信息所示）
 - `-s "#main"` 只查看局部区域
 
 ### 9.4 想接入 AI，对话式控制怎么开
 
-CLI 本身提供 `chat` 命令和 dashboard 内置聊天面板，但前提是先配置 Vercel AI Gateway 相关环境变量，例如 `AI_GATEWAY_API_KEY`。只需要"让上层 Agent 调命令"时不必启用 `chat`，直接用 `snapshot + ref` 更可控——`chat` 适合人工调试或让 LLM 自主探索，不适合需要确定性执行的流程。
+CLI 本身提供 `chat` 命令和 dashboard 内置聊天面板，但前提是先配置 Vercel AI Gateway 相关环境变量，例如 `AI_GATEWAY_API_KEY`。若只是"让上层 Agent 调命令"，不必启用 `chat`，直接用 `snapshot + ref` 更可控——`chat` 适合人工调试或让 LLM 自主探索，不适合需要确定性执行的流程。
 
 ## §10 练习与自测
 
@@ -523,11 +522,11 @@ CLI 本身提供 `chat` 命令和 dashboard 内置聊天面板，但前提是先
 
 ### 10.2 自测清单
 
-- 我能解释为什么 Agent 优先使用 `snapshot + ref`，而不是直接猜 CSS 选择器
+- 我能解释为什么 Agent 优先使用 `snapshot + ref`，避免直接猜 CSS 选择器
 - 我知道 `type`、`fill`、`find role`、`wait --load networkidle` 分别适合什么场景
 - 我知道 `--session`、`--session-name`、`--profile`、`state save/load` 的差异，并能根据场景选择
 - 我知道怎样用 `--allowed-domains`、`--content-boundaries`、`--action-policy` 控制风险
-- 我知道页面失败时先看 `snapshot`、`console`、`network`，而不是盲目重试
+- 我知道页面失败时先看 `snapshot`、`console`、`network`，避免盲目重试
 - 我能区分 `agent-browser` 与 Playwright SDK 的适用边界，并说明何时该切换
 - 我知道 `batch` 适合什么场景，以及为什么动态决策流程不应使用 `batch`
 
@@ -535,7 +534,7 @@ CLI 本身提供 `chat` 命令和 dashboard 内置聊天面板，但前提是先
 
 ### 11.1 一句话结论
 
-要让 AI Agent 直接在终端里稳定操控浏览器，`agent-browser` 是一条值得优先试的路径。它的价值集中在围绕 Agent 设计的交互范式：先观察，再引用，再行动，再刷新上下文。LLM 最容易出错的"猜选择器"环节被换成了"读快照引用"，从源头降低了误操作。
+要让 AI Agent 直接在终端里稳定操控浏览器，`agent-browser` 值得优先尝试。它的价值在于为 Agent 设计的交互范式：先观察，再引用，再行动，再刷新上下文。LLM 最容易出错的"猜选择器"环节被换成"读快照引用"，在源头降低误操作。
 
 ### 11.2 选型建议
 
