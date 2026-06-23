@@ -22,9 +22,9 @@ tags: ["AI Agent", "Rust", "Claude", "MCP协议", "命令行工具"]
 
 ## 项目概览
 
-[Claw Code](https://github.com/ultraworkers/claw-code) 是 ultraworkers 团队开源的 AI Agent（人工智能代理）开发框架，采用 Rust 语言实现，是 `claw` CLI agent harness 的公开参考实现。截至 2026 年初，该项目已在 GitHub 获得接近 19 万颗星，成为 AI Agent 开源领域最受关注的 CLI 工具之一。
+[Claw Code](https://github.com/ultraworkers/claw-code) 是 ultraworkers 团队开源的 AI Agent（人工智能代理）开发框架，采用 Rust 语言实现，是 `claw` CLI agent harness 的公开参考实现。截至 2026 年初，该项目在 GitHub 上获得了超过 19 万颗星，在 AI Agent 开源 CLI 工具中关注度较高。
 
-项目的定位是：**为开发者提供一个生产级的 Rust CLI 运行环境，用于构建、运行和调试多工具调用的 AI Agent**。canonical 实现位于仓库的 `rust/` 目录，是当前真正的代码基线。
+项目提供一个 Rust CLI 运行环境，用于构建、运行和调试多工具调用的 AI Agent。canonical 实现位于仓库的 `rust/` 目录，是当前真正的代码基线。
 
 ### 关键背景：不是 `cargo install claw-code`
 
@@ -133,7 +133,7 @@ claw-code/
 
 ## 会话管理与工具生态
 
-Claw Code 支持会话持久化和多工具调用，这是其区别于简单 CLI chat 的关键能力。具体功能包括：
+Claw Code 支持会话持久化和多工具调用，这些能力让它可以维持多轮对话上下文、接入外部工具。具体功能包括：
 
 - **会话管理**：保存和恢复多轮对话上下文
 - **多后端兼容**：Anthropic（Claude）、OpenAI 等 API 可切换
@@ -212,9 +212,9 @@ cargo build --workspace --release
 
 ## 总结
 
-Claw Code 用 Rust 实现了一个生产级 CLI harness，兼顾启动速度、低内存占用和跨平台能力。设计上强调本地化、工具化和可审计性。
+Claw Code 用 Rust 实现的 CLI harness 启动快、内存占用低，支持 macOS、Linux、Windows 三个平台。如果你要在本地跑 AI Agent 原型，或者需要私有化部署、不依赖第三方云服务，这个工具比较合适。
 
-如果你是 AI 应用开发者，建议从 `claw doctor` 开始验证环境，再结合 USAGE.md 深入探索会话管理和 MCP 集成能力。项目仍处于活跃开发阶段，ACP/Zed 完整支持的进展值得持续关注。
+建议先运行 `claw doctor` 确认环境没问题，再读 USAGE.md 了解会话管理和 MCP 集成的细节。项目还在活跃开发，ACP 和 Zed 的完整支持已经在 ROADMAP.md 里列出。
 
 **相关链接：**
 - GitHub: https://github.com/ultraworkers/claw-code

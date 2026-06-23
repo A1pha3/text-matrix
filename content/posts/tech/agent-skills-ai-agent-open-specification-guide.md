@@ -988,6 +988,164 @@ compatibility: 需要互联网访问，用于调用外部 API
 
 ---
 
+## 练习题
+
+### 练习一：创建一个文件备份 Skill（入门）
+
+**目标**：创建一个能在本地自动备份指定文件的 Skill。
+
+**步骤**：
+1. 创建 `.agents/skills/backup-file` 目录
+2. 编写 `SKILL.md`，包含 `name`、`description`、`license` 字段
+3. 在 `scripts/` 下写备份脚本，接受源路径和目标路径两个参数
+4. 用 `skills-ref validate` 验证格式
+5. 在 Agent 中测试激活
+
+**验收标准**：
+- `description` 中包含"备份文件""增量备份"等触发关键词
+- 脚本能处理"文件不存在""目标目录不存在"两种边界情况
+- 激活后 Agent 能正确执行备份并记录备份时间
+
+<details>
+<summary>参考答案</summary>
+
+**SKILL.md 核心字段**：
+
+```yaml
+name: backup-file
+description: 备份指定文件到目标目录，支持增量备份。
+             当用户提到备份文件、保存副本、同步文档时使用。
+license: MIT
+```
+
+**评分要点**：
+1. `name` 全小写、无连续连字符（1 分）
+2. `description` 包含触发关键词（1 分）
+3. 脚本处理"文件不存在"边界（1 分）
+4. 用 `skills-ref validate` 验证通过（1 分）
+5. Agent 激活测试能正确执行（1 分）
+
+</details>
+
+### 练习二：把团队高频操作用 Skill 封装（进阶）
+
+选一个你的团队每周至少执行 3 次的操作用 Skill 封装：
+- 发布前检查清单
+- 数据库迁移脚本
+- 日志排查快捷命令
+
+完成以下任务：
+1. 写出这个操作的「触发关键词表」（`description` 字段用）
+2. 判断哪些资源该放进 `scripts/`，哪些该放进 `references/`
+3. 写一个 50 行以内的 `SKILL.md` body，只保留执行路径
+4. 找一个同事，让他不看 `SKILL.md` 原文，只通过 Agent 对话来完成这个操作——记录他卡在哪一步
+
+**信号**：如果同事卡在"不知道该说什么才能触发"，说明 `description` 缺少触发关键词；如果卡在"激活了但执行不对"，说明指令不够精确。
+
+### 练习三：在已有 Agent 系统里评估 Skill 迁移收益（高阶）
+
+如果你团队的 Agent 系统目前把所有工具描述在启动时全量加载，按以下步骤评估迁移到 Skill 的收益：
+
+1. 统计当前启动时加载的工具描述总 token 数
+2. 估算日常对话中实际命中的工具比例（例如 10 个工具里平均用 2 个）
+3. 按 Skill 渐进式披露的三阶段模型，计算迁移后的 token 节省量
+4. 列出迁移成本：需要改的几个接口、需要转换的几个工具描述
+
+**决策规则**：如果启动时 token 开销超过 3000 且日常命中率低于 40%，迁移通常有正 ROI。
+
+---
+
+## 自测题
+
+读完本文后，先自己想 30 秒再展开答案：
+
+<details>
+<summary>1. Skill 的 `name` 字段和目录名必须完全一致，这条规则解决了哪两个问题？</summary>
+
+第一，目录名作为文件系统路径，全小写加连字符可以避免 macOS/Windows 大小写敏感差异导致的跨平台问题；第二，`name` 会被 Agent 用作唯一标识，禁止连续连字符（`--`）可以防止与命令行参数（如 `--flag`）混淆。
+</details>
+
+<details>
+<summary>2. 渐进式披露的三阶段分别解决什么开销问题？</summary>
+
+阶段 1（元数据）解决「启动开销」——Agent 启动时只扫 `name` + `description`，每个 Skill 约 100 token；阶段 2（指令）解决「命中开销」——只加载被用户请求匹配的 Skill 的完整 `SKILL.md`；阶段 3（资源）解决「执行开销」——只在指令显式引用时才读 `scripts/`、`references/`、`assets/` 里的文件。
+</details>
+
+<details>
+<summary>3. 什么时候该把能力做成 Skill，什么时候直接写进系统提示词？</summary>
+
+做成 Skill：不是每次对话都用得到、有明确触发关键词、需要附带脚本或参考资料、需要跨项目复用、需要版本管理。写进系统提示词：全局基础行为（如输出语言偏好）、指令很短且无附带资源、每次对话都会用到、只服务于当前项目的临时指令。
+</details>
+
+<details>
+<summary>4. `description` 字段写得好不好，直接影响什么指标？</summary>
+
+直接影响「激活准确率」——相关请求中 Skill 被正确激活的比例。写得好：`description` 包含功能描述 + 触发时机 + 关键词，Agent 能准确匹配；写得差：只写"帮助处理文档"这种模糊描述，会导致该激活时不激活、不该激活时误激活。
+</details>
+
+<details>
+<summary>5. 如果 `SKILL.md` 的 body 超过 5000 token，规范推荐怎么处理？</summary>
+
+把详细参考文档拆到 `references/` 目录，让 `SKILL.md` body 只保留执行路径和摘要。`references/` 里的文件只在指令显式引用时才加载，未引用的部分不占上下文。`body` 控制在 5000 token 以内，激活时的上下文开销更可控。
+</details>
+
+---
+
+## Skill 快速参考卡
+
+### 最小 SKILL.md
+
+```yaml
+---
+name: my-skill
+description: 功能描述。触发时机。关键词。
+license: MIT
+compatibility: 需要 Python 3.10+
+---
+
+# 技能名
+
+## 使用步骤
+1. ...
+
+## 示例
+...
+```
+
+### 渐进式披露：三阶段 token 开销
+
+| 阶段 | 加载内容 | 典型 token |
+|------|----------|-------------|
+| 元数据 | `name` + `description` | ~100 / Skill |
+| 指令 | `SKILL.md` body | 500-2000 |
+| 资源 | `scripts/` / `references/` | 按需 |
+
+### `description` 写作三问
+
+1. **功能**：这个 Skill 能做什么？
+2. **时机**：用户说什么会激活它？
+3. **关键词**：哪些术语应该命中？
+
+### 常见 discovery 失败原因
+
+- `SKILL.md` 文件不存在
+- YAML frontmatter 格式错误（缺少 `---` 或字段格式不对）
+- `name` 包含大写字母或非法字符
+
+---
+
+## 进阶路径
+
+读完本文后，按以下顺序深入：
+
+1. **跑通一个官方 Skill**：从 [anthropics/skills](https://github.com/anthropics/skills) 挑一个高频场景的 Skill 放进 `.agents/skills/`，确认你选用的 Agent 能正确 discovery 和 activation
+2. **封装一个团队高频操作**：识别团队内部重复执行 3 次/周以上的流程，按本文的 Skill 格式规范做成 Skill
+3. **接入 Skill 发现机制**：如果团队现有 Agent 系统是全量加载工具描述，评估迁移到 Skill 渐进式披露的 ROI
+4. **读 `skills-ref` 源码**：理解 `validate`、`read-properties`、`to-prompt` 三个命令的内部实现，为团队定制 Skill 校验规则做准备
+5. **关注 Agent Skills 社区**：[Discord 社区](https://discord.gg/MKPE9g8aUy) 的 `#show-and-tell` 频道有团队实践案例，规范版本更新会先在 Discord 公告
+
+---
+
 ## 十、采用建议与总结
 
 ### 采用顺序

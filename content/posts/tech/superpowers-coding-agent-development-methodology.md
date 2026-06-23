@@ -10,6 +10,18 @@ tags: ["AI Coding Agent", "Superpowers", "开发方法论", "TDD", "Claude Code"
 
 # Superpowers：让 Coding Agent 拥有完整开发方法论的插件系统
 
+## 学习目标
+
+读完本文后，你应该能够：
+
+- 理解为什么直接让 Coding Agent 写代码会导致意图偏差、零测试防护和架构漂移
+- 掌握 Superpowers 的 6 个技能（brainstorming → using-git-worktrees → writing-plans → subagent-driven-development → TDD → reviewing）及其强制流程
+- 通过一个完整案例（文章阅读时间估算功能）理解 Superpowers 的实际工作流程
+- 对比 Superpowers、Harness Engineering 和 Compound Engineering 的异同
+- 判断 Superpowers 是否适合你的项目和团队
+
+---
+
 2025 年 10 月 9 日，Anthropic 正式发布 Claude Code 插件系统。同一天，Jesse Vincent 发布了 Superpowers 的第一个版本。截至 2026 年 5 月，这个项目在 GitHub 上积累了超过 199,000 个 Star，成为 Claude Code 生态中安装量仅次于 Anthropic 官方插件的第三方项目。
 
 Superpowers 给 Coding Agent 装上了一套开发流程——6 个强制检查点，Agent 每次起飞都遵循同一条航线，每一步都不可跳过。
