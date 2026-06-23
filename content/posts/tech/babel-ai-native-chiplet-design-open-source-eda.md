@@ -30,7 +30,7 @@ Babel 的系统边界可以拆成三层：上层是 agent 编排层，用 Claude
               ↑_________________________*-needs-fix 回流__________________________|
 ```
 
-三层之间通过文件系统解耦：agent 对 EDA 工具的调用都经过 skill 层封装，skill 之间不共享状态，状态只通过文件系统中的设计产物和 `.handoff/` 目录里的 labeled issue 传递。这样每个 agent 出错时不会牵连其他 agent，可以单独重试。
+三层之间通过文件系统解耦：skill 层封装 agent 对 EDA 工具的调用，skill 之间不共享状态，状态只通过文件系统中的设计产物和 `.handoff/` 目录里的 labeled issue 传递。单个 agent 出错时不会牵连其他 agent，可以单独重试。
 
 ### Agent 与工具对照
 
@@ -46,19 +46,19 @@ Babel 的系统边界可以拆成三层：上层是 agent 编排层，用 Claude
 
 ### 为什么用 issue handoff
 
-芯片设计流程天然是多阶段接力：架构师交付 MAS（微架构规范）后，RTL 工程师才能开始编码；RTL 通过 lint 后，验证工程师才能跑仿真。Babel 把这种接力关系映射成 GitHub issue 的 label 状态机，每个 agent 监听自己负责的 label，处理完后打上下一个 label。
+芯片设计流程本质是多阶段接力：架构师交付 MAS（微架构规范）后，RTL 工程师才能开始编码；RTL 通过 lint 后，验证工程师才能跑仿真。Babel 把这种接力关系映射成 GitHub issue 的 label 状态机，每个 agent 监听自己负责的 label，处理完后打上下一个 label。
 
-选 issue handoff 是因为它的上下文承载能力、人类可读性和持久化特性刚好匹配 agent 协作的需求。issue 天然带评论、附件、关联 PR，适合承载设计产物的元数据。label 状态机对人类可读，设计师可以随时介入修改 label 强制回流。agent 间不共享内存状态，issue 充当持久化的消息队列，崩溃后可恢复。
+选 issue handoff 而不是函数调用或消息队列，是因为 issue 自带评论、附件、关联 PR，能承载设计产物的元数据；label 状态机对人类可读，设计师可以随时介入修改 label 强制回流；agent 间不共享内存状态，issue 充当持久化的消息队列，崩溃后可恢复。
 
 ### 5 个 Agent 的职责
 
 | Agent | 触发 label | 输入 | 输出 | 质量门控 |
 |-------|-----------|------|------|---------|
-| `/bba-architect` | 新设计想法 / `arch-needs-fix` | 用户需求 | PRD → arch_spec → MAS | `/bb-spec-review` 对抗评审 |
-| `/bba-guru-rtl` | `ready-for-rtl` / `rtl-needs-fix` | MAS | lint-clean SystemVerilog | `/bb-gate-rtl-quality` |
-| `/bba-guru-verification` | `ready-for-verification` | RTL | 100% 覆盖率报告 | `/bb-gate-test-quality` |
-| `/bba-guru-synthesis` | `ready-for-synth` / `synth-needs-fix` | RTL + SDC | timing-closed 网表 | `/bb-gate-synth-quality` |
-| `/bba-guru-pd` | `ready-for-pd` / `pd-rework` | 网表 | GDSII + DRC/LVS 通过 | `/bb-gate-pd-quality` |
+| `bba-architect` | 新设计想法 / `arch-needs-fix` | 用户需求 | PRD → arch_spec → MAS | `/bb-spec-review` 对抗评审 |
+| `bba-guru-rtl` | `ready-for-rtl` / `rtl-needs-fix` | MAS | lint-clean SystemVerilog | `/bb-gate-rtl-quality` |
+| `bba-guru-verification` | `ready-for-verification` | RTL | 100% 覆盖率报告 | `/bb-gate-test-quality` |
+| `bba-guru-synthesis` | `ready-for-synth` / `synth-needs-fix` | RTL + SDC | timing-closed 网表 | `/bb-gate-synth-quality` |
+| `bba-guru-pd` | `ready-for-pd` / `pd-rework` | 网表 | GDSII + DRC/LVS 通过 | `/bb-gate-pd-quality` |
 
 ### Issue Label 状态机
 
@@ -94,7 +94,7 @@ Babel 的系统边界可以拆成三层：上层是 agent 编排层，用 Claude
 | synthesis | timing 6 次 | 10 |
 | pd | total 8 次（DRC 3 / LVS 2 / STA 3） | 10 |
 
-超限自动触发 `escalate-user`，停止并等待用户决策。这个设计承认 AI agent 在硬件设计上无法 100% 自主收敛，把"何时放弃"显式化成 label。
+超限自动触发 `escalate-user`，停止并等待用户决策。这个设计承认 AI agent 在硬件设计上无法 100% 自主收敛——Babel 把"何时放弃"做成可观察的 label，避免 agent 在死循环中耗尽配额。
 
 ## Skill 体系
 
@@ -200,7 +200,7 @@ designs/<name>/
 
 ## 任务流案例：一个 AI 推理处理器如何流过系统
 
-假设用户想设计一个主频 1GHz、能运行主流大模型的 AI 推理处理器，使用 ASAP7 PDK。整个流程如下：
+假设用户想设计一个主频 1GHz、能运行主流大模型的 AI 推理处理器，使用 ASAP7 PDK：
 
 1. **需求解析**：用户在 Claude Code 中描述需求，`/bba-architect` 被触发。agent 把自然语言需求解析成 `idea/parsed_idea.json`，生成 `PRD.md`，暂停等待用户确认。
 
@@ -216,7 +216,7 @@ designs/<name>/
 
 7. **用户审核**：`signoff` label 触发用户审核 GDSII。用户可强制打 `*-needs-fix` label 回流到任意阶段。
 
-整个流程中，agent 间通过文件系统和 issue label 传递状态，没有共享内存或直接调用。任何一个 agent 失败都不会污染其他 agent 的状态，用户也可以随时介入修改 label 强制回流。
+agent 间没有共享内存或直接调用，状态只通过文件系统和 issue label 传递。这种解耦让单个 agent 失败时可以单独重试，不必回滚整条流水线。
 
 ## 技术栈
 
@@ -249,7 +249,7 @@ source ~/wrk/eda_opensources/eda_env.sh
 claude-code
 
 # 描述设计需求
-> 设计一个 AI 推理处理器 主频 1Ghz，能运行主流大模型，使用 ASAP7 PDK
+> 设计一个 AI 推理处理器 主频 1GHz，能运行主流大模型，使用 ASAP7 PDK
 
 # 或显式触发 architect
 > /bba-architect
@@ -289,4 +289,4 @@ claude-code
 3. 尝试中等复杂度设计（如简单 RISC-V 核心），观察哪些阶段容易触发回流
 4. 评估是否把 issue handoff 模式迁移到自己的设计流程中，与现有 EDA 工具链集成
 
-Babel 把 AI coding agent 引入硬件设计流程的工程实践，把"agent 间如何协作""何时放弃""如何持久化状态"这些问题显式化成可观察的 label 和文件。它复用开源 EDA 工具，把精力集中在流程编排和质量门控上。
+Babel 复用开源 EDA 工具，把精力放在流程编排和质量门控上，把 agent 间协作、迭代收敛、状态持久化落成可观察的 label 和文件，设计师随时可以介入、回流或审计。
