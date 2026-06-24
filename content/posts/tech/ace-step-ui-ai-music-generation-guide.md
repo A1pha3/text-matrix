@@ -79,7 +79,7 @@ tags: ["React", "TypeScript", "AI音乐", "TailwindCSS", "开源"]
 | Stars | 截至 2026 年 4 月，2,000+ ⭐ |
 | 语言 | TypeScript 60.3%，CSS 33.3% |
 | 框架 | React 18，TailwindCSS |
-| 最近一次提交 | 2026 年 3 月（截至 2026 年 4 月访问时） |
+| 最近一次提交 | 2026 年 6 月（截至 2026 年 6 月访问时） |
 | 推荐版本 | ACE-Step v1.5+ |
 | 许可证 | 开源（许可证见 GitHub 仓库 README） |
 | GitHub | [fspecii/ace-step-ui](https://github.com/fspecii/ace-step-ui) |
