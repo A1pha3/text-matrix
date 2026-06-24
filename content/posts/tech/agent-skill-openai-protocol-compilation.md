@@ -588,6 +588,187 @@ MCP 是一种标准化的客户端-服务端协议，定义了三方（Host、Cl
 
 ---
 
+## 练习题
+
+### 练习 1：Skill 触发条件设计
+
+你正在为一个代码审查工具编写 `code-review` skill。下面两段 `description` 哪一段更可能被正确触发？为什么？
+
+A 版：
+```yaml
+description: >-
+  Helps with code review tasks.
+```
+
+B 版：
+```yaml
+description: >-
+  Run code review on the current git diff.
+  Use when the user asks to review code, check pull request quality,
+  or wants coding feedback. Also trigger when the conversation
+  mentions PR, MR, code quality, or review.
+```
+
+<details>
+<summary>参考答案</summary>
+
+B 版更可能被正确触发。原因：
+
+1. **覆盖触发场景**：B 版列出了具体的关键词（PR、MR、code quality、review），而 A 版只有一句模糊的 "Helps with code review tasks"
+2. **明示触发时机**：B 版用 "Use when..." 句式告诉 LLM 什么时候该用这个 skill
+3. **兜底触发条件**：B 版加了 "Also trigger when the conversation mentions..."，覆盖对话中隐含的触发场景
+
+A 版的问题在于：LLM 可能无法将用户的 "帮我看看这段代码" 与 "code review tasks" 关联起来。
+
+</details>
+
+### 练习 2：用 curl 验证 Skill 协议交互
+
+按文中「用 curl 模拟单轮测试」的方法，写一个完整的测试用例，验证以下场景：
+
+> 用户说："帮我用 mp-read 读这篇公众号文章：https://mp.weixin.qq.com/s/xxxxx"
+
+要求：
+1. 构造完整的 `curl` 请求体（包含 system prompt 中的 `<available_skills>` 块）
+2. 预测 LLM 返回的第一个 `tool_calls` 应该是什么
+3. 构造第二轮请求的 `messages` 数组（包含 tool 返回结果）
+
+完成后再用真实的 OpenAI API Key 跑一遍，对比预期和实际返回是否有差异。
+
+### 练习 3：编写第一个最小 Skill
+
+按文中「如何从零编写第一个 Skill」的 6 步顺序，为以下任务编写一个 `SKILL.md`：
+
+> 任务：检查当前 Git 仓库是否有未提交的改动，如果有，提醒用户先提交再继续。
+
+要求：
+1. 目录名和 `name` 字段一致（用 kebab-case）
+2. `description` 覆盖"检查 git 状态"、"是否有未提交改动"等触发场景
+3. 正文包含 Prerequisites Check（检查是否在 git 仓库内）
+4. 步骤指令明确：用 `Shell` 工具执行 `git status --porcelain`，解析输出，如果有改动就提醒用户
+
+写完后用 Cursor 或支持 Skill 的 IDE 实际运行一次，确认能被正确触发。
+
+---
+
+## 自测题
+
+读完本文后，先自己想 30 秒再展开答案：
+
+<details>
+<summary>1. Skill 在 OpenAI 兼容协议的请求体中，对应哪三个字段或机制？</summary>
+
+1. **System Message 文本注入** — `<available_skills>` 块和触发指令被注入到 `messages[0].content`
+2. **Tools Definition** — Skill 需要的工具（Read、Shell 等）被注册到 `tools` 数组
+3. **Multi-turn Tool Calling Loop** — LLM 通过发起 `tool_calls` 来读取 SKILL.md、执行步骤、返回结果
+
+Skill 本身不对应协议中的独立字段。
+
+</details>
+
+<details>
+<summary>2. 为什么说 Skill 是一种「给 LLM 写使用手册」的设计模式？</summary>
+
+因为 Skill 不新增协议能力，而是把三件已有事情组合起来：
+1. 在 system prompt 里告诉 LLM「你有这些手册可以查」
+2. LLM 通过 `Read` 工具自己去读手册
+3. LLM 读完手册后，按手册说的步骤通过 `Shell`/`Read` 等工具执行
+
+整个流程依赖的是 LLM 已有的 tool calling 机制，不是新能力。
+
+</details>
+
+<details>
+<summary>3. Progressive Loading 节省 token 的原理是什么？举例说明。</summary>
+
+原理：不在每次对话的 system prompt 中全量注入 SKILL.md 正文，只注入 `name` + `description` 摘要（约 50 token）。只有当 LLM 判定需要该 Skill 时才通过 `Read` 工具读取完整正文（约 3000 token）。
+
+以 mp-read 为例：5 个 Skill 各 3000 token，全量注入要 15000 token；用 Progressive Loading 只要 250 token（摘要），省下 14750 token 留给用户对话。
+
+</details>
+
+<details>
+<summary>4. 如果 Skill 没有被触发，应该按什么顺序排查？</summary>
+
+排查顺序：
+1. **检查 system prompt 中是否有 `<available_skills>` 块** — 没有说明 IDE 没扫描到 Skill 目录
+2. **检查 `description` 是否覆盖了触发场景** — 太窄会导致不触发
+3. **检查 system prompt 中是否有触发指令**（如 "read and follow it IMMEDIATELY"）— 没有则 LLM 可能不会主动读 SKILL.md
+4. **检查 `tools` 数组中是否注册了 `Read` 工具** — 没有则 LLM 无法读取 SKILL.md
+5. **用 mitmproxy 抓包确认** — 看实际请求体中 `messages[0].content` 的内容
+
+</details>
+
+<details>
+<summary>5. Skill 和 MCP 的核心区别是什么？</summary>
+
+| 维度 | Skill | MCP |
+|------|-------|-----|
+| 层级 | 应用层模式 | 协议层规范 |
+| 依赖 | 依赖 IDE 已注册的工具 | 定义自己的工具发现/调用协议 |
+| 实现 | Markdown 文件 + prompt 注入 | 标准化的 Client-Server 通信 |
+| 适用场景 | 编排已有工具完成特定任务 | 为 LLM 提供新的工具能力 |
+
+两者都依赖 tool calling 作为底层执行机制，但 MCP 试图标准化工具接入方式，Skill 则完全依赖自然语言指令驱动。
+
+</details>
+
+---
+
+## 进阶路径
+
+读完本文后，按以下顺序动手操作：
+
+### 第一步：跑通一次完整的 Skill 协议交互观测（预计 1-2 小时）
+
+1. 安装 mitmproxy：`pip install mitmproxy`
+2. 启动代理：`mitmproxy --mode regular --listen-port 8080`
+3. 配置 Cursor 走代理（设置 `HTTP_PROXY` 和 `HTTPS_PROXY`）
+4. 触发一个已安装的 Skill（如输入 "read this file" 触发 Read 相关 skill）
+5. 在 mitmproxy 界面中观察：
+   - 第一轮请求的 `messages[0].content` 是否包含 `<available_skills>`
+   - LLM 返回的第一个 `tool_calls` 是否包含 `Read(SKILL.md)`
+   - 第二轮请求的 `messages` 数组是否包含 `role: "tool"` 且 `content` 为 SKILL.md 全文
+
+**验证标准**：能完整说出从用户发问到 LLM 执行核心命令之间的所有消息轮次。
+
+### 第二步：编写一个带前置检查的 Skill（预计 2-3 小时）
+
+选一个你自己业务里的小任务，例如：
+- 「按团队 ESLint 规则检查当前文件」
+- 「生成符合团队规范的 commit message」
+- 「读取腾讯云 API 文档并生成调用示例」
+
+按文中 6 步顺序编写 `SKILL.md`，重点检查：
+- `description` 能否覆盖 3 种以上触发场景
+- Prerequisites Check 是否列出了所有依赖
+- 步骤指令中的每个参数是否都能从 SKILL.md 中直接读到
+
+写完后用 IDE 实际运行，确认：
+- Skill 在合适的时机被触发
+- 前置检查确实被执行
+- 核心命令的参数正确
+
+### 第三步：为团队设计 Skill 组织规范（预计 1 天）
+
+当团队 Skill 数量超过 5 个时，需要关注：
+
+1. **触发覆盖度矩阵**：列出每个 Skill 的触发关键词、用户意图模式、URL 模式，定期检查是否有遗漏或重叠
+2. **Skill 边界划分原则**：一个 Skill 只做一件事（参考 Factor 10：小而专注的 Agent）
+3. **`references/` 目录的按需加载策略**：把大型参考文档（如 API 文档）放到 `references/`，在 SKILL.md 中说明「需要时读取 `references/api.md`」
+
+交付物：一份团队 Skill 编写规范（可以直接存在团队 Wiki 里）。
+
+### 第四步（可选）：深入 OpenAI 协议层（预计 2-3 天）
+
+如果你想知道 Skill 之外的协议层细节：
+1. 读 OpenAI 的 [Function Calling 文档](https://platform.openai.com/docs/guides/function-calling)
+2. 读 Anthropic 的 [Tool Use 文档](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
+3. 对比两者在 `tool_calls` 格式、`finish_reason` 处理、并行调用支持上的差异
+4. 用 curl 分别调用两个接口，观察返回格式的差异
+
+---
+
 ## 设计启示
 
 看完底层机制，Skill 在工程上是一个干净的设计。

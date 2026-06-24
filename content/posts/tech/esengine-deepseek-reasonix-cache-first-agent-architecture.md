@@ -1,6 +1,7 @@
 ---
 title: "DeepSeek-Reasonix：把 terminal coding agent 写成 DeepSeek prefix-cache 的延伸"
 date: 2026-06-21T17:55:00+08:00
+slug: "deepseek-reasonix-cache-first-agent-architecture"
 categories: ["技术笔记"]
 tags: ["DeepSeek", "coding-agent", "prompt-cache", "Go", "架构分析"]
 description: "DeepSeek-Reasonix 把 agent 循环的设计目标对齐到 DeepSeek prefix-cache 的字节稳定性上，让长会话成本压到 flash 模型水平。本文拆解三大 Pillar、Go 重写取舍，以及这套架构的适用边界。"

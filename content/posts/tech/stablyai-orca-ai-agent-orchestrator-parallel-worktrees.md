@@ -3,6 +3,7 @@ title: "StablyAI Orca 深度拆解：让 5 个 Coding Agent 各自跑在独立 W
 date: 2026-06-23T21:04:11+08:00
 lastmod: 2026-06-23T21:04:11+08:00
 draft: false
+slug: "stablyai-orca-ai-agent-orchestrator-parallel-worktrees"
 description: "Orca 是一个面向 100x builder 的桌面 IDE，把每个 feature 都装进独立 git worktree，让 Codex / Claude Code / OpenCode 等 CLI 编码 Agent 在同一窗口并行运行，并配 Mobile 伴侣做远程监控。本文拆解它的 Worktree 模型、Agent 调度、Design Mode 与 Orca CLI。"
 categories: ["技术笔记"]
 tags: ["AI Agent", "Git Worktree", "桌面 IDE", "StablyAI", "Orca", "Claude Code", "Codex"]
