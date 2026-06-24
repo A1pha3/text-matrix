@@ -12,6 +12,50 @@ tags: ["GitHub Actions", "自动化修复", "CI 流水线", "代码格式化", "
 
 autofix.ci 把 PR 里那些"修起来 30 秒、等起来半小时"的格式问题交给 CI 末端处理：开发者在 CI 中跑已有的格式化工具，autofix.ci 收集 staged 变更并 push 回 PR 分支。它适合对代码风格有强制要求、且不想在 review 中反复纠结格式的团队；如果项目对第三方后端可见性敏感，或需要自托管修复链路，则要权衡后再采用。
 
+## 目录
+
+- [先说结论](#先说结论)
+- [前置知识](#前置知识)
+- [学习目标](#学习目标)
+- [总览：组件边界与数据流](#总览组件边界与数据流)
+- [它在解决什么问题](#它在解决什么问题)
+- [工作原理：一次修复任务的完整路径](#工作原理一次修复任务的完整路径)
+- [接入：从零到第一次自动修复](#接入从零到第一次自动修复)
+- [适用边界与采用建议](#适用边界与采用建议)
+- [常见问题](#常见问题)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶阅读路径](#进阶阅读路径)
+
+## 先说结论
+
+autofix.ci 解决的核心问题是：**让 CI 里已经跑通的格式化工具，自动把修复结果 push 回 PR，而不是让开发者手动修完再推一次**。
+
+三个判断：
+
+1. **它是"格式化工具链的最后一环"**。你得先在 CI 里跑 `cargo fmt` / `prettier` / `ruff format`，autofix.ci 才收集得到 staged changes。它不替代 linter，只替代"手动修格式 → 再 push"这一步。
+2. **后端非开源是主要采用门槛**。如果你在私有仓库里跑，代码 artifact 会上传到 `autofix-api.maximilianhils.com`。能用，但得评估风险。
+3. **适合"格式强制统一 + CI 已经配好"的团队**。如果你的项目还没在 CI 里跑格式化，先去把 `pre-commit` hook 或 CI lint 步骤配好，再回来装 autofix.ci。
+
+## 前置知识
+
+阅读本文前，建议先确认以下工具/概念你已经用过：
+
+- **GitHub Actions 基础**：能在 `.github/workflows/` 里创建 YAML 文件并触发运行。一句话理解：autofix.ci 是以 GitHub Action 的形式接入你的 CI 流水线的。
+- **代码格式化工具**：`cargo fmt`（Rust）、`prettier`（JS/TS）、`ruff format`（Python）至少用过一种。一句话理解：autofix.ci 不内置格式化能力，它只收集你已有工具的产出。
+- **Git 基本操作**：理解 `staged changes`、`commit`、`push`、`PR branch` 之间的关系。一句话理解：autofix.ci 的本质是"帮你自动 commit 并 push 格式化后的变更"。
+
+如果你这三条任一条不满足，先花 20 分钟跑通一个最小的 GitHub Actions workflow（比如 `actions/checkout@v4` + `cargo fmt`），再回来读。
+
+## 学习目标
+
+读完本文后，你应当能够：
+
+1. 在 15 分钟内为一个已有 CI 格式化工序的仓库接入 autofix.ci，并解释为什么 workflow 必须命名为 `autofix.ci`。
+2. 区分 autofix.ci 的"GitHub App"和"GitHub Action"两个组件的职责边界，并画出一个修复任务从"开发者 push"到"修复 commit 出现在 PR 上"的完整数据流。
+3. 针对"后端非开源"这个限制，给你的团队写一个"是否采用 autofix.ci"的评估清单，覆盖敏感代码、自托管需求、CI 顺序依赖三个维度。
+4. 当 autofix.ci 修复失败时，利用 Action 源码里的关键路径（`git reset` → `git add --all` → 安全检查 → artifact 上传 → 后端 push）定位是"格式化工具没跑通"还是"Action 上报失败"。
+
 ## 总览：组件边界与数据流
 
 autofix.ci 由两端组成，边界清晰：
@@ -294,6 +338,93 @@ jobs:
 **Q: 修复失败怎么办？**
 
 后端处理失败时，Action 会输出错误信息并将 workflow 标为失败，同时打印需要手动修复的内容。
+
+## 自测题
+
+检验理解程度，可以回答下面 5 个问题：
+
+1. autofix.ci 的"GitHub App"和"GitHub Action"两个组件，职责边界是什么？为什么后端服务不开源会成为采用门槛？
+2. 为什么 workflow 必须命名为 `autofix.ci`？如果改成别名字会怎样？
+3. Action 源码里"禁止修改 `.github` 目录"这条规则，在安全防护上解决了什么问题？
+4. 如果你要在私有仓库里用 autofix.ci，需要在"后端可见性"这个维度上评估哪些风险？
+5. autofix.ci 和"本地跑 `pre-commit` hook"相比，各自的适用场景是什么？
+
+3 题以上答不稳的话，建议重看"总览：组件边界与数据流""工作原理""适用边界与采用建议"三节。
+
+<details>
+<summary>参考答案</summary>
+
+**题 1**：GitHub App（`autofix-ci`）负责提供写入 PR 的权限（安装到仓库时授权）；GitHub Action（`autofix-ci/action`）负责在 CI 末端收集 staged changes 并上报任务；后端服务（`autofix-api.maximilianhils.com`）负责接收 artifact、生成 commit、push 回 PR。后端不开源意味着：如果你的代码涉及商业机密或强合规要求（比如金融、医疗），代码 artifact 上传到第三方会触发安全评审；无法自托管也意味着你依赖第三方服务的可用性 SLA。
+
+**题 2**：Action 启动时校验 `process.env.GITHUB_WORKFLOW` 是否等于 `"autofix.ci"`，不匹配直接抛错。这是**安全机制**：防止恶意 PR 通过其他 workflow（比如你自己的 CI 流程）触发 autofix.ci 写入权限，从而篡改 PR 内容。如果改成别的名字，Action 会直接 `throw` 退出，修复不会执行。
+
+**题 3**：这条规则（staged 文件中包含 `.github` 路径时抛错退出）防止 PR 通过 autofix.ci 改动 workflow 自身配置，避免权限提升攻击。比如，一个恶意 PR 可以通过格式化工具修改 `.github/workflows/` 下的 YAML 文件，注入新的 workflow 或篡改现有 workflow 的权限。有了这条规则，autofix.ci 永远不会把 `.github/` 下的变更 push 回 PR。
+
+**题 4**：需要评估：(1) **数据可见性**——artifact 上传到 `autofix-api.maximilianhils.com`，你需要确认对方是否有 SOC 2 / ISO 27001 认证，以及数据处理协议（DPA）是否覆盖你的合规要求；(2) **代码泄露风险**——artifact 包含 staged changes（即格式化后的代码差异），如果 PR 里包含敏感信息（密钥、内部 API 端点），这些会被打包上传；(3) **可用性依赖**——如果 `autofix-api.maximilianhils.com` 宕机，你的 CI 会失败（取决于 `fail-fast` 设置）。
+
+**题 5**：`pre-commit` hook 是"本地强制"——开发者在 `git commit` 时就被拦下来，适合"团队所有人都配了 pre-commit"且"格式化工具有确定结果"的场景；autofix.ci 是"CI 末端补救"——开发者可以随便推，CI 帮你自动修，适合"开源项目外部贡献者多""团队对 pre-commit 有抵触"的场景。两者不互斥：你可以同时用 `pre-commit` 做第一道拦截，用 autofix.ci 做兜底。
+
+</details>
+
+## 练习
+
+### 练习一：为一个已有 CI 格式化工序的仓库接入 autofix.ci
+
+**目标**：从安装 GitHub App 到看到第一条 `autofix` commit，完整走一遍。
+
+**步骤**：
+
+1. 找一个你有权限的 GitHub 仓库（可以是测试仓库），确认它已经有 CI 格式化工序（比如 `ruff format` 或 `prettier --write`）。
+2. 访问 [https://autofix.ci](https://autofix.ci)，安装 GitHub App 到这个仓库。
+3. 创建 `.github/workflows/autofix.yml`（注意文件名就是 workflow 名，必须为 `autofix.ci`），填入官方示例内容（记得把格式化工序放在 `autofix-ci/action` 之前）。
+4. 故意在代码里加几个格式问题（比如把 import 顺序搞乱），push 到分支并开 PR。
+5. 等待 CI 运行，观察是否出现 `autofix` commit。
+
+**通过标准**：PR 上出现 `autofix` commit，且 commit 内容确实是格式修复（不是代码逻辑变更）。
+
+### 练习二：读 Action 源码，标注关键路径
+
+**目标**：把 `index.ts` 里的 4 个关键步骤（安全校验 → 收集变更 → PR 场景 rebase → 上报后端）在源码里标注出来，建立"出问题知道去哪查"的直觉。
+
+**步骤**：
+
+1. 打开 [index.ts](https://github.com/autofix-ci/action/blob/main/index.ts)。
+2. 找到 `GITHUB_WORKFLOW` 校验那一段，标注"这是安全要求"。
+3. 找到 `git reset` → `git add --all` → 提取文件列表那一段，标注"这是收集变更"。
+4. 找到 `event.pull_request` 分支（fetch PR head → checkout → cherry-pick），标注"这是 PR 场景 rebase 处理"。
+5. 找到 `uploadArtifact` + `fetch` 到后端那一段，标注"这是上报后端"。
+
+**通过标准**：你能对着源码说出"如果修复没生效，先查这 4 步里的哪一步"，而不用凭记忆猜。
+
+### 练习三：为你的团队写一份"是否采用 autofix.ci"评估清单
+
+**目标**：把"适用边界与采用建议"那一节的内容，变成一张可以发给团队 tech lead 的评估表。
+
+**步骤**：
+
+1. 列出你团队当前的情况：开源/私有、是否已跑通 CI 格式化、是否有强合规要求、开发者对 `pre-commit` 的接受度。
+2. 对照"适合的场景"和"局限与注意事项"两节，逐条打勾/打叉。
+3. 如果"后端非开源"是 blocker，调研替代方案（比如 [pre-commit.ci](https://pre-commit.ci) 或自建 [GitHub Actions artifact + bot 推送](https://github.com/autofix-ci/action/issues)）。
+4. 输出一份 1 页的评估结论："采用" / "不采用" / "试点 2 周后再决定"。
+
+**通过标准**：评估结论有具体理由（不是"感觉不错"），且覆盖了"敏感代码可见性""CI 顺序依赖""自建 vs 第三方"三个维度。
+
+## 进阶阅读路径
+
+下面给出阅读顺序与每篇为什么放在这个位置的理由：
+
+1. **[autofix.ci 官网 Setup 指南](https://autofix.ci/setup)**（先读）。这是最快能让你"跑起来"的页面，包含多语言（Python/JS/Go/Rust）的 YAML 片段。先读这个，把第一个 `autofix` commit 看到，再往下读原理。
+2. **[Action 源码（index.ts）](https://github.com/autofix-ci/action/blob/main/index.ts)**（第二读）。当你想知道"为什么修复没生效"或"为什么 commit 出现在 PR head 而非当前 checkout 的 commit"时，直接读源码比猜日志快。重点关注 `GITHUB_WORKFLOW` 校验、`git reset` → `git add --all` 的逻辑、PR 场景的 `cherry-pick` 处理。
+3. **[GitHub Actions 官方文档：Artifacts](https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts)**（第三读，可选）。如果你好奇"artifact 是怎么上传的、保留多久、会不会泄露"，官方文档给的信息比 blog post 准确。autofix.ci 用的是 `actions/upload-artifact@v4`，保留 1 天。
+4. **[pre-commit.ci 官网](https://pre-commit.ci)**（第四读，可选）。当你发现"后端非开源"是团队的 blocker 时，pre-commit.ci 是替代品之一（区别是它只跑 `pre-commit` hook，不支持任意格式化工序）。读这个帮你拓宽选项。
+5. **[GitHub Actions: write your own plugin](https://docs.github.com/en/actions/creating-actions)**（最后读，可选）。如果你最终决定"不用 autofix.ci，自己写一个类似的 Action"，官方文档的"Creating Actions"系列是起点。核心思路：`actions/checkout` + 跑格式化 + `actions/upload-artifact` + 一个 bot 账号 push 回 PR。
+
+这个顺序的好处是：
+
+- 先"跑起来看到效果"（Setup 指南）
+- 再"理解它为什么这么做"（读源码）
+- 然后"知道 artifact 会不会泄露敏感信息"（GitHub Actions 官方文档）
+- 最后"如果不用它，有什么替代方案"或"怎么自己写一个"（pre-commit.ci 对比 + 自建 Action 文档）
 
 ## 延伸链接
 

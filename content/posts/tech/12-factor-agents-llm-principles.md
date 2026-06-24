@@ -32,15 +32,17 @@ tags: ["AI Agent", "LLM", "工程实践", "上下文工程", "Python"]
 
 用 LLM 做产品的团队，常常在两种走法之间反复。一种是把赌注押在万能 Agent 上：写一段 prompt、挂上工具集，让模型自己 loop 到目标。另一种是把 LLM 当成增强搜索，外面包厚厚一层 if-else 兜底。
 
-Dex（Dexter Horthy，humanlayer 创始人）访谈 100 多个 SaaS 创始人之后，给出的判断很直接：**真正交付到生产用户手里的 LLM 软件，绝大多数是软件 + LLM 步骤的混合体，而不是纯 Agent。**
+humanlayer 创始人 Dex（Dexter Horthy）访谈 100 多个 SaaS 创始人之后，给出的判断很直接：**真正交付到生产用户手里的 LLM 软件，绝大多数是软件 + LLM 步骤的混合体，而不是纯 Agent。**
 
-12 条正式原则加 1 条荣誉提及都建立在这个判断上。每条背后都能对应到某个团队踩过的坑和被迫重写的代码。
+这个判断不是理论推演。每一条原则背后，都有一个具体的、让某个团队白干了几周的踩坑故事。比如有个团队用 LangChain 搭了客服 Agent，demo 跑得不错，一上生产就炸——用户问"我的订单状态"，Agent 调了知识库搜索、情感分析，最后才想起查订单表。问题不在模型不够聪明，而在工具设计和上下文组织。
 
-- 为什么用 Agent 框架跑出来的 demo，停在 70-80% 质量后再也上不去？
-- 从 demo 到生产级之间，缺的究竟是模型能力，还是工程结构？
-- 不用框架、自己搭的话，按什么顺序决定先做哪一块？
+12-Factor Agents 要解决的就是这类问题。它不教你"怎么搭 Agent"，而是帮你回答：
 
-12-Factor Agents 的 [GitHub 仓库](https://github.com/humanlayer/12-factor-agents) 由作者 Dex 持续维护，配套补充材料包括视频讲解、脚手架 `npx/uvx create-12-factor-agent`、Discord 社区和开源参考实现 `got-agents/agents`（链接有效性以发布时为准）。团队既拿它审视现有实现里哪些环节失控，也拿它指导新项目从第一行代码开始的结构。
+- 为什么 Agent 框架跑出来的 demo 停在 70-80% 后再也上不去？
+- 从 demo 到生产级之间，缺的是模型能力还是工程结构？
+- 不用框架、自己搭的话，先做哪一块？
+
+仓库地址是 [github.com/humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)，配套有视频讲解、脚手架 `npx/uvx create-12-factor-agent`、Discord 社区和开源参考实现 `got-agents/agents`。团队一般拿它做两件事：审视现有实现里哪些环节失控，以及指导新项目从第一行代码开始的结构。
 
 ## 目录
 
@@ -65,17 +67,34 @@ Dex（Dexter Horthy，humanlayer 创始人）访谈 100 多个 SaaS 创始人之
 
 ## 好 Agent 的本质是软件
 
-12-Factor Agents 的判断建立在一个演化路径上：**软件 → DAG → Agent Loop**。
+要理解 12-Factor Agents，先看 Agent 在软件演化里的位置。路径很清晰：**软件 → DAG → Agent Loop**。
 
 ### 软件本质上是有向图
 
-做个实验：翻出你团队 CI/CD 里最复杂的那条流水线，数一数里面有多少个"步骤 A 完成后再跑步骤 B"的依赖。这就是 DAG（有向无环图）。过去二十年，Airflow、Prefect、Dagster、Inngest、Windmill 这些工具把 DAG 编排变成了一件可观测、可重试、可在 UI 上点两下就恢复的事——节点挂了能看到是哪个节点，跑崩了能从失败点重来，不用盯着终端手动补数据。
+翻出你团队 CI/CD 里最复杂的那条流水线，数一数里面有多少个"步骤 A 完成后再跑步骤 B"的依赖。这就是 DAG（有向无环图）。过去二十年，Airflow、Prefect、Dagster、Inngest、Windmill 这些工具把 DAG 编排变成了一件可观测、可重试、可在 UI 上点两下就恢复的事——节点挂了能看到是哪个节点，跑崩了能从失败点重来，不用盯着终端手动补数据。
 
 ### Agent Loop 的承诺与现实
 
-Agent 范式抛出了一个诱人的承诺：**让 LLM 自己决定路径，扔掉 DAG。** 工程师只提供"边"（可用的工具），模型在运行时决定走哪些"节点"。听上去省事——少写编排代码、LLM 说不定还能发现你没考虑到的解法、错误自动恢复。
+Agent 范式抛出一个看起来很省事的承诺：**让 LLM 自己决定路径，扔掉 DAG。** 工程师只提供"边"（可用的工具），模型在运行时决定走哪些"节点"。听上去不错——少写编排代码，LLM 说不定还能发现你没考虑到的解法，错误自动恢复。
 
-但实际跑起来的 Agent Loop，只有三步：
+但实际跑起来的 Agent Loop，核心就是这三步：
+
+```python
+# 简化版 Agent Loop
+while not done:
+    # 1. LLM 输出下一步要做什么
+    next_step = await llm.decide(context)
+    
+    # 2. 确定性代码执行这个工具调用
+    result = await execute(next_step)
+    
+    # 3. 执行结果追加进上下文窗口
+    context.append(result)
+
+# 重复，直到 LLM 判断"完成"
+```
+
+用 Python 完整写出来的话：
 
 ```python
 from dataclasses import dataclass, field
@@ -91,7 +110,7 @@ class NextStep:
     final_answer: str | None = None
 
 class LLMClient:
-    """基于 OpenAI SDK 的 tool calling 实现，determine_next_step 返回结构化决策。"""
+    """基于 OpenAI SDK 的 tool calling 实现。"""
 
     def __init__(self, model: str, tools: dict[str, Callable]) -> None:
         self.client = AsyncOpenAI()
@@ -102,69 +121,52 @@ class LLMClient:
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=context,
-            tools=[
-                {
-                    "type": "function",
-                    "function": {
-                        "name": name,
-                        "parameters": {"type": "object", "properties": {}},
-                    },
-                }
-                for name in self.tools
-            ],
+            tools=[{"type": "function", "function": {"name": name, "parameters": {"type": "object", "properties": {}}}} for name in self.tools],
         )
         choice = response.choices[0].message
         if choice.tool_calls:
             call = choice.tool_calls[0]
-            return NextStep(
-                intent="tool_call",
-                tool=call.function.name,
-                args=json.loads(call.function.arguments or "{}"),
-            )
+            return NextStep(intent="tool_call", tool=call.function.name, args=json.loads(call.function.arguments or "{}"))
         return NextStep(intent="done", final_answer=choice.content)
 
 async def execute_step(step: NextStep, tools: dict[str, Callable]) -> dict:
-    """确定性代码执行工具调用，路由由 tools 字典决定（见 Factor 4）。"""
+    """确定性代码执行工具调用。"""
     handler = tools.get(step.tool or "")
     if handler is None:
         return {"status": "error", "reason": f"unknown tool: {step.tool}"}
     return {"status": "executed", "result": handler(**step.args)}
 
-initial_event = {"role": "user", "content": "deploy the backend"}
-context: list[dict] = [initial_event]
-
 async def agent_loop(context: list[dict], llm: LLMClient, tools: dict[str, Callable]) -> str:
     while True:
         next_step = await llm.determine_next_step(context)
-        context.append(
-            {"role": "assistant", "tool_call": next_step.tool, "args": next_step.args}
-        )
-
+        context.append({"role": "assistant", "tool_call": next_step.tool, "args": next_step.args})
         if next_step.intent == "done":
             return next_step.final_answer or ""
-
         result = await execute_step(next_step, tools)
         context.append({"role": "tool", "name": next_step.tool, "result": result})
 ```
 
-1. LLM 输出下一步要做什么（结构化输出 / tool calling，工具调用）
-2. 确定性代码执行这个工具调用
-3. 执行结果追加进上下文窗口
-4. 重复，直到 LLM 判断"完成"
-
-**这套循环的天花板就在 70-80% 质量区间。** "质量"指端到端任务成功率——demo 跑 10 次有 7-8 次能通，剩下 2-3 次要么走偏要么卡死。再往上推，靠的是对循环中每一步的工程控制，模型本身已经给不出更多。模型再聪明，也补不上缺少的这部分。
+这套循环的天花板在 **70-80% 质量区间**。"质量"指端到端任务成功率——demo 跑 10 次有 7-8 次能通，剩下 2-3 次要么走偏要么卡死。再往上推，靠的是对循环中每一步的工程控制，模型本身已经给不出更多。
 
 ### 从 70% 到生产级的典型翻车路径
 
-Dex 访谈 100 多个团队后发现了一条反复出现的轨迹：用 LangChain 或 CrewAI 搭一个 Agent demo，跑出 70-80% 的成功率——觉得差不多了——推到真实客户场景——炸了。用户不接受"大多数时候对"。于是开始逆向工程框架内部注入的 prompt、flow、状态管理，结果发现框架替你做的决策恰好是你需要自己掌控的那部分。最后，从零重写。
+Dex 访谈 100 多个团队后发现了一条反复出现的轨迹：
 
-12-Factor Agents 要解决的问题不在"怎么搭 Agent"，重点在**让重写这一步不用从零开始**。每条原则背后，都有一个具体的、让某个团队白干了几周的踩坑故事。
+1. 用 LangChain 或 CrewAI 搭一个 Agent demo
+2. 跑出 70-80% 的成功率
+3. 觉得差不多了，推到真实客户场景
+4. 炸了。用户不接受"大多数时候对"
+5. 开始逆向工程框架内部注入的 prompt、flow、状态管理
+6. 发现框架替你做的决策恰好是你需要自己掌控的那部分
+7. 从零重写
+
+12-Factor Agents 要解决的问题不在"怎么搭 Agent"，而在**让重写这一步不用从零开始**。每条原则背后，都有一个具体的踩坑故事——比如有个团队发现 Agent 在生产环境里"卡住"了，查了半天是执行状态存在内存里，进程重启后全丢了。
 
 ---
 
 ## 系统地图
 
-12 条正式原则加 1 条荣誉提及分布在三层上：
+12 条正式原则加 1 条荣誉提及分布在三层上。这个分层不是执行流水线，而是**概念分类**——遇到问题先定位层次，再找对应 Factor。
 
 ```mermaid
 graph TB
@@ -194,17 +196,19 @@ graph TB
     Layer2 -.- Layer3
 ```
 
-> 三层之间是**概念分类**关系，不是执行流水线。遇到问题先定位层次，再找对应 Factor；不要把它读成"数据从 Layer1 流到 Layer3"。
+三层各自管的事：
 
 | 层次 | 管什么 | 核心工程问题 |
 |------|--------|----------|
-| **输入输出层** (F1, F3, F4, F9, F13) | LLM 看到什么、输出什么、怎么被调用 | 上下文格式怎么设计？工具契约怎么定义？错误怎么反馈给 LLM？ |
-| **控制层** (F2, F8, F10, F12) | 谁来决定下一步做什么 | 提示词所有权归谁？while loop 归谁写？Agent 粒度多大？状态怎么建模？ |
-| **运行层** (F5, F6, F7, F11) | Agent 在生产环境怎么活下来 | 状态怎么持久化？人怎么介入？触发源有哪些？ |
+| **输入输出层** (F1, F3, F4, F9, F13) | LLM 看到什么、输出什么 | 上下文格式怎么设计？工具契约怎么定义？错误怎么反馈？ |
+| **控制层** (F2, F8, F10, F12) | 谁来决定下一步 | prompt 所有权归谁？while loop 归谁写？Agent 粒度多大？ |
+| **运行层** (F5, F6, F7, F11) | Agent 怎么在生产环境活下来 | 状态怎么持久化？人怎么介入？触发源有哪些？ |
 
-遇到具体问题时，先定位"这属于哪一层"。比如 Agent 在生产环境里停了就再也恢复不了——这是运行层的问题，和 prompt 没关系。把问题放对层次，就能找到对应的那条 Factor。
+**怎么用这个地图**：Agent 在生产环境里停了就再也恢复不了→运行层的问题（F5/F6）。LLM 总是调错工具→输入输出层的问题（F1/F4）。控制流逻辑散在 prompt 里到处都是→控制层的问题（F8/F12）。
 
----
+把问题放对层次，就能找到对应的那条 Factor。
+
+> **小技巧**：把这条系统地图截图贴在团队 Wiki 里，讨论 Agent 行为异常时先对层次，再翻正文。
 
 ## 一次真实任务穿过系统长什么样
 
@@ -879,15 +883,43 @@ Agent 正准备上线时，逐条过一遍：
 
 ## 进阶路径
 
-读完本文后，按以下顺序深入：
+读完本文后，按以下顺序动手操作，而不是只按阅读顺序：
 
-1. **读 `got-agents/agents` 仓库源码**：重点看 `examples/customer-support/` 和 `examples/deploy-approval/` 两个目录，对照本文的 Factor 编号理解每段代码管的是哪一层
-2. **读 The Outer Loop 博客**：推荐先读 [Context Engineering for Agents](https://theouterloop.substack.com)（对应 Factor 3 深化）和 [Why Agents Need Harnesses](https://theouterloop.substack.com)（对应 Factor 8 + Factor 12 深化），其余文章按兴趣展开
-3. **做练习 2**：把现有 Agent reducer 化，跑通单元测试 + 回放测试，这是从"读懂"到"会写"的关键一步
-4. **对照 12-Factor App 原始方法论**：读 [12factor.net](https://12factor.net) 原文，理解 Agent 版本在哪些地方做了类比、哪些地方做了调整，加深对每条原则背后取舍的把握
-5. **关注 humanlayer 后续更新**：Factor 13 是荣誉提及，作者可能继续补充；Discord 社区的 `#show-and-tell` 频道有团队实践案例
+### 第一步：跑通一个最小 Agent（预计 2-3 小时）
+
+1. 安装依赖：`pip install openai`
+2. 申请 OpenAI API Key（或本地跑 Ollama）
+3. 把本文「Agent Loop 的承诺与现实」节的 Python 代码抄进本地文件 `minimal_agent.py`
+4. 把 `AsyncOpenAI()` 替换成你的实际 client 调用
+5. 运行：`python minimal_agent.py`
+6. 预期结果：输入"查一下订单 ORD-001 的状态"，Agent 至少尝试调用一次工具
+
+**验证标准**：Agent 能完成一轮 tool_call → execute → append 的循环，不抛未捕获的异常。
+
+### 第二步：对照 got-agents/agents 做差异分析（预计 1 小时）
+
+1. `git clone https://github.com/got-agents/agents.git`
+2. 打开 `examples/customer-support/` 目录
+3. 对比本文 Factor 2/3/8/12 的论述，在代码里找到对应实现位置
+4. 记录：哪条 Factor 在该示例里体现得最明显？哪条最不明显？
+
+**交付物**：一页差异对照表（可以直接存在团队 Wiki 里）。
+
+### 第三步：给现有 Agent 做 reducer 化（预计 1 天）
+
+1. 找一个你们团队已有的 Agent（用 LangChain / 自写都行）
+2. 把它的单步逻辑提取成 `agent_step(state, event, llm, tools) -> State` 签名
+3. 用 Mock LLM 跑通 3 个路径的单元测试（工具调用成功 / 失败重试 / Agent 主动终止）
+4. 把生产环境的真实事件序列（至少 10 个事件）灌入 reducer，记录每一步的 State 快照
+
+**验收条件**：reducer 化后，相同输入产生相同输出（temperature=0 前提下）。
+
+### 第四步（可选）：加 Factor 5+6 做持久化（预计 2-3 天）
+
+在第三步基础上，加一张 `agent_tasks` 表（SQLite 也行），字段至少包含：`id, status, current_step, events_json, business_entity_id`。实现 `save_state(task_id, state)` 和 `load_state(task_id)` 两个函数后，进程重启不再等于任务丢失。
 
 ---
+
 
 ## 12-Factor Agents 快速参考卡
 

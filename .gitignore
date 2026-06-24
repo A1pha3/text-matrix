@@ -58,3 +58,6 @@ optimize-report.md
 .cache/
 .workbuddy/
 
+optimization-report-*.md
+scripts/optimize-articles.sh
+optimization-summary-report.md
