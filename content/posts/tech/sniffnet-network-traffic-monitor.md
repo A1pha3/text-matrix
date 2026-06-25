@@ -8,7 +8,51 @@ categories: ["技术笔记"]
 tags: ["Rust", "网络监控", "流量分析", "iced", "pcap", "跨平台"]
 ---
 
+## 快速信息卡
+
+| 属性 | 值 |
+|------|-----|
+| **GitHub Stars** | 36,000+ |
+| **GitHub Forks** | 1,400+ |
+| **主要语言** | Rust |
+| **开源协议** | MIT OR Apache-2.0 |
+| **GUI 框架** | iced (GPU 加速) |
+| **当前版本** | v1.5.0 |
+| **项目定位** | 跨平台网络流量监控工具 |
+
+---
+
 # Sniffnet：Rust 跨平台网络流量监控工具架构解析
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+- 理解 Sniffnet 的技术选型理由（为什么选择 Rust + iced）
+- 区分 Sniffnet 的模块职责（networking、gui、chart、notifications）
+- 成功从源码构建 Sniffnet，并理解 pcap 抓包流程
+- 针对你的场景判断 Sniffnet 是否合适（替代 Wireshark？补充监控？）
+- 理解跨平台差异处理（Windows 进程关联、macOS entitlement、Linux capabilities）
+
+---
+
+## 目录
+
+- [快速信息卡](#快速信息卡)
+- [学习目标](#学习目标)
+- [项目背景与定位](#项目背景与定位)
+- [技术选型决策分析](#技术选型决策分析)
+- [架构设计](#架构设计)
+- [主要模块深度解析](#主要模块深度解析)
+- [性能优化策略](#性能优化策略)
+- [跨平台差异处理](#跨平台差异处理)
+- [开发与扩展](#开发与扩展)
+- [常见问题与故障排查](#常见问题与故障排查)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [总结](#总结)
+
+---
 
 ## 项目背景与定位
 
@@ -326,6 +370,83 @@ services.txt 中追加一行即可：
 ### 自定义主题
 
 Sniffnet 内置了多个主题（Deep Cosmos、Monokai、Dracula 等）。如需创建新主题，修改 `gui/styles/` 下的主题定义文件，遵循 iced 的颜色系统规范即可。
+
+---
+
+## 常见问题与故障排查
+
+### Q: 运行 sniffnet 时提示"Permission denied"怎么办？
+
+**Linux/macOS**：需要 root 权限或设置 capabilities：
+
+```bash
+# Linux - 设置 capabilities（推荐）
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet
+
+# macOS - 需要 com.apple.networking.manager entitlement
+sudo /Applications/Sniffnet.app/Contents/MacOS/sniffnet
+```
+
+**Windows**：需要管理员权限运行，或为二进制文件授予"Network Monitor" capability。
+
+### Q: 为什么看不到任何流量？
+
+检查以下事项：
+
+1. **适配器选择**：确保在 UI 中选择了正确的网络适配器（通常是 Wi-Fi 或 Ethernet）
+2. **过滤器设置**：BPF 过滤器可能过于严格，尝试清除过滤器
+3. **权限问题**：确认已正确配置权限（参见上一个问题）
+4. **网络活动**：确保所选适配器上有实际的网络流量
+
+### Q: 如何关联进程和端口（Windows）？
+
+Windows 上 Sniffnet 可以显示哪个进程在使用某个端口。确保：
+
+1. 使用管理员权限运行 Sniffnet
+2. 在设置中启用"进程关联"选项
+3. 等待几分钟让 Sniffnet 建立进程-端口映射
+
+---
+
+## 自测题
+
+检验你对 Sniffnet 架构的理解，回答下面 4 个问题：
+
+1. Sniffnet 为什么选择 Rust + iced 组合？Rust 带来了哪些实际好处？
+2. Sniffnet 的数据流是怎样的？抓包线程和 GUI 线程如何通信？
+3. BPF 过滤器的作用是什么？如何设置只捕获 HTTPS 流量？
+4. 如果要在 Linux 上以非 root 用户运行 Sniffnet，需要配置什么？
+
+3 题以上答不准的话，建议重看"技术选型决策分析"和"性能优化策略"两节。
+
+<details>
+<summary>参考答案</summary>
+
+**题 1**：Rust 带来内存安全、异步并发（tokio）、二进制分发友好。iced 提供声明式 UI、GPU 加速渲染、跨平台适配层。
+
+**题 2**：网络适配器 → pcap 捕获 → networking::parse_packets → async-channel → gui::manage_packets → iced GUI rendering。抓包线程通过 async-channel 将解析后的数据包发送给 GUI 线程，解耦耗时操作和 UI 更新。
+
+**题 3**：BPF 过滤器在内核层过滤数据包，减少用户空间拷贝开销。只捕获 HTTPS 流量：`tcp dst port 443`。
+
+**题 4**：需要设置 capabilities：`sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet`。
+
+</details>
+
+---
+
+## 进阶路径
+
+下面给出学习顺序与每篇为什么放在这个位置的理由：
+
+1. **[Sniffnet GitHub 仓库](https://github.com/GyulyVGC/sniffnet)**（先读）。这是理解项目的起点，重点关注 README、Wiki 中的 Required Dependencies 和 services.txt。先读这个，建立对项目定位的完整认知。
+
+2. **[pcap crate 文档](https://docs.rs/pcap/latest/pcap/)**（第二读）。当你想知道"pcap 如何捕获数据包"、"BPF 过滤器如何工作"时，这个文档是最直接的参考。
+
+3. **[iced 官方教程](https://iced.rs/)**（第三读）。当你想理解"iced 的 State-View-Message 模型"、"如何在 GUI 中嵌入实时图表"时，读这个。注意：Sniffnet 使用的是 iced 0.12+ 版本。
+
+4. **[etherparse crate 文档](https://docs.rs/etherparse/latest/etherparse/)**（第四读，如果你需要自定义协议解析）。当你想理解"如何从原始字节解析 Ethernet II 帧"、"如何识别隧道协议"时，读这个。
+
+5. **[plotters-iced2 文档](https://docs.rs/plotters-iced2/latest/plotters_iced2/)**（最后读，可选）。当你想基于 Sniffnet 做二次开发，或想理解"如何在 iced 中绘制实时图表"时读这个。
 
 ---
 

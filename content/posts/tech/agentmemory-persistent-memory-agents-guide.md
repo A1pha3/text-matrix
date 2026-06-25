@@ -10,9 +10,25 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "MCP", "Claude Code", "Cursor", "agentmemory"]
 ---
 
-> **目标读者**：已经在使用 Claude Code、Cursor、Gemini CLI、Codex CLI 等 AI 编程 Agent，并且切身感受过“每开一个新会话就要重新解释项目”的开发者。
+> **目标读者**：已经在使用 Claude Code、Cursor、Gemini CLI、Codex CLI 等 AI 编程 Agent，并且切身感受过"每开一个新会话就要重新解释项目"的开发者。
 > **核心问题**：agentmemory 到底解决了什么问题？它和 `CLAUDE.md`、`MEMORY.md`、`.cursorrules` 这类静态记忆文件有什么本质区别？
 > **资料范围**：本文以 agentmemory 的 GitHub README、benchmark 目录、集成说明和 iii 相关公开资料为主；凡无法在公开资料中直接证实的说法，本文不沿用。
+
+## 学习目标
+
+读完本文后，你应当能够：
+
+1. 说清 agentmemory 的定位：它解决什么问题，和静态记忆文件（CLAUDE.md、MEMORY.md）的本质区别是什么
+2. 解释 agentmemory 的四层记忆架构：原始捕获、压缩摘要、模式提取、图谱关联
+3. 描述 agentmemory 的三种接入方式（Hooks、MCP、REST API）各自适合什么场景
+4. 完成 agentmemory 的安装，并在 Claude Code 或 Cursor 中接入使用
+5. 根据项目规模和安全要求，判断是否采用 agentmemory 及采用顺序
+
+**自测问题：**
+
+1. agentmemory 的"四层巩固模型"每一层都在做什么？如果只用到第一层（原始捕获），会丢失什么能力？
+2. agentmemory 用 BM25 + Vector + Graph 三种索引，它们各自适合召回什么类型的信息？能不能只用其中一种？
+3. agentmemory 不依赖外部数据库服务，数据存在哪里？这对数据安全有什么影响？
 
 ---
 
@@ -27,7 +43,7 @@ tags: ["AI Agent", "MCP", "Claude Code", "Cursor", "agentmemory"]
 
 ## 1. 它解决的是会话记忆断层
 
-AI 编程 Agent 最大的问题，往往出在记忆上——**每次会话都像第一次接手项目**。上一轮你已经解释过目录结构、鉴权方案、依赖约束、踩过的坑；下一轮它还是要重新理解一遍。随着项目变大，这种重复会带来三个直接成本：
+AI 编程 Agent 最大的问题往往出在记忆上。上一轮解释过的目录结构、鉴权方案、依赖约束，下一轮它还要重新理解。项目变大后，这种重复会带来三个直接成本：
 
 - 上下文要反复重塞，token 消耗持续升高。
 - 关键决策散落在对话里，过几天几乎无法复用。
@@ -67,7 +83,7 @@ flowchart LR
 
 ## 2. agentmemory 到底是什么
 
-按照项目自己的定义，agentmemory 是一个**构建在 iii engine 之上的持久化记忆系统**，面向支持 hooks、MCP 或 REST API 的 AI Agent。它是一台本地运行的记忆服务器，不同 Agent 可以共用同一份记忆层，不是某个特定 Agent 的插件。
+agentmemory 是一个**构建在 iii engine 之上的持久化记忆系统**，面向支持 hooks、MCP 或 REST API 的 AI Agent。它是一台本地运行的记忆服务器，不同 Agent 可以共用同一份记忆层。
 
 截至 2026 年 5 月 10 日，GitHub 页面显示这个项目大约有 3.8k stars。README 首页同时给出了几组最常被引用的数据：
 
@@ -81,7 +97,6 @@ flowchart LR
 这些数字都能在 README 中找到出处，但不能脱离 benchmark 口径和默认配置单独理解。更接近工程现实的判断是：agentmemory 已经把自动采集、混合检索、本地运行和多 Agent 接入打包成了一个成品系统，不是只有 API 的 memory SDK。
 
 项目对外暴露的形态主要有三层：
-
 - 一个完整运行的本地服务，负责 API、viewer、hooks、压缩和回放。
 - 一个可独立接入的 MCP server，适合 Cursor、Claude Desktop、Cline 这类支持 MCP 的客户端。
 - 一组对外集成接口，包括 REST API、resources、prompts 和 skills。

@@ -16,6 +16,20 @@ tags:
 
 GitHub: [tech-leads-club/agent-skills](https://github.com/tech-leads-club/agent-skills)
 
+## 快速信息卡
+
+| 指标 | 数值 |
+|------|--------|
+| GitHub Stars | 4.7k |
+| Forks | 422 |
+| 许可证 | NOASSERTION |
+| 主要语言 | TypeScript |
+| 仓库地址 | [tech-leads-club/agent-skills](https://github.com/tech-leads-club/agent-skills) |
+
+> 数据采集于 2026-06-25。最新数据以仓库首页为准。
+
+---
+
 Agent Skills 把 AI 编码 agent 的技能（Skills）当成供应链依赖来管理。Snyk 2026 Agent Threat Report 的数据是：公开市场里 13.4% 的技能包含关键漏洞。技能市场不前置安全审查，agent 就是在直接执行来历不明的代码。
 
 Agent Skills 把安全审查前置到发布流程——100% 开源、CI 静态分析、lockfile（锁文件）内容哈希、人工 prompt 审核、Snyk Agent Scan（Snyk 智能体扫描），五层全部通过才进 catalog。CLI 安装侧另有纵深防御：输入清理、路径隔离、符号链接防护、原子锁文件、审计日志。截至 2026 年 4 月，仓库到达 skills-catalog-v0.14.3，1,029 次提交，56 个 release，支持 19 个 AI 编码 agent。
@@ -298,6 +312,14 @@ audit.log 是 append-only 的取证日志，没有内置还原机制。如果文
 **锁文件 `.agents/.skill-lock.json` 损坏，CLI 报 schema 验证失败**
 
 这是 Zod schema 验证在起作用。锁文件被外部工具改写或磁盘错误导致字段缺失时，schema 验证会拒绝非法条目并尝试优雅迁移到干净状态。如果自动迁移失败，备份文件 `.skill-lock.json.bak` 里有上一次成功写入的完整内容——手动把 `.bak` 复制回 `.skill-lock.json` 即可恢复。恢复后运行 `npx @tech-leads-club/agent-skills` 列出已安装技能，确认状态一致。
+
+## 进阶路径
+
+- **深入理解安全机制**：直接读仓库里的 `SECURITY.md`，五层发布审查和 CLI 五道关卡的设计 rationale 都在里面。重点关注"威胁模型"表和每道关卡的实现代码指针。
+- **为团队定制**：fork 仓库后修改 `packages/skills-catalog/security-scan-allowlist.yaml`，加入团队内部的误报规则。lockfile 的过期时间（`expiresAt`）建议设短一些（1-3 个月），强制定期重新评估。
+- **贡献新技能**：按 `docs/skill-anatomy.md` 的格式写 `SKILL.md`，提交 PR 后会自动走五层发布审查。想跳过某层检查可以在 PR 里说明，但维护者会逐条 review。
+- **扩展到其他 agent**：CLI 支持 19 个 agent，如果团队用的 agent 不在列表里，可以按 `docs/agent-adapter.md` 的格式写适配器，提交 PR 合并后所有人都能用。
+- **结合 Snyk Agent Scan**：如果团队已有 Snyk 订阅，`npm run scan` 可以接入你们的 CI。扫描结果是增量的，每个技能的 SHA-256 哈希缓存到 `.security-scan-cache.json`，内容没变不重扫。
 
 ## 附录：技能结构
 

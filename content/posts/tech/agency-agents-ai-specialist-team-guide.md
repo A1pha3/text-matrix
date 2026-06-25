@@ -51,12 +51,12 @@ tags: ["AI Agent", "Claude Code", "Cursor", "多工具集成", "AI团队", "Open
 
 这套仓库的实际用法是按团队职能挑几个岗位单独跑或按 pipeline 串联，再通过配置文件替换模型、输出目录和外部凭据。一次装 147 个 Agent 反而是少数场景。把它理解成一组可组合的岗位库比理解成"超大号提示词包"更接近真实用法——后者会让人忽略它里面的工程约束（工作流步骤、交付物格式、退出条件）。
 
-**项目数据**（以下数据来自仓库 [README](https://github.com/msitarzewski/agency-agents#readme) 和 [tags 页面](https://github.com/msitarzewski/agency-agents/tags)，获取时间 2026-05-05）：
+**项目数据**（以下数据来自仓库 [README](https://github.com/msitarzewski/agency-agents#readme)，获取时间 2026-06-24）：
 
-- GitHub Stars：1,000+
-- Agent 总数：147 个（去重后），按部门计数约 172
-- 覆盖领域：12 个部门
-- 支持工具：Claude Code、Cursor、OpenClaw、Windsurf 等主流工具（完整列表见仓库 README）
+- GitHub Stars：21,000+（截至 2026 年 6 月，持续增长中）
+- Agent 总数：200+ 个（按细分场景计数）
+- 覆盖领域：16 个专业领域
+- 支持工具：Claude Code、GitHub Copilot、Cursor、OpenClaw、Windsurf 等主流 AI 编程工具
 - 开源协议：MIT
 
 ---

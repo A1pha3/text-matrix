@@ -8,7 +8,34 @@ categories: ["技术笔记"]
 tags: ["Multica", "AI Agent", "Claude Code", "Codex", "Self-Hosting"]
 ---
 
-如果你已经在用 Claude Code、Codex、OpenClaw 这类编码 Agent，你很快会遇到同一个瓶颈：模型能力在持续上升，但团队协作仍停留在“复制提示词、盯着终端、手动同步进度”的阶段。Multica 解决的是“让 Agent 可以被管理、被协作、被复用、被审计”，不是“让 Agent 会写代码”。
+## 快速信息卡
+
+| 属性 | 值 |
+|------|-----|
+| **GitHub Stars** | 6.4K+ |
+| **GitHub Forks** | 800+ |
+| **主要语言** | TypeScript |
+| **开源协议** | Apache-2.0 |
+| **最新版本** | v0.1.23 |
+| **项目定位** | 开源 Managed Agents 平台 |
+
+---
+
+如果你已经在用 Claude Code、Codex、OpenClaw 这类编码 Agent，你很快会遇到同一个瓶颈：模型能力在持续上升，但团队协作仍停留在"复制提示词、盯着终端、手动同步进度"的阶段。Multica 解决的是"让 Agent 可以被管理、被协作、被复用、被审计"，不是"让 Agent 会写代码"。
+
+如果你已经在用 Claude Code、Codex、OpenClaw 这类编码 Agent，你很快会遇到同一个瓶颈：模型能力在持续上升，但团队协作仍停留在"复制提示词、盯着终端、手动同步进度"的阶段。Multica 解决的是"让 Agent 可以被管理、被协作、被复用、被审计"，不是"让 Agent 会写代码"。
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+- 理解 Multica 的核心定位：它是 Agent 的组织层，不是模型能力增强工具
+- 区分 Runtime 和 Agent 的概念，并知道如何为团队配置多 Runtime 环境
+- 成功部署 Multica 自托管实例，并配置 daemon 领取任务
+- 针对你的场景判断是否需要 Multica（团队协作 + 多 Agent 调度 = 适合）
+- 理解 Workspace、Issue、Skill 的设计意图，并知道如何组织团队的 Agent 工作流
+
+---
 
 最短判断标准只有一句话：Agent 负责执行，Multica 负责组织。
 

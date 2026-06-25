@@ -8,13 +8,26 @@ categories: ["技术笔记"]
 tags: ["Google Flights", "MCP", "Python", "API", "航班"]
 ---
 
+## 学习目标
+
+通过本文，你应该能够：
+
+- 说清 Fli 的核心定位：它不是爬虫，而是直接调用 Google Flights 的 API
+- 完成 Fli 的安装和基本配置，跑通第一个航班搜索
+- 理解 Fli 的 Python API，能写简单的脚本自动化查询航班
+- 配置 MCP Server，让 Claude Desktop 能直接调用 Fli 搜索航班
+- 根据需求选择合适的部署方式（本地 CLI、Docker、Railway）
+- 判断 Fli 是否适合你的场景（合规风险、使用限制）
+
+---
+
 # Fli：Google Flights MCP 服务器与 Python 库完全指南
 
 ## 一、项目概述
 
 ### 1.1 Fli 是什么
 
-**Fli** 是一个强大的 Python 库，提供对 **Google Flights 数据**的程序化访问，同时带有优雅的 CLI 接口。与其他依赖网页爬取的库不同，Fli 通过**逆向工程直接与 Google Flights 的 API 交互**。
+**Fli** 是一个 Python 库，提供对 **Google Flights 数据**的程序化访问，同时带有 CLI 接口。和其他依赖网页爬取的库不同，Fli 通过**逆向工程直接与 Google Flights 的 API 交互**。
 
 ### 1.2 核心数据
 
@@ -29,12 +42,12 @@ tags: ["Google Flights", "MCP", "Python", "API", "航班"]
 
 ### 1.3 核心优势
 
-| 优势 | 说明 |
-|------|------|
-| 🚀 **快速** | 直接 API 访问，更快更可靠 |
-| 🛡️ **零爬取** | 无 HTML 解析，无浏览器自动化 |
-| ✅ **可靠** | 不受 UI 变化影响 |
-| 🔧 **模块化** | 易于定制和集成 |
+Fli 的核心优势在于：
+
+- **快速**：直接 API 访问，比爬虫更快更可靠
+- **零爬取**：无 HTML 解析，无浏览器自动化，不受 UI 变化影响
+- **可靠**：Google Flights 的 API 比网页结构稳定
+- **模块化**：易于定制和集成到现有工作流
 
 ---
 
@@ -575,6 +588,37 @@ try:
 except ValueError as e:
     print(f"验证错误: {e}")
 ```
+
+---
+
+## 自测题
+
+完成阅读后，试着回答以下问题：
+
+1. Fli 的核心优势是什么？它和网页爬虫有什么区别？
+2. Fli 的 MCP Server 有哪两种模式？分别适合什么场景？
+3. `search_flights` 和 `search_dates` 两个 API 的核心区别是什么？各自适合什么场景？
+4. 如果你要做一个"价格监控"功能，你会怎么基于 Fli 实现？
+5. Fli 的自动重试机制有什么用？什么情况下会触发重试？
+6. 如果你要给 Fli 贡献代码，你会从哪个示例开始理解项目？
+7. Fli 的 LICENSE 是什么？如果你要做商业项目，需要注意什么？
+
+---
+
+## 进阶路径
+
+**已经能跑基本搜索，想进一步用好：**
+
+- **自动化价格监控**：基于 `examples/price_tracking.py`，写一个定时任务，每天查询特定航线的价格，价格下降时发通知。
+- **MCP Server 深度集成**：把 Fli 的 MCP Server 接入你的 Claude Desktop，然后用自然语言规划旅行（"帮我找下个月去东京最便宜的航班"）。
+- **多城市行程规划**：结合 `search_flights` 和 `search_dates`，写一个脚本自动找"多城市 open-jaw 机票"的最优组合。
+- **错误处理完善**：基于 `examples/error_handling_with_retries.py`，给你的脚本加上完善的错误处理和日志记录。
+
+**想参与项目本身：**
+
+- 仓库地址：<ADDRESS_REMOVED>
+- 项目使用 Python + `curl_cffi`（用于处理 Cloudflare 防护），如果你熟悉网络请求库或 Google Flights 的 API 格式，可以参与改进。
+- 示例目录有 11 个综合示例，是理解项目最好的起点。
 
 ---
 

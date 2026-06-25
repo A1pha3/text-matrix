@@ -10,6 +10,36 @@ tags: ["AI Avatar", "MuseTalk", "XTTS", "Whisper", "WebSocket"]
 
 # AvatarAI：把照片+5 秒音频变成实时对话数字人，底层那套流式架构才是护城河
 
+> **快速信息卡**
+>
+> | 项目 | 信息 |
+> |------|------|
+> | 仓库 | [PunithVT/ai-avatar-system](https://github.com/PunithVT/ai-avatar-system) |
+> | Stars | 279+ |
+> | Forks | 52+ |
+> | 许可证 | MIT |
+> | 语言 | Python |
+> | 更新 | 2026-06-22 |
+
+## 学习目标
+
+读完这篇文章后，你应该能够：
+
+- 说出 ai-avatar-system 的核心架构：Whisper STT → LLM → XTTS TTS → MuseTalk 唇形同步
+- 解释流式分句推送（sentence-chunk streaming）如何降低首帧延迟
+- 理解持久化 MuseTalk worker 的设计价值（避免每次重载 9GB 模型）
+- 在 Docker Compose 环境中部署 ai-avatar-system 并验证端到端延迟
+- 判断 ai-avatar-system 是否适合你的数字人应用场景
+
+## 目录
+
+- [核心判断](#核心判断)
+- [系统地图](#系统地图)
+- [与同类项目的差异](#与同类项目的差异)
+- [参考资源](#参考资源)
+
+---
+
 ## 核心判断
 
 `ai-avatar-system`（仓库 [PunithVT/ai-avatar-system](https://github.com/PunithVT/ai-avatar-system)，MIT 许可，218 stars）解决的不是"数字人怎么做"——这是被 MuseTalk、XTTS、Wav2Lip、SadTalker 等开源模型反复回答过的问题。它回答的是一个工程整合层面的问题：**怎么把 4 个独立模型（Whisper STT → LLM → XTTS TTS → MuseTalk 唇形同步）拼成"用户感觉像在跟真人说话"的端到端体验？**
@@ -192,3 +222,17 @@ AvatarAI 强在整合度：把 STT + LLM + TTS + 唇形同步 + Web UI 五件事
 - **faster-whisper 仓库**：[github.com/SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper)
 - **AWS g5.xlarge 文档**：[aws.amazon.com/ec2/instance-types/g5](https://aws.amazon.com/ec2/instance-types/g5/)
 - **Ollama 本地 LLM**：[ollama.ai](https://ollama.ai)
+
+## 自测题
+
+在你的环境中部署 ai-avatar-system 后，完成以下检查：
+
+- [ ] **GPU 可用**：`docker exec avatar-backend python -c "import torch; print(torch.cuda.is_available())"` 返回 `True`
+- [ ] **MuseTalk 模型加载**：`ls -lh backend/models/MuseTalk/checkpoints/` 显示模型文件（约 2.1GB）
+- [ ] **WebSocket 联通**：`wscat -c ws://localhost:8000/ws/session/test` 能建立连接
+- [ ] **端到端延迟**：发送测试音频后，首帧视频在 5 秒内到达浏览器
+- [ ] **唇形同步**：生成的视频中嘴角运动与音频同步
+
+全部通过后，你的 ai-avatar-system 部署即处于可用状态。
+
+**性能调优建议**：如果首帧延迟 > 5s，检查 `nvidia-smi` 确认 MuseTalk worker 已加载（显存占用约 9GB）。如果未加载，检查 `AVATAR_ENGINE=musetalk` 环境变量是否设置。

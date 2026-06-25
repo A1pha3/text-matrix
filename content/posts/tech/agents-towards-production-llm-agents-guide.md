@@ -9,7 +9,7 @@ description: "Nir Diamant 的 agents-towards-production 提供 28 个配套 Note
 
 # 开源热点：Agents Towards Production——LLM Agent 开发工程化实践
 
-把 LLM Agent 从原型推到生产，难点在工程链：状态、记忆、工具、安全、观测、部署。任何一环缺失都可能在生产环境暴露问题——没有观测，上线后出问题无法回放；没有安全护栏，工具调用可能越权；没有记忆层，每次对话从零开始。Nir Diamant 的 [agents-towards-production](https://github.com/NirDiamant/agents-towards-production) 做的就是这件事——28 个配套 Notebook，按工程依赖关系排成五层，下层不依赖上层，上层直接复用下层的产物。第一层写好的 Agent 代码，到第四层就是部署目标。
+把 LLM Agent 从原型推到生产，难点在工程链：状态、记忆、工具、安全、观测、部署。任何一环缺失都可能在生产环境暴露问题。Nir Diamant 的 agents-towards-production 做的就是这件事——28 个配套 Notebook，按工程依赖关系排成五层，下层不依赖上层，上层直接复用下层的产物。第一层写好的 Agent 代码，到第四层就是部署目标。
 
 文章先拆仓库的五层架构和一条任务流（带长期记忆的搜索 Agent 从请求到部署的完整链路），再说技术选型逻辑和同类项目差异。读完之后能直接动手的两件事：判断每一层是否适合自己的场景，按依赖关系组合教程。
 

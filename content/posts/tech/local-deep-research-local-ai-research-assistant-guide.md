@@ -8,17 +8,30 @@ categories: ["技术笔记"]
 tags: ["AI", "本地部署", "科研工具", "Ollama", "RAG", "搜索增强", "隐私"]
 ---
 
+## 学习目标
+
+通过本文，你应该能够：
+
+- 说清 LDR 的核心定位与"本地优先"理念具体指什么
+- 在本地机器上完成 Docker Compose 一键部署，并跑通第一个研究任务
+- 根据硬件条件选择合适的 LLM（本地 Ollama vs 云端 API）和搜索源组合
+- 理解 LDR 的三阶段研究流程，并能按需切换研究策略
+- 配置本地加密知识库，实现研究积累的复合增长
+- 识别 LDR 的适用边界，判断它是否适合你的场景
+
+---
+
 # local-deep-research: 本地优先的 AI 科研助手完整指南
 
-在 AI 搜索与科研助手这个赛道上，大多数工具都依赖云端 API——你的查询记录、研究内容、文档数据都会流经第三方服务器。这对关心数据隐私的研究人员和开发者来说，一直是个隐患。
+在 AI 搜索与科研助手这个赛道上，大多数工具都依赖云端 API——查询记录、研究内容、文档数据都会流经第三方服务器。这对关心数据隐私的研究人员和开发者来说，一直是个隐患。
 
-**local-deep-research**（以下简称 LDR）试图解决这个问题。它是一个完全本地运行的 AI 科研助手，支持任意本地或云端大模型、对接 10+ 搜索数据源、用 SQLCipher AES-256 加密每个用户的数据，并在 SimpleQA 基准测试中取得了约 95% 的准确率。本文从项目概览、核心架构、安装配置、支持模型、搜索能力、隐私安全和适用场景出发，提供一份完整的使用指南。
+**local-deep-research**（以下简称 LDR）走的是另一条路：完全本地运行。它支持任意本地或云端大模型、对接 10+ 搜索数据源、用 SQLCipher AES-256 加密每个用户的数据，并在 SimpleQA 基准测试中取得了约 95% 的准确率。本文从项目概览、核心架构、安装配置、支持模型、搜索能力、隐私安全和适用场景出发，提供一份完整的使用指南。
 
 > **信息来源**：本文所有事实均来自 [LearningCircuit/local-deep-research](https://github.com/LearningCircuit/local-deep-research) 仓库的 README、文档和源码。如有信息在仓库中未明确说明，会单独标注。
 
 ## 项目概览
 
-LDR 定位为一个**本地优先的 AI 研究助手**，核心理念是：数据留在本地、模型由你选择、过程完全透明。
+LDR 定位为一个**本地优先的 AI 研究助手**，核心理念很直接：数据留在本地、模型由你选择、过程完全透明。
 
 关键数据一览：
 
@@ -57,7 +70,7 @@ flowchart LR
     S -.-> R
 ```
 
-每次研究过程中发现的优质资源（arXiv 论文、PubMed 文章、网页）可以一键下载到本地加密库，LDR 自动提取文本、建立向量索引，让你的下一次研究可以同时覆盖私有文档和实时网络结果。长期使用下来，研究积累的知识会不断复合增长。
+每次研究过程中发现的优质资源（arXiv 论文、PubMed 文章、网页）可以一键下载到本地加密库，LDR 自动提取文本、建立向量索引，让下一次研究可以同时覆盖私有文档和实时网络结果。用得越久，本地知识库的覆盖越广。
 
 ### 架构总览
 
@@ -183,7 +196,7 @@ LDR 支持接入任意 LangChain 兼容的 Retriever（FAISS、Chroma、Pinecone
 
 ### 爬虫策略
 
-README 特别指出，LDR 遵守 `robots.txt` 并在抓取网页时如实表明身份（User-Agent），不采用任何隐蔽或反检测技术。这意味着某些明确阻止自动化访问的页面可能无法被抓取，但项目认为这是正确的权衡。
+README 特别指出，LDR 遵守 `robots.txt` 并在抓取网页时如实表明身份（User-Agent），不采用任何隐蔽或反检测技术。这意味着某些明确阻止自动化访问的页面可能无法被抓取——项目认为这是正确的权衡，优先避免给站点造成额外负担。
 
 ### 搜索结果验证
 
@@ -201,7 +214,7 @@ README 也明确标注这些是**初步结果**，性能受查询类型、模型
 
 ### 数据加密
 
-每个用户拥有独立的 SQLCipher 数据库，采用 AES-256 加密（Signal 级安全）。README 特别说明：**没有密码恢复机制**，这意味着真正的零知识——即使服务器管理员也无法读取你的数据。
+每个用户拥有独立的 SQLCipher 数据库，采用 AES-256 加密（Signal 级安全）。关键是：没有密码恢复机制。这意味着真正的零知识——即使服务器管理员也无法读取你的数据，但你自己忘了密码也就真的找不回来了。
 
 关于内存中的凭据，项目解释：像所有在运行时需要解密的应用（包括密码管理器、浏览器、API 客户端）一样，凭据在活动会话期间以明文形式保存在进程内存中。这是行业普遍接受的事实，而非 LDR 特有的问题。项目通过会话作用域的凭据生命周期和核心转储排除来缓解这一风险。
 
@@ -215,15 +228,13 @@ cosign verify localdeepresearch/local-deep-research:latest
 
 ### 无遥测、无追踪
 
-README 明确声明：LDR 包含**零遥测、零分析、零追踪**。不收集、不传输、不存储任何关于用户或使用情况的数据。唯一的网络调用来自用户主动操作——搜索查询（到你配置的引擎）、LLM API 调用（到你选择的提供商）和通知（仅在你配置了 Apprise 时）。使用指标存储在你的本地加密数据库中。
+README 明确声明：LDR 不收集、不传输、不存储任何关于用户或使用情况的数据。唯一的网络调用来自你主动的操作——搜索查询（到你配置的引擎）、LLM API 调用（到你选择的提供商）和通知（仅在你配置了 Apprise 时）。使用指标存在你本地的加密数据库里。
 
 ### 安全扫描
 
 仓库维护了非常详细的安全扫描体系，包括 CodeQL、Semgrep、DevSkim、Bearer、Gitleaks、OSV-Scanner、npm-audit、Retire.js、Container Security、Dockle、Hadolint、Checkov、Zizmor、OWASP ZAP 等。扫描抑制项的说明文档包括 [Security Alerts Assessment](https://github.com/LearningCircuit/local-deep-research/blob/main/.github/SECURITY_ALERTS.md)、[Scorecard Compliance](https://github.com/LearningCircuit/local-deep-research/blob/main/.github/SECURITY_SCORECARD.md)、[Container CVE Suppressions](https://github.com/LearningCircuit/local-deep-research/blob/main/.trivyignore) 和 [SAST Rule Rationale](https://github.com/LearningCircuit/local-deep-research/blob/main/bearer.yml)。
 
 ## 高级功能
-
-### MCP Server
 
 LDR 提供了一个 MCP（Model Context Protocol）服务器，允许 Claude Desktop、Claude Code 等 AI 助手通过 STDIO 传输执行深度研究。安装方式：
 
@@ -232,8 +243,6 @@ pip install "local-deep-research[mcp]"
 ```
 
 可用工具包括：`search`（针对特定引擎的原始结果，无 LLM 成本）、`quick_research`、`detailed_research`、`generate_report`、`analyze_documents` 等。注意该 MCP 服务器设计用于本地使用（STDIO 传输），没有内置认证或速率限制，如有网络暴露需求需自行实现安全控制。
-
-### REST API
 
 LDR 提供经过认证的 HTTP API，适合与现有系统集成。API 使用需要 CSRF token 处理，仓库在 `examples/api_usage/http/` 目录中提供了完整的可运行示例，包括自动用户创建、认证处理、结果重试逻辑和进度监控。
 
@@ -301,7 +310,37 @@ print(result["summary"])
 
 ### 与其他工具的对比
 
-README 被 Medium 文章引用时特别提到：LDR 对于注重隐私的用户"值得特别关注"，它针对可以在消费级 GPU 甚至 CPU 上运行的开源 LLM 进行了调优，记者、研究人员或处理敏感话题的公司可以在不经过外部服务器的情况下调查信息。
+README 被 Medium 文章引用时提到：LDR 对注重隐私的用户"值得特别关注"——它针对可以在消费级 GPU 甚至 CPU 上运行的开源 LLM 进行了调优，记者、研究人员或处理敏感话题的公司可以在不经过外部服务器的情况下调查信息。
+
+## 自测题
+
+完成阅读后，试着回答以下问题，检验掌握程度：
+
+1. LDR 的"本地优先"具体指什么？哪些数据会离开本地、哪些不会？
+2. 三阶段研究流程中，哪个阶段决定了最终报告的质量上限？
+3. 为什么项目明确声明遵守 `robots.txt`？这对搜索覆盖率有什么影响？
+4. SQLCipher AES-256 加密"没有密码恢复机制"意味着什么？你在部署前需要做什么准备？
+5. LangGraph Agent Strategy 与传统管道式策略的核心区别是什么？
+6. 如果你只有一台 RTX 3060 (12GB VRAM) 的机器，你会选择哪个本地模型配置？为什么？
+7. 期刊质量评分系统用了哪几个数据源？它们分别解决什么问题？
+
+---
+
+## 进阶路径
+
+**已经完成基础部署，想进一步深挖：**
+
+- **研究策略调优**：尝试对比 `quick_summary`、`detailed_research`、`report_generation` 三种策略在同一查询下的输出质量和耗时差异，找到你场景的最优点。
+- **本地知识库积累**：把一个你正在做的调研项目的参考资料（PDF、网页、论文）全部导入 LDR 本地库，体验"跨私有文档与网络"的混合检索。
+- **MCP Server 集成**：把 LDR 的 MCP Server 接入 Claude Desktop 或 Claude Code，在研究工作流中直接调用深度搜索，而不用来回切换界面。
+- **基准测试贡献**：在你的硬件配置下跑一遍 [Hugging Face 基准测试数据集](https://huggingface.co/datasets/local-deep-research/ldr-benchmarks) 并提交结果，帮助社区建立更完整的模型性能地图。
+
+**想参与项目本身：**
+
+- 仓库的 [CONTRIBUTING.md](https://github.com/LearningCircuit/local-deep-research/blob/main/CONTRIBUTING.md) 包含了完整的开发环境搭建指南。
+- 安全扫描体系（CodeQL、Semgrep、OSV-Scanner 等）是比较好的入门切入点，适合对 DevSecOps 感兴趣的开发者。
+
+---
 
 ## 总结
 

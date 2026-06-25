@@ -10,6 +10,17 @@ tags: ["AI Agent", "Go", "Svelte", "SQLite", "本地优先"]
 
 ## 核心判断
 
+> **快速信息卡**
+>
+> | 项目 | 信息 |
+> |------|------|
+> | 仓库 | [kenn-io/agentsview](https://github.com/kenn-io/agentsview) |
+> | Stars | 3.2k+ |
+> | Forks | 265+ |
+> | 许可证 | MIT |
+> | 语言 | Go / Svelte |
+> | 更新 | 2026-06-25 |
+
 agentsview 解决的是一个被掩盖的小麻烦：**当你在 Claude Code、Codex、Copilot CLI、Gemini CLI、Cursor、Kiro 几个 Agent 之间来回切，本地磁盘上其实堆了一堆 `~/.claude/projects/`、`~/.codex/sessions/`、`~/.copilot/` 这种互不相通的会话目录。**
 
 你没法在一个地方搜索昨天问过 Claude 的某条指令，没法知道这个月在不同 Agent 上各花了多少钱，没法比较「Claude Opus 4 和 GPT-5 在我这个仓库上的实际上下文消耗」。
@@ -20,7 +31,25 @@ kenn-io/agentsview 把这件事做成一个本地优先的 Go 单文件二进制
 
 ---
 
-## 系统地图
+## 学习目标
+
+读完这篇文章后，你应该能够：
+
+- 说出 agentsview 的核心价值：为什么需要在多个 AI Coding Agent 之间统一监控会话和成本
+- 解释 agentsview 的架构：SQLite 主存、PostgreSQL/DuckDB 镜像、只读服务模式
+- 通过 `agentsview serve` 和 `agentsview usage daily` 快速查看 Agent 使用成本和会话统计
+- 配置远程访问（`--public-url`）和团队共享（PostgreSQL 镜像）
+- 判断 agentsview 是否适合你的场景，并制定采用顺序
+
+## 目录
+
+- [系统地图](#系统地图)
+- [三种安装方式](#三种安装方式)
+- [一次完整使用流](#一次完整使用流)
+- [三个值得展开的细节](#三个值得展开的细节)
+- [适用边界与采用决策](#适用边界与采用决策)
+
+---
 
 在动手之前，先把 agentsview 的组件摊开看一眼，省得后面被「它到底有几个后端」绕晕。
 
@@ -196,5 +225,18 @@ agentsview 是一个「让 AI 使用过程更可观察」的工具。**先判断
 2. CLI 跑通 `usage daily` 和 `stats`，看 28 天的 archetype 分布是不是符合你的实际使用习惯
 3. 想要远端访问再上 `--public-url` + `--require-auth`
 4. 团队场景才上 `pg push` / `pg serve`；分析需求再上 `duckdb push` + Quack
+
+## 自测题
+
+在你的环境中完成以下检查，确认 agentsview 正确运行：
+
+- [ ] **安装成功**：运行 `agentsview serve`，确认 Web UI 在 `http://127.0.0.1:8080` 打开且不报错
+- [ ] **Agent 自动发现**：确认 Claude Code、Cursor 等已安装的 Agent 会话目录被自动扫描并索引
+- [ ] **成本统计**：运行 `agentsview usage daily`，确认输出最近 30 天每日成本且数据准确
+- [ ] **模型细分**：运行 `agentsview usage daily --breakdown --agent claude`，确认按模型显示细项
+- [ ] **状态栏格式**：运行 `agentsview usage statusline`，确认输出简洁格式（如 "Today $4.23 / Month $87.12"）
+- [ ] **统计档案**：运行 `agentsview stats --since 2026-06-01`，确认输出 archetype 分布
+
+全部通过后，你的 agentsview 部署即处于可用状态。
 
 完整文档在 [agentsview.io](https://agentsview.io)（README 反复强调的「Full docs」），仓库 license 是 MIT。安装脚本和 docker image 都在 `ghcr.io/kenn-io/agentsview`。

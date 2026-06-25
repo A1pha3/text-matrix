@@ -25,6 +25,20 @@ tags: ["Python", "LLM", "MCP", "Agent", "OpenAI"]
 
 README 第一屏就是 OpenCoworker 的下载链接，这透露出仓库的发布形态：`pip install aisuite` 拿到库，下载 dmg/exe 拿到参考实现，二者共用一套核心抽象。Andrew Ng 把自己的名字放进仓库名，意味着这个项目是他本人搭 Agent 的工作台，顺便开源给社区用。
 
+---
+
+## 学习目标
+
+通过本文，你会了解：
+
+1. aisuite 的两层抽象（Chat Completions API + Agents API）分别解决什么问题
+2. Toolkits、MCP、Tool Policies、State Stores 四块拼图如何协同
+3. 和 LiteLLM、OpenAI Agents SDK、LangChain 的差异化取舍
+4. 什么场景该选 aisuite，什么场景该用别的方案
+5. 如何快速上手并评估 aisuite 是否适合你的项目
+
+---
+
 ## 二、与 LiteLLM 的分叉点
 
 LiteLLM 的卖点是"一行切换 provider"。aisuite 表面上看起来一样（`model="openai:gpt-4o"` / `model="anthropic:claude-3-5-sonnet-20240620"`），但读完整套设计后会发现重心完全不同：
@@ -323,3 +337,57 @@ aisuite 的差异化集中在工具相关抽象（Toolkits / MCP / Policies / St
 - **企业级合规要求 RBAC、租户隔离、审计签名**——aisuite 是 MIT 开源库，这些能力需要团队自行包装。
 
 如果"换一个 provider 改一处代码"和"工具调用循环每次自己写"是当前项目的痛点，aisuite 值得花半天评估。库本身写得不重，但每一层抽象都对齐了实际工程痛点：tool calling 循环、工具审批、状态持久化、MCP 集成——这些是从 demo 走向 production 时绕不开的环节。
+
+---
+
+## 常见问题
+
+**Q: aisuite 和 LiteLLM 能一起用吗？**
+A: 可以。aisuite 负责统一接口和 Agent harness，LiteLLM 负责 provider 路由。如果你已经用 LiteLLM 且只需要路由，不必换；如果需要 Agent 能力，可以迁移到 aisuite。
+
+**Q: OpenAI Agents SDK 和 aisuite 该选哪个？**
+A: 如果用 OpenAI 且不需要跨 provider，选 OpenAI Agents SDK（官方生态迭代快）；如果需要跨 provider + 统一工具调用抽象，选 aisuite。
+
+**Q: State Store 用 Postgres 是不是太重了？**
+A: 对于生产级 Agent，State Store 需要事务保证和并发控制，Postgres 是合适选择；开发测试阶段用 `file` 或 `in-memory` 即可。
+
+**Q: Tool Policy 会影响 Agent 的自主性和灵活性吗？**
+A: 会。Tool Policy 的本质是在"让 Agent 自主决策"和"防止 Agent 做危险操作"之间做权衡。建议先设 `RequireApprovalPolicy` 只拦危险工具，后续根据运行数据调整策略。
+
+**Q: MCP 服务器启动失败怎么排查？**
+A: 先确认命令和参数正确（`npx -y @modelcontextprotocol/server-filesystem /path` 能在本机跑通），再检查框架的 MCPClient 日志。如果是网络隔离环境，需要提前把 MCP server 的 npm 包缓存到本地。
+
+---
+
+## 故障排查
+
+### 安装阶段
+
+- **`pip install aisuite` 后导入失败**：确认 Python 版本 ≥ 3.10。`import aisuite` 报错时，先执行 `python --version` 确认版本。
+- **安装 `[all]` 依赖冲突**：`pip install 'aisuite[all]'` 可能和现有环境的包版本冲突。建议先创建虚拟环境，或按需安装单个 provider extra。
+
+### Provider 接入阶段
+
+- **API Key 配置后仍报错**：检查环境变量是否设置正确。可以在 Python 里先 `import os; print(os.environ.get("OPENAI_API_KEY"))` 确认键值已读取。
+- **本地 Ollama 连接失败**：确认 Ollama 已启动并监听默认端口（11434）。用 `curl http://localhost:11434/api/tags` 测试连接。
+
+### Agent 运行阶段
+
+- **`max_turns` 上限触发，Agent 未完成任务**：调大 `max_turns` 或改用手动单轮调用模式逐步调试。可以在 `Runner.run` 时打印 `result.messages` 查看中间步骤。
+- **Tool Policy 拦截了不该拦截的工具**：检查 policy 函数逻辑。`RequireApprovalPolicy(tools=["shell.run"])` 只拦 `shell.run`，不影响其他工具。
+
+---
+
+## 自测清单
+
+在关闭本文前，检查你是否已经能回答下面这些问题：
+
+1. **aisuite 的两层抽象分别是什么？各解决什么问题？** 下层 Chat Completions API（统一多 provider 接口 + tool calling 循环）；上层 Agents API（Agent 定义 + Runner 执行器 + 工具集 + 审批策略 + 状态持久化）
+2. **`model` 参数的 `provider:model` 格式有什么好处？** 一个字符串同时携带 provider 信息和模型名，路由器解析后直接分发，调用方不需要为每个 provider 实例化不同的 client
+3. **`max_turns` 的作用是什么？为什么需要它？** 控制 tool calling 循环上限，防止模型反复调用工具却不收敛导致死循环或超成本
+4. **Toolkits 预制了哪三类工具？为什么是这三类？** files（文件读写）、git（仓库操作）、shell（命令执行）——绝大多数开发类 Agent 的工具需求都落在这三类里
+5. **Tool Policy 的两种形式分别怎么用？** 白名单审批（`RequireApprovalPolicy(tools=[...])` 列出需要人工确认的工具；callable（传入自定义函数）实现细粒度规则
+6. **State Store 的三种 backend 分别适合什么场景？** `in-memory`（默认，进程结束即丢失）；`file`（单机开发测试）；`postgres`（生产级持久化，支持多进程共享和断点续跑）
+7. **aisuite 和同类方案相比，差异化集中在哪几块？** 工具相关抽象（Toolkits / MCP / Policies / State Stores）
+
+如果以上 7 项你都能确认，说明你已经抓住了 aisuite 的核心设计要点。

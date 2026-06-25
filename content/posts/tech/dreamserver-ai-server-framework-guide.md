@@ -8,13 +8,48 @@ categories: ["技术笔记"]
 tags: ["AI", "开源", "本地部署", "llama.cpp", "RAG", "Docker", "自托管"]
 ---
 
-## 什么是 DreamServer
+## 快速信息卡
+
+| 项目 | 信息 |
+|------|------|
+| 仓库 | [Light-Heart-Labs/DreamServer](https://github.com/Light-Heart-Labs/DreamServer) |
+| Stars | 2,171+ |
+| Forks | 344+ |
+| License | Apache 2.0 |
+| 语言 | Shell |
+| 平台 | Linux (NVIDIA/AMD/Intel Arc)、Windows (NVIDIA/AMD)、macOS (Apple Silicon) |
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. **理解 DreamServer 的定位**：知道它和 Ollama、LocalAI 的核心差异
+2. **判断硬件适配性**：根据 GPU 显存或统一内存大小，预判可运行的模型分级
+3. **完成基础安装**：在 Linux/macOS/Windows 上执行一键安装并验证
+4. **管理模型与服务**：使用 `dream` CLI 切换模型、启停服务、切换本地/云端模式
+5. **扩展与定制**：理解扩展机制，能够添加自定义服务或接入新能力
+
+## 目录
+
+1. [什么是 DreamServer](#什么是-dreamserver)
+2. [为什么需要它](#为什么需要它)
+3. [核心架构](#核心架构)
+4. [硬件自动检测与分级](#硬件自动检测与分级)
+5. [安装流程](#安装流程)
+6. [模型切换](#模型切换)
+7. [dream-cli 用法](#dream-cli-用法)
+8. [扩展机制](#扩展机制)
+9. [与同类方案的对比](#与同类方案的对比)
+10. [局限性与适用场景](#局限性与适用场景)
+11. [常见问题与故障排查](#常见问题与故障排查)
+12. [自测题](#自测题)
+13. [进阶路径](#进阶路径)
 
 DreamServer 是 Light Heart Labs 出品的开源项目，目标只有一个：**让任何人在自己的硬件上跑起一套完整的本地 AI 栈，不需要云端，不需要订阅**。
 
 这套栈包含：LLM 推理引擎、网页聊天界面、语音识别与合成、Agent 框架、工作流自动化、RAG 知识库检索、图像生成，以及一整套隐私保护与监控工具。项目自称"主权 AI 基础设施"，核心理念是 AI 不该被几家大公司垄断，普通人应该能在自己机器上运行。
 
-截至 2026 年 5 月，GitHub 获得约 950 颗星、192 个 Fork，主分支保持活跃更新，支持 Linux（NVIDIA + AMD + Intel Arc）、Windows（NVIDIA + AMD）、macOS（Apple Silicon）三个平台。
+截至 2026 年 6 月，GitHub 获得约 2,171 颗星、344 个 Fork，主分支保持活跃更新，支持 Linux（NVIDIA + AMD + Intel Arc）、Windows（NVIDIA + AMD）、macOS（Apple Silicon）三个平台。
 
 ## 为什么需要它
 
@@ -228,6 +263,99 @@ DreamServer 适合以下场景：
 - **完全没有 GPU**：可以用 CPU 模式跑 Tier 0（2B 模型），但体验远不如 GPU 加速版本
 - **需要最高性能**：同等的云端算力（如 H100 集群）远超过任何单机的本地推理性能；DreamServer 的价值在数据主权而非性能极限
 - **仅需要简单聊天**：Ollama 单体安装更轻量，DreamServer 的全部功能需要一定的学习成本
+
+## 常见问题与故障排查
+
+### 安装器报错「GPU 未检测到」
+
+先确认显卡驱动是否正常：
+
+```bash
+# NVIDIA
+nvidia-smi
+
+# AMD (Linux)
+/opt/rocm/bin/rocminfo
+
+# Apple Silicon
+system_profiler SPDisplaysDataType
+```
+
+驱动正常但安装器仍报错，手动指定分级：
+
+```bash
+./install.sh --tier 2
+```
+
+### 服务启动后 `http://localhost:3000` 无法访问
+
+先检查服务状态：
+
+```bash
+dream status
+```
+
+常见原因：
+
+1. 端口被占用 — 修改 `.env` 中的 `OWEBUI_PORT`
+2. Docker 未启动 — Linux 上确认 `systemctl status docker`，macOS/Windows 确认 Docker Desktop 在运行
+3. 防火墙拦截 — 本地访问一般不受影响，远程访问需放行对应端口
+
+### 模型切换失败自动回滚
+
+这是内置安全机制。切换失败通常因为：
+
+- 目标模型尚未下载 → 先运行 `./scripts/pre-download.sh --tier <N>`
+- 显存不足 → 选更低的分级，或关闭其他占用 GPU 的服务
+- 磁盘空间不足 → 模型文件较大，Tier 3+ 需要 20GB+ 空闲空间
+
+### ComfyUI 无法生成图像
+
+ComfyUI 依赖 GPU 加速。如果运行在 CPU 模式，生成速度会极慢甚至超时。确认 `.env` 中 `COMFYUI_GPU` 已设为 `true`，且 Docker 有权限访问 GPU。
+
+## 自测题
+
+1. **DreamServer 和 Ollama 的核心差异是什么？**
+   - 答案：Ollama 只提供 LLM 推理，DreamServer 是一套完整 AI 栈（推理 + 聊天 + 语音 + Agent + 工作流 + RAG + 图像）
+
+2. **你的机器是 RTX 4060（8GB 显存），安装器会默认选择哪个模型分级？**
+   - 答案：Tier 1，对应 Qwen3.5 9B (Q4_K_M)，上下文长度 16K
+
+3. **`dream mode hybrid` 是什么意思？**
+   - 答案：本地推理优先，云端 API 兜底。本地服务异常时自动切换到 LiteLLM 配置的云端模型
+
+4. **如何在不重新部署的情况下修改服务配置？**
+   - 答案：修改 `.env` 文件，然后运行 `dream restart` 重启相关服务
+
+5. **扩展一个自定义服务需要哪些文件？**
+   - 答案：`manifest.yaml`（元数据）和 `compose.yaml`（Docker Compose 片段），放在 `extensions/services/<your-service>/` 目录
+
+## 进阶路径
+
+### 阶段 1：熟练使用现有栈
+
+- 掌握 `dream` CLI 的全部子命令
+- 理解各服务的端口分配和依赖关系
+- 配置适合自己硬件的模型分级
+
+### 阶段 2：定制和扩展
+
+- 编写自定义扩展（参考 `docs/EXTENSIONS.md`）
+- 替换默认模型为您偏好的模型（修改 `.env` 中的 `GGUF_FILE` 和 `LLM_MODEL`）
+- 接入自定义 Embedding 模型（替换 TEI Embeddings 配置）
+
+### 阶段 3：生产化部署
+
+- 配置 HTTPS（反向代理 + Let's Encrypt）
+- 设置用户认证和权限（Open WebUI 的 RBAC）
+- 监控资源使用（Token Spy + Langfuse）
+- 配置自动备份（Qdrant 快照 + 向量数据持久化）
+
+### 阶段 4：贡献和社区
+
+- 提交扩展 manifest 给上游
+- 在 Discord 社区分享您的配置预设
+- 参与硬件兼容性测试（尤其是新 GPU 和新平台）
 
 ## 总结
 

@@ -13,6 +13,51 @@ hiddenFromHomePage: true
 
 ---
 
+## 学习目标
+
+通过本文，你将掌握以下核心能力：
+
+- 理解 oMLX 的项目定位和设计目标（Apple Silicon 原生 + vLLM 级别的企业特性）
+- 掌握 oMLX 的三大核心机制：连续批处理、热冷 KV 缓存、Claude Code 优化
+- 学会安装和配置 oMLX（macOS App、Homebrew、源码三种方式）
+- 掌握 oMLX 的管理面板功能（模型管理、实时监控、Benchmark 工具）
+- 了解 oMLX 与同类工具（Ollama、llama.cpp、mlx-lm、vLLM）的差异
+- 知道 oMLX 的适用场景与边界
+
+---
+
+## 目录
+
+- [一句话定位](#一句话定位)
+- [解决什么问题](#解决什么问题)
+  - [连续批处理](#连续批处理)
+  - [热冷 KV 缓存](#热冷-kv-缓存)
+  - [Claude Code 优化](#claude-code-优化)
+- [核心功能](#核心功能)
+  - [支持的模型类型](#支持的模型类型)
+  - [多模型同时服务](#多模型同时服务)
+  - [管理面板](#管理面板)
+- [安装方式](#安装方式)
+  - [macOS App（推荐）](#macos-app推荐)
+  - [Homebrew](#homebrew)
+  - [从源码](#从源码)
+- [快速开始](#快速开始)
+  - [macOS App](#macos-app)
+  - [CLI](#cli)
+  - [与 Claude Code 集成](#与-claude-code-集成)
+- [技术架构](#技术架构)
+  - [核心技术栈](#核心技术栈)
+  - [KV Cache 实现细节](#kv-cache-实现细节)
+  - [内存管理](#内存管理)
+- [与同类工具的比较](#与同类工具的比较)
+- [适用场景](#适用场景)
+- [常见问题与故障排查](#常见问题与故障排查)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [总结](#总结)
+
+---
+
 ## 一句话定位
 
 [oMLX](https://github.com/jundot/omlx) 是一个专为 Apple Silicon 优化的 LLM 推理服务器，核心卖点：
@@ -21,7 +66,7 @@ hiddenFromHomePage: true
 - **热冷 KV 缓存**：RAM 常驻 + SSD 分级缓存，上下文跨请求复用
 - **菜单栏管理**：零配置开机自启，一个图标管全部
 
-当前 GitHub ⭐ **13.5k**，Python 实现，macOS 专属，Apache 2.0 许可证。
+当前 GitHub ⭐ **17k**，Python 实现，macOS 专属，Apache 2.0 许可证。
 
 ---
 
@@ -235,6 +280,196 @@ oMLX 的定位是"Apple Silicon 原生 + vLLM 级别的企业特性"。
 - Linux 或非 Apple 硬件（专为 macOS 设计）
 - 追求极致单请求性能的独立部署（llama.cpp 更快）
 - 需要 Windows 支持的场景
+
+---
+
+## 常见问题与故障排查
+
+### 问题1：模型加载失败
+
+**现象**：启动 oMLX 后，模型无法加载，日志显示内存不足。
+
+**原因**：Apple Silicon 的内存有限，大型模型（如 70B 参数）需要过多内存。
+
+**解决方案**：
+1. 使用量化模型（如 4-bit 或 8-bit 量化）
+2. 设置模型 TTL，超时自动卸载：`omlx serve --model-ttl 300`（5 分钟）
+3. 手动固定常用模型，卸载不常用模型（通过管理面板）
+4. 增加系统内存限制：`omlx serve --max-memory 48GB`
+
+### 问题2：KV Cache 未命中
+
+**现象**：多轮对话时，响应速度没有提升，看起来 KV cache 没有生效。
+
+**原因**：可能的原因包括：
+1. 对话的 prefix 发生变化（如系统提示词变化）
+2. Cold tier（SSD）的 cache 被清理
+3. 不同请求使用了不同的采样参数（temperature、top_p 等）
+
+**解决方案**：
+1. 保持系统提示词一致
+2. 增加 hot tier 的内存限制
+3. 检查管理面板中的 KV cache 命中率统计
+4. 对于关键对话，使用模型固定（Pin）功能
+
+### 问题3：Claude Code 集成失败
+
+**现象**：配置 Claude Code 后，无法连接到 oMLX。
+
+**原因**：可能的原因包括：
+1. oMLX 服务未启动
+2. 端口被占用
+3. 环境变量设置错误
+
+**解决方案**：
+1. 检查 oMLX 服务是否运行：`curl http://localhost:8000/v1/models`
+2. 检查端口占用：`lsof -i :8000`
+3. 确认环境变量设置正确：
+   ```bash
+   export OPENAI_BASE_URL=http://localhost:8000/v1
+   export OPENAI_API_KEY=any
+   ```
+4. 使用管理面板的一键配置功能（/admin/integrations）
+
+### 问题4：性能不如预期
+
+**现象**：oMLX 的推理速度比预期慢。
+
+**原因**：可能的原因包括：
+1. 未启用连续批处理
+2. KV cache 未命中
+3. 模型未完全加载到内存（部分在 SSD）
+4. 系统内存不足，触发 swap
+
+**解决方案**：
+1. 检查管理面板中的并发请求数，确保连续批处理已启用
+2. 查看 KV cache 命中率
+3. 使用活动监视器（Activity Monitor）检查内存使用情况
+4. 运行 Benchmark 工具（/admin/benchmark）找出瓶颈
+
+---
+
+## 自测题
+
+### 题目1：连续批处理
+
+**问题**：解释 oMLX 的连续批处理（Continuous Batching）是什么，它如何解决传统批处理的效率问题？
+
+<details>
+<summary>参考答案</summary>
+
+**传统批处理的问题**：
+- 传统推理服务器按顺序处理请求（一个完成后才处理下一个）
+- 或者固定批处理（等待批满才处理，造成延迟）
+
+**连续批处理的解决方案**：
+- 允许不同请求共享 GPU 计算周期
+- 当一个请求的生成本完成时，立即用新请求填充计算槽位
+- 显著提高并发吞吐量，减少等待时间
+
+oMLX 基于 mlx-lm 的 BatchGenerator 实现连续批处理，可配置最大并发数。
+</details>
+
+### 题目2：热冷 KV 缓存
+
+**问题**：oMLX 的热冷 KV 缓存是如何工作的？它解决了什么问题？
+
+<details>
+<summary>参考答案</summary>
+
+**工作原理**：
+1. **Hot Tier（RAM）**：常用模型的 KV cache 常驻内存，访问零延迟
+2. **Cold Tier（SSD）**：当 hot 满了，block 被压缩写入 SSD（safetensors 格式）
+3. 下次请求用到这段 prefix 时，从 SSD 恢复并复制到 RAM
+4. 服务重启后，cache 依然有效（持久化）
+
+**解决的问题**：
+1. **上下文复用**：同一个对话的上下文只需计算一次
+2. **跨请求复用**：多轮对话中，前面的计算结果不丢失
+3. **内存效率**：RAM 只保留常用 cache，不常用 cache 存放在 SSD
+4. **持久化**：服务重启不丢失 cache
+</details>
+
+### 题目3：Claude Code 优化
+
+**问题**：oMLX 针对 Claude Code 做了哪些特殊优化？
+
+<details>
+<summary>参考答案</summary>
+
+oMLX 针对 Claude Code 的优化：
+1. **上下文缩放**：缩放报告的 token 数量，使 auto-compact 在正确时机触发
+2. **SSE keep-alive**：防止长 prefill 期间的读取超时
+3. **模型管理**：一键配置 Claude Code 集成（/admin/integrations）
+4. **KV cache 持久化**：Claude Code 长时间使用时，cache 不丢失
+
+这些优化使 oMLX 成为 Claude Code 的理想本地模型后端。
+</details>
+
+### 题目4：与 vLLM 的比较
+
+**问题**：oMLX 和 vLLM 有哪些相似之处和不同之处？
+
+<details>
+<summary>参考答案</summary>
+
+**相似之处**：
+1. 都支持连续批处理
+2. 都实现了分级 KV 缓存（vLLM 的 PagedAttention，oMLX 的热冷分级）
+3. 都针对高并发场景优化
+
+**不同之处**：
+1. **平台**：vLLM 针对 Linux/GPU，oMLX 针对 macOS/Apple Silicon
+2. **依赖**：vLLM 依赖 CUDA，oMLX 依赖 MLX（Apple 的框架）
+3. **管理界面**：oMLX 有内置的菜单栏+Web 管理面板，vLLM 需要第三方工具
+4. **Claude Code 优化**：oMLX 专门针对 Claude Code 做了优化，vLLM 没有
+5. **目标用户**：vLLM 面向数据中心部署，oMLX 面向个人/小团队使用
+</details>
+
+### 题目5：适用场景判断
+
+**问题**：以下哪些场景适合使用 oMLX？哪些不适合？为什么？
+1. 在 M3 MacBook Pro 上本地跑 Llama 3 70B
+2. 在 Linux 服务器上部署 LLM 服务给 100 个用户使用
+3. 使用 Claude Code 进行 AI 辅助编程，需要本地模型作为 fallback
+4. 在 Windows PC 上跑 LLM
+
+<details>
+<summary>参考答案</summary>
+
+1. **适合**：M3 MacBook Pro 是 Apple Silicon，oMLX 原生支持；本地跑 LLM 是 oMLX 的主要场景
+2. **不适合**：oMLX 专为 macOS/Apple Silicon 设计，不支持 Linux；应使用 vLLM
+3. **适合**：oMLX 专门针对 Claude Code 做了优化，KV cache 持久化和上下文缩放都是为这个场景设计的
+4. **不适合**：oMLX 不支持 Windows；应使用 Ollama 或 llama.cpp
+</details>
+
+---
+
+## 进阶路径
+
+### 阶段1：熟练使用 oMLX
+
+- 掌握所有 CLI 参数（模型目录、内存限制、并发数等）
+- 学会使用管理面板的所有功能（模型管理、实时监控、Benchmark）
+- 配置多模型同时服务，理解 LRU 驱逐和模型固定
+
+### 阶段2：深入理解推理优化
+
+- 学习 LLM 推理优化的核心技术（连续批处理、KV 缓存、量化、 speculative decoding）
+- 理解 Apple Silicon 的架构特性（Unified Memory、Neural Engine）
+- 探索 MLX 框架的原理和实现
+
+### 阶段3：自定义 oMLX
+
+- 阅读 oMLX 源码，理解其架构和实现细节
+- 为 oMLX 添加新的模型类型支持
+- 自定义 KV 缓存策略（当前是 LRU，可以尝试其他策略）
+
+### 阶段4：构建基于 oMLX 的应用
+
+- 将 oMLX 集成到自己的 AI 工具链中
+- 构建多模型负载均衡系统（结合 oMLX 和其他推理服务器）
+- 探索 LLM 推理服务的生产部署最佳实践
 
 ---
 

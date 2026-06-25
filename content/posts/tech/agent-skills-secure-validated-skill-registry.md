@@ -9,9 +9,20 @@ tags: ["AI智能体", "技能注册表", "TypeScript", "Claude Code", "Cursor", 
 
 # agent-skills：面向专业 AI 编码智能体的安全技能注册表
 
+> **快速信息卡**
+>
+> | 项目 | 信息 |
+> |------|------|
+> | 仓库 | [tech-leads-club/agent-skills](https://github.com/tech-leads-club/agent-skills) |
+> | Stars | 4.7k+ |
+> | Forks | 422+ |
+> | 许可证 | MIT（代码）/ CC-BY-4.0（技能内容） |
+> | 语言 | TypeScript |
+> | 更新 | 2026-06-25 |
+
 Snyk 2026 Agent Threat Report 给出一个数字：公开市场里 13.4% 的 AI 编码智能体技能包含关键级漏洞。换算下来，每安装 7 到 8 个技能就有一个可能携带可利用缺陷。AI 技能会以系统指令形式进入智能体的执行上下文，缺陷一旦被利用，影响范围比普通依赖更靠前。
 
-[agent-skills](https://github.com/tech-leads-club/agent-skills) 由 Tech Leads Club 维护，把 AI 编码智能体（AI coding agent）的技能当成供应链依赖来管理。项目用 CI/CD 流水线、人工策展和 CLI 纵深防御，在技能从发布到安装的每一步留下可复查的痕迹。截至 2026 年 4 月，仓库到达 skills-catalog-v0.14.3，1,029 次提交，56 个 release，支持 19 个 AI 编码智能体。核心技术栈：Nx Cloud 多包管理、代码全部用 TypeScript 编写、MIT/CC-BY-4.0 双许可证。
+[agent-skills](https://github.com/tech-leads-club/agent-skills) 由 Tech Leads Club 维护，把 AI 编码智能体（AI coding agent）的技能当成供应链依赖来管理。项目用 CI/CD 流水线、人工策展和 CLI 纵深防御，在技能从发布到安装的每一步留下可复查的痕迹。核心技术栈：Nx Cloud 多包管理、代码全部用 TypeScript 编写、MIT/CC-BY-4.0 双许可证。截至 2026 年 6 月，项目仍在活跃维护，已支持 19 个 AI 编码智能体。
 
 下面分两层看：catalog 侧的发布审查机制怎么挡住恶意技能，CLI 侧的安装路径怎么挡住路径穿越和供应链篡改。
 
@@ -32,6 +43,24 @@ Snyk 2026 Agent Threat Report 给出一个数字：公开市场里 13.4% 的 AI 
 - **AI 编码智能体**：能在 IDE 或终端里自主读写代码、执行命令的智能体，如 Claude Code、Cursor、Cline 等
 - **供应链安全**：第三方依赖被植入恶意代码或静默更新带来的风险，以及 lockfile、内容哈希等应对手段
 - **TypeScript 基础**：能看懂 `async/await`、`Promise`、模板字符串等语法，理解 `resolve()`、`normalize()` 等 Node.js path 模块函数的作用
+
+## 目录
+
+- [安全技能注册表的工作流](#安全技能注册表的工作流)
+- [技能包的结构约定](#技能包的结构约定)
+- [CLI 纵深防御的五道关卡](#cli-纵深防御的五道关卡)
+  - [L1 — 输入清理](#l1--输入清理input-sanitization)
+  - [L2 — 路径隔离](#l2--路径隔离filesystem-isolation)
+  - [L3 — 符号链接防护](#l3--符号链接防护symlink-guard)
+  - [L4 — 原子锁文件](#l4--原子锁文件lockfile-integrity)
+  - [L5 — 审计日志](#l5--审计日志audit-trail)
+- [支持的智能体平台](#支持的智能体平台)
+- [精选技能一览](#精选技能一览)
+- [任务流案例：从发现到审计的完整路径](#任务流案例从发现到审计的完整路径)
+- [MCP 服务器：让 AI 自己发现技能](#mcp-服务器让-ai-自己发现技能)
+- [FAQ](#faq)
+- [自检测试](#自检测试)
+- [采用建议与适用边界](#采用建议与适用边界)
 
 ## 安全技能注册表的工作流
 

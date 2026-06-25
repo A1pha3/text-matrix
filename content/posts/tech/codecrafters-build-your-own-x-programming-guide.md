@@ -11,17 +11,34 @@ categories: ["技术笔记"]
 tags: ["编程学习", "系统架构", "开源教育", "底层原理", "Codecrafters"]
 ---
 
-## 阅读导航
+## 学习目标
 
-- 快速了解项目：`§1 项目概述`
-- 实践路径：`§3 技术分类体系`
-- 开始学习：`§5 如何高效使用本仓库`
+读完本文后，你应能：
+
+- 说清 Codecrafters build-your-own-x 的项目定位和学习方式，判断它是否适合你的技术阶段
+- 对照 8 大技术领域（Dev Tools、Networking、Databases、Gaming、Languages、Infrastructure、Frontend、Crypto）的项目列表，选出最适合你当前水平的 2-3 个项目
+- 按照「阅读需求 → 逐层实现 → 测试验证 → 对比官方实现」的完整流程，独立完成一个 build-your-own 项目
+- 针对自己团队的技术栈，设计出基于 build-your-own-x 的内部培训路径
+
+## 目录
+
+- [学习目标](#学习目标)
+- [§1 项目概述](#§1-项目概述)
+- [§2 技术分类体系](#§2-技术分类体系)
+- [§3 重点架构分析](#§3-重点架构分析)
+- [§4 学习路径建议](#§4-学习路径建议)
+- [§5 如何高效使用本仓库](#§5-如何高效使用本仓库)
+- [§6 实践案例](#§6-实践案例)
+- [§7 总结与延伸](#§7-总结与延伸)
+- [自测题](#自测题)
+- [常见问题](#常见问题)
+- [进阶路径](#进阶路径)
 
 ## §1 项目概述
 
 ### 1.1 基本信息
 
-[codecrafters-io/build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) 是一个开源教育仓库，于 2018 年创建，至今已积累 **494,944 Stars**、**46,884 Forks**，是 GitHub 上最受欢迎的编程学习项目之一。项目首页为 [codecrafters.io](https://codecrafters.io)。
+[codecrafters-io/build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) 是一个开源教育仓库，于 2018 年创建，至今已积累 **519k+ Stars**、**49.1k+ Forks**，是 GitHub 上最受欢迎的编程学习项目之一。项目首页为 [codecrafters.io](https://codecrafters.io)。
 
 **项目定位**：通过「从零重构你最喜欢的技术」，真正理解其内部工作原理。
 
@@ -660,4 +677,89 @@ def select_piece_to_download(self, available_pieces, peer_pieces):
 
 ---
 
-*本文基于 GitHub 仓库 `codecrafters-io/build-your-own-x`（494,944 Stars，MIT License）编写。*
+## 自测题
+
+检验理解程度，可以回答下面 5 个问题：
+
+1. Build your own Git 项目中，`blob`、`tree`、`commit` 三种对象的关系是什么？为什么 Git 能高效处理分支？
+2. Build your own Redis 项目中，SDS 相比普通字符串有什么优势？跳表（skip list）在 Redis 有序集合中的作用是什么？
+3. Build your own Docker 项目中，`namespace` 和 `cgroup` 各自实现什么隔离？容器和虚拟机的根本区别是什么？
+4. Build your own BitTorrent 项目中，Rarest First 策略为什么能有效提升下载速度？B 编码（Bencode）的四种数据类型是什么？
+5. 如果你要为自己的团队设计 build-your-own 培训路径，你会按什么顺序选哪 3 个项目？理由是什么？
+
+3 题以上答不稳的话，建议重看「§3 重点架构分析」和「§4 学习路径建议」两节。
+
+<details>
+<summary>参考答案</summary>
+
+**题 1**：`blob` 存文件内容（按内容 SHA-1 寻址），`tree` 存目录结构（指向 blob 或其他 tree），`commit` 存提交信息（指向一个 tree、父提交、作者信息）。三者构成 DAG——分支只是指向某个 commit 的指针（41 字节文件），所以创建/切换分支是 O(1)。
+
+**题 2**：SDS（Simple Dynamic String）支持预分配和惰性释放，减少内存分配次数；支持二进制安全（不依赖 \0 终止），可以存任意数据。跳表是有序集合（Sorted Set）的底层实现，插入/删除/查找都是 O(log n)，且范围查询比平衡树简单。
+
+**题 3**：`namespace` 提供进程隔离（PID、Mount、Network、UTS、IPC、User 六种），让进程"看到"不同的系统视图；`cgroup` 提供资源限制（CPU、内存、磁盘 I/O、网络带宽），控制进程能用多少资源。根本区别：虚拟机有完整 Guest OS，通过 Hypervisor 虚拟化硬件；容器共享 Host Kernel，通过 namespace + cgroup 实现隔离，更轻量但不彻底。
+
+**题 4**：Rarest First 优先下载 peers 中拥有最少的 piece，这样能让稀有 piece 更快扩散，避免"所有 peer 都缺同一块"的瓶颈。B 编码四种类型：字符串（`4:spam`）、整数（`i3e`）、列表（`l...e`）、字典（`d...e`）。
+
+**题 5**：示例顺序（后端工程师，2-4 年经验）：(1) Build your own HTTP Server（理解协议解析和并发模型）、(2) Build your own Git（理解 DAG 和存储模型）、(3) Build your own Redis（理解内存数据结构和性能优化）。理由：从"每天都在用的工具"入手，先建立动机，再逐步深入底层。
+
+</details>
+
+## 常见问题
+
+### Q1：我是前端工程师，这个仓库对我有用吗？
+
+有用，但要有选择。优先做 Build your own React、Build your own Webpack、Build your own Vue——这三个能帮你深入理解日常工具的设计权衡。如果时间有限，先做 React，它直接解释为什么虚拟 DOM 是必要的、Fiber 架构解决了什么问题。
+
+### Q2：每个项目要花多少时间？
+
+入门级（HTTP Server、Game of Life）：1-2 天。进阶级（Git、BitTorrent）：3-7 天。高级（Redis、Docker）：1-2 周。大师级（Lisp、OS）：2-4 周。重点是"理解透了再做下一个"，而不是赶进度。
+
+### Q3：我看不懂官方源码，怎么办？
+
+这就是 build-your-own 的设计目的——先自己实现一版，再对比官方源码，你会有"原来他们考虑了这个边界 case"的瞬间。如果还是看不懂，说明你的实现还不够完整，回去补测试用例。
+
+### Q4：我该用哪种编程语言实现？
+
+选你最熟悉的。这个项目的目的不是"学新语言"，而是"理解技术原理"。如果你熟悉 Python，就用 Python 实现 Build your own Redis——虽然 Redis 本身是 C 写的，但核心数据结构（跳表、压缩列表）在任何语言里都一样。
+
+### Q5：做完这些项目，我能达到什么水平？
+
+能系统性地回答"为什么"而不只是"怎么做"。面试时，你能从底层原理解释为什么 Redis 快、为什么 Docker 容器比虚拟机轻量、为什么 Git 分支切换是 O(1)。这种理解是"拧螺丝"和"造火箭"之间的桥梁。
+
+## 进阶路径
+
+把 build-your-own-x 的项目做完，只是第一步。要继续深入，建议按下面这条顺序走：
+
+### 第一阶段：生产级实现
+
+把自己"能跑通测试"的简化版，改造成"能实际用的工具"：
+
+- 给 Build your own Git 加上 `git merge` 和冲突解决
+- 给 Build your own Redis 加上持久化（RDB、AOF）和主从复制
+- 给 Build your own Docker 加上镜像构建（Dockerfile 解析）和网络配置（overlay network）
+
+### 第二阶段：源码贡献
+
+选一个你实现过的项目（如 Redis、Git），去读它的 issue 列表，挑一个 bug 或 feature 去修/实现。这时你已经有"自己实现过"的背景，读源码会快很多。
+
+### 第三阶段：系统设计
+
+用 build-your-own 里学到的原理，去分析真实系统的设计决策：
+
+- 为什么 etcd 用 Raft 而不是 Paxos？
+- 为什么 Kafka 用零拷贝（zero-copy）而不是普通的 socket 传输？
+- 为什么 LevelDB 用 LSM 树而不是 B+ 树？
+
+### 第四阶段：造轮子（可选）
+
+如果你有强烈兴趣，可以自己从零设计一个新技术：
+
+- 一个比 Redis 更适合你的业务的内存数据库
+- 一个比 Git 更适合大二进制文件的版本控制系统
+- 一个比 Docker 更安全的容器运行时
+
+大多数人在第三阶段就已经能胜任架构师工作了。
+
+---
+
+*本文基于 [codecrafters-io/build-your-own-x](https://github.com/codecrafters-io/build-your-own-x)（519k+ Stars，MIT License）编写。*

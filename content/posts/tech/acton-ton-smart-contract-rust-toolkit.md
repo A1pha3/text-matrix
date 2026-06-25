@@ -38,7 +38,7 @@ tags: ["TON", "智能合约", "Rust", "区块链开发", "Web3"]
 
 ## 项目概览
 
-Acton 把 TON 合约开发里原本散落在 `func`、`fift`、`tonos-cli` 和多个第三方测试框架之间的命令，收束到一个 Rust 编写的二进制里，覆盖从项目脚手架到链上验证的全部环节。本文描述的行为对应撰写时 Acton 仓库 HEAD 的 commit 状态（仓库尚未发布稳定版本号），命令与产物路径以仓库 README 为准。TON（The Open Network）由 Telegram 团队发起，现由 TON Foundation 维护；智能合约使用 FunC 语言（TON 官方低层合约语言，类 C 语法）编写，运行在 TON Virtual Machine（TVM）上。
+Acton 把 TON 合约开发里原本散落在 `func`、`fift`、`tonos-cli` 和多个第三方测试框架之间的命令，收束到一个 Rust 编写的二进制里，覆盖从项目脚手架到链上验证的全部环节。本文描述的行为对应撰写时 Acton 仓库 HEAD 的 commit 状态，命令与产物路径以仓库 README 为准。
 
 TON 合约开发长期存在工具链碎片化：开发者需要同时管理 `func`（FunC 编译器）、`fift`（TVM 字节码工具）、`tonos-cli`（钱包操作）和多个第三方测试框架——这些工具的命令风格、配置文件和错误信息彼此不兼容。一套 Jetton 合约的开发链路里，编译用 `func`，本地测试用 `@ton/sandbox`，部署用 `tonos-cli`，验证用 tonverifier.app 的手动上传——四次上下文切换，每次都要确认"当前用的是哪个网络、哪个钱包、哪个编译器版本"。
 

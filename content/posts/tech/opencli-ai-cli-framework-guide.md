@@ -1,7 +1,7 @@
 ---
 title: "OpenCLI：把 Agent 的工具入口收成一棵命令树"
 date: "2026-05-17T09:10:00+08:00"
-lastmod: "2026-05-19T18:20:00+08:00"
+lastmod: "2026-06-25T09:30:00+08:00"
 slug: "opencli-ai-agent-browser-cli-framework"
 description: "OpenCLI 把站点适配器、登录态浏览器、Electron 应用和本地 CLI 收进同一棵命令树。理解它，要先看命令优先、Browser Bridge、三层会话模型，以及哪些场景其实不该用它。"
 summary: "OpenCLI 不只是 browser 子命令。更顺的用法是先查适配器命令，缺口再退到 browser 原语；用 profile、browser session、siteSession 分别处理身份、流程和站点页生命周期；重复出现的流程，再沉淀成 adapter、plugin 或 external CLI。"
@@ -12,7 +12,40 @@ tags: ["OpenCLI", "AI Agent", "CLI", "Browser Bridge", "浏览器自动化", "El
 
 <!-- markdownlint-disable-file MD003 MD041 -->
 
-OpenCLI 常被归到浏览器自动化工具里。这个归类抓住了 `opencli browser`，却漏掉了更值得看的部分：站点适配器、登录态浏览器、Electron 应用和本地 CLI，被放进同一棵命令树；使用顺序也被重新排好，先找稳定命令，命令不够再退到浏览器原语。
+## 快速信息卡
+
+| 项目 | 信息 |
+|------|------|
+| 仓库 | [jackwener/OpenCLI](https://github.com/jackwener/OpenCLI) |
+| Stars | 25,171+ |
+| Forks | 2,503+ |
+| License | Apache 2.0 |
+| 语言 | JavaScript |
+| 版本 | v1.7.22+ |
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. **理解 OpenCLI 的核心设计**：命令优先、Browser Bridge、三层状态模型
+2. **掌握基本用法**：`opencli list`、`opencli <site> <command>`、`opencli browser <session> ...`
+3. **管理多 profile 和会话**：理解 `--profile`、`browser <session>`、`siteSession` 的区别
+4. **排查常见问题**：知道空数据、权限错误、文档漂移时该查什么
+5. **规划采用路径**：判断 OpenCLI 是否适合您的场景，以及如何逐步引入
+
+## 目录
+
+1. [先看系统地图](#先看系统地图)
+2. [命令优先，是核心设计](#命令优先是核心设计)
+3. [三层状态模型](#三层状态模型)
+4. [Browser Bridge 的边界](#browser-bridge-的边界)
+5. [一次任务怎样从网页动作沉淀成命令](#一次任务怎样从网页动作沉淀成命令)
+6. [排障先看边界](#排障先看边界)
+7. [适用边界](#适用边界)
+8. [更稳的采用顺序](#更稳的采用顺序)
+9. [自测题](#自测题)
+10. [进阶路径](#进阶路径)
+11. [结语](#结语)
 
 它和 Playwright 的分工也在这里拉开。Playwright 擅长测试、断言、隔离环境和可重复的浏览器脚本；OpenCLI 处理的是另一类问题：真实登录态里已经能做的事，怎样变成一条人和 Agent 都能调用的命令。前者把浏览器当测试运行时，后者把浏览器、桌面应用和本地二进制工具收进同一个调用面。
 
@@ -309,6 +342,49 @@ opencli longbridge quote TSLA.US
 5. 写入文档或自动化脚本前，用 `opencli <command> --help` 和当前包元数据复核命令写法。
 
 这套顺序把 OpenCLI 放在运行面的位置，而不是把它当一组网页点击命令。它收拢的是能力被发现、被调用、被验证、被沉淀的路径。
+
+## 自测题
+
+1. **OpenCLI 的「命令优先」是什么意思？**
+   - 答案：先找现成命令，命令缺口才退到浏览器原语。这样得到的不是临时脚本，而是结构化、可复用的命令。
+
+2. **`--profile work`、`browser <session>`、`siteSession` 三者各管什么？**
+   - 答案：`--profile` 管 Chrome 身份；`browser <session>` 管一段浏览器流程的 tab lease 和默认目标页；`siteSession` 管浏览器型适配器是否延续同一站点页。
+
+3. **什么时候用 `bind`，什么时候用 owned session？**
+   - 答案：登录、SSO、验证码已由人完成时，用 `bind` 把已有 tab 借给 session；临时网页工作、需要连续上下文时，用 owned session（如 `opencli browser work ...`）。
+
+4. **`opencli doctor` 绿了，为什么 `opencli xiaohongshu notifications` 还是空数据？**
+   - 答案：`doctor` 只检查 daemon、扩展、Chrome profile 连通性，不保证某个 browser-backed adapter 已经读到当前页面上下文。需要查身份、登录态、页面 host、风控页。
+
+5. **External CLI 注册和管理在哪里？**
+   - 答案：注册在 `opencli external ...`，执行在根命令树下（如 `opencli gh ...`、`opencli docker ...`）。
+
+## 进阶路径
+
+### 阶段 1：验证可行性
+
+- 安装 OpenCLI 和 Browser Bridge
+- 跑 `opencli list`，确认您需要的站点是否已有适配器
+- 测试 1-2 个现有命令，理解输出格式和退出码
+
+### 阶段 2：补缺口
+
+- 对没有适配器的站点，用 `opencli browser <session> ...` 做临时探索
+- 定位页面、确认字段、观察网络请求
+- 确认流程会重复发生后，写成 user adapter（`~/.opencli/clis/<site>/<command>.js`）
+
+### 阶段 3：沉淀和共享
+
+- 把稳定的 user adapter 整理成 plugin
+- 如果有通用价值，提交 PR 给 OpenCLI 上游
+- 为团队编写使用文档，标注 profile、session、siteSession 的最佳实践
+
+### 阶段 4：集成到工作流
+
+- 将 OpenCLI 命令集成到脚本、Agent 工具链、CI 流程
+- 用 `opencli <command> -f json` 输出结构化数据，接入下游处理
+- 监控命令的稳定性和性能，及时更新 adapter
 
 ## 结语
 

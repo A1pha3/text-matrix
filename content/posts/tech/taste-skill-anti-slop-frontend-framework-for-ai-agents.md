@@ -8,7 +8,39 @@ categories: ["技术笔记"]
 tags: ["AI前端", "Taste Skill", "前端设计", "ChatGPT Images", "Codex", "Cursor", "设计规范"]
 ---
 
-## 核心判断
+## 快速信息卡
+
+| 项目 | 信息 |
+|------|------|
+| 仓库 | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) |
+| Stars | 50,329+ |
+| Forks | 3,479+ |
+| License | MIT |
+| 语言 | JavaScript |
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. **理解 Taste Skill 的定位**：解决 AI 生成前端的"同质化问题"
+2. **掌握核心设计参数**：DESIGN_VARIANCE、MOTION_INTENSITY、VISUAL_DENSITY
+3. **使用工作流程**：图像优先流和直接代码流
+4. **选择对的技能**：代码技能 vs 图像生成技能
+5. **判断适用场景**：知道什么时候该用、什么时候不该用
+
+## 目录
+
+1. [核心判断](#核心判断)
+2. [系统地图](#系统地图)
+3. [核心设计参数](#核心设计参数)
+4. [工作流程](#工作流程)
+5. [设计原则：不只是"好看"](#设计原则不只是好看)
+6. [与其他方案的对比](#与其他方案的对比)
+7. [适用场景](#适用场景)
+8. [常见问题](#常见问题)
+9. [自测题](#自测题)
+10. [进阶路径](#进阶路径)
+11. [总结](#总结)
 
 Taste Skill 解决的是 AI 生成前端时的"同质化问题"——当 Codex、Cursor 或 Claude Code 按照默认方式写前端时，它们的输出往往带着一套隐性的偷懒逻辑：居中卡片、渐变按钮、AOS 动画、Inter 字体，写多了看起来都一样。Taste Skill 把"好的设计"显式化成一套可配置的技能指令，让 AI 照着做，而不是靠随机性碰。
 
@@ -126,6 +158,71 @@ Taste Skill 的差异化在于：它不提供组件，而提供**设计决策能
 **不该用的时候**：已有成熟设计系统的团队（会与现有 token 冲突）、需要强一致性主题色和组件复用的场景（Skill 更偏指南而非组件库）。
 
 ---
+
+## 常见问题
+
+### Taste Skill 会让我的前端看起来"都一样"吗？
+
+不会。Taste Skill 提供的是设计决策规则，不是组件库。您仍然可以选择不同的字体、配色、布局方式。它的作用是避免 AI 默认输出的"居中卡片 + 渐变按钮 + Inter 字体"同质化风格。
+
+### 需要懂设计才能用吗？
+
+不需要。Taste Skill 的设计原则已经写进 Skill 文件里。您只需要安装对应的 skill，然后让 AI 照着做。但如果您有设计经验，可以调整 `DESIGN_VARIANCE`、`MOTION_INTENSITY`、`VISUAL_DENSITY` 三个参数来微调输出风格。
+
+### 图像生成技能一定要用吗？
+
+不是必须的。如果您已经有设计参考图，可以直接用 `image-to-code-skill` 分析图像并生成代码。如果您想从零开始设计，图像生成技能可以帮助您快速生成设计参考图。
+
+### Taste Skill 和组件库（如 shadcn/ui）冲突吗？
+
+不冲突。Taste Skill 提供设计规则，组件库提供实现。您可以同时使用两者：用 Taste Skill 的 Skill 文件定义设计风格，用组件库实现具体 UI。
+
+### 哪些 AI 编码工具可以使用 Taste Skill？
+
+支持 Claude Code、Codex、Cursor、Windsurf 等主流 AI 编码工具。只要工具支持加载 Skill 文件或粘贴 Skill 内容到对话窗口，就可以使用。
+
+## 自测题
+
+1. **Taste Skill 解决的核心问题是什么？**
+   - 答案：AI 生成前端的"同质化问题"——默认输出的"居中卡片、渐变按钮、Inter 字体"风格。
+
+2. **三个可配置参数 `DESIGN_VARIANCE`、`MOTION_INTENSITY`、`VISUAL_DENSITY` 各控制什么？**
+   - 答案：`DESIGN_VARIANCE` 控制布局对称性（低值=居中传统，高值=不对称现代）；`MOTION_INTENSITY` 控制动效强度（低值=hover 过渡，高值=scroll/magnetic 动效）；`VISUAL_DENSITY` 控制信息密度（低值=通透留白，高值=信息密集）。
+
+3. **「图像优先流」和「直接代码流」的区别是什么？**
+   - 答案：图像优先流先生成设计参考图，再分析图像生成代码；直接代码流直接安装 skill 后让 AI 生成代码。
+
+4. **Taste Skill 和普通组件库的核心差异是什么？**
+   - 答案：组件库提供 UI 组件合集，Taste Skill 提供设计决策规则，且不依赖特定框架。
+
+5. **什么场景不该用 Taste Skill？**
+   - 答案：已有成熟设计系统的团队（会与现有 token 冲突）；需要强一致性主题色和组件复用的场景（Skill 更偏指南而非组件库）。
+
+## 进阶路径
+
+### 阶段 1：安装和试用
+
+- 安装 `taste-skill`（默认全能款）
+- 在 Claude Code / Codex / Cursor 中加载 Skill 文件
+- 让 AI 生成一个简单的前端页面，观察输出差异
+
+### 阶段 2：调整参数和风格
+
+- 调整 `DESIGN_VARIANCE`、`MOTION_INTENSITY`、`VISUAL_DENSITY` 三个参数
+- 尝试其他风格变体（soft-skill、minimalist-skill、brutalist-skill）
+- 对比不同参数组合的输出效果
+
+### 阶段 3：配合图像生成技能
+
+- 安装 `imagegen-frontend-web` 或 `imagegen-frontend-mobile`
+- 生成设计参考图（配合 ChatGPT Images）
+- 用 `image-to-code-skill` 分析图像并生成代码
+
+### 阶段 4：定制和贡献
+
+- 如果现有 Skill 文件不满足需求，复制一份后定制规则
+- 为您的定制版本创建新的 Skill 文件
+- 如果对有通用价值，提交 PR 给 [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)
 
 ## 总结
 

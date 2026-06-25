@@ -10,7 +10,7 @@ tags: ["TON", "智能合约", "TypeScript", "区块链开发", "FunC"]
 
 # TON 智能合约开发工具链完全指南：从 FunC 编写到链上验证
 
-TON（The Open Network）生态没有单一官方工具链。Blueprint 脚手架、FunC/Tolk 编译器、@ton/sandbox 本地沙盒、@ton/test-utils 测试断言库各自独立维护，靠目录约定和 Node.js API 串成完整开发链路。早期文章提到的"Acton 一站式 CLI"在 TON 官方仓库（[github.com/ton-blockchain](https://github.com/ton-blockchain) 与 [github.com/ton-community](https://github.com/ton-community)）中未找到对应仓库。本文用一个 Jetton（TON 上的代币标准，类似 ERC-20）代币合约作为线索，依次过编写、编译、测试、调试、部署、验证七个阶段，每个阶段给出工具选型、采用顺序和常见错误排查。
+TON（The Open Network）生态没有单一官方工具链。Blueprint 脚手架、FunC/Tolk 编译器、`@ton/sandbox`、`@ton/test-utils` 各自独立维护，靠目录约定和 Node.js API 串成完整开发链路。Acton 是 TON 官方推出的 Rust 实现智能合约工具链（[github.com/ton-blockchain/acton](https://github.com/ton-blockchain/acton)），提供编译、测试、部署的一体化 CLI，但社区主流教程仍围绕 Blueprint + func-js 生态展开。本文用一个 Jetton（TON 上的代币标准，类似 ERC-20）代币合约作为线索，依次过编写、编译、测试、调试、部署、验证七个阶段，每个阶段给出工具选型、采用顺序和常见错误排查。
 
 ## 学习目标
 

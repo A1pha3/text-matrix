@@ -57,7 +57,7 @@ tags: ["AI科研", "实验自动化", "论文复现", "AI Agent", "本地优先"
 
 ---
 
-做研究最累的往往不是缺想法，而是被各种**低杠杆工作**消耗掉时间：
+做研究最累的往往不是缺想法，而是被各种低杠杆工作消耗掉时间：
 
 1. **论文爆炸**：新论文不断出来，但能变成可执行的下一步研究计划的只有一小部分
 2. **环境地狱**：baseline 代码跑不通——依赖、数据、脚本，问题叠问题，真正的工作还没开始就卡住了
@@ -70,7 +70,7 @@ tags: ["AI科研", "实验自动化", "论文复现", "AI Agent", "本地优先"
 
 ## 二、DeepScientist 是什么？
 
-DeepScientist 是一个长期运行的 AI 研究伙伴，跟那种一次性对话的摘要工具不一样：它把任务、文件、分支、工件、记忆全部持久化，每次运行结束后把成功和失败的路径都留着，供下一轮使用。
+DeepScientist 是一个长期运行的 AI 研究伙伴，跟一次性对话的摘要工具不一样：它把任务、文件、分支、工件、记忆全部持久化，每次运行结束后把成功和失败的路径都留着，供下一轮使用。项目入选 ICLR 2026 Top 10，由 WestlakeNLP 维护，负责人为 ACL Fellow 张岳教授。
 
 ### 对比传统 AI 工具
 
@@ -227,12 +227,28 @@ DeepScientist：
 
 ## 八、模型配置
 
-DeepScientist 支持多种 LLM 提供商，默认使用 Codex：
+DeepScientist 支持多种 LLM 提供商，内置四个 runner：
 
-### Codex 配置
+### 支持的 Runner
+
+| Runner | 说明 |
+|--------|------|
+| **Codex** | OpenAI Codex，默认 runner |
+| **Claude Code** | Anthropic Claude，支持长上下文 |
+| **Kimi Code** | Moonshot Kimi，适合中文场景 |
+| **OpenCode** | 开源 runner，可自定义 |
+
+### 配置示例
 
 ```bash
-codex --login ds --here
+# 使用默认 Codex runner
+ds --here
+
+# 使用 Claude Code runner
+ds --here --runner claude
+
+# 使用 Kimi Code runner
+ds --here --runner kimi
 ```
 
 ### 自定义模型
@@ -241,7 +257,7 @@ codex --login ds --here
 
 - 打开 `docs/en/15_CODEX_PROVIDER_SETUP.md`
 - 配置你自己的 API 密钥和端点
-- 支持 OpenAI、Anthropic、Google 等多种模型
+- 支持 OpenAI、Anthropic、Google、Moonshot 等多种模型
 
 ---
 

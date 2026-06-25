@@ -13,11 +13,50 @@ hiddenFromHomePage: true
 
 ---
 
+## 学习目标
+
+通过本文，你将掌握以下核心能力：
+
+- 理解 ShipSwift 的项目定位和设计目标（AI-native SwiftUI 组件库）
+- 掌握 ShipSwift 的三种安装方式（MCP Skills + Recipe Server、本地 Skills、文件复制）
+- 理解 ShipSwift 的依赖规则（金字塔结构）和命名规范（SW 前缀、.sw 修饰符）
+- 学会使用 ShipSwift 的组件（SWAnimation、SWChart、SWComponent、SWModule）
+- 了解 ShipSwift 的商业模式（Free + Pro）和适用场景
+- 知道如何将 ShipSwift 集成到 AI 辅助 iOS 开发工作流中
+
+---
+
+## 目录
+
+- [一句话定位](#一句话定位)
+- [解决什么问题](#解决什么问题)
+  - [AI 写 SwiftUI 的困境](#ai-写-swiftui-的困境)
+- [核心架构](#核心架构)
+  - [三种安装方式](#三种安装方式)
+  - [依赖规则：金字塔结构](#依赖规则金字塔结构)
+- [组件体系](#组件体系)
+  - [SWAnimation — 动画组件](#swanimation--动画组件)
+  - [SWChart — 图表组件](#swchart--图表组件)
+  - [SWComponent — UI 组件](#swcomponent--ui-组件)
+  - [SWModule — 多文件业务模块](#swmodule--多文件业务模块)
+- [命名规范](#命名规范)
+  - [类型命名](#类型命名)
+  - [View Modifier 命名](#view-modifier-命名)
+- [商业模式：Free + Pro](#商业模式free--pro)
+- [技术栈与实现亮点](#技术栈与实现亮点)
+- [适用场景](#适用场景)
+- [常见问题与故障排查](#常见问题与故障排查)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [总结](#总结)
+
+---
+
 ## 一句话定位
 
 [ShipSwift](https://github.com/signerlabs/ShipSwift) 是一个**AI-native SwiftUI 组件库**，通过 MCP 协议让 AI 助手（如 Claude Code）能够按需获取生产级组件代码，说出"添加一个 shimmer 加载动画"或"构建一个认证流程"，AI 就能直接生成可运行的代码。
 
-当前 GitHub ⭐ **1.4k**，Swift 实现，MIT 许可证。
+当前 GitHub ⭐ **2.2k**，Swift 实现，MIT 许可证。
 
 ---
 
@@ -369,6 +408,219 @@ Pro recipes 覆盖的场景：
 - 主要面向 iOS 18+（SwiftUI Charts 等需要较新 API）
 - Pro recipes 需要付费（但开源代码质量本身已经很高）
 - 组件偏向展示层，复杂业务逻辑仍需自己实现
+
+---
+
+## 常见问题与故障排查
+
+### 问题1：MCP Server 连接失败
+
+**现象**：配置 MCP Server 后，AI 助手无法获取 ShipSwift 组件。
+
+**原因**：可能的原因包括：
+1. MCP Server 未启动
+2. 网络连接问题
+3. API 密钥未配置
+
+**解决方案**：
+1. 检查 MCP Server 是否运行：`curl https://api.shipswift.app/mcp`
+2. 检查 Claude Code 的 MCP 配置是否正确
+3. 尝试本地 Skills 方式（无需 MCP）：`npx skills add signerlabs/ShipSwift`
+
+### 问题2：组件代码无法编译
+
+**现象**：AI 生成的代码无法编译，提示类型错误或不兼容的 API。
+
+**原因**：可能的原因包括：
+1. iOS 版本不匹配（ShipSwift 需要 iOS 18+）
+2. 缺少必要的框架导入
+3. 组件版本更新导致 API 变化
+
+**解决方案**：
+1. 检查项目的 iOS 部署目标（Deployment Target）是否设置为 iOS 18.0+
+2. 确保导入了必要的框架：`import SwiftUI`, `import Charts`, 等
+3. 查看 ShipSwift 的 GitHub 仓库，确认使用的是最新版本的组件代码
+4. 使用本地 Skills 方式，让 AI 直接读取源码（保证版本一致）
+
+### 问题3：Pro Recipe 是否值得购买
+
+**现象**：正在考虑是否购买 Pro Recipe。
+
+**分析**：Pro Recipe 的价值在于：
+1. **后端实现**：Free 版只提供 iOS 客户端代码，Pro 版提供完整的后端路由、数据库 schema、Webhooks
+2. **集成指南**：端到端检查清单，避免集成时的常见坑
+3. **合规模板**：隐私清单、App Store 标签等合规文档
+4. **已知陷阱**：每个 recipe 10+ 条实战经验，避免踩坑
+
+**建议**：
+- 如果你只需要 iOS 客户端组件，Free 版足够
+- 如果你需要构建完整的后端服务（如 Paywall 的后端验证），Pro 版值得购买
+- 可以先使用 Free 版原型，需要后端时再购买 Pro Recipe
+
+### 问题4：组件与现有代码冲突
+
+**现象**：集成 ShipSwift 组件后，与现有代码的命名冲突。
+
+**原因**：虽然 ShipSwift 使用 `SW` 前缀，但可能与你现有的类型名冲突。
+
+**解决方案**：
+1. 使用 Swift 的 module 系统，通过 `ShipSwift.SWShimmer` 方式引用
+2. 如果使用 CocoaPods 或 SPM，确保 module 名称正确
+3. 如果使用文件复制方式，可以全局替换 `SW` 前缀为其他前缀（如 `MyAppSW`）
+
+---
+
+## 自测题
+
+### 题目1：ShipSwift 的核心价值
+
+**问题**：ShipSwift 与传统 SwiftUI 组件库（如 SwiftUIX、ASCollectionView）的主要区别是什么？
+
+<details>
+<summary>参考答案</summary>
+
+**传统组件库**：
+- 提供预定义的组件代码
+- 开发者手动复制代码或集成框架
+- AI 生成代码时需要猜测组件 API
+
+**ShipSwift 的差异化**：
+1. **AI-native**：通过 MCP 协议让 AI 助手能够按需获取生产级组件代码
+2. **完整上下文**：不只提供组件代码，还提供使用指南、依赖规则、常见陷阱
+3. **MCP 集成**：AI 可以自动选择正确的组件、生成正确的代码、处理边界情况
+4. **Pro Recipe**：提供完整的后端实现和集成指南，不只是前端组件
+
+核心价值：让 AI 真正成为"能产出生产级代码"的开发者助手。
+</details>
+
+### 题目2：MCP 协议的作用
+
+**问题**：解释 ShipSwift 如何通过 MCP 协议让 AI 助手生成正确的代码？
+
+<details>
+<summary>参考答案</summary>
+
+**MCP（Model Context Protocol）的作用**：
+1. **上下文提供**：AI 助手通过 MCP 协议访问 ShipSwift 的组件库，获得完整的组件代码、使用示例、依赖规则
+2. **按需获取**：AI 可以根据用户的需求（如"添加一个 shimmer 加载动画"）自动选择正确的组件（SWShimmer）
+3. **代码生成**：AI 基于获取到的组件代码，生成符合项目规范的代码（正确的导入、正确的 API 调用、正确的状态管理）
+4. **避免猜测**：AI 不需要猜测组件的 API，而是直接读取源码或文档
+
+**对比**：
+- 没有 MCP：AI 生成 SwiftUI 代码时，只能基于训练数据，容易生成已废弃的 API 或不完整的代码
+- 有 MCP：AI 可以读取最新的组件代码，生成正确的、完整的、可运行的代码
+</details>
+
+### 题目3：依赖规则（金字塔结构）
+
+**问题**：解释 ShipSwift 的依赖规则（金字塔结构），为什么这样设计？
+
+<details>
+<summary>参考答案</summary>
+
+**金字塔结构**：
+```
+        SWModule（业务模块）
+           ↑ 依赖
+    SWComponent（UI组件）
+    ↑         ↑         ↑
+依赖     依赖      依赖
+SWUtil  SWUtil   SWUtil
+
+SWAnimation   SWChart
+    ↑            ↑
+    └────────────┘
+           ↑
+        SWUtil（工具层，无任何依赖）
+```
+
+**设计原因**：
+1. **可复用性**：底层的 `SWUtil` 不依赖任何其他模块，可以被任意组件引用
+2. **避免循环依赖**：严格的依赖方向（上层依赖下层）避免了循环依赖
+3. **模块化**：每个组件只依赖 `SWUtil`，可以独立使用
+4. **业务集成**：上层的 `SWModule` 依赖下层组件，构成完整的业务模块（如 SWAuth、SWPaywall）
+
+这种设计确保了组件的可复用性和可维护性。
+</details>
+
+### 题目4：Free vs Pro
+
+**问题**：ShipSwift 的 Free 版和 Pro Recipe 有什么区别？什么场景需要购买 Pro？
+
+<details>
+<summary>参考答案</summary>
+
+**Free 版**：
+- iOS 客户端代码完整开源（MIT 许可证）
+- 包含 SWAnimation、SWChart、SWComponent 等前端组件
+- 代码可审计、无锁定
+
+**Pro Recipe**：
+- 后端实现（Hono 路由、数据库 schema、Webhooks）
+- 端到端集成指南
+- 合规模板（隐私清单、App Store 标签）
+- 已知陷阱（每个 recipe 10+ 条实战经验）
+
+**需要购买 Pro 的场景**：
+1. 需要构建完整的后端服务（如 Paywall 的订阅验证、TikTok 事件追踪）
+2. 需要快速上线，不想踩常见坑
+3. 需要合规文档（App Store 审核需要）
+
+**不需要购买 Pro 的场景**：
+1. 只需要 iOS 客户端组件
+2. 有足够时间自己实现后端
+3. 只是学习 SwiftUI，不打算上架应用
+</details>
+
+### 题目5：适用场景判断
+
+**问题**：以下哪些场景适合使用 ShipSwift？哪些不适合？为什么？
+1. 独立开发者，使用 Claude Code 辅助 iOS 开发
+2. 企业团队，有专门的 UI 组件库
+3. 学习 SwiftUI，想参考生产级组件实现
+4. 需要快速原型，验证产品想法
+
+<details>
+<summary>参考答案</summary>
+
+1. **适合**：独立开发者使用 Claude Code，ShipSwift 的 MCP 集成可以让 AI 生成正确的代码，大幅提高开发速度
+2. **不适合**：企业团队有专门的 UI 组件库，引入 ShipSwift 可能导致维护成本增加（需要同时维护两套组件库）
+3. **适合**：ShipSwift 的组件是学习 SwiftUI、Swift Charts、StoreKit 2 等的优秀参考
+4. **适合**：ShipSwift 的开源组件覆盖常见需求（Shimmer、LineChart、Paywall 等），可以快速构建原型
+
+**关键判断因素**：
+- 是否使用 AI 辅助开发（Claude Code、Gemini 等）
+- 是否需要快速上线（时间成本）
+- 是否有足够的 iOS 开发经验（避免踩坑）
+</details>
+
+---
+
+## 进阶路径
+
+### 阶段1：熟练使用 ShipSwift
+
+- 掌握所有组件的 API（SWShimmer、SWLineChart、SWAlert 等）
+- 学会使用 MCP 协议让 AI 生成正确的代码
+- 理解依赖规则和命名规范，避免集成时的问题
+
+### 阶段2：自定义组件
+
+- 参考 ShipSwift 的组件实现，学习生产级 SwiftUI 代码的写法
+- 为自己的项目创建自定义组件，遵循 ShipSwift 的命名规范和依赖规则
+- 将自定义组件贡献给 ShipSwift 社区（提交 PR）
+
+### 阶段3：构建 AI-native 工作流
+
+- 深入理解 MCP 协议，构建自己的 MCP Server
+- 将其他开源组件库接入 MCP（让 AI 能够访问更多组件）
+- 探索 AI 辅助 iOS 开发的最佳实践（提示词工程、代码审查、自动化测试）
+
+### 阶段4：探索 iOS 开发的新范式
+
+- 学习 SwiftUI 的高级特性（Custom Layout、Advanced Animation、Swift Charts）
+- 探索 AI 生成代码的验证和测试方法
+- 构建自己的 AI-native iOS 开发工具链
 
 ---
 
