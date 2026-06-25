@@ -1,8 +1,8 @@
 ---
-title: "Android逆向工程Skill：2.5K Stars的Claude Code智能体——从APK提取Retrofit API完整指南"
+title: "Android逆向工程Skill：6.2K Stars的Claude Code智能体——从APK提取Retrofit API完整指南"
 date: "2026-04-17T16:45:00+08:00"
 slug: "android-reverse-engineering-skill-claude-code"
-description: "2.6K Stars的Android逆向工程Claude Code Skill。反编译APK/XAPK/JAR/AAR，提取Retrofit/OkHttp API端点、硬编码URL、认证模式，支持jadx/Vineflower双引擎对比，可追踪Activity→ViewModel→HTTP调用完整链路。"
+description: "6.2K Stars的Android逆向工程Claude Code Skill。反编译APK/XAPK/JAR/AAR，提取Retrofit/OkHttp API端点、硬编码URL、认证模式，支持jadx/Vineflower双引擎对比，可追踪Activity→ViewModel→HTTP调用完整链路。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit", "OkHttp", "安全研究"]
@@ -10,9 +10,25 @@ tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit",
 
 # Android 逆向工程 Skill：把 APK 反编译和 API 提取压缩成一句话
 
-Android 逆向工程的真正瓶颈在工具链割裂。jadx 反编译、dex2jar 转码、grep 抓接口、人工拼调用链——每一步单独看都简单，串起来却容易出错：命令记不住、引擎切换丢上下文、混淆代码让 grep 失效。`android-reverse-engineering-skill`（截至 2026 年 4 月 GitHub 约 2.5K Stars，数据以仓库页面为准）把这条链路封装成 Claude Code Skill，用一句 `/decompile app.apk` 触发依赖检查、反编译、结构分析、API 提取、调用链追踪五个阶段。
+> **快速信息卡** |
+> Stars: 6,2K+ |
+> Forks: 701+ |
+> License: Apache 2.0 |
+> Language: Shell |
+
+Android 逆向工程的真正瓶颈在工具链割裂。jadx 反编译、dex2jar 转码、grep 抓接口、人工拼调用链——每一步单独看都简单，串起来却容易出错：命令记不住、引擎切换丢上下文、混淆代码让 grep 失效。`android-reverse-engineering-skill`（GitHub 6.2K+ Stars）把这条链路封装成 Claude Code Skill，用一句 `/decompile app.apk` 触发依赖检查、反编译、结构分析、API 提取、调用链追踪五个阶段。
 
 本文拆解这条链路上的两套并行反编译引擎（jadx 与 Vineflower）边界、API 提取的特征识别逻辑，以及一个从 `LoginActivity` 追到 HTTP 请求的完整任务流案例。
+
+## 学习目标
+
+阅读本文后，你应该能够：
+
+1. **理解逆向工程脚本化的价值**：说清楚传统手工逆向的三个断点，以及 Skill 如何解决这些问题
+2. **区分jadx与Vineflower的能力边界**：知道什么场景下用哪个引擎，什么时候值得开双引擎对比
+3. **掌握API提取的特征识别模式**：能用grep命令从反编译代码中提取Retrofit接口、OkHttp调用和硬编码URL
+4. **追踪完整的调用链**：从Activity出发，穿过ViewModel、Repository，定位到具体的HTTP请求端点
+5. **合规使用逆向技术**：明确法律边界，知道什么场景允许逆向，什么场景禁止
 
 ## 本文覆盖
 
@@ -22,6 +38,41 @@ Android 逆向工程的真正瓶颈在工具链割裂。jadx 反编译、dex2jar
 4. Retrofit/OkHttp/硬编码 URL 的提取特征
 5. 从 UI 点击到 HTTP 请求的调用链追踪
 6. 逆向工程的法律合规边界与采用建议
+
+## 目录
+
+- [一、为什么需要把逆向工程脚本化](#一为什么需要把逆向工程脚本化)
+  - [1.1 应用场景](#11-应用场景)
+  - [1.2 传统手工流程的断点](#12-传统手工流程的断点)
+  - [1.3 Skill 的解法把流程压成一句命令](#13-skill-的解法把流程压成一句命令)
+- [二、核心功能五阶段工作流](#二核心功能五阶段工作流)
+  - [2.1 整体架构](#21-整体架构)
+  - [2.2 支持的文件格式](#22-支持的文件格式)
+- [三、工具链详解jadx与Vineflower的边界](#三工具链详解jadx与Vineflower的边界)
+  - [3.1 jadx默认反编译器](#31-jadx默认反编译器)
+  - [3.2 Vineflower复杂结构的备选](#32-vineflower复杂结构的备选)
+  - [3.3 双引擎对比什么时候值得多花一倍时间](#33-双引擎对比什么时候值得多花一倍时间)
+  - [3.4 辅助工具](#34-辅助工具)
+- [四、API提取模式](#四api提取模式)
+  - [4.1 Retrofit 接口识别](#41-retrofit-接口识别)
+  - [4.2 OkHttp 调用识别](#42-okhttp-调用识别)
+  - [4.3 硬编码URL和密钥](#43-硬编码url和密钥)
+  - [4.4 API 文档模板](#44-api-文档模板)
+- [五、调用链追踪](#五调用链追踪)
+  - [5.1 追踪原理](#51-追踪原理)
+  - [5.2 追踪命令](#52-追踪命令)
+  - [5.3 代码结构分析](#53-代码结构分析)
+- [六、安装与配置](#六安装与配置)
+  - [6.1 环境要求](#61-环境要求)
+  - [6.2 Claude Code 安装](#62-claude-code-安装)
+  - [6.3 手动脚本使用](#63-手动脚本使用)
+- [七、实战案例提取某App的登录API](#七实战案例提取某app的登录api)
+- [八、法律合规](#八法律合规)
+- [九、故障排除](#九故障排除)
+- [十、采用建议](#十采用建议)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [相关资源](#相关资源)
 
 ## 一、为什么需要把逆向工程脚本化
 
@@ -531,6 +582,65 @@ LoginActivity.onLoginClicked()
 4. **双引擎对比留作疑难场景**：常规分析不必开启，耗时翻倍且对比需要人工判断。
 
 适用边界：这个 Skill 解决的是"流程编排"问题，对"混淆对抗"无能为力。重度混淆的 App（如金融类应用）仍需要人工介入做反混淆映射、字符串解密、native 层分析。Skill 的价值在于把可自动化的部分压成一句命令，把人工时间留给真正需要判断的环节。
+
+## 自测题
+
+### 基础题
+
+1. **jadx 和 Vineflower 的核心区别是什么？什么场景下应该选哪个？**
+2. **传统手工逆向的三个断点是什么？这个 Skill 如何解决这些问题？**
+3. **Retrofit 接口的特征识别模式是什么？应该用什么样的 grep 命令提取？**
+4. **从 Activity 到 HTTP 请求的调用链通常经过哪些层？如何用 grep 追踪？**
+5. **什么场景下值得开启双引擎对比？开启后输出在哪里？**
+
+### 进阶题
+
+1. **混淆后的代码如何让 grep 失效？有哪些对抗混淆的策略？**
+2. **OkHttp 的 Interceptor 为什么是提取认证逻辑的关键位置？**
+3. **XAPK 格式和 APK 格式有什么区别？为什么 jadx 能直接处理 XAPK？**
+4. **在法律层面，DMCA §1201(f) 和 EU Directive 2009/24/EC 分别允许什么场景的逆向？**
+5. **如果反编译输出大量 `// Error`，应该如何排查是 jadx 的问题还是 APK 本身的问题？**
+
+### 参考答案要点
+
+1. jadx 直接处理 DEX，Vineflower 需要先转 JAR；Vineflower 在 lambda/泛型还原更好
+2. 命令记忆成本、混淆对抗、调用链断裂；Skill 用五阶段串行工作流 + 文件落盘解决
+3. HTTP 方法注解（`@GET`/`@POST` 等）；`grep -rn '@GET\|@POST' sources/`
+4. Activity → ViewModel → Repository → ApiService → OkHttpClient；grep 继承关系和字段引用
+5. 单引擎输出大量 Error、需要交叉验证关键方法、混淆严重可能映射出错；输出在 `output/jadx/` 和 `output/vineflower/`
+
+## 进阶路径
+
+### 阶段一：熟练使用单引擎（1-2 周）
+
+- [ ] 在自己熟悉的 APK 上跑通 jadx 单引擎全流程
+- [ ] 验证依赖检查、反编译、结构分析、API 提取四个阶段的输出
+- [ ] 手动追踪一个已知 App 的调用链，对比 Skill 输出
+
+### 阶段二：掌握双引擎对比（2-3 周）
+
+- [ ] 在一个混淆严重的 APK 上对比 jadx 和 Vineflower 的输出质量
+- [ ] 理解 `--deobf` 和反混淆映射表的局限性
+- [ ] 学会用 `-mpm` 参数避免 Vineflower 卡死
+
+### 阶段三：深入逆向工程（1-2 个月）
+
+- [ ] 学习 ProGuard/R8 混淆原理，理解为什么继承关系不会被混淆
+- [ ] 掌握 native 层分析（IDA Pro、Frida），理解 Skill 覆盖不到的场景
+- [ ] 阅读 jadx 源码，理解 DEX→Java 的反编译原理
+
+### 阶段四：贡献和扩展（持续）
+
+- [ ] 为 Skill 贡献新的 API 提取模式（如 GraphQL、gRPC）
+- [ ] 扩展支持的文件格式（如 `.apkm`、`.xapk` 变体）
+- [ ] 集成动态分析能力（Frida hook、adb 注入）
+
+### 进阶资源
+
+- **jadx 源码**：https://github.com/skylot/jadx - 理解反编译器原理
+- **Android 逆向实战**：《Android 软件安全权威指南》- 系统学习逆向工程
+- **Frida 官方文档**：https://frida.re/docs/home/ - 动态分析工具
+- **OWASP Mobile Top 10**：https://owasp.org/www-project-mobile-top-10/ - 移动安全测试指南
 
 ## 相关资源
 

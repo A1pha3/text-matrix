@@ -8,6 +8,28 @@ categories: ["技术笔记"]
 author: 钳岳星君
 ---
 
+## 快速信息卡
+
+| 指标 | 数值 |
+|------|------|
+| Stars | 12,424+ |
+| Forks | 741+ |
+| 许可证 | Apache-2.0 |
+| 语言 | C++（核心）+ Python / Node.js / Go / Rust / Dart（SDK） |
+| 官网 | https://zvec.org |
+| 仓库 | [alibaba/zvec](https://github.com/alibaba/zvec) |
+| 最新版本 | v0.5.0（2026-06-12） |
+
+## 学习目标
+
+读完本文，你应该能够：
+
+1. **理解 Zvec 的核心定位**：明白它为什么是"SQLite for Vectors"，以及它如何填补嵌入式向量数据库的空白
+2. **掌握架构分层**：理解 Collection → Segment → Index 的存储模型，以及它如何实现读写隔离
+3. **选择索引类型**：HNSW / IVF / Flat / DiskANN 的适用场景和权衡
+4. **使用 MultiQuery 混合检索**：Dense + Sparse + FTS + Filter 如何一次融合
+5. **评估适用性**：判断 Zvec 是否适合你的场景，以及迁移路径是什么
+
 # Zvec 深度拆解：阿里开源的进程内向量数据库，10K Stars 的 SQLite-for-Vectors 怎么把 FAISS / Qdrant 拉开身位
 
 **判断**：Zvec 把自己定位成 "SQLite for Vectors"——`pip install zvec` 一行能用，多语言 SDK、Dense+Sparse 向量、DiskANN on-disk 索引、MultiQuery 混合检索全有。它卡在一个具体空白上：主流向量库要么是 C/S 架构（Qdrant / Milvus / Weaviate），部署摩擦压不到本地场景；要么是单进程嵌入（FAISS），但要自己写 WAL、查询规划、SDK 维护；嵌入式数据库（SQLite / DuckDB）又没有"原生向量检索 + 全文 + 标量过滤"的混合检索。**6 个月（2025-12-05 创建）斩获 10,261 stars、600 forks**，README 直接写 "battle-tested within Alibaba Group"，阿里内部生产环境验证过。这个增长曲线背后是 RAG 应用本地化部署需求上升，而嵌入式向量库赛道此前没有强产品填补。
@@ -38,8 +60,8 @@ author: 钳岳星君
 
 | 维度 | 实际情况 |
 |------|----------|
-| Stars | 10,261+（2026-06-16） |
-| Forks | 600+ |
+| Stars | 12,424+（2026-06-25） |
+| Forks | 741+ |
 | 主语言 | C++ 核心 + Python / Node.js / Go / Rust / Dart 多语言 SDK |
 | 协议 | Apache-2.0 |
 | 仓库 | <https://github.com/alibaba/zvec> |
@@ -51,7 +73,7 @@ author: 钳岳星君
 | 检索类型 | Dense / Sparse 向量、Multi-Vector、全文检索（FTS，v0.5.0 新增）、混合检索（MultiQuery） |
 | 持久化 | WAL（Write-Ahead Logging） |
 | 并发模型 | 多进程可读、单进程写独占 |
-| Open issues | 58 |
+| Open issues | 61 |
 
 一句话：**阿里开源的 "SQLite for Vectors"，用嵌入式架构 + 多语言 SDK + 全栈混合检索，把 RAG 本地化的部署摩擦压到 `pip install` 级别**。
 
@@ -396,6 +418,127 @@ const results = await collection.query(new VectorQuery('embedding', [0.4, 0.3, 0
 - **从零起步做本地 RAG**：直接用 Zvec，省掉 FAISS + Chroma + 自研 filter 的拼装成本。先用 HNSW 跑通，corpus 超过单机内存再切 DiskANN。
 
 无论哪种路径，上线前都要在自己的 corpus 上跑召回率和延迟压测。README 的 "battle-tested" 是阿里内部背书，但具体业务场景和规模数据未公开，不能直接外推到自己的数据分布。
+
+---
+
+## 常见问题与故障排查
+
+### Q1：Zvec 和 FAISS 到底差在哪？
+
+**A**：FAISS 只做向量检索，没有 Collection 管理、WAL、SQL-like filter、FTS、多语言 SDK。生产环境要在 FAISS 之上叠一层 ORM + WAL + Query Planner，重复造轮子。Zvec 把这些全做了，开箱即用。
+
+### Q2：什么时候选 HNSW，什么时候选 DiskANN？
+
+**A**：
+- **HNSW**：corpus < 10M，内存够用，要低延迟 → 选 HNSW
+- **DiskANN**：corpus > 100M，内存不够，或者 corpus 持续增长不想做 IVF 训练 → 选 DiskANN
+
+简单判断：如果你的 corpus 能全放内存，用 HNSW；如果不能，用 DiskANN。
+
+### Q3：MultiQuery 的 RRF 融合要不要调权重？
+
+**A**：默认不需要。RRF（Reciprocal Rank Fusion）只看 rank 不看 score，跨体系天然兼容。但如果你发现某个 sub-query 的结果总是被压制，可以在 `MultiQuery` 里给每个 sub-query 加 `weight` 参数（如果 API 支持）。
+
+### Q4：Zvec 的 WAL 能保证什么级别的一致性？
+
+**A**：Zvec 的 WAL 保证 crash safety（进程崩溃/断电后 replay WAL 恢复），但不保证分布式一致性。它是嵌入式数据库，不是分布式数据库。如果你需要跨节点一致性，要用 Qdrant / Milvus 集群。
+
+### Q5：从 FAISS 迁移到 Zvec 难吗？
+
+**A**：分两步：
+1. **建 schema**：把 FAISS 的 `index.d` 和 `metadata` 映射成 Zvec 的 `CollectionSchema`
+2. **导数据**：把 FAISS 的向量 dump 成 `collection.insert()` 批次
+
+没有自动化迁移工具，要手写脚本。但逻辑不复杂，几百行代码能搞定。
+
+---
+
+## 自测题
+
+### 问题 1：Zvec 的四大并行机制是什么？
+
+<details>
+<summary>查看答案</summary>
+<b>答案</b>：
+1. 存储分层（Collection → Segment → Index）
+2. 索引选择（HNSW / IVF / Flat / DiskANN）
+3. MultiQuery 执行计划
+4. WAL + 多读单写
+</details>
+
+### 问题 2：为什么 Zvec 的 Segment 模型适合 RAG 场景？
+
+<details>
+<summary>查看答案</summary>
+<b>答案要点</b>：
+RAG 场景是 read-heavy、write-occasional（偶尔 ingest 新文档）。Zvec 的 Segment 模型允许多进程同时读同一 Collection，写是单进程独占。读端不需要加锁，吞吐随 Segment 数线性扩展。这和 SQLite 的模型一致，适合 read-heavy 场景。
+</details>
+
+### 问题 3：HNSW 和 DiskANN 的核心区别是什么？
+
+<details>
+<summary>查看答案</summary>
+<b>答案要点</b>：
+- HNSW：内存图索引，低延迟，内存占用大
+- DiskANN：SSD + PQ 压缩，内存占用小，适合大 corpus
+- HNSW 不需要训练，DiskANN 也不需要训练（在线 build）
+- IVF 才需要训练（k-means），这是它的硬伤
+</details>
+
+### 问题 4：MultiQuery 的 RRF 融合为什么不需要 score 归一化？
+
+<details>
+<summary>查看答案</summary>
+<b>答案要点</b>：
+RRF 只看 rank 不看 score。cosine 在 [-1, 1]、BM25 在 [0, ∞)、bool 在 {0, 1}，直接拼会失真。RRF 用 `1/(k+rank)` 加权融合，跨体系天然兼容，不需要归一化。
+</details>
+
+### 问题 5：Zvec 适合十亿级生产向量库吗？
+
+<details>
+<summary>查看答案</summary>
+<b>答案</b>：
+不适合。Zvec 是单进程嵌入式数据库，没有水平扩展能力。十亿级生产向量库应该用 Qdrant / Milvus 集群。Zvec 的优势在嵌入式场景（本地 RAG、边缘设备、桌面应用），不是大规模分布式场景。
+</details>
+
+---
+
+## 进阶路径
+
+### 阶段 1：快速体验（1-2 天）
+
+- [ ] 安装 Zvec：`pip install zvec`
+- [ ] 跑通官方快速上手示例（创建 Collection、插入向量、查询）
+- [ ] 对比 FAISS：在同一份数据集上跑召回率和延迟
+
+### 阶段 2：生产评估（1 周）
+
+- [ ] 在自己的 corpus 上跑召回率压测（recall@10, recall@100）
+- [ ] 测试 WAL 恢复：强制 kill 进程，重启后检查数据完整性
+- [ ] 评估内存占用：HNSW vs DiskANN 在你的 corpus 规模下的内存差异
+- [ ] 评估写吞吐：单进程写是否能满足你的 ingest 速率
+
+### 阶段 3：集成到 RAG 流水线（2-4 周）
+
+- [ ] 用 Zvec 替换 FAISS / Chroma
+- [ ] 实现 MultiQuery：Dense + Sparse + FTS + Filter 融合
+- [ ] 调优 RRF 权重（如果发现某个 sub-query 被压制）
+- [ ] 监控 WAL 文件大小，配置 compact 策略
+
+### 阶段 4：深度定制（1-3 个月）
+
+- [ ] 阅读 Zvec 源码，理解存储分层和索引实现
+- [ ] 基于 Zvec C++ 核心做二次开发（如自定义融合函数、新索引类型）
+- [ ] 贡献代码：提交 PR 或 Feature Request
+- [ ] 参与 Roadmap 讨论：https://github.com/alibaba/zvec/issues/309
+
+### 进阶资源
+
+- [Zvec 官方文档](https://zvec.org/zh/docs/db/)
+- [Zvec GitHub 仓库](https://github.com/alibaba/zvec)
+- [Zvec Roadmap](https://github.com/alibaba/zvec/issues/309)
+- [DiskANN 论文](https://papers.microsoft.com/archive/2019/DiskANN-Fast-accurate-billion-scale-nearest-neighbor-search-on-a-single-node.pdf)
+- [HNSW 论文](https://arxiv.org/abs/1603.09320)
 
 ---
 

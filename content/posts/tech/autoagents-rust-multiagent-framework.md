@@ -9,7 +9,25 @@ tags: ["AutoAgents", "Rust", "多智能体", "LLM框架", "ReAct", "WASM", "Pyda
 hiddenFromHomePage: true
 ---
 
-目录
+# AutoAgents：Rust 多智能体框架的模块化设计与生产级实践
+
+> **快速信息卡** |
+> Stars: 628+ |
+> Forks: 70+ |
+> License: Apache 2.0 |
+> Language: Rust |
+
+## 学习目标
+
+阅读本文后，你应该能够：
+
+1. **理解Rust写Agent框架的价值**：说清楚Python生态的LangChain/LlamaIndex在生产阶段的局限性，以及Rust如何解决类型安全和性能问题
+2. **掌握AutoAgents的架构边界**：理解13个crate的模块划分，以及核心层、工具层、编排层、绑定层的职责
+3. **使用ReAct执行器**：理解推理-行动循环的实现原理，以及如何用derive宏简化工具定义
+4. **配置WASM沙盒**：理解工具安全的实现方式，以及如何用WASM隔离不可信代码
+5. **扩展多智能体编排**：理解类型化通信和环境管理的设计，以及如何集成OpenTelemetry可观测性
+
+## 目录
 
 - [为什么用 Rust 写 Agent 框架](#为什么用-rust-写-agent-框架)
 - [架构总览：13 个 crate 的模块边界](#架构总览 13-个-crate-的模块边界)

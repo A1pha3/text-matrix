@@ -8,6 +8,35 @@ categories: ["技术笔记"]
 tags: ["TTS", "Markdown", "Apple Silicon", "MLX", "Python", "语音克隆", "Qwen3"]
 ---
 
+> **项目信息卡**
+>
+> - **GitHub**: [alexr314/mellifluous](https://github.com/alexr314/mellifluous)
+> - **Stars**: 3+ | **Forks**: 0+ | **License**: MIT
+> - **语言**: Python | **平台**: macOS Apple Silicon (M1+)
+> - **核心依赖**: MLX-Audio, markdown-it-py, Qwen3-TTS
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. 理解 mellifluous 的核心设计思路——为什么 Markdown 结构化朗读比通用 TTS 更适合技术文档
+2. 区分 mellifluous 架构中的关键模块职责（synth、parse、Detector 链）
+3. 独立完成 mellifluous 的安装、演示和运行
+4. 配置自定义语音克隆样本，并理解 WAV 格式要求
+5. 判断 mellifluous 是否适合你的使用场景，以及它的平台限制
+
+## 目录
+
+- [学习目标](#学习目标)
+- [项目概览](#项目概览)
+- [核心特性](#核心特性)
+- [技术架构](#技术架构)
+- [快速开始](#快速开始)
+- [适用场景与限制](#适用场景与限制)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [总结](#总结)
+
 ## 项目概览
 
 **mellifluous**（[alexr314/mellifluous](https://github.com/alexr314/mellifluous)）是一个 macOS Apple Silicon 上的本地 Markdown 转语音（TTS）工具。它的核心思路是把 Markdown 文档解析为"有结构的朗读"——不是把文字一股脑送进 TTS，而是理解文档的层次（标题、段落、列表、代码块），按阅读节奏插入停顿，让语音输出听起来更像真人朗读。
@@ -137,6 +166,67 @@ eq_reader = make_reader(model="openai/gpt-oss-120b")
 - 仅支持 macOS Apple Silicon（M1+）
 - 个人项目，未发布 PyPI，需要从源码安装
 - 语音克隆必须使用有权限使用的声音样本
+
+## 常见问题
+
+**Q1：mellifluous 的语音输出质量取决于什么？**
+
+主要取决于 Qwen3-TTS 模型的发音准确度和 Detector 链对内联内容的处理效果。对于技术文档中常见的代码、URL、数学公式，Detector 链会做专门处理，但复杂公式需要配置 LLM 支持才能正确朗读。
+
+**Q2：为什么首次运行要下载约 2GB 的模型权重？**
+
+Qwen3-TTS 是一个完整的 TTS 模型，约 2GB。首次运行时 mellifluous 通过 MLX 框架自动下载。下载后权重会缓存在本地，后续运行不需要重新下载。
+
+**Q3：除了 macOS Apple Silicon，还有其他方式运行吗？**
+
+可以，但需要替换 `mellifluous/synthesize/` 部分。你可以尝试用 PyTorch + CPU 推理，但语音质量和延迟会显著下降。作者目前没有计划官方支持 Linux/Windows，社区如有需求可以提 PR。
+
+**Q4：语音克隆会不会有法律风险？**
+
+会。你必须有权限使用目标声音样本。用他人的声音克隆并分发，可能涉及肖像权、隐私权等法律问题。建议只用自己的声音，或者获得明确授权。
+
+**Q5：公式朗读的 LLM 调用成本高吗？**
+
+公式朗读结果按 LaTeX 哈希做磁盘缓存，同一个公式不会重复调用 LLM。如果只是偶尔遇到公式，成本很低。如果文档大量包含公式，建议批量预处理。
+
+## 自测题
+
+1. **mellifluous 和普通 TTS 工具的核心区别是什么？**
+   答：mellifluous 理解 Markdown 结构（标题、段落、列表、代码块），按阅读节奏插入停顿；普通 TTS 把文字一股脑送进去，读起来像机器报菜名。
+
+2. **Detector 链的作用是什么？举两个 Detector 的例子。**
+   答：Detector 链按优先级处理 Markdown 中的内联元素，让语音输出更符合阅读习惯。例如 `NumberDetector` 正确处理 `$1,200`、`5%`；`SymbolDetector` 把 `->` 读成 "arrow"。
+
+3. **语音克隆对 WAV 样本有什么要求？**
+   答：5-30 秒、24kHz、单声道、PCM_16 格式的 WAV 文件。
+
+4. **mellifluous 为什么只能在 macOS Apple Silicon 上运行？**
+   答：TTS 推理通过 MLX 框架在 Apple Silicon 上运行。MLX 是苹果为 Apple Silicon 优化的机器学习框架，不跨平台。
+
+5. **如果公式朗读结果不正确，可能是什么原因？**
+   答：公式朗读需要配置 Groq API Key 和 LLM 支持。如果没有配置，`EquationDetector` 默认说 "equation"，不会真正朗读公式内容。
+
+## 进阶路径
+
+### 阶段一：基础使用（1-2 天）
+- 完成 `python demo.py` 一键演示
+- 用 `Reader()` 默认声音朗读一篇自己的技术文档
+- 调整 `Policy` 参数，找到舒服的语速和停顿
+
+### 阶段二：自定义语音（3-5 天）
+- 录制自己的 20 秒语音样本，用 ffmpeg 转成要求格式
+- 配置自定义声音，对比克隆效果和默认 alex 声音的差异
+- 如果有技术文档需要"听审"，用 mellifluous 跑一遍，检查哪些地方朗读效果不好
+
+### 阶段三：扩展和贡献（1-2 周）
+- 阅读 `synth/` 和 `parse/` 目录的代码，理解 TTS 推理和 Markdown 解析的实现
+- 如果需要支持新的 Markdown 元素（例如 footnotes、definition lists），编写新的 Detector
+- 如果需要在 Linux/CUDA 上运行，研究如何替换 `mellifluous/synthesize/` 部分
+
+### 阶段四：集成到工作流（2-4 周）
+- 把 mellifluous 集成到文档生成流水线（例如用 Sphinx 生成文档后自动转成语音）
+- 为团队内部知识库添加语音版本
+- 如果有兴趣，给项目提 PR——作者活跃，社区友好
 
 ## 总结
 

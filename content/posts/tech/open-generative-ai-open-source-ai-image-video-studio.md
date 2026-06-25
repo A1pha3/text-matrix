@@ -12,6 +12,47 @@ tags: ["Open Generative AI", "AI生成", "图片生成", "视频生成", "开源
 
 [Open Generative AI](https://github.com/Anil-matcha/Open-Generative-AI) 是一个免费、开源的 AI 媒体生成套件，覆盖图片生成、视频生成、口型同步（Lip Sync）和影院控制四大场景。项目口号是"The free, open-source alternative to AI Video Platforms"，核心主张是：无内容过滤、无封闭生态、无订阅费用，200+ SOTA 模型开箱即用。
 
+---
+
+## 快速信息卡
+
+| 项目 | 信息 |
+|------|------|
+| **Stars** | 20,689+ |
+| **Forks** | 3,552+ |
+| **License** | MIT |
+| **语言** | JavaScript (Next.js/Electron) |
+| **最后更新** | 2026-06-25 |
+| **模型数量** | 200+ |
+
+---
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. **理解 Open Generative AI 的核心定位和四大工作室功能**
+2. **判断 Open Generative AI 是否适合你的 AI 生成需求**
+3. **完成桌面客户端安装并运行第一个生成任务**
+4. **配置本地推理引擎（sd.cpp / Wan2GP）**
+5. **在需要时使用 Workflow Studio 构建自动化 AI 流水线**
+
+---
+
+## 目录
+
+1. [项目概览](#1-项目概览)
+2. [四大工作室](#2-四大工作室)
+3. [本地推理：sd.cpp 和 Wan2GP](#3-本地推理sdcpp-和-wan2gp)
+4. [架构解析](#4-架构解析)
+5. [安装与快速开始](#5-安装与快速开始)
+6. [常见问题](#6-常见问题)
+7. [自测题](#自测题)
+8. [进阶路径](#进阶路径)
+9. [总结](#7-总结)
+
+---
+
 ## 1. 项目概览
 
 Open Generative AI 提供两种使用形态：
@@ -204,6 +245,56 @@ sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ### Z-Image 在 8GB Mac 上挂起
 
 Z-Image 模型需要约 7.4GB 权重 + 2.4GB 计算缓冲区，基础 8GB M 系列 Mac 无法承载，应使用 SD 1.5 系列模型。
+
+---
+
+## 自测题
+
+1. **Open Generative AI 不支持以下哪项功能？**
+   - A. 图片生成
+   - B. 视频生成
+   - C. 音频生成
+   - D. 口型同步
+   - **答案：C**
+
+2. **Image Studio 的多图参考输入最多支持几张参考图？**
+   - A. 5 张
+   - B. 10 张
+   - C. 14 张
+   - D. 20 张
+   - **答案：C**
+
+3. **sd.cpp 在 macOS Apple Silicon 上使用哪种加速后端？**
+   - A. CUDA
+   - B. Metal GPU
+   - C. ROCm
+   - D. Vulkan
+   - **答案：B**
+
+4. **Wan2GP 为什么设计为远程服务器？**
+   - A. 因为代码过于复杂
+   - B. 因为运行时依赖仅支持 CUDA/ROCm，无法在 Apple Silicon 上运行
+   - C. 因为需要多用户访问
+   - D. 因为需要高速网络
+   - **答案：B**
+
+5. **Open Generative AI 的 License 是什么？**
+   - A. Apache-2.0
+   - B. GPL 3.0
+   - C. MIT
+   - D. BSD 3-Clause
+   - **答案：C**
+
+---
+
+## 进阶路径
+
+1. **基础使用**：下载桌面客户端，安装后运行第一个图片生成任务（Flux 或 SD 1.5）。
+2. **本地推理**：配置 sd.cpp 引擎，在 Mac 上实现本地图片生成（无需 API Key）。
+3. **远程 Wan2GP**：在配备 NVIDIA GPU 的服务器上部署 Wan2GP，从桌面客户端远程调用。
+4. **Workflow Studio**：使用可视化节点编辑器构建自定义 AI 流水线，实现多模型串联自动化。
+
+---
 
 ## 7. 总结
 

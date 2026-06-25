@@ -12,9 +12,39 @@ tags: ["AI Agent", "工程自动化", "Rust", "MCP", "开源"]
 
 # Goose：aaif-goose 出品的本地可扩展 AI 工程自动化 Agent 完全指南
 
-> 项目地址：[aaif-goose/goose](https://github.com/aaif-goose/goose)
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. 理解 Goose 作为第三代 AI 编程工具的核心差异——执行闭环（规划、执行、验证、修正）
+2. 区分 Goose 架构中的六个子系统职责（Session Manager、LLM Router、Recipe Engine、Tool Executor、MCP Bridge、Workspace Isolation）
+3. 独立完成 Goose 桌面应用或 CLI 的安装、配置和多模型路由策略设置
+4. 编写自定义 Recipe 工作流，并理解 `on_failure` 三种策略的适用场景
+5. 判断 Goose 是否适合你的团队场景，以及如何在 CI/CD 流水线中集成 Goose
+
+## 目录
+
+- [学习目标](#学习目标)
+- [项目信息卡](#项目信息卡)
+- [本地 AI Agent 解决了什么问题](#本地-ai-agent-解决了什么问题)
+- [架构总览](#架构总览)
+- [安装与配置](#安装与配置)
+- [模型路由机制深度解析](#模型路由机制深度解析)
+- [MCP 集成实战](#mcp-集成实战)
+- [实战案例](#实战案例)
+- [工作区隔离与持久化记忆](#工作区隔离与持久化记忆)
+- [Recipe 工作流引擎](#recipe-工作流引擎)
+- [构建自定义分发版本（Custom Distributions）](#构建自定义分发版本custom-distributions)
+- [FAQ](#faq)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
+> **项目信息卡**
 >
-> 今日 Star：42.3k | Forks：4.3k | Releases：126 | License：Apache-2.0
+> - **GitHub**: [aaif-goose/goose](https://github.com/aaif-goose/goose)
+> - **Stars**: 50,166+ | **Forks**: 5,339+ | **License**: Apache-2.0
+> - **语言**: Rust | **平台**: macOS / Windows / Linux
+> - **发布**: 126+ releases | **最近更新**: 2026-06-25
 
 ## 本地 AI Agent 解决了什么问题
 
@@ -751,6 +781,58 @@ bash /tmp/goose-ci-test.sh
 ```
 
 确认 Goose CLI 在非交互式环境（CI runner）中能正常工作。如果出现 TTY 相关的错误，检查是否需要设置 `CI=true` 环境变量。
+
+## 自测题
+
+1. **Goose 的「执行闭环」指的是什么？对比 Copilot/Cursor，它少了哪一层？**
+
+   答：执行闭环指规划、执行、验证、修正四个步骤在本地自动完成。对比 Copilot/Cursor，Goose 少了「逐条审查输出」这一层——它自动验证并执行下一步。
+
+2. **LLM Router 的 `complexity_based` 策略具体怎么决定用哪个模型？**
+
+   答：每次工具调用前评估当前任务的 token 消耗、文件操作范围和历史错误次数。单文件修改 → mini 模型，跨模块重构 → standard 模型，涉及外部 API 集成或全新项目搭建 → max 模型。
+
+3. **MCP Bridge 的职责是什么？它和直接调用外部 API 有什么区别？**
+
+   答：MCP Bridge 是协议适配层，把 MCP 服务器的能力注册为 Tool Executor 可调用的工具列表，消除 Goose Core 与外部服务之间的耦合。对比直接调用 API，MCP 提供了标准化接口，Goose 不需要为每个外部服务写专用集成代码。
+
+4. **Recipe 的 `on_failure` 有哪三种策略？分别适合什么场景？**
+
+   答：`abort`（失败时终止，适合 lint、typecheck 等必须通过的步骤）、`warn`（失败时输出警告并继续，适合覆盖率阈值等非阻塞检查）、`retry`（失败时重试最多 3 次，适合网络请求等可能临时失败的操作）。
+
+5. **如果你要在团队内推广 Goose，按什么顺序引入功能最稳？**
+
+   答：先单人本地使用 → 跑通一个完整项目 → 编写团队常用 Recipe → 配置 MCP 服务器（filesystem、github）→ 嵌入 CI/CD 流水线 → 用 Custom Distributions 分发预配置版本。
+
+## 进阶路径
+
+### 阶段一：基础使用（1-2 周）
+
+- 安装 Goose 桌面应用或 CLI
+- 配置一个 LLM provider（推荐 Anthropic Claude Sonnet）
+- 完成「从零搭建全栈项目」案例，理解 Goose 的执行序列
+- 尝试用自然语言驱动 Goose 完成日常开发任务
+
+### 阶段二：MCP 集成（2-4 周）
+
+- 配置内置 MCP 服务器（filesystem、git、github、slack）
+- 编写自定义 MCP 服务器（例如数据库迁移工具）
+- 理解 MCP 安全边界，配置 `allowedPaths` 和 `allowedChannels`
+- 在真实项目中用 Goose + MCP 完成一个完整功能
+
+### 阶段三：Recipe 工作流（1-2 个月）
+
+- 编写团队常用的 Recipe（代码审查、测试生成、文档更新）
+- 理解 Recipe 执行语义（`on_failure`、`requires_confirmation`）
+- 把 Recipe 嵌入 GitHub Actions 或团队 CI/CD 流水线
+- 用 `goose recipe run --dry-run` 验证 Recipe 正确性
+
+### 阶段四：团队推广（2-4 个月）
+
+- 用 Custom Distributions 构建团队预配置版本
+- 编写团队编码规范到 `.goose/memory/conventions.json`
+- 在团队内推广 Goose，收集反馈并迭代 Recipe
+- 如果有需要，给 Goose 提 PR——项目活跃，社区友好
 
 ---
 

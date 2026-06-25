@@ -10,6 +10,12 @@ tags: ["Rust", "Shell", "历史管理", "SQLite", "加密"]
 
 # Atuin：把 Shell 历史从纯文本升级成可加密同步的数据库
 
+> **快速信息卡** |
+> Stars: 29.1K+ |
+> Forks: 1.5K+ |
+> License: MIT |
+> Language: Rust |
+
 Shell 自带的历史是一行一行的纯文本，没有退出码、没有目录、没有主机信息，更没有跨机器同步。Atuin 用 SQLite 替换这套机制，把每条命令连同它的上下文一起存进数据库，再通过端到端加密在多台机器间同步。存储变成结构化数据后，按退出码、目录、时间筛选就变成一条 SQL 的事，无需 grep 和管道的组合。
 
 > 文中提到的 29.1K Stars 为 2026 年 4 月初的统计时点数据，实际数值请以 [GitHub 仓库](https://github.com/atuinsh/atuin) 当前显示为准。

@@ -14,6 +14,49 @@ tags: ["TransformerLens", "可解释性", "Python", "大模型", "因果推断",
 
 项目本身由 AI 辅助（Claude Codex）完成，覆盖模型加载、激活修补、因果追踪、对数透镜解码和模型 steering 五个方向，适配 Llama 3、Qwen 3 和 Gemma 3 三个主流开源模型族。
 
+---
+
+## 快速信息卡
+
+| 项目 | 信息 |
+|------|------|
+| **Stars** | 2+ |
+| **Forks** | 0+ |
+| **License** | NOASSERTION |
+| **语言** | Python |
+| **最后更新** | 2026-06-13 |
+| **依赖** | TransformerLens + PyTorch |
+
+---
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. **理解机制可解释性的核心概念**（激活缓存 / 因果追踪 / 归因修补 / 对数透镜 / 激活 Steering）
+2. **使用 transformerlens-skill 加载模型并缓存激活**
+3. **运行激活修补实验定位因果电路**
+4. **执行因果追踪分析模型的知识存储位置**
+5. **判断 transformerlens-skill 是否适合你的可解释性研究需求**
+
+---
+
+## 目录
+
+1. [项目概览](#项目概览)
+2. [快速信息卡](#快速信息卡)
+3. [学习目标](#学习目标)
+4. [目录](#目录)
+5. [核心模块](#核心模块)
+6. [快速开始](#快速开始)
+7. [适用场景](#适用场景)
+8. [常见问题与故障排查](#常见问题与故障排查)
+9. [自测题](#自测题)
+10. [进阶路径](#进阶路径)
+11. [总结](#总结)
+
+---
+
 ## 核心模块
 
 ### `nnsight_basics.py` — TransformerLens 基础
@@ -117,6 +160,76 @@ transformerlens-skill 适合以下场景：
 - **Steering 实验**：在生成时通过激活 steering 引导模型输出特定类型的答案
 
 对于 TransformerLens 框架有基本了解的研究者，这个工具库可以把通常需要几百行 boilerplate 才能跑起来的实验压缩到几十行。
+
+---
+
+## 常见问题与故障排查
+
+### Q1: 安装时出现依赖冲突怎么办？
+
+A: 建议使用 `uv` 创建独立虚拟环境：`uv venv .venv && source .venv/bin/activate`，然后再执行 `uv sync`。
+
+### Q2: 模型加载失败提示"model not found"？
+
+A: 检查 `load_model` 的参数是否正确。支持的模型族为 `llama3`、`qwen3`、`gemma3`。如果需要其他模型，需要修改 `models/load_model.py` 中的配置。
+
+### Q3: 激活修补结果不明显怎么办？
+
+A: 尝试增大修补范围（增加层数和位置），或切换到 `attribution_patching` 用梯度归因精确定位。
+
+### Q4: 因果追踪内存占用过高？
+
+A: 减少 `trace_important_states` 的 `subject_tokens` 数量，或只在特定层和位置执行追踪。
+
+---
+
+## 自测题
+
+1. **transformerlens-skill 不支持以下哪个模型族？**
+   - A. Llama 3
+   - B. Qwen 3
+   - C. Gemma 3
+   - D. GPT-4
+   - **答案：D**
+
+2. **激活修补（Activation Patching）的作用是？**
+   - A. 加速模型推理
+   - B. 定位因果电路
+   - C. 优化模型参数
+   - D. 压缩模型大小
+   - **答案：B**
+
+3. **归因修补（Attribution Patching）相比激活修补的优势是？**
+   - A. 结果更准确
+   - B. 用梯度近似替代穷举，减少前向传播次数
+   - C. 支持更多模型
+   - D. 不需要缓存激活
+   - **答案：B**
+
+4. **对数透镜（Logit Lens）用于观察什么？**
+   - A. 模型各层各位置的正确 token 概率演化轨迹
+   - B. 模型的注意力权重
+   - C. 模型的梯度大小
+   - D. 模型的训练损失
+   - **答案：A**
+
+5. **transformerlens-skill 的 License 是什么？**
+   - A. MIT
+   - B. Apache-2.0
+   - C. NOASSERTION
+   - D. GPL 3.0
+   - **答案：C**
+
+---
+
+## 进阶路径
+
+1. **基础使用**：安装依赖，运行 `activation_patching.py` 示例，理解干净-损坏-修补范式。
+2. **深入模块**：逐个阅读核心模块源码（`nnsight_basics.py`、`causal_tracing.py` 等），理解实现细节。
+3. **复现论文**：用 transformerlens-skill 复现某篇机制可解释性论文的实验（如 ROME、Causal Abstraction）。
+4. **扩展模型支持**：修改 `models/load_model.py`，添加对新模型族的支持（如 Mistral、Phi-3）。
+
+---
 
 ## 总结
 

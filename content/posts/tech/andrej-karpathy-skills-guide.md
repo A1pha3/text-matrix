@@ -8,6 +8,26 @@ categories = ['技术笔记']
 tags = ['AI', 'Claude', 'Agent', '开发工具']
 +++
 
+## 快速信息卡
+
+| 指标 | 数值 |
+|------|------|
+| Stars | 181,830+ |
+| Forks | 18,610+ |
+| 许可证 | 无（CLAUDE.md 文件本身无许可证，但仓库未明确标注） |
+| 语言 | 文档（Markdown） |
+| 仓库 | [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) |
+
+## 学习目标
+
+读完本文，你应该能够：
+
+1. **理解 AI 编程的根问题**：明白为什么 AI 在决策环节缺约束，以及这会导致什么故障
+2. **掌握四项原则**：Think Before Coding、Simplicity First、Surgical Changes、Goal-Driven Execution 各自堵什么漏洞
+3. **知道如何安装**：Claude Code 插件、项目级 CLAUDE.md、Cursor 规则，哪种适合你
+4. **识别过度工程**：能从 AI 生成的代码中识别隐藏假设、过度抽象、顺手改等故障
+5. **评估适用性**：判断你的团队是否应该采用这套准则，以及如何与现有工作流整合
+
 andrej-karpathy-skills 是一个把 Andrej Karpathy 推文洞察整理为 `CLAUDE.md` 行为准则的开源项目，用来约束 AI Coding Agent 在编码前的决策环节。它的核心做法是把"先思考、先确认、先对齐目标"写成 AI 可读的硬规则，让 AI 在动手前主动暴露假设、列出权衡、给出可验证的成功标准。本文先拆解这套准则的四项原则与生效机制，再给出安装方式、实战案例、横向对比和采用建议。
 
 ## 这篇文章会带你看到什么
@@ -236,9 +256,9 @@ discount = calculate_discount(100.0, 10.0)  # 减 10 元
 
 ## 横向对比：定位差异
 
-| 项目 | 定位 | Stars（截至 2026-05-19） | 特点 |
+| 项目 | 定位 | Stars（截至 2026-06-25） | 特点 |
 |------|------|-------|------|
-| **andrej-karpathy-skills** | AI 行为准则 | 137k ⭐ | 专注解决 AI 编程中的决策质量，4 条核心原则，极简实现 |
+| **andrej-karpathy-skills** | AI 行为准则 | 181,830+ ⭐ | 专注解决 AI 编程中的决策质量，4 条核心原则，极简实现 |
 | [anthropics/anthropic-cookbook](https://github.com/anthropics/anthropic-cookbook) | Prompt 技巧集 | 16.7k | 大量具体场景的 Prompt 模板，侧重技巧，不约束 AI 行为 |
 | [dair-ai/Prompt-Engineering-Guide](https://github.com/dair-ai/Prompt-Engineering-Guide) | Prompt 工程指南 | 64k | 覆盖范围广，偏理论，适合学习，不直接给 AI 用 |
 | [microsoft/AI-App-Accelerator](https://github.com/microsoft/AI-App-Accelerator) | 企业 AI 应用 | 11k | 面向企业场景，偏架构和流程，重量级 |
@@ -293,6 +313,128 @@ andrej-karpathy-skills/
 **给已有 `CLAUDE.md` 的项目**：用方式三追加，避免覆盖既有规则。追加后通读一遍合并后的文件，确认四项原则与既有规则没有冲突。
 
 **何时绕开准则**：typo 修正、单行改动、明确限定范围的小修改，可以直接让 AI 动手，跳过完整流程。准则本身允许这种判断。
+
+---
+
+## 常见问题与故障排查
+
+### Q1：安装了插件，但 AI 仍然不按准则行事，为什么？
+
+**A**：检查 `CLAUDE.md` 是否被正确加载。在 Claude Code 中，可以用 `/status` 命令查看当前加载的指令文件。如果 `CLAUDE.md` 没有被加载，检查：
+1. 文件是否在项目根目录
+2. 文件名是否是 `CLAUDE.md`（大小写敏感）
+3. 文件内容是否是有效的 Markdown
+
+### Q2：准则会不会让 AI 变慢？
+
+**A**：会让对话变多，但不会让代码变慢。准则要求 AI 在动手前先列假设和选项，这会增加一轮对话，但能消除整段返工。Karpathy 在准则里明确说了："这些准则偏向谨慎而非速度。对于简单任务，请自行判断。"
+
+### Q3：如果我和 AI 对需求的理解有分歧，准则能解决吗？
+
+**A**：能。Think Before Coding 原则要求 AI "主动说出假设，不确定就问"。如果 AI 仍然不提问，说明 `CLAUDE.md` 没有被正确加载，或者 AI 模型本身有问题（换模型试试）。
+
+### Q4：团队里有人不喜欢准则约束，怎么办？
+
+**A**：准则不是强制的。你可以把它当成"推荐流程"而不是"硬性规定"。在 Code Review 阶段，把"是否暴露假设""是否做最小改动"作为 review 检查项，让团队逐步形成共识，而不是强制推行。
+
+### Q5：Cursor 和 Claude Code 的准则会冲突吗？
+
+**A**：不会。Claude Code 用 `CLAUDE.md`，Cursor 用 `.cursor/rules/*.mdc`，两套机制独立。如果同一个项目同时用 Claude Code 和 Cursor，需要维护两份规则文件。建议把核心准则内容提取出来，做成共享文档，然后分别适配到 `CLAUDE.md` 和 `.cursor/rules/*.mdc`。
+
+---
+
+## 自测题
+
+### 问题 1：四项原则分别堵什么漏洞？
+
+<details>
+<summary>查看答案</summary>
+<b>答案</b>：
+1. Think Before Coding：堵"默默假设"
+2. Simplicity First：堵"过度抽象"
+3. Surgical Changes：堵"顺手改"
+4. Goal-Driven Execution：堵"能跑就算完成"
+</details>
+
+### 问题 2：为什么 Karpathy 说 AI 喜欢过度抽象？
+
+<details>
+<summary>查看答案</summary>
+<b>答案要点</b>：
+AI 训练数据里有很多"最佳实践"文章，这些文章倾向于把简单问题复杂化（用设计模式、抽象层、框架）。AI 学到了这种风格，但不理解什么时候该用、什么时候不该用。Simplicity First 原则就是要把这种倾向压回去。
+</details>
+
+### 问题 3：什么时候应该绕开准则？
+
+<details>
+<summary>查看答案</summary>
+<b>答案</b>：
+- typo 修正
+- 简单的单行代码改动
+- 明显的格式化调整
+- 已明确限定范围的小修改
+
+准则本身允许这种判断。关键是"明确限定范围"——如果范围不明确，还是要走完整流程。
+</details>
+
+### 问题 4：Goal-Driven Execution 如何让 AI 稳定收敛？
+
+<details>
+<summary>查看答案</summary>
+<b>答案要点</b>：
+AI 擅长在明确目标下循环优化，不擅长在模糊目标下自行判断"够了"。Goal-Driven Execution 要求把模糊任务转化为可验证目标（如"为非法输入写测试用例 → 运行测试确认失败 → 实现验证 → 确认测试通过"），AI 才能稳定收敛。
+</details>
+
+### 问题 5：如果你是团队 Lead，怎么推行这套准则？
+
+<details>
+<summary>查看答案</summary>
+<b>答案要点</b>：
+1. 先把 `CLAUDE.md` 纳入仓库，让所有成员的 AI 会话读到同一份规则
+2. 在 Code Review 阶段，把"是否暴露假设""是否做最小改动""是否给可验证标准"作为 review 检查项
+3. 不要强制推行，让团队逐步形成共识
+4. 挑一个新功能开发任务，让团队体验"AI 主动列假设"和"AI 埋头就写"的差异
+</details>
+
+---
+
+## 进阶路径
+
+### 阶段 1：快速体验（1 天）
+
+- [ ] 安装 andrej-karpathy-skills 插件（Claude Code）或复制 `CLAUDE.md` 到项目根目录
+- [ ] 挑一个简单任务（如"加个导出功能"），观察 AI 是否在动手前主动列假设
+- [ ] 对比"有准则"和"无准则"的 AI 输出差异
+
+### 阶段 2：深度使用（1 周）
+
+- [ ] 把所有活跃项目都加上 `CLAUDE.md`
+- [ ] 通读 `EXAMPLES.md`，理解 AI 编程的反范本
+- [ ] 在 Code Review 阶段检查 AI 是否符合四项原则
+- [ ] 根据你的团队规范，定制 `CLAUDE.md`（如加上代码风格、测试要求）
+
+### 阶段 3：团队推行（2-4 周）
+
+- [ ] 把 `CLAUDE.md` 纳入团队仓库，让所有成员共享同一份规则
+- [ ] 在 Code Review 检查项里加入"AI 准则符合度"
+- [ ] 收集团队反馈，调整准则细节（如哪些任务可以绕开准则）
+- [ ] 培训团队成员：如何判断"简单任务"和"复杂任务"
+
+### 阶段 4：定制与贡献（1-3 个月）
+
+- [ ] 基于四项原则，扩展出适合你团队的定制准则（如加上安全规则、性能规则、日志规则）
+- [ ] 向 andrej-karpathy-skills 提交 Feature Request 或 PR
+- [ ] 分享你的定制准则（写博客、开 issue、提交到仓库）
+
+### 进阶资源
+
+- [Andrej Karpathy 原推](https://x.com/karpathy/status/2015883857489522876)
+- [andrej-karpathy-skills 仓库](https://github.com/multica-ai/andrej-karpathy-skills)
+- [EXAMPLES.md](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/EXAMPLES.md)（AI 编程反范本百科全书）
+- [Claude Code 官方文档](https://docs.anthropic.com/en/docs/claude-code)
+- [Cursor Rules 文档](https://cursor.com/docs/rules)
+
+---
 
 ## 延伸阅读与资源
 
