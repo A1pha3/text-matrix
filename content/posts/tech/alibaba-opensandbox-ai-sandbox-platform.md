@@ -15,9 +15,50 @@ tags: ["OpenSandbox", "沙箱", "AI平台", "Docker", "Kubernetes"]
 
 ---
 
+## 快速信息卡
+
+| 指标 | 数值 |
+|------|------|
+| GitHub Stars | 11,649+ |
+| Forks | 966+ |
+| License | Apache-2.0 |
+| 主要语言 | Python, Go |
+| 最新版本 | python/code-interpreter 0.1.2 |
+| 官方文档 | https://open-sandbox.ai/ |
+| CNCF Landscape | 已收录 |
+
+> 数据截至 2026-06-25，以仓库实际状态为准。
+
 ## 一句话判断
 
 OpenSandbox 把"为 AI 应用提供隔离执行环境"这件事做成了平台级产品：上层用多语言 SDK 屏蔽差异，下层用 Docker/Kubernetes 调度资源，中间用 gVisor/Kata/Firecracker 三种安全容器适配不同隔离强度。它解决的核心矛盾是 AI Agent 需要执行任意代码、访问浏览器和桌面，又不能让这些操作污染宿主环境或逃逸到公网。
+
+## 学习目标
+
+读完本文后你应当能够：
+
+1. 说清 OpenSandbox 五层架构中每层的职责与可替换点
+2. 区分 7 种 sandbox 适配器的隔离强度与适用场景
+3. 描述一次代码执行如何从 SDK 层穿过五层到达容器运行时层
+4. 在 Docker 模式与 Kubernetes 模式之间做出与场景匹配的选型决策
+5. 列出 OpenSandbox 适用与不适用的三类场景的判断依据
+
+## 目录
+
+- [一、项目概览](#一项目概览)
+- [二、技术架构](#二技术架构)
+- [三、核心机制详解](#三核心机制详解)
+- [四、任务流案例：一次代码执行如何穿过五层](#四任务流案例一次代码执行如何穿过五层)
+- [五、快速开始](#五快速开始)
+- [六、集成示例](#六集成示例)
+- [七、与同类项目对比](#七与同类项目对比)
+- [八、适用场景](#八适用场景)
+- [九、Roadmap](#九roadmap)
+- [十、采用建议](#十采用建议)
+- [十一、常见问题排查](#十一常见问题排查)
+- [十二、自测题](#十二自测题)
+- [十三、进阶路径](#十三进阶路径)
+- [十四、总结](#十四总结)
 
 ## 总览地图
 
@@ -39,12 +80,12 @@ OpenSandbox 分五层，每层职责独立，可以单独替换：
 
 [OpenSandbox](https://github.com/alibaba/OpenSandbox) 是阿里巴巴开源的通用 AI 应用沙箱平台，提供多语言 SDK、统一沙箱 API、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、Agent 评估、AI 代码执行、强化学习训练等场景。
 
-**核心数据（截至 2026-03-28，数据来自 GitHub 仓库主页快照）：**
+**核心数据（截至 2026-06-25，数据来自 GitHub API）：**
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 10.0k |
-| Forks | 779 |
+| GitHub Stars | 11,649+ |
+| Forks | 966+ |
 | License | Apache-2.0 |
 | 最新版本 | python/code-interpreter 0.1.2 |
 | 官方文档 | https://open-sandbox.ai/ |
@@ -485,6 +526,119 @@ OpenSandbox 提供 LangGraph 状态机工作流集成：
 | 功能 | 说明 |
 |------|------|
 | **部署指南** | 自托管 Kubernetes 集群部署指南 |
+
+---
+
+## 十一、常见问题排查
+
+实际跑 OpenSandbox 时容易踩的坑与排查路径：
+
+**1. Sandbox Server 启动失败**
+
+症状：`opensandbox-server` 命令报错或端口被占用。
+
+排查步骤：
+```bash
+# 检查端口占用（默认端口）
+lsof -i :8080
+# 检查配置文件
+cat ~/.sandbox.toml
+# 查看日志
+opensandbox-server --log-level debug
+```
+
+**2. 代码执行超时**
+
+症状：SDK 调用 `interpreter.codes.run()` 长时间无响应。
+
+可能原因：
+- sandbox 镜像未正确拉取
+- 网络隔离导致无法访问外部依赖
+- 代码本身有死循环
+
+排查步骤：
+```python
+# 设置超时
+sandbox = await Sandbox.create(..., timeout=timedelta(seconds=30))
+# 检查 sandbox 状态
+print(sandbox.status)
+```
+
+**3. Kubernetes 模式下 sandbox 创建慢**
+
+症状：在 Kubernetes 模式下创建 sandbox 需要几十秒。
+
+原因：镜像拉取时间长，预热池未配置。
+
+修复：配置预热池（`pre-warmed pools`），提前创建好 sandbox 实例。
+
+**4. Egress 控制导致依赖安装失败**
+
+症状：在 Code Interpreter 里 `pip install` 失败，报网络错误。
+
+原因：Egress 控制默认可能阻止公网访问。
+
+修复：在 `sandbox.toml` 里配置 Egress 白名单，允许访问 PyPI 镜像源。
+
+**5. 多语言 SDK 类型不匹配**
+
+症状：Java SDK 调用时报类型错误。
+
+原因：SDK 版本不匹配或类型定义有变化。
+
+修复：检查 SDK 版本，确保与服务端版本兼容。查看 `sdks/` 目录下对应 SDK 的 README。
+
+---
+
+## 十二、自测题
+
+用以下 5 题检验理解程度。答案折叠在每题下方。
+
+**Q1**：OpenSandbox 五层架构中，哪一层负责定义生命周期管理 API 和执行 API？
+
+> **答案**：协议层（Protocol Layer）。它用 OpenAPI 规范定义接口，让多语言 SDK 能保持一致行为。
+
+**Q2**：7 种 sandbox 适配器中，哪几种提供文件系统级隔离？
+
+> **答案**：`docker` 提供容器级文件系统隔离；`modal` / `daytona` / `e2b` 提供云端隔离，适合多租户生产场景。`local` / `ipython` 共享宿主命名空间，仅适合本地实验。
+
+**Q3**：为什么需要预热池（Pre-warmed pools）？
+
+> **答案**：创建一个 sandbox 要拉镜像、起容器、初始化运行时，冷启动可能要几秒到几十秒。AI Agent 的代码执行通常是高频短任务，如果每次都冷启动，用户体验会非常差。预热池把这部分延迟摊到空闲期。
+
+**Q4**：OpenSandbox 与 E2B 的主要差异是什么？
+
+> **答案**：E2B 是商业化的代码执行沙箱，SDK 以 Python 为主，浏览器环境支持较弱；OpenSandbox 提供完整五层平台（SDK、协议、运行时、环境、隔离），支持多语言 SDK、Kubernetes 原生、多种沙箱环境，且已被 CNCF Landscape 收录。
+
+**Q5**：下面哪个场景不适合用 OpenSandbox？
+
+> A. 需要执行任意代码的 AI 应用
+> B. 对启动延迟极敏感的实时交互场景
+> C. 多租户代码执行平台
+> D. Agent 评估基准
+
+> **答案**：B。预热池也救不了冷启动，纯 API 调用型 Agent 不需要沙箱，简单关键词搜索直接用 grep 更快。
+
+---
+
+## 十三、进阶路径
+
+读完本文后，按以下顺序深入：
+
+1. **跑通最小示例**：按"快速开始"章节安装，用 Docker 模式跑通基本使用示例，确认环境正常。
+2. **切换 sandbox 环境**：同一任务分别用 Code Interpreter、Chrome、Playwright 环境跑一遍，理解不同环境的适用场景。
+3. **上 Kubernetes 模式**：在测试集群里部署 `kubernetes/` 目录下的资源，配置预热池，记录冷启动时间与资源消耗。
+4. **自定义镜像**：基于 `sandboxes/code-interpreter/` 自定义镜像，增加项目需要的依赖，保持 entrypoint 协议不变。
+5. **读源码**：从 `server/` 目录开始，理解 FastAPI 服务如何管理 sandbox 生命周期，再看 `components/execd/` 理解命令执行流程。
+6. **贡献社区**：OpenSandbox 是开源项目，可以贡献新的 sandbox 环境、改进文档或提交 bug fix。
+
+---
+
+## 十四、总结
+
+OpenSandbox 提供的信号是：在 AI Agent 需要执行任意代码、访问浏览器和桌面的今天，"如何提供安全隔离的执行环境" 比 "模型能力有多强" 还有更多工程空间。OpenSandbox 把这件事做成了平台级产品——五层架构、多语言 SDK、统一沙箱协议、Docker/Kubernetes 运行时、强隔离机制覆盖了从本地实验到生产部署的链路。
+
+对于想要构建安全 AI 应用平台的开发者，OpenSandbox 是 2026 年值得深入的开源项目之一。
 
 ---
 

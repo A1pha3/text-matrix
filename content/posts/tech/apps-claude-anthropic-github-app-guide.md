@@ -10,6 +10,29 @@ tags: ["AI", "Anthropic", "Claude", "GitHub", "Pull Request", "代码审查"]
 
 Anthropic Claude GitHub App：将 Claude Code 接入 Pull Request 工作流
 
+## 学习目标
+
+读完本文，可以：
+
+1. 理解 Claude GitHub App 的核心能力和适用场景
+2. 说清它的三条工作链路（审查响应、CI 修复、按需改动）的区别
+3. 判断它是否适合你的团队
+4. 完成首次安装和基本配置
+5. 理解它的技术边界和采用建议
+
+## 目录
+
+- [一句话判断](#一句话判断)
+- [总览地图](#总览地图)
+- [工作机制](#工作机制)
+- [任务流案例](#任务流案例)
+- [与同类工具的比较](#与同类工具的比较)
+- [接入方式](#接入方式)
+- [技术边界与采用建议](#技术边界与采用建议)
+- [常见问题](#常见问题)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
 ## 一句话判断
 
 Anthropic 官方托管的 GitHub App（slug 为 `claude`）把 Claude Code 的代码执行能力嵌进 PR 和 Issue 工作流：reviewer 留下评论后，App 能直接读对话上下文、改文件、推 commit、回复评论；CI 报红时，能分析日志、定位问题、推送修复。它基于公开的 Claude Code SDK 构建，继承了 Claude Code 对代码库的整体理解能力。按 Anthropic 公开资料，App 于 2025 年上线，近期在 GitHub Trending 受到关注。
@@ -128,3 +151,51 @@ Claude App 的差异点在第二列：它做的是"代码修改 + 审查"，与"
 - 对 AI 自动推送 commit 有安全顾虑，或组织合规要求所有代码变更必须由实名开发者操作
 
 是否采用，关键看团队在 PR 流程里有多少"AI 直接动手改代码"的场景。如果场景以"AI 给建议、人来执行"为主，Claude App 的执行能力会被浪费，轻量工具更合适。
+
+## 常见问题
+
+### Claude App 和直接调用 Claude Code SDK 有什么区别？
+
+Claude App 把 SDK 嵌进了 GitHub 的事件系统。直接调用 SDK 需要自己写事件监听、权限管理、commit 推送逻辑；Claude App 这些都在安装时配置好了。如果你的场景只在 CI 里用，直接调 SDK 更灵活；如果要在 PR 和 Issue 里用，Claude App 省掉很多脚手架。
+
+### App 推送的 commit 能追溯到具体开发者吗？
+
+不能。commit 归属到 App 安装身份，不归属到触发评论的开发者。对需要实名责任追溯的团队，这是接入前必须确认的合规点。有个变通办法：让开发者在自己的 comment 里签名，App 的回复会引用这条评论，间接建立关联。
+
+### 事件窗口约束会导致 App 漏看上下文吗？
+
+会。App 在每次事件触发时只能处理当前对话窗口内的信息。如果一次改动依赖跨 PR 的全局上下文，需要在评论里显式提供链接或描述。这是 GitHub Webhook 模型的固有约束，所有 GitHub App 都受此限制，不是 Claude App 的缺陷。
+
+### Claude App 能访问私有仓库吗？
+
+能，但需要在安装时授权对应的权限。App 申请的 `contents: read` 权限允许它读取仓库内容，`contents: write` 允许它推送 commit。对于高度敏感的私有仓库，可以先在公开仓库或测试仓库里试用，确认行为符合预期后再扩大授权范围。
+
+## 自测题
+
+读完后，尝试回答这些问题：
+
+1. Claude App 的三条工作链路（审查响应、CI 修复、按需改动）在触发源和写入边界上有什么区别？
+2. 为什么 App 以安装身份推送 commit 可能是合规问题？如何应对？
+3. 事件窗口约束会对哪些场景造成影响？如何缓解？
+4. Claude App 和 Grit、Mergify、Ollama PR Bot 的核心差异是什么？
+5. 你的团队在 PR 流程里有多少"AI 直接动手改代码"的场景？这些场景值不值得引入 Claude App？
+
+## 进阶路径
+
+如果你准备在生产环境使用 Claude App，建议按下面顺序推进：
+
+1. **先在测试仓库试用** - 选一个非关键的测试仓库，完成安装和基本配置，观察 App 的行为是否符合预期。
+
+2. **阅读 Claude Code SDK 文档** - 理解 App 的底层的执行逻辑，有助于排查异常行为和优化使用方式。
+
+3. **配置权限范围** - 根据团队的实际需要，最小化授权 App 的权限。不要一股脑给所有权限，遵循最小权限原则。
+
+4. **建立使用规范** - 在团队内部明确：什么时候用 `@claude`、什么时候人来执行、怎么区分 App 推送的 commit 和开发者推送的 commit。
+
+5. **监控和审计** - 定期检查 App 的操作日志，确保它的行为符合预期，及时发现异常情况。
+
+进阶资源：
+
+- [Claude Code SDK 文档](https://docs.anthropic.com/claude-code/docs/sdk)
+- [GitHub Apps 权限模型](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/permissions-for-github-apps)
+- [Anthropic 官方博客](https://www.anthropic.com/news)

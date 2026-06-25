@@ -12,9 +12,24 @@ tags = ['AI', '安全', 'Claude', 'Agent']
 
 Anthropic Cybersecurity Skills 是一个面向 AI Agent 的网络安全技能库，仓库地址 <https://github.com/mukul975/Anthropic-Cybersecurity-Skills>，作者 mukul975，许可证 Apache-2.0。
 
-项目把 754 条结构化安全技能按 26 个领域组织，每条技能映射到 5 个行业框架——MITRE ATT&CK、NIST CSF 2.0、MITRE ATLAS、MITRE D3FEND、NIST AI RMF。它兼容 Claude Code、GitHub Copilot、OpenAI Codex CLI、Cursor、Gemini CLI 等 26 个以上 AI 平台，但项目性质上属于社区项目，README 明确声明 *Not affiliated with Anthropic PBC*，与 Anthropic 官方没有归属关系。
+项目把 817 条结构化安全技能按 29 个领域组织，每条技能映射到 6 个行业框架——MITRE ATT&CK、NIST CSF 2.0、MITRE ATLAS、MITRE D3FEND、NIST AI RMF、MITRE F3 (Fight Fraud)。它兼容 Claude Code、GitHub Copilot、OpenAI Codex CLI、Cursor、Gemini CLI 等 20+ 个以上 AI 平台，但项目性质上属于社区项目，README 明确声明 *Not affiliated with Anthropic PBC*，与 Anthropic 官方没有归属关系。
 
 下面要拆开的是这个技能库和传统 SAST（Static Application Security Testing）/DAST（Dynamic Application Security Testing）工具的关系，它能做什么、不能做什么，以及安全团队怎么把它放进现有工作流。
+
+## 快速信息卡
+
+| 指标 | 数值 |
+|------|------|
+| GitHub Stars | 20,675+ |
+| Forks | 2,402+ |
+| License | Apache-2.0 |
+| 技能数量 | 817 条结构化技能 |
+| 领域覆盖 | 29 个安全领域 |
+| 框架映射 | MITRE ATT&CK、NIST CSF 2.0、MITRE ATLAS、MITRE D3FEND、NIST AI RMF、MITRE F3 |
+| 兼容平台 | Claude Code、GitHub Copilot、OpenAI Codex CLI、Cursor、Gemini CLI 等 20+ |
+| 技能标准 | agentskills.io 开放标准 |
+
+> 数据截至 2026-06-25，以仓库实际状态为准。
 
 ## 目录
 
@@ -50,10 +65,10 @@ Anthropic Cybersecurity Skills 是一个面向 AI Agent 的网络安全技能库
 |------|------|
 | 仓库 | `mukul975/Anthropic-Cybersecurity-Skills` |
 | 许可证 | Apache-2.0 |
-| 技能数量 | 754 条结构化技能 |
-| 领域覆盖 | 26 个安全领域 |
-| 框架映射 | MITRE ATT&CK v18、NIST CSF 2.0、MITRE ATLAS v5.4、MITRE D3FEND v1.3、NIST AI RMF 1.0 |
-| 兼容平台 | Claude Code、GitHub Copilot、OpenAI Codex CLI、Cursor、Gemini CLI 等 26+ |
+| 技能数量 | 817 条结构化技能 |
+| 领域覆盖 | 29 个安全领域 |
+| 框架映射 | MITRE ATT&CK、NIST CSF 2.0、MITRE ATLAS、MITRE D3FEND、NIST AI RMF、MITRE F3 |
+| 兼容平台 | Claude Code、GitHub Copilot、OpenAI Codex CLI、Cursor、Gemini CLI 等 20+ |
 | 技能标准 | agentskills.io 开放标准 |
 | 单技能扫描成本 | 约 30 tokens（仅 frontmatter） |
 | 单技能完整加载 | 500-2000 tokens |

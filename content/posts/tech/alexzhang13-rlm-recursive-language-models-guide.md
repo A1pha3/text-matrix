@@ -10,7 +10,7 @@ tags: ["RLM", "CodeAct", "REPL", "长上下文", "Python", "递归推理"]
 
 # RLM 推理范式拆解：用 CodeAct REPL 让 LLM 自己递归处理无限长上下文
 
-`alexzhang13/rlm` 改造的对象是"如何调用 LLM"这件事本身。传统接口 `llm.completion(prompt, model)` 把整段 prompt 塞进上下文窗口；RLM 提出的 `rlm.completion(prompt, model)` 把 prompt 当成代码环境里的变量，让 LLM 在 REPL 里**编程式**地审视、拆解、递归调用自己。截至 2026 年 6 月，这个由 MIT OASYS 实验室开源的项目（4,977 Stars、MIT 许可证、配套论文 arXiv:2512.24601）已经发展出 7 种 sandbox 适配器（local / ipython / docker / modal / prime / daytona / e2b），并附带基于 Prime Intellect prime-rl 的训练环境。
+`alexzhang13/rlm` 改造的对象是"如何调用 LLM"这件事本身。传统接口 `llm.completion(prompt, model)` 把整段 prompt 塞进上下文窗口；RLM 提出的 `rlm.completion(prompt, model)` 把 prompt 当成代码环境里的变量，让 LLM 在 REPL 里**编程式**地审视、拆解、递归调用自己。截至 2026 年 6 月，这个由 MIT OASYS 实验室开源的项目（5,108+ Stars、842+ Forks、MIT 许可证、配套论文 arXiv:2512.24601）已经发展出 7 种 sandbox 适配器（local / ipython / docker / modal / prime / daytona / e2b），并附带基于 Prime Intellect prime-rl 的训练环境。
 
 ## 学习目标
 
