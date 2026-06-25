@@ -10,6 +10,49 @@ tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
 
 # Antigravity Tools：AI 账号管理与协议代理系统
 
+## 快速信息卡
+
+> **GitHub 仓库**: [lbjlaq/Antigravity-Manager](https://github.com/lbjlaq/Antigravity-Manager)
+>
+> | 指标 | 数值 |
+> |------|------|
+> | ⭐ Stars | 29,885+ |
+> | 🍴 Forks | 3,231+ |
+> | 📜 License | 未指定 (NOASSERTION) |
+> | 💻 主要语言 | Rust |
+> | 📅 最后更新 | 2026-06-25 |
+> | 🔗 在线预览 | [GitHub Pages](https://lbjlaq.github.io/Antigravity-Manager/) |
+
+---
+
+## 学习目标
+
+- 理解 Antigravity Tools 在 AI 工具链中的定位（协议转换 + 账号管理）
+- 掌握三协议互转（OpenAI ↔ Anthropic ↔ Gemini）的配置方法
+- 学会设计账号分发策略（轮询、权重、429 自动切换）
+- 能为团队场景设计高可用部署方案（Docker + 多实例）
+- 识别系统的适用边界（个人开发 vs 团队生产）
+
+---
+
+## 目录
+
+- [快速信息卡](#快速信息卡)
+- [学习目标](#学习目标)
+- [一句话判断](#一句话判断)
+- [它解决什么问题](#它解决什么问题)
+- [总览地图](#总览地图)
+- [项目数据](#项目数据)
+- [安装指南](#安装指南)
+- [核心功能详解](#核心功能详解)
+- [任务流案例](#任务流案例一次请求如何流过系统)
+- [快速接入示例](#快速接入示例)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [常见问题](#常见问题)
+
+---
+
 ## 一句话判断
 
 Antigravity Tools 把 Google Gemini 与 Anthropic Claude 的 Web Session 转成标准 API 接口，并在前面加了一层多账号轮换、协议转换和模型路由。它适合个人开发者在合规可控的前提下，把分散的 Web 配额聚合成一个稳定的本地 API 端点；不适合作为团队生产环境的合规通道，因为 Web Session 转 API 本身就走在厂商服务条款的灰色地带。
@@ -371,3 +414,75 @@ brew install --cask --no-quarantine antigravity-tools
 **风险提示：**
 
 把 Web Session 转成 API 调用，本质上是在绕过厂商的 API 付费通道，可能违反服务条款。个人开发调试场景风险可控；团队生产环境建议评估合规性后再决定，或直接走官方付费 API。
+
+---
+
+## 自测题
+
+1. **Antigravity Tools 的三条并行机制是什么？各自解决什么问题？**
+   - 参考答案：协议转换（解决客户端协议不匹配）、账号分发（解决多账号配额管理）、模型路由（解决模型 ID 映射）。三条机制互相独立，配置时分别调整。
+
+2. **为什么 Antigravity Tools 适合个人开发但不适合团队生产环境？**
+   - 参考答案：个人开发场景风险可控，且能充分利用免费配额；团队生产环境需要合规保障和 SLA，而 Web Session 转 API 走在服务条款灰色地带，且依赖 Web Session 的稳定性。
+
+3. **如果你配置了一个 Claude Code 客户端，想让它通过 Antigravity 调用 Gemini 上游，需要配置哪些部分？**
+   - 参考答案：1) 协议转换层（Anthropic → Gemini）；2) 模型路由表（把 claude-sonnet-4 映射到 gemini-3-pro-high）；3) 账号分发策略（选择哪个 Google 账号的配额）。
+
+4. **429 自愈机制的工作流程是什么？对客户端有什么影响？**
+   - 参考答案：当请求返回 429 时，账号分发器立即切换到下一个可用账号重试，整个过程对客户端透明（客户端收到正常响应，不知道后端换了账号）。
+
+5. **Docker 部署时，`API_KEY` 和 `WEB_PASSWORD` 的区别是什么？**
+   - 参考答案：`API_KEY` 是客户端调用 API 时的鉴权凭据；`WEB_PASSWORD` 是登录管理界面的密码。两者应该分开设置，避免把管理界面密码暴露给客户端。
+
+---
+
+## 进阶路径
+
+### 阶段一：基础接入（1 周）
+- 目标：跑通单账号接入，验证客户端兼容性
+- 行动：安装桌面版，添加一个 Google 账号，配置 Claude Code 环境变量，发送测试请求
+- 验收：能成功通过 Antigravity 调用 Gemini API，并在 Claude Code 中看到响应
+
+### 阶段二：多账号与路由（2-4 周）
+- 目标：配置多账号轮换和模型路由，提升可用性
+- 行动：添加 2-3 个账号，配置模型路由表，模拟 429 场景验证自动切换
+- 验收：单账号配额耗尽时，系统自动切换到下一个账号，客户端无感知
+
+### 阶段三：Docker 部署与生产化（1 个月）
+- 目标：迁移到 Docker 部署，配置监控和告警
+- 行动：编写 docker-compose.yml，配置日志收集，设置资源限制，配置健康检查
+- 验收：Docker 容器稳定运行 7×24 小时，日志可查，资源占用可控
+
+### 阶段四：二次开发与生态集成（长期）
+- 目标：基于 Antigravity 的协议转换能力，开发自己的工具或集成到现有系统
+- 行动：阅读 Axum Server 的源码，理解协议转换层的实现，尝试添加自定义协议支持
+- 验收：能修改或扩展 Antigravity 的功能，并提交 PR 到官方仓库
+
+**进阶资源**：
+- [Antigravity Manager GitHub 仓库](https://github.com/lbjlaq/Antigravity-Manager)
+- [Antigravity Tools LSP 项目](https://github.com/lbjlaq/Antigravity-Tools-LS)
+- [Tauri v2 官方文档](https://v2.tauri.app/)
+- [Axum Web 框架](https://docs.rs/axum/latest/axum/)
+
+---
+
+## 常见问题
+
+### Q1: Antigravity Tools 和直接购买官方 API 有什么区别？
+**A**: Antigravity Tools 利用 Web Session 的免费配额，适合个人开发调试；官方 API 按调用量付费，有 SLA 保障，适合生产环境。两者定位不同，不是替代关系。
+
+### Q2: Web Session 会过期吗？过期后怎么办？
+**A**: 会过期。Antigravity 会在请求失败时自动标记为异常，你需要重新授权刷新 Session。建议定期检查和刷新 Session，避免使用时才发现问题。
+
+### Q3: 支持团队多人共享一个 Antigravity 实例吗？
+**A**: 技术上可以（部署 Docker 版本，多人用同一个 API Base URL），但需要注意：1) 配额是共享的；2) Web Session 转 API 可能违反服务条款；3) 日志里会混杂多人的请求。团队场景建议评估合规性。
+
+### Q4: 如何调试协议转换问题？
+**A**: 开启 Axum Server 的日志（设置 `RUST_LOG=debug`），查看请求/响应的原始报文。也可以用 curl 直接发请求到 Antigravity 的端点，对比上游 API 的响应格式。
+
+### Q5: 能在生产环境用 Antigravity 节省 API 成本吗？
+**A**: 不建议。生产环境需要稳定的 SLA 和合规保障，Web Session 转 API 的稳定性和合规性都无法保证。Antigravity 适合个人开发调试，生产环境应该走官方付费 API。
+
+---
+
+🦞

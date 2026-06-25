@@ -8,6 +8,25 @@ categories: ["技术笔记"]
 tags: ["MLX", "Apple Silicon", "VLM", "视觉语言模型", "本地AI", "Mac"]
 ---
 
+## 速查信息卡
+
+> **MLX-VLM** v0.4.4 · [GitHub](https://github.com/Blaizzy/mlx-vlm) · Stars: 5,092+ · Forks: 647+ · License: MIT
+>
+> **一句话定位**：在 Apple Silicon Mac 上本地运行视觉语言模型（VLM）的推理与微调框架，利用统一内存架构跑大模型。
+>
+> **核心特性**：
+> - 🖼️ 多模态输入（图片/音频/视频）
+> - ⚡ Vision Feature Cache 加速多轮对话
+> - 💾 TurboQuant KV Cache 量化（128K 上下文从 24GB → 8GB）
+> - 🔧 LoRA/QLoRA 微调支持
+> - 🌐 OpenAI Chat Completions API 兼容
+>
+> **最低配置**：macOS 12.0+ / Apple Silicon (M1/M2/M3/M4) / 16GB+ 统一内存
+>
+> **最后核实**：2026-04（本文数据基于该时间点的 GitHub 仓库信息）
+
+---
+
 ## 学习目标
 
 读完本文后，你应该能够：

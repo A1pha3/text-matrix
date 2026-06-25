@@ -13,7 +13,14 @@ tags: ["Claude", "Anthropic", "AI Agent", "金融服务", "MCP"]
 > **资料基线**：本文以 [anthropics/financial-services](https://github.com/anthropics/financial-services) 仓库 README、managed-agent-cookbooks 目录说明和若干 agent guardrail 文档为准，并比对仓库最新主干内容做了事实校验。仓库内容会随版本更新，文中涉及的 agent 数量、skill 数量、连接器数量以本文写作时（2026 年 5 月）的主干为准，后续可能变化
 > **预计阅读时间**：22 - 30 分钟
 
-读完后你能判断的几件事：
+> **快速信息卡**
+> - **Stars**: 32,495+
+> - **Forks**: 4,709+
+> - **License**: Apache-2.0
+> - **语言**: Python
+> - **最后更新**: 2026-06-25
+
+**学习目标**：读完后你能判断的几件事：
 - 仓库、Cowork 插件发布源、Managed Agent（托管智能体）模板这三层的边界分别在哪
 - 你的团队该直接装命名 agent，还是只装一块 vertical plugin
 - 这个仓库能产出哪些分析产物，又有哪些合规和操作底线绝对不能碰
@@ -315,3 +322,28 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 - [Claude Managed Agents API 文档](https://platform.claude.com/docs/en/api/managed-agents)
 - [Claude Cowork 产品页](https://claude.com/product/cowork)
 - [Model Context Protocol (MCP) 规范](https://modelcontextprotocol.io/)
+
+---
+
+## 进阶路径
+
+### 阶段一：分析师试用（1-2 周）
+- 在 Cowork 装一个命名 agent（如 Pitch Agent 或 Market Researcher）
+- 确认团队是否真的需要这种工作流入口
+- 只使用 Standalone 模式，不接 MCP 连接器
+
+### 阶段二：验证命令和技能（2-4 周）
+- 在 Claude Code 装 `financial-analysis` 和一个对应 vertical plugin
+- 确认 slash commands、skills 和 connectors 是否符合实际工作习惯
+- 测试 `/validate` 的方法论审查是否帮到团队
+
+### 阶段三：接入数据源（1-3 个月）
+- 配置 MCP 连接器（FactSet、CapIQ、Snowflake 等）
+- 设置环境变量（`CAPIQ_MCP_URL`、`DALOPRA_MCP_URL`、`FACTSET_MCP_URL` 等）
+- 跑通完整工作流（从触发到产出）
+
+### 阶段四：生产部署（3 个月+）
+- 看 `managed-agent-cookbooks/`，把工作流接进审批、调度、事件系统
+- 补齐编排层（Temporal / Airflow / 事件总线）
+- 建立 guardrails 和人工审核节点
+

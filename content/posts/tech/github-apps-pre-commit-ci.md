@@ -12,6 +12,34 @@ tags = ['GitHub', 'DevOps', '代码质量', '工具']
 
 > lint、format、type-check……每次提交前要跑一堆检查？pre-commit-ci 把这些全部自动化——不用本地配置，不用担心团队成员跳过检查，每次 PR 都自动跑，在合并之前就堵住代码质量问题。
 
+## 学习目标
+
+读完本文后，你应该能够：
+
+- 理解 pre-commit-ci 解决的核心问题：为什么需要把 pre-commit hooks 的执行从本地搬到云端 CI
+- 区分 pre-commit-ci 和传统本地 pre-commit 的异同（执行依赖、配置同步、强制执行）
+- 配置 `.pre-commit-ci.yaml` 和 `.pre-commit-config.yaml`，包括自动更新 hook 版本
+- 启用自动修复 PR 功能，让格式化问题自动生成修复 PR
+- 将 pre-commit-ci 与 GitHub Actions、Branch Protection Rules 配合，构建完整的代码质量门禁
+
+---
+
+## 目录
+
+- [一、什么是 pre-commit-ci](#一什么是-pre-commit-ci)
+- [二、主要功能](#二主要功能)
+- [三、安装与配置](#三安装与配置)
+- [四、与 GitHub Actions 配合](#四与-github-actions-配合)
+- [五、自动修复 PR 示例](#五自动修复-pr-示例)
+- [六、团队使用实践建议](#六团队使用实践建议)
+- [七、为什么需要 pre-commit-ci](#七为什么需要-pre-commit-ci)
+- [八、常见问题](#八常见问题)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶阅读路径](#进阶阅读路径)
+
+---
+
 ## 一、什么是 pre-commit-ci
 
 [pre-commit-ci](https://github.com/apps/pre-commit-ci) 是 GitHub 官方出品的 GitHub App，专门为 [pre-commit](https://pre-commit.com/) 生态提供云端 CI 执行能力。
@@ -254,6 +282,96 @@ pre-commit-ci 是专门的 GitHub App，提供自动更新、修复 PR 等高级
 **Q: 私有仓库可以免费使用吗？**
 
 pre-commit-ci 对公开仓库免费，私有仓库需要付费计划。具体定价查看 [GitHub Marketplace](https://github.com/marketplace/pre-commit-ci)。
+
+---
+
+## 自测题
+
+回答下面 5 个问题，检验你对 pre-commit-ci 的理解：
+
+1. pre-commit-ci 和传统本地 pre-commit 的核心区别是什么？为什么需要把 hooks 执行搬到云端？
+2. pre-commit-ci 的自动更新功能是怎么工作的？它解决了什么问题？
+3. 如果你开启了自动修复 PR（autofix），当 `ruff format` 发现格式问题时会发生什么？
+4. 如何将 pre-commit-ci 与 GitHub Branch Protection Rules 配合，确保不符合质量标准的代码无法合并？
+5. pre-commit-ci 和 GitHub Actions 的关系是什么？它们是否是替代关系？
+
+3 题以上答不准的话，建议重看"主要功能"和"为什么需要 pre-commit-ci"两节。
+
+<details>
+<summary>参考答案</summary>
+
+**题 1**：核心区别是执行环境和强制执行机制。本地 pre-commit 依赖开发者本地环境配置，可能被跳过；pre-commit-ci 在云端隔离环境执行，无法绕过。需要搬到云端的原因：确保团队中所有 PR 都经过一致的检查，且 hook 版本始终保持最新。
+
+**题 2**：自动更新功能会定期（如每周一）检查 `.pre-commit-config.yaml` 中配置的 hooks 是否有新版本，如果有则自动发起一个更新 PR。解决了手动更新 hooks 版本繁琐的问题，确保团队始终使用最新的代码质量检查工具。
+
+**题 3**：pre-commit-ci 会自动创建一个修复 PR（分支名类似 `pre-commit-ci/autofix/xxx`），其中包含自动格式化的改动。你只需要审查并合并这个 PR，而不需要手动运行 `ruff format`。
+
+**题 4**：在 GitHub Branch Protection Rules 中配置 `require_status_checks: true`，并添加 `pre-commit-ci/patch` 到 required status checks 列表。这样，只有 pre-commit-ci 检查通过的 PR 才能合并。
+
+**题 5**：不是替代关系，是互补关系。pre-commit-ci 专门负责代码质量检查（lint、format、type-check），而 GitHub Actions 负责完整的 CI/CD（测试、构建、部署）。两者可以很好地配合，在 GitHub Actions workflow 中调用 pre-commit-ci。
+
+</details>
+
+---
+
+## 练习
+
+### 练习一：配置一个基础的 pre-commit-ci 环境
+
+**目标**：在一个测试仓库中配置 pre-commit-ci，确保每次 PR 都自动运行 pre-commit hooks。
+
+**步骤**：
+
+1. 在 GitHub 上创建一个测试仓库
+2. 安装 pre-commit-ci App（从 [GitHub Marketplace](https://github.com/marketplace/pre-commit-ci)）
+3. 在仓库中添加 `.pre-commit-config.yaml`（可以参考本文"安装与配置"一节中的示例）
+4. 创建一个测试 PR，观察 pre-commit-ci 是否自动运行
+5. 故意提交一个包含 trailing whitespace 的文件，验证检查是否生效
+
+**通过标准**：PR 状态显示为失败，且错误信息明确指出是哪个 hook 失败。
+
+### 练习二：启用自动更新并观察更新 PR
+
+**目标**：配置 pre-commit-ci 的自动更新功能，观察它如何自动更新 hook 版本。
+
+**提示**：
+
+- 在 `.pre-commit-ci.yaml` 中配置 `update.enabled: true` 和 `update.schedule: weekly`
+- 等待一周（或手动触发）观察是否自动生成更新 PR
+- 审查更新 PR 的内容，理解它更新了什么
+
+**通过标准**：成功收到自动更新 PR，且 PR 内容正确反映了 hook 版本的更新。
+
+### 练习三：配置 Branch Protection 确保质量门禁
+
+**目标**：配置 GitHub Branch Protection Rules，确保不符合质量标准的代码无法合并。
+
+**提示**：
+
+- 进入仓库 Settings → Branches → Add rule
+- 勾选 "Require status checks to pass before merging"
+- 添加 `pre-commit-ci/patch` 到 required status checks
+- 创建一个新的 PR，故意让 pre-commit-ci 检查失败，观察是否无法合并
+
+**通过标准**：pre-commit-ci 检查失败时，GitHub 阻止 PR 合并，并提示"Required status check failed"。
+
+---
+
+## 进阶阅读路径
+
+按这个顺序深入，每步解决一个具体问题：
+
+1. **[pre-commit 官方文档](https://pre-commit.com/)**（先读）。如果你想理解"hooks 是怎么工作的"、"如何写自己的 hook"、"可用的 hooks 有哪些"，这是起点。pre-commit-ci 建立在 pre-commit 之上，不理解 pre-commit 就很难深入理解 pre-commit-ci 的高级配置。
+
+2. **[pre-commit-ci 官方文档](https://pre-commit-ci.com/)**（第二读）。当你想查"某个高级功能怎么配置"、"自动修复 PR 的详细行为"、"与 GitHub Enterprise 的兼容性"时，这是最权威的来源。
+
+3. **[GitHub Branch Protection 文档](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches)**（第三读）。当你想理解"如何构建完整的代码质量门禁"、"Required status checks 的高级用法"、"与 CODEOWNERS 的配合"时，读这个。
+
+4. **[Ruff 文档](https://docs.astral.sh/ruff/)**（可选，如果你用 Ruff 做 Python linting/formatting）。当你想理解"Ruff 的规则集"、"如何配置 Ruff 的 pre-commit hook"、"fix 和 format 的区别"时，读这个。
+
+5. **[Awesome Pre-commit Hooks](https://github.com/pre-commit/awesome-pre-commit)**（可选，当你想发现更多有用的 hooks）。当你想"给团队配置更多代码质量检查"、"寻找特定语言的 hooks"时，参考这个列表。
+
+---
 
 ## 小结
 

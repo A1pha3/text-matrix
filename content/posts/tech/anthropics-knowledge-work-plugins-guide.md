@@ -18,7 +18,14 @@ author: 钳岳星君
 
 当成聊天机器人用，这个仓库像一组模板；当成工作界面用，它更接近一套岗位操作系统的起点。
 
-读完这篇文章，可以回答：
+> **快速信息卡**
+> - **Stars**: 21,926+
+> - **Forks**: 2,559+
+> - **License**: Apache-2.0
+> - **语言**: Python
+> - **最后更新**: 2026-06-25
+
+**学习目标**：读完这篇文章，可以回答——
 
 - `knowledge-work-plugins` 到底是插件市场，还是一堆 prompt 模板。
 - 它和 MCP、Claude Cowork、Claude Code 分别是什么关系。
@@ -261,3 +268,68 @@ claude plugin install sales@knowledge-work-plugins
 - 插件入口：[claude.com/plugins](https://claude.com/plugins/)
 - Claude Cowork：[claude.com/product/cowork](https://claude.com/product/cowork)
 - Claude Code：[claude.com/product/claude-code](https://claude.com/product/claude-code)
+
+**目录**
+- [一句话判断](#一句话判断)
+- [先看结论：它解决的是工作流太散](#先看结论它解决的是工作流太散)
+- [四层结构地图：插件mcpclaude-coworkcode](#四层结构地图插件mcpclaude-coworkcode)
+- [仓库里现在有什么](#仓库里现在有什么)
+- [这些插件到底由什么组成](#这些插件到底由什么组成)
+- [任务流案例：一次销售-call-prep-怎么走完插件](#任务流案例一次销售-call-prep-怎么走完插件)
+- [怎么安装](#怎么安装)
+- [如果你要落地，第一刀通常改哪里](#如果你要落地第一刀通常改哪里)
+- [一个具体例子：为什么-enterprise-search-很像下一代企业搜索](#一个具体例子为什么-enterprise-search-很像下一代企业搜索)
+- [它最适合谁](#它最适合谁)
+- [它的边界也很明确](#它的边界也很明确)
+- [第一次上手，建议这样走](#第一次上手建议这样走)
+- [常见问题](#常见问题)
+- [自测问题](#自测问题)
+- [最后判断](#最后判断)
+- [相关链接](#相关链接)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
+
+---
+
+## 自测题
+
+1. **`knowledge-work-plugins` 到底是插件市场，还是一堆 prompt 模板？**  
+   → 它是一组面向具体岗位的 Claude 插件样板。它把技能说明、命令入口和 MCP 连接方式整理成文件化结构，让你不必每次都从空白对话开始教 Claude 怎么做销售调研、数据分析、法务初审或企业搜索。
+
+2. **它和 MCP、Claude Cowork、Claude Code 分别是什么关系？**  
+   → 插件告诉 Claude 该做什么，MCP 告诉 Claude 能访问什么，Cowork 和 Code 是两套运行时承载这套插件机制。  
+
+3. **11 个官方插件按什么思路划分，适合先从哪一个试起？**  
+   → 按岗位划分（生产力、销售、客服、产品、法务、财务、数据等）。个人用户从 `productivity` 开始，销售团队从 `sales` 开始，工程团队从 `engineering` 开始。  
+
+4. **如果你想把它接进自己的团队流程，第一步应该先改哪里？**  
+   → 先改 `.mcp.json`，把连接器换成你们真的在用的系统。再改 `skills/`，把团队术语、审批边界和输出格式写进去。最后才补 `commands/`。  
+
+5. **`enterprise-search` 为什么很像下一代企业搜索？**  
+   → 它把"查询改写、跨源搜索、结果综合"这三步已经合并进同一条工作流里。传统搜索只完成检索这一步，剩下的综合判断还要人来做。  
+
+---
+
+## 进阶路径
+
+### 阶段一：个人验证（1-2 周）
+- 安装 `productivity` 插件，用 `/start` 初始化
+- 连续使用一周，打开 TASKS.md 和 CLAUDE.md 看看里面长了什么
+- 如果两份文件比你自己的任务清单更准更全，就继续。如果没有，卸载。
+
+### 阶段二：团队试用（2-4 周）
+- 产品团队：每个人装 `productivity` 管自己的任务，PM 装 `product-management`
+- 工程团队：装 `engineering`（优先配 GitHub/GitLab MCP）
+- 数据分析团队：装 `data`（配数据仓库 MCP）
+
+### 阶段三：定制化（1-3 个月）
+- 改 `.mcp.json`，把连接器换成你们真的在用的系统
+- 改 `skills/`，把团队术语、审批边界和输出格式写进去
+- 添加自定义 `commands/`，把最高频、最稳定的动作做成固定入口
+
+### 阶段四：生态扩展（3 个月+）
+- fork 仓库，创建自定义插件
+- 使用 `cowork-plugin-management` 插件管理插件创建和定制
+- 把团队的工作流固化成可复用的插件，分享给更多团队
+

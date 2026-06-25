@@ -17,6 +17,31 @@ Anthropic Knowledge Work Plugins：把 AI 插件从写代码改成了写 Markdow
 
 **GitHub**: [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins)
 
+> **快速信息卡**
+> - **Stars**: 21,926+
+> - **Forks**: 2,559+
+> - **License**: Apache-2.0
+> - **语言**: Python
+> - **最后更新**: 2026-06-25
+
+**学习目标**：读完后你能回答——
+- Commands、Skills、MCP Connectors 三层各自的职责是什么，为什么这三层要分开控制
+- 11 个官方插件按什么思路划分，你的团队该从哪一个试起
+- 一个完整的任务流（如 Pitch Agent）从触发到产出经历了什么，哪些环节必须人工审核
+- 怎么把这个仓库接进自己的团队流程——先改哪一层，后改哪一层
+- 这个插件体系的设计判断有哪些可以迁移到别的行业
+
+**目录**
+- [一、三层结构：一次完整交互是怎么跑通的](#一三层结构一次完整交互是怎么跑通的)
+- [二、三个任务流：用具体案例把三层串起来](#二三个任务流用具体案例把三层串起来)
+- [三、11 个官方插件全景](#三11-个官方插件全景)
+- [四、三个代表性插件深度拆解](#四三个代表性插件深度拆解)
+- [五、五个设计模式](#五五个设计模式)
+- [六、采用指南](#六采用指南)
+- [七、这件事能活多久](#七这件事能活多久)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
 ---
 
 市面上大部分 AI 插件系统都在走同一条路：提供 SDK、定义 API、写胶水代码、打包、发布。Anthropic 这 11 个开源插件走的是另一条路——**零代码，纯 Markdown + JSON 驱动**。
@@ -372,3 +397,47 @@ claude plugin install productivity@knowledge-work-plugins
 ---
 
 *本文基于 GitHub [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) 公开信息撰写，数据截取至 2026-05-30。插件结构和功能细节来自仓库 README、plugin.json 和示例工作流。文中示例数据（如人名、项目代号、金额）为说明性内容，非真实业务数字。*
+
+---
+
+## 自测题
+
+1. **Commands、Skills、MCP Connectors 三层的控制者分别是谁？**  
+   → 用户（显式触发）、AI（上下文自动激活）、运维/开发者（配置文件绑定）
+
+2. **为什么三层要分开控制，而不是写成一个整体？**  
+   → 三层耦合在一起时，任何改动都需要跨角色协商，迭代速度会塌掉。分开后，团队可以独立改 Commands（交互流程），不碰 Skills；可以独立换 Connectors（换数据库、换 CRM），不碰 Commands 和 Skills。
+
+3. **产品团队的 PM 用 `/write-spec` 写一个功能 PRD，整个流程经历了什么？**  
+   → Command 启动 → Skill 注入（feature-spec）→ Connector 拉取上下文（Jira/Notion/Figma）→ 输出结构化 PRD
+
+4. **Standalone 模式和 Supercharged 模式的核心区别是什么？**  
+   → Skills 层逻辑不变，只是拿输入的方式不同。先 Standalone 跑起来验证知识逻辑，再接 Connectors。
+
+5. **什么时候不应该用这个插件体系？**  
+   → 团队还没有明确的角色分工和工作流；数据合规要求禁止 AI 访问生产数据库；工作内容高度非标、没有任何可模板化的部分。
+
+---
+
+## 进阶路径
+
+### 阶段一：个人验证（1-2 周）
+- 安装 `productivity` 插件，用 `/start` 初始化
+- 连续使用一周，打开 TASKS.md 和 CLAUDE.md 看看里面长了什么
+- 如果两份文件比你自己的任务清单更准更全，继续；如果没有，卸载
+
+### 阶段二：团队试用（2-4 周）
+- 产品团队：每个人装 `productivity` 管自己的任务，PM 装 `product-management`
+- 工程团队：装 `engineering`（优先配 GitHub/GitLab MCP）
+- 数据分析团队：装 `data`（配数据仓库 MCP）
+
+### 阶段三：定制化（1-3 个月）
+- 改 `.mcp.json`，把连接器换成你们真的在用的系统
+- 改 `skills/`，把团队术语、审批边界和输出格式写进去
+- 添加自定义 `commands/`，把最高频、最稳定的动作做成固定入口
+
+### 阶段四：生态扩展（3 个月+）
+-  fork 仓库，创建自定义插件
+- 使用 `cowork-plugin-management` 插件管理插件创建和定制
+- 把团队的工作流固化成可复用的插件，分享给更多团队
+

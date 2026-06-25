@@ -9,6 +9,18 @@ categories: ["技术笔记"]
 tags: ["AI", "LLM", "金融", "Python"]
 ---
 
+## 学习目标
+
+读完本文后，你应该能够：
+
+- 理解 daily_stock_analysis 解决的核心问题：为什么需要把整条分析链路跑成定时流水线
+- 解释四层架构（数据源层、处理层、AI 决策层、推送层）如何协作
+- 配置 GitHub Actions 零成本部署，包括 Secrets 配置和定时任务
+- 使用 Web 工作台进行手动分析、历史回溯和回测
+- 判断 15 种策略 Agent 的适用场景，并能配置多策略并行分析
+
+---
+
 ## 目录
 
 - [这套系统真正解决的问题](#这套系统真正解决的问题)
@@ -400,6 +412,22 @@ Agent 的底层是一个有状态的多轮对话系统：
 3. **配置回测**：对过去 30 天的分析结果做回测，确认信号有效性。回测输出的胜率低于 50%，说明当前策略组合不适合你的股票池，需要调整。
 4. **根据回测结果调整策略组合**：不同策略在不同市场环境下的表现差异很大，不要 15 种全开。A 股和美股适用的策略不同——A 股更适合资金流和筹码策略，美股更适合期权和成长策略。
 5. **考虑 AlphaSift + AlphaEvo 联动**：如果需要选股和策略进化，项目作者还有两个同系列项目——AlphaSift（多因子选股）和 AlphaEvo（策略回测与自我进化），可以组合使用。
+
+---
+
+## 进阶阅读路径
+
+按这个顺序深入，每步解决一个具体问题：
+
+1. **[daily_stock_analysis 源码](https://github.com/ZhuLinsen/daily_stock_analysis)**（先读）。如果你想理解"Pipeline 具体怎么实现的"、"Agent 怎么编排的"，这是起点。重点关注 `pipeline/` 和 `agent/` 两个目录。
+
+2. **[LiteLLM 文档](https://docs.litellm.ai/)**（第二读）。当你想理解"统一路由是怎么做的"、"如何配置多个 LLM 渠道的负载均衡"时，读这个。daily_stock_analysis 的 LLM 调用全部通过 LiteLLM，不理解它就很难定制模型配置。
+
+3. **[Anspire AI Search 文档](https://docs.anspire.ai/)**（可选，如果你用 Anspire 做新闻搜索）。当你想理解"搜索结果怎么融入 Prompt"、"如何优化搜索 Query 提高新闻质量"时，读这个。
+
+4. **[AlphaSift](https://github.com/ZhuLinsen/AlphaSift)**（可选，如果你需要选股）。daily_stock_analysis 的作者同时维护了多因子选股项目 AlphaSift，两者可以组合使用——AlphaSift 负责选股，daily_stock_analysis 负责分析。
+
+5. **[AlphaEvo](https://github.com/ZhuLinsen/AlphaEvo)**（可选，如果你需要策略进化）。策略回测与自我进化项目，适合已经有回测数据、想让系统自动优化策略参数的场景。
 
 ---
 

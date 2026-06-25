@@ -9,10 +9,44 @@ draft: false
 categories: ["技术笔记"]
 tags: ["3D重建", "Gaussian-Splatting", "Rust", "WebGPU", "Burn", "开源"]
 ---
+ 
+## 快速信息卡
 
-# Brush: 一个跨平台的 Gaussian Splatting 3D 重建引擎
+| 项目 | 信息 |
+|------|------|
+| **Stars** | 4,755+ |
+| **Forks** | 273+ |
+| **许可证** | Apache-2.0 |
+| **语言** | Rust |
+| **仓库** | [ArthurBrussee/brush](https://github.com/ArthurBrussee/brush) |
 
-最近在 GitHub Trending 上看到一个挺有意思的项目——[Brush](https://github.com/ArthurBrussee/brush)，一个用 Rust 写的 3D 重建引擎，截至目前已收获 **4,403 Stars** 和 236 个 Forks。项目的 slogan 很直接：**3D Reconstruction for all**——想做一个人人都能用的 3D 重建工具。
+最近在 GitHub Trending 上看到一个挺有意思的项目——[Brush](https://github.com/ArthurBrussee/brush)，一个用 Rust 写的 3D 重建引擎。
+
+## 学习目标
+
+阅读本文后，你将能够：
+
+1. **理解 Brush 的技术定位**，掌握其基于 Gaussian Splatting 的 3D 重建原理
+2. **解释 Brush 的跨平台实现方式**，包括 Rust + Burn 框架的技术选型理由
+3. **在本地运行 Brush**，包括安装依赖、准备训练数据、启动 CLI 和查看器
+4. **使用 Brush 进行 3D 重建**，包括数据格式选择、训练参数配置、实时预览
+5. **集成 Brush 到自己的项目**，包括作为库使用、WebGPU 渲染、移动端部署
+6. **判断 Brush 是否适合你的场景**，包括质量、性能、跨平台需求评估
+
+## 目录
+
+- [项目定位与背景](#项目定位与背景)
+- [核心特性](#核心特性)
+- [技术栈分析](#技术栈分析)
+- [安装与配置](#安装与配置)
+- [训练与查看](#训练与查看)
+- [CLI 工具](#cli-工具)
+- [可视化集成](#可视化集成)
+- [常见问题](#常见问题)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
+---
 
 ## 项目定位与背景
 
@@ -126,6 +160,79 @@ README 提到渲染和训练速度"generally faster than gsplat"（通常优于 
 - WebGPU 浏览器支持有限，非 Chrome 浏览器暂时用不了 Web 版本
 - Android 端构建流程相对复杂，需要同时管理 Rust (cargo-ndk) 和 Gradle 两套工具链
 - 项目明确声明不是 Google 官方产品，线上生产使用需要自己承担风险
+
+## 自测题
+
+### 基础概念
+
+**问题 1**：Brush 基于什么技术实现 3D 重建？它相比 NeRF 家族有什么优势？
+
+<details>
+<summary>参考答案</summary>
+
+Brush 基于 Gaussian Splatting 技术实现 3D 重建。相比 NeRF 家族，Gaussian Splatting 通过海量高斯分布来表达场景，可以在保持较高重建质量的同时实现实时渲染。
+
+</details>
+
+**问题 2**：Brush 的技术栈选型是什么？为什么选择这套技术栈？
+
+<details>
+<summary>参考答案</summary>
+
+Brush 的核心开发语言是 Rust，ML 框架选用了 Burn（一个纯 Rust 实现、跨平台支持的深度学习框架）。这个技术组合直接决定了 Brush 最重要的特性：**跨平台、零依赖部署**。
+
+</details>
+
+### 实践操作
+
+**问题 3**：你需要在本地运行 Brush 进行 3D 重建，需要准备哪些依赖和步骤？
+
+<details>
+<summary>参考答案</summary>
+
+依赖：
+- Rust 工具链（cargo）
+- Burn 框架依赖
+- 训练数据：COLMAP 格式或 Nerfstudio 格式
+
+步骤：
+1. 克隆仓库：`git clone https://github.com/ArthurBrussee/brush.git`
+2. 准备训练数据
+3. 运行训练：`cargo run --release -- train --data-path <path>`
+4. 实时预览：添加 `--with-viewer` 参数
+
+</details>
+
+**问题 4**：Brush 支持哪些平台？WebGPU 渲染需要什么环境？
+
+<details>
+<summary>参考答案</summary>
+
+支持平台：
+- 桌面端：macOS、Windows、Linux
+- GPU：AMD、Nvidia、Intel 显卡均支持
+- 移动端：Android
+- 浏览器：通过 WebGPU 运行（需要 Chrome 134+）
+
+WebGPU 渲染需要 Chrome 134+ 浏览器。
+
+</details>
+
+**问题 5**：你正在评估是否在生产环境使用 Brush，应该考虑哪些因素？
+
+<details>
+<summary>参考答案</summary>
+
+需要考虑：
+1. **性能**：README 提到的性能数据是项目自述，没有统一硬件环境下的公开第三方对比
+2. **稳定性**：项目非常活跃（最新 release v0.3.0，但 commit 频率高），可能还在快速迭代
+3. **浏览器支持**：WebGPU 目前只有 Chrome 支持
+4. **移动端构建**：Android 端需要同时管理 Rust (cargo-ndk) 和 Gradle 两套工具链
+5. **许可证**：Apache-2.0，适合商业使用
+
+</details>
+
+---
 
 ## 总结
 

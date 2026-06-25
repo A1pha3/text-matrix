@@ -18,16 +18,48 @@ AI 助手赛道上，功能强的依赖云端，隐私好的功能有限。**Ope
 
 OpenHuman 由 tinyhumansai 开发，用 Rust 构建性能和安全性，并基于一套独特的 **Memory Tree（记忆树）** + **Obsidian Wiki** 本地知识库架构来实现持久记忆。
 
+## 学习目标
+
+读完本文后，你应该能够：
+
+- 理解 OpenHuman 的核心主张：为什么"Context in minutes, not weeks"是重要的
+- 解释 Memory Tree + Obsidian Wiki 的双重记忆架构如何工作
+- 配置 OAuth 集成和 auto-fetch 自动数据同步
+- 针对你的硬件条件（是否有 GPU、内存大小）选择合适的部署方式
+- 判断 OpenHuman 是否适合你的使用场景（个人助理 vs 团队部署）
+
+---
+
+## 目录
+
+- [先给判断](#先给判断)
+- [项目速览](#项目速览)
+- [核心主张](#核心主张让-ai-在几分钟内了解你)
+- [系统架构](#系统架构)
+- [特色功能](#特色功能)
+- [与同类项目的对比](#与同类项目的对比)
+- [安装](#安装)
+- [已知局限](#已知局限)
+- [总结](#总结)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
+---
+
 ## 项目速览
 
 | 维度 | 内容 |
 |------|------|
 | 仓库 | [tinyhumansai/openhuman](https://github.com/tinyhumansai/openhuman) |
-| Stars | 3,750（截至 2026-05-13） |
+| Stars | 32,948+ |
+| Forks | 3,200+ |
 | 主要语言 | Rust |
-| 许可证 | GNU |
+| 许可证 | GNU GPL v3.0 |
 | 状态 | Early Beta（活跃开发中） |
+| 最后更新 | 2026-06-25 |
 | 安装 | macOS/Linux: `curl -fsSL https://raw.githubusercontent.com/tinyhumansai/openhuman/main/scripts/install.sh \| bash` |
+
+> **快速信息卡**：OpenHuman 是一个 Rust 构建的桌面 AI 助理，基于 Memory Tree 和 Obsidian Wiki 实现本地持久记忆，通过 OAuth 一键接入 118+ 第三方服务，内置 TokenJuice 智能压缩模型将 token 成本降低 80%。支持语音、Google Meet 会议参与，开源免费（GPL v3.0）。
 
 ## 核心主张：让 AI 在几分钟内了解你
 
@@ -149,6 +181,73 @@ irm https://raw.githubusercontent.com/tinyhumansai/openhuman/main/scripts/instal
 ## 总结
 
 OpenHuman 最明显的特点是用 **Rust + SQLite + Obsidian Markdown** 构建了一套"本地优先 + AI 可读 + 人类可读"三位一体的记忆系统，同时通过 auto-fetch 和 OAuth 集成把个人数据的采集自动化。对于希望 AI 真正了解自己日常工作上下文、而不是每次对话都要重新提供背景信息的用户，这是一个值得关注的思路。
+
+---
+
+## 自测题
+
+回答下面 5 个问题，检验你对 OpenHuman 的理解：
+
+1. OpenHuman 的核心主张是"Context in minutes, not weeks"。这句话解决的是什么实际问题？为什么传统 Agent 系统做不到这一点？
+
+2. Memory Tree + Obsidian Wiki 的双重记忆架构分别解决了什么问题？为什么需要两层？
+
+3. TokenJuice 智能 token 压缩层做了什么？它如何影响 AI 使用成本？
+
+4. OpenHuman 支持 118+ OAuth 集成。这对用户来说意味着什么？对比传统 Agent 系统需要手动配置 API Key 的方式，OpenHuman 的优势在哪里？
+
+5. 如果你要从"这个仓库值不值得继续读源码"的角度看 OpenHuman，你会关注哪几个设计决策？为什么？
+
+3 题以上答不准的话，建议重看"系统架构"和"核心主张"两节。
+
+<details>
+<summary>参考答案</summary>
+
+**题 1**：解决的是 Agent 系统需要几周数据积累才能了解用户上下文的问题。传统 Agent 系统每次对话都要重新提供背景信息，或者需要手动导入历史数据。OpenHuman 通过 auto-fetch 和 Memory Tree 在首次同步后就建立起完整的用户上下文。
+
+**题 2**：Memory Tree 负责压缩后的知识以层次化摘要树的形式存储在本地 SQLite 数据库中（AI 可查询的结构化数据）；Obsidian Wiki 负责同步生成 `.md` 文件到 Obsidian 兼容的 vault（人类可手动阅读和编辑）。需要两层是因为：AI 需要结构化的知识表示来高效查询，人类需要可读可编辑的 Markdown 文件来理解和管理知识。
+
+**题 3**：TokenJuice 在数据送入 LLM 之前进行处理：HTML → Markdown 转换、长 URL 缩短、非 ASCII 字符清理、重复内容去重。官方声称可降低 80% 的 token 使用量，同时保留核心信息。这直接减少了 API 调用成本。
+
+**题 4**：意味着用户可以通过一键 OAuth 授权接入 118+ 第三方服务，不需要写插件，不需要配置 API Key，所有授权在 OAuth 标准流程中完成。对比传统方式，OpenHuman 的优势是：零配置、自动更新、统一计费。
+
+**题 5**：会关注这几个决策：Rust 核心 vs TypeScript 桌面端（性能 vs 迭代速度）、Memory Tree 存储在 SQLite（本地优先）、OAuth 标准流程（安全性）、模型路由（成本优化）。因为这些决策决定了系统的性能、安全性和适用场景。
+
+</details>
+
+---
+
+## 进阶路径
+
+### 阶段 1：跑通基础功能（1-2 天）
+
+- 安装 OpenHuman 并完成首次配置
+- 接入 1-2 个 OAuth 服务（如 Gmail、Notion）
+- 观察 auto-fetch 如何工作，查看生成的 Obsidian Wiki 文件
+- 验证 Memory Tree 是否正确存储了你的上下文
+
+### 阶段 2：深度配置（3-5 天）
+
+- 配置模型路由，针对不同类型的任务分配不同的 LLM
+- 调整 TokenJuice 压缩参数，平衡成本和质量
+- 接入更多 OAuth 服务（GitHub、Slack、Calendar 等）
+- 阅读 Memory Tree 和 Obsidian Wiki 的源码，理解双重记忆架构的实现
+
+### 阶段 3：生产使用（1-2 周）
+
+- 在日常工作中实际使用 OpenHuman，观察它如何了解你的上下文
+- 配置 Google Meet 会议参与功能，体验语音交互
+- 如果遇到性能问题，调整 auto-fetch 频率或禁用某些数据源
+- 如果需要更高隐私保护，切换到本地 Ollama 模型
+
+### 阶段 4：源码研究（2-4 周）
+
+- 阅读 Rust 核心代码，理解 Memory Tree 和工具执行的实现
+- 阅读 TypeScript 桌面端代码，理解 UI 交互和集成层
+- 如果你有兴趣，可以尝试贡献代码或提交 PR
+- 思考：这个架构如何应用到你自己的项目中？
+
+---
 
 > **延伸阅读：**
 > - [OpenHuman 官方文档](https://tinyhumans.gitbook.io/openhuman/)

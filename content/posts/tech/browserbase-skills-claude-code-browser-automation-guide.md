@@ -10,31 +10,51 @@ tags: ["AI Agent", "Claude Code", "浏览器自动化", "Browserbase", "开源"]
 
 # Browserbase Skills：让 Claude Code 拥有浏览器自动化能力
 
-## 📋 本文覆盖内容
+## 快速信息卡
 
-- Browserbase Skills 的定位——将浏览器自动化能力注入 Claude Code
-- 10 个技能的用途与协作关系
-- 在 Claude Code 中安装和配置 Browserbase Skills
-- 本地模式与远程 Browserbase 云端模式的切换方式
-- site-debugger 和 browser-trace 的调试工作流
-- cookie-sync 和 ui-test 在实际场景中的应用
+| 项目 | 信息 |
+|------|------|
+| **Stars** | 2,131+ |
+| **Forks** | 134+ |
+| **许可证** | 未指定（待确认） |
+| **语言** | JavaScript |
+| **仓库** | [browserbase/browserbase-skills](https://github.com/browserbase/browserbase-skills) |
+
+**Browserbase Skills** 是一个开源的 Claude Agent SDK，通过官方 `bb` CLI 和一组结构化技能，让 Claude Code 能够与浏览器进行深度交互。
+
+## 学习目标
+
+阅读本文后，你将能够：
+
+1. **理解 Browserbase Skills 的定位**，掌握其如何通过 Browserbase 云服务解决反爬虫、CAPTCHA、内存占用等问题
+2. **区分 10 个核心技能的用途与协作关系**，判断每个技能适合的场景
+3. **在 Claude Code 中安装和配置 Browserbase Skills**，包括本地模式与远程云端模式的切换
+4. **使用 site-debugger 和 browser-trace 进行调试**，掌握调试工作流
+5. **在实战场景中应用 cookie-sync 和 ui-test**，解决实际自动化需求
+6. **判断自己的场景该使用本地模式还是云端模式**，并给出决策依据
+
+## 目录
+
+- [项目概述](#项目概述)
+  - [核心数据](#核心数据)
+  - [解决的问题](#解决的问题)
+- [技术架构](#技术架构)
+  - [整体架构](#整体架构)
+  - [两种运行环境](#两种运行环境)
+- [安装与配置](#安装与配置)
+  - [前置条件](#前置条件)
+  - [安装 Skills](#安装-skills)
+  - [Claude Code 专用安装](#claude-code-专用安装)
+  - [验证安装](#验证安装)
+- [10 个核心技能详解](#10-个核心技能详解)
+- [实战用例](#实战用例)
+- [调试与故障排除](#调试与故障排除)
+- [常见问题](#常见问题)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [相关资源](#相关资源)
 
 ---
-
-## 📖 项目概述
-
-**Browserbase Skills** 是一个开源的 Claude Agent SDK，通过官方 `bb` CLI 和一组结构化技能，让 Claude Code 能够与浏览器进行深度交互。与传统的无头浏览器方案不同，Browserbase Skills 构建在 Browserbase 云服务之上，提供了反爬虫规避、CAPTCHA 自动解决、住宅代理轮换等能力。
-
-### 核心数据
-
-| 指标 | 数值 |
-|------|------|
-| GitHub Stars | 2,131 |
-| Forks | 134 |
-| 主要语言 | JavaScript |
-| 创建时间 | 2025-10-12 |
-| 最新更新 | 2026-04-30 |
-| 许可证 | 尚未声明（私有仓库 fork 来的公开项目） |
 
 ### 解决的问题
 
@@ -484,6 +504,76 @@ browse cookie-sync --session-id <id>
 ### Q: ui-test 和普通单元测试的区别是什么？
 
 ui-test 是对抗式的、AI 驱动的端到端测试，不需要预先编写测试用例。普通单元测试需要开发者定义断言，ui-test 则由 AI 自主发现潜在问题，更适合探索性测试阶段。
+
+---
+
+## 自测题
+
+### 基础概念
+
+**问题 1**：Browserbase Skills 与传统无头浏览器方案（如 Playwright）的核心差异是什么？
+
+<details>
+<summary>参考答案</summary>
+
+Browserbase Skills 构建在 Browserbase 云服务之上，提供了反爬虫规避、CAPTCHA 自动解决、住宅代理轮换等能力。传统无头浏览器方案在本地运行，遇到 Cloudflare、Distil Networks 等反爬虫平台时容易被拦截。
+
+</details>
+
+**问题 2**：Browserbase Skills 支持哪两种运行模式？各自的适用场景是什么？
+
+<details>
+<summary>参考答案</summary>
+
+| 模式 | 触发方式 | 适用场景 |
+|------|---------|---------|
+| **本地模式** | `browse env local` | 开发调试、轻量任务、已有 Chrome 环境 |
+| **云端模式** | 默认/远程 | 反爬虫网站、需要代理、需要 Stealth 能力 |
+
+</details>
+
+### 实践操作
+
+**问题 3**：你需要在 Claude Code 中安装 Browserbase Skills，应该执行什么命令？
+
+<details>
+<summary>参考答案</summary>
+
+```bash
+# 通过 npm 安装
+npx skills add browserbase/skills
+
+# 或通过 Claude Code 专用安装
+/plugin marketplace add browserbase/skills
+/plugin install browse@browserbase
+```
+
+</details>
+
+**问题 4**：你正在调试一个被 Cloudflare 拦截的网站，应该使用哪个技能？这个技能能给你什么信息？
+
+<details>
+<summary>参考答案</summary>
+
+应该使用 `site-debugger` 技能。它能：
+1. 检测网站使用了哪些反爬虫机制（Cloudflare、Distil Networks 等）
+2. 生成 Playbook（配置文件），告诉你如何配置 Stealth 模式绕过检测
+3. 提供具体的 selectors、等待时间、请求头配置
+
+</details>
+
+**问题 5**：你需要让 Claude Code 在多个测试用例中保持登录态，应该使用哪个技能？具体步骤是什么？
+
+<details>
+<summary>参考答案</summary>
+
+应该使用 `cookie-sync` 技能。步骤：
+1. 在本地 Chrome 登录目标网站
+2. 运行 `browse cookie-sync --session-id <id>` 导出 Cookie
+3. 在远程 Browserbase 会话中加载 Cookie
+4. 后续任务自动使用登录态
+
+</details>
 
 ---
 

@@ -7,9 +7,21 @@ draft: false
 categories: ["技术笔记"]
 tags: ["Agent", "MCP", "A2A", "CRDT", "全栈框架"]
 ---
+ 
+## 快速信息卡
+
+| 项目 | 信息 |
+|------|------|
+| **Stars** | 2,260+ |
+| **Forks** | 218+ |
+| **许可证** | 未指定 |
+| **语言** | TypeScript |
+| **仓库** | [BuilderIO/agent-native](https://github.com/BuilderIO/agent-native) |
+
+agent-native 是 Builder.io 用来把自家 SaaS 改造成"Agent + UI 双形态"产品的底座。
 
 ## 学习目标
-
+ 
 读完本文后你应当能够：
 
 1. 说清 `defineAction` 为什么能让一个工作单元被 6 种入口消费，以及框架在运行时如何选择执行路径
