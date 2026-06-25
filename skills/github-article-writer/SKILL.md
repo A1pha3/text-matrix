@@ -63,16 +63,20 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 3. 脚本返回 `exit 1`（有已写）→ stdout 会列出"已写"的 repo + 命中文件路径，**必须**把这些 repo 从本轮写文章清单中**剔除**，只对脚本标记的"🆕 未写"列表动笔。
 4. 脚本返回 `exit 2`（路径错）→ 立即停下来检查工作区是否在 text-matrix 仓库内，不要在错误目录里继续。
 
-**3 重 grep 兜底原理**（`music-assistant/server` 漏判复盘，2026-06-16 23:20 师父拍板）：
+**4 重 grep 兜底原理**（`music-assistant/server` 漏判复盘，2026-06-16 23:20 师父拍板 + 6-25 单段 owner 过杀复盘，2026-06-25 16:02 师父拍板修复）：
 
-- **A 重 - owner 段模糊匹配**：`music-assistant` → 命中 `music-assistant-server-*.md`（处理 `/` vs `-` 不匹配）
-- **B 重 - owner-repo 拼接形式**：同时试 `music-assistant-server` 和大小写保留版
+- **A 重 - owner 段 basename 前缀匹配**（仅**多段 owner** 启用）：`music-assistant` → 命中 `music-assistant-server-*.md`（处理 `/` vs `-` 不匹配）；只在 basename 前缀匹配，不 grep 内容。单段 owner（flutter/microsoft）不启用，避免 `flutter-*.md` / `microsoft-*.md` 前缀过杀同 owner 未写的新 repo。
+- **B 重 - owner-repo 拼接形式**：同时试 `music-assistant-server` 和大小写保留版，grep 文件内容
 - **C 重 - git log --grep**：按 `owner/repo` 查 commit 标题
-- **D 重 - git log --grep owner 段**：补"模糊 commit 标题"（如 `LMCache + music-assistant`）
+- **D 重 - git log --grep owner 段**（仅**多段 owner** 启用）：补"模糊 commit 标题"（如 `LMCache + music-assistant`）。单段 owner 不启用，避免 git log 含 owner 字符串后过杀所有 owner/* 新 repo。
 
 任一命中即视为"已写过"，从本轮清单剔除。
 
+**6-25 修复历史**（2026-06-25 16:02）：原 A 重用 `grep -liE` 对文件内容匹配，单段 owner（如 `microsoft`）会过杀任何含 "Microsoft" 字符串的文章（如 `ace-step-ui-ai-music-generation-guide.md`），单段 owner（如 `flutter`）会过杀任何含 "Flutter" 字符串的文章（如 `flutter-skill-claude-code-gaokao-volunteer-guide.md`）。修复后 A 重只在**多段 owner**（含 `-` 的 owner，如 `music-assistant`）时启用，且只在 basename 前缀匹配，不 grep 内容。15:00 cron 47 个 trending repo 回归测试验证：修复前 47 个全判定已写（14 个过杀），修复后正确识别 33 个已写 + 14 个真未写。
+
 **历史教训**（2026-06-16 复盘）：6-13 trending daily 15:00 写过 `music-assistant/server`（`unified-music-hub-guide.md`），6-16 trending daily+weekly 15:00 **又**把它当"新 repo"写了一遍（`media-orchestration-guide.md`）。根因：6-16 子代理只查 git log，没在 `content/posts/tech/` 做全量 grep 兜底；`/` vs `-` 不匹配让 owner/repo grep 漏判。本 Step + 脚本彻底封死此类问题。
+
+**历史教训**（2026-06-25 复盘）：15:00 cron 抓 47 个 trending repo，dedup-check 全部判定"已写"（exit 1）。人工精确复核发现 3 个高价值过杀（microsoft/presidio / microsoft/Webwright / flutter/flutter）+ 11 个真未写。根因：A 重 grep 内容匹配 owner 字符串（microsoft/flutter 等单段 owner 过杀），D 重 git log --grep owner 字符串（单段 owner 过杀）。修复方案：方案 2.1（A 重 + D 重都只在多段 owner 启用）。详见 `~/.openclaw/workspace/docs/anomaly-decisions/trending-dedup-check-A-owner-segment-overkill-fix-2026-06-25.md` 呈报稿。
 
 ### Step 1: 仓库取证
 

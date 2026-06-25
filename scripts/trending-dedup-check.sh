@@ -80,10 +80,31 @@ for full in "${REPOS[@]}"; do
 
   hits=()
 
-  # 重 A：按 owner 段模糊匹配（处理 / vs -）
+  # 重 A：对多段 owner（含 -）启用 basename 前缀匹配，处理 / vs - 路径差异
   # 例如 owner=music-assistant 时，匹配 music-assistant-server-*.md
-  hit_a=$(grep -liE "(^|[^a-z0-9])${owner_lc}([^a-z0-9]|-)" content/posts/tech/*.md 2>/dev/null | head -3 || true)
-  [[ -n "$hit_a" ]] && hits+=("A:owner-segment")
+  # 单段 owner（如 flutter/microsoft）不走 A 重，避免过杀
+  # （flutter-* / microsoft-* 前缀会命中任何该 owner 下的文件，
+  #  包含还未写的同 owner 新 repo → 过杀）
+  # 6-25 fix: 原 A 重用 grep -liE 对内容匹配，会过杀含 owner 字符串的文章
+  # （如 'microsoft' 命中 ace-step-ui 等含 'Microsoft' 字符串的文章）。
+  # 现改为只对多段 owner 启用，且只在 basename 前缀匹配，不 grep 内容。
+  hit_a=""
+  if [[ "$owner_lc" == *-* ]]; then
+    for f in content/posts/tech/*.md; do
+      [[ -e "$f" ]] || continue
+      base=$(basename "$f" .md)
+      # 匹配 owner- 开头的 slug（slug 命名规律：owner-repo-description）
+      # 用 tr 不用 ${base,,}（macOS 默认 bash 3.2 不支持）
+      base_lc=$(echo "$base" | tr '[:upper:]' '[:lower:]')
+      if [[ "$base_lc" == "${owner_lc}-"* ]]; then
+        hit_a+="${f}"$'\n'
+        # 收集到 3 个就停
+        [[ $(printf '%s' "$hit_a" | grep -c .) -ge 3 ]] && break
+      fi
+    done
+    hit_a=$(printf '%s' "$hit_a" | head -3 | grep -v '^$' || true)
+    [[ -n "$hit_a" ]] && hits+=("A:multi-segment-owner-prefix")
+  fi
 
   # 重 B：按 owner-repo 拼接形式匹配（同时试 - 和 /）
   hit_b1=$(grep -lF "$owner_dash_repo" content/posts/tech/*.md 2>/dev/null | head -3 || true)
@@ -95,9 +116,15 @@ for full in "${REPOS[@]}"; do
   hit_c=$(git log --all --oneline --grep="${full}" 2>/dev/null | head -1 || true)
   [[ -n "$hit_c" ]] && hits+=("C:git-log-grep")
 
-  # 重 D：commit 标题中含 owner 段（处理 6-13/6-14 那种 "LMCache + music-assistant" 模糊标题）
-  hit_d=$(git log --all --oneline --grep="$owner" 2>/dev/null | head -1 || true)
-  [[ -n "$hit_d" ]] && hits+=("D:git-log-owner")
+  # 重 D：对多段 owner（含 -）启用 commit 标题模糊匹配
+  # 处理 6-13/6-14 那种 "LMCache + music-assistant" 模糊标题
+  # 单段 owner 不走 D 重（flutter/microsoft 已写过 → git log 含 flutter/microsoft
+  # 字符串 → 会过杀所有 owner/* 新 repo）
+  hit_d=""
+  if [[ "$owner_lc" == *-* ]]; then
+    hit_d=$(git log --all --oneline --grep="$owner" 2>/dev/null | head -1 || true)
+    [[ -n "$hit_d" ]] && hits+=("D:multi-segment-owner")
+  fi
 
   if [[ ${#hits[@]} -gt 0 ]]; then
     WRITTEN_REPOS+=("$full")
