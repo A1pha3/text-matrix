@@ -325,6 +325,25 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 ---
 
+## 自测题
+
+1. **插件系统的三层结构（plugins/、external_plugins/、marketplace.json 远程插件）分别是什么？**
+   - 参考答案：plugins/ 是 Anthropic 官方维护的插件；external_plugins/ 是第三方合作插件（经审核）；marketplace.json 远程插件是第三方插件（指向外部 Git 仓库）
+
+2. **Pitch Agent 的工作流里有两个人工卡点，分别在哪两步之后？**
+   - 参考答案：模型完成后一次，deck 完成后一次。如果把这两个卡点拿掉，产出物在数字溯源、模板一致性、合规表述这几个环节最可能出错。
+
+3. **MCP 连接器的四种类型（stdio、SSE、HTTP、WebSocket）分别适用什么场景？**
+   - 参考答案：stdio：本地工具，调起子进程（如 PostgreSQL、clangd）；SSE：托管服务，支持 OAuth（如 GitHub、GitLab）；HTTP：REST API 直连；WebSocket：实时双向通信（消息推送场景）
+
+4. **插件安全策略的三项检查（has_broad_scope_hooks、has_undisclosed_telemetry、description_matches_behavior）分别防什么？**
+   - 参考答案：has_broad_scope_hooks：防止插件监听全局事件窃取数据；has_undisclosed_telemetry：强制声明所有外向网络调用；description_matches_behavior：确保 README 与实际行为一致，避免伪装。
+
+5. **开发一个 MCP 服务器时，工具的 description 字段应该怎么写？**
+   - 参考答案：说明工具的用途（实现细节交给代码）、列举典型的输入格式和输出示例、指明适用场景和禁忌场景。
+
+---
+
 ## 进阶路径
 
 ### 阶段一：分析师试用（1-2 周）

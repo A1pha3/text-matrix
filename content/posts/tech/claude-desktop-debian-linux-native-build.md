@@ -17,6 +17,28 @@ tags: ["Claude", "Linux", "MCP", "跨平台", "沙箱"]
 
 ---
 
+> **快速信息卡**
+> - **GitHub**: [aaddrick/claude-desktop-debian](https://github.com/aaddrick/claude-desktop-debian)
+> - **Stars**: 3,496+
+> - **Forks**: 382+
+> - **许可证**: Apache-2.0 / MIT (双许可证)
+> - **语言**: Shell
+> - **最后更新**: 2026-06-26
+
+## 学习目标
+
+读完本文后，你应能：
+
+1. **理解 Claude Desktop 在 Linux 上的移植原理**：Windows 原生应用如何通过重新打包在 Linux 上运行
+2. **掌握支持的发行版和安装方式**：Debian/Ubuntu、Fedora、Arch、NixOS 各自的安装方法
+3. **配置 MCP 协议和 Cowork Mode**：理解沙箱隔离机制（bubblewrap/KVM）
+4. **解决常见移植问题**：系统托盘、全局快捷键、Wayland 兼容性
+5. **根据发行版选择合适的包格式**：deb/rpm/AppImage/AUR 各自的适用场景
+
+---
+
+
+
 ## §1 项目概述
 
 ### 1.1 项目基本信息
@@ -845,3 +867,52 @@ sudo zypper install claude-desktop
 ---
 
 *🦞 撰写于 2026 年 4 月 19 日*
+
+
+---
+
+## 自测题
+
+1. **Claude Desktop 在 Linux 上的移植原理是什么？核心挑战有哪些？**
+   - 参考答案：通过重新打包官方 Windows 应用实现原生运行。核心挑战：Win32 API 调用（Linux 等价替代）、系统托盘（AppIndicator/KStatusNotifierItem）、全局快捷键（X11/Wayland 差异）、沙箱隔离（Windows/Sandboxie → bubblewrap/KVM）。
+
+2. **支持的发行版有哪些？各自用什么包格式？**
+   - 参考答案：Debian/Ubuntu（deb，APT 仓库）、Fedora/RHEL（rpm，DNF 仓库）、Arch Linux（AppImage，AUR 包）、NixOS（Nix Flake）、通用 Linux（AppImage）。
+
+3. **MCP 协议和 Cowork Mode 是什么？**
+   - 参考答案：MCP（Model Context Protocol）是 Claude Desktop 集成外部工具的协议。Cowork Mode 是隔离执行环境，让多个 Claude 会话在沙箱中并行工作，避免互相干扰。
+
+4. **如何解决 Wayland 下的兼容性问题？**
+   - 参考答案：项目提供了 `wayland-compat.patch` 补丁。主要解决全局快捷键在 Wayland 下的注册问题（需要用 Wayland 原生 API 而不是 X11 兼容层）。
+
+5. **如何选择合适的包格式？**
+   - 参考答案：Debian/Ubuntu 用户用 deb（APT 仓库最方便），Fedora/RHEL 用户用 rpm（DNF 仓库），Arch 用户用 AUR，NixOS 用户用 Nix Flake，其他发行版用 AppImage（通用）。
+
+---
+
+## 进阶路径
+
+### 阶段 1：安装和配置（1 周）
+- 根据发行版安装合适的包（Debian/Ubuntu 用 APT，Fedora 用 DNF）
+- 配置 MCP 协议连接外部工具
+- 测试基本功能（对话、工具调用）
+
+### 阶段 2：深度配置（2-4 周）
+- 配置 Cowork Mode 沙箱隔离
+- 解决发行版特有的问题（如 Wayland 兼容性、系统托盘图标）
+- 编译自定义版本（修改补丁文件）
+
+### 阶段 3：贡献到上游（1-2 个月）
+- 修复 bug 并提交 PR
+- 添加新的发行版支持（如 openSUSE rpm）
+- 改进补丁文件（如更好的 Wayland 支持）
+
+### 阶段 4：维护自己的 fork（持续优化）
+- 跟踪上游更新，合并新版本
+- 添加自己的定制功能
+- 分享经验到社区（Reddit、Discord）
+
+**进阶资源**
+- [claude-desktop-debian GitHub 仓库](https://github.com/aaddrick/claude-desktop-debian)
+- [Claude Desktop 官方文档](https://docs.anthropic.com/en/docs/claude-desktop)
+- [MCP 协议文档](https://modelcontextprotocol.io/)
