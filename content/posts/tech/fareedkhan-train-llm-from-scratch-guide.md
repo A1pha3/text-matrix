@@ -21,6 +21,20 @@ tags: ["LLM训练", "PyTorch", "Transformer", "深度学习", "从零实现"]
 
 ---
 
+## 项目速览
+
+| 字段 | 值 |
+|------|-----|
+| 仓库 | [FareedKhan-dev/train-llm-from-scratch](https://github.com/FareedKhan-dev/train-llm-from-scratch) |
+| Stars | 7,454+ |
+| Forks | 1,052+ |
+| License | MIT |
+| 主语言 | Python |
+| 核心依赖 | PyTorch、tiktoken、HDF5 |
+| 训练数据 | Pile 数据集（825 GB） |
+
+---
+
 ## 系统总览
 
 在进入细节之前，先把整条管线看清楚。下图是一次完整训练的数据流：
@@ -384,3 +398,30 @@ python scripts/generate_text.py --model_path models/your_model.pth --input_text 
 - **理论层面**：原论文 [Attention Is All You Need](https://arxiv.org/abs/1706.03762) + [The Annotated Transformer](http://nlp.seas.harvard.edu/annotated-transformer/) 逐行讲解
 - **数据层面**：了解 [Pile 数据集论文](https://arxiv.org/abs/2101.00027)，理解训练数据构成如何影响模型行为
 - **扩展开源**：看看 [TinyLlama](https://github.com/jzhang38/TinyLlama)（1.1B 参数，在 3T token 上训练），体会"小模型 + 大数据"路线的效果
+
+---
+
+## 进阶路径
+
+**阶段 1：跑通 13M 模型（1-2 天）**
+
+按文章「快速上手」节的步骤，用默认配置跑通完整管线。重点不是模型效果，而是确认数据流和模型管线都理解清楚了。训练时观察 loss 曲线——13M 模型的 loss 应该平滑下降，几乎无波动。
+
+**阶段 2：改动一个超参数观察影响（3-7 天）**
+
+把 `N_BLOCKS=1` 改成 `N_BLOCKS=2`，或者把 `CONTEXT_LENGTH=128` 改成 `CONTEXT_LENGTH=256`。重新训练，观察：
+- 参数量增加了多少？
+- 训练时间增加了多少？
+- loss 曲线有什么变化？
+
+这个练习能帮你建立「模型规模 ↔ 训练资源 ↔ 效果」的直觉。
+
+**阶段 3：换成自己的数据（1-2 周）**
+
+找几百 MB 你熟悉的领域的文本（比如代码、法律文档、医学论文），按文章「常见问题 Q3」的方法预处理。观察模型能不能学到领域特有的词汇和句式。
+
+**阶段 4：放大到 500M-1B 参数（需要 ≥24GB 显存）**
+
+如果你有 RTX 3090 或更好的 GPU，尝试 `N_EMBED=1024`, `N_HEAD=16`, `N_BLOCKS=24` 这个配置（约 500M 参数）。这个阶段你会遇到「显存不够」和「训练不稳定」两个新问题——解决它们的过程，就是真正理解 Transformer 训练的时候。
+
+---

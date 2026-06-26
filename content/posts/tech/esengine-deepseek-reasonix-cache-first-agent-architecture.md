@@ -7,27 +7,54 @@ tags: ["DeepSeek", "coding-agent", "prompt-cache", "Go", "架构分析"]
 description: "DeepSeek-Reasonix 把 agent 循环的设计目标对齐到 DeepSeek prefix-cache 的字节稳定性上，让长会话成本压到 flash 模型水平。本文拆解三大 Pillar、Go 重写取舍，以及这套架构的适用边界。"
 ---
 
-## 一句话判断
+## 学习目标
 
-DeepSeek-Reasonix 真正解决的问题不是「让模型写代码」，而是「在 DeepSeek prefix-cache 的字节匹配机制下，让 agent 循环可以被留常驻而不烧钱」。整套架构——上下文分区、tool-call 修复、成本控制——都围绕同一个不变量：保持 cache hit。
+读完本文你能：
 
-把它当成 Claude Code / Cursor 的「DeepSeek 替代版」会错过重点。把它当成「DeepSeek 的 prefix-cache 工程化样板」才看得清它和同类项目的本质差异。
+1. **解释** DeepSeek-Reasonix 的三层架构（Cache-First Loop、Tool-Call Repair、Cost Control）如何协同保证 99.82% 的 cache hit 率
+2. **识别** prefix-cache 机制的字节匹配不变量，以及通用 agent 框架为什么命中率 < 20%
+3. **对比** v1（TypeScript）和 v2（Go）的核心差异，判断是否需要等待 v2 成熟再采用
+4. **设计** 基于 `<<<NEEDS_PRO>>>` 标记的成本控制策略，在 flash-first 默认下按需升级到 pro
+5. **评估** 你的工作流是否适合 Reasonix（DeepSeek 后端依赖、terminal-first 交互、长时运行场景）
 
-## 项目状态速览
+## 项目速览
+
+> **DeepSeek-Reasonix** — 把 DeepSeek prefix-cache 经济学工程化的 terminal coding agent
 
 | 项 | 值 |
 |---|---|
-| 仓库 | `esengine/DeepSeek-Reasonix` |
-| 主分支 | `main-v2`（Go 重写，1.0+） |
-| Legacy 分支 | `v1`（TypeScript，0.x，maintenance only） |
-| Stars / Forks | 23,444 / 1,416（GitHub API 实时） |
-| 创建 | 2026-04-21 |
-| 默认后端 | DeepSeek（v4-flash / v4-pro preset） |
+| GitHub | `esengine/DeepSeek-Reasonix` |
+| Stars | 24,908+ |
+| Forks | 1,510+ |
 | 许可证 | MIT |
-| 安装方式 | `npm i -g reasonix@next` / `brew install esengine/reasonix/reasonix` / 预编译 6 平台二进制 |
-| 单二进制 | `CGO_ENABLED=0`，无运行时依赖（除 TOML parser） |
+| 语言 | Go |
+| 创建时间 | 2026-04-21 |
+| 默认后端 | DeepSeek（v4-flash / v4-pro preset） |
+| 安装 | `npm i -g reasonix@next` / `brew install esengine/reasonix/reasonix` |
 
-仓库默认分支已经从 TypeScript 切到 Go，但 `npm latest` tag 仍停在 `0.x`——这是为了不强行升级存量用户。要装新版本必须显式 `@next`。两条线并存是项目身份的一部分，写文章时不能省略。
+## 目录
+
+- [一句话判断](#一句话判断)
+- [系统地图：三条主线](#系统地图三条主线)
+- [Pillar 1：Cache-First Loop](#pillar-1cache-first-loop)
+- [Pillar 2：Tool-Call Repair](#pillar-2tool-call-repair)
+- [Pillar 3：Cost Control](#pillar-3cost-control)
+- [任务流案例：一次 SEARCH/REPLACE 修改如何穿过三层](#任务流案例一次-searchreplace-修改如何穿过三层)
+- [benchmark 解读：99.82% cache hit 意味着什么](#benchmark-解读9982-cache-hit-意味着什么)
+- [v1 → v2：Go 重写的取舍](#v1--v2go-重写的取舍)
+- [对比同类项目](#对比同类项目)
+- [采用顺序与适用边界](#采用顺序与适用边界)
+- [常见问题与故障排查](#常见问题与故障排查)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
+---
+
+## 一句话判断
+
+DeepSeek-Reasonix 真正解决的问题不是「让模型写代码」，而是「在 DeepSeek prefix-cache 的字节匹配机制下，让 agent 循环可以被留常驻而不烧钱」。整套架构——上下文分区、tool-call 修复、成本控制——都围绕同一个不变量：**保持 cache hit**。
+
+把它当成 Claude Code / Cursor 的「DeepSeek 替代版」会错过重点。把它当成「DeepSeek 的 prefix-cache 工程化样板」才看得清它和同类项目的本质差异。
 
 ## 系统地图：三条主线
 
@@ -269,6 +296,143 @@ README 给的真实数据（2026-05-01 单日）：
 - **`reasonix.toml` schema 仍在演进**：v1.8.1 才有 `config.toml` 路径，跨版本 config 可能要手动迁移。
 - **CodeGraph 不再内置**：v1 把 CodeGraph 作为 internal MCP server 提供，v2 没移植。如果你的工作流依赖它，需要自部署。
 - **Desktop 客户端是 prerelease**：installer 未经代码签名（macOS Gatekeeper、 Windows SmartScreen），需要 `xattr -dr com.apple.quarantine` 或「More info → Run anyway」。这是已知 trade-off，等 SignPath 流程跑通会改善。
+
+## 常见问题与故障排查
+
+### 1. 装完 `reasonix` 但跑到的是 v1（TypeScript 版）？
+
+**症状**：`reasonix --version` 显示 `0.x`，或者启动时出现 Node 进程。
+
+**原因**：`npm latest` tag 仍指向 v1，为了不强行升级存量用户。
+
+**解决**：
+```bash
+npm i -g reasonix@next   # 必须显式 @next
+reasonix --version        # 应该显示 1.x
+```
+
+### 2. TUI 顶栏 cache hit 率只有 30-40%，远低于 99.82%？
+
+**排查步骤**：
+
+1. 检查是否有 tool 在 prefix 区域注入动态内容（时间戳、随机 ID）：
+   ```bash
+   # 在 config.toml 里设置 log level = debug
+   # 观察每轮请求的 prefix hash 是否变化
+   ```
+
+2. 确认没有频繁重启 session——每次重启都会重新计算 prefix。
+
+3. 检查 system prompt 是否引用外部状态（文件内容、环境变量）——这些会导致 prefix 变化。
+
+**预期**：稳定工作流下，cache hit 应该 > 95%。
+
+### 3. 模型一直发 `<<<NEEDS_PRO>>>`，成本飙升？
+
+**原因**：任务确实超出 flash 能力，或者模型「过度谨慎」。
+
+**解决**：
+
+- **方案 A**：接受 pro 升级，但设置 `/model flash` 强制回到 flash。
+- **方案 B**：在 system prompt 里加入「除非绝对必要，不要使用 NEEDS_PRO 标记」。
+- **方案 C**：用 `auto` preset（默认），让系统自动在 hard turns 时切换到 v4-pro。
+
+**注意**：`<<<NEEDS_PRO>>>` 是纯粹的 self-report，没有阈值或计数器——模型说需要就是需要。
+
+### 4. v2 找不到 v1 的 semantic search 功能？
+
+**确认**：这是预期行为。v2 主动移除了 embedding-based semantic search，退回到 LSP + grep。
+
+**替代方案**：
+
+- 小中型项目：LSP + grep 够用。
+- 大型 monorepo：等待社区移植 semantic search，或者回到 v1（不推荐，maintenance only）。
+- 用 MCP 接入外部 code intelligence 服务（Sourcegraph / GitHub Copilot）。
+
+### 5. macOS 上 desktop GUI 无法打开（「无法验证开发者」）？
+
+**原因**：Desktop 客户端 installer 未经代码签名（等待 SignPath 流程）。
+
+**解决**（临时）：
+```bash
+xattr -dr com.apple.quarantine /Applications/Reasonix.app
+```
+
+然后在「系统设置 → 隐私与安全性」底部点击「仍要打开」。
+
+**长期**：等 SignPath 流程跑通，后续版本会正确签名。
+
+## 自测题
+
+1. **DeepSeek prefix-cache 的命中条件是什么？为什么通用 agent 框架的命中率 < 20%？**
+   <details>
+   <summary>答案</summary>
+   命中条件是「上一轮请求的字节前缀 = 下一轮请求的字节前缀」。通用框架每轮重新拼接 prompt（注入时间戳、重新排序 tool results、改写 system prompt），导致前缀字节变化，命中率 < 20%。
+   </details>
+
+2. **Reasonix 的上下文分成哪三个区域？每个区域的生命周期是什么？**
+   <details>
+   <summary>答案</summary>
+   Immutable Prefix（整个 session 固定）、Append-Only Log（单调增长）、Volatile Scratch（每轮重置）。三个区域保证 prefix 字节稳定，从而维持 cache hit。
+   </details>
+
+3. **Pillar 2 的四个 pass 分别处理什么失效模式？执行顺序是什么？**
+   <details>
+   <summary>答案</summary>
+   flatten（schema 参数过多或嵌套过深）、scavenge（tool call 写在 <think> 里漏发）、truncation（JSON 不平衡或触顶 max_tokens）、storm（同一 tool+args 重复调用）。顺序执行，每个 pass 处理不同层级的失效。
+   </details>
+
+4. **`<<<NEEDS_PRO>>>` 标记的工作机制是什么？在 pro tier 上会怎样？**
+   <details>
+   <summary>答案</summary>
+   模型自己判断任务超出当前 tier，在第一行响应打标记，系统中断当前 flash 调用，整轮在 pro 上重试。在 pro tier 上，标记是 no-op（pro 是顶层，无法继续升级）。这是纯粹的 self-report，没有失败计数器或自动升级逻辑。
+   </details>
+
+5. **v1（TypeScript）和 v2（Go）的核心差异有哪些？semantic search 在 v2 里去哪了？**
+   <details>
+   <summary>答案</summary>
+   v2 是 Go 重写的单二进制，移除 web dashboard 和 semantic search，改用 LSP + grep。semantic search 没移植到 v2，大型 monorepo 用户会感受到退化。如果需要 semantic search，只能等社区移植或回到 v1（maintenance only，不推荐）。
+   </details>
+
+## 进阶路径
+
+### 阶段 1：跑起来，观察 cache hit（1 天）
+
+- 安装 v2：`npm i -g reasonix@next`
+- 配置 DeepSeek API Key
+- 启动 `reasonix code <dir>`，观察 TUI 顶栏 cache hit 数字
+- 跑一个简单任务（改文件名、修 bug），看 cost 染色
+
+**目标**：理解 cache hit 机制，确认你的工作流能达到 > 95% hit 率。
+
+### 阶段 2：理解三层架构，调 cost control（3-5 天）
+
+- 读源码里 Pillar 1/2/3 的实现（Go 代码在 `internal/agent/`）
+- 尝试 `flash` / `auto` / `pro` preset，观察成本变化
+- 故意触发 `<<<NEEDS_PRO>>>`（给模型一个超出 flash 能力的任务），看自动升级流程
+- 调整 `REASONIX_PARALLEL_MAX` 和环境变量，看 parallel tool dispatch 效果
+
+**目标**：掌握成本控制机制，能在 flash-first 默认下按需升级。
+
+### 阶段 3：扩展 Reasonix（1-2 周）
+
+- 写自定义 tool（MCP server 或内置 tool）
+- 配置 `reasonix.toml`，加入外部 MCP servers
+- 写自定义 skill（Claude Code 格式兼容）
+- 尝试 Plan mode + hooks，集成到你的 CI/CD
+
+**目标**：把 Reasonix 做成你的 daily driver，而不只是试用。
+
+### 阶段 4：贡献和深度定制（2 周+）
+
+- 读 Go 源码，理解 `complete_step`（evidence-backed step sign-off）
+- 移植 semantic search 到 v2（社区都在等）
+- 给 Desktop GUI 贡献代码（Wails + Go）
+- 提交 PR 修复 bug 或添加新 feature
+
+**目标**：从用户变成 contributor，影响项目方向。
+
+---
 
 ## 回到判断
 
