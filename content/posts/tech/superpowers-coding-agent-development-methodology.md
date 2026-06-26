@@ -10,6 +10,17 @@ tags: ["AI Coding Agent", "Superpowers", "开发方法论", "TDD", "Claude Code"
 
 # Superpowers：让 Coding Agent 拥有完整开发方法论的插件系统
 
+> **快速信息卡**
+>
+> | 项目 | 信息 |
+> |------|------|
+> | GitHub | [obra/superpowers](https://github.com/obra/superpowers) |
+> | Stars | 239,206+ |
+> | Forks | 21,220+ |
+> | License | MIT |
+> | 语言 | Shell |
+> | 最后更新 | 2026-06-26 |
+
 ## 学习目标
 
 读完本文后，你应该能够：
@@ -19,6 +30,29 @@ tags: ["AI Coding Agent", "Superpowers", "开发方法论", "TDD", "Claude Code"
 - 通过一个完整案例（文章阅读时间估算功能）理解 Superpowers 的实际工作流程
 - 对比 Superpowers、Harness Engineering 和 Compound Engineering 的异同
 - 判断 Superpowers 是否适合你的项目和团队
+
+## 目录
+
+- [为什么直接写代码是错的](#为什么直接写代码是错的)
+- [6 个技能构成的强制流程](#6-个技能构成的强制流程)
+  - [brainstorming：先问清楚，再动手](#brainstorming先问清楚再动手)
+  - [writing-plans：拆成 2-5 分钟能完成的小任务](#writing-plans拆成-2-5-分钟能完成的小任务)
+  - [using-git-worktrees：隔离不是可选项](#using-git-worktrees隔离不是可选项)
+  - [subagent-driven-development：每个任务一个干净的上下文](#subagent-driven-development每个任务一个干净的上下文)
+  - [TDD：不是建议，是铁律](#tdd不是建议是铁律)
+  - [reviewing：两阶段审查](#reviewing两阶段审查)
+- [为什么这套流程有效](#为什么这套流程有效)
+- [实战案例：从一句需求到合并 PR](#实战案例从一句需求到合并-pr)
+- [与其他方法论的对比](#与其他方法论的对比)
+  - [Superpowers vs Harness Engineering](#superpowers-vs-harness-engineering)
+  - [Superpowers vs Compound Engineering](#superpowers-vs-compound-engineering)
+- [FAQ](#faq)
+- [自检测试](#自检测试)
+- [支持的 Harness](#支持的-harness)
+- [适用边界](#适用边界)
+- [总结](#总结)
+- [练习](#练习)
+- [相关阅读](#相关阅读)
 
 ---
 

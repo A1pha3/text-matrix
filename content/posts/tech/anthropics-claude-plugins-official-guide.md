@@ -17,11 +17,11 @@ tags: ["Claude Code", "Claude插件", "MCP", "Agent SDK", "AI工作流", "Anthro
 本文回答四个问题：插件是什么、怎么安装使用、怎么开发、哪些场景值得用。
 
 > **快速信息卡**
-> - **Stars**: 31,103+
-> - **Forks**: 3,388+
+> - **Stars**: 31,137+
+> - **Forks**: 3,399+
 > - **License**: Apache-2.0
 > - **语言**: Python
-> - **最后更新**: 2026-06-25
+> - **最后更新**: 2026-06-26
 
 **学习目标**：读完后你能回答——
 - 插件系统的三层结构（plugins/、external_plugins/、marketplace.json 远程插件）分别是什么

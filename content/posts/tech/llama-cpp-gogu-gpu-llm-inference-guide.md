@@ -23,6 +23,24 @@ tags: ["llama.cpp", "LLM推理", "GGUF", "量化", "CPU推理", "GPU加速", "C/
 
 ---
 
+## 目录
+
+- [学习目标](#学习目标)
+- [项目概述](#项目概述)
+- [技术架构](#技术架构)
+- [快速开始](#快速开始)
+- [API 服务器](#api-服务器)
+- [Docker 部署](#docker-部署)
+- [与 LangChain 集成](#与-langchain-集成)
+- [性能优化](#性能优化)
+- [模型转换](#模型转换)
+- [常见问题](#常见问题)
+- [故障排查](#故障排查)
+- [自测](#自测)
+- [进阶路径](#进阶路径)
+
+---
+
 ## 1. 项目概述
 
 ### 1.1 是什么
@@ -522,6 +540,85 @@ aria2c -x 16 -s 16 \
 # 使用 hf-transfer 加速
 HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download ...
 ```
+
+---
+
+## 故障排查
+
+### 问题1：模型加载失败
+
+**错误信息**：`error loading model: unable to allocate memory`
+
+**排查步骤**：
+1. 检查模型文件是否完整（文件大小是否正确）
+2. 检查系统内存是否足够（使用 `free -h` 或 `top` 查看）
+3. 尝试使用更小的量化级别（Q4_K_M 或 Q3_K_M）
+4. 减小 context 大小（使用 `-c 1024` 或更小）
+
+### 问题2：GPU 加速不生效
+
+**排查步骤**：
+1. 确认编译时是否启用了 GPU 支持（检查 `cmake` 命令是否包含 `-DLLAMA_CUDA=ON` 或 `-DLLAMA_METAL=ON`）
+2. 确认模型加载时是否指定了 GPU layers（使用 `-ngl 99` 参数）
+3. 检查 GPU 驱动是否正确安装（运行 `nvidia-smi` 或检查 Metal 支持）
+
+### 问题3：生成质量差
+
+**排查步骤**：
+1. 检查是否使用了正确的量化级别（Q4_K_M 或更高）
+2. 调整温度参数（使用 `--temp 0.7` 或更低）
+3. 尝试使用更大的模型（7B 参数或更多）
+4. 检查 prompt 是否清晰明确
+
+### 问题4：服务器无法启动
+
+**排查步骤**：
+1. 检查端口是否被占用（使用 `lsof -i :8080` 查看）
+2. 尝试使用不同的端口（使用 `-port 8081` 参数）
+3. 检查防火墙设置（确保端口已开放）
+4. 查看服务器日志（添加 `--log-disable` 参数查看详细日志）
+
+---
+
+## 自测：检查你的理解
+
+1. llama.cpp 的核心优势是什么？为什么它能在 CPU 上高效运行 LLM？
+2. GGUF 格式相比 PyTorch 格式有什么优势？为什么 llama.cpp 选择使用 GGUF 格式？
+3. 量化技术如何影响模型性能和内存占用？在实际应用中，你应该如何选择量化级别？
+4. 如果你有一块 RTX 4090（24GB 显存），你会如何配置 llama.cpp 来运行 LLaMA 3.1 70B 模型？
+5. llama.cpp 支持哪些硬件加速后端？如果你要在树莓派上运行 LLM，你会选择哪种配置？
+
+---
+
+## 进阶路径
+
+### 初级阶段（0-1个月）
+
+- 熟练使用 llama.cpp 的命令行界面
+- 理解不同量化级别的区别
+- 学会使用 llama.cpp Server 提供 API 服务
+- 尝试不同的模型（LlaMA、Mistral、Phi 等）
+
+### 中级阶段（1-3个月）
+
+- 学习如何从 PyTorch 格式转换模型到 GGUF 格式
+- 理解 llama.cpp 的编译选项和硬件加速配置
+- 学习如何优化性能（线程数、GPU layers、KV Cache 量化、Flash Attention）
+- 尝试将 llama.cpp 集成到自己的应用中（使用 LangChain 或直接使用 API）
+
+### 高级阶段（3个月以上）
+
+- 研究 llama.cpp 的源码，理解其实现原理
+- 学习如何为 llama.cpp 贡献代码（修复 bug、添加新功能）
+- 尝试在不同的硬件上运行 llama.cpp（FPGA、DSP、ARM 等）
+- 研究如何进一步优化推理性能（自定义量化方案、算子优化等）
+
+### 相关资源
+
+- [llama.cpp GitHub](https://github.com/ggerganov/llama.cpp)
+- [GGUF 格式文档](https://github.com/ggerganov/ggml/docs/gguf.md)
+- [llama.cpp 性能优化指南](https://github.com/ggerganov/llama.cpp/discussions/4167)
+- [LangChain 官方文档](https://python.langchain.com/docs/)
 
 ---
 

@@ -8,6 +8,36 @@ categories: ["技术笔记"]
 tags: ["Cal.diy", "Cal.com", "开源日历", "自托管", "Next.js", "tRPC", "Docker部署", "调度系统"]
 ---
 
+## 学习目标
+
+读完本文应能：
+
+1. 说清 Cal.diy 与 Cal.com 在许可协议、功能范围、维护方三个轴上的核心差异
+2. 解释 Cal.diy 技术栈（Next.js + tRPC + Prisma）各自解决的工程问题，以及为什么选这个组合`
+3. 在本地 Docker 环境和生产环境分别完成一次完整部署，包括数据库初始化、环境变量配置、镜像构建`
+4. 识别 Cal.diy 的适用边界——它不适合哪些生产场景，以及遇到这些场景时的替代方案`
+5. 完成一次"从克隆代码到接收第一个预约通知"的完整任务流`
+
+---
+
+## 目录
+
+- [学习目标](#学习目标)
+- [项目概览](#项目概览)
+- [与 Cal.com 的核心区别](#与-calcom-的核心区别)
+- [技术架构](#技术架构)
+- [本地开发环境快速上手](#本地开发环境快速上手)
+- [Docker 部署详解](#docker-部署详解)
+- [其他部署平台](#其他部署平台)
+- [集成生态](#集成生态)
+- [适用场景与边界](#适用场景与边界)
+- [常见问题](#常见问题)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [相关资源](#相关资源)
+
+---
+
 ## 项目概览
 
 Cal.diy（calcom/cal.diy）是 Cal.com 的**开源社区维护分支**，定位为完全自托管的调度（scheduling）基础设施。该项目从 Cal.com 主代码库中移除了所有企业级功能，以 MIT License 重新发布，面向需要私有部署但不想受制于 Cal.com 商业模式的个人开发者和小型团队。
@@ -318,6 +348,87 @@ export NODE_OPTIONS="--max-old-space-size=16384"
 ```bash
 npx playwright install
 ```
+
+---
+
+## 自测题
+
+### 题 1：Cal.diy 与 Cal.com 的核心差异
+Cal.diy 在许可协议、功能范围、维护方三个轴上与 Cal.com 有什么不同？什么场景下应该选 Cal.com 而不是 Cal.diy？
+
+<details>
+<summary>参考答案</summary>
+
+Cal.diy 是 MIT 授权，完全开源，无企业功能（Teams、Organizations、SSO 等），社区维护。Cal.com 有免费版和企业版，保留完整企业功能，官方维护。
+
+需要商业级 SLA、SSO、团队管理时，选 Cal.com 付费计划。需要完全私有部署、无成本、可二次开发时，选 Cal.diy。
+</details>
+
+### 题 2：技术栈选型
+Next.js + tRPC + Prisma 这个组合各自解决了什么工程问题？换成其他技术栈（如 Express + Drizzle）会有什么代价？
+
+<details>
+<summary>参考答案</summary>
+
+Next.js 提供 SSR/SSG 和 API 路由统一框架；tRPC 提供类型安全的 API 层，前后端共享 TypeScript 类型定义；Prisma 提供类型安全的 ORM，简化数据库操作。
+
+换成 Express + Drizzle 会失去类型安全链路（tRPC 的端到端类型推导），需要手动维护前后端类型同步，增加类型不一致的风险。
+</details>
+
+### 题 3：部署流程
+从克隆代码到接收第一个预约通知，中间有哪些关键步骤？哪一步最经常出错？
+
+<details>
+<summary>参考答案</summary>
+
+关键步骤：1. 克隆代码；2. 安装依赖；3. 配置环境变量（生成 NEXTAUTH_SECRET 和 CALENDSO_ENCRYPTION_KEY）；4. 数据库初始化；5. 启动开发服务器；6. 初始化向导；7. 配置集成；8. 测试预约流程。
+
+最经常出错的是环境变量的生成和配置，特别是 Windows 用户需要特殊处理。
+</details>
+
+### 题 4：适用边界
+什么场景下不应该用 Cal.diy？列出至少三个具体场景。
+
+<details>
+<summary>参考答案</summary>
+
+1. 需要商业级 SLA 和保障的企业生产环境。
+2. 需要官方技术支持、SSO、团队管理功能。
+3. 团队没有 Docker 和 PostgreSQL 维护能力。
+</details>
+
+### 题 5：故障排查
+Docker 部署时，容器日志报 `CLIENT_FETCH_ERROR`，应该如何排查？
+
+<details>
+<summary>参考答案</summary>
+
+可能原因：1. 容器内无法解析宿主机名；2. 环境变量 `NEXTAUTH_URL` 配置错误。
+
+解决：在 `.env` 中明确设置 `NEXTAUTH_URL=http://localhost:3000/api/auth`。
+</details>
+
+---
+
+## 进阶路径！
+
+完成基础部署后，可以按以下三个方向深入：
+
+### 方向一：生产部署优化
+- 配置 HTTPS（Let's Encrypt 或 Cloudflare）
+- 设置自动备份（PostgreSQL 定时备份）
+- 配置监控（Prometheus + Grafana）
+- 优化性能（启用 Next.js 的 ISR、配置缓存）
+
+### 方向二：二次开发与定制
+- 开发自定义集成（实现 Cal.diy 的 App Store 接口）
+- 修改预约流程（添加自定义字段、支付集成）
+- 定制 UI 主题（修改 Tailwind CSS 配置）
+
+### 方向三：监控与运维
+- 设置健康检查端点（用于负载均衡器探活）
+- 配置日志聚合（结构化日志、错误追踪）
+- 监控关键指标（预约成功率、邮件发送成功率）
 
 ---
 

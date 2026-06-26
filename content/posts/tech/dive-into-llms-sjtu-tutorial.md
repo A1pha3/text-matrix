@@ -10,6 +10,17 @@ tags: ["大模型", "LLM", "上海交通大学", "微调", "RLHF"]
 
 # 《动手学大模型》：上海交通大学 31.5K Stars 的 LLM 编程实践教程——微调/提示工程/知识编辑/RLHF 全覆盖
 
+> **快速信息卡**
+>
+> | 项目 | 信息 |
+> |------|------|
+> | GitHub | [FourierTransformer/dive-into-llms](https://github.com/FourierTransformer/dive-into-llms) |
+> | Stars | 30,348+ |
+> | 类型 | 编程实践教程（Jupyter Notebook） |
+> | 来源 | 上海交通大学《自然语言处理前沿技术》 |
+> | 教师 | 张倬胜 |
+> | 语言 | 中文 |
+
 ---
 
 ## §1 这篇教程能给你什么

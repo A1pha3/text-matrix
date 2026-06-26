@@ -12,10 +12,30 @@ tags: ["CloakBrowser", "Stealth", "Playwright", "Puppeteer", "BotDetection", "Ch
 
 # CloakBrowser：C++ 源码级指纹修改的隐形 Chromium，零配置 0.9 reCAPTCHA v3
 
-> **目标读者**：爬虫 / Agent 自动化 / 反爬对抗工程师，需要一个"看起来像真人 Chrome" 的浏览器内核
-> **核心问题**：`playwright-stealth` 这类 JS 注入补丁每次 Chrome 升级就坏，antibot 系统检测到"补丁"本身——怎么从源码层把指纹改了？
-> **难度**：⭐⭐（一行 `pip install` 就能用）
-> **来源**：GitHub [CloakHQ/CloakBrowser](https://github.com/CloakHQ/CloakBrowser)，25,060 ★ / MIT / 2026-06-09
+## 读完这篇文章你会知道
+
+- CloakBrowser 的项目定位和技术原理
+- 如何在 Playwright/Puppeteer 中一键替换
+- 源码级指纹修改覆盖哪些检测点
+- 如何配置 `humanize=True` 增强行为层
+- 适用场景和采用建议
+
+---
+
+## 目录
+
+- [核心判断](#核心判断)
+- [项目概览](#项目概览)
+- [3行替换Playwright](#3行替换playwright)
+- [源码级58处补丁](#源码级58处补丁)
+- [humanize行为层](#humanize行为层)
+- [真实战绩](#真实战绩)
+- [适用场景](#适用场景)
+- [同类方案对比](#同类方案对比)
+- [最小可运行示例](#最小可运行示例)
+- [常见问题与故障排查](#常见问题与故障排查)
+- [自测](#自测)
+- [进阶路径](#进阶路径)
 
 ---
 

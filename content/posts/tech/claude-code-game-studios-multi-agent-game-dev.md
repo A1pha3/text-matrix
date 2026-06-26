@@ -16,6 +16,14 @@ tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 
 面向独立开发者、AI 应用研究者以及对多 Agent 系统感兴趣的人。需要对 Claude Code 有基本了解。
 
+> **快速信息卡**
+> - **GitHub**: [Donchitos/Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios)
+> - **Stars**: 22,332+
+> - **Forks**: 3,230+
+> - **License**: MIT
+> - **语言**: Shell
+> - **最后更新**: 2026-06-26
+
 ---
 
 ## §1 学习目标
@@ -26,6 +34,27 @@ tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 4. **理解 12 个自动化钩子的工作机制**：提交验证、推送检查、会话管理如何自动运行
 5. **根据项目需求裁剪这套工作流**：调整 agents、skills、rules，增减 Hook
 6. **把模板落地到自己的游戏项目**：从思路到发布的全流程指引
+
+---
+
+**目录**
+- [§1 学习目标](#§1-学习目标)
+- [§2 背景与动机](#§2-背景与动机)
+- [§3 项目概览](#§3-项目概览)
+- [§4 工作室层级架构](#§4-工作室层级架构)
+- [§5 72 个 Skills](#§5-72-个-skills)
+- [§6 12 个 Hooks](#§6-12-个-hooks)
+- [§7 11 个路径规则](#§7-11-个路径规则)
+- [§8 项目结构](#§8-项目结构)
+- [§9 开始使用](#§9-开始使用)
+- [§10 Agent 协作机制](#§10-agent-协作机制)
+- [§11 设计哲学](#§11-设计哲学)
+- [§12 自定义指南](#§12-自定义指南)
+- [§13 常见问题 FAQ](#§13-常见问题-faq)
+- [§14 相关资源](#§14-相关资源)
+- [§15 适用建议](#§15-适用建议)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
 
 ---
 
@@ -56,7 +85,8 @@ tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
 
 | 属性 | 值 |
 |------|------|
-| **Stars** | 11,142 ⭐ |
+| **Stars** | 22,332+ ⭐ |
+| **Forks** | 3,230+ |
 | **类型** | Claude Code 模板/工具包 |
 | **语言** | Shell（项目本身）+ Markdown（agents 配置） |
 | **许可证** | MIT |
@@ -680,3 +710,51 @@ Godot 4、Unity、Unreal Engine 5 都有专属 agent set。每个引擎有对应
 采用建议：先从 `/start` 跑通一个完整阶段——比如从 `/brainstorm` 到 `/dev-story` 写出一段可运行的玩法逻辑——再根据痛点逐步打开更多 Agent 和 Hook。别一口气全开：模板过重反而会拖慢前期迭代。另外，把你不玩的引擎对应的 Agent 目录删掉（比如只做 2D 就别留着 UE5 那些），能显著减少无关角色的提问和检查。
 
 **🦞 作者：钳岳星君 | 来源：GitHub Donchitos/Claude-Code-Game-Studios**
+
+---
+
+## 自测题
+
+1. **Claude Code Game Studios 的三层架构（Tier 1/2/3）各自用什么模型？为什么这样选？**
+   - 参考答案：Tier 1（导演层）用 Opus，因为需要做复杂决策和愿景判断；Tier 2（部门主管）用 Sonnet，平衡能力和成本；Tier 3（专家层）用 Sonnet/Haiku，专家任务更单一，可以用更轻量的模型。
+
+2. **12 个 Hooks 中，哪些是在提交代码时触发的？它们各自检查什么？**
+   - 参考答案：`validate-commit.sh` 在 git commit 时触发，检查硬编码值、TODO 格式、JSON 有效性、设计文档章节。`validate-push.sh` 在 git push 时触发，检查是否推送到受保护分支、是否有未提交的更改。
+
+3. **如果你想只做 2D Godot 游戏，应该怎么裁剪这个模板？**
+   - 参考答案：删除 `.claude/agents/specialists/` 下 Unity 和 Unreal 相关的 Agent，删除 `.claude/skills/` 下对应引擎的技能，保留 `godot-specialist` 和 GDScript 相关专家。也可以只开启部分 Hook（如只开提交验证）。
+
+4. **Session 管理相关的 Hooks 有哪些？它们解决什么问题？**
+   - 参考答案：`session-start.sh`（显示分支和近期提交）、`session-stop.sh`（归档活动）、`pre-compact.sh`（保存进度）、`post-compact.sh`（恢复状态）。解决的是长周期开发中"上次写到哪了"的问题，让 Agent 状态可恢复。
+
+5. **为什么需要 `producer` Agent？它的核心职责是什么？**
+   - 参考答案：producer 负责跨部门协调和变更传播。当设计改动影响了多个域（如游戏设计改动影响了 UI 和音频），producer 追踪变更影响范围，通知相关 Agent 更新。这是三层架构中 Tier 1 的关键价值。
+
+---
+
+## 进阶路径
+
+### 阶段 1：理解多 Agent 协作（1-2 周）
+- 阅读 `creative-director.md`、`technical-director.md`、`producer.md` 三个 Tier 1 Agent 的定义
+- 理解协作协议（Ask → Present options → You decide → Draft → Approve）
+- 跑通一个完整的 `/start` → `/brainstorm` → `/create-epics` 流程
+
+### 阶段 2：定制自己的工作室（2-4 周）
+- 根据项目需求删除不需要的 Agents（如只做单人游戏就删除 `network-programmer`）
+- 调整 Hooks 的严格度（如关闭推送检查，只保留提交验证）
+- 修改路径规则（如 `src/gameplay/` 规则）以适应项目规范
+
+### 阶段 3：深度集成到开发流程（1-2 个月）
+- 使用 `/team-combat`、`/team-narrative` 等团队协作技能
+- 配置 CI/CD 集成（通过 Hooks 触发构建和测试）
+- 建立自己的 Agent 和 Skill（扩展模板）
+
+### 阶段 4：贡献回上游（持续优化）
+- 将通用的 Agents/Skills 贡献回 [Donchitos/Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios)
+- 参与 GitHub Discussions 分享最佳实践
+- 跟踪项目更新，合并新版本的 Agents/Skills
+
+**进阶资源**
+- [Claude Code 官方文档](https://docs.anthropic.com/en/docs/claude-code)
+- [MDA Framework](https://en.wikipedia.org/wiki/MDA_framework)（游戏设计理论）
+- [Verification-Driven Development](https://en.wikipedia.org/wiki/Test-driven_development)（测试驱动开发）

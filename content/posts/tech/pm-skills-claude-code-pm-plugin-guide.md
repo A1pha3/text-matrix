@@ -12,10 +12,29 @@ tags: ["PM", "ClaudeCode", "ClaudeCowork", "ProductManagement", "OST", "Plugins"
 
 # pm-skills：把 Teresa Torres / Marty Cagan / Alberto Savoia 的 PM 框架做成 AI 工作流，68 个 skill + 42 条 command
 
-> **目标读者**：产品经理 / 创始团队 / 任何需要做"产品决策" 的角色；以及 Claude Code / Codex / Cowork 重度用户
-> **核心问题**：通用 AI 给你"通用建议"，怎么让 Claude 像 Teresa Torres、Marty Cagan、Alberto Savoia 一样按严谨框架做 PM 决策？
-> **难度**：⭐⭐（一条命令装 marketplace）
-> **来源**：GitHub [phuryn/pm-skills](https://github.com/phuryn/pm-skills)，13,085 ★ / MIT / 2026-06-09
+## 读完这篇文章你会知道
+
+- pm-skills 的项目定位和三层结构
+- 如何安装和使用 pm-skills
+- 典型 Discovery 链的工作流
+- 9 个 Plugin 的覆盖全景
+- 如何选择合适的采用顺序
+
+---
+
+## 目录
+
+- [核心判断](#核心判断)
+- [项目概览](#项目概览)
+- [三层结构](#三层结构)
+- [9 个 Plugin 与典型入口](#9-个-plugin-与典型入口)
+- [典型例子](#典型例子)
+- [安装](#安装)
+- [适用边界](#适用边界)
+- [阅读路径](#阅读路径)
+- [常见问题与故障排查](#常见问题与故障排查)
+- [自测](#自测)
+- [进阶路径](#进阶路径)
 
 ---
 
