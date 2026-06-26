@@ -9,6 +9,18 @@ tags: ["LLM", "AI", "Agent", "RAG", "开源项目"]
 ---
 
 # Awesome AI Apps：80+ LLM 应用实战项目合集
+## 快速信息卡
+
+> **GitHub 仓库**: [Arindam200/awesome-ai-apps](https://github.com/Arindam200/awesome-ai-apps)
+>
+> | 指标 | 数值 |
+> |------|------|
+> | ⭐ Stars | 12,926+ |
+> | 🍴 Forks | 1,653+ |
+> | 📜 License | MIT |
+> | 💻 主要语言 | Python |
+> | 📅 最后更新 | 2026-06-26 |
+
 
 ## 这个合集值不值得读
 
@@ -22,6 +34,12 @@ tags: ["LLM", "AI", "Agent", "RAG", "开源项目"]
 
 读完本文应能：
 
+
+- 说清 Agent 框架、RAG、Memory、MCP 四类机制各自解决的问题和边界
+- 根据业务场景在 Starter / Simple / Advanced 三层中找到对应参考项目
+- 识别合集项目的生产化缺口（凭证管理、可观测性、错误恢复）
+- 判断哪些项目受赞助关系影响，选型时不被项目分布误导
+- 完成一次"选框架 → 找参考项目 → 运行 → 改造到自己的场景"的完整任务
 
 ## 目录
 

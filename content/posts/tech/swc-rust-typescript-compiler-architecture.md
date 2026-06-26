@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Rust", "TypeScript", "编译器", "Babel", "Node.js"]
 ---
 
-# swc-project/swc 架构拆解：Rust 写的 TS/JS 编译器为何能在 33k+ star 仓库里保持单 crate 形态
+# swc-project/swc 架构拆解：Rust 写的 TS/JS 编译器为何能在 34k+ star 仓库里保持单 crate 形态
 
 > 一句话核心判断：**SWC 是 Rust 写的 TypeScript/JavaScript 编译器，仓库看似只有一个根 crate（`swc`），但通过 Cargo workspace 聚合了 parser / codegen / bundler / CSS / 压缩器等几十个子 crate，对外同时暴露 Rust API 和 Node API（`@swc/core`）。它比 Babel 快 20–70 倍的核心原因是 Rust + 精心设计的 SIMD 优化，但工程上更值得学习的是"如何在大规模编译器项目里既保持单一发布入口、又不牺牲模块化"**。
 
@@ -18,13 +18,42 @@ tags: ["Rust", "TypeScript", "编译器", "Babel", "Node.js"]
 |------|------|
 | 仓库 | [swc-project/swc](https://github.com/swc-project/swc) |
 | 主语言 | Rust（编译器核心）+ Node.js binding（`@swc/core`） |
-| Stars | 约 33.5k（截至 2026-06） |
+| Stars | 34,136+ |
+| Forks | 1,431+ |
 | License | Apache-2.0 |
 | MSRV | Rust 1.73 |
 | Node 版本要求 | v10+ 用 / v20+ 开发 |
 | 周边工具 | `@swc/cli`、`@swc/core`、`@swc/jest`、Next.js / Vite / Turbopack 集成 |
 
-33.5k stars 的体量，背后是"Next.js 默认编译器 + Deno 内置 + Vite SWC 插件"这套生态——几乎所有现代 JS 工具链都会直接 / 间接调用 SWC。
+34,136+ stars 的体量，背后是"Next.js 默认编译器 + Deno 内置 + Vite SWC 插件"这套生态——几乎所有现代 JS 工具链都会直接 / 间接调用 SWC。
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+- 理解 SWC 的核心定位：Rust 写的 TypeScript/JavaScript 编译器，比 Babel 快 20–70 倍
+- 掌握 SWC 的架构：根 crate（`swc`）+ workspace 聚合几十个子 crate
+- 理解核心流水线：Parse → Transform → Codegen
+- 了解 `@swc/core` 的 Node.js 绑定原理：N-API / Neon
+- 对比 SWC 与 esbuild 的差异，判断 SWC 是否适合你的项目
+
+## 目录
+
+- [一、项目坐标](#一项目坐标)
+- [二、为什么不是 Babel 的复制？](#二为什么不是-babel-的复制)
+- [三、系统地图：根 crate + workspace](#三系统地图根-crate--workspace)
+- [四、核心流水线：Parse → Transform → Codegen](#四核心流水线parse--transform--codegen)
+- [五、@swc/core：Node.js 绑定](#五swccorenodejs-绑定)
+- [六、性能：从架构到 SIMD](#六性能从架构到-simd)
+- [七、Bundler：SWC 1.5+ 的新方向](#七bundlerswc-15-的新方向)
+- [八、版本同步：crates 同步升级工具](#八版本同步crates-同步升级工具)
+- [九、和 esbuild 的差异](#九和-esbuild-的差异)
+- [FAQ](#faq)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [十、采用建议](#十采用建议)
+
+---
 
 ## 二、为什么不是 Babel 的复制？
 
@@ -254,6 +283,110 @@ esbuild 是另一个用 Go 写的 TS/JS 编译/打包工具，常被拿来和 SW
 关键差异在**架构**——esbuild 用的是"解析后直接生成代码"的 printer 模型（没有显式 transform AST 阶段），适合做 bundler；SWC 的"parser → AST → transform → codegen"模型更适合需要复杂 transform 的场景（Next.js SWC compiler 那一套）。
 
 实际选型：如果只是 bundle + minify，esbuild 够用；如果需要复杂 transform（如自定义 React Server Components 编译器），SWC 更合适。
+
+---
+
+## FAQ
+
+**Q1：SWC 支持哪些工具链？**
+
+支持 Next.js（默认编译器）、Deno（内置）、Vite（SWC 插件）、Turbopack 等。几乎所有现代 JS 工具链都会直接/间接调用 SWC。
+
+**Q2：`@swc/core` 的体积是多少？**
+
+约 9 MB（含 native binding）。对极简部署场景可能偏重。
+
+**Q3：SWC 支持自定义 transform 吗？**
+
+支持。有两种方式：内建 transform（Rust 写，性能最高）、WASM 插件（JS/TS 写，编译成 WASM 加载，性能比纯 JS Babel 插件仍然快 5–10 倍）。
+
+**Q4：SWC bundler 和 esbuild 哪个快？**
+
+当前性能接近，部分 benchmark 已经反超。但 esbuild 的 goroutine 调度更友好，单文件收益不大。
+
+**Q5：如何迁移从 Babel 到 SWC？**
+
+Next.js 用户无需迁移（已默认使用 SWC）。Vite 用户安装 `@vitejs/plugin-swc` 并配置。纯 Babel 项目需要逐步替换 preset（TS 类型擦除、JSX 转换等）。
+
+---
+
+## 自测题
+
+**问题 1**：SWC 比 Babel 快的核心原因是什么？
+
+<details>
+<summary>参考答案</summary>
+语言层：Rust vs JS（5–10×）；SIMD 关键字识别（1.5–2×）；零拷贝字符串（1.2–1.5×）；紧凑 AST 表示（1.2×）；并行 codegen（2–4×）。
+</details>
+
+**问题 2**：SWC 的 workspace 架构有什么特点？
+
+<details>
+<summary>参考答案</summary>
+根 crate `swc` 是 umbrella，re-export 所有子 crate 的 public API；子 crate 互相独立，可以单独测试、单独发版；Cargo workspace 共享依赖图。
+</details>
+
+**问题 3**：`@swc/core` 是什么？它如何工作？
+
+<details>
+<summary>参考答案</summary>
+`@swc/core` 是 SWC 的 N-API 绑定，让 Node.js 代码能直接调 SWC 的 Rust 实现。底层 crate 是 `swc_node_bindings`，通过 N-API/Neon 暴露接口。
+</details>
+
+**问题 4**：SWC 和 esbuild 的核心差异是什么？
+
+<details>
+<summary>参考答案</summary>
+架构差异：esbuild 用的是"解析后直接生成代码"的 printer 模型（没有显式 transform AST 阶段），适合做 bundler；SWC 的"parser → AST → transform → codegen"模型更适合需要复杂 transform 的场景。
+</details>
+
+**问题 5**：什么场景下适合选 SWC？
+
+<details>
+<summary>参考答案</summary>
+CI 构建时间是大瓶颈；Next.js/Deno/Vite 用户；需要自定义 transform；跨语言工具链（Rust 后端 + 前端构建统一到 Rust）。
+</details>
+
+---
+
+## 进阶路径
+
+### 阶段 1：基础使用（1–2 周）
+
+- [ ] 在 Next.js 项目中验证 SWC 编译速度（对比 Babel）
+- [ ] 在 Vite 项目中配置 `@vitejs/plugin-swc`
+- [ ] 使用 `@swc/core` 的 `transformSync` API 进行简单转换
+- [ ] 阅读官方文档：https://swc.rs/docs
+
+### 阶段 2：生产优化（2–4 周）
+
+- [ ] 配置 SWC 的 `jsc` 选项（target、loose、externalHelpers）
+- [ ] 优化 CI 构建时间（对比 Babel → SWC 的收益）
+- [ ] 实现自定义 WASM 插件（如团队内部的代码规范检查）
+- [ ] 监控 SWC 编译性能和错误率
+
+### 阶段 3：高级功能（1–2 个月）
+
+- [ ] 深入 SWC 编译器架构：parser → transform → codegen
+- [ ] 贡献代码或插件到社区
+- [ ] 实现复杂 transform（如自定义 React Server Components 编译器）
+- [ ] 分享最佳实践（博客、会议演讲）
+
+### 阶段 4：生态贡献（持续优化）
+
+- [ ] 修复 Bug 或提交 Feature Request
+- [ ] 参与社区讨论（GitHub Discussions、Discord）
+- [ ] 帮助新用户解决问题
+- [ ] 维护或创建示例项目
+
+**进阶资源**：
+
+- 官方文档：https://swc.rs/docs
+- GitHub 仓库：https://github.com/swc-project/swc
+- API 文档：https://swc.rs/docs/api-reference
+- 社区 Discord：https://discord.gg/swc
+
+---
 
 ## 十、采用建议
 
