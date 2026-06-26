@@ -11,6 +11,27 @@ hiddenFromHomePage: true
 
 > "Basalt 不是 Obsidian 的替代品，它提供极简主义终端界面和 WYSIWYG Markdown 体验。"——README 开篇声明
 
+## 快速信息卡
+
+> **GitHub 仓库**: [erikjuhani/basalt](https://github.com/erikjuhani/basalt)
+>
+> | 指标 | 数值 |
+> |------|------|
+> | ⭐ Stars | 1,239+ |
+> | 🍴 Forks | 35+ |
+> | 📜 License | Apache-2.0 |
+> | 💻 主要语言 | Rust |
+> | 📅 最后更新 | 2026-06-25 |
+
+## 学习目标
+
+读完本文应能：
+
+- 说清 Basalt 三窗格架构的职责划分和切换方式
+- 判断 Basalt 的 Markdown 渲染边界是否满足你的笔记结构
+- 完成一次"启动 → 选保险库 → 浏览 → 跳转标题 → 呼出外部编辑器"的完整任务
+- 评估把 Basalt 加入日常终端工作流的适用场景和风险
+
 ## 这篇文章的判断
 
 Basalt 给出的承诺很窄：在终端里浏览和导航 Obsidian 保险库，不做编辑、不做搜索、不做 Graph View。1.2k 星（截至 2026-05-11）的关注度来自这种窄定位——它把终端能做好的部分（键盘导航、文本渲染、快速启动）和做不好的部分（富文本编辑、图形化视图）干净地切开了。
@@ -322,10 +343,72 @@ Basalt 对这三个路径分别处理，解析 JSON 获取 vault 列表。跨平
 
 ---
 
+## 自测题
+
+1. **Basalt 的三窗格架构各窗格的职责是什么？如何切换焦点？**
+   - 参考答案：Explorer（左侧，文件浏览）、Note Editor（中央，Markdown渲染）、Outline（右侧，标题大纲）。用 `Tab` / `Shift+Tab` 切换焦点。
+
+2. **Basalt 的 Markdown 渲染支持哪些元素？不支持哪些元素？为什么？**
+   - 参考答案：支持标题、段落、列表、引用、代码块、任务列表、Callouts、Wiki-links。不支持图片、表格、分割线、语法高亮、数学公式、脚注、HTML内容、外链点击。因为终端是字符网格，这些元素没有自然的渲染方式。
+
+3. **Basalt 适合直接替代 Obsidian GUI 吗？为什么？**
+   - 参考答案：不适合。Basalt 只做浏览和导航，编辑委托给外部编辑器。搜索、Graph View、Backlinks 这些是 Obsidian GUI 的能力。
+
+4. **Basalt 的重命名同步功能为什么重要？**
+   - 参考答案：Wiki-links 是 Obsidian 笔记图的核心连接方式，重命名时如果不同步更新引用，链接会断成悬空指针。Basalt 把这件事做对了，是它能作为 Obsidian 配套工具的基础门槛。
+
+5. **如果你想评估 Basalt 是否适合你的工作流，你会从哪几个方面测试？**
+   - 参考答案：1) 安装后看能否发现你的保险库；2) 试一次"启动 → 浏览 → 跳转标题"流程；3) 配置 Vim 模式和外部编辑器；4) 测试重命名同步是否正常。
+
+---
+
+## 进阶路径
+
+### 阶段一：基础使用（1 周）
+- 目标：理解 Basalt 的三窗格架构和基本操作
+- 行动：安装 Basalt，用 `Tab` 切换窗格，浏览一个保险库，尝试跳转标题
+- 验收：能流畅使用 Basalt 浏览笔记，理解三窗格的职责
+
+### 阶段二：配置定制（2-4 周）
+- 目标：定制 Basalt 的配置，适配个人工作流
+- 行动：配置 `vim_mode = true`，设置外部编辑器快捷键，调整符号预设
+- 验收：能根据个人偏好定制 Basalt 的配置
+
+### 阶段三：深度使用（1-3 个月）
+- 目标：把 Basalt 完整接入日常终端工作流
+- 行动：每天用 Basalt 浏览笔记，替代部分 Obsidian GUI 操作，评估效率提升
+- 验收：能判断 Basalt 在哪些场景有帮助，哪些场景仍需 Obsidian GUI
+
+### 阶段四：贡献与扩展（长期）
+- 目标：理解 ratatui 实战要点，可能为 Basalt 贡献代码
+- 行动：阅读 Basalt 源码，理解三窗格实现、事件处理、配置系统，尝试修复 bug 或添加功能
+- 验收：能理解 Basalt 的技术实现，并能贡献改进
+
+---
+
+## 常见问题
+
+### Q1: Basalt 支持 Windows 吗？
+**A**: 支持。Basalt 是跨平台的，支持 Windows / macOS / Linux。配置文件位置见"安装与配置"章节。
+
+### Q2: Basalt 能编辑笔记吗？
+**A**: 内置编辑器是实验性的，功能有限。官方推荐用外部编辑器（Vim、VS Code 等）做实际编辑，Basalt 只负责浏览和导航。
+
+### Q3: Basalt 的渲染效果和 Obsidian GUI 一样吗？
+**A**: 不一样。Basalt 在终端字符网格里渲染 Markdown，不支持图片、表格、数学公式等元素。如果你的笔记重度依赖这些元素，Basalt 只能做文件树导航用。
+
+### Q4: 如何配置外部编辑器？
+**A**: 在配置文件中添加 `key_bindings` 绑定外部命令，通过 `%note_path`、`%vault` 等占位符注入上下文。详见"自定义命令"章节。
+
+### Q5: Basalt 会影响我的 Obsidian 保险库吗？
+**A**: 不会。Basalt 只读访问保险库文件，重命名操作会更新 Wiki-links 引用，但不会修改笔记内容（除非你用内置编辑器）。
+
+---
+
 **项目信息**
 
-- GitHub：[erikjuhani/basalt](https://github.com/erikjuhani/basalt) ⭐ 1.2k（截至 2026-05-11）
+- GitHub：[erikjuhani/basalt](https://github.com/erikjuhani/basalt) ⭐ 1,239+（截至 2026-06-25）
 - 语言：Rust
 - 框架：ratatui + pulldown-cmark
-- 许可证：MIT
+- 许可证：Apache-2.0
 - 安装：`cargo install basalt-tui`

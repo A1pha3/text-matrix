@@ -21,6 +21,34 @@ Babel 把 Claude Code 这类 AI coding agent 引入芯片设计流程，用 labe
 - 对照开源 EDA 工具链，判断 Babel 在哪些环节做了封装、哪些环节直接调用
 - 评估把 AI coding agent 引入硬件设计流程的适用边界与风险
 
+## 目录
+
+- [快速信息卡](#快速信息卡)
+- [学习目标](#学习目标)
+- [总览地图](#总览地图)
+- [Agent 流水线机制](#agent-流水线机制)
+- [Skill 体系](#skill-体系)
+- [设计产物目录结构](#设计产物目录结构)
+- [任务流案例](#任务流案例)
+- [技术栈](#技术栈)
+- [快速开始](#快速开始)
+- [采用建议](#采用建议)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [常见问题](#常见问题)
+
+## 快速信息卡
+
+> **GitHub 仓库**: [amoslee2026/Babel](https://github.com/amoslee2026/Babel)
+>
+> | 指标 | 数值 |
+> |------|------|
+> | ⭐ Stars | 33+ |
+> | 🍴 Forks | 7+ |
+> | 📜 License | GPL-3.0 |
+> | 💻 主要语言 | SystemVerilog |
+> | 📅 最后更新 | 2026-06-25 |
+
 ## 总览地图
 
 Babel 的系统边界分三层：上层是 agent 编排层，用 Claude Code 的 slash command 和 labeled issue 驱动；中层是 skill 层，把 EDA 工具调用、质量检查、流程生成、质量门控封装成可复用 skill；下层是开源 EDA 工具层，Yosys/OpenSTA/Magic 等工具直接执行综合、时序分析、物理设计。
@@ -290,3 +318,68 @@ claude-code
 4. 评估是否把 issue handoff 模式迁移到自己的设计流程中，与现有 EDA 工具链集成
 
 Babel 复用开源 EDA 工具，把精力放在流程编排和质量门控上，把 agent 间协作、迭代收敛、状态持久化落成可观察的 label 和文件，设计师随时可以介入、回流或审计。
+
+---
+
+## 自测题
+
+1. **Babel 的 5-agent 流水线各阶段的输入输出是什么？**
+   - 参考答案：architect（输入：用户需求，输出：PRD → arch_spec → MAS）→ rtl（输入：MAS，输出：lint-clean SystemVerilog）→ verification（输入：RTL，输出：100% 覆盖率报告）→ synthesis（输入：RTL + SDC，输出：timing-closed 网表）→ pd（输入：网表，输出：GDSII + DRC/LVS 通过）
+
+2. **为什么 Babel 使用 issue handoff 而不是函数调用或消息队列？**
+   - 参考答案：issue 自带评论、附件、关联 PR，能承载设计产物的元数据；label 状态机对人类可读，设计师可以随时介入修改 label 强制回流；agent 间不共享内存状态，issue 充当持久化的消息队列，崩溃后可恢复。
+
+3. **Babel 的迭代限制是什么？为什么需要这些限制？**
+   - 参考答案：每个 agent 有单阶段迭代限制和全局限制（如 rtl 的 lint 3 次，verification 的 coverage 8 次，全局都是 10 次）。这些限制防止 agent 在无法收敛的问题上死循环，超限自动触发 `escalate-user`，停止并等待用户决策。
+
+4. **Babel 适合直接用于生产芯片设计吗？为什么？**
+   - 参考答案：不适合。项目仍处于早期阶段（截至 2026-05-22 约 20 星），AI agent 在硬件设计上无法 100% 自主收敛，开源 EDA 工具在先进工艺节点的支持有限，整个流程依赖 Claude Code 的 agent 能力。
+
+5. **如果你想评估 Babel 是否适合你的团队，你会从哪几个方面测试？**
+   - 参考答案：1) 在 ASAP7 PDK 上跑通一个简单设计（如计数器、FIFO），熟悉 agent 流水线和 issue handoff 机制；2) 用质量检查 skill 单独评审现有 RTL，理解 skill 封装；3) 尝试中等复杂度设计（如简单 RISC-V 核心），观察哪些阶段容易触发回流；4) 评估是否把 issue handoff 模式迁移到自己的设计流程中。
+
+---
+
+## 进阶路径
+
+### 阶段一：理解基础（1-2 周）
+- 目标：理解 Babel 的 5-agent 流水线和 issue handoff 机制
+- 行动：阅读本文，理解总览地图和 Agent 流水线机制章节，跑通快速开始中的示例
+- 验收：能画出 Babel 的 5-agent 流水线图，解释每个 agent 的职责和触发条件
+
+### 阶段二：动手实验（2-4 周）
+- 目标：在 ASAP7 PDK 上跑通一个简单设计，熟悉 agent 流水线和 skill 封装
+- 行动：按照快速开始章节，在 Claude Code 中描述一个简单设计需求，观察 agent 如何协作，查看每个阶段的设计产物
+- 验收：能独立完成一个简单设计的全流程，理解每个阶段的设计产物和质量门控
+
+### 阶段三：深度定制（1-3 个月）
+- 目标：理解 skill 封装机制，尝试修改或扩展 skill
+- 行动：阅读 Skill 体系章节，理解四类 skill（EDA 工具、质量检查、流程生成、质量门控），尝试修改现有 skill 或创建自定义 skill
+- 验收：能修改现有 skill 的提示词或参数，或创建新的 skill 封装自定义 EDA 工具调用
+
+### 阶段四：生产应用（3 个月+）
+- 目标：评估 Babel 在生产环境的可行性，与现有 EDA 工具链集成
+- 行动：用 Babel 跑一个中等复杂度的设计，对比传统人工流程的时间和质量，评估迭代限制和收敛性，考虑与现有 CI/CD 流程集成
+- 验收：能给出 Babel 在团队中的适用场景和不适用场景的明确判断，制定采用路线图
+
+---
+
+## 常见问题
+
+### Q1: Babel 需要安装哪些依赖？
+**A**: Babel 依赖 Claude Code 和开源 EDA 工具链（Yosys、OpenSTA、Magic、Netgen、QRouter、KLayout）。需要按照快速开始章节配置环境，运行 `source ~/wrk/eda_opensources/eda_env.sh` 设置工具路径。
+
+### Q2: Babel 支持哪些 PDK？
+**A**: 目前示例使用 ASAP7 PDK（7nm 教学工艺）。其他 PDK 需要相应的标准单元库和工艺文件，可能需要修改 skill 中的工具调用参数。
+
+### Q3: 如果 agent 在某个阶段卡住了怎么办？
+**A**: 检查 `.handoff/` 目录中的 `fix_iter.json` 和 `global_fix_iter.json`，看是否触发了迭代限制。如果触发了 `escalate-user`，需要人工介入决策。也可以手动修改 issue 的 label，强制回流到上一个阶段。
+
+### Q4: Babel 生成的 GDSII 可以直接用于流片吗？
+**A**: 不推荐。Babel 仍处于早期阶段，开源 EDA 工具在先进工艺节点的支持有限，生成的结果需要经过专业验证。建议把 Babel 用于教学、原型验证或开源芯片项目。
+
+### Q5: 如何贡献到 Babel 项目？
+**A**: 可以在 GitHub 上提交 issue 或 PR。项目处于早期阶段，欢迎贡献新的 skill、改进文档或报告 bug。
+
+---
+

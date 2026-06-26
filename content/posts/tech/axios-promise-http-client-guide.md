@@ -10,6 +10,24 @@ tags: ["JavaScript", "HTTP", "Axios", "Node.js", "前端开发"]
 
 # Axios：Promise HTTP 客户端完全指南
 
+> **快速信息卡**
+> - **GitHub**: [axios/axios](https://github.com/axios/axios)
+> - **Stars**: 109k+
+> - **Forks**: 11.6k+
+> - **License**: MIT
+> - **语言**: JavaScript/TypeScript
+> - **最后更新**: 2026-06-26
+
+## 学习目标
+
+读完本指南，你会掌握：
+
+1. Axios 的核心特性，以及它相比 fetch API 的优势和适用边界
+2. 安装配置、实例创建、拦截器、错误处理、请求取消的完整用法
+3. 在实际项目中引入 Axios 的采用顺序和常见陷阱
+4. 如何通过拦截器统一错误处理、添加认证头、实现请求重试
+5. Axios 的适用场景和不适用场景，以及迁移到 fetch 的考量
+
 ## 本文覆盖范围
 
 读完本指南，你会了解：

@@ -8,7 +8,24 @@ categories: ["技术笔记"]
 tags: ["Biome", "Rust工具链", "Prettier", "ESLint", "代码格式化", "前端工程化", "Linter"]
 ---
 
-# Biome 2.x 全栈 Web 工具链：单二进制替代 Prettier + ESLint 的 Rust 实践
+> **快速信息卡**
+> - **GitHub**: [biomejs/biome](https://github.com/biomejs/biome)
+> - **Stars**: 25,187+
+> - **Forks**: 1,047+
+> - **License**: Apache-2.0
+> - **语言**: Rust
+> - **最后更新**: 2026-06-25
+
+## 学习目标
+
+读完这篇，你应该能回答下面几个问题：
+
+1. Biome 把哪些活儿从 Prettier + ESLint 接了过来，哪些还没接
+2. 单二进制 + Rust 在大仓库 CI 上具体省在哪里
+3. 从一个跑着 Prettier + ESLint 的存量项目迁过来，按什么顺序最稳
+4. 什么情况下不该上 Biome
+
+## 全文地图
 
 `biomejs/biome` 想做的事情可以一句话讲完：**用 Rust 重写 Prettier + ESLint 的核心能力，做成一个单二进制工具链**。和"在 Prettier / ESLint 上叠配置文件"的传统玩法不同，Biome 的目标是"开箱即用、零配置、跨语言统一"，并且把性能压到极限。截至 2026 年，Biome 在格式化层做到了 **97% Prettier 兼容**、Linter 收录 **500+ 规则**（来自 ESLint、typescript-eslint 等生态），原生支持 **JavaScript / TypeScript / JSX / JSON / CSS / GraphQL**。
 

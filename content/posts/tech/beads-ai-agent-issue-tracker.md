@@ -14,6 +14,31 @@ AI 编程 Agent 跑长周期任务时，记忆会丢。上下文窗口有限，M
 
 截至 2026-04-27，GitHub 21.5k stars，Go 实现，单 CLI 工具装一次所有项目都能用。本文判断它为什么值得看，拆开四层并行机制，给一个任务流案例和采用顺序建议。
 
+> **快速信息卡**
+> - **GitHub**: [gastownhall/beads](https://github.com/gastownhall/beads)
+> - **Stars**: 24,771+
+> - **Forks**: 1,660+
+> - **License**: MIT
+> - **语言**: Go
+> - **最后更新**: 2026-06-25
+
+## 目录
+
+- [快速信息卡](#快速信息卡)
+- [总览：Beads 的四层并行机制](#总览beads-的四层并行机制)
+- [为什么 AI Agent 需要专门的 Issue 追踪器](#为什么-ai-agent-需要专门的-issue-追踪器)
+- [存储层：Dolt 驱动的 SQL 后端](#存储层dolt-驱动的-sql-后端)
+- [ID 层：Hash ID 与层级结构](#id-层hash-id-与层级结构)
+- [协作层：角色、存储模式与 Git-Free](#协作层角色存储模式与-git-free)
+- [上下文层：语义压缩与消息类型](#上下文层语义压缩与消息类型)
+- [任务流案例](#任务流案例)
+- [快速开始](#快速开始)
+- [与传统 Issue 追踪工具对比](#与传统-issue-追踪工具对比)
+- [采用建议](#采用建议)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [常见问题](#常见问题)
+
 ## 总览：Beads 的四层并行机制
 
 Beads 不是把 Markdown 换成 SQL 这么简单。它把"Agent 任务管理"拆成四层可以独立讨论的机制，每层解决一个具体问题：
@@ -279,6 +304,70 @@ echo "Use 'bd' for task tracking" >> AGENTS.md
 2. 任务量上来后启用语义压缩，观察 token 占用变化
 3. 多 Agent 协作时切到 Server 模式，让多个 writer 并发
 4. 开源协作场景再引入 Contributor/Maintainer 角色区分
+
+---
+
+## 自测题
+
+1. **Beads 的四层并行机制各解决什么问题？**
+   - 参考答案：存储层（多 Agent 写冲突、历史不可回溯，用 Dolt cell-level merge + 原生分支解决）；ID 层（自增 ID 合并必冲突，用 Hash-based ID + 层级 ID 解决）；协作层（角色与仓库边界，用 Contributor/Maintainer 自动检测和 Git-Free 模式解决）；上下文层（旧任务撑爆上下文窗口，用语义压缩和 Message 类型解决）
+
+2. **为什么 Beads 使用 Dolt 而不是传统数据库或文件？**
+   - 参考答案：Dolt 既是 SQL 数据库，又是 git 风格的版本控制系统。cell-level merge 让两个字段级的修改可以自动合并，原生分支支持多 Agent 并行工作，SQL 查询支持结构化数据访问，内置同步支持多机器协作。
+
+3. **Beads 的 Hash ID 和层级 ID 各有什么作用？**
+   - 参考答案：Hash ID（如 `bd-a3f8`）替代自增 ID，防止多分支合并时冲突；层级 ID（如 `bd-a3f8.1`）表达 epic-task-subtask 结构关系，让 Agent 可以快速判断任务归属。
+
+4. **Beads 适合用在什么场景？不适合什么场景？**
+   - 参考答案：适合 AI 编程 Agent 主导的项目、多 Agent 协作、长周期项目、Monorepo、开源贡献；不适合纯人类团队、任务量极小、需要严格权限管理的场景。
+
+5. **如果你想评估 Beads 是否适合你的团队，你会从哪几个方面测试？**
+   - 参考答案：1) 在单 Agent 项目里跑 `bd init`，用基本命令跑通流程；2) 任务量上来后启用语义压缩，观察 token 占用变化；3) 多 Agent 协作时切到 Server 模式；4) 开源协作场景引入角色区分。
+
+---
+
+## 进阶路径
+
+### 阶段一：快速验证（1 周）
+- 目标：理解 Beads 的基本机制和核心命令
+- 行动：安装 Beads，运行 `bd init`，用 `bd create` / `bd ready` / `bd update --claim` 跑通基本流程
+- 验收：能解释 Beads 的四层并行机制，熟练使用基本命令
+
+### 阶段二：实际项目试用（2-4 周）
+- 目标：在真实项目中用 Beads 管理任务，评估适用边界
+- 行动：在真实 AI Agent 项目中配置 Beads，观察多 Agent 协作时的写冲突处理，评估语义压缩效果
+- 验收：能判断 Beads 是否适合团队的工作流，识别需要人工介入的场景
+
+### 阶段三：高级功能与定制化（1-3 个月）
+- 目标：理解 Embedded vs Server 模式、Contributor/Maintainer 角色、Git-Free 模式
+- 行动：阅读四层机制的详细文档，尝试 Server 模式多 Agent 并发写，配置 Contributor/Maintainer 角色区分
+- 验收：能根据团队规模和工作流选择合适的存储模式和角色配置
+
+### 阶段四：生态扩展与贡献（长期）
+- 目标：与现有工具链集成，贡献到 Beads 项目
+- 行动：集成到 CI/CD 流程，开发与 Claude Code / Cursor / Copilot 的深度集成，提交 PR 改进文档或功能
+- 验收：能把 Beads 完整接入团队的 AI Agent 工作流，并能贡献改进
+
+---
+
+## 常见问题
+
+### Q1: Beads 和 GitHub Issues 有什么区别？
+**A**: GitHub Issues 设计给人用，Beads 设计给 AI Agent 用。Beads 的数据是结构化 SQL，支持自动依赖图、原子认领、语义压缩、Hash ID 防冲突、Dolt 版本控制，这些功能对 AI Agent 协作至关重要。
+
+### Q2: Beads 的 Embedded 模式和 Server 模式有什么区别？
+**A**: Embedded 模式（默认）在进程内运行 Dolt，不需要外部服务器，适合单 Agent；Server 模式连接外部 `dolt sql-server`，支持多个并发 writer，适合多 Agent 协作。
+
+### Q3: 语义压缩是什么？为什么需要它？
+**A**: 语义压缩是 Beads 的自动压缩机制，关闭的任务被语义压缩，保留关键信息但大幅减少 token 占用。需要它是因为长周期项目中，关闭的旧任务会累积占用上下文窗口，压缩后 Agent 能在有限上下文窗口里处理更长的项目历史。
+
+### Q4: Beads 支持哪些 VCS？
+**A**: Beads 默认与 git 集成，也支持 Git-Free 模式（完全脱离 git 工作），适用于 Sapling、Jujutsu、Piper 等非 git VCS，以及 Monorepos、CI/CD、评估/测试场景。
+
+### Q5: 如何保证多 Agent 并发写不冲突？
+**A**: Beads 用 Dolt 的 cell-level merge 保证并发写不冲突。两个 Agent 同时改同一个任务的不同字段（一个改 status，一个改 assignee）能自动合并，不需要手动解冲突。
+
+---
 
 ## 相关链接
 

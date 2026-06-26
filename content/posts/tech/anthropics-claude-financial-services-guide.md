@@ -14,11 +14,11 @@ tags: ["Claude", "Anthropic", "AI Agent", "金融服务", "MCP"]
 > **预计阅读时间**：22 - 30 分钟
 
 > **快速信息卡**
-> - **Stars**: 32,495+
-> - **Forks**: 4,709+
+> - **Stars**: 32,543+
+> - **Forks**: 4,716+
 > - **License**: Apache-2.0
 > - **语言**: Python
-> - **最后更新**: 2026-06-25
+> - **最后更新**: 2026-06-26
 
 **学习目标**：读完后你能判断的几件事：
 - 仓库、Cowork 插件发布源、Managed Agent（托管智能体）模板这三层的边界分别在哪
@@ -116,7 +116,7 @@ scripts/                             ← deploy / validate / sync / orchestrate
 
 这套目录把复用边界划开了。命名 agent 管一条工作流的端到端执行。Vertical plugin 管可复用的领域技能和命令。Managed Agent cookbook 把同一套 system prompt 和 skills 包装成可通过 API 托管部署的形式。分析师和平台团队看到的是不同的运行面，底层的 prompt 和 skill 来源不变。
 
-这个仓库是 file-based 的，主体内容就是 Markdown、JSON、YAML。没有构建系统，没有二进制分发，没有 docker-compose。Anthropic 把复杂度放在了内容组织、引用关系和部署脚本上，没有放在代码框架上。这种取舍对应一个具体判断：行业 agent 场景里真正频繁变化的是流程、模板、规则和数据接入方式，代码本身相对稳定。Markdown 比代码更容易被业务团队读懂和修改，业务侧改 skill 时不需要走开发提测流程——这降低了运营成本，代价是失去了类型检查和编译期校验。
+这个仓库是 file-based 的，主体内容就是 Markdown、JSON、YAML。没有构建系统，没有二进制分发，没有 docker-compose。Anthropic 把复杂度放在了内容组织、引用关系和部署脚本上，没有放在代码框架上。这种取舍基于一个实际判断：行业 agent 场景里真正频繁变化的是流程、模板、规则和数据接入方式，代码本身相对稳定。Markdown 比代码更容易被业务团队读懂和修改，业务侧改 skill 时不需要走开发提测流程——这降低了运营成本，代价是失去了类型检查和编译期校验。
 
 ## 4. 现在有哪些 agent，它们各自能干到什么程度
 

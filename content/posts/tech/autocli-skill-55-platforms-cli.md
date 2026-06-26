@@ -2,7 +2,7 @@
 title: "AutoCLI Skill：AI Agent 多平台浏览器自动化工具"
 slug: autocli-skill-55-platforms-cli
 date: "2026-04-22T00:50:00+08:00"
-description: "全面解析AutoCLI Skill：开源的55+平台CLI工具，让AI Agent无需API Key即可操控Twitter/X、B站、知乎、微博、YouTube等平台，复用Chrome登录态，零配置开箱即用，Rust编写仅4.7MB。"
+description: "全面解析 AutoCLI Skill：开源的 55+平台 CLI 工具，让 AI Agent 无需 API Key 即可操控 Twitter/X、B 站、知乎、微博、YouTube 等平台，复用 Chrome 登录态，零配置开箱即用，Rust 编写仅 4.7MB。"
 categories: ["技术笔记"]
 tags: ["AutoCLI", "AI Agent", "浏览器自动化", "Rust", "OpenClaw", "Claude Code"]
 ---
@@ -14,6 +14,35 @@ tags: ["AutoCLI", "AI Agent", "浏览器自动化", "Rust", "OpenClaw", "Claude 
 AutoCLI Skill 把"AI Agent 操控 55+ 平台"这件事压成一个 4.7MB 的 Rust 二进制加一个 Chrome 扩展，靠复用浏览器已有登录态绕开 OAuth 与 API Key 申请，代价是必须保持 Chrome 在前台运行、且依赖平台 DOM 结构稳定。它适合个人开发者快速搭建跨平台信息流助手，不适合做生产级多租户服务。
 
 > 本文数据基于 2026 年 4 月公开仓库状态，Stars/Forks/二进制大小均可能随版本变化，请以仓库主页为准。
+
+## 学习目标
+
+读完本文应能：
+
+1. 说清 AutoCLI Skill 的三种访问模式（Public API / Browser / Desktop App）各自的适用场景和运行前提
+2. 解释"复用 Chrome 登录态"的代价与边界，能判断某个业务场景是否适合用 AutoCLI
+3. 根据业务需求（如"聚合 HackerNews 和 B 站热榜"）选出正确的模式并写出对应命令
+4. 识别 Browser 模式下的常见失效信号（平台改版、Chrome 未打开、登录态失效）并知道如何诊断
+5. 对比 AutoCLI 与 Playwright/Puppeteer 的取舍，能向团队解释"为什么选它"和"什么时候不该用"
+
+## 目录
+
+- [一句话判断](#一句话判断)
+- [学习目标](#学习目标)
+- [它解决什么问题](#它解决什么问题)
+- [总览地图：三重模式如何分工](#总览地图三重模式如何分工)
+- [技术选型背后的取舍](#技术选型背后的取舍)
+- [平台支持矩阵](#平台支持矩阵)
+- [安装与配置](#安装与配置)
+- [任务流案例：从自然语言到平台动作](#任务流案例从自然语言到平台动作)
+- [使用方法](#使用方法)
+- [命令参考](#命令参考)
+- [故障排除](#故障排除)
+- [与同类工具对比](#与同类工具对比)
+- [采用建议](#采用建议)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [资源链接](#资源链接)
 
 ## 它解决什么问题
 
@@ -427,6 +456,32 @@ autocli --debug twitter trending
 - **登录态共享风险**：所有命令共享 Chrome 登录态，无账号隔离
 - **并发限制**：Chrome 单实例无法高并发，多任务需排队
 - **合规风险**：自动化操作可能违反部分平台 ToS，使用前请查阅目标平台条款
+
+## 自测题
+
+回答下面 5 个问题，能答对说明已经理解 AutoCLI 的适用边界和调用方式：
+
+1. AutoCLI 的三种模式各需要什么运行前提？如果 Chrome 未打开，哪些命令会失败？
+2. "复用 Chrome 登录态"的核心代价是什么？什么场景下这个代价不可接受？
+3. 给一个需要同时查 HackerNews 热榜和 Twitter 热搜的任务，写出完整的命令调用思路。
+4. Browser 模式的命令返回空结果，可能的原因有哪三类？分别如何诊断？
+5. 为什么 AutoCLI 不适合做生产级多租户服务？如果要支持多租户，需要在哪些方面自行搭建？
+
+**参考答案方向**：
+1. Public API 无需 Chrome；Browser 需 Chrome + 扩展；Desktop App 需对应应用已打开。Chrome 未打开时所有 Browser 模式命令失败。
+2. 代价是无账号隔离、Chrome 进程强依赖、无法多用户并发。多租户 SaaS 场景下不可接受。
+3. 先调 `autocli hackernews top` 再调 `autocli twitter trending`，AI Agent 聚合成 Markdown。
+4. 平台前端改版（等仓库更新）、Chrome 未登录对应平台、网络超时（`autocli doctor` 诊断）。
+5. 登录态无法隔离，存在账号安全风险；需自行搭建登录态管理、并发控制、操作审计层。
+
+## 进阶路径
+
+完成本文阅读后，按以下四个阶段深化理解：
+
+- [ ] **阶段一：跑通 Public API 模式** — 用 HackerNews 或 Wikipedia 验证 AI Agent 与 autocli 的协作链路，确认输出格式符合预期
+- [ ] **阶段二：测试 Browser 模式稳定性** — 选 1-2 个已登录平台（如 B 站、知乎），实测 DOM 操作在平台改版后的失效频率
+- [ ] **阶段三：接入 Desktop App 模式** — 在 Cursor 或 Notion 上验证自动化价值，评估是否纳入日常工作流
+- [ ] **阶段四：评估生产可行性** — 梳理 Chrome 依赖、并发限制、合规风险，判断是否需要回到 Playwright 自行搭建
 
 ## 资源链接
 

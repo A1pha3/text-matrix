@@ -5,7 +5,7 @@ slug: "awesome-deepseek-agent-integration-guide"
 description: "基于 DeepSeek 官方仓库 awesome-deepseek-agent，梳理 16 款 AI 编程助手接入 DeepSeek-V4 模型的三种模式（Anthropic 兼容、OpenAI 兼容、直连），详解配置方法、选型建议与常见问题。"
 draft: false
 categories: ["技术笔记"]
-tags: ["DeepSeek", "AI编程助手", "Claude Code", "Agent Skills", "OpenClaw"]
+tags: ["DeepSeek", "AI 编程助手", "Claude Code", "Agent Skills", "OpenClaw"]
 ---
 
 # Awesome DeepSeek Agent：16 款主流 AI 编程助手接入 DeepSeek 模型完整指南
@@ -20,6 +20,18 @@ awesome-deepseek-agent 仓库把 16 款 AI 编程助手接 DeepSeek-V4 的方式
 - 如何根据自身需求选择合适的接入工具和模式
 
 ---
+
+
+## 学习目标
+
+读完本文应能：
+
+1. 区分 Anthropic 兼容、OpenAI 兼容、模型直连三种接入模式，并能判断给定工具应使用哪种
+2. 独立完成 Claude Code、Reasonix、WorkBuddy 中任意一款工具的 DeepSeek-V4 接入配置
+3. 根据使用场景（如"从零开始"、"需要接入飞书"）选出最合适的工具和接入模式
+4. 解释 DeepSeek-V4 Pro/Flash 的定价差异，能设计基本的成本控制策略
+5. 排查常见的接入问题（认证错误、400 错误、工具调用失败）
+
 
 ## 目录
 
@@ -329,3 +341,31 @@ DeepSeek 要求多轮对话中的 `reasoning_content` 被原样回传，Copilot 
 - DeepSeek API 文档：[api-docs.deepseek.com](https://api-docs.deepseek.com/)
 - 仓库地址：[github.com/deepseek-ai/awesome-deepseek-agent](https://github.com/deepseek-ai/awesome-deepseek-agent)
 - DeepSeek 官方定价：[platform.deepseek.com](https://platform.deepseek.com/)
+
+
+## 自测题
+
+请回答以下问题检验你的理解：
+
+1. **模式判断**：你有一个原本对接 OpenAI API 的工具，现在要接入 DeepSeek-V4。应该配置哪种模式？具体需要改哪些字段？
+2. **成本控制**：你的团队每天用 AI 助手处理约 10 万 token 的输入和 5 万 token 的输出。如果全部用 Pro 模型，每日成本是多少？如果只在复杂任务时用 Pro、日常用 Flash，成本大概能降低多少？
+3. **故障排查**：配置完 Claude Code 后报 401 错误，可能的原因有哪些？如何逐一排查？
+4. **工具选型**：一个需要接入飞书、且希望技能可扩展的团队，应该选 OpenClaw 还是 AstrBot？两者的主要区别是什么？
+5. **配置细节**：Oh My Pi 文档中特别强调的三个兼容性字段是什么？为什么它们对 DeepSeek-V4 非常重要？
+
+## 进阶路径
+
+**入门（已完成本文阅读）**
+- 按照本文步骤完成一款工具的 DeepSeek-V4 接入（推荐从 Reasonix 开始）
+- 对比 Pro 和 Flash 模型在同一任务上的输出质量差异
+
+**进阶**
+- 为团队编写一份《DeepSeek-V4 接入配置模板》，覆盖环境变量、配置文件、常见问题三部分
+- 搭建一个多工具并存的环境（如 Reasonix + WorkBuddy），比较它们的使用体验差异
+
+**深入**
+- 研究 DeepSeek-V4 的 API 兼容层实现原理（Anthropic 兼容端点是如何将 `/v1/messages` 请求转发的）
+- 基于 Agent Skills 机制，为你的日常开发流程编写一款自定义 Skill
+
+---
+

@@ -18,11 +18,11 @@ Anthropic Knowledge Work Plugins：把 AI 插件从写代码改成了写 Markdow
 **GitHub**: [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins)
 
 > **快速信息卡**
-> - **Stars**: 21,926+
-> - **Forks**: 2,559+
+> - **Stars**: 21,961+
+> - **Forks**: 2,563+
 > - **License**: Apache-2.0
 > - **语言**: Python
-> - **最后更新**: 2026-06-25
+> - **最后更新**: 2026-06-26
 
 **学习目标**：读完后你能回答——
 - Commands、Skills、MCP Connectors 三层各自的职责是什么，为什么这三层要分开控制
@@ -46,7 +46,7 @@ Anthropic Knowledge Work Plugins：把 AI 插件从写代码改成了写 Markdow
 
 市面上大部分 AI 插件系统都在走同一条路：提供 SDK、定义 API、写胶水代码、打包、发布。Anthropic 这 11 个开源插件走的是另一条路——**零代码，纯 Markdown + JSON 驱动**。
 
-省掉代码是表层。更深的判断是：一个 AI Agent 在一个领域里能干多少活，取决于它对这个领域的**知识编码有多细、有多准确**。Markdown 文件——可读、可改、可进 Git——是当前最适合做这件事的载体。相比 Python 脚本、数据库 schema、配置文件模板，Markdown 的门槛最低，非工程师也能直接改。
+省掉代码是表层。更实际的考虑是：一个 AI Agent 在一个领域里能干多少活，取决于它对这个领域的**知识编码有多细、有多准确**。Markdown 文件——可读、可改、可进 Git——是当前最适合做这件事的载体。相比 Python 脚本、数据库 schema、配置文件模板，Markdown 的门槛最低，非工程师也能直接改。
 
 11 个插件覆盖了产品管理、销售、客服、数据分析、工程开发、市场营销、法务、财务、生物研究、企业搜索和插件管理，每个插件都遵循同一套三层结构：Commands（用户显式触发）、Skills（AI 自动调用）、MCP Connectors（连接外部工具）。
 
@@ -397,6 +397,34 @@ claude plugin install productivity@knowledge-work-plugins
 ---
 
 *本文基于 GitHub [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) 公开信息撰写，数据截取至 2026-05-30。插件结构和功能细节来自仓库 README、plugin.json 和示例工作流。文中示例数据（如人名、项目代号、金额）为说明性内容，非真实业务数字。*
+
+---
+
+## 八、常见问题和故障排查
+
+### 问题1：装了插件，但 Commands 不出现
+
+**原因**：只装了命名 agent，没有装对应的 vertical plugin。
+
+**解决**：命名 agent 打包了自己的 skills 副本，但 slash commands 定义在 `vertical-plugins/<vertical>/commands/` 下。如果想用 `/comps`、`/dcf` 这类命令，需要装对应的 vertical plugin。
+
+### 问题2：改了 skill 文件，但 agent 行为没变化
+
+**原因**：命名 agent 读的是 `agent-plugins/<slug>/skills/` 下的副本，不是 `vertical-plugins/<vertical>/skills/` 源文件。
+
+**解决**：改完源文件后，运行 `python3 scripts/sync-agent-skills.py` 把更新推到所有打包了该 skill 的 agent。
+
+### 问题3：Connector 配置了，但 AI 没有调用
+
+**原因**：Skills 层逻辑不变，但 Connector 需要在 `.mcp.json` 中正确配置，且 AI 需要根据上下文自动判断何时调用。
+
+**解决**：检查 `.mcp.json` 配置是否正确，确认 MCP 服务器已启动，查看 AI 的推理过程了解为何没有调用。
+
+### 问题4：Markdown 文件存储状态，会不会有并发写冲突
+
+**原因**：当前设计面向单人使用或小团队，确实存在并发写冲突的风险。
+
+**解决**：对于团队使用，建议引入锁机制或迁移到数据库。但当前架构的明确上限是：一旦团队规模上来，需要引入锁机制或迁到数据库。
 
 ---
 

@@ -16,8 +16,8 @@ tags: ["AI工具", "Antigravity", "Claude Code", "插件生态", "AI资源导航
 >
 > | 指标 | 数值 |
 > |------|------|
-> | ⭐ Stars | 41,675+ |
-> | 🍴 Forks | 6,682+ |
+> | ⭐ Stars | 41,692+ |
+> | 🍴 Forks | 6,685+ |
 > | 📜 License | MIT |
 > | 💻 主要语言 | Python |
 > | 📅 最后更新 | 2026-06-25 |
