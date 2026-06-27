@@ -22,7 +22,17 @@ author: 钳岳星君
 
 ---
 
-## 阅读导航
+## 学习目标
+
+读完本文后，你应当能够：
+
+- 说明 Turbovec 相比 FAISS HNSW/IVF-PQ 的 3 个独特定位（在线 ingest、4-16× 内存压缩、ARM SIMD 加速），并判断自己的 RAG 场景是否值得引入
+- 解释 TurboQuant 6 步编码管线的每一步在做什么，以及为什么"随机旋转"能让量化器变成 data-oblivious
+- 区分 TQ+ 校准和论文原始 Beta 分布假设的适用场景，并说明"在校准后冻结"为什么能消除训练阶段
+- 在 ARM NEON / x86 AVX-512 两种 SIMD 后端下，判断 Turbovec 的性能收益来自哪里
+- 用 Turbovec 替换现有 FAISS 索引，并完成一次选择性过滤（selective filter）的搜索，定位是否掉 recall
+
+## 阅读导航## 阅读导航
 
 - **5 分钟判断值不值得用**：看「先看结论」
 - **理解它在向量索引生态的卡位**：看「为什么 FAISS / HNSW 还差一块」
@@ -340,6 +350,61 @@ Rust 依赖（看 Cargo.toml）：
 - **需要 100% 精确召回**：brute-force 或者 HNSW
 - **需要把索引卸到磁盘 / S3**：turbovec 当前是 RAM
 - **想要 ANN-Benchmarks 标准协议兼容**：turbovec 接口是自家 API，不直接跑 ann-benchmarks（需要 adapter）
+
+---
+
+
+
+---
+
+## 自测题
+
+1. **在线 vs 训练**。你的任务是给一个持续增长的知识库做向量索引，每天新增 5K 文档。FAISS IVF-PQ 和 Turbovec 在"首次构建"和"持续 ingest"两个阶段的运维成本各是什么？如果知识库的语义分布会随时间漂移（比如新出的产品让旧产品的向量表示失效），Turbovec 的"无训练阶段"是不是就不需要重建索引了？
+2. **SIMD 加速适用边界**。你在 Apple M3 Max 上测 Turbovec，发现 4-bit 比 FAISS HNSW 快 15%，但 2-bit 只快 5%。结合文章里的 SIMD 搜索核说明，解释为什么 bit 数越低，SIMD 的加速收益越小？如果换成 x86 AVX2 环境，这个趋势会变吗？
+3. **选择性过滤的实现差异**。FAISS IVF 在 `ef=50` 且带 `filter` 时，实际考察的候选数是 `ef * (1 / filter_rate)`，如果 `filter_rate=0.1` 就等于考察 500 个。Turbovec 的"32-vector block 粒度短路"是怎么避免这个 over-fetch 的？如果你的过滤条件命中率只有 1%（100 万向量里只有 1 万条满足），Turbovec 的加速还能保持吗？
+
+---
+
+## 进阶路径
+
+### 阶段一：能跑通搜索，但不知道为什么快
+
+**目标读者**：刚把 Turbovec 替掉 FAISS HNSW，看到 benchmark 数字有提升，但说不清快在哪里。
+
+具体可做：
+1. **跑一次文章里的 `TurboQuantIndex(dim=1536, bit_width=4)` 最小示例**，然后故意把 `bit_width` 改成 `2` 再跑，对比召回率和搜索耗时。这样你直观感受到"低 bit → 高压缩但召回掉"的 trade-off。
+2. **用 `np.save` 把 Turbovec 的索引写到磁盘，再 `TurboQuantIndex.load` 回来**，确认持久化 → 重加载这条路径没问题。生产环境里索引要能 survives restart。
+3. **故意构造一个 selective filter 场景**：10 万向量里只有 100 条带 `source="wikipedia"`，然后对比加 filter 和不加 filter 的搜索耗时。这样你能感受到"SIMD 短路"的实际效果。
+
+### 阶段二：能改量化方案，但需要验证召回
+
+**目标读者**：已经在用 Turbovec 且对 6 步编码管线有理解，现在想调 `bit_width` 和 `num_bits` 之外的参数。
+
+具体可做：
+1. **读 Turbovec 源码里 `calibrate()` 的逻辑**（第一个 `add()` 时触发），看它怎么算每个维度的 5%/95% 分位。然后故意给一个分布很偏的输入向量（比如所有维度都挤在 [0.4, 0.6]），看校准后的码本是不是比默认 Beta 假设更准。
+2. **对比 2-bit 和 4-bit 在不同 `dim` 下的压缩比**：`dim=200`（低维）和 `dim=3072`（高维）时，TQ+ 校准带来的召回提升哪个更明显？结合 Beta 分布的渐近性质解释。
+3. **把 Turbovec 接到 LangChain 的 `VectorStore` 接口**，跑一个真实的 RAG 查询（比如"解释 Transformer 的位置编码"），对比 Turbovec vs FAISS 的回答质量和延迟。
+
+### 阶段三：能改搜索核，或者给 Turbovec 贡献代码
+
+**目标读者**：对 SIMD 优化和量化索引内部已经有深入理解，想改 Turbovec 的搜索核（比如加一个新的过滤策略），或者想给 upstream 提 PR。
+
+具体可做：
+1. **读 Turbovec 的 `neon_search()` 或 `avx512_search()` 源码**，看 32-vector block 是怎么展开成 SIMD 指令的。读懂后你能判断"要不要加 ARM SVE2 支持"（下一代 ARM 的矢量扩展）。
+2. **设计一个"范围过滤 + 向量相似度"的混合查询场景**：比如"找跟这句话相似、且发布时间在 2024 年之后的文档"。Turbovec 现在把 filter 烧进 SIMD 核，但如果过滤条件不是等值条件（而是范围条件），实现会怎么变？
+3. **复现 TurboQuant 论文里的 Figure 4**（不同 bit width 和不同 `dim` 下的失真率曲线）。复现完你能独立判断"我的数据集应该选 2-bit 还是 4-bit"。
+
+---
+
+## 常见问题
+
+**Turbovec 和 FAISS 能混用吗？** 能。Turbovec 的定位是"向量索引"，FAISS 可以继续做训练、聚类、PCA。典型分工：FAISS 训 IVF 码本 → Turbovec 负责低延迟搜索。
+
+**ARM NEON 加速在 Linux 和 macOS 上表现一致吗？** 不一致。Apple Silicon 的 NEON 实现和 Linux 上的 NEON 可能有细微的指令调度差异。生产环境建议在目标硬件上重新跑 benchmark，不要直接搬 macOS 的开发测试结果。
+
+**2-bit 量化会不会让多语言嵌入模型的召回率崩掉？** 会，如果嵌入模型的各语言向量分布差异很大。建议先对嵌入模型做一次分离度测试（比如用 `sentence-transformers` 的 `evaluation` 模块），确认 2-bit 下的跨语言召回还能接受，再上生产。
+
+**Turbovec 支持 GPU 加速吗？** 不支持。Turbovec 的设计哲学是"CPU + SIMD 足够快"。如果你的数据集超过 1 亿向量，建议看 Milvus 或 Qdrant（它们支持 GPU 索引）。
 
 ---
 

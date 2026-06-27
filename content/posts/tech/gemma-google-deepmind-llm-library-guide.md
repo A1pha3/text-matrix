@@ -10,6 +10,45 @@ tags: ["Gemma", "Google", "DeepMind", "LLM", "JAX"]
 
 # Gemma：Google DeepMind 开源 LLM 库完全指南
 
+> **目标读者**：LLM 应用开发者、AI 研究人员、对本地部署大模型感兴趣的实践者
+> **预计阅读时间**：30-40 分钟
+> **前置知识**：Python 基础、深度学习框架概念（JAX/PyTorch）
+> **难度定位**：⭐⭐⭐ 中级实用
+
+---
+
+## §0 学习目标
+
+完成本篇文章后，你将能够：
+
+1. **理解 Gemma 系列模型的定位与演进**：Gemma 1/2/3/3n/4 的区别与适用场景
+2. **掌握 Gemma 的基础使用**：安装、加载模型、多轮对话
+3. **使用多模态能力**：图像 + 文本混合输入
+4. **执行高效微调**：LoRA 配置与训练流程
+5. **选择适合的部署方案**：本地推理、量化、批处理优化
+6. **判断何时用 Gemma vs Gemini**：开源权重与闭源 API 的决策边界
+
+---
+
+## §0.5 目录
+
+- [§1 项目概述](#一项目概述)：Gemma 是什么、核心数据、支持版本
+- [§2 系统要求](#二系统要求)：硬件支持、软件依赖
+- [§3 快速开始](#三快速开始)：安装、基础使用、多轮对话
+- [§4 模型架构](#四模型架构)：Gemma 系列演进、核心模块、可用模型路径
+- [§5 多模态能力](#五多模态能力)：图像支持、采样器配置
+- [§6 微调指南](#六微调指南)：LoRA 微调、全量微调
+- [§7 示例与 Colabs](#七示例与-colabs)：官方 Colabs、文本生成、聊天示例
+- [§8 模型下载](#八模型下载)：检查点路径、下载权重
+- [§9 实践建议](#九实践建议)：推理优化、训练优化、常见问题
+- [§10 技术报告](#十技术报告)：各版本技术报告链接
+- [§11 项目结构](#十一项目结构)：代码库结构概览
+- [§12 与 Gemini 的关系](#十二与-gemini-的关系)：Gemma vs Gemini 对比
+- [§13 自测题](#自测题)：巩固知识点的 5 道题
+- [§14 进阶路径](#进阶路径)：从入门到生产的四个阶段
+
+---
+
 ## 一、项目概述
 
 ### 1.1 Gemma 是什么
@@ -20,8 +59,8 @@ tags: ["Gemma", "Google", "DeepMind", "LLM", "JAX"]
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 4.8k ⭐ |
-| Forks | 824 |
+| Stars | 5,477+ ⭐ |
+| Forks | 973+ |
 | 贡献者 | 30 |
 | 许可证 | Apache-2.0 |
 | 最新版本 | v3.3.0 (2025-11-18) |
@@ -390,21 +429,84 @@ Gemma 基于 Gemini 的研究和技术，但有如下区别：
 
 ---
 
-## 十三、总结
+## 自测题
 
-Gemma 是 Google DeepMind 提供的**生产级开源 LLM 库**：
+完成阅读后，请自检以下知识点：
 
-| 维度 | 说明 |
-|------|------|
-| 🏆 **权威背景** | Google DeepMind 出品，基于 Gemini 研究 |
-| 🔧 **功能完整** | 推理、微调、LoRA、多版本统一 API |
-| 📊 **多模态** | Gemma 3+ 支持图像+文本 |
-| ⚡ **性能优化** | JAX 原生支持 GPU/TPU |
-| 📚 **生态完善** | 官方 Colabs、文档、技术报告 |
+**Q1**：Gemma 3n 相比 Gemma 3 的主要区别是什么？
+<details>
+<summary>参考答案</summary>
+Gemma 3n 是 Gemma 3 的多模态优化版本，主要增强了图像 + 文本的混合输入能力。`ChatSampler` 的 `images` 参数只在 Gemma 3+ 版本可用。
+</details>
+
+**Q2**：`ChatSampler` 的 `multi_turn=True` 参数起什么作用？
+<details>
+<summary>参考答案</summary>
+启用多轮对话模式后，每次调用 `chat()` 会自动携带之前的对话历史作为上下文，实现连贯的对话体验。不需要手动管理历史消息。
+</details>
+
+**Q3**：LoRA 微调相比全量微调的主要优势是什么？
+<details>
+<summary>参考答案</summary>
+LoRA（Low-Rank Adaptation）只训练少量新增参数（rank 和 alpha 控制参数量），显存占用大幅降低，训练速度更快，且可以在同一个基础模型上叠加多个 LoRA 权重，方便切换不同任务。
+</details>
+
+**Q4**：Gemma 和 Gemini 的核心区别是什么？什么场景选哪个？
+<details>
+<summary>参考答案</summary>
+Gemma 是开源权重（可下载、可微调、Apache 2.0），Gemini 是闭源 API。需要本地部署、定制模型、离线运行的场景选 Gemma；需要最强模型能力、不想管理基础设施的场景选 Gemini API。
+</details>
+
+**Q5**：Gemma 的 `CheckpointPath` 枚举的作用是什么？
+<details>
+<summary>参考答案</summary>
+`gm.ckpts.CheckpointPath` 枚举了所有可用的预训练模型检查点路径（如 `GEMMA2_2B_IT`、`GEMMA4_E4B_IT`），通过 `gm.ckpts.load_params()` 加载对应权重，避免手动拼接路径。
+</details>
 
 ---
 
-**🔗 相关资源：**
+## 进阶路径
+
+### 阶段一：跑起来（1-2 天）
+- 安装 JAX 和 Gemma
+- 运行官方 Colabs（Sampling、Multi-modal）
+- 完成一次基础文本生成
+
+### 阶段二：接到自己的项目（3-7 天）
+- 将 Gemma 集成到现有 Python 项目
+- 实现多轮对话接口
+- 配置合适的采样参数（temperature、top_p、max_tokens）
+
+### 阶段三：微调与优化（1-2 周）
+- 准备自己的数据集
+- 配置并运行 LoRA 微调
+- 量化部署（INT8/INT4）
+- 启用 KV Cache 和 Flash Attention 加速推理
+
+### 阶段四：生产级部署（2-4 周）
+- 批量推理优化
+- 多 GPU/TPU 分布式推理
+- 监控与日志
+- A/B 测试不同模型版本
+
+**推荐资源**：
+- [Gemma 官方文档](https://gemma-llm.readthedocs.io)
+- [JAX 官方文档](https://jax.readthedocs.io)
+- [Hugging Face Gemma 模型页](https://huggingface.co/google/gemma)
+
+---
+
+## 十三、总结
+
+Gemma 是 Google DeepMind 开源的 LLM 库，基于 Gemini 的研究积累，提供从 2B 到 27B 规模的模型权重。核心优势是 Apache 2.0 许可证下的可微调性——你可以把模型拉到本地，用自己的数据跑 LoRA，而不用依赖闭源 API。
+
+JAX 后端原生支持 GPU/TPU，推理性能不错。Gemma 3 开始支持多模态输入，图像 + 文本的混合场景可以直接用 `ChatSampler(images=[...])` 处理。
+
+如果你在做本地化部署、需要定制模型行为、或者数据不能出本地，Gemma 比 Gemini API 更合适。如果只需要最强模型能力、不想管基础设施，直接调 Gemini API 更省事。
+
+---
+
+**相关资源：**
 
 | 资源 | 链接 |
 |------|------|
@@ -412,8 +514,7 @@ Gemma 是 Google DeepMind 提供的**生产级开源 LLM 库**：
 | PyPI | https://pypi.org/project/gemma |
 | 文档 | https://gemma-llm.readthedocs.io |
 | Gemma 官网 | https://ai.google.dev/gemma |
-| Gemma 生态 | https://ai.google.dev/gemma/docs |
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 Google DeepMind Gemma (4.8k Stars)_
+_🦞 本文由钳岳星君撰写，基于 Google DeepMind Gemma (5,477+ Stars)_

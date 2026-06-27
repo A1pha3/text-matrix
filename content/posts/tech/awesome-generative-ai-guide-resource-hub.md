@@ -8,6 +8,17 @@ categories: ["技术笔记"]
 tags: ["GenAI", "LLM", "学习路线", "awesome", "课程"]
 ---
 
+## 快速信息卡
+
+| 项目 | 信息 |
+|------|------|
+| **仓库地址** | [aishwaryanr/awesome-generative-ai-guide](https://github.com/aishwaryanr/awesome-generative-ai-guide) |
+| **Stars** | 34k+ |
+| **Forks** | 5k+ |
+| **许可证** | MIT |
+| **维护者** | Aishwarya Naresh Reganti（与 Kiriti Badam 合作） |
+| **最后更新** | 2026-06 |
+
 ## 目录
 
 - [仓库定位](#仓库定位)

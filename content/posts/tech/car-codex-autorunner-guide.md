@@ -10,7 +10,31 @@ tags: ["CAR", "Codex", "Opencode", "AI智能体", "自动化", "Tickets", "PMA"]
 
 # CAR Codex Auto-Runner：AI 编程智能体协作框架完全指南
 
-## §1 本文覆盖范围
+> **快速信息卡**
+>
+> | 项目 | 信息 |
+> |------|------|
+> | **Stars** | 839+ |
+> | **Forks** | 69+ |
+> | **License** | MIT |
+> | **语言** | Python 84.7%, TypeScript 5.9%, JavaScript 6.3% |
+> | **版本** | v1.11.2 (2026-04-15) |
+> | **提交** | 1,289+ commits |
+> | **贡献者** | 7 人 |
+> | **仓库** | [Git-on-my-level/codex-autorunner](https://github.com/Git-on-my-level/codex-autorunner) |
+> | **PyPI** | [codex-autorunner](https://pypi.org/project/codex-autorunner/) |
+
+## 学习目标
+
+读完本文，你应该能够：
+
+1. **理解CAR的设计理念**：掌握"Tickets即控制平面"的核心设计思路，理解为什么需要AI编程智能体协调框架
+2. **掌握三种交互方式**：学会使用Web UI、CLI、聊天应用（Telegram/Discord）三种方式与CAR交互
+3. **运用Tickets管理工作流**：能够创建、管理、执行CAR Tickets，理解状态持久化和上下文隔离机制
+4. **配置多智能体协作**：能够在项目中配置和使用Codex、Opencode、Hermes三大智能体，理解ACP协议
+5. **实践团队协作模式**：能够在团队中推广CAR协作工作流，理解PMA（Project Manager Agent）的使用场景
+
+## 本文覆盖范围
 
 读完本文，你会了解：
 
@@ -21,10 +45,57 @@ tags: ["CAR", "Codex", "Opencode", "AI智能体", "自动化", "Tickets", "PMA"]
 - 创建和管理 CAR Tickets 的方法
 - Project Manager Agent（PMA）的使用场景
 - 在团队中推广 CAR 协作工作流
+- 理解 CAR 的适用场景和局限性
+
+## 目录
+
+- [本文覆盖范围](#本文覆盖范围)
+- [项目概述](#项目概述)
+  - [什么是 CAR](#什么是-car)
+  - [核心数据](#核心数据)
+  - [支持的智能体](#支持的智能体)
+  - [为什么需要 CAR](#为什么需要-car)
+- [原理分析](#原理分析)
+  - [系统架构：Tickets 即控制平面](#系统架构tickets-即控制平面)
+  - [工作流程](#工作流程)
+  - [Contextspace 机制](#contextspace-机制)
+  - [Tickets as Code（代码化 Tickets）](#tickets-as-code代码化-tickets)
+- [架构分析](#架构分析)
+  - [仓库结构](#仓库结构)
+  - [核心组件](#核心组件)
+  - [数据流](#数据流)
+  - [Ticket 格式](#ticket-格式)
+- [功能详解](#功能详解)
+  - [三种交互方式](#三种交互方式)
+  - [Project Manager Agent（PMA）](#project-manager-agentpma)
+  - [支持的智能体集成](#支持的智能体集成)
+  - [Ticket 模板系统](#ticket-模板系统)
+- [使用说明](#使用说明)
+  - [环境要求](#环境要求)
+  - [安装方式](#安装方式)
+  - [快速开始](#快速开始)
+  - [Telegram 集成](#telegram-集成)
+  - [Discord 集成](#discord-集成)
+  - [Docker 运行时执行](#docker-运行时执行)
+- [开发扩展](#开发扩展)
+  - [创建自定义 Ticket 模板](#创建自定义-ticket-模板)
+  - [扩展新智能体支持](#扩展新智能体支持)
+  - [自定义 Contextspace](#自定义-contextspace)
+  - [与 CI/CD 集成](#与-cicd-集成)
+- [实践建议](#实践建议)
+  - [Ticket 编写规范](#ticket-编写规范)
+  - [多智能体协作模式](#多智能体协作模式)
+  - [状态管理实践建议](#状态管理实践建议)
+  - [故障排查](#故障排查)
+- [常见问题](#常见问题)
+- [进阶路径](#进阶路径)
+- [总结](#总结)
 
 ---
 
-## §2 项目概述
+## 项目概述
+
+## 项目概述
 
 ### 2.1 什么是 CAR
 
@@ -35,10 +106,10 @@ CAR 的设计原则：**让智能体做它们最擅长的事，不要挡路**（
 ### 2.2 核心数据
 
 ```
-Stars:     658
-Forks:    52
+Stars:     839+
+Forks:    69+
 版本:     v1.11.2（2026-04-15）
-提交:     1,289 commits
+提交:     1,289+ commits
 分支:     30 branches
 标签:     37 tags
 贡献者:   7 人
@@ -79,7 +150,7 @@ CAR 通过**Tickets 控制平面**和**状态机架构**解决了这些问题：
 
 ---
 
-## §3 原理分析
+## 原理分析
 
 ### 3.1 系统架构：Tickets 即控制平面
 
@@ -177,7 +248,7 @@ CAR 将 Tickets 视为一个**新的软件层**。这意味着：
 
 ---
 
-## §4 架构分析
+## 架构分析
 
 ### 4.1 仓库结构
 
@@ -288,7 +359,7 @@ contextspace:
 
 ---
 
-## §5 功能详解
+## 功能详解
 
 ### 5.1 三种交互方式
 
@@ -417,7 +488,7 @@ CAR 维护了一套祝福模板集：[car-ticket-templates](https://github.com/G
 
 ---
 
-## §6 使用说明
+## 使用说明
 
 ### 6.1 环境要求
 
@@ -555,7 +626,7 @@ codex-autorunner run --runtime docker
 
 ---
 
-## §7 开发扩展
+## 开发扩展
 
 ### 7.1 创建自定义 Ticket 模板
 
@@ -669,7 +740,7 @@ jobs:
 
 ---
 
-## §8 实践建议
+## 实践建议
 
 ### 8.1 Ticket 编写规范
 
@@ -794,7 +865,7 @@ cp ~/.car/car.db.backup-20260331 ~/.car/car.db
 
 ---
 
-## §9 常见问题
+## 常见问题
 
 ### Q1：CAR 和直接使用 Codex/Opencode 有什么区别？
 
@@ -852,7 +923,123 @@ CAR 经过测试可在以下系统运行：
 
 ---
 
-## §10 总结
+## 自测题
+
+学完后，用这些题检验掌握程度：
+
+### 题目1：CAR的核心设计理念是什么？
+
+**题目**：CAR（Codex Auto-Runner）的核心设计理念是什么？为什么需要"Tickets即控制平面"这种设计？
+
+**参考答案**：
+CAR的核心设计理念是"**Tickets即控制平面**"（Tickets-as-Control-Plane）。这种设计的原因是：
+- 传统的AI编程工具需要人工持续监督，AI遇到问题就停止等待
+- Tickets作为控制平面，让任务和AI智能体解耦：任务被封装为Markdown文件，AI和人类都可以编辑
+- 状态持久化：SQLite数据库记录任务状态，重启后可恢复
+- 上下文隔离：每个Ticket有独立的contextspace，避免上下文膨胀
+
+### 题目2：CAR支持哪三种交互方式？
+
+**题目**：CAR支持哪三种交互方式？它们各有什么特点和适用场景？
+
+**参考答案**：
+CAR支持三种交互方式：
+1. **Web UI**（主控制平面）：提供最完整的功能（仓库管理、智能体聊天、Ticket运行器、Usage Analytics），适合需要可视化管理的场景
+2. **CLI**（最智能体友好）：适合构建自定义UI的底层接口，或直接让智能体调用CAR
+3. **聊天应用**（Telegram & Discord）：适合需要多设备持久化聊天体验的场景，且不想暴露CAR服务在公网
+
+### 题目3：如何理解CAR的状态管理？
+
+**题目**：CAR如何管理Ticket的状态？SQLite数据库在CAR中扮演什么角色？
+
+**参考答案**：
+CAR通过**状态机架构**和**SQLite数据库**管理Ticket状态：
+- 状态机：检查未完成的Tickets → 选择下一个 → 执行
+- SQLite数据库记录：
+  - `tickets`表：存储所有Ticket的元数据（id、title、status、agent、priority等）
+  - `runs`表：记录每次执行的日志
+  - `state`表：记录全局状态
+- 状态持久化的好处：AI重启后不丢失之前的进度和决策，支持长时间运行复杂任务
+
+### 题目4：如何配置多智能体协作？
+
+**题目**：CAR目前支持哪些AI编程智能体？如何配置它们协同工作？
+
+**参考答案**：
+CAR目前支持以下AI编程智能体：
+- **Codex**（原生支持）：需要配置`OPENAI_API_KEY`
+- **Opencode**（原生支持）：直接添加即可
+- **Hermes**（ACP协议）：需要配置`HERMES_HOME`，支持持久线程和跨会话记忆
+
+配置多智能体协作的方法：
+1. 添加多个智能体：`./car agent add codex`, `./car agent add opencode`
+2. 在Ticket中指定`agent`字段：指定哪个智能体执行这个Ticket
+3. 使用依赖管理：`depends_on`字段指定Ticket的执行顺序
+4. Hermes是优秀的PMA选择，因为它通过共享的`HERMES_HOME`维护跨会话的全局记忆
+
+### 题目5：PMA（Project Manager Agent）的作用是什么？
+
+**题目**：什么是PMA（Project Manager Agent）？它在CAR工作流中扮演什么角色？
+
+**参考答案**：
+PMA（Project Manager Agent）是CAR的对话式管理界面，它可以：
+- **创建/编辑Tickets**：通过对话创建和修改任务
+- **管理仓库和工作树**：设置新仓库，管理分支
+- **协调Ticket流程**：管理任务流程和依赖
+- **响应智能体调度**：处理来自Ticket流程智能体的请求
+- **从零到一的项目启动**：快速启动新项目并迭代
+
+PMA支持通过Telegram/Discord聊天应用交互，让项目管理更加灵活。Hermes是优秀的PMA选择，因为它支持跨会话记忆。
+
+---
+
+## 进阶路径
+
+当你已经掌握CAR的基础使用后，可以通过以下路径深入：
+
+### 路径一：深入CAR架构（理解原理）
+
+- [ ] 阅读CAR Core源码（`src/codex_autorunner/`），理解状态机实现
+- [ ] 理解Contextspace机制：如何隔离上下文、如何传递给智能体
+- [ ] 研究Ticket生命周期：从创建到完成的状态转换
+- [ ] 分析Web UI与CLI的通信协议
+- [ ] 进阶资源：[CAR Architecture Docs](https://github.com/Git-on-my-level/codex-autorunner/blob/main/docs/architecture.md)
+
+### 路径二：贡献CAR社区（开源协作）
+
+- [ ] 提交PR：修复文档错误、改进CLI输出、添加新功能
+- [ ] 创建Ticket模板：为常见场景（code-review、tech-debt）创建模板
+- [ ] 改进文档：补充缺失的使用案例、翻译文档
+- [ ] 分享使用经验：在博客或社交媒体分享CAR实践
+- [ ] 进阶资源：[CONTRIBUTING.md](https://github.com/Git-on-my-level/codex-autorunner/blob/main/CONTRIBUTING.md)
+
+### 路径三：集成企业工作流（生产实践）
+
+- [ ] 与CI/CD集成：配置GitHub Actions自动运行Tickets
+- [ ] 团队推广：在团队中推广CAR协作工作流，建立Ticket编写规范
+- [ ] 权限管理：配置多用户访问、隔离团队项目
+- [ ] 监控和告警：集成Prometheus/Grafana监控CAR运行状态
+- [ ] 进阶资源：[CAR Enterprise Guide](https://github.com/Git-on-my-level/codex-autorunner/blob/main/docs/enterprise.md)
+
+### 路径四：扩展CAR能力（二次开发）
+
+- [ ] 开发自定义智能体适配器：支持更多AI编程工具
+- [ ] 创建Contextspace库：为常用技术栈（React、Django、Rails）创建contextspace
+- [ ] 扩展通知渠道：支持Slack、企业微信、飞书
+- [ ] 开发自定义Ticket模板引擎：支持动态生成Ticket
+- [ ] 进阶资源：[CAR Plugin Guide](https://github.com/Git-on-my-level/codex-autorunner/blob/main/docs/plugins.md)
+
+### 路径五：探索ACP协议生态（前沿技术）
+
+- [ ] 理解Agent Client Protocol（ACP）：阅读ACP规范文档
+- [ ] 集成其他ACP兼容智能体：如Hermes、其他支持ACP的工具
+- [ ] 研究多智能体协作模式：如何设计复杂的多智能体工作流
+- [ ] 贡献ACP生态：提交ACP改进建议、创建ACP工具
+- [ ] 进阶资源：[ACP Specification](https://github.com/agent-client-protocol/specification)
+
+---
+
+## 总结
 
 CAR（Codex Auto-Runner）是一个 AI 编程智能体协调框架，通过 **Tickets 即控制平面** 的设计，让 AI 智能体能够长时间、无人值守地运行复杂任务。
 

@@ -343,6 +343,113 @@ ctx stats  # 查看会话事件数
 
 ---
 
+## 自测问题
+
+完成阅读后，尝试回答以下问题以检验理解：
+
+1. **Context Mode 的三大核心能力是什么？分别解决了什么问题？**
+   <details>
+   <summary>参考答案</summary>
+   Context Saving（沙箱工具保持原始数据不入上下文，节省 98%）、Session Continuity（SQLite FTS5 知识库追踪文件编辑、任务、错误，对话压缩后完美恢复）、Think in Code（LLM 生成计算脚本而非读取数据，100 倍上下文节省）。
+   </details>
+
+2. **为什么代理状态（Proxy Status）必须是灰色云（DNS only）？**
+   <details>
+   <summary>参考答案</summary>
+   GitHub Pages 的 DNS 记录必须设为灰色云，因为 Cloudflare 的 CDN 代理会干扰 GitHub 的 SSL 证书自动验证，且 GitHub 要求直接连接到他们的服务器。
+   </details>
+
+3. **`ctx_execute` 和 `ctx_execute_file` 的区别是什么？**
+   <details>
+   <summary>参考答案</summary>
+   `ctx_execute` 在 11 种语言中运行代码，仅 stdout 进入上下文；`ctx_execute_file` 在沙箱中处理文件，原始内容永不离开沙箱。后者适合处理大文件（日志、API 响应、CSV）。
+   </details>
+
+4. **Think in Code 范式的核心思想是什么？为什么能节省上下文？**
+   <details>
+   <summary>参考答案</summary>
+   LLM 应该编程分析，而不是计算数据。与其将 50 个文件读入上下文来计数函数，不如让 Agent 写一个脚本来计数并 `console.log()` 结果。上下文消耗从 500KB 降到 0.3KB。
+   </details>
+
+5. **如果你的平台不支持 SessionStart 钩子，会话连续性会受多大影响？**
+   <details>
+   <summary>参考答案</summary>
+   影响取决于平台。Claude Code 和 Gemini CLI 有完整钩子协同，会话完整性高；Cursor 和 OpenCode 缺 SessionStart，压缩或恢复后可能无法完美恢复状态。可以通过 PostToolUse 钩子部分缓解。
+   </details>
+
+## FAQ
+
+### Q1: Context Mode 会影响我的代码执行结果吗？
+
+**A**: 不会。Context Mode 的沙箱执行只是拦截工具的 stdout/stderr，不影响实际执行结果。你的代码仍然在正常环境中运行，只是输出不再全部进入 LLM 上下文。
+
+### Q2: 知识库会占用很多磁盘空间吗？
+
+**A**: 通常不会。SQLite 数据库存储在你的 home 目录，仅存储 markdown 分块和搜索索引。除非你索引了非常大量的文档（GB 级别），否则占用空间在 MB 级别。
+
+### Q3: 我可以同时用 Context Mode 和其他 MCP 服务器吗？
+
+**A**: 可以。Context Mode 是一个 MCP 服务器，可以和其他 MCP 服务器并存。在 Claude Code、Cursor 等工具中，多个 MCP 服务器可以同时激活。
+
+### Q4: `ctx_purge` 会删除我的源代码吗？
+
+**A**: 不会。`ctx_purge` 仅删除知识库中的索引内容（markdown 分块、搜索索引），不影响你的任何源代码文件。
+
+### Q5: 为什么我的平台在生态兼容表中显示"等待上游钩子分发"？
+
+**A**: 这意味着该平台尚未实现 Context Mode 所需的全部钩子（PreToolUse、PostToolUse、SessionStart、PreCompact）。你可以关注该平台的 GitHub Issues 或 Discord 频道，了解钩子支持进展。
+
+## 练习
+
+### 练习 1：测量你的上下文节省
+
+**任务**：
+1. 安装 Context Mode 前，使用 Claude Code 完成一个涉及日志分析或 API 调用的任务
+2. 记录上下文窗口使用量（可以通过 Claude Code 的统计或估算）
+3. 安装 Context Mode 后，完成类似任务
+4. 对比两次的上下文消耗和任务完成时间
+
+**参考答案**：
+- 使用 `ctx_stats` 查看上下文节省统计
+- 典型场景：Playwright 快照从 56KB 降到 299B（99% 节省）
+- 全会话效果：315KB 原始输出 → 5.4KB
+
+### 练习 2：配置 Think in Code 范式
+
+**任务**：
+1. 找到一个需要数据分析的编程任务（如：分析一个 CSV 文件）
+2. 传统方式：让 AI 读取文件并分析
+3. Think in Code 方式：让 AI 生成分析脚本并运行
+4. 对比两次的上下文消耗
+
+**提示**：
+```bash
+# 传统方式（高上下文消耗）
+Read CSV file → AI 读取全部内容 → 分析
+
+# Think in Code 方式（低上下文消耗）
+AI 生成分析脚本 → ctx_execute 运行脚本 → 仅返回结果
+```
+
+### 练习 3：验证会话连续性
+
+**任务**：
+1. 在 Claude Code 中开始一个多步骤任务
+2. 等待上下文压缩（或手动触发）
+3. 检查模型是否还记得之前的任务、文件、决策
+4. 如果没有完美恢复，检查钩子配置
+
+**参考答案**：
+```bash
+# 检查钩子状态
+/context-mode:ctx-doctor
+
+# 查看会话事件数
+/context-mode:ctx-stats
+```
+
+---
+
 ## ✅ 总结
 
 Context Mode 是**AI 编程工具的上下文危机解决方案**：

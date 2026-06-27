@@ -18,8 +18,8 @@ Anthropic Knowledge Work Plugins：把 AI 插件从写代码改成了写 Markdow
 **GitHub**: [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins)
 
 > **快速信息卡**
-> - **Stars**: 22,001+
-> - **Forks**: 2,569+
+> - **Stars**: 22,040+
+> - **Forks**: 2,571+
 > - **License**: Apache-2.0
 > - **语言**: Python
 > - **最后更新**: 2026-06-26

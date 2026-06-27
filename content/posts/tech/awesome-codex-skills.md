@@ -9,9 +9,26 @@ draft: false
 categories: ["技术笔记"]
 tags: ["AI", "Codex", "OpenAI", "自动化", "工作流"]
 ---
+
+# Awesome Codex Skills：Codex CLI 的技能宝库，让 AI 代理真正替你干活
+
+## 快速信息卡
+
+> **GitHub 仓库**: [ComposioHQ/awesome-codex-skills](https://github.com/ComposioHQ/awesome-codex-skills)
+>
+> | 指标 | 数值 |
+> |------|------|
+> | ⭐ Stars | 14,209+ |
+> | 🍴 Forks | 1,369+ |
+> | 📜 License | 无 |
+> | 💻 主要语言 | Python |
+> | 📅 最后更新 | 2026-06-26 |
+
+---
+
 Codex CLI 默认只输出文本。Awesome Codex Skills（以下简称 ACS）把它改造成能调外部 API、操作 GitHub、发 Slack、写 Notion 的执行器，靠的是一套"描述触发 + 按需加载"的 Skill 模块。
 
-ACS 适合已经在用 Codex CLI 且希望它直接产出工单、消息、文档的人；如果只是想让模型回答问题，引入 Skills 反而增加维护成本。本文要回答三个问题：Skill 的触发与执行边界在哪里、哪个 Skill 该先装、什么场景不该上 ACS。
+ACS 适合已经在用 Codex CLI 且希望它直接产出工单、消息、文档的人；如果只是想让模型回答问题，引入 Skills 反而增加维护成本。本文回答三个问题：Skill 的触发与执行边界、哪个 Skill 该先装、什么场景不该上 ACS。
 
 ## 学习目标
 
@@ -333,10 +350,50 @@ ACS 中有一个值得单独关注的技能——`helium-mcp/`。它集成了实
 ---
 
 
+## 常见问题
+
+### Q1：Skill 安装了但没触发，怎么排查？
+
+**A**：按以下顺序检查：
+1. 确认 `description` 是否具体——过于泛化的描述会导致多个 Skill 冲突或都不触发
+2. 重启 Codex CLI——新安装的 Skill 需要重启才能加载元数据
+3. 检查 `$CODEX_HOME/skills/` 下是否有对应的 Skill 文件夹
+4. 用边界任务测试——同时安装可能冲突的 Skill，看 Codex 选哪个
+
+### Q2：`connect` Skill 本身持有 Slack token 吗？
+
+**A**：不持有。`connect` Skill 只告诉 Codex "何时该调 Composio CLI"，实际的 API 调用由 Composio 平台完成。这也是为什么使用 `connect` 前必须先在 Composio 平台完成对应应用的 OAuth 授权。
+
+### Q3：可以不用 Composio，让 Skill 直接调 Slack API 吗？
+
+**A**：可以，但需要自己写 Skill 和对应的脚本/工具适配代码。`connect` Skill 的价值是省去这一步——它依赖 Composio 平台已经封装好的 1000+ 应用连接器。如果只对接少量应用且不复用，直接写工具适配代码更快。
+
+### Q4：自建 Skill 的 `description` 怎么写才能让触发准确？
+
+**A**：遵循三个原则：
+1. **具体动词 + 明确对象**——"当用户要求把会议转录稿转成 action item 时触发" 比 "处理会议相关任务" 准确得多
+2. **不要描述实现方式**——`description` 只决定"何时触发"，"怎么做" 留给 body
+3. **测试负例**——确保你的 `description` 不会在无关任务上误触发
+
+### Q5：ACS 的 Skill 和 MCP Server 有什么区别？
+
+**A**：Skill 是"触发 + 执行指引"，MCP Server 是"工具协议标准"。一个 MCP Server 可以被多个 Agent 框架调用；一个 Skill 只被 Codex CLI 按 `description` 匹配触发。两者可以叠加使用（如 `helium-mcp` Skill 内部调用 MCP 协议暴露的工具）。
+
+### Q6：Codex CLI 升级后，已安装的 Skill 需要更新吗？
+
+**A**：取决于 Skill 的触发机制是否依赖特定版本的元数据扫描行为。建议每次升级后：
+1. 重新安装核心 Skill（`connect`、`meeting-notes-and-actions`）
+2. 测试触发是否仍然准确
+3. 如果行为有变化，调整 `description` 措辞
+
+
+🦞 每日 08:00 自动更新
+---
+
 **相关链接：**
 
 - GitHub：https://github.com/ComposioHQ/awesome-codex-skills
 - Composio 官网：https://dashboard.composio.dev
 - Discord 社区：https://discord.com/invite/composio
 
-🦞 每日 08:00 自动更新
+

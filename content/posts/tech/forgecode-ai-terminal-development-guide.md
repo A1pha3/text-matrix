@@ -11,6 +11,35 @@ draft: false
 
 # ForgeCode：AI 增强的终端开发环境与 ZSH 插件集成
 
+> **目标读者**：终端重度用户、需要 ZSH 集成的开发者、多 Agent 协作开发场景
+> **预计阅读时间**：30-40 分钟
+> **前置知识**：终端使用、ZSH 基础、Git 基础
+> **难度定位**：⭐⭐ 入门友好
+
+---
+
+## 目录
+
+- [1. 学习目标](#1-学习目标)
+- [2. 项目概述](#2-项目概述)：核心特性、项目数据、技术栈
+- [3. 三种使用模式](#3-三种使用模式)：交互式、单次 CLI、ZSH 插件
+- [4. 三大内置 Agent](#4-三大内置-agent)：forge、sage、muse
+- [5. 核心命令详解](#5-核心命令详解)：会话管理、Git 集成、Shell 命令工具
+- [6. Skills 系统](#6-skills-系统)
+- [7. 语义搜索](#7-语义搜索工作区索引)
+- [8. 多 AI 提供商架构](#8-多-ai-提供商架构)
+- [9. 自定义 Agent 行为](#9-自定义-agent-行为)
+- [10. 技术架构](#10-技术架构)
+- [11. 安装与配置](#11-安装与配置)
+- [12. 与 Claude Code 对比](#12-与-claude-code-对比)
+- [13. 实践建议](#13-实践建议)
+- [14. 常见问题](#14-常见问题)
+- [15. 总结](#15-总结)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
+---
+
 ## 1. 学习目标
 
 通过本文你将掌握：
@@ -418,6 +447,71 @@ export FORGE_WORKSPACE_SERVER_URL=http://localhost:8080
 **Q: 支持哪些 IDE？**
 
 终端集成，任何 IDE 配合终端使用。
+
+## 自测题
+
+完成阅读后，请自检以下知识点：
+
+**Q1**：ForgeCode 的三种使用模式有什么区别？
+<details>
+<summary>参考答案</summary>
+交互式模式（`forge`）启动持久会话，AI 在对话循环中响应；单次 CLI 模式（`forge -p "..."`）运行单次提示词并退出；ZSH 插件模式（`: <prompt>`）以 `:` 前缀命令拦截，最高效的日常开发方式。
+</details>
+
+**Q2**：`forge`、`sage`、`muse` 三大 Agent 的区别是什么？
+<details>
+<summary>参考答案</summary>
+`forge` 是默认 Agent，构建功能、修复 Bug、运行测试（修改文件）；`sage`（别名 `:ask`）用于研究，架构映射、数据流追踪、代码阅读（不修改文件）；`muse`（别名 `:plan`）用于规划，分析结构、编写计划到 `plans/`（不修改文件）。
+</details>
+
+**Q3**：如何配置 ForgeCode 使用不同的 AI 模型？
+<details>
+<summary>参考答案</summary>
+会话级切换：`:model <model-id>`（关闭终端后重置）；持久化配置：`:config-model <model-id>`（保存到配置文件）。还可以为不同功能配置不同模型，如 `:config-commit-model` 设置提交用模型。
+</details>
+
+**Q4**：ForgeCode 的 Skills 系统是什么？
+<details>
+<summary>参考答案</summary>
+Skills 是 AI 可调用的可重用工作流。路径优先级：项目本地 `.forge/skills/` > 全局 `~/forge/skills/` > 内置。可以通过 `: create a new skill` 创建自定义 Skill。
+</details>
+
+**Q5**：ForgeCode 相比 Claude Code 的主要优势是什么？
+<details>
+<summary>参考答案</summary>
+原生 ZSH 插件支持（`: ` 前缀命令）、三 Agent 分工（forge/sage/muse）、Shell 命令转换（`:suggest`）、工作区索引（`:sync`）、Rust 高性能（93.5% Rust 实现）。
+</details>
+
+---
+
+## 进阶路径
+
+### 阶段一：安装与上手（1 天）
+- 安装 ForgeCode（`curl -fsSL https://forgecode.dev/cli | sh`）
+- 配置 AI 提供商（`:provider login`）
+- 尝试三种使用模式
+
+### 阶段二：集成到日常开发（3-7 天）
+- 安装 ZSH 插件（`forge setup`）
+- 使用 `:sage` 研究代码、`:muse` 规划功能
+- 配置 `AGENTS.md` 定制 Agent 行为
+
+### 阶段三：定制与扩展（1-2 周）
+- 创建自定义 Skill（`.forge/skills/`）
+- 配置工作区索引（`:sync`）
+- 调整模型配置（不同任务用不同模型）
+
+### 阶段四：团队落地（2-4 周）
+- 统一团队 AGENTS.md 配置
+- 共享自定义 Skills
+- 建立 ForgeCode 使用规范
+
+**推荐资源**：
+- [ForgeCode 官网](https://forgecode.dev)
+- [ForgeCode GitHub](https://github.com/antinomyhq/forge)（需要确认实际仓库地址）
+- [ZSH 插件文档](#)（需要补充）
+
+---
 
 ## 15. 总结
 

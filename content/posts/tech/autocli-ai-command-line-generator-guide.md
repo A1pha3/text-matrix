@@ -4,12 +4,12 @@ slug: "autocli-ai-command-line-generator-guide"
 date: "2026-04-08T12:50:00+08:00"
 lastmod: 2026-04-08T12:50:00+08:00
 categories: ["技术笔记"]
-tags: ["CLI", "Go", "AI", "命令行工具", "Cobra", "代码生成"]
-description: "AutoCLI 是一个用 Go 语言编写的 AI 命令行工具，能够根据自然语言描述自动生成 CLI 程序。支持 OpenAI、Claude、Gemini、Grok、Ollama、DeepSeek 等多 AI 提供商，打通自然语言与命令行工具的壁垒。"
-draft: true
+tags: ["CLI", "Rust", "AI", "命令行工具", "Cobra", "代码生成"]
+description: "AutoCLI 是一个用 Rust 编写的 AI 命令行工具，能够根据自然语言描述自动生成 CLI 程序。支持 OpenAI、Claude、Gemini、Grok、Ollama、DeepSeek 等多 AI 提供商，打通自然语言与命令行工具的壁垒。"
+draft: false
 ---
 
-AutoCLI 是一个用 Rust 编写的命令行工具，前身是 opencli-rs，从 v0.2.4 起改名。它把 Twitter、Reddit、YouTube、Bilibili、知乎、小红书等 55 个网站的抓取逻辑封装成 333 条命令，单二进制 4.7MB，零运行时依赖。本文判断：AutoCLI 适合需要频繁从公开网页拉取数据的开发者和数据爱好者，不适合作为生产级数据管道的核心组件——它的优势在覆盖广度和启动速度，边界在依赖浏览器会话和站点改版风险。
+AutoCLI 用 Rust 编写，前身是 opencli-rs，从 v0.2.4 起改名。它把 Twitter、Reddit、YouTube、Bilibili、知乎、小红书等 55 个网站的抓取逻辑封装成 333 条命令，单二进制 4.7MB，零运行时依赖。AutoCLI 适合需要频繁从公开网页拉取数据的开发者和数据爱好者，不适合作为生产级数据管道的核心组件——优势在覆盖广度和启动速度，边界在依赖浏览器会话和站点改版风险。
 
 ## 快速信息卡
 
@@ -17,7 +17,7 @@ AutoCLI 是一个用 Rust 编写的命令行工具，前身是 opencli-rs，从 
 >
 > | 指标 | 数值 |
 > |------|------|
-> | ⭐ Stars | 2,799+ |
+> | ⭐ Stars | 2,803+ |
 > | 🍴 Forks | 268+ |
 > | 📜 License | Apache-2.0 |
 > | 💻 主要语言 | Rust |

@@ -15,8 +15,8 @@ tags: ["LLM", "AI", "Agent", "RAG", "开源项目"]
 >
 > | 指标 | 数值 |
 > |------|------|
-> | ⭐ Stars | 12,926+ |
-> | 🍴 Forks | 1,653+ |
+> | ⭐ Stars | 12,934+ |
+> | 🍴 Forks | 1,655+ |
 > | 📜 License | MIT |
 > | 💻 主要语言 | Python |
 > | 📅 最后更新 | 2026-06-26 |
@@ -24,7 +24,7 @@ tags: ["LLM", "AI", "Agent", "RAG", "开源项目"]
 
 ## 这个合集值不值得读
 
-挑 LLM 应用框架，或者想看"生产级 Agent 长什么样"，Awesome AI Apps 值得花两小时翻一遍。80 多个可运行项目按难度从 Starter 排到 Advanced，覆盖 Agno、CrewAI、LangChain、PydanticAI、AWS Strands、DSPy 等主流框架，集中展示 RAG、Memory、MCP、Voice 四类横向能力的工程写法。
+挑 LLM 应用框架，或者想看"生产级 Agent 长什么样"，Awesome AI Apps 值得花两小时翻一遍。80 多个可运行项目按难度从 Starter 排到 Advanced，覆盖 Agno、CrewAI、LangChain、PydanticAI、AWS Strands、DSPy 等主流框架，集中展示 RAG、Memory、MCP、Voice 四类横向能力的工程写法。合集的价值在对照同一类问题在不同框架下的解法。教写 Agent 的事交给框架官方文档，合集负责提供样本。
 
 合集的价值在对照同一类问题在不同框架下的解法。教写 Agent 的事交给框架官方文档，合集负责提供样本。下面按系统地图、难度分层、研究流水线三段展开。
 

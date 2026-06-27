@@ -17,6 +17,25 @@ tags: ["Agent", "Python", "LLM", "浏览器控制", "技能树"]
 
 ---
 
+## 目录
+
+- [§1 学习目标](#§1-学习目标)
+- [§2 背景与动机](#§2-背景与动机)：现有 Agent 框架的问题、GenericAgent 的解决思路、自举实证
+- [§3 项目概览](#§3-项目概览)：基本信息、核心特性、与同类产品对比
+- [§4 分层记忆系统](#§4-分层记忆系统)：L0-L4 架构、记忆写入时序
+- [§5 自主执行循环](#§5-自主执行循环)：核心循环架构、执行示例
+- [§6 9 个原子工具详解](#§6-9-个原子工具详解)：工具总览、code_run、web_execute_js、工具组合示例
+- [§7 多种前端支持](#§7-多种前端支持)：微信 Bot、QQ Bot、飞书 Bot、企业微信/钉钉、Web UI
+- [§8 快速开始](#§8-快速开始)：安装、配置模型、验证安装
+- [§9 实际应用场景](#§9-实际应用场景)：外卖下单、量化选股、批量微信消息、支出追踪
+- [§10 技术架构深度解析](#§10-技术架构深度解析)：核心模块、Agent Loop 详解、记忆系统实现
+- [§11 与其他框架对比](#§11-与其他框架对比)：vs OpenClaw、vs Claude Code、GenericAgent 的优势
+- [§12 常见问题 FAQ](#§12-常见问题-faq)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
+---
+
 ## §1 学习目标
 
 完成本篇文章后，你将能够：
@@ -661,6 +680,73 @@ class TaskSkills:
 2. **自我进化**：越用越强，形成个人专属技能树
 3. **部署简单**：pip install 即可
 4. **成本节省**：6x less token consumption（相比传统方法）
+
+---
+
+---
+
+## 自测题
+
+完成阅读后，请自检以下知识点：
+
+**Q1**：GenericAgent 的分层记忆系统 L0-L4 各层的职责是什么？
+<details>
+<summary>参考答案</summary>
+L0 元规则（基础行为规则）；L1 记忆索引（快速路由）；L2 全局事实（长期稳定知识）；L3 Task Skills（可复用流程，自我进化的核心）；L4 Session Archive（会话归档，用于长程召回）。
+</details>
+
+**Q2**：GenericAgent 的 9 个原子工具中，哪个工具能力最强？为什么？
+<details>
+<summary>参考答案</summary>
+`code_run` 能力最强，因为它可以动态安装 Python 包、编写新脚本、调用外部 API，将临时能力固化为永久工具。其他工具（如 `web_execute_js`）功能相对固定。
+</details>
+
+**Q3**：GenericAgent 如何实现"自我进化"？
+<details>
+<summary>参考答案</summary>
+每次完成任务后，执行路径会被固化为 L3 Skill（通过 `crystallize_skill()`）。下次遇到类似任务时，直接调用 Skill 而不需要重新推理，实现"越用越强"。
+</details>
+
+**Q4**：GenericAgent vs OpenClaw 的核心区别是什么？
+<details>
+<summary>参考答案</summary>
+代码量：GenericAgent ~3K 行 vs OpenClaw ~530K 行；架构：GenericAgent 单 agent + 分层记忆 vs OpenClaw 多 agent 编排；进化方式：GenericAgent 自主生长 Skill vs OpenClaw 插件生态；部署：GenericAgent `pip install` vs OpenClaw 多服务编排。
+</details>
+
+**Q5**：GenericAgent 支持哪些前端？
+<details>
+<summary>参考答案</summary>
+微信 Bot（个人微信，扫码登录）、QQ Bot（WebSocket 长连接）、飞书 Bot（文本/富文本/图片/文件/音频/交互卡片）、企业微信、钉钉、Streamlit Web UI、Telegram。
+</details>
+
+---
+
+## 进阶路径
+
+### 阶段一：理解核心设计（1-3 天）
+- 理解分层记忆系统 L0-L4
+- 理解 9 个原子工具的能力边界
+- 运行示例，观察 Skill 固化过程
+
+### 阶段二：本地部署与定制（1 周）
+- 安装 GenericAgent 并配置模型
+- 编写自定义 L0 元规则
+- 测试不同前端（微信、飞书等）
+
+### 阶段三：生产使用（2-4 周）
+- 接入真实任务场景
+- 观察 Skill 树自增长过程
+- 优化记忆系统配置（L1 索引策略、L3 Skill 触发条件）
+
+### 阶段四：贡献与扩展（持续）
+- 分享 Skill 到百万级 Skill 库
+- 优化 Agent Loop 核心逻辑
+- 提交 PR 改进 GenericAgent
+
+**推荐资源**：
+- [GenericAgent GitHub](https://github.com/lsdefine/GenericAgent)
+- [新手教程](https://my.feishu.cn/wiki/CGrDw0T76iNFuskmwxdcWrpinPb)
+- [Skill 库](#)（百万级 Skill 库，公众号获取）
 
 ---
 

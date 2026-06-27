@@ -16,6 +16,18 @@ tags: ["Cloudflare", "GitHub Pages", "DNS", "域名", "建站"]
 
 ---
 
+## 学习目标
+
+完成本指南后，你将能够：
+
+- [ ] 理解 DNS 解析全过程（从用户输入域名到服务器响应）
+- [ ] 独立完成 Spacing → Cloudflare → GitHub Pages 的完整配置
+- [ ] 排查常见的 DNS 传播、HTTPS 证书、Cloudflare 521 错误
+- [ ] 配置 Cloudflare SSL/TLS 加密模式和自动 HTTPS 重写
+- [ ] 设置 www 子域名到根域名的 301 永久重定向
+
+---
+
 ## 前置知识｜新手必看
 
 ### 什么是域名？
@@ -755,6 +767,64 @@ Cloudflare Dashboard → 你的域名 → **Analytics & Threats**：
 ### 为什么 DNS 传播很慢？
 
 每个 DNS 服务器都会"记住"查询结果一段时间（TTL）。即使你修改了 DNS 记录，全世界所有 DNS 服务器的缓存不会立即更新，必须等到各自的缓存过期后重新查询，才能获得新记录。
+
+---
+
+## 自测问题
+
+完成配置后，尝试回答以下问题以检验理解：
+
+1. **为什么根域名（@）不能使用 CNAME 记录？**
+   <details>
+   <summary>参考答案</summary>
+   DNS 规范规定 CNAME 记录不能与其他记录类型共存。根域名通常需要同时存在 SOA、NS、A 等记录，所以根域名不能使用 CNAME。
+   </details>
+
+2. **Cloudflare 的代理状态（Proxy Status）为什么必须是灰色云（DNS only）？**
+   <details>
+   <summary>参考答案</summary>
+   GitHub Pages 的 DNS 记录必须设为灰色云，因为：① Cloudflare 的 CDN 代理会干扰 GitHub 的 SSL 证书自动验证；② GitHub 要求直接连接到他们的服务器。
+   </details>
+
+3. **DNS 传播通常需要多长时间？为什么这么慢？**
+   <details>
+   <summary>参考答案</summary>
+   通常需要 5 分钟到 48 小时。因为：每个 DNS 服务器都会"记住"查询结果一段时间（TTL），必须等到各自的缓存过期后重新查询，才能获得新记录。
+   </details>
+
+4. **如果你在 GitHub Pages 设置中看到"DNS check failed"，你会按什么顺序排查？**
+   <details>
+   <summary>参考答案</summary>
+   ① 确认 DNS 记录已正确配置（A 记录指向 GitHub IPs，CNAME 指向 username.github.io）；② 等待 5-10 分钟；③ 检查是否使用了 Cloudflare 橙色云代理（改为灰色云）；④ 使用 `dig` 命令检查 DNS 是否已生效；⑤ 清除浏览器缓存。
+   </details>
+
+5. **为什么 GitHub Pages 要求自定义域名必须勾选"Enforce HTTPS"？**
+   <details>
+   <summary>参考答案</summary>
+   因为 GitHub 会使用 Let's Encrypt 自动为你的域名申请 SSL 证书。勾选"Enforce HTTPS"后，GitHub 会强制使用 HTTPS 连接，保护用户数据安全。证书生成需要 24-48 小时。
+   </details>
+
+## FAQ
+
+### Q1: 我可以同时使用多个自定义域名吗？
+
+**A**: 可以。在 GitHub Pages 设置中，你可以添加多个自定义域名。每个域名都需要单独配置 DNS 记录（A 记录或 CNAME 记录）。
+
+### Q2: 如果我想把域名从 Spaceship 转移到其他注册商，需要重新配置吗？
+
+**A**: 需要。转移注册商后，你需要在新注册商处修改 Nameservers 指向 Cloudflare，然后等待 DNS 传播（5 分钟到 48 小时）。
+
+### Q3: Cloudflare 的"Always Use HTTPS"和 GitHub 的"Enforce HTTPS"有什么区别？
+
+**A**: Cloudflare 的"Always Use HTTPS"是将 HTTP 请求重定向到 HTTPS；GitHub 的"Enforce HTTPS"是要求 GitHub Pages 必须使用 HTTPS 连接。两者应该同时开启。
+
+### Q4: 我可以使用 Cloudflare 的页面规则（Page Rules）来加速 GitHub Pages 吗？
+
+**A**: 可以，但要小心。你可以为静态资源（如图片、CSS、JS）开启 Cloudflare CDN（橙色云），但 GitHub Pages 的 `www` 和 `@` 记录不要开启 CDN。
+
+### Q5: 如果我的 GitHub Pages 网站突然无法访问，我应该先检查什么？
+
+**A**: 检查顺序：① 浏览器是否能访问 `https://username.github.io`（确认 GitHub Pages 本身正常）；② 运行 `dig www.example.com` 检查 DNS 记录；③ 检查 Cloudflare Dashboard 的 SSL/TLS 设置；④ 检查 GitHub Pages 设置中的自定义域名状态。
 
 ---
 

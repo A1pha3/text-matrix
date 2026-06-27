@@ -12,7 +12,31 @@ tags: ["C#", ".NET", "AI Agent", "Agent Skills", "智能体", "微软", "Copilot
 
 # dotnet/skills：.NET 官方 AI 编码智能体技能库完全指南
 
-## 项目概览
+## 学习目标
+
+完成本文阅读后，你将能够：
+
+1. **理解 dotnet/skills 的核心价值**：明白为什么需要 .NET 官方技能库，以及它如何解决 AI Agent 在 .NET 生态中的专业性问题
+2. **掌握 12 个专项插件**：理解每个插件的定位、核心覆盖场景和使用方法
+3. **安装与配置**：将 dotnet/skills 集成到 Copilot CLI、Claude Code、VS Code、Cursor 等工具
+4. **运用核心技能**：在 .NET 项目中使用 dotnet、dotnet-data、dotnet-diag 等技能解决工程问题
+5. **定制与扩展**：根据团队需求定制现有技能，或创建新的 .NET 专项技能
+
+## 目录
+
+1. [项目概览](#项目概览)
+2. [为什么值得看](#为什么值得看)
+3. [核心能力：12 个专项插件](#核心能力12-个专项插件)
+   - [插件一览](#插件一览)
+   - [dotnet-ai：AI 与 ML 专项技能](#dotnet-aiai-与-ml-专项技能)
+   - [dotnet-upgrade：迁移利器](#dotnet-upgrade迁移利器)
+4. [安装与配置](#安装与配置)
+5. [使用方法](#使用方法)
+6. [技能详解](#技能详解)
+7. [自测题](#自测题)
+8. [进阶路径](#进阶路径)
+
+---
 
 **dotnet/skills**（https://github.com/dotnet/skills）是微软官方 `.NET` 团队维护的 AI 编码智能体技能库，为主流 AI 编程工具提供针对 .NET 生态的专项能力扩展。截至目前仓库拥有 **2,575 Stars**、**202 Forks**，持续活跃维护中。
 
@@ -171,6 +195,59 @@ skill-installer install https://github.com/dotnet/skills/tree/main/plugins/dotne
 - 正在进行 .NET 版本迁移 → `dotnet-upgrade` 插件
 - 生产环境性能问题排查 → `dotnet-diag` 插件
 - 想构建自己的 Agent Skills → 参考仓库的 `.agents` 和 `AGENTS.md`
+
+---
+
+## 自测题
+
+完成本文阅读后，请尝试回答以下问题：
+
+1. **dotnet/skills 的核心价值是什么？它解决了什么问题？**
+   - 参考答案：它将 .NET 开发中的专业知识封装为标准化的"技能"，使 AI 编码智能体能准确处理 .NET 特有的工程问题，而不是给出泛泛的通用建议。
+
+2. **dotnet/skills 包含哪 12 个专项插件？分别覆盖哪些场景？**
+   - 参考答案：包含 dotnet、dotnet-data、dotnet-diag、dotnet-msbuild、dotnet-nuget、dotnet-upgrade、dotnet-maui、dotnet-ai、dotnet-template-engine、dotnet-test、dotnet-aspnet、dotnet11。覆盖 .NET 开发、数据访问、性能诊断、构建优化、包管理、迁移升级、MAUI 开发、AI 集成、测试等全栈场景。
+
+3. **如何将 dotnet/skills 集成到 Copilot CLI、Claude Code、VS Code、Cursor 等工具？**
+   - 参考答案：每个工具有各自的集成方式。Copilot CLI 和 Claude Code 支持 Agent Skills 标准；VS Code 通过插件市场或 settings.json 配置；Cursor 通过插件目录链接本地仓库。
+
+4. **dotnet-ai 插件包含哪些 AI/ML 专项技能？如何用于技术选型？**
+   - 参考答案：包含 mcp-csharp-create、mcp-csharp-debug、mcp-csharp-publish、mcp-csharp-test、technology-selection 等技能。technology-selection 技能可帮助选型 LLM 集成、智能体工作流、RAG、MCP 等技术路线。
+
+5. **dotnet-upgrade 插件如何帮助 .NET 版本迁移？覆盖哪些迁移路径？**
+   - 参考答案：专门处理跨框架版本的迁移任务，包括旧版 .NET Framework → .NET 6/7/8/11 的迁移路径，以及语言特性升级（新版 C# 特性适配）。
+
+---
+
+## 练习题
+
+1. **配置并使用 dotnet/skills**：在你的 Copilot CLI 或 Claude Code 环境中安装配置 dotnet/skills，然后使用 dotnet-diag 技能诊断一个实际的 .NET 性能问题。
+   - 提示：参考"快速开始"部分的安装步骤，确保技能目录路径正确。
+
+2. **创建自定义 .NET 技能**：为你的团队创建一个自定义技能，解决一个特定的 .NET 开发痛点（如 EF Core 性能优化、Blazor 组件模板等）。
+   - 提示：参考 dotnet/skills 仓库中的现有技能结构，确保包含 SKILL.md 和完整工作流。
+
+---
+
+## 进阶路径
+
+如果你希望深入掌握 dotnet/skills，可以参考以下进阶路径：
+
+1. **基础使用**：安装并配置 dotnet/skills，在 Copilot CLI 或 Claude Code 中使用核心技能完成日常 .NET 开发任务
+   - 实践任务：为你的 .NET 项目配置 dotnet/skills，并使用 dotnet-diag 技能诊断一个性能问题
+   - 学习目标：能够独立安装、配置和使用 dotnet/skills
+
+2. **技能理解**：深入理解每个插件的技能结构、触发条件和工作流，能够根据需求选择合适的技能
+   - 实践任务：阅读 dotnet、dotnet-data、dotnet-ai 等插件的 SKILL.md 文件，理解其设计理念
+   - 学习目标：能够理解并选择合适的 dotnet/skills 技能
+
+3. **定制与扩展**：学习如何定制现有技能或创建新的 .NET 专项技能，满足团队的特定需求
+   - 实践任务：为你的团队创建一个自定义技能，解决特定的 .NET 工程痛点
+   - 学习目标：能够设计并实现符合 Agent Skills 标准的自定义技能
+
+4. **生态贡献**：参与 dotnet/skills 社区，贡献代码或文档，或构建自己的 .NET 技能集合
+   - 实践任务：为 dotnet/skills 提交 PR，或在 GitHub 上发布自己的 .NET 技能集合
+   - 学习目标：能够为开源项目做出贡献，或构建自己的技能生态
 
 ---
 

@@ -17,7 +17,7 @@ hiddenFromHomePage: true
 >
 > | 指标 | 数值 |
 > |------|------|
-> | ⭐ Stars | 1,239+ |
+> | ⭐ Stars | 1,241+ |
 > | 🍴 Forks | 35+ |
 > | 📜 License | Apache-2.0 |
 > | 💻 主要语言 | Rust |

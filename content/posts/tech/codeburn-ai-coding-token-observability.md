@@ -561,6 +561,83 @@ codeburn export -f json | jq '.projects | to_entries[] | select(.key | contains(
 
 ---
 
+## 自测问题
+
+完成阅读后，尝试回答以下问题以检验理解：
+
+1. **CodeBurn 的"无 API Key 依赖"设计有什么优势？**
+   <details>
+   <summary>参考答案</summary>
+   不需要用户提供 AI 平台的 API Key，避免了额外的安全风险和配置成本。直接读取本地会话文件，不涉及任何第三方服务。
+   </details>
+
+2. **13 类任务分类是如何实现的？为什么它比 LLM 调用更高效？**
+   <details>
+   <summary>参考答案</summary>
+   纯规则判断（基于关键词、工具调用模式），不涉及 LLM 调用，完全确定性地分类。这比用 LLM 做分类更快、更便宜、不消耗 Token。
+   </details>
+
+3. **Cursor 的"Auto"模式成本估算误差范围大约是多少？为什么会有误差？**
+   <details>
+   <summary>参考答案</summary>
+   误差范围大约 ±50%。因为 Cursor Auto 模式不记录实际使用的模型，CodeBurn 按 Sonnet 定价估算。实际可能使用 Opus、Sonnet 或 Haiku。
+   </details>
+
+4. **CodeBurn 的缓存机制解决了什么问题？**
+   <details>
+   <summary>参考答案</summary>
+   解决首次运行慢的问题（Cursor 的 SQLite 数据库可能非常大，解析时间长达一分钟）。缓存存储在 `~/.cache/codeburn/`，数据库变更时自动失效。
+   </details>
+
+5. **如果你想基于 CodeBurn 数据优化 AI 编码成本，你会从哪三个策略入手？**
+   <details>
+   <summary>参考答案</summary>
+   ① 监控 One-Shot 成功率低的类别，提供更清晰的错误信息上下文；② 按项目分配成本，找出成本异常高的项目；③ 模型使用配比优化，将简单任务配置为使用 Sonnet 或 Haiku。
+   </details>
+
+## 练习
+
+### 练习 1：导出并分析你的 CodeBurn 数据
+
+**任务**：
+1. 运行 `codeburn export -f json > my-usage.json`
+2. 用 `jq` 分析哪个项目的成本最高
+3. 找出 One-Shot 成功率最低的 3 个任务类型
+
+**参考答案**：
+```bash
+# 按项目排序成本
+codeburn export -f json | jq '.projects | to_entries | sort_by(.value.totalCostUSD) | reverse | .[:5]'
+
+# 找出 One-Shot 成功率
+codeburn status --format json | jq '.oneShotSuccessRate'
+```
+
+### 练习 2：配置多货币结算
+
+**任务**：
+1. 将 CodeBurn 切换为你的本地货币
+2. 运行 `codeburn today` 查看以本地货币显示的成本
+3. 切换回 USD
+
+**参考答案**：
+```bash
+codeburn currency CNY   # 切换为人民币
+codeburn today
+codeburn currency --reset  # 重置为 USD
+```
+
+### 练习 3：添加自定义任务分类规则
+
+**任务**：
+1. 打开 `src/classifier.ts`
+2. 添加一条自定义规则，识别"数据库迁移"任务
+3. 重启 CodeBurn，验证新规则是否生效
+
+**提示**：参考 `src/classifier.ts` 中现有规则的结构。
+
+---
+
 ## 📊 总结速查
 
 ### 核心要点

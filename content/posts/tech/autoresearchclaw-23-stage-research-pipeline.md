@@ -13,14 +13,22 @@ tags: ["AutoResearchClaw", "LLM", "Multi-Agent", "OpenClaw", "科学研究"]
 
 ## 核心判断
 
-AutoResearchClaw 把研究流程拆成 23 个可中断的阶段，关键价值在两件事：所有文献绑定真实 API（arXiv、Semantic Scholar、OpenAlex），所有论文数字必须通过 `VerifiedRegistry` 追溯到实验运行。这两点决定了它生成的论文能拿来当学术产出，避免沦为 demo。
+AutoResearchClaw 把研究流程拆成 23 个可中断的阶段，关键价值在两件事：所有文献绑定真实 API（arXiv、Semantic Scholar、OpenAlex），所有论文数字必须通过 `VerifiedRegistry` 追溯到实验运行。这两点决定了它生成的论文能当学术产出，不只是 demo。
 
 > **GitHub**: [aiming-lab/AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw)
 > **许可证**: MIT
 > **语言**: Python 3.11+
 > **核心特性**: 23 阶段全自动管道 | 多代理辩论 | Human-in-the-Loop | 自进化学习
 
-> 数据来源：截至 2026 年 4 月，GitHub 仓库 aiming-lab/AutoResearchClaw 报告 11,433 Stars、1,320 Forks。Stars 数会随时间变化，以下数据仅反映本文写作时点。
+> **GitHub 仓库**: [aiming-lab/AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw)
+>
+> | 指标 | 数值 |
+> |------|------|
+> | ⭐ Stars | 13,609+ |
+> | 🍴 Forks | 1,593+ |
+> | 📜 License | MIT |
+> | 💻 主要语言 | Python |
+> | 📅 最后更新 | 2026-06-26 |
 
 一句话定位：**"Chat an Idea. Get a Paper."** —— 输入一个研究想法，输出一篇完整的学术论文。
 
@@ -748,7 +756,24 @@ researchclaw skills disable scientific-writing
 | Discord 社区 | https://discord.gg/u4ksqW5P |
 ## 自测题
 
-回答下面 5 个问题...
+回答下面 5 个问题，检验你是否理解了 AutoResearchClaw 的核心机制：
+
+1. **AutoResearchClaw 的 23 个阶段如何分成 Phase A-H？每个 Phase 的核心职责是什么？**
+   - 参考答案：Phase A-B（研究定位与文献发现）→ Phase C（知识综合与假设生成）→ Phase D-E（实验设计与执行）→ Phase F-G（分析与论文写作）→ Phase H（质量保障与发布）。每个 Phase 包含 2-6 个阶段，用门控节点分隔。
+
+2. **VerifiedRegistry 如何防止 LLM 编造实验数据？你能判断一篇论文是否可复现吗？**
+   - 参考答案：VerifiedRegistry 要求论文中的所有数字必须来自真实实验运行（experiment_run 或 ITERATIVE_REFINE），手动添加的数据会被标记为 unverified。判断可复现性：检查论文是否包含所有实验的 VerifiedRegistry 日志，以及代码是否可在沙箱中重新运行。
+
+3. **如果你输入研究想法"量子门噪声作为正则化器"，完整流程会经过哪些关键阶段？**
+   - 参考答案：Stage 1（TOPIC_INIT）→ Stage 3-6（文献发现）→ Stage 7（SYNTHESIS）→ Stage 8（HYPOTHESIS_GEN，多代理辩论）→ Stage 9（EXPERIMENT_DESIGN [门控]）→ Stage 10-13（实验执行与自愈）→ Stage 14-15（决策）→ Stage 16-19（论文写作与评审）→ Stage 20-23（质量门控、导出、引用验证）。
+
+4. **MetaClaw 的自进化机制是什么？为什么它能减少 Stage 重试率和 REFINE 循环次数？**
+   - 参考答案：MetaClaw 把每次运行的失败和警告转化为可复用的技能文件（arc-* Skill），存储在 ~/.metaclaw/skills/，后续运行时通过 build_overlay() 注入每个 LLM Prompt。减少重试的原因：技能文件帮助 LLM 避免已知陷阱，一次性生成正确的实验代码。
+
+5. **对比 AutoResearchClaw 与 GPT-Researcher / MiniMax，为什么后两者不能产出可复现的学术成果？**
+   - 参考答案：GPT-Researcher 停在文献综述阶段，不生成实验和论文；MiniMax 覆盖更多阶段但没有引用验证和自愈执行。AutoResearchClaw 的差异点在实验执行（沙箱+自愈）和抗伪造机制（VerifiedRegistry + 四层引用验证），这两个特性决定了它能否产出可复现的学术成果。
+
+---
 
 ## 进阶路径
 

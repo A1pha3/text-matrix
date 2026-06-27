@@ -14,7 +14,7 @@ tags: ["3D重建", "Gaussian-Splatting", "Rust", "WebGPU", "Burn", "开源"]
 
 | 项目 | 信息 |
 |------|------|
-| **Stars** | 4,755+ |
+| **Stars** | 4,760+ |
 | **Forks** | 273+ |
 | **许可证** | Apache-2.0 |
 | **语言** | Rust |
@@ -38,13 +38,14 @@ tags: ["3D重建", "Gaussian-Splatting", "Rust", "WebGPU", "Burn", "开源"]
 - [项目定位与背景](#项目定位与背景)
 - [核心特性](#核心特性)
 - [技术栈分析](#技术栈分析)
-- [安装与配置](#安装与配置)
-- [训练与查看](#训练与查看)
-- [CLI 工具](#cli-工具)
-- [可视化集成](#可视化集成)
-- [常见问题](#常见问题)
+- [构建方式速览](#构建方式速览)
+- [性能表现](#性能表现)
+- [项目维护状态](#项目维护状态)
+- [适用场景与局限](#适用场景与局限)
 - [自测题](#自测题)
+- [常见问题](#常见问题)
 - [进阶路径](#进阶路径)
+- [总结](#总结)
 
 ---
 
@@ -234,8 +235,68 @@ WebGPU 渲染需要 Chrome 134+ 浏览器。
 
 ---
 
+## 常见问题
+
+### Brush 与 gsplat 等其他 Gaussian Splatting 实现有什么区别？
+
+Brush 的核心优势是**跨平台零依赖部署**。相比 gsplat 等 Python/CUDA 实现，Brush 基于 Rust + Burn 框架，编译后只有一个二进制文件，不需要 Python 运行时或 CUDA 依赖。性能方面，README 提到"generally faster than gsplat"，但这是项目自述，建议在实际硬件上运行 `cargo bench` 验证。
+
+### WebGPU 版本的性能如何？是否适合生产环境？
+
+WebGPU 版本通过 WASM 编译，性能比原生版本低。当前仅支持 Chrome 134+，Firefox 和 Safari 的支持还在开发中。如果是生产环境，建议优先使用原生版本（桌面端或移动端）。
+
+### 如何在 Android 设备上部署 Brush？
+
+需要配置 Android SDK/NDK，然后使用 `cargo ndk` 构建 Rust 代码，再用 Gradle 构建 Android Studio 项目。具体步骤参考[构建方式速览](#构建方式速览)中的 Android 端部分。
+
+### Brush 的训练速度如何？需要什么硬件配置？
+
+训练速度取决于场景复杂度和硬件配置。README 提到性能"generally faster than gsplat"，但未提供具体硬件配置下的 benchmark。建议在实际使用前，用你的数据跑一次完整训练，记录时间和质量。
+
+### 可以将 Brush 集成到现有的 3D 应用程序中吗？
+
+可以。Brush 支持作为库使用（参考[技术栈分析](#技术栈分析)），也支持加载 `.ply` 和 `.compressed.ply` 文件。如果是 Web 环境，可以通过 WebGPU 接口集成。
+
+---
+
+## 进阶路径
+
+### 1. 深入理解 Gaussian Splatting 原理
+
+- 阅读原始论文：[3D Gaussian Splatting for Real-Time Radiance Field Rendering](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/)
+- 理解算法核心：如何用高斯分布表达场景、如何优化协方差矩阵、如何实现实时渲染
+- 对比 NeRF 家族：为什么 Gaussian Splatting 能实现实时渲染
+
+### 2. 贡献到 Brush 项目
+
+- 从 [GitHub 仓库](https://github.com/ArthurBrussee/brush) 克隆代码
+- 阅读贡献指南（如果有）
+- 从简单 issue 开始：修复文档错误、添加单元测试、优化错误处理
+- 理解代码结构：核心库、CLI 工具、Web 前端、Android 应用
+
+### 3. 将 Brush 集成到生产环境
+
+- 评估需求：跨平台支持、性能要求、许可证兼容性
+- 测试稳定性：在实际数据集上运行 Brush，记录崩溃、内存泄漏、性能瓶颈
+- 集成到流水线：将数据准备、训练、查看、导出集成到现有 3D 重建流水线
+
+### 4. 优化 Brush 性能
+
+- 运行 `cargo bench` 识别性能瓶颈
+- 优化数据加载：使用更快的存储、并行加载、缓存策略
+- 优化训练参数：调整学习率、批量大小、迭代次数
+- 贡献优化：将你的优化提交到上游仓库
+
+### 5. 探索 Brush 的高级功能
+
+- 动态场景：使用 cat-4D 和 Cap4D 格式的数据
+- 实时可视化：集成 Rerun 进行训练过程监控
+- 自定义渲染：修改 WebGPU 着色器，实现自定义渲染效果
+
+---
+
 ## 总结
 
-Brush 是一个目标很明确的项目——用 Rust+Burn 这套技术栈，把 Gaussian Splatting 这项技术做成一个真正可以跨设备、零依赖运行的工具。当前 Stars 4,403，说明社区对这类"一次构建，到处运行"的 3D 工具确实有需求。如果你有 3D 重建相关的需求，不妨先去它的 [Web Demo](https://arthurbrussee.github.io/brush-demo)（需要 Chrome）体验一下效果，再决定要不要深入折腾。
+Brush 是一个目标很明确的项目——用 Rust+Burn 这套技术栈，把 Gaussian Splatting 这项技术做成一个真正可以跨设备、零依赖运行的工具。当前 Stars 4,760+，说明社区对这类"一次构建，到处运行"的 3D 工具确实有需求。如果你有 3D 重建相关的需求，不妨先去它的 [Web Demo](https://arthurbrussee.github.io/brush-demo)（需要 Chrome）体验一下效果，再决定要不要深入折腾。
 
 **仓库链接**：https://github.com/ArthurBrussee/brush
