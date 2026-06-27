@@ -10,18 +10,21 @@ slug: agent-governance-toolkit-microsoft-ai-agent-security
 author: 钳岳星君
 description: "微软出品的 AI Agent 治理工具包，提供策略执行、零信任身份验证、隔离执行环境和可靠性工程四大护盾，系统性覆盖 OWASP Agentic Top 10 全部 10 类安全风险。"
 ---
+
 # Agent Governance Toolkit：微软 AI Agent 安全护盾
 
 ## 这套工具真正解决什么
 
-Agent Governance Toolkit（以下简称 AGT）把 Agent 的不可控行为从模型概率层下沉到确定性代码层。提示词级别的安全约束（"请遵守规则"）依赖模型自律，构不成确定性的控制面。AGT 在模型意图到达工具之前，用代码拦截每一次工具调用、消息发送和 Agent 委托——拦截是否发生不取决于模型是否配合。
+Agent Governance Toolkit（以下简称 AGT）在模型意图到达工具之前，用代码拦截每一次工具调用、消息发送和 Agent 委托。拦截是否发生不取决于模型是否配合，这是和提示词约束的根本区别。
 
 OWASP 在 [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/) 的 LLM01:2025 Prompt Injection 条目中明确指出："it is unclear if there are fool-proof methods of prevention for prompt injection"（提示词注入可能没有万无一失的预防方法）。Andriushchenko 等人在 ICLR 2025 论文 [Jailbreaking Leading Safety-Aligned LLMs with Simple Adaptive Attacks](https://arxiv.org/abs/2404.02151) 中报告，对 GPT-4o、Claude 3、Llama-3 使用自适应攻击，越狱成功率达 100%。
 
 AGT 项目红队测试报告显示，提示词级安全的策略违规率为 26.67%，应用层强制执行的违规率为 0.00%（数据来源：AGT 仓库 README，截至 v3.7.0）。这组数字测的是"在红队构造的注入场景下，危险动作是否真正发生"，反映的是应用层拦截的有效性，而不是模型本身是否更难被越狱。它不能推出 AGT 能消除提示词注入——注入仍可能成功，只是成功后的危险动作被代码层挡住。
 
 **项目地址：** [github.com/microsoft/agent-governance-toolkit](https://github.com/microsoft/agent-governance-toolkit)
+
 **当前版本：** v3.7.0（Public Preview，MIT 许可证，截至 2026 年 5 月）
+
 **支持语言：** Python、TypeScript、.NET、Rust、Go
 
 ## 学习目标
@@ -47,22 +50,23 @@ AGT 项目红队测试报告显示，提示词级安全的策略违规率为 26.
   - [可观测性与审计](#可观测性与审计)
 - [快速上手](#快速上手)
 - [任务如何流过系统](#任务如何流过系统)
-- [风险覆盖：与 OWASP Top 10 for LLM Applications 2025 的映射](#风险覆盖与-owasp-top-10-for-llm-applications-2025-的映射)
+- [风险覆盖：与 OWASP Top 10 的映射](#风险覆盖与-owasp-top-10-的映射)
 - [适用场景与采用顺序](#适用场景与采用顺序)
 - [常见问题与错误处理](#常见问题与错误处理)
 - [自测检查](#自测检查)
+- [进阶路径](#进阶路径)
 - [相关工具](#相关工具)
 
 ## 总览：四层护盾与系统地图
 
 AGT 的架构有四条独立主线，分别回答四个问题：动作是否允许、谁发起的、危险代码如何隔离、失控后如何止损。审计日志横切四层，记录每一次决策的完整上下文。
 
-```text
+```
 Agent ──► 策略引擎 ──► 身份验证 ──► 审计日志
             (YAML/OPA/Cedar)  (SPIFFE/DID/mTLS)  (防篡改)
                  │                                    │
-                 ├── 允许 ──► 工具执行（可选沙箱）       │
-                 └── 拒绝 ──► 抛出 GovernanceDenied    │
+                 ├── 允许 ──► 工具执行（可选沙箱）    │
+                 └── 拒绝 ──► 抛出 GovernanceDenied   │
                                                       ▼
                                                决策记录
 ```
@@ -82,7 +86,7 @@ Agent ──► 策略引擎 ──► 身份验证 ──► 审计日志
 
 ### 策略执行引擎
 
-策略引擎是 AGT 的第一道关卡，每一次工具调用都会被拦截并求值。默认拒绝（default deny）意味着策略不匹配时动作不会放行，遗漏规则不会导致越权。
+策略引擎是 AGT 的第一道关卡，每一次工具调用都会被拦截并求值。默认拒绝（default deny）意味着策略不匹配时动作不会放行，遗漏的规则不会导致越权。
 
 AGT 支持三种策略后端：
 
@@ -94,7 +98,7 @@ AGT 支持三种策略后端：
 
 ### 零信任身份验证
 
-在多 Agent 系统里，五个 Agent 可能共享一个 API key。出问题时"某个 Agent 干的"无法支撑事件响应。AGT 的身份层为每个 Agent 分配独立身份：
+在多 Agent 系统里，五个 Agent 可能共享一个 API key。出问题时无法定位是哪个 Agent 发起的危险调用。AGT 的身份层为每个 Agent 分配独立身份：
 
 - **SPIFFE**：工作负载身份框架，为 Agent 颁发可验证的身份凭证。
 - **DID（去中心化标识符）**：跨组织 Agent 协作时的身份互信。
@@ -195,7 +199,7 @@ agt lint-policy policies/                           # 校验策略文件
 
 用一个具体任务走一遍四层护盾的配合：用户让 Agent 清理数据库旧数据，Agent 决定调用 `drop_table` 工具。
 
-```text
+```
 1. 用户请求 → "清理 users 表的旧数据"
 2. Agent 决策 → 调用 drop_table(table="users")
 3. AGT 拦截 → 策略引擎求值
@@ -214,7 +218,7 @@ agt lint-policy policies/                           # 校验策略文件
 
 如果策略允许（比如 `web_search`），流程会多走两步：
 
-```text
+```
 1-3. 同上，但策略引擎决策：允许
 4. 身份层验证 → mTLS 双向认证通过
 5. 沙箱层判断 → web_search 不需要沙箱，直接执行
@@ -225,7 +229,7 @@ agt lint-policy policies/                           # 校验策略文件
 
 策略引擎的拒绝发生在代码层：被 AGT 拒绝的动作，Agent 在代码层面无法绕过。提示词级安全依赖模型自律，AGT 让越权动作在代码层不可执行——这是两者最根本的差别。
 
-## 风险覆盖：与 OWASP Top 10 for LLM Applications 2025 的映射
+## 风险覆盖：与 OWASP Top 10 的映射
 
 OWASP Top 10 for LLM Applications 2025 是 OWASP GenAI Security Project 发布的大语言模型应用安全风险权威清单。AGT 项目徽章标注覆盖 OWASP Agentic Top 10 全部 10 类风险，本文按 OWASP 官方的 Top 10 for LLM Applications 2025 进行映射。
 
@@ -315,6 +319,54 @@ except GovernanceDenied as e:
 3. Agent 调用 `execute_code` 工具时，代码逃逸了模型约束，AGT 的哪一层负责限制影响范围？四特权环中哪一环适合执行不可信代码？
 4. 团队刚开始引入 AGT，应该先上哪一层？为什么不是同时上所有层？
 5. OWASP LLM01（提示词注入）的根因在模型层，AGT 如何在不修改模型的情况下降低这类风险？
+
+### 自测参考答案
+
+**题 1**：OAuth 2.0 scope 控制的是"Agent 能访问哪些服务"，不是"访问服务后能执行哪些动作"。持有 `query_database` 权限的 Agent 同样可以执行 `drop_table`，scope 在此处失效。AGT 的策略引擎在工具调用真正发生之前拦截，用代码判断动作是否允许，不依赖模型配合。
+
+**题 2**：需要启用 AGT 的身份层（零信任身份验证）。为每个 Agent 分配独立身份（SPIFFE/DID），出问题时审计日志里会记录 `agent: did:mesh:agent-7` 这样的身份标识，可以精确追溯。
+
+**题 3**：隔离执行沙箱层负责限制影响范围。不可信代码应路由到 Ring 3（用户级，仅可计算，无 I/O）或 Ring 2（应用级，受限文件和网络访问）执行。即使代码逃逸了模型约束，也无法触达宿主系统的敏感资源。
+
+**题 4**：应先上策略执行 + 审计日志。这两层覆盖过度授权和无界消耗两类核心风险，不依赖额外基础设施，投入产出比最高。同时上所有层会增加运维复杂度和延迟开销，不适合初始阶段。
+
+**题 5**：AGT 在模型输出之后、工具执行之前插入代码层拦截。注入可能成功（模型被误导），但注入成功后试图执行的危险动作会被策略引擎拦截。根因在模型层，AGT 解决的是"注入成功后的损害控制"，不是"注入预防"。
+
+## 进阶路径
+
+### 深入策略编写
+
+从 YAML 策略起步，逐步过渡到 OPA Rego 或 Cedar：
+
+1. **YAML 策略**：适合简单场景，声明式规则，易于审核。
+2. **OPA Rego**：适合已有 OPA 基础设施的团队，表达能力强，支持复杂条件。
+3. **Cedar**：适合需要细粒度权限模型的场景，Amazon 出品，与 IAM 策略模型兼容。
+
+### 集成到现有 Agent 框架
+
+AGT 提供 Python、TypeScript、.NET、Rust、Go 多语言 SDK。集成步骤：
+
+1. 用 `govern()` 包装现有工具函数。
+2. 编写 YAML 策略文件，定义允许/拒绝规则。
+3. 启用审计日志，记录所有决策。
+4. 逐步启用身份层、沙箱层、SRE 层。
+
+### 合规审计准备
+
+如果团队需要满足 SOC 2、ISO 27001 等合规框架：
+
+1. 启用审计日志，确保决策记录完整。
+2. 用 `agt verify --evidence` 生成合规证据包。
+3. 定期运行 `agt red-team` 做提示词注入审计。
+4. 用 `agt lint-policy` 在 CI 中校验策略文件。
+
+### 参考资源
+
+- [AGT GitHub 仓库](https://github.com/microsoft/agent-governance-toolkit)
+- [AGT 官方文档](https://microsoft.github.io/agent-governance-toolkit/)
+- [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/)
+- [OPA Rego 文档](https://www.openpolicyagent.org/docs/latest/policy-language/)
+- [SPIFFE 工作负载身份规范](https://spiffe.io/)
 
 ## 相关工具
 

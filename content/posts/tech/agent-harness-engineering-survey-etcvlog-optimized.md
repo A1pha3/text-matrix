@@ -10,7 +10,7 @@ tags: ["AI Agent", "Harness Engineering", "ETCLOVG", "Agent Infrastructure", "Co
 
 # Agent Harness Engineering：AI Agent 执行框架的系统化重构
 
-2026 年 CMU、耶鲁等机构与亚马逊的联合 Survey（调研）给出了一个判断：当模型本身已经强到能尝试长任务时，制约 Agent 上生产的瓶颈已经从模型下移到了包裹模型的执行框架——他们称之为 agent execution harness（执行框架或驾驭层）。论文把这套框架拆成 ETCLOVG 七层，并用 2022–2026 年的开源项目分布印证：行业把工程投入堆在 L 层（Lifecycle & Orchestration，生命周期与编排），而 C 层（Context & Memory，上下文与记忆）和 O 层（Observability & Operations，可观测性与运维）在开源侧偏薄。
+2026 年 CMU、耶鲁等机构与亚马逊的联合 Survey 给出了一个判断：当模型本身已经强到能尝试长任务时，制约 Agent 上生产的瓶颈已经从模型下移到了包裹模型的执行框架——他们称之为 agent execution harness（执行框架或驾驭层）。论文把这套框架拆成 ETCLOVG 七层，并用 2022–2026 年的开源项目分布印证：行业把工程投入堆在 L 层（Lifecycle & Orchestration，生命周期与编排），而 C 层（Context & Memory，上下文与记忆）和 O 层（Observability & Operations，可观测性与运维）在开源侧偏薄。
 
 论文全称 *Agent Harness Engineering: A Survey*，由 CMU、耶鲁、JHU、NEU、Tulane、UAB、OSU、Virginia Tech 与 Amazon 联合团队发布，配套一个持续更新的开源项目目录 Awesome-Agent-Harness。论文于 2026 年 5 月 14 日在 OpenReview 发布（ID: eONq7FdiHa），最后一次修改为 2026 年 5 月 15 日。论文正式标题为 Agent Harness Engineering，项目页面 picrew.github.io/LLM-Harness/ 沿用早期命名 LLM-Harness，两者指向同一工作。venue/submission 状态以 OpenReview 页面为准。
 
