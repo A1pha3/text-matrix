@@ -506,4 +506,117 @@ graph TD
 
 ---
 
+## 十、进阶路径
+
+### 10.1 深入理解 Agent Skills
+
+- 阅读 `SKILL.md` 格式规范和 `run_js` / `run_intent` 工具源码
+- 理解 Text-Only / JS / Native 三种技能类型的执行差异
+- 学习如何设计安全的技能系统（避免任意命令执行）
+
+### 10.2 扩展 Native Skill
+
+- 修改 Android `IntentHandler.kt` / iOS 对应文件
+- 添加新的系统意图（如发送日历事件、读取健康数据）
+- 理解 Android/iOS 权限模型和用户授权流程
+
+### 10.3 社区贡献
+
+- 在 [GitHub Discussions](https://github.com/google-ai-edge/gallery/discussions/categories/skills) 分享你的技能
+- 学习其他人的技能设计思路
+- 参与 Gallery 项目贡献（PR、Issue、文档改进）
+
+### 相关资源
+
+| 资源 | 链接 |
+|------|------|
+| Agent Skills 设计文档 | https://github.com/google-ai-edge/gallery/blob/main/skills/README.md |
+| JavaScript Skill 示例 | https://github.com/google-ai-edge/gallery/tree/main/skills/featured |
+| Native Intent 源码 | https://github.com/google-ai-edge/gallery/blob/main/android/src/main/java/com/example/gallery/IntentHandler.kt |
+
+---
+
+## 十一、自测题
+
+### 题 1（基础概念）：Agent Skills 的三种类型是什么？各适用于什么场景？
+
+<details>
+<summary>参考答案</summary>
+
+1. **Text-Only Skill**：只需提供角色设定或场景数据，无需外部代码。适用于扮演类技能（如健身教练、地牢大师）。
+2. **JavaScript Skill**：需要执行自定义逻辑，JS 代码运行在隐藏的 WebView 中。适用于 API 调用、图像处理、数据计算。
+3. **Native Skill**：调用 Android/iOS 系统原生能力。适用于发送邮件、发送短信等系统级操作。
+
+</details>
+
+### 题 2（安装配置）：如何从 URL 添加技能？需要注意什么？
+
+<details>
+<summary>参考答案</summary>
+
+1. 将技能托管到 Web 服务器（GitHub Pages、Cloudflare 等）
+2. 进入 Skill Manager，点击 (+) → "Load skill from URL"
+3. 输入技能文件夹的 URL
+
+**注意**：JS 技能必须托管在提供正确 MIME 类型的服务器上。GitHub Pages 需要在仓库根目录创建 `.nojekyll` 文件以禁止 Jekyll 处理 Markdown 文件。
+
+</details>
+
+### 题 3（安全）：为什么 JS Skill 不应该直接写 API Key？正确的做法是什么？
+
+<details>
+<summary>参考答案</summary>
+
+**原因**：JS 代码运行在客户端，直接写 API Key 会暴露给用户可以查看的 JS 源码。
+
+**正确做法**：使用 `require-secret: true` 机制。在 `SKILL.md` 的 metadata 中添加：
+
+```yaml
+metadata:
+  require-secret: true
+  require-secret-description: Go to Github settings page to copy your token.
+```
+
+然后 JS 代码通过 `ai_edge_gallery_get_result(data, secret)` 的 `secret` 参数获取密钥。
+
+</details>
+
+---
+
+## 十二、练习
+
+### 练习 1：创建第一个 Text-Only Skill
+
+创建一个扮演「Python 导师」的 Text-Only Skill，要求：
+- 风格：耐心、鼓励、用具体例子解释概念
+- 功能：解释 Python 概念、提供代码示例、指出常见错误
+
+### 练习 2：创建 JS Skill 调用 public API
+
+创建一个 JS Skill，调用 https://api.agify.io/ API 猜测名字的性别，要求：
+- 输入：名字字符串
+- 输出：猜测的性别 + 置信度
+- 处理 API 错误
+
+### 练习 3：调试 JS Skill
+
+故意在你的 JS Skill 中引入一个 bug（如访问不存在的变量），然后使用应用内置的 JavaScript 技能调试面板排查问题。记录：
+- 如何在调试面板中查看控制台日志？
+- 如何查看传递给脚本的调用详情？
+- 如何查看返回的完整数据？
+
+---
+
+## 十三、资料口径说明
+
+本文判断基于以下来源：
+
+1. **项目 README**：https://github.com/google-ai-edge/gallery/blob/main/README.md（2026-04-06 版本）
+2. **Skill 示例**：https://github.com/google-ai-edge/gallery/tree/main/skills（2026-04-06 版本）
+3. **Google AI Edge 官方文档**：https://ai.google.dev/edge（访问日期：2026-04-06）
+
+本文未实测所有 JS Skill 的 MIME 类型行为，相关判断来自项目 README 和社区讨论。如果你的 Web 服务器配置特殊，可能需要额外测试。
+
+---
+
 *文档信息：Google AI Edge Gallery v1.0.11 | 更新日期：2026-04-06 | 难度：⭐⭐⭐*

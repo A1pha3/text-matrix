@@ -521,4 +521,136 @@ Impeccable 主要面向英文 UI，但设计原则适用于任何语言。
 
 ---
 
+## §12 进阶路径
+
+### 12.1 深入理解设计系统
+
+- 阅读 Google Material Design / Apple HIG 官方指南
+- 学习色彩理论（OKLCH 色彩空间、对比度计算）
+- 掌握字体排印（模块化比例、OpenType 特性）
+
+### 12.2 扩展 Impeccable
+
+- 修改 `source/skills/frontend-design/reference/` 下的文件
+- 添加自定义设计 token（符合你的设计系统）
+- 提交 Pull Request 到 [pbakaus/impeccable](https://github.com/pbakaus/impeccable)
+
+### 12.3 集成到工作流
+
+- 在 CI/CD 中添加 `/audit` 检查
+- 配置预提交钩子（pre-commit hook）自动运行 `/normalize`
+- 训练团队正确使用 Impeccable 命令
+
+### 相关资源
+
+| 资源 | 链接 |
+|------|------|
+| Material Design | https://m3.material.io |
+| Apple HIG | https://developer.apple.com/design/human-interface-guidelines/ |
+| OKLCH 色彩工具 | https://oklch.com |
+| 模块化比例计算器 | https://typescale.com |
+
+---
+
+## §13 自测题
+
+### 题 1（基础概念）：Impeccable 的核心定位是什么？它和普通设计系统有什么区别？
+
+<details>
+<summary>参考答案</summary>
+
+**核心定位**：为 AI 编码 Agent 提供设计知识库，让 AI 能做出更好的 UI 设计决策。
+
+**和普通设计系统的区别**：
+
+| 特性 | Impeccable | 普通设计系统 |
+|------|-------------|---------------|
+| **目标用户** | AI 编码 Agent | 人类开发者 |
+| **工作方式** | 命令驱动 | 组件库 |
+| **反馈类型** | 设计建议 | UI 组件 |
+| **覆盖范围** | 字体/颜色/空间/动效/交互/响应式/文案 | 主要是组件 |
+
+</details>
+
+### 题 2（命令使用）：`/audit`、`/critique`、`/normalize`、`/polish` 的区别是什么？
+
+<details>
+<summary>参考答案</summary>
+
+| 命令 | 功能 | 使用时机 |
+|------|------|----------|
+| `/audit` | 技术质量检查（无障碍、性能、响应式） | 做出更改之前 |
+| `/critique` | UX 设计审查（层次、清晰度、情感共鸣） | 需要设计反馈时 |
+| `/normalize` | 对齐设计系统标准，修复不一致 | 审核后，修复不一致 |
+| `/polish` | 发布前的最终检查和清理 | 部署到生产环境前 |
+
+</details>
+
+### 题 3（安装配置）：如何将 Impeccable 安装到 Claude Code？
+
+<details>
+<summary>参考答案</summary>
+
+**项目级别安装**：
+
+```bash
+cp -r dist/claude-code/.claude your-project/
+```
+
+**全局安装**（应用到所有项目）：
+
+```bash
+cp -r dist/claude-code/.claude/* ~/.claude/
+```
+
+安装后重启 Claude Code，技能会自动加载。
+
+</details>
+
+---
+
+## §14 练习
+
+### 练习 1：为你的项目运行完整检查流程
+
+在你的项目中运行：
+
+```bash
+/audit              # 找到问题
+/normalize         # 修复不一致
+/polish            # 最终清理
+```
+
+记录发现的问题数量和类型。
+
+### 练习 2：创建自定义反模式库
+
+在 `source/skills/frontend-design/reference/` 下添加你的团队反模式：
+
+1. 创建一个新文件 `anti-patterns-custom.md`
+2. 添加 3 条你的团队常见设计错误
+3. 测试 Impeccable 是否能识别这些反模式
+
+### 练习 3：扩展设计系统
+
+修改 `source/skills/frontend-design/reference/color-and-contrast.md`：
+
+1. 添加你的品牌色板
+2. 确保对比度满足 WCAG AA 标准
+3. 测试 `/normalize` 是否能正确应用你的设计 token
+
+---
+
+## §15 资料口径说明
+
+本文判断基于以下来源：
+
+1. **项目 README**：https://github.com/pbakaus/impeccable/blob/main/README.md（2026-03-31 版本）
+2. **官方文档**：https://impeccable.style（访问日期：2026-03-31）
+3. **技能示例**：https://github.com/pbakaus/impeccable/tree/main/dist（2026-03-31 版本）
+
+本文未实测所有 AI 编码工具（Cursor/Claude Code/OpenCode 等）的技能加载行为，相关判断来自项目 README 和社区讨论。如果你的工具版本特殊，可能需要额外测试。
+
+---
+
 *文档版本 1.0 | 撰写日期：2026-03-31 | 基于最新提交 (2026-03-31) | Stars: 15k ⭐*

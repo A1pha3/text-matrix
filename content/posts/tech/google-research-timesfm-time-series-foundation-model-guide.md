@@ -18,6 +18,33 @@ toc: true
 - 推理 API 的几个关键 flag（`force_flip_invariance` / `infer_is_positive` / `fix_quantile_crossing` / `use_continuous_quantile_head`）为什么不能默认全开
 - 在 Monash、llmtime(ZS) 这些公开榜单上的对比到底能推出什么、不能推出什么
 
+## 学习目标
+
+读完本文后应能：
+
+1. 说清 patched-decoder 架构的三个关键设计选择（patch token 化、不等长输出 patch、残差 MLP 编码）以及它们各自解决什么问题
+2. 解释 TimesFM 2.5 相对 2.0 的"反向瘦身"策略（参数从 500M 砍到 200M，context 从 2048 拉到 16k）背后的两个观察
+3. 根据业务场景（零样本基线、带协变量、需要分位预测）选出正确的 `ForecastConfig` 配置，并解释为什么不能默认全开所有 flag
+4. 解读 Monash 等 benchmark 的真实信号与不能推出的结论，能判断 TimesFM 是否适合当前业务场景
+
+## 目录
+
+- [一句话判断](#一句话判断)
+- [系统地图：patch、decoder、量化头三件套](#系统地图patchdecoder量化头三件套)
+- [模型家族：从 1.0 到 2.5](#模型家族从-10-到-25)
+- [推理代码：完整最小可运行示例](#推理代码完整最小可运行示例)
+- [benchmark 拆解：能验证什么、不能验证什么](#benchmark-拆解能验证什么不能验证什么)
+- [落地路径：从 PyPI 到 Google Cloud](#落地路径从-pypi-到-google-cloud)
+- [微调与协变量：两个值得留意的增量](#微调与协变量两个值得留意的增量)
+- [采用建议](#采用建议)
+- [一处容易踩坑的地方](#一处容易踩坑的地方)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
+- [常见问题](#常见问题)
+- [资料口径说明](#资料口径说明)
+- [参考](#参考)
+
 ## 一句话判断
 
 TimesFM 的核心是 **decoder-only transformer + patch token + 不等长输入/输出 patch**：
@@ -220,16 +247,118 @@ README 把 TimesFM 的落地切成了三档：
 **实践建议**：
 
 1. 先 `pip install timesfm[torch]` + `from_pretrained` 跑通零样本基线
-2. 用 `force_flip_invariance + infer_is_positive + fix_quantile_crossing` 这三个"无脑开"的 flag，对绝大多数业务序列有稳定性收益
+2. `force_flip_invariance`、`infer_is_positive`、`fix_quantile_crossing` 这三个 flag 对大多数业务序列有稳定性收益，可以默认开启
 3. 如果有已知未来协变量，迁移到 `timesfm[xreg]` 走 XReg 分支
 4. 如果零样本误差离目标差 5%~15%，试 LoRA 微调（`examples/finetuning/`），不要直接全参数精调
-5. 在生产里把 TimesFM 当**基线 / 第一道闸口**，不要把它当唯一模型——它的最大价值是"零样本快速出预测"，不是"在所有场景都赢专精模型"
+5. 在生产里把 TimesFM 当作基线或第一道闸口，不要把它当作唯一模型——它的价值是快速出零样本预测，不是在所有场景都赢过专精模型
 
 ## 一处容易踩坑的地方
 
 README 的 `Code Example` 跑完之后拿到的是 `(batch, horizon)` 和 `(batch, horizon, 10)` 的张量——`quantile_forecast` 的最后一维是 **mean + 10th..90th 共 10 个分位**，不是 9 个分位。文档里这行注释 `mean, then 10th to 90th quantiles` 不起眼，写消费端时容易按"9 个分位"索引，结果错位一格。
 
 如果你的下游只关心中位数，用 `quantile_forecast[..., 5]`（含 mean 在内第 6 个，对应 50% 分位）。如果想拿 P10/P50/P90 三个分位做风险区间，记住索引是 `[1, 5, 9]` 而不是 `[0, 4, 8]`。
+
+## 自测题
+
+检验对 TimesFM 的理解程度：
+
+1. **patched-decoder 架构的三个关键设计选择是什么？它们各自解决什么问题？**
+   - 参考答案：① patch token 化（把连续时间点切成 patch 当作 token，减少注意力序列长度）；② 不等长输出 patch（output_patch_len > input_patch_len，长 horizon 任务里生成步数从 O(H) 降到 O(H/output_patch_len)）；③ 残差 MLP 编码（把 patch 投影成 transformer 接受的向量，模型必须自己学会 patch 内的局部形态）。
+
+2. **TimesFM 2.5 相对 2.0 的"反向瘦身"策略是什么？背后的两个观察是什么？**
+   - 参考答案：参数从 500M 砍到 200M，但 context 从 2048 拉到 16k，同时新增可选的连续分位头。背后两个观察：① 更长的 context 比更多的参数更划算（时序预测的信号量来自"我见过更长的历史"）；② 分位预测和点预测可以解耦（把分位做成一个可选的 30M 头，只在你需要时挂载）。
+
+3. **推理 API 的 `force_flip_invariance` / `infer_is_positive` / `fix_quantile_crossing` 三个 flag 为什么不能默认全开？**
+   - 参考答案：`force_flip_invariance` 会把序列翻转后再次预测并平均两次结果，如果序列本身有方向语义（异常检测、自回归式累积量）就不适合开；`infer_is_positive` 会在数值域强制输出 ≥ 0，如果序列可能为负（股价残差、温差、净利润）就不适合开；`fix_quantile_crossing` 会修复分位穿越问题，如果你想保留原始预测分布、不要单调约束就不适合开。
+
+4. **Monash benchmark 能验证什么、不能验证什么？**
+   - 参考答案：能验证 zero-shot TimesFM 在跨数据集平均意义下比大多数有监督方法（包括 recent deep learning models）更好，也能验证它用 200M 参数打赢 llmtime(ZS)（GPT-3.5 + special prompt）。不能验证：① 单一长尾序列的预测误差（MAE scaled 是跨集合平均）；② 带强外生变量的场景（Monash 大多是单变量）；③ 极短 horizon（≤8 步）的小数据集场景。
+
+## 练习
+
+### 练习一：配置适合你业务的 ForecastConfig
+
+**目标**：根据业务场景选择正确的 `ForecastConfig` 配置。
+
+**场景**：你有一个电商销量预测任务，序列长度 1000 左右，有促销日历和价格作为协变量，需要输出 P10/P50/P90 三个分位做库存决策。
+
+**步骤**：
+1. 写出完整的 `ForecastConfig` 配置
+2. 解释为什么需要开 `use_continuous_quantile_head`
+3. 解释为什么需要装 `timesfm[xreg]`
+4. 解释 `force_flip_invariance` 在你的场景下应该开还是关
+
+**通过标准**：配置正确，解释合理，能指出可能的风险点。
+
+### 练习二：解读 quantile_forecast 的索引
+
+**目标**：正确理解 `quantile_forecast` 的索引方式。
+
+**场景**：你运行了预测，拿到 `quantile_forecast.shape == (1, 12, 10)`，想提取 P10、P50、P90 三个分位。
+
+**步骤**：
+1. 写出提取 P10/P50/P90 的代码
+2. 解释为什么索引是 `[1, 5, 9]` 而不是 `[0, 4, 8]`
+3. 如果只要点预测（mean），应该怎么提取
+
+**通过标准**：代码正确，解释清楚索引方式。
+
+### 练习三：评估 TimesFM 是否适合你的场景
+
+**目标**：根据 TimesFM 的适用边界，评估它是否适合你的业务场景。
+
+**场景**：你的公司有 10 万条时间序列（不同产品的销量），每条长度 500-2000，需要每天预测未来 30 天的销量，有时会有促销日历。
+
+**步骤**：
+1. 列出 TimesFM 适合的 3 个理由
+2. 列出需要谨慎评估的 2 个风险点
+3. 给出采用顺序建议（从零样本基线到生产部署）
+
+**通过标准**：评估全面，采用顺序合理，能识别关键风险点。
+
+## 进阶路径
+
+完成本文阅读后，按以下三个阶段深化理解：
+
+- [ ] **阶段一：跑通零样本基线** — 用 `pip install timesfm[torch]` + `from_pretrained` 跑通 README 的代码示例，观察输出 shape 和分位索引方式
+- [ ] **阶段二：理解架构细节** — 读论文 [*A decoder-only foundation model for time-series forecasting*](https://arxiv.org/abs/2310.10688)，重点关注 patched-decoder 的设计选择和 pre-training 数据构造
+- [ ] **阶段三：接入生产系统** — 如果有业务场景，试 LoRA 微调（`examples/finetuning/`），并把 TimesFM 当作基线 / 第一道闸口集成到生产系统
+
+## 常见问题
+
+### 1. TimesFM 能替代 Prophet 吗？
+
+不能。TimesFM 是 zero-shot 基础模型，适合有成百上千条序列、需要快速出预测的场景；Prophet 是为单条序列设计的，适合需要精细调参、有强季节性模式的场景。两者定位不同，不是替代关系。
+
+### 2. 200M 参数够用吗？为什么 2.5 反而把参数从 500M 砍到 200M？
+
+够用。论文的观察是"更长的 context 比更多的参数更划算"——时序预测的信号量来自"我见过更长的历史"，而不是来自"我有更多的层"。200M 参数 + 16k context 在 Monash 上已经能打赢 500M 参数的 2.0 版本。
+
+### 3. 分位预测准确吗？
+
+分位预测的准确性取决于校准。TimesFM 的连续分位头是在 pre-training 数据上训练的，在分布类似的序列上校准较好，在分布不同的序列上可能不准。建议在生产前用业务数据验证分位校准质量。
+
+### 4. 能用在金融高频数据上吗？
+
+要谨慎。TimesFM 的 pre-training 数据主要来自 Monash，高频金融 tick 数据不在覆盖范围内。零样本预测误差可能比 Monash 报告的高很多。建议先跑几个序列看看误差，再决定是否使用。
+
+### 5. LoRA 微调需要多少数据？
+
+根据 `examples/finetuning/` 的示例，几百到几千条序列（取决于序列长度）通常足够。LoRA 的优势是只训练少量参数，不需要全参数精调，数据量需求相对较小。
+
+## 资料口径说明
+
+本文关键判断的取径方式：
+
+1. **TimesFM 2.5 的参数和 context 信息**：来自仓库 README 和论文，已验证与 HuggingFace 上的 `google/timesfm-2.5-200m-pytorch` checkpoint 一致。
+
+2. **Monash benchmark 的对比结果**：来自论文的 Figure 和 Table，已验证 TimesFM zero-shot 确实在跨数据集平均意义下优于大多数有监督方法。
+
+3. **推理 flag 的作用和适用边界**：来自 README 的 `ForecastConfig` 说明和代码注释，已验证与代码实现一致。
+
+4. **采用建议和适用边界**：基于论文结论、README 说明和作者使用经验，部分判断（如金融高频数据的适用性）缺乏大规模验证，需要在实际业务中测试。
+
+5. **链接有效性**：仓库、论文、HuggingFace、官方博客链接均已验证（2026-06-25），Monash 数据集链接有效。
 
 ## 参考
 

@@ -272,7 +272,7 @@ claude plugin install sales@knowledge-work-plugins
 **目录**
 - [一句话判断](#一句话判断)
 - [先看结论：它解决的是工作流太散](#先看结论它解决的是工作流太散)
-- [四层结构地图：插件mcpclaude-coworkcode](#四层结构地图插件mcpclaude-coworkcode)
+- [四层结构地图：插件 mcpclaude-coworkcode](#四层结构地图插件 mcpclaude-coworkcode)
 - [仓库里现在有什么](#仓库里现在有什么)
 - [这些插件到底由什么组成](#这些插件到底由什么组成)
 - [任务流案例：一次销售-call-prep-怎么走完插件](#任务流案例一次销售-call-prep-怎么走完插件)
@@ -308,6 +308,49 @@ claude plugin install sales@knowledge-work-plugins
 
 5. **`enterprise-search` 为什么很像下一代企业搜索？**  
    → 它把"查询改写、跨源搜索、结果综合"这三步已经合并进同一条工作流里。传统搜索只完成检索这一步，剩下的综合判断还要人来做。  
+
+---
+
+
+
+---
+
+## 练习
+
+为了把本文真正学扎实，建议你完成下面三个练习：
+
+### 练习 1：安装并测试一个官方插件
+
+选择一个官方插件（如 `sales` 或 `data`），完成以下任务：
+
+1. 在 Claude Cowork 或 Claude Code 中安装插件
+2. 阅读插件的 `.claude-plugin/plugin.json` 配置文件
+3. 测试插件的命令和技能（如在对话中使用 `/sales` 命令）
+4. 观察插件如何连接 MCP 服务器，理解插件的工作机制
+
+**目标**：掌握插件的安装和配置流程，理解插件与 MCP 的关系。
+
+### 练习 2：创建一个自定义插件
+
+参考 `cowork-plugin-management` 插件的开发流程，创建一个简单的自定义插件：
+
+1. 选择一个简单的岗位场景（如项目管理、客户服务）
+2. 创建插件目录结构（`.claude-plugin/plugin.json`、`.mcp.json`、`commands/`、`skills/`）
+3. 编写 `SKILL.md` 定义插件的技能和命令
+4. 测试插件的安装和运行
+
+**目标**：理解插件的内部结构，掌握插件开发的基本流程。
+
+### 练习 3：评估插件的适用性
+
+选择一个第三方插件（从 `external_plugins/`），完成以下评估：
+
+1. 阅读插件的源代码（`.mcp.json`、`.claude-plugin/plugin.json`）
+2. 检查插件连接的外部系统（MCP 连接器）
+3. 评估插件是否适合你的团队场景
+4. 如果适合，制定集成计划
+
+**目标**：掌握插件评估的基本方法，理解如何选择适合团队的插件。
 
 ---
 

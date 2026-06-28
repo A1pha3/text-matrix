@@ -1,7 +1,7 @@
 +++
 date = '2026-06-28T13:56:19+08:00'
 draft = false
-title = 'Ai Quant Book Multi Agent Quant Trading Guide'
+title = 'Ai Quant Book Multi Agent Quant Trading Guide Optimized'
 +++
 
 ## 练习

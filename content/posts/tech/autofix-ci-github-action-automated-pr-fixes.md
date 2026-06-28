@@ -128,7 +128,7 @@ Action 源码托管于 [autofix-ci/action](https://github.com/autofix-ci/action)
 ```typescript
 // 出于安全考虑，工作流必须命名为 "autofix.ci"
 if (process.env.GITHUB_WORKFLOW !== "autofix.ci") {
-  throw `For security reasons, the workflow in which the autofix.ci action is used must be named "autofix.ci".`;
+ throw `For security reasons, the workflow in which the autofix.ci action is used must be named "autofix.ci".`;
 }
 ```
 
@@ -141,13 +141,13 @@ await exec("git", ["-c", "core.fileMode=false", "add", "--all"]);
 
 // 提取文件列表（禁用路径转义，支持中文路径）
 let { stdout } = await getExecOutput("git", [
-  "-c", "core.quotepath=false",
-  "diff", "--name-only", "--staged", "--no-renames",
+ "-c", "core.quotepath=false",
+ "diff", "--name-only", "--staged", "--no-renames",
 ]);
 
 // 安全检查：禁止修改 .github 目录
 if (changes.some((path) => path.includes(".github"))) {
-  throw "The autofix.ci action is not allowed to modify the .github directory.";
+ throw "The autofix.ci action is not allowed to modify the .github directory.";
 }
 ```
 
@@ -159,17 +159,17 @@ if (changes.some((path) => path.includes(".github"))) {
 
 ```typescript
 if (event.pull_request) {
-  // 创建修复 commit
-  await exec("git", ["config", "user.name", "autofix.ci"]);
-  await exec("git", ["config", "user.email", "noreply@autofix.ci"]);
-  await exec("git", ["commit", "--no-verify", "-m", "autofix"]);
+ // 创建修复 commit
+ await exec("git", ["config", "user.name", "autofix.ci"]);
+ await exec("git", ["config", "user.email", "noreply@autofix.ci"]);
+ await exec("git", ["commit", "--no-verify", "-m", "autofix"]);
 
-  // 拉取并 checkout PR head
-  await exec("git", ["fetch", "--depth=1", "origin", event.pull_request.head.sha]);
-  await exec("git", ["checkout", "--force", "FETCH_HEAD"]);
+ // 拉取并 checkout PR head
+ await exec("git", ["fetch", "--depth=1", "origin", event.pull_request.head.sha]);
+ await exec("git", ["checkout", "--force", "FETCH_HEAD"]);
 
-  // 将修复以 cherry-pick 方式应用到 PR head
-  await exec("git", ["cherry-pick", "--no-commit", commit_hash]);
+ // 将修复以 cherry-pick 方式应用到 PR head
+ await exec("git", ["cherry-pick", "--no-commit", commit_hash]);
 }
 ```
 
@@ -187,9 +187,9 @@ await client.uploadArtifact("autofix.ci", [filename], ".", { retentionDays: 1 })
 
 // 通知后端处理
 const url =
-  "https://autofix-api.maximilianhils.com/fix" +
-  "?owner=" + encodeURIComponent(event.repository.owner.login) +
-  "&repo=" + encodeURIComponent(event.repository.name);
+ "https://autofix-api.maximilianhils.com/fix" +
+ "?owner=" + encodeURIComponent(event.repository.owner.login) +
+ "&repo=" + encodeURIComponent(event.repository.name);
 ```
 
 修复 artifact 通过 GitHub Actions artifact 机制上传（保留 1 天），后端收到通知后拉取 artifact 并执行修复。Action 本身不接触修复逻辑，只完成"打包 + 通知"。
@@ -213,25 +213,25 @@ const url =
 name: autofix.ci
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
+ push:
+ branches: [main, master]
+ pull_request:
 
 jobs:
-  autofix:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+ autofix:
+ runs-on: ubuntu-latest
+ steps:
+ - uses: actions/checkout@v4
+ with:
+ ref: ${{ github.event.pull_request.head.sha }}
 
-      # ↓ 这里放你自己的格式化工序 ↓
-      - run: cargo fmt
+ # ↓ 这里放你自己的格式化工序 ↓
+ - run: cargo fmt
 
-      # ↓ Action 必须在格式化工序之后调用 ↓
-      - uses: autofix-ci/action@v1
-        with:
-          fail-fast: false
+ # ↓ Action 必须在格式化工序之后调用 ↓
+ - uses: autofix-ci/action@v1
+ with:
+ fail-fast: false
 ```
 
 > **安全加固建议**：将 Action 固定到特定 commit hash 而非 tag，例如 `autofix-ci/action@8bc06253bec489732e5f9c52884c7cace15c0160`，以降低供应链攻击风险。
@@ -248,10 +248,10 @@ jobs:
 
 ```yaml
 - uses: autofix-ci/action@v1
-  with:
-    fail-fast: false
-    commit-message: "style: auto-format code"
-    comment: "autofix.ci 已自动修复格式问题"
+ with:
+ fail-fast: false
+ commit-message: "style: auto-format code"
+ comment: "autofix.ci 已自动修复格式问题"
 ```
 
 ### 多语言场景示例
@@ -295,7 +295,7 @@ jobs:
 
 ## 实战故障排查
 
-### 场景1：修复没生效
+### 场景 1：修复没生效
 
 **症状**：Push 代码后,CI 运行成功,但没有 `autofix` commit 出现。
 
@@ -303,15 +303,15 @@ jobs:
 
 1. **检查 workflow 名称**：确认 `.github/workflows/autofix.yml` 的 `name:` 字段是 `autofix.ci`（不是文件名,是 YAML 中的 `name:` 字段）
 2. **检查 Action 顺序**：确认 `autofix-ci/action` 在所有格式化工序**之后**,比如：
-   ```yaml
-   steps:
-     - run: ruff format .  # 先格式化
-     - uses: autofix-ci/action@v1  # 后调用 autofix.ci
-   ```
+ ```yaml
+ steps:
+ - run: ruff format . # 先格式化
+ - uses: autofix-ci/action@v1 # 后调用 autofix.ci
+ ```
 3. **检查是否有 staged changes**：在本地手动运行格式化命令,看是否有文件被修改。如果没有,说明代码已经符合格式规范,autofix.ci 无事可做
 4. **检查 Action 日志**：在 GitHub Actions 页面查看 autofix.ci 的日志,看是否有错误信息
 
-### 场景2：修复 commit 包含了 `.github` 目录的修改
+### 场景 2：修复 commit 包含了 `.github` 目录的修改
 
 **症状**：autofix.ci 报错 `The autofix.ci action is not allowed to modify the .github directory.`
 
@@ -320,11 +320,11 @@ jobs:
 **解决**：在格式化工具的配置中排除 `.github/` 目录。例如,对 `prettier`:
 ```json
 {
-  "ignorePatterns": [".github/**"]
+ "ignorePatterns": [".github/**"]
 }
 ```
 
-### 场景3：私有仓库的安全顾虑
+### 场景 3：私有仓库的安全顾虑
 
 **症状**：安全团队阻止使用 autofix.ci,因为"代码会上传到第三方"。
 

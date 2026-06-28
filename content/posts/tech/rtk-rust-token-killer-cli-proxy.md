@@ -1,11 +1,11 @@
 ---
-title: "RTK：Rust编写的CLI代理，让LLM开发者节省60-90% Token消耗"
+title: "RTK：Rust 编写的 CLI 代理，让 LLM 开发者节省 60-90% Token 消耗"
 date: "2026-05-19T20:25:00+08:00"
 slug: "rtk-rust-cli-proxy-token-optimization"
 description: "RTK（Rust Token Killer）是用 Rust 编写的高性能 CLI 代理，单文件无依赖，可将常见开发命令的 LLM Token 消耗降低 60-90%。支持 ls、cat、git、pytest 等 100+ 命令，处理延迟 <10ms。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "LLM优化", "CLI工具", "Token压缩", "开发效率"]
+tags: ["Rust", "LLM 优化", "CLI 工具", "Token 压缩", "开发效率"]
 ---
 
 ## 先给判断
@@ -43,28 +43,28 @@ LLM 按 Token 计费，但开发里大量命令输出（`ls`、`git diff`、`pyt
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        开发者终端                                │
-│                                                                  │
-│   ls / tree / cat / git diff / pytest / cargo test ...          │
-│                                                                  │
+│ 开发者终端 │
+│ │
+│ ls / tree / cat / git diff / pytest / cargo test ... │
+│ │
 └────────────────────────────┬────────────────────────────────────┘
-                             │
-                             ▼
+ │
+ ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     RTK 代理层                                   │
-│            (过滤 → 压缩 → 优化 → 输出)                            │
-│                                                                  │
-│   输入：完整命令输出（如 pytest 500行）                           │
-│   输出：压缩后的关键信息（60-90%更少 Token）                       │
-│                                                                  │
-│   延迟：<10ms                                                    │
-│   依赖：零（单一Rust二进制）                                      │
+│ RTK 代理层 │
+│ (过滤 → 压缩 → 优化 → 输出) │
+│ │
+│ 输入：完整命令输出（如 pytest 500 行） │
+│ 输出：压缩后的关键信息（60-90%更少 Token） │
+│ │
+│ 延迟：<10ms │
+│ 依赖：零（单一 Rust 二进制） │
 └─────────────────────────────────────────────────────────────────┘
-                             │
-                             ▼
+ │
+ ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       LLM (Claude Code, etc.)                    │
-│              (收到更少的Token，付费更少)                          │
+│ LLM (Claude Code, etc.) │
+│ (收到更少的 Token，付费更少) │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -106,7 +106,7 @@ RTK 支持 100+常用开发命令，按类型分类：
 对每种命令类型，RTK 知道哪些信息是关键的、哪些是模板噪音：
 
 ```bash
-# pytest 原始输出（示例，500行）
+# pytest 原始输出（示例，500 行）
 # ===== test session starts =====
 # platform darwin -- Python 3.x.x
 # collected 150 items
@@ -145,7 +145,7 @@ curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/instal
 安装到`~/.local/bin`，需要手动添加到 PATH：
 
 ```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc  # 或 ~/.zshrc
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc # 或 ~/.zshrc
 ```
 
 ### Cargo
@@ -159,10 +159,10 @@ cargo install --git https://github.com/rtk-ai/rtk
 RTK 作为代理运行在你和 LLM 之间：
 
 ```bash
-# 方式1：透明代理（自动拦截命令输出）
+# 方式 1：透明代理（自动拦截命令输出）
 rtk proxy
 
-# 方式2：手动管道
+# 方式 2：手动管道
 command | rtk process | llm
 ```
 
@@ -224,7 +224,7 @@ command | rtk process | llm
 ```bash
 echo $PATH | grep -o "$HOME/.local/bin"
 # 如果没有输出，需要添加
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc  # 或 ~/.bashrc
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc # 或 ~/.bashrc
 ```
 
 ### `rtk proxy` 启动后没有效果

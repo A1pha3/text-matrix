@@ -620,4 +620,122 @@ Ground Station 是**开源的软件无线电框架**：
 
 ---
 
+## 十二、进阶路径
+
+### 12.1 深入理解 SDR 原理
+
+- 学习《软件无线电原理》相关教材
+- 理解 IQ 信号、采样定理、奈奎斯特频率
+- 掌握 FFT 频谱分析、滤波器设计
+
+### 12.2 扩展硬件支持
+
+- 研究 HackRF 的高级功能（频谱扫描、包注入）
+- 探索 USRP 的多通道相位同步
+- 尝试 LimeSDR、BladeRF 等其他 SDR 硬件
+
+### 12.3 社区贡献
+
+- 在 [GitHub Discussions](https://github.com/sgoudelis/ground-station/discussions) 分享你的 Station 配置
+- 提交 Pull Request 改进 Ground Station 功能
+- 编写教程帮助更多人上手 SDR
+
+### 相关资源
+
+| 资源 | 链接 |
+|------|------|
+| Ground Station 文档 | https://github.com/sgoudelis/ground-station#readme |
+| RTL-SDR 博客 | https://www.rtl-sdr.com |
+| SDR 教程 | https://www.rtl-sdr.com/quick-start-guide/ |
+
+---
+
+## 十三、自测题
+
+### 题 1（基础概念）：Ground Station 的核心架构是什么？
+
+<details>
+<summary>参考答案</summary>
+
+Ground Station 采用管道（Pipeline）架构：
+1. **信号源（Source）**：RTL-SDR、HackRF、USRP、文件、网络流
+2. **处理块（Block）**：滤波、解调、FFT、降噪等信号处理模块
+3. **信号汇（Sink）**：GUI 可视化、音频输出、文件录制
+
+信号从 Source → Block1 → Block2 → ... → Sink 流动，形成完整的信号处理链。
+
+</details>
+
+### 题 2（硬件选择）：如果你的预算是 $50，应该选什么 SDR 设备？
+
+<details>
+<summary>参考答案</summary>
+
+选择 **RTL-SDR**（$20-30）：
+- 支持 500kHz - 1766MHz 频率范围
+- 足够接收 FM 广播、ADS-B 飞机信号、NOAA 气象卫星
+- 性价比最高，适合入门
+
+如果预算 $300，选择 **HackRF**：
+- 支持 1MHz - 6GHz（更宽的频率范围）
+- 支持发射（TX），可以做更多实验
+- 适合进阶用户
+
+</details>
+
+### 题 3（信号处理）：为什么采样率 2.4 MSPS 只能接收 1 MHz 带宽的信号？
+
+<details>
+<summary>参考答案</summary>
+
+根据**奈奎斯特-香农采样定理**：
+- 采样率必须至少是信号带宽的 2 倍
+- 2.4 MSPS 采样率 → 最大可接收带宽 = 2.4 / 2 = 1.2 MHz（实际约 1 MHz）
+
+如果要接收更宽带的信号，需要：
+1. 提高采样率（换用 HackRF 支持更高采样率）
+2. 或使用更窄带的信号
+
+</details>
+
+---
+
+## 十四、练习
+
+### 练习 1：创建 FM 广播 Station
+
+创建一个 Station 配置，接收本地 FM 广播：
+- 频率：88-108 MHz
+- 增益：40 dB
+- 解调：FM Demodulator
+- 输出：Audio Sink
+
+### 练习 2：录制 ADS-B 信号并离线分析
+
+使用 Ground Station 录制 1090 MHz 的 IQ 信号：
+1. 录制 5 分钟
+2. 计算文件大小（2 MSPS，8 bytes/sample）
+3. 使用 `dump1090` 工具离线解码
+
+### 练习 3：扩展 Ground Station 源码
+
+尝试为 Ground Station 添加一个新的 Block：
+- 功能：信号强度指示器（RSSI）
+- 输入：IQ 信号
+- 输出：dBm 数值
+
+---
+
+## 十五、资料口径说明
+
+本文判断基于以下来源：
+
+1. **项目 README**：https://github.com/sgoudelis/ground-station/blob/main/README.md（2026-04-12 版本）
+2. **SDR 原理**：基于软件无线电标准教材和 RTL-SDR 社区文档
+3. **硬件规格**：来自各厂商官方文档（RTL-SDR、HackRF、USRP）
+
+本文未实测所有硬件设备，相关判断来自官方文档和社区评测。如果你的硬件配置特殊，可能需要额外调试。
+
+---
+
 _🦞 本文由钳岳星君撰写，基于 Ground Station (1.2k Stars)_

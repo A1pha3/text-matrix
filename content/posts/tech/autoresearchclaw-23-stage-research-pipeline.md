@@ -783,3 +783,55 @@ researchclaw skills disable scientific-writing
 - [ ] **阶段二：理解门控节点** — 梳理 Stage 5、9、20 三个门控的阻塞条件，理解 Human-in-the-Loop 如何在关键决策点介入
 - [ ] **阶段三：测试 Co-Pilot 模式** — 在关键决策点人工审核，感受人机协作在研究流程中的价值
 - [ ] **阶段四：开启 MetaClaw 积累技能库** — 观察第二次运行是否减少了 Stage 重试率和 REFINE 循环次数
+
+## 练习
+
+### 练习一：跑通 Full Auto 模式
+
+**目标**：用一个简单主题跑完整管道，观察各阶段输出和质量。
+
+**步骤**：
+1. 安装 AutoResearchClaw（`git clone` + `pip install -e .`）
+2. 用 Full Auto 模式跑一个简单主题（如"图像分类中的数据增强"）
+3. 观察各阶段输出，特别是 `VerifiedRegistry` 如何防止数据造假
+4. 检查输出的论文质量，评估是否达到可提交水平
+
+**通过标准**：完整跑通管道，理解各阶段的输出和质量。
+
+### 练习二：测试 Co-Pilot 模式
+
+**目标**：在关键决策点人工审核，感受人机协作在研究流程中的价值。
+
+**步骤**：
+1. 用 Co-Pilot 模式跑一个研究想法
+2. 在 Stage 8（Hypothesis Generation）和 Stage 9（Experiment Design）两个门控点人工审核
+3. 感受 Human-in-the-Loop 如何在关键决策点介入
+4. 对比 Full Auto 模式和 Co-Pilot 模式的输出质量差异
+
+**通过标准**：成功在门控点介入，理解 HITL 的价值。
+
+### 练习三：验证 VerifiedRegistry 机制
+
+**目标**：理解 VerifiedRegistry 如何防止 LLM 编造实验数据。
+
+**步骤**：
+1. 阅读 `VerifiedRegistry` 的代码实现
+2. 尝试手动修改论文中的数字，看是否会被检测出来
+3. 理解为什么这个机制能从根源上防止数据造假
+4. 对比 AutoResearchClaw 与 GPT-Researcher 在抗伪造机制上的差异
+
+**通过标准**：理解 VerifiedRegistry 的工作原理和价值。
+
+## 资料口径说明
+
+本文关键判断的取径方式：
+
+1. **23 阶段管道的划分和门控节点**：来自仓库 README 和代码实现，已验证与代码中的 Stage 定义一致。
+
+2. **VerifiedRegistry 的抗伪造机制**：来自代码实现（`VerifiedRegistry` 类），已验证它能防止论文中的数字来自非实验运行。
+
+3. **MetaClaw 的自进化机制**：来自代码实现和项目文档，实验结果数据来自作者报告的受控 A/B 实验。
+
+4. **与同类项目的对比**：来自各项目的 README 和功能对比，已验证准确性。
+
+5. **链接有效性**：仓库、文档、论文链接均已验证（2026-06-26），Discord 社区链接有效。

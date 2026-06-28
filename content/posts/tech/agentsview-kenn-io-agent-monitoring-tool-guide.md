@@ -239,4 +239,82 @@ agentsview 是一个「让 AI 使用过程更可观察」的工具。**先判断
 
 全部通过后，你的 agentsview 部署即处于可用状态。
 
+## 练习
+
+### 练习1：评估你的 Agent 使用场景
+
+回顾你最近一个月使用 AI 编程 Agent 的经历，回答以下问题：
+
+1. 你同时在使用几个 AI 编程 Agent？（Claude Code、Cursor、Copilot CLI 等）
+2. 你是否需要在多个 Agent 之间查找之前的问题和回答？
+3. 你是否需要跟踪不同 Agent 的成本消耗？
+4. 你的会话历史是否已经积累了几个月？
+
+如果以上问题的答案多为"是"，那么 agentsview 可能适合你的场景。
+
+### 练习2：配置远程访问
+
+假设你需要在远程服务器上运行 agentsview，并通过 SSH 端口转发在本地浏览器访问。请完成以下配置：
+
+1. 在远程服务器上启动 agentsview，并配置 `--public-url` 参数
+2. 在本地机器上配置 SSH 端口转发
+3. 在本地浏览器中访问 agentsview Web UI
+4. 确认成本统计和会话搜索功能正常工作
+
+### 练习3：分析你的 Agent 使用模式
+
+使用 agentsview 的 `stats` 命令分析你的 Agent 使用模式：
+
+1. 运行 `agentsview stats --since <起始日期>` 查看你的使用档案
+2. 分析你的 archetype（automation / quick / standard / deep / marathon）
+3. 查看你的时长、消息数、峰值上下文、工具调用次数的分布
+4. 根据分析结果，调整你的 Agent 使用策略
+
+## 进阶路径
+
+### 阶段1：深入理解 agentsview 架构
+
+- **目标**：理解 agentsview 的组件结构和数据流
+- **行动**：
+  1. 阅读 agentsview 源码中的 `cmd/agentsview/` 和 `internal/` 目录
+  2. 理解 SQLite 主存、PostgreSQL/DuckDB 镜像的架构设计
+  3. 分析 `internal/parser` 如何解析不同 Agent 的会话文件
+  4. 理解 file watcher 如何自动识别新会话文件
+- **参考资源**：
+  - [agentsview GitHub 仓库](https://github.com/kenn-io/agentsview)
+  - [agentsview 架构文档](https://agentsview.io/architecture/)
+
+### 阶段2：优化性能和扩展性
+
+- **目标**：让你的 agentsview 部署更高效、更可扩展
+- **行动**：
+  1. 调整 SQLite 的 FTS5 索引配置，优化搜索性能
+  2. 配置 PostgreSQL 镜像，实现团队共享面板
+  3. 使用 DuckDB 镜像，实现历史数据分析
+  4. 优化 file watcher 的性能，减少资源消耗
+- **参考资源**：
+  - [agentsview 性能优化指南](https://agentsview.io/performance/)
+  - [SQLite FTS5 文档](https://www.sqlite.org/fts5.html)
+
+### 阶段3：集成到团队工作流
+
+- **目标**：让团队成员共享 agentsview 数据，提升协作效率
+- **行动**：
+  1. 配置 PostgreSQL 镜像，让团队成员共享会话和成本数据
+  2. 设置访问控制和认证，保护敏感数据
+  3. 将会话数据导出到团队知识库，便于知识共享
+  4. 配置自动化报告，定期发送成本统计和使用分析
+- **参考资源**：
+  - [agentsview 团队共享文档](https://agentsview.io/team-sharing/)
+  - [agentsview 安全配置指南](https://agentsview.io/security/)
+
+## 资料口径说明
+
+为避免把 README 文案直接写成结论，本文的几个关键判断采用了下面的取径方式：
+
+- agentsview 的架构、安装命令、CLI 命令、Web UI 功能、PostgreSQL/DuckDB 镜像、Antigravity CLI 支持，直接以其 GitHub README 和官方文档为准。
+- 性能对比（相比 ccusage 快 100 倍）采用 README 中的 benchmark 口径，不独立第三方复测。
+- 28 个 Agent 的会话根目录和解析器支持，以 `internal/parser` 源码和 README 中的表格为准。
+- 本文的适用场景和采用顺序，结合 README 的功能列表和实际使用场景进行交叉比对。
+
 完整文档在 [agentsview.io](https://agentsview.io)（README 反复强调的「Full docs」），仓库 license 是 MIT。安装脚本和 docker image 都在 `ghcr.io/kenn-io/agentsview`。

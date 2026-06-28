@@ -1,11 +1,11 @@
 ---
-title: "Syll：一个开源多模态Agent驾驭框架，让AI成为住在电脑里的小精灵"
+title: "Syll：一个开源多模态 Agent 驾驭框架，让 AI 成为住在电脑里的小精灵"
 date: "2026-05-31T18:59:17+08:00"
 slug: "syll-open-source-agent-harness-teachable-ai"
-description: "深度解读清华大学SAGA实验室开源项目Syll，设计理念是以Markdown文件管理AI人格、lore fragments替代向量检索、Agent判断的主动沉默、跨通道确认两步模式，附ETCLOVG框架拆解与Demo分析。"
+description: "深度解读清华大学 SAGA 实验室开源项目 Syll，设计理念是以 Markdown 文件管理 AI 人格、lore fragments 替代向量检索、Agent 判断的主动沉默、跨通道确认两步模式，附 ETCLOVG 框架拆解与 Demo 分析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Syll", "THU-SAGE", "Persona-Driven", "Agent Harness", "自托管AI伴侣"]
+tags: ["AI Agent", "Syll", "THU-SAGE", "Persona-Driven", "Agent Harness", "自托管 AI 伴侣"]
 ---
 
 # Syll：一个开源多模态 Agent 驾驭框架，让 AI 成为"住在电脑里的小精灵"
@@ -30,11 +30,11 @@ Syll 的论文 *Syll: An Open-Source Multimodal Agent Harness for Teachable AI* 
 
 - [学习目标](#学习目标)
 - [设计理念：能教会的 Agent 才有实用价值](#设计理念能教会的-agent-才有实用价值)
-- [设计一：Persona as Config，把人格写成 Markdown](#设计一persona-as-config把人格写成-markdown)
-- [设计二：Lore Fragments，用规则替代检索](#设计二lore-fragments用规则替代检索)
-- [设计三：Proactive Rituals with Agent-Judged Silence](#设计三proactive-rituals-with-agent-judged-silence)
-- [设计四：Confirmation-First Delivery，多通道一致操作](#设计四confirmation-first-delivery多通道一致操作)
-- [快速上手：5 分钟跑起来](#快速上手5-分钟跑起来)
+- [设计一：Persona as Config，把人格写成 Markdown](#设计一 persona-as-config 把人格写成-markdown)
+- [设计二：Lore Fragments，用规则替代检索](#设计二 lore-fragments 用规则替代检索)
+- [设计三：Proactive Rituals with Agent-Judged Silence](#设计三 proactive-rituals-with-agent-judged-silence)
+- [设计四：Confirmation-First Delivery，多通道一致操作](#设计四 confirmation-first-delivery 多通道一致操作)
+- [快速上手：5 分钟跑起来](#快速上手 5-分钟跑起来)
 - [技术架构：轻量循环 + 多通道接入](#技术架构轻量循环--多通道接入)
 - [Agent Harness 视角下的 Syll](#agent-harness-视角下的-syll)
 - [Demo 三个场景](#demo-三个场景)
@@ -148,10 +148,10 @@ Syll 的方案不同。它没有向量检索，没有专用工具调用，也没
 
 ```python
 def execute_ritual(ritual_prompt: str) -> Optional[str]:
-    response = llm_call(ritual_prompt)
-    if not response or response.strip() == "":
-        return None  # 不发布
-    return response
+ response = llm_call(ritual_prompt)
+ if not response or response.strip() == "":
+ return None # 不发布
+ return response
 ```
 
 这样 Agent 可以"觉得没什么好说的就不说"——这更像真实室友的行为，而不是一个永远有话要讲的邮件客户端。用户随时可以关掉这个开关（`identity.rituals_enabled`），但默认行为是沉默优先。
@@ -205,8 +205,8 @@ cd syll
 
 # 创建虚拟环境（推荐）
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 或 venv\Scripts\activate  # Windows
+source venv/bin/activate # Linux/Mac
+# 或 venv\Scripts\activate # Windows
 
 # 安装依赖
 pip install -r requirements.txt
@@ -268,7 +268,7 @@ FEISHU_APP_SECRET=your_app_secret
 
 ## 实战示例：三个典型使用场景
 
-### 场景1：定制化技术助手
+### 场景 1：定制化技术助手
 
 **目标**：把 Syll 改造成你的个人技术助手,帮你看代码、解释概念、记录学习笔记。
 
@@ -305,7 +305,7 @@ You're a technical assistant who:
 
 **预期结果**：Syll 的回复会更简洁、更技术化，并在合适的时候引用 lore fragments。
 
-### 场景2：多通道协作助手
+### 场景 2：多通道协作助手
 
 **目标**：让 Syll 在飞书和命令行两个通道都能工作，保持一致的人格和行为。
 
@@ -318,7 +318,7 @@ You're a technical assistant who:
 
 **关键机制**：Syll 的 Agent 逻辑与通道无关，所有通道共享同一个 workspace 和同一套人格配置。这保证了多通道体验的一致性。
 
-### 场景3：主动提醒助手
+### 场景 3：主动提醒助手
 
 **目标**：让 Syll 在每天早上提醒你今天的任务，并在周五下午提醒你整理本周工作。
 
@@ -453,7 +453,7 @@ Lore fragments 的触发完全靠 LLM 自己判断，不同模型之间表现有
 
 ### 常见问题排查
 
-**问题1：修改了 `SOUL.md` 但 Agent 的语气没有变化**
+**问题 1：修改了 `SOUL.md` 但 Agent 的语气没有变化**
 
 排查步骤：
 
@@ -462,15 +462,15 @@ Lore fragments 的触发完全靠 LLM 自己判断，不同模型之间表现有
 3. 检查系统提示是否成功加载：查看日志中是否有 `Loading SOUL.md` 的记录
 4. 如果使用了模板变量（如 `{{user_name}}`），确认 `USER.md` 中已设置对应值
 
-**问题2：Lore fragments 出现频率过高或过低**
+**问题 2：Lore fragments 出现频率过高或过低**
 
 调整方法：
 
-1. 打开 `lore/fragments.md`，检查碎片数量。如果碎片过多（>30个），考虑合并或删除不常用的碎片
+1. 打开 `lore/fragments.md`，检查碎片数量。如果碎片过多（>30 个），考虑合并或删除不常用的碎片
 2. 修改规则参数：每个回复至多出现一个 fragment，整体上至多五分之一的回复包含 fragment
 3. 观察日志：LLM 判断是否"rhymes with"某个 fragment，这个判断依赖模型能力。如果模型判断不准确，考虑更换模型或调整碎片描述
 
-**问题3：Confirmation-First Delivery 两轮确认失效**
+**问题 3：Confirmation-First Delivery 两轮确认失效**
 
 可能原因：
 
@@ -562,13 +562,13 @@ Syll 没有直接对标 AutoGPT、Camel 或者 LangChain。它要对比的是：
 
 1. 选择一个你熟悉的 Agent 框架（如 LangChain、AutoGPT、MetaGPT）。
 2. 按 ETCLOVG 的七个层次逐一分析：
-   - **E**（执行环境）：运行方式、隔离机制、资源限制
-   - **T**（工具接口）：工具接入协议、扩展方式
-   - **C**（上下文管理）：记忆方案、上下文窗口利用
-   - **L**（生命周期）：Agent loop 设计、状态持久化
-   - **O**（可观测性）：日志、追踪、调试工具
-   - **V**（验证评估）：基准测试、评估框架
-   - **G**（治理）：权限控制、安全机制、行为约束
+ - **E**（执行环境）：运行方式、隔离机制、资源限制
+ - **T**（工具接口）：工具接入协议、扩展方式
+ - **C**（上下文管理）：记忆方案、上下文窗口利用
+ - **L**（生命周期）：Agent loop 设计、状态持久化
+ - **O**（可观测性）：日志、追踪、调试工具
+ - **V**（验证评估）：基准测试、评估框架
+ - **G**（治理）：权限控制、安全机制、行为约束
 3. 对比 Syll 和这个目标框架在设计取舍上的差异，写出 3 个关键区别。
 
 **通过标准**：你的分析覆盖所有七个层次，且对比结论有具体的技术细节支撑，而不是泛化描述。
