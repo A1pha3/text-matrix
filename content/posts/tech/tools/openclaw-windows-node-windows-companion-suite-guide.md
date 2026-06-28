@@ -10,7 +10,32 @@ categories: ["技术笔记"]
 tags: ["OpenClaw", "Windows", "WinUI", "PowerToys", "WSL", "Scott Hanselman"]
 ---
 
-# openclaw-windows-node 实战指南：Scott Hanselman 出品的 OpenClaw Windows 伴侣套件（系统托盘 + PowerToys + WSL 网关）
+## 学习目标
+
+读完本文，你应该能：
+
+1. 说明 openclaw-windows-node 在 OpenClaw 跨平台版图里的位置——特别是它和 Linux/macOS 上的 OpenClaw 核心是什么关系。
+2. 描述 5 个组件各自的作用：WinUI 托盘、`OpenClaw.Shared`、CLI 校验器、WSL Gateway、PowerToys 扩展。
+3. 在 Windows 11 上从源码 build 出 WinUI 托盘，并用 `run-app-local.ps1` 跑起来。
+4. 配置 `OpenClawGateway` 这个 app-owned WSL 发行版，理解「openclaw 用户 + root 写保护」的权限模型。
+5. 判断 openclaw-windows-node 是否适合你的场景——Windows 桌面 AI 用户、PowerToys 用户、还是企业 IT 部署。
+
+---
+
+## 目录
+
+1. [核心判断](#核心判断)
+2. [系统地图](#系统地图)
+3. [快速开始](#快速开始)
+4. [关键能力](#关键能力)
+5. [它在解决谁的什么问题](#它在解决谁的什么问题)
+6. [适合与不适合](#适合与不适合)
+7. [已知边界](#已知边界)
+8. [自测题](#自测题)
+9. [进阶路径](#进阶路径)
+10. [总结](#总结)
+
+---
 
 ## 核心判断
 
@@ -187,6 +212,88 @@ sudo nano /etc/openclaw/protected.json
 - **PowerToys 必须先安装**：Command Palette 扩展依赖 PowerToys Run 注入
 - **MSIX 侧载需要开发者模式开启**：Settings → Privacy & security → For developers → Developer Mode = On
 - **托盘的 WebView2 渲染**：少数企业代理会拦截 WebView2 子进程，注意配 bypass
+
+## 自测题
+
+**题 1（组件定位）**：openclaw-windows-node 里有 5 个组件：WinUI 托盘、`OpenClaw.Shared`、`OpenClaw.Cli`、`OpenClawGateway`、PowerToys 扩展。请说明「用户双击托盘图标」之后，一个命令是怎么从点击走到 WSL Gateway 的。
+
+<details>
+<summary>参考答案</summary>
+
+流程：
+1. 用户在 WinUI 托盘里点击某个命令（比如「触发 OpenClaw 工作流」）。
+2. WinUI 托盘调用 `OpenClaw.Shared` 里的共享网关客户端库，通过 WebSocket 连到本地的 OpenClaw Gateway 地址。
+3. `OpenClaw.Shared` 把命令封装成 WebSocket 消息发给 Gateway。
+4. 如果 Gateway 在 `OpenClawGateway` WSL 发行版里运行，消息通过 `hdc fport` 类似的端口转发机制进 WSL。
+5. Gateway 收到消息后执行对应工作流，结果原路返回，托盘更新 UI。
+
+`OpenClaw.Cli` 可以做离线校验——比如用 `OpenClaw.Cli probe` 看托盘当前连接的 Gateway 地址和 token 状态。
+</details>
+
+**题 2（WSL Gateway 权限模型）**：`OpenClawGateway` 是 app-owned 发行版，「openclaw 用户 + root 写保护」是什么意思？如果你要改 Gateway 的配置，应该怎么操作？
+
+<details>
+<summary>参考答案</summary>
+
+意思：
+- `OpenClawGateway` 是一个被 OpenClaw 应用「拥有」的特殊 WSL 发行版，不是用户手动装的 Ubuntu/Debian。
+- 发行版里有一个专门的 `openclaw` 用户，Gateway 进程以这个用户身份运行。
+- 关键配置文件（比如 `/etc/openclaw/protected.json`）只有 root 能写，即使 `openclaw` 用户被攻破，攻击者也无法改受保护文件。
+
+改配置的正确操作：
+1. 进 WSL：`wsl -d OpenClawGateway`
+2. 切换到 `openclaw` 用户：`su openclaw`
+3. 编辑用户态配置：`nano ~/openclaw.json`
+4. 如果要改受保护文件，先退出到 root：`exit`，然后 `sudo nano /etc/openclaw/protected.json`
+5. 改完重启 Gateway 进程（或者重启 WSL 发行版）。
+</details>
+
+**题 3（PowerToys 集成）**：你按 `Alt+Space` 呼出 PowerToys Run，输入「OpenClaw」后能看到 OpenClaw 命令。请问这个集成是「PowerToys 主动拉取的」还是「openclaw-windows-node 注册进去的」？如果要调试这个扩展，应该怎么改代码？
+
+<details>
+<summary>参考答案</summary>
+
+是「openclaw-windows-node 作为 PowerToys Command Palette 扩展注册进去的」——PowerToys 提供了扩展注入机制，openclaw-windows-node 实现对应的扩展接口，编译后放到 PowerToys 的扩展目录，PowerToys Run 就能加载。
+
+调试方法：
+1. 先装 PowerToys（openclaw-windows-node 的扩展依赖它）。
+2. 从源码 build 扩展项目（具体项目名看仓库的 `src/` 目录）。
+3. 把 build 出来的扩展 DLL/包放到 PowerToys 的扩展目录（一般是 `%LOCALAPPDATA%\Microsoft\PowerToys\Modules` 或类似路径）。
+4. 重启 PowerToys，按 `Alt+Space` 看扩展是否加载。
+5. 如果没加载，看 PowerToys 的日志（一般在 `%LOCALAPPDATA%\Microsoft\PowerToys\Logs`）。
+
+</details>
+
+---
+
+## 进阶路径
+
+如果你正在 Windows 上深度使用 OpenClaw，可以按这个顺序深入：
+
+1. **会用**：装预编译 installer，把 OpenClaw 接到托盘里，用 PowerToys Run 触发命令。
+2. **看懂**：从源码 build 出 WinUI 托盘，理解 `OpenClaw.Shared` 的 WebSocket 协议，以及托盘是怎么和 Gateway 通信的。
+3. **能改**：改托盘的 UI（比如加新的命令、改样式），或者改 `OpenClaw.Cli` 的校验逻辑。
+4. **能部署**：用 MSIX 包做企业部署，配置 `OpenClawGateway` 的 WSL 发行版，让团队里的 Windows 用户都能用上 OpenClaw。
+
+如果你是 Scott Hanselman 的读者，这个项目本身也是一个「Windows 桌面开发 + WinUI 3 + WSL 集成」的好案例。
+
+---
+
+## 常见问题
+
+**Q1：WinUI 3 和 WPF 有什么区别？为什么 openclaw-windows-node 选 WinUI 3？**
+WinUI 3 是微软最新的 Windows UI 框架，用现代 Composition API 渲染，性能比 WPF 好，也支持更现代的控件样式。openclaw-windows-node 选 WinUI 3 是因为它需要和系统主题同步、做动画，WPF 在这些场景下比较吃力。代价是 WinUI 3 要求 Windows 10 20H2+ 和 .NET 10 SDK。
+
+**Q2：MSIX 包和 EXE 安装包有什么区别？**
+MSIX 是微软新的打包格式，类似 UWP 包——它支持侧载（不用上 Microsoft Store）、有沙箱隔离、卸载时不会留垃圾。EXE 安装包是传统的 MSI/NSIS 安装程序，改动系统更自由，但卸载可能留注册表。openclaw-windows-node 两种都提供。
+
+**Q3：`OpenClawGateway` WSL 发行版会不会和我自己装的 Ubuntu 冲突？**
+不会。`OpenClawGateway` 是一个独立的 WSL 发行版，和 `Ubuntu`、`Debian` 等并行存在。你用 `wsl -d Ubuntu` 进的还是你自己的发行版；`wsl -d OpenClawGateway` 才是进 OpenClaw 的。
+
+**Q4：没有 Windows 11，只有 Windows 10 20H2，能跑吗？**
+能。Windows 10 20H2（2021 年 11 月更新）是支持 WinUI 3 的最低版本。但要注意：20H2 已经接近生命周期末尾，建议升级到 Windows 11。
+
+---
 
 ## 与文本矩阵的关联
 

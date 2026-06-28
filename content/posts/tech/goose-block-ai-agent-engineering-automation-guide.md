@@ -4,7 +4,7 @@ date: "2026-04-04T20:33:00+08:00"
 slug: "goose-block-ai-agent-engineering-automation-guide"
 aliases:
   - "/posts/tech/goose-aaif-extensible-ai-agent-guide/"
-description: "Goose 是 aaif-goose（Anti-AI Gravity Foundation）出品的开源 AI Agent（42.3k Stars），能够自主完成复杂的工程任务——从零构建项目、编写执行代码、调试失败、对接外部 API。支持任意 LLM、多模型配置、MCP 服务器集成，同时提供桌面应用和 CLI 两种形态。"
+description: "Goose 是 aaif-goose（Anti-AI Gravity Foundation）出品的开源 AI Agent（50k+ Stars），能够自主完成复杂的工程任务——从零构建项目、编写执行代码、调试失败、对接外部 API。支持任意 LLM、多模型配置、MCP 服务器集成，同时提供桌面应用和 CLI 两种形态。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "工程自动化", "Rust", "MCP", "开源"]
@@ -14,12 +14,12 @@ tags: ["AI Agent", "工程自动化", "Rust", "MCP", "开源"]
 
 ## 学习目标
 
-读完本文后，你应该能够：
+读完本文，你将能够：
 
-1. 理解 Goose 作为第三代 AI 编程工具的核心差异——执行闭环（规划、执行、验证、修正）
-2. 区分 Goose 架构中的六个子系统职责（Session Manager、LLM Router、Recipe Engine、Tool Executor、MCP Bridge、Workspace Isolation）
+1. 说清 Goose 作为第三代 AI 编程工具的核心差异——执行闭环（规划、执行、验证、修正）
+2. 画出 Goose 架构中的六个子系统职责（Session Manager、LLM Router、Recipe Engine、Tool Executor、MCP Bridge、Workspace Isolation）
 3. 独立完成 Goose 桌面应用或 CLI 的安装、配置和多模型路由策略设置
-4. 编写自定义 Recipe 工作流，并理解 `on_failure` 三种策略的适用场景
+4. 编写自定义 Recipe 工作流，并说清 `on_failure` 三种策略的适用场景
 5. 判断 Goose 是否适合你的团队场景，以及如何在 CI/CD 流水线中集成 Goose
 
 ## 目录
@@ -36,6 +36,7 @@ tags: ["AI Agent", "工程自动化", "Rust", "MCP", "开源"]
 - [Recipe 工作流引擎](#recipe-工作流引擎)
 - [构建自定义分发版本（Custom Distributions）](#构建自定义分发版本custom-distributions)
 - [FAQ](#faq)
+- [自检测试](#自检测试)
 - [自测题](#自测题)
 - [进阶路径](#进阶路径)
 
@@ -195,30 +196,9 @@ providers:
     endpoint: http://localhost:11434
     models:
       - name: llama3.1:70b
-
-defaults:
-  provider: anthropic
-  model: claude-sonnet-4-5
-
-autonomous:
-  model_routing:
-    strategy: complexity_based
-    thresholds:
-      simple: gpt-4o-mini
-      medium: claude-sonnet-4-5
-      complex: claude-opus-4
-
-mcpServers:
-  - name: filesystem
-    command: npx
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "~/projects"]
-
-workspace:
-  exclude:
-    - ~/.ssh
-    - ~/.aws
-    - ~/wallet
 ```
+
+（完整配置示例见 [官方文档](https://goose-docs.ai/docs/configuration)，以下为常用配置片段。）
 
 配置中值得注意的几个决策点：
 
@@ -368,7 +348,7 @@ async def create_migration(name, up_sql, down_sql):
 将此服务器注册到 Goose 配置：
 
 ```yaml
-mcpServers:
+mcpservers:
   - name: db-migrations
     command: uv
     args: ["run", "python", "~/tools/migration_server.py"]
@@ -387,7 +367,7 @@ Goose 会自动调用 `list_migrations` 检查当前状态，然后调用 `creat
 MCP 服务器在本地进程内运行，但这不意味着可以不加限制。推荐的安全实践：
 
 ```yaml
-mcpServers:
+mcpservers:
   - name: filesystem
     command: npx
     args: ["-y", "@modelcontextprotocol/server-filesystem"]

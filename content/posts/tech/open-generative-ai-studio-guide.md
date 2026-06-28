@@ -13,11 +13,37 @@ tags: ["AI图像", "AI视频", "开源工具", "唇同步", "Midjourney"]
 >
 > **核心理念**：无内容过滤、无封闭生态、无订阅费用——让创意自由流动。
 
+## 学习目标
+
+读完本文，你将能够：
+
+- 说清 Open Generative AI 和其他 AI 图像/视频平台的差异
+- 在 macOS 或 Windows 上完成桌面应用安装
+- 用四个工作室（图像、视频、唇同步、电影）生成内容
+- 在本地跑起 Z-Image 或 SD 1.5 模型，不依赖任何 API 服务
+- 给工作室接入新模型
+
+## 目录
+
+1. [项目概览](#项目概览)
+2. [在线体验](#在线体验)
+3. [桌面应用安装](#桌面应用)
+4. [核心功能](#核心功能)
+5. [本地模型推理](#本地模型推理)
+6. [新增模型](#新增模型)
+7. [为什么选择 Open Generative AI？](#为什么选择-open-generative-ai)
+8. [适用场景](#适用场景)
+9. [常见问题](#常见问题)
+10. [自测题](#自测题)
+11. [进阶路径](#进阶路径)
+12. [总结](#总结)
+
 ## 项目概览
 
 Open Generative AI 是一个免费、开源、无审查的 AI 图像、视频、电影和唇同步生成工作室。它是 Higgsfield AI、Freepik、Krea、Openart AI 的开源替代品。
 
 **核心特点**：
+
 - **无审查** —— 无内容过滤器、无提示词拒绝、无护栏限制
 - **免费开源** —— 无订阅费、无供应商锁定
 - **自托管** —— 数据保留在本地，完全控制创意内容
@@ -47,6 +73,7 @@ Open Generative AI 是一个免费、开源、无审查的 AI 图像、视频、
 **第一步**：将 DMG 中的应用拖到 `/Applications`
 
 **第二步**：打开终端并运行：
+
 ```bash
 xattr -cr "/Applications/Open Generative AI.app"
 ```
@@ -110,7 +137,7 @@ Windows SmartScreen 可能会显示警告，因为安装程序未经代码签名
 > - **Qwen3-4B 文本编码器** — 2.4 GB
 > - **FLUX VAE** — 335 MB
 
-### 硬件要求
+#### 硬件要求
 
 - 支持 CPU（所有平台）和 **Metal GPU**（macOS Apple Silicon — M1/M2/M3/M4）
 - Metal GPU 加速内置于 macOS 桌面版——显著快于纯 CPU
@@ -144,9 +171,143 @@ Windows SmartScreen 可能会显示警告，因为安装程序未经代码签名
 - 想要探索多种 AI 模型的用户
 - 需要自动化媒体管道的开发者（通过 API）
 
+## 常见问题
+
+### Q1：Open Generative AI 真的完全免费吗？
+
+是的。项目采用开源许可证，你可以免费使用、修改和分发。在线版本需要注册免费账户，但生成额度未明确限制。桌面应用完全免费，本地模型推理无需任何 API 费用。
+
+### Q2：无审查意味着什么？有什么风险？
+
+无审查意味着：
+- 没有内容安全过滤器阻止特定提示词
+- 不会拒绝生成特定类型的图像/视频
+- 没有平台侧的审核机制
+
+风险：你需要自行承担使用责任，确保不生成违法或侵权内容。
+
+### Q3：macOS 安装时提示"无法验证此 App"怎么办？
+
+这是 macOS Gatekeeper 的安全机制。按照本文档的 [macOS 安装说明](#macos-安装说明) 执行 `xattr -cr` 命令即可。这一步移除扩展属性，让系统允许运行未公证的应用。
+
+### Q4：本地模型推理对硬件要求高吗？
+
+取决于模型：
+- **Z-Image Turbo**：推荐 16 GB RAM，Metal GPU 加速
+- **SD 1.5 系列**：8 GB RAM 即可，CPU 可运行但较慢
+- **SDXL Base**：推荐 32 GB RAM 或 16 GB + 交换空间
+
+### Q5：可以在商业项目中使用生成的图片吗？
+
+取决于具体模型的许可证。项目文档未明确说明各模型的授权方式。商业使用前，建议检查具体模型的许可证（通常在模型仓库中）。
+
+### Q6：在线版本和桌面应用有什么区别？
+
+| 对比维度 | 在线版本 | 桌面应用 |
+|----------|----------|----------|
+| 安装 | 无需安装 | 需要下载安装 |
+| 数据隐私 | 上传到服务器 | 本地处理 |
+| 模型访问 | 200+ 云端模型 | 本地模型 + 部分云端模型 |
+| 离线使用 | 不支持 | 支持（本地模型） |
+| API 访问 | 需要账户 | 本地 API 可用 |
+
+### Q7：如何为工作室添加自定义模型？
+
+项目是开源的，你可以通过修改源码添加自定义模型。具体步骤：
+1. Fork 仓库
+2. 在模型配置文件中添加新模型定义
+3. 本地构建或使用你的 fork 版本
+
+目前项目未提供插件系统或配置文件方式添加模型。
+
+## 自测题
+
+### 基础概念
+
+1. Open Generative AI 的核心特点是什么？（多选）
+   - A. 无内容审查
+   - B. 免费开源
+   - C. 仅支持云端运行
+   - D. 支持 200+ 模型
+
+2. 本地模型推理使用哪个引擎？
+   - A. TensorRT
+   - B. ONNX Runtime
+   - C. stable-diffusion.cpp
+   - D. PyTorch
+
+### 安装配置
+
+3. macOS 安装未公证应用时，需要执行什么命令？
+   - A. `chmod +x`
+   - B. `xattr -cr`
+   - C. `codesign --force`
+   - D. `spctl --add`
+
+4. Windows SmartScreen 警告出现时，如何继续安装？
+   - A. 不可能继续
+   - B. 点击"更多信息" → "仍要运行"
+   - C. 禁用防火墙
+   - D. 以管理员身份运行
+
+### 功能使用
+
+5. 图像工作室支持哪些生成模式？
+   - A. 仅文生图
+   - B. 文生图和图生图
+   - C. 仅图生图
+   - D. 文生图、图生图、视频生图
+
+6. 唇同步工作室支持几种输入模式？
+   - A. 1 种
+   - B. 2 种
+   - C. 3 种
+   - D. 4 种
+
+### 参考答案
+
+1. A, B, D（自托管，非仅云端）
+2. C
+3. B
+4. B
+5. B
+6. B（肖像 + 音频；视频 + 音频）
+
+## 进阶路径
+
+### 第一步：深入模型定制
+
+- 研究 [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp) 的模型转换流程
+- 学习如何将自定义模型（Checkpoint、LoRA）转换为 GGUF 格式
+- 探索量化对生成质量和速度的影响
+
+### 第二步：工作流自动化
+
+- 使用工作流工作室的可视化编辑器创建多步骤管道
+- 学习节点编辑器的使用方法
+- 参考社区模板，构建自己的媒体生成工作流
+
+### 第三步：集成到生产环境
+
+- 使用本地 API 将生成能力集成到自己的应用
+- 研究项目的 API 文档（如果可用）
+- 为团队搭建共享的 Open Generative AI 实例
+
+### 相关资源
+
+| 资源 | 链接 | 用途 |
+|------|------|------|
+| 项目 GitHub | https://github.com/Anil-matcha/Open-Generative-AI | 源码、Issue、PR |
+| 在线体验 | https://dev.muapi.ai/open-generative-ai | 快速试用 |
+| stable-diffusion.cpp | https://github.com/leejet/stable-diffusion.cpp | 本地推理引擎 |
+| Awesome GPT-Image-2 API Prompts | https://github.com/Anil-matcha/Awesome-GPT-Image-2-API-Prompts | 提示词参考 |
+| Generative-Media-Skills | https://github.com/SamurAIGPT/Generative-Media-Skills | 媒体生成技能 |
+
 ## 总结
 
 Open Generative AI 是一个功能强大的开源 AI 生成工具，它提供了无审查、无限制的创意体验。无论你是设计师、开发者还是创意爱好者，都可以从中受益。其对多种模型的支持、本地推理能力和工作流自动化功能，使其成为一个全面且灵活的 AI 创作平台。
+
+如果你在寻找 Higgsfield AI、Freepik、Krea 或 Openart AI 的开源替代品，Open Generative AI 值得一试。
 
 ## 延伸阅读
 
@@ -157,4 +318,4 @@ Open Generative AI 是一个功能强大的开源 AI 生成工具，它提供了
 
 ---
 
-*本文由钳岳星君撰写，基于 GitHub 仓库 [Anil-matcha/Open-Generative-AI](https://github.com/Anil-matcha/Open-Generative-AI) 的 README。*
+*本文由钳岳星君撰写，基于 GitHub 仓库 [Anil-matcha/Open-Generative-AI](https://github.com/Anil-matcha/Open-Generative-AI) 的 README。优化版本增加了学习目标、目录、常见问题、自测题和进阶路径。*

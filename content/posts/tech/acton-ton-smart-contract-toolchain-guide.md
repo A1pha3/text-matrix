@@ -449,5 +449,5 @@ TON 的 Gas 按 TVM 指令计费。用 `@ton/sandbox` 的 `result.transactions[0
 1. **职责边界**：Blueprint 管项目脚手架、目录约定、编译/部署脚本编排；FunC 编译器把 FunC 源码编译为 TVM Cell；@ton/sandbox 在本地进程内模拟 TVM 执行，提供 `Blockchain` 类做单元测试。三者不互相替代——Blueprint 调用编译器，编译器输出 Cell 给 sandbox 加载。
 2. **codeBoc 格式与转换**：`codeBoc` 是 base64 编码的 TVM Cell（Bag of Cells，BoC 二进制格式）。用 `Cell.fromBoc(Buffer.from(result.codeBoc, 'base64'))[0]` 转成 `@ton/core` 的 `Cell` 对象。
 3. **treasury 与 openContract**：`blockchain.treasury('deployer')` 创建一个有初始余额的虚拟钱包合约，作为部署者和消息发送者；`blockchain.openContract` 把合约包装成可调用对象，提供 `send`（发消息）和 getter 调用方法。
-4. **Testnet 查询 getter**：用 `TonClient4` 连接 Testnet 节点，`client.open(contract)` 打开合约实例后调用 getter 方法；或用 `client.runMethod` 直接调用合约的 `method_id` 方法。
+4. **Testnet 查询 getter**：用 `TonClient4` 连接 TestNet 节点，`client.open(contract)` 打开合约实例后调用 getter 方法；或用 `client.runMethod` 直接调用合约的 `method_id` 方法。
 5. **tonverifier 验证**：提交合约源码文件（`jetton_minter.fc` 及所有 `#include` 的文件），选择与 `compilerVersion()` 一致的编译器版本。验证的是本地源码编译后的 Cell 与链上合约的 Cell 是否一致。

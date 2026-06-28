@@ -4,7 +4,7 @@ date: "2026-04-12T11:40:00+08:00"
 lastmod: 2026-04-15T21:40:02+08:00"
 slug: agent-browser-vercel-ai-browser-automation-guide
 summary: "本文基于官方 README 与 CLI 帮助信息，系统讲清 Agent Browser 的安装方法、snapshot + ref 工作流、会话与认证管理、安全控制、调试观测与 Agent 集成边界。"
-description: "基于 vercel-labs/agent-browser README 与 CLI 帮助信息整理的中文指南，聚焦安装、snapshot+ref 工作流、会话与认证、安全控制、调试与 AI Agent 集成。"
+description: "基于 vercel-labs/agent-browser README 与公开 CLI 帮助信息整理的中文指南，聚焦安装、snapshot+ref 工作流、会话与认证、安全控制、调试与 AI Agent 集成。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
@@ -334,7 +334,7 @@ Agent Browser 提供多种状态复用方式，最常用的几类：
 | `--profile <name 或 path>` | 复用 Chrome 现有登录态或持久目录 | `agent-browser --profile Default open https://gmail.com` |
 | `--session-name <name>` | 自动保存和恢复会话状态 | `agent-browser --session-name myapp open https://app.example.com` |
 | `state save/load` | 显式导出与回放状态 | `agent-browser state save ./auth.json` |
-| `auth save/login` | 本地加密存凭据并触发登录 | `echo "pass" \| agent-browser auth save github --url https://github.com/login --username user --password-stdin` |
+| `auth save/login` | 本地加密存凭据并触发登录 | `echo "pass" | agent-browser auth save github --url https://github.com/login --username user --password-stdin` |
 
 策略选错容易导致登录态丢失或状态污染。按场景选：
 

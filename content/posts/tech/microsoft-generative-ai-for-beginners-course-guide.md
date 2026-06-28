@@ -8,6 +8,36 @@ categories: ["技术笔记"]
 tags: ["Generative AI", "LLM", "提示工程", "RAG", "AI Agent", "微软", "Azure OpenAI", "OpenAI API"]
 ---
 
+# microsoft/generative-ai-for-beginners：109k Stars 生成式AI入门完全指南
+
+## 学习目标
+
+读完本文，你将能够：
+
+1. 说清生成式 AI 和 LLM 的核心概念，以及 Transformer 架构的基本作用
+2. 在 Azure OpenAI、GitHub Models、OpenAI API 三种平台中做出选择并配置开发环境
+3. 理解提示工程的基础和进阶技术（Few-shot、Chain-of-Thought、Function Calling）
+4. 构建文本生成、聊天、搜索（RAG）、图片生成等实际应用的原型
+5. 解释 RAG、Agent、微调等高级主题的基本思想和适用场景
+
+## 目录
+
+1. [学习目标](#学习目标)
+2. [阅读前提](#阅读前提)
+3. [项目概述](#项目概述)
+4. [环境准备](#环境准备)
+5. [课程大纲（21 节）](#课程大纲21-节)
+6. [实战项目（第 6-11 节）](#实战项目第-6-11-节)
+7. [高级主题（第 12-18 节）](#高级主题第-12-18-节)
+8. [模型专题（第 19-21 节）](#模型专题第-19-21-节)
+9. [配套资源](#配套资源)
+10. [常见问题](#常见问题)
+11. [自测题](#自测题)
+12. [进阶路径](#进阶路径)
+13. [总结](#总结)
+
+---
+
 ## 阅读前提
 
 本文覆盖以下内容：
@@ -167,8 +197,8 @@ response = client.chat.completions.create(
 
 **第 05 节：高级提示技术**
 
-| 技术 | 代码示例 |
-|------|----------|
+| 技术 | 说明 |
+|------|------|
 | **Few-shot** | 提供示例让模型学习 |
 | **Chain-of-Thought** | 引导模型展示推理过程 |
 | **角色扮演** | System Prompt 设定角色 |
@@ -248,7 +278,7 @@ vector = response.data[0].embedding
 # 支持：Pinecone、Milvus、Chroma、FAISS
 
 # 3. 相似度搜索
-query_vector = get_embedding("搜索query")
+query_vector = get_embedding("搜索 query")
 results = vector_db.search(
     query_vector,
     top_k=5
@@ -418,7 +448,7 @@ class SimpleAgent:
 
     def run(self, task):
         # 1. 规划
-        plan = self.llm Planner(task, self.tools)
+        plan = self.llm_planner(task, self.tools)
 
         # 2. 执行
         for step in plan:
@@ -522,15 +552,18 @@ model = get_peft_model(base_model, config)
 - Python 入门：aka.ms/genai-beginners/python
 - TypeScript 入门：aka.ms/genai-beginners/typescript
 
+如果你完全没有编程基础，建议先花 1-2 周学习 Python 基础（变量、函数、类、基本语法），再来学习这个课程。
+
 ### 8.2 需要付费吗
 
 **问题**：课程免费吗？需要购买 API 吗？
 
 **答案**：
 
-- 课程本身：**完全免费**
+- 课程本身：**完全免费**（MIT 协议）
 - API 调用：需要付费（Azure/GitHub/OpenAI）
-- GitHub Models：有一定免费额度
+- GitHub Models：有一定免费额度（适合学习和实验）
+- Azure OpenAI：新用户有免费额度和学生优惠
 
 ### 8.3 如何选择 API
 
@@ -538,19 +571,142 @@ model = get_peft_model(base_model, config)
 
 | 场景 | 推荐 |
 |------|------|
-| 企业生产环境 | Azure OpenAI |
-| 快速实验测试 | GitHub Models |
-| 原生 OpenAI 开发 | OpenAI API |
+| 企业生产环境 | Azure OpenAI（企业级安全、SLA 保障） |
+| 快速实验测试 | GitHub Models（免费额度、简单配置） |
+| 原生 OpenAI 开发 | OpenAI API（最新模型、最快更新） |
+
+### 8.4 课程学完能找到 AI 相关工作吗
+
+**问题**：学完这个课程后，我能达到什么水平？
+
+**答案**：这个课程是入门级，学完后你能：
+
+- 理解生成式 AI 的核心概念
+- 使用 API 构建基础的 AI 应用
+- 知道提示工程、RAG、Agent 等高级主题的基本思想
+
+但要找到 AI 相关工作，还需要：
+
+1. 深入某一个方向（例如 RAG、Agent 或微调）
+2. 构建 2-3 个完整的项目（放进作品集）
+3. 学习更多进阶课程（例如 DeepLearning.AI、Fast.ai）
+4. 参与开源项目或实习
+
+### 8.5 学完后应该继续学什么
+
+参见下面的「进阶路径」章节。
 
 ---
 
-## 9. 总结
+## 9. 自测题
+
+### 基础概念
+
+1. Transformer 架构的核心机制是什么？
+   - A. 卷积
+   - B. 注意力机制
+   - C. 循环神经网络
+   - D. 对抗训练
+
+2. Token 在 LLM 中的作用是什么？
+   - A. 存储模型权重
+   - B. 文本处理的最小单位
+   - C. 控制生成速度
+   - D. 管理 API 调用
+
+### 提示工程
+
+3. Chain-of-Thought 提示技术的核心思想是什么？
+   - A. 提供多个示例
+   - B. 引导模型展示推理过程
+   - C. 设定角色身份
+   - D. 指定输出格式
+
+4. Few-shot 提示是指什么？
+   - A. 只提供一个示例
+   - B. 提供零个示例
+   - C. 提供少量示例（2-5 个）
+   - D. 提供大量示例（>10 个）
+
+### RAG 和 Agent
+
+5. RAG 的核心流程是哪四步？
+   - A. 加载 → 分块 → 向量化 → 检索生成
+   - B. 训练 → 微调 → 部署 → 监控
+   - C. 规划 → 执行 → 验证 → 修正
+   - D. 编码 → 加密 → 传输 → 解密
+
+6. AI Agent 和单次 LLM 调用的核心区别是什么？
+   - A. Agent 更便宜
+   - B. Agent 有循环执行和工具调用能力
+   - C. Agent 只能用开源模型
+   - D. Agent 不需要提示词
+
+### 参考答案
+
+1. B（注意力机制是 Transformer 的核心）
+2. B（Token 是文本分词后的最小单位）
+3. B（Chain-of-Thought 让模型展示中间推理步骤）
+4. C（Few-shot = 提供少量示例）
+5. A（加载文档 → 分块 → 向量化存储 → 检索增强生成）
+6. B（Agent 可以循环调用工具直到任务完成）
+
+---
+
+## 10. 进阶路径
+
+### 第一阶段：巩固基础（2-4 周）
+
+- 完整学完 `generative-ai-for-beginners` 的 21 节课程
+- 每节课程都动手运行代码（不要只看不动手）
+- 加入 Microsoft Foundry Discord 社区，提问交流
+- 构建一个小项目：例如「基于 RAG 的文档问答系统」
+
+### 第二阶段：深入方向（1-3 个月）
+
+根据兴趣选择方向：
+
+**方向 A：RAG 和向量搜索**
+- 学习 LangChain 或 LlamaIndex 框架
+- 深入理解 Embedding 模型、分块策略、混合检索
+- 构建项目：企业知识库问答系统
+
+**方向 B：AI Agent 开发**
+- 学习 `ai-agents-for-beginners`（微软另一门课程）
+- 理解 ReAct、Plan-and-Execute、Multi-Agent 等模式
+- 构建项目：自动化任务执行 Agent
+
+**方向 C：模型微调**
+- 学习 LoRA、QLoRA 微调技术
+- 使用 Hugging Face PEFT 库
+- 构建项目：基于专有数据微调 LLM
+
+### 第三阶段：生产实践（3-6 个月）
+
+- 学习 LLMOps：模型部署、监控、版本管理
+- 学习 AI 应用安全：提示注入防护、数据泄露防护
+- 学习成本和延迟优化：模型选择、缓存策略、批处理
+- 参与开源项目（例如 LangChain、LlamaIndex）
+
+### 相关资源
+
+| 资源 | 链接 | 用途 |
+|------|------|------|
+| 课程 GitHub | https://github.com/microsoft/generative-ai-for-beginners | 源码、视频、作业 |
+| 中文版 | translations/zh-CN/README.md | 中文翻译 |
+| Discord 社区 | https://discord.gg/nTYy5BXMWG | 提问交流 |
+| LangChain 课程 | microsoft/langchain-for-beginners | 下一门推荐课程 |
+| AI Agents 课程 | microsoft/ai-agents-for-beginners | Agent 方向进阶 |
+
+---
+
+## 11. 总结
 
 **microsoft/generative-ai-for-beginners** 是目前最完整的生成式 AI 入门课程之一：21 节课程、Python + TypeScript 双代码示例、Azure OpenAI / GitHub Models / OpenAI API 三种平台、50+ 语言翻译、MIT 协议、109k stars。
 
 **适用人群**：想入门生成式 AI 的开发者、准备 AI 相关面试的求职者、想了解 AI 应用的企业人员、对 AI 感兴趣的学生。
 
-**学习建议**：按顺序学习并动手实践，善用视频讲解，加入 Discord 社区提问交流，完成课程后尝试构建自己的项目。
+**学习建议**：按顺序学习并动手实践，善用视频讲解，加入 Discord 社区提问交流，完成课程后尝试构建自己的项目。不要只「看」课程，要「跑」代码、「改」代码、「建」项目。
 
 **官方资源**：
 
