@@ -968,3 +968,19 @@ uvx create-12-factor-agent
 
 > **项目地址**：[github.com/humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)
 > **内容许可**：CC BY-SA 4.0 | **代码许可**：Apache 2.0
+
+---
+
+## 资料口径说明
+
+本文的判断和结论来自以下来源，存在明确的局限性：
+
+1. **主要来源**：humanlayer/12-factor-agents 仓库的公开文档、Dex（Dexter Horthy）在 AI Engineer World's Fair 的演讲视频、以及 The Outer Loop 博客的技术笔记。这些材料代表了作者团队从 100+ SaaS 团队访谈中提炼的工程判断，但是样本选择和结论推广存在主观性。
+
+2. **技术准确性边界**：本文涉及代码示例基于 OpenAI SDK 的 Python 实现，使用其他 SDK（如 Anthropic、Ollama）时具体 API 调用方式会有差异，但原则本身与语言无关。代码示例以教学为目的，生产环境需要加错误处理、日志、监控等工程化组件。
+
+3. **适用性边界**：12-Factor Agents 面向的是"需要稳定交付给真实用户的 LLM 应用"，对于原型验证、纯研究、单轮结构化提取等场景，部分原则的边际收益会递减。文中的"70-80% 天花板"判断基于作者团队的访谈样本，不同业务场景下这个数值可能有差异。
+
+4. **未覆盖话题**：本文明确不讨论 MCP（Model Context Protocol）协议层、框架横向评测、模型训练/Fine-tuning，这些话题的判断需要参考其他专门资料。
+
+5. **版本与时效性**：本文基于 2026 年 5 月的仓库版本撰写。12-Factor Agents 仍在持续迭代，后续新增原则或调整以仓库最新版本为准。
