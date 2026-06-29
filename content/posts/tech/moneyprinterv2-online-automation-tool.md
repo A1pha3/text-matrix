@@ -222,9 +222,29 @@ MoneyPrinter 有多个语言版本，由社区开发：
 - 用户使用本项目产生的任何行为，风险自担
 - 作者不对因使用本项目导致的任何损失或损害负责
 
+## 六、常见问题解答
+### Q1：运行 `pip install -r requirements.txt` 报错提示 Python 版本不匹配？
+A：MoneyPrinterV2 强制要求 Python 3.12，若系统默认版本低于 3.12，需先安装 Python 3.12 并在虚拟环境中指定该版本：
+```bash
+# 创建指定 Python 版本的虚拟环境
+python3.12 -m venv venv
+```
+
+### Q2：Twitter Bot 发帖失败，提示 API 权限不足？
+A：Twitter API 需申请 Elevated 权限才能发送推文，免费版仅支持读取。前往 [Twitter Developer Portal](https://developer.twitter.com/) 提交权限申请，审核通过后再填入 `config.json`。
+
+### Q3：YouTube Shorts 上传失败，提示配额不足？
+A：YouTube Data API v3 每日配额默认为 10 000 单位，上传视频会消耗大量配额。需前往 Google Cloud Console 申请提升配额，或等待次日配额重置。
+
+### Q4：冷启动邮件发送后被标记为垃圾邮件？
+A：优化建议：
+1. 使用企业域名邮箱，避免使用免费邮箱（如 Gmail、QQ 邮箱）
+2. 邮件内容避免包含过多营销链接
+3. 控制单日发送量，逐步提升发送规模
+
 ---
 
-## 七、与 MoneyPrinterTurbo 对比
+## 七、总结与进阶路径
 
 | 特性 | MoneyPrinterV2 | MoneyPrinterTurbo |
 |------|---------------|-------------------|
@@ -234,6 +254,40 @@ MoneyPrinter 有多个语言版本，由社区开发：
 | **自动化** | 社交媒体 + 外展 | 视频制作全流程 |
 | **适用场景** | 副业变现、联盟营销 | 短视频内容创作 |
 | **Python 版本** | 3.12 | 任意 |
+
+---
+
+## 七、总结与进阶路径
+MoneyPrinterV2 围绕Twitter、YouTube、联盟营销三大场景提供自动化能力，适合希望快速搭建副业变现流水线的用户。需注意所有 API 都需要提前申请权限，严格遵守平台规则，避免账号被封禁。
+
+### 进阶学习
+1. 结合 [CLIProxyAPI]({{< relref "posts/tech/cliproxyapi-unified-ai-cli-proxy.md" >}}) 实现多账号 Twitter 管理
+2. 参考 [Hysteria 2]({{< relref "posts/tech/hysteria2-quic-proxy-guide.md" >}}) 实现海外服务器部署，提升 Twitter 账号安全性
+3. 学习 Python 异步编程，优化批量邮件发送的发送效率
+
+---
+
+## 自测问题
+### 题 1：MoneyPrinterV2 与 Turbo 版本的核心差异是什么？
+<details>
+<summary>参考答案</summary>
+V2 定位在线赚钱自动化，覆盖 Twitter Bot、YouTube Shorts、联盟营销、冷启动邮件四大功能；Turbo 定位 AI 视频生成，核心功能是将文案转换为带配音、字幕、音乐的完整视频。
+</details>
+
+### 题 2：为什么必须安装 Python 3.12？
+<details>
+<summary>参考答案</summary>
+项目依赖的部分 Python 包（如 `httpx` 的高版本）要求 Python 3.12 及以上特性，低版本 Python 会出现依赖安装失败或运行时报错。
+</details>
+
+### 题 3：如何避免 Twitter Bot 账号被封？
+<details>
+<summary>参考答案</summary>
+1. 控制发帖频率，避免短时大量发帖
+2. 内容避免完全重复，可结合 AI 生成差异化文案
+3. 不要纯发营销链接，穿插正常互动内容
+4. 使用住宅代理 IP，避免数据中心 IP 被标记
+</details>
 
 ---
 

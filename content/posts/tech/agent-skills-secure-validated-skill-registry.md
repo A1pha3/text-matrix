@@ -352,6 +352,22 @@ agent-skills 提供了独立的 MCP 服务器 `@tech-leads-club/agent-skills-mcp
 
 完整威胁模型和漏洞报告流程见 [SECURITY.md](https://github.com/tech-leads-club/agent-skills/blob/main/SECURITY.md)。官方文档在 https://tech-leads-club.github.io/agent-skills/。
 
+## 资料口径说明
+
+本文基于 agent-skills 项目的 GitHub 仓库（[tech-leads-club/agent-skills](https://github.com/tech-leads-club/agent-skills)）中的以下来源进行判断和撰写：
+
+1. **官方文档**：项目 README.md、SECURITY.md、官方网站（https://tech-leads-club.github.io/agent-skills/）
+2. **源代码**：CLI 实现代码、锁文件生成逻辑、审计日志记录机制
+3. **Snyk Agent Scan**：漏洞扫描工具的功能说明和报告格式
+4. **MCP 服务器规范**：Model Context Protocol 的官方文档和 agent-skills-mcp 的实现
+
+**局限性说明**：
+
+- 项目仍在快速迭代（v0.14.3），部分细节可能在未来版本中变化。本文基于 2026年6月的版本撰写，建议在使用前查看项目最新文档。
+- 性能数据（如"总耗时通常 < 500ms"）来自项目文档和社区反馈，实际性能可能因环境而异。
+- 支持的平台列表可能随版本更新而变化，请以项目 GitHub 仓库的 README.md 为准。
+- 本文未覆盖所有 CLI 命令和配置选项，仅聚焦核心安全机制和典型使用场景。
+
 ## 结语
 
 大多数 AI 技能市场优先做的是降低贡献门槛和扩大技能数量，agent-skills 把优先级倒过来：CI/CD 流水线、人工策展、CLI 纵深防御三件事先到位，再谈技能数量。每个技能包上那枚 SHA-256 内容哈希是这条路线的落点——它让"这个技能安装后没被改过"变成可复查的事实，而不是一句承诺。

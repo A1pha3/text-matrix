@@ -17,6 +17,18 @@ tags: ["PapersWeLove", "论文", "计算机科学", "学术资源", "社区"]
 
 ---
 
+## 学习目标
+
+阅读本文后，你应该能够：
+
+1. **理解 Papers We Love 的核心价值**：为何它是建立技术深度知识体系的首选资源
+2. **掌握论文分类体系**：了解 59 个分类的领域覆盖和代表性主题
+3. **参与社区活动**：加入本地分会、观看 YouTube 分享、参与 Discord 讨论
+4. **高效阅读论文**：掌握论文阅读顺序和技巧
+5. **建立学习习惯**：制定论文阅读计划，持续提升技术深度
+
+---
+
 ## 一、项目概览
 
 ### 1.1 为什么这个项目值得关注
@@ -276,6 +288,160 @@ Papers We Love 的关键价值在于**为开发者提供系统化接触学术论
      ↓
 架构师/研究员 → 前沿研究
 ```
+
+---
+
+## 自测题
+
+### 问题 1：Papers We Love 的核心价值是什么？
+<details>
+<summary>查看参考答案</summary>
+
+Papers We Love 的核心价值：
+- **统一目录**：按主题分类整理学术论文，解决分散搜索的问题
+- **社区讨论**：全球本地分会、Discord 服务器、YouTube 频道，提供交流平台
+- **学习督促**：分会线下活动、阅读小组，帮助坚持学习习惯
+- **分类引导**：59 个分类体系，为不同领域的开发者提供学习路径
+- **免费资源**：开源项目，免费访问论文和社区资源
+
+</details>
+
+### 问题 2：Papers We Love 包含哪些主要分类？
+<details>
+<summary>查看参考答案</summary>
+
+Papers We Love 的 59 个分类涵盖：
+- **人工智能**：artificial_intelligence, machine_learning
+- **系统与架构**：computer_architecture, distributed_systems, datastores
+- **编程语言**：languages, languages-paradigms, languages-theory, logic_and_programming
+- **数据相关**：data_structures, data_compression, data_science, data_fusion
+- **安全与密码**：cryptography, security, privacy
+- **视觉与语音**：computer_vision, speech_recognition, affective_computing
+- **算法**：algorithms, experimental_algorithmics, pattern_matching
+- **并发与系统**：concurrency, non_blocking_algorithms, fault_tolerance
+- **新兴技术**：quantum_computing, robotics, brain-computer-interface
+- **其他**：bioinformatics, biocomputing, economics, ethics, physics
+
+</details>
+
+### 问题 3：如何高效阅读学术论文？
+<details>
+<summary>查看参考答案</summary>
+
+论文阅读顺序：
+1. 标题 → 摘要 → 结论（判断是否值得继续）
+2. 导言（了解背景和问题）
+3. 核心方法（理解创新点）
+4. 实验结果（验证有效性）
+5. 相关工作（定位贡献）
+6. 反复推敲（不懂的地方查阅参考文献）
+
+阅读技巧：
+- 先读博客，降低理解门槛
+- 看懂图表，实验结果的核心
+- 跑跑代码，复现加深理解
+- 做笔记，摘录关键点
+- 讲给别人，教是更好的学
+
+</details>
+
+### 问题 4：如何参与 Papers We Love 社区？
+<details>
+<summary>查看参考答案</summary>
+
+参与方式：
+1. **加入本地分会**：查找所在城市的分会，参加线下论文分享活动
+2. **观看 YouTube 频道**：https://www.youtube.com/user/PapersWeLove，观看过往分享
+3. **加入 Discord 服务器**：实时交流，讨论论文
+4. **贡献仓库**：提交 PR，添加论文或改进分类
+5. **创建分会**：如果在的城市没有分会，可以申请创建
+
+</details>
+
+### 问题 5：如何建立论文阅读习惯？
+<details>
+<summary>查看参考答案</summary>
+
+建立习惯的建议：
+1. **选感兴趣的方向**：从熟悉的领域开始，降低入门门槛
+2. **建立阅读习惯**：每天/每周固定时间，形成规律
+3. **做笔记和分享**：摘录关键点，写博客或分享给同事
+4. **参加线下活动**：加入本地分会，结识同好，互相督促
+5. **尝试复现**：动手实现论文算法，加深理解
+
+技术成长路径：
+- 初级开发者 → 博客和教程
+- 中级开发者 → 论文阅读
+- 高级开发者 → 论文复现 + 贡献
+- 架构师/研究员 → 前沿研究
+
+</details>
+
+---
+
+## 练习
+
+### 练习 1：选择并阅读一篇论文
+**目标**：从 Papers We Love 选择一篇感兴趣的论文并阅读
+
+**步骤**：
+1. 访问 https://github.com/papers-we-love/papers-we-love
+2. 选择一个你熟悉的领域（如 machine_learning、distributed_systems）
+3. 从分类中选择一篇论文
+4. 按照论文阅读顺序阅读
+5. 做笔记，记录关键点和疑问
+
+**验证标准**：
+- 完成论文阅读
+- 笔记记录完整
+- 能够向他人简述论文核心贡献
+
+---
+
+### 练习 2：参加本地分会活动
+**目标**：查找并参加 Papers We Love 本地分会活动
+
+**步骤**：
+1. 访问 Papers We Love 官网或 GitHub，查找本地分会列表
+2. 如果没有所在城市的分会，考虑创建分会
+3. 参加一次线下活动，聆听论文分享
+4. 参与讨论，提问和交流
+5. 考虑自己分享一篇论文
+
+**验证标准**：
+- 成功找到并参加本地分会活动
+- 积极参与讨论
+- 考虑未来分享论文
+
+---
+
+### 练习 3：创建论文阅读小组
+**目标**：在组织或社区内创建论文阅读小组
+
+**步骤**：
+1. 找到感兴趣的同事或朋友
+2. 选择论文（可以从 Papers We Love 选择）
+3. 安排定期会议（如每两周一次）
+4. 每次会议由一人主导，分享论文
+5. 讨论论文的创新点、实验方法、实际应用
+
+**验证标准**：
+- 成功创建阅读小组
+- 完成至少一次论文分享
+- 小组成员积极参与讨论
+
+---
+
+## 资料口径说明
+
+本文档基于以下来源编写，存在相应局限性：
+
+1. **信息来源**：主要基于 Papers We Love GitHub 仓库（https://github.com/papers-we-love/papers-we-love）和官方资源
+2. **论文可用性**：仓库中的论文链接可能因时间而失效，部分论文可能需要付费访问或大学订阅
+3. **分类时效性**：59 个分类可能随项目发展而调整，最新分类请参考 GitHub 仓库
+4. **社区活动**：本地分会的活动频率和方式可能因城市而异，具体信息请参考官方渠道
+5. **阅读难度**：不同论文的阅读难度差异很大，初学者建议从综述类论文或经典论文开始
+6. **版权说明**：Papers We Love 项目本身不持有论文版权，所有论文版权归原作者和出版社所有，项目仅提供目录和链接
 
 ---
 

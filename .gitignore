@@ -62,3 +62,5 @@ optimization-report-*.md
 scripts/optimize-articles.sh
 optimization-summary-report.md
 optimization-workflow.md
+.optimized_tech_articles.txt
+scripts/optimize_agent_reach.py

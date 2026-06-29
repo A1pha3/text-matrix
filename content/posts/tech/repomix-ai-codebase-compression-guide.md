@@ -18,6 +18,30 @@ tags: ["AI", "代码压缩", "Claude", "LLM", "Git"]
 - 清楚安全检查在挡什么，压缩在省多少 Token
 - 在 GitHub Actions 里自动打包，或在 Node.js 项目里当库调用
 
+## 目录
+
+- [Repomix 解决的是什么](#repomix-解决的是什么)
+- [核心技术原理](#核心技术原理)
+- [快速上手](#快速上手)
+- [配置文件详解](#配置文件详解)
+- [一次真实流转：把项目发给 Claude 做安全审查](#一次真实流转把项目发给-claude-做安全审查)
+- [GitHub Actions 集成](#github-actions-集成)
+- [作为 Library 使用](#作为-library-使用)
+- [安全检查详解](#安全检查详解)
+- [输出格式对比](#输出格式对比)
+- [社区项目](#社区项目)
+- [实践建议](#实践建议)
+- [常见问题](#常见问题)
+- [什么时候用、什么时候不用](#什么时候用什么时候不用)
+- [安装速查表](#安装速查表)
+- [参考链接](#参考链接)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
+- [资料口径说明](#资料口径说明)
+
+---
+
 ## Repomix 解决的是什么
 
 把一整个仓库扔给 ChatGPT 或 Claude 之前，你通常得手动挑文件、拼 prompt、算 Token。Repomix 把这个过程压缩成一条命令：扫描仓库 → 按规则筛选文件 → 打包成一份带 Token 计数的 XML/Markdown/JSON 输出，直接丢给模型。
@@ -701,3 +725,158 @@ repomix --init
 - 在线平台：https://repomix.com
 - Discord 社区：https://discord.gg/wNYzTwZFku
 - npm 包：https://www.npmjs.com/package/repomix
+
+---
+
+## 自测题
+
+**1. Repomix 的核心价值是什么？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+Repomix 的核心价值在于把整个代码仓库打包成 AI 可读的单一文件，内置安全检查、Token 计数和 Tree-sitter 压缩。它解决了把代码库发给 AI 模型时需要手动挑文件、拼 prompt、算 Token 的痛点。
+
+</details>
+
+**2. 如何使用 Repomix 打包远程 GitHub 仓库？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+使用 `--remote` 参数：
+```bash
+# 直接使用 URL
+repomix --remote https://github.com/yamadashy/repomix
+
+# 使用 GitHub 简写
+repomix --remote yamadashy/repomix
+
+# 指定分支
+repomix --remote yamadashy/repomix --remote-branch main
+```
+
+</details>
+
+**3. Repomix 的 `--compress` 选项是什么原理？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+`--compress` 选项使用 Tree-sitter 进行代码压缩。Tree-sitter 是一个增量解析库，能够构建代码的抽象语法树（AST）。压缩过程会保留关键的语法结构（如函数签名、类定义、接口和类型声明），去除不必要的实现细节，同时保持代码的可读性和完整性。
+
+</details>
+
+**4. 如何禁用 Repomix 的安全检查？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+可以通过以下方式禁用安全检查：
+
+**配置文件方式：**
+```json
+{
+  "security": {
+    "enableSecurityCheck": false
+  }
+}
+```
+
+**命令行方式：**
+```bash
+repomix --no-security-check
+```
+
+但建议保持安全检查开启，除非测试文件中包含无害的假凭证。
+
+</details>
+
+**5. Repomix 支持哪些输出格式？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+Repomix 支持以下输出格式：
+1. **XML**（默认）：适合 Claude 等模型处理
+2. **Markdown**：便于阅读
+3. **JSON**：适合程序解析
+4. **Plain**：纯文本格式，最小依赖
+
+</details>
+
+---
+
+## 练习
+
+### 练习 1：基本打包
+
+**任务**：使用 Repomix 打包一个本地项目
+
+1. 选择一个本地 Git 项目
+2. 运行 `repomix` 打包整个项目
+3. 查看生成的 `repomix-output.xml`
+4. 尝试不同输出格式（Markdown、JSON）
+5. 检查 Token 计数
+
+**参考答案**：熟悉 Repomix 的基本使用，理解不同输出格式的区别。
+
+### 练习 2：配置文件优化
+
+**任务**：为项目创建自定义配置文件
+
+1. 运行 `repomix --init` 生成配置文件
+2. 配置 `include` 只打包源代码文件
+3. 配置 `ignore` 排除测试文件和构建产物
+4. 启用压缩模式
+5. 测试配置是否生效
+
+**参考答案**：掌握配置文件的使用，理解 include/ignore 规则。
+
+### 练习 3：GitHub Actions 集成
+
+**任务**：在 GitHub Actions 中自动打包代码库
+
+1. 创建 GitHub Actions 工作流文件
+2. 使用 Repomix Action 打包代码
+3. 上传打包结果为 Artifact
+4. 测试工作流是否正常运行
+
+**参考答案**：理解 CI/CD 集成，掌握自动化打包流程。
+
+---
+
+## 进阶路径
+
+如果您已经掌握 Repomix 的基本使用，可以参考以下进阶路径：
+
+1. **高级压缩配置**：针对特定语言优化 Tree-sitter 压缩规则
+2. **自定义输出格式**：修改 XML/Markdown 模板以满足特定需求
+3. **集成到开发流**：在 pre-commit hook 中自动打包，或集成到代码审查流程
+4. **开发插件**：为 VSCode/Vim/Emacs 开发编辑器插件
+5. **贡献到社区**：参与 Repomix 的开发，提交 PR 或改进文档
+
+---
+
+## 资料口径说明
+
+本文基于以下来源撰写：
+
+1. **官方 GitHub 仓库**：https://github.com/yamadashy/repomix
+   - Stars、Forks、贡献者数量等数据来自 GitHub API
+   - 最新版本信息来自仓库的 Releases 页面
+
+2. **官方文档和 README**：
+   - 安装方法、命令说明、配置选项来自官方文档
+   - 技术原理说明基于 README 和源码分析
+
+3. **版本时效性**：
+   - 本文基于 Repomix 最新稳定版本编写
+   - 新版本可能引入新功能或改变命令参数，请以官方文档为准
+
+4. **事实边界**：
+   - 本文提供的信息基于公开可查的官方资料
+   - Token 计数和压缩效果因代码库而异，实际效果可能不同
+   - 安全检查能力有限，不能保证检测所有敏感信息
+
+---

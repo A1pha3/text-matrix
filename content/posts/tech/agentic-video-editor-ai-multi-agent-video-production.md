@@ -897,6 +897,23 @@ AVE 的 Preprocessor 是本地文件系统。生产环境可以：
 - [FFmpeg 官方文档](https://ffmpeg.org/)
 - [MoviePy 文档](https://zulko.github.io/moviepy/)
 
+## 资料口径说明
+
+本文基于 Agentic Video Editor（AVE）项目的 GitHub 仓库（[poseljacob/agentic-video-editor](https://github.com/poseljacob/agentic-video-editor)）中的以下来源进行判断和撰写：
+
+1. **官方文档**：项目 README.md、Pipeline YAML 示例、Style Template 示例
+2. **源代码**：`src/agents/` 目录下的 Agent 实现、`src/models/` 目录下的 Pydantic 数据模型、`src/pipeline/` 目录下的流水线执行器
+3. **技术栈文档**：Google ADK（Agent Development Kit）文档、Gemini API 文档、FFmpeg 官方文档、MoviePy 文档
+4. **示例配置**：`pipelines/ugc-ad.yaml`、`styles/dtc-testimonial.yaml`
+
+**局限性说明**：
+
+- 项目仍处于早期阶段（GitHub Stars 233），部分功能可能不稳定或未完成。本文基于 2026年4月的版本撰写，建议在使用前查看项目最新文档。
+- Web UI（AVE Studio）处于 pre-alpha 阶段，功能和界面可能变化。
+- Reviewer Agent 的评分质量取决于 Gemini 的多模态理解能力，实际评分可能跟人工评审有差距。
+- 本文中的代码示例为简化版，实际实现可能更复杂。
+- 性能数据（如 API 费用“$0.1-0.3”）来自项目文档和社区反馈，实际费用可能因使用场景而异。
+
 ## §13 相关资源
 
 - **GitHub 仓库**：https://github.com/poseljacob/agentic-video-editor

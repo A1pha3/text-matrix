@@ -22,6 +22,24 @@ draft: false
 - 定制和扩展工具功能
 - 实践建议和常见问题解决
 
+### 目录
+
+1. [项目概述](#2-项目概述)
+2. [系统架构](#3-系统架构)
+3. [安装与配置](#4-安装与配置)
+4. [使用指南](#5-使用指南)
+5. [AI Agent Skill 集成](#6-ai-agent-skill-集成)
+6. [高级用法](#7-高级用法)
+7. [测试](#8-测试)
+8. [实践建议](#9-实践建议)
+9. [常见问题](#10-常见问题)
+10. [与类似工具对比](#11-与类似工具对比)
+11. [总结](#12-总结)
+12. [自测题](#自测题)
+13. [练习](#练习)
+14. [进阶路径](#进阶路径)
+15. [资料口径说明](#资料口径说明)
+
 ## 2. 项目概述
 
 ### 2.1 什么是 WeChat Article to Markdown
@@ -568,6 +586,86 @@ WeChat Article to Markdown 是微信公众号文章转换的利器：
 - 内容迁移和二次编辑
 - AI 工具输入源
 - 知识库建设
+
+---
+
+## 自测题
+
+1. **WeChat Article to Markdown 的核心价值是什么？**
+   <details>
+   <summary>查看答案</summary>
+   将微信公众号文章转换为干净的 Markdown 格式，支持反检测抓取、图片本地化、代码高亮保留，并可作为 AI Agent Skill 使用。
+   </details>
+
+2. **Camoufox 在工具中起什么作用？**
+   <details>
+   <summary>查看答案</summary>
+   Camoufox 是一个抗检测的浏览器自动化库，用于抓取微信公众号文章时避免被检测并封禁。
+   </details>
+
+3. **如何将该工具集成到 Claude Code 中？**
+   <details>
+   <summary>查看答案</summary>
+   使用 `npx skills add jackwener/wechat-article-to-markdown -a claude-code` 命令安装 SKILL.md，然后重启 Claude Code 即可。
+   </details>
+
+4. **如何批量转换多篇文章？**
+   <details>
+   <summary>查看答案</summary>
+   使用 Python API 和 asyncio 并发处理多个 URL，或使用循环逐个处理。
+   </details>
+
+5. **输出的 Markdown 文件结构是怎样的？**
+   <details>
+   <summary>查看答案</summary>
+   输出到 `output/<文章标题>/` 目录，包含 `<文章标题>.md` 文件和 `images/` 目录（存放下载的图片）。
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：安装并转换第一篇文章
+
+按照文档步骤安装 WeChat Article to Markdown，然后转换一篇微信公众号文章。尝试：
+- 使用 `uv tool install` 安装
+- 转换一篇测试文章
+- 查看输出的 Markdown 文件和图片
+
+### 练习 2：Python API 批量转换
+
+使用 Python API 批量转换 3 篇微信公众号文章。尝试：
+- 创建包含 3 个 URL 的列表
+- 使用 `WeChatArticle` 类逐个转换
+- 检查输出目录结构
+
+### 练习 3：集成到 Claude Code
+
+将该工具作为 Skill 安装到 Claude Code 中。尝试：
+- 使用 `npx skills add` 命令安装
+- 在 Claude Code 对话中请求转换文章
+- 验证 Skill 是否正常工作
+
+---
+
+## 进阶路径
+
+1. **深入理解 Camoufox 反检测机制**：研究 Camoufox 的源码，理解其反检测原理
+2. **扩展工具功能**：添加对新平台（如知乎、掘金）的支持
+3. **优化性能**：实现并发抓取、图片压缩、缓存机制
+4. **贡献开源**：提交 PR 修复 bug 或添加新功能
+5. **构建 AI Agent**：基于该工具构建自己的 AI Agent，自动抓取和整理微信公众号文章
+
+---
+
+## 资料口径说明
+
+1. **信息来源与时效性**：本文基于 jackwener/wechat-article-to-markdown 仓库的 README 和源代码（采集时间 2026-04-08）。项目处于活跃状态，具体细节可能已更新。
+2. **技术细节验证**：Camoufox 反检测机制、Markdown 转换逻辑等技术细节来自官方文档，但未在实际代码中完整验证。
+3. **判断与建议的边界**：本文对工具适用场景与局限性的判断基于公开信息，实际体验可能因个人需求而异。
+4. **未覆盖的内容**：本文未深入讨论工具的完整 API、性能基准测试、与其他工具的详细对比等。
+5. **术语使用说明**：本文保留 WeChat Article to Markdown、Camoufox、Claude Code 等专有名词，首次出现时附上中文释义。
+6. **更新记录**：本文撰写于 2026-04-08，基于当时的项目状态。
 
 ---
 

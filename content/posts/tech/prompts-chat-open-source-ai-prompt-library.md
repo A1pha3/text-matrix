@@ -10,7 +10,47 @@ tags: ["ChatGPT", "Prompt Engineering", "开源", "AI提示词", "prompts.chat"]
 
 # prompts.chat：全球最大开源 AI 提示词库完全指南
 
-## 📖 一、项目概述
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. **理解 prompts.chat 的核心定位**：知道它是全球最大开源 AI 提示词库，明确它的价值和应用场景
+2. **掌握使用方法**：能够通过网页、CLI、Claude Code 插件、MCP 服务器等方式使用 prompts.chat
+3. **评估是否采用**：根据你的场景判断 prompts.chat 是否适合你（学习提示词工程、搭建私有提示词库）
+4. **贡献提示词**：能够向 prompts.chat 提交提示词（通过网页或 GitHub PR）
+5. **自托管部署**：能够在企业或团队环境中自托管 prompts.chat
+
+## 目录
+
+1. [项目概述](#一项目概述)
+   - 1.1 [什么是 prompts.chat](#11-什么是-promptschat)
+   - 1.2 [核心定位](#12-核心定位)
+   - 1.3 [数据格式与分发](#13-数据格式与分发)
+2. [快速上手：如何使用提示词](#二快速上手如何使用提示词)
+   - 2.1 [直接在网页端浏览使用](#21-直接在网页端浏览使用)
+   - 2.2 [CLI 命令行工具](#22-cli-命令行工具)
+   - 2.3 [Claude Code 插件](#23-claude-code-插件)
+   - 2.4 [MCP 服务器](#24-mcp-服务器)
+3. [提示词分类体系](#三提示词分类体系)
+   - 3.1 [开发者与技术类](#31-开发者与技术类development--technical)
+   - 3.2 [创意与写作类](#32-创意与写作类creative--writing)
+   - 3.3 [分析与研究类](#33-分析与研究类analysis--research)
+   - 3.4 [教育与学习类](#34-教育与学习类education--learning)
+   - 3.5 [儿童与趣味类](#35-儿童与趣味类kids--fun)
+4. [交互式提示词工程教程](#四交互式提示词工程教程)
+5. [自托管部署](#五自托管部署)
+   - 5.1 [快速开始](#51-快速开始)
+   - 5.2 [手动安装](#52-手动安装)
+6. [贡献与社区](#六贡献与社区)
+7. [Kids 专区](#七kids-专区)
+8. [自测题](#自测题)
+9. [练习](#练习)
+10. [进阶路径](#进阶路径)
+11. [资料口径说明](#资料口径说明)
+12. [延伸阅读与参考链接](#八延伸阅读与参考链接)
+13. [总结](#总结)
+
+---
 
 ### 1.1 什么是 prompts.chat
 
@@ -218,6 +258,91 @@ npm install && npm run setup
 | DeepWiki 问答 | [deepwiki.com/f/prompts.chat](https://deepwiki.com/f/prompts.chat) |
 | 提示词工程教程 | [fka.gumroad.com/l/art-of-chatgpt-prompting](https://fka.gumroad.com/l/art-of-chatgpt-prompting) |
 | 儿童专区 | [prompts.chat/kids](https://prompts.chat/kids) |
+
+## 自测题
+
+1. **prompts.chat 的前身是什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   前身是 **Awesome ChatGPT Prompts**。
+   </details>
+
+2. **prompts.chat 在 GitHub 获得多少 Star？**
+   <details>
+   <summary>点击查看答案</summary>
+   截至本文撰写时，累计获得 **161,212 个 Star**。
+   </details>
+
+3. **"Act as..." 模式是什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   "Act as..."（扮演某个角色）模式是 AI 提示词工程领域的经典范式，通过定义角色身份和任务目标，引导 AI 产生特定风格的输出。这个模式由 prompts.chat 推广并被广泛模仿。
+   </details>
+
+4. **prompts.chat 支持哪些使用方式？**
+   <details>
+   <summary>点击查看答案</summary>
+   支持：网页浏览、CLI 命令行工具、Claude Code 插件、MCP 服务器。
+   </details>
+
+5. **prompts.chat 的提示词内容采用什么许可证？**
+   <details>
+   <summary>点击查看答案</summary>
+   提示词内容（prompts.csv、PROMPTS.md、用户提交的提示词）采用 CC0 1.0 Universal（公有领域贡献），可以自由使用、修改和商业化，无需署名。
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：使用 CLI 工具
+
+1. 安装并运行：`npx prompts.chat`
+2. 在交互式界面中浏览和搜索提示词
+3. 选择一个提示词，复制到 ChatGPT 或 Claude 中使用
+
+### 练习 2：配置 MCP 服务器
+
+1. 在 Claude Desktop 的 MCP 配置中添加 prompts.chat：
+   ```json
+   {
+     "mcpServers": {
+       "prompts.chat": {
+         "url": "https://prompts.chat/api/mcp"
+       }
+     }
+   }
+   ```
+2. 在 Claude Desktop 中调用 prompts.chat 的提示词
+
+### 练习 3：自托管部署
+
+1. 克隆仓库：`git clone https://github.com/f/prompts.chat.git`
+2. 安装依赖：`npm install && npm run setup`
+3. 启动开发服务器，观察自托管版本的界面
+
+---
+
+## 进阶路径
+
+1. **深入学习提示词工程**：阅读 [The Art of ChatGPT Prompting](https://fka.gumroad.com/l/art-of-chatgpt-prompting) 教程，掌握 Chain-of-Thought、Few-Shot Learning 等技巧
+2. **研究提示词分类**：理解不同类别提示词的设计模式，学习如何编写高质量提示词
+3. **贡献提示词**：向 prompts.chat 提交你的提示词，参与开源社区
+4. **搭建私有提示词库**：基于 prompts.chat 的自托管功能，搭建团队内部的提示词库
+5. **研究 MCP 协议**：理解 Model Context Protocol，学习如何开发 MCP 服务器
+
+---
+
+## 资料口径说明
+
+1. **项目数据**：本文提到的 Star 数、下载量等数据来自 GitHub 仓库，可能随时间变化
+2. **许可证**：项目采用双许可证模式（MIT for 源代码，CC0 for 提示词内容），具体以仓库 LICENSE 文件为准
+3. **MCP 服务器**：MCP（Model Context Protocol）是 Anthropic 推出的协议，本文撰写时可能仍在演进
+4. **提示词质量**：prompts.chat 的提示词由社区贡献，质量可能参差不齐，使用时请自行判断
+5. **权威背书**：本文提到 Forbes 报道、高校课程引用、学术论文引用，具体以原始来源为准
+6. **儿童专区**：Kids 专区的内容适合 8-14 岁儿童，但需要成人监督
+
+---
 
 ## 📝 总结
 

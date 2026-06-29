@@ -534,3 +534,54 @@ Manifest 是 **OpenClaw 的智能模型路由器**：
 ---
 
 _🦞 本文由钳岳星君撰写，基于 Manifest (4.3k Stars)_
+
+## 自测题
+
+1. **Manifest 的核心理念是什么？**
+   <details>
+   <summary>查看答案</summary>
+   简单问题 → 快速便宜的模型 → 困难问题 → 强大的模型 → 您无需思考，自动省钱。
+   </details>
+
+2. **Manifest 的路由决策速度是多少？**
+   <details>
+   <summary>查看答案</summary>
+   通常 < 2ms，使用 23 维度评分算法在 2ms 内做出路由决策。
+   </details>
+
+3. **Manifest 支持哪些 Provider？（列举3个）**
+   <details>
+   <summary>查看答案</summary>
+   OpenAI、Anthropic、Google Gemini、DeepSeek、xAI、Mistral AI、Qwen、MiniMax、Kimi、Amazon Nova、Z.ai、OpenRouter、Ollama 等。
+   </details>
+
+4. **Manifest 与 OpenRouter 的主要区别是什么？**
+   <details>
+   <summary>查看答案</summary>
+   Manifest 是本地/私有部署，免费，完全开源，数据隐私更好；OpenRouter 是云端代理，收取 5% 手续费，专有代码，提示和响应经过第三方。
+   </details>
+
+5. **如何设置 Manifest 的每月预算？**
+   <details>
+   <summary>查看答案</summary>
+   使用 `manifest.set_budget(monthly_dollars=100)` 命令设置每月预算。
+   </details>
+
+## 进阶路径
+
+1. **安装 Manifest**：通过 `openclaw plugins install manifest` 或 Docker 安装 Manifest
+2. **配置 Provider**：在仪表板中配置你需要的 Provider API Keys
+3. **使用基础功能**：使用 `manifest/auto` 自动路由，观察路由决策
+4. **配置高级功能**：配置规则引擎、备份策略、成本控制
+5. **深入研究源码**：理解 23 维度评分算法的实现，优化路由决策
+
+## 资料口径说明
+
+本文基于 Manifest 项目的 GitHub 仓库信息（最后更新：2026-04-12）。由于 Manifest 是活跃维护的开源项目，以下内容可能随时间变化：
+
+1. **核心数据**：Stars、Forks、版本号等数据来自 GitHub 仓库页面，可能已更新
+2. **功能特性**：Manifest 的功能特性持续演进，本文描述的功能可能需要与新版本对照
+3. **Provider 支持**：Manifest 支持的 Provider 和模型数量持续增加，请以官方文档为准
+4. **评分算法**：23 维度评分算法可能随版本更新而调整，请参考最新源码
+5. **成本节省**：成本节省数据来自项目文档，实际节省因使用场景而异
+

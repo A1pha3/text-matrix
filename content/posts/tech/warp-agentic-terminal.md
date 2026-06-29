@@ -14,6 +14,32 @@ tags: ["Warp", "AI Agent", "Rust", "终端", "开源"]
 > **预计阅读时间**：20 分钟
 > **前置知识**：终端基本用法、了解过 AI coding assistant（如 Copilot、Claude Code）
 
+### 学习目标
+
+阅读本文后，你应该能够：
+
+1. **理解 Warp 的定位**：说清 Warp 与传统终端模拟器的本质区别，以及它为什么把自己叫"agentic development environment"
+2. **掌握 Warp 技术架构**：解释 WarpUI 框架的 Entity-Component-Handle 模式，以及为什么选择 Rust + 自研 UI 框架
+3. **了解 Oz agent 工作模式**：描述 Oz agent 如何处理真实 issue/PR，以及 build.warp.dev 平台的透明化设计
+4. **本地构建 Warp**：按照文档步骤成功编译并运行 Warp 客户端
+5. **评估适用性**：根据 Warp 的局限性和特色功能，判断它是否适合你的工作场景
+
+### 目录
+
+1. [从终端模拟器到 Agentic IDE](#1-从终端模拟器到-agentic-ide)
+2. [WarpUI 框架：自定义 Rust UI 框架](#2-warpui-框架自定义-rust-ui-框架)
+3. [Oz Agent 与 Agentic Workflows](#3-oz-agent-与-agentic-workflows)
+4. [目录结构与核心 crates](#4-目录结构与核心-crates)
+5. [编译与本地运行](#5-编译与本地运行)
+6. [数据库与状态管理](#6-数据库与状态管理)
+7. [Warp 特色功能一览](#7-warp-特色功能一览)
+8. [适用场景与局限性](#8-适用场景与局限性)
+9. [总结](#9-总结)
+10. [自测题](#自测题)
+11. [练习](#练习)
+12. [进阶路径](#进阶路径)
+13. [资料口径说明](#资料口径说明)
+
 ---
 
 ## 📝 项目概览
@@ -229,7 +255,85 @@ Warp 是一个在终端场景下重新思考"AI Warp 的核心贡献不只是做
 
 ---
 
-## 🔗 延伸阅读
+## 自测题
+
+1. **Warp 与传统终端模拟器的核心区别是什么？**
+   <details>
+   <summary>查看答案</summary>
+   Warp 不只是渲染字符界面，而是把终端作为开发工作的天然入口，叠加了 AI 推理层和 agent 执行层，使得在终端里完成从任务理解到代码提交的全流程成为可能。
+   </details>
+
+2. **WarpUI 框架采用什么设计模式？**
+   <details>
+   <summary>查看答案</summary>
+   Entity-Component-Handle 模式：全局 App 对象拥有所有视图/模型，视图通过 ViewHandle 引用其他视图，AppContext 在 render/event 期间提供临时访问权限。
+   </details>
+
+3. **Oz agent 的"agentic"体现在哪里？**
+   <details>
+   <summary>查看答案</summary>
+   Oz agent 不是玩具演示，而是真的在处理 open source 项目的 issue 和 PR。build.warp.dev 平台公开透明地展示 Oz 的工作流，包括 triage issues、write specs、implement changes、review PRs。
+   </details>
+
+4. **Warp 的 license 策略有什么特点？**
+   <details>
+   <summary>查看答案</summary>
+   WarpUI 框架采用 MIT license，而其余代码采用 AGPL-3.0。这个 license 切割意味着其他人可以在 MIT 条件下复用 WarpUI 框架，而不必开源自己的修改。
+   </details>
+
+5. **如何在本地构建和运行 Warp？**
+   <details>
+   <summary>查看答案</summary>
+   运行 `./script/bootstrap` 进行平台相关初始化，然后运行 `./script/run` 构建并运行 Warp。提交 PR 前必须运行 `./script/presubmit` 通过 fmt、clippy、test 三项检查。
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：本地构建 Warp
+
+按照文档步骤，在你的本地机器上构建并运行 Warp。尝试：
+- 运行 `./script/bootstrap`
+- 运行 `./script/run`
+- 运行 `./script/presubmit` 检查是否通过
+
+### 练习 2：探索 WarpUI 框架
+
+阅读 `crates/warpui/` 和 `crates/warpui_core/` 的源代码，理解 Entity-Component-Handle 模式的具体实现。尝试：
+- 找到一个 ViewHandle 的使用示例
+- 理解 AppContext 如何在 render/event 期间提供访问权限
+- 解释为什么鼠标状态必须初始化一次后复用
+
+### 练习 3：观察 Oz Agent 工作流
+
+访问 [build.warp.dev](https://build.warp.dev)，观察 Oz agent 如何处理真实 issue/PR。尝试：
+- 找到一个新的 issue 被 Oz 处理的记录
+- 查看 Oz 的 PR 评审意见
+- 理解 Oz 的任务标签体系（ready-to-spec、ready-to-implement）
+
+---
+
+## 进阶路径
+
+1. **深入理解 WarpUI 框架**：阅读 `crates/warpui/` 源代码，理解其渲染机制和事件系统
+2. **研究 Oz Agent 实现**：查看 `app/ai/` 目录下的 agent 相关代码，理解 agent 如何与终端集成
+3. **贡献 Warp 项目**：从 `ready-to-spec` 或 `ready-to-implement` 标签的 issue 入手，提交你的第一个 PR
+4. **集成外部 CLI agent**：尝试将 Claude Code、Codex 或 Gemini CLI 接入 Warp
+5. **研究 License 策略**：理解 MIT + AGPL 的 license 切割对开源商业化的影响
+
+---
+
+## 资料口径说明
+
+1. **信息来源与时效性**：本文基于 warpdotdev/warp 仓库的 README、WARP.md 和 GitHub API 数据（采集时间 2026-04-30）。项目处于高度活跃状态，具体细节可能已更新。
+2. **技术细节验证**：WarpUI 框架的 Entity-Component-Handle 模式、Oz agent 的工作模式等技术细节来自官方文档，但未在实际代码中完整验证。
+3. **判断与建议的边界**：本文对 Warp 适用场景与局限性的判断基于公开信息，实际体验可能因个人需求而异。
+4. **未覆盖的内容**：本文未深入讨论 Warp 的性能优化、具体 AI 模型集成细节、与其他终端模拟器的详细对比等。
+5. **术语使用说明**：本文保留 Warp、Oz、WarpUI 等专有名词，首次出现时附上中文释义。
+6. **更新记录**：本文撰写于 2026-04-30，基于当时的项目状态。
+
+---
 
 - [Warp 官网](https://warp.dev)
 - [Warp 官方文档](https://docs.warp.dev)

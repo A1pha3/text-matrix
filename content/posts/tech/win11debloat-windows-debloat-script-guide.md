@@ -10,6 +10,32 @@ tags: ["Windows", "PowerShell", "系统优化", "开源工具", "Debloat"]
 
 # Win11Debloat：单文件 PowerShell 脚本给 Windows 10/11 做彻底、可回退的清理
 
+## 学习目标
+
+阅读本文后，你应该能够：
+
+1. **理解 Win11Debloat 的价值**：解释为什么需要这个工具，以及它与其他 Windows 优化工具的区别
+2. **掌握三种运行方式**：使用一行命令快速启动、手动下载运行、命令行参数批量执行
+3. **了解九大类功能**：描述应用卸载、隐私设置、AI 功能管理、UI 定制等主要功能
+4. **应用可回退机制**：理解如何还原改动，避免系统不稳定
+5. **评估适用性**：根据适用边界判断 Win11Debloat 是否适合你的场景
+
+## 目录
+
+1. [项目是什么](#一项目是什么)
+2. [为什么需要它](#二为什么需要它)
+3. [三种运行方式](#三三种运行方式)
+4. [九大类功能详解](#四九大类功能详解)
+5. [可回退机制](#五可回退机制)
+6. [参数化与自动化](#六参数化与自动化)
+7. [最佳实践](#七最佳实践)
+8. [适用边界](#八适用边界)
+9. [与其他 Windows 优化工具对比](#九与其他-windows-优化工具对比)
+10. [自测题](#自测题)
+11. [练习](#练习)
+12. [进阶路径](#进阶路径)
+13. [资料口径说明](#资料口径说明)
+
 ## 一、项目是什么
 
 Win11Debloat 是一款轻量、单文件、无需安装的 PowerShell 脚本，用来快速清理 Windows 10/11 上的预装应用、关闭遥测、禁用 AI 功能、恢复旧版 UI 元素、调整任务栏/开始菜单/文件资源管理器等。它把原本要手动翻几十个设置页面的工作集中到一个交互菜单里，同时提供完整的命令行参数，方便系统管理员在多台机器上批量执行。
@@ -289,6 +315,86 @@ cd c:\Win11Debloat
 - 高级功能（Sysprep、其他用户）：[Advanced Features](https://github.com/Raphire/Win11Debloat/wiki/Advanced-Features)
 - 讨论区：[GitHub Discussions](https://github.com/Raphire/Win11Debloat/discussions)
 - Releases：[Latest Release](https://github.com/Raphire/Win11Debloat/releases/latest)
+
+---
+
+## 自测题
+
+1. **Win11Debloat 与其他 Windows 优化工具的核心区别是什么？**
+   <details>
+   <summary>查看答案</summary>
+   Win11Debloat 是单文件 PowerShell 脚本（MIT 许可证），支持可回退机制、参数化命令行、Sysprep 模式，且持续维护。
+   </details>
+
+2. **如何快速启动 Win11Debloat？**
+   <details>
+   <summary>查看答案</summary>
+   以管理员身份打开 PowerShell，粘贴并执行：`& ([scriptblock]::Create((irm "https://debloat.raphi.re/")))`
+   </details>
+
+3. **Win11Debloat 的改动是否可回退？**
+   <details>
+   <summary>查看答案</summary>
+   是的，几乎所有改动都有官方"还原指南"（Reverting Changes 文档），被卸载的预装应用多数也能从 Microsoft Store 重新装回。
+   </details>
+
+4. **如何在多台机器上批量执行 Win11Debloat？**
+   <details>
+   <summary>查看答案</summary>
+   使用命令行参数模式：`Set-ExecutionPolicy Unrestricted -Scope Process -Force`，然后 `.\Win11Debloat.ps1 -RunDefaults -Silent`。
+   </details>
+
+5. **Win11Debloat 适合生产服务器吗？**
+   <details>
+   <summary>查看答案</summary>
+   不适合。Win11Debloat 主要面向桌面端 Windows，Server 系列的功能覆盖不完整。
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：在新装的 Windows 11 上运行 Win11Debloat
+
+在一台测试机器（或虚拟机）上运行 Win11Debloat。尝试：
+- 使用一行命令快速启动
+- 选择"默认设置预设"（Run Defaults）
+- 重启后验证改动是否生效
+
+### 练习 2：使用命令行参数批量执行
+
+创建一个 PowerShell 脚本，在多台机器上批量执行 Win11Debloat。尝试：
+- 使用 `-RunDefaults -Silent` 参数
+- 将执行日志保存到文件
+- 验证每台机器的配置是否一致
+
+### 练习 3：还原改动
+
+在测试机器上还原 Win11Debloat 的改动。尝试：
+- 阅读官方"还原指南"（Reverting Changes 文档）
+- 手动还原部分改动（如重新启用 Copilot）
+- 验证系统是否恢复正常
+
+---
+
+## 进阶路径
+
+1. **深入理解 PowerShell 脚本**：研究 Win11Debloat.ps1 的源码，理解其实现原理
+2. **定制自己的清理脚本**：基于 Win11Debloat 修改，添加自定义清理项
+3. **集成到自动化流程**：将 Win11Debloat 集成到 SCCM、Intune 或镜像制作流程
+4. **贡献开源**：提交 PR 修复 bug 或添加新功能
+5. **研究 Windows 优化原理**：深入理解注册表项、组策略、PowerShell cmdlet 的作用
+
+---
+
+## 资料口径说明
+
+1. **信息来源与时效性**：本文基于 Raphire/Win11Debloat 仓库的 README、Wiki 和源代码（采集时间 2026-06-15）。项目处于持续维护状态，具体细节可能已更新。
+2. **技术细节验证**：PowerShell 脚本功能、注册表项修改等技术细节来自官方文档，但未在实际系统中完整验证。
+3. **判断与建议的边界**：本文对工具适用场景与局限性的判断基于公开信息，实际体验可能因系统配置而异。
+4. **未覆盖的内容**：本文未深入讨论所有命令行参数、完整的功能列表、性能影响等。
+5. **术语使用说明**：本文保留 Win11Debloat、PowerShell、Sysprep 等专有名词，首次出现时附上中文释义。
+6. **更新记录**：本文撰写于 2026-06-15，基于当时的项目状态。
 
 ---
 

@@ -490,3 +490,161 @@ OpenScreen 是一款专为演示场景设计的屏幕录制工具，它以开源
 - 最新版本：v1.3.0
 - Discord 社区：https://discord.gg/yAQQhRaEeg
 - DeepWiki 文档：https://deepwiki.com/siddharthvaddem/openscreen
+
+---
+
+## 自测题
+
+### 问题 1：OpenScreen 的核心定位是什么？
+<details>
+<summary>查看参考答案</summary>
+
+OpenScreen 是一个开源屏幕录制与演示制作工具，旨在为用户提供 Screen Studio 的免费替代方案。它专注于录制产品演示和操作指南这两个核心场景，让用户无需支付 $29/月即可创建精美的屏幕录制内容。
+
+核心特点：
+- 完全免费，MIT License
+- 支持窗口录制、全屏录制、系统音频
+- 内置缩放效果、运动模糊、注释功能
+- 跨平台支持（macOS、Windows、Linux）
+
+</details>
+
+### 问题 2：如何在 macOS 上安装和配置 OpenScreen？
+<details>
+<summary>查看参考答案</summary>
+
+macOS 安装步骤：
+1. 下载 .dmg 安装包
+2. 双击打开，将 OpenScreen.app 拖入应用程序文件夹
+3. 如果 macOS Gatekeeper 阻止了应用运行，执行：`xattr -rd com.apple.quarantine /Applications/Openscreen.app`
+4. 进入「系统设置 > 隐私与安全性」，授予「屏幕录制」权限和「辅助功能」权限
+5. macOS 13+ 支持系统音频录制，14.2+ 版本会提示授权音频捕获
+
+</details>
+
+### 问题 3：OpenScreen 的技术架构是什么？
+<details>
+<summary>查看参考答案</summary>
+
+OpenScreen 基于 Electron 构建，技术栈包括：
+- **应用层**：React + TypeScript
+- **渲染引擎**：PixiJS（高性能 2D 渲染）
+- **Electron 主进程**：处理系统级操作
+- **屏幕捕获**：desktopCapturer API
+- **音频处理**：Web Audio API
+- **文件系统**：Node.js fs
+
+项目目录结构清晰，使用 Vite 构建，Biome 进行代码格式化。
+
+</details>
+
+### 问题 4：如何解决 Linux 版本无法启动的问题？
+<details>
+<summary>查看参考答案</summary>
+
+Linux 版本无法启动的解决方案：
+1. 使用 `--no-sandbox` 参数运行：`./Openscreen-Linux-*.AppImage --no-sandbox`
+2. 检查是否使用 PipeWire（Ubuntu 22.04+、Fedora 34+ 默认包含）
+3. 旧版 PulseAudio 系统可能不支持系统音频录制，但麦克风通常可用
+4. 确保 AppImage 文件有执行权限：`chmod +x Openscreen-Linux-*.AppImage`
+
+</details>
+
+### 问题 5：OpenScreen 与 OBS Studio 的区别是什么？
+<details>
+<summary>查看参考答案</summary>
+
+OpenScreen 与 OBS Studio 的定位区别：
+- **OpenScreen**：专为演示录制设计，学习曲线低，内置缩放效果，适合应用窗口/全屏录制
+- **OBS Studio**：专业直播/录制工具，学习曲线高，支持任意内容录制，缩放效果需插件/脚本
+
+选择建议：
+- 如果需要快速录制产品演示或操作教程，选择 OpenScreen
+- 如果需要直播推流或高级视频编辑，选择 OBS Studio
+
+</details>
+
+---
+
+## 练习
+
+### 练习 1：录制产品演示视频
+**目标**：使用 OpenScreen 录制一个产品演示视频
+
+**步骤**：
+1. 下载并安装 OpenScreen
+2. 配置录制设置（窗口录制、系统音频+麦克风）
+3. 录制一个 2-3 分钟的产品功能演示
+4. 添加缩放效果强调关键功能
+5. 添加文字注释说明操作步骤
+6. 导出为 1080p MP4 格式
+
+**验证标准**：
+- 视频画面清晰，音频同步
+- 缩放效果流畅，突出关键内容
+- 注释准确，易于理解
+
+---
+
+### 练习 2：配置自定义背景
+**目标**：为录制视频配置品牌化背景
+
+**步骤**：
+1. 准备一张品牌背景图片（尺寸适配 16:9）
+2. 在 OpenScreen 中选择"自定义"背景类型
+3. 上传背景图片
+4. 录制测试视频，验证背景效果
+5. 调整背景亮度和模糊度（如果有此功能）
+
+**验证标准**：
+- 背景图片正确显示
+- 录制内容在背景上清晰可见
+- 品牌形象一致
+
+---
+
+### 练习 3：从源码构建 OpenScreen
+**目标**：从 GitHub 源码构建 OpenScreen
+
+**步骤**：
+1. 克隆仓库：`git clone https://github.com/siddharthvaddem/openscreen.git`
+2. 安装依赖：`npm install`
+3. 启动开发服务器：`npm run dev`
+4. 尝试构建一个平台的安装包：`npm run build:mac` 或 `npm run build:win`
+5. 验证构建结果
+
+**验证标准**：
+- 开发服务器成功启动
+- 构建过程无错误
+- 生成的安装包可以正常安装和运行
+
+---
+
+## 进阶路径
+
+如果你想深入掌握 OpenScreen 并基于它进行定制或贡献，建议按以下路径学习：
+
+1. **理解 Electron 架构**：深入学习 Electron 的主进程/渲染进程模型、desktopCapturer API、IPC 通信机制
+2. **掌握 PixiJS**：学习 PixiJS 的渲染原理、滤镜系统、动画实现，理解如何实现平滑的缩放和运动模糊效果
+3. **研究项目源码**：阅读 OpenScreen 的源码，理解状态管理、组件设计、构建配置
+4. **定制功能**：尝试添加新功能，如新的注释类型、导出格式、音频处理选项
+5. **优化性能**：研究如何优化录制性能、减少内存占用、提高导出速度
+6. **贡献开源**：参与 OpenScreen 开源项目，提交 PR，改进文档或功能
+7. **跨平台适配**：研究如何解决 macOS、Windows、Linux 的兼容性问题，特别是系统音频录制、权限管理、打包分发
+
+---
+
+## 资料口径说明
+
+本文档基于以下来源编写，存在相应局限性：
+
+1. **信息来源**：主要基于 OpenScreen GitHub 仓库（https://github.com/siddharthvaddem/openscreen）和官方文档，部分信息可能因项目快速迭代而过时
+2. **版本时效性**：本文档编写时的最新版本是 v1.3.0（2026 年 4 月 2 日），新版本可能包含额外功能或改动
+3. **平台兼容性**：macOS、Windows、Linux 的兼容性说明基于项目文档和常见问题，实际体验可能因系统版本、硬件配置而异
+4. **功能完整性**：OpenScreen 仍在活跃开发中，部分功能可能在未来版本中变化或被移除
+5. **性能数据**：文档中未包含具体性能数据，实际录制性能取决于硬件配置、录制设置、内容复杂度
+6. **音频支持**：系统音频录制在不同平台和版本的兼容性可能有限制，特别是 macOS 12 及以下版本不支持系统音频捕获
+
+---
+
+*撰写于 2026 年 4 月 6 日*

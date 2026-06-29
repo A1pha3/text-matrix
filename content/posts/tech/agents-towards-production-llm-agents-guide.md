@@ -408,3 +408,20 @@ langsmith>=0.1.0
 - Redis 5.x 的向量检索依赖 Redis Stack（含 RediSearch 模块），社区版 Redis 不带向量索引
 - Tavily SDK 包名是 `tavily-python`，不是 `tavily`
 - 涉及第四层 GPU 部署时，还需要 Docker、NVIDIA Container Toolkit 和 RunPod CLI
+
+## 资料口径说明
+
+本文基于 Agents Towards Production 项目的 GitHub 仓库（[NirDiamant/agents-towards-production](https://github.com/NirDiamant/agents-towards-production)）中的以下来源进行判断和撰写：
+
+1. **官方 README.md**：项目的整体介绍、教程列表、赞助商信息、架构设计
+2. **各教程目录**：28 个教程的独立说明文档、代码示例、requirements.txt
+3. **赞助商官方文档**：LangChain、Redis、Contextual AI、Bright Data、Tavily、Arcade、JetBrains Kolo、Mem0、RunPod 等赞助商提供的官方集成方案和文档
+4. **相关技术文档**：LangGraph 官方文档、LangSmith 文档、LlamaFirewall 文档、Apex 文档、IntellAgent 文档
+
+**局限性说明**：
+
+- 项目采用自定义非商业许可证，具体条款需要在使用前查阅 LICENSE 文件
+- 教程内容来自对应领域厂商的官方集成方案，可能会偏向赞助商自家的工具，选型时需要对照其他方案
+- 教程的依赖版本可能因时间而变化，建议在使用前查看各教程目录下的 requirements.txt 和 README
+- 本文中的代码示例为简化版，实际实现可能更复杂
+- 性能数据（如 Stars 数、Forks 数）来自项目 GitHub 页面，实际数据可能随时间变化

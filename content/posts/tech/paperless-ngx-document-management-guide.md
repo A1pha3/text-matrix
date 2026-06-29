@@ -9,6 +9,35 @@ tags: ["文档管理", "Python", "Docker", "OCR", "开源"]
 
 # paperless-ngx：开源文档管理系统指南
 
+## 学习目标
+
+通过本文，您将掌握：
+
+1. **理解 paperless-ngx 的价值**：为什么需要开源文档管理系统
+2. **掌握安装部署**：使用 Docker 快速部署 paperless-ngx
+3. **熟练使用核心功能**：文档导入、OCR 识别、标签管理、全文搜索
+4. **掌握高级功能**：API 集成、Webhook 配置、插件开发
+5. **优化生产环境**：数据库优化、OCR 调优、存储策略、备份方案
+
+## 目录
+
+- [什么是 paperless-ngx](#什么是-paperless-ngx)
+- [核心特性一览](#核心特性一览)
+- [系统架构](#系统架构)
+- [核心功能模块](#核心功能模块)
+- [安装配置](#安装配置)
+- [使用指南](#使用指南)
+- [开发扩展](#开发扩展)
+- [性能优化](#性能优化)
+- [常见问题](#常见问题)
+- [结语](#结语)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
+- [资料口径说明](#资料口径说明)
+
+---
+
 在日常生活中，我们每天都会产生大量的纸质文档——账单、合同、发票、说明书、手写笔记……堆积如山，查找困难，还容易丢失。有没有一种方法，能把这些纸张通通数字化，然后像管理邮件一样管理它们？
 
 答案是 **paperless-ngx**。
@@ -629,6 +658,157 @@ Docker 一键部署、强大的 OCR 能力、灵活的标签系统、完整的 A
 - 🌐 在线演示：[https://demo.paperless-ngx.com](https://demo.paperless-ngx.com)（demo/demo）
 - 📖 官方文档：[https://docs.paperless-ngx.com/](https://docs.paperless-ngx.com/)
 - 💾 GitHub：[https://github.com/paperless-ngx/paperless-ngx](https://github.com/paperless-ngx/paperless-ngx)
+
+---
+
+## 自测题
+
+**1. paperless-ngx 的核心功能是什么？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+paperless-ngx 的核心功能包括：
+1. 文档数字化：将纸质文档扫描成数字格式
+2. OCR 识别：使用 Tesseract 引擎自动识别图片中的文字
+3. 标签分类：灵活的多标签系统，支持树形分类结构
+4. 全文搜索：基于 Whoosh 的强大全文搜索引擎
+5. 自动导入：通过消费文件夹、邮件、API 等多种方式自动导入文档
+
+</details>
+
+**2. 如何配置 paperless-ngx 支持中文 OCR？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+在环境变量或配置文件中添加中文语言包：
+```env
+PAPERLESS_OCR_LANGUAGES=eng chi_sim
+```
+
+其中 `chi_sim` 表示简体中文，`chi_tra` 表示繁体中文。
+
+</details>
+
+**3. paperless-ngx 支持哪些数据库？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+paperless-ngx 支持以下数据库：
+1. **SQLite**（默认）：零配置，适合个人/家庭使用
+2. **PostgreSQL**：推荐用于生产环境，更好的并发性能
+3. **MySQL/MariaDB**：适合已有 MySQL 环境的场景
+
+</details>
+
+**4. 如何通过 API 上传文档到 paperless-ngx？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+使用 curl 命令上传文档：
+```bash
+curl -X POST https://your-paperless.com/api/documents/post_document/ \
+  -H "Authorization: Token YOUR_TOKEN" \
+  -F "file=@document.pdf" \
+  -F "title=My Invoice" \
+  -F "tags=1,3"
+```
+
+需要先获取 API Token，在设置页面生成。
+
+</details>
+
+**5. 如何优化 paperless-ngx 的 OCR 性能？**
+
+<details>
+<summary>点击查看参考答案</summary>
+
+优化 OCR 性能的策略：
+1. 跳过已有文本层的 PDF：`PAPERLESS_OCR_MODE=skip`
+2. 限制 OCR 语言：`PAPERLESS_OCR_LANGUAGES=eng,chi_sim`
+3. 降低 OCR 分辨率：`PAPERLESS_OCR_RESOLUTION=200`
+4. 使用 OCR 优化版镜像：`paperlessngx/paperless-ngx:tesseract`
+
+</details>
+
+---
+
+## 练习
+
+### 练习 1：Docker 部署
+
+**任务**：使用 Docker Compose 部署 paperless-ngx
+
+1. 创建目录结构：`data/`、`media/`、`consume/`
+2. 下载 `docker-compose.yml`
+3. 配置环境变量（时区、管理员账号、OCR 语言）
+4. 启动服务：`docker compose up -d`
+5. 访问 Web 界面并完成初始化配置
+
+**参考答案**：熟悉 Docker 部署流程，理解各个目录的作用。
+
+### 练习 2：配置消费文件夹
+
+**任务**：设置多个消费文件夹并实现自动标签
+
+1. 配置多个消费文件夹：`/consume/scan`、`/consume/email`
+2. 设置文件名规则自动分配标签
+3. 测试自动导入功能
+4. 验证标签自动分配
+
+**参考答案**：掌握消费文件夹的高级用法，实现自动化文档处理。
+
+### 练习 3：API 集成
+
+**任务**：编写 Python 脚本批量上传文档
+
+1. 获取 API Token
+2. 编写 Python 脚本使用 requests 库上传文档
+3. 实现批量上传功能
+4. 添加错误处理和日志记录
+
+**参考答案**：理解 paperless-ngx 的 API 接口，掌握程序化文档上传。
+
+---
+
+## 进阶路径
+
+如果您已经掌握 paperless-ngx 的基本使用，可以参考以下进阶路径：
+
+1. **高级搜索技巧**：掌握 Whoosh 搜索引擎的高级查询语法
+2. **自定义 OCR 配置**：针对特定文档类型优化 OCR 参数
+3. **集成到工作流**：与 Nextcloud、Home Assistant 等服务集成
+4. **开发插件**：使用 Signals 和 Middleware 扩展功能
+5. **大规模部署**：优化数据库、存储和性能，支持多用户团队协作
+6. **迁移与备份**：制定完整的备份和恢复策略
+
+---
+
+## 资料口径说明
+
+本文基于以下来源撰写：
+
+1. **官方 GitHub 仓库**：https://github.com/paperless-ngx/paperless-ngx
+   - Stars、Forks、编程语言等数据来自 GitHub API
+   - 最新版本信息来自仓库的 Releases 页面
+
+2. **官方文档**：https://docs.paperless-ngx.com/
+   - 安装方法、配置说明、API 文档来自官方文档
+
+3. **在线演示**：https://demo.paperless-ngx.com
+   - 功能验证和界面截图基于在线演示环境
+
+4. **版本时效性**：
+   - 本文基于 paperless-ngx 最新稳定版本编写
+   - 新版本可能引入新功能或改变配置方式，请以官方文档为准
+
+5. **事实边界**：
+   - 本文提供的信息基于公开可查的官方资料
+   - OCR 识别效果因文档质量而异，实际效果可能低于理论值
+   - 性能数据来自社区反馈，实际体验可能因环境而异
 
 ---
 

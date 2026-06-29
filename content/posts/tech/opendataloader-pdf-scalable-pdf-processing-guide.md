@@ -10,7 +10,26 @@ tags: ["OpenDataLoader", "PDF处理", "数据基础设施", "LLM训练数据", "
 
 # OpenDataLoader-PDF：面向大规模 PDF 数据集构建的开源数据处理基础设施
 
-## §1 项目概述
+> **目标读者**：需要处理大规模PDF数据集的开发者、数据工程师、AI研究员、构建知识库的技术团队
+> **预计阅读时间**：30-40分钟
+> **前置知识**：了解Python编程、PDF文件格式基础、异步编程概念
+> **难度定位**：⭐⭐⭐ 中级实用
+
+---
+
+## §1 学习目标
+
+阅读本文后，你应该能够：
+
+1. **理解OpenDataLoader-PDF的核心价值**：为何它适合大规模PDF数据集构建
+2. **掌握技术架构**：Rust+Python混合架构的优势和实现原理
+3. **使用核心功能**：文本提取、表格检测、图片提取、文档结构化
+4. **处理大规模PDF**：批处理、异步处理、流式处理的最佳实践
+5. **应用于实际场景**：LLM训练数据提取、知识图谱构建、文档数字化
+
+---
+
+## §2 项目概述
 
 ### 1.1 核心定位
 
@@ -578,6 +597,176 @@ OpenDataLoader-PDF 为 PDF 数据集构建提供了：
 | **知识图谱构建** | 结构化实体与关系抽取 |
 | **文档数字化** | 历史文档批量处理 |
 | **企业文档库** | 私有文档安全处理 |
+
+---
+
+## §10 自测题
+
+### 问题 1：OpenDataLoader-PDF 的核心优势是什么？
+<details>
+<summary>查看参考答案</summary>
+
+OpenDataLoader-PDF 的核心优势包括：
+- **任意规模处理**：从单文档到数十亿文档，同一套 API
+- **10倍性能提升**：Rust 核心实现，高性能处理
+- **隐私优先**：所有处理本地完成，数据不外泄
+- **智能表格检测**：内置表格检测算法，无需额外工具
+- **统一API**：简洁的 Python 接口，易于使用
+- **多后端支持**：支持 PyMuPDF、PyPDF2、unstructured 等多种后端
+
+</details>
+
+### 问题 2：如何选择合适的后端？
+<details>
+<summary>查看参考答案</summary>
+
+后端选择策略：
+- **PyMuPDF (fitz)**：速度快，功能丰富，通用首选
+- **PyPDF2**：轻量，依赖少，适合简单文本提取
+- **unstructured**：智能布局分析，适合复杂文档结构
+- **pypdf**：纯 Python，跨平台，适合特殊环境
+
+可通过 `PDFLoader(backend='pymupdf')` 手动指定，或不指定后端让系统自动选择。
+
+</details>
+
+### 问题 3：如何处理大规模PDF数据集？
+<details>
+<summary>查看参考答案</summary>
+
+大规模PDF处理策略：
+1. **批处理**：使用 `BatchProcessor` 并发处理，配置 `num_workers` 和 `batch_size`
+2. **异步处理**：使用 `AsyncPDFLoader` 并发处理URL或网络资源
+3. **流式处理**：使用 `loader.stream_pages()` 逐页处理，避免内存溢出
+4. **缓存**：使用 `Cache` 避免重复处理同一文档
+5. **错误恢复**：配置 `max_retries` 和 `skip_on_error` 提高健壮性
+
+</details>
+
+### 问题 4：如何提取PDF中的表格？
+<details>
+<summary>查看参考答案</summary>
+
+表格提取方法：
+```python
+result = loader.extract_tables(
+    'document.pdf',
+    detect_tables=True,        # 启用表格检测
+    min_table_rows=2,         # 最小行数
+    min_table_cols=2,         # 最小列数
+    detect_merged_cells=True,   # 检测合并单元格
+    detect_header=True,         # 检测表头
+    output_format='dataframe',  # 输出格式
+)
+```
+
+表格检测算法基于视觉特征：图像预处理→线条检测→交叉分析→单元格识别→表格结构推断→内容填充。
+
+</details>
+
+### 问题 5：如何将PDF内容用于LLM训练？
+<details>
+<summary>查看参考答案</summary>
+
+LLM训练数据提取流程：
+```python
+from opendataloader import PDFLoader, DatasetBuilder
+
+# 1. 加载PDF
+loader = PDFLoader()
+documents = loader.extract_text(
+    '/path/to/pdf/library',
+    batch_size=500,
+    num_workers=16,
+)
+
+# 2. 构建数据集
+builder = DatasetBuilder(format='jsonl')
+builder.add_field('text', documents.text)
+builder.add_field('metadata', documents.metadata)
+
+# 3. 导出
+builder.export('training_dataset.jsonl', compression='gz')
+```
+
+</details>
+
+---
+
+## §11 练习
+
+### 练习 1：提取技术文档的目录结构
+**目标**：使用 OpenDataLoader-PDF 提取一份技术PDF文档的目录结构
+
+**步骤**：
+1. 找一份有多级标题的PDF文档（如技术手册、论文）
+2. 使用 `loader.extract_by_headings()` 提取章节结构
+3. 输出为Markdown格式的目录
+4. 验证提取结果与原始PDF目录是否一致
+
+**验证标准**：
+- 成功提取所有一级和二级标题
+- 输出的Markdown目录结构正确
+- 处理了标题中的特殊字符
+
+---
+
+### 练习 2：批量处理PDF目录
+**目标**：使用批处理器处理一个包含多个PDF的目录
+
+**步骤**：
+1. 准备一个包含10+个PDF文件的目录
+2. 配置 `BatchProcessor`，设置 `num_workers=4`
+3. 实现进度回调函数，显示处理进度
+4. 处理完成后统计成功/失败数量
+
+**验证标准**：
+- 所有PDF文件都被处理
+- 进度条正确显示处理进度
+- 错误文件被正确跳过并记录
+
+---
+
+### 练习 3：构建简易知识库
+**目标**：从PDF文档集合中提取文本，构建简易知识库
+
+**步骤**：
+1. 准备5-10个相关主题的PDF文档
+2. 提取所有文档的文本内容
+3. 将文本按章节分割，添加元数据（文件名、页码、章节）
+4. 保存为JSON格式，供后续检索使用
+
+**验证标准**：
+- JSON文件包含所有必要字段
+- 文本按章节正确分割
+- 元数据准确无误
+
+---
+
+## §12 进阶路径
+
+如果你想深入掌握 OpenDataLoader-PDF 并构建基于它的应用，建议按以下路径学习：
+
+1. **理解PDF格式**：深入学习PDF文件格式规范，理解如何解析PDF内部结构
+2. **研究Rust绑定**：了解 PyO3 如何将 Rust 代码暴露给 Python，学习混合编程
+3. **优化性能**：研究批处理、异步处理、内存优化的底层实现，进行性能调优
+4. **扩展后端**：尝试添加新的PDF处理后端，如 pdfplumber 或 camelot
+5. **构建应用**：基于 OpenDataLoader-PDF 构建实际应用，如文档搜索引擎、自动摘要工具
+6. **贡献开源**：参与 OpenDataLoader-PDF 开源项目，提交PR，改进文档或功能
+7. **处理特殊文档**：研究如何正确处理扫描版PDF（需要OCR）、多语言PDF、加密PDF等特殊场景
+
+---
+
+## §13 资料口径说明
+
+本文档基于以下来源编写，存在相应局限性：
+
+1. **信息来源**：主要基于 OpenDataLoader-PDF GitHub 仓库和项目文档，部分信息可能因项目快速迭代而过时
+2. **代码准确性**：文档中的代码示例基于项目公开文档和常见用法模式，实际使用时请参考最新版本文档
+3. **性能数据**：文档中提到的"10倍性能提升"来源于项目宣传，实际性能取决于硬件、PDF复杂度、配置等多种因素
+4. **后端兼容性**：支持的后端列表和特点基于项目文档，实际兼容性可能因版本而异
+5. **应用场景**：LLM训练数据提取、知识图谱构建等应用场景为常见用法，具体实现可能需要根据需求调整
+6. **安装依赖**：安装步骤和依赖要求基于常见环境，特殊环境（如M1 Mac、Windows）可能需要额外配置
 
 ---
 
