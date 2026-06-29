@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["BitNet", "1-bit LLM", "微软", "量化推理", "llama.cpp", "CPU 推理"]
 ---
 
-学习目标
+## 学习目标
 
 通过本文，你将全面掌握以下核心能力：
 
@@ -21,7 +21,7 @@ tags: ["BitNet", "1-bit LLM", "微软", "量化推理", "llama.cpp", "CPU 推理
 
 ---
 
-. 项目概述
+## 一、项目概述
 
 . 是什么
 
@@ -433,7 +433,70 @@ Enter-VsDevShell 3f0e31ad -SkipAutomaticLocation -DevCmdArguments "-arch=x64 -ho
 
 ---
 
-. 总结
+## 自测题
+
+1. **BitNet b1.58 的权重值域是什么？为什么叫 1.58 bits/参数？**
+   <details>
+   <summary>查看答案</summary>
+   答案：权重组限三个值：-1、0、+1。叫 1.58 bits/参数因为 -1 和 +1 比 0 更频繁，信息熵计算下来平均每个参数需要 1.58 bits 表示。
+   </details>
+
+2. **BitNet 支持哪些后端？**
+   <details>
+   <summary>查看答案</summary>
+   答案：x86 CPU（全面支持）、ARM CPU（全面支持）、NVIDIA GPU（全面支持）、NPU（开发中）。
+   </details>
+
+3. **I2_S、TL1、TL2 三种量化内核有什么区别？**
+   <details>
+   <summary>查看答案</summary>
+   答案：I2_S 是 INT8 激活 + 符号权重，通用场景；TL1 是 Token-level INT8，低延迟；TL2 是 Token-level INT8 v2，优化吞吐量。
+   </details>
+
+4. **如何在 CPU 上运行 BitNet 推理？**
+   <details>
+   <summary>查看答案</summary>
+   答案：先下载模型（huggingface-cli 或 setup_env.py），然后运行 `python run_inference.py -m <模型路径> -p "提示词"`。可以加 `-cnv` 启用对话模式，加 `--use-gpu` 使用 GPU。
+   </details>
+
+5. **BitNet 和 llama.cpp 的关系是什么？**
+   <details>
+   <summary>查看答案</summary>
+   答案：BitNet 基于 llama.cpp 框架构建，但专注于 1-bit LLM 的优化（量化内核优化、1-bit 特殊算子、CPU/GPU 高效实现）。
+   </details>
+
+---
+
+## 练习
+
+1. **在自己的机器上部署 BitNet**：按照安装步骤，完成环境配置、模型下载和首次推理运行。观察 CPU 和 GPU 模式下的推理速度差异。
+2. **运行基准测试**：运行 `python utils/e2e_benchmark.py`，记录不同线程数（-t 参数）下的 token/秒 数据，绘制线程数 vs 推理速度的曲线。
+3. **尝试不同量化类型**：用 `python setup_env.py -md models/BitNet-b1.58-2B-4T -q i2_s`（或 tl1、tl2）生成不同量化类型的模型，比较文件大小和推理速度。
+
+---
+
+## 进阶路径
+
+1. **深入量化内核**：阅读 `src/kernel/i2_s/` 目录下的代码，理解 I2_S 内核的实现原理（符号乘法累加）。
+2. **并行优化研究**：研究最新版本引入的并行内核实现（OpenMP 并行），理解如何在 CPU 上最大化利用多核性能。
+3. **贡献代码**：向 BitNet 仓库提交 PR，修复 bug 或优化某个平台的性能（比如为 ARM CPU 优化特定算子）。
+4. **模型量化研究**：深入研究 1-bit LLM 的量化感知训练（QAT）原理，理解为什么三元量化能保持精度。
+5. **边缘部署**：研究如何将 BitNet 部署到边缘设备（树莓派、手机），评估实际可用的模型规模和推理速度。
+
+---
+
+## 资料口径说明
+
+1. **信息来源**：本文基于 BitNet 仓库的 README、技术报告（arXiv:2410.16144）和可验证的代码示例编写。
+2. **版本时效性**：BitNet 处于活跃开发阶段，性能数据、支持的后端、量化内核类型可能随版本变化，请以仓库最新代码为准。
+3. **性能数据边界**：本文中的加速比和能耗降低数据来自技术报告，实际数值因硬件、模型规模、线程数等因素而异，不构成性能承诺。
+4. **模型可用性**：预训练模型的下载链接和可用性取决于 HuggingFace 和微软的发布策略，本文无法保证所有链接长期有效。
+5. **硬件要求**：本文中的构建步骤假设读者有基本的 Python、CMake 和 C++ 编译环境使用经验，Windows 用户需要额外安装 Visual Studio 2022。
+6. **不准确内容**：本文写作时发现原文有「最新优化（ 年 月）」等不完整内容，已尽量标注或忽略，实际使用时请参考仓库最新 README。
+
+---
+
+## 总结
 
 BitNet 是微软官方发布的 1-bit LLM 推理框架，代表了高效 LLM 推理的重要方向：
 

@@ -10,9 +10,39 @@ tags: ["C++", "模拟器", "PS4", "PlayStation", "游戏"]
 
 # shadPS4：30.7K Stars·开源 PlayStation 4 模拟器·C++重写的跨平台 PS4 模拟器
 
+## 学习目标
+
+在阅读完本文后，你应该能够：
+
+1. **理解 shadPS4 的技术架构**：掌握其核心设计理念（C++ 重写、跨平台支持、模块化设计、Vulkan 渲染），以及项目目录结构
+2. **掌握构建与安装方法**：能够在 Windows、Linux、macOS 或 Docker 环境中成功构建 shadPS4 核心
+3. **配置与运行游戏**：了解如何获取合法的 PS4 固件文件，掌握命令行与 GUI（QtLauncher）的使用方式
+4. **自定义键盘和鼠标映射**：能够根据个人喜好配置手柄、键盘和鼠标的映射关系
+5. **参与开发与调试**：了解如何报告问题、查看游戏兼容性列表、参与代码贡献
+
+## 目录
+
+1. [学习目标](#学习目标)
+2. [项目概述](#项目概述)
+3. [技术架构](#技术架构)
+4. [构建指南](#构建指南)
+5. [使用方法](#使用方法)
+6. [键盘和鼠标映射](#键盘和鼠标映射)
+7. [调试和问题报告](#调试和问题报告)
+8. [参与开发](#参与开发)
+9. [版本信息](#版本信息)
+10. [安装速查](#安装速查)
+11. [参考链接](#参考链接)
+12. [自测题](#自测题)
+13. [练习](#练习)
+14. [进阶路径](#进阶路径)
+15. [资料口径说明](#资料口径说明)
+
+---
+
 ## 项目概述
 
-shadPS4 是一个开源的 PlayStation 4 模拟器项目，使用 C++ 编写，支持 Windows、Linux、macOS 和 FreeBSD 平台。该项目由社区驱动，目前处于早期开发阶段，已经能够成功运行包括《血源》（Bloodborne）、《黑暗之魂 重制版》（Dark Souls Remastered）和《荒野大镖客》（Red Dead Redemption）在内的多款游戏。
+shadPS4 并不是一个完整的产品——它属于"能跑部分游戏的在研模拟器"，距离"完全兼容"还有距离。项目由社区驱动，目前处于早期开发阶段，已经能够成功运行包括《血源》（Bloodborne）、《黑暗之魂 重制版》（Dark Souls Remastered）和《荒野大镖客》（Red Dead Redemption）在内的多款游戏。
 
 需要特别注意的是，shadPS4 本身是模拟器核心，不包含图形用户界面。如果只是想使用模拟器玩游戏的最终用户，应该下载包含 GUI 的 QtLauncher 版本，而不是直接使用 shadPS4 核心。
 
@@ -262,6 +292,110 @@ cmake --build build
 # QtLauncher 下载（最终用户使用）
 # 访问 https://github.com/shadps4-emu/shadps4-qtlauncher/releases
 ```
+
+## 自测题
+
+以下问题用于检验你对 shadPS4 模拟器的理解程度：
+
+1. **shadPS4 的核心设计理念是什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   shadPS4 采用了现代化的技术栈和设计理念：C++ 重写（整个项目使用 C++ 从零开始编写，而非基于现有的模拟器代码）、跨平台支持（支持 Windows、Linux、macOS 和 FreeBSD）、模块化设计（核心与 GUI 分离，便于维护和扩展）、Vulkan 渲染（使用现代图形 API）。
+   </details>
+
+2. **shadPS4 核心与 QtLauncher 的区别是什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   shadPS4 本身是模拟器核心，不包含图形用户界面。QtLauncher 是包含 GUI 的版本，适合最终用户使用。如果只是想使用模拟器玩游戏，应该下载 QtLauncher 版本，而不是直接使用 shadPS4 核心。
+   </details>
+
+3. **如何获取 PS4 固件文件？有什么法律注意事项？**
+   <details>
+   <summary>点击查看答案</summary>
+   固件模块需要从你合法拥有的 PlayStation 4 游戏机上提取。这些模块必须放置在模拟器的 `sys_modules` 文件夹中。重要提示：这些模块只能从你合法拥有的 PS4 上提取，不得从其他来源获取。
+   </details>
+
+4. **shadPS4 支持哪些平台？有什么限制？**
+   <details>
+   <summary>点击查看答案</summary>
+   支持 Windows、Linux、macOS 和 FreeBSD 平台。macOS 用户需要注意：需要 macOS 15.4 或更高版本、Xcode 15+、支持 Metal 的 GPU。由于 GPU 问题，Intel Mac 目前存在严重 bug。
+   </details>
+
+5. **如何报告 shadPS4 的问题？报告前应该做什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   在报告问题之前，建议先查看 shadPS4 游戏兼容性列表（https://github.com/shadps4-compatibility/shadps4-game-compatibility），了解已知问题和限制。当遇到问题时：1. 先查阅快速入门指南；2. 查看是否已有相同问题的报告；3. 收集详细的错误日志；4. 在 Discord 服务器中寻求帮助。
+   </details>
+
+## 练习
+
+以下练习帮助你实践使用 shadPS4 模拟器：
+
+### 练习 1：在 Linux 上构建 shadPS4
+
+**任务**：在 Linux 平台上从源码构建 shadPS4 模拟器核心。
+
+**步骤**：
+1. 安装依赖：`sudo apt install cmake build-essential vulkan-tools libvulkan-dev python3`（Ubuntu/Debian）或 `sudo dnf install cmake gcc-c++ vulkan-tools vulkan-devel python3`（Fedora）
+2. 克隆仓库：`git clone https://github.com/shadps4-emu/shadPS4.git`
+3. 创建构建目录：`cd shadPS4 && mkdir build && cd build`
+4. 配置：`cmake ..`
+5. 构建：`cmake --build .`
+6. 验证：运行生成的可执行文件，检查是否启动成功
+
+**参考答案**：构建成功后，应该能看到 shadPS4 核心的命令行界面。如果遇到依赖问题，参考 `documents/building-linux.md` 文件。
+
+### 练习 2：配置键盘和鼠标映射
+
+**任务**：根据你的个人喜好，自定义 shadPS4 的键盘和鼠标映射配置。
+
+**步骤**：
+1. 启动 shadPS4（核心或 QtLauncher）
+2. 进入设置菜单
+3. 找到键盘和鼠标映射配置
+4. 修改默认映射（例如，将手柄按钮映射到不同的键盘按键）
+5. 保存配置并测试
+
+**参考答案**：配置成功后，按下你自定义的键盘按键应该能触发对应的 PS4 手柄按钮动作。绑定配置会按游戏保存，所以不同游戏可以有不同映射。
+
+### 练习 3：参与 shadPS4 开发
+
+**任务**：为 shadPS4 项目贡献代码，修复一个简单的问题或添加一个小功能。
+
+**步骤**：
+1. 阅读 CONTRIBUTING.md 文件了解贡献指南
+2. Fork 项目仓库到你的 GitHub 账号
+3. 创建特性分支：`git checkout -b fix-some-issue`
+4. 进行开发：修复 bug 或添加功能
+5. 提交 Pull Request
+6. 等待项目维护者的审查和反馈
+
+**参考答案**：贡献成功后，你的 Pull Request 应该能通过 GitHub Actions 的持续集成检查（代码质量和测试覆盖）。项目维护者会在 Discord 或 GitHub 上提供反馈。
+
+## 进阶路径
+
+如果你希望更深入地使用或开发 shadPS4，可以按照以下路径进行：
+
+1. **掌握多个平台的构建**：不要只停留在你熟悉的平台，尝试在 Windows、Linux、macOS 上分别构建 shadPS4，理解跨平台兼容性的挑战
+2. **研究渲染管线**：深入阅读 shadPS4 的 Vulkan 渲染代码，理解 PS4 的图形 API 是如何被模拟的
+3. **参与逆向工程**：如果你对 PS4 的内部工作机制感兴趣，可以参与 fpPS4、Panda3DS 等项目的逆向工程工作
+4. **改进游戏兼容性**：选择一个你感兴趣的游戏，研究它在 shadPS4 上运行失败的原因，并尝试修复
+5. **优化性能**：研究如何优化 shadPS4 的 CPU 指令翻译、内存管理、渲染性能等
+6. **参与社区**：加入 shadPS4 的 Discord 服务器，与其他开发者和用户交流经验
+7. **文档贡献**：为 shadPS4 编写或改进文档（如构建指南、调试指南、游戏兼容性报告等）
+
+## 资料口径说明
+
+本文档基于以下来源和假设：
+
+1. **信息来源**：本文主要基于 shadPS4 的 GitHub 仓库（https://github.com/shadps4-emu/shadPS4）的 README、文档文件和配置信息。所有数字（Stars、版本信息等）来自仓库公开信息，截至本文写作时。
+2. **构建依赖时效性**：文章描述了不同平台的构建依赖（如 CMake 版本、Vulkan SDK 版本等），但这些依赖的版本会随项目更新而变化。请以仓库最新版本为准。
+3. **固件文件合法性**：文章提及需要从合法拥有的 PS4 上提取固件模块，但具体提取方法、法律边界在不同国家/地区可能有所不同。用户需要自行了解并遵守当地法律。
+4. **游戏兼容性**：文章提及查看游戏兼容性列表，但兼容性状态会随项目开发而不断变化。某个游戏在本文写作时可能不兼容，但在最新版本中可能已经可以运行。
+5. **macOS 支持限制**：文章说明了 macOS 平台的限制（需要 macOS 15.4+、Intel Mac 存在严重 bug 等），但这些限制可能会在未来版本中得到改善。
+6. **局限性**：本文未深入评估 shadPS4 的性能表现、游戏兼容性详细列表、或与其他 PS4 模拟器（如有）的对比。这些评估需要结合实际测试经验和最新版本。
+
+---
 
 ## 参考链接
 

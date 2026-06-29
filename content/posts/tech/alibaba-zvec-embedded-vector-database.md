@@ -453,6 +453,36 @@ const results = await collection.query(new VectorQuery('embedding', [0.4, 0.3, 0
 
 ---
 
+
+
+---
+
+## 练习
+
+### 练习一：本地跑通 Zvec 基础操作
+
+1. 安装 Zvec：`pip install zvec`
+2. 创建 Collection：按照本文"快速上手"部分的示例，创建一个包含 Dense 向量的 Collection
+3. 插入向量：插入 10-100 条测试向量
+4. 执行查询：用 `collection.query()` 执行向量查询，观察返回结果
+5. 记录：安装耗时、创建 Collection 耗时、查询延迟
+
+### 练习二：对比 HNSW 与 DiskANN 的性能特征
+
+1. 准备一个 10M+ 向量的数据集（或用 FAISS 生成随机向量）
+2. 分别用 HNSW 和 DiskANN 索引建索引
+3. 记录：建图时间、内存占用、查询延迟、召回率
+4. 对比：哪种索引适合你的场景？
+
+### 练习三：实现 MultiQuery 混合检索
+
+1. 准备一个包含 Dense 向量、Sparse 向量、FTS 字段的 Collection
+2. 用 `zvec.MultiQuery` 执行混合查询
+3. 调整 RRF 参数（如果 API 支持），观察排序变化
+4. 记录：混合检索的延迟是否可接受？结果质量是否优于单一检索？
+
+---
+
 ## 自测题
 
 ### 问题 1：Zvec 的四大并行机制是什么？
@@ -554,6 +584,23 @@ Zvec 是阿里巴巴开源的。README 里直接写 **"battle-tested within Alib
 - **多语言 SDK 不止 Python**：Go / Rust / Dart 都有官方仓库，不是社区包
 
 阿里系开源常见路径是"先内部验证，再开放"——FastJSON / Dubbo / Nacos / OpenSumi 都走过这条线。Zvec 的可信度主要来自这种"已经在生产扛过流量"的背书，但 README 没给出具体业务场景或规模数据，评估时仍需在自己的 corpus 上做召回和压力测试。
+
+---
+
+
+
+---
+
+## 资料口径说明
+
+本文基于 Zvec 官方仓库（[alibaba/zvec](https://github.com/alibaba/zvec)）公开文档整理，需要说明的边界：
+
+1. **性能数据来源**：文中提到的性能数据（召回率、延迟、内存占用）来自官方文档和社区反馈，未在标准化测试环境中验证，实际性能因硬件配置和数据分布而异。
+2. **版本时效性**：Zvec 处于活跃开发阶段（v0.1.0 → v0.5.0，共 8 个版本），API 可能变化，请以[官方 GitHub 仓库](https://github.com/alibaba/zvec)的最新代码为准。
+3. **索引选择**：HNSW/IVF/DiskANN 的适用场景因数据规模、查询模式、硬件配置而异，本文提供的决策表仅供参考，建议用户在实际数据集上做压测。
+4. **多语言 SDK**：文中提到 5 种语言 SDK，实际可用性因语言而异，建议查看对应 SDK 仓库的 README。
+5. **阿里内部验证**：README 提到"battle-tested within Alibaba Group"，但未提供具体业务场景或规模数据，评估时需在自己的数据集上做召回和压力测试。
+6. **判断边界**：本文对 Zvec 适用场景的判断基于其设计目标和技术特征，具体采用决策请结合业务场景评估。
 
 ---
 

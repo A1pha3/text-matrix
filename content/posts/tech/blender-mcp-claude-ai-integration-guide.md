@@ -10,6 +10,32 @@ tags = ['AI', 'Claude', 'MCP', '3D 建模']
 
 BlenderMCP：通过 MCP 协议用 Claude 控制 Blender D 建模
 
+## 学习目标
+
+通过本文，你将掌握以下核心能力：
+
+- 理解 BlenderMCP 的架构和通信协议（TCP Socket + JSON）
+- 掌握 Blender 插件和 MCP 服务器的安装配置
+- 学会在 Claude Desktop 和 Cursor 中配置 BlenderMCP
+- 能够使用自然语言控制 Blender 进行 3D 建模
+- 理解 Poly Haven 资产集成和 Hyper3D Rodin 模型生成的使用方式
+- 掌握常见问题的排查方法
+
+## 目录
+
+1. [项目概述](#项目概述)
+2. [核心架构](#核心架构)
+3. [功能特性](#功能特性)
+4. [安装配置](#安装配置)
+5. [使用方法](#使用方法)
+6. [技术细节](#技术细节)
+7. [故障排除](#故障排除)
+8. [自测题](#自测题)
+9. [练习](#练习)
+10. [进阶路径]
+
+---
+
 . 项目概述
 
 BlenderMCP 是一款开源的 Blender 与 AI 连接器，通过 Model Context Protocol（MCP）将 Claude AI 与 Blender 对接，实现通过自然语言直接控制 Blender 进行 3D 建模、场景创建和对象操作[^1]。
@@ -258,7 +284,70 @@ DISABLE_TELEMETRY=true uvx blender-mcp
 
 ---
 
-. 相关资源
+## 自测题
+
+1. **BlenderMCP 的通信协议是什么？**
+   <details>
+   <summary>查看答案</summary>
+   答案：基于 TCP Socket 的 JSON 协议。Claude Desktop ↔ MCP Server ↔ Socket ↔ Blender Addon ↔ Blender Python API。
+   </details>
+
+2. **BlenderMCP 包含哪两个核心组件？**
+   <details>
+   <summary>查看答案</summary>
+   答案：Blender 插件（`addon.py`）和 MCP 服务器（`src/blender_mcp/server.py`）。前者在 Blender 内创建 Socket 服务器，后者实现 MCP 协议与插件通信。
+   </details>
+
+3. **如何让 BlenderMCP 支持 Poly Haven 资产？**
+   <details>
+   <summary>查看答案</summary>
+   答案：在 Blender 的 BlenderMCP 标签页中勾选相应选项，然后在 Claude 中就可以用自然语言搜索并下载 Poly Haven 的 3D 模型、纹理和 HDRI。
+   </details>
+
+4. **`execute_blender_code` 工具存在什么安全风险？**
+   <details>
+   <summary>查看答案</summary>
+   答案：该工具允许在 Blender 中执行任意 Python 代码，具有潜在危险性。生产环境中使用前应先保存工作，并谨慎授予权限。
+   </details>
+
+5. **如何禁用 BlenderMCP 的匿名遥测？**
+   <details>
+   <summary>查看答案</summary>
+   答案：两种方法：在 Blender 偏好设置中取消勾选遥测同意复选框；或在启动时设置环境变量 `DISABLE_TELEMETRY=true`。
+   </details>
+
+---
+
+## 练习
+
+1. **完成 BlenderMCP 的完整安装**：在自己的机器上安装 Blender 插件和 MCP 服务器，配置 Claude Desktop，并成功用自然语言创建一组简单场景（比如「创建一个红色金属球的低多边形场景」）。
+2. **尝试 Poly Haven 集成**：通过 Claude 搜索并下载一个 Poly Haven 的 HDRI 贴图，应用到场景中，观察渲染效果变化。
+3. **尝试 Hyper3D Rodin 生成**：通过 Claude 调用 Hyper3D Rodin 生成一个自定义 3D 模型（比如「一个花园侏儒」），并导入到当前场景中。
+
+---
+
+## 进阶路径
+
+1. **阅读源码**：深入理解 `addon.py` 和 `server.py` 的实现，理解 MCP 协议如何映射到 Blender Python API。
+2. **扩展工具能力**：基于现有代码，添加新的 MCP 工具（比如批量导入、动画控制、材质节点编辑等）。
+3. **集成到其他 MCP 客户端**：研究如何让 BlenderMCP 在更多支持 MCP 的编辑器（VS Code、Cursor 等）中工作。
+4. **优化生成质量**：研究如何通过更好的 prompt 设计，让 Claude 生成更复杂的 3D 场景和模型。
+5. **贡献社区**：向 BlenderMCP 仓库提交 PR，修复 bug 或添加新功能，参与 [Discord 社区](https://discord.gg/z5apgR8TFU) 讨论。
+
+---
+
+## 资料口径说明
+
+1. **信息来源**：本文基于 BlenderMCP 仓库的 README、官方教程视频和可验证的代码示例编写。
+2. **版本时效性**：BlenderMCP 处于活跃开发阶段，功能特性、配置方式和支持的 Blender 版本可能随版本变化，请以仓库最新代码为准。
+3. **前置要求**：本文假设读者已安装 Blender 3.0+ 和 Python 3.10+，并了解基本的 3D 建模概念。
+4. **MCP 客户端配置**：Claude Desktop 和 Cursor 的配置路径可能因操作系统和版本而异，请参考各自官方文档确认配置位置。
+5. **Poly Haven 和 Hyper3D 的可用性**：这些第三方服务的 API 和集成方式可能变化，本文仅描述写作时的集成方式。
+6. **安全提醒**：`execute_blender_code` 允许执行任意 Python 代码，生产环境使用前请评估风险并考虑沙箱隔离。
+
+---
+
+## 相关资源
 
 - **完整教程视频**：[YouTube 教程](https://www.youtube.com/watch?v=lCyQ717DuzQ)
 - **官方 Discord**：[加入社区](https://discord.gg/z5apgR8TFU)

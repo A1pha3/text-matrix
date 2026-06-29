@@ -8,6 +8,30 @@ categories: ["技术笔记"]
 tags: ["订阅管理", "自托管", "Docker", "PocketBase", "Go", "React", "SaaS"]
 ---
 
+## 学习目标
+
+通过本文，你将掌握以下核心能力：
+
+- 理解 Renewlet 的技术架构和 Design Choices（Go + PocketBase + React 19）
+- 掌握一键 Docker 部署的完整流程
+- 学会配置多种通知渠道（Telegram、企业微信、Webhook 等）
+- 理解内置调度器与外部调度器的取舍
+- 能够判断 Renewlet 是否适合你的场景
+
+## 目录
+
+1. [项目概览](#项目概览)
+2. [技术架构](#技术架构)
+3. [核心功能](#核心功能)
+4. [快速部署](#快速部署)
+5. [常用运维命令](#常用运维命令)
+6. [适用场景与边界](#适用场景与边界)
+7. [自测题](#自测题)
+8. [练习](#练习)
+9. [进阶路径](#进阶路径)
+
+---
+
 ## 项目概览
 
 **Renewlet**（[zhiyingzzhou/renewlet](https://github.com/zhiyingzzhou/renewlet)）是一个自托管的订阅管理工具，用一个界面把个人或团队用到的 SaaS、AI 工具、云服务和开发工具统一管起来：谁在什么时候扣费、每月花多少钱、哪些服务快到期、通知要发到哪里。
@@ -145,6 +169,69 @@ docker compose pull && docker compose up -d
 
 - 需要多用户权限隔离和审计日志的企业管理场景（当前架构是单容器单数据库，无细粒度 RBAC）
 - 需要自动从信用卡账单抓取订阅的服务（目前是纯手动录入）
+
+## 自测题
+
+1. **Renewlet 的技术栈是什么？为什么选择这个组合？**
+   <details>
+   <summary>查看答案</summary>
+   答案：前端用 React 19（Vite），后端用 Go + PocketBase。选择理由：PocketBase 内置 Admin UI 和认证体系，省去管理面板开发量；Go 内存占用低，单容器 128MiB 够跑；React 19 + Vite 生态成熟。
+   </details>
+
+2. **Renewlet 的通知调度有哪两种模式？**
+   <details>
+   <summary>查看答案</summary>
+   答案：内置调度器（默认每分钟检查）和外部调度器（Vercel Cron、GitHub Actions、crontab）。可以在 `.env` 中设置 `NOTIFICATION_SCHEDULER_ENABLED="false"` 关闭内置调度器。
+   </details>
+
+3. **如果想在外部系统中触发通知检查，应该调用哪个接口？**
+   <details>
+   <summary>查看答案</summary>
+   答案：`curl -H "Authorization: Bearer $CRON_SECRET" "https://YOUR_DOMAIN/api/cron/notifications"`。可以加 `dryRun=1` 只跑逻辑不实际发通知，加 `force=1` 强制触发。
+   </details>
+
+4. **Renewlet 适合多用户权限隔离的企业场景吗？**
+   <details>
+   <summary>查看答案</summary>
+   答案：不适合。当前架构是单容器单数据库，无细粒度 RBAC（基于角色的访问控制）。
+   </details>
+
+5. **部署完成后，第一次访问应该打开哪个 URL？**
+   <details>
+   <summary>查看答案</summary>
+   答案：`http://<服务器IP>:3000/setup`，用于创建第一个管理员账号（同时也是 PocketBase Admin UI 的初始账号）。
+   </details>
+
+---
+
+## 练习
+
+1. **在自己的服务器或本地 Docker 环境部署 Renewlet**，完成初始化配置，并添加 3 条订阅记录（选择你实际在用的 SaaS 工具）。
+2. **配置一个通知渠道**（推荐用 Telegram Bot 或 Bark），设置一个订阅的提前提醒（比如提前 3 天），验证通知是否能正常到达。
+3. **尝试用外部 crontab 触发通知检查**：在宿主机上添加一条 crontab 记录，每天固定时间调用 `/api/cron/notifications` 接口，并观察日志输出。
+
+---
+
+## 进阶路径
+
+1. **深入 PocketBase**：阅读 PocketBase 文档，理解其数据模型、认证体系和 Admin UI 的定制方式。
+2. **定制通知模板**：修改后端代码，支持更丰富的通知内容（比如附上订阅详情链接、月度成本图表等）。
+3. **集成账单抓取**：研究如何通过信用卡账单 API 或邮件解析自动抓取订阅记录，减少手动录入。
+4. **多用户场景**：如果确实需要团队多人使用，可以基于 PocketBase 的多租户能力做二次开发，或等待官方支持。
+5. **备份与迁移**：研究 PocketBase 的备份机制，确保 `data/` 目录定期备份到远程存储。
+
+---
+
+## 资料口径说明
+
+1. **信息来源**：本文基于 Renewlet 仓库的 README、部署脚本和源码结构编写，所有技术细节均来自官方文档和可验证的代码示例。
+2. **版本时效性**：Renewlet 处于活跃开发阶段，具体配置项、环境变量和 API 接口可能随版本变化，请以仓库最新代码为准。
+3. **部署前提**：本文的部署步骤假设读者有基本的 Docker 和 Linux 命令行使用经验，生产环境请额外考虑 HTTPS、备份、监控等运维需求。
+4. **通知渠道可用性**：Telegram Bot、企业微信机器人等外部服务需要自行申请凭据，本文不涉及第三方服务的申请流程。
+5. **适用性判断**：本文给出的「适用场景与边界」基于技术架构分析，实际选型请结合团队规模、预算、合规要求综合判断。
+6. **示例与事实边界**：本文中的命令示例来自官方部署脚本，实际执行时请先阅读脚本内容，理解每一步的行为后再执行。
+
+---
 
 ## 总结
 

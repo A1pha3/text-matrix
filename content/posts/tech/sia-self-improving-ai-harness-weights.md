@@ -10,10 +10,32 @@ tags: ["AI Agent", "自改进", "Harness Engineering", "Benchmark", "OpenHands"]
 
 # SIA（Self-Improving AI）：同时改 harness 和权重的自改进 Agent 框架
 
-> **目标读者**：在跑 Agent benchmark、调 Agent harness 提示词、想理解"权重 + 提示词双轴微调"的研究者 / 工程师
-> **核心问题**：能不能让一个 Agent 在没有人类重写 prompt 的情况下，靠自己**同时调 harness（提示词 / 工具装配）和 weight（模型微调）**两轴，把 benchmark 分数单调推上去？
-> **难度**：⭐⭐⭐⭐（需要熟悉 Agent 框架 + benchmark 评估管线 + LLM 微调）
-> **来源**：GitHub [hexo-ai/sia](https://github.com/hexo-ai/sia)，MIT / Python 3.11+ / 论文 arXiv:2605.27276
+## 学习目标
+
+在阅读完本文后，你应该能够：
+
+1. **理解 SIA 的核心创新**：掌握为什么同时更新 harness（提示词 + 工具装配）和 weight（模型参数）能够比单一通道取得更好的 benchmark 结果
+2. **区分三类 Agent 的职责**：理解 Meta-Agent、Target Agent、Feedback Agent 在自改进循环中的不同角色和协作方式
+3. **掌握 H 通道与 W 通道的适用边界**：判断什么时候应该走 H-only、W-only 还是 W+H 策略
+4. **配置和运行 SIA**：能够使用 `sia run` 命令启动自改进循环，并理解 Profile 与 Provider 的配置方式
+5. **设计自定义任务包**：掌握如何为新的科研或工程任务编写 `task.md`、`reference_target_agent.py` 和 `evaluate.py`，接入 SIA 框架
+
+## 目录
+
+1. [学习目标](#学习目标)
+2. [核心判断](#一核心判断)
+3. [系统地图](#二系统地图)
+4. [真实任务流](#三真实任务流从零跑到w+h-sota)
+5. [Benchmark 解读](#四benchmark-解读测的是什么不能推什么)
+6. [Profile 与 Provider](#五profile-与-provider可拆可换的最小配置)
+7. [评估管线的契约](#六评估管线的契约)
+8. [适用边界与决策建议](#七适用边界与决策建议)
+9. [引用](#八引用)
+10. [参考链接](#九参考链接)
+11. [自测题](#自测题)
+12. [练习](#练习)
+13. [进阶路径](#进阶路径)
+14. [资料口径说明](#资料口径说明)
 
 ---
 
@@ -237,6 +259,108 @@ python evaluate.py --gen-dir runs/run_1/gen_1
 3. **写自己的 `evaluate.py`**：哪怕只跑 5 个样本，能让 Feedback 拿到标量就行
 4. **先看 H-only 是不是够了**：论文里 H-only 在不少任务上已经能到基线的 1.2×，W 通道**贵且不一定总是更优**
 5. **W 通道慎重上**：先确认 H 通道的 improvement 理由稳定，再开 LoRA / SFT 训练循环
+
+---
+
+## 自测题
+
+以下问题用于检验你对 SIA 框架的理解程度：
+
+1. **SIA 的"两轴"指的是什么？为什么同时更新这两轴比单一轴效果更好？**
+   <details>
+   <summary>点击查看答案</summary>
+   H 轴（Harness）更新 Target Agent 的 prompt、工具调用循环、retry 策略；W 轴（Weights）直接微调 Target 模型参数。同时更新两轴效果更好的原因是：harness 演进挖的是"这个 prompt 让不让模型把答案写对"，weight 演进挖的是"模型自己有没有这个能力"——两者正交、不可互相替代。
+   </details>
+
+2. **SIA 的三类 Agent（Meta / Target / Feedback）各自的职责是什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   Meta-Agent 读 `task.md` 写初始 Target Agent；Target Agent 跑任务、留下执行轨迹；Feedback Agent 读执行轨迹 + 评估分，决定改 harness 还是改 weights。
+   </details>
+
+3. **SIA 的评估管线有什么特点？为什么这一点很重要？**
+   <details>
+   <summary>点击查看答案</summary>
+   每代结束 `evaluate.py` 跑出 `results.json`，分数字段直接被注入下代 Feedback 的 prompt。这意味着自改进的"标量奖励"是真的标量，不是 LLM 自评。这一点很重要，因为它避免了 LLM 自评带来的偏差和不可靠性。
+   </details>
+
+4. **在 LawBench 任务上，SIA-W+H 取得了什么结果？与基线相比提升多少？**
+   <details>
+   <summary>点击查看答案</summary>
+   SIA-W+H 在 LawBench 拿到 70.1% Top-1 准确率。基线是 45%，H-only 是 56.6%，W-only 是 64.3%。W+H 相对基线提升 25.1 个百分点。
+   </details>
+
+5. **什么时候应该使用 SIA？什么时候不应该？**
+   <details>
+   <summary>点击查看答案</summary>
+   应该使用：手上有可量化的标量奖励（benchmark 排行榜、Kaggle 比赛、内部评测集），任务对 Target Agent 的能力是端到端、长链路的，愿意接受生成 N 代的计算开销。
+   不应该使用：任务没有"对/错"标量（只有"用户满意"），样本量太小（每代少于 100 例），想跑"单 Agent + 短期反思"，任务需要长上下文推理（100k+ token 单题）。
+   </details>
+
+## 练习
+
+以下练习帮助你实践使用 SIA 框架：
+
+### 练习 1：运行内置任务 gpqa
+
+**任务**：使用 SIA 运行内置的 gpqa 任务，观察自改进循环的运行过程。
+
+**步骤**：
+1. 克隆 SIA 仓库：`git clone https://github.com/hexo-ai/sia.git`
+2. 安装依赖：`pip install -e .`
+3. 运行任务：`sia run --task gpqa --max_gen 5 --run_id 1`
+4. 启动 dashboard：`sia web`，访问 `http://127.0.0.1:8000`
+5. 观察每代的 `target_agent.py` 源码、improvement 计划、accuracy-across-generations 折线图
+
+**参考答案**：运行成功后，在 dashboard 中应该能看到每代的改进计划、准确率变化、以及 Feedback Agent 决定的 H/W/W+H 更新策略。gpqa 任务是单机几分钟级的，适合快速验证。
+
+### 练习 2：为 SIA 编写自定义 evaluate.py
+
+**任务**：为一个简单的分类任务编写 `evaluate.py`，让 SIA 能够运行自改进循环。
+
+**步骤**：
+1. 创建任务目录：`sia/tasks/my-task/`
+2. 编写 `task.md`：描述任务输入/输出/评估指标
+3. 编写 `evaluate.py`：实现 `evaluate(gen_dir) -> dict` 函数
+4. 编写 `reference_target_agent.py`：提供一个简单的参考实现
+5. 运行：`sia run --task my-task --max_gen 3`
+
+**参考答案**：`evaluate.py` 的关键是返回一个 dict，其中至少有一个数值字段作为主分数。例如，分类任务可以返回 `{"accuracy": 0.85, "f1": 0.72}`。SIA 会把这个主分数注入到下代 Feedback 的 prompt 中。
+
+### 练习 3：分析 SIA 在 MLE-Bench Hard 上的结果
+
+**任务**：深入研究 SIA 在 MLE-Bench Hard（真实 Kaggle ML 比赛）上的表现，理解为什么 W+H 能够 SOTA。
+
+**步骤**：
+1. 阅读 SIA 论文的 MLE-Bench Hard 章节
+2. 分析"端到端 ML 工程能力"包含哪些子任务（数据清洗/建模/调参/提交）
+3. 思考：为什么在这些子任务上，H 通道和 W 通道各有贡献？
+4. 设计一个实验，分别测量 H-only、W-only、W+H 在每个子任务上的表现
+
+**参考答案**：MLE-Bench Hard 测的是端到端 ML 工程能力。H 通道的贡献在于：改进 prompt 让 Agent 更好地组织 ML pipeline、选择特征、调参策略。W 通道的贡献在于：让模型本身掌握更好的建模方法和参数理解。两者结合，覆盖了"知道怎么组织代码"和"知道怎么选模型"两个层面。
+
+## 进阶路径
+
+如果你希望更深入地研究或使用 SIA 框架，可以按照以下路径进行：
+
+1. **复现论文实验**：先复现论文中的四个内置任务（gpqa / lawbench / longcot-chess / spaceship-titanic），理解每代改进的具体原因
+2. **研究 Feedback 策略**：深入分析 Feedback Agent 的决定逻辑——它什么时候选择 H 通道、什么时候选择 W 通道、依据是什么
+3. **自定义 W 通道微调器**：SIA 的 W 通道不绑死一种微调器，尝试接入 LoRA、SFT、RLHF 等不同微调方法
+4. **研究代际收敛性**：分析自改进循环是否一定会收敛、收敛到什么水平、会不会过拟合到 evaluate.py 的偏差上
+5. **扩展到多任务场景**：研究如何让一个 SIA 实例同时改进多个相关任务（如多个 Kaggle 比赛），实现知识迁移
+6. **研究评估管线的鲁棒性**：如果 evaluate.py 的标量是噪声的、有偏的，自改进循环会如何表现？这需要理论分析和实验验证
+7. **与生产系统结合**：研究如何将 SIA 的自改进能力部署到生产系统中，而不是直接跑 benchmark
+
+## 资料口径说明
+
+本文档基于以下来源和假设：
+
+1. **信息来源**：本文主要基于 SIA 的 GitHub 仓库（https://github.com/hexo-ai/sia）的 README、架构文档、配置文档，以及论文 arXiv:2605.27276。所有 benchmark 数字来自论文报告。
+2. **Benchmark 结果时效性**：论文报告的 benchmark 结果是截至论文提交时的快照。随着模型能力、baseline 方法的演进，这些数字可能会变化。
+3. **W+H 增益的泛化性**：论文在四类任务上分别报告了 H-only、W-only、W+H 的结果，都显示 W+H 最优。但这不能推出"在任意自定义任务上 SIA-W+H 都会 SOTA"——论文里任务包都自带 `reference_target_agent.py`、`evaluate.py`、打分逻辑。如果任务没有明确标量奖励，Feedback 决定 H/W 的策略会失效。
+4. **计算资源需求**：文章未详细说明运行 SIA 所需的计算资源（GPU 类型、内存、存储）。对于需要 W 通道（微调）的任务，通常需要多卡或高性能 GPU。
+5. **Profile 与 Provider 配置**：文章说明了 Profile 与 Provider 的解耦设计，但不同模型、不同 endpoint 的实际兼容性需要用户自行验证。
+6. **局限性**：本文未深入讨论 SIA 的潜在失败模式（如 Feedback Agent 做出错误决定、evaluate.py 的标量有噪声、多代循环后过拟合等）。这些是需要进一步研究的问题。
 
 ---
 

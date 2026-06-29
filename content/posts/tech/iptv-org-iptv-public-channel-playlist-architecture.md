@@ -11,6 +11,34 @@ tags: ["GitHub", "TypeScript", "IPTV", "GitHub Actions", "开源"]
 # iptv-org/iptv 架构拆解：一个 12 万星仓库如何用 GitHub Issues + Actions 当 CMS
 
 > 一句话核心判断：**iptv-org/iptv 把 GitHub Issues 当作无服务器 CMS，用 GitHub Actions 当 ETL（Extract-Transform-Load）引擎，每天自动生成 600+ 个公开 m3u 播放列表，整个仓库不存任何视频文件，只存频道链接元数据**。这是一个用 Git 原生能力拼出"自动化内容运营"的典型案例，比传统 CMS 方案轻量得多，但代价是把"数据完整性"和"链接存活率"全部押注在社区贡献者的提交习惯上。
+
+## 学习目标
+
+通过本文，你将掌握以下核心能力：
+
+- 理解 iptv-org/iptv 的整体架构和数据流水线
+- 掌握「Issue 作为 CMS」的核心抽象设计
+- 理解 9 个维度生成器如何切出 600+ 个播放列表
+- 能够复现「一个频道从 Issue 到播放列表」的完整生命周期
+- 理解 GitHub App Token 的权限边界设计
+- 能够判断这种「Git 原生 ETL」架构是否适合你的场景
+
+## 目录
+
+1. [项目坐标](#一项目坐标)
+2. [系统地图：从 Issue 到播放列表](#二系统地图从-issue-到播放列表)
+3. [Issue 作为 CMS：核心抽象](#三issue-作为-cms核心抽象)
+4. [生成器矩阵：从一份源数据切出 600+ 个播放列表](#四生成器矩阵从一份源数据切出-600-个播放列表)
+5. [一个频道从 Issue 到播放列表的完整生命周期](#五一个频道从-issue-到播放列表的完整生命周期)
+6. [Bot 与权限边界](#六bot-与权限边界)
+7. [为什么不存视频文件，以及法律边界](#七为什么不存视频文件以及法律边界)
+8. [采用建议与边界](#八采用建议与边界)
+9. [自测题](#自测题)
+10. [练习](#练习)
+11. [进阶路径](#进阶路径)
+
+---
+
 ## 一、项目坐标
 
 | 字段 | 值 |
@@ -261,6 +289,69 @@ jobs:
 1. **不要 fork 整个仓库做镜像**，直接用它的 `index.country.m3u` 等切片文件作为数据源即可。
 2. **如果要写 EPG 解析器**，用 `@iptv-org/sdk`（已被 iptv 自身用），里面封装了 stream-id → EPG-id 的映射。
 3. **如果要贡献**，必须遵守 CONTRIBUTING.md 的字段规范（比如国家用 ISO 3166-1 alpha-2 代码 `cn` 而非 `CN` 或 `China`），否则 lint 阶段会被拒绝。
+
+## 自测题
+
+1. **iptv-org/iptv 仓库里存储的是什么？**
+   <details>
+   <summary>查看答案</summary>
+   答案：不存任何视频文件，只存频道链接元数据（m3u 播放列表）。所有 600+ 个 m3u 文件都是 ETL 产物，不是手工维护的。
+   </details>
+
+2. **iptv-org/iptv 的「CMS」是什么？**
+   <details>
+   <summary>查看答案</summary>
+   答案：GitHub Issues。用户在 Issue 里贴上频道流链接，Actions 每天跑一次，解析 Issue、合并流、写入 m3u 文件、自动关闭 Issue。
+   </details>
+
+3. **`iptv-bot` 的权限是如何最小化的？**
+   <details>
+   <summary>查看答案</summary>
+   答案：workflow 默认 token 只有 `contents: read` 权限；需要写入时切换到 GitHub App Token（通过 `tibdex/github-app-token`），Token 的 scope 由 App 本身决定，且 bot 只能推 `streams/` 目录。
+   </details>
+
+4. **9 个生成器分别是按什么维度切分播放列表的？**
+   <details>
+   <summary>查看答案</summary>
+   答案：全量、国家、国家子区域（省/州）、城市、地区（洲）、语言、分类、源头域名、类别聚合索引。
+   </details>
+
+5. **为什么 iptv-org 能运行 10+ 年不被 GitHub 下架？**
+   <details>
+   <summary>查看答案</summary>
+   答案：仓库只存流媒体链接（linking service），不存视频本身；且明确声明响应版权移除请求（DMCA takedown process）。这种「链接集合 + 不存储内容」模式在版权法里属于链接服务，平台不承担内容责任。
+   </details>
+
+---
+
+## 练习
+
+1. **本地运行 ETL 流水线**：用 `gh act` 或本地安装依赖后运行 `npm run api:load` 和 `npm run playlist:update`，观察 `streams/` 目录的变化。
+2. **写一个简单的 Generator**：参考 `scripts/generators/categories.ts`，写一个新生成器按「分辨率」维度切分播放列表（比如 1080p 以上、720p、480p 以下）。
+3. **分析链接存活率**：写一个简单的脚本，随机抽查 100 个 m3u 链接，用 `curl -I` 检查 HTTP 状态码，统计存活率并分析原因。
+
+---
+
+## 进阶路径
+
+1. **深入 ETL 引擎**：阅读 `scripts/commands/playlist/update.ts` 和 `scripts/utils.ts`，理解 Issue 解析、流合并、去重排序的完整逻辑。
+2. **研究 GitHub Actions 安全实践**：分析 `.github/workflows/update.yml`，理解 GitHub App Token、权限最小化、本地调试路径（`gh act`）的设计思路。
+3. **二次开发**：基于 iptv-org 的架构，为己用或企业内部知识库设计「Issue 当 CMS」的方案（比如 Bug 跟踪、文档审核、数据录入等）。
+4. **EPG 解析**：研究 `iptv-org/epg` 仓库，理解如何从数百个来源下载并解析 EPG（电子节目指南）。
+5. **法律边界研究**：深入研究版权法中「链接服务」vs「内容托管」的边界，理解为什么 iptv-org 能长期运营而类似项目可能被下架。
+
+---
+
+## 资料口径说明
+
+1. **信息来源**：本文基于 iptv-org/iptv 仓库的 README、源码结构（`package.json` scripts、`scripts/` 目录）和 GitHub Actions workflow 编写，所有技术细节均来自可验证的代码和文档。
+2. **数据时效性**：文中提到的 Stars 数（约 118k）、调度频率（每天 UTC 0 点）来自 2026-06 的观察，实际数据请参考仓库最新状态。
+3. **架构分析边界**：本文的架构拆解基于静态代码分析，未实际运行完整 ETL 流水线。实际运行时可能存在本文未覆盖的边界情况或最新代码变更。
+4. **法律判断边界**：本文关于「链接服务」的法律边界分析基于一般原理，不构成法律建议。实际运营此类项目请咨询法律专业人士。
+5. **链接存活率**：本文未对 m3u 链接的存活率做实际测试，链接失效是常态，使用方需自行做心跳检测。
+6. **适用场景判断**：本文给出的「采用建议与边界」基于技术架构分析，实际决策需结合团队规模、法律环境、技术栈综合判断。
+
+---
 
 ## 九、总结
 

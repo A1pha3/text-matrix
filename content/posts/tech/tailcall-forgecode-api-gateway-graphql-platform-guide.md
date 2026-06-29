@@ -8,6 +8,18 @@ categories: ["技术笔记"]
 tags: ["GraphQL", "API Gateway", "Rust", "TypeScript", "微服务"]
 ---
 
+## 📋 学习目标
+
+通过本文，您将掌握：
+
+1. **理解 Tailcall ForgeCode 的核心价值** — 了解 API Gateway 和 GraphQL 平台的优势和使用场景
+2. **掌握 Tailcall 的安装与基本使用** — 学会如何安装和启动 Tailcall 服务
+3. **学会 Schema Stitching** — 了解如何将多个下游服务的 Schema 组合成统一入口
+4. **掌握 Live Queries** — 学会如何使用 Server-Sent Events 实现实时查询
+5. **了解 BFF 模式** — 理解 Backend for Frontend 的设计理念和实践
+
+---
+
 # Tailcall ForgeCode：19.3K Stars·API Gateway + GraphQL 平台·TypeScript+Rust 双引擎·Schema Stitching
 
 ## 一、项目概述

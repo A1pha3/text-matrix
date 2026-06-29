@@ -17,6 +17,31 @@ tags: ["沙箱", "AI Agent", "代码执行", "微软", "安全隔离"]
 
 ---
 
+## 学习目标
+
+通过本文，你将掌握以下核心能力：
+
+- 理解 MXC 的分层隔离思路和跨平台抽象设计
+- 掌握 MXC 的 Schema 双轨机制（稳定版 vs 实验版）
+- 学会使用 TypeScript SDK 执行沙箱代码
+- 理解 MXC 的状态生命周期 API（provision → start → exec → stop → deprovision）
+- 识别 MXC 当前的安全边界和适用场景
+- 能够判断 MXC 是否适合你的 Agent/CI/IDE 项目
+
+## 目录
+
+1. [为什么 MXC 值得看](#一为什么-mxc-值得看)
+2. [核心判断](#二核心判断)
+3. [系统地图：MXC 的三层结构](#三系统地图mxc-的三层结构)
+4. [平台支持矩阵](#四平台支持矩阵来自-readme-实测)
+5. [任务流案例：跑一段「AI 生成的 Python」到底发生了什么](#五任务流案例跑一段ai-生成的-python到底发生了什么)
+6. [Schema 版本与「稳定/实验」双轨](#六schema-版本与稳定实验双轨)
+7. [显式风险：微软自己说的「不是安全边界」](#七显式风险微软自己说的不是安全边界)
+8. [谁应该关注，谁可以先观望](#八谁应该关注谁可以先观望)
+9. [阅读路径建议](#九阅读路径建议)
+
+---
+
 ## 一、为什么 MXC 值得看
 
 过去两年 AI Agent 的爆发，把「让大模型自己跑代码」从一个 Demo 推到了生产链路。Claude Code、Codex CLI、各种 Coding Agent 在用户机器上自动 `npm install`、执行 shell 命令、改写文件系统——这背后每一行 `child_process.spawn` 都在隐式承担一个沙箱责任。
@@ -224,6 +249,69 @@ MXC 在仓库里同时维护两套 Schema，这是工程上很务实的设计：
 5. **挑一个 backend 文档**：`docs/bwrap-support/` 或 `docs/macos-support/` 等，看真实后端如何接收 JSON
 
 MXC 的最大价值在于「把跨平台沙箱这件事拉到统一的策略面」。对 Agent 平台来说，它不是「要不要用」的问题，而是「等它 GA 之后要不要第一时间替换现有自研适配」的问题。
+
+---
+
+## 自测题
+
+1. **MXC 的核心抽象是什么？**
+   <details>
+   <summary>查看答案</summary>
+   答案：JSON Schema（mxc-config）+ 多 Backend 适配 + 状态生命周期 API。业务侧只写一份配置，原生 binary 根据平台派发到对应后端。
+   </details>
+
+2. **MXC 目前是否可以作为生产级安全边界使用？**
+   <details>
+   <summary>查看答案</summary>
+   答案：不可以。微软在 README 顶部明确写了 WARNING：当前任何 MXC profile 都不应被视为安全边界，下游策略存在已知过度宽松的问题。
+   </details>
+
+3. **如果想从 `bubblewrap` 升级到 `microvm`，需要修改业务代码吗？**
+   <details>
+   <summary>查看答案</summary>
+   答案：不需要。只需修改一行配置（改 backend 字段），不用动业务代码。这是 MXC「策略统一、后端可换」设计的核心价值。
+   </details>
+
+4. **`0.6.0-alpha` 和 `0.7.0-dev` 两个 Schema 版本有什么区别？**
+   <details>
+   <summary>查看答案</summary>
+   答案：`0.6.0-alpha` 是稳定版，推荐新代码使用；`0.7.0-dev` 是实验版，包含实验后端和状态生命周期 API，调用时需要显式声明 `experimental: true`。
+   </details>
+
+5. **MXC 的状态生命周期 API 包含哪五个阶段？**
+   <details>
+   <summary>查看答案</summary>
+   答案：provision → start → exec → stop → deprovision。这五个阶段避免每次都从零拉起 sandbox，适合需要长连接的 Agent 工具调用场景。
+   </details>
+
+---
+
+## 练习
+
+1. **在自己的 macOS 机器上安装 MXC SDK**，尝试运行 README 中的 SDK 例子，观察 sandbox 的执行日志。
+2. **修改 SDK 例子中的 `filesystem` 配置**，尝试限制只能读取 `~/.cache/` 目录，禁止写入任何其他目录，验证隔离是否生效。
+3. **对比 `bubblewrap`（Linux）和 `seatbelt`（macOS）的策略表达差异**，思考如何写出一份在两个平台上都能正确生效的 MXC 配置。
+
+---
+
+## 进阶路径
+
+1. **深入后端实现**：阅读 `src/` 目录下的 Rust workspace，理解 `wxc-exec` / `lxc-exec` / `mxc-exec-mac` 如何接收 JSON 配置并派发到对应后端。
+2. **参与策略规范反馈**：阅读 `docs/sandbox-policy/v1/policy.md`，在实际使用中记录策略过宽或过严的案例，向微软反馈。
+3. **集成到 Agent 框架**：尝试将 MXC 接入自己维护的 Agent 框架或 CI 系统，替换现有的自研沙箱适配。
+4. **安全审计**：在 MXC GA 之前，不要将其当作唯一的安全防线，叠加审计、速率限制、资源限额等额外保护层。
+5. **关注微 VM 路线**：跟踪 `microvm`（NanVix）和 `hyperlight` 的演进，评估是否需要从 `bubblewrap` 升级到微 VM 后端。
+
+---
+
+## 资料口径说明
+
+1. **信息来源**：本文基于 Microsoft MXC 仓库的 README、SDK 文档和 `docs/sandbox-policy/v1/policy.md` 编写，所有技术细节均来自官方文档。
+2. **版本时效性**：MXC 处于 early preview 阶段，Schema 版本（`0.6.0-alpha` / `0.7.0-dev`）和后端支持情况可能快速变化，请以仓库最新代码为准。
+3. **安全声明**：微软明确声明当前 MXC profile 不应被视为安全边界，本文中所有关于安全性的讨论均以此为前提，不构成安全建议。
+4. **平台支持**：本文中的平台支持矩阵来自 README 的「Platforms」章节，实际可用性可能因操作系统版本、构建配置而有所差异。
+5. **代码示例**：本文中的 TypeScript 代码示例来自 SDK 的 README，实际使用时请参考最新版 SDK 的 API 文档。
+6. **判断与建议边界**：本文给出的「谁应该关注」和「采用建议」基于技术分析，实际决策需要结合团队的具体场景、风险承受能力和技术栈。
 
 ---
 

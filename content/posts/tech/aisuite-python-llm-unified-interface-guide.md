@@ -379,19 +379,46 @@ A: 先确认命令和参数正确（`npx -y @modelcontextprotocol/server-filesys
 
 ---
 
-## 十六、自测清单
+## 十六、自测题
 
-在关闭本文前，检查你是否已经能回答下面这些问题：
+用以下 5 题检验理解程度。答案折叠在每题下方。
 
-1. **aisuite 的两层抽象分别是什么？各解决什么问题？** 下层 Chat Completions API（统一多 provider 接口 + tool calling 循环）；上层 Agents API（Agent 定义 + Runner 执行器 + 工具集 + 审批策略 + 状态持久化）
-2. **`model` 参数的 `provider:model` 格式有什么好处？** 一个字符串同时携带 provider 信息和模型名，路由器解析后直接分发，调用方不需要为每个 provider 实例化不同的 client
-3. **`max_turns` 的作用是什么？为什么需要它？** 控制 tool calling 循环上限，防止模型反复调用工具却不收敛导致死循环或超成本
-4. **Toolkits 预制了哪三类工具？为什么是这三类？** files（文件读写）、git（仓库操作）、shell（命令执行）——绝大多数开发类 Agent 的工具需求都落在这三类里
-5. **Tool Policy 的两种形式分别怎么用？** 白名单审批（`RequireApprovalPolicy(tools=[...])` 列出需要人工确认的工具；callable（传入自定义函数）实现细粒度规则
-6. **State Store 的三种 backend 分别适合什么场景？** `in-memory`（默认，进程结束即丢失）；`file`（单机开发测试）；`postgres`（生产级持久化，支持多进程共享和断点续跑）
-7. **aisuite 和同类方案相比，差异化集中在哪几块？** 工具相关抽象（Toolkits / MCP / Policies / State Stores）
+**Q1**: aisuite 的两层抽象分别是什么？各解决什么问题？
 
-如果以上 7 项你都能确认，说明你已经抓住了 aisuite 的核心设计要点。
+<details>
+<summary>查看答案</summary>
+答：下层 Chat Completions API（统一多 provider 接口 + tool calling 循环）；上层 Agents API（Agent 定义 + Runner 执行器 + 工具集 + 审批策略 + 状态持久化）。
+</details>
+
+**Q2**: `model` 参数的 `provider:model` 格式有什么好处？
+
+<details>
+<summary>查看答案</summary>
+答：一个字符串同时携带 provider 信息和模型名，路由器解析后直接分发，调用方不需要为每个 provider 实例化不同的 client。
+</details>
+
+**Q3**: `max_turns` 的作用是什么？为什么需要它？
+
+<details>
+<summary>查看答案</summary>
+答：控制 tool calling 循环上限，防止模型反复调用工具却不收敛导致死循环或超成本。
+</details>
+
+**Q4**: Toolkits 预制了哪三类工具？为什么是这三类？
+
+<details>
+<summary>查看答案</summary>
+答：files（文件读写）、git（仓库操作）、shell（命令执行）——绝大多数开发类 Agent 的工具需求都落在这三类里。
+</details>
+
+**Q5**: aisuite 和同类方案相比，差异化集中在哪几块？
+
+<details>
+<summary>查看答案</summary>
+答：工具相关抽象（Toolkits / MCP / Policies / State Stores）。
+</details>
+
+---
 
 ---
 
