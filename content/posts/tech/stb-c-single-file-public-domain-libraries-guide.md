@@ -6,7 +6,7 @@ slug = 'stb-c-single-file-public-domain-libraries'
 description = 'stb 是 Sean Barrett 发起的单文件 C/C++ 公共领域库项目，包含 21 个精选库，零依赖零配置，支持图像加载、字体渲染、音频处理等场景。'
 categories = ['技术笔记']
 tags = ['C/C++', '开源', '工具', '库']
----
++++
 
 ## 📋 学习目标
 
