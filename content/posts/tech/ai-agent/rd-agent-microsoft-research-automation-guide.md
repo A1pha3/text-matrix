@@ -9,6 +9,21 @@ tags: ["RD-Agent", "Microsoft", "AI Agent", "量化交易", "MLE-bench", "自动
 description: "微软研究院开源的自动化研发智能体框架 RD-Agent 完全指南，涵盖 RD 循环、MLE-bench 最强性能、RD-Agent(Q) 量化交易等全方位讲解。"
 ---
 
+## 学习目标
+
+阅读本文后，你将能够：
+
+1. **理解 RD-Agent 的核心设计**：掌握 R（研究）和 D（开发）自动化循环的原理
+2. **部署 RD-Agent**：在本地或服务器上安装和配置 RD-Agent
+3. **运行 MLE-bench**：使用 RD-Agent 参加机器学习工程竞赛
+4. **应用 RD-Agent(Q)**：将 RD-Agent 应用到量化交易场景
+5. **扩展 RD-Agent**：自定义新的研究循环和开发策略
+6. **贡献到 RD-Agent**：理解代码结构，提交 PR 和改进建议
+
+---
+
+
+
 # RD-Agent：微软自动化研发智能体完全指南
 
 > 预计阅读时间：35 分钟 | 难度：⭐⭐⭐⭐
@@ -320,3 +335,114 @@ Research → Develop → Verify → (迭代)
 📄 **论文**：[arXiv](https://arxiv.org/abs/2505.14738)
 
 🎥 **演示视频**：[YouTube](https://www.youtube.com/watch?v=JJ4JYO3HscM)
+
+
+
+---
+
+## 自测题
+
+### 问题 1：RD-Agent 的核心设计是什么？
+
+<details>
+<summary>查看答案</summary>
+
+RD-Agent 的核心设计是"R"（研究）和"D"（开发）自动化循环：提出想法 → 实现 → 验证 → 改进。
+
+</details>
+
+### 问题 2：RD-Agent 在 MLE-bench 上的表现如何？
+
+<details>
+<summary>查看答案</summary>
+
+RD-Agent 是 MLE-bench 的最强选手，在 75 个 Kaggle 竞赛上展现出顶尖的机器学习工程能力。
+
+</details>
+
+### 问题 3：RD-Agent(Q) 是什么？
+
+<details>
+<summary>查看答案</summary>
+
+RD-Agent(Q) 是将 RD-Agent 应用到量化交易场景的版本，自动化研究和开发量化交易策略。
+
+</details>
+
+### 问题 4：如何部署 RD-Agent？
+
+<details>
+<summary>查看答案</summary>
+
+RD-Agent 是 Python 项目，可以通过 pip 安装，或在 Docker 中运行。
+
+</details>
+
+### 问题 5：如何贡献到 RD-Agent？
+
+<details>
+<summary>查看答案</summary>
+
+阅读 CONTRIBUTING.md，提交 PR、修复 Bug、改进文档、分享使用案例。
+
+</details>
+
+---
+
+## 练习
+
+### 练习 1：部署 RD-Agent 并运行示例
+
+**任务**：在本地部署 RD-Agent，运行官方示例，理解 R&D 循环。
+
+**参考答案**：
+```bash
+# 参考 RD-Agent GitHub 仓库的 README
+```
+
+### 练习 2：参加 MLE-bench 竞赛
+
+**任务**：使用 RD-Agent 参加一个 Kaggle 竞赛，提交结果。
+
+**参考答案**：
+```python
+# 参考 RD-Agent 的 MLE-bench 示例代码
+```
+
+### 练习 3：扩展 RD-Agent 支持新的模型
+
+**任务**：修改 RD-Agent 的代码，支持新的 LLM（如本地部署的模型）。
+
+**参考答案**：
+```python
+# 参考 RD-Agent 的模型配置代码
+```
+
+---
+
+## 进阶路径
+
+如果你已经掌握本文内容，可以继续深入以下方向：
+
+1. **深入研究 RD-Agent 架构**：了解核心模块、循环机制、策略实现
+2. **优化 R&D 循环**：研究如何提升想法质量、实现效率、验证准确性
+3. **应用到新领域**：将 RD-Agent 应用到其他数据驱动领域（如生物信息、材料科学）
+4. **贡献到 RD-Agent 项目**：提交 PR、修复 Bug、改进文档
+5. **构建企业级部署**：研究如何在企业环境中部署 RD-Agent（数据隐私、权限管理、审计日志）
+6. **集成到 ML 平台**：将 RD-Agent 集成到 MLflow、Kubeflow 等 ML 平台
+7. **研究自动化研发**：深入研究自动化机器学习、AutoML、AI 研究的未来方向
+
+---
+
+## 资料口径说明
+
+本文档基于以下来源和假设：
+
+1. **信息来源**：本文基于 RD-Agent GitHub 仓库（https://github.com/microsoft/RD-Agent）的 README、论文和文档
+2. **版本时效性**：本文描述的是 RD-Agent 的主分支代码，可能与你使用的版本存在差异
+3. **性能数据**：本文提到的 MLE-bench 性能数据基于微软研究院的评估结果，实际表现可能因任务而异
+4. **量化交易**：RD-Agent(Q) 的量化交易能力是基于研究原型，实际投资需谨慎
+5. **更新记录**：本文最后更新于 2026-04-01。如果项目有重大更新，请及时更新本文档
+
+---
+

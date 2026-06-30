@@ -15,6 +15,37 @@ description: "智能体依赖图编排框架，支持并行扇出、迭代循环
 
 ---
 
+## 学习目标
+
+阅读本文后，你将能够：
+
+1. **理解 AgentFlow 的核心概念**：掌握依赖图编排、并行扇出、迭代循环等基本机制
+2. **设计智能体管道**：使用 `>>` 管道符连接节点，构建清晰的依赖链
+3. **实现并行处理**：使用 `fanout()` 实现整数模式、列表模式、字典模式的并行扇出
+4. **配置远程执行**：使用零配置 SSH/EC2/ECS 远程执行智能体
+5. **应用迭代优化**：使用 `on_failure` 和 `success_criteria` 实现自动重试循环
+
+---
+
+## 目录
+
+- [§2 项目概述](#§2-项目概述)
+- [§3 核心概念](#§3-核心概念)
+- [§4 并行扇出（Fanout）](#§4-并行扇出 fanout)
+- [§5 迭代循环](#§5-迭代循环)
+- [§6 远程执行](#§6-远程执行)
+- [§7 Scratchboard](#§7-scratchboard)
+- [§8 安装与部署](#§8-安装与部署)
+- [§9 CLI 命令](#§9-cli-命令)
+- [§10 示例管道](#§10-示例管道)
+- [§11 项目结构](#§11-项目结构)
+- [§12 推荐做法](#§12-推荐做法)
+- [§13 常见问题](#§13-常见问题)
+- [§14 总结](#§14-总结)
+- [§15 附录：API 参考](#§15-附录 api-参考)
+
+---
+
 ## §2 项目概述
 
 ### 2.1 什么是 AgentFlow？
@@ -537,6 +568,132 @@ agentflow inspect pipeline.py
 |------|------|
 | **GitHub** | https://github.com/shouc/agentflow |
 | **安装** | `curl -fsSL https://raw.githubusercontent.com/shouc/agentflow/master/install.sh \| bash` |
+
+---
+
+## 自测题
+
+### 问题 1：AgentFlow 的核心编排机制是什么？
+
+<details>
+<summary>查看答案</summary>
+
+AgentFlow 使用有向无环图（DAG）组织智能体节点，节点之间通过 `>>` 管道符连接，表示依赖关系。
+
+</details>
+
+### 问题 2：如何实现并行扇出？
+
+<details>
+<summary>查看答案</summary>
+
+使用 `fanout()` 函数，支持三种模式：
+- 整数模式：创建 N 个相同副本
+- 列表模式：为每个元素创建一个副本
+- 字典模式：创建笛卡尔积组合
+
+</details>
+
+### 问题 3：如何实现迭代循环？
+
+<details>
+<summary>查看答案</summary>
+
+使用 `on_failure` 属性实现迭代循环，当节点失败时自动重试上游节点，直到满足成功条件（`success_criteria`）或达到最大迭代次数（`max_iterations`）。
+
+</details>
+
+### 问题 4：如何配置远程执行？
+
+<details>
+<summary>查看答案</summary>
+
+通过 `target` 参数配置远程执行，支持三种方式：
+- EC2：`{"kind": "ec2", "region": "us-east-1"}`
+- ECS Fargate：`{"kind": "ecs", "region": "us-east-1"}`
+- SSH：`{"kind": "ssh", "host": "server", "username": "deploy"}`
+
+</details>
+
+### 问题 5：Scratchboard 的作用是什么？
+
+<details>
+<summary>查看答案</summary>
+
+Scratchboard 是跨所有智能体共享的内存文件，用于在并行任务间共享数据。通过 `Graph(scratchboard=True)` 启用。
+
+</details>
+
+---
+
+## 练习
+
+### 练习 1：构建基础代码审查管道
+
+**任务**：创建一个 AgentFlow 管道，使用 Codex 扫描代码文件，然后并行审查多个文件，最后汇总审查结果。
+
+**提示**：
+- 使用 `codex(task_id="scan", prompt="List files to review.")` 扫描文件
+- 使用 `fanout()` 并行审查多个文件
+- 使用 `codex(task_id="summary", prompt="Merge findings: ...")` 汇总结果
+
+**参考答案**：
+```python
+# 参考示例代码在 §4.5 代码审查示例
+```
+
+### 练习 2：实现迭代实现循环
+
+**任务**：创建一个迭代循环，使用 Codex 生成代码，Claude 审查，如果审查不通过（不是 LGTM），则重新生成代码。
+
+**提示**：
+- 使用 `success_criteria=[{"kind": "output_contains", "value": "LGTM"}]` 定义成功条件
+- 使用 `review.on_failure >> write` 实现循环
+
+**参考答案**：
+```python
+# 参考示例代码在 §5.3 迭代示例
+```
+
+### 练习 3：配置远程 EC2 执行
+
+**任务**：修改示例管道，使其在远程 EC2 实例上运行代码生成任务。
+
+**提示**：
+- 使用 `target={"kind": "ec2", "region": "us-east-1"}` 配置远程执行
+- 使用 `shared` 参数让多个节点共享同一实例
+
+**参考答案**：
+```python
+# 参考示例代码在 §6.2 EC2 执行 和 §6.5 共享实例
+```
+
+---
+
+## 进阶路径
+
+如果你已经掌握本文内容，可以继续深入以下方向：
+
+1. **贡献到 AgentFlow 项目**：阅读 `CONTRIBUTING.md`，了解如何贡献代码、文档或示例
+2. **探索高级模式**：研究 `examples/` 目录中的高级示例（如多智能体辩论、批量模糊测试）
+3. **集成到 CI/CD**：将 AgentFlow 管道集成到 GitHub Actions 或 Jenkins，实现自动化代码审查
+4. **自定义智能体类型**：扩展 AgentFlow 以支持其他 AI 智能体（如 Kimi、GPT）
+5. **性能优化**：研究如何优化大规模并行执行的性能和成本
+6. **监控和调试**：构建管道执行监控系统，实时查看节点状态和日志
+7. **生产化部署**：将 AgentFlow 部署到生产环境，考虑高可用、容错、安全等因素
+
+---
+
+## 资料口径说明
+
+本文档基于以下来源和假设：
+
+1. **信息来源**：本文基于 AgentFlow GitHub 仓库（https://github.com/shouc/agentflow）的 README、示例代码和 API 文档。
+2. **版本时效性**：本文描述的是 AgentFlow 主分支（master）的代码，可能与你使用的版本存在差异。建议对照官方文档验证。
+3. **代码示例**：本文的代码示例来自官方示例，未经完整运行验证。在实际使用前，请先在小规模场景中测试。
+4. **性能数据**：本文未提供性能基准测试数据。实际性能取决于智能体类型、并行度、远程执行配置等因素。
+5. **限制说明**：AgentFlow 是一个相对年轻的项目（Stars 277，提交数 715），可能存在未发现的 Bug 或未完成的功能。生产使用前请充分测试。
+6. **更新记录**：本文最后更新于 2026-04-01。如果项目有重大更新，请及时更新本文档。
 
 ---
 

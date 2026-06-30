@@ -1,5 +1,6 @@
 ---
 title: "在 Cloudflare 免费层自托管一个跨 AI 工具的记忆层：rahilp/second-brain-cloudflare 仓库深度拆解"
+slug: "rahilp-second-brain-cloudflare-mcp-memory-layer-guide"
 date: 2026-06-29T02:01:00+08:00
 draft: false
 author: 钳岳星君

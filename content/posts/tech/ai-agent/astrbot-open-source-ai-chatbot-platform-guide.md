@@ -9,6 +9,21 @@ tags: ["AstrBot", "AI聊天机器人", "开源", "IM集成", "Telegram", "Discor
 description: "全面解析 AstrBot (28.4k Stars)：开源一站式AI Agent聊天机器人平台，支持QQ/微信/Telegram/飞书等15+平台，集成OpenAI/Claude/Gemini/Ollama等模型，1000+插件，Agent Sandbox。"
 ---
 
+## 学习目标
+
+阅读本文后，你将能够：
+
+1. **理解 AstrBot 的核心价值**：掌握一站式 AI Agent 聊天机器人平台的定位和应用场景
+2. **部署 AstrBot**：在本地或服务器上安装和配置 AstrBot
+3. **集成 IM 平台**：连接 QQ、微信、Telegram、飞书等 15+ 聊天平台
+4. **配置 AI 模型**：接入 OpenAI、Claude、Gemini、本地模型等主流 LLM
+5. **扩展功能**：使用 1000+ 插件增强 AstrBot 的能力
+6. **安全部署**：理解 Agent Sandbox 的安全机制，实现安全的代码执行
+
+---
+
+
+
 # AstrBot：开源一站式 AI Agent 聊天机器人平台完全指南
 
 > **目标读者**：想搭建 IM 平台机器人的开发者、AI 应用实践者
@@ -422,6 +437,125 @@ docker-compose up -d
 - GitHub Issues：https://github.com/AstrBotDevs/AstrBot/issues
 - QQ 群：多个中文群组（详见 GitHub README）
 - Discord：https://discord.gg/hAVk6tgV36
+
+---
+
+
+
+
+---
+
+## 自测题
+
+### 问题 1：AstrBot 的核心优势是什么？
+
+<details>
+<summary>查看答案</summary>
+
+AstrBot 的核心优势：
+1. **多平台支持**：一个项目支持 15+ 聊天平台
+2. **多模型支持**：接入所有主流 LLM
+3. **插件生态**：1000+ 社区插件
+4. **安全执行**：内置 Agent Sandbox
+
+</details>
+
+### 问题 2：如何开始使用 AstrBot？
+
+<details>
+<summary>查看答案</summary>
+
+1. 安装 AstrBot（Docker 或 pip）
+2. 配置 AI 模型（API Key）
+3. 连接 IM 平台（如 Telegram）
+4. 安装插件（可选）
+5. 测试对话
+
+</details>
+
+### 问题 3：AstrBot 支持哪些 IM 平台？
+
+<details>
+<summary>查看答案</summary>
+
+AstrBot 支持 QQ、微信、Telegram、飞书、钉钉、Discord 等 15+ 平台。
+
+</details>
+
+### 问题 4：如何保证代码执行的安全？
+
+<details>
+<summary>查看答案</summary>
+
+AstrBot 内置 Agent Sandbox，在隔离环境中执行代码，防止恶意代码影响主机。
+
+</details>
+
+### 问题 5：如何扩展 AstrBot 的功能？
+
+<details>
+<summary>查看答案</summary>
+
+使用插件市场，安装 1000+ 社区插件，或自己开发插件。
+
+</details>
+
+---
+
+## 练习
+
+### 练习 1：部署 AstrBot 并连接 Telegram
+
+**任务**：在服务器上部署 AstrBot，连接 Telegram，实现 AI 对话。
+
+**参考答案**：
+```bash
+# 参考 AstrBot 官方文档的部署指南
+```
+
+### 练习 2：开发一个简单的 AstrBot 插件
+
+**任务**：开发一个插件，让 AstrBot 能够查询天气。
+
+**参考答案**：
+```python
+# 参考 AstrBot 插件开发文档
+```
+
+### 练习 3：配置多模型 fallback
+
+**任务**：配置 AstrBot 使用多个 AI 模型，当主模型失败时自动切换到备用模型。
+
+**参考答案**：
+```yaml
+# 参考 AstrBot 配置文件中的模型配置
+```
+
+---
+
+## 进阶路径
+
+如果你已经掌握本文内容，可以继续深入以下方向：
+
+1. **深入研究 AstrBot 架构**：了解核心模块、消息流转、插件机制
+2. **开发高级插件**：开发复杂的插件（如集成第三方 API、实现多步骤工作流）
+3. **贡献到 AstrBot 项目**：提交 PR、修复 Bug、改进文档
+4. **构建企业级部署**：研究高可用、负载均衡、监控告警
+5. **集成到现有系统**：将 AstrBot 集成到企业的 IM、CRM、工单系统
+6. **优化性能和成本**：研究如何选择合适的模型、控制 token 使用量、优化响应速度
+7. **实现安全加固**：构建企业级安全机制（认证、授权、审计、风控）
+
+---
+
+## 资料口径说明
+
+本文档基于以下来源和假设：
+
+1. **信息来源**：本文基于 AstrBot GitHub 仓库（https://github.com/AstrBotDevs/AstrBot）的 README 和文档
+2. **版本时效性**：本文描述的是 AstrBot v4.22.2（2026-03-28），可能与你使用的版本存在差异
+3. **平台支持**：本文提到的 IM 平台支持情况基于 2026 年 3 月的信息，未来可能增加或变化
+4. **插件数量**：本文提到的 1000+ 插件是基于社区统计，实际数量可能变化
+5. **更新记录**：本文最后更新于 2026-03-31。如果项目有重大更新，请及时更新本文档
 
 ---
 

@@ -2,6 +2,10 @@
 date = '2026-06-28T13:56:19+08:00'
 draft = false
 title = 'Ai Quant Book Multi Agent Quant Trading Guide Optimized'
+slug = 'ai-quant-book-multi-agent-quant-trading-guide'
+description = '系统解读 ai-quant-book 开源量化教程，梳理多智能体架构、22 课课程地图、学习路径，以及从 Regime Detection 到 Risk Agent、Execution Agent 的适用范围。'
+categories = ['技术笔记']
+tags = ['量化交易', '多智能体', 'AI Agent', '量化', 'Python']
 +++
 
 ## 练习

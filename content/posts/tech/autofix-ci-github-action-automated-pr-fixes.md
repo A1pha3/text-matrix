@@ -297,7 +297,7 @@ jobs:
 
 ### 场景 1：修复没生效
 
-**症状**：Push 代码后,CI 运行成功,但没有 `autofix` commit 出现。
+**症状**：Push 代码后，CI 运行成功，但没有 `autofix` commit 出现。
 
 **排查步骤**：
 

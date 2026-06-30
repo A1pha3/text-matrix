@@ -10,6 +10,34 @@ tags: ["Tesla", "Elixir", "自托管", "Grafana", "MQTT"]
 
 # TeslaMate：自托管 Tesla 车辆数据记录器
 
+## 学习目标
+
+通过本文，你将能够：
+
+- 理解 TeslaMate 的项目定位：自托管 Tesla 车辆数据记录器，不是"另一款 Tesla App"
+- 读懂 TeslaMate 的架构：TeslaMate (Elixir) + PostgreSQL + Grafana + Mosquitto
+- 理解 vampire drain 的设计取舍：车一进入睡眠就停止轮询
+- 知道 TeslaMate 的关键能力：高精度行驶数据记录、约 20 张预置 Grafana 仪表盘、MQTT 集成
+- 能够评估 TeslaMate 是否适合你的使用场景
+
+## 目录
+
+1. [项目定位](#一项目定位)
+2. [为什么要自托管 Tesla 数据](#二为什么要自托管-tesla-数据)
+3. [架构总览](#三架构总览)
+4. [关键能力清单](#四关键能力清单)
+5. [部署路径](#五部署路径)
+6. [典型使用场景](#六典型使用场景)
+7. [适用边界与不适用人群](#七适用边界与不适用人群)
+8. [与其他 Tesla 数据方案对比](#八与其他-tesla-数据方案对比)
+9. [开始之前](#九开始之前)
+10. [自测题](#自测题)
+11. [练习](#练习)
+12. [进阶路径](#进阶路径)
+13. [资料口径说明](#资料口径说明)
+
+---
+
 ## 一、项目定位
 
 TeslaMate 是一款自托管（self-hosted）的 Tesla 车辆数据记录器，把官方 API 没有持续提供的细粒度数据——每一次充电、每一度消耗、每一次行驶——持续落盘到本地 Postgres，再用 Grafana 仪表盘可视化，最后通过本地 MQTT Broker 把车况广播给 Home Assistant / Node-RED / Telegram 等自动化系统。
@@ -263,6 +291,30 @@ TeslaMate 镜像（`teslamate/teslamate:latest`）也支持 arm64，树莓派 4 
 - 反向代理（Nginx / Caddy / Traefik）—— 如果想从公网访问
 - 心理准备：第一次 OAuth 流程对国内网络不一定友好
 
+## 常见问题（FAQ）
+
+### TeslaMate 会增加车辆的 vampire drain（驻车耗电）吗？
+
+不会。TeslaMate 采用流式订阅模式，只在车辆主动 wake 时才向云端拉数据，一旦车辆进入 sleep 状态就立刻断开连接。设计目标是把车辆尽可能快地放回睡眠状态。
+
+### TeslaMate 的 License 是 AGPL-3.0，对我有什么影响？
+
+AGPL-3.0 是强 copyleft 许可证。如果你修改 TeslaMate 代码并提供网络服务（SaaS 化），你需要开源你的修改。个人自托管使用没有问题。
+
+### TeslaMate 和 TeslaFi 有什么区别？
+
+TeslaFi 是第三方云服务（已停服），数据存在第三方；TeslaMate 是自托管，所有数据本地存储。TeslaMate 提供更完整的数据记录、零耗电、MQTT 集成、20+ 仪表盘。
+
+### 我需要什么硬件来运行 TeslaMate？
+
+一台能 7×24 运行的机器：树莓派 4B+、旧笔记本、NAS、旧台式机、NUC 都可以。需要 Docker 和 docker-compose。
+
+### TeslaMate 的数据库会多大？
+
+取决于记录精度和时长。一般每天新增几 MB 数据。PostgreSQL + TimescaleDB 可以高效存储时序数据，运行一年可能在 GB 级别。
+
+---
+
 ## 十、参考资源
 
 - 官方仓库：[github.com/teslamate-org/teslamate](https://github.com/teslamate-org/teslamate)
@@ -271,6 +323,85 @@ TeslaMate 镜像（`teslamate/teslamate:latest`）也支持 arm64，树莓派 4 
 - 仪表盘截图：[docs.teslamate.org/docs/screenshots/](https://docs.teslamate.org/docs/screenshots/)
 - 商标策略：[TRADEMARK.md](https://github.com/teslamate-org/teslamate/blob/main/TRADEMARK.md)
 - CLA：[teslamate-org/legal/CLA.md](https://github.com/teslamate-org/legal/blob/main/CLA.md)
+
+---
+
+## 自测题
+
+1. **TeslaMate 的核心定位是什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   自托管 Tesla 车辆数据记录器，跑在你自己的机器上，所有数据本地存储，不依赖任何第三方云服务。
+   </details>
+
+2. **TeslaMate 的架构由哪几个组件构成？**
+   <details>
+   <summary>点击查看答案</summary>
+   4 个核心组件：TeslaMate (Elixir)、PostgreSQL (TimescaleDB)、Grafana、Mosquitto (MQTT)。
+   </details>
+
+3. **TeslaMate 怎么解决 vampire drain 问题？**
+   <details>
+   <summary>点击查看答案</summary>
+   采用流式订阅模式，只在车辆主动 wake 时才向云端拉数据，一旦车辆进入 sleep 状态就立刻断开连接。
+   </details>
+
+4. **TeslaMate 提供多少张预置 Grafana 仪表盘？**
+   <details>
+   <summary>点击查看答案</summary>
+   约 20 张，包括 Battery Health、Charge Level、Drives、Efficiency、Vampire Drain 等。
+   </details>
+
+5. **TeslaMate 的 License 是什么？有什么影响？**
+   <details>
+   <summary>点击查看答案</summary>
+   AGPL-3.0。如果是商用 fleet（车队）管理或要做 SaaS 化，需要谨慎评估 copyleft 条款。
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：部署 TeslaMate
+1. 准备一台 Linux 主机或 NAS
+2. 安装 Docker 和 docker-compose
+3. 复制本文的 docker-compose.yml 示例
+4. 修改密码和配置
+5. 运行 `docker-compose up -d`
+6. 访问 `http://<host>:4000` 完成 Tesla OAuth 授权
+
+### 练习 2：配置 Home Assistant 集成
+1. 在 Home Assistant 安装 HACS
+2. 通过 HACS 安装 TeslaMate 集成
+3. 配置 MQTT Broker 地址
+4. 查看 Home Assistant 中是否出现 TeslaMate 实体
+5. 创建自动化：当充电完成时发送通知
+
+### 练习 3：分析电池健康
+1. 让 TeslaMate 运行至少 6 个月
+2. 打开 Grafana，查看 Battery Health 仪表盘
+3. 分析电池组实际容量 vs 标称容量
+4. 估算电池衰减程度
+
+---
+
+## 进阶路径
+
+1. **深入研究 TeslaMate 架构**：理解 Elixir/Phoenix/LiveView、PostgreSQL/TimescaleDB、Grafana、MQTT 的技术栈
+2. **自定义 Grafana 仪表盘**：基于 TeslaMate 数据库，创建自己的 Grafana 仪表盘
+3. **开发 TeslaMate 扩展**：基于 TeslaMate 的 MQTT 输出，开发自己的应用或集成
+4. **研究 Tesla API**：深入理解 Tesla 官方 API，理解 TeslaMate 的数据采集原理
+5. **参与 TeslaMate 社区**：提交 PR、报告 bug、改进文档
+
+---
+
+## 资料口径说明
+
+1. **信息来源**：本文基于 teslamate-org/teslamate 仓库的 README（2026-06 版本）、官方文档和社区讨论
+2. **版本时效性**：TeslaMate 仍在活跃维护中，本文描述的功能和部署方式可能在未来版本中变化
+3. **技术准确性**：本文的技术描述基于公开文档，未验证所有功能在实际环境中的表现
+4. **Tesla API 限制**：Tesla 偶尔会调整 API，TeslaMate 的兼容性取决于社区维护
+5. **使用风险**：使用 TeslaMate 需要 Tesla 账号授权，请遵守 Tesla 的使用条款
 
 ---
 

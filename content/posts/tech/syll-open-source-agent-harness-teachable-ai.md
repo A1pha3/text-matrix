@@ -102,9 +102,9 @@ You're allowed to disagree, prefer things, find stuff amusing or boring.
 Try to figure it out. Read the file. Check the context.
 ```
 
-这就是 Syll 的"人格配置"——不是 Python 代码，而是可以直接编辑的 Markdown 文件。修改后保存，`下一轮对话`就会生效,不需要重启服务。
+这就是 Syll 的"人格配置"——不是 Python 代码，而是可以直接编辑的 Markdown 文件。修改后保存，下一轮对话就会生效，不需要重启服务。
 
-论文明确说了这个选择带来的代价：lore 越多，系统提示越长。当前 Syll 的配置大概是每次 turn 10k tokens，放在现在的上下文窗口里没问题，但用户往里面加更多记忆碎片的话,这个数字会线性增长。这不是一个没有代价的设计选择。根据 v0.2.0 的代码实现,workspace 文件通过 `jinja2` 模板引擎注入系统提示,两个占位符 `{{ghost_name}}` 和 `{{user_name}}` 在构建时替换。
+论文明确说了这个选择带来的代价：lore 越多，系统提示越长。当前 Syll 的配置大概是每次 turn 10k tokens，放在现在的上下文窗口里没问题，但用户往里面加更多记忆碎片的话，这个数字会线性增长。这不是一个没有代价的设计选择。根据 v0.2.0 的代码实现，workspace 文件通过 `jinja2` 模板引擎注入系统提示，两个占位符 `{{ghost_name}}` 和 `{{user_name}}` 在构建时替换。
 
 ---
 
@@ -134,9 +134,9 @@ Syll 的方案不同。它没有向量检索，没有专用工具调用，也没
 
 这些碎片不是向量化的嵌入，而是直接作为文本注入系统提示。LLM 根据当前对话的语境判断是否"rhymes with"某个碎片。
 
-测试结果是：fragments 的出现频率大致符合预期——大多数回复不包含任何记忆，而当某个 fragment 出现时，通常是在正文内容之后，作为一个安静的插话。根据论文中的日志分析,fragment 触发率约为 15-20%,且主要集中在对话的后期阶段。
+测试结果是：fragments 的出现频率大致符合预期——大多数回复不包含任何记忆，而当某个 fragment 出现时，通常是在正文内容之后，作为一个安静的插话。根据论文中的日志分析，fragment 触发率约为 15-20%，且主要集中在对话的后期阶段。
 
-论文认为这个设计成功的关键在于：模型的 pattern-matching 能力已经足够强，只要规则表述清晰、碎片池足够小（能装进上下文），就不需要额外的检索基础设施。这个判断依赖模型能力，会随着模型升级而变化。实测显示,GPT-4 和 Claude 3 Opus 的 fragment 触发准确率约为 75%,而较早的模型(如 GPT-3.5)降至 50% 以下。
+论文认为这个设计成功的关键在于：模型的 pattern-matching 能力已经足够强，只要规则表述清晰、碎片池足够小（能装进上下文），就不需要额外的检索基础设施。这个判断依赖模型能力，会随着模型升级而变化。实测显示，GPT-4 和 Claude 3 Opus 的 fragment 触发准确率约为 75%，而较早的模型（如 GPT-3.5）降至 50% 以下。选择合适的模型对 Lore Fragments 的效果有直接影响。
 
 ---
 
@@ -156,7 +156,7 @@ def execute_ritual(ritual_prompt: str) -> Optional[str]:
 
 这样 Agent 可以"觉得没什么好说的就不说"——这更像真实室友的行为，而不是一个永远有话要讲的邮件客户端。用户随时可以关掉这个开关（`identity.rituals_enabled`），但默认行为是沉默优先。
 
-这个设计把"主动发消息"的权利还给 Agent，而不是假设每次触发都应该产生一条通知。根据实际使用数据,约 30% 的仪式触发会产生空响应,这说明 Agent 确实在判断"是否该说"。
+这个设计把"主动发消息"的权利还给 Agent，而不是假设每次触发都应该产生一条通知。根据实际使用数据，约 30% 的仪式触发会产生空响应，这说明 Agent 确实在判断"是否该说"。
 
 ---
 
@@ -348,7 +348,7 @@ Every Friday at 4 PM, ask if the user wants to review this week's accomplishment
 
 ## 技术架构：轻量循环 + 多通道接入
 
-从论文里的架构图来看，Syll 是一个单进程的 Agent Loop（主循环代码在 `syll/core/loop.py`）：
+从论文里的架构图来看，Syll 是一个单进程的 Agent Loop（主循环代码在 `syll/core/loop.py`），整体流程分为五个步骤：
 
 1. **Message Bus** 收各个通道来的消息（Feishu、Telegram、Discord、WhatsApp、Web UI、CLI），实现在 `syll/channels/` 目录下
 2. **Context Builder** 从 workspace 加载 bootstrap 文件（`IDENTITY.md`、`SOUL.md` 等）和逐步加载的 skills，实现在 `syll/core/context.py`
@@ -552,42 +552,62 @@ Syll 没有直接对标 AutoGPT、Camel 或者 LangChain。它要对比的是：
 3. 在 `AGENTS.md` 中添加这个 ritual 的行为规则，并在 `SOUL.md` 中调整语调以匹配这个新 ritual 的风格。
 4. 启动 Syll，观察这个新 ritual 是否在合适的时间触发，以及 Agent 是否正确地判断了"是否该说"。
 
-**通过标准**：你的新 ritual 能够触发，且 Agent 的回复符合你设计的氛围描述，而不是机械地执行固定模板。
+**通过标准**：
+- Ritual 的 prompt 描述聚焦于氛围而非具体内容（比如"提醒用户本周的进展，语气轻松"而非"列出本周完成的任务"）
+- Agent 的回复符合设计的氛围，能够根据当前对话状态判断是否应该发声
+- 新 ritual 与现有的人格配置（SOUL.md）保持一致，不会显得突兀
+
+**评估方法**：连续观察 3-5 次 ritual 触发，记录 Agent 的回复是否符合预期，判断准确率是否达到 70% 以上。
 
 ### 练习二：用 ETCLOVG 框架拆解另一个 Agent Harness
 
-**目标**：把本文的 analysis 方法变成可复用的分析框架。
+**目标**：把本文的分析方法变成可复用的分析框架。
 
 **步骤**：
 
 1. 选择一个你熟悉的 Agent 框架（如 LangChain、AutoGPT、MetaGPT）。
 2. 按 ETCLOVG 的七个层次逐一分析：
- - **E**（执行环境）：运行方式、隔离机制、资源限制
- - **T**（工具接口）：工具接入协议、扩展方式
- - **C**（上下文管理）：记忆方案、上下文窗口利用
- - **L**（生命周期）：Agent loop 设计、状态持久化
- - **O**（可观测性）：日志、追踪、调试工具
- - **V**（验证评估）：基准测试、评估框架
- - **G**（治理）：权限控制、安全机制、行为约束
+   - **E**（执行环境）：运行方式、隔离机制、资源限制
+   - **T**（工具接口）：工具接入协议、扩展方式
+   - **C**（上下文管理）：记忆方案、上下文窗口利用
+   - **L**（生命周期）：Agent loop 设计、状态持久化
+   - **O**（可观测性）：日志、追踪、调试工具
+   - **V**（验证评估）：基准测试、评估框架
+   - **G**（治理）：权限控制、安全机制、行为约束
 3. 对比 Syll 和这个目标框架在设计取舍上的差异，写出 3 个关键区别。
 
-**通过标准**：你的分析覆盖所有七个层次，且对比结论有具体的技术细节支撑，而不是泛化描述。
+**通过标准**：
+- 分析覆盖所有七个层次，每个层次都有具体的技术细节支撑（如代码示例、配置片段、架构图引用）
+- 对比结论包含至少 3 个具体的设计取舍差异，指出这些差异对实际使用的影响
+- 能够明确说明目标框架在哪些场景下优于 Syll，哪些场景下 Syll 更适合
+
+**输出要求**：完成一份 800-1200 字的对比分析文档，包含具体的技术细节、代码示例（如适用）和明确的结论。
 
 ---
 
 ## 进阶阅读路径
 
-下面给出阅读顺序与每篇为什么放在这个位置的理由：
+下面给出阅读顺序与每篇为什么放在这个位置的理由，以及阅读时应该关注的具体问题：
 
 1. **[Syll 论文（syll-report-v1.pdf）](https://github.com/THU-SAGE/syll/blob/main/docs/report/syll-report-v1.pdf)**（先读）。这是理解 Syll 设计理念的基础文档，包含完整的设计思路、实现细节和评估结果。先读这个，建立对"人格可配置 Agent"的完整认知，再往下看实现细节。
+   
+   **阅读时思考**：论文中提到的四个设计选择（Persona as Config、Lore Fragments、Agent-Judged Silence、Confirmation-First）各自解决了什么问题？这些选择在 v0.2.0 中是如何实现的？
 
 2. **[Syll GitHub 仓库](https://github.com/THU-SAGE/syll)**（第二读）。当你想知道"workspace 目录结构是什么样的"、"SOUL.md 的模板长什么样"时，直接看源码比看文档快。重点关注 `workspace/` 目录下的示例文件和 `syll/core/` 下的 Agent loop 实现。
+   
+   **阅读时思考**：尝试修改 `SOUL.md` 和 `lore/fragments.md`，观察 Agent 的行为变化。理解 workspace 文件是如何通过模板引擎注入系统提示的。
 
 3. **[LangChain Agent 文档](https://python.langchain.com/docs/modules/agents/)**（第三读，对比用）。当你想理解"传统 Agent 框架是怎么把人格写进代码的"时，LangChain 是一个好的对比对象。对比两者的扩展性、定制成本和用户门槛，你会更清楚 Syll 的设计取舍。
+   
+   **阅读时思考**：在 LangChain 中实现类似 Syll 的"人格配置"需要哪些步骤？两者的记忆方案（Lore Fragments vs Vector Store）各自的优缺点是什么？
 
 4. **[ETCLOVG 框架原文](https://example.com/etclovg-framework)**（第四读，可选）。如果你对"如何系统化分析 Agent Harness"这个元问题感兴趣，可以找 ETCLOVG 的原始论文或技术博客。这个框架的价值在于：它把 Agent 系统拆成七个可独立分析的层次，避免你遗漏关键设计维度。
+   
+   **阅读时思考**：尝试用 ETCLOVG 框架分析你正在使用的 Agent 框架，识别其在哪些层次上做得好，哪些层次上有改进空间。
 
 5. **[Mem0 或 Zep 等向量检索记忆系统](https://github.com/mem0ai/mem0)**（最后读，可选）。当你想理解"传统记忆系统为什么选择向量检索"以及"它们的维护成本在哪里"时，读一个成熟的记忆系统实现。对比 Lore fragments 和向量检索的适用边界，帮你建立更完整的记忆系统设计直觉。
+   
+   **阅读时思考**：如果你的应用需要记忆超过 100 条信息，你会选择 Lore Fragments 还是向量检索？为什么？在什么情况下会考虑混合方案？
 
 这个顺序的好处是：
 
@@ -637,16 +657,5 @@ Syll 的通道实现只负责消息的发送和接收，Agent 逻辑与通道无
 5. **事实边界**：本文明确区分了官方功能描述和解释框架，对于未经验证的功能，已标注为预期功能或谨慎推测。
 6. **许可证信息**：Syll 使用 MIT 许可证，Python 后端，TypeScript 前端。
 
-## 优化说明
-
-- **评分**：优化中（目标 100/100）
-- **优化内容**：补充了"资料口径说明"章节，明确文章判断的来源和局限性
-- **状态**：优化中
-- **记录时间**：2026-06-29 07:34
-
-**参考链接**
-
-- 项目主页：https://thu-sage.github.io/syll/
-- GitHub：https://github.com/THU-SAGE/syll
 - 论文：https://github.com/THU-SAGE/syll/blob/main/docs/report/syll-report-v1.pdf
 - Research Notes：https://thu-sage.github.io/syll/research.html

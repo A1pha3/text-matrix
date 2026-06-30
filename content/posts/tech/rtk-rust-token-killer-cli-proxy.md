@@ -92,7 +92,7 @@ LLM 按 Token 计费，但开发里大量命令输出（`ls`、`git diff`、`pyt
 
 ### 1. 命令覆盖
 
-RTK 支持 100+常用开发命令，按类型分类：
+RTK 支持 100+ 常用开发命令，按类型分类：
 
 - **文件系统**：`ls`、`tree`、`find`、`cat`、`read`
 - **Git**：`status`、`diff`、`log`、`add`、`commit`、`push`

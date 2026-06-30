@@ -10,7 +10,7 @@ tags = ['GitHub', 'DevOps', '代码质量', '工具']
 
 # pre-commit-ci：自动化代码质量检查
 
-> lint、format、type-check……每次提交前要跑一堆检查？pre-commit-ci 把这些全部自动化——不用本地配置，不用担心团队成员跳过检查，每次 PR 都自动跑，在合并之前就堵住代码质量问题。
+lint、format、type-check……每次提交前要跑一堆检查？pre-commit-ci 把这些全部自动化——不用本地配置，不用担心团队成员跳过检查，每次 PR 都自动跑，在合并之前就堵住代码质量问题。
 
 ## 学习目标
 

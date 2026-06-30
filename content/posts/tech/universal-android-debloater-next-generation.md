@@ -370,6 +370,30 @@ UAD-ng 的解法：
 
 ---
 
+## 常见问题（FAQ）
+
+### Q1: 用 UAD-ng 卸载应用安全吗？
+
+安全，但要有心理准备。`pm uninstall -k --user 0` 只卸载当前用户的 app，不删系统分区。如果卸错了，用 `pm install-existing <pkg>` 就能恢复。但有些系统应用被其他应用依赖，卸了可能导致功能异常——UAD-ng 的 `dependencies` / `neededBy` 字段会提示你。
+
+### Q2: 重启手机后卸载的应用会回来吗？
+
+OEM 通常不会主动恢复，但恢复出厂设置会清空所有卸载记录。如果你经常恢复出厂设置，需要重新卸载。
+
+### Q3: UAD-ng 支持所有 Android 手机吗？
+
+理论上支持 Android 5.0+，但实际覆盖取决于 `uad_lists.json` 里有没有你的 OEM 包名清单。主流厂商（三星、小米、华为、OPPO、vivo、一加、Sony）都覆盖了，冷门厂商可能缺条目。
+
+### Q4: 为什么用 GPL-3.0 协议？
+
+GPL-3.0 要求衍生项目也开源，这保证了 UAD-ng 的社区属性——没人能把它闭源商业化。如果你不喜欢 GPL-3.0，可以用 MIT 协议的 Canta（但功能弱一些）。
+
+### Q5: 怎么贡献包名清单？
+
+直接去 [uad_lists.json](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/blob/main/resources/assets/uad_lists.json) 提 PR。格式很简单：包名做 key，value 里写 `list`（OEM）、`description`、`labels`。社区维护者会 review 后合并。
+
+---
+
 ## 参考
 
 - 仓库：<https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation>

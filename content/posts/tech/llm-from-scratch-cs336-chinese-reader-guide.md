@@ -1,5 +1,6 @@
 ---
 title: "把斯坦福 CS336 改写成中文通识课：一份'硬核内容通俗化'的工程化样本"
+slug: "llm-from-scratch-cs336-chinese-reader-guide"
 date: 2026-06-28T14:16:00+08:00
 draft: false
 author: 钳岳星君

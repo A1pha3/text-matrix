@@ -2,6 +2,7 @@
 date = '2026-06-28T13:56:19+08:00'
 draft = false
 title = '文档审核报告 - ftshare-python-sdk-financial-data-agent-access-layer-optimized.md'
+description = 'doc-auditor-2 对 ftshare-python-sdk-financial-data-agent-access-layer-optimized.md 的文档审核报告，记录审核概述、问题清单与改进建议。'
 +++
 
 # 文档审核报告 - ftshare-python-sdk-financial-data-agent-access-layer-optimized.md

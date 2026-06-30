@@ -228,16 +228,79 @@ agentsview 是一个「让 AI 使用过程更可观察」的工具。**先判断
 
 ## 自测题
 
-在你的环境中完成以下检查，确认 agentsview 正确运行：
+下面 5 道题用来检验你对 agentsview 核心概念和使用方式的掌握程度。点击参考答案前的三角展开查看解析。
 
-- [ ] **安装成功**：运行 `agentsview serve`，确认 Web UI 在 `http://127.0.0.1:8080` 打开且不报错
-- [ ] **Agent 自动发现**：确认 Claude Code、Cursor 等已安装的 Agent 会话目录被自动扫描并索引
-- [ ] **成本统计**：运行 `agentsview usage daily`，确认输出最近 30 天每日成本且数据准确
-- [ ] **模型细分**：运行 `agentsview usage daily --breakdown --agent claude`，确认按模型显示细项
-- [ ] **状态栏格式**：运行 `agentsview usage statusline`，确认输出简洁格式（如 "Today $4.23 / Month $87.12"）
-- [ ] **统计档案**：运行 `agentsview stats --since 2026-06-01`，确认输出 archetype 分布
+1. agentsview 的架构中，哪个组件是主存储？PostgreSQL 和 DuckDB 镜像的角色是什么？
 
-全部通过后，你的 agentsview 部署即处于可用状态。
+<details>
+<summary>参考答案</summary>
+
+- **主存储**：SQLite（位于 `~/.agentsview/` 下），使用 FTS5 全文索引
+- **PostgreSQL 镜像**：通过 `pg push` 推送数据，提供只读共享面板，适合团队场景
+- **DuckDB 镜像**：通过 `duckdb push` 同步历史数据，支持 Quack 协议查询
+- **关键边界**：所有写入都从 SQLite 出去，PG 和 DuckDB 都是只读镜像，不能替代 SQLite 作为主存
+
+（对应章节：系统地图）
+
+</details>
+
+2. 在 SSH 远程转发场景下，`agentsview serve` 为什么要配置 `--public-url`？不配置会出现什么错误？
+
+<details>
+<summary>参考答案</summary>
+
+- **原因**：agentsview 默认绑 `127.0.0.1:8080` 并校验 `Host` 头防 DNS rebinding。SSH 转发后浏览器发的 `Host` 与服务端预期不符，会导致 `/api/v1/settings` 等接口返回 403
+- **配置方式**：`agentsview serve --public-url http://127.0.0.1:18080`（假设 SSH 转发端口为 18080）
+- **安全注意**：一旦暴露到 loopback 之外，必须加 `--require-auth`
+
+（对应章节：三个值得展开的细节）
+
+</details>
+
+3. agentsview 与 ccusage 相比，性能优势来自哪里？
+
+<details>
+<summary>参考答案</summary>
+
+- **ccusage**：每次运行重新解析原始会话文件（JSONL），随着会话积累变慢
+- **agentsview**：首次运行将会话索引到 SQLite（FTS5），后续查询直接走数据库，作者给出的 benchmark 数字是快 100 倍
+- **实际影响**：会话量大的用户（几个月累积、多个 Agent）感受明显；新安装、会话少的场景下差异不大
+
+（对应章节：核心判断）
+
+</details>
+
+4. Antigravity CLI 的老版本会话文件为什么需要 `agy-reader` sidecar？新版本是怎么处理的？
+
+<details>
+<summary>参考答案</summary>
+
+- **老版本**：会话存为 AES-GCM 加密的 `.pb` 文件，agentsview 无法解密，只能 fallback 到 summary mode（用 `history.jsonl` 的 prompt + `brain/` 下的纯文本工件拼合）
+- **新版本**：会话存为 SQLite `.db`，agentsview 直接索引，不需要额外工具
+- **agy-reader 方案**：社区工具，一次性或守护模式把老版本 `.pb` 解密成 `.trajectory.json`，agentsview 的 file watcher 自动识别并切换到完整解析，无需重启
+
+（对应章节：三个值得展开的细节）
+
+</details>
+
+5. 说出 agentsview 的采用顺序，并解释为什么 SQLite 单机是第一步。
+
+<details>
+<summary>参考答案</summary>
+
+**采用顺序**：
+1. 跑 `agentsview serve` + Web UI，确认 Agent 目录自动发现
+2. CLI 跑通 `usage daily` 和 `stats`，看 archetype 分布
+3. 需要远端访问再上 `--public-url` + `--require-auth`
+4. 团队场景才上 `pg push` / `pg serve`；分析需求再上 `duckdb push` + Quack
+
+**为什么 SQLite 单机是第一步**：agentsview 的所有写入都在本地 SQLite，PG/DuckDB 是镜像。先确认本地索引、成本统计、会话搜索都正常工作，再考虑远程访问和团队共享。跳过第一步直接上 PG 镜像，出问题时不方便定位是解析器、SQLite 还是 PG 推送的故障。
+
+（对应章节：适用边界与采用决策）
+
+</details>
+
+[↑ 回到目录](#目录)
 
 ## 练习
 

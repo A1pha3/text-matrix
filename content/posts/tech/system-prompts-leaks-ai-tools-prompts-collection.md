@@ -10,6 +10,37 @@ author: 钳岳星君
 
 # system_prompts_leaks 深度解读：4.2 万 Stars 的 AI 系统提示词档案，以及它为什么是 prompt engineering 的现实教材
 
+## 学习目标
+
+通过本文，你将能够：
+
+- 理解 system_prompts_leaks 仓库的价值：唯一同时覆盖 14 家厂商、100+ 套 AI 系统提示词的公开档案
+- 读懂档案结构：按厂商分顶层目录，每个厂商目录下按产品/模型/入口分文件
+- 理解一份典型 system prompt 的 6 个标准模块：行为总则、搜索优先、产品信息、默认立场、工具 prompt、风格与用户偏好
+- 知道怎么把这份档案当成 prompt engineering 的"现实教材"使用
+- 了解合规、引用与转载边界
+
+## 目录
+
+1. [阅读导航](#阅读导航)
+2. [先看结论](#先看结论)
+3. [档案结构全图](#档案结构全图)
+4. [一份典型 system prompt 拆解](#一份典型-system-prompt-拆解)
+5. [它怎么变成一本 prompt engineering 的活教材](#它怎么变成一本-prompt-engineering-的活教材)
+6. [版本时间线（截至 2026-06-15）](#版本时间线截至-2026-06-15)
+7. [怎么用这个仓库](#怎么用这个仓库)
+8. [引用与转载的合规边界](#引用与转载的合规边界)
+9. [这份档案的局限](#这份档案的局限)
+10. [怎么贡献或反馈](#怎么贡献或反馈)
+11. [适合谁、不适合谁](#适合谁不适合谁)
+12. [总结](#总结)
+13. [自测题](#自测题)
+14. [练习](#练习)
+15. [进阶路径](#进阶路径)
+16. [资料口径说明](#资料口径说明)
+
+---
+
 **判断**：这个仓库不是 prompt 资料合集那么简单——它是目前公开渠道里**唯一同时覆盖 Anthropic、OpenAI、Google、xAI、Perplexity、Cursor、Microsoft、Meta、Mistral、Notion、Qwen、Misc 12 个产品线、且持续按版本更新**的系统提示词档案。2025-05 立项到 2026-06，14 个月内拿到 42K+ stars、7K+ forks、登上 GitHub Trending，**The Washington Post 也引用过它**（2026-05-11 报道：让读者用 AI 工具的真实 system prompt 改写新闻稿）。
 
 如果你想搞清楚下面任何一件事，这篇都值得读：
@@ -346,9 +377,33 @@ README 里没写 issue 模板，主要联系方式：
 
 ---
 
+## 常见问题（FAQ）
+
+### system_prompts_leaks 仓库的 prompt 是官方的吗？
+
+不是官方版本，是社区抓取的快照。仓库的 `Official/` 目录是发布日冻结版，只反映发布那天的 prompt，不会随模型迭代更新。`main/` 目录是社区持续更新的版本。
+
+### 我可以商用这个仓库里的 prompt 吗？
+
+可以。仓库使用 CC0-1.0 许可证（公有领域），可以商用、修改、不署名。但不建议声称这是"官方"prompt，最好标注"by community, not official"。
+
+### 怎么用这个仓库学习 prompt engineering？
+
+建议流程：1. 按厂商扫一遍 README 索引；2. 选 1-2 份完整 prompt 通读；3. 打开 `Official/` 看发布日快照；4. 打开 `old/` 看历史；5. 用 diff 看演变。
+
+### 同一模型在不同入口（Web/API/CLI）的 prompt 为什么不同？
+
+因为不同入口的用户场景、可用工具、输出格式要求不同。Web 入口需要搜索优先、产品话术；API 入口需要简洁、可定制；CLI 入口需要代码执行、终端交互。
+
+### system_prompts_leaks 的 prompt 准确吗？
+
+仓库里的 prompt 是社区抓取版，不保证字节级匹配厂商实际部署。适合作为 prompt engineering 的研究素材，不适合作为官方文档引用。
+
+---
+
 ## 总结
 
-`asgeirtj/system_prompts_leaks` 的真正价值不是某一份 prompt，而是**它把 14 家厂商、100+ 产品、多种入口的 system prompt 维护成一份活的、公开的、可 diff 的档案**。在 prompt engineering 这个领域，**底层素材 > 上层方法论**，而这个仓库就是 2026 年目前最完整的底层素材库。
+`asgeirtj/system_prompts_leaks` 的真正价值不是某一份 prompt，而是**它把 14 家厂商、100+ 产品、多种入口的 system prompt 维护成一份活的、公开的、可 diff 的档案**。在 prompt engineering 这个领域，**底层素材 > 上层方法**，而这个仓库就是 2026 年目前最完整的底层素材库。
 
 如果你正在做以下任何一件事，建议 clone 下来而不是只在线浏览：
 
@@ -356,5 +411,85 @@ README 里没写 issue 模板，主要联系方式：
 - 给团队做 prompt 培训
 - 做 LLM 行为评估 / 红队测试
 - 研究厂商 prompt 演进史
+
+用法上，**先按厂商扫一遍 README 索引 → 选 1-2 份完整 prompt 通读 → 打开 `Official/` 看发布日快照 → 打开 `old/` 看历史 → 用 diff 看演变**——这是 30 分钟内能把这仓库价值榨干的标准流程。
+
+---
+
+## 自测题
+
+1. **system_prompts_leaks 仓库的核心价值是什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   它是目前公开渠道里唯一同时覆盖 14 家厂商、100+ 套 AI 系统提示词的公开档案，并且持续按版本更新。
+   </details>
+
+2. **一份典型 system prompt 包含哪 6 个标准模块？**
+   <details>
+   <summary>点击查看答案</summary>
+   1. 行为总则；2. 搜索优先；3. 产品信息；4. 默认立场（拒答处理）；5. 工具 prompt；6. 风格与用户偏好。
+   </details>
+
+3. **怎么把 system_prompts_leaks 当成 prompt engineering 的教材使用？**
+   <details>
+   <summary>点击查看答案</summary>
+   可以：1. 对照读同一模型在多入口下的 prompt 分层；2. 看同厂商不同模型的 prompt 演进；3. 跨厂商的 prompt 风格对比；4. 工具 prompt 模板的复用。
+   </details>
+
+4. **system_prompts_leaks 仓库的 License 是什么？有什么使用限制？**
+   <details>
+   <summary>点击查看答案</summary>
+   CC0-1.0（公有领域），可以商用、改、不署名。但不能声称这是"官方"prompt，最好标注"by community, not official"。
+   </details>
+
+5. **`Anthropic/Official/` 目录的作用是什么？**
+   <details>
+   <summary>点击查看答案</summary>
+   是发布日冻结版，只反映发布那天的 prompt，不会随模型迭代更新。适合作为引用时的官方来源。
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：对照读同一模型的多入口 prompt
+1. 打开 `OpenAI/` 目录
+2. 找到 GPT-5.5 的 5 份 prompt（Web、API、CLI 等）
+3. 对照读，理解 Web / API / CLI 三层 prompt 的差异
+4. 总结不同入口的 prompt 设计要点
+
+### 练习 2：看 prompt 演进
+1. 打开 `Anthropic/` 目录
+2. 找到 Claude Opus 4.5 → 4.8 的 prompt 文件
+3. 使用 diff 工具（如 delta 或 difftastic）对比差异
+4. 分析行为约束、工具 prompt、产品话术的演进
+
+### 练习 3：提取工具 prompt 模板
+1. 打开 `OpenAI/tool-web-search.md`
+2. 分析工具 prompt 的结构：input schema 描述、fallback 行为、工具输出处理
+3. 提取可复用的模板
+4. 应用到自己的 Agent 工具描述中
+
+---
+
+## 进阶路径
+
+1. **深入研究 prompt engineering**：基于这份档案，系统学习 prompt 设计、优化、评估的方法
+2. **分析各家 AI 厂商的 prompt 风格**：深入分析 Anthropic、OpenAI、Google、xAI 等的 prompt 设计哲学
+3. **构建自己的 prompt 模板库**：基于这份档案和自己的经验，构建可复用的 prompt 模板库
+4. **参与 prompt engineering 社区**：分享你的 prompt 工程经验，参与社区讨论
+5. **研究 LLM 行为与安全**：基于 system prompt 分析，研究 LLM 的行为边界和安全机制
+
+---
+
+## 资料口径说明
+
+1. **信息来源**：本文基于 asgeirtj/system_prompts_leaks 仓库的 README（2026-06-15 版本）和仓库内容分析
+2. **版本时效性**：仓库高频更新，本文描述的文件和版本基于 2026-06-15 时点的快照
+3. **prompt 准确性**：仓库里的 prompt 是社区抓取版，不保证字节级匹配厂商实际部署
+4. **合规边界**：仓库用 CC0-1.0，但引用时建议标注"by community, not official"
+5. **使用建议**：这份档案是底层素材，适合有 prompt engineering 基础的人深入研究
+
+---
 
 用法上，**先按厂商扫一遍 README 索引 → 选 1-2 份完整 prompt 通读 → 打开 `Official/` 看发布日快照 → 打开 `old/` 看历史 → 用 diff 看演变**——这是 30 分钟内能把这仓库价值榨干的标准流程。
