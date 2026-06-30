@@ -467,6 +467,17 @@ Andrej Karpathy Skills 把一位世界级 AI 研究者对 LLM 行为的理解，
 
 ---
 
+## 资料口径说明
+
+1. **信息来源与时效性**：本文基于 Andrej Karpathy 2026 年初的公开博客与社交媒体帖子，以及社区整理的 `andrej-karpathy-skills` 仓库（forrestchang/andrej-karpathy-skills）的 CLAUDE.md 内容。Karpathy 的原话可能在表述细节上随场合变化，本文以仓库 CLAUDE.md 为基准。
+2. **技术细节验证**：文中引用的四条原则、行为缺失诊断、安装配置步骤均来自仓库文档，未经独立复测；实际表现取决于 Claude Code 版本、模型选择和团队规范。
+3. **判断与建议的边界**：本文给出的团队推广路径、提示词改造建议、适用边界等判断，基于社区报告和实际使用观察，不代表 Karpathy 本人或 Anthropic 官方立场。
+4. **未覆盖的内容**：本文聚焦原则拆解和安装配置，未深入覆盖：Skills 与其他 Claude Code 配置（如 CLAUDE.local.md、settings.json）的协同、多 Skills 组合使用的冲突处理、非英语编程场景下的适用性、团队级 Skills 版本管理最佳实践。
+5. **术语使用说明**：本文保留 LLM（Large Language Model）、Skills、CLAUDE.md、Surgical Changes、Goal-Driven Execution 等专有名词不翻译。
+6. **更新记录**：本文初稿基于 2026-04-08 的仓库版本，若 Karpathy 或社区后续更新原则内容，将同步更新对应章节。
+
+---
+
 ## 进阶路径
 
 读完本文后，按以下顺序深入：

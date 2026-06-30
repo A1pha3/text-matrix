@@ -8,6 +8,40 @@ tags: ["SQLite", "Rust", "Database", "MVCC", "MCP", "Embedded Database"]
 description: "Turso Database 是 tursodatabase 团队用 Rust 重写 SQLite 的 in-process SQL 引擎，20K+ stars，v0.7.0-pre.10（2026-06-18），原生支持 MVCC BEGIN CONCURRENT、io_uring 异步 I/O、向量搜索和 9 个工具的 MCP server。本文从重写动机、MVCC 实现、跨语言绑定、MCP 集成、生产边界四个层面拆解它和 libSQL 的路线差异。"
 ---
 
+## 一、学习目标
+
+读完本文，你应该能够：
+
+1. **解释 Turso Database 的重写动机**：说清楚为什么 tursodatabase 团队从 libSQL 路线转向 Rust 原生重写，以及 fork 模式和 rewrite 模式的核心差异。
+2. **描述 Turso Database 的架构分层**：从 SQL 文本到 page cache 的四层执行路径（Parser/Planner → VDBE-like 字节码执行器 → MVCC 存储层 → io_uring 适配）。
+3. **理解 `BEGIN CONCURRENT` MVCC 的工程取舍**：知道它是 opt-in 而非默认模式，以及多版本指针的实现边界。
+4. **使用 Turso 的 MCP Server 让 AI agent 直连数据库**：能配置 `tursodb --mcp`，并在 Claude Code 等工具中调用 9 个 MCP 工具。
+5. **判断 Turso Database 是否适合你的生产场景**：能根据可靠性要求、向量搜索需求、Rust 工具链维护能力做出选型决策。
+
+---
+
+## 二、目录
+
+- [核心判断](#核心判断)
+- [关键事实表](#关键事实表)
+- [重写动机：fork 还是 rewrite](#重写动机fork-还是-rewrite)
+- [架构切片：从 SQL 文本到 page cache](#架构切片从-sql-文本到-page-cache)
+- [MCP Server：让 AI 直接对数据库读写](#mcp-server让-ai-直接对数据库读写)
+- [多语言绑定：production 的 6 条路径](#多语言绑定production-的-6-条路径)
+- [实验性特性：4 条还在孵化的能力](#实验性特性4-条还在孵化的能力)
+- [路线图：向量索引还没落地](#路线图向量索引还没落地)
+- [测试与可靠性：Antithesis + DST 双层保护](#测试与可靠性antithesis--dst-双层保护)
+- [学术成果：把数据库和 serverless 一起设计](#学术成果把数据库和-serverless-一起设计)
+- [生产边界：什么时候用、什么时候不用](#生产边界什么时候用什么时候不用)
+- [入门路径](#入门路径)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
+- [资料口径说明](#资料口径说明)
+- [一句话总结](#一句话总结)
+
+---
+
 ## 核心判断
 
 Turso Database（`tursodatabase/turso`）**不是**「又一个 SQLite 兼容层」，而是 tursodatabase 团队对 SQLite 的 Rust 原生重写：保留 SQLite 的 SQL 方言、文件格式和 C API（`COMPAT.md` 详细列出兼容矩阵），把执行器、存储、I/O 全替换为 Rust 实现，再叠加 `BEGIN CONCURRENT` MVCC、io_uring 异步 I/O、向量搜索和内嵌 MCP server 四件 SQLite 原版没有的能力。它和 libSQL 是同一个团队走过的两条路线——`libSQL` 是 fork（生产可用），Turso 是 rewrite（Beta 但方向被官方 all-in）。对自托管 SQLite 替代方案的选型来说，Turso 现在的状态是「能跑、能加速、但有 Beta 风险」。
@@ -194,3 +228,70 @@ claude mcp add my-database -- tursodb ./path/to/your/database.db --mcp
 ## 一句话总结
 
 Turso Database 是 Rust 生态里**最接近「用现代语言重写 SQLite」**的尝试——它赌的不是 fork 兼容，而是「async + MVCC + io_uring + vector + MCP」五件 SQLite 原版没有的武器能让 in-process SQL 在 AI agent 时代重新成为一等公民。赌赢了它就是下一个 libSQL，赌输了它就是又一个兼容性噩梦。**现在的版本（v0.7.0-pre.10）适合做 PoC、跑 benchmark、接 MCP 做 agent 实验，不适合直接上生产关键路径**。
+
+---
+
+## 自测题
+
+1. **Turso Database 和 libSQL 的核心区别是什么？**
+   <details>
+   <summary>查看答案</summary>
+   答：libSQL 是 fork SQLite 加补丁（生产可用），Turso 是 Rust 原生重写（Beta 但方向被官方 all-in）。libSQL 有 hosted server 模式，Turso 定位是客户端进程内的库。
+   </details>
+
+2. **Turso Database 的 MVCC 是默认开启的吗？**
+   <details>
+   <summary>查看答案</summary>
+   答：不是。`BEGIN CONCURRENT` 是 opt-in 模式，需要应用显式声明。默认仍是 SQLite 兼容的 serializable。
+   </details>
+
+3. **Turso Database 的 MCP Server 暴露了哪 9 个工具？**
+   <details>
+   <summary>查看答案</summary>
+   答：`open_database`、`current_database`、`list_tables`、`describe_table`、`execute_query`（只读 SELECT）、`insert_data`、`update_data`、`delete_data`、`schema_change`。
+   </details>
+
+4. **Turso Database 的向量搜索现在支持哪种类型？**
+   <details>
+   <summary>查看答案</summary>
+   答：现在支持 exact search（线性扫描）和 vector manipulation（SQL 函数 `vector_distance_cosine()` 之类），但 ANN（approximate nearest neighbor）索引还没合进 main。
+   </details>
+
+5. **Turso Database 的测试栈包含哪两个主要工具？**
+   <details>
+   <summary>查看答案</summary>
+   答：Deterministic Simulation Testing (DST) 和 Antithesis。DST 把数据库运行放到模拟时钟和故障注入下复现 corner case；Antithesis 在 Hyper-V 虚拟机里对数据库做 7×24 随机故障注入。
+   </details>
+
+---
+
+## 练习
+
+1. **本地体验 Turso CLI**：按照「入门路径」的「最快 5 分钟」步骤，安装 Turso CLI 并创建测试表，执行插入和查询操作。
+2. **配置 MCP Server**：在你的 Claude Code 或 Cursor 中配置 Turso 的 MCP Server，尝试用自然语言操作数据库（创建表、插入数据、查询数据）。
+3. **性能对比测试**：用 Turso Database 和 SQLite 分别执行相同的查询负载，对比性能差异（特别是 WAL 和 page fetch 的 I/O 性能）。
+
+---
+
+## 进阶路径
+
+1. **深入 Rust 异步运行时**：理解 Tokio 的 async/await 模型，以及 Turso 如何利用 io_uring 实现异步 I/O。
+2. **研究 MVCC 实现**：阅读 Turso 源码中 `BEGIN CONCURRENT` 的多版本指针实现（fallible skiplist），理解其工程取舍。
+3. **探索 MCP 协议**：理解 Model Context Protocol 的 JSON-RPC 2.0 over stdio 协议，以及如何在其他 AI agent 工具中集成 Turso 的 MCP server。
+4. **对比 libSQL 和 Turso**：同时测试 libSQL 和 Turso Database，对比它们的性能、兼容性、功能差异，形成选型建议。
+5. **贡献 Turso 项目**：从 GitHub 仓库的 good first issue 开始，尝试为 Turso 贡献代码（修复 bug、添加文档、实现小功能）。
+6. **研究确定性模拟测试**：理解 DST 和 Antithesis 的原理，以及如何在自己的数据库项目中应用类似的测试策略。
+7. **设计生产级部署方案**：基于 Turso 的 production boundaries，设计高可用、容错的部署架构，并制定回滚和备份策略。
+
+---
+
+## 资料口径说明
+
+1. **版本与时效性**：本文基于 Turso Database v0.7.0-pre.10（2026-06-18 预发布），代码示例和兼容性说明可能随版本演进发生变化。
+2. **技术细节验证**：本文引用了官方 README、COMPAT.md、FAQ 和博客文章，但 MVCC 实现细节、io_uring 性能数据等可能需要查看最新源码和 benchmark 报告进行验证。
+3. **判断与建议边界**：本文给出的「生产边界」判断（适合/不适合场景）基于官方文档和一般性经验，具体选型需结合项目实际需求、团队技术栈和风险承受能力。
+4. **未覆盖内容**：本文未深入讲解 Turso 的加密静态存储、DBSP 增量计算、tantivy 全文搜索、`.tshm` 多进程 WAL 协调等实验性特性的具体用法。
+5. **术语使用说明**：本文中 "MVCC" 指多版本并发控制，"MCP" 指 Model Context Protocol，"DST" 指 Deterministic Simulation Testing，"ANN" 指 Approximate Nearest Neighbor。
+6. **更新记录**：本文在 2026-06-30 由自动化任务优化，添加了学习目标、目录、自测题、练习、进阶路径、资料口径说明章节。
+
+---

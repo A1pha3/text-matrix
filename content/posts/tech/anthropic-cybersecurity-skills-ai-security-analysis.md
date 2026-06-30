@@ -355,6 +355,17 @@ Agent 行为（预期）:
 
 **路径三：自建技能库**。如果团队有内部 playbook 不便公开，参照这个仓库的目录结构和 frontmatter 规范，搭一个内部技能库。agentskills.io 标准是开放的，自建技能库同样能被 Claude Code、Cursor 等平台发现。这一步的关键是把团队现有的 SOP（Standard Operating Procedure）文档转写成技能格式，让 Agent 能按 SOP 执行。
 
+## 资料口径说明
+
+1. **信息来源与时效性**：本文基于 `anthropics/cybersecurity-skills` 仓库（2026-03-29 初版，最后更新 2026-04-08）的 README、SKILL.md 和 `references/standards.md` 整理。仓库仍在迭代，后续版本可能增加新领域、新框架映射或新工具集成，本文以初版功能为基准。
+2. **技术细节验证**：文中引用的技能条数（754 条）、领域数（26 个）、框架映射数（5 个）、token 估算（front matter ~30 tokens）均来自 README 描述，未经独立复测；实际 token 消耗取决于宿主平台和上下文窗口。
+3. **判断与建议的边界**：本文给出的引入顺序、适用边界、贡献路径等判断，基于 README 建议和社区使用观察，不代表 Anthropic 官方立场（仓库已声明 *Not affiliated with Anthropic PBC*）。
+4. **未覆盖的内容**：本文聚焦仓库架构和技能格式，未深入覆盖：具体某条技能的完整 Workflow 拆解、ATT&CK v19 发布后的映射更新进度、`references/tools/` 中各安全工具的 YAML 格式细节、多技能冲突时的优先级仲裁逻辑。
+5. **术语使用说明**：本文保留 ATT&CK、NIST CSF、NIST AI RMF、MITRE ATLAS、D3FEND、SOP、PR、Volatility3、SAST、DAST、SIEM 等专有名词不翻译，因为它们在安全工程社区中有固定英文表述。
+6. **更新记录**：本文初稿基于仓库初版（2026-03-29），若仓库后续版本有功能变化，将同步更新对应章节。
+
+---
+
 ## 小结
 
 Anthropic Cybersecurity Skills 是一个社区维护的技能文件库，把 754 条安全工作流编码成 AI Agent 可读取的格式，覆盖 26 个领域、映射 5 个行业框架。它本身不执行扫描、不抓包、不跑 exploit，作用是给 Agent 提供决策流程，让 Agent 在面对安全任务时按从业者的工作流执行，避免靠模型自行猜测。

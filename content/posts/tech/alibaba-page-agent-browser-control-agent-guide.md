@@ -468,6 +468,47 @@ await agent.execute('Click the login button')
 
 ## 12. 延伸阅读
 
+## 13. 自测题
+
+以下问题检验你对 Page Agent 架构和适用边界的理解：
+
+1. Page Agent 的 `FlatDomTree` 跟 `browser-use` 的截图方案，核心差异是什么？什么场景下必须选截图？
+2. `@page-agent/core` 为什么不依赖 UI？什么场景下你会直接调用 `PageAgentCore` 而不是 `page-agent` 入口类？
+3. MCP Server 的 Hub Tab 用了 WebSocket 而不是 HTTP 轮询，这带来什么好处？有什么代价？
+4. 如果你要在生产环境用 Page Agent，模型选型会优先考虑哪三个指标？为什么？
+5. Page Agent 目前没有完整 step replay，这会影响哪类场景的采用决策？
+
+<details>
+<summary>参考答案</summary>
+
+1. `FlatDomTree` 是文本化 DOM，成本远低于截图，且不需要多模态模型；但遇到"看图选图"或复杂视觉布局时，文本化会丢失信息。需要视觉判断的场景必须选截图。
+2. `core` 不依赖 UI，可以被 Node.js 脚本或服务端调用，适合"后端定时任务操控页面"或"测试脚本"场景；前端页面里的 AI Copilot 才用 `page-agent` 入口类。
+3. WebSocket 的好处是低延迟双向通信，LLM 执行步骤可以实时推给 Hub Tab；代价是连接管理更复杂，需要扩展常驻后台。
+4. 优先考虑：延迟（决定用户感知的响应速度）、成本（反射循环会调两次模型）、上下文窗口（简化 HTML 的体积）。
+5. 会影响金融、医疗等需要完整操作审计和回放的场景——没有 step replay，无法向合规方证明"模型每一步做了什么"。
+
+</details>
+
+## 14. 资料口径说明
+
+1. **信息来源与时效性**：本文基于 2026-06-15 发布的 v1.10.0 源码与 README 整理。Page Agent 仍在快速迭代，后续版本可能在 MCP Server 配置、Hub Tab 协议、FlatDomTree 过滤规则等方面发生变化。
+2. **技术细节验证**：文中涉及的 npm package 拓扑、`PageController` 异步接口、`reflection-before-action` 心智模型均来自 `AGENTS.md` 与源码，未经独立复测；实际表现取决于模型选择、网络状况和页面 DOM 复杂度。
+3. **判断与建议的边界**：本文给出的选型建议、适用边界、采用顺序等判断，基于公开文档和架构分析得出，不构成阿里官方立场，也不构成商业建议。
+4. **未覆盖的内容**：本文聚焦架构解读和 MCP 接入，未深入覆盖：`packages/extension` 的完整 WXT 构建配置、MultiPage Agent 跨 Tab 上下文共享的具体实现、`SimulatorMask` 的 CSS 隔离细节、`packages/llms/` 对其他 LLM 的适配层代码。
+5. **术语使用说明**：本文保留 MCP（Model Context Protocol）、npm、ESM、WS（WebSocket）、CDN、SaaS、CRM、ERP、LLM、OpenAI 兼容协议等专有名词不翻译。
+6. **更新记录**：本文初稿基于 v1.10.0（2026-06-15），若 Page Agent 后续版本有架构变化，将同步更新对应章节。
+
+## 15. 进阶路径
+
+- **源码层面**：从 `packages/core/src/PageAgentCore.ts` 入手，理解 Agent 主循环
+- **协议层面**：读 `packages/mcp/src/hub-ws.ts`，理解 Hub Tab WebSocket 协议
+- **DOM 层面**：从 `packages/page-controller/src/dom/dom_tree/index.js` 入手，理解 FlatDomTree 提取逻辑
+- **模型层面**：从 `packages/llms/` 入手，理解 reflection-before-action 的实现
+
+---
+
+## 12. 延伸阅读
+
 - 仓库主页：<https://github.com/alibaba/page-agent>
 - Demo：<https://alibaba.github.io/page-agent/>
 - 文档站：<https://alibaba.github.io/page-agent/docs/introduction/overview>

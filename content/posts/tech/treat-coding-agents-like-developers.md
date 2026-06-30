@@ -16,6 +16,39 @@ AI 编程 Agent 已经足够强大，可以帮你写代码、修 Bug、做重构
 
 本文是 Finbarr Taylor 的深度实践，介绍如何用**yolobox**将 AI 编程 Agent 当作真实开发者来对待：给每个 Agent 一个完整的工作目录、独立的运行时环境、自己的 Git 分支和独立的 URL 访问入口。
 
+> **学习目标**：理解多 Agent 并行时的核心问题（Git 冲突、文件系统混乱、Docker 容器冲突）；掌握 yolobox 的核心机制（完整拷贝、Compose 命名空间隔离、localhost 反向代理）；能够为实际项目配置多 Agent 并行工作流
+> **核心问题**：如何让多个 AI 编程 Agent 同时工作而不互相踩脚？为什么 Git worktree 不是最佳解决方案？如何给每个 Agent 提供独立的运行时环境？
+> **难度**：⭐⭐⭐（中级，需要 Docker 和 Git 基础）
+> **预计阅读时间**：20 分钟
+
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. 理解多 Agent 并行时的三个核心问题（Git 崩溃、文件系统崩溃、Docker Compose 崩溃）及原因
+2. 解释为什么 Git worktree 不是多 Agent 并行的最佳解决方案
+3. 使用 yolobox 为每个 Agent 创建独立的工作目录和运行时环境
+4. 配置 Traefik/Caddy 反向代理，让每个 Agent 获得友好的 localhost URL
+5. 设计适合你项目的多 Agent 协作工作流（调查 + 实现 + 测试 + 审查）
+
+## 目录
+
+1. [背景：单个 Agent 的困境](#背景单个-agent-的困境)
+2. [单 Agent 工作流的伸缩困境](#单-agent-工作流的伸缩困境)
+3. [Git Worktree：技术上正确，最危险的正确](#git-worktree技术上正确最危险的正确)
+4. [有用的虚构：Agent 就是开发者](#有用的虚构agent-就是开发者)
+5. [核心机制：完整拷贝而非干净 checkout](#核心机制完整拷贝而非干净-checkout)
+6. [运行时隔离：每个 Agent 自己的 Compose 命名空间](#运行时隔离每个-agent-自己的-compose-命名空间)
+7. [Web 应用的 URL 问题：不要端口表格](#web-应用的-url-问题不要端口表格)
+8. [为什么完整拷贝胜过所有聪明的替代方案](#为什么完整拷贝胜过所有聪明的替代方案)
+9. [实战一天的样子](#实战一天的样子)
+10. [这只是教程关卡](#这只是教程关卡)
+11. [总结](#总结)
+12. [自测题](#自测题)
+13. [练习](#练习)
+14. [进阶路径](#进阶路径)
+15. [资料口径说明](#资料口径说明)
+
 ---
 
 ## 背景：单个 Agent 的困境
@@ -258,6 +291,137 @@ https://bob-api.myapp.localhost
 给它一个 clone。
 给它自己的 Compose 命名空间。
 然后让它像所有人一样 push 一个分支。
+
+---
+
+## 自测题
+
+读完本文后，请自测以下问题：
+
+1. **多 Agent 并行时的三个核心问题是什么？为什么会出现？**
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - **Git 崩溃**：两个 Agent 修改同一个仓库的不同分支，导致合并冲突
+   - **文件系统崩溃**：Agent 写入的缓存、构建产物、lock 文件、生成的代码等不在 `git status` 里，会互相踩踏
+   - **Docker Compose 崩溃**：每个 Agent 都想要相同的端口、容器名、网络和命名卷，导致容器互相"谋杀"
+   </details>
+
+2. **为什么 Git worktree 不是多 Agent 并行的最佳解决方案？**
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - Worktree 共享 `.git`，但不共享 `node_modules`、构建产物、`.env`、SQLite 文件、运行的容器等
+   - 每个新的 worktree 都是干净的 checkout，需要手动"补水"（clone env 文件、重新安装依赖、重建缓存、用不同项目名重启 Compose）
+   - 这些"仪式感"是错误的层次——Git 被要求去建模"另一台开发者的机器"，而它只会建模"另一个分支"
+   </details>
+
+3. **yolobox 的核心机制"完整拷贝"是什么意思？为什么它比 worktree 更好？**
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - **完整拷贝**：每个 fork 都是当前项目文件夹的完整拷贝（包括 `.git`、`.env`、被忽略的文件、未跟踪的文件、`node_modules`、本地缓存等）
+   - **为什么更好**：
+     1. 保留项目运行所需的精确本地状态（包括那些不在版本控制中、你已停止想起的 parts）
+     2. 在容器内部把拷贝挂载到原始路径，所以任何路径相关的东西都能继续工作而无需转换
+     3. 心理模型显而易见——每个 fork 就是另一台开发者的机器
+   </details>
+
+4. **yolobox 如何实现 Docker Compose 的运行时隔离？**
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - 为每个 fork 导出 `COMPOSE_PROJECT_NAME` 环境变量
+   - Compose 用这个 key 来命名空间它拥有的所有东西（容器、网络、命名卷）
+   - 所以 Alice 得到自己的 Postgres 卷，Bob 得到自己的 Postgres 卷，不会互相冲突
+   - 退出时 yolobox 会自动运行 `docker compose -p "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans` 清理运行时
+   </details>
+
+5. **为什么"完整拷贝"比"干净的 checkout"更好？**
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - **干净的 checkout** 只给你版本控制中的文件，但项目运行还需要很多不在版本控制中的东西（依赖、缓存、本地配置、数据库文件等）
+   - **完整拷贝** 给你项目实际运行的、相同的混乱现实——对于本地开发来说，这本身就是产品的大部分
+   - 虽然磁盘使用不是免费的，但存储便宜，而对本地开发仪式感的耐心不便宜
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：安装 yolobox 并创建第一个 fork
+
+**目标**：从零开始安装 yolobox，并为你的一个实际项目创建第一个 Agent fork。
+
+**步骤**：
+1. 安装 yolobox：`pip install yolobox`（或根据官方 README 的安装方式）
+2. 进入你的一个实际项目目录（确保有 git 仓库和可能的 Docker Compose 文件）
+3. 运行 `yolobox fork --name test-agent codex` 创建第一个 fork
+4. 检查 fork 是否创建成功：`ls ../.yolobox-forks/<your-project>/test-agent`
+5. 检查环境变量是否正确：`yolobox fork resume test-agent codex`
+
+**验证**：你能成功创建 fork，并且 fork 的目录包含完整项目拷贝（包括 `.env`、`node_modules` 等）吗？
+
+---
+
+### 练习 2：配置 Traefik 反向代理让每个 Agent 获得友好 URL
+
+**目标**：配置本地反向代理，让每个 Agent 的 Web 应用获得友好的 `.localhost` 子域 URL。
+
+**步骤**：
+1. 安装 Traefik 或 Caddy（选择你熟悉的反向代理）
+2. 配置 Traefik 监听 `:80`/`:443`，并根据 `YOLOBOX_FORK_NAME` 派生出的名字路由
+3. 为每个 fork 配置 `.localhost` 子域（例如 `alice.myapp.localhost`、`bob.myapp.localhost`）
+4. 使用 `mkcert` 生成本地 HTTPS 证书，让浏览器不警告
+5. 启动多个 fork，验证每个都能通过友好 URL 访问
+
+**验证**：你能在浏览器中通过 `https://alice.myapp.localhost` 和 `https://bob.myapp.localhost` 同时访问不同 Agent 的 Web 应用吗？
+
+---
+
+### 练习 3：设计适合你项目的多 Agent 协作工作流
+
+**目标**：根据你的实际项目需求，设计一个多 Agent 协作方案。
+
+**步骤**：
+1. 明确你的项目类型和当前瓶颈（是调查 Bug、实现功能、写测试、做重构、还是研究新技术？）
+2. 设计 Agent 分工方案：
+   - 一个 Agent 调查 Bug（创建 fork `debugger`）
+   - 一个 Agent 实现功能（创建 fork `implementer`）
+   - 一个 Agent 写测试（创建 fork `tester`）
+   - 一个 Agent 做代码审查（创建 fork `reviewer`）
+3. 为每个 Agent 配置独立的工作目录和 Docker Compose 命名空间
+4. 模拟一个完整工作流：debugger 调查并提交到分支 → implementer 基于该分支实现 → tester 写测试 → reviewer 审查 PR
+
+**验证**：你的多 Agent 工作流能顺畅运行吗？遇到了什么协调问题？如何改进？
+
+---
+
+## 进阶路径
+
+如果你想更深入地使用或扩展 yolobox，可以按这个顺序：
+
+1. **深入理解 yolobox 源码**：克隆 yolobox 仓库，理解它是如何管理 fork 生命周期、环境变量、Docker Compose 命名空间的
+2. **定制化 yolobox**：根据你的项目需求修改 yolobox（例如：添加更多环境变量、支持更多反向代理、集成到你的 CI/CD）
+3. **结合 Claude Code / Cursor / OpenCode**：把 yolobox 集成到你的 AI 编程工作流，让每个 AI 工具都使用独立的 fork
+4. **团队规模化管理**：当你有 5+ 个 Agent 同时运行时，如何监控它们的状态、资源使用、冲突情况？考虑添加一个管理面板
+5. **评估 yolobox 是否适合生产环境**：yolobox 目前是 Finbarr Taylor 的个人项目，评估它是否稳定、是否有活跃维护、是否满足你的生产需求
+6. **贡献代码或文档**：给 yolobox 提交 PR，修复 Bug、添加功能、改进文档，让它更好用
+7. **探索多 Agent 协作的理论边界**：当 Agent 数量从 4 个增加到 10+ 个时，协调成本如何变化？如何设计更好的协作协议？
+
+---
+
+## 资料口径说明
+
+为保障文章的判断和可操作性，在此说明本文章的资料来源和边界：
+
+1. **信息来源与时效性**：本文基于 Finbarr Taylor 的博客文章《Treat Your Coding Agents Like Developers》（2026-05-05）和 yolobox 的 GitHub README。yolobox 仍在早期阶段，部分细节（命令行参数、环境变量、反向代理配置）可能在你读到时已经更新。
+2. **功能验证**：文中提到的 yolobox 核心机制（完整拷贝、`COMPOSE_PROJECT_NAME` 隔离、localhost 反向代理）已在原文章中描述，但我未逐一实测。实际使用时请参考最新官方文档。
+3. **技术方案的判断边界**：本文推荐"完整拷贝"而非"worktree"、"稀疏 checkout"、"rsync"等方案，这是基于 Finbarr Taylor 的个人实践。你的项目规模、依赖大小、磁盘空间、团队协作模式可能影响最佳方案的选择。
+4. **Docker Compose 隔离的局限性**：文中提到 `COMPOSE_PROJECT_NAME` 能解决大部分容器冲突，但硬编码的宿主机端口、显式的 `container_name` 指令、外部网络和绝对 bind 挂载仍然可能冲突。这些例外需要手动处理。
+5. **反向代理配置**：文中提到使用 Traefik 或 Caddy 做 localhost 反向代理，但未提供完整配置示例。实际配置时需要考虑你的操作系统、DNS 设置、证书管理等细节。
+6. **更新记录**：本文撰写于 2026-06-30，基于 Finbarr Taylor 的原文章（2026-05-05）。如果 yolobox 在之后有重大版本更新，本文可能需要补充。
 
 ---
 

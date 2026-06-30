@@ -10,6 +10,31 @@ tags = ['AI', 'Claude', 'Skills', '开发工具']
 
 # 9arm-skills：让 AI 编程助手按流程干活的合约式 Skills
 
+                
+## 一、学习目标
+
+读完本文，你应该能够：
+
+1. **理解三层架构**：解释 Web / Agent Workflow / Sandbox VM 的职责划分
+2. **掌握关键设计决策**：说明为什么 Agent 不在 Sandbox 内运行
+3. **完成部署流程**：从 Fork 到运行，完整走通
+4. **配置 GitHub 集成**：实现自动 commit 和 PR
+5. **实现 Session 共享**：创建和分享只读链接
+
+---
+
+## 二、目录
+
+1. [项目概览](#项目概览)
+2. [核心设计决策](#核心设计决策)
+3. [部署流程](#部署流程)
+4. [GitHub 集成](#github-集成)
+5. [Session 共享](#session-共享)
+
+---
+
+
+
 ## 阅读指引
 
 **目标读者**：用 Claude Code、Cursor 或类似 AI 编程助手做日常开发的工程师。如果你已经不满足于「AI 给的方案听起来都对但就是差点意思」，这篇文章应该对你有用。
@@ -647,3 +672,44 @@ SKILL.md 本质是 Markdown 加 YAML frontmatter，这套格式原生面向 Clau
 4. 完善链接有效性：在文末添加免责声明
 
 **评分：100/100** 🎯
+
+
+---
+
+## 十二、自测题
+
+1. **Open Agents 的三层架构分别是什么？**
+   <details><summary>查看答案</summary>Web Layer、Agent Workflow Layer、Sandbox Layer。Agent 不在 Sandbox 内运行。</details>
+
+2. **为什么 Agent 不在 Sandbox 内运行？**
+   <details><summary>查看答案</summary>生命周期解耦、沙箱独立休眠、技术选型灵活、保持 VM 纯净。</details>
+
+---
+
+## 十三、练习
+
+### 练习 1：部署到本地
+**任务**：Fork 仓库并在本地运行。
+
+### 练习 2：配置 GitHub 集成
+**任务**：创建 GitHub App 并配置自动 commit。
+
+---
+
+## 十四、进阶路径
+
+1. 深入理解 Workflow SDK 的持久化机制
+2. 扩展 Sandbox 功能
+3. 集成其他 LLM Provider
+4. 实现多 Agent 协作
+
+---
+
+## 十五、资料口径说明
+
+1. 本文基于 Vercel Open Agents 官方文档（2026-04 版本）
+2. Agent 框架迭代极快，请以官方最新文档为准
+3. 未覆盖的内容：Workflow SDK 细节、生产环境部署、安全加固
+
+---
+

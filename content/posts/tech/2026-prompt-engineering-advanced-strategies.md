@@ -806,3 +806,44 @@ Expert Panel 增加 token 消耗和输出长度（3-5 倍），Compression Proto
 - [Attention Is All You Need](https://arxiv.org/abs/1706.03762) — Transformer 原论文，理解注意力机制的工程前提
 - [Prompt Engineering Guide | DAIR.AI](https://www.promptingguide.ai/) — 社区维护的综合性提示词工程指南，覆盖从基础到 Agent 的完整路径
 - [Anthropic's Claude prompting guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview) — 本文多处引用的工程实践来源
+
+
+---
+
+## 十二、自测题
+
+1. **Open Agents 的三层架构分别是什么？**
+   <details><summary>查看答案</summary>Web Layer、Agent Workflow Layer、Sandbox Layer。Agent 不在 Sandbox 内运行。</details>
+
+2. **为什么 Agent 不在 Sandbox 内运行？**
+   <details><summary>查看答案</summary>生命周期解耦、沙箱独立休眠、技术选型灵活、保持 VM 纯净。</details>
+
+---
+
+## 十三、练习
+
+### 练习 1：部署到本地
+**任务**：Fork 仓库并在本地运行。
+
+### 练习 2：配置 GitHub 集成
+**任务**：创建 GitHub App 并配置自动 commit。
+
+---
+
+## 十四、进阶路径
+
+1. 深入理解 Workflow SDK 的持久化机制
+2. 扩展 Sandbox 功能
+3. 集成其他 LLM Provider
+4. 实现多 Agent 协作
+
+---
+
+## 十五、资料口径说明
+
+1. 本文基于 Vercel Open Agents 官方文档（2026-04 版本）
+2. Agent 框架迭代极快，请以官方最新文档为准
+3. 未覆盖的内容：Workflow SDK 细节、生产环境部署、安全加固
+
+---
+

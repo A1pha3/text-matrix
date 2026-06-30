@@ -6,7 +6,31 @@ slug = 'caveman-claude-code-token-optimization-guide'
 description = 'caveman 系统性去掉 LLM 输出中的填充词、客套话和犹豫词，Token 消耗降 65% 而技术准确性不变，支持 lite/full/ultra 三种强度级别。'
 categories = ['技术笔记']
 tags = ['AI', 'LLM', 'Token 优化', '开发工具']
-+++
+## 学习目标
+
+阅读本文后，你应该能够：
+
+1. **理解 caveman 的压缩原理**——清楚 LLM 输出膨胀的根源和 caveman 的压缩策略
+2. **掌握三种强度级别**——知道 lite/full/ultra 的区别和适用场景
+3. **完成安装和配置**——能在 Claude Code、Cursor、Windsurf 等工具中安装和激活 caveman`
+4. **使用核心功能**——激活/关闭、压缩内存文件、查看基准测试`
+5. **进行二次开发**——能修改 SKILL.md、添加自定义强度级别、集成到其他 Agent`
+
+---
+
+## 目录
+
+1. [原理分析：caveman 为什么有效](#一原理分析caveman-为什么有效)
+2. [架构分析：系统是如何设计的](#二架构分析系统是如何设计的)
+3. [使用说明：从安装到实战](#三使用说明从安装到实战)
+4. [开发扩展：二次开发指南](#四开发扩展二次开发指南)
+5. [生态系统：caveman 不是孤立项目](#五生态系统caveman-不是孤立项目)
+6. [自测：你是否理解了 caveman 的核心机制](#六自测你是否理解了-caveman-的核心机制)
+7. [练习](#七练习)
+8. [进阶路径](#八进阶路径)
+9. [资料口径说明](#九资料口径说明)
+
+---
 
 # Caveman：用山顶洞人语言砍掉 65% Token 消耗
 
@@ -603,7 +627,7 @@ cavemem 压缩跨会话的持久记忆
 
 ---
 
-## 自测：你是否理解了 caveman 的核心机制
+## 六、自测：你是否理解了 caveman 的核心机制
 
 **1.** 以下哪段文本是 caveman full 模式压缩后的结果？为什么另外两段不是？
 
@@ -611,13 +635,149 @@ cavemem 压缩跨会话的持久记忆
 - B. "auth middleware bug. token expiry check use `<` not `<=`. Fix: change to `<=`."
 - C. "auth midware bug. tok expiry `<` → rejected. Fix: `<=`."
 
+<details>
+<summary>点击查看答案</summary>
+
+答案是 B。
+
+- A 是正常 LLM 输出（有填充词 "I'd recommend"、完整句子、冠词 "the"）
+- B 是 full 模式（去冠词 + 填充词 + 碎片句，无缩写）
+- C 是 ultra 模式（有缩写如 "midware"、"tok"）
+
+</details>
+
 **2.** caveman 的 `/caveman:compress` 和 `/caveman` 分别压缩什么？如果 CLAUDE.md 有 2000 tokens，压缩后大概剩多少？
+
+<details>
+<summary>点击查看答案</summary>
+
+- `/caveman:compress` 压缩**输入端**的文件（如 CLAUDE.md、项目笔记等），减少每次会话启动时加载的 token 消耗
+- `/caveman` 压缩**输出端**的 LLM 回复，让 AI "闭嘴说重点"
+
+按 `caveman-compress` 的平均节省率 46% 计算，2000 tokens 压缩后约剩 1080 tokens（范围可能在 1000-1100 之间，取决于文件内容类型）。
+
+</details>
 
 **3.** caveman 的 flag 文件 `~/.claude/.caveman-active` 为什么需要 symlink 安全检查？列出至少两条安全措施。
 
+<details>
+<summary>点击查看答案</summary>
+
+flag 文件可能被攻击者替换为指向 `~/.ssh/id_rsa` 等敏感文件的 symlink，从而让状态行脚本或钩子读取并泄露私钥内容。
+
+安全措施包括：
+1. **拒绝 symlink 目录和文件**——写入端和读取端都检查
+2. **O_NOFOLLOW 原子写入**——防止写入时被劫持
+3. **MAX_FLAG_BYTES=64 硬上限**——只接受最长 64 字节的内容（合法值如 "wenyan-ultra" 仅 12 字节）
+4. **VALID_MODES 白名单校验**——只接受预定义的模式名
+5. **文件权限 0600**——只有当前用户可读取
+
+任何异常 → 返回 null，绝不注入不可信内容到模型上下文。
+
+</details>
+
 **4.** 你正在带新人 onboarding，需要详细解释一段代码的推理过程。此时应该用 caveman 的哪个模式（或不用）？为什么？
 
-> 答案参考：1-B（full 去冠词 + 填充词 + 碎片句，C 是 ultra 有缩写）；2-`/caveman:compress` 压缩输入端文件，`/caveman` 压缩输出端回复，2000 tokens 压缩后约剩 1000-1100（按 46% 平均节省率）；3-防止攻击者通过 symlink 将 flag 文件指向 `~/.ssh/id_rsa` 等敏感文件从而泄露内容，安全措施包括：拒绝 symlink 目录和文件、O_NOFOLLOW 原子写入、MAX_FLAG_BYTES=64 硬上限、VALID_MODES 白名单校验、文件权限 0600；4-不用 caveman 或用 lite 模式，因为教学场景需要完整推理过程，压缩会损害学习效果。
+<details>
+<summary>点击查看答案</summary>
+
+不用 caveman，或用 `lite` 模式。
+
+原因：教学场景需要完整推理过程，压缩会损害学习效果。`lite` 模式去掉填充词但保留完整句子和专业技术语气，适合需要详细解释的场景。`full` 或 `ultra` 会删除冠词、允许碎片句，让解释变得跳跃难懂。
+
+</details>
+
+---
+
+## 七、练习
+
+### 练习 1：对比三种强度模式的输出
+
+**任务：** 用 Claude Code 分别测试 `lite`、`full`、`ultra` 三种模式，对比同一问题的回答差异。
+
+**步骤：**
+1. 启动 Claude Code
+2. 输入 `/caveman lite`，问一个编程问题（如"解释 React useEffect 的依赖数组"）
+3. 记录回答的 token 数量和表达方式
+4. 输入 `/caveman` （切换到 full）
+5. 问同一个问题，对比回答
+6. 输入 `/caveman ultra`，再问同一个问题
+
+**思考：** 三种模式下，信息量是否有损失？哪种模式最适合你的日常工作流程？
+
+### 练习 2：压缩你的 CLAUDE.md
+
+**任务：** 使用 `/caveman:compress` 压缩你的项目 CLAUDE.md 文件。
+
+**步骤：**
+1. 记录原始文件的 token 数量（可以在 Claude Code 中问 "how many tokens is this file?"）
+2. 运行 `/caveman:compress CLAUDE.md`
+3. 检查压缩后的文件，确认标题、代码块、URL、路径是否保留
+4. 对比原始备份（`CLAUDE.original.md`），确认没有丢关键信息
+5. 重启 Claude Code，验证压缩后的 CLAUDE.md 是否正常加载
+
+**验证：** 新会话启动时，context window 占用是否明显下降？
+
+### 练习 3：添加自定义强度级别
+
+**任务：** 在 `skills/caveman/SKILL.md` 中添加一个新的强度级别 `custom-short`，规则为"最多 3 句回答，禁用代码块外的所有修饰词"。
+
+**步骤：**
+1. 读取 `skills/caveman/SKILL.md`
+2. 在 Intensity 表中添加 `custom-short` 级别
+3. 在 Rules 部分定义其具体规则
+4. 在 `hooks/caveman-config.js` 的 `VALID_MODES` 数组中添加 `'custom-short'`
+5. 重启 Claude Code，测试 `/caveman custom-short`
+
+**扩展：** 根据你的团队风格，定义更多自定义级别（如 `custom-code-only` 只输出代码块）
+
+---
+
+## 八、进阶路径
+
+当你掌握了 caveman 的基础使用后，可以沿着以下路径深入：
+
+### 路径 1：深入 Token 优化理论
+
+1. **阅读论文**——["Brevity Constraints Reverse Performance Hierarchies in Language Models"](https://arxiv.org/abs/2604.00025)（2026-03）
+2. **理解 LLM 训练目标**——为什么 LLM 被优化为"像人类一样流畅对话"？这个训练目标如何影响输出长度？
+3. **研究信息密度**——不同语言（中文、英文、文言文）的信息密度差异，以及这对 token 消耗的意义
+
+### 路径 2：贡献到 caveman 项目
+
+1. **阅读 SKILL.md 生成逻辑**——理解强度级别的示例是如何生成的
+2. **提交 PR**——修复 bug、添加新强度级别、改进 symlink 安全检查
+3. **改进文档**——帮助其他用户更好地理解和使用 caveman
+
+### 路径 3：构建自己的输出压缩工具
+
+1. **理解 LLM 输出格式控制**——system prompt、response format、output token 限制等多种控制方式
+2. **学习 Post-processing 技巧**——如何在保持技术准确性的前提下压缩文本
+3. **构建自己的压缩规则集**——针对你的特定用例（如代码审查、文档生成）定制压缩策略
+
+### 路径 4：扩展到多模态
+
+1. **研究多模态 LLM 的 token 消耗**——图像、音频、视频的 token 占用
+2. **设计多模态压缩策略**——不只是文本，还有图像分辨率、音频采样率等
+3. **构建多模态 "caveman"**——为 Claude Sonnet 3.5、GPT-4o 等多模态模型定制压缩策略
+
+---
+
+## 九、资料口径说明
+
+本文基于以下来源编写，存在若干需要说明的边界：
+
+1. **信息来源与时效性**：本文主要基于 caveman 的 GitHub 仓库 README、`skills/caveman/SKILL.md`、`hooks/*.js` 等文件，以及 v（截至 2026-04-30）的功能。caveman 仍在活跃开发中，功能和配置方式可能随版本变化。
+
+2. **技术细节验证**：本文中的架构解析、命令示例、配置示例基于公开文档和源码分析。由于无法在实际环境中完整测试所有功能（特别是文言文模式、自定义强度级别、多平台同步等高级功能），部分技术细节可能需要根据实际情况调整。
+
+3. **性能数据未实测**：本文引用了 `benchmarks/` 目录中的 token 计数结果（平均节省 65%）。实际节省幅度取决于你的 LLM 默认输出有多 verbose——agent 本身简洁则节省偏低，agent 习惯先客套再回答则节省更明显。建议先用 `/caveman lite` 试几轮，对比 token 用量变化，再决定用哪个级别。
+
+4. **安全建议的边界**：本文提供的安全建议（如 flag 文件 symlink 检查、文件权限 0600）是基于通用最佳实践。具体的安全需求需要根据你的威胁模型调整。本文不构成专业安全审计或法律建议。
+
+5. **未覆盖的内容**：本文未详细讨论如何编写高质量的 SKILL.md（强度级别定义）、如何调试 hooks（如 caveman-mode-tracker.js 未正确注入规则）、如何在无 hooks 系统的 Agent 中使用 caveman（需要手动添加 snippet 到 rules 文件）。这些内容的详细讨论需要单独的文章或视频教程。
+
+6. **更新记录**：本文基于 caveman v（2026-04-30）编写。如果 caveman 发布新版本，部分内容可能需要更新。
 
 ---
 

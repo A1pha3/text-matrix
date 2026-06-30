@@ -10,6 +10,31 @@ tags: ["AI Agent", "LLM", "工程实践", "上下文工程", "Python"]
 
 # 12-Factor Agents：把 LLM 应用从 Demo 拉进生产线的工程原则
 
+                
+## 一、学习目标
+
+读完本文，你应该能够：
+
+1. **理解三层架构**：解释 Web / Agent Workflow / Sandbox VM 的职责划分
+2. **掌握关键设计决策**：说明为什么 Agent 不在 Sandbox 内运行
+3. **完成部署流程**：从 Fork 到运行，完整走通
+4. **配置 GitHub 集成**：实现自动 commit 和 PR
+5. **实现 Session 共享**：创建和分享只读链接
+
+---
+
+## 二、目录
+
+1. [项目概览](#项目概览)
+2. [核心设计决策](#核心设计决策)
+3. [部署流程](#部署流程)
+4. [GitHub 集成](#github-集成)
+5. [Session 共享](#session-共享)
+
+---
+
+
+
 ## 学习目标
 
 读完本文后，你应当能够：
@@ -984,3 +1009,44 @@ uvx create-12-factor-agent
 4. **未覆盖话题**：本文明确不讨论 MCP（Model Context Protocol）协议层、框架横向评测、模型训练/Fine-tuning，这些话题的判断需要参考其他专门资料。
 
 5. **版本与时效性**：本文基于 2026 年 5 月的仓库版本撰写。12-Factor Agents 仍在持续迭代，后续新增原则或调整以仓库最新版本为准。
+
+
+---
+
+## 十二、自测题
+
+1. **Open Agents 的三层架构分别是什么？**
+   <details><summary>查看答案</summary>Web Layer、Agent Workflow Layer、Sandbox Layer。Agent 不在 Sandbox 内运行。</details>
+
+2. **为什么 Agent 不在 Sandbox 内运行？**
+   <details><summary>查看答案</summary>生命周期解耦、沙箱独立休眠、技术选型灵活、保持 VM 纯净。</details>
+
+---
+
+## 十三、练习
+
+### 练习 1：部署到本地
+**任务**：Fork 仓库并在本地运行。
+
+### 练习 2：配置 GitHub 集成
+**任务**：创建 GitHub App 并配置自动 commit。
+
+---
+
+## 十四、进阶路径
+
+1. 深入理解 Workflow SDK 的持久化机制
+2. 扩展 Sandbox 功能
+3. 集成其他 LLM Provider
+4. 实现多 Agent 协作
+
+---
+
+## 十五、资料口径说明
+
+1. 本文基于 Vercel Open Agents 官方文档（2026-04 版本）
+2. Agent 框架迭代极快，请以官方最新文档为准
+3. 未覆盖的内容：Workflow SDK 细节、生产环境部署、安全加固
+
+---
+

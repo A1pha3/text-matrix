@@ -10,19 +10,16 @@ tags: ["机器人", "MIT Press", "开源教材", "LaTeX", "自动驾驶"]
 
 # Introduction to Autonomous Robots：MIT Press 自动驾驶机器人入门教材开源笔记
 
-> 仓库：<https://github.com/Introduction-to-Autonomous-Robots/Introduction-to-Autonomous-Robots>
-> 教材官网：<https://introduction-to-autonomous-robots.github.io/>
-> 印刷版购买：<https://www.amazon.com/Introduction-Autonomous-Robots-Mechanisms-Algorithms/dp/0262047551>
-> 取材时间：2026-06-14，Stars 2,481 / Forks 583 / 626 commits（master 分支）
-
 ## 学习目标
 
-读完本文后能回答这 4 件事：
+读完本文后能回答这 6 件事：
 
 - 这个仓库**不是**一个生产级机器人框架，**是**一本 MIT Press 印刷版教材的 LaTeX 源码，所有内容都按章节分文件组织
 - 23 个章节覆盖了从运动学（kinematics）、力学、感知到定位、SLAM、深度学习的完整链路，还附了 Wolfram + MATLAB 示例代码与 4 套作业
 - 印刷版版权归 MIT Press，源码采用 CC-BY-NC-ND（署名 - 非商业 - 不可演绎），**不能**把编译好的 PDF 重新发布到网上
 - 自己想拿到一份 PDF，Overleaf 一键导入最快；本地编译需要 `pdflatex` + `bibtex` 三轮
+- 仓库的 `meshery-cloud-native-manager-cncf-architecture-guide.md` 文件是 Meshery 云原生管理器的架构指南
+- 本文档的**资料口径说明**在文末，列出了信息来源、许可协议、编译命令等细节
 
 ---
 
