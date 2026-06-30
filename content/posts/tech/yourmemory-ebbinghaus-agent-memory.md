@@ -19,7 +19,7 @@ tags: ["AI", "Agent", "MCP", "记忆系统", "艾宾浩斯"]
 - [快速开始：5 步接入任意 MCP 客户端](#快速开始：5-步接入任意-mcp-客户端)
 - [MCP 工具：三个核心 API](#mcp-工具：三个核心-api)
 - [多 Agent 共享记忆](#多-agent-共享记忆)
-- [性能基准：59% Recall@5 的含义](#性能基准：59%-recall@5-的含义)
+- [性能基准：59% Recall@5 的含义](#performance-benchmark)
 - [适用场景与边界](#适用场景与边界)
 
 ---
@@ -224,7 +224,7 @@ result = register_agent(
 
 ---
 
-## 性能基准：59% Recall@5 的含义
+## 性能基准：59% Recall@5 的含义 {#performance-benchmark}
 
 YourMemory 在 LoCoMo-10（Snap Research 发布的 10 个多会话对话数据集，共 1,534 个 QA 对）上的表现：
 

@@ -11,11 +11,15 @@ while IFS= read -r -d '' f; do
 done < <(git diff --cached --name-only --diff-filter=ACMR -z -- 'content/**/*.md' '*.md')
 
 if [ "${#changed[@]}" -gt 0 ]; then
+  target_args=()
+  for f in "${changed[@]}"; do
+    target_args+=(--target "$f")
+  done
   if command -v uv >/dev/null 2>&1; then
-    uv run --with pyyaml python scripts/frontmatter_lint.py --root content --target "${changed[@]}" || \
+    uv run --with pyyaml python scripts/frontmatter_lint.py --root content "${target_args[@]}" || \
       uv run --with pyyaml python scripts/frontmatter_lint.py --root content
   else
-    python3 scripts/frontmatter_lint.py --root content --target "${changed[@]}" || \
+    python3 scripts/frontmatter_lint.py --root content "${target_args[@]}" || \
       python3 scripts/frontmatter_lint.py --root content
   fi
 fi
