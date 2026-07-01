@@ -5,28 +5,26 @@ repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
 # 1. frontmatter 校验：优先跑本次改动的文件，全量失败则全量再跑一次
+# ⚠️ 7-1 合并：保留 staged version 的 --offline 标志（针对 198.18.0.0/15 隔离网络，PyYAML 已本地缓存）
+# ⚠️ 7-1 合并：保留 staged version 的 --target "${changed[@]}" 简洁写法（vs HEAD 的 target_args 数组）
 changed=()
 while IFS= read -r -d '' f; do
   changed+=("$f")
 done < <(git diff --cached --name-only --diff-filter=ACMR -z -- 'content/**/*.md' '*.md')
 
 if [ "${#changed[@]}" -gt 0 ]; then
-  target_args=()
-  for f in "${changed[@]}"; do
-    target_args+=(--target "$f")
-  done
   if command -v uv >/dev/null 2>&1; then
-    uv run --with pyyaml python scripts/frontmatter_lint.py --root content "${target_args[@]}" || \
-      uv run --with pyyaml python scripts/frontmatter_lint.py --root content
+    uv run --offline --with pyyaml python scripts/frontmatter_lint.py --root content --target "${changed[@]}" || \
+      uv run --offline --with pyyaml python scripts/frontmatter_lint.py --root content
   else
-    python3 scripts/frontmatter_lint.py --root content "${target_args[@]}" || \
+    python3 scripts/frontmatter_lint.py --root content --target "${changed[@]}" || \
       python3 scripts/frontmatter_lint.py --root content
   fi
 fi
 
 # 2. frontmatter 字段自动补全
 if command -v uv >/dev/null 2>&1; then
-  uv run python scripts/frontmatter_autofill.py --root content
+  uv run --offline python scripts/frontmatter_autofill.py --root content
 else
   python3 scripts/frontmatter_autofill.py --root content
 fi
