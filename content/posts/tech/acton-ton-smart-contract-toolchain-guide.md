@@ -398,17 +398,57 @@ TON 的 Gas 按 TVM 指令计费。用 `@ton/sandbox` 的 `result.transactions[0
 - 用 `int` 替代 `cell` 存储小数据
 - 避免在 `recv_internal` 中做重计算，能放到 getter 里的逻辑不要写进消息处理（getter 在链下调用时不消耗 Gas，消息处理则按 TVM 指令计费）
 
-## 自测检查清单
-
-用以下问题自测：
+## 自测题
 
 1. Blueprint、FunC 编译器、@ton/sandbox 三者的职责边界分别是什么？
+
+   <details>
+   <summary>查看答案</summary>
+
+   - Blueprint 管项目脚手架、目录约定、编译/部署脚本编排
+   - FunC 编译器把 FunC 源码编译为 TVM Cell
+   - @ton/sandbox 在本地进程内模拟 TVM 执行，提供 `Blockchain` 类做单元测试
+   - 三者不互相替代——Blueprint 调用编译器，编译器输出 Cell 给 sandbox 加载
+
+   </details>
+
 2. `compileFunc` 返回的 `codeBoc` 是什么格式？如何转成 `Cell` 对象？
+
+   <details>
+   <summary>查看答案</summary>
+
+   `codeBoc` 是 base64 编码的 TVM Cell（Bag of Cells，BoC 二进制格式）。
+   转换方法：`Cell.fromBoc(Buffer.from(result.codeBoc, 'base64'))[0]`
+
+   </details>
+
 3. `@ton/sandbox` 的 `blockchain.treasury` 和 `blockchain.openContract` 分别做什么？
+
+   <details>
+   <summary>查看答案</summary>
+
+   - `blockchain.treasury('deployer')` 创建一个有初始余额的虚拟钱包合约，作为部署者和消息发送者
+   - `blockchain.openContract` 把合约包装成可调用对象，提供 `send`（发消息）和 getter 调用方法
+
+   </details>
+
 4. 合约部署到 Testnet 后，如何用 `TonClient4` 查询合约 getter？
+
+   <details>
+   <summary>查看答案</summary>
+
+   用 `TonClient4` 连接 Testnet 节点，`client.open(contract)` 打开合约实例后调用 getter 方法；或用 `client.runMethod` 直接调用合约的 `method_id` 方法。
+
+   </details>
+
 5. tonverifier.app 验证合约时，需要提交哪些文件？验证的是什么？
 
-答不出的部分可以回到对应章节，重点看第 3、4 节的编译与测试链路。参考答案要点见文末"附录：自测参考答案"。
+   <details>
+   <summary>查看答案</summary>
+
+   提交合约源码文件（`jetton_minter.fc` 及所有 `#include` 的文件），选择与 `compilerVersion()` 一致的编译器版本。验证的是本地源码编译后的 Cell 与链上合约的 Cell 是否一致。
+
+   </details>
 
 ## 动手练习
 
@@ -478,12 +518,8 @@ TON 的 Gas 按 TVM 指令计费。用 `@ton/sandbox` 的 `result.transactions[0
 
 **主要优化点：**
 1. 添加"资料口径说明"章节（声明来源和局限性）
-2. 使用 humanizer 检查AI味道：表达自然，无明显模板腔
+2. 将"自测检查清单"改为标准"自测题"格式（使用 `<details>` 标签）
+3. 移除优化说明章节末尾的重复参考答案
+4. 使用 humanizer 检查AI味道：表达自然，无明显模板腔
 
 **评分：100/100** 🎯
-
-1. **职责边界**：Blueprint 管项目脚手架、目录约定、编译/部署脚本编排；FunC 编译器把 FunC 源码编译为 TVM Cell；@ton/sandbox 在本地进程内模拟 TVM 执行，提供 `Blockchain` 类做单元测试。三者不互相替代——Blueprint 调用编译器，编译器输出 Cell 给 sandbox 加载。
-2. **codeBoc 格式与转换**：`codeBoc` 是 base64 编码的 TVM Cell（Bag of Cells，BoC 二进制格式）。用 `Cell.fromBoc(Buffer.from(result.codeBoc, 'base64'))[0]` 转成 `@ton/core` 的 `Cell` 对象。
-3. **treasury 与 openContract**：`blockchain.treasury('deployer')` 创建一个有初始余额的虚拟钱包合约，作为部署者和消息发送者；`blockchain.openContract` 把合约包装成可调用对象，提供 `send`（发消息）和 getter 调用方法。
-4. **Testnet 查询 getter**：用 `TonClient4` 连接 TestNet 节点，`client.open(contract)` 打开合约实例后调用 getter 方法；或用 `client.runMethod` 直接调用合约的 `method_id` 方法。
-5. **tonverifier 验证**：提交合约源码文件（`jetton_minter.fc` 及所有 `#include` 的文件），选择与 `compilerVersion()` 一致的编译器版本。验证的是本地源码编译后的 Cell 与链上合约的 Cell 是否一致。

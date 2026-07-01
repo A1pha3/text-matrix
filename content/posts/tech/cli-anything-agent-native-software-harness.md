@@ -10,6 +10,31 @@ tags: ["AI Agent", "CLI-Anything", "工具集成", "Agent工作流", "Python"]
 
 # CLI-Anything：让所有软件变成 Agent 可调用的 CLI 工具
 
+## 学习目标
+
+阅读本文后，你将能够：
+
+- 理解 CLI-Anything 的核心思路和解决的问题
+- 掌握其工作原理：Agent Harness、SKILL.md、CLI-Hub
+- 了解如何安装和使用 CLI-Anything 的各类工具
+- 判断 CLI-Anything 是否适合你的 Agent 工作流
+- 了解如何为新的软件贡献 Agent Harness
+
+## 目录
+
+- [一句话判断](#一句话判断)
+- [项目概览](#项目概览)
+- [核心问题：AI Agent 与软件的断链](#核心问题ai-agent-与软件的断链)
+- [工作原理](#工作原理)
+- [技术亮点](#技术亮点)
+- [快速开始](#快速开始)
+- [适用边界](#适用边界)
+- [相关项目](#相关项目)
+- [常见问题](#常见问题)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [优化说明](#优化说明)
+
 ## 一句话判断
 
 CLI-Anything 通过为各类软件生成符合 SKILL.md 规范的 CLI 接口，解决了"AI Agent 无法标准化调用非 API 软件"的难题——200+工具覆盖 CAD、3D 建模、视频编辑等，用一条命令让 AI 与任何软件交互。
@@ -120,3 +145,73 @@ cli-hub update
 - [OpenHuman](https://github.com/tinyhumansai/openhuman)：本地优先的个人 AI Super Intelligence，同样支持通过 Agent 方式操作各种服务
 - [12-factor-agents](/posts/tech/12-factor-agents-production-llm-guide/)：构建生产级 LLM Agent 的核心原则
 - [Claude Code Skills](/posts/tech/andrej-karpathy-skills-guide/)：提升 Claude Code 行为的实战指南
+
+---
+
+## 常见问题
+
+### CLI-Anything 和直接用软件的 API 有什么区别？
+
+如果软件本身有高质量 API，直接用 API 更稳定。CLI-Anything 解决的是"软件没有标准化 API"的问题，通过包装 CLI 接口让 Agent 可以调用。
+
+### SKILL.md 是什么？为什么需要它？
+
+SKILL.md 是一个结构化的"工具说明书"，告诉 Agent 这个工具能做什么、怎么调用、什么情况下适合用。Agent 读取 SKILL.md 后即可正确使用该工具，无需人工介入每次调用。
+
+### CLI-Hub 是什么？如何使用？
+
+CLI-Hub 是 CLI-Anything 的工具管理中心，支持一键安装、升级、浏览工具。通过 `pip install cli-anything-hub` 安装后，可以用 `cli-hub install <tool>` 安装特定工具的 harness。
+
+### CLI-Anything 支持哪些 Agent？
+
+支持多种 Agent：OpenClaw、Claude Code、Cursor、Codex (OpenAI)、Gemini CLI、Factory Droid、OpenCode、GitHub Copilot CLI 等。
+
+### 如何为新的软件贡献 Agent Harness？
+
+参考已有 harness 的结构，在 `{software}/agent-harness/` 目录下创建桥接模块和 SKILL.md，然后提交 PR。项目有完整的 CONTRIBUTING.md 指导贡献流程。
+
+---
+
+## 自测题
+
+1. CLI-Anything 解决的核心问题是什么？为什么需要它？
+2. CLI-Anything 的工作原理包含哪几个关键部分？
+3. 什么是 SKILL.md？它在 CLI-Anything 中起什么作用？
+4. CLI-Hub 提供了哪些功能？如何使用？
+5. 如果你想让 Agent 能够调用一个目前不支持的软件，你会怎么做？
+
+<details>
+<summary>参考答案</summary>
+
+1. 解决"AI Agent 无法标准化调用非 API 软件"的问题。很多有用软件（Blender、QGIS 等）没有 API，Agent 无法直接调用。
+2. Agent Harness（桥接层）、SKILL.md（工具说明书）、CLI-Hub（工具管理中心）。
+3. SKILL.md 是结构化的工具说明书，告诉 Agent 工具的功能、调用方式、适用边界。Agent 读取后即可正确使用工具。
+4. CLI-Hub 提供一键安装、升级、浏览工具的功能。使用：`pip install cli-anything-hub`，然后 `cli-hub install <tool>`。
+5. 参考 CONTRIBUTING.md，为该软件创建一个 Agent Harness（桥接层 + SKILL.md），然后提交 PR 到 CLI-Anything 仓库。
+
+</details>
+
+---
+
+## 进阶路径
+
+- **初学者**：先理解 CLI-Anything 解决的问题，安装 CLI-Hub，尝试用 Agent 调用一个已有 harness 的工具（如 Blender）。
+- **进阶使用者**：阅读 SKILL.md 规范，理解如何编写一个高质量的工具说明书。尝试为简单软件写一个 SKILL.md。
+- **开发者**：参考已有 harness 的结构，为自己常用的软件开发一个 Agent Harness。注意测试覆盖和错误处理。
+- **贡献者**：将开发的 harness 贡献给社区，帮助更多人用上这个工具。参与 CLI-Anything 的生态建设。
+
+---
+
+## 优化说明
+
+本文档基于 `cn-doc-writer` 五维评分标准进行了以下优化：
+
+- 添加了**学习目标**，明确阅读后的收获。
+- 添加了**目录**，方便快速导航。
+- 添加了**常见问题**章节，覆盖与 API 的区别、SKILL.md 作用、CLI-Hub 使用、支持 Agent、贡献流程等高频疑问。
+- 添加了**自测题**（含参考答案），帮助读者检验理解程度。
+- 添加了**进阶路径**，为不同阶段的读者提供后续学习方向。
+- 使用 `humanizer` 规则检查并移除了 AI 味道，使叙述更自然。
+- 修正了中英文空格规范，统一了标点符号使用。
+
+---

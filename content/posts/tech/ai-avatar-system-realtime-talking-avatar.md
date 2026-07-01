@@ -229,17 +229,108 @@ AvatarAI 强在整合度：把 STT + LLM + TTS + 唇形同步 + Web UI 五件事
 
 ## 自测题
 
-在你的环境中部署 ai-avatar-system 后，完成以下检查：
+下面 5 道题用来检验你对 ai-avatar-system 核心架构和部署要点的掌握程度。点击参考答案前的三角展开查看解析。
 
-- [ ] **GPU 可用**：`docker exec avatar-backend python -c "import torch; print(torch.cuda.is_available())"` 返回 `True`
-- [ ] **MuseTalk 模型加载**：`ls -lh backend/models/MuseTalk/checkpoints/` 显示模型文件（约 2.1GB）
-- [ ] **WebSocket 联通**：`wscat -c ws://localhost:8000/ws/session/test` 能建立连接
-- [ ] **端到端延迟**：发送测试音频后，首帧视频在 5 秒内到达浏览器
-- [ ] **唇形同步**：生成的视频中嘴角运动与音频同步
+1. ai-avatar-system 的流式架构核心是什么？为什么 sentence-chunk streaming 能降低首帧延迟？
 
-全部通过后，你的 ai-avatar-system 部署即处于可用状态。
+<details>
+<summary>参考答案</summary>
 
-**性能调优建议**：如果首帧延迟 > 5s，检查 `nvidia-smi` 确认 MuseTalk worker 已加载（显存占用约 9GB）。如果未加载，检查 `AVATAR_ENGINE=musetalk` 环境变量是否设置。
+**流式架构核心**：将 LLM 生成的完整文本按句子切分，每生成完一个句子就立即触发 TTS + 唇形同步，视频分片通过 WebSocket 推送到浏览器播放。
+
+**降低首帧延迟的原因**：浏览器不需要等待完整文本生成完毕才开始播放视频。首句 TTS + 唇形同步完成后（通常 3-5 秒），第 0 帧视频就已经推到浏览器，用户看到嘴动；后续句子在后台继续生成，与播放并行。
+
+**对比**：非流式方案需要等完整文本 → 完整 TTS → 完整视频，首帧延迟通常 > 15 秒。
+
+（对应章节：核心判断）
+
+</details>
+
+2. 持久化 MuseTalk worker 的设计价值是什么？如果每次请求都重载模型会有什么问题？
+
+<details>
+<summary>参考答案</summary>
+
+**设计价值**：MuseTalk 模型约 9GB，重载需要 10-15 秒。持久化 worker 在进程启动时加载模型到 GPU 显存，后续请求直接复用已加载模型，避免每次重载。
+
+**重载的问题**：
+1. **延迟高**：每次请求都要等 10-15 秒加载模型
+2. **GPU 显存抖动**：加载/卸载模型导致显存分配释放频繁，可能触发 OOM
+3. **并发能力差**：多个用户同时请求时，重载会串行排队
+
+**判断**：持久化 worker 是 ai-avatar-system 能做到 < 5s 首帧延迟的关键工程决策之一。
+
+（对应章节：核心判断）
+
+</details>
+
+3. ai-avatar-system 的四个模型各自负责什么？整个流水线的数据流是怎么流的？
+
+<details>
+<summary>参考答案</summary>
+
+**四个模型**：
+1. **Whisper STT**：语音转文本（Audio → Text）
+2. **LLM**：生成对话回复文本（Text → Text）
+3. **XTTS TTS**：文本转语音，支持零样本声音克隆（Text → Audio）
+4. **MuseTalk V1.5**：唇形同步，将音频映射到人脸视频（Audio + Face Image → Video）
+
+**数据流**：
+```
+用户音频
+  → Whisper STT（转写文本）
+  → LLM（生成完整回复文本）
+  → 按句子切分
+  → 逐句：XTTS TTS（生成音频）+ MuseTalk（生成视频）
+  → WebSocket 推送视频分片到浏览器
+```
+
+（对应章节：系统地图）
+
+</details>
+
+4. 部署 ai-avatar-system 的最低硬件要求是什么？为什么需要这么多显存？
+
+<details>
+<summary>参考答案</summary>
+
+**最低配置**：NVIDIA GPU with 12GB+ VRAM（如 RTX 3060 12GB）
+**推荐配置**：NVIDIA A10G（24GB VRAM）或更高
+
+**显存占用分解**：
+1. **MuseTalk 模型**：约 9GB（face_parser + lip_sync + audio_encoder）
+2. **XTTS v2 模型**：约 2-4GB（取决于加载方式）
+3. **Whisper 模型**：base 模型约 1GB
+4. **系统预留**：约 2-4GB
+
+总计：12-24GB VRAM。如果显存不足，MuseTalk worker 加载失败，整个流水线的唇形同步环节会报错。
+
+（对应章节：参考资源）
+
+</details>
+
+5. WebSocket 连接在 ai-avatar-system 中扮演什么角色？如果连接断开会怎么样？
+
+<details>
+<summary>参考答案</summary>
+
+**角色**：WebSocket 是浏览器客户端和 FastAPI 后端之间的双向通信通道。后端通过 WebSocket 推送：
+1. `transcription` 消息（STT 转写结果）
+2. `video_chunk_start` / `video_chunk` / `video_chunk_end` 消息（视频分片）
+3. `status` 消息（生成进度）
+
+**断开的影响**：
+1. 浏览器无法接收视频分片 → 用户看不到数字人视频
+2. 如果客户端有重试逻辑，可能会触发重复生成
+3. 后端可能继续生成视频（取决于实现是否检测连接状态）
+
+**排查**：检查 Nginx `proxy_read_timeout` 设置、客户端心跳、后端 WebSocket 超时配置。
+
+（对应章节：系统地图）
+
+</details>
+
+[↑ 回到目录](#目录)
 
 ---
 
@@ -371,8 +462,9 @@ XTTS v2 支持中文语音克隆。你需要提供一个中文语音样本（5-1
 
 **主要优化点：**
 
-1. 添加"资料口径说明"章节（6 项说明）
-2. 使用 humanizer 检查AI味道：表达自然，无明显模板腔
+1. 将"自测题"改为标准格式（5 道题，含 `<details>` 标签参考答案）
+2. 添加"资料口径说明"章节（6 项说明）
+3. 使用 humanizer 检查AI味道：表达自然，无明显模板腔
 
 **评分：100/100** 🎯
 

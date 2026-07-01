@@ -230,6 +230,67 @@ LLM API → 流式响应 (SSE) → 返回给用户
 
 ---
 
+## 实践案例
+
+### 案例1：用 Claw Code 对接 OpenAI 模型
+
+假设你已经有 OpenAI API Key，想用 Claw Code 作为 CLI harness：
+
+```bash
+# 1. 设置 OpenAI API Key
+export OPENAI_API_KEY="sk-..."
+
+# 2. 运行健康检查
+../target/debug/claw doctor
+
+# 3. 用 OpenAI 模型运行 Prompt
+../target/debug/claw prompt "用 Python 写一个快速排序" --provider openai --model gpt-4o
+
+# 4. 查看会话历史
+../target/debug/claw sessions list
+```
+
+**关键点**：Claw Code 的多 Provider trait 让你可以无缝切换 between Anthropic 和 OpenAI，不需要改代码。
+
+### 案例2：本地 Ollama 运行（无需 API Key）
+
+如果你想在离线环境使用：
+
+```bash
+# 1. 启动 Ollama（确保已安装 Ollama）
+ollama serve
+
+# 2. 在新终端中拉取模型
+ollama pull llama3
+
+# 3. 配置 Claw Code 使用 Ollama
+export OLLAMA_HOST="http://localhost:11434"
+
+# 4. 运行 Prompt
+../target/debug/claw prompt "解释 Rust 的所有权机制" --provider ollama --model llama3
+```
+
+**关键点**：Ollama 不需要 API Key，适合隐私敏感场景或离线开发。
+
+### 案例3：会话管理与恢复
+
+Claw Code 的 SQLite 持久化让你可以恢复之前的对话：
+
+```bash
+# 1. 创建一个带名称的会话
+../target/debug/claw prompt "帮我设计一个 Rust CLI 工具" --session-name "rust-cli-design"
+
+# 2. 查看所有会话
+../target/debug/claw sessions list
+
+# 3. 恢复会话，继续之前的对话
+../target/debug/claw prompt "继续刚才的设计，加上错误处理" --session-name "rust-cli-design"
+```
+
+**关键点**：会话持久化让你可以跨多次运行维护上下文，不需要把所有历史都放在一个 Prompt 里。
+
+---
+
 ## 常见问题
 
 ### Q: `claw doctor` 报告 API Key 无效怎么办？

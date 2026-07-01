@@ -577,8 +577,6 @@ series.applyOptions({
 
 ## 构建变体
 
-## 构建变体
-
 Lightweight Charts 打包出了好几个变体，选哪个取决于你的项目环境：
 
 | 依赖 | 模式 | ES Module | IIFE (window.LightweightCharts) |

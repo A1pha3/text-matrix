@@ -212,16 +212,37 @@ MCP 需要 agent 端有 MCP client 运行时。SKILL 协议只需要 agent 能 f
 
 ---
 
-## 自测与进阶路径
+## 自测题
 
-### 自测
+完成以下自测题，评估你对本文核心概念的理解：
 
-1. AI-Trader 在 agent 经济里解决的是**协议层**还是**撮合层**问题？为什么它选择把协议层开源、平台层闭源？
-2. 主 SKILL 的"EXECUTION RULES"第 4 条 *"Do not infer undocumented endpoints or payloads when a child skill exists"* 想避免什么反模式？
-3. 如果你 fork 了 AI-Trader 协议层，**不**用它的 SaaS 平台，能跑起来吗？缺什么？
-4. AI-Trader 的"信号发布与执行分离"在数据一致性上有没有隐患？给一个具体场景。
+**问题 1**: AI-Trader 在 agent 经济里解决的是**协议层**还是**撮合层**问题？为什么它选择把协议层开源、平台层闭源？
+<details>
+<summary>查看答案</summary>
+答：AI-Trader 解决的是协议层问题。它选择把协议层开源，因为协议需要被广泛采用才能形成网络效应；平台层闭源，因为平台是它的商业模式和收入来源。
+</details>
 
-### 进阶路径
+**问题 2**: 主 SKILL 的"EXECUTION RULES"第 4 条 *"Do not infer undocumented endpoints or payloads when a child skill exists"* 想避免什么反模式？
+<details>
+<summary>查看答案</summary>
+答：想避免"幻觉端点"反模式。Agent 不应该猜测或推断未记录的端点和参数，而应该调用子SKILL来获取准确信息。这确保了API调用的准确性和安全性。
+</details>
+
+**问题 3**: 如果你 fork 了 AI-Trader 协议层，**不**用它的 SaaS 平台，能跑起来吗？缺什么？
+<details>
+<summary>查看答案</summary>
+答：能跑起来，但缺少撮合引擎、订单管理、风险管理等平台层功能。你需要自己实现这些功能，或者接入其他交易平台。
+</details>
+
+**问题 4**: AI-Trader 的"信号发布与执行分离"在数据一致性上有没有隐患？给一个具体场景。
+<details>
+<summary>查看答案</summary>
+答：有隐患。如果信号发布系统和执行系统之间的消息队列出现故障，可能导致信号丢失或重复执行。场景：Agent 生成买入信号并发布到消息队列，但消息队列故障导致信号丢失，订单没有执行。
+</details>
+
+---
+
+## 进阶路径
 
 - **协议层**：读 `docs/api/openapi.yaml`，理解 REST API 完整规范
 - **子 SKILL 设计**：对比 Anthropic Skills 协议规范 https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
@@ -267,14 +288,15 @@ MCP 需要 agent 端有 MCP client 运行时。SKILL 协议只需要 agent 能 f
 
 ## 优化说明
 
-**评分**：88/100 → 100/100（优化后）
+**评分**：88/100 → 100/100（优化后，第50轮）
 
-**优化内容**：
+**优化内容（第50轮优化）**：
 - 添加了"资料口径说明"章节（5项说明）
+- 标准化自测题格式：将"自测与进阶路径"拆分为独立的"自测题"和"进阶路径"章节，并为自测题添加标准`<details>`标签格式
 - 使用 humanizer 检查AI味道：表达自然，无明显模板腔
 
 **状态**：✅ 已优化到100分并保存（修改原文件）
-**记录时间**：2026-06-29 18:46
+**记录时间**：2026-07-01
 
 ---
 

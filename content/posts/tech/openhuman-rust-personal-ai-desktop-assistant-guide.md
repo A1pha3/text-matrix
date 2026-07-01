@@ -309,6 +309,51 @@ OpenHuman 用 **Rust + SQLite + Obsidian Markdown** 搭建了一套"本地优先
 
 ---
 
+## 实践案例
+
+### 案例1：用 OpenHuman 管理 GitHub 和 Gmail 通知
+
+假设你希望 AI 助手能帮你监控 GitHub Issue 和 Gmail 邮件：
+
+1. **配置 OAuth**：在 OpenHuman 设置中连接 GitHub 和 Gmail
+2. **Auto-fetch 自动同步**：每 20 分钟拉取一次数据
+3. **Memory Tree 自动整理**：OpenHuman 将通知摘要存入本地 SQLite
+4. **查询示例**：问 OpenHuman "我有哪些未读的 GitHub Issue？"
+
+**关键点**：不需要手动检查多个平台，OpenHuman 自动聚合。
+
+### 案例2：本地 Ollama 模式（隐私优先）
+
+如果你不希望数据传到云端：
+
+```bash
+# 1. 安装 Ollama
+brew install ollama
+
+# 2. 启动 Ollama
+ollama serve
+
+# 3. 在 OpenHuman 设置中切换到 Ollama
+# 选择模型：llama3、mistral、或 gemma
+
+# 4. 所有推理在本地运行，数据不出设备
+```
+
+**关键点**：Memory Tree 和 Obsidian Wiki 完全在本地，只有 OAuth 数据同步需要联网。
+
+### 案例3：用 Obsidian 浏览 Memory Tree
+
+OpenHuman 生成的 Obsidian Wiki 可以直接用 Obsidian 打开：
+
+1. 打开 Obsidian
+2. 打开 Vault：`~/.openhuman/obsidian-wiki/`
+3. 浏览 AI 整理的知识图谱
+4. 手动编辑或补充笔记
+
+**关键点**：AI 生成的知识和你的手动笔记在同一个地方，可以混合使用。
+
+---
+
 > **延伸阅读：**
 > - [OpenHuman 官方文档](https://tinyhumans.gitbook.io/openhuman/)
 > - [OpenHuman GitHub 仓库](https://github.com/tinyhumansai/openhuman)

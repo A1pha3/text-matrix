@@ -651,6 +651,57 @@ xattr -cr "/Applications/XXX.app"
 
 ---
 
+## 实践案例
+
+### 案例1：为新 Mac 配置开发环境（15 分钟搞定）
+
+假设你刚买了一台 M3 MacBook Pro，需要配置 Python + Node.js 开发环境：
+
+```bash
+# 1. 安装 Homebrew（如果还没有）
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 2. 安装命令行工具
+brew install git node python go
+
+# 3. 安装 GUI 应用
+brew install --cask iterm2 visual-studio-code docker tableplus
+
+# 4. 安装效率工具
+brew install --cask raycast rectangle 1password
+
+# 5. 验证安装
+git --version
+node --version
+python3 --version
+```
+
+**关键点**：一条命令装完所有工具，不需要去十几个网站下载安装包。
+
+### 案例2：用 Raycast 提升日常效率
+
+Raycast 是 macOS 上的快速启动器，可以替代 Spotlight 并做更多事：
+
+1. **快速启动应用**：按 `Option + Space`，输入应用名
+2. **剪贴板历史**：按 `Option + Shift + C` 查看剪贴板历史
+3. **代码片段管理**：保存常用代码片段，随时调用
+4. **窗口管理**：配合 Rectangle 实现快捷键窗口布局
+
+**实际效果**：每天节省 20-30 次鼠标点击和菜单导航。
+
+### 案例3：用 1Password 管理开发相关密码
+
+开发工作中需要管理很多密码和 API Key：
+
+1. **Git 仓库 Token**：存在 1Password，用 CLI 调取
+2. **SSH 密钥密码**：让 1Password 管理，每次 push 自动填充
+3. **数据库密码**：存在加密笔记里，不写在配置文件
+4. **2FA 验证码**：1Password 内置验证器，不用手机扫
+
+**关键点**：不要把密码写在 `.bashrc` 或 `.zshrc` 里，用 1Password CLI 在需要时动态获取。
+
+---
+
 ## 进阶路径
 
 - **想深入 Homebrew**：读 [Homebrew 官方文档](https://docs.brew.sh)，学习自定义 formula 和 cask

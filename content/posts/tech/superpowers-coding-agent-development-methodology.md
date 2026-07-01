@@ -22,6 +22,28 @@ tags: ["AI Coding Agent", "Superpowers", "开发方法论", "TDD", "Claude Code"
 
 ---
 
+## 目录
+
+- [为什么直接写代码是错的](#为什么直接写代码是错的)
+- [6 个技能构成的强制流程](#6-个技能构成的强制流程)
+  - [brainstorming：先问清楚，再动手](#brainstorming先问清楚再动手)
+  - [writing-plans：拆成 2-5 分钟能完成的小任务](#writing-plans拆成-2-5-分钟能完成的小任务)
+  - [using-git-worktrees：隔离不是可选项](#using-git-worktrees隔离不是可选项)
+  - [subagent-driven-development：每个任务一个干净的上下文](#subagent-driven-development每个任务一个干净的上下文)
+  - [TDD：不是建议，是铁律](#tdd不是建议是铁律)
+  - [reviewing：两阶段审查](#reviewing两阶段审查)
+- [为什么这套流程有效](#为什么这套流程有效)
+- [实战案例：从一句需求到合并 PR](#实战案例从一句需求到合并-pr)
+- [与其他方法论的对比](#与其他方法论的对比)
+- [FAQ](#faq)
+- [自检测试](#自检测试)
+- [支持的 Harness](#支持的-harness)
+- [适用边界](#适用边界)
+- [进阶路径](#进阶路径)
+- [相关阅读](#相关阅读)
+
+---
+
 2025 年 10 月 9 日，Anthropic 正式发布 Claude Code 插件系统。同一天，Jesse Vincent 发布了 Superpowers 的第一个版本。截至 2026 年 5 月，这个项目在 GitHub 上积累了超过 199,000 个 Star，成为 Claude Code 生态中安装量仅次于 Anthropic 官方插件的第三方项目。
 
 Superpowers 给 Coding Agent 装上了一套开发流程——6 个强制检查点，Agent 每次起飞都遵循同一条航线，每一步都不可跳过。
@@ -202,6 +224,42 @@ brainstorming 阶段的设计文档是逐段确认的，你可以在任何一步
 - 一次性脚本或临时工具（写完就扔的代码不需要工程纪律）
 
 **一个判断标准：** 如果你在开始一个任务之前，自己会先花 5 分钟做设计——那这个任务就应该用 Superpowers。
+
+---
+
+## 进阶路径
+
+想把 Superpowers 用到位，可以按下面这条顺序走：
+
+### 第一阶段：跑通基础流程（1-2 天）
+
+- 安装 Superpowers 插件（Claude Code: `/plugin install superpowers@claude-plugins-official`）
+- 用一个真实但不大的任务（比如"给博客加阅读时间估算"）完整走一遍 6 个技能
+- 观察 brainstorming 阶段 Agent 提问的质量，学会如何在提问阶段把需求说清楚
+- 验证 Git worktree 是否正确创建，子 Agent 是否先写测试
+
+### 第二阶段：深度配置（3-5 天）
+
+- 阅读 Superpowers 的技能文件（`~/.claude/plugins/superpowers/skills/`），理解每个技能的触发条件和执行逻辑
+- 针对你的项目特点调整技能参数（比如 TDD 严格程度、review 阈值）
+- 在一个有多人协作的项目里试用，观察 Superpowers 是否能帮助统一代码风格和减少回归
+- 对比使用 Superpowers 前后的代码质量差异（测试覆盖率、PR 大小、review 轮次）
+
+### 第三阶段：与团队工作流集成（1-2 周）
+
+- 把 Superpowers 的流程写入团队的 AI Coding 规范文档
+- 配置 CI/CD 检查，确保 Agent 生成的代码通过了所有测试才允许合并
+- 收集团队反馈，找出 Superpowers 流程中的痛点（比如 brainstorming 阶段太慢、某些任务不适合拆分子 Agent）
+- 根据团队反馈调整 Superpowers 配置，或者考虑切换到 Harness Engineering 做更定制化的工程环境
+
+### 第四阶段：深入原理与贡献（2-4 周）
+
+- 阅读 Superpowers 的技能实现代码，理解它是如何通过 prompt engineering 实现强制流程的
+- 对比 Superpowers、Harness Engineering、Compound Engineering 的源码实现，理解它们的设计取舍
+- 如果你的项目有特殊需求（比如特定的代码风格、特定的测试框架），可以尝试修改 Superpowers 的技能文件
+- 考虑向 Superpowers 仓库提交 PR，分享你的改进或新技能
+
+---
 
 ## 相关阅读
 
