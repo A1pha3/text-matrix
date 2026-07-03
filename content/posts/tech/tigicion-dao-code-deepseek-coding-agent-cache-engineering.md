@@ -473,3 +473,146 @@ DAO Code 对三类读者的信号不同。
 - [NVIDIA SkillSpector：让 26% 不安全的 agent skill 无处藏身](https://txtmix.com/posts/tech/nvidia-skillspector-agent-skill-security-scanner/)——agent skill 安全扫描（系列）
 - [Meta 挖角 Virtue AI 三位创始人](https://txtmix.com/posts/tech/meta-poaches-virtue-ai-agent-security-talent-war/)——agent 安全人才战（系列）
 - [FTShare Python SDK](https://txtmix.com/posts/tech/ftshare-python-sdk-financial-data-agent-access-layer/)——agent skill 数据接入（系列）
+
+---
+
+## 场景问答（FAQ）
+
+**Q：DAO Code 的缓存命中率真能到 95% 以上吗？实测条件是什么？**
+
+README 里的 95.8% 命中率来自 7 道真实开源 bug-fix 评测，输入 token 合计 388 万。但这个数字依赖"字节稳定纪律"——如果项目指令文件（`DAO.md`）频繁变动、或者系统 prompt 里嵌入了时间戳，命中率会明显下降。用 `/audit cache` 可以定位是哪一项破了缓存。
+
+**Q：把 DAO Code 换到 Claude API 上，成本优势还在吗？**
+
+不在了。DAO Code 的成本优势完全建立在 DeepSeek V4 的低价位 + 高 prefix-cache 命中率上。换到 Claude API 后，prefix-cache 的实现不同（Anthropic 的 cache 是按 16-token block 计费的），字节稳定纪律需要重新验证，而且 Claude 的 API 单价本身就高。
+
+**Q：fork 反思子代理会增加响应延迟吗？**
+
+会增加一些——fork 子代理需要单独发一次 API 调用。但反思成本很低：根据 README 的评测，95.8% 缓存命中时，flash 模型跑一次反思大约 0.001 元。而且反思是异步的，不阻塞主对话的响应。
+
+**Q：auto 模式下 `AUTO_ALLOWLIST` 的白名单安全吗？**
+
+白名单只包含只读类工具（`read_file`、`grep_files` 等），理论上安全。但 `exec_shell` 在 auto 模式下会检查 `isReadOnlyShellCommand` 白名单——这个函数是启发式的，复合命令、管道、重定向可能绕过检查。在不受信的环境中，建议用 `default: ask` 而不是 `default: allow`。
+
+**Q：影子 git 检查点会占用很多磁盘空间吗？**
+
+每个 checkpoint 是完整的文件快照（通过 git 对象存储）。长期使用的项目，checkpoint 会占用一些空间。可以定期用 `git -C ~/.dao/checkpoints/<session>/ gc --prune=now` 清理旧的检查点。
+
+---
+
+## 自测题
+
+读完这篇文章，试试回答下面 5 道题：
+
+1. **DAO Code 的 7 大子系统中，哪个子系统负责"敏感目标 + 危险命令"的 hard block？这个 block 能否被 yolo 模式跳过？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   permissions 子系统（`src/permissions/engine.ts`）负责。`mustConfirm` 是硬性兜底——即使在 `bypassPermissions` 模式下，触及敏感目标或执行危险 shell 命令也会被拦截。这是设计上的纵深防御，不能跳过。
+   </details>
+
+2. **为什么反思层必须走 fork 子代理而不是 in-place 反思？请列出至少两个原因。**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - in-place 反思的反思 prompt 塞进主对话的 system prompt → 前缀缓存被破坏
+   - 反思输出塞进主对话 → 主对话被反思结论污染，模型被"牵着鼻子走"
+   - 反思和主任务共享同一上下文 → 反思可能干扰主任务
+   - fork 反思完全复用主对话前缀 → cache hit，且反思输出通过 `drainAdvisories()` 注入，不污染主对话历史
+   </details>
+
+3. **压缩策略中"不保留最近 N 轮原文"的原因是什么？这样做有什么风险？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   原因：压缩后前缀本来就从"新摘要"处断开缓存，tail 落在冷区、留原文对缓存无益。而且"最近轮含大工具输出 → tail 膨胀、压不动"是结构性问题。
+   风险：如果摘要质量差（模型挂了或熔断），丢掉的最近 N 轮原文可能包含关键信息。这就是为什么要有"硬截断兜底"——摘要失败时直接截断，而不是依赖可能不准确的摘要。
+   </details>
+
+4. **`/audit cache` 的"四维指纹"是哪四维？分别检测什么？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - 系统前缀指纹：检测系统 prompt 是否变化（如嵌入了时间戳、UUID）
+   - 工具表指纹：检测工具描述是否变化（如模式切换导致工具表变化）
+   - 记忆注入指纹：检测记忆注入是否变化（如随机化注入顺序）
+   - 消息累计 hash：检测整体消息历史是否变化
+   </details>
+
+5. **DAO Code 的 `verify` 子代理和普通模型自评的区别是什么？为什么必须"真跑命令"？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   `verify` 子代理的 prompt 里写明"不是确认能用，而是试图证明它是坏的"——对抗性找反例、边界、回归。必须"真跑命令"是因为：模型自评不可靠——它会说"代码看起来是对的""实现者的测试已经过了"这类自我合理化借口。`verify` 必须真跑构建、真跑测试套件、真跑 linter/类型检查，贴出可复现的命令输出才签发"通过"。
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：安装 DAO Code 并跑通最小任务
+
+**任务**：安装 DAO Code，配置 DeepSeek API key，然后跑一个"读 README 然后改一行无关紧要的注释"的最小任务。
+
+**步骤**：
+1. 一键安装脚本一行启动（参考 README 的安装说明）
+2. 配置 `~/.dao/config.json` 存 DeepSeek API key
+3. 在一个测试仓库里运行 `dao`
+4. 输入"读 README.md，然后在 README.md 的第一行加一个空行"
+5. 观察 `/cost` 的输出，看缓存命中率
+
+### 练习 2：用 `/audit cache` 定位缓存破坏者
+
+**任务**：故意破坏缓存纪律，然后用 `/audit cache` 定位问题。
+
+**步骤**：
+1. 在一个长时间会话中，观察 `/cost` 的缓存命中率（应该很高）
+2. 修改项目根目录的 `DAO.md`（加一个空格就行）
+3. 再次运行一个任务，观察 `/cost` 的缓存命中率变化
+4. 运行 `/audit cache`，看它是否检测到"项目指令文件变化"
+
+### 练习 3：配置自定义权限规则
+
+**任务**：配置 `~/.dao/permissions.json`，让 `npm test` 永远 allow。
+
+**步骤**：
+1. 创建或编辑 `~/.dao/permissions.json`
+2. 添加一条 allow 规则：`{ "tool": "exec_shell", "command_pattern": "npm test.*" }`
+3. 重启 `dao`
+4. 在会话中执行一个会触发 `exec_shell` 的编辑任务，观察是否还需要确认
+
+---
+
+## 进阶路线
+
+1. **入门**：安装 DAO Code，跑通最小任务，理解缓存纪律的重要性
+2. **应用**：在一个真实项目里用 DAO Code 完成一个功能开发，观察成本和质量
+3. **定制**：配置自定义权限规则、MCP 服务器，把 DAO Code 集成到你的工作流
+4. **深入**：阅读 `src/agent/loop.ts` 和 `src/permissions/engine.ts`，理解回合循环和权限引擎的实现
+5. **扩展**：尝试为 DAO Code 添加一个新的内置子代理（参考 `bundled_agents.ts` 的格式）
+6. **贡献**：找一个 good first issue，提交 PR——DAO Code 是 MIT 协议，欢迎社区贡献
+
+---
+
+## 参考资料
+
+- [tigicion/dao-code GitHub 仓库](https://github.com/tigicion/dao-code)，MIT 协议，截至 2026-06-27 共 420 stars / 5 forks，v0.2.0
+- [DAO.md 项目指令](https://github.com/tigicion/dao-code/blob/master/DAO.md)——开发约定与踩坑笔记（中文）
+- [README.en.md 英文版](https://github.com/tigicion/dao-code/blob/master/README.en.md)——成本数据 + 7 任务评测表
+- [src/agent/loop.ts](https://github.com/tigicion/dao-code/blob/master/src/agent/loop.ts)——回合循环核心 + 缓存指纹 djb2
+- [src/agent/compact.ts](https://github.com/tigicion/dao-code/blob/master/src/agent/compact.ts)——增量摘要压缩策略
+- [src/agent/unified_reflect.ts](https://github.com/tigicion/dao-code/blob/master/src/agent/unified_reflect.ts)——统一反思器 fork 模式
+- [src/permissions/engine.ts](https://github.com/tigicion/dao-code/blob/master/src/permissions/engine.ts)——CC 1:1 权限裁决优先级链
+- [src/permissions/bash_safety.ts](https://github.com/tigicion/dao-code/blob/master/src/permissions/bash_safety.ts)——危险 shell 命令启发式黑名单
+- [src/agent/bundled_agents.ts](https://github.com/tigicion/dao-code/blob/master/src/agent/bundled_agents.ts)——explore / verify / plan / general-purpose 4 个内置子代理
+- [src/memory/store.ts](https://github.com/tigicion/dao-code/blob/master/src/memory/store.ts)——3 层记忆 + 校验 + GC
+- [DeepSeek V4 定价](https://platform.deepseek.com/api_pricing)——prefix-cache 命中价 ≈ 未命中的 1/10
+- [Claude Code 权限系统](https://docs.claude.com/en/docs/claude-code/iam)——DAO Code 复刻的目标
+- [NVIDIA SkillSpector：让 26% 不安全的 agent skill 无处藏身](https://txtmix.com/posts/tech/nvidia-skillspector-agent-skill-security-scanner/)——agent skill 安全扫描（系列）
+- [Meta 挖角 Virtue AI 三位创始人](https://txtmix.com/posts/tech/meta-poaches-virtue-ai-agent-security-talent-war/)——agent 安全人才战（系列）
+- [FTShare Python SDK](https://txtmix.com/posts/tech/ftshare-python-sdk-financial-data-agent-access-layer/)——agent skill 数据接入（系列）

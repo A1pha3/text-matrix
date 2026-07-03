@@ -10,7 +10,21 @@ tags: ["Faster Qwen3-TTS", "TTS", "CUDA Graph", "语音合成", "Qwen3"]
 
 # Faster Qwen3-TTS：实时语音合成加速完全指南
 
-## §1 阅读前提
+## 学习目标
+
+读完这篇文章后，你应该能够：
+
+1. 理解 CUDA Graph 加速 Qwen3-TTS 的原理，说出它和传统 PyTorch 推理的性能差距在哪里
+2. 根据自己的 GPU 型号，判断用 0.6B 还是 1.7B 模型，以及预期的 RTF/TTFA 是多少
+3. 用 Python API 完成一次语音克隆生成，理解 `xvec_only` 参数的作用
+4. 为不同场景（实时交互、录音制作、长文本生成）选择合适的流式配置和 `chunk_size`
+5. 在生产环境中使用预计算 Speaker Embedding，减少冷启动时延
+
+## 目录
+
+| → | [项目概述](#§2-项目概述) | [技术原理深度解析](#§3-技术原理深度解析) | [语音克隆原理解析](#§4-语音克隆原理解析) | [安装与配置](#§5-安装与配置) | [使用说明](#§6-使用说明) | [基准测试指南](#§7-基准测试指南) | [开发扩展](#§8-开发扩展) | [实践建议](#§9-实践建议) | [常见问题](#§10-常见问题) | [自测](#自测) | [进阶路径](#进阶路径) |
+
+---
 
 本文覆盖以下内容：
 
@@ -665,6 +679,36 @@ CUDA-graph capture 在 `torch<=2.5.0` 上不可靠，捕获可能失败并显示
 | Qwen3-TTS 原生 | https://github.com/QwenLM/Qwen3-TTS |
 | PyTorch | https://pytorch.org/ |
 | CUDA Graph 文档 | https://pytorch.org/docs/stable/generated/torch.cuda.CUDAGraph.html |
+
+---
+
+## 自测
+
+1. CUDA Graph 加速的核心原理是什么？为什么它能带来 5-6 倍的加速比？捕获前和捕获后的内核调用方式有什么区别？
+2. 流式生成的 `chunk_size=1` 和 `chunk_size=12` 分别适合什么场景？如果你的应用是实时语音助手，`chunk_size` 应该选多少？
+3. 语音克隆的 `xvec_only=True` 和 `xvec_only=False`（ICL 模式）有什么区别？什么情况下应该用 ICL 模式？
+4. 你有一块 RTX 4060（8GB 显存），想部署 Faster Qwen3-TTS。应该用 0.6B 还是 1.7B 模型？预期 RTF 和 TTFA 大概是多少？
+5. 预计算 Speaker Embedding 的文件大小约 4KB，为什么这么小？生产环境中如何用这个机制减少冷启动时延？
+
+---
+
+## 进阶路径
+
+**阶段 1：跑通 Demo UI（今天）**
+
+按文章「Demo UI 部署」节的步骤，安装 `faster-qwen3-tts[demo]`，启动 `demo/server.py`，打开 `http://localhost:7860`。上传一段自己的声音作为参考音频，做一次语音克隆生成，观察 TTFA 和 RTF 指标。
+
+**阶段 2：Python API 集成（本周）**
+
+把 Faster Qwen3-TTS 集成到你自己的项目里。先用水质参考音频跑通非流式生成，再尝试流式生成（`chunk_size=4`）。重点观察：模型加载时间、首音频延迟、吞吐量是否符合你的要求。
+
+**阶段 3：生产部署优化（下周）**
+
+按文章「使用预计算 Speaker Embedding」节，把参考音频的 speaker embedding 提取出来，存成 `.pt` 文件。部署 OpenAI 兼容 API 服务器，用 `--voices voices.json` 配置多音色。这样每次推理不需要重新计算 speaker embedding，冷启动时延会显著降低。
+
+**阶段 4：在自己的数据上微调（下个月）**
+
+如果你有自己的语音数据，可以微调 Qwen3-TTS 模型。0.6B 模型在单卡 RTX 4090 上就能微调，重点是准备好高质量的参考音频（每段 5-30 秒，安静无回声）。
 
 ---
 

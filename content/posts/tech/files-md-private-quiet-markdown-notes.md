@@ -213,6 +213,30 @@ Notes/
 
 ---
 
+## 常见问题
+
+**Q：files.md 和 Obsidian 能同时用吗？**
+
+能。files.md 只是读取 `.md` 文件，Obsidian 的 Vault 也是 `.md` 文件。你可以在 Obsidian 里做知识管理，在 files.md 里做专注写作，只要不同时在两个应用里编辑同一个文件就行。
+
+**Q：笔记存在本地，多设备怎么同步？**
+
+files.md 本身不提供同步，但文件是普通 `.md`，可以用 Git、iCloud、Syncthing 或任何文件同步方案。Git 方案的好处是有版本历史，适合技术用户。
+
+**Q：支持手机吗？**
+
+files.md 是 Electron 桌面应用，没有官方移动版。手机上可以用任意支持 Markdown 的编辑器打开同一批文件（配合 iCloud 或 Syncthing 同步）。
+
+**Q：支持实时预览吗？**
+
+支持。编辑器支持实时预览切换，左侧写 Markdown，右侧看渲染效果。不需要分屏或外部预览工具。
+
+**Q：适合团队知识库吗？**
+
+不太适合。files.md 是本地单用户工具，没有多用户协作、权限管理、评论等功能。团队知识库应该用 Confluence、Notion 或 MediaWiki。
+
+---
+
 ## 进阶路径
 
 **阶段一：用纯 `.md` 写一周笔记（本周）**

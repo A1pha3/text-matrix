@@ -12,6 +12,31 @@ tags: ["Google", "Android", "Gemini", "AI", "大模型", "智能系统", "主动
 
 > **来源**：Google Blog | **发布日期**：2026-05-12 | **作者**：Mindy Brooks（VP, Product Management）
 
+## 学习目标
+
+读完后你应当能够：
+
+1. 解释 Gemini Intelligence 的核心变革：从响应式 OS 到主动式智能系统的转变
+2. 描述 Gemini Intelligence 的 5 大核心能力（多步骤任务自动化、视觉上下文理解、智能填表、Chrome 浏览器助手、Rambler 语音降噪）
+3. 分析 Gemini Intelligence 的技术意义：系统级 AI 能力嵌入 vs App 层 AI 实现的差异
+4. 对比传统 App 模式与 Gemini Intelligence 在跨 App 操作、上下文理解、主动性等维度的差异
+5. 判断 Gemini Intelligence 对移动 AI、App 生态、用户体验设计的中长期影响
+
+## 目录
+
+- [学习目标](#学习目标)
+- [一、从响应式到主动式](#一从响应式到主动式)
+- [二、能力概览](#二能力概览)
+- [三、Chrome 上的 Gemini 浏览器助手](#三chrome-上的-gemini-浏览器助手)
+- [四、Rambler：语音转文字的降噪层](#四rambler语音转文字的降噪层)
+- [五、Create My Widget：自定义 Widget](#五create-my-widget自定义-widget)
+- [六、设计语言：Material 3 Expressive 进化](#六设计语言material-3-expressive-进化)
+- [七、技术意义：从 App 层到系统层](#七技术意义从-app-层到系统层)
+- [八、发布节奏](#八发布节奏)
+- [FAQ](#faq)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+
 ---
 
 ## 一、从响应式到主动式
@@ -133,6 +158,70 @@ Gemini Intelligence 功能将分阶段推出：
 
 1. **今年夏天**：首批支持 Samsung Galaxy S26 和 Google Pixel 10
 2. **今年内**：覆盖更多 Android 设备，包括 Wear OS 手表
+
+---
+
+## FAQ
+
+**Q: Gemini Intelligence 需要联网才能工作吗？**
+
+A: 部分功能需要联网（如网页搜索、实时数据），但本地模型可以处理很多任务（如语音转文字、智能填表）。Google 的策略是敏感数据本地处理，需要云端能力的再走网络。
+
+**Q: Gemini Intelligence 会泄露我的隐私吗？**
+
+A: Google 强调隐私控制是可选的。比如 Autofill 连接需要用户主动开启，可以随时在设置里关闭。但系统级 AI 意味着更多数据被模型"看到"，这是便利性和隐私的权衡。
+
+**Q: 我的旧 Android 手机能用 Gemini Intelligence 吗？**
+
+A: 首批支持的是 Samsung Galaxy S26 和 Google Pixel 10（2026 年夏天）。旧设备能否支持取决于硬件性能（尤其是 NPU）和 Google 的适配计划，可能会在后续逐步覆盖。
+
+**Q: Gemini Intelligence 和 Siri、Bixby 有什么区别？**
+
+A: Siri 和 Bixby 主要是语音助手，执行预设指令；Gemini Intelligence 是系统级 AI，能理解屏幕内容、跨 App 操作、主动预判需求。它不是"另一个语音助手"，而是"让整个系统变聪明"。
+
+**Q: 开发者需要做什么来适配 Gemini Intelligence？**
+
+A: 如果你的 App 需要被 Gemini 调用（如外卖点餐、票务预订），需要在 Android 的 App Actions 框架里声明能力。如果不需要，系统级的 AI 能力对开发者是透明的。
+
+---
+
+## 自测题
+
+1. Gemini Intelligence 的核心变革是什么？用一句话概括"从响应式到主动式"的含义。
+2. 多步骤任务自动化（如外卖订餐）涉及哪些技术能力？为什么这需要系统级支持而不是 App 层实现？
+3. 对比传统 App 模式和 Gemini Intelligence 在以下维度的差异：AI 能力实现、跨 App 操作、用户交互、上下文理解、主动性。
+4. Rambler 解决的是什么问题？为什么语音转文字需要"降噪层"？
+5. Gemini Intelligence 对 App 生态的可能影响是什么？开发者需要如何应对？
+
+---
+
+## 进阶路径
+
+### 阶段一：理解概念（1-2 天）
+- 阅读 Google 官方博客和 Android Developer 文档
+- 理解系统级 AI  vs App 层 AI 的架构差异
+- 分析现有移动 AI 方案的局限性
+
+### 阶段二：体验产品（等到 2026 年夏天）
+- 在 Pixel 10 或 Galaxy S26 上体验 Gemini Intelligence
+- 测试多步骤任务自动化（外卖、订票、日程管理）
+- 体验视觉上下文理解和智能填表
+
+### 阶段三：思考影响（1 周）
+- 分析 Gemini Intelligence 对你的产品/服务的影响
+- 评估是否需要适配 App Actions 框架
+- 思考用户体验设计的变化（从"用户操作"到"AI 预判"）
+
+### 阶段四：准备适配（持续）
+- 如果你是开发者，学习 Android App Actions 框架
+- 设计你的 App 的 AI 能力声明
+- 测试 Gemini 调用你的 App 的体验
+- 优化你的 App 在多步骤任务中的表现
+
+**推荐资源：**
+- [Gemini Intelligence 官方博客](https://blog.google/products-and-platforms/platforms/android/gemini-intelligence/)
+- [Android App Actions 文档](https://developer.android.com/guide/app-actions)
+- [Material 3 Expressive 设计指南](https://m3.material.io/)
 
 ---
 

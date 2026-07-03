@@ -22,7 +22,27 @@ draft: false
 - emoji 输入的两种 trigger 机制：假名读音 vs Slack 风 `:trigger`
 - 怎么在自己的 Rust 项目里嵌入 Karukan 引擎做文本转换
 
-## 一、为什么又来了一个日语 IME
+## 目录
+
+1. [为什么又来了一个日语 IME](#为什么又来了一个日语-ime)
+2. [定位与核心数字](#定位与核心数字)
+3. [整体架构：5 个 crate 的分层](#整体架构5-个-crate-的分层)
+4. [核心机制 1：GPT-2 神经假名汉字转换](#核心机制-1gpt-2-神经假名汉字转换)
+5. [核心机制 2：用户转换学习](#核心机制-2用户转换学习)
+6. [核心机制 3：系统词典与候选改写](#核心机制-3系统词典与候选改写)
+7. [emoji 输入：双 trigger 机制](#emoji-输入双-trigger-机制)
+8. [Linux 前端：fcitx5 addon + C FFI](#linux-前端fcitx5-addon--c-ffi)
+9. [macOS 前端：Swift + InputMethodKit](#macos-前端swift--inputmethodkit)
+10. [karukan-cli 工具链](#karukan-cli-工具链)
+11. [典型问题与边界](#典型问题与边界)
+12. [适用人群](#适用人群)
+13. [场景问答（FAQ）](#场景问答faq)
+14. [自测题](#自测题)
+15. [练习](#练习)
+16. [进阶路线](#进阶路线)
+17. [总结](#总结)
+
+---
 
 如果你在 Linux/macOS 上做日语输入，你大概率在用：
 
@@ -396,6 +416,138 @@ karukan-cli serve --port 8080
 **不建议**：
 - **企业生产环境**——Karukan 是个人项目，没有 SLA
 - **离线场景但需要大模型**——GPT-2 在这种场景下精度不够
+
+---
+
+## 场景问答（FAQ）
+
+**Q：Karukan 需要多大的内存？GPT-2 模型跑得动吗？**
+
+GPT-2 small 模型 FP16 约 500 MB，量化后 ~150 MB。推理时需要额外内存存放上下文（取决于输入序列长度）。建议：macOS 上 8 GB 内存就够了（Apple Silicon 的 GPU 内存共享帮忙）；Linux 上建议 16 GB 内存（纯 CPU 推理）。
+
+**Q：live conversion 的延迟真的能 < 50ms 吗？实测条件是什么？**
+
+README 里提到的 < 50ms 是用户感知阈值，不是 GPT-2 推理延迟。实际流程：键入 → roma字转换（查表，< 1ms）→ GPT-2 推理（10-50ms，取决于硬件）→ 候选排序（< 1ms）。在 Apple Silicon (M1/M2/M3) 上，用 llama.cpp 的 Metal 加速，GPT-2 推理延迟约 10-30ms；在纯 CPU 上可能到 50-100ms。
+
+**Q：用户转换学习的数据存在哪里？能导出或同步吗？**
+
+推测是本地 SQLite（README 未明确写）。目前没有跨设备同步机制——这是设计选择，隐私优先。如果你需要在多台设备上共享学习数据，目前只能手动备份数据库文件。
+
+**Q：Karukan 能用在 Fcitx5 之外的输入法框架吗？**
+
+目前只支持 Fcitx5 (Linux) 和 InputMethodKit (macOS)。Windows 不支持，Wayland 用 XWayland 兼容模式。如果你需要其他框架（如 IBus），需要自己实现前端——karukan-engine crate 是独立的，可以嵌入。
+
+**Q：Mozc 候选改写器移植完整吗？所有 Mozc 的改写规则都在吗？**
+
+README 未明确说明完整度。但既然选择"移植"而不是"重写"，核心改写规则（半角片假名、全角/半角切换、大写/小写、数字变体、进制、符号）应该都覆盖了。如果你发现某个改写缺失，可以提 issue 或 PR。
+
+---
+
+## 自测题
+
+读完这篇文章，试试回答下面 5 道题：
+
+1. **Karukan 的 5 个 crate 中，哪个 crate 负责"ローマ字→ひらがな"转换？为什么 macOS 前端不直接调用 llama.cpp？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - karukan-engine crate 负责"ローマ字→ひらがな"转换（查表）和 llama.cpp 推理 NKCC。
+   - macOS 前端不直接调用 llama.cpp 是因为：llama.cpp 是 C++ 库，Swift/C++ 混编很痛；独立 JSON-RPC server (karukan-imserver) 隔离了语言边界，且多个 macOS app 可以共享同一个 karukan 引擎进程。
+   </details>
+
+2. **Context-aware 转换和传统 N-gram IME 的核心差异是什么？举一个具体例子。**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - 传统 N-gram IME 只看输入字符串本身；NKCC 模型看完整上下文（context_before 和 context_after）。
+   - 具体例子：输入 "ashita"——传统 IME 不知道是"明日"还是"あした"（同音异字）；输入 "明日のashita"——Karukan 通过 context_after "明日" 直接锁定候选。
+   </details>
+
+3. **Live conversion 的用户体感差异是什么？为什么它能减少按键次数？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - 传统 IME：用户输入假名 → 按 Space → 弹出候选 → 选
+   - Live conversion：用户输入假名时实时显示转换结果，Space 只是"确认当前选中的候选"
+   - 体感差异：传统 IME 每输入 4-6 字符需要按一次 Space；Live conversion 几乎不用按 Space，只在需要切换候选时按。
+   </details>
+
+4. **用户转换学习的三种机制是什么？各举一个例子。**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - 候选优先排序：用户选过的候选 → 提到第一位
+   - 预测转换（前缀匹配）：输入到一半就开始推荐（如已学"ユーザー" → 输入"ゆーざ"时预测区显示）
+   - 学习数据存储：每次 commit 候选时更新（推测是本地 SQLite）
+   </details>
+
+5. **Karukan 和 Mozc 的核心差异是什么？什么场景选 Karukan，什么场景选 Mozc？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - 核心差异：Mozc 是 C++ N-gram + CRF 模型；Karukan 是 Rust + GPT-2 神经模型。Karukan 的 NKCC 对长上下文理解更强，但模型精度上限受 GPT-2 限制。
+   - 选 Karukan：开发者/NLP 研究者、macOS 重度用户、想嵌入 NKCC 引擎到自己的产品
+   - 选 Mozc：普通用户、需要 100% 准确率、Windows 用户
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：编译 Karukan 并跑通 Linux (fcitx5) 前端
+
+**任务**：在 Linux 上编译 Karukan 的 fcitx5 前端，并配置一个日语输入测试环境。
+
+**步骤**：
+1. 安装 Rust toolchain 和 fcitx5 开发库（`sudo apt install fcitx5 fcitx5-modules libfcitx5-dev` on Ubuntu）
+2. `git clone https://github.com/togatoga/karukan`
+3. `cargo build --release -p karukan-fcitx5`
+4. 复制 `target/release/libkarukan_fcitx5.so` 到 fcitx5 addon 目录
+5. 配置 fcitx5 添加 Karukan 作为输入法
+6. 下载 GPT-2 模型（参考 README 的模型下载说明）
+7. 测试输入：启动 fcitx5，切换到 Karukan，输入"こんにちは"
+
+### 练习 2：在 macOS 上配置 Karukan 并测试 live conversion
+
+**任务**：在 macOS 上编译 Karukan 的 macOS 前端，并测试 live conversion 特性。
+
+**步骤**：
+1. 安装 Xcode 和 Command Line Tools
+2. `git clone https://github.com/togatoga/karukan`
+3. 编译 karukan-imserver（`cargo build --release -p karukan-im`）
+4. 编译 macOS 前端（参考 `karukan-macos` 目录的构建说明）
+5. 注册 Karukan 为输入法（系统设置 → 键盘 → 输入法 → 添加）
+6. 启用 live conversion（Ctrl+Shift+L 切换）
+7. 测试：输入"きょうは"看是否实时转换为"今日は"
+
+### 练习 3：用 karukan-cli 构建系统词典
+
+**任务**：用 karukan-cli 从 SudachiDict 源数据构建系统词典。
+
+**步骤**：
+1. 下载 SudachiDict 源数据（参考 SudachiDict GitHub 的下载说明）
+2. 运行 `karukan-cli build-dict --input sudachidict/ --output dict.bin`
+3. 验证词典：`karukan-cli view-dict dict.bin --entry きょう`
+4. 把构建好的词典配置到 Karukan（参考 README 的词典配置说明）
+
+---
+
+## 进阶路线
+
+1. **入门**：在 Linux 或 macOS 上编译并跑通 Karukan，理解 5 个 crate 的分层架构
+2. **应用**：在日常日语输入中用 Karukan 替代 Mozc，对比体感差异（尤其是 live conversion）
+3. **定制**：配置用户转换学习，观察"预测转换"是否准确
+4. **深入**：阅读 `karukan-engine` crate 的源码，理解"ローマ字→ひらがな"转换表和 llama.cpp 推理的集成
+5. **扩展**：尝试为 Karukan 添加一个新的候选改写规则（参考 Mozc 候选改写器的实现）
+6. **嵌入**：在自己的 Rust 项目里嵌入 karukan-engine crate，做文本转换（如 chatbot 候选、邮件自动补全）
+7. **贡献**：找一个 good first issue，提交 PR——Karukan 是个人项目，社区贡献欢迎
+
+---
 
 ## 十三、总结
 

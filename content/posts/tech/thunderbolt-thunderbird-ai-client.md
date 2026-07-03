@@ -15,6 +15,34 @@ tags: ["AI", "Tauri", "MCP", "端到端加密", "自托管"]
 > **前置知识**：对 AI 助手使用有经验、了解基本的数据安全概念
 > **难度定位**：⭐⭐⭐⭐ 专家设计
 
+## 学习目标
+
+读完本文后，你应该能够：
+
+1. 说出 Thunderbolt 的三层分离架构各部分职责，以及为什么选择 Tauri + Bun 组合
+2. 解释离线优先设计的数据流，以及 PowerSync 同步引擎的工作方式
+3. 描述 MCP 集成的完整流程，包括如何配置自定义 MCP 服务器
+4. 列出 Thunderbolt 的 6 种部署方案，并根据场景选择最合适的方案
+5. 理解 E2E 加密的威胁缓解模型，以及哪些威胁无法通过 E2E 完全消除
+6. 把 Thunderbolt 当 ChatGPT/Claude AI 的自托管替代品来用，并理解其数据控制优势
+
+## 目录
+
+- [项目概述](#项目概述)
+- [技术架构](#技术架构)
+- [核心功能模块](#核心功能模块)
+- [部署方案](#部署方案)
+- [安全模型](#安全模型)
+- [与竞品对比](#与竞品对比)
+- [开发指南](#开发指南)
+- [实践建议](#实践建议)
+- [未来路线图与演进](#未来路线图与演进)
+- [总结](#总结)
+- [场景问答（FAQ）](#场景问答faq)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶路线](#进阶路线)
+
 ---
 
 ## §1 项目概述
@@ -1039,7 +1067,132 @@ flowchart TD
 | MCP 工具不工作 | 检查 MCP 配置 | 重启 Thunderbolt |
 
 
+## 场景问答（FAQ）
+
+**Q：Thunderbolt 和 ChatGPT 网页版的核心差异是什么？什么场景选 Thunderbolt？**
+
+ChatGPT 网页版的数据由 OpenAI 控制，可用于模型训练；Thunderbolt 自托管时数据完全由你控制。如果你处理敏感数据（医疗、法律、企业机密），或者希望完全离线工作，Thunderbolt 是唯一选择。如果只是日常使用、对数据控制没要求，ChatGPT 网页版更方便。
+
+**Q：E2E 加密真的安全吗？有没有被破解的可能？**
+
+E2E 加密意味着服务器只存储密文，无法解密。但注意：E2E 加密功能尚未经过密码学审计（文中已标注）。如果你的威胁模型包含"服务器被攻破"这一项，E2E 能提供很强保护；但如果攻击者能访问你的本地设备（恶意软件、设备丢失），本地存储的密钥仍然可能被提取。
+
+**Q：PowerSync 同步在离线状态下怎么工作？**
+
+PowerSync 的设计是"本地 SQLite 先行，后台同步到 PostgreSQL"。网络断开时，所有数据写入本地 SQLite，完全可用；网络恢复后，PowerSync 自动将本地变更同步到服务器。冲突解决默认使用 last-write-wins，你也可以配置自定义合并规则。
+
+**Q：MCP 服务器会带来安全风险吗？**
+
+MCP 服务器运行在本地，理论上可以访问文件系统、执行命令。Thunderbolt 通过权限引擎（CC 1:1）控制工具调用——敏感操作需要用户确认。但 MCP 服务器本身是第三方代码，安装前应该审查其实现。只安装来自可信来源的 MCP 服务器。
+
+**Q：官方托管版和自托管版在功能上有差异吗？**
+
+核心功能一致，但自托管版可以启用 E2E 加密、配置自定义 LLM 端点、完全控制数据保留策略。官方托管版由 Thunderbird 团队运维，数据存储在他们的服务器上（但可以选择不启用 E2E）。
+
+---
+
+## 自测题
+
+读完这篇文章，试试回答下面 5 道题：
+
+1. **Thunderbolt 的三层分离架构中，设备层和服务器层各负责什么？为什么离线优先设计要先写本地 SQLite？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   设备层负责 UI、状态管理、本地存储和 E2E 加密；服务器层负责认证、同步引擎和 PostgreSQL 存储。离线优先设计先写本地 SQLite 是因为本地写入速度快、不依赖网络，网络恢复后再通过 PowerSync 同步到服务器——这样即使网络断开，用户仍能正常工作。
+   </details>
+
+2. **E2E 加密能防御哪些威胁？不能防御哪些威胁？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   能防御：服务器数据泄露（服务器只存密文）、中间人攻击（传输用 TLS 1.3 加密）。
+   不能防御：本地设备被攻破（密钥存储在本地）、API 密钥泄露（API 密钥不包含在 E2E 加密范围内）、模型提供商的日志（如果用了云端 LLM，提供商可能记录请求）。
+   </details>
+
+3. **MCP 集成的完整流程是什么？如何配置一个自定义的 filesystem MCP 服务器？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   流程：AI 模型 → MCP Client → MCP Server → 本地工具（文件系统、Git、数据库等）。
+   配置方法：编辑 `~/.config/thunderbolt/mcp-servers.json`，添加 filesystem MCP 的配置（示例中已给出完整配置）。
+   </details>
+
+4. **6 种部署方案各自的适用场景和安全性如何？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   - 官方托管：个人/试用，基础安全性
+   - Docker Compose：小团队，标准安全性
+   - Kubernetes：中型企业，高级安全性
+   - E2E 加密模式：任何规模，最高安全性
+   </details>
+
+5. **Thunderbolt 的认证流程支持哪些方式？OIDC SSO 适用于什么场景？**
+
+   <details>
+   <summary>点击查看参考答案</summary>
+   
+   支持 OTP（手机验证码）、OIDC（企业 SSO）、Passkey（无密码）。OIDC SSO 适用于企业环境，可以和公司的统一认证系统（如 Okta、Azure AD）集成，实现统一的权限管理。
+   </details>
+
+---
+
+## 练习
+
+### 练习 1：部署 Thunderbolt 到本地 Docker
+
+**任务**：用 Docker Compose 在本地部署 Thunderbolt，并配置一个本地 Ollama 模型。
+
+**步骤**：
+1. 安装 Docker 和 Docker Compose
+2. 复制文中的 `docker-compose.yml` 示例，调整端口和密码
+3. 运行 `docker-compose up -d` 启动服务
+4. 访问 `http://localhost:3000` 完成初始化配置
+5. 配置 Ollama 作为模型提供商（需要先在本地安装 Ollama）
+
+### 练习 2：配置自定义 MCP 服务器
+
+**任务**：配置一个 git MCP 服务器，让 Thunderbolt 能够操作本地 Git 仓库。
+
+**步骤**：
+1. 编辑 `~/.config/thunderbolt/mcp-servers.json`
+2. 添加 git MCP 服务器的配置（示例中已给出）
+3. 重启 Thunderbolt
+4. 在 AI 对话中测试"帮我查看当前仓库的状态"
+
+### 练习 3：启用 E2E 加密并验证
+
+**任务**：启用 E2E 加密，并验证服务器无法解密你的对话。
+
+**步骤**：
+1. 在设置中启用 E2E 加密
+2. 进行一次 AI 对话
+3. 查看数据库中的存储内容（应该是密文）
+4. 在另一台设备上导入密钥，验证能否解密
+
+---
+
+## 进阶路线
+
+如果你想更深入地使用或贡献 Thunderbolt，可以按这个顺序：
+
+1. **入门**：用官方托管版体验基本功能，理解 Thunderbolt 的定位
+2. **部署**：用 Docker Compose 部署到自己的服务器，配置域名和 TLS 证书
+3. **定制**：配置自定义 MCP 服务器，扩展 Thunderbolt 的能力边界
+4. **安全**：启用 E2E 加密，理解密钥管理和恢复流程
+5. **贡献**：阅读 `docs/architecture.md` 理解架构，找一个 good first issue 开始贡献
+6. **集成**：把 Thunderbolt 集成到你的工作流（如结合 Obsidian、VS Code 等工具）
+
+---
+
 ## 相关资源
+
+
 
 - **GitHub 仓库**：https://github.com/thunderbird/thunderbolt
 - **官网**：https://thunderbolt.io
