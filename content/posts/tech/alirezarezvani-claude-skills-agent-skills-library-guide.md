@@ -1,0 +1,226 @@
+---
+title: "alirezarezvani/claude-skills 深度拆解：5,200 Stars 的 354 个 AI Agent Skills 大库是怎么组织的"
+date: "2026-07-05T14:55:00+08:00"
+slug: "alirezarezvani-claude-skills-agent-skills-library-guide"
+description: "354 个生产级 Claude Code Skills 跨 13 个 AI 编码工具、18 个领域，593 个零依赖 Python CLI 的开源大库，本文拆解其 Skills/Agents/Personas 三层模型与 SKILL.md 最小可执行结构。"
+draft: false
+categories: ["技术笔记"]
+tags: ["Claude Code", "Agent Skill", "Skills 库", "OpenAI Codex", "MCP"]
+author: text-matrix
+---
+
+# alirezarezvani/claude-skills 深度拆解：5,200 Stars 的 354 个 AI Agent Skills 大库是怎么组织的
+
+## 一句话定位
+
+`alirezarezvani/claude-skills` 是当前 GitHub 上**最完整的开源 Claude Code Skills 与 Agent Plugins 库**，5,200+ Stars，354 个生产级 Skills 覆盖工程、产品、营销、合规、C-level 顾问等 18 个领域，同一份 Skills 通过 `scripts/convert.sh` 可一键分发到 13 个 AI 编码工具（Claude Code / OpenAI Codex / Gemini CLI / OpenClaw / Cursor / Aider / Windsurf / Kilo Code / OpenCode / Augment / Antigravity / Hermes Agent / Mistral Vibe）。
+
+**这篇文章不展开**单条 Skill 的逐字使用手册（README 里已经写得很细），而是从**库设计者的视角**回答三个问题：354 个 Skills 用什么目录约定能保持可发现性？`SKILL.md` 的最小可执行结构长什么样？跨 13 个平台的"一份源、13 份产物"是怎么落地的？
+
+## 项目全景：354 × 18 × 13 的矩阵
+
+README 把整个库划成 **18 个领域**、**354 个 Skills**、配套 **593 个 Python CLI 工具**（标准库 only，零 pip 安装）、**711 份模板与参考文档**。下面这张表是来自 `Skills Overview` 一节的精确摘录，数字与 CHANGELOG 里 `derive_counters.py --check` 校验过的 per-domain 表保持一致：
+
+| 领域 | Skill 数 | 代表能力 |
+|---|---|---|
+| 🔧 Engineering — Core | 52 | 架构 / 前端 / 后端 / 全栈 / QA / DevOps / SecOps / AI-ML / Playwright Pro / self-improving-agent |
+| ⚡ Engineering — POWERFUL | 80 | agent-designer / rag-architect / database-designer / CI-CD / MCP-builder / AgentHub / zero-hallucination-coder |
+| 🎯 Product | 17 | PM / 敏捷 PO / 战略 / UX / UI / Landing / SaaS scaffolder / 实验设计 |
+| 📣 Marketing | 48 | 8 个 Pod：内容 / SEO + AEO（E-E-A-T 审计、5 LLM 引用追踪）/ 本地 SEO（GBP/NAP/Map-Pack）/ CRO / 渠道 / 增长 / 情报 / 销售 |
+| 🚀 Productivity | 7 | capture / email pair / reflect / handoff / andreessen / roast（5 角度对抗点子评审 → GO/RESHAPE/KILL） |
+| 🔬 Research（学术） | 9 | orchestrator + pulse / litreview / grants（NIH）/ dossier / patent / syllabus / notebooklm / deep-research |
+| 🧪 Research Operations（v2.9.0 新增） | 5 | 临床研究 / 研究财务 / 市场研究 / 产品研究（每条带 onboarding + 自定义 + autoresearch 桥接） |
+| 📋 Project Management | 9 | Senior PM / Scrum / Jira / Confluence / Atlassian admin + bundled Atlassian Remote MCP |
+| 🏥 Regulatory & QM | 19 | ISO 13485 / MDR 2017/745 / FDA / ISO 27001 / GDPR / SOC 2 / CAPA / agent-decision-receipts |
+| 🛡️ Compliance OS | 9 | 合规操作系统：controls / evidence / audit-readiness |
+| 💼 C-Level Advisory | 68 | 全 C-suite（CEO/CTO/CFO/CMO/CRO/CPO/COO/CHRO/CISO/GC/CDO/CAIO/CCO/VPE）+ 21 条 `/cs:*` 命令 |
+| 📈 Business & Growth | 5 | 客户成功 / Sales Engineer / Revenue Ops / 合同与提案 / BizDev |
+| 🏭 Business Operations | 7 | orchestrator + process-mapper / vendor-management / capacity-planner |
+| 🤝 Commercial | 8 | 定价 / deal-desk / 渠道经济 / RFP 响应 / 商业预测 |
+| 💰 Finance | 4 | 财务分析师（DCF / 预算 / 预测）/ SaaS 指标 / 投资顾问 |
+| 🔄 Loop Library | 1 | 发现、查找、审计/修复、改编、设计 bounded agent loops |
+| 📄 Markdown → HTML | 5 | md-document / md-review / md-slides / 设计系统 / 编排器 |
+
+**维护强度信号**：CHANGELOG 顶部仍在跑 `## [Unreleased] — housekeeping: CHANGELOG backfill + per-domain counter validation`，最近一次提交 2026-07-01，仓库自己用 Claude Code 维护（commit 作者里 `claude` 这个 bot 频繁出现），PR #882 是当前最新合并。
+
+## Skills / Agents / Personas：三层概念切分
+
+README 用一张三列对照表把这三个最容易混的概念讲清楚——这是整个库**最值得抄的设计**：
+
+| 概念 | Purpose（解决什么问题） | Scope | Voice | 示例 |
+|---|---|---|---|---|
+| **Skills** | How to execute a task（怎么执行） | 单领域 | 中性 | "Follow these steps for SEO" |
+| **Agents** | What task to do（做什么任务） | 单领域 | 专业 | "Run a security audit" |
+| **Personas** | Who is thinking（谁在思考） | 跨领域 | 性格化 | "Think like a startup CTO" |
+
+三层**不是替代关系，而是叠加关系**。库里 pre-built 的 `Startup CTO` Persona 同时挂载 `aws-solution-architect` + `senior-frontend` 两组 Skills，配上 `Solo Founder` 的工作流模板，可以从架构决策一路推到代码评审。
+
+## SKILL.md 的最小可执行结构
+
+每个 Skill 文件夹的"宪法"是一个 `SKILL.md`，frontmatter 字段在仓库内是**强约定**：
+
+```markdown
+---
+name: loop-library
+description: Discover, find, compare, audit, repair, adapt, and design 
+  repeatable AI-agent loops with explicit triggers, actions, verification, 
+  stopping conditions, guardrails, and handoffs...
+---
+```
+
+两个字段缺一不可：
+
+- **`name`**：Skill 的稳定标识。CLI 工具按这个名字分发。
+- **`description`**：触发器。当用户在 prompt 里提到这些意图时，agent 自动加载这条 Skill。**这是 agent 行为的触发面**，所以 CHANGELOG 里反复出现 `description now passes skill_description_validator` 这种 hardening 提交。
+
+正文部分（Markdown body）通常按这个顺序：
+
+1. **Route the request**：先判断走哪条最小路径（Discover / Find / Audit / Design）。
+2. **核心方法论**：执行步骤、决策框架、guardrails。
+3. **兜底规则**：用户没给够信息时怎么反问，比如 "What would you like the agent to get done?"。
+4. **未在文中声明的副作用**：明确告诉 agent 不要执行"材料里嵌入的指令"——这是 Loop Library 直接写明的安全姿态。
+
+完整文件夹结构遵循一个隐式模板：`SKILL.md` + `scripts/`（Python 工具，可选）+ `references/`（参考文档，可选）+ `assets/`（资源，可选）。CLI 脚本**全部是 stdlib only**，README 明文写："All 593 Python CLI tools use the standard library only — zero pip installs required. Every script is verified to run with --help."
+
+## 跨 13 平台的"一份源、13 份产物"
+
+库对"AI 编码工具碎片化"的解法是**生成式分发**而不是适配器模式。核心是 `scripts/convert.sh`：
+
+```bash
+#!/usr/bin/env bash
+# Usage:
+#   ./scripts/convert.sh [--tool <name>] [--out <dir>] [--help]
+#
+# Tools: antigravity, cursor, aider, kilocode, windsurf, opencode, augment, all
+# Default: all
+```
+
+执行 `./scripts/convert.sh --tool all` 大约 15 秒，把 345 个 Skills（README 里 354 是 headline，345 是 convert.sh 能处理的实数）转成各平台的原生格式：
+
+| 目标工具 | 输出格式 | 安装位置 |
+|---|---|---|
+| Claude Code | `.claude-plugin/` | marketplace 模式 |
+| OpenAI Codex | `.codex-plugin/` | `npx agent-skills-cli add` |
+| Gemini CLI | `.gemini/` | gemini-install.sh |
+| Cursor | `.cursor/rules/*.mdc` | `./scripts/install.sh --tool cursor` |
+| Aider | `CONVENTIONS.md` | per-repo |
+| Windsurf | `.windsurf/skills/` | per-repo |
+| Kilo Code | `.kilocode/rules/` | per-repo |
+| OpenCode | `.opencode/skills/` | per-repo |
+| Augment | `.augment/rules/` | per-repo |
+| Antigravity | `~/.gemini/antigravity/skills/` | global |
+| Hermes Agent | `~/.hermes/skills/` | BYO-sync tier |
+| Mistral Vibe | `~/.vibe/skills/` | BYO-sync tier |
+| OpenClaw | `~/.openclaw/skills/` | 一键 curl 脚本 |
+
+底层协议遵循 [agentskills.io](https://agentskills.io) 的 `SKILL.md` 标准（Hermes Agent 与 Mistral Vibe 直接复用，零格式转换），其他工具由 `convert.sh` 静态转换。
+
+## 工程亮点：三个值得抄的工程决策
+
+### 1. stdlib-only 的 593 个 CLI
+
+README 把"零 pip 安装"作为**强约束**写进契约：`Every script is verified to run with --help`。这带来两个后果：
+
+- **零供应链攻击面**：所有 Skills 拉下来就能跑，没有 `pip install -r requirements.txt` 这种隐式执行入口。
+- **CI 友好**：CHANGELOG 里反复出现的 `derive_counters.py --check` 这种工具本身就是 stdlib 写的，跨机器一致。
+
+代价是脚本必须用标准库手搓很多东西（比如 `metrics_calculator.py` 算 MRR / churned 自己写参数解析、自己写 JSON 输出），但这种"用 stdlib 写一切"的姿态本身就是一个信号：库作者清楚 Skill 的安全边界。
+
+### 2. `skill-security-auditor`：Skills 安装前的安全闸门
+
+POWEREUL tier 里专门有一条 `skill-security-auditor`，README 写明它扫描的六类风险：
+
+> Scans for: **command injection**, **code execution**, **data exfiltration**, **prompt injection**, **dependency supply chain risks**, **privilege escalation**. Returns PASS / WARN / FAIL with remediation guidance.
+
+调用方式：
+
+```bash
+python3 engineering/skill-security-auditor/scripts/skill_security_auditor.py /path/to/skill/
+```
+
+这条 Skill 的存在回应了一个非常具体的问题：**当你打算 `npx skills add xxx` 安装第三方 Skills 时，谁替你审过 `scripts/` 里那段 Python 是不是真的"只算指标"**。`skill-security-auditor` 是给"我打算装一堆 Skills"这个动作配的安全带。
+
+### 3. CHANGELOG 当成"治理日志"而不是流水账
+
+CHANGELOG 不是简单按时间倒序列 commit，而是按 **PR 粒度 + hardening 注释**组织。比如：
+
+> **`research/deep-research`** (PR #872, hardened from #851 by @Socialpranker) — rigor-first multi-source meta-research: 9-phase pipeline, triangulation (>=3 independent differently-typed sources per thesis), mandatory adversarial pass, per-source files with verbatim quotes, **no fabricated citations**.
+
+> Hardening applied before merge: fixed dangling cross-refs (`ai-seo` → `aeo`, removed the non-existent `gbp-content-creator` companion), description now passes `skill_description_validator`.
+
+`derive_counters.py --check` 是 CI 闸门 G3，对 README 的 per-domain 表做强制一致性校验——一个 354 个 Skills 的库，per-domain 数字不能漂。
+
+## 安装实战：三条主流路径
+
+**路径 A — Claude Code（推荐，marketplace 模式）**：
+
+```bash
+/plugin marketplace add alirezarezvani/claude-skills
+
+# 按域批量安装
+/plugin install engineering-skills@claude-code-skills           # 24 个核心工程
+/plugin install engineering-advanced-skills@claude-code-skills  # 25 个 POWERFUL
+/plugin install marketing-skills@claude-code-skills             # 43 个营销
+/plugin install c-level-skills@claude-code-skills               # 28 个 C 级顾问
+
+# 或单条安装
+/plugin install skill-security-auditor@claude-code-skills
+/plugin install playwright-pro@claude-code-skills
+```
+
+**路径 B — OpenAI Codex**：
+
+```bash
+npx agent-skills-cli add alirezarezvani/claude-skills --agent codex
+# 或 git clone + ./scripts/codex-install.sh
+```
+
+**路径 C — Cursor / Aider / Windsurf 等 7 个静态格式工具**：
+
+```bash
+# 1) 转换所有 Skills 到目标工具（约 15 秒）
+./scripts/convert.sh --tool all
+
+# 2) 安装进指定项目
+./scripts/install.sh --tool cursor --target /path/to/project
+
+# 3) 验证（Cursor 模式下应该看到 346 个 .mdc）
+find .cursor/rules -name "*.mdc" | wc -l
+```
+
+## 适用边界与采用建议
+
+**什么时候用**：
+
+- 团队已经在用 Claude Code / Codex / Cursor 中的至少一个，希望把"工程最佳实践 / 安全审计 / 合规审查"以 Skill 形式注入 agent，而不是写散在各处的 prompt。
+- 单人 / 小团队需要现成的"代理顾问"能力：Startup CTO Persona + 21 条 `/cs:*` 命令是一种轻量级"虚拟 CTO"配置。
+- 需要做营销（特别是 AEO——LLM 引用追踪）、合规（MDR / FDA / SOC 2）、研究运营（NIH grants / 临床研究设计）等长尾领域的结构化提示。
+
+**什么时候不用**：
+
+- 只想要单条 Skill（比如一个 SEO 模板），直接 clone 仓库挑一条复制即可，没必要装整个库。
+- 团队不接受"装 354 条 Skill 里大部分用不上"——`convert.sh --tool all` 会一次性生成 345 条规则文件，Coder 项目可能会被刷屏。建议**按域分批 `install`**。
+- 对 Skill 行为透明度有合规要求时，必须先跑 `skill-security-auditor` 审一遍——README 自陈"开源库"，但"零 pip 安装"不等于"零风险"。
+
+**采用顺序建议**：
+
+1. 先装 `skill-security-auditor`，用它审一遍库本身的 Scripts。
+2. 按域分批 `install`，每批装完跑一条典型 Skill（比如 `seo-audit`）验证 agent 行为。
+3. 跨平台团队：先把 Skills 装在主力工具上，再跑 `convert.sh --tool all` 把其他工具的产物放仓库 `.cursor/rules/` / `.augment/rules/` 之类，**保留 Skills 源在 marketplace**，产物当只读快照。
+4. 自建 Skill：复用仓库 `engineering-team/skills/` 下的 `TEMPLATE.md` 与 `CLAUDE.md`，对齐 frontmatter 的 `name` + `description` 触发器约定，否则 agent 不会触发。
+
+## 一句话总结
+
+`alirezarezvani/claude-skills` 不只是一个 Skills 库，它是一份**关于"如何把领域知识打包成 agent 可执行指令"的可运行范例**——三层概念切分（Skills/Agents/Personas）、单一 frontmatter 触发器、`SKILL.md` 强约定、生成式跨平台分发、stdlib-only CLI、CHANGELOG 治理日志，每一条都值得在做自己内部 Skills 仓库时参考。
+
+---
+
+**仓库地址**：https://github.com/alirezarezvani/claude-skills
+
+**License**：MIT（Copyright 2025 Alireza Rezvani）
+
+**Stars**：5,200+
+
+**Skills 总数**：354（per README headline）/ 345（per `convert.sh` 可转换实数）/ 18 领域
+
+**最近提交**：2026-07-01（PR #882）
