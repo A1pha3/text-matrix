@@ -54,6 +54,19 @@ skills/morning-report/diag-*.mjs
 skills/morning-report/cmc-*.mjs
 skills/morning-report/try-*.mjs
 skills/morning-report/recmp.mjs
+# D 扩展（2026-07-06 18:26 heartbeat 1535 + 师父 B 方案批准）—— 覆盖未列的临时诊断文件模式
+skills/morning-report/batch-articles-*.mjs
+skills/morning-report/check-articles-*.mjs
+skills/morning-report/extract-*.mjs
+skills/morning-report/fetch-cdp-*.mjs
+skills/morning-report/openai-check.mjs
+skills/morning-report/openai-*.mjs
+skills/morning-report/rescan-*.mjs
+skills/morning-report/rescan2.mjs
+skills/morning-report/verify-*.json
+skills/morning-report/selected-*.json
+skills/morning-report/side-hustle-*.json
+skills/morning-report/*-verified-*.json
 optimize-report.md
 .cache/
 .workbuddy/
