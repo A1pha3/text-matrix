@@ -52,6 +52,12 @@ def score_article(content):
         score["可读性"] += 5
     else:
         score["可读性"] += 3
+    # 结构化表达 - 列表 / 表格 / 代码块是否被合理使用
+    has_list = bool(re.search(r'^\s*[-*] ', content, re.MULTILINE))
+    has_table = bool(re.search(r'^\|.+\|$', content, re.MULTILINE))
+    has_code_block = "```" in content
+    if sum([has_list, has_table, has_code_block]) >= 2:
+        score["可读性"] += 5
     
     # 教学性 (20分)
     if "学习目标" in content or "目标" in content:
