@@ -114,7 +114,7 @@ def optimize_article(file_path):
     print(f"初始评分: {total}/100")
     print(f"各维度得分: {score}")
     
-    # 如果已经100分，直接返回
+    # 如果已经100分，直接返回（不写文件、不生成副本）
     if total >= 100:
         print("文章已达到满分，无需优化")
         return total
@@ -122,10 +122,10 @@ def optimize_article(file_path):
     # 优化：去除AI味道
     content = humanize_text(content)
     
-    # 保存优化版本
-    output_path = file_path.replace('.md', '-optimized.md')
-    with open(output_path, 'w', encoding='utf-8') as f:
+    # 就地写回原文件，避免生成 -optimized.md 重复副本
+    with open(file_path, 'w', encoding='utf-8') as f:
         f.write(content)
+    print(f"已就地写回原文件: {file_path}")
     
     # 重新评分
     new_score, new_total = score_article(content)
