@@ -25,6 +25,24 @@ author: "text-matrix"
 
 ---
 
+## 目录
+
+- [本文导读](#本文导读)
+- [一、先给判断](#一先给判断)
+- [二、项目地图：核心模块构成](#二项目地图核心模块构成)
+- [三、Maven 4.x 主线：5 个值得知道的方向](#三maven-4x-主线5-个值得知道的方向)
+- [四、今日热提交：3 个值得关注的方向](#四今日热提交3-个值得关注的方向)
+- [五、采用边界](#五采用边界)
+- [六、和 Gradle / Bazel 的边界](#六和-gradle-bazel-的边界)
+- [七、起步建议](#七起步建议)
+- [最小可运行示例](#最小可运行示例)
+- [自测题（附参考答案）](#自测题附参考答案)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
+- [常见问题 FAQ](#常见问题-faq)
+
+---
+
 ## 一、先给判断
 
 Apache Maven 仓库今天（2026-07-03）再次登上 GitHub Trending，单日 +53 Stars。这件事需要拆成两层：
@@ -187,3 +205,100 @@ Wrapper 自动下载 Maven 发行版，校验和验证防止中间人篡改。
 5. **升级路径**：Maven 3.x 升级到 4.x 前先跑 `mvn validate -P apache-release` 验证插件兼容性
 
 Maven 今天的 Trending 表现是「稳定流量 + 4.x 主线演进」。21 年的项目不是「古董」，而是「Java 生态基础设施」。CLI 重写 + Wrapper 默认化 + Resilience4j 集成 + 构建缓存改进这四条主轴同时推进，说明 Maven 团队仍在认真维护这个工具。
+
+---
+
+## 最小可运行示例
+
+把四条主轴串成一个任务流：生成 Wrapper、开启远程构建缓存、用 BOM 简化 POM 继承链，最后在 CI 看每个 phase 的耗时。
+
+```bash
+# 1) 生成 Wrapper（把 .mvn/wrapper/ 提交到 git，新人 clone 后直接 ./mvnw）
+mvn wrapper:wrapper -Dmaven=4.0.0
+
+# 2) 用 Wrapper 构建，并让 CI 复用本地缓存目录
+./mvnw clean verify -Dmaven.repo.local=$CI_CACHE_DIR
+
+# 3) 看每个 phase 的耗时，定位瓶颈
+./mvnw --show-version --batch-mode validate
+```
+
+```xml
+<!-- BOM 导入：把 parent POM 继承链从 3-4 层降到 1-2 层 -->
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-framework-bom</artifactId>
+      <version>6.1.0</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+```
+
+这条链里：Wrapper 解决「团队 Maven 版本不一致」，远程缓存解决「CI 重复下载与重建」，BOM 解决「parent POM 继承链过长导致难以维护」。
+
+---
+
+## 自测题（附参考答案）
+
+1. **Maven 主仓库包含什么？为什么 compiler / surefire / jar 这些插件是独立仓库？**
+   - 答：主仓库只有 **Maven 核心**（`maven-core`、`maven-model`、`maven-resolver` 等）。插件是 `apache/maven-*` 独立仓库，按 release train 独立发版，核心引擎不用跟着插件一起升级。
+
+2. **mvnsh 把 CLI 重写了什么？冷启动时间从多少降到多少？**
+   - 答：CLI 用 Java 21 重新实现（替换老版本反射式实现），冷启动从 ~1.5s 降到 ~400ms；可选 GraalVM native image 进一步降到 < 100ms。
+
+3. **Wrapper 默认化解决了什么问题？`./mvnw` 和 `mvn` 的区别是什么？**
+   - 答：解决「团队 / CI 的 Maven 版本不一致」——Wrapper 自动下载指定版本，新人 clone 后直接 `./mvnw`，不用先 `apt install maven`。`mvnw` 是 Wrapper 启动器，`mvn` 是系统预装的 Maven。
+
+4. **Maven 4.x 把 Resilience4j 集成的默认值开成了什么？**
+   - 答：重试默认 3 次（指数退避）、Maven Central 响应慢时自动断路、连接超时 30s / 读超时 60s。之前要 CI 重跑，现在自动重试。
+
+5. **为什么说「Maven 比 Gradle 慢」部分原因是缓存？4.x 把差距缩小了多少？**
+   - 答：老版本缓存机制不完善，每次构建重复下载与重建；4.x 引入基于 `${session.topology}` 的增量缓存 + 远程缓存规范，把与 Gradle 的构建速度差距缩小了 30–50%。
+
+6. **Maven 在哪些场景「不太适合」？**
+   - 答：超大规模 monorepo（> 1000 模块，Gradle task graph 更深入）、Kotlin / Scala 项目（Gradle + Kotlin DSL 体验更好）、需要复杂自定义构建逻辑、polyrepo 跨仓库构建、追求极致增量构建。
+
+---
+
+## 练习
+
+1. 在一个新项目跑 `mvn wrapper:wrapper`，把 `.mvn/wrapper/` 提交 git，再在一台没装 Maven 的机器上 clone 后直接 `./mvnw` 验证可用。
+2. 开启 Maven 4.x 远程构建缓存，配合 GitHub Actions cache 复用产物，对比二次构建的耗时差异。
+3. 把一个继承链超过 2 层的 parent POM 拆成 BOM 导入，验证拆分前后构建产物一致。
+4. 在 CI 里用 `--show-version --batch-mode` 输出每个 phase 的耗时，定位最慢的瓶颈 phase。
+5. 拿一个 3.8.x 项目升级到 4.x，先跑 `mvn validate -P apache-release` 验证插件兼容性，再处理 breaking changes。
+
+---
+
+## 进阶路径
+
+- **从「能构建」到「构建快」**：开启远程构建缓存、调 `maven-resolver` 内存占用、利用 Java 21 虚拟线程做并行插件调用。
+- **从「单仓库」到「多模块」**：reactor build 调优、模块边界合理划分、用 BOM 统一依赖版本避免冲突。
+- **从「构建」到「发布」**：`mvn deploy`、release plugin、私有仓库（Nexus / Artifactory）集成与制品晋级。
+- **从「Maven」到「生态」**：开发自己的 plugin 与 `extensions.xml`、在多语言 monorepo 里与 Gradle / Bazel 按项目规模分工。
+
+---
+
+## 常见问题 FAQ
+
+1. **升级到 4.x 后老插件报错，怎么排查？**
+   先在 3.8.x 跑 `mvn validate -P apache-release` 验证插件兼容性；不兼容的插件需升级到支持 4.x 的版本，或暂时锁定旧版。
+
+2. **Wrapper 下载的 Maven 被中间人篡改怎么办？**
+   Wrapper 默认校验下载 jar 的 checksum，校验失败会拒绝启动；务必使用官方 `distributionUrl`，不要指向未知源。
+
+3. **依赖传递里的 BOM 导入出错怎么处理？**
+   4.x 改进了 BOM 的传递依赖解析；检查 `dependencyManagement` 的导入顺序与版本范围，必要时显式锁定。
+
+4. **构建还是太慢，从哪里入手？**
+   开远程构建缓存、在 CI 缓存本地 repo（`-Dmaven.repo.local`）、避免反复调用 `mvn`（把多个 goal 串成一次调用，如 `./mvnw clean verify`）。
+
+5. **超大规模 monorepo 怎么选构建工具？**
+   > 1000 模块评估 Gradle 的 task graph 优化；> 5000 模块直接上 Bazel，Maven / Gradle 都不擅长这种体量。
+
+6. **Maven 和 Gradle 该怎么分工？**
+   传统 Java 项目、中型 monorepo 用 Maven 最稳；Kotlin / Scala、大型 monorepo 用 Gradle；超大规模跨语言构建用 Bazel。按团队维护成本而非「哪个更好」选型。

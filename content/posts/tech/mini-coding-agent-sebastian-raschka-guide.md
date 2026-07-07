@@ -24,6 +24,25 @@ tags: ["代码代理", "AI Agent", "Ollama", "Sebastian Raschka", "Python", "LLM
 
 ---
 
+## 目录
+
+- [1. 项目概述](#1-项目概述)
+- [2. 六大核心组件](#2-六大核心组件)
+- [3. 环境配置](#3-环境配置)
+- [4. 基本使用](#4-基本使用)
+- [5. 会话管理](#5-会话管理)
+- [6. 交互式命令](#6-交互式命令)
+- [7. CLI 参数详解](#7-cli-参数详解)
+- [8. 工具输出格式](#8-工具输出格式)
+- [9. 工作流程示例](#9-工作流程示例)
+- [10. 与其他框架对比](#10-与其他框架对比)
+- [11. 扩展建议](#11-扩展建议)
+- [12. 总结](#12-总结)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
+- [常见问题与排查](#常见问题与排查)
+
 ## 1. 项目概述
 
 ### 1.1 是什么
@@ -163,11 +182,11 @@ ollama serve
 ### 3.2 拉取模型
 
 ```bash
-# 默认模型：qwen3.5:4b（推荐配置）
-ollama pull qwen3.5:4b
+# 默认模型：qwen2.5-coder:7b（推荐配置）
+ollama pull qwen2.5-coder:7b
 
 # 如有足够显存，可尝试更大模型
-ollama pull qwen3.5:9b
+ollama pull qwen2.5-coder:14b
 
 # 其他可选模型
 ollama pull llama3.2:3b
@@ -203,14 +222,14 @@ python mini_coding_agent.py
 ### 4.1 启动代理
 
 ```bash
-# 默认配置：qwen3.5:4b + ask 批准模式
+# 默认配置：qwen2.5-coder:7b + ask 批准模式
 uv run mini-coding-agent
 
 # 指定工作目录
 uv run mini-coding-agent --cwd /path/to/project
 
 # 指定模型
-uv run mini-coding-agent --model qwen3.5:9b
+uv run mini-coding-agent --model qwen2.5-coder:14b
 ```
 
 ### 4.2 批准模式
@@ -290,7 +309,7 @@ uv run mini-coding-agent --help
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `--cwd` | `.` | 工作目录 |
-| `--model` | `qwen3.5:4b` | Ollama 模型名 |
+| `--model` | `qwen2.5-coder:7b` | Ollama 模型名 |
 | `--host` | `http://127.0.0.1:11434` | Ollama 服务器地址 |
 | `--ollama-timeout` | `300` | 等待 Ollama 响应超时（秒） |
 | `--resume` | 新会话 | 恢复会话 ID 或 `latest` |
@@ -304,7 +323,7 @@ uv run mini-coding-agent --help
 
 ```bash
 # 使用更大上下文模型
-uv run mini-coding-agent --model qwen3.5:9b --max-steps 10
+uv run mini-coding-agent --model qwen2.5-coder:14b --max-steps 10
 
 # 增加输出长度
 uv run mini-coding-agent --max-new-tokens 1024
@@ -459,3 +478,69 @@ TOOLS = {
 - GitHub：https://github.com/rasbt/mini-coding-agent
 - 作者 Blog：https://magazine.sebastianraschka.com/p/components-of-a-coding-agent
 - Sebastian Twitter：https://twitter.com/rasbt
+
+## 自测题
+
+**概念题**
+
+1. Mini-Coding-Agent 的定位是「教学示范」还是「生产级代理」？它为什么坚持只用 Python 标准库、不引第三方依赖？
+2. 提示缓存（Prompt Cache Reuse）把系统指令、工具定义、仓库上下文放在「稳定前缀」。这部分为什么能缓存复用，而对话历史和用户请求不能？
+3. 上下文缩减（Context Reduction）做了哪三件事？为什么长输出要「截断」而不是全保留？
+4. 子代理（Subagent）被「限制作用域」指的是什么？如果不加这个限制会发生什么？
+5. 批准模式 `--approval` 有 ask / auto / never 三档，各自适用于什么环境？
+
+**场景题**
+
+6. 你用一块 4 GB 显存的老显卡跑这个代理，默认的 `qwen2.5-coder:7b` 很吃紧。你会怎么调 `--max-new-tokens` 和 `--max-steps` 让它稳定工作？
+
+**参考答案**
+
+1. 它是教学示范，目标是用最小可读代码讲清代码代理的核心组件，不是为生产 robustness 设计。只用标准库是为了可读性优先、零安装摩擦，读者能直接读懂每行代码。
+2. 稳定前缀在多次调用间基本不变（系统指令、工具 schema、仓库结构都不随对话变），所以 KV cache 可复用，省下重复 prefill 的 token；对话历史和用户请求每轮都变，没法复用。
+3. 长输出截断、重复读取去重、旧对话压缩。截断是为控制上下文窗口和 token 成本，否则长日志会把前面的关键信息挤出去。
+4. 子代理只继承完成任务所需的最小上下文，且被严格限制操作边界，防止无限递归或耗光资源。不限的话，子代理可能越权访问或递归调用把自己拖死。
+5. ask 适合日常和陌生代码库（危险操作先确认）；auto 只用于可信、隔离的代码库；never 拒绝一切写操作，适合只读分析。
+6. 7B 模型在 4 GB 显存上很容易 OOM（量化后也接近上限）。我会把 `--max-new-tokens` 降到 256 左右、`--max-steps` 降到 4，缩短单次任务链，或者直接换更小的 `qwen2.5-coder:3b`，必要时略调 `--temperature`。
+
+## 练习
+
+1. 用 `uv` 把仓库跑起来，随便指一个你自己的小项目目录，让代理加一个 CLI 入口点，确认读 / 写 / 编辑工具都走通。
+2. 故意触发一次危险操作（比如让代理删除某个文件），观察 `--approval ask` 模式下的确认提示；再试 `--approval never`，看它如何拒绝。
+3. 跑完一轮后执行 `--resume latest`，确认它能从 `.mini-coding-agent/sessions/<session-id>/` 里的 `transcript.json` 恢复上下文，并读懂 `memory.json` 里蒸馏了什么。
+4. 打开 `mini_coding_agent.py`，照第 11.1 节的示例加一个 `execute_sql` 工具，注册进 `TOOLS`，验证代理能调用它。
+5. 把后端从 Ollama 换成 OpenAI 兼容接口（或本地 llama.cpp 服务），改 `--host` 指向你的端点，确认工具调用格式 `<tool>...</tool>` 仍能被模型正确产出。
+
+## 进阶路径
+
+读通这份代码后，可以往这几个方向深挖：
+
+- 读 `mini_coding_agent.py` 里上下文缩减的实现，理解「去重 + 截断 + 压缩」三步怎么配合，以及压缩阈值怎么定
+- 研究提示缓存的工程细节：稳定前缀的边界划在哪、哪些内容绝对不能进缓存、缓存命中率怎么影响成本
+- 对比 Mini-Coding-Agent 与 Claude Code / Aider 的架构差异，重点看它们怎么处理「长任务的多轮状态」
+- 把第 11 节的扩展点真正做出来：换后端、加记忆策略（向量存储 / 重要性评分）、给子代理加更细的作用域控制
+
+## 常见问题与排查
+
+### Q1：代理启动后一直连不上 Ollama，报超时？
+
+先确认 `ollama serve` 在跑，且 `--host` 默认是 `http://127.0.0.1:11434`。如果用的是远程或容器里的 Ollama，把 `--host` 指向可达地址，并检查防火墙。超时还能调 `--ollama-timeout`（默认 300 秒）。
+
+### Q2：模型不按 `<tool>` / `<final>` 格式输出怎么办？
+
+不同模型对这些自定义标签的遵循度不同。优先选指令遵循强的模型；如果是小模型经常出错，可以调高 `--temperature`（如 0.2 → 0.4）或换更大的模型。这也正是项目的「教学性」所在——它不隐藏格式约束，而是让你看到代理对模型输出的依赖。
+
+### Q3：`--approval auto` 真的安全吗？
+
+不安全，除非你完全信任当前代码库且环境隔离。`auto` 会直接执行所有读写和 Bash 命令，一旦模型判断失误可能删文件或跑危险命令。日常用 `ask`，只读场景才考虑 `never`。
+
+### Q4：会话文件存在哪，能手动清理吗？
+
+在项目的 `.mini-coding-agent/sessions/<session-id>/` 下，含 `transcript.json`、`memory.json`、`state.json`。可以直接删整个目录来清掉某次会话；`/reset` 则在 REPL 内清当前会话的历史与记忆但保留 REPL。
+
+### Q5：小显存机器跑不动默认模型怎么办？
+
+换更小的模型（如 `qwen2.5-coder:3b` 或 `llama3.2:3b`），同时把 `--max-new-tokens` 和 `--max-steps` 调小，缩短单次任务链，降低显存峰值。
+
+### Q6：它和 Claude Code、Aider 比，我该用哪个？
+
+如果你想学「代码代理到底怎么搭」，读 Mini-Coding-Agent 的 ~500 行源码最快；真要干活、要生产级能力，用 Claude Code / Aider。Mini-Coding-Agent 的价值在「可读懂、可改、可当起点」，不在功能完备。

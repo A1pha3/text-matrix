@@ -23,6 +23,39 @@ tags: ["Cloudflare", "MCP", "LLM", "第二大脑", "技术写作", "反向写作
 
 ---
 
+## 学习目标
+
+读完整篇拆解，你应该能够：
+
+- 说清 second-brain 为什么要把记忆从单个 AI 工具里「夺回来」，放进自己的 Cloudflare 账号
+- 解释 reserved tag 这套「不改 schema 就能扩状态 / 类型」的设计解决了什么工程问题
+- 讲明白 recall 背后「关键词 + 语义双路 + RRF 融合」为什么比单路向量检索更稳
+- 复述 9 条 MANDATORY RULES 的精神，以及它怎么把 AI 从「被动工具」变成「有记忆的合作者」
+- 判断这套仓库适合谁、不适合谁，以及你想抄作业时该抄哪几块
+
+## 目录
+
+- [一句话定位与三个核心问题](#一句话定位与三个核心问题)
+- [架构总览：Cloudflare 全家桶 5 件套](#架构总览cloudflare-全家桶-5-件套)
+- [6 个记忆工具：MCP 接口设计](#6-个记忆工具mcp-接口设计)
+- [关键设计创新 1：reserved tag 表达状态和类型](#关键设计创新-1reserved-tag-表达状态和类型)
+- [关键设计创新 2：混合召回（RRF 算法）](#关键设计创新-2混合召回rrf-算法)
+- [关键设计创新 3：重要性 + 矛盾机制](#关键设计创新-3重要性-矛盾机制)
+- [关键设计创新 4：压缩 eligibility（cron 任务）](#关键设计创新-4压缩-eligibilitycron-任务)
+- [AI 行为约定：CLAUDE_INSTRUCTIONS.md 的 9 条强制规则](#ai-行为约定claude_instructionsmd-的-9-条强制规则)
+- [5 个接入入口：覆盖所有 AI 使用场景](#5-个接入入口覆盖所有-ai-使用场景)
+- [关键设计创新 5：Vectorize 绑定的巧妙 workaround](#关键设计创新-5vectorize-绑定的巧妙-workaround绕过-cloudflare-deploy-button-ux-bug)
+- [部署流程：3 步 2 分钟](#部署流程3-步-2-分钟)
+- [反例对比：常见 AI 工具 vs 这套仓库](#反例对比常见-ai-工具-vs-这套仓库)
+- [自查清单：你想做的 AI 工具能不能通过这几条](#自查清单你想做的-ai-工具能不能通过这几条)
+- [价值与边界](#价值与边界)
+- [这套仓库给我们的启示](#这套仓库给我们的启示)
+- [实战：如何用 second-brain 做你自己的项目](#实战如何用-second-brain-做你自己的项目)
+- [练习](#练习)
+- [自测题](#自测题)
+- [进阶路径](#进阶路径)
+- [常见问题与排查](#常见问题与排查)
+
 ## 一句话定位与三个核心问题
 
 作者在 README 里把仓库定位写得很清楚：
@@ -347,6 +380,72 @@ README 里把部署流程压缩到极致：
 **局限**：这套仓库是单用户（一个 AUTH_TOKEN）。如果要做团队协作，需要自己 fork 改造加多用户/权限层。
 
 ---
+
+## 练习
+
+1. 部署一份到自己的 Cloudflare 账号，连上 Claude Code / Cursor 的 MCP，用一次 `recall` 看记忆里现在有什么。
+2. 用 `brain` CLI 或 Obsidian 插件手动 `remember` 一条「项目背景」，再切到另一个 AI 客户端 `recall`，验证跨端共享确实生效。
+3. 改 `CLAUDE_INSTRUCTIONS.md` 的 Rule 3，让 AI 在回答里主动存「技术决策」，跑一轮后打开 `memory.json` 看新增了什么。
+4. 故意写一条已经过期的记忆，再用 `update` 工具完全替换它，观察 `status:canonical` / `status:draft` 怎么随之变化。
+5. 把一条重要记忆的 `importance_score` 标到 5，确认它不会被每天 1 点的 cron 压缩；再写一条低重要性记忆，观察 60 天后是否进了 digest。
+
+## 自测题
+
+**概念题**
+
+1. 为什么说「把记忆放进自己的 Cloudflare 账号」比「用 Claude / ChatGPT 的内建记忆」更可控？账号被封或换平台时会发生什么？
+2. reserved tag 表达状态（如 `status:canonical`）相比在 D1 里加一个 `status` 列，最大的工程好处是什么？
+3. recall 用了「关键词 + 语义」两路召回再用 RRF 融合。为什么不直接把两路分数加权平均？
+4. 矛盾机制里 `contradiction_wins` / `contradiction_losses` 怎么改变一条记忆的 `importance_score`？为什么要让「错的记忆自然衰减」？
+5. 压缩 eligibility 的三个条件为什么要「同时满足」才压缩？只满足其中一个会怎样？
+
+**场景题**
+
+6. 你照着 9 条 MANDATORY RULES 给自己的 AI 写行为契约，但发现它还是经常重复给同样的建议。你会改哪条规则、怎么改？
+
+**参考答案**
+
+1. 内建记忆属于平台，平台能读、能锁，你换号或账号被封记忆就没了；放进自己 Cloudflare 账号，数据和控制权都在你手里，且能用 MCP 让所有工具共享。
+2. 不用做 schema migration，老数据天然兼容；一条记忆能同时挂多个维度标签；查询时用 `json_each` 拆 tags 即可，扩展状态只改常量数组。
+3. 关键词召回（SQL LIKE）和向量召回（Vectorize）输出的分数量纲不同、不可比，加权平均没有意义。RRF 只看排名（`1/(k+rank)`），天然兼容异构分数源。
+4. 新记忆与旧记忆矛盾时进入「竞赛」，胜者 importance +1、败者 -1，clamp 在 [1,5]。这避免矛盾信息永远堆积，错的记忆会因反复落败而重要性衰减、更易被压缩。
+5. 因为策略是「严格 default to keep」——宁可留错也不能误删对的。只满足一个（比如只是旧）但很重要，就不该压。三个同时满足才说明它「不重要、不常被召回、又没赢过矛盾」，压掉风险最低。
+6. 重点看 Rule 7（推荐前先 recall 避免重复）。我会把规则写得更硬：在给出任何 recommendation / action item 前强制 recall 同类历史，命中就引用或跳过；并把「已给过的建议」也 remember 进记忆，让下次 recall 能直接看到。
+
+## 进阶路径
+
+想基于这套仓库做自己的「AI 记忆 / 知识工具」，可以往这些方向走：
+
+- 把 `CLAUDE_INSTRUCTIONS.md` 的 9 条规则按你的工作流定制：开发向可让 AI 自动 remember「常踩的坑」，内容向可记住「写作风格偏好」
+- 扩展标签体系：在 `status:` / `kind:` 之外加自己的维度（如 `project:` / `priority:`），体会 reserved tag 扩展的低成本
+- 调压缩阈值：`COMPRESSION_IMPORTANCE_THRESHOLD`、`COMPRESSION_MIN_RECALL`、`COMPRESSION_MIN_AGE_MS`，观察 cron 每天 1 点的压缩效果，找误压缩与误保留的平衡点
+- 研究多用户化：这套仓库是单 AUTH_TOKEN 设计，要做团队协作得自己 fork 加权限 / 审计层，这是它和 mem0 / Zep 类产品的分水岭
+
+## 常见问题与排查
+
+### Q1：一定要绑 Cloudflare 吗？能不能跑在自己服务器上？
+
+这套仓库的架构强绑 Cloudflare 全家桶（Workers + D1 + Vectorize + Workers AI + KV），没有「部署到 NAS / 自管服务器」的选项。想完全自托管，得自己把后端换成 Postgres + 向量库 + 一个能跑的运行时，相当于重写大半。
+
+### Q2：免费层真能跑满整套后端吗？有上限吗？
+
+D1、Vectorize、Workers AI、KV 都有免费额度，个人轻度使用基本够。但免费层有请求数和计算时长上限，超出要升 Workers Paid Plan，高并发或大向量量会先撞到。
+
+### Q3：一键部署卡在 Vectorize 空白字段怎么办？
+
+这是 Cloudflare Deploy Button 的已知 UX bug（cloudflare/workers-sdk#14075）。作者用 `scripts/prepare-wrangler.mjs` 在 postinstall 时建好索引并写生成的 `wrangler.deploy.jsonc` + 重定向配置绕过了它——正常点 Deploy 即可，不用手填维度。
+
+### Q4：OAuth 是怎么保证只有我的 AI 客户端能访问的？
+
+用 Workers OAuth Provider + KV 存 OAuth 状态，AI 客户端走 OAuth 授权后拿 token 访问。你部署时设的 `AUTH_TOKEN` 是第一道密码，OAuth 是第二道，二者配合把记忆锁在你自己账号里。
+
+### Q5：多端（Claude / Cursor / iOS）共享的是同一份记忆吗？
+
+是。所有入口（MCP clients、CLI、Obsidian 插件、浏览器扩展、iOS Shortcuts）核心数据都走你 Cloudflare 账号里的同一套 D1 + Vectorize，所以多端看到的是同一份记忆。
+
+### Q6：它能当团队知识库用吗？
+
+不适合。它是单用户设计（一个 AUTH_TOKEN），没有团队、权限、审计。要团队协作得自己 fork 改造加多用户 / 权限层。
 
 ## 参考资料
 

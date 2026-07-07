@@ -25,6 +25,24 @@ author: "text-matrix"
 
 ---
 
+## 目录
+
+- [本文导读](#本文导读)
+- [一、先给判断](#一先给判断)
+- [二、项目地图：核心模块构成](#二项目地图核心模块构成)
+- [三、Ansible Core 2.18 主线：5 个值得知道的方向](#三ansible-core-218-主线5-个值得知道的方向)
+- [四、今日热提交：3 个值得关注的方向](#四今日热提交3-个值得关注的方向)
+- [五、采用边界](#五采用边界)
+- [六、和 Terraform / Chef / Salt 的边界](#六和-terraform-chef-salt-的边界)
+- [七、起步建议](#七起步建议)
+- [最小可运行示例](#最小可运行示例)
+- [自测题（附参考答案）](#自测题附参考答案)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
+- [常见问题 FAQ](#常见问题-faq)
+
+---
+
 ## 一、先给判断
 
 Ansible 仓库今天（2026-07-03）再次登上 GitHub Trending，单日 +50 Stars。这件事需要拆成两层：
@@ -188,3 +206,100 @@ Kubernetes 3.0 模块加入；老的 `docker` 模块彻底删除（推荐 `commu
 5. **CI 启用 syntax check + lint**：`ansible-lint` + `--syntax-check` 在 CI 第一步跑
 
 Ansible 今天的 Trending 表现是「稳定流量 + 2.18 主线演进」。13 年的项目不是「古董」，而是「运维生态基础设施」。EE 默认化 + Jinja 沙箱 + collections 治理 + AWS SDK 迁移这四条主轴同时推进，说明 Red Hat / 社区仍在认真维护这个工具。
+
+---
+
+## 最小可运行示例
+
+把上面四条主轴串成一个能直接跑的任务流：用 EE（执行环境）跑一个幂等 playbook，secret 走 Vault，collections 版本走 lock file，最后在 CI 跑 lint + 语法检查。
+
+```yaml
+# site.yml —— 在 EE 里执行，依赖 collections lock file
+- hosts: web
+  become: true
+  vars_files:
+    - vars/secret.yml  # 已用 ansible-vault 加密
+  tasks:
+    - name: 确保 nginx 安装且开机自启
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+```
+
+```bash
+# 1) 锁定 collections 版本，杜绝版本漂移
+ansible-galaxy collection install -r requirements.yml --locked
+
+# 2) 用 EE 跑 playbook（EE 不可用会回退到系统 Python）
+ansible-navigator run site.yml --mode stdout
+
+# 3) CI 第一步：语法检查 + lint，失败就卡在合并前
+ansible-playbook site.yml --syntax-check
+ansible-lint site.yml
+```
+
+这条链里：EE 解决「开发机和 CI 环境不一致」，Vault 解决「secret 不能明文进 git」，lock file 解决「collections 版本漂移」。三者配合，playbook 才能在任意机器复现同一结果。
+
+---
+
+## 自测题（附参考答案）
+
+1. **Ansible 主仓库包含哪些部分？为什么 AWS / Azure / GCP / Kubernetes 这些 provider 是独立 collections 仓库？**
+   - 答：主仓库只包含 **Ansible Core**（执行引擎 + 内置约 3000 个模块）。provider 是独立 collections 仓库（`community.aws`、`amazon.aws`、`community.kubernetes` 等），按各自版本节奏发版，避免核心引擎跟着 provider 一起膨胀。
+
+2. **Execution Environment（执行环境）默认化解决了什么问题？`ansible-navigator` 和 `ansible-playbook` 是什么关系？**
+   - 答：解决「开发机跑得通、生产 CI 跑不通」的环境不一致问题——EE 把整个执行环境打成 container image，开发机和 CI 用同一份。2.18 起 `ansible-navigator` 取代 `ansible-playbook` 成为主 CLI，EE 不可用时才回退系统 Python。
+
+3. **Jinja 沙箱改进限制了哪些访问？对什么场景最关键？**
+   - 答：限制 `__class__`、`__bases__`、`__subclasses__` 等魔术属性，以及 `os.environ`、`subprocess.Popen` 等敏感对象，模板只能访问 Ansible 显式暴露的属性。对多租户场景（不同 team 共用控制节点写 playbook）最关键——恶意 playbook 读不到环境变量里的 secret。
+
+4. **为什么说 Ansible 是「过程式」、Terraform 是「声明式」？这对状态管理意味着什么？**
+   - 答：playbook 按顺序执行 task，靠 **idempotency（幂等性）** 反复执行收敛到目标状态；Terraform 维护一份 state 文件描述「期望终态」。Ansible 没有集中式 state，跨资源依赖和漂移检测不如声明式工具直接。
+
+5. **AWS SDK 迁移到 `boto3` 完成后，还在用 `boto` 的 AWS playbook 会怎样？**
+   - 答：`ec2`、`s3`、`iam` 等 AWS 模块只支持 `boto3`，旧 `boto` 模块会触发 deprecation warning，必须升级到支持 `boto3` 的版本。
+
+6. **Ansible 在哪些场景「不太适合」？**
+   - 答：基础设施声明式管理（Terraform / Pulumi 更专业）、超大规模 monorepo（> 5000 节点，控制节点是单点）、强状态管理、Kubernetes 资源编排（Helm / Kustomize / ArgoCD 更直接）、Windows Server Core / Nano Server 兼容性。
+
+---
+
+## 练习
+
+1. 用 `ansible-navigator run` 跑一个最小 playbook，分别观察 EE 模式与系统 Python 模式下 `ansible --version` 报出的 Python 路径差异。
+2. 写一个用 `ansible-vault` 加密的 `vars/secret.yml`，在 CI 里用 `--vault-password-file` 解密后跑 playbook，确认 secret 不落明文本地。
+3. 用 `requirements.yml` 声明 collections 并加 lock file，在两台环境里 `ansible-galaxy collection install -r requirements.yml --locked`，验证模块版本完全一致。
+4. 在 CI 第一步跑 `ansible-lint` + `ansible-playbook --syntax-check`，故意引入一个语法错误，确认流水线在合并前被拦下。
+5. 拿一个还在用 `boto` 的 AWS playbook，把 `ec2` / `s3` / `iam` 模块迁移到 `boto3` 版本，逐个消除 deprecation warning。
+
+---
+
+## 进阶路径
+
+- **从「会用」到「用对」**：playbook 的幂等性设计、`handler` 触发机制、`role` 拆分与复用、变量优先级（`group_vars` / `host_vars` / `extra_vars`）。
+- **从「单机」到「规模」**：AWX / Controller 集群化、动态 inventory（云厂商标签驱动）、SSH 连接池与 fact 并行收集调优。
+- **从「配置」到「安全」**：Jinja 沙箱策略落地、Vault 密钥管理与轮换、最小权限 `become`、敏感任务的审计日志。
+- **从「Ansible」到「生态」**：开发并发布自己的 collections 到 Galaxy（含私有源）、自定义 module / plugin、把 Ansible 与 Terraform / Pulumi 按「配置 + 应用层 vs 基础设施层」分工协同。
+
+---
+
+## 常见问题 FAQ
+
+1. **EE 默认化之后，还能用系统 Python 跑 playbook 吗？**
+   能。`ansible-navigator` 默认尝试 EE，EE 不可用时回退到系统 Python。但生产环境推荐始终走 EE，避免「我本地能跑」的环境差异。
+
+2. **Windows 节点怎么管理？**
+   用 `win_` 系列模块（基于 WinRM 连接），Linux + Windows 混合纳管是 Ansible 的强项。注意 Windows Server Core 上的兼容性不如完整版 Windows。
+
+3. **collections 版本冲突怎么办？**
+   用 `requirements.yml` 加 lock file 锁定版本；企业内部可搭私有 Galaxy 把团队依赖隔离，避免公共仓库的版本波动。
+
+4. **老 `boto` 相关 AWS 模块报错怎么处理？**
+   迁移到 `boto3` 版本；旧 `boto` 模块已弃用。可先用 `ansible-lint` 扫出所有 `boto` 调用再批量替换。
+
+5. **大型 monorepo（> 5000 节点）性能不够怎么办？**
+   AWX / Controller 集群 + 分片 inventory + 连接池复用；若仍触达边界，把基础设施层交给 Terraform / Pulumi，Ansible 只负责配置与应用层。
+
+6. **Ansible 和 Terraform 该怎么分工？**
+   Ansible 管「配置 + 应用层」（装软件、改配置、发版本），Terraform / Pulumi 管「基础设施层」（建 VPC、开机器、配网络），两者互补而非二选一。

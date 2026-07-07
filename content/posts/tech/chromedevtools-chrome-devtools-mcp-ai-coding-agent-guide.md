@@ -23,6 +23,32 @@ author: text-matrix
 
 这条"语义化 → 压缩 → 适合 LLM 上下文窗口"的设计哲学贯穿整个仓库，是它跟 Puppeteer 的本质差异。
 
+## 学习目标
+
+读完本文，你应该能够：
+
+- 说清 chrome-devtools-mcp 与 Puppeteer / Playwright 的本质差异——不是"又一个浏览器自动化工具"，而是 DevTools 能力的**语义化封装**。
+- 根据调试场景在"内置 Chrome 实例"与"连接现有 Chrome"两条启动路径之间做选择。
+- 用 slim 模式与类别开关（`--category*`）控制 51 个工具对上下文窗口的占用。
+- 跟着任务流案例，用 `performance_*` 工具完成一次 LCP 劣化的端到端诊断。
+- 判断哪些场景适合采用、哪些场景（高敏数据、纯后端）应该避开。
+
+## 目录
+
+- [系统地图：51+ 工具按能力切片](#系统地图：51-工具按能力切片)
+- [双模式启动：内置 Chrome 还是连接现有 Chrome](#双模式启动：内置-chrome-还是连接现有-chrome)
+  - [路径 A：内置 Chrome 实例（默认）](#路径-a：内置-chrome-实例（默认）)
+  - [路径 B：连接现有 Chrome（sandboxed / 共享登录态）](#路径-b：连接现有-chrome（sandboxed-共享登录态）)
+- [任务流案例：性能问题的端到端诊断](#任务流案例：性能问题的端到端诊断)
+- [设计原则（来自 `docs/design-principles.md`）](#设计原则（来自-docsdesign-principlesmd）)
+- [隐私与统计：使用数据默认开启](#隐私与统计：使用数据默认开启)
+- [版本节奏：从 2026-05 到 2026-06 的密集发布](#版本节奏：从-2026-05-到-2026-06-的密集发布)
+- [适用边界与采用顺序](#适用边界与采用顺序)
+  - [适合采用](#适合采用)
+  - [不适合采用](#不适合采用)
+  - [推荐的接入顺序](#推荐的接入顺序)
+- [仓库元信息](#仓库元信息)
+
 ## 系统地图：51+ 工具按能力切片
 
 仓库当前默认暴露 51 个工具（含 1 个 slim 套餐），按能力分组：
@@ -225,3 +251,56 @@ chrome-devtools-mcp 是"前端调试 AI 化"的事实标准入口之一，但用
 | 包名 | `chrome-devtools-mcp`（npm 公开） |
 
 如果只是想"让代理能截图并执行 JS"，slim 模式 + Claude Code 的 plugin 安装是 5 分钟可用的最小路径。如果要做"AI 驱动的端到端浏览器调试"，chrome-devtools-mcp 是当前 MCP 生态里**唯一一个把 DevTools 完整语义能力封装成代理工具**的项目——这一点它暂时没有直接对手。
+
+## 自测题
+
+1. chrome-devtools-mcp 与 Puppeteer / Playwright 的本质区别在哪？
+2. slim 模式默认保留哪三个工具？它解决了什么工程问题？
+3. 路径 A（内置 Chrome）与路径 B（连接现有 Chrome）分别在什么场景下更合适？
+4. 任务流案例里 `performance_analyze_insight` 返回的是 trace JSON 吗？它实际给代理的是什么？
+5. CrUX 集成默认是开启还是关闭？不想把 URL 发给 Google 该加什么参数？
+6. 使用统计默认开启，有哪几种关闭方式？
+
+### 参考答案
+
+1. 不是"又一个浏览器自动化工具"，而是把 DevTools 能力做**语义化封装**：给 LCP/CLS/FCP 数字、给 DOM 快照 + 无障碍树、给网络请求摘要，而不是 50k 行 trace JSON、整页 HTML 或原始 HAR。这让 LLM 上下文窗口用得起来。
+2. 只留 `navigate_page` + `evaluate_script` + `take_screenshot`。51 个工具的描述全塞进上下文会很贵，slim 适合"打开页面看一眼"的轻量场景，先验证配置和权限链路。
+3. 路径 A 让服务器自动起一个 Chrome stable 实例，最简单；路径 B 是连一个你手动启动、带 `--remote-debugging-port` 的 Chrome，适合要保留登录态/应用状态、要绕过 WebDriver 风控、或让浏览器跑在沙箱外的场景。`--autoConnect` 介于两者之间，但需要用户在场授权。
+4. 不是 JSON。trace 文件被保存为本地路径（重型资产返回路径而非原始字节），`performance_analyze_insight` 再调用 DevTools 前端的 trace 分析能力，返回"LCP 4.12s / 阻塞资源 / 最大 payload"这类结构化结论。
+5. 默认开启（会把 trace URL 发到 Google CrUX API 取真实用户数据）。加 `--no-performance-crux` 即可关闭上传。
+6. 三种：`--no-usage-statistics` 命令行参数、环境变量 `CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS`、或设 `CI` 环境变量（CI 下自动关闭）。
+
+## 练习
+
+1. 用 `npx -y chrome-devtools-mcp@latest --slim --headless` 起一个 MCP server，在 Claude Code / Cursor 里验证它能列出三个工具并完成一次截图。
+2. 打开任意一个网页，用 `evaluate_script` 在页面上下文里取出某个 DOM 节点的 `textContent` 或某个全局变量的值。
+3. 复现任务流案例：对某个慢页面跑 `performance_start_trace` → 导航 → `performance_stop_trace` → `performance_analyze_insight`，对比"有 srcset"和"无 srcset"两种 hero 图下的 LCP。
+4. 手动启动带 `--remote-debugging-port=9222` 的 Chrome（先登录一个站点），再用 `--browser-url=http://127.0.0.1:9222` 连接过去，确认代理能操作你已经登录的页面。
+5. 加 `--memoryDebugging` 启动，对一个已知会泄漏内存的页面依次 `take_heapsnapshot` → 操作 → `compare_heapsnapshots_summary`，看 dominator 链指向哪类对象。
+
+## 进阶路径
+
+- 读 `docs/design-principles.md` 七条原则，重点看 Token-Optimized 与 Reference over Value 如何共同决定"截图降采样、trace 返回路径"这些取舍。
+- 翻 `src/tools/` 下的工具注册代码，理解每个工具如何把 DevTools 协议调用收束成一个语义化返回。
+- 写一个 `Third-party` 类别的自定义 developer tool（`list_3p_developer_tools` / `execute_3p_developer_tool`），把你们内部平台的能力暴露给代理。
+- 把 CrUX API 与你们自己的 RUM 数据对齐，让代理的"修复建议"同时参考真实用户指标和实验室测量。
+
+## 常见问题 FAQ
+
+**Q：只能用在 Google Chrome 上吗？Edge / Brave / Arc 行不行？**
+官方只支持 Google Chrome 和 Chrome for Testing。其它 Chromium 内核浏览器"可能工作但不保证"——因为它们未必实现完整的 DevTools 远程调试协议细节。生产环境别赌这个。
+
+**Q：代理会看到我的登录态和表单数据吗？**
+会。MCP server 看到的所有浏览器内容都暴露给代理，这是设计使然（README 第一段 Disclaimer 写明了）。高敏场景要么用隔离的 `--isolated` profile，要么干脆不接这类页面。
+
+**Q：`--autoConnect` 为什么不适合 CI？**
+因为它需要用户在 `chrome://inspect` 弹窗里手动授权，依赖"人在现场"。CI 里没有人点确认，链路会卡住。CI 用路径 B 的 `--browser-url` 显式连接更稳。
+
+**Q：trace / 截图这些文件存哪了，怎么清理？**
+默认 user-data-dir 跨实例共享、不会自动清理（路径在 `$HOME/.cache/chrome-devtools-mcp/`）。要彻底隔离就在启动时加 `--isolated`，浏览器关闭后临时目录自动删除。
+
+**Q：51 个工具把上下文撑爆了怎么办？**
+用类别开关关掉不用的：`--categoryExtensions=false`、`--memoryDebugging`（默认就关）等。`--categoryEmulation` / `--categoryPerformance` / `--categoryNetwork` 默认开，按需保留。
+
+**Q：工具报错了有没有自带排错指引？**
+有。设计原则里的 Self-Healing Errors 要求错误信息自带上下文和可能的修复建议，代理能基于错误自己重试或换路径，不需要你从零读堆栈。

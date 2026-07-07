@@ -18,6 +18,43 @@ weight: 1
 
 ---
 
+## 学习目标
+
+读完本文，你应该能够：
+
+- 说清 Craft Agents 的"Agent Native 软件原则"与"为人类设计"的传统软件到底差在哪。
+- 画出 Desktop / Server / CLI 三端共用 WebSocket RPC 的结构，讲清它们如何共享 `packages/shared/`。
+- 区分 Sources / Skills / Permission / Automations 四个子系统各自解决什么问题。
+- 用 `craft-cli run` 一条命令跑通"自起 server → 发 prompt → 流式响应 → 退出"的完整链路。
+- 判断哪些场景适合采用、哪些边界它覆盖不到（不是 Agent 框架、核心 LLM 不开源）。
+
+## 目录
+
+- [一句话压住全文](#一句话压住全文)
+- [§1 Agent Native 原则到底改变了什么](#§1-agent-native-原则到底改变了什么)
+- [§2 整体架构：Desktop / Server / CLI 三端共用 RPC](#§2-整体架构：desktop-server-cli-三端共用-rpc)
+- [§3 核心子系统](#§3-核心子系统)
+  - [3.1 Sources：把外部世界接进来](#31-sources：把外部世界接进来)
+  - [3.2 Skills：可复用的 Agent 指令](#32-skills：可复用的-agent-指令)
+  - [3.3 Permission Modes：三级权限 + 自定义规则](#33-permission-modes：三级权限-自定义规则)
+  - [3.4 Automations：事件驱动的 Agent 工作流](#34-automations：事件驱动的-agent-工作流)
+  - [3.5 Sessions：JSONL 持久化 + 动态状态](#35-sessions：jsonl-持久化-动态状态)
+  - [3.6 大响应自动摘要](#36-大响应自动摘要)
+- [§4 LLM 多提供商与第三方路由](#§4-llm-多提供商与第三方路由)
+- [§5 安装、远程 Server 与 CLI 实战](#§5-安装、远程-server-与-cli-实战)
+  - [5.1 一行安装](#51-一行安装)
+  - [5.2 Headless Server 部署](#52-headless-server-部署)
+  - [5.3 TLS（远程访问的标配）](#53-tls（远程访问的标配）)
+  - [5.4 Docker](#54-docker)
+  - [5.5 CLI 实战](#55-cli-实战)
+  - [5.6 Debug 模式](#56-debug-模式)
+- [§6 适用边界与上手建议](#§6-适用边界与上手建议)
+  - [6.1 它解决了什么](#61-它解决了什么)
+  - [6.2 它没解决的（边界）](#62-它没解决的（边界）)
+  - [6.3 上手顺序建议](#63-上手顺序建议)
+- [自测题](#自测题)
+- [进阶学习路径](#进阶学习路径)
+
 ## 一句话压住全文
 
 Craft Agents OSS 是一个**把 Agent Native 软件原则落到桌面 + Server + CLI 三端的开源平台**——用 Claude Agent SDK 和 Pi SDK 拼出多 LLM 接入层，把 MCP、REST API、本地文件系统统一抽象为 Sources，把可复用的指令变成 Skills，再用事件驱动的 Automations 把它们串起来；客户端可以是 Electron 桌面应用、Headless 远程服务器，也可以是命令行工具，三者共用同一套 WebSocket RPC。
@@ -390,6 +427,14 @@ craft-cli --validate-server
 4. thin-client 模式下，桌面端和远端 Server 的职责如何划分？
 5. 为什么 CLI 的 `--validate-server` 在 CI 里特别有用？
 
+## 练习
+
+1. 用一行安装脚本装好桌面端，用 Anthropic API key 建第一个会话，确认 UI 能正常收发消息。
+2. 接一个 MCP server（GitHub 或 Linear），然后用 `@skill` 在会话里激活一个你自己写的"PR 审查"Skill，验证 Skill 能即时挂载、即时生效。
+3. 写一个 `automations.json`：给任意会话贴 `urgent` 标签时，自动拉起一个 triage 会话，把新消息归纳成三条要点。用 `LabelAdd` 的 `^urgent$` 匹配器验证触发链。
+4. 在远程 VPS 上起 Headless Server（带 `CRAFT_SERVER_TOKEN`），本地桌面端用 `wss://` + thin-client 连入，确认长会话跑在远端、UI 在本地。
+5. 用 `craft-cli run --provider openai --model gpt-4o "Summarize this repo"` 跑通一条非 Anthropic 后端的链路，再挂上 `--validate-server` 确认 RPC 全链路通。
+
 ## 进阶学习路径
 
 - 仓库 `apps/cli/src/index.ts` 看 CLI 命令注册流程，理解 RPC channel 设计
@@ -397,3 +442,23 @@ craft-cli --validate-server
 - `packages/shared/src/agent/` 看 `CraftAgent` 类的权限注入和工具调度
 - 翻一遍 `~/.craft-agent/workspace/{id}/automations.json` 真实事件触发链
 - 在 VPS 上跑一遍 Server + TLS + thin-client 完整链路
+
+## 常见问题 FAQ
+
+**Q：Craft Agents 是 Agent 框架吗？能像 LangChain 那样改 agent loop 吗？**
+不是。它和 LangChain / LlamaIndex 不在同一抽象层——是端到端的 Agent 产品，不把底层 agent loop 暴露给开发者改写。想完全自定义调度逻辑，得在它之外自己搭。
+
+**Q：没有 Claude / Pi 的 SDK 能完全自托管吗？**
+OSS 部分是 Claude Agent SDK 和 Pi SDK 之上的封装与 UI 层，这两个 SDK 本身不开源。只跑 Claude backend + 自托管兼容端点（OpenRouter / Ollama 等）是可行的；要把 Pi backend 也换掉，得自己替换或绕过那一层。
+
+**Q：本地 MCP server 的敏感环境变量会泄漏到子进程吗？**
+不会。Server 在 stdio 模式 spawn 本地 MCP 时，会过滤掉 `ANTHROPIC_API_KEY`、`AWS_ACCESS_KEY_*`、`GITHUB_TOKEN`、`OPENAI_API_KEY` 等，避免泄漏到子进程。需要透传某个变量，在 source config 里显式写 `env` 字段。
+
+**Q：TLS 默认开吗？远程访问要怎么配？**
+默认不开。`wss://` 需要自己提供 PEM 证书或前置 nginx / Caddy 反代；开发环境可用仓库自带 `./scripts/generate-dev-cert.sh` 生成 365 天自签证书。
+
+**Q：`craft-cli run` 每次都起 server，高频调用会不会很慢？**
+会。CLI 是单机 / 脚本范式，每次 spawn server，适合低频脚本与 CI。高频场景应直接连一个已常驻的 Server，而不是每条命令都重新起进程。
+
+**Q：OAuth 接入（Slack / Microsoft / Google）摩擦大吗？**
+有摩擦。Slack、Microsoft 的 OAuth 凭据需要在构建时烘入；Google 要求用户自己创建 OAuth client（README 给了完整 5 步流程）。生产部署前要先把这批接入成本评估进去。
