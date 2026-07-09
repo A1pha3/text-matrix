@@ -1,7 +1,7 @@
 ---
-title: "Web3早报 2026-07-09"
+title: "Web3晚报 2026-07-09"
 date: 2026-07-09T19:55:00+08:00
-slug: web3-morning-news-2026-07-09
+slug: web3-evening-news-2026-07-09
 description: "2026年7月9日 Web3 晚报：SWIFT 上线区块链 ledger + 17 家银行 7×24 tokenized deposit 试点、Sony Bank 获 OCC 临时批准设立美国 stablecoin 信托银行、Temasek 退出加密资产转向 AI（目标 2031 年 AI 占组合 15%）、B3 推出 BTC/ETH/SOL 期货期权、BoJ 前官员警告加息或快于预期、Pantera 称 Hyperliquid 领 onchain perps 走出加密、LayerZero 已有 $7.2B 资产迁移到 Chainlink CCIP、Mantle 加入迁移潮、Paradigm 推出 $1.2B AI 基金但仍承诺 crypto 投资、StarkWare CEO 提议 4% 年化通胀替代 BTC 21M cap、Strike 推出抗波动 BTC 抵押贷款。"
 draft: false
 categories: ["行业快讯"]
