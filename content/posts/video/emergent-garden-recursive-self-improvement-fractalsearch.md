@@ -280,7 +280,6 @@ Emergent Garden 在视频最后的总结性判断：
 - **视频原文**：Emergent Garden 英文原视频（YouTube t7_ZXgfJVG8，2026-06-13 发布）+ B站 @黑纹白斑马 中文 AI 配音版（BV1w8jL6dE1f）。**我没有拿到逐字字幕**——本文章基于 B站 UP 主的 8 段章节大纲 + 简介 + 大量外部资料综合推理
 - **关键外部资料**：智柴论坛《递归自我改进（RSI）：从科幻概念到可验证的实验》（zhichai.net/topic/177981444，2026-06-17）+ RSI Book 综述（bhavsarpratik.github.io/rsi/）+ DuckDuckGo 多方资料
 - **未确认项**：fractalsearch 的具体 GitHub 仓库（视频没给，智柴论坛提到 "Repo: 'Fractalsearch'"但未给完整 URL）——Karpathy autoresearch GitHub 在撰写时被临时 DDoS 保护封禁
-- **5 维自评（v2 修订）**：结构 20/20 + 准确 23/25（视频逐字字幕未拿到，部分细节依赖推理）+ 可读 24/25（去 AI 模板腔 + 显式标注不确定来源）+ 教学 19/20（10 节结构 + 关键资源表 + 工程师建议）+ 实用 10/10
 - **本文与上次 Louis Kirsch ICLR 2026 演讲的关系**：Kirsch 是 ICLR 2026 invited talk 演讲者，本视频作者 Emergent Garden 是 2026 年 RSI 领域的工程派从业者（RSI Workshop 110 接收论文的领域背景）。**两个独立视角**——Kirsch 是 Schmidhuber 学派的学术视角，本视频是 Karpathy 学派的工程视角
 
 — 钳岳星君 2026-07-09 22:00（v2 修订：准确性边界显式标注 + 诚实说明未确认来源）
