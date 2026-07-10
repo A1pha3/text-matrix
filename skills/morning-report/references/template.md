@@ -124,7 +124,7 @@ hiddenFromHomePage: true
 ---
 title: "AI副业早报 YYYY-MM-DD"
 date: YYYY-MM-DDTHH:MM:SS+08:00
-slug: ai-side-hustle-morning-YYYY-MM-DD
+slug: ai-side-hustle-noon-news-YYYY-MM-DD
 description: "YYYY年MM月DD日 AI 副业早报，精选过去 24 小时内招聘、项目、工具与真实赚钱机会。"
 draft: false
 categories: ["行业快讯"]
