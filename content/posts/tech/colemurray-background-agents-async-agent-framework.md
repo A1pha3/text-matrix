@@ -4,8 +4,8 @@ date: 2026-07-13T03:01:47+08:00
 categories: ["技术笔记"]
 tags: ["AI-Agent", "Cloudflare", "TypeScript", "后台任务", "Sandbox"]
 description: "Open-Inspect 是 Ramp 后台 AI 代理开源版。控制面用 Cloudflare+DO 承载会话,数据面用 Modal 等沙箱跑 OpenCode,GitHub App 短期令牌做凭证。"
-slug: colemurray-background-agents-async-agent-framework---
-
+slug: colemurray-background-agents-async-agent-framework
+---
 # Open-Inspect 源码剖析：后台 AI 编码代理如何跑起来
 
 > 仓库：`ColeMurray/background-agents`（[GitHub](https://github.com/ColeMurray/background-agents)），截至 2026-07-13 公开数据 2 212 stars、341 forks，主语言 TypeScript，协议 MIT。最近一次 push 2026-07-12。

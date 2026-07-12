@@ -4,8 +4,8 @@ date: 2026-07-13T03:01:47+08:00
 categories: ["技术笔记"]
 tags: ["Rust", "AI-Agent", "Claude-Code", "安全", "CLI工具"]
 description: "DCG 是为 Claude Code、Codex CLI 等 AI 编码代理设计的高性能钩子。50+ 安全包拦截破坏命令,Rust+SIMD 压时延,heredoc 三层管线捕获嵌入式脚本危险语句。"
-slug: dicklesworthstone-destructive-command-guard-claude-code-safety---
-
+slug: dicklesworthstone-destructive-command-guard-claude-code-safety
+---
 # DCG 实战：把 AI 编码代理挡在破坏性命令之外
 
 > 仓库：`Dicklesworthstone/destructive_command_guard`（[GitHub](https://github.com/Dicklesworthstone/destructive_command_guard)），截至 2026-07-13 公开数据 2672 stars、101 forks，主语言 Rust。

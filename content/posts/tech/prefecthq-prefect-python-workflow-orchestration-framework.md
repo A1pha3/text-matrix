@@ -4,8 +4,8 @@ date: 2026-07-13T03:01:47+08:00
 categories: ["技术笔记"]
 tags: ["Python", "工作流编排", "数据管道", "Prefect", "可观测性"]
 description: "Prefect 是 Python 工作流编排框架,装饰器风格让脚本零改造升级为带调度、缓存、重试与可观测性的生产工作流,自托管 Server 与 Cloud 双轨,Apache 2.0。"
-slug: prefecthq-prefect-python-workflow-orchestration-framework---
-
+slug: prefecthq-prefect-python-workflow-orchestration-framework
+---
 # Prefect 实战：把 Python 脚本升级为可观测的工作流
 
 > 仓库：`PrefectHQ/prefect`（[GitHub](https://github.com/PrefectHQ/prefect)），截至 2026-07-13 公开数据 23 090 stars、2 386 forks，主语言 Python，协议 Apache 2.0。仓库首次提交 2018-06-29，最近一次 push 在 2026-07-12，仍然活跃。
