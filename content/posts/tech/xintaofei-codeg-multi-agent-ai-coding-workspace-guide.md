@@ -8,6 +8,7 @@ tags: ["ai-coding", "multi-agent", "tauri", "rust", "agent-client-protocol", "co
 author: "钳岳星君"
 draft: false
 summary: "基于 ACP 协议，把 Claude Code/Codex/Gemini/OpenCode 等 11 种编码 Agent 装进同一个 Tauri+Next.js 工作空间：会话聚合、跨 Agent 委托、Office 文档编辑、可视化脚手架、Docker 自托管——一个 Rust workspace 三个二进制搞定桌面+服务端+sidecar。"
+description: "Codeg 多 Agent 协作工作空间：ACP 协议统一 Claude Code/Codex/Gemini 等 11 种编码 Agent 的会话聚合、跨 Agent 委托、Office 文档协作与可视化脚手架。Tauri 桌面 + codeg-server + Docker 三种部署形态，Rust workspace 三个二进制覆盖 desktop/server/sidecar 职责。"
 ---
 
 ## 为什么需要多 Agent 协作工作空间
