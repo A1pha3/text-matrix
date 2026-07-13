@@ -15,6 +15,8 @@ hiddenFromHomePage: true
 > **前身**：[MaxRobinsonTheGreat/mandelbrotnn](https://github.com/MaxRobinsonTheGreat/mandelbrotnn)（个人长期 pet 项目）+ [karpathy/autoresearch](https://github.com/karpathy/autoresearch)
 > **写作笔记**：本版相对 7-9 旧文 e9541bce 的最大差异是**直读源码 + 直读 runs.jsonl**，不再依赖 B 站 8 段章节大纲的二次转述。B 站视频未提供官方字幕轨（AI 配音版通常不含），YouTube 原版 yt-dlp 抓取需要登录 cookie，因此本版以仓库级事实为核心——AGENT.md 是任务书、README.md 是作者意图、solutions/notebook.md 是 AI 自留的研究笔记、runs.jsonl 是 104 次实跑的硬数据。
 
+**读完这篇你能拿走什么**：分清 RSI 的宣传叙事和工程现实，看懂 fractalsearch 四个组件（任务书/裁判/选手/研究笔记）怎么咬合，理解 Triton fused encoder、GT-free 采样、空间误差场三次关键突破各自的贡献，并能动手复现一次最小 RSI 回路来判断"AI 自主科研"目前真实的边界在哪。
+
 ---
 
 ## 先把"fractalsearch 是谁做的"理清楚
@@ -30,6 +32,21 @@ hiddenFromHomePage: true
 视频作者 Emergent Garden 在 8 段章节中把 fractalsearch 当成"RSI 在可重复工程上做到了什么"的样板间来展示——他没有动手 fork，没有亲手改 code，但他把这个实验配上"ASI / 智能爆炸 / 沙箱风险"的 RSI 主流议题一起讲。fractalsearch 源码是 Emergent Garden 的论据，不是他自己的产出。
 
 厘清之后，视频里每一段在说什么，就不再是"AI 多厉害"，而是"AI 借助一个 5 分钟训练 budget + 一个 33M 参数的小哈希网格，在一个受限视觉学习问题上能做到什么程度"。这才是更具体、也更值得工程师关心的视角。
+
+### 先给一张系统地图：fractalsearch 的四个组件各管什么
+
+读后面所有章节前，先记住这张拆分。整个实验里其实有**四条互不重叠的主线**，很容易被讲成一条故事线，混淆之后每个数字都对不上号：
+
+| 组件 | 文件 | 职责 | 谁能动 |
+|---|---|---|---|
+| **任务书** | `AGENT.md` | 告诉 AI 要做什么、不能做什么、循环长什么样 | 人类写死，AI 不改 |
+| **裁判**（harness） | `harness/groundtruth.py` + `harness/evaluate.py` | 定义目标函数、固定 5 分钟 budget、SIGALRM 强杀、把结果写进 `runs.jsonl` | 人类写死，AI 不改（结构性沙箱） |
+| **选手**（solution） | `solutions/*.py`（baseline / fourier / hashgrid / champion） | AI 提交的拟合算法，每次 commit 一个新文件 | AI 全权改写 |
+| **研究笔记** | `solutions/notebook.md` | AI 跨 session 的连续记忆，记录 bracket、假设、教训 | AI 自己追加 |
+
+一个数字（比如 MSE `0.000226`）必须能同时落到这张表里的三个格子：它由某个**选手**（`champion.py`）在**裁判**（`evaluate.py` 5 分钟 budget）下跑出来、写进**研究笔记**（`notebook.md` 的 best 记录）。后面所有数字都按这张表归位，才不会和视频叙事错位。
+
+**本文怎么读**：第二章把视频 8 段章节对到源码文件；第三到五章拆三次关键突破（Triton fused encoder、GT-free 采样、空间误差场）；第六章是 104 次试错的全景；第七到八章解释为什么这次不会"智能爆炸"；最后给三类读者各自的下一步。
 
 ---
 
@@ -96,7 +113,36 @@ README.md 写："This project is directly adapted from Karpathy's autoresearch."
 
 **视频作者 Emergent Garden 在 24:50 提到"哈希网格大幅提升"，对应到仓库就是 `hashgrid_gtfree.py`（240 行）。** 全名 *Multi-resolution Hash Grid Encoding*——tiny-cuda-nn 的标准技巧在 PyTorch + Triton 下的复刻：把 2D 坐标 `(x, y)` 经过多分辨率哈希查找 + 4 角双线性插值，喂给浅层 MLP。每一级哈希表独立 grid size × feature dim，最终拼接。
 
-NOTICE 重要之处：作者**没用 NVIDIA 推荐的 tiny-cuda-nn**——他在 `champion.py` 的 docstring 里写明了：triton 3.5.1 跟 torch 自带同发，"in-scope"。这是工程上的微小但不妥协——确保一切代码在 `pyproject.toml` 列出的依赖里能跑，**不需要外挂 C++ 扩展**。
+一个容易被看漏的工程取舍：作者**没用 NVIDIA 推荐的 tiny-cuda-nn**（Müller et al. 2022 在 SIGGRAPH 上发的 multiresolution hash grid 原始实现，CUDA + C++ 扩展）。他在 `champion.py` 的 docstring 里写明了：triton 3.5.1 跟 torch 自带同发，"in-scope"。这是工程上的微小但不妥协——确保一切代码在 `pyproject.toml` 列出的依赖里能跑，**不需要外挂 C++ 扩展**，任何拿到仓库的人 `uv sync` 之后就能复现，不必先编译 CUDA。
+
+### 一次完整迭代怎么流过这四个组件
+
+光看四件套还是抽象。把第 103 次迭代（champion 那次）拆开，能看到 AI 的一个"猜想→实验→反驳"回合具体怎么穿过系统：
+
+```text
+① 猜想  AI 读 git log，看到上一版 errfield 已收敛
+        → 形成假设："现在步数够，可以把 grid 调细到 Nmax 65536 + 13 levels"
+        → git commit -m "hashgrid_n64l13: test finer grid at higher throughput"
+
+② 实验  AI 跑：uv run python -m harness.evaluate solutions/champion.py > run.log 2>&1
+        harness 内部：
+          · 读 champion.py 的 build_model()
+          · 启动 SIGALRM 定时 600 秒（hard kill）
+          · 训练循环跑到 300 秒（soft budget）
+          · 每个 step：forward → loss → backward → step
+          · 跑完 append 一行 JSON 到 runs.jsonl
+
+③ 观察  AI 读 run.log：grep "^mse:\|^status:" run.log
+        → mse: 0.00022636, status: ok
+        → 对照 leaderboard：是新的 best
+
+④ 反驳/证实 0.00022636 < 0.00024397（上一版 errfield best）
+        → 假设成立，finer grid + 更多步数确实赢
+        → 在 notebook.md 记一笔："Nmax 65536 + 13 levels WINS at ~1600 steps"
+        → 进入下一轮猜想
+```
+
+一次迭代 = 一次 commit + 一次 5 分钟训练 + 一行 JSON。`AGENT.md` 的 `NEVER STOP` 就是让这个回路不停转——AI 不在中间问人。104 条 `runs.jsonl` 就是 104 个这样的回合叠出来的。
 
 ## 三、关键突破 1：Triton Fused Encoder——把 48 个 gather 合成 1 个
 
@@ -138,7 +184,7 @@ forward 2×, backward 4×。bottleneck 从 launch overhead 翻入 DRAM 友好—
 
 **空间误差场（errfield）登场**——
 
-GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 ~110ms（220ms/step），又是 5 分钟 budget 的 36%。`notebook.md` 6-9 第三段给出的解决非常优雅：
+GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 ~110ms（220ms/step），又是 5 分钟 budget 的 36%。`notebook.md` 6-9 第三段给出的解法，把这一步的开销压到接近零：
 
 > _persistent spatial error field mining: a coarse 2048×1296 EMA grid of per-cell mean |error|, updated FREE each step from the train batch's own residuals; hard coords sampled by cell-multinomial + in-cell jitter._
 
@@ -148,11 +194,11 @@ GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 
 - 把 train batch 固定 768k 中 98% 拿来抽自这个"hard field"，剩 2% 留 uniform。
 - **零额外 forward**。
 
-`notebook.md` 里这一改动划出一道陡崖：`0.00027444 → 0.00024397`，**-11.1%**。原因看似反直觉：
+`notebook.md` 里这一改动划出一道陡崖：`0.00027444 → 0.00024397`，**-11.1%**。这个结果第一眼反直觉——明明 EMA 引入了延迟，为什么反而比实时估计更准？
 
-- 单次 GT-free pool 估计的"难度"是即时噪声大的（一次抽样估计 cell 的误差，方差大）。
-- 把"难度估计"做成时间平均 + 在每 step 拿**训练本身的 residual 顺便更新**——这是个零成本 inference 跟"持续纠错"相结合的 trick。
-- 结果比"用真实误差做 mining"还便宜还准。
+原因在方差上。单次 GT-free pool 估计"难度"时，靠的是一次抽样去猜一个 cell 的误差，方差很大：某个 cell 偶尔被抽中一次、恰好 error 大，就被标记成"难"，下一个 step 又可能被漏掉。EMA 把这个估计摊到时间轴上做加权平均（α=0.6，约 2-3 个 step 的记忆窗口），噪声被压下去，留下的是 cell 真实难度的时间平均。
+
+再叠加一个零成本的便利：每 step 本来就要算训练样本的 residual，顺手把这个 residual 写回它所在的 cell——不用额外 forward，不用额外 GT 计算。结果就是，这套"持续纠错的难度地图"比"用真实误差做 mining"还便宜，还更稳。
 
 > Bracket result in notebook：field res 1024 / 2048 / 4096 三档跑，2048 最好；EMA 0.9 / 0.8 / 0.6 / 0.3 四档，0.6 最好；hard fraction 85% / 90% / 95% / 98% 四档，98% 最好（91-98% 是噪声平坦）。**三个超参都不是孤峰，是 plateau**——这种 plateau 在 ML 工程上是好兆头：超参不敏感，结果可复现。
 
@@ -164,7 +210,7 @@ GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 
 
 > 想过 n128l14（Nmax 131072, 14 levels）`mse=0.00022644`——跟 n64l13 在一个水平。结论：1600 step 时分辨率天花板就是 Nmax 65536；再有 step 才往上走。这是经验法则"hardware throughput 越高，architecture 选择空间越大"的一次工程级具体化。
 
-跑完这次后 champion.py 全文 251 行，跑得最久的就是 champion.py 本身——**历史最长的一个 solution 文件就是最终的胜出者**。这暗合 RSI 的核心：**不是"哪个 solution 最好"而是"哪个 solution 在持续研究循环里被推得最远"**。
+跑完这次后 champion.py 全文 251 行，跑得最久的就是 champion.py 本身——**历史最长的一个 solution 文件就是最终的胜出者**。这恰好点出 RSI 的核心：决定胜负的从来不是某个 solution 静态有多好，而是它能在持续研究循环里被推多远。champion.py 赢在它是被推到最远的那一个。
 
 ## 六、最终结果：104 次试错全景
 
@@ -194,9 +240,9 @@ champion entry 具体字段：
 视频 27:08 在公布成本时数字偏高——这是工程真相：
 
 - **104 条 runs × 300 秒 = ~8.67 小时** RTX 3090 Ti 单卡时间。
-- 实验不是"调参一次跑通"，而是 AI 自己改 100 个不同 solution 文件——每个 5 分钟。期间又有人工核对、commit logging、JSON 持久化——wall-clock 时间远不止 8.67 小时。
+- 这 8.67 小时跑的不是"调一次参跑通"，是 AI 改 100 个不同 solution 文件、每个跑 5 分钟。期间还掺着人工核对、commit logging、JSON 持久化——wall-clock 时间远不止 8.67 小时。
 
-但**拿到的是 0.0041 → 0.000226**，是 -94.5% 的 MSE 改善——单卡几百元成本，跑出这种量级的视觉拟合。这才是 AI 自主科研该有的成本曲线：**"试错的边际成本不是无穷的，是常数"**。
+但**拿到的是 0.0041 → 0.000226**，是 -94.5% 的 MSE 改善——单卡几百元成本，跑出这种量级的视觉拟合。这件事最该记住的成本特征是：试错的边际成本是常数（每次固定 5 分钟），不会随尝试次数膨胀。这是 AI 自主科研能跑起来的经济前提。
 
 ## 七、为什么"智能爆炸"不会从这事里发生
 
@@ -270,6 +316,53 @@ fractalsearch 实验里 0.000226 是权威——因为它来自 `runs.jsonl` 第
 如果把 Anker / 姚顺雨 / 田渊栋 这些 RSI 相关的中文讨论并列起来看，**fractalsearch 是其中唯一一份完全开源、全部可复现、能让读者在自己 GPU 上重跑并验证结果的**——Karpathy autoresearch 框架的一个 PR，人类作者 MaxRobinsonTheGreat，AI 操作者（自己写自己 commits）。
 
 视频作者 Emergent Garden 把这个实验**配着 RSI 这种宏大议题**讲给观众听——但 rsi 的本质其实是 33M 参数、1600 steps 和 5 分钟 hard kill。这种"宏大叙事 × 工程现状"的错位，才是标题党们喜欢讲的"AI 取代科研"的真相——工程现实比新闻乐观得多，也冷静得多。
+
+---
+
+## 自己复现一次：从 clone 到 0.000226
+
+光读不练，数字始终是别人的。下面这张清单把"复现一次 fractalsearch 最小回路"拆成可勾选的步骤，照着走一遍，对 RSI 的工程体感会比看十遍视频都牢。这是一道实战练习，不是阅读材料。
+
+### 复现练习清单（动手做）
+
+- [ ] **1. 环境**：装好 [uv](https://docs.astral.sh/uv/)，`git clone` 仓库后 `uv sync`。确认 `pyproject.toml` 里 torch + triton 3.5.1 能跑——这是作者刻意不挂 C++ 扩展的原因，你不必装 CUDA 工具链。
+- [ ] **2. 跑通 baseline**：`uv run python -m harness.evaluate solutions/baseline_mlp.py`。应该看到 MSE 在 `0.004-0.006` 量级。这一步验证 harness 通了，SIGALRM 定时生效。
+- [ ] **3. 读 AGENT.md**：重点看 "What you CANNOT do" 三条禁令（不改 harness、不硬编码曼德博逻辑、不加依赖）。这是沙箱的边界，也是后面所有 commit 的合法性来源。
+- [ ] **4. 读 runs.jsonl**：`wc -l runs.jsonl` 应该是 104 行。`tail -1` 看最后一条的 `mse` 字段——这就是要挑战的 `0.000226`。
+- [ ] **5. 让 AI 跑一轮**：把 `AGENT.md` 喂给你的 coding agent，`NEVER STOP` 一旦启动，观察它会不会自己 `git commit` + 跑 evaluate + 读 run.log。如果它停下来问人，说明 prompt 没吃透 `AGENT.md`。
+- [ ] **6. 对照 notebook.md**：跑完几轮后，对比你的 agent 写的 notebook 和原作者的 notebook。两份笔记的"假设质量"差距，就是 RSI 当前真正的能力边界。
+
+**常见卡点**：
+- **SIGALRM 在 Windows 上不生效**——`signal.SIGALRM` 是 Unix 专属，Windows 复现得换成 `threading.Timer` 或 WSL2。
+- **5 分钟跑不满**：如果 GPU 显存不够，batch size 会被自动降，300 秒里跑的 step 数远少于 1600，MSE 就复现不到。3090/4090 这一档是作者实测的硬件下限。
+- **triton 版本漂移**：triton 小版本之间 kernel 行为会变，`2x speedup` 的数字只在 3.5.1 上成立。换版本前先跑一次 champion 确认 MSE 没退化。
+
+### 自测：你真的看懂这次实验了吗
+
+读完前面八章，试着不查源码回答下面三个问题。答得上来说明 RSI 的工程骨架已经立住了：
+
+1. **为什么是 5 分钟 budget 而不是 1 小时？** 提示：fixed budget 对"分数可比"为什么是必要的？如果 budget 浮动，commit 历史还能当 leaderboard 用吗？
+2. **GT-free mining 为什么比"用真实 GT 算 error"还便宜？** 提示：把"算 error"这件事从哪个环节撤下来了？撤下来之后那 0.346s/step 去哪了？
+3. **errfield 用 EMA(α=0.6) 而不是直接用本 step 的 residual，是在换什么？** 提示：单次抽样的方差 vs 时间平均的延迟，这两个代价哪个更可接受？
+
+答案分别藏在第二章（fixed budget）、第四章（GT-free）、第四章（errfield EMA）——但先自己想一遍，再回去对。
+
+---
+
+## 延伸：从 fractalsearch 往外看一步
+
+把 fractalsearch 放回 2026 年 RSI 的版图里，它的位置很特殊，也很清楚：
+
+| 项目 | 改的是什么 | 完全开源可复现 | 跟 fractalsearch 的关系 |
+|---|---|---|---|
+| **karpathy/autoresearch** | 训练脚本 / 架构配置（弱 RSI） | ✅ | fractalsearch 的母框架 |
+| **MaxRobinsonTheGreat/fractalsearch** | 拟合算法（弱 RSI） | ✅ | autoresearch 的一个 PR 级应用 |
+| **DeepMind AlphaEvolve** | 调度算法 / 矩阵乘 kernel（弱 RSI） | ❌ 内部 | 同类，工业规模 |
+| **Schmidhuber Gödel Machine** | 自身权重 / 推理能力（强 RSI） | 纯理论 | fractalsearch 不是这个 |
+
+fractalsearch 的价值不在"它多强"——单卡 8 小时压一个 MSE 到 0.000226，在 ML benchmark 里排不上号。它的价值在**它是这张表里唯一一个连 AI 的研究笔记（notebook.md）都公开的**。别的项目要么只发论文，要么只放最终代码，读者看不到 AI 中间那些"换思路、记 bracket、证伪假设"的过程。fractalsearch 把 RSI 的中间产物也摊开了，这才是它对工程师和研究者真正稀缺的地方。
+
+如果你顺着这篇文章想再走远一点：先 fork autoresearch，找一个你自己的"曼德博集合"（任何一个有客观 metric、能 5 分钟跑完、有改进空间的问题），把 `AGENT.md` 换成你的任务书，让 AI 跑一晚上。第二天早上回来翻 `runs.jsonl` 和 notebook——你对"AI 自主科研现在到哪了"的判断，会比任何一篇综述都准。
 
 ---
 
