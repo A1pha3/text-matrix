@@ -1,253 +1,285 @@
 ---
-title: "逃逸速度：Louis Kirsch 在 ICLR 2026 给出的 RSI 判据"
-date: 2026-07-09T21:30:00+08:00
+title: "逃逸速度：Louis Kirsch 在 ICLR 2026 怎么讲递归自我改进的拐点"
+date: 2026-07-13T21:30:00+08:00
 slug: louis-kirsch-iclr-2026-recursive-self-improvement-review-and-outlook
-description: "ICLR 2026 RSI Workshop invited talk 解读：Louis Kirsch 没有宣称逃逸速度已经发生，他做的是更基础的事——给 RSI 装上一组判据（可修改范围、可信评估、可持续增长、资源有界、对自身状态可读写），让'AI 能不能自我改进'变成可以逐条勾选的工程清单。本文修正了原版对 FME 的误读，还原演讲真实框架。"
+description: "ICLR 2026 RSI Workshop 首场受邀报告精读。据 43 页幻灯片原件重建：Louis Kirsch 没有宣称逃逸速度已经到来，他真正讲的是三件事——怎么把人类移出 AI 研究的外层循环、用哪几类机制保证自我改进不是自欺、以及拐点之前还剩哪些硬骨头。本文删除了此前流传但并不在幻灯片里的'5 判据'叙事，补上了 Darwin/Huxley-Gödel Machine 与 Inherent 的'集体递归自我改进'展望。"
 draft: false
 categories: ["视频精读"]
-tags: ["ICLR2026", "RecursiveSelfImprovement", "LouisKirsch", "Schmidhuber", "GödelMachine", "PowerPlay", "RLVR", "AIAgent", "Frontier"]
+tags: ["ICLR2026", "RecursiveSelfImprovement", "LouisKirsch", "Schmidhuber", "GödelMachine", "DarwinGödelMachine", "FME", "Inherent", "AIAgent", "Frontier"]
 hiddenFromHomePage: true
 ---
 
-> **目标读者**：AI 研究者、AGI 安全与对齐从业者、关注 AI4Science 的产品经理
-> **核心问题**：AI 真的能开始改写自己吗？RSI 成立需要同时满足哪些条件？通往"逃逸速度"的路径上还缺什么？
-> **难度**：⭐⭐⭐⭐ | **来源**：B站 @至高机器智能 转 Louis Kirsch @ ICLR 2026 RSI Workshop invited talk
+> **目标读者**：AI 研究者、AGI 安全与对齐从业者、关注 AI4Science 的工程师与产品经理
+> **这篇文章的判断**：Kirsch 这场报告的分量不在某个新算法，而在于把"递归自我改进"从一句吓人的口号，拆成三个能分头讨论的工程问题——把人移出外层循环、保证每次改动是真改进、以及拐点之前那堆没解决的开放难题。
+> **难度**：⭐⭐⭐⭐ | **来源**：B站 @至高机器智能 转 Louis Kirsch @ ICLR 2026 RSI Workshop 首场受邀报告
 
-[原视频链接（B站）](https://www.bilibili.com/video/BV1YRVy6nEzT/?spm_id_from=333.337.search-card.all.click&vd_source=fda86480434b6573c5b58707deda68d9) ｜ [演讲幻灯片 PDF](https://louiskirsch.com/assets/louis_at_the_recursive_workshop_ICLR_2026.pdf) ｜ [RSI 2026 Workshop 主页](https://recursive-workshop.github.io/) ｜ 时长 27:57 ｜ 发布于 2026-06-03
+[原视频链接（B站）](https://www.bilibili.com/video/BV1YRVy6nEzT/?spm_id_from=333.337.search-card.all.click&vd_source=fda86480434b6573c5b58707deda68d9) ｜ [演讲幻灯片 PDF（43 页）](https://louiskirsch.com/assets/louis_at_the_recursive_workshop_ICLR_2026.pdf) ｜ [SlidesLive 录像](https://slideslive.com/39063672?t=1425) ｜ [RSI 2026 Workshop 主页](https://recursive-workshop.github.io/) ｜ 时长 27:57 ｜ 现场 2026-04-26
 
 ---
 
 ## 视频信息卡
 
 | 项目 | 内容 |
-|------|------|
-| 标题 | 【Frontier】递归式自我提升：回顾和展望 \| ICLR 2026 \| Louis Kirsch |
-| 演讲原始标题 | *Escape Velocity: The inflection point for Recursive Self Improvement* |
-| 场合 | ICLR 2026 Workshop on AI with Recursive Self-Improvement（RSI 2026） |
-| 演讲者背景 | IDSIA 博士（导师 Schmidhuber）→ Google DeepMind Research Scientist → RSI 方向 stealth startup 联合创始人 |
-| UP 主 | 至高机器智能 |
-| 时长 | 27:57（1677 秒） |
-| 发布时间 | 2026-06-03 |
+| ------ | ------ |
+| 标题（B站转载） | 【Frontier】递归式自我提升：回顾和展望 \| ICLR 2026 \| Louis Kirsch |
+| 演讲原始标题 | *Escape Velocity: The inflection point for Recursive Self-Improvement* |
+| 场合 | ICLR 2026 RSI Workshop 首场受邀报告（Invited Talk 1，2026-04-26，里约热内卢 101-D 厅） |
+| 演讲者 | Louis Kirsch —— IDSIA 博士（导师 Schmidhuber）；前 Google DeepMind「AI Scientist」团队创建者与负责人；现 Inherent 联合创始人兼 Chief Superintelligence Officer |
+| 幻灯片 | 43 页，作者个人站公开 PDF（本文逐页核对） |
+| 录像 | SlidesLive（含现场 Q&A） |
+| B站 UP 主 | 至高机器智能 |
+| 时长 | 27:57 |
+| B站发布 | 2026-06-03 |
 | 播放量 | 1271 |
 | 点赞 / 投币 / 收藏 | 57 / 23 / 138 |
-| 链接 | https://www.bilibili.com/video/BV1YRVy6nEzT/ |
+| 链接 | [bilibili.com/video/BV1YRVy6nEzT](https://www.bilibili.com/video/BV1YRVy6nEzT/) |
 
-章节：开篇：递归自改进的拐点 / 研究自动化 \| 从元学习到大模型 / 递归自改进 \| 定义与实现 / 关键基石 \| 大模型的作用 / 未决问题 \| 度量、奖励与协作 / 结语：迈向逃逸速度
-
-> **前置说明**：ICLR 2026 的 RSI Workshop 自称"可能是全球第一个专门聚焦 RSI 的研讨会"。这场 invited talk 的核心贡献**不是某个新算法**，而是一个用于判断"哪些系统算 RSI、哪些不算"的判据框架。本文的写作依据是 B 站章节大纲 + Kirsch 个人站公开的[演讲幻灯片 PDF](https://louiskirsch.com/assets/louis_at_the_recursive_workshop_ICLR_2026.pdf) + 其 arXiv 论文与 PhD 论文，**未拿到逐字字幕**——所有引用均为综合转述，不确定处已显式标注。
-
----
-
-## 一、这场演讲在回答什么
-
-读完 Kirsch 的 PhD 论文（题目就叫《Automating AI Research》），再回看这场 27 分钟的 invited talk，会发现他其实一直在收窄一个问题：**能不能让一个 AI 系统，做出一个比它自己更强的 AI 系统，然后让那个更强的系统继续做这件事？**
-
-这就是 RSI（Recursive Self-Improvement，递归自改进）。这不是 Kirsch 的原创概念——它的思想源头可以追到 I. J. Good 1965 年的"智能爆炸"猜想，以及 Schmidhuber 从 1987 年硕士论文到 2003 年 Gödel Machine、2011 年 PowerPlay 这条三十多年的自指改进脉络。Kirsch 是 Schmidhuber 在 IDSIA 的博士生，他的整场演讲本质上是把这条脉络**用 2025 年的工程语言重新讲一遍**。
-
-但和早年 Schmidhuber 的"理论独白"不同，Kirsch 这次的论证带上了 2025 年的工程实感。他反复引用的是已经跑通的项目：Sakana AI 的 The AI Scientist（2024-08，arXiv 2408.06292）能自己生成 ML 论文并自审；DeepMind 的 FunSearch（Nature 2023）在新组合数学问题上发现新算法；AlphaEvolve（arXiv 2506.13131）进一步把 FunSearch 泛化成进化式编码智能体，改进了 DeepMind 自己的若干算法。这些系统的共同点是：**它们跑通了"自动生成—自动验证—自动修改"的最小循环，而且不需要人类在环路里**。
-
-Kirsch 的判断很直接：RSI 不再只是思想实验，它进入了工程实证阶段。但他没说"逃逸速度已经发生"——进入工程实证离逃逸速度还有距离。要达到逃逸速度，一个 RSI 系统得同时满足五个判据。这是整场演讲的核心。
-
-| 演讲脉络 | 这一节对应 |
-|---------|-----------|
-| 拐点判断：RSI 已进入工程实证 | ✅ 本节 |
-| Schmidhuber 谱系：Gödel Machine / PowerPlay 的思想来源 | 第二节 |
-| RSI 定义 + 5 判据 + 三条工程路径 | 第三节 |
-| 大模型为何是 RSI 的底座 | 第四节 |
-| 未决问题：度量、奖励黑客、多智能体内卷 | 第五节 |
-| 逃逸速度的观察信号 | 第六节 |
-
----
-
-## 二、Schmidhuber 谱系：RSI 的思想前史
-
-要听懂这场演讲，得先知道 Kirsch 站在谁的肩膀上。Schmidhuber 学派的三个早期工作构成了 RSI 的思想骨架，Kirsch 在演讲里反复回指它们。
-
-**Gödel Machine（2003，arXiv cs/0309048）** 是强 RSI 的纯理论原型。它的设计是一个系统能重写自己代码的任何部分，但**只有一个前置条件**：必须先用自带的定理证明器生成一个形式化证明，证明这次重写会让某个形式目标函数严格改进，证明通过才允许动手。定理证明器和被修改的目标程序共用同一个底层。这套机制在 2003 年没有 LLM 可用，停留在纯理论——但它的"可证明的自改进"思想直接影响了 Kirsch。
-
-**PowerPlay（2011，arXiv 1112.5309；2013 期刊版见 Frontiers in Psychology）** 回答的是"自改进系统该学什么"。它的策略是：**不断挑出当前能构造出的、最简单的、还解不了的问题**，把它加进训练课程，训到能解，再挑下一个。结果是产出一个"越来越通用的问题求解器"。这是把"课程学习"塞进自改进循环的早期尝试。
-
-**1987 年硕士论文**《Evolutionary Principles in Self-Referential Learning》（慕尼黑工大）是 Schmidhuber 自指学习思想的起点，比 Gödel Machine 早 16 年。它是概念前驱，不是 Gödel Machine 本身——这一区分在中文二手资料里经常被混淆。
-
-> **一个易踩的坑**：不少中文转述把"1987 年 Gödel Machine 论文"当成一个东西。实际上 1987 是硕士论文（概念前驱），Gödel Machine 是 2003。两个相隔 16 年，不能合并。本文按 arXiv 原始编号 cs/0309048 标注。
-
-Kirsch 自己的博士工作就是在这条脉络上的延伸。他在 [Eliminating Meta Optimization Through Self-Referential Meta Learning](https://arxiv.org/abs/2212.14392)（arXiv 2212.14392）里提出：与其保留一个昂贵的外层元优化器，不如让系统**自指地直接修改自己的权重或结构**。那篇论文里有一个保留规则——按测得的 fitness 概率性地保留候选解，从而在期望意义上保证改进单调。这个机制常被称作 **Fitness Monotonic Execution（FME）**。
-
-> **关于 FME 的边界标注**：FME 是 Kirsch 2022 年论文里的机制，不是这次 ICLR 演讲的主框架。演讲的核心是一个更上层的"RSI 判据"，FME 只是其中"可信评估"这一判据在权重层面的具体实现之一。如果你看到其他文章把 FME 当成本次演讲的中心贡献，那是误读。
-
----
-
-## 三、RSI 的定义、5 判据与三条工程路径
-
-### 3.1 一个工程化的定义
-
-Kirsch 在演讲里给出的 RSI 定义可以浓缩成一句话：
-
-> **RSI = 一个系统研究自身，产出一个严格更强的自身，然后部署这个更强的版本继续循环。**
-
-他和"普通微调"做了一个关键切割：单纯的 fine-tuning 不算 RSI，**改进后的系统必须本身具备做下一轮改进的能力**。这个切割非常重要——它把一大批号称"自我改进"的系统挡在门外：那些系统改完之后，并不比之前更能做下一轮改进。
-
-### 3.2 RSI 成立的 5 个判据（演讲的核心贡献）
-
-这是整场演讲最该被记住的部分。Kirsch 给出的不是某个新算法，而是一组**用于判断"哪些系统算 RSI、还缺什么"的判据**。根据其个人站公开的演讲幻灯片，五个判据是：
-
-| # | 判据 | 含义 | 缺失时的后果 |
-|---|------|------|-------------|
-| 1 | **Valid scope**（可修改范围有界） | 系统里"哪些部分可以安全地被改"必须定义清楚，不能是"什么都能改" | 自改进可能波及验证逻辑本身，导致评估失效 |
-| 2 | **Reliable evaluation**（可信自动评估） | 必须有一个比被改进的生成器更便宜、更可信的评估器 | 没有 ground truth 的反馈，自改进退化成随机游走 |
-| 3 | **Sustainable growth**（可持续增长） | 改进必须能复利累积，而不是很快触顶 | 投入产出比递减，飞轮转不动 |
-| 4 | **Budgeted resources**（资源有界） | 每轮改进的算力/数据成本必须有上限 | 改进一 roll 跑一年，工程上不可持续 |
-| 5 | **Integrated access to state**（对自身状态可读写） | 智能体要能读、能写自己的权重/代码/数据，而不只是发 prompt | 只能改 prompt 的"伪 RSI"无法触及真正的自改进 |
-
-五个判据合起来把一个老问题翻了个面：别再问"AI 能不能自我改进"——那是句口号；该问的是**这个系统在这五条上分别过了哪几关**。
-
-第 2 条值得单独展开。它是 RLVR（Reinforcement Learning with Verifiable Rewards，带可验证奖励的强化学习）在 2024–2025 年爆发的底层原因——数学有标准答案、代码能跑单元测试、形式化证明能被 Lean/Coq 验证，这些场景天然提供了比人类标注更便宜、更可信的 reward。没有这种评估器，RSI 的反馈环闭不上。Lilian Weng 在 2026-07-04 的文章里把围绕评估器的工程叫"harness engineering"，说的是同一件事。
-
-### 3.3 三条工程路径
-
-把 5 判据当筛子，再看 Kirsch 划分的三条工程路径，每条对应"改什么"：
-
-**路径 A：改权重（in-situ fine-tuning）**。模型对自己的输出做评估 + 梯度下降。Kirsch 自己的自指元学习论文（2212.14392）走的就是这条。风险是 mode collapse——模型把自己训成一个低熵垃圾。它的核心难题是判据 2：怎么让"评估"可信，不被模型自己骗。
-
-**路径 B：改代码（Gödel Machine 范式）**。AI 重写自己的搜索/推理代码。代表是 The AI Scientist 和 FunSearch/AlphaEvolve。这条路径在 2024 年后变得具体，是因为 LLM 写代码的能力过了临界点——GPT-4 级别的模型第一次能"听懂研究目标"。Kirsch 在这里的态度很明确：**路径 B 是当前最有希望的**。
-
-**路径 C：改架构（AutoML 范式）**。AI 设计自己的网络结构。风险是搜索空间爆炸——层数、头数、激活函数的笛卡尔积太大。它最容易卡在判据 4（资源有界）。
-
-> **一张任务流图**：以 The AI Scientist 为例，一次完整的 RSI 循环是怎么流过这五条判据的——
-> 1. 生成假设（valid scope = 限定在某个 ML 子领域）
-> 2. 写实验代码（integrated access = 能调用 GPU、写文件）
-> 3. 跑实验、拿指标（reliable evaluation = benchmark 数字）
-> 4. 自审、决定是否"改进"（budgeted = 单轮算力有上限）
-> 5. 若通过则把改进写回代码，进入下一轮（sustainable = 不触顶）
+> **前置说明（写作依据，以及一处必须先讲的更正）**：ICLR 2026 的 RSI Workshop 自称"可能是全球第一个专门聚焦 RSI 的研讨会"，Kirsch 讲的是当天第一场受邀报告。本文依据其个人站公开的 43 页幻灯片原件（已逐页核对文本）、Workshop 官网、Kirsch 个人站与相关 arXiv 论文写成，**未拿到逐字字幕**，所有口头引用都是据幻灯片的综合转述。
 >
-> 这五步对应五判据。**任意一步崩了，整个 RSI 循环就退化成普通的自动化脚本**。这就是为什么 Kirsch 把判据而不是算法当成核心贡献。
+> 有一点得先摆在前面：此前网络上（也包括本站更早的版本）流传过一套"RSI 五判据"——可修改范围、可信评估、可持续增长、资源有界、状态可读写，并说它出自这场演讲。**把 43 页幻灯片逐页核对之后，这五条一条都不在里面**，属于对演讲的误读。本文已据真实幻灯片重建框架。演讲里确实有一张"如何保证改进"的清单，但它讲的是另一回事（见第四节）。
+
+## 目录
+
+- [视频信息卡](#视频信息卡)
+- [目录](#目录)
+- [一、这场演讲到底在讲什么](#一这场演讲到底在讲什么)
+- [二、从元学习到 agentic scientist：Kirsch 站在哪条脉络上](#二从元学习到-agentic-scientistkirsch-站在哪条脉络上)
+- [三、RSI：把人类移出外层循环](#三rsi把人类移出外层循环)
+- [四、真正的清单：怎么保证"自我改进"不是在自欺](#四真正的清单怎么保证自我改进不是在自欺)
+- [五、FME：Kirsch 自己的赌注](#五fmekirsch-自己的赌注)
+- [六、逃逸速度：一个还没跨过的拐点](#六逃逸速度一个还没跨过的拐点)
+- [七、Lessons Learned：三条来自实战的教训](#七lessons-learned三条来自实战的教训)
+- [八、Open Problems：拐点之前的硬骨头](#八open-problems拐点之前的硬骨头)
+- [九、Kirsch 要把这条路带去哪：Inherent 与"集体递归自我改进"](#九kirsch-要把这条路带去哪inherent-与集体递归自我改进)
+- [十、常见误读：这场演讲没有在说什么](#十常见误读这场演讲没有在说什么)
+- [十一、给不同读者的落地建议](#十一给不同读者的落地建议)
+- [十二、自测：你读懂真实框架了吗](#十二自测你读懂真实框架了吗)
+- [十三、论文与资源地图](#十三论文与资源地图)
+- [写作笔记（给后续读者）](#写作笔记给后续读者)
 
 ---
 
-## 四、为什么大模型是 RSI 的底座
+## 一、这场演讲到底在讲什么
 
-这一节 Kirsch 的论证干脆：大模型不是 RSI 的充分条件，但是必要条件。三条理由分别卡在 5 判据里的某一条：
+Kirsch 开场先抛了一张 Schmidhuber 的老图：如果把人类历史上的重大里程碑排在时间轴上，它们大致落在一条指数曲线上，外推下去，收敛点落在 2040 年前后——Schmidhuber 半开玩笑地把那个收敛点记作 Ω，也就是超级智能。这张图不是论证，是一个坐标：它把整场演讲要谈的东西，钉在"通往 Ω 的最后一段路由什么驱动"这个问题上。
 
-1. **代码生成能力** —— 对应路径 B（改代码）。GPT-4 级别的模型是第一个能"听懂研究目标"并产出可运行代码的 AI。在这之前，路径 B 根本动不起来。
-2. **长上下文** —— 对应判据 5（integrated access）。递归改进需要系统看到自己全部的历史行为，包括失败的。100K+ 上下文让"把整个代码库装进上下文再改"第一次成为可能。
-3. **可验证的奖励信号** —— 对应判据 2（reliable evaluation）。数学、代码、形式化证明这些领域天然有"对/错"反馈，RLVR 才能落地。
+Kirsch 给的答案是两台咬合在一起的引擎：**AI 做 AI 研究**（自动化科研），和 **递归自我改进**（一个系统研究自己，产出一个更强的自己，再让更强的那个继续研究自己）。前者决定进步能不能被自动化，后者决定这种自动化能不能自我加速。剩下 20 多分钟，他就在这两台引擎上做三件事：先说清楚 RSI 怎么"把人移出外层循环"，再摆出一张"怎么保证自我改进是真的"的清单，最后交待哪些教训已经学到、哪些问题还悬着。
 
-但 Kirsch 也列出了三个依然缺失的能力，每一个都直接卡在某个判据上：
+有一句话得替他强调，因为最容易被断章取义：**他没有说逃逸速度已经发生**。幻灯片里的原话恰恰相反——当前的 RSI 系统"过早地停止改进，仍然需要人类介入"。他所谓的逃逸速度，是那个"人类不再需要亲自推动进步"的拐点；他的判断是我们正在逼近它，不是已经越过它。整场报告的张力就在这里：技术栈在快速就位，可临界点还没到，中间缺的东西恰恰是最难的。
 
-| 缺失能力 | 卡住的判据 | 当前研究方向 |
-|----------|-----------|-------------|
-| 长期记忆 | 判据 5（access to state） | [Mindstorms / NL Societies of Mind](https://arxiv.org/abs/2305.17066)（Kirsch 等合作，v3 2026-03） |
-| 元认知（知道自己不知道什么） | 判据 2（reliable evaluation） | Uncertainty Estimation、Calibration |
-| 多智能体协调 | 判据 1（valid scope）与判据 3（sustainable growth） | Societies of Mind 框架 |
+下面这张表把演讲的真实脉络和本文各节对上，方便你对照着看：
 
-元认知那条尤其关键。一个不知道自己不知道什么的系统，**无法安全地修改自己**——因为它没法判断"这次修改是不是把我改坏了"。这是 Schmidhuber 学派的标准论证，也是 Gödel Machine 当年要求"先有形式证明再动手"的根源。
-
----
-
-## 五、三个未决问题
-
-演讲后半段是 Kirsch 最实在的部分。他列出的不是"未来展望"，而是当前实验室里没人能完整回答的开放问题，每一个都对应 5 判据里的某一条没过关。
-
-### 问题 1：怎么度量"能力提升"？
-
-这卡在判据 2 和判据 3。当前普遍依赖固定 benchmark，但 benchmark 很快被 AI 学会（reward hacking / 度量博弈）——AI 优化"度量本身"而不是"度量想反映的能力"，这是 Goodhart 定律在 RSI 场景的直接表现。
-
-Kirsch 提议的方向是**对抗式度量**：让两个 AI 互相出题、互相打分。背后的直觉是——当度量不再是单点固定值，而是动态博弈的产物，AI 就没那么容易 hacking 它。这是一个方向，不是答案。**关于对抗式度量，我无法从外部资料确认它是否在幻灯片原文里出现，标注存疑**。
-
-### 问题 2：奖励黑客怎么办？
-
-AI 可能学会"修改自己的奖励函数"而不是真的变强。这卡在判据 1（valid scope）——**如果奖励函数本身落在可修改范围内，系统可以合法地把自己改"赢"**。
-
-Kirsch 在其 2022 年论文里给出的工程解是 FME——保留规则保证改进在期望意义上单调。但 FME 有一个隐含前提：**评估步骤本身不能被 AI 篡改**。换句话说，FME 解决的是"保留规则"这一层，不解决"评估器可信"这一层。后者要靠 RLVR + 把评估器物理隔离在 valid scope 之外。
-
-### 问题 3：多智能体协同怎么避免"内卷"？
-
-多个 AI 互相改进可能收敛到局部最优（类似 GAN 训练里的 mode collapse）。这卡在判据 3（sustainable growth）。
-
-Kirsch 与 Zhuge、Schmidhuber 等合作的 [Mindstorms in NL-Based Societies of Mind](https://arxiv.org/abs/2305.17066)（v3 2026-03）给出的设计是**异构智能体池**：每个智能体有不同的 reward function、不同的 prompt template、不同的 memory 结构，互相之间通过自然语言协议通信。这跟单一目标 benchmark 绑死的单智能体形成对比——它的核心赌注是"多样性本身是对抗局部最优的解药"。
-
-> **一个一致性提示**：GPTSwarm（[arXiv 2402.16823](https://arxiv.org/abs/2402.16823)）的完整标题是 *GPTSwarm: Language Agents as Optimizable Graphs*，第一作者是 Mingchen Zhuge，被 ICML 2024 接收。Kirsch 是合作者，不是主导者。如果其他资料把它写成"Kirsch 的论文"，那不够准确——它提供了"把智能体抽象成可优化计算图"的理论框架，是路径 B 的基础设施，但作者归属应标清楚。
+| 演讲脉络（据幻灯片） | 本文对应 |
+| ------ | ------ |
+| Ω 收敛 + 两台引擎：自动化科研 × 递归自我改进 | 第一节 |
+| 从元学习到 agentic scientist 的路线 | 第二节 |
+| RSI 定义：把人移出外层循环 | 第三节 |
+| "如何保证改进"的五类机制 | 第四节 |
+| FME：Kirsch 自己的机制 | 第五节 |
+| 逃逸速度：还没跨过的拐点 + 怎么度量 | 第六节 |
+| Lessons Learned：三条实战教训 | 第七节 |
+| Open Problems：奖励、好奇心、可证明性 | 第八节 |
+| 落到 Inherent 的"集体 RSI" | 第九节 |
 
 ---
 
-## 六、逃逸速度：演讲的物理学隐喻
+## 二、从元学习到 agentic scientist：Kirsch 站在哪条脉络上
 
-结语 Kirsch 用了一个物理学隐喻收尾——**逃逸速度**（Escape Velocity）。这也是演讲的正式标题。对应关系很直接：
+要听懂这场报告，先得知道 Kirsch 是从哪条路走上来的——这条路解释了他为什么把 RSI 讲成一个可以拆解的工程问题，而不是一句预言。
 
-- 地球引力 ≈ 人类研究员的智力瓶颈（论文阅读速度、实验设计能力、验证成本）
-- 火箭速度 ≈ AI 改写 AI 的反馈环速度
-- 逃逸速度 ≈ AI 自改进的速度超过人类改进 AI 的速度，此后改进自维持，不再需要人类的智力输入
+思想源头在 Schmidhuber 学派。RSI 这个念头本身可以追到 I. J. Good 1965 年的"智能爆炸"猜想，而把"系统改写自己"做成研究纲领的是 Schmidhuber：从 1987 年的自指学习硕士论文，到 2003 年提出 Gödel Machine（arXiv cs/0309048，后续还有 2007、2009 的修订版，Kirsch 在幻灯片里引的是后面这几版），再到用人工好奇心让系统自己造任务。有一个流传很广的坑顺手澄清：1987 那篇是硕士论文，是概念前驱，和 2003 年的 Gödel Machine 差着 16 年，不是同一样东西，中文二手资料经常把它们并成"1987 年 Gödel Machine"。
 
-Kirsch 给出的不是时间表，而是**三个可观测的信号**。需要说明的是，这些信号是判断拐点是否越过的**指标**，不是 benchmark 数字——它们测的是"整个 RSI 反馈环是否已经自维持"，不能直接推出"AGI 何时到来"：
+Kirsch 自己的工作是这条脉络往前的延伸，而且一路在把"元"这个前缀往上叠。他早期做元学习（meta-learning）：给定一批相似任务，学出一个能快速适应新任务的学习算法。接着往通用走——**MetaGenRL**（Kirsch et al. 2019）直接用神经网络去学一个能跨环境泛化的强化学习损失函数；**VSML**（2020）和 **GPICL**（2022）让网络在上下文里"就地"学习，甚至重新发现了反向传播。这些工作的共同母题，是把原本由人手工设计的那一层（损失函数、学习规则）交给系统自己去发现。演讲里那张"搜索空间"的幻灯片说的就是这件事：不同的 RSI 路线，区别只在于**把什么当成"可以被改的部分"**——是 RNN / Transformer 的权重，是一个 RL 损失函数，还是一个大模型加上它的"脚手架"（harness：提示词、代码、工具，乃至架构）。
 
-| # | 信号 | 测的是什么 | 不能推出什么 |
-|---|------|-----------|-------------|
-| 1 | AI 写出的论文在 NeurIPS / ICLR 顶会接收率 > 30% | AI 在"完整研究流程"上的可发表性 | 不能推出论文质量全面超过人类 |
-| 2 | AI 改写自己的速度 > 人类研究员改写 AI 的速度 | 反馈环周期是否已经短过人类周期 | 不能推出改进质量一定更高 |
-| 3 | 验证一个 AI 提出的假设的成本 < 人类提出的假设 | 评估器（判据 2）在经济上是否可持续 | 不能推出假设的原创性更高 |
+到了 2023 年之后，这条线跟大模型合流，长成了"agentic scientist"。Kirsch 在幻灯片里点了一串名字：ML Agent Bench、MLE-Bench、OPRO、PromptBreeder，以及 GPTSwarm（Zhuge 2024）、ADAS（Hu et al. 2024）、Sakana 的 AI Scientist（Lu et al. 2024）、MLGym（Nathani et al. 2025）。共同点是让 LLM 智能体去跑"提假设—写代码—做实验—自审"的科研循环。值得留意的是这里的第一手视角：Kirsch 在 DeepMind **亲手创建并带过一个 AI Scientist 团队**，2025 年又全职去做 RSI 创业。所以他这张地图不是旁观者画的，是一个下过场的人画的——这也是为什么他后半程谈"教训"和"开放问题"时，比谈定义时更值得听。
 
-The AI Scientist 和 FunSearch 已经在做信号 1 和信号 3，但都还没到阈值。Kirsch 没给时间表，但他明确说他不认为这是"50 年后"的事。
-
-演讲最值得记住的一句话（综合转述）：
-
-> 检验"AI 能不能改写自己"已经不是问题了——这已经是事实。真正开放的问题是，**人类能不能保住验证的最终权威**。
-
-这句话的潜台词是：RSI 的技术栈已经就位，唯一还没就位的是安全验证这一关。它和 5 判据里的判据 1（valid scope）与判据 2（reliable evaluation）直接对应——如果"可修改范围"和"可信评估"这两条由 AI 自己说了算，人类就失去了最终权威。
+> **一处顺带的更正**：网上不少解读说 Kirsch"反复引用 FunSearch 和 AlphaEvolve"。这两个是 RSI 邻域里很重要的系统，但**它们不在这 43 页幻灯片里**；他现场举的例子是上面那串（STOP、Darwin Gödel Machine、GPTSwarm、ADAS、Sakana AI Scientist、MLGym、EvoTune）。AlphaEvolve 出现在 Workshop 的参考文献列表里，不是他的演讲内容。
 
 ---
 
-## 七、论文与资源地图
+## 三、RSI：把人类移出外层循环
 
-按"读完能复现 Kirsch 思想脉络"的优先级排序：
+Kirsch 给 RSI 的定义很短：一个系统对自己做研究，产出一个更强的自己（幻灯片原话是 "a system that does research on itself to create an even better version of itself"）。关键在"更强"怎么理解。他画了一道梯子：最底下是人类手写更新规则，往上一层是元学习（meta-learning，系统学怎么更新自己），再往上是元-元学习（系统学"怎么学会更新自己"）……每往上爬一层，就从外层循环里拿掉一点人类的参与。RSI 就是把这道梯子推到底——用他幻灯片上的话说，目标是"最小化对人类工程的依赖"，一个 RSI 系统"能无界地改进自己的能力，且在需要时无需人类介入"。
+
+这里有个容易被略过、却恰恰是整场报告最锋利的切割：**改进"表现"和改进"改进能力"是两回事**。一个模型微调完在某个 benchmark 上分数高了，这不算 RSI——除非它改完之后，做下一轮自我改进的能力也跟着变强了。普通 fine-tuning 停在前者，RSI 要的是后者。这个区别听着抽象，但 2025 年有两个系统把它做成了能测量的东西，正好当注脚：
+
+- **Darwin Gödel Machine（DGM，Zhang et al. 2025，arXiv 2505.22954）**：它反复改写自己的代码，按论文的说法，这个过程"同时也在改进它改写自己代码库的能力"。它维护一个智能体存档，采样一个、用基础模型变异出一个"有意思的新版本"、再用编程 benchmark 实测，好的留下。这套开放式进化把 SWE-bench 从 20.0% 推到 50.0%、Polyglot 从 14.2% 推到 30.7%，全程带沙箱和人类监督。它对应的正是下一节那张"如何保证改进"清单里的"进化"一档。
+- **Huxley-Gödel Machine（HGM，arXiv 2510.21614，Zhuge、Schmidhuber 等 KAUST 团队）**：它把这道切割顶到更精细的地方。作者发现了一个叫 **Metaproductivity-Performance Mismatch（元生产力—表现错配）** 的现象——一个智能体当下的 benchmark 分数，并不能预测它后代的自我改进潜力。于是他们不再用"当前分数"决定保留谁，而是用一个受赫胥黎"演化支（clade）"概念启发的指标 CMP：把一个智能体所有后代的表现聚合起来，当作它"自我改进潜力"的信号。用更少的 CPU 小时，HGM 在 SWE-bench 上追平了人类手工打造的顶尖编程智能体。
+
+把这两个放一起看，就明白 Kirsch 为什么死抠"改进改进能力"这件事：如果你用错了信号（拿当前分数当潜力），你会在自我改进的树上一路选错枝，越走越窄。RSI 难就难在，你得优化一个你还测不准的东西。
+
+（不用记住上面所有名字。记住一句就够——RSI 的门槛不是"变强"，是"变得更能变强"。）
+
+---
+
+## 四、真正的清单：怎么保证"自我改进"不是在自欺
+
+如果这场报告里有一张最该被截图的幻灯片，是这张——标题叫 **Guaranteeing improvement**（如何保证改进），出处标着 Kirsch 博士论文《Automating AI Research》第 7 章。它回答的是一个具体到冒汗的问题：一个系统在改自己，你凭什么相信每次改动真的是改进，而不是它在自欺欺人？Kirsch 把已有的答案归成五类，每一类都是一种"用什么代价换什么保证"的赌注：
+
+| 机制 | 代表系统 | 怎么保证"这次改动是改进" | 代价 / 边界 |
+| ------ | ------ | ------ | ------ |
+| 不做保证 | STOP（Self-Taught Optimizer，Zelikman et al. 2023） | 不设护栏，直接让模型改自己的脚手架 | 可能改坏，且没有回退 |
+| 形式化证明 | Gödel Machine（Schmidhuber 2003，及后续修订） | 改动前先证明它会严格改进目标函数，证明通过才动手 | 现实里"证明大多数改动有益"几乎做不到 |
+| 回滚有害改动 | Success Story Algorithm（Schmidhuber 1997） | 允许先改，但一旦后续表现变差就回退到历史检查点 | 需要一个可靠的"表现是否变差"判据 |
+| 元编排 / 进化 | Darwin Gödel Machine（Zhang et al. 2025） | 维护智能体存档，采样—变异—用 benchmark 实测，留下好的 | 吃 benchmark 的可信度；探索开销大 |
+| 按 fitness 分配算力 | Fitness Monotonic Execution（Kirsch & Schmidhuber 2022） | 给测得更好的解更多算力，让改进在期望意义上单调 | reward 从哪来仍是开放问题（见第八节） |
+
+这张表比它看上去更有用。五行从上往下，其实是同一根轴上的滑块：**越往上越严格、越往下越实用**。Gödel Machine 给你数学级别的保证，代价是它在现实里几乎跑不起来；STOP 什么都不保证，换来的是立刻能用。中间那三档——回滚、进化、按 fitness 分配算力——才是 2025 年真正在跑的东西，因为它们放弃了"每一步都可证明"，改成"允许犯错，但留一套机制把错的收回来"。
+
+所以，面对一个号称会自我改进的系统，别问它"聪不聪明"，问它这一条：**你落在这五行的哪一行？** 停在"不做保证"那档的系统，跟一个会不小心把自己改崩、还没有 Ctrl+Z 的脚本没有本质区别。这张表，而不是那套并不存在的"五判据"，才是这场演讲真正留下的清单。
+
+---
+
+## 五、FME：Kirsch 自己的赌注
+
+上面那张表的最后一行——按 fitness 分配算力——是 Kirsch 自己押的方向，全名叫 **Fitness Monotonic Execution（FME，适应度单调执行）**，出自他和 Schmidhuber 2022 年那篇 [Eliminating Meta Optimization Through Self-Referential Meta Learning](https://arxiv.org/abs/2212.14392)（arXiv 2212.14392），博士论文第 7 章有完整版。他用了三页幻灯片专门讲它，值得单独拆开。
+
+FME 想拆掉的是"外层元优化器"这个部件。传统做法里总有一个固定的外层优化器规定"元参数该怎么改"，这个外层越强、成本越高，而且它本身没法被系统改进。FME 的思路是把它整个去掉：让系统沿时间展开，候选解在每一层——行为、学习、元学习、元-元学习——都自己修改自己，没有任何固定流程规定改法。那靠什么保证不越改越差？靠一条概率性的保留规则——**测得越好的解，分到越多算力去繁衍下一代**。因为算力按 fitness 分配，好的解在期望意义上被保留得更多，改进就单调了。
+
+他给的实验是一个"会切换的老虎机（swapping bandit）"任务，结论有三条，最后一条最关键：自我修改能收敛出对当前任务有效的策略；更重要的是，这些修改会**调整未来的修改方式**，因此打得过固定的爬山法；而当你把 reward 直接喂给系统当输入，它就开始"学会怎么学"。这正好把第三节那句话落了地——不是变强，是变得更能变强。
+
+但 FME 有一道它自己迈不过去的坎，Kirsch 在演讲里也坦率地把它单拎出来问了：**这个 fitness / reward 到底从哪来？**（幻灯片原话：What is the reward, e.g. in FME? Where does this come from?）FME 解决的是"拿到 fitness 之后怎么保留"这一层，它默认 fitness 是给定的。可在真正开放的自我改进里，没人从外面递给你一个可信的分数——系统得自己生成评价自己的标准。这道坎，正是下面"开放问题"那一节的引信。
+
+---
+
+## 六、逃逸速度：一个还没跨过的拐点
+
+演讲的正式标题就是"逃逸速度"，Kirsch 用这个物理隐喻收束整场。对应关系不复杂：
+
+- 引力 ≈ 人类驱动研究的那层阻力——读论文的速度、设计实验的带宽、验证一个想法的成本；
+- 火箭速度 ≈ "AI 改 AI"这个反馈环的转速；
+- 逃逸速度 ≈ 反馈环快到能自我维持的那个临界点，过了它，进步不再需要人类亲自去推。
+
+再强调一遍那个最容易被漏掉的限定词：Kirsch 说的是**还没到**。他的原话是当前 RSI 系统"过早地停止改进，仍然需要人类介入"；逃逸速度是"人类不再被需要来交付进步"的那个拐点。他的判断是方向性的——我们在逼近，不是已经越过。他也没给时间表，但明确表示不认为这是"几十年后"的事。
+
+那怎么知道拐点到没到？Kirsch 没给"顶会接收率超过某个百分比"这类具体阈值——网上流传的那几个数字并不在幻灯片里。他给的是一套更诚实、也更难的度量思路（幻灯片 "How to measure RSI?"）：
+
+- **白盒 vs 黑盒**。如果只盯系统内部结构（白盒），麻烦在于——原则上连一个 RNN 都能被论证成"可以无界自我改进"，因为它结构上是图灵完备的。所以他反问：是不是该更"苦涩教训（bitter lesson）"一点，只看行为、从外部去找 RSI 涌现的**信号**（黑盒）？
+- **改进的阶数**。他把能力提升分成几阶：零阶是当前表现 / 已掌握的知识；一阶是"创新的过程"本身；二阶是"改进创新过程的过程"，也就是元学习；三阶再往上叠。逃逸速度的问题，本质上是问：**高阶那几项能不能长期保持为正**，而不是某个单点 benchmark 好不好看。
+
+这套度量观是整场报告的暗线：RSI 之所以难判断，是因为你要测的不是"它现在多强"，而是"它变强的能力有没有在变强"，而后者恰恰最难有一把便宜、可信、又骗不过去的尺子。
+
+---
+
+## 七、Lessons Learned：三条来自实战的教训
+
+报告中段有一节干脆就叫 "Lessons Learned"，是 Kirsch 从自己下场做 AI Scientist 的经历里拧出来的三条，比前面的定义更接地气。
+
+**一，基座模型的分量压倒一切（Base models matter a lot）。** 底座模型的能力，很大程度上决定了整个自我改进循环的天花板。换句话说，你没法靠外面那层脚手架，把一个弱底座"救"成强系统。
+
+**二，光有 agent 脚手架不够（Agent harnesses are not enough）。** 这一条他连着放了三页幻灯片来敲。把提示词、工具、代码这套 harness（脚手架）堆得再精巧，本身也变不出 RSI。**但是**——他补了个重要转折——harness 可以被当成一个"改进算子"来用，让它去改进别的东西，例子是 EvoTune（Surina et al. 2025）。区别在于：harness 不是终点，是一件可以拿来改进系统的工具。
+
+**三，真正的方向是"脚手架—模型协同演化"（Harness-Model Co-evolution）。** 别把两者中任何一个冻住单独优化，而是让 harness 和底座模型一起进化。（他还挂了一篇相关博客，Addy Osmani 谈 "agent harness engineering"。）
+
+三条合起来，其实是在纠正一个 2025 年很流行的错觉：以为把 agent 的提示词和工具链调得够花哨，就能逼近自我改进。Kirsch 的经验是反的——底座决定上限，脚手架只有在"和底座一起被改进"时才真正进入 RSI 的循环。
+
+---
+
+## 八、Open Problems：拐点之前的硬骨头
+
+报告的最后三分之一叫 "Open Problems"，也是最实在的一段——没有一条是"未来展望"式的漂亮话，全是当前没人能完整回答的硬问题。挑五个说。
+
+**1. 怎么度量 RSI。** 第六节已经铺过：白盒会把问题变得没意义（结构上什么都能自我改进），所以得往黑盒的"行为信号"走，还得区分改进的阶数。度量不解决，"拐点到没到"就永远是口水仗。
+
+**2. 人机协同，以及它带来的安全问题。** 这里 Kirsch 的立场值得单独讲，因为它和外界给他贴的标签相反。他不是说"把人留在系统外面当审批员"，而是主张**把人重新塞回循环里**——一个人与智能体**协同演化**的联合 RSI 系统。他画了三张图：现在是人类驱动 AI 研究；一种可能是 AI 系统自己转；而他认为**该去的方向**是人和智能体绑成一个共演化的 RSI 系统。安全含义顺着这个走：人类是 RSI 系统的一部分、持续监控与主动的信息共享、以及用自动化去做安全研究本身。安全不在系统外面加锁，而在系统内部留人。
+
+**3. reward 从哪来。** 就是 FME 留下的那道坎：自我改进要有一个 fitness / reward，可这个信号本身谁来给？系统越自主、越没有外部裁判，这个问题越尖锐。Inherent 后来把它凝成了一句创业级的问法（见下一节）。
+
+**4. 自生成任务与人工好奇心。** 一个通用 RSI 系统不能只会解别人给的题，得自己造题。Kirsch 把这条接回 Schmidhuber 的老本行——**人工好奇心（Artificial Curiosity）**：最早的做法（1990/1991，也是 GAN 的雏形之一）是让策略的内在奖励等于模型的预测误差，哪里预测不准就往哪里探。但它在随机环境里会翻车，就是著名的"噪声电视（noisy TV）"问题——面对纯随机的画面，预测永远不准，系统会被无意义的噪声勾住。改良方向是把目标换成**信息增益 / 学习进展（learning progress）**：不奖励"预测不准"，奖励"预测在变准"。（顺带一提，Schmidhuber 的 PowerPlay（2011）也属于这条线——不断给自己出"当前刚好还解不了"的新题；本文把它当背景，它并不在这次幻灯片里。）
+
+> **一处必须做的更正**：本站早期版本说 Kirsch 提议"对抗式度量：让两个 AI 互相出题打分"，并自标存疑。核对幻灯片后，这段没有依据；他真正讲的是上面这套"人工好奇心 / 信息增益"，本文据此改写。
+
+**5. 能不能直接为 RSI 优化，以及可证明性。** 现在的自我改进里，"改进算子"往往是**隐式涌现**的——靠归纳偏置，或者环境里一些先验说不清的东西——而不是被直接优化出来的。能不能显式地拿 RSI 当目标去优化？Kirsch 说他有些别的想法，但"结论还没定"，而且直接优化容易过拟合。这条最终又指回 Schmidhuber 2007 年的 Gödel Machine：可证明的递归自我改进，仍然是这条路的理论北极星。
+
+---
+
+## 九、Kirsch 要把这条路带去哪：Inherent 与"集体递归自我改进"
+
+演讲里那个署名 "Co-Founder @ Stealth Startup"，到 2026 年 5 月已经揭了盖——这家公司叫 **Inherent**（inherentlabs.ai），Kirsch 是联合创始人，头衔是 Chief Superintelligence Officer；共同创始人还有 Tantum Collins、Edward Hughes、Kaloyan Aleksiev。它注册成一家**公益公司（Public Benefit Corporation）**，用意是让"对社会有益的研究"在与利润冲突时也能被优先。知道这家公司在赌什么，就能看懂这场演讲真正的落点。
+
+Inherent 押的是一个更大号的 RSI——**集体递归自我改进（Recursive Collective Self-Improvement）**。他们不把 RSI 放在单个智能体身上，而是放在**整个实验室**上。灵感来自文化进化：在他们看来，人类文化演化本身就是 RSI 的原型——"一个能改进自己改进能力的系统"。一个先进 AI 系统的诞生，牵涉研究讨论、资源分配、硬件、训练数据、学习算法一整张网；AI 可以在每个维度上加速这张网，而这些加速只有在一个"从头就围着递归回路设计"的组织里才会复利。
+
+这正好接上演讲里"人机协同"那一节——自我改进的单位是一个人机组织，不是一个孤零零的模型。更耐人寻味的是，他们把第八节那道最难的坎，直接刻进了公司的开创性问题：
+
+> "How can we craft rigorous benchmarks for a system that controls its own reward?"（对一个自己掌控奖励的系统，我们要怎么设计严格的 benchmark？）
+
+这句话和 FME 的"reward 从哪来"是同一道题。区别在于，在演讲里它是一个待解的开放问题，在 Inherent 那里成了立身之本的赌注。这也是"回顾和展望"里"展望"两个字真正的落点：Kirsch 不是在预测别人会怎样，他把自己接下来几年押在了"组织层的集体 RSI，且要在系统自控奖励的前提下守住可信评估"上。
+
+---
+
+## 十、常见误读：这场演讲没有在说什么
+
+这场报告被转述得很多，几处走样也传得很广。对着幻灯片逐条校一遍：
+
+- **误读一：它宣布逃逸速度已经发生。** 恰好相反。Kirsch 的论点是当前 RSI"过早停止改进、仍需人类介入"，拐点在前方，不在身后。
+- **误读二：演讲给了一套"RSI 五判据"（可修改范围 / 可信评估 / 可持续增长 / 资源有界 / 状态可读写）。** 43 页幻灯片里没有这五条。演讲里真正的那张清单是第四节的"如何保证改进"（不做保证 / 形式化证明 / 回滚 / 进化 / 按 fitness 分配算力），讲的是另一回事。
+- **误读三：Kirsch 反复引用 FunSearch 和 AlphaEvolve。** 这两个不在他的幻灯片里；他举的例子是 STOP、Darwin Gödel Machine、GPTSwarm、ADAS、Sakana AI Scientist、MLGym、EvoTune。AlphaEvolve 只出现在 Workshop 的参考文献列表里。
+- **误读四：他给了 benchmark 阈值（比如顶会接收率超过 30%）。** 没有。他刻意不给单点阈值，度量思路是白盒 vs 黑盒加上"改进的阶数"。
+- **误读五：Gödel Machine 到底是 2003 还是 2007？** 都对。最早的 arXiv 版本是 2003（cs/0309048），之后有 2007、2009 的修订版，Kirsch 幻灯片里引的是后面几版。
+
+---
+
+## 十一、给不同读者的落地建议
+
+**做 AI Agent 工程的**：把第四节那张"如何保证改进"的表当 checklist 用。现在大多数 agent 框架其实停在最上面那档——"不做保证"：能自己改提示词和工具，但改坏了没有回退。往 RSI 挪一步，先补上"回滚有害改动"（Success Story Algorithm 的思路，留检查点），再接一个可信的 benchmark 闭环（Darwin / Huxley-Gödel Machine 的做法）。别一上来就追"让 agent 改自己权重"，那是更靠后的事。
+
+**做 AI 安全 / 对齐的**：先纠正一个直觉。Kirsch 的安全立场不是"人在系统外把关"，而是"人是 RSI 系统里共演化的一部分"。落到工程上，两个点最该盯：一是 reward 的来源（FME 那道坎），二是自生成任务的好奇心目标会不会退化——盯着"噪声电视"问题，别让系统被纯随机的信号勾住。
+
+**做 AI4Science 的**：Kirsch 自己（Inherent）押的是"组织层的集体 RSI"。对你更实际的判断点是：**你的领域有没有便宜又可信的验证**。代码、数学、形式化证明这类有 ground truth 的地方，改进环能闭上；湿实验、临床、社会科学这类验证又贵又慢的地方，卡住 RSI 的往往不是模型，是"reward 从哪来"。
+
+**不太适合谁**：想要 SOTA 数字或纯 RL 数学推导的人。这是一场综述加纲领性质的报告，不展开公式，也不报 benchmark 成绩——它给的是一张地图，不是一张成绩单。
+
+---
+
+## 十二、自测：你读懂真实框架了吗
+
+读完不妨用这几个问题回扣一下，答案都散在正文里：
+
+1. Kirsch 的"逃逸速度"论点，是"已经发生"还是"还没跨过"？为什么这个限定词值得较真？（第一、六节）
+2. 第四节那张"如何保证改进"的表，五档各自用什么代价换什么保证？今天大多数 agent 落在哪一档？（第四节）
+3. 为什么"benchmark 分数变高"不等于"自我改进能力变强"？用 Metaproductivity-Performance Mismatch 解释一下。（第三节）
+4. FME 解决了自我改进的哪一层，又明确没解决哪一层？（第五节）
+5. Kirsch 讲的安全，为什么是"把人放进 RSI 系统"，而不是"人在系统外把关"？（第八节）
+
+第 2、3 两题若能一口气答上来，这场演讲的骨架你就抓住了；剩下的都是枝叶。
+
+---
+
+## 十三、论文与资源地图
+
+按"读完能把 Kirsch 的思想脉络复现出来"的优先级排：
 
 | 优先级 | 资源 | 作者 | 链接 | 与演讲的关联 |
-|--------|------|------|------|-------------|
-| ★★★ | 演讲幻灯片 PDF | Kirsch | [louiskirsch.com/...ICLR_2026.pdf](https://louiskirsch.com/assets/louis_at_the_recursive_workshop_ICLR_2026.pdf) | 5 判据的一手来源 |
-| ★★★ | Kirsch PhD 论文《Automating AI Research》 | Kirsch | [louiskirsch.com/assets/phd_thesis...](https://louiskirsch.com/assets/phd_thesis_automating_ai_research_louis_kirsch.pdf) | 演讲思想的完整版 |
-| ★★★ | Self-Referential Meta Learning（含 FME） | Kirsch | [arXiv 2212.14392](https://arxiv.org/abs/2212.14392) | FME 机制的一手出处 |
-| ★★ | Mindstorms in NL Societies of Mind | Zhuge, Liu, …, Kirsch, …, Schmidhuber | [arXiv 2305.17066](https://arxiv.org/abs/2305.17066) | 异构多智能体（v3 2026-03） |
-| ★★ | GPTSwarm: Language Agents as Optimizable Graphs | **Zhuge**（一作）, Wang, Kirsch, …, Schmidhuber | [arXiv 2402.16823](https://arxiv.org/abs/2402.16823) | 路径 B 的可优化计算图框架（ICML 2024） |
-| ★★ | Gödel Machine | Schmidhuber | [arXiv cs/0309048](https://arxiv.org/abs/cs/0309048) | 强 RSI 的纯理论原型（2003） |
-| ★★ | PowerPlay | Schmidhuber | [arXiv 1112.5309](https://arxiv.org/abs/1112.5309) | 自改进的课程学习（2011） |
-| ★ | The AI Scientist | Sakana AI | [arXiv 2408.06292](https://arxiv.org/abs/2408.06292) | 路径 B 的代表实现（2024-08） |
-| ★ | AlphaEvolve | DeepMind | [arXiv 2506.13131](https://arxiv.org/abs/2506.13131) | FunSearch 的泛化（2025） |
-| ★ | ASAL: Automating the Search for Artificial Life | Kumar, Lu, Kirsch, Tang, Stanley, Isola, Ha | [arXiv 2412.17799](https://arxiv.org/abs/2412.17799) | AI4Science 自动化的代表 |
-| — | Schmidhuber 自指学习谱系页 | Schmidhuber | [idsia.ch/~juergen/metalearning.html](https://people.idsia.ch/~juergen/metalearning.html) | 1987 硕士论文等一手索引 |
+| ------ | ------ | ------ | ------ | ------ |
+| ★★★ | 演讲幻灯片 PDF（43 页） | Kirsch | [louiskirsch.com/…ICLR_2026.pdf](https://louiskirsch.com/assets/louis_at_the_recursive_workshop_ICLR_2026.pdf) | 本文一手依据 |
+| ★★★ | SlidesLive 现场录像（含 Q&A） | Kirsch | [slideslive.com/39063672](https://slideslive.com/39063672?t=1425) | 口头论证的原声 |
+| ★★★ | PhD 论文《Automating AI Research》 | Kirsch | [phd_thesis…pdf](https://louiskirsch.com/assets/phd_thesis_automating_ai_research_louis_kirsch.pdf) | 第 7 章＝"保证改进"清单与 FME 完整版 |
+| ★★★ | Self-Referential Meta Learning（含 FME） | Kirsch & Schmidhuber | [arXiv 2212.14392](https://arxiv.org/abs/2212.14392) | FME 的一手出处 |
+| ★★ | Darwin Gödel Machine | Zhang, Hu, Lu, Lange, Clune | [arXiv 2505.22954](https://arxiv.org/abs/2505.22954) | "进化"一档；改代码同时改"改代码的能力" |
+| ★★ | Huxley-Gödel Machine（HGM） | Wang, Piękos, …, Zhuge, Schmidhuber | [arXiv 2510.21614](https://arxiv.org/abs/2510.21614) | Metaproductivity-Performance 错配；CMP 指标 |
+| ★★ | Gödel Machine | Schmidhuber | [arXiv cs/0309048](https://arxiv.org/abs/cs/0309048) | "形式化证明"一档；可证明 RSI 的理论原型 |
+| ★★ | GPTSwarm: Language Agents as Optimizable Graphs | **Zhuge**（一作）, …, Kirsch, …, Schmidhuber | [arXiv 2402.16823](https://arxiv.org/abs/2402.16823) | agentic scientist 的可优化计算图（ICML 2024） |
+| ★ | STOP: Self-Taught Optimizer | Zelikman et al. | [arXiv 2310.02304](https://arxiv.org/abs/2310.02304) | "不做保证"一档的代表 |
+| ★ | The AI Scientist | Sakana AI（Lu et al.） | [arXiv 2408.06292](https://arxiv.org/abs/2408.06292) | 幻灯片点名的 agentic scientist |
+| ★ | Agent-as-a-Judge | Zhuge et al. | [arXiv 2410.10934](https://arxiv.org/abs/2410.10934) | "用 AI 评 AI"，扣"reward 从哪来" |
+| — | Inherent 宣言《Living within the Experiment》 | Collins, Hughes, Kirsch, Aleksiev | [inherentlabs.ai](https://inherentlabs.ai/) | "集体 RSI"的展望出处 |
+| — | Schmidhuber 元学习 / 自指学习索引页 | Schmidhuber | [idsia.ch/~juergen/metalearning.html](https://people.idsia.ch/~juergen/metalearning.html) | 好奇心、Gödel Machine 等一手索引 |
 
-读完顺序建议：**演讲幻灯片 PDF → PhD 论文 → Self-Referential Meta Learning → Mindstorms v3 → Gödel Machine**。前三篇覆盖 Kirsch 自己的工作，后两篇补上思想脉络。
-
----
-
-## 八、给不同读者的采用建议
-
-**如果你在做 AI Agent 工程**：把 5 判据当成你自改进 agent 的 checklist。当前绝大多数 agent 框架只过了判据 5（access to state）的一半——它们能调工具，但不能改自己的权重/代码。要往 RSI 靠，至少先把"valid scope"（判据 1）划清楚，避免 agent 把自己的评估逻辑也改掉。
-
-**如果你在做 AI 安全 / 对齐**：盯紧判据 1 和判据 2。"可修改范围"和"可信评估"这两条是人类保住"验证最终权威"的最后防线。FME 解决的是保留规则这一层，但**评估器是否落在 valid scope 之外**才是真正的安全设计点——这是 Kirsch 没在演讲里充分展开、但在 Gödel Machine 原论文里反复强调的一点。
-
-**如果你在做 AI4Science**：信号 1 和信号 3 已经在发生，关键看你的领域是否有天然的 reliable evaluation。数学、代码、形式化证明这些有 ground truth 的领域，RLVR 能闭反馈环；湿实验、临床、社会科学这些评估成本高的领域，RSI 还卡在判据 2。
-
-**不适合谁**：纯 RL 算法细节控（演讲是综述性质，不展开数学推导）；找具体 SOTA benchmark 数字的人（Kirsch 反复强调 benchmark 正在失效）。
-
----
-
-## 九、一句话总结这场演讲
-
-> Kirsch 没有宣称逃逸速度已经发生，他做的是更基础的事：**给 RSI 装上一组判据，让"AI 能不能自我改进"从一个吓人的口号，变成一个可以逐条勾选的工程清单。**
-
-这也许才是这场 27 分钟演讲真正的价值——在 RSI 从科幻走向工程的关口，它给的不是答案，而是一张让所有人能在同一张地图上讨论的坐标系。
+读的顺序建议：**幻灯片 PDF → PhD 论文第 7 章 → FME 论文 → Darwin / Huxley-Gödel Machine → Gödel Machine 原论文**。前三篇是 Kirsch 自己的骨架，后两组一个补"进化派"实证、一个补"证明派"理论。
 
 ---
 
 ## 写作笔记（给后续读者）
 
-- **信息来源**：B站 @至高机器智能 的章节大纲 + Kirsch 个人站公开的[演讲幻灯片 PDF](https://louiskirsch.com/assets/louis_at_the_recursive_workshop_ICLR_2026.pdf) + 其 arXiv 论文与 PhD 论文。**未拿到逐字字幕**，所有演讲引用均为综合转述。
-- **关键修正（相对于本仓库早期版本）**：
-  - 自指元学习论文 arXiv 编号由 2212.14311 更正为 **2212.14392**（前者是无关的随机微分方程论文）
-  - "1987 Gödel Machine"更正为：**1987 是 Schmidhuber 硕士论文（概念前驱），Gödel Machine 本身是 2003（cs/0309048）**
-  - "PowerPlay 2015"更正为 **PowerPlay 2011（1112.5309）**
-  - GPTSwarm（2402.16823）作者归属更正为：**一作 Mingchen Zhuge，Kirsch 为合作者**，ICML 2024 接收
-  - 把原版"FME 是演讲核心"的叙事**重构为"5 判据是核心，FME 是判据 2 的具体实现之一"**——这是最关键的一次框架修正
-- **未确认项（已显式标注在正文中）**：对抗式度量是否在幻灯片原文出现；AlphaEvolve 的具体公开月份；Kirsch 从 DeepMind 转 stealth startup 的确切时间。这些均不影响主线论证。
-- **本文与同仓库 [emergent-garden RSI 文章](https://github.com/a1pha3/web/text-matrix/blob/main/content/posts/video/emergent-garden-recursive-self-improvement-fractalsearch.md) 的关系**：两者是**独立视角**——Kirsch 是 Schmidhuber 学派的学术判据视角，Emergent Garden 是 Karpathy 学派的工程实证视角（用 fractalsearch 实测 RSI 边界）。两篇可以对照读：一篇说"该满足哪些判据才算 RSI"，另一篇说"真跑一个 RSI 循环会发生什么"。
+- **信息来源**：Kirsch 个人站公开的 43 页幻灯片原件（已用 pypdf 逐页提取核对）＋ [SlidesLive 录像页](https://slideslive.com/39063672?t=1425) ＋ Workshop 官网 ＋ Kirsch 个人站与相关 arXiv 论文。**未拿到逐字字幕**，所有口头引用为据幻灯片的综合转述。
+- **这一版（v5）做的最重要一件事，是拆掉上一版自己搭错的台子**：
+  - 上一版把演讲核心说成"RSI 五判据"（可修改范围 / 可信评估 / 可持续增长 / 资源有界 / 状态可读写）。逐页核对 43 页幻灯片后确认，**这五条不在演讲里**，属于虚构框架，已整体删除。
+  - 演讲里真正的那张清单是"如何保证改进"的五类机制（不做保证 / 形式化证明 / 回滚有害改动 / 进化 / 按 fitness 分配算力），据此重建了第四节，并把 FME 放回它本来的位置——五类机制中的一类（第五节）。
+  - 删除了"Kirsch 反复引用 FunSearch / AlphaEvolve"的说法（幻灯片无此内容），换成幻灯片实际点名的系统。
+  - 删除了"顶会接收率 >30%"等三个"可观测信号"（幻灯片未给任何阈值），换成演讲真实的度量思路（白盒 / 黑盒＋改进的阶数）。
+  - 把"对抗式度量"改成演讲实际讲的"人工好奇心 / 信息增益"（含噪声电视问题）。
+- **顺带落实的事实**：演讲＝ICLR 2026 RSI Workshop 首场受邀报告（2026-04-26，里约）；此前标注"存疑"的"Kirsch 转创业时间"已确认——2025 年 12 月共同创立 **Inherent**，2026 年 5 月揭盖。补入 Darwin Gödel Machine、Huxley-Gödel Machine 两项 2025 年的一手实证。
+- **保留的既有更正**：FME 论文编号 **2212.14392**（不是 2212.14311）；1987 是 Schmidhuber 硕士论文（概念前驱），Gödel Machine 是 2003；GPTSwarm 一作是 Mingchen Zhuge，Kirsch 为合作者。
+- **与同仓库 [emergent-garden RSI 文章]({{< relref "emergent-garden-recursive-self-improvement-fractalsearch.md" >}}) 的关系**：两篇是互补视角。本篇是 Schmidhuber 学派、从"怎么保证自我改进为真"切入；那篇是 Karpathy 学派、用 fractalsearch 实测"真跑一个 RSI 循环会撞到什么边界"。一篇讲机制，一篇讲边界，对照着读最省事。
 
-— 钳岳星君 2026-07-09 21:55（v4：修正 arXiv 编号与时间线 / 重构为 5 判据框架 / 显式标注未确认项 / 对齐 emergent-garden 文章的诚实性标准）
+— 钳岳星君 2026-07-13（v5：据 43 页幻灯片原件重建框架 / 删除虚构的"5 判据"叙事 / 还原"保证改进"五机制与 FME / 补 Darwin & Huxley-Gödel Machine 与 Inherent 展望 / 更正好奇心与信号段）
