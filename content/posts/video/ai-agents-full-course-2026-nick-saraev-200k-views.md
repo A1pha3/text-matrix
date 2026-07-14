@@ -1,541 +1,204 @@
 ---
-title: "AI Agents 全栈指南：Nick Saraev 2小时大师班拆解"
+title: "Nick Saraev 的 AI Agent 无代码大师班：三大平台、核心循环与提示词架构"
 date: "2026-04-29T15:01:00+08:00"
 slug: "ai-agents-full-course-2026-nick-saraev-200k-views"
-description: "Nick Saraev AI Agents全栈课程拆解，涵盖ReAct、Tool Use、Memory、Multi-Agent系统与生产部署，从入门到专家的技术路径。"
+description: "Nick Saraev《AI Agents Full Course 2026》（YouTube EsTrWCV0Ph4，494K 观看）据字幕重建：这是一门明确的无代码课——不写 Python，而是教你用 Codex / Claude Code / Antigravity 三大 agent 平台。核心是 Observe→Think→Act 的智能体循环与'完成的定义'、会自改的 agents.md、多智能体 MCP 编排与子智能体互审。开场用 5 个各带 Chrome 浏览器的 agent 跑真实获客 demo。"
 draft: false
 categories: ["视频精读"]
-tags: ["AI Agent", "Nick Saraev", "Multi-Agent", "LangChain", "生产部署"]
+tags: ["AIAgent", "NickSaraev", "ClaudeCode", "Codex", "Antigravity", "MCP", "AgentSkills", "无代码"]
+---
+
+> **目标读者**：想用 AI agent 干实事的人——不限程序员，做自动化、运营、内容、编程都适用
+> **这门课的判断**：这是一门**无代码**课。Nick Saraev 开场就说"你不需要任何编程经验，我自己也没有 CS 学位"。它教的不是写 Python，而是**用** Codex / Claude Code / Antigravity 三大 agent 平台，靠提示词架构把它们编排起来。
+> **难度**：⭐⭐⭐ | **来源**：Nick Saraev《AI Agents Full Course 2026: Master Agentic AI》（YouTube，约 2 小时）
+
+[YouTube 原片](https://www.youtube.com/watch?v=EsTrWCV0Ph4) ｜ 频道 [@nicksaraev](https://www.youtube.com/@nicksaraev) ｜ 时长约 2 小时 ｜ 494K 观看
+
+---
+
+## 视频信息卡
+
+| 项目 | 内容 |
+| ------ | ------ |
+| 标题 | AI Agents Full Course 2026: Master Agentic AI (2 Hours) |
+| 作者 | Nick Saraev（@nicksaraev；无代码 AI 自动化，Maker School 创始人） |
+| 链接 | [youtube.com/watch?v=EsTrWCV0Ph4](https://www.youtube.com/watch?v=EsTrWCV0Ph4) |
+| 观看 | 494K |
+| 时长 | 约 2 小时 |
+| 定位 | 平台无关的通用 agent 课（Codex / Claude Code / Antigravity） |
+
+> **前置说明（据字幕重建，以及一处必须先讲的更正）**：本文据 YouTube 原片英文字幕逐段核对写成（yt-dlp 取字幕后清洗，约 1477 句）。
+>
+> 得先摆明：本站早期版本把这门课写成了一套 **Python / LangChain / CrewAI 编程课**（`ReActAgent`、`RAGAgent`、`SupervisorAgent` 一堆类），还配了编造的时间戳。核对字幕后确认——**视频里根本没有这些代码**。Nick 开场第一句就是"你不需要任何编程或计算机经验，我自己也没有 CS 学位"。这是一门**无代码**课，教你用三大 agent 平台，而不是手写 agent 框架。本文已据真实内容重建。
+
+## 目录
+
+本文较长（约 2 小时课程的整理），可用页面侧栏的目录（TOC）按章节跳转；只想抓骨架，看第一、三、五三节即可。
+
+---
+
+## 一、这门课到底在讲什么：无代码，且平台无关
+
+先把定位钉死，因为最容易被讲反。Nick Saraev 开场就划了三条边界：
+
+- **不需要编程**。"你不需要任何编程或已有的计算机经验……我自己也没有正规的计算机科学学位，我会的一切都是看免费资源学的。"
+- **平台无关**。"这不只是讲 Codex、Claude Code 或 Antigravity，而是讲它们全部。"三个平台随便从哪个入手，终点一样。
+- **讲别人没讲过的**。他自称"到目前为止我没在 YouTube 上看到有人讲我这门课里的大部分东西"，管这叫 "the sauce"（干货）。
+
+他的底层判断很清醒，也是全片地基：**当前的 AI agent，单看智能未必比人强，一次做对的能力也比人差；它们真正的强项是并行**。同一个任务，你可以同时开很多个 agent 实例、各试各的路子，一遍遍地试，靠速度和数量堆出比人更好的结果。所以这门课的重点不是"把某个 agent 调得多聪明"，而是**怎么用提示词架构把多个 agent 编排起来**。
+
+（他本人的背景也说明取向：教了 2000+ 人、用 AI agent 跑着一门年入 400 万美元的生意——是把 agent 用来干经济价值活的实战派，不是研究派。）
+
+## 二、开场 demo：5 个各带浏览器的 agent 同时干活
+
+课程一上来就甩了个"几个月前还会被当成天方夜谭"的 demo，把目标先摆出来。
+
+场景是获客。他手上有一批会议来的 leads——有网站、LinkedIn、名字，**唯独缺邮箱**。搁一年前这批线索基本作废。现在，他让 Claude Code **同时开出一堆 Chrome 浏览器**，每个浏览器里一个子 agent，各自去一个网站，动态找到联系表单、填名字/邮箱、再写一段"模板但会随对象微调"的外联话术。这些 agent 之间还通过一个**共享聊天室**互通消息、分工。原本一个 agent 要干好几小时的活，一群 agent 并行几分钟铺完。
+
+这个 demo 就是全片的"目标态"：**把工作拆散到多个浏览器实例、每个子 agent 一块独立工作区**。后面两小时讲的所有技巧，都是为了搭出这种编排。
+
 ---
 
 ---
 
-## 视频概述
+## 三、核心：每个 agent 都在跑的三步循环
 
-### 这套课程为什么值得看
+Nick 说，先别管平台，所有 agent 骨子里都在跑同一个循环，由三步组成——这是全片会反复回来的地基：
 
-Nick Saraev 的「AI Agents Full Course 2026」是 YouTube 上观看量最高的 AI Agent 系统课程之一。2 小时的时长覆盖了从入门到进阶的完整路径。
+1. **观察（Observe）**：读进所有上下文——文件、之前的工具调用、系统提示、你给的 agents.md / claude.md / gemini.md、上一步的联网 research，乃至多模态数据（图像、音频）。
+2. **思考（Think / Reason）**：基于全部上下文和你的高层目标，想"下一步做什么、怎么规划"。现在主流平台都有一个**可点开的推理步骤**——Nick 特别强调这点被很多人低估，因为它带来可解释性、可问责性和**可操控性**（你能中途看它在想什么、叫停、或者塞新资源进去）。
+3. **行动（Act）**：调用工具、编辑文件、或者跑一条命令行（CLI）。
 
-### 视频完整内容地图
+行动拿到结果后，把结果**喂回观察步**，循环再来一遍——每转一圈，上下文就更大一点。转个三四圈，模型会撞到一个 Nick 认为大多数人漏掉、"所以老是对 agent 失望"的东西——**完成的定义（definition of done）**：一组约束和技术规格，告诉模型"到此可以不用再循环了"。一旦满足，它就切到"任务完成"路线，吐一段格式化的最终回答。
 
-```
-2小时课程结构
-├── 第1部分：Agent 基础（0:00-20:00）
-│   ├── 什么是 Agentic AI
-│   ├── Agent vs Chatbot vs RAG
-│   └── Agent 的四大组件
-│
-├── 第2部分：ReAct 与 Tool Use（20:00-45:00）
-│   ├── ReAct 框架详解
-│   ├── Tool 定义与注册
-│   ├── Multi-Tool 协作
-│   └── 错误处理机制
-│
-├── 第3部分：Memory 与 Knowledge（45:00-70:00）
-│   ├── 短期 vs 长期记忆
-│   ├── 向量数据库实战
-│   ├── RAG 增强 Agent
-│   └── 知识图谱应用
-│
-├── 第4部分：Multi-Agent 系统（70:00-100:00）
-│   ├── 何时需要 Multi-Agent
-│   ├── Agent 协作模式
-│   ├── 通信与协调
-│   └── 冲突解决机制
-│
-└── 第5部分：生产级部署（100:00-120:00）
-    ├── 性能优化
-    ├── 安全与权限
-    ├── 监控与日志
-    └── 扩展与容错
-```
+Nick 反复敲一句话：这三步**每一步都能往死里优化**——观察能优化、思考能优化、行动也能优化，这门课就是教这个。
 
 ---
 
-## 第一部分：Agentic AI 基础
+## 四、agent 不等于那个大模型
 
-### 什么是 Agentic AI？
+第二个地基判断：**agent ≠ LLM**。大模型只是里面的推理引擎，负责理解语言、做决策；但它就像两万年前一个手里攥着长矛的人——没有房子、火堆、社会分工、车这些"周边基础设施"，光有智能，能干的事很有限。
 
-**Agentic AI（自主智能体）** 是指能够自主规划、执行和迭代的 AI 系统。传统 AI 回答问题，Agentic AI 完成任务。它做的事：自主规划（将复杂目标分解为可执行步骤）、持续执行（多步骤循环直到达成目标）、工具使用（调用外部工具扩展能力）、自我反思（评估执行结果并调整策略）、记忆积累（从历史经验中学习改进）。
+给 agent 装上"基础设施"，它才成其为 agent：
 
-很多人分不清 Chatbot、RAG 和 Agent：
+- **工具**：像人一样能读文件、跑代码、搜网页、调 API、改文件。
+- **推理循环**：就是上一节那个 observe → think → act。
+- **记忆**：agents.md / claude.md / gemini.md、对话历史、自动记忆文件、以及 skills。
 
-| 对比维度 | Chatbot | RAG | Agent |
-|----------|---------|-----|-------|
-| **关键能力** | 对话 | 知识检索 | 任务执行 |
-| **执行模式** | 问答 | 检索+生成 | 规划+执行 |
-| **工具调用** | ❌ | ❌ | ✅ |
-| **多步骤任务** | ❌ | ❌ | ✅ |
-| **自我修正** | ❌ | 有限 | ✅ |
-| **典型场景** | 客服闲聊 | 知识问答 | 自动化任务 |
+所以"chatbot vs agent"的区别很干脆：chatbot 大致就是那个 LLM；agent 是 LLM **再加上**工具、推理循环和记忆。Nick 现场用 Codex 演示了一遍这个循环——让它研究"男性肌酸补充"，并给了个明确的完成定义："凑够 10+ 篇实证来源就返回一份结构化报告"。模型于是 观察 →（"用户要研究，我有联网工具"）思考 → 行动（搜索、汇编）→ 再观察，循环两三圈，58 秒后交出结构化证据报告。
 
 ---
 
-## 第二部分：ReAct 与 Tool Use
+## 五、三大平台：各自最擅长什么、最差什么
 
-### ReAct 框架拆解
+课程真正动手的部分，是带你注册并跑通三大 agent 平台，各自搭一个"给 Nick 做个人主页"的小 demo。Nick 反复强调一句克制的话：**这三家的智能差距其实很小（2%–5%），都在整个互联网上训练，能力差异更多是"谁训练得更晚"，而且每代都会重置——你完全可以只挑一个用**。但如果要区分，各有脾气：
 
-ReAct（Reasoning + Acting）是 Agent 最重要的推理框架。其思想是「边推理边执行，边执行边反思」。
+| 平台（模型） | 归属 | 最擅长 | 短板 |
+| ------ | ------ | ------ | ------ |
+| **Codex**（GPT-5.4 系） | OpenAI | 后端编程、数学、测试驱动开发（给完成定义就自主跑到底）；生态和文档最全（最早入场） | 可解释性一般 |
+| **Claude Code** | Anthropic | **推理最可解释**、最适合编排与 agentic 工作流（能实时看 / 叫停 / 操控）、质量稳定；像个"搭档" | 慢（除非 fast 模式，很烧额度）；前端 / 设计偏弱 |
+| **Antigravity**（Gemini 3.1 Pro） | Google | **前端 / 设计最强**、多模态最强（能理解视频）、出字快 | 最不可解释、质量不稳定（"有些天直接拉胯"）；像"导弹"，指个目标就发射 |
 
-```python
-from typing import List, Dict, Any
-from enum import Enum
+Nick 的用法：要干净前端找 Gemini，要可控编排找 Claude，要后端 / 数学 / TDD 找 Codex。收费上他点了一句：Claude Code 要付费（约 $17–20/月），但他自己"在 agent 平台上拿到过 100–200 倍回报"，建议真想学就先付了、第一个月想办法把钱赚回来。
 
-class AgentState(Enum):
-    THINKING = "thinking"
-    ACTING = "acting"
-    OBSERVING = "observing"
-    FINISHED = "finished"
-
-class ReActAgent:
-    def __init__(self, llm, tools: List[Any], max_iterations=10):
-        self.llm = llm
-        self.tools = {t.name: t for t in tools}
-        self.max_iterations = max_iterations
-    
-    def run(self, task: str) -> str:
-        """ReAct 主循环"""
-        history = []
-        current_state = AgentState.THINKING
-        
-        for iteration in range(self.max_iterations):
-            if current_state == AgentState.THINKING:
-                # 让 LLM 分析当前状态，决定下一步
-                thought = self._think(task, history)
-                
-                if thought.is_finished:
-                    return thought.result
-                
-                current_state = AgentState.ACTING
-                next_action = thought.action
-                
-            elif current_state == AgentState.ACTING:
-                # 执行工具
-                try:
-                    result = self.tools[next_action.name].execute(**next_action.args)
-                    history.append({
-                        "action": next_action,
-                        "result": result
-                    })
-                    current_state = AgentState.OBSERVING
-                except Exception as e:
-                    # 错误处理：回退或使用备用方案
-                    result = self._handle_error(e, next_action)
-                    history.append({"error": str(e), "recovery": result})
-                    current_state = AgentState.OBSERVING
-                    
-            elif current_state == AgentState.OBSERVING:
-                # 让 LLM 分析结果，决定下一步
-                thought = self._think(task, history)
-                
-                if thought.is_finished:
-                    return thought.result
-                
-                current_state = AgentState.THINKING
-                
-        return "任务执行超时"
-```
-
-### Tool Use 实践
-
-**Tool 设计四件事：** 单一职责（每个 Tool 只做一件事）、清晰的描述（Tool description 要让 LLM 理解何时使用）、完善的错误处理（考虑网络超时、权限问题等）、一致的返回格式（便于 LLM 解析和后续处理）。
-
-```python
-from typing import Optional
-
-class WebSearchTool:
-    """搜索工具的包装类"""
-    
-    def __init__(self, search_api):
-        self.search_api = search_api
-    
-    def run(self, query: str, max_results: int = 5) -> str:
-        """执行搜索并返回格式化结果"""
-        try:
-            results = self.search_api.search(query, num_results=max_results)
-            
-            # 格式化结果
-            formatted = []
-            for i, r in enumerate(results, 1):
-                formatted.append(f"{i}. {r.title}\n   {r.snippet}\n   链接: {r.url}")
-            
-            return "\n\n".join(formatted)
-            
-        except RateLimitError:
-            # 限流时使用备用方案
-            return "搜索服务暂时限流，请稍后再试"
-        except NetworkError:
-            return "网络连接失败，请检查网络"
-
-# 创建 LangChain Tool
-web_search_tool = Tool(
-    name="web_search",
-    func=WebSearchTool(search_api).run,
-    description="""
-    搜索互联网获取最新信息。
-
-    使用场景：
-    - 需要获取实时数据时（天气、新闻、股价）
-    - 需要验证不确定的事实时
-    - 需要了解最新技术进展时
-
-    输入：搜索关键词（字符串）
-    输出：搜索结果列表，包含标题、摘要和链接
-
-    示例：
-    输入："2026年最新的 AI Agent 框架"
-    输出：["1. AutoGPT 0.5 发布...\n   链接: ...", ...]
-    """
-)
-```
+> 一句必须转述的话：他也承认在自己的 design-taste 技能加持下，Gemini 出的站最"性感"、GPT 出的偏"笨重"。但他一再强调别把这些 2%–5% 的差异太当真——"它们就是在整个互联网上训练的星系级大脑，差异更多来自训练时间的新旧"。
 
 ---
 
-## 第三部分：Memory 与 Knowledge
+## 六、agents.md：会自我进化的系统提示词
 
-### Agent 记忆系统架构
+这是 Nick 眼里"高投产比"的头号设计模式。每个平台都有一个会被**自动拼到每次对话最前面**的文件——Codex 叫 `agents.md`、Claude Code 叫 `claude.md`、Antigravity 叫 `gemini.md`（名字不同，机制一样）。
 
-Nick Saraev 详细讲解了 Agent 的记忆系统。记忆系统决定 Agent 能不能"记住之前做过什么"：
+它真正的威力不在"静态模板一段提示词"，而在把它做成**会自改的元提示词**：让 agent 在你纠正它、或它犯错时，**自动把一条新规则追加到文件底部的"已学规则"区**。Nick 给的格式大致是这样（可直接塞进任何 agents/claude/gemini.md）：
 
-```
-记忆系统架构
-┌─────────────────────────────────────────────────┐
-│                 Agent Memory                     │
-├───────────────┬───────────────┬─────────────────┤
-│   短期记忆     │    工作记忆    │    长期记忆      │
-│  (Short-term) │  (Working)   │   (Long-term)   │
-├───────────────┼───────────────┼─────────────────┤
-│ 上下文窗口     │ 当前任务状态   │ 向量数据库       │
-│ 最近的对话     │ 中间变量       │ 经验积累        │
-│ 即时信息       │ 决策历史       │ 知识图谱        │
-└───────────────┴───────────────┴─────────────────┘
+```text
+开始任何任务前先读完本文件；文件底部有一个会增长的"已学规则"区。
+当用户纠正你、或你犯错时，立刻往"已学规则"区追加一条新规则，
+按序号写成祈使句，格式：[类别] 永远/绝不 做 X，因为 Y。
+
+── 已学规则 ──
+1. 【前端】绝不默认深色模式，因为用户不喜欢。
 ```
 
-### 实现记忆系统
+现场的例子：他让 Antigravity 建个主页，结果给了个漂亮但**深色模式**的站；他说"别再搞深色模式了"，agent 没有只改这次，而是把"绝不做深色模式（用户偏好）"写进了 `gemini.md`。**下次再建站，这条规则已经在提示词最顶上，它再也不会犯**。规则越攒越多，agent 犯的"不合你偏好"的错就越来越少——第五次可能几乎归零。
 
-```python
-from langchain.memory import (
-    ConversationBufferWindowMemory,
-    VectorStoreRetrieverMemory
-)
-from langchain.vectorstores import Chroma
-from langchain.embeddings import OpenAIEmbeddings
-
-class AgentMemory:
-    """完整的 Agent 记忆系统"""
-    
-    def __init__(self, k_short=10, k_long=5):
-        # 短期记忆：保留最近 k 次对话
-        self.short_term = ConversationBufferWindowMemory(
-            k=k_short,
-            return_messages=True
-        )
-        
-        # 长期记忆：向量数据库
-        self.vectorstore = Chroma(
-            embedding=OpenAIEmbeddings()
-        )
-        self.long_term = VectorStoreRetrieverMemory(
-            vectorstore=self.vectorstore,
-            retriever=self.vectorstore.as_retriever(k=k_long),
-            memory_key="long_term_memory"
-        )
-        
-        # 工作记忆：当前任务状态
-        self.working_memory = {}
-    
-    def add_interaction(self, input_str: str, output_str: str):
-        """添加对话到短期记忆"""
-        self.short_term.save_context(
-            {"input": input_str},
-            {"output": output_str}
-        )
-        
-        # 如果是重要信息，加入长期记忆
-        if self._is_important(output_str):
-            self._add_to_long_term(input_str, output_str)
-    
-    def get_context(self, query: str) -> str:
-        """获取相关上下文用于 Prompt"""
-        # 1. 获取短期记忆
-        short_context = self.short_term.load_memory_variables({})
-        
-        # 2. 获取长期记忆（相关）
-        long_context = self.long_term.load_memory_variables(
-            {"input": query}
-        )
-        
-        # 3. 获取工作记忆
-        working_context = str(self.working_memory)
-        
-        return f"""
-【短期记忆】
-{short_context}
-
-【长期记忆】
-{long_context}
-
-【当前任务】
-{working_context}
-"""
-```
-
-### RAG 增强 Agent
-
-RAG（检索增强生成）是给 Agent 补知识的方式：
-
-```python
-from langchain.chains import RetrievalQA
-from langchain.retrievers import EnsembleRetriever
-
-class RAGAgent:
-    """使用 RAG 增强的 Agent"""
-    
-    def __init__(self, llm, vectorstores: List):
-        # 多源检索器
-        retrievers = [vs.as_retriever() for vs in vectorstores]
-        self.retriever = EnsembleRetriever(
-            retrievers=retrievers,
-            weights=[0.5, 0.3, 0.2]
-        )
-        
-        # RAG Chain
-        self.qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=self.retriever,
-            return_source_documents=True
-        )
-    
-    def query_with_context(self, query: str) -> Dict[str, Any]:
-        """使用 RAG 查询，支持引用来源"""
-        result = self.qa_chain({"query": query})
-        
-        return {
-            "answer": result["result"],
-            "sources": [
-                {
-                    "content": doc.page_content[:200],
-                    "metadata": doc.metadata
-                }
-                for doc in result["source_documents"]
-            ]
-        }
-```
+层级也讲清了：最顶上是**全局** agents/claude/gemini.md（对所有项目生效，Claude 存在 `~/.claude/`），然后拼**本地项目**的 .md，再往下是 **skills**，最后才是你这次的行内提示词。好处是把一大堆上下文和功能**压进很少的 token**——这很关键，因为账单按 token 算，而且上下文越长、模型质量越容易掉。
 
 ---
 
-## 第四部分：Multi-Agent 系统
+## 七、Agent Skills：把工作流标准化成一段规程
 
-### 何时需要 Multi-Agent？
+Skill 是把大模型的"灵活 / 发散"收成"确定性直线"的办法——同一个任务每次都照同一套标准操作规程（SOP）来做。三家都支持（Codex skills、Gemini skills、Claude Code skills），规格几乎一样：一个带 `---` frontmatter 的文件，里头写 name、description，可选 tools / license / metadata。Nick 说他自己通常只写 name + description + 偶尔几个可用工具。
 
-不是所有场景都需要 Multi-Agent。以下是判断标准：
-
-| 场景 | 推荐架构 | 原因 |
-|------|----------|------|
-| 简单问答、单一任务 | 单体 Agent | Multi-Agent 过度设计 |
-| 多步骤但可串行执行 | 单体 Agent + Loop | 简单有效 |
-| 多角色协作、各司其职 | Multi-Agent | 需要专业化分工 |
-| 复杂任务需要规划、执行、审查分离 | Multi-Agent + Supervisor | 职责分离 |
-
-### Multi-Agent 架构模式
-
-**模式 1：Supervisor 模式**
-
-```
-用户输入
-    ↓
-Supervisor Agent（负责任务分配）
-    ↓
-┌───────┴───────┐
-↓               ↓
-Researcher    Writer
-Agent         Agent
-    ↓               ↓
-    └───────┬───────┘
-            ↓
-      Supervisor（整合结果）
-            ↓
-        最终输出
-```
-
-```python
-from typing import List
-from langchain.agents import Agent, AgentExecutor
-
-class SupervisorAgent:
-    """Supervisor 模式的主控 Agent"""
-    
-    def __init__(self, llm, sub_agents: List[Agent]):
-        self.llm = llm
-        self.sub_agents = {a.name: a for a in sub_agents}
-    
-    def run(self, task: str) -> str:
-        # 1. 分析任务，决定调用哪些子 Agent
-        plan = self._plan_subtasks(task)
-        
-        # 2. 依次执行子任务
-        results = {}
-        for subtask, agent_name in plan:
-            agent = self.sub_agents[agent_name]
-            result = agent.run(subtask)
-            results[agent_name] = result
-        
-        # 3. 整合结果
-        return self._synthesize(task, results)
-```
-
-**模式 2：Crew 模式（多 Agent 平等协作）**
-
-```python
-from crewai import Agent, Task, Crew
-
-# 定义多个 Agent
-researcher = Agent(
-    role="研究员",
-    goal="收集相关信息",
-    backstory="你是一位专业研究员，擅长信息收集和分析"
-)
-
-writer = Agent(
-    role="作家",
-    goal="撰写报告",
-    backstory="你是一位专业作家，擅长清晰表达复杂概念"
-)
-
-reviewer = Agent(
-    role="审稿人",
-    goal="审核并优化内容",
-    backstory="你是一位资深编辑，对内容质量有严格要求"
-)
-
-# 定义任务
-tasks = [
-    Task(
-        description="研究 AI Agent 最新进展",
-        agent=researcher
-    ),
-    Task(
-        description="根据研究结果撰写报告",
-        agent=writer
-    ),
-    Task(
-        description="审核报告质量",
-        agent=reviewer
-    )
-]
-
-# 创建 Crew 并执行
-crew = Crew(
-    agents=[researcher, writer, reviewer],
-    tasks=tasks,
-    verbose=True
-)
-
-result = crew.kickoff()
-```
+他拿 Anthropic 官方的 "algorithmic art"（算法艺术）skill 现场演示：把整个 skill.md 喂进模型、存成 skill 再 run，模型就照着规程生成了一批粒子算法艺术，还能实时调粒子数、噪声、湍流。要点是——**skill 让"同一件事每次都做得一样"**，并把一大段上下文折进很少的 token。
 
 ---
 
-## 第五部分：部署到生产
+## 八、进阶：用提示词架构编排多个 agent
 
-### 性能优化
+课程后半程是 Nick 说"YouTube 上没人讲过"的那部分——**都是用提示词编排多个 agent，不涉及写框架**。列一下他覆盖的技巧：
 
-| 优化方向 | 具体措施 | 效果 |
-|----------|----------|------|
-| **延迟优化** | 流式输出、异步调用 | TTFT 降低 50% |
-| **成本优化** | 使用小模型处理简单任务 | 成本降低 80% |
-| **吞吐优化** | 并发请求、批量处理 | QPS 提升 3 倍 |
+- **自改指令**（第六节已详述）：agent 改写自己的规则来减少犯错。
+- **多智能体 MCP 编排**：把 Codex、Gemini、Claude 都**注册成 MCP 服务器**，在一个对话线程里同时调度多个 agent。
+- **视频转动作（video-to-action）**：让 agent 从 YouTube 视频里学，而不只从纯文本学。
+- **随机化多智能体共识**：用同一条提示词开出多个 agent，用它们结果的**统计离散度**来做创意发散和改进。
+- **智能体聊天室**：给一群 agent 一个集中辩论的地方，互相怼着把答案质量顶上去。
+- **子智能体互审回路**：让 agent **实时互相 review 对方的产出**，抓一个 agent 可能漏掉的问题。
+- **提示词契约与反向提示**：约束输出格式、让模型反过来帮你补提示；收尾讲上下文管理与 token 定价优化。
 
-```python
-# Agent 优化示例
-from langchain.callbacks import get_openai_callback
-
-class OptimizedAgent:
-    def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",  # 简单任务用小模型
-            temperature=0.7
-        )
-    
-    def run(self, task: str) -> str:
-        # 根据任务复杂度选择模型
-        if self._is_complex_task(task):
-            return self._run_with_model(task, "gpt-4o")
-        else:
-            return self._run_with_model(task, "gpt-4o-mini")
-```
-
-### 安全与权限
-
-```python
-# Agent 权限控制
-class SecureAgent:
-    def __init__(self):
-        self.allowed_tools = ["web_search", "calculator"]
-        self.denied_tools = ["delete_file", "send_email"]
-    
-    def can_use_tool(self, tool_name: str) -> bool:
-        if tool_name in self.denied_tools:
-            return False
-        if tool_name in self.allowed_tools:
-            return True
-        return False  # 默认拒绝未明确允许的工具
-```
-
-### 监控与日志
-
-```python
-import logging
-from langchain.callbacks import StdOutCallbackHandler
-
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
-class MonitoredAgent:
-    def run(self, task: str) -> str:
-        logger = logging.getLogger("AgentMonitor")
-        
-        # 记录开始
-        logger.info(f"任务开始: {task[:50]}...")
-        
-        # 执行
-        with get_openai_callback() as cb:
-            result = self.agent.run(task)
-            
-            # 记录完成
-            logger.info(f"任务完成，消耗: ${cb.total_cost:.4f}")
-        
-        return result
-```
+这些合起来就是开场那个"5 个浏览器 agent 并行获客"demo 背后的东西：**单个 agent 没那么强，但把一群 agent 用提示词架构编排起来（分工、辩论、互审、共识），整体质量就上一个台阶**。
 
 ---
 
-## 架构选型指南
+## 九、常见误读：这门课不是在教什么
 
-| 架构 | 适用场景 | 复杂度 | 扩展性 |
-|------|----------|--------|--------|
-| **单体 ReAct** | 简单任务、快速原型 | ⭐ | ⭐⭐⭐ |
-| **单体+Memory** | 需要上下文记忆 | ⭐⭐ | ⭐⭐ |
-| **Supervisor** | 多步骤、需要规划 | ⭐⭐⭐ | ⭐⭐⭐ |
-| **Crew** | 多角色协作 | ⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **Hierarchical** | 企业级、复杂任务 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+本站早期版本据"内容地图"综合推理，把这门课写成了编程课，几处走样对着字幕更正：
 
----
-
-## 学习路径
-
-入门阶段（第一周）：理解 Agent 基本概念，掌握 ReAct 框架，能运行简单 Agent。进阶阶段（第二周）：实现 Tool Use，添加 Memory，用 LangChain 开发。专家阶段（第三周及以后）：Multi-Agent 架构，部署到生产，性能优化与监控。
-
-## 知识关联
-
-- **前置**：[AI Agent 基本概念](ai-agents-clearly-explained-jeff-su-4m-views) ⭐⭐⭐⭐
-- **相关**：[25 分钟实战教程](zero-to-ai-agent-25-minutes-futurepedia-3m-views) ⭐⭐⭐⭐
-- **进阶**：[Multi-Agent 系统设计]() ⭐⭐⭐⭐⭐ | [Agent 优化与监控]() ⭐⭐⭐⭐
+- **误读一：这是一门 Python / LangChain / CrewAI 编程课**（写 `ReActAgent`、`AgentMemory`、`RAGAgent`、`SupervisorAgent` 等类）。全错。Nick 开场原话是"**你不需要任何编程**"，这是无代码课，教**用** Codex / Claude Code / Antigravity，不写 agent 框架代码。视频里没有这些 Python 类。
+- **误读二：课程分"ReAct→Tool Use→Memory→Multi-Agent→生产部署"五部分，各有精确时间戳。** 这个大纲和时间戳是编的。真实主线是：无代码定位 + 开场 demo → observe/think/act 循环 → 三大平台对比 → self-modifying agents.md → skills → 一串"用提示词编排多 agent"的进阶技巧。
+- **误读三：把"记忆"讲成短期 / 工作 / 长期 + 向量数据库 + 知识图谱。** 视频里的"记忆"就是 agents.md / claude.md / gemini.md、对话历史、自动记忆文件和 skills，不是向量库那一套。
+- **误读四：Multi-Agent 讲的是 Supervisor / Crew 代码模式。** 视频讲的是 MCP 编排、智能体聊天室、子智能体互审、随机化共识——全是提示词层面的编排，不是 CrewAI 代码。
 
 ---
 
-🦞 钳岳星君 · 每日修炼
+## 十、给不同读者的建议
+
+**想用 agent 干活的非程序员**：这门课就是给你的。别被"agent"吓到——先挑一个平台（Nick 说随便挑，差距很小），把第三节那个 observe → think → act 循环记住，然后重点练一件事：给任务写清楚**完成的定义**。很多人对 agent 失望，排查下来往往就是没写清"做到什么算完"。
+
+**做自动化 / 获客 / 运营的**：直接学第六节的 **self-modifying agents.md**——这是投产比最高的一招，让 agent 越用越懂你的偏好。再往上，开场那个"多浏览器并行"是靠把任务拆散 + 子 agent 各自工作区 + 共享聊天室实现的。
+
+**程序员**：这门课的价值不在代码（它没代码），在**编排思路**——MCP 把多个 agent 注册成服务、子 agent 互审、随机化共识。把这些当提示词架构的模式库看。
+
+**不适合谁**：想要现成 Python / LangChain agent 框架代码的人——这门课不给代码，给的是"怎么用现成平台把 agent 编排起来"的方法。
+
+---
+
+## 十一、资源与参考
+
+- 视频原片：[Nick Saraev《AI Agents Full Course 2026》(YouTube EsTrWCV0Ph4)](https://www.youtube.com/watch?v=EsTrWCV0Ph4)
+- 作者与社区：[Nick Saraev 个人站](https://nicksaraev.com/)（无代码 AI 自动化）／ [Maker School](https://www.skool.com/makerschool)
+- 三大平台官方入口：OpenAI Codex、[Anthropic Claude Code](https://www.anthropic.com/)、Google Antigravity
+- **进阶阅读**（站内相关）：[AI Agent 概念讲清楚（Jeff Su）]({{< relref "ai-agents-clearly-explained-jeff-su-4m-views.md" >}}) ／ [25 分钟从零到 Agent]({{< relref "zero-to-ai-agent-25-minutes-futurepedia-3m-views.md" >}})
+
+---
+
+## 十二、自测：你抓住这门课的真实定位了吗
+
+1. 这门课要不要写代码？它教的是"写 agent 框架"还是"用 agent 平台"？（第一节）
+2. observe → think → act 循环里，最多人漏掉、导致对 agent 失望的是哪一步？为什么它重要？（第三节）
+3. 三大平台里，要干净前端、要可控编排、要后端 / TDD，各该找谁？（第五节）
+4. self-modifying agents.md 为什么能让 agent 越用越少犯错？（第六节）
+
+---
+
+## 写作笔记（给后续读者）
+
+- **信息来源**：YouTube 原片英文自动字幕（yt-dlp + chrome cookie 取字幕后清洗成约 1477 句，逐段核对）。所有引号内的话为字幕转译。
+
+- **这一版（v2）做的最重要一件事，是把编造的编程课换回真实的无代码课**：删掉了视频里根本不存在的 Python / LangChain / CrewAI 代码（ReActAgent / WebSearchTool / AgentMemory / RAGAgent / SupervisorAgent / OptimizedAgent / MonitoredAgent）和编造的"五部分 + 时间戳"大纲；换成真实主线——无代码定位、5 浏览器 demo、observe/think/act 循环 + 完成的定义、三大平台（Codex / Claude Code / Antigravity）最擅长 / 最差、self-modifying agents.md、skills、MCP 编排 / 互审 / 共识等进阶技巧。
+
+- **顺带落实的出处**：视频 = YouTube EsTrWCV0Ph4（494K 观看）；作者 Nick Saraev 是无代码 AI 自动化博主（@nicksaraev / Maker School），非程序员。
+
+- **仍要知道的边界**：用的是自动字幕，个别专有名词 / 数字可能有听写误差（如 GPT 版本号"5.4"、Claude Code 价格"$17–20/月"按字幕如实转录）；进阶技巧一节按 Nick 的课程路线图概述，未逐一展开每个技巧的完整演示。
+
+— 钳岳星君 2026-07-13（v2：据 YouTube 字幕重建 / 删除编造的 Python 编程课 / 还原无代码定位与三大平台 / 补 observe-think-act 循环与 self-modifying agents.md）
