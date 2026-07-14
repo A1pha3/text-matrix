@@ -17,6 +17,8 @@ hiddenFromHomePage: true
 
 **读完这篇你能拿走什么**：分清 RSI 的宣传叙事和工程现实，看懂 fractalsearch 四个组件（任务书/裁判/选手/研究笔记）怎么咬合，理解 Triton fused encoder、GT-free 采样、空间误差场三次关键突破各自的贡献，并能动手复现一次最小 RSI 回路来判断"AI 自主科研"目前真实的边界在哪。
 
+> **配套阅读**：想先看这支视频"讲了什么论点"（RSI 可能、但难、且危险），看同仓库的 [Emergent Garden RSI 视频精读]({{< relref "emergent-garden-recursive-self-improvement-fractalsearch.md" >}})；本篇专注"仓库里到底发生了什么"。
+
 ---
 
 ## 先把"fractalsearch 是谁做的"理清楚
@@ -38,7 +40,7 @@ hiddenFromHomePage: true
 读后面所有章节前，先记住这张拆分。整个实验里其实有**四条互不重叠的主线**，很容易被讲成一条故事线，混淆之后每个数字都对不上号：
 
 | 组件 | 文件 | 职责 | 谁能动 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **任务书** | `AGENT.md` | 告诉 AI 要做什么、不能做什么、循环长什么样 | 人类写死，AI 不改 |
 | **裁判**（harness） | `harness/groundtruth.py` + `harness/evaluate.py` | 定义目标函数、固定 5 分钟 budget、SIGALRM 强杀、把结果写进 `runs.jsonl` | 人类写死，AI 不改（结构性沙箱） |
 | **选手**（solution） | `solutions/*.py`（baseline / fourier / hashgrid / champion） | AI 提交的拟合算法，每次 commit 一个新文件 | AI 全权改写 |
@@ -55,7 +57,7 @@ hiddenFromHomePage: true
 B站 @黑纹白斑马 在 UP 主简介里给出的 8 段章节时间线是研究骨架，下面这张表把它对到 fractalsearch 仓库里**真实存在的**文件，看视频每段在源码里落在哪里：
 
 | B站章节时间线 | B站字幕简介（拿到的） | 源码里的实际对应 |
-|---|---|---|
+| --- | --- | --- |
 | 00:00 RSI 概念引入 + Anthropic / OpenAI 动态 + 视频预告 | 引出 RSI 概念 | `AGENT.md` 顶部 "find the best algorithm to fit the Mandelbrot set" |
 | 02:12 fractalsearch 实验介绍 | 源自 Karpathy AutoResearch，让 AI 在递归循环里迭代优化拟合曼德博集合 + 实验运行机制 + 评估规则 + 初步进展 | `solutions/baseline_mlp.py` + `harness/groundtruth.py`（[0,1] 区间的周期性 log-distance 目标）+ `harness/evaluate.py`（5 分钟固定 budget + 10 分钟 SIGALRM hard kill） |
 | 09:27 RSI 可行性分析 | 起重机自举 / 人类学习 / 生物进化做类比 + 弱 RSI vs 强 RSI 区分 + 3 年内前沿 AI 公司开展大规模 RSI 实验 | `notebook.md` "the irreducible floor" 段落证实了"收益递减"这件事是真实存在的工程现象 |
@@ -76,6 +78,7 @@ B站 @黑纹白斑马 在 UP 主简介里给出的 8 段章节时间线是研究
 > _Find the best algorithm to fit the Mandelbrot set, i.e. learn the map `(real, imag) -> target` defined in `harness/groundtruth.py`, while still being a universal function approximator._
 
 三个隐形但严苛的边界：
+
 - **目标函数在 [0,1]**，并非常规的 0/1 集合成员关系。`groundtruth.py` 用了 `Periodic · log-distance` 变换：先跟踪 escape-time 的轨道导数 `z' = dz/dc` 给出距离估计 `d`，再用 `phase = BETA · log(d)`、`target = 0.5 + 0.5·sin(2π·phase)`（BETA = 0.050，R = 1e4 bailout）。这是难度的灵魂——它**接近边界时频率发散**，比单调平滑 escape-time 多出无限嵌套的细节纹理。
 - **每次训练 budget = 5 分钟**，10 分钟强制 SIGALRM kill。`evaluate.py` 明确写着 "use it all"。这就是 RSI 的工程化身：每次只给你 5 分钟，跑完直接看 MSE，分数上去了就 commit，分数不行就换思路再来。
 
@@ -97,7 +100,7 @@ B站 @黑纹白斑马 在 UP 主简介里给出的 8 段章节时间线是研究
 
 `AGENT.md` 里还有一行容易被看漏：
 
-> _Each run trains for a fixed 5-minute budget (a run is force-killed at 10 minutes). Because the budget is fixed, you don't trade off compute — use it all. A massive network that scores better *is* better._
+> _Each run trains for a fixed 5-minute budget (a run is force-killed at 10 minutes). Because the budget is fixed, you don't trade off compute — use it all. A massive network that scores better **is** better._
 
 这句话悄悄推翻了一个常见的 ML 神话——"参数少一点更优雅"。在 fractalsearch，**分数就是唯一裁判**，所以"用一个 33M 参数的哈希网格压到 0.000226"反而是胜利，"用一个 1M 参数的 MLP 卡在 0.001"就算失败。
 
@@ -109,9 +112,9 @@ README.md 写："This project is directly adapted from Karpathy's autoresearch."
 
 `solutions/baseline_mlp.py` 是 53 行的平凡 MLP——两层 hidden 256 维，ReLU，Adam 1e-3，5 分钟 budget 跑完一次。`runs.jsonl` 起始 MSE 是 `0.00413`（run_id 0）和 `0.00554`（run_id 6）这种量级，**远不是我们以为的"MLP 练 5 分钟能学出来的水平"**。原因正是 `groundtruth.py` 的周期化目标——无限边界细节不可能让一个朴素 MLP 跑 5 分钟拟合到位。
 
-**第一道墙**是 escape-time + 周期变换下的"无穷频率"，多层感知机在 [0,1] 输入空间里根本无法解析这种细节。突破它需要一类函数逼近器：能把任意高频信号通过位置编码塞进去的——这就是 *fourier features* / *positional encoding* 的领域。`solutions/fourier_mlp.py`（80 行）就是把输入先升维到 Fourier basis 再喂 MLP。从 `runs.jsonl` 看，前期 Fourier 变体的 MSE 大约压到 `0.00049` 量级——比 baseline 好 10×，但还没到 1e-3 这种视觉质量。
+**第一道墙**是 escape-time + 周期变换下的"无穷频率"，多层感知机在 [0,1] 输入空间里根本无法解析这种细节。突破它需要一类函数逼近器：能把任意高频信号通过位置编码塞进去的——这就是 _fourier features_ / _positional encoding_ 的领域。`solutions/fourier_mlp.py`（80 行）就是把输入先升维到 Fourier basis 再喂 MLP。从 `runs.jsonl` 看，前期 Fourier 变体的 MSE 大约压到 `0.00049` 量级——比 baseline 好 10×，但还没到 1e-3 这种视觉质量。
 
-**视频作者 Emergent Garden 在 24:50 提到"哈希网格大幅提升"，对应到仓库就是 `hashgrid_gtfree.py`（240 行）。** 全名 *Multi-resolution Hash Grid Encoding*——tiny-cuda-nn 的标准技巧在 PyTorch + Triton 下的复刻：把 2D 坐标 `(x, y)` 经过多分辨率哈希查找 + 4 角双线性插值，喂给浅层 MLP。每一级哈希表独立 grid size × feature dim，最终拼接。
+**视频作者 Emergent Garden 在 24:50 提到"哈希网格大幅提升"，对应到仓库就是 `hashgrid_gtfree.py`（240 行）。** 全名 _Multi-resolution Hash Grid Encoding_——tiny-cuda-nn 的标准技巧在 PyTorch + Triton 下的复刻：把 2D 坐标 `(x, y)` 经过多分辨率哈希查找 + 4 角双线性插值，喂给浅层 MLP。每一级哈希表独立 grid size × feature dim，最终拼接。
 
 一个容易被看漏的工程取舍：作者**没用 NVIDIA 推荐的 tiny-cuda-nn**（Müller et al. 2022 在 SIGGRAPH 上发的 multiresolution hash grid 原始实现，CUDA + C++ 扩展）。他在 `champion.py` 的 docstring 里写明了：triton 3.5.1 跟 torch 自带同发，"in-scope"。这是工程上的微小但不妥协——确保一切代码在 `pyproject.toml` 列出的依赖里能跑，**不需要外挂 C++ 扩展**，任何拿到仓库的人 `uv sync` 之后就能复现，不必先编译 CUDA。
 
@@ -156,7 +159,7 @@ README.md 写："This project is directly adapted from Karpathy's autoresearch."
 
 `notebook.md` 里 6-9 session 的 encoder bench 给出了让人闭嘴的数据：
 
-```
+```text
 champ 47.5/47.8ms (fwd/bwd)
 packed 43.4/79.2ms (index-tensor DRAM traffic kills it — skip full run)
 TRITON FUSED 22.6/24.0ms = 2x
@@ -175,6 +178,7 @@ forward 2×, backward 4×。bottleneck 从 launch overhead 翻入 DRAM 友好—
 `notebook.md` 6-9 第二段："hashgrid_gtfree: 0.00029260 — NEW BEST (-9.6%), first sub-3e-4. Fresh coords each step, mining by finite-diff HF proxy |f(x+2e-4 d)-f(x)| on the model itself (no pool GT), GT only on the selected 768k batch."
 
 含义是：
+
 - 每 step 重新采一组坐标，避免大批固定坐标被 hashgrid "背诵"。
 - 怎么知道哪些点"难"？不在样本池上算 ground truth，而是在模型自己的 forward 上做 finite-difference——`|f(x+Δd) - f(x)|`。
 - 数学直觉：模型自己输出变化剧烈的位置，**很可能是真值变化剧烈但模型没学到位的地方**。
@@ -189,6 +193,7 @@ GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 
 > _persistent spatial error field mining: a coarse 2048×1296 EMA grid of per-cell mean |error|, updated FREE each step from the train batch's own residuals; hard coords sampled by cell-multinomial + in-cell jitter._
 
 **关键不是神经网络，是数据结构**——一张 2048×1296 的图像，跟训练分辨率同一量级：
+
 - 每个 cell 存一个 EMA(α=0.6) of mean |error|，**每 step 用这批训练样本的 residual 免 GPU 算力更新**。
 - 每 step 抽样硬坐标：先按 cell 上的统计做 multinomial（更"难"的 cell 抽中概率更高），再在 cell 内 uniform jitter。
 - 把 train batch 固定 768k 中 98% 拿来抽自这个"hard field"，剩 2% 留 uniform。
@@ -217,7 +222,7 @@ GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 
 `runs.jsonl` 是 8 小时跑出来的硬数据。下面我把 104 条按里程碑分桶：
 
 | 阶段 | MSE 量级 | 含义 |
-|---|---|---|
+| --- | --- | --- |
 | baseline MLP / Fourier | 0.00554 - 0.00049 | 朴素网络尚能拟合大体形状，但高频细节完全失守 |
 | Champion 哈希网格 (with bf16 autocast) | ~0.000335 | 哈希 grid 出现，明显提升；卡在"irreducible floor" |
 | Triton fused encoder | 0.00032359 | step 数翻倍让 floor 随之下降 |
@@ -227,6 +232,7 @@ GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 
 | **Nmax 65536 + 13 levels + best errfield** | **0.00022636** | **best result** |
 
 champion entry 具体字段：
+
 - run_id: 20260609-151512
 - commit: ac29eca
 - device: NVIDIA GeForce RTX 3090 Ti
@@ -263,6 +269,7 @@ champion entry 具体字段：
 ### 8.1 Mandelbrot 拟合这一题的特殊性
 
 把训练目标设为 [0,1] 上的周期函数其实是很巧的工程选择：
+
 - 它**接近边界时频率发散**——提供"无穷细节"的视觉素材，区分能力比 escape-time 整数更细。
 - 它的**结构**是分形的——任何子区域都跟全局类似。这意味着 train 集 = eval 集时，只要随便选个区域就代表整个分布，不会出"采样偏置"。
 - 它的 ground truth **在 GPU 上算**——ESCAPE_R = 1e4 + MAX_DEPTH = 200 step 是 O(N) 单点计算，batch 3.1M 也只用 ~350ms（一度是整个 step 时间预算的 81%）。
@@ -271,7 +278,7 @@ champion entry 具体字段：
 
 ### 8.2 不在视频里的"with human approval"
 
-`AGENT.md` 第二段："Await human approval before starting a research loop." 
+`AGENT.md` 第二段："Await human approval before starting a research loop."
 
 **AI 拿到 5 分钟 budget 之前要人同意一次**——但 `NEVER STOP` 写得更显眼。"never stop"是一个交付保证——"如果你启动循环，就别停下问人是否继续"。两个声明放一起看时，RSI 的可操作定义就清楚了：**人是进入门槛和退出点，AI 是中间的所有迭代**。
 
@@ -282,6 +289,7 @@ champion entry 具体字段：
 `notebook.md` 里出现的一个观察让人想起波普尔的可证伪性——"if steps jump but MSE doesn't move, the irreducible-boundary story is finally proven." —— AI 通过**观察实验现象**反过来证伪 / 证实一个假设。这就是 AI 做了 Karl Popper 那句"科学进步靠猜想与反驳"的实操动作。
 
 工程化的 RSI 包含三个动作：
+
 1. **猜想** (form a hypothesis) — 形成为有效假设，commit 一个新 solution。
 2. **实验** (run the loop) — 跑，看 MSE。
 3. **反驳 / 证实** (reject/accept) — based on runs.jsonl 数据，决定这个思路是否继续。
@@ -293,6 +301,7 @@ champion entry 具体字段：
 ### 9.1 如果你是 AI 研究者
 
 `AGENT.md` + `champion.py` + `notebook.md` 是一份**完整的"AI 跑实验"工程模板**——可以直接 fork 到自己的 benchmark 问题。`evaluate.py` 的不变 5 项是值得模仿的：
+
 - fixed budget（time-bounded 公平性）
 - SIGALRM hard kill（实验必须终结）
 - immutable harness（结构 sandbox）
@@ -332,7 +341,8 @@ fractalsearch 实验里 0.000226 是权威——因为它来自 `runs.jsonl` 第
 - [ ] **5. 让 AI 跑一轮**：把 `AGENT.md` 喂给你的 coding agent，`NEVER STOP` 一旦启动，观察它会不会自己 `git commit` + 跑 evaluate + 读 run.log。如果它停下来问人，说明 prompt 没吃透 `AGENT.md`。
 - [ ] **6. 对照 notebook.md**：跑完几轮后，对比你的 agent 写的 notebook 和原作者的 notebook。两份笔记的"假设质量"差距，就是 RSI 当前真正的能力边界。
 
-**常见卡点**：
+**常见卡点**有这么几处：
+
 - **SIGALRM 在 Windows 上不生效**——`signal.SIGALRM` 是 Unix 专属，Windows 复现得换成 `threading.Timer` 或 WSL2。
 - **5 分钟跑不满**：如果 GPU 显存不够，batch size 会被自动降，300 秒里跑的 step 数远少于 1600，MSE 就复现不到。3090/4090 这一档是作者实测的硬件下限。
 - **triton 版本漂移**：triton 小版本之间 kernel 行为会变，`2x speedup` 的数字只在 3.5.1 上成立。换版本前先跑一次 champion 确认 MSE 没退化。
@@ -354,7 +364,7 @@ fractalsearch 实验里 0.000226 是权威——因为它来自 `runs.jsonl` 第
 把 fractalsearch 放回 2026 年 RSI 的版图里，它的位置很特殊，也很清楚：
 
 | 项目 | 改的是什么 | 完全开源可复现 | 跟 fractalsearch 的关系 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **karpathy/autoresearch** | 训练脚本 / 架构配置（弱 RSI） | ✅ | fractalsearch 的母框架 |
 | **MaxRobinsonTheGreat/fractalsearch** | 拟合算法（弱 RSI） | ✅ | autoresearch 的一个 PR 级应用 |
 | **DeepMind AlphaEvolve** | 调度算法 / 矩阵乘 kernel（弱 RSI） | ❌ 内部 | 同类，工业规模 |
@@ -368,24 +378,28 @@ fractalsearch 的价值不在"它多强"——单卡 8 小时压一个 MSE 到 0
 
 ## 关键资源
 
-**主要资料**
+### 主要资料
+
 - [Emergent Garden《Recursive Self-Improvement》(YouTube)](https://www.youtube.com/watch?v=t7_ZXgfJVG8) — 2026-06-13 发布英文原版
 - [BV1w8jL6dE1f](https://www.bilibili.com/video/BV1w8jL6dE1f/) — B站 @黑纹白斑马 AI 配音版，本文的章节时间线来源
 - [MaxRobinsonTheGreat/fractalsearch](https://github.com/MaxRobinsonTheGreat/fractalsearch) — 2026-06-19 公开，104 条 runs.jsonl + 4 个 solution + AGENT.md
 - [MaxRobinsonTheGreat/mandelbrotnn](https://github.com/MaxRobinsonTheGreat/mandelbrotnn) — 作者个人长期 pet 项目
 - [karpathy/autoresearch](https://github.com/karpathy/autoresearch) — framework 起源
 
-**关键算法参考**
+### 关键算法参考
+
 - Multi-resolution Hash Grid Encoding (Instant NGP / tiny-cuda-nn)
 - Triton `tl.constexpr` + atomic_add backward
 - EMA spatial error field (persistence + zero-cost update)
 - finite-difference hardness proxy (`|f(x+Δd) - f(x)|` on model itself)
 
-**对照阅读**
+### 对照阅读
+
 - 《[田渊栋重返牌桌：RSI、潜在推理与 AI 研究的下一次换挡](https://txtmix.com/posts/video/tianyuandong-rsi-recursive-superintelligence-2026/)》— 中文 RSI 综合视角
 - Emergent Garden 个人其他视频（YouTube 同频道）
 
-**复现环境**
+### 复现环境
+
 - NVIDIA RTX 3090 Ti（实测设备）
 - Python 3.x + uv（依赖管理）
 - PyTorch + Triton 3.5.1（与 torch 自带同发）
@@ -397,12 +411,14 @@ fractalsearch 的价值不在"它多强"——单卡 8 小时压一个 MSE 到 0
 
 **视频无官方字幕** — BV1w8jL6dE1f 是 YouDub AI 配音的中文译制版，B 站 subtitle 轨返回空数组；YouTube `t7_ZXgfJVG8` 字幕需要登录 cookie 绕过 yt-dlp 的 bot 检测。本版没有声称"逐字逐句对照视频"，而是以 `AGENT.md` `README.md` `solutions/notebook.md` `runs.jsonl` 四个仓库级文件为骨架。
 
-**关键外部资料**：
+本文用到的**关键外部资料**：
+
 - B站 BV1w8jL6dE1f 章节时间线（UP 主简介直接给出 8 段 + 时间戳）
 - [karpathy/autoresearch](https://github.com/karpathy/autoresearch) 框架设计：5 分钟 budget + SIGALRM hard kill + 不可改的 harness + JSON log
 - [tiny-cuda-nn](https://github.com/NVlabs/tiny-cuda-nn) multi-resolution hash grid 原始论文 Müller et al. 2022
 - Periodic · log-distance 目标的具体工程实现：[mandelbrot_lab.html](https://github.com/MaxRobinsonTheGreat/fractalsearch/blob/master/dashboard/static/mandelbrot_lab.html) 在 fractalsearch 仓库自身
 
-**未确认项**：
+还有两处**未确认项**：
+
 - 视频作者 Emergent Garden 的个人背景 — fractalsearch 仓库的所有者是 `MaxRobinsonTheGreat`（README 和 git commit 明确）；视频频道作者未在 BV1w8jL6dE1f 简介里点明是否同一人
 - 0.000226 在 fractalsearch 之后是否被进一步压低 — 本文撰写时仓库 `runs.jsonl` 截止 2026-06-09 15:15:12 session，没看到新 commit 后的更好结果

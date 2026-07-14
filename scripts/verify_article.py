@@ -112,6 +112,46 @@ def score_article(path: Path) -> int:
     return 0 if total >= 100 else 1
 
 
+def _score_one(scorer, path: Path) -> tuple[int, int]:
+    """返回 (总分, 超长块数量)，供批量模式汇总。"""
+    content = path.read_text(encoding="utf-8")
+    _, total = scorer.score_article(content)
+    big = sum(
+        1 for b in content.split("\n\n") if b.strip() and len(b.split("\n")) >= 10
+    )
+    return total, big
+
+
+def score_all(root: str) -> int:
+    """批量扫描目录下所有 .md 文章评分，按分数升序汇总（问题优先）。"""
+    scorer = _load_scorer()
+    base = (REPO_ROOT / root) if not Path(root).is_absolute() else Path(root)
+    files = sorted(p for p in base.rglob("*.md") if p.name != "_index.md")
+    if not files:
+        print(f"未找到文章: {base}")
+        return 1
+    rows = []
+    for path in files:
+        try:
+            total, big = _score_one(scorer, path)
+        except Exception as exc:  # 单篇失败不阻断整批
+            print(f"  跳过 {path}: {exc}", file=sys.stderr)
+            continue
+        rows.append((total, big, path))
+    rows.sort(key=lambda r: (r[0], -r[1]))  # 低分在前
+    print(f"== 批量评分: {base} （共 {len(rows)} 篇，按分数升序）==")
+    below = 0
+    for total, big, path in rows:
+        flag = "" if total >= 100 else "  ← 未满分"
+        blk = f" [超长块x{big}]" if big else ""
+        rel = path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
+        print(f"  {total:3d}/100{blk}  {rel}{flag}")
+        if total < 100:
+            below += 1
+    print(f"-- 未满分 {below} 篇 / 共 {len(rows)} 篇 --")
+    return 0 if below == 0 else 1
+
+
 def run_lint(path: Path | None) -> int:
     """调用仓库的 frontmatter_lint.py。"""
     cmd = [sys.executable, str(FRONTMATTER_LINT)]
@@ -135,12 +175,14 @@ def main() -> int:
     parser.add_argument("--pdf", help="一手 PDF 的 URL 或本地路径，逐页提取正文供事实核对")
     parser.add_argument("--out", help="配合 --pdf：把提取文本写到该文件（默认打印到 stdout）")
     parser.add_argument("--score", metavar="ARTICLE.md", help="对文章做只读评分 + 超长块诊断")
+    parser.add_argument("--score-all", nargs="?", const="content/posts", metavar="DIR",
+                        help="批量扫描目录下所有 .md 文章评分（默认 content/posts）")
     parser.add_argument("--lint", nargs="?", const="", metavar="ARTICLE.md",
                         help="跑 frontmatter lint（给路径则只校验该文件，否则校验 content 全量）")
     parser.add_argument("--build", action="store_true", help="跑 Hugo 构建验证")
     args = parser.parse_args()
 
-    if not any([args.pdf, args.score, args.lint is not None, args.build]):
+    if not any([args.pdf, args.score, args.score_all, args.lint is not None, args.build]):
         parser.print_help()
         return 0
 
@@ -149,6 +191,8 @@ def main() -> int:
         worst = max(worst, extract_pdf(args.pdf, args.out))
     if args.score:
         worst = max(worst, score_article(Path(args.score)))
+    if args.score_all:
+        worst = max(worst, score_all(args.score_all))
     if args.lint is not None:
         worst = max(worst, run_lint(Path(args.lint) if args.lint else None))
     if args.build:
