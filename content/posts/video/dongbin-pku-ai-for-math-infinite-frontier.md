@@ -8,7 +8,7 @@ categories: ["视频精读"]
 author: "钳岳星君"
 ---
 
-# 数学还能学吗？北大董彬与 AI 时代的无尽前沿——甲小姐对话反写
+> **阅读目标**：在国际 AI for Math 的真实坐标系里（AlphaProof / AlphaGeometry / AlphaEvolve、Axiom、Lean），读懂董彬这段访谈抛出的"无尽前沿"——国内"AI 自主证明"站在哪、数学家会不会沦为"鉴赏家"、以及机器能自证猜想的年代普通人还要不要学数学。
 
 2026 年 7 月 1 日，B 站"甲子光年官方账号"上传了一段 2 小时 16 分钟的访谈。对谈人是北大北京国际数学研究中心的董彬——他另一个身份是北京中关村学院常务副院长，研究方向这两年越来越聚焦在 **AI for Math**。视频 desc 里有一行很硬的话：他的团队用"自主构建的自动化 AI 框架"证明了"安德森猜想"，并称这是"国内首次实现 AI 自主解决数学开放问题，并实现了大规模形式化验证"。
 
@@ -31,7 +31,7 @@ author: "钳岳星君"
 在展开董彬这条线之前，先用一张表把 2023 年到 2026 年夏天 AI for Math 的关键节点串起来。你可以把它当成全文目录。
 
 | 时间 | 关键事件 | 谁做的 | 性质 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 2023-12 | FunSearch 首次用 LLM 在开放数学问题上发现新结果（cap set 问题，论文次月发《Nature》） | DeepMind | 工具范式 |
 | 2024-01 | AlphaGeometry 在 IMO 几何 30 题解出 25 题（金牌阈值 26），神经-符号混合架构，1 亿合成样本，《Nature》 | DeepMind + NYU | IMO 几何金牌级 |
 | 2024-07 | AlphaProof 在 IMO 拿 28/42 分，达"银牌标准"，距金牌线 1 分 | DeepMind | IMO 综合银牌 |
@@ -198,38 +198,32 @@ AI for Math 这条赛道在 2026 年夏天的状态大致是这样：
 ## 附录 B：参考资料与延伸阅读
 
 ### 视频本身
-- 视频原片：B 站《甲小姐对话董彬：AI for Math 的无尽前沿，AI 时代不被替代的志愿……请相信数学！》（BV1cDTe6QE4p），2026-07-01 11:16 由"甲子光年官方账号"发布，时长 2:16:15。**该视频在 B 站明确标注"暂无字幕"，本文未观看完整视频，全部内容基于视频 desc + 公开学术资料综合整理**。
+
+- 视频原片：B 站《甲小姐对话董彬：AI for Math 的无尽前沿，AI 时代不被替代的志愿……请相信数学！》（[BV1cDTe6QE4p](https://www.bilibili.com/video/BV1cDTe6QE4p)），2026-07-01 11:16 由"甲子光年官方账号"发布，时长 2:16:15。**该视频在 B 站明确标注"暂无字幕"，本文未观看完整视频，全部内容基于视频 desc + 公开学术资料综合整理**。
 - 视频 desc 来源：B 站 view API `https://api.bilibili.com/x/web-interface/view?bvid=BV1cDTe6QE4p` 抓取（fetched 2026-07-02 16:30 CST）。
 
 ### 国际 AI for Math 权威工作
-- DeepMind AlphaProof（2024 IMO 银牌）：https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/
-- DeepMind Gemini Deep Think（2025 IMO 金牌标准）：https://deepmind.google/blog/advanced-version-of-gemini-with-deep-think-officially-achieves-gold-medal-standard-at-the-international-mathematical-olympiad/
-- DeepMind AlphaGeometry（《Nature》论文，NYU 合作）：https://deepmind.google/discover/blog/alphageometry-an-olympiad-level-ai-system-for-geometry/
-- DeepMind AlphaEvolve：https://deepmind.google/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/
-- AlphaEvolve 白皮书（arXiv）：https://arxiv.org/abs/2506.13131
-- DeepMind FunSearch（《Nature》论文，cap set 问题）：https://deepmind.google/discover/blog/funsearch-making-new-discoveries-in-mathematical-sciences-using-large-language-models/
-- Axiom Math 官网：https://www.axiommath.ai/
-- Axiom 论文列表：https://www.axiommath.ai/papers
-- Axiom 开源工具集 AXLE：https://axle.axiommath.ai/
-- Lean 4 官方文档：https://lean-lang.org/
-- Lean GitHub：https://github.com/leanprover/lean4
-- mathlib（Lean 的数学标准库）统计：https://leanprover-community.github.io/mathlib_stats.html
-- Lean FRO 基金会：https://leanprover-foundation.org/
-- Ken Ono 维基条目：https://en.wikipedia.org/wiki/Ken_Ono
-- Kominers 维基条目：https://en.wikipedia.org/wiki/Scott_Duke_Kominers
-- Robert Aumann 维基条目（2005 诺奖）：https://en.wikipedia.org/wiki/Robert_Aumann
+
+- [DeepMind AlphaProof（2024 IMO 银牌）](https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/)；2025 年与 [Gemini Deep Think（金牌标准）](https://deepmind.google/blog/advanced-version-of-gemini-with-deep-think-officially-achieves-gold-medal-standard-at-the-international-mathematical-olympiad/) 组合达金牌级
+- [DeepMind AlphaGeometry（《Nature》论文，NYU 合作）](https://deepmind.google/discover/blog/alphageometry-an-olympiad-level-ai-system-for-geometry/)
+- [DeepMind AlphaEvolve](https://deepmind.google/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/)（[arXiv 白皮书 abs/2506.13131](https://arxiv.org/abs/2506.13131)）
+- [DeepMind FunSearch（《Nature》论文，cap set 问题）](https://deepmind.google/discover/blog/funsearch-making-new-discoveries-in-mathematical-sciences-using-large-language-models/)
+- Axiom Math：[官网](https://www.axiommath.ai/) ｜ [论文列表](https://www.axiommath.ai/papers) ｜ [开源工具集 AXLE](https://axle.axiommath.ai/)
+- Lean 4：[官方文档](https://lean-lang.org/) ｜ [GitHub](https://github.com/leanprover/lean4) ｜ [mathlib 统计](https://leanprover-community.github.io/mathlib_stats.html) ｜ [Lean FRO 基金会](https://leanprover-foundation.org/)
+- 维基：[Ken Ono](https://en.wikipedia.org/wiki/Ken_Ono) ｜ [Scott Duke Kominers](https://en.wikipedia.org/wiki/Scott_Duke_Kominers) ｜ [Robert Aumann（2005 诺奖）](https://en.wikipedia.org/wiki/Robert_Aumann)
 - Carina Hong SAIR Summit 2026 演讲（视频精读）：本仓库 `content/posts/video/axiom-ai-mathematician-formal-verification-lean.md`
 
 ### 国内相关背景
-- 北京大学北京国际数学研究中心（BICMR）：https://bicmr.pku.edu.cn/
+
+- [北京大学北京国际数学研究中心（BICMR）](https://bicmr.pku.edu.cn/)
 - 北京中关村学院：董彬任常务副院长（视频 desc 提到）
-- 甲子光年（视频出品方）官网：https://www.jazzyear.com/
-- 甲子光年"甲小姐对话"系列：https://www.jazzyear.com/article_list.html?type=1
+- 甲子光年：[官网](https://www.jazzyear.com/) ｜ ["甲小姐对话"系列](https://www.jazzyear.com/article_list.html?type=1)
 
 ### 限制与声明
+
 - 本文不对"安德森猜想"的具体数学内容做实质讨论——视频未提供字幕，公开渠道未检索到对应文献。
 - 本文不对"上千位数学家签署宣言反对 AI"的具体来源、签署人、诉求做实质讨论。
 - 本文不对董彬在视频中的具体金句做引用——所有董彬的具体观点均以"视频 desc 提到"的形式陈述。
-- 文中 AlphaEvolve 的部分量化指标（如开放问题上的最优解超越比例、训练 kernel 提速）未在本文核查周期内完成一手核实，故正文采用概括表述；如需精确数字请查阅 DeepMind 官方博客与 arXiv 白皮书 abs/2506.13131。
-- 许晨阳的 ICM 受邀年份、朱歆文的"新视野"奖等"黄金一代"人物的具体奖项，建议以 IMU 官方名单（https://www.mathunion.org/imu-awards）和 Breakthrough Prize 官方名单（https://breakthroughprize.org/）为准。
+- 文中 AlphaEvolve 的部分量化指标（如开放问题上的最优解超越比例、训练 kernel 提速）未在本文核查周期内完成一手核实，故正文采用概括表述；如需精确数字请查阅 DeepMind 官方博客与 [arXiv 白皮书 abs/2506.13131](https://arxiv.org/abs/2506.13131)。
+- 许晨阳的 ICM 受邀年份、朱歆文的"新视野"奖等"黄金一代"人物的具体奖项，建议以 [IMU 官方名单](https://www.mathunion.org/imu-awards)和 [Breakthrough Prize 官方名单](https://breakthroughprize.org/)为准。
 - 如视频发布完整文字稿（甲子光年公众号文章），本文将在核实后重新修订。
