@@ -81,6 +81,10 @@ tags: ["Coding Plan", "火山方舟", "MiniMax", "智谱 GLM", "小米 MiMo"]
 
 表里的价格只用于定位档位，不适合直接计算"谁最便宜"。方舟 9.9 元是限时首购入口，GLM 和 MiMo 页面同时展示原价、周期折扣或首购价，MiniMax 邀请活动也会改变实付金额。购买时应以续费价格和取消规则为准，首月折扣只算一次。
 
+## kimi 的 K3 很好用
+
+- 帮我助力，一起拿大奖！完成 Kimi 会员订阅，你我都能 100% 拿奖，最高可得 1 年会员等值权益：https://kimi-bot.com/activities/zh-cn/viral-referral/share?scenario=subscribe&from=share_poster&invitation_code=BM82V4
+
 ## 方舟 Coding Plan：多模型入口的账怎么算
 
 方舟目前提供 Lite 和 Pro 两档。Lite 覆盖 Doubao、GLM、DeepSeek、Kimi、MiniMax 等模型，Pro 的用量约为 Lite 的 5 倍。用户可以在 Claude Code、Cursor、Cline、Kilo Code、OpenCode 等工具中使用同一套餐，额度在工具之间共享。
