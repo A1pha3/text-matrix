@@ -109,7 +109,10 @@ echo ""
 echo "→ [4/4] 新闻条数检查（≥6，AI 副业早报豁免至 ≥ 5）..."
 n=$(grep -cE '^## ' "$FILE" || true)
 # 6-12 师父裁决：ai-side-hustle-morning 5## 豁免（cron 850cf6e9 heartbeat #83）
-if [[ "$FILE" == *ai-side-hustle-morning* ]]; then
+# ⚠️ 7-18 改: 豁免扩到 *ai-side-hustle-* (覆盖 morning + noon + 未来扩展)
+# 6-12 原豁免: *ai-side-hustle-morning* (只覆盖早报)
+# 16:06 师父裁决 D2: ai-side-hustle 全系列午报也享 H2 ≥ 5 豁免
+if [[ "$FILE" == *ai-side-hustle-* ]]; then
   MIN_HEADLINES=5
   echo "  ℹ️  AI 副业早报豁免阈值：≥ 5（6-12 师父裁决）"
 else
