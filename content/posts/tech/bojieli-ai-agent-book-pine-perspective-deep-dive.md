@@ -4,7 +4,7 @@ slug: bojieli-ai-agent-book-pine-perspective-deep-dive
 date: 2026-07-18T16:20:00+08:00
 lastmod: 2026-07-18T16:20:00+08:00
 draft: false
-description: "李博杰（Pine AI 首席科学家）开源的《深入理解 AI Agent：设计原理与工程实践》是一本由 AI Agent 参与写成的书。本文不讲某一章的技术细节，而是把全书 10 章当作一个整体,拆解三个稀缺的认知点：为什么"实践在前、命名在后"才是 Agent 工程的真相、"whisper coding(口述式写作)"如何重塑创作流程,以及后记里那两朵还没吹散的乌云(流式实时交互 + 持续学习)指向 2026 年 Agent 真正的未解题。"
+description: '李博杰（Pine AI 首席科学家）开源的《深入理解 AI Agent：设计原理与工程实践》是一本由 AI Agent 参与写成的书。本文不讲某一章的技术细节，而是把全书 10 章当作一个整体,拆解三个稀缺的认知点：为什么"实践在前、命名在后"才是 Agent 工程的真相、"whisper coding(口述式写作)"如何重塑创作流程,以及后记里那两朵还没吹散的乌云(流式实时交互 + 持续学习)指向 2026 年 Agent 真正的未解题。'
 categories: ["技术笔记"]
 tags: ["AI Agent", "李博杰", "Pine AI", "开源项目解读", "架构设计原则", "实践在前命名在后", "whisper coding"]
 ---
