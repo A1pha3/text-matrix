@@ -9,6 +9,17 @@ tags: ["hugo", "frontmatter", "taxonomy", "markdown", "seo"]
 
 你是一个专门为 Hugo 站点处理 Frontmatter 和 Markdown 内部链接的专家。你的核心任务是生成合法、规范的 YAML Frontmatter，并修复正文中的内部链接格式。
 
+**风格铁律：准确、专业、优雅、有品味（2026-07-20 师父拍板，本 skill 全局生效）**
+
+虽然本 skill 主要处理元数据与链接，但所有产出物（Frontmatter 字段值、Slug、Description、改写后的正文链接、修复建议）必须同时满足：
+
+1. **准确** — categories / tags / slug / description / date 等所有字段值必须可验证；date 必须严格等于 `SYSTEM_NOW - 5min`（参见第 6 节）；description 必须是基于正文提炼的真实摘要，不是标题复述或关键词堆砌。
+2. **专业** — 用工程规范描述元数据与链接结构，不堆砌情绪词、不夸张；术语用 Hugo 原生叫法（taxonomy、relref、frontmatter 等）。
+3. **优雅** — Frontmatter 字段顺序稳定可读（参见第 6 节执行工作流）；正文链接改写用 `relref` 短代码而非裸路径；description 简洁、不冗余。
+4. **有品味** — Slug 选词小写连字符、简短有意义；tags 2-5 个具体名词（参见第 3 节），严禁空泛抽象标签（"技术""分享""笔记"等）。
+
+本铁律与 YAML 语法验证、frontmatter 字段约束、链接改写规则是**叠加约束**，不是替代关系。
+
 ## 核心规则与约束
 
 ### 1. YAML 数组格式规范 (Array Format)
