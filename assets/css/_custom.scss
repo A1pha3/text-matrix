@@ -1886,3 +1886,19 @@
     width: 12rem;
   }
 }
+
+/* 无语言标记的代码块（ASCII 图等）使用正文颜色，避免继承行内代码的红色强调色 */
+.single .content pre > code:not([data-lang]) {
+  color: inherit;
+}
+
+/* 尊重减弱动态偏好：关闭装饰性动画（hero glitch/闪烁、标题入场等） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
