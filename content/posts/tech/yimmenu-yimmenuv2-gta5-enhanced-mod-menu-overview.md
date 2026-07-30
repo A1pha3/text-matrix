@@ -6,7 +6,6 @@ draft: false
 categories: ["技术笔记"]
 tags: ["C++"]
 description: "YimMenuV2 是 YimMenu 团队发布的 GTA V: Enhanced（Rockstar 升级版）单机 mod menu 实验性分支，1.5k stars，C++ 编写。它通过 DLL 注入方式向游戏进程注入修改能力，本文从技术构成、离线使用边界、与 BattlEye/在线对战的关系、以及单机玩家社区的实际用法四个角度，给出对这一类 GTA V mod menu 的事实性拆解。"
-weight: 1
 slug: "yimmenu-yimmenuv2-gta5-enhanced-mod-menu-overview"
 author: text-matrix
 ---

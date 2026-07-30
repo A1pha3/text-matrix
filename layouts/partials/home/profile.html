@@ -1,0 +1,13 @@
+{{- $postCount := len (where .Site.RegularPages "Type" "posts") -}}
+<div class="home-profile home-hero">
+    <p class="hero-kicker">AI Agent · Coding 工作流 · 开源工具</p>
+    <h1 class="hero-title">面向中文开发者的 AI Agent 知识库</h1>
+    <p class="hero-sub">覆盖 Agent 架构、Coding Agent 工作流与开源工具选型，每周更新。</p>
+    <p class="hero-meta">
+        <span>{{ $postCount }} 篇文章</span>
+        <span aria-hidden="true">·</span>
+        <span>3 个专题</span>
+        <span aria-hidden="true">·</span>
+        <a href="{{ "index.xml" | relURL }}">RSS 订阅</a>
+    </p>
+</div>

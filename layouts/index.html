@@ -4,11 +4,11 @@
     {{- $posts := .Site.Params.home.posts -}}
     {{- $allPosts := where .Site.RegularPages "Type" "posts" -}}
     {{- $visiblePosts := where $allPosts "Params.hiddenfromhomepage" "!=" true -}}
-    {{- $techPosts := first 4 (where $visiblePosts "Params.categories" "intersect" (slice "技术笔记")) -}}
-    {{- $videoPosts := first 2 (where $visiblePosts "Params.categories" "intersect" (slice "视频精读")) -}}
-    {{- $thoughtPosts := first 2 (where $visiblePosts "Params.categories" "intersect" (slice "思考与随笔")) -}}
+    {{- $techPosts := first 4 (sort (where $visiblePosts "Params.categories" "intersect" (slice "技术笔记")) "Date" "desc") -}}
+    {{- $videoPosts := first 3 (sort (where $visiblePosts "Params.categories" "intersect" (slice "视频精读")) "Date" "desc") -}}
+    {{- $thoughtPosts := first 3 (sort (where $visiblePosts "Params.categories" "intersect" (slice "思考与随笔")) "Date" "desc") -}}
+    {{- $latestNews := first 5 (sort (where $allPosts "Params.categories" "intersect" (slice "行业快讯")) "Date" "desc") -}}
     {{- $featuredPost := index $techPosts 0 -}}
-    {{- $latestNews := first 5 (where $allPosts "Params.categories" "intersect" (slice "行业快讯")) -}}
 
     <div class="page home home-curated"{{ if ne $posts.enable false }} data-home="posts"{{ end }}>
         {{- if ne $profile.enable false -}}
@@ -17,50 +17,43 @@
 
         {{- with $featuredPost -}}
         <section class="home-featured" data-pagefind-ignore="all">
-            <div class="home-section-heading">
-                <p class="home-section-kicker">本周重点</p>
+            <div class="home-kicker-row">
+                <span class="home-kicker">本周重点</span>
+                <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
             </div>
-            <article class="home-featured-card">
-                <div class="home-featured-copy">
-                    {{- with .Params.categories -}}
-                    <p class="home-featured-meta">{{ index . 0 }}</p>
-                    {{- end -}}
-                    <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-                    <p>{{ .Description | default (.Summary | plainify) }}</p>
-                    <div class="home-featured-actions">
-                        <a class="home-featured-link" href="{{ .RelPermalink }}">阅读全文</a>
-                        <span>{{ .Date.Format "2006-01-02" }}</span>
-                    </div>
-                </div>
-            </article>
+            <h3 class="home-featured-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+            <p class="home-featured-summary">{{ .Description | default (.Summary | plainify) }}</p>
+            <p class="home-featured-meta">{{ with .Params.categories }}{{ index . 0 }} · {{ end }}{{ .ReadingTime }} 分钟阅读</p>
         </section>
         {{- end -}}
 
         <section class="home-sections-grid" data-pagefind-ignore="all">
             <div class="home-section-block">
-                <div class="home-section-heading">
-                    <h2>最新技术笔记</h2>
+                <div class="home-block-heading">
+                    <h2>技术笔记</h2>
+                    <a class="home-more" href="/categories/技术笔记/">全部 →</a>
                 </div>
-                <div class="home-compact-list">
+                <div class="home-row-list">
                     {{- range after 1 $techPosts -}}
-                    <article class="home-compact-item">
-                        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-                        <p>{{ .Description | default (.Summary | plainify) }}</p>
-                    </article>
+                    <a class="home-row" href="{{ .RelPermalink }}">
+                        <span class="home-row-title">{{ .Title }}</span>
+                        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "01-02" }}</time>
+                    </a>
                     {{- end -}}
                 </div>
             </div>
 
             <div class="home-section-block">
-                <div class="home-section-heading">
-                    <h2>最新视频精读</h2>
+                <div class="home-block-heading">
+                    <h2>视频精读</h2>
+                    <a class="home-more" href="/categories/视频精读/">全部 →</a>
                 </div>
-                <div class="home-compact-list">
+                <div class="home-row-list">
                     {{- range $videoPosts -}}
-                    <article class="home-compact-item">
-                        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-                        <p>{{ .Description | default (.Summary | plainify) }}</p>
-                    </article>
+                    <a class="home-row" href="{{ .RelPermalink }}">
+                        <span class="home-row-title">{{ .Title }}</span>
+                        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "01-02" }}</time>
+                    </a>
                     {{- end -}}
                 </div>
             </div>
@@ -68,46 +61,46 @@
 
         <section class="home-sections-grid" data-pagefind-ignore="all">
             <div class="home-section-block">
-                <div class="home-section-heading">
-                    <h2>最近行业快讯</h2>
+                <div class="home-block-heading">
+                    <h2>行业快讯</h2>
+                    <a class="home-more" href="/categories/行业快讯/">全部 →</a>
                 </div>
-                <div class="home-news-list">
+                <div class="home-row-list">
                     {{- range $latestNews -}}
-                    <article class="home-news-item">
-                        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-                        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
-                    </article>
+                    <a class="home-row" href="{{ .RelPermalink }}">
+                        <span class="home-row-title">{{ .Title }}</span>
+                        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "01-02" }}</time>
+                    </a>
                     {{- end -}}
                 </div>
-                <a class="home-inline-link" href="/categories/行业快讯/">查看全部快讯</a>
             </div>
 
             <div class="home-section-block">
-                <div class="home-section-heading">
+                <div class="home-block-heading">
                     <h2>思考与随笔</h2>
+                    <a class="home-more" href="/categories/思考与随笔/">全部 →</a>
                 </div>
-                <div class="home-compact-list">
+                <div class="home-row-list">
                     {{- range $thoughtPosts -}}
-                    <article class="home-compact-item">
-                        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-                        <p>{{ .Description | default (.Summary | plainify) }}</p>
-                    </article>
+                    <a class="home-row" href="{{ .RelPermalink }}">
+                        <span class="home-row-title">{{ .Title }}</span>
+                        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "01-02" }}</time>
+                    </a>
                     {{- end -}}
                     {{- if not $thoughtPosts -}}
-                    <article class="home-compact-item">
-                        <a href="/categories/思考与随笔/">查看思考与随笔栏目</a>
-                        <p>这里会保留品牌表达、长期观察和那些不适合被快节奏消费的内容。</p>
-                    </article>
+                    <a class="home-row" href="/categories/思考与随笔/">
+                        <span class="home-row-title">品牌表达、长期观察与慢思考</span>
+                    </a>
                     {{- end -}}
                 </div>
             </div>
         </section>
 
         <nav class="home-topic-strip" data-pagefind-ignore="all" aria-label="专题">
-            <span class="home-topic-strip-label">专题</span>
-            <a href="/ai-agent/">AI Agent 学习路径</a>
-            <a href="/coding-agent/">Coding Agent 工作流</a>
-            <a href="/open-source-ai-tools/">开源 AI 工具</a>
+            <span class="home-topic-label">专题</span>
+            <a href="/ai-agent/">AI Agent 学习路径 →</a>
+            <a href="/coding-agent/">Coding Agent 工作流 →</a>
+            <a href="/open-source-ai-tools/">开源 AI 工具 →</a>
         </nav>
 
         {{- if .Content -}}

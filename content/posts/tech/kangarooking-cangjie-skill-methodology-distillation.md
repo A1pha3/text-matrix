@@ -6,7 +6,6 @@ draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "Skills", "AI Agent", "方法论"]
 description: "cangjie-skill 是 kangarooking 维护的开源 skill 蒸馏流水线，3.2k stars，用 RIA-TV++ 七阶段方法（Adler 整体阅读 → 5 路并行提取 → 三重验证 → RIA++ 构造 → Zettelkasten 链接 → 压力测试 → 交付）把书 / 长视频 / 播客转成可被 Claude Code / Cursor 调用的 skill 仓库。本文拆解它的方法论骨架、5 个并行 extractor、三重验证筛、21 个已生成 skill pack 实战案例。"
-weight: 1
 slug: "kangarooking-cangjie-skill-methodology-distillation"
 author: text-matrix
 ---

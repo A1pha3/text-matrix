@@ -6,7 +6,6 @@ draft: false
 categories: ["技术笔记"]
 tags: ["GitHub Actions", "CI/CD", "DevOps", "TypeScript"]
 description: "拆解 actions/checkout 的 v7 安全默认、v6 凭据持久化机制与常见场景：sparse-checkout、fetch-depth、多仓库与子模块，走向可靠 CI。"
-weight: 1
 author: text-matrix
 ---
 

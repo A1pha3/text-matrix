@@ -6,7 +6,6 @@ draft: false
 categories: ["技术笔记"]
 tags: ["Apache"]
 description: "Apache Ossie（前身 Open Semantic Interchange）是 Apache 孵化中的厂商中立语义模型互操作规范，0.2.0.dev0 草案阶段。它定义 JSON/YAML 双格式 schema，配套 dbt / GoodData / Polaris / Salesforce 多向 converter，用单一事实源解决同一个 KPI 在不同 BI 工具里口径不同的行业老问题。"
-weight: 1
 slug: "apache-ossie-semantic-model-interchange-spec-guide"
 author: text-matrix
 ---

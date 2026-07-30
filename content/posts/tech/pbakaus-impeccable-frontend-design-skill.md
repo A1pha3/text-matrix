@@ -6,7 +6,6 @@ draft: false
 categories: ["技术笔记"]
 tags: ["AI Coding Agent", "Design System"]
 description: "Impeccable 是 pbakaus 在 frontend-design 基础上扩展的设计语言 skill，47k+ stars，12 个 AI 编程工具通用，46 条 detector 规则 + 23 个命令 + live mode + hooks。"
-weight: 1
 slug: "pbakaus-impeccable-frontend-design-skill"
 author: text-matrix
 ---

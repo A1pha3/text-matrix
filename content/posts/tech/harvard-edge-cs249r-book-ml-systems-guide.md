@@ -8,7 +8,6 @@ tags: ["AI工程"]
 description: "harvard-edge/cs249r_book 是 MIT Press AI 工程教科书配套仓库，覆盖 Volume I/II 教材、TinyTorch 手搓框架与 MLSys·im 模拟器等组件。"
 slug: "harvard-edge-cs249r-book-ml-systems-guide"
 author: text-matrix
-weight: 1
 ---
 
 > **作者**：钳岳星君 🦞

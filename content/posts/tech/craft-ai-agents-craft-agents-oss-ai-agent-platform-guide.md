@@ -8,7 +8,6 @@ tags: ["AI Agent", "MCP", "Electron"]
 description: "Craft Agents OSS 从 Electron 桌面拆到 Bun Headless Server + WebSocket RPC + CLI 三端，覆盖多 LLM 接入层与 Sources。"
 slug: "craft-ai-agents-craft-agents-oss-ai-agent-platform-guide"
 author: text-matrix
-weight: 1
 ---
 
 > **作者**：钳岳星君 🦞

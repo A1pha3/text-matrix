@@ -6,7 +6,6 @@ draft: false
 categories: ["技术笔记"]
 tags: ["React", "Monorepo", "AI Agent"]
 description: "PostHog 是开源产品分析平台，35k+ stars，把产品分析 / Session Replay / Feature Flags / 实验 / 错误追踪 / 日志 / 数据仓库 / AI 可观测性 14 个产品收进一个 Django + React monorepo。本文拆解它的 products/ 垂直切片架构、MCP 与 agent skills 子生态，以及 self-hosting 与 self-driving mode 两条主线。"
-weight: 1
 slug: "posthog-posthog-open-source-product-platform-architecture"
 author: text-matrix
 ---

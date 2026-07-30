@@ -1,0 +1,50 @@
+// ==============================
+// Override Variables
+// Text Matrix 品牌统一：stone 中性色 + teal 强调色
+// 覆盖 LoveIt 默认的蓝/粉与蓝灰暗色，保证首页与文章页一致
+// ==============================
+
+// ========== 全局 ==========
+// 暗色页面背景：暖墨 stone，替换默认蓝灰 #292a2d
+$global-background-color-dark: #131211;
+
+// 暗色文字
+$global-font-color-dark: #e7e5e4;
+$global-font-secondary-color-dark: #a8a29e;
+$global-link-color-dark: #e7e5e4;
+$global-link-hover-color-dark: #5eead4;
+$global-border-color-dark: #292524;
+
+// 头部与搜索
+$header-background-color: #faf9f7;
+$header-background-color-dark: #131211;
+$search-background-color-dark: #292524;
+
+// 选区：teal 淡染，替换默认蓝
+$selection-color: rgba(15, 118, 110, .18);
+$selection-color-dark: rgba(94, 234, 212, .24);
+
+// ========== 正文 ==========
+// 正文链接：品牌 teal，替换默认蓝 #2d96bd / 粉 #ef3982
+$single-link-color: #0f766e;
+$single-link-color-dark: #5eead4;
+$single-link-hover-color: #115e59;
+$single-link-hover-color-dark: #99f6e4;
+
+// 引用块竖条
+$blockquote-color: #0f766e;
+$blockquote-color-dark: #5eead4;
+
+// 深色表格：stone 而非蓝黑
+$table-background-color-dark: #1c1917;
+$table-thead-color-dark: #292524;
+
+// ========== 分页 ==========
+$pagination-link-color: #0f766e;
+$pagination-link-color-dark: #a8a29e;
+$pagination-link-hover-color: #115e59;
+$pagination-link-hover-color-dark: #5eead4;
+
+// ========== 代码 ==========
+// 深色代码块背景：stone 而非蓝黑 #272C34
+$code-background-color-dark: #1c1917;
