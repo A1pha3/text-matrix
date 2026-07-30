@@ -5,7 +5,7 @@ slug: "awesome-gpt-image-2-technical-overview"
 description: "Awesome GPT Image 2 是目前规模最大的 GPT Image 2 提示词精选集合，由 YouMind-OpenLab 团队维护，提供 4000+ 提示词、17 语言支持、自动化 CMS 工作流与网页画廊。本文深入解析其技术架构、提示词结构设计与最佳实践。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GPT Image 2", "OpenAI", "提示词工程", "AI 图像生成", "开源项目"]
+tags: ["OpenAI", "提示词工程", "开源项目"]
 ---
 
 # Awesome GPT Image 2：世界最大 GPT Image 2 提示词库的技术架构与实战指南

@@ -5,7 +5,7 @@ slug: "lightricks-ltx-2-audio-video-foundation-model-guide"
 description: "Lightricks/LTX-2 是首个 DiT 架构的音视频联合基础模型，单模型搞定同步音视频生成、高保真、多档性能、生产级输出、API 与开源访问。本文拆解其架构、Pipelines 与 ComfyUI 接入路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LTX-2", "DiT", "音视频生成", "多模态", "扩散模型", "视频生成", "Lightricks"]
+tags: ["DiT", "多模态", "扩散模型", "视频生成"]
 ---
 
 # LTX-2 音视频联合 DiT 拆解：第一个一体化音视频基础模型

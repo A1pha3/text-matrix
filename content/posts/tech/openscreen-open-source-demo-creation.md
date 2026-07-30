@@ -5,7 +5,7 @@ slug: openscreen-open-source-demo-creation
 description: "openscreen是一款开源的demo录制工具，完全免费、无水印、商用友好，是Screen Studio的开源替代品。本文详细介绍其核心功能、技术架构、使用方法和开发指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TypeScript", "demo工具", "开源", "录屏", "屏幕录制"]
+tags: ["TypeScript", "开源"]
 ---
 
 # openscreen：开源项目演示录制工具

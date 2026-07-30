@@ -4,7 +4,7 @@ slug: "aws-agent-toolkit-for-aws-mcp-skills-plugins-guide"
 date: "2026-06-25T21:05:40+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["AWS", "MCP", "Claude Code", "Cursor", "Kiro"]
+tags: ["AWS", "MCP", "Claude Code", "Cursor"]
 description: "AWS Agent Toolkit 是 AWS 官方在 2026 年 4 月推出的 AI 编码助手增强包，把 AWS MCP Server、Skills、Rules 整合成 4 个可一键安装的插件，覆盖 Claude Code、Codex、Cursor、Kiro 等 IDE。"
 ---
 

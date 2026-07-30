@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-28
 description: "2026年5月28日 AI 新闻早报，汇总过去 24 小时内模型发布、企业动态与行业投融资的关键变化，覆盖量子位、Hacker News 等来源。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "新闻", "行业动态"]
+tags: ["行业动态"]
 hiddenFromHomePage: true
 ---
 

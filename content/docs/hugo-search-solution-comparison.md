@@ -3,7 +3,7 @@ title: "Hugo 站内搜索方案对比与迁移成本评估"
 date: 2026-04-02T12:00:00+08:00
 draft: false
 description: "对比 Lunr、Pagefind、Algolia 等 Hugo 站内搜索方案，从功能、性能、部署难度和迁移成本四个维度评估，提供选型建议。"
-tags: ["Hugo", "搜索", "Lunr", "Pagefind", "架构设计"]
+tags: ["Hugo"]
 categories: ["技术笔记"]
 ---
 

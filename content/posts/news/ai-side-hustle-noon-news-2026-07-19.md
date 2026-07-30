@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-19
 description: "2026年7月19日 AI 副业午报，精选过去 24 小时内区块链开发、模型蒸馏、AI 算法工程师、AI 全栈等远程招聘与 AI 开发实践讨论。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "远程", "区块链", "模型蒸馏"]
+tags: ["AI副业", "招聘", "远程", "区块链"]
 hiddenFromHomePage: true
 ---
 

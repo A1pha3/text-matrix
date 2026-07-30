@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-13
 description: "2026年5月13日 AI 新闻早报，汇总过去 24 小时内模型发布、企业合作与行业投融资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "模型发布", "开源工具", "程序员"]
+tags: ["模型发布", "开源工具", "程序员"]
 hiddenFromHomePage: true
 ---
 

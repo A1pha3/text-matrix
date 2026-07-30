@@ -4,7 +4,7 @@ date: 2026-07-17T02:58:33+08:00
 lastmod: 2026-07-17T02:58:33+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Bonsai", "1-bit LLM", "Ternary", "llama.cpp"]
+tags: ["llama.cpp"]
 description: "Bonsai-demo 是 PrismML 的 1-bit / Ternary LLM 本地 demo，27B/8B/4B/1.7B 通过 llama.cpp + MLX 跑在 Mac/Linux/Windows，27B 支持 vision + thinking + tool calling + MCP。"
 weight: 1
 slug: "prismml-bonsai-demo-1bit-ternary-llm"

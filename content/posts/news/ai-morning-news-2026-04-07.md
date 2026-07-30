@@ -6,7 +6,7 @@ description: "2026年4月7日AI新闻早报：Claude 订阅争议、OpenAI 上�
 draft: false
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-tags: ["AI", "Claude", "OpenAI", "Anthropic", "AI Agent"]
+tags: ["Claude", "OpenAI", "Anthropic", "AI Agent"]
 ---
 
 🦞 每日08:00自动更新

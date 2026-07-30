@@ -7,7 +7,7 @@ aliases:
 description: "pm-skills 是面向 Claude Code / Codex / Cowork 的 PM 操作系统，9 个插件覆盖 discovery / strategy / execution / GTM 全周期，68 个 skill 编码了 OST / RICE / JTBD 等真实 PM 框架，42 条 command 把它们串成端到端工作流。"
 draft: false
 categories: ["技术笔记"]
-tags: ["PM", "ClaudeCode", "ClaudeCowork", "ProductManagement", "OST", "Plugins"]
+tags: ["Claude Code"]
 ---
 
 # pm-skills：把 Teresa Torres / Marty Cagan / Alberto Savoia 的 PM 框架做成 AI 工作流，68 个 skill + 42 条 command

@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-05-22
 description: "2026年5月22日 AI副业早报，精选过去24小时内AI招聘、外包机会与独立开发赚钱案例。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "外包", "独立开发", "DeepSeek", "Agent"]
+tags: ["AI副业", "招聘", "外包", "独立开发", "DeepSeek", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

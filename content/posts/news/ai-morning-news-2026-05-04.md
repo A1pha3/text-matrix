@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-04
 description: "2026年5月4日 AI 新闻早报，汇总过去 24 小时内模型发布、企业动态、技术研究与行业人才流动的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Anthropic", "Claude", "具身智能", "开源"]
+tags: ["Anthropic", "Claude", "具身智能", "开源"]
 hiddenFromHomePage: true
 ---
 

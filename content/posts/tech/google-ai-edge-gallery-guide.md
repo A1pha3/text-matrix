@@ -5,7 +5,7 @@ slug: "google-ai-edge-gallery-guide"
 description: "Google AI Edge Gallery 是 Google 推出的本地 ML/GenAI 展示与应用平台，支持在浏览器和移动设备上运行 AI 模型。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Google AI Edge", "边缘AI", "本地部署", "ML", "GenAI", "Kotlin"]
+tags: ["本地部署", "GenAI", "Kotlin"]
 ---
 
 # Google AI Edge Gallery：本地 ML/GenAI 展示与应用平台完全指南

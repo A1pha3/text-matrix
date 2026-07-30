@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-05-01
 description: "2026年5月1日 AI 副业早报，汇总过去 24 小时内 AI 赚钱、副业创业、独立开发者相关的真实案例与实用经验。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "独立开发", "副业赚钱", "内容创作", "API中转"]
+tags: ["AI副业", "独立开发", "内容创作", "API中转"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "opendatalab-mineru-document-parsing-engine-guide"
 description: "opendatalab/MinerU 是 LLM 时代的高精度文档解析引擎，把 PDF/DOCX/PPTX/XLSX/图片解析为 Markdown/JSON。本文拆解其 pipeline / vlm-engine / hybrid 三路后端、OmniDocBench 评测定位、MCP 与多 AI 芯片支持。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MinerU", "文档解析", "OCR", "VLM", "Python"]
+tags: ["OCR", "VLM", "Python"]
 ---
 
 # MinerU 架构拆解：高精度文档解析引擎的 pipeline / vlm-engine / hybrid 三路后端与多模态输出

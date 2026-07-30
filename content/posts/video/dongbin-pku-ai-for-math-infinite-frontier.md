@@ -3,7 +3,7 @@ title: "数学还能学吗？北大董彬与 AI 时代的无尽前沿——甲�
 date: "2026-07-02T16:40:00+08:00"
 slug: "dongbin-pku-ai-for-math-infinite-frontier"
 description: "【视频精读 · 方法论说明】本文基于《甲小姐对话》董彬访谈视频（B 站 BV1cDTe6QE4p）的官方 desc 与公开学术资料综合整理，**未观看完整视频**——该 2:16:15 视频无字幕轨且未检索到公开文字稿，故所有董彬具体原话均不引用。本文用国际 AI for Math 同行的工作（DeepMind AlphaEvolve/AlphaGeometry/AlphaProof、Axiom Math 的 Lean 形式化验证、Lean 4.31 等）作为对照背景，尝试为视频中提到的 8 个核心话题提供一个有质感的解读框架。"
-tags: ["AI for Math", "形式化验证", "Lean", "Axiom Math", "DeepMind", "AlphaEvolve", "AlphaGeometry", "AlphaProof", "董彬", "北京大学", "甲小姐对话", "视频精读", "B站反写", "数学"]
+tags: ["DeepMind", "视频精读", "B站反写"]
 categories: ["视频精读"]
 author: "钳岳星君"
 ---

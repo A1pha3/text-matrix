@@ -5,7 +5,7 @@ slug: "ai-side-hustle-morning-2026-04-18"
 description: "2026年4月18日AI副业早报：觅蜂科技发布一站式物理AI数据服务平台、智元机器人万台下线、具身智能数据缺口成为行业瓶颈、AI眼镜和机器人成为就业新方向。"
 draft: false
 categories: ["行业快讯"]
-tags: ["副业", "具身智能", "数据平台", "机器人", "人形机器人", "AI就业"]
+tags: ["副业", "具身智能", "机器人", "人形机器人"]
 hiddenFromHomePage: true
 ---
 

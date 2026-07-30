@@ -5,7 +5,7 @@ slug: "stefan-jansen-machine-learning-for-trading-guide"
 description: "Stefan Jansen 的《Machine Learning for Algorithmic Trading》第 2 版配套代码库，150+ Jupyter Notebooks 覆盖 23 章、800+ 页、四大主题：数据源与特征工程、监督/无监督交易策略、文本 NLP 信号、深度与强化学习。本文详解其端到端 ML4T 工作流、可复现的 notebook 矩阵与基于 Zipline-reloaded 的回测引擎集成方式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["量化交易", "机器学习", "Python", "Zipline", "金融工程"]
+tags: ["量化交易", "机器学习", "Python"]
 ---
 
 # Stefan Jansen《Machine Learning for Trading》2nd：量化金融 ML 工程化完全指南

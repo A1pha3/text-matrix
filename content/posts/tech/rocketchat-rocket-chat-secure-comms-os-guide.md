@@ -5,7 +5,7 @@ slug: "rocketchat-rocket-chat-secure-comms-os-guide"
 description: "Rocket.Chat 是面向任务关键型组织的开源通信平台，用 Yarn 4 workspaces + Turborepo 组织上百个 TS 包，并通过 NATS/moleculer 拆微服务。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rocket.Chat", "TypeScript", "Monorepo", "微服务", "CommsOS"]
+tags: ["TypeScript", "Monorepo", "微服务"]
 ---
 
 ## 目录

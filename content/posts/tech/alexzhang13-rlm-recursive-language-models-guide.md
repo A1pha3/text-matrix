@@ -5,7 +5,7 @@ slug: "alexzhang13-rlm-recursive-language-models-guide"
 description: "alexzhang13/rlm 是 MIT OASYS 实验室开源的 Recursive Language Models 推理引擎，用 CodeAct REPL 让 LLM 在代码环境里递归调用自己处理近无限长上下文。本文拆解其 RLM 范式与多 sandbox 适配器。"
 draft: false
 categories: ["技术笔记"]
-tags: ["RLM", "CodeAct", "REPL", "长上下文", "Python", "递归推理"]
+tags: ["Python"]
 ---
 
 # RLM 推理范式拆解：用 CodeAct REPL 让 LLM 自己递归处理无限长上下文

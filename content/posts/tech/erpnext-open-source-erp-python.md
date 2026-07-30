@@ -5,7 +5,7 @@ slug: "erpnext-open-source-erp-python"
 description: "ERPNext是基于Frappe框架开发的开源ERP系统，覆盖会计、库存、项目管理、人力资源等企业核心模块，支持自托管或Frappe Cloud托管，是Python生态中功能最全面的开源ERP方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["ERPNext", "ERP", "开源", "Frappe", "Python", "企业管理"]
+tags: ["ERP", "开源", "Python", "企业管理"]
 ---
 
 ## 学习目标

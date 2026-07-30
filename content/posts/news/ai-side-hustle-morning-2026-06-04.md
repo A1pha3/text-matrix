@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-04
 description: "2026年6月4日 AI 副业早报：从 Suno 4亿美元融资看 AI 音乐变现机会、ChatGPT 化形带来 Agent 副业窗口、世界模型团队招聘热。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "Agent", "AI音乐"]
+tags: ["AI副业", "招聘", "V2EX", "AI Agent", "AI音乐"]
 hiddenFromHomePage: true
 ---
 

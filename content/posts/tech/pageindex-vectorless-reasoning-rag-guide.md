@@ -5,7 +5,7 @@ slug: "pageindex-vectorless-reasoning-rag-guide"
 description: "PageIndex 是基于推理的新型 RAG 框架，通过跳过向量数据库和文档分块，直接利用大语言模型的推理能力实现高质量检索。本文详细解析其核心原理、架构设计、MCP 集成与适用场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["RAG", "LLM", "向量数据库", "检索增强生成", "PageIndex"]
+tags: ["RAG", "LLM", "向量数据库"]
 ---
 
 ## 你会拿到什么

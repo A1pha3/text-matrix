@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-10
 description: "2026年6月10日 AI 新闻早报（补做），严格采集 06-09 08:00 至 06-10 08:00 窗口，覆盖 Anthropic 发布 Claude Fable 5/Mythos 5、Microsoft GitHub 开源工具遭供应链攻击、Amazon 员工在 Slack 上嘲讽自家 AI 产品、法官发现原被告双方均用 AI 直接撤销庭审、Apple AI 自动改密码的安全风险、内蒙吉瓦级 AI 算力与电力一体化、理想智驾一号位创立昆仑行具身智能、Nextie 4B 认知模型、腾讯 WorkBuddy 企业版、DeepSeek 招 IDC 工程师自建 GW 数据中心、小红书 RED Skill、AppLovin CEO 演讲、中国 2950 亿美元 AI 投资计划等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Anthropic", "Claude", "Microsoft", "Amazon", "Apple", "DeepSeek", "理想汽车", "昆仑行", "腾讯", "WorkBuddy", "小红书", "Nextie", "认知模型", "内蒙", "远景", "AppLovin", "Bloomberg", "Meta", "EU"]
+tags: ["Anthropic", "Claude", "Microsoft", "Apple", "DeepSeek", "腾讯", "小红书", "Meta"]
 hiddenFromHomePage: true
 ---
 

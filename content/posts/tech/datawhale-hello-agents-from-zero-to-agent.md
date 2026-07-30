@@ -5,7 +5,7 @@ slug: "datawhale-hello-agents-from-zero-to-agent"
 description: "hello-agents 是 Datawhale 出品的 44K 星智能体教程，覆盖从基础理论到多智能体系统的完整学习路径。15 章内容包括 ReAct/Reflection 范式、低代码平台、AutoGen/LangGraph 框架、MCP/A2A 协议、Agentic RL 训练与 3 个综合实战项目。本文梳理该教程的主要脉络与关键知识点。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Datawhale", "ReAct", "MCP", "Agentic RL", "多智能体"]
+tags: ["AI Agent", "Datawhale", "ReAct", "MCP", "多智能体"]
 ---
 
 ## 学习目标

@@ -3,7 +3,7 @@ title: "VibeVoice：微软开源前沿语音AI模型家族，ASR支持60分钟�
 date: "2026-04-29T11:30:00+08:00"
 lastmod: 2026-04-29T11:30:00+08:00
 draft: false
-tags: ["语音AI", "微软", "ASR", "TTS", "开源", "VibeVoice"]
+tags: ["语音AI", "微软", "ASR", "TTS", "开源"]
 categories: ["技术笔记"]
 description: "VibeVoice 是微软开源的前沿语音AI模型家族，包含ASR语音识别（支持60分钟长音频、50+语言）和Realtime实时语音合成，已被接纳为ICLR 2026 Oral论文。"
 slug: vibevoice-microsoft-voice-ai

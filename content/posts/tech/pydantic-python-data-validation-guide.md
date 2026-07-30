@@ -5,7 +5,7 @@ slug: "pydantic-python-data-validation-guide"
 description: "从类型提示如何驱动验证、V2 为什么用 Rust 重写 pydantic-core，到 FastAPI 请求的完整验证路径、严格模式取舍与常见踩坑，一篇讲清 Pydantic 的工程定位与使用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Pydantic", "Python", "数据验证", "类型提示", "FastAPI"]
+tags: ["Pydantic", "Python", "FastAPI"]
 ---
 
 Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAPI、SQLModel、LangChain 这些下游框架的验证瓶颈被打开了。V1 时代，一个高 QPS 接口里 30%-50% 的 CPU 可能花在 Python 层的字典遍历和类型检查上；V2 把这部分压到 Rust 后，下游框架可以放心地把请求模型做得更复杂，而不必担心验证开销吃掉吞吐。迁移文档里能看到的是 API 表面更一致，看不到的是验证开销从"必须优化掉的成本"变成了"可以放心使用的基建"。

@@ -4,7 +4,7 @@ date: "2026-04-13T10:30:00+08:00"
 slug: mempalace-ai-memory-system-guide
 description: "深度解析MemPalace：基于记忆宫殿原理的AI记忆系统，采用Wings/Halls/Rooms结构组织记忆。本地ChromaDB向量检索与SQLite知识图谱双引擎驱动，96.6% LongMemEval R@5，零API调用，完全本地运行。"
 categories: ["技术笔记"]
-tags: ["AI记忆", "记忆宫殿", "知识图谱", "MCP", "本地向量数据库"]
+tags: ["AI记忆", "知识图谱", "MCP"]
 draft: false
 ---
 

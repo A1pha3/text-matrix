@@ -6,7 +6,7 @@ draft: false
 slug: "apache-maven-build-tool-today-trending-guide"
 description: "Apache Maven 核心仓库今日再登 GitHub Trending，单日 +53 Stars。本文拆解 Maven 4.x 主线：CLI 重写、Wrapper 默认化、Resilience4j 集成、CI 构建缓存改进，以及为什么一个 21 年的工具还在被维护。"
 categories: ["技术笔记"]
-tags: ["Maven", "Java", "构建工具", "Gradle", "Apache"]
+tags: ["Java", "Apache"]
 author: "text-matrix"
 ---
 

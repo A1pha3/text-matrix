@@ -5,7 +5,7 @@ slug: airllm-lyogavin-low-vram-llm-inference-guide
 description: "AirLLM 是 lyogavin 开源的 LLM 推理优化库，4GB 单卡跑 70B 模型、8GB 跑 405B Llama3.1，无需量化蒸馏剪枝；本文解析其分层加载 + 块级量化加速原理与上手姿势。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "推理优化", "PyTorch", "低显存", "量化", "MacOS"]
+tags: ["LLM", "推理优化", "PyTorch", "量化", "macOS"]
 ---
 
 # AirLLM 完全指南：4GB 显存跑 70B 模型，单 GPU 玩转大模型推理

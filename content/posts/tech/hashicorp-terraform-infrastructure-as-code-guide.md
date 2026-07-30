@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["terraform", "iac", "基础设施即代码", "devops", "hashicorp"]
+tags: ["DevOps"]
 description: "Terraform 用声明式 HCL 配置 + provider 插件架构 + 状态图（state graph）把多云基础设施编排统一在一个工具里。本文拆解其核心机制、provider 生态、State 后端、模块化体系、与 Pulumi/CDK 的工程取舍。"
 ---
 

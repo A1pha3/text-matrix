@@ -5,7 +5,7 @@ slug: "superpowers-coding-agent-development-methodology"
 description: "Superpowers是一个软件开发方法论+插件系统，为Claude Code、Codex、Cursor等Coding Agent注入结构化开发流程。包含6个可自动触发的技能（brainstorming→spec→plan→TDD→review），让Agent在写代码前先理解需求、拆解任务、写出可验证的测试，实现数小时自主工作不断线。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Coding Agent", "Superpowers", "开发方法论", "TDD", "Claude Code"]
+tags: ["AI Coding Agent", "Superpowers", "TDD", "Claude Code"]
 ---
 
 # Superpowers：让 Coding Agent 拥有完整开发方法论的插件系统

@@ -5,7 +5,7 @@ slug: "oh-my-pi-coding-agent-deep-dive"
 description: "oh-my-pi（简称 omp）是一个终端 Coding Agent，核心差异不在模型，而在工具链层：hashline 锚定编辑消除格式摩擦、Rust 内联原语去掉 fork 开销、32 个内置工具覆盖读、写、搜、LSP、调试、子 Agent 全流程。本文深入解析其架构设计与 benchmark 数据背后的实质。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Coding Agent", "oh-my-pi", "Rust", "TypeScript", "LSP", "工具链"]
+tags: ["AI Agent", "Coding Agent", "Rust", "TypeScript", "LSP", "工具链"]
 ---
 
 ## 先说判断

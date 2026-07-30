@@ -5,7 +5,7 @@ slug: "puppeteer-chrome-firefox-automation-devtools-api-guide"
 description: "Puppeteer 是 94.6k stars 的浏览器自动化 Node.js 库，提供 Chrome/Firefox 的高级 API，基于 DevTools Protocol 和 WebDriver BiDi。本文从协议抽象、安装模式、locator API、Chrome DevTools MCP 集成等维度深度拆解。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Puppeteer", "浏览器自动化", "DevTools Protocol", "Chrome", "E2E测试"]
+tags: ["Puppeteer", "浏览器自动化"]
 ---
 
 > **目标读者**：在 Node.js / TypeScript 工程里需要驱动浏览器做爬虫、E2E 测试、截图、自动化操作的工程师，以及想把现有自动化栈接入 AI Agent 的架构师。

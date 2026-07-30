@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-11
 description: "2026年6月11日 AI 新闻早报，严格采集 06-10 08:00 至 06-11 08:00 窗口，覆盖国家队下场做 AI 虚拟细胞（百曜科技融资）、小鹏机器人核心产品一号位施晓鑫离职、抖音征召 AI 视频英才、Anthropic 推出 Mythos 级 30 天数据保留政策、网络安全研究者不满 Fable 模型护栏、Dario Amodei 谈 AI 指数增长与政治制度脱节、Google 开源扩散语言模型 DiffusionGemma、Apache Burr 进入 Apache 孵化器等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Anthropic", "DarioAmodei", "Google", "DiffusionGemma", "Apache", "Burr", "36kr", "量子位", "抖音", "虚拟细胞", "百曜科技", "小鹏", "机器人", "Mythos", "Fable"]
+tags: ["Anthropic", "Dario Amodei", "Google", "Apache", "36kr", "量子位", "抖音", "机器人", "Mythos"]
 hiddenFromHomePage: true
 ---
 

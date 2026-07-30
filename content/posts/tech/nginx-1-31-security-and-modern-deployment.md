@@ -7,7 +7,7 @@ aliases:
 description: "Nginx 1.31.1 mainline 修复了 ngx_http_rewrite 模块的 buffer overflow 漏洞（CVE-2026-XXXX）。本文解读这个 23 年历史项目的现代部署方式、与 Caddy/Traefik 的对比，以及在 AI Agent 网关场景的用法。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Nginx", "反向代理", "Web 服务器", "CVE", "DevOps"]
+tags: ["DevOps"]
 ---
 
 # Nginx 1.31 安全修复与现代部署：30 岁反向代理的常青之道

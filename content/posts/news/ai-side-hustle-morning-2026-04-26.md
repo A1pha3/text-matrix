@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-04-26
 description: "2026年4月26日AI副业早报，汇总过去24小时内AI赚钱、副业、求职相关的热门帖子和独立开发动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "独立开发", "远程工作", "V2EX", "求职招聘"]
+tags: ["AI副业", "独立开发", "远程工作", "V2EX"]
 hiddenFromHomePage: true
 ---
 

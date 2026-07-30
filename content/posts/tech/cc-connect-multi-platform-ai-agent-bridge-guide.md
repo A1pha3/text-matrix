@@ -5,7 +5,7 @@ slug: cc-connect-multi-platform-ai-agent-bridge-guide
 description: "CC-Connect 是一个将 AI coding agent 连接到多种聊天平台的工具，支持 Telegram、Discord、Slack 等平台。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "Telegram", "Discord", "Slack"]
+tags: ["AI Agent", "Discord"]
 ---
 
 ## 学习目标

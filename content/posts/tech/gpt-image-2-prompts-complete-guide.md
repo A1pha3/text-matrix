@@ -5,7 +5,7 @@ slug: "gpt-image-2-prompts-complete-guide"
 description: "基于 EvoLinkAI、YouMind、freestylefly 与 Anil-matcha 四个开源仓库，系统拆解 GPT Image 2 提示词的选库方法、结构化写法、高频场景模板与常见误区。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI绘图", "GPT-Image-2", "提示词工程", "图像生成", "OpenAI"]
+tags: ["提示词工程", "图像生成", "OpenAI"]
 ---
 
 > **目标读者**：已经在用 AI 生图，想把提示词从“能出图”提升到“更稳定、更可复用”的设计师、运营、独立开发者与内容创作者

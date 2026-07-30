@@ -6,7 +6,7 @@ description: "Emergent Garden 2026-06 视频精读（据英文字幕逐句重建
 draft: false
 
 categories: ["视频精读"]
-tags: ["RecursiveSelfImprovement", "Karpathy", "AutoResearch", "EmergentGarden", "Anthropic", "fractalsearch", "Mandelbrot", "RSI"]
+tags: ["RecursiveSelfImprovement", "Karpathy", "AutoResearch", "Anthropic", "RSI"]
 hiddenFromHomePage: true
 ---
 

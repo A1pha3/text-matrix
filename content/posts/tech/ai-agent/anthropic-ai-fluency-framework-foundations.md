@@ -7,7 +7,7 @@ aliases:
 description: "基于 Anthropic 官方课程整理的 AI 通识指南，讲解 4D 框架（委托、描述、判断、审慎），帮助读者提升与大语言模型协作的能力。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "AI通识", "提示词", "Anthropic"]
+tags: ["Claude", "提示词", "Anthropic"]
 ---
 
 # Anthropic AI 通识课：4D 框架——与 AI 协作的核心能力

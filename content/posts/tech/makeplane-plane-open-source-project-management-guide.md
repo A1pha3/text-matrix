@@ -5,7 +5,7 @@ slug: "makeplane-plane-open-source-project-management-guide"
 description: "makeplane/plane 是开源项目管理平台，提供 Jira/Linear/Monday/ClickUp 的开源替代方案。本文拆解其 React + Django + NestJS 三端架构、God Mode 自托管治理、Monorepo 工作流。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Plane", "项目管理", "React", "Django", "NestJS", "PostgreSQL"]
+tags: ["React", "NestJS", "PostgreSQL"]
 ---
 
 # Plane 架构拆解：开源项目管理平台的 React + Django + NestJS 三端分层实现

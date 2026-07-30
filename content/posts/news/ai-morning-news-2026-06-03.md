@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-03
 description: "2026年6月3日 AI 新闻早报。Opus 4.8 烧 1 万美元冲顶 ARC-AGI-3、Anthropic 递表 S-1 但旗舰被吐槽、谷歌 800 亿美元 AI 基建融资、微软发布 MAI-Code-1-Flash、字节开源 Bernini 视频编辑框架。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Anthropic", "Opus", "英伟达", "豆包", "开源"]
+tags: ["Anthropic", "英伟达", "豆包", "开源"]
 hiddenFromHomePage: true
 ---
 

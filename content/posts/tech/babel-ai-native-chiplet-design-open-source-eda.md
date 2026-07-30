@@ -5,7 +5,7 @@ slug: "babel-ai-native-chiplet-design-open-source-eda"
 description: "Babel是amoslee2026开源的AI原生Chiplet设计流程，基于开源EDA工具链（Yosys/OpenSTA/Magic/Netgen等）和5-agent流水线架构，通过Claude Code实现从PRD到GDSII的全流程自动化。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Chiplet", "EDA", "开源工具链", "AI Agent", "芯片设计"]
+tags: ["AI Agent"]
 ---
 
 # Babel：开源 EDA 工具链驱动的 AI 原生 Chiplet 设计流程

@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-12
 description: "2026年6月12日 AI 副业早报，精选过去 24 小时 V2EX 极客DIY 4 条 + Hacker News Show HN/Ask HN 7 条，覆盖 Claude Code Linux 桌面版、AI 视频提示词反推小站、本地优先 AI 财务管理 App、辞职妈妈搭自动化、AI Agent 基建爆发、Agent 安全/可观测/记忆栈、VC 路演工具、独立思考的下一个 high value profession 等 11 条。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "HackerNews", "ClaudeCode", "独立开发", "Agent", "IndieHacker"]
+tags: ["AI副业", "V2EX", "HackerNews", "Claude Code", "独立开发", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

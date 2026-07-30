@@ -10,7 +10,7 @@ aliases:
 description: "ShadowBroker 是一个开源实时地理空间情报平台，聚合航空、航海、卫星、冲突、无线电等 60+ 公共数据源于单一暗色地图界面。本文从入门到精通全面解析其功能特性、架构设计、Docker 部署、AI 智能体集成与隐私安全模型。"
 draft: false
 categories: ["技术笔记"]
-tags: ["ShadowBroker", "OSINT", "威胁情报", "Python", "Next.js", "FastAPI", "MapLibre", "AI Agent", "开源情报"]
+tags: ["OSINT", "Python", "Next.js", "FastAPI", "AI Agent"]
 ---
 
 # ShadowBroker：开源全球威胁情报平台，60+ 数据源实时聚合

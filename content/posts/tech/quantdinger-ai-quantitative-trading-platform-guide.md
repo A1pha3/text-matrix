@@ -5,7 +5,7 @@ slug: "quantdinger-ai-quantitative-trading-platform-guide"
 description: "QuantDinger 是一个开源自托管 AI 量化操作系统，集 AI 市场研究、Python 策略开发、回测与实盘交易于一体，支持加密货币、IBKR 股票和 MT5 外汇。一键 Docker 部署，适合想完整掌控策略研发到执行全流程的量化开发者与团队。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "量化交易", "Python", "Docker", "加密货币", "IBKR", "MT5"]
+tags: ["量化交易", "Python", "Docker", "加密货币"]
 ---
 
 ## 学习目标

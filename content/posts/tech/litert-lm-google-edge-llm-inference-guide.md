@@ -5,7 +5,7 @@ slug: "litert-lm-google-edge-llm-inference-guide"
 description: "介绍 Google LiteRT-LM 边缘设备 LLM 推理框架，涵盖核心特性、技术架构、多语言API、工具调用、多模态能力和全平台部署实践。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LiteRT-LM", "Google AI Edge", "LLM推理", "边缘计算", "Android", "Gemma"]
+tags: ["LLM推理", "Android", "Gemma"]
 ---
 
 # LiteRT-LM：Google 生产级边缘设备 LLM 推理框架指南

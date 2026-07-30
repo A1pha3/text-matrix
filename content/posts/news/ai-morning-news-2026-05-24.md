@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-24
 description: "2026年5月24日 AI 新闻早报，汇总过去 24 小时内模型发布、企业动态、行业格局与产品更新。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "DeepSeek", "量子位", "具身智能", "AIGC", "OpenAI", "SpaceX"]
+tags: ["DeepSeek", "量子位", "具身智能", "AIGC", "OpenAI", "SpaceX"]
 hiddenFromHomePage: true
 ---
 

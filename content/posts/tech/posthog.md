@@ -5,7 +5,7 @@ slug: posthog-all-in-one-product-platform
 description: "PostHog 是一个开源 all-in-one 产品工程平台，提供产品分析、会话回放、Feature Flags、实验、错误追踪等能力。本文深度解析其 33k stars 的技术架构、产品矩阵和开源方法论。"
 draft: false
 categories: ["技术笔记"]
-tags: ["PostHog", "产品分析", "Feature Flags", "Session Replay", "Python", "开源"]
+tags: ["Python", "开源"]
 ---
 
 # PostHog：开源 all-in-one 产品工程平台，33k stars 的全栈方法论

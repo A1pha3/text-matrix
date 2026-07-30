@@ -5,7 +5,7 @@ slug: "mukul975-anthropic-cybersecurity-skills-guide"
 description: "mukul975 维护的开源项目把 817 个网络安全技能按 agentskills.io 标准封装,统一映射到 MITRE ATT&CK、NIST CSF 2.0、MITRE ATLAS、D3FEND、AI RMF 和 MITRE F3 六个框架,支持 Claude Code、Cursor、Codex CLI 等 26+ AI 平台。本文拆解其渐进式披露机制、单技能目录结构与跨框架映射设计,并以 Volatility3 内存取证为案例展示一个安全任务如何被 AI Agent 拆解执行。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "网络安全", "MITRE ATT&CK", "agentskills.io", "开源工具"]
+tags: ["AI Agent", "网络安全", "MITRE ATT&CK", "开源工具"]
 ---
 
 ## 一句话判断

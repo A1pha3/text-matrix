@@ -7,7 +7,7 @@ aliases:
 description: "Claude Code Harness为Claude Code设计了一套有约束的交付流程：写Spec→实施→验证→独立Review→打包证据，支持Go原生内核和5个Skill动词，覆盖从首次提交到PR发布的完整交付闭环。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI编程", "工作流", "Skill", "软件开发"]
+tags: ["Claude Code", "AI编程", "工作流", "Skill"]
 ---
 
 # Claude Code Harness：给 AI 编程助手加一套有约束的交付流程

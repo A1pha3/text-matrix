@@ -5,7 +5,7 @@ slug: senparc-weixin-wechat-net-sdk-guide
 description: "Senparc.Weixin 是目前使用率最高的微信 .NET SDK。本文从入门到精通，涵盖架构分析、原理深度解析、消息处理、微信支付、小程序开发、分布式缓存等全方位讲解。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Senparc.Weixin", "微信SDK", ".NET", "CSharp", "微信公众号"]
+tags: [".NET"]
 ---
 
 # Senparc.Weixin（微信 .NET SDK）从入门到精通：架构、原理与实战开发

@@ -5,7 +5,7 @@ slug: "agent-skill-openai-protocol-compilation"
 description: "Skill 是一个纯粹的应用层抽象，而非协议层概念。本文通过 7 步协议交互拆解 Skill 的完整生命周期，揭示 Skill 如何被 Cursor 等 IDE 编译成 system prompt 片段、tool schema 和多轮 tool calling 循环的组合。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Agent Skill", "OpenAI协议", "LLM", "HTTP", "Cursor", "Tool Calling"]
+tags: ["Agent Skills", "LLM", "HTTP", "Cursor"]
 ---
 
 # Agent Skill 的 HTTP 底层：Skill 如何被编译成 OpenAI 协议原语

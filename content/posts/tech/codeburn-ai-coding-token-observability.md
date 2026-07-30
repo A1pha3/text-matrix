@@ -5,7 +5,7 @@ slug: "codeburn-ai-coding-token-observability"
 description: "本文从问题动机、架构设计、数据采集原理、任务分类机制等维度，对 AI 编码 Token 可视化工具 CodeBurn 进行了深度剖析，涵盖交互式 TUI 仪表盘、多 Provider 支持、One-Shot 成功率等核心功能的完整使用指南与开发扩展路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Claude Code", "Cursor", "Token", "开发者工具", "TypeScript"]
+tags: ["Claude Code", "Cursor", "Token", "TypeScript"]
 ---
 
 # CodeBurn：AI 编码 Token 消耗可视化仪表盘 ⭐⭐⭐ 进阶分析

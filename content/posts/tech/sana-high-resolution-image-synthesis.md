@@ -4,7 +4,7 @@ date: "2026-05-18T19:56:00+08:00"
 slug: "sana-high-resolution-image-synthesis"
 description: "SANA是NVIDIA实验室开源的高效扩散模型系列，支持最高4K分辨率文生图，比Flux-12B模型小20倍、快100倍，同时保持领先的生成质量，已被ICLR 2025/2026接收为Oral论文。"
 categories: ["技术笔记"]
-tags: ["扩散模型", "图像生成", "线性注意力", "DiT", "NVlabs", "高分辨率"]
+tags: ["扩散模型", "图像生成", "DiT"]
 ---
 
 # SANA：线性扩散 Transformer 驱动的高分辨率图像生成

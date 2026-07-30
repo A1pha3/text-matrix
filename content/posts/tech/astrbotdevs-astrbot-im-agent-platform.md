@@ -2,7 +2,7 @@
 title: "AstrBot：让 AI Agent 落地 QQ/飞书/钉钉/Slack 的全平台桥接层"
 date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
-tags: ["agent", "im-bridge", "python", "mcp", "chatbot"]
+tags: ["AI Agent", "Python", "MCP"]
 description: "AstrBot 是 36K+ stars 的国产开源 Agent 桥接框架，把 LLM + Agent + MCP + 插件体系接到 QQ、飞书、钉钉、Slack 等 IM 上，本文拆它的桥接架构、Agent Sandbox 和插件市场。"
 ---
 

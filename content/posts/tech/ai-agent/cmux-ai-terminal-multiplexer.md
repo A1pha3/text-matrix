@@ -7,7 +7,7 @@ aliases:
 description: "深度解读 mana flow.ai 的 cmux：11k Stars 的 AI 终端多路复用器，整合 Claude AI、Skills 系统、远程 SSH、工作流自动化，支持 26+ 语言本地化。"
 draft: false
 categories: ["技术笔记"]
-tags: ["cmux", "终端", "Claude", "多路复用器", "macOS", "Ghostty", "AI工作流"]
+tags: ["终端", "Claude", "macOS", "AI工作流"]
 ---
 
 # cmux：11k Stars 的 AI 终端多路复用器，让终端成为 AI 工作流中心

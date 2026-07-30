@@ -5,7 +5,7 @@ slug: "langfuse-llm-engineering-platform"
 description: "Langfuse 是一个开源 LLM 工程平台，帮助团队协作开发、监控、评估和调试 AI 应用。本文从可观测性、提示词管理、评估体系、数据集架构、ClickHouse 存储层五个维度，系统解析这个被 YC 孵化的 28K Stars 项目的工程设计与技术路线。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLMOps", "可观测性", "Langfuse", "OpenTelemetry", "ClickHouse", "Y Combinator", "AI工程", "提示词管理", "评估", "数据集"]
+tags: ["可观测性", "Langfuse", "ClickHouse", "AI工程"]
 ---
 
 # Langfuse 深度解析：YC 孵化的开源 LLM 工程平台，如何重新定义 AI 应用的可观测性与迭代闭环

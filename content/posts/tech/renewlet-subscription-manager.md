@@ -5,7 +5,7 @@ slug: "renewlet-self-hosted-subscription-manager"
 description: "Renewlet 是一个开源自托管订阅管理工具，支持同时管理 SaaS、AI 工具、云服务和开发工具的订阅信息、续费提醒和支出统计，前端用 React 19，后端用 Go + PocketBase，单容器一键部署。"
 draft: false
 categories: ["技术笔记"]
-tags: ["订阅管理", "自托管", "Docker", "PocketBase", "Go", "React", "SaaS"]
+tags: ["自托管", "Docker", "Go", "React", "SaaS"]
 ---
 
 ## 学习目标

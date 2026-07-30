@@ -5,7 +5,7 @@ date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["bun", "javascript-runtime", "nodejs", "rust", "javascriptcore", "性能优化"]
+tags: ["Bun", "Node.js", "Rust", "性能优化"]
 description: "Bun 把 runtime、包管理器、bundler、test runner 压缩成一个二进制。本文拆 Bun 的架构取舍、JavaScriptCore 选择、bun install 的二进制 lockfile、与 Node.js 的兼容边界。"
 ---
 

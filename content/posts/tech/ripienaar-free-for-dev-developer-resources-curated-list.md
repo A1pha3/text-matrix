@@ -5,7 +5,7 @@ slug: "ripienaar-free-for-dev-developer-resources-curated-list"
 description: "free-for-dev 不是代码项目，是一份聚焦基础设施开发者的 SaaS/PaaS/IaaS 免费 tier 清单，1600+ 人贡献、10 年仍在逐条维护。本文拆解它的收录门槛、PR 流程、anti-AI 政策与典型分类，并讨论中文开发者该如何用以及免费 tier 的真实局限。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GitHub", "SaaS", "DevOps", "免费资源", "awesome-list"]
+tags: ["GitHub", "SaaS", "DevOps", "Awesome List"]
 ---
 
 # ripienaar/free-for.dev：一份给 DevOps 用的 SaaS 免费 Tier 检索表，11 年还在更新

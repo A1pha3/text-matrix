@@ -4,7 +4,7 @@ slug: "wechat-article-to-markdown-conversion-guide"
 date: "2026-04-08T13:05:00+08:00"
 lastmod: 2026-04-08T13:05:00+08:00
 categories: ["技术笔记"]
-tags: ["Python", "微信", "Markdown", "爬虫", "Camoufox", "反检测"]
+tags: ["Python", "微信", "Markdown", "爬虫"]
 description: "WeChat Article to Markdown 是一个 Python 编写的工具，用于抓取微信公众号文章并转换为干净的 Markdown 格式。支持反检测抓取、图片本地化、代码高亮保留，可作为 AI Agent Skill 使用。"
 draft: false
 ---

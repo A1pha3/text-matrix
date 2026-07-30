@@ -5,7 +5,7 @@ slug: "ecc-harness-native-agentic-operator-system"
 description: "从 skills/instincts/memory 的三层操作符体系、跨 Codex/Claude Code/Cursor/OpenCode/Gemini/Zed/Copilot 的统一抽象到 security scanning 与 research-first development 的工作流内嵌，逐层拆解 affaan-m/ecc 的设计——为什么这个 182K Stars 的仓库把自己定义为「harness-native operator system」而不是「prompt 集合」。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "工作流", "Skills", "MCP", "开源项目深拆", "ECC", "Cursor", "Claude Code"]
+tags: ["AI Agent", "工作流", "Skills", "MCP", "开源项目深拆", "Cursor", "Claude Code"]
 toc: true
 ---
 

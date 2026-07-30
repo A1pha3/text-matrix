@@ -5,7 +5,7 @@ slug: grafana-grafana-open-source-observability-platform-guide
 description: "Grafana 已经从单一 dashboard 工具演化成数据源、面板、告警、探索四模块协同的可观测性平台。本文从架构、模块边界、OSS/Enterprise/Cloud 划分、与 Prometheus/Loki/Tempo 栈的协同关系四个角度重新理解它。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Grafana", "可观测性", "Prometheus", "Loki", "开源"]
+tags: ["可观测性", "开源"]
 ---
 
 # Grafana：开源可观测性平台不是 dashboard 工具，理解它的边界比记住功能更重要

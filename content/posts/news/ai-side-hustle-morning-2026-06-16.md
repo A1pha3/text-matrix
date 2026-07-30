@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-16
 description: "2026年6月16日 AI 副业早报：过去 24h 内 V2EX 蓝果汁 AI 教育产品招协作者、上海外企 AI Full-Stack 岗、渣打银行广州 AI 岗内推、北京 AI Native 美资招人、远程 AI 采购员、一人公司讨论；Reddit SideProject FreeWeights 隐私本地 AI 聊天、AISEORadar AI 搜索情报平台、DoMind 5000 用户 0 VC 经验、Wispr Flow 开源替代、ChatGPT 封号申诉指南。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "HackerNews", "招聘", "远程工作", "AI教育", "独立开发", "side project", "AI Agent", "OnePersonSaaS", "ChatGPT申诉"]
+tags: ["AI副业", "V2EX", "Reddit", "HackerNews", "招聘", "远程工作", "AI教育", "独立开发", "Side Project", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

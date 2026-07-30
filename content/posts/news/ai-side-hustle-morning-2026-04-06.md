@@ -5,7 +5,7 @@ slug: "ai-side-hustle-morning-2026-04-06"
 description: "汇总V2EX等平台上AI相关工作机会、创业组队信息及职场讨论，涵盖AI Agent创业、大模型应用开发、远程工作等话题。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI工作", "创业组队", "远程工作", "V2EX", "大模型"]
+tags: ["远程工作", "V2EX", "LLM"]
 hiddenFromHomePage: true
 ---
 

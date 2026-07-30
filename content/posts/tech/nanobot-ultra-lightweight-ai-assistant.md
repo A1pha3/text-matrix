@@ -5,7 +5,7 @@ slug: nanobot-ultra-lightweight-ai-assistant
 description: "Nanobot 是超轻量级个人 AI 助手，本文档从入门到精通涵盖原理分析、架构设计、多平台支持配置和开发扩展。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Nanobot", "AI助手", "LLM", "ChatBot", "多平台"]
+tags: ["AI助手", "LLM"]
 ---
 
 # Nanobot：超轻量级个人 AI 助手

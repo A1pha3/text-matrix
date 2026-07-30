@@ -5,7 +5,7 @@ slug: "t2i-l2p-latent-potential-pixel-generation"
 description: "腾讯音视频实验室开源的 L2P 项目，将 latent-space 扩散模型（如 Z-Image-Turbo）的知识通过参数高效微调迁移到 pixel-space 端到端生成，在 1K 分辨率下实现高质量图像合成，训练数据需求和计算开销均显著低于从零训练。"
 draft: false
 categories: ["技术笔记"]
-tags: ["文生图", "扩散模型", "腾讯", " latent-space", "pixel-space", "参数高效微调"]
+tags: ["文生图", "扩散模型", "腾讯"]
 ---
 
 ## 项目概览

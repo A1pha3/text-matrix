@@ -5,7 +5,7 @@ slug: "can1357-oh-my-pi-hash-anchored-terminal-coding-agent-guide"
 description: "can1357/oh-my-pi（omp）是 14.5k+ Stars 的终端 AI 编程 Agent，fork 自 Mario Zechner 的 pi-mono。它用 hashline 锚定编辑把 str_replace 的失败模式（whitespace 不一致、anchor 漂移、整段重打）从根上拆掉；用 32 个工具 + 14 LSP + 28 DAP + ~55k 行 Rust 内核构建\"Agent 真的能调的工具\"。文章拆 hashline 的 [PATH#TAG] 格式、SWAP/INS/DEL 操作符、与同类 Agent 的精度/成本对比、以及在生产 Agent 中的适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["oh-my-pi", "hashline", "AI Coding Agent", "终端 Agent", "Rust", "TypeScript", "LSP", "DAP", "MCP", "工具调用"]
+tags: ["AI Coding Agent", "Rust", "TypeScript", "LSP", "MCP", "工具调用"]
 ---
 
 # oh-my-pi：把 hash-anchored 编辑做进终端 AI 编程 Agent

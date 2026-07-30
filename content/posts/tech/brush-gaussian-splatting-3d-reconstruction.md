@@ -7,7 +7,7 @@ aliases:
 description: "Brush 是一个基于 Rust 和 Burn ML 框架构建的 Gaussian Splatting 3D 重建引擎，支持 macOS、Windows、Linux、Android 和浏览器多平台运行，通过 WebGPU 实现跨设备渲染能力。"
 draft: false
 categories: ["技术笔记"]
-tags: ["3D重建", "Gaussian-Splatting", "Rust", "WebGPU", "Burn", "开源"]
+tags: ["Rust", "WebGPU", "开源"]
 ---
  
 ## 快速信息卡

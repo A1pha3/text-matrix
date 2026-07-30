@@ -5,7 +5,7 @@ slug: "ai-security-technical-learning-notes"
 description: "系统整理AI安全技术核心内容，涵盖对齐技术、评估与红队、隐私保护与对抗鲁棒性、安全框架、治理与合规等关键领域，并提供学习路径与实用建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI安全", "对齐技术", "红队测试", "隐私保护", "合规治理"]
+tags: ["AI安全", "隐私保护"]
 ---
 
 # AI 安全技术学习笔记

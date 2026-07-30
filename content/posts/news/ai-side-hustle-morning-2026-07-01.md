@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-07-01
 description: "2026年7月1日 AI 副业早报，24h 内值得关注的招聘与副业机会：DeepSeek 33 岗位大招聘+不要大厂履历、AI 求职对轰催生独立开发者工具、Claude Code 后台子智能体升级、Cursor iOS 移动端 75% 折扣、Claude Code 之父职场 MBTI 5 类人、AI 失业潮下的富人思维自救、工程师岗位消失+20-42% 代码 AI 生成、OpenAI Codex 宏键盘联名硬件副业。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "AI招聘", "ClaudeCode", "Cursor", "DeepSeek", "AI工具", "独立开发"]
+tags: ["AI副业", "AI招聘", "Claude Code", "Cursor", "DeepSeek", "AI工具", "独立开发"]
 hiddenFromHomePage: true
 ---
 

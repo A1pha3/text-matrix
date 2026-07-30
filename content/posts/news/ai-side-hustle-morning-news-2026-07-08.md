@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-news-2026-07-08
 description: "2026年7月8日 AI 副业早报：V2EX AI Agent 额度缩减讨论持续、Claude + ChatGPT 把订阅阈值拉高、Codex 用户晒 GPT-5.5-high/GPT-5.4-high 使用、AI Coding 工具公司报销 vs 自费、AI 中转站模型比价站又扎堆出现、App 订阅全球价格查询独立站、独立开发者纠结网站 app 化、AI 服务器运维 + SSH 给 AI 一把嗦路线讨论。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "ClaudeCode", "Codex", "AI订阅", "AI中转站", "独立开发", "外包", "Agent"]
+tags: ["AI副业", "V2EX", "Claude Code", "Codex", "独立开发", "外包", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

@@ -9,7 +9,7 @@ aliases:
 description: "OpenHuman 是一个 Rust 构建的桌面 AI 助理，基于 Memory Tree 和 Obsidian Wiki 实现本地持久记忆，通过 OAuth 一键接入 118+ 第三方服务（ Gmail、Notion、GitHub 等），内置 TokenJuice 智能压缩模型将 token 成本降低 80%。支持语音、Google Meet 会议参与，开源免费。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Rust", "本地优先", "Personal AI", "记忆系统"]
+tags: ["AI Agent", "Rust", "本地优先", "记忆系统"]
 ---
 
 # OpenHuman：Rust 构建的本地优先个人 AI 超级助理

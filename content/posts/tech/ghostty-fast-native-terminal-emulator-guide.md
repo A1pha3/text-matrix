@@ -5,7 +5,7 @@ slug: "ghostty-fast-native-terminal-emulator-guide"
 description: "全面介绍49.9k Stars的Ghostty终端模拟器，详解Zig+Swift/GTK多线程架构、GPU加速渲染、SIMD终端解析器、原生平台集成（Metal/GTK）、libghostty嵌入式开发、配置指南和性能优化。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Ghostty", "终端模拟器", "Zig", "Swift", "GPU渲染", "终端", "libghostty", "跨平台"]
+tags: ["Zig", "Swift", "终端", "跨平台"]
 ---
 
 # Ghostty：49.9k Stars 快速原生终端模拟器完全指南

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-04
 description: "2026年7月4日 AI 新闻早报，覆盖过去 24 小时可灵 30 亿美元融资、Etched 50 亿美元估值、阿里禁用 Claude、Anthropic 主导航 AI 芯片、Meta Watermelon 新模型、DeepSeek DSpark 移植苹果、阿里达摩院 AI 发现四种全新超导体、Claude Fable 5 回归差评以及 AURA CellOS 把世界模型搬进细胞。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "融资", "AI Infra", "算力", "世界模型"]
+tags: ["融资", "AI Infra", "世界模型"]
 hiddenFromHomePage: true
 ---
 

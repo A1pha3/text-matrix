@@ -8,7 +8,7 @@ aliases:
 description: "Cua是专注于Computer-Use的开源基础设施，提供沙箱、SDK和Benchmark来训练与评估能控制完整桌面的AI Agent。支持macOS、Linux、Windows三大平台，提供Cua Driver（后台控制）、Cua Sandbox（Agent-ready隔离环境）和Cua Bench（评估基准），是当前最完整的开源CUA方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Computer-Use", "沙箱", "Benchmark", "macOS"]
+tags: ["AI Agent", "Computer Use", "沙箱", "Benchmark", "macOS"]
 ---
 
 # Cua：开源计算机控制 Agent 基础设施完全指南

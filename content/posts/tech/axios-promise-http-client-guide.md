@@ -5,7 +5,7 @@ slug: "axios-promise-http-client-guide"
 description: "Axios 是基于 Promise 的 HTTP 客户端，支持浏览器和 Node.js 环境。本文覆盖安装配置、基本使用、拦截器、错误处理、请求取消、数据序列化、推荐做法和常见问题。"
 draft: false
 categories: ["技术笔记"]
-tags: ["JavaScript", "HTTP", "Axios", "Node.js", "前端开发"]
+tags: ["JavaScript", "HTTP", "Node.js"]
 ---
 
 # Axios：Promise HTTP 客户端完全指南

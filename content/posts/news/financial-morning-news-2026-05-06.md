@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-06
 description: "2026年5月6日经济财经早报，汇总过去24小时内美股表现、原油市场、劳动力数据与政策动向。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "标普500", "原油", "AMD", "SEC"]
+tags: ["美股", "原油", "SEC"]
 hiddenFromHomePage: true
 ---
 

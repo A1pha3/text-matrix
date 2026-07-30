@@ -5,7 +5,7 @@ date: 2026-07-13T03:05:00+08:00
 lastmod: 2026-07-13T03:05:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Protocol Buffers", "IDL", "序列化", "C++", "gRPC", "基础设施"]
+tags: ["C++", "gRPC"]
 description: "Protocol Buffers 是 Google 的语言中立、平台中立、可扩展结构化数据序列化机制。本文拆解其协议层（proto2/proto3/wire format/well-known types）、protoc 编译器工作流、跨语言运行时与代码生成策略、向后兼容与 JSON 映射机制。"
 ---
 

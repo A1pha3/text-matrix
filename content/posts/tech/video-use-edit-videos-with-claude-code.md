@@ -5,7 +5,7 @@ slug: "video-use-ai-video-editing-with-claude-code"
 description: "video-use 是 browser-use 团队开源的 AI 视频剪辑工作流。本文从公开 README 与 SKILL.md 出发，拆解它如何用 Claude Code 协调转录、FFmpeg、字幕、动画与自检，把自然语言指令变成可确认、可迭代的视频编辑流程。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "视频编辑", "Claude Code", "FFmpeg", "ElevenLabs"]
+tags: ["视频编辑", "Claude Code", "FFmpeg"]
 ---
 
 > **一句话结论**：`video-use` 不是"让模型直接看完整视频"，而是把剪辑问题压缩成模型擅长处理的结构化文本，再在关键决策点补充少量视觉证据。  

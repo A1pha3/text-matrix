@@ -5,7 +5,7 @@ slug: "islands-dark-vscode-theme-guide"
 description: "Islands Dark 是一款受 easemate IDE 和 JetBrains Islands 启发的 VSCode 深色主题，以悬浮玻璃面板、圆角元素和暖色语法高亮为核心视觉语言。本文详解其设计理念、安装方式、字体配置及适用场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["VSCode", "主题", "前端开发工具", "开源", "设计"]
+tags: ["VS Code", "开源", "设计"]
 ---
 
 ## 项目概览

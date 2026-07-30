@@ -5,7 +5,7 @@ slug: "findomain-subdomain-enumeration"
 description: "Findomain 是 3.7K Stars 的极速子域名发现工具，基于 Rust 实现，支持 14+ 数据源（Certspotter、Crt.sh、Virustotal 等）。5.5秒发现 84,110 个子域名，内置 Discord/Slack/Telegram Webhook 监控告警，支持 DNS over TLS 和暴力枚举。"
 draft: false
 categories: ["技术笔记"]
-tags: ["安全", "BugBounty", "OSINT", "子域名枚举", "Findomain", "Rust"]
+tags: ["安全", "BugBounty", "OSINT", "Rust"]
 ---
 
 # Findomain：用证书透明日志做被动子域名发现

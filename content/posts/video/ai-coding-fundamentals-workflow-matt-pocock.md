@@ -5,7 +5,7 @@ slug: "ai-coding-fundamentals-workflow-matt-pocock"
 description: "基于 Matt Pocock 两个爆款视频，深度解读 AI Coding 的核心要义：为什么软件基础功比工具更重要，以及完整 AI 辅助开发工作流实战指南。"
 draft: false
 categories: ["视频精读"]
-tags: ["AI", "Coding", "Matt Pocock", "Workflow", "Software Fundamentals"]
+tags: []
 ---
 
 # AI Coding 实战指南：基础功比工具更重要

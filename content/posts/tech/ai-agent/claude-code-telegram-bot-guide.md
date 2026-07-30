@@ -5,7 +5,7 @@ aliases:
   - /posts/tech/claude-code-telegram-bot-guide/
 date: "2026-04-01T01:08:00+08:00"
 categories: ["技术笔记"]
-tags: ["Claude Code", "Telegram Bot", "AI编程", "远程开发", "Claude", "智能体", "Webhook", "事件驱动", "Python", "自动化"]
+tags: ["Claude Code", "AI编程", "Claude", "智能体", "Python", "自动化"]
 description: "深度解析 Claude Code Telegram Bot (2.3k Stars)：通过 Telegram 远程访问 Claude Code，支持智能体模式和经典终端模式，提供自然语言代码交互、会话持久化、Webhook 自动化、完整安全审计等 23 项功能特性。"
 ---
 

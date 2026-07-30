@@ -6,7 +6,7 @@ description: "witr 是一个跨平台进程归因工具。输入进程名、PID�
 draft: false
 aliases: ["/posts/tech/witr-agentic-task-runner/"]
 categories: ["技术笔记"]
-tags: ["Go", "系统诊断", "进程溯源", "故障排查", "TUI"]
+tags: ["Go", "TUI"]
 ---
 
 你在机器上看到一个占着端口的进程时，第一反应通常不是“它叫什么”，而是“它为什么会在这里”。`ps`、`top`、`lsof`、`systemctl`、`docker ps` 这类工具能把状态摊开，却很少直接把因果关系讲清楚。`witr` 想补上的，正是这一步。

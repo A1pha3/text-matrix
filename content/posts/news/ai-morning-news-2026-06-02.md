@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-02
 description: "2026年6月2日 AI 新闻早报。Anthropic 秘密递交 S-1 启动 IPO、英伟达 GTC 台北发布 RTX Spark 与 Vera CPU、OpenAI 重启机器人团队招揽华人学者、VAST 完成近 2 亿美元融资。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Anthropic", "英伟达", "OpenAI", "融资"]
+tags: ["Anthropic", "英伟达", "OpenAI", "融资"]
 hiddenFromHomePage: true
 ---
 

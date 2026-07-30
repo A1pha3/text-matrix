@@ -5,7 +5,7 @@ slug: "officecli-ai-agent-office-suite-cli"
 description: "OfficeCLI 是一个 Apache 2.0 单文件 CLI，给 AI Agent 提供 .docx / .xlsx / .pptx 读写与渲染能力。本文拆解 L1 阅读/L2 DOM/L3 XML 三层架构、live preview 回环、与 LibreOffice/python-docx 在 Agent 场景下的取舍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Office", "CLI", "MCP", "文档自动化"]
+tags: ["AI Agent", "CLI", "MCP"]
 ---
 
 # OfficeCLI：把 Office 三件套切给 AI Agent 的单 binary CLI

@@ -5,7 +5,7 @@ lastmod: "2026-07-01T21:03:00+08:00"
 slug: "togatoga-karukan-neural-japanese-ime-architecture"
 description: "Karukan 是一个用 Rust 写、基于 llama.cpp 推理 GPT-2 模型的神经假名汉字转换（Neural Kana-Kanji Conversion, NKCC）引擎，配合 fcitx5（Linux）和 Swift InputMethodKit（macOS）前端，提供跨平台日语输入体验。文章拆解其 5 个 crate 的分层、live conversion、context-aware 转换、用户转换学习、Sudachi 系统词典、Mozc 候选改写等核心机制。"
 categories: ["技术笔记"]
-tags: ["Karukan", "日语IME", "Rust", "llama.cpp", "fcitx5", "InputMethodKit", "NLP"]
+tags: ["Rust", "llama.cpp", "NLP"]
 draft: false
 ---
 

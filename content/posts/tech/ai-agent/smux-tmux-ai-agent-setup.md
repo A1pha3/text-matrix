@@ -7,7 +7,7 @@ aliases:
 description: "深入解读 smux 项目，一键配置 tmux 环境，支持 Option 键绑定、鼠标操作、窗格标签，并提供 tmux-bridge CLI 实现 AI Agent 间的跨窗格通信。"
 draft: false
 categories: ["技术笔记"]
-tags: ["tmux", "终端", "AI Agent", "自动化", "Claude Code"]
+tags: ["终端", "AI Agent", "自动化", "Claude Code"]
 ---
 
 # smux：一键 tmux 配置，让 AI Agent 操控终端

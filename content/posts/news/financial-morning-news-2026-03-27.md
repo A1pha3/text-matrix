@@ -5,7 +5,7 @@ slug: "financial-morning-news-2026-03-27"
 description: "汇总2026年3月27日全球金融市场动态，涵盖伊朗战争对油价影响、黄金九连跌创15年纪录、欧洲议会批准美欧贸易协定、英伟达AI芯片收入预期翻倍等核心事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["金融", "伊朗战争", "黄金", "英伟达", "美欧贸易", "特斯拉", "美股"]
+tags: ["金融", "伊朗战争", "黄金", "英伟达", "特斯拉", "美股"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["nextjs", "react", "fullstack", "ssr", "rsc"]
+tags: ["Next.js", "React"]
 description: "Next.js 是 React 全栈框架的事实标准，覆盖 SSR/SSG/ISR/RSC 四种渲染模型、App Router、Server Components。本文拆解其渲染模型演进、与传统 SPA/Remix/Astro 的取舍、生产部署路径。"
 ---
 

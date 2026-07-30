@@ -5,7 +5,7 @@ slug: "trycua-cua-open-source-computer-use-agents"
 description: "CUA 是 trycua 推出的开源计算机控制 AI Agent 基础设施，提供沙箱、SDK 和基准测试，覆盖 macOS、Linux、Windows 全平台，支持本地 QEMU 和云端虚拟化，可训练和评估能控制完整桌面的 AI 智能体。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "计算机控制", "沙箱", "QEMU", "macOS", "AI编程", "开源"]
+tags: ["AI Agent", "沙箱", "macOS", "AI编程", "开源"]
 ---
 
 # CUA：开源计算机控制 AI Agent 基础设施，支持 macOS/Linux/Windows 全平台

@@ -5,7 +5,7 @@ slug: "owainlewis-awesome-artificial-intelligence-guide"
 description: "owainlewis/awesome-artificial-intelligence 是走过 11 年的经典 AI 学习资源精选清单，覆盖课程、书籍、视频讲座、论文、博客与开源框架，本文拆解其分类逻辑与使用建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["awesome-list", "AI学习", "资源精选", "机器学习", "深度学习", "课程"]
+tags: ["Awesome List", "机器学习", "深度学习", "课程"]
 ---
 
 # awesome-artificial-intelligence 指南：一份走过 11 年的 AI 学习资源精选清单

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-08
 description: "2026年6月8日 AI 新闻早报，汇总过去 24 小时内 36 氪 AI 频道、量子位与 Hacker News 的关键条目：万亿美元 AI 公司面试禁 AI、OpenAI 芯片元老转投 Anthropic、国产开源长视频框架跻身第一梯队、VibeOS 首个 AI-native OS 上线等。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "36氪", "量子位", "HackerNews", "Anthropic"]
+tags: ["量子位", "HackerNews", "Anthropic"]
 hiddenFromHomePage: true
 ---
 

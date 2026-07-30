@@ -5,7 +5,7 @@ slug: "moneyprinterturbo-ai-video-generation"
 description: "MoneyPrinterTurbo 只需提供一个视频主题或关键词，即可全自动生成文案、视频素材、字幕和背景音乐，合成高清短视频。支持 WebUI 和 API，覆盖竖屏/横屏，集成 DeepSeek/Moonshot/Gemini 等多模型。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI视频", "短视频生成", "Python", "Streamlit", "LLM"]
+tags: ["AI视频", "Python", "LLM"]
 ---
 
 ## 学习目标

@@ -5,7 +5,7 @@ slug: "cliproxyapi-unified-ai-cli-proxy"
 description: "从协议面、OAuth 与 auth-files 出发，拆解 CLIProxyAPI 如何把 Claude Code、Gemini CLI、OpenAI Codex、Grok Build 接成统一 API，并讲清部署、路由、多账号与观测边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CLIProxyAPI", "Claude Code", "Gemini CLI", "OpenAI Codex", "管理 API"]
+tags: ["Claude Code", "OpenAI Codex"]
 ---
 
 CLIProxyAPI 把 Claude Code、Gemini CLI、OpenAI Codex、Grok Build 这类原本依赖本地 OAuth 会话的订阅制 CLI，整理成程序可以稳定调用的统一 API。对外它表现成接口服务；对内还要处理协议翻译、身份代理、账号调度和运行态管理。

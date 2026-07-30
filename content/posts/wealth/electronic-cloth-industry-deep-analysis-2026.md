@@ -6,7 +6,7 @@ description: "从电子布（玻纤布）的制造工艺、配方体系与性能
 draft: false
 categories: ["财富自由"]
 hiddenFromHomePage: true
-tags: ["电子布", "玻纤布", "国产替代", "AI算力", "高频高速", "IC载板"]
+tags: ["国产替代", "AI算力"]
 ---
 
 # 电子布行业深度技术分析：AI 算力爆发下玻纤布的供需重构与国产替代

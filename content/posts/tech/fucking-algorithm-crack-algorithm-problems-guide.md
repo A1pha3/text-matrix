@@ -5,7 +5,7 @@ slug: "fucking-algorithm-crack-algorithm-problems-guide"
 description: "全面介绍 142k Stars 的 fucking-algorithm 算法刷题笔记，涵盖学习路径、vscode-leetcode 插件、动态规划、回溯算法、二叉树、双指针等主要专题，以及多语言版本和面试技巧。"
 draft: false
 categories: ["技术笔记"]
-tags: ["fucking-algorithm", "算法", "动态规划", "LeetCode", "vscode-leetcode", "刷题"]
+tags: ["算法"]
 ---
 
 # fucking-algorithm：142k Stars 刷穿算法题完全指南

@@ -5,7 +5,7 @@ slug: autobe-ai-backend-builder-guide
 description: "AutoBE 是一个 AI 后端构建器，能够从需求描述自动生成完整的生产级后端代码，支持 TypeScript、Prisma、NestJS 等技术栈。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "后端", "TypeScript", "Prisma", "NestJS"]
+tags: ["TypeScript", "NestJS"]
 ---
 
 # AutoBE：用 AST 兜底的 AI 后端生成器，能交付到什么程度

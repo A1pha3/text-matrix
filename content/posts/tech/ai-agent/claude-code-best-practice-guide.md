@@ -8,7 +8,7 @@ aliases:
 description: "深度解读 shanraisshan/claude-code-best-practice 仓库，系统梳理 Claude Code 的核心概念、工作流组织方式、配置结构、扩展边界与团队落地建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI编程", "Anthropic", "最佳实践", "Agent工作流"]
+tags: ["Claude Code", "AI编程", "Anthropic", "最佳实践"]
 ---
 
 # Claude Code 推荐做法大全：高热度 AI 编程指南解读

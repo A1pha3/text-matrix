@@ -5,7 +5,7 @@ date: 2026-06-29T21:02:57+08:00
 lastmod: 2026-06-29T21:02:57+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["GitHub", "Auth", "OIDC", "OAuth", "SaaS", "AI-Agent", "开源"]
+tags: ["GitHub", "SaaS", "AI Agent", "开源"]
 description: "logto-io/logto 是一个把 OIDC / OAuth 2.1 / SAML 协议封装成可多租户、SSO、RBAC 一体化体验的开源认证基础设施。本文拆解它的产品定位、能力边界、与 Auth0/Keycloak 的差异以及何时应该选它。"
 ---
 

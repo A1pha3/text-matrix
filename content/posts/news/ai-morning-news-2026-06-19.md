@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-19
 description: "2026年6月19日 AI 新闻早报，覆盖过去 24 小时内 Midjourney 推出全身超声波扫描仪与 Spa 体检门店、Noam Shazeer 正式加盟 OpenAI 担任架构负责人、SK Telecom 与 Anthropic Mythos 模型出口管制争议、智谱 MiniMax 双雄不同走势、何恺明组 258M 小参数文生图、九章云极 AI 工厂战略、OpenAI Q1 财务泄露、何恺明组 ABot-Earth0.5 登顶 Hugging Face 三榜、美图 AI 转型、国产算力 Token 标准化等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Midjourney", "NoamShazeer", "OpenAI", "Anthropic", "何恺明", "文生图", "智谱", "MiniMax", "SKTelecom", "出口管制", "国产算力", "AI工厂", "万机易租", "魔法原子", "具身智能", "ABot", "美图", "何恺明组", "Transformer", "企业级Agent", "算力基建", "九章云极", "OpenAI财报", "Q1亏损", "美图", "美图影像", "国产算力", "Token标准化", "DCU"]
+tags: ["OpenAI", "Anthropic", "文生图", "智谱", "MiniMax", "出口管制", "国产算力", "具身智能", "Transformer"]
 hiddenFromHomePage: true
 ---
 

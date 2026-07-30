@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-21
 description: "2026年6月21日 AI 新闻早报，汇总过去 24 小时内值得关注的融资动向、产品发布、技术进展、人才流动与商业落地。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Anthropic", "智能体", "融资", "机器人"]
+tags: ["Anthropic", "智能体", "融资", "机器人"]
 hiddenFromHomePage: true
 ---
 

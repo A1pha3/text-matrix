@@ -5,7 +5,7 @@ slug: "oh-my-pi-integrated-ide-coding-agent"
 description: "oh-my-pi是一个用TypeScript/Rust编写的终端AI Coding Agent，将IDE完整集成到Agent中。支持hashline编辑、LSP、DAP调试、40+模型、内置浏览器和子Agent，源自Mario Zechner的开源项目Pi。开源4个月斩获5187 Stars。本文详解其核心特性、架构设计和快速上手。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Coding", "Terminal", "LSP", "Debugger", "TypeScript", "Rust"]
+tags: ["AI 编程", "Terminal", "LSP", "TypeScript", "Rust"]
 ---
 
 ## 项目概览

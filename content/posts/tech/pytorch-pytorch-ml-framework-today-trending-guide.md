@@ -6,7 +6,7 @@ draft: false
 slug: "pytorch-pytorch-ml-framework-today-trending-guide"
 description: "PyTorch 主仓库今日再登 GitHub Trending，背后是 ROCm gfx1250、FlexAttention Blackwell 模板、SymmetricMemory 与 torch.compile 调试体验持续改进，本文梳理近期发布、组件构成与采用边界。"
 categories: ["技术笔记"]
-tags: ["PyTorch", "深度学习", "ROCm", "torch.compile", "FlexAttention"]
+tags: ["PyTorch", "深度学习"]
 author: text-matrix
 ---
 

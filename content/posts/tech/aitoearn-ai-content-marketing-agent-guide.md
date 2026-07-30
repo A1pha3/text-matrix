@@ -5,7 +5,7 @@ slug: aitoearn-ai-content-marketing-agent-guide
 description: "yikart/AiToEarn 源码级解析：从一段中文创意到 13 平台自动发布+商单撮合的端到端架构。覆盖 MCP 协议、OpenClaw 集成、Monetize/Publish/Engage/Create 四 Agent 拆解、变现结算回路。"
 draft: false
 categories: ["技术博客"]
-tags: ["aitoearn", "yikart", "mcp", "openclaw", "内容营销", "opc", "ai-agent"]
+tags: ["MCP", "OpenClaw", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ lastmod: 2026-06-30T11:00:00+08:00
 draft: false
 slug: "glm-rush-buying-assistant-concurrency-engineering-deep-dive"
 categories: ["技术剖析", "前端工程", "抢购脚本"]
-tags: ["tampermonkey", "userscript", "并发重试", "反检测", "shadow-dom", "vue-hook", "json.parse-hook", "高精度定时", "智谱glm", "抢购脚本"]
+tags: []
 description: 把智谱GLM Coding抢购助手v4.6的两千行油猴脚本逐层拆开——双模式并发引擎、JSON.parse定向拦截、Shadow DOM UI隔离、Vue组件深度hook、4层支付恢复、高精度定时——讲清楚每一行背后在对抗什么、保护什么、放弃什么。
 ---
 

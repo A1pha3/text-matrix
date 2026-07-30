@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["gRPC", "rpc", "protobuf", "microservices", "http2"]
+tags: ["gRPC"]
 description: "gRPC 是 Google 开源的现代 RPC 框架，基于 HTTP/2 + Protocol Buffers + 多语言代码生成，已成为微服务通信的事实标准。本文拆解其协议层、IDL、streaming 模型、生产工程的四个常见取舍。"
 ---
 

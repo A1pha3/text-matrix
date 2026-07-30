@@ -5,7 +5,7 @@ slug: "tabpfn-foundation-model-tabular-data-guide"
 description: "TabPFN 是专为表格数据设计的预训练 Transformer 模型，可以在秒级完成分类和回归任务，且无需调参。本文详细解析其核心原理、性能表现、与传统 AutoML 框架的对比以及快速上手方法。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AutoML", "表格数据", "机器学习", "Transformer", "TabPFN"]
+tags: ["机器学习", "Transformer"]
 ---
 
 ## 学习目标

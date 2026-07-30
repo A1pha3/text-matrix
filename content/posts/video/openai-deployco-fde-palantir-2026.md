@@ -6,7 +6,7 @@ description: "硅谷 101《OpenAI 联手 PE 砸下 40 亿美元，聊聊硅谷�
 
 draft: false
 categories: ["视频精读"]
-tags: ["FDE", "Forward Deployed Engineer", "OpenAI", "Anthropic", "Palantir", "Deployment Company", "DeployCo", "Blackstone", "Bain", "Cresta", "Invisible Technologies", "前置部署", "AI 原生组织", "组织孪生", "Ontology", "麦肯锡", "硅谷 101"]
+tags: ["OpenAI", "Anthropic", "Palantir", "硅谷101"]
 hiddenFromHomePage: false
 ---
 

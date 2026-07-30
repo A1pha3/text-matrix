@@ -5,7 +5,7 @@ slug: "vercel-open-agents-cloud-agent-template"
 description: "Vercel Open Agents是2.4K Stars的开源模板，用于在Vercel上构建和运行云端Agent。三层架构（Web/Agent Workflow/Sandbox），支持GitHub集成、自动commit/PR、Session共享。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Vercel", "Agent", "TypeScript", "云端", "GitHub集成"]
+tags: ["Vercel", "AI Agent", "TypeScript"]
 ---
 
 # Vercel Open Agents：2.4K Stars 的云端 Agent 部署模板——Web/Workflow/Sandbox 三层架构、GitHub 集成、Session 共享

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-14
 description: "2026年7月14日 AI 新闻早报，精选过去 24 小时内值得关注的融资、新模型发布、Agent 基础设施与行业人事变动。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "Agent", "融资", "安全"]
+tags: ["LLM", "AI Agent", "融资", "安全"]
 hiddenFromHomePage: true
 ---
 

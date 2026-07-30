@@ -5,7 +5,7 @@ slug: ground-station-sdr-framework-guide
 description: "Ground Station 是一个开源的软件无线电框架，提供 SDR 管道和模块化信号处理功能，支持多种硬件设备。"
 draft: false
 categories: ["技术笔记"]
-tags: ["SDR", "无线电", "信号处理", "Python", "硬件"]
+tags: ["Python"]
 ---
 
 # Ground Station：1.2K Stars·软件无线电框架·SDR 管道·模块化信号处理·社区共享

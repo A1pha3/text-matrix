@@ -5,7 +5,7 @@ slug: rd-agent-microsoft-research-automation-guide
 aliases:
   - /posts/tech/rd-agent-microsoft-research-automation-guide/
 categories: ["技术笔记"]
-tags: ["RD-Agent", "Microsoft", "AI Agent", "量化交易", "MLE-bench", "自动化研发"]
+tags: ["Microsoft", "AI Agent", "量化交易"]
 description: "微软研究院开源的自动化研发智能体框架 RD-Agent 完全指南，涵盖 RD 循环、MLE-bench 最强性能、RD-Agent(Q) 量化交易等全方位讲解。"
 ---
 

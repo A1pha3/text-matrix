@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-18
 description: "2026年5月18日经济财经早报，汇总过去24小时内美伊局势升级、油价飙升、亚太股市普跌、日债收益率飙升及长鑫科技IPO等重磅市场动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "原油", "黄金", "日债", "韩股", "IPO"]
+tags: ["美股", "原油", "黄金", "IPO"]
 hiddenFromHomePage: true
 ---
 

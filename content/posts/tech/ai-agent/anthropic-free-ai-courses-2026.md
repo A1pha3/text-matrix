@@ -7,7 +7,7 @@ aliases:
 description: "Anthropic 官方开放 13 门免费 AI 课程与认证，涵盖 Claude 入门、API 开发、MCP 协议及垂直领域应用，为不同背景学习者提供完整的 AI 能力进阶路线图。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Claude", "Anthropic", "大模型"]
+tags: ["Claude", "Anthropic", "LLM"]
 ---
 ---
 

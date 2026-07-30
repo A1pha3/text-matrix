@@ -5,7 +5,7 @@ slug: "music-assistant-server-unified-music-hub-guide"
 description: "music-assistant/server 是 Python 自托管音乐中枢，统一多源订阅与本地曲库并跨 Sonos / AirPlay 多房间同步。拆解三方架构与 Provider 抽象的边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Music Assistant", "自托管", "Python", "家庭音响", "多房间同步"]
+tags: ["自托管", "Python"]
 ---
 
 # music-assistant/server：自托管音乐中枢的架构与边界

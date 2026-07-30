@@ -3,7 +3,7 @@ title: "AirLLM 技术拆解：单张 4GB GPU 如何跑 70B 大模型"
 date: "2026-07-19T03:10:00+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["AirLLM", "大模型推理", "显存优化", "Layer-wise Loading"]
+tags: []
 description: "AirLLM 通过逐层加载策略，让 70B 参数大模型在单张 4GB 显存 GPU 上完成推理，无需量化或剪枝。本文拆解其核心原理、压缩加速机制与适用边界。"
 ---
 

@@ -5,7 +5,7 @@ slug: "anthropics-claude-financial-services-guide"
 description: "基于 anthropics/financial-services 仓库，解析 Claude for Financial Services 的命名智能体、垂直插件、MCP 连接器、Managed Agents 部署路径与工程取舍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "Anthropic", "AI Agent", "金融服务", "MCP"]
+tags: ["Claude", "Anthropic", "AI Agent", "MCP"]
 ---
 
 > **目标读者**：想搞清楚 Anthropic 如何把金融工作流做成可安装智能体的开发者、平台团队与金融科技从业者

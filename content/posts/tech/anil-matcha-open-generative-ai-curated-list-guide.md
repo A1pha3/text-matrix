@@ -5,7 +5,7 @@ slug: "anil-matcha-open-generative-ai-curated-list-guide"
 description: "Open Generative AI 是自托管、无内容过滤的 AI 工作室,200+ 模型覆盖图像/视频/唇同步,支持双模式 Studio 与 sd.cpp/Wan2GP 本地推理。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI图像", "AI视频", "唇同步", "开源工具", "Electron"]
+tags: ["AI视频", "开源工具", "Electron"]
 ---
 
 # Anil-matcha/Open-Generative-AI 指南

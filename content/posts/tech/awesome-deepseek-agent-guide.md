@@ -5,7 +5,7 @@ slug: "awesome-deepseek-agent-integration-guide"
 description: "基于 DeepSeek 官方仓库 awesome-deepseek-agent，梳理 16 款 AI 编程助手接入 DeepSeek-V4 模型的三种模式（Anthropic 兼容、OpenAI 兼容、直连），详解配置方法、选型建议与常见问题。"
 draft: false
 categories: ["技术笔记"]
-tags: ["DeepSeek", "AI 编程助手", "Claude Code", "Agent Skills", "OpenClaw"]
+tags: ["DeepSeek", "AI 编程", "Claude Code", "Agent Skills", "OpenClaw"]
 ---
 
 # Awesome DeepSeek Agent：16 款主流 AI 编程助手接入 DeepSeek 模型完整指南

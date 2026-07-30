@@ -7,7 +7,7 @@ aliases:
 description: "全面介绍 Sebastian Raschka 的 Mini-Coding-Agent 极简代码代理框架，详解六大核心组件（实时上下文、提示缓存、结构化工具、上下文缩减、对话记忆、子代理委托）、Ollama 环境配置、CLI 参数、会话管理和扩展建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["代码代理", "AI Agent", "Ollama", "Sebastian Raschka", "Python", "LLM", "自主编程", "工具调用"]
+tags: ["AI Agent", "Ollama", "Python", "LLM", "工具调用"]
 ---
 
 ## 学习目标

@@ -5,7 +5,7 @@ slug: "recaptcha-reverse-engineering-google-anti-bot-analysis"
 description: "elelysiox/recaptcha是一个reCAPTCHA逆向工程文档项目，详细记录了Google reCAPTCHA的Payload结构、指纹识别技术、代码混淆方法和反调试技术。"
 draft: false
 categories: ["技术笔记"]
-tags: ["reCAPTCHA", "逆向工程", "JavaScript", "反爬虫", "安全研究"]
+tags: ["JavaScript", "安全研究"]
 ---
 
 # reCAPTCHA 逆向工程：Google 反爬虫机制的技术剖析

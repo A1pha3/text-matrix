@@ -5,7 +5,7 @@ slug: "diegosouzapw-omniroute-ai-gateway-guide"
 description: "OmniRoute 是一个聚合 236 家 AI 厂商（含 50+ 免费层）的统一 AI 网关，8k Stars、TypeScript、MIT 协议，支持 Claude Code、Codex、Cursor、Cline 等 16+ 编程代理通过单一端点接入，包含 RTK+Caveman 压缩、4 级自动回退、A2A/MCP 协议适配，本文拆解其定位、4 层路由策略、压缩机制与运行边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OmniRoute", "AI 网关", "Claude Code", "OpenAI Codex", "路由策略", "MCP"]
+tags: ["Claude Code", "OpenAI Codex", "MCP"]
 ---
 
 # diegosouzapw/OmniRoute：聚合 236 家 AI 提供商的免费 AI 网关深度拆解

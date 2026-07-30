@@ -5,7 +5,7 @@ lastmod: "2026-07-01T21:03:00+08:00"
 slug: "allenai-olmocr-pdf-ocr-vlm-pipeline-guide"
 description: "Ai2 的 olmOCR 是一个把 PDF、扫描件、图片线性化为干净 Markdown/纯文本的 7B VLM 工具链，v0.4.0 在自建 olmOCR-Bench 上拿到 82.4 总体分（7B 模型，百万页 200 美元以内），并提供 GRPO RL 训练脚本与 vLLM 推理后端。本文拆解其 prompt 结构、YAML guided decoding、多节点 S3 队列、bench 设计以及在 LLM 训练数据准备中的位置。"
 categories: ["技术笔记"]
-tags: ["olmocr", "allenai", "OCR", "VLM", "PDF", "vLLM", "数据准备"]
+tags: ["OCR", "VLM", "PDF", "vLLM"]
 draft: false
 ---
 

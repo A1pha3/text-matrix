@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-04-28
 description: "2026年4月28日 AI 新闻早报，涵盖Manus收购被禁、微软OpenAI分手、AGI时间线判断、GitHub Copilot计费变化等重大事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Manus", "OpenAI", "AGI", "GitHub Copilot"]
+tags: ["Manus", "OpenAI", "AGI", "GitHub Copilot"]
 hiddenFromHomePage: true
 ---
 

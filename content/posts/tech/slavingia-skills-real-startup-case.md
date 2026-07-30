@@ -5,7 +5,7 @@ slug: slavingia-skills-real-startup-case
 description: "用一个基于真实创业约束整理的完整案例，演示如何按顺序使用 10 个 Minimalist Entrepreneur Skills，从找社区、验证、定价到拿下首批付费客户。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Skill", "创业案例", "Minimalist Entrepreneur", "独立开发"]
+tags: ["Claude Code", "Skill", "Minimalist Entrepreneur", "独立开发"]
 ---
 
 > 专题导读：[Minimalist Entrepreneur Skills 专题导读：原理、案例与 Prompt 模板一站看完]({{< relref "ai-agent/slavingia-skills-series-guide.md" >}}) ⭐⭐

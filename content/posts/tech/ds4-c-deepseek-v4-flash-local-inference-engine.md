@@ -5,7 +5,7 @@ slug: "ds4-c-deepseek-v4-flash-local-inference-engine"
 description: "基于 README 与源码整理 ds4.c 的实现边界：单模型专用 Metal 执行路径、单一 live session、磁盘 KV cache，以及 thinking 与工具调用的兼容处理。"
 draft: false
 categories: ["技术笔记"]
-tags: ["DeepSeek", "Metal", "AI推理", "AppleSilicon", "本地部署"]
+tags: ["DeepSeek", "Apple Silicon", "本地部署"]
 ---
 
 > **目标读者**：希望在 Apple Silicon 上运行 DeepSeek V4 Flash 的开发者、AI 推理工程师

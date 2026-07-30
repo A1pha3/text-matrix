@@ -5,7 +5,7 @@ slug: "ollama-local-llm-guide"
 description: "全面介绍 Ollama 本地大模型运行平台。不仅覆盖安装、模型管理、Modelfile 自定义、OpenAI 兼容 API，更深入解释「为什么」要做某些配置、不同参数的实际影响、以及什么时候应该用 Ollama 而不是其他方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Ollama", "本地大模型", "LLM", "隐私计算", "开源", "GPU加速", "AI 开发"]
+tags: ["Ollama", "本地大模型", "LLM", "隐私计算", "开源", "GPU加速"]
 ---
 
 ## 学习目标

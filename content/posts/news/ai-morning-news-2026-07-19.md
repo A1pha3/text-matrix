@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-19
 description: "2026年7月19日 AI 新闻早报，精选过去 24 小时值得关注的 WAIC 2026 算力重组与 Agent 交付信号、Anthropic Fable 5 永久可用、商汤国产 Token 工厂目标 10 万亿/日、宇泛灵猫群舞与普渡具身落地等动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "WAIC", "Kimi K3", "Anthropic", "国产算力", "具身智能"]
+tags: ["WAIC", "Anthropic", "国产算力", "具身智能"]
 hiddenFromHomePage: true
 ---
 

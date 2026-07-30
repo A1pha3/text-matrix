@@ -5,7 +5,7 @@ slug: "dimillian-skills-apple-platform-guide"
 description: "深度解析 Dimillian/Skills (3.3k Stars)：专注于 Apple 平台开发的可复用智能体技能集合，包含16个核心技能，覆盖App Store发布、SwiftUI重构、代码审查、bug调查等领域，采用自包含设计，每个技能独立完整可单独使用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Dimillian", "Skills", "Apple", "SwiftUI", "iOS", "macOS", "Codex", "智能体技能", "代码审查", "Bug调查"]
+tags: ["Skills", "Apple", "iOS", "macOS", "Codex", "代码审查"]
 ---
 
 # Dimillian/Skills：Apple 平台智能体技能集合完全指南

@@ -5,7 +5,7 @@ title = 'OpenCV 5.0 解析：88K+ Stars 经典库 5.0 正式发布，14 年大�
 slug = 'opencv-5-0-release-computer-vision-library-guide'
 description = '2026-06-08 GitHub Trending 今日榜收录，OpenCV 5.0.0 于 2026-06-06 正式发布，4.x → 5.x 升级路径、核心 API 改动、DNN/ONNX 路径、Python/C++ 绑定变化、迁移建议与典型踩坑。'
 categories = ['技术笔记']
-tags = ['OpenCV', '计算机视觉', 'C++', 'Python', 'DNN', 'ONNX', '图像处理', '深度学习', '开源项目深拆']
+tags = ['计算机视觉', 'C++', 'Python', 'ONNX', '图像处理', '深度学习', '开源项目深拆']
 +++
 
 # OpenCV 5.0 解析：88K+ Stars 经典库 5.0 正式发布，14 年大版本怎么变？

@@ -8,7 +8,7 @@ summary: "这篇访谈反写想拆开的,不是\"AI 泡沫会不会来\"这个�
 
 draft: false
 categories: ["视频精读"]
-tags: ["视频精读", "王煜全", "海银资本", "AI 泡沫", "2029", "自动驾驶", "Carlota Perez", "技术-金融周期", "英伟达", "B站反写", "特朗普"]
+tags: ["视频精读", "AI泡沫", "自动驾驶", "英伟达", "B站反写", "特朗普"]
 hiddenFromHomePage: false
 ---
 

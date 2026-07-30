@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-07-02
 description: "2026年7月2日 Web3 早报，主流币技术修复，机构级代币化进入实操阶段：Robinhood 主网上线 + dYdX Labs 改名 Arcus 联手、Tradeweb 完成首笔 USDCx 实时结算代币化美国国债、BTC 反弹破 6 万美元但 6 月仍创 2022 年以来最差。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "代币化", "Robinhood", "Arcus", "TD9", "Canton"]
+tags: ["Web3", "BTC", "ETH", "代币化"]
 hiddenFromHomePage: true
 ---
 

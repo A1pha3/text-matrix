@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-17
 description: "2026年7月17日 AI 新闻早报，精选过去 24 小时内 Kimi K3 开源 3T 级模型上线、中国移动战略投资友机技术、清华/无问芯穹 RLinf v0.3 打通真机部署、Anthropic 模拟 AI 失控新报告、AI 情感陪伴监管收紧、GPT-5.6 90 分钟破解统计学 20 年悬案等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "融资", "具身智能", "语音模型"]
+tags: ["LLM", "融资", "具身智能"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "syll-open-source-agent-harness-teachable-ai"
 description: "深度解读清华大学 SAGA 实验室开源项目 Syll，设计理念是以 Markdown 文件管理 AI 人格、lore fragments 替代向量检索、Agent 判断的主动沉默、跨通道确认两步模式，附 ETCLOVG 框架拆解与 Demo 分析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Syll", "THU-SAGE", "Persona-Driven", "Agent Harness", "自托管 AI 伴侣"]
+tags: ["AI Agent", "Agent Harness"]
 ---
 
 # Syll：一个开源多模态 Agent 驾驭框架，让 AI 成为"住在电脑里的小精灵"

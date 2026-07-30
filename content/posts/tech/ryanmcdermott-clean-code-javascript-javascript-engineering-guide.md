@@ -4,7 +4,7 @@ date: "2026-07-02T21:02:26+08:00"
 lastmod: "2026-07-02T21:02:26+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["JavaScript", "Clean Code", "代码风格", "工程实践", "SOLID"]
+tags: ["JavaScript", "工程实践"]
 description: "Ryan McDermott 把《Clean Code》原则落到 JavaScript 的开源笔记，94k Star，12 章节覆盖命名、函数、对象、类、SOLID 与错误处理。"
 weight: 1
 author: text-matrix

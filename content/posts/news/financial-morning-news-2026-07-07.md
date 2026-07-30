@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-07-07
 description: "2026年7月7日经济财经早报，汇总过去24小时美股芯片反弹、三星Q2利润暴增、日元空头创新高、腾讯套现快手、Meta印度算力租赁、特朗普称俄乌冲突将快速解决等关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "早报", "美股", "存储芯片", "汇率"]
+tags: ["财经", "早报", "美股", "存储芯片"]
 hiddenFromHomePage: true
 ---
 

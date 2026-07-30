@@ -5,7 +5,7 @@ slug: "financial-morning-news-2026-04-18"
 description: "2026年4月18日经济财经早报：一季度水利投资2070亿元同比增长4.1%、美股纳指13连涨创新高、四大一线城市房价全涨、江苏具身智能机器人纳入消费补贴。"
 draft: false
 categories: ["行业快讯"]
-tags: ["经济", "水利投资", "纳指", "房价", "消费补贴", "财报"]
+tags: ["经济", "纳指", "财报"]
 hiddenFromHomePage: true
 ---
 

@@ -8,7 +8,7 @@ summary: "这不是一篇把 AI 副业写成暴富清单的文章，而是一份
 draft: false
 aliases: ["/posts/news/ai-side-hustle-money-making-guide-2026/"]
 categories: ["财富自由"]
-tags: ["财富自由", "AI", "创业", "副业", "自动化"]
+tags: ["财富自由", "创业", "副业", "自动化"]
 hiddenFromHomePage: true
 ---
 

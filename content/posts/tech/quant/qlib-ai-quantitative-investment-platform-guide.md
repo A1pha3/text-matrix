@@ -7,7 +7,7 @@ aliases:
 description: "Qlib 是微软亚洲研究院开源的 AI 量化投资平台，本文从功能边界、架构、数据层、模型层、策略层、华炎低代码四大模块全方位深度解析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Qlib", "量化投资", "AI", "机器学习", "微软亚洲研究院", "Python"]
+tags: ["量化投资", "机器学习", "Python"]
 ---
 
 > **目标读者**：想要掌握 Qlib 架构与应用的量化开发者、AI 研究者

@@ -5,7 +5,7 @@ slug: "impeccable-ai-design-guide"
 description: "全面解析 Impeccable (15k Stars)：1个技能+20个命令+反模式库，帮助AI写出专业前端代码。基于Anthropic frontend-design技能，支持Cursor/Claude Code/OpenCode等9个工具。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Impeccable", "AI设计", "Claude Code", "Cursor", "OpenCode", "前端设计", "UI设计", "设计系统"]
+tags: ["Claude Code", "Cursor", "OpenCode", "设计系统"]
 ---
 
 # Impeccable：AI 前端设计技能套件完全指南

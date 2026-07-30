@@ -5,7 +5,7 @@ title = 'Gentle-AI：AI 编程 Agent 的统一生态配置器'
 slug = 'gentle-ai-ecosystem-configurator-guide'
 description = 'Gentleman-Programming/gentle-ai 是一个 Go 写的 AI 编程 Agent 生态配置器，支持 15 个 Agent，注入持久记忆、SDD 工作流、Skill 注册表、MCP、AI Provider 切换。本文拆解它的能力边界、OpenClaw 适配与实战路径。'
 categories = ['技术笔记']
-tags = ['AI', 'Agent', 'Claude Code', 'OpenClaw', '工具', '生态']
+tags = ['AI Agent', 'Claude Code', 'OpenClaw', '工具']
 +++
 
 ## 📋 学习目标

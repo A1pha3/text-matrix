@@ -7,7 +7,7 @@ aliases:
 description: "CloakBrowser 在 Chromium 146 源码层做 58 处 C++ 指纹补丁，pip/npm 一行安装即可替换 Playwright/Puppeteer，Cloudflare Turnstile / FingerprintJS / BrowserScan 等 30+ 检测站全部通过，是当前最强的隐形浏览器方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CloakBrowser", "Stealth", "Playwright", "Puppeteer", "BotDetection", "Chromium"]
+tags: ["Playwright", "Puppeteer"]
 ---
 
 # CloakBrowser：C++ 源码级指纹修改的隐形 Chromium，零配置 0.9 reCAPTCHA v3

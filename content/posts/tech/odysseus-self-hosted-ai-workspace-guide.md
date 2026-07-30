@@ -5,7 +5,7 @@ slug: "odysseus-self-hosted-ai-workspace-guide"
 description: "Odysseus 是 PewDiePie 团队推出的开源自托管 AI 工作台，整合聊天/Agent/Deep Research/记忆/邮件/日历/笔记七大模块，目标是 1:1 复刻 ChatGPT 与 Claude 的 UI 体验并跑在本地硬件。本文详解其架构、模块拆解、与同类项目的差异以及部署建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "自托管", "本地大模型", "Agent", "OpenCode", "PWA", "vLLM", "llama.cpp"]
+tags: ["自托管", "本地大模型", "AI Agent", "OpenCode", "vLLM", "llama.cpp"]
 hiddenFromHomePage: false
 ---
 

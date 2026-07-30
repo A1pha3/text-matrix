@@ -5,7 +5,7 @@ title = 'pg_durable 解析：把 durable execution 直接搬进 PostgreSQL，Mic
 slug = 'pg-durable-postgres-durable-execution-guide'
 description = '微软开源的 PostgreSQL 扩展 pg_durable，把 durable execution 模式从 Temporal / Airflow / Step Functions 收回到 SQL 内：长跑、容错、检查点、并行 fan-out 全部用 df.start(~> 和 |=> 表达，零基础设施，深度对比传统方案。'
 categories = ['技术笔记']
-tags = ['PostgreSQL', 'pg_durable', 'durable execution', '数据库', '工作流', 'Azure HorizonDB', 'Microsoft']
+tags = ['PostgreSQL', '数据库', '工作流', 'Microsoft']
 +++
 
 # pg_durable 解析：把 durable execution 直接搬进 PostgreSQL，Microsoft 给后端工程师的零基础设施工作流

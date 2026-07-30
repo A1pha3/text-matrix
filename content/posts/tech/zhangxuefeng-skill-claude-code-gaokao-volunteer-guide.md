@@ -5,7 +5,7 @@ slug: "zhangxuefeng-skill-claude-code-gaokao-volunteer-guide"
 description: "alchaincyf/zhangxuefeng-skill 把张雪峰的高考志愿思维蒸馏成 SKILL.md，5 心智模型 + 8 决策启发式，50+ runtime 一行安装。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AgentSkill", "ClaudeCode", "PromptEngineering", "高考志愿", "AI"]
+tags: ["Agent Skills", "Claude Code", "Prompt Engineering"]
 ---
 
 # 张雪峰.skill：把一位高考志愿名师的认知框架打包成 Agent Skill

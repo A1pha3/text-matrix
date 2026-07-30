@@ -5,7 +5,7 @@ slug: delta-git-syntax-highlighting-pager-guide
 description: "Delta 是一个 Git 语法高亮分页器，使用 Rust 编写，具有高性能和丰富的语法高亮主题，支持 Side-by-Side 对比视图。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Git", "Rust", "语法高亮", "分页器", "终端"]
+tags: ["Git", "Rust", "终端"]
 ---
 
 ## 学习目标

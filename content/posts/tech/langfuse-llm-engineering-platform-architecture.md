@@ -5,7 +5,7 @@ slug: "langfuse-llm-engineering-platform-architecture"
 description: "YC W23 孵化的 25K+ Stars 开源 LLM 工程平台。本文解析：Monorepo 架构、PostgreSQL+ClickHouse 双数据库、OpenTelemetry 追踪模型、事件摄取流水线及主流框架集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Langfuse", "LLMOps", "LLM Observability", "OpenTelemetry", "ClickHouse", "PostgreSQL", "LangChain", "Traces", "Evals"]
+tags: ["Langfuse", "ClickHouse", "PostgreSQL", "LangChain"]
 ---
 
 # Langfuse：25K Stars 开源 LLM 工程平台，架构设计与集成实践解析

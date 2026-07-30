@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-07-05
 description: "2026年7月5日 Web3 早报，Vitalik 公布 Lean Ethereum 三年路线图、Kraken 接入代币化股票作抵押、Revolut 8 月下架 USDT、MCSA 撤回 CLARITY Act 反对意见、BTC 链上盈亏比触 43 月新低、MIM 50% 脱锚触发 Abracadabra 紧急加息。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "SOL", "Vitalik", "LeanEthereum", "Kraken", "Revolut", "USDT", "CLARITYAct", "MIM", "Abracadabra"]
+tags: ["Web3", "BTC", "ETH", "SOL"]
 hiddenFromHomePage: true
 ---
 

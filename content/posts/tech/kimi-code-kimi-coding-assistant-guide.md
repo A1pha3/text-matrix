@@ -7,7 +7,7 @@ aliases:
 description: "Kimi Code CLI 是 Moonshot AI 开源的一款终端 AI 编程 Agent，基于 TypeScript monorepo 架构，支持子 Agent 并行、MCP 配置生命周期hooks等高级特性。本文深入解析其项目结构、核心组件职责与任务流转路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI编程助手", "Kimi", "Moonshot AI", "TypeScript", "Agent", "MCP"]
+tags: ["AI 编程", "Kimi", "TypeScript", "AI Agent", "MCP"]
 ---
 
 # Kimi Code CLI：Moonshot AI 的终端 AI 编程助手架构解析

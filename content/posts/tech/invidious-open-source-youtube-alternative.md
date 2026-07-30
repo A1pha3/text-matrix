@@ -5,7 +5,7 @@ slug: "invidious-open-source-youtube-alternative"
 description: "Invidious 是一个用 Crystal 语言编写的开源 YouTube 替代前端，通过直接解析 YouTube 页面获取数据而不依赖 Google API，实现了无追踪、无广告的观看体验，支持 RSS 订阅、多语言界面和 JSON API。"
 draft: false
 categories: ["技术笔记"]
-tags: ["开源", "YouTube", "隐私保护", "Crystal", "Web"]
+tags: ["开源", "YouTube", "隐私保护", "Web"]
 ---
 
 说起在浏览器里看 YouTube 视频，大多数人的第一反应是打开 youtube.com，登录 Google 账号，接受所有 cookie，然后忍受贴片广告和推荐算法。如果不想被 Google 追踪，又不想装浏览器插件，有什么开源方案？

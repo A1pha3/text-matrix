@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-07
 description: "2026年6月7日 AI 新闻早报，汇总过去 24 小时内 RSI 递归自我改进爆火、Anthropic 警告 OpenAI 跨过可靠性阈值、Emergence AI 虚拟城镇实验失控、CVPR 2026 颁奖广工大本科生入围、Hinton 公开承认 AI 意识等关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "RSI", "Anthropic", "CVPR", "Hinton"]
+tags: ["RSI", "Anthropic"]
 hiddenFromHomePage: true
 ---
 

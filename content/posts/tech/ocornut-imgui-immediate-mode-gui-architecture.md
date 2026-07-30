@@ -5,7 +5,7 @@ date: 2026-07-13T03:03:14+08:00
 lastmod: 2026-07-13T03:03:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["C++", "Dear ImGui", "即时模式", "GUI", "图形界面"]
+tags: ["C++", "GUI"]
 description: "Dear ImGui 是 Omar Cornut 维护的 C++ 即时模式 GUI 库，零依赖。本文拆解 IMGUI 范式本质、库状态边界、与 retained-mode 取舍及调试工具适用场景。"
 ---
 

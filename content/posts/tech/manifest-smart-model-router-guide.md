@@ -5,7 +5,7 @@ slug: manifest-smart-model-router-guide
 description: "Manifest 是一个 OpenClaw 智能模型路由器，使用 23 维度评分算法在 2ms 内做出路由决策，可节省高达 70% 的成本，支持 300+ 模型。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "模型路由", "OpenClaw", "成本优化", "API"]
+tags: ["OpenClaw", "成本优化", "API"]
 ---
 
 # Manifest：4.3K Stars·OpenClaw 智能模型路由器·节省 70%成本·23 维度评分算法·2ms 路由决策·300+模型支持

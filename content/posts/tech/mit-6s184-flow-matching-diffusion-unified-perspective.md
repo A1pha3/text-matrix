@@ -5,7 +5,7 @@ slug: mit-6s184-flow-matching-diffusion-unified-perspective
 description: "MIT 2026 新开课程 6.S184《Generative AI with Stochastic Differential Equations》的核心论点不是再讲一遍扩散模型,而是把 flow matching 和 denoising diffusion 还原成同一个 ODE/SDE 家族的两种表达。读懂这个统一框架,才能真正看懂 Stable Diffusion 3、Meta Movie Gen、AlphaFold 3、VEO-3 这些当代最强生成模型为什么这样设计。"
 draft: false
 categories: ["技术笔记"]
-tags: ["diffusion model", "flow matching", "score matching", "SDE", "ODE", "生成模型", "MIT 课程", "DiT", "discrete diffusion", "CTMC"]
+tags: ["DiT"]
 ---
 
 ## 学习目标

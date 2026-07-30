@@ -5,7 +5,7 @@ slug: nemo-skills-llm-skill-pipeline-guide
 aliases:
   - /posts/tech/nemo-skills-llm-skill-pipeline-guide/
 categories: ["技术笔记"]
-tags: ["NeMo Skills", "NVIDIA", "LLM训练", "合成数据", "模型评估", "OpenReasoning"]
+tags: ["NVIDIA", "LLM训练"]
 description: "NeMo Skills 是 NVIDIA 开源的 LLM 技能提升工具集，覆盖合成数据生成、模型训练与基准评估全流程。本文基于仓库 README，梳理主要功能、已发布模型与数据集、评估基准体系与快速上手路径。"
 ---
 

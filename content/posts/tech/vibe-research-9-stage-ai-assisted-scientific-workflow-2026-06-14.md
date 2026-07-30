@@ -8,7 +8,7 @@ aliases:
 description: "ModelScope 的 awesome-vibe-research 把科研拆成 9 阶段、收录 40+ 项目。文章把项目分进端到端流水线、Skill 套件、单点工具 3 大流派，给出任务流案例、7 种 AI 失败模式与 5 种 HITL 介入模式的选择矩阵，最后给个人 / 团队 / 机构三种落地顺序。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI 辅助科研", "AI Agent", "Claude Code", "Codex", "学术研究", "智能体工作流", "AI 写作", "文献综述", "Hugging Face", "ModelScope", "GPT", "Anthropic", "引用审计", "失败模式", "HITL", "工具链", "SakanaAI", "Karpathy", "Microsoft", "Stanford"]
+tags: ["AI Agent", "Claude Code", "Codex", "Hugging Face", "GPT", "Anthropic", "工具链", "Karpathy", "Microsoft"]
 hiddenFromHomePage: false
 ---
 

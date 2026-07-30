@@ -5,7 +5,7 @@ slug: agent-skills-addyosmani-production-engineering-guide
 description: "66. 4k Stars 的生产级工程技能框架——23 个结构化技能和 7 条 slash 命令，强制 AI 按 Define→Plan→Build→Test→Review→Ship 的完整生命周期工作。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI编程", "Claude Code", "工程技能", "工作流框架", "质量门控"]
+tags: ["AI编程", "Claude Code"]
 ---
 
 # Agent Skills：addyosmani 的生产级 AI 编程工程技能框架

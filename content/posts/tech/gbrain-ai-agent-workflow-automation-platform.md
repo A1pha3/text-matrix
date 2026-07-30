@@ -5,7 +5,7 @@ slug: gbrain-ai-agent-workflow-automation-platform
 description: 'gbrain 真正解决的不是"又一个 Agent 框架"，而是把多模型切换、多 Agent 协作和知识检索三条线拧成一套可落地的工程方案。'
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "工作流", "自动化", "Python"]
+tags: ["AI Agent", "工作流", "自动化", "Python"]
 ---
 
 # gbrain：开源 AI Agent 与工作流自动化平台

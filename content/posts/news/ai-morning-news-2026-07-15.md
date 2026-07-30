@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-15
 description: "2026年7月15日 AI 新闻早报，精选过去 24 小时内阶跃星辰发布 Agentic OS、爱诗科技 C 轮 29.8 亿、腾讯牵头收购 Manus、Claude Fable 5 解开弦论难题等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "Agent", "融资", "具身智能"]
+tags: ["LLM", "AI Agent", "融资", "具身智能"]
 hiddenFromHomePage: true
 ---
 

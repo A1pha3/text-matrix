@@ -5,7 +5,7 @@ slug: "dexterous-hand-six-schools-impossible-triangle-2026"
 description: "从 Shadow Robot、Tesla Optimus、TetherIA Aero Hand Open、Gaia Hand 与 VLA 论文出发，拆解灵巧手在性能、成本、可靠性之间的真实取舍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["灵巧手", "具身智能", "机器人", "开源硬件", "VLA"]
+tags: ["具身智能", "机器人", "VLA"]
 ---
 
 # 灵巧手不可能三角：300 美元级开源手，改写了什么

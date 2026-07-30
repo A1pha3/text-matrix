@@ -5,7 +5,7 @@ slug: "claudian-obsidian-ai-collaboration-guide"
 description: "Claudian是首个将Claude Code嵌入Obsidian笔记库的插件，让笔记成为AI的工作目录。本文深入解析其核心功能、内联编辑、Skills系统、MCP服务器集成，以及在知识管理中的应用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claudian", "Obsidian", "Claude Code", "AI协作", "笔记工具", "知识管理", "MCP", "第二大脑"]
+tags: ["Obsidian", "Claude Code", "知识管理", "MCP", "第二大脑"]
 ---
 
 # Claudian：在 Obsidian 笔记库中嵌入 Claude Code 的 AI 协作插件

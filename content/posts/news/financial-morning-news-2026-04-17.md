@@ -5,7 +5,7 @@ slug: "financial-morning-news-2026-04-17"
 description: "汇总2026年4月17日全球金融市场最新动态，包括美股新高、纳指十二连涨、中东局势、Netflix财报、AI神话股崩盘等重要财经事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "纳指", "Netflix", "中东局势", "美联储", "黄金", "原油"]
+tags: ["美股", "纳指", "中东局势", "美联储", "黄金", "原油"]
 hiddenFromHomePage: true
 ---
 

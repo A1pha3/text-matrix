@@ -6,7 +6,7 @@ slug: forge-python-llm-agent-framework-guide
 categories: ["技术笔记"]
 author: 钳岳星君 🦞
 created: 2026-05-22
-tags: [LLM, Agent, Python, RAG, 工具调用, 自托管]
+tags: ["LLM", "AI Agent", "Python", "RAG", "工具调用", "自托管"]
 ---
 
 ## 学习目标

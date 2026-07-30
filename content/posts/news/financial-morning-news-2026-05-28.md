@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-28
 description: "2026年5月28日经济财经早报，汇总过去24小时内市场、宏观、商品与政策的重要变化，覆盖A股、芯片产业链、全球央行动态及加密货币市场。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "早报", "美股", "市场", "A股", "芯片"]
+tags: ["财经", "早报", "美股", "市场", "A股"]
 hiddenFromHomePage: true
 ---
 

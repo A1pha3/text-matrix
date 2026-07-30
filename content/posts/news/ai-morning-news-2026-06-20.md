@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-20
 description: "2026年6月20日 AI 新闻早报，汇总过去 24 小时内阿里 ATH 世界模型、银河通用机器人小脑模型、OpenAI 药物自主合成、ZuzuZoos 陪伴机器人融资、挪威 AI 教育限制与亚马逊取消 Sam Altman 电影等关键动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "具身智能", "AI教育", "AI融资"]
+tags: ["LLM", "具身智能", "AI教育"]
 hiddenFromHomePage: true
 ---
 

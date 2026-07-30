@@ -5,7 +5,7 @@ slug: "maigret-username-osint-tool-guide"
 description: "Maigret 是一款基于 Python 的开源 OSINT 工具，通过用户名即可在全网 3000+ 站点范围内检索目标人物的账户存在性，并提取可用信息。本文解析其核心机制（递归搜索、自动更新站点库、信息提取）、安装方法、最小示例、Python 嵌入用法及适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OSINT", "Python", "信息安全", "用户名枚举", "开源工具"]
+tags: ["OSINT", "Python", "开源工具"]
 ---
 
 # Maigret：用户名溯源 3000+ 站点的 OSINT 工具

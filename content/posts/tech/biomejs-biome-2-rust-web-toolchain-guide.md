@@ -5,7 +5,7 @@ slug: "biomejs-biome-2-rust-web-toolchain-guide"
 description: "biomejs/biome 是用 Rust 写的一体化 Web 工具链，格式化兼容 Prettier 97%、Linter 收录 500+ 规则、原生支持 JS/TS/JSX/JSON/CSS/GraphQL，本文拆解其架构、安装与 vs Prettier+ESLint 的取舍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Biome", "Rust工具链", "Prettier", "ESLint", "代码格式化", "前端工程化", "Linter"]
+tags: ["代码格式化"]
 ---
 
 > **快速信息卡**

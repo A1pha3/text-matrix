@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-04-30
 description: "2026年4月30日 AI 新闻早报，汇总过去 24 小时内模型发布、企业财报、融资动态与行业重要变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "财报", "融资", "DeepSeek"]
+tags: ["LLM", "财报", "融资", "DeepSeek"]
 hiddenFromHomePage: true
 ---
 

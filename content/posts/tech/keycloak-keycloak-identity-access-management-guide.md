@@ -5,7 +5,7 @@ slug: "keycloak-keycloak-identity-access-management-guide"
 description: "Keycloak 是 CNCF 旗下的开源 IAM（身份与访问管理）/ SSO（单点登录）服务器，原生支持 OAuth2、OIDC、SAML 2.0；以 Realm / Client / Role / User 为核心模型，通过 Quarkus 发行版对外分发；本文从协议面、模型面、部署面三轴拆解，并给出与 Auth0 / Keycloak 的选型决策。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Keycloak", "IAM", "SSO", "OAuth2", "OIDC"]
+tags: []
 ---
 
 ## 学习目标

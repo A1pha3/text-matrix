@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-26
 description: "2026年5月26日经济财经早报，汇总过去24小时内美伊谈判、全球市场反应、软银新高存储芯片紧张及地缘局势等关键动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "美伊谈判", "软银", "高盛", "存储芯片", "地缘政治"]
+tags: ["美股", "美伊谈判", "高盛", "存储芯片", "地缘政治"]
 hiddenFromHomePage: true
 ---
 

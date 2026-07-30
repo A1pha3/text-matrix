@@ -5,7 +5,7 @@ slug: "alibaba-page-agent-browser-control-agent-guide"
 description: "拆解 alibaba/page-agent v1.10.0 单仓多包架构与 PageAgentCore 异步解耦，对比 browser-use 与 Playwright MCP 的设计取舍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Page Agent", "GUI Agent", "阿里巴巴", "MCP", "浏览器自动化"]
+tags: ["Page Agent", "阿里巴巴", "MCP", "浏览器自动化"]
 ---
 
 # Page Agent v1.10.0：阿里巴巴开源的浏览器控制 Agent 全栈拆解

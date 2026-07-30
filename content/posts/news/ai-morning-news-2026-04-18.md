@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-04-18"
 description: "2026年4月18日AI行业早报：智元机器人推出AI开放生态要做具身智能平台、纳指13连涨再创新高、OpenAI Sora负责人离职、华为天才少年创业做推理芯片、荣耀称AI手机是端侧AI最好载体。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "人形机器人", "智元机器人", "具身智能", "纳指", "Sora", "OpenAI"]
+tags: ["人形机器人", "具身智能", "纳指", "OpenAI"]
 hiddenFromHomePage: true
 ---
 

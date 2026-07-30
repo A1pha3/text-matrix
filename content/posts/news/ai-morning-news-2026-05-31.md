@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-31
 description: "2026年5月31日 AI 新闻早报，汇总过去24小时内融资财报、产品发布与技术进展的关键动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "SpaceX", "六小虎", "MiniMax", "世界模型"]
+tags: ["SpaceX", "MiniMax", "世界模型"]
 hiddenFromHomePage: true
 ---
 

@@ -4,7 +4,7 @@ slug: tursodatabase-turso-rust-sqlite-rewrite-guide
 date: "2026-06-20T20:58:00+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["SQLite", "Rust", "Database", "MVCC", "MCP", "Embedded Database"]
+tags: ["SQLite", "Rust", "MCP"]
 description: "Turso Database 是 tursodatabase 团队用 Rust 重写 SQLite 的 in-process SQL 引擎，20K+ stars，v0.7.0-pre.10（2026-06-18），原生支持 MVCC BEGIN CONCURRENT、io_uring 异步 I/O、向量搜索和 9 个工具的 MCP server。本文从重写动机、MVCC 实现、跨语言绑定、MCP 集成、生产边界四个层面拆解它和 libSQL 的路线差异。"
 ---
 

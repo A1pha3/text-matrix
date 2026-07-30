@@ -7,7 +7,7 @@ aliases:
 description: "深度解读 Lightpanda Browser：25.5k Stars 的 AI 自动化无头浏览器，从零构建（非 Chromium Fork）、用 Zig 编写、内存占用仅 Chrome 的 1/9、速度提升 11 倍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Lightpanda", "无头浏览器", "Zig", "AI自动化", "CDP"]
+tags: ["Zig", "CDP"]
 ---
 
 # Lightpanda Browser：25.5k Stars 从零构建的 Zig 无头浏览器

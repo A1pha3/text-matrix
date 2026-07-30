@@ -9,7 +9,7 @@ aliases:
 description: "Telegraf 是 InfluxDB 官方开源的指标采集Agent，支持300+输入/输出插件，覆盖系统监控、云服务、消息队列等场景。本文从核心架构、插件生态、快速配置到生产部署进行完整解读，助你搭建现代化可观测性基础设施。"
 draft: false
 categories: ["技术笔记"]
-tags: ["监控", "InfluxDB", "时序数据", "DevOps", "可观测性", "Golang", "插件系统"]
+tags: ["DevOps", "可观测性", "Golang", "插件系统"]
 ---
 
 # Telegraf：InfluxDB 开源时序数据采集 Agent，300+ 插件生态实战指南

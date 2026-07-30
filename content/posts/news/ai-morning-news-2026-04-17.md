@@ -5,7 +5,7 @@ slug: "ai-news-morning-2026-04-17"
 description: "汇总2026年4月17日AI领域的最新动态，包括Claude Opus 4.7发布、Qwen3.6-35B-A3B开源、OpenAI Codex等产品更新，以及Cloudflare AI平台等重要进展。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Claude", "OpenAI", "Qwen", "Cloudflare", "Codex"]
+tags: ["Claude", "OpenAI", "Qwen", "Cloudflare", "Codex"]
 hiddenFromHomePage: true
 ---
 

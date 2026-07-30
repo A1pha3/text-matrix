@@ -5,7 +5,7 @@ slug: echo-ai-prediction-future
 description: "基于 UniPat AI 当前公开页面，严谨分析 Echo 的通用 AI 预测定位、公开指标、方法边界与预测市场关系。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI预测", "Echo", "Polymarket", "预测市场", "大模型"]
+tags: ["Polymarket", "预测市场", "LLM"]
 ---
 
 > **目标读者**：关注 AI、预测市场、量化研究与产品基础设施的技术读者

@@ -2,7 +2,7 @@
 title: "wigolo：本地优先的 AI Agent Web 智能层，无 API Key 跑 MCP"
 date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
-tags: ["mcp", "local-first", "web-search", "ai-agent", "rag"]
+tags: ["MCP", "Local-First", "AI Agent", "RAG"]
 description: "wigolo 是一个本地优先的 AI Agent Web 智能层，通过 MCP 把搜索、抓取、爬取、提取、缓存全部装进 ~1.5 GB 磁盘，零云、零 API key、零查询费用，公开 beta 已对接 Claude Code / Cursor / Codex / Gemini CLI。"
 ---
 

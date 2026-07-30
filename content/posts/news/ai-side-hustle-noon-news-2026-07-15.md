@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-15
 description: "2026年7月15日 AI 副业午报，精选过去 24 小时内 Deep Kernel 可信 AI 招聘、Agent Computer 团队组建、深圳 Electron 智能体壳岗、出海 SaaS 远程岗与 AI 自媒体淘金讨论。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "AI Agent", "远程招聘", "可信AI"]
+tags: ["AI副业", "V2EX", "AI Agent", "远程招聘"]
 hiddenFromHomePage: true
 ---
 

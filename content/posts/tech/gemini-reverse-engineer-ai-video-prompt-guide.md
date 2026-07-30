@@ -6,7 +6,7 @@ slug: "gemini-reverse-engineer-ai-video-prompt-guide"
 description: "基于 Google 官方视频理解、Files API、上下文缓存、媒体分辨率、结构化输出与社区高颗粒度模板，系统讲清如何用 Gemini 从视频逆向拆回可复用的生成条件，并把结果沉淀成长期可复用的 prompt 资产。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI视频", "提示词工程", "Gemini", "反推", "Google AI Studio", "结构化输出", "AI生成"]
+tags: ["AI视频", "提示词工程", "Gemini", "结构化输出"]
 ---
 
 <!-- markdownlint-disable-file MD003 MD041 -->

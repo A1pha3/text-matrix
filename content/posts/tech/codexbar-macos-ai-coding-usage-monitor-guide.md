@@ -5,7 +5,7 @@ slug: "codexbar-macos-ai-coding-usage-monitor-guide"
 description: "CodexBar（steipete/CodexBar，MIT）是一个 macOS 14+ 菜单栏小工具，统一显示 Codex / Claude / Cursor / Gemini / Copilot / Grok / ElevenLabs / AWS Bedrock / OpenRouter / LiteLLM 等 57 家 AI 编程服务的 quota、spend、reset countdown。隐私优先（不复用 provider session 之外的任何凭证），支持 CLI + Linux/Windows 集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["macOS", "Menu Bar", "AI Coding", "Usage Monitor", "CodexBar"]
+tags: ["macOS", "AI 编程"]
 ---
 
 # CodexBar：把 AI 编程服务的 quota 塞进菜单栏

@@ -5,7 +5,7 @@ slug: tech-interview-handbook-yangshun-coding-interview-guide
 description: "Tech Interview Handbook：超 100 万人受益的免费技术面试准备手册，Blind 75 → Grind 75 的演化，与 Cracking the Coding Interview 的差异。"
 draft: false
 categories: ["技术博客"]
-tags: ["tech-interview-handbook", "yangshun", "blind-75", "grind-75", "面试", "算法"]
+tags: ["面试", "算法"]
 hiddenFromHomePage: true
 ---
 

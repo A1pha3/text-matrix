@@ -8,7 +8,7 @@ aliases:
 description: "本文讲解了如何开始与 Claude 的第一段对话，通过目标、背景和结果形式三要素，以及逐步追问的迭代技巧，获取高质量的回答。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "AI对话", "提示词工程", "对话技巧", "Anthropic"]
+tags: ["Claude", "提示词工程", "Anthropic"]
 ---
 
 # Claude 101 第二课：你的第一段对话——先聊起来，再慢慢变好

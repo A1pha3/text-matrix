@@ -5,7 +5,7 @@ slug: ghost-headless-cms-expert-guide
 aliases:
   - /posts/tech/ghost-headless-cms-expert-guide/
 categories: ["技术笔记"]
-tags: ["Ghost", "CMS", "Headless", "Node.js", "会员系统"]
+tags: ["Node.js"]
 description: "Ghost 是最流行的开源 Headless CMS，本文档从入门到精通涵盖原理分析、架构设计、使用说明、开发扩展和推荐做法。"
 ---
 

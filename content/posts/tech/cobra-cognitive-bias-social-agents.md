@@ -5,7 +5,7 @@ slug: cobra-cognitive-bias-social-agents
 description: 深入解析CHI 2026最佳论文CoBRA——首个通过经典社会心理学实验实现LLM Agent认知偏差精确量化控制的工具箱
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "认知偏差", "社会心理学", "可解释性AI", "表征工程"]
+tags: ["AI Agent"]
 ---
 
 # CoBRA：用经典社会心理学实验编程 AI 认知偏差

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-05
 description: "2026年5月5日 AI 新闻早报，汇总过去 24 小时内值得关注的模型、产品、融资与行业动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "融资", "产品发布", "行业动态"]
+tags: ["融资", "行业动态"]
 hiddenFromHomePage: true
 ---
 

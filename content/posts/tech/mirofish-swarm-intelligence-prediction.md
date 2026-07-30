@@ -7,7 +7,7 @@ aliases:
 description: "解读盛大集团 MiroFish：55.7k Stars 的群体智能预测引擎，通过构建高保真数字平行世界，让 AI 智能体自主演化推演，实现按需预测。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MiroFish", "群体智能", "多智能体", "预测引擎", "OASIS"]
+tags: ["多智能体"]
 ---
 
 # MiroFish：55.7k Stars 的群体智能预测引擎，让未来在数字沙盘中预演

@@ -5,7 +5,7 @@ slug: "safe-ai-lab-eagle-speculative-decoding-guide"
 description: "拆解 SafeAILab/EAGLE 三代推测解码：EAGLE-1 特征外推、EAGLE-2 动态草稿树、EAGLE-3 训练时测试，对比 Medusa。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Speculative Decoding", "EAGLE", "LLM推理", "vLLM", "SGLang"]
+tags: ["LLM推理", "vLLM", "SGLang"]
 ---
 
 # EAGLE / EAGLE-2 / EAGLE-3：基于特征外推的 LLM 推测解码全栈指南

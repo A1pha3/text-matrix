@@ -5,7 +5,7 @@ slug: lark-cli-feishu-command-line-tool-guide
 aliases:
   - /posts/tech/lark-cli-feishu-command-line-tool-guide/
 categories: ["技术笔记"]
-tags: ["Lark", "飞书", "CLI", "AI Agent", "OpenAPI"]
+tags: ["飞书", "CLI", "AI Agent"]
 description: "基于官方公开信息系统讲解飞书官方 Lark CLI：功能版图、三层命令架构、认证机制、AI Agent Skills、源码阅读路径、开发扩展与从新手到专家的实践路线。"
 ---
 

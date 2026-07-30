@@ -5,7 +5,7 @@ slug: "basalt-rust-obsidian-tui-notes"
 description: "深度解析erikjuhani/basalt：用Rust和ratatui构建的Obsidian笔记TUI工具，三窗格布局（Explorer+Editor+Outline），WYSIWYG Markdown渲染，支持Vim模式和TOML配置。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "TUI", "Obsidian", "ratatui", "Markdown", "终端", "笔记工具"]
+tags: ["Rust", "TUI", "Obsidian", "Markdown", "终端"]
 hiddenFromHomePage: true
 ---
 

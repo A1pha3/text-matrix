@@ -5,7 +5,7 @@ slug: context-mode-mcp-context-optimization-guide
 description: "7.1k Stars的Context Mode，通过沙箱执行将315KB上下文压缩至5.4KB，节省98%。支持12大平台：Claude Code/Gemini CLI/Cursor/OpenCode等。FTS5+BM25知识库实现会话连续性。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MCP", "上下文优化", "Claude Code", "Cursor", "FTS5", "知识库"]
+tags: ["MCP", "Claude Code", "Cursor", "知识库"]
 ---
 
 # Context Mode：解决 AI 编程 Agent 上下文危机的 MCP 服务器

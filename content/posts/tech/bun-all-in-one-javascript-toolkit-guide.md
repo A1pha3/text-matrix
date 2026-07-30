@@ -5,7 +5,7 @@ slug: "bun-javascript-runtime-all-in-one-toolkit"
 description: "Bun 真正的差异化不是「快」，而是把运行时、打包、测试、包管理四件事合并到一个二进制里，改变了 JS 工具链的依赖结构。本文拆解 JavaScriptCore 选型动机、四合一架构的工程含义、一次 bun run 的完整执行路径，以及与 Node.js / Deno 的真实取舍和迁移风险。"
 draft: false
 categories: ["技术笔记"]
-tags: ["JavaScript", "Bun", "Rust", "Node.js", "TypeScript", "打包工具"]
+tags: ["JavaScript", "Bun", "Rust", "Node.js", "TypeScript"]
 ---
 
 # Bun v1.3.14：90K Stars 的 all-in-one JavaScript 工具链完整指南

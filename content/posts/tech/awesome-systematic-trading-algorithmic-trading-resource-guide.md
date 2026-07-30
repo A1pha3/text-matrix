@@ -5,7 +5,7 @@ slug: awesome-systematic-trading-algorithmic-trading-resource-guide
 description: "awesome-systematic-trading 是一个精心策划的量化交易资源集合，涵盖研究论文、书籍、数据集、代码库等。本文按动量、均值回归、统计套利、机器学习、加密货币五大策略方向，整理核心论文、代码示例和推荐学习路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["量化交易", "Python", "R", "金融", "算法"]
+tags: ["量化交易", "Python", "金融", "算法"]
 ---
 
 目录

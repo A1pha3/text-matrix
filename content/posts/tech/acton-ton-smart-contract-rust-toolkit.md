@@ -5,7 +5,7 @@ slug: "acton-ton-smart-contract-rust-toolkit"
 description: "Acton 是 TON 官方推出的全功能智能合约开发工具链，基于 Rust 语言编写，覆盖项目脚手架、编译、测试、脚本、钱包操作、网络部署、形式化验证和调试等合约全生命周期环节，是 TON 生态目前最完整的开发基础设施。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TON", "智能合约", "Rust", "区块链开发", "Web3"]
+tags: ["智能合约", "Rust", "Web3"]
 ---
 
 # Acton：TON 智能合约全生命周期开发工具链

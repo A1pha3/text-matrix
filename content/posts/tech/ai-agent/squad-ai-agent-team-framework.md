@@ -5,7 +5,7 @@ aliases:
   - /posts/tech/squad-ai-agent-team-framework/
 date: "2026-03-31T12:50:00+08:00"
 categories: ["技术笔记"]
-tags: ["Squad", "AI智能体", "GitHub Copilot", "多智能体", "协作框架", "团队开发"]
+tags: ["AI智能体", "GitHub Copilot", "多智能体"]
 description: "Squad 把 GitHub Copilot 的 Agent 模式扩展成一支多角色 AI 开发团队（1.5k Stars, MIT）。本文拆解它的多智能体协作、持久化知识和 SDK-First 团队定义机制，覆盖 CLI 命令、架构分析和实际使用场景。"
 ---
 

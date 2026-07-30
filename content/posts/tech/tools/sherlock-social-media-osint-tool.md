@@ -5,7 +5,7 @@ slug: sherlock-social-media-osint-tool
 aliases:
   - /posts/tech/sherlock-social-media-osint-tool/
 categories: ["技术笔记"]
-tags: ["Sherlock", "OSINT", "社工库", "Python", "渗透测试"]
+tags: ["OSINT", "Python", "渗透测试"]
 description: "Sherlock 是一款开源的 OSINT 侦查工具，通过用户名在 400+ 社交网络平台搜索目标账户。本文从入门到精通，涵盖安装配置、基本使用、匿名请求、云端部署、源码解析和开发扩展。"
 ---
 

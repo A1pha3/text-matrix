@@ -5,7 +5,7 @@ slug: "nvlabs-longlive-2-nvfp4-long-video-generation"
 description: "LongLive 2.0 是 NVlabs 开源的长视频生成基础设施，支持 NVFP4 低精度推理、多序列并行与注意力 sink 机制，实现 45.7 FPS 的实时长视频生成。本文从原理到实操完整解析其训练与推理架构。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "视频生成", "NVFP4", "长视频", "NVlabs", "推理优化"]
+tags: ["视频生成", "推理优化"]
 ---
 
 # LongLive 2.0：NVFP4 并行基础架构下的长视频生成指南

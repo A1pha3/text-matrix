@@ -4,7 +4,7 @@ date: 2026-07-07T07:09:51+08:00
 slug: anthropic-jspace-global-workspace-in-claude
 description: "系统解读 Anthropic 关于 Claude 内部「J-space」与「Jacobian Lens」的研究。围绕五项功能属性（可报告 / 可控制 / 可推理 / 跨任务共享 / 不参与自动处理）拆解证据链，对照神经科学的全局工作区理论，落地到 AI 安全监测、模型行为审计与可解释性研究的工程边界。"
 categories: ["技术笔记"]
-tags: ["Anthropic", "Claude", "J-space", "Jacobian Lens", "全局工作区", "可解释性", "AI 安全", "机制可解释性", "对齐监测"]
+tags: ["Anthropic", "Claude", "可解释性", "AI安全"]
 draft: false
 ---
 

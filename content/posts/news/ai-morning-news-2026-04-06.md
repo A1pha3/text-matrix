@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-04-06"
 description: "汇总2026年4月5-6日AI领域最新进展，涵盖大模型更新、机器人突破、AI商业化动向、开源工具与行业趋势。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "机器人", "开源", "AI商业化"]
+tags: ["LLM", "机器人", "开源"]
 hiddenFromHomePage: true
 ---
 

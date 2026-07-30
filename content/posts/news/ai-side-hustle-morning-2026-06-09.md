@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-09
 description: "2026年6月9日 AI 副业早报，精选过去 24 小时内 V2EX 招聘/AI 项目贴 5 条、Hacker News Show/Launch HN 4 条、量子位创业大赛 1 条，附 24h 互动量与技术栈。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "HackerNews", "SideProject"]
+tags: ["AI副业", "招聘", "V2EX", "HackerNews", "Side Project"]
 hiddenFromHomePage: true
 ---
 

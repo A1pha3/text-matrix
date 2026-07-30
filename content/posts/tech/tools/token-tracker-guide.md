@@ -8,7 +8,7 @@ summary: "以 OpenClaw 本地会话日志为例，讲清纯本地 Token Tracker 
 description: "这是一篇面向工程实践的本地 Token 用量追踪指南：先对比 Vibe Usage 与自建方案，再用可运行的 Node.js 脚本示范如何从 OpenClaw 日志提取 usage、做多字段归一化，并说明多工具扩展与统计误差边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Token", "AI编程", "OpenClaw", "VibeUsage", "用量追踪"]
+tags: ["Token", "AI编程", "OpenClaw"]
 ---
 
 > 定位：这篇文章不教你“怎么接一个现成云面板”，而是把“纯本地 Token Tracker”拆成几个可验证的工程问题：日志在哪里、哪些字段该信、怎样做归一化、怎样避免把示意代码写成事实。

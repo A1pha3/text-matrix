@@ -5,7 +5,7 @@ slug: "dexter-autonomous-financial-research-agent-guide"
 description: "Dexter 是 Virattt 开发的自主金融研究智能体，模仿 Claude Code 的交互方式专门为金融分析场景优化，支持任务规划、自我验证、实时市场数据和 WhatsApp 集成。本文解析其设计思路和使用方法。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Dexter", "金融分析", "自主智能体", "市场数据", "量化研究"]
+tags: ["AI Agent"]
 ---
 
 # Dexter：专注金融研究的自主 AI Agent

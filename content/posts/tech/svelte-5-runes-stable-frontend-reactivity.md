@@ -7,7 +7,7 @@ aliases:
 description: "Svelte 5 稳定版发布已超过一年，Runes 响应式范式在 5.56.x 持续打磨。本文回顾 runes 的核心机制、为什么 2026 年它重新上 GitHub Trending，以及与 React/Vue/Solid 的对照。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Svelte", "前端框架", "Runes", "响应式编程", "JavaScript"]
+tags: ["Svelte", "JavaScript"]
 ---
 
 # Svelte 5 Runes：稳定版一年后，前端响应式范式走到哪一步了

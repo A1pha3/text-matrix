@@ -5,7 +5,7 @@ slug: "new-api-llm-gateway"
 description: "new-api 在统一 OpenAI 格式的入口背后，做了三件事：格式转换与多模型适配、按渠道和模型粒度的路由、基于额度的用户计费。本文拆开这三条线，给一个请求的完整流转，并给出什么时候该用、什么时候不该用的判断。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "API网关", "AI", "Claude", "OpenAI", "GPT"]
+tags: ["LLM", "API网关", "Claude", "OpenAI", "GPT"]
 ---
 
 # new-api：把多个 LLM API 收进一个网关，顺便把计费也做了

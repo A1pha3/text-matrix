@@ -5,7 +5,7 @@ slug: "hugohe3-ppt-master-ai-ppt-generation-guide"
 description: "深度拆解 ppt-master 的 SVG→DrawingML 转换、双角色流水线与 spec_lock 反漂移机制,理解 AI 生成可编辑 PPT 的工程取舍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "PowerPoint", "SVG", "DrawingML", "Claude Code"]
+tags: ["AI Agent", "Claude Code"]
 ---
 
 # hugohe3/ppt-master 深度拆解

@@ -2,7 +2,7 @@
 title: "GitHub Copilot PR Reviewer：AI 代码审查实战指南"
 date: 2026-05-15T10:25:00+08:00
 categories: ["技术笔记"]
-tags: ["GitHub", "Copilot", "PR", "Code Review", "AI", "自动化"]
+tags: ["GitHub", "Copilot", "Code Review", "自动化"]
 draft: false
 slug: github-copilot-pr-reviewer
 description: "GitHub Copilot PR Reviewer 基于 Copilot SDK，自动分析 PR 改动、识别潜在问题和生成审查意见。本文覆盖配置安装、实践建议和 CI/CD 集成。"

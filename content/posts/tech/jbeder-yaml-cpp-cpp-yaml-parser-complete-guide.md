@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["C++", "yaml", "parser", "序列化", "配置文件"]
+tags: ["C++"]
 description: "yaml-cpp 是 C++ 生态里历史最久、维护最稳的 YAML 1.2 解析/生成器。本文从 CMake 构建入手，拆解 Node/Emitter 两条主线 API，对比 YAML 与 JSON/Protobuf 的工程取舍，并给出常见坑点和替代方案评估。"
 ---
 

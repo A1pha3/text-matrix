@@ -5,7 +5,7 @@ date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["claude", "anthropic", "prompt-engineering", "rag", "tool-use", "jupyter-notebook"]
+tags: ["Claude", "Anthropic", "Prompt Engineering", "RAG"]
 description: "Claude Cookbooks 是 Anthropic 官方维护的实战代码库。本文按 capabilities / tool_use / multimodal 三大类拆解其模式,解释为何 47.8K stars 但真正的工程价值集中在 5-7 个核心 notebook。"
 ---
 

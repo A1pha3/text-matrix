@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-03-30
 description: "AI副业早报：resume-coach简历工具、远程工作招聘、AI创业组队、Product Hunt爆款Crossnode vibe coding付费墙等。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "远程工作", "外包", "创业组队", "赚钱方法"]
+tags: ["AI副业", "远程工作", "外包"]
 hiddenFromHomePage: true
 ---
 

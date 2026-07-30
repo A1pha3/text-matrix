@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-05-30
 description: "2026年5月30日 AI副业早报，精选过去24小时内招聘、项目、工具与真实赚钱机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "远程工作", "开源社区", "AI出海"]
+tags: ["AI副业", "招聘", "远程工作"]
 hiddenFromHomePage: true
 ---
 

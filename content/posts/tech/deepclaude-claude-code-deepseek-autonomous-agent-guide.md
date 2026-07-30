@@ -5,7 +5,7 @@ slug: "deepclaude-claude-code-deepseek-autonomous-agent-guide"
 description: "deepclaude 保留 Claude Code 的工具循环，让你通过直连或本地 proxy 接入 DeepSeek V4 Pro、OpenRouter、Fireworks，并补上跨 provider 使用时最关键的兼容层。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "DeepSeek", "AI Agent", "OpenRouter", "API 代理"]
+tags: ["Claude Code", "DeepSeek", "AI Agent", "OpenRouter", "API代理"]
 ---
 
 ## 学习目标

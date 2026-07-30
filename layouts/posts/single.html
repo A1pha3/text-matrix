@@ -69,7 +69,6 @@
                 {{- $visibleChars := countrunes (replaceRE "\\s+" "" (plainify .Content)) -}}
                 {{- $readingSpeed := .Site.Params.readingSpeedCJK | default 400 -}}
                 {{- $readingTime := cond (gt $visibleChars 0) (div (add $visibleChars (sub $readingSpeed 1)) $readingSpeed) 1 -}}
-                <i class="fas fa-pencil-alt" aria-hidden="true"></i>&nbsp;{{ T "wordCount" $visibleChars }}&nbsp;
                 <i class="far fa-clock" aria-hidden="true"></i>&nbsp;{{ T "readingTime" $readingTime }}&nbsp;
                 {{- $comment := .Scratch.Get "comment" | default dict -}}
                 {{- if $comment.enable | and $comment.valine.enable | and $comment.valine.visitor -}}

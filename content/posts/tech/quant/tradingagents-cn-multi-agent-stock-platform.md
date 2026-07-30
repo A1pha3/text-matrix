@@ -7,7 +7,7 @@ aliases:
 description: "深度解析 TradingAgents-CN 多智能体量化投资平台，Fork 自 43k Stars 原版，21.9k Stars，FastAPI+Vue3 全新架构，支持 A股/港股/美股，详解原理、架构、配置与二次开发路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TradingAgents-CN", "多智能体", "量化投资", "AI金融", "Vue3", "LangGraph"]
+tags: ["多智能体", "量化投资", "LangGraph"]
 ---
 
 > **目标读者**：对 AI 量化投资感兴趣的个人投资者、研究者，以及希望学习多智能体 LLM 金融分析的技术开发者

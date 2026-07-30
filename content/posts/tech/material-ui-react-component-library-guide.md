@@ -5,7 +5,7 @@ slug: "material-ui-react-component-library-guide"
 description: "全面介绍 Material UI React 组件库，涵盖 98k Stars 的核心特性、主题定制、组件实战、性能优化和版本升级指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Material UI", "React", "Material Design", "前端组件库", "CSS-in-JS"]
+tags: ["React"]
 ---
 
 ## 学习目标

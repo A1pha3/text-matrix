@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-25
 description: "2026年6月25日 AI 新闻早报，精选过去 24 小时内 OpenAI 自研芯片首度公开、Claude Code 大升级被 Karpathy 称为 LLM 第三次变革、Momenta 港交所冲刺物理 AI 第一股、百度千帆 Token Plan 企业版上线、豆包专业版发布 Agent 办公任务等关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "具身智能", "Agent", "融资"]
+tags: ["LLM", "具身智能", "AI Agent", "融资"]
 hiddenFromHomePage: true
 ---
 

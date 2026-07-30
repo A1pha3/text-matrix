@@ -5,7 +5,7 @@ slug: "sub2api-ai-api-gateway-subscription"
 description: "Sub2API 是一款开源 AI API 网关，核心功能是将 AI 产品订阅（如 Claude Code）的配额通过多账号管理和智能调度，实现 API Key 分发给多个用户使用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI网关", "API分发", "Claude Code", "Go语言", "开源项目"]
+tags: ["Claude Code", "开源项目"]
 ---
 
 # Sub2API：一个把订阅配额变成可分发 API Key 的开源网关

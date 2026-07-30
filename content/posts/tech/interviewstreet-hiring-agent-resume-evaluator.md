@@ -5,7 +5,7 @@ slug: "interviewstreet-hiring-agent-resume-evaluator"
 description: "Hiring Agent 是 InterviewStreet 开源的简历智能评估 Agent：用 pymupdf_rag 把 PDF 转 Markdown，按 section 用 LLM 抽 JSON，再用 GitHub 信号补强，最后跑严格约束下的多维评分。Ollama 本地或 Gemini 云端双后端，本文拆解其架构、Pydantic 数据模型与公平性约束。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "简历评估", "Hiring", "Python", "Pydantic", "Ollama", "Gemini"]
+tags: ["AI Agent", "Python", "Pydantic", "Ollama", "Gemini"]
 ---
 
 # Hiring Agent：InterviewStreet 开源的简历评分 Agent 管线，PDF→JSON→GitHub 增强→公平评分

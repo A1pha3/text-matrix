@@ -5,7 +5,7 @@ aliases:
   - /posts/tech/shannon-multi-agent-orchestration-framework-guide/
 date: "2026-04-01T10:15:00+08:00"
 categories: ["技术笔记"]
-tags: ["Shannon", "多智能体", "Multi-Agent", "Orchestration", "WASI", "Token Budget", "生产级AI", "Human-in-the-Loop", "Swarm", "Temporal"]
+tags: ["Shannon", "多智能体", "Multi-Agent"]
 description: "Shannon 把多智能体编排从原型推到生产：Temporal 工作流保证可回放、WASI 沙箱隔离代码执行、硬性 Token 预算防止成本失控，15+ LLM 提供商，MIT 许可证。"
 ---
 

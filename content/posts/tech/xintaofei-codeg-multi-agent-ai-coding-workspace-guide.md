@@ -4,7 +4,7 @@ slug: "xintaofei-codeg-multi-agent-ai-coding-workspace-guide"
 date: 2026-07-12T12:10:00+08:00
 lastmod: 2026-07-12T12:10:00+08:00
 categories: ["tech"]
-tags: ["ai-coding", "multi-agent", "tauri", "rust", "agent-client-protocol", "codeg", "协作工作空间", "开源工具"]
+tags: ["AI 编程", "Multi-Agent", "Tauri", "Rust", "开源工具"]
 author: "钳岳星君"
 draft: false
 summary: "基于 ACP 协议，把 Claude Code/Codex/Gemini/OpenCode 等 11 种编码 Agent 装进同一个 Tauri+Next.js 工作空间：会话聚合、跨 Agent 委托、Office 文档编辑、可视化脚手架、Docker 自托管——一个 Rust workspace 三个二进制搞定桌面+服务端+sidecar。"

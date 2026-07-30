@@ -5,7 +5,7 @@ slug: "skillopt-microsoft-self-evolving-agent-skills"
 description: "深度解读微软与上海交大、复旦、同济联合提出的 SkillOpt。它不微调模型权重，而是把 Skill 文档当成 Agent 的外部状态，用 rollout、reflection、bounded edit 和 validation gate 训练出可部署、可迁移的 best_skill.md。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "SkillOpt", "Agent Engineering", "Prompt 优化", "微软", "Text-space Optimization"]
+tags: ["AI Agent", "微软"]
 hiddenFromHomePage: false
 ---
 

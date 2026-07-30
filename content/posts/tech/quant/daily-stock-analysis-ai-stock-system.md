@@ -5,7 +5,7 @@ slug: daily-stock-analysis-ai-quantitative-investment
 aliases:
   - /posts/tech/daily-stock-analysis-ai-quantitative-investment/
 categories: ["技术笔记"]
-tags: ["量化投资", "AI", "股票分析", "LiteLLM", "Python", "GitHub Actions"]
+tags: ["量化投资", "Python", "GitHub Actions"]
 description: "详解 daily_stock_analysis：一个基于 AI 大模型的 A股/港股/美股智能分析系统，支持多渠道推送、内置交易策略、零成本 GitHub Actions 运行。"
 ---
 

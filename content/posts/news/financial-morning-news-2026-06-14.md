@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-06-14
 description: "2026年6月14日经济财经早报，汇总美伊协议预计24小时内签署、中国政府债券余额首破100万亿元、瑞银厄尔尼诺正式成立、SK海力士140亿美元IPO、香港楼市回暖等过去24小时关键市场变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "早报", "美伊协议", "中国政府债券", "SK海力士"]
+tags: ["财经", "早报", "美伊协议"]
 hiddenFromHomePage: true
 ---
 

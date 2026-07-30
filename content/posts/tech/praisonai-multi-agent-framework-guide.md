@@ -5,7 +5,7 @@ slug: praisonai-multi-agent-framework-guide
 description: "PraisonAI 是 AutoGen 的继任者，支持 100+ LLM 和 MCP 原生，提供多智能体框架功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "LLM", "MCP", "Python"]
+tags: ["AI Agent", "LLM", "MCP", "Python"]
 ---
 
 # PraisonAI：AutoGen 继任者，100+ LLM、MCP 原生多智能体框架

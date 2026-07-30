@@ -5,7 +5,7 @@ slug: "insforge-ai-backend-platform-guide"
 description: "InsForge是一个专为AI编码助手和AI代码编辑器设计的开源后端开发平台，通过语义层将数据库、身份认证、文件存储、函数计算等后端原语暴露给AI代理，实现端到端的自动化后端操作与检查。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI编程助手", "后端平台", "MCP", "Docker", "开源"]
+tags: ["AI 编程", "MCP", "Docker", "开源"]
 ---
 
 InsForge 是一个开源后端开发平台，定位是 **AI 编程助手和 AI 代码编辑器的后端基础设施**。它将传统后端原语（数据库、身份认证、存储、函数）包装成语义层，让 AI 代理能够理解、推理并端到端地操作系统。

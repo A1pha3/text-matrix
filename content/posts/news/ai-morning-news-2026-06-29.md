@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-29
 description: "2026年6月29日 AI 新闻早报，精选过去 24 小时内 Liblib 母公司演语科技 20 亿美元估值、General Intuition 3.2 亿美元融资、英伟达红皇后哥德尔机让 AI 自我繁衍、Anthropic 创始人预测 2028 RSI、阿里 Qwen 被指蒸馏 Claude、GLM 5.2 在网络安全基准上击败 Claude 等核心动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "LLM", "融资", "开源", "海外"]
+tags: ["LLM", "融资", "开源"]
 hiddenFromHomePage: true
 ---
 

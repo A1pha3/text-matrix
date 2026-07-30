@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-04-30
 description: "2026年4月30日AI副业早报，汇总V2EX等社区关于AI赚钱、副业、创业的热门讨论。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Side Project", "独立开发", "GPT Image"]
+tags: ["AI副业", "V2EX", "Side Project", "独立开发"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-04-01
 description: "2026年4月1日经济财经早报：特朗普称2-3周内结束伊朗战争，外国央行抛售美债，欧元区通胀升至2.5%，Mistral融资8.3亿美元建AI中心，英国钢铁国有化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["伊朗战争", "美联储", "OpenAI", "AI芯片", "中国经济", "英国经济"]
+tags: ["伊朗战争", "美联储", "OpenAI", "AI芯片"]
 hiddenFromHomePage: true
 ---
 

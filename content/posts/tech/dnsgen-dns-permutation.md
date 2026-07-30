@@ -5,7 +5,7 @@ slug: "dnsgen-dns-permutation"
 description: "DNSGen 是 1K Stars 的智能 DNS 域名变形工具，支持 8 种高级变形技术（Word Insertion、Cloud Patterns、Microservice 等）。配合 Findomain 和 massdns 使用，可显著扩展子域名发现范围，支持自定义云平台词表和带注释词表格式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["安全", "BugBounty", "DNS", "子域名枚举", "DNSGen", "渗透测试"]
+tags: ["安全", "BugBounty", "DNS", "渗透测试"]
 ---
 
 # DNSGen：智能 DNS 域名变形引擎——子域名枚举的进阶武器

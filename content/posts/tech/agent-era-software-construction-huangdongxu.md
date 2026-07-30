@@ -6,7 +6,7 @@ summary: "基于黄东旭高强度 Agent 实战的公开分享，本文系统拆
 description: "深度解读黄东旭对 Agent 时代软件构建的判断：代码为何从思考载体退为执行载体，Spec 为什么比堆 Agent 更重要，程序员能力为何会快速分化，以及验证与治理为什么会成为下一代软件基础设施。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Agent", "AI", "软件工程", "黄东旭", "TiDB", "Coding Agent", "大模型", "Skill", "Harness Engineering"]
+tags: ["AI Agent", "软件工程", "Coding Agent", "LLM", "Skill", "Harness Engineering"]
 ---
 
 > **定位**：把黄东旭在高强度 Agent（智能体）实战后的观点，整理成一篇工程师能直接评估和试运行的方法论笔记，不涉及"AI 会不会替代程序员"的泛泛讨论。

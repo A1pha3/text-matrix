@@ -5,7 +5,7 @@ slug: "google-agents-cli-gemini-enterprise-guide"
 description: "google/agents-cli 是 Google 官方发布的 CLI + Skills 套件，让 Antigravity CLI、Claude Code、Codex 等任意编程助手具备在 Gemini Enterprise Agent Platform 上创建、评估、部署 AI 代理的能力。本文拆解其定位、Skill 设计、CLI 命令族与典型工作流。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Google Cloud", "Gemini", "Agent", "CLI", "Claude Code", "Codex"]
+tags: ["Google Cloud", "Gemini", "AI Agent", "CLI", "Claude Code", "Codex"]
 ---
 
 # google/agents-cli：让任意编程助手变成 Gemini Enterprise Agent 部署专家的 CLI 技能套件

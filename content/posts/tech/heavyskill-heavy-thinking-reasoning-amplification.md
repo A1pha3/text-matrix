@@ -5,7 +5,7 @@ slug: "heavyskill-heavy-thinking-reasoning-amplification"
 description: "HeavySkill 通过并行推理 + 顺序深思两阶段架构，将复杂推理任务分解为 K 条独立推理轨迹与关键分析合成。GitHub 13 Stars，新型测试时 Scaling 技术，支持 Claude Code Skill 与 Python Pipeline 两种使用模式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "LLM", "推理增强", "测试时Scaling", "Agent", "Claude Code"]
+tags: ["LLM", "AI Agent", "Claude Code"]
 ---
 
 # HeavySkill 完全指南：测试时 Scaling 的推理增强技术

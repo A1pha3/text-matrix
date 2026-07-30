@@ -5,7 +5,7 @@ slug: "bitnet-microsoft-1bit-llm-inference-guide"
 description: "全面介绍微软官方 BitNet 1-bit LLM 推理框架，涵盖 37.2k Stars 的核心原理、I2_S/TL1/TL2 量化内核、CPU/GPU 高效推理、性能优化和部署指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["BitNet", "1-bit LLM", "微软", "量化推理", "llama.cpp", "CPU 推理"]
+tags: ["微软", "llama.cpp", "CPU 推理"]
 ---
 
 ## 学习目标

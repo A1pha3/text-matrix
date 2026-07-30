@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["archify", "agent-skill", "mermaid", "diagram", "AI-工具"]
+tags: ["Agent Skills", "diagram", "AI工具"]
 description: "Archify 是一个让 Claude / Codex CLI / opencode 直接生成架构图、技术流程图、时序图的 agent skill。它把自然语言描述转为单文件 HTML 图表，支持深色浅色切换、4× 倍率 PNG/JPEG/WebP/SVG 导出。本文拆解其工作流、与 Mermaid/Excalidraw 的关系。"
 ---
 

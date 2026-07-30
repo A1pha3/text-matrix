@@ -7,7 +7,7 @@ aliases:
 description: "Codex Skills 是模块化指令包，让 Codex CLI 能执行发邮件、操作 GitHub、发 Slack 等真实任务。本文全景解析十大分类热门技能及构建方法。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Codex", "OpenAI", "自动化", "工作流"]
+tags: ["Codex", "OpenAI", "自动化", "工作流"]
 ---
 
 # Awesome Codex Skills：Codex CLI 的技能宝库，让 AI 代理真正替你干活

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-27
 description: "2026-05-27 AI 新闻早报，汇总过去 24 小时内模型发布、企业融资、硅谷动向与行业投资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "LLM", "Agent", "HackerNews", "36kr", "量子位"]
+tags: ["LLM", "AI Agent", "HackerNews", "36kr", "量子位"]
 hiddenFromHomePage: true
 ---
 

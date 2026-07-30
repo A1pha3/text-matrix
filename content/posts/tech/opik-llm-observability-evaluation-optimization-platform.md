@@ -4,7 +4,7 @@ date: 2026-06-26T00:05:00+08:00
 slug: opik-llm-observability-evaluation-optimization-platform
 description: "深度拆解 comet-ml/opik 的设计：一个把 LLM Tracing、Evaluation、Datasets/Experiments、Production Monitoring、Agent Optimizer、Guardrails 六件事装进同一个开源平台的框架。基于 19.8k Stars / Apache-2.0 / 60+ 框架集成 / Java + Python + React 全栈 monorepo / 40M+ traces/day 生产规模，本文拆开它的子系统边界、ClickHouse 选型理由、Agent Optimizer 的工作机制，并给出与 Langfuse、Helicone、MLflow、Phoenix 的工程边界对比。"
 categories: ["技术笔记"]
-tags: ["Opik", "Comet", "LLM Observability", "LLM Evaluation", "Agent Optimizer", "Prompt Optimization", "Guardrails", "Langfuse", "Tracing", "ClickHouse", "LLM-as-a-judge", "Apache 2.0"]
+tags: ["Langfuse", "ClickHouse"]
 draft: false
 ---
 

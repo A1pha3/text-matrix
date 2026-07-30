@@ -5,7 +5,7 @@ slug: fli-google-flights-mcp-server-guide
 description: "Fli 是一个 Google Flights MCP 服务器和 Python 库，提供航班搜索和预订功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Google Flights", "MCP", "Python", "API", "航班"]
+tags: ["MCP", "Python", "API"]
 ---
 
 ## 学习目标

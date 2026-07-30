@@ -7,7 +7,7 @@ description: "Bernini 是字节跳动 2026-05-29 开源的视频生成与编辑�
 summary: "Bernini 不是又一个 DiT 视频模型。它把「MLLM 语义规划 + Wan2.2 双专家 DiT 渲染 + Open-VeOmni 序列并行」三段式架构开源，并且把 6 类视频任务（t2i/i2i/t2v/v2v/mv2v/rv2v/r2v）和 7 种 guidance mode 显式化。本文从 Bernini 仓库的 configs、pipeline.py、parallel/ops.py 三个核心文件出发，拆出这套架构的设计取舍与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["视频生成", "DiT", "MLLM", "Bernini", "字节跳动", "Wan2.2", "视频编辑", "架构分析"]
+tags: ["视频生成", "DiT", "字节跳动", "视频编辑", "架构分析"]
 ---
 
 > **核心判断**：Bernini 真正的创新不是某个新模型，而是把「语义规划」和「像素渲染」拆成两个独立阶段，再用 Qwen2.5-VL 做规划、Wan2.2 双专家 DiT 做渲染，Open-VeOmni 做序列并行。视频编辑的难点是「在保持原视频不变的前提下做局部修改」，这三段式架构是字节跳动对这个问题给出的工程答案。

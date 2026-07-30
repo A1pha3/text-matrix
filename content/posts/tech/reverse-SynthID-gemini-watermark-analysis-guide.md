@@ -5,7 +5,7 @@ slug: reverse-synthID-gemini-watermark-analysis-guide
 description: "Reverse SynthID 是对 Google Gemini 水印技术的逆向工程研究，探讨 AI 生成图像的版权保护和追溯技术。"
 draft: false
 categories: ["技术笔记"]
-tags: ["SynthID", "Gemini", "水印", "AI", "版权"]
+tags: ["Gemini"]
 ---
 
 # Reverse SynthID：Google Gemini 水印的逆向工程

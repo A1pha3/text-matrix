@@ -270,51 +270,35 @@
 }
 
 .post-conversion {
-  display: grid;
-  gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
   margin-top: 2rem;
-  padding: 1.35rem 1.45rem;
-  border: 1px solid rgba(15, 23, 42, .08);
-  border-radius: .9rem;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(148, 163, 184, .18);
 
-  .post-conversion-kicker {
-    margin: 0 0 .45rem;
+  .post-conversion-label {
     color: #0f766e;
-    font-size: .74rem;
+    font-size: .78rem;
     font-weight: 700;
     letter-spacing: .12em;
-    text-transform: uppercase;
-  }
-
-  .post-conversion-copy h2 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 1.32rem;
-    line-height: 1.3;
-  }
-
-  .post-conversion-copy p:last-child {
-    margin-bottom: 0;
-    color: #475569;
-    line-height: 1.75;
   }
 
   .post-conversion-links {
     display: flex;
     flex-wrap: wrap;
-    gap: .75rem;
+    gap: .6rem;
   }
 
   .post-conversion-links a {
-    padding: .62rem .92rem;
+    padding: .42rem .8rem;
     border: 1px solid rgba(15, 23, 42, .08);
     border-radius: 999px;
-    color: #0f172a;
+    color: #475569;
+    font-size: .9rem;
     font-weight: 600;
     text-decoration: none;
-    background: rgba(255, 255, 255, .76);
   }
 
   .post-conversion-links a:hover {
@@ -322,22 +306,15 @@
   }
 
   [theme=dark] & {
-    border-color: rgba(255, 255, 255, .06);
-    background: rgba(15, 23, 42, .84);
-    box-shadow: 0 1px 2px rgba(2, 8, 23, .3);
-
-    .post-conversion-copy h2,
-    .post-conversion-links a {
-      color: #f8fafc;
-    }
-
-    .post-conversion-copy p:last-child {
-      color: #cbd5e1;
-    }
+    border-top-color: rgba(148, 163, 184, .14);
 
     .post-conversion-links a {
       border-color: rgba(255, 255, 255, .08);
-      background: rgba(15, 23, 42, .55);
+      color: #cbd5e1;
+    }
+
+    .post-conversion-links a:hover {
+      color: #5eead4;
     }
   }
 }
@@ -430,19 +407,16 @@
 
 .discovery-hero {
   margin-bottom: 1.4rem;
-  padding: 1.35rem 1.45rem;
+  padding: 1rem 1.4rem;
   border: 1px solid rgba(15, 23, 42, .08);
   border-radius: .9rem;
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
 
-  .discovery-kicker {
-    margin: 0 0 .45rem;
-    color: #0f766e;
-    font-size: .74rem;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
+  .single-title {
+    margin: 0 0 .4rem;
+    text-align: left;
+    font-size: 1.35rem;
   }
 
   .discovery-intro {
@@ -451,42 +425,20 @@
     line-height: 1.75;
   }
 
-  .discovery-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .75rem;
-    margin-top: 1rem;
-  }
-
-  .discovery-actions a {
-    padding: .62rem .92rem;
-    border: 1px solid rgba(15, 23, 42, .08);
-    border-radius: 999px;
-    color: #0f172a;
-    font-weight: 600;
-    text-decoration: none;
-    background: rgba(255, 255, 255, .76);
-  }
-
-  .discovery-actions a:hover {
-    color: #0f766e;
-  }
-
   [theme=dark] & {
     border-color: rgba(255, 255, 255, .06);
     background: rgba(15, 23, 42, .84);
     box-shadow: 0 1px 2px rgba(2, 8, 23, .3);
 
-    .discovery-intro,
-    .discovery-actions a {
+    .discovery-intro {
       color: #cbd5e1;
     }
-
-    .discovery-actions a {
-      border-color: rgba(255, 255, 255, .08);
-      background: rgba(15, 23, 42, .55);
-    }
   }
+}
+
+/* 归档/目录页标题与正文统一左对齐 */
+.archive .single-title {
+  text-align: left;
 }
 
 .search-discovery-grid {

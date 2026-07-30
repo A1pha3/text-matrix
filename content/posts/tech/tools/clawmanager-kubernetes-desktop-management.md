@@ -5,7 +5,7 @@ slug: clawmanager-kubernetes-desktop-management
 aliases:
   - /posts/tech/clawmanager-kubernetes-desktop-management/
 categories: ["技术笔记"]
-tags: ["ClawManager", "Kubernetes", "OpenClaw", "AI Gateway", "桌面管理"]
+tags: ["Kubernetes", "OpenClaw"]
 description: "基于 ClawManager 上游 README 与 AI Gateway 文档，系统讲清其定位、核心能力、部署流程、治理逻辑与运维要点。"
 ---
 

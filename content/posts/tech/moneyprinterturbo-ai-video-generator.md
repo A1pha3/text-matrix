@@ -5,7 +5,7 @@ slug: "moneyprinterturbo-ai-video-generator"
 description: "深度解析 MoneyPrinterTurbo：AI 全自动短视频生成工具，一键生成文案+素材+配音+字幕+音乐，支持竖屏9:16和横屏16:9，53.7k stars，详解原理、安装、配置与常见问题。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MoneyPrinterTurbo", "AI视频生成", "短视频", "AI自动化", "Python"]
+tags: ["AI视频生成", "Python"]
 ---
 
 # MoneyPrinterTurbo：AI 全自动短视频生成工具

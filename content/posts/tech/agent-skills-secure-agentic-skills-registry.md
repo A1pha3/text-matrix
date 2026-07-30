@@ -4,12 +4,7 @@ date: 2026-05-18
 slug: agent-skills-secure-agentic-skills-registry
 categories: ["技术笔记"]
 description: "Snyk 2026 报告显示公开市场里 13.4% 的技能包含关键漏洞。Agent Skills 用五层发布审查加 CLI 纵深防御把安全审查前置到发布流程。"
-tags:
-  - AI Agent
-  - 安全
-  - Claude Code
-  - Cursor
-  - 开源生态
+tags: ["AI Agent", "安全", "Claude Code", "Cursor"]
 ---
 
 # Agent Skills：安全验证的 AI 编码智能体技能注册表

@@ -5,7 +5,7 @@ slug: "multica-agent-time-sharing-platform"
 description: "Multica 是一个开源的 agent 管理平台，通过把 AI coding agent 当作正式员工一样指派任务、跟踪进度、沉淀技能，实现多 agent 协同工作。核心创新是将 Unix 的时间共享模型重新带回 AI 时代，让小团队也能拥有大型开发团队的速度。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "多 agent 协作", "Coding Agent", "任务管理", "Go"]
+tags: ["AI Agent", "多Agent协作", "Coding Agent", "Go"]
 ---
 
 ## 开场判断

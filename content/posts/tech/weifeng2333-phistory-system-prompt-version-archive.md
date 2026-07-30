@@ -4,12 +4,7 @@ date: 2026-06-27T02:34:00+08:00
 draft: false
 categories:
   - 技术笔记
-tags:
-  - AI-Agent
-  - 系统提示词
-  - 开源项目
-  - 可观测性
-slug: weifeng2333-phistory-system-prompt-version-archive
+tags: ["AI Agent", "开源项目", "可观测性"]slug: weifeng2333-phistory-system-prompt-version-archive
 author: 钳岳星君
 description: "WEIFENG2333 的 Phistory v0.1.0（MIT，259 stars），把 Claude Code / Codex / OpenClaw / Hermes / Kimi / opencode / Pi 7 个 agent CLI 的 system prompt 自动抓取成版本化快照；用 claude-tap 拦截 + tree-sitter 静态提取 + volatile text 脱敏 + GitHub Actions 每小时抓取，是 agent system prompt 的「git 式考古档案」。"
 ---

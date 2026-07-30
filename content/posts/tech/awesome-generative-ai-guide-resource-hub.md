@@ -5,7 +5,7 @@ slug: "awesome-generative-ai-guide-resource-hub"
 description: "aishwaryanr/awesome-generative-ai-guide 是一份以月度论文榜 + 系统化课程为核心的资源仓库，托管 Applied LLMs Mastery、AI Evals for Everyone、OpenClaw Mastery 等系列免费课。本文给出它的结构拆解、适合人群与使用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GenAI", "LLM", "学习路线", "awesome", "课程"]
+tags: ["GenAI", "LLM", "课程"]
 ---
 
 ## 快速信息卡

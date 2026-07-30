@@ -6,7 +6,7 @@ slug: "linux-kernel-development-guide"
 description: "本文系统讲解 Linux 内核源码目录结构、主线开发流程、编译构建方法以及如何参与上游社区贡献，涵盖子系统划分、提交规范、测试框架与 Rust 融入现状等核心内容。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Linux", "内核", "内核开发", "C语言", "开源"]
+tags: ["Linux", "C语言", "开源"]
 ---
 
 > **目标读者**：有一定 C 语言和操作系统基础，想系统掌握 Linux 内核开发路径的工程师

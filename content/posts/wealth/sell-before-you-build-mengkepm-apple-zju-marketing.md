@@ -3,7 +3,7 @@ title: "成就伟大之前先学会卖东西：Apple × 浙大营销课的 23.9 
 date: "2026-06-20T15:55:00+08:00"
 slug: "sell-before-you-build-mengkepm-apple-zju-marketing"
 description: "Mengke Wang 在 Apple × 浙江大学移动应用孵化营 1.5 天营销课的 23.9 万浏览背后，「成就伟大之前先学会卖东西」反工程文化的 3 个反直觉洞察：营销不是产品之后的事，是产品的前提；卖东西的最好方法是先做需要被卖的东西；中国开发者社区普遍轻视营销的代价。"
-tags: ["营销", "创业", "产品", "Apple", "浙江大学", "Mengke Wang", "商业洞察", "孵化营", "方法论", "反工程文化"]
+tags: ["创业", "Apple", "方法论"]
 categories: ["财富自由"]
 draft: false
 ---

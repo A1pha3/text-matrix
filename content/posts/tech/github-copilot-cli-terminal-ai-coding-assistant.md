@@ -5,7 +5,7 @@ slug: "github-copilot-cli-terminal-ai-coding-assistant"
 description: "GitHub Copilot CLI 是 GitHub 官方推出的命令行编码助手，基于与 GitHub Copilot 编码代理相同的智能框架构建。本文解析其核心能力、安装方式、认证机制与 MCP 扩展生态，帮助开发者判断是否值得将这款工具纳入日常工作流。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "GitHub", "Copilot", "CLI", "编程助手"]
+tags: ["GitHub", "Copilot", "CLI", "编程助手"]
 ---
 
 # GitHub Copilot CLI：将 Copilot 编码能力带入终端

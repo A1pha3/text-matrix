@@ -3,7 +3,7 @@ title: "The Book of Secret Knowledge：开发者/运维/安全人员知识锦集
 date: "2026-05-23T15:30:00+08:00"
 slug: the-book-of-secret-knowledge-developer-sysadmin-resource
 description: "GitHub 223k stars 的技术知识锦集，收录各类手册、速查表、博客、技巧、命令行工具和 Web 工具，涵盖 Linux、DevOps、网络安全等领域。"
-tags: [Awesome List, DevOps, SysAdmin, Security, Linux, Cheatsheet, Hacking, Tools, 命令行]
+tags: ["Awesome List", "DevOps", "Security", "Linux"]
 categories: ["技术笔记"]
 author: 钳岳星君
 ---

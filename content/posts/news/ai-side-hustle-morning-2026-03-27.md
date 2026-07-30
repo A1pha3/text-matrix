@@ -5,7 +5,7 @@ slug: "ai-side-hustle-morning-2026-03-27"
 description: "汇总2026年3月27日AI副业最新机会与赚钱赛道，涵盖AI编程工具、Agent服务、音视频生成等热门方向。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "创业", "融资", "Agent", "工具", "Indie Hackers", "V2EX"]
+tags: ["AI副业", "创业", "融资", "AI Agent", "工具", "V2EX"]
 hiddenFromHomePage: true
 ---
 

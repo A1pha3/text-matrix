@@ -4,7 +4,7 @@ slug: "forgecode-ai-terminal-development-guide"
 date: "2026-04-08T16:40:00+08:00"
 lastmod: 2026-04-08T16:40:00+08:00
 categories: ["技术笔记"]
-tags: ["Rust", "AI", "Terminal", "ZSH", "CLI", "Coding Agent", "Claude", "开发环境"]
+tags: ["Rust", "Terminal", "CLI", "Coding Agent", "Claude"]
 description: "ForgeCode 是一个开源的 AI 增强终端开发环境，支持 ZSH 插件模式、多 AI 提供商（OpenAI/Anthropic/Groq/DeepSeek等）、三大内置 Agent（forge/sage/muse）、Git 集成、语义搜索、工作区索引等。技术栈为 Rust 93.5%，零配置开箱即用。"
 draft: false
 ---

@@ -3,7 +3,7 @@ title: "AI Website Cloner Template 架构拆解:把'克隆任意网站'拆成 5 
 date: 2026-06-22T20:58:00+08:00
 slug: "jcodesmore-ai-website-cloner-template-agent-skill-architecture"
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "Next.js", "Agent Skill", "架构分析"]
+tags: ["AI Agent", "Claude Code", "Next.js", "Agent Skills", "架构分析"]
 description: "JCodesMore/ai-website-cloner-template 是一个让 Claude Code 等 AI 编码代理一键克隆任意网站到 Next.js 16 代码库的模板仓库,核心架构是 5 阶段管道 + Spec 文件作为契约 + Git Worktree 并行 Builder,3 个月拿到 17k+ stars。"
 ---
 

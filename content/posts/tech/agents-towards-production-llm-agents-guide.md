@@ -3,7 +3,7 @@ title: "开源热点：Agents Towards Production——LLM Agent 开发工程化�
 date: 2026-05-17T20:15:00+08:00
 categories: ["技术笔记"]
 slug: agents-towards-production-llm-agents-guide
-tags: ["LLM Agent", "LangGraph", "RAG", "Multi-agent", "生产级AI"]
+tags: ["LangGraph", "RAG", "Multi-Agent"]
 description: "Nir Diamant 的 agents-towards-production 提供 28 个配套 Notebook，按工程依赖关系排成从基础到部署的完整 LLM Agent 生产化路径。"
 ---
 

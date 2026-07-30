@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-07-10
 description: "2026年7月10日经济财经早报，覆盖美股芯片股领涨反弹、美伊冲突升级与霍尔木兹海峡通航骤降、美光追投500亿美元锁定原料、SK海力士赴美融资创纪录、A股午后大反击与高盛建议转仓中国AI链、百事CEO警告美国通胀卷土重来等核心市场变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "美股", "地缘政治", "存储芯片", "AI"]
+tags: ["财经", "美股", "地缘政治", "存储芯片"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: koala73-worldmonitor-real-time-intelligence-dashboard-guide
 description: "koala73/worldmonitor 用 276 个 proto 文件定义 34 个服务域，65+ 上游数据源 + 双地图引擎 + Country Instability Index + Ollama 本地 AI 把冲突、军事、市场、灾害信号拼成一张实时态势图。本文拆解其分层架构、协议先行策略与 6 站点变体复用机制。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OSINT", "World Monitor", "TypeScript", "情报仪表盘", "Protocol Buffers"]
+tags: ["OSINT", "TypeScript"]
 ---
 
 # World Monitor 架构解析：一个面向 OSINT 分析师的开源全球情报仪表盘，是怎么把 65+ 数据源拼成一张可读态势图的

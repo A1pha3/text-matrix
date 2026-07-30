@@ -5,7 +5,7 @@ slug: "introduction-to-autonomous-robots-mit-press-textbook-guide"
 description: "MIT Press 2022 自动驾驶机器人入门教材（CC-BY-NC-ND），LaTeX 源码与课程代码全部开源，覆盖运动学、感知、定位、SLAM、深度学习等 23 章。"
 draft: false
 categories: ["技术笔记"]
-tags: ["机器人", "MIT Press", "开源教材", "LaTeX", "自动驾驶"]
+tags: ["机器人", "自动驾驶"]
 ---
 
 # Introduction to Autonomous Robots：MIT Press 自动驾驶机器人入门教材开源笔记

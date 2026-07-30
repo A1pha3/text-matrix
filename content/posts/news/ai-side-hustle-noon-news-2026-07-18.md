@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-18
 description: "2026年7月18日 AI 副业午报,精选过去 24 小时内 V2EX 上的模型蒸馏兼职、远程 PHP/Go/Java 工程岗、AI 独立开发小工具、API 中转站讨论、Vibe Coding 面试与模型重置风险话题。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "模型蒸馏", "远程兼职", "Vibe Coding"]
+tags: ["AI副业", "V2EX", "Vibe Coding"]
 hiddenFromHomePage: true
 ---
 

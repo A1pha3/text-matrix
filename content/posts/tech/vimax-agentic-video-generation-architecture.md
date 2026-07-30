@@ -5,7 +5,7 @@ slug: "vimax-agentic-video-generation-architecture"
 description: "ViMax 是香港大学推出的智能视频生成系统，通过多智能体协作实现从创意想法到完整视频的端到端自动化生产。本文深入解析其导演、编剧、制片和视频生成一体化的核心架构，以及与现有AI视频生成工具的差异化定位。"
 draft: false
 categories: ["技术笔记"]
-tags: ["视频生成", "AI Agent", "多智能体", "ViMax", "香港大学", "AIGC"]
+tags: ["视频生成", "AI Agent", "多智能体", "AIGC"]
 ---
 
 # ViMax：端到端智能视频生成架构深度解析

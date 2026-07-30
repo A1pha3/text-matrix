@@ -4,7 +4,7 @@ date: "2026-07-02T21:02:26+08:00"
 lastmod: "2026-07-02T21:02:26+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["ML系统", "AI工程", "TinyTorch", "MLSys·im", "哈佛"]
+tags: ["AI工程"]
 description: "harvard-edge/cs249r_book 是 MIT Press AI 工程教科书配套仓库，覆盖 Volume I/II 教材、TinyTorch 手搓框架与 MLSys·im 模拟器等组件。"
 slug: "harvard-edge-cs249r-book-ml-systems-guide"
 author: text-matrix

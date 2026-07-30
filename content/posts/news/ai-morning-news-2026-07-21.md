@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-21
 description: "2026年7月21日 AI 新闻早报，汇总过去 24 小时内值得关注的 WAIC 2026 重磅发布、世界模型与国产 NPU 突破、以及开源生态的中外关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "WAIC", "世界模型", "国产NPU", "Qwen-Audio", "AgenticInfra"]
+tags: ["WAIC", "世界模型"]
 hiddenFromHomePage: true
 ---
 

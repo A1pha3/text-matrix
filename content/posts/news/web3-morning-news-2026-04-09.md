@@ -5,7 +5,7 @@ slug: "web3-morning-news-2026-04-09"
 description: "Web3早报汇集最新加密货币市场动态、NFT、DeFi、DAO及区块链行业资讯。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "Crypto", "DeFi", "区块链"]
+tags: ["Web3", "DeFi", "区块链"]
 hiddenFromHomePage: true
 ---
 

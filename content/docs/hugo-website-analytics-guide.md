@@ -3,7 +3,7 @@ title: "Hugo 静态网站如何查看访问数据？三种主流方案全解析"
 date: 2026-03-23T10:00:00+08:00
 draft: false
 description: "详解 Hugo 静态网站的三种访问数据分析方案：Google Analytics、Cloudflare Analytics 和自建方案，从隐私、成本、功能维度对比。"
-tags: ["Hugo", "网站统计", "LoveIt", "教程"]
+tags: ["Hugo", "教程"]
 categories: ["技术笔记"]
 ---
 

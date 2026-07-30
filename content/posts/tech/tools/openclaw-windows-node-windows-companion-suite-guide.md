@@ -7,7 +7,7 @@ aliases:
 description: "openclaw-windows-node 是 OpenClaw 官方的 Windows 端伴侣套件，WinUI 3 系统托盘 + 共享网关客户端库 + WSL Gateway + PowerToys Command Palette 扩展，由 Scott Hanselman 主导开发。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenClaw", "Windows", "WinUI", "PowerToys", "WSL", "Scott Hanselman"]
+tags: ["OpenClaw", "Windows"]
 ---
 
 ## 学习目标

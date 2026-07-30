@@ -5,7 +5,7 @@ slug: "free-tv-iptv-curated-free-tv-channels-m3u-playlist-guide"
 description: "Free-TV/IPTV 是一个独立运营 5 年的 M3U 数据策展项目，把 DVB-S/T、YouTube Live 上的免费频道整理成一份统一 playlist。本文拆解它的策展哲学、目录组织、生成管线与跟 iptv-org 的取舍差异。"
 draft: false
 categories: ["技术笔记"]
-tags: ["IPTV", "M3U", "数据策展", "FFmpeg", "Playlist"]
+tags: ["FFmpeg"]
 ---
 
 Free-TV/IPTV：把 100+ 国家免费电视频道手工策展成一个 M3U playlist 的数据项目

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-06
 description: "2026年5月6日 AI 新闻早报，汇总过去24小时内模型发布、企业动态与行业融资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "OpenAI", "豆包", "xAI", "高通"]
+tags: ["OpenAI", "豆包"]
 hiddenFromHomePage: true
 ---
 

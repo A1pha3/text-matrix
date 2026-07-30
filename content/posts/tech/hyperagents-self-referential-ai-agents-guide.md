@@ -5,7 +5,7 @@ slug: "hyperagents-self-referential-ai-agents-guide"
 description: "Hyperagents 是 Meta FAIR 提出的自指性自我改进智能体框架。本文基于论文摘要、官方 README 与公开源码入口，系统解释其定义、运行流程、代码结构、扩展方式与使用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["HyperAgents", "AI Agent", "自我改进", "元认知", "Meta FAIR"]
+tags: ["AI Agent", "自我改进"]
 ---
 
 ## 学习目标

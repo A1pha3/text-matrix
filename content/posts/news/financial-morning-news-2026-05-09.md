@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-09
 description: "2026年5月9日经济财经早报，汇总过去24小时内全球市场、宏观政策与商品动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "美股", "市场", "宏观"]
+tags: ["财经", "美股", "市场"]
 hiddenFromHomePage: true
 ---
 

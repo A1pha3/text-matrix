@@ -5,7 +5,7 @@ slug: "hardikpandya-stop-slop-ai-writing-pattern-skill-guide"
 description: "hardikpandya/stop-slop 是一份给 LLM 用的「去 AI 味」Skill，把 AI 写作套路整理成可机读规则。本文拆解它的 8 条主规则、4 类结构禁式与使用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI写作", "Prompt工程", "Claude", "LLM", "Skill"]
+tags: ["Prompt Engineering", "Claude", "LLM", "Skill"]
 ---
 
 ## 学习目标

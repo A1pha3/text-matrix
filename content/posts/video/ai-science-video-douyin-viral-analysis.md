@@ -4,7 +4,7 @@ slug: "ai-science-video-douyin-viral-analysis"
 date: "2026-04-07T16:55:00+08:00"
 lastmod: 2026-04-08T13:15:00+08:00
 categories: ["视频精读"]
-tags: ["AI科普", "抖音", "B站", "视频创作", "内容运营", "AIGC"]
+tags: ["抖音", "B站", "AIGC"]
 description: "拆解抖音B站AI科普视频爆火现象，分析内容创作公式、算法推荐逻辑、涨粉变现路径，并从BiliSummary等工具视角看视频知识管理的技术实现。"
 
 draft: false

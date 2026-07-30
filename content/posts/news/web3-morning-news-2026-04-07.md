@@ -5,7 +5,7 @@ slug: "web3-morning-news-2026-04-07"
 description: "2026年4月7日 Web3 早报:BTC 盘中重回 7 万美元上方,Kalshi 获上诉法院支持,华尔街继续把代币化视为竞争变量,IMF 提醒代币化风险外溢。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "比特币", "Tokenization", "预测市场", "监管"]
+tags: ["Web3", "比特币", "预测市场", "监管"]
 hiddenFromHomePage: true
 ---
 

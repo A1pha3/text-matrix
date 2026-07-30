@@ -6,7 +6,7 @@ draft: false
 slug: "elastic-elasticsearch-search-engine-today-trending-guide"
 description: "Elasticsearch 主仓库今日再登 GitHub Trending，单日 +77 Stars。本文梳理 ES 9.x 主线：向量搜索与 RAG 一等公民、ES|QL 新查询语言、Lucene 10 升级、Aggregation 性能改进，以及今天该不该上 ES 的判断。"
 categories: ["技术笔记"]
-tags: ["Elasticsearch", "搜索引擎", "Lucene", "向量搜索", "ES|QL"]
+tags: ["向量搜索"]
 author: "text-matrix"
 ---
 

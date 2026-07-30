@@ -7,13 +7,7 @@ slug: alxndr-little-book-rl-cleanrl-style-implementations
 description: "alxndrTL/little-book-rl 仓库深度拆解——一本配套 PyTorch 实现的小型强化学习书，覆盖 tabular MC / SARSA / Q-learning / n-step SARSA / SARSA(λ) / REINFORCE / VPG / SPG / PPO 全套算法。"
 categories:
   - tech
-tags:
-  - Reinforcement Learning
-  - PyTorch
-  - PPO
-  - CleanRL
-  - cn-doc-writer
-  - alxndrTL
+tags: ["PyTorch", "cn-doc-writer"]
 ---
 
 # The Little Book of RL：从零到 PPO 的 CleanRL 风格实现解析

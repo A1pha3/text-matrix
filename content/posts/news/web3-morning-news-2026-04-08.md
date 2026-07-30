@@ -5,7 +5,7 @@ slug: "web3-morning-news-2026-04-08"
 description: "2026年4月8日Web3早报：BTC $71983/ETH $2245/全球加密市场$2.45T/Hyperliquid领涨DeFi。"
 draft: false
 categories: ["行业快讯"]
-tags: ["比特币", "以太坊", "CMC20", "Hyperliquid", "Solana"]
+tags: ["比特币", "以太坊", "Hyperliquid", "Solana"]
 hiddenFromHomePage: true
 ---
 

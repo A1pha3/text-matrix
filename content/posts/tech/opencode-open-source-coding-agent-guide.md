@@ -5,7 +5,7 @@ slug: "opencode-open-source-ai-coding-agent-guide"
 description: "OpenCode 是目前星标数最高的开源 AI 编程助手，采用 TypeScript 构建，支持任意 LLM 提供商，提供内置 LSP 保护、TUI 终端界面和客户端/服务器架构。本文从原理、架构、安装配置、实战演示到二次开发全方位解析这一开源 Coding Agent。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Coding Agent", "TypeScript", "LSP", "TUI", "OpenCode"]
+tags: ["Coding Agent", "TypeScript", "LSP", "TUI", "OpenCode"]
 ---
 
 # OpenCode 完全指南：开源 AI Coding Agent 从入门到精通

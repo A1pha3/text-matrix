@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-30
 description: "2026年5月30日 AI 新闻早报，汇总过去24小时内模型发布、企业动态与行业融资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "六小虎", "大模型", "苹果", "图像压缩"]
+tags: ["LLM", "苹果"]
 hiddenFromHomePage: true
 ---
 

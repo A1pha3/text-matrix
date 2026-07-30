@@ -5,7 +5,7 @@ slug: "openai-whisper-speech-recognition-guide"
 description: "全面介绍97.2k Stars的OpenAI Whisper语音识别模型，详解Transformer seq2seq架构、6种模型规模、命令行/Python API使用、多语言翻译、Faster Whisper加速、LangChain集成和微调训练。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Whisper", "语音识别", "OpenAI", "ASR", "语音翻译", "多语言", "Transformer", "Python"]
+tags: ["Whisper", "语音识别", "OpenAI", "ASR", "多语言", "Transformer", "Python"]
 ---
 
 ## 这篇文章覆盖什么

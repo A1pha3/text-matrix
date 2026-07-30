@@ -3,7 +3,7 @@ title: "「一天修好你整个人生」的真相：Dan Koe 30 万喜欢爆款�
 date: "2026-06-20T16:28:00+08:00"
 slug: "fix-your-entire-life-in-one-day-dan-koe-reverse"
 description: "Dan Koe @thedankoe 2026-01-12 病毒爆款 X 文章（30.6 万喜欢 / 8.7 千回复）「How to fix your entire life in 1 day」反向精读：为什么新年决心注定失败？怎么用 1 天彻底重置？3 个反直觉洞察 + 5 步可执行方案 + 中国人对照。"
-tags: ["Dan Koe", "个人成长", "自我改变", "习惯重置", "原子习惯", "The One Thing", "极简主义", "财富自由", "新年决心", "方法论", "第二大脑"]
+tags: ["财富自由", "方法论", "第二大脑"]
 categories: ["财富自由"]
 draft: false
 ---

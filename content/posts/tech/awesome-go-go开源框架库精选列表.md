@@ -5,7 +5,7 @@ slug: "awesome-go-go-ecosystem-curated-list"
 description: "awesome-go 是 GitHub 星标量超过 17 万的 Go 语言开源框架和库精选列表，涵盖 Web 框架、数据库、CLI、机器学习等数十个领域，是 Go 开发者寻找轮子和了解生态的首选入口。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Go", "开源", "框架", "生态"]
+tags: ["Go", "开源"]
 ---
 
 # awesome-go：Go 语言最权威的开源生态导航站

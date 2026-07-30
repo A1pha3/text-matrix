@@ -12,7 +12,7 @@ aliases:
 description: "深度解析 Hermes Agent 自改进 AI Agent 框架：内置学习循环、多平台 Gateway、Skills 系统、模型无关架构，详解原理、架构、使用与二次开发。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "自改进", "多平台", "Skills系统", "Nous Research"]
+tags: ["AI Agent", "Nous Research"]
 ---
 
 # Hermes Agent：自改进 AI Agent 框架

@@ -7,7 +7,7 @@ aliases:
 description: "深度解读 Prompt Master：2.8k Stars 的提示词优化工具，7步生成精准提示词，30+ AI工具兼容，5大安全技术，35种浪费模式检测，让每个Token都不浪费。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Prompt Master", "提示词工程", "Claude", "AI工具", "效率优化"]
+tags: ["提示词工程", "Claude", "AI工具"]
 ---
 
 # Prompt Master：2.8k Stars 让提示词零浪费的 Claude Skill

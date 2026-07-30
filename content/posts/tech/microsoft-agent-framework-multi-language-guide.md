@@ -5,7 +5,7 @@ slug: microsoft-agent-framework-multi-language-guide
 description: "Microsoft Agent Framework 是微软官方的 Agent 框架，支持 Python 和 .NET 双语言，提供图工作流和多种 Provider 支持。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Microsoft", "Agent", "Python", ".NET", "工作流"]
+tags: ["Microsoft", "AI Agent", "Python", ".NET", "工作流"]
 ---
 
 # Microsoft Agent Framework：Python + .NET 双语言 Agent 框架

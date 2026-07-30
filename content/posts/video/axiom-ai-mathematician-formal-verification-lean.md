@@ -3,7 +3,7 @@ title: "100 年前 Ramanujan 写下素数的秘密，今天一台机器在 Lean 
 date: "2026-06-18T00:30:00+08:00"
 slug: "axiom-ai-mathematician-formal-verification-lean"
 description: "【视频精读】从 1916 年 Ramanujan 在英国写下 tau 函数，到 2026 年 Axiom 的 AxiomProver 在 Lean 里完成形式化证明——AI 数学家走完了从'解题'到'发现'的关键一跃。12 篇顶刊论文、3 项期刊接收、50→500 推理节点的 10 倍跃升，这篇文章拆解 B 站 SAIR 演讲切片第七期（BV1tV7Q6TEUV），看 Ken Ono + Carina Hong + Lean 如何重写'数学发现的未来'。"
-tags: ["AI for Math", "形式化验证", "Lean", "Ramanujan", "Axiom Math", "Ken Ono", "Tau Function", "Erdos", "Theorem Proving", "SAIR", "视频精读", "Carina Hong", "B站反写"]
+tags: ["视频精读", "B站反写"]
 categories: ["视频精读"]
 author: "钳岳星君"
 ---

@@ -5,7 +5,7 @@ slug: "microsoft-mxc-sandboxed-code-execution-guide"
 description: "Microsoft MXC 是微软开源的跨平台沙箱代码执行系统，统一封装 Windows Sandbox、AppContainer、LXC、Bubblewrap、Seatbelt、MicroVM 等十余种底层隔离后端，对外提供 JSON 配置和 TypeScript SDK。本文解读其分层隔离思路、Schema 设计、状态生命周期 API 与早期预览阶段的明确边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["沙箱", "AI Agent", "代码执行", "微软", "安全隔离"]
+tags: ["沙箱", "AI Agent", "微软"]
 ---
 
 # Microsoft MXC：跨平台策略驱动沙箱执行容器

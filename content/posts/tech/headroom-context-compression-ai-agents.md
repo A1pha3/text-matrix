@@ -5,7 +5,7 @@ slug: headroom-context-compression-ai-agents
 description: "headroom 是 7K stars 的 AI Agent 上下文压缩中间件，6 算法在 LLM 看到前压 tool 输出与 RAG 文本，省 47-92% token 不损精度。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Context Engineering", "MCP", "RAG", "Token Optimization"]
+tags: ["AI Agent", "Context Engineering", "MCP", "RAG"]
 ---
 
 # headroom：AI Agent 的 Context 压缩层，把 92% 的 Token 在到达 LLM 之前拦下来

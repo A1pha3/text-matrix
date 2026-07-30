@@ -5,7 +5,7 @@ slug: "smolml-machine-learning-library-from-scratch"
 description: "SmolML 是一个完全使用纯 Python 标准库实现的机器学习库，不依赖 NumPy/SciPy 等外部包。通过完整的自动微分引擎 Value 和 N 维数组 MLArray 两大核心模块，构建了从线性回归、神经网络到 SVM、K-Means 的完整模型体系。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Machine Learning", "Python", "Autograd", "Neural Network", "从头实现"]
+tags: ["Python"]
 ---
 
 ## 这篇文章在讲什么

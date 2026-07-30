@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-04-27
 description: "2026年4月27日 AI 新闻早报，汇总过去 24 小时内模型评测、医疗AI开源、自动驾驶战略与行业整合的重要动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "开源", "自动驾驶", "Claude", "SWE-bench"]
+tags: ["LLM", "开源", "自动驾驶", "Claude", "SWE-bench"]
 hiddenFromHomePage: true
 ---
 

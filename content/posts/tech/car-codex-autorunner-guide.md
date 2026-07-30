@@ -5,7 +5,7 @@ slug: "car-codex-autorunner-guide"
 description: "全面解析 CAR（Codex Auto-Runner）：AI 编程智能体元协调框架。658 Stars，MIT 许可证。支持 Codex/Opencode/Hermes 三大智能体，Tickets 即控制平面设计，无人值守长时间任务执行。从入门到精通，包含架构分析、原理讲解、使用说明和最佳实践。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CAR", "Codex", "Opencode", "AI智能体", "自动化", "Tickets", "PMA"]
+tags: ["Codex", "OpenCode", "AI智能体", "自动化"]
 ---
 
 # CAR Codex Auto-Runner：AI 编程智能体协作框架完全指南

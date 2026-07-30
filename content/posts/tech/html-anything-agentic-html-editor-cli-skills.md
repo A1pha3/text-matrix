@@ -5,7 +5,7 @@ slug: "html-anything-agentic-html-editor-cli-skills"
 description: "nexu-io 团队发布的 html-anything 是一款 agentic HTML 编辑器，自动检测本地 8 款编码 Agent CLI（Claude Code/Codex/Cursor/Gemini CLI 等），通过 75 个 Skill 模板和 9 种成品形态（杂志/PPT/小红书卡片/Hyperframes 视频帧），把 Markdown/CSV/Excel/JSON/SQL 一键转成 ship-ready 的 HTML，再一键发到公众号/X/知乎。零 API key、纯本地，已收获近 6,000 stars。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "HTML", "Agent", "Claude Code", "Codex", "Skill 模板", "本地优先", "内容创作"]
+tags: ["HTML", "AI Agent", "Claude Code", "Codex", "本地优先", "内容创作"]
 hiddenFromHomePage: false
 ---
 

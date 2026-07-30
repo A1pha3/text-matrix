@@ -5,7 +5,7 @@ slug: "home-assistant-core-open-source-home-automation"
 description: "Home Assistant 是开源智能家居领域最活跃的项目之一，以本地优先、私有化为核心理念。本文解析 Home Assistant Core 的实体/状态模型、集成（Integration）架构、自动化引擎与数据流设计，帮助读者理解其为何能支持 2000+ 设备集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Home Assistant", "智能家居", "Python", "IoT", "MQTT", "本地优先"]
+tags: ["Home Assistant", "智能家居", "Python", "本地优先"]
 ---
 
 # Home Assistant Core：把 2000 种设备统一到一台本地服务器的背后

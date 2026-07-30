@@ -5,7 +5,7 @@ slug: "pixelle-video-ai-auto-short-video-engine"
 description: "Pixelle-Video 是 AIDC-AI 开源的 AI 全自动短视频生成引擎，基于 ComfyUI 架构设计，支持从主题输入到配图、配音、视频合成的全自动化流程。本文深入解析其模块化架构、核心代码结构、各模块功能及典型使用场景，并提供从零安装到自定义工作流的完整指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI视频生成", "ComfyUI", "短视频创作", "Python", "开源项目"]
+tags: ["AI视频生成", "Python", "开源项目"]
 ---
 
 # Pixelle-Video：AI 全自动短视频引擎，从一句话到完整视频的全流程解析

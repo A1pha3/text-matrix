@@ -5,7 +5,7 @@ slug: "yairm210-unciv-android-civ-v-remake-guide"
 description: "Unciv 是基于 LibGDX 与 Kotlin Multiplatform 的开源 Civ V 重制版，把核心规则塞进共享 core 模块并在 Android、桌面、Server 三端复用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Unciv", "Kotlin Multiplatform", "LibGDX", "Civ V", "游戏开发"]
+tags: ["游戏开发"]
 ---
 
 ## 一句话判断

@@ -5,7 +5,7 @@ date: 2026-07-13T03:03:14+08:00
 lastmod: 2026-07-13T03:03:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "设计", "Claude Code", "skill", "前端"]
+tags: ["设计", "Claude Code", "Skill", "前端"]
 description: "Hallmark 是 Together AI 出品的反 AI 同质化设计 skill（Claude Code / Cursor / Codex 通用）。本文解读其规则集结构与 4 动词。"
 ---
 

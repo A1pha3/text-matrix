@@ -5,7 +5,7 @@ slug: "argoproj-argo-cd-gitops-kubernetes-deep-dive"
 description: "Argo CD 是 Kubernetes 上的声明式 GitOps 持续交付工具，核心由 API Server、Repository Server、Application Controller 三大组件协同。本文按系统地图、同步机制、漂移修复、Helm/Kustomize/plain 三类任务流，逐层拆解它的 GitOps 控制器模型与多租户边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GitOps", "Argo CD", "Kubernetes", "持续交付", "声明式"]
+tags: ["Kubernetes"]
 ---
 
 # Argo CD 深度拆解：GitOps 控制器的同步、漂移修复与多租户边界

@@ -8,7 +8,7 @@ aliases:
 description: "从第一性原理到基准测试，系统梳理 OpenSpace 如何把 Skill 作为外部化记忆，让 AI Agent 从经验中持续进化，并在 GDPVal 实验中展现出显著的效率与质量收益。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "OpenSpace", "自我进化", "第一性原理", "Skill"]
+tags: ["AI Agent", "Skill"]
 ---
 
 # OpenSpace：为什么 AI Agent 需要记忆，以及它如何实现自我进化

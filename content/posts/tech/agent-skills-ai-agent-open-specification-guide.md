@@ -5,7 +5,7 @@ slug: "agent-skills-ai-agent-open-specification-guide"
 description: "Agent Skills 是 Anthropic 主导的 AI Agent 能力扩展开放规范。内容覆盖 Skill 格式、工作原理、渐进式披露机制，以及创建、评估和部署生产级 Skill 的完整流程。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Anthropic", "Skill 扩展", "开放规范", "渐进式披露"]
+tags: ["AI Agent", "Anthropic"]
 ---
 
 # Agent Skills：AI Agent 能力扩展开放规范完全指南

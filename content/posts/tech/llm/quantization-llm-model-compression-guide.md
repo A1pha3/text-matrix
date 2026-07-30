@@ -5,7 +5,7 @@ slug: quantization-llm-model-compression-guide
 aliases:
   - /posts/tech/quantization-llm-model-compression-guide/
 categories: ["技术笔记"]
-tags: ["Quantization", "LLM", "模型压缩", "INT8", "INT4", "GPTQ", "llama.cpp"]
+tags: ["LLM", "llama.cpp"]
 description: "详解量化技术原理：对称/非对称量化、异常值处理、逐通道量化、GPTQ/AWQ/llama.cpp 实战，让大模型体积缩小 4-8 倍。"
 ---
 

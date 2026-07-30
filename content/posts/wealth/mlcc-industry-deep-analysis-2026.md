@@ -6,7 +6,7 @@ description: "从被动元件结构、MLCC 制造工艺、堆叠与共烧两大�
 draft: false
 categories: ["财富自由"]
 hiddenFromHomePage: true
-tags: ["MLCC", "被动元件", "国产替代", "AI算力", "人形机器人"]
+tags: ["国产替代", "AI算力", "人形机器人"]
 ---
 
 # MLCC 行业深度技术分析：AI 浪潮下高端电容的供需重构与国产替代

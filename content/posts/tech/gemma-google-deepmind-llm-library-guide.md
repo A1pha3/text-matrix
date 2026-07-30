@@ -5,7 +5,7 @@ slug: gemma-google-deepmind-llm-library-guide
 description: "Gemma 是 Google DeepMind 开源的大语言模型库，提供 Gemma 2/3/3n/4 等多种规模的模型，支持 JAX 和 PyTorch。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Gemma", "Google", "DeepMind", "LLM", "JAX"]
+tags: ["Gemma", "Google", "DeepMind", "LLM"]
 ---
 
 # Gemma：Google DeepMind 开源 LLM 库完全指南

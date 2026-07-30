@@ -4,7 +4,7 @@ slug: "autocli-ai-command-line-generator-guide"
 date: "2026-04-08T12:50:00+08:00"
 lastmod: 2026-04-08T12:50:00+08:00
 categories: ["技术笔记"]
-tags: ["CLI", "Rust", "AI", "命令行工具", "Cobra", "代码生成"]
+tags: ["CLI", "Rust", "代码生成"]
 description: "AutoCLI 是一个用 Rust 编写的 AI 命令行工具，能够根据自然语言描述自动生成 CLI 程序。支持 OpenAI、Claude、Gemini、Grok、Ollama、DeepSeek 等多 AI 提供商，打通自然语言与命令行工具的壁垒。"
 draft: false
 ---

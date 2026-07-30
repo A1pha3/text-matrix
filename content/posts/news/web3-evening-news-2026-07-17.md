@@ -5,7 +5,7 @@ slug: web3-evening-news-2026-07-17
 description: "7月17日晚间Web3晚报：BTC 失守 $63,000 关键支撑，被美股 AI/半导体/存储板块连锁抛售 + 美国新一波对伊朗打击拖累；摩根大通上调 Strategy 看涨评级，现金储备从 $25.5 亿提到 $30 亿可覆盖 20 个月优先股股息；Coinbase BTC 溢价指数连续 60 天负溢价续创最长连负纪录；Base 公开承认社交战略失败转押交易+支付+AI 三大战场，Cobie 接任并向 Meme 文化示好；Citadel Securities $4 亿投 Crypto.com 估值 $200 亿（成立 10 年首次机构融资）；T. Rowe Price 首只主动多代币加密 ETF TKNZ 启动（BTC 40.75% / ETH 18.42% / HYPE 6.45%）；RWA 周刊：摩根大通+美银+花旗+富国+汇丰联手代币化存款网络；币安 19:00 SHA 上线 Aerodrome (AERO) 后又推迟到 7-18 00:00；SBI Holdings 完成对新加坡 Coinhako 持牌交易所收购；Clarity Act 加密法案进入'最终博弈'阶段，7-17 Trump 主持解决自身利益冲突。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "比特币", "以太坊", "Citadel", "CryptoCom", "TRowePrice", "Base", "Coinbase", "RWA", "Binance", "SBI", "Strategy", "AI", "伊朗", "ClarityAct"]
+tags: ["Web3", "比特币", "以太坊", "Coinbase", "RWA", "Binance", "Strategy", "伊朗"]
 hiddenFromHomePage: true
 ---
 

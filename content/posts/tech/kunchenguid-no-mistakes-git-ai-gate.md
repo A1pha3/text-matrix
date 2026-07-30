@@ -5,7 +5,7 @@ slug: "kunchenguid-no-mistakes-git-ai-gate"
 description: "no-mistakes 是一个本地 git 代理 + AI 评审闸门：把 push 路由到 disposable worktree，跑 review→test→docs→lint→PR→CI 全流程 AI 检查，全部通过后才转发到真实 remote。Agent 无关（claude/codex/rovodev/opencode/pi），人类保留终审权。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Git", "AI Agent", "Code Review", "PR 自动化", "Go", "Coding Agent"]
+tags: ["Git", "AI Agent", "Code Review", "Go", "Coding Agent"]
 ---
 
 # no-mistakes：在 git push 之前插入 AI 评审闸门，Code Agent 时代的代码质量门

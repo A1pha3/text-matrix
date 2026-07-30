@@ -2,7 +2,7 @@
 title: "WrenAI：让 AI Agent 真正可信任的 GenBI Context Layer"
 date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
-tags: ["genbi", "text-to-sql", "agent", "context-layer", "rag"]
+tags: ["AI Agent", "RAG"]
 description: "WrenAI 是 Canner 开源的 GenBI 引擎，核心是在 LLM 和数据仓库之间塞一层 reviewable 的 context layer（MDL + 业务语义），让 Agent 生成的 SQL 和 Dashboard 不是幻觉，而是可治理、可版本化的产物。"
 ---
 

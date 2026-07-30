@@ -5,7 +5,7 @@ draft: false
 hiddenFromHomePage: true
 description: "每日经济财经要闻速览，涵盖宏观经济、公司财报、行业动态"
 slug: financial-morning-news-2026-05-08
-tags: ["财经", "早报", "宏观经济", "财报", "股市"]
+tags: ["财经", "早报", "宏观经济", "财报"]
 categories: ["行业快讯"]
 ---
 

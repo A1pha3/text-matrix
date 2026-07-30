@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-07-20
 description: "今日要闻:Saylor 发文 3700 字反对 BIP-110 分叉提议;美国财政部、OCC、FDIC 与 Fed 错过 GENIUS Act 一周年最终规则截止日;法国监管机构 ANJ 责令 ISP 屏蔽 Polymarket;韩国监管机构对 Upbit 母公司 Dunamu 启动制裁程序。"
 draft: false
 categories: ["行业快讯"]
-tags: ["BTC", "BIP-110", "GENIUS Act", "Polymarket", "MiCA", "Upbit"]
+tags: ["BTC", "Polymarket", "MiCA"]
 hiddenFromHomePage: true
 ---
 

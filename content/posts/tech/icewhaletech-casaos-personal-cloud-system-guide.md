@@ -5,7 +5,7 @@ slug: "icewhaletech-casaos-personal-cloud-system-guide"
 description: "IceWhaleTech/CasaOS 是一个面向家庭场景的开源个人云系统，主代码用 Go 写、UI 用 Vue 写，提供一行命令安装、App Store、Docker 应用管理、文件/磁盘/系统小部件。本文拆解其系统组件、端口与运行机制、硬件/系统兼容矩阵与维护状态，并给出上手和适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CasaOS", "个人云", "Go", "Docker", "家庭服务器"]
+tags: ["Go", "Docker"]
 ---
 
 # CasaOS 项目导读：把家庭/小型工作室服务器装成个人云的开源方案

@@ -5,7 +5,7 @@ slug: "mathematical-foundations-of-reinforcement-learning-book"
 description: "15K Stars强化学习数学专著完整解读：由施若石编写、Springer出版的《Mathematical Foundations of Reinforcement Learning》，涵盖10章核心内容、54节配套视频、网格世界贯穿始终，210万播放量验证的教学品质。"
 draft: false
 categories: ["技术笔记"]
-tags: ["RL", "强化学习", "Bellman方程", "Q-Learning", "Policy Gradient", "Actor-Critic", "Python", "MATLAB"]
+tags: ["RL", "强化学习", "Python"]
 ---
 
 # Mathematical Foundations of Reinforcement Learning：强化学习的数学基石

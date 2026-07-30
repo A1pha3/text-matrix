@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-23
 description: "2026年5月23日 AI新闻早报，汇总过去24小时内模型发布、行业融资、Agent应用与市场趋势的重要动态，DeepSeek新一轮700亿融资与梁文锋Code Harness招兵买马成今日焦点。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "DeepSeek", "ChatGPT", "OpenAI", "Anthropic", "Agent"]
+tags: ["DeepSeek", "ChatGPT", "OpenAI", "Anthropic", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

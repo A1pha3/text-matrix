@@ -5,7 +5,7 @@ slug: "transformers-huggingface-nlp-guide"
 description: "不止于 API 调用。本文深入 Transformers 的设计决策、Pipeline/AutoClass/Trainer 三条主线的工作机制、一个完整的微调任务流案例，以及模型量化、Flash Attention 等生产部署策略。最后给出不同场景的采用路线图。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Transformers", "Hugging Face", "NLP", "PyTorch", "大模型", "预训练模型"]
+tags: ["Hugging Face", "NLP", "PyTorch", "LLM"]
 ---
 
 ## 这篇文章解决什么问题

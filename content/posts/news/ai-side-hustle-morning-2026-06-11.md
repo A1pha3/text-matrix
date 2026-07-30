@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-11
 description: "2026年6月11日 AI 副业早报，精选过去 24 小时 V2EX 招聘/创业组队/独立开发 6 条 + Hacker News Show HN/Ask HN 5 条，覆盖 AI 应用创业找 CTO、Token 替代外包、Claude Code Loop 流水线、AI coding agent 成本监控、Local-first 副业工具、独立思考方法论等 11 条。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "HackerNews", "独立开发", "Agent", "ClaudeCode"]
+tags: ["AI副业", "V2EX", "HackerNews", "独立开发", "AI Agent", "Claude Code"]
 hiddenFromHomePage: true
 ---
 

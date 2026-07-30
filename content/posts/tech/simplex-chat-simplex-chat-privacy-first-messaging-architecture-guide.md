@@ -7,7 +7,7 @@ aliases:
 description: "SimpleX Chat 是第一个不分配任何用户标识符的消息网络——不是匿名 ID，不是随机号，而是整套协议里根本没有\"我是谁\"这个槽位。本文拆解它如何用单向消息队列、双 ratchet 加 NaCl 附加层、SMP 代理和无 ID 的连接邀请把社交图谱压扁到服务器看不到的程度。"
 draft: false
 categories: ["技术笔记"]
-tags: ["SimpleX", "隐私消息", "端到端加密", "协议设计", "去中心化通信"]
+tags: ["端到端加密"]
 ---
 
 # SimpleX Chat 架构指南：把"用户 ID"从隐私消息里拆掉的工程问题

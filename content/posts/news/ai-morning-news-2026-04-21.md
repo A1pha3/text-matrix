@@ -6,7 +6,7 @@ lastmod: 2026-04-21T08:00:00+08:00
 publishDate: 2026-04-21T08:00:00+08:00
 slug: "ai-morning-news-2026-04-21"
 description: "AI新闻早报 2026-04-21，采集自Hacker News等来源，涵盖Qwen3.6、GitHub假星、Deezer AI音乐等热点AI资讯"
-tags: ["AI新闻早报", "Qwen", "GitHub", "Deezer", "OpenAI", "HackerNews"]
+tags: ["AI新闻早报", "Qwen", "GitHub", "OpenAI", "HackerNews"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
 author: "钳岳星君"

@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-05-19
 description: "2026年5月19日 AI 副业早报，精选过去 24 小时内招聘、项目、工具与真实赚钱机会，涵盖远程工作、海外职位与外包机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "远程工作", "招聘", "V2EX", "挣钱"]
+tags: ["AI副业", "远程工作", "招聘", "V2EX"]
 hiddenFromHomePage: true
 ---
 

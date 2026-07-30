@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-21
 description: "2026年7月21日 AI 副业午报，精选过去 24 小时内远程后端 30-60K、Go+AI Native 全栈、前端 Agent 工程师、智能驾驶 Java 等招聘贴，MarkAI 跨 Agent 共享记忆、Termany 终端、OpenASR 本地语音转写、Shuo 语音输入、WinSSH 1.2.4、AltG 标签归档、PopTrans 翻译、Startwork 透明协作、独立开发者复盘与 Agent 会话资产沉淀讨论等真实公开案例。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "远程", "VibeCoding", "Agent"]
+tags: ["AI副业", "招聘", "远程", "Vibe Coding", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

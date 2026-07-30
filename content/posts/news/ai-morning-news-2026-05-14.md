@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-05-14"
 description: "2026年5月14日AI大模型、Agent应用、安全治理、商业融资等领域的最新动态与核心事件解读，来源VentureBeat、Ars Technica、Wired等。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "Anthropic", "Agent", "OpenAI", "安全治理"]
+tags: ["LLM", "Anthropic", "AI Agent", "OpenAI"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-06
 description: "2026年6月6日 AI 副业早报：V2EX 24h 仅 2 条 AI 相关，Reddit 6 个 sub 覆盖 Indie AI SaaS / MCP / OpenCode / AEO 新赛道。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "Agent", "MCP"]
+tags: ["AI副业", "V2EX", "Reddit", "AI Agent", "MCP"]
 hiddenFromHomePage: true
 ---
 

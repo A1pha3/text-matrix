@@ -5,7 +5,7 @@ slug: "web3-morning-news-2026-05-07"
 description: "2026年5月7日Web3早报：BTC $81103/ETH $2343/SOL $88.56/全球加密市场数据速览。"
 draft: false
 categories: ["行业快讯"]
-tags: ["比特币", "以太坊", "Solana", "XRP", "ADA", "AVAX", "DOT", "SUI"]
+tags: ["比特币", "以太坊", "Solana", "XRP", "ADA"]
 hiddenFromHomePage: true
 ---
 

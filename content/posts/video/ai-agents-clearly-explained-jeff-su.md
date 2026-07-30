@@ -5,7 +5,7 @@ slug: "ai-agents-clearly-explained-jeff-su"
 description: "基于 Jeff Su 的 421万播放爆款视频，拆解 AI Agent 的概念、工作原理、三种类型，以及 2026 年学习路径和实战框架推荐。"
 draft: false
 categories: ["视频精读"]
-tags: ["AI", "Agent", "Jeff Su", "YouTube", "2026"]
+tags: ["AI Agent", "YouTube"]
 ---
 
 # AI Agents 完全指南：Jeff Su 爆款视频解读

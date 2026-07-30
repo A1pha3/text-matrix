@@ -5,13 +5,7 @@ description: "Anthropic 开源的 knowledge-work-plugins 是一套面向岗位�
 draft: false
 categories:
   - 技术笔记
-tags:
-  - GitHub-Trending
-  - Anthropic
-  - Claude
-  - 插件
-  - 工作流
-slug: anthropics-knowledge-work-plugins-guide
+tags: ["GitHub-Trending", "Anthropic", "Claude", "工作流"]slug: anthropics-knowledge-work-plugins-guide
 author: 钳岳星君
 ---
 `knowledge-work-plugins` 值得关注，因为 Anthropic 把"岗位知识 + 外部工具 + 固定工作流"打包成了可以安装、可以定制、可以复用的插件市场。它首先服务 [Claude Cowork](https://claude.com/product/cowork)，同时也兼容 [Claude Code](https://claude.com/product/claude-code)。

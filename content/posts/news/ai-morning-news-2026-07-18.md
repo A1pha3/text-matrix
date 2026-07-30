@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-18
 description: "2026年7月18日 AI 新闻早报，精选过去 24 小时值得关注的 Kimi K3 实测、国产芯片与算电协同、具身智能新框架与企业级 Agent 落地动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Kimi", "WAIC", "具身智能", "Agent"]
+tags: ["Kimi", "WAIC", "具身智能", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

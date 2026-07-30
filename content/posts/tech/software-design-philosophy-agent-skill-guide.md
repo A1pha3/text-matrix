@@ -5,7 +5,7 @@ slug: software-design-philosophy-agent-skill-guide
 description: "软件设计哲学 Agent Skill 将《A Philosophy of Software Design》与 AI 代码审查结合，提供系统化的软件设计指导。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "软件设计", "代码审查", "Python"]
+tags: ["AI Agent", "代码审查", "Python"]
 ---
 
 # 软件设计哲学 Agent Skill：从《A Philosophy of Software Design》到 AI 代码审查

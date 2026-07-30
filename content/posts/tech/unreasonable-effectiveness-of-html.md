@@ -6,7 +6,7 @@ description: "基于 thariq 的 html-effectiveness 项目，拆解 20 个自包�
 summary: "这篇文章围绕 thariq 的 html-effectiveness 项目，分析单文件 HTML 为什么能在方案比较、PR 审查、概念讲解、SVG 资产和临时编辑器等场景里，成为比线性文档更有效的工作介质。"
 draft: false
 categories: ["技术笔记"]
-tags: ["HTML", "AI 编码助手", "Markdown", "文档工程", "浏览器"]
+tags: ["HTML", "Markdown", "浏览器"]
 ---
 
 > **学习目标**：理解单文件 HTML 在现代 AI 工作流中的重新定位；掌握 20 个示例分别替代哪些低效文档场景；能够判断何时应该让 Agent 生成 HTML 页面而非 Markdown 文档；能够设计适合你团队工作的 HTML 中间产物

@@ -5,7 +5,7 @@ slug: "xbtlin-ai-berkshire-multi-agent-value-investing-guide"
 description: "xbtlin/ai-berkshire 是 1.5k+ Stars 的价值投资研究框架，基于 Claude Code 构建 Skill + 多 Agent 编排。它把巴菲特、芒格、段永平、李录四位大师的方法论做成可对抗的视角，配 16 个 Skill + decimal.Decimal 金融严谨性工具 + 三情景估值。文章拆解 Skill/Agent/Tool 三层架构、4 大师对抗机制、/investment-team 任务流、与同类 AI 投研工具的边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI 投研", "Claude Code", "价值投资", "多 Agent", "Skill 框架"]
+tags: ["Claude Code", "多 Agent"]
 ---
 
 # AI Berkshire：把四位价值投资大师的对抗塞进 Claude Code 的 16 个 Skill

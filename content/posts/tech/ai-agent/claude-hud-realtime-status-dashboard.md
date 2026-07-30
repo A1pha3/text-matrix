@@ -7,7 +7,7 @@ aliases:
 description: "Claude HUD 是 14.8k Stars 的 Claude Code 插件，实时显示上下文使用量、工具活动、智能体状态、Git 信息，让 AI 编程过程一目了然。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Claude HUD", "AI编程", "状态监控", "终端工具"]
+tags: ["Claude Code", "AI编程", "终端工具"]
 ---
 
 # Claude HUD：实时显示 Claude Code 状态的智能仪表盘

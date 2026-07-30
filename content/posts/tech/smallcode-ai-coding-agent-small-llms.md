@@ -5,7 +5,7 @@ slug: "smallcode-ai-coding-agent-small-llms"
 description: "SmallCode是一款专为8B-35B本地模型设计的终端原生AI Coding Agent，通过MarrowScript认知层、Context Budget引擎、2-Stage Tool Routing等机制，在消费级硬件上实现可靠编码任务自动化。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Coding Agent", "Local LLM", "JavaScript", "Node.js"]
+tags: ["Coding Agent", "JavaScript", "Node.js"]
 ---
 
 # SmallCode: 为本地小模型打造的 AI Coding Agent 深度解析

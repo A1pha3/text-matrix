@@ -5,7 +5,7 @@ slug: "google-adk-agentic-engineering-2026"
 description: "Google 2026 年 7 月发布了一门 1 小时 12 分钟的 Agentic Engineering 课，配套推出官方框架 Agent Development Kit (ADK)——同时覆盖 Python/TypeScript/Go/Java/Kotlin 五个 SDK。本文以 @0xCodez 在 X 上整理的五段大纲（第一个 Agent / 记忆 / Agentic Loop / MCP / Multi-Agent）为骨架，逐项拆开 ADK 文档里的真实代码与设计选择：LoopAgent 的 Writer-Critic 迭代范式、MemoryService 的 Session/State 短期与 long-term 检索长期双层模型、MCP 工具注册与 OpenAPI 工具的取舍、SequentialAgent / ParallelAgent / LoopAgent 三种 template workflow 的适用场景，并补一段对独立 Agent 项目作者可复用的工程经验。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Google ADK", "Agentic Engineering", "AI Agent", "MCP", "MemoryService", "LoopAgent", "Multi-Agent", "Python", "Go", "TypeScript"]
+tags: ["Google ADK", "AI Agent", "MCP", "Multi-Agent", "Python", "Go", "TypeScript"]
 hiddenFromHomePage: false
 ---
 

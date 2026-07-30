@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-10
 description: "2026年7月10日 AI 新闻早报，精选过去 24 小时内模型发布、具身智能开源、AI Agent 融资与国际厂商动态的关键变化：蚂蚁灵波连开两款具身基础模型、原力灵机 DM0.5 强调 Zero-Shot 泛化、OpenAI GPT-5.6 三档齐发、Ollama 拿到 6500 万美元。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "具身智能", "OpenAI", "Ollama", "灵波"]
+tags: ["具身智能", "OpenAI", "Ollama"]
 hiddenFromHomePage: true
 ---
 

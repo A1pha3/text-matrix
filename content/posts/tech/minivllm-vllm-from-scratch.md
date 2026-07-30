@@ -5,7 +5,7 @@ slug: minivllm-vllm-from-scratch
 description: "MinivLLM 是一个基于 Nano-vLLM 的自定义 vLLM 推理引擎实现，提供了从层组件到调度器的完整代码路径，并通过基准测试对比 FlashAttention（预填充阶段）和 PagedAttention（解码阶段）的性能差异。项目作者还提供了配套的中文学习指南，适合想要深入理解 LLM 推理系统工程细节的开发者。"
 draft: false
 categories: ["技术笔记"]
-tags: ["vLLM", "LLM推理", "PagedAttention", "FlashAttention", "CUDA", "Triton", "Paged KV Cache"]
+tags: ["vLLM", "LLM推理", "CUDA"]
 hiddenFromHomePage: true
 ---
 

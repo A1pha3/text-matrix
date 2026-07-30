@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-05-10"
 description: "2026年5月10日AI行业新闻早报：Kimi、阶跃星辰45亿美金刷新融资纪录，苹果CarPlay接入Grok，字节跳动AI基础设施支出增加25%，AMD英特尔美光飙升，英伟达光环渐褪等热点解读。"
 draft: false
 categories: ["行业快讯"]
-tags: ["字节跳动", "Kimi", "阶跃星辰", "苹果", "Grok", "AMD", "英特尔", "英伟达", "融资", "大模型"]
+tags: ["字节跳动", "Kimi", "苹果", "Grok", "英伟达", "融资", "LLM"]
 hiddenFromHomePage: true
 ---
 

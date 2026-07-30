@@ -5,7 +5,7 @@ slug: "cypress-e2e-component-testing-real-browser-architecture-guide"
 description: "Cypress 是 50k stars 的浏览器内 E2E 与组件测试平台，测试代码与被测应用同运行时执行，拆解同运行时架构、自动等待原理与 Cloud 并行化能力。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Cypress", "E2E测试", "组件测试", "JavaScript", "测试框架"]
+tags: ["JavaScript", "测试框架"]
 ---
 
 > **目标读者**：在前端 / 全栈工程里负责回归测试的工程师、技术负责人，以及正在 Playwright / Selenium / Cypress 之间做选型的架构师。

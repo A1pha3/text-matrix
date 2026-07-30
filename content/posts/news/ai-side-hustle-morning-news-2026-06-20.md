@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-news-2026-06-20
 description: "2026年6月20日 AI 副业早报：过去 24h 内 Atlas Cloud 招 AI 方向中级前端 20-25K、外企 CP 集团招数据工程 20-40w 全远程、SHEIN 整理 122 个技术岗全量内推、邮件群发系统外包 8K-10K、Golang&Vue3 合伙人机会、V2EX 应聘 AI Agent 工作避免透露过多技巧、Reddit 独立开发者 Tracer LLM 可观测工具/AI 代理应用商店/YouTube 受众痛点自动化/AirPods 跳跃计数器等共 12 条。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "远程工作", "独立开发", "Reddit", "外包", "Agent", "LLM"]
+tags: ["AI副业", "招聘", "V2EX", "远程工作", "独立开发", "Reddit", "外包", "AI Agent", "LLM"]
 hiddenFromHomePage: true
 ---
 

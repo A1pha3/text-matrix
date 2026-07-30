@@ -5,7 +5,7 @@ slug: deeptutor-agent-native-personalized-learning-platform
 description: "DeepTutor 是一个 Agent-Native 个性化学习平台，利用 AI Agent 技术提供个性化的学习体验和辅导。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "学习", "教育", "个性化"]
+tags: ["AI Agent", "教育"]
 ---
 
 # DeepTutor：Agent-Native 个性化学习平台

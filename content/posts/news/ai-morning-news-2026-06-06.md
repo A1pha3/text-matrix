@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-06
 description: "2026年6月6日 AI 新闻早报，汇总 24 小时内 Anthropic Mythos 泄密、DeepSeek 登顶 Ramp、互联网 Bot 流量反超人类等关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Anthropic", "DeepSeek", "模型发布", "华为云"]
+tags: ["Anthropic", "DeepSeek", "模型发布"]
 hiddenFromHomePage: true
 ---
 

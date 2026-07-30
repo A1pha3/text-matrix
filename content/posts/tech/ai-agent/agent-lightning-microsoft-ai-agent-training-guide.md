@@ -5,7 +5,7 @@ aliases:
   - /posts/tech/agent-lightning-microsoft-ai-agent-training-guide/
 date: "2026-04-01T01:20:00+08:00"
 categories: ["技术笔记"]
-tags: ["Agent Lightning", "微软", "AI智能体", "强化学习", "RL", "TLA", "GRPO", "PyTorch", "Python"]
+tags: ["微软", "AI智能体", "强化学习", "RL", "PyTorch", "Python"]
 description: "微软研究院开发的 AI 智能体训练框架，支持 ZERO CODE CHANGE 优化任意框架，内置强化学习、自动提示优化、监督微调等算法，MIT 许可证。"
 ---
 

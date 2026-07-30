@@ -5,7 +5,7 @@ slug: "alchaincyf-zhangxuefeng-skill-agent-perspective-guide"
 description: "深入解析 alchaincyf/zhangxuefeng-skill（9,382 stars）—— 一款基于 5 本著作、15+ 篇深度采访、30+ 条一手语录蒸馏出的张雪峰 Agent 思维操作系统。涵盖 5 心智模型、8 决策启发式、表达 DNA、Agentic Protocol 工作流与女娲 skill 蒸馏管线。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Agent Skills", "Persona Skill", "张雪峰", "思维框架", "教育规划"]
+tags: ["Agent Skills"]
 ---
 
 # ZhangXueFeng Skill：张雪峰思维操作系统的 Agent 实现完全拆解

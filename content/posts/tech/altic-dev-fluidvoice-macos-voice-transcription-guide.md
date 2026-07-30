@@ -5,7 +5,7 @@ slug: "altic-dev-fluidvoice-macos-voice-transcription-guide"
 description: "FluidVoice 是 altic-dev 开源的 macOS 15+ 离线听写应用，集成 Nemotron / Parakeet / Cohere / Apple Speech / Whisper 等 8 个 ASR 后端，搭配命令模式、改写模式与本地 Fluid Intelligence 润色层。本文梳理它的快速上手、模型选择路径与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["macOS", "Swift", "语音转文字", "Parakeet", "Whisper"]
+tags: ["macOS", "Swift", "Parakeet", "Whisper"]
 ---
 
 # FluidVoice：macOS 上的本地语音转文字与命令模式，8 个 ASR 后端随便挑

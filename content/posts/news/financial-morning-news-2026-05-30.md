@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-30
 description: "2026年5月30日经济财经早报，汇总过去24小时内全球市场、地缘政治与商品价格的重要变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "华尔街见闻", "SpaceX", "马斯克", "亚洲大米"]
+tags: ["美股", "华尔街见闻", "SpaceX"]
 hiddenFromHomePage: true
 ---
 

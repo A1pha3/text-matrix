@@ -3,7 +3,7 @@ title: "ABF 膜与 ABF 载板产业深度解析：AI 芯片隐形骨架的战略
 date: "2026-05-25T08:00:00+08:00"
 slug: "abf-film-substrate-industry-deep-analysis"
 description: "深度解析 ABF 膜与 ABF 载板如何成为 AI 芯片封装的核心战略材料。味之素 95% 垄断格局、2027-2028 年供需缺口达峰、国产替代三层不对称格局与最后投资窗口的完整分析。"
-tags: ["ABF膜", "ABF载板", "半导体材料", "AI芯片", "国产替代", "味之素", "投资机会"]
+tags: ["AI芯片", "国产替代", "投资机会"]
 categories: ["财富自由"]
 draft: false
 hiddenFromHomePage: true

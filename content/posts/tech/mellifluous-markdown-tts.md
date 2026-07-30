@@ -5,7 +5,7 @@ slug: "mellifluous-markdown-tts-apple-silicon"
 description: "mellifluous 是一个运行在 macOS Apple Silicon 上的本地 Markdown 转语音工具，基于 Qwen3-TTS 和 MLX 框架，支持语音克隆，可以把 Markdown 文档解析为结构化朗读节奏，支持公式、代码、链接等内联内容的语音处理。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TTS", "Markdown", "Apple Silicon", "MLX", "Python", "语音克隆", "Qwen3"]
+tags: ["TTS", "Markdown", "Apple Silicon", "MLX", "Python", "Qwen3"]
 ---
 
 > **项目信息卡**

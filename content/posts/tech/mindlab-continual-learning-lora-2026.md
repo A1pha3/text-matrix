@@ -5,7 +5,7 @@ slug: "mindlab-continual-learning-lora-2026"
 description: "从 0.12% 参数的 δ-mem 在线记忆、18.3x 交接提速的 MinT 基础设施、Scale up/down/out 三大 LoRA 扩展轴、到 A2UI-Bench 75.6 分的 Macaron-A2UI 生成式 UI，拆解心洲科技这条从 PEFT 平替走向智能体基础设施的技术链路。"
 draft: false
 categories: ["技术笔记"]
-tags: ["PEFT", "LoRA", "持续学习", "智能体", "AI基础设施"]
+tags: ["智能体"]
 ---
 
 # Mind Lab 四件套深度解读：LoRA 持续学习如何从「廉价平替」变成智能体基础设施

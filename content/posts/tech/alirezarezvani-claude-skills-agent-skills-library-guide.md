@@ -5,7 +5,7 @@ slug: "alirezarezvani-claude-skills-agent-skills-library-guide"
 description: "354 个生产级 Claude Code Skills 跨 13 个 AI 编码工具、18 个领域，593 个零依赖 Python CLI 的开源大库，本文拆解其 Skills/Agents/Personas 三层模型与 SKILL.md 最小可执行结构。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Agent Skill", "Skills 库", "OpenAI Codex", "MCP"]
+tags: ["Claude Code", "Agent Skills", "OpenAI Codex", "MCP"]
 author: text-matrix
 ---
 

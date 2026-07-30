@@ -5,7 +5,7 @@ slug: "apple-container-macos-lightweight-vm-containers"
 description: "Apple 官方开源的 macOS 容器工具，每个 Linux 容器运行在独立轻量 VM 中。本文拆解其架构、组件协作、1.0.0 新特性与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Apple", "macOS", "容器", "Virtualization", "Swift"]
+tags: ["Apple", "macOS", "Swift"]
 ---
 
 ## 学习目标

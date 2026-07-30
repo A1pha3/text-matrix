@@ -5,7 +5,7 @@ slug: beads-ai-agent-issue-tracker
 description: "Beads 是一个 AI 编程 Agent 的持久化记忆工具，用 Dolt（版本控制 SQL 数据库）取代杂乱的 Markdown 计划。依赖感知图结构、自动-ready 任务检测、语义压缩防止上下文窗口溢出。支持多 Agent 和多分支工作流，Hash ID 防止合并冲突。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Issue Tracker", "Dolt", "Task Management", "Go", "多Agent协作"]
+tags: ["AI Agent", "Go", "多Agent协作"]
 ---
 
 # Beads：给 AI 编程 Agent 用的分布式图结构 Issue 追踪器，Powered by Dolt

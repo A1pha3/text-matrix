@@ -5,7 +5,7 @@ slug: "chatwoot-open-source-customer-support-platform-guide"
 description: "Chatwoot 是面向中小团队的开源全渠道客服平台，统一管理网站在线聊天、邮件及 Facebook/Instagram/WhatsApp 等多渠道对话。本文从项目定位、技术栈、架构概览、Captain AI 能力与部署路径五个角度，帮你判断它是否能替代 Intercom、Zendesk 这类 SaaS 客服系统。"
 draft: false
 categories: ["技术笔记"]
-tags: ["开源", "Rails", "Vue", "全渠道客服", "AI Agent"]
+tags: ["开源", "AI Agent"]
 ---
 
 ## 学习目标

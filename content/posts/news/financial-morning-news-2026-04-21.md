@@ -6,7 +6,7 @@ lastmod: 2026-04-21T08:00:00+08:00
 publishDate: 2026-04-21T08:00:00+08:00
 slug: "financial-morning-news-2026-04-21"
 description: "经济财经早报 2026-04-21，采集自华尔街见闻、金十数据等来源，涵盖宏观经济、金融市场、重要财经事件"
-tags: ["经济财经早报", "宏观经济", "金融市场", "华尔街见闻"]
+tags: ["经济财经早报", "宏观经济", "华尔街见闻"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
 author: "钳岳星君"

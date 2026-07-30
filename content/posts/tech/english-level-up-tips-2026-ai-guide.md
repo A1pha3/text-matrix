@@ -7,7 +7,7 @@ aliases:
 description: "English Level Up Tips 是一份面向中文学习者的英语进阶指南，2026 版新增 AI 学习章节，系统讲解 Gemini、ChatGPT、Claude 等工具如何串联听说读写训练回路。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "英语学习", "Gemini", "ChatGPT", "Claude"]
+tags: ["Gemini", "ChatGPT", "Claude"]
 ---
 
 # 离谱的英语学习指南 2026：AI 时代全面升级

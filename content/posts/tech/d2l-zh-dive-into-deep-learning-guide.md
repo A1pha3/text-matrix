@@ -5,7 +5,7 @@ slug: d2l-zh-dive-into-deep-learning-guide
 description: "D2L-ZH（动手学深度学习）是李沐团队编写的开源深度学习教材，被全球 500+ 高校采用，覆盖 PyTorch、TensorFlow、JAX 三大框架。本文从定位、章节、配套资源、环境配置到学习路径做完整解读。"
 draft: false
 categories: ["技术笔记"]
-tags: ["深度学习", "PyTorch", "TensorFlow", "JAX", "李沐"]
+tags: ["深度学习", "PyTorch", "TensorFlow"]
 ---
 
 # D2L-ZH 动手学深度学习：李沐团队开源教材解读

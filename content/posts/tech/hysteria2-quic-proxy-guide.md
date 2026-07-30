@@ -7,7 +7,7 @@ aliases:
 description: "Hysteria是一款基于QUIC协议的高速、抗审查代理工具，支持SOCKS5、HTTP代理、TCP/UDP转发、TUN等丰富模式，以自定义QUIC协议伪装为HTTP/3流量，突破网络审查的同时提供卓越的传输性能。本文详细解析其核心原理、架构设计、安装配置与典型场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["代理", "QUIC", "抗审查", "Go", "网络工具"]
+tags: ["代理", "Go", "网络工具"]
 ---
 
 # Hysteria 2：QUIC 协议加持的抗审查代理工具完全指南

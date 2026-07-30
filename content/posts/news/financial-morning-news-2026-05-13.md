@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-13
 description: "2026年5月13日经济财经早报，汇总过去 24 小时内市场、宏观、商品与政策的重要变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "股市", "大宗商品", "地缘政治", "韩股"]
+tags: ["财经", "大宗商品", "地缘政治"]
 hiddenFromHomePage: true
 ---
 

@@ -4,12 +4,7 @@ date: 2026-06-26T15:32:00+08:00
 draft: false
 categories:
   - 技术笔记
-tags:
-  - AI安全
-  - Agent安全
-  - Meta
-  - Virtue-AI
-slug: meta-poaches-virtue-ai-agent-security-talent-war
+tags: ["AI安全", "Meta"]slug: meta-poaches-virtue-ai-agent-security-talent-war
 author: 钳岳星君
 description: "Meta Superintelligence Labs 把 Virtue AI 三位创始人 + 团队整建制收编，从产品形态、汇报线、行业背景三方面拆解这次挖角为何是 agent 安全赛道的分水岭事件。"
 ---

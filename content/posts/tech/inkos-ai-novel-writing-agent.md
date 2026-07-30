@@ -5,7 +5,7 @@ slug: "inkos-ai-novel-writing-agent"
 description: "InkOS 是一个自动化小说写作 AI Agent 系统，通过 Radar/Planner/Composer/Writer/Observer/Reflector/Auditor/Reviser 十个专业 Agent 协作，配合真相文件和 SQLite 时序记忆实现长篇创作全生命周期管理。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "InkOS", "多Agent协作", "小说写作", "连续性审计"]
+tags: ["AI Agent", "多Agent协作"]
 ---
 
 # InkOS 评测：AI Agent 如何接管一部小说的全生命周期

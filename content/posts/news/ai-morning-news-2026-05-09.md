@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-09
 description: "2026年5月9日 AI 新闻早报，汇总过去24小时内模型研究、安全事件与行业动态重要变化。注：今日早报因早起网络故障延迟至10:00发布。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "安全", "模型研究", "行业动态"]
+tags: ["安全", "行业动态"]
 hiddenFromHomePage: true
 ---
 

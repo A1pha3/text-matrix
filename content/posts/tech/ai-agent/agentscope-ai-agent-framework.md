@@ -7,7 +7,7 @@ aliases:
 description: "系统解读 AgentScope 的 ReAct Agent、MCP、A2A、记忆、Realtime、TTS、Tuner 与多 Agent 架构，涵盖核心抽象层、能力层、编排层的设计解析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AgentScope", "AI Agent", "ReAct", "MCP", "A2A", "多智能体"]
+tags: ["AI Agent", "ReAct", "MCP", "多智能体"]
 ---
 
 # AgentScope：生产级 AI Agent 框架完全指南

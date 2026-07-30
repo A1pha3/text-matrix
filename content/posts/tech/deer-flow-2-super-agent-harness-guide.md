@@ -7,7 +7,7 @@ aliases:
 description: "DeerFlow 2.0是字节跳动开发的开源超级智能体框架，通过编排子智能体、记忆系统和沙箱环境实现复杂任务自动化。本文详细解析其架构设计、主要特性、本地部署及适用场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "DeerFlow", "字节跳动", "子智能体", "开源"]
+tags: ["AI Agent", "字节跳动", "开源"]
 ---
 
 ## 学习目标

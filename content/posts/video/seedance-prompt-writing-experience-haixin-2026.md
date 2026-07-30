@@ -3,7 +3,7 @@ title: "Seedance 提示词实战心得——一份来自高频使用的四要素
 date: "2026-07-12T01:15:29+08:00"
 slug: seedance-prompt-writing-experience-haixin-2026
 categories: ["视频精读"]
-tags: ["Seedance", "AI视频", "提示词", "海辛Hyacinth", "实战心得"]
+tags: ["Seedance", "AI视频", "提示词"]
 description: "字节跳动 Seedance 用户@海辛Hyacinth 的提示词实战心得反写：四要素写法、抽卡策略与五条纠正营销号认知。"
 ---
 

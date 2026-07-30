@@ -4,7 +4,7 @@ slug: "financial-morning-news-2026-04-20"
 date: "2026-04-20T07:30:00+08:00"
 description: "2026年4月20日经济财经要闻：美伊新一轮谈判预期升温，美股创新高；Vercel安全事件引发科技行业关注；瑞士政府推进减少对微软依赖；加密货币市场整体下跌。"
 categories: ["行业快讯"]
-tags: ["经济", "美股", "美伊谈判", "Vercel", "科技"]
+tags: ["经济", "美股", "美伊谈判", "Vercel"]
 hiddenFromHomePage: true
 ---
 

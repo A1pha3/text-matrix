@@ -5,7 +5,7 @@ slug: "context-mode-mcp-server-llm-context-optimization-guide"
 description: "Context Mode 用沙箱隔离 + SQLite 事件日志 + 脚本优先范式 + 输出压缩四合一，把 AI 编程 Agent 的工具输出污染从 40% 压到接近零。这篇文章不讲概念，讲它到底做了什么、为什么能跑、你该怎么用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Context Mode", "MCP", "上下文优化", "AI编程", "LLM"]
+tags: ["Claude Code", "MCP", "AI编程", "LLM"]
 ---
 
 # Context Mode：AI 编程 Agent 上下文治理实战——从 40% 污染到零

@@ -5,7 +5,7 @@ slug: "builderio-agent-native-framework-architecture"
 description: "BuilderIO 发布的 agent-native 框架把 GUI 与 Agent 视为同等公民，用一条 defineAction 把 UI、HTTP、MCP、A2A、CLI、Agent Tool Call 六种调用入口打通。本文从核心抽象、三种产品形态、协议栈、决策边界四个角度做原理拆解。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Agent", "MCP", "A2A", "CRDT", "全栈框架"]
+tags: ["AI Agent", "MCP"]
 ---
  
 ## 快速信息卡

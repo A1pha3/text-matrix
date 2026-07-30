@@ -5,7 +5,7 @@ slug: "hivemind-activeloop-shared-agent-brain-architecture-guide"
 description: "Hivemind 是 Activeloop 推出的跨多编程 Agent 的云端共享记忆与技能传播系统。本文解析其流水线、SKILL.md 编译与 LoCoMo benchmark 边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "OpenClaw", "共享记忆", "SKILL.md"]
+tags: ["AI Agent", "Claude Code", "OpenClaw"]
 ---
 
 > **目标读者**：同时在用 Claude Code、Cursor、Codex CLI、OpenClaw 等多个编程 Agent，并希望把"团队踩过的坑"沉淀成可复用资产的工程师 / 团队负责人。

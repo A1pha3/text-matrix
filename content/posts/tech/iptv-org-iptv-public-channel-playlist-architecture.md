@@ -5,7 +5,7 @@ slug: "iptv-org-iptv-public-channel-playlist-architecture"
 description: "拆解 iptv-org/iptv 的数据流水线：用 GitHub Issues 当 CMS、Actions 当 ETL 引擎，每日生成 600+ 个公开 m3u 播放列表。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GitHub", "TypeScript", "IPTV", "GitHub Actions", "开源"]
+tags: ["GitHub", "TypeScript", "GitHub Actions", "开源"]
 ---
 
 # iptv-org/iptv 架构拆解：一个 12 万星仓库如何用 GitHub Issues + Actions 当 CMS

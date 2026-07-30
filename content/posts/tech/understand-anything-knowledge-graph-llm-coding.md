@@ -10,7 +10,7 @@ aliases:
 description: "Understand Anything 通过 Tree-sitter 静态分析、LLM 语义摘要和多 Agent 流水线，把代码库、业务域和知识库转成交互式知识图谱——支持搜索、问答和增量复用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Understand Anything", "知识图谱", "AI Coding", "Claude Code", "TypeScript"]
+tags: ["知识图谱", "AI 编程", "Claude Code", "TypeScript"]
 ---
 
 ## 一、学习目标

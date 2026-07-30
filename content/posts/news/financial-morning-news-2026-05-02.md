@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-02
 description: "2026年5月2日经济财经早报，汇总过去 24 小时内美股财报、云厂商资本开支、AI芯片IPO与大宗商品市场的重要变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "财报", " Cerebras", "云厂商", "原油", "伯克希尔"]
+tags: ["美股", "财报", "原油", "伯克希尔"]
 hiddenFromHomePage: true
 ---
 

@@ -4,7 +4,7 @@ date: 2026-05-27
 draft: false
 description: "Heretic 把方向性消融 + Optuna 超参数优化拧成一条全自动管线：无需人工调参，就能把语言模型的审查对齐剥掉，同时把能力损伤压到最低。"
 categories: ["技术笔记"]
-tags: ["LLM", "abliteration", "censorship removal", "Python", "PyTorch", "LoRA"]
+tags: ["LLM", "Python", "PyTorch"]
 slug: heretic-full-analysis
 aliases:
   - "/posts/tech/p-e-w-heretic-analysis/"

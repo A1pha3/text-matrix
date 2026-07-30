@@ -5,7 +5,7 @@ slug: "ai-news-morning-2026-04-03"
 description: "汇总4月3日AI行业最新动态，涵盖Google Gemma 4开源、阿里Qwen3.6-Plus、Anthropic Claude永久在线，英伟达龙虾大脑、SpaceX史上最大IPO等重磅新闻。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Gemma", "Qwen", "Claude", "Anthropic", "具身智能", "机器人"]
+tags: ["Gemma", "Qwen", "Claude", "Anthropic", "具身智能", "机器人"]
 hiddenFromHomePage: true
 ---
 

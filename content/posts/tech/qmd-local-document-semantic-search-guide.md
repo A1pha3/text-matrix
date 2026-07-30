@@ -5,7 +5,7 @@ slug: "qmd-local-document-semantic-search-guide"
 description: "全面介绍 21.8k Stars 的 QMD 本地文档语义搜索工具，涵盖语义搜索+BM25 混合搜索、10+ 文档格式支持、Python API、MCP Server 集成，以及 Ollama 向量嵌入的工作原理。"
 draft: false
 categories: ["技术笔记"]
-tags: ["QMD", "语义搜索", "本地搜索", "Ollama", "BM25", "MCP"]
+tags: ["Ollama", "MCP"]
 ---
 
 ## 学习目标

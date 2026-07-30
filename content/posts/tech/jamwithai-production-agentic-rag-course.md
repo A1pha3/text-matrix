@@ -5,7 +5,7 @@ slug: jamwithai-production-agentic-rag-course
 description: "jamwithai 是 6.5K stars 的 7 周 RAG 教学，反 AI-first「先 BM25 后向量」路线，含 LangGraph Agentic RAG + Telegram Bot。"
 draft: false
 categories: ["技术笔记"]
-tags: ["RAG", "LangGraph", "BM25", "教学项目", "FastAPI"]
+tags: ["RAG", "LangGraph", "FastAPI"]
 ---
 
 # Mother of AI Project：7 周渐进式 RAG 教学，反 AI-first 潮流的「先 BM25 后向量」路线

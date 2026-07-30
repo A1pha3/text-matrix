@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-01
 description: "2026年5月1日 AI 新闻早报，汇总过去 24 小时内模型发布、企业合作与行业投融资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "模型发布", "企业服务", "人形机器人"]
+tags: ["模型发布", "人形机器人"]
 hiddenFromHomePage: true
 ---
 

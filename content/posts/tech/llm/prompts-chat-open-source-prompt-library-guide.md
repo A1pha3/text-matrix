@@ -7,7 +7,7 @@ aliases:
 description: "系统讲清 Prompts.chat 的产品定位、功能模块、使用方式、工作原理、架构与源码入口、自托管部署、MCP 与 Claude Code 集成，以及从新手到专家的实践路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Prompts.chat", "提示词工程", "MCP", "Claude Code", "自托管"]
+tags: ["提示词工程", "MCP", "Claude Code", "自托管"]
 ---
 > **难度**：⭐⭐⭐ 到 ⭐⭐⭐⭐ | **类型**：工具全景指南 | **预计阅读时间**：30 分钟
 > **适合读者**：AI 使用者、提示词工程实践者、开发者、技术内容策展人、想自建提示词库的团队

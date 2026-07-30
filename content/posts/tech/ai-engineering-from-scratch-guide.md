@@ -8,7 +8,7 @@ aliases:
 description: "AI Engineering From Scratch 是一个覆盖 20 个阶段、428 节课程的免费 AI 工程教程，涵盖数学基础、机器学习、深度学习、LLM 构建、Agent 开发、多 Agent 系统等完整路径。每课遵循'从零构建→生产库验证→产出可安装工具'的方法，已斩获 8973 Stars。本文深入解析其课程架构、核心方法论与快速上手路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI 工程", "Agent 开发", "LLM", "MCP", "深度学习", "多智能体系统"]
+tags: ["AI工程", "LLM", "MCP", "深度学习"]
 ---
 
 ## 你会读到什么

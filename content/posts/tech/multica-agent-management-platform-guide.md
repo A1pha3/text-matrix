@@ -5,7 +5,7 @@ description: "开源 Agent 管理平台 Multica 指南，系统拆解 Claude Cod
 date: "2026-04-11T00:15:00+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["Multica", "AI Agent", "Claude Code", "Codex", "Self-Hosting"]
+tags: ["AI Agent", "Claude Code", "Codex"]
 ---
 
 ## 快速信息卡

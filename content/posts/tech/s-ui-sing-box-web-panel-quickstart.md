@@ -5,7 +5,7 @@ slug: "s-ui-sing-box-web-panel-quickstart"
 description: "S-UI 是基于 SagerNet/Sing-Box 的高级 Web 管理面板，支持 VLESS、VMess、Trojan、Shadowsocks 等多协议代理，提供流量监控、订阅服务、客户端管理与 Dark/Light 主题，适合需要图形化管控代理节点的用户快速部署使用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Sing-Box", "SagerNet", "代理面板", "多协议", "网络工具"]
+tags: ["网络工具"]
 ---
 
 # S-UI：SagerNet/Sing-Box 多协议 Web 管理面板快速上手

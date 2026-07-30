@@ -5,7 +5,7 @@ slug: "robbyant-lingbot-map-ai-world-model-guide"
 description: "LingBot-Map 是 Robbyant 团队开源的流式 3D 重建基础模型，基于几何上下文 Transformer 与分页 KV 缓存注意力实现。本文解析其架构设计、关键机制、benchmark 边界与工程实践。"
 draft: false
 categories: ["技术笔记"]
-tags: ["3D重建", "Transformer", "视觉几何", "流式推理", "基础模型"]
+tags: ["Transformer", "基础模型"]
 ---
 
 ## 学习目标

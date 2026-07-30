@@ -5,7 +5,7 @@ slug: "agents-towards-production-ai-agents-production-guide"
 description: "Agents Towards Production 是 GitHub 上专注于 AI Agent 生产级部署的开源教程仓库，涵盖状态流编排、向量记忆、实时搜索、Docker 容器化、FastAPI 暴露、安全防护、GPU 扩展、多智能体协作、可观测性与评估等 28 个完整教程，覆盖从原型到企业级的完整路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "GenAI", "LangGraph", "RAG", "Docker", "FastAPI", "多智能体", "可观测性", "安全防护", "GPU部署"]
+tags: ["AI Agent", "GenAI", "LangGraph", "RAG", "Docker", "FastAPI", "多智能体", "可观测性"]
 ---
 
 # Agents Towards Production：AI Agent 生产级开发全栈指南

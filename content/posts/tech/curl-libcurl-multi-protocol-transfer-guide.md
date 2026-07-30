@@ -4,7 +4,7 @@ date: "2026-04-27T15:00:00+08:00"
 slug: "curl-libcurl-multi-protocol-transfer-guide"
 description: "curl 是互联网数据传输领域最不可或缺的基础设施之一。本文从架构视角解析 curl 命令行工具与 libcurl 库的设计关系，介绍 easy/multi/share 三种编程接口的区别与应用场景，以及 curl_url 等核心组件的设计思路。包含完整自测题与进阶路径。"
 categories: ["技术笔记"]
-tags: ["curl", "libcurl", "HTTP", "URL解析", "C语言", "开源"]
+tags: ["HTTP", "C语言", "开源"]
 draft: false
 ---
 

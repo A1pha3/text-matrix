@@ -5,7 +5,7 @@ slug: "magika-ai-file-type-detection"
 description: "Magika是Google开源的AI驱动文件类型检测工具，13.5K Stars，在100M样本上训练达到99%准确率，推理仅5ms/文件。支持200+文件类型(Git/JSON/Python/JS等)，已被VirusTotal和abuse.ch集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["文件检测", "AI", "深度学习", "安全", "Google", "Python", "Rust", "开源"]
+tags: ["深度学习", "安全", "Google", "Python", "Rust", "开源"]
 ---
 
 # Magika：Google 开源的 AI 文件类型检测方案

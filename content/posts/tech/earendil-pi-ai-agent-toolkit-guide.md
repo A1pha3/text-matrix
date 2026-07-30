@@ -5,7 +5,7 @@ title = 'pi：全能 AI Agent 工具包，CLI+TUI+API+Slack 一站搞定'
 slug = 'earendil-pi-ai-agent-toolkit-guide'
 description = 'pi 是 Earendil 开源的全能 AI Agent 工具包，支持 CLI、TUI、API 和 Slack 四种交互方式，集成了 30+ 个 MCP 工具。本文补充学习目标、项目速览、目录、自测题、进阶路径和常见问题排查，优化到 100 分。'
 categories = ['技术笔记']
-tags = ['AI', 'Agent', 'CLI', 'MCP', 'TypeScript']
+tags = ['AI Agent', 'CLI', 'MCP', 'TypeScript']
 +++
 
 # pi：65K+ Stars 全能 AI Agent 工具包，CLI+TUI+API+Slack 一站搞定

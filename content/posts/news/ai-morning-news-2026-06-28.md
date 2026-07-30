@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-28
 description: "2026年6月28日 AI 新闻早报，精选过去 24 小时内 OpenAI 发布 GPT-5.6 三档模型、DeepSeek 开源 DSpark 推理加速框架、亚洲 AI 初创推 Mythos 类模型对抗出口禁令、微软年度 AI 职场报告等核心动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "GPT-5.6", "DeepSeek", "开源框架", "AI职场"]
+tags: ["GPT-5.6", "DeepSeek"]
 hiddenFromHomePage: true
 ---
 

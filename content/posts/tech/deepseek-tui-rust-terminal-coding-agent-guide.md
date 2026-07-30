@@ -5,7 +5,7 @@ slug: "deepseek-tui-rust-terminal-coding-agent-guide"
 description: "DeepSeek-TUI 把 AI 编程助手从 Electron 应用里拽回了终端。文章从架构拆解到一次完整的修 bug 实录，说明这套 Rust TUI 工具在什么场景下比 IDE 插件好用，什么时候不必折腾。"
 draft: false
 categories: ["技术笔记"]
-tags: ["DeepSeek-TUI", "Rust", "AI Coding", "终端工具", "DeepSeek", "LLM"]
+tags: ["Rust", "AI 编程", "终端工具", "DeepSeek", "LLM"]
 ---
 
 # DeepSeek-TUI：Rust 终端里的 DeepSeek 编程智能体

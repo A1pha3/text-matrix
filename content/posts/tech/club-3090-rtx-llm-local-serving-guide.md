@@ -5,7 +5,7 @@ slug: "club-3090-rtx-3090-llm-local-serving-guide"
 description: "深入解析如何在 RTX 3090（24GB 显存）上本地运行大语言模型，涵盖 vLLM 与 llama.cpp 双引擎对比、Docker Compose 架构设计、Qwen3.6-27B INT4 AutoRound 量化方案，以及 Genesis、tolist_cudagraph、Marlin pad 三大核心补丁的原理与实战。"
 draft: false
 categories: ["技术笔记"]
-tags: ["RTX 3090", "vLLM", "llama.cpp", "LLM", "Qwen", "本地部署", "Docker"]
+tags: ["vLLM", "llama.cpp", "LLM", "Qwen", "本地部署", "Docker"]
 ---
 
 # RTX 3090 本地运行 LLM 实战：vLLM 与 llama.cpp 双引擎对比

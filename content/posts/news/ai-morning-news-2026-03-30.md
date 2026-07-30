@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-03-30
 description: "AI新闻早报：Sora之死、最强Claude泄露、Karpathy叫停AGI、OpenClaw引爆赛博大屠杀等26条热点。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Claude", "AI Agent", "人形机器人", "大模型", "OpenClaw"]
+tags: ["Claude", "AI Agent", "人形机器人", "LLM", "OpenClaw"]
 hiddenFromHomePage: true
 ---
 

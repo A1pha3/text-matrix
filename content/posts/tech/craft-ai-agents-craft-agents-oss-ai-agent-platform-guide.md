@@ -4,7 +4,7 @@ date: "2026-07-02T21:02:26+08:00"
 lastmod: "2026-07-02T21:02:26+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "MCP", "Electron", "Claude Agent SDK", "多LLM"]
+tags: ["AI Agent", "MCP", "Electron"]
 description: "Craft Agents OSS 从 Electron 桌面拆到 Bun Headless Server + WebSocket RPC + CLI 三端，覆盖多 LLM 接入层与 Sources。"
 slug: "craft-ai-agents-craft-agents-oss-ai-agent-platform-guide"
 author: text-matrix

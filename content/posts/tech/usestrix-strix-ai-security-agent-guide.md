@@ -5,7 +5,7 @@ slug: "usestrix-strix-ai-security-agent-guide"
 description: "Strix 是 usestrix 开源的 AI 渗透测试框架，靠多智能体编排 + 真实 PoC 动态验证，区别于传统静态扫描。本文拆解其架构、工具栈与任务流，给出 CI/CD 接入建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "渗透测试", "安全自动化", "DevSecOps", "LLM 安全"]
+tags: ["AI Agent", "渗透测试", "DevSecOps"]
 ---
 
 # Strix：用 AI Agent 群跑 PoC，把渗透测试从周压到小时

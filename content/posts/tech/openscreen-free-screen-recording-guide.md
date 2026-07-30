@@ -5,7 +5,7 @@ slug: "openscreen-free-screen-recording-guide"
 description: "全面介绍 OpenScreen 开源屏幕录制工具，涵盖功能详解、技术架构、安装配置、跨平台注意事项等内容。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenScreen", "屏幕录制", "Electron", "PixiJS", "开源工具"]
+tags: ["Electron", "开源工具"]
 ---
 
 # OpenScreen：免费开源的屏幕录制与演示制作工具

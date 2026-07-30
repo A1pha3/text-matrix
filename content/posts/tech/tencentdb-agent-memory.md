@@ -5,7 +5,7 @@ slug: "tencentdb-agent-memory"
 description: "TencentDB Agent Memory 的关键不在于‘多一层记忆’，而在于把跨会话经验沉淀与长任务上下文治理拆成两套系统：L0 到 L3 长期记忆金字塔，以及短期 Context Offload。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "OpenClaw", "Hermes", "长期记忆", "Context Offload", "向量数据库"]
+tags: ["AI Agent", "OpenClaw", "Hermes", "向量数据库"]
 ---
 
 <!-- markdownlint-disable-file MD003 MD041 -->

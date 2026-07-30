@@ -5,7 +5,7 @@ slug: "autofix-ci-github-action-automated-pr-fixes"
 description: "autofix.ci 是 GitHub App + GitHub Action 组合，在 CI 末端自动修复 PR 中的格式问题。本文解析其原理、架构与使用方法。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GitHub Actions", "自动化修复", "CI 流水线", "代码格式化", "Pull Request"]
+tags: ["GitHub Actions", "代码格式化", "Pull Request"]
 ---
 
 # autofix.ci：让 Pull Request 自动化修复成为流水线标配

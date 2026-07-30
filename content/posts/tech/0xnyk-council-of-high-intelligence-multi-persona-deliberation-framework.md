@@ -5,7 +5,7 @@ draft: false
 slug: "0xnyk-council-of-high-intelligence-multi-persona-deliberation-framework"
 description: "Council of High Intelligence 是 18 个 AI 角色与 7 步协商协议的组合，让 Claude Code 或 Codex 把决策拆给不同思维传统并强制互相质疑，自动跨 6 个 provider 路由模型。"
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "Codex", "Multi-LLM", "决策协议"]
+tags: ["AI Agent", "Claude Code", "Codex"]
 ---
 
 ## 本文导读

@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-06-07
 description: "2026年6月7日 Web3 早报：BTC 周末回升至 6.1 万美元上方但周线收 FTX 崩盘以来最大跌幅（蒸发 3,900 亿美元），CoinDesk 报道 JPMorgan/BoA/Citi 将通过 The Clearing House 共建代币化存款网络，DFG CEO James Wo 公开质疑 Tom Lee 的 ETH 25 万美元预测、力挺 BTC，Saylor 提出 BTC 「四部落」框架，Zcash 漏洞研究员宣布将审计 Monero。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "SOL", "XRP", "ADA", "BNB", "代币化存款", "Zcash", "Monero"]
+tags: ["Web3", "BTC", "ETH", "SOL", "XRP", "ADA", "Zcash"]
 hiddenFromHomePage: true
 ---
 

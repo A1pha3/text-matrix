@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-09
 description: "2026年7月9日 AI 新闻早报，精选过去 24 小时内模型发布、企业融资、行业治理与学术前沿的关键变化：工信部首次定调 Claude Code 安全、Anthropic Q3 盈利破 10 亿美元、阿里 ACL 2026 最佳资源论文、DeepSeek 秘密造芯、Cognition SWE-1.7 上线。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "工信部", "Anthropic", "DeepSeek", "具身智能", "Agent"]
+tags: ["Anthropic", "DeepSeek", "具身智能", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "gemini-intelligence-android-proactive-ai"
 description: "Google 在 Android Show 2026 上发布的 Gemini Intelligence 将 Gemini AI 能力深度融入 Android 系统，实现主动式 AI：从自动填表、网页摘要、语音笔记整理到多步骤任务自动化。本文深入解析这项新战略的技术细节与用户体验变革。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Google", "Android", "Gemini", "AI", "大模型", "智能系统", "主动AI"]
+tags: ["Google", "Android", "Gemini", "LLM"]
 ---
 
 # Gemini Intelligence：Android 从操作系统进化为智能系统

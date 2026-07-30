@@ -4,7 +4,7 @@ date: "2026-07-02T21:02:26+08:00"
 lastmod: "2026-07-02T21:02:26+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Open Standard", "LLM", "Prompt Engineering"]
+tags: ["AI Agent", "LLM", "Prompt Engineering"]
 description: "拆解 Agent Skills 开放规范的核心设计：SKILL.md frontmatter 字段语义、渐进披露三阶段、42 个兼容客户端、参考实现 skills-ref 的取舍。"
 weight: 1
 author: text-matrix

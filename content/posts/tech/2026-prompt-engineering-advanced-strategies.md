@@ -6,7 +6,7 @@ description: "基于 ReAct、Chain-of-Thought、Lost in the Middle 与 Anthropic
 summary: "2026 年的提示词工程，重点已经从「把一句话写漂亮」转向「定义成功标准、组织上下文、设计工具循环与诊断失效层级」。文章围绕 Expert Panel、Compression Protocol、ReAct 与四层框架，说明它们分别解决什么问题、如何落地，以及何时不该继续加码。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "LLM", "Prompt Engineering", "提示词工程", "Agent", "ReAct", "Context Engineering", "上下文工程"]
+tags: ["LLM", "Prompt Engineering", "提示词工程", "AI Agent", "ReAct", "Context Engineering", "上下文工程"]
 ---
 > **难度**：⭐⭐⭐⭐ | **类型**：方法论梳理 + 实战模板 | **更新日期**：2026-06-23 | **预计阅读时间**：22 - 30 分钟
 >

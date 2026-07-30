@@ -5,7 +5,7 @@ slug: "web3-morning-news-2026-04-05"
 description: "Web3/区块链行业早报，涵盖BTC/ETH价格走势、DeFi最新动态、NFT与GameFi热点、监管政策动向，以及Twitter Web3圈热门讨论。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "DeFi", "NFT", "GameFi", "区块链", "加密货币"]
+tags: ["Web3", "BTC", "ETH", "DeFi", "区块链", "加密货币"]
 hiddenFromHomePage: true
 ---
 

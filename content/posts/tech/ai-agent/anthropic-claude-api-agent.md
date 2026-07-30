@@ -7,7 +7,7 @@ aliases:
 description: "Claude API 的 Agent 架构设计：单 Agent 与多 Agent 系统、并行执行与链式调用模式、条件路由与状态管理、错误处理与恢复机制，以及生产环境的安全考量与部署方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "Agent", "并行执行", "链式调用", "Python"]
+tags: ["Claude", "AI Agent", "Python"]
 ---
 
 # Claude API 基础专题（七）：Agent 架构与智能体设计

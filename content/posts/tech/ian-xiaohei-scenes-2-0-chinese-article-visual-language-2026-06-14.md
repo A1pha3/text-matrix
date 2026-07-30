@@ -8,7 +8,7 @@ aliases:
 description: "逐行拆解 helloianneo/ian-xiaohei-scenes 2.0 的 7 张母版、4 个不变量、1B 事实锚定、QA 18 必过项与 18 失败信号。给出标准模式与彩蛋长卷的完整任务流,以及 text-matrix 这类技术站接入视觉语言的迁移路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI 配图", "Codex Skill", "Ian Xiaohei", "中文配图", "视觉语言", "开源解读", "Codex", "Claude Code", "AI Agent", "Content Creation", "Indie Builder", "一人公司", "配图设计", "真实物件", "物理动作", "小众 IP", "AI 设计", "AI Workflow", "工具链"]
+tags: ["Codex", "Claude Code", "AI Agent", "工具链"]
 hiddenFromHomePage: false
 ---
 

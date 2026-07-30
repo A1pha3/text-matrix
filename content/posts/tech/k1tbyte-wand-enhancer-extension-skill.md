@@ -5,7 +5,7 @@ slug: k1tbyte-wand-enhancer-extension-skill
 description: "Wand-Enhancer 是 Wand（WeMod）客户端的本地增强工具，C# WPF 编写、Apache-2.0 许可、不发布预编译可执行文件，用户必须 fork 后用 GitHub Actions 自构建。内置 Remote Web Panel（QR 扫码 + 局域网 TCP 3223）和 Chromium renderer 注入的 JS 沙箱。本文拆开它的「不出二进制」分发模型、JS 注入约束与网络拓扑。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Wand", "C#", "WPF", "GitHub Actions", "扩展开发"]
+tags: ["C#", "GitHub Actions"]
 ---
 
 # Wand-Enhancer：6.8K Stars 的本地客户端增强器，如何用「不出二进制」重新定义开源分发

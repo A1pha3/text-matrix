@@ -4,7 +4,7 @@ slug: paperless-ngx-document-management-guide
 date: "2026-04-20T11:30:00+08:00"
 description: "全面解析 paperless-ngx：一个强大的开源文档管理系统，支持 OCR 识别、全文搜索、标签分类，通过 Docker 即可快速部署，让你的纸质文档数字化归档变得前所未有的简单。"
 categories: ["技术笔记"]
-tags: ["文档管理", "Python", "Docker", "OCR", "开源"]
+tags: ["Python", "Docker", "OCR", "开源"]
 ---
 
 # paperless-ngx：开源文档管理系统指南

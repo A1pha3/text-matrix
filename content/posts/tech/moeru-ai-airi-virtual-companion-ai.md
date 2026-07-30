@@ -5,7 +5,7 @@ slug: "moeru-ai-airi-virtual-companion-ai"
 description: "moeru-ai/airi 是受 Neuro-sama 启发的开源 AI VTuber 项目，支持 Live2D/VRM 渲染、ChatGPT/Claude 等多模型接入、可在浏览器/桌面/移动端运行，并自带 Minecraft/Factorio 等游戏 Agent 子项目。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Live2D", "VRM", "VTuber", "WebGPU"]
+tags: ["Live2D", "WebGPU"]
 ---
 
 ## 核心判断

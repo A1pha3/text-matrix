@@ -5,7 +5,7 @@ slug: "odoo-open-source-erp-business-platform-guide"
 description: "Odoo是全球规模最大的开源ERP平台之一，拥有超过51k Stars和32k Forks，基于Python开发，提供CRM、电商、仓库管理、项目管理、财务、POS、HR等40+业务模块。本文从项目定位、核心架构、模块生态和适用场景四个维度，系统解析Odoo的能力边界与上手路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Python", "ERP", "开源", "Odoo", "业务管理"]
+tags: ["Python", "ERP", "开源"]
 ---
 
 Odoo 是全球规模最大的开源 ERP（企业资源规划）平台之一，基于 Python 开发，提供从 CRM、电商、仓库管理到财务核算、人力资源、市场营销在内的全链路业务模块。截至本文写作时，仓库拥有 **51,067 Stars** 和 **32,512 Forks**，默认分支为 19.0，表明项目处于活跃维护状态。

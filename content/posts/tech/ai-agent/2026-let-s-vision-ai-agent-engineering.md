@@ -7,7 +7,7 @@ aliases:
 description: "基于 onevcat/2026-let-s-vision 仓库公开材料，拆解这场演讲如何把 AI Agent 时代的工程方法论落到资料组织、Slidev 制作、设计迭代与团队协作上。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Agentic Engineering", "Slidev", "工程师", "人机协作", "知识管理"]
+tags: ["AI Agent", "知识管理"]
 ---
 
 # AI Agent 的道与术：工程师如何重构工作方式

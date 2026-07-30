@@ -7,7 +7,7 @@ aliases:
 description: "iii 是一个以 Rust 实现的实时服务编排运行时，通过 Worker、Function、Trigger 三大原语实现零集成互通，适合需要动态扩展能力的微服务与 AI Agent 系统。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "AI Agent", "微服务", "服务编排", "后端开发"]
+tags: ["Rust", "AI Agent", "微服务"]
 ---
 
 # iii：Rust 运行时实现零集成的服务编排

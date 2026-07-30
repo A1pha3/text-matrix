@@ -5,7 +5,7 @@ slug: "bradautomates-claude-video-watch-skill-guide"
 description: "bradautomates/claude-video 是一个面向 50+ AI 编程代理的 Agent Skill，提供 /watch 指令把 YouTube/Loom/本地视频喂给 Claude：自动下载、抽帧、ASR 转写、让 Claude 真正看图听音后回答。4k stars，MIT 协议，本文拆解四档 detail 模式、frame dedup 与 token 预算权衡。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "Agent Skills", "视频理解", "yt-dlp"]
+tags: ["AI Agent", "Claude Code", "Agent Skills"]
 ---
 
 # claude-video：把视频变成 Claude 能"看"的输入

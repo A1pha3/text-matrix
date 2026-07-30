@@ -5,7 +5,7 @@ date: 2026-07-13T03:03:14+08:00
 lastmod: 2026-07-13T03:03:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "PostgreSQL", "数据库", "重写", "源码分析"]
+tags: ["Rust", "PostgreSQL", "数据库"]
 description: "pgrust 是 malisper 用 Rust 重写 PostgreSQL 18.3，磁盘兼容、回归套件 100% 通过。本文解读其线程模型改造、回归 oracle 选择与性能数据应如何解读。"
 ---
 

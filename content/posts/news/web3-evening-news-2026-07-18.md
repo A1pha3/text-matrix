@@ -5,7 +5,7 @@ slug: web3-evening-news-2026-07-18
 description: "7月18日晚间Web3晚报：BTC 反弹至 $64,087 (+1.42%)，ETF 连 3 日净流入 $368M、7 月累计转正；ARK Invest × Sentora 公开反驳 a16z 「传统金融采用 permissioned blockchain 而非 DeFi」论；参议员 Warren 致信 Trump 要求 7-23 前自愿披露 2026 加密收益（已披露 2025 年 $14 亿）；Stripe 据报拟 $530 亿收购 PayPal 抢稳定币分销；Injective 向 SEC 递交转让代理注册申请把证券所有权记录上链；ESMA MiCA 注册新增 14 家 CASP 累计 294 家；法国 ANJ 屏蔽 Polymarket（违反最高罚 €10 万）；CleanSpark 签 $66 亿 AI/HPC 设备租赁；Bolivia 拟承认 USDT 缓解美元短缺；Kaspersky 揭露 ClickFix 新型加密恶意软件框架；荷兰法院宣判 Knaken 破产（客户资金 €700 万失踪）；Balaji 因 Network School 以色列护照争议拟迁出马来西亚（$1.22 亿扩张搁置）；Ordinals 倡导者 Leonidas 提议新 Bitcoin 客户端 $DOG Mode。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "比特币", "以太坊", "ETF", "a16z", "ARK", "Warren", "Stripe", "PayPal", "Injective", "MiCA", "Polymarket", "CleanSpark", "USDT", "Kaspersky", "Knaken", "Balaji", "Ordinals"]
+tags: ["Web3", "比特币", "以太坊", "ETF", "MiCA", "Polymarket"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "free-programming-books-curated-list-guide"
 description: "全面介绍 GitHub 第7大项目 385k Stars 的 free-programming-books，涵盖 4,000+ 免费编程书籍的导航方法、精选推荐、贡献指南、社区生态，以及如何高效利用这个海量学习资源。"
 draft: false
 categories: ["技术笔记"]
-tags: ["免费资源", "编程书籍", "学习路线", "GitHub", "开源社区"]
+tags: ["GitHub"]
 ---
 
 # free-programming-books 完全指南：全球最大免费编程书籍资源

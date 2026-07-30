@@ -3,7 +3,7 @@ title: "Harper：用 Rust 重写的本地隐私语法检查器"
 date: 2026-07-24T03:00:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "Grammar Checker", "Privacy", "LSP", "WASM"]
+tags: ["Rust", "LSP", "WASM"]
 description: "Automattic 出品的开源语法检查器，用 Rust 实现全部规则引擎，数据不出本机，内存占用仅为 LanguageTool 的五十分之一。"
 ---
 

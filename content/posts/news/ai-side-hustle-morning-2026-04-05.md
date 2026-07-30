@@ -5,7 +5,7 @@ slug: "ai-side-hustle-morning-2026-04-05"
 description: "汇总2026年4月5日V2EX酷工作、AI相关岗位招聘、职场热议话题及独立开发者副业机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI工作", "V2EX", "远程工作", "求职", "副业"]
+tags: ["V2EX", "远程工作", "求职", "副业"]
 hiddenFromHomePage: true
 ---
 

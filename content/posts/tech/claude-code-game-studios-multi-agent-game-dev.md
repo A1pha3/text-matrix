@@ -7,7 +7,7 @@ aliases:
 description: "Claude Code Game Studios是11.5K Stars的开源项目，将Claude Code转变为完整的游戏开发工作室。49个AI agents（导演/主程/美术总监）、72个技能（设计/开发/测试/发布）、12个钩子自动化验证。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "游戏开发", "多Agent", "AI", "工作流"]
+tags: ["Claude Code", "游戏开发", "多 Agent", "工作流"]
 ---
 
 # Claude Code Game Studios：11.5K Stars 的多 Agent 游戏开发工作室——49 个 AI 角色、72 个技能、12 个钩子的完整游戏开发工作流

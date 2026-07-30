@@ -8,7 +8,7 @@ aliases:
 description: "whichllm 把 HuggingFace 候选模型、benchmark 证据、量化惩罚和硬件约束合成排序，帮助开发者为本地机器缩小开源大模型候选集。"
 draft: false
 categories: ["技术笔记"]
-tags: ["whichllm", "LocalLLM", "HuggingFace", "GGUF", "Ollama", "LLM Benchmark", "Python"]
+tags: ["Hugging Face", "Ollama", "Python"]
 ---
 
 # whichllm 架构拆解：本地 LLM 选型不该只看显存

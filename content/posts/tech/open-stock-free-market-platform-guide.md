@@ -5,7 +5,7 @@ title = 'OpenStock：一套可自部署的股市数据中台，免费行情看�
 slug = 'open-stock-free-market-platform-guide'
 description = 'OpenStock 用 Next.js 15 + MongoDB + Inngest + Gemini 搭了一套完整的股市数据平台，集认证、AI 邮件自动化、多源舆情分析和 Docker 部署于一体。'
 categories = ['技术笔记']
-tags = ['金融', '开源', 'AI', 'Next.js']
+tags = ['金融', '开源', 'Next.js']
 +++
 
 ## 目录

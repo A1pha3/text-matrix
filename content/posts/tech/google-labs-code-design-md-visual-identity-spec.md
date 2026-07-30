@@ -5,7 +5,7 @@ slug: "google-labs-code-design-md-visual-identity-spec"
 description: "Google Labs 开源的 DESIGN.md 不只是一个 token 文件格式，它把「Prose 优先」「具体参考 > 形容词列表」「负约束自动从参考对象继承」三条设计哲学编进了规范里。本文拆解 PHILOSOPHY.md 的核心洞察、9 条 lint 规则作为生产契约的意义、Tailwind v3/v4 + W3C DTCG 互操作路径，以及 `.md` 仓库命名的工程意图。"
 draft: false
 categories: ["技术笔记"]
-tags: ["DESIGN.md", "Google Labs", "设计系统", "AI Agent", "Design Tokens"]
+tags: ["设计系统", "AI Agent"]
 ---
 
 # DESIGN.md 哲学与采用路径：Google Labs 给 Coding Agent 的设计简报范式

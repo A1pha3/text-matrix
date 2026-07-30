@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-19
 description: "2026年5月19日经济财经早报，汇总过去24小时内美伊局势降级、油价V形反转、A股小幅震荡、港股科技股走弱、英伟达即将公布财报及本周重磅日程等市场动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "原油", "黄金", "日债", "港股", "A股", "英伟达", "美伊局势"]
+tags: ["美股", "原油", "黄金", "港股", "A股", "英伟达", "美伊局势"]
 hiddenFromHomePage: true
 ---
 

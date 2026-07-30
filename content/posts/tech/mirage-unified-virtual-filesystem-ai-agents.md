@@ -5,7 +5,7 @@ slug: "mirage-unified-virtual-filesystem-ai-agents"
 description: "Mirage 是一个为 AI Agent 设计的统一虚拟文件系统（VFS），将 S3、Google Drive、Slack、Github、Gmail、MongoDB 等各种后端服务以文件系统语义挂载到同一个目录树下，让 AI 智能体通过熟悉的 bash 命令操作一切数据源，无需学习每个服务的专属 SDK。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "TypeScript", "Python", "VFS", "Agent工具"]
+tags: ["AI Agent", "TypeScript", "Python"]
 ---
 
 ## Mirage 是什么

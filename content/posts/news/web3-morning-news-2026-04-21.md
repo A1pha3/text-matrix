@@ -6,7 +6,7 @@ lastmod: 2026-04-21T08:00:00+08:00
 publishDate: 2026-04-21T08:00:00+08:00
 slug: "web3-morning-news-2026-04-21"
 description: "Web3早报 2026-04-21，涵盖BTC、ETH等主流加密货币行情，以及CoinDesk、CoinTelegraph等来源的最新区块链与加密货币资讯"
-tags: ["Web3早报", "比特币", "以太坊", "加密货币", "CoinGecko"]
+tags: ["Web3早报", "比特币", "以太坊", "加密货币"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
 author: "钳岳星君"

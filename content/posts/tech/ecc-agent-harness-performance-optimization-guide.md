@@ -5,7 +5,7 @@ slug: "ecc-agent-harness-performance-optimization-system"
 description: "ECC（EveryCoding's Companion）是跨智能体编程工作流系统，182K+ Stars、28K+ Forks、170+ 贡献者，支持 Codex、Claude Code、Cursor、OpenCode、Gemini 等多种 AI 编程 harness。提供技能、本能、记忆优化、安全扫描和研究优先开发策略。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI智能体", "Codex", "Claude Code", "Cursor", "自动化", "工程效能", "编程工具"]
+tags: ["AI智能体", "Codex", "Claude Code", "Cursor", "自动化"]
 ---
 
 # ECC：跨 Codex / Claude Code / Cursor 的多 harness Agent 性能优化系统

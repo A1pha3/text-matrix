@@ -5,7 +5,7 @@ slug: "superpowers-agentic-development-methodology"
 description: "Superpowers 是由 Jesse Vincent 开发的开源项目，通过可组合的技能库让主流 AI 编程工具自动遵循 TDD、设计优先、子智能体驱动等开发原则，实现数小时自主工作不偏离计划。本文解析其核心理念、工作流与技能体系。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI 编程", "智能体开发", "TDD", "Superpowers", "开源工具"]
+tags: ["AI编程", "TDD", "Superpowers", "开源工具"]
 ---
 
 # Superpowers：给编程智能体装上一套完整开发方法论

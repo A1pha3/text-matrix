@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-27
 description: "2026年6月27日 AI 新闻早报，汇总过去 24 小时内模型发布、监管动态、AI 融资与具身智能领域的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "新闻", "模型发布", "融资", "具身智能"]
+tags: ["模型发布", "融资", "具身智能"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-17
 description: "2026年6月17日 AI 新闻早报，严格采集 06-16 08:00 至 06-17 08:00 窗口，覆盖「DeepSeek 500 亿首轮融资梁文锋以 200 亿个人出资拿下控制权、Anthropic 华盛顿谈判破裂 Fable 5 仍被全网封杀、Cursor 曾贡献 Anthropic 高达 50% 收入却被 Claude Code 反向捅刀、微信支付宝把小程序做成 Skill 反击豆包、Karpathy 入职不到一个月或被自家模型锁在门外、阿里千问三连发 Qwen-Robot 具身大模型矩阵、智谱港股盘中再涨 48% 5 个月 16 倍、AGI 不是终点 DeepMind 新论文迈向 ASI、40 名顶尖专家华盛顿推演 2030 年 AI 经济情景 GDP 翻倍白领进零工经济、机器人学会撕茶包全身协同干精细活、算力滴滴派想未来收入翻 10 倍毛利率为负冲刺港股、具身智能数据采集赛道成卖铲子最赚钱生意」等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "DeepSeek", "梁文锋", "Anthropic", "Fable5", "出口管制", "Cursor", "ClaudeCode", "微信", "支付宝", "小程序", "Skill", "硅星人Pro", "豆包", "Karpathy", "外籍研究员", "ASI", "Qwen-Robot", "阿里巴巴", "具身智能", "VLA", "VLN", "世界模型", "智谱", "GLM-5.2", "港股", "王智远", "DeepMind", "AGI", "ASI", "华盛顿", "AI经济", "白领零工", "派想未来", "AI云", "港股IPO", "姚欣", "光轮智能", "无问智科", "弈人科技", "数据采集", "大晓机器人", "撕茶包", "全身协同", "GPT-NL", "荷兰主权模型", "TNO"]
+tags: ["DeepSeek", "Anthropic", "Fable5", "出口管制", "Cursor", "Claude Code", "微信", "Skill", "豆包", "Karpathy", "阿里巴巴", "具身智能", "VLA", "世界模型", "智谱", "GLM-5.2", "港股", "DeepMind", "AGI"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: web3-evening-news-2026-07-16
 description: "7月16日晚间Web3晚报：BTC 从月高回落至 $64,000，伊朗袭击美军基地打击风险偏好；Galaxy Digital 推出 Galaxy Curator 机构级稳定币 DeFi 收益平台（基于 Morpho，承接 Fireblocks 2,400 机构客户）；DTCC 把代币化证券推上生产环境实盘交易；Cantor 与 Securitize 合作做区块链 IPO；Coinbase 的 Jesse Pollak 因加密社交策略失败退出 Base 应用一线，Jordan Fish(Cobie) 接任；U.S. 制裁伊朗央行 4 个加密钱包，Tether 主动冻结 $1.31 亿；Tether $20M 战略投资阿根廷 neobank Ualá；U.S. 参议院全票反对 SBF 减刑；休眠 9 年的 BTC 钱包移动 $3.83 亿；Ostium 因预言机攻击损失 $1,800 万。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "比特币", "以太坊", "GalaxyDigital", "DTCC", "代币化", "Base", "Coinbase", "Tether", "制裁", "Ostium", "BTC"]
+tags: ["Web3", "比特币", "以太坊", "代币化", "Coinbase", "Tether", "BTC"]
 hiddenFromHomePage: true
 ---
 

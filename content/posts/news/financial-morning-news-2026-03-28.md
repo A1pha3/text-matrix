@@ -5,7 +5,7 @@ slug: "financial-morning-news-2026-03-28"
 description: "2026年3月28日全球金融市场最新动态：伊朗战争第27天美股暴跌、滞胀担忧再起、美联储考虑缩减资产负债表2万亿、SpaceX计划IPO估值1.75万亿美元、欧洲议会批准美欧贸易协定"
 draft: false
 categories: ["行业快讯"]
-tags: ["伊朗战争", "美股", "美联储", "SpaceX", "滞胀"]
+tags: ["伊朗战争", "美股", "美联储", "SpaceX"]
 hiddenFromHomePage: true
 ---
 

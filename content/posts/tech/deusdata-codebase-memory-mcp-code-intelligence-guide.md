@@ -5,7 +5,7 @@ slug: "deusdata-codebase-memory-mcp-code-intelligence-guide"
 description: "DeusData/codebase-memory-mcp 是用纯 C 写的高性能代码情报 MCP 服务器：158 种语言、亚毫秒查询、99% token 削减。本文拆解其 tree-sitter + Hybrid LSP + 知识图谱三层架构。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MCP", "代码情报", "tree-sitter", "知识图谱", "C", "AI 编程助手"]
+tags: ["MCP", "tree-sitter", "知识图谱", "AI 编程"]
 ---
 
 ## 学习目标

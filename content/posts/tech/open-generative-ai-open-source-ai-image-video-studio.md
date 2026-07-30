@@ -5,7 +5,7 @@ slug: "open-generative-ai-open-source-ai-image-video-studio"
 description: "Open Generative AI 是开源 AI 图片、视频、口型同步和影院工作室，支持200+模型，提供桌面客户端和网页版，内置本地推理引擎 sd.cpp 和 Wan2GP，无需 API Key 即可离线生成 AI 媒体内容。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Open Generative AI", "AI生成", "图片生成", "视频生成", "开源", "Electron", "Flux", "Kling"]
+tags: ["视频生成", "开源", "Electron"]
 ---
 
 # Open Generative AI：一站式开源 AI 图片和视频生成平台

@@ -6,7 +6,7 @@ description: "深度拆解 Claude Code 在大型代码库中的导航机制、Ha
 summary: "在数百万行代码的单体仓库、数十年历史的遗留系统中，Claude Code 的表现更多取决于代码库结构设计和 Harness 配置，而非模型本身。本文拆解导航机制（为什么不用 RAG）、七层 Harness 扩展体系、三种生产验证过的配置模式，以及从试点到全公司推广的组织策略。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "大型代码库", "Agent", "Harness", "上下文工程"]
+tags: ["Claude Code", "AI Agent", "Harness", "上下文工程"]
 ---
 
 Claude Code 在大型代码库里的表现，决定性因素不是模型选型，而是三件事：代码库能不能被 agent 高效导航、Harness 各层配置有没有形成闭环、组织有没有为这些配置安排明确的 Owner。本文以 Anthropic 工程博客 Claude Code at scale 系列为基线，补充了上下文工程指南中 compaction、sub-agent 等机制的工程含义，并结合社区落地经验展开。

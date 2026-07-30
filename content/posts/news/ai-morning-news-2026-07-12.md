@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-12
 description: "2026年7月12日 AI 新闻早报，覆盖智谱战略内部信、苹果起诉 OpenAI、Claude 可解释性 J-Space、国产十万卡集群、具身扑翼机器人融资等过去 24 小时值得关注的模型、产品、融资与行业动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "具身智能", "国产算力", "OpenAI"]
+tags: ["LLM", "具身智能", "国产算力", "OpenAI"]
 hiddenFromHomePage: true
 ---
 

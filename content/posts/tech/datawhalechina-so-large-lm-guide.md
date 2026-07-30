@@ -5,7 +5,7 @@ slug: "datawhalechina-so-large-lm-guide"
 description: "全面介绍 Datawhale 出品的 so-large-lm 项目，7,167 Stars 的开源 LLM 教程，涵盖 14 章内容体系、学习路径与核心技术深度解读。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "大模型", "Datawhale", "教程", "Transformer"]
+tags: ["LLM", "Datawhale", "教程", "Transformer"]
 ---
 
 ## 学习目标

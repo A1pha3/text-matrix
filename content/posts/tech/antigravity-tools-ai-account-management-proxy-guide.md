@@ -5,7 +5,7 @@ slug: antigravity-tools-ai-account-management-proxy-guide
 description: "29.9k+ Stars专业级AI账号管理与协议代理系统，支持OAuth 2.0授权、协议转换（OpenAI/Anthropic/Gemini）、智能模型路由、Docker部署，一站式解决多账号配额管理问题。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "API代理", "账号管理", "Claude Code", "Tauri", "Rust"]
+tags: ["API代理", "Claude Code", "Tauri", "Rust"]
 ---
 
 # Antigravity Tools：AI 账号管理与协议代理系统

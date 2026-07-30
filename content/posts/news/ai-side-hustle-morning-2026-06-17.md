@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-17
 description: "2026年6月17日 AI 副业早报：过去 24h 内 V2EX 出现 Cursor 10亿 Token 重度用户王善波找 AI 应用落地/技术合伙机会、虚拟货币方向急招 Agent 创新应用算法工程师、AI for code 创业公司（2 亿融资）招 LLM Training/Alignment 核心成员、Kapibala AI（迪拜，Pre-Seed 1000 万美元）语音工程师、找 Agent/AI 应用开发工程师、vibe coding 与裁员两极分化讨论；Reddit SideProject 出现透明 AI 预测世界杯、Gemma 4 26B 本地模型、JobsMatch EU 求职 AI 聚合、自托管 Spectre AI Agent、Campfire AI 编码社交层。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "招聘", "AI Agent", "LLM训练", "本地AI", "AI Coding", "OnePersonSaaS", "独立开发"]
+tags: ["AI副业", "V2EX", "Reddit", "招聘", "AI Agent", "LLM训练", "本地AI", "AI 编程", "独立开发"]
 hiddenFromHomePage: true
 ---
 

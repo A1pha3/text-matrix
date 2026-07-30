@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-05-15"
 description: "2026年5月15日AI新闻早报，汇总过去24小时内AI领域融资动态、产品发布、技术进展与行业重要事件，来源36kr、量子位、Hacker News等。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "Agent", "OpenAI", "田渊栋", "Anthropic", "融资"]
+tags: ["LLM", "AI Agent", "OpenAI", "Anthropic", "融资"]
 hiddenFromHomePage: true
 ---
 

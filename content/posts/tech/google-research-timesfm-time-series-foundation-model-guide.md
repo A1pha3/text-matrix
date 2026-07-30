@@ -5,7 +5,7 @@ slug: "google-research-timesfm-time-series-foundation-model-guide"
 description: "TimesFM 是 Google Research 开源的 decoder-only 时间序列基础模型，2.5 版本把参数量压到 200M、context 拉到 16k，并通过 XReg 接入协变量。本文拆解 patched-decoder 架构、推理代码、Monash 等 benchmark 的真实信号与采用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TimesFM", "时间序列预测", "基础模型", "Transformer", "Google Research"]
+tags: ["基础模型", "Transformer"]
 toc: true
 ---
 

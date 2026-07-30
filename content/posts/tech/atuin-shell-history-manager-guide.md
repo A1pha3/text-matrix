@@ -5,7 +5,7 @@ slug: atuin-shell-history-manager-guide
 description: "Atuin 是一款用 Rust 编写的 Shell 历史管理器，用 SQLite 替换文本文件历史，支持端到端加密同步。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "Shell", "历史管理", "SQLite", "加密"]
+tags: ["Rust", "SQLite", "加密"]
 ---
 
 # Atuin：把 Shell 历史从纯文本升级成可加密同步的数据库

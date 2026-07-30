@@ -25,12 +25,12 @@
                 <h3 class="group-title">{{ .Key }}</h3>
                 {{- range .Pages -}}
                     <article class="archive-item">
+                        <time class="archive-item-date" datetime="{{ .Date.Format "2006-01-02" }}">
+                            {{- $.Site.Params.list.dateFormat | default "01-02" | .Date.Format -}}
+                        </time>
                         <a href="{{ .RelPermalink }}" class="archive-item-link">
                             {{- .Title | emojify -}}
                         </a>
-                        <span class="archive-item-date">
-                            {{- $.Site.Params.list.dateFormat | default "01-02" | .Date.Format -}}
-                        </span>
                     </article>
                 {{- end -}}
             {{- end -}}

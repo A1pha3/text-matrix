@@ -2,7 +2,7 @@
 title = 'Tokio-rs Topcoat:服务端渲染即客户端响应性——Rust 全栈框架的范式突破'
 date = '2026-07-21T02:57:15+08:00'
 categories = ['技术笔记']
-tags = ['Rust', 'Topcoat', '全栈框架', '服务端渲染', '响应式']
+tags = ['Rust']
 description = '拆解 tokio-rs 团队 Topcoat 框架的两大架构创新——$() 表达式把服务端 Rust 同源翻译成浏览器 JS、shard 机制按需触发服务端重渲染——看清"零客户端构建步骤"背后的类型安全设计。'
 draft = false
 +++

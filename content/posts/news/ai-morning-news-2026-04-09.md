@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-04-09"
 description: "AI新闻早报汇集每天最新人工智能行业动态，涵盖技术突破、企业动向、人物观点和创业趋势。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "人工智能", "大模型", "行业动态"]
+tags: ["LLM", "行业动态"]
 hiddenFromHomePage: true
 ---
 

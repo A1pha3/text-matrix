@@ -5,7 +5,7 @@ slug: "china-coding-plan-comparison"
 description: "从模型范围、额度口径、工具兼容、多模态能力和生产使用边界出发，对比方舟、MiniMax、智谱 GLM 与小米 MiMo，并说明 DeepSeek API 和 WorkBuddy 分别适合什么场景。"
 draft: false
 categories: ["思考与随笔"]
-tags: ["Coding Plan", "火山方舟", "MiniMax", "智谱 GLM", "小米 MiMo"]
+tags: ["MiniMax"]
 ---
 
 <!-- markdownlint-disable-file MD003 MD041 -->

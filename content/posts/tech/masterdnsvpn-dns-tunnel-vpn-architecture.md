@@ -5,7 +5,7 @@ slug: "masterdnsvpn-dns-tunnel-vpn-architecture"
 description: "MasterDnsVPN 是 Go 实现的对抗性 DNS 隧道 VPN，自研 ARQ + 多解析器均衡 + 重复发送。本文拆解它和 DNSTT/SlipStream 的真实差异与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Go", "DNS隧道", "网络审查", "ARQ", "抗丢包"]
+tags: ["Go"]
 ---
 
 # MasterDnsVPN 架构解析：在 DNS 隧道里重建 VPN —— 一个在 88 天断网里救过命的 Go 项目

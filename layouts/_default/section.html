@@ -18,21 +18,20 @@
     {{- end -}}
     <div class="page archive" data-pagefind-ignore="all">
         <div class="discovery-hero">
-            <p class="discovery-kicker">栏目浏览</p>
-            <h2 class="single-title animate__animated animate__pulse animate__faster">
+            <h2 class="single-title">
                 {{- $sectionName -}}
             </h2>
             <p class="discovery-intro">{{ $sectionDescription }}</p>
-            <div class="discovery-actions">
-                <a href="/search/">站内搜索</a>
-                <a href="/ai-agent/">AI Agent 专题</a>
-                <a href="/coding-agent/">Coding Agent 专题</a>
-                <a href="/open-source-ai-tools/">开源 AI 工具</a>
-            </div>
         </div>
 
-        {{- if .Pages -}}
-            {{- $pages := .Pages.GroupByDate "2006" -}}
+        {{- $sectionPages := .RegularPagesRecursive -}}
+        {{- if eq .Section "posts" -}}
+            {{- /* 归档页聚焦长内容，日报类快讯从 /categories/行业快讯/ 进入 */ -}}
+            {{- $news := where $sectionPages "Params.categories" "intersect" (slice "行业快讯") -}}
+            {{- $sectionPages = complement $news $sectionPages -}}
+        {{- end -}}
+        {{- if $sectionPages -}}
+            {{- $pages := $sectionPages.GroupByDate "2006" -}}
             {{- with .Site.Params.section.paginate | default .Site.Params.paginate -}}
                 {{- $pages = $.Paginate $pages . -}}
             {{- else -}}

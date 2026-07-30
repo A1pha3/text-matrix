@@ -5,7 +5,7 @@ slug: "harbor-cncf-cloud-native-registry-guide"
 description: "Harbor 是由 CNCF 托管的开源云原生容器注册表，提供容器镜像和 Helm Chart 存储、签名、扫描、复制、权限管理等功能。本文深入解析 Harbor 的架构设计、核心组件、高可用部署、安全机制以及与 Kubernetes 的集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Harbor", "容器注册表", "CNCF", "Docker Registry", "Kubernetes", "云原生", "镜像签名", "漏洞扫描"]
+tags: ["Kubernetes"]
 ---
 
 # Harbor：CNCF 云原生容器注册表的技术指南

@@ -5,7 +5,7 @@ slug: "ai-advertising-production-6-hours-vs-300k"
 description: "解读可灵 AI Cinema Studio 2.5 制作奢侈品广告实验：一个人 6 小时产出广告公司报价 30 万美元的成品，拆解五步制作流程、技术细节与广告行业影响。"
 draft: false
 categories: ["视频精读"]
-tags: ["AI视频生成", "可灵AI", "广告制作", "AI工作流", "Cinema Studio"]
+tags: ["AI视频生成", "AI工作流"]
 ---
 
 # AI 广告制作实验：6 小时 vs 30 万美元，广告行业会被颠覆吗？

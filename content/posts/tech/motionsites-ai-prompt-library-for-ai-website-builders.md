@@ -5,7 +5,7 @@ lastmod: 2026-07-13T17:45:00+08:00
 slug: motionsites-ai-prompt-library-for-ai-website-builders
 description: "深度解读 MotionSites.ai——一个面向 Lovable / Bolt / Cursor / Claude 的 prompt 订阅库。它的 89 个 hero / landing / animation prompt 解决了 AI 网站生成的哪个真实痛点，$349 终身制定价又对应了怎样的产品策略？哪些用户该买，哪些应该跳过？"
 categories: ["技术文章", "产品评测", "AI工具"]
-tags: ["MotionSites", "prompt-library", "AI-website-builder", "Lovable", "Bolt", "Cursor", "Claude", "design-system", "评测"]
+tags: ["Cursor", "Claude", "Design System"]
 author: "text-matrix"
 ---
 

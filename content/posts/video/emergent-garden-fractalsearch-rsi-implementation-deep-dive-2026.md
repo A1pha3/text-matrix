@@ -5,7 +5,7 @@ slug: emergent-garden-fractalsearch-rsi-implementation-deep-dive-2026
 description: "BV1w8jL6dE1f 视频讲 fractalsearch 实验的概念与截图，真正落到实处的实验日志在 MaxRobinsonTheGreat 仓库的 104 条 runs.jsonl + 4 个 solution + AGENT.md。本文以源码、runs 为骨，B 站章节大纲为时间锚，还原 AI 自主科研这 8 小时的过程：从 autoresearch 框架、Triton fused encoder 突破、GT-free 采样，到空间误差场（errfield）演化，最终 0.000226 MSE、PSNR 36.45 dB。"
 draft: false
 categories: ["视频精读"]
-tags: ["RecursiveSelfImprovement", "RSI", "fractalsearch", "Mandelbrot", "Karpathy", "AutoResearch", "EmergentGarden", "MaxRobinsonTheGreat", "Triton", "hashgrid", "errfield", "AIResearch", "MLOps"]
+tags: ["RecursiveSelfImprovement", "RSI", "Karpathy", "AutoResearch"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "topoteretes-cognee-graph-rag-llm-memory-engine-guide"
 description: "cognee 是面向 AI Agent 的开源长期记忆引擎，把知识图谱作为召回主干而非纯向量检索；本文拆解其存储层、Pipeline、17 个 SearchType 与多源 Recall 路由机制，并结合 BEAM benchmark 解读 GraphRAG 的真实工程边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["cognee", "GraphRAG", "LLM记忆", "知识图谱", "RAG"]
+tags: ["知识图谱", "RAG"]
 ---
 
 # cognee：把知识图谱塞进 LLM 长期记忆的开源引擎怎么工作

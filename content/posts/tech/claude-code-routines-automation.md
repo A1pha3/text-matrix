@@ -5,7 +5,7 @@ slug: "claude-code-routines-automation"
 description: "Claude Code Routines 是官方推出的云端自动化框架，支持定时调度、API 调用、GitHub 事件触发三种方式，让 AI Agent 实现 24/7 无人值守运行。适用场景包括：Backlog 维护、告警分级、代码审查自动化、部署验证、文档漂移检测、SDK 跨语言同步。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI Agent", "自动化", "GitHub", "DevOps", "云端", "工作流"]
+tags: ["Claude Code", "AI Agent", "自动化", "GitHub", "DevOps", "工作流"]
 ---
 
 # Claude Code Routines：让 AI Agent 实现无人值守自动化

@@ -7,7 +7,7 @@ aliases:
 description: "awesome-free-apps 是一个按平台和场景分类的免费软件精选清单，覆盖 Windows、macOS、Linux 三大桌面平台和 Android、iOS 两大移动端，按音频、浏览器、开发工具、文档、图像、安全等场景组织，每个条目标注平台兼容性和开源状态。"
 draft: false
 categories: ["技术笔记"]
-tags: ["免费软件", "Windows", "macOS", "Linux", "开源", "工具推荐"]
+tags: ["Windows", "macOS", "Linux", "开源"]
 ---
 
 ## 快速信息卡

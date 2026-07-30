@@ -5,7 +5,7 @@ slug: "tencentdb-agent-memory-layered-symbolic-architecture"
 description: "拆解 TencentDB Agent Memory 的核心设计：4 层语义金字塔与 Mermaid 符号化短期记忆，解决 Agent 长记忆丢失证据、压缩不可逆的问题。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Agent", "LLM", "记忆系统", "MCP", "向量数据库"]
+tags: ["AI Agent", "LLM", "记忆系统", "MCP", "向量数据库"]
 ---
 
 

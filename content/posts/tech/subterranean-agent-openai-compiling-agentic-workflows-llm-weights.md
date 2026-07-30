@@ -5,7 +5,7 @@ slug: "subterranean-agent-compiling-agentic-workflows-llm-weights"
 description: "Dennis 等人的 arXiv 论文提出一条反直觉路线：把稳定的 Agent 工作流从运行时编排器前移到训练阶段，微调进 3B-8B 小模型。本文梳理论文实验、成本假设、重编译条件和适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "LLM", "Fine-tuning", "Agent编译", "工作流编排", "成本优化"]
+tags: ["AI Agent", "LLM", "工作流编排", "成本优化"]
 ---
 
 # Subterranean Agent：把工作流编译进模型权重

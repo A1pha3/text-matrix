@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-20
 description: "2026年5月20日 AI 新闻早报，汇总过去 24 小时内模型发布、企业动态、行业格局与产品更新。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "腾讯", "百度", "Anthropic", "OpenAI", "具身智能", "人形机器人", "HackerNews"]
+tags: ["腾讯", "百度", "Anthropic", "OpenAI", "具身智能", "人形机器人", "HackerNews"]
 hiddenFromHomePage: true
 ---
 

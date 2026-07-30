@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-06-09
 description: "2026年6月9日 Web3早报（补做，cron9c412432 漏跑）：BTC/ETH/SOL/XRP/ADA 全线小幅企稳（12:22 BJT 报价：BTC$62,848.66 / ETH$1,668.13 / SOL$66.07 / XRP$1.15 / ADA$0.1662 / BNB$598.42）；Strategy重新增持1,550 BTC带动币价重回6.3 万美元、Citrini Research 看涨 Hyperliquid、Aave84.5 亿美元挤兑后创始人归因第三方、MetaMask 推出 AI代理钱包、SBF 正式请求特赦、Galaxy下调 CLARITY Act 通过概率至60%、现货 BTC ETF连续4周失血17亿美元。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "Strategy", "Hyperliquid", "MetaMask", "SBF"]
+tags: ["Web3", "BTC", "Strategy", "Hyperliquid"]
 hiddenFromHomePage: true
 ---
 

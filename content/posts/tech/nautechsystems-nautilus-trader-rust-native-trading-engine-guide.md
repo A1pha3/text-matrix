@@ -5,7 +5,7 @@ slug: "nautechsystems-nautilus-trader-rust-native-trading-engine-guide"
 description: "nautechsystems/nautilus_trader 是把 Rust 核心与 Python 控制面融为一体的多资产多场所交易引擎，确定性事件驱动 + 研究-生产同代码 + 40+ 适配器。本文拆解其 Rust/Python 分层、时间模型、适配器架构。"
 draft: false
 categories: ["技术笔记"]
-tags: ["NautilusTrader", "Rust", "Python", "量化交易", "事件驱动", "PyO3"]
+tags: ["Rust", "Python", "量化交易"]
 ---
 
 # NautilusTrader 架构拆解：Rust 内核 + Python 控制面的研究-生产一体化交易引擎

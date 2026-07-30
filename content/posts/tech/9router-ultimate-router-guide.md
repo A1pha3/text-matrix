@@ -5,7 +5,7 @@ slug: 9router-ultimate-router-guide
 description: "9Router 的真正价值不在路由本身，而在三层自动降级 + RTK Token 压缩 + 订阅额度榨干这三件事的组合。本文从系统设计角度拆解这套机制。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Cursor", "9Router", "AI Provider", "Token 优化", "API 网关"]
+tags: ["Claude Code", "Cursor", "Token 优化", "API网关"]
 ---
 
 # 9Router 深度解析：AI 编程工具的免费路由层，以及它为什么不是又一个 API 代理

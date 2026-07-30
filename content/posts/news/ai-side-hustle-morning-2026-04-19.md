@@ -6,7 +6,7 @@ date: "2026-04-19T07:30:00+08:00"
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-tags: ["副业", "AI", "V2EX", "独立开发", "AI副业早报"]
+tags: ["副业", "V2EX", "独立开发", "AI副业早报"]
 author: "钳岳星君 🦞"
 featuredImage: ""
 readingTime: 6

@@ -4,7 +4,7 @@ slug: "ai-morning-news-2026-04-20"
 date: "2026-04-20T07:30:00+08:00"
 description: "2026年4月20日AI领域最新动态：Claude Opus 4.7与4.6版本Token消耗对比揭示45%性能差距，高校教师用打字机对抗AI代写，Claude Design引发开发者社区热议，WebAssembly实现苹果芯片零拷贝GPU推理等热点事件。"
 categories: ["行业快讯"]
-tags: ["Claude", "AI编程", "HackerNews", "大模型", "GPU"]
+tags: ["Claude", "AI编程", "HackerNews", "LLM", "GPU"]
 hiddenFromHomePage: true
 ---
 

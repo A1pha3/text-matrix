@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-20
 description: "2026年7月20日 AI 新闻早报，汇总过去 24 小时内值得关注的模型发布、AI 基础设施与企业级智能体生态的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "智能体", "国产GPU", "Claude Code", "Qwen"]
+tags: ["智能体", "Claude Code", "Qwen"]
 hiddenFromHomePage: true
 ---
 

@@ -6,7 +6,7 @@ description: "ICLR 2026 RSI Workshop 首场受邀报告精读。据 43 页幻灯
 draft: false
 
 categories: ["视频精读"]
-tags: ["ICLR2026", "RecursiveSelfImprovement", "LouisKirsch", "Schmidhuber", "GödelMachine", "DarwinGödelMachine", "FME", "Inherent", "AIAgent", "Frontier"]
+tags: ["RecursiveSelfImprovement", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

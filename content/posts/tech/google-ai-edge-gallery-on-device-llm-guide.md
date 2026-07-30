@@ -5,7 +5,7 @@ slug: "google-ai-edge-gallery-on-device-llm-guide"
 description: "全面介绍 Google AI Edge Gallery 的功能与使用方法，涵盖 Agent Skills 扩展系统、JavaScript/Native 技能开发、移动端大模型运行等技术细节。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Google", "移动端", "Agent Skills", "大模型"]
+tags: ["Google", "Agent Skills", "LLM"]
 ---
 
 > **目标读者**：希望在移动设备上本地运行大模型的开发者、AI 应用工程师

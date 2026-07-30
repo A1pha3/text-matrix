@@ -10,7 +10,7 @@ aliases:
 description: "Free Claude Code 是一个 Python 代理服务器，通过环境变量拦截 Claude Code 的 Anthropic API 调用并路由到免费提供商（NVIDIA NIM / OpenRouter / DeepSeek / LM Studio / llama.cpp / Ollama），实现 Claude Code 零成本使用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Anthropic", "API", "免费", "本地部署", "OpenRouter", "NVIDIA NIM"]
+tags: ["Claude Code", "Anthropic", "API", "本地部署", "OpenRouter"]
 ---
 
 # Free Claude Code：用免费提供商替代 Anthropic API，让 Claude Code 零成本运行

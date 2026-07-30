@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-06-26
 description: "2026年6月26日经济财经早报，覆盖美股、PCE 通胀、霍尔木兹海峡地缘冲突、OpenAI IPO 推迟、黄金重回 4000 美元等过去 24 小时关键市场变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "美股", "PCE", "黄金", "霍尔木兹"]
+tags: ["财经", "美股", "黄金", "霍尔木兹"]
 hiddenFromHomePage: true
 ---
 

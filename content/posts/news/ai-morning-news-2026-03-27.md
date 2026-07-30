@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-03-27"
 description: "汇总2026年3月27日AI大模型、Agent、具身智能、AI视频/音乐生成、AI开源、芯片算力等领域的最新动态，全部来自过去24小时。来源：36kr / 量子位 / 机器之心 / FT中文网 / Hacker News"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Kimi", "英伟达", "DeepSeek", "OpenAI", "Agent", "具身智能", "AI视频", "AI音乐", "开源模型"]
+tags: ["Kimi", "英伟达", "DeepSeek", "OpenAI", "AI Agent", "具身智能", "AI视频", "AI音乐", "开源模型"]
 hiddenFromHomePage: true
 ---
 

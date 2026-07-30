@@ -5,7 +5,7 @@ slug: repomix-ai-codebase-compression-guide
 description: "Repomix 把 Git 仓库打包成 AI 可读的单一文件，内置安全检查、Token 计数和 Tree-sitter 压缩。从 CLI 到 CI 集成，一篇讲完。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "代码压缩", "Claude", "LLM", "Git"]
+tags: ["Claude", "LLM", "Git"]
 ---
 
 # Repomix：把代码库压缩成 AI 可读的单一文件

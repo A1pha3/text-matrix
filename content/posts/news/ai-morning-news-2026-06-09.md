@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-09
 description: "2026年6月9日 AI 新闻早报（补做），严格采集 06-08 08:00 至 06-09 08:00 窗口，覆盖 OpenAI 秘密提交 S-1、Apple 与 Google Gemini 共建新 AI 架构、小米 MiMo-V2.5-Pro 1T 跑出 1000 tokens/s、Anthropic 80% 代码由 Claude 写、蚂蚁海外 AI 支付 AMP、高德 ABot-Earth 0.5 等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "OpenAI", "Apple", "Gemini", "Xiaomi", "Anthropic", "蚂蚁集团", "高德", "WWDC2026", "Bun", "Claude"]
+tags: ["OpenAI", "Apple", "Gemini", "Anthropic", "Bun", "Claude"]
 hiddenFromHomePage: true
 ---
 

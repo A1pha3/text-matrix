@@ -5,7 +5,7 @@ slug: "huggingface-speech-to-speech-voice-agent-pipeline-guide"
 description: "Hugging Face speech-to-speech（5.4k stars / Apache 2.0）是一个低延迟、可全本地化、模块化的语音 agent pipeline：VAD→STT→LLM→TTS 四段可换，并通过 OpenAI Realtime 兼容 WebSocket API 暴露。已在 Reachy Mini 机器人的生产环境跑了数千实例，本文拆四段模块化设计与本地部署路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Voice Agent", "OpenAI Realtime", "STT", "TTS", "Hugging Face"]
+tags: ["TTS", "Hugging Face"]
 ---
 
 # speech-to-speech：一个能本地化的 OpenAI Realtime 兼容语音 Agent

@@ -5,7 +5,7 @@ slug: tailcall-forgecode-api-gateway-graphql-platform-guide
 description: "Tailcall ForgeCode 是一个 API Gateway 和 GraphQL 平台，使用 TypeScript 和 Rust 双引擎构建，提供 Schema Stitching 功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GraphQL", "API Gateway", "Rust", "TypeScript", "微服务"]
+tags: ["GraphQL", "Rust", "TypeScript", "微服务"]
 ---
 
 ## 📋 学习目标

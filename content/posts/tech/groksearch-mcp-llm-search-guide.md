@@ -5,7 +5,7 @@ slug: "groksearch-mcp-llm-realtime-search"
 description: "深度解析GuDaStudio/GrokSearch：基于FastMCP构建的MCP服务器，Grok负责AI搜索，Tavily/Firecrawl负责网页抓取，双引擎互补，支持一键禁用Claude Code官方工具强制路由到本工具。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MCP", "Claude Code", "Grok", "Tavily", "网络搜索", "AI Agent", "Python"]
+tags: ["MCP", "Claude Code", "Grok", "AI Agent", "Python"]
 hiddenFromHomePage: true
 ---
 

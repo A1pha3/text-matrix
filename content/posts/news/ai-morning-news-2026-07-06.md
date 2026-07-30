@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-06
 description: "2026年7月6日 AI 新闻早报，覆盖 7 月 5 日 Codex 与 ChatGPT 整合、Cloudflare 默认屏蔽 AI 爬虫、汽车 Tier1 涌入人形机器人、海外开发者报告 GPT-5.5 Codex 推理聚簇异常与 Anthropic 新模型工具调用稳定性下降。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "模型评测", "Cloudflare", "具身智能", "Codex"]
+tags: ["Cloudflare", "具身智能", "Codex"]
 hiddenFromHomePage: true
 ---
 

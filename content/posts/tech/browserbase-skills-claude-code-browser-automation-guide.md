@@ -5,7 +5,7 @@ slug: browserbase-skills-claude-code-browser-automation-guide
 description: "Browserbase Skills是为Claude Code打造的浏览器自动化技能框架，支持远程Browserbase会话、反爬虫Stealth模式、CAPTCHA解决和住宅代理轮换。本文详细解析其10个核心技能的架构、安装配置与实战用法。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "浏览器自动化", "Browserbase", "开源"]
+tags: ["AI Agent", "Claude Code", "浏览器自动化", "开源"]
 ---
 
 # Browserbase Skills：让 Claude Code 拥有浏览器自动化能力

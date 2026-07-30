@@ -6,7 +6,7 @@ slug: "ai-hedge-fund-multi-agent-trading"
 description: "基于源码，解析 virattt/ai-hedge-fund 的多 Agent 架构、风控链路、CLI 与 Web 入口，以及可迁移的量化系统设计模式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "多 Agent", "LangGraph", "Python", "量化交易"]
+tags: ["多 Agent", "LangGraph", "Python", "量化交易"]
 ---
 
 ## 学习目标

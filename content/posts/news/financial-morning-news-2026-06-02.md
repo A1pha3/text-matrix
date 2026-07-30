@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-06-02
 description: "2026年6月2日经济财经早报：标普纳指八连涨创新高、英伟达GTC台北发布Vera Rubin与AI PC、Anthropic秘密递交IPO招股书、谷歌罕见增发800亿美元砸AI基建、美光突破1000美元、伊朗威胁封锁霍尔木兹海峡推升油价。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "早报", "美股", "AI", "Anthropic"]
+tags: ["财经", "早报", "美股", "Anthropic"]
 hiddenFromHomePage: true
 ---
 

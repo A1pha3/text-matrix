@@ -5,7 +5,7 @@ slug: "gorvgoyl-clone-wars-open-source-clones-collection-guide"
 description: "Clone Wars 收录了 100+ 知名网站（Airbnb、Instagram、Netflix 等）的开源克隆项目，每条记录包含源码、demo、技术栈和 GitHub stars。本文深度解析这个资源库的价值、学习路径和实际使用建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["开源项目", "学习资源", "项目集", "全栈开发", "Clone Wars"]
+tags: ["开源项目"]
 ---
 
 # Clone Wars：100+ 开源克隆站的全栈学习资源宝库

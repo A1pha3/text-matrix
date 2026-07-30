@@ -5,7 +5,7 @@ slug: "microsoft-presidio-pii-deidentification-framework-2026"
 description: "Presidio 把 PII 识别 + 编辑 + 反向编辑做成可插拔的事实标准，5 个模块（Analyzer / Anonymizer / Image Redactor / Structured / CLI）覆盖文本、图像、DICOM 与结构化数据。它不只是脱敏工具，是企业 AI 数据处理流水线的合规基础设施。本文拆开双层架构、182 个内置 recognizer、10 个 operator、DICOM 医学影像脱敏、与 LLM 双向编辑的反向回路，并给出 4 类团队的采用顺序。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Presidio", "PII", "De-identification", "Microsoft", "Anonymization", "DICOM", "spaCy", "HuggingFace", "AI Compliance", "Data Privacy"]
+tags: ["Microsoft", "Hugging Face"]
 hiddenFromHomePage: false
 ---
 

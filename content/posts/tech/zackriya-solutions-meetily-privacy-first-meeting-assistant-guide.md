@@ -5,7 +5,7 @@ slug: zackriya-solutions-meetily-privacy-first-meeting-assistant-guide
 description: "Meetily（Zackriya-Solutions/meetily）是隐私优先的开源 AI 会议助手，所有转写和总结完全本地运行。基于 Tauri+Rust 后端与 Next.js 前端，支持 Whisper/Parakeet 双引擎与 Ollama/Claude/Groq/OpenRouter 等多种 AI 提供方。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Meetily", "Tauri", "Whisper", "Parakeet", "本地 AI", "会议转写", "Rust"]
+tags: ["Tauri", "Whisper", "Parakeet", "本地AI", "Rust"]
 ---
 
 # Meetily 深度拆解：开源隐私优先的 AI 会议助手，本地 Whisper/Parakeet 实时转写 + 多模型总结

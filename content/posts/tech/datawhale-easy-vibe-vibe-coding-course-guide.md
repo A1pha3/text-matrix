@@ -6,7 +6,7 @@ description: "easy-vibe 是 DatawhaleChina 维护的 Vibe Coding 开源课程，
 summary: "这篇文章基于 easy-vibe 的 README、中文 README 和 llms.txt，重新梳理这套课程的 3 + 1 学习结构、适用人群、代表内容、OpenClaw 与 llms.txt 的位置，以及它为什么比普通的 AI 编程入门教程更完整。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Vibe Coding", "Datawhale", "AI Agent", "OpenClaw", "Claude Code", "教程指南"]
+tags: ["Vibe Coding", "Datawhale", "AI Agent", "OpenClaw", "Claude Code"]
 ---
 
 <!-- markdownlint-disable-file MD003 MD041 -->

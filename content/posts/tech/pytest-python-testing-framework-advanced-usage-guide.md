@@ -5,7 +5,7 @@ slug: "pytest-python-testing-framework-advanced-usage-guide"
 description: "pytest 是 13.9k stars 的 Python 测试框架事实标准。从 assert 反射讲起，系统拆解 fixture、parametrize、conftest、插件生态等机制与反模式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["pytest", "Python", "测试框架", "单元测试", "Fixture"]
+tags: ["Python", "测试框架"]
 ---
 
 # pytest：Python 测试框架的事实标准，从 assert 反射到 fixture 体系

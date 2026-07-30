@@ -5,7 +5,7 @@ slug: "bytedance-deer-flow-long-horizon-superagent-guide"
 description: "DeerFlow 2.0 是字节跳动开源的长时超级智能体运行时，以 LangGraph 为底座，通过主代理+子代理委派、渐进式技能、沙箱隔离与长期记忆承接分钟到小时级任务，解析其架构与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "DeerFlow", "LangGraph", "字节跳动", "多智能体"]
+tags: ["AI Agent", "LangGraph", "字节跳动", "多智能体"]
 ---
 
 DeerFlow 2.0 真正解决的问题，不是「让单个 agent 推理得更好」，而是把「几分钟到几小时」的多步长任务改造为可观测、可中断、可恢复的执行系统。它不是把 prompt 写得更好，而是给一个会计划、会委派、会用工具、会记笔记、能在容器里动文件改代码的 agent 配齐基础设施，让它能像一名远程工程师那样长时间在线工作。

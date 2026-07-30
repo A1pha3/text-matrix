@@ -5,7 +5,7 @@ date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["nuxt", "vue", "ssr", "nitro", "fullstack-framework"]
+tags: []
 description: "Nuxt 是 Vue 生态的全栈框架。本文拆解 Nuxt 的文件路由约定、Nitro 引擎、SSR/SSG/ISR 渲染模式选择、与 Next.js 的对比以及为什么 60K+ stars 但社区仍分裂。"
 ---
 

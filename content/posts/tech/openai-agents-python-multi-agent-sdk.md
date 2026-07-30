@@ -5,7 +5,7 @@ slug: "openai-agents-python-multi-agent-sdk"
 description: "21,475 Stars的OpenAI官方多智能体SDK。支持OpenAI Responses/Chats API及100+第三方LLM，提供Agent/SandboxAgent/Tool/Guardrail/Handoff/Human-in-the-loop等完整生态，Python 3.10+可用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenAI", "多智能体", "Agent", "SDK", "Python", "工作流", "Guardrails", "MCP"]
+tags: ["OpenAI", "多智能体", "AI Agent", "Python", "工作流", "MCP"]
 ---
 
 # OpenAI Agents SDK：官方多智能体工作流框架

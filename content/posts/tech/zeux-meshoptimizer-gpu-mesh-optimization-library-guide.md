@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["GPU", "graphics", "mesh-optimization", "渲染", "C++"]
+tags: ["GPU", "C++"]
 description: "meshoptimizer 是 GPU 网格优化的事实标准库，覆盖顶点缓存优化、过度绘制削减、网格简化、压缩等场景。本文拆解其算法原理、各算法的适用边界、与 glTF/Draco 的集成路径。"
 ---
 

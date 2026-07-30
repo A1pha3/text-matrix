@@ -5,7 +5,7 @@ slug: "longlive-nvfp4-long-video-generation-infrastructure"
 description: "LongLive 2.0 是 NVlabs 开源的长视频生成基础设施，支持 NVFP4（W4A4）量化推理、序列并行训练和异步解码，在消费级 GPU 上实现 45.7 FPS 实时生成长视频，已被 ICLR 2026 接收。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Python", "深度学习", "视频生成", "GPU推理", "ICLR2026", "NVIDIA", "量化"]
+tags: ["Python", "深度学习", "视频生成", "NVIDIA", "量化"]
 ---
 
 🦞 每日10:00自动更新

@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-news-2026-06-10
 description: "2026年6月10日 AI 副业早报：过去 24h 内小红书 RED Skill 正式内测、原力灵机并购 Atomix（年营收近 10 亿）、百曜科技 AI 虚拟细胞获国家队领投、GitHub 联创 Scott Chacon 用 Agent Swarm 几个月重写 Git、YC P26 Transload 单站可回收 5 万美元/月、Nextie 4B 端侧认知模型、Hacker News Grit 与 Transload、毫秒智控线控底盘天使+轮、V2EX Meows #5 独立开发副业连载等共 10 条。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "RED-Skill", "具身智能", "认知模型", "端侧AI", "独立开发", "YC", "融资", "Agent"]
+tags: ["AI副业", "具身智能", "端侧AI", "独立开发", "YC", "融资", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

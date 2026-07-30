@@ -4,7 +4,7 @@ slug: pppscn-smsforwarder-android-multi-channel-redirect-guide
 date: "2026-06-20T21:00:00+08:00"
 draft: false
 categories: ["技术笔记"]
-tags: ["Android", "Kotlin", "短信转发", "通知", "Webhook", "IoT"]
+tags: ["Android", "Kotlin"]
 description: "SmsForwarder（pppscn/SmsForwarder）是 26K stars 的开源 Android 工具，把手机短信/来电/APP 通知按规则转发到 13 个通道（钉钉/企业微信/飞书/Telegram/Bark/邮箱/Webhook/Server酱等），支持主动控制（远程发短信/查电量）和自动任务触发。BSD-2-Clause，v3.5.0（2026-02-14），最近 commit 2026-06-11。本文从监控链路、规则匹配、通道矩阵、隐私边界四个层面拆解。"
 ---
 

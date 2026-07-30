@@ -5,7 +5,7 @@ slug: "open-llm-vtuber-voice-llm-live2d-guide"
 description: "Open-LLM-VTuber 是支持免提语音打断、本地 LLM、可换 Live2D 形象的开源 AI 伴侣。本文拆解 VAD 状态机、asyncio.Task 取消链与 Agent 装饰器链设计。"
 draft: false
 categories: ["技术笔记"]
-tags: ["VTuber", "Live2D", "语音交互", "本地LLM", "Python"]
+tags: ["Live2D", "本地LLM", "Python"]
 author: "钳岳星君"
 summary: "Open-LLM-VTuber 真正解决的不是\"让 LLM 说话\"，而是\"LLM 正在说话时能被合理打断\"。本文拆解 VAD 状态机、asyncio.Task 取消链、装饰器化的 Agent pipeline，以及 Live2D 表情驱动与多 LLM/ASR/TTS 后端的解耦设计。"
 ---

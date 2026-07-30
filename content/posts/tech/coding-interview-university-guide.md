@@ -5,7 +5,7 @@ slug: "coding-interview-university-guide"
 description: "Coding Interview University 是 GitHub 上最受欢迎的编程面试准备指南，340k Stars。涵盖数据结构、算法、系统设计、面试技巧等核心知识点，提供完整的学习路线图和资源推荐。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Coding Interview", "算法", "数据结构", "面试", "软件工程师", "学习路线图"]
+tags: ["算法", "面试"]
 ---
 
 ## 学习目标

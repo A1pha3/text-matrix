@@ -4,7 +4,7 @@ slug: trendradar-54k-stars-hot-news-assistant
 date: "2026-04-22T15:50:00+08:00"
 description: "全面解析TrendRadar：开源的AI热点新闻助手，54K Stars，30秒部署，支持AI智能筛选、MCP客户端、多渠道推送（飞书/钉钉/微信/Telegram），让AI Agent自动推送用户关心的新闻。"
 categories: ["技术笔记"]
-tags: ["TrendRadar", "AI新闻", "MCP", "飞书", "多渠道推送", "Python"]
+tags: ["MCP", "飞书", "Python"]
 ---
 
 # TrendRadar：54K Stars 的 AI 热点新闻助手，一键部署支持飞书/钉钉/微信多渠道推送

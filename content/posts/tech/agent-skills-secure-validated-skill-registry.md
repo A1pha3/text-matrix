@@ -4,7 +4,7 @@ date: "2026-05-18T19:56:00+08:00"
 slug: "agent-skills-secure-validated-skill-registry"
 description: "Tech Leads Club 开源的安全技能注册表，为 AI coding 智能体提供经过安全扫描、验证测试的标准化技能包，支持 Claude Code、Cursor、Windsurf 等主流平台。"
 categories: ["技术笔记"]
-tags: ["AI智能体", "技能注册表", "TypeScript", "Claude Code", "Cursor", "安全扫描", "MCP"]
+tags: ["AI智能体", "TypeScript", "Claude Code", "Cursor", "MCP"]
 ---
 
 # agent-skills：面向专业 AI 编码智能体的安全技能注册表

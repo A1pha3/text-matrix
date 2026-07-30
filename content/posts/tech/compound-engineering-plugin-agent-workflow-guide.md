@@ -5,7 +5,7 @@ slug: "compound-engineering-plugin-agent-workflow-system"
 description: "Compound Engineering 把工程工作变成复利：37 个 Skill、51 个 Agent，覆盖 brainstorm → plan → work → review → compound 完整闭环，支持 Claude Code、Cursor、Codex、Copilot、Qwen Code、OpenCode 等 10+ 平台。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "Cursor", "Codex", "工作流", "复合工程", "工程效能"]
+tags: ["AI Agent", "Claude Code", "Cursor", "Codex", "工作流"]
 ---
 
 Compound Engineering 的目标是让每次工程工作不仅产出一个功能，还产出了下一次更好工作的条件。

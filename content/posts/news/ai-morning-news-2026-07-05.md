@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-05
 description: "2026年7月5日 AI 新闻早报，覆盖过去 24 小时可灵 AI 对赌局细节、光象科技数亿元天使轮融资、GPT-5.6 三大模型全曝定档 7 月 7 日、Anthropic 全面封禁地下通道、Hinton 盛赞 Gemini 核心贡献者演讲、Claude Fable 5「TOO_DUMB_TO_NEED_FABLE」内心戏曝光、AI 眼镜芯片不可能三角、OpenAI Codex 推理 token 异常聚集、Claude Code session 泄漏、Better Models Worse Tools 以及微软 25 亿美元 Frontier Company 与 OASIS Ring 语音输入戒指走红。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "融资", "GPT-5.6", "Claude Fable", "AI 芯片", "AI Infra"]
+tags: ["融资", "GPT-5.6", "AI芯片", "AI Infra"]
 hiddenFromHomePage: true
 ---
 

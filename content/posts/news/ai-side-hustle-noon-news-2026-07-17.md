@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-17
 description: "2026年7月17日 AI 副业午报,精选过去 24 小时内 V2EX 招聘、独立开源项目、远程兼职与 AI 训练数据标注的真实机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "远程兼职"]
+tags: ["AI副业", "招聘", "V2EX"]
 hiddenFromHomePage: true
 ---
 

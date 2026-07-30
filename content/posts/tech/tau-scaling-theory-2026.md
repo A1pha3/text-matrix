@@ -5,7 +5,7 @@ slug: "tau-scaling-theory-2026"
 description: "从几何缩放的边际失效出发，系统解读华为 Tingbo He 提出的 τ 缩放理论：它不是简单的 3D 封装口号，而是试图用时间常数 τ 重新统一器件、布线、封装与系统的优化目标。"
 draft: false
 categories: ["技术笔记"]
-tags: ["半导体", "摩尔定律", "先进封装", "华为", "光互连"]
+tags: ["半导体"]
 toc: true
 ---
 

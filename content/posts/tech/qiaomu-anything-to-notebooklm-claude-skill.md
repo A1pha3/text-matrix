@@ -5,7 +5,7 @@ slug: "qiaomu-anything-to-notebooklm-claude-skill"
 description: "Qiaomu（巧木）是一个 Claude Code Skill，支持 15+ 种内容源（微信公众号、Twitter、YouTube、PDF、付费文章等）一键转为 NotebookLM 可处理的格式，再生成播客、PPT、思维导图或 Quiz 等多种输出。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "Claude Code", "NotebookLM", "Python", "AI工具", "内容处理"]
+tags: ["Claude", "Claude Code", "NotebookLM", "Python", "AI工具"]
 ---
 
 # Qiaomu 巧木：Anything to NotebookLM，多源内容一键转播客/PPT/思维导图

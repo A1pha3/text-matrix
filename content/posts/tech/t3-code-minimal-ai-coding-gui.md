@@ -5,7 +5,7 @@ slug: "t3-code-minimal-ai-coding-gui"
 description: "T3 Code是pingdotgg出品的极简AI编程Web GUI，让用户通过图形界面使用Codex和Claude进行编程。支持npx直接运行和桌面安装，提供可视化编码体验。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI编程", "Codex", "Claude", "GUI", "Web界面", "编程工具"]
+tags: ["AI编程", "Codex", "Claude", "GUI"]
 ---
 
 # T3 Code：9K Stars 的极简 AI 编程 GUI——支持 Codex 和 Claude 的 Web 界面

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-02
 description: "2026年7月2日 AI 新闻早报，覆盖过去 24 小时内 Physical AI 融资、自变量 200 亿具身大脑、Etched 流片、英伟达开源 ASPIRE 机器人技能库、Loop 世界模型与智谱市值争议。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "具身智能", "融资", "世界模型", "英伟达"]
+tags: ["具身智能", "融资", "世界模型", "英伟达"]
 hiddenFromHomePage: true
 ---
 

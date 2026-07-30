@@ -7,7 +7,7 @@ aliases:
 description: "NVIDIA Cosmos 是 NVIDIA 推出的 8.8K stars 开源世界基础模型平台，Cosmos 3 用统一 MoT 架构联合做图像/视频/音频/动作生成与推理，覆盖机器人、自动驾驶、智慧城市等 Physical AI 场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["NVIDIA", "世界模型", "Physical AI", "VLM", "机器人", "Cosmos"]
+tags: ["NVIDIA", "世界模型", "Physical AI", "VLM", "机器人"]
 ---
 
 # NVIDIA Cosmos 3 实战指南：把世界模型、机器人策略和自动驾驶拉到同一根 Transformer 线上

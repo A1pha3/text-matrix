@@ -5,7 +5,7 @@ slug: "neovim-vim-fork-guide"
 aliases:
   - /posts/tech/neovim-vim-fork-guide/
 categories: ["技术笔记"]
-tags: ["Neovim", "Vim", "文本编辑器", "Lua", "LSP", "插件开发"]
+tags: ["LSP"]
 description: "Neovim 是从 Vim 分叉的现代化文本编辑器，专注于可扩展性和可用性。支持任意语言 API、异步 Job、嵌入式终端，提供现代化的插件架构和 Lua 配置。"
 ---
 

@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-04
 description: "2026年5月4日经济财经早报，汇总过去24小时内美股、宏观经济、关税摩擦与下周重磅事件日程。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "宏观经济", "关税", "美联储", "黄金"]
+tags: ["美股", "宏观经济", "美联储", "黄金"]
 hiddenFromHomePage: true
 ---
 

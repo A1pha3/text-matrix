@@ -4,7 +4,7 @@ date: 2026-07-17T02:57:12+08:00
 lastmod: 2026-07-17T02:57:12+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "MCP", "AI Agent", "开源模板", "Node.js CLI", "Skills"]
+tags: ["Claude Code", "MCP", "AI Agent", "Skills"]
 description: "Claude Code Templates 是 davila7 维护的开源 Claude Code 组件集合（agents / commands / hooks / MCPs / settings / skills），29.5k stars，配套 npm CLI + Astro 仪表盘 + Cloudflare Workers 后端。本文拆解它的三件套架构、组件分类、6 条 CLI 子命令、以及 aitmpl.com 仪表盘与 components.json 索引。"
 weight: 1
 slug: "davila7-claude-code-templates-collection-guide"

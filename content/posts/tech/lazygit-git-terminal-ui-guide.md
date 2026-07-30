@@ -5,7 +5,7 @@ slug: lazygit-git-terminal-ui-guide
 description: "LazyGit 是一个简单的 Git 终端 UI，使用 Go 语言编写。它旨在通过可视化界面让 Git 版本控制更加用户友好，支持交互式 Rebase、冲突解决等功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Git", "Go", "终端", "TUI", "版本控制"]
+tags: ["Git", "Go", "终端", "TUI"]
 ---
 
 # LazyGit：76K Stars·Go 语言编写·Git 终端 UI·可视化版本控制·交互式 Rebase·冲突解决

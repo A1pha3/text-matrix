@@ -7,7 +7,7 @@ aliases:
 description: "基于《全球通用智能体竞争报告》原文，系统拆解 Manus、Genspark、Flowith、Operator 与 Devin 的分层关系，解释通用 Agent 为何进入以任务交付、工作台入口和治理能力为核心的新竞争阶段。"
 draft: false
 categories: ["技术笔记"]
-tags: ["通用智能体", "Manus", "Genspark", "Flowith", "Devin"]
+tags: ["Manus"]
 ---
 
 > **难度**：⭐⭐⭐⭐ | **类型**：深度分析 | **预计阅读时间**：26 分钟

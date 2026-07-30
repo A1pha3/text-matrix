@@ -5,7 +5,7 @@ slug: voxcpm2-tokenizer-free-tts-guide
 description: "VoxCPM2是OpenBMB推出的2B参数Tokenizer-Free TTS模型，支持30语言语音合成、Voice Design和Voice Cloning。采用LocDiT扩散架构，在保持高质量输出的同时简化了传统TTS的复杂tokenizer设计。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TTS", "语音合成", "多语言", "VoxCPM", "OpenBMB", "扩散模型"]
+tags: ["TTS", "语音合成", "多语言", "扩散模型"]
 ---
 
 # VoxCPM2：Tokenizer-Free TTS 多语言语音合成指南 ⭐⭐⭐

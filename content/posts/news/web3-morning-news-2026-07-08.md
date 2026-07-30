@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-07-08
 description: "2026年7月8日 Web3 早报：Strategy 卖 $216M BTC 触发 Lyn Alden BTC 不需要救世主论、BNB Chain 建 agentic trading L1 目标 2027 mainnet、Bitmine 加仓 $70M+ ETH 推 ETH 反弹、Coinbase 获 UK FCA 牌照、Vanguard 招 Head of Digital Assets、Tether 投 Mercado Bitcoin $20M、SEC Crypto Safe Harbor 这个月公开征询、Strike 推 volatility-proof BTC 借贷、Wintermute 称 BTC 反弹只是 relief rally。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "Strategy", "BNBChain", "Bitmine", "Coinbase", "Vanguard", "Tether", "MercadoBitcoin", "SEC", "Strike", "Wintermute", "TeraWulf", "Anthropic", "StrategySells"]
+tags: ["Web3", "BTC", "ETH", "Strategy", "Coinbase", "Tether", "SEC", "Anthropic"]
 hiddenFromHomePage: true
 ---
 

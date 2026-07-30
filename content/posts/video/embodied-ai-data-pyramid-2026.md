@@ -6,7 +6,7 @@ description: "硅谷 101《揭秘数采工厂：稀缺的机器人数据，到�
 
 draft: false
 categories: ["视频精读"]
-tags: ["具身智能", "机器人数据", "智元", "AgiBot World", "觅蜂", "Sharpa", "数据金字塔", "硅谷101", "VLA", "触觉 AI"]
+tags: ["具身智能", "硅谷101", "VLA"]
 hiddenFromHomePage: false
 ---
 

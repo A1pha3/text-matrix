@@ -5,7 +5,7 @@ slug: "harry0703-moneyprinterturbo-short-video-automation-guide-2026"
 description: "harry0703/MoneyPrinterTurbo 把 LLM 文案、TTS 配音、素材检索、字幕生成、MoviePy 视频合成 5 段流水线装进一个 CLI / WebUI / FastAPI 三端同源的工厂。给定主题就能吐出可发布的短视频。本文拆开 5 个 stage 的边界、可插拔点，以及单条全自动 vs 系列化的适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MoneyPrinterTurbo", "AI 短视频", "MoviePy", "FastAPI", "Streamlit", "TTS", "Edge TTS", "Whisper"]
+tags: ["FastAPI", "TTS", "Whisper"]
 ---
 
 # MoneyPrinterTurbo：把 5 段流水线装成一条命令的 AI 短视频工厂

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-16
 description: "2026年7月16日 AI 新闻早报，精选过去 24 小时内 DeepSeek 估值 4800 亿火速融资、面壁智能端侧大模型登陆三星、Meta 被曝用 AI 筛人、字节回应物理 AI 传闻、阿里 Qwen-Audio-3.0-Realtime 等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "融资", "具身智能", "端侧AI"]
+tags: ["LLM", "融资", "具身智能", "端侧AI"]
 hiddenFromHomePage: true
 ---
 

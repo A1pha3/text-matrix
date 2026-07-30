@@ -9,7 +9,7 @@ aliases:
 description: "The Agency是一个包含147个专业AI Agent的开源项目，覆盖工程、设计、销售、营销等12个领域。每个Agent拥有独特人格、专业流程和可衡量产出，可接入Claude Code、Cursor、Windsurf等主流AI编程工具。本文详解其架构设计、Agent分类、集成方式与实际应用场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "Cursor", "多工具集成", "AI团队", "OpenClaw"]
+tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 ---
 
 # The Agency：147个专业 AI Agent 组成的虚拟团队

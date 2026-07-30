@@ -5,7 +5,7 @@ slug: "cli-anything-universal-cli-ai-agent"
 description: "CLI-Anything是香港大学DDS实验室推出的开源项目，通过为各类软件生成标准化CLI接口，让AI代理（Agent）能够以结构化方式控制任意软件，目前支持18+应用并提供可扩展的CLI-Hub生态。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "CLI", "Hong Kong University", "开源工具", "工作流自动化"]
+tags: ["AI Agent", "CLI", "开源工具", "工作流自动化"]
 ---
 
 ## 先给判断

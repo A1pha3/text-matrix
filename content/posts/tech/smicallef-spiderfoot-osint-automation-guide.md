@@ -3,7 +3,7 @@ title: "SpiderFoot 架构分析：200+ 模块的 OSINT 自动化引擎与 YAML �
 date: "2026-06-22T15:06:00+08:00"
 slug: "smicallef-spiderfoot-osint-automation-guide"
 categories: ["技术笔记"]
-tags: ["OSINT", "安全工具", "威胁情报", "架构分析", "Python"]
+tags: ["OSINT", "安全工具", "架构分析", "Python"]
 description: "SpiderFoot 是一个开源 OSINT 自动化工具,核心架构是 200+ 模块通过 publisher/subscriber 模型解耦的爬虫网络,加上 v4.0 引入的 YAML 关联规则引擎把碎片组合成画像。"
 ---
 

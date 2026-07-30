@@ -5,7 +5,7 @@ lastmod: 2026-06-30T16:16:00+08:00
 draft: false
 slug: "quesma-qwen-3-6-blog-deep-dive"
 categories: ["技术翻译", "AI 模型评测", "本地部署"]
-tags: ["qwen-3-6", "27b", "llama.cpp", "opencode", "本地大模型", "量化", "moe", "混合专家", "deepseek", "gemma"]
+tags: ["llama.cpp", "OpenCode", "本地大模型", "量化", "MoE", "DeepSeek", "Gemma"]
 description: 把 Quesma 创始人 Piotr Migdał 关于 Qwen 3.6 27B 的实测长文完整译为中文——一篇 226 行、覆盖"为什么 27B 才是甜蜜点 / 实测案例 / 硬件消耗 / llama.cpp 部署 / 量化方案选择 / 与 frontier 模型对比 / 本地化的未来"七大维度的本地大模型工程化入门指南。
 ---
 

@@ -5,7 +5,7 @@ slug: "acton-ton-smart-contract-toolchain-guide"
 description: "TON 生态的工具链由 Blueprint 脚手架、FunC/Tolk 编译器、@ton/sandbox 本地沙盒、@ton/test-utils 测试断言库等独立工具组成，没有单一官方工具链。本文以一个 Jetton 代币合约为例，串联编写、编译、测试、调试、部署、验证七个阶段，给出工具选型、采用顺序和常见错误排查。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TON", "智能合约", "TypeScript", "区块链开发", "FunC"]
+tags: ["智能合约", "TypeScript"]
 ---
 
 # TON 智能合约开发工具链完全指南：从 FunC 编写到链上验证

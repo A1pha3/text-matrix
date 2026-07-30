@@ -5,7 +5,7 @@ slug: "google-agent-skills-guide"
 description: "深入解析 Google Agent Skills 框架，涵盖标准化 SKILL.md 格式、渐进式加载机制、参考文档系统与跨平台兼容架构，适用于 AI Agent 开发者和云架构师。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "Google Cloud", "GKE", "BigQuery", "Gemini", "标准化"]
+tags: ["AI Agent", "Google Cloud", "Gemini"]
 ---
 
 # Google Agent Skills 全解析：AI Agent 的标准化技能框架

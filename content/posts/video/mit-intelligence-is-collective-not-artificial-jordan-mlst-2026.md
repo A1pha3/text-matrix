@@ -5,7 +5,7 @@ slug: mit-intelligence-is-collective-not-artificial-jordan-mlst-2026
 description: "Michael I. Jordan(UC Berkeley / Inria)2026 年 5 月在 Machine Learning Street Talk 接受 77 分钟访谈,主题是 Intelligence is collective, not artificial。本文不是逐字翻译,而是基于访谈与他的论文《A Collectivist, Economic Perspective on AI》(arXiv:2507.06268)提炼的 15 个核心论点 + 系统地图 + 任务流案例 + 采用顺序。Jordan 的判断是:把智能视为'市场'而不是'大脑',才是 AI 走向成熟工程学科的必经之路。"
 draft: false
 categories: ["视频精读"]
-tags: ["Michael I. Jordan", "collective intelligence", "machine learning", "economics", "AGI critique", "data market", "AlphaFold", "e-values", "prediction-powered inference", "MLST", "MIT"]
+tags: []
 ---
 
 ## 学习目标

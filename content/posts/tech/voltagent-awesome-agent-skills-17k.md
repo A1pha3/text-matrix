@@ -5,7 +5,7 @@ date: "2026-04-22T16:10:00+08:00"
 summary: "基于 README 与 officialskills.sh 的交叉核实，本文拆解 VoltAgent/awesome-agent-skills 到底收录了什么、1100+ 与 581 的差别、兼容各类 AI 编码助手到底意味着什么，以及装 skill 前应该重点看哪些边界。"
 description: "深度解读 VoltAgent/awesome-agent-skills：它不是统一安装器，而是一个收录官方团队技能与社区技能的索引仓库。本文覆盖数量口径、兼容路径、选型方法、风险边界与落地流程，帮助开发者更准确地使用 Agent Skills 生态。"
 categories: ["技术笔记"]
-tags: ["VoltAgent", "Agent Skills", "Claude Code", "Codex", "GitHub Copilot", "AI Agent", "开源"]
+tags: ["Agent Skills", "Claude Code", "Codex", "GitHub Copilot", "AI Agent", "开源"]
 ---
 
 > **定位**：这篇文章把 VoltAgent/awesome-agent-skills 拆成工程师真正关心的几个问题：它到底是不是“全官方”、为什么会同时出现 1100+ 和 581 两个数量、兼容意味着什么，以及装 skill 前到底该看什么。

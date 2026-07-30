@@ -6,7 +6,7 @@ draft: false
 slug: "santifer-career-ops-ai-job-search-automation-guide"
 description: "Career-Ops 把任意 AI 编程 CLI 改造为求职指挥中心，包含 15 个 skill mode、Go TUI 仪表盘、Playwright PDF 与 ATS 渠道扫描，作者用其评估 740+ 岗位后落地 Head of Applied AI。"
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "Playwright", "求职自动化", "Go TUI"]
+tags: ["AI Agent", "Claude Code", "Playwright"]
 author: text-matrix
 ---
 

@@ -5,7 +5,7 @@ slug: ai-avatar-system-realtime-talking-avatar
 description: "ai-avatar-system 是 218 stars 的开源 AI Avatar 平台，串 Whisper+Claude+XTTS+ MuseTalk 成实时唇形同步数字人。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Avatar", "MuseTalk", "XTTS", "Whisper", "WebSocket"]
+tags: ["Whisper", "WebSocket"]
 ---
 
 # AvatarAI：把照片+5 秒音频变成实时对话数字人，底层那套流式架构才是护城河

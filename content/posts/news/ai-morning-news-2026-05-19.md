@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-19
 description: "2026年5月19日 AI 新闻早报，汇总过去 24 小时内模型发布、企业财报、行业格局与融资动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "百度", "OpenAI", "Anthropic", "微软", "行业格局"]
+tags: ["百度", "OpenAI", "Anthropic", "微软"]
 hiddenFromHomePage: true
 ---
 

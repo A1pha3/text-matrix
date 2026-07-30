@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-15
 description: "2026年6月15日 AI 副业早报：过去 24h 内 V2EX RightCapital 招资深后端 30-60K、副业讨论与背单词 AI 工具；Show HN Velyr AI 转化率 agent、Morning Stack AI 求职、Isitslop 写作检测；开源 AI Workdeck 法律工作台、AI 抠图、skills++ 技能管理。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "HackerNews", "ShowHN", "远程工作", "独立开发", "AI Agent", "AI招聘", "独立工程师"]
+tags: ["AI副业", "V2EX", "HackerNews", "远程工作", "独立开发", "AI Agent", "AI招聘"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "bytebytego-system-design-101-guide"
 description: "ByteByteGo 系统设计图解的开源索引:15 个主题、约 400 篇 guide 链接到 bytebytego.com,价值在覆盖广度不在代码。"
 draft: false
 categories: ["技术笔记"]
-tags: ["system-design", "ByteByteGo", "分布式系统", "面试", "技术写作"]
+tags: ["面试", "技术写作"]
 ---
 
 # ByteByteGo system-design-101 资源地图

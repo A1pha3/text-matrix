@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-23
 description: "2026年7月23日 AI 新闻早报，精选过去 24 小时内值得关注的模型发布、产业动态、投融资与 AI 教育变革。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "模型发布", "AI教育", "产业动态"]
+tags: ["模型发布", "AI教育"]
 hiddenFromHomePage: true
 ---
 

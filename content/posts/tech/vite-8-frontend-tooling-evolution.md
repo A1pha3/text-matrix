@@ -7,7 +7,7 @@ aliases:
 description: "Vite 8 在 2026 年初发布，8.0.x 系列持续迭代到 8.0.16。本文梳理 Vite 8 的关键变化、与 Rollup 4 的解耦策略、以及对前端工程化（特别是 AI 辅助开发）的影响。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Vite", "前端构建", "Rollup", "JavaScript", "TypeScript"]
+tags: ["JavaScript", "TypeScript"]
 ---
 
 # Vite 8：前端构建工具之王 2026 年的演化方向

@@ -7,7 +7,7 @@ description: "基于罗福莉 3.5 小时访谈、36kr 整理稿与相关公开�
 
 draft: false
 categories: ["视频精读"]
-tags: ["AI", "大模型", "Post-train", "Agent", "OpenClaw", "罗福莉", "小米", "DeepSeek", "RL Scaling"]
+tags: ["LLM", "AI Agent", "OpenClaw", "DeepSeek"]
 hiddenFromHomePage: false
 ---
 

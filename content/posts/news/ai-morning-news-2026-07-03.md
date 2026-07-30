@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-03
 description: "2026年7月3日 AI 新闻早报，覆盖过去 24 小时宇树科技 IPO 注册获批、美团 LongCat-2.0 万亿模型、Together AI 8亿美元融资、OpenAI 推理成本减半、Anthropic 名单里的中国模型、天工AI ARR 突破8亿美元与 Manufact MCP Cloud 上线。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "具身智能", "融资", "大模型", "AI Infra"]
+tags: ["具身智能", "融资", "LLM", "AI Infra"]
 hiddenFromHomePage: true
 ---
 

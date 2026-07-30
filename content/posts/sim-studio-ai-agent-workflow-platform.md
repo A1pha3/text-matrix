@@ -5,7 +5,7 @@ slug: "sim-studio-ai-agent-workflow-platform"
 description: "从 Turborepo Monorepo 架构、Block 三层扩展体系、执行引擎的序列化/执行期分离到实时协作的边界隔离，逐层拆解 Sim Studio 的设计决策——为什么它比 LangGraph 更适合团队协作，以及它的架构给了多用户 Agent 平台什么启示。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "工作流编排", "ReactFlow", "Next.js", "Bun", "Monorepo", "开源项目深拆"]
+tags: ["AI Agent", "工作流编排", "Next.js", "Bun", "Monorepo", "开源项目深拆"]
 toc: true
 ---
 

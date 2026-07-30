@@ -5,7 +5,7 @@ slug: promptfoo-llm-evaluation-testing-guide
 aliases:
   - /posts/tech/promptfoo-llm-evaluation-testing-guide/
 categories: ["技术笔记"]
-tags: ["Promptfoo", "LLM评测", "Red Teaming", "Prompt工程", "CI/CD", "RAG"]
+tags: ["Prompt Engineering", "CI/CD", "RAG"]
 description: "Promptfoo 是开源 LLM 评测与 Red Teaming 工具，支持 60+ 模型统一评测、断言系统、Red Teaming 对抗测试、CI/CD 集成。本文基于官方文档，覆盖真实配置格式、断言类型、扩展机制与实战场景。"
 ---
 

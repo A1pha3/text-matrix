@@ -7,7 +7,7 @@ aliases:
 description: "Open Notebook 是 lfnovo 出品的 24K+ stars 开源 NotebookLM 替代，18+ 模型提供方（OpenAI/Anthropic/Ollama）+ 1-4 说话人播客 + 全 REST API + Docker 一键部署，研究数据完全私有。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Open Notebook", "NotebookLM", "RAG", "开源", "播客生成", "本地优先"]
+tags: ["NotebookLM", "RAG", "开源", "本地优先"]
 ---
 
 # Open Notebook 实战指南：开源版 NotebookLM，18+ 模型 + 1-4 说话人播客的本地知识工作台

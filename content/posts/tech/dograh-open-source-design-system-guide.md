@@ -5,7 +5,7 @@ slug: "dograh-open-source-voice-agent-platform"
 description: "深度解析开源语音 Agent 平台 Dograh 的核心架构与工作原理，涵盖 Workflow 图引擎、实时通话流水线、节点类型与边界触发器，并提供一键本地部署与自定义扩展的完整指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Voice AI", "语音助手", "开源", "FastAPI", "WebRTC"]
+tags: ["AI Agent", "开源", "FastAPI"]
 ---
 
 > **目标读者**：想搭建电话 AI 助手或外呼机器人的开发者，或对语音 AI 平台架构感兴趣的技术人员

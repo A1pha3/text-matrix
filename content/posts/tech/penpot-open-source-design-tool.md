@@ -5,7 +5,7 @@ slug: "penpot-open-source-design-tool"
 description: "Penpot 是首个开源的设计与代码协作平台，基于 Clojure 构建，支持 SVG/CSS/HTML/JSON 等开放标准。本文深入分析其设计理念、核心技术架构、2.0 版本新特性，以及自托管与二次开发实践。"
 draft: false
 categories: ["技术笔记"]
-tags: ["设计工具", "开源", "Clojure", "SVG", "设计系统"]
+tags: ["设计工具", "开源", "设计系统"]
 ---
 
 ## 本文覆盖范围

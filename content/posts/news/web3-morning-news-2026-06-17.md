@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-06-17
 description: "2026年6月17日 Web3 早报,汇总过去 24 小时内主流币价格、Coinbase 全金融平台化、Ethereum Glamsterdam 进入最终开发、BlackRock 比特币收益基金等关键动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "Coinbase", "BlackRock"]
+tags: ["Web3", "BTC", "ETH", "Coinbase"]
 hiddenFromHomePage: true
 ---
 

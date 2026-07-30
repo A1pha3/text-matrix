@@ -5,7 +5,7 @@ slug: "opendataloader-pdf-scalable-pdf-processing-guide"
 description: "OpenDataLoader-PDF是专为构建大规模PDF数据集设计的开源数据处理基础设施，支持任意规模处理、10倍性能提升、隐私优先本地处理。本文深入解析其技术架构、多后端设计、表格检测与异步处理能力。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenDataLoader", "PDF处理", "数据基础设施", "LLM训练数据", "表格检测", "异步处理", "开源"]
+tags: ["开源"]
 ---
 
 # OpenDataLoader-PDF：面向大规模 PDF 数据集构建的开源数据处理基础设施

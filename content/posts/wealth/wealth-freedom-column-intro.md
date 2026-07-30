@@ -7,7 +7,7 @@ description: "说明本专栏的覆盖范围、写作原则、阅读建议与免
 draft: false
 aliases: ["/posts/thoughts/wealth-freedom-column-intro/"]
 categories: ["财富自由"]
-tags: ["财富自由", "专栏说明"]
+tags: ["财富自由"]
 hiddenFromHomePage: true
 ---
 

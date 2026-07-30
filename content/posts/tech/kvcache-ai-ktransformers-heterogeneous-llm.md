@@ -2,7 +2,7 @@
 title: "KTransformers：让 CPU-GPU 异构推理跑超大 MoE 的实战框架"
 date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
-tags: ["llm-inference", "moe", "cpu-gpu", "fine-tuning", "ktransformers"]
+tags: ["MoE"]
 description: "KTransformers 是一个 CPU-GPU 异构 LLM 推理 / 微调框架，18K stars，支持 DeepSeek-V3/V4、Kimi-K2.5、GLM-5.2、MiniMax-M3 等主流 MoE 模型在 24GB 单卡上跑，集成 LLaMA-Factory 做 SFT，是当下最活跃的国产 LLM 优化框架之一。"
 ---
 

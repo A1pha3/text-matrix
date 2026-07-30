@@ -5,7 +5,7 @@ slug: "newton-gpu-accelerated-physics-simulation-guide"
 description: "Newton是基于NVIDIA Warp的GPU加速物理仿真引擎，由Disney Research、Google DeepMind和NVIDIA联合开发，支持机器人仿真、柔体物理、软体物理等多物理场仿真，广泛应用于机器人学和仿真研究。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GPU加速", "物理仿真", "NVIDIA Warp", "机器人仿真", "Python", "CUDA", "Isaac Sim"]
+tags: ["GPU加速", "Python", "CUDA"]
 ---
 
 # Newton：基于 NVIDIA Warp 的 GPU 加速物理仿真引擎

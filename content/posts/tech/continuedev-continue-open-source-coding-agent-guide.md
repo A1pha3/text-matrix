@@ -5,7 +5,7 @@ slug: "continuedev-continue-open-source-coding-agent-guide"
 description: "continuedev/continue 是早期最具影响力的开源 AI 编程助手之一，已发布 Final 2.0.0 并归档为只读。本文解读其三端形态与仓库结构。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Coding Agent", "TypeScript", "VS Code", "CLI", "开源归档"]
+tags: ["Coding Agent", "TypeScript", "VS Code", "CLI"]
 ---
 
 # Continue 终版回顾：把 33k Stars 的开源 Coding Agent 留在 2.0.0 的现场

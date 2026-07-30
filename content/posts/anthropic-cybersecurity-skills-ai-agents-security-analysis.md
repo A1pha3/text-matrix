@@ -5,7 +5,7 @@ slug: "anthropic-cybersecurity-skills-ai-agents-security-analysis"
 description: "从 Skill 的渐进式加载机制、五框架映射的设计意图、26 个安全领域的覆盖策略到 agentskills.io 标准的实操约束，逐层拆解这个 6.9K Stars 的网络安全技能库——它为什么比散落的 playbook 更适合 AI，以及如何在 Claude Code 中落地一次真实的 DFIR 分析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Python", "AI Agent", "网络安全", "MITRE ATT&CK", "自动化", "DFIR", "开源项目深拆"]
+tags: ["Python", "AI Agent", "网络安全", "MITRE ATT&CK", "自动化", "开源项目深拆"]
 toc: true
 ---
 

@@ -5,7 +5,7 @@ slug: "hermes-agent-self-improving-ai-agent"
 description: "从 FTS5 会话检索 + LLM 摘要的跨 session recall、Honcho dialectic 用户建模、agentskills.io 开放标准的技能自创与自改进机制到六种终端后端（local/Docker/SSH/Singularity/Modal/Daytona）的 serverless 持久化策略，逐层拆解 Hermes Agent 的设计取舍——为什么它把「学习循环」做成一等公民。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Nous Research", "学习循环", "技能系统", "MCP", "开源项目深拆", "Hermes"]
+tags: ["AI Agent", "Nous Research", "MCP", "开源项目深拆", "Hermes"]
 toc: true
 ---
 

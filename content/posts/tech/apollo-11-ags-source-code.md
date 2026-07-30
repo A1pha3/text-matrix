@@ -5,7 +5,7 @@ slug: "apollo-11-ags-source-code"
 description: "Apollo-11是66K Stars的GitHub明星项目，保存了1969年登月的阿波罗制导计算机(AGC)源码。详解Comanche055(指令舱)和Luminary099(月球舱)的汇编代码，Margaret Hamilton等程序员的传奇故事。"
 draft: false
 categories: ["技术笔记"]
-tags: ["NASA", "阿波罗", "汇编", "AGC", "制导计算机", "历史", "编程遗产"]
+tags: []
 ---
 
 # Apollo-11：阿波罗 11 号制导计算机源码探秘——66K Stars 的人类登月编程遗产

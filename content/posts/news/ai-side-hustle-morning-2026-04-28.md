@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-04-28
 description: "2026年4月28日AI副业早报，汇总过去24小时内的AI招聘、远程工作、职业转型与赚钱机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "远程工作", "职业转型"]
+tags: ["AI副业", "招聘", "远程工作"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "mlx-vlm-apple-silicon-vlm-inference-guide"
 description: "介绍 MLX-VLM 技术框架，涵盖架构解析、支持模型、视觉特征缓存、TurboQuant KV Cache、LoRA微调等核心功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["MLX", "Apple Silicon", "VLM", "视觉语言模型", "本地AI"]
+tags: ["MLX", "Apple Silicon", "VLM", "本地AI"]
 ---
 
 # MLX-VLM：Apple Silicon 上的视觉语言模型推理与微调框架

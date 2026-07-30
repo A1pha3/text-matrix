@@ -5,7 +5,7 @@ slug: "web3-morning-news-2026-04-18"
 description: "2026年4月18日Web3加密货币早报：BTC $77,374（+3.56%）、ETH $2,422（+3.87%）、SOL $89.06、俄罗斯将加密服务定罪、美国参议员质问Binance伊朗制裁、Polymarket预测霍尔木兹海峡开放概率。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "加密货币", "俄罗斯", "Binance", "Polymarket"]
+tags: ["Web3", "BTC", "ETH", "加密货币", "Binance", "Polymarket"]
 hiddenFromHomePage: true
 ---
 

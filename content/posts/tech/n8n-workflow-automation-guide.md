@@ -5,7 +5,7 @@ slug: "n8n-workflow-automation-guide"
 description: "n8n 的真正差异化不是 400+ 集成，而是代码可扩展、自托管、AI LangChain 原生三者结合。本文从系统地图、任务流案例、与 Zapier/Make 的工程取舍、自托管部署、企业级功能到采用顺序，给出一份工程视角的落地指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["n8n", "工作流自动化", "AI Agent", "LangChain", "低代码", "开源"]
+tags: ["n8n", "工作流自动化", "AI Agent", "LangChain", "开源"]
 ---
 
 ## 目录

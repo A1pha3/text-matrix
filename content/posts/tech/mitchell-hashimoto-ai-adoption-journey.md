@@ -5,7 +5,7 @@ slug: "mitchell-hashimoto-ai-adoption-journey"
 description: "资深工程师 Mitchell Hashimoto 分享了他从 AI 怀疑论者到‘绝对回不去‘的完整路径：放弃聊天界面、强制用 Agent 复现工作、尾盘 Agent 模式、委托高确定性任务、工程化 Harness，以及始终保持一个 Agent 在跑。本文是关于 AI 编程采纳最真实、最有操作性的一手经验。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "Claude Code", "效率", "开发者工作流"]
+tags: ["AI Agent", "Claude Code"]
 ---
 
 > **原文**：[My AI Adoption Journey](https://mitchellh.com/writing/my-ai-adoption-journey) — Mitchell Hashimoto，2026 年 2 月 5 日  

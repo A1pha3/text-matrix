@@ -5,7 +5,7 @@ slug: hindsight-agent-memory-system-guide
 description: "Hindsight 是一个 Agent 记忆系统，具有最准确的记忆功能，在 SOTA 性能测试中表现优异，支持多种 AI 模型集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "记忆系统", "机器学习", "向量数据库"]
+tags: ["AI Agent", "记忆系统", "机器学习", "向量数据库"]
 ---
 
 # Hindsight：让 Agent 从经验中学习，而不只是记住对话

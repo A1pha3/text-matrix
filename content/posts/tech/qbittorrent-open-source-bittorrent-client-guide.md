@@ -5,7 +5,7 @@ slug: "qbittorrent-open-source-bittorrent-client-guide"
 description: "qBittorrent 是一款基于 C++/Qt 和 libtorrent 的开源 BitTorrent 客户端，37K Stars，支持全平台，无广告，提供搜索、RSS 订阅、带宽调度、IP 过滤等企业级功能。本文覆盖编译安装、核心功能解析、qbittorrent-nox 无图形界面用法及高级配置。"
 draft: false
 categories: ["技术笔记"]
-tags: ["BitTorrent", "P2P", "C++", "Qt", "开源", "qBittorrent", "libtorrent"]
+tags: ["P2P", "C++", "开源"]
 ---
 
 # qBittorrent：开源全平台 BitTorrent 客户端完全指南

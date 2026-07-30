@@ -5,7 +5,7 @@ slug: tiktok-downloader-douk-guide
 description: "TikTokDownloader 是一个抖音和 TikTok 数据采集与下载工具，支持批量下载、Web API 和终端交互功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TikTok", "抖音", "下载", "爬虫", "Python"]
+tags: ["抖音", "爬虫", "Python"]
 ---
 
 # TikTokDownloader：14K Stars·抖音/TikTok 数据采集与下载工具

@@ -5,7 +5,7 @@ slug: "simple-ml-code-machine-learning-tutorial"
 description: "深入解读 Simple ML Code 项目，一站式掌握线性回归、逻辑回归、决策树、SVM、K-means、朴素贝叶斯六大机器学习算法，配有完整代码、可视化结果和实战练习。"
 draft: false
 categories: ["技术笔记"]
-tags: ["机器学习", "Python", "scikit-learn", "数据科学", "算法"]
+tags: ["机器学习", "Python", "算法"]
 ---
 
 # Simple ML Code：机器学习入门实战教程

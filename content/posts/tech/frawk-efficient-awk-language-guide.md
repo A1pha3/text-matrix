@@ -5,7 +5,7 @@ slug: "frawk-efficient-awk-language"
 description: "深度解析ezrosent/frawk：一个用Rust实现的高性能AWK方言，支持CSV/TSV原生解析、类型推导、JIT编译与SIMD并行处理，benchmark击败gawk/mawk达20倍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "AWK", "编译器", "CSV解析", "SIMD", "JIT", "性能优化"]
+tags: ["Rust", "编译器", "SIMD", "性能优化"]
 hiddenFromHomePage: true
 ---
 

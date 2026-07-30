@@ -5,7 +5,7 @@ slug: web3-evening-news-2026-07-15
 description: "7月15日晚间Web3晚报：日本FIEA修订法案将加密资产纳入金融工具监管并引入内幕交易规则；韩国出台National Asset Basic Act草案把数字资产纳入国资管理框架；Stripe联合Advent以530亿美元、28%溢价报价PayPal；Bitmine单季ETH质押收入4570万美元占比98%；Coinbase Rob Witoff透露95%以上代码已由AI辅助完成；剑桥研究将ETH列入PoS能耗第二低；BTC突破64600美元创近期高点，ETF短期净流出4.25亿美元。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "比特币", "以太坊", "监管", "稳定币", "支付", "机构", "ETF"]
+tags: ["Web3", "比特币", "以太坊", "监管", "稳定币", "机构", "ETF"]
 hiddenFromHomePage: true
 ---
 

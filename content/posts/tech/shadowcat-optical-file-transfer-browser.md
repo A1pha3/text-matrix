@@ -5,7 +5,7 @@ slug: "shadowcat-optical-file-transfer-browser"
 description: "ShadowCat 是一个单文件 HTML 页面，通过 QR 码实现两台设备间的纯离线文件传输。协议将文件切分为 header + chunk 数据块，接收方实时追踪缺失块并重组文件。本文详解其协议设计、分块策略及适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["QR码", "浏览器", "离线传输", "光学传输", "协议设计"]
+tags: ["浏览器"]
 ---
 
 # ShadowCat：用 QR 码在浏览器间离线传输文件

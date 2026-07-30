@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-04-12
 description: "AI副业早报：V2EX热帖讨论AI对软件工程的冲击，65人参与辩论；蓝领阶层对AI愤怒；新加坡AI岗位年薪150万；外包市场需求旺盛。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "求职", "外包", "AI就业"]
+tags: ["AI副业", "V2EX", "求职", "外包"]
 hiddenFromHomePage: true
 ---
 

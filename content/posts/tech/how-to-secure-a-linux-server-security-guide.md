@@ -5,7 +5,7 @@ slug: "how-to-secure-a-linux-server-security-guide"
 description: "How-To-Secure-A-Linux-Server是由imthenachoman维护的开源安全指南，星数27,245，涵盖SSH加固、sudo/su限制、防火墙配置（UFW/iptables）、入侵检测（Fail2Ban/CrowdSec/OSSEC）、文件完整性监控、病毒扫描等Linux服务器安全全栈知识，配有Ansible自动化脚本。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Linux", "服务器安全", "SSH", "防火墙", "Fail2Ban", "安全加固"]
+tags: ["Linux", "SSH"]
 ---
 
 # How-To-Secure-A-Linux-Server：持续演进的中文版 Linux 服务器安全加固指南

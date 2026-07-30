@@ -5,7 +5,7 @@ slug: unsloth-ai-training-inference-platform-guide
 description: "Unsloth 是一个本地 AI 训练与推理平台，可实现 2 倍速度和 70% 显存节省，支持多种开源模型。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "训练", "推理", "GPU", "深度学习"]
+tags: ["GPU", "深度学习"]
 ---
 
 # Unsloth：本地 AI 训练与推理平台实操指南

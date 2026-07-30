@@ -2,7 +2,7 @@
 title: "listmonk：自托管邮件通讯平台部署与运营指南"
 date: 2026-05-17
 draft: false
-tags: ["邮件", "自托管", "Newsletter", "邮件列表", "SMTP", "Go"]
+tags: ["自托管", "Go"]
 categories: ["技术指南"]
 description: "全面介绍 listmonk——一款用 Go 编写的开源自托管邮件 Newsletter 和邮件列表管理平台，涵盖安装配置、SMTP 对接、运营管理和 API 开发。"
 slug: listmonk-self-hosted-email-newsletter-platform-guide

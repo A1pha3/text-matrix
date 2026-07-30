@@ -5,7 +5,7 @@ slug: "finceptterminal-modern-finance-terminal"
 description: "从 C++20/Qt6 原生桌面架构、内嵌 Python 分析引擎、37 个 AI Agent 的分组策略到 QuantLib 18 模块的 GUI 封装，逐层拆解 FinceptTerminal 的混合架构设计——它为什么比 Electron 方案更适合金融场景，以及这种架构的代价是什么。"
 draft: false
 categories: ["技术笔记"]
-tags: ["C++", "Qt6", "Python", "量化交易", "AI Agent", "金融", "开源", "开源项目深拆"]
+tags: ["C++", "Python", "量化交易", "AI Agent", "金融", "开源", "开源项目深拆"]
 toc: true
 ---
 

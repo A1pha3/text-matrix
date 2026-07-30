@@ -8,7 +8,7 @@ aliases:
 description: "一页看完 Minimalist Entrepreneur Skills 专题的阅读顺序：先理解方法论，再看真实案例，最后直接复制 Prompt 模板开始执行。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Skill", "专题导读", "创业", "Minimalist Entrepreneur"]
+tags: ["Claude Code", "Skill", "创业", "Minimalist Entrepreneur"]
 ---
 
 # Minimalist Entrepreneur Skills 专题导读：原理、案例与 Prompt 模板一站看完

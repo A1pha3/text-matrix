@@ -3,7 +3,7 @@ title: "AI新闻早报 | 2026年4月29日"
 date: "2026-04-29T08:00:00+08:00"
 lastmod: 2026-04-29T08:00:00+08:00
 draft: false
-tags: ["AI新闻早报", "人工智能", "大模型", "OpenAI", "Anthropic"]
+tags: ["AI新闻早报", "LLM", "OpenAI", "Anthropic"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
 description: "每日AI行业新闻速递，涵盖OpenAI、Anthropic、大模型进展、AI投融资等热点。"

@@ -5,7 +5,7 @@ slug: "omlx-apple-silicon-llm-inference-server"
 description: "深度解析jundot/omlx：Apple Silicon原生LLM推理服务器，支持连续批处理和热冷KV缓存，从菜单栏一键管理，支持Claude Code优化。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "推理服务器", "Apple Silicon", "macOS", "MLX", "本地部署", "性能优化"]
+tags: ["LLM", "Apple Silicon", "macOS", "MLX", "本地部署", "性能优化"]
 hiddenFromHomePage: true
 ---
 

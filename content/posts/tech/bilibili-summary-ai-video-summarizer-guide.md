@@ -4,7 +4,7 @@ slug: "bilibili-summary-ai-video-summarizer-guide"
 date: "2026-04-08T13:10:00+08:00"
 lastmod: 2026-04-08T13:10:00+08:00
 categories: ["技术笔记"]
-tags: ["Python", "B站", "AI摘要", "FastAPI", "Bilibili", "知识管理"]
+tags: ["Python", "B站", "FastAPI", "知识管理"]
 description: "BiliSummary 是一个桌面优先的 B站视频 AI 摘要工具，支持视频字幕提取、AI 摘要生成、收藏夹批量管理、统一阅读体验。"
 draft: false
 ---

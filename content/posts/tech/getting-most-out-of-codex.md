@@ -4,7 +4,7 @@ date: "2026-05-24T10:30:00+08:00"
 slug: "getting-most-out-of-codex"
 description: "基于 jxnlco 长帖与 OpenAI 官方文档，整理 Codex 的持久线程、Steering、自动化、shared memory 与 side panel，重点看它怎样把长任务留在同一条工作线上。"
 summary: "沿着一次真实任务，整理 Codex 怎样保留上下文、在执行中纠偏、继续推进长任务，并把代码和网页结果放回同一条线程里审查。"
-tags: ["OpenAI", "Codex", "AI Coding Agent", "持久线程", "自动化"]
+tags: ["OpenAI", "Codex", "AI Coding Agent", "自动化"]
 categories: ["技术笔记"]
 draft: false
 ---

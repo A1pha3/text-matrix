@@ -5,7 +5,7 @@ slug: "local-deep-research-local-ai-research-assistant-guide"
 description: "local-deep-research（LDR）是一个本地优先的 AI 科研助手，支持任意 LLM 和 10+ 搜索引擎，在 SimpleQA 基准上达到约 95% 准确率。本文详解其架构、部署方式、支持模型、搜索能力与隐私安全特性。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "本地部署", "科研工具", "Ollama", "RAG", "搜索增强", "隐私"]
+tags: ["本地部署", "Ollama", "RAG", "隐私"]
 ---
 
 ## 学习目标

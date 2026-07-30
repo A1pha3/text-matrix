@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-07-22
 description: "2026年7月22日经济财经早报，汇总过去24小时内全球市场、地缘政治、大宗商品与政策的重要变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "美股", "黄金", "日元"]
+tags: ["财经", "美股", "黄金"]
 hiddenFromHomePage: true
 ---
 

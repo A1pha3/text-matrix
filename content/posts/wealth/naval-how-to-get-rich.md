@@ -6,7 +6,7 @@ description: "基于 Naval Ravikant 的推文风暴与长篇访谈，系统梳�
 draft: false
 aliases: ["/posts/thoughts/naval-how-to-get-rich/"]
 categories: ["财富自由"]
-tags: ["财富自由", "财富", "创业", "杠杆", "Naval Ravikant", "长期主义"]
+tags: ["财富自由", "创业"]
 ---
 
 > Naval 的「如何致富」不教人一夜暴富，它试图回答一个更硬的问题：怎样把财富创造从一次偶然事件，变成一套长期可重复的方法。

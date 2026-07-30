@@ -9,7 +9,7 @@ description: "基于近 4 小时访谈与视频字幕，文章梳理姚顺宇对
 summary: "这篇文章围绕姚顺宇在访谈里反复强调的几件事展开：AI 为什么越来越像系统工程，研究里怎样区分 bug、错误假设和被做漂亮的指标，个人英雄主义为何在模型训练里退潮，聊天机器人为什么未必是终局，以及 Anthropic 与 Google DeepMind 的组织差异怎样传导到模型训练。"
 draft: false
 categories: ["视频精读"]
-tags: ["AI", "大模型训练", "Anthropic", "Google DeepMind", "Claude", "Gemini", "模型Scaling", "系统工程", "技术预测", "姚顺宇"]
+tags: ["Anthropic", "Claude", "Gemini"]
 hiddenFromHomePage: false
 ---
 

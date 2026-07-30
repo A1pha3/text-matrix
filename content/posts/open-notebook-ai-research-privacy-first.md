@@ -5,7 +5,7 @@ slug: "open-notebook-ai-research-privacy-first"
 description: "Open Notebook 不是简单复刻 Notebook LM。它用 Esperanto 接多模型 provider，用 SurrealDB 同时承接图关系、全文搜索和向量检索，把播客生成做成可配置的 1-4 speaker 管线，重点在隐私、本地化和模型可替换性。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI 研究工具", "Notebook LM", "多模态", "开源项目深拆", "SurrealDB", "播客生成", "LangChain", "Esperanto"]
+tags: ["NotebookLM", "多模态", "开源项目深拆", "LangChain"]
 toc: true
 ---
 

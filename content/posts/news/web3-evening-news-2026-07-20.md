@@ -4,17 +4,7 @@ date: 2026-07-20
 categories:
   - news
   - web3
-tags:
-  - Bitcoin
-  - Ethereum
-  - Solana
-  - ETF
-  - CBDC
-  - Grayscale
-  - 俄罗斯
-  - 韩国
-  - 监管
-  - 市场
+tags: ["Bitcoin", "Ethereum", "Solana", "ETF", "监管", "市场"]
 ---
 
 # Web3晚报 2026-07-20

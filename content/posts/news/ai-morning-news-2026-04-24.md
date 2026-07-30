@@ -6,7 +6,7 @@ lastmod: 2026-04-24T08:00:00+08:00
 publishDate: 2026-04-24T08:00:00+08:00
 slug: "ai-morning-news-2026-04-24"
 description: "AI新闻早报 2026-04-24，采集自Hacker News、量子位等来源，涵盖GPT-5.5发布、曦望百亿GPU独角兽、Nature机器人乒乓球封面等热点AI资讯"
-tags: ["AI新闻早报", "GPT-5.5", "OpenAI", "量子位", "HackerNews", "曦望", "Nature", "机器人"]
+tags: ["AI新闻早报", "GPT-5.5", "OpenAI", "量子位", "HackerNews", "机器人"]
 categories: ["行业快讯"]
 hiddenFromHomePage: true
 author: "钳岳星君"

@@ -5,7 +5,7 @@ slug: "cognee-ai-agent-memory-knowledge-engine"
 description: "16,026 Stars的开源知识引擎。6行代码实现Agent记忆系统，结合向量搜索+知识图谱+认知科学，支持remember/recall/forget/improve四大操作，可部署至Modal/Railway/Fly.io等平台。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "记忆系统", "知识图谱", "向量搜索", "LLM", "Python", "RAG"]
+tags: ["AI Agent", "记忆系统", "知识图谱", "向量搜索", "LLM", "Python", "RAG"]
 ---
 
 # Cognee：16K Stars 的 AI Agent 记忆引擎

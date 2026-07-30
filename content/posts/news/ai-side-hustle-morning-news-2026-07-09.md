@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-news-2026-07-09
 description: "2026年7月9日 AI 副业早报：消费 VC 招实习、日本 IT 26 卒纳新、拼多多 2027 校招内推、AI 中转站挣小白的 token 钱、Claude Code 依赖担忧、阿里全面禁用 Claude、coding-tools-conductor 启动器、SightRead 阅读插件、molvqingtai 灵魂文档、Trae 自动安装推广标识事件、AI 服务器运维路线讨论、免费 LLM 轮换白嫖攻略。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "招聘", "ClaudeCode", "AI中转站", "独立开发", "AI Coding", "AI Ops"]
+tags: ["AI副业", "V2EX", "招聘", "Claude Code", "独立开发", "AI 编程"]
 hiddenFromHomePage: true
 ---
 

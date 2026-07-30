@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-01
 description: "2026年7月1日 AI 新闻早报，精选过去 24 小时内模型与产品动态：DeepSeek V4 破天荒涨价、Meta 内部禁用 Claude Code/Codex、智谱唐杰为 GLM-5.3 全球征集意见。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "DeepSeek", "Meta", "智谱", "具身智能"]
+tags: ["DeepSeek", "Meta", "智谱", "具身智能"]
 hiddenFromHomePage: true
 ---
 

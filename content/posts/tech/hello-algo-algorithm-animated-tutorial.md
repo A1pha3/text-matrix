@@ -5,7 +5,7 @@ slug: "hello-algo-algorithm-animated-tutorial"
 description: "Hello 算法（krahets/hello-algo）是一款动画图解、一键运行的数据结构与算法入门教程，126,758+ Stars。支持简繁中、英、日、俄 5 种语言文档，13+ 种编程语言代码实现。本文解析其章节体系、多语言代码组织、动画图解工作机制与适用人群。"
 draft: false
 categories: ["技术笔记"]
-tags: ["算法", "数据结构", "开源教程", "Python", "Java"]
+tags: ["算法", "Python", "Java"]
 ---
 
 # Hello 算法：12 万 Star 的动画图解数据结构与算法教程

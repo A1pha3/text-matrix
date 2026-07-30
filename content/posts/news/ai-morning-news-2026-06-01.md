@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-01
 description: "2026年6月1日 AI 新闻早报，汇总过去 24 小时内模型发布、企业融资与行业动态的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "具身智能", "融资", "行业动态"]
+tags: ["LLM", "具身智能", "融资", "行业动态"]
 hiddenFromHomePage: true
 ---
 

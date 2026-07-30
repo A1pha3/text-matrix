@@ -5,7 +5,7 @@ slug: "tech-leads-club-release-bot-github-automation-guide"
 description: "全面解析 tech-leads-club-release-bot GitHub App 的架构设计、安装配置及在 agent-skills 项目中的实战应用"
 draft: false
 categories: ["技术笔记"]
-tags: ["GitHub App", "CI/CD", "自动化发布", "Nx", "semantic-release", "GitHub Actions", "TypeScript"]
+tags: ["CI/CD", "GitHub Actions", "TypeScript"]
 ---
 
 # tech-leads-club-release-bot：Tech Leads Club 的自动化发布机器人深度解读

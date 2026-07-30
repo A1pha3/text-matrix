@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-06-15
 description: "2026年6月15日经济财经早报，汇总美伊和平协议正式达成、霍尔木兹海峡周五重新开放、超级央行周沃什首秀、欧央行近三年首次加息25bp、黄金ETF缩水近370亿、碳酸锂期货重回17万元等过去24小时关键市场变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "早报", "美伊协议", "超级央行周", "碳酸锂"]
+tags: ["财经", "早报", "美伊协议"]
 hiddenFromHomePage: true
 ---
 

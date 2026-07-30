@@ -5,7 +5,7 @@ slug: "financial-morning-news-2026-04-05"
 description: "汇总4月5日中东战争第35天、原油价格飙升至141美元、美联储按兵不动、信贷投资者避险等全球经济金融重大动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["经济", "美联储", "原油", "中东战争", "SpaceX", "信贷市场"]
+tags: ["经济", "美联储", "原油", "中东战争", "SpaceX"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-11
 description: "2026年7月11日 AI 新闻早报：苹果正式起诉 OpenAI 商业机密盗窃、OpenAI GPT-5.6 同步更新一轮关键能力、蚂蚁灵波再放大招-LingBot-VA 2.0 全球首个具身原生 VA 模型、百度搭子日均提问数暴增 20 倍、许锦波 MoleculeOS 开放、智能驾驶老兵切入 AI 睡眠赛道。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "OpenAI", "GPT-5.6", "具身智能", "Anthropic", "百度", "苹果"]
+tags: ["OpenAI", "GPT-5.6", "具身智能", "Anthropic", "百度", "苹果"]
 hiddenFromHomePage: true
 ---
 

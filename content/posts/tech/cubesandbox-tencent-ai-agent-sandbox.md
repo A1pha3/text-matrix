@@ -5,7 +5,7 @@ slug: "cubesandbox-tencent-ai-agent-sandbox"
 description: "CubeSandbox 是腾讯开源的基于 RustVMM 与 KVM 的 AI Agent 安全沙箱服务，冷启动低于 60ms、内存开销低于 5MB、内核级硬件隔离，并兼容 E2B SDK。本文从架构、原理、使用、扩展四个维度对其作全方位深入剖析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["沙箱", "AI-Agent", "KVM", "Rust", "eBPF", "腾讯云"]
+tags: ["沙箱", "AI Agent", "Rust"]
 ---
 
 # CubeSandbox：腾讯开源的极速、高并发、安全沙箱服务——专为 AI Agent 打造

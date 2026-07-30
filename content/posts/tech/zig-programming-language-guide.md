@@ -5,7 +5,7 @@ slug: zig-programming-language-guide
 description: "Zig 是 C 的现代替代而非 Rust 的竞争者：用显式分配器、comptime 和无隐藏控制流换取系统编程的可读性与可控性。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Zig", "编程语言", "系统编程", "内存管理", "性能"]
+tags: ["Zig", "编程语言"]
 ---
 
 # Zig：把 C 重写一遍，而不是把 Rust 再造一遍

@@ -5,7 +5,7 @@ slug: "alibaba-opensandbox-ai-sandbox-platform"
 description: "深度解读阿里巴巴开源的 OpenSandbox：10.0k Stars 的通用 AI 应用沙箱平台，支持多语言 SDK、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、AI 代码执行、强化学习训练等场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenSandbox", "沙箱", "AI平台", "Docker", "Kubernetes"]
+tags: ["沙箱", "Docker", "Kubernetes"]
 ---
 
 > **目标读者**：构建 AI 应用（编程 Agent、GUI Agent、代码执行、RL 训练）的开发者

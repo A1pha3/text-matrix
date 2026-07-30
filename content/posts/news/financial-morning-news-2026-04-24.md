@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-04-24
 description: "2026年4月24日经济财经早报，汇总过去24小时内全球市场、地缘局势、宏观政策与商品期货的重要变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "早报", "美股", "美联储", "原油", "地缘政治", "科技"]
+tags: ["财经", "早报", "美股", "美联储", "原油", "地缘政治"]
 hiddenFromHomePage: true
 ---
 

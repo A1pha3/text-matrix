@@ -8,7 +8,7 @@ aliases:
 description: "基于公开官方资料梳理 Claude 桌面应用中的 Chat、Cowork 和 Code 三类工作方式，帮助你理解各自定位、能力边界与适用场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "桌面应用", "开发工具", "AI工具", "效率指南"]
+tags: ["Claude", "桌面应用", "开发工具", "AI工具"]
 ---
 
 # Claude 101 第一课：Claude 桌面应用——Chat、Cowork、Code 三类工作方式

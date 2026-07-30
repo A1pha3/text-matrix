@@ -2,7 +2,7 @@
 title: "从 J-space 到全局工作区：Anthropic 如何观察 Claude 的隐藏推理"
 slug: "anthropic-jspace-global-workspace-in-claude"
 date: 2026-07-06
-tags: ["Anthropic", "Mechanistic Interpretability", "J-space", "Global Workspace"]
+tags: ["Anthropic"]
 categories: ["技术深潜"]
 
 description: "系统拆解 Anthropic 的 Jacobian Lens、J-space 与全局工作区研究，解释 Claude 的隐藏推理、结构证据、安全审计价值，以及这套方法仍然看不到什么。"

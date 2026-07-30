@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-14
 description: "2026年6月14日 AI 新闻早报，严格采集 06-13 08:00 至 06-14 08:00 窗口，覆盖「Anthropic Claude 5 上线 72 小时遭美国政府禁令全球下架、智谱 GLM-5.2 趁势宣布完全开源、月之暗面们估值集体重写、阿里通义首席科学家周靖人履新 6 天被曝离职、智源 2026 大会发布悟界·Physis 等通用世界基座模型、HuggingFace CEO 力荐 1500 美元训出的 1B HRM 模型、TensorZero 融资 730 万美元当晚 archived 仓库、新通教育 x 36 氪《AI 时代留学就业白皮书》、Jiuwen Symbiosis 把 Agent 接入 physical AI」等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Anthropic", "Claude5", "Fable5", "Mythos", "智谱", "GLM5", "开源", "HuggingFace", "HRM", "Bengio", "Kimi", "月之暗面", "估值", "ARR", "通义", "周靖人", "阿里", "TokenFoundry", "智源", "Physis", "世界模型", "具身智能", "Symbiosis", "Jiuwen", "OpenJiuwen", "TensorZero", "新通教育", "留学", "白皮书", "36kr", "量子位", "HackerNews"]
+tags: ["Anthropic", "Fable5", "Mythos", "智谱", "开源", "Hugging Face", "Kimi", "阿里", "世界模型", "具身智能", "36kr", "量子位", "HackerNews"]
 hiddenFromHomePage: true
 ---
 

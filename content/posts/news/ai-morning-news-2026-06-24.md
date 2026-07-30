@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-24
 description: "2026年6月24日 AI 新闻早报，精选过去 24 小时内字节豆包 2.1 成本暴砍 80%、OpenAI/Anthropic/Google 围绕 Context 全面开战、微信原生 AI 助手「小微」一级入口上线、Momenta 港交所通过聆讯冲「物理 AI 第一股」、OpenRouter 中国大模型周调用量连续八周领跑、英伟达 Halos for Robotics 抢占具身版安卓、智元/银河/傅利叶等 27 家公司卷走 489 亿具身融资等行业关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "具身智能", "融资", "Agent", "AI硬件"]
+tags: ["LLM", "具身智能", "融资", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

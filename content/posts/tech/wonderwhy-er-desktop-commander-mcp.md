@@ -2,7 +2,7 @@
 title: "wonderwhy-er/DesktopCommanderMCP：把 Claude 接到本地终端与文件系统"
 date: 2026-07-10T02:58:08+08:00
 slug: "wonderwhy-er-desktop-commander-mcp"
-tags: ["MCP", "Desktop Commander", "Claude", "AI Agent", "TypeScript", "Terminal"]
+tags: ["MCP", "Claude", "AI Agent", "TypeScript", "Terminal"]
 categories: ["技术笔记"]
 description: "拆解 wonderwhy-er/DesktopCommanderMCP 的核心机制——一款让 Claude / GPT / Gemini 通过 Model Context Protocol 接管本地终端、文件搜索、diff 编辑、Excel 操作的 MCP 服务器。"
 ---

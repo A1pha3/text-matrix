@@ -5,7 +5,7 @@ date: 2026-06-29T21:02:57+08:00
 lastmod: 2026-06-29T21:02:57+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["GitHub", "AI-Agent", "Claude-Code", "Cursor", "Prompt-Engineering", "开源"]
+tags: ["GitHub", "AI Agent", "Claude Code", "Cursor", "Prompt Engineering", "开源"]
 description: "msitarzewski/agency-agents 是一个把 AI 角色定义做成可分发资产的仓库，它不训练模型，而是把每个 Agent 写成独立 Markdown 文件，配上 install.sh / convert.sh 即可一行命令装进 Claude Code、Cursor、Codex 等十余种工具。"
 ---
 

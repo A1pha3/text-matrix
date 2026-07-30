@@ -5,7 +5,7 @@ slug: hackingtool-all-in-one-hacking-suite-guide
 description: "HackingTool 是一个全功能黑客工具箱，包含 9 大模块，涵盖社会工程学、渗透测试、SQL 注入、无线攻击、钓鱼等多个领域，是安全研究人员的必备工具。"
 draft: false
 categories: ["技术笔记"]
-tags: ["安全", "渗透测试", "黑客工具", "网络安全", "Python"]
+tags: ["安全", "渗透测试", "网络安全", "Python"]
 ---
 
 # HackingTool：56K Stars 全功能黑客工具箱

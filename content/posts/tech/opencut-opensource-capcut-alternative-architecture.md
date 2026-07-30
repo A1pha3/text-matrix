@@ -4,7 +4,7 @@ slug: opencut-opensource-capcut-alternative-architecture
 date: 2026-06-23T15:04:20+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["视频编辑器", "CapCut", "TanStack Start", "Elysia", "Cloudflare", "开源项目", "WebAssembly", "Rust"]
+tags: ["视频编辑器", "Cloudflare", "开源项目", "Rust"]
 description: "OpenCut 是定位为「开源 CapCut 替代品」的跨端视频编辑器，2025-06 立项一年内冲到 58,966 Star / 6,420 Fork。正在从 Web 单体重写为 TanStack Start + Elysia + Moon + Rust Core 的插件优先架构，预告 Editor API、MCP server、headless 自动化与桌面/移动端。本文从立项节奏、技术栈、rewrite 蓝图、当前可用状态四个层面拆解。"
 ---
 

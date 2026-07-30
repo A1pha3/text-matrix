@@ -5,7 +5,7 @@ slug: "supermemory-ai-memory-context-engine-guide"
 description: "Supermemory是面向AI的记忆与上下文引擎，在LongMemEval、LoCoMo、ConvoMem三大AI记忆基准上均排名第一。本文详细解析其核心记忆结构、用户画像系统、混合搜索、Connectors生态、多模态提取能力，以及面向AI产品开发者的单API集成方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI记忆", "Supermemory", "RAG", "MCP", "上下文管理"]
+tags: ["AI记忆", "RAG", "MCP"]
 ---
 
 # Supermemory：AI 时代的记忆与上下文引擎完全指南

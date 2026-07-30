@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-03
 description: "2026年5月3日 AI 新闻早报，汇总过去 24 小时内模型发布、企业动态、行业政策与开源工具的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "奥斯卡", "Meta", "VSCode", "开源", "语言模型"]
+tags: ["Meta", "VS Code", "开源"]
 hiddenFromHomePage: true
 ---
 

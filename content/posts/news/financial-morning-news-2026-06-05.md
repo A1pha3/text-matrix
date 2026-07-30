@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-06-05
 description: "2026年6月5日经济财经早报：道指涨1.73%创历史新高、博通业绩指引不及预期暴跌12.6%、日本实际薪资连续四月上涨强化日银加息、SpaceX拟IPO募资750亿美元破纪录、WTI原油跌3.10%、Anthropic估值9650亿美元超OpenAI、高盛SpaceX到2028年资本开支3600亿。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "美股", "A股", "日银加息", "原油", "SpaceX", "Anthropic"]
+tags: ["财经", "美股", "A股", "原油", "SpaceX", "Anthropic"]
 hiddenFromHomePage: true
 ---
 

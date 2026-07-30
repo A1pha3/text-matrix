@@ -5,7 +5,7 @@ slug: "paper2code-ai-arxiv-paper-implementation"
 description: "解析PrathamLearnsToCode/paper2code：用AI Agent将任意arxiv论文转化为带引用标注的代码实现，每行代码都锚定论文段落和公式，未明确指定的超参数诚实标记为UNSPECIFIED。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "arxiv", "论文复现", "Claude Code", "机器学习", "代码生成", "技能"]
+tags: ["AI Agent", "Claude Code", "机器学习", "代码生成"]
 hiddenFromHomePage: true
 ---
 

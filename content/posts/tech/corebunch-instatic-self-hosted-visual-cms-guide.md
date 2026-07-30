@@ -4,7 +4,7 @@ slug: corebunch-instatic-self-hosted-visual-cms-guide
 date: 2026-07-01T15:03:41+08:00
 lastmod: 2026-07-01T15:03:41+08:00
 categories: ["技术笔记"]
-tags: ["self-hosted-cms", "bun", "visual-editor", "static-site", "core-framework", "single-binary-cms"]
+tags: ["Bun"]
 description: "CoreBunch/Instatic 把可视化编辑器、内容引擎、媒体、鉴权、表单、插件和发布器塞进一个 Bun 进程，输出干净的语义 HTML。本文拆解它的架构、Core Framework 设计系统、Railway 一键部署与适用边界。"
 ---
 

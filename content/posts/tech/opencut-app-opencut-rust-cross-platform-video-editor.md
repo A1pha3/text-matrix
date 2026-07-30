@@ -3,7 +3,7 @@ title: "OpenCut：用 Rust 重写的开源跨平台视频编辑器"
 date: 2026-07-24T03:02:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Video Editor", "Rust", "Cross-Platform", "Open Source", "MCP"]
+tags: ["Rust", "Open Source", "MCP"]
 description: "一个从零开始重写的开源视频编辑器，目标是用 Rust 核心统一覆盖 Web、桌面和移动端，并原生支持 AI agent 通过 MCP 协议接入。"
 ---
 

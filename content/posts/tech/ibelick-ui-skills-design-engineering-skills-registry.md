@@ -4,7 +4,7 @@ date: 2026-07-17T02:58:00+08:00
 lastmod: 2026-07-17T02:58:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Skills", "UI", "Design Engineering", "Astro"]
+tags: ["Claude Code", "Skills", "Astro"]
 description: "ibelick/ui-skills 是一个面向 Design Engineer 的 Claude Code skill 注册中心，4k+ stars，MIT 协议。它把分散在 antfu、emilkowalski、mattpocock、jakubkrehel、iart-ai 等数十位设计师/工程师的 UI 心法统一为可一键安装的 skill 包，并提供 CLI 让 agent 按 motion / accessibility / typography 维度自动路由。"
 weight: 1
 slug: "ibelick-ui-skills-design-engineering-skills-registry"

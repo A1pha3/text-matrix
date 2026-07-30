@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-12
 description: "2026年5月12日经济财经早报，汇总过去24小时内美股、A股、港股、大宗商品、外汇与政策的重要变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "A股", "港股", "大宗商品", "外汇"]
+tags: ["美股", "A股", "港股", "大宗商品"]
 hiddenFromHomePage: true
 ---
 

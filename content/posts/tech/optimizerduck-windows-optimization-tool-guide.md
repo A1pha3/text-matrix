@@ -5,7 +5,7 @@ slug: "optimizerduck-windows-optimization-tool-guide"
 description: "itsfatduck/optimizerDuck 是 3.5k Stars 的开源 Windows 优化工具，基于 WPF + .NET 10，内置 5 类 Revert Step 反悔机制，可一键还原所有修改。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Windows", "系统优化", "WPF", ".NET 10", "开源工具"]
+tags: ["Windows", "系统优化", "开源工具"]
 ---
 
 ## 学习目标

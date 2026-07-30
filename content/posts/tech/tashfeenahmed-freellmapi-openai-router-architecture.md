@@ -3,7 +3,7 @@ title: "FreeLLMAPI 深度拆解：把 16 个免费 LLM 厂商聚合成一个 Ope
 date: "2026-06-22T15:05:40+08:00"
 slug: "tashfeenahmed-freellmapi-openai-router-architecture"
 categories: ["技术笔记"]
-tags: ["LLM", "OpenAI 兼容", "API 路由", "架构分析", "TypeScript"]
+tags: ["LLM", "OpenAI兼容", "架构分析", "TypeScript"]
 description: "FreeLLMAPI 是一个本地自托管的 OpenAI 兼容代理,把 16 个 LLM 厂商的免费层聚合在 /v1/chat/completions 后面,核心难点在跨厂商的协议翻译、Per-key 限速追踪和中途切换的 Context Handoff。"
 ---
 

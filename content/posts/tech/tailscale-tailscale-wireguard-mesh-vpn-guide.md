@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["tailscale", "wireguard", "VPN", "mesh", "networking"]
+tags: ["WireGuard", "networking"]
 description: "Tailscale 是用 WireGuard 做传输层、加上 NAT 穿透 + 身份层（带外 control plane）做的 mesh VPN。它把传统 VPN 的配置复杂度降到最低，让个人开发者和小型团队 5 分钟跑起全球内网。本文拆解其架构、控制面/数据面分离、与传统 IPSec VPN/ZeroTier 的取舍。"
 ---
 

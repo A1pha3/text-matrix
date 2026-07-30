@@ -5,7 +5,7 @@ slug: "english-level-up-tips-ai-english-learning-guide"
 description: "byoungd 的离谱英语学习指南是一份 49.7k Stars 的 AI 驱动英语学习综合教程，覆盖听说读写训练回路、CEFR 等级体系，以及 2026 年版的 Gemini/ChatGPT/Claude 分工使用方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["英语学习", "AI学习", "Gemini", "ChatGPT", "Claude", "学习方法"]
+tags: ["Gemini", "ChatGPT", "Claude"]
 ---
 
 ## 学习目标

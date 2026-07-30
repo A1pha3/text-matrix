@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-03
 description: "2026年5月3日经济财经早报，汇总华尔街见闻、金十数据、新浪财经等来源的全球金融市场最新动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["宏观经济", "伯克希尔", "美联储", "伊朗", "制裁"]
+tags: ["宏观经济", "伯克希尔", "美联储", "伊朗"]
 hiddenFromHomePage: true
 ---
 

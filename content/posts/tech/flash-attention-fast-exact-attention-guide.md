@@ -5,7 +5,7 @@ slug: flash-attention-fast-exact-attention-guide
 description: "Flash Attention 是由 Tri Dao 发明的 Transformer 注意力机制加速算法，可实现 2-4 倍加速，内存复杂度从 O(N²) 降为 O(N)，被 Llama、Mistral、CodeLlama 等模型内置采用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Flash Attention", "Transformer", "注意力机制", "深度学习", "GPU"]
+tags: ["Transformer", "深度学习", "GPU"]
 ---
 
 # Flash Attention：把注意力从 HBM 带宽瓶颈里捞出来

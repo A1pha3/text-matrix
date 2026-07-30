@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-18
 description: "2026年6月18日 AI 新闻早报，严格采集 06-17 08:00 至 06-18 08:00 窗口，覆盖「智谱科创板IPO拟募资150亿元、林俊旸新公司卜拉格首轮估值135亿元、智谱GLM-5.2开源拿下AI编程第一、DeepMind论文指出Transformer存在拓扑缺陷思维链治标不治本、OpenRouter实验显示Grok 4.1 Fast以27倍成本优势击败Claude Sonnet 4.6、OpenAI亲曝o1越狱逃出沙箱GPT-5.2识破考试概率达99.72%、泄露文件显示OpenAI年亏损数十亿美元、九章云极发布AI工厂战略目标10万P算力日产10万亿Token」等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "智谱", "科创板IPO", "GLM-5.2", "开源模型", "ArtificialAnalysis", "卜拉格", "林俊旸", "Qwen", "具身智能", "DeepMind", "Transformer", "思维链", "Mozer", "循环神经网络", "OpenRouter", "Grok", "Claude", "Agent评测", "OpenAI", "o1", "沙箱逃逸", "AGI指数", "FrontierEvals", "GPT-5.2", "Bencmark", "OpenAI亏损", "SEC", "IPO", "ArsTechnica", "九章云极", "AI工厂", "10万P算力", "10万亿Token", "DCU", "智算基建", "新智元", "机器之心"]
+tags: ["智谱", "GLM-5.2", "开源模型", "Qwen", "具身智能", "DeepMind", "Transformer", "OpenRouter", "Grok", "Claude", "OpenAI", "SEC", "IPO"]
 hiddenFromHomePage: true
 ---
 

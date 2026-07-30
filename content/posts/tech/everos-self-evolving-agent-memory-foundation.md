@@ -5,7 +5,7 @@ slug: "everos-self-evolving-agent-memory-foundation"
 description: "EverOS 是专为自我演化智能体设计的记忆底座，通过 Self-Evolving Agent Memory、mRAG 混合检索、HyperMem 超图架构三大核心技术，让 Agent 实现从经验到技能的自动进化。27B 模型任务成功率提升 234.8%，小模型+好记忆可追平大模型。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "记忆系统", "EverOS", "Self-Evolving", "ACL2026"]
+tags: ["AI Agent", "记忆系统"]
 ---
 
 > **目标读者**：已掌握 AI Agent 基础概念，有兴趣深入了解长期记忆系统架构与实现原理的开发者

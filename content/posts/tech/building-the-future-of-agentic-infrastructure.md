@@ -5,7 +5,7 @@ lastmod: 2026-07-13T21:55:00+08:00
 slug: building-the-future-of-agentic-infrastructure
 description: "Anthropic 官方频道 7-11 发布的一段 30 分钟 keynote，把 agent 拆成 session / harness / sandbox 三个抽象层。把这 9 段章节标题与 Anthropic 工程博客 5 篇相关文章对照后，会发现这不是产品发布会，而是基础设施提案——他们想抢 agent OS 的生态位。"
 categories: ["技术文章", "视频精读", "AI基础设施"]
-tags: ["Anthropic", "Claude", "agent", "agentic-infrastructure", "Claude-Managed-Agents", "MCP", "multi-agent", "harness", "sandboxes"]
+tags: ["Anthropic", "Claude", "AI Agent", "MCP", "Multi-Agent", "Harness"]
 author: "text-matrix"
 ---
 

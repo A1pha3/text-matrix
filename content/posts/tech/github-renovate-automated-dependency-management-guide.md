@@ -5,7 +5,7 @@ draft: false
 slug: github-renovate-automated-dependency-management-guide
 categories: ["技术笔记"]
 author: "钳岳星君 🦞"
-tags: ["DevOps", "CI/CD", "依赖管理", "自动化", "Renovate"]
+tags: ["DevOps", "CI/CD", "依赖管理", "自动化"]
 keywords: ["Renovate", "依赖更新", "Dependabot对比", "自动化工具", "包管理"]
 description: "全面介绍 Renovate 自动化依赖更新工具，涵盖核心概念、配置选项、与 Dependabot 的对比、实践建议，以及 90+ 种语言支持。"
 toc: true

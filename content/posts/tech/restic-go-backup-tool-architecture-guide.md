@@ -5,7 +5,7 @@ slug: "restic-go-backup-tool-architecture-guide"
 description: "restic 是 Go 编写的开源备份工具，34.3K Stars、v0.19.0。拆解四层架构、CDC 去重、Pack 加密、快照树与多后端，给出 backup→restore 任务流与维护边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["restic", "Go", "内容定义分块", "加密", "架构分析"]
+tags: ["Go", "加密", "架构分析"]
 ---
 
 > **判断**：restic 真正解决的问题不是「把文件复制一份」这件事，而是「当备份存储不被信任时，怎么让增量、去重、加密、多后端四件事能压成一条对运维足够简单的命令行」。仓库的五大设计原则——Easy / Fast / Verifiable / Secure / Efficient——是同一条判断在五个不同维度的展开：Easy 给运维、Fast 给数据量、Verifiable 给恢复链路、Secure 给不可信后端、Efficient 给存储成本。

@@ -5,7 +5,7 @@ slug: "page-agent-alibaba-gui-agent-guide"
 description: "全面介绍阿里巴巴开源的 Page Agent 网页内置 GUI Agent，涵盖集成方式、文本化 DOM 操作、MCP Server、Chrome 扩展和与 browser-use 的差异化定位。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Page Agent", "GUI Agent", "阿里巴巴", "浏览器自动化", "MCP", "Web"]
+tags: ["Page Agent", "阿里巴巴", "浏览器自动化", "MCP", "Web"]
 ---
 
 ## 学习目标

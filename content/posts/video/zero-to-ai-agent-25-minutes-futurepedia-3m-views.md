@@ -5,7 +5,7 @@ slug: "zero-to-ai-agent-25-minutes-futurepedia-3m-views"
 description: "Futurepedia 354 万播放量 AI Agent 实战教程拆解。视频用 n8n 无代码平台，从零构建一个能查日历、看天气、推荐跑步路线的智能个人助手，无需写一行代码。"
 draft: false
 categories: ["视频精读"]
-tags: ["AI Agent", "Futurepedia", "n8n", "无代码", "GPT-4o Mini", "自动化"]
+tags: ["AI Agent", "n8n", "无代码", "自动化"]
 ---
 
 ---

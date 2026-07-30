@@ -5,7 +5,7 @@ slug: "docuseal-open-source-document-signing-platform-guide"
 description: "DocuSeal 是开源的电子文档签署和处理平台，提供 PDF 表单构建、数字签名、自动化邮件、API 和 Webhook 集成等功能，支持 Docker 一键部署。本文详解其功能特性、部署方式、API 集成与 Pro 版高级功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["开源", "电子签名", "PDF", "文档处理", "DocuSign 替代", "Docker"]
+tags: ["开源", "PDF", "文档处理", "Docker"]
 ---
 
 # DocuSeal：开源电子文档签署平台，DocuSign 替代方案

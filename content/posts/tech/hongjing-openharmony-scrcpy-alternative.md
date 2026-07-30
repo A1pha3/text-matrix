@@ -5,7 +5,7 @@ slug: "hongjing-openharmony-scrcpy-alternative"
 description: "鸿镜是一个面向 OpenHarmony 5.0+ 设备的投屏调试工具，Flutter 桌面客户端通过 hdc fport 端口转发与设备通信，实时镜像屏幕并提供触控注入、应用管理、终端模拟等功能，是 OpenHarmony 设备开发调试的实用辅助。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenHarmony", "Flutter", "投屏", "调试工具", "Scrcpy", "H.264"]
+tags: ["Flutter", "调试工具"]
 ---
 
 ## 学习目标

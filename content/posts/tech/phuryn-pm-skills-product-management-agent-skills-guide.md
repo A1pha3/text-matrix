@@ -5,7 +5,7 @@ slug: "phuryn-pm-skills-product-management-agent-skills-guide"
 description: "phuryn/pm-skills 是面向 PM 的 Claude Code / Codex Skills Marketplace，9 个插件覆盖 68 个 skill 和 42 个 command，从发现、策略、执行到发布与 AI 代码审核。本文拆解它的 skill/command/plugin 三层结构、9 插件边界与安装路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "PM", "Agent Skills", "产品管理", "MCP"]
+tags: ["Claude Code", "Agent Skills", "MCP"]
 ---
 
 # PM Skills Marketplace 解读：68 个产品经理 Agent Skill + 42 个链式工作流 + 9 个插件

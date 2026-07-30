@@ -5,7 +5,7 @@ slug: "gstack-garry-tan-claude-code-setup"
 description: "gstack 是 Y Combinator CEO Garry Tan 开源的个人开发工具集，将 Claude Code 打造成虚拟工程团队：CEO、设计师、架构师、安全审查员、QA 等 23 个专家角色，8 个强力命令，全部 MIT 协议免费使用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI辅助开发", "Claude Code", "YC", "生产力工具", "开源"]
+tags: ["Claude Code", "YC", "开源"]
 ---
 
 ## 快速信息卡

@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-05
 description: "2026年6月5日 AI 副业早报：V2EX 酷工作七连发(4条老 Agent 岗+海外远程 AI 后端+内推+5年+全栈接单)，Reddit AI 外包赛道(AI engineer $45-75/hr / Activepieces / n8n / 17年AI dev / AI 视觉短片)持续白热化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "Agent", "海外远程"]
+tags: ["AI副业", "V2EX", "Reddit", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

@@ -7,7 +7,7 @@ aliases:
 description: "withastro/flue 是 Astro 团队推出的 TypeScript Agent Harness 框架，重点不在模型调用，而在 session、sandbox、skills、持久化和跨运行时部署。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Flue", "Agent Harness", "Astro", "TypeScript", "Cloudflare"]
+tags: ["Agent Harness", "Astro", "TypeScript", "Cloudflare"]
 ---
 
 # withastro/flue：Astro 团队的 Agent Harness 框架

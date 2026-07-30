@@ -4,7 +4,7 @@ date: "2026-04-07T17:25:00+08:00"
 slug: weekly-trendy-weekly-personal-blog
 description: "深度解析Weekly周刊：一个持续263期的个人周报项目，Astro静态网站，记录工程师Tw93的旅行、美食、摄影与生活，标题诗意，风格独特。"
 categories: ["技术笔记"]
-tags: ["Astro", "静态网站", "个人博客", "Tailwind CSS", "生活记录"]
+tags: ["Astro", "Tailwind CSS"]
 draft: false
 ---
 

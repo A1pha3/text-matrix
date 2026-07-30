@@ -6,7 +6,7 @@ draft: false
 slug: "rommapp-romm-self-hosted-rom-manager-guide"
 description: "romm 是一款自托管 ROM 收藏管理器，支持多平台扫描、IGDB 元数据匹配、Web 端 ROM 模拟器直接运行与多用户隔离，适合游戏收藏党、单服务器多用户与 Plex/Jellyfin 联动。"
 categories: ["技术笔记"]
-tags: ["romm", "自托管", "ROM管理", "游戏模拟器", "Python"]
+tags: ["自托管", "Python"]
 author: "text-matrix"
 ---
 

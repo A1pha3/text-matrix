@@ -5,7 +5,7 @@ title = 'espectre 深度拆解：10 欧元的 ESP32 + Wi-Fi CSI + ESPHome，做�
 slug = 'espectre-wifi-csi-motion-detection-esp32'
 description = 'espectre（francescopace/espectre）把一台 10 欧元的 ESP32 变成“穿墙动检传感器”：采集 Wi-Fi 子载波 CSI → Gain Lock + NBVI 子载波选择 + 移动方差分段（MVS）/神经网络（ML）→ 直接对接 Home Assistant；8,019 stars、ESPHome 原生组件、F1 >99%，是隐私敏感智能家居的最强开源动检方案。'
 categories = ['技术笔记']
-tags = ['espectre', 'ESP32', 'Wi-Fi CSI', 'ESPHome', 'Home Assistant', '动检', '智能家居', '隐私', 'signal-processing', '开源']
+tags = ['Home Assistant', '智能家居', '隐私', '开源']
 +++
 
 # espectre 深度拆解：10 欧元的 ESP32 + Wi-Fi CSI + ESPHome，做穿墙隐私动检的 Home Assistant 完整方案

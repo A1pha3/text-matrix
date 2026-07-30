@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-04-05"
 description: "汇总4月5日AI大模型、具身智能、程序员职业风险及Hacker News热点等最新动态与核心事件解读。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "具身智能", "HackerNews"]
+tags: ["LLM", "具身智能", "HackerNews"]
 hiddenFromHomePage: true
 ---
 

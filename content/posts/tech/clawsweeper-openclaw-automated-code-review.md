@@ -6,7 +6,7 @@ slug: clawsweeper-openclaw-automated-code-review
 description: "深入解析 OpenClaw 官方维护机器人 ClawSweeper 的架构设计、工作流程与安全模型，探讨如何在大规模代码库（9500+ 开放项）中实现可靠的自动化代码审查。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenClaw", "代码审查", "自动化", "AI", "GitHub Actions", "Codex", "TypeScript"]
+tags: ["OpenClaw", "代码审查", "自动化", "GitHub Actions", "Codex", "TypeScript"]
 hiddenFromHomePage: false
 ---
 

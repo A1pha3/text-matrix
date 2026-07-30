@@ -6,7 +6,7 @@ draft: false
 slug: "supabase-supabase-postgres-platform-today-trending-guide"
 description: "supabase 仓库今日再登 GitHub Trending，单日 +145 Stars。本文从「开源 BaaS（后端即服务）」「Postgres 平台」「AI 集成」三个角度拆解 supabase 今天的信号：Edge Functions 性能改进、Auth 与 RLS（行级安全）协同、Vector 类型优化与 Realtime 多区域。"
 categories: ["技术笔记"]
-tags: ["Supabase", "Postgres", "BaaS", "Realtime", "开源"]
+tags: ["开源"]
 author: "text-matrix"
 ---
 

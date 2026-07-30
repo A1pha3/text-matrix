@@ -5,7 +5,7 @@ slug: "free-llm-api-resources-guide"
 description: "free-llm-api-resources是免费LLM API清单，含OpenRouter、Google AI Studio、NVIDIA NIM、Groq等，适合开发者快速测试与探索。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "API", "免费", "开发者资源"]
+tags: ["LLM", "API", "开发者资源"]
 ---
 
 # free-llm-api-resources：免费 LLM API 资源汇总清单

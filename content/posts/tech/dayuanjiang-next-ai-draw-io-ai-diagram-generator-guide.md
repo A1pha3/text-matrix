@@ -5,7 +5,7 @@ date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["drawio", "nextjs", "llm", "diagram", "mcp", "ai-tool"]
+tags: ["Next.js", "LLM", "diagram", "MCP"]
 description: "Next AI Draw.io 是 AI 对话生成 draw.io 图表的开源工具,33K+ stars。本文拆解它的 LLM 图表生成模式、MCP Server 集成、多 Provider 架构以及与传统 draw.io 的差异。"
 ---
 

@@ -5,7 +5,7 @@ slug: "the-book-of-secret-knowledge-sysadmin-toolkit"
 description: "The Book of Secret Knowledge 是 trimstray 在 GitHub 上维护的一个巨型工具索引仓库，收录 CLI/GUI 工具、Web 服务、渗透测试、系统加固等领域的精选资源，面向系统管理员、DevOps 和安全研究员。本文从项目定位、章节结构、核心亮点三个维度进行全面解读，并给出阅读建议与适用边界分析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["DevOps", "安全工具", "运维", "开源", "网络工具"]
+tags: ["DevOps", "安全工具", "开源", "网络工具"]
 ---
 
 ## 项目概览与定位

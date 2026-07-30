@@ -7,7 +7,7 @@ aliases:
 description: "介绍如何通过 MCP (Model Context Protocol) 扩展 Claude 的能力边界，实现企业级搜索与复杂场景下的深度研究与推理。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "MCP", "企业搜索", "工具连接", "Anthropic"]
+tags: ["Claude", "MCP", "Anthropic"]
 ---
 
 # Claude 101 第三课：扩展 Claude 的能力边界——工具连接、企业搜索与深度研究

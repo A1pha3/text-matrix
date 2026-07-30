@@ -5,7 +5,7 @@ slug: shadps4-ps4-emulator-guide
 description: "shadPS4 是一个开源的 PlayStation 4 模拟器，使用 C++ 编写，支持 Windows、Linux、macOS 和 FreeBSD，能够运行 Bloodborne 等游戏。"
 draft: false
 categories: ["技术笔记"]
-tags: ["C++", "模拟器", "PS4", "PlayStation", "游戏"]
+tags: ["C++"]
 ---
 
 # shadPS4：30.7K Stars·开源 PlayStation 4 模拟器·C++重写的跨平台 PS4 模拟器

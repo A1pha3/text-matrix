@@ -5,7 +5,7 @@ slug: "mauriceboe-trek-self-hosted-travel-planner-guide"
 description: "mauriceboe/TREK 是 6,210 Stars 的自托管实时协作旅行规划平台,基于 NestJS 11 + SQLite。本文拆解其模块矩阵、安全部署与 MCP 接入。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TREK", "自托管", "旅行规划", "NestJS", "MCP"]
+tags: ["自托管", "NestJS", "MCP"]
 ---
 
 # TREK 项目导读：自托管实时协作旅行规划平台

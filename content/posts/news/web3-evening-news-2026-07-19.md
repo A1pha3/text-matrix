@@ -5,7 +5,7 @@ slug: web3-evening-news-2026-07-19
 description: "2026年07月19日 Web3 晚报，精选过去 24 小时内加密货币行业监管、合规与市场动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "监管", "加密货币", "合规", "安全", "机构合作"]
+tags: ["Web3", "监管", "加密货币", "安全"]
 hiddenFromHomePage: true
 ---
 

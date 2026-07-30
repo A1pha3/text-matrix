@@ -5,7 +5,7 @@ slug: "hands-on-modern-rl-course-guide"
 description: "深度解读 walkinglabs/hands-on-modern-rl 开源课程，涵盖从 CartPole 到 RLHF、Agentic RL、VLM RL 的完整学习路径，分析四大部分结构、附录设计、与其他 RL 资源的对比及使用建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["强化学习", "RLHF", "DPO", "PPO", "Agentic RL", "VLM RL", "Hands-on Modern RL"]
+tags: ["强化学习", "RLHF"]
 ---
 
 ## 学习目标

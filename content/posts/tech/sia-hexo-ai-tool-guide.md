@@ -5,7 +5,7 @@ slug: "sia-hexo-ai-tool-guide"
 description: "SIA（hexo-ai/sia）是一个自我改进 AI 框架，让语言模型 Agent 循环改写 harness 与权重。本文拆解三 Agent 协作机制、benchmark 含义与自定义任务接入路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["SIA", "AI Agent", "自我改进", "Harness更新", "权重更新"]
+tags: ["AI Agent", "自我改进"]
 ---
 
 ## 学习目标

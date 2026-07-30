@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-04-27
 description: "2026年4月27日 Web3 早报，汇总过去 24 小时内加密货币价格走势、机构动态与链上重要事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "加密货币", "BTC", "ETH", "Strategy", "以太坊基金会"]
+tags: ["Web3", "加密货币", "BTC", "ETH", "Strategy"]
 hiddenFromHomePage: true
 ---
 

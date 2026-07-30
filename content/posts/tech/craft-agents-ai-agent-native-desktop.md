@@ -5,7 +5,7 @@ slug: "craft-agents-ai-agent-native-desktop"
 description: "Craft Agents是lukilabs出品的AI Agent桌面应用，基于Agent Native软件原则。用自然语言连接Linear/Gmail/Slack等60+服务，支持多LLM提供商，可视化编程体验。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "桌面应用", "MCP", "多LLM", "Craft", "工作流自动化"]
+tags: ["AI Agent", "桌面应用", "MCP", "工作流自动化"]
 ---
 
 # Craft Agents：4K Stars 的 AI Agent 原生桌面应用——用自然语言操控 Linear/Slack/Gmail

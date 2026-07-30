@@ -5,7 +5,7 @@ slug: "ublock-origin-architecture-filtering-mechanisms"
 description: "深入拆解 uBlock Origin 的静态过滤、动态过滤和脚本注入三大引擎，以及 BitTrie、Bloom Filter、MRU 缓存如何联手把单次 URL 匹配从 O(n) 压到 O(k)。附带完整请求流转案例和源码阅读路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["uBlock Origin", "广告拦截", "浏览器扩展", "过滤规则", "开源", "性能优化"]
+tags: ["开源", "性能优化"]
 ---
 
 ## 这篇文章在讲什么

@@ -5,7 +5,7 @@ slug: "cloudflare-github-pages-custom-domain-guide"
 description: "详细讲解如何将 Spaceship 购买的域名通过 Cloudflare DNS 解析，并绑定到 GitHub Pages 上，包含完整配置步骤与常见问题排查。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Cloudflare", "GitHub Pages", "DNS", "域名", "建站"]
+tags: ["Cloudflare", "DNS", "域名"]
 ---
 
 # 🌐 Cloudflare + GitHub Pages 自定义域名配置指南

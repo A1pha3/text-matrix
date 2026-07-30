@@ -7,7 +7,7 @@ description: "OpenCLI 把站点适配器、登录态浏览器、Electron 应用�
 summary: "OpenCLI 不只是 browser 子命令。更顺的用法是先查适配器命令，缺口再退到 browser 原语；用 profile、browser session、siteSession 分别处理身份、流程和站点页生命周期；重复出现的流程，再沉淀成 adapter、plugin 或 external CLI。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenCLI", "AI Agent", "CLI", "Browser Bridge", "浏览器自动化", "Electron"]
+tags: ["AI Agent", "CLI", "浏览器自动化", "Electron"]
 ---
 
 <!-- markdownlint-disable-file MD003 MD041 -->

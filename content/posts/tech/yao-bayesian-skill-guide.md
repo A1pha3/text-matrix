@@ -5,7 +5,7 @@ slug: "yao-bayesian-skill-guide"
 description: "深入解析贝叶斯决策 AI 技能框架，涵盖先验后验、证据分级、多轮对话机制与报告生成，适用于产品、商业、创业等复杂决策场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "贝叶斯", "决策分析", "技能", "Python"]
+tags: ["Python"]
 ---
 
 # 贝叶斯决策 AI 技能全解析：如何用 AI 做高质量不确定决策

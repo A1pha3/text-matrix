@@ -7,7 +7,7 @@ description: "基于张小珺与苏煜访谈，结合 Language Agents tutorial�
 summary: "这篇访谈精读想讨论的，不是 Agent 在 2026 年突然出现了，而是它终于开始被当成一套生产系统认真对待：规则系统写死下一步，策略网络学出下一步，语义解析把语言变成程序，Language Agent 再把语言、工具、记忆、GUI 和日志接进同一条执行链。OpenClaw 更像入口和界面的变化，NeoCognition 更像长期学习和专业化的尝试；真正的分水岭，在于这条执行链能不能跑稳，错误能不能收住，人类能不能接管。"
 draft: false
 categories: ["视频精读"]
-tags: ["AI Agent", "Language Agent", "苏煜", "NeoCognition", "OpenClaw", "Computer Use", "世界模型", "LLM"]
+tags: ["AI Agent", "OpenClaw", "Computer Use", "世界模型", "LLM"]
 hiddenFromHomePage: false
 ---
 

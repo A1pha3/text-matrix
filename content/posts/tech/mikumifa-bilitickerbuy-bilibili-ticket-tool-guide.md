@@ -3,7 +3,7 @@ title: "biliTickerBuy 项目导读：B 站会员购的开源辅助工具，定�
 date: "2026-06-22T15:06:20+08:00"
 slug: "mikumifa-bilitickerbuy-bilibili-ticket-tool-guide"
 categories: ["技术笔记"]
-tags: ["Python", "桌面应用", "B 站", "抢票工具", "项目导读"]
+tags: ["Python", "桌面应用", "B站"]
 description: "biliTickerBuy 是一个针对 B 站会员购票务的开源辅助工具,提供桌面端和 Web 界面,MIT 协议但官方明确仅供个人学习研究使用,严禁代抢和商业牟利。"
 ---
 

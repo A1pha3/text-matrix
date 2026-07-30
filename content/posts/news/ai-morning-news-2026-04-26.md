@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-04-26
 description: "2026年4月26日 AI 新闻早报，汇总过去 24 小时内模型发布、企业合作与行业投融资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "自动驾驶", "具身智能", "开源模型"]
+tags: ["LLM", "自动驾驶", "具身智能", "开源模型"]
 hiddenFromHomePage: true
 ---
 

@@ -7,7 +7,7 @@ aliases:
 description: "基于 Anthropic 论文与博客，解读 Claude 3.5 Haiku 替代模型中观察到的概念表示、提前规划、心算、幻觉与越狱机制，并明确这些结论的边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "Anthropic", "可解释性", "AI原理", "大语言模型", "AI安全"]
+tags: ["Claude", "Anthropic", "可解释性", "大语言模型", "AI安全"]
 ---
 
 # Claude 是如何思考的？Anthropic 可解释性研究深度解读

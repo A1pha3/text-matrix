@@ -5,7 +5,7 @@ slug: "evolver-gep-self-evolution-engine"
 description: "3,862 Stars的Evolver是GEP（基因组进化协议）驱动的AI Agent自进化引擎。通过Gene/Capsule/Event结构化资产和Strategy Presets实现可审计的进化，支持修复/优化/创新三种模式，可选接入EvoMap网络共享技能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "自进化", "GEP", "JavaScript", "Node.js", "协议", "自我修复"]
+tags: ["AI Agent", "自进化", "JavaScript", "Node.js"]
 ---
 
 # Evolver：GEP 基因组进化协议——让 AI Agent 实现自进化

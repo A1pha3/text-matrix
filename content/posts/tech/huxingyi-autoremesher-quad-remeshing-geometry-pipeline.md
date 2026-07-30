@@ -2,7 +2,7 @@
 title: "huxingyi/autoremesher：把高模自动拆成干净四边面的几何管线"
 date: 2026-07-10T02:58:08+08:00
 slug: "huxingyi-autoremesher-quad-remeshing-geometry-pipeline"
-tags: ["几何处理", "网格重建", "Quad Remeshing", "C++", "CGAL", "OpenGL"]
+tags: ["C++"]
 categories: ["技术笔记"]
 description: "梳理 huxingyi/autoremesher 的核心目标、依赖、构建链路与典型用例——一款基于 Geogram、libigl、isotropicremesher 的跨平台自动四边形网格重建工具。"
 ---

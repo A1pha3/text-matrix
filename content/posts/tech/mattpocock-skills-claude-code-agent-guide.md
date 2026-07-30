@@ -5,7 +5,7 @@ slug: "mattpocock-skills-claude-code-agent-guide"
 description: "全面介绍 Matt Pocock Skills 开源技能集合，涵盖17个Agent技能的定位、场景和用法，以及完整的开发流程工作流。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Agent Skills", "Matt Pocock", "TDD", "PRD"]
+tags: ["Claude Code", "Agent Skills", "TDD"]
 ---
 
 # Matt Pocock Skills：Claude Code Agent 技能集合完全指南

@@ -5,7 +5,7 @@ slug: "vane-ai-search-engine-guide"
 description: "全面解析 Vane (33.5k Stars)：隐私优先的 AI 回答引擎，支持本地 Ollama/OpenAI/Claude/Gemini/Groq，配备 SearxNG 隐私搜索，引用来源，文件上传分析。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Vane", "AI搜索引擎", "隐私计算", "SearxNG", "Ollama", "RAG", "本地LLM", "Docker"]
+tags: ["隐私计算", "Ollama", "RAG", "本地LLM", "Docker"]
 ---
 
 # Vane：隐私优先的 AI 回答引擎完全指南

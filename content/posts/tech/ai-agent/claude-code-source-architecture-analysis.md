@@ -7,7 +7,7 @@ aliases:
 description: "基于 instructkr/claude-code 镜像说明与 Anthropic 官方资料，系统拆解 Claude Code 的 Tool、Command、MCP、Bridge、权限模型与扩展机制，帮助你从入门一路看懂到架构层。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Anthropic", "TypeScript", "MCP", "智能体架构"]
+tags: ["Claude Code", "Anthropic", "TypeScript", "MCP"]
 ---
 
 # Claude Code 源码架构全解析：Tool、Command、MCP 与权限系统

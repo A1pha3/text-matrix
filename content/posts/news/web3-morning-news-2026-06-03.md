@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-06-03
 description: "2026年6月3日 Web3 早报，过去 24 小时主流币普跌、Strive/BlackRock 加仓 BTC、Charles Schwab 拟推现货加密交易、TesseraDAO 因增发漏洞遭 250 万美元攻击、Ethereum 研究员提交抗量子密钥注册表提案。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "SOL", "安全事件"]
+tags: ["Web3", "BTC", "ETH", "SOL"]
 hiddenFromHomePage: true
 ---
 

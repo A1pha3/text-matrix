@@ -5,7 +5,7 @@ slug: self-rationalization-guard-ai-agent-quality-guide
 aliases:
   - /posts/tech/self-rationalization-guard-ai-agent-quality-guide/
 categories: ["技术笔记"]
-tags: ["Self-Rationalization Guard", "AI Agent", "OpenClaw", "质量防护", "自我合理化"]
+tags: ["AI Agent", "OpenClaw"]
 description: "OpenClaw AgentSkill 自我合理化防护指南，识别和反制 AI Agent 常见的偷懒、逃避和自我欺骗模式。"
 ---
 

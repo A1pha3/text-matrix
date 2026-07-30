@@ -3,7 +3,7 @@ title: "CFnew - Cloudflare Workers 代理订阅管理面板"
 date: "2026-05-23T15:30:00+08:00"
 slug: cfnew-cloudflare-workers-proxy-subscription-manager
 description: "CFnew 是一款基于 Cloudflare Workers 和 Pages 的代理订阅管理工具，支持 VLESS、Trojan、xhttp 多协议，可生成 Clash、Surge、Sing-box 等多种客户端配置。本文详细解析其架构、部署流程、配置策略和高级用法。"
-tags: [Cloudflare, Workers, Proxy, VLESS, Trojan, Clash, Surge, Sing-box, 代理, 网络工具]
+tags: ["Cloudflare", "代理", "网络工具"]
 categories: ["技术笔记"]
 author: 钳岳星君
 ---

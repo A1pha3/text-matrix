@@ -5,7 +5,7 @@ slug: "teo-high-performance-rust-orm"
 description: "深度解析teodevgroup/teo：Rust原生高性能ORM，0.4版本完全重写，支持MySQL/PostgreSQL/SQLite/MongoDB四大数据库，内置Pipeline中间件、权限系统和自动迁移。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "ORM", "数据库", "MySQL", "PostgreSQL", "MongoDB", "异步", "性能"]
+tags: ["Rust", "数据库", "PostgreSQL"]
 hiddenFromHomePage: true
 ---
 

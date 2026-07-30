@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-11
 description: "2026年5月11日 AI 新闻早报，汇总过去24小时内模型进展、开源工具与行业融资的重要动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "开源工具", "本地部署"]
+tags: ["LLM", "开源工具", "本地部署"]
 hiddenFromHomePage: true
 ---
 

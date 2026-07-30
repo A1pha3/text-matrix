@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-22
 description: "2026年7月22日 AI 副业午报，精选过去 24 小时内 RAG 工程师远程招聘、AI Agent 全栈岗位、跨境电商 AI 运营、独立开发者副业变现与 AI 工具出海讨论。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "远程招聘", "AI Agent", "RAG", "跨境电商"]
+tags: ["AI副业", "远程招聘", "AI Agent", "RAG"]
 hiddenFromHomePage: true
 ---
 

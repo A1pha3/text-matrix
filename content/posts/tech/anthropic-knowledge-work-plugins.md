@@ -6,7 +6,7 @@ date: 2026-05-29T19:30:00+08:00
 lastmod: 2026-05-30T12:00:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Anthropic", "Claude", "MCP", "AI Agent", "插件体系", "Skills", "Commands", "知识工作"]
+tags: ["Anthropic", "Claude", "MCP", "AI Agent", "Skills"]
 hiddenFromHomePage: false
 featuredImage: ""
 externalUrl: ""

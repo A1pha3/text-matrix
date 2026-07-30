@@ -5,7 +5,7 @@ slug: "ai-side-hustle-morning-2026-04-03"
 description: "汇总4月3日AI副业与招聘动态，V2EX酷工作板块过去24小时内暂无AI相关新帖子，附近期热点AI视频自动化开源工具推荐。"
 draft: false
 categories: ["行业快讯"]
-tags: ["副业", "AI", "V2EX", "招聘"]
+tags: ["副业", "V2EX", "招聘"]
 hiddenFromHomePage: true
 ---
 

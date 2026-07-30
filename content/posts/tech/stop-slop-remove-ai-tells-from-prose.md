@@ -5,8 +5,7 @@ slug: "stop-slop-remove-ai-tells-from-prose"
 description: "stop-slop 是 Hardik Pandya 开源的写作 skill，它把 AI 常见套话、模板句和假动作拆成可执行规则，适合清理英文技术写作里的 AI 味。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Writing", "Claude Code", "Prompt Engineering", "Agent Skills", "Editing"]
-
+tags: ["Claude Code", "Prompt Engineering", "Agent Skills"]
 ---
 
 ## 📋 学习目标

@@ -4,7 +4,7 @@ slug: roboflow-supervision-computer-vision-toolkit-guide
 date: 2026-07-01T15:03:41+08:00
 lastmod: 2026-07-01T15:03:41+08:00
 categories: ["技术笔记"]
-tags: ["computer-vision", "roboflow", "supervision", "detection", "annotators", "python", "opencv"]
+tags: ["Python"]
 description: "roboflow/supervision 是 Roboflow 出品的『模型无关』计算机视觉 Python 工具箱，覆盖数据加载、推理、Annotators 可视化、跟踪与统计。本文拆解它的模型连接器、Annotators 系统、数据集工具链与适用边界。"
 ---
 

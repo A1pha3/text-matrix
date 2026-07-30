@@ -4,7 +4,7 @@ date: 2026-06-19T19:30:00+08:00
 slug: deli-auto-research-framework-deep-dive
 description: "把一份针对长时自主任务（数天到数周）的协议框架拆开来看：它真正解决的不是模型能力问题，而是把'工程脚手架缺失'带来的三类失败模式降到可控。"
 categories: ["技术笔记"]
-tags: ["AI Agent", "long-horizon", "框架解读", "protocol", "watchdog", "state management"]
+tags: ["AI Agent"]
 ---
 
 ## 学习目标

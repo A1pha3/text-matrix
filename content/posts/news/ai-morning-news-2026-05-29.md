@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-29
 description: "2026年5月29日 AI 新闻早报，汇总过去 24 小时内模型发布、Agent 生态、硬件落地与行业投融资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "Agent", "具身智能", "产品发布"]
+tags: ["LLM", "AI Agent", "具身智能"]
 hiddenFromHomePage: true
 ---
 

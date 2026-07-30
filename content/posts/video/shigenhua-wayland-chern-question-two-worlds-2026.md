@@ -5,7 +5,7 @@ slug: "shigenhua-wayland-chern-question-two-worlds-2026"
 description: "这篇文章不想把数学史硬套到 AI 上，而是想把三件事讲清楚：陈省身为什么会注意到石根华的数值流形法，NMM 的双覆盖为什么能处理复杂断裂区域，以及 Wayland / Deep Manifold 为什么会用这套语言重新理解神经网络。"
 draft: false
 categories: ["视频精读"]
-tags: ["视频精读", "石根华", "陈省身", "江泽涵", "姜伯驹", "Manifold", "数值流形法", "NMM", "不动点", "Wayland Zhang", "LLM张老师", "Deep Manifold", "神经网络", "数学科普"]
+tags: ["视频精读"]
 hiddenFromHomePage: false
 ---
 

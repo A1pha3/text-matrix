@@ -5,7 +5,7 @@ slug: awesome-mac-macos-software-resource-guide
 description: "awesome-mac 是 jaywcjlove 维护的 macOS 应用资源集合，收录各类 macOS 软件，涵盖开发者工具、设计工具、媒体工具、效率工具、安全工具等领域，截至 2026 年 6 月已积累 106K Stars。"
 draft: false
 categories: ["技术笔记"]
-tags: ["macOS", "Homebrew", "开发工具", "效率工具", "软件"]
+tags: ["macOS", "开发工具"]
 ---
 
 # awesome-mac：106K Stars·macOS 软件资源大全·开发者工具/设计/媒体/效率工具

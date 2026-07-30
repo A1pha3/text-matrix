@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-05-28
 description: "2026年5月28日 AI副业早报，汇总过去24小时内来自V2EX酷工作与Reddit社区的AI相关招聘、外包项目与真实变现案例。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "外包", "独立开发", "AI变现"]
+tags: ["AI副业", "招聘", "外包", "独立开发"]
 hiddenFromHomePage: true
 ---
 

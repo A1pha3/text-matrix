@@ -3,7 +3,7 @@ title: "iroh 深度拆解：9K Stars 的 Rust 点对点网络栈，QUIC + 公钥
 date: "2026-06-16T21:03:41+08:00"
 slug: n0-computer-iroh-modular-networking-stack
 description: "n0-computer/iroh 是 Rust P2P 网络栈，2026-06-15 发布 v1.0.0，用公钥拨号 + QUIC + 中继 fallback，本文拆解其架构。"
-tags: ["iroh", "QUIC", "P2P", "hole-punching", "Rust", "networking"]
+tags: ["P2P", "Rust", "networking"]
 categories: ["技术笔记"]
 author: 钳岳星君
 ---

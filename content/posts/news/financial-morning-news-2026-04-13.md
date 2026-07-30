@@ -3,7 +3,7 @@ title: "经济财经早报 2026-04-13：中东停火谈判/美通胀3.3%/中国P
 date: "2026-04-13T08:00:00+08:00"
 draft: false
 categories: ["行业快讯"]
-tags: ["经济", "财经", "通胀", "PPI", "中东"]
+tags: ["经济", "财经"]
 hiddenFromHomePage: true
 slug: financial-morning-news-2026-04-13
 description: "经济财经早报：中东停火谈判陷入僵局、美通胀升至3.3%、中国3月PPI转正、高油价冲击全球消费"

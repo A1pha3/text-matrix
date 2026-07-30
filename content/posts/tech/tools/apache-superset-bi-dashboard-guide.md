@@ -5,7 +5,7 @@ slug: apache-superset-bi-dashboard-guide
 aliases:
   - /posts/tech/apache-superset-bi-dashboard-guide/
 categories: ["技术笔记"]
-tags: ["Apache Superset", "BI", "数据可视化", "仪表板", "Python", "数据分析"]
+tags: ["Python"]
 description: "Apache Superset 是 Apache 软件基金会的顶级开源 BI 平台，64.5k Stars。本文从入门到精通，涵盖 47+ 图表类型、SQL Lab、权限管理、生产部署和自定义插件开发。"
 ---
 

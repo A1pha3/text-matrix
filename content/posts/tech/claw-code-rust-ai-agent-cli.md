@@ -5,7 +5,7 @@ slug: "claw-code-rust-ai-agent-cli"
 description: "Claw Code 是 ultraworkers 团队开源的 Rust 实现的 CLI agent harness，但项目明确自述为「博物馆展品」而非生产级工具。本文解析其架构、能力边界、与 Claude Code 的区别，以及自主维护模式带来的局限。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Rust", "CLI工具", "Claw Code", "自主维护项目"]
+tags: ["AI Agent", "Rust", "CLI工具"]
 ---
 
 ## 快速信息卡

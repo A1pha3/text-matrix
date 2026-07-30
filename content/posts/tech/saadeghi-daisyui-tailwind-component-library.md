@@ -2,7 +2,7 @@
 title: "saadeghi/daisyui：Tailwind 生态里最被低估的组件库"
 date: 2026-07-10T02:58:08+08:00
 slug: "saadeghi-daisyui-tailwind-component-library"
-tags: ["daisyUI", "Tailwind CSS", "组件库", "设计系统", "前端", "Svelte"]
+tags: ["Tailwind CSS", "组件库", "设计系统", "前端", "Svelte"]
 categories: ["技术笔记"]
 description: "梳理 daisyUI 5 这款基于 Tailwind CSS 的开源组件库——41K+ stars、纯类名系统、CSS 变量主题、与任意前端框架无关的设计取舍。"
 ---

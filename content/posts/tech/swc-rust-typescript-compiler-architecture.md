@@ -5,7 +5,7 @@ slug: "swc-rust-typescript-compiler-architecture"
 description: "拆解 swc-project/swc 架构：Rust 写的高性能 TS/JS 编译器，单 crate 聚合 parser/codegen/bundler，Rust 库 + Node 包双形态发行。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "TypeScript", "编译器", "Babel", "Node.js"]
+tags: ["Rust", "TypeScript", "编译器", "Node.js"]
 ---
 
 # swc-project/swc 架构拆解：Rust 写的 TS/JS 编译器为何能在 34k+ star 仓库里保持单 crate 形态

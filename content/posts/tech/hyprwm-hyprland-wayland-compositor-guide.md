@@ -3,7 +3,7 @@ title: "Hyprland：独立自研的动态 Wayland 合成器深度解析"
 date: 2026-07-23T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Wayland", "Linux桌面", "合成器", "C++"]
+tags: ["C++"]
 description: "Hyprland 是一个 100% 独立自研的动态平铺 Wayland 合成器，不依赖 wlroots，提供极致的视觉效果和插件系统。"
 ---
 

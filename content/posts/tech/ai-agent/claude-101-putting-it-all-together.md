@@ -8,7 +8,7 @@ aliases:
 description: "Claude 101 课程的最终篇，结合 NASA 火星探测等真实案例，指导读者综合运用多项技能设计专属的 AI 工作流。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "工作流", "Anthropic", "实战教程"]
+tags: ["Claude", "工作流", "Anthropic"]
 ---
 
 # Claude 101 第四课：融会贯通——把一切组合起来

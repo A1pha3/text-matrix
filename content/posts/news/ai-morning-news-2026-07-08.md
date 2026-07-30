@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-08
 description: "2026年7月8日 AI 新闻早报，聚焦字节 Seedance 2.0 商业化、华源智因与 Norm Ai 融资、Meta 推出 Muse Image 图像模型、Anthropic 在 Claude 内部发现类脑 J-space、蚂蚁灵波空间原生具身视觉基模开源，以及 zkSecurity 用 AI 在 Cloudflare CIRCL 找到 7 个真实漏洞。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "融资", "具身智能", "图像生成"]
+tags: ["LLM", "融资", "具身智能", "图像生成"]
 hiddenFromHomePage: true
 ---
 

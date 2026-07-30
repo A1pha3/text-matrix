@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-news-2026-07-10
 description: "2026年7月10日 AI 副业早报：悉尼 startup Senior AI Researcher KV Cache、内推悉尼/远程、阿里千问 Agent P6/P7 Java、Crypto 交易所英语社群客服远程轮班、舜宇红外电子研发工程师、招 PM 跨境订单系统全远程、Brivionix GPT-5.6 中转站内测送 $5、AR 眼镜具身数据创业组队。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "招聘", "AI Researcher", "Agent", "中转站", "AR眼镜", "具身智能", "远程工作"]
+tags: ["AI副业", "V2EX", "招聘", "AI Agent", "具身智能", "远程工作"]
 hiddenFromHomePage: true
 ---
 

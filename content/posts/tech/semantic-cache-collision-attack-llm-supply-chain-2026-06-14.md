@@ -8,7 +8,7 @@ aliases:
 description: "深度拆解 arXiv 2601.23088《From Similarity to Vulnerability: Key Collision Attack on LLM Semantic Caching》:4 个 RQ 全部交出 (HR 86% / TSR 降 84.5% / 跨模型白盒 >92%) + Generator-Validator 框架 + 3 种防御评估 + 性能-安全不可能三角。文末给出 LLM 服务商/部署方/终端用户/研究者四类决策建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM 安全", "Semantic Caching", "CacheAttack", "AI Agent", "供应链攻击", "AI 安全", "AI Agent", "Qwen", "AWS", "Microsoft", "Azure", "GPTCache", "embedding", "Hugging Face", "BAAI", "intfloat", "sentence-transformers", "GCG", "黑盒攻击", "侧信道", "形式化证明", "密码学", "模糊哈希", "avalanche effect", "arXiv 论文解读", "性能-安全权衡", "LLM 基础设施", "NLP", "Qwen3", "Locality-Sensitive Hashing", "LSH", "碰撞攻击"]
+tags: ["AI Agent", "AI安全", "Qwen", "AWS", "Microsoft", "Hugging Face", "密码学", "NLP", "Qwen3"]
 hiddenFromHomePage: false
 ---
 

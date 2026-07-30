@@ -5,7 +5,7 @@ lastmod: 2026-06-30T16:24:00+08:00
 draft: false
 slug: "ornith-1-self-improving-agentic-coding-model-deep-dive"
 categories: ["技术剖析", "AI 模型评测", "Agent 框架"]
-tags: ["ornith-1", "deep-reinforce", "agentic-coding", "self-improving", "reinforcement-learning", "rl-training", "gemma-4", "qwen-3-5", "vllm", "sglang", "terminal-bench", "swe-bench"]
+tags: ["vLLM", "SGLang", "SWE-bench"]
 description: 把 deepreinforce-ai 团队 Ornith-1.0 模型发布说明完整译为中文——一篇 90 行、覆盖"自改进训练框架 / 4 个尺寸选型 / Benchmark 全景 / vLLM+SGLang+Transformers+llama.cpp 多框架部署 / OpenHands+OpenCode+Hermes Agent 集成"的工程化深度解读。
 ---
 

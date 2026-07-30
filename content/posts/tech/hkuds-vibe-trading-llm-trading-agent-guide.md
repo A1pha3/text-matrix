@@ -5,7 +5,7 @@ slug: hkuds-vibe-trading-llm-trading-agent-guide
 description: "HKUDS/Vibe-Trading 是港大数据智能实验室的 LLM 个人交易 Agent，本文聚焦多智能体交易架构与信号/风控/执行分层，并与 QuantConnect 做横向对比与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["量化交易", "LLM Agent", "Vibe-Trading", "QuantConnect", "多智能体"]
+tags: ["量化交易", "多智能体"]
 ---
 
 # Vibe-Trading 架构解析：HKUDS 把 LLM Agent 拆成「信号—风控—执行」三层的工程实践

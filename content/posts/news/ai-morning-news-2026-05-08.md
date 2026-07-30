@@ -5,7 +5,7 @@ draft: false
 hiddenFromHomePage: true
 description: "每日AI行业新闻速览，涵盖产品发布、技术进展、学术成果、行业动态"
 slug: ai-morning-news-2026-05-08
-tags: ["AI", "早报", "大模型", "AI视频", "Agent"]
+tags: ["早报", "LLM", "AI视频", "AI Agent"]
 categories: ["行业快讯"]
 ---
 

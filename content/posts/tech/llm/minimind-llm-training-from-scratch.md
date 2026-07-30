@@ -7,7 +7,7 @@ aliases:
 description: "MiniMind 是 44.4k Stars 的开源 LLM 训练项目，3 元钱 + 2 小时即可训练 64M 参数模型。覆盖预训练、SFT、LoRA、DPO、PPO、GRPO、CISPO、Agentic RL、工具调用的完整链路，所有核心算法从零 PyTorch 原生实现。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "大模型训练", "PyTorch", "MoE", "RLHF", "GRPO", "强化学习"]
+tags: ["LLM", "PyTorch", "MoE", "RLHF", "强化学习"]
 ---
 
 # MiniMind：从零开始用3块钱训练64M参数的大语言模型

@@ -5,7 +5,7 @@ slug: "reconurge-flowsint-graph-osint-guide"
 description: "Flowsint 是图谱化、本地化、可扩展的 OSINT 调查平台，统一 Pydantic 实体并写入 Neo4j 调查图。本文拆解其模块分层、Enricher 注册机制、图谱写入路径与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OSINT", "网络安全", "图分析", "TypeScript", "情报分析"]
+tags: ["OSINT", "网络安全", "TypeScript"]
 ---
 
 # Flowsint 深度解析：把 OSINT 调查搬上 Neo4j 图谱，以及它和 Maltego / SpiderFoot 的本质区别

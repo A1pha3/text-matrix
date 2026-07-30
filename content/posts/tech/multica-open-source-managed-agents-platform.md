@@ -5,7 +5,7 @@ slug: "multica-open-source-managed-agents-platform"
 description: "Multica 是一个开源托管代理平台，让 AI 编程代理（Claude Code、Codex 等）变成真正的团队成员，支持任务分配、进度追踪、技能复用和多代理协作。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Claude Code", "多代理", "MCP", "开源"]
+tags: ["Claude Code", "MCP", "开源"]
 ---
 
 # Multica：把 AI 代码代理变成真正的队友

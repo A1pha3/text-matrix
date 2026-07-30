@@ -5,7 +5,7 @@ slug: "awesome-llm-apps-curated-llm-application-projects-guide"
 description: "全面介绍105k Stars的awesome-llm-apps精选合集，涵盖100+ LLM应用项目，包括AI Agent、RAG、MCP、Voice Agents、多Agent协作等，详解Google ADK、OpenAI Agents SDK等框架。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Voice AI", "Google ADK", "OpenAI Agents SDK"]
+tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Google ADK"]
 ---
 
 ## 核心判断

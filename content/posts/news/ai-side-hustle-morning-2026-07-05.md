@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-07-05
 description: "2026年7月5日 AI 副业早报：Cloudflare 9-15 默认屏蔽 AI 爬虫掀开「数据税收站」基础设施之争、GPT-5.6 Sol/Terra/Luna 三大模型 7-7 卡点截杀 Claude、Codex 桌面端负责人访谈谈「实现变便宜 品味变贵」、caveman 把 Claude/Codex/Cursor 输出砍 65% token 火上 GitHub Trending 第 1、阿里 page-agent 2 万星让网页原生变 GUI Agent、Chrome DevTools 官方 MCP 让 AI Coding 直接调试浏览器、独立开发者 5 天 AI 全程撸出 PDF 翻译平台「译档」、V2EX 同步涌现 ICP 许可证虚假广告警示 + 国产模型替代选型讨论。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "Cloudflare", "GPT5.6", "Codex", "Claude", "VibeCoding", "独立开发", "Agent", "Skills", "page-agent", "caveman", "国产模型", "合规"]
+tags: ["AI副业", "Cloudflare", "GPT-5.6", "Codex", "Claude", "Vibe Coding", "独立开发", "AI Agent", "Skills", "Page Agent"]
 hiddenFromHomePage: true
 ---
 

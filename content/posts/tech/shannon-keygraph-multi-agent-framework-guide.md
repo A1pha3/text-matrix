@@ -4,7 +4,7 @@ date: "2026-04-07T15:50:00+08:00"
 slug: shannon-keygraph-multi-agent-framework-guide
 description: "Shannon 是 KeygraphHQ 推出的多智能体框架，核心创新包括三层记忆架构（Working/Episodic/Semantic）和 Human-in-the-Loop 机制，让 AI Agent 真正具备长期记忆和关键决策的人类监督能力。"
 categories: ["技术笔记"]
-tags: ["AI Agent", "多智能体", "Shannon", "记忆系统", "Human-in-the-Loop"]
+tags: ["AI Agent", "多智能体", "Shannon", "记忆系统"]
 draft: false
 hiddenFromHomePage: true
 ---

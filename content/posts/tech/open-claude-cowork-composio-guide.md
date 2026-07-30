@@ -5,7 +5,7 @@ slug: open-claude-cowork-composio-guide
 description: "Open Claude Cowork 是一个开源桌面 AI 助手，使用 Claude Agent SDK 和 Composio 工具路由，支持 500+ 应用集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "Agent", "Composio", "桌面应用", "AI"]
+tags: ["Claude", "AI Agent", "桌面应用"]
 ---
 
 # Open Claude Cowork：3.8K Stars·开源桌面 AI 助手·Claude Agent SDK·Composio 工具路由·500+应用集成

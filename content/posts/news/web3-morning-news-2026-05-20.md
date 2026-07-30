@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-05-20
 description: "2026年5月20日 Web3 早报，汇总过去 24 小时内加密货币价格、监管动态、机构布局与链上生态重要变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "监管", "Strategy", "Ethereum Foundation"]
+tags: ["Web3", "BTC", "ETH", "监管", "Strategy"]
 hiddenFromHomePage: true
 ---
 

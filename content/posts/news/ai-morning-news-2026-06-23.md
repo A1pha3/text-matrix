@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-23
 description: "2026年6月23日 AI 新闻早报，精选过去 24 小时内智谱市值破万亿港元、阿里 HappyHorse 1.1 视频生成、钉钉 A1 横扫 618、马斯克前联创 10 亿美元做 River AI、陶哲轩数学形式化临界点、腾讯押注燧原挑战寒武纪、人形机器人灵巧手 87 亿资本热、清华开源空间模型入选 ECCV 2026 等行业关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "融资", "开源", "视频生成", "具身智能", "AI硬件"]
+tags: ["融资", "开源", "视频生成", "具身智能"]
 hiddenFromHomePage: true
 ---
 

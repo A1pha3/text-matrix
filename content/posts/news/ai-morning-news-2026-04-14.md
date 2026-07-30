@@ -5,7 +5,7 @@ title = 'AI新闻早报 2026-04-14：WordPress插件后门/科技裁员潮/斯�
 slug = 'ai-morning-news-2026-04-14'
 description = '2026年4月14日 AI 新闻早报，涵盖 WordPress 插件后门、科技裁员潮、斯坦福 AI 报告等热点。'
 categories = ['行业快讯']
-tags = ['AI', '早报']
+tags = ['早报']
 +++
 
 # AI 新闻早报 2026-04-14

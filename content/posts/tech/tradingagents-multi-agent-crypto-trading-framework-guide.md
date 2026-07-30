@@ -9,7 +9,7 @@ aliases:
 description: "深度解析 TauricResearch/TradingAgents 框架的架构设计、Agent 协作机制、安装配置与实战使用方法，涵盖 LangGraph 编排、多 Provider LLM 支持、检查点恢复与持久化决策日志等核心功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "多 Agent", "LangGraph", "Python", "量化交易", "LLM", "金融", "LangChain"]
+tags: ["多 Agent", "LangGraph", "Python", "量化交易", "LLM", "金融", "LangChain"]
 ---
 
 > **目标读者**：想系统掌握 LLM 多 Agent 协作在金融交易场景中实际应用的工程师与研究者

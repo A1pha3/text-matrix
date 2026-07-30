@@ -5,7 +5,7 @@ slug: openbb-open-data-platform-guide
 aliases:
   - /posts/tech/openbb-open-data-platform-guide/
 categories: ["技术笔记"]
-tags: ["OpenBB", "金融数据", "Python", "MCP", "量化交易", "数据平台"]
+tags: ["金融数据", "Python", "MCP", "量化交易"]
 description: "OpenBB 是开源金融数据平台，本文档从入门到精通涵盖原理分析、架构设计、数据集成和 AI Agent 扩展，详解 OpenBB Platform、Python SDK、CLI、Terminal 与 MCP Server。"
 ---
 

@@ -5,7 +5,7 @@ slug: "freedomain-digitalplat-free-domain-project"
 description: "171k Stars 的免费域名项目值不值得关注？这篇文章从需求信号、免费域名类型和决策框架三个角度给出判断。"
 draft: false
 categories: ["技术笔记"]
-tags: ["域名", "免费域名", "Web", "GitHub", "决策框架"]
+tags: ["域名", "Web", "GitHub"]
 ---
 
 ## 学习目标

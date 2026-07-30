@@ -5,7 +5,7 @@ slug: cliproxyapi-openai-compatible-api-proxy-guide
 description: "本文整合CLIProxyAPI核心概念、新旧版本差异、完整迁移步骤与实战示例，帮助开发者快速上手并规避版本漂移风险，旧稿链接已重定向至本文。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CLIProxyAPI", "Claude Code", "Gemini CLI", "OpenAI Codex", "API代理"]
+tags: ["Claude Code", "OpenAI Codex", "API代理"]
 ---
 
 ## 学习目标

@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["C++", "测试框架", "unit-testing", "TDD", "BDD"]
+tags: ["C++", "测试框架", "TDD"]
 description: "Catch2 v3 是 C++ 单文件 header-only 测试框架的主力替代品。本文拆解其 TEST_CASE / SECTION 嵌套、Matchers、BDD 风格宏、微基准测试能力，并对比 GoogleTest / doctest 的工程取舍。"
 ---
 

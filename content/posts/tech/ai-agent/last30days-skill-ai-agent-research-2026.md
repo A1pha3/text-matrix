@@ -7,7 +7,7 @@ aliases:
 description: "深度解析 last30days-skill：13.1k stars 的 AI Agent 研究助手，支持 Reddit/X/YouTube/HN/Polymarket 等8大平台，详解两阶段搜索架构、多维度评分算法、完整安装配置与开发扩展指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["last30days-skill", "AI Agent", "全网研究", "Reddit", "Polymarket"]
+tags: ["AI Agent", "Reddit", "Polymarket"]
 ---
 
 # last30days-skill：AI 全网研究助手从入门到精通

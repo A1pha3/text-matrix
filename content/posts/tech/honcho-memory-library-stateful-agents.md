@@ -5,7 +5,7 @@ title = 'honcho：为有状态 Agent 打造的记忆库'
 slug = 'honcho-memory-library-stateful-agents'
 description = 'honcho 是 Plastic Labs 开源的有状态 Agent 记忆库，通过对话历史持久化存储让 AI Agent 在跨会话场景中保持上下文连续性。'
 categories = ['技术笔记']
-tags = ['AI', 'Agent', '记忆框架', '开源']
+tags = ['AI Agent', '开源']
 +++
 
 # honcho: 为有状态 Agent 打造的记忆库，让 Agent 记住一切

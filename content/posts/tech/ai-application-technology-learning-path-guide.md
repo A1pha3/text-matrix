@@ -6,7 +6,7 @@ summary: "一篇面向工程师的 AI 应用技术路线图：先把 LLM、Promp
 description: "系统梳理 LLM、Prompt Engineering、Fine-tuning、RAG、MCP、Agent、Multi-Agent、Workflow Engineering、Context Engineering、Agent Skill、OpenClaw、Harness Engineering 等核心主题，给出从入门到进阶的学习顺序、工程边界、练习题与实战示例。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "LLM", "Agent", "Prompt Engineering", "MCP", "RAG", "AI应用"]
+tags: ["LLM", "AI Agent", "Prompt Engineering", "MCP", "RAG"]
 ---
 
 > **目标读者**：希望系统掌握 AI 应用技术的开发者与工程师

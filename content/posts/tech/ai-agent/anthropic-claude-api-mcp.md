@@ -7,7 +7,7 @@ aliases:
 description: "MCP（Model Context Protocol）协议的设计思想、架构组成与工作流程，如何构建 MCP 服务器与客户端，以及 MCP 与传统工具调用的区别与适用场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "MCP", "JSON-RPC", "Python"]
+tags: ["Claude", "MCP", "Python"]
 ---
 
 # Claude API 基础专题（五）：MCP 协议深度解析

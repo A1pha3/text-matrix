@@ -5,7 +5,7 @@ date: 2026-06-29T21:02:57+08:00
 lastmod: 2026-06-29T21:02:57+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["GitHub", "Encryption", "TrueCrypt", "C++", "Security", "开源", "Fork"]
+tags: ["GitHub", "C++", "Security", "开源"]
 description: "veracrypt/VeraCrypt 是从 TrueCrypt 7.1a fork 出来的开源全盘加密项目，本文梳理它的安全增强点、平台矩阵、为什么二进制必须从官网下载，以及它在 macOS / Linux / Windows 各自编译体系的差异，并给出落地时的注意点。"
 ---
 

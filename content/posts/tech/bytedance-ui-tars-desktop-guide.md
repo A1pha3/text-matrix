@@ -5,7 +5,7 @@ slug: "bytedance-ui-tars-desktop-multimodal-agent"
 description: "深度解析bytedance/UI-TARS-desktop：字节跳动开源的多模态AI Agent全栈，包含Agent TARS CLI和UI-TARS Desktop两个产品，支持GUI Agent、浏览器自动化和MCP工具集成。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "多模态", "GUI自动化", "MCP", "浏览器自动化", "字节跳动", "TypeScript"]
+tags: ["AI Agent", "多模态", "MCP", "浏览器自动化", "字节跳动", "TypeScript"]
 hiddenFromHomePage: true
 ---
 

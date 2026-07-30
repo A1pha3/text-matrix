@@ -2,7 +2,7 @@
 title: "microsoft/terminal：104K stars 的 Windows Terminal 到底做了什么"
 date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
-tags: ["windows-terminal", "c++", "winui", "console", "wsl"]
+tags: ["C++"]
 description: "microsoft/terminal 是 Windows 10/11 上 Windows Terminal + 原生 console host 的开源实现，104K stars、10万+ stars 的 C++ 项目。它把 Windows 的终端体验从 conhost 升级到现代 GPU 加速 / 多 tab / Unicode 完整支持的 Terminal。"
 ---
 

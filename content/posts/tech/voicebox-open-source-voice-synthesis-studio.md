@@ -5,7 +5,7 @@ slug: "voicebox-open-source-voice-synthesis-studio"
 description: "Voicebox是17.9K Stars的开源语音合成工作室，支持Qwen3-TTS/LuxTTS/Chatterbox等5大TTS引擎、23种语言、本地运行保护隐私。内置音频特效、无限时长、Stories编辑器、REST API。"
 draft: false
 categories: ["技术笔记"]
-tags: ["语音合成", "TTS", "AI", "开源", "Voicebox", " ElevenLabs替代", "本地运行"]
+tags: ["语音合成", "TTS", "开源"]
 ---
 
 # Voicebox：开源语音合成工作站——本地运行、支持 5 大 TTS 引擎、17.9K Stars 的 ElevenLabs 替代方案

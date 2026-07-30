@@ -5,7 +5,7 @@ aliases:
   - /posts/tech/ripgrep-recursive-search-guide/
 date: "2026-03-31T23:14:00+08:00"
 categories: ["技术笔记"]
-tags: ["Ripgrep", "rg", "Rust", "PCRE2", "代码搜索"]
+tags: ["Rust"]
 description: "基于 Ripgrep 官方 README、GUIDE、FAQ、CHANGELOG 与 15.1.0 帮助信息整理，系统讲解 rg 的默认行为、性能原理、工程架构、扩展方式与常见误区。"
 ---
 

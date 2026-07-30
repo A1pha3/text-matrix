@@ -5,7 +5,7 @@ slug: "github-spec-kit-spec-driven-development"
 description: "Spec Kit 是 GitHub 官方开源的 Spec-Driven Development（规格驱动开发）工具包，通过将规格文档变为可执行产出物，配合 AI 编码智能体实现从需求到实现的结构化工作流。本文解析其核心概念、CLI 安装、五步开发流程及扩展开发生态。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GitHub", "Spec-Driven Development", "AI Agent", "SDD", "Python"]
+tags: ["GitHub", "Spec-Driven Development", "AI Agent", "Python"]
 ---
 
 ## 项目概览

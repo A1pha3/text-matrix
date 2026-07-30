@@ -5,7 +5,7 @@ slug: "freedomain-free-domain-guide"
 description: "全面介绍 156k Stars 的 FreeDomain 免费域名平台，涵盖可用域名扩展（.DPDNS.ORG 等）、注册流程、DNS 配置（Cloudflare/FreeDNS）、使用场景、社区参与和使用建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["FreeDomain", "免费域名", "DNS", "Cloudflare", "域名注册", "自助托管"]
+tags: ["DNS", "Cloudflare"]
 ---
 
 ## 先把判断说清楚

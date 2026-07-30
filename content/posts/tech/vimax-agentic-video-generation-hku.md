@@ -5,7 +5,7 @@ slug: "vimax-agentic-video-generation-hku"
 description: "ViMax是香港大学DDS实验室推出的代理原生视频生成系统，通过Director、Screenwriter、Producer、Video Generator四个智能体协作，将创意想法或剧本端到端转化为完整视频故事。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI视频生成", "多智能体系统", "港大DDS", "视频创作", "开源研究"]
+tags: ["AI视频生成"]
 ---
 
 ## 先给判断

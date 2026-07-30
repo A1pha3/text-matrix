@@ -7,7 +7,7 @@ aliases:
 description: "AI Scientist-v2 是首个生成论文被 ICLR Workshop 接收的 AI 科研系统，使用智能体树搜索实现完全自主的科学研究流程：假设生成、实验设计、论文撰写。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI科研", "智能体", "树搜索", "自动化", "LLM"]
+tags: ["智能体", "自动化", "LLM"]
 ---
 
 # AI Scientist-v2：智能体树搜索驱动的自动化科研论文生成

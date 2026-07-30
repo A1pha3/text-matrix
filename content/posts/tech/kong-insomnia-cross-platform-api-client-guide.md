@@ -5,7 +5,7 @@ slug: "kong-insomnia-cross-platform-api-client-guide"
 description: "Kong/insomnia 是成熟的开源跨平台 API 客户端，支持 GraphQL、REST、WebSockets、SSE、gRPC 等协议，仓库采用 monorepo 架构，把桌面端、inso CLI、共享 API/数据层、脚本执行环境与测试包分离。本文拆解其 monorepo 布局、3 种存储后端、inso CLI 子命令与 CI 集成方式，并给出采用建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Insomnia", "API客户端", "GraphQL", "gRPC", "Electron"]
+tags: ["GraphQL", "gRPC", "Electron"]
 ---
 
 # Insomnia 项目导读：覆盖 GraphQL/REST/gRPC/WebSocket 的开源 API 客户端

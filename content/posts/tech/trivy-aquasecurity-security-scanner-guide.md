@@ -5,7 +5,7 @@ slug: trivy-aquasecurity-security-scanner-guide
 description: "Trivy 是 Aqua Security 维护的 35K Stars 综合安全扫描器，覆盖容器镜像、文件系统、Git 仓库、K8s 集群、VM 镜像，集成漏洞 CVE、SBOM、IaC 错误配置与密钥扫描。"
 draft: false
 categories: ["技术笔记"]
-tags: ["安全扫描", "CVE", "容器安全", "DevSecOps", "Kubernetes", "SBOM"]
+tags: ["DevSecOps", "Kubernetes"]
 ---
 
 # Trivy 实战指南：Aqua Security 开源的「全能」安全扫描器

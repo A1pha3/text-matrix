@@ -5,7 +5,7 @@ slug: "claudecode-imageautoprompt-noobai-artist-exploration"
 description: "深度解读VirtualAllocate的B站视频，介绍如何用ClaudeCode驱动ComfyUI结合noobai模型，通过ImageAutoPrompt工具系统化探索danbooru画师标签串，从单画师到多画师权重混合的完整方法论与工作流。"
 draft: false
 categories: ["视频精读"]
-tags: ["AI绘图", "ComfyUI", "ClaudeCode", "noobai", "ImageAutoPrompt", "画师串", "danbooru", "prompt工程"]
+tags: ["Claude Code", "Prompt Engineering"]
 ---
 
 ## 视频信息卡

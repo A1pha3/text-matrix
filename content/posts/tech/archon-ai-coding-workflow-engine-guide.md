@@ -5,7 +5,7 @@ slug: "archon-ai-coding-workflow-engine-guide"
 description: "Archon 是一个面向 AI 编程的工作流引擎，通过 YAML 定义 DAG，把规划、实现、验证、评审与 PR 创建变成可重复、可审计、可复用的开发流程。本文系统拆解其工作流模型、worktree 隔离、默认工作流、上手路径与自定义方式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Archon", "AI编程", "工作流引擎", "YAML", "Claude Code"]
+tags: ["AI编程", "Claude Code"]
 ---
 
 用 Claude Code、Codex 这类编码 Agent 一段时间后，会撞上同一个瓶颈：模型能力在涨，开发流程却仍靠临时提示词、人工盯执行、手动补审查维系。Archon 解决的就是这一层——把 Agent 的执行固定成可定义、可审计的工程流程。

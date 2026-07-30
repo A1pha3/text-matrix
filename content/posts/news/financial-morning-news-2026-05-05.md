@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-05
 description: "2026年5月5日经济财经早报，汇总过去24小时内全球市场、地缘政治、企业财报与AI行业动态的核心变化。数据来源：华尔街见闻。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "美股", "Palantir", "霍尔木兹", "亚马逊"]
+tags: ["财经", "美股", "Palantir", "霍尔木兹"]
 hiddenFromHomePage: true
 ---
 

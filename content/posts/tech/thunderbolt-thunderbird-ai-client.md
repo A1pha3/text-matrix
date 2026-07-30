@@ -5,7 +5,7 @@ slug: "thunderbolt-thunderbird-ai-client"
 description: "Thunderbolt是Mozilla Thunderbird开源的1679 Stars企业级AI客户端，采用Tauri跨平台架构、React 19前端、Elysia/Bun后端，支持本地/云端/私有化部署，集成MCP协议，提供可选端到端加密和多设备同步，实现真正的数据自主可控。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Tauri", "MCP", "端到端加密", "自托管"]
+tags: ["Tauri", "MCP", "端到端加密", "自托管"]
 ---
 
 # Thunderbolt：雷鸟 1679 Stars 的企业级 AI 客户端——自托管、无供应商锁定、端到端加密

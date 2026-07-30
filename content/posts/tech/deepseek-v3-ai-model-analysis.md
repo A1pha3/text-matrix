@@ -5,7 +5,7 @@ slug: deepseek-v3-technical-analysis
 description: "深度解析 DeepSeek-V3 的 MoE 架构设计原理，涵盖 Multi-Head Latent Attention（MLA）、辅助损失-free 负载均衡、Multi-Token Prediction 等核心技术，附完整推理、微调、部署实战指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "LLM", "MoE", "DeepSeek", "开源模型"]
+tags: ["LLM", "MoE", "DeepSeek", "开源模型"]
 ---
 
 # DeepSeek-V3 技术解析：671B 参数 MoE 模型的工程实践

@@ -5,7 +5,7 @@ slug: "arnis-real-world-to-minecraft-2026"
 description: "Arnis 是一个 Rust + Tauri 桌面应用，把 OpenStreetMap 矢量数据、ESA WorldCover 卫星土地分类、AWS Terrain Tiles 高程数据、Overture Maps 机器学习建筑足迹、3DMR + Wikimedia 真实 3D 地标，融合成可游玩的 Minecraft Java / Bedrock / Luanti 世界。本文拆开它的多源数据拼装、八步高程处理流水线、8 种屋顶 + 9 种墙面风格系统、mimalloc + rayon + 流式落盘的 Rust 性能取舍，以及 2.9.0 Mosaic Update（流式写盘、并行化 Bedrock chunk 编码、真实车道宽、机场跑道、暴雪线）背后的工程权衡。最后给出对做地理可视化 / 数据驱动生成项目的 5 条可复用经验。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Arnis", "Minecraft", "OpenStreetMap", "ESA WorldCover", "AWS Terrain Tiles", "Overture Maps", "Rust", "Tauri", "fastanvil", "地理数据", "3DMR", "Luanti"]
+tags: ["Rust", "Tauri"]
 hiddenFromHomePage: false
 ---
 

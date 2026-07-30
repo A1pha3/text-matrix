@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-22
 description: "2026年6月22日 AI 新闻早报，精选过去 24 小时内具身赛道融资、Sutton 与 Carmack 合作 Physical Atari、Databricks 千亿融资、GLM-5.2 完全开源、Token 补贴与芯片设备涨价等行业关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "具身智能", "融资", "开源", "半导体"]
+tags: ["具身智能", "融资", "开源", "半导体"]
 hiddenFromHomePage: true
 ---
 

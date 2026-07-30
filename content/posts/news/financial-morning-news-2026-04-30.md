@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-04-30
 description: "2026年4月30日经济财经早报，汇总过去24小时内美股财报、美联储动态及全球重要经济事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美股", "美联储", "财报", "宏观经济", "Alphabet"]
+tags: ["美股", "美联储", "财报", "宏观经济"]
 hiddenFromHomePage: true
 ---
 

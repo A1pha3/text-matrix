@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-05-16
 description: "2026年5月16日 AI副业早报，精选过去24小时内来自社区的真实招聘、外包接单与赚钱机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "接单", "V2EX", "中转站"]
+tags: ["AI副业", "招聘", "接单", "V2EX"]
 hiddenFromHomePage: true
 ---
 

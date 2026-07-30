@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-21
 description: "2026年5月21日 AI 新闻早报，汇总过去 24 小时内模型发布、企业动态、行业格局与产品更新。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "英伟达", "OpenAI", "阿里巴巴", "SpaceX", "量子位", "AIGC", "HackerNews"]
+tags: ["英伟达", "OpenAI", "阿里巴巴", "SpaceX", "量子位", "AIGC", "HackerNews"]
 hiddenFromHomePage: true
 ---
 

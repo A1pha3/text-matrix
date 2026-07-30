@@ -5,7 +5,7 @@ slug: "last30days-ai-agent-cross-platform-research-skill"
 description: "2026-06-07 GitHub Trending 当日榜 #1，29,164 stars / 单日 +439。它不是一个 search 工具，而是把'人投票过的事'——Reddit upvote、X like、YouTube view、Polymarket 真金白银——做成交叉信号源，给 agent 喂事实。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "Skill", "OpenClaw", "深度研究", "开源项目深拆", "MCP", "搜索"]
+tags: ["AI Agent", "Claude Code", "Skill", "OpenClaw", "开源项目深拆", "MCP"]
 toc: true
 ---
 

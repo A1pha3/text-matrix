@@ -2,7 +2,7 @@
 title: "code-review-graph：本地优先的代码智能图，把 Code Review 的 token 砍到 1/93"
 date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
-tags: ["code-review", "mcp", "graphrag", "tree-sitter", "ai-coding"]
+tags: ["Code Review", "MCP", "tree-sitter", "AI 编程"]
 description: "code-review-graph 是本地优先的代码智能图（CRG），用 Tree-sitter 把代码库解析成 nodes + edges 持久化到 SQLite，回答 AI Coding Agent 的'读哪些文件就够'问题。21K stars、自家仓库 token 削减 93x、支持 9+ 种主流 coding agent。"
 ---
 

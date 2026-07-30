@@ -5,7 +5,7 @@ slug: "self-hosting-guide-mikeroyal-complete-local-hosting-handbook"
 description: "mikeroyal/Self-Hosting-Guide 是 20.6k Stars 的自托管资源合集，覆盖 Docker、WireGuard、Home Assistant、Nextcloud 等 34 个主题的中文导读。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Self-Hosting", "自托管", "Docker", "WireGuard", "Awesome List"]
+tags: ["自托管", "Docker", "WireGuard", "Awesome List"]
 ---
 
 > **目标读者**：想搭建 Home Lab / NAS / 自托管服务的工程师，以及需要快速了解自托管赛道全貌的架构师。

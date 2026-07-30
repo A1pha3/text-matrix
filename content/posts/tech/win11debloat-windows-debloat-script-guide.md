@@ -5,7 +5,7 @@ slug: "win11debloat-windows-debloat-script-guide"
 description: "Win11Debloat 是一款单文件 PowerShell 脚本（MIT），47743+ Stars，支持 Windows 10/11。它能卸载预装应用、关闭遥测、禁用 Copilot/Recall/AI 功能、恢复经典右键菜单、调整任务栏、关闭 Bing 搜索等。本文覆盖 9 大类功能、三种运行方式、参数化与可回退机制、适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Windows", "PowerShell", "系统优化", "开源工具", "Debloat"]
+tags: ["Windows", "系统优化", "开源工具"]
 ---
 
 # Win11Debloat：单文件 PowerShell 脚本给 Windows 10/11 做彻底、可回退的清理

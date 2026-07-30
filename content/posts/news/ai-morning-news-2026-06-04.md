@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-04
 description: "2026年6月4日 AI 新闻早报：Suno 4亿美元D轮融资估值54亿、字节用Arm CPU、宇树73天闯关IPO、李飞飞下场定义世界模型、戴盟机器人亿元A轮融资。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "融资", "世界模型", "具身智能", "苹果"]
+tags: ["融资", "世界模型", "具身智能", "苹果"]
 hiddenFromHomePage: true
 ---
 

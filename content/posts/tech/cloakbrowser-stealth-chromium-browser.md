@@ -8,7 +8,7 @@ aliases:
 description: "CloakBrowser 是一款经过源码级改写的 Chromium 分发版，在 C++ 层面修改浏览器指纹，使反爬虫系统将其识别为正常浏览器。不同于 Patch 配置或 JS 注入方案，它是一个真正、原生的 Chromium 二进制，可直接作为 Playwright/Puppeteer 的零成本替代品。"
 draft: false
 categories: ["技术笔记"]
-tags: ["爬虫", "Chromium", "反爬虫", "隐私", "自动化"]
+tags: ["爬虫", "隐私", "自动化"]
 ---
 
 CloakBrowser 解决的是"补丁打在哪一层"的问题。`playwright-stealth`、`undetected-chromedriver` 这类方案在 JS 层或启动参数层做覆盖，每次 Chrome 升级就崩，反爬系统还能检测到"补丁本身"。CloakBrowser 把 58 处指纹修改直接打进 Chromium 146 的 C++ 源码，编译成独立二进制，反爬系统看到的是一个真实的 Chrome，因为它的确是——只是指纹被改了。

@@ -5,7 +5,7 @@ slug: sniffnet-network-traffic-monitor
 description: "Sniffnet 是一款使用 Rust 和 iced 框架构建的跨平台网络流量监控工具，支持 PCAP 导入导出、实时流量图表、地理定位、协议识别等功能。本文从架构设计角度深入解析其主要模块、技术选型和性能优化策略。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "网络监控", "流量分析", "iced", "pcap", "跨平台"]
+tags: ["Rust", "跨平台"]
 ---
 
 ## 快速信息卡

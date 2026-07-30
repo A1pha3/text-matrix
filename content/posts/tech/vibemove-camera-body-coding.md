@@ -5,7 +5,7 @@ slug: "vibemove-camera-body-coding"
 description: "VibeMove 是一款新兴的身体编码工具，通过相机捕捉身体动作（6种手势、3种动作）来操控电脑，支持 AI 工作流自动化。MIT 许可证，完全离线运行，基于 Apple Vision 框架的几何分类器，适合喜欢探索新技术的开发者。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "交互", "Swift", "Vision框架", "身体编码", "手势识别", "macOS"]
+tags: ["Swift", "macOS"]
 ---
 
 # VibeMove：相机驱动的身体编码工具——用肢体动作操控电脑的未来交互方式

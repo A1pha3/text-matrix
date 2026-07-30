@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-01
 description: "2026年5月1日经济财经早报，汇总过去24小时全球宏观经济动态、金融市场走势与重要财经新闻。"
 draft: false
 categories: ["行业快讯"]
-tags: ["金融", "宏观经济", "美股", "央行", "加密货币"]
+tags: ["金融", "宏观经济", "美股", "加密货币"]
 hiddenFromHomePage: true
 ---
 

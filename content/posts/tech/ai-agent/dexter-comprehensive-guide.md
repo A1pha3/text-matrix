@@ -8,7 +8,7 @@ aliases:
 description: "系统学习 Dexter 项目全部中文文档，涵盖：多模型路由、金融工具链、网页工具、技能系统、持久记忆、WhatsApp 网关、心跳与定时任务、Agent 循环机制、扩展开发与故障排查的完整技术指南。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Agent", "Dexter", "金融工具", "多模型路由", "研究代理", "自动化"]
+tags: ["AI Agent", "自动化"]
 ---
 
 # Dexter 全面解读：从零到一的 AI 研究代理平台（含架构设计、工具生态与扩展开发）

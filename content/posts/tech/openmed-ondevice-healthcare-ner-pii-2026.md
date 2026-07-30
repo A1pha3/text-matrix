@@ -5,7 +5,7 @@ title = 'openmed 深度拆解：1000+ 本地医疗 NER 模型 + HIPAA 级 PII �
 slug = 'openmed-ondevice-healthcare-ner-pii-2026'
 description = 'openmed（maziyarpanahi/openmed）是 2025-10 发布的本地优先医疗 AI 库，1,000+ 临床 NER 模型 + 247 个 PII checkpoint 覆盖 12 种语言；支持 CPU/CUDA/Apple MLX/iOS Swift 五种后端，全部 Apache-2.0 + arXiv:2508.01630 背书，是把临床 NLP “送进 iPhone” 的最完整开源方案。'
 categories = ['技术笔记']
-tags = ['openmed', '医疗 AI', 'NER', 'PII 反识别', '本地推理', 'Apple MLX', 'HIPAA', 'Swift', 'iOS', 'Apache-2.0', 'openmed']
+tags = ['Swift', 'iOS']
 +++
 
 # openmed 深度拆解：1000+ 本地医疗 NER 模型 + HIPAA 级 PII 反识别，把临床 NLP 装进 iPhone 的 Apache-2.0 全栈方案

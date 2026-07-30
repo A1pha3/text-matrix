@@ -5,7 +5,7 @@ slug: "web3-morning-news-2026-05-24"
 description: "2026年5月24日Web3早报：BTC $76590/ETH $2113/SOL $85.57，全球加密市值$2.64T，Hyperliquid领涨7%，恐慌指数38。"
 draft: false
 categories: ["行业快讯"]
-tags: ["比特币", "以太坊", "CoinMarketCap", "Hyperliquid", "Solana", "CoinDesk", "Cointelegraph"]
+tags: ["比特币", "以太坊", "CoinMarketCap", "Hyperliquid", "Solana", "CoinDesk"]
 hiddenFromHomePage: true
 ---
 

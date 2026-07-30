@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-16
 description: "2026年5月16日AI新闻早报，涵盖大模型、应用、安全等行业动态，数据范围2026-05-16 08:00至2026-05-15 08:00北京时间。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "早报", "大模型", "Agent"]
+tags: ["早报", "LLM", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

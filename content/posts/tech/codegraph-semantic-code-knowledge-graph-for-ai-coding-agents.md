@@ -9,7 +9,7 @@ aliases:
 description: "深入拆解 CodeGraph 如何把大型仓库的代码探索前置成可复用的本地知识图谱，并解释它的 MCP 工具、增量同步、benchmark 与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CodeGraph", "AI Agent", "Claude Code", "MCP", "代码知识图谱"]
+tags: ["AI Agent", "Claude Code", "MCP"]
 ---
 
 CodeGraph 把 AI Coding Agent 在大型仓库里最耗钱、也最容易失焦的一段工作提前做完了：先把代码库索引成一张可查询的图，再让 agent 沿着符号、调用关系、导入链和路由绑定去找答案。模型本身没有变强，变的是它不必每次都从 `grep`、`glob`、`Read` 重新找路。

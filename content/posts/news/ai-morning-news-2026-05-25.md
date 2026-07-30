@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-25
 description: "2026年5月25日 AI 新闻早报，汇总过去 24 小时内模型发布、企业融资、硅谷动向与行业投资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "DeepSeek", "谷歌", "LLM", "Agent", "HBM"]
+tags: ["DeepSeek", "LLM", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

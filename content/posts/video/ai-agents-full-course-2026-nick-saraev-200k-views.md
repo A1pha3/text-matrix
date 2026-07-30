@@ -5,7 +5,7 @@ slug: "ai-agents-full-course-2026-nick-saraev-200k-views"
 description: "Nick Saraev《AI Agents Full Course 2026》（YouTube EsTrWCV0Ph4，494K 观看）据字幕重建：这是一门明确的无代码课——不写 Python，而是教你用 Codex / Claude Code / Antigravity 三大 agent 平台。核心是 Observe→Think→Act 的智能体循环与'完成的定义'、会自改的 agents.md、多智能体 MCP 编排与子智能体互审。开场用 5 个各带 Chrome 浏览器的 agent 跑真实获客 demo。"
 draft: false
 categories: ["视频精读"]
-tags: ["AIAgent", "NickSaraev", "ClaudeCode", "Codex", "Antigravity", "MCP", "AgentSkills", "无代码"]
+tags: ["AI Agent", "Claude Code", "Codex", "Antigravity", "MCP", "Agent Skills", "无代码"]
 ---
 
 > **目标读者**：想用 AI agent 干实事的人——不限程序员，做自动化、运营、内容、编程都适用

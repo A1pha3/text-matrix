@@ -5,7 +5,7 @@ slug: "mimo2codex-codex-local-proxy"
 description: "深入解析 mimo2codex 0.2.4 的架构设计：Responses API 与 Chat Completions 的双向转换、reasoning_content 多轮透传机制、Provider 路由体系，以及如何用它把最新版 Codex CLI 接入小米 MiMo V2.5 或 DeepSeek V4 Pro。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TypeScript", "API网关", "OpenAI", "MiMo", "DeepSeek", "Codex", "协议转换", "本地代理"]
+tags: ["TypeScript", "API网关", "OpenAI", "MiMo", "DeepSeek", "Codex"]
 ---
 
 # mimo2codex：让最新 Codex 无缝接入 MiMo/DeepSeek 的本地代理网关

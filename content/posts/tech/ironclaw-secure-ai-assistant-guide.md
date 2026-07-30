@@ -5,7 +5,7 @@ slug: "ironclaw-secure-ai-assistant-guide"
 description: "全面解析 IronClaw：11.2k Stars 的安全私密个人 AI 助手。支持 WASM 沙箱安全隔离、多渠道（REPL/Telegram/Slack）、混合搜索、Rust 编写的开源项目。"
 draft: false
 categories: ["技术笔记"]
-tags: ["IronClaw", "AI助手", "安全隐私", "WASM", "Rust", "PostgreSQL"]
+tags: ["AI助手", "WASM", "Rust", "PostgreSQL"]
 ---
 
 # IronClaw：安全私密个人 AI 助手

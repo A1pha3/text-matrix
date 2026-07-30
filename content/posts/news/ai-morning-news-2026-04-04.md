@@ -5,7 +5,7 @@ slug: "ai-news-morning-2026-04-04"
 description: "汇总4月4日AI行业最新动态，涵盖谷歌Gemma 4突袭发布（31B击败20倍对手）、强一股份Q1净利暴增655%、OpenAI收购TBPN播客、机器人版GPT-3（99%成功率）、Kimi期权时光机、AgentOS新进展等重磅新闻。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "Gemma", "大模型", "具身智能", "机器人", "Agent", "开源", "AI投资"]
+tags: ["Gemma", "LLM", "具身智能", "机器人", "AI Agent", "开源"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-06-08
 description: "2026年6月8日 Web3 早报：BTC/ETH/SOL/XRP/ADA/BNB 24h 普涨 4-8%（08:25 BJT 行情），NYDIG 总结 BTC 本轮下跌由 AI/IPO/量子/Strategy 抛压多重叠加、CoinDesk 报道 BTC 回到 6 万美元附近 ETF 资金流向与 2 月截然相反、Abra CEO 看衰币价看好代币化、Consensys 创始人 Joe Lubin 回应以太坊基金会裁员、Ethereum Foundation 缩编非危机、众议院筹款委员会推进加密税立法、Saylor 周末暗示加仓 BTC 等周一股东大会决议。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "SOL", "XRP", "ADA", "BNB", "CoinMarketCap", "CoinDesk", "CoinTelegraph", "EthereumFoundation", "代币化", "Strategy"]
+tags: ["Web3", "BTC", "ETH", "SOL", "XRP", "ADA", "CoinMarketCap", "CoinDesk", "代币化", "Strategy"]
 hiddenFromHomePage: true
 ---
 

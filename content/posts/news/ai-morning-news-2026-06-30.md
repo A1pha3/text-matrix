@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-30
 description: "2026年6月30日 AI 新闻早报，汇总过去 24 小时内港大源策未来具身大脑数亿种子轮、国产光计算切入天基算力、普林斯顿 CEO-Bench 给 AI 当老板做 500 天压力测试、Qwen 3.6 27B 被本地开发者视为甜点档等核心动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "具身智能", "光计算", "Qwen", "开源模型"]
+tags: ["具身智能", "Qwen", "开源模型"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "openenv-agentic-rl-execution-framework"
 description: "拆解 huggingface/OpenEnv：用 Gymnasium-style API 统一 agentic RL 训练环境，通过 WebSocket、Docker 与 HF Spaces 托管。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Agent", "RL", "Docker", "HuggingFace", "Gymnasium"]
+tags: ["AI Agent", "RL", "Docker", "Hugging Face"]
 ---
 
 # huggingface/OpenEnv 架构拆解：Agentic RL 训练环境的 Gymnasium 化标准（WebSocket + Docker + HF Spaces）

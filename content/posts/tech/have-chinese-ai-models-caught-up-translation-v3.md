@@ -5,7 +5,7 @@ slug: "have-chinese-ai-models-caught-up-translation"
 description: "scaling01 长文翻译：Kimi-K3 2.8T 开源模型 benchmark 接近美国 frontier，但 ECI 视角下中美差距仍有 4.37-5.29 个月。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Kimi-K3", "中美AI对比", "基准测试", "开源模型", "ECI"]
+tags: ["开源模型"]
 ---
 
 > 原文：[Have Chinese AI Models Caught Up to the US Frontier?](https://scaling01.substack.com/p/have-chinese-ai-models-caught-up)（作者 Zito / scaling01，2026-07-19）

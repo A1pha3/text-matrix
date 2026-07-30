@@ -5,7 +5,7 @@ slug: "astro-framework-deep-dive"
 description: "Astro 是面向内容驱动网站开发的 Web 框架，核心创新为 Islands 架构（孤岛水文）——默认零 JS，按需激活组件。58,820 GitHub Stars，支持 React/Vue/Svelte 等多框架，运行在 Node/Vercel/Cloudflare 等多平台。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Astro", "Islands架构", "前端框架", "内容网站", "静态站点生成"]
+tags: ["Astro"]
 ---
 
 # Astro：内容优先的现代化 Web 框架

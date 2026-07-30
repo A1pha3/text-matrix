@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-26
 description: "2026年6月26日 AI 新闻早报，精选过去 24 小时内豆包 2.1 发布、黄仁勋 Loop 范式、Nature 放大螺旋研究、美光物理 AI 转向与 IBM 0.7nm 芯片突破。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "豆包", "黄仁勋", "美光", "IBM"]
+tags: ["豆包", "美光"]
 hiddenFromHomePage: true
 ---
 

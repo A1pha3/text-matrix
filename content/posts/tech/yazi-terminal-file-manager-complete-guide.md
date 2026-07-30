@@ -5,7 +5,7 @@ slug: yazi-terminal-file-manager-complete-guide
 description: "Yazi 把异步 I/O、内置图片预览和 Lua 插件三者结合，让终端文件管理器第一次做到不依赖外部工具就能预览图片。本文拆解它的架构取舍与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "终端", "文件管理", "TUI", "Go"]
+tags: ["Rust", "终端", "TUI", "Go"]
 ---
 
 # Yazi：异步 I/O、内置图片预览与 Lua 插件同处一个终端

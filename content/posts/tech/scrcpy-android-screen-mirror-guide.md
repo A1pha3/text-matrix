@@ -5,7 +5,7 @@ slug: "scrcpy-android-screen-mirror-guide"
 description: "全面介绍 138k Stars 的 scrcpy Android 屏幕镜像工具，涵盖安装配置、USB/无线连接、屏幕录制、音频转发、键盘鼠标/游戏手柄控制、OTG 模式、摄像头镜像、性能优化等全部功能。"
 draft: false
 categories: ["技术笔记"]
-tags: ["scrcpy", "Android", "屏幕镜像", "无线调试", "ADB", "远程控制"]
+tags: ["Android"]
 ---
 
 ## 目录

@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-04-16
 description: "2026年4月16日经济财经早报，汇总过去 24 小时内美股财报、地缘政治、市场动态与政策变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "美股", "特朗普", "特斯拉", "国债"]
+tags: ["财经", "美股", "特朗普", "特斯拉"]
 hiddenFromHomePage: true
 ---
 

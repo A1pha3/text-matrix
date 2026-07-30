@@ -5,7 +5,7 @@ slug: "timesfm-google-time-series-foundation-model-guide"
 description: "TimesFM 选了一条跟气象模型完全不同的路：不做物理建模，不做多维协变量堆叠，靠 decoder-only 架构和 1-bit token 把时间序列预测做成预训练问题。本文拆解 2.5 版本的架构选择、连续分位数机制和 BigQuery 部署路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TimesFM", "时间序列", "Google Research", "ICML", "预测模型", "PyTorch", "BigQuery"]
+tags: ["PyTorch"]
 ---
 
 ## 总览：一张图看懂 TimesFM 的系统边界

@@ -5,7 +5,7 @@ slug: "microsoft-powertoys-windows-productivity-suite-guide"
 description: "Microsoft PowerToys 是微软官方推出的 Windows 生产力工具集，提供 30+ 实用工具，覆盖窗口管理、文件批量处理、快捷键定制、屏幕取色与 OCR 等场景。本文详解其核心工具、安装方式及上手指南，帮助 Windows 用户快速判断价值并完成首次配置。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Windows", "PowerToys", "微软", "生产力工具", "开源"]
+tags: ["Windows", "微软", "开源"]
 ---
 
 # 微软 PowerToys：Windows 上最值得安装的生产力工具套件

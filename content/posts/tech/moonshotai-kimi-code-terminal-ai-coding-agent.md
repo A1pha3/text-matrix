@@ -3,7 +3,7 @@ title: "Kimi Code CLI：月之暗面开源的终端 AI 编码 Agent"
 date: 2026-07-24T03:06:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Coding Agent", "CLI", "TUI", "MCP", "Moonshot AI"]
+tags: ["AI Coding Agent", "CLI", "TUI", "MCP"]
 description: "月之暗面推出的终端原生 AI 编码 agent，单二进制分发、毫秒级启动，内置子代理调度、视频输入和 MCP 生态，开箱即用对接 Kimi 模型。"
 ---
 

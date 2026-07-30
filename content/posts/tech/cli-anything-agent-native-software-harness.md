@@ -5,7 +5,7 @@ slug: "cli-anything-agent-native-software-harness"
 description: "HKUDS出品的AI Agent工具链，通过为各种软件生成标准化CLI接口，让AI Agent能够以统一方式调用任意软件。目前支持18个领域的200+工具（CAD、3D建模、视频编辑等），通过SKILL.md规范和CLI-Hub实现一键安装与版本管理，测试覆盖2,269个用例。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "CLI-Anything", "工具集成", "Agent工作流", "Python"]
+tags: ["AI Agent", "Python"]
 ---
 
 # CLI-Anything：让所有软件变成 Agent 可调用的 CLI 工具

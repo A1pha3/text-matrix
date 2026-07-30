@@ -5,7 +5,7 @@ slug: ace-step-ui-ai-music-generation-guide
 description: "Ace-Step-UI 是 ACE-Step 1.5 AI 音乐生成模型的专业 Web UI，Spotify 风格界面，完全本地运行、免费无限制，是 Suno 的开源替代方案。"
 draft: false
 categories: ["技术笔记"]
-tags: ["React", "TypeScript", "AI音乐", "TailwindCSS", "开源"]
+tags: ["React", "TypeScript", "AI音乐", "Tailwind CSS", "开源"]
 ---
 
 # Ace-Step-UI：开源版 Suno 来了，Spotify 风格的本地 AI 音乐生成界面

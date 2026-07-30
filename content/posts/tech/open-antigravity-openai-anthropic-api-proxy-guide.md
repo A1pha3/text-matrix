@@ -4,7 +4,7 @@ slug: "open-antigravity-openai-anthropic-api-proxy-guide"
 date: "2026-04-08T13:00:00+08:00"
 lastmod: 2026-04-08T13:00:00+08:00
 categories: ["技术笔记"]
-tags: ["API代理", "TypeScript", "OpenAI兼容", "Anthropic兼容", "Antigravity", "gRPC-Web"]
+tags: ["API代理", "TypeScript", "OpenAI兼容", "Antigravity"]
 description: "Open-Antigravity 是一个 TypeScript 编写的 API 代理工具，将 Antigravity 桌面应用暴露为 OpenAI 和 Anthropic 兼容的 API 服务。只需 base_url + key，即可让 Claude Code、Cursor、Continue、Python SDK 等任何兼容客户端调用 Antigravity。"
 draft: false
 ---

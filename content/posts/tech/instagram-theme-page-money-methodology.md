@@ -5,7 +5,7 @@ slug: "instagram-theme-page-money-methodology"
 description: "基于 Reddit 热门案例与评论追问，拆解 Instagram 主题页（Theme Page）的变现路径、广告合作、平台奖金、卖号逻辑、版权争议与 2026 年平台风险。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Instagram", "主题页", "副业", "流量运营", "内容分发"]
+tags: ["副业"]
 ---
 
 > 这篇文章写给想研究 Instagram 主题页生意的独立创作者、流量运营者和副业观察者。核心问题其实不复杂：一个年入 32 万美元的案例，究竟说明了什么，又刻意回避了什么？把原帖和评论区一起看完，更接近现实的结论反而不那么轻松：Theme Page 确实能赚钱，但它从来不是一门舒服的被动收入生意，决定上限和下限的是分发能力、版权边界和平台政策，不是灵感。

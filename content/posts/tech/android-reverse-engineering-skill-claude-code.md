@@ -5,7 +5,7 @@ slug: "android-reverse-engineering-skill-claude-code"
 description: "6.2K Stars的Android逆向工程Claude Code Skill。反编译APK/XAPK/JAR/AAR，提取Retrofit/OkHttp API端点、硬编码URL、认证模式，支持jadx/Vineflower双引擎对比，可追踪Activity→ViewModel→HTTP调用完整链路。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Android", "逆向工程", "APK", "反编译", "Claude Code", "Retrofit", "OkHttp", "安全研究"]
+tags: ["Android", "Claude Code", "安全研究"]
 ---
 
 # Android 逆向工程 Skill：把 APK 反编译和 API 提取压缩成一句话

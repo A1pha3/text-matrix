@@ -3,7 +3,7 @@ title: "OpenCodeReview：阿里巴巴开源的 AI 代码审查工具"
 date: 2026-07-24T03:04:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Code Review", "CLI", "Agent", "Alibaba", "DevOps"]
+tags: ["CLI", "AI Agent", "DevOps"]
 description: "源自阿里巴巴内部两万人级实战检验的 AI 代码审查工具，用确定性工程约束 agent 行为，在相同模型下精度远超通用 agent，token 消耗仅九分之一。"
 ---
 

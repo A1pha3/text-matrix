@@ -4,7 +4,7 @@ date: 2026-05-14T12:05:00+08:00
 slug: "aitoearn-ai-content-marketing-agent-opc"
 description: "AiToEarn 是一款面向 OPC（一人公司）的 AI 内容营销工具，通过 AI Agent 自动化实现内容创作、多平台分发、互动运营和变现结算。本文解析其四大核心 Agent 能力（Monetize/Publish/Engage/Create）、API 接入方式和变现模式。"
 categories: ["技术笔记"]
-tags: ["AI Agent", "内容营销", "多平台分发", "抖音", "小红书", "TypeScript"]
+tags: ["AI Agent", "抖音", "小红书", "TypeScript"]
 ---
 
 ## 快速信息卡

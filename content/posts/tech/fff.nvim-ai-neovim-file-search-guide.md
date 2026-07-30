@@ -5,7 +5,7 @@ slug: "fff.nvim-ai-neovim-file-search-guide"
 description: "全面介绍 FFF.nvim 极速文件搜索工具，涵盖 AI Agent MCP 集成、Neovim 配置、Frecency 排序、三种搜索模式和高级用法。"
 draft: false
 categories: ["技术笔记"]
-tags: ["fff.nvim", "Neovim", "MCP", "AI Agent", "文件搜索", "Fuzzy"]
+tags: ["MCP", "AI Agent"]
 ---
 
 ## 学习目标

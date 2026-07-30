@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["C++", "asynchronous", "networking", "io-context", "system-programming"]
+tags: ["C++", "networking"]
 description: "Asio 是 C++ 异步网络与并发编程的事实标准库，Boost.Asio 与独立版 asio 共享代码库。本文拆解其 io_context 调度模型、Proactor 模式、与 Coroutines 的集成，并对比 libevent / libuv / Boost.Beast 的工程取舍。"
 ---
 

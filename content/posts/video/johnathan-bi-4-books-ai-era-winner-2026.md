@@ -5,7 +5,7 @@ slug: "johnathan-bi-4-books-ai-era-winner-2026"
 description: "B站人文与科技 UP 毕英杰 Johnathan 在《只读这4本书，就能成为AI时代的赢家》视频里给出一份反常识书单：Weber、Aristotle、Girard、Kripal 四位跨越两千多年的思想家。没有一本是 AI 教材，没有一本是 self-help，但视频认为：AI 时代真正的对手不是'AI 会不会抢我工作'，而是'支撑你整套生活意义的宗教——资本主义/工作/成就——正在坍塌'。本文拆解这 4 本书各自回答什么、为什么放在 AI 时代读、它们如何拼成一张完整的'AI 抗震'地图。"
 draft: false
 categories: ["视频精读"]
-tags: ["毕英杰 Johnathan", "Weber", "Aristotle", "Girard", "Kripal", "AI 时代", "哲学", "模仿理论", "资本主义", "Substack"]
+tags: []
 hiddenFromHomePage: false
 ---
 

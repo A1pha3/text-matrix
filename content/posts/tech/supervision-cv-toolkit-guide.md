@@ -5,7 +5,7 @@ slug: "supervision-cv-toolkit-guide"
 description: "Supervision 是 Roboflow 推出的模块化计算机视觉 Python 工具库，提供从数据加载、检测框处理到区域统计的全流程工具，支持 Ultralytics、Transformers、MMDetection 等主流模型，目标让开发者专注业务而非底层工程。"
 draft: false
 categories: ["技术笔记"]
-tags: ["计算机视觉", "Python", "目标检测", "Roboflow", "开源工具"]
+tags: ["计算机视觉", "Python", "开源工具"]
 ---
 
 # Supervision：计算机视觉工具链的「瑞士军刀」

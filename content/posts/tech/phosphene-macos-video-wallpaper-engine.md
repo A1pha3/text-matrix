@@ -5,7 +5,7 @@ title = 'Phosphene：macOS 视频壁纸引擎'
 slug = 'phosphene-macos-video-wallpaper-engine'
 description = 'Phosphene 是一个 macOS 视频壁纸引擎，支持将视频文件设置为桌面背景，兼容 macOS Tahoe 系统。'
 categories = ['技术笔记']
-tags = ['macOS', '开源', 'Swift', '桌面美化']
+tags = ['macOS', '开源', 'Swift']
 +++
 
 # Phosphene：macOS 视频壁纸引擎

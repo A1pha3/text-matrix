@@ -5,7 +5,7 @@ slug: "mathvideomaker-ai-friendly-math-explainer-skill"
 description: "mathVideoMaker 用 SafeScene、checktext、checkweb 三项护栏把「看图纠错」机械化，让无视觉 AI 稳定产出 Manim 视频与配套交互网页。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Cursor Skill", "Manim", "数学可视化", "护栏工程"]
+tags: ["AI Agent"]
 ---
 
 # mathVideoMaker：当 AI 不会看图，怎么稳定产出数学讲解视频与交互网页

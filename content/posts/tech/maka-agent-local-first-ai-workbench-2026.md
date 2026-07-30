@@ -5,7 +5,7 @@ slug: "maka-agent-local-first-ai-workbench-2026"
 description: "Maka 是一个 Electron 桌面 AI 工作台，把模型连接、会话、工具权限、文件读写、终端执行、搜索、机器人入口、开放网关和运行恢复放在一个本地优先的应用里。最近合并的 Runtime Kernel Extraction 把原来集中的 SessionManager / AiSdkBackend 拆成 6 个内部组件（ToolRuntime / ModelAdapter / RunTrace / AgentRun types & store / AgentRun execution / Startup recovery），同时保持了所有用户可见的会话/渲染/IPC/JSONL 兼容性。本文拆开它的 monorepo 拓扑、6 组件拆分、9 个 Memory Privacy Gates、凭据保护（Electron safeStorage）和多模型 / 多机器人接入架构，附上对独立 AI Agent 项目作者可复用的 5 条工程经验。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Maka", "Local-First", "Electron", "AI Agent", "Runtime Kernel", "Vercel AI SDK", "Google ADK", "Privacy Gates", "safeStorage", "OpenGateway", "Monorepo"]
+tags: ["Local-First", "Electron", "AI Agent", "Google ADK", "Monorepo"]
 hiddenFromHomePage: false
 ---
 

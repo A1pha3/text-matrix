@@ -4,7 +4,7 @@ slug: "seomachine-seo-ai-agent-guide"
 date: "2026-04-08T16:35:00+08:00"
 lastmod: 2026-04-08T16:35:00+08:00
 categories: ["技术笔记"]
-tags: ["TypeScript", "SEO", "AI Agent", "内容生成", "搜索引擎优化", "自动化"]
+tags: ["TypeScript", "SEO", "AI Agent", "自动化"]
 description: "SEOMachine 是一个开源的 SEO AI Agent，支持 Google 搜索竞争分析、SEO 优化内容生成、关键词研究、竞品分析和排名追踪。技术栈包括 TypeScript、AI 多提供商支持（OpenAI/Anthropic等）、多爬虫支持（Firecrawl/Crawl4AI/Playwright）等。"
 draft: false
 ---

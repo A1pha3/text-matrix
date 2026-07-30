@@ -5,7 +5,7 @@ slug: prompts-chat-open-source-ai-prompt-library
 description: "prompts.chat 是全球最大开源 AI 提示词库，原名 Awesome ChatGPT Prompts，GitHub 超 16 万 Star，曾被 Forbes 报道，支持 ChatGPT、Claude、Gemini 等多模型，含 CLI 工具与 MCP 服务器。"
 draft: false
 categories: ["技术笔记"]
-tags: ["ChatGPT", "Prompt Engineering", "开源", "AI提示词", "prompts.chat"]
+tags: ["ChatGPT", "Prompt Engineering", "开源"]
 ---
 
 # prompts.chat：全球最大开源 AI 提示词库完全指南

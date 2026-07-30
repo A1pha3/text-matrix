@@ -9,7 +9,7 @@ aliases:
 description: "RuView 是一个基于 WiFi CSI（信道状态信息）的空间智能平台，无需摄像头即可实现人体存在检测、呼吸心率监测、姿态估计和穿墙感知。本文深入解析其技术原理、架构设计、安装配置与主要应用场景。"
 draft: false
 categories: ["技术笔记"]
-tags: ["WiFi感知", "CSI", "ESP32", "Rust", "空间智能", "人体感知"]
+tags: ["Rust"]
 ---
 
 # WiFi 空间智能：RuView 如何用 WiFi 信号实现人体感知

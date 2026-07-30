@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-05-20
 description: "2026年5月20日经济财经早报，汇总过去24小时内全球市场、债市、汇市、大宗商品与重要财经新闻的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["美债", "美股", "美联储", "谷歌I/O", "地缘政治"]
+tags: ["美债", "美股", "美联储", "地缘政治"]
 hiddenFromHomePage: true
 ---
 

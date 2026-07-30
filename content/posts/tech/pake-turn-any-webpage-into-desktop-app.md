@@ -4,7 +4,7 @@ date: "2026-04-07T17:15:00+08:00"
 slug: pake-turn-any-webpage-into-desktop-app
 description: "深度解析Pake项目：如何用Rust Tauri实现轻量级桌面应用打包，支持macOS/Windows/Linux，比Electron小20倍，一行命令将任何网页变成原生应用。"
 categories: ["技术笔记"]
-tags: ["Tauri", "Rust", "桌面应用", "Electron替代", "跨平台"]
+tags: ["Tauri", "Rust", "桌面应用", "跨平台"]
 draft: false
 ---
 

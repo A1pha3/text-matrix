@@ -5,7 +5,7 @@ slug: "magic-trace-janestreet-high-resolution-tracing"
 description: "从 Intel PT 硬件原理、环形缓冲区触发机制、FXT 解码流程到 Perfetto 可视化的完整链路，逐层拆解 magic-trace 如何在不插桩、不改代码的前提下，以 2%-10% 开销记录进程完整控制流。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OCaml", "性能分析", "动态追踪", "Intel PT", "调试工具", "开源项目深拆"]
+tags: ["OCaml", "性能分析", "调试工具", "开源项目深拆"]
 toc: true
 ---
 

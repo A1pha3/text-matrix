@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-13
 description: "2026年6月13日 AI 副业早报：过去 24h 内 V2EX 独立 FDE 在大阪做制造业 AI 落地项目、硅谷公司招 AI Infra 工程师、东八区远程、生物医药招 AI 应用工程师 35-70 万、AI 陪伴产品招远程岗位、ChatVault 上 Chrome Web Store、Hermes 开源 AI Agent 击败付费工具、llmjob LLM 选 GPU 工具、寻找 Go&Vue3 合伙人 50/50、用 AI 写中医自诊网站等共 9 条。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "FDE", "远程工作", "AI招聘", "开源Agent", "独立开发"]
+tags: ["AI副业", "V2EX", "Reddit", "远程工作", "AI招聘", "独立开发"]
 hiddenFromHomePage: true
 ---
 

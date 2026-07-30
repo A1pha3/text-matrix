@@ -5,7 +5,7 @@ slug: quarkdown-markdown-superpowers-complete-guide
 description: "Quarkdown 是一个基于 Kotlin 的 Markdown 扩展语言，支持函数调用和 Turing-complete 扩展，可编译为书籍、论文、幻灯片、网站和知识库等多种格式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Kotlin", "Markdown", "文档工具", "编译器", "知识库"]
+tags: ["Kotlin", "Markdown", "编译器", "知识库"]
 ---
 
 

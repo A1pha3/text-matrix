@@ -5,7 +5,7 @@ draft: false
 hiddenFromHomePage: true
 description: "每日AI副业与独立开发资讯，涵盖搞钱项目、远程工作、技术接单"
 slug: ai-side-hustle-morning-2026-05-08
-tags: ["副业", "AI", "早报", "独立开发", "远程工作"]
+tags: ["副业", "早报", "独立开发", "远程工作"]
 categories: ["行业快讯"]
 ---
 

@@ -4,7 +4,7 @@ date: "2026-07-12T01:23:50+08:00"
 slug: google-doodles-holiday-collection-2026
 description: "Google Doodles 是首页 Logo 的一次性变更。28 年间它从两位创始人去火人节的请假条，演化为覆盖节日、人物、文化、科学的全球艺术档案。本文按节日维度梳理 Google Doodles 库中的节日涂鸦，并把每一类涂鸦背后的节日由来、涂鸦灵感、关键时间节点一一交代清楚。"
 categories: ["思考与随笔"]
-tags: ["Google", "Doodle", "涂鸦", "节日", "设计", "艺术", "互联网文化", "Logo"]
+tags: ["Google", "设计"]
 hiddenFromHomePage: false
 ---
 

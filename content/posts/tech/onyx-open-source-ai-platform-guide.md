@@ -5,7 +5,7 @@ slug: "onyx-open-source-ai-platform-guide"
 description: "Onyx 是一个开源 AI 平台，提供 RAG、Deep Research、自定义 Agent、代码执行等高级功能，支持所有主流 LLM 提供商。本文介绍其核心功能、架构设计和部署方式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI平台", "RAG", "Deep Research", "Agent", "开源"]
+tags: ["RAG", "AI Agent", "开源"]
 ---
 
 # Onyx：开源 AI 平台，让你的团队拥有自己的 ChatGPT

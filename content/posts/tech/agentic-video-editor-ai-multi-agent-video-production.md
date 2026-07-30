@@ -5,7 +5,7 @@ slug: "agentic-video-editor-ai-multi-agent-video-production"
 description: "一个获得 233 Stars 的开源项目，用多个 AI 智能体协同完成视频剪辑——从理解创意简报、选择镜头、优化剪辑点，到渲染成片和质量评审，全部自动化。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "视频剪辑", "多智能体", "Gemini", "FFmpeg", "Python", "LLM", "自动化生产"]
+tags: ["多智能体", "Gemini", "FFmpeg", "Python", "LLM"]
 ---
 
 # Agentic Video Editor：用多智能体架构重新定义视频剪辑

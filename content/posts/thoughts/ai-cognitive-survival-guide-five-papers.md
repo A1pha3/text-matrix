@@ -6,7 +6,7 @@ slug: ai-cognitive-survival-guide-five-papers
 description: "重新核对 MIT EEG 实验、微软 × 卡内基梅隆调查，以及三篇关于批判性思维、辩论和结构化反思的研究后，一个更稳的结论是：AI 最适合增强判断，不适合接管判断。"
 draft: false
 categories: ["思考与随笔"]
-tags: ["AI", "认知科学", "批判性思维", "人机协作", "认知债务", "认知卸载", "大模型", "AI使用", "微软", "MIT", "研究"]
+tags: ["LLM", "微软"]
 hiddenFromHomePage: false
 ---
 

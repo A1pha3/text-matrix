@@ -5,7 +5,7 @@ slug: "ecc-agentic-work-system-for-ai-agents"
 description: "ECC 是 Anthropic Hackathon 获奖项目，旨在打造一个 harness 原生的 AI Agent 操作系统。它不只是一堆配置，而是一套覆盖技能、本能反应、记忆优化、持续学习、安全扫描和研究驱动开发的完整系统，支持 Claude Code、Codex、Cursor 等 7 种主流 Agent。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "ECC", "Claude Code", "Cursor", "Agent工具链", "工作流自动化"]
+tags: ["AI Agent", "Claude Code", "Cursor", "工作流自动化"]
 ---
 
 # ECC：让 AI Agent 真正可用的 Agentic Work 系统

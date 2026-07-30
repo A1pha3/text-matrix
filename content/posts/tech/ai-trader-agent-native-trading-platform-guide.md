@@ -5,7 +5,7 @@ slug: ai-trader-agent-native-trading-platform-guide
 description: "HKUDS/AI-Trader 源码级解析：100% Fully-Automated Agent-Native Trading 平台的 Skill 协议设计、agent 零摩擦接入、与 OpenClaw 深度集成、Polymarket 集成。"
 draft: false
 categories: ["技术博客"]
-tags: ["ai-trader", "hkuds", "agent", "openclaw", "polymarket", "skill-protocol", "mcp-style"]
+tags: ["AI Agent", "OpenClaw", "Polymarket"]
 hiddenFromHomePage: true
 ---
 

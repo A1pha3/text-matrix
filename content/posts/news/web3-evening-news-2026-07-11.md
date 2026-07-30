@@ -5,7 +5,7 @@ slug: web3-evening-news-2026-07-11
 description: "7-10 20:00 ~ 7-11 20:00 24h 晚报窗口：Bonzo Lend 因 Supra 预言机漏洞被攻击 900 万美元、美国住房法案含 CBDC 禁令将于 7-12 自动成法、IMF 工作论文警示稳定币在固定汇率制下可能放大货币挤兑、Coinbase Premium 反弹带动 BTC 重回 $64K、五名民主党参议员要求就特朗普加密持仓召开听证会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "稳定币", "CBDC", "Bonzo", "IMF", "BTC", "ETH", "Chainlink"]
+tags: ["Web3", "稳定币", "BTC", "ETH"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: "gtweak-windows-optimizer"
 description: "GTweak 是由 Greedeks 开发的一款开源 Windows 系统优化工具，聚合了 HWID/KMS 激活、系统去臃肿、隐私关闭、服务管理等功能，支持 13 种语言，适合需要快速部署理想 Windows 环境的用户。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Windows", "系统优化", "去臃肿", "激活工具", "开源"]
+tags: ["Windows", "系统优化", "开源"]
 ---
 
 ## 快速信息卡

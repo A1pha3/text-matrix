@@ -5,7 +5,7 @@ slug: spook-home-assistant-toolbox
 description: "Spook 是 Home Assistant 社区最受欢迎的自定义集成之一，通过标签管理、楼层管理、集成管理、设备/实体管理增强，以及对 20+ 内置集成的修复检测增强，为 Home Assistant 添加了一套完整的问题诊断、配置管理和自动化增强工具。当前版本 v4.0.1，GitHub 1115 Stars。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Home Assistant", "Spook", "智能家居", "HACS", "自动化", "Home Assistant集成增强"]
+tags: ["Home Assistant", "智能家居", "自动化"]
 hiddenFromHomePage: true
 ---
 

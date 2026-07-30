@@ -5,7 +5,7 @@ slug: "ai-side-hustle-morning-2026-05-05"
 description: "汇总5月5日AI副业领域的最新机会与实战案例，涵盖AI代码优化外包、数据清洗众包、海外TikTok运营等兼职机会，以及Instagram变现32万、一人AI团队达成10万ARR等真实赚钱路径。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "代码优化", "Instagram变现", "AI外包", "TikTok运营", "独立开发"]
+tags: ["AI副业", "独立开发"]
 hiddenFromHomePage: true
 ---
 

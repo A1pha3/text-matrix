@@ -5,7 +5,7 @@ slug: "photogimp-gimp-photoshop-layout-patch"
 description: "PhotoGIMP 是一个免费的社区驱动补丁，将 GIMP 3.0 打造成接近 Adobe Photoshop 的界面布局和操作体验。本文详细介绍了其功能特性、安装步骤和适用场景，适合从 Photoshop 转向 GIMP 的用户快速上手。"
 draft: false
 categories: ["技术笔记"]
-tags: ["GIMP", "Photoshop", "开源", "图像处理", "UI定制", "Linux"]
+tags: ["开源", "图像处理", "Linux"]
 ---
 
 # PhotoGIMP：让 GIMP 秒变 Photoshop 的开源补丁

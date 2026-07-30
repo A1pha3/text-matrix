@@ -5,7 +5,7 @@ slug: "karakeep-self-hosted-bookmark-ai-tag-guide"
 description: "Karakeep（前身 Hoarder）是一个自托管、开源的书签 + 笔记 + 高亮 + 全文搜索 + AI 自动打标签的「数字囤积者」工具。支持 Chrome/Firefox/Safari 扩展、iOS/Android app、CLI + Agent Skills、与 RSS 自动归档、monolith 整页存档、yt-dlp 视频存档。NextJS + Drizzle + tRPC + Meilisearch 栈，AGPL-3.0。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Self-Hosted", "Bookmark Manager", "AI Tagging", "Agent Skills", "Karakeep"]
+tags: ["Agent Skills"]
 ---
 
 # Karakeep：给"数字囤积者"的自托管书签 + AI 工具

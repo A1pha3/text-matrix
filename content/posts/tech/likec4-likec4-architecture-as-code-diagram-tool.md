@@ -3,7 +3,7 @@ title: "LikeC4：用代码绘制永远最新的架构图"
 date: 2026-07-24T03:08:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["Architecture", "C4 Model", "Diagram", "DSL", "DevTools"]
+tags: ["diagram"]
 description: "一个受 C4 模型启发的架构即代码工具，用 DSL 描述系统结构并自动生成实时同步的可视化图表，支持自定义 нотации和任意嵌套层级。"
 ---
 

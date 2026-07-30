@@ -5,7 +5,7 @@ slug: "kilo-org-kilocode-coding-agent-guide"
 description: "Kilo-Org/kilocode 是开源 AI 编码 Agent，覆盖 VS Code / JetBrains / CLI / Cloud Agent / KiloClaw 五大入口，500+ 模型 mid-task 切换、零加价按 provider 计费、自带 MCP 市场。"
 draft: false
 categories: ["技术笔记"]
-tags: ["KiloCode", "AI编码Agent", "MCP", "VSCode", "JetBrains", "CLI", "CodeAgent"]
+tags: ["MCP", "VS Code", "CLI"]
 ---
 
 # Kilo Code 全平台编码 Agent：500+ 模型切换、Open Pricing 与 MCP 生态

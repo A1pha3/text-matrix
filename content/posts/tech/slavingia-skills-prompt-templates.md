@@ -5,7 +5,7 @@ slug: slavingia-skills-prompt-templates
 description: "整理一套可直接复制到 Claude Code 的 Minimalist Entrepreneur Skills Prompt 模板，覆盖找社区、验证、MVP、流程化、定价、首批客户与经营复盘。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Prompt", "Skill", "创业", "模板"]
+tags: ["Claude Code", "Skill", "创业"]
 ---
 
 > 前置知识：[Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统]({{< relref "ai-agent/slavingia-skills-minimalist-entrepreneur.md" >}}) ⭐⭐⭐ | [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "slavingia-skills-real-startup-case.md" >}}) ⭐⭐⭐⭐

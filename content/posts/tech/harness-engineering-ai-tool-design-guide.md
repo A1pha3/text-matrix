@@ -4,7 +4,7 @@ slug: "harness-engineering-ai-tool-design-guide"
 date: "2026-04-08T20:25:00+08:00"
 lastmod: 2026-04-08T20:25:00+08:00
 categories: ["技术笔记"]
-tags: ["AI", "Harness", "方法论", "Agent", "工作流", "提示词", "经验工程"]
+tags: ["Harness", "方法论", "AI Agent", "工作流", "提示词"]
 description: "Harness Engineering 是方法论级实战手册，7个深度案例拆解（OpenAI Codex、Stripe、Kent Beck等），回答核心问题：AI能写代码之后，人的核心能力是什么？"
 draft: false
 ---

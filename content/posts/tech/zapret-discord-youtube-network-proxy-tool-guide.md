@@ -5,7 +5,7 @@ slug: "zapret-discord-youtube-windows-dpi-bypass-guide"
 description: "zapret-discord-youtube 是一款专为 Windows 平台打造的 DPI（深度包检测）穿透工具，聚焦解决 Discord 语音聊天与 YouTube 访问受限问题。本文从 DPI 工作原理出发，深入解析 nfqws/winws 的多策略去同步（DPI Desync）机制，涵盖 general*.bat 策略体系、service.bat 服务管理、游戏过滤器与 IPSet 过滤器的架构设计，并提供从安装配置、实战调试到自定义策略开发的完整路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["DPI", "Windows", "Discord", "YouTube", "网络代理", "zapret", "WinDivert"]
+tags: ["Windows", "Discord", "YouTube"]
 ---
 
 # Windows 环境下 Discord 与 YouTube 的 DPI 穿透工具：从原理到实战的完整指南

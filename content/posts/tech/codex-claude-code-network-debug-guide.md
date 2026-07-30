@@ -5,7 +5,7 @@ slug: "codex-claude-code-network-debug-guide"
 description: "本文详细介绍两种让 Codex/Claude Code 获取浏览器网络请求数据的方法：HAR 文件导出和 Chrome 插件实时抓包，涵盖操作步骤、适用场景和进阶技巧。包括学习目标、练习与自测。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Codex", "Claude Code", "Chrome DevTools", "网络调试", "HAR"]
+tags: ["Codex", "Claude Code", "Chrome DevTools"]
 ---
 
 # Codex 调试网络请求：HAR 导出与 Chrome 插件实战

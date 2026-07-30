@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-05
 description: "2026年6月5日 AI 新闻早报,精选过去 24 小时内值得关注的模型研究、具身智能融资、企业 AI 战略与监管动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "具身智能", "Anthropic", "融资", "监管"]
+tags: ["具身智能", "Anthropic", "融资", "监管"]
 hiddenFromHomePage: true
 ---
 

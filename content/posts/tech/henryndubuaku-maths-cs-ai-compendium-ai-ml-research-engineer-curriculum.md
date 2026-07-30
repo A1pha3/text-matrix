@@ -4,7 +4,7 @@ date: 2026-07-18T03:08:50+08:00
 lastmod: 2026-07-18T03:08:50+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["AI/ML", "Curriculum", "学习路径", "Maths", "Compendium"]
+tags: []
 description: "maths-cs-ai-compendium 是 Henry Ndubuaku 维护的 AI/ML 研究工程师 textbook,18 章覆盖向量到 ML Systems Design,Apache-2.0 协议,6527 stars,自带 MCP Server。"
 weight: 1
 slug: "henryndubuaku-maths-cs-ai-compendium-ai-ml-research-engineer-curriculum"

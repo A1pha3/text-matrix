@@ -4,7 +4,7 @@ date: "2026-04-25T11:35:00+08:00"
 slug: ml-intern-huggingface-autonomous-ml-agent
 description: "深入解析 HuggingFace ml-intern 项目：基于 smolagents 的自主 AI 工程师，能读论文、写代码、训模型。详细剖析其架构设计、Agent 循环、工具路由、Doom Loop 检测等核心机制，并给出采用建议。"
 categories: ["技术笔记"]
-tags: ["AI", "HuggingFace", "Agent", "机器学习", "开源"]
+tags: ["Hugging Face", "AI Agent", "机器学习", "开源"]
 draft: false
 ---
 

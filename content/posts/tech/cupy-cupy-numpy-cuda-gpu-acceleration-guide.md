@@ -5,7 +5,7 @@ slug: "cupy-cupy-numpy-cuda-gpu-acceleration-guide"
 description: "CuPy 解决的不是「让 NumPy 跑得快」，而是用多后端抽象、NVRTC 即时编译与厂商库绑定，把 NumPy/SciPy 生态完整搬到 GPU 上。本文拆解它的分层、任务流与采用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CuPy", "CUDA", "NumPy", "GPU计算", "科学计算"]
+tags: ["CUDA"]
 ---
 
 ## 开场判断

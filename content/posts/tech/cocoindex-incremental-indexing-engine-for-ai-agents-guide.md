@@ -7,7 +7,7 @@ aliases:
 description: "CocoIndex 是一个开源 Python 框架，把 RAG 系统的全量重新索引默认操作改成只同步 Δ，让运维成本从 O(全量) 降到 O(变化量)。代码变更、文档更新、Slack 新消息涌入后，AI Agent 都能拿到持续新鲜的数据。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CocoIndex", "AI Agent", "增量索引", "RAG", "向量搜索", "Python"]
+tags: ["AI Agent", "RAG", "向量搜索", "Python"]
 ---
 
 # CocoIndex：为 AI Agent 打造的增量索引引擎

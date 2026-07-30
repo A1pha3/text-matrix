@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-06-27
 description: "2026年6月27日经济财经早报，覆盖本周美股 AI 交易大退潮、纳指五连跌、黄金跌破4000美元、霍尔木兹海峡货船遇袭美军空袭伊朗、软银单日暴跌13%、韩国 KOSPI 杠杆ETF压力等过去 24 小时关键市场与地缘变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "美股", "黄金", "霍尔木兹", "AI交易"]
+tags: ["财经", "美股", "黄金", "霍尔木兹"]
 hiddenFromHomePage: true
 ---
 

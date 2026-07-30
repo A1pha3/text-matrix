@@ -5,7 +5,7 @@ slug: "zerolang-vercel-ai-first-programming-language"
 description: "zerolang 是 Vercel Labs 推出的实验性编程语言，以「Agent 优先」为核心理念：让 AI 智能体能够边学边用、即时调试、结构化输出，构建一个不依赖外部依赖栈的标准库生态。本文详解其设计哲学、核心语法与快速上手路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "编程语言", "Vercel", "Agent", "C语言"]
+tags: ["编程语言", "Vercel", "AI Agent", "C语言"]
 ---
 
 

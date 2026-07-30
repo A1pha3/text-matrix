@@ -2,7 +2,7 @@
 title: "Kimi CLI：MoonshotAI 给终端 Agent 的另一种答案，ACP + Shell Mode + MCP"
 date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
-tags: ["agent", "cli", "kimi", "acp", "mcp"]
+tags: ["AI Agent", "CLI", "Kimi", "MCP"]
 description: "Kimi CLI 是 MoonshotAI 推出的终端 AI Agent，主打 Shell Mode（Ctrl-X 切到 shell）、ACP 协议接入 IDE、MCP 工具管理三大特性。它正在演进为 Kimi Code CLI，但所有现有安装与文档继续可用。"
 ---
 

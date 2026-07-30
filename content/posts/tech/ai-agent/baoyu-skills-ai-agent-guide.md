@@ -5,7 +5,7 @@ aliases:
   - /posts/tech/baoyu-skills-ai-agent-guide/
 date: "2026-03-31T15:45:00+08:00"
 categories: ["技术笔记"]
-tags: ["baoyu-skills", "AI Agent", "Claude Code", "OpenCode", "深度研究", "市场分析", "金融数据"]
+tags: ["AI Agent", "Claude Code", "OpenCode", "金融数据"]
 description: "全面解析 baoyu-skills (1.8k Stars)：AI Coding Agent 技能套件，包含深度研究、金融数据、市场分析、LinkedIn/X优化等7大技能。"
 ---
 

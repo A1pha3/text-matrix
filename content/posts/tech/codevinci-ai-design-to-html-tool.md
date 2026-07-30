@@ -5,7 +5,7 @@ slug: "codevinci-ai-design-to-html-tool"
 description: "CodeVinci是一款本地运行的设计稿转网页工具，支持在画布上绘制或导入设计稿，通过视觉大模型生成HTML，并实现语音驱动的高效修改与实时预览。文章深入解析其架构设计、增量更新机制与语音交互模式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI前端开发", "设计稿转代码", "Vision LLM", "语音交互", "增量更新", "React", "Fabric.js"]
+tags: ["React"]
 hiddenFromHomePage: false
 ---
 

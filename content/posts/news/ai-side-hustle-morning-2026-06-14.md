@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-14
 description: "2026年6月14日 AI 副业早报：过去 24h 内 V2EX 德国上海 AI Platform Engineer、远程后端 20-35K、恒生 iOS 外包建议、TD Synnex 招聘、荷兰中级后端、Crypto 远程英语客服；Reddit 独立全栈接单、开源 AWS 事故排查 agent、macOS 屏幕感知 AI 代理 Blink。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "远程工作", "独立开发", "AI招聘", "AI Agent", "独立工程师"]
+tags: ["AI副业", "V2EX", "Reddit", "远程工作", "独立开发", "AI招聘", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

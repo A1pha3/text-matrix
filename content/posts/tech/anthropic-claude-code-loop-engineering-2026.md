@@ -5,7 +5,7 @@ slug: "anthropic-claude-code-loop-engineering-2026"
 description: "2026 年 7 月 11 日，precis0x 在 X 上转发了一条消息：Anthropic 推出了一门关于 loop engineering 的免费课，搭配 Claude (Fable) 5 / Claude Code，把 Claude 终端编码工具的内部机制讲透。本文以 6 段大纲（Claude Code 内部如何工作 / agentic loop / 99% 开发者忽略的功能 / 声音胜于写作 / Draft PR / 非代码工作）为骨架，逐项拆开 Anthropic 官方文档与 claude-code 仓库的真实内容：agentic loop 三阶段（gather context / take action / verify results）、5 类内置工具 + 4 类扩展（Skills / MCP / Hooks / Sub-agents）、PreToolUse/PostToolUse 等 27 个 hook 事件、Explore/Plan 内置 sub-agent 的设计取舍，并补一段对独立项目作者可复用的工程经验。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Anthropic", "Claude Code", "Fable 5", "Agentic Loop", "Hooks", "Sub-agents", "MCP", "Skills", "Loop Engineering", "AI Coding Agent"]
+tags: ["Anthropic", "Claude Code", "Fable5", "Hooks", "MCP", "Skills", "AI Coding Agent"]
 hiddenFromHomePage: false
 ---
 

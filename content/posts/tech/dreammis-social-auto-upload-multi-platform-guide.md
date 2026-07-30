@@ -6,7 +6,7 @@ description: "从 CLI 入口设计、平台实现差异、账号管理机制到 
 summary: "7 平台是覆盖面，4 平台 CLI 主线才是当前最稳的部分。先把抖音、快手、小红书、Bilibili 跑顺，再考虑视频号、百家号、TikTok。"
 draft: false
 categories: ["技术笔记"]
-tags: ["自动化工具", "社交媒体", "视频上传", "Python", "AI Agent", "Browser Automation", "开源项目深拆"]
+tags: ["社交媒体", "Python", "AI Agent", "开源项目深拆"]
 toc: true
 ---
 

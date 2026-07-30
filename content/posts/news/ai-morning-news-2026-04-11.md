@@ -4,7 +4,7 @@ slug: ai-morning-news-2026-04-11
 description: "每日AI新闻早报，涵盖国内外AI领域最新动态。"
 date: "2026-04-11T08:00:00+08:00"
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "机器人", "Claude", "Hermes Agent"]
+tags: ["LLM", "机器人", "Claude", "Hermes Agent"]
 hiddenFromHomePage: true
 draft: false
 ---

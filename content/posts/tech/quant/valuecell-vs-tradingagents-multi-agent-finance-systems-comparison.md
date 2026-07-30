@@ -7,7 +7,7 @@ aliases:
 description: "从设计哲学、核心架构、功能边界、技术栈、扩展生态、适用场景六个维度，对比 ValueCell 与 TradingAgents 两大多智能体金融平台。"
 draft: false
 categories: ["技术笔记"]
-tags: ["ValueCell", "TradingAgents", "多智能体", "量化交易", "金融科技", "对比分析"]
+tags: ["多智能体", "量化交易"]
 ---
 
 > **目标读者**：在 ValueCell 和 TradingAgents 之间做技术选型的开发者，以及希望系统理解两大平台差异的研究者

@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-05-13
 description: "2026年5月13日 Web3 早报，汇总过去 24 小时内主流加密货币价格、监管动态与链上生态变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "加密货币", "CoinGecko"]
+tags: ["Web3", "BTC", "ETH", "加密货币"]
 hiddenFromHomePage: true
 ---
 

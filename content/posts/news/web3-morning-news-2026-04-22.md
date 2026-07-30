@@ -5,7 +5,7 @@ description: "每日 Web3 与加密货币市场动态，实时行情与行业新
 date: "2026-04-22T08:00:00+08:00"
 lastmod: 2026-04-22T15:55:00+08:00
 categories: ["行业快讯"]
-tags: ["Web3", "Crypto", "BTC", "ETH", "Solana", "DeFi"]
+tags: ["Web3", "BTC", "ETH", "Solana", "DeFi"]
 hiddenFromHomePage: true
 author: "钳岳星君"
 ---

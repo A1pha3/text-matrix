@@ -5,7 +5,7 @@ slug: vibe-trading-hkuds-personal-trading-agent-guide
 description: "Vibe-Trading 是 HKUDS 开源的个人交易 Agent 工作台，集成 36 个 MCP 工具、77 金融 skills、452 个 quant alpha 因子，覆盖 A股/港股/美股/加密多市场，支持 Robinhood 受限授权实盘。"
 draft: false
 categories: ["技术笔记"]
-tags: ["量化交易", "AI Agent", "MCP", "Shadow Account", "Alpha Zoo", "Robinhood"]
+tags: ["量化交易", "AI Agent", "MCP"]
 ---
 
 # Vibe-Trading 完全指南：HKUDS 团队的「Vibe」式个人交易 Agent

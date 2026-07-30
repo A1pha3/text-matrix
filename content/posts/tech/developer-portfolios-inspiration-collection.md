@@ -5,7 +5,7 @@ slug: "developer-portfolios-inspiration-collection"
 description: "Developer Portfolios 是一个收录了 1684 个开发者个人网站作品集的灵感合集，按字母表从 A 到 Z 排列，涵盖软件工程师、前端、后端、全栈、AI/ML 等多个方向。本文解析该仓库的组织结构、收录标准、以及如何利用它来设计自己的开发者作品集。"
 draft: false
 categories: ["技术笔记"]
-tags: ["开发者作品集", "个人网站", "前端", "作品集灵感", "Web 开发"]
+tags: ["前端", "Web开发"]
 ---
 
 ## 学习目标

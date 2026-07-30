@@ -5,7 +5,7 @@ date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["C++", "abseil", "google", "开源库", "系统编程"]
+tags: ["C++", "Google"]
 description: "Abseil 是 Google 从自身 C++ 代码库中提炼出的通用组件集合，目标是在 C++ 标准库尚不完善时填补空白，并最终将成熟部分推进 C++ 标准。本文拆解其模块切分、设计哲学、与 Boost/标准库的关系以及在生产工程中的取舍。"
 ---
 

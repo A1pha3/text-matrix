@@ -7,7 +7,7 @@ aliases:
     - "/posts/tech/agentmemory-persistent-memory-ai-coding-agents/"
 description: "基于 agentmemory 官方 README 与 benchmark，系统解析其四层记忆架构、MCP 接入方式、iii 运行时、Claude Code 与 Cursor 集成，以及真实落地边界。"
 categories: ["技术笔记"]
-tags: ["AI Agent", "MCP", "Claude Code", "Cursor", "agentmemory"]
+tags: ["AI Agent", "MCP", "Claude Code", "Cursor"]
 ---
 
 > **目标读者**：已经在使用 Claude Code、Cursor、Gemini CLI、Codex CLI 等 AI 编程 Agent，并且切身感受过"每开一个新会话就要重新解释项目"的开发者。

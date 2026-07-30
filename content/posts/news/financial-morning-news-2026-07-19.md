@@ -5,7 +5,7 @@ slug: financial-morning-news-2026-07-19
 description: "2026年7月19日经济财经早报，汇总过去24小时美股/A股/港股、大宗商品与中东地缘冲突关键变化：美伊第八轮空袭推升油价破84美元、费半周跌10%入熊、苹果短暂超英伟达、Meta洽谈100亿美元租算力给Anthropic。"
 draft: false
 categories: ["行业快讯"]
-tags: ["财经", "早报", "美股", "中东", "油价"]
+tags: ["财经", "早报", "美股", "油价"]
 hiddenFromHomePage: true
 ---
 

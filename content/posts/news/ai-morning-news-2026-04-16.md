@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-04-16
 description: "2026年4月16日 AI 新闻早报，汇总过去 24 小时内模型发布、企业动态、技术进展与行业融资的关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "大模型", "OpenAI", "Anthropic", "行业动态"]
+tags: ["LLM", "OpenAI", "Anthropic", "行业动态"]
 hiddenFromHomePage: true
 ---
 

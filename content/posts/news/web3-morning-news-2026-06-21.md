@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-06-21
 description: "2026年6月21日 Web3 早报，BTC 站回 $64.2K 走出 Juneteenth 弱势、ETH 报 $1,737 / SOL 涨 4.8% 领涨主流币；Jaredfromsubway MEV Bot 反遭 $7.5M 攻击、Pudgy Penguins 借 Target 进军实体零售、菲律宾 SEC 表态拥抱 RWA 代币化、G7 将朝鲜加密盗窃纳入联合行动框架。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "MEV", "监管"]
+tags: ["Web3", "BTC", "ETH", "监管"]
 hiddenFromHomePage: true
 ---
 

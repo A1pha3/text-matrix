@@ -5,7 +5,7 @@ slug: supermemory-ai-memory-context-engine
 aliases:
   - /posts/tech/supermemory-ai-memory-context-engine/
 categories: ["技术笔记"]
-tags: ["Supermemory", "AI记忆", "RAG", "上下文管理", "智能体", "向量数据库"]
+tags: ["AI记忆", "RAG", "智能体", "向量数据库"]
 description: "Supermemory 在 LongMemEval/LoCoMo/ConvoMem 三大 AI 记忆基准测试中全部排名第一。本文拆解其 Memory Engine、User Profiles、Hybrid Search 的工作机制，并给出 API 用法和框架集成方案。"
 ---
 

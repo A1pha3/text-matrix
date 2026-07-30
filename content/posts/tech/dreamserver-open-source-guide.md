@@ -5,7 +5,7 @@ slug: "dreamserver-local-ai-stack-guide"
 description: "DreamServer 是 Light-Heart-Labs 开源的全栈本地 AI 解决方案，一条命令自动检测 GPU、选择模型、启动十余个服务（LLM推理、聊天、语音、Agent、工作流、RAG、图片生成），无需云端、无需订阅。本文深入解析其架构、核心机制、安装与使用。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "开源", "本地部署", "LLM", "Docker", "RAG", "语音AI", "n8n"]
+tags: ["开源", "本地部署", "LLM", "Docker", "RAG", "语音AI", "n8n"]
 ---
 
 ## 0. 学习目标

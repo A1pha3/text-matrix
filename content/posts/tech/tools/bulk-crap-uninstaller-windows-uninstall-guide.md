@@ -5,7 +5,7 @@ aliases:
   - /posts/tech/bulk-crap-uninstaller-windows-uninstall-guide/
 date: "2026-03-31T14:25:00+08:00"
 categories: ["技术笔记"]
-tags: ["BCUninstaller", "Windows", "卸载工具", "批量卸载", "系统清理"]
+tags: ["Windows"]
 description: "全面解析 Bulk Crap Uninstaller (BCU)：18.1k Stars 的免费开源 Windows 程序卸载器。支持 NSIS、InnoSetup、MSI、Steam、Windows Store Apps 等多种卸载系统，批量卸载、自动清理残留、检测孤儿应用。Apache-2.0 开源许可证。"
 ---
 

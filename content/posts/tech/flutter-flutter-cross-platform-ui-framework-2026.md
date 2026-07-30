@@ -5,7 +5,7 @@ slug: "flutter-flutter-cross-platform-ui-framework-2026"
 description: "flutter/flutter 是 Google 维护的跨平台 UI 框架（177k+ Stars，Dart 74% / C++ 16.5%，BSD-3-Clause，2015 年首次发布）。它和 React Native 的根本分歧是「自带渲染引擎 + 逐像素控制」vs「调用原生控件 + 桥接 JS」。本文拆开 Flutter 的分层架构（framework + engine + embedder）、Skia/Impeller 渲染管线的差异、Dart AOT/JIT 双模式、自带 widget 库（Material + Cupertino）、引擎源码从 flutter/engine 迁到 flutter/flutter/engine 的工程含义，并给出一份「跨平台优先 vs 深 OS 集成」的选型决策表。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Flutter", "Dart", "Skia", "Impeller", "跨平台", "AOT", "JIT", "Material", "Cupertino", "React Native", "Dart VM", "Embedder"]
+tags: ["Flutter", "跨平台"]
 hiddenFromHomePage: false
 ---
 

@@ -7,7 +7,7 @@ aliases:
 description: "CopilotKit 是面向 Agent 原生应用的全栈 SDK，覆盖 React/Angular/Vue/React Native 四大前端框架，AG-UI 协议被 Google、LangChain、AWS、Microsoft、Mastra、PydanticAI 等联合采纳，Slack/Teams 通道与 Self-Learning CLHF 已进入早期访问。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CopilotKit", "AG-UI", "Agent", "Generative UI", "TypeScript"]
+tags: ["AI Agent", "TypeScript"]
 ---
 
 # CopilotKit：32.7K Stars 的 Agent 原生前端框架，AG-UI 协议背后的 UI 层

@@ -5,7 +5,7 @@ slug: "tensorlogic-ai-unified-reasoning-guide"
 description: "TensorLogic 是基于 Pedro Domingos 论文的 Python 实现，通过 Tensor 方程统一神经推理和符号推理。Boolean 模式零幻觉、RESCAL 自动谓词发明、Transformer/RNN 全部用 Tensor 方程表达，FB15k-237 MRR 0.347 超越 LibKGE 参考实现。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TensorLogic", "神经符号推理", "知识图谱", "RESCAL", "Transformer"]
+tags: ["知识图谱", "Transformer"]
 ---
 
 # TensorLogic：Pedro Domingos 论文实现·神经符号统一推理框架·FB15k-237 基准 MRR 0.347

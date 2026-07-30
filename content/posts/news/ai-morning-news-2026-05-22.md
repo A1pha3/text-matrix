@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-22
 description: "2026年5月22日 AI 新闻早报，汇总过去 24 小时内模型突破、企业融资、IPO动态与行业应用的关键进展。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "OpenAI", "Anthropic", "大模型", "具身智能", "IPO"]
+tags: ["OpenAI", "Anthropic", "LLM", "具身智能", "IPO"]
 hiddenFromHomePage: true
 ---
 

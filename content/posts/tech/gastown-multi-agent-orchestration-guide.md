@@ -5,7 +5,7 @@ slug: "gastown-multi-agent-orchestration-guide"
 description: "Gas Town（gastownhall/gastown，16.6k stars / MIT，Go）是一个面向 Claude Code、Copilot、Codex、Gemini 等 AI 编程代理的多 agent 工作空间管理器：用 git-backed Hooks 持久化 agent 状态、用 Beads ledger 持久化 work item、用 Mayor+Rig+Polecat 三层抽象管理 20–30 个并行 agent。本文拆解其架构、角色分工与上下文保留机制。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Multi-Agent", "AI Agent", "Claude Code", "Git Worktree", "Go"]
+tags: ["Multi-Agent", "AI Agent", "Claude Code", "Go"]
 ---
 
 # Gas Town：让 Claude Code 真正能并行协作

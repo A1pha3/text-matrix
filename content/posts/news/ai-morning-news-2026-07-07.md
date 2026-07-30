@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-07
 description: "2026年7月7日 AI 新闻早报，覆盖 7 月 6 日 ICML 2026 公布 10 篇获奖论文含清华阿里 dLLM 杰出论文、腾讯混元 3 正式版总参 295B 激活 21B、字节 Seedance 进入好莱坞长片工作流、大厂集中整合 AI 入口告别赛马、Karpathy 解读 Agent 性能差距在 Harness 而非模型、Meta 推出 Meta Compute 卖 GPU 算力、Martin Alderson 论 GLM 5.2 引发 AI 利润率塌缩。"
 draft: false
 categories: ["行业快讯"]
-tags: ["ICML", "腾讯混元", "Seedance", "Agent Harness", "Meta Compute", "GLM"]
+tags: ["Seedance", "Agent Harness"]
 hiddenFromHomePage: true
 ---
 

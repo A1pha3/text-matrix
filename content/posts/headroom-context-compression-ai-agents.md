@@ -5,7 +5,7 @@ slug: "headroom-context-compression-ai-agents"
 description: "从 ContentRouter 的内容类型分发、SmartCrusher/CodeCompressor/Kompress-base 三种压缩器选型逻辑、CacheAligner 稳定前缀提高 KV cache 命中率到 CCR（Content-Code Reversible）可逆压缩存储策略，逐层拆解 Headroom 的工程取舍——为什么它把压缩层做成可插拔的 proxy、library、MCP 三种接入形态。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Token 优化", "上下文压缩", "MCP", "开源项目深拆", "LLM"]
+tags: ["AI Agent", "Token 优化", "MCP", "开源项目深拆", "LLM"]
 toc: true
 ---
 

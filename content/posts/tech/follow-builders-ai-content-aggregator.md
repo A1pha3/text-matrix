@@ -5,7 +5,7 @@ slug: "follow-builders-ai-content-aggregator"
 description: "深入解读 Follow Builders 项目，一个 AI 驱动的信息聚合工具，追踪 AI 领域顶尖研究员、创始人、产品经理和工程师的最新动态，整理成易于消化的摘要推送。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI 资讯", "信息聚合", "OpenClaw", "SKILL", "Twitter"]
+tags: ["OpenClaw", "Skill"]
 ---
 
 # Follow Builders：追踪 AI 建造者的信息聚合工具

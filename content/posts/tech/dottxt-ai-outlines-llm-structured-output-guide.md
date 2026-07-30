@@ -3,7 +3,7 @@ title: "Outlines：让 LLM 输出 100% 符合结构约束的推理控制库"
 date: 2026-07-23T02:55:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "结构化输出", "Pydantic", "推理控制"]
+tags: ["LLM", "结构化输出", "Pydantic"]
 description: "Outlines 是一个 LLM 结构化生成库，通过在推理过程中直接约束模型输出，保证生成的 JSON、类型或语法永远合法。"
 ---
 

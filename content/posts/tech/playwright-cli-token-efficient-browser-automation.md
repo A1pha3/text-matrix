@@ -5,7 +5,7 @@ slug: "playwright-cli-token-efficient-browser-automation"
 description: "Microsoft出品的Playwright CLI专为coding agents设计，主打Token高效。CLI模式相比MCP节省上下文窗口，83K Stars。核心功能：snapshot、click、type、storage管理、sessions隔离。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Playwright", "浏览器自动化", "CLI", "AI", "Coding Agent", "TypeScript"]
+tags: ["Playwright", "浏览器自动化", "CLI", "Coding Agent", "TypeScript"]
 ---
 
 # Playwright CLI：Microsoft 出品的 Token 高效浏览器自动化利器——8.3K Stars 的 AI Coding Agent 首选

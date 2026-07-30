@@ -7,7 +7,7 @@ aliases:
 description: "AI-DLC（AI-Driven Development Life Cycle）是 AWS Labs 推出的自适应编码工作流规范，通过结构化的三阶段流程引导 AI 编码助手遵循开发流程规范。它不是工具，而是一套可以在 Kiro、Amazon Q、Cursor、Cline、Claude Code 等主流 IDE 中使用的「方向盘规则」。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AWS", "AI编码", "工作流", "Claude Code", "Cursor"]
+tags: ["AWS", "工作流", "Claude Code", "Cursor"]
 ---
 
 ## 快速信息卡

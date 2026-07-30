@@ -6,7 +6,7 @@ draft: false
 slug: "ansible-ansible-it-automation-today-trending-guide"
 description: "Ansible 主仓库今日再登 GitHub Trending，单日 +50 Stars。本文拆解 Ansible Core 2.18 主线：execution environment 默认化、Jinja 沙箱改进、collections 治理、AWS SDK 迁移，以及今天该不该用 Ansible 的判断。"
 categories: ["技术笔记"]
-tags: ["Ansible", "IT自动化", "DevOps", "Python", "配置管理"]
+tags: ["DevOps", "Python"]
 author: "text-matrix"
 ---
 

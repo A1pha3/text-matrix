@@ -4,7 +4,7 @@ slug: "rowboat-ai-knowledge-graph-coworker-guide"
 description: "深入解析Rowboat——11.5k Stars的开源AI同事工具，将邮件、会议、工作笔记自动转为Obsidian兼容的Markdown知识图谱，本地优先，隐私安全。"
 date: "2026-04-11T00:00:00+08:00"
 categories: ["技术笔记"]
-tags: ["AI", "知识图谱", "Obsidian", "LLM", "Gmail", "Claude", "RAG", "本地优先"]
+tags: ["知识图谱", "Obsidian", "LLM", "Claude", "RAG", "本地优先"]
 ---
 
 # Rowboat 完全指南：将工作转为知识图谱的 AI 同事

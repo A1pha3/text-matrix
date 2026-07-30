@@ -5,7 +5,7 @@ slug: "aitoearn-ai-content-marketing-platform-guide"
 description: "AiToEarn 把 AI 创作、多平台分发、评论互动和商单变现放进同一套内容营销流程里。本文基于官网和 README，拆清四大 Agent、5 种接入路径、MCP 集成、自部署边界，以及它更适合什么样的一人公司与内容团队。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AiToEarn", "AI 营销", "内容变现", "MCP", "OpenClaw", "一人公司"]
+tags: ["MCP", "OpenClaw"]
 toc: true
 ---
 

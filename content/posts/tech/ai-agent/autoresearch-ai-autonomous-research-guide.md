@@ -4,7 +4,7 @@ slug: "autoresearch-ai-autonomous-research-guide"
 aliases: ["/posts/tech/autoresearch-ai-autonomous-research-guide/"]
 date: "2026-03-31T15:05:00+08:00"
 categories: ["技术笔记"]
-tags: ["AutoResearch", "AI Agent", "LLM 训练", "自主研究", "Karpathy", "nanochat", "PyTorch"]
+tags: ["AutoResearch", "AI Agent", "LLM训练", "Karpathy", "PyTorch"]
 description: "AutoResearch 把单 GPU 训练、固定 5 分钟预算和 AI Agent 可审查修改面拼成一个可连续跑通宵的研究闭环。本文基于 README、program.md、prepare.py 与 train.py 逐行拆解它为什么成立、适合谁、哪里不该高估。"
 ---
 

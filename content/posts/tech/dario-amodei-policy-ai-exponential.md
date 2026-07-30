@@ -6,7 +6,7 @@ description: "Anthropic 联合创始人兼 CEO Dario Amodei 于 2026 年 6 月�
 summary: "Dario Amodei 的核心判断是：AI 能力正进入 1-2 年级别的跃迁窗口，政策仍按多年周期运转。Anthropic 因此把 2023-2025 年的透明度路线推进到强制测试、独立评估、政府阻止危险部署、经济冲击预案和民主国家供应链联盟。文章同时补入来源边界、政策流转案例、中国语境对照和几处容易读偏的争议点。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI", "Anthropic", "DarioAmodei", "AI政策", "AI监管", "PowerfulAI", "ProjectGlasswing", "前沿模型", "AI安全", "AI经济", "递归自我改进", "RSI"]
+tags: ["Anthropic", "Dario Amodei", "AI监管", "AI安全", "递归自我改进", "RSI"]
 ---
 
 > **难度**：⭐⭐⭐⭐⭐ | **类型**：技术政策深读 | **更新日期**：2026-06-12 | **预计阅读时间**：35-45 分钟

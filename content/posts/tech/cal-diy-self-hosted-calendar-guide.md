@@ -5,7 +5,7 @@ slug: "cal-diy-self-hosted-calendar-guide"
 description: "Cal.diy 是 Cal.com 的开源社区分支，移除所有企业功能后完全 MIT 授权。本文解析其架构设计、本地开发环境搭建、Docker 部署流程及与 Cal.com 的核心差异，帮助个人开发者和小型团队快速部署私有调度系统。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Cal.diy", "Cal.com", "开源日历", "自托管", "Next.js", "tRPC", "Docker部署", "调度系统"]
+tags: ["自托管", "Next.js"]
 ---
 
 ## 学习目标

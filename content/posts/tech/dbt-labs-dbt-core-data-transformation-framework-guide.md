@@ -5,7 +5,7 @@ slug: "dbt-labs-dbt-core-data-transformation-framework-guide"
 description: "dbt-core 是 dbt-labs 维护的开源数据转换框架，把 SELECT 语句 + Jinja 模板组织成可追溯、可测试、可版本化的 dbt project；2026 年 main 分支切到 Rust 重写的 v2.0（Fusion 引擎），把 parse 与 compile 时间压缩到 v1 的零头，并产出 Parquet 格式的 manifest 工件。"
 draft: false
 categories: ["技术笔记"]
-tags: ["dbt", "ELT", "数据转换", "Rust", "Jinja"]
+tags: ["Rust"]
 ---
 
 ## 学习目标

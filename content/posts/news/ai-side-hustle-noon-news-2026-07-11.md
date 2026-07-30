@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-11
 description: "2026年7月11日 AI 副业午报，汇总过去 24 小时 V2EX 与独立社区里可承接的 AI 招聘、副业外包与产品机会：灵点 Lynpoint AI 内容策划（兼职/项目制/全职远程）、云南白药供应链中台 Java 外包 3 个月、青岛能源 IoT 前端招聘、长城汽车 Java 后端、Meta Muse Image 模型观察、AI 吵架应用内测招募。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "招聘", "远程工作", "AI内容", "外包", "SaaS", "Agent"]
+tags: ["AI副业", "V2EX", "招聘", "远程工作", "外包", "SaaS", "AI Agent"]
 hiddenFromHomePage: true
 ---
 

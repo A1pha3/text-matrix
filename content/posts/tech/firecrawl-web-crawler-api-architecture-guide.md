@@ -5,7 +5,7 @@ slug: "firecrawl-web-crawler-api-architecture-guide"
 description: "Firecrawl（146k stars / AGPL-3.0）把网页爬取、JS 渲染、结构化抽取、爬虫调度四件事打包成一个 REST API，专为 LLM 上下文设计：支持 search / scrape / crawl / batch scrape / extract。本文拆解它的接口形态、可靠性边界、与同类工具（jina reader / tavily / playwright）的差异点。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Web Scraping", "LLM Context", "AI Agent", "API", "Firecrawl"]
+tags: ["AI Agent", "API"]
 ---
 
 # Firecrawl：Web → Markdown，给 LLM 当上下文

@@ -4,7 +4,7 @@ slug: "karpathy-llm-wiki-agent-skill-guide"
 date: "2026-04-08T11:10:00+08:00"
 lastmod: 2026-04-08T11:10:00+08:00
 categories: ["技术笔记"]
-tags: ["AI", "知识管理", "Wiki", "Agent Skills", "LLM"]
+tags: ["知识管理", "Agent Skills", "LLM"]
 description: "Karpathy 提出的 LLM Wiki 理念：人类只管阅读和提问，LLM 负责撰写、编目和修复。本文拆解其社区实现，覆盖 Ingest/Query/Lint 三条主线的运转方式和落地的坑。"
 draft: false
 ---

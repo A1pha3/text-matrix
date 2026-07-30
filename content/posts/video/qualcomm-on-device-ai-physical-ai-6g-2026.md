@@ -6,7 +6,7 @@ description: "硅谷 101《对话高通：智能体爆发、6G 与 Physical AI �
 
 draft: false
 categories: ["视频精读"]
-tags: ["高通", "端侧 AI", "6G", "Physical AI", "智能体", "Snapdragon", "NPU", "徐晧", "骁友会", "硅谷101"]
+tags: ["端侧AI", "Physical AI", "智能体", "硅谷101"]
 hiddenFromHomePage: false
 ---
 

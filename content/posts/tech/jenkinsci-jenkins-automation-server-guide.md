@@ -5,7 +5,7 @@ slug: "jenkinsci-jenkins-automation-server-guide"
 description: "jenkinsci/jenkins 是 Java 编写的开源自动化服务器，2000+ 插件覆盖构建、测试、静态分析、部署全链路，本文拆解其双发行线、插件生态与 2026 年的现代 CI/CD 取舍。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Jenkins", "CI/CD", "自动化服务器", "Java", "插件生态", "DevOps"]
+tags: ["CI/CD", "Java", "DevOps"]
 ---
 
 # Jenkins 自动化服务器深度拆解：2000+ 插件、Java 实现与企业级 CI/CD 事实标准

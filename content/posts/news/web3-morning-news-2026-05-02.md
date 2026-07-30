@@ -5,7 +5,7 @@ slug: web3-morning-news-2026-05-02
 description: "2026年5月2日 Web3 早报，汇总过去 24 小时内主流加密货币行情、融资数据、Arbitrum治理提案与行业分化动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "加密货币", "融资", "Arbitrum"]
+tags: ["Web3", "BTC", "ETH", "加密货币", "融资"]
 hiddenFromHomePage: true
 ---
 

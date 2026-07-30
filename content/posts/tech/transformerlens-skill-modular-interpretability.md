@@ -5,7 +5,7 @@ slug: "transformerlens-skill-modular-mechanistic-interpretability"
 description: "transformerlens-skill 将 TransformerLens 框架常用的机制可解释性工作流封装为可复用模块，包括激活缓存、因果追踪、归因修补、对数透镜和激活 steering 等，适用于 Llama 3、Qwen 3、Gemma 3 等主流开源大模型。"
 draft: false
 categories: ["技术笔记"]
-tags: ["TransformerLens", "可解释性", "Python", "大模型", "因果推断", "机制可解释性"]
+tags: ["可解释性", "Python", "LLM"]
 ---
 
 ## 项目概览

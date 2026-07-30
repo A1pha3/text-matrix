@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-05-12
 description: "2026年5月12日 AI 新闻早报，汇总过去 24 小时内量子计算、视频生成大模型、AI购物与行业融资的重要动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "量子计算", "视频生成", "AI购物", "融资"]
+tags: ["视频生成", "融资"]
 hiddenFromHomePage: true
 ---
 

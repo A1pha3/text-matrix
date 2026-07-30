@@ -5,7 +5,7 @@ slug: "deepmind-topological-trouble-with-transformers-cn"
 description: "DeepMind 2026 年的论文《The Topological Trouble With Transformers》给出了一个不讨喜的判断：Transformer 的纯前馈架构天然不擅长追踪状态，CoT 只是给结构性缺陷打补丁。真正的出路在循环。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Transformer", "循环架构", "RNN", "DeepMind", "状态追踪", "思维链"]
+tags: ["Transformer", "DeepMind"]
 ---
 
 ## 学习目标

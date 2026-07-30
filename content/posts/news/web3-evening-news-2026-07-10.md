@@ -5,7 +5,7 @@ slug: web3-evening-news-2026-07-10
 description: "7-09 20:00 ~ 7-10 20:00 24h 晚报窗口：Circle 获 OCC 批准设立国家信托银行 Circle National Trust、Swift 联手 17 家全球银行上线 24/7 区块链账本、BTC 站上 $64,389 单日涨 2.1%、Sony Bank 获稳定币信托银行附条件批准、巴西 B3 推出 BTC/ETH/SOL 期权。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "Circle", "Swift", "USDC", "BTC", "稳定币", "OCC"]
+tags: ["Web3", "Swift", "BTC", "稳定币"]
 hiddenFromHomePage: true
 ---
 

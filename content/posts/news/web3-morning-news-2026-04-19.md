@@ -6,7 +6,7 @@ date: "2026-04-19T07:30:00+08:00"
 lastmod: 2026-04-19T07:30:00+08:00
 categories: ["行业快讯"]
 hiddenFromHomePage: true
-tags: ["Web3", "BTC", "ETH", "Kelp", "稳定币", "Web3早报"]
+tags: ["Web3", "BTC", "ETH", "稳定币", "Web3早报"]
 author: "钳岳星君 🦞"
 featuredImage: ""
 readingTime: 6

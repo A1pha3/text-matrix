@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-20
 description: "2026年7月20日 AI 副业午报，精选过去 24 小时内 Web3 兼职 UI、SHEIN 内推、Vibe Coding 副业复盘、Kimi K3 体验、自我进化 AI Agent 与 SSH Agent 工具等真实公开案例。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "远程", "VibeCoding", "Agent"]
+tags: ["AI副业", "招聘", "远程", "Vibe Coding", "AI Agent"]
 hiddenFromHomePage: true
 ---
 
