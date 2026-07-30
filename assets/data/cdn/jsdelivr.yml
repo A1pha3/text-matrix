@@ -5,7 +5,6 @@ prefix:
 libFiles:
   # fontawesome-free@7.2.0 https://fontawesome.com/
   # animate.css@4.1.1 https://github.com/daneden/animate.css
-  animateCSS: animate.css@4.1.1/animate.min.css
   # autocomplete.js@0.38.1 https://github.com/algolia/autocomplete.js
   autocompleteJS: autocomplete.js@0.38.1/dist/autocomplete.min.js
   # lunr.js@2.3.9 https://lunrjs.com/
@@ -36,7 +35,6 @@ libFiles:
   katexCopyTexJS: katex@0.16.21/dist/contrib/copy-tex.min.js
   katexMhchemJS: katex@0.16.21/dist/contrib/mhchem.min.js
   # mermaid@11.5.0https://github.com/mermaid-js/mermaid
-  mermaidJS: mermaid@11.5.0/dist/mermaid.min.js
   # echarts@5.6.0 https://echarts.apache.org/
   echartsJS: echarts@5.6.0/dist/echarts.min.js
   # mapbox-gl@2.9.1 https://docs.mapbox.com/mapbox-gl-js

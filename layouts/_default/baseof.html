@@ -27,16 +27,27 @@
 
           applyTheme();
           query.addEventListener('change', applyTheme);
+
+          /* theme-color 跟随实际主题（含手动切换）：观察 body[theme] 属性变化 */
+          const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+          if (metaThemeColor) {
+            const syncThemeColor = () => metaThemeColor.setAttribute(
+              'content', document.body.getAttribute('theme') === 'dark' ? '#131211' : '#faf9f7');
+            syncThemeColor();
+            new MutationObserver(syncThemeColor)
+              .observe(document.body, { attributes: true, attributeFilter: ['theme'] });
+          }
         </script>
 
         <div id="mask" data-pagefind-ignore="all"></div>
 
         {{- /* Body wrapper */ -}}
         <div class="wrapper">
+          <a href="#main-content" class="skip-to-content">跳到正文</a>
           <div data-pagefind-ignore="all">
             {{- partial "header.html" . -}}
           </div>
-            <main class="main">
+            <main class="main" id="main-content">
                 <div class="container">
                     {{- block "content" . }}{{ end -}}
                 </div>

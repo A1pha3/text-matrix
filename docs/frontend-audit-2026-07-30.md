@@ -110,3 +110,27 @@
 5. **构建期 mermaid→SVG**（架构级优化，可作为下个大版本目标）
 
 完成 1-3 后，Lighthouse Performance 预计可达 95+（无广告页），CLS 风险显著下降。
+
+---
+
+## 实施状态（2026-07-30 当日完成）
+
+| 项目 | 状态 | 结果 |
+|---|---|---|
+| P0-1 FA 子集化 | ✅ 完成 | 314KB → 21KB，收编本地（`scripts/subset_fontawesome.py`） |
+| P0-2 mermaid 懒加载 | ✅ 完成 | 2.6MB 移出首载，stub 代理零侵入 + 收编本地（实测 jsDelivr 需 11.7s） |
+| P0-3 animate.css 裁剪 | ✅ 完成 | 70KB → 6.2KB，收编本地（`scripts/subset_animatecss.py`） |
+| P1-4 preconnect | ✅ 完成 | AdSense 4 条 preconnect/dns-prefetch |
+| P1-6 theme-color | ✅ 完成 | 单标签 + MutationObserver 同步（含手动切换），品牌双色 |
+| P2-8 skip-to-content | ✅ 完成 | 首个 Tab 聚焦即达，目标 #main-content |
+| P2-9 og:locale | ✅ 完成 | `zh` → `zh_CN`（hugo.toml 顶层 locale 字段） |
+| P2-9 文章页 JSON-LD | ⏭️ 无需做 | 主题已内置 BlogPosting（headline/datePublished/description 齐全，已验证有效） |
+| P1-5 AdSense 手动槽位 | ⏸️ 冻结 | 见下方评估 |
+| 构建期 mermaid→SVG | 📋 长期项 | 下个大版本 |
+
+### AdSense CLS 评估（保持 autoAds 的决策依据）
+
+- **不动收入配置是安全底线**：手动槽位需要在 AdSense 后台创建广告单元、改 hugo.toml、布点 shortcode，且自动广告的填充率和位置优化通常优于手工布点，贸然切换有收入下行风险。
+- **当前无 CLS 异常证据**：没有 Search Console / CrUX 实测数据表明确诊 CLS 超标；该站正文以文字为主，自动广告插入频率受 Google 密度控制。
+- **已做的缓解**：preconnect 缩短广告脚本加载，间接降低迟滞插入概率。
+- **触发条件**：若 Search Console「核心网页指标」报告文章页 CLS 超标（>0.1），再启手动槽位方案（广告容器 `min-height` 预留 + 禁用内容内自动插入，仅保留锚定/穿插）。

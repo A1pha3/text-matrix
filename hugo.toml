@@ -1,6 +1,6 @@
 baseURL = 'https://txtmix.com/'
 #locale = 'en-us'
-locale = 'zh'
+locale = 'zh_CN'
 languageCode = "zh-cn"
 hasCJKLanguage = true
 defaultContentLanguage = "zh-cn"
