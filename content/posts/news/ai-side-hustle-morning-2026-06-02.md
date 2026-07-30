@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-02
 description: "2026年6月2日 AI 副业早报：V2EX 6条24h内AI相关真实机会（远程Agent工程师、AI Infra SRE内推、AI效能工程师、Grok AI辅导招聘、AI Coding心得、HR简历初筛AI讨论）。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "远程工作", "AI编程"]
+tags: ["AI副业", "招聘", "V2EX", "远程工作", "AI 编程"]
 hiddenFromHomePage: true
 ---
 

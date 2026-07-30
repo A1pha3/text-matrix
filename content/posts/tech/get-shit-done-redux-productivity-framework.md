@@ -5,7 +5,7 @@ slug: "get-shit-done-redux-productivity-framework"
 description: "get-shit-done-redux 是 open-gsd 维护的 AI 编程工作流框架。它通过结构化 planning 文件、独立子 agent 和 discuss → plan → execute → verify → ship 循环，解决长会话里的 context rot，把 AI 编程收束成可验证的交付流程。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI编程", "Claude Code", "工作流", "上下文工程", "Spec-Driven Development"]
+tags: ["AI 编程", "Claude Code", "工作流", "上下文工程", "Spec-Driven Development"]
 ---
 
 # get-shit-done-redux 极速上手：用一个六指令循环把 AI 编程拉回巅峰状态

@@ -5,7 +5,7 @@ slug: "cc-switch-ai-context-switcher-guide"
 description: "CC-Switch 是一款基于 Tauri 2 的跨平台桌面应用，用于统一管理 Claude Code、Codex、Gemini CLI、OpenCode、OpenClaw 与 Hermes Agent 的提供商切换、MCP、Skills、会话和本地路由。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI编程", "Claude Code", "OpenClaw", "Hermes Agent", "MCP", "Tauri"]
+tags: ["AI 编程", "Claude Code", "OpenClaw", "Hermes Agent", "MCP", "Tauri"]
 ---
 
 ## 学习目标

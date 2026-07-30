@@ -5,7 +5,7 @@ slug: "garrytan-gstack-claude-code-ceo-setup-guide"
 description: "gstack 是 Garry Tan（YC CEO）公开的 Claude Code 配置库，核心是 23 个角色化 Skill + 8 个跨域 Power Tool，把 Think→Plan→Build→Review→Test→Ship→Reflect 的一套 sprint 流程固化成可执行命令，同时支持 10 款 AI 编码 Agent 与 OpenClaw 调度。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI Agent", "AI编程", "gstack", "工作流"]
+tags: ["Claude Code", "AI Agent", "AI 编程", "gstack", "工作流"]
 ---
 
 [Y Combinator](https://www.ycombinator.com/) 总裁 Garry Tan 在 2026 年 3 月把一份用了 60 天、跑出 3 个生产服务 + 40 余个功能的 Claude Code 个人配置开源为 [garrytan/gstack](https://github.com/garrytan/gstack)。这不是又一份「prompt 集合」，而是一套把 **AI 编码 Agent 当作虚拟工程团队**来用的方法论固化产物：23 个角色化 Skill 排成 7 步 sprint，8 个跨域 Power Tool 覆盖安全、文档、第二意见与浏览器交互，所有能力都以斜杠命令形式挂在 Claude Code 上，单人即可同时跑 10-15 条并行 sprint。

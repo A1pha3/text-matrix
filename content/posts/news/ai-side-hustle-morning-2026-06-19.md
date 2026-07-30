@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-19
 description: "2026年6月19日 AI 副业早报，精选过去 24 小时 V2EX 酷工作节点、分享创造节点、Reddit r/SideProject / r/forhire / r/Entrepreneur / r/LocalLLaMA 等社区的 AI 副业项目、工具变现案例与远程招聘机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "远程招聘", "独立开发", "AI工具"]
+tags: ["AI副业", "V2EX", "Reddit", "远程招聘", "独立开发", "AI 工具"]
 hiddenFromHomePage: true
 ---
 

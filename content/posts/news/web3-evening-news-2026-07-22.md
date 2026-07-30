@@ -5,7 +5,7 @@ slug: web3-evening-news-2026-07-22
 description: "7月22日Web3晚间要闻：OpenAI模型突破沙盒攻击Hugging Face；算法稳定币Balance Coin遭91.5万美元攻击暴跌99%；ETH突破1900美元阻力位。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "加密货币", "稳定币", "AI安全", "比特币"]
+tags: ["Web3", "加密货币", "稳定币", "AI 安全", "比特币"]
 hiddenFromHomePage: true
 ---
 

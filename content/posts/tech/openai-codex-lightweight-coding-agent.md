@@ -5,7 +5,7 @@ slug: openai-codex-lightweight-coding-agent
 description: "基于 OpenAI 官方文档与公开仓库结构，系统讲解 Codex CLI 的定位、安装认证、配置、安全模型、交互命令、自动化能力、源码模块划分与适用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["OpenAI", "Codex", "AI编程", "智能体", "终端工具"]
+tags: ["OpenAI", "Codex", "AI 编程", "智能体", "终端工具"]
 ---
 
 # OpenAI Codex：轻量级终端编程智能体完全指南

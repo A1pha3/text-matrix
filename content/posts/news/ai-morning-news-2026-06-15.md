@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-15
 description: "2026年6月15日 AI 新闻早报，严格采集 06-14 08:00 至 06-15 08:00 窗口，覆盖「Claude Fable 5 全球停服 72 小时始末完整复盘（拒绝修复漏洞 / 亚马逊举报 / 美国出口管制三重暴击）、Anthropic 卡在上市前夜的强监管信号、阿里官方辟谣周靖人离职但承认 AI 决策层正被『慢性消耗』、德国 Neura 完成 14 亿美元 C 轮人民币 94.9 亿元人形机器人年度最大融资、谷歌 DeepMind 57 页《从 AGI 到 ASI》路线图主张『1 亿人类水平 AI = ASI』、高瓴独家投资柔性机器人 SoulX 旗下 MoYa 睡眠安抚机器人下半年发布、The Register『AI 是代码而非智慧』jqwik 反 AI 实战实验、巴西里约热内卢 397B 『自研』大模型被 Nex-N2 实锤为 Nex 与 Qwen3.5-397B-A17B 的元素级合并」等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Claude", "Fable5", "Anthropic", "Mythos", "阿里", "人形机器人", "英伟达", "DeepMind", "具身智能", "Qwen", "开源", "AI安全", "Linux"]
+tags: ["Claude", "Fable5", "Anthropic", "Mythos", "阿里", "人形机器人", "英伟达", "DeepMind", "具身智能", "Qwen", "开源", "AI 安全", "Linux"]
 hiddenFromHomePage: true
 ---
 

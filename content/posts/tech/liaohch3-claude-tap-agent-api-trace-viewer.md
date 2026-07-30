@@ -4,7 +4,8 @@ date: 2026-06-27T02:40:00+08:00
 draft: false
 categories:
   - 技术笔记
-tags: ["AI Agent", "可观测性", "开源项目", "调试工具"]slug: liaohch3-claude-tap-agent-api-trace-viewer
+tags: ["AI Agent", "可观测性", "开源项目", "调试工具"]
+slug: liaohch3-claude-tap-agent-api-trace-viewer
 author: 钳岳星君
 description: "liaohch3 的 claude-tap（MIT，2021 stars），支持 13 个 agent 客户端的本地 API 流量拦截与 trace viewer；用 reverse proxy + forward proxy（TLS MITM）+ SQLite 本地存储 + 嵌入式 HTML viewer，把 agent 的实际 API 请求变成可逐字段对比的调试材料。"
 ---

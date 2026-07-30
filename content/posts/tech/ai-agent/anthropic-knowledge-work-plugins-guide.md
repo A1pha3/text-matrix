@@ -7,7 +7,7 @@ aliases:
 description: "详细介绍 Anthropic 官方推出的 11 款 Knowledge Work Plugins，解析其结构与功能，帮助用户为 Claude 安装“岗位操作系统”，提升各行业的工作效率。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude", "MCP", "工作流", "AI工具"]
+tags: ["Claude", "MCP", "工作流", "AI 工具"]
 ---
 
 # Anthropic Knowledge Work Plugins：把 Claude 变成岗位专家的完整指南

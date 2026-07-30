@@ -5,7 +5,7 @@ slug: "codexplusplus-launcher-injection-cox-enhancement"
 description: "CodexPlusPlus（Codex++）是面向 OpenAI Codex App 的外部增强启动器与管理工具，Rust 后端 + Tauri 前端，通过 Chromium DevTools Protocol 注入增强脚本而非改写 app.asar，解决了「API Key 登录模式插件入口被锁」「中转 API 切换繁琐」「无法删除会话」等真实痛点，已收获 12,600+ stars。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Codex", "OpenAI", "Tauri", "Rust", "CDP", "AI编程", "桌面应用"]
+tags: ["Codex", "OpenAI", "Tauri", "Rust", "CDP", "AI 编程", "桌面应用"]
 hiddenFromHomePage: false
 ---
 

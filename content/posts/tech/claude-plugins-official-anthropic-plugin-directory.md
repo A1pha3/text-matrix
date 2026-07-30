@@ -5,7 +5,7 @@ slug: "claude-plugins-official-anthropic-plugin-directory"
 description: "Claude Plugins Official 是 Anthropic 官方维护的 Claude Code 高质量插件目录，分为内部插件和外部插件两类。本文详细解析了其目录结构、插件机制、安装方式及生态定位，帮助开发者快速上手并为社区贡献插件。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Anthropic", "插件系统", "MCP", "AI工具"]
+tags: ["Claude Code", "Anthropic", "插件系统", "MCP", "AI 工具"]
 ---
 
 # Claude Plugins Official：Anthropic 官方插件目录深度解读

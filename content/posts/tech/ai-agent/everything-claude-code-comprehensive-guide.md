@@ -7,7 +7,7 @@ aliases:
   - /posts/tech/everything-claude-code-comprehensive-guide/
   - /posts/tech/everything-claude-code-agent-harness-performance/
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI编程", "Anthropic"]
+tags: ["Claude Code", "AI 编程", "Anthropic"]
 description: "基于 affaan-m/everything-claude-code 当前公开仓库状态，讲清这个项目如何从 Claude Code 入门资料演进为覆盖技能、记忆、安全与工作流系统的高热度资源库。"
 ---
 

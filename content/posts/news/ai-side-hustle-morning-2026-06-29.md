@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-29
 description: "2026年6月29日 AI 副业早报，覆盖 V2EX 招聘：AI Native 全栈 20K 远程、Agent 工程师 40-80万 北京/深圳、web3/AI 测试开发远程、SHEIN 内推大模型/算法 20-80K；V2EX 副业实战：纯 Claude Code 搓飞书告警 Agent、Factory Droid 配 GLM5.2 max；Reddit r/SideProject：AI finance autopilot for freelancers、Costs of Running 15k/mo AI SaaS、FastAPI+BM25 离线大学 Q&A Chatbot。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "AI招聘", "独立开发", "AI工具"]
+tags: ["AI副业", "V2EX", "Reddit", "AI招聘", "独立开发", "AI 工具"]
 hiddenFromHomePage: true
 ---
 

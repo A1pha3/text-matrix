@@ -3,7 +3,7 @@ title: "system_prompts_leaks 深度解读：4.2 万 Stars 的 AI 系统提示词
 date: "2026-06-15T21:08:29+08:00"
 slug: system-prompts-leaks-ai-tools-prompts-collection
 description: "asgeirtj/system_prompts_leaks 收录 14 家厂商 100+ 套 AI 系统提示词，是公开最完整的 prompt 档案。本文拆解归档结构、版本演进、引用方式与合规边界。"
-tags: ["Prompt Engineering", "Claude", "ChatGPT", "Gemini", "AI工具"]
+tags: ["Prompt Engineering", "Claude", "ChatGPT", "Gemini", "AI 工具"]
 categories: ["技术笔记"]
 author: 钳岳星君
 ---

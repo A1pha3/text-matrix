@@ -1,276 +1,192 @@
 ---
-title: "HenryNdubuaku/maths-cs-ai-compendium 拆解：一份把 AI/ML 研究工程师之路切成 18 个可执行阶段的 textbook 仓库"
+title: "HenryNdubuaku/maths-cs-ai-compendium 拆解：一份把 AI/ML 研究工程师之路做成 18 章主干、20 章版图的 textbook 仓库"
 date: 2026-07-18T03:08:50+08:00
-lastmod: 2026-07-18T03:08:50+08:00
+lastmod: 2026-07-30T14:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: []
-description: "maths-cs-ai-compendium 是 Henry Ndubuaku 维护的 AI/ML 研究工程师 textbook,18 章覆盖向量到 ML Systems Design,Apache-2.0 协议,6527 stars,自带 MCP Server。"
+description: "maths-cs-ai-compendium 是 Henry Ndubuaku 维护的 intuition-first AI/ML 教材仓库：18 章主干已开放，19/20 章扩展在路上，并提供 llms.txt 与 MCP 子项目。"
+
 weight: 1
 slug: "henryndubuaku-maths-cs-ai-compendium-ai-ml-research-engineer-curriculum"
 author: text-matrix
+toc: true
 ---
+
+> **目标读者**：已经会用 PyTorch 或常见 ML 框架，想继续补系统、推理和研究工程训练路径的人。
+> **核心问题**：这份仓库到底只是“资料汇总”，还是一条能执行的 AI/ML Research Engineer 学习主线？
+> **来源**：GitHub 仓库、在线站点、README、llms.txt 与 mcp 子目录，访问时间为 2026-07-30。
 
 ## 一句话判断
 
-**[HenryNdubuaku/maths-cs-ai-compendium](https://github.com/HenryNdubuaku/maths-cs-ai-compendium) 是一份 Apache-2.0 协议的"AI/ML 研究工程师 textbook",18 章从 Vectors 一路写到 ML Systems Design,作者 Henry Ndubuaku 是去年进 Y Combinator 的从业者,描述里直接写 "Become a cracked AI/ML Research Engineer"。** 它和 OSSU / fast.ai 的最大差别在于**作者亲自整理并以"朋友在 DeepMind / OpenAI / Nvidia 通过面试"作为背书**,且 18 章全部 Available(README 表格里 Status 列无 "Planned"),仓库还附带一个 MCP Server,让 Claude Code / Cursor / VS Code 直接把它当知识库用。
+[HenryNdubuaku/maths-cs-ai-compendium](https://github.com/HenryNdubuaku/maths-cs-ai-compendium) 不是“从线代讲到 LLM”的普通笔记仓库，而是一份把 AI/ML Research Engineer 这条路拆成主干课程、模态专项、推理系统和系统设计的 curriculum。它最有分量的地方不在仓库口号，而在三件更难长期做好的事：18 章主干已经可读，学习方法写得足够具体，面向 Agent 的入口也做成了 llms.txt 和独立的 MCP 子项目。
 
-如果你正在从"会用 PyTorch 跑模型"过渡到"能独立设计一个训练 / 推理 / 部署闭环",或者在准备 DeepMind / OpenAI 级别的研究工程师面试,这份 18 章路径值得放进书单。但如果你只想 6 周速成 Transformer,它是错的工具。
+如果你正从“会训练模型”往“能解释系统瓶颈、能做推理优化、能谈 ML systems design”过渡，这个仓库值得认真读。如果你只想在 6 周内速刷 Transformer 面试题，它反而太宽，也太慢。
 
----
+## 学习目标
 
-## 系统地图
+读完本文后，你应当能够：
 
-Compendium 的真实结构不是 README 顶部的 logo,而是按"作者背景 → 学习理念 → 18 章 syllabus → 学习方法论 → MCP 集成"五层组织的:
+1. 说清这份仓库为什么更像 curriculum，而不是“AI 资料收藏夹”。
+2. 区分它的 18 章主干与 19/20 章扩展之间的角色差异。
+3. 判断 README、llms.txt 和 MCP 子项目分别在解决什么问题。
+4. 给自己选出一条更合适的阅读顺序，而不是机械地从第 1 章读到第 20 章。
+5. 识别使用这份教材时最常见的错误，并知道如何排查。
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│  顶层定位 (Author positioning)                                           │
-│   作者: Henry Ndubuaku,去年进 Y Combinator                                │
-│   背景: 在 AI/ML 行业工作多年,笔记本积累 intuition-first 笔记                │
-│   背书: 2025 年朋友用这份笔记通过 DeepMind / OpenAI / Nvidia 面试            │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │
-┌─────────────────────────────────▼────────────────────────────────────┐
-│  学习理念 (Pedagogy)                                                     │
-│   - 不堆符号,从 intuition 出发                                            │
-│   - 不假设读者已有先验知识                                                  │
-│   - 真实世界语境,不做"为考试而学"的裁剪                                      │
-│   - "你只需要 elementary maths + basic python,其他都现学"                   │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │
-┌─────────────────────────────────▼────────────────────────────────────┐
-│  18 章 Syllabus (每一章都是 Available)                                    │
-│   基础数学 (01–05):                                                     │
-│     01 Vectors / 02 Matrices / 03 Calculus / 04 Statistics / 05 Probability│
-│   AI/ML 核心 (06–12):                                                   │
-│     06 ML / 07 NLP / 08 CV / 09 Audio / 10 Multimodal /                  │
-│     11 Autonomous Systems / 12 GNN                                      │
-│   系统与工程 (13–18):                                                     │
-│     13 Computing & OS / 14 DS&A / 15 ProdSE / 16 SIMD & GPU /            │
-│     17 AI Inference / 18 ML Systems Design                              │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │
-┌─────────────────────────────────▼────────────────────────────────────┐
-│  学习方法论 (How to study better)                                          │
-│   Phase 1 - Cumulative reading: 当天睡前读当天内容,下一讲从头再来补 gap          │
-│   Phase 2 - Shadow reading: 读小标题→合书→写解释→对比缺失                     │
-│             "类似 masked language modelling"                                  │
-│             最终用代码实现每个概念 → 形成 muscle memory                       │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │
-┌─────────────────────────────────▼────────────────────────────────────┐
-│  MCP Server 集成 (AI-Native 入口)                                         │
-│   - Claude Code / Cursor / VS Code 等可直接挂载                             │
-│   - 把 18 章 compendium 当作本地知识库                                       │
-│   - 附教学用途的 tools + example implementations                             │
-│   - 需要本地 clone 仓库                                                     │
-└──────────────────────────────────────────────────────────────────────┘
-```
+## 目录
 
-这张图最重要的一条路径:**"作者背书 → intuition-first pedagogy → 18 章 syllabus → 两阶段阅读法 → MCP 接入"**。Compendium 之所以不是又一个 markdown 学习资料合集,是因为它**有作者背景做锚 + 方法论做约束 + AI 原生入口做延伸**——任何一个因素缺失都让它退化成"awesome-X"列表。
+- 项目快照
+- 系统地图
+- 18 章主干怎么组织
+- llms.txt 与 MCP 的两层入口
+- 阅读顺序与任务流示例
+- 适用边界
+- 常见错误与排查
+- 练习、自测与进阶路径
 
----
+## 项目快照
 
-## 边界与角色划分
+| 指标 | 快照 |
+| ---- | ---- |
+| Stars | 7.2k+ |
+| Forks | 880+ |
+| Watching | 71 |
+| License | Apache-2.0 |
+| 内容状态 | 18 章主干 Available，19/20 章已有草稿页面，但 README 主大纲仍标为 Coming |
+| 维护信号 | 最近可见提交在两周内，mcp 子目录独立存在 |
 
-把 Compendium 拆成 6 组"不变项",可以一次性回答它和 OSSU、fast.ai、Hugging Face 课程、DeepLearning.AI 短课的差别:
+这些数字本身不说明质量，但它们至少说明两件事：第一，这不是发完 README 就停摆的一次性仓库；第二，作者已经把主干章节、在线阅读站和面向 Agent 的接口一起维护起来了。
 
-| 维度 | Compendium 的不变项 | 工程含义 |
-|------|----------------------|---------|
-| 顶层依据 | 作者本人 AI/ML 工作积累 + YC 背景 + 朋友面试结果 | 不是按公开课标准,也不是按论文路线图,而是按"真实研究工程师要会什么" |
-| 选材标准 | intuition first + no hand-waving + real-world context | 任何"符号密集"或"脱离实现"的章节都会让读者中途放弃 |
-| 内容形态 | 18 章自包含 markdown,目录里全是 Available | 不会发生"读到一半发现后面是 TODO" |
-| 教学风格 | 两阶段阅读法(累计阅读 + 遮蔽阅读) | 不是看视频,而是"读→合书→写解释→代码实现" |
-| 工程覆盖 | 含 SIMD/GPU/CUDA、Triton、TPU、ML Systems Design | 不只是模型层,系统层和推理层都覆盖 |
-| AI 集成 | 原生 MCP Server,挂 Claude Code / Cursor / VS Code | 让 LLM 把 compendium 当 RAG 知识库,而不仅是 PDF 阅读 |
+## 系统地图：这份仓库其实有四层
 
-要注意的几个边界:**Compendium 不是学位**——它没有学分、没有证书、不替代正式学位;**它不是速成训练营**——18 章每章都是严肃教材,完整读完至少半年;**它不是论文集**——它教你"够用的原理",不是 paper-by-paper 的 survey;**它不替代教科书**——遇到特别深的数学细节,作者鼓励你额外查资料补 gap。
+| 层 | 你会看到什么 | 它解决什么问题 |
+| ---- | ---- | ---- |
+| 课程层 | 01 到 18 章主干，19/20 章扩展 | 把知识边界画清楚 |
+| 教学层 | Phase 1 与 Phase 2 学习法 | 把“怎么学”写进仓库 |
+| 检索层 | README + llms.txt | 让人和模型都能快速定位内容 |
+| 工具层 | mcp 子项目 | 让本地 clone 的内容能被 AI 助手消费 |
 
----
+这四层组合起来，才是 Compendium 和一般“awesome 列表”真正拉开距离的地方。单独看 README，它像教材目录；连上 llms.txt 和 MCP 再看，它更像一套为人类学习和 Agent 检索同时设计的知识产品。
 
-## 关键机制:18 章到底在覆盖什么
+## 18 章主干怎么组织
 
-把 README 里 18 章的 Summary 列原样梳理(已经过核验),按"数学基础 / AI 核心 / 系统工程"三段拆开:
+| 区段 | 章节 | 作用 |
+| ---- | ---- | ---- |
+| 数学基础 | 01-05 | 让你能读公式、理解优化和概率语言 |
+| AI/ML 主体 | 06-12 | 按模态拆开语言、视觉、语音、多模态、机器人、图学习 |
+| 系统与工程 | 13-18 | 把 OS、算法、ProdSE、硬件、推理、系统设计串起来 |
+| 扩展区 | 19-20 | Applied AI 与 Bleeding Edge AI，属于下一层延展 |
 
-### 第一段:数学基础 (01–05)
+### 01-05：先让你能读懂推导，而不是把你训练成数学家
 
-| # | 章节 | 覆盖范围 | 一句话判断 |
-|---|------|----------|-----------|
-| 01 | Vectors | 空间、模、方向、范数、距离、点/叉/外积、基、对偶 | 是线性代数的入门,不是科普 |
-| 02 | Matrices | 性质、特殊矩阵、运算、线性变换、LU/QR/SVD 分解 | 把"矩阵到底是什么"讲清楚 |
-| 03 | Calculus | 导数、积分、多元微积分、Taylor 近似、优化与梯度下降 | 直接为深度学习的反向传播铺路 |
-| 04 | Statistics | 描述统计、抽样、中心极限定理、假设检验、置信区间 | 不是统计学家视角,是 ML 工程师视角 |
-| 05 | Probability | 计数、条件概率、分布、贝叶斯方法、信息论 | 信息论那段是给后续 Transformer / RL 打地基 |
+前 5 章覆盖向量、矩阵、微积分、统计和概率，范围并不保守，但目标很明确：让读者见到梯度、Hessian、置信区间、信息论这些词时不会直接卡住。它更像研究工程师所需的“数学工作语言”，不是纯数学训练营。
 
-**这段的关键判断**:数学基础只到 5 章,作者不打算把你训练成数学家,而是"让你看到公式不害怕、能复现论文里的推导"。如果你的目标是发论文,读完这 5 章后还得补《Mathematics for Machine Learning》或更深的测度论。
+### 06-12：按模态组织，而不是按模型家族组织
 
-### 第二段:AI/ML 核心 (06–12)
+从第 7 章的 Computational Linguistics 到第 12 章的 Graph Neural Networks，作者不是先讲“CNN 一章、Transformer 一章、Diffusion 一章”，而是按语言、视觉、语音、多模态、自动系统和图学习来分。这样做的好处是，新的模型路线出现时，你更容易把它放回具体问题域，而不是只记住一个模型名字。
 
-| # | 章节 | 覆盖范围 | 一句话判断 |
-|---|------|----------|-----------|
-| 06 | Machine Learning | 经典 ML、梯度方法、深度学习、强化学习、分布式训练 | 是全书的中枢,所有章节都从这里辐射 |
-| 07 | Computational Linguistics | 句法/语义/语用、NLP、语言模型、RNN/CNN/Attention、Transformer、Text Diffusion、Text OCR、MoE、SSM、现代 LLM 架构、NLP 评测 | NLP 的全景图,SSM/MoE 都覆盖 |
-| 08 | Computer Vision | 图像处理、目标检测、分割、视频处理、SLAM、CNN、ViT、扩散、Flow Matching、VR/AR | 把传统 CV 和现代扩散模型都塞进一章 |
-| 09 | Audio & Speech | DSP、ASR、TTS、声学活动检测、说话人 diarisation、源分离、主动降噪、WaveNet、Conformer | 语音方向的全栈式覆盖 |
-| 10 | Multimodal Learning | 融合策略、对比学习、CLIP、VLM、图像/视频 tokenization、跨模态生成、统一架构、World Models | 2024–2026 主流方向的入口 |
-| 11 | Autonomous Systems | 感知、机器人学习、VLA(Self-driving cars)、Space robots | 偏具身 / 自动驾驶方向 |
-| 12 | Graph Neural Networks | 几何深度学习、图论、GNN、Graph Attention、Graph Transformer、3D 等变网络 | 覆盖了 Geometric DL 的主线 |
+### 13-18：真正把它和多数 AI 教材拉开差距的是后半段
 
-**这段的关键判断**:AI 核心不是按"模型分类"组织,而是按"数据模态"(语言/视觉/语音/多模态/机器人/图)组织——这是它和"按模型分类"的教科书最大的差别。这种组织方式的好处是**当一个新模型出来时,你能马上定位它在哪个模态章节的延伸里**(比如 Mamba 放 SSM,Gato/VLA 放 Autonomous Systems)。
+第 13 到 18 章把 Computing & OS、Data Structures & Algorithms、Production Software Engineering、SIMD & GPU Programming、AI Inference、ML Systems Design 放进同一条必修主线。这一段的含义很直接：作者写的不是“如何入门大模型”，而是“为什么研究工程师最后一定会撞上系统、硬件、推理和生产问题”。
 
-### 第三段:系统与工程 (13–18)
+### 19-20：它们存在，但不该被误读成主路径入口
 
-| # | 章节 | 覆盖范围 | 一句话判断 |
-|---|------|----------|-----------|
-| 13 | Computing & OS | 离散数学、计算机架构、操作系统、并发/并行、编程语言 | 给后续 SIMD/GPU 打地基 |
-| 14 | Data Structures & Algorithms | Big O、递归、回溯、DP、数组、哈希、链表、栈、树、图、排序、二分 | 算法面试基础,但不是 LeetCode 题库 |
-| 15 | Production Software Engineering | Linux、Git、codebase 设计、测试、CI/CD、Docker、模型 serving、MLOps、监控、"最佳使用 coding agents" | 是把 ML 工程师从 notebook 拽到生产环境的关键 |
-| 16 | SIMD & GPU Programming | C++ for ML、框架怎么工作、硬件基础、ARM NEON/I8MM/SME2、x86 AVX、GPU/CUDA、Triton、TPU、RISC-V、Vulkan、WebGPU | 硬件层的全景图,从 ARM 到 RISC-V |
-| 17 | AI Inference | 量化、高效架构、serving/batching、edge inference、speculative decoding、成本优化 | 推理优化的入口 |
-| 18 | ML Systems Design | 系统基础、云计算、分布式系统、ML 生命周期、feature store、A/B 测试、推荐/搜索/广告/反作弊设计案例 | 是"ML 工程师和研究员的最大区别" |
+更准确地说，Applied AI 和 Bleeding Edge AI 已经能在仓库目录和 llms.txt 里看到不少草稿页面，但 README 的主大纲还没有把它们提升到和前 18 章同等成熟的状态。把它们当作版图扩展是对的，把它们当作现在就该优先冲进去的主线入口就错了。真正稳定的骨架，仍然是前 18 章。
 
-**这段的关键判断**:13–18 章是 Compendium 和其他"AI 教科书"最大的差异点。**大部分 AI 教科书到第 7 章 NLP 就结束了,Compendium 用 6 章把系统层、推理层、生产层串起来**——这正是"研究工程师"(Research Engineer)和"ML 研究员"(Research Scientist)的分界线。
+## 真正的难度藏在 llms.txt 里
 
----
+只看 README 的章节摘要，你会觉得它像一份很强的目录；看过 llms.txt 之后，才知道它的难度和密度到底落在哪。
 
-## 学习方法:两阶段阅读法
+- 第 17 章不只写“AI Inference”，还把 PTQ、QAT、GPTQ、AWQ、HQQ、AQLM、BitNet、KV-cache quantisation 这些路线显式列了出来。
+- 第 16 章不只谈 CUDA，还把 Apple Silicon 的 NEON、x86 的 AVX、TPUs/Pallas、RISC-V、Vulkan、WebGPU 放在同一章里。
+- 第 15 章不只讲 Git 和测试，还把 codebase design、CI/CD、model serving、monitoring、AI coding agents 一起放进 Production Software Engineering。
 
-作者在 README "How To Study Better" 部分给了具体的、可立刻执行的方法,值得直接抄走:
+这也是我更愿意把它叫做 curriculum 的原因：它不是用“广”掩盖“浅”，而是在不少章节里直接把读者推到研究工程和系统实现会真正碰到的细处。
 
-**Phase 1 - Cumulative reading after classes(累计阅读)**
+## 为什么这套编排对 Research Engineer 更有用
 
-> 每天下课后、睡前把当天材料读一遍。下一讲开始时从头再来,直到读到当前进度,然后用额外研究补 gap。这让大脑把模式连起来。
+1. 它先统一数学和优化语言，再让你进入不同模态，这比先看一堆模型名更稳。
+2. 它把推理、硬件和系统设计放进主干，而不是附录，这更贴近研究工程师的真实工作面。
+3. 它把“学什么”和“怎么学”同时写出来，减少读者在方法论上自己摸索的成本。
 
-**Phase 2 - Shadow reading before exams(遮蔽式阅读)**
+README 里的 Phase 1 和 Phase 2 不是可有可无的鸡汤段落。作者把这套方法放在 “How To Study Better” 里，起点是他大学第一学期同时修 17 门课程、成绩并不理想，后来才改出这套读法。Phase 1 强调累计阅读，Phase 2 强调遮蔽回忆和代码实现，核心意思很朴素：别把理解停在“看过”，要把概念逼到“能复述、能实现、能迁移”。
 
-> 读每个 slide / note 的小标题,合上书,然后在心里复述 + 写下那个概念的解释。只重读你漏掉的部分——**类似 masked language modelling**。最终用代码实现每个概念,形成 muscle memory。
+## 一个任务流示例：如果你要准备 inference / systems 面试，应该怎么读
 
-**几个关键 takeaway**:
+1. 先读第 05 章 Probability 和第 06 章 Machine Learning，把损失函数、分布和优化语言补齐。
+2. 接着跳到第 16 章，看硬件与框架内部是怎么约束模型实现的。
+3. 然后进入第 17 章，把量化、continuous batching、PagedAttention、edge inference 串成一条推理链路。
+4. 最后读第 18 章，把这些局部优化放回 feature store、A/B testing、search/ads/fraud 这类系统设计语境里。
+5. 每读完一段，用 Phase 2 的方式合书复述，再写一个最小示例，比如解释为什么 prefill 和 decode 的瓶颈不同。
 
-- **Phase 1 是"重复模式识别",Phase 2 是"主动回忆"**——这是认知科学里两个最有效的学习策略,Compendium 把它们工程化了
-- **Phase 2 的"写代码"环节不是可选**——作者明确说"muscle memory 是终极目标",意味着每个概念都要落到实现
-- **不靠视频**——Compendium 是 markdown,所有学习都是"读 + 写",不依赖任何人讲解
+这个例子能说明 Compendium 的一个关键优点：它允许你按任务反向切入，而不是永远被目录顺序绑死。
 
----
+## MCP 和 llms.txt：它的 AI-Native 入口分两层
 
-## 如何本地使用 + MCP 接入
+| 入口 | 作用 | 边界 |
+| ---- | ---- | ---- |
+| llms.txt | 给模型一个静态、可抓取的章节清单和摘要 | 适合索引，不负责交互 |
+| MCP 子项目 | 让本地 clone 的内容被 Claude Code、Cursor、VS Code 等助手当作知识库使用 | 需要本地仓库和额外配置 |
 
-README 里说"This repo includes an MCP server that lets any AI assistant (Claude Code, Cursor, VS Code, etc.) use the compendium as a knowledge base." 也就是说仓库自带 MCP server,有以下使用方式:
+这两层很容易被混成一句“仓库支持 MCP”。更准确的说法是：作者同时准备了适合模型预读的文本索引和适合工具接入的交互层。仓库根目录下确实存在独立的 mcp 子目录，并带有 src、package.json 和 tsconfig.json，这说明它不是一句宣传文案，而是被当作单独组件维护。
 
-### 方式 A: 在线阅读(零成本入门)
+同样要说清边界：README 只明确确认了 MCP Server 的存在、本地 clone 的前提，以及“可作为知识库使用”这件事，并没有在首页把具体接入配置全部写开。所以如果你想实际接入，下一步不是脑补“开箱即用”，而是继续读 mcp 子项目本身。
 
-直接访问 [henryndubuaku.github.io/maths-cs-ai-compendium](https://henryndubuaku.github.io/maths-cs-ai-compendium/)(README 里给的链接),不需要 clone,适合先扫一遍判断是否适合自己。
+## 本地使用：先按人类读法，再决定要不要接入 Agent
 
-### 方式 B: 本地 clone + 纯 markdown 阅读(推荐)
+最稳的起点仍然是先把仓库 clone 到本地，直接读原始 Markdown。
 
 ```bash
 git clone https://github.com/HenryNdubuaku/maths-cs-ai-compendium.git
 cd maths-cs-ai-compendium
 ```
 
-然后按 01 → 18 顺序,用任意 markdown 阅读器(Typora / Obsidian / VS Code Markdown Preview)开始读。**这种方式的优点**:不被 LLM "二手转述"扭曲,直接读作者原文;**缺点**:没有 RAG 增强,跨章节检索要靠自己的笔记。
+推荐顺序是这样的：第一步，先在线或本地读 README，确认自己究竟要补的是数学、模态还是系统；第二步，再进具体章节做 Phase 1/Phase 2 阅读；第三步，只有在你已经知道自己常查哪些章节时，再考虑把 MCP 接进助手，避免把“找答案”误当成“学会了”。
 
-### 方式 C: MCP Server 接入 AI 助手(进阶)
+## 适用边界
 
-仓库自带 MCP server,按 README 描述:"It requires a local clone of the repo. Comes with tools for educational purposes and example implementations."
+### 谁会明显受益
 
-具体步骤:
+- 已经会训练模型，但对推理优化、系统设计和生产工程不够扎实的 ML 工程师。
+- 准备 Research Engineer 或偏系统向 AI 岗位面试的人。
+- 需要一条长期学习路线，而不是一个周末刷完的速成教程的人。
+- 愿意读原文、做复述、写示例代码，而不是只收藏链接的人。
 
-1. 本地 clone(同方式 B)
-2. 启动仓库自带的 MCP server(具体启动方式参考仓库内的 MCP 文档,README 未展开)
-3. 在 Claude Code / Cursor / VS Code 里挂载这个 MCP server,把 compendium 当作知识库
-4. 学习时遇到问题直接问 AI:"根据 compendium 第 7 章,Transformer 的 attention 公式是什么?",AI 会基于本地 markdown 回答
+### 谁先别把它当主路径
 
-**这种方式的优点**:把 18 章内容当作 RAG 知识库,问答时可以精确定位章节;**缺点**:需要你配置 MCP(有学习成本),且 LLM 回答仍有幻觉风险,关键概念以原文为准。
+- 只想 6 周速成某个单点主题，比如只补 Transformer 八股的人。
+- 只想看论文综述，不准备花时间做代码实现的人。
+- 还没有基本 Python 能力、但又希望完全零门槛进入的人。
+- 需要正式证书、学位或标准化课程体系的人。
 
----
+## 常见错误与排查
 
-## 适用边界:谁该用 / 谁不该用
+- **错误一：把它当成“读完目录就算学过”。** 排查方法：随机挑第 17 章一个主题，看看你能不能不用原文解释 continuous batching 或 KV-cache quantisation；如果不行，说明你只做了浏览，没有形成理解。
+- **错误二：把第 19/20 章当主线。** 排查方法：先确认自己是否已经补完 01-18 的主干；如果还没有，直接冲 Applied AI 或 Bleeding Edge AI 通常只会得到碎片感。
+- **错误三：一上来就折腾 MCP。** 排查方法：先问自己是不是已经形成固定的查阅需求；如果还没有，MCP 只会让你更频繁地问助手，而不是更快地建立结构。
 
-### 推荐使用
+## 练习与自测
 
-- **想从"调参工程师"过渡到"研究工程师"的从业者**——13–18 章的系统内容是这类人群的最大痛点
-- **准备 DeepMind / OpenAI / Nvidia 面试的求职者**——README 里明确说 2025 年朋友用这份笔记通过了这些面试,这是最强背书
-- **在工作中遇到 ML Systems Design 题目但没系统训练过的工程师**——第 18 章直接给"推荐/搜索/广告/反作弊"的系统设计案例
-- **想从 inference 角度重新理解模型的工程师**——第 17 章的 quantisation / speculative decoding / batching / edge inference 串成完整链路
-- **想用 MCP 把学习资料 AI-Native 化的早期采用者**——Compendium 的 MCP server 是同类项目里少见的"AI-first 入口"
+1. 用不超过 200 字解释：为什么第 13-18 章比第 07-12 章更能定义“研究工程师”的边界？
+2. 给自己设计一个 8 周阅读计划，只允许选 6 章，并说明取舍理由。
+3. 选第 16 或第 17 章的一个概念，写一个最小示例或最小解释稿，验证自己是否真的理解。
+4. 试着回答这个问题：如果不接 MCP，只靠 README、llms.txt 和本地 Markdown，你还能不能高效使用这套资料？
 
-### 不推荐使用
+## 下一步与进阶路径
 
-- **想 6 周速成 Transformer 的初学者**——18 章里 Transformer 知识分布在第 6/7/10/16/17 章,跨度大,不适合赶进度
-- **想读论文、写 paper 的学术研究员**——Compendium 是工程师视角,不是 survey 视角,论文引用密度不够
-- **想拿学位证的正规学生**——Compendium 没学分、没证书,不能替代正式学位
-- **只想学传统 CV 或传统 NLP 的人**——第 7/8 章把传统方法和现代方法混在一起讲,如果你只想看 YOLO 历史,直接读论文更高效
-- **不打算写代码的人**——作者明确说"muscle memory"是终极目标,不写代码的纯阅读会浪费 Phase 2 的核心机制
-
----
-
-## 阅读路径建议(三种 profile)
-
-根据不同背景,Compendium 的最佳起点不一样:
-
-### Profile 1:已经有 ML 工程经验,想补系统层(8 周)
-
-跳过 01–06,从 **第 13 章 Computing & OS** 开始 → 14 DS&A → 15 ProdSE → 16 SIMD/GPU → 17 Inference → 18 ML Systems Design。每章用 Phase 2 的方法,读完小标题后合书写代码。
-
-### Profile 2:数学基础不扎实,但会写 PyTorch(16 周)
-
-从 **第 01 章 Vectors** 开始按顺序读到 06 ML,这一段严格用 Phase 1(累计阅读)巩固基础。然后从 07 开始按"数据模态"挑感兴趣的方向读(比如对 LLM 感兴趣就重点看 07,对自动驾驶感兴趣就重点看 11),最后回到 17/18 收尾。
-
-### Profile 3:零基础但有 Python(24 周以上)
-
-完全按 01 → 18 顺序读,每周一章,严格 Phase 1 + Phase 2 交替,每章至少写 3 段代码验证概念。前 5 章(数学基础)可以放慢到每章 2 周,因为这是后续所有章节的地基。
-
-### 通用建议
-
-- **不要试图一次读完**——18 章是 18 个独立项目,每个都能单独成书
-- **跨章节笔记**——第 6 章的"梯度方法"和第 17 章的"量化"会反复出现,做好交叉引用
-- **MCP 接入是放大器不是替代**——AI 助手可以帮你定位章节、解释概念,但 Phase 2 的"自己写代码"环节不能省
-
----
-
-## 仓库健康度(截至 2026-07-18)
-
-| 指标 | 数据 | 解读 |
-|------|------|------|
-| Stars | 6527 | 增长中(2026-02 创建,半年 6500+) |
-| Forks | 805 | fork 比例 ~12%,正常自学路径水平 |
-| Watchers | 6527(=Stars) | 用户订阅活跃,不是僵尸仓 |
-| License | Apache-2.0 | 可商用、可改、可闭源,无传染性 |
-| 默认分支 | main | 无 dev 分支 |
-| 创建时间 | 2026-02-03 | 半年内的新仓 |
-| 最新 push | 2026-07-16 | 2 天前仍在更新 |
-| 最新 metadata 更新 | 2026-07-17 | 仓库元数据 1 天前更新 |
-| Open Issues | 8 | 健康(没有堆积 PR / Issue) |
-| Discussions | enabled | 有社区讨论 |
-| Wiki | enabled | 有额外文档空间 |
-| GitHub Pages | enabled | 有在线阅读站(README 顶部的链接) |
-| 仓库 size | 8063 KB | 包含图片 + MCP 实现,体积合理 |
-| Subscribers | 72 | 关注 release 的开发者数量 |
-
-**关键判断**:
-
-- **README 表格里 18 章全部 Available**,没有 Planned / TODO 状态,这是教科书类项目最容易翻车的地方(承诺写一半没了)
-- **作者本人在持续 push**(2026-07-16 仍在更新),不是发完就跑的"毕业项目"
-- **Apache-2.0 协议**比 MIT 更适合"教科书"——明确授予专利使用权,适合做企业培训
-- **8 个 open issues**——可能包含 typo / 章节补充请求,而不是结构性问题
-
----
+1. 如果你卡在数学表述，下一步先补更系统的线性代数、概率和优化教材，再回到第 06 章之后的内容。
+2. 如果你最关心推理与系统，下一步把第 16-18 章和 Triton、vLLM、FlashAttention 等项目文档对读。
+3. 如果你想把这套材料用在工作里，下一步不要继续扩阅读，而是选一个主题做内部分享或写一份自己的章后总结。
 
 ## 总结
 
-Compendium 的真正价值不在 6527 stars,而在**它是少数把"研究工程师"当作完整职业路径来设计的 textbook**——从 Vectors 到 ML Systems Design,18 章覆盖了数学、AI、CV/NLP/Audio/Multimodal/Robotics/GNN、SIMD/GPU、Inference、Systems Design 的全栈式路径,且每一章都自带作者背书 + intuition-first 教学法 + MCP AI-Native 入口。
+Compendium 真正稀缺的，不是它同时覆盖了数学、NLP、CV、语音、多模态、机器人、GNN、硬件、推理和系统设计，而是它把这些内容组织成了一条更接近 Research Engineer 日常问题的路径。你在这里读到的不是“模型百科全书”，而是一种职业训练顺序：先会读懂公式，再会拆模态问题，接着理解硬件和推理，最后把局部技术放回真实系统里。
 
-它不是给所有人的——但如果你正在从"调参工程师"过渡到"独立设计训练/推理/部署闭环的研究工程师",它可能是 2026 年最值得系统读完的一份 syllabus。
+如果你正好处在“模型会用，但系统还没打通”的阶段，这份仓库值得慢慢读，而且最好边读边写。它不适合着急的人，但很适合想把能力真正连起来的人。
 
----
+## 参考
 
-## 参考链接
-
-- 仓库: [github.com/HenryNdubuaku/maths-cs-ai-compendium](https://github.com/HenryNdubuaku/maths-cs-ai-compendium)
-- 在线阅读: [henryndubuaku.github.io/maths-cs-ai-compendium](https://henryndubuaku.github.io/maths-cs-ai-compendium/)
-- License: Apache-2.0
-- 创建时间: 2026-02-03
-- 最新更新: 2026-07-16 push / 2026-07-17 metadata
-- 引用: `@book{ndubuaku2025compendium, year={2026}, publisher={GitHub}}`
+- 仓库首页：[HenryNdubuaku/maths-cs-ai-compendium](https://github.com/HenryNdubuaku/maths-cs-ai-compendium)
+- 在线阅读站：[henryndubuaku.github.io/maths-cs-ai-compendium](https://henryndubuaku.github.io/maths-cs-ai-compendium/)
+- 仓库索引：[llms.txt](https://raw.githubusercontent.com/HenryNdubuaku/maths-cs-ai-compendium/main/llms.txt)
+- MCP 子目录：[mcp](https://github.com/HenryNdubuaku/maths-cs-ai-compendium/tree/main/mcp)

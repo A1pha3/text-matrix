@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-13
 description: "2026年7月13日 AI 副业午报，精选过去 24 小时内独立开发变现案例、API 中转、套壳工具与 AI 自托管基础设施的真实机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "独立开发", "API中转", "AI工具"]
+tags: ["AI副业", "V2EX", "独立开发", "API中转", "AI 工具"]
 hiddenFromHomePage: true
 ---
 

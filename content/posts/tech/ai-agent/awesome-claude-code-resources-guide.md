@@ -5,7 +5,7 @@ slug: awesome-claude-code-resources-guide
 aliases:
   - /posts/tech/awesome-claude-code-resources-guide/
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI编程", "Awesome List", "Skills", "Hooks"]
+tags: ["Claude Code", "AI 编程", "Awesome List", "Skills", "Hooks"]
 description: "Awesome Claude Code 是 Claude Code 资源精选列表，34.4k Stars，收录 Skills、Agents、Plugins、Hooks 等扩展项目。本文涵盖 Agent Skills、Workflows、Tooling、Hooks、Slash Commands 使用指南。"
 ---
 

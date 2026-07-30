@@ -22,9 +22,9 @@ MIN_COUNT = 2  # 删除合并后使用次数 <= 2 的标签
 
 # 簇级别的规范写法覆盖 (归一化键 -> 规范标签)
 CLUSTER_CANONICAL = {
-    "aibiancheng": "AI 编程",
-    "aigongju": "AI 工具",
-    "aianquan": "AI 安全",
+    "ai编程": "AI 编程",
+    "ai工具": "AI 工具",
+    "ai安全": "AI 安全",
     "huggingface": "Hugging Face",
     "vscode": "VS Code",
     "vibecoding": "Vibe Coding",
@@ -70,7 +70,7 @@ def parse_frontmatter(text):
     fm = m.group(2)
 
     # YAML inline: tags: ["a", "b"]
-    t = re.search(r"^tags:\s*(\[[^\n]*\])\s*$", fm, re.M)
+    t = re.search(r"^tags:[ \t]*(\[[^\n]*\])[ \t]*$", fm, re.M)
     if t:
         raw = t.group(1)
         tags = [x.strip() for x in raw.strip("[]").split(",")]
@@ -83,11 +83,15 @@ def parse_frontmatter(text):
     if t:
         tags = re.findall(r"^\s+-\s+(.*?)\s*$", t.group(1), re.M)
         tags = [x.strip("\"'") for x in tags]
+        end = fm_start + t.end()
+        # 不把块末尾的换行计入替换区间, 避免与后续键粘连
+        while end > fm_start + t.start() and m.string[end - 1] == "\n":
+            end -= 1
         return ("yaml-dash", m.span(2), tags,
-                (fm_start + t.start(), fm_start + t.end()))
+                (fm_start + t.start(), end))
 
     # TOML inline: tags = ['a', 'b']
-    t = re.search(r"^tags\s*=\s*(\[[^\n]*\])\s*$", fm, re.M)
+    t = re.search(r"^tags[ \t]*=[ \t]*(\[[^\n]*\])[ \t]*$", fm, re.M)
     if t:
         raw = t.group(1)
         tags = [x.strip() for x in raw.strip("[]").split(",")]

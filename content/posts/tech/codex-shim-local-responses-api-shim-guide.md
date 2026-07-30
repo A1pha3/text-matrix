@@ -8,7 +8,7 @@ aliases:
 description: "codex-shim 是一个本地 Python 服务，通过模拟 OpenAI Responses API 让 Codex Desktop 能够调用用户在 Factory.ai 配置的任意 BYOK 自定义模型，包括 OpenAI、Anthropic、DeepSeek 等。它还支持将 ChatGPT 订阅的 GPT-5.5 以 Passthrough 方式接入 Codex 模型选择器，无需重新编译即可扩展 Codex 的模型支持范围。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Codex", "OpenAI", "AI工具", "Python"]
+tags: ["Codex", "OpenAI", "AI 工具", "Python"]
 ---
 
 # codex-shim：让 Codex Desktop 支持任意自定义模型

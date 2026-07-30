@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-30
 description: "2026年6月30日 AI 副业早报，覆盖 V2EX 招聘：小米 AI 基建架构师 hc5+ 北京、Suger.io 高级后端 Go AWS 远程、React 远程全职 八字占仆出海、Codex 学习资源归档；Reddit r/SideProject：AI Agent 长期记忆开源、8k LOC 极简 Python Agent 框架、Expex.ai 闲置 AI 模型共享变现；Reddit r/Entrepreneur：AI Overview 时代 SEO 获客实战讨论。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "AI招聘", "独立开发", "AI工具"]
+tags: ["AI副业", "V2EX", "Reddit", "AI招聘", "独立开发", "AI 工具"]
 hiddenFromHomePage: true
 ---
 

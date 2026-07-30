@@ -5,7 +5,7 @@ slug: "claude-mythos-preview-security-vulnerabilities-analysis"
 description: "Anthropic发布的Claude Mythos Preview在网络安全领域引发震动。本文深度解析这段官方视频披露的核心发现：27年历史的OpenBSD漏洞、Linux权限提升、以及Anthropic推出的玻璃翼计划(Glasswing Project)，探讨AI安全研究的范式转变。"
 draft: false
 categories: ["视频精读"]
-tags: ["Anthropic", "Claude", "安全研究", "AI安全", "Dario Amodei"]
+tags: ["Anthropic", "Claude", "安全研究", "AI 安全", "Dario Amodei"]
 ---
 
 > **学习目标**：看懂 Anthropic「玻璃翼计划（Project Glasswing）」+ Claude Mythos Preview 这次安全披露到底意味着什么——AI 为什么突然能挖出 27 年的老漏洞、漏洞链是怎么串起来的、以及「不公开发模型、只给白帽优先」这套打法背后的安全逻辑，并用 OpenBSD / Linux 两个例子看实测。下面各级 §标题即目录（TOC），可按需跳读。

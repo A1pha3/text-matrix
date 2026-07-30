@@ -5,7 +5,7 @@ slug: "ljg-skills-claude-code-skills-collection"
 description: "深入解析 lijigang/ljg-skills：一个包含19个 Claude Code 技能的个人工具箱，涵盖论文阅读、内容铸卡、写作引擎、概念解剖、投资分析等场景。剖析每个技能的定位、使用方式和串联逻辑，理解如何用 AI 工具锻造认知流水线。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI工具", "工作流"]
+tags: ["Claude Code", "AI 工具", "工作流"]
 ---
 
 # ljg-skills：李继刚的 Claude Code 技能集，19 把刀锻造认知流水线

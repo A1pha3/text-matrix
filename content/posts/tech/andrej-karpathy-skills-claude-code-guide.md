@@ -5,7 +5,7 @@ slug: "andrej-karpathy-skills-claude-code-guide"
 description: "Andrej Karpathy Skills 是一份改进 Claude Code 行为的 CLAUDE.md 指南，源于 Karpathy 对 LLM 编程陷阱的深刻洞察。掌握四大原则：Think Before Coding、Simplicity First、Surgical Changes、Goal-Driven Execution，让 AI 编程从『幻觉不断』到『精准可控』。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI编程", "最佳实践", "Agent Skills", "Karpathy"]
+tags: ["Claude Code", "AI 编程", "最佳实践", "Agent Skills", "Karpathy"]
 ---
 
 Andrej Karpathy Skills：Claude Code 进化指南

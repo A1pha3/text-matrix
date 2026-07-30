@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-04-12
 description: "AI新闻早报：Claude说谎问题引关注，25岁天才少女公司估值百亿，AI安全漏洞持续发酵，OpenAI与Cirrus Labs合作。"
 draft: false
 categories: ["行业快讯"]
-tags: ["LLM", "Anthropic", "OpenAI", "AI安全"]
+tags: ["LLM", "Anthropic", "OpenAI", "AI 安全"]
 hiddenFromHomePage: true
 ---
 

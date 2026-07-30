@@ -5,7 +5,7 @@ slug: "ai-morning-news-2026-03-29"
 description: "2026年3月29日AI行业新闻早报：算力成本拆解、马斯克xAI团队动荡、华为AI大变、GLM-5.1编程突破、金融Agent再获融资等热点深度解读。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Anthropic", "Claude", "LLM", "人形机器人", "AI编程"]
+tags: ["Anthropic", "Claude", "LLM", "人形机器人", "AI 编程"]
 hiddenFromHomePage: true
 ---
 

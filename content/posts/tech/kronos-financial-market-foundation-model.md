@@ -3,7 +3,8 @@ title: "Kronos：金融市场的语言基础模型"
 date: "2026-05-14T20:17:49+08:00"
 categories:
   - "技术笔记"
-tags: ["基础模型", "Transformer"]description: "Kronos 是首个针对金融 K 线数据的开源基础模型，基于分层分词器将 OHLCV 多维连续数据量化为离散 Token，覆盖 45 个全球交易所数据。AAAI 2026。"
+tags: ["基础模型", "Transformer"]
+description: "Kronos 是首个针对金融 K 线数据的开源基础模型，基于分层分词器将 OHLCV 多维连续数据量化为离散 Token，覆盖 45 个全球交易所数据。AAAI 2026。"
 slug: kronos-financial-market-foundation-model
 ---
 

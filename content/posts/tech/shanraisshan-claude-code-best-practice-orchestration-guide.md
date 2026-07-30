@@ -5,7 +5,7 @@ slug: "shanraisshan-claude-code-best-practice-orchestration-guide"
 description: "shanraisshan/claude-code-best-practice 是 60.2k Stars 的 Claude Code 最佳实践参考库，由 Claude Code 创造者 Boris Cherny 团队与社区贡献者共同维护。本文拆解其 14 个章节的内容定位、Command→Agent→Skill 三层编排模式、与 12 个相邻仓库的关系，并给出按角色（产品/工程/Agent 写作者）的阅读路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "最佳实践", "AI编程"]
+tags: ["Claude Code", "最佳实践", "AI 编程"]
 ---
 
 # claude-code-best-practice：把 Claude Code 的最佳实践从 596 行 README 拆给你看

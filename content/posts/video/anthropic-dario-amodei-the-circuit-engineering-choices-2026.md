@@ -5,7 +5,7 @@ slug: "anthropic-dario-amodei-the-circuit-engineering-choices-2026"
 description: "Anthropic CEO Dario Amodei 在 Bloomberg《The Circuit》70 分钟访谈中，把最不愿意公开的 8 个工程取舍全盘说出——离开 OpenAI 不是因为安全分歧，是因为信任破裂；Mythos 在 Firefox 找到 271 个新漏洞、自主走完 cyber kill chain；白领入门岗位 1-5 年内被冲击 50%+；10-25% 的文明崩溃概率；五角大楼要求取消军事 AI 红线他拒。"
 draft: false
 categories: ["视频精读"]
-tags: ["视频精读", "Anthropic", "Dario Amodei", "Mythos", "AI安全", "Claude", "OpenAI", "B站反写"]
+tags: ["视频精读", "Anthropic", "Dario Amodei", "Mythos", "AI 安全", "Claude", "OpenAI", "B站反写"]
 hiddenFromHomePage: false
 ---
 

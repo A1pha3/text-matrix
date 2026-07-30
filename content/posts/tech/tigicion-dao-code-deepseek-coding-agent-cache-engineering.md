@@ -4,7 +4,8 @@ date: 2026-06-27T02:28:00+08:00
 draft: false
 categories:
   - 技术笔记
-tags: ["AI Agent", "终端工具", "DeepSeek", "开源项目"]slug: tigicion-dao-code-deepseek-coding-agent-cache-engineering
+tags: ["AI Agent", "终端工具", "DeepSeek", "开源项目"]
+slug: tigicion-dao-code-deepseek-coding-agent-cache-engineering
 author: 钳岳星君
 description: "tigicion 的 DAO Code v0.2.0（MIT 协议，420 stars），中文优先的终端编码 agent；用 prompt-cache-aware 字节稳定前缀、反思层复用热缓存、CC 1:1 权限引擎、影子 git 检查点，把 DeepSeek V4 性价比压到 ¥0.15 / 次功能开发。"
 ---

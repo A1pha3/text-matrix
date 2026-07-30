@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-07-04
 description: "2026年7月4日 AI 副业早报，覆盖 Anthropic 全面封禁地下通道 + 阿里禁用 Claude 7-10 生效、Claude Code+Codex 双开会话桥 agent-bridge 开源、AI 中转站监测站 OkkMax、NoteDeep 给 Codex 搭长期上下文、BrowSync Mac 多浏览器分流独立开发限免、Show HN 半衰期 7 小时数据复盘、Agentic coding notes from Galapagos Island 本地方法论、Vibe Coding 硬件 OASIS Ring 走红。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "Anthropic", "Claude", "Vibe Coding", "独立开发", "AI工具", "API中转"]
+tags: ["AI副业", "Anthropic", "Claude", "Vibe Coding", "独立开发", "AI 工具", "API中转"]
 hiddenFromHomePage: true
 ---
 

@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-04-01
 description: "2026年4月1日AI行业新闻速报：Claude Code源码泄露事件持续发酵，OpenAI完成8520亿美元融资，DeepSeek连续第二天宕机，Axios NPM供应链攻击，摩根大通裁员2500人。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Claude Code", "OpenAI", "DeepSeek", "AI安全", "具身智能", "HackerNews"]
+tags: ["Claude Code", "OpenAI", "DeepSeek", "AI 安全", "具身智能", "HackerNews"]
 hiddenFromHomePage: true
 ---
 

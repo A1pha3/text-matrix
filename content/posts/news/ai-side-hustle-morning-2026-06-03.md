@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-03
 description: "2026年6月3日 AI 副业早报：V2EX 24h内7条AI副业（AI 交易终端设计师、Agent 远程岗、vLLM 内推、$15 vibecoder 外包、FDE 趋势、远程工作网站案例）。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "远程工作", "AI编程"]
+tags: ["AI副业", "招聘", "V2EX", "远程工作", "AI 编程"]
 hiddenFromHomePage: true
 ---
 

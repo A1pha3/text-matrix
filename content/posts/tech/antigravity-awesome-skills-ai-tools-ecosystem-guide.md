@@ -5,7 +5,7 @@ slug: antigravity-awesome-skills-ai-tools-ecosystem-guide
 description: "33.3k Stars的Antigravity Awesome Skills专辑，收录1,400+AI工具插件。涵盖官方26个插件、多Agent系统、AI编程、AI搜索、AI音乐等12大分类，是AI工具爱好者的一站式资源库。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI工具", "Antigravity", "Claude Code"]
+tags: ["AI 工具", "Antigravity", "Claude Code"]
 ---
 
 # Antigravity Awesome Skills：1,400+ AI 工具插件生态系统完全指南

@@ -5,7 +5,7 @@ slug: "ai-side-hustle-morning-2026-04-04"
 description: "每日AI副业/赚钱相关资讯速递，涵盖独立开发、远程工作、AI工具变现、创业经验"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "独立开发", "远程工作", "AI工具", "创业"]
+tags: ["AI副业", "独立开发", "远程工作", "AI 工具", "创业"]
 hiddenFromHomePage: true
 ---
 

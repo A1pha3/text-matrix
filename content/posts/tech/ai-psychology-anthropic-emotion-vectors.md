@@ -6,7 +6,7 @@ description: "从 Persona Selection Model 到 171 个情绪向量，再到 rewar
 summary: "把 Anthropic 最新研究串成一条逻辑链的技术解读：角色空间、情绪向量、奖励黑客、对齐伪装与 CoT 不忠实，如何共同指向更深的模型内部状态问题。文章明确区分官方结论、解释框架与谨慎推测，避免把模型简单拟人化。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Anthropic", "AI安全", "LLM"]
+tags: ["Anthropic", "AI 安全", "LLM"]
 ---
 
 ## 目录

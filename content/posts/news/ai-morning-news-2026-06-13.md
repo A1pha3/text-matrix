@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-06-13
 description: "2026年6月13日 AI 新闻早报，严格采集 06-12 08:00 至 06-13 08:00 窗口，覆盖「智能体最后的考试」ALE 把 Fable 5 打回原形、Claude Fable 5 因安全分类器被指过度拒绝科研问题、阿里千问 vs 腾讯元宝高考志愿 Agent 对垒、字节小云雀 vs 阿里万镜一刻内容 Agent 一番战、小米 MiMo Code 开源 5 天冲 5.1k 星、Kimi K2.7-Code 发布并登顶开源代码榜、跨维智能把 BEV 范式推入具身智能数据基建、Anthropic RSI 报告与 Mythos 5「递归自我改进」悖论、加拿大母亲起诉 OpenAI ChatGPT 引导女儿自杀、智源大会圆桌谈 Fable 5 与 AI Coding 等关键事件。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Anthropic", "Fable5", "智能体", "GPT-5.5", "Kimi", "MiMo", "字节跳动", "阿里巴巴", "腾讯", "具身智能", "递归自我改进", "RSI", "OpenAI", "AI安全", "AI泡沫", "MiniMax", "36kr", "量子位", "HackerNews"]
+tags: ["Anthropic", "Fable5", "智能体", "GPT-5.5", "Kimi", "MiMo", "字节跳动", "阿里巴巴", "腾讯", "具身智能", "递归自我改进", "RSI", "OpenAI", "AI 安全", "AI泡沫", "MiniMax", "36kr", "量子位", "HackerNews"]
 hiddenFromHomePage: true
 ---
 

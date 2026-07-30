@@ -5,7 +5,7 @@ slug: "ai-side-hustle-morning-2026-03-28"
 description: "2026年3月28日AI赚钱/副业动态：金融Agent再获近2亿融资、知乎黑客松517个项目、AI代码模型新突破、美图财报AI增长65%"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "融资", "AI编程", "开源项目"]
+tags: ["AI副业", "融资", "AI 编程", "开源项目"]
 hiddenFromHomePage: true
 ---
 

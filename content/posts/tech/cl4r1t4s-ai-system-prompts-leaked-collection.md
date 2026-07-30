@@ -5,7 +5,7 @@ slug: "cl4r1t4s-ai-system-prompts-leaked-collection"
 description: "CL4R1T4S 是 elder-plinius 维护的系统提示词档案库，集中收录多个主流 AI 产品与 AI 编码工具的提示词文本。本文从仓库证据出发，说明它能做什么、适合谁用，以及使用时必须注意的边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM", "提示词工程", "AI安全", "开源项目"]
+tags: ["LLM", "提示词工程", "AI 安全", "开源项目"]
 ---
 
 ## 学习目标

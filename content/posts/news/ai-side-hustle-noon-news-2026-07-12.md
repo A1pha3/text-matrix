@@ -5,7 +5,7 @@ slug: ai-side-hustle-noon-news-2026-07-12
 description: "2026年7月12日 AI 副业午报，汇总过去 24 小时 V2EX 社区里可承接的 AI 招聘、AI 工具发布与开源项目机会：SHEIN 上海全栈技术岗内推、Codeg V0.20 科研模式上线、ChatGPT 当 Codex 用无限额度方案、CC Lights 状态栏工具、Codex+AgentDraw 白板总结、中文起名报告工具、Balanced Portfolio 风险平价回测系统、Seedance 2.5 视频模型观察。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "招聘", "开源", "AI工具", "AI Agent", "视频生成", "Claude", "Codex", "ChatGPT", "投资", "远程工作"]
+tags: ["AI副业", "V2EX", "招聘", "开源", "AI 工具", "AI Agent", "视频生成", "Claude", "Codex", "ChatGPT", "投资", "远程工作"]
 hiddenFromHomePage: true
 ---
 

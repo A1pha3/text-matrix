@@ -5,7 +5,7 @@ slug: ai-morning-news-2026-07-13
 description: "2026年7月13日 AI 新闻早报，覆盖智谱内部信、Anthropic Claude 模型与努力度辨析、AI 编程的安全风险、具身数据 44.7 亿融资热、千卡集群与芯片公司估值争议等关键变化。"
 draft: false
 categories: ["行业快讯"]
-tags: ["智谱", "Claude", "具身智能", "Anthropic", "AI安全"]
+tags: ["智谱", "Claude", "具身智能", "Anthropic", "AI 安全"]
 hiddenFromHomePage: true
 ---
 

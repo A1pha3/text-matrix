@@ -5,7 +5,7 @@ slug: "qiaomu-anything-to-notebooklm-guide"
 description: "qiaomu-anything-to-notebooklm 是一个 Claude Code Skill，可将微信公众号、付费文章、YouTube、播客、PDF、EPUB 等任意内容自动抓取并上传至 Google NotebookLM，生成播客、PPT、思维导图、Quiz 等多种格式。其核心亮点是 6 层级联付费墙绕过策略，支持 300+ 付费新闻网站。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "NotebookLM", "MCP", "AI工具"]
+tags: ["Claude Code", "NotebookLM", "MCP", "AI 工具"]
 ---
 
 # qiaomu-anything-to-notebooklm：任意内容一键转播客、PPT、思维导图

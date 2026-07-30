@@ -5,7 +5,7 @@ slug: ai-side-hustle-morning-2026-06-21
 description: "2026年6月21日 AI 副业早报，过去 24h 内 Chatwoot AI 客服方向远程兼职、Android 高级安全逆向 10W-20W/月招聘、AI 文档解析 Knowhere 1500 stars 实战复盘、Rust→JS 心智模型交互教程、Reddit r/forhire 的 AI 副业接单等共 16 条 V2EX + Reddit 副业机会与工具案例。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "Reddit", "远程招聘", "独立开发", "AI工具", "AI Agent", "Vibe Coding"]
+tags: ["AI副业", "V2EX", "Reddit", "远程招聘", "独立开发", "AI 工具", "AI Agent", "Vibe Coding"]
 hiddenFromHomePage: true
 ---
 

@@ -3,7 +3,7 @@ title: "AI Coding Agent 的新型攻击面：AMOS Stealer 通过 Cursor 会话�
 date: "2026-06-20T15:25:00+08:00"
 slug: "ai-coding-agent-new-attack-surface-amos-stealer-cursor"
 description: "Field Effect 2026-04-23 真实事件复盘：AMOS Stealer 通过 Cursor AI Agent + Claude Code session 在 2 分钟内窃取 Keychain、SSH keys、加密钱包凭据，揭示 AI Coding agent 作为新型 malware delivery 通道的工程化风险与防御盲区。"
-tags: ["AI安全", "AI Coding Agent", "Cursor", "MITRE ATT&CK", "Claude Code", "AI Infra"]
+tags: ["AI 安全", "AI Coding Agent", "Cursor", "MITRE ATT&CK", "Claude Code", "AI Infra"]
 categories: ["技术笔记"]
 draft: false
 ---
