@@ -63,25 +63,7 @@ enableRobotsTXT = true
     [params.home.profile]
       typeit = false
       subtitle = '''
-<span class="hero-console">
-  <span class="hero-console-grid"></span>
-  <span class="hero-console-noise"></span>
-  <span class="hero-wordmark" aria-label="Text Matrix" data-text="TEXT MATRIX">
-    <span class="hero-wordmark-text">
-      <span class="hero-wordmark-char">T</span>
-      <span class="hero-wordmark-char">E</span>
-      <span class="hero-wordmark-char">X</span>
-      <span class="hero-wordmark-char">T</span>
-      <span class="hero-wordmark-gap"></span>
-      <span class="hero-wordmark-char">M</span>
-      <span class="hero-wordmark-char">A</span>
-      <span class="hero-wordmark-char">T</span>
-      <span class="hero-wordmark-char">R</span>
-      <span class="hero-wordmark-char">I</span>
-      <span class="hero-wordmark-char">X</span>
-    </span>
-  </span>
-</span>
+<span class="hero-wordmark">TEXT MATRIX</span>
 <span class="hero-positioning">面向中文开发者的 AI Agent、AI 开发工作流与开源工具知识库</span>
 '''
 

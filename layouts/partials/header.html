@@ -15,17 +15,12 @@
         <div class="header-dock">
             <div class="header-title{{ if .IsHome }} is-home{{ end }}">
                 <a class="header-brand{{ if .IsHome }} is-home{{ end }}" href="{{ .Site.Home.RelPermalink }}" title="{{ $headerTitle }}" aria-label="{{ $headerTitle }}">
-                    <span class="header-brand-panel" aria-hidden="true">
-                        <span class="header-brand-panel-grid"></span>
-                        <span class="header-brand-panel-pulse"></span>
-                    </span>
                     <span class="header-brand-wordmark">
                         <span class="header-brand-overline">
                             <span class="header-brand-text">{{ $headerLead }}</span>
                         </span>
                         {{- with $headerTail -}}
                             <span class="header-brand-baseline">
-                                <span class="header-brand-signal" aria-hidden="true"></span>
                                 <span class="header-brand-text accent">{{ . }}</span>
                             </span>
                         {{- end -}}
@@ -87,17 +82,12 @@
         <div class="header-wrapper">
             <div class="header-title{{ if .IsHome }} is-home{{ end }}">
                 <a class="header-brand{{ if .IsHome }} is-home{{ end }}" href="{{ .Site.Home.RelPermalink }}" title="{{ $headerTitle }}" aria-label="{{ $headerTitle }}">
-                    <span class="header-brand-panel" aria-hidden="true">
-                        <span class="header-brand-panel-grid"></span>
-                        <span class="header-brand-panel-pulse"></span>
-                    </span>
                     <span class="header-brand-wordmark">
                         <span class="header-brand-overline">
                             <span class="header-brand-text">{{ $headerLead }}</span>
                         </span>
                         {{- with $headerTail -}}
                             <span class="header-brand-baseline">
-                                <span class="header-brand-signal" aria-hidden="true"></span>
                                 <span class="header-brand-text accent">{{ . }}</span>
                             </span>
                         {{- end -}}
