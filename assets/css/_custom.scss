@@ -53,20 +53,14 @@
 }
 
 .home-curated {
-  .home-sections-grid,
-  .home-action-band {
+  .home-sections-grid {
     display: grid;
     gap: 1.25rem;
     margin-top: 2rem;
-  }
-
-  .home-action-band,
-  .home-sections-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
   .home-section-block,
-  .home-action-card,
   .home-featured-card {
     border: 1px solid rgba(15, 23, 42, .08);
     border-radius: .9rem;
@@ -74,7 +68,6 @@
     box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
   }
 
-  .home-action-card,
   .home-section-block {
     padding: 1.35rem 1.4rem;
   }
@@ -98,12 +91,10 @@
     color: #0f766e;
     font-size: .74rem;
     font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
+    letter-spacing: .05em;
   }
 
   .home-section-heading h2,
-  .home-action-card h2,
   .home-featured-copy h3 {
     margin: 0;
     color: #0f172a;
@@ -111,8 +102,7 @@
   }
 
   .home-compact-item p,
-  .home-featured-copy p,
-  .home-action-card p:last-child {
+  .home-featured-copy p {
     color: #475569;
     line-height: 1.75;
   }
@@ -149,7 +139,7 @@
   .home-news-item a:hover,
   .home-featured-copy h3 a:hover,
   .home-inline-link:hover,
-  .home-action-links a:hover,
+  .home-topic-strip a:hover,
   .home-featured-link:hover {
     color: #0f766e;
   }
@@ -196,34 +186,8 @@
     font-size: .95rem;
   }
 
-  .home-action-card {
-    grid-column: span 6;
-  }
-
-  .home-cta-card {
-    grid-column: span 12;
-  }
-
-  .home-action-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .75rem;
-    margin-top: 1rem;
-  }
-
-  .home-action-links a {
-    padding: .62rem .92rem;
-    border: 1px solid rgba(15, 23, 42, .08);
-    border-radius: 999px;
-    color: #0f172a;
-    font-weight: 600;
-    text-decoration: none;
-    background: rgba(255, 255, 255, .72);
-  }
-
   [theme=dark] & {
     .home-section-block,
-    .home-action-card,
     .home-featured-card {
       border-color: rgba(255, 255, 255, .06);
       background: rgba(15, 23, 42, .84);
@@ -231,18 +195,16 @@
     }
 
     .home-section-heading h2,
-    .home-action-card h2,
     .home-featured-copy h3,
     .home-compact-item a,
     .home-news-item a,
     .home-featured-copy h3 a,
-    .home-action-links a {
+    .home-topic-strip a {
       color: #f8fafc;
     }
 
     .home-compact-item p,
     .home-featured-copy p,
-    .home-action-card p:last-child,
     .home-news-item time,
     .home-featured-actions {
       color: #cbd5e1;
@@ -253,17 +215,48 @@
       border-bottom-color: rgba(148, 163, 184, .14);
     }
 
-    .home-action-links a {
+    .home-topic-strip {
+      border-top-color: rgba(148, 163, 184, .14);
+    }
+  }
+}
+
+/* 首页底部专题入口：单行链接条 */
+.home-topic-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem .75rem;
+  margin-top: 2.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(148, 163, 184, .18);
+
+  .home-topic-strip-label {
+    color: #0f766e;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+  }
+
+  a {
+    padding: .42rem .8rem;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 999px;
+    color: #475569;
+    font-size: .9rem;
+    font-weight: 600;
+    text-decoration: none;
+
+    [theme=dark] & {
       border-color: rgba(255, 255, 255, .08);
-      background: rgba(15, 23, 42, .62);
+      color: #cbd5e1;
     }
   }
 }
 
 @media (max-width: 900px) {
   .home-curated {
-    .home-section-block,
-    .home-action-card {
+    .home-section-block {
       grid-column: span 12;
     }
   }
@@ -282,7 +275,7 @@
     color: #0f766e;
     font-size: .78rem;
     font-weight: 700;
-    letter-spacing: .12em;
+    letter-spacing: .05em;
   }
 
   .post-conversion-links {
@@ -332,8 +325,7 @@
     color: #0f766e;
     font-size: .74rem;
     font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
+    letter-spacing: .05em;
   }
 
   .post-related-header h2 {
@@ -460,8 +452,7 @@
     color: #0f766e;
     font-size: .74rem;
     font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
+    letter-spacing: .05em;
   }
 
   h3 {
@@ -536,8 +527,7 @@
     color: #0f766e;
     font-size: .74rem;
     font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
+    letter-spacing: .05em;
   }
 
   .topic-intro,
@@ -627,8 +617,7 @@
     color: #0f766e;
     font-size: .74rem;
     font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
+    letter-spacing: .05em;
   }
 
   .topic-brief-card h2 {
@@ -1176,8 +1165,7 @@
   color: #64748b;
   font-size: .78rem;
   font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
+  letter-spacing: .05em;
 
   [theme=dark] & {
     color: #94a3b8;

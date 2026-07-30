@@ -4,10 +4,7 @@
     {{- $params := .Scratch.Get "params" -}}
     <div class="page single special">
         <div class="pagefind-document" data-pagefind-body>
-            <h1 class="single-title animate__animated animate__pulse animate__faster" data-pagefind-meta="title">
-                {{- .Title -}}
-            </h1>
-
+            <span hidden data-pagefind-meta="title">{{ .Title }}</span>
             {{- with $params.subtitle -}}
                 <h2 class="single-subtitle">{{ . }}</h2>
             {{- end -}}

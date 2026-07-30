@@ -19,7 +19,6 @@
         <section class="home-featured" data-pagefind-ignore="all">
             <div class="home-section-heading">
                 <p class="home-section-kicker">本周重点</p>
-                <h2>先看这一篇深度内容</h2>
             </div>
             <article class="home-featured-card">
                 <div class="home-featured-copy">
@@ -85,7 +84,7 @@
 
             <div class="home-section-block">
                 <div class="home-section-heading">
-                    <h2>少而精的深度内容</h2>
+                    <h2>思考与随笔</h2>
                 </div>
                 <div class="home-compact-list">
                     {{- range $thoughtPosts -}}
@@ -104,36 +103,12 @@
             </div>
         </section>
 
-        <section class="home-action-band" data-pagefind-ignore="all">
-            <article class="home-action-card">
-                <h2>从分类页进入你最关心的主题</h2>
-                <div class="home-action-links">
-                    <a href="/ai-agent/">AI Agent 专题</a>
-                    <a href="/coding-agent/">Coding Agent 专题</a>
-                    <a href="/open-source-ai-tools/">开源 AI 工具</a>
-                    <a href="/categories/技术笔记/">技术笔记</a>
-                    <a href="/categories/视频精读/">视频精读</a>
-                    <a href="/categories/行业快讯/">行业快讯</a>
-                </div>
-            </article>
-            <article class="home-action-card">
-                <h2>搜索、关于与联系信息也保持就近可达</h2>
-                <div class="home-action-links">
-                    <a href="/search/">站内搜索</a>
-                    <a href="/about/">关于本站</a>
-                    <a href="/contact/">联系</a>
-                </div>
-            </article>
-            <article class="home-action-card home-cta-card">
-                <h2>想持续跟进这条内容线，就把联系入口放近一点。</h2>
-                <p>如果你希望获取更新、反馈选题、交流工具链，或者讨论内容合作与产品合作，可以直接通过联系页进入当前公开渠道。</p>
-                <div class="home-action-links">
-                    <a href="/contact/">获取联系渠道</a>
-                    <a href="/about/">了解本站定位</a>
-                    <a href="/search/?q=Claude%20Code">直接搜索主题</a>
-                </div>
-            </article>
-        </section>
+        <nav class="home-topic-strip" data-pagefind-ignore="all" aria-label="专题">
+            <span class="home-topic-strip-label">专题</span>
+            <a href="/ai-agent/">AI Agent 学习路径</a>
+            <a href="/coding-agent/">Coding Agent 工作流</a>
+            <a href="/open-source-ai-tools/">开源 AI 工具</a>
+        </nav>
 
         {{- if .Content -}}
             <div class="single">

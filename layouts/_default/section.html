@@ -4,17 +4,17 @@
 
 {{- define "content" -}}
     {{- $sectionName := .Params.Title | default (T .Section) | default .Section | dict "Some" | T "allSome" -}}
-    {{- $sectionDescription := "按时间归档浏览这一栏目下的全部内容。" -}}
+    {{- $sectionDescription := "本栏目全部内容，按时间倒序。" -}}
     {{- if eq .Section "posts" -}}
-        {{- $sectionDescription = "这里汇集了站点所有公开文章，适合按发布时间整体浏览内容更新节奏。" -}}
+        {{- $sectionDescription = "全部文章，按时间倒序。日报类快讯在「行业快讯」栏目。" -}}
     {{- else if eq .Section "news" -}}
-        {{- $sectionDescription = "高频快讯会集中收录在这里，适合快速查看最近的行业变化与热点事件。" -}}
+        {{- $sectionDescription = "高频快讯集中在这里。" -}}
     {{- else if eq .Section "tech" -}}
-        {{- $sectionDescription = "技术笔记更适合系统阅读和长期回看，建议结合专题页一起使用。" -}}
+        {{- $sectionDescription = "系统化的深度内容，适合长期回看。" -}}
     {{- else if eq .Section "video" -}}
-        {{- $sectionDescription = "这里收录的是对高价值视频内容的结构化拆解与提炼。" -}}
+        {{- $sectionDescription = "高价值视频的结构化笔记。" -}}
     {{- else if eq .Section "thoughts" -}}
-        {{- $sectionDescription = "这部分内容更新更慢，但通常更适合慢读和回看。" -}}
+        {{- $sectionDescription = "更新慢，但值得慢读。" -}}
     {{- end -}}
     <div class="page archive" data-pagefind-ignore="all">
         <div class="discovery-hero">
