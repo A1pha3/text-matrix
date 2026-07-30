@@ -62,10 +62,10 @@
 
   .home-section-block,
   .home-featured-card {
-    border: 1px solid rgba(15, 23, 42, .08);
+    border: 1px solid rgba(28, 25, 23, .08);
     border-radius: .9rem;
     background: #ffffff;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
   }
 
   .home-section-block {
@@ -119,7 +119,7 @@
 
   .home-compact-item {
     padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(148, 163, 184, .18);
+    border-bottom: 1px solid rgba(168, 162, 158, .18);
   }
 
   .home-compact-item:last-child {
@@ -156,7 +156,7 @@
     align-items: baseline;
     justify-content: space-between;
     padding-bottom: .85rem;
-    border-bottom: 1px solid rgba(148, 163, 184, .16);
+    border-bottom: 1px solid rgba(168, 162, 158, .16);
   }
 
   .home-news-item time {
@@ -212,11 +212,11 @@
 
     .home-compact-item,
     .home-news-item {
-      border-bottom-color: rgba(148, 163, 184, .14);
+      border-bottom-color: rgba(168, 162, 158, .14);
     }
 
     .home-topic-strip {
-      border-top-color: rgba(148, 163, 184, .14);
+      border-top-color: rgba(168, 162, 158, .14);
     }
   }
 }
@@ -229,7 +229,7 @@
   gap: .6rem .75rem;
   margin-top: 2.4rem;
   padding-top: 1.2rem;
-  border-top: 1px solid rgba(148, 163, 184, .18);
+  border-top: 1px solid rgba(168, 162, 158, .18);
 
   .home-topic-strip-label {
     color: #0f766e;
@@ -240,7 +240,7 @@
 
   a {
     padding: .42rem .8rem;
-    border: 1px solid rgba(15, 23, 42, .08);
+    border: 1px solid rgba(28, 25, 23, .08);
     border-radius: 999px;
     color: #57534e;
     font-size: .9rem;
@@ -269,7 +269,7 @@
   gap: .75rem;
   margin-top: 2rem;
   padding-top: 1.2rem;
-  border-top: 1px solid rgba(148, 163, 184, .18);
+  border-top: 1px solid rgba(168, 162, 158, .18);
 
   .post-conversion-label {
     color: #0f766e;
@@ -286,7 +286,7 @@
 
   .post-conversion-links a {
     padding: .42rem .8rem;
-    border: 1px solid rgba(15, 23, 42, .08);
+    border: 1px solid rgba(28, 25, 23, .08);
     border-radius: 999px;
     color: #57534e;
     font-size: .9rem;
@@ -299,7 +299,7 @@
   }
 
   [theme=dark] & {
-    border-top-color: rgba(148, 163, 184, .14);
+    border-top-color: rgba(168, 162, 158, .14);
 
     .post-conversion-links a {
       border-color: rgba(255, 255, 255, .08);
@@ -315,10 +315,10 @@
 .post-related {
   margin-top: 2rem;
   padding: 1.4rem 1.45rem;
-  border: 1px solid rgba(15, 23, 42, .08);
+  border: 1px solid rgba(28, 25, 23, .08);
   border-radius: .9rem;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
 
   .post-related-kicker {
     margin: 0 0 .45rem;
@@ -343,7 +343,7 @@
 
   .post-related-card {
     padding: 1rem 1.05rem;
-    border: 1px solid rgba(148, 163, 184, .18);
+    border: 1px solid rgba(168, 162, 158, .18);
     border-radius: .75rem;
     background: #ffffff;
   }
@@ -387,7 +387,7 @@
     }
 
     .post-related-card {
-      border-color: rgba(148, 163, 184, .16);
+      border-color: rgba(168, 162, 158, .16);
       background: rgba(15, 23, 42, .55);
     }
 
@@ -400,10 +400,10 @@
 .discovery-hero {
   margin-bottom: 1.4rem;
   padding: 1rem 1.4rem;
-  border: 1px solid rgba(15, 23, 42, .08);
+  border: 1px solid rgba(28, 25, 23, .08);
   border-radius: .9rem;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
 
   .single-title {
     margin: 0 0 .4rem;
@@ -442,10 +442,10 @@
 
 .search-discovery-card {
   padding: 1.1rem 1.15rem;
-  border: 1px solid rgba(15, 23, 42, .08);
+  border: 1px solid rgba(28, 25, 23, .08);
   border-radius: .75rem;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
 
   .search-discovery-kicker {
     margin: 0 0 .42rem;
@@ -508,10 +508,10 @@
   .topic-mini-card,
   .topic-switcher-link,
   .topic-content-shell {
-    border: 1px solid rgba(15, 23, 42, .08);
+    border: 1px solid rgba(28, 25, 23, .08);
     border-radius: .9rem;
     background: #ffffff;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
   }
 
   .topic-hero-copy,
@@ -550,7 +550,7 @@
 
   .topic-actions a {
     padding: .62rem .92rem;
-    border: 1px solid rgba(15, 23, 42, .08);
+    border: 1px solid rgba(28, 25, 23, .08);
     border-radius: 999px;
     color: #1c1917;
     font-weight: 600;
@@ -590,7 +590,7 @@
 
   .topic-switcher-link.active {
     border-color: rgba(15, 118, 110, .3);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
   }
 
   .topic-content-shell {
@@ -606,10 +606,10 @@
 
   .topic-brief-card {
     padding: 1.2rem 1.2rem 1.1rem;
-    border: 1px solid rgba(15, 23, 42, .08);
+    border: 1px solid rgba(28, 25, 23, .08);
     border-radius: .75rem;
     background: #ffffff;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
   }
 
   .topic-brief-label {
@@ -781,7 +781,7 @@
   .header-dock-divider {
     width: 1px;
     height: 2.2rem;
-    background: linear-gradient(180deg, transparent, rgba(15, 23, 42, .06), transparent);
+    background: linear-gradient(180deg, transparent, rgba(28, 25, 23, .06), transparent);
     margin: 0 .1rem;
 
     [theme=dark] & {
@@ -834,7 +834,7 @@
 #header-desktop .menu a.menu-item:hover,
 #header-desktop .menu a.menu-item.active {
   color: #1c1917;
-  background: rgba(241, 245, 249, .8);
+  background: rgba(245, 245, 244, .8);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .6),
     0 2px 4px rgba(0, 0, 0, .02);
@@ -864,15 +864,15 @@
   height: 2.2rem;
   width: 2.2rem;
   border-radius: .8rem;
-  background: rgba(15, 23, 42, .03);
+  background: rgba(28, 25, 23, .03);
   box-shadow:
-    inset 0 0 0 1px rgba(15, 23, 42, .08),
-    inset 0 1px 0 rgba(15, 23, 42, .02);
+    inset 0 0 0 1px rgba(28, 25, 23, .08),
+    inset 0 1px 0 rgba(28, 25, 23, .02);
 
   [theme=dark] & {
     background: rgba(255, 255, 255, .03);
     box-shadow:
-      inset 0 0 0 1px rgba(148, 163, 184, .14),
+      inset 0 0 0 1px rgba(168, 162, 158, .14),
       inset 0 1px 0 rgba(255, 255, 255, .04);
   }
 }
@@ -894,7 +894,7 @@
   color: #78716c;
 
   [theme=dark] & {
-    color: rgba(226, 232, 240, .72);
+    color: rgba(231, 229, 228, .72);
   }
 }
 
@@ -918,13 +918,13 @@
   color: #78716c;
 
   [theme=dark] & {
-    color: rgba(226, 232, 240, .72);
+    color: rgba(231, 229, 228, .72);
   }
 }
 
 #header-desktop .menu .theme-switch:hover,
 #header-desktop .menu .language:hover {
-  background: rgba(241, 245, 249, .8);
+  background: rgba(245, 245, 244, .8);
 
   [theme=dark] & {
     background: rgba(30, 41, 59, .8);
@@ -1044,8 +1044,8 @@
   --pagefind-ui-primary: #0f766e;
   --pagefind-ui-text: #1c1917;
   --pagefind-ui-background: rgba(255, 255, 255, .82);
-  --pagefind-ui-border: rgba(148, 163, 184, .18);
-  --pagefind-ui-tag: rgba(226, 232, 240, .88);
+  --pagefind-ui-border: rgba(168, 162, 158, .18);
+  --pagefind-ui-tag: rgba(231, 229, 228, .88);
   --pagefind-ui-border-width: 1px;
   --pagefind-ui-border-radius: 16px;
   --pagefind-ui-image-border-radius: 12px;
@@ -1054,7 +1054,7 @@
     --pagefind-ui-primary: #5eead4;
     --pagefind-ui-text: #e2e8f0;
     --pagefind-ui-background: rgba(15, 23, 42, .72);
-    --pagefind-ui-border: rgba(148, 163, 184, .16);
+    --pagefind-ui-border: rgba(168, 162, 158, .16);
     --pagefind-ui-tag: rgba(30, 41, 59, .92);
   }
 }
@@ -1085,10 +1085,10 @@
 
 .pagefind-hero-copy {
   padding: 1.35rem 1.4rem;
-  border: 1px solid rgba(15, 23, 42, .08);
+  border: 1px solid rgba(28, 25, 23, .08);
   border-radius: .9rem;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
 
   [theme=dark] & {
     border-color: rgba(94, 234, 212, .14);
@@ -1149,10 +1149,10 @@
   justify-content: space-between;
   min-height: 7.2rem;
   padding: 1rem 1.05rem;
-  border: 1px solid rgba(15, 23, 42, .08);
+  border: 1px solid rgba(28, 25, 23, .08);
   border-radius: .75rem;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
 
   [theme=dark] & {
     border-color: rgba(94, 234, 212, .14);
@@ -1197,10 +1197,10 @@
 
 .pagefind-search-card {
   padding: 1.4rem;
-  border: 1px solid rgba(15, 23, 42, .08);
+  border: 1px solid rgba(28, 25, 23, .08);
   border-radius: .9rem;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
 
   [theme=dark] & {
     border-color: rgba(94, 234, 212, .14);
@@ -1231,7 +1231,7 @@
   min-height: 1.9rem;
   padding: 0 .72rem;
   border-radius: 999px;
-  background: rgba(226, 232, 240, .82);
+  background: rgba(231, 229, 228, .82);
   color: #44403c;
   font-size: .78rem;
   font-weight: 700;
@@ -1248,8 +1248,8 @@
   font-size: .98rem;
   border-radius: 1rem;
   box-shadow:
-    inset 0 0 0 1px rgba(15, 23, 42, .06),
-    0 10px 28px rgba(15, 23, 42, .05);
+    inset 0 0 0 1px rgba(28, 25, 23, .06),
+    0 10px 28px rgba(28, 25, 23, .05);
 }
 
 .pagefind-search-page .pagefind-ui__search-input::placeholder {
@@ -1264,11 +1264,11 @@
   padding: 1rem 1.05rem;
   border-radius: 1rem;
   background: rgba(255, 255, 255, .58);
-  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .12);
+  box-shadow: inset 0 0 0 1px rgba(168, 162, 158, .12);
 
   [theme=dark] & {
     background: rgba(15, 23, 42, .54);
-    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .12);
+    box-shadow: inset 0 0 0 1px rgba(168, 162, 158, .12);
   }
 }
 
@@ -1332,16 +1332,16 @@
 #header-mobile .menu .search.mobile input {
   height: 2.7rem;
   border-radius: .9rem;
-  background: rgba(15, 23, 42, .03);
+  background: rgba(28, 25, 23, .03);
   box-shadow:
-    inset 0 0 0 1px rgba(15, 23, 42, .08),
-    inset 0 1px 0 rgba(15, 23, 42, .02);
+    inset 0 0 0 1px rgba(28, 25, 23, .08),
+    inset 0 1px 0 rgba(28, 25, 23, .02);
   color: #1c1917;
 
   [theme=dark] & {
     background: rgba(255, 255, 255, .03);
     box-shadow:
-      inset 0 0 0 1px rgba(148, 163, 184, .14),
+      inset 0 0 0 1px rgba(168, 162, 158, .14),
       inset 0 1px 0 rgba(255, 255, 255, .04);
     color: #f8fafc;
   }
@@ -1351,7 +1351,7 @@
   color: #78716c;
 
   [theme=dark] & {
-    color: rgba(226, 232, 240, .72);
+    color: rgba(231, 229, 228, .72);
   }
 }
 
@@ -1368,12 +1368,12 @@
   line-height: 1;
 
   [theme=dark] & {
-    color: rgba(226, 232, 240, .88);
+    color: rgba(231, 229, 228, .88);
   }
 }
 
 #header-mobile .menu a.menu-item:hover {
-  background: rgba(241, 245, 249, .8);
+  background: rgba(245, 245, 244, .8);
   color: #1c1917;
 
   [theme=dark] & {
