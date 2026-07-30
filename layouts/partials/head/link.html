@@ -46,12 +46,12 @@
 {{- $options = dict "Context" . "ToCSS" $toCSS | merge $options -}}
 {{- partial "plugin/style.html" $options -}}
 
-{{- /* Font Awesome */ -}}
-{{- $source := $cdn.fontawesomeFreeCSS | default "lib/fontawesome-free/css/all.min.css" -}}
+{{- /* Font Awesome（子集版，由 scripts/subset_fontawesome.py 生成，314KB -> 21KB） */ -}}
+{{- $source := $cdn.fontawesomeFreeCSS | default "lib/fontawesome-free-subset/css/all.min.css" -}}
 {{- $options := dict "Source" $source "Fingerprint" $fingerprint "Preload" true -}}
 {{- partial "plugin/style.html" $options -}}
 {{- if not $cdn.fontawesomeFreeCSS -}}
-    {{- range resources.Match "lib/fontawesome-free/webfonts/*" -}}
+    {{- range resources.Match "lib/fontawesome-free-subset/webfonts/*" -}}
         {{- .Publish -}}
     {{- end -}}
 {{- end -}}
