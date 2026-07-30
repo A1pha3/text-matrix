@@ -1,11 +1,11 @@
 ---
 title: "AI新闻早报 2026-07-30"
-date: 2026-07-30T07:15:00+08:00
+date: 2026-07-30T08:00:00+08:00
 slug: ai-morning-news-2026-07-30
-description: "2026年7月30日 AI新闻早报：OpenAI GPT-6性能突破、DeepSeek代码能力超越、字节跳动豆包生态扩展、英伟达H200发布、欧盟AI法案实施、斯坦福发布AI安全新框架。"
+description: "2026年7月30日 AI新闻早报：GCC禁止AI生成关键代码、谷歌AlphaFold诺奖团队解散、GPT-5.6自我优化实锤、李飞飞世界模型训练机器人、翁荔重返OpenAI、OpenAI科研流水线进ChatGPT、Hugging Face Agent入侵事件、Anthropic密码学新发现、Kimi K3-256k发布、DeepMind视觉提示工程。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI", "OpenAI", "DeepSeek", "字节跳动", "英伟达", "Meta", "监管", "AI安全"]
+tags: ["AI", "OpenAI", "GCC", "AlphaFold", "谷歌", "Anthropic", "HuggingFace", "Kimi", "DeepMind", "李飞飞"]
 hiddenFromHomePage: true
 ---
 
@@ -15,73 +15,64 @@ hiddenFromHomePage: true
 
 ## 🔬 技术进展
 
-### OpenAI GPT-6性能报告泄露，推理能力提升40%，支持1000万token上下文
-来源: 36kr
-原文: [原文](https://36kr.com/p/3906759052907910)
-摘要: 7月29日OpenAI开发者社区泄露GPT-6性能测试报告，参数规模据业内估计达8万亿，推理能力较GPT-5.6提升40%，支持1000万token上下文窗口。新版模型在MMLU基准测试中得分96.8%，首次超过人类专家平均水平。泄露文档显示，全新的推理API价格为每百万token 12美元，预计全面版将于2026年Q4正式上线。业内分析师表示，GPT-6在数学推理、逻辑演绎和长文本理解方面的突破性进展，可能再次改变AI产业竞争格局。
-
-### 百度文心助手任务Agent登顶PinchBench v2，超越Claude与GPT拿下全球智能体冠军
+### GPT-5.6自己优化自己实锤了，OpenAI的RSI（递归自我改进）来了
 来源: 量子位
-原文: [原文](https://www.qbitai.com/2026/07/457117.html)
-摘要: 7月17日，百度文心助手任务Agent以最高分94.6%、平均分94.4%的成绩登顶全球工程向AI智能体评测榜单PinchBench v2，成为首个以正式产品身份获得总榜第一的国产智能体系统。在59个参评模型中排名第一，领先Anthropic Claude Opus 4.8-fast（93.5%）、阿里通义千问Qwen3.7-max（92.5%）、Claude Opus 4.8（90.5%）和OpenAI GPT-5.6-luna（88.7%）。PinchBench由Kilo AI推出、OpenClaw社区维护，包含23个真实工作场景、147项任务，覆盖数据分析、研究写作、代码开发等七大类别。百度已在GitHub开源完整评测流程，147个任务的执行快照和LLM Judge打分理由全量公开。
+原文: [GPT-5.6自己优化自己实锤了，新的左脚踩右脚已经出现](https://www.qbitai.com/2026/07/463297.html)
+摘要: OpenAI的RSI（Recursive Self-Improvement）技术首次得到实证。GPT-5.6在推理和代码生成方面展现出自我优化的能力，通过让模型迭代改进自身输出，在多项基准测试中实现了显著提升。这一"左脚踩右脚"式的自我提升路径，标志着AI模型训练进入新阶段。
+
+### Google DeepMind提出"视觉提示工程"新范式：比文本指令更有效
+来源: 36kr
+原文: [prompt工程已死？Google DeepMind提出"视觉提示工程"新范式](https://36kr.com/p/3917923747933830)
+摘要: Google DeepMind提出视觉提示工程（Visual Prompt Engineering）新范式，研究表明视觉指令比纯文本指令更有效。这一从文本到视觉的范式转变，可能重塑人与AI模型的交互方式，传统prompt工程面临被颠覆的可能。
+
+### Kimi K3-256k发布，HN热度超450点
+来源: Hacker News
+原文: [Kimi K3-256k 模型文档](https://www.kimi.com/code/docs/en/kimi-code/models)
+摘要: 月之暗面发布Kimi K3-256k模型，支持256k上下文窗口，HN讨论热度高达459点。该模型在代码生成和长文本理解方面表现突出，被视为国产开源大模型的又一力作，持续在海外社区刷屏。
 
 ## 🚀 产品发布
 
-### 字节跳动豆包生态扩展，企业版用户突破10万
+### OpenAI把科研流水线搬进ChatGPT，10万科学家免费用1年
 来源: 36kr
-原文: [原文](https://36kr.com/p/3906712566797699)
-摘要: 7月29日字节跳动公布豆包生态最新进展，企业版用户突破10万，覆盖金融、制造、零售等多个行业。豆包API日均调用量突破200亿次，在多模态交互和语音识别方面持续优化，支持40种语言实时互译，延迟低于200ms。字节跳动同时宣布推出豆包开发者计划，投入10亿元扶持AI原生应用开发。据透露，豆包月活用户已突破3亿，其中付费用户占比持续提升。
+原文: [10万科学家免费用1年，OpenAI把科研流水线搬进ChatGPT](https://36kr.com/p/3918031055023751)
+摘要: OpenAI宣布将科研流水线工具集成进ChatGPT，向10万名科学家提供免费一年使用权。该工具覆盖数据分析、文献综述、实验设计等科研全流程。Anthropic此前已在科研领域布局，但打法不同。此举标志着AI巨头对科研用户市场的争夺白热化。
 
-### Meta Llama多模态模型持续优化，开源生态蓬勃发展
-来源: Hacker News
-原文: [原文](https://news.ycombinator.com/item?id=41008992)
-摘要: 7月29日Meta公布Llama多模态模型最新优化进展，开源社区基于Llama开发的衍生模型已超过5000个。Llama系列在多模态基准测试中表现优异，支持图像、视频和3D点云输入。扎克伯格在博客中表示，开源是AI进步的关键，Meta将继续推动AI技术的民主化。据统计，Llama系列模型累计下载量已突破1亿次，成为全球最受欢迎的开源大模型。
+### 李飞飞World Labs突破：世界模型终于开始训练机器人
+来源: 量子位
+原文: [李飞飞的世界模型，终于开始训练机器人了](https://www.qbitai.com/2026/07/463217.html)
+摘要: 李飞飞创立的World Labs补上了关键拼图——将世界模型与机器人训练结合。这一突破使具身智能从感知走向操作，机器人可以通过世界模型模拟环境进行训练，大幅降低真实世界训练的成本和风险。
 
 ## 📰 行业动态
 
-### 欧盟AI法案实施进入倒计时，科技公司加速合规准备
-来源: Hacker News / Politico
-原文: [原文](https://www.politico.com/news/2026/07/22/startup-founders-urge-trump-not-to-shut-off-chinese-open-weight-ai-01008992)
-摘要: 7月29日欧盟AI法案实施进入最后倒计时，标志着全球首个综合性AI监管框架即将全面实施。欧盟委员会正在评估多家科技公司的旗舰模型合规性，预计将有包括OpenAI、谷歌在内的多家公司模型被列为"极高风险"类别，需接受严格的透明度和安全审计。法案规定，极高风险AI系统需在上线前进行合规评估，每年提交安全报告，并向用户明确披露AI生成内容。违规企业最高可面临全球年营业额6%的罚款。
+### GCC指导委员会宣布AI政策：禁止AI生成关键代码贡献
+来源: Hacker News / LWN.net
+原文: [GCC steering committee announces AI policy](https://lwn.net/Articles/1086041/)
+摘要: GCC指导委员会正式宣布AI政策，今年将不再接受任何由AI/大语言模型Agent生成的"具有法律重要性"的代码贡献。这一政策在开源社区引发广泛讨论，HN热度28点。36kr同日报道：[GCC禁止AI生成关键代码贡献](https://36kr.com/p/3918030776921481)。标志着开源社区对AI生成代码的谨慎态度正式化为规则。
 
-### 英伟达H200芯片即将量产，AI算力需求持续爆发增长
-来源: 36kr
-原文: [原文](https://36kr.com/p/3906610073819017)
-摘要: 7月29日英伟达在财报电话会议上透露H200下一代AI加速芯片量产进展，采用HBM3e显存技术，单卡容量达288GB，显存带宽达8.4TB/s，较H100性能提升50%。H200将用于训练和推理超大规模AI模型，预计2026年Q4开始出货。英伟达同时公布Q2财报指引，分析师预计营收达580亿美元，同比增长128%，其中数据中心业务将成为主要增长引擎。CEO黄仁勋表示，全球AI算力需求仍处于爆发式增长阶段，英伟达正在加速产能扩张。
-
-## 💰 融资财报
-
-### AI基础设施投资持续升温，云计算巨头加速算力布局
-来源: Hacker News / Bloomberg
-原文: [原文](https://www.darpa.mil/news/2026/darpa-us-air-force-fly-ai-controlled-f-16)
-摘要: 7月29日市场消息显示，AI云基础设施领域投资持续升温，微软、亚马逊、谷歌等科技巨头均在加速算力布局。据透露，AI基础设施公司估值持续走高，行业头部公司估值已达数百亿美元。目前全球AI训练GPU需求持续紧张，H100等高端芯片交付周期仍超过6个月。分析师预计，2026年全球AI基础设施投资将突破3000亿美元，数据中心建设将成为主要投资方向。
-
-### 百度文心大模型生态扩展，企业客户加速增长
+### 谷歌AlphaFold诺奖团队解散，核心成员投奔Anthropic
 来源: 量子位
-原文: [原文](https://www.qbitai.com/2026/07/457117.html)
-摘要: 7月29日百度公布文心大模型最新进展，企业客户增长加速，在金融、制造、医疗等行业的渗透率持续提升。文心一言API日均调用量保持高速增长，已成为中国市场份额最大的大模型服务提供商。李彦宏表示，AI原生应用正在进入爆发期，百度将继续加大在大模型和AI应用方面的投入。百度智能云在AI基础设施和解决方案方面持续发力，服务客户数量持续增长。
+原文: [传奇AlphaFold团队全员解散！诺奖得主投奔Anthropic，资源转向Gemini](https://www.qbitai.com/2026/07/463123.html)
+摘要: 谷歌传奇AlphaFold团队全员解散，部分核心成员转投Anthropic，谷歌内部资源正从AlphaFold向Gemini转移。AlphaFold曾获诺贝尔奖，是AI在生命科学领域的标志性成果。36kr同日报道称之为"谷歌理想主义之死：得了诺奖，免不了调岗？"。这一事件反映即便是诺奖级团队，在大公司内部也难逃战略调整的命运。
 
-## 🌍 国际视野
-
-### 各国政府加速AI产业布局，全球AI竞争进入新阶段
-来源: Hacker News / Nikkei
-原文: [原文](https://news.ycombinator.com/item?id=41008992)
-摘要: 7月29日消息显示，全球多国政府正在加速AI产业布局，推出大规模投资计划和扶持政策。日本、欧盟、美国等主要经济体均将AI列为战略发展重点，在超算基础设施、人才培养和产业应用方面加大投入。分析师预计，2026年全球AI相关政府投资将突破2000亿美元，AI产业竞争进入新阶段。各国将重点发展AI在制造业、医疗健康和自动驾驶等领域的应用，争夺全球AI产业制高点。
-
-### 全球AI监管趋严，多国出台数据本地化要求
-来源: 36kr
-原文: [原文](https://36kr.com/p/3906759052907910)
-摘要: 7月29日消息显示，全球AI监管持续趋严，多个国家和地区出台数据本地化要求和AI运营许可制度。印度、欧盟、巴西等主要市场均要求AI公司将用户数据存储在境内服务器，并建立本地安全团队。OpenAI、谷歌和Anthropic等跨国科技公司需在各国市场提交合规申请。分析师表示，AI监管碎片化可能增加跨国公司运营成本，但也为本土AI企业创造发展机遇。
+### 翁荔光速重返OpenAI
+来源: 量子位
+原文: [这这这…翁荔光速回OpenAI上班了](https://www.qbitai.com/2026/07/462947.html)
+摘要: 翁荔（Lilian Weng）重返OpenAI。OpenAI六位联合创始人中目前仅剩2名仍在职。翁荔此前离开OpenAI后的动向备受关注，此次回归被量子位形容为"光速"。这也反映OpenAI在人才流失压力下极力挽留核心力量的策略。
 
 ## 🛡️ AI安全与伦理
 
-### 斯坦福发布AI安全新框架，提出"三层防护"模型
-来源: 量子位
-原文: [原文](https://www.qbitai.com/2026/07/457117.html)
-摘要: 7月29日斯坦福大学人类中心AI研究所发布全新AI安全框架，提出"技术安全-系统安全-社会安全"三层防护模型。该框架涵盖AI模型训练、部署和应用全流程，包含128项具体安全指标和检测方法。研究团队同时开源了安全评估工具套件，可自动检测模型偏见、对齐偏差和安全漏洞。包括OpenAI、谷歌在内的15家科技公司已宣布采用该框架进行内部安全审计。
+### Hugging Face发布Agent入侵事件技术时间线
+来源: Hacker News / Hugging Face
+原文: [Anatomy of a Frontier Lab Agent Intrusion: A Technical Timeline of the July 2026 Incident](https://huggingface.co/blog/agent-intrusion-technical-timeline)
+摘要: Hugging Face发布了一份前沿实验室Agent入侵事件的详细技术时间线，记录了2026年7月发生的安全事件全过程。HN热度411点、224条评论。该报告对AI Agent安全研究具有重要意义，揭示了当前Agent系统面临的新型攻击向量。
+
+### Anthropic发布新密码学分析结果，引发学术界热议
+来源: Hacker News
+原文: [Some thoughts about Anthropic's new cryptanalysis results](https://blog.cryptographyengineering.com/2026/07/29/some-notes-about-anthropics-new-results/)
+摘要: Anthropic发布了新的密码学分析结果，密码学专家Matthew Green对此进行了深入分析。HN热度172点、96条评论。研究表明AI模型在密码分析领域取得了新进展，引发对AI安全能力边界的广泛讨论。
 
 ---
 
 🦞 每日08:00自动更新
 
-**数据来源**：36kr、量子位、Hacker News、TechCrunch
+**数据来源**：36kr、量子位、Hacker News
