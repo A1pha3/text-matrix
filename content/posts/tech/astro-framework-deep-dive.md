@@ -10,58 +10,20 @@ tags: ["Astro"]
 
 # Astro：内容优先的现代化 Web 框架
 
-> **快速信息卡** |
-> Stars: 58,820+ |
-> Forks: 3,387+ |
-> License: MIT |
-> Language: TypeScript |
+Astro 解决一个很具体的问题：**内容型网站为什么要把完整的 JavaScript 运行时交给每一个访问者。**
 
-## 学习目标
+大多数博客、文档站、营销页、电商详情页，90% 以上的内容是静态的。但过去十年，SSR 框架的主流做法是：服务端渲染 HTML，浏览器收到后，再加载整个框架运行时，把组件树在客户端重建一遍（水合，hydration）。即使页面里只有一个点赞按钮需要交互，用户也要等几十 KB 甚至上百 KB 的 JS 下载、解析、执行完，才能看到首屏。
 
-阅读本文后，你应该能够：
+Astro 把这个默认值反过来：**默认只给 HTML，不给 JS。需要交互的组件，单独声明激活策略。** 截至 2026 年 4 月，[Astro](https://github.com/withastro/astro) 在 GitHub 上累计 58,820 Stars、3,387 Forks，由 [Astro Building Tools PBC](https://astro.build/) 主导开发。
 
-1. **理解Astro的核心价值**：说清楚为什么内容型网站需要"默认零JS"的架构
-2. **掌握Islands架构原理**：解释静态HTML海洋与交互组件孤岛的关系，以及水合策略的选择
-3. **区分Astro与Next.js/Nuxt的差异**：理解构建编排层与应用框架的职责边界
-4. **使用Content Collections管理内容**：用Zod schema校验frontmatter，用类型安全的API获取内容
-5. **选择适合的渲染模式**：判断什么时候用SSG、什么时候用SSR、什么时候用混合模式
-
-## 目录
-
-- [这篇文章在回答什么问题](#这篇文章在回答什么问题)
-- [总览：Astro 负责什么，不负责什么](#总览astro-负责什么不负责什么)
-- [默认零 JS：从框架默认值到组件激活策略](#默认零-js从框架默认值到组件激活策略)
-- [Islands 架构详解](#islands-架构详解)
-- [一个页面请求的完整路径](#一个页面请求的完整路径)
-- [Content Collections：内容管理范式](#content-collections内容管理范式)
-- [渲染模式：静态、SSR 与混合](#渲染模式静态ssr-与混合)
-- [官方集成生态](#官方集成生态)
-- [目录结构与编译器](#目录结构与编译器)
-- [安装与最小示例](#安装与最小示例)
-- [View Transitions 与现代 Web](#view-transitions-与现代-web)
-- [竞品对比](#竞品对比)
-- [适用场景与边界](#适用场景与边界)
-- [常见问题与排查](#常见问题与排查)
-- [从哪里开始](#从哪里开始)
-
----
-
-## 这篇文章在回答什么问题
-
-Astro 解决的问题很具体：**内容型网站为什么要把完整的 JavaScript 运行时交给每一个访问者。**
-
-大多数博客、文档站、营销页、电商详情页，90% 以上的内容是静态的。但过去十年，SSR 框架的主流做法是：服务端渲染 HTML，浏览器收到后，再加载整个框架运行时，把组件树在客户端重建一遍（水合，hydration）。结果是——即使页面里只有一个点赞按钮需要交互，用户也要等几十 KB 甚至上百 KB 的 JS 下载、解析、执行完，才能看到首屏。
-
-Astro 把这个默认值反过来：**默认只给 HTML，不给 JS。需要交互的组件，单独声明激活策略。** 截至 2026 年 4 月，[Astro](https://github.com/withastro/astro) 在 GitHub 上累计 58,820 Stars、3,387 Forks（数据来自 GitHub 公开页面），由 [Astro Building Tools PBC](https://astro.build/) 主导开发。
-
-这篇文章先画一张 Astro 的系统边界图，再用一个页面请求把静态渲染、Islands 水合、Content Collections 这几条主线串起来，最后落到一个具体问题：你的下一个内容项目，该不该用 Astro。
+读完本文你会掌握：Astro 的系统边界、静态渲染与 Islands 水合的关系、Content Collections 的内容管理方式，以及判断一个内容项目该不该用 Astro。
 
 ## 总览：Astro 负责什么，不负责什么
 
-先看一张职责边界表，搞清楚 Astro 在你项目里到底占哪个位置：
+Astro 的职责边界可以用一张表说清楚。它不做 UI 框架的事，也不做数据库的事——它是一个**构建编排层**：
 
-| 职责 | Astro 负责 | 不负责（交给集成或你自己） |
-|------|-----------|--------------------------|
+| 职责 | Astro 负责 | 不负责 |
+|------|-----------|--------|
 | 构建与路由 | `.astro` 文件编译、文件路由、SSG/SSR 切换 | — |
 | 静态内容渲染 | 所有未标记 `client:*` 的组件编译为纯 HTML | — |
 | 交互组件水合 | 按 `client:*` 指令控制激活时机 | 组件本身的状态管理 |
@@ -70,8 +32,6 @@ Astro 把这个默认值反过来：**默认只给 HTML，不给 JS。需要交�
 | 部署 | 通过适配器对接 Vercel/Cloudflare/Netlify/Node | 服务器运维 |
 | 样式方案 | 原生支持 Scoped CSS、Tailwind、CSS Modules | 设计系统 |
 | 数据获取 | `fetch()` + `Astro.glob()` + 文件系统 | ORM、数据库直连 |
-
-Astro 的边界画得很清楚：它是一个**构建编排层**，不做 UI 框架的事，也不做数据库的事。理解这张表，后面的机制就好懂了。
 
 ---
 
@@ -143,15 +103,15 @@ React 社区在 2023 年引入的 Server Components 解决的是同一类问题�
 | 构建产物 | 按水合策略分离 JS bundles | 混合 stream 输出 |
 | 适用场景 | 内容主导、多框架混用 | 应用主导、React 生态深度绑定 |
 
-Astro 选择 Islands 路径而非 RSC，原因在于目标场景不同。RSC 假设整站是 React 应用，服务端组件和客户端组件在同一棵组件树里协作；Islands 假设页面主体是静态 HTML，只有少数组件需要交互，每个孤岛可以选不同的框架。内容站里，一篇文章可能 95% 是静态文本，只有评论区、点赞按钮需要 JS——Islands 让这 5% 的 JS 独立加载，不影响其余 95% 的渲染。
+Astro 选 Islands 而非 RSC，是因为目标场景不同。RSC 假设整站是 React 应用，服务端组件和客户端组件在同一棵组件树里协作；Islands 假设页面主体是静态 HTML，只有少数组件需要交互，每个孤岛可以选不同的框架。一篇文章可能 95% 是静态文本，只有评论区、点赞按钮需要 JS——Islands 让这 5% 的 JS 独立加载，不影响其余 95% 的渲染。
 
 ---
 
 ## 一个页面请求的完整路径
 
-上面把静态渲染、Islands 水合、Content Collections、输出模式各讲了一遍。现在把它们串起来——看一个典型博客页面的请求，从源码到浏览器经历了什么。
+把前面几节串起来——看一个典型博客页面的请求，从源码到浏览器经历了什么。
 
-这个博客页面的需求是：
+这个页面有这些需求：
 
 - 文章正文（Markdown，纯静态）
 - 阅读计数器（React 组件，进视口才激活）
@@ -176,7 +136,7 @@ Astro 选择 Islands 路径而非 RSC，原因在于目标场景不同。RSC 假
 5. 用户向下滚动，`client:visible` 的 React 计数器进入视口，触发 JS 下载和水合，显示阅读量。
 6. `client:only` 的评论表单在用户点击「写评论」时才会触发完整的 React 运行时加载——评论区的 JS 体积最大，但它只在用户真正需要时才进入页面。
 
-整条路径里，Astro 在每一步问的都是同一个问题：**这个组件需要浏览器端的 JS 吗？如果需要，什么时候加载最不打扰用户？** 没有一步是因为框架自身需要而加载 JS。
+Astro 在这条路径里做的选择始终围绕一个判断：**这个组件需要浏览器端的 JS 吗？如果需要，什么时候加载最不打扰用户？** 没有一步是因为框架自身需要而加载 JS。
 
 ---
 
@@ -227,14 +187,14 @@ const { Content } = await post.render();
 </article>
 ```
 
-Content Collections 解决的事：
+Content Collections 做的事：
 
 - **Schema 校验**：用 Zod 定义内容结构，类型错误在构建时就暴露
 - **自动 TypeScript 推断**：内容字段享有完整的类型提示
 - **统一入口**：`getCollection()` 返回类型化数组，支持过滤、排序
 - **构建时验证**：draft 标记、必填字段、格式校验都在构建阶段完成
 
-为什么要把内容管理做进框架？因为内容站的痛点不在写 Markdown，而在 frontmatter 字段一旦多了（SEO、OG、多语言、草稿状态），没有 schema 约束就会在部署后才发现某篇文章缺了 `description`。Content Collections 把这个检查前移到构建阶段，失败即终止构建。
+把内容管理做进框架的原因是：内容站的痛点不在写 Markdown，而在 frontmatter 字段一多（SEO、OG、多语言、草稿状态），没有 schema 约束就会在部署后才发现某篇文章缺了 `description`。Content Collections 把这个检查前移到构建阶段，失败即终止构建。
 
 ---
 
@@ -291,7 +251,7 @@ const { slug } = Astro.params;
 ---
 ```
 
-混合模式是 Astro v3 起的默认推荐做法：内容页保持静态，API 路由和需要实时数据的页面单独开 SSR，避免为少数动态页面把整站拖进 SSR 运行时。
+混合模式从 Astro v3 开始成为默认推荐：内容页保持静态，API 路由和需要实时数据的页面单独开 SSR，避免为少数动态页面把整站拖进 SSR 运行时。
 
 ---
 
@@ -359,7 +319,7 @@ packages/
 └── db/                       # Astro DB（边缘数据库）
 ```
 
-Astro **自研了编译器**（[withastro/compiler](https://github.com/withastro/compiler)），将 `.astro` 文件（HTML 模板 + frontmatter TypeScript）编译为 JavaScript 模块。自研编译器的好处是 Astro 完全掌控构建流水线，可以精确区分"这段代码在服务端跑还是浏览器跑"，并把 `client:*` 指令直接编译成独立的 JS bundle 入口，而不依赖 Babel 或 SWC 的转换链。
+Astro **自研了编译器**（[withastro/compiler](https://github.com/withastro/compiler)），将 `.astro` 文件（HTML 模板 + frontmatter TypeScript）编译为 JavaScript 模块。自研编译器让 Astro 完全掌控构建流水线，能精确区分"这段代码在服务端跑还是浏览器跑"，并把 `client:*` 指令直接编译成独立的 JS bundle 入口，不依赖 Babel 或 SWC 的转换链。
 
 ---
 
@@ -434,7 +394,7 @@ import Counter from './Counter.jsx'; // React 组件
 
 ## View Transitions 与现代 Web
 
-Astro v3 引入了 **View Transitions API**（视图过渡）支持，允许在页面导航时实现类似 SPA 的平滑过渡动画，而不需要加载完整 SPA 框架。
+Astro v3 开始支持 **View Transitions API**（视图过渡），在页面导航时实现类似 SPA 的平滑过渡动画，不需要加载完整 SPA 框架。
 
 ```astro
 ---
@@ -456,7 +416,7 @@ import { ViewTransitions } from 'astro:transitions';
 </main>
 ```
 
-`transition:animate` 支持多种内置动画（fade、slide、morph），也可以自定义关键帧动画。底层依赖的是浏览器原生 [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API)，Astro 做了服务端渲染兼容处理和渐进增强——不支持该 API 的浏览器会回退到普通页面跳转，不会报错。
+`transition:animate` 支持多种内置动画（fade、slide、morph），也可以自定义关键帧动画。底层依赖浏览器原生 [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API)，Astro 做了服务端渲染兼容处理和渐进增强——不支持该 API 的浏览器会回退到普通页面跳转，不会报错。
 
 ---
 
@@ -470,89 +430,24 @@ import { ViewTransitions } from 'astro:transitions';
 | **SvelteKit** | Svelte 应用框架 | 无原生 Islands | 仅 Svelte | 高 |
 | **Remix** | SSR 应用框架 | 无 Islands | 仅 React | 高 |
 
-在**内容网站**这个细分里，Astro 是目前 Islands 实现最完整的框架，多框架混用能力也是独有的。Next.js 的 RSC 和 Partial Prerendering 在朝类似方向走，但绑定 React 生态；Nuxt 的 Nuxt Island 仍在实验阶段。
+在**内容网站**这个细分里，Astro 是目前 Islands 实现最完整的框架，多框架混用能力也是独有的。Next.js 的 RSC 和 Partial Prerendering 在朝类似方向走，但绑定 React 生态。Nuxt 的 Nuxt Island 仍在实验阶段。
 
 ---
 
 ## 适用场景与边界
 
-### 适合用 Astro
+### 适合
 
 - **内容主导网站**：博客、文档站、营销页、个人主页——90%+ 是静态内容，不需要复杂的客户端状态管理
 - **多框架共存项目**：团队里有人写 React、有人写 Vue，Astro 负责编排，不需要统一技术栈
-- **性能敏感项目**：JS 体积直接影响 CWV（Core Web Vitals）分数的场景，零 JS 默认策略天然友好
+- **性能敏感项目**：JS 体积直接影响 CWV（Core Web Vitals）分数，零 JS 默认策略天然友好
 - **文档站点**：官方力推的 Starlight 就是基于 Astro 的文档框架，内置 i18n、搜索、MDX 支持
 
-### 不适合用 Astro
+### 不适合
 
 - **复杂交互型应用**：看板、在线文档、多人协作工具——需要大量客户端状态和实时更新，React/Vue 生态更成熟
 - **需要服务端数据库直连的 CRUD 应用**：Astro 的 SSR 模式可以做，但配套的 ORM、认证、权限体系不如 Next.js/Nuxt 完善
 - **强状态管理需求**：Astro 官方不提供状态管理方案，需要自行引入 Zustand/Jotai/Pinia
-
----
-
-## 自测题
-
-### 基础题
-
-1. **Astro 的"默认零JS"是什么意思？它如何解决传统SSR框架的水合问题？**
-2. **Islands架构的核心隐喻是什么？静态HTML海洋与交互组件孤岛的关系是什么？**
-3. **Astro 支持哪些水合策略？`client:visible` 和 `client:idle` 的区别是什么？**
-4. **Content Collections 的作用是什么？如何用 Zod schema 校验 frontmatter？**
-5. **Astro 与 Next.js 的核心区别是什么？各自适合什么场景？**
-
-### 进阶题
-
-1. **Astro 的 Islands 架构与 React Server Components 有什么区别？实现路径有何不同？**
-2. **如何在一个 Astro 项目中混用 React 和 Vue 组件？需要注意什么？**
-3. **Astro 的 SSR 模式如何配置？需要安装什么适配器？**
-4. **View Transitions API 在 Astro 中如何配置？底层依赖什么技术？**
-5. **Astro 的构建产物如何优化？如何减少 JS 体积？**
-
-### 参考答案要点
-
-1. 默认只给HTML不给JS；通过渐进式水合解决水合开销
-2. 页面是静态HTML海洋，交互组件是孤岛；每个孤岛独立水合
-3. 6种策略（static/client:load/idle/visible/media/only）；visible是进视口激活，idle是浏览器空闲激活
-4. 类型安全的内容管理；用 `defineCollection` + Zod schema
-5. Astro是构建编排层，默认零JS；Next.js是应用框架，RSC部分类似
-
-## 进阶路径
-
-### 阶段一：掌握基础用法（1-2周）
-
-- [ ] 用 `npm create astro@latest` 创建一个新项目
-- [ ] 理解 `.astro` 文件的双区块结构（frontmatter + 模板）
-- [ ] 掌握6种水合策略的使用场景
-- [ ] 用 Content Collections 管理博客文章
-
-### 阶段二：多框架集成（2-3周）
-
-- [ ] 在同一个项目中混用 React 和 Vue 组件
-- [ ] 理解 `npx astro add` 的集成机制
-- [ ] 掌握跨框架组件通信的方式
-- [ ] 配置 View Transitions 实现SPA般的交互
-
-### 阶段三：生产级优化（1个月）
-
-- [ ] 配置 SSR 模式并部署到 Vercel/Cloudflare
-- [ ] 用 `@astrojs/image` 优化图片加载
-- [ ] 配置 i18n 多语言支持
-- [ ] 用 Lighthouse 验证 CWV 指标
-
-### 阶段四：深入源码和贡献（持续）
-
-- [ ] 阅读 Astro 编译器的源码（Vite 插件部分）
-- [ ] 理解 Islands 水合的实现原理
-- [ ] 开发一个自定义集成（Integration）
-- [ ] 为 Astro 生态贡献代码或文档
-
-### 进阶资源
-
-- **Astro 官方文档**：https://docs.astro.build/ - 最权威的参考资料
-- **Astro GitHub**：https://github.com/withastro/astro - 源码和issue讨论
-- **Starlight 文档**：https://starlight.astro.build/ - 基于Astro的文档框架
-- **Astro Discord**：https://astro.build/chat - 社区支持和讨论
 
 ---
 
@@ -582,70 +477,75 @@ export default defineConfig({
 
 ---
 
-## 从哪里开始
-
-如果你的项目满足以下条件，Astro 是目前最直接的选择：
-
-1. **内容占比 > 交互占比**：你的页面主要是文章、图片、列表、文档，交互组件只有少数几个。
-2. **团队用多种 UI 框架**：或者你还没确定用哪个框架——先用 Astro 搭骨架，交互组件选框架时再定。
-3. **对 CWV 分数敏感**：SEO 驱动的项目（博客、内容站、电商详情页），JS 体积小有直接的业务好处。
-
-如果以上三点都不沾——你的项目是一个需要复杂路由、全局状态、实时同步的数据看板——那 Next.js/Nuxt/SvelteKit 是更稳妥的选择。这些框架和 Astro 本来就是为不同类型的项目设计的，选型时先确认项目类型，再选框架。
-
-可以从这几个入口开始：
-
-- [官方文档](https://docs.astro.build/)——getting started 不超过 10 分钟
-- [Starlight](https://starlight.astro.build/)——如果你在搭文档站，直接用这个
-- [Astro Playground](https://astro.new/)——在线跑示例，不用装任何东西
-
----
-
 ## 自测题
 
-完成以下自测题，评估你对 Astro 核心概念的理解：
+### 基础题
 
-**问题 1**: Astro 的"默认零 JS"是什么意思？它和 Next.js 的 hydration 有什么区别？
+1. Astro 的"默认零JS"是什么意思？它如何解决传统 SSR 框架的水合问题？
+2. Islands 架构的核心隐喻是什么？静态 HTML 海洋与交互组件孤岛的关系是什么？
+3. Astro 支持哪些水合策略？`client:visible` 和 `client:idle` 的区别是什么？
+4. Content Collections 的作用是什么？如何用 Zod schema 校验 frontmatter？
+5. Astro 与 Next.js 的核心区别是什么？各自适合什么场景？
+
+### 进阶题
+
+1. Astro 的 Islands 架构与 React Server Components 有什么区别？实现路径有何不同？
+2. 如何在一个 Astro 项目中混用 React 和 Vue 组件？需要注意什么？
+3. Astro 的 SSR 模式如何配置？需要安装什么适配器？
+4. View Transitions API 在 Astro 中如何配置？底层依赖什么技术？
+5. Astro 的构建产物如何优化？如何减少 JS 体积？
+
+### 参考答案
+
 <details>
-<summary>查看答案</summary>
-答：Astro 默认只生成纯 HTML，不加载任何 JS。需要交互的组件通过 `client:*` 指令显式声明激活策略。Next.js 则默认在浏览器端重新水合整个组件树，即使 90% 的页面是静态的也要加载框架运行时。
+<summary>基础题答案</summary>
+1. 默认只给 HTML 不给 JS；通过渐进式水合解决水合开销。<br/>
+2. 页面是静态 HTML 海洋，交互组件是孤岛；每个孤岛独立水合。<br/>
+3. 6 种策略：static/client:load/idle/visible/media/only；visible 是进视口激活，idle 是浏览器空闲激活。<br/>
+4. 类型安全的内容管理，用 `defineCollection` + Zod schema。<br/>
+5. Astro 是构建编排层，默认零 JS；Next.js 是应用框架，RSC 部分类似但绑定 React 生态。
 </details>
 
-**问题 2**: Islands 架构的核心思想是什么？
 <details>
-<summary>查看答案</summary>
-答：页面是静态 HTML"海洋"，需要交互的组件是"孤岛"。每个孤岛独立水合、互不干扰，开发者可以精确控制每个组件的 JS 代价。
+<summary>进阶题答案</summary>
+1. Islands 默认服务端、按需水合，支持多框架；RSC 默认服务端、按需标记 `"use client"`，仅 React。<br/>
+2. 用 `npx astro add react` 和 `npx astro add vue` 分别安装集成，组件间通过 props 或自定义事件通信。<br/>
+3. 安装 `@astrojs/node` 或平台适配器，在 `astro.config.mjs` 中设置 `output: 'server'`。<br/>
+4. 在 Layout 中引入 `<ViewTransitions />`，在元素上添加 `transition:animate` 属性。<br/>
+5. 优先用 `client:visible` 和 `client:idle` 而非 `client:load`，减少不必要的 JS bundle。
 </details>
-
-**问题 3**: 什么时候用 `client:load` vs `client:visible`？
-<details>
-<summary>查看答案</summary>
-答：`client:load` 适合首屏关键交互组件（如导航菜单、搜索框）；`client:visible` 适合进入视口才需要交互的组件（如评论区、点赞按钮），可以延迟 JS 加载，提升首屏性能。
-</details>
-
-**问题 4**: Content Collections 的核心价值是什么？
-<details>
-<summary>查看答案</summary>
-答：用 Zod schema 校验 frontmatter，提供类型安全的 API 获取内容，避免运行时才发现 frontmatter 字段错误。这是 Astro 在内容管理上的核心创新。
-</details>
-
-**问题 5**: Astro 适合什么场景？不适合什么场景？
-<details>
-<summary>查看答案</summary>
-答：适合内容主导的网站（博客、文档、营销页），团队用多种 UI 框架，对 Core Web Vitals 敏感。不适合应用主导的项目（复杂路由、全局状态、实时同步的数据看板），这类项目应该用 Next.js/Nuxt/SvelteKit。
-</details>
-
----
 
 ## 进阶路径
 
-如果你准备在生产环境使用 Astro，建议按下面顺序推进：
+### 阶段一：掌握基础用法（1-2 周）
 
-1. **先用 Astro 搭一个文档站或博客** - 用 Starlight 快速搭建，体验 Content Collections 和 Islands 架构
-2. **再试多框架混用** - 在一个页面里同时用 React、Vue、Svelte 组件，理解 `client:*` 指令的作用
-3. **然后做性能对比** - 用 Lighthouse 测 Astro 站点和等效 Next.js 站点，观察 JS 体积和 TBT 差异
-4. **最后看源码和编译器** - 理解 `.astro` 文件怎么编译成 HTML 和 JS，以及适配器怎么对接部署平台
+- 用 `npm create astro@latest` 创建一个新项目
+- 理解 `.astro` 文件的双区块结构（frontmatter + 模板）
+- 掌握 6 种水合策略的使用场景
+- 用 Content Collections 管理博客文章
 
-进阶资源：
+### 阶段二：多框架集成（2-3 周）
+
+- 在同一个项目中混用 React 和 Vue 组件
+- 理解 `npx astro add` 的集成机制
+- 配置 View Transitions 实现 SPA 般的交互
+- 尝试跨框架组件通信
+
+### 阶段三：生产级优化（1 个月）
+
+- 配置 SSR 模式并部署到 Vercel/Cloudflare
+- 用 `@astrojs/image` 优化图片加载
+- 配置 i18n 多语言支持
+- 用 Lighthouse 验证 CWV 指标
+
+### 阶段四：深入源码和贡献（持续）
+
+- 阅读 Astro 编译器的源码（Vite 插件部分）
+- 理解 Islands 水合的实现原理
+- 开发一个自定义集成（Integration）
+- 为 Astro 生态贡献代码或文档
+
+### 进阶资源
 
 - [Astro 官方文档](https://docs.astro.build/)
 - [Starlight 文档站框架](https://starlight.astro.build/)
@@ -656,17 +556,13 @@ export default defineConfig({
 
 ## 资料口径说明
 
-本文的判断基于以下来源和取径：
+本文的判断基于以下来源：
 
-1. **项目文档分析**：分析了 `withastro/astro` 仓库的 GitHub README、官方文档（docs.astro.build）、Starlight 文档（截至 2026 年 4 月）
-2. **性能对比数据**：Astro 官方博客提到的"减少 40-70% JavaScript 体积"，属于 Astro 自家对比，非独立 benchmark
-3. **技术细节验证**：部分 CLI 命令和配置示例来自官方文档，实际使用时需要参考最新版本
+1. **项目文档分析**：`withastro/astro` 仓库的 GitHub README、官方文档（docs.astro.build）、Starlight 文档（截至 2026 年 4 月）
+2. **性能对比数据**：Astro 官方博客提到的"减少 40-70% JavaScript 体积"，属于自家对比，非独立 benchmark
+3. **技术细节验证**：CLI 命令和配置示例来自官方文档，实际使用时需参考最新版本
 4. **竞品对比**：基于各框架官方文档和社区对比文章，结论可能因版本变化而调整
-5. **事实边界**：Astro 仍在快速迭代，部分功能（如 View Transitions、Actions）可能在新版本中有所变化
+5. **事实边界**：Astro 仍在快速迭代，部分功能可能在新版本中有所变化
 
-**局限性**：
-
-- Astro 的性能数据（JS 体积减少百分比）取决于对比基准和测试场景，不是通用结论
-- 本文未实际部署所有适配器的 SSR 模式，部分描述基于文档推断
-- 竞品对比（Next.js、Nuxt、SvelteKit）可能因版本更新而发生变化
+**局限性**：JS 体积减少百分比取决于对比基准和测试场景，不是通用结论。本文未实际部署所有适配器的 SSR 模式，部分描述基于文档推断。
 

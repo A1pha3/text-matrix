@@ -15,7 +15,7 @@ tags: ["React", "TypeScript", "AI音乐", "Tailwind CSS", "开源"]
 阅读本文后，你将能够：
 
 1. 说出 Ace-Step-UI 与 Suno（在线 AI 音乐生成平台）等商用方案在数据流向和部署形态上的四点差异。
-2. 复述 Ace-Step-UI 前端三大模块（Prompt 输入、状态管理、音频播放）的职责边界与通信方式。
+2. 复述 Ace-Step-UI 前端三大模块（Prompt（提示词）输入、状态管理、音频播放）的职责边界与通信方式。
 3. 在本地完成 Ace-Step-UI 与 ACE-Step 后端的对接，并跑通一次完整的生成—播放—导出流程。
 4. 根据硬件条件和使用场景，判断是否采用 Ace-Step-UI，并选择合适的部署路径。
 
@@ -42,12 +42,12 @@ tags: ["React", "TypeScript", "AI音乐", "Tailwind CSS", "开源"]
   - [5.4 基本使用流程](#54-基本使用流程)
 - [6. 代码示例](#6-代码示例)
   - [6.1 自定义 Prompt 输入组件](#61-自定义-prompt-输入组件)
-  - [6.2 使用 Web Audio API 播放音频](#62-使用-web-audio-api-播放音频)
+  - [6.2 使用 Web Audio API（应用程序接口）播放音频](#62-使用-web-audio-api-播放音频)
   - [6.3 与后端通信的服务层](#63-与后端通信的服务层)
   - [6.4 生成历史的状态管理](#64-生成历史的状态管理)
 - [7. 练习与自测](#7-练习与自测)
   - [7.1 练习](#71-练习)
-  - [7.2 自测清单](#72-自测清单)
+  - [7.2 自测题](#72-自测题)
 - [8. 适用场景与局限性](#8-适用场景与局限性)
   - [8.1 最佳使用场景](#81-最佳使用场景)
   - [8.2 当前局限性](#82-当前局限性)
@@ -61,7 +61,7 @@ tags: ["React", "TypeScript", "AI音乐", "Tailwind CSS", "开源"]
   - [10.1 推荐的采用顺序](#101-推荐的采用顺序)
   - [10.2 谁该先用，谁可以等等](#102-谁该先用谁可以等等)
   - [10.3 决策检查清单](#103-决策检查清单)
-- [11. 进阶路径](#11-进阶路径)
+- [11. 进阶方向](#11-进阶方向)
 - [12. 延伸阅读](#12-延伸阅读)
 
 ## 1. 项目概述
@@ -192,7 +192,7 @@ src/
 └── utils/            # 工具函数
 ```
 
-**组件化设计**：每个功能模块都是一个独立组件，通过 props 和 context 传递数据。
+**组件化设计**：每个功能模块都是一个独立组件，通过 props（属性）和 context 传递数据。
 
 **状态管理**：使用 Zustand（React 状态管理库）管理全局状态，包括当前播放歌曲、生成队列、历史记录等。相比 Redux，Zustand 的 API 更加简洁，样板代码更少。
 
@@ -288,7 +288,7 @@ AI 音乐生成是耗时操作，可能需要几十秒到几分钟。Ace-Step-UI
 
 ### 5.1 环境要求
 
-- **Node.js** 18 或更高版本。
+- **Node.js**（Node 节点运行时）18 或更高版本。
 - **ACE-Step 1.5** 后端服务运行中（本地或远程）。
 - 浏览器：Chrome、Firefox、Safari、Edge 最新版。
 
@@ -645,7 +645,7 @@ export const useHistoryStore = create<HistoryStore>()(
 下面两个练习用来检验你对第 6 节四段代码的理解，建议动手改一改再对照行为：
 
 1. **扩展 AudioPlayer 支持播放列表切换**：在 `AudioPlayer` 类里增加 `loadPlaylist(urls: string[])` 和 `playNext()` 方法，要求切换时无缝衔接（旧音频淡出 200ms，新音频从 0 开始播放）。提示：可以借助 `AudioContext` 的 `GainNode` 做淡入淡出，避免直接 `audioElement.src = url` 造成的爆音。
-2. **给 `submitGeneration` 加上请求去重**：当用户连续两次点击"生成"且 Prompt 与参数完全相同时，第二次调用应直接返回上一次的 `id`，不再发一次 POST。提示：在 service 层维护一个 `Map<string, Promise<string>>`，key 用 `prompt + JSON.stringify(params)`。
+2. **给 `submitGeneration` 加上请求去重**：当用户连续两次点击"生成"且 Prompt 与参数完全相同时，第二次调用应直接返回上一次的 `id`，不再发一次 POST。提示：在 service（服务）层维护一个 `Map<string, Promise<string>>`，key 用 `prompt + JSON.stringify(params)`。
 
 做完练习 1，试着向自己解释为什么 `HTMLAudioElement` 切换 `src` 时会触发一次 `abort` 事件，以及怎么在 `AudioContext` 层面规避它。做完练习 2，再想想"去重 key 的设计"在并发场景下的边界——比如用户在第一次请求未返回时又改了 `seed`，应当算作新请求还是命中缓存。
 
@@ -720,7 +720,7 @@ export const useHistoryStore = create<HistoryStore>()(
 2. 再启动 Ace-Step-UI（配置 `VITE_API_BASE_URL`，运行 `npm run dev`）
 3. 用简单 Prompt 验证链路（短 Prompt，确认能播放、能下载、能进历史）
 4. 再调参数和批量生成（稳定后再尝试温度、种子、风格等参数）
-5. 最后考虑二次开发（fork 仓库改组件）
+5. 最后考虑二次开发（fork（派生）仓库改组件）
 
 **为什么后端先跑通**：Ace-Step-UI 是纯前端 UI，本身不含模型。如果后端没跑通，前端所有操作都会失败（连不上、`Failed to fetch`）。先验证后端能独立生成音频，才能隔离问题——是模型/显存问题，还是前端/网络问题。
 
@@ -737,7 +737,7 @@ export const useHistoryStore = create<HistoryStore>()(
 - **独立音乐人和创作者**：需要快速生成音乐灵感，零成本探索不同风格。
 - **游戏和视频开发者**：预算有限但需要版权清白的背景配乐，AI 生成可以降低版权采购成本，但生成结果的版权归属仍需按当地法律确认。
 - **隐私敏感项目**：客户合同或合规要求禁止把创意素材上传到第三方服务器，本地推理是硬约束。
-- **企业内网环境**：需要在私有化部署中提供 AI 音乐生成能力，外网不通或安全审计不允许调用 SaaS。
+- **企业内网环境**：需要在私有化部署中提供 AI 音乐生成能力，外网不通或安全审计不允许调用 SaaS（软件即服务）。
 - **技术研究者**：想研究 ACE-Step 模型的能力边界，或基于此二次开发。
 
 ### 8.2 当前局限性
@@ -763,12 +763,12 @@ export const useHistoryStore = create<HistoryStore>()(
 1. 确认 ACE-Step 后端进程在跑：`curl http://localhost:8000/` 看是否有响应（端口以你实际启动的为准）。
 2. 确认 `VITE_API_BASE_URL` 配置正确。本地开发时这个变量在 `.env` 文件里读取，注意 Vite 的环境变量必须以 `VITE_` 前缀才能在前端代码中访问。
 3. 浏览器 DevTools → Network 面板，看请求实际打到的 URL 和端口，确认没有走错地址。
-4. 如果后端在远程机器上，确认防火墙放行了对应端口，且没有走 VPN 拦截。
+4. 如果后端在远程机器上，确认防火墙放行了对应端口，且没有走 VPN（虚拟专用网络）拦截。
 
 **修复**：
 
 - `.env` 文件改完后必须重启 `npm run dev`，Vite 不会热加载环境变量。
-- 如果是跨域问题（控制台报 CORS 错误），需要在 ACE-Step 后端允许 Ace-Step-UI 的来源，或在 Vite 配置里加 `server.proxy` 把 `/api` 转发到后端。
+- 如果是跨域问题（控制台报 CORS（跨域资源共享）错误），需要在 ACE-Step 后端允许 Ace-Step-UI 的来源，或在 Vite 配置里加 `server.proxy`（代理）把 `/api` 转发到后端。
 
 ### 9.2 生成失败或一直不返回
 
@@ -862,12 +862,12 @@ export const useHistoryStore = create<HistoryStore>()(
 
 [↑ 回到目录](#目录)
 
-## 11. 进阶路径
+## 11. 进阶方向
 
 跑通基本流程后，下面几条方向可以按兴趣挑选：
 
 1. **读 ACE-Step 模型源码**：克隆 [ace-step/ACE-Step](https://github.com/ace-step/ACE-Step)，重点看推理入口和音频后处理模块，理解 Prompt 如何变成音频帧。
-2. **尝试 LoRA 微调**：用自己收藏的曲目做数据集，对 ACE-Step 1.5 做 LoRA 微调，让模型在特定风格（如某类民乐）上更稳定。微调流程以 ACE-Step 仓库 README 为准。
+2. **尝试 LoRA（低秩适配）微调**：用自己收藏的曲目做数据集，对 ACE-Step 1.5 做 LoRA 微调，让模型在特定风格（如某类民乐）上更稳定。微调流程以 ACE-Step 仓库 README 为准。
 3. **改造 AudioPlayer 支持多轨**：在现有 `AudioPlayer` 基础上扩展多个 `HTMLAudioElement` 实例，配合 `GainNode` 做混音，为后续多轨编辑功能打基础。
 4. **接入工作流编排**：把 `submitGeneration` 封装成命令行脚本或 CI 步骤，实现批量生成、自动归档到指定目录。
 5. **给上游提 issue 或 PR**：遇到 bug 或缺失功能时，先在 [fspecii/ace-step-ui](https://github.com/fspecii/ace-step-ui) 搜索现有 issue，没有再提新 issue；有能力的可以直接提 PR。
