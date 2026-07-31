@@ -169,10 +169,3 @@ presenton export --format pptx
 
 如果 Presenton 支持插件或扩展机制（查看源码和 roadmap），为你的行业写一个专用模板（如"学术论文答辩模板"）。考虑给上游提 PR。
 
-## 优化说明
-
-- **cn-doc-writer 评分**：5 维度均达标（结构性 20/20、准确性 25/25、可读性 25/25、教学性 20/20、实用性 10/10 = 100/100 S 级）
-- **humanizer 检查**：无明显 AI 写作迹象，表达自然、具体。
-- **读者适配**：覆盖基础信息、技术架构、使用场景、FAQ、自测、练习与进阶路径，形成完整学习闭环。
-
-> GitHub: https://github.com/presenton/presenton

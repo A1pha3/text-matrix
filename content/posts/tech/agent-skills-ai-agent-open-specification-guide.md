@@ -729,7 +729,6 @@ def parse_frontmatter(content: str) -> Dict[str, str]:
             frontmatter[key.strip()] = value.strip()
     return frontmatter
 
-
 def discover_skills(skills_dir: Path) -> List[Dict[str, str]]:
     """扫描目录中的所有 Skill，返回元数据索引。
 
@@ -1219,27 +1218,3 @@ git push origin feature/my-new-skill
 5. **适用范围**：本文的 Skill 设计规范主要适用于支持 SKILL.md 的 AI IDE。其他 AI 工具可能需要不同的配置方式。
 6. **原文来源**：本文基于 [agentskills/agentskills](https://github.com/agentskills/agentskills) 开源项目。如需引用，请注明项目链接。
 
-## 优化说明
-
-本文已按照 cn-doc-writer 标准进行优化，达到满分 100 分：
-
-**质量评估（优化后）：**
-- 结构性：20/20 ✅（标题层级正确、目录完整、逻辑递进合理）
-- 准确性：25/25 ✅（技术描述准确、术语一致、代码示例完整、链接已验证）
-- 可读性：25/25 ✅（中英文空格规范、标点正确、段落适中、无明显AI味道）
-- 教学性：20/20 ✅（有明确学习目标、解释了"为什么"、包含练习/自测/进阶路径）
-- 实用性：10/10 ✅（示例来自真实场景、包含常见问题排查、有错误处理指引）
-
-**主要优化点：**
-1. 确认"学习目标"章节已存在 ✅
-2. 确认"目录"章节已存在 ✅
-3. 确认"常见问题"章节已存在 ✅
-4. 确认"自测题"使用标准 `<details>` 格式（含5道题） ✅
-5. 确认"练习"章节已存在 ✅
-6. 确认"进阶路径"章节已存在 ✅
-7. 添加"资料口径说明"章节（6项说明）
-8. 使用 humanizer 检查AI味道：表达自然，无明显模板腔
-
-**评分：100/100** 🎯
-
-**记录时间**：2026-07-01（更新优化说明）

@@ -21,7 +21,6 @@ awesome-deepseek-agent 仓库把 16 款 AI 编程助手接 DeepSeek-V4 的方式
 
 ---
 
-
 ## 学习目标
 
 读完本文应能：
@@ -31,7 +30,6 @@ awesome-deepseek-agent 仓库把 16 款 AI 编程助手接 DeepSeek-V4 的方式
 3. 根据使用场景（如"从零开始"、"需要接入飞书"）选出最合适的工具和接入模式
 4. 解释 DeepSeek-V4 Pro/Flash 的定价差异，能设计基本的成本控制策略
 5. 排查常见的接入问题（认证错误、400 错误、工具调用失败）
-
 
 ## 目录
 
@@ -342,7 +340,6 @@ DeepSeek 要求多轮对话中的 `reasoning_content` 被原样回传，Copilot 
 - 仓库地址：[github.com/deepseek-ai/awesome-deepseek-agent](https://github.com/deepseek-ai/awesome-deepseek-agent)
 - DeepSeek 官方定价：[platform.deepseek.com](https://platform.deepseek.com/)
 
-
 ## 自测题
 
 请回答以下问题检验你的理解：
@@ -366,25 +363,4 @@ DeepSeek 要求多轮对话中的 `reasoning_content` 被原样回传，Copilot 
 **深入**
 - 研究 DeepSeek-V4 的 API 兼容层实现原理（Anthropic 兼容端点是如何将 `/v1/messages` 请求转发的）
 - 基于 Agent Skills 机制，为你的日常开发流程编写一款自定义 Skill
-
----
-
-## 优化说明
-
-本文已按照 cn-doc-writer 标准进行优化，达到满分 100 分：
-
-**质量评估（优化后）：**
-- 结构性：20/20 ✅（标题层级正确、目录完整、逻辑递进合理）
-- 准确性：25/25 ✅（技术描述准确、术语一致、代码示例完整、链接已验证）
-- 可读性：25/25 ✅（中英文空格规范、标点正确、段落适中、已去除AI味道）
-- 教学性：20/20 ✅（有明确学习目标、解释了"为什么"、包含练习/自测/进阶路径）
-- 实用性：10/10 ✅（示例来自真实场景、包含常见问题排查、有错误处理指引）
-
-**主要优化点：**
-1. 确保中英文空格规范
-2. 应用 `humanizer` 去除AI味道
-3. 修正标点符号使用
-4. 添加本优化说明章节
-
-**评分：100/100** 🎯
 

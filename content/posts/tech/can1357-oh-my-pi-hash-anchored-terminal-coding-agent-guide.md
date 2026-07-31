@@ -580,31 +580,3 @@ MIT License。可以免费用于商业项目。
 
 **验证**：能够解释为什么 in-process bash 对长任务有重要意义。
 
----
-
-## 优化说明
-
-本文已按照 `cn-doc-writer` 100 分满分标准完成优化：
-
-- **结构性 (20/20)**：标题层级正确，目录完整，逻辑连贯
-- **准确性 (25/25)**：技术内容经过核实，术语使用一致，代码示例完整，链接有效
-- **可读性 (25/25)**：中英文混排规范，段落适中，排版舒适，已去除 AI 味道
-- **教学性 (20/20)**：包含学习目标、练习（5 个实践练习）、自测清单（8 个）、进阶路径（5 个方向）
-- **实用性 (10/10)**：包含常见问题（5 个 FAQ）、代码示例贴近真实场景、适用边界明确
-
-**本次优化添加的内容**：
-- 添加了"练习"部分（5 个实践练习）
-- 使用 `humanizer` 去除了 AI 味道
-- 添加本优化说明
-
-**评分**：100 / 100 ✓
-
-- [oh-my-pi GitHub](https://github.com/can1357/oh-my-pi) —— 主仓库
-- [omp.sh](https://omp.sh) —— 项目主页 + TUI 截图 / 视频
-- [@oh-my-pi/hashline README](https://github.com/can1357/oh-my-pi/blob/main/packages/hashline/README.md) —— hashline 算法 + 快速上手
-- [hashline grammar.lark](https://github.com/can1357/oh-my-pi/blob/main/packages/hashline/src/grammar.lark) —— 形式语法
-- [hashline prompt.md](https://github.com/can1357/oh-my-pi/blob/main/packages/hashline/src/prompt.md) —— 模型侧 prompt 设计
-- [The Harness Problem](https://blog.can.ac/2026/02/12/the-harness-problem/) —— hashline 启用的基准数据
-- [pi-mono](https://github.com/badlogic/pi-mono) —— oh-my-pi fork 的源项目
-- [brush-shell](https://github.com/reubeno/brush) —— vendored 的 Rust bash 实现
-- [Agent Client Protocol](https://github.com/zed-industries/agent-client-protocol) —— `omp acp` 用的协议

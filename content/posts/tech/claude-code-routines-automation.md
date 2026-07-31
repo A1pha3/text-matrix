@@ -14,7 +14,6 @@ Routines 把 Claude Code 从终端里的交互式助手变成云端定时执行�
 
 正文聚焦三件事：三种触发器的边界与适用场景、用告警分级案例串起完整执行链路、不同团队的采用顺序。配置字段不逐项罗列，需要时查官方文档即可。
 
-
 > **快速信息卡**
 > - **GitHub**: [anthropics/claude-code](https://github.com/anthropics/claude-code)
 > - **Documentation**: [Claude Code Routines 官方文档](https://docs.anthropic.com/en/docs/claude-code/routines)
@@ -399,7 +398,6 @@ Routine 在你的 Session 列表中显示失败状态，可以查看日志排查
 | **MCP 连接器** | [code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp) |
 | **云端环境** | [code.claude.com/docs/en/claude-code-on-the-web](https://code.claude.com/docs/en/claude-code-on-the-web) |
 
-
 ---
 
 ## 进阶路径
@@ -431,20 +429,3 @@ Routine 在你的 Session 列表中显示失败状态，可以查看日志排查
 
 ---
 
-## 优化说明
-
-本文已完成 cn-doc-writer 100 分满分优化：
-
-- **结构性 (20/20)**：标题层级正确、目录清晰、逻辑连贯、导航完整
-- **准确性 (25/25)**：技术内容正确、术语使用一致、代码示例完整可运行、链接有效
-- **可读性 (25/25)**：中英文混排规范、段落适中、排版舒适、自然表达（无AI味道）、格式统一
-- **教学性 (20/20)**：有学习目标、解释"为什么"、学习元素自然融入、递进合理
-- **实用性 (10/10)**：示例贴近真实、常见问题覆盖、错误处理清晰
-
-本文已包含完整的学习元素：学习目标、目录、实践案例（告警分级 Routine 的完整执行路径）、FAQ（5个常见问题）、自测题（6个问题）、快速进阶建议、进阶路径（4个阶段）。
-
-**优化措施**：
-- 修复了标题层级问题（将 `### 进阶路径` 改为 `### 快速进阶建议`，避免与主 `## 进阶路径` 重复）
-- 添加了本"优化说明"部分
-
----

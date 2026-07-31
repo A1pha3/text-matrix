@@ -37,7 +37,6 @@ author: text-matrix
 - [自测题](#自测题)
 - [练习](#练习)
 - [进阶路径](#进阶路径)
-- [优化说明](#优化说明)
 
 ## 这是什么
 
@@ -286,8 +285,3 @@ review gate 是 Claude 每次 Stop 前自动触发 Codex 评审的机制。仓�
 2. **[Codex app-server 文档](https://developers.openai.com/codex/app-server)**（推荐）。理解插件的下层运行时——Codex 进程是怎么被调度和管理的。
 3. **[Claude Code Plugins 官方文档](https://code.claude.com/docs/plugins)**（可选）。如果你想开发自己的插件或理解 marketplace 机制，这篇是起点。
 
----
-
-## 优化说明
-
-本文已按照 cn-doc-writer 评分标准完成优化，达到 100 分满分（S 级）。所有五个维度（结构性 20/20、准确性 25/25、可读性 25/25、教学性 20/20、实用性 10/10）均已达标。

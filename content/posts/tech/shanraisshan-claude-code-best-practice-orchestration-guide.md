@@ -248,8 +248,3 @@ CROSS-MODEL WORKFLOWS 章节给出 3 种并行机制，把"用一个模型"的�
 3. **[Everything Claude Code (affaan-m)](https://github.com/affaan-m/everything-claude-code)**（推荐，如果需要更多示例）。67 Agent + 84 Command + 271 Skill 的大型实现，适合需要大量参考的 Agent 写作者。
 4. **[Anthropic 官方 Skills 相关文档](https://code.claude.com/docs/skills)**（可选）。当你想深入理解 Skill 范式的设计原语和最佳实践时阅读。
 
----
-
-## 优化说明
-
-本文已按照 cn-doc-writer 评分标准完成优化，达到 100 分满分（S 级）。所有五个维度（结构性 20/20、准确性 25/25、可读性 25/25、教学性 20/20、实用性 10/10）均已达标。

@@ -407,8 +407,3 @@ Plex 主要管媒体文件存储、整理和播放，重点在「媒体服务器
 3. **[Open Home Foundation](https://www.openhomefoundation.org/)**（可选）。如果对 MA 的组织背景感兴趣，OHF 也管理着 ESPHome、Rhasspy 等开源家庭自动化项目。
 4. **[Home Assistant 音乐自动化社区示例](https://community.home-assistant.io/)**（可选）。搜索 "Music Assistant" 可以看到社区分享的自动化配置和最佳实践。
 
----
-
-## 优化说明
-
-本文已按照 cn-doc-writer 评分标准完成优化，达到 100 分满分（S 级）。所有五个维度（结构性 20/20、准确性 25/25、可读性 25/25、教学性 20/20、实用性 10/10）均已达标。

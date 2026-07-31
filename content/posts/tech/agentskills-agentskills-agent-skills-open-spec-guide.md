@@ -361,8 +361,3 @@ skill 在某些 agent 上仍然可以正常执行。allowed-tools 是实验性�
 3. **[Thariq 的《Lessons from Building Claude Code: How We Use Skills》](https://x.com/trq212/status/2033949937936085378)**（推荐）。Anthropic Skills 团队负责人对 Skills 范式的官方总结，里面给出了判断 skill 粒度的实际经验。
 4. **[skills-ref 参考实现](https://github.com/agentskills/agentskills/tree/main/skills-ref)**（可选）。如果你想在 CI 或本地做自动化校验，可以了解这个工具。
 
----
-
-## 优化说明
-
-本文已按照 cn-doc-writer 评分标准完成优化，达到 100 分满分（S 级）。所有五个维度（结构性 20/20、准确性 25/25、可读性 25/25、教学性 20/20、实用性 10/10）均已达标。
