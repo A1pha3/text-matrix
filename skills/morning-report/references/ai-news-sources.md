@@ -12,11 +12,33 @@
 
 ## 海外补充来源
 
-| 来源 | 网址 | 特色 |
-| ------ | ------ | ------ |
-| Hacker News AI | [https://news.ycombinator.com/](https://news.ycombinator.com/) | 工程师热点 |
-| TechCrunch AI | [https://techcrunch.com/category/artificial-intelligence/](https://techcrunch.com/category/artificial-intelligence/) | 创业投资 |
-| Wired AI | [https://www.wired.com/tag/ai/](https://www.wired.com/tag/ai/) | 深度报道 |
+> **🆕 2026-07-31 源优化**:新增 5 个已验证英文 / 官方源(Import AI / DeepMind / Anthropic / HuggingFace / Ben's Bites),带 RSS / sitemap,可被 `fetch_feeds.py` 自动抓取。官方研究源(DeepMind / Anthropic / HuggingFace)是 AI 主线信号的一手来源,优先级高于通用科技媒体。
+
+| 来源 | 网址 | RSS / sitemap | 特色 | 状态 |
+| ------ | ------ | ------ | ------ | ------ |
+| Import AI | importai.substack.com | importai.substack.com/feed | 英文研究深度(Jack Clark 周刊) | ✅ 主用 |
+| Google DeepMind | deepmind.google | deepmind.google/blog/rss.xml | 官方研究 / 产品(Gemini / Robotics) | ✅ 主用 |
+| Anthropic | anthropic.com | sitemap.xml + lastmod(filter `/news/` + `/research/`) | 官方安全 / 研究 / 模型 | ✅ 主用 |
+| HuggingFace | huggingface.co | sitemap-blog.xml + lastmod | 社区 / 模型 / 安全事件 | ✅ 主用 |
+| Ben's Bites | bensbites.com | bensbites.com/feed | 工具 / 创业 / 产品视角 | ✅ 主用 |
+| Hacker News AI | news.ycombinator.com | news.ycombinator.com/rss | 工程师热点 / 社区信号 | ✅ 主用 |
+| TechCrunch AI | techcrunch.com/category/artificial-intelligence/ | — | 创业投资 | 🟡 辅用 |
+| Wired AI | wired.com/tag/ai/ | — | 深度报道 | 🟡 辅用 |
+
+## 🆕 RSS 候选快速发现(2026-07-31 新增,采集阶段推荐)
+
+**先用 RSS / sitemap 发现候选 URL,再用 Browser 逐条核验(铁律不变)**:
+
+```bash
+# 抓 7 源最新素材池 → JSON
+python3 ~/.openclaw/workspace/fetch_feeds.py ai
+# 输出 ~/.openclaw/workspace/feeds/ai-<date>-<time>.json(约 78 条)
+```
+
+- 7 源已验证可用:量子位 / Import AI / Ben's Bites / DeepMind / Hacker News / HuggingFace(sitemap)/ Anthropic(sitemap)
+- **HuggingFace** 用 `sitemap-blog.xml`、**Anthropic** 用 `sitemap.xml` + lastmod filter `/news/` + `/research/`(两者均无原生 RSS,靠 sitemap+lastmod 解决,不必自建 RSSHub)
+- 发现候选后,**仍必须**按下方流程逐条 Browser 核验
+- `fetch_feeds.py` 同时管理 Web3 早报 7 源,早报架构统一
 
 ## 采集要求
 
