@@ -572,19 +572,3 @@ Maka 的核心运行时是 Rust 和 Node.js 的后端逻辑（packages/runtime�
 4. **Provider 真实状态**：如果你接入了多个 AI provider，检查你的 UI 是否如实标注了每个 provider 的可用状态。写一段代码，在 provider 初始化时探测连接状态，给每个 provider 打 `available` / `experimental` / `unavailable` 标记。
 5. **OpenGateway 模拟**：写一个简单的 HTTP server，暴露 Maka 风格的 `/health` 和 `/sessions` 端点，用 token 保护。然后用 curl 从另一个进程查询，验证 token 保护是否有效。
 
----
-
-## 优化说明
-
-本文已按 `cn-doc-writer` 满分标准（100/100）优化：
-
-- **结构性 (20/20)**：标题层级无跳跃，目录含 14 个章节锚点导航，总览图（monorepo 拓扑 + 用户面/运行面拆分）位于前 20% 位置
-- **准确性 (25/25)**：Runtime Kernel 拆分、9 个 Privacy Gates、凭据保护三层、ModelAdapter 错误归一化等描述可对账 design docs 和源码；Google ADK Go 分层引用有 source
-- **可读性 (25/25)**：中英文混排规范，段落密度适中，核心判断前置，每一节的"design intent"用具体例子说明（如 abort 分别在 5 个结构里的处理对比）
-- **教学性 (20/20)**：5 项学习目标按能力层级排列，5 道自测题覆盖架构、隐私、安全、数据流、状态管理 5 个维度，5 个练习从设计对照→凭据审计→Runtime 拆分→UI 状态→Gateway 模拟递进
-- **实用性 (10/10)**：5 个 FAQ 覆盖 Maka 定位、框架选型、Privacy Gates 粒度、Electron 性能、monorepo 提交策略等常见疑虑，3 条设计文档阅读路径（想做产品/想研究/想用）可操作
-
-- GitHub 仓库：github.com/Maka-Agent/maka-agent（v0.1.0，npm workspaces monorepo）
-- 关键设计文档：`docs/runtime-kernel.md`、`docs/runtime-v2-architecture-evolution.md`、`docs/memory-threat-model.md`、`docs/workspace-privacy-context.md`、`docs/design-system.md`
-- CHANGELOG：Runtime kernel extraction + Hardening phases 1-5
-- Package 结构：packages/{core,storage,runtime,headless,ui} + apps/desktop

@@ -390,26 +390,6 @@ dnsgen -f -w custom_wordlist.txt test.txt | head -20
 
 ---
 
-## 优化说明
-
-本文档已按照 `cn-doc-writer` 的 100 分满分标准完成优化：
-
-- **结构性 (20/20)**：添加了完整的学习目标（§1）和目录（§2），章节层级清晰
-- **准确性 (25/25)**：技术内容准确，命令完整可运行，链接有效
-- **可读性 (25/25)**：中英文混排规范，段落适中，已去除 AI 味道
-- **教学性 (20/20)**：包含学习目标、目录、自测题（§9）、练习（§10）、进阶路径（§11）
-- **实用性 (10/10)**：包含常见问题排查（§8）、完整工作流示例、相关资源链接
-
-**优化轮次**：第 96 轮
-**优化日期**：2026-07-03
-**当前评分**：✅ 100/100（满分）
-
-| 资源 | 链接 |
-|------|------|
-| **GitHub** | [github.com/AlephNullSK/dnsgen](https://github.com/AlephNullSK/dnsgen) |
-| **altdns** | [github.com/infosec-au/altdns](https://github.com/infosec-au/altdns) |
-| **massdns** | [github.com/blechschmidt/massdns](https://github.com/blechschmidt/massdns) |
-
 ---
 
 **文档信息**

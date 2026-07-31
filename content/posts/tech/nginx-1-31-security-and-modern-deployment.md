@@ -215,14 +215,3 @@ WebSocket 的 `Connection: Upgrade` 头在 HTTP/1.0 代理下默认会被丢掉�
 - OpenResty（Lua 增强）：https://openresty.org/
 - Ingress-NGINX 迁移指南：https://kubernetes.github.io/ingress-nginx/
 
----
-
-## 优化说明
-
-本文已按 `cn-doc-writer` 满分标准（100/100）优化：
-
-- **结构性 (20/20)**：标题层级无跳跃，添加了目录和 11 个章节的完整导航
-- **准确性 (25/25)**：CVE 描述、代码示例和部署命令均基于 Nginx 1.31.1 官方公告和文档，可验证
-- **可读性 (25/25)**：中英文混排规范，段落密度适中，无模板腔和机械转场
-- **教学性 (20/20)**：添加了学习目标、6 道自测题、5 个练习、4 条进阶路径
-- **实用性 (10/10)**：6 个 FAQ 覆盖升级、选型、AI 网关、WebSocket 代理等真实场景

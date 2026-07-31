@@ -121,7 +121,6 @@ from openai import OpenAI
 
 client = OpenAI()
 
-
 def get_weather(location: str) -> str:
     """获取指定城市的天气信息"""
     weather_data = {
@@ -130,7 +129,6 @@ def get_weather(location: str) -> str:
         "广州": "雨，30°C",
     }
     return weather_data.get(location, "暂无天气数据")
-
 
 tools = [
     {
@@ -151,7 +149,6 @@ tools = [
         },
     }
 ]
-
 
 def run_agent(user_input: str) -> str:
     """运行一个最小可用的 Agent：感知 → 规划 → 行动 → 返回"""
@@ -186,7 +183,6 @@ def run_agent(user_input: str) -> str:
         return final_response.choices[0].message.content
 
     return message.content
-
 
 if __name__ == "__main__":
     print(run_agent("北京今天天气怎么样？"))
@@ -324,7 +320,6 @@ from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import FunctionTool, ToolSet
 from azure.identity import DefaultAzureCredential
 
-
 async def main() -> None:
     project_client = AIProjectClient(
         endpoint="https://your-project.services.ai.azure.com/api/projects/your-project",
@@ -356,7 +351,6 @@ async def main() -> None:
 
     messages = await project_client.agents.list_messages(thread_id=thread.id)
     print(messages["data"][0]["content"][0]["text"]["value"])
-
 
 asyncio.run(main())
 ```
@@ -398,7 +392,6 @@ from openai import OpenAI
 
 client = OpenAI()
 
-
 def search_knowledge_base(query: str, top_k: int = 3) -> str:
     """从私有文档库检索相关片段，生产环境替换为向量数据库查询"""
     # 这里用 mock 数据演示，生产环境接 Milvus / Qdrant / Azure AI Search
@@ -408,7 +401,6 @@ def search_knowledge_base(query: str, top_k: int = 3) -> str:
     }
     hits = [v for k, v in docs.items() if k in query]
     return "\n".join(hits[:top_k]) if hits else "未检索到相关文档"
-
 
 tools = [
     {
@@ -427,7 +419,6 @@ tools = [
         },
     }
 ]
-
 
 def run_kb_agent(user_input: str) -> str:
     """知识问答 Agent：检索 → 整合 → 回答"""
@@ -601,7 +592,6 @@ def get_weather(location: str, humidity: bool = False) -> str:
         result += "，" + humidity_data.get(location, "暂无湿度数据")
     return result
 
-
 tools = [
     {
         "type": "function",
@@ -671,25 +661,6 @@ A：不能。课程覆盖了从概念到生产的关键知识点，但生产部�
 6. **生产部署能力缺口**：课程覆盖了从概念到生产的关键知识点，但生产部署还需要自己补日志、监控、容错、成本控制等工程能力。课程第 8-10 节是切入点，但不是完整方案。
 
 ---
-
-## 优化说明
-
-本文已按照 cn-doc-writer 标准进行优化，达到满分 100 分：
-
-**质量评估（优化后）：**
-
-- 结构性：20/20 ✅（标题层级正确、目录完整、逻辑递进合理）
-- 准确性：25/25 ✅（技术描述准确、术语一致、代码示例完整、链接已验证）
-- 可读性：25/25 ✅（中英文空格规范、标点正确、段落适中、已去除AI味道）
-- 教学性：20/20 ✅（有明确学习目标、解释了"为什么"、包含练习/自测/进阶路径）
-- 实用性：10/10 ✅（示例来自真实场景、包含常见问题排查、有错误处理指引）
-
-**主要优化点：**
-
-1. 添加"资料口径说明"章节（6 项说明）
-2. 使用 humanizer 检查AI味道：表达自然，无明显模板腔
-
-**评分：100/100** 🎯
 
 ---
 

@@ -500,16 +500,3 @@ EAGLE 已被合并到 15+ 个 LLM 推理框架（按字母序）：
 > 数据采集声明：本文核心数据来自 GitHub 仓库 `SafeAILab/EAGLE` 的公开 README、Releases、EAGLE-3 Weights 表与 GitHub API，访问时间 2026-06-28。文章中引用的速度数字均来自仓库 README 自报的 Vicuna-13B / 2×RTX 3090 / fp16 测量条件；其他模型 / 硬件下的真实加速比需要自行复现。所有命令、配置项、API 名称与权重链接均可在仓库与论文中找到对应出处，未做虚构。
 
 > 重要归属说明：用户原任务要求写作 `NVlabs/Eagle`，但 [NVlabs/Eagle](https://github.com/NVlabs/Eagle) 实际是 NVIDIA 的视觉-语言模型（"Eagle: Frontier Vision-Language Models with Data-Centric Strategies"），与"Tree Draft + Dynamic Draft Tree + Medusa 对比"的推测解码内容不符。本文中描述的"EAGLE / EAGLE-2 / EAGLE-3 推测解码"是 [SafeAILab/EAGLE](https://github.com/SafeAILab/EAGLE) 的项目，由 Yuhui Li 等作者在 ICML'24 / EMNLP'24 / NeurIPS'25 发表。slug 已相应调整为 `safe-ai-lab-eagle-speculative-decoding-guide`。
----
-
-## 优化说明
-
-本文已按照 `cn-doc-writer` 的评分标准优化至 100 分满分：
-
-- **结构性（20/20）**：已有完整目录，标题层级正确（§1-§13），逻辑连贯，导航完整。
-- **准确性（25/25）**：技术内容正确详实，代码示例完整可运行，论文链接和配置项均有效。
-- **可读性（25/25）**：中英文混排规范，段落适中，排版舒适，自然表达（无 AI 味道），格式统一。
-- **教学性（20/20）**：已有学习目标、目录、常见问题与排查，添加了练习（5 个）、自测（6 个问题）、进阶路径。
-- **实用性（10/10）**：已有常见问题排查表，示例贴近真实生产环境，错误处理清晰。
-
-优化完成时间：2026-07-03。
