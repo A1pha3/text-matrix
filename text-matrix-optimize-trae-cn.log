@@ -1,0 +1,5 @@
+# text-matrix cn-doc-writer 优化记录
+# 格式：文章路径 | 优化状态 | 优化日期 | 备注
+
+content/posts/tech/astro-framework-deep-dive.md | 100/100 | 2026-08-01 | 合并重复章节，去除 AI 味，优化自然表达
+content/posts/tech/apache-maven-build-tool-today-trending-guide.md | 100/100 | 2026-08-01 | 去除 AI 味，改进自测题格式，优化自然表达

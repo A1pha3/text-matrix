@@ -62,7 +62,7 @@ Maven 是一个 Java 仓库（Java 21 + Maven 自举——Maven 用 Maven 构建
 | `maven-cli` | 命令行入口（4.x 重写为 mvnsh） |
 | `maven-resolver-*` | 依赖解析的具体实现（transport、connector） |
 
-**注意**：Maven 主仓库只包含「Maven 核心」。插件（compiler、surefire、jar、war、deploy 等）是独立仓库 `apache/maven-*`，按 release train（发布列车）独立发版。
+Maven 主仓库只包含「Maven 核心」。插件（compiler、surefire、jar、war、deploy 等）是独立仓库 `apache/maven-*`，按 release train（发布列车）独立发版。
 
 ---
 
@@ -110,7 +110,7 @@ Maven「比 Gradle 慢」的印象，部分原因就是缓存机制不够完善�
 - **parent POM 链简化**：默认最多 1 层继承
 - **CI-friendly 版本**：`${revision}`、`${sha1}`、`${changelist}` 三个变量默认启用
 
-POM 简化对大型 polyrepo（多仓库）场景有帮助——继承链从「平均 3-4 层」降到「1-2 层」。
+POM 简化对大型 polyrepo（多仓库）场景有帮助——继承链从平均 3-4 层降到 1-2 层。
 
 ---
 
@@ -180,7 +180,7 @@ Wrapper 自动下载 Maven 发行版，校验和验证防止中间人篡改。
 | 插件生态 | 极广（Java 生态默认） | 广 | 较窄 |
 | 适用规模 | 中（< 500 模块） | 中（< 2000 模块） | 大（任意规模） |
 
-对于「传统 Java 项目」「中型 monorepo」，Maven 4.x 仍是当前最稳的选择。对于「Kotlin / Scala」「大型 monorepo」，Gradle 更合适。对于「超大规模 monorepo」「跨语言构建」，Bazel 是更专业的工具。
+传统 Java 项目和中型 monorepo 用 Maven 4.x 最稳。Kotlin/Scala 和大型 monorepo 用 Gradle 更合适。超大规模 monorepo 和跨语言构建，Bazel 是更专业的工具。
 
 ---
 
@@ -226,29 +226,29 @@ mvn wrapper:wrapper -Dmaven=4.0.0
 </dependencyManagement>
 ```
 
-这条链里：Wrapper 解决「团队 Maven 版本不一致」，远程缓存解决「CI 重复下载与重建」，BOM 解决「parent POM 继承链过长导致难以维护」。
+这条链里，Wrapper 解决版本不一致，远程缓存解决重复下载与重建，BOM 解决继承链过长导致难以维护。
 
 ---
 
-## 自测题（附参考答案）
+## 自测题
 
 1. **Maven 主仓库包含什么？为什么 compiler / surefire / jar 这些插件是独立仓库？**
-   - 答：主仓库只有 **Maven 核心**（`maven-core`、`maven-model`、`maven-resolver` 等）。插件是 `apache/maven-*` 独立仓库，按 release train 独立发版，核心引擎不用跟着插件一起升级。
+   <details><summary>查看答案</summary>主仓库只有 Maven 核心（`maven-core`、`maven-model`、`maven-resolver` 等）。插件是独立仓库，按 release train 独立发版，核心引擎不用跟着插件一起升级。</details>
 
 2. **mvnsh 把 CLI 重写了什么？冷启动时间从多少降到多少？**
-   - 答：CLI 用 Java 21 重新实现（替换老版本反射式实现），冷启动从 ~1.5s 降到 ~400ms；可选 GraalVM native image 进一步降到 < 100ms。
+   <details><summary>查看答案</summary>CLI 用 Java 21 重新实现，冷启动从 ~1.5s 降到 ~400ms；可选 GraalVM native image 进一步降到 < 100ms。</details>
 
 3. **Wrapper 默认化解决了什么问题？`./mvnw` 和 `mvn` 的区别是什么？**
-   - 答：解决「团队 / CI 的 Maven 版本不一致」——Wrapper 自动下载指定版本，新人 clone 后直接 `./mvnw`，不用先 `apt install maven`。`mvnw` 是 Wrapper 启动器，`mvn` 是系统预装的 Maven。
+   <details><summary>查看答案</summary>解决团队/CI 的 Maven 版本不一致——Wrapper 自动下载指定版本，新人 clone 后直接 `./mvnw`。`mvnw` 是 Wrapper 启动器，`mvn` 是系统预装的 Maven。</details>
 
 4. **Maven 4.x 把 Resilience4j 集成的默认值开成了什么？**
-   - 答：重试默认 3 次（指数退避）、Maven Central 响应慢时自动断路、连接超时 30s / 读超时 60s。之前要 CI 重跑，现在自动重试。
+   <details><summary>查看答案</summary>重试默认 3 次（指数退避），Maven Central 响应慢时自动断路，连接超时 30s、读超时 60s。</details>
 
 5. **为什么说「Maven 比 Gradle 慢」部分原因是缓存？4.x 把差距缩小了多少？**
-   - 答：老版本缓存机制不完善，每次构建重复下载与重建；4.x 引入基于 `${session.topology}` 的增量缓存 + 远程缓存规范，把与 Gradle 的构建速度差距缩小了 30–50%。
+   <details><summary>查看答案</summary>老版本缓存机制不完善，每次构建重复下载与重建；4.x 引入基于 `${session.topology}` 的增量缓存和远程缓存规范，把差距缩小了 30-50%。</details>
 
-6. **Maven 在哪些场景「不太适合」？**
-   - 答：超大规模 monorepo（> 1000 模块，Gradle task graph 更深入）、Kotlin / Scala 项目（Gradle + Kotlin DSL 体验更好）、需要复杂自定义构建逻辑、polyrepo 跨仓库构建、追求极致增量构建。
+6. **Maven 在哪些场景不太适合？**
+   <details><summary>查看答案</summary>超大规模 monorepo（> 1000 模块）、Kotlin/Scala 项目、需要复杂自定义构建逻辑、polyrepo 跨仓库构建、追求极致增量构建。</details>
 
 ---
 
