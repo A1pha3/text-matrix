@@ -562,6 +562,3 @@ OSS 版本 MIT 协议永久免费，包含全部 skills、agents、hooks、rules
 
 项目地址：[affaan-m/ECC](https://github.com/affaan-m/ECC)。三个核心文档按这个顺序读：`the-shortform-guide.md`（hooks / skills / subagents / MCP 怎么联动）→ `the-longform-guide.md`（token 优化 / 记忆持久化 / 验证循环 / 并行化细节）→ `the-security-guide.md`（攻击向量 / 沙箱 / AgentShield）。
 
----
-
-> 优化说明：本文已按照 cn-doc-writer 的五维评分标准（结构性 20%、准确性 25%、可读性 25%、教学性 20%、实用性 10%）优化到 100 分满分。补充了练习（5 个实践练习）和优化说明。

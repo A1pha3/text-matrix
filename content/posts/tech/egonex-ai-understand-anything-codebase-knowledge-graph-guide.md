@@ -436,6 +436,3 @@ ls -la .git/hooks/ | grep under
 
 *Tags: #知识图谱 #Tree-sitter #Claude-Code #多智能体 #代码分析 #TypeScript*
 
----
-
-> 优化说明：本文已按照 cn-doc-writer 的五维评分标准（结构性 20%、准确性 25%、可读性 25%、教学性 20%、实用性 10%）优化到 100 分满分。补充了练习（5 个实践练习）和优化说明。
