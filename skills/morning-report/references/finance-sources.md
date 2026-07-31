@@ -4,18 +4,18 @@
 
 | 来源 | 网址 | 特色 | 抓取 |
 | ------ | ------ | ------ | ------ |
-| 华尔街见闻 | [https://wallstreetcn.com/](https://wallstreetcn.com/) | 快讯+资讯+行情，真实文章链接 | 🆕 Google 聚合 RSS |
+| 华尔街见闻 | [https://wallstreetcn.com/](https://wallstreetcn.com/) | 快讯+资讯+行情，真实文章链接 | 🆕 sitemap+news:title |
 | 金十数据 | [https://www.jin10.com/](https://www.jin10.com/) | 实时快讯流（非文章，仅人工浏览） | ❌ 无 RSS |
 | 新浪财经 | [https://finance.sina.com.cn/](https://finance.sina.com.cn/) | 全面财经新闻 | ❌ RSS 已下线（404） |
 
 ## 🆕 RSS 可抓取来源（2026-07-31 新增，采集阶段推荐）
 
-> **2026-07-31 源优化**：国内财经媒体普遍无原生 RSS，36氪是少数有稳定 RSS 的；华尔街见闻用 Google News 聚合绕过无 RSS 限制（`site:wallstreetcn.com` 查询，带中文标题+发布时间）。`fetch_feeds.py finance` 已验证 3 源可用。
+> **2026-07-31 源优化**：国内财经媒体普遍无原生 RSS，36氪是少数有稳定 RSS 的；华尔街见闻无 RSS 但有 **Google News sitemap 协议**（`sitemap-articles.xml` 按月分片 + `news:title` 扩展标题），`fetch_feeds.py` 已验证可抓——真实文章 URL + 中文标题。`fetch_feeds.py finance` 已验证 3 源可用。
 
 | 来源 | RSS | 特色 | 状态 |
 | ------ | ------ | ------ | ------ |
 | 36氪 | 36kr.com/feed | 国内科技+财经，稳定 30 条，标题完整 | ✅ 主用 |
-| 华尔街见闻（Google 聚合） | news.google.com/rss/search?q=site:wallstreetcn.com+when:2d | Google 聚合华尔街见闻近 2 天，带中文标题 | ✅ 主用 |
+| 华尔街见闻 | wallstreetcn.com/sitemap-articles.xml（Google News sitemap 协议，news:title 标题） | 财经快讯+深度，按月分片，真实文章 URL | ✅ 主用 |
 | Reddit r/Economics | reddit.com/r/Economics/.rss | 海外宏观视角补充 | 🟡 辅用（间歇 429） |
 
 ## 🆕 RSS 候选快速发现（采集阶段推荐）
@@ -28,8 +28,8 @@ python3 ~/.openclaw/workspace/fetch_feeds.py finance
 # 输出 ~/.openclaw/workspace/feeds/finance-<date>-<time>.json（约 36 条）
 ```
 
-- 3 源已验证：36氪 / 华尔街见闻（Google 聚合）/ Reddit Economics
-- **华尔街见闻** RSS 的 link 是 Google News 重定向（`news.google.com/rss/articles/...`），Browser 核验时**必须跟随到真实 wallstreetcn.com 文章页**再记录原文 URL
+- 3 源已验证：36氪 / 华尔街见闻（sitemap+news:title）/ Reddit Economics
+- **华尔街见闻** sitemap 按 `lastmod` 排序取最新（title 来自 `news:title` 协议，link 是真实文章 URL）
 - 发现候选后，**仍必须**按下方流程逐条 Browser 核验
 - `fetch_feeds.py` 统一管理 ai/web3/finance/side-hustle/dev 五类早报源
 
