@@ -17,18 +17,46 @@ bash scripts/morning-news-web3-dedup.sh --threshold 3 --window 14 <url1> <url2> 
 
 ## 核心来源
 
-| 来源 | 网址 | 特色 | 状态 |
-| ------ | ------ | ------ | ------ |
-| CoinIndex | [https://coinindex.top/](https://coinindex.top/) | 实时加密货币价格、行情数据 | ⚠️ 备用 |
-| CoinGecko API | [https://api.coingecko.com/api/v3/](https://api.coingecko.com/api/v3/) | 主流币种价格、24h/7d涨跌 | ✅ **主用** |
-| CoinDesk | [https://www.coindesk.com/](https://www.coindesk.com/) | 权威加密货币新闻 | 🟡 辅用（补充多元来源） |
-| CoinTelegraph | [https://cointelegraph.com/](https://cointelegraph.com/) | 英文加密货币新闻 | ✅ **主用** |
-| Decrypt | [https://decrypt.co/](https://decrypt.co/) | 加密货币新闻 | 🟡 辅用（补充多元来源） |
-| The Block | [https://www.theblock.co/](https://www.theblock.co/) | 加密货币深度报道 | 🟡 辅用 |
-| PANews 中文 | [https://www.panewslab.com/](https://www.panewslab.com/) | 中文加密货币快讯 | 🟡 辅用 |
-| 华尔街见闻Crypto | [https://wallstreetcn.com/](https://wallstreetcn.com/) | 中文加密货币快讯 | ⚠️ 备用 |
+> **🆕 2026-07-31 源优化**:新增 5 个已验证 RSS 源(Bankless / The Defiant / Blockworks / Vitalik / 区块客),CoinTelegraph 因「持续更新型」文章造成去重负担降为慎用。多元化要求提升至 ≥ 3 源。
 
-**多元化要求**（2026-06-19 强化）：web3 早报应**尽量覆盖 ≥ 2 个来源**（CoinTelegraph + CoinDesk / Decrypt / The Block / PANews），避免单一来源 + 持续更新型文章造成的"假新闻"问题。
+### 新闻源(按优先级,带 RSS)
+
+| 来源 | 网址 | RSS feed | 特色 | 状态 |
+| ------ | ------ | ------ | ------ | ------ |
+| The Block | theblock.co | theblock.co/rss.xml | 深度报道、机构动向 | ✅ 主用 |
+| CoinDesk | coindesk.com | coindesk.com/arc/outboundfeeds/rss/ | 权威新闻 | ✅ 主用 |
+| Bankless | bankless.com | bankless.com/feed | 综合、DeFi / 宏观 | ✅ 主用 |
+| The Defiant | thedefiant.io | thedefiant.io/api/feed | DeFi 专项 | ✅ 主用 |
+| Blockworks | blockworks.co | blockworks.co/feed | 机构、宏观 | ✅ 主用 |
+| 区块客 | blocktempo.com | blocktempo.com/feed | 中文快讯 | ✅ 主用(中文) |
+| Vitalik | vitalik.eth.limo | vitalik.eth.limo/feed.xml | 以太坊研究深度 | 🟡 辅用(更新慢) |
+| CoinTelegraph | cointelegraph.com | — | 英文新闻 | ⚠️ 慎用(持续更新型重灾区,见去重铁律) |
+| Decrypt | decrypt.co | — | 英文新闻 | 🟡 辅用 |
+| PANews 中文 | panewslab.com | — | 中文快讯 | 🟡 辅用 |
+
+### 行情源
+
+| 来源 | 网址 | 状态 |
+| ------ | ------ | ------ |
+| CoinGecko API | api.coingecko.com/api/v3 | ✅ 主用 |
+| CoinIndex | coinindex.top | ⚠️ 备用 |
+
+## 🆕 RSS 候选快速发现(2026-07-31 新增,采集阶段推荐)
+
+**先用 RSS 发现候选 URL,再用 Browser 逐条核验(铁律不变)**:
+
+```bash
+# 抓 7 源最新素材池 → JSON
+python3 ~/.openclaw/workspace/fetch_feeds.py web3
+# 输出 ~/.openclaw/workspace/feeds/web3-<date>-<time>.json(约 70-82 条)
+```
+
+- 7 源已全部验证可用(Bankless / The Block / CoinDesk / The Defiant / Blockworks / Vitalik / 区块客)
+- RSS 比 Chrome CDP 采集更轻量稳定(无需启动浏览器),适合候选发现阶段
+- 发现候选后,**仍必须**按下方流程逐条 Browser 核验 + Web3 事件级去重
+- `fetch_feeds.py` 同时管理 AI 早报 7 源(含 HuggingFace / Anthropic 的 sitemap 源),早报架构统一
+
+**多元化要求(强化)**:web3 早报应覆盖 **≥ 3 个新闻源**,避免单一来源 + 持续更新型文章造成「假新闻」问题。
 
 ## 价格数据采集（API优先）
 
