@@ -19,6 +19,31 @@
 | Reddit r/LocalLLaMA | [https://reddit.com/r/LocalLLaMA](https://reddit.com/r/LocalLLaMA) | 本地AI |
 | Product Hunt AI | [https://www.producthunt.com/](https://www.producthunt.com/) | AI产品发布 |
 
+## 🆕 RSS 可抓取来源（2026-07-31 新增，采集阶段推荐）
+
+> **2026-07-31 源优化**：V2EX / Product Hunt / Reddit SideProject 三源已接入 `fetch_feeds.py side-hustle`。**关键**：V2EX 必须用 `feed/jobs.xml`（酷工作专用 RSS），不是主站 `/feed`（那是 HTML 不是 RSS，之前踩过坑）。
+
+| 来源 | RSS | 特色 | 状态 |
+| ------ | ------ | ------ | ------ |
+| V2EX 酷工作 | v2ex.com/feed/jobs.xml | 招聘/外包，稳定 50 条 | ✅ 主用 |
+| Product Hunt | producthunt.com/feed | AI 产品发布，稳定 50 条 | ✅ 主用 |
+| Reddit r/SideProject | reddit.com/r/SideProject/.rss | 独立开发 | 🟡 辅用（间歇 429） |
+
+## 🆕 RSS 候选快速发现（采集阶段推荐）
+
+**先用 RSS 发现候选 URL，再用 Browser 逐条核验（V2EX 链接必须验证，见下方铁律）**：
+
+```bash
+# 抓 3 源最新素材池 → JSON
+python3 ~/.openclaw/workspace/fetch_feeds.py side-hustle
+# 输出 ~/.openclaw/workspace/feeds/side-hustle-<date>-<time>.json（约 24-36 条）
+```
+
+- 3 源已验证：V2EX 酷工作 / Product Hunt / Reddit SideProject
+- Reddit 间歇 429 时该源标 ❌ 跳过，V2EX + Product Hunt 仍提供约 24 条
+- 发现候选后，**仍必须**逐条 Browser 核验（V2EX 尤甚，见下方历史教训）
+- `fetch_feeds.py` 统一管理 ai/web3/finance/side-hustle/dev 五类早报源
+
 ## ⚠️ 关键警告：V2EX链接必须验证
 
 **历史教训：**
