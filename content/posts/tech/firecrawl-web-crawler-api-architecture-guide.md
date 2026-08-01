@@ -10,21 +10,10 @@ tags: ["AI Agent", "API"]
 
 # Firecrawl：Web → Markdown，给 LLM 当上下文
 
-我们已经在 2026 年习惯"让 LLM 读网页"这件事了——但你只要真的让 LLM 去抓一个现代网页（React SPA、需要登录、有反爬、有无限滚动），就会撞上三件事：JS 没渲染就拿到了空壳、HTML 标签噪音淹没 prompt 的有效信息、爬到一半被 Cloudflare 拦下。Firecrawl（146k stars / AGPL-3.0）就是把这三件事兜起来的"web context API"——本文拆它的接口形态和它为什么是 Agent 时代最常被点名的爬虫。
-
-## 学习目标
-
-读完本文，你应该能够：
-
-- 说清 Firecrawl 在「API 维度」把「读 web」切成哪 4 个端点（search / scrape / crawl / batch scrape），各自对应哪类用户场景
-- 区分 Firecrawl（LLM context API）与普通爬虫（Scrapy / Playwright / Crawlee）的边界，说清它在中间层替你做了哪几件事（JS 渲染、Markdown 转换、结构化抽取、绕过反爬）
-- 用 MCP server 一行接入的方式，把 Firecrawl 挂到 Claude Code / Cursor / Continue / Cline 等任意 MCP-aware agent
-- 判断什么场景该用 Firecrawl、什么场景 jina reader / tavily / Playwright 更合适，以及自托管与 hosted 版本的取舍
-- 评估自托管 Firecrawl 的真实成本（内存、token、proxy）与 AGPL-3.0 合规边界（闭源产品为何必须用 hosted 版本）
+让 LLM 读现代网页（React SPA、需要登录、有反爬、有无限滚动）总会撞上三件事：JS 没渲染就拿到空壳、HTML 标签噪音淹没 prompt 的有效信息、爬到一半被 Cloudflare 拦下。[Firecrawl](https://github.com/firecrawl/firecrawl)（146k stars / AGPL-3.0）就是把这三件事兜起来的 web context API——本文拆它的接口形态和它为什么是 Agent 时代最常被点名的爬虫。
 
 ## 目录
 
-- [学习目标](#学习目标)
 - [它在 API 维度做了四件事](#它在-api-维度做了四件事)
 - [为什么是 LLM Context API 而不是 Crawler](#为什么是-llm-context-api-而不是-crawler)
 - [怎么用：4 个最小例子](#怎么用4-个最小例子)
@@ -44,7 +33,7 @@ Firecrawl 把"读 web"切成 4 个端点，每个对应一类用户场景：
 
 | 端点 | 用途 | 典型用法 |
 |------|------|----------|
-| `search` | 搜并返回完整页面内容 | "搜 LLM evaluation 论文给我带全文" |
+| `search` | 搜并返回完整页面内容 | "搜 LLM evaluation 论文带全文" |
 | `scrape` | 单 URL 转 markdown/HTML/screenshot/JSON | 单页结构化抽取 |
 | `crawl` | 全站爬取（一组 URL） | 整个 docs site、整个博客 |
 | `batch scrape` | 异步并发数千 URL | 一次性把一堆 URL 拉成 markdown |
@@ -57,9 +46,9 @@ Firecrawl 把"读 web"切成 4 个端点，每个对应一类用户场景：
 
 1. **JS 渲染**：headless 浏览器跑 React/Vue/SPA，等 hydration 完成再 snapshot。
 2. **Markdown 转换**：HTML → Markdown，保留代码块、表格、链接、标题层级，去掉 nav/footer/广告。
-3. **结构化抽取**：`extract` 端点接受 JSON Schema 或自然语言描述，从页面里抽出结构化字段（产品价格、规格、作者）。
-4. **绕过反爬**：内置 proxy rotation、UA rotation、stealth 模式。官方 benchmark 声称覆盖 96% 的 web（包括 JS-heavy 页面）。
-5. **Action 序列**：可以先 click / scroll / write / wait / press 再抽取，处理"翻页后才看到列表"这种交互场景。
+3. **结构化抽取**：`extract` 端点接受 JSON Schema 或自然语言描述，从页面里抽出结构化字段。
+4. **绕过反爬**：内置 proxy rotation、UA rotation、stealth 模式。官方 benchmark 声称覆盖 96% 的 web。
+5. **Action 序列**：可以 click / scroll / write / wait / press 再抽取，处理"翻页后才看到列表"这种交互场景。
 
 输出默认是 markdown（保留可读性 + 适配 LLM prompt 长度限制），也可以指定 HTML、screenshot、JSON。
 
@@ -175,134 +164,77 @@ Firecrawl 主仓库是完整的 TypeScript + Playwright + Redis 队列实现，�
 
 ## 自测题
 
-读完本文后，先自己想 30 秒再展开答案：
-
 <details>
 <summary>1. Firecrawl 把「读 web」切成哪 4 个端点？各自解决什么用户场景？</summary>
 
-4 个端点：`search`（搜并返回完整页面内容，如"搜 LLM evaluation 论文给我带全文"）、`scrape`（单 URL 转 markdown / HTML / screenshot / JSON，做单页结构化抽取）、`crawl`（全站爬取一组 URL，如整个 docs site）、`batch scrape`（异步并发数千 URL，一次性把一堆 URL 拉成 markdown）。外加面向 Agent 的 `extract`——用自然语言或 JSON Schema 描述字段，Firecrawl 自己用 LLM 从页面抠结构化数据。
+4 个端点：`search`（搜并返回完整页面内容）、`scrape`（单 URL 转 markdown / HTML / screenshot / JSON）、`crawl`（全站爬取一组 URL）、`batch scrape`（异步并发数千 URL）。外加面向 Agent 的 `extract`——用自然语言或 JSON Schema 描述字段，Firecrawl 自己用 LLM 从页面抠结构化数据。
 </details>
 
 <details>
 <summary>2. 普通爬虫（Scrapy / Playwright）和 Firecrawl 的核心区别在哪一层？</summary>
 
-普通爬虫给你 HTML 字符串或裸 JSON，要你自己 parse 标签、去噪、提取正文。Firecrawl 在中间层替你做了四件事：JS 渲染（headless 浏览器跑 SPA 等 hydration 完成再 snapshot）、Markdown 转换（保留代码块/表格/链接/标题层级，去掉 nav/footer/广告）、结构化抽取（`extract` 端点从页面抽字段）、绕过反爬（proxy rotation / UA rotation / stealth 模式）。简言之，它交付的是"LLM 能直接吃的 Markdown 上下文"，不是"你还得自己处理的 HTML"。
+普通爬虫给你 HTML 或裸 JSON，要你自己 parse 标签、去噪、提取正文。Firecrawl 在中间层做了 JS 渲染、Markdown 转换、结构化抽取、绕过反爬。它交付的是"LLM 能直接吃的 Markdown 上下文"，不是"你还得自己处理的 HTML"。
 </details>
 
 <details>
 <summary>3. `extract` 端点怎么做结构化抽取？它背后是什么？</summary>
 
-`extract` 接受 JSON Schema 或自然语言描述的 schema，从页面里抽出结构化字段（产品价格、规格、作者）。它背后是一次 LLM 调用——这也是为什么长页面的 `extract` 有可见的 token 成本。它的价值在于把"写 selector / 写 parse 脚本"换成"描述要什么字段"，但代价是每次抽取都消耗模型推理。
+`extract` 接受 JSON Schema 或自然语言描述的 schema，从页面里抽出结构化字段。它背后是一次 LLM 调用——这也是为什么长页面的 `extract` 有可见的 token 成本。价值在于把"写 selector / 写 parse 脚本"换成"描述要什么字段"，代价是每次抽取都消耗模型推理。
 </details>
 
 <details>
-<summary>4. 为什么 Firecrawl 的 MCP server 是它 2025–2026 增长到 146k stars 的核心驱动？</summary>
+<summary>4. 为什么 Firecrawl 的 MCP server 是它增长到 146k stars 的核心驱动？</summary>
 
-因为它把"agent 联网"做成了 declarative 的"加一个 mcp server"，而不是 imperative 的"写一段 Python 调用 SDK"。你只要往 `mcp.json` 里加一段 `npx -y firecrawl-mcp`，Claude Code / Cursor / Continue / Cline 等 MCP-aware agent 就多了 `firecrawl_scrape` / `firecrawl_crawl` / `firecrawl_search` 三个 tool。摩擦低到接近"声明一下就能用"。
+因为它把"agent 联网"做成了 declarative 的"加一个 mcp server"，而不是 imperative 的"写一段 Python 调用 SDK"。你只要往 `mcp.json` 里加一段 `npx -y firecrawl-mcp`，agent 就多了三个 tool。摩擦低到接近"声明一下就能用"。
 </details>
 
 <details>
-<summary>5. 自托管 Firecrawl 要注意哪四件事（合规 / 反爬 / 资源 / 成本）？</summary>
+<summary>5. 自托管 Firecrawl 要注意哪四件事？</summary>
 
-四件事：① AGPL-3.0——你 fork / 修改后必须开源，做闭源产品必须用 hosted 版本规避风险；② 反爬 IP 池——自托管版要自己配 proxy rotation，否则跑几小时就被 Cloudflare 拦；③ JS 渲染成本——headless Chrome 吃内存，单机起 5 个 worker 就吃约 8GB RAM；④ LLM 抽取 token 成本——`extract` 背后是 LLM 调用，长页面 token 消耗要留意。
+① AGPL-3.0——fork / 修改后必须开源；② 反爬 IP 池——要自己配 proxy rotation，否则几小时就被 Cloudflare 拦；③ JS 渲染成本——headless Chrome 吃内存，5 个 worker 约 8GB RAM；④ LLM 抽取 token 成本——`extract` 背后是 LLM 调用，长页面 token 消耗要留意。
 </details>
 
 ---
 
 ## 练习
 
-### 练习 1：跑通第一个 scrape（入门，约 15 分钟）
+1. **跑通第一个 scrape。** 用 Firecrawl Python SDK 把任意一篇博客转成 markdown，统计输出字数。观察 markdown 去掉了哪些噪声、保留了哪些结构。
 
-用 Firecrawl Python SDK 把任意一篇博客文章转成 markdown，并统计输出字数：
+2. **用 extract 抽结构化字段。** 挑一个电商商品页，用 JSON Schema 描述 `name` / `price` / `rating`，调用 `app.extract` 把结果打印成 JSON。
 
-```python
-from firecrawl import Firecrawl
+3. **MCP 接入 agent。** 在你的 Claude Code 或 Cursor 的 `mcp.json` 里加入 Firecrawl MCP server，重启后让 agent 执行"搜一下 X 的最新文档并总结"。
 
-app = Firecrawl(api_key="fc-...")
-result = app.scrape("https://example.com/article", formats=["markdown"])
-print(len(result.markdown), "chars")
-```
+4. **Firecrawl vs jina reader 对比。** 对同一篇长文（含代码块和表格），分别用 Firecrawl `scrape` 和 jina reader 取 markdown，对比代码块完整性、表格保留情况和广告剔除效果。
 
-完成后回答：输出的 markdown 和原始 HTML 相比，去掉了哪些噪声（nav / footer / 广告）？保留了哪些对 LLM 有用的结构（代码块 / 表格 / 链接）？
-
-### 练习 2：用 extract 抽结构化字段（约 30 分钟）
-
-挑一个电商商品页，用 JSON Schema 描述 `name` / `price` / `rating` 三个字段，调用 `app.extract([url], schema=schema)`，把结果打印成 JSON。
-
-参考要点：schema 里每个 property 要写清 `type`；如果页面字段是动态加载的，先确认 `scrape` 能渲染出该字段，再交给 `extract`。
-
-### 练习 3：MCP 接入一个 agent（约 30 分钟）
-
-在你的 Claude Code 或 Cursor 的 `mcp.json` 里加入 Firecrawl MCP server（参考本文「MCP 一行接入」节的配置），重启后让 agent 执行"搜一下 X 的最新文档并总结"。
-
-验收：agent 能成功调用 `firecrawl_search` / `firecrawl_scrape`，而不是报"没有联网工具"。
-
-### 练习 4：Firecrawl vs jina reader 输出对比（约 20 分钟）
-
-对同一篇长文（含代码块和表格），分别用 Firecrawl `scrape` 和 jina reader 取 markdown，对比：代码块是否完整、表格是否保留、广告/nav 是否被正确剔除。
-
-结论记录：哪个在你常处理的页面类型上更干净？单页延迟差多少？
-
-### 练习 5：自托管一次小批量 crawl（约 1 天，含环境搭建）
-
-用 `docker-compose` 起一个自托管 Firecrawl，配好 proxy，对某个 docs 站点跑 `crawl`（limit 100），观察内存占用和被 Cloudflare 拦截的频率。
-
-交付物：一份"自托管 vs hosted"的 TCO 笔记（含内存峰值、proxy 费用、被拦重试次数）。
+5. **自托管小批量 crawl（可选）。** 用 `docker-compose` 起自托管 Firecrawl，配好 proxy，对某个 docs 站点跑 `crawl`（limit 100），观察内存占用和被 Cloudflare 拦截的频率。
 
 ---
 
 ## 进阶路径
 
-读完本文后，按以下顺序动手，而不是只按阅读顺序：
-
-### 第一步：跑通 4 个最小例子（约 1 小时）
-
-把本文「怎么用：4 个最小例子」节的 search / scrape / crawl / extract 各跑一遍，确认 SDK 和 API key 可用。`formats` 参数可以组合 `markdown` 与带 `schema` 的 `json`，先试通一种再组合。
-
-**验证标准**：能拿到非空的 `result.markdown` 和一个结构化 `result.json`。
-
-### 第二步：MCP 接入 agent（约 30 分钟）
-
-按「MCP 一行接入」节把 Firecrawl 挂到你的主力 coding agent。这步让你从"写 Python 调用"切换到"声明式接入"，是理解它增长逻辑的关键。
-
-**交付物**：一段可用的 `mcp.json` 配置。
-
-### 第三步：extract + schema 实战（约 2 小时）
-
-选一个你手头真实要抓的页面，写出稳定的 JSON Schema，把 `extract` 跑通。重点体会"描述字段"和"写 parse 脚本"的代价差异。
-
-**验收条件**：对 3 个不同页面，抽取成功率 ≥ 90%。
-
-### 第四步（可选）：自托管与规模化评估（约 1 天）
-
-`docker-compose` 起自托管，配 proxy，跑百级 URL 的 crawl，记录内存、token、被拦率。用这份数据决定你的场景该 hosted 还是自托管。
-
-**边界提醒**：闭源产品别碰自托管——AGPL-3.0 会强制你开源。
+1. **跑通 4 个最小例子：** search / scrape / crawl / extract 各跑一遍，确认 SDK 和 API key 可用。
+2. **MCP 接入 agent：** 把 Firecrawl 挂到你的主力 coding agent，从"写 Python 调用"切换到"声明式接入"。
+3. **extract + schema 实战：** 选一个真实要抓的页面，写出稳定的 JSON Schema，对 3 个不同页面验证抽取成功率。
+4. **自托管与规模化评估（可选）：** `docker-compose` 起自托管，跑百级 URL 的 crawl，记录内存、token、被拦率，决定该用 hosted 还是自托管。闭源产品别碰自托管。
 
 ---
 
 ## 常见问题
 
 **Q1：Firecrawl 免费吗？**
-
-自托管免费，但要自己承担 proxy、内存和 `extract` 的 token 成本，且受 AGPL-3.0 约束。hosted 版本（firecrawl.dev）按 credit 计费，1k credits 起卖。单页快速验证用 jina reader 的免费层通常更快更省。
+自托管免费，但要自己承担 proxy、内存和 `extract` 的 token 成本，且受 AGPL-3.0 约束。hosted 版本按 credit 计费。
 
 **Q2：Firecrawl 和 jina reader 怎么选？**
-
-要全栈（爬 + 渲染 + 抽取 + 结构化）+ agent ready + 愿意付费，选 Firecrawl。要单页干净 markdown、免费层慷慨、不批量爬，选 jina reader。一句话：Firecrawl 是 jina reader 的全栈版，jina reader 是 Firecrawl 的轻量单页版。
+要全栈 + agent ready + 愿意付费，选 Firecrawl。要单页干净 markdown、免费层慷慨、不批量爬，选 jina reader。Firecrawl 是 jina reader 的全栈版，jina reader 是 Firecrawl 的轻量单页版。
 
 **Q3：自托管需要准备什么？**
-
-`docker-compose` 能起主仓库（TypeScript + Playwright + Redis 队列），但三件容易被忽略的事：proxy rotation（否则被 Cloudflare 拦）、充足内存（headless Chrome 是吃内存大户）、以及 `extract` 的 LLM token 预算。
+`docker-compose` 能起主仓库，但三件事容易被忽略：proxy rotation（否则被 Cloudflare 拦）、充足内存（headless Chrome 是吃内存大户）、`extract` 的 LLM token 预算。
 
 **Q4：`extract` 的 token 成本怎么估算？**
-
-背后每次抽取是一次 LLM 调用，成本随页面长度和字段数上升。长页面（如整篇文档）单次 `extract` 可能消耗几千 token。建议先 `scrape` 拿到正文再 `extract`，而不是对整个原始 HTML 抽。
+背后每次抽取是一次 LLM 调用，成本随页面长度和字段数上升。建议先 `scrape` 拿到正文再 `extract`，而不是对整个原始 HTML 抽。
 
 **Q5：AGPL-3.0 对我的产品有什么实际影响？**
-
-AGPL 的强点是"网络使用也视为分发"——你 fork / 修改后必须开源。做闭源 to C 产品时，直接用 hosted 版本规避；做内部 agent 联网且不在意付费，hosted 也是合理选择；想白嫖又闭源，走 jina reader + 自己写批量调度。
+AGPL 的强点是"网络使用也视为分发"——fork / 修改后必须开源。做闭源 to C 产品时，直接用 hosted 版本规避。
 
 **Q6：爬一半被 Cloudflare 拦了怎么办？**
-
-hosted 版本内置 proxy rotation / stealth，通常更稳。自托管必须自己配 proxy 池和 UA rotation；若仍频繁被拦，检查单 IP 请求频率、是否带了合理 UA 与等待间隔。规模化前先算 TCO，超大规模可能 hosted 反而划算。
+hosted 版本内置 proxy rotation / stealth，通常更稳。自托管必须自己配 proxy 池和 UA rotation。规模化前先算 TCO，超大规模可能 hosted 反而划算。

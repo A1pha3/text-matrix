@@ -12,44 +12,6 @@ tags: ["Python", "测试框架"]
 
 > pytest 的入门门槛很低，一个 `assert` 就能写测试。但真正让它难以替代的是 fixture 体系、parametrize、conftest.py 加上 1300 多个插件——从一行 demo 到十万级用例的测试工程都能撑住。新手常把它当 unittest 替代品，老手把它当测试编排框架，两种用法并不冲突。
 
-## 阅读前
-
-**这篇文章适合谁？**
-
-| 读者画像 | 建议读法 |
-|-----------|----------|
-| 刚接触 pytest，想快速跑起来 | 重点看"五分钟快速上手"、"内置常用 fixture"、"Marker 系统" |
-| 用过 unittest，想把测试工程迁移到 pytest | 重点看"为什么 pytest 成了事实标准"、"Fixture 体系"、"运行 unittest"、"采用顺序建议" |
-| 已经在用 pytest，想写好 fixture 和 parametrize | 重点看"Fixture 体系"、"parametrize"、"conftest.py"、"典型反模式" |
-| 团队技术负责人，想统一测试规范 | 重点看"采用顺序建议"、"Marker 系统"、"插件机制"、"小结" |
-
-**读完这篇你能做到：**
-
-- 把 `unittest.TestCase` 改写为 pytest 风格，利用自动发现减少样板代码
-- 设计 fixture 依赖图，用 scope 和 factory 模式管理测试资源生命周期
-- 用 parametrize 把一组数据展开成独立测试用例，失败时精确定位到具体数据行
-- 通过 conftest.py 组织跨文件共享，用 marker 给测试分组，合理引入插件
-
-**目录**
-
-- [一、项目坐标](#一项目坐标)
-- [二、为什么 pytest 成了事实标准](#二为什么-pytest-成了事实标准)
-- [三、五分钟快速上手](#三五分钟快速上手)
-- [四、pytest 机制总览](#四pytest-机制总览)
-- [五、Fixture 体系](#五fixture-体系)
-- [六、parametrize——数据驱动测试](#六parametrize数据驱动测试)
-- [七、conftest.py——跨文件共享](#七conftestpy跨文件共享)
-- [八、内置常用 fixture](#八内置常用-fixture)
-- [九、Marker 系统](#九marker-系统)
-- [十、运行 unittest](#十运行-unittest)
-- [十一、一次完整的测试执行过程](#十一次完整的测试执行过程)
-- [十二、插件机制](#十二插件机制)
-- [十三、典型反模式与避坑建议](#十三典型反模式与避坑建议)
-- [十四、什么时候用 pytest，什么时候用别的](#十四什么时候用-pytest什么时候用别的)
-- [十五、采用顺序建议](#十五采用顺序建议)
-- [十六、小结](#十六小结)
-- [进阶路径](#进阶路径)
-
 ## 一、项目坐标
 
 | 字段 | 值 |
@@ -98,25 +60,6 @@ E        +  where 4 = inc(3)
 assert 反射降低了动笔成本，自动发现减少了样板代码，插件架构覆盖了长尾需求。三者叠加，unittest 在新项目里基本退到了"兼容性选项"的位置。
 
 ---
-
-<div style="padding: 12px; border-radius: 6px; background: #f5f7fa; margin: 16px 0;">
-
-**📝 自测：理解了"为什么"吗？**
-
-1. pytest 的 `assert a == b` 和 unittest 的 `self.assertEqual(a, b)` 在失败时输出有什么本质差别？
-2. 为什么 `test_answer()` 这个函数名能让 pytest 自动发现它，而不需要注册？
-3. 如果有一个 Django 项目，你应该装哪个 pytest 插件？
-
-<details>
-<summary>点击查看参考答案</summary>
-
-1. **本质差别**：pytest 通过 AST 改写对 `a` 和 `b` 做二次求值，输出"具体变量的实际值 + 推导链"；unittest 只输出相等性判定失败，不显示变量的推导过程。
-2. **原因**：pytest 的测试发现规则是扫描文件名匹配 `test_*.py` 或 `*_test.py` 的文件，从中收集 `test_` 开头的函数。函数命名符合约定就自动被收集。
-3. **答案**：`pytest-django`，它提供了 Django 专用的 fixture（如 `client`、`db`、`admin_client` 等）和 Django 集成配置。
-
-</details>
-
-</div>
 
 ## 三、五分钟快速上手
 
@@ -292,55 +235,6 @@ def test_create(user_repo):
 
 pytest 会先算依赖图，按拓扑序逐层 setup。这样可以把"重型资源 → 业务封装 → 业务对象"逐层封装，测试只用关心"我需要哪个业务对象"，不用关心它依赖什么。
 
----
-
-<div style="padding: 12px; border-radius: 6px; background: #f5f7fa; margin: 16px 0;">
-
-**📝 练习：设计一个 fixture 依赖链**
-
-假设你要测试一个订单服务，它依赖数据库连接和 Redis 缓存。请设计 3 个 fixture：
-
-- `db_conn`：scope=module 的数据库连接
-- `redis_conn`：scope=module 的 Redis 连接
-- `order_service`：依赖 `db_conn` 和 `redis_conn`，返回 `OrderService` 实例
-
-写出 fixture 定义和依赖关系。假设 `connect_database`、`redis.Redis`、`OrderService` 已经在项目中可用。
-
-<details>
-<summary>点击查看参考实现</summary>
-
-```python
-import pytest
-import redis  # 需安装：pip install redis
-
-@pytest.fixture(scope="module")
-def db_conn():
-    conn = connect_database("postgresql://localhost/testdb")
-    yield conn
-    conn.close()
-
-@pytest.fixture(scope="module")
-def redis_conn():
-    r = redis.Redis(host="localhost", port=6379, db=0)
-    yield r
-    r.close()
-
-@pytest.fixture
-def order_service(db_conn, redis_conn):
-    svc = OrderService(db=db_conn, cache=redis_conn)
-    return svc
-
-def test_create_order(order_service):
-    order = order_service.create({"item": "book", "qty": 1})
-    assert order.id is not None
-```
-
-pytest 的依赖解析顺序：`db_conn` 和 `redis_conn`（同层，可并行）→ `order_service`（依赖前两者）→ `test_create_order`。
-
-</details>
-
-</div>
-
 ## 六、parametrize——数据驱动测试
 
 fixture 解决"怎么准备环境"，parametrize 解决"怎么准备数据"。
@@ -396,36 +290,6 @@ project/
 `conftest.py` 的可见性规则：fixture 树和目录树同构，靠近根的 conftest 越"通用"，靠近叶子的 conftest 越"专用"。不用 import 就能让 fixture 跨文件可见，这一点是 fixture 体系能在大型项目里铺开的前提。
 
 不要在 conftest.py 里写测试函数——pytest 不会收集它们，文件名虽然带 test 也无效。conftest.py 只放 fixture、hook、plugin 配置。
-
----
-
-<div style="padding: 12px; border-radius: 6px; background: #f5f7fa; margin: 16px 0;">
-
-**📝 自测：conftest.py 可见性规则**
-
-```
-ecommerce/
-├── conftest.py            # fixture: api_base_url = "https://api.example.com"
-├── tests/
-│   └── conftest.py        # fixture: db_conn
-│   └── orders/
-│       └── test_order.py  # 这里能用到哪些 fixture？
-│   └── payments/
-│       └── test_pay.py    # 这里能用到哪些 fixture？
-```
-
-在 `test_order.py` 中，你能通过参数名直接使用 `api_base_url` 和 `db_conn` 吗？需要 import 吗？
-
-<details>
-<summary>点击查看参考答案</summary>
-
-`test_order.py` 可以**直接使用** `api_base_url`（来自 `ecommerce/conftest.py`）和 `db_conn`（来自 `ecommerce/tests/conftest.py`），都不需要 import。
-
-pytest 从测试文件所在目录向上遍历 `conftest.py`，越靠近测试文件的 `conftest.py` 优先级越高。如果 `tests/conftest.py` 和 `ecommerce/conftest.py` 定义了同名 fixture，`tests/` 下的那个会覆盖上级的。
-
-</details>
-
-</div>
 
 ## 八、内置常用 fixture
 
@@ -675,58 +539,6 @@ def pytest_runtest_makereport(item, call):
 | 写超长参数列表的 parametrize | 失败信息像天书 | 用 `pytest.param(..., id="...")` 起可读名字 |
 | `assert` 后不写消息 | 失败时只看到"AssertionError" | `assert x == y, "期望 y 因为 xxx"` |
 
----
-
-<div style="padding: 12px; border-radius: 6px; background: #f5f7fa; margin: 16px 0;">
-
-**📝 自测：能识别反模式吗？**
-
-看下面这段代码，找找有哪些反模式：
-
-```python
-# tests/test_user.py
-state = []
-
-def test_create_user():
-    state.append("user1")
-    assert len(state) == 1
-
-def test_delete_user():
-    state.append("user2")
-    assert len(state) == 1  # 这个测试能独立通过吗？
-```
-
-<details>
-<summary>点击查看参考答案</summary>
-
-**反模式**：测试间共享可变全局状态 `state`。
-
-`test_delete_user` 单独跑时 `len(state) == 1` 能通过（state 只有 `["user2"]`）；但如果 `test_create_user` 先跑，state 会变成 `["user1", "user2"]`，`test_delete_user` 就挂了。
-
-**修正**：把 `state` 变成一个 fixture（scope=function）：
-
-```python
-import pytest
-
-@pytest.fixture
-def state():
-    return []
-
-def test_create_user(state):
-    state.append("user1")
-    assert len(state) == 1
-
-def test_delete_user(state):
-    state.append("user2")
-    assert len(state) == 1
-```
-
-每个测试函数都拿到独立的 `state` 列表，互不影响。这也是为什么 fixture 默认 scope=function——默认最安全。
-
-</details>
-
-</div>
-
 ## 十四、什么时候用 pytest，什么时候用别的
 
 pytest 不是银弹，少数场景下别的工具更合适：
@@ -759,47 +571,6 @@ pytest 不是银弹，少数场景下别的工具更合适：
 - 1300+ 插件是"按需引入"，不是"全装上"——内置 fixture 才是 80% 场景的主力。
 
 pytest 不只是一个写测试的工具，它是一套测试编排框架。理解这一层定位差异，比记住 10 个 fixture API 更值得。
-
----
-
-## 进阶路径
-
-如果你已经掌握了本文内容，可以沿着下面三条路深入：
-
-**路径一：pytest 插件开发**
-- 阅读 [pytest 官方插件开发指南](https://docs.pytest.org/en/stable/how-to/writing_plugins.html)，了解 hook 规范
-- 给团队写一个自定义 marker 收集和报告插件（从 `pytest_runtest_makereport` 起步）
-- 研究 `pytest-cov` 源码，理解它如何 hook 覆盖率收集
-
-**路径二：属性测试（Property-Based Testing）**
-- 学习 [hypothesis](https://hypothesis.readthedocs.io/) 库，把"手写用例"改为"声明属性约束"
-- 典型的属性测试场景：序列化/反序列化一致性（`encode(decode(x)) == x`）、排序单调性、idempotency
-- hypothesis 和 pytest 的 parametrize 天然协同，可以通过 `@given` 装饰器直接集成
-
-**路径三：测试工程化**
-- 引入 `pytest-xdist` 做并行执行（CI 加速 2-4 倍），但要先确保测试之间没有共享可变状态
-- 用 `pytest-benchmark` 把关键路径的性能纳入 CI 检查（"这个 PR 不能让 add() 变慢 10%"）
-- 配置 `pytest.ini` / `pyproject.toml` 统一团队的测试配置（marker 注册、默认参数、插件列表）
-- 在 CI 中按 marker 分层跑：`smoke` 在每次 commit，`regression` 在 PR 阶段，`slow` 在 nightly
-
----
-
-<div style="padding: 12px; border-radius: 6px; background: #f5f7fa; margin: 16px 0;">
-
-**📝 最终自测清单**
-
-做完一遍后，检查你能不能：
-
-- [ ] 不查文档，写出一个带 `yield` 的 fixture，并解释 setup 和 teardown 的时机
-- [ ] 说出 `scope="function"` 和 `scope="session"` 的取舍场景，以及 session 级 fixture 的注意事项
-- [ ] 用 `@pytest.mark.parametrize` 写一组数据驱动测试，并给每条数据起好可读的 id
-- [ ] 解释为什么 conftest.py 里的 fixture 不需要 import，以及它的可见范围规则
-- [ ] 说出至少 3 个 pytest 内置 fixture 的名字和用途
-- [ ] 写出一个 team marker 的注册和过滤命令
-- [ ] 列出 3 个常见反模式，并说出修正方案
-- [ ] 解释 pytest 的测试发现规则：什么文件名会被收集、什么函数名会被收集
-
-</div>
 
 ---
 
