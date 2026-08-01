@@ -18,7 +18,7 @@ toc: true
 
 `paperswithbacktest/awesome-systematic-trading` 把系统化交易拆成了几条可以分别学习的主线：数据、回测、分析、论文、书单和课程。初入量化的人，最大瓶颈是入口太散——这份仓库先把散落各处的入口收拢到一处。
 
-但 2026 年再看它，需要多读一层上下文。GitHub 仓库是一个好用的入口，README 列出 97 个库、40+ 策略（含论文链接）、55 本书、23 个视频，以及博客和课程，另有中文版 README_zh.md；与此同时，官方站点已经把重心转到产品化平台本身，首页展示 5,000+ 篇可运行论文、1.04 TB 清洗数据、60+ 课程内容、30,000+ 社区成员，README 的策略区也直接写了"Strategies are now hosted here"。仓库是索引，站点是工作台。
+但 2026 年再看它，需要多读一层上下文。GitHub 仓库是一个好用的入口，README 列出 97 个库、40+ 策略（含论文链接）、55 本书、23 个视频，以及博客和课程，另有中文版 README_zh.md；与此同时，官方站点已经把重心转到产品化平台本身，首页展示 5,000+ 篇可运行论文（官方也把它们称作“策略”）、1.04 TB 清洗数据、60+ 课程内容、30,000+ Discord 社区成员，README 的策略区也直接写了“Strategies are now hosted here”。仓库是索引，站点是工作台。
 
 下面按这个顺序展开：先分清仓库、官网、课程和博客各自负责什么，再看回测框架怎么选，最后用一条最小任务流把这些资源串起来。
 
@@ -41,7 +41,9 @@ toc: true
 | GitHub README | 资源导航、项目入口、书单和课程索引 | 用来做第一轮筛选和建立知识地图 |
 | paperswithbacktest.com | 5,000+ 可运行论文、数据、API、MCP、工作台 | 已经知道要查什么时，直接去站内搜策略和数据 |
 | Course | 61 节内容、25 个 code notebook，覆盖 Python、数据采集、回测、ML/DL/LLM 与量化金融专题 | 适合按章节系统补课，零散查资料效率低 |
-| Blog (Substack) | 27,000+ 订阅者，覆盖策略组合、期权定价、加密货币季节性与量化研究方法 | 用来跟踪作者的判断，补充 README 的静态内容 |
+| Blog (Substack) | 数万订阅者，覆盖策略组合、期权定价、加密货币季节性与量化研究方法 | 用来跟踪作者的判断，补充 README 的静态内容 |
+
+需要说清楚的是：官网可以免费浏览论文目录和课程大纲，但完整的可运行代码、清洗数据和一键实盘部署在付费档之后（Backtester 约 $50/mo）。把它当工作台之前，先掂量这笔投入对现阶段值不值。
 
 数据基础设施可以接 [OpenBB：开源金融数据平台专家级技术文档]({{< relref "quant/openbb-open-data-platform-guide.md" >}})，AI 量化研究流水线可以接 [Qlib：微软亚洲研究院 AI 量化投资平台从入门到精通]({{< relref "quant/qlib-ai-quantitative-investment-platform-guide.md" >}})。
 
@@ -72,7 +74,7 @@ flowchart LR
 
 它把事件驱动回测、向量化原型、加密框架、数据源、组合优化和策略论文放在了同一个结构里——散落在 20 个独立仓库里做不到这一点。同时把论文和代码入口放在一起：README 的策略区同时给出 Sharpe、波动率、调仓频率、论文链接和 QuantConnect 实现入口。虽然这些数字不能直接拿来比实盘价值，但它大幅缩短了"看到论文标题"到"找到第一份代码"之间的距离。
 
-用它排优先级也很方便：不需要把 97 个库都装一遍，先回答自己是研究、回测、部署、还是做组合管理，就能把大部分无关选项排除掉。加上 129 次提交、持续维护的中文版 README —— 这份仓库没有变成一个死目录。
+用它排优先级也很方便：不需要把 97 个库都装一遍，先回答自己是研究、回测、部署、还是做组合管理，就能把大部分无关选项排除掉。仓库近一年已转入低频维护、退居索引角色，但配合仍在维护的中文版 README_zh.md，用来建知识地图依然够用——把它当资源索引，而不是实时更新的知识库。
 
 ## 回测框架怎么选
 
@@ -88,7 +90,7 @@ flowchart LR
 
 离实盘还远，先用易学和迭代快的工具建立闭环；已经明确需要从回测迁移到执行层，Lean、NautilusTrader、HFTBacktest 这类更偏工程化的平台才值得投入时间。容易把"未来可能需要"错当成"现在必须掌握"。
 
-除了回测框架本身，README 的 Broker APIs 和 Databases 分类也值得单独看。Broker APIs 涵盖 Alpaca、IBKR、CCXT 等主流券商与交易所接口，Databases 包括 InfluxDB、ClickHouse 等时序存储方案——这些是量化基础设施的关键组件，但经常被只关注回测框架的人跳过。
+除了回测框架本身，README 的 Broker APIs 和 Databases 分类也值得单独看。Broker APIs 涵盖 IBKR（Ib_insync）、CCXT、Coinnect、PENDAX 等券商与交易所接口，Databases 收录 Marketstore、Tectonicdb、ArcticDB 这类面向行情与订单簿的时序存储方案——这些是量化基础设施的关键组件，但经常被只关注回测框架的人跳过。
 
 | 场景 | 第一选择 | 原因 |
 | ---- | ---- | ---- |
@@ -107,7 +109,7 @@ flowchart LR
 
 2. 再去 Data Sources 里挑一套拿得到、也能解释清楚的数据。学习阶段用 yfinance、AkShare、TuShare 没问题，但不适合当成生产级行情源。
 
-3. 原型阶段优先选 vectorbt 或 backtesting.py，先把"信号有没有基本效果"回答掉，不要一开始就搭整套实盘框架。
+3. 原型阶段优先选 vectorbt 或 backtesting.py，先把“信号有没有基本效果”回答掉，不要一开始就搭整套实盘框架。vectorbt 对 numpy/numba 版本较敏感，装不上时优先建一个干净虚拟环境，或先退回更好装的 backtesting.py。
 
 4. 跑出结果后，把绩效输出交给 quantstats、pyfolio、ffn 这类分析工具，检查收益、回撤和 Sharpe 来自哪里。
 
@@ -116,14 +118,15 @@ flowchart LR
 ```python
 import yfinance as yf
 import vectorbt as vbt
-close = yf.download("SPY", start="2018-01-01")["Close"]
+# auto_adjust 取复权价；squeeze 把单列 DataFrame 压成 Series，规避新版 yfinance 的 MultiIndex 列
+close = yf.download("SPY", start="2018-01-01", auto_adjust=True)["Close"].squeeze()
 fast = close.rolling(20).mean()
 slow = close.rolling(50).mean()
-pf = vbt.Portfolio.from_signals(close, fast > slow, fast < slow)
+pf = vbt.Portfolio.from_signals(close, fast > slow, fast < slow, fees=0.001, slippage=0.001)
 print(pf.stats()[["Total Return [%]", "Max Drawdown [%]", "Sharpe Ratio"]])
 ```
 
-这个示例只回答一件事：一个最简单的双均线想法，在一套公开数据上能不能跑出可参考的历史结果。它还没有回答滑点、成交约束、交易时段差异和样本外稳定性，离实盘结论还很远。
+示例里特意保留了 `fees=0.001, slippage=0.001`：把这两个参数删掉，Sharpe 和收益往往立刻好看一截——纸面回测默认零成本，这正是它最容易骗人的地方。还要留意标的是 SPY 这只指数 ETF，本身没有幸存者偏差、不停牌、也没有复权争议；一旦换成个股或 A 股，下面“常见错误”里的数据坑才会真正冒头。所以这个示例只回答一件事：一个最简单的双均线想法，在一套公开数据上能不能跑出可参考的历史结果。它还没有回答成交约束、交易时段差异和样本外稳定性，离实盘结论还很远。
 
 跑出裸回测结果后，可以用 quantstats 生成一份 HTML 报告，把回撤分布、月度收益、滚动 Sharpe 等信息可视化：
 
@@ -173,7 +176,7 @@ README 的策略区很吸引人，因为每条策略都给出 Sharpe、波动率
 
 - **太早把机器学习当成 alpha 发生器**。线性规则、因子模型、简单动量都还没稳定复现时，先问清楚复杂模型到底在解决什么问题。
 
-- **在同一个数据集上反复调参，直到曲线"完美"**。这是过拟合最常见的入口：做样本外测试或交叉验证，把数据分成训练集和测试集，测试集在最终评估前不能碰；如果样本外表现远差于样本内，说明参数拟合的只是历史噪声。
+- **在同一个数据集上反复调参，直到曲线“完美”**。这是过拟合最常见的入口：做样本外测试或交叉验证，把数据按时间切开——比如 2018-2022 用来调参、2023-2025 只用来验证，测试段在最终评估前绝不回看；如果样本外表现远差于样本内，说明参数拟合的只是历史器声。
 
 ## 练习
 
@@ -195,11 +198,13 @@ README 的策略区很吸引人，因为每条策略都给出 Sharpe、波动率
 
 当已经知道自己要查什么，GitHub 仓库可以退到"目录"位置，接下来去更靠近执行的地方工作。
 
-- 要挖策略细节，去官方站点看 5,000+ 策略、数据目录和实现入口。
+- 要挖策略细节，去官方站点看 5,000+ 可运行论文、数据目录和实现入口。
 
 - 要系统补课，直接走课程页那 61 节内容和 25 个 code notebook，零散博客拼不出完整知识结构。
 
 - 要程序化检索资源，可以继续看站点提供的 API 和 MCP 入口——它们把目录变成了可查询的接口，不需要每次手动翻网页。
+
+- 要在本地脚本里直接调用，官方还提供了 Python 工具包 pwb-toolbox（`pip install pwb-toolbox`），把站内数据和策略接进自己的研究流程。
 
 分水岭在于能不能把其中一条研究路径走完：选假设、拿数据、跑回测、看风险、做复盘，再决定值不值得继续。
 
@@ -220,6 +225,8 @@ README 的策略区很吸引人，因为每条策略都给出 Sharpe、波动率
 - [paperswithbacktest/awesome-systematic-trading 仓库](https://github.com/paperswithbacktest/awesome-systematic-trading)
 
 - [paperswithbacktest 官方站点](https://paperswithbacktest.com/)
+
+- [pwb-toolbox 官方 Python 工具包](https://github.com/paperswithbacktest/pwb-toolbox)
 
 - [Algo Trading Course](https://paperswithbacktest.com/course)
 
