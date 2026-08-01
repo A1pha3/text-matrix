@@ -1,6 +1,6 @@
 ---
 name: morning-report
-description: 为 text-matrix 生成四类中文早报:AI 新闻早报、经济财经早报、AI 副业午报、Web3 早报。触发词:"做早报""写早报""morning report""AI 新闻早报""财经早报""副业午报""副业早报""Web3 早报""加密货币早报"。强制 24h 时间窗、Browser 逐条核链、V2EX 验真、Web3 事件级去重、Hugo 快讯 frontmatter 输出。
+description: 为 text-matrix 生成四类中文早报:AI 新闻早报、经济财经早报、AI 副业早报、Web3 早报。触发词:"做早报""写早报""morning report""AI 新闻早报""财经早报""副业午报""副业早报""Web3 早报""加密货币早报"。强制 24h 时间窗、Browser 逐条核链、V2EX 验真、Web3 事件级去重、Hugo 快讯 frontmatter 输出。
 metadata:
    version: 2.3.0
    tags: ["morning-report", "news", "hugo", "verification", "workflow", "web3-dedup"]
@@ -24,7 +24,7 @@ metadata:
 
 **风格铁律：准确、专业、优雅、有品味（2026-07-20 师父拍板，本 skill 全局生效）**
 
-所有早报产物（AI 新闻 / 经济财经 / AI 副业午报 / Web3 早报）必须同时满足以下四维，缺一不可：
+所有早报产物（AI 新闻 / 经济财经 / AI 副业早报 / Web3 早报）必须同时满足以下四维，缺一不可：
 
 1. **准确** — 数字、价格、时间、发布者、链接必须从原文页可追溯；禁止模型幻觉数据（参见下方 Web3 行情"禁止"项）；每条新闻标题、正文、发布时间必须以打开过的原文页为准。
 2. **专业** — 用财经/科技/工程语言描述新闻事件，不堆砌情绪词、不夸张、不网络化；术语首次出现用中文（English）括注（如"首次代币分发（ICO）"）。
@@ -56,7 +56,7 @@ metadata:
 | "检查早报""修复早报""纠正早报" | 审核并修复已有早报 | template.md;逐份加载对应来源文件 | 不要把已有正文当作事实来源 |
 | "AI 新闻""AI 早报""模型新闻" | 仅 AI 新闻早报 | template.md + ai-news-sources.md | 其余来源文件 |
 | "财经早报""经济早报""市场早报" | 仅经济财经早报 | template.md + finance-sources.md | 其余来源文件 |
-| "副业午报""副业早报""招聘早报""赚钱机会" | 仅 AI 副业午报 | template.md + side-hustle-sources.md | 其余来源文件 |
+| "副业午报""副业早报""招聘早报""赚钱机会" | 仅 AI 副业早报 | template.md + side-hustle-sources.md | 其余来源文件 |
 | "Web3""加密货币""币圈""BTC""ETH" | 仅 Web3 早报 | template.md + web3-sources.md + web3-event-dedup.md | 其余来源文件 |
 | "做早报""写早报""morning report" | 全部 4 份 | template.md;逐份加载对应来源文件 | 不要一次全量预加载 |
 
@@ -148,7 +148,7 @@ metadata:
 | ------ | ------ |
 | AI 新闻早报 | ≥ 3 个来源,含 ≥ 2 中文 + ≥ 1 海外 |
 | 经济财经早报 | ≥ 2 核心财经来源;行情必须写出关键数字 |
-| AI 副业午报 | ≥ 3 个来源,含 ≥ 1 社区 + ≥ 1 内容来源 |
+| AI 副业早报 | ≥ 3 个来源,含 ≥ 1 社区 + ≥ 1 内容来源 |
 | Web3 早报 | CoinMarketCap + CoinDesk;Browser 采集真实价格,禁止模型幻觉数据 |
 
 ### Hugo frontmatter
@@ -170,7 +170,7 @@ hiddenFromHomePage: true
 | ------ | ------ |
 | AI 新闻早报 | ai-morning-news-YYYY-MM-DD |
 | 经济财经早报 | financial-morning-news-YYYY-MM-DD |
-| AI 副业午报 | ai-side-hustle-noon-news-YYYY-MM-DD |
+| AI 副业早报 | ai-side-hustle-morning-news-YYYY-MM-DD |
 | Web3 早报 | web3-morning-news-YYYY-MM-DD |
 
 ## 禁止项
