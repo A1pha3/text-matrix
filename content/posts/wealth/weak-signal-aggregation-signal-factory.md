@@ -2,7 +2,7 @@
 title: "弱信号聚合与信号工厂：用数学和工程构建量化交易的护城河"
 date: "2026-08-01T21:55:00+08:00"
 draft: false
-categories: ["量化交易"]
+categories: ["财富自由"]
 tags: ["量化交易", "弱信号聚合", "正交化", "因子剥离", "信号工厂", "风险管理"]
 slug: quant-weak-signal-aggregation-and-signal-factory
 description: "从平方根定律到信号工厂——用通俗的语言讲透量化交易中弱信号聚合的数学原理、三道验证关卡和工程化生产线模型。"
