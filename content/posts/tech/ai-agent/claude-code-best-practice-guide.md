@@ -15,11 +15,8 @@ tags: ["Claude Code", "AI 编程", "Anthropic", "最佳实践"]
 
 > **目标读者**：希望系统掌握 Claude Code 推荐做法、提升 AI 编程效率的开发者
 > **前置知识**：了解 Claude Code 基础用法、有编程经验
-> **预计阅读时间**：25 分钟 | **难度**：⭐⭐⭐
 
 ---
-
-## 这篇文章在做什么
 
 [Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice) 是 GitHub 上 Claude Code 实践资料最集中的仓库之一（31.4k Stars）。它既非官方手册，也非入门教程——它解决的具体问题是：Claude Code 概念多、配置项杂、新特性更新快，开发者容易迷失在功能名词里。
 
@@ -30,60 +27,22 @@ tags: ["Claude Code", "AI 编程", "Anthropic", "最佳实践"]
 
 如果你已经有 Claude Code 使用经验，但配置还散落在各处，这篇文章能帮你把零散操作收敛成一套可维护的工作方法。
 
-### 概念地图
-
-```text
-
-## 学习目标
-
-完成本文后，就能：
-
-1. **说出这个仓库在 Claude Code 生态中的位置**：是方法地图，不是官方手册，也不是入门教程
-2. **区分六个关键概念的边界**：Subagents、Commands、Skills、Hooks、MCP、Plugins 各自管什么范围
-3. **判断哪些特性适合现在就用**：区分稳定收益项、进阶组合项和时间敏感的新特性
-4. **把知识迁移到自己的项目**：个人开发者和团队负责人分别从什么模块开始落地
-
----
-
-## 目录
-
-- [一、项目概览](#一项目概览)
-- [二、核心概念体系](#二核心概念体系)
-- [三、配置与个性化](#三配置与个性化)
-- [四、新兴特性](#四新兴特性)
-- [五、开发工作流对比](#五开发工作流对比)
-- [六、编排工作流详解](#六编排工作流详解)
-- [七、实战建议](#七实战建议)
-- [八、常见问题](#八常见问题)
-- [九、落地建议](#九落地建议)
-- [十、自测清单](#十自测清单)
-- [十一、实战练习](#十一实战练习)
-
----
-
 ## 一、项目概览
 
 ### 这个仓库里有什么
 
 [Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice) 由开发者 **shanraisshan** 创建和维护，被 Boris Cherny（Anthropic 前员工、TypeScript 专家）在 X 上多次推荐，曾在 GitHub Trending 上获得 **#1 Repository Of The Day**。
 
-**仓库规模**：
-
-| 指标 | 数值 |
-|------|------|
-| GitHub Stars | 31.4k+ |
-| Forks | 2.8k+ |
-| Open Issues | 3 |
-| 许可证 | MIT |
+**仓库规模**：31.4k+ Stars，2.8k+ Forks，MIT 许可证。
 
 仓库内容覆盖这几个方向：
 
 - **概念澄清**：Subagents、Commands、Skills、Hooks 等容易混淆的概念，分别说明各自的触发方式、上下文策略和适用场景
 - **配置示例**：可以直接复用的 `.claude/` 配置文件，覆盖 settings、rules、agents、commands、skills、hooks 等目录
-- **开发工作流**：对比 Superpowers、Spec Kit、BMAD-METHOD 等六套主流 AI 开发方法论，给出各自的核心理念和独特组件
+- **开发工作流**：对比 Superpowers、Spec Kit、BMAD-METHOD 等六套主流 AI 开发方法论
 - **新特性汇总**：梳理 Auto Mode、Channels、Agent Teams、GitHub Actions 等持续演进的 beta 能力
 
-### 不适合做什么
+### 仓库的正确用法
 
 这类仓库适合用来建立方法地图，但不适合把全部配置直接"整包复制"进项目。更稳妥的用法：
 
@@ -91,15 +50,9 @@ tags: ["Claude Code", "AI 编程", "Anthropic", "最佳实践"]
 2. 挑 1 到 2 个收益最高的模块做最小迁移
 3. 根据项目实际情况决定要不要团队化、插件化
 
----
-
 ## 二、核心概念体系
 
-Claude Code 的功能体系可以分为**三个层次**和**若干扩展模块**。
-
-### 概念层次总览
-
-```text
+Claude Code 的功能体系可以分为三个层次和若干扩展模块。
 
 ### Subagents（子代理）
 
@@ -165,7 +118,15 @@ export const preToolUse = async (tool, args) => {
   console.log(`About to use tool: ${tool}`);
   return { tool, args };
 };
-```textjson
+```
+
+### MCP（模型上下文协议）
+
+MCP 通过外部独立进程的方式扩展 Claude Code 的能力。与 Plugin 的区别在于：MCP 解决的是"连接"问题——让 Claude Code 能调用外部工具；Plugin 解决的是"分发"问题——让配置和技能可以打包分享。
+
+**配置位置**：`.claude/settings.json` 中的 `mcpServers` 字段
+
+```json
 {
   "mcpServers": {
     "github": {
@@ -178,10 +139,74 @@ export const preToolUse = async (tool, args) => {
     }
   }
 }
-```textmarkdown
-使用 @path/to/file 可以将任意文件内容导入上下文
+```
+
+### Plugins（插件）
+
+Plugin 是 Claude Code 的打包分发单元，把一组配置（Commands、Skills、MCP 配置、Rules 等）打包成一个模块，通过 `claude plugins install` 安装。适合团队内部共享实践。
+
+### 概念之间的关系
+
 ```text
-Research → Plan → Execute → Review → Ship
+User invokes /command
+        ↓
+    Command loads
+    (prompt template)
+        ↓
+    May spawn Agent
+    (isolated context)
+        ↓
+    Agent uses Skill
+    (reusable capability)
+```
+
+## 三、配置与个性化
+
+### 配置文件层级
+
+Claude Code 的配置按优先级从高到低分为四层：
+
+1. **项目级**：`./.claude/` 目录中的 settings、rules、agents、commands、skills、hooks
+2. **用户级**：`~/.claude/` 目录中的对应的配置
+3. **CLAUDE.md**：项目根目录的上下文文件，描述项目结构、技术栈和编码规范（优先级高于 rules 但低于 settings）
+4. **CLI 参数**：启动时通过 `--flag` 传入的临时配置
+
+### 项目上下文配置
+
+```markdown
+使用 @path/to/file 可以将任意文件内容导入上下文
+```
+
+### 目录结构
+
+```text
+.claude/
+├── agents/          # 子代理定义
+├── commands/        # 命令模板
+├── hooks/           # 事件钩子
+├── skills/          # 技能模块
+├── rules/           # 规则文件
+├── memory/          # 持久记忆
+└── settings.json    # 全局设置
+```
+
+## 四、开发工作流对比
+
+以下是六套主流 AI 开发方法论的简要对比：
+
+| 工作流 | 核心理念 | 独特组件 |
+|--------|----------|----------|
+| Superpowers | 结构化提示词模板 | 多层提示词体系 |
+| Spec Kit | 先写规格说明，再生成代码 | 规格驱动开发 |
+| BMAD-METHOD | 分阶段执行（分析→设计→实现） | 渐进式交付 |
+| Research → Plan → Execute → Review → Ship | 线性流水线 | 质量控制节点 |
+| Ralph Wiggum Loop | 自主迭代 | 循环验证 |
+| Spec Drift | 反模式识别 | 变更追踪 |
+
+## 五、编排工作流详解
+
+### 调用链
+
 ```text
 User invokes /command
         ↓
@@ -197,7 +222,7 @@ User invokes /command
 
 ### 一次代码审查如何流过系统
 
-以 GitHub PR（Pull Request）审查为例，看 Commands、Subagents、Skills 和 Hooks 如何协同：
+以 GitHub PR 审查为例，看 Commands、Subagents、Skills 和 Hooks 如何协同：
 
 1. 用户在 Claude Code 中输入 `/review-pr #42`，触发 `review-pr` Command
 2. Command 的提示词模板定义了审查步骤：拉取 diff → 安全检查 → 风格检查 → 生成报告
@@ -215,28 +240,22 @@ User invokes /command
 3. **创建 Skill**：在 `.claude/skills/` 中定义
 4. **组合使用**：通过 Command 调用 Subagent，Subagent 使用 Skill
 
----
-
-## 七、实战建议
+## 六、实战建议
 
 ### 新手入门路径
 
 **第一阶段（1-2 天）**：
-
 1. 安装 Claude Code，阅读官方文档
 2. 尝试基本操作：读写文件、运行命令
-3. 体验 `/voice` 语音输入
-4. 体验 `/help` 获取帮助
+3. 体验 `/voice` 语音输入和 `/help` 获取帮助
 
 **第二阶段（3-7 天）**：
-
 1. 配置 `.claude/settings.json`
 2. 尝试 Subagents：创建简单子代理
 3. 尝试 Commands：创建自定义命令
 4. 体验 Hooks：添加简单的预工具钩子
 
 **第三阶段（长期）**：
-
 1. 构建个人 Skills 库
 2. 配置 MCP Servers 连接常用工具
 3. 探索 Agent Teams 并行开发
@@ -245,24 +264,21 @@ User invokes /command
 ### 团队采用建议
 
 **第一步：制定规范**
-
 - 确定哪些操作需要人工审批
 - 定义提交消息格式
 - 制定 Code Review 流程
 
 **第二步：配置共享**
-
 - 在团队仓库中创建 `.claude/` 配置
 - 使用 Rules 组织团队规范
 - 共享常用的 Commands 和 Skills
 
 **第三步：CI/CD 集成**
-
 - 配置 GitHub Actions 自动审查
 - 使用 Scheduled Tasks 自动化报告
 - 建立质量门禁
 
-### 安全推荐做法
+### 安全与性能
 
 | 场景 | 建议 |
 |------|------|
@@ -271,18 +287,14 @@ User invokes /command
 | 自动化任务 | 使用 Scheduled Tasks，记录日志 |
 | 外部集成 | 使用 MCP，设置最小权限 |
 
-### 性能优化
-
 | 优化项 | 方法 |
 |--------|------|
-| 上下文管理 | 使用 Checkpointing（检查点）避免上下文溢出 |
+| 上下文管理 | 使用 Checkpointing 避免上下文溢出 |
 | 并行执行 | 使用 Agent Teams 加速独立任务 |
 | 成本控制 | 使用 Status Line 监控 Token 使用 |
 | 长任务 | 使用 Ralph Wiggum Loop 自主迭代 |
 
----
-
-## 八、常见问题
+## 七、常见问题
 
 ### Q1：这个仓库最适合当"教程"还是"模板库"？
 
@@ -300,9 +312,7 @@ User invokes /command
 
 学会把个人经验沉淀为共享的 `.claude/` 资产，比"知道更多功能名词"有用得多。团队在上下文入口、命令入口、校验规则和分工上形成一致的工作流，比每个人各用各的配置更可靠。
 
----
-
-## 九、落地建议
+## 八、落地建议
 
 ### 个人开发者：从哪里开始
 
@@ -333,118 +343,6 @@ User invokes /command
 | GitHub 仓库 | https://github.com/shanraisshan/claude-code-best-practice |
 | Claude Code 文档 | https://code.claude.com/docs |
 | 官方 Skills | https://github.com/anthropics/skills |
-
----
-
-## 十、自测清单
-
-用这份清单检验你对 Claude Code 核心概念的掌握程度。每项只有能用自己的话说清楚才算通过——只记得名词不算。
-
-### 概念边界
-
-- [ ] 能说清 Subagent 和 Command 在上下文策略上的根本区别
-- [ ] 能举出一个该用 Skill 而非 Command 的典型场景
-- [ ] 能解释 Hook 为什么运行在智能体循环外面，以及四个事件类型各适合干什么
-- [ ] 能区分 MCP 和 Plugin：一个管连接、一个管分发
-
-### 配置体系
-
-- [ ] 知道 `.claude/` 下各子目录的职责（agents、commands、skills、hooks、rules）
-- [ ] 能按优先级高低列出配置的四个层级
-- [ ] 能说清 `CLAUDE.md`、`.claude/rules/` 和 `~/.claude/rules/` 三者的区别和覆盖关系
-
-### 编排与工作流
-
-- [ ] 能画出 Command → Agent → Skill 的调用链，并在链上标出上下文策略
-- [ ] 能拆解一次 PR 审查流程中，哪些环节该用 Subagent 并行、哪些该顺序执行
-- [ ] 读完六大工作流对比后，能判断自己的项目最接近哪一种，并说出理由
-
-### 落地决策
-
-- [ ] 能为一个真实项目写出 `CLAUDE.md` 的关键内容（不是模板填空）
-- [ ] 知道团队配置共享的前三步顺序，以及每一步的验收标准
-- [ ] 能对 Auto Mode、Agent Teams、Channels 分别做出"现在就用 / 观望 / 暂不需要"的判断
-
-### 安全与性能
-
-- [ ] 能说清 Auto Mode 和 Manual Mode 各自适合什么仓库类型
-- [ ] 知道至少两种控制上下文溢出的方法，并了解各自的代价
-- [ ] 能为公开仓库和内部敏感项目分别制定一套权限策略（不只是"设成 auto"）
-
----
-
-## 十一、实战练习
-
-以下三个练习按难度递进，覆盖从个人配置到编排设计的完整路径。每个练习都附带明确的验收标准——不是为了完成步骤，是为了达到效果。
-
-### 练习 1：建立项目上下文（30 分钟）
-
-**目标**：让 Claude Code 准确理解一个现有项目，不再依赖你口头补充背景信息。
-
-**适用水平**：读过本文概念部分即可。
-
-**步骤**：
-
-1. 选一个你熟悉的真实项目（不要拿 Hello World）
-2. 在项目根目录创建 `CLAUDE.md`，至少写入：项目一句话描述、技术栈、顶层目录结构说明、三条以上编码约定
-3. 在 `.claude/rules/` 下创建 2–3 条规则文件，每条规则描述一个具体约束（如"接口变更需同步更新文档""提交前跑 lint"）
-4. 启动 Claude Code 会话，问："这个项目是做什么的？用了什么技术栈？有哪些编码约定？"
-5. 检查：Claude Code 的回答是否准确反映了 CLAUDE.md 和 rules 中描述的内容
-
-**验收标准**：启动新会话（不加额外提示），Claude Code 能准确描述项目用途、技术栈和三条以上编码规范。如果你发现它漏了某条规则——规则文件里写得太模糊，重写，再来一轮。
-
-**常见坑**：CLAUDE.md 写得像 README 的摘要——把"是什么"写得很全，但缺少"怎么做"的约束。Claude 需要的是后者。
-
----
-
-### 练习 2：创建代码审查 Command 和安全审查 Subagent（45 分钟）
-
-**目标**：实现一个 `/review` 命令，能调用独立子代理并行审查代码。
-
-**适用水平**：已完成练习 1，或已经配置过项目上下文。
-
-**步骤**：
-
-1. 在 `.claude/commands/` 下创建 `review.md`，定义审查提示词：至少覆盖安全检查、代码风格、逻辑完整性三个维度
-2. 在 `.claude/agents/` 下创建 `security-reviewer.md`，这是一个专门检查安全漏洞的 Subagent。给它独立的工具权限和审查清单
-3. 在 Command 的提示词中指定：安全维度交给 `security-reviewer` Subagent 处理，其余维度由主会话完成
-4. 找一段包含安全问题的代码（比如硬编码密钥、SQL 注入风险），用 `/review` 审查它
-5. 观察：安全类问题是否来自 Subagent？风格和逻辑问题是否来自主会话？
-
-**验收标准**：
-
-- `/review` 能正确触发安全 Subagent
-- 审查结果中，安全问题和其他问题的来源可区分（通过日志或输出结构）
-- 如果有 Hooks 记录日志，能在日志中看到 Subagent 的工具调用记录
-
-**常见坑**：Command 提示词写成了任务列表而不是编排指令。Command 的核心不是"要做什么"——是"怎么拆、分给谁"。
-
----
-
-### 练习 3：设计一个从 PR 到部署的编排工作流（60 分钟）
-
-**目标**：综合使用 Command、Subagent、Skill 和 Hook，设计一套可复用的 PR 审查与部署编排流程。
-
-**适用水平**：已完成练习 2，或已经单独使用过 Command 和 Subagent。
-
-**步骤**：
-
-1. 画一张流程图，标记出从"收到 PR"到"通过审查并部署"的完整链路
-2. 在链路上标注每一步使用哪种机制（Command 做入口调度、Subagent 做并行审查、Skill 提供可复用能力、Hook 做事件拦截）
-3. 至少定义三个文件：
-   - 一个入口 Command（如 `pr-pipeline.md`）
-   - 一个 Subagent（如 `deploy-checker.md`，负责部署前校验）
-   - 一个 Hook（如 `post-tool-use` 校验输出格式）
-4. 选一个链路节点做实际验证：模拟一次 PR 提交，跑通从 Command 触发到 Subagent 完成审查的过程
-5. 记录：哪些环节确实适合并行、哪些必须串行，以及你的判断依据
-
-**验收标准**：
-
-- 流程图中，并行节点和串行节点的区分有明确理由（不是"看起来可以并行"）
-- 至少一个 Subagent 和 Hook 能在实际运行中协同工作
-- 能说出这套流程不适合什么场景——不是万能答案
-
-**没有标准答案**：不同项目对安全级别、部署频率、团队规模的要求不同，编排设计也会不同。重要的是你做出的取舍有依据，而不是抄了一个"推荐做法"。
 
 ---
 
