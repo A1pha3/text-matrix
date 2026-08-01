@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["Rust", "Minecraft", "游戏服务器", "性能优化", "开源"]
 description: "Pumpkin 是一个完全用 Rust 编写的 Minecraft 服务器实现，以多线程性能、安全性和可扩展性为核心设计目标。"
+slug: pumpkin-mc-rust-minecraft-server-guide
+
 ---
 
 ## 项目概览

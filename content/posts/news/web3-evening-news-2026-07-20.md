@@ -5,6 +5,9 @@ categories:
   - news
   - web3
 tags: ["Bitcoin", "Ethereum", "Solana", "ETF", "监管", "市场"]
+slug: web3-evening-news-2026-07-20
+description: "2026年7月20日加密市场晚报：涵盖审计信任信号、俄罗斯加密法案、灰度 ETH/SOL 质押等 7 条核心新闻。"
+
 ---
 
 # Web3晚报 2026-07-20

@@ -5,7 +5,7 @@ title = 'ChinaTextbook 深度解析：覆盖小初高到大学的中文 PDF 教�
 slug = 'china-textbook-tapxworld-open-pdf-textbook'
 description = 'TapXWorld/ChinaTextbook 是一个把所有小初高、大学阶段人教版 PDF 教材全部开源到 GitHub 的项目，从项目背景、目录结构、版权风险、海外华人使用场景、克隆同步指南、做课资源整合等六个角度系统拆解。'
 categories = ['技术笔记']
-tags = []
+tags = ['教育资源', '开源', 'PDF', '中文']
 +++
 
 # ChinaTextbook 深度解析：覆盖小初高到大学的中文 PDF 教材开源仓库，从对抗水印盗版到服务海外华人

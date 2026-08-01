@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["端到端加密", "CLI工具"]
 description: "Croc 是一个 CLI 文件传输工具，使用 PAKE 密码认证密钥交换协议实现端到端加密，支持跨平台、断点续传和多文件传输。"
+slug: schollz-croc-pake-end-to-end-file-transfer-guide
+
 ---
 
 # Croc：基于 PAKE 密码认证的跨平台端到端加密文件传输工具

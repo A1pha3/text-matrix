@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["MCP", "Local-First", "AI Agent"]
 description: "wigolo 为 AI 编程 agent 提供完全本地的 Web 搜索、抓取与爬取能力，无需 API key、无需云端、每次查询零成本。本文拆解其分层路由、rank fusion 与 evidence scoring 机制。"
+slug: wigolo-local-first-web-intelligence-ai-agents
+
 ---
 
 ## 核心判断

@@ -8,7 +8,7 @@ aliases:
 summary: "Kronos 是面向金融 K 线的时间序列基础模型。本文从论文、README 与公开代码出发，讲清其离散化编码器、层次化 Token、自回归 Transformer、预测与微调流程，并补一份可直接执行的论文复现实验清单与研究改进路线。"
 description: "Kronos 是面向金融 K 线的时间序列基础模型。本文基于 arXiv:2508.02739、官方 README 与公开代码，系统讲解其 45 个交易所、120 亿 K 线预训练背景、层次化离散 Token、自回归 Transformer、预测与微调流程，以及从入门到研究改进的完整路径。"
 categories: ["技术笔记"]
-tags: []
+tags: ["金融AI", "时间序列", "量化交易", "基础模型"]
 draft: false
 ---
 

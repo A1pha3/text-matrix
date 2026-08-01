@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["Box3D", "物理引擎", "游戏开发", "C语言", "Box2D"]
 description: "Box3D 是 Box2D 作者 Erin Catto 用 C17 重写的 3D 物理引擎，采用 data-oriented design，支持连续碰撞检测、Soft Step 刚体求解器、跨平台确定性，以及丰富的关节类型和传感器系统。"
+slug: erincatto-box3d-3d-physics-engine-guide
+
 ---
 
 ## 一句话判断

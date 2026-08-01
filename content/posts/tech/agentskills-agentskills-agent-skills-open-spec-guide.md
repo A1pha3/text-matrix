@@ -7,6 +7,8 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "LLM", "Prompt Engineering"]
 description: "拆解 Agent Skills 开放规范的核心设计：SKILL.md frontmatter 字段语义、渐进披露三阶段、42 个兼容客户端、参考实现 skills-ref 的取舍。"
 author: text-matrix
+slug: agentskills-agentskills-agent-skills-open-spec-guide
+
 ---
 
 # agentskills/agentskills 原理拆解：Agent Skills 开放规范是怎么设计的

@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["FaceSwap", "深度学习", "换脸", "计算机视觉", "Python"]
 description: "FaceSwap（deepfakes/faceswap）是 GitHub 上最知名的开源深度换脸项目，56k+ Stars，完整的 Extract-Train-convert 三步工作流，支持多种模型架构，附带 GUI 和 CLI 双模式，强调伦理使用。"
+slug: deepfakes-faceswap-deep-learning-face-swap-guide
+
 ---
 
 ## 一句话判断

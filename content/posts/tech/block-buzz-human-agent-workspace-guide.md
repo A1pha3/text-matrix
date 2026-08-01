@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["Buzz", "Block", "Nostr", "AI Agent", "Rust", "人机协作"]
 description: "Buzz 是 Block（Square）开源的自托管工作空间，将人类与 AI agent 放在同一个频道里协作。底层是 Nostr relay，每条消息、反应、工作流步骤都是签名事件，人和 agent 共享同一套身份模型和审计链。"
+slug: block-buzz-human-agent-workspace-guide
+
 ---
 
 ## 一句话判断

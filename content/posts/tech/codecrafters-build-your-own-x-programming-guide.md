@@ -8,7 +8,7 @@ aliases:
 description: "深入解析 Codecrafters build-your-own-x 项目：近50万星的教育圣地，通过从零重构 BitTorrent、Git、Docker 等核心技术，帮助程序员理解底层原理。"
 draft: false
 categories: ["技术笔记"]
-tags: []
+tags: ["教育", "编程语言", "系统设计", "学习路径"]
 ---
 
 ## 学习目标

@@ -5,7 +5,7 @@ date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: []
+tags: ["C++", "日志库", "性能优化", "Header-only"]
 description: "spdlog 是 C++ 最快的 header-only 日志库之一,29K+ stars。本文拆解 spdlog 的 fmt 集成、异步模式、sinks 架构、性能基准与适用场景。"
 ---
 

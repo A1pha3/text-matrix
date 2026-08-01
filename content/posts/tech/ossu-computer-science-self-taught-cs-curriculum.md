@@ -4,7 +4,7 @@ date: 2026-07-17T02:58:33+08:00
 lastmod: 2026-07-17T02:58:33+08:00
 draft: false
 categories: ["技术笔记"]
-tags: []
+tags: ["CS自学", "课程", "教育资源", "计算机基础"]
 description: "OSSU Computer Science 是 Open Source Society University 的免费 CS 自学路径，按 CS 2013 标准选取 MIT/Princeton 公开课，4 段路径约 20 小时/周 × 2 年。"
 slug: "ossu-computer-science-self-taught-cs-curriculum"
 author: text-matrix

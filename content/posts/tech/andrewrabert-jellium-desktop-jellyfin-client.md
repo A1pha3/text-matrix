@@ -4,6 +4,8 @@ date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
 tags: ["Rust"]
 description: "jellium-desktop 是一个非官方 Jellyfin 桌面客户端，基于 CEF 渲染 UI + mpv 播放视频，跨平台打包 Linux AppImage / macOS DMG / Windows installer，是 Jellyfin 官方没有桌面端时的可靠替代。"
+slug: andrewrabert-jellium-desktop-jellyfin-client
+
 ---
 
 # jellium-desktop：Jellyfin 的非官方桌面客户端，CEF + mpv 双引擎

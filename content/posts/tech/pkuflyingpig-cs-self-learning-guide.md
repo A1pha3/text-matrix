@@ -2,8 +2,10 @@
 title: "PKUFlyingPig/cs-self-learning：74K stars 的计算机自学指南到底有什么"
 date: 2026-07-20T03:02:36+08:00
 categories: ["技术笔记"]
-tags: []
+tags: ["CS自学", "教材推荐", "学习路径", "中文资源"]
 description: "PKUFlyingPig/cs-self-learning 是 74K stars 的中文计算机自学指南，作者用 4 年大学自学经验把课程、书籍、视频路径整理成一本可在线阅读的电子书，目标 2-3 年从小白成长为主流语言 + 全领域涉猎的全能程序员。"
+slug: pkuflyingpig-cs-self-learning-guide
+
 ---
 
 # PKUFlyingPig/cs-self-learning：74K stars 的计算机自学指南到底有什么

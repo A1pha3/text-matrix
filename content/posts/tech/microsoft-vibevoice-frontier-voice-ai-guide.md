@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["VibeVoice", "语音识别", "语音合成", "ASR", "TTS", "Microsoft"]
 description: "微软开源的 VibeVoice 是一组覆盖语音识别与语音合成的前沿模型，支持 60 分钟长音频单次转录和 90 分钟多说话人语音合成，核心创新在于 7.5Hz 超低帧率连续语音 tokenizer。"
+slug: microsoft-vibevoice-frontier-voice-ai-guide
+
 ---
 
 ## 一句话判断

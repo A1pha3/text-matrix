@@ -29,4 +29,12 @@ else
   python3 scripts/frontmatter_autofill.py --root content
 fi
 
+if [ "${#changed[@]}" -gt 0 ]; then
+  if command -v uv >/dev/null 2>&1; then
+    uv run --offline --with pyyaml python scripts/frontmatter_fill_missing.py --root content --target "${changed[@]}"
+  else
+    python3 scripts/frontmatter_fill_missing.py --root content --target "${changed[@]}"
+  fi
+fi
+
 git add content

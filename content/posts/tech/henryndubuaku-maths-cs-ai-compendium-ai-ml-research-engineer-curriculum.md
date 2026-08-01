@@ -4,7 +4,7 @@ date: 2026-07-18T03:08:50+08:00
 lastmod: 2026-07-30T14:00:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: []
+tags: ["AI/ML", "学习路径", "教材", "研究"]
 description: "maths-cs-ai-compendium 是 Henry Ndubuaku 维护的 intuition-first AI/ML 教材仓库：18 章主干已开放，19/20 章扩展在路上，并提供 llms.txt 与 MCP 子项目。"
 
 slug: "henryndubuaku-maths-cs-ai-compendium-ai-ml-research-engineer-curriculum"

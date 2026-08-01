@@ -5,7 +5,7 @@ draft: false
 slug: "louis-kirsch-automating-ai-research-thesis-translation"
 description: "USI 博士论文 Automating AI Research 由 Schmidhuber 弟子 Louis Kirsch 撰写，把 AGI/ASI 的核心命题收敛到学习算法的自我发现，论文用 MetaGenRL、VSML、SymLA、GPICL、GLAs、FME 六个工作压成可评测的元学习路线"
 categories: ["技术笔记"]
-tags: []
+tags: ["AI研究", "元学习", "自动化", "论文"]
 ---
 
 ## 本文导读

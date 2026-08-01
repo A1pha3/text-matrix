@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["T3 Code", "Agent", "Claude Code", "Codex", "Cursor", "远程开发"]
 description: "T3 Code 是 Theo（pingdotgg）开发的 AI 编程 agent 控制台，提供 iOS/Android/Web/桌面四端客户端，统一管理本机的 Claude Code、Codex、Cursor、Grok Build 和 OpenCode agent，支持远程操控编码任务。"
+slug: pingdotgg-t3code-agent-harness-guide
+
 ---
 
 ## 一句话判断

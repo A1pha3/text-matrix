@@ -5,7 +5,7 @@ slug: "ai-coding-fundamentals-workflow-matt-pocock"
 description: "基于 Matt Pocock 两个视频，解读 AI 辅助开发的核心：软件基础功决定 AI 输出上限，以及一套从模糊需求到生产代码的完整工作流。"
 draft: false
 categories: ["视频精读"]
-tags: []
+tags: ["AI编程", "软件工程", "工作流", "代码审查"]
 ---
 
 Matt Pocock 在 AI Engineer 频道上发了两个视频，一个讲为什么软件基础功在 AI 时代比以往更重要，另一个完整演示了从需求到交付的 AI Coding 工作流。这两个视频分别指向同一个问题：有了 AI 编程工具，软件基础功还重要吗？

@@ -7,6 +7,8 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "Codex", "AI 编程", "OpenAI"]
 description: "OpenAI 官方插件 codex-plugin-cc：在 Claude Code 中嵌入 Codex 的 8 个 slash 命令与 rescue 子代理，覆盖评审、委派与 session 转交。"
 author: text-matrix
+slug: openai-codex-plugin-cc-codex-claude-code-bridge-guide
+
 ---
 
 # openai/codex-plugin-cc 项目指南：在 Claude Code 中调用 Codex 做代码评审与任务委派

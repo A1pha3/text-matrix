@@ -4,7 +4,7 @@ slug: hasaneyldrm-exercises-dataset-multilingual-fitness-guide
 date: 2026-07-01T15:03:41+08:00
 lastmod: 2026-07-01T15:03:41+08:00
 categories: ["技术笔记"]
-tags: []
+tags: ["数据集", "健身", "多语言", "开发者工具"]
 description: "hasaneyldrm/exercises-dataset 是 1,324 个健身动作的结构化数据集，覆盖 6 种语言的逐步指导，含交互式浏览器与开发者脚手架（DB schema / API / LLM prompt）。本文拆解它的字段设计、翻译体系、配套 HTML 工具与适用边界。"
 ---
 

@@ -13,22 +13,6 @@ draft: false
 
 项目地址：[https://github.com/davila7/claude-code-templates](https://github.com/davila7/claude-code-templates)
 
-## 目录
-
-- [先说结论](#先说结论)
-- [前置知识](#前置知识)
-- [学习目标](#学习目标)
-- [组件地图](#组件地图)
-- [六类组件](#六类组件)
-- [安装](#安装)
-- [三个实战案例](#三个实战案例)
-- [Claude Code Analytics：监控层详解](#claude-code-analytics监控层详解)
-- [生态对比与协作](#生态对比与协作)
-- [FAQ](#faq)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶阅读路径](#进阶阅读路径)
-
 ## 先说结论
 
 如果你在团队里推广 Claude Code，直接装 Templates 比手动配 Agents 和 MCPs 快 5–10 倍。它解决的核心问题是：**把分散在 GitHub、npm、各种教程里的 Claude Code 配置，收拢成一个带版本管理的一键安装器**。
@@ -43,20 +27,11 @@ draft: false
 
 阅读本文前，建议先确认以下工具已在你的机器上可运行：
 
-- **Claude Code CLI**：能在终端里启动并完成至少一次对话。一句话理解：这是 Templates 要增强的那个"基础模型"。
-- **Node.js ≥ 18**：`npx` 命令可用。一句话理解：Templates 的 CLI 是用 npx 启动的 TypeScript 包。
-- **Git**：能在终端里执行 `git commit`。一句话理解：Hooks 和某些 Agents 会往你的 Git 流程里插检查点。
+- **Claude Code CLI**：能在终端里启动并完成至少一次对话。
+- **Node.js ≥ 18**：`npx` 命令可用。
+- **Git**：能在终端里执行 `git commit`。
 
 如果你这三条任一条不满足，先花 20 分钟把 Claude Code 官方文档的 Quick Start 走完。
-
-## 学习目标
-
-读完本文后，你应当能够：
-
-1. 在 10 分钟内为团队项目配置好代码审查 + 自动测试生成的 Claude Code 工作流，并解释为什么 Templates 比手动配置快。
-2. 区分 Agents、Commands、MCPs、Hooks、Settings、Skills 六类组件的职责边界，并举例说明它们在一次代码审查任务中如何协作。
-3. 解读 Analytics 面板里的"首次响应延迟"和"工具调用成功率"两个指标，并说明它们各自在诊断什么类型的故障。
-4. 针对你团队的 Claude Code 使用场景（纯代码审查 / 前端性能优化 / 数据库驱动开发），列出最优先安装的 3 个组件，并说明为什么选它们。
 
 ## 组件地图
 
@@ -178,7 +153,7 @@ npx claude-code-templates@latest --command testing/generate-tests --yes
 npx claude-code-templates@latest --hook git/pre-commit-validation --yes
 ```
 
-**第二步，验证安装**。安装完成后，在 Claude Code 会话中可以看到 code-reviewer agent 已经注册。你可以通过以下方式确认：
+**第二步，验证安装**。安装完成后，在 Claude Code 会话中可以看到 code-reviewer agent 已经注册：
 
 ```bash
 claude --agents list
@@ -215,7 +190,7 @@ npx claude-code-templates@latest --command performance/optimize-bundle --yes
 /optimize-bundle --analyze
 ```
 
-这个命令会触发 Claude Code 对项目进行三件事：运行 webpack-bundle-analyzer 或类似工具生成依赖图，识别体积最大的 chunk；检查组件树中的不必要的重渲染路径；扫描未使用的依赖和重复打包的库。
+这个命令会触发 Claude Code 做三件事：运行 webpack-bundle-analyzer 生成依赖图，识别体积最大的 chunk；检查组件树中的不必要的重渲染路径；扫描未使用的依赖和重复打包的库。
 
 **第三步，获取优化方案**。Claude Code 会输出一份优化清单，按优先级排列：
 
@@ -275,7 +250,7 @@ Claude Code 会通过 MCP 直接连接数据库执行 DDL 和查询，而不是�
 4. 编写查询 → Claude Code 生成参数化查询，避免 SQL 注入
 5. 性能分析 → Claude Code 用 `EXPLAIN ANALYZE` 分析执行计划
 
-**产出**：从需求描述到表结构落地，一个对话完成。数据库操作不再需要切换工具，SQL 注入风险被参数化查询消解，慢查询在开发阶段就被发现和修复。
+**产出**：从需求描述到表结构落地，一个对话完成。
 
 ## Claude Code Analytics：监控层详解
 
@@ -430,93 +405,6 @@ npx claude-code-templates@latest --config .claude-templates --yes
 
 Templates CLI 会检测当前 Claude Code 版本，并安装兼容的组件版本。如果遇到不兼容的情况，健康检查会提示。Claude Code 大版本升级后，建议重新运行一次安装命令，确保组件版本匹配。
 
-## 自测题
-
-检验理解程度，可以回答下面 5 个问题：
-
-1. Templates 的六类组件中，哪两类负责"扩展 Claude Code 的知识边界"，哪两类负责"在特定事件上自动触发逻辑"？
-2. 为什么 Templates 的 CLI 和 Web UI 被画成"入口层"，而不是直接连到 Claude Code？
-3. Analytics 面板里的"首次响应延迟"和"工具调用成功率"分别诊断什么类型的故障？
-4. 如果你在团队里推广 Templates，应该按什么顺序安装组件：先装监控，还是先装 Agents？为什么？
-5. Templates 和 OpenClaw 的核心差异是什么？给出一个"两者配合使用"的具体场景。
-
-3 题以上答不稳的话，建议重看"组件地图""安装""Claude Code Analytics"三节。
-
-<details>
-<summary>参考答案</summary>
-
-**题 1**：扩展知识边界的是 **MCPs**（接入外部服务）和 **Skills**（可复用技能模块）；触发自动逻辑的是 **Hooks**（事件触发器）和 **Commands**（自定义斜杠命令）。Agents 是角色定义，Settings 是配置项，它们不直接"扩展知识"，而是决定"谁在回答"和"回答时的参数"。
-
-**题 2**：因为 Templates 本身是"配置分发器"，不是 Claude Code 的一部分。CLI 和 Web UI 是"安装入口"，它们把组件注入到 Claude Code 的配置文件里，而不是直接调用 Claude Code 的 API。画成入口层能清晰表达"安装"和"运行"是两个阶段。
-
-**题 3**：**首次响应延迟**诊断的是模型 API 或 MCP 服务端的网络/性能问题（比如 Anthropic API 慢、PostgreSQL MCP 连接不上）；**工具调用成功率**诊断的是 MCP 配置是否正确、外部服务是否稳定（比如 GitHub token 失效、数据库密码错误）。前者偏网络，后者偏配置。
-
-**题 4**：先装 **Agents 和 Commands**，再装监控。原因是：你得先让 Claude Code 真正用起来，才能从监控里看到"哪些 Agent 最烧 token""哪些 Command 最常用"。如果先装监控再装组件，Analytics 面板里空空如也，你看不出任何问题。
-
-**题 5**：OpenClaw 是"个人 AI 助手平台"，核心是长期运行的守护进程 + 多消息渠道（WhatsApp、Telegram 等）；Templates 是"Claude Code 配置生态"，核心是组件仓库 + 一键安装。配合场景：你在 OpenClaw 里配置 Claude Code 作为后端模型，然后用 Templates 给 Claude Code 装上 code-reviewer Agent；用户在 Telegram 里发"帮我审查这段代码"，OpenClaw 路由到 Claude Code，Claude Code 以 code-reviewer 角色响应。
-
-</details>
-
-## 练习
-
-### 练习一：为你的团队选型 Templates 组件
-
-**目标**：根据团队实际场景，选出最值得装的 5 个组件，并说明为什么。
-
-**步骤**：
-
-1. 列出你团队用 Claude Code 做的 3 个主要任务（比如"代码审查""重构旧代码""写测试用例"）。
-2. 打开 [aitmpl.com](https://aitmpl.com)，搜索与这 3 个任务相关的 Agents 和 Commands。
-3. 选 5 个组件（至少包含 2 个 Agents、2 个 Commands、1 个 MCP 或 Hook）。
-4. 为每个组件写一句"装了之后能解决什么具体问题"。
-
-**通过标准**：5 个组件都能对应到团队的真实痛点，而不是"看名字酷就装"。
-
-### 练习二：跑通"代码审查 + 自动测试生成"流水线
-
-**目标**：在本地把 Templates 的 code-reviewer Agent 和 generate-tests Command 跑通。
-
-**步骤**：
-
-1. 安装组件：`npx claude-code-templates@latest --agent development-tools/code-reviewer --yes` 和 `npx claude-code-templates@latest --command testing/generate-tests --yes`。
-2. 找一个你最近做的 PR（或者新建一个故意写几行有问题的代码）。
-3. 启动 Claude Code，让它以 code-reviewer 角色审查这个 PR。
-4. 再让它用 `/generate-tests` 为改动的文件生成测试用例。
-5. 对比"没装 Templates 之前"和"装了之后"的审查深度和测试覆盖率。
-
-**通过标准**：code-reviewer 能指出至少 2 个你没注意到的代码问题，generate-tests 能生成至少 3 个非平凡的测试用例（不是只测 happy path）。
-
-### 练习三：解读 Analytics 面板（实操型）
-
-**目标**：跑一个周末的个人项目，然后从 Analytics 面板里读出"哪个 Agent 最烧 token""哪类任务单轮解决率高"。
-
-**步骤**：
-
-1. 安装 Analytics：`npx claude-code-templates@latest --analytics`。
-2. 启动本地监控服务，打开 `http://localhost:3456`。
-3. 用一个下午的时间，用 Claude Code 做 3 个不同的任务（比如"加一个 API 端点""重构一个组件""修一个 bug"），每个任务故意换不同的 Agent。
-4. 回到 Analytics 面板，看"Agent 使用分布"和"Token 消耗"两个图表。
-5. 回答：哪个 Agent 最烧 token？哪个任务的单轮解决率高？
-
-**通过标准**：你能从 Analytics 数据里得出至少 2 条"下次怎么做更快"的结论（比如"用 frontend-performance/optimization Agent 时，先跑一遍性能分析再问问题，能减少 30% 的来回轮次"）。
-
-## 进阶阅读路径
-
-下面给出阅读顺序与每篇为什么放在这个位置的理由：
-
-1. **[Claude Code 官方文档](https://docs.anthropic.com/en/docs/claude-code)**（先读）。如果你还没跑通过 Claude Code 的 Quick Start，先去把官方文档的"安装""第一次对话""Agents 基础"三篇读完。Templates 假设你已经理解 Claude Code 的基础概念。
-2. **[Templates 官方文档](https://docs.aitmpl.com)**（第二读）。理解 CLI 参数、组件依赖规则、MCP 配置格式。这是你后续"自己写组件"或"给团队写内部 Templates 配置"的参考书。
-3. **[Anthropic MCP 文档](https://modelcontextprotocol.io)**（第三读）。当你需要在 Templates 里接入自己的 MCP 服务（比如公司内部的知识库 API），你得先理解 MCP 的 Transport 层、Tool 定义、Resource 概念。
-4. **[OpenClaw 项目](https://github.com/steipete/openclaw)**（第四读，可选）。如果你想把 Claude Code 接到 WhatsApp / Telegram / 飞书，OpenClaw 是目前最成熟的多渠道网关。读完这篇，你能判断"要不要用 OpenClaw 包一层"还是"直接用在终端里跑 Claude Code 就够了"。
-5. **[Anthropic Claude Code Plugins](https://github.com/anthropics/claude-plugins)**（最后读，可选）。当你需要"写自己的 Agent 或 Command"时，这个仓库里的示例和规范是最接近官方的参考资料。
-
-这个顺序的好处是：
-
-- 先理解"Claude Code 是什么"（官方文档）
-- 再理解"怎么快速装上能用得上的扩展"（Templates 文档）
-- 然后理解"怎么接自己的服务"（MCP 文档）
-- 最后理解"怎么让 Claude Code 出现在更多场景里"（OpenClaw）和"怎么自己写扩展"（Plugins）。
-
 ---
 
 ## 资料口径说明
@@ -524,13 +412,9 @@ Templates CLI 会检测当前 Claude Code 版本，并安装兼容的组件版�
 本文关键判断的取径方式：
 
 1. **Claude Code Templates 的组件分类和协作关系**：来自仓库 README 和官方文档，已验证与代码实现一致。
-
 2. **Analytics 面板的指标含义和诊断价值**：来自仓库 README 和 Analytics 文档，已验证与实现一致。
-
 3. **与 OpenClaw、ECC、9arm/skills、superpowers 的对比**：来自各项目的 README 和功能对比，已验证准确性。
-
 4. **安装命令和配置示例**：来自仓库 README 和文档，已验证可运行（假设环境满足前置知识要求）。
-
 5. **链接有效性**：仓库、文档、Web UI、Discord 社区链接均已验证（2026-04-28），Claude Code 官方文档链接有效。
 
 ---

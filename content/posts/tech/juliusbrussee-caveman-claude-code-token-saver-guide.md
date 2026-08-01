@@ -7,6 +7,8 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "AI Agent", "MCP", "提示词工程", "开源工具"]
 description: "caveman 让 Claude Code 等 30+ 编程代理以洞穴人体回复，输出 token 削减 65-75%，技术准确性不变。本文拆解多档强度、钩子持久化与 Auto-Clarity 边界。"
 author: text-matrix
+slug: juliusbrussee-caveman-claude-code-token-saver-guide
+
 ---
 
 # caveman：让 Claude Code 用 1/4 的 token 把话说完

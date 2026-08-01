@@ -8,31 +8,11 @@ categories: ["技术笔记"]
 tags: ["Claude Code", "DeepSeek", "AI Agent", "OpenRouter", "API代理"]
 ---
 
-## 学习目标
-
-读完本文，你应该能够：
-
-1. 理解 deepclaude 的核心价值：在 Claude Code 执行框架外添加模型请求链路
-2. 区分 CLI 直连和 Remote Control + 本地 Proxy 两条路径的适用场景
-3. 配置和使用 deepclaude 进行日常编码任务
-4. 理解 proxy 兼容层的作用和实现原理
-5. 掌握热切换、成本追踪等高级功能
-
-deepclaude 做的事情很窄：在 Claude Code 成熟的执行框架外面加一层模型请求链路，让 DeepSeek V4 Pro、OpenRouter 等后端能稳定对接。README 和关键脚本看完，主线就是这一条——文件编辑、Bash、Git、子 Agent 还是原来的那套，变化集中在模型请求怎么走。
+deepclaude 做的事情很窄：在 Claude Code 成熟的执行框架外面加一层模型请求链路，让 DeepSeek V4 Pro、OpenRouter 等后端能稳定对接。文件编辑、Bash、Git、子 Agent 还是原来那套，变化集中在模型请求怎么走。
 
 README 写了"17 倍更便宜"，但这只是引子。deepclaude 下功夫的地方在兼容层：模型名与档位映射、thinking block 清理、`usage` 修复、Remote Control 下的 bridge 分流。很多同类方案演示一轮问答跑得通，一到长会话和工具循环就开始出错，deepclaude 至少走过这些坑。
 
 它把直连和本地 proxy 分成了两条路径，也没把自己包装成 Anthropic 的无损替代。
-
-### 阅读目标
-
-下面几个问题读完应该有答案：
-
-- deepclaude 改了什么、没改什么（执行框架 vs 模型链路）。
-- 什么时候该走 CLI 直连，什么时候该上 Remote Control + 本地 proxy。
-- `--switch` 热切换的前提条件是什么，为什么普通直连下不可用。
-- proxy 兼容层具体补了哪些坑，少一项会出什么问题。
-- 怎么按自己的任务复杂度渐进式上手，以及哪些场景不适合用 deepclaude。
 
 ### 两条路径，一张图看清
 
@@ -69,19 +49,9 @@ deepclaude 的两条运行路径边界很明确，一开始分清就省掉大量
 | `CLAUDE_CODE_SUBAGENT_MODEL` | 子 Agent 模型 |
 | `CLAUDE_CODE_EFFORT_LEVEL` | 默认 effort level |
 
-这些变量都是临时注入的。POSIX 版本在脚本进程里 `export` 后直接 `exec claude`，Windows 版本则在子进程结束后清理临时环境变量，所以不会把你的系统环境长期污染掉。
+这些变量都是临时注入的。POSIX 版本在脚本进程里 `export` 后直接 `exec claude`，Windows 版本则在子进程结束后清理临时环境变量，所以不会把系统环境长期污染。
 
-因此，Claude Code 那套核心执行能力基本没动：
-
-- 文件读写、编辑和补丁应用。
-- Bash / PowerShell 执行。
-- Glob / Grep 搜索。
-- Git 操作。
-- 多步自主工具循环。
-- 子 Agent 派生。
-- `/init` 这类项目初始化流程。
-
-deepclaude 管的是模型链路，不是执行框架。
+因此，deepclaude 管的是模型链路，不是执行框架。
 
 ## 两条实际运行路径
 
@@ -89,14 +59,9 @@ deepclaude 管的是模型链路，不是执行框架。
 
 ### 路径一：普通 CLI 直连
 
-普通 CLI 直连没有额外桥接层，最接近“原来的 Claude Code，只是后端换了”。
+普通 CLI 直连没有额外桥接层，最接近"原来的 Claude Code，只是后端换了"。
 
-要跑起来，只需要：
-
-- 已安装 Claude Code CLI。
-- 有对应 provider 的 API key。
-- 不需要为了这条路径先做 `claude auth login`。
-- 也不需要先启动本地 proxy。
+要跑起来，只需要已安装 Claude Code CLI，有对应 provider 的 API key。不需要先做 `claude auth login`，也不需要先启动本地 proxy。
 
 典型安装和启动方式如下：
 
@@ -126,12 +91,7 @@ deepclaude --cost
 deepclaude --benchmark
 ```
 
-这条路径：
-
-- 不启动本地 proxy。
-- 不提供可热切换的会话控制平面。
-
-也就是说，普通 `deepclaude` 启动出来的 Claude Code 会直接打到目标 provider，而不是先经过 `127.0.0.1:3200`。
+这条路径不启动本地 proxy，不提供可热切换的会话控制平面。普通 `deepclaude` 启动出来的 Claude Code 会直接打到目标 provider，而不是先经过 `127.0.0.1:3200`。
 
 ### 路径二：Remote Control + 本地 Proxy
 
@@ -140,7 +100,7 @@ deepclaude --benchmark
 - WebSocket bridge：固定连到 `wss://bridge.claudeusercontent.com`。
 - Model API：可以通过 `ANTHROPIC_BASE_URL` 重定向。
 
-所以需要本地 proxy：它不能把所有流量都改到 DeepSeek，否则 bridge 先断。
+所以需要本地 proxy——它不能把所有流量都改到 DeepSeek，否则 bridge 先断。
 
 启动方式：
 
@@ -156,7 +116,7 @@ deepclaude --remote -b anthropic
 - 有可用的 `claude.ai` 订阅，因为 bridge 是 Anthropic 基础设施。
 - 本机有 Node.js 18+，因为 proxy 由 Node 脚本启动。
 
-Remote 路径里，脚本会按下面的顺序处理：
+Remote 路径里，脚本的处理顺序：
 
 1. 先启动 `proxy/start-proxy.js`。
 2. 再把 `ANTHROPIC_BASE_URL` 指到本地 `http://127.0.0.1:<port>`。
@@ -169,7 +129,7 @@ Remote 路径里，脚本会按下面的顺序处理：
 
 假设你在一个 Python 项目里要修一个类型错误——告诉 Claude Code "fix the type error in `src/utils.py` line 42"。
 
-**CLI 直连路径下**：Claude Code 用 Grep 找到文件、用 Read 读上下文、生成补丁、用 Bash 跑类型检查——这套工具循环完全不变。唯一的变化是：每一步的模型推理走到了 DeepSeek V4 Pro，而不是 Claude Opus。因为没走 proxy，中间没有额外跳转层，延迟和原生 Claude Code 差别不大。修完以后直接退出，会话结束。
+**CLI 直连路径下**：Claude Code 用 Grep 找到文件、用 Read 读上下文、生成补丁、用 Bash 跑类型检查——这套工具循环完全不变。唯一的变化是每一步的模型推理走到了 DeepSeek V4 Pro，而不是 Claude Opus。因为没走 proxy，中间没有额外跳转层，延迟和原生 Claude Code 差别不大。修完以后直接退出，会话结束。
 
 **Remote Control + Proxy 路径下**：同一个任务，用户在浏览器里发出指令。bridge 把指令从 `wss://bridge.claudeusercontent.com` 传到本机 CLI，CLI 执行同样的 Grep/Read/Bash 工具循环，但每次 `/v1/messages` 的模型请求先经过 `127.0.0.1:3200` 的 proxy，proxy 做模型名映射、thinking block 清理、`usage` 补齐，再转发到 DeepSeek。用户可以在中途跑 `deepclaude --switch anthropic` 把后端切到 Anthropic——前提是会话已经挂在 proxy 上。
 
@@ -198,17 +158,17 @@ curl -s http://127.0.0.1:3200/_proxy/cost
 - 会话已经在用 `127.0.0.1:3200` 这个 proxy → `/_proxy/mode` 才能改它的后端。
 - `deepclaude --remote` 会把会话接到这个 proxy 上，热切换在 Remote Control 场景里最自然。
 - README 里的 slash commands、VS Code tasks 和快捷键，本质上都是给已有 proxy 发控制请求。
-- 仓库里还带了 standalone proxy 模式，手工把会话接到本地 proxy；但就现有 shell launcher 来看，普通 `deepclaude` 不会自动把 CLI 会话切到这条路径上。
+- 仓库里还带了 standalone proxy 模式，可以手工把会话接到本地 proxy；但就现有 shell launcher 来看，普通 `deepclaude` 不会自动把 CLI 会话切到这条路径上。
 
 proxy 暴露的几个端点，分别对应状态、切换和成本统计：
 
 | 端点 | 作用 | 适合拿来确认什么 |
 | ------ | ------ | ------ |
-| `GET /_proxy/status` | 当前模式、运行时长、请求数 | 你的会话是不是已经接到 proxy |
+| `GET /_proxy/status` | 当前模式、运行时长、请求数 | 会话是不是已经接到 proxy |
 | `POST /_proxy/mode` | 切换 DeepSeek / OpenRouter / Fireworks / Anthropic | 控制平面是否可用 |
 | `GET /_proxy/cost` | token 用量和相对 Anthropic 的成本估算 | 长会话有没有真的省钱 |
 
-如果你只是普通执行一次 `deepclaude`，然后再另开终端跑 `deepclaude --switch anthropic`，多半只会收到一句 “Proxy not running”。问题通常不在 provider，而在于这个会话压根没接到 proxy 上。
+如果你只是普通执行一次 `deepclaude`，然后再另开终端跑 `deepclaude --switch anthropic`，多半只会收到一句 "Proxy not running"。问题通常不在 provider，而在于这个会话压根没接到 proxy 上。
 
 ## proxy 实际补了什么
 
@@ -252,17 +212,17 @@ proxy 路径又多了一层 `MODEL_REMAP`。当会话里仍然出现 Anthropic �
 
 这张表也暴露了两个边界：
 
-- deepclaude 不是“自动理解一切未来模型名”的通用翻译层，映射表是硬编码维护的。
-- 不同运行路径下，子模型的选择并不一定完全相同。普通直连和 proxy 切换模式在档位映射上更像“工程上尽量接近”，不是严格逐项同构。
+- deepclaude 不是"自动理解一切未来模型名"的通用翻译层，映射表是硬编码维护的。
+- 不同运行路径下，子模型的选择并不一定完全相同。普通直连和 proxy 切换模式在档位映射上更像"工程上尽量接近"，不是严格逐项同构。
 
 ### 3. thinking block 的双向清理
 
-常见的理解是“非 Anthropic 后端不认识 thinking block，发出去前删掉就行”。源码处理得比这更严格：
+常见的理解是"非 Anthropic 后端不认识 thinking block，发出去前删掉就行"。源码处理得比这更严格：
 
 - 发往非 Anthropic 后端前，删除所有 thinking block。
 - 从非 Anthropic 切回 Anthropic 时，如果会话里已经混入第三方后端生成的 thinking block，也要删。
 
-原因不是表面上的“有没有签名”，而是兼容性语义不同。源码注释写得很直接：第三方后端可能生成“带签名但 Anthropic 不认可”的 thinking block，如果只做半套过滤，切回 Anthropic 时会直接打出 400。
+原因不是表面上的"有没有签名"，而是兼容性语义不同。源码注释写得很直接：第三方后端可能生成"带签名但 Anthropic 不认可"的 thinking block，如果只做半套过滤，切回 Anthropic 时会直接打出 400。
 
 问题不在单次请求转发，而在跨 provider 的会话状态清洁。
 
@@ -295,11 +255,11 @@ claude remote-control
 
 proxy 的设计很克制：只有真正的模型消息路径会被分流，其他 Anthropic 相关请求仍然透传回官方端点。范围收得够窄，Remote Control 才比较稳。
 
-`/_proxy/cost` 给你的也是估算，不是账单。它按源码里写死的每百万 token 价格做静态计算，再和 Anthropic 价格对比。这个数字很适合看趋势和节省比例，不适合拿去做严格结算。
+`/_proxy/cost` 给你的也是估算，不是账单。它按源码里写死的每百万 token 价格做静态计算，再和 Anthropic 价格对比。这个数字适合看趋势和节省比例，不适合拿去做严格结算。
 
 ## 选后端要考虑的不只是单价
 
-只看价格表，容易得出“DeepSeek 永远最优”的结论。真用起来，至少要把延迟、推理强度和任务风险一起看。
+只看价格表，容易得出"DeepSeek 永远最优"的结论。真用起来，至少要把延迟、推理强度和任务风险一起看。
 
 | 后端 | 输入 $/M | 输出 $/M | 更适合什么场景 |
 | ------ | ------ | ------ | ------ |
@@ -362,13 +322,13 @@ README 的直观判断大致对得上实际效果：
 
 把这两条路混在一起，会让很多本来两分钟能跑通的场景平白多出一道门槛。
 
-### 2. `--switch` 不是“顺手帮你启用代理”
+### 2. `--switch` 不是"顺手帮你启用代理"
 
-`deepclaude --switch` 只会发控制请求，不会自动创建一个正在承载当前会话的 proxy。看到 “Proxy not running” 时，先别怀疑 provider，先确认自己的会话是不是本来就没挂到 `127.0.0.1:3200`。
+`deepclaude --switch` 只会发控制请求，不会自动创建一个正在承载当前会话的 proxy。看到 "Proxy not running" 时，先别怀疑 provider，先确认自己的会话是不是本来就没挂到 `127.0.0.1:3200`。
 
 ### 3. `--benchmark` 测的是通路，不是智商
 
-源码里的 benchmark 做的是一次很小的 `POST /v1/messages` 请求，测 HTTP 是否成功以及大致延迟。它适合用来排查 key、端点和网络，不适合拿来判断“这个 provider 的复杂推理到底强不强”。
+源码里的 benchmark 做的是一次很小的 `POST /v1/messages` 请求，测 HTTP 是否成功以及大致延迟。它适合用来排查 key、端点和网络，不适合拿来判断"这个 provider 的复杂推理到底强不强"。
 
 ### 4. 跨 provider 切换后如果仍然出现诡异 400，优先重开会话
 
@@ -376,7 +336,7 @@ proxy 已经尽力清理 thinking block，但跨 provider 的历史上下文本�
 
 ### 5. 不同模式下，低档位模型不一定完全一样
 
-普通 CLI 直连和 proxy 切换模式在模型档位的处理上更像“尽量兼容”，不是“一模一样的严格镜像”。如果你在意子 Agent 用的是 `Pro` 还是 `Flash`，最好直接读一下当前脚本设置，而不是默认它们在所有路径下都严格一致。
+普通 CLI 直连和 proxy 切换模式在模型档位的处理上更像"尽量兼容"，不是"一模一样的严格镜像"。如果你在意子 Agent 用的是 `Pro` 还是 `Flash`，最好直接读一下当前脚本设置，而不是默认它们在所有路径下都严格一致。
 
 ## 适用与不适用的场景
 
@@ -393,7 +353,7 @@ deepclaude 大致适合这几类情况：
 - 强依赖 MCP server 工具。
 - 经常处理高风险、强推理、错一次代价很高的生产级任务。
 
-后一类场景不是“完全不能用 deepclaude”，而是更适合把它当默认档位，再把 Anthropic 当高难任务的回退档位。
+后一类场景不是"完全不能用 deepclaude"，而是更适合把它当默认档位，再把 Anthropic 当高难任务的回退档位。
 
 ## 总结
 
@@ -402,44 +362,6 @@ deepclaude 大致适合这几类情况：
 如果需要浏览器会话、热切换和成本统计，再把 proxy 和 Remote Control 加上。反过来，如果工作高度依赖图片、MCP server 或强推理，直接用 Anthropic 更省心。
 
 deepclaude 做的事就是把那批其实没必要花 Opus 价格的任务挪到更便宜的档位上去。至于该用 Opus 的任务，该用还是用。
-
-## 练习
-
-1. **基础练习**：按照本文的说明，安装 deepclaude 并配置 DeepSeek API Key，使用 CLI 直连模式运行 deepclaude。
-
-2. **路径对比练习**：分别使用 CLI 直连模式和 Remote Control + 本地 Proxy 模式运行 deepclaude，对比两种模式的差异和适用场景。
-
-3. **热切换练习**：在 Remote Control + Proxy 模式下，使用 `deepclaude --switch` 命令在 DeepSeek 和 Anthropic 之间切换，观察切换过程和成本统计。
-
-4. **proxy 兼容层练习**：阅读 proxy 源码，理解模型名映射、thinking block 清理和 `usage` 补齐的实现原理。
-
-5. **成本对比练习**：使用 `deepclaude --cost` 命令查看成本统计，对比 DeepSeek 和 Anthropic 的价格差异。
-
----
-
-## 自测
-
-完成以下自测题，检查你对 deepclaude 的理解：
-
-1. deepclaude 改了 Claude Code 的哪部分？没改哪部分？
-2. CLI 直连和 Remote Control + Proxy 两条路径的核心差异是什么？
-3. `--switch` 热切换的前提条件是什么？为什么普通直连下不可用？
-4. proxy 兼容层具体补了哪些坑？少一项会出什么问题？
-5. deepclaude 不适合哪些场景？
-
----
-
-## 进阶路径
-
-1. **深入 proxy 兼容层**：阅读 proxy 源码，理解请求路径和鉴权头的适配、模型名和档位的映射、thinking block 的双向清理、SSE 和 JSON 响应里的 `usage` 补齐等技术细节。
-
-2. **贡献 deepclaude**：如果你发现 bug 或有改进建议，可以向 deepclaude 项目提交 PR。
-
-3. **多后端策略**：研究如何根据任务复杂度动态选择后端，实现成本优化和性能平衡。
-
-4. **集成到工作流**：将 deepclaude 集成到你的日常开发工作流中，如 CI/CD、代码审查等。
-
----
 
 ---
 

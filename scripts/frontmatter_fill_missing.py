@@ -14,6 +14,7 @@
     uv run python scripts/frontmatter_fill_missing.py --root content
     uv run python scripts/frontmatter_fill_missing.py --root content --dry-run
     uv run python scripts/frontmatter_fill_missing.py --root content --target content/posts/tech/xxx.md
+    uv run python scripts/frontmatter_fill_missing.py --root content --target content/posts/a.md content/posts/b.md
 """
 from __future__ import annotations
 
@@ -169,13 +170,14 @@ def fill_one(path: Path, root: Path) -> FillResult:
 def render_fm(fence: str, fm: str, added: dict[str, object]) -> str:
     """把要补的字段追加到 frontmatter 末尾，保持原有 fence/缩进风格。"""
     indent = _indent_for(fm)
+    assignment = ":" if fence == "---" else "="
     new_lines: list[str] = []
     for key, value in added.items():
         if key == "categories":
             rendered = _yaml_list(value) if fence == "---" else _toml_list(value)
         else:  # slug
             rendered = _yaml_scalar(value) if fence == "---" else _toml_scalar(value)
-        new_lines.append(f"{indent}{key}: {rendered}")
+        new_lines.append(f"{indent}{key} {assignment} {rendered}")
     return fm.rstrip() + "\n" + "\n".join(new_lines) + "\n"
 
 
@@ -226,7 +228,12 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("--root", default="content")
-    p.add_argument("--target", action="append", default=[])
+    p.add_argument(
+        "--target",
+        action="extend",
+        nargs="+",
+        default=[],
+    )
     p.add_argument("--dry-run", action="store_true")
     return p.parse_args()
 

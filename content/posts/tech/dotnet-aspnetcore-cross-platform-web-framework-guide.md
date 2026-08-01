@@ -5,7 +5,7 @@ date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false
 categories: ["技术笔记"]
-tags: []
+tags: ["C#", ".NET", "Web框架", "跨平台"]
 description: "ASP.NET Core 是 .NET 生态的 Web 框架。本文拆解 ASP.NET Core 的 Kestrel 中间件管道、最小托管模型、与 Spring Boot 的对比、为何 38K stars 但学习曲线陡峭。"
 ---
 

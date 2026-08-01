@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["C++"]
 description: "Hyprland 是一个 100% 独立自研的动态平铺 Wayland 合成器，不依赖 wlroots，提供极致的视觉效果和插件系统。"
+slug: hyprwm-hyprland-wayland-compositor-guide
+
 ---
 
 # Hyprland：独立自研的动态 Wayland 合成器深度解析

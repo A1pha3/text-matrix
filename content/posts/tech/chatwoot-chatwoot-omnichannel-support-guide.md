@@ -5,6 +5,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["Chatwoot", "客服", "全渠道", "开源", "Ruby", "Rails", "自托管"]
 description: "Chatwoot 是 35k Stars 的开源客服平台，将网站实时聊天、邮件、WhatsApp、Telegram、Facebook、Instagram 等渠道统一到一个收件箱，支持 AI agent 自动应答、团队协作和自助知识库，可自托管部署。"
+slug: chatwoot-chatwoot-omnichannel-support-guide
+
 ---
 
 ## 一句话判断

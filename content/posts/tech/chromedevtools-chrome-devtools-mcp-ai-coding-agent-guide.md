@@ -7,6 +7,8 @@ categories: ["技术笔记"]
 tags: ["MCP", "Chrome DevTools", "AI Agent", "Puppeteer", "性能分析"]
 description: "chrome-devtools-mcp 把 Chrome DevTools 能力通过 MCP 暴露给 AI 编程代理，以语义摘要替代 trace JSON。本文拆解工具分层与连接模式。"
 author: text-matrix
+slug: chromedevtools-chrome-devtools-mcp-ai-coding-agent-guide
+
 ---
 
 # chrome-devtools-mcp：把 Chrome DevTools 装进 AI 编码代理

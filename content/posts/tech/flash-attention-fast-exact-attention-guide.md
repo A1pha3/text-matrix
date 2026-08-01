@@ -10,20 +10,9 @@ tags: ["Transformer", "深度学习", "GPU"]
 
 # Flash Attention：把注意力从 HBM 带宽瓶颈里捞出来
 
-> **目标读者**：大模型训练/推理工程师、CUDA 内核爱好者、Transformer 优化方向的研究者
-> **预计阅读时间**：50-70 分钟
-> **前置知识**：标准 Attention 公式、GPU 内存层级（SRAM/HBM）、PyTorch 基础
-> **难度定位**：⭐⭐⭐ 中高级，需要理解 GPU 内存层级
+前置知识：标准 Attention 公式、GPU 内存层级（SRAM/HBM）、PyTorch 基础。面向大模型训练/推理工程师、CUDA 内核爱好者。
 
-## 学习目标
-
-读完这篇能：
-
-- 说清标准 Attention 在 HBM 带宽上的瓶颈位置，以及 FA 用 tiling + online softmax 把 O(N²) 内存压到 O(N) 的机制
-- 区分 FA1/FA2/FA3 三代各自解决的瓶颈层次（HBM 带宽 → GPU 占用率 → Tensor Core 利用率）
-- 在 HuggingFace Transformers、xFormers、Megatron-LM 里正确启用 FA，并能排查 CUDA 版本不匹配、kernel image 缺失等常见报错
-- 读 benchmark 数字时区分"测的是什么"和"不能推出什么"，避免把 attention kernel 加速比外推成端到端训练加速比
-- 判断自己的场景（训练/推理、长序列/短序列、NVIDIA/其他 GPU）是否适合用 FA，以及什么时候该换 Ring Attention 或 PagedAttention
+读完本文能说清：标准 Attention 在 HBM 带宽上的瓶颈位置，FA 用 tiling + online softmax 把 O(N²) 内存压到 O(N) 的机制；FA1/FA2/FA3 三代各自解决的瓶颈层次；在主流框架里正确启用 FA 并排查常见报错；读 benchmark 时区分"测的是什么"和"不能推出什么"；判断自己的场景是否适合用 FA，以及什么时候该换其他方案。
 
 ## 目录
 

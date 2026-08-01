@@ -5,7 +5,7 @@ slug: "haojingfang-from-beijing-folding-to-ai-folding-cn"
 description: "郝景芳谈 AI Agent、童行拆成 9 个小公司和《北京折叠》在现实里的回声。这篇精读拆开三件事：AI 如何压缩组织翻译链，为什么 OPC 更像边界重写，以及判断力为何成了更稀缺的能力。"
 draft: false
 categories: ["视频精读"]
-tags: []
+tags: ["AI Agent", "组织结构", "OPC", "科幻"]
 ---
 
 视频原址：[BV1Tj5y63Edj](https://www.bilibili.com/video/BV1Tj5y63Edj)。《甲小姐对话郝景芳：从北京折叠到 AI 折叠》由[甲子光年](https://www.bilibili.com/video/BV1Tj5y63Edj)制作，2026-05-13 发布，时长 2 小时 50 分 21 秒。本文以甲子光年授权的[网易长文版](https://www.163.com/dy/article/KSQM32JE0512MLBG.html)为主要文本来源，辅以[2016 年雨果奖官方页面](https://www.thehugoawards.org/hugo-history/2016-hugo-awards/)和童行计划在腾讯新闻发布的两篇公开文章交叉整理。由于 B 站页面未提供可稳定引用的完整字幕，本文不做逐句转录，而是把这场访谈还原成一篇更适合年度回看、也更能承受时间检验的分析文章。
