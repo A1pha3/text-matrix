@@ -218,7 +218,17 @@ def apply(path: Path, root: Path, dry_run: bool) -> FillResult:
 
 def iter_targets(root: Path, explicit: Iterable[Path] | None) -> list[Path]:
     if explicit:
-        return [t for t in explicit if t.is_file() and t.suffix == ".md"]
+        result = []
+        for t in explicit:
+            if not t.is_file() or t.suffix != ".md":
+                continue
+            try:
+                # 验证文件在 root 子树中
+                t.relative_to(root)
+                result.append(t)
+            except ValueError:
+                print(f"[warn] {t} 不在根目录 {root} 下，跳过", file=sys.stderr)
+        return result
     return sorted(p for p in root.rglob("*.md") if p.is_file())
 
 
@@ -254,7 +264,11 @@ def main() -> int:
             result = apply(path, root, dry_run=args.dry_run)
         except Exception as exc:
             failed += 1
-            print(f"[ERR ] {path.relative_to(root)}: {exc}")
+            try:
+                rel = path.relative_to(root)
+            except ValueError:
+                rel = path
+            print(f"[ERR ] {rel}: {exc}")
             continue
         if result.changed:
             changed += 1
