@@ -12,9 +12,9 @@ tags: ["Bun", "JavaScript", "TypeScript", "测试框架", "Zig", "Node.js", "性
 
 2026 年 5 月，Bun 的 GitHub 星标突破 90,685，最新稳定版本 1.3.14。这个项目从 2021 年起步，到 2024 年起进入多家头部公司的生产环境，已经不再是"值得关注的实验品"。
 
-Bun 是什么？一句话：**一个可执行文件，同时是运行时 + bundler + 测试框架 + 包管理器。** 你不再需要 node + npm + vite + jest，只需要 `bun`。
+Bun 是一个可执行文件，同时是运行时、bundler、测试框架和包管理器。你不再需要 node + npm + vite + jest，只需要 `bun`。
 
-这不是概念炒作。本文从运行时、包管理、打包、测试、框架集成五个维度，对 Bun 做一次系统性的技术解读，并在结尾给出适用场景与采用顺序建议。
+本文从运行时、包管理、打包、测试、框架集成五个维度，对 Bun 做一次系统性的技术解读，并在结尾给出适用场景与采用顺序建议。
 
 ## 目录
 
@@ -23,11 +23,11 @@ Bun 是什么？一句话：**一个可执行文件，同时是运行时 + bundl
 - [运行时：Node.js 的直接替代品](#运行时nodejs-的直接替代品)
 - [包管理器：与 npm/yarn/pnpm 的性能对比](#包管理器与-npmyarnpnpm-的性能对比)
 - [打包工具：Bun.build](#打包工具bunbuild)
-- [测试框架：Jest 兼容的极速测试](#测试框架jest-兼容的极速测试)
+- [测试框架：Jest 兼容的测试运行器](#测试框架jest-兼容的测试运行器)
 - [框架与工具链集成](#框架与工具链集成)
 - [配置文件：bunfig.toml](#配置文件bunfigtoml)
 - [性能基准：测的是什么，不能说明什么](#性能基准测的是什么不能说明什么)
-- [当前限制与注意事项](#当前限制与注意事项)
+- [已知限制](#已知限制)
 - [FAQ：常见问题与错误排查](#faq常见问题与错误排查)
 - [自测题](#自测题)
 - [进阶路径](#进阶路径)
@@ -35,18 +35,18 @@ Bun 是什么？一句话：**一个可执行文件，同时是运行时 + bundl
 
 ## 学习目标
 
-读完本文并动手实践后，你应当能够：
+完成本文阅读和动手实践后，你应该能：
 
-- 说清 Bun 与 Node.js 在引擎、事件循环、模块系统上的核心差异，并判断这些差异对你的项目意味着什么。
+- 说清 Bun 与 Node.js 在引擎、事件循环、模块系统上的核心差异，判断这些差异对你的项目意味着什么。
 - 在本地装好 Bun，用它跑 TypeScript 文件、装依赖、跑测试、打包产物，替换掉至少两个现有工具。
 - 识别 Bun 的内置 API（`Bun.serve`、`Bun.SQL`、`bun:sqlite` 等）的适用场景，以及哪些场景仍需第三方库。
-- 根据项目类型（新项目、迁移现有 Node.js 项目、CI 加速）选择合适的采用策略，而不是盲目全量替换。
+- 根据项目类型（新项目、迁移现有 Node.js 项目、CI 加速）选择合适的采用策略。
 
 ## 什么是 Bun：定位与技术栈
 
 Bun 是一个用 **Zig** 编写、底层基于 **JavaScriptCore**（WebKit 引擎，与 Node.js 使用的 V8 不同）的 JavaScript 运行时。它的设计目标是成为 Node.js 的**直接替代品**，同时内置打包、测试和包管理功能。
 
-三件事让它与众不同：
+三个差异让 Bun 与众不同：
 
 **第一，启动速度和内存占用远低于 Node.js。** JavaScriptCore 比 V8 轻量，加上 Zig 的系统级控制，Bun 的冷启动时间通常是 Node.js 的 1/4 到 1/10。这对 CLI 工具和 Serverless 场景尤其重要。
 
@@ -343,9 +343,9 @@ bun --watch index.tsx
 
 ### 与 Vite 的关系
 
-Bun 的打包器不是 Vite 的替代品，而是**更快的替代品**。如果你的项目使用 Vite 特有的插件生态，可以继续用 Vite，同时用 `bun install` 加速依赖安装。如果你的项目比较简单，直接用 `Bun.build` 可以省掉整个 Vite 工具链。
+Bun 的打包器定位与 Vite 不同——它更轻量，插件生态也更小。如果你的项目依赖 Vite 特有的插件体系，可以继续用 Vite，同时用 `bun install` 加速依赖安装。如果你的项目比较简单，直接用 `Bun.build` 可以省掉整个 Vite 工具链。
 
-## 测试框架：Jest 兼容的极速测试
+## 测试框架：Jest 兼容的测试运行器
 
 ### 基本用法
 
@@ -561,9 +561,9 @@ Bun 官方基准测试（在 M2 MacBook Pro 上）：
 
 实际表现因项目规模、硬件和操作系统而异。在大规模项目中，Bun 的优势通常会更明显，但建议用自己的项目做基准测试，而不是直接套用官方数字。
 
-## 当前限制与注意事项
+## 已知限制
 
-Bun 并不完美，以下场景需要谨慎：
+以下场景需要注意：
 
 **1. V8 特有功能缺失**
 Bun 使用 JavaScriptCore，不是 V8。如果你的代码依赖 `v8.*` API（如 `v8.Serializer`），会不兼容。大部分 npm 包不受影响，但某些 Node.js 内部工具链可能有问题。
@@ -577,8 +577,8 @@ macOS 和 Linux 仍然是 Bun 的最佳运行环境。Windows 版本虽然可用
 **4. 生态仍在成熟**
 npm 上的包大多数可以在 Bun 上运行，但某些包的特定功能（如 Vite 的某些插件）可能需要调整。查阅 [Bun 兼容性列表](https://bun.sh/docs/runtime/nodejs-apis) 确认。
 
-**5. Long-term 稳定性**
-Bun 仍在活跃开发中，版本之间的 API 可能有 breaking change。使用 `bun.lockb` 锁定依赖版本，避免升级导致的不兼容。
+**5. 版本稳定性**
+Bun 仍在活跃开发中，版本之间可能有 breaking change。使用 `bun.lockb` 锁定依赖版本，避免升级导致的不兼容。
 
 ## FAQ：常见问题与错误排查
 
@@ -629,25 +629,15 @@ Bun 的 mock API 与 Jest 高度兼容但不完全一致。常见差异：`jest.
 
 掌握 Bun 基础后，可以按以下方向深入：
 
-**方向一：全栈应用**
+**全栈应用**：用 `bun init` + Hono + Drizzle ORM + `Bun.SQL` 搭一个全栈应用，体验"零配置"开发。Hono 的路由设计、Drizzle 的类型安全 schema、Bun 的内置数据库客户端三者组合，可以省掉 Express + Prisma + pg 的一堆依赖。
 
-用 `bun init` + Hono + Drizzle ORM + `Bun.SQL` 搭一个全栈应用，体验"零配置"开发。Hono 的路由设计、Drizzle 的类型安全 schema、Bun 的内置数据库客户端三者组合，可以省掉 Express + Prisma + pg 的一堆依赖。
+**CLI 工具**：用 `bun build --compile` 把 CLI 工具打包成单文件可执行文件，分发给没有 Node.js 环境的用户。配合 `Bun.spawn` 调用子进程，`Bun.file` 读写配置，能做出比 Node.js + pkg 更轻量的 CLI。
 
-**方向二：CLI 工具**
+**CI/CD 加速**：在 GitHub Actions 里用 `bun install --frozen-lockfile` 替换 `npm ci`，用 `bun test` 替换 `jest`。大型 monorepo 的 CI 时间通常能缩短 30-50%。注意先在本地跑通 `bun test`，确认没有兼容性问题再上 CI。
 
-用 `bun build --compile` 把 CLI 工具打包成单文件可执行文件，分发给没有 Node.js 环境的用户。配合 `Bun.spawn` 调用子进程，`Bun.file` 读写配置，能做出比 Node.js + pkg 更轻量的 CLI。
+**Edge Function 与 Serverless**：Bun 的冷启动优势在 Serverless 场景下最明显。Bun 官方提供了 `bun deploy` 命令部署到 Bun Edge，Cloudflare Workers、Vercel Edge Functions 等平台也在逐步支持 Bun 运行时。
 
-**方向三：CI/CD 加速**
-
-在 GitHub Actions 里用 `bun install --frozen-lockfile` 替换 `npm ci`，用 `bun test` 替换 `jest`。大型 monorepo 的 CI 时间通常能缩短 30-50%。注意先在本地跑通 `bun test`，确认没有兼容性问题再上 CI。
-
-**方向四：Edge Function 与 Serverless**
-
-Bun 的冷启动优势在 Serverless 场景下最明显。Bun 官方提供了 `bun deploy` 命令部署到 Bun Edge，Cloudflare Workers、Vercel Edge Functions 等平台也在逐步支持 Bun 运行时。
-
-**方向五：插件与工具链**
-
-学习 `Bun.plugin` 的 API，为自定义文件类型（如 `.graphql`、`.vue`）写加载器。如果你维护一个内部工具链，可以用 Bun 的插件系统替换 Webpack loader 或 Vite plugin。
+**插件与工具链**：学习 `Bun.plugin` 的 API，为自定义文件类型（如 `.graphql`、`.vue`）写加载器。如果你维护一个内部工具链，可以用 Bun 的插件系统替换 Webpack loader 或 Vite plugin。
 
 ## 练习
 
@@ -720,7 +710,7 @@ console.log(users)
 
 ## 适用场景与采用顺序
 
-**Bun 非常适合：**
+**Bun 适合的场景：**
 
 - 新项目的起始脚手架（`bun init` + Hono + Drizzle）
 - 需要极致启动速度的 CLI 工具和脚本
@@ -729,7 +719,7 @@ console.log(users)
 - 需要内置 SQLite/PostgreSQL 的全栈应用
 - 快速原型和迭代（不需要配置 ts-node/jest/vite 一堆工具）
 
-**Bun 需要谨慎的场景：**
+**需要谨慎的场景：**
 
 - 严重依赖 Node.js 内部 API 或 `node-gyp` 编译的 addon
 - 需要 V8 特定功能（大部分业务代码不会遇到）
@@ -737,7 +727,7 @@ console.log(users)
 
 **采用顺序建议**
 
-如果你决定引入 Bun，建议按以下顺序渐进采用，而不是一次性全量替换：
+如果决定引入 Bun，建议按以下顺序渐进采用：
 
 1. **先用包管理器**：在现有 Node.js 项目里把 `npm install` 换成 `bun install`，风险最低，收益立竿见影。
 2. **再替换测试框架**：把 `jest` 换成 `bun test`，先在单个子包里试，确认 mock 和快照兼容后再推广。
@@ -746,14 +736,7 @@ console.log(users)
 
 这个顺序的好处是每一步都可回滚，且每一步都能拿到性能收益。反过来，如果你一开始就把生产服务从 Node.js 切到 Bun，遇到兼容性问题时的回滚成本会很高。
 
-Bun 解决的根本问题是：**现代 JavaScript 工具链太碎片化了。** 做一个新项目，你需要 node、npm、typescript、vite、jest、eslint、prettier……每一个都需要安装、配置、维护。Bun 把这些全部整合到一个可执行文件里，启动速度还快 10 倍。
-
-它之所以能走到这一步，有几个具体原因：
-
-- **Jarred Sumner**（创始人）是前 Stripe 工程师，深知大型项目里 npm 的痛点
-- 用 Zig 编写给了团队对性能的极致控制
-- JavaScriptCore 的选择避开了 V8 的许可问题，同时获得了更好的启动性能
-- 渐进式兼容策略：先做 Node.js 替代品，再逐步扩展
+Bun 能走到这一步，有几个具体原因：创始人 **Jarred Sumner**（前 Stripe 工程师）深知大型项目里 npm 的痛点；用 Zig 编写给了团队对性能的极致控制；JavaScriptCore 的选择避开了 V8 的许可问题，同时获得了更好的启动性能；渐进式兼容策略让它在 Node.js 兼容性上逐步完善。
 
 如果你还没用过 Bun，可以从今天开始：
 

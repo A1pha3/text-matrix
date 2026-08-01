@@ -16,38 +16,38 @@ tags: ["AI Agent", "记忆系统", "知识图谱", "向量搜索", "LLM", "Pytho
 
 读完本文，你会了解：
 
-- ✅ Cognee 的核心理念与四大操作（remember / recall / forget / improve）
-- ✅ 双轨搜索系统（向量搜索 + 知识图谱）的原理与实现
-- ✅ 认知科学原理在记忆系统中的应用
-- ✅ 如何与 AI Agent 集成（OpenClaw / Claude Code / Hermes）
-- ✅ 部署方案与平台选择
-- ✅ 实战案例与最佳实践
+- Cognee 的核心理念与四大操作（remember / recall / forget / improve）
+- 双轨搜索系统（向量搜索 + 知识图谱）的原理与实现
+- 认知科学原理在记忆系统中的应用
+- 如何与 AI Agent 集成（OpenClaw / Claude Code / Hermes）
+- 部署方案与平台选择
+- 实战案例与最佳实践
 
 ## 目录
 
-- [§1 项目定位](#§1-项目定位)
-- [§2 背景与动机：为何 AI 需要记忆](#§2-背景与动机为何-ai-需要记忆)
-- [§3 关键概念：四大操作](#§3-关键概念四大操作)
-- [§4 技术架构：双轨搜索系统](#§4-技术架构双轨搜索系统)
-- [§5 认知科学原理](#§5-认知科学原理)
-- [§6 与 AI Agent 集成](#§6-与-ai-agent-集成)
-- [§7 部署方案](#§7-部署方案)
-- [§8 案例研究](#§8-案例研究)
-- [§9 研究论文](#§9-研究论文)
-- [§10 CLI 工具](#§10-cli-工具)
+- [1 项目定位](#1-项目定位)
+- [2 背景与动机：为何 AI 需要记忆](#2-背景与动机为何-ai-需要记忆)
+- [3 关键概念：四大操作](#3-关键概念四大操作)
+- [4 技术架构：双轨搜索系统](#4-技术架构双轨搜索系统)
+- [5 认知科学原理](#5-认知科学原理)
+- [6 与 AI Agent 集成](#6-与-ai-agent-集成)
+- [7 部署方案](#7-部署方案)
+- [8 案例研究](#8-案例研究)
+- [9 研究论文](#9-研究论文)
+- [10 CLI 工具](#10-cli-工具)
 - [自测题](#自测题)
 - [常见问题 FAQ](#常见问题-faq)
 - [进阶学习路径](#进阶学习路径)
 
 ---
 
-## §1 项目定位
+## 1 项目定位
 
 Cognee 是一个 AI Agent 记忆引擎，做四件事：**remember / recall / forget / improve**，底层用向量搜索 + 知识图谱双轨检索。本文覆盖：架构设计、四大操作详解、双轨搜索原理、部署方案、Agent 集成方式。
 
 ---
 
-## §2 背景与动机：为何 AI 需要记忆
+## 2 背景与动机：为何 AI 需要记忆
 
 ### 2.1 当前 LLM 的局限性
 
@@ -64,14 +64,14 @@ Cognee 是一个 AI Agent 记忆引擎，做四件事：**remember / recall / fo
 
 ```
 工作记忆 ────→ 短期记忆 ────→ 长期记忆
- (当前) (今日) (永久)
- │ │ │
- ▼ ▼ ▼
- 即时处理 重要信息 知识图谱
- 快速遗忘 选择性保留 语义关联
+ (当前)       (今日)       (永久)
+   │            │            │
+   ▼            ▼            ▼
+ 即时处理      重要信息      知识图谱
+ 快速遗忘     选择性保留    语义关联
 ```
 
-**Cognee 的设计灵感**：模拟人类记忆的层次结构
+Cognee 借鉴了人类记忆的层次结构。
 
 ### 2.3 Cognee 的定位
 
@@ -82,11 +82,11 @@ Cognee 是一个 AI Agent 记忆引擎，做四件事：**remember / recall / fo
  │
  ▼
 ┌─────────────────────────────────────────┐
-│ Cognee Knowledge Engine │
+│ Cognee Knowledge Engine                 │
 ├─────────────────────────────────────────┤
-│ 向量搜索 ──→ 语义相似性检索 │
-│ 知识图谱 ──→ 关系网络推理 │
-│ 认知科学 ──→ 记忆巩固与遗忘 │
+│ 向量搜索 ──→ 语义相似性检索             │
+│ 知识图谱 ──→ 关系网络推理               │
+│ 认知科学 ──→ 记忆巩固与遗忘             │
 └─────────────────────────────────────────┘
  │
  ▼
@@ -95,7 +95,7 @@ Cognee 是一个 AI Agent 记忆引擎，做四件事：**remember / recall / fo
 
 ---
 
-## §3 关键概念：四大操作
+## 3 关键概念：四大操作
 
 ### 3.1 remember - 记忆存储
 
@@ -104,16 +104,16 @@ import cognee
 import asyncio
 
 async def main():
- # 永久存储到知识图谱
- await cognee.remember(
- "Cognee turns documents into AI memory."
- )
- 
- # 会话级快速缓存
- await cognee.remember(
- "User prefers detailed explanations.",
- session_id="chat_1"
- )
+    # 永久存储到知识图谱
+    await cognee.remember(
+        "Cognee turns documents into AI memory."
+    )
+    
+    # 会话级快速缓存
+    await cognee.remember(
+        "User prefers detailed explanations.",
+        session_id="chat_1"
+    )
 
 asyncio.run(main())
 ```
@@ -131,12 +131,12 @@ asyncio.run(main())
 # 自动路由（智能选择最佳搜索策略）
 results = await cognee.recall("What does Cognee do?")
 for result in results:
- print(result)
+    print(result)
 
 # 指定会话优先
 results = await cognee.recall(
- "What does the user prefer?",
- session_id="chat_1" # 先查会话缓存，未命中再查图谱
+    "What does the user prefer?",
+    session_id="chat_1"  # 先查会话缓存，未命中再查图谱
 )
 ```
 
@@ -144,15 +144,15 @@ results = await cognee.recall(
 
 ```python
 async def recall(query, session_id=None):
- # 1. 如果有session_id，先查会话缓存
- if session_id:
- session_results = await search_session_cache(query, session_id)
- if session_results:
- return session_results
- 
- # 2. 自动路由到最佳搜索策略
- search_strategy = await determine_strategy(query) # 语义/关键词/混合
- return await search_knowledge_graph(query, strategy=search_strategy)
+    # 1. 如果有session_id，先查会话缓存
+    if session_id:
+        session_results = await search_session_cache(query, session_id)
+        if session_results:
+            return session_results
+    
+    # 2. 自动路由到最佳搜索策略
+    search_strategy = await determine_strategy(query)  # 语义/关键词/混合
+    return await search_knowledge_graph(query, strategy=search_strategy)
 ```
 
 ### 3.3 forget - 记忆遗忘
@@ -166,7 +166,7 @@ await cognee.forget(memory_id="memory_123")
 
 # 按条件删除
 await cognee.forget(
- predicate=lambda m: m.created_at < threshold_date
+    predicate=lambda m: m.created_at < threshold_date
 )
 ```
 
@@ -181,9 +181,9 @@ await cognee.forget(
 ```python
 # 基于反馈优化记忆
 await cognee.improve(
- memory_id="memory_456",
- feedback="This is incorrect, the correct answer is...",
- context={"correction_reason": "outdated_information"}
+    memory_id="memory_456",
+    feedback="This is incorrect, the correct answer is...",
+    context={"correction_reason": "outdated_information"}
 )
 ```
 
@@ -195,114 +195,114 @@ await cognee.improve(
 
 ---
 
-## §4 技术架构：双轨搜索系统
+## 4 技术架构：双轨搜索系统
 
 ### 4.1 向量搜索轨
 
 ```python
 class VectorSearchPipeline:
- """语义相似性搜索"""
- 
- def __init__(self, embedding_model="text-embedding-3-small"):
- self.embedder = load_embedder(embedding_model)
- self.vector_store = load_vector_store() # 支持多种后端
- 
- async def add(self, text: str, metadata: dict):
- # 1. 文本向量化
- embedding = await self.embedder.embed(text)
- 
- # 2. 存储到向量数据库
- await self.vector_store.insert(
- embedding=embedding,
- text=text,
- metadata=metadata,
- )
- 
- async def search(self, query: str, top_k: int = 5):
- # 1. 查询向量化
- query_embedding = await self.embedder.embed(query)
- 
- # 2. 相似性搜索
- results = await self.vector_store.search(
- embedding=query_embedding,
- top_k=top_k,
- )
- 
- return results
+    """语义相似性搜索"""
+    
+    def __init__(self, embedding_model="text-embedding-3-small"):
+        self.embedder = load_embedder(embedding_model)
+        self.vector_store = load_vector_store()  # 支持多种后端
+    
+    async def add(self, text: str, metadata: dict):
+        # 1. 文本向量化
+        embedding = await self.embedder.embed(text)
+        
+        # 2. 存储到向量数据库
+        await self.vector_store.insert(
+            embedding=embedding,
+            text=text,
+            metadata=metadata,
+        )
+    
+    async def search(self, query: str, top_k: int = 5):
+        # 1. 查询向量化
+        query_embedding = await self.embedder.embed(query)
+        
+        # 2. 相似性搜索
+        results = await self.vector_store.search(
+            embedding=query_embedding,
+            top_k=top_k,
+        )
+        
+        return results
 ```
 
 ### 4.2 知识图谱轨
 
 ```python
 class KnowledgeGraphPipeline:
- """关系网络搜索"""
- 
- def __init__(self, graph_db):
- self.graph = graph_db # 支持Neo4j/NetworkX等
- 
- async def add(self, text: str, metadata: dict):
- # 1. 实体抽取
- entities = await extract_entities(text)
- 
- # 2. 关系抽取
- relations = await extract_relations(entities)
- 
- # 3. 存入图数据库
- for entity in entities:
- await self.graph.upsert_node(entity)
- 
- for relation in relations:
- await self.graph.upsert_edge(relation)
- 
- async def search(self, query: str, top_k: int = 5):
- # 1. 查询解析
- query_entities = await extract_entities(query)
- 
- # 2. 图遍历
- subgraph = await self.graph.traverse(
- start_nodes=query_entities,
- depth=3,
- )
- 
- # 3. 返回相关节点
- return subgraph.nodes[:top_k]
+    """关系网络搜索"""
+    
+    def __init__(self, graph_db):
+        self.graph = graph_db  # 支持Neo4j/NetworkX等
+    
+    async def add(self, text: str, metadata: dict):
+        # 1. 实体抽取
+        entities = await extract_entities(text)
+        
+        # 2. 关系抽取
+        relations = await extract_relations(entities)
+        
+        # 3. 存入图数据库
+        for entity in entities:
+            await self.graph.upsert_node(entity)
+        
+        for relation in relations:
+            await self.graph.upsert_edge(relation)
+    
+    async def search(self, query: str, top_k: int = 5):
+        # 1. 查询解析
+        query_entities = await extract_entities(query)
+        
+        # 2. 图遍历
+        subgraph = await self.graph.traverse(
+            start_nodes=query_entities,
+            depth=3,
+        )
+        
+        # 3. 返回相关节点
+        return subgraph.nodes[:top_k]
 ```
 
 ### 4.3 双轨融合
 
 ```python
 class HybridSearch:
- """向量搜索 + 知识图谱融合"""
- 
- async def search(self, query: str, top_k: int = 5):
- # 并行执行两种搜索
- vector_results, graph_results = await asyncio.gather(
- self.vector_search.search(query, top_k * 2),
- self.knowledge_graph.search(query, top_k * 2),
- )
- 
- # RRF融合算法
- fused = self.rrf_fusion(
- results_list=[vector_results, graph_results],
- k=60, # RRF参数
- )
- 
- return fused[:top_k]
- 
- def rrf_fusion(self, results_list, k=60):
- """Reciprocal Rank Fusion"""
- scores = defaultdict(float)
- 
- for results in results_list:
- for rank, item in enumerate(results):
- scores[item.id] += 1 / (k + rank + 1)
- 
- return sorted(scores.items(), key=lambda x: -x[1])
+    """向量搜索 + 知识图谱融合"""
+    
+    async def search(self, query: str, top_k: int = 5):
+        # 并行执行两种搜索
+        vector_results, graph_results = await asyncio.gather(
+            self.vector_search.search(query, top_k * 2),
+            self.knowledge_graph.search(query, top_k * 2),
+        )
+        
+        # RRF融合算法
+        fused = self.rrf_fusion(
+            results_list=[vector_results, graph_results],
+            k=60,  # RRF参数
+        )
+        
+        return fused[:top_k]
+    
+    def rrf_fusion(self, results_list, k=60):
+        """Reciprocal Rank Fusion"""
+        scores = defaultdict(float)
+        
+        for results in results_list:
+            for rank, item in enumerate(results):
+                scores[item.id] += 1 / (k + rank + 1)
+        
+        return sorted(scores.items(), key=lambda x: -x[1])
 ```
 
 ---
 
-## §5 认知科学原理
+## 5 认知科学原理
 
 ### 5.1 记忆巩固模型
 
@@ -310,9 +310,9 @@ Cognee 借鉴了认知科学的记忆巩固理论：
 
 ```
 编码 ───→ 巩固 ───→ 提取
- │ │ │
- ▼ ▼ ▼
-输入处理 睡眠期整合 线索触发
+  │         │         │
+  ▼         ▼         ▼
+输入处理   睡眠期整合  线索触发
 ```
 
 **Cognee 的实现**：
@@ -324,52 +324,52 @@ Cognee 借鉴了认知科学的记忆巩固理论：
 
 ```python
 class MemoryImportanceScorer:
- """基于认知科学的重要性评估"""
- 
- async def score(self, memory: Memory) -> float:
- factors = []
- 
- # 新近性（Recency）
- factors.append(self.recency_factor(memory))
- 
- # 情感强度（Emotional Intensity）
- factors.append(self.emotional_factor(memory))
- 
- # 使用频率（Usage Frequency）
- factors.append(self.frequency_factor(memory))
- 
- # 关联数量（Association Count）
- factors.append(self.association_factor(memory))
- 
- # 加权平均
- return sum(f * w for f, w in zip(factors, WEIGHTS))
+    """基于认知科学的重要性评估"""
+    
+    async def score(self, memory: Memory) -> float:
+        factors = []
+        
+        # 新近性（Recency）
+        factors.append(self.recency_factor(memory))
+        
+        # 情感强度（Emotional Intensity）
+        factors.append(self.emotional_factor(memory))
+        
+        # 使用频率（Usage Frequency）
+        factors.append(self.frequency_factor(memory))
+        
+        # 关联数量（Association Count）
+        factors.append(self.association_factor(memory))
+        
+        # 加权平均
+        return sum(f * w for f, w in zip(factors, WEIGHTS))
 ```
 
 ### 5.3 主动遗忘机制
 
 ```python
 class CognitiveForgetting:
- """模拟人类主动遗忘"""
- 
- # 基于重要性阈值的遗忘
- MINIMUM_IMPORTANCE = 0.3
- 
- # 基于时间的衰减
- HALF_LIFE_DAYS = 30
- 
- async def should_forget(self, memory: Memory) -> bool:
- if memory.importance < self.MINIMUM_IMPORTANCE:
- return True
- 
- age = datetime.now() - memory.created_at
- decay = 0.5 ** (age.days / self.HALF_LIFE_DAYS)
- 
- return memory.importance * decay < self.MINIMUM_IMPORTANCE
+    """模拟人类主动遗忘"""
+    
+    # 基于重要性阈值的遗忘
+    MINIMUM_IMPORTANCE = 0.3
+    
+    # 基于时间的衰减
+    HALF_LIFE_DAYS = 30
+    
+    async def should_forget(self, memory: Memory) -> bool:
+        if memory.importance < self.MINIMUM_IMPORTANCE:
+            return True
+        
+        age = datetime.now() - memory.created_at
+        decay = 0.5 ** (age.days / self.HALF_LIFE_DAYS)
+        
+        return memory.importance * decay < self.MINIMUM_IMPORTANCE
 ```
 
 ---
 
-## §6 与 AI Agent 集成
+## 6 与 AI Agent 集成
 
 ### 6.1 OpenClaw 插件
 
@@ -381,13 +381,13 @@ npm install @cognee/cognee-openclaw
 ```javascript
 // openclaw配置
 {
- "plugins": {
- "cognee": {
- "provider": "local", // 或 "cloud"
- "cloudUrl": "https://your-instance.cognee.ai",
- "apiKey": "ck_..."
- }
- }
+    "plugins": {
+        "cognee": {
+            "provider": "local",  // 或 "cloud"
+            "cloudUrl": "https://your-instance.cognee.ai",
+            "apiKey": "ck_..."
+        }
+    }
 }
 ```
 
@@ -419,17 +419,17 @@ claude --plugin-dir ./cognee-integrations/integrations/claude-code
 ```yaml
 # ~/.hermes/config.yaml
 memory:
- provider: cognee
+    provider: cognee
 ```
 
 ```bash
 export LLM_API_KEY="your-openai-key"
-hermes # 会话感知+知识图谱持久化自动开启
+hermes  # 会话感知+知识图谱持久化自动开启
 ```
 
 ---
 
-## §7 部署方案
+## 7 部署方案
 
 ### 7.1 部署选项对比
 
@@ -470,22 +470,22 @@ CMD ["cognee-cli", "-ui"]
 # 使用docker-compose
 version: '3.8'
 services:
- cognee:
- build: .
- ports:
- - "8000:8000"
- environment:
- - LLM_API_KEY=${LLM_API_KEY}
- volumes:
- - cognee_data:/data
+    cognee:
+        build: .
+        ports:
+            - "8000:8000"
+        environment:
+            - LLM_API_KEY=${LLM_API_KEY}
+        volumes:
+            - cognee_data:/data
 
 volumes:
- cognee_data:
+    cognee_data:
 ```
 
 ---
 
-## §8 案例研究
+## 8 案例研究
 
 ### 8.1 案例 1：客服 Agent 记忆
 
@@ -494,29 +494,29 @@ volumes:
 场景：客服Agent记住用户历史交互
 """
 async def customer_support_workflow():
- # 用户发起咨询
- user_message = "My invoice looks wrong"
- 
- # 1. 召回相关记忆（历史交互、产品问题）
- relevant_memories = await cognee.recall(
- f"Customer invoice issues and resolutions for {user_id}"
- )
- 
- # 2. 构建上下文
- context = {
- "current_issue": user_message,
- "history": relevant_memories,
- "product": get_product_info(user_id),
- }
- 
- # 3. Agent生成回复
- response = await agent.generate(context)
- 
- # 4. 记住这次交互
- await cognee.remember(
- f"Customer {user_id} asked about: {user_message}, Response: {response}",
- session_id=user_id,
- )
+    # 用户发起咨询
+    user_message = "My invoice looks wrong"
+    
+    # 1. 召回相关记忆（历史交互、产品问题）
+    relevant_memories = await cognee.recall(
+        f"Customer invoice issues and resolutions for {user_id}"
+    )
+    
+    # 2. 构建上下文
+    context = {
+        "current_issue": user_message,
+        "history": relevant_memories,
+        "product": get_product_info(user_id),
+    }
+    
+    # 3. Agent生成回复
+    response = await agent.generate(context)
+    
+    # 4. 记住这次交互
+    await cognee.remember(
+        f"Customer {user_id} asked about: {user_message}, Response: {response}",
+        session_id=user_id,
+    )
 ```
 
 **效果**：Agent 能够记住用户历史问题，避免重复询问。
@@ -528,44 +528,44 @@ async def customer_support_workflow():
 场景：学习专家的SQL查询模式
 """
 async def knowledge_distillation_workflow():
- # 1. 提取专家查询
- expert_queries = extract_expert_queries(expert_id)
- 
- # 2. 记忆专家模式
- for query in expert_queries:
- await cognee.remember(
- f"Expert {expert_id} uses pattern: {query.pattern}",
- metadata={"schema": query.schema, "success_rate": query.success_rate}
- )
- 
- # 3. 新手查询时检索相似模式
- novice_query = "How to calculate customer retention?"
- similar_patterns = await cognee.recall(
- f"SQL patterns for: {novice_query}",
- filter_fn=lambda m: m.metadata.get("schema") == target_schema
- )
- 
- # 4. 适配到当前上下文
- adapted_pattern = adapt_pattern(similar_patterns[0], current_schema)
+    # 1. 提取专家查询
+    expert_queries = extract_expert_queries(expert_id)
+    
+    # 2. 记忆专家模式
+    for query in expert_queries:
+        await cognee.remember(
+            f"Expert {expert_id} uses pattern: {query.pattern}",
+            metadata={"schema": query.schema, "success_rate": query.success_rate}
+        )
+    
+    # 3. 新手查询时检索相似模式
+    novice_query = "How to calculate customer retention?"
+    similar_patterns = await cognee.recall(
+        f"SQL patterns for: {novice_query}",
+        filter_fn=lambda m: m.metadata.get("schema") == target_schema
+    )
+    
+    # 4. 适配到当前上下文
+    adapted_pattern = adapt_pattern(similar_patterns[0], current_schema)
 ```
 
 **效果**：新手分析师能复用专家级查询逻辑，性能接近专家水平。
 
 ---
 
-## §9 研究论文
+## 9 研究论文
 
-Cognee 团队发表了重要的研究论文：
+Cognee 团队发表的研究论文：
 
 ```bibtex
 @article{markovic2025optimizinginterfaceknowledgegraphs,
- title={Optimizing the Interface Between Knowledge Graphs and LLMs for Complex Reasoning},
- author={Vasilije Markovic and Lazar Obradovic and Laszlo Hajdu and Jovan Pavlovic},
- year={2025},
- eprint={2505.24478},
- archivePrefix={arXiv},
- primaryClass={cs.AI},
- url={https://arxiv.org/abs/2505.24478},
+    title={Optimizing the Interface Between Knowledge Graphs and LLMs for Complex Reasoning},
+    author={Vasilije Markovic and Lazar Obradovic and Laszlo Hajdu and Jovan Pavlovic},
+    year={2025},
+    eprint={2505.24478},
+    archivePrefix={arXiv},
+    primaryClass={cs.AI},
+    url={https://arxiv.org/abs/2505.24478},
 }
 ```
 
@@ -576,7 +576,7 @@ Cognee 团队发表了重要的研究论文：
 
 ---
 
-## §10 CLI 工具
+## 10 CLI 工具
 
 ### 10.1 基本命令
 
@@ -602,32 +602,32 @@ import asyncio
 import cognee
 
 async def full_example():
- # 配置
- os.environ["LLM_API_KEY"] = "your-key"
- 
- # 1. 存储记忆
- await cognee.remember(
- "Alice works in the engineering department."
- )
- await cognee.remember(
- "Alice prefers detailed technical explanations.",
- session_id="alice_session"
- )
- 
- # 2. 召回记忆
- results = await cognee.recall(
- "Who is Alice and what does she prefer?"
- )
- print(f"Found {len(results)} relevant memories")
- 
- # 3. 优化记忆
- await cognee.improve(
- memory_id=results[0].id,
- feedback="Alice actually prefers concise summaries."
- )
- 
- # 4. 遗忘
- await cognee.forget(dataset="main_dataset")
+    # 配置
+    os.environ["LLM_API_KEY"] = "your-key"
+    
+    # 1. 存储记忆
+    await cognee.remember(
+        "Alice works in the engineering department."
+    )
+    await cognee.remember(
+        "Alice prefers detailed technical explanations.",
+        session_id="alice_session"
+    )
+    
+    # 2. 召回记忆
+    results = await cognee.recall(
+        "Who is Alice and what does she prefer?"
+    )
+    print(f"Found {len(results)} relevant memories")
+    
+    # 3. 优化记忆
+    await cognee.improve(
+        memory_id=results[0].id,
+        feedback="Alice actually prefers concise summaries."
+    )
+    
+    # 4. 遗忘
+    await cognee.forget(dataset="main_dataset")
 
 asyncio.run(full_example())
 ```
@@ -712,10 +712,10 @@ asyncio.run(full_example())
 
 ---
 
-## §11 FAQ
+## 11 FAQ
 
 **Q1：Cognee 和其他 RAG 框架有什么区别？**
-A：Cognee 不仅做向量检索，还结合知识图谱实现关系推理，并且内置记忆管理（remember/recall/forget/improve）而不仅仅是搜索。
+A：Cognee 在向量检索的基础上叠加了知识图谱关系推理，并内置了 remember/recall/forget/improve 记忆管理，不只是一个搜索工具。
 
 **Q2：支持哪些向量数据库后端？**
 A：支持 Qdrant、Milvus、Pinecone、Chroma 等主流向量数据库。
@@ -736,21 +736,21 @@ A：是的，支持文档、音频、视频等多种格式的 ingestion。
 当你掌握 Cognee 的基础使用后，可以按以下路径继续深入：
 
 ### 初级阶段（已完成基础部署）
-- ✅ 跑通 remember / recall / forget / improve 完整流程
-- ✅ 理解向量搜索和知识图谱的基本原理
-- ✅ 能用 CLI 工具或 Python API 完成基本操作
+- 跑通 remember / recall / forget / improve 完整流程
+- 理解向量搜索和知识图谱的基本原理
+- 能用 CLI 工具或 Python API 完成基本操作
 
 ### 中级阶段（生产就绪）
-- 📚 **自定义嵌入模型**：替换默认的 `text-embedding-3-small`
-- 📚 **优化知识图谱**：调整实体抽取和关系抽取的 prompt
-- 📚 **接入外部系统**：与 LangChain / LlamaIndex 集成
-- 📚 **性能优化**：调整向量数据库配置、优化搜索策略
+- **自定义嵌入模型**：替换默认的 `text-embedding-3-small`
+- **优化知识图谱**：调整实体抽取和关系抽取的 prompt
+- **接入外部系统**：与 LangChain / LlamaIndex 集成
+- **性能优化**：调整向量数据库配置、优化搜索策略
 
 ### 高级阶段（贡献者/架构师）
-- 🚀 **阅读源码**：理解双轨搜索融合算法（RRF）
-- 🚀 **扩展 Cognee**：实现自定义记忆重要性评估函数
-- 🚀 **研究论文**：阅读团队发表的论文（arXiv:2505.24478）
-- 🚀 **贡献社区**：在 GitHub 上提交 PR 或 Issue
+- **阅读源码**：理解双轨搜索融合算法（RRF）
+- **扩展 Cognee**：实现自定义记忆重要性评估函数
+- **研究论文**：阅读团队发表的论文（arXiv:2505.24478）
+- **贡献社区**：在 GitHub 上提交 PR 或 Issue
 
 ### 相关深入学习资源
 
@@ -771,4 +771,3 @@ A：是的，支持文档、音频、视频等多种格式的 ingestion。
 - **研究论文**：https://arxiv.org/abs/2505.24478
 - **Discord 社区**：https://discord.gg/NQPKmU5CCg
 - **OpenClaw 插件**：https://www.npmjs.com/package/@cognee/cognee-openclaw
-

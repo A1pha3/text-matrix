@@ -12,7 +12,7 @@ tags: ["JavaScript", "Bun", "Rust", "Node.js", "TypeScript"]
 
 Bun 真正改变 JavaScript 工具链的点，是把运行时、打包器、测试运行器、包管理器四件事压进同一个二进制。这套合并带来的工程含义，比「启动快 4 倍」更值得拆开看：它改变了 JS 工具链的依赖管理方式——以前一个项目要 `node` + `esbuild` + `jest` + `npm` 四个独立工具，升级节奏对不齐、报错栈跨工具、锁版本要分别管，现在只有一个版本号要追。代价是 Node.js 兼容性不是 100%，部分原生模块仍要回退到 Node。
 
-按「为什么这样选 → 四合一怎么落地 → 一次执行怎么流过去 → 什么时候该用什么时候该等」的顺序展开。版本基线 v1.3.14（2026-05-13），90,566 Stars，已越过实验阶段，进入生产可用区间，但生产可用不等于零风险——文末给出具体的迁移边界。
+本文从引擎选型、四合一架构、执行路径、迁移判断四个层面展开。版本基线 v1.3.14（2026-05-13），90,566 Stars，已越过实验阶段，进入生产可用区间，但生产可用不等于零风险——文末给出具体的迁移边界。
 
 > **目标读者**：JS / TS 后端与全栈工程师；评估工具链升级的技术负责人
 > **难度**：⭐⭐（中级；假设熟悉 Node.js 与 npm 工作流）
@@ -58,7 +58,7 @@ Bun 真正改变 JavaScript 工具链的点，是把运行时、打包器、测�
 
 ## 总览：Bun 把什么压进了一个二进制
 
-Bun 官方对自己的定义是「all-in-one toolkit for JavaScript and TypeScript apps」，拆开是四个职责。Node.js 生态里这四件事通常由四个独立工具承担，Bun 把它们合并到一个二进制里：
+Bun 对自己的定义是「all-in-one toolkit for JavaScript and TypeScript apps」，拆开是四个职责。Node.js 生态里这四件事通常由四个独立工具承担，Bun 把它们合并到一个二进制里：
 
 | 职责 | 替代对象 | 关键差异 |
 |------|----------|----------|
@@ -83,13 +83,13 @@ Bun 官方对自己的定义是「all-in-one toolkit for JavaScript and TypeScri
 | 测试运行器 | 需单独安装 | 内置 | 内置 |
 | Node.js 兼容 | 原生 | 通过 `npm:` 协议兼容 | 通过 `node:` 模块兼容层 |
 
-三者真正的分歧在「如何对待 npm 生态」。Node.js 是 npm 生态本身；Deno 早期拒绝 npm，后来通过 `npm:` 协议兼容；Bun 一开始就做 npm registry 兼容，把 `package.json` 和 `node_modules` 当成事实标准保留下来。这个选择决定了 Bun 能直接跑大部分现有 Node.js 项目，而 Deno 的迁移成本更高——Deno 的迁移要改 import 路径，Bun 的迁移只需要换运行时。
+三者真正的分歧在于如何对待 npm 生态。Node.js 就是 npm 生态本身；Deno 早期拒绝 npm，后来通过 `npm:` 协议兼容；Bun 一开始就做 npm registry 兼容，把 `package.json` 和 `node_modules` 当成事实标准保留下来。这个选择决定了 Bun 能直接跑大部分现有 Node.js 项目，而 Deno 的迁移成本更高——Deno 的迁移要改 import 路径，Bun 的迁移只需要换运行时。
 
 ---
 
 ## 为什么是 JavaScriptCore，以及代价是什么
 
-Bun 与 Deno 最大的技术分歧是引擎选型。Deno 选 V8，是因为 V8 最成熟、性能上限最高，且 Deno 团队有 V8 经验。Bun 选 JavaScriptCore（WebKit 的 JS 引擎），盯着的是两个具体目标：冷启动和内存占用。
+Bun 与 Deno 最大的技术分歧是引擎选型。Deno 选 V8，原因是 V8 最成熟、性能上限最高，且 Deno 团队有 V8 经验。Bun 选 JavaScriptCore（WebKit 的 JS 引擎），目标有两个：冷启动和内存占用。
 
 **冷启动开销低**。JavaScriptCore 的初始化路径比 V8 短。V8 启动时要构建完整的 isolate、初始化 JIT 编译器、加载内置库，这套开销在长期运行的服务端进程里被摊薄，但在 CLI 工具、Serverless 函数、脚本这类「跑一次就退出」的场景里占比很高。Bun 的目标场景里冷启动是常态，JSC 的这个特性刚好对上——Serverless 函数的冷启动延迟直接进用户感知的 P99，CLI 工具的启动延迟则卡在开发者每一次保存-运行的循环里。
 
@@ -131,7 +131,7 @@ export default { port: 3000, fetch: app.fetch }
 
 ---
 
-## 四个核心能力的工程用法
+## 四个场景的工程用法
 
 ### 运行时：直接跑 TypeScript 和 JSX
 
@@ -150,11 +150,11 @@ bun
 
 内置 Web API 覆盖 `fetch`、`WebSocket`、`Streams`、`Crypto`，以及 Bun 特有的 `Bun.sql`、`Bun.redis`、`Bun.serve`、`Bun.file`。`node:` 模块兼容层覆盖了 `fs`、`path`、`process`、`Buffer`、`events` 等常用模块，但仍有少量缺失——遇到不兼容的包，先查兼容性列表，再决定是 polyfill 还是回退 Node。
 
-一个容易踩的点：Bun 的 transpiler 不做类型检查。`bun run` 会愉快地跑过有类型错误的代码，只要语法能转换。这是有意的工程取舍——类型检查是静态分析，transpile 是语法转换，两件事分开做能让运行时路径更短。代价是类型错误不会在运行时暴露，生产构建前要单独跑 `tsc --noEmit` 或在 CI 里加类型检查步骤。一个可操作的配置是在 `package.json` 的 `prebuild` 脚本里挂 `tsc --noEmit`，让构建前自动检查一次。
+一个容易踩的坑：Bun 的 transpiler 不做类型检查。`bun run` 会愉快地跑过有类型错误的代码，只要语法能转换。这是有意的工程取舍——类型检查是静态分析，transpile 是语法转换，两件事分开做能让运行时路径更短。代价是类型错误不会在运行时暴露，生产构建前要单独跑 `tsc --noEmit` 或在 CI 里加类型检查步骤。一个可操作的配置是在 `package.json` 的 `prebuild` 脚本里挂 `tsc --noEmit`，让构建前自动检查一次。
 
 ### 打包器：Bun.build 与单文件可执行文件
 
-Bun 的打包速度对标 esbuild（官标 1.75x），支持插件系统、代码分割、Tree-shaking、Minifier。配置走 `Bun.build()` API（官方稳定 API），写在 `build.ts` 里用 `bun run` 执行：
+Bun 的打包速度对标 esbuild（官方标称 1.75x），支持插件系统、代码分割、Tree-shaking、Minifier。配置走 `Bun.build()` API（官方稳定 API），写在 `build.ts` 里用 `bun run` 执行：
 
 ```typescript
 // build.ts —— 用 Bun.build API 配置打包
@@ -187,7 +187,7 @@ bun build --entrypoints ./src/index.tsx --outdir ./dist --minify
 
 > 注意：Bun 官方目前主推 `bunfig.toml` 配置运行时行为、`Bun.build()` API 配置打包。社区早期流传的 `bun.config.ts` + `@bun/runtime` 的 `defineConfig` 写法不是官方稳定 API，不要照搬。
 
-Bun.build 最有差异性的能力是 `--compile`，把 JS 代码和 Bun 运行时一起打成一个独立的可执行文件：
+Bun.build 最具差异化的能力是 `--compile`，把 JS 代码和 Bun 运行时一起打成一个独立的可执行文件：
 
 ```bash
 bun build --compile --entrypoints ./src/cli.ts --outfile mycli
@@ -241,13 +241,13 @@ Bun 的包管理器兼容 npm registry，可以直接读 `package.json` 和 `pac
 
 一个迁移注意点：`bun.lockb` 是二进制格式，不能像 `package-lock.json` 那样直接读 diff。要查依赖变化用 `bun install --dry-run` 或 `bun pm why <pkg>`。如果团队里有人用 npm 有人用 Bun，锁文件冲突会是个问题——建议统一工具链。
 
-什么时候选 Bun install，什么时候保留 pnpm？两者都用全局缓存 + 硬链接，性能差异不大，决策点在「团队是否接受二进制锁文件」和「是否需要 workspace 的高级特性」。pnpm 的 `pnpm-workspace.yaml` 在 monorepo 场景里更成熟，支持 `catalogs`、`overrides` 这类高级依赖管理特性；Bun 的 workspace 支持覆盖了基本场景，但复杂依赖拓扑下的边界行为还在收敛。如果 monorepo 里有跨包依赖覆盖、版本 catalog 这类需求，pnpm 仍是更稳的选择；如果是单包或简单 monorepo，Bun install 的速度收益更直接。
+什么时候选 Bun install，什么时候保留 pnpm？两者都用全局缓存 + 硬链接，性能差异不大，决策点在「团队是否接受二进制锁文件」和「是否需要 workspace 的高级特性」。pnpm 的 `pnpm-workspace.yaml` 在 monorepo 场景里更成熟，支持 `catalogs`、`overrides` 这类高级依赖管理特性；Bun 的 workspace 支持覆盖了基本场景，但复杂依赖拓扑下的边界行为还在收敛。如果 monorepo 里有跨包依赖覆盖、版本 catalog 这类需求，pnpm 仍是更稳的选择；如果是单包或简单 monorepo，Bun install 的安装速度优势更明显。
 
 ---
 
 ## v1.3.14 改了什么（2026-05-13）
 
-v1.3.14 是 2026 年 5 月中旬的稳定版本，11 位贡献者参与。这个版本的看点在「兼容性收尾」——TypeScript 6 对齐和 SQLite 性能优化都是把已有能力做稳，没有开新坑。对评估迁移的团队来说，这种版本比大版本更值得关注：兼容性收敛意味着之前因为边缘语法或性能问题卡住的场景可能解封。主要更新：
+v1.3.14 是 2026 年 5 月中旬的稳定版本，11 位贡献者参与。这个版本的方向是「兼容性收尾」——TypeScript 6 对齐和 SQLite 性能优化都是把已有能力做稳，没有开新坑。对评估迁移的团队来说，这种版本比大版本更能说明问题：兼容性收敛意味着之前因为边缘语法或性能问题卡住的场景可能解封。主要更新：
 
 - **TypeScript 6 支持**：`--tsconfig` 全面对齐 TypeScript 6 的新语法特性。TypeScript 6 本身还在迭代，部分边缘语法可能仍有兼容问题，遇到问题查 [Bun 的 TypeScript 兼容性文档](https://bun.com/docs/runtime/typescript)。如果项目刚升 TS 6，这个版本是第一个能稳定跑的 Bun 版本。
 - **SQLite 性能优化**：`bun:sqlite` 的查询性能进一步提升，主要在 prepared statement 复用路径上。对用 `Bun.sql` 做 embedded 数据库的场景（本地缓存、单机服务）收益直接；对走外部 Postgres / MySQL 的服务无影响。
@@ -273,7 +273,7 @@ Bun 官方和社区的基准测试数据（因环境而异，仅供参考）：
 
 - **HTTP Hello World** 测的是「最小请求的吞吐上限」，反映的是 HTTP 栈和事件循环的基线开销。真实业务请求带数据库、缓存、序列化，瓶颈不在 HTTP 栈，这个倍数会显著收窄。
 - **`npm install` cold** 测的是「冷缓存下的安装耗时」，反映的是下载、解压、链接的全流程。Bun 快的原因是 Zig 实现没有 Node.js 进程启动开销 + 全局缓存命中率高。热缓存下差距会缩小。
-- **TypeScript 编译 cold** 测的是「启动到首字节输出」，反映的是 transpiler 启动开销。Bun 不做类型检查，`tsc` 做——这本质上是两个不同的工作，倍数反映的是「跳过类型检查能省多少时间」，而不是「Bun 的 transpiler 比 tsc 快 10 倍」。
+- **TypeScript 编译 cold** 测的是「启动到首字节输出」，反映的是 transpiler 启动开销。Bun 不做类型检查，`tsc` 做——这是两个不同的工作，倍数反映的是「跳过类型检查能省多少时间」，而不是「Bun 的 transpiler 比 tsc 快 10 倍」。
 - **`bun test` vs Jest** 测的是「测试发现 + 执行 + 报告」全流程。Bun 快的原因是测试运行器和运行时共用进程，没有 Jest 的 worker 进程启动开销。
 
 真实项目里的体感差距通常比这些数字小。但「`npm install` 从 15 秒到 2 秒」这种在 CI 上每天跑几十次的操作，体感差距是实打实的。
@@ -299,7 +299,7 @@ Bun 官方和社区的基准测试数据（因环境而异，仅供参考）：
 - **Windows arm64 生产环境**：Bun 在这块的稳定版支持相对较新，生产环境建议再观察一两个版本。
 - **强依赖 Jest 生态**：`jest-styled-components`、`jest-image-snapshot` 这类深度集成 Jest 的包，迁移到 `bun:test` 可能要改 mock 注入方式。
 
-两个列表看似在列场景，背后其实只有一个判断变量：**项目对 Node.js 生态的耦合度有多深**。耦合度低（新项目、标准 API、少量原生依赖）→ Bun 收益直接；耦合度高（企业中间件、native addon、深度 Jest 集成）→ 迁移成本会吃掉速度收益。中间地带的项目，按下面的排查指引做一次试运行，比看文档判断更准。
+两个列表列了多个场景，但判断变量只有一个：**项目对 Node.js 生态的耦合度有多深**。耦合度低（新项目、标准 API、少量原生依赖）→ Bun 收益直接；耦合度高（企业中间件、native addon、深度 Jest 集成）→ 迁移成本会吃掉速度收益。中间地带的项目，按下面的排查指引做一次试运行，比看文档判断更准。
 
 ### 迁移排查指引
 
@@ -342,9 +342,9 @@ bun upgrade
 
 **`bun.lockb` 为什么是二进制？** 为了解析速度。二进制格式读取比 JSON 快，但不可读。查依赖变化用 `bun pm why <pkg>` 或 `bun install --dry-run`。如果团队对锁文件可读性有硬性要求（比如要在 code review 里看依赖 diff），可以配 `bun install --save-yaml-lockfile` 生成 `bun.lock` 的 YAML 版本，可读性接近 `package-lock.json`。
 
-**Bun 和 Deno 该选哪个？** 看你对 npm 生态的依赖程度。重度依赖现有 npm 包选 Bun（兼容性更好）；从零开始、想要更干净的权限模型和 TypeScript 优先体验选 Deno。两者都在向对方靠拢——Deno 加了 `npm:` 兼容，Bun 在加强权限模型。一个更具体的判断：如果项目要跑在 Cloudflare Workers / Deno Deploy 这类边缘运行时上，Deno 的权限模型和部署体验更顺；如果要跑在传统 VPS / 容器 / Serverless 函数上，Bun 的 Node.js 兼容性让迁移路径更短。
+**Bun 和 Deno 该选哪个？** 看你对 npm 生态的依赖程度。重度依赖现有 npm 包选 Bun（兼容性更好）；从零开始、想要更干净的权限模型和 TypeScript 优先体验选 Deno。两者都在向对方靠拢——Deno 加了 `npm:` 兼容，Bun 在加强权限模型。具体判断：如果项目要跑在 Cloudflare Workers / Deno Deploy 这类边缘运行时上，Deno 的权限模型和部署体验更顺；如果要跑在传统 VPS / 容器 / Serverless 函数上，Bun 的 Node.js 兼容性让迁移路径更短。
 
-**Bun 生产环境稳定吗？** v1.3.x 已经被多家公司用于生产（包括 Vercel 部分内部工具、Clerk 等），但稳定不等于零 bug。关键路径服务建议先灰度，观察 1-2 个版本周期再全量切换。灰度时要重点观察三个指标：长跑服务的内存增长曲线（Bun 的 GC 行为和 Node.js 不同）、HTTP 服务的错误率（特别是用了 `Bun.serve` 的流式响应）、`node:` 模块兼容层的边缘 case（某些 API 行为可能和 Node.js 有细微差异）。
+**Bun 生产环境稳定吗？** v1.3.x 已经被多家公司用于生产（包括 Vercel 部分内部工具、Clerk 等），但稳定不意味着没有 bug。关键路径服务建议先灰度，观察 1-2 个版本周期再全量切换。灰度时要重点观察三个指标：长跑服务的内存增长曲线（Bun 的 GC 行为和 Node.js 不同）、HTTP 服务的错误率（特别是用了 `Bun.serve` 的流式响应）、`node:` 模块兼容层的边缘 case（某些 API 行为可能和 Node.js 有细微差异）。
 
 ---
 
@@ -472,7 +472,7 @@ Bun 官方 benchmark 里「TypeScript 编译 cold 10x」这个数字，测的到
 
 ## 进阶路径
 
-跑通基础用法后，下面三个方向值得深入，按收益和难度排序。
+跑通基础用法后，下面三个方向可以进一步了解，按收益和难度排序。
 
 ### 方向一：Bun 插件开发
 
@@ -502,7 +502,7 @@ Bun 的打包器和运行时都支持插件系统，插件用 TypeScript 写，A
 
 ### 方向三：Zig + JavaScriptCore 交互
 
-Bun 用 Zig 直接调 JavaScriptCore 的 C API，绕过 V8 的 C++ 抽象层。这套交互模式是 Bun 性能优势的底层来源，也是 Bun 团队最核心的技术资产。适合想做 Bun 贡献或自研运行时的人。
+Bun 用 Zig 直接调 JavaScriptCore 的 C API，绕过 V8 的 C++ 抽象层。这套交互模式是 Bun 性能优势的底层来源，也是 Bun 团队的技术核心。适合想做 Bun 贡献或自研运行时的人。
 
 入门路径：
 
@@ -511,11 +511,11 @@ Bun 用 Zig 直接调 JavaScriptCore 的 C API，绕过 V8 的 C++ 抽象层。�
 3. 从 [Bun 的 good first issue](https://github.com/oven-sh/bun/labels/good%20first%20issue) 入手，挑一个涉及 bindings 的 issue
 4. 进阶：理解 Bun 的 `comptime` 用法——Bun 大量用 Zig 的编译期特性做代码生成，这是它能在编译期完成类型检查的关键
 
-这个方向门槛最高，但也是 Bun 区别于 Node.js / Deno 的根本所在。如果目标是给 Bun 提 PR 或理解「为什么 Bun 比 Node.js 快」，这是必经之路。
+这个方向门槛最高，但也是 Bun 和 Node.js / Deno 最根本的区别所在。如果目标是给 Bun 提 PR 或理解「为什么 Bun 比 Node.js 快」，这是必经之路。
 
 ### 其他方向
 
-- **Bun + Hono / Elysia**：Web 框架在 Bun 上的最佳实践，对比 Express / Fastify 的迁移路径
+- **Bun + Hono / Elysia**：Web 框架在 Bun 上的使用经验，对比 Express / Fastify 的迁移路径
 - **Bun.serve + WebSocket**：Bun 内置 WebSocket 支持，不走 `ws` 包，性能和 API 都有差异
 - **Bun.sql / Bun.redis**：Bun 内置的数据库客户端，对比 `pg` / `ioredis` 的兼容性和性能边界
 - **`bun build --compile` 的产物分析**：理解 50-90 MB 二进制里都包含什么，如何裁剪

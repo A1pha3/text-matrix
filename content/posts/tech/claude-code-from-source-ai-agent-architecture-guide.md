@@ -12,7 +12,11 @@ tags: ["Claude Code", "Anthropic", "AI Agent", "架构分析", "MCP"]
 
 Claude Code 要同时满足流式生成、工具调度、成本控制三个互相冲突的约束——这三者工程上几乎不可能同时满足，它的解法值得拆开看。
 
-素材来自一本叫 *Claude Code from Source* 的技术书籍。它并非 Anthropic 官方出品，作者是一个叫 Alejandro Balderas 的开发者，他带着 36 个 AI Agent 花了 6 个小时写成。书本身的故事值得简短交代：Claude Code 发布到 npm 时，源码地图（source maps）一起打包了进去。Balderas 读了每一个 `.js.map` 文件中的 `sourcesContent` 字段，拿到了接近 2000 个原始 TypeScript 文件，然后用 36 个 Agent 协作，把这堆代码变成了一本 494KB 的叙事化技术书籍。所有代码块都改写为伪代码，使用不同的变量名，仅用于说明架构模式。
+本文的素材来自 *Claude Code from Source*，一本从 npm source maps 逆向分析 Claude Code 完整源码架构的技术书籍，由 Alejandro Balderas 带着 36 个 AI Agent 用时 6 小时写成。下面从 18 章里挑出能直接搬进自己 Agent 项目的架构模式。
+
+本文预设读者已经写过 Agent 系统（哪怕只是一个能调用工具的 `while True` 循环），并对 TypeScript 的 AsyncGenerator、Promise.all 有基本认识。如果你完全没接触过 LLM 工具调用，建议先补一下 Function Calling 的基础概念再回来。
+
+读完本文，你应该能说清 Claude Code 六大核心抽象各自的职责和数据流向，解释 AsyncGenerator 相比 `while True` 的三个本质优势，复述 14 步工具执行管道中推测执行和并发安全分组的位置与顺序依据，判断 Fork 模式 95% 成本节省的前提条件，以及在自己的 Agent 项目中挑选合适的模式组合。
 
 | 指标 | 数值 |
 |------|------|
@@ -21,20 +25,6 @@ Claude Code 要同时满足流式生成、工具调度、成本控制三个互�
 | 参与 Agent | 36 个（6 探索 + 12 分析 + 15 写作 + 3 审核） |
 | 创作耗时 | 6 小时，从源码提取到最终修订 |
 | 产出 | 494KB 原始技术文档 → 叙事化书籍 |
-
-下面从 18 章里挑出能直接搬进自己 Agent 项目的架构模式。
-
-## 你会从这篇文章里拿到什么
-
-本文预设读者已经写过 Agent 系统（哪怕只是一个能调用工具的 `while True` 循环），并对 TypeScript 的 AsyncGenerator、Promise.all 有基本认识。如果你完全没接触过 LLM 工具调用，建议先补一下 Function Calling 的基础概念再回来。
-
-读完本文，你应该能：
-
-- 说清 Claude Code 六大核心抽象各自的职责，以及它们之间的数据流向
-- 解释 AsyncGenerator 驱动的 Agent 循环相比 `while True` 的三个本质优势
-- 复述 14 步工具执行管道中推测执行和并发安全分组的位置与顺序依据
-- 判断 Fork 模式 95% 成本节省的前提条件，以及何时该用 LLM 召回而非向量搜索
-- 在自己的 Agent 项目中挑选合适的模式组合，并知道每个模式的适用边界
 
 ## 目录
 
@@ -510,13 +500,9 @@ async function* agentLoop(): AsyncGenerator<Message> {
 
 第 17 章是性能优化的专题——从 240ms 冷启动到上下文窗口管理再到渲染管线。第 18 章是全书总结，讨论了 5 个关键的架构赌注和可迁移性。
 
-**精读路径建议**：
+根据你的关注点，精读路径可以这样选：
 
-- 只关心 Agent 主循环怎么写：精读第 5 章（`query.ts` 拆解）+ 第 6 章（工具接口），其余章节按需查阅
-- 关心多 Agent 成本控制：精读第 9 章（Fork + Prompt Cache）+ 第 3 章（粘性门闩），这两章合起来才能讲清缓存复用的前提
-- 关心长对话稳定性：精读第 5 章的四层压缩部分 + 第 11 章（陈旧记忆警告），第 11 章补充了压缩之外的另一条遗忘防线
-- 关心可扩展性和安全：精读第 12 章（技能 + 钩子）+ 第 2 章（信任边界），第 2 章解释了为什么钩子配置必须在启动时冻结
-- 关心性能工程：精读第 17 章，配合第 2 章的并行 I/O 部分一起看，能拼出完整的冷启动优化图
+只关心 Agent 主循环怎么写的，精读第 5 章（`query.ts` 拆解）和第 6 章（工具接口），其余章节按需查阅。关心多 Agent 成本控制的，精读第 9 章（Fork + Prompt Cache）和第 3 章（粘性门闩），这两章合起来才能讲清缓存复用的前提。关心长对话稳定性的，精读第 5 章的四层压缩部分和第 11 章（陈旧记忆警告），第 11 章补充了压缩之外的另一条遗忘防线。关心可扩展性和安全的，精读第 12 章（技能 + 钩子）和第 2 章（信任边界），第 2 章解释了为什么钩子配置必须在启动时冻结。关心性能工程的，精读第 17 章，配合第 2 章的并行 I/O 部分一起看，能拼出完整的冷启动优化图。
 
 ## 常见问题
 
@@ -655,20 +641,9 @@ Claude Code 的架构里，错误处理嵌在 14 步管道的第 10 步，而非
 
 ## 进阶路径
 
-**已经读完了，想进一步深入：**
+如果想自己动手实现一个 Agent 框架，可以从 AsyncGenerator 驱动的核心循环开始，逐步添加工具执行管道、内存系统、多 Agent 编排，参考 Claude Code 的 10 个架构模式，但用自己的语言重新实现。
 
-**路径 1：实现自己的 Agent 框架**
-- 从 AsyncGenerator 驱动的核心循环开始
-- 逐步添加工具执行管道、内存系统、多 Agent 编排
-- 参考 Claude Code 的 10 个架构模式，但用自己的语言重新实现
+如果已经有 Agent 系统但想优化性能，可以实现四层上下文压缩（Snip → Microcompact → Collapse → Autocompact），添加推测执行降低首字节延迟，使用 Prompt Cache 降低 API 成本。
 
-**路径 2：优化现有 Agent 系统的性能**
-- 实现四层上下文压缩（Snip → Microcompact → Collapse → Autocompact）
-- 添加推测执行，降低首字节延迟
-- 使用 Prompt Cache 降低 API 成本
-
-**路径 3：研究 Anthropic 的官方实现**
-- 克隆 `alejandrobalderas/claude-code-from-source` 仓库
-- 阅读原始源码（通过 source maps）
-- 对比本文的伪代码和实际实现，加深对架构模式的理解
+如果想深入研究 Anthropic 的官方实现，可以克隆 `alejandrobalderas/claude-code-from-source` 仓库，阅读原始源码（通过 source maps），对比本文的伪代码和实际实现。
 

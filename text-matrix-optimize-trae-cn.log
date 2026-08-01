@@ -1,5 +1,16 @@
-# text-matrix cn-doc-writer 优化记录
-# 格式：文章路径 | 优化状态 | 优化日期 | 备注
+# text-matrix 文章优化记录
+# 格式：YYYY-MM-DD | 文章名 | 状态
+# 已优化到 100 分的文章记录在此，下次不再重复检测和优化
 
-content/posts/tech/astro-framework-deep-dive.md | 100/100 | 2026-08-01 | 合并重复章节，去除 AI 味，优化自然表达
-content/posts/tech/apache-maven-build-tool-today-trending-guide.md | 100/100 | 2026-08-01 | 去除 AI 味，改进自测题格式，优化自然表达
+2026-08-01 | astro-framework-deep-dive | 已优化到 100 分
+2026-08-01 | bun-all-in-one-javascript-toolkit-guide | 已优化到 100 分
+2026-08-01 | apollo-11-ags-source-code | 已优化到 100 分
+2026-08-01 | bun-javascript-runtime-all-in-one | 已优化到 100 分
+2026-08-01 | ai-engineering-from-scratch-guide | 已优化到 100 分
+2026-08-01 | ai-agent-architecture-book-guide | 已优化到 100 分
+2026-08-01 | 2026-prompt-engineering-advanced-strategies | 已优化到 100 分
+2026-08-01 | claude-code-routines-automation | 已优化到 100 分
+2026-08-01 | agents-towards-production-ai-agents-production-guide | 已优化到 100 分
+2026-08-01 | ai-hedge-fund-multi-agent-trading | 已优化到 100 分
+2026-08-01 | browser-use-ai-browser-automation-guide | 已优化到 100 分
+2026-08-01 | claude-code-from-source-ai-agent-architecture-guide | 已优化到 100 分

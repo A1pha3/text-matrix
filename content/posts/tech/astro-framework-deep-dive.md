@@ -16,11 +16,11 @@ Astro 解决一个很具体的问题：**内容型网站为什么要把完整的
 
 Astro 把这个默认值反过来：**默认只给 HTML，不给 JS。需要交互的组件，单独声明激活策略。** 截至 2026 年 4 月，[Astro](https://github.com/withastro/astro) 在 GitHub 上累计 58,820 Stars、3,387 Forks，由 [Astro Building Tools PBC](https://astro.build/) 主导开发。
 
-读完本文你会掌握：Astro 的系统边界、静态渲染与 Islands 水合的关系、Content Collections 的内容管理方式，以及判断一个内容项目该不该用 Astro。
+读完本文你应当能回答以下问题：Astro 的系统边界在哪？静态渲染与 Islands 水合是什么关系？Content Collections 如何管理内容？一个内容项目该不该用 Astro？
 
 ## 总览：Astro 负责什么，不负责什么
 
-Astro 的职责边界可以用一张表说清楚。它不做 UI 框架的事，也不做数据库的事——它是一个**构建编排层**：
+Astro 的职责边界可以用一张表来界定。它不做 UI 框架的事，也不做数据库的事——它是一个**构建编排层**：
 
 | 职责 | Astro 负责 | 不负责 |
 |------|-----------|--------|
@@ -37,7 +37,7 @@ Astro 的职责边界可以用一张表说清楚。它不做 UI 框架的事，�
 
 ## 默认零 JS：从框架默认值到组件激活策略
 
-传统 SSR 框架（Next.js、Nuxt）能做服务端渲染，问题出在渲染之后：页面落到浏览器，框架运行时仍然要加载，组件树在客户端重新水合。这层水合开销（hydration cost）是性能瓶颈——即使页面 90% 是静态内容，也要等全部 JS 下载执行完才能交互。
+传统 SSR 框架（Next.js、Nuxt）能做服务端渲染，但渲染之后仍有一层开销：页面落到浏览器，框架运行时仍然要加载，组件树在客户端重新水合。即使页面 90% 是静态内容，也要等全部 JS 下载执行完才能交互。
 
 Astro 的解法是**渐进式水合**（progressive hydration）：每个组件显式声明自己需要哪种激活策略。
 
@@ -52,13 +52,13 @@ Astro 的解法是**渐进式水合**（progressive hydration）：每个组件�
 
 开发者能精确控制每个组件的 JS 代价。Astro 官方在多个对比案例中给出的数字是：产出网站通常比等效 Next.js 站点减少 **40-70% 的 JavaScript 体积**（来源：Astro 官方博客与 marketing 页面，属于 Astro 自家对比，非独立 benchmark）。
 
-这个数字主要反映**页面初始 JS 下载量**（不含运行时按需加载的部分），对应的是首屏加载和 TBT（Total Blocking Time）。它不直接说明运行时交互性能、首字节时间（TTFB）或服务端渲染吞吐量——这些指标受部署平台、CDN、适配器实现影响更大，和"去掉不必要的水合"属于不同的优化维度。
+这个数字主要反映**页面初始 JS 下载量**（不含运行时按需加载的部分），对应的是首屏加载和 TBT（Total Blocking Time）。它不直接说明运行时交互性能、首字节时间（TTFB）或服务端渲染吞吐量——这些指标受部署平台、CDN、适配器实现影响更大，和去掉不必要的水合属于不同的优化维度。
 
 ---
 
 ## Islands 架构详解
 
-「Islands」（孤岛）是 Astro 架构的关键隐喻。一个页面是一整片静态 HTML「海洋」，中间点缀着若干需要交互的「孤岛」。每个孤岛独立水合、互不干扰。
+「Islands」（孤岛）是理解 Astro 架构的关键。一个页面是一整片静态 HTML「海洋」，中间点缀着若干需要交互的「孤岛」。每个孤岛独立水合、互不干扰。
 
 ### 工作原理
 
@@ -109,13 +109,13 @@ Astro 选 Islands 而非 RSC，是因为目标场景不同。RSC 假设整站是
 
 ## 一个页面请求的完整路径
 
-把前面几节串起来——看一个典型博客页面的请求，从源码到浏览器经历了什么。
+把前面几节串起来，看一个典型博客页面的请求，从源码到浏览器经历了什么。
 
 这个页面有这些需求：
 
 - 文章正文（Markdown，纯静态）
 - 阅读计数器（React 组件，进视口才激活）
--「最新发布」徽章（Vue 组件，空闲时加载）
+- 「最新发布」徽章（Vue 组件，空闲时加载）
 - 评论表单（仅在客户端渲染，涉及用户输入）
 
 **构建阶段：**
@@ -124,7 +124,7 @@ Astro 选 Islands 而非 RSC，是因为目标场景不同。RSC 假设整站是
 2. `getCollection('blog')` 返回校验过的文章列表，`getEntry('blog', slug)` 取到当前文章。
 3. `.astro` 模板开始编译：静态 header、文章正文（`<Content />`）编译为纯 HTML，输出到 `dist/blog/my-post/index.html`。
 4. 阅读计数器标记了 `client:visible` → Astro 编译器为这个 React 组件单独打包一份 JS bundle，注入视口检测逻辑。
-5.「最新发布」徽章标记了 `client:idle` → 单独打包，注入 `requestIdleCallback` 监听。
+5. 「最新发布」徽章标记了 `client:idle` → 单独打包，注入 `requestIdleCallback` 监听。
 6. 评论表单标记了 `client:only="react"` → 不做 SSR，打包完整 React 运行时 + 组件代码。
 
 **请求阶段（用户访问 `/blog/my-post`）：**
@@ -430,7 +430,7 @@ import { ViewTransitions } from 'astro:transitions';
 | **SvelteKit** | Svelte 应用框架 | 无原生 Islands | 仅 Svelte | 高 |
 | **Remix** | SSR 应用框架 | 无 Islands | 仅 React | 高 |
 
-在**内容网站**这个细分里，Astro 是目前 Islands 实现最完整的框架，多框架混用能力也是独有的。Next.js 的 RSC 和 Partial Prerendering 在朝类似方向走，但绑定 React 生态。Nuxt 的 Nuxt Island 仍在实验阶段。
+在**内容网站**这个细分里，Astro 是目前 Islands 实现最完整的框架，多框架混用能力也是独有的。Next.js 的 RSC 和 Partial Prerendering 方向类似，但绑定 React 生态。Nuxt 的 Nuxt Island 仍在实验阶段。
 
 ---
 
@@ -441,7 +441,7 @@ import { ViewTransitions } from 'astro:transitions';
 - **内容主导网站**：博客、文档站、营销页、个人主页——90%+ 是静态内容，不需要复杂的客户端状态管理
 - **多框架共存项目**：团队里有人写 React、有人写 Vue，Astro 负责编排，不需要统一技术栈
 - **性能敏感项目**：JS 体积直接影响 CWV（Core Web Vitals）分数，零 JS 默认策略天然友好
-- **文档站点**：官方力推的 Starlight 就是基于 Astro 的文档框架，内置 i18n、搜索、MDX 支持
+- **文档站点**：官方提供的 Starlight 就是基于 Astro 的文档框架，内置 i18n、搜索、MDX 支持
 
 ### 不适合
 
@@ -482,10 +482,10 @@ export default defineConfig({
 ### 基础题
 
 1. Astro 的"默认零JS"是什么意思？它如何解决传统 SSR 框架的水合问题？
-2. Islands 架构的核心隐喻是什么？静态 HTML 海洋与交互组件孤岛的关系是什么？
+2. Islands 架构的隐喻是什么？静态 HTML 海洋与交互组件孤岛的关系是什么？
 3. Astro 支持哪些水合策略？`client:visible` 和 `client:idle` 的区别是什么？
 4. Content Collections 的作用是什么？如何用 Zod schema 校验 frontmatter？
-5. Astro 与 Next.js 的核心区别是什么？各自适合什么场景？
+5. Astro 与 Next.js 的区别是什么？各自适合什么场景？
 
 ### 进阶题
 
@@ -521,7 +521,7 @@ export default defineConfig({
 
 - 用 `npm create astro@latest` 创建一个新项目
 - 理解 `.astro` 文件的双区块结构（frontmatter + 模板）
-- 掌握 6 种水合策略的使用场景
+- 熟悉 6 种水合策略的使用场景
 - 用 Content Collections 管理博客文章
 
 ### 阶段二：多框架集成（2-3 周）

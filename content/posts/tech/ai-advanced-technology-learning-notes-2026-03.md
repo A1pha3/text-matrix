@@ -10,7 +10,7 @@ tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
 
 # AI 先进技术学习笔记
 
-> 更新时间：2026 年 3 月 24 日｜整理：钳岳星君 🦞
+> 更新时间：2026 年 3 月 24 日
 
 ## 学习目标
 
@@ -30,11 +30,11 @@ tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
 - [四、多模态 AI（Multimodal AI）](#四多模态-ai-multimodal-ai)
 - [五、AI Safety 与对齐](#五ai-safety-与对齐)
 - [六、学习路线建议](#六学习路线建议)
-- [七、推荐阅读](#七推荐阅读)
-- [八、常见问题 FAQ](#八常见问题-faq)
-- [九、练习](#九练习)
-- [十、进阶路径](#十进阶路径)
-- [十一、资料口径说明](#十一资料口径说明)
+- [七、常见问题 FAQ](#七常见问题-faq)
+- [八、练习](#八练习)
+- [九、进阶路径](#九进阶路径)
+- [十、资料口径与参考来源](#十资料口径与参考来源)
+- [自测题](#自测题)
 
 ---
 
@@ -44,7 +44,7 @@ tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
 
 大语言模型（**LLM**，Large Language Model）是基于 **Transformer 架构**的大规模预训练语言模型，通过在海量文本数据上进行自监督学习，学习语言的统计规律和知识表示。
 
-2025-2026 年，LLM 正在从"对话助手"向"推理引擎"和"Agent 底座"演进，代表模型包括：
+2025-2026 年，LLM 的定位从"对话助手"扩展到推理和 Agent 底座，代表模型包括：
 
 | 厂商 | 代表模型 | 特点 |
 |------|----------|------|
@@ -115,7 +115,7 @@ AI Agent 是能够**自主感知环境、规划行动、执行任务**并根据�
 - 多步骤推理
 - 自主决策能力
 
-> 2025-2026 年被称为"Agent 元年"，Claude 3.7、GPT-4o、DeepSeek R1 等模型的工具调用能力大幅提升，Agent 从研究走向落地。
+Claude 3.7、GPT-4o、DeepSeek R1 等模型的工具调用能力大幅提升，Agent 从研究走向落地。
 
 ### 2.2 核心原理
 
@@ -176,7 +176,7 @@ AI Agent 是能够**自主感知环境、规划行动、执行任务**并根据�
 
 **RAG**（Retrieval-Augmented Generation）通过从外部知识库中检索相关文档，结合 LLM 进行生成，解决大模型"幻觉"和"知识过时"问题。
 
-2025-2026 年 RAG 已发展为**模块化、层次化、可评估**的企业级架构，支持：
+2025-2026 年 RAG 向模块化、层次化方向演进，企业级落地支持：
 
 - 多模态检索（文本、图像、表格、PDF）
 - Agent 化演进（动态决策检索策略）
@@ -207,7 +207,7 @@ AI Agent 是能够**自主感知环境、规划行动、执行任务**并根据�
 | **GraphRAG** | 利用知识图谱增强检索质量，解决复杂关联问答 |
 | **CRAG** | Corrective RAG，自动纠正检索结果质量 |
 
-> **Native RAG vs. Agentic RAG**：后者让 Agent 动态决定是否检索、检索范围和深度。
+Native RAG 与 Agentic RAG 的区别在于：后者让 Agent 动态决定是否检索、检索范围和深度。
 
 ### 3.3 应用场景
 
@@ -252,7 +252,7 @@ AI Agent 是能够**自主感知环境、规划行动、执行任务**并根据�
 
 多模态 AI 指能够同时**理解和生成**多种模态信息（文本、图像、音频、视频、3D）的 AI 系统。
 
-2025-2026 年，多模态成为大模型竞争焦点：
+2025-2026 年，多模态成为大模型竞争最激烈的方向之一：
 
 | 领域 | 代表进展 |
 |------|----------|
@@ -319,7 +319,7 @@ AI Agent 是能够**自主感知环境、规划行动、执行任务**并根据�
 
 AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行为符合人类意图和价值观。
 
-2026 年，随着 AI 能力接近 AGI 水平，AI Safety 成为仅次于模型性能的第二优先级。
+2026 年，AI Safety 从学术议题进入工程实践，成为模型部署时的关键评估维度。
 
 ### 5.2 核心概念
 
@@ -385,19 +385,7 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ---
 
-## 七、推荐阅读
-
-| 书籍/资源 | 说明 |
-|----------|------|
-| 《动手学深度学习》（D2L） | 李沐等著 |
-| 《Understanding Deep Learning》 | Simon J.D. Prince（免费在线版） |
-| The Batch | Andrew Ng AI Newsletter |
-| Deep Learning Weekly | 新闻简报 |
-| Star History | GitHub AI 项目趋势 |
-
----
-
-## 八、常见问题 FAQ
+## 七、常见问题 FAQ
 
 ### Q1：这篇文章适合完全没有AI基础的人吗？
 
@@ -405,7 +393,7 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ### Q2：我应该先学LLM、Agent，还是RAG？
 
-推荐顺序：LLM → RAG → Agent → 多模态。LLM是基础，RAG是LLM的重要应用，Agent是LLM的进阶使用方式，多模态是LLM的扩展方向。
+推荐顺序：LLM 是基础，RAG 是 LLM 的重要应用，Agent 是进阶使用方式，多模态是扩展方向。
 
 ### Q3：需要多少数学基础才能看懂Transformer原理？
 
@@ -413,7 +401,7 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ### Q4：本地部署LLM需要多少资源？
 
-取决于模型大小：
+本地部署的资源需求因模型参数量而异：
 - 7B参数模型：至少8GB RAM，推荐16GB
 - 13B参数模型：至少16GB RAM，推荐32GB
 - 70B参数模型：至少48GB RAM，推荐64GB+或量化推理
@@ -429,7 +417,7 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ---
 
-## 九、练习
+## 八、练习
 
 ### 练习一：搭建本地 LLM 推理环境
 
@@ -456,7 +444,7 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ---
 
-## 十、进阶路径
+## 九、进阶路径
 
 ### 深入理解 LLM 内部工作机制
 
@@ -484,74 +472,19 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ---
 
-## 十一、资料口径说明
+## 十、资料口径与参考来源
 
-本文整理自公开可用的官方文档、技术博客、学术论文和社区资源。以下说明关键判断的取径方式：
+本文整理自官方文档、技术博客、学术论文和社区资源。关键判断的取径方式：
 
-1. **模型能力描述**：来自官方博客和论文，如 GPT-4o 的推理能力来自 OpenAI 官方博客，DeepSeek R1 的 RLVR 技术来自 DeepSeek 团队发表的论文。
+- **模型能力描述**：来自官方博客和论文，如 GPT-4o 的推理能力来自 OpenAI 官方博客，DeepSeek R1 的 RLVR 技术来自 DeepSeek 团队发表的论文。
+- **评测基准结果**：来自各模型的官方技术报告或独立评测机构（如 ChatArena、Hugging Face Open LLM Leaderboard）。
+- **工具推荐**：基于社区采用率和 GitHub Stars，不构成商业推荐。
+- **学习路线建议**：基于作者个人的学习路径和社区反馈整理，不同背景的读者可能需要调整顺序。
+- **AI 技术发展趋势**：基于 2026 年 3 月前的公开信息，AI 领域发展极快，部分判断可能在数月后过时。
 
-2. **评测基准结果**：来自各模型的官方技术报告或独立评测机构（如 ChatArena、Hugging Face Open LLM Leaderboard）。
-
-3. **工具推荐**：基于社区采用率和 GitHub Stars，结合个人使用体验。不构成商业推荐。
-
-4. **学习路线建议**：基于作者个人的学习路径和社区反馈整理，不同背景的读者可能需要调整顺序。
-
-5. **AI 技术发展趋势**：基于 2026 年 3 月前的公开信息，AI 领域发展极快，部分判断可能在数月后过时。
-
-本文持续更新，欢迎通过 GitHub Issues 提交修正建议。
+主要参考来源涵盖了各章节已列出的论文和资源，包括但不限于 OpenAI、Anthropic、Google DeepMind、DeepSeek 的官方博客，Hugging Face、LangChain、LlamaIndex 的技术博客，以及各章节引用的学术论文。本文持续更新，欢迎通过 GitHub Issues 提交修正建议。
 
 ---
-
-## 附录：技术内容来源
-
-本文整理自以下来源：
-
-### 官方文档 & 技术博客
-
-| 来源 | 链接 |
-|------|------|
-| OpenAI Blog | https://openai.com/blog |
-| Anthropic Research | https://www.anthropic.com/research |
-| Google DeepMind | https://deepmind.google/discover/blog/ |
-| DeepSeek Blog | https://www.deepseek.com/ |
-| Hugging Face Blog | https://huggingface.co/blog |
-| LangChain Blog | https://blog.langchain.dev/ |
-| LlamaIndex Blog | https://www.llamaindex.ai/blog |
-| Pinecone Blog | https://www.pinecone.io/blog/ |
-| Jay Alammar Blog | https://jalamar.github.io/ |
-
-### 重要论文
-
-| 论文 | 链接 |
-|------|------|
-| Attention Is All You Need | https://arxiv.org/abs/1706.03762 |
-| InstructGPT / RLHF | https://arxiv.org/abs/2203.02155 |
-| Constitutional AI | https://arxiv.org/abs/2212.08073 |
-| ReAct: Synergizing Reasoning and Acting | https://arxiv.org/abs/2210.03629 |
-| DeepSeek-R1 | https://arxiv.org/abs/2501.12599 |
-| LLaMA: Open Foundation Models | https://arxiv.org/abs/2302.13971 |
-| RAG for Knowledge-Intensive NLP | https://arxiv.org/abs/2005.11401 |
-| LLaVA: Vision-Language Assistant | https://arxiv.org/abs/2304.08485 |
-| GPT-4V System Card | https://openai.com/index/gpt-4v-system-card/ |
-| Sora Video Generation | https://openai.com/index/sora-video-generation-model/ |
-
-### 社区 & 资源
-
-| 资源 | 链接 |
-|------|------|
-| Hugging Face Hub | https://huggingface.co/models |
-| Chatbot Arena | https://chat.lmsys.org/ |
-| r/MachineLearning | https://reddit.com/r/machine-learning |
-| r/LocalLLaMA | https://reddit.com/r/LocalLLaMA |
-| Alignment Forum | https://alignmentforum.org/ |
-| Model Context Protocol | https://modelcontextprotocol.io/ |
-| Papers with Code | https://paperswithcode.com/ |
-
----
-
-🦞 **钳岳星君整理 | 2026 年 3 月 24 日**
-
-> ⚠️ AI 技术发展迅速，本文内容会持续更新。如有疏漏，欢迎指正！
 
 ## 自测题
 
@@ -586,8 +519,6 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 <summary>查看答案</summary>
 答：推荐顺序：1) 基础：Python + 机器学习基础 + Transformer 架构；2) 进阶：LangChain/LlamaIndex + 向量数据库 + RAG；3) Agent 开发：ReAct/LangGraph + MCP 协议；4) 多模态：CLIP + 图文/视频应用；5) AI Safety（可选）。
 </details>
-
----
 
 > **下一步**：从一个小项目开始实践（如用 LlamaIndex 搭建个人知识库 RAG，或用 LangGraph 写一个多步推理 Agent），比单纯阅读更有效。
 

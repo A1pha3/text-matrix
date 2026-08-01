@@ -221,7 +221,7 @@ IntellAgent 能告诉你：改了 prompt 后行为是变好还是变坏、不同
 
 [Fine-Tuning AI Agents for Domain Expertise & Efficiency](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/fine-tuning-agents) 覆盖如何针对特定领域微调大语言模型，让 Agent 在垂直场景下输出更精准。教程包含数据准备、训练流程、评估方案以及如何将微调后的模型集成回 Agent 工作流。
 
-微调适合有标注数据且通用模型在垂直领域表现不足的场景；数据频繁变动时 RAG 更合适。两者的边界可以这样判断：如果问题出在"模型不懂行业术语"或"输出风格不符合规范"，微调能直接改善；如果问题出在"模型不知道最新的内部文档"，RAG 是更经济的方案。生产项目里两者经常并存——微调负责稳定的能力底座，RAG 负责动态的知识补充。
+微调适合有标注数据且通用模型在垂直领域表现不足的场景；数据频繁变动时 RAG 更合适。如果问题出在"模型不懂行业术语"或"输出风格不符合规范"，微调能直接改善；如果问题出在"模型不知道最新的内部文档"，RAG 是更经济的方案。生产项目里两者经常并存——微调负责稳定的能力底座，RAG 负责动态的知识补充。
 
 ### Streamlit：从 Demo 到内部工具
 
@@ -439,7 +439,7 @@ class VersionedMemory:
 
 ## 使用前需要注意
 
-仓库声明了明确的免责声明：所有教程仅用于教育目的，作者不对因使用教程内容而造成的任何损失负责。安全相关工具（LlamaFirewall、Apex 等）必须在获得授权后才能用于实际测试。
+仓库声明了免责声明：所有教程仅用于教育目的，作者不对因使用教程内容而造成的任何损失负责。安全相关工具（LlamaFirewall、Apex 等）必须在获得授权后才能用于实际测试。
 
 仓库采用自定义非商业许可证，具体条款在 [LICENSE](https://github.com/NirDiamant/agents-towards-production/blob/main/LICENSE) 文件中约定，使用前请务必查阅。
 
@@ -458,11 +458,11 @@ class VersionedMemory:
 - **RunPod**——GPU 云算力
 - **CodeRabbit**——AI 代码审查
 
-每个教程链接都直接指向赞助商的官方文档和技术支持页面。这意味着教程内容来自对应领域厂商的官方集成方案，但也要注意：教程会偏向赞助商自家的工具，选型时需要对照其他方案。
+每个教程链接都直接指向赞助商的官方文档和技术支持页面。教程内容来自对应领域厂商的官方集成方案——但教程会偏向赞助商自家的工具，选型时需要对照其他方案。
 
 ## 推荐阅读与进阶路径
 
-配合这个仓库，以下几本书值得一读。每本书对应正文里的不同层次：
+配合这个仓库，以下三本书可以从正文不同层次加深理解：
 
 - **《AI Engineering》**（Chip Huyen）——Chip Huyen 是这个领域最清晰的写作者之一，本书是 LLM 应用生产化的标准参考。对应正文的部署层、可观测性、评估层，适合想从 Demo 走到规模化部署的读者。
 - **《Hands-On Large Language Models》**（Jay Alammar & Maarten Grootendorst）——视觉化风格，对 LLM 的工作机制讲解深入浅出。对应正文的编排层、工具层、RAG，适合想理解 Agent 内部机制再动手的读者。

@@ -46,23 +46,23 @@ tags: ["AI Coding Agent", "Superpowers", "TDD", "Claude Code"]
 
 2025 年 10 月 9 日，Anthropic 正式发布 Claude Code 插件系统。同一天，Jesse Vincent 发布了 Superpowers 的第一个版本。截至 2026 年 5 月，这个项目在 GitHub 上积累了超过 199,000 个 Star，成为 Claude Code 生态中安装量仅次于 Anthropic 官方插件的第三方项目。
 
-Superpowers 给 Coding Agent 装上了一套开发流程——6 个强制检查点，Agent 每次起飞都遵循同一条航线，每一步都不可跳过。
+Superpowers 给 Coding Agent 引入了一套开发流程——6 个强制检查点，从需求到交付逐步推进，不满足条件就卡住。
 
 ## 为什么直接写代码是错的
 
 大多数 Coding Agent 的行为模式是：收到指令 → 开始写代码。一个没有约束的 Agent 会同时暴露三个问题：
 
-1. **意图偏差**。你说「帮我做一个用户认证系统」，Agent 的理解和你想要的可能差了十万八千里，但它不会停下来问——它已经在写了。
-2. **零测试防护**。每写一个功能，Agent 不会验证它是否破坏了已有功能。你今天修了一个 Bug，明天它悄悄被另一个修改覆盖了。
+1. **意图偏差**。你说「帮我做一个用户认证系统」，Agent 的理解和你想要的可能完全不同，但它不会停下来确认——它已经在写了。
+2. **零测试防护**。每写一个功能，Agent 不会验证它是否破坏了已有功能。你今天修了一个 Bug，明天它可能被另一个修改覆盖。
 3. **架构漂移**。Agent 没有「设计」概念。它只是在当前文件的上下文中做出局部最优选择，但局部最优的叠加往往等于全局灾难。
 
-这些问题不是 Agent 能力不够导致的——Claude、GPT-5 在代码生成上的能力已经足够强。缺的是工程纪律：动手之前先停下来想一想的肌肉记忆。
+Claude、GPT-5 在代码生成上的能力已经足够强，问题在于 Agent 缺少工程纪律——动手之前先停下来想一想。
 
-Jesse Vincent 的洞察是：靠更好的 prompt 解决不了这个问题。写一条提示词让 Agent「永远先写测试」——它会点头，然后继续直接写生产代码。需要一个在系统层面强制执行流程的机制。
+Jesse Vincent 的洞察是：写一条提示词让 Agent「永远先写测试」——它会点头，然后继续直接写生产代码。需要一个在系统层面强制执行流程的机制。
 
 ## 6 个技能构成的强制流程
 
-Superpowers 在 Agent 的决策链路中埋入了 6 个检查点，从需求到交付逐步推进。每个技能是强制规程，不满足条件，流程不会继续。
+Superpowers 在 Agent 的决策链路中埋入了 6 个检查点，从需求到交付逐步推进。每个技能是强制规程。
 
 ### brainstorming：先问清楚，再动手
 
@@ -72,7 +72,7 @@ brainstorming 在 Agent 检测到你要构建东西时自动触发。Agent 不�
 - 技术栈有什么约束？团队规范是什么？有不可以改的遗留代码吗？
 - 「完成」的定义是什么？什么情况下这个功能算交付了？
 
-Agent 用一个关键技巧呈现设计文档：每段不超过 200-300 字。传统 AI 对话中，Agent 一上来就丢给你一堵墙一样的文字，你根本不会读完。Superpowers 把设计文档拆成短段落，一段一段让你确认，确保你真的消化了每个决策点。
+Agent 用了一个技巧：每段不超过 200-300 字。传统 AI 对话中，Agent 一上来就丢给你一堵墙一样的文字，你根本不会读完。Superpowers 把设计文档拆成短段落，一段一段让你确认，确保你真的消化了每个决策点。
 
 ### writing-plans：拆成 2-5 分钟能完成的小任务
 
@@ -90,7 +90,7 @@ Agent 用一个关键技巧呈现设计文档：每段不超过 200-300 字。�
 
 ### subagent-driven-development：每个任务一个干净的上下文
 
-这是 Superpowers 最激进的设计决策。传统 AI 编程助手的上下文会随着对话越来越长，Agent 越跑越偏。Superpowers 的做法是：每个任务派一个全新的子 Agent 去独立实现——零上下文污染。
+传统 AI 编程助手的上下文会随着对话越来越长，Agent 越跑越偏。Superpowers 的做法是：每个任务派一个全新的子 Agent 去独立实现——零上下文污染。
 
 主 Agent 把任务描述发给子 Agent，子 Agent 在自己的会话中实现、自测、提交、自审。然后派发另一个子 Agent 做规格审查（第一轮）和代码质量审查（第二轮）。两轮审查都通过后，结果返回主 Agent，继续下一个任务。
 
@@ -106,7 +106,7 @@ Superpowers 的 TDD 是 RED-GREEN-REFACTOR 循环：
 4. 重构，保持测试通过
 5. 提交
 
-如果 Agent 先写了生产代码再写测试，Superpowers 要求**删除生产代码**，从测试开始重来。这不是教学示范，是强制执行。同时强调 YAGNI（You Aren't Gonna Need It）和 DRY（Don't Repeat Yourself），防止 Agent 过度设计。
+如果 Agent 先写了生产代码再写测试，Superpowers 要求**删除生产代码**，从测试开始重来。同时强调 YAGNI（You Aren't Gonna Need It）和 DRY（Don't Repeat Yourself），防止 Agent 过度设计。
 
 ### reviewing：两阶段审查
 
@@ -258,8 +258,6 @@ brainstorming 阶段的设计文档是逐段确认的，你可以在任何一步
 - 对比 Superpowers、Harness Engineering、Compound Engineering 的源码实现，理解它们的设计取舍
 - 如果你的项目有特殊需求（比如特定的代码风格、特定的测试框架），可以尝试修改 Superpowers 的技能文件
 - 考虑向 Superpowers 仓库提交 PR，分享你的改进或新技能
-
----
 
 ---
 

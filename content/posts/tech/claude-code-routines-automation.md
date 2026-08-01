@@ -12,16 +12,23 @@ tags: ["Claude Code", "AI Agent", "自动化", "GitHub", "DevOps", "工作流"]
 
 Routines 把 Claude Code 从终端里的交互式助手变成云端定时执行的 Agent——你关掉电脑，它还在跑。触发方式有三种：定时调度、API 回调、GitHub 事件，分别对应周期性维护、外部系统唤醒和仓库事件响应，执行环境是 Anthropic 托管的 Cloud Session。
 
-正文聚焦三件事：三种触发器的边界与适用场景、用告警分级案例串起完整执行链路、不同团队的采用顺序。配置字段不逐项罗列，需要时查官方文档即可。
+正文围绕三条线展开：三种触发器的边界与适用场景、用告警分级案例串起完整执行链路、不同团队的采用顺序。配置字段不逐项罗列，需要时查官方文档即可。
 
-> **快速信息卡**
+> **快速参考**
 > - **GitHub**: [anthropics/claude-code](https://github.com/anthropics/claude-code)
-> - **Documentation**: [Claude Code Routines 官方文档](https://docs.anthropic.com/en/docs/claude-code/routines)
+> - **官方文档**: [Claude Code Routines](https://docs.anthropic.com/en/docs/claude-code/routines)
 > - **最后更新**: 2026-06-26
 
-> **目标读者**：Claude Code 用户、DevOps 工程师、AI 自动化实践者
-> **前置知识**：Claude Code 基础用法、Git/GitHub 基础、了解过 MCP（Model Context Protocol）连接器
-> **预计阅读时间**：45-60 分钟
+## 学习目标
+
+阅读本文后，你将能够：
+
+- 根据任务特性选择正确的触发器类型（Schedule / API / GitHub Events）
+- 为一个 Routine 编写 Prompt、配置仓库和 Connectors，使其自主完成端到端任务
+- 规划 Routines 的采用顺序，从低风险定时任务逐步扩展到实时响应
+- 识别不适合 Routines 的任务类型，避免为一次性交互或复杂调试场景配置自动化
+
+---
 
 ## 目录
 
@@ -37,24 +44,13 @@ Routines 把 Claude Code 从终端里的交互式助手变成云端定时执行�
 - [采用指南：从哪个场景开始](#采用指南从哪个场景开始)
 - [Routine vs 本地 Claude Code](#routine-vs-本地-claude-code)
 - [常见问题](#常见问题)
-- [自测题](#自测题)
 - [相关资源](#相关资源)
-
-## 学习目标
-
-读完本文后，你应能完成以下任务：
-
-- 区分 Routine 与本地 Claude Code 在执行环境、权限模型、运行持续性上的差异，并判断给定任务该用哪一种
-- 为周期性维护、外部回调、仓库事件三类需求分别选择合适的触发器，并说明各自的边界条件
-- 描述一个 Routine 从触发到产出 PR 的完整链路，包括 Cloud Session、仓库克隆、Prompt 执行、Connectors 调用等环节
-- 检查 Routine 的权限边界，判断哪些操作不该交给个人账号自动执行
-- 为所在团队设计第一个 Routine 的切入场景，并给出从低风险到实时响应的推进顺序
 
 ---
 
 ## 系统全景：三种触发器 + 一条执行主线
 
-三套触发机制看起来是三个并列选项，但它们背后的适用场景完全不同：
+三套触发机制虽然并列列出，但各自的适用场景完全不同：
 
 ```mermaid
 graph TD
@@ -95,7 +91,7 @@ graph TD
 
 Claude Code 最初的设计目标是在终端里和人协作——你坐在电脑前，它帮你写代码、调试、解释。你控制它启动和停止。
 
-Routines 把这种关系翻转了：你不再需要坐在电脑前，甚至不需要电脑开机。你定义规则，Claude 在云端自动执行，结果推送给团队。
+Routines 把这种关系对调了：你不再需要坐在电脑前，甚至不需要电脑开机。你定义规则，Claude 在云端自动执行，结果推送给团队。
 
 ### 传统自动化方案为什么不够用
 
@@ -124,6 +120,8 @@ Routines 把模型对代码的理解、云端不间断运行、事件驱动响�
 - 不需要 Permission Mode 选择器，运行过程无审批中断
 - 可以执行 shell 命令、使用 skills、调用 connectors
 - 访问范围由仓库权限、环境变量和连接器共同决定
+
+Cloud Session 的生命周期绑定单次执行：触发时创建，Prompt 执行完毕后销毁。每次执行都是全新的环境，不存在跨次的状态残留——这意味着 Routine 不能依赖文件系统保存中间结果，任何需要跨执行周期保留的数据都必须通过 Git 提交、外部 API 或 Connectors 持久化到外部系统。
 
 Routine 从默认分支克隆仓库，在 `claude/` 前缀的分支上创建更改。如果需要推送到任意分支，需要开启 **Allow unrestricted branch pushes**。
 
@@ -191,7 +189,7 @@ GitHub 触发器直接挂载到仓库事件上，属于最精准的触发方式�
 
 ## 任务流案例：告警分级 Routine 的完整执行路径
 
-上面讲的是静态结构，现在用告警分级的场景把整条链路串起来，看看一个 Routine 从触发到产出结果到底经历了什么。
+以下用告警分级场景把整条链路串起来。
 
 ### 触发阶段
 
@@ -226,33 +224,100 @@ Cloud Session 启动后，Claude 按 Prompt 中的指令逐步执行：
 
 ### 这个案例的关键点
 
-这个案例里，Routine 把三件事压到了同一次执行中：把堆栈跟踪关联到具体代码行、把代码行关联到最近一次提交、把根因分析转换成可 Review 的 Draft PR。监控系统只负责发现异常，Routine 负责把异常翻译成可操作的修复方案。这种链路在纯脚本方案里需要写大量粘合代码，且每次告警模式变化都要改脚本；Routine 用 Prompt 描述任务，模型负责适配输入变化。
+Routine 把三件事压到了同一次执行中：把堆栈跟踪关联到具体代码行、把代码行关联到最近一次提交、把根因分析转换成可 Review 的 Draft PR。监控系统只负责发现异常，Routine 负责把异常翻译成可操作的修复方案。这种链路在纯脚本方案里需要写大量粘合代码，且每次告警模式变化都要改脚本；Routine 用 Prompt 描述任务，模型负责适配输入变化。
 
 ---
 
 ## 实战场景
 
-以下 5 个场景都经过验证，按投入产出比从高到低排列：
+以下 5 个场景按投入产出比从高到低排列，每个场景附带 Prompt 结构示意和关键配置，方便直接套用。
 
 ### 场景 1：Backlog 维护（定时触发）
 
-每个工作日晚间自动整理 Issue 队列：读取自上次运行以来的新 Issue，根据代码区域自动打标签、分配负责人，生成 Slack 摘要。团队每天早上看到的是已分好类的 Issue 列表，而不是原始收件箱。
+每个工作日晚间自动整理 Issue 队列：读取自上次运行以来的新 Issue，根据代码区域自动打标签、分配负责人，生成 Slack 摘要。
+
+**Prompt 结构示意**：
+```text
+扫描仓库 {repo} 中自 {last_run} 以来新创建的 Issue。
+对每个 Issue：
+1. 根据标题和正文判断所属模块（frontend/backend/infra/docs）
+2. 打上对应标签
+3. 如果代码区域匹配，@相关维护者
+4. 汇总今日新增 Issue 数量、已打标签分布、未分配 Issue 列表
+将摘要发送到 Slack #backlog 频道。
+```
+
+**关键配置**：Schedule → Daily，23:00 执行。Connectors 只保留 Slack 写入和 GitHub 读写，移除不需要的 Linear、Jira 等。团队每天早上看到的是已分好类的 Issue 列表，而不是原始收件箱。
 
 ### 场景 2：代码审查自动化（GitHub 触发）
 
-每个新 PR 自动执行审查清单：安全漏洞扫描、性能反模式检测、代码风格检查。Inline 评论直接贴在 PR 上，人工 Reviewer 可以把精力放在设计审查上，机械性检查交给 Routine。
+每个新 PR 自动执行审查清单：安全漏洞扫描、性能反模式检测、代码风格检查。Inline 评论直接贴在 PR 上。
+
+**Prompt 结构示意**：
+```text
+PR #{pr_number} 由 @{author} 提交，变更文件 {files}。
+执行以下审查清单：
+1. 安全检查：是否引入新依赖、是否暴露敏感信息、是否有 SQL 注入风险
+2. 性能检查：是否有 N+1 查询、是否在循环中执行 IO 操作
+3. 风格检查：是否遵循项目 .eslintrc / .golangci.yml 配置
+每条审查意见必须附带文件路径和行号引用。
+对严重问题（安全漏洞、性能退化）标记为 BLOCKING。
+```
+
+**关键配置**：GitHub 触发器 → `pull_request.opened`，过滤条件只含 `main` 和 `release/*` 分支。人工 Reviewer 可以把精力放在设计审查上，机械性检查交给 Routine。注意：此场景的 Prompt 需要持续迭代——如果 Routine 频繁误报或漏报，先调整审查清单的优先级，而不是增加更多检查项。
 
 ### 场景 3：部署验证（API 触发）
 
-CD 流水线完成后，部署平台调用 Routine 进行验证：运行冒烟测试、扫描错误日志、检查回归。部署窗口关闭前自动给出"通过/不通过"判断，结果发布到 Slack 发布频道。
+CD 流水线完成后，部署平台调用 Routine 进行验证：运行冒烟测试、扫描错误日志、检查回归。
+
+**Prompt 结构示意**：
+```text
+部署版本 {version} 已推送到 {environment}。
+验证步骤：
+1. 运行冒烟测试套件（{smoke_test_suite}），记录失败用例
+2. 扫描部署后 5 分钟内的错误日志，提取新增异常模式
+3. 对比上一个版本的基线指标（响应时间、错误率、P99 延迟）
+判定标准：
+- 冒烟测试全部通过 + 无新增异常 → 通过
+- 冒烟测试失败或错误率上升超过 50% → 不通过，附带失败详情
+将结果发布到 Slack #deploy 频道，标注判定结果。
+```
+
+**关键配置**：API 触发器，CD 流水线在部署完成后调用。Routine 的 Prompt 通过 `{{text}}` 接收部署版本和环境信息。部署窗口关闭前自动给出"通过/不通过"判断，回滚决策由人工确认。
 
 ### 场景 4：文档漂移检测（定时触发）
 
-每周一扫描过去一周合并的 PR，检查涉及 API 变更的 PR 是否更新了对应文档。未更新的自动创建文档更新 PR。
+每周一扫描过去一周合并的 PR，检查涉及 API 变更的 PR 是否更新了对应文档。
+
+**Prompt 结构示意**：
+```text
+扫描过去一周（{last_week_range}）合并到 main 分支的 PR。
+对每个 PR：
+1. 判断变更是否涉及公开 API（路由、SDK 方法、配置格式）
+2. 如果涉及 API 变更，检查同 PR 是否包含对应文档更新
+3. 如果 API 变更但文档未更新，创建一个新的文档 PR
+4. 将文档 PR 分配给原 PR 作者 Review
+输出报告：已检查 {n} 个 PR，其中 {m} 个存在文档漂移，已创建文档 PR 列表。
+```
+
+**关键配置**：Schedule → Weekly，周一 08:00 执行。此场景的收益随着团队规模增长——小型团队靠口头沟通就能覆盖，大型团队每月可能漏掉 5-10 个未同步的 API 变更。
 
 ### 场景 5：SDK 跨语言同步（GitHub 触发）
 
-一个 SDK 仓库的 PR 合并后，Routine 将变更 port 到另一个语言的平行 SDK 仓库，创建匹配的 PR。多语言 SDK 保持同步，不需要人工重复实现。
+一个 SDK 仓库的 PR 合并后，Routine 将变更 port 到另一个语言的平行 SDK 仓库，创建匹配的 PR。
+
+**Prompt 结构示意**：
+```text
+PR #{pr_number} 已合并到 {source_repo}，变更涉及 {files}。
+任务：
+1. 理解 PR 中的逻辑变更，不限于逐行翻译
+2. 在 {target_repo} 中找到对应的模块位置
+3. 按目标语言的习惯实现等效逻辑（如 TypeScript 的 async/await 对应 Python 的 asyncio）
+4. 创建 Draft PR，标题注明 [Port from {source_repo}#{pr_number}]
+5. 在 PR 正文中附上源 PR 链接和 Port 说明
+```
+
+**关键配置**：GitHub 触发器 → `pull_request.closed`，叠加 `action: merged` 过滤条件。需要配置两个仓库的访问权限。此场景对 Prompt 质量要求最高——逻辑翻译比逐行拷贝更容易出错，建议先在非核心 SDK 模块上跑一段时间再推广。
 
 ---
 
@@ -301,13 +366,15 @@ Routine 默认包含你所有已连接的 MCP Connectors。一个只做代码审
 
 Routines 需要 Pro / Max / Team / Enterprise 计划并启用 Claude Code on the Web。Free 计划不可用。Routine 的每次运行计入账户的每日运行配额。
 
-高频定时任务（如 Hourly）在配额紧张时需要权衡：要么降低频率，要么把多个相关任务合并到一个 Routine 里，让单次执行覆盖更多工作。
+高频定时任务（如 Hourly）在配额紧张时需要权衡：要么降低频率，要么把多个相关任务合并到一个 Routine 里，让单次执行覆盖更多工作。例如，把 Backlog 维护和文档漂移检测合并到同一个 Routine 中，用 Prompt 区分执行逻辑，而不是拆成两个独立的定时任务。
+
+另一个容易被忽略的限制：单个 Routine 的 Prompt 执行时长没有公开的硬性上限，但 Cloud Session 的创建和销毁有冷启动延迟——首次触发大约需要 10-30 秒的初始化时间。对于需要秒级响应的场景（如实时告警），这个延迟需要纳入 SLA 设计。
 
 ---
 
 ## 采用指南：从哪个场景开始
 
-刚开始用 Routines 时，按以下顺序推进会比较稳妥。
+Routines 的采用顺序，按风险从低到高分三个阶段。
 
 ### 第一阶段：低风险定时任务
 
@@ -331,14 +398,15 @@ Routines 需要 Pro / Max / Team / Enterprise 计划并启用 Claude Code on the
 
 ## Routine vs 本地 Claude Code
 
-| 场景 | 推荐 |
-|------|------|
-| 复杂调试、需要即时反馈 | 本地 Claude Code |
-| 定期整理任务、自动化 | Routine |
-| 事件驱动（PR 打开时） | Routine |
-| 需要交互式探索 | 本地 Claude Code |
-| 24/7 无人值守 | Routine |
-| 一次性任务 | 本地 Claude Code |
+| 维度 | 本地 Claude Code | Routine |
+|------|-----------------|---------|
+| 运行位置 | 本地终端 | Anthropic 云端 |
+| 是否需要电脑开机 | 是 | 否 |
+| 触发方式 | 手动输入命令 | 定时 / API / GitHub 事件 |
+| 交互模式 | 实时对话 | 无人值守 |
+| 审批流程 | 需 Permission Mode 确认 | 无审批中断 |
+| 状态持久化 | 本地文件系统 | 无状态，每次全新环境 |
+| 适合任务 | 复杂调试、交互式探索、一次性任务 | 定期整理、自动化、事件驱动 |
 
 ---
 
@@ -366,28 +434,6 @@ Routine 在你的 Session 列表中显示失败状态，可以查看日志排查
 
 ---
 
-## 自测题
-
-以下问题用于检验对本文内容的理解，建议先自己作答再对照正文：
-
-1. **触发器选择**：团队需要"每天凌晨清理一次 staging 环境的临时分支"，应该选哪种触发器？为什么不用另外两种？
-2. **权限边界**：一个 Routine 想自动合并自己创建的 PR 到 `main` 分支，这种做法存在哪些风险？至少列出两点。
-3. **执行链路**：在告警分级案例中，Routine 是如何把堆栈跟踪 `PaymentGateway.java:142` 关联到具体提交 `a3f2b1c` 的？中间用了哪些 Git 操作？
-4. **配额权衡**：Hourly 触发的 Routine 在配额紧张时有哪些处理方式？各自的代价是什么？
-5. **采用顺序**：为什么"告警分级"被放在第三阶段而不是第一阶段？如果团队直接从告警分级切入，最可能在哪个环节出问题？
-6. **失败处理**：API 触发的 Routine 执行失败后，谁来负责重试？定时触发的 Routine 失败后又是什么行为？
-
-### 快速进阶建议
-
-掌握本文内容后，可以继续探索以下方向：
-
-- 阅读 [MCP 连接器文档](https://code.claude.com/docs/en/mcp)，了解如何为 Routine 接入更多外部服务（如 Jira、PagerDuty、Sentry）
-- 在 staging 环境用低风险任务（如 Issue 打标签）跑一周，观察 Prompt 收敛过程，积累调参经验
-- 研究多 Routine 协作模式：一个 Routine 触发另一个 Routine，构建更复杂的工作流
-- 关注 Claude Code on the Web 的更新日志，跟踪 Connectors 和触发器类型的新增能力
-
----
-
 ## 相关资源
 
 | 资源 | 链接 |
@@ -397,35 +443,6 @@ Routine 在你的 Session 列表中显示失败状态，可以查看日志排查
 | **Claude Code 概述** | [code.claude.com/docs/en/overview](https://code.claude.com/docs/en/overview) |
 | **MCP 连接器** | [code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp) |
 | **云端环境** | [code.claude.com/docs/en/claude-code-on-the-web](https://code.claude.com/docs/en/claude-code-on-the-web) |
-
----
-
-## 进阶路径
-
-### 阶段 1：理解 Routines 的三种触发器（1 周）
-- 理解 Schedule、API、GitHub 事件三种触发器的边界与适用场景
-- 跑通一个定时触发的 Routine（如每日整理 Issue）
-- 理解 Cloud Session 的执行环境和安全模型
-
-### 阶段 2：配置到自己的项目（1-2 周）
-- 配置第一个 Routine（从低风险场景开始，如 Backlog 维护）
-- 学习编写 Prompt 让 Routine 产出可验收的结果
-- 配置 Connectors（Slack、Linear 等）
-
-### 阶段 3：深度集成到团队工作流（1 个月）
-- 建立团队的 Routine 库（覆盖常见维护任务）
-- 配置配额管理和成本监控
-- 培训团队成员编写和调试 Routines
-
-### 阶段 4：高级用法（持续优化）
-- 使用 Routines 做跨仓库操作（如 SDK 同步）
-- 配置复杂的 GitHub 事件触发 Routine（如 PR 审查自动化）
-- 参与 Claude Code 社区分享 Routine 最佳实践
-
-**进阶资源**
-- [Claude Code Routines 官方文档](https://docs.anthropic.com/en/docs/claude-code/routines)
-- [Claude Code 官方仓库](https://github.com/anthropics/claude-code)
-- [GitHub Actions 文档](https://docs.github.com/en/actions)（对比参考）
 
 ---
 
