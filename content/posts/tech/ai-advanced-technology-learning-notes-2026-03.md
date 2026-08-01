@@ -521,4 +521,3 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 </details>
 
 > **下一步**：从一个小项目开始实践（如用 LlamaIndex 搭建个人知识库 RAG，或用 LangGraph 写一个多步推理 Agent），比单纯阅读更有效。
-
