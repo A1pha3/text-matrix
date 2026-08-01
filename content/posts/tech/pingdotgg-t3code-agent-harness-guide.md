@@ -21,7 +21,7 @@ T3 Code 解决的核心问题是：AI 编程 agent（Claude Code、Codex 等）�
 | 许可证 | MIT |
 | 作者 | Theo Browne（pingdotgg） |
 
-T3 Code 自称是 "agent harness control surface"——agent 线束控制面板。它不替代 Claude Code 或 Codex，而是在它们之上加一层 UI 和远程访问能力。
+T3 Code 在 README 里把自己定位为 "minimal web GUI for coding agents"，但 Theo 在视频中更深一层的解释是——它本质上是一个 agent 的 control surface（控制面板），不替代 Claude Code 或 Codex，而是在它们之上加一层 UI 和远程访问能力。
 
 ## 架构分层：T3 Code 不是"一个 Web 界面"
 
@@ -172,7 +172,7 @@ T3 Code 的技术选择反映了几层思考：
 
 **T3 Code 的角色是 agent 的壳，不是 agent 本身**。它不跑模型、不做代码生成，依赖你已经有的 Claude Code 或 Codex 订阅和认证，只负责提供更好的操控界面。这意味着 T3 Code 的成功与 agent 生态深度绑定。
 
-**TypeScript + Electron + React Native（推测）**。四端覆盖的技术代价是 Electron 桌面 + Web + 移动原生，这对小团队来说是合理的快速覆盖策略。不过 Electron 的包体积和内存占用是客观存在的代价。
+**TypeScript + Electron + React Native（推测）**。四端覆盖的技术代价是 Electron 桌面 + Web + 移动原生，这对小团队来说是合理的快速覆盖策略。不过 Electron 的包体积和内存占用在设计时就需要计入。
 
 **WebSocket 作为核心传输协议**。架构文档显示，T3 Code 使用 typed WebSocket 合约在客户端和服务端之间传输状态。`ServerPushBus` 保证推送顺序，`RuntimeReceiptBus` 让异步处理可等待。这套设计比轮询或 Server-Sent Events 更适合实时 agent 监控场景，但要求网络连接稳定——在弱网环境下，WebSocket 重连和状态恢复是需要关注的。
 
@@ -234,7 +234,7 @@ npx t3@latest --help
 
 小团队场景下，有人专门负责 agent 机器的话，T3 Code 的远程控制和 Git 工作流自动化能减少"谁在哪个 agent 上跑了什么"的信息损耗。不过项目不接受大贡献，遇到特定 bug 不要指望能快速修掉。
 
-如果正在评估 agent 编排方案，可以同时看看 T3 Code 和 Parallel Code。前者强在远程和多 agent 统一入口，后者强在每个 agent 的工作区隔离。两个工具解决的是不同维度的问题，不是非此即彼的关系。
+如果正在评估 agent 编排方案，可以同时看看 T3 Code 和 Parallel Code。前者强在远程和多 agent 统一入口，后者强在每个 agent 的工作区隔离。两个工具解决的是不同维度的问题，可以按实际场景选。
 
 ## 相关链接
 

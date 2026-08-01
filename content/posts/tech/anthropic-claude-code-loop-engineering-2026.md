@@ -2,7 +2,7 @@
 title: "Anthropic Claude Code：把 Loop Engineering 拆成你今天就能用的四块"
 date: "2026-07-11T20:54:22+08:00"
 slug: "anthropic-claude-code-loop-engineering-2026"
-description: "2026 年 7 月 11 日，precis0x 在 X 上转发了一条消息：Anthropic 推出了一门关于 loop engineering 的免费课，搭配 Claude (Fable) 5 / Claude Code，把 Claude 终端编码工具的内部机制讲透。本文以 6 段大纲（Claude Code 内部如何工作 / agentic loop / 99% 开发者忽略的功能 / 声音胜于写作 / Draft PR / 非代码工作）为骨架，逐项拆开 Anthropic 官方文档与 claude-code 仓库的真实内容：agentic loop 三阶段（gather context / take action / verify results）、5 类内置工具 + 4 类扩展（Skills / MCP / Hooks / Sub-agents）、PreToolUse/PostToolUse 等 27 个 hook 事件、Explore/Plan 内置 sub-agent 的设计取舍，并补一段对独立项目作者可复用的工程经验。"
+description: "Claude Code 的 agentic loop 三阶段、5 类内置工具 + 4 类扩展、PreToolUse/PostToolUse 等 27 个 hook 事件、Explore/Plan 内置 sub-agent 的设计取舍，以及给独立项目作者的 5 条工程经验。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Anthropic", "Claude Code", "Fable5", "Hooks", "MCP", "Skills", "AI Coding Agent"]
@@ -11,34 +11,9 @@ hiddenFromHomePage: false
 
 # Anthropic Claude Code：把 Loop Engineering 拆成你今天就能用的四块
 
-## 学习目标
-
-读完本文后，你应当能够：
-
-- 说出 Claude Code 的 agentic loop 三阶段（gather context / take action / verify results），并能用它诊断 agent 为什么卡住
-- 区分 Claude Code 的 5 类内置工具与 4 类扩展（Skills / MCP / Hooks / Sub-agents），知道每一种的适用边界
-- 写出一个能拦掉 `rm -rf` 的 PreToolUse hook，知道 27 个 hook 事件哪些最常用
-- 创建一个 Explore/Plan 内置 sub-agent 之外的 custom sub-agent，用 YAML frontmatter 表达 model / tools / hooks 限制
-- 把"loop engineering"这个新概念对应到 Anthropic 在 [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) 里提出的 5 大工作流（chaining / routing / parallelization / orchestrator-workers / evaluator-optimizer）
-
-## 本文目录
-
-1. [这门课到底在讲什么](#1-这门课到底在讲什么)
-2. [Loop Engineering：一个被低估的工程范式](#2-loop-engineering一个被低估的工程范式)
-3. [Claude Code 内部：agentic loop 三阶段](#3-claude-code-内部agentic-loop-三阶段)
-4. [99% 开发者忽略的功能：Hooks](#4-99-开发者忽略的功能hooks)
-5. [Sub-agents：把任务委派给专门的子代理](#5-sub-agents把任务委派给专门的子代理)
-6. [为什么声音胜于写作](#6-为什么声音胜于写作)
-7. [Draft PR：自动代码评审](#7-draft-pr自动代码评审)
-8. [Fable 5 用于非代码工作](#8-fable-5-用于非代码工作)
-9. [对独立 Agent 项目作者的 5 条工程经验](#9-对独立-agent-项目作者的-5-条工程经验)
-10. [关键资源与延伸阅读](#10-关键资源与延伸阅读)
-
----
-
 ## 1. 这门课到底在讲什么
 
-2026 年 7 月 11 日，precis0x 在 X 上转发了一条消息：Anthropic 推出了一门关于 loop engineering 的免费课，搭配 Claude (Fable) 5 / Claude Code，把这个在终端里跑了快两年的编码工具的内部机制讲透。他给出的评价很直接："Este curso gratuito reemplaza cualquier tutorial de pago de claude code"（这门免费课替代任何付费的 Claude Code 教程）。
+2026 年 7 月 11 日，precis0x 在 X 上转发了一条消息：Anthropic 推出了一门关于 loop engineering 的免费课，搭配 Claude (Fable) 5 / Claude Code，把这个在终端里跑了快两年的编码工具的内部机制讲透。他给的评价很直接："Este curso gratuito reemplaza cualquier tutorial de pago de claude code"（这门免费课替代任何付费的 Claude Code 教程）。
 
 视频 1 小时 1 分 04 秒，按 6 段大纲展开：
 
@@ -49,7 +24,7 @@ hiddenFromHomePage: false
 - `32:34` — revisión automática de código con draft PRs（Draft PR 自动代码评审）
 - `58:39` — Fable 5 para trabajo que no es código（Fable 5 用于非代码工作）
 
-这门课的关键不在"内容多"，而在"配套齐"。Anthropic 把 Claude Code 文档从 `docs.claude.com` 整体迁到 `code.claude.com/docs/en/`，把 hooks / sub-agents / MCP / skills 四个扩展点的 reference 和 quickstart 写得极度详尽。课程里的每一个示例，都能在文档里找到对应章节的真实代码。下面是逐项展开。
+这门课的关键不在"内容多"，而在"配套齐"。Anthropic 把 Claude Code 文档从 `docs.claude.com` 整体迁到 `code.claude.com/docs/en/`，hooks / sub-agents / MCP / skills 四个扩展点的 reference 和 quickstart 写得极度详尽。课程里的每一个示例，都能在文档里找到对应章节的真实代码。
 
 ## 2. Loop Engineering：一个被低估的工程范式
 
@@ -87,7 +62,7 @@ hiddenFromHomePage: false
 
 意思是：**循环的形状随任务变**。问问题可能只跑阶段 1；改 bug 三个阶段反复跑；重构可能要大量阶段 3。Claude 自己决定每一步要走哪个阶段、走多远。
 
-**5 类内置工具** 是循环能跑起来的基础（同一份文档）：
+**5 类内置工具** 是循环能跑起来的基础：
 
 | 类别 | 能做什么 |
 |---|---|
@@ -118,7 +93,7 @@ Hooks 是 Claude Code 在 agentic loop 关键节点自动触发的用户定义�
 - **每条 prompt 提交时**（`UserPromptSubmit`）
 - **每次 context 压缩前后**（`PreCompact` / `PostCompact`）
 
-完整事件列表有 **27 个**（文档原文），按生命周期分三档：
+完整事件列表有 **27 个**，按生命周期分三档：
 
 ```
 once per session:    SessionStart, SessionEnd, Setup, InstructionsLoaded
@@ -348,4 +323,4 @@ Hooks + sub-agent + MCP 共同提供了这三个问题的答案。**如果你写
 
 ---
 
-*本文基于 Anthropic 官方 Claude Code 文档（2026-07 版本）与 precis0x 在 X 整理的 loop engineering 课程大纲。所有代码示例与 hook 事件清单均来自 `code.claude.com/docs/en/` 原文，未做改动。文档可能在后续版本中变化，建议以当前版本为准。*
+*本文基于 Anthropic 官方 Claude Code 文档（2026-07 版本）与 precis0x 在 X 整理的 loop engineering 课程大纲。所有代码示例与 hook 事件清单均来自 `code.claude.com/docs/en/` 原文。文档可能在后续版本中变化，建议以当前版本为准。*

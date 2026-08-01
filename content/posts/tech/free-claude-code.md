@@ -16,45 +16,11 @@ tags: ["Claude Code", "Anthropic", "API", "本地部署", "OpenRouter"]
 # Free Claude Code：用免费提供商替代 Anthropic API，让 Claude Code 零成本运行
 
 > **目标读者**：希望零成本使用 Claude Code 的开发者，或对 AI 编程助手 API 代理机制感兴趣的技术人员
-> **预计阅读时间**：40-50 分钟
 > **前置知识**：基本了解 Claude Code、Anthropic API、环境变量配置，有 Python 基础更佳
-> **难度定位**：⭐⭐⭐ 入门到实践
 
 ---
 
-## §1 学习目标
-
-完成本篇文章后，你将能够：
-
-1. **理解** Free Claude Code 的核心原理：如何通过两个环境变量拦截 Claude Code 的 API 请求
-2. **掌握**六大免费提供商（NVIDIA NIM、OpenRouter、DeepSeek、LM Studio、llama.cpp、Ollama）的配置方法与适用场景
-3. **完成** Free Claude Code 的基础安装与配置，让 Claude Code 通过免费模型运行
-4. **了解**代理服务的架构设计：环境变量层、代理服务层、提供商适配层的三层结构
-5. **评估** Free Claude Code 的能力边界：哪些场景适合，哪些场景仍需付费 API
-
----
-
-## §2 本文目录
-
-1. [学习目标](#学习目标)
-2. [本文目录](#本文目录)
-3. [系统地图：三层结构](#系统地图三层结构)
-4. [核心原理：一次请求如何流过代理](#核心原理一次请求如何流过代理)
-5. [六大提供商](#六大提供商)
-6. [安装与快速开始](#安装与快速开始)
-7. [Model Picker：交互式选择模型](#model-picker交互式选择模型)
-8. [可选：身份认证](#可选身份认证)
-9. [技术栈与架构](#技术栈与架构)
-10. [与 Ollama / LocalAI 等本地方案的区别](#与-ollama--localai-等本地方案的区别)
-11. [常见问题](#常见问题)
-12. [适用场景与决策建议](#适用场景与决策建议)
-13. [自测题](#自测题)
-14. [练习](#练习)
-15. [进阶路径](#进阶路径)
-
----
-
-## §3 系统地图：三层结构
+## 三层结构
 
 代理的职责边界——它不负责推理，只负责"让 Claude Code 以为自己在跟 Anthropic 对话"：
 
@@ -64,11 +30,9 @@ tags: ["Claude Code", "Anthropic", "API", "本地部署", "OpenRouter"]
 | 代理服务层 | 解析请求中的 model 信息、路由到对应提供商、做格式转换 | 不存储请求/响应，不缓存 |
 | 提供商适配层 | 把 Anthropic Messages 格式转为各提供商原生格式，再转回 SSE | 不实现 LLM 推理，不管理模型生命周期 |
 
-三条线各司其职，下面分别展开。
-
 ---
 
-## 二、核心原理：一次请求如何流过代理
+## 核心原理：一次请求如何流过代理
 
 ```
 Claude Code → Free Claude Code Proxy (:8082) → 免费 LLM 提供商
@@ -100,9 +64,9 @@ Claude Code → Free Claude Code Proxy (:8082) → 免费 LLM 提供商
 
 ---
 
-## 三、六大提供商
+## 六个提供商
 
-### 3.1 NVIDIA NIM（推荐，免费，40 req/min）
+### NVIDIA NIM（推荐，免费，40 req/min）
 
 注册地址：https://build.nvidia.com/settings/api-keys
 
@@ -119,7 +83,7 @@ ENABLE_MODEL_THINKING=true
 
 主流可用模型含 MiniMax-M2.5、Qwen3.5 等。
 
-### 3.2 OpenRouter（大量免费模型）
+### OpenRouter（大量免费模型）
 
 注册地址：https://openrouter.ai/keys
 
@@ -133,7 +97,7 @@ MODEL_HAIKU="open_router/stepfun/step-3.5-flash:free"
 MODEL="open_router/stepfun/step-3.5-flash:free"
 ```
 
-### 3.3 DeepSeek（直接 API）
+### DeepSeek（直接 API）
 
 注册地址：https://platform.deepseek.com/api_keys
 
@@ -144,7 +108,7 @@ MODEL_SONNET="deepseek/deepseek-chat"
 MODEL_HAIKU="deepseek/deepseek-chat"
 ```
 
-### 3.4 LM Studio（完全本地，无 API key）
+### LM Studio（完全本地，无 API key）
 
 本地运行 GGUF 格式模型，无需联网：
 
@@ -156,7 +120,7 @@ MODEL_HAIKU="lmstudio/unsloth/GLM-4.7-Flash-GGUF"
 
 安装 [LM Studio](https://lmstudio.ai)，下载模型，无需 API key。
 
-### 3.5 llama.cpp（本地推理引擎，无 API key）
+### llama.cpp（本地推理引擎，无 API key）
 
 轻量级本地推理，运行 `llama-server`：
 
@@ -166,7 +130,7 @@ MODEL_OPUS="llamacpp/local-model"
 MODEL="llamacpp/local-model"
 ```
 
-### 3.6 Ollama（本地运行时，无 API key）
+### Ollama（本地运行时，无 API key）
 
 简单易用的本地 LLM 运行时，原生 Anthropic Messages API 支持：
 
@@ -178,7 +142,7 @@ MODEL="ollama/llama3.1"
 
 安装后 `ollama serve` 保持运行即可。
 
-### 3.7 混用提供商
+### 混用提供商
 
 每个 `MODEL_*` 变量可以配置不同提供商，灵活组合：
 
@@ -194,9 +158,9 @@ MODEL="nvidia_nim/z-ai/glm4.7"                           # fallback
 
 ---
 
-## 四、安装与快速开始
+## 安装与快速开始
 
-### 4.1 环境准备
+### 环境准备
 
 ```bash
 # 安装 uv
@@ -206,7 +170,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv python install 3.14
 ```
 
-### 4.2 克隆与配置
+### 克隆与配置
 
 ```bash
 git clone https://github.com/Alishahryar1/free-claude-code.git
@@ -215,7 +179,7 @@ cp .env.example .env
 # 编辑 .env，选择提供商并填入 API key
 ```
 
-### 4.3 启动代理 + Claude Code
+### 启动代理 + Claude Code
 
 **终端 1：启动代理**
 ```bash
@@ -231,7 +195,7 @@ $env:ANTHROPIC_AUTH_TOKEN="freecc"; $env:ANTHROPIC_BASE_URL="http://localhost:80
 ANTHROPIC_AUTH_TOKEN="freecc" ANTHROPIC_BASE_URL="http://localhost:8082" claude
 ```
 
-### 4.4 VSCode 扩展配置
+### VSCode 扩展配置
 
 1. 启动代理（同上）
 2. 打开 VSCode Settings → 搜索 `claude-code.environmentVariables`
@@ -246,7 +210,7 @@ ANTHROPIC_AUTH_TOKEN="freecc" ANTHROPIC_BASE_URL="http://localhost:8082" claude
 
 4. 重载扩展，如果看到登录页面点击 Anthropic Console 然后 authorize
 
-### 4.5 IntelliJ 扩展配置
+### IntelliJ 扩展配置
 
 编辑 `~/.jetbrains/acp.json`（Linux / macOS）或 `%APPDATA%/JetBrains/acp-agents/installed.json`（Windows），在 `acp.registry.claude-acp` 的 `env` 中加入：
 
@@ -261,7 +225,7 @@ ANTHROPIC_AUTH_TOKEN="freecc" ANTHROPIC_BASE_URL="http://localhost:8082" claude
 
 ---
 
-## 五、Model Picker：交互式选择模型
+## Model Picker：交互式选择模型
 
 `claude-pick` 是内置的交互式模型选择器，每次启动 Claude Code 时选择模型：
 
@@ -285,7 +249,7 @@ alias claude-kimi='ANTHROPIC_BASE_URL="http://localhost:8082" ANTHROPIC_AUTH_TOK
 
 ---
 
-## 六、可选：身份认证
+## 可选：身份认证
 
 在公网暴露代理时，可以设置 `ANTHROPIC_AUTH_TOKEN` 要求客户端认证：
 
@@ -301,7 +265,7 @@ ANTHROPIC_AUTH_TOKEN="your-secret-token-here" ANTHROPIC_BASE_URL="http://localho
 
 ---
 
-## 七、技术栈与架构
+## 技术栈与架构
 
 | 组件 | 技术选型 |
 |------|---------|
@@ -318,7 +282,7 @@ ANTHROPIC_AUTH_TOKEN="your-secret-token-here" ANTHROPIC_BASE_URL="http://localho
 
 ---
 
-## 八、与 Ollama / LocalAI 等本地方案的区别
+## 与 Ollama / LocalAI 等本地方案的区别
 
 | 对比 | Free Claude Code | Ollama / LM Studio 直接用 |
 |------|-----------------|------------------------|
@@ -332,7 +296,7 @@ Free Claude Code 做的关键工作是格式转换与协议欺骗：它知道 An
 
 ---
 
-## 九、常见问题
+## 常见问题
 
 **Q：免费模型的能力跟 Claude 官方模型差距大吗？**
 
@@ -352,7 +316,7 @@ Claude Code 会收到连接错误，跟 Anthropic API 断连的表现一样。�
 
 ---
 
-## 十、适用场景与决策建议
+## 适用场景与决策建议
 
 | 场景 | 推荐提供商 | 优先级 |
 |------|----------|--------|
@@ -362,105 +326,15 @@ Claude Code 会收到连接错误，跟 Anthropic API 断连的表现一样。�
 | 想用 DeepSeek 推理模型 | DeepSeek（direct API）| 已有 DeepSeek 额度直接用 |
 | 混用不同级别模型 | 混用模式（Opus 走云端，Haiku 走本地）| 最佳性价比 |
 
-**如果你日常开发量不大**，先从 NVIDIA NIM 免费方案开始——不需要任何付费，40 req/min 足够一个人正常使用。
+**日常开发量不大**，先从 NVIDIA NIM 免费方案开始——不需要任何付费，40 req/min 足够一个人正常使用。
 
-**如果对代码隐私有要求**，直接用 LM Studio 下载 GGUF 模型，完全离线。本地模型不考虑 API 费用，但需要你有足够的显存（至少 8GB 推荐 16GB 以上）。
+**代码隐私敏感**，直接用 LM Studio 下载 GGUF 模型，完全离线。本地模型不考虑 API 费用，但需要至少 8GB 显存，推荐 16GB 以上。
 
-**如果你已经买了 DeepSeek API 额度**，把 Opus 路由到 `deepseek-reasoner`、Sonnet / Haiku 路由到 `deepseek-chat` 是个合理的混用方案。
+**已经买了 DeepSeek API 额度**，把 Opus 路由到 `deepseek-reasoner`、Sonnet / Haiku 路由到 `deepseek-chat` 是个合理的混用方案。
 
-**反过来，如果你需要 Claude Code 的完整能力**——尤其是复杂多文件重构、精确的 tool use 调用——免费模型的兼容性可能不够稳。这时直接付 Anthropic API 费用更划算，代理的格式转换层在这个场景下反而可能引入额外的不确定性。
+**需要 Claude Code 的完整能力**——尤其是复杂多文件重构、精确的 tool use 调用——免费模型的兼容性可能不够稳。这时直接付 Anthropic API 费用更划算，代理的格式转换层在这个场景下反而可能引入额外的不确定性。
 
-**如果你需要多实例共享**，把代理部署在一台机器上，所有 Claude Code 实例通过同一个 `ANTHROPIC_BASE_URL` 连接。注意免费提供商的速率限制是共享的，多实例会分摊配额。
-
----
-
-## §13 自测题
-
-### 13.1 基础概念题
-
-1. Free Claude Code 通过哪两个环境变量拦截 Claude Code 的 API 请求？
-2. Free Claude Code 的三层架构是什么？每一层分别做什么？
-3. 代理服务拦截了哪 5 类琐碎请求，直接本地响应？
-4. Free Claude Code 支持哪六大提供商？
-5. 如何让 Claude Code 的 Opus、Sonnet、Haiku 分别使用不同的模型？
-
-### 13.2 场景分析题
-
-1. 你想完全本地运行 Claude Code，不发送代码到云端。应该选择哪个提供商？需要什么硬件配置？
-2. 你的日常开发量不大，想零成本使用 Claude Code。应该选择哪个免费提供商？有什么限制？
-3. 你需要 Claude Code 的完整能力（复杂多文件重构、精确的 tool use 调用）。Free Claude Code 是否适合？为什么？
-
----
-
-## §14 练习
-
-### 练习 1：安装 Free Claude Code 并配置 NVIDIA NIM
-
-**目标**：完成 Free Claude Code 的基础安装，并配置 NVIDIA NIM 作为免费提供商。
-
-**步骤**：
-1. 安装 uv：`curl -LsSf https://astral.sh/uv/install.sh | sh`
-2. 克隆仓库：`git clone https://github.com/Alishahryar1/free-claude-code.git`
-3. 复制配置文件：`cp .env.example .env`
-4. 注册 NVIDIA NIM API Key：https://build.nvidia.com/settings/api-keys
-5. 编辑 `.env`，填入 API Key 并配置模型
-6. 启动代理：`uv run uvicorn server:app --host 0.0.0.0 --port 8082`
-7. 运行 Claude Code：`ANTHROPIC_AUTH_TOKEN="freecc" ANTHROPIC_BASE_URL="http://localhost:8082" claude`
-
-**验收标准**：
-- 代理成功启动，监听 `:8082`
-- Claude Code 成功运行，并通过 NVIDIA NIM 免费模型响应
-
-### 练习 2：配置 VSCode 扩展使用 Free Claude Code
-
-**目标**：在 VSCode 中配置 Claude Code 扩展，使用 Free Claude Code 代理。
-
-**步骤**：
-1. 完成练习 1，确保代理正在运行
-2. 打开 VSCode Settings，搜索 `claude-code.environmentVariables`
-3. 添加环境变量配置（参考文章 §4.4）
-4. 重载 VSCode 扩展
-5. 在 VSCode 中打开 Claude Code 扩展，测试是否正常工作
-
-**验收标准**：
-- VSCode 扩展成功连接到 Free Claude Code 代理
-- 可以在 VSCode 中使用 Claude Code，通过免费模型响应
-
-### 练习 3：混用不同提供商
-
-**目标**：理解如何为 Opus、Sonnet、Haiku 分别配置不同的提供商。
-
-**步骤**：
-1. 注册多个提供商的 API Key（如 NVIDIA NIM、OpenRouter、DeepSeek）
-2. 编辑 `.env`，为 `MODEL_OPUS`、`MODEL_SONNET`、`MODEL_HAIKU` 分别配置不同的模型
-3. 重启代理
-4. 运行 Claude Code，测试不同级别的模型是否使用了不同的提供商
-
-**验收标准**：
-- 成功配置混用模式
-- Opus、Sonnet、Haiku 分别使用不同的提供商和模型
-- 理解 per-model 路由的原理和适用场景
-
----
-
-## §15 进阶路径
-
-| 阶段 | 内容 | 推荐资源 |
-|------|------|----------|
-| **入门** | 完成基础安装，配置 NVIDIA NIM 免费方案 | 本文章 §4-§5 |
-| **实践** | 完成 3 个练习，在 VSCode 中配置 Claude Code | Free Claude Code GitHub README |
-| **深入** | 研究代理服务的源码，理解格式转换与协议欺骗 | [github.com/Alishahryar1/free-claude-code](https://github.com/Alishahryar1/free-claude-code) |
-| **专家** | 添加新的提供商适配器，扩展 Free Claude Code | Free Claude Code 架构文档 |
-| **贡献** | 参与社区贡献，修复 bug 或添加新功能 | Free Claude Code GitHub Issues |
-
-### 深入学习的方向
-
-1. **API 代理设计**：学习如何构建兼容多个 LLM 提供商的代理服务
-2. **格式转换**：理解 Anthropic Messages API 与 OpenAI Chat API 之间的差异
-3. **协议欺骗**：学习如何让客户端以为自己在跟原始服务器通信
-4. **本地 LLM 部署**：学习如何使用 LM Studio、llama.cpp、Ollama 运行本地模型
-
----
+**多实例共享**，把代理部署在一台机器上，所有 Claude Code 实例通过同一个 `ANTHROPIC_BASE_URL` 连接。注意免费提供商的速率限制是共享的，多实例会分摊配额。
 
 ---
 
@@ -472,8 +346,3 @@ Claude Code 会收到连接错误，跟 Anthropic API 断连的表现一样。�
 - DeepSeek：https://platform.deepseek.com/api_keys
 
 🦞 每日 08:00 自动更新
-
----
-
-**文档信息**
-难度：⭐⭐⭐ | 类型：实践指南 | 更新日期：2026-04-27 | 预计阅读时间：40-50 分钟
