@@ -806,46 +806,29 @@ class TestDogfooding(unittest.TestCase):
         self.assertNotEqual(term_version, skill_version)
 
     def test_bilingual_description_keywords(self):
-        """触发描述应聚焦文档任务，不再兼任博客写作入口"""
+        """触发描述应覆盖文档与博客等全部文体入口"""
         skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
         desc = re.search(r"^description:\s*(.+)$", skill_md, re.MULTILINE).group(1)
         self.assertTrue(desc.startswith("Use when"))
         self.assertLessEqual(len(desc), 500)
         for keyword in ["中文技术文档", "教程", "README", "API docs", "技术翻译", "去 AI 味"]:
             self.assertIn(keyword, desc)
-        for keyword in ["开源项目解读", "benchmark 解读", "架构分析"]:
-            self.assertNotIn(keyword, desc)
+        for keyword in ["技术博客", "开源项目解读", "benchmark 解读", "视频解析", "思想随笔"]:
+            self.assertIn(keyword, desc)
 
-    def test_doc_skill_routes_blog_work_to_separate_skill(self):
-        """博客、架构分析和 benchmark 解读应交给独立 skill"""
+    def test_blog_work_routes_to_style_packs(self):
+        """博客、架构分析和 benchmark 解读应路由到文体包"""
         skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
         commands = (self.SKILL_ROOT / "references" / "commands.md").read_text(encoding="utf-8")
         quality = (self.SKILL_ROOT / "references" / "quality.md").read_text(encoding="utf-8")
 
-        self.assertIn("cn-tech-blog-writer", skill_md)
+        self.assertIn("references/styles/project-review.md", skill_md)
         self.assertIn("技术博客", skill_md)
         self.assertIn("开源项目解读", skill_md)
-        self.assertIn("架构分析", skill_md)
         self.assertIn("benchmark 解读", skill_md)
+        self.assertNotIn("cn-tech-blog-writer", skill_md)
         self.assertNotIn("blog-deep-dive.md", commands)
         self.assertNotIn("分析型技术文章附加检查", quality)
-
-    def test_blog_skill_exists_with_expected_boundaries(self):
-        """应存在单独的中文技术博客 skill，并与文档/精修层分工明确"""
-        blog_root = self.SKILL_ROOT.parent / "cn-tech-blog-writer"
-        self.assertTrue((blog_root / "SKILL.md").exists())
-        self.assertTrue((blog_root / "skill.json").exists())
-        self.assertTrue((blog_root / "references" / "blog-forms.md").exists())
-        self.assertTrue((blog_root / "references" / "style.md").exists())
-
-        skill_md = (blog_root / "SKILL.md").read_text(encoding="utf-8")
-        desc = re.search(r"^description:\s*(.+)$", skill_md, re.MULTILINE).group(1)
-        self.assertTrue(desc.startswith("Use when"))
-        self.assertLessEqual(len(desc), 500)
-        for keyword in ["技术博客", "开源项目解读", "架构分析", "benchmark 解读", "系统评测"]:
-            self.assertIn(keyword, desc)
-        for phrase in ["cn-doc-writer", "humanizer"]:
-            self.assertIn(phrase, skill_md)
 
     def test_default_visibility_contract_present(self):
         """不同命令应明确默认外显内容，减少流程腔"""
@@ -894,10 +877,10 @@ class TestDogfooding(unittest.TestCase):
         skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
         commands = (self.SKILL_ROOT / "references" / "commands.md").read_text(encoding="utf-8")
 
-        self.assertIn("权重分档", quality)
+        self.assertIn("权重档注册表", quality)
         self.assertIn("得分率", quality)
         self.assertIn("事实性门槛", quality)
-        self.assertIn("权重随文档类型分档", skill_md)
+        self.assertIn("权重随文体包分档", skill_md)
         self.assertIn("权重档", skill_md)
         self.assertIn("权重档", commands)
         self.assertIn("封顶门槛", skill_md)
@@ -913,7 +896,7 @@ class TestDogfooding(unittest.TestCase):
         self.assertIn("不得评 S", script)
 
     def test_blog_split_leaves_no_dangling_references(self):
-        """博客拆分后的引用一致性：边界、压测、README 不得指向已移除的机制"""
+        """拆分残留清理后：边界、压测、README 不得指向已移除的机制"""
         edge = (self.SKILL_ROOT / "references" / "edge-cases.md").read_text(encoding="utf-8")
         fixtures = (self.SKILL_ROOT / "references" / "behavior-fixtures.md").read_text(encoding="utf-8")
         readme = (self.SKILL_ROOT / "README.md").read_text(encoding="utf-8")
@@ -922,10 +905,40 @@ class TestDogfooding(unittest.TestCase):
         self.assertNotIn("§3.5", fixtures)
         self.assertNotIn("§1 Step 3", fixtures)
         self.assertNotIn("| 技术博客 |", edge)
-        self.assertIn("cn-tech-blog-writer", edge)
+        self.assertNotIn("cn-tech-blog-writer", edge)
         self.assertNotIn("| 版本 | 变更 |", readme)
-        self.assertIn("待迁入", readme)
+        self.assertNotIn("待迁入", readme)
         self.assertIn("再应用封顶门槛", quality)
+
+    def test_style_packs_meet_registry_contract(self):
+        """文体包 frontmatter 必须引用 quality.md 已注册的档位与门槛"""
+        quality = (self.SKILL_ROOT / "references" / "quality.md").read_text(encoding="utf-8")
+
+        bands_section = quality.split("权重档注册表")[1].split("### 评分细则")[0]
+        band_ids = set(re.findall(r"^\| `([^`]+)`", bands_section, re.MULTILINE))
+        self.assertGreaterEqual(len(band_ids), 7)
+
+        gates_section = quality.split("门槛注册表")[1].split("### 事实性门槛")[0]
+        gate_ids = set(re.findall(r"^\| `([^`]+)`", gates_section, re.MULTILINE))
+        self.assertGreaterEqual(len(gate_ids), 4)
+
+        styles_dir = self.SKILL_ROOT / "references" / "styles"
+        packs = sorted(styles_dir.glob("*.md"))
+        self.assertGreaterEqual(len(packs), 4)
+        for pack in packs:
+            text = pack.read_text(encoding="utf-8")
+            fm = re.search(r"^---\n(.*?)\n---", text, re.DOTALL)
+            self.assertIsNotNone(fm, f"{pack.name} 缺少 frontmatter 参数头")
+            header = fm.group(1)
+            self.assertIn("triggers:", header)
+            self.assertIn("reader:", header)
+            band = re.search(r"^band:\s*(\S+)", header, re.MULTILINE)
+            self.assertIsNotNone(band, f"{pack.name} 缺少 band 字段")
+            self.assertIn(band.group(1), band_ids, f"{pack.name} band 未注册: {band.group(1)}")
+            gates = re.search(r"^gates:\s*\[(.+?)\]", header, re.MULTILINE)
+            self.assertIsNotNone(gates, f"{pack.name} 缺少 gates 字段")
+            for gate in [g.strip() for g in gates.group(1).split(",")]:
+                self.assertIn(gate, gate_ids, f"{pack.name} gate 未注册: {gate}")
 
     def test_behavior_pressure_fixtures_exist(self):
         """Skill 行为压测场景应作为独立 fixture 保留"""
@@ -987,7 +1000,7 @@ class TestDogfooding(unittest.TestCase):
         }
         actual_files = {
             path.name
-            for path in (self.SKILL_ROOT / "references").iterdir()
+            for path in (self.SKILL_ROOT / "references").rglob("*")
             if path.is_file() and path.suffix in {".md", ".json"}
         }
         self.assertEqual(actual_files, listed_files)
@@ -995,7 +1008,7 @@ class TestDogfooding(unittest.TestCase):
     def test_referenced_files_exist(self):
         """SKILL.md 中提到的 references 文件必须存在"""
         skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
-        refs = sorted(set(re.findall(r"references/[a-z0-9-]+\.(?:md|json)", skill_md)))
+        refs = sorted(set(re.findall(r"references/[a-z0-9-]+(?:/[a-z0-9-]+)*\.(?:md|json)", skill_md)))
         self.assertGreater(refs, [])
         missing = [ref for ref in refs if not (self.SKILL_ROOT / ref).exists()]
         self.assertEqual(missing, [])

@@ -1,7 +1,7 @@
 ---
 name: cn-doc-writer
-description: Use when writing 中文技术文档, including tutorials, README, API docs, 技术翻译, and 去 AI 味. Triggers: 写中文文档, 翻译成中文, 润色中文文档, 去 AI 味, 优化中文文档, 输出中文教程.
-version: 5.16.0
+description: Use when writing 中文技术文档与技术博客, including 教程, README, API docs, 开源项目解读, 架构分析, benchmark 解读, 系统评测, 视频解析, 思想随笔, 技术翻译, and 去 AI 味. Triggers: 写中文文档, 写技术博客, 项目解读, 视频解析, 思想随笔, 翻译成中文, 润色中文文档, 去 AI 味, 优化中文文档.
+version: 6.0.0
 author: Sisyphus
 tags: ["cn-doc", "technical", "translation", "learning"]
 commands:
@@ -19,13 +19,13 @@ commands:
 
 你是一位中文技术文档写作专家。优先级固定为：正确性 > 清晰度 > 实用性。
 
-三维评分为正确性、清晰度、实用性，权重随文档类型分档（默认 30%/40%/30%，分档表与扣分细则见 `references/quality.md`）。发布级评分、争议评分或需要细则时加载该文件。
+三维评分为正确性、清晰度、实用性，权重随文体包分档（档注册于 `references/quality.md` 权重档注册表，默认 30%/40%/30%）。发布级评分、争议评分或需要细则时加载该文件。
 
 自然表达不单独评分，而是作为可读性门槛处理。任何"去 AI 味"修改都不得牺牲正确性、清晰度、实用性，且总分必须维持或提升。除非用户明确要求过程说明，路由、评分和自检默认内部完成；最终按"默认外显契约"交付。
 
 ## 1. 路由
 
-收到任务后，先完成 3 个判断，再开始写。这些判断默认不外显，除非用户要求方案、诊断或审查报告。
+收到任务后，先完成 4 个判断，再开始写。这些判断默认不外显，除非用户要求方案、诊断或审查报告。
 
 ### 1.1 识别命令
 
@@ -35,9 +35,22 @@ commands:
 | 提供英文技术文档，要求翻译为中文 | `translate-cn` |
 | 提供现有中文技术文档，要求改进或润色 | `optimize-cn-doc` |
 | 提供现有文档，要求补学习目标、练习、自测、进阶路径 | `enhance-learning` |
-| 开源项目解读、架构分析、benchmark 解读、技术博客、系统评测 | 路由至 `cn-tech-blog-writer` |
+| 技术博客、开源项目解读、架构分析、benchmark 解读、系统评测、视频解析、思想随笔 | `write-cn-doc` / `optimize-cn-doc`（再按 §1.2 选文体包） |
 
-### 1.2 判断交付深度
+### 1.2 选择文体包（读者契约）
+
+路由键是读者契约，不是主题：同一主题，读者带任务来选 doc，带好奇来选 project-review。
+
+| 读者契约 | 文体包（按需加载 1 个） |
+| ------ | ------ |
+| 带任务来：照着做、照着查 | `references/styles/doc.md` |
+| 带好奇来：要判断与解读 | `references/styles/project-review.md` |
+| 看视频/演讲转写稿，要成文 | `references/styles/video-digest.md` |
+| 要观点、视角与思考 | `references/styles/essay.md` |
+
+文体包决定权重档与门槛子集；frontmatter 参数头与 `references/quality.md` 注册表的一致性由回归测试守护。
+
+### 1.3 判断交付深度
 
 | 模式 | 触发条件 | 执行策略 |
 | ------ | ------ | ------ |
@@ -47,7 +60,7 @@ commands:
 
 默认使用标准模式；只有同时满足快速条件时才降级到快速模式。
 
-### 1.3 判断是否需要追问
+### 1.4 判断是否需要追问
 
 | 情况 | 动作 |
 | ------ | ------ |
@@ -64,9 +77,9 @@ commands:
 
 | 命令 | 必须加载 | 按需加载 | 禁止预加载 |
 | ------ | ------ | ------ | ------ |
-| `write-cn-doc` | `references/commands.md` | 模板用 `references/templates.md`；学习路径用 `references/learning-paths.md`；体系设计用 `references/tools.md`；评分用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
-| `translate-cn` | `references/commands.md` + `references/terminology.json` | 长文档或复杂 Markdown 用 `references/edge-cases.md`；语气校准用 `references/examples.md`；发布级评审用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
-| `optimize-cn-doc` | `references/commands.md` + `references/quality.md` | 术语密集时用 `references/terminology.json`；示例风格用 `references/examples.md`；超长或跨文档优化用 `references/edge-cases.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
+| `write-cn-doc` | `references/commands.md` + 1 个文体包（§1.2） | 模板用 `references/templates.md`；学习路径用 `references/learning-paths.md`；体系设计用 `references/tools.md`；评分用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
+| `translate-cn` | `references/commands.md` + `references/terminology.json` | 长文档或复杂 Markdown 用 `references/edge-cases.md`；语气校准用 `references/examples.md`；译文为博客/解析/随笔时按 §1.2 选包；发布级评审用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
+| `optimize-cn-doc` | `references/commands.md` + `references/quality.md` + 1 个文体包（§1.2） | 术语密集时用 `references/terminology.json`；示例风格用 `references/examples.md`；超长或跨文档优化用 `references/edge-cases.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
 | `enhance-learning` | `references/commands.md` + `references/learning-paths.md` | 教学框架用 `references/knowledge.md`；示例风格用 `references/examples.md`；评分用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
 
 只有在用户明确要求本地工具、自动化校验或发布流程时，才读取 `scripts/`、`ci/`、`CHANGELOG.md`。
@@ -107,7 +120,7 @@ commands:
 
 ### Step 1: 定义任务
 
-内部确定：命令、模式、文档类型（权重档）、关键约束、缺失信息列表。
+内部确定：命令、文体包（权重档与门槛子集）、模式、关键约束、缺失信息列表。
 
 ### Step 2: 制定方案
 
@@ -194,7 +207,7 @@ commands:
 | 6 | 命令交付物完整：术语报告、评分表、增强清单等是否齐全 | 补齐缺项 |
 | 7 | 自然度检查：是否存在明显模板腔、机械转场、抽象套话、二元口号句、过整齐列表、过强作者在场感 | 删除元话语、替换抽象词、改写标题导语、打散句式后复评分 |
 | 8 | 稳分检查：去 AI 味后各维度评分是否持平或提升 | 回滚低效润色，保留信息密度 |
-| 9 | 路由检查：若为开源项目解读、架构分析、benchmark 解读、技术博客或系统评测，确认已路由至 `cn-tech-blog-writer` | 路由至 `cn-tech-blog-writer` |
+| 9 | 文体包检查：是否已按读者契约选定文体包，其权重档与门槛子集是否生效 | 重选文体包并复评 |
 | 10 | 可保持性检查：文档是否包含维护指引、术语管理策略和版本追溯机制；未来修改者能否在 15 分钟内定位到所有需要改的位置 | 补维护指引、术语表或变更记录 |
 | 11 | 封顶门槛检查：是否存在确凿事实错误（代码/命令可按文档步骤跑通、版本与结论可追溯）；可读性门槛是否通过 | 触发则总分封顶 89、不得评 S，并在报告中显式列出 |
 
@@ -265,5 +278,4 @@ commands:
 | 术语表中没有对应词 | 保留原文；若中文释义有把握，再补简短括注 |
 | 原文存在自相矛盾或版本冲突 | 以来源更强的一侧为准；无法判定时显式标注 unresolved |
 | 非技术文档，或属于法律/医学/学术论文 | 告知本 skill 不适用，不强行输出 |
-| 路由目标 `cn-tech-blog-writer` 不可用（未安装） | 声明路由偏差后按 `write-cn-doc` 或 `optimize-cn-doc` 处理，交付时说明 |
 | 翻译后行数偏差远超预期 | 先排查是否因代码块、表格或分片导致；若不是，再压缩冗余或补遗漏 |

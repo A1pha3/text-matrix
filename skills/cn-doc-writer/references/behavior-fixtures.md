@@ -40,7 +40,7 @@
 关联规则：
 
 - SKILL.md §4 示例（benchmark 正例）
-- SKILL.md §1.1 路由（分析型任务路由至 `cn-tech-blog-writer`）
+- references/styles/project-review.md
 
 ## insufficient-facts
 
