@@ -888,6 +888,30 @@ class TestDogfooding(unittest.TestCase):
         ]:
             self.assertNotIn(copied_catalog_phrase, quality)
 
+    def test_scoring_model_weight_bands_and_gates(self):
+        """分档权重、得分率公式、双封顶门槛应在质量文件与执行流中就位"""
+        quality = (self.SKILL_ROOT / "references" / "quality.md").read_text(encoding="utf-8")
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        commands = (self.SKILL_ROOT / "references" / "commands.md").read_text(encoding="utf-8")
+
+        self.assertIn("权重分档", quality)
+        self.assertIn("得分率", quality)
+        self.assertIn("事实性门槛", quality)
+        self.assertIn("权重随文档类型分档", skill_md)
+        self.assertIn("权重档", skill_md)
+        self.assertIn("权重档", commands)
+        self.assertIn("封顶门槛", skill_md)
+        self.assertIn("选题价值", skill_md)
+
+        self.assertNotIn("X/30", commands)
+        self.assertNotIn("20/25", quality)
+
+    def test_ai_tone_gate_message_matches_current_model(self):
+        """check_ai_tone.py 的门槛说明应对齐现行评分模型"""
+        script = (self.SKILL_ROOT / "scripts" / "check_ai_tone.py").read_text(encoding="utf-8")
+        self.assertNotIn("20/25", script)
+        self.assertIn("不得评 S", script)
+
     def test_behavior_pressure_fixtures_exist(self):
         """Skill 行为压测场景应作为独立 fixture 保留"""
         fixture = self.SKILL_ROOT / "references" / "behavior-fixtures.md"

@@ -169,9 +169,9 @@ class AIToneChecker:
             "matches": phrase_data["matches"][:20],
             "template_headings": heading_hits[:20],
             "gate_effect": (
-                "通过：可继续参与 A / S / 100 分评估"
+                "通过：脚本覆盖的高频信号未命中；完整门槛仍需对照 quality.md 去 AI 味门槛评估"
                 if gate_passed
-                else "未通过：建议按 quality.md 将可读性封顶 20/25，总分不超过 89"
+                else "未通过：按 quality.md 可读性门槛处理，总分不超过 89 且不得评 S"
             ),
         }
 

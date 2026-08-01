@@ -79,7 +79,7 @@
 
 关联规则：
 
-- SKILL.md §3 Step 4.5
+- SKILL.md §3 Step 4
 - references/examples.md 完整信号库
 
 ## auto-de-ai-default
