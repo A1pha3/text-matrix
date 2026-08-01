@@ -4,7 +4,7 @@ date: "2026-03-25T10:00:00+08:00"
 slug: "claude-api-agent-architecture-design"
 aliases:
   - /posts/tech/claude-api-agent-architecture-design/
-description: "Claude API 的 Agent 架构设计：单 Agent 与多 Agent 系统、并行执行与链式调用模式、条件路由与状态管理、错误处理与恢复机制，以及生产环境的安全考量与部署方案。"
+description: "Claude API Agent 架构设计深度指南：单 Agent 与多 Agent 系统、并行与链式执行模式、条件路由与状态管理、错误处理与恢复机制，以及生产环境的安全考量与部署方案。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "AI Agent", "Python"]
@@ -12,21 +12,14 @@ tags: ["Claude", "AI Agent", "Python"]
 
 # Claude API 基础专题（七）：Agent 架构与智能体设计
 
-> 预计阅读时间：45 分钟 | 难度：⭐⭐⭐⭐
-
----
-
-> **目标读者**：希望构建复杂AI应用系统的架构师与高级开发者
+> **目标读者**：构建复杂 AI 应用系统的架构师与高级开发者
 > **前置知识**：已完成第一篇《API基础》、第二篇《提示词工程》、第三篇《工具调用》、第四篇《RAG系统》、第五篇《MCP协议》、第六篇《Claude Code与Computer Use》
-> **说明**：本文是 Claude API 系列的收官篇，梳理 Agent 架构的核心概念与设计模式
 
 ---
 
 ## 学习目标
 
-读完本文后，你应当能够：
-
-1. 说清 Agent 与单次工具调用的边界，并指出五个必备要素中缺一项会导致什么后果
+1. 说清 Agent 与单次工具调用的边界，指出五个必备要素中缺一项会导致什么后果
 2. 写出一个状态外部化、终止条件前置的最小 Agent 主循环
 3. 根据任务特征在星型、链式、网状三种多 Agent 架构中做出取舍，并说明各自的失败模式
 4. 针对上下文溢出、限流、工具失败三类常见错误，给出对应的重试与回退策略
@@ -49,87 +42,66 @@ tags: ["Claude", "AI Agent", "Python"]
 
 ---
 
-## 7.1 从工具调用到Agent：跨越的关键一步
+## 7.1 从工具调用到 Agent：跨越的关键一步
 
-### 为什么需要Agent？
+### 为什么需要 Agent？
 
-工具调用本身已经能解决不少问题，但遇到多步骤、有分支、需要保留中间状态的任务时就会卡住。先看工具调用的典型工作模式：
+工具调用能解决不少问题，但遇到多步骤、有分支、需要保留中间状态的任务时就会卡住。先看工具调用的典型模式：
 
 ```python
-# 工具调用的工作模式
 result = await client.messages.create(
     model="claude-opus-4-20250514",
-    messages=[{
-        "role": "user",
-        "content": "帮我查一下北京天气"
-    }],
+    messages=[{"role": "user", "content": "帮我查一下北京天气"}],
     tools=[{"name": "get_weather", ...}]
 )
 ```
 
 这个模式里，LLM 是被动响应者：用户提问 → LLM 调用工具 → 工具返回结果 → LLM 回答。LLM 不持有状态，不主动决策，只根据当前输入决定调用哪个工具。
 
-现实任务往往比这复杂。下表列出工具调用在几类任务上的局限，以及 Agent 能补上的能力：
+现实任务往往比这复杂：
 
 | 任务特征 | 工具调用的局限 | Agent 能补上的能力 |
-|----------|--------------|---------------|
+|----------|----------------|-------------------|
 | 多步骤决策 | 每次决策独立 | 保持目标状态 |
 | 条件分支 | 无法根据结果跳转 | 动态规划路径 |
 | 长期任务 | 上下文会丢失 | 持久化状态 |
 | 多工具协同 | 缺乏编排能力 | 编排执行流程 |
 | 错误恢复 | 失败即终止 | 重试和回退 |
 
-### Agent的本质定义
+### Agent 的本质定义
 
 Agent 可以拆成五个要素：
 
 > **Agent = LLM + 状态 + 工具 + 执行循环 + 终止条件**
 
-```text
+```
 ┌─────────────────────────────────────────────────────────────┐
 │                        Agent 系统                           │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   ┌───────────┐                                            │
-│   │    LLM    │ ← 大脑：理解、推理、决策                     │
-│   └─────┬─────┘                                            │
-│         │                                                  │
-│   ┌─────▼─────┐                                            │
-│   │   状态    │ ← 记忆：目标、上下文、中间结果                 │
-│   └─────┬─────┘                                            │
-│         │                                                  │
-│   ┌─────▼─────┐                                            │
-│   │   工具    │ ← 能力：搜索、代码、文件、API                 │
-│   └─────┬─────┘                                            │
-│         │                                                  │
-│   ┌─────▼─────┐                                            │
-│   │  执行循环  │ ← 引擎：观察→决策→执行                      │
-│   └─────┬─────┘                                            │
-│         │                                                  │
-│   ┌─────▼─────┐                                            │
-│   │  终止条件  │ ← 边界：完成、出错、超时                     │
-│   └───────────┘                                            │
-│                                                             │
+│   ┌───────────┐   ┌───────────┐   ┌───────────┐            │
+│   │    LLM    │   │   状态    │   │   工具    │            │
+│   │ 理解/推理  │   │ 目标/上下文 │   │ 搜索/代码  │            │
+│   └─────┬─────┘   └─────┬─────┘   └─────┬─────┘            │
+│         └───────┬───────┘               │                  │
+│           ┌─────▼─────┐                 │                  │
+│           │  执行循环  │─────────────────┘                  │
+│           │ 观察→决策→执行│                                 │
+│           └─────┬─────┘                                    │
+│           ┌─────▼─────┐                                    │
+│           │  终止条件  │                                    │
+│           │ 完成/出错/超时│                                 │
+│           └───────────┘                                    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**缺了任何一个都跑不起来：**
-
-- **LLM**：没有 LLM 就没有智能决策
-- **状态**：没有状态就无法处理多步骤任务
-- **工具**：没有工具就无法影响外部世界
-- **执行循环**：没有循环就无法持续工作
-- **终止条件**：没有终止条件就会无限循环
-
-这五项也是后面几节展开的线索：7.2 讲单 Agent 如何把这五项组装起来，7.3 讲多 Agent 之间如何分工，7.5 讲状态怎么管，7.6 讲出错时怎么办。
+缺了任何一个都跑不起来：没有 LLM 就没有智能决策，没有状态就无法处理多步骤任务，没有工具就无法影响外部世界，没有执行循环就无法持续工作，没有终止条件就会无限循环。
 
 ### Agent vs 传统软件
 
 | 维度 | 传统软件 | Agent |
 |------|---------|-------|
-| 决策方式 | 确定性的if-else | 基于LLM的概率推理 |
+| 决策方式 | 确定性的 if-else | 基于 LLM 的概率推理 |
 | 流程定义 | 预先设计 | 运行时动态规划 |
-| 错误处理 | 显式try-catch | 自我纠错能力 |
+| 错误处理 | 显式 try-catch | 自我纠错能力 |
 | 状态管理 | 显式变量 | 隐式上下文 |
 | 扩展方式 | 模块化 | 添加工具/提示词 |
 | 可预测性 | 高 | 中（有一定随机性） |
@@ -140,205 +112,119 @@ Agent 可以拆成五个要素：
 
 ### 最小可运行 Agent
 
-从一个最简单的 Agent 入手，逐步理解其架构：
-
 ```python
 from anthropic import Anthropic
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from typing import Any
 import asyncio
 
 @dataclass
 class AgentState:
-    """
-    Agent状态容器
-
-    为什么需要专门的状态类？
-    1. 封装所有状态，边界清晰
-    2. 便于序列化和持久化
-    3. 类型提示让代码更健壮
-    """
-    goal: str                           # 当前目标
-    messages: list[dict] = field(default_factory=list)  # 对话历史
-    context: dict[str, Any] = field(default_factory=dict) # 共享上下文
-    results: list[dict] = field(default_factory=list)    # 执行结果
-    iterations: int = 0                 # 迭代计数器
-    max_iterations: int = 10           # 最大迭代次数
+    goal: str
+    messages: list[dict] = field(default_factory=list)
+    context: dict[str, Any] = field(default_factory=dict)
+    results: list[dict] = field(default_factory=list)
+    iterations: int = 0
+    max_iterations: int = 10
 
 class SimpleAgent:
-    """
-    最小可运行Agent
-
-    设计原则：
-    - 简单性：先让它跑起来
-    - 可观测性：每个步骤都记录
-    - 可停止：明确的终止条件
-    """
-
     def __init__(self, api_key: str, tools: list[dict]):
         self.client = Anthropic(api_key=api_key)
         self.tools = tools
 
     async def run(self, goal: str) -> dict[str, Any]:
-        """
-        Agent主循环
-
-        流程：
-        1. 初始化状态
-        2. 进入执行循环
-        3. 每次迭代：LLM推理 → 调用工具 → 更新状态
-        4. 达到终止条件时退出
-        """
         state = AgentState(goal=goal)
-        # 把用户目标作为第一条消息塞进上下文
-        state.messages.append({
-            "role": "user",
-            "content": f"目标：{goal}\n\n请决定下一步行动。"
-        })
+        state.messages.append({"role": "user", "content": f"目标：{goal}\n\n请决定下一步行动。"})
 
         while not self._should_terminate(state):
             state.iterations += 1
-
-            # 步骤1：LLM推理，传入完整对话历史
             response = await self._think(state)
 
-            # 步骤2：检查是否需要调用工具
-            tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
-            if tool_use_blocks:
-                # 把 assistant 的响应加入历史
+            tool_blocks = [b for b in response.content if b.type == "tool_use"]
+            if tool_blocks:
                 state.messages.append({"role": "assistant", "content": response.content})
-                # 执行所有工具调用，按 Anthropic API 规范构造 tool_result
                 tool_results = []
-                for tool_use in tool_use_blocks:
-                    tool_result = await self._execute_tool(tool_use)
-                    state.results.append(tool_result)
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_use.id,
-                        "content": str(tool_result),
-                    })
-                # tool_result 必须以 user 角色回传
+                for tb in tool_blocks:
+                    result = await self._execute_tool(tb)
+                    state.results.append(result)
+                    tool_results.append({"type": "tool_result", "tool_use_id": tb.id, "content": str(result)})
                 state.messages.append({"role": "user", "content": tool_results})
             else:
-                # LLM直接回答，任务完成
-                text_blocks = [b for b in response.content if b.type == "text"]
-                return {
-                    "status": "completed",
-                    "goal": goal,
-                    "result": text_blocks[0].text if text_blocks else "",
-                    "iterations": state.iterations
-                }
+                text = "".join(b.text for b in response.content if b.type == "text")
+                return {"status": "completed", "goal": goal, "result": text, "iterations": state.iterations}
 
-        return {
-            "status": "terminated",
-            "goal": goal,
-            "reason": "max_iterations_reached",
-            "iterations": state.iterations
-        }
+        return {"status": "terminated", "goal": goal, "reason": "max_iterations_reached", "iterations": state.iterations}
 
     def _should_terminate(self, state: AgentState) -> bool:
-        """判断是否应该终止"""
-        # 达到最大迭代次数
-        if state.iterations >= state.max_iterations:
-            return True
-        # 其他终止条件可以在这里添加
-        return False
+        return state.iterations >= state.max_iterations
 
     async def _think(self, state: AgentState) -> Any:
-        """LLM推理：传入完整对话历史，让模型能看到之前的工具调用与结果"""
-        response = self.client.messages.create(
-            model="claude-opus-4-20250514",
-            max_tokens=4096,
-            messages=state.messages,
-            tools=self.tools
+        return self.client.messages.create(
+            model="claude-opus-4-20250514", max_tokens=4096,
+            messages=state.messages, tools=self.tools,
         )
-        return response
 
     async def _execute_tool(self, tool_use: Any) -> dict:
-        """执行工具调用，返回原始结果（由调用方按 API 规范包装）"""
-        tool_name = tool_use.name
-        tool_args = tool_use.input
-
-        # 这里应该调用实际的工具
-        # 为了简化，省略具体实现
-        return {
-            "tool": tool_name,
-            "args": tool_args,
-            "output": f"Tool {tool_name} executed"
-        }
+        return {"tool": tool_use.name, "args": tool_use.input, "output": f"Tool {tool_use.name} executed"}
 ```
 
-上面这段代码有两处与 Anthropic Messages API 规范强相关的细节，容易踩坑：
+上面这段代码有两处与 Anthropic Messages API 规范相关的细节，容易踩坑：
 
 1. **tool_result 必须以 `role: "user"` 回传**，且 `content` 是 `tool_result` 类型的块数组，每块带 `tool_use_id` 指向对应的工具调用。如果直接把工具返回值塞进 `role: "assistant"`，API 会报 400。
-2. **`_think` 必须传入完整的 `state.messages`**，否则 LLM 看不到上一轮的工具调用和结果，会重复发起相同的调用。原始版本每次只发一条新消息，等于丢掉了上下文。
+2. **`_think` 必须传入完整的 `state.messages`**，否则 LLM 看不到上一轮的工具调用和结果，会重复发起相同的调用。
 
 参考来源：[Anthropic Messages API - Tool use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
 
 ### 为什么要这样设计？
 
-**1. 状态外部化（AgentState 类）**
+**1. 状态外部化**
 
 ```python
-# 好：状态外部化
+# 好
 state = AgentState(goal=goal)
-while not self._should_terminate(state):
-    ...
+while not self._should_terminate(state): ...
 
-# 不好：状态散落在各处
+# 不好：状态散落在 self 属性里
 while self.iterations < self.max_iterations:
     self.messages.append(...)
-    self.context.update(...)
 ```
 
-把状态收进 dataclass，是为了能序列化保存（断点续跑）、热切换（修改状态不影响逻辑）、并行运行多个 Agent 实例。如果状态散落在 `self` 的各个属性里，这三件事都做不了。
+把状态收进 dataclass，是为了能序列化保存（断点续跑）、热切换（修改状态不影响逻辑）、并行运行多个 Agent 实例。
 
 **2. 终止条件前置判断**
 
 ```python
 # 好：先检查再执行
-while not self._should_terminate(state):
-    response = await self._think(state)
-    ...
+while not self._should_terminate(state): ...
 
 # 不好：先执行再检查
 while True:
     response = await self._think(state)
-    if self._should_terminate(state):
-        break
+    if self._should_terminate(state): break
 ```
 
-先检查再执行，避免在达到终止条件后还多跑一次 LLM 推理——这一次推理既浪费 token，又可能触发不必要的工具调用。
+先检查再执行，避免在达到终止条件后还多跑一次 LLM 推理——既浪费 token，又可能触发不必要的工具调用。
 
-**3. 结果记录完整**
+**3. 完整记录对话历史**
 
-主循环里每次工具调用后，assistant 响应和 tool_result 都要追加到 `state.messages`：
-
-```python
-state.messages.append({"role": "assistant", "content": response.content})
-state.messages.append({"role": "user", "content": tool_results})
-```
-
-完整的对话历史让 LLM 在下一轮推理时能看到之前的工具调用和返回值，否则会重复发起相同调用。这也是 7.2 节开头强调的 API 规范要求。
+每次工具调用后，assistant 响应和 tool_result 都要追加到 `state.messages`，否则 LLM 看不到之前的结果，会重复发起相同调用。
 
 ---
 
-## 7.3 多Agent协作系统
+## 7.3 多 Agent 协作系统
 
-### 为什么需要多Agent？
+### 为什么需要多 Agent？
 
 单个 Agent 处理复杂任务时会遇到几个具体问题：要同时精通多个领域、上下文越来越长导致响应变慢、一个环节出错可能污染整个对话。以旅行规划为例：
 
-```text
-任务：帮用户规划一次旅行
-
+```
 单个Agent的问题：
 - 需要同时是旅行专家 + 酒店专家 + 天气专家 + 预算专家
 - 知识过于分散，难以精通所有领域
 - 单一Agent处理所有任务，响应会变慢
 
 多Agent方案：
-- 旅行规划Agent（主Agent）负责任务分解和协调
+- 主Agent负责任务分解和协调
 - 酒店Agent负责搜索和推荐酒店
 - 天气Agent负责查询天气预报
 - 预算Agent负责计算和控制预算
@@ -346,7 +232,7 @@ state.messages.append({"role": "user", "content": tool_results})
 
 拆分后每个 Agent 的上下文更短、职责更窄，主 Agent 的工作收敛到分解任务和汇总结果，不必自己精通每个领域。
 
-### 多Agent架构模式
+### 多 Agent 架构模式
 
 **模式一：星型架构（主从模式）**
 
@@ -355,9 +241,7 @@ state.messages.append({"role": "user", "content": tool_results})
                     │  主Agent    │
                     │ (协调者)    │
                     └──────┬──────┘
-                           │
           ┌────────────────┼────────────────┐
-          │                │                │
     ┌─────▼─────┐   ┌─────▼─────┐   ┌─────▼─────┐
     │ 子Agent1  │   │ 子Agent2  │   │ 子Agent3  │
     │ (酒店)    │   │ (天气)    │   │ (预算)    │
@@ -366,33 +250,14 @@ state.messages.append({"role": "user", "content": tool_results})
 
 ```python
 class MasterAgent:
-    """
-    星型架构主Agent
-
-    特点：
-    - 主Agent负责任务分解和结果汇总
-    - 子Agent只做特定领域的任务
-    - 主Agent和子Agent之间通过消息传递
-    """
-
     def __init__(self):
-        self.sub_agents = {
-            "hotel": HotelAgent(),
-            "weather": WeatherAgent(),
-            "budget": BudgetAgent()
-        }
+        self.sub_agents = {"hotel": HotelAgent(), "weather": WeatherAgent(), "budget": BudgetAgent()}
 
     async def run(self, task: str) -> dict:
-        # 1. 分解任务
         subtasks = await self._decompose_task(task)
-
-        # 2. 并行派发子任务
         results = await asyncio.gather(*[
-            self._run_subagent(name, subtask)
-            for name, subtask in subtasks.items()
+            self._run_subagent(name, subtask) for name, subtask in subtasks.items()
         ])
-
-        # 3. 汇总结果
         return await self._aggregate_results(results)
 ```
 
@@ -407,78 +272,29 @@ class MasterAgent:
 
 ```python
 class ChainAgent:
-    """
-    链式架构Agent
-
-    特点：
-    - 每个Agent有明确的职责（预处理/核心/验证/输出）
-    - 输出层层传递，形成处理流水线
-    - 适合有明确处理步骤的任务
-    """
-
     def __init__(self):
-        self.chain = [
-            PreprocessAgent(),
-            CoreAgent(),
-            ValidationAgent(),
-            OutputAgent()
-        ]
+        self.chain = [PreprocessAgent(), CoreAgent(), ValidationAgent(), OutputAgent()]
 
     async def run(self, input_data: Any) -> Any:
         current = input_data
-
         for agent in self.chain:
             current = await agent.process(current)
-
             if not self._is_valid(current):
-                # 验证失败，触发错误处理
                 return await self._handle_error(current, agent)
-
         return current
 ```
 
 **模式三：网状架构（对等模式）**
 
-```text
-┌───────────┐────────────┐
-│  Agent1   │──────────││
-└───┬───────┘          ││
-    │                  ││
-    │    ┌─────────────▼┐
-    └───►│  Agent2      │
-         └──────┬───────┘
-                │
-         ┌──────▼───────┐
-         │  Agent3       │
-         └───────────────┘
-```
-
 ```python
 class PeerNetwork:
-    """
-    网状架构（对等模式）
-
-    特点：
-    - 没有中心协调者
-    - Agent之间可以直接通信
-    - 适合需要横向协作的场景
-    - 复杂度高，需要好的协调机制
-    """
-
+    """没有中心协调者，Agent 之间可直接通信"""
     async def run(self, task: str) -> dict:
-        # 使用消息队列进行Agent间通信
         queue = MessageQueue()
-
-        # 启动所有Agent
         agents = [Agent(i) for i in range(3)]
         tasks = [agent.run(queue) for agent in agents]
-
-        # 发送初始任务
         await queue.publish("task", task)
-
-        # 等待所有Agent完成
         results = await asyncio.gather(*tasks)
-
         return self._merge_results(results)
 ```
 
@@ -501,127 +317,66 @@ class PeerNetwork:
 
 ```python
 async def parallel_execution(tasks: list[dict]) -> list[dict]:
-    """
-    并行执行多个任务
-
-    为什么并行能提升效率？
-    假设每个任务需要3秒：
-    - 串行：3 * N 秒
-    - 并行：约3秒（理想情况）
-
-    注意：
-    - 并行任务之间不能有依赖
-    - 需要处理好并发竞争问题
-    """
     async def execute_single(task: dict) -> dict:
         agent = create_agent(task["type"])
         result = await agent.run(task["input"])
         return {"task_id": task["id"], "result": result}
 
-    # 使用asyncio.gather实现真正并行
-    results = await asyncio.gather(*[
-        execute_single(task) for task in tasks
-    ])
-
-    return results
+    return await asyncio.gather(*[execute_single(t) for t in tasks])
 ```
 
 判断一个任务能不能并行，看的是它是否依赖其他任务的输出：
 
 ```python
-# 适合并行的任务
+# 适合并行：任务之间无依赖
 parallel_tasks = [
     {"id": 1, "type": "search", "input": "北京天气"},
-    {"id": 2, "type": "search", "input": "上海天气"},  # 独立
-    {"id": 3, "type": "search", "input": "广州天气"},  # 独立
+    {"id": 2, "type": "search", "input": "上海天气"},
+    {"id": 3, "type": "search", "input": "广州天气"},
 ]
 
-# 不适合并行的任务（存在依赖）
+# 不适合并行：存在依赖关系
 sequential_tasks = [
     {"id": 1, "type": "search", "input": "用户ID"},
-    {"id": 2, "type": "fetch", "input": "依赖任务1的结果"},  # 依赖
-    {"id": 3, "type": "save", "input": "依赖任务2的结果"},   # 依赖
+    {"id": 2, "type": "fetch", "input": "依赖任务1的结果"},
+    {"id": 3, "type": "save", "input": "依赖任务2的结果"},
 ]
 ```
 
 ### 链式执行
 
-链式执行用于有依赖关系的任务：
-
 ```python
 async def chain_execution(tasks: list[dict]) -> dict:
-    """
-    链式执行（串行依赖）
-
-    执行流程：
-    Task1 → Task2 → Task3 → ... → TaskN
-
-    每个任务接收前一个任务的输出作为输入
-    """
     context = {}
-
-    for i, task in enumerate(tasks):
-        # 构建当前任务的输入
+    for task in tasks:
         task_input = await self._prepare_input(task, context)
-
-        # 执行当前任务
         agent = create_agent(task["type"])
         result = await agent.run(task_input)
-
-        # 保存结果到上下文，供后续任务使用
         context[task["id"]] = result
-
-        # 检查是否需要错误恢复
         if not self._is_success(result):
             if task.get("retry"):
                 result = await self._retry(task, context)
             else:
                 raise ExecutionError(f"Task {task['id']} failed")
-
-    return context  # 返回完整的上下文（包含所有任务的结果）
+    return context
 ```
 
 ### 并行与链式的混合模式
 
 ```python
 class HybridExecutor:
-    """
-    混合执行器：并行 + 链式的结合
-
-    适用场景：
-    - 部分任务可以并行
-    - 部分任务有依赖关系
-
-    示例：旅行规划
-    1. 并行：同时查询 酒店、景点、天气
-    2. 链式：基于查询结果生成行程 → 审核行程 → 输出最终方案
-    """
-
+    """并行 + 链式结合：先并行执行独立任务，再按依赖链式执行"""
     async def run(self, workflow: dict) -> dict:
-        # 阶段1：并行执行独立任务
         parallel_results = await self._parallel_phase(workflow["parallel_tasks"])
-
-        # 阶段2：基于并行结果执行链式任务
         context = {"parallel": parallel_results}
-        chain_result = await self._chain_phase(
-            workflow["chain_tasks"], 
-            context
-        )
-
-        return {
-            "parallel_results": parallel_results,
-            "chain_result": chain_result
-        }
+        chain_result = await self._chain_phase(workflow["chain_tasks"], context)
+        return {"parallel_results": parallel_results, "chain_result": chain_result}
 
     async def _parallel_phase(self, tasks: list[dict]) -> dict:
-        """并行阶段"""
-        results = await asyncio.gather(*[
-            self._execute(task) for task in tasks
-        ])
+        results = await asyncio.gather(*[self._execute(task) for task in tasks])
         return {task["id"]: result for task, result in zip(tasks, results)}
 
     async def _chain_phase(self, tasks: list[dict], context: dict) -> dict:
-        """链式阶段"""
         for task in tasks:
             context[task["id"]] = await self._execute(task, context)
         return context
@@ -633,102 +388,38 @@ class HybridExecutor:
 
 ### 状态持久化的重要性
 
-Agent 跑得越久，对话历史越长，迟早会撞上上下文窗口上限：
-
-```python
-# 问题：LLM的上下文是有限的
-MAX_TOKENS = 200000  # Claude Opus的最大上下文
-
-# 如果对话历史越来越长...
-messages = [
-    {"role": "user", "content": "第一轮对话"},      # 100 tokens
-    {"role": "assistant", "content": "第一轮回答"},  # 200 tokens
-    {"role": "user", "content": "第二轮对话"},      # 150 tokens
-    {"role": "assistant", "content": "第二轮回答"},  # 300 tokens
-    # ... 100轮后
-    # tokens总量超过限制
-]
-```
-
-撞上上限后有两种走法：要么把旧历史压缩成摘要，要么按相关性挑出一部分留下。下面分别给出实现。
+Agent 跑得越久，对话历史越长，迟早会撞上上下文窗口上限。撞上后有两条路：把旧历史压缩成摘要，或按相关性挑出一部分留下。
 
 **方案一：状态压缩与摘要**
 
 ```python
 class StateManager:
-    """
-    状态管理器
-
-    职责：
-    1. 压缩对话历史
-    2. 提取关键信息
-    3. 维护工作上下文
-    """
-
     def __init__(self, max_history: int = 10):
-        self.max_history = max_history  # 保留最近N轮对话
-        self.summaries = []            # 压缩后的摘要
-        self.working_memory = {}       # 当前工作内存
+        self.max_history = max_history
+        self.summaries = []
+        self.working_memory = {}
 
     def add_interaction(self, user_msg: str, assistant_msg: str):
-        """添加一轮交互"""
-        # 1. 加入历史
-        self.summaries.append({
-            "user": user_msg,
-            "assistant": assistant_msg,
-            "timestamp": now()
-        })
-
-        # 2. 检查是否需要压缩
+        self.summaries.append({"user": user_msg, "assistant": assistant_msg, "timestamp": now()})
         if len(self.summaries) > self.max_history:
             self._compress()
 
     def _compress(self):
-        """
-        压缩历史
-
-        压缩策略：
-        1. 保留最近N轮完整对话
-        2. 更早的对话压缩成摘要
-        3. 提取关键实体和决策
-        """
         recent = self.summaries[-self.max_history:]
         older = self.summaries[:-self.max_history]
-
-        # 用LLM生成摘要
-        summary_prompt = f"""
-        请总结以下对话的关键信息：
-        {self._format_conversation(older)}
-
-        提取：
-        1. 用户的主要目标
-        2. 已完成的关键步骤
-        3. 当前状态
-        4. 重要的中间结果
-        """
-
         summary = self.client.messages.create(
             model="claude-opus-4-20250514",
-            messages=[{"role": "user", "content": summary_prompt}]
+            messages=[{"role": "user", "content": f"请总结以下对话的关键信息：{self._format_conversation(older)}\n提取：1.用户的主要目标 2.已完成的关键步骤 3.当前状态 4.重要的中间结果"}]
         )
-
-        # 保存摘要，清空旧历史
         self.working_memory["conversation_summary"] = summary.content[0].text
         self.summaries = recent
 
     def get_context_for_llm(self) -> str:
-        """构建发送给LLM的上下文"""
         parts = []
-
-        # 1. 添加摘要（如果有）
         if "conversation_summary" in self.working_memory:
             parts.append(f"对话摘要：{self.working_memory['conversation_summary']}")
-
-        # 2. 添加最近N轮对话
         for item in self.summaries[-self.max_history:]:
-            parts.append(f"用户：{item['user']}")
-            parts.append(f"助手：{item['assistant']}")
-
+            parts.append(f"用户：{item['user']}\n助手：{item['assistant']}")
         return "\n".join(parts)
 ```
 
@@ -736,57 +427,30 @@ class StateManager:
 
 ```python
 class SmartContextManager:
-    """
-    智能上下文管理器
-
-    思路：
-    - 按相关性给每条历史打分，而不是按时间顺序硬截断
-    - 保留与当前任务最相关的上下文
-    """
-
     def __init__(self, max_tokens: int = 150000):
         self.max_tokens = max_tokens
         self.priority_levels = {
             "critical": ["目标", "关键约束", "核心决策"],
             "important": ["中间结果", "用户偏好", "当前状态"],
             "normal": ["一般对话", "解释说明"],
-            "discardable": ["问候", "重复确认"]
+            "discardable": ["问候", "重复确认"],
         }
 
     def build_context(self, all_items: list[dict], current_task: str) -> str:
-        """
-        构建当前任务所需的上下文
-
-        算法：
-        1. 为每个上下文项计算相关性分数
-        2. 按分数排序
-        3. 从最高分开始选取，直到达到token限制
-        """
-        scored_items = []
-
+        weights = {"critical": 1.0, "important": 0.7, "normal": 0.4, "discardable": 0.0}
+        scored = []
         for item in all_items:
             relevance = self._calculate_relevance(item, current_task)
             priority = self._get_priority(item)
+            scored.append((relevance * weights.get(priority, 0.5), item))
 
-            # 综合分数 = 相关性 * 优先级权重
-            weight = {"critical": 1.0, "important": 0.7, "normal": 0.4, "discardable": 0.0}
-            score = relevance * weight.get(priority, 0.5)
-
-            scored_items.append((score, item))
-
-        # 按分数降序排序
-        scored_items.sort(key=lambda x: x[0], reverse=True)
-
-        # 选取项直到达到token限制
-        selected = []
-        total_tokens = 0
-
-        for score, item in scored_items:
-            item_tokens = self._estimate_tokens(item)
-            if total_tokens + item_tokens <= self.max_tokens:
+        scored.sort(key=lambda x: x[0], reverse=True)
+        selected, total = [], 0
+        for _, item in scored:
+            tokens = self._estimate_tokens(item)
+            if total + tokens <= self.max_tokens:
                 selected.append(item)
-                total_tokens += item_tokens
-
+                total += tokens
         return self._format_selected(selected)
 ```
 
@@ -794,62 +458,30 @@ class SmartContextManager:
 
 ## 7.6 错误处理与容错机制
 
-### 错误分类与处理策略
-
 ```python
+from enum import Enum
+
 class ErrorType(Enum):
-    """Agent可能遇到的错误类型"""
-
-    # LLM相关错误
-    LLM_TIMEOUT = "llm_timeout"           # LLM响应超时
-    LLM_RATE_LIMIT = "llm_rate_limit"     # API限流
-    LLM_INVALID_RESPONSE = "llm_invalid"  # LLM返回无效响应
-
-    # 工具相关错误
-    TOOL_NOT_FOUND = "tool_not_found"     # 工具不存在
-    TOOL_EXECUTION_FAILED = "tool_failed" # 工具执行失败
-    TOOL_TIMEOUT = "tool_timeout"        # 工具执行超时
-
-    # 状态相关错误
-    STATE_CORRUPTED = "state_corrupted"  # 状态损坏
-    CONTEXT_OVERFLOW = "context_overflow" # 上下文溢出
-
-    # 业务相关错误
-    MAX_ITERATIONS = "max_iterations"    # 达到最大迭代
-    USER_CANCELLED = "user_cancelled"    # 用户取消
+    LLM_TIMEOUT = "llm_timeout"
+    LLM_RATE_LIMIT = "llm_rate_limit"
+    TOOL_EXECUTION_FAILED = "tool_failed"
+    TOOL_TIMEOUT = "tool_timeout"
+    CONTEXT_OVERFLOW = "context_overflow"
+    MAX_ITERATIONS = "max_iterations"
 
 class ErrorAction(Enum):
-    """错误处理动作：决定错误发生后Agent的下一步行为"""
-
-    RETRY = "retry"                       # 重试当前操作
-    RETRY_WITH_FALLBACK = "retry_fallback"  # 使用备用方案重试
-    FAIL = "fail"                         # 终止任务并上报错误
-    RETURN_BEST_RESULT = "return_best"    # 返回当前最佳结果
-    ESCALATE = "escalate"                 # 上报给上层处理者
+    RETRY = "retry"
+    RETRY_WITH_FALLBACK = "retry_fallback"
+    FAIL = "fail"
+    RETURN_BEST_RESULT = "return_best"
 
 class ErrorHandler:
-    """
-    错误处理器
-
-    设计原则：
-    1. 不同错误类型采用不同的处理策略
-    2. 记录错误日志便于调试
-    3. 在适当时候回退或重试
-    """
-
     def __init__(self):
         self.error_counts = {}
 
     async def handle(self, error: Exception, state: AgentState) -> ErrorAction:
-        """
-        处理错误，返回处理动作
-        """
         error_type = self._classify(error)
-
-        # 记录错误
         self._log_error(error_type, error, state)
-
-        # 根据错误类型决定动作
         handlers = {
             ErrorType.LLM_TIMEOUT: self._handle_timeout,
             ErrorType.LLM_RATE_LIMIT: self._handle_rate_limit,
@@ -857,49 +489,33 @@ class ErrorHandler:
             ErrorType.CONTEXT_OVERFLOW: self._handle_context_overflow,
             ErrorType.MAX_ITERATIONS: self._handle_max_iterations,
         }
-
-        handler = handlers.get(error_type, self._handle_unknown)
-        return await handler(error, state)
+        return await handlers.get(error_type, self._handle_unknown)(error, state)
 
     async def _handle_timeout(self, error, state):
-        """超时处理：等待后重试"""
         state.context["retry_count"] = state.context.get("retry_count", 0) + 1
-
         if state.context["retry_count"] < 3:
             await asyncio.sleep(2 ** state.context["retry_count"])  # 指数退避
             return ErrorAction.RETRY
-        else:
-            return ErrorAction.FAIL
+        return ErrorAction.FAIL
 
     async def _handle_rate_limit(self, error, state):
-        """限流处理：等待指定时间"""
-        retry_after = getattr(error, "retry_after", 60)
-        await asyncio.sleep(retry_after)
+        await asyncio.sleep(getattr(error, "retry_after", 60))
         return ErrorAction.RETRY
 
     async def _handle_tool_failure(self, error, state):
-        """工具失败处理：尝试备用方案"""
-        tool_name = getattr(error, "tool_name", None)
-
-        # 检查是否有备用工具
-        if self._has_fallback(tool_name):
+        if self._has_fallback(getattr(error, "tool_name", None)):
             state.context["using_fallback"] = True
             return ErrorAction.RETRY_WITH_FALLBACK
-
         return ErrorAction.FAIL
 
     async def _handle_context_overflow(self, error, state):
-        """上下文溢出处理：压缩历史"""
-        # 调用状态管理器压缩历史
-        state_manager = state.context.get("state_manager")
-        if state_manager:
-            state_manager._compress()
+        manager = state.context.get("state_manager")
+        if manager:
+            manager._compress()
             return ErrorAction.RETRY
-        else:
-            return ErrorAction.FAIL
+        return ErrorAction.FAIL
 
     async def _handle_max_iterations(self, error, state):
-        """达到最大迭代：返回当前最佳结果"""
         return ErrorAction.RETURN_BEST_RESULT
 ```
 
@@ -907,23 +523,8 @@ class ErrorHandler:
 
 ```python
 class RetryPolicy:
-    """
-    重试策略
-
-    为什么需要重试策略？
-    1. 瞬时故障（网络抖动）可能自行恢复
-    2. 限流错误等待后通常可以继续
-    3. 合理重试能提高系统稳定性
-    """
-
-    def __init__(
-        self,
-        max_retries: int = 3,
-        base_delay: float = 1.0,
-        exponential_base: float = 2.0,
-        max_delay: float = 60.0,
-        jitter: bool = True
-    ):
+    def __init__(self, max_retries: int = 3, base_delay: float = 1.0,
+                 exponential_base: float = 2.0, max_delay: float = 60.0, jitter: bool = True):
         self.max_retries = max_retries
         self.base_delay = base_delay
         self.exponential_base = exponential_base
@@ -931,42 +532,24 @@ class RetryPolicy:
         self.jitter = jitter
 
     def get_delay(self, attempt: int) -> float:
-        """计算重试延迟"""
-        # 指数退避
-        delay = self.base_delay * (self.exponential_base ** attempt)
-        delay = min(delay, self.max_delay)
-
-        # 添加随机抖动，避免惊群效应
+        delay = min(self.base_delay * (self.exponential_base ** attempt), self.max_delay)
         if self.jitter:
             import random
-            delay = delay * (0.5 + random.random())
-
+            delay *= 0.5 + random.random()
         return delay
 
 class FallbackManager:
-    """
-    备用方案管理器
-
-    思路：
-    - 每个主工具可以有多个备用工具
-    - 主工具失败时，自动尝试备用工具
-    - 记录使用情况，便于优化
-    """
-
     def __init__(self):
         self.fallback_map = {
             "primary_search": ["fallback_search_1", "fallback_search_2"],
             "primary_translate": ["fallback_translate"],
-            "primary_code_exec": ["fallback_sandbox"]
+            "primary_code_exec": ["fallback_sandbox"],
         }
         self.usage_stats = {}
 
     async def execute_with_fallback(self, primary_tool: str, args: dict) -> Any:
-        """执行主工具，失败时尝试备用方案"""
-        tools_to_try = [primary_tool] + self.fallback_map.get(primary_tool, [])
-
         last_error = None
-        for tool in tools_to_try:
+        for tool in [primary_tool] + self.fallback_map.get(primary_tool, []):
             try:
                 result = await self._execute_tool(tool, args)
                 self._record_success(tool)
@@ -974,47 +557,28 @@ class FallbackManager:
             except Exception as e:
                 last_error = e
                 self._record_failure(tool, e)
-                continue
-
-        # 所有工具都失败
-        raise AllToolsFailedError(tools_to_try, last_error)
+        raise AllToolsFailedError([primary_tool] + self.fallback_map.get(primary_tool, []), last_error)
 ```
 
 ---
 
 ## 7.7 安全与权限管理
 
-### 权限模型设计
-
 ```python
+from enum import Enum
+
 class PermissionScope(Enum):
-    """权限范围"""
-    NONE = "none"           # 无任何权限
-    READ = "read"           # 只读
-    WRITE = "write"         # 读写
-    EXECUTE = "execute"     # 执行
-    ADMIN = "admin"         # 管理
+    NONE = "none"
+    READ = "read"
+    WRITE = "write"
+    EXECUTE = "execute"
+    ADMIN = "admin"
 
 class Permission:
-    """
-    权限定义
-
-    为什么需要权限系统？
-    1. 防止Agent执行危险操作
-    2. 限制资源访问范围
-    3. 满足合规审计要求
-    """
-
-    def __init__(
-        self,
-        scopes: list[PermissionScope] = None,  # 权限范围列表
-        file_paths: list[str] = [],      # 允许访问的文件路径
-        allowed_tools: list[str] = [],   # 允许使用的工具
-        allowed_domains: list[str] = [], # 允许访问的网络域名
-        max_execution_time: int = 300,   # 最大执行时间（秒）
-        max_api_calls: int = 100         # 最大API调用次数
-    ):
-        self.scopes = scopes if scopes is not None else [PermissionScope.READ]
+    def __init__(self, scopes: list[PermissionScope] = None, file_paths: list[str] = [],
+                 allowed_tools: list[str] = [], allowed_domains: list[str] = [],
+                 max_execution_time: int = 300, max_api_calls: int = 100):
+        self.scopes = scopes or [PermissionScope.READ]
         self.file_paths = file_paths
         self.allowed_tools = allowed_tools
         self.allowed_domains = allowed_domains
@@ -1022,108 +586,52 @@ class Permission:
         self.max_api_calls = max_api_calls
 
 class SecurityManager:
-    """
-    安全管理器
-
-    职责：
-    1. 验证操作权限
-    2. 拦截危险操作
-    3. 记录所有操作日志
-    """
-
     def __init__(self, permission: Permission):
         self.permission = permission
         self.audit_log = []
 
     def check_file_access(self, path: str, mode: str) -> bool:
-        """检查文件访问权限"""
-        # 如果是只读权限但要求写操作
         if mode == "write" and PermissionScope.WRITE not in self.permission.scopes:
             return False
-
-        # 检查路径是否在允许范围内
         import os
-        real_path = os.path.realpath(path)
-
-        for allowed_path in self.permission.file_paths:
-            if real_path.startswith(os.path.realpath(allowed_path)):
-                return True
-
-        return False
+        real = os.path.realpath(path)
+        return any(real.startswith(os.path.realpath(p)) for p in self.permission.file_paths)
 
     def check_tool_usage(self, tool_name: str) -> bool:
-        """检查工具使用权限"""
         return tool_name in self.permission.allowed_tools
 
     def check_network_access(self, domain: str) -> bool:
-        """检查网络访问权限"""
-        for allowed in self.permission.allowed_domains:
-            if domain.endswith(allowed) or domain == allowed:
-                return True
-        return False
+        return any(domain.endswith(a) or domain == a for a in self.permission.allowed_domains)
 
     def audit(self, operation: str, details: dict):
-        """记录审计日志"""
-        self.audit_log.append({
-            "timestamp": now(),
-            "operation": operation,
-            "details": details
-        })
+        self.audit_log.append({"timestamp": now(), "operation": operation, "details": details})
 ```
 
 ### 沙箱隔离
 
 ```python
 class SandboxConfig:
-    """
-    沙箱配置
-
-    为什么需要沙箱？
-    即使Agent出错，也只会影响沙箱内的模拟环境
-    不会影响真实系统
-    """
-
-    def __init__(
-        self,
-        use_sandbox: bool = True,
-        network_isolation: bool = True,
-        filesystem_boundary: str = "/workspace/sandbox",
-        memory_limit: str = "2GB"
-    ):
+    def __init__(self, use_sandbox: bool = True, network_isolation: bool = True,
+                 filesystem_boundary: str = "/workspace/sandbox", memory_limit: str = "2GB"):
         self.use_sandbox = use_sandbox
         self.network_isolation = network_isolation
         self.filesystem_boundary = filesystem_boundary
         self.memory_limit = memory_limit
 
 class SandboxExecutor:
-    """沙箱执行器"""
-
     def __init__(self, config: SandboxConfig):
         self.config = config
 
     async def execute(self, code: str, language: str) -> Any:
-        """在沙箱中执行代码"""
-        if self.config.use_sandbox:
-            return await self._execute_in_sandbox(code, language)
-        else:
+        if not self.config.use_sandbox:
             return await self._execute_direct(code, language)
-
-    async def _execute_in_sandbox(self, code: str, language: str) -> Any:
-        """在沙箱中执行"""
-        # 1. 准备沙箱环境
         sandbox = await self._prepare_sandbox()
-
-        # 2. 设置资源限制
         sandbox.set_memory_limit(self.config.memory_limit)
         sandbox.set_network_isolation(self.config.network_isolation)
         sandbox.set_filesystem_boundary(self.config.filesystem_boundary)
-
-        # 3. 执行代码
         try:
-            result = await sandbox.run(code, language)
-            return result
+            return await sandbox.run(code, language)
         finally:
-            # 4. 清理沙箱
             await sandbox.cleanup()
 ```
 
@@ -1133,103 +641,37 @@ class SandboxExecutor:
 
 ### 架构设计原则
 
-生产环境 Agent 系统的架构原则可以归纳为五条：
-
-1. **分离关注点（Separation of Concerns）**
-   - Agent 核心逻辑与工具实现分离
-   - 状态管理与执行逻辑分离
-   - 安全检查与业务逻辑分离
-
-2. **失败设计（Design for Failure）**
-   - 每个组件都可能失败
-   - 优雅降级，而非整体崩溃
-   - 快速失败，便于诊断
-
-3. **可观测性（Observability）**
-   - 日志：记录每个关键步骤
-   - 指标：QPS、延迟、错误率
-   - 追踪：请求全链路追踪
-
-4. **资源管理（Resource Management）**
-   - 限制并发请求数
-   - 控制内存使用
-   - 防止资源泄漏
-
-5. **安全第一（Security First）**
-   - 最小权限原则
-   - 纵深防御
-   - 审计追踪
+1. **分离关注点**：Agent 核心逻辑与工具实现分离，状态管理与执行逻辑分离，安全检查与业务逻辑分离
+2. **失败设计**：每个组件都可能失败，优雅降级而非整体崩溃，快速失败便于诊断
+3. **可观测性**：日志记录每个关键步骤，指标追踪 QPS/延迟/错误率，请求全链路追踪
+4. **资源管理**：限制并发请求数，控制内存使用，防止资源泄漏
+5. **安全第一**：最小权限原则，纵深防御，审计追踪
 
 ### 监控与告警
 
 ```python
 class AgentMonitor:
-    """
-    Agent监控指标
-    """
-
     metrics = {
-        "requests_total": "总请求数",
-        "requests_success": "成功请求数",
-        "requests_failed": "失败请求数",
-        "average_latency": "平均延迟",
-        "p99_latency": "P99延迟",
-        "active_agents": "活跃Agent数",
-        "tools_usage": "工具使用统计",
-        "error_distribution": "错误分布"
+        "requests_total": "总请求数", "requests_success": "成功请求数", "requests_failed": "失败请求数",
+        "average_latency": "平均延迟", "p99_latency": "P99 延迟", "active_agents": "活跃Agent数",
+        "tools_usage": "工具使用统计", "error_distribution": "错误分布",
     }
 
 class AlertManager:
-    """
-    告警管理
-    """
-
-    alert_rules = {
-        "high_error_rate": {
-            "condition": "error_rate > 0.05",  # 错误率超过5%
-            "severity": "critical",
-            "action": "notify_oncall"
-        },
-        "high_latency": {
-            "condition": "p99_latency > 30s",
-            "severity": "warning",
-            "action": "notify_team"
-        },
-        "agent_timeout": {
-            "condition": "timeout_count > 10/min",
-            "severity": "warning",
-            "action": "investigate"
-        }
+    rules = {
+        "high_error_rate": {"condition": "error_rate > 0.05", "severity": "critical", "action": "notify_oncall"},
+        "high_latency":    {"condition": "p99_latency > 30s", "severity": "warning",  "action": "notify_team"},
+        "agent_timeout":   {"condition": "timeout_count > 10/min", "severity": "warning", "action": "investigate"},
     }
 ```
 
-### 部署架构建议
+### 部署架构
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                        负载均衡层                               │
-│                    （Nginx / 云负载均衡）                        │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-┌─────────────────────────────▼───────────────────────────────────┐
-│                        API网关层                                │
-│              （认证、限流、日志、路由）                           │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-┌─────────────────────────────▼───────────────────────────────────┐
-│                      Agent服务集群                               │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐│
-│  │  Agent-1   │  │  Agent-2   │  │  Agent-3   │  │  Agent-N   ││
-│  │  (实例1)    │  │  (实例2)    │  │  (实例3)    │  │  (实例N)    ││
-│  └────────────┘  └────────────┘  └────────────┘  └────────────┘│
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-          ┌───────────────────┼───────────────────┐
-          │                   │                   │
-┌─────────▼─────┐   ┌────────▼────────┐   ┌─────▼─────────┐
-│   工具服务1    │   │    工具服务2     │   │    工具服务3    │
-│  (搜索服务)    │   │   (代码执行)     │   │   (API服务)    │
-└───────────────┘   └─────────────────┘   └───────────────┘
+```
+负载均衡层（Nginx/云负载均衡）
+    → API网关层（认证、限流、日志、路由）
+        → Agent服务集群（Agent-1 ... Agent-N）
+            → 工具服务（搜索服务、代码执行、API服务）
 ```
 
 ### 性能优化建议
@@ -1242,24 +684,20 @@ class AlertManager:
 | 预热机制 | 定期预加载模型 | 降低冷启动延迟 |
 | 连接池复用 | 复用 HTTP/数据库连接 | 提高吞吐 |
 
-其中"缓存 LLM 响应"要小心：如果工具结果会随时间变化（比如查天气、查库存），缓存命中反而会返回过期数据。建议只对纯函数式工具（如固定文档检索、数学计算）开启缓存，并给缓存条目设 TTL。
+缓存 LLM 响应需注意：如果工具结果会随时间变化（如查天气），缓存命中反而返回过期数据。建议只对纯函数式工具（固定文档检索、数学计算）开启缓存，并设 TTL。
 
 ### 常见问题排查
 
-上线后遇到问题时，按下面的顺序定位：
-
 | 现象 | 可能原因 | 排查步骤 |
 |------|----------|----------|
-| Agent 反复调用同一个工具 | `_think` 没传完整 messages，LLM 看不到上一轮结果 | 检查 `messages=state.messages` 是否传入；打印每轮 messages 长度 |
-| API 报 400 `tool_use_id` not found | tool_result 的 `tool_use_id` 与 assistant 的 tool_use 块对不上 | 检查 `tool_use.id` 是否正确透传到 tool_result |
-| Agent 跑几轮后上下文溢出 | 没有压缩历史，messages 无限增长 | 接入 7.5 的 StateManager，或在每轮结束后估算 token 数 |
-| 工具偶尔超时但 Agent 直接挂掉 | 没有重试策略，单次失败即终止 | 接入 7.6 的 RetryPolicy，对超时类错误做指数退避 |
-| Agent 在沙箱外执行了危险操作 | 权限检查没覆盖到该工具或路径 | 检查 `allowed_tools` 和 `file_paths` 白名单是否完整；查审计日志 |
-| 并行子 Agent 结果丢失 | `asyncio.gather` 中某个协程抛异常未被捕获 | 用 `return_exceptions=True` 或给每个子任务包 try/except |
+| Agent 反复调用同一个工具 | `_think` 没传完整 messages | 检查 `messages=state.messages` 是否传入 |
+| API 报 400 `tool_use_id` not found | tool_result 的 `tool_use_id` 对不上 | 检查 `tool_use.id` 是否正确透传 |
+| 上下文溢出 | 没有压缩历史 | 接入 StateManager 或每轮估算 token 数 |
+| 工具超时导致 Agent 挂掉 | 没有重试策略 | 接入 RetryPolicy，做指数退避 |
+| 危险操作 | 权限检查不完整 | 检查 `allowed_tools` 和 `file_paths` 白名单 |
+| 并行子 Agent 结果丢失 | gather 中协程异常未被捕获 | 用 `return_exceptions=True` |
 
 ### 最小可运行示例
-
-下面是一个能直接跑起来的最小 Agent，用 `get_weather` 工具演示完整的"推理 → 调用工具 → 回传结果 → 再推理"闭环：
 
 ```python
 import os
@@ -1270,62 +708,39 @@ client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 tools = [{
     "name": "get_weather",
     "description": "查询指定城市的天气",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "city": {"type": "string", "description": "城市名"}
-        },
-        "required": ["city"]
-    }
+    "input_schema": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}
 }]
 
 def execute_tool(tool_use):
-    """实际工具实现：这里用假数据，生产环境替换成真实 API"""
     if tool_use.name == "get_weather":
-        city = tool_use.input["city"]
-        return f"{city} 今天晴，25°C"
+        return f"{tool_use.input['city']} 今天晴，25°C"
     raise ValueError(f"未知工具: {tool_use.name}")
 
 def run_agent(goal: str, max_iterations: int = 10):
     messages = [{"role": "user", "content": goal}]
-
     for i in range(max_iterations):
         response = client.messages.create(
-            model="claude-opus-4-20250514",
-            max_tokens=1024,
-            tools=tools,
-            messages=messages,
+            model="claude-opus-4-20250514", max_tokens=1024, tools=tools, messages=messages,
         )
-
-        tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
-        if not tool_use_blocks:
-            # 没有工具调用，说明 LLM 给出了最终回答
+        tool_blocks = [b for b in response.content if b.type == "tool_use"]
+        if not tool_blocks:
             text = "".join(b.text for b in response.content if b.type == "text")
             print(f"[最终回答] {text}")
             return text
-
-        # 把 assistant 响应加入历史
         messages.append({"role": "assistant", "content": response.content})
-
-        # 执行所有工具调用，按 API 规范回传 tool_result
-        tool_results = []
-        for tool_use in tool_use_blocks:
-            result = execute_tool(tool_use)
-            print(f"[工具调用] {tool_use.name}({tool_use.input}) → {result}")
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": tool_use.id,
-                "content": result,
-            })
-        messages.append({"role": "user", "content": tool_results})
-
+        results = []
+        for tb in tool_blocks:
+            result = execute_tool(tb)
+            print(f"[工具调用] {tb.name}({tb.input}) → {result}")
+            results.append({"type": "tool_result", "tool_use_id": tb.id, "content": result})
+        messages.append({"role": "user", "content": results})
     print("达到最大迭代次数，Agent 终止")
 
 if __name__ == "__main__":
     run_agent("帮我查一下北京和上海的天气，然后总结哪个更适合出行")
 ```
 
-运行前确保已安装 `anthropic` 并设置 `ANTHROPIC_API_KEY` 环境变量。这段代码演示了 7.2 节主循环的最小形态：状态就是 `messages` 列表，终止条件是"没有 tool_use 块"或"达到 max_iterations"。
+运行前确保已安装 `anthropic` 并设置 `ANTHROPIC_API_KEY` 环境变量。
 
 ---
 
@@ -1333,39 +748,22 @@ if __name__ == "__main__":
 
 ### 核心知识点
 
-| 知识点 | 掌握程度 | 关键点 |
-|--------|----------|--------|
-| Agent定义 | ⭐⭐⭐⭐⭐ | LLM+状态+工具+执行循环+终止条件 |
-| 单Agent架构 | ⭐⭐⭐⭐⭐ | 状态外部化、终止条件前置 |
-| 多Agent协作 | ⭐⭐⭐⭐⭐ | 星型/链式/网状架构 |
-| 执行模式 | ⭐⭐⭐⭐⭐ | 并行与链式混合 |
-| 状态管理 | ⭐⭐⭐⭐⭐ | 压缩、摘要、智能选择 |
-| 错误处理 | ⭐⭐⭐⭐⭐ | 分类处理、重试回退 |
-| 安全机制 | ⭐⭐⭐⭐ | 权限模型、沙箱隔离 |
-| 生产实践 | ⭐⭐⭐⭐⭐ | 监控、告警、优化 |
-
-### Claude API 七篇完整系列
-
-Claude API 全系列七篇至此完成：
-
-| 篇 | 主题 | 核心要点 |
-|----|------|----------|
-| 一 | API基础 | 认证、请求、会话、结构化输出 |
-| 二 | 提示词工程 | Few-shot、CoT、Temperature |
-| 三 | 工具调用 | Function Calling、MCP |
-| 四 | RAG系统 | 分块、嵌入、搜索、重排序 |
-| 五 | MCP协议 | 架构、服务器开发、客户端 |
-| 六 | Computer Use | 观察-决策-执行、安全机制 |
-| 七 | Agent架构 | 多Agent、状态管理、生产实践 |
+| 知识点 | 关键点 |
+|--------|--------|
+| Agent 定义 | LLM + 状态 + 工具 + 执行循环 + 终止条件 |
+| 单 Agent 架构 | 状态外部化、终止条件前置 |
+| 多 Agent 协作 | 星型/链式/网状架构 |
+| 执行模式 | 并行与链式混合 |
+| 状态管理 | 压缩、摘要、智能选择 |
+| 错误处理 | 分类处理、重试回退 |
+| 安全机制 | 权限模型、沙箱隔离 |
+| 生产实践 | 监控、告警、优化 |
 
 ### 自测题
 
-下面 5 道题用来检验掌握程度，答案附在题后。
-
-**Q1**：Agent 的五个必备要素中，如果去掉"终止条件"，系统会出现什么现象？
+**Q1**：Agent 的五个必备要素中，去掉"终止条件"会出现什么现象？
 
 **Q2**：下面这段代码会导致什么问题？如何修复？
-
 ```python
 response = client.messages.create(
     model="claude-opus-4-20250514",
@@ -1374,36 +772,34 @@ response = client.messages.create(
 )
 ```
 
-**Q3**：星型架构和链式架构分别适合什么场景？如果一个任务既有可并行的子任务、又有严格顺序依赖的子任务，应该怎么组合？
+**Q3**：星型架构和链式架构分别适合什么场景？如何组合？
 
-**Q4**：`asyncio.gather` 中某个子 Agent 抛了异常，默认情况下整个 gather 会怎样？如何避免单个子任务失败拖垮全部并行任务？
+**Q4**：`asyncio.gather` 中某个子 Agent 抛异常，默认行为是什么？如何避免单点失败拖垮全部？
 
-**Q5**：为什么 tool_result 必须以 `role: "user"` 回传，而不是 `role: "assistant"`？从 API 的消息交替规则角度解释。
+**Q5**：为什么 tool_result 必须以 `role: "user"` 回传？
 
 <details>
 <summary>参考答案</summary>
 
-**A1**：Agent 会进入无限循环，不断调用 LLM 和工具，直到撞上 API 限流或上下文溢出。终止条件（最大迭代次数、目标完成检测、超时）是防止 Agent 失控的最后一道闸。
+**A1**：Agent 会无限循环，直到撞上 API 限流或上下文溢出。终止条件是防止 Agent 失控的最后一道闸。
 
-**A2**：每次只发一条 `"继续"` 消息，LLM 看不到之前的工具调用和结果，会重复发起相同调用或丢失任务上下文。修复方法是把完整的 `state.messages` 传给 `messages` 参数，让 LLM 能看到整个对话历史。
+**A2**：每次只发一条"继续"消息，LLM 看不到之前的工具调用和结果。修复方法：传入完整的 `state.messages`。
 
-**A3**：星型适合子任务彼此独立的场景（如同时查酒店、天气、景点）；链式适合有严格顺序依赖的场景（如"查用户 → 查订单 → 生成报告"）。既有独立又有依赖的任务，用 7.4 节的混合模式：先并行跑独立子任务，再按依赖顺序跑链式任务。
+**A3**：星型适合子任务独立（同时查酒店、天气、景点）；链式适合有严格顺序依赖（查用户 → 查订单 → 生成报告）。组合：先并行跑独立子任务，再按依赖顺序跑链式任务。
 
-**A4**：默认情况下 `asyncio.gather` 会在第一个异常抛出时立即返回，其他未完成的协程会被取消。要避免单点失败拖垮全部，用 `return_exceptions=True` 参数，这样异常会作为返回值而不是抛出，调用方可以逐个检查结果。
+**A4**：默认情况第一个异常时 gather 立即返回，其他协程被取消。用 `return_exceptions=True` 避免。
 
-**A5**：Anthropic Messages API 要求 user 和 assistant 角色严格交替。assistant 发起 tool_use 后，工具结果属于"用户侧提供的事实反馈"，必须以 user 角色回传，才能维持交替顺序。如果用 assistant 角色，会破坏交替规则，API 返回 400。
+**A5**：Anthropic Messages API 要求 user 和 assistant 角色严格交替。tool_result 属于用户侧反馈，必须以 user 角色回传，否则 API 返回 400。
 
 </details>
 
 ### 进阶路径
 
-掌握本文内容后，可以按以下方向继续深入：
-
-1. **MCP 协议与 Agent 结合**：把 7.3 节的子 Agent 替换为 MCP 服务器，让 Agent 能动态发现和调用外部工具。参考第五篇《MCP协议》和 [MCP 官方规范](https://modelcontextprotocol.io/)。
-2. **长时任务与断点续跑**：把 `AgentState` 序列化到数据库（如 Redis、PostgreSQL），实现 Agent 崩溃后能从上次断点恢复。重点解决状态版本兼容和工具幂等性。
-3. **多 Agent 评估与调优**：搭建离线评估管线，用固定测试集衡量 Agent 的任务完成率、平均迭代次数、token 消耗。Anthropic 的 [Agent 评估指南](https://docs.anthropic.com/en/docs/build-with-claude/agent-evals) 提供了评估框架。
-4. **成本控制**：监控每个 Agent 实例的 token 消耗，对高消耗任务做模型降级（如简单子任务用 Haiku，复杂推理用 Opus）。参考 [Anthropic 模型选择指南](https://docs.anthropic.com/en/docs/about-claude/models)。
-5. **安全加固**：在 7.7 节的权限模型基础上，加入人工审批环节（human-in-the-loop），对高危操作（如删除文件、转账）强制要求人工确认后再执行。
+1. **MCP 协议与 Agent 结合**：把子 Agent 替换为 MCP 服务器，参考 [MCP 官方规范](https://modelcontextprotocol.io/)
+2. **长时任务与断点续跑**：将 `AgentState` 序列化到数据库，实现崩溃恢复
+3. **多 Agent 评估与调优**：搭建离线评估管线，参考 [Anthropic Agent 评估指南](https://docs.anthropic.com/en/docs/build-with-claude/agent-evals)
+4. **成本控制**：监控 token 消耗，简单任务用 Haiku，复杂推理用 Opus
+5. **安全加固**：加入人工审批环节（human-in-the-loop），高危操作强制确认
 
 ### 参考资料
 
@@ -1412,8 +808,3 @@ response = client.messages.create(
 - [Anthropic 官方文档 - Agent evals](https://docs.anthropic.com/en/docs/build-with-claude/agent-evals)
 - [Anthropic 官方文档 - Models](https://docs.anthropic.com/en/docs/about-claude/models)
 - [Model Context Protocol 规范](https://modelcontextprotocol.io/)
-
----
-
-**文档元信息**
-难度：⭐⭐⭐⭐ | 类型：专家设计 | 更新日期：2026-03-25 | 预计阅读时间：60 分钟 | 字数：约 10000 字
