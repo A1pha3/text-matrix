@@ -806,13 +806,46 @@ class TestDogfooding(unittest.TestCase):
         self.assertNotEqual(term_version, skill_version)
 
     def test_bilingual_description_keywords(self):
-        """触发描述应同时覆盖英文与中文检索信号"""
+        """触发描述应聚焦文档任务，不再兼任博客写作入口"""
         skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
         desc = re.search(r"^description:\s*(.+)$", skill_md, re.MULTILINE).group(1)
         self.assertTrue(desc.startswith("Use when"))
         self.assertLessEqual(len(desc), 500)
-        for keyword in ["中文技术文档", "技术翻译", "去 AI 味", "开源项目解读", "benchmark 解读"]:
+        for keyword in ["中文技术文档", "教程", "README", "API docs", "技术翻译", "去 AI 味"]:
             self.assertIn(keyword, desc)
+        for keyword in ["开源项目解读", "benchmark 解读", "架构分析"]:
+            self.assertNotIn(keyword, desc)
+
+    def test_doc_skill_routes_blog_work_to_separate_skill(self):
+        """博客、架构分析和 benchmark 解读应交给独立 skill"""
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        commands = (self.SKILL_ROOT / "references" / "commands.md").read_text(encoding="utf-8")
+        quality = (self.SKILL_ROOT / "references" / "quality.md").read_text(encoding="utf-8")
+
+        self.assertIn("cn-tech-blog-writer", skill_md)
+        self.assertIn("技术博客", skill_md)
+        self.assertIn("开源项目解读", skill_md)
+        self.assertIn("架构分析", skill_md)
+        self.assertIn("benchmark 解读", skill_md)
+        self.assertNotIn("blog-deep-dive.md", commands)
+        self.assertNotIn("分析型技术文章附加检查", quality)
+
+    def test_blog_skill_exists_with_expected_boundaries(self):
+        """应存在单独的中文技术博客 skill，并与文档/精修层分工明确"""
+        blog_root = self.SKILL_ROOT.parent / "cn-tech-blog-writer"
+        self.assertTrue((blog_root / "SKILL.md").exists())
+        self.assertTrue((blog_root / "skill.json").exists())
+        self.assertTrue((blog_root / "references" / "blog-forms.md").exists())
+        self.assertTrue((blog_root / "references" / "style.md").exists())
+
+        skill_md = (blog_root / "SKILL.md").read_text(encoding="utf-8")
+        desc = re.search(r"^description:\s*(.+)$", skill_md, re.MULTILINE).group(1)
+        self.assertTrue(desc.startswith("Use when"))
+        self.assertLessEqual(len(desc), 500)
+        for keyword in ["技术博客", "开源项目解读", "架构分析", "benchmark 解读", "系统评测"]:
+            self.assertIn(keyword, desc)
+        for phrase in ["cn-doc-writer", "humanizer"]:
+            self.assertIn(phrase, skill_md)
 
     def test_default_visibility_contract_present(self):
         """不同命令应明确默认外显内容，减少流程腔"""
@@ -845,7 +878,7 @@ class TestDogfooding(unittest.TestCase):
         examples = (self.SKILL_ROOT / "references" / "examples.md").read_text(encoding="utf-8")
         self.assertIn("完整信号库", examples)
         self.assertIn("references/examples.md", quality)
-        self.assertIn("可读性` 上限封顶为 20/25", quality)
+        self.assertIn("可读性门槛", quality)
         self.assertIn("总分不得超过 89 分", quality)
         self.assertIn("不得评为 S 级", quality)
         for copied_catalog_phrase in [
@@ -945,7 +978,7 @@ class TestDogfooding(unittest.TestCase):
         self.assertIn("默认简版报告格式", commands)
         self.assertIn("发布级完整评审格式", commands)
         self.assertIn("输出：优化后文档 + 默认简版报告", commands)
-        self.assertIn("只有用户要求发布级评审、完整评分或发布前审查时，才输出完整五维评分表", commands)
+        self.assertIn("只有用户要求发布级评审、完整评分或发布前审查时，才输出完整评分表", commands)
         self.assertNotIn("输出：优化后文档 + 优化前后对比 + 改进报告", commands)
         default_section = commands.split("### 默认简版报告格式", 1)[1].split("### 发布级完整评审格式", 1)[0]
         self.assertNotIn("| 维度 | 优化前 | 优化后 | 变化 |", default_section)
