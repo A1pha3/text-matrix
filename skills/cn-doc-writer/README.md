@@ -58,7 +58,7 @@ cn-doc-writer/
 ├── references/                 # 知识层
 │   ├── commands.md             # 命令执行流程
 │   ├── quality.md              # 评分标准与发布门槛
-│   ├── blog-deep-dive.md       # 分析型技术文章增强指南
+│   ├── blog-deep-dive.md       # 分析型文章指南（待迁入 cn-tech-blog-writer）
 │   ├── examples.md             # 语气与正反例
 │   ├── behavior-fixtures.md    # Skill 行为压测场景
 │   ├── edge-cases.md           # 边界与恢复策略
@@ -197,22 +197,7 @@ python test_scripts.py
 
 ## 更新日志
 
-| 版本 | 变更 |
-|------|------|
-| v5.10.0 | 将主副本同步防漂移接入 `ci/check-docs.yml`：新增可选环境变量 `CN_DOC_WRITER_SOURCE_DIR` / `CN_DOC_WRITER_TARGET_DIR`，配置后 CI 会执行 `check_skill_sync.py` 并阻断副本漂移；触发路径补充 `skills/cn-doc-writer/**` 与 `agent/skills/my-skills/cn-doc-writer/**`。 |
-| v5.9.0 | 新增主副本同步防漂移契约：明确 `prompt_alpha` 为主版本、`text-matrix` 为副本；新增 `scripts/check_skill_sync.py`，可在同步后检查缺失、多余和内容不同的文件；README、SKILL 和回归测试同步覆盖主从方向。 |
-| v5.8.0 | 补强双语触发描述；新增默认外显契约和自动去 AI 味契约；将 `optimize-cn-doc` 拆成默认简版报告与发布级完整评审；将去 AI 味完整信号库下沉到 `references/examples.md`；新增 `references/behavior-fixtures.md` 行为压测场景；拆分 skill 版本与术语表版本；补齐 reference 清单与命令流程可见性回归测试。 |
-| v5.7.0 | 优化 Skill 激活描述与元数据同步；主 SKILL 内置五维评分摘要；默认将路由、评分和自检作为内部步骤；补充去 AI 味与 benchmark 校准短例；压缩重复红线。 |
-| v5.5.0 | 新增“分析型技术文章增强”分支：增加 `references/blog-deep-dive.md`；主 SKILL 接入开源项目解读 / 架构分析 / benchmark 解读路由；commands 和 quality 增加总览图、任务流案例、benchmark 解读与采用建议等强制检查；README 与 skill.json 同步更新。 |
-| v5.4.0 | 新增启发式自动门槛：加入 `scripts/check_ai_tone.py`，可本地检查模板腔、生成式转场、作者在场感和模板化标题；CI 模板同步加入“去 AI 味门槛检查”；README 同步补齐目录结构与脚本说明。 |
-| v5.3.0 | 加入“去 AI 味但不降分”工作流：核心规则新增去 AI 味回路，四个命令全部接入后处理步骤，质量标准加入自然表达强制门槛，但不新增评分维度；未通过门槛时不得冲击 S / 满分。 |
-| v3.7.0 | 代码修复（inline code/LaTeX 误报、变长围栏、CI 注入）、语气框架、发布门槛、增量模式约束、§3.6 文档治理、术语表 216 条（+5 新分类）、4 新模板（Changelog/迁移/故障排除/ADR）、反馈闭环 §1.10，测试 105→126 |
-| v3.6.0 | Prompt（提示词）缓存/上下文管理策略（§2.0）、文档增量更新模式（§2.0.1）、多模型适配提示（§2.0.2）、可读性量化指标（`check_readability`）、CI/CD（持续集成/持续部署）集成模板（`ci/check-docs.yml`）、`--readability` CLI（命令行工具）参数 |
-| v3.5.0 | AI 角色定义、自检循环、智能任务识别、跨文档检查、`is_in_inline_code` 多反引号支持、`_add_space` 保护行内代码/URL、`post_translate` 统一 `should_skip`、`pre_translate` 变长围栏修复、极端场景测试、版本号统一，测试 70→85+ |
-| v3.4.0 | CommonMark 波浪号(~)围栏完整支持、修复 `is_in_latex` bug、消除 `post_translate` 死代码、新增 documentation 术语领域、测试 58→70 |
-| v3.1.0 | 提取共享 utils.py、添加 gen_terminology_md.py、tools.md Mermaid 化、添加 README |
-| v3.0.0 | 重大重构：执行指令、场景路由、量化评估、术语 JSON 单源、翻译脚本拆分、模板去重 |
-| v2.3.0 | 精简主文档、删除冗余、消除重复 |
+见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 

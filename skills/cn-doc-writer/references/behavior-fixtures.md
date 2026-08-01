@@ -39,8 +39,8 @@
 
 关联规则：
 
-- SKILL.md §3.5 分析型技术文章增强回路
-- references/blog-deep-dive.md
+- SKILL.md §4 示例（benchmark 正例）
+- SKILL.md §1.1 路由（分析型任务路由至 `cn-tech-blog-writer`）
 
 ## insufficient-facts
 
@@ -59,7 +59,7 @@
 
 关联规则：
 
-- SKILL.md §1 Step 3
+- SKILL.md §3 Step 3
 - SKILL.md §9 异常与恢复
 
 ## de-ai-score-stability

@@ -912,6 +912,21 @@ class TestDogfooding(unittest.TestCase):
         self.assertNotIn("20/25", script)
         self.assertIn("不得评 S", script)
 
+    def test_blog_split_leaves_no_dangling_references(self):
+        """博客拆分后的引用一致性：边界、压测、README 不得指向已移除的机制"""
+        edge = (self.SKILL_ROOT / "references" / "edge-cases.md").read_text(encoding="utf-8")
+        fixtures = (self.SKILL_ROOT / "references" / "behavior-fixtures.md").read_text(encoding="utf-8")
+        readme = (self.SKILL_ROOT / "README.md").read_text(encoding="utf-8")
+        quality = (self.SKILL_ROOT / "references" / "quality.md").read_text(encoding="utf-8")
+
+        self.assertNotIn("§3.5", fixtures)
+        self.assertNotIn("§1 Step 3", fixtures)
+        self.assertNotIn("| 技术博客 |", edge)
+        self.assertIn("cn-tech-blog-writer", edge)
+        self.assertNotIn("| 版本 | 变更 |", readme)
+        self.assertIn("待迁入", readme)
+        self.assertIn("再应用封顶门槛", quality)
+
     def test_behavior_pressure_fixtures_exist(self):
         """Skill 行为压测场景应作为独立 fixture 保留"""
         fixture = self.SKILL_ROOT / "references" / "behavior-fixtures.md"

@@ -1,7 +1,7 @@
 ---
 name: cn-doc-writer
 description: Use when writing 中文技术文档, including tutorials, README, API docs, 技术翻译, and 去 AI 味. Triggers: 写中文文档, 翻译成中文, 润色中文文档, 去 AI 味, 优化中文文档, 输出中文教程.
-version: 5.15.0
+version: 5.16.0
 author: Sisyphus
 tags: ["cn-doc", "technical", "translation", "learning"]
 commands:
@@ -265,4 +265,5 @@ commands:
 | 术语表中没有对应词 | 保留原文；若中文释义有把握，再补简短括注 |
 | 原文存在自相矛盾或版本冲突 | 以来源更强的一侧为准；无法判定时显式标注 unresolved |
 | 非技术文档，或属于法律/医学/学术论文 | 告知本 skill 不适用，不强行输出 |
+| 路由目标 `cn-tech-blog-writer` 不可用（未安装） | 声明路由偏差后按 `write-cn-doc` 或 `optimize-cn-doc` 处理，交付时说明 |
 | 翻译后行数偏差远超预期 | 先排查是否因代码块、表格或分片导致；若不是，再压缩冗余或补遗漏 |

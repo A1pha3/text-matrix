@@ -255,9 +255,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root", default="content", help="扫描根目录，默认 content")
     parser.add_argument(
         "--target",
-        action="append",
+        action="extend",
+        nargs="+",
         default=[],
-        help="显式指定要校验的文件，可多次传入（pre-commit 场景）",
+        help="显式指定要校验的文件；支持一次传多个，也支持重复传入（pre-commit 场景）",
     )
     parser.add_argument(
         "--strict",
