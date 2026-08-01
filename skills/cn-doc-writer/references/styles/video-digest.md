@@ -3,6 +3,7 @@ triggers: [视频解析, 视频笔记, 转写成文, 演讲实录成文, 播客�
 reader: 没时间看原视频、要快速获取内容价值的读者
 band: video
 gates: [事实性, 去AI味, 转写保真]
+deliverables: [关键论点时间点标注, 读者判断（谁该看原视频）]
 ---
 
 # video-digest 文体包：视频解析博客

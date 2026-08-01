@@ -913,6 +913,7 @@ class TestDogfooding(unittest.TestCase):
     def test_style_packs_meet_registry_contract(self):
         """文体包 frontmatter 必须引用 quality.md 已注册的档位与门槛"""
         quality = (self.SKILL_ROOT / "references" / "quality.md").read_text(encoding="utf-8")
+        skill_md = (self.SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
 
         bands_section = quality.split("权重档注册表")[1].split("### 评分细则")[0]
         band_ids = set(re.findall(r"^\| `([^`]+)`", bands_section, re.MULTILINE))
@@ -930,8 +931,8 @@ class TestDogfooding(unittest.TestCase):
             fm = re.search(r"^---\n(.*?)\n---", text, re.DOTALL)
             self.assertIsNotNone(fm, f"{pack.name} 缺少 frontmatter 参数头")
             header = fm.group(1)
-            self.assertIn("triggers:", header)
-            self.assertIn("reader:", header)
+            for field in ["triggers:", "reader:", "deliverables:"]:
+                self.assertIn(field, header, f"{pack.name} 缺少 {field} 字段")
             band = re.search(r"^band:\s*(\S+)", header, re.MULTILINE)
             self.assertIsNotNone(band, f"{pack.name} 缺少 band 字段")
             self.assertIn(band.group(1), band_ids, f"{pack.name} band 未注册: {band.group(1)}")
@@ -939,6 +940,12 @@ class TestDogfooding(unittest.TestCase):
             self.assertIsNotNone(gates, f"{pack.name} 缺少 gates 字段")
             for gate in [g.strip() for g in gates.group(1).split(",")]:
                 self.assertIn(gate, gate_ids, f"{pack.name} gate 未注册: {gate}")
+            triggers = re.search(r"^triggers:\s*\[(.+?)\]", header, re.MULTILINE).group(1)
+            trigger_words = [t.strip() for t in triggers.split(",")]
+            self.assertTrue(
+                any(t in skill_md for t in trigger_words),
+                f"{pack.name} 的 triggers 在 SKILL.md 路由中无对应",
+            )
 
     def test_behavior_pressure_fixtures_exist(self):
         """Skill 行为压测场景应作为独立 fixture 保留"""

@@ -3,6 +3,7 @@ triggers: [开源项目解读, 架构分析, benchmark 解读, 系统评测, 技
 reader: 带好奇来的技术决策者：要判断，不要功能清单
 band: review
 gates: [事实性, 去AI味, 观点依据]
+deliverables: [总览图或对照表, 任务流案例, 采用建议]
 ---
 
 # project-review 文体包：项目解读与分析博客

@@ -3,6 +3,7 @@ triggers: [思想随笔, 技术随笔, 观点文章, 方法论随笔]
 reader: 寻找视角与判断的同行：要思考价值，不要操作手册
 band: essay
 gates: [去AI味, 观点依据]
+deliverables: [关键论断的依据（出处/数据/推理链）]
 ---
 
 # essay 文体包：思想随笔

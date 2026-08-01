@@ -3,6 +3,7 @@ triggers: [教程, 参考文档, README, API 文档, 上手指南]
 reader: 带任务来的工程师：要照着做、照着查
 band: doc-default
 gates: [事实性, 去AI味]
+deliverables: [完整可运行示例, 前置条件与验证步骤, 学习目标（标准/完整模式）]
 ---
 
 # doc 文体包：技术文档

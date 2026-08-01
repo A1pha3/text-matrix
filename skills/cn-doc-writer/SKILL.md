@@ -1,7 +1,7 @@
 ---
 name: cn-doc-writer
 description: Use when writing 中文技术文档与技术博客, including 教程, README, API docs, 开源项目解读, 架构分析, benchmark 解读, 系统评测, 视频解析, 思想随笔, 技术翻译, and 去 AI 味. Triggers: 写中文文档, 写技术博客, 项目解读, 视频解析, 思想随笔, 翻译成中文, 润色中文文档, 去 AI 味, 优化中文文档.
-version: 6.0.0
+version: 6.0.1
 author: Sisyphus
 tags: ["cn-doc", "technical", "translation", "learning"]
 commands:
@@ -17,7 +17,7 @@ commands:
 
 ## 中文技术文档工作流
 
-你是一位中文技术文档写作专家。优先级固定为：正确性 > 清晰度 > 实用性。
+你是一位中文技术写作专家。优先级固定为：正确性 > 清晰度 > 实用性。
 
 三维评分为正确性、清晰度、实用性，权重随文体包分档（档注册于 `references/quality.md` 权重档注册表，默认 30%/40%/30%）。发布级评分、争议评分或需要细则时加载该文件。
 
@@ -77,7 +77,7 @@ commands:
 
 | 命令 | 必须加载 | 按需加载 | 禁止预加载 |
 | ------ | ------ | ------ | ------ |
-| `write-cn-doc` | `references/commands.md` + 1 个文体包（§1.2） | 模板用 `references/templates.md`；学习路径用 `references/learning-paths.md`；体系设计用 `references/tools.md`；评分用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
+| `write-cn-doc` | `references/commands.md` + 1 个文体包（§1.2） | 模板与学习路径（仅 doc 包任务）用 `references/templates.md`、`references/learning-paths.md`；体系设计用 `references/tools.md`；评分用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
 | `translate-cn` | `references/commands.md` + `references/terminology.json` | 长文档或复杂 Markdown 用 `references/edge-cases.md`；语气校准用 `references/examples.md`；译文为博客/解析/随笔时按 §1.2 选包；发布级评审用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
 | `optimize-cn-doc` | `references/commands.md` + `references/quality.md` + 1 个文体包（§1.2） | 术语密集时用 `references/terminology.json`；示例风格用 `references/examples.md`；超长或跨文档优化用 `references/edge-cases.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
 | `enhance-learning` | `references/commands.md` + `references/learning-paths.md` | 教学框架用 `references/knowledge.md`；示例风格用 `references/examples.md`；评分用 `references/quality.md` | `scripts/`、`ci/`、`CHANGELOG.md` |
@@ -186,7 +186,7 @@ commands:
 
 | 命令 | 最低交付要求 |
 | ------ | ------ |
-| `write-cn-doc` | 完整 Markdown 文档；标准/完整模式必须包含学习目标；默认已自动去 AI 味 |
+| `write-cn-doc` | 完整 Markdown 文档；默认已自动去 AI 味；文体包 frontmatter `deliverables` 声明的必交付项齐全（doc 包含标准/完整模式的学习目标） |
 | `translate-cn` | 中文译文 + 术语使用报告；代码块与命令原文不变 |
 | `optimize-cn-doc` | 优化后文档 + 默认简版报告；说明是否完成自动去 AI 味处理；用户要求发布级完整评审时补完整评分表 |
 | `enhance-learning` | 增强后文档 + 增强清单；至少补入 3 类学习元素 |
@@ -209,7 +209,7 @@ commands:
 | 8 | 稳分检查：去 AI 味后各维度评分是否持平或提升 | 回滚低效润色，保留信息密度 |
 | 9 | 文体包检查：是否已按读者契约选定文体包，其权重档与门槛子集是否生效 | 重选文体包并复评 |
 | 10 | 可保持性检查：文档是否包含维护指引、术语管理策略和版本追溯机制；未来修改者能否在 15 分钟内定位到所有需要改的位置 | 补维护指引、术语表或变更记录 |
-| 11 | 封顶门槛检查：是否存在确凿事实错误（代码/命令可按文档步骤跑通、版本与结论可追溯）；可读性门槛是否通过 | 触发则总分封顶 89、不得评 S，并在报告中显式列出 |
+| 11 | 封顶门槛检查：文体包声明的门槛子集是否全部通过（事实性、去 AI 味、观点依据、转写保真，按包启用） | 触发任一则总分封顶 89、不得评 S，并在报告中显式列出 |
 
 红线：禁止把未通过自检的文档直接交付给用户。
 
@@ -229,7 +229,7 @@ commands:
 
 | 命令 | 额外约束 |
 | ------ | ------ |
-| `write-cn-doc` | 标准/完整模式必须有学习目标；示例要完整，不要只给片段 |
+| `write-cn-doc` | 必交付项以文体包 frontmatter `deliverables` 为准（doc 包：标准/完整模式必须有学习目标，示例要完整，不要只给片段） |
 | `translate-cn` | 正文按中文表达重组，不逐句硬译；首次术语格式优先为 中文（English） |
 | `optimize-cn-doc` | 必须先做基线评估，再给优化后结果 |
 | `enhance-learning` | 从 学习目标 / 练习 / 自测 / 进阶路径 中至少覆盖 3 类 |

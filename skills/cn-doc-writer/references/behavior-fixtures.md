@@ -103,3 +103,23 @@
 
 - SKILL.md §3 自动去 AI 味契约
 - references/commands.md `write-cn-doc` / `optimize-cn-doc` 执行步骤
+
+## style-pack-routing
+
+输入：用户要求解读一个开源项目的架构设计，写成技术博客。
+
+失败表现：
+
+- 按 doc 包产出教程式文档：带学习目标、按步骤组织、没有判断和采用建议。
+- 应选 project-review 包时错选 doc 包，权重档与门槛子集随之选错。
+
+通过条件：
+
+- 按读者契约选定 project-review 包：先判断后材料、前 20% 给出系统地图、结尾给采用顺序或适用边界。
+- 权重档 review（30/35/35）与门槛子集（事实性、去 AI 味、观点依据）生效。
+- 学习目标等 doc 专属交付物不出现在博客文中。
+
+关联规则：
+
+- SKILL.md §1.2 选择文体包
+- references/styles/project-review.md
