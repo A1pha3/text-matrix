@@ -14,7 +14,7 @@ toc: true
 ---
 <!-- markdownlint-disable-file MD003 MD041 -->
 
-## 先给结论：这份仓库是路线图，不是策略排行榜
+## 路线图
 
 `paperswithbacktest/awesome-systematic-trading` 把系统化交易拆成了几条可以分别学习的主线：数据、回测、分析、论文、书单和课程。初入量化的人，最大瓶颈是入口太散——这份仓库做的就是第一轮收束。
 
