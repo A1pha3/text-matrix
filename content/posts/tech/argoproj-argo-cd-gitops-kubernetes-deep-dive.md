@@ -23,15 +23,13 @@ tags: ["Kubernetes"]
 - Helm、Kustomize、纯 YAML 三种任务源在 `repo-server` 里的渲染路径有什么不同？
 - AppProject + RBAC + 命名空间白名单这套多租户边界到底卡住了什么、放过了什么？
 
-阅读建议：第一遍按"核心判断 → 系统地图 → 一次任务穿过系统 → 同步/漂移机制 → 多租户边界"读，先把骨架看明白；第二遍按需跳到具体机制深入。
-
 ---
 
 ## 核心判断
 
-很多人把 Argo CD 当成"会 watch Git 的 kubectl"。这是把它低估了的看法。Argo CD 的核心价值不是把 `kubectl apply` 自动化，而是把"集群的实时状态"和"Git 上声明的目标状态"做成两份独立可对比的事实（live state vs target state），并以 Kubernetes 控制器的形式持续把前者收敛到后者。
+很多人把 Argo CD 当成"会 watch Git 的 kubectl"。它的核心价值不是把 `kubectl apply` 自动化，而是把"集群的实时状态"和"Git 上声明的目标状态"做成两份独立可对比的事实（live state vs target state），并以 Kubernetes 控制器的形式持续把前者收敛到后者。
 
-仓库地址是 [github.com/argoproj/argo-cd](https://github.com/argoproj/argo-cd)，Apache-2.0 协议，目前 master 分支的最新提交时间是 2026-07-13，仓库累计 Star 数 2.37w、Forks 约 7.6k（README 与 GitHub API 实时数据）。CNCF 毕业项目，OpenSSF Scorecard 和 CII Best Practices 都打了卡；发布版带 SLSA 3 等级的供应链元数据。从工程量级看，它本身就是个安装到集群里的"GitOps 控制器 + 一组 CRD + 一个 UI + 一组 CLI"。把它当作 Kubernetes 原生对象管理 Git 仓库这件事，理解全篇文章就足够了。
+仓库地址是 [github.com/argoproj/argo-cd](https://github.com/argoproj/argo-cd)，Apache-2.0 协议，目前 master 分支的最新提交时间是 2026-07-13，仓库累计 Star 数 2.37w、Forks 约 7.6k（README 与 GitHub API 实时数据）。CNCF 毕业项目，OpenSSF Scorecard 和 CII Best Practices 都打了卡；发布版带 SLSA 3 等级的供应链元数据。从工程量级看，它就是安装到集群里的"GitOps 控制器 + 一组 CRD + 一个 UI + 一组 CLI"。
 
 读完 Argo CD 项目自己的 README，加上官方 Architectural Overview 与 Core Concepts 两份文档之后，可以归纳出三条核心判断：
 
@@ -39,11 +37,8 @@ tags: ["Kubernetes"]
 - **判断 2：Application 不是一组 manifest，而是一个 CRD**。Application 是 Argo CD 自己定义的 Kubernetes Custom Resource，里面写的是"我想要的最终态"。Argo CD 只关心这份期望的最终态，并把它和集群里真实的对象逐个对比。manifest 只是 Application 的一部分字段。
 - **判断 3：sync 是一次幂等操作，Reconcile 才是核心循环**。Sync 是用户或控制器主动触发的一次"对齐"动作；Reconcile 是控制器对每个 Application 周期性跑的那段 reconcile loop（对照 live vs target、修正 sync status、清理孤儿资源）。理解这两件事的区别，drift detection、self-heal、prune 这些功能才好分清顺序。
 
-第一条判断点出架构立足点：pull 模型，控制循环跑在集群内部。第二条指明核心对象：Application CRD 是 gitops workload 的基本单位。第三条点出核心动作：sync 是写一次，reconcile 是持续读并收敛。
-
 ## 目录
 
-- [目录](#目录)
 - [核心判断](#核心判断)
 - [系统地图](#系统地图)
 - [边界拆分：三种 Git 引用、三种渲染工具、三种隔离面](#边界拆分：三种-git-引用、三种渲染工具、三种隔离面)
@@ -175,10 +170,10 @@ Reconcile 周期可在 controller 的 `--sync`（默认 3s）和 `--status` flag
 Prune 是 sync 阶段同步处理"集群里多余的对象"。三种典型场景：
 
 - 应用换 chart：旧 chart 里有个 ConfigMap，新 chart 里删了；开 prune 之后这条 ConfigMap 会被自动清掉。
-- 团队手工改了 cluster 里某个 deployment（手 kubectl edit）；下次 reconcile 时 OpenSync + sync 会把它追回 Git（selfHeal）。
+- 团队手工改了 cluster 里某个 deployment（手 kubectl edit）；下次 reconcile 时 OutOfSync + sync 会把它追回 Git（selfHeal）。
 - 跨 application 共享对象：例如两个 Application 都创建 ConfigMap `foo`，开 prune + 多 Application 容易互相踩，建议把共享对象放到独立 Application 或者关 prune。
 
-`--auto-prune` 等开关在原 kubernetes 工具里没有，Argo CD 把这一层语义补上。代价是开 prune 容易误删——>比如 CronJob `successfulJobsHistoryLimit` 之类的对象和另一个工具管理，prune 会删掉它。
+`--auto-prune` 等开关在原 kubernetes 工具里没有，Argo CD 把这一层语义补上。代价是开 prune 容易误删——比如 CronJob `successfulJobsHistoryLimit` 管理的对象，如果另一个工具也在碰，prune 会删掉它。
 
 ### Sync Window：变更节奏护栏
 
@@ -261,7 +256,7 @@ policy 在 argocd-server 鉴权时被读取。它可以做到"张三只能在 st
 
 ### 这层边界不卡什么
 
-值得警觉的是：AppProject 不是 namespace。多个 Application 即使分属不同 AppProject，依然跑在同一个 controller 进程里、共享同一个 repo-server 缓存、共享同一个 informer quota。一个 AppProject 内的 Application 配置错误（比如 tight loop 装 Helm chart 每秒 reconcile）会拉低整组性能。
+AppProject 不是 namespace。多个 Application 即使分属不同 AppProject，依然跑在同一个 controller 进程里、共享同一个 repo-server 缓存、共享同一个 informer quota。一个 AppProject 内的 Application 配置错误（比如 tight loop 装 Helm chart 每秒 reconcile）会拉低整组性能。
 
 另外，AppProject 不能阻止 Application 在 dest cluster 上 create 任意 cluster-scoped 资源，除非你显式把 `clusterResourceWhitelist` 关掉。一旦开了 cluster-scoped 准入，Argo CD 在多租户场景下需要慎重评估。
 
@@ -294,7 +289,7 @@ policy 在 argocd-server 鉴权时被读取。它可以做到"张三只能在 st
 - 团队 GitOps 文化是否成立？拒绝直接 `kubectl apply` 改 prod？
 - 多集群 / 多 namespace 数量级是否超过人手维护？
 - 现有的 Helm chart / Kustomize 模板是否规范，secret 走 SealedSecrets / External Secrets？
-- 是否能接受 center-cluster 当 downtime 时整组 reconciliation 跟着停？
+- 是否能接受 center-cluster 宕机时整组 reconciliation 跟着停？
 - 是否已经有非 cluster-level 的 CI 系统兜底？Argo CD 只解决 CD 这一段。
 
 ## 常见翻车现场
@@ -355,11 +350,9 @@ A：Helm 是 templating + package 工具；Argo CD 是 controller + 多 source �
 
 Argo CD 的核心价值在 README 的"Why Argo CD"两条 philosophy 里写得很直白——"application definitions, configurations, and environments should be declarative and version controlled"和"application deployment and lifecycle management should be automated, auditable, and easy to understand"。
 
-把全文整理成三句话：
-
-- **架构上**：三个组件（API Server、Repository Server、Application Controller）+ 三类对象（Application、AppProject、ApplicationSet）+ 拉模型 reconcile。理解这一面，整套术语都能落到具体代码包。
-- **机制上**：sync 是单次幂等操作，Reconcile 是持续对比 cycle。Drift detection 来自 live vs target diff，selfHeal 把 diff 自动化，prune 把孤儿资源回收。把这三件事独立看，sync 调优才有抓手。
-- **管理上**：AppProject + RBAC + 命名空间白名单构成多租户三层边界，但单 controller 是有上限的——多数团队从单集群单 controller 起步，再扩到 HA + 多集群。
+- **架构上**：三个组件（API Server、Repository Server、Application Controller）+ 三类对象（Application、AppProject、ApplicationSet）+ 拉模型 reconcile。整套术语都能落到具体代码包。
+- **机制上**：sync 是单次幂等操作，Reconcile 是持续对比 cycle。Drift detection 来自 live vs target diff，selfHeal 把 diff 自动化，prune 把孤儿资源回收。
+- **管理上**：AppProject + RBAC + 命名空间白名单构成多租户三层边界，但单 controller 有上限——多数团队从单集群单 controller 起步，再扩到 HA + 多集群。
 
 它不是万能轮；想让 Argo CD 跑出价值，先把"Git 唯一 source of truth"这一文化跑通，再讨论具体 CRD。否则 selfHeal 会变成自我矛盾：昨晚救场的人，今早被它追回来。
 

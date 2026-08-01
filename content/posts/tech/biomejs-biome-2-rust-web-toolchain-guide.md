@@ -16,35 +16,13 @@ tags: ["代码格式化"]
 > - **语言**: Rust
 > - **最后更新**: 2026-06-25
 
-## 这篇文章的判断
+## 一句话判断
 
-Biome 给前端工具链提供了一个"单二进制替代"的选项。如果你的项目是新建的，或者已经受够了 Prettier + ESLint 的配置地狱，Biome 值得一试。如果是深度定制 ESLint 插件的大型存量项目，迁移成本需要仔细评估。
+Biome 给前端工具链提供了一个"单二进制替代"的选项。新项目直接上，受够了 Prettier + ESLint 配置地狱的旧项目也可以考虑迁。但如果深度定制了 ESLint 插件，迁移成本需要仔细评估。
 
 ---
 
-## 学习目标
-
-读完这篇，你应该能回答下面几个问题：
-
-1. Biome 把哪些活儿从 Prettier + ESLint 接了过来，哪些还没接
-2. 单二进制 + Rust 在大仓库 CI 上具体省在哪里
-3. 从一个跑着 Prettier + ESLint 的存量项目迁过来，按什么顺序最稳
-4. 什么情况下不该上 Biome
-
 ## 全文地图
-
-`biomejs/biome` 想做的事情可以一句话讲完：**用 Rust 重写 Prettier + ESLint 的核心能力，做成一个单二进制工具链**。和"在 Prettier / ESLint 上叠配置文件"的传统玩法不同，Biome 的目标是"开箱即用、零配置、跨语言统一"，并且把性能压到极限。截至 2026 年，Biome 在格式化层做到了 **97% Prettier 兼容**、Linter 收录 **500+ 规则**（来自 ESLint、typescript-eslint 等生态），原生支持 **JavaScript / TypeScript / JSX / JSON / CSS / GraphQL**。
-
-## 你会读到什么
-
-读完这篇，你应该能回答下面几个问题：
-
-- Biome 把哪些活儿从 Prettier + ESLint 接了过来，哪些还没接
-- 单二进制 + Rust 在大仓库 CI 上具体省在哪里
-- 从一个跑着 Prettier + ESLint 的存量项目迁过来，按什么顺序最稳
-- 什么情况下不该上 Biome
-
-### 全文地图
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -134,7 +112,7 @@ Biome 全栈用 Rust 写，最大的收益是**冷启动 + 大仓库 lint 速度
 - 从"分钟级"压到"秒级"，PR 反馈更快
 - 不需要维护 Node 版本 / npm 依赖
 
-代价：安装包是二进制（不是 npm script），需要操作系统匹配（README 标注 GitHub Releases 上有全平台构建）。但从工程总账看，单二进制反而比 npm 几百个依赖更可控。
+代价：安装包是二进制（不是 npm script），需要操作系统匹配（README 标注 GitHub Releases 上有全平台构建）。但单二进制比 npm 几百个依赖更容易管理。
 
 > 上面两个数字测的是"单文件 lint 耗时"和"中型仓库全量 lint 耗时"，反映的是 Rust 解析 + 单线程调度相对 Node.js 的差距。它们不能推出"在你的项目里 CI 一定快 10 倍"——真实收益取决于文件数量、规则集大小和 CI 机器规格。
 
@@ -329,12 +307,4 @@ Biome 默认只处理它认识的语言。检查 `formatter.include` 和 `files.
 - 性能基准：`https://github.com/biomejs/benchmark`
 - VS Code 扩展：`https://marketplace.visualstudio.com/items?itemName=biomejs.biome`
 - 规则索引：`https://biomejs.dev/linter/javascript/rules/`
-
-> 本文证据全部来自 Biome README + 官网公开文档。未在 README 中明确给出的"插件 API 完整度"、"未来 ESM/TS 类型支持计划"，本文未作推断。
-
----
-
-## 资料口径说明
-
-本文的判断和结论来自相关项目的官方文档和开源社区的技术讨论。具体技术细节和实现可能随项目版本变化而更新，使用时请参考官方最新文档。
 
