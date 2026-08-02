@@ -39,15 +39,21 @@
 
 ---
 
-## ⚠️ 6-10 自动 push 铁律（永久）
+## ⚠️ 6-10 自动投递 + push 铁律（永久，2026-08-02 对抗审查增强：投递前置）
 
-> **早报自动 push 到 GitHub，AI 验证通过即可 push，不等师父确认，保证及时发布。**
+> **早报价值在"内容生成成功(verify 通过)"那一刻即交付——立即推飞书完整正文。git push 降为 best-effort 持久化（失败只告警，绝不阻断已投递的正文）。**
+>
+> **根治"做完没送"**：原流程投递绑在任务末尾、依赖框架 post-delivery（受 commit/push 竞态影响，8-02 AI新闻冤案：内容+push 全成功，却因末尾竞态被判 error → 正文 not-delivered）。现 **agent 在 verify 通过点自投递正文**，与 push/框架 status 彻底解耦——正文送达只认"verify 通过"，不认"全流程零错误"。
 
 **实施**：
-1. ✅ `bash scripts/morning-news-verify.sh <目标文件绝对路径>` exit 0 才能 push
-2. ✅ exit 0 → 推飞书简短汇报（文件名/条目数/来源数/完成时间）→ git push origin main
-3. ✅ git push 后核对 `gh run list --limit 1` 确认 success
-4. ✅ exit ≠ 0 → 飞书告警（失败原因+文件路径）→ 不 push，等 AI 显式 sessions_spawn 处理
+1. ✅ `bash scripts/morning-news-verify.sh <目标文件绝对路径>` exit 0 才继续
+2. ✅ exit 0 → **立即 `openclaw message send --channel feishu --target user:ou_28db2798a35179602c855f46406e63f3 --message "<去 frontmatter 的正文>"` 推飞书完整正文**（价值此时交付，不依赖后续步骤）
+3. ✅ git push origin main（**best-effort**：失败发飞书告警，但任务不因此 error——正文已送达）
+4. ✅ git push 后核对 `gh run list --limit 1`（失败仅告警，不影响已交付）
+5. ✅ exit ≠ 0（verify 不过）→ 飞书告警（失败原因+文件路径）→ 不 push，等处理
+6. ✅ agent 最终回复 = 简短汇报（"X 条，正文已发飞书，push ✓/⚠️"）供框架 post-delivery（与正文不重复，作次要状态通知）
+
+**为什么 step 2 在 step 3 前**：push 是"持久化存档"，正文投递是"价值交付"。价值交付必须先于、且独立于持久化——存档失败不该让用户收不到早报。
 
 **工具强制**：verify.sh 包含 4 项检查：
 - date ≤ now（不是未来时间）
@@ -55,7 +61,7 @@
 - 链接 200 验证（User-Agent 模拟真浏览器，最多 50 条 / 8 条失败容忍）
 - 新闻条数 ≥ 6
 
-**记忆来源**：2026-06-10 14:33 师父飞书裁决
+**记忆来源**：2026-06-10 14:33 师父飞书裁决（自动 push）；2026-08-02 对抗性审查增强（投递前置 + push best-effort，根治做完没送）
 
 ---
 
@@ -142,13 +148,14 @@ Chrome CDP 采集 <SOURCE_LIST>，逐条打开原文验证。
 ⚠️ 铁律铁门：详见 skills/morning-report/references/iron-laws.md
    - 6-9 隐私铁律 + 6-10 自动 push + 6-19 Web3 去重（如适用） + 6-30 pre-commit（仓库级已激活）
 
-# Step 4: push 前验证（工具强制）
-1. bash scripts/morning-news-verify.sh <目标文件绝对路径>，exit 0 才能 push
-2. exit 0 → 推飞书简短汇报 → git push origin main
-3. git push 后核对 gh run list --limit 1 确认 success
-4. exit ≠ 0 → 飞书告警 → 不 push
+# Step 4: 投递 + push（投递前置，2026-08-02 对抗审查根治"做完没送"）
+1. bash scripts/morning-news-verify.sh <目标文件绝对路径>，exit 0 才继续
+2. exit 0 → openclaw message send 推飞书**完整正文**(去frontmatter) ← 价值交付点，先于push
+3. git push origin main（**best-effort**，失败告警但不阻断——正文已送达）
+4. git push 后核对 gh run list --limit 1（失败仅告警）
+5. exit ≠ 0 → 飞书告警 → 不 push
 
-# Step 5: 完成后推送飞书简短汇报
+# Step 5: agent 最终回复 = 简短汇报（供框架 post-delivery，与正文不重复）
 ```
 
 ---
