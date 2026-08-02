@@ -10,33 +10,9 @@ tags: ["AI Agent", "Harness Engineering", "Context Engineering"]
 
 # Agent Harness Engineering：AI Agent 执行框架的系统化重构
 
-2026 年 CMU、耶鲁等机构与亚马逊的联合 Survey 给出了一个判断：当模型本身已经强到能尝试长任务时，制约 Agent 上生产的瓶颈已经从模型下移到了包裹模型的执行框架——论文称之为 agent execution harness（执行框架或驾驭层）。这套框架被拆成 ETCLOVG 七层，2022–2026 年的开源项目分布印证了行业的投入方向：工程资源集中在 L 层（Lifecycle & Orchestration，生命周期与编排），而 C 层（Context & Memory，上下文与记忆）和 O 层（Observability & Operations，可观测性与运维）在开源侧偏薄。
+2026 年 CMU、耶鲁等机构与亚马逊的联合 Survey 给出了一个判断：当模型本身已经强到能尝试长任务时，制约 Agent 上生产的瓶颈已经从模型下移到了包裹模型的执行框架——论文称之为 agent execution harness（执行框架或驾驭层）。这套框架被拆成 ETCLOVG 七层，2022–2026 年的开源项目分布印证了行业的投入方向：工程资源集中在 L 层（Lifecycle & Orchestration），而 C 层（Context & Memory）和 O 层（Observability & Operations）在开源侧偏薄。
 
 接下来的内容按 ETCLOVG 的层次逐层拆解这套框架，并补一个"编程 Agent 修 GitHub Issue"的任务流案例，把七层串起来。
-
-## 学习目标
-
-读完这篇笔记，应该能够：
-
-- 说出 ETCLOVG 七层各自解决的工程问题，以及前四层与后三层的分组依据
-- 把一个真实 Agent 任务（如修 GitHub Issue）映射到七层结构，指出每层的具体职责
-- 根据团队需求（短任务 vs 长任务、内部工具 vs 上生产）选出先做哪一层
-- 识别 Survey 的三个主要局限：开源编码偏倚、L 层同质化、O/G 层商业化承接
-- 在选型或构建时，避开 E 层选错、C 层嵌入陷阱、O 层缺位等典型故障模式
-
-## 目录
-
-1. [三代演进：行业把工程投入投向哪里](#三代演进行业把工程投入投向哪里)
-2. [ETCLOVG 七层：先看地图，再进细节](#etclovg-七层先看地图再进细节)
-3. [七层逐层拆解](#七层逐层拆解)
-4. [任务如何流过七层：一次 Agent 修 GitHub Issue](#任务如何流过七层一次-agent-修-github-issue)
-5. [开源生态分布：测的是什么，反映哪部分](#开源生态分布测的是什么反映哪部分)
-6. [五个开放问题](#五个开放问题)
-7. [该怎么用这篇 Survey](#该怎么用这篇-survey)
-8. [自测清单](#自测清单)
-9. [参考链接](#参考链接)
-
----
 
 ## 三代演进：行业把工程投入投向哪里
 
@@ -85,11 +61,11 @@ flowchart TB
 
 Agent 代码跑在哪里、受什么沙箱约束。具体形态包括托管沙箱、微虚拟机（如 Firecracker）、代码专用运行时、计算机使用环境、浏览器沙箱、操作系统权限模型。
 
-设计轴只有一条：安全与灵活性的权衡。沙箱太严，Agent 改不了一个配置文件；太松，Prompt Injection（提示注入）和 Goal Misalignment（目标错位）就有可乘之机。论文没有给出"该选哪种沙箱"的判断，只列出了选项和各自的代价——E 层在 2026 年还没有形成共识。
+设计轴只有一条：安全与灵活性的权衡。沙箱太严，Agent 改不了一个配置文件；太松，Prompt Injection 和 Goal Misalignment 就有可乘之机。论文没有给出"该选哪种沙箱"的判断，只列出了选项和各自的代价——E 层在 2026 年还没有形成共识。
 
 ### T – Tool Interface & Protocol（工具接口与协议）
 
-外部能力如何被描述、发现和调用。MCP（Model Context Protocol，模型上下文协议）在 2025–2026 年快速成为事实标准，Anthropic 的插件生态和 OpenAI 的工具调用体系都在向协议层收敛；A2A（Agent-to-Agent）则处理 Agent 之间的互调。
+外部能力如何被描述、发现和调用。MCP 在 2025–2026 年快速成为事实标准，Anthropic 的插件生态和 OpenAI 的工具调用体系都在向协议层收敛；A2A 则处理 Agent 之间的互调。
 
 T 层真正决定成败的是工具 Schema 的描述质量。协议本身只是载体，描述质量才决定模型能不能正确调用工具。一个描述模糊的工具，模型要么不敢调，要么调错参数；一个描述过细的工具，又会挤占上下文窗口。这是 T 层和 C 层的耦合点。
 
@@ -346,8 +322,6 @@ Trace 应该成为系统计算结果分数、轨迹质量、失败归因和回�
 
 ## 资料口径说明
 
-本节说明本文的信息来源、时效性、适用边界和已知局限。
-
 ### 信息来源与时效性
 
 本文基于 *Agent Harness Engineering: A Survey*（CMU、耶鲁、JHU、NEU、Tulane、UAB、OSU、Virginia Tech 与 Amazon 联合团队）编写，论文于 2026 年 5 月 14 日在 OpenReview 发布（ID: eONq7FdiHa），最后一次修改为 2026 年 5 月 15 日。
@@ -374,7 +348,7 @@ Trace 应该成为系统计算结果分数、轨迹质量、失败归因和回�
 
 ### 未覆盖的内容
 
-本文未深入讨论以下话题，未来可能需要补充：
+本文未深入讨论以下话题：
 
 - ETCLOVG 七层在具体行业（金融、医疗、法律）的合规映射。
 - 多区域、多云平台上的 E 层沙箱和 G 层身份同步方案。
@@ -396,4 +370,3 @@ Trace 应该成为系统计算结果分数、轨迹质量、失败归因和回�
 - 开源项目目录：https://github.com/Picrew/awesome-agent-harness
 - HuggingFace 数据集：https://huggingface.co/datasets/ChenLiu1996/Agent-Harness-Engineering
 - OpenReview：https://openreview.net/forum?id=eONq7FdiHa（venue/submission 状态以 OpenReview 页面为准）
-

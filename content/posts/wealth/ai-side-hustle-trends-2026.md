@@ -1,7 +1,7 @@
 ---
 title: "AI 副业赚钱指南：2026 年如何用 AI 做出可复购的第二收入"
 date: "2026-03-26T08:00:00+08:00"
-lastmod: 2026-05-08T10:30:00+08:00
+lastmod: 2026-08-02T12:00:00+08:00
 slug: "ai-side-hustle-money-making-guide-2026"
 description: "基于 Stanford AI Index、Microsoft Work Trend Index、Anthropic Economic Index 等公开资料，拆解 2026 年更值得做的 AI 副业路径、30 天验证方法与常见风险。"
 summary: "这不是一篇把 AI 副业写成暴富清单的文章，而是一份面向普通人的执行框架：基于公开资料判断 2026 年的真实窗口，筛出更值得做的 5 条路径，并给出 30 天验证、报价分层、风险边界与 90 天放大路线。"
@@ -12,7 +12,7 @@ tags: ["财富自由", "创业", "副业", "自动化"]
 hiddenFromHomePage: true
 ---
 
-2026 年再谈 AI 副业，已经很难靠一份"热门方向清单"把问题讲清楚。还有空间的方向，是把某个真实需求做得更快、更稳、更容易复用，而不是把模型名字挂在服务前面。站在这个时间点，需要回答三件事：窗口还在不在，普通人的第一笔钱更可能从哪里来，以及一个方向该怎样低成本验证。
+2026 年再谈 AI 副业，光靠一份"热门方向清单"已经讲不清楚了。还有空间的方向，是把某个真实需求做得更快、更稳、更容易复用，而不是把模型名字挂在服务前面。现在需要回答三件事：窗口还在不在，普通人的第一笔钱更可能从哪里来，以及一个方向该怎样低成本验证。
 
 > 这是一篇研究与执行框架文章，不构成投资、创业、税务或法律建议。凡是涉及客户数据、版权素材、自动化发布和商业承诺的场景，都需要你自己做最终核验。
 
@@ -33,7 +33,7 @@ AI 副业卖的是结果，不是提示词。客户不会为模型名称付钱�
 | 2024 年有 78% 的组织表示已经使用 AI，上一年是 55% | [Stanford HAI《2025 AI Index Report》](https://hai.stanford.edu/ai-index/2025-ai-index-report) | 市场从"教育客户什么是 AI"转向"谁能把 AI 用到具体业务里" |
 | 2024 年全球生成式 AI 私人投资达到 339 亿美元，同比增长 18.7% | [Stanford HAI《2025 AI Index Report》](https://hai.stanford.edu/ai-index/2025-ai-index-report) | 工具供给会继续变多，单纯靠"我会用某个模型"越来越难形成壁垒 |
 | 达到 GPT-3.5 水平的推理成本在 2022 年 11 月到 2024 年 10 月之间下降超过 280 倍 | [Stanford HAI《2025 AI Index Report》](https://hai.stanford.edu/ai-index/2025-ai-index-report) | 试错成本更低，但价格战也更容易发生，壁垒只能来自场景和交付 |
-| 82% 的管理者预计未来 12 到 18 个月会用数字劳动力扩展产能，81% 预计 AI agent（智能代理）会中度或深度进入公司策略 | [Microsoft《2025 Work Trend Index》](https://www.microsoft.com/en-us/worklab/work-trend-index/2025-the-year-the-frontier-firm-is-born) | 企业对"AI 能不能省人、省时间、提效率"的需求已经从兴趣变成预算问题 |
+| 82% 的管理者预计未来 12 到 18 个月会用数字劳动力扩展产能，81% 预计 AI agent 会中度或深度进入公司策略 | [Microsoft《2025 Work Trend Index》](https://www.microsoft.com/en-us/worklab/work-trend-index/2025-the-year-the-frontier-firm-is-born) | 企业对"AI 能不能省人、省时间、提效率"的需求已经从兴趣变成预算问题 |
 | 78% 的管理者正在考虑招聘 AI 相关岗位，重点包括 AI Trainer、AI Agent Specialist、AI Media & Content Manager、AI Business Process Consultant | [Microsoft《2025 Work Trend Index》](https://www.microsoft.com/en-us/worklab/work-trend-index/2025-the-year-the-frontier-firm-is-born) | 最接近变现的方向，往往就是这些岗位的外包版、顾问版或轻量版 |
 | Claude 的高频工作任务集中在软件开发、业务文档、邮件、故障排查、内容编辑等知识工作 | [Anthropic Economic Index](https://www.anthropic.com/economic-index) | AI 副业最容易成交的，是这些已经被验证过的任务类型，不是玄乎的概念 |
 
@@ -180,7 +180,7 @@ AI 副业卖的是结果，不是提示词。客户不会为模型名称付钱�
 | 第 15 到 21 天 | 找 10 到 20 个潜在客户做试点邀约 | 试点方案、报价、边界说明 |
 | 第 22 到 30 天 | 交付至少 1 个试点并复盘 | 案例、反馈、SOP、下一轮优化点 |
 
-这里面关键是"任务定义"，不是工具。一句好的副业定位，通常长这样：
+这里面的关键是"任务定义"，不是工具。一句好的副业定位，通常长这样：
 
 > 我帮小型电商团队把每周经营周报从手工整理改成半自动生成，目标是把整理时间从 3 小时压到 30 分钟，并保留人工复核。
 

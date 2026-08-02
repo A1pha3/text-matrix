@@ -6,7 +6,7 @@ tags: ["Anthropic"]
 categories: ["技术深潜"]
 
 description: "系统拆解 Anthropic 的 Jacobian Lens、J-space 与全局工作区研究，解释 Claude 的隐藏推理、结构证据、安全审计价值，以及这套方法仍然看不到什么。"
-summary: "这不是一篇“Claude 有意识了”的转述，而是一篇技术判断：Anthropic 用 Jacobian Lens 找到的 J-space，究竟如何支撑可报告、可调动、可参与推理的共享工作区，以及它在结构证据、安全审计、后训练与反思训练上的真正价值与边界。"
+summary: "这不是一篇\"Claude 有意识了\"的转述，而是一篇技术判断：Anthropic 用 Jacobian Lens 找到的 J-space，究竟如何支撑可报告、可调动、可参与推理的共享工作区，以及它在结构证据、安全审计、后训练与反思训练上的真正价值与边界。"
 featuredImage: "/images/anthropic-jspace-header.webp"
 ---
 
@@ -14,45 +14,11 @@ featuredImage: "/images/anthropic-jspace-header.webp"
 
 更值得盯住的不是"模型会不会有意识"这种答不上来的争议，而是一个已经被实验支撑的事实：前沿语言模型内部出现了一小片特权的"工作台"，专门承接可报告、可调动、可复用的显式思考。
 
-这项工作有两个入口：研究页 A global workspace in language models 偏研究导读，Transformer Circuits 上的正式论文 Verbalizable Representations Form a Global Workspace in Language Models 偏完整技术细节。两者讲的是同一件事，本文把它们当作同一组工作来拆。
-
-## 目录
-
-- 学习目标
-- 一句话判断：这不是"机器意识实锤"
-- 先把两篇研究分开看
-- 总览图：怎么读这篇 J-space 论文
-- Jacobian Lens 到底在算什么
-- J-space 到底是什么，不是什么
-- Anthropic 为什么把它叫"工作区"
-- 一个具体任务如何流过 J-space
-- 结构上它为什么更像"工作区"
-- J-space 与自动处理的分界线
-- 这项方法能做什么安全审计
-- 后训练怎样改写 J-space
-- 反事实反思训练：为什么"训练它会怎么说"会改写"它会怎么想"
-- 为什么它像全局工作区，但还不是"有主观体验"
-- 目前最重要的边界
-- 如果你想自己复现
-- FAQ 与参考资料
-- 练习
-- 进阶方向
-- 自测题
-
----
-
-## 学习目标
-
-- 分清 2025 年的 circuit tracing 方法论文，和 2026 年的 J-space / global workspace 论文各自解决什么问题。
-- 理解 Jacobian Lens 不是"直接读脑"，而是把当前层的残差表征先运输到最终输出基底，再解码。
-- 看懂 Anthropic 用哪几类实验论证 J-space 具备"可报告、可调动、可参与推理、可共享广播"的性质。
-- 明白这项工作真正支持的是 access consciousness 的功能类比，而不是 phenomenal consciousness 的证明。
-
----
+这项工作有两个入口：研究页 [A global workspace in language models](https://www.anthropic.com/research/global-workspace) 偏研究导读，Transformer Circuits 上的正式论文 [Verbalizable Representations Form a Global Workspace in Language Models](https://transformer-circuits.pub/2026/workspace/index.html) 偏完整技术细节。两者讲的是同一件事，本文把它们当作同一组工作来拆。
 
 ## 一句话判断：这不是"机器意识实锤"
 
-如果只保留一个结论，我会这样概括这组工作：
+如果只保留一个结论，我会这样概括：
 
 **Anthropic 发现的，不是 Claude"有了主观体验"，而是 Claude 内部存在一小块更接近"可被报告、可被主动调动、可被多任务复用"的共享表征区。**
 
@@ -159,7 +125,7 @@ Anthropic 不是因为看到几个漂亮可视化，就把 J-space 命名成"工
 | 共享广播 | 在询问首都、语言、货币、洲别这几类不同问题时，把 France 换成 China，会同时改写多个答案 | 同一表征能被多个下游系统复用 |
 | 与自动处理分界 | 删掉 J-space 后，流利续写、基础语法、简单事实还能做；多步推理、摘要、押韵写作明显崩掉 | 它更像"显式思考的工作台"，不是全部计算本体 |
 
-合在一起，J-space 就确实不像普通中间层特征。它更像一条高连接度的共享通道：很多系统能往里写，很多系统也能从里读。
+合在一起，J-space 就确实不像普通中间层特征。它更像一条高连接度的共享通道：很多系统能往里写，很多系统也能从里读。"
 
 而且这种"共享"不是凭直觉描述出来的。论文把 concept vector 拆成 J-space 成分和非 J-space 成分时，前者只解释概念向量方差的 **中位数 6% 到 7%**，约 93% 落在 J-space 之外，可这点成分已经承担了 verbal report 的主要因果作用——纯 J-space 成分的交换有 59% 的试验把目标答案顶进 top-5，直接用 J-lens token 向量能做到 88%，而把 J-space 成分钳掉只剩 5%。在更系统的 flexible generalization 评估里，作者做了 **192 次跨函数交换**（国家、月份、动物、数字词四类 × 四种函数 × 12 对），标准强度下 **76 次成功**，把交换强度加到 $\alpha = 2$ 后升到 **101 次**；其中"国家"参数加载最重、交换最稳，"数字词"最差。这组数字很像在告诉你：工作区不是"大容量"，而是"小容量但高权限"。
 

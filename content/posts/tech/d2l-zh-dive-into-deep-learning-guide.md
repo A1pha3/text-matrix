@@ -1,21 +1,22 @@
 ---
-title: "D2L-ZH 动手学深度学习：李沐团队开源教材解读·PyTorch/TensorFlow/JAX 三框架"
+title: "D2L-ZH 动手学深度学习：李沐团队开源教材解读"
 date: "2026-04-12T02:31:39+08:00"
 slug: d2l-zh-dive-into-deep-learning-guide
-description: "D2L-ZH（动手学深度学习）是李沐团队编写的开源深度学习教材，被全球 500+ 高校采用，覆盖 PyTorch、TensorFlow、JAX 三大框架。本文从定位、章节、配套资源、环境配置到学习路径做完整解读。"
+description: "D2L-ZH（动手学深度学习）是李沐团队编写的开源深度学习教材，被全球 500+ 高校采用，覆盖 PyTorch、TensorFlow、JAX、PaddlePaddle 四种框架。本文从定位、章节、配套资源、环境配置到学习路径做完整解读。"
 draft: false
 categories: ["技术笔记"]
-tags: ["深度学习", "PyTorch", "TensorFlow"]
+tags: ["深度学习", "PyTorch", "TensorFlow", "JAX"]
 ---
 
 # D2L-ZH 动手学深度学习：李沐团队开源教材解读
 
-《动手学深度学习》（Dive into Deep Learning，简称 D2L）是 Aston Zhang、Zachary C. Lipton、Mu Li（李沐）和 Alexander J. Smola 合著的开源教材。中文版仓库 d2l-zh 是面向中文读者的翻译与维护版本，截至 2026 年 4 月，GitHub 星标约 77k，被全球 500 多所高校用作教材或参考书，覆盖 PyTorch、TensorFlow、JAX（以及 PaddlePaddle）四种框架实现。
+《动手学深度学习》（Dive into Deep Learning，简称 D2L）是 Aston Zhang、Zachary C. Lipton、Mu Li（李沐）和 Alexander J. Smola 合著的开源教材。中文版仓库 d2l-zh 面向中文读者维护，截至 2026 年 4 月，GitHub 星标约 77k，被全球 500 多所高校用作教材或参考书，提供 PyTorch、TensorFlow、JAX、PaddlePaddle 四种框架实现。
 
 本文不堆功能清单，而是把这本教材拆成"它解决什么问题、章节怎么排、配套资源怎么用、环境怎么搭、按什么顺序学"五条线，给打算用它入门或备课的读者一份可执行的参考。
 
 ## 目录
 
+- [学习目标](#学习目标)
 - [项目定位：为什么需要一本"能运行"的教材](#项目定位为什么需要一本能运行的教材)
 - [章节结构：从线性回归到 BERT 的 15 章](#章节结构从线性回归到-bert-的-15-章)
 - [配套资源：在线版、视频课、工具包](#配套资源在线版视频课工具包)
@@ -24,6 +25,7 @@ tags: ["深度学习", "PyTorch", "TensorFlow"]
 - [学习路径：5 周入门 + 进阶分流](#学习路径5-周入门--进阶分流)
 - [FAQ：常见问题与错误排查](#faq常见问题与错误排查)
 - [自测题](#自测题)
+- [练习](#练习)
 - [进阶路径](#进阶路径)
 - [资源链接与引用](#资源链接与引用)
 
@@ -38,31 +40,31 @@ tags: ["深度学习", "PyTorch", "TensorFlow"]
 
 ## 项目定位：为什么需要一本"能运行"的教材
 
-D2L-ZH 的核心定位写在仓库首页的一句话里——"理解深度学习的最佳方法是学以致用"。这句话对应一个具体的设计取舍：教材里每一个概念都配有可运行的代码，读者可以修改参数、观察输出，再回到数学公式。
+D2L-ZH 的核心定位写在仓库首页——"理解深度学习的最佳方法是学以致用"。教材里每一个概念都配有可运行的代码，读者可以修改参数、观察输出，再回到数学公式。
 
-这种"代码 + 数学 + 讨论"三位一体的形式，让它和两类常见教材区分开。一类是偏理论的"花书"（Goodfellow 等《Deep Learning》），数学严谨但代码缺位；另一类是偏工程的框架教程，代码齐全但缺乏原理推导。D2L 试图在中间找到一个平衡点：用 Jupyter Notebook 承载可运行代码，用 LaTeX 排版数学推导，用讨论区（discuss.d2l.ai）承接读者提问。
+这种"代码 + 数学 + 讨论"的形式，把它和两类常见教材区分开。一类是偏理论的"花书"（Goodfellow 等《Deep Learning》），数学严谨但代码缺位；另一类是偏工程的框架教程，代码齐全但缺乏原理推导。D2L 在两者之间找平衡：用 Jupyter Notebook 承载可运行代码，用 LaTeX 排版数学推导，用讨论区（discuss.d2l.ai）承接读者提问。
 
-教材的作者团队背景也值得说明。Mu Li（李沐）是亚马逊资深首席科学家，Aston Zhang 同样来自亚马逊，Zachary C. Lipton 是卡内基梅隆大学教授，Alexander J. Smola 是亚马逊杰出科学家兼慕尼黑工业大学教授。这个组合让教材既有工业界的工程视角，也有学术界的理论严谨性。
+作者团队背景决定了教材的气质。Mu Li（李沐）是亚马逊资深首席科学家，Aston Zhang 同样来自亚马逊，Zachary C. Lipton 是卡内基梅隆大学教授，Alexander J. Smola 是亚马逊杰出科学家兼慕尼黑工业大学教授。这个组合让教材既有工业工程视角，也有学术理论严谨性。
 
-教材的认可度可以从两个维度看。学术推荐方面，韩家炜（伊利诺伊大学香槟分校）、Bernhard Schölkopf（马普所智能系统院院长）、周志华（南京大学）、张潼（香港科技大学）等都在仓库 README 中给出了推荐语，这些推荐语可在 [d2l-zh GitHub 首页](https://github.com/d2l-ai/d2l-zh) 直接查阅。工业推荐方面，黄仁勋（NVIDIA 创始人 & CEO）、余凯（地平线创始人 & CEO）、漆远（复旦大学浩清教授）、沈强（将门创投创始合伙人）也都在 README 中给出了推荐。这些推荐均来自仓库官方页面，可追溯。
+教材的认可度反映在推荐名单上。学术方面，韩家炜（伊利诺伊大学香槟分校）、Bernhard Schölkopf（马普所智能系统院院长）、周志华（南京大学）、张潼（香港科技大学）等都在仓库 README 中给出了推荐语，可在 [d2l-zh GitHub 首页](https://github.com/d2l-ai/d2l-zh) 查阅。工业方面，黄仁勋（NVIDIA 创始人 & CEO）、余凯（地平线创始人 & CEO）、漆远（复旦大学浩清教授）、沈强（将门创投创始合伙人）同样在 README 中给出了推荐。这些推荐均来自官方页面，可追溯。
 
 关于版本：教材当前稳定版本为 v2.0.0，于 2022 年 12 月 8 日发布，对应人民邮电出版社 2023 年出版的纸质书《动手学深度学习（PyTorch 版）》。GitHub 仓库在 v2.0.0 之后仍有持续提交（修复勘误、跟进框架版本），但未发布新的版本号。如果你需要最新内容，建议直接看在线版；如果需要稳定快照，用 v2.0.0 tag。
 
 ## 章节结构：从线性回归到 BERT 的 15 章
 
-v2.0.0 版本共 15 章加一个附录，按"基础 → 卷积与循环网络 → 注意力与优化 → 应用"的顺序展开。下面按部分说明每章的核心问题和引入的概念。
+v2.0.0 版本共 15 章加一个附录，按"基础 → 卷积与循环网络 → 注意力与优化 → 应用"展开。
 
 **第一部分：基础（第 1-5 章）**
 
-第 1 章引言解释深度学习为什么在 2012 年后爆发，给出数据、算力、算法三个驱动因素。第 2 章预备知识覆盖张量运算、线性代数、微积分、概率论，以及 Pandas 基础——这一章的目的是让没有 ML 背景的读者也能跟上后续推导。第 3 章用线性回归和 Softmax 回归引入"模型 + 损失 + 优化器"的训练范式，这是全书反复出现的骨架。第 4 章多层感知机引入激活函数、反向传播、过拟合与 Dropout，把线性模型扩展到非线性。第 5 章深度学习计算讲层与块的组合、参数管理、延后初始化、GPU 计算，相当于框架使用手册。
+第 1 章引言解释深度学习为什么在 2012 年后爆发，给出数据、算力、算法三个驱动因素。第 2 章预备知识覆盖张量运算、线性代数、微积分、概率论，以及 Pandas 基础——没有 ML 背景的读者从这里开始也能跟上后续推导。第 3 章用线性回归和 Softmax 回归引入"模型 + 损失 + 优化器"的训练范式，这个模式贯穿全书。第 4 章多层感知机引入激活函数、反向传播、过拟合与 Dropout，把线性模型扩展到非线性。第 5 章深度学习计算讲层与块的组合、参数管理、延后初始化、GPU 计算，相当于框架使用手册。
 
 **第二部分：卷积与循环网络（第 6-9 章）**
 
-第 6 章卷积神经网络从互相关运算讲起，引入填充、步幅、池化、多输入多输出通道。第 7 章现代卷积神经网络按历史顺序介绍 AlexNet、VGG、NiN、GoogLeNet、ResNet、DenseNet，重点解释残差连接为什么能让网络变深。第 8 章循环神经网络引入状态更新公式和沿时间反向传播（BPTT），第 9 章现代循环网络讲 GRU、LSTM、双向 RNN、编码器-解码器架构和 Beam Search。
+第 6 章卷积神经网络从互相关运算讲起，引入填充、步幅、池化、多输入多输出通道。第 7 章现代卷积神经网络按历史顺序介绍 AlexNet、VGG、NiN、GoogLeNet、ResNet、DenseNet，残差连接是这一章的核心——它解释了为什么网络可以变深。第 8 章循环神经网络引入状态更新公式和沿时间反向传播（BPTT），第 9 章现代循环网络讲 GRU、LSTM、双向 RNN、编码器-解码器架构和 Beam Search。
 
 **第三部分：注意力与优化（第 10-12 章）**
 
-第 10 章注意力机制是全书的重点之一，从注意力评分函数讲到自注意力，再到 Transformer。这一章是后续理解 BERT、GPT 的基础。第 11 章优化算法讲 SGD、小批量 SGD、Momentum、AdaGrad、RMSProp、Adam，重点解释为什么需要学习率调度。第 12 章计算性能讨论并行计算、异步计算、多 GPU 训练，属于工程化内容。
+第 10 章注意力机制从注意力评分函数讲到自注意力，再到 Transformer，是后续理解 BERT、GPT 的基础。第 11 章优化算法讲 SGD、小批量 SGD、Momentum、AdaGrad、RMSProp、Adam，学习率调度的必要性是这一章的主线。第 12 章计算性能讨论并行计算、异步计算、多 GPU 训练，属于工程化内容。
 
 **第四部分：应用（第 13-15 章）**
 
@@ -84,7 +86,7 @@ v2.0.0 版本共 15 章加一个附录，按"基础 → 卷积与循环网络 �
 
 **d2l 工具包**
 
-教材配套了一个 Python 工具包 `d2l`，封装了绘图、数据加载、训练循环等常用函数，目的是让正文代码聚焦于模型本身而不是样板代码。安装方式：
+教材配套了一个 Python 工具包 `d2l`，封装了绘图、数据加载、训练循环等常用函数，让正文代码聚焦于模型本身而不是样板代码。安装方式：
 
 ```bash
 # 从 PyPI 安装
@@ -96,7 +98,7 @@ cd d2l-zh/d2l
 pip install -e .
 ```
 
-工具包的主要模块包括 `d2l.torch`（PyTorch 实现）、`d2l.tensorflow`（TensorFlow 实现）、`d2l.jax`（JAX 实现），以及内部的 `data`（数据加载）、`functions`（绘图与训练函数）、`nn`（层封装）、`optim`（优化器）等子模块。日常使用时通常只导入对应框架的命名空间：
+工具包按框架分命名空间：`d2l.torch`（PyTorch 实现）、`d2l.tensorflow`（TensorFlow 实现）、`d2l.jax`（JAX 实现），内部模块包括 `data`（数据加载）、`functions`（绘图与训练函数）、`nn`（层封装）、`optim`（优化器）。日常使用时只导入对应框架的命名空间：
 
 ```python
 from d2l import torch as d2l
@@ -194,7 +196,7 @@ num_epochs = 10
 d2l.train_ch3(net, train_iter, test_iter, loss, num_epochs, trainer)
 ```
 
-注意 `train_iter` 和 `test_iter` 必须先通过 `load_data_fashion_mnist` 获取，原文档中部分代码片段省略了这一步，直接调用 `train_ch3` 会报 `NameError`。`train_ch3` 的命名来自第 3 章，它内部会调用 `train_epoch_ch3` 完成单个 epoch 的训练，并在每个 epoch 结束后计算测试集精度、绘制训练曲线。
+`train_iter` 和 `test_iter` 必须先通过 `load_data_fashion_mnist` 获取。教材的部分代码片段省略了这一步，直接调用 `train_ch3` 会报 `NameError`。`train_ch3` 内部调用 `train_epoch_ch3` 完成单个 epoch 训练，每个 epoch 结束后计算测试集精度、绘制训练曲线。
 
 TensorFlow 实现的 API 风格类似，区别在于模型定义用 `tf.keras.Sequential`，训练循环同样由 `d2l.train_ch3` 封装：
 
@@ -221,11 +223,11 @@ JAX 和 PaddlePaddle 实现的覆盖度不如前两者，部分章节可能只�
 
 ## 学习路径：5 周入门 + 进阶分流
 
-下面给出一个 5 周入门计划，适合每周能投入 10-15 小时的读者。这个计划不是唯一解，但能避免"从头读到尾"的低效。
+一个 5 周入门计划，适合每周投入 10-15 小时的读者。按周推进，避免从头读到尾的低效。
 
 **第 1 周：基础（第 1-3 章）**
 
-第 1 章快速浏览即可，重点放在第 2 章预备知识。如果你对张量运算、广播机制、自动求导不熟，这一章必须动手敲代码。第 3 章线性回归是全书训练范式的最小完整示例，务必理解"模型 → 损失 → 优化器 → 训练循环"四件套。
+第 1 章快速浏览即可，重点放在第 2 章预备知识。如果你对张量运算、广播机制、自动求导不熟，这一章必须动手敲代码。第 3 章线性回归是全书训练范式的最小完整示例，理解"模型 → 损失 → 优化器 → 训练循环"四件套是后续所有章节的基础。
 
 **第 2 周：从 MLP 到计算图（第 4-5 章）**
 
@@ -233,11 +235,11 @@ JAX 和 PaddlePaddle 实现的覆盖度不如前两者，部分章节可能只�
 
 **第 3 周：卷积网络（第 6-7 章）**
 
-第 6 章是 CNN 基础，第 7 章是经典架构。学完第 7 章后，建议自己用 PyTorch 复现一个 ResNet-18 并在 CIFAR-10 上训练，这是检验是否理解残差连接的最好方式。
+第 6 章是 CNN 基础，第 7 章是经典架构。学完第 7 章后，自己用 PyTorch 复现一个 ResNet-18 并在 CIFAR-10 上训练，能有效检验对残差连接的理解程度。
 
 **第 4 周：循环网络与注意力（第 8-10 章）**
 
-第 8-9 章是 RNN 基础，第 10 章注意力机制是重点。Transformer 的自注意力机制建议配合论文《Attention Is All You Need》一起读，教材的代码实现能帮你理解论文里公式对应的实际计算。
+第 8-9 章是 RNN 基础，第 10 章注意力机制是理解后续 BERT、GPT 的关键。读 Transformer 时配合论文《Attention Is All You Need》，教材的代码实现能把论文里的公式映射到实际计算上。
 
 **第 5 周：优化与应用（第 11-13 章）**
 
@@ -291,7 +293,7 @@ JAX 实现仍在补充中，部分章节只有 PyTorch 版本。如果你必须�
 
 ## 练习
 
-为巩固对教材的理解，完成以下3个练习：
+完成以下 3 个练习来巩固对教材的理解：
 
 ### 练习1：环境配置与跑通（预计30分钟）
 
@@ -337,27 +339,27 @@ JAX 实现仍在补充中，部分章节只有 PyTorch 版本。如果你必须�
 
 ## 进阶路径
 
-教材覆盖的是深度学习的基础到中级内容，学完后可以按以下方向深入：
+教材覆盖深度学习的基础到中级内容，学完后按以下方向深入：
 
 **方向一：Transformer 与大模型**
 
-教材第 10、14 章是 Transformer 和 BERT 的入门，进阶建议读论文《Attention Is All You Need》、BERT 原论文、GPT 系列论文，然后上手 Hugging Face Transformers 库。如果你想理解大模型训练的工程细节，可以看 Megatron-LM、DeepSpeed 的文档和源码。
+教材第 10、14 章是 Transformer 和 BERT 的入门，接下来读论文《Attention Is All You Need》、BERT 原论文、GPT 系列论文，然后上手 Hugging Face Transformers 库。想理解大模型训练的工程细节，看 Megatron-LM、DeepSpeed 的文档和源码。
 
 **方向二：计算机视觉**
 
-教材第 13 章讲了目标检测和语义分割的基础，进阶建议看 DETR、Mask R-CNN、Vision Transformer（ViT）的论文。代码实践可以从 mmdetection 或 Detectron2 入手。
+教材第 13 章讲了目标检测和语义分割的基础，进阶看 DETR、Mask R-CNN、Vision Transformer（ViT）的论文。代码实践从 mmdetection 或 Detectron2 入手。
 
 **方向三：生成模型**
 
-教材对生成模型覆盖较少（只有样式迁移），如果你想学扩散模型（Diffusion），建议从论文《Denoising Diffusion Probabilistic Models》开始，配合 Hugging Face Diffusers 库实践。GAN 部分可以看教材英文版的扩展章节。
+教材对生成模型覆盖较少（只有样式迁移）。想学扩散模型（Diffusion），从论文《Denoising Diffusion Probabilistic Models》开始，配合 Hugging Face Diffusers 库实践。GAN 部分可以看教材英文版的扩展章节。
 
 **方向四：强化学习**
 
-D2L 对强化学习覆盖有限，进阶建议看 Sutton & Barto 的《Reinforcement Learning: An Introduction》，以及 OpenAI Spinning Up 教程。
+D2L 对强化学习覆盖有限，进阶看 Sutton & Barto 的《Reinforcement Learning: An Introduction》，以及 OpenAI Spinning Up 教程。
 
 **方向五：系统与工程**
 
-如果你对深度学习系统本身感兴趣（而不是应用），建议看 MLSys（Machine Learning Systems）方向的内容，如 TVM、XLA、PyTorch 的分布式训练实现。CMU 10-414/10-714（Deep Learning Systems）课程是很好的入门。
+对深度学习系统本身感兴趣（而不是应用），看 MLSys（Machine Learning Systems）方向的内容，如 TVM、XLA、PyTorch 的分布式训练实现。CMU 10-414/10-714（Deep Learning Systems）课程是一个扎实的起点。
 
 ## 资源链接与引用
 
