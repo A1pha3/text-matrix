@@ -54,6 +54,7 @@ graph TB
         Codex[Codex CLI]
         Cursor[Cursor CLI]
         OpenCode[OpenCode]
+        Grok[Grok Build]
     end
 
     Browser -->|WebSocket:3773| WSServer
@@ -67,6 +68,7 @@ graph TB
     Provider -->|JSON-RPC stdio| Codex
     Provider -->|JSON-RPC stdio| Cursor
     Provider -->|JSON-RPC stdio| OpenCode
+    Provider -->|JSON-RPC stdio| Grok
 ```
 
 **客户端层**是 React Web 应用，通过 `wsTransport` 状态机管理 WebSocket 连接。所有 typed push 事件在客户端边界解码，服务端运行时细节不会泄露到 UI 层。
@@ -212,6 +214,20 @@ npx t3@latest --help
 **前置条件**：至少安装并认证一个 agent（Claude Code / Codex / Cursor / Grok / OpenCode），确认它能在本机终端正常工作。
 
 远程访问配置参见 [remote-access.md](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md)。
+
+## 常见问题
+
+**Agent 列表为空或显示未认证**
+确认 agent 已在本机安装并完成认证。在终端依次运行 `claude auth login` 或 `codex login` 等命令，确保认证成功后，再启动 T3 Code。如果已经启动，重启服务端即可刷新状态。
+
+**手机无法连接到服务器**
+先确认手机和服务器在同一网络（或已配置 Tailscale 等 mesh 网络）。在服务器上运行 `npx t3 pair` 生成配对二维码，手机扫描后自动连接，不要直接输入 IP 地址。使用 `--tailscale` 选项时，确保 Tailscale 已在服务器上登录并运行。
+
+**WebSocket 频繁断连**
+T3 Code 依赖 WebSocket 做实时通信，弱网环境可能出现断连。建议在稳定网络下使用，或通过 SSH 隧道建立连接。如果服务端以 systemd 服务运行，可通过 `journalctl -u t3code` 查看日志辅助排查。
+
+**如何更新 T3 Code**
+`npx t3@latest` 方式每次运行都会自动拉取最新版本。桌面 App 用户可在 GitHub Releases 页面下载新版，或通过 `brew upgrade t3-code`（macOS）更新。
 
 ## 适用边界
 

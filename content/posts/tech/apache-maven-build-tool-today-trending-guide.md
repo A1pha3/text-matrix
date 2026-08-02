@@ -12,8 +12,6 @@ author: "text-matrix"
 
 Apache Maven 核心仓库今天再次登上 GitHub Trending，单日 +53 Stars。一个 21 年的项目还能上榜，不是因为什么明星新功能，而是 Maven 4.x 主线仍在持续推进。本文回答三件事：今天为什么会再次上榜、4.x 主线改了什么、采用边界在哪里。
 
-适合读者：Java 工程化负责人、构建系统选型架构师，以及关注 Java 生态构建工具演进的开发者。
-
 ## 目录
 
 - [一、先给判断](#一先给判断)
@@ -24,12 +22,10 @@ Apache Maven 核心仓库今天再次登上 GitHub Trending，单日 +53 Stars�
 - [六、和 Gradle / Bazel 的边界](#六和-gradle-bazel-的边界)
 - [七、起步建议](#七起步建议)
 - [最小可运行示例](#最小可运行示例)
-- [自测题（附参考答案）](#自测题附参考答案)
+- [自测题](#自测题)
 - [练习](#练习)
 - [进阶路径](#进阶路径)
 - [常见问题 FAQ](#常见问题-faq)
-
----
 
 ## 一、先给判断
 
@@ -37,7 +33,7 @@ Apache Maven 仓库今天（2026-07-03）再次登上 GitHub Trending，单日 +
 
 **第一层：Maven 已经 21 年了。** 从 2004 年 1.0 发布到现在，它是 Java 生态最长寿的构建工具。登上 Trending 不是因为明星新功能，而是 Maven 4.x 主线仍在持续推进——这是个「稳定演进期」项目，不是「维护期」项目。
 
-**第二层：单日 +53 是合理流量。** Maven 主仓库的提交节奏相对稳定（每周 ~30 commits），不像新项目那样爆发式增长。+53 Stars 大部分来自 Java 社区对 4.x 路线图的关注——尤其是 CLI 重写、Wrapper 默认化等已经落地或接近落地的变化。
+**第二层：单日 +53 是合理流量。** Maven 主仓库的提交节奏相对稳定（每周约 30 commits），不像新项目那样爆发式增长。+53 Stars 大部分来自 Java 社区对 4.x 路线图的关注——尤其是 CLI 重写、Wrapper 默认化等已经落地或接近落地的变化。
 
 过去 24 小时的提交（2026-07-02 ~ 2026-07-03）给出几个核心信号：
 
@@ -45,8 +41,6 @@ Apache Maven 仓库今天（2026-07-03）再次登上 GitHub Trending，单日 +
 - **Wrapper 默认化**：Maven Wrapper（mvnw）从可选变成默认推荐
 - **Resilience4j 集成**：网络重试、断路器成为核心插件
 - **构建缓存改进**：基于 `${session.topology}` 的增量缓存
-
----
 
 ## 二、项目地图：核心模块构成
 
@@ -62,9 +56,7 @@ Maven 是一个 Java 仓库（Java 21 + Maven 自举——Maven 用 Maven 构建
 | `maven-cli` | 命令行入口（4.x 重写为 mvnsh） |
 | `maven-resolver-*` | 依赖解析的具体实现（transport、connector） |
 
-Maven 主仓库只包含「Maven 核心」。插件（compiler、surefire、jar、war、deploy 等）是独立仓库 `apache/maven-*`，按 release train（发布列车）独立发版。
-
----
+Maven 主仓库只包含「Maven 核心」。插件（compiler、surefire、jar、war、deploy 等）是独立仓库 `apache/maven-*`，按 release train 独立发版。
 
 ## 三、Maven 4.x 主线：5 个值得知道的方向
 
@@ -73,7 +65,7 @@ Maven 4.0 于 2023-07 发布，4.x 主线是当前活跃分支。每个版本都
 ### 1. CLI 重写：mvnsh
 
 - **Maven 4.0**：CLI 用 Java 21 重新实现，替换老版本的反射式实现
-- **启动时间**：从 ~1.5s 降到 ~400ms（冷启动）
+- **启动时间**：从约 1.5s 降到约 400ms（冷启动）
 - **GraalVM native image**：可选原生镜像，启动时间 < 100ms
 
 CI 频繁调用 `mvn` 命令，启动时间在构建总时间里占比可观。`mvnsh` 把启动时间从 1.5s 降到 400ms，一次典型构建（20 个 `mvn` 调用）能省约 22 秒。
@@ -98,7 +90,7 @@ Maven Central 偶发故障时，以前要 CI 重新跑，现在是自动重试�
 
 ### 4. 构建缓存改进
 
-- **基于 `${session.topology}` 的缓存键**：相同 reactor build（反应式构建）的不同模块共享缓存
+- **基于 `${session.topology}` 的缓存键**：相同 reactor build 的不同模块共享缓存
 - **远程缓存协议**：4.x 引入远程缓存规范（类似 Gradle Build Cache），CI 可以在多次构建间共享产物
 - **增量构建改进**：Maven 4.x 的增量构建（Incremental Build）API 稳定化
 
@@ -110,9 +102,7 @@ Maven「比 Gradle 慢」的印象，部分原因就是缓存机制不够完善�
 - **parent POM 链简化**：默认最多 1 层继承
 - **CI-friendly 版本**：`${revision}`、`${sha1}`、`${changelist}` 三个变量默认启用
 
-POM 简化对大型 polyrepo（多仓库）场景有帮助——继承链从平均 3-4 层降到 1-2 层。
-
----
+POM 简化对大型 polyrepo 场景有帮助——继承链从平均 3-4 层降到 1-2 层。
 
 ## 四、今日热提交：3 个值得关注的方向
 
@@ -138,16 +128,14 @@ Wrapper 自动下载 Maven 发行版，校验和验证防止中间人篡改。
 - `fix(resolver): handle BOM imports in transitive dependencies`
 - `perf(resolver): reduce memory in version range computation`
 
-依赖解析是 Maven 最复杂的部分，BOM（Bill of Materials，材料清单）导入的传递依赖处理是经典 bug 点。
-
----
+依赖解析是 Maven 最复杂的部分，BOM（Bill of Materials）导入的传递依赖处理是经典 bug 点。
 
 ## 五、采用边界
 
 ### 适合
 
 - **传统 Java EE / Spring 企业应用**：Maven 的 XML 配置对企业流程友好
-- **多模块单仓库（monorepo）**：Maven 的 reactor build（反应式构建）天然支持
+- **多模块单仓库（monorepo）**：Maven 的 reactor build 天然支持
 - **CI 构建速度敏感**：Maven 4.x 的构建缓存改进对 CI 帮助大
 - **团队熟悉 Maven**：学习曲线低，新人入职成本低
 - **生产环境稳定性**：Maven 的中央仓库 + Wrapper 校验是 Java 生态最稳定的依赖方案
@@ -157,16 +145,14 @@ Wrapper 自动下载 Maven 发行版，校验和验证防止中间人篡改。
 - **超大规模 monorepo（> 1000 模块）**：Gradle 的任务图（task graph）优化更深入
 - **Kotlin / Scala 项目**：Gradle + Kotlin DSL 的体验更好
 - **需要复杂自定义构建逻辑**：Maven 的插件机制（绑定到 lifecycle）比 Gradle 的 task DAG（有向无环图）僵硬
-- **polyrepo 跨仓库构建**：Maven 4.x 引入 `mvn -f` 多 POM 支持，但 Gradle 的 composite build（复合构建）更成熟
-- **追求极致增量构建**：Gradle 的 configuration cache（配置缓存）+ task caching 比 Maven 4.x 更激进
+- **polyrepo 跨仓库构建**：Maven 4.x 引入 `mvn -f` 多 POM 支持，但 Gradle 的 composite build 更成熟
+- **追求极致增量构建**：Gradle 的 configuration cache + task caching 比 Maven 4.x 更激进
 
 ### 升级建议
 
 - **Maven 3.6.x / 3.8.x → 4.x**：4.x 引入 breaking changes（部分插件不兼容、XML 简化），需要灰度
 - **Gradle → Maven 4.x**：评估标准不是「哪个更好」而是「团队维护成本」。Gradle 的 build.gradle.kts 学习曲线比 Maven POM 陡
 - **Bazel / Pants 用户**：Maven / Gradle 都不适合超大规模 monorepo（> 5000 模块），直接上 Bazel
-
----
 
 ## 六、和 Gradle / Bazel 的边界
 
@@ -182,8 +168,6 @@ Wrapper 自动下载 Maven 发行版，校验和验证防止中间人篡改。
 
 传统 Java 项目和中型 monorepo 用 Maven 4.x 最稳。Kotlin/Scala 和大型 monorepo 用 Gradle 更合适。超大规模 monorepo 和跨语言构建，Bazel 是更专业的工具。
 
----
-
 ## 七、起步建议
 
 1. **新项目直接用 Maven 4.x + Wrapper**：`mvn wrapper:wrapper` 生成 `.mvn/wrapper/`，提交到 git
@@ -193,8 +177,6 @@ Wrapper 自动下载 Maven 发行版，校验和验证防止中间人篡改。
 5. **升级路径**：Maven 3.x 升级到 4.x 前先跑 `mvn validate -P apache-release` 验证插件兼容性
 
 Maven 今天的 Trending 表现来自「稳定流量 + 4.x 主线演进」。CLI 重写、Wrapper 默认化、Resilience4j 集成、构建缓存改进这四条主轴同时推进，说明 Maven 团队仍在认真维护这个工具。
-
----
 
 ## 最小可运行示例
 
@@ -228,15 +210,13 @@ mvn wrapper:wrapper -Dmaven=4.0.0
 
 这条链里，Wrapper 解决版本不一致，远程缓存解决重复下载与重建，BOM 解决继承链过长导致难以维护。
 
----
-
 ## 自测题
 
 1. **Maven 主仓库包含什么？为什么 compiler / surefire / jar 这些插件是独立仓库？**
    <details><summary>查看答案</summary>主仓库只有 Maven 核心（`maven-core`、`maven-model`、`maven-resolver` 等）。插件是独立仓库，按 release train 独立发版，核心引擎不用跟着插件一起升级。</details>
 
 2. **mvnsh 把 CLI 重写了什么？冷启动时间从多少降到多少？**
-   <details><summary>查看答案</summary>CLI 用 Java 21 重新实现，冷启动从 ~1.5s 降到 ~400ms；可选 GraalVM native image 进一步降到 < 100ms。</details>
+   <details><summary>查看答案</summary>CLI 用 Java 21 重新实现，冷启动从约 1.5s 降到约 400ms；可选 GraalVM native image 进一步降到 < 100ms。</details>
 
 3. **Wrapper 默认化解决了什么问题？`./mvnw` 和 `mvn` 的区别是什么？**
    <details><summary>查看答案</summary>解决团队/CI 的 Maven 版本不一致——Wrapper 自动下载指定版本，新人 clone 后直接 `./mvnw`。`mvnw` 是 Wrapper 启动器，`mvn` 是系统预装的 Maven。</details>
@@ -250,8 +230,6 @@ mvn wrapper:wrapper -Dmaven=4.0.0
 6. **Maven 在哪些场景不太适合？**
    <details><summary>查看答案</summary>超大规模 monorepo（> 1000 模块）、Kotlin/Scala 项目、需要复杂自定义构建逻辑、polyrepo 跨仓库构建、追求极致增量构建。</details>
 
----
-
 ## 练习
 
 1. 在一个新项目跑 `mvn wrapper:wrapper`，把 `.mvn/wrapper/` 提交 git，再在一台没装 Maven 的机器上 clone 后直接 `./mvnw` 验证可用。
@@ -260,16 +238,12 @@ mvn wrapper:wrapper -Dmaven=4.0.0
 4. 在 CI 里用 `--show-version --batch-mode` 输出每个 phase 的耗时，定位最慢的瓶颈 phase。
 5. 拿一个 3.8.x 项目升级到 4.x，先跑 `mvn validate -P apache-release` 验证插件兼容性，再处理 breaking changes。
 
----
-
 ## 进阶路径
 
 - **从「能构建」到「构建快」**：开启远程构建缓存、调 `maven-resolver` 内存占用、利用 Java 21 虚拟线程做并行插件调用。
 - **从「单仓库」到「多模块」**：reactor build 调优、模块边界合理划分、用 BOM 统一依赖版本避免冲突。
 - **从「构建」到「发布」**：`mvn deploy`、release plugin、私有仓库（Nexus / Artifactory）集成与制品晋级。
 - **从「Maven」到「生态」**：开发自己的 plugin 与 `extensions.xml`、在多语言 monorepo 里与 Gradle / Bazel 按项目规模分工。
-
----
 
 ## 常见问题 FAQ
 
