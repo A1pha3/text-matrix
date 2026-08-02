@@ -1,6 +1,6 @@
 ---
 title: "AI-Trader 源码解读：HKUDS 给 AI Agent 搭的'金融版 USB-C'"
-date: 2026-06-04T19:09:47+08:00
+date: "2026-06-04T19:09:47+08:00"
 slug: ai-trader-agent-native-trading-platform-guide
 description: "HKUDS/AI-Trader 源码级解析：100% Fully-Automated Agent-Native Trading 平台的 Skill 协议设计、agent 零摩擦接入、与 OpenClaw 深度集成、Polymarket 集成。"
 draft: false
@@ -8,19 +8,6 @@ categories: ["技术博客"]
 tags: ["AI Agent", "OpenClaw", "Polymarket"]
 hiddenFromHomePage: true
 ---
-
-## 学习目标
-
-读完之后能回答：
-
-- AI-Trader 在 agent 经济里占住了什么位置？它解决的是**协议层**还是**撮合层**问题？
-- 7 个 Skill Files 之间的边界怎么拆？为什么 `ai4trade` 必须是主入口、其余 6 个必须按需 fetch？
-- 发送 *"Read https://ai4trade.ai/SKILL.md and register"* 这条消息，agent 内部到底走完了哪些步骤？
-- 在什么场景下应该把 AI-Trader 接进自己的工作流，又在什么场景下用不上？
-
----
-
-## 先给判断
 
 AI-Trader 不是又一个"AI 炒股工具"，也不是 eToro 那种人工跟单平台的 AI 化。它做的是**协议层**——给所有 AI agent（OpenClaw、Claude Code、Cursor、Codex、nanobot）提供一套**标准化的金融交易接入规范**，让"agent 看行情""agent 发信号""agent 跟单""agent 跨券商同步"这些动作变成**任何 agent 都能直接调用的工具集**。
 
@@ -35,12 +22,25 @@ AI-Trader 不是又一个"AI 炒股工具"，也不是 eToro 那种人工跟单�
 仓库的目录结构乍看是普通 Web 项目，但 **agent 视角**下的关键拆分在 `skills/` 和 `service/` 的关系上。
 
 ```text
+protocol/ (开源)
+  └── skills/
+      ├── ai4trade/        # 主入口 SKILL，路由 + bootstrap
+      ├── copytrade/       # 跟单
+      ├── tradesync/       # 跨券商持仓同步
+      ├── market-intel/    # 金融事件情报
+      ├── heartbeat/       # 心跳轮询
+      └── polymarket/      # 预测市场数据
+
+platform/ (闭源 SaaS)
+  ├── service/             # 撮合引擎、订单管理、风险管理
+  └── web/                 # Dashboard
+```
 
 **为什么这样拆**：
 
-- **协议层开源 = 任何 agent 都能本地 fork + 自部署**（MIT 协议）
-- **平台层闭源 = 撮合、评分、用户数据走 SaaS**，避免 agent 重复造轮子
-- **Polymarket 例外**——因为 Polymarket 自己有公开 API，AI-Trader 的 SKILL 只是包装数据获取，**不下单到 Polymarket**（2026-03-03 后支持模拟结算，但执行路径走 Polymarket 自己）
+- **协议层开源** = 任何 agent 都能本地 fork + 自部署（MIT 协议）
+- **平台层闭源** = 撮合、评分、用户数据走 SaaS，避免 agent 重复造轮子
+- **Polymarket 例外**——Polymarket 自己有公开 API，AI-Trader 的 SKILL 只是包装数据获取，**不下单到 Polymarket**（2026-03-03 后支持模拟结算，但执行路径走 Polymarket 自己）
 
 这跟"开源 + 增值 SaaS"的 Plausible 模式异曲同工，但 AI-Trader 更激进：把**协议层**（SKILL 文件）作为开源主体，而不是把**平台代码**作为开源主体。
 
@@ -77,7 +77,6 @@ agent 解析后会拿到：
 **关键路由决策**：
 
 > "看 AAPL 怎么看" 匹配 `market-intel`（金融事件情报）
-
 > "今天" 暗示需要日内实时数据 → 触发 `heartbeat` 心跳轮询
 
 所以 agent 接下来要 fetch 的是 `market-intel/SKILL.md` + `heartbeat/SKILL.md`，**不会**去 fetch `copytrade` 或 `tradesync`（当前任务用不上）。
@@ -88,8 +87,12 @@ agent 解析后会拿到：
 # 首次接入：注册
 curl -X POST https://ai4trade.ai/api/register \
   -H "Content-Type: application/json" \
-  -d '{"agent_name": "openclaw-bot", "email": "[email protected]"}'
-```textjson
+  -d '{"agent_name": "openclaw-bot", "email": "bot@example.com"}'
+```
+
+返回：
+
+```json
 {
   "token": "at_xxxxxxxxxxxxxxxx",
   "agent_id": "agt_openclaw_bot",
@@ -99,12 +102,20 @@ curl -X POST https://ai4trade.ai/api/register \
     "heartbeat": "/api/heartbeat"
   }
 }
-```textbash
+```
+
+### Step 4：请求市场情报
+
+```bash
 curl -X POST https://ai4trade.ai/api/market-intel \
   -H "Authorization: Bearer at_xxx" \
   -H "Content-Type: application/json" \
   -d '{"symbol": "AAPL", "lookback": "1d", "include": ["news", "signals", "polymarket"]}'
-```textjson
+```
+
+返回：
+
+```json
 {
   "symbol": "AAPL",
   "price": 232.45,
@@ -134,7 +145,11 @@ curl -X POST https://ai4trade.ai/api/market-intel \
     }
   ]
 }
-```textbash
+```
+
+### Step 5：发布信号
+
+```bash
 curl -X POST https://ai4trade.ai/api/signals \
   -H "Authorization: Bearer at_xxx" \
   -H "Content-Type: application/json" \
@@ -146,14 +161,26 @@ curl -X POST https://ai4trade.ai/api/signals \
     "thesis": "多空信号分歧 + Polymarket 隐含偏空，等待 7 月财报再决策",
     "confidence": 0.55
   }'
-```textbash
+```
+
+### Step 6：设置心跳轮询
+
+```bash
 curl -X POST https://ai4trade.ai/api/heartbeat \
   -H "Authorization: Bearer at_xxx" \
   -d '{"interval_sec": 300, "events": ["new_signals:AAPL", "price_alert:AAPL"]}'
-```text
-Read https://ai4trade.ai/SKILL.md and register.
-```textbash
-# 1. 创建 clawtrader 目录
+```
+
+---
+
+## 接入 AI-Trader 的三种方式
+
+### 路径 A：OpenClaw 一键集成
+
+OpenClaw 用户只需要在 `~/.openclaw/skills/` 下创建 `clawtrader/` 目录，拉取所有 SKILL 文件，注册获取 token，即可在 agent 会话中直接调用 AI-Trader 的全部能力。
+
+```bash
+# 1. 创建目录
 mkdir -p ~/.openclaw/skills/clawtrader/{copytrade,tradesync,heartbeat,polymarket,market-intel}
 
 # 2. 下载所有 SKILL 文件
@@ -164,13 +191,17 @@ done
 # 3. 注册获取 token
 TOKEN=$(curl -s -X POST https://ai4trade.ai/api/register \
   -H "Content-Type: application/json" \
-  -d '{"agent_name":"my-bot","email":"[email protected]"}' \
+  -d '{"agent_name":"my-bot","email":"bot@example.com"}' \
   | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
 
 # 4. 持久化 token
 echo "{\"token\": \"$TOKEN\"}" > ~/.openclaw/skills/clawtrader/config.json
 chmod 600 ~/.openclaw/skills/clawtrader/config.json
 ```
+
+### 路径 B：任何 agent 手动接入
+
+任何支持 HTTP 的 agent 都可以通过 `Read https://ai4trade.ai/SKILL.md and register` 这条指令完成接入。不需要 MCP 运行时，不需要 SDK，不需要安装任何依赖。
 
 ### 路径 C：作为信号消费者
 
@@ -214,8 +245,6 @@ MCP 需要 agent 端有 MCP client 运行时。SKILL 协议只需要 agent 能 f
 
 ## 自测题
 
-完成以下自测题，评估你对本文核心概念的理解：
-
 **问题 1**: AI-Trader 在 agent 经济里解决的是**协议层**还是**撮合层**问题？为什么它选择把协议层开源、平台层闭源？
 <details>
 <summary>查看答案</summary>
@@ -242,15 +271,6 @@ MCP 需要 agent 端有 MCP client 运行时。SKILL 协议只需要 agent 能 f
 
 ---
 
-## 进阶路径
-
-- **协议层**：读 `docs/api/openapi.yaml`，理解 REST API 完整规范
-- **子 SKILL 设计**：对比 Anthropic Skills 协议规范 https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
-- **架构层**：看 `service/server/` 源码，理解 FastAPI + 后台 worker 分离的实现
-- **业务层**：访问 https://ai4trade.ai/financial-events 体验 Dashboard
-
----
-
 ## 链接与版本
 
 - **GitHub 仓库**：https://github.com/HKUDS/AI-Trader
@@ -261,7 +281,7 @@ MCP 需要 agent 端有 MCP client 运行时。SKILL 协议只需要 agent 能 f
 - **OpenAPI 规范**：https://github.com/HKUDS/AI-Trader/blob/main/docs/api/openapi.yaml
 - **姊妹项目**：https://github.com/HKUDS/Vibe-Trading
 - **仓库创建**：2025-10-23
-- **最新更新**：2026-05-13（实验通知曝光跟踪）
+- **最新更新**：2026-05-13
 - **开源协议**：MIT
 - **主语言**：Python（FastAPI 后端）+ TypeScript（React 前端）
 
@@ -269,23 +289,15 @@ MCP 需要 agent 端有 MCP client 运行时。SKILL 协议只需要 agent 能 f
 
 ## 资料口径说明
 
-本文的判断基于以下来源和取径：
+本文的判断基于以下来源：
 
 1. **仓库源码分析**：分析了 `HKUDS/AI-Trader` 仓库的 README、SKILL 文件（`skills/ai4trade/SKILL.md`）、OpenAPI 规范（`docs/api/openapi.yaml`）（2026 年 5 月版本）
 2. **协议设计解读**：基于 Anthropic Skills 协议规范，对比 AI-Trader 的 SKILL 协议设计，给出协议层与撮合层的边界拆分
 3. **任务流案例**：基于 OpenClaw 集成场景，给出完整的任务流案例（注册、fetch SKILL、调用 API、发布信号）
-4. **技术细节验证**：部分 API 端点格式与 SKILL.md 内容来自 GitHub 仓库 raw 链接验证，实际使用时需要参考最新版本
-5. **事实边界**：AI-Trader 平台已上线（https://ai4trade.ai），但部分功能（如 Polymarket 集成）可能是模拟执行，需要以平台实际功能为准
+4. **技术细节验证**：部分 API 端点格式与 SKILL.md 内容来自 GitHub 仓库 raw 链接验证
 
-**局限性**：
-
-- 仓库仍在持续更新，部分实现可能会调整
-- HKUDS 仓库访问可能有网络抖动，部分链接需要验证可访问性
-- 平台功能（如券商对接、Polymarket 集成）可能需要根据实际版本验证
-- 本文侧重协议层分析，未深入交易平台的后台实现细节
+**局限性**：仓库仍在持续更新，部分实现可能会调整；平台功能（如券商对接、Polymarket 集成）请以实际版本为准。
 
 ---
 
----
-
-**声明**：本文基于 2026-05-13 仓库 README + `skills/ai4trade/SKILL.md` + `docs/api/openapi.yaml` 整理。HKUDS 仓库 14:00+ 直连偶有网络抖动，文中所有 API 端点格式与 SKILL.md 内容来自 GitHub 仓库 raw 链接 200 验证通过的部分。
+**声明**：本文基于 2026-05-13 仓库 README + `skills/ai4trade/SKILL.md` + `docs/api/openapi.yaml` 整理，不构成投资建议。

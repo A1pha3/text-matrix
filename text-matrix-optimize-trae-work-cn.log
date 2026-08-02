@@ -1,5 +1,5 @@
 # text-matrix cn-doc-writer 优化记录
-# 格式：YYYY-MM-DD | slug | 文章标题 | 优化后评分
+# 注：china-coding-plan-comparison 已于 2026-08-02 完成第二轮深度优化（humanizer + 结构优化），评分维持 100/100
 
 2026-08-02 | qualcomm-on-device-ai-physical-ai-6g-2026 | AI 智能体的「端侧元年」：高通骁友会 5 周年里藏着的「云→端」迁移，与 Physical AI 押注的工程逻辑 | 100/100
 
@@ -75,3 +75,7 @@
 2026-08-02 | openai-deployco-fde-palantir-2026 | FDE 浪潮：OpenAI 部署公司、PE 资本与 AI 落地的组织深处 | 100/100
 
 2026-08-02 | ai-agents-full-course-2026-nick-saraev-200k-views | Nick Saraev 的 AI Agent 无代码大师班：三大平台、核心循环与提示词架构 | 100/100
+
+2026-08-02 | china-coding-plan-comparison | 国产 Coding Plan 怎么选：方舟、MiniMax、智谱 GLM 与小米 MiMo 横向对比 | 100/100
+
+2026-08-02 | ai-advertising-production-6-hours-vs-300k | AI 广告制作实验：6 小时 vs 30 万美元，广告行业会被颠覆吗？ | 100/100

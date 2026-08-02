@@ -1,5 +1,5 @@
 ---
-title: "Atuin：29.1K Stars·加密同步的Shell历史管理器"
+title: "Atuin：加密同步的 Shell 历史管理器"
 date: "2026-04-12T01:56:00+08:00"
 slug: atuin-shell-history-manager-guide
 description: "Atuin 是一款用 Rust 编写的 Shell 历史管理器，用 SQLite 替换文本文件历史，支持端到端加密同步。"
@@ -10,45 +10,11 @@ tags: ["Rust", "SQLite", "加密"]
 
 # Atuin：把 Shell 历史从纯文本升级成可加密同步的数据库
 
-> **快速信息卡** |
-> Stars: 29.1K+ |
-> Forks: 1.5K+ |
-> License: MIT |
-> Language: Rust |
-
 Shell 自带的历史是一行一行的纯文本，没有退出码、没有目录、没有主机信息，更没有跨机器同步。Atuin 用 SQLite 替换这套机制，把每条命令连同它的上下文一起存进数据库，再通过端到端加密在多台机器间同步。存储变成结构化数据后，按退出码、目录、时间筛选就变成一条 SQL 的事，无需 grep 和管道的组合。
 
 > 文中提到的 29.1K Stars 为 2026 年 4 月初的统计时点数据，实际数值请以 [GitHub 仓库](https://github.com/atuinsh/atuin) 当前显示为准。
 
 本文按"安装配置 → 日常使用 → 自建服务器 → 选型判断"展开，结尾给出采用顺序和适用边界。
-
-## 学习目标
-
-读完本文后，你应能完成以下任务：
-
-- 说明 Atuin 用 SQLite 替换纯文本历史的动机，以及结构化存储带来的查询能力提升
-- 完成从安装、注册、导入历史到开启同步的完整初始化流程
-- 描述一条命令从本地敲下到在另一台机器被搜索召回的全过程，指出加密发生在哪一步
-- 调整 `~/.config/atuin.toml` 中的同步、快捷键、忽略规则等常用配置项
-- 判断自己的场景是否需要自建同步服务器，并完成 Docker 部署
-- 评估 Atuin 与 fzf、Shell 自带 history 的适用边界，做出合理选型
-
-> 文末"自测题"一节配有参考答案，可用来检验上述目标的达成情况。
-
-## 目录
-
-- [功能总览](#功能总览)
-- [快速上手](#快速上手)
-- [一条命令的完整旅程](#一条命令的完整旅程)
-- [核心功能](#核心功能)
-- [配置详解](#配置详解)
-- [数据存储](#数据存储)
-- [自建同步服务器](#自建同步服务器)
-- [与其他工具对比](#与其他工具对比)
-- [采用建议与适用边界](#采用建议与适用边界)
-- [常见问题](#常见问题)
-- [自测题](#自测题)
-- [安装速查](#安装速查)
 
 ## 功能总览
 
@@ -121,14 +87,14 @@ atuin search --exit 0 --after "yesterday 3pm" make
 
 ## 一条命令的完整旅程
 
-下面跟踪一条命令从敲下到在另一台机器上被搜索到的全过程，串起 Atuin 的本地记录、加密同步和召回三条主线：
+一条命令从敲下到在另一台机器被搜索到，经过六个步骤：
 
-1. **本地记录**：在 zsh 中敲下 `npm test`，Atuin 的 shell 钩子（通过 `precmd` 和 `preexec`）捕获命令文本、当前工作目录、主机名、会话 ID，命令结束后再补上退出码和执行时长。
-2. **写入数据库**：这条记录被写入本地 SQLite 数据库 `~/.local/share/atuin/history.db`，即使离线也能正常工作。
-3. **加密上传**：执行 `atuin sync` 时，本地数据用注册时生成的密钥加密，再上传到配置的同步服务器（官方或自建）。服务器只看到密文，无法解读命令内容。
+1. **本地记录**：在 zsh 敲下 `npm test`，Atuin 的 shell 钩子（`precmd` / `preexec`）捕获命令文本、工作目录、主机名、会话 ID，命令结束后补上退出码和执行时长。
+2. **写入数据库**：写入本地 SQLite `~/.local/share/atuin/history.db`，离线也能正常工作。
+3. **加密上传**：执行 `atuin sync` 时，本地数据用注册时生成的密钥加密，再上传到同步服务器。服务器只看到密文。
 4. **另一台机器拉取**：在另一台已登录同一账号的机器上执行 `atuin sync`，从服务器拉取加密数据。
 5. **本地解密**：拉取的密文用本地密钥解密，合并进本地数据库。
-6. **搜索召回**：在这台机器上按 `Ctrl+R`，输入 `npm test`，Atuin 从本地数据库按相关性返回结果，并显示退出码、目录、时间等上下文。
+6. **搜索召回**：按 `Ctrl+R`，输入 `npm test`，Atuin 从本地数据库按相关性返回结果，附带退出码、目录、时间等上下文。
 
 这条链路里，服务器始终只拿到密文。即使官方服务器被入侵，攻击者能拿到的也只有加密后的历史，没有本地密钥就无法还原命令内容。
 
@@ -151,7 +117,7 @@ atuin register -u <USERNAME> -e <EMAIL>
 atuin sync
 ```
 
-> **注意**：自建服务器场景下，需先在 `~/.config/atuin/config.toml` 中设置 `sync_address` 指向自建地址，再执行注册。加密密钥在注册时自动生成，可用 `atuin key` 查看，请妥善备份——密钥丢失后历史数据无法解密。
+自建服务器场景下，需先在 `~/.config/atuin/config.toml` 中设置 `sync_address` 指向自建地址，再执行注册。加密密钥在注册时自动生成，可用 `atuin key` 查看，请妥善备份——密钥丢失后历史数据无法解密。
 
 自建服务器适合企业内网或对数据主权有要求的场景，下文"自建同步服务器"一节给出 Docker 部署的最小配置。
 
@@ -197,16 +163,7 @@ Hours of the day:
 
 ### 支持的 Shell
 
-Atuin 目前支持以下 Shell：
-
-| Shell | 支持级别 | 说明 |
-|--------|----------|------|
-| zsh | 完整支持 | 首选推荐 |
-| bash | 完整支持 | 需要 bash-preexec |
-| fish | 完整支持 | 原生支持 |
-| nushell | 实验性支持 | 接口可能变动 |
-| xonsh | 实验性支持 | 接口可能变动 |
-| powershell | 次级支持 | 可能有 bug |
+zsh、bash、fish 完整支持，nushell 和 xonsh 实验性支持，powershell 次级支持。
 
 ## 配置详解
 
@@ -218,12 +175,11 @@ Atuin 的配置文件位于 `~/.config/atuin.toml`（Linux/macOS）或 `%APPDATA
 
 ```toml
 [sync]
-host = "https://api.atuin.sh"  # Atuin 官方服务器
-# host = "https://my-server.com"  # 自建服务器时取消注释并替换地址
-key = "your-encryption-key"  # 端到端加密密钥
+host = "https://api.atuin.sh"  # 官方服务器，自建替换地址
+key = "your-encryption-key"    # 注册时自动生成，用 `atuin key` 查看
 ```
 
-> **注意**：`key` 字段在注册时由 Atuin 自动生成，不要手动填写占位字符串。用 `atuin key` 命令查看当前密钥；换机器同步时需导入同一密钥才能解密历史数据。如果密钥丢失，已加密的历史无法恢复，只能重新生成密钥并重新同步。
+`key` 由 Atuin 在注册时自动生成，不要手动填写占位字符串。换机器同步时需导入同一密钥才能解密历史数据。密钥丢失后已加密的历史无法恢复，只能重新生成并重新同步。
 
 ### 快捷键配置
 
@@ -310,11 +266,11 @@ atuin import fish
 atuin import nu
 ```
 
-> **注意**：早期文档中曾出现 `atuin import < ~/.zsh_history` 的写法，该重定向语法在新版本中已不推荐，正确做法是使用 `atuin import zsh` 让 Atuin 自动定位并读取 `~/.zsh_history`。如果历史文件不在默认路径，可参考 `atuin import --help` 查看自定义路径的选项。
+早期文档中曾出现 `atuin import < ~/.zsh_history` 的写法，新版本已不推荐此重定向语法，正确做法是使用 `atuin import zsh` 让 Atuin 自动定位并读取 `~/.zsh_history`。历史文件不在默认路径时，参考 `atuin import --help` 查看自定义路径选项。
 
 ## 自建同步服务器
 
-官方同步服务器对个人使用足够，但企业团队或对数据主权有要求的场景更适合自建。Atuin 的服务器组件用 Rust 写成（与客户端同语言，便于复用加密和数据结构代码），可以单二进制运行，也支持容器部署。
+官方同步服务器对个人使用足够，但企业团队或对数据主权有要求的场景更适合自建。服务器组件支持单二进制运行和容器部署。
 
 ### Docker 部署
 
@@ -401,21 +357,13 @@ Zsh 和 Bash 自带的 `history` 命令配合 `HIST_IGNORE_DUPS`、`HIST_IGNORE_
 
 ## 常见问题
 
-**同步失败怎么办？**
+**同步失败怎么办？** 先检查网络和服务器地址，再确认账号是否登录。`atuin status` 查看同步状态，`atuin key` 查看本地密钥。密钥丢失后历史数据无法解密，只能重新生成密钥并重新同步。
 
-先检查网络和服务器地址，再确认账号是否登录。`atuin status` 能看到当前同步状态，`atuin key` 能查看本地密钥。如果密钥丢失，历史数据无法解密，只能重新生成密钥并重新同步。
+**换机器后历史没同步过来？** 新机器需要先 `atuin login` 用同一账号登录，再 `atuin sync` 拉取。启用了端到端加密的话，必须导入原来的密钥才能解密历史数据。
 
-**换机器后历史没同步过来？**
+**不想用同步功能可以吗？** 可以。Atuin 完全支持纯本地模式，配置文件里把 `auto_sync` 设为 `false` 即可。
 
-新机器需要先 `atuin login` 用同一账号登录，再 `atuin sync` 拉取。如果启用了端到端加密，必须导入原来的密钥才能解密历史数据。
-
-**不想用同步功能可以吗？**
-
-可以。Atuin 完全支持纯本地模式，只用作 SQLite 历史搜索工具。配置文件里把 `auto_sync` 设为 `false` 即可。
-
-**和 fzf 的历史搜索冲突吗？**
-
-不冲突。Atuin 默认接管 `Ctrl+R`，如果更习惯 fzf 的交互，可以在配置里把 Atuin 的快捷键改成别的，两者并存。
+**和 fzf 的历史搜索冲突吗？** 不冲突。Atuin 默认接管 `Ctrl+R`，如果更习惯 fzf 的交互，可以在配置里把 Atuin 的快捷键改成别的，两者并存。
 
 ## 自测题
 
@@ -445,23 +393,6 @@ Zsh 和 Bash 自带的 `history` 命令配合 `HIST_IGNORE_DUPS`、`HIST_IGNORE_
 - 研究自建服务器的高可用部署：配合 PostgreSQL 后端、反向代理和 TLS 证书
 - 探索 Atuin 与其他 Shell 工具的集成：如 starship 提示符、direnv、tmux 会话管理
 - 关注 Atuin 的 `atuin search` 命令行模式，将其嵌入脚本实现历史命令的自动化分析
-
-## 安装速查
-
-```bash
-# 一键安装
-curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
-
-# Homebrew
-brew install atuin
-
-# 注册并启用同步
-atuin register -u <USERNAME> -e <EMAIL>
-atuin import auto
-atuin sync
-
-# 重启 Shell
-```
 
 ## 参考链接
 
