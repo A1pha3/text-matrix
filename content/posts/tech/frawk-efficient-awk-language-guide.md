@@ -13,40 +13,7 @@ hiddenFromHomePage: true
 
 ---
 
-## §1 学习目标
-
-完成本篇文章后，你将能够：
-
-1. **理解** frawk 的核心定位与技术优势，判断它是否适合你的数据处理场景
-2. **掌握** frawk 的编译器管线架构（Lexer → AST → CFG → SSA → 类型推导 → JIT）
-3. **了解** frawk 的类型推导系统与静态单赋值（SSA）形式的设计原理
-4. **完成** frawk 的基础安装，并运行一个 CSV 处理任务
-5. **评估** frawk 与同类工具（gawk、mawk、xsv、tsv-utils）的性能差异与适用边界
-
----
-
-## §2 本文目录
-
-1. [一句话定位](#一句话定位)
-2. [学习目标](#学习目标)
-3. [本文目录](#本文目录)
-4. [为什么 AWK 还需要另一个实现](#为什么-awk-还需要另一个实现)
-5. [核心架构：frawk 是怎么跑起来的](#核心架构frawk-是怎么跑起来的)
-6. [类型系统：AWK 的动态语义，Rust 的静态性能](#类型系统awk-的动态语义rust-的静态性能)
-7. [性能实测：它到底有多快](#性能实测它到底有多快)
-8. [CSV 解析的工程细节](#csv-解析的工程细节)
-9. [并行执行模型](#并行执行模型)
-10. [安装与使用](#安装与使用)
-11. [与同类工具的比较](#与同类工具的比较)
-12. [局限与注意事项](#局限与注意事项)
-13. [常见问题 FAQ](#常见问题-faq)
-14. [自测题](#自测题)
-15. [练习](#练习)
-16. [进阶路径](#进阶路径)
-
----
-
-## §3 一句话定位
+## 一句话定位
 
 [frawk](https://github.com/ezrosent/frawk) 是用 Rust 实现的一个 AWK 方言，兼容大多数标准 AWK 语法，同时在两个核心问题上做了质的提升：
 
@@ -86,7 +53,7 @@ frawk 的解法：用 Rust 重写编译器前端 + SIMD 加速解析 + JIT 编�
 
 ## 核心架构：frawk 是怎么跑起来的
 
-### 编译器管线（Standard Compiler Architecture）
+### 编译器管线
 
 frawk 的结构就是一个标准的教学级编译器，分 6 个阶段：
 
@@ -298,125 +265,12 @@ frawk -i csv '
 
 frawk 填补了一个工程空白：当你需要 AWK 的编程模型（条件、循环、函数）但数据是 CSV 格式且量很大时，它是唯一同时满足这三点的选择。
 
----
-
-## §13 局限与注意事项
+### 局限与注意事项
 
 1. **正则语法不同**：frawk 用 Rust regex 语法，与 POSIX AWK 的 ERE 有细微差异
 2. **字符串比较语义调整**：数字 vs 字符串的比较优先级与标准 AWK 不同
 3. **Null 值处理**：未初始化变量在条件判断中的行为与 AWK 有差异
 4. **开发活跃度下降**：作者在 README 中明确表示 2024 年后维护时间减少，主要维护其他 AWK 实现（如 gawk）
-
----
-
-## §14 常见问题 FAQ
-
-### Q1：frawk 完全兼容标准 AWK 吗？
-
-**A**：大部分兼容，但有一些差异。正则语法使用 Rust regex（与 POSIX ERE 略有不同），字符串比较语义有调整，null 值处理也有差异。对于简单的 AWK 脚本，通常可以直接用 frawk 运行；对于复杂的 AWK 脚本，建议先测试。
-
-### Q2：frawk 的并行模式安全吗？会出现数据竞争吗？
-
-**A**：frawk 的并行模式基于记录级并行（record-level parallelism），主循环的不同记录由不同 worker 处理。标量变量会自动跨 worker 累加，MAP 变量会自动做 union。对于不满足默认聚合语义的操作（如求最大值），可以使用 `PREPARE` 块显式聚合。只要正确使用，不会出现数据竞争。
-
-### Q3：frawk 需要安装 LLVM 吗？
-
-**A**：不是必须的。frawk 默认使用 Cranelift JIT 后端，不需要 LLVM。如果你需要最高的性能，可以安装 LLVM 12 并启用 LLVM JIT 后端。Cranelift 后端对小脚本够用，性能接近 LLVM。
-
-### Q4：frawk 能处理多大的数据？
-
-**A**：取决于你的内存和 CPU。frawk 的并行模式在 8 核 MacBook Pro 上可以跑出 >2 GB/s 的吞吐量。对于 7GB 的 TSV 文件（3600 万行），frawk 并行模式可以在 4.3 秒内处理完。
-
-### Q5：frawk 支持哪些数据格式？
-
-**A**：原生支持 CSV 和 TSV。通过 `-i csv` 或 `-i tsv` 参数指定输入格式。对于其他格式（如 JSON、XML），需要先转换为 CSV/TSV，或者用其他工具处理。
-
----
-
-## §15 自测题
-
-### 15.1 基础概念题
-
-1. frawk 是用什么语言实现的？它相比标准 AWK 有哪些优势？
-2. frawk 的编译器管线分为哪 6 个阶段？
-3. 什么是 SSA 形式？frawk 为什么要在类型推导之前转换成 SSA？
-4. frawk 有哪三种后端？分别适合什么场景？
-5. frawk 的类型推导系统是如何工作的？
-
-### 15.2 性能分析题
-
-1. 在处理 700 万行 CSV 文件时，frawk (Cranelift 并行) 比 Python (csv 库) 快多少倍？
-2. frawk 的 SIMD CSV 解析分为哪两个阶段？各自的作用是什么？
-3. 为什么 frawk 的并行模式能超过 tsv-utils 这个专为 TSV 设计的高度优化工具？
-
----
-
-## §16 练习
-
-### 练习 1：安装 frawk 并运行第一个 CSV 处理任务
-
-**目标**：完成 frawk 的基础安装，并运行一个简单的 CSV 处理任务。
-
-**步骤**：
-1. 安装 Rust nightly：`rustup update nightly`
-2. 从 crates.io 安装 frawk：`cargo +nightly install frawk`
-3. 创建一个测试 CSV 文件（如 `sales.csv`，包含日期、产品、金额三列）
-4. 运行 frawk 命令，求金额列的总和：`frawk -i csv 'NR>1 { sum += $3 } END { print sum }' sales.csv`
-
-**验收标准**：
-- frawk 成功安装，可以运行 `frawk --version`
-- CSV 处理任务成功运行，输出正确的总和
-
-### 练习 2：比较 frawk 与 gawk 的性能
-
-**目标**：理解 frawk 的性能优势。
-
-**步骤**：
-1. 创建一个大型 CSV 文件（如 100 万行，可以使用 Python 生成）
-2. 用 gawk 处理该文件，记录耗时：`time gawk -F',' 'NR>1 { sum += $2 } END { print sum }' large.csv`
-3. 用 frawk 处理该文件，记录耗时：`time frawk -i csv '{ sum += $2 } END { print sum }' large.csv`
-4. 比较两者的耗时差异
-
-**验收标准**：
-- 成功生成大型 CSV 文件
-- 成功运行 gawk 和 frawk 的处理任务
-- 记录并比较两者的耗时差异，理解 frawk 的性能优势
-
-### 练习 3：使用 frawk 的并行模式
-
-**目标**：理解 frawk 的并行执行模型。
-
-**步骤**：
-1. 使用练习 2 中的大型 CSV 文件
-2. 运行 frawk 的并行模式：`time frawk -pr -i csv '{ sum += $2 } END { print sum }' large.csv`
-3. 比较并行模式与非并行模式的耗时差异
-4. 尝试不同的并行度（如设置环境变量 `FRAWK_NUM_WORKERS=4`）
-
-**验收标准**：
-- 成功运行 frawk 的并行模式
-- 并行模式明显快于非并行模式
-- 理解并行执行的原理和适用场景
-
----
-
-## §17 进阶路径
-
-| 阶段 | 内容 | 推荐资源 |
-|------|------|----------|
-| **入门** | 完成基础安装，运行简单 CSV 处理任务 | 本文章 §10 |
-| **实践** | 完成 3 个练习，比较 frawk 与 gawk 的性能 | frawk GitHub README |
-| **深入** | 研究 frawk 的编译器管线源码（Lexer、AST、CFG、SSA） | [github.com/ezrosent/frawk](https://github.com/ezrosent/frawk) |
-| **专家** | 理解类型推导系统与 mRAG 混合检索架构 | frawk 论文与文档 |
-| **贡献** | 参与社区贡献，修复 bug 或添加新功能 | frawk GitHub Issues |
-
-### 深入学习的方向
-
-1. **编译器设计**：学习 AWK 方言的编译器实现，理解 SSA 转换和类型推导
-2. **SIMD 优化**：理解 SIMD 指令在 CSV 解析中的应用
-3. **并行计算**：理解记录级并行的实现原理与聚合语义
-4. **Rust 性能优化**：学习 Rust 在高性能数据处理中的应用
-
----
 
 ---
 
@@ -427,9 +281,3 @@ frawk 填补了一个工程空白：当你需要 AWK 的编程模型（条件、
 - 支持数据库：CSV、TSV、标准输入分隔符
 - 后端：字节码解释器 / Cranelift JIT / LLVM JIT
 - 最新版本：v0.4.7（2026）
-- 官方文档：[docs.teodev.io](https://docs.teodev.io)（frawk 相关文档在 [info/](https://github.com/ezrosent/frawk/tree/master/info) 目录）
-
----
-
-**文档信息**
-难度：⭐⭐⭐ | 类型：技术分析 | 更新日期：2026-05-11 | 预计阅读时间：20-30 分钟
