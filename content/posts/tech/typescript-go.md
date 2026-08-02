@@ -10,20 +10,20 @@ tags: ["TypeScript", "Go", "编译器", "微软", "性能优化", "编程语言"
 
 # TypeScript Go：微软用 Go 重写 TypeScript 编译器
 
-2025 年，微软 TypeScript 团队做了一件很多人喊了多年但没人真敢做的事：把 tsc 从 TypeScript/JavaScript 整个重写为 Go。项目 repo `microsoft/typescript-go` 上线即拿到 25k stars，目前以 `@typescript/native-preview` npm 包提供预览版。
+2025 年，微软 TypeScript 团队将 tsc 从 TypeScript/JavaScript 重写为 Go。项目 `microsoft/typescript-go` 上线即获 25k stars，目前以 `@typescript/native-preview` npm 包提供预览版。
 
-Go 重写带来的变化很直接——本地机器码、无运行时依赖、极低启动延迟、原生多线程。对小型项目感知不强，但面对百万行级别的 TypeScript 代码库，tsc 的增量构建和类型检查耗时一直是开发体验的瓶颈。这一版就是冲着这个去的。
+Go 重写的收益很直接：本地机器码、无运行时依赖、接近零的启动延迟、原生多线程。对小型项目感知不强，但百万行级别的 TypeScript 代码库中，增量构建和类型检查的耗时一直是开发体验的瓶颈——这次重写正是为此而来。
 
 ---
 
 ## 为什么重写：编译器的自我编译困境
 
-TypeScript 编译器自诞生以来就是用 TypeScript/JavaScript 写的，这造成了一个悖论：一个以"类型检查"为核心价值的工具，自身却运行在动态类型语言之上。代价体现在四个维度：
+TypeScript 编译器自诞生以来就是用 TypeScript/JavaScript 写的，这制造了一个悖论：一个以"类型检查"为核心价值的工具，自身却运行在动态类型语言之上。代价体现在四个维度：
 
 - **运行时依赖**：必须装 Node.js 才能跑 tsc
 - **冷启动延迟**：JIT 预热前，编译器大部分时间在暖自己
-- **内存开销**：JS 引擎的堆结构对长时间运行的编译器进程并不友好
-- **并行化受限**：事件循环模型下，多核利用率低
+- **内存开销**：JS 引擎的堆结构对长时间运行的编译器进程不友好
+- **并行化受限**：事件循环模型下多核利用率低
 
 Go 的对比优势很直观：
 
@@ -35,13 +35,13 @@ Go 的对比优势很直观：
 | 多核利用 | 受限于事件循环 | Goroutine 原生并发 |
 | 增量编译 | 受语言架构限制 | 成熟的高效实现 |
 
-微软的目标是让 tsc 成为一个可以直接分发、本地执行的高效二进制工具，而不是一个需要 JS 运行时支撑的解释型工具。
+微软的目标是让 tsc 成为一个可直接分发、本地执行的高效二进制工具，而非一个需要 JS 运行时支撑的解释型工具。
 
 ---
 
 ## 项目状态：预览阶段，功能表已铺开
 
-截至目前（2026 年 4 月），TypeScript Go 仍处于预览阶段，以 `@typescript/native-preview` npm 包发布。功能覆盖情况：
+截至 2026 年 4 月，TypeScript Go 仍处于预览阶段，以 `@typescript/native-preview` npm 包发布。功能覆盖情况：
 
 | 功能 | 状态 | 说明 |
 |------|------|------|
@@ -101,9 +101,9 @@ TypeScript Go 的首要目标是 **与现有编译器输出完全相同的结果
 
 ### Watch 模式和增量构建
 
-Watch 模式（`tsc --watch`）已实现原型级别——可以监听文件变化并触发重建，但增量重检查（incremental rechecking）尚未完成优化。这意味着 watch 模式下每次变更后的类型检查仍然是全量运行，性能尚未达到原版 tsc 的水平。
+Watch 模式（`tsc --watch`）处于原型阶段——可监听文件变化触发重建，但增量重检查尚未优化，每次变更后仍是全量类型检查。
 
-增量构建（incremental build）已经完成，有 `.tsbuildinfo` 文件时能正确跳过未变更部分。
+增量构建已就绪，有 `.tsbuildinfo` 文件时能正确跳过未变更部分。
 
 ---
 
@@ -113,17 +113,17 @@ Watch 模式（`tsc --watch`）已实现原型级别——可以监听文件变�
 
 > **Long-term, we expect that this repo and its contents will be merged into `microsoft/TypeScript`.**
 
-typescript-go 不是永久分叉，它最终的归宿是合并回 TypeScript 主仓库。这意味着：
+typescript-go 不是永久分叉，最终会合并回 TypeScript 主仓库。这意味着：
 
-1. 用户不需要担心分裂——你用的还是同一个 TypeScript，只是底层从 JS 变成 Go
-2. npm 包只是过渡——当前通过 `@typescript/native-preview` 分发，一旦合并完成，`tsc` 本身就是 Go 二进制
-3. TS 版本号会延续——不会因为重写产生一个"TS 7"，它仍然是 TypeScript
+1. 用户不需要担心分裂——还是同一个 TypeScript，只是底层从 JS 变成 Go
+2. npm 包只是过渡——合并完成后 `tsc` 本身就是 Go 二进制
+3. 版本号延续——不会因为重写产生"TS 7"
 
 ---
 
 ## 与 TypeScript 6.0 的有意变更
 
-项目维护了一份明确的 [CHANGES.md](https://github.com/microsoft/typescript-go/blob/main/CHANGES.md)，记录了与 TypeScript 6.0 的**有意变更**。这些变更经过了设计讨论，不是 bug。如果你在预览版中发现与原版不同的行为，先去 CHANGES.md 查一下——很可能是有意为之。
+项目维护了一份 [CHANGES.md](https://github.com/microsoft/typescript-go/blob/main/CHANGES.md)，记录了与 TypeScript 6.0 的**有意变更**。这些变更经过设计讨论，不是 bug。预览版中遇到与原版不同的行为，建议先查这份文档——很可能是有意为之。
 
 ---
 
@@ -131,11 +131,11 @@ typescript-go 不是永久分叉，它最终的归宿是合并回 TypeScript 主
 
 根据微软公布的数据（具体数字因项目规模而异）：
 
-- **编译速度**：Go 版本在冷启动场景下比 Node.js 原版快 **5-10x**
+- **编译速度**：冷启动场景下比 Node.js 原版快 **5-10x**
 - **内存占用**：降低约 **40-50%**
 - **增量构建**：接近原版水平（watch 模式的增量重检查仍在优化中）
 
-对于一个 100 万行 TypeScript 的企业级项目，从 `tsc --build` 30 秒到 5 秒的体验差距是巨大的。
+对于一个百万行级的企业项目，`tsc --build` 从 30 秒缩至 5 秒，体验差距是质变的。
 
 ---
 
@@ -143,26 +143,26 @@ typescript-go 不是永久分叉，它最终的归宿是合并回 TypeScript 主
 
 ### 适合的场景
 
-- **大规模 TypeScript 代码库**：性能提升最显著
+- **大规模代码库**：性能提升最显著
 - **CI/CD 流水线**：编译速度直接影响构建时间
 - **Monorepo**：多包依赖链的增量构建收益明显
-- **TypeScript 语言服务器（LSP）**：IDE 响应速度改善
+- **语言服务器（LSP）**：IDE 响应速度改善
 
 ### 当前局限
 
-- **API 尚未完成**：TypeScript 编译器插件作者暂时还不能用 Go 版本
-- **Watch 模式不完美**：增量重检查未完成，文件变更后响应不如原版快
-- **三端支持但非全优化**：Windows/Linux/macOS 部分平台的性能调优可能未完成
+- **API 未完成**：编译器插件作者暂时无法使用 Go 版本
+- **Watch 模式不完善**：增量重检查未完成，文件变更后响应不如原版
+- **三端支持但未全优化**：Windows/Linux/macOS 部分平台的性能调优可能未完成
 
 ---
 
 ## Go 如何实现 TypeScript 的类型系统
 
-TypeScript 的类型系统出了名的复杂——协变/逆变推导、泛型约束、模板字面量类型、分布式条件类型。用 Go 实现意味着几件事：
+TypeScript 的类型系统以复杂著称——协变/逆变推导、泛型约束、模板字面量类型、分布式条件类型。用 Go 实现意味着面对几个根本性挑战：
 
 ### 类型表示
 
-Go 没有泛型模板（泛型只在运行时通过反射或代码生成实现），TypeScript 的泛型系统在 Go 中需要用接口加类型断言模拟，或者通过代码生成在编译期展开。具体来说，typescript-go 将类型表示为 Go 接口的层次结构：
+Go 没有泛型模板（泛型通过反射或代码生成实现），TypeScript 的泛型系统在 Go 中需用接口加类型断言模拟，或通过代码生成在编译期展开。typescript-go 将类型表示为 Go 接口的层次结构：
 
 ```go
 type Type interface {
@@ -184,7 +184,7 @@ type ObjectType struct {
 
 ### 错误消息兼容
 
-原版 tsc 的错误消息格式是经过多年打磨的，很多用户依赖特定的错误格式做解析或国际化。Go 版本必须精确复现这些消息，包括位置信息（line/column）、错误代码（如 `TS2322`）、建议文本。typescript-go 的做法是将错误模板编译为 Go 常量，在运行时按需填充参数，避免运行时字符串拼接的性能损失。
+原版 tsc 的错误消息格式经过多年打磨，许多用户依赖特定格式做解析或国际化。Go 版本必须精确复现这些消息，包括位置信息、错误代码（如 `TS2322`）、建议文本。typescript-go 的做法是将错误模板编译为 Go 常量，运行时按需填充参数，避免字符串拼接的性能损失。
 
 ### 源码映射（Source Maps）
 
@@ -194,7 +194,7 @@ type ObjectType struct {
 
 ## 为什么是 Go 而不是 Rust
 
-这是社区讨论最多的问题之一。Rust 同样是编译成机器码、性能极强、内存安全，但微软选择了 Go：
+这是社区讨论最多的问题之一。Rust 同样可编译为机器码，性能极强、内存安全，但微软选择了 Go：
 
 | 考量 | Go 的优势 |
 |------|----------|
@@ -204,23 +204,23 @@ type ObjectType struct {
 | 并发模型 | Goroutine 对编译器这种 IO 密集型任务天然友好 |
 | 学习曲线 | 门槛低，社区贡献者容易上手 |
 
-Rust 在内存控制和零成本抽象上更优，但 Go 的"简单"在这个场景里更务实——TypeScript 团队首先要产出与原版行为完全一致的编译器，技术选型服务于这个目标，而非追求理论上的最优。
+Rust 在内存控制和零成本抽象上更优，但 Go 的"简单"在这个场景里更务实——TypeScript 团队的首要目标是产出与原版行为完全一致的编译器，技术选型服务于这个目标，而非追求理论最优。
 
 ---
 
 ## Timeline 与未来展望
 
-没有官方 ETA，但从路线图可以推断：
+没有官方 ETA，从路线图可推断出大致节奏：
 
 1. **近期**：完善 watch 模式的增量重检查、完成 API 层、完成 JS 文件的声明 emit
 2. **中期**：所有功能达到 `done` 状态，发布稳定版 npm 包
 3. **长期**：合并回 `microsoft/TypeScript` 主仓库，`tsc` 二进制默认使用 Go 版本
 
-届时，所有 TypeScript 用户都会无感地享受到 Go 版本带来的性能提升——你只需要升级 TypeScript 版本，不需要改变任何使用习惯。
+届时，所有 TypeScript 用户将无感地享受到 Go 版本带来的性能提升——只需升级 TypeScript 版本，无需改变任何使用习惯。
 
 ---
 
-如果你在维护大型 TypeScript 项目，值得尝试 `@typescript/native-preview`，并在 [GitHub Issues](https://github.com/microsoft/typescript-go/issues) 反馈遇到的问题——这个项目需要社区的测试力量来逼近 `done` 状态。
+如果你在维护大型 TypeScript 项目，值得尝试 `@typescript/native-preview`，并通过 [GitHub Issues](https://github.com/microsoft/typescript-go/issues) 反馈遇到的问题——这个项目需要社区测试来逼近 `done` 状态。
 
 **相关链接：**
 
