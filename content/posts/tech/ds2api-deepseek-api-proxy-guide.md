@@ -1,7 +1,7 @@
 ---
 title: "DS2API：为 DeepSeek Web 对话装上 OpenAI/Claude/Gemini 兼容接口"
 slug: "ds2api-deepseek-api-proxy-guide"
-description: "DS2API 是一个轻量级 Go 全栈中间件，将 DeepSeek Web 对话能力转换为 OpenAI、Claude 与 Gemini 兼容 API。支持多账号轮询、Vercel Serverless 和 Docker 部署，兼容主流 AI SDK。"
+description: "DS2API 是一个轻量级 Go 中间件，将 DeepSeek Web 对话能力转换为 OpenAI、Claude 与 Gemini 兼容 API。支持多账号轮询、Vercel Serverless 和 Docker 部署，兼容主流 AI SDK。"
 date: "2026-04-28T11:35:00+08:00"
 categories: ["技术笔记"]
 tags: ["DeepSeek", "API代理", "OpenAI兼容", "Go"]
@@ -11,7 +11,7 @@ draft: false
 
 # DS2API：为 DeepSeek Web 对话装上 OpenAI/Claude/Gemini 兼容接口
 
-> **项目信息卡**
+> **项目信息**
 >
 > - **GitHub**: [CJackHwang/ds2api](https://github.com/CJackHwang/ds2api)（⚠️ 仓库已归档，不再维护）
 > - **Stars**: 4,729+ | **Forks**: 1,539+ | **License**: AGPL-3.0
@@ -19,38 +19,11 @@ draft: false
 >
 > **注意**：本项目仓库已归档，新用户建议先查看仓库 Issues 了解当前状态再决定是否使用。
 
-## 学习目标
-
-读完本文后，你应该能够：
-
-1. 理解 DS2API 解决的核心问题——让已有 OpenAI/Claude SDK 代码不改一行就能跑在 DeepSeek Web 后端上
-2. 区分 PromptCompat 和 DeepSeek Client 两层不同的职责
-3. 独立完成 DS2API 的 Docker 或二进制部署，并配置多账号轮询
-4. 用 OpenAI/Claude/Gemini SDK 对接 DS2API，理解认证机制和流式输出
-5. 判断 DS2API 是否适合你的场景，以及它的可用性和稳定性边界
-
-## 目录
-
-- [一句话判断](#一句话判断)
-- [系统地图](#系统地图)
-- [问题拆解：DeepSeek Web 与 SDK 之间缺了什么](#问题拆解deepseek-web-与-sdk-之间缺了什么)
-- [一次请求走过系统](#一次请求走过系统)
-- [核心模块](#核心模块)
-- [部署](#部署)
-- [SDK 调用](#sdk-调用)
-- [多账号轮询与并发控制](#多账号轮询与并发控制)
-- [适用边界](#适用边界)
-- [常见问题](#常见问题)
-
 ## 一句话判断
 
 DS2API 真正解决的问题不是"调用 DeepSeek"——这件事 DeepSeek 自己的 API 就能做。它解决的是：**让已经写好的 OpenAI/Claude/Gemini SDK 代码，不改一行就能跑在 DeepSeek Web 后端上**。
 
-项目地址：[https://github.com/CJackHwang/ds2api](https://github.com/CJackHwang/ds2api)
-
-## 系统地图
-
-先看清整体结构，再进入细节。
+## 架构总览
 
 ```
 客户端（OpenAI / Claude / Gemini SDK）
@@ -74,14 +47,14 @@ DeepSeek Client（Session / Auth / Completion / 文件上传）
 DeepSeek Web API
 ```
 
-这张图里两条容易混淆的边界：
+架构里两条容易混淆的边界：
 
 - **PromptCompat 和 DeepSeek Client 是两层不同的东西**。PromptCompat 只管"把各厂商的消息格式翻译成 DeepSeek Web 能处理的纯文本上下文"；DeepSeek Client 管的是与 DeepSeek Web 的实际通信——Session 维护、Auth、PoW（工作量证明）计算、文件上传。
 - **Account Pool + Queue 是夹在中间的一层调度器**。它不是简单的轮询列表，而是一个带并发槽位的调度队列：每个账号有独立的 in-flight 上限，超出上限的请求排队等待。
 
 ## 问题拆解：DeepSeek Web 与 SDK 之间缺了什么
 
-DeepSeek 给了两条访问路径：Web 界面和官方 API。官方 API 需要申请、有调用配额，而且不是所有开发者都能方便地拿到。但 Web 对话能力功能完整——问题是它只能通过浏览器用，没法被 OpenAI SDK 或 Anthropic SDK 调用。
+DeepSeek 给了两条访问路径：Web 界面和官方 API。官方 API 需要申请、有调用配额。但 Web 对话能力功能完整——问题是它只能通过浏览器用，没法被 OpenAI SDK 或 Anthropic SDK 调用。
 
 两个协议之间存在以下差距：
 
@@ -99,9 +72,7 @@ DS2API 做的事，就是在这些差距之间填一层翻译层。
 
 ## 一次请求走过系统
 
-用一个具体场景把抽象模块串起来。
-
-假设你用 Python 写了这段代码：
+用一个具体场景把抽象模块串起来。假设用 Python 写了这段代码：
 
 ```python
 from openai import OpenAI
@@ -128,7 +99,7 @@ response = client.chat.completions.create(
 4. **DeepSeek Client 发起对话** — 用该账号的 Cookie 和 NATIVE_TOKEN 向 DeepSeek Web 发起请求。如果 Web 端返回 PoW 挑战，毫秒级 Go 实现完成计算后重试。
 5. **响应回译** — Web 端返回的对话内容被重新包装成 OpenAI 兼容的 `ChatCompletion` 格式，流式输出通过 SSE 逐块返回。
 
-整个过程对调用方透明——你的 SDK 代码感知不到中间经过了协议翻译。
+整个过程对调用方透明——SDK 代码感知不到中间经过了协议翻译。
 
 ## 核心模块
 
@@ -245,51 +216,6 @@ Admin UI 提供可视化配置：每个账号的 in-flight 上限、等待队列
 **Q: 和官方 API 比有什么差别？**
 
 官方 API 有稳定 SLA、不依赖 Cookie、不需要 PoW 计算。DS2API 的优势在于零申请门槛和零代码改造，代价是依赖 Web 对话的可用性。
-
-## 自测题
-
-1. **DS2API 解决的真正问题是什么？它和 DeepSeek 官方 API 的区别在哪里？**
-   答：DS2API 让已有 OpenAI/Claude SDK 代码不改一行就能跑在 DeepSeek Web 后端上。区别：官方 API 需要申请、有配额、稳定 SLA；DS2API 依赖 Web 对话，稳定性受 Web 端影响。
-
-2. **PromptCompat 和 DeepSeek Client 的职责区别是什么？**
-   答：PromptCompat 只管"把各厂商的消息格式翻译成 DeepSeek Web 能处理的纯文本上下文"；DeepSeek Client 管的是与 DeepSeek Web 的实际通信——Session 维护、Auth、PoW 计算、文件上传。
-
-3. **多账号轮询是如何工作的？什么场景下它比单个账号更有优势？**
-   答：多个 DeepSeek Web 账号组成池子，自动轮询分发请求。每个账号有独立的 in-flight 上限，超出上限的请求排队等待。优势场景：高并发调用、需要分摊请求量、避免单个账号触发速率限制。
-
-4. **DS2API 的部署方式有哪些？Vercel Serverless 有什么限制？**
-   答：本地二进制、Docker、Linux systemd、Vercel Serverless。Vercel 限制：执行时长（10-60 秒）、并发数、冷启动延迟。高并发场景建议用 Docker 或二进制部署。
-
-5. **为什么 DS2API 不校验 `api_key`？认证是怎么做的？**
-   答：DS2API 是协议翻译层，认证由后台配置的 DeepSeek Cookie 和 NATIVE_TOKEN 完成。`api_key` 字段被忽略，可以填任意字符串。
-
-## 进阶路径
-
-### 阶段一：快速验证（1-2 天）
-- 用 Docker 一条命令跑起 DS2API
-- 用 OpenAI SDK 发一条测试请求，确认协议翻译正确
-- 在 `/admin` UI 中添加一个 DeepSeek Web 账号
-- 确认流式输出（SSE）正常工作
-
-### 阶段二：生产部署（3-5 天）
-- 选择部署方式（推荐 Docker + 反向代理）
-- 配置多账号池，理解 `in-flight` 上限和队列长度
-- 配置 `allowedPaths`（如果用 filesystem MCP）
-- 设置监控和日志，跟踪账号 Cookie 过期时间
-
-### 阶段三：SDK 迁移（1-2 周）
-- 在开发环境把现有 OpenAI SDK 代码的 `base_url` 指向 DS2API
-- 对比官方 API 和 DS2API 的输出差异
-- 处理边缘情况（Vision、文件上传、tool calls）
-- 做性能测试，确认延迟和吞吐量满足需求
-
-### 阶段四：长期维护（持续）
-- 定期检查 DeepSeek Web 的协议变化（可能影响 DS2API）
-- 维护账号 Cookie 和 NATIVE_TOKEN 的更新
-- 关注 DS2API 仓库更新（注意：仓库已归档，可能需要 fork 自维护）
-- 如果稳定性达不到要求，规划迁移到 DeepSeek 官方 API
-
----
 
 ---
 

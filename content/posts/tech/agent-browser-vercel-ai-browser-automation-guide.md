@@ -1,7 +1,7 @@
 ---
 title: "Agent Browser：面向 AI Agent 的原生浏览器自动化 CLI 指南"
 date: "2026-04-12T11:40:00+08:00"
-lastmod: 2026-04-15T21:40:02+08:00"
+lastmod: 2026-04-15T21:40:02+08:00
 slug: agent-browser-vercel-ai-browser-automation-guide
 summary: "本文基于官方 README 与 CLI 帮助信息，系统讲清 Agent Browser 的安装方法、snapshot + ref 工作流、会话与认证管理、安全控制、调试观测与 Agent 集成边界。"
 description: "基于 vercel-labs/agent-browser README 与公开 CLI 帮助信息整理的中文指南，聚焦安装、snapshot+ref 工作流、会话与认证、安全控制、调试与 AI Agent 集成。"
