@@ -10,7 +10,7 @@ tags: ["量化交易", "AI Agent", "MCP"]
 
 # Vibe-Trading 完全指南：从零开始理解你的个人交易智能体
 
-你有没有过这样的经历——脑子里冒出一个交易想法，觉得「如果均线金叉时买入，应该能赚」，但真要验证它，你得先找数据、写代码、跑回测，折腾一整天，热情早凉了。
+你有没有过这样的经历：脑子里冒出一个交易想法，觉得「如果均线金叉时买入，应该能赚」。但真要验证它，你得先找数据、写代码、跑回测，折腾一整天，热情早凉了。
 
 现在换一种方式：你直接告诉它「帮我看看沪深 300 的动量策略最近还行不行」，它就去拉数据、算因子、跑回测，最后给你一份带图表的报告。如果你授权，它还能帮你盯着盘，在符合你设定的规则范围内执行交易。
 
@@ -72,7 +72,7 @@ Vibe-Trading 可以理解成一个「交易研究工作台」。你用自然语�
 - **Backtest（回测层）**：用历史数据模拟交易，看这套规则在过去赚了多少、亏了多少
 - **Report（报告层）**：输出指标、图表、run card，所有步骤都可复查
 
-它不是券商，也不托管你的资金。它帮你把「研究想法」变成「可运行、可复查、可沉淀」的研究成果。
+它不是券商，也不托管你的资金。它帮你把「研究想法」变成能实际运行的成果：过程可复查，结果留得下、查得到。
 
 ### 读完本文，你能做什么
 
@@ -143,7 +143,7 @@ flowchart TB
         BTEngine[9 个回测引擎<br/>多市场 + 组合 + 期权]
         Shadow[Shadow Account<br/>行为复盘 + 规则提取]
         Goal[Research Goal<br/>长程任务追踪]
-        AutoPilot[Research Autopilot<br/>定时研究闭环]
+        AutoPilot[Research Autopilot<br/>定时研究编排]
     end
 
     subgraph ExecutionLayer[执行层 - 风控与券商]
@@ -249,6 +249,7 @@ flowchart TB
 
 | 术语 | 白话解释 | 项目里对应哪里 |
 |------|----------|---------------|
+| 市场引擎 / engine | 不同市场（A 股、加密、期货、外汇）走不同的模拟规则：A 股有 T+1、涨跌停，加密支持 T+0、做空 | 回测配置里的 `engine`；跨市场组合走 CompositeEngine |
 | PIT | Point-in-time，只使用当时已经公开、可获得的数据 | 财务字段、Shadow Account 入场上下文和回测验证都强调这个边界 |
 | 滑点 / slippage | 你想成交的价格和实际成交价格之间的差距 | 不同市场引擎都有自己的简化滑点参数 |
 | 回撤 / drawdown | 账户净值从高点跌到低点的幅度。最大回撤是衡量策略痛苦程度的重要指标 | 回测 metrics |
@@ -256,7 +257,7 @@ flowchart TB
 | paper / live | paper 是模拟盘，live 是真实账户 | connector profile 的 `environment` |
 | mandate | 实盘授权边界：能交易哪些标的、单笔多少、最大仓位、每日亏损限制等 | 实盘下单路径的风控门 |
 
-术语有了，接下来动手。先把它装到你的机器上，跑几个命令感受一下——你会发现，从「知道这些词」到「真的跑起来」，距离比你想象的要短。
+术语有了，接下来动手。先把它装到机器上跑几个命令——从「知道这些词」到「真的跑起来」，距离比你想象的要短。
 
 ---
 
@@ -321,7 +322,7 @@ vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, an
 - **REST API**：`vibe-trading serve` 起服务后暴露 HTTP 接口，适合二次开发
 - **MCP 服务**：接入 Claude Desktop / Cursor / OpenClaw 等 MCP 客户端，让现有 Agent 直接调金融工具
 
-装好了，跑通了，接下来看看它最硬核的部分——88 个 skill、460+ 个因子、Shadow Account 复盘、多 Agent Swarm。这些才是 Vibe-Trading 真正拉开差距的地方。
+装好了，跑通了。接下来看它最硬核的部分：88 个 skill、460+ 个因子、Shadow Account 复盘、多 Agent Swarm。这些才是它真正拉开差距的地方。
 
 ---
 
@@ -350,7 +351,9 @@ vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, an
 
 注意到上面表格里 Strategy 分类下的 skill 名称了吗？这里说的 Strategy 是交易策略的生成与筛选，不是设计模式里的策略模式（Strategy Pattern）。这种命名冲突在金融软件里不算少见，看语境就能区分。
 
-这 88 个 skill 是 Vibe-Trading 跟通用 Agent 的分水岭。通用 Agent 拿到「分析一下宁德时代」，只能靠通用推理硬猜。Vibe-Trading 的每个 skill 则是带数据接入、参数约定和输出契约的模块：`ashare-pre-st-filter` 会真的去拉 ST 名单，`perp-funding-basis` 会真的去取资金费率。它是有金融领域纵深的 Agent，不是「聊天 + 跑代码」。
+这 88 个 skill 是 Vibe-Trading 跟通用 Agent 的分水岭。通用 Agent 拿到「分析一下宁德时代」，只能靠通用推理硬猜。
+
+Vibe-Trading 的每个 skill 都带数据接入、参数约定和输出契约。`ashare-pre-st-filter` 会真的去拉 ST 名单，`perp-funding-basis` 会真的去取资金费率。它是**有金融领域纵深的 Agent**，不是「聊天 + 跑代码」。
 
 ### 6.2 Alpha Zoo（460+ 个预置 alpha 因子）
 
@@ -367,7 +370,7 @@ vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, an
 | `gtja191` | 191 | 国泰君安短周期交易型因子，A 股语境更强 |
 | `qlib158` | 154 | Qlib Alpha158 特征，常作为机器学习模型的输入特征 |
 
-四个池合计 456，官方各渠道口径略有浮动（README 写 452+、PyPI v0.1.12 列出 461），但都在 460+ 量级。真正常用的是 `vibe-trading alpha list` 的实际输出，不必纠结精确数字。
+四个池合计 456。官方各渠道口径略有浮动：README 写 452+，PyPI v0.1.12 列出 461，都在 460+ 量级。真正常用的是 `vibe-trading alpha list` 的实际输出，不必纠结精确数字。
 
 常见 theme 可以这样读：
 
@@ -385,6 +388,8 @@ vibe-trading alpha list --zoo academic
 vibe-trading alpha show academic_mkt_rf
 vibe-trading alpha bench --zoo academic --universe sp500 --period 2020-2025 --top 10
 ```
+
+三个命令的用途不同：`alpha list` 列出池内所有因子名；`alpha show` 打印单个因子的公式和 metadata（比如 `min_warmup_bars`）。`alpha bench` 才是把因子放到一个 universe 上做回测，输出 IC/IR 和分类标签。
 
 一行命令跑完整个 zoo：
 
@@ -408,17 +413,17 @@ vibe-trading alpha bench --zoo gtja191 --universe csi300 --period 2018-2025 --to
 - **300-row lookahead sentinel test**：往序列里插入「未来会发生的事件」哨兵，跑一遍回测，看因子是否提前反应。如果因子在事件发生前就异动，说明存在数据泄漏，测试必挂。
 - **`pytest-socket` 网络 kill-switch**：测试进程里直接禁网，防止「测试偷偷联网拉未来数据」这种不可能通过代码审查的作弊。
 
-另外，社区 PR 走 DCO 工作流：每个贡献者要签 Developer Certificate of Origin（开发者原创证书），保证因子来源可追溯。
+社区 PR 走 DCO 工作流，每个贡献者都要签 Developer Certificate of Origin（开发者原创证书）。目的很简单：保证因子来源可追溯。
 
 ### 6.3 Shadow Account（影子账户）
 
-这是 Vibe-Trading 最具创意、也最容易被低估的功能。它解决一个真实痛点：**你实盘做了几百笔交易，但你说不清自己的交易系统到底是什么**。直觉是「低买高卖」，实际上可能一直在追涨杀跌。Shadow Account 把「你以为的」和「你实际做的」都摆到桌面上：
+这是 Vibe-Trading 最容易被低估的功能。它解决一个真实痛点：**你实盘做了几百笔交易，但你说不清自己的交易系统到底是什么**。直觉是「低买高卖」，实际上可能一直在追涨杀跌。Shadow Account 把「你以为的」和「你实际做的」都摆到桌面上：
 
 | 步骤 | Agent 输出 |
 |------|------------|
 | 1. 读交易记录 | 解析同花顺 / 东财 / 富途 / 通用 CSV |
 | 2. 行为画像 | 持仓天数、胜率、盈亏比、回撤、处置效应、过度交易、追涨杀跌、锚定偏差 |
-| 3. 规则提取 | 把反复出现的进出场动作转成显式策略（含 RSI、前 5 日收益等条件入场） |
+| 3. 规则提取 | 把反复出现的进出场动作提炼成 3~5 条 if-then 显式规则（含 RSI、前 5 日收益等条件入场） |
 | 4. 跑影子 | 用提取出的规则回测，高亮规则破坏 / 提前出场 / 错过信号 / 替代交易路径 |
 | 5. 出报告 | HTML / PDF 报告 + 可复用的策略代码，可存档或再迭代 |
 
@@ -490,7 +495,7 @@ Robinhood 是**实盘**支持的代表，它的安全设计是「AI 托管真金
 - **Audit ledger**：所有动作（谁、什么时间、什么指令、结果如何）全量留痕，出问题能回溯。
 - **Auto-expire mandate**：承诺有过期时间，到点自动失效，避免「我忘了关 Agent」这种最朴素的翻车方式。
 
-v0.1.12 又加了一层 **PreTradeAdvisoryInterface**：下单前，Agent 把「准备做什么」发给一个咨询接口过一遍，自查订单是否超限、是否在禁售名单内。
+v0.1.12 又加了一层 **PreTradeAdvisoryInterface**，让下单前多一道复查：Agent 把「准备做什么」发给咨询接口，自查订单是否超限、是否在禁售名单内。
 
 > ⚠️ 官方明确标注：Experimental / use at your own risk。**没有资金托管，没有交易所权限**——broker 持资执行，Vibe-Trading 只传递意图。
 
@@ -523,7 +528,7 @@ v0.1.10 之后新增的端到端流程：**假设 → 研究目标 → 回测**�
 
 ### 6.9 持久化记忆（Persistent Memory）
 
-项目内置分层记忆（Tier 2 结构）：短期记忆记录当前会话上下文，长期记忆沉淀跨会话的事实与结论。记忆带质量评分，按 Ebbinghaus 遗忘曲线衰减，支持可选 GC。
+项目内置分层记忆（Tier 2 结构）：短期记忆记录当前会话上下文，长期记忆跨会话保存事实与结论。记忆带质量评分，按 Ebbinghaus 遗忘曲线衰减，支持可选 GC。
 
 上周你让它研究过的行业、你纠正过它的偏好，这周再开新会话它还记得，不用重复交代。
 
@@ -533,13 +538,41 @@ v0.1.10 之后新增的端到端流程：**假设 → 研究目标 → 回测**�
 
 前面拆了各个模块，这一节把它们串起来。假设你是一个量化研究员，想「评估并回测一个沪深 300 动量策略」，看看这个请求在 Vibe-Trading 里实际经历了什么。以下命令和输出都是**示意**，用来展示流程，不代表真实的因子结果。
 
+先给一张时序图，把「一条 prompt 如何流过系统」压缩成几秒能看懂的画面，后面再逐步展开：
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant A as Agent Loop
+    participant D as data-routing
+    participant Z as alpha-zoo
+    participant B as 回测引擎
+
+    U->>A: run -p "评估 CSI300 动量策略"
+    A->>D: 请求 CSI300 行情
+    D-->>A: akshare 数据 panel（fallback 后）
+
+    A->>Z: 计算动量因子 IC/IR
+    Z-->>A: alive / reversed / dead 标记
+
+    A->>B: 提交 signal_engine.py
+    B-->>A: 回测指标 + 交易明细
+    A-->>U: 报告 + run_card（写入记忆）
+```
+
 ### Step 1：用户输入 → Agent Loop 路由
 
 ```bash
 vibe-trading run -p "Evaluate a CSI300 momentum strategy, backtest 2018-2025, output report"
 ```
 
-CLI 收到请求后，Agent Loop 进入 Plan 阶段：分析 prompt 需要哪些能力——动量因子需要 Alpha Zoo 的 `alpha101` 或 `gtja191`，回测需要 `csi300` 数据源，报告需要 `report-generate` skill。Loop 自动选定了 4 个 skill：`data-routing` → `alpha-zoo` → `strategy-generate` → `report-generate`。
+CLI 收到请求后，Agent Loop 进入 Plan 阶段，先拆解这个 prompt 需要哪些能力：
+
+- 动量因子 → Alpha Zoo 的 `alpha101` 或 `gtja191`
+- 回测 → `csi300` 数据源
+- 报告 → `report-generate` skill
+
+最终 Loop 自动选了 4 个 skill：`data-routing` → `alpha-zoo` → `strategy-generate` → `report-generate`。
 
 ### Step 2：数据路由
 
@@ -550,7 +583,7 @@ CLI 收到请求后，Agent Loop 进入 Plan 阶段：分析 prompt 需要哪些
 3. tushare 限流或 token 未配 → 切 akshare（免费，无需 token）
 4. akshare IP 被封 → 切腾讯财经数据源
 
-最终用 akshare 拿到 2018-2025 日的 CSI300 OHLCV 数据，标准化成内部 panel 格式返回给 Agent Loop。
+最终 akshare 拿到了 2018-2025 日的 CSI300 OHLCV 数据。系统把它标准化成内部 panel 格式，返回给 Agent Loop。
 
 > 容易混淆的一步：**市场 ≠ 数据源 ≠ 券商账户。** 市场决定交易规则（T+1、涨跌停、做空限制），数据源决定历史数据从哪里来（tushare、akshare、yfinance），券商账户只在你需要读取真实账户或模拟/真实下单时才涉及。新手最容易犯的错是「把数据源当券商」，或者反过来「以为连了券商就能自动拿到所有历史数据」。三者是独立的，图中数据路由只处理数据源，与券商无关。
 
@@ -570,7 +603,9 @@ GTJA_042 (reversal_5d):  IC=-0.041, IR=1.02, reversed
 
 > 回测不是预测器，而是历史模拟器。它的价值不是告诉你「未来会赚多少」，而是让你在投入真实资金前，先看清一套规则在历史数据里经历过什么：赚了多少、最大亏了多少、交易频率多高、是否只是某一年有效、是否被手续费吃掉。
 
-Agent Loop 取 IC 最高的 5 个因子，调用 `strategy-generate` skill 合成一个等权多因子信号，生成 `signal_engine.py`。这个 Python 文件经过 pre-flight 验证（检查循环自 import、缺少 `generate()`、错误返回类型）后，提交给回测引擎。
+Agent Loop 取 IC 最高的 5 个因子，调用 `strategy-generate` skill 合成等权多因子信号，生成 `signal_engine.py`。
+
+这个 Python 文件要先过 pre-flight 验证（检查循环自 import、缺少 `generate()`、错误返回类型），通过后才提交给回测引擎。
 
 回测引擎启动沙箱子进程——网络被 `pytest-socket` 拦截，文件系统被限制在回测目录，无法访问 `~/.vibe-trading/` 中的配置密钥。回测报告（以下为示意数据）：
 
@@ -626,7 +661,7 @@ vibe-trading --upload my_futu_export.csv
 vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, run backtest on the rules, show me how much I left on the table"
 ```
 
-「how much I left on the table」是 Shadow Account 报告里最扎心的一行，也最有行动价值。它把「交易纪律问题」翻译成了具体金额。
+「how much I left on the table」是 Shadow Account 报告里最扎心的一行。它把「交易纪律问题」翻译成了具体金额——哪些钱本来能留下、又是在哪一步丢掉的。
 
 ### 场景 D：跨市场组合
 
@@ -737,7 +772,7 @@ Vibe-Trading 的核心差异化是「**AI Agent + 量化研究 + 受限实盘**�
 ## 十二、隐私合规要点
 
 - **API key 配置**：写在本地 `.env`，**不上传任何云端**；不要在非官方部署上用生产 API key。
-- **Mandate 过期 = 自动失效**：防止「我忘了关 Agent」这类最朴素的失控。
+- **Mandate 过期 = 自动失效**：防止「我忘了关 Agent」这类最基本的失控。
 - **Audit ledger 全留痕**：所有动作可回溯，这是出事时自证清白的唯一凭据。
 - **Paper account 优先**：所有新策略先在模拟盘跑，确认行为符合预期再接实盘。
 - **安全审计已收尾**：2026-07-10 完成外部安全审计，10 项发现全部修复——回测沙箱用 AST 加固（禁网络/子进程/eval），另有 CSRF / SSRF 防护和 API 认证加固。
