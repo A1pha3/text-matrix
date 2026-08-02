@@ -92,6 +92,18 @@ hiddenFromHomePage: true
 
 ---
 
+## 📚 学习案例
+
+### Sniffnet：四周年纪念，独立开发者如何把工具做成 GitHub 第一网络监控应用
+来源: Reddit r/SideProject
+发布者: /u/GyulyVGC
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vdepnd/4_years_of_my_side_project/)
+摘要: Sniffnet 上线四年，已成为 GitHub 上最受欢迎的网络流量监控工具，全部开源。开发者从一句"做个 GUI 是不是太冲动了"出发，用四年持续打磨一个看似窄众的工具，最终做到平台级影响力。作者分享了过程中的工程取舍、推广策略与社区运营经验。对于想长期坚持做一款独立工具的开发者，这份周年复盘提供了从 0 到 1 的完整路径参考。
+
+标签: #开源项目 #独立开发 #长期主义
+
+---
+
 🦞 每日07:15自动更新
 
 **数据来源**：Reddit r/SideProject、V2EX 酷工作
@@ -105,3 +117,4 @@ hiddenFromHomePage: true
 - ✅ https://www.v2ex.com/t/1231571 - Multi-Agent架构师招聘
 - ✅ https://www.reddit.com/r/SideProject/comments/1vdaft8/i_made_my_first_app_and_got_over_1000_downloads/ - Flight Scanner Wear OS
 - ✅ https://www.reddit.com/r/SideProject/comments/1vd9zra/drop_your_app_ill_create_a_free_viralstyle/ - 免费短视频推广
+- ✅ https://www.reddit.com/r/SideProject/comments/1vdepnd/4_years_of_my_side_project/ - Sniffnet 四周年
