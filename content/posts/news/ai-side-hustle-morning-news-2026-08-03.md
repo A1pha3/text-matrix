@@ -1,11 +1,11 @@
 ---
 title: "AI副业早报 2026-08-03"
-date: 2026-08-03T07:02:00+08:00
+date: 2026-08-03T07:10:00+08:00
 slug: ai-side-hustle-morning-news-2026-08-03
-description: "2026年8月3日 AI副业早报，精选过去24小时内AI赚钱机会、独立项目、招聘与工具推荐。"
+description: "2026年8月3日 AI副业早报，精选过去24小时内AI招聘、副业变现研究、独立开发里程碑与行业趋势。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "独立开发", "AI赚钱", "Agent", "招聘"]
+tags: ["AI副业", "Multi-Agent", "独立开发", "招聘", "变现"]
 hiddenFromHomePage: true
 ---
 
@@ -13,108 +13,60 @@ hiddenFromHomePage: true
 
 ---
 
-## 🔥 今日热门
+## 招聘 Multi-Agent 架构/资深开发（北京·45-60K）
 
-### AI 赚钱方法搜索需求年度研究：无代码应用开发月搜 9 万次居首
+来源: V2EX酷工作
+发布者: clbigdata
+原文: [原文](https://www.v2ex.com/t/1231571)
+摘要: 岗位聚焦 Multi-Agent 工作流编排，要求设计基于图或状态机的专职 Agent 阵列（意图拆解、规则合成、逻辑校验、资产匹配），构建"幻觉"防御与确定性闭环。技术栈要求 Python 3 年以上、精通 LangGraph/AutoGen/CrewAI 底层原理或具备原生 API 手写 Agent 调度器经验，能将 LLM 发散输出通过 JSON Schema / Function Calling 强制锁定在严格格式内。base 北京，不接受远程，薪资 45-60K。
+
+标签: #Multi-Agent #LangGraph #Python #北京
+
+## 联想天津直招 AI 原生设备工程师（Linux/嵌入式/模型侧）
+
+来源: V2EX酷工作
+发布者: bbbpppwagg
+原文: [原文](https://www.v2ex.com/t/1231559)
+摘要: 联想天津开放多个 AI 原生设备相关岗位，包括 Linux 系统软件工程师（负责设备启动、OTA、容器/沙箱生命周期、端侧 AI 负载资源治理）、嵌入式 MCU/RTOS 固件工程师、以及模型/智能体方向。Linux 岗位要求 C/C++ 扎实、熟悉 systemd、LXC/Docker、有 Yocto/Buildroot 经验者优先。技术面可先行，过了直接走流程。
+
+标签: #联想 #AI设备 #Linux #嵌入式 #天津
+
+## Reddit 用户发布 2026 AI 副业搜索需求研究：无代码应用构建月搜 9 万次
+
 来源: Reddit r/SideProject
 发布者: /u/AppropriateHamster
 原文: [原文](https://www.reddit.com/r/SideProject/comments/1vdpt9q/i_researched_search_demand_for_the_best_ways_to/)
-摘要: 作者拉取了过去 12 个月的搜索数据，对各类 AI 副业方向按真实搜索量和趋势变化做了排名。无代码应用开发以月均约 9.05 万次搜索位居第一，用户描述需求后由 AI 工具自动生成可收费产品；AI SEO 服务月均约 3600 次搜索，增长势头明显，为中小商家提供 AI 驱动的搜索引擎优化方案。研究强调这些数据反映的是持续搜索需求而非短期热点，对选择 AI 副业方向具有参考价值。
+摘要: 该用户拉取了过去 12 个月的搜索数据，对各类 AI 副业按搜索量和增长趋势排名。需求最大的是"用 AI 无代码构建应用"（约 90,500 次/月搜索），其次是"付费训练 AI"（8,100 次/月）、"AI 虚拟助手"（6,600 次/月）、"AI 接待员与语音代理"（5,400 次/月）。AI SEO 服务搜索量增速最快，下半年几乎垂直上升；小企业自动化月搜 2,900 次，毛利率高但客户教育成本也高。
 
-标签: #AI赚钱 #搜索需求 #无代码 #SEO
+标签: #AI副业 #搜索需求 #无代码 #变现
 
----
+## 独立开发者 Wear OS 应用突破 1000 下载：从 Garmin 起步到安卓扩展
 
-## 🚀 AI 项目
-
-### Aivora：用自然语言描述问题，自动推荐 AI 工具及使用指南
-来源: Reddit r/SideProject
-发布者: /u/Still_Pirate1653
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vdsxi1/built_aivora_with_a_friend_describe_a_problem_get/)
-摘要: 开发者构建了一个 AI 工具推荐引擎：用户用自然语言输入具体问题（如"给 YouTube 视频加字幕"），系统返回最匹配的 AI 工具及简短使用教程。产品包含精选工具库、每日 AI 技巧和分场景推荐页面，目前托管在 Vercel 上免费使用。作者正在社区征集推荐准确度和指南实用性的反馈。
-
-标签: #AI工具 #推荐引擎 #独立项目
-
-### Fullpack：拍照即收纳，AI 自动命名分类并生成贴纸
-来源: Reddit r/SideProject
-发布者: /u/w-zhong
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vdem91/now_your_pile_of_hoard_can_fly/)
-摘要: 独立开发者推出的首款个人 App，核心功能是对物品拍照后由 AI 自动命名、分类并生成贴纸样式，将物理物品数字化整理为可搜索的清单，并可复用为打包清单。数据通过用户个人 iCloud 同步，无账号无追踪。已上架 App Store，是 AI 视觉识别在生活场景中的轻量落地案例。
-
-标签: #AI视觉 #独立开发 #iOS
-
-### Archie：AI 识别建筑风格与历史，拍照即学建筑知识
-来源: Reddit r/SideProject
-发布者: /u/Lastplaceheroes
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vdl7bz/i_made_an_app_that_identifies_any_buildings/)
-摘要: 开发者推出 iOS 应用 Archie，用户拍摄任意建筑即可获取建筑风格、历史背景和特征解读，并配有语音解说。地图模式可探索周边知名建筑。作者提到每张识别有少量 AI 推理成本，因此首次 5 次免费后有付费墙。产品定位介于教育工具与城市探索之间，是 AI 图像识别在垂直领域的变现尝试。
-
-标签: #AI图像识别 #知识付费 #iOS
-
-### Fable-os：裸金属自进化 Agent 操作系统，能自写驱动并播放音频
-来源: Reddit r/SideProject
-发布者: /u/robi0t
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vdurpu/i_built_a_real_selfevolving_operating_system/)
-摘要: 开发者展示了名为 Fable-os 的项目——不是运行在浏览器中的 AI 模拟，而是在裸金属上运行的 Agent 操作系统。在演示中，Agent 发现缺少音频驱动后，自动枚举设备、识别出 Intel AC'97 声卡、从零编写驱动并成功播放音频。作者表示对市场上"浏览器 AI 操作系统"的营销话术感到不满，选择用真实工程实现做区分。项目对理解 Agent 自主演化与系统级自动化具有前瞻性参考价值。
-
-标签: #AgentOS #裸金属 #自进化 #前沿项目
-
----
-
-## 💼 招聘
-
-### 招聘 Multi-Agent 架构 / 资深开发工程师
-来源: V2EX 酷工作
-原文: [原文](https://www.v2ex.com/t/1231571)
-摘要: 岗位要求设计并落地 Multi-Agent 工作流编排系统，包括意图拆解、规则合成、逻辑校验和资产匹配等专职 Agent 阵列，构建基于图或状态机的调度机制。重点方向含 LLM 幻觉防御与确定性闭环、模型路由与成本工程（Claude/GPT/Qwen/DeepSeek 分层路由）、AI 评测与可观测体系。要求 3 年以上 Python 后端架构经验，需具备 LangGraph/AutoGen/CrewAI 等框架的底层实战经历。薪资和公司详情见原帖。
-
-标签: #Multi-Agent #架构师 #Python #远程
-
----
-
-## 🛠️ 工具推荐
-
-### Flight Scanner：Wear OS 实时航班雷达，独立开发者下载量破千
 来源: Reddit r/SideProject
 发布者: /u/Chemicalzz
 原文: [原文](https://www.reddit.com/r/SideProject/comments/1vdaft8/i_made_my_first_app_and_got_over_1000_downloads/)
-摘要: 开发者发布的首款应用 Flight Scanner 把智能手表变成实时航班雷达，展示当前位置附近的飞机与直升机，点击即可查看呼号、海拔、速度、注册号和航向。开发者最初是因为常抬头看飞机、又不想掏手机才做出来，Garmin 版本下载量超 1000 后移植到 Wear OS 并继续增长。产品展示了个人开发者如何从自身需求切入穿戴设备这一被巨头忽视的垂直场景。
+摘要: 开发者发布了 Flight Scanner，一款将智能手表变为实时飞机雷达的应用，在 Garmin 平台先获得超过 1000 次下载后又上线 Wear OS。应用展示附近飞机的呼号、高度、速度和航向，收入已可覆盖数月数据成本。作者表示这个副业项目已经占用了大量时间处理用户反馈和 Bug 修复，从航空爱好者工具发展成了持续运营的产品。
 
-标签: #WearOS #独立开发 #AI工具
+标签: #WearOS #独立开发 #副业 #航空
 
-### 免费为你的 App 制作病毒式短视频解说
-来源: Reddit r/SideProject
-发布者: /u/CharmingPotential331
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vd9zra/drop_your_app_ill_create_a_free_viralstyle/)
-摘要: 一位有短视频运营经验的创作者发起免费活动：在帖子下留言你的 App，被选中后 24 小时内交付一条竖版解说视频，涵盖强钩子、快节奏剪辑、字幕和清晰卖点，完成后创作者不附加任何条件。对于缺乏营销预算的独立开发者来说，这是一个零成本获取推广素材的机会。
+## TechCrunch：App Store 精品应用证明 AI 时代仍有独立软件空间
 
-标签: #免费推广 #短视频 #独立开发者
+来源: TechCrunch
+原文: [原文](https://techcrunch.com/2026/08/02/these-app-store-hidden-gems-prove-theres-still-room-for-great-software-in-the-ai-era/)
+摘要: TechCrunch 报道指出，尽管业界预测 AI Agent 可能取代传统应用，但独立开发者发布新软件的速度并未放缓。从智能书签工具、社区市场到自然日志应用，App Store 仍在涌现有创意的非 AI 包装产品。对独立开发者而言，"用 AI 做工具"和"做不被 AI 替代的工具"两条路径同时成立。
 
----
+标签: #AppStore #独立开发 #AI时代
 
-## 📚 学习案例
+## Sam Altman 呼吁行业"控制 AI 发展节奏"
 
-### Sniffnet：四周年纪念，独立开发者如何把工具做成 GitHub 第一网络监控应用
-来源: Reddit r/SideProject
-发布者: /u/GyulyVGC
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vdepnd/4_years_of_my_side_project/)
-摘要: Sniffnet 上线四年，已成为 GitHub 上最受欢迎的网络流量监控工具，全部开源。开发者从一句"做个 GUI 是不是太冲动了"出发，用四年持续打磨一个看似窄众的工具，最终做到平台级影响力。作者分享了过程中的工程取舍、推广策略与社区运营经验。对于想长期坚持做一款独立工具的开发者，这份周年复盘提供了从 0 到 1 的完整路径参考。
+来源: TechCrunch
+原文: [原文](https://techcrunch.com/2026/08/02/sam-altman-and-ais-decel-debate/)
+摘要: 在 TechCrunch Equity 节目中，Sam Altman 公开呼吁行业"pace the rate of AI development"（控制 AI 发展节奏），引发"减速派（decel）"与"加速派（accel）"的新一轮辩论。对于依赖 AI API 构建产品的独立开发者和副业从业者，这一信号意味着模型迭代节奏和 API 定价策略可能出现调整窗口，值得密切关注。
 
-标签: #开源项目 #独立开发 #长期主义
+标签: #SamAltman #AI监管 #行业趋势
 
 ---
 
 🦞 每日07:15自动更新
 
-**数据来源**：Reddit r/SideProject、V2EX 酷工作
-
-**⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://www.reddit.com/r/SideProject/comments/1vdpt9q/i_researched_search_demand_for_the_best_ways_to/ - AI赚钱搜索需求研究
-- ✅ https://www.reddit.com/r/SideProject/comments/1vdsxi1/built_aivora_with_a_friend_describe_a_problem_get/ - Aivora AI工具推荐
-- ✅ https://www.reddit.com/r/SideProject/comments/1vdem91/now_your_pile_of_hoard_can_fly/ - Fullpack AI拍照收纳
-- ✅ https://www.reddit.com/r/SideProject/comments/1vdl7bz/i_made_an_app_that_identifies_any_buildings/ - Archie AI建筑识别
-- ✅ https://www.reddit.com/r/SideProject/comments/1vdurpu/i_built_a_real_selfevolving_operating_system/ - Fable-os Agent OS
-- ✅ https://www.v2ex.com/t/1231571 - Multi-Agent架构师招聘
-- ✅ https://www.reddit.com/r/SideProject/comments/1vdaft8/i_made_my_first_app_and_got_over_1000_downloads/ - Flight Scanner Wear OS
-- ✅ https://www.reddit.com/r/SideProject/comments/1vd9zra/drop_your_app_ill_create_a_free_viralstyle/ - 免费短视频推广
-- ✅ https://www.reddit.com/r/SideProject/comments/1vdepnd/4_years_of_my_side_project/ - Sniffnet 四周年
+**数据来源**：V2EX酷工作、Reddit r/SideProject、TechCrunch
