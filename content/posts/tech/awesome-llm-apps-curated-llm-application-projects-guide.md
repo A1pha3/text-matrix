@@ -10,7 +10,7 @@ tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Google ADK"]
 
 ## 一句话定位
 
-**awesome-llm-apps** 是 LLM 应用的学习样本库与起手模板集，不是生产框架。它把 Agent、RAG、MCP、Voice、Memory 五条能力轴上的 100 多个示例集中到一个仓库，每个示例可独立运行。想找个生产框架？去看 LangGraph、CrewAI、Google ADK。想看看 RAG Agent 到底怎么写？这仓库命中率最高。
+**awesome-llm-apps** 是 LLM 应用的学习样本库与起手模板集，不是生产框架。它把 Agent、RAG、MCP、Voice、Memory 五条能力轴上的 100 多个示例集中到一个仓库，每个示例可独立运行。想找生产框架，去看 LangGraph、CrewAI、Google ADK。想看看 RAG Agent 到底怎么写，这仓库命中率最高。
 
 ---
 
@@ -472,7 +472,7 @@ LLM 本身无状态，每次调用独立。要实现"记住用户偏好""延续�
 
 ### 个性化记忆系统
 
-Memory 的两个关键操作：写入时提取关键信息存入向量库 + 更新用户画像；读取时按用户过滤检索相关记忆，注入 prompt。
+Memory 的两个关键操作：写入时提取关键信息存入向量库，更新用户画像；读取时按用户过滤检索相关记忆，注入 prompt。
 
 ```python
 class PersonalizedMemory:
@@ -595,7 +595,7 @@ result = app.run("研究 2024 年 AI Agent 领域的最新进展")
 
 ## LLM 优化工具
 
-仓库还收录了两个 Token 优化工具。成本降低比例（30-60%、50-90%）来自项目作者声明，建议在自己的数据集上验证后再采用。
+仓库还收录了两个 Token 优化工具。
 
 ### Toonify Token 优化
 
@@ -690,38 +690,18 @@ python app.py
 
 ## 采用建议
 
-把仓库当作**索引**来用：
+把仓库当作索引来用：
 
-1. **先读项目地图**：确定你要学哪条能力轴。
-2. **挑一个 Starter 项目跑通**：建议从 `AI Travel Agent` 或 `AI Data Analysis Agent` 开始，依赖少、流程清晰。
-3. **按需求选进阶项目**：做知识库选 RAG，做电话客服选 Voice，要对接外部系统选 MCP。
-4. **学一个框架课程**：Google ADK 或 OpenAI Agents SDK 二选一，把零散知识系统化。
-5. **组合到自己的项目**：参考任务流案例的拆解方式，从仓库里挑模块拼装。
+1. 先确定要学哪条能力轴
+2. 从 `AI Travel Agent` 或 `AI Data Analysis Agent` 开始跑通，依赖少、流程清晰
+3. 按需求选进阶项目：做知识库选 RAG，做电话客服选 Voice，要对接外部系统选 MCP
+4. 学一个框架课程：Google ADK 或 OpenAI Agents SDK 二选一，把零散知识系统化
+5. 组合到自己的项目：参考任务流案例的拆解方式，从仓库里挑模块拼装
 
-**注意事项**：仓库代码是教学示例，错误处理、并发、监控都不够生产级；Stars 数会变化，选型时以仓库当前状态为准；部分项目依赖的 API（如 OpenAI Realtime API）可能需要特定权限或付费。
+仓库代码是教学示例，错误处理、并发、监控都不够生产级。Stars 数会变化，选型时以仓库当前状态为准。部分项目依赖的 API（如 OpenAI Realtime API）可能需要特定权限或付费。
 
 **官方资源**：
 
 - GitHub：https://github.com/Shubhamsaboo/awesome-llm-apps
 - 作者网站：https://www.theunwindai.com
 - LinkedIn：https://www.linkedin.com/in/shubhamsaboo/
-
----
-
-## 常见问题
-
-### 仓库代码能直接用于生产环境吗？
-
-不能。代码是教学示例，错误处理、并发、监控都不够生产级。建议作为学习参考和原型基础，在生产化时充分改造。
-
-### 如何选择合适的学习路径？
-
-从 Starter AI Agents 开始，跑通一个项目（如 AI Travel Agent），建立对 Agent 的基本理解。然后根据自己的需求选择进阶方向（RAG、Voice、MCP 等）。
-
-### 仓库中的代码示例支持哪些 LLM？
-
-支持多种 LLM，包括 OpenAI GPT、Anthropic Claude、Google Gemini、xAI Grok、Meta Llama、Alibaba Qwen 等。很多示例提供多个版本的实现。
-
-### 需要什么前置知识？
-
-基本的 Python 编程能力、LLM API 使用经验。特定方向（如 RAG、Voice）需要了解相关技术的基本原理。

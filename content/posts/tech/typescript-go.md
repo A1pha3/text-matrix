@@ -2,7 +2,7 @@
 title: "TypeScript Go：微软用 Go 重写 TypeScript 编译器"
 date: "2026-04-27T01:00:00+08:00"
 slug: typescript-go-native-port
-description: "微软将 TypeScript 编译器（tsc）从 TypeScript/JavaScript 重写为 Go 语言实现，GitHub 25k stars。本文深度解析这个 native port 的动机、架构设计、当前进度与未来影响。"
+description: "微软将 TypeScript 编译器（tsc）从 TypeScript/JavaScript 重写为 Go 语言实现，GitHub 25k stars。解析这个 native port 的动机、架构设计、当前进度与未来影响。"
 draft: false
 categories: ["技术笔记"]
 tags: ["TypeScript", "Go", "编译器", "微软", "性能优化", "编程语言"]
@@ -12,20 +12,18 @@ tags: ["TypeScript", "Go", "编译器", "微软", "性能优化", "编程语言"
 
 2025 年，微软 TypeScript 团队将 tsc 从 TypeScript/JavaScript 重写为 Go。项目 `microsoft/typescript-go` 上线即获 25k stars，目前以 `@typescript/native-preview` npm 包提供预览版。
 
-Go 重写的收益很直接：本地机器码、无运行时依赖、接近零的启动延迟、原生多线程。对小型项目感知不强，但百万行级别的 TypeScript 代码库中，增量构建和类型检查的耗时一直是开发体验的瓶颈——这次重写正是为此而来。
+收益来自本地机器码、无运行时依赖、接近零的启动延迟、原生多线程。对小型项目感知不强，但百万行级别的 TypeScript 代码库中，增量构建和类型检查的耗时一直是开发体验的瓶颈。
 
 ---
 
 ## 为什么重写：编译器的自我编译困境
 
-TypeScript 编译器自诞生以来就是用 TypeScript/JavaScript 写的，这制造了一个悖论：一个以"类型检查"为核心价值的工具，自身却运行在动态类型语言之上。代价体现在四个维度：
+TypeScript 编译器自诞生以来就是用 TypeScript/JavaScript 写的——一个以"类型检查"为核心价值的工具，自身却运行在动态类型语言之上：
 
 - **运行时依赖**：必须装 Node.js 才能跑 tsc
 - **冷启动延迟**：JIT 预热前，编译器大部分时间在暖自己
 - **内存开销**：JS 引擎的堆结构对长时间运行的编译器进程不友好
 - **并行化受限**：事件循环模型下多核利用率低
-
-Go 的对比优势很直观：
 
 | 维度 | TypeScript (JS) | Go |
 |------|----------------|-----|
@@ -35,7 +33,7 @@ Go 的对比优势很直观：
 | 多核利用 | 受限于事件循环 | Goroutine 原生并发 |
 | 增量编译 | 受语言架构限制 | 成熟的高效实现 |
 
-微软的目标是让 tsc 成为一个可直接分发、本地执行的高效二进制工具，而非一个需要 JS 运行时支撑的解释型工具。
+目标是将 tsc 变为可直接分发、本地执行的高效二进制工具，而非需要 JS 运行时支撑的解释型工具。
 
 ---
 
@@ -127,7 +125,7 @@ typescript-go 不是永久分叉，最终会合并回 TypeScript 主仓库。这
 
 ---
 
-## 性能基准：从数据看提升
+## 性能基准
 
 根据微软公布的数据（具体数字因项目规模而异）：
 
@@ -135,7 +133,7 @@ typescript-go 不是永久分叉，最终会合并回 TypeScript 主仓库。这
 - **内存占用**：降低约 **40-50%**
 - **增量构建**：接近原版水平（watch 模式的增量重检查仍在优化中）
 
-对于一个百万行级的企业项目，`tsc --build` 从 30 秒缩至 5 秒，体验差距是质变的。
+百万行级的企业项目中，`tsc --build` 从 30 秒缩至 5 秒。
 
 ---
 
@@ -194,7 +192,7 @@ type ObjectType struct {
 
 ## 为什么是 Go 而不是 Rust
 
-这是社区讨论最多的问题之一。Rust 同样可编译为机器码，性能极强、内存安全，但微软选择了 Go：
+Rust 同样可编译为机器码，性能极强、内存安全，但微软选择了 Go：
 
 | 考量 | Go 的优势 |
 |------|----------|
@@ -204,11 +202,11 @@ type ObjectType struct {
 | 并发模型 | Goroutine 对编译器这种 IO 密集型任务天然友好 |
 | 学习曲线 | 门槛低，社区贡献者容易上手 |
 
-Rust 在内存控制和零成本抽象上更优，但 Go 的"简单"在这个场景里更务实——TypeScript 团队的首要目标是产出与原版行为完全一致的编译器，技术选型服务于这个目标，而非追求理论最优。
+Rust 在内存控制和零成本抽象上更优，但 Go 的简洁在这个场景里更务实——TypeScript 团队的首要目标是产出与原版行为完全一致的编译器，技术选型服务于这个目标，而非追求理论最优。
 
 ---
 
-## Timeline 与未来展望
+## 时间线与未来展望
 
 没有官方 ETA，从路线图可推断出大致节奏：
 
@@ -219,8 +217,6 @@ Rust 在内存控制和零成本抽象上更优，但 Go 的"简单"在这个场
 届时，所有 TypeScript 用户将无感地享受到 Go 版本带来的性能提升——只需升级 TypeScript 版本，无需改变任何使用习惯。
 
 ---
-
-如果你在维护大型 TypeScript 项目，值得尝试 `@typescript/native-preview`，并通过 [GitHub Issues](https://github.com/microsoft/typescript-go/issues) 反馈遇到的问题——这个项目需要社区测试来逼近 `done` 状态。
 
 **相关链接：**
 

@@ -9,11 +9,7 @@ tags: ["GLM-5.2", "MoE", "vLLM"]
 author: "text-matrix"
 ---
 
-## 一句话判断
-
-**colibrì（[JustVugg/colibri](https://github.com/JustVugg/colibri)）是当下把"小内存跑大模型"这件事做到工程极限的开源项目**：单文件 `c/glm.c` 3775 行 + 一组 ~30KB 的 headers，纯 C + OpenMP + AVX2/NEON，零 Python 运行时依赖，在 12 核 + 25GB RAM 的笔记本上把 744B 参数的 GLM-5.2（每 token 激活 ~40B）跑起来——而且在 6× RTX 5090 满配机器上，它达到 **6.28-6.84 tok/s 单请求解码**，比同期 vLLM-Moet TP4 的 2.5-2.7 tok/s 快 **2.5 倍**（[仓库 docs/experiments/glm52-6x5090-2026-07-12.md](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md) 实测）。
-
-它不是教科书项目，也不是 AGI 路线图——它是一份诚实的工程笔记：作者在 25GB RAM 上撞过每一个墙，然后把这些墙一个一个凿穿。
+**[colibrì](https://github.com/JustVugg/colibri)** 是目前把"小内存跑大模型"做到工程极限的开源项目：单文件 `c/glm.c` 3775 行 + 一组 ~30KB headers，纯 C + OpenMP + AVX2/NEON，零 Python 运行时依赖，在 12 核 + 25GB RAM 的笔记本上跑 744B 参数的 GLM-5.2（每 token 激活 ~40B）。在 6× RTX 5090 满配机器上达到 **6.28-6.84 tok/s 单请求解码**，比同期 vLLM-Moet TP4 的 2.5-2.7 tok/s 快 **2.5 倍**（[仓库实测](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md)）。
 
 ## 系统地图：3 层抽象 + 4 个核心组件
 
@@ -228,60 +224,17 @@ RAM experts: 10,113 / 19,456  (~191.3 GB)
 Disk service/wait during decode: 0 s
 ```
 
-**三个不能从这些数字直接推出的结论**：
+**benchmark 数字的三条限制**：
 
-**1. 不要直接推出"colibri 总是比 vLLM 快"**。
-同 6×5090 上 vLLM-Moet TP4 是 2.5-2.7 tok/s，TP2×PP3 是 1.78 tok/s。colibri full residency 6.28-6.84 tok/s **快 ~2.5×**。但这是 full residency 的数字——cold cache 早上是 0.12 tok/s。
+**1. colibri 并非总是比 vLLM 快。** 同 6×5090 上 vLLM-Moet TP4 是 2.5-2.7 tok/s，colibri full residency 6.28-6.84 tok/s 快约 2.5×，但 cold cache 时只有 0.12 tok/s。
 
-**2. 不要直接推出"Metal/CUDA 总是赢"**。
-9800X3D 上 AVX-512 CPU matmul 已匹配 5090，CUDA tier 收益 ~0%。CUDA 价值在 CPU 弱时才显现。colibri 自己说"The GPU tier earns its VRAM only when the CPU is the weak link, not by default."
+**2. Metal/CUDA 并非总是比 CPU 快。** 9800X3D 上 AVX-512 CPU matmul 已匹配 5090，CUDA tier 收益接近 0。colibri 自己的说法："The GPU tier earns its VRAM only when the CPU is the weak link, not by default."
 
-**3. 不要直接推出"int4 量化没损失"**。
-[62.5% mean acc_norm on hellaswag/arc/mmlu](https://github.com/JustVugg/colibri) 远低于 full-precision GLM-5.2 的 85-95%。**但 62.5% 不全是量化损失**：
-- 0-shot log-likelihood MC scoring 不给 reasoning model "think" 机会
-- n=40 ±14pp，统计学上不显著
+**3. int4 量化有精度损失，但 62.5% 不全是量化问题。** 这个数字有三个注意点：
 
-**决定性实验**：OLMoE fp16-vs-int4 A/B under same harness（small enough to run both precisions）—— the delta is the quantization cost with scoring protocol cancelled. 还没人跑。
-
-## 适用边界：谁该用 colibri，谁不该
-
-**该用**：
-
-- 想在 **16-32 GB RAM** 的开发机上跑 700B+ 模型做 prompt engineering（不是 production）
-- 想研究 **MoE 量化 / streaming expert / MLA** 的实现细节——单文件 3775 行，比读 paper + PyTorch 实现快
-- 想做 **本地离线 + 强隐私** 的 LLM 应用（无 Python runtime, 无网络依赖）
-- 想做 **CUDA/Metal 后端的基线对比**（CPU path 已经是 token-exact oracle 验证过的）
-
-**不该用**：
-
-- **生产部署**：colibri 是研究型项目，没有 continuous batching，没有 P2P/NCCL multi-GPU 并发 inference
-- **CUDA 已经比 AVX-512 慢的机器**（intel 13/14th gen 无 AVX-512）——CPU path 已经 0.41 tok/s，CUDA expert tier 收益接近 0
-- **< 16 GB RAM** 的机器——磁盘 swap 会触发 OOM
-- **需要视觉 / 工具调用 / function calling**——目前是 text-only
-
-## 3 个数字 + 3 个问号（数字不能告诉你什么）
-
-colibri 的 README 给了 [62.5% mean acc_norm on hellaswag/arc/mmlu 0-shot log-likelihood, n=40](https://github.com/JustVugg/colibri#quality-benchmark--help-wanted)。下面对这个数字拆 3 个问号：
-
-**问号 1：这个数字能说明什么？**
-	• 能说明：colibri 能跑 GLM-5.2 int4 量化后的推理 + 拿到接近推理模型的准确率
-	• 不能说明：int4 量化丢了多少精度
-	• 为什么不能：0-shot log-likelihood MC scoring 不给 reasoning model "think" 机会。GLM-5.2 是 reasoning model，它输出需要 chain-of-thought。同一道问答题以 greedy completion 评分 vs 以 log-likelihood MC 评分，可能相差 20-30pp ——这不是量化问题，是评估协议问题。
-
-**问号 2：那怎么量化量化误差？**
-作者明确说，**决定性实验是 OLMoE fp16-vs-int4 A/B**：
-	• OLMoE 是个 6.9B 参数的 MoE open model，小到可以在同一台机器跑 fp16 和 int4 两个版本
-	• 用同一套评测 harness
-	• fp16-int4 delta = 量化代价（scoring protocol cancelled）
-	• 仓库已经准备好代码：`c/coli bench` + `c/tools/eval_glm.py`
-	• 跑完发 issue，colibri 文档明确请求
-
-**问号 3：这些数字背后什么不能复制？**
-	• 6x5090 实验 6.28-6.84 tok/s 是**单请求** decode 速度，不是 aggregate throughput。生产系统不这么测。
-	• README 里「RAM turns cold reads into free cache hits」 是 warm cache 状态，第一次启动仍 cold
-	• 9800X3D 上 AVX-512 CPU 匹配 5090 是 Zen4+ 的特例。老一代 Zen3 （如 EPYC 7443）明确报告 "no AVX-512/VNNI on Zen3"
-
-**结论**：colibri 的所有数字都是诚实的，但都是 single-system measurement。跨机复制需考虑你的 RAM / disk / CPU generation / 量化版本 / MTP head int8 vs int4 这 5 个变量。
+- **62.5% 不全是量化损失。** 0-shot log-likelihood MC scoring 不给 reasoning model "think" 机会。GLM-5.2 需要 chain-of-thought 输出，同一道题用 greedy completion 评分 vs log-likelihood MC 评分可能相差 20-30pp——这是评估协议问题，不是量化问题。
+- **量化损失的干净测量方式是 OLMoE fp16-vs-int4 A/B**。OLMoE 是 6.9B 参数的 MoE 开源模型，可在一台机器上跑 fp16 和 int4 两个版本，用同一套评测 harness。fp16-int4 delta 即为量化代价。仓库已备好 `c/coli bench` + `c/tools/eval_glm.py`。
+- **这些数字不能直接复制。** 6x5090 实验的 6.28-6.84 tok/s 是单请求 decode 速度，不是 aggregate throughput。9800X3D 上 AVX-512 CPU 匹配 5090 是 Zen4+ 的特例，老一代 Zen3 没有 AVX-512/VNNI。
 
 ## 系统层判断
 
@@ -295,26 +248,12 @@ colibrì 处在 LLM inference 生态里一个很特殊的位置：**CPU-first �
 | **ktransformers** | MoE + CPU offload | expert routing, AMX/AVX-512 | 与 colibri 同类，更成熟 |
 | **colibri** | **小内存跑前沿 MoE 极限** | int4 + streaming + MLA + MTP + DSA + 学习 cache | **单文件纯 C, 25GB RAM, 0 依赖** |
 
-**colibri 的护城河不是"快"——是"边界"**。它证明了一件事：**前沿 700B+ MoE 模型不一定需要 H100 + 多机多卡**——只要你的工程足够细致（量化 + 分层 + 流式 + 投机解码 + 持久化 KV），它可以在 25GB RAM + 1 GB/s NVMe 上回答问题（虽然慢）。
+**colibri 的护城河不是"快"——是"边界"**：前沿 700B+ MoE 模型不一定需要 H100 + 多机多卡，只要工程足够细致（量化 + 分层 + 流式 + 投机解码 + 持久化 KV），它可以在 25GB RAM + 1 GB/s NVMe 上回答问题。它不适合 production——single-process, single-sequence (or 8-slot FIFO queue)，没有 continuous batching。但作为"小内存跑大模型"的工程天花板，它无可替代。
 
-**这个证明的实际价值**：
-- 对个人开发者：拥有了一个能在笔记本上跑 frontier 模型的工具
-- 对企业：在没有 GPU 预算时，临时可以用 CPU 集群跑 fallback
-- 对研究：单文件 C 引擎 + 完整 doc + 13 个真实 benchmark，比 paper 更实用
-
-**它不适合 production**——single-process, single-sequence (or 8-slot FIFO queue)，没有 continuous batching。但作为"小内存跑大模型"的工程天花板，它无可替代。
-
-## 信息源
+## 参考资源
 
 - **仓库**：[JustVugg/colibri](https://github.com/JustVugg/colibri)（Apache 2.0）
-- **核心代码**：`c/glm.c`（3775 行单文件 C 引擎）+ `c/olmoe.c`（OLMoE A/B 验证）+ `c/backend_cuda.cu` / `c/backend_metal.mm`
-- **实验文档**：
-  - [docs/experiments/glm52-6x5090-2026-07-12.md](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md)（6× RTX 5090 完整驻留 6.28-6.84 tok/s）
-  - README 13 个社区 benchmark（issue #2, #4, #5, #12, #31, #39, #72, #87, #101, #103, #104, #107, #113）
-- **配套组件**：
-  - `c/doctor.py`（read-only 部署前检查）
-  - `c/resource_plan.py`（RAM/VRAM/Disk 三层 placement 规划）
-  - `c/openai_server.py`（text-only OpenAI-compatible HTTP gateway）
-  - `web/`（React + TypeScript 浏览器 UI，~390 行）
-  - `desktop/`（Tauri 本地 desktop shell）
+- **核心代码**：`c/glm.c`（3775 行）+ `c/olmoe.c` + `c/backend_cuda.cu` / `c/backend_metal.mm`
+- **实验文档**：[6× RTX 5090 完整驻留 6.28-6.84 tok/s](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md) + README 13 个社区 benchmark
+- **配套组件**：`c/doctor.py` | `c/resource_plan.py` | `c/openai_server.py` | `web/` | `desktop/`
 - **GLM-5.2 权重**：[Z.ai 发布](https://huggingface.co/THUDM/glm-5.2)（MIT license）

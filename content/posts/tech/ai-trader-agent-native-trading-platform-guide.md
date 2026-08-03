@@ -37,7 +37,6 @@ platform/ (闭源 SaaS)
 ```
 
 **为什么这样拆**：
-
 - **协议层开源** = 任何 agent 都能本地 fork + 自部署（MIT 协议）
 - **平台层闭源** = 撮合、评分、用户数据走 SaaS，避免 agent 重复造轮子
 - **Polymarket 例外**——Polymarket 自己有公开 API，AI-Trader 的 SKILL 只是包装数据获取，**不下单到 Polymarket**（2026-03-03 后支持模拟结算，但执行路径走 Polymarket 自己）
@@ -48,8 +47,6 @@ platform/ (闭源 SaaS)
 
 ## 任务流：让 OpenClaw 注册 AI-Trader 并发一个 AAPL 信号
 
-这一节用一个完整案例把上面那张图串起来。
-
 ### 输入
 
 用户在 OpenClaw 会话里说：
@@ -59,7 +56,6 @@ platform/ (闭源 SaaS)
 ### Step 1：识别任务类型
 
 OpenClaw 的 agent 内部：
-
 1. 看到"AI-Trader"关键词 → 识别为"接入 AI-Trader"任务
 2. 看 SKILL 列表（已预加载到 `~/.openclaw/skills/clawtrader/SKILL.md`）→ 找到主入口
 3. **不**直接调用 API，而是**先按主 SKILL 的 EXECUTION RULES 走 bootstrap**
@@ -220,14 +216,11 @@ chmod 600 ~/.openclaw/skills/clawtrader/config.json
 
 **Q2：发信号会被其他 agent 自动跟单吗？**
 
-取决于你发的信号类型：
-- **type=operation** → 任何 follow 你的 agent 都会自动同步到自己的券商
-- **type=strategy** → 只显示在策略流，**不**触发跟单
-- **type=discussion** → 进社区讨论区，**不**触发跟单
+取决于信号类型：**type=operation** 触发自动跟单，**type=strategy** 只显示在策略流，**type=discussion** 进社区讨论区。
 
 **Q3：OpenClaw 集成的"clawtrader"目录约定从何而来？**
 
-AI-Trader 给 OpenClaw 用户的**命名约定**——`claw` 对应 OpenClaw（也叫"claw"或"龙虾"），`trader` 对应 AI-Trader 本身。SKILL 文件存 `~/.openclaw/skills/clawtrader/` 下，OpenClaw 自动识别并按 Skills 协议加载。
+AI-Trader 给 OpenClaw 用户的命名约定——`claw` 对应 OpenClaw（也叫"claw"或"龙虾"），`trader` 对应 AI-Trader。SKILL 文件存 `~/.openclaw/skills/clawtrader/` 下，OpenClaw 自动识别并按 Skills 协议加载。
 
 **Q4：Polymarket 集成是真实的吗？**
 
@@ -240,34 +233,6 @@ AI-Trader 给 OpenClaw 用户的**命名约定**——`claw` 对应 OpenClaw（�
 **Q6：为什么 SKILL 协议比 MCP 更适合这个场景？**
 
 MCP 需要 agent 端有 MCP client 运行时。SKILL 协议只需要 agent 能 fetch HTTP + 读 Markdown——**零依赖、零安装、跨 agent 通用**。对于"金融接入"这种**低频但高安全**的场景，文档协议比二进制协议更合适。
-
----
-
-## 自测题
-
-**问题 1**: AI-Trader 在 agent 经济里解决的是**协议层**还是**撮合层**问题？为什么它选择把协议层开源、平台层闭源？
-<details>
-<summary>查看答案</summary>
-答：AI-Trader 解决的是协议层问题。它选择把协议层开源，因为协议需要被广泛采用才能形成网络效应；平台层闭源，因为平台是它的商业模式和收入来源。
-</details>
-
-**问题 2**: 主 SKILL 的"EXECUTION RULES"第 4 条 *"Do not infer undocumented endpoints or payloads when a child skill exists"* 想避免什么反模式？
-<details>
-<summary>查看答案</summary>
-答：想避免"幻觉端点"反模式。Agent 不应该猜测或推断未记录的端点和参数，而应该调用子SKILL来获取准确信息。这确保了API调用的准确性和安全性。
-</details>
-
-**问题 3**: 如果你 fork 了 AI-Trader 协议层，**不**用它的 SaaS 平台，能跑起来吗？缺什么？
-<details>
-<summary>查看答案</summary>
-答：能跑起来，但缺少撮合引擎、订单管理、风险管理等平台层功能。你需要自己实现这些功能，或者接入其他交易平台。
-</details>
-
-**问题 4**: AI-Trader 的"信号发布与执行分离"在数据一致性上有没有隐患？给一个具体场景。
-<details>
-<summary>查看答案</summary>
-答：有隐患。如果信号发布系统和执行系统之间的消息队列出现故障，可能导致信号丢失或重复执行。场景：Agent 生成买入信号并发布到消息队列，但消息队列故障导致信号丢失，订单没有执行。
-</details>
 
 ---
 
@@ -284,19 +249,6 @@ MCP 需要 agent 端有 MCP client 运行时。SKILL 协议只需要 agent 能 f
 - **最新更新**：2026-05-13
 - **开源协议**：MIT
 - **主语言**：Python（FastAPI 后端）+ TypeScript（React 前端）
-
----
-
-## 资料口径说明
-
-本文的判断基于以下来源：
-
-1. **仓库源码分析**：分析了 `HKUDS/AI-Trader` 仓库的 README、SKILL 文件（`skills/ai4trade/SKILL.md`）、OpenAPI 规范（`docs/api/openapi.yaml`）（2026 年 5 月版本）
-2. **协议设计解读**：基于 Anthropic Skills 协议规范，对比 AI-Trader 的 SKILL 协议设计，给出协议层与撮合层的边界拆分
-3. **任务流案例**：基于 OpenClaw 集成场景，给出完整的任务流案例（注册、fetch SKILL、调用 API、发布信号）
-4. **技术细节验证**：部分 API 端点格式与 SKILL.md 内容来自 GitHub 仓库 raw 链接验证
-
-**局限性**：仓库仍在持续更新，部分实现可能会调整；平台功能（如券商对接、Polymarket 集成）请以实际版本为准。
 
 ---
 

@@ -10,13 +10,13 @@ tags: ["量化交易", "AI Agent", "MCP"]
 
 # Vibe-Trading 完全指南：从零开始理解你的个人交易智能体
 
-你有没有过这样的经历：脑子里冒出一个交易想法，觉得「如果均线金叉时买入，应该能赚」。但真要验证它，你得先找数据、写代码、跑回测，折腾一整天，热情早凉了。
+一个交易想法从产生到验证，典型路径是：找数据源、写因子代码、跑回测、解读报告、出结论。这一套流程走下来，少则半天，多则数天——而大部分想法在第一步就死了。
 
-现在换一种方式：你直接告诉它「帮我看看沪深 300 的动量策略最近还行不行」，它就去拉数据、算因子、跑回测，最后给你一份带图表的报告。如果你授权，它还能帮你盯着盘，在符合你设定的规则范围内执行交易。
+Vibe-Trading 把这个链条压缩成一句话。你告诉它「帮我看看沪深 300 的动量策略最近还行不行」，它在 Agent Loop 内部自动路由到数据层、因子库、回测引擎，最后出一份带图表的报告。如果授权，它还能在 mandate 约束范围内盯着盘执行交易。
 
-这就是 Vibe-Trading——一个开源的个人交易研究工作台，来自香港大学数据智能实验室（HKUDS）。它把「AI Agent + 量化研究 + 受限实盘」三大功能集成为一个自然语言工作台，你只需要开口说出需求，剩下的工作都交给智能系统。
+它来自香港大学数据智能实验室（HKUDS），是「AI Agent + 量化研究 + 受限实盘」三位一体的开源工作台。核心思路不是让 AI 替你赚钱，而是让 AI 替你跑通研究流程——你只需要做决策，剩下的验证工作交给系统。
 
-当然，它也是 v0.1.x 早期项目，不会托管资金、也不构成投资建议。读者一定要把预期放在「研究加速器」上，而不是「自动印钞机」上。
+它也是 v0.1.x 早期项目，不托管资金、不构成投资建议。把预期放在「研究加速器」上，而不是「自动印钞机」上。
 
 ---
 
@@ -25,7 +25,7 @@ tags: ["量化交易", "AI Agent", "MCP"]
 **理解篇：是什么、怎么用、核心能力**
 
 - [一、先从地图开始](#一先从地图开始)
-- [二、核心判断](#二博采众长)
+- [二、核心差异](#二核心差异)
 - [三、项目地图](#三项目地图)
 - [四、金融术语速查表](#四金融术语速查表)
 - [五、安装与快速上手](#五安装与快速上手)
@@ -54,9 +54,9 @@ tags: ["量化交易", "AI Agent", "MCP"]
 
 ## 一、先从地图开始
 
-如果你没有金融背景，Vibe-Trading 里的「因子」「回测」「Alpha Zoo」「Connector」这些词可能会让你一头雾水。先从最上层的视角看它是什么。
+如果你没有金融背景，Vibe-Trading 里的「因子」「回测」「Alpha Zoo」「Connector」这些术语可能比较陌生。先从最上层的视角理解它是什么。
 
-### 一句话说清它干什么
+### 它能干什么
 
 Vibe-Trading 可以理解成一个「交易研究工作平台」。你用自然语言提出问题，项目把问题拆成五个步骤自动完成：
 
@@ -87,16 +87,16 @@ Vibe-Trading 可以理解成一个「交易研究工作平台」。你用自然�
 
 ---
 
-## 二、博采众长
+## 二、核心差异
 
-Vibe-Trading 跟别的开源项目拉开差距，靠四个别人没拼齐的点：
+Vibe-Trading 在四个维度上与其他开源项目形成差异化：
 
-1. **88 个金融 skills + 68 个研究工具**：A 股 / 港股 / 美股 / 加密全覆盖，19 个免费数据源按 IP 封禁风险自动 fallback，零配置也无单点故障。
-2. **460+ 个预置 alpha 因子**：来自 Qlib Alpha158、Kakushadze 101、国泰君安 191 与学术因子。一行命令 `vibe-trading alpha bench --zoo gtja191` 就能跑完一个因子动物园。
-3. **Shadow Account（影子账户）**：解析你自己过去的交易记录 → 提取行为规则 → 用规则跑回测。它 diff 出的不是收益率，而是「按你实际执行的规则，本来能赚多少、在哪一步丢了钱」。
-4. **Connector-first Broker Architecture（券商连接器优先）**：同一套 CLI（命令行工具）在 12 家券商之间切换（IBKR / Robinhood / 富途 / 老虎 / OKX / 币安等）。Robinhood 实盘带硬护栏：mandate 承诺 + 文件级 kill switch + fail-closed pre-trade + 审计日志 + 自动过期。
+1. **88 个金融 skills + 68 个研究工具**：覆盖 A 股 / 港股 / 美股 / 加密四大市场，19 个免费数据源按 IP 封禁风险排序自动 fallback，零配置下也无单点故障。
+2. **460+ 个预置 alpha 因子**：来自 Qlib Alpha158、Kakushadze 101、国泰君安 191 与学术因子，附带 AST purity gate + lookahead sentinel test + 网络 kill-switch 三道防作弊闸。一行命令 `vibe-trading alpha bench --zoo gtja191` 就能跑完整个因子动物园。
+3. **Shadow Account（影子账户）**：解析你过去的交易记录，提炼行为规则并用规则跑回测。它输出的不是收益率对比，而是「按你实际执行的规则，本来能赚多少、在哪一步丢了钱」的行为归因。
+4. **Connector-first Broker Architecture（券商连接器优先）**：同一套 CLI 在 12 家券商之间切换（IBKR / Robinhood / 富途 / 老虎 / OKX / 币安等）。Robinhood 实盘带五层硬护栏：mandate 用户承诺 + 文件级 kill switch + fail-closed pre-trade gate + 审计日志 + 自动过期。
 
-一句话：**Vibe-Trading = AI Agent + 量化研究工作流 + 受限实盘，三位一体**。
+一句话概括：**Vibe-Trading = AI Agent + 量化研究工作流 + 受限实盘，三位一体**。
 
 ---
 
@@ -110,7 +110,7 @@ Vibe-Trading 跟别的开源项目拉开差距，靠四个别人没拼齐的点�
 | PyPI | [pypi.org/project/vibe-trading-ai](https://pypi.org/project/vibe-trading-ai/) |
 | 许可证 | MIT |
 | 维护方 | HKUDS（Data Intelligence Lab @ HKU） |
-| 当前版本 | v0.1.12（2026-07-22 发布） |
+| 当前版本 | v0.1.12（2026-07-22 发布，main 分支持续更新至 2026-07-31） |
 
 ### 系统架构总览
 
@@ -184,10 +184,10 @@ flowchart TB
     Brokers --> Audit
 ```
 
-读这张图时注意三个容易误解的设计细节：
+读这张图时注意三个设计细节，容易误解：
 
-- **智能体层 ≠ 简单 LLM（大语言模型）调用**：Agent Loop 是一个多轮推理循环，88 个 skills 是带数据接入、参数约定和输出契约的模块，不是「让 LLM 猜」。
-- **数据层自带 fallback 链**：19 个免费数据源按 IP 封禁风险排序，yfinance 被限流时自动切到 Alpha Vantage 或 Tushare，零配置也不会有单点故障。
+- **智能体层 ≠ 简单 LLM 调用**：Agent Loop 是一个多轮推理循环，88 个 skills 各自带数据接入、参数约定和输出契约，不是「让 LLM 猜」。
+- **数据层自带 fallback 链**：19 个免费数据源按 IP 封禁风险排序，yfinance 被限流时自动切到 Alpha Vantage 或 Tushare，零配置下也不会有单点故障。
 - **执行层的风控横跨研究层**：mandate 在信号生成阶段就要被读取（限制可交易 universe），pre-trade gate 在执行前做最后拦截。两者通过同一个 mandate 配置对象连接，不是独立的两道门。
 
 ### 能力矩阵
@@ -198,7 +198,7 @@ flowchart TB
 |------|------|
 | 自然语言研究 | 多 Agent loop（Plan → Ground → Execute → Validate → Deliver） |
 | 多市场回测 | A 股 / 美股 / 港股 / 印度 / 韩国 / 加密 / 外汇 / 期权 / USD-M 永续，共 9 个市场 |
-| 免费数据源 | 19 个（tushare / yfinance / akshare / mootdx / ccxt / 腾讯 / 东财 / OKX / 币安等），自动 fallback |
+| 免费数据源 | 24 个（tushare / yfinance / akshare / mootdx / ccxt / 腾讯 / 东财 / OKX / 币安 / 富途等），自动 fallback |
 | 付费数据源 | QVeris 数据市场，63+ 家提供商 |
 | Alpha 因子 | **460+** 个预置（Qlib158 + Kakushadze 101 + GTJA 191 + 学术 + PIT） |
 | Swarm 预设 | 30 套多 Agent 团队（投资委员会、量化台、加密交易台、宏观等） |
@@ -209,11 +209,12 @@ flowchart TB
 | 维度 | 实现 |
 |------|------|
 | 后端 | Python 3.11+ / FastAPI |
-| 前端 | React 19 |
+| 前端 | React 19（v0.1.13 重建为 guided-minimalism 架构） |
 | Broker | 12 家（IBKR、Robinhood、Tiger、Longbridge、Alpaca、OKX、Binance、Futu、Trading 212、Dhan、Shoonya、MT5-Exness） |
 | Skills | **88 个**金融 skills，分 9 大类 |
 | 研究工具 | 68 个（Research Autopilot），18 个只读数据工具经 MCP 暴露 |
 | 导出 | Pine Script v6 / 通达信 / MetaTrader 5 / vnpy / MCP 服务 |
+| 桥接 | OpenBB Workspace 桥接（v0.1.13） |
 | 跨平台 | Docker 非 root 用户运行；macOS / Linux / Windows |
 
 ---
@@ -322,7 +323,7 @@ vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, an
 - **REST API**：`vibe-trading serve` 起服务后暴露 HTTP 接口，适合二次开发
 - **MCP 服务**：接入 Claude Desktop / Cursor / OpenClaw 等 MCP 客户端，让现有 Agent 直接调金融工具
 
-装好了，跑通了。接下来看它最硬核的部分：88 个 skill、460+ 个因子、Shadow Account 复盘、多 Agent Swarm。这些才是它真正拉开差距的地方。
+装好了，跑通了。接下来看它最硬核的部分：88 个 skill、460+ 个因子、Shadow Account 复盘、多 Agent Swarm。
 
 ---
 
@@ -345,7 +346,7 @@ vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, an
 | 分类 | 示例 |
 |------|------|
 | Flow（资金流） | `hk-connect-flow` / `us-etf-flow` / `edgar-sec-filings` / `financial-statement` / `adr-hshare` |
-| Tool（工具） | `backtest-diagnose` / `report-generate` / `pine-script` / `doc-reader` / `web-reader` / `vnpy-export` / `alpha-zoo` |
+| Tool（工具） | `backtest-diagnose` / `report-generate` / `pine-script` / `doc-reader` / `web-reader` / `vnpy-export` / `alpha-zoo` / `technical-indicators`（RSI/MACD/Bollinger/SMA/EMA，只读） |
 | Research（研究） | `strategy-dev-manager` / `correlation-regime` / `earnings-revision` / `pair-trading` / `sentiment-analysis` |
 | Risk（风控） | `ashare-pre-st-filter` |
 
@@ -353,13 +354,13 @@ vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, an
 
 这 88 个 skill 是 Vibe-Trading 跟通用 Agent 的分水岭。通用 Agent 拿到「分析一下宁德时代」，只能靠通用推理硬猜。
 
-Vibe-Trading 的每个 skill 都带数据接入、参数约定和输出契约。`ashare-pre-st-filter` 会真的去拉 ST 名单，`perp-funding-basis` 会真的去取资金费率。它是**有金融领域纵深的 Agent**，不是「聊天 + 跑代码」。
+Vibe-Trading 的每个 skill 都带数据接入、参数约定和输出契约。`ashare-pre-st-filter` 会真的去拉 ST 名单，`perp-funding-basis` 会真的去取资金费率。**有金融领域纵深的 Agent**，不是「聊天 + 跑代码」。
 
 ### 6.2 Alpha Zoo（460+ 个预置 alpha 因子）
 
-因子是 Vibe-Trading 里最容易让非金融读者困惑的部分。把它理解成「排序公式」：每天给很多股票各打一个分，然后看分数高的一组未来表现是否更好。
+因子可以理解为「排序公式」：每天给多只股票各打一个分，然后看分数高的一组未来表现是否更好。
 
-**重要：因子不是策略**。因子只回答「哪个标的分数更高」，策略还要回答「买多少、什么时候买、什么时候卖、交易成本多少、是否允许集中持仓」。
+**因子 ≠ 策略**。因子只回答「哪个标的分数更高」，策略还要回答「买多少、什么时候买、什么时候卖、交易成本多少、是否允许集中持仓」。
 
 当前 Alpha Zoo 有 460+ 个 alpha，分成四类：
 
@@ -372,14 +373,14 @@ Vibe-Trading 的每个 skill 都带数据接入、参数约定和输出契约。
 
 四个池合计 456。官方各渠道口径略有浮动：README 写 452+，PyPI v0.1.12 列出 461，都在 460+ 量级。真正常用的是 `vibe-trading alpha list` 的实际输出，不必纠结精确数字。
 
-常见 theme 可以这样读：
+常见 theme 分类：
 
-- **momentum**：最近强的标的是否继续强
-- **reversal**：最近跌多或涨多后是否反向修复
+- **momentum**：近期强势标的是否延续强势
+- **reversal**：近期超涨或超跌后是否反向修复
 - **volume**：成交量变化是否包含资金行为信息
-- **volatility**：波动率是否能解释之后的收益或风险
+- **volatility**：波动率是否能解释后续收益或风险
 - **liquidity / microstructure**：流动性、盘口、成交结构相关信号
-- **value / quality**：估值或质量风格，通常更偏中长期
+- **value / quality**：估值或质量风格，通常偏中长期
 
 先用 CLI 浏览，而不是直接读 460 个源码文件：
 
@@ -391,15 +392,16 @@ vibe-trading alpha bench --zoo academic --universe sp500 --period 2020-2025 --to
 
 三个命令的用途不同：`alpha list` 列出池内所有因子名；`alpha show` 打印单个因子的公式和 metadata（比如 `min_warmup_bars`）。`alpha bench` 才是把因子放到一个 universe 上做回测，输出 IC/IR 和分类标签。
 
-一行命令跑完整个 zoo：
+一行命令跑完整个 zoo，v0.1.13 之后还支持 `--strict` 模式，开启同 universe 随机对照 + OOS 闸门：
 
 ```bash
 vibe-trading alpha bench --zoo gtja191 --universe csi300 --period 2018-2025 --top 20
+vibe-trading alpha bench --zoo academic --universe sp500 --period 2020-2025 --strict --top 10
 ```
 
 输出里每个 alpha 会附带两个指标（IC、IR）和三个分类标签（alive、reversed、dead）。这组标签决定一个因子的可用性：
 
-- **IC（信息系数）**：因子值与未来收益的秩相关，绝对值越大越好，0 附近说明跟扔硬币差不多
+- **IC（信息系数）**：因子值与未来收益的秩（Rank，即排名位次）相关，绝对值越大越好，0 附近说明跟扔硬币差不多
 - **IR（信息比率）**：IC 的均值除以波动，衡量预测的稳定性，IR 高说明不是偶尔蒙对一次
 - **alive**：IC 显著且方向正确，可以直接进组合
 - **reversed**：IC 显著但方向和原始公式反了——这类因子别扔，**取反号往往就是有效因子**，很多量化团队靠这个白捡 alpha
@@ -429,8 +431,11 @@ vibe-trading alpha bench --zoo gtja191 --universe csi300 --period 2018-2025 --to
 
 两个工程细节让它比「拍脑袋复盘」可信：
 
-- **PIT（Point-in-Time）安全的入场上下文**：规则里记录的是入场那一刻的 `entry_rsi14`、`prior_5d_return` 等快照，而不是用事后才知道的数据补写入场理由——复盘不会「事后诸葛亮」。
+- **PIT（Point-in-Time）安全的入场上下文**：规则里记录的是入场那一刻的 `entry_rsi14`、`prior_5d_return` 等快照，而不是用事后才知道的数据补写入场理由——复盘不会「事后诸葛亮」。2026-07-21 之后，Shadow Account 在日线数据上会跳过入场时段闸门（`mined entry-hour gate`），避免日线级别的入场时段误判。
 - **规则与代码共享同一套 `PRICE_FEATURES` 契约**：提取出的规则和生成的信号引擎代码字段一致，规则说得通，代码就能跑，不存在「报告是一套、实现是另一套」。
+- **行为偏差检测项**：除持仓时间、胜率、盈亏比等基础指标外，还覆盖处置效应（过早卖出盈利股、持有亏损股过久）、过度交易（换手率 vs 收益的边际递减）、追涨杀跌（入场时机的价格动量方向）、锚定偏差（出场决策是否被入场价粘住）——这些检测项来自行为金融学文献，不是简单统计。
+
+自 2026-07-21 起，交易日志解析器会跳过空白/NaN 的标的行，避免因数据质量问题导致规则扭曲。自 2026-07-23 起，`holding_days` 为空时的校验逻辑也做了加固。
 
 自己实盘 + 自己跑一遍规则回测，diff 出「按规则 vs 实际」的差距。这是行为金融学和量化的混合产物：行为金融学解释「你为什么会亏」，回测引擎量化「你本来能赚多少」。
 
@@ -495,7 +500,7 @@ Robinhood 是**实盘**支持的代表，它的安全设计是「AI 托管真金
 - **Audit ledger**：所有动作（谁、什么时间、什么指令、结果如何）全量留痕，出问题能回溯。
 - **Auto-expire mandate**：承诺有过期时间，到点自动失效，避免「我忘了关 Agent」这种最朴素的翻车方式。
 
-v0.1.12 又加了一层 **PreTradeAdvisoryInterface**，让下单前多一道复查：Agent 把「准备做什么」发给咨询接口，自查订单是否超限、是否在禁售名单内。
+v0.1.12 又加了一层 **PreTradeAdvisoryInterface**，下单前多一道复查：Agent 把「准备做什么」发给咨询接口，自查订单是否超限、是否在禁售名单内。v0.1.13（2026-07-30）还增加了 signed exposure caps、atomic daily order limits、consent-first mandate commits，以及 fail-closed live state 的额外加固。
 
 > ⚠️ 官方明确标注：Experimental / use at your own risk。**没有资金托管，没有交易所权限**——broker 持资执行，Vibe-Trading 只传递意图。
 
@@ -528,17 +533,17 @@ v0.1.10 之后新增的端到端流程：**假设 → 研究目标 → 回测**�
 
 ### 6.9 持久化记忆（Persistent Memory）
 
-项目内置分层记忆（Tier 2 结构）：短期记忆记录当前会话上下文，长期记忆跨会话保存事实与结论。记忆带质量评分，按 Ebbinghaus 遗忘曲线衰减，支持可选 GC。
+项目内置分层记忆结构。v0.1.12 之后的 Tier 2 组织把记忆分为短期（当前会话上下文）和长期（跨会话事实与结论）。记忆带质量评分，按 Ebbinghaus 遗忘曲线衰减，支持可选的归档 GC（默认关闭）。上周你让它研究过的行业、你纠正过它的偏好，这周再开新会话它还记得，不用重复交代。
 
-上周你让它研究过的行业、你纠正过它的偏好，这周再开新会话它还记得，不用重复交代。
+2026-07-29 之后，`bar_returns` 不再吞掉超过前向填充窗口的停牌复牌行情——此前跨缺口的真实涨跌被静默记为 0，导致波动率被低估、Sharpe 被高估，这个修复提升了记忆层中回测结论的可靠性。
 
 ---
 
 ## 七、任务流案例：一次完整的研究如何流过系统
 
-前面拆了各个模块，这一节把它们串起来。假设你是一个量化研究员，想「评估并回测一个沪深 300 动量策略」，看看这个请求在 Vibe-Trading 里实际经历了什么。以下命令和输出都是**示意**，用来展示流程，不代表真实的因子结果。
+前面拆了各个模块，这一节把它们串起来。假设你是一个量化研究员，想「评估并回测一个沪深 300 动量策略」。以下命令和输出都是**示意**，用来展示流程，不代表真实的因子结果。
 
-先给一张时序图，把「一条 prompt 如何流过系统」压缩成几秒能看懂的画面，后面再逐步展开：
+先给一张时序图，把一条 prompt 从输入到输出的完整路径压缩成几秒能看懂的画面，后面再逐步展开：
 
 ```mermaid
 sequenceDiagram
@@ -601,7 +606,7 @@ GTJA_042 (reversal_5d):  IC=-0.041, IR=1.02, reversed
 
 ### Step 4：策略生成与回测
 
-> 回测不是预测器，而是历史模拟器。它的价值不是告诉你「未来会赚多少」，而是让你在投入真实资金前，先看清一套规则在历史数据里经历过什么：赚了多少、最大亏了多少、交易频率多高、是否只是某一年有效、是否被手续费吃掉。
+> 回测是历史模拟器，不是预测器。它的价值不在于告诉你「未来会赚多少」，而在于让你在投入真实资金之前，先看清一套规则在历史数据里经历过什么：赚了多少、最大回撤幅度、交易频率、是否只在一段特定行情中有效、是否被手续费侵蚀。
 
 Agent Loop 取 IC 最高的 5 个因子，调用 `strategy-generate` skill 合成等权多因子信号，生成 `signal_engine.py`。
 
@@ -618,7 +623,7 @@ Agent Loop 取 IC 最高的 5 个因子，调用 `strategy-generate` skill 合�
 
 ### Step 5：报告输出
 
-`report-generate` skill 把回测结果渲染成 `run_card.json`，记录研究参数、数据版本和结果。同时生成 HTML 报告，包含 IC 热力图、分组收益曲线和因子相关性矩阵。Agent Loop 把结论写入持久化记忆——下次再问 CSI300 动量策略，它记得这次的结果。
+`report-generate` skill 把回测结果渲染成 `run_card.json`，记录研究参数、数据版本和结果。同时生成 HTML 报告，包含 IC 热力图、分组收益曲线和因子相关性矩阵。v0.1.13 之后，组合回测还会额外产出 **risk x-ray 工件**（`risk_xray.json`/`.md`），包含集中度、波动率和回撤的头条指标——不只是一个总收益数字，而是风险结构的快照。Agent Loop 把结论写入持久化记忆——下次再问 CSI300 动量策略，它记得这次的结果。
 
 ### 这个流程跑通的工程前提
 
@@ -702,33 +707,33 @@ vibe-trading schedule add --cron "0 9 * * 1" -p "Weekly CSI300 momentum factor h
 
 | 工具 | 定位 | 与 Vibe-Trading 的差异 |
 |------|------|------|
-| **Vibe-Trading** | 通用交易研究 + 量化回测 + **受限实盘** + 影子账户 | 88 skills + 460 alphas + 30 swarms + 12 brokers |
-| OpenBB | 数据终端 + 因子研究 | **无实盘**，无 Agent |
-| QuantConnect | 云端强回测平台 | **Web 端**，不本地，无自然语言 Agent |
-| Backtrader | 老牌回测框架 | **单进程**，无 Agent，无因子库 |
+| **Vibe-Trading** | 通用交易研究 + 量化回测 + **受限实盘** + 影子账户 | 88 skills + 460 alphas + 30 swarms + 12 brokers + Shadow Account |
+| OpenBB | 数据终端 + 因子研究 | **无实盘**，无 Agent，无预置因子库 |
+| QuantConnect | 云端强回测平台 | **Web 端**，不本地，无自然语言 Agent，无 Shadow Account |
+| Backtrader | 老牌回测框架 | **单进程**，无 Agent，无因子库，用户需自建数据管道 |
 
 Agent 与框架类：
 
 | 工具 | 定位 | 与 Vibe-Trading 的差异 |
 |------|------|------|
-| Freqtrade | 加密交易 bot | **重实盘**，无金融研究深度 |
-| TradingAgents | 多 Agent 投研 | **无回测无实盘** |
-| Hikyuu | A 股量化框架 | **无 Agent**，无多市场 |
-| Qlib | 微软量化平台 | **无 Agent**，无实盘 |
+| Freqtrade | 加密交易 bot | **重实盘**，但无金融研究深度、无多市场回测、无 Shadow Account |
+| TradingAgents | 多 Agent 投研 | **无回测、无实盘**，纯研究对话 |
+| Hikyuu | A 股量化框架 | **无 Agent**，无多市场，无因子库 |
+| Qlib | 微软量化平台 | **无 Agent**，无实盘，无 Shadow Account |
 
-Vibe-Trading 的核心差异化是「**AI Agent + 量化研究 + 受限实盘**」三位一体。单看任何一环，都有更强的专用工具：回测不如 QuantConnect，实盘不如 Freqtrade。但把三环收进一个自然语言工作台的，目前开源世界里没有第二家。
+Vibe-Trading 的核心差异化是「**AI Agent + 量化研究 + 受限实盘**」三位一体。单看任何一环，都有更强的专用工具：回测深度不如 QuantConnect，实盘执行力不如 Freqtrade。但把三环收进一个自然语言工作台的在开源世界里目前没有第二家。此外，Shadow Account 的行为归因能力在同类中也是独有——没有其他工具能把「交易记录 → 规则提取 → 反事实回测」这条链路跑通。
 
 ---
 
 ## 十、边界与盲点
 
-- **0.1.x 早期项目**：v0.1.12（2026-07-22）仍是 0.1.x，**慎上生产实盘**——官方自己也标 Experimental。每周都在高频迭代，升级前先看 changelog。
+- **0.1.x 早期项目**：v0.1.12（2026-07-22）仍是 0.1.x，**慎上生产实盘**——官方自己也标 Experimental。每周都在高频迭代（2026-07-22 至 07-31 合入近 200 个 PR），升级前先看 changelog。
 - **Robinhood 实盘需要美股账户 + 接受 mandate + 接受 broker 风险**；Docker 镜像建议用官方 digest 锁定版本，不要 tag 漂移。
 - **Alpha zoo 是公式级**：460+ 个 alpha 是**公开数学内容**，不是「独家因子」——它帮你省的是实现和回测时间，不是提供圣杯，你自己的 alpha 仍然要写。
 - **多市场数据源依赖公网**：yfinance / ccxt / tushare 都需要稳定网络，**严格断网环境跑不通**；免费数据源有 IP 封禁风险，fallback 链按风险排序自动切换。
-- **界面语言**：Web UI 长期以英文为主，完整中文化仍在推进。
+- **界面语言**：Web UI 在 v0.1.13（2026-07-30）完成了 guided-minimalism 重建，但长期以英文为主，完整中文化仍在推进。
 - **量化研究 = 长期投入**：alpha bench 跑完只是开始，**真正赚钱来自因子组合 + 仓位 + 风控 + 纪律**——工具只负责把「想法的验证成本」降下来。
-- **Futu / 老虎 / OKX / 币安** 的 paper/live 区分是**结构性**的，配错会**直接下实盘**——上线前必须 `connector check` 核对账户环境。
+- **Futu / 老虎 / OKX / 币安** 的 paper/live 区分是**结构性**的，配错会**直接下实盘**——上线前必须 `connector check` 核对账户环境。2026-07-25 之后，connector CLI 会加载 `~/.vibe-trading/.env`，环境变量类的券商凭证恢复可用。
 - **谨防仿冒资产**：官方从未发行或背书任何代币 / memecoin，X 账号 `VibeTrading_HKU`、Virtuals 项目 101845、代币合约 0x640B... 均非官方；社区出现过钓鱼 Discord 邀请，只认官方服务器。
 
 ---
@@ -771,11 +776,11 @@ Vibe-Trading 的核心差异化是「**AI Agent + 量化研究 + 受限实盘**�
 
 ## 十二、隐私合规要点
 
-- **API key 配置**：写在本地 `.env`，**不上传任何云端**；不要在非官方部署上用生产 API key。
+- **API key 配置**：写在本地 `.env`，**不上传任何云端**；不要在非官方部署上用生产 API key。2026-07-28 之后，非交互式 `vibe-trading run` 会注入宿主 session id，避免研究目标类工具每次调用都失败的问题。
 - **Mandate 过期 = 自动失效**：防止「我忘了关 Agent」这类最基本的失控。
 - **Audit ledger 全留痕**：所有动作可回溯，这是出事时自证清白的唯一凭据。
 - **Paper account 优先**：所有新策略先在模拟盘跑，确认行为符合预期再接实盘。
-- **安全审计已收尾**：2026-07-10 完成外部安全审计，10 项发现全部修复——回测沙箱用 AST 加固（禁网络/子进程/eval），另有 CSRF / SSRF 防护和 API 认证加固。
+- **安全审计已收尾**：2026-07-10 完成外部安全审计，10 项发现全部修复——回测沙箱用 AST 加固（禁网络/子进程/eval），另有 CSRF / SSRF 防护和 API 认证加固。2026-07-13 之后，Docker 采用 multi-stage 构建 + digest 锁定镜像，Compose 使用只读 rootfs、降权 capabilities 和资源限制。
 - **认准官方资产**：官方从无代币；任何「Vibe-Trading 代币」「官方群拉你连钱包」的消息都是诈骗。
 
 ---
@@ -1016,18 +1021,18 @@ reversed 表示因子的 IC 显著但方向与原始公式相反。**不要扔�
 
 ## 十八、资料口径说明
 
-1. **信息来源**：本文参考 Vibe-Trading 官方 GitHub 仓库、官网（vibetrading.wiki）、PyPI 页面与公开技术文档，数字以官方为准。
-2. **版本时效性**：本文基于 2026-08-02 时点的 v0.1.12（2026-07-22 发布）。项目每周高频迭代，API / 命令 / 功能可能随版本变化，使用前请核对官方文档最新版。
+1. **信息来源**：本文参考 Vibe-Trading 官方 GitHub 仓库（含 2026-07-31 前全部更新）、官网（vibetrading.wiki）、PyPI 页面与公开技术文档，数字以官方为准。
+2. **版本时效性**：本文基于 2026-08-03 时点的 v0.1.12（2026-07-22 发布，main 分支持续更新至 2026-07-31）。项目每周高频迭代，API / 命令 / 功能可能随版本变化，使用前请核对官方文档最新版。
 3. **技术细节验证**：Shadow Account 流程、Alpha Zoo 防护、Robinhood 护栏等细节基于官方文档描述，未在真实环境逐一验证；关键决策前请自行验证。
 4. **性能数据未验证**：本文不包含独立性能测试。alpha 的 IC/IR 分数、回测准确性、券商延迟都依赖你的数据源与网络环境，需要自己跑一遍。
 5. **安全建议边界**：文中实盘护栏是项目官方设计，不是投资建议。高风险场景请咨询专业合规与安全团队。
-6. **数字口径**：skills（88）、alpha（460+）、broker（12）、swarm（30）、市场（9）等数字随版本演进，文中已标注版本来源；同一时点不同渠道口径可能略有差异，以仓库 README 与 `vibe-trading --help` 实际输出为准。
+6. **数字口径**：skills（88）、alpha（460+）、broker（12）、swarm（30）、市场（9）、数据源（24）等数字随版本演进，文中已标注版本来源；同一时点不同渠道口径可能略有差异，以仓库 README 与 `vibe-trading --help` 实际输出为准。
 
 ---
 
 ## 十九、一句话总结
 
-> Vibe-Trading 是目前「**AI Agent + 量化研究 + 受限实盘**」三位一体覆盖最全的开源方案：88 个 skills、460+ 个 alphas、30 套 swarms、12 家券商连接器把研究流程串完整，Shadow Account 把交易行为量化成可复盘的差距，Robinhood 实盘护栏是「AI 托管真金白银」的教科书设计；但它是 v0.1.x 早期项目，**模拟盘优先、小资金实盘、严审 mandate、常翻 audit ledger**。
+> Vibe-Trading 是目前「**AI Agent + 量化研究 + 受限实盘**」三位一体覆盖最全的开源方案：88 个 skills、460+ 个 alphas、30 套 swarms、12 家券商连接器、24 个数据源把研究流程串完整，Shadow Account 把交易行为量化成可复盘的差距，Robinhood 实盘护栏是「AI 托管真金白银」的教科书设计；但它是 v0.1.x 早期项目，**模拟盘优先、小资金实盘、严审 mandate、常翻 audit ledger**。
 
 ---
 
