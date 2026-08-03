@@ -209,7 +209,7 @@ for url in "${URLS[@]}"; do
   # 如果 state 没命中但 fs 命中了 → 用 fs 的日期算 span
   if [[ -z "$state_hit" && ${#matched_files[@]} -gt 0 ]]; then
     fs_dates=$(for f in "${matched_files[@]}"; do
-      basename "$f" | grep -oE '2026-06-[0-9]{2}' || true
+      basename "$f" | grep -oE '20[0-9]{2}-[0-9]{2}-[0-9]{2}' || true
     done | sort -u)
     if [[ -n "$fs_dates" ]]; then
       first_seen=$(echo "$fs_dates" | head -1)
