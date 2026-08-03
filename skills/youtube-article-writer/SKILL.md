@@ -61,6 +61,23 @@ tags: ["youtube", "video", "article", "hugo", "video-analysis", "workflow"]
 1. `mcp__web-reader__webReader` — 首选。两个平台均返回结构化 metadata（title / description / publishedTime / keywords 等），无需解析 HTML
 2. `WebFetch` — 备选。当 webReader 超时或返回异常时使用
 3. `mcp__web-search-prime__web_search_prime` — 补充搜索。用于查找视频评论摘要、相关讨论、频道背景等 webReader 无法获取的信息
+4. `yt-dlp` — **YouTube/B站 字幕全文**（webReader 拿不到，见下方"取字幕"）
+
+### 取字幕（YouTube / B站，用 yt-dlp）
+
+webReader 只返回 metadata，**拿不到字幕全文**。深度解读需要字幕时，用 `yt-dlp` 下载（agent-reach 已装、已验证可用）：
+
+```bash
+# YouTube: 下载字幕不下载视频，优先中文回退英文
+yt-dlp --write-auto-sub --write-sub --sub-lang "zh-Hans,zh,en" --skip-download \
+  --sub-format vtt -o "/tmp/yts/%(id)s.%(ext)s" "https://www.youtube.com/watch?v=VIDEO_ID"
+cat /tmp/yts/VIDEO_ID.*.vtt   # 读取；auto-sub 可能有重复行，写作前需去重清洗
+
+# B站: 同样命令；海外 IP 加 --cookies-from-browser chrome 应对 412
+```
+
+- 手动上传字幕质量最好；自动生成字幕可能有重复行/无标点，写作前需清洗
+- **铁律**：基于自动字幕引用的原话，必须标注"基于自动字幕，可能存在识别误差"，不得当作视频确凿原话
 
 **YouTube 取证字段**（从 metadata 提取）：
 
@@ -96,7 +113,7 @@ tags: ["youtube", "video", "article", "hugo", "video-analysis", "workflow"]
 - B站分区（如"科技→计算机"）不直接体现在 metadata 中；需要时从页面内容推断
 - 投硬币、收藏、转发是 B站独有的互动指标，写入文章时保留这些数据以体现平台特色
 
-**两个平台均无法自动获取的字段**：订阅数/粉丝数、评论内容、字幕/transcript、视频章节（YouTube）。这些需用户补充或标记为"未知"。
+**两个平台均无法自动获取的字段**：订阅数/粉丝数、评论内容、视频章节（YouTube）。字幕/transcript 用 yt-dlp 自动获取（见上方"取字幕"）。无法获取的字段需用户补充或标记为"未知"。
 
 **按需补充**：
 

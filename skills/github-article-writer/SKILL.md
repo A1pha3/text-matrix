@@ -82,6 +82,24 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 
 先从 GitHub 页面、README、docs、示例、发行记录中收集证据，再决定文章结构。**如果是 trending 类任务**，取证前先确认 `scripts/trending-dedup-check.sh` 已经跑过且本 repo 在"未写"列表里。
 
+**取证工具（固化，不要临场挑）**——一律用 `gh`（agent-reach 已装）。前置：`gh auth login` 已认证（token 失效时先 `gh auth login -h github.com` 重新登录）。
+
+```bash
+REPO="owner/repo"
+# 1. 结构化元数据（name/description/stars/forks/语言/更新时间/license/homepage）
+gh repo view "$REPO" --json name,description,stargazerCount,forkCount,primaryLanguage,updatedAt,licenseInfo,homepageUrl
+# 2. README 全文（项目定位、核心能力、安装、快速开始的主要来源）
+gh repo view "$REPO" --json readme --jq .readme
+# 3. 最新提交（维护迹象）
+gh api "repos/$REPO/commits?per_page=3" --jq '.[] | "\(.commit.author.date) \(.commit.message | split("\n")[0])"'
+# 4. 最新 Release（版本节奏）
+gh release list -R "$REPO" --limit 3
+# 5. README 不足时才深挖：目录结构、核心源码
+gh api "repos/$REPO/contents/" --jq '.[].name'
+```
+
+`gh` 拿不到或字段缺失时，才用 `mcp__zread__read_file` / `WebFetch` 补充，并在文中标注来源。禁止凭仓库名想象内容。
+
 如果用户提供的是仓库内子页面链接，先提取并记录：
 
 - 原始链接
