@@ -1,9 +1,9 @@
 ---
-title: "Claude Video：让Claude真正"看懂"视频的开源技能"
+title: "Claude Video：让Claude真正「看懂」视频的开源技能"
 date: 2026-08-04T03:20:00+08:00
 slug: "claude-video-watch-skill"
 github_repo: "bradautomates/claude-video"
-description: "Claude Video 是一个开源技能，让 Claude 能够"观看"视频内容——提取帧画面和字幕，基于画面内容回答问题，支持 YouTube、TikTok 等多种视频源。"
+description: "Claude Video 是一个开源技能，让 Claude 能够「观看」视频内容——提取帧画面和字幕，基于画面内容回答问题，支持 YouTube、TikTok 等多种视频源。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "AI视频分析", "开源", "技能", "自动化"]
