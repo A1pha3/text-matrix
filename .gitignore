@@ -79,3 +79,6 @@ optimization-workflow.md
 scripts/optimize_agent_reach.py
 scripts/check_article_elements.py
 .zcode/*
+
+image-cards/
+

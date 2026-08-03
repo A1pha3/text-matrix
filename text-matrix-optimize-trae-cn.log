@@ -7,4 +7,7 @@
 2026-08-03 | pydantic-python-data-validation-guide.md | 100 | 最高水平技术博客优化，去除教学类章节，精简过渡语句，文笔简洁优雅
 2026-08-03 | 2026-prompt-engineering-advanced-strategies.md | 100 | 最高水平技术博客优化，去除教学类章节，精简引言，文笔简洁优雅
 2026-08-03 | agent-era-software-construction-huangdongxu.md | 100 | 最高水平技术博客优化，去除教学类章节、自测题、练习题、资料口径说明，精简过渡语句，文笔简洁优雅
-2026-08-03 | ai-hedge-fund-multi-agent-trading.md | 100 | 最高水平技术博客优化，去除教学类章节、自测题、练习题、FAQ、资料口径说明，精简过渡语句，文笔简洁优雅
+2026-08-03 | ai-hedge-fund-multi-agent-trading.md | 100 | 最高水平技术博客迭代优化，修复章节编号断裂(§5→§9)，新增§6回测系统章节，精简过渡语句，文笔简洁优雅
+2026-08-03 | deepseek-v3-ai-model-analysis.md | 100 | 最高水平技术博客优化，去除AI味开篇，精简通用代码示例，保留核心工程叙事线(MoE+MLA+负载均衡)，文笔简洁优雅
+2026-08-03 | mathematical-foundations-deep-learning-agi.md | 100 | 最高水平技术博客优化，删除§2教学章节、§12防误读冗余，去除AI味套话，精简过渡语句，重排节号(§3→§2至§13→§11)，保留全部技术内容
+2026-08-03 | ml-systems-notes-data-movement-vs-compute.md | 100 | 最高水平技术博客优化，删除13处「判断」教学标签，精简引言，去除冗余修饰与AI味，保留全部技术数据与代码
