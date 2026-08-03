@@ -12,30 +12,7 @@ hiddenFromHomePage: false
 
 # Flutter：用自渲染引擎统一 7 个平台的工程取舍
 
-## §1 先给判断
-
-flutter/flutter 这个项目要解的是：让一份 Dart 代码在 iOS、Android、Web、Windows、macOS、Linux、Fuchsia 七个目标上跑出接近原生帧率的一致 UI。
-
-它和 React Native 的分歧归结到一句话：Flutter 自带渲染引擎（Dart framework + C++ engine + Skia/Impeller），逐像素自己画；React Native 调用原生控件，JavaScript 跨桥把事件回给原生层。这个差异之后会从性能、UI 一致性、平台集成、生态、调试五处持续展开。
-
-文章要拆开的事：
-1. 分层架构——Dart framework / C++ engine / Embedder 三层各管什么，渲染为什么放在 C++ 而不是 Dart
-2. 渲染管线——Skia 还能用多久，Impeller 在 2024-2026 解决了什么具体问题
-3. Dart 的双模式——开发期 JIT + hot reload，上线期 AOT 编译到 ARM/x64
-4. 任务流案例——`flutter create` 一次完整流程，把抽象机制串成可跟随的步骤
-5. 引擎源码迁移——flutter/engine 在 2025-02-25 archived，引擎代码回到 flutter/flutter 的 engine/ 子树，PR 周期从跨 2 仓库变成 1 仓库
-6. 选型决策——跨平台优先 vs 深 OS 集成，谁该选 Flutter，谁该选 React Native 或回退原生
-
-## §2 阅读路径
-
-- **想看架构总览**：§3 总览图 + §4 分层职责拆分
-- **想看渲染管线**：§5 Skia vs Impeller + §6 像素流
-- **想看 Dart 编译模型**：§7 JIT/AOT 双模式 + Hot reload 机制
-- **想看任务流案例**：§8 `flutter create` 一次完整流程
-- **想看引擎源码迁移**：§9 flutter/engine archived
-- **想看选型决策**：§10 vs React Native + §11 决策矩阵 + §12 适用边界
-
-## §3 一张总览图：Flutter 的东西怎么分
+## §1 一张总览图：Flutter 的东西怎么分
 
 ```
 Flutter
@@ -69,7 +46,7 @@ Flutter
 
 `engine/src/flutter/` 下面是另一个完整的工程世界：53 个 C++ 源文件目录，从 shell 平台嵌入到 Impeller 渲染器到 Dart VM 集成。
 
-## §4 分层架构：Dart framework / C++ engine / Embedder
+## §2 分层架构：Dart framework / C++ engine / Embedder
 
 Flutter 的分层在 `docs/about/The-Engine-architecture.md` 里画得很清楚：
 
@@ -140,11 +117,11 @@ Dart 完全可以自己实现一个软件渲染器（Flutter 早期在 Sky 引�
 
 实际效果：过去 4 个月（2025-02 到 2026-06）flutter/flutter 的 commit 数量稳定在每天 50-80 个，其中 40% 左右是 engine 相关的提交（Skia 滚动、Impeller 改动、平台 embedder 修复）。这次合并让 framework + engine 的协同改动的 PR 周期从 2 个仓库各自 review 压缩到 1 个 PR。
 
-## §5 渲染管线：Skia vs Impeller
+## §3 渲染管线：Skia vs Impeller
 
 引擎的核心工作是把 widget tree 变成 GPU 命令。Flutter 团队对这件事有两条实现：Skia（Flutter 1.0 到 3.7 时代的默认）和 Impeller（3.10 起的 iOS 默认，3.27 起 Android 默认）。
 
-### 5.1 Skia：Flutter 1.0 - 3.7 的默认渲染器
+### 3.1 Skia：Flutter 1.0 - 3.7 的默认渲染器
 
 Skia 是 Google 维护的 2D 图形库，Chrome / Android / Fuchsia 都在用。Flutter 早期直接复用 Skia 的 C++ API。
 
@@ -159,7 +136,7 @@ Skia 是 Google 维护的 2D 图形库，Chrome / Android / Fuchsia 都在用。
 2. **状态对象散乱**——pipeline state object（PSO）在多线程下要反复重建，线程同步开销大
 3. **难以 instrument**——Skia 的 tracing 集成有限，性能问题难定位
 
-### 5.2 Impeller：3.10 起的 iOS 默认，3.27 起 Android 默认
+### 3.2 Impeller：3.10 起的 iOS 默认，3.27 起 Android 默认
 
 Impeller 是 Flutter 团队自研的渲染器，目标就是解决 Skia 上面那 3 个问题。从 `engine/src/flutter/impeller/README.md` 抓的设计目标：
 
@@ -184,7 +161,7 @@ Impeller 实际改的几件事：
 - 旧 GPU 驱动（特别是 Android 上的老 Mali / Adreno）可能有 bug
 - Web 端目前还是用 CanvasKit（Skia 的 WASM 编译版本），不是 Impeller
 
-### 5.3 当前状态（2026-06-25）
+### 3.3 当前状态（2026-06-25）
 
 从 commit log 看，Impeller 是当前的工作重点：
 - `[Impeller] Add anisotropic filtering support to samplers`（2026-06-25）
@@ -193,7 +170,7 @@ Impeller 实际改的几件事：
 
 Skia 没有被抛弃——Web 端和某些旧设备还在用。但 Impeller 已经是 iOS 和新 Android 的默认。
 
-## §6 像素流：从 widget 到 GPU 命令
+## §4 像素流：从 widget 到 GPU 命令
 
 把一次 widget paint 变成 GPU 帧，需要经过 4 个阶段：
 
@@ -238,11 +215,11 @@ Dart side 的瓶颈通常是 `build()` 里做了重活（典型反例：在 buil
 
 Flutter Inspector + DevTools 能直接看到每一帧 4 个阶段各自花了多少时间。
 
-## §7 Dart 的双模式：JIT / AOT
+## §5 Dart 的双模式：JIT / AOT
 
 Dart 是个"两种跑法"的语言，Flutter 同时用上：
 
-### 7.1 开发期：JIT + Hot Reload
+### 5.1 开发期：JIT + Hot Reload
 
 ```bash
 $ flutter run
@@ -254,7 +231,7 @@ Hot Reload 的实际行为：**widget tree 重建但 State 对象保留**。所�
 
 JIT 的代价：性能只到 AOT 的 50-70%，debug build 不能反映真实帧率。
 
-### 7.2 上线期：AOT 编译到 ARM / x64
+### 5.2 上线期：AOT 编译到 ARM / x64
 
 ```bash
 $ flutter build apk --release
@@ -268,7 +245,7 @@ AOT 的具体效果：
 - **稳态帧率** — JIT 的 50-70% → AOT 的 100%
 - **包大小** — AOT 编译的机器码比 Dart 源码大 5-10 倍，但比带 JIT runtime 的二进制小 30%
 
-### 7.3 Web 端的特殊处理
+### 5.3 Web 端的特殊处理
 
 Web 端不能直接 AOT 到 WebAssembly（截至 2026-06，WASM GC 还不是所有浏览器都支持）。Flutter Web 的策略：
 - **CanvasKit 模式**（默认）— Skia 用 WASM 编译版本，Dart 走 Dart2wasm
@@ -277,11 +254,11 @@ Web 端不能直接 AOT 到 WebAssembly（截至 2026-06，WASM GC 还不是所�
 
 Web 端的包大小是个老问题：一个最简单的 Flutter Web 应用打包后是 1.5-2.5 MB（CanvasKit 占 1 MB）。React 写的同等应用是 100-300 KB。
 
-## §8 任务流案例：`flutter create` 到上线
+## §6 任务流案例：`flutter create` 到上线
 
 跟一个具体的 Flutter app 从初始化到上线的完整流程。
 
-### 8.1 初始化
+### 6.1 初始化
 
 ```bash
 $ flutter create myapp
@@ -298,7 +275,7 @@ $ flutter run
 
 `flutter run` 启动 dev server，编译 Dart 代码到 JIT，把 app 装到连接的设备 / 模拟器。
 
-### 8.2 写一个 counter app
+### 6.2 写一个 counter app
 
 `lib/main.dart` 默认生成的就是 Flutter 教程里的 counter app：屏幕中央一个数字，一个浮动按钮，每次点 +1。
 
@@ -377,7 +354,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 改 `_counter++` 为 `_counter += 2`，按 `r`，1 秒内看到行为变化，TextField 输入、滚动位置保留。
 
-### 8.3 加 Material Design 组件
+### 6.3 加 Material Design 组件
 
 ```dart
 Scaffold(
@@ -404,7 +381,7 @@ Scaffold(
 
 `import 'package:flutter/material.dart'` 拿到的就是 Google 官方 Material Design 实现。所有视觉细节（阴影、ripple 效果、字号、颜色）都跟 Android 原生 Material 一致。
 
-### 8.4 加 iOS-style 组件（混合 Material + Cupertino）
+### 6.4 加 iOS-style 组件（混合 Material + Cupertino）
 
 ```dart
 import 'package:flutter/cupertino.dart';
@@ -421,7 +398,7 @@ CupertinoNavigationBar(
 
 同一个 app 可以混用 Material 和 Cupertino widget——iOS 用户看到的是 iOS 风格，Android 用户看到的是 Material 风格，通过 `Theme.of(context).platform` 判断。
 
-### 8.5 上线
+### 6.5 上线
 
 ```bash
 $ flutter build apk --release        # Android APK
@@ -438,7 +415,7 @@ release build 触发：
 
 典型 APK 大小：5-15 MB（其中 Dart AOT 占 60-70%）。典型 IPA 大小：8-20 MB（universal binary 会大一倍）。
 
-### 8.6 同样的流程，Flutter 在哪里做不同的事
+### 6.6 同样的流程，Flutter 在哪里做不同的事
 
 跟 React Native 对照，每一步 Flutter 都在做不同的取舍：
 
@@ -454,11 +431,11 @@ release build 触发：
 
 "渲染"和"Hot reload"这两行的差异最终会决定什么场景选 Flutter、什么场景选 React Native。
 
-## §9 引擎源码迁移：flutter/engine archived 之后
+## §7 引擎源码迁移：flutter/engine archived 之后
 
 flutter/engine 在 2025-02-25 archived，最后一条 commit 标题是 "Prepare for archive (#57288)"。
 
-### 9.1 迁移前后的代码拓扑
+### 7.1 迁移前后的代码拓扑
 
 **迁移前**（2025-02 之前）：
 ```
@@ -475,7 +452,7 @@ flutter/flutter（主仓库）
   └── engine/src/flutter/      # C++ engine
 ```
 
-### 9.2 合并前的 3 个长期问题
+### 7.2 合并前的 3 个长期问题
 
 `bin/internal/engine.version` 文件写的是 engine 的 commit SHA，Flutter framework 在 build 时下载对应 SHA 的 engine binary。这套机制有 3 个长期问题：
 
@@ -485,7 +462,7 @@ flutter/flutter（主仓库）
 
 合并后这 3 个问题一次性解决——单 PR、单 review、单 CI、单 bisect。
 
-### 9.3 合并付出的代价
+### 7.3 合并付出的代价
 
 **仓库体积**：从 ~200 MB 涨到 ~448 MB。一次 `git clone` 从 ~30 秒变成 ~70 秒（master 单一分支）。
 
@@ -495,7 +472,7 @@ flutter/flutter（主仓库）
 
 **贡献门槛**：以前 framework 贡献者不需要本地编译 engine（下载预编译 binary），合并后某些 PR 需要本地编译 engine。门槛提高。
 
-### 9.4 16 个月后的实际数据
+### 7.4 16 个月后的实际数据
 
 从 commit log 统计（commit message 关键词）：
 - 每天 50-80 个 commit
@@ -506,7 +483,7 @@ engine 相关 PR 数量没有减少，**PR 周期**显著缩短：以前跨 2 �
 
 这次合并把分散的代码合到一处，牺牲仓库体积换协同效率——这是工程基础设施层常见的取舍。
 
-## §10 vs React Native：5 处真实差异
+## §8 vs React Native：5 处真实差异
 
 Flutter 和 React Native 是"跨平台移动开发"领域的两个主要选项。先把对照表放出来再逐条展开：
 
@@ -518,7 +495,7 @@ Flutter 和 React Native 是"跨平台移动开发"领域的两个主要选项�
 | **UI 库** | 自带 Material + Cupertino | 第三方生态（react-native-paper 等） |
 | **平台集成** | Embedder API 标准化 | Bridge 桥接，平台模块各写一套 |
 
-### 10.1 渲染路径的差异
+### 8.1 渲染路径的差异
 
 **Flutter 路径**：
 
@@ -546,7 +523,7 @@ JSX → Virtual DOM → 原生 UIView / Android View → 系统渲染
 
 具体例子：Flutter 画的 `Slider` 在 iOS 和 Android 上视觉接近（都用 Material 风格）。React Native 的 `Slider` 在 iOS 是 UISlider，在 Android 是 SeekBar，长得完全不一样。
 
-### 10.2 性能差异的真实情况
+### 8.2 性能差异的真实情况
 
 "Flutter 性能比 React Native 好"是社区里常听的口号，但准确度有限。
 
@@ -574,7 +551,7 @@ JSX → Virtual DOM → 原生 UIView / Android View → 系统渲染
 
 具体数字因设备、列表复杂度、应用大小而异，上表是社区报告的中位数，不是严格测试结果。
 
-### 10.3 UI 一致性 vs 原生观感的取舍
+### 8.3 UI 一致性 vs 原生观感的取舍
 
 这一条是选型时最关键的设计决策：
 
@@ -582,7 +559,7 @@ JSX → Virtual DOM → 原生 UIView / Android View → 系统渲染
 - **要"每个平台用真原生控件"** → React Native。iOS 用户用 iOS 风格，Android 用户用 Android 风格
 - **要"Web 端 + 移动端"** → Flutter Web 更强。React Native Web 有但生态弱
 
-### 10.4 生态差异
+### 8.4 生态差异
 
 **React Native 生态**（成熟、跨 JavaScript 生态）：
 - npm 上 200+ 万个包，多数能在 React Native 里用
@@ -595,16 +572,14 @@ JSX → Virtual DOM → 原生 UIView / Android View → 系统渲染
 - 第三方组件库多数由 Google 团队维护
 - 跨 JavaScript 生态是不可能的（Dart 隔离）
 
-### 10.5 学习曲线
+### 8.5 学习曲线
 
 - **Flutter** — Dart 语言学习曲线小（类 Java / JavaScript），widget 体系需要时间（StatefulWidget / StatelessWidget / RenderObject 概念）
 - **React Native** — JavaScript / TypeScript 多数开发者已会，React 组件模型直接用，但需要懂原生 iOS / Android 才能调试深问题
 
-## §11 决策矩阵：选 Flutter / React Native / 原生
+## §9 决策矩阵：选 Flutter / React Native / 原生
 
-下面 3 张表把决策逻辑写出来。每张表的判断标准都来自上一节的事实，不是主观偏好。
-
-### 11.1 该选 Flutter 的场景
+### 9.1 该选 Flutter 的场景
 
 | 场景 | 理由 |
 |------|------|
@@ -615,7 +590,7 @@ JSX → Virtual DOM → 原生 UIView / Android View → 系统渲染
 | **Google 全家桶集成** | Firebase / Google Maps / Google Pay 都有官方 plugin |
 | **Web 端是"移动端的扩展"** | Flutter Web 用同一份 widget 代码 |
 
-### 11.2 该选 React Native 的场景
+### 9.2 该选 React Native 的场景
 
 | 场景 | 理由 |
 |------|------|
@@ -625,7 +600,7 @@ JSX → Virtual DOM → 原生 UIView / Android View → 系统渲染
 | **需要平台特定 UI** | iOS 用户要真 iOS 风格，Android 用户要真 Material |
 | **已有 Web 端 React 代码** | 部分组件可复用（react-native-web） |
 
-### 11.3 该选原生（Swift / Kotlin）的场景
+### 9.3 该选原生（Swift / Kotlin）的场景
 
 | 场景 | 理由 |
 |------|------|
@@ -635,43 +610,41 @@ JSX → Virtual DOM → 原生 UIView / Android View → 系统渲染
 | **包大小敏感** | 5-15 MB（Flutter）vs 1-3 MB（原生） |
 | **长期维护 5+ 年** | 原生人才市场比 Flutter 大，团队稳定性高 |
 
-### 11.4 3 个常见反模式
+### 9.4 3 个常见反模式
 
 - **"Flutter 火就选 Flutter"** — 它是工具，不是银弹
 - **"团队会 JavaScript 就选 React Native"** — 跨桥有 0.1-1 ms 开销，深优化时是瓶颈
 - **"为了全平台覆盖硬上跨平台"** — Web 端 1.5-2.5 MB 的 Flutter 包对很多 Web 场景是 deal-breaker
 
-## §12 适用边界：Flutter 不是万能的
+## §10 适用边界：Flutter 不是万能的
 
-通用框架的代价是必须画清楚边界。
-
-### 12.1 Flutter 擅长的
+### 10.1 Flutter 擅长的
 
 - 移动端跨平台（iOS + Android）— **最成熟**的场景，工具链完整、社区丰富
 - 自定义 UI 重的应用（设计系统、复杂动画）— 自带渲染管线的红利
 - 跨移动 + 桌面（Windows / macOS / Linux）— 桌面端是 "good enough"，不如移动端成熟
 - 跨移动 + Web — Web 端是 "可行但有 trade-off"，包大小、SEO、首屏时间是主要问题
 
-### 12.2 Flutter 还在追的
+### 10.2 Flutter 还在追的
 
 - **Web 端的 SEO 和首屏** — CanvasKit 模式首屏要 1-2 秒，搜索引擎爬虫对 CanvasKit 内容索引差
 - **桌面端的 OS 集成** — 系统托盘、菜单栏、键盘快捷键的支持还在完善
 - **iOS App Clip / Android Instant App** — 小程序式场景，Flutter 工程化支持弱
 - **watchOS / Wear OS / Android TV** — 嵌入式 Flutter 的工具链不成熟
 
-### 12.3 Flutter 不适合的
+### 10.3 Flutter 不适合的
 
 - **小工具 / 命令行工具** — Dart AOT 编译的二进制 5-10 MB，对小工具太重
 - **Web 端的首屏 + 包大小敏感场景** — Flutter Web 1.5-2.5 MB 起，对比 React 100-300 KB
 - **需要平台特定 UI 控件的场景** — 比如需要 iOS 用户用真 UISwitch（带原生动画），Flutter 的 CupertinoSwitch 是模拟的
 - **极致性能场景** — 120 fps 游戏、AR/VR 渲染，原生 Metal / Vulkan 更直接
 
-### 12.4 一句话判断标准
+### 10.4 判断标准
 
 **面向终端用户的、功能完整的 App** → Flutter 是个安全的选择。
 **Web 优先 / 小工具 / 深度 OS 集成** → Flutter 不是最优解。
 
-## §13 关键事实校核
+## §11 项目数据
 
 - **仓库**：github.com/flutter/flutter（公开仓库，BSD-3-Clause）
 - **Stars**：177k+（177491 截至 2026-06-25）

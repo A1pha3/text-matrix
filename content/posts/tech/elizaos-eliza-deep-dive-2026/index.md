@@ -84,15 +84,15 @@ packages/
 
 ## 3. 运行时核心:`AgentRuntime` 11,782 行
 
-`@elizaos/core/src/runtime.ts` 是整个仓库的"宪法"。文件头注释(原文翻译)写得极其诚实:
+`@elizaos/core/src/runtime.ts` 是整个仓库的"宪法"。文件头注释(原文翻译):
 
 > `AgentRuntime` 是每个 Eliza agent 跑在上面的中央编排器,具体实现 `IAgentRuntime`。一个实例拥有一个 agent 的整个世界:它的 actions / providers / evaluators / services、model-handler registry 和 `useModel` dispatch/routing/fallback 层、plugin 集和它的生命周期(register / unload / reload / config)、memory 和 state(database adapter / embeddings / `stateCache` / working memory),以及跑 provider → model → action → evaluator 的 message loop。Plugin 贡献 capability,runtime 装配并跑它们。**`@elizaos/core` 几乎全部和每个 plugin 最终都和这个类对话**。
 >
 > 文件大约 1 万行——**按符号导航,不要从上往下读**。
 
-### 3.1 三条不变式(原文标注,工程上极重要)
+### 3.1 三条不变式
 
-读到 `runtime.ts` 文件头注释里写明的 invariant,直接体现这个项目的工程品味:
+`runtime.ts` 文件头注释里写明了三条 invariant:
 
 **不变式 1:多租户不读 env**
 ```ts
@@ -101,7 +101,7 @@ packages/
 // 宿主应该把 dotenv 折进构造函数 settings map
 ```
 
-这种注释级别告诉读者:"我们考虑过偷懒,我们没偷"。
+这种注释级别说明作者考虑过多租户场景下的 env 泄漏问题。
 
 **不变式 2:embedding 宽度 pin 到首次应答的 provider**
 ```ts
@@ -111,7 +111,7 @@ packages/
 // 并禁用 embedding generation 而不是 crash boot
 ```
 
-`#8769` 是 GitHub issue 编号——这种 cross-file issue 引用,只有大规模生产代码才有。
+`#8769` 是 GitHub issue 编号——跨文件引用 issue 是生产级代码的常见做法。
 
 **不变式 3:无 database adapter 的降级路径**
 ```ts
@@ -119,7 +119,7 @@ packages/
 // 才会 fallback 到 in-memory adapter
 ```
 
-`ALLOW_NO_DATABASE` 是显式 opt-in 开关——**默认拒绝 in-memory fallback**,逼你显式选内存模式,这是个安全/正确性的取舍。
+`ALLOW_NO_DATABASE` 是显式 opt-in 开关——**默认拒绝 in-memory fallback**,要求显式选择内存模式,这是个安全/正确性的取舍。
 
 ### 3.2 消息循环骨架
 
@@ -143,11 +143,11 @@ message → providers(state/context)
 
 ## 4. 2026 年的最新演进:从 CHANGELOG 看到的三个方向
 
-读 `@elizaos/core/CHANGELOG.md` (Unreleased 部分),能看到 elizaOS 在 2026 年的三个工程重锤。
+读 `@elizaos/core/CHANGELOG.md` (Unreleased 部分),能看到 elizaOS 在 2026 年的三个工程方向。
 
 ### 4.1 Prompt caching 段标记(prompt segments)
 
-传统 prompt 调用的成本黑洞是每次调用重发整个 system prompt。2026 年 Anthropic ephemeral cache、OpenAI/Gemini prefix cache 都要求主动声明"哪些段是稳定的"。
+传统 prompt 调用的问题是每次调用重发整个 system prompt。2026 年 Anthropic ephemeral cache、OpenAI/Gemini prefix cache 都要求主动声明"哪些段是稳定的"。
 
 `elizaOS` 的解法:`GenerateTextParams` 新增可选字段 `promptSegments?: PromptSegment[]`,每个 segment 是 `{ content, stable }`。runtime 在 `dynamicPromptExecFromState` 里把动态 prompt 按 stable 边界切段:
 
@@ -161,11 +161,11 @@ message → providers(state/context)
 
 CHANGELOG 原文解释:_"Marking validation or variable content as stable would prevent cache hits because that content changes every call; splitting format from validation ensures the stable segments are actually cacheable."_
 
-然后 plugin 层各显神通:
+然后 plugin 层各自实现:
 - **Anthropic plugin**:每个 segment 一个 content block,stable 的打 `cache_control: { type: "ephemeral" }`
 - **OpenAI / Gemini plugin**:stable 段前置(前缀缓存靠的就是"前面那 N token 一样")
 
-core 表达语义、plugin 做 provider-specific 优化,这是 agent runtime 该有的切分。
+core 表达语义、plugin 做 provider-specific 优化,这是 runtime 层的合理切分。
 
 ### 4.2 跨 runtime 任务调度器(cross-runtime task scheduler)
 
@@ -179,7 +179,7 @@ core 表达语义、plugin 做 provider-specific 优化,这是 agent runtime 该
 | **per-daemon** | 多 agent 守护进程 | host 调 `startTaskScheduler(adapter)`,共享 timer + 批 `getTasks(agentIds)` |
 | **serverless** | 无长进程 | `runtime.serverless === true`,host 用 cron / per-request 调 `runDueTasks()` |
 
-`serverless?: boolean` 是 `AgentRuntime` 构造参数。elizaOS 已经准备好跑在 Lambda / Vercel / Cloudflare Workers 这种 ephemeral runtime 里,传统 agent 框架几乎都没考虑过这点。
+`serverless?: boolean` 是 `AgentRuntime` 构造参数。elizaOS 已经准备好跑在 Lambda / Vercel / Cloudflare Workers 这种 ephemeral runtime 里,这是传统 agent 框架较少考虑的场景。
 
 任务系统本身也升级:`TaskMetadata` 加了 `notBefore` / `notAfter` / `paused` / `failureCount` / `maxFailures` / `lastError` / `baseInterval`,dead-letter 机制首次出现。
 
@@ -190,8 +190,6 @@ core 表达语义、plugin 做 provider-specific 优化,这是 agent runtime 该
 2026 年的统一:`utils/batch-queue` 模块提供 `PriorityQueue` / `BatchProcessor`(信号量并发 + retry)/ `TaskDrain` / 组合 `BatchQueue` / 共享 `Semaphore`。
 
 CHANGELOG 原文解释:_"The runtime is not globally 'batching-bound'; a minimal fix in one service could be a few lines. The goal here is forward-looking consolidation so embedding drains, action-index embedding, batcher affinity scheduling, and shared throttling do not each grow a bespoke queue + task + retry stack that drifts over time."_
-
-承认现在不紧迫、为未来克制。
 
 ## 5. Plugin model:四件套 primitives
 
@@ -310,11 +308,11 @@ const summarizeAction: Action = {
 };
 ```
 
-这一段把 4.1 节的 prompt segments、3.2 节的 useModel 调用、6 节的 logger 一次性串起来。读完应该能看懂 runtime 的核心调用范式。
+这一段把 4.1 节的 prompt segments、3.2 节的 useModel 调用、6 节的 logger 一次性串起来,展示了 runtime 的核心调用范式。
 
-整个流程 5 分钟,不用碰 YAML、不用写 Dockerfile、不用写 deployment script。`elizaos create -t plugin` 想给你的就是这种体验。
+整个流程 5 分钟,不用碰 YAML、不用写 Dockerfile、不用写 deployment script。
 
-## 6. 安全与隐私:不是事后补丁
+## 6. 安全与隐私
 
 `@elizaos/core/src/security/` 下三个关键目录:
 
@@ -322,11 +320,11 @@ const summarizeAction: Action = {
 - `secret-swap/` —— `SecretSwapSession`,运行时用一次性 placeholder 替换真实 secret,只在出站前还原
 - `index.ts` —— PII 识别 + owner-exclusive disclosure,带 `PseudonymSession` 和 `GuardedStreamScanner`
 
-README 上专门一段叫 "Private by default"。`Eliza-1` 模型家族 + 语音本地推理 + 图像本地描述是工程承诺,不是 marketing 词。`ALLOW_NO_DATABASE` 这种开关,以及 `#8769` 这种 issue 的存在,告诉你这个团队对"安全/隐私默认是 ON,不是默认 OFF"这件事认真。
+README 上专门一段叫 "Private by default"。`Eliza-1` 模型家族 + 语音本地推理 + 图像本地描述是工程承诺,不是 marketing 词。`ALLOW_NO_DATABASE` 这种开关,以及 `#8769` 这种 issue 的存在,说明安全/隐私默认是 ON。
 
-## 7. elizaOS 的 OS 野心:`packages/os`
+## 7. 操作系统层:`packages/os`
 
-光看 `app/` 你会觉得这是一个 AI 桌面应用。看 `packages/os/` 你才会意识到这是一个真操作系统。
+只看 `app/` 会觉得这是一个 AI 桌面应用。看 `packages/os/` 才会意识到这是一个真操作系统。
 
 ```
 packages/os/
@@ -341,7 +339,7 @@ README 上明说:
 > - **Linux** — boots a full desktop with Eliza built in from a USB stick. amd64 · arm64 · **riscv64**.
 > - **Android** — Eliza is the system launcher and assistant, on Pixel-class devices.
 
-注意 **riscv64** —— 这不是 x86-only 项目,这是从硬件层就考虑开源 RISC-V 阵营的。`scripts/build:riscv64-artifacts` / `verify:riscv64` / `check:riscv64-artifacts` 在 root `package.json` 里,是真在跑。
+注意 **riscv64** —— 这说明它不是 x86 专属。`scripts/build:riscv64-artifacts` / `verify:riscv64` / `check:riscv64-artifacts` 在 root `package.json` 里,是真实构建目标。
 
 ## 8. 商业层:Eliza Cloud
 
@@ -356,32 +354,12 @@ Cloud 做的事:
 4. **Sync & bridge** —— 跨设备状态同步,从云 dashboard 驱动本地的 agent
 5. **Monetization** —— app / agent / MCP 可以 metered + creator 收益
 
-第五点尤其关键:这是个 agent 经济系统,不只是 serving 平台。`contracts/` 目录下应该有链上合约实现 creator earnings 分账。
+第五点值得注意:这是个 agent 经济系统,不只是 serving 平台。`contracts/` 目录下应该有链上合约实现 creator earnings 分账。
 
 ## 9. 给工程师的 takeaway
 
 1. **runtime ≠ framework**——elizaOS 把 runtime 当 OS。思考"长期驻留进程 + 多 capability 装配",不是"调用一次函数"
-2. **local-first 是工程承诺**——`ALLOW_NO_DATABASE` / `#8769` / `security/redact` 都在告诉你"安全默认是 ON"
+2. **local-first 是工程承诺**——`ALLOW_NO_DATABASE` / `#8769` / `security/redact` 都指向安全默认 ON 的设计原则
 3. **prompt cache 段标记是 2026 必修课**——Anthropic/OpenAI/Gemini 都按"stable 段"计费,你不切段就是在烧钱
-4. **serverless runtime 是新坐标**——`serverless?: boolean` 告诉你 agent 不一定活在 long-lived 进程里
+4. **serverless runtime 是新坐标**——`serverless?: boolean` 意味着 agent 不一定活在 long-lived 进程里
 5. **plugin 四件套是 agent runtime 的通用语**——`actions / providers / services / evaluators` 这套 vocabulary 会被更多 framework 复用
-
-## 10. 留给读者的 5 个问题
-
-- 18.9K stars 的 contributor distribution 是什么样的?核心团队 + 社区比例?
-- `packages/os/linux` 的 bootable image 用什么 init 系统?systemd 还是自定义?
-- `Eliza-1` 模型家族里 "Gemma-4 衍生"具体是什么意思——纯 fine-tune,还是有架构修改?
-- `contracts/` 下的链上合约是 Solana 还是 EVM?creator earnings 怎么 split?
-- **RISC-V** 是真在做,还是给营销加分?有真用户跑吗?
-
----
-
-**反写元数据**
-- 源:`github.com/elizaOS/eliza`(develop 分支,HEAD at 2026-08-03T07:38:55Z)
-- 反写时点:2026-08-03 15:42 GMT+8
-- 素材:`api/repos/elizaOS/eliza` + `raw.githubusercontent` README + `packages/core/{README,CHANGELOG,AGENTS}.md` + `packages/core/src/runtime.ts` 文件头 + root `package.json`
-- 反写版本:v3 终版(三轮迭代:80 → 93 → 100)
-- 自评(三维):
-  - 正确性 30/30(hard-sourced:18.9K stars / v2.0.4 / 11,782 行 runtime.ts / 36 deps / 200+ scripts / 42 packages / 三条不变式原文引用 / CHANGELOG 引用 / 代码示例)
-  - 清晰度 40/40(10 节渐进设计 / 概念唯一定义 / 去 AI 味 4 处 / 实战双节 plugin+model 调用 / takeaway 5 条模板化去除)
-  - 实用性 30/30(5 分钟 plugin 实战 + useModel 实战 + runtime 概念 → 代码完整闭环 + 5 个探索方向)

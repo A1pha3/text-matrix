@@ -11,11 +11,7 @@ author: "钳岳"
 canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-2026/"
 ---
 
-> **视频来源**：B 站 `BV1yVNU6xERx`（3Blue1Brown "Compression is Intelligence Part 1: Reinventing Entropy"，32m20s，2026-07-14，翻译贰鼠 / 校正畏狐之狐）及 YouTube 原版 `https://youtu.be/l6DKRf-fAAM`。播放 289,312 / 点赞 21,046。
->
-> 以下内容把这期视频的核心命题——"prediction 与 compression 在数学上等价"——及其推演路径（猜字母 → 香农信息含量 → 上下文 → cross-entropy → LLM 训练本质）用一篇博客讲透。
-
----
+源视频: [3Blue1Brown "Compression is Intelligence Part 1"](https://youtu.be/l6DKRf-fAAM) (32m20s, 2026-07-14, 翻译贰鼠 / 校正畏狐之狐)
 
 ## 一、ASCII 太胖了
 
@@ -37,7 +33,7 @@ canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-20
 
 ## 二、猜字母游戏
 
-视频用一个非常聪明的实验来逼近这个极限：**猜下一个字母**。
+视频用一个实验来逼近这个极限：**猜下一个字母**。
 
 规则：主持人心里想一段英文句子，逐字显示。猜的人每轮赌下一个字母是什么。
 
@@ -246,48 +242,3 @@ LLM 用 Transformer 的 attention 机制做"超长上下文条件预测"，效�
 | **信道容量** | C = max_{P(X)} I(X;Y) | Autoencoder 瓶颈维度、扩散模型 noise schedule、纠错码设计 |
 
 这套数学在 80 年里作为骨架，支撑了深度学习一半的关键技术。不是 Shannon 当年预见到的，是后人发现这三条定义恰好是 ML 需要的形状。
-
----
-
-## 十三、视频结尾：一场"代餐式"午餐
-
-视频最后 2 分钟，3B1B 突然话锋一转——开始介绍一个团队。原话大意：
-
-> It's almost impossible to get a true sense of what it's like to work at a place just by poking around online, and you learn orders of magnitude more if you have a chance to sit down for lunch with a couple team members. My hope is to give you the vicarious version of that.
-
-社区普遍认为是 3B1B 在为某个 AI lab 做软广——通过介绍团队工作日常，给观众一个"vicarious lunch"的体验。这件事跟"压缩即智能"没有直接关系，但作为结尾，给这期内容盖了个"人"的戳：从 1948 年 Shannon 的纯数学，到 2026 年 Grant Sanderson 在一个真实团队里研究智能的工程问题，80 年的跨度，最后落到一张饭桌上。
-
----
-
-## 十四、为什么这篇博客值得写
-
-3B1B 这期视频做了一件很少有人做的事：把信息论的"骨架"接到 LLM 训练的"皮肤"上。
-
-大部分 ML 工程师知道 cross-entropy loss，但不一定知道 loss 的值（nats/token）可以直接换算成 bits per character——也就是模型对训练集的压缩率。知道这件事有三个实际好处：
-
-1. **跨模型对比**：不同 tokenizer 的 LLM 没法比 loss，但 bits per character 可以
-2. **训练信号**：盯 BPC 而不是 loss，单位是绝对的，不会因为 tokenizer 改变而失真
-3. **理论锚点**：英语的理论熵约 0.5-1.5 bits/字符，当前 LLM 离这个下界还有 2-5x 的差距——这是个有用的"工程进度条"
-
-3B1B 把这件事用最直觉的方式讲透了——不是从定理出发，而是从猜字母游戏出发，让"为什么 prediction = compression"变成一个不需要数学证明就能理解的事实。这是他的一贯风格：把数学的**骨架**讲清楚，让数学的**皮肤**自己长出来。
-
----
-
-## 附：来源核验
-
-- **视频**：`BV1yVNU6xERx` / `https://youtu.be/l6DKRf-fAAM` / 3Blue1Brown / 32m20s / 2026-07-14 / 289,312 播放 / 21,046 点赞
-- **字幕**：`yt-en.en.vtt` / 529 cues / 49.43 KiB / 全片覆盖 / 官方英文字幕
-- **关键 cue 定位**：
-  - L49 "Claude Shannon's seminal work"（00:00:46）
-  - L64 "cross-entropy loss"（00:01:03）
-  - L73 "prediction and compression are mathematically equivalent"（00:01:30）
-  - L547 "reinventing the idea of Shannon entropy"（00:11:10）
-  - L1093 "longer context windows are when things are at their most predictable"（00:23:47）
-- **翻译致谢**：贰鼠（翻译）+ 畏狐之狐（校正）
-- **压缩率数字**：4 bits/char (Huffman)、4.5 bits/char (字符级独立熵)、1-1.5 bits/char (context-aware)——均来自视频 + 经典信息论教材
-
----
-
-**最后**：3B1B 这期视频最大的启发不是"compression is intelligence"——这是个老命题。真正有价值的是 **"prediction 和 compression 在数学上等价"** 这一句话，它把两个看起来毫无关系的工程领域（无损压缩 + LLM 训练）焊在了同一个数学骨架上。
-
-下次有人问你"LLM 到底在学什么"，你可以回答：**在学一个最优压缩器**。它的 loss 函数（cross-entropy）= 它对训练集的预期编码长度。它的训练目标（最小化 loss）= 最大化压缩率。它的扩展方向（longer context / bigger model / more data）= 让压缩率接近香农下界。三件事是同一件事。这是 Shannon 在 1948 年给 2026 年留下的最深遗产。
