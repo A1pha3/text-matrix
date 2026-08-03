@@ -34,3 +34,5 @@
 2026-08-03 | deepmind-topological-trouble-with-transformers-cn.md | 100 | 最高水平技术博客优化，删除"常见问题"FAQ章节，精简"有人会反驳"等过渡语句，去除AI味，文笔简洁优雅
 2026-08-03 | flutter-flutter-cross-platform-ui-framework-2026.md | 100 | 最高水平技术博客优化，删除§1先给判断/§2阅读路径/AI味过渡语句，重排章节编号(§3→§1至§13→§11)，去除AI味，文笔简洁优雅
 2026-08-03 | codecrafters-build-your-own-x-programming-guide.md | 100 | 最高水平技术博客优化，精简AI味标题与过渡语句，删除"这和你习惯的学习方式不一样"/"做与不做之间的权衡"等AI味表达，文笔简洁优雅
+2026-08-04 | tursodatabase-turso-rust-sqlite-rewrite-guide.md | 100 | 最高水平技术博客优化，删除学习目标/目录/自测题/练习/进阶路径/资料口径说明/一句话总结，去除AI味"赌赢了...赌输了..."表述，精简过渡语句，优化"如果你要做的是"等AI味表达，文笔简洁优雅
+2026-08-04 | unsloth-ai-training-inference-platform-guide.md | 100 | 最高水平技术博客优化，删除学习目标/目录/自测题/练习/进阶路径/资料口径说明/你应该怎么开始，去除AI味套话，精简引言过渡语句，文笔简洁优雅

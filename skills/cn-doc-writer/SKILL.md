@@ -240,8 +240,8 @@ commands:
 
 | 命令 | 文件写入规则 |
 | ------ | ------ |
-| `write-cn-doc` | 新写一份，路径按落盘不变量确定 |
-| `translate-cn` | 新写一份，写入用户指定路径 |
+| `write-cn-doc` | 新写，路径按落盘不变量确定 |
+| `translate-cn` | 新写，写入用户指定路径 |
 | `optimize-cn-doc` | 覆盖原始文件 |
 | `enhance-learning` | 覆盖原始文件 |
 
