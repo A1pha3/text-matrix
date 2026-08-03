@@ -2,6 +2,7 @@
 title: "Claude API 基础专题（五）：MCP 协议深度解析"
 date: "2026-03-25T14:00:00+08:00"
 slug: "claude-api-mcp-model-context-protocol"
+github_repo: "modelcontextprotocol/servers"
 aliases:
   - /posts/tech/claude-api-mcp-model-context-protocol/
 description: "MCP（Model Context Protocol）协议的设计思想、架构组成与工作流程，如何构建 MCP 服务器与客户端，以及 MCP 与传统工具调用的区别与适用场景。"

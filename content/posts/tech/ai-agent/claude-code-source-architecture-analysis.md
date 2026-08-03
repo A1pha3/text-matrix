@@ -2,6 +2,7 @@
 title: "Claude Code 源码架构全解析：Tool、Command、MCP 与权限系统"
 date: "2026-03-31T21:54:05+08:00"
 slug: "claude-code-source-architecture-analysis"
+github_repo: "anthropics/claude-code"
 aliases:
   - /posts/tech/claude-code-source-architecture-analysis/
 description: "基于 instructkr/claude-code 镜像说明与 Anthropic 官方资料，系统拆解 Claude Code 的 Tool、Command、MCP、Bridge、权限模型与扩展机制，帮助你从入门一路看懂到架构层。"

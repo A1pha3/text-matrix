@@ -1,6 +1,7 @@
 ---
 title: "AstrBot：开源一站式 AI Agent 聊天机器人平台完全指南"
 slug: "astrbot-open-source-ai-chatbot-platform-guide"
+github_repo: "AstrBotDevs/AstrBot"
 aliases:
   - /posts/tech/astrbot-open-source-ai-chatbot-platform-guide/
 date: "2026-03-31T16:00:00+08:00"

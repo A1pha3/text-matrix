@@ -2,6 +2,7 @@
 title: "OpenViking：字节跳动开源的 19.6k Stars AI Agent 上下文数据库"
 date: "2026-03-28T21:15:00+08:00"
 slug: "openviking-context-database-ai-agents"
+github_repo: "volcengine/OpenViking"
 aliases:
   - /posts/tech/openviking-context-database-ai-agents/
 description: "深度解读字节跳动开源的 OpenViking：19.6k Stars 的 AI Agent 上下文数据库，采用「文件系统 paradigm」统一管理记忆、资源和技能。"

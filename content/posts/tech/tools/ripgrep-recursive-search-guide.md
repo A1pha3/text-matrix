@@ -1,6 +1,7 @@
 ---
 title: "Ripgrep 完全指南：从入门到原理、架构与扩展"
 slug: "ripgrep-recursive-search-guide"
+github_repo: "BurntSushi/ripgrep"
 aliases:
   - /posts/tech/ripgrep-recursive-search-guide/
 date: "2026-03-31T23:14:00+08:00"

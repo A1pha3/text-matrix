@@ -2,6 +2,7 @@
 title: "Token Tracker 入门到精通：纯本地 AI 编程工具 Token 用量追踪实战"
 date: "2026-03-28T13:38:00+08:00"
 slug: "token-tracker-guide-openclaw-usage"
+github_repo: "vibe-cafe/vibe-usage"
 aliases:
   - /posts/tech/token-tracker-guide-openclaw-usage/
 summary: "以 OpenClaw 本地会话日志为例，讲清纯本地 Token Tracker 的设计边界、JSONL 解析、字段归一化、时间聚合与多工具扩展路径。"

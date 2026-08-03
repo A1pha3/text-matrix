@@ -2,6 +2,7 @@
 title: "Awesome Claude Code 资源指南：从看过到用起来"
 date: "2026-03-31T01:30:00+08:00"
 slug: awesome-claude-code-resources-guide
+github_repo: "hesreallyhim/awesome-claude-code"
 aliases:
   - /posts/tech/awesome-claude-code-resources-guide/
 categories: ["技术笔记"]

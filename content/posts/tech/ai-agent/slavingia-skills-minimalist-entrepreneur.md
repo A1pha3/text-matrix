@@ -2,6 +2,7 @@
 title: "Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统"
 date: "2026-03-30T16:05:00+08:00"
 slug: slavingia-skills-minimalist-entrepreneur
+github_repo: "slavingia/skills"
 aliases:
   - /posts/tech/slavingia-skills-minimalist-entrepreneur/
 description: "系统拆解 slavingia/skills 的 10 个 Minimalist Entrepreneur Skills：它们解决什么问题、适合在什么阶段使用、如何串成一条可执行的创业路径。"

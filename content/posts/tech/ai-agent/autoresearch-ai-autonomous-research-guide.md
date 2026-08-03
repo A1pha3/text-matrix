@@ -1,6 +1,7 @@
 ---
 title: "AutoResearch：AI 自主科研智能体完全指南"
 slug: "autoresearch-ai-autonomous-research-guide"
+github_repo: "karpathy/autoresearch"
 aliases: ["/posts/tech/autoresearch-ai-autonomous-research-guide/"]
 date: "2026-03-31T15:05:00+08:00"
 categories: ["技术笔记"]

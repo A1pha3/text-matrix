@@ -3,6 +3,7 @@ title: "Claude Code 最佳实践大全：高热度 AI 编程指南解读"
 date: "2026-03-28T20:00:00+08:00"
 lastmod: 2026-04-03T23:33:16+08:00
 slug: "claude-code-best-practice-guide"
+github_repo: "shanraisshan/claude-code-best-practice"
 aliases:
   - /posts/tech/claude-code-best-practice-guide/
 description: "深度解读 shanraisshan/claude-code-best-practice 仓库，系统梳理 Claude Code 的核心概念、工作流组织方式、配置结构、扩展边界与团队落地建议。"

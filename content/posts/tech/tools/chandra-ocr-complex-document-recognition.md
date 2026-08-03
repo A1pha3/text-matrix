@@ -1,6 +1,7 @@
 ---
 title: "Chandra OCR：复杂表格、表单与手写内容识别方案"
 slug: chandra-ocr-complex-document-recognition
+github_repo: "datalab-to/chandra"
 aliases:
   - /posts/tech/chandra-ocr-complex-document-recognition/
 description: "深入解析 Chandra OCR 项目，涵盖复杂表格识别、表单处理、手写内容识别等核心功能的技术原理、架构分析与实战应用。"

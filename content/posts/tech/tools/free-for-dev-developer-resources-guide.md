@@ -1,6 +1,7 @@
 ---
 title: "free-for-dev：开发者免费资源大全完全指南"
 slug: "free-for-dev-developer-resources-guide"
+github_repo: "ripienaar/free-for-dev"
 aliases:
   - /posts/tech/free-for-dev-developer-resources-guide/
 date: "2026-03-31T14:15:00+08:00"

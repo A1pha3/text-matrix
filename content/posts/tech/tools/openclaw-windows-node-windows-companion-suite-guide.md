@@ -2,6 +2,7 @@
 title: "openclaw-windows-node 实战指南：Scott Hanselman 出品的 OpenClaw Windows 伴侣套件（系统托盘 + PowerToys + WSL 网关）"
 date: "2026-06-04T23:00:00+08:00"
 slug: "openclaw-windows-node-windows-companion-suite-guide"
+github_repo: "openclaw/openclaw-windows-node"
 aliases:
   - /posts/tech/openclaw-windows-node-windows-companion-suite-guide/
 description: "openclaw-windows-node 是 OpenClaw 官方的 Windows 端伴侣套件，WinUI 3 系统托盘 + 共享网关客户端库 + WSL Gateway + PowerToys Command Palette 扩展，由 Scott Hanselman 主导开发。"

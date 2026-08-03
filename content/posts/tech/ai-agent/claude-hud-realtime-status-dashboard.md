@@ -2,6 +2,7 @@
 title: "Claude HUD：实时显示 Claude Code 状态的智能仪表盘"
 date: "2026-03-29T15:50:00+08:00"
 slug: "claude-hud-realtime-status-dashboard"
+github_repo: "jarrodwatts/claude-hud"
 aliases:
   - /posts/tech/claude-hud-realtime-status-dashboard/
 description: "Claude HUD 是 14.8k Stars 的 Claude Code 插件，实时显示上下文使用量、工具活动、智能体状态、Git 信息，让 AI 编程过程一目了然。"

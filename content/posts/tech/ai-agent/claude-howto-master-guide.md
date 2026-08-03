@@ -2,6 +2,7 @@
 title: "Claude How To：Claude Code 精通学习指南"
 date: "2026-04-01T13:00:00+08:00"
 slug: "claude-howto-master-guide"
+github_repo: "luongnv89/claude-howto"
 aliases:
   - /posts/tech/claude-howto-master-guide/
   - /posts/tech/ai-agent/claude-howto-master-claude-code-guide/

@@ -2,6 +2,7 @@
 title: "CZSC：缠中说禅技术分析工具完全指南"
 date: "2026-04-08T11:00:00+08:00"
 slug: czsc-chanlun-technical-analysis-tool-guide
+github_repo: "waditu/czsc"
 aliases:
   - /posts/tech/czsc-chanlun-technical-analysis-tool-guide/
 categories: ["技术笔记"]

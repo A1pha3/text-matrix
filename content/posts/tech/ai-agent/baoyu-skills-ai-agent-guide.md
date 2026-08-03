@@ -1,6 +1,7 @@
 ---
 title: "baoyu-skills：AI Coding Agent 深度研究市场分析技能套件完全指南"
 slug: "baoyu-skills-ai-agent-guide"
+github_repo: "JimLiu/baoyu-skills"
 aliases:
   - /posts/tech/baoyu-skills-ai-agent-guide/
 date: "2026-03-31T15:45:00+08:00"

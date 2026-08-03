@@ -2,6 +2,7 @@
 title: "Prompt Master：2.8k Stars 让提示词零浪费的 Claude Skill"
 date: "2026-03-29T00:05:00+08:00"
 slug: "prompt-master-claude-skill"
+github_repo: "nidhinjs/prompt-master"
 aliases:
   - /posts/tech/prompt-master-claude-skill/
 description: "深度解读 Prompt Master：2.8k Stars 的提示词优化工具，7步生成精准提示词，30+ AI工具兼容，5大安全技术，35种浪费模式检测，让每个Token都不浪费。"

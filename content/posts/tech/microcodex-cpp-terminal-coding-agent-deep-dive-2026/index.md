@@ -3,6 +3,7 @@ title: "microcodex 深度解构: 25 stars 5 天前创建的 C++ 终端 coding ag
 date: 2026-08-03T16:44:00+08:00
 draft: false
 slug: "microcodex-cpp-terminal-coding-agent-deep-dive-2026"
+github_repo: "paoloanzn/microcodex"
 tags: ["cpp", "agent", "terminal", "open-source", "architecture"]
 categories: ["tech"]
 description: "paoloanzn/microcodex 用纯 C++23 写了一个终端 coding agent，10,208 行代码、49 个源文件、零运行时依赖。本文从源码层面拆解它的架构、工具链和工程取舍。"

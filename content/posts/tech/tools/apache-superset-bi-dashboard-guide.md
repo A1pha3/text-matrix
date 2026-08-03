@@ -2,6 +2,7 @@
 title: "Apache Superset：从入门到精通 开源企业级BI与数据可视化平台"
 date: "2026-03-31T01:00:00+08:00"
 slug: apache-superset-bi-dashboard-guide
+github_repo: "apache/superset"
 aliases:
   - /posts/tech/apache-superset-bi-dashboard-guide/
 categories: ["技术笔记"]

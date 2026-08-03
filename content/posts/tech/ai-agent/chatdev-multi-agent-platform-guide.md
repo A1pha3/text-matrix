@@ -1,6 +1,7 @@
 ---
 title: "ChatDev 2.0 (DevAll)：零代码多智能体开发平台完全指南"
 slug: "chatdev-multi-agent-platform-guide"
+github_repo: "OpenBMB/ChatDev"
 aliases:
   - /posts/tech/chatdev-multi-agent-platform-guide/
 date: "2026-04-01T01:22:00+08:00"

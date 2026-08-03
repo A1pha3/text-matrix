@@ -2,6 +2,7 @@
 title: "Promptfoo：LLM 评测与 Red Teaming 实战指南"
 date: "2026-04-12T10:00:00+08:00"
 slug: promptfoo-llm-evaluation-testing-guide
+github_repo: "promptfoo/promptfoo"
 aliases:
   - /posts/tech/promptfoo-llm-evaluation-testing-guide/
 categories: ["技术笔记"]

@@ -1,6 +1,7 @@
 ---
 title: "Bulk Crap Uninstaller：Windows 批量程序卸载完全指南"
 slug: "bulk-crap-uninstaller-windows-uninstall-guide"
+github_repo: "Klocman/Bulk-Crap-Uninstaller"
 aliases:
   - /posts/tech/bulk-crap-uninstaller-windows-uninstall-guide/
 date: "2026-03-31T14:25:00+08:00"

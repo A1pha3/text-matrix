@@ -1,6 +1,7 @@
 ---
 title: "Agent Lightning：微软 AI 智能体强化学习训练框架完全指南"
 slug: "agent-lightning-microsoft-ai-agent-training-guide"
+github_repo: "microsoft/agent-lightning"
 aliases:
   - /posts/tech/agent-lightning-microsoft-ai-agent-training-guide/
 date: "2026-04-01T01:20:00+08:00"

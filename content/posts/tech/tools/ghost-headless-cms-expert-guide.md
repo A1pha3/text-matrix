@@ -2,6 +2,7 @@
 title: "Ghost：开源 Headless CMS 专家级技术文档"
 date: "2026-03-30T12:25:00+08:00"
 slug: ghost-headless-cms-expert-guide
+github_repo: "TryGhost/Ghost"
 aliases:
   - /posts/tech/ghost-headless-cms-expert-guide/
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "MiniMind：从零开始用3块钱训练64M参数的大语言模型"
 date: "2026-04-12T12:00:00+08:00"
 slug: "minimind-llm-training-from-scratch"
+github_repo: "jingyaogong/minimind"
 aliases:
   - /posts/tech/minimind-llm-training-from-scratch/
 description: "MiniMind 是 44.4k Stars 的开源 LLM 训练项目，3 元钱 + 2 小时即可训练 64M 参数模型。覆盖预训练、SFT、LoRA、DPO、PPO、GRPO、CISPO、Agentic RL、工具调用的完整链路，所有核心算法从零 PyTorch 原生实现。"

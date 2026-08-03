@@ -2,6 +2,7 @@
 title: "TradingAgents-CN：多智能体 AI 量化投资学习平台从入门到精通"
 date: "2026-04-08T10:30:00+08:00"
 slug: "tradingagents-cn-multi-agent-stock-platform"
+github_repo: "hsliuping/TradingAgents-CN"
 aliases:
   - /posts/tech/tradingagents-cn-multi-agent-stock-platform/
 description: "深度解析 TradingAgents-CN 多智能体量化投资平台，Fork 自 43k Stars 原版，21.9k Stars，FastAPI+Vue3 全新架构，支持 A股/港股/美股，详解原理、架构、配置与二次开发路径。"

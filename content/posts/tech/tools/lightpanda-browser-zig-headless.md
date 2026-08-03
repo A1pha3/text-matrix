@@ -2,6 +2,7 @@
 title: "Lightpanda Browser：25.5k Stars 从零构建的 Zig 无头浏览器"
 date: "2026-03-28T21:30:00+08:00"
 slug: "lightpanda-browser-zig-headless"
+github_repo: "lightpanda-io/browser"
 aliases:
   - /posts/tech/lightpanda-browser-zig-headless/
 description: "深度解读 Lightpanda Browser：25.5k Stars 的 AI 自动化无头浏览器，从零构建（非 Chromium Fork）、用 Zig 编写、内存占用仅 Chrome 的 1/9、速度提升 11 倍。"

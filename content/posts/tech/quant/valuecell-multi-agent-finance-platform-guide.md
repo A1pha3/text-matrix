@@ -2,6 +2,7 @@
 title: "ValueCell：社区驱动的多智能体金融应用平台完全指南"
 date: "2026-04-08T13:00:00+08:00"
 slug: "valuecell-multi-agent-finance-platform-guide"
+github_repo: "ValueCell-ai/valuecell"
 aliases:
   - /posts/tech/valuecell-multi-agent-finance-platform-guide/
 description: "基于 README、配置文档与源码结构，系统讲解 ValueCell 的功能边界、使用方法、运行原理、架构设计与二次开发路径。"

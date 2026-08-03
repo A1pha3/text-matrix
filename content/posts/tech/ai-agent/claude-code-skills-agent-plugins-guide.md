@@ -1,6 +1,7 @@
 ---
 title: "Claude Code Skills & Plugins：AI 编程智能体技能库完全指南"
 slug: "claude-code-skills-agent-plugins-guide"
+github_repo: "alirezarezvani/claude-skills"
 aliases:
   - /posts/tech/claude-code-skills-agent-plugins-guide/
 date: "2026-03-31T12:35:00+08:00"

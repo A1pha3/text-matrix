@@ -3,6 +3,7 @@ title: "elizaOS 深度解构:18.9K stars 的本地优先 AI Agent OS 到底在�
 date: 2026-08-03T15:42:00+08:00
 draft: false
 slug: "elizaos-eliza-deep-dive-2026"
+github_repo: "elizaOS/eliza"
 tags: ["agent", "ai-os", "typescript", "open-source", "architecture", "elizaOS"]
 categories: ["tech"]
 description: "18,886 stars 的 elizaOS/eliza 不只是又一个 agent 框架。它把自己定位成 agentic operating system,把 runtime、agent loop、plugin model、memory/state primitives、整机的 Linux/Android 系统镜像、桌面/移动 app、optional cloud 全塞进一个 monorepo。本文逐层拆开。"

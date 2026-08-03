@@ -1,6 +1,7 @@
 ---
 title: "Squad：把 GitHub Copilot 变成一个 AI 开发团队"
 slug: "squad-ai-agent-team-framework"
+github_repo: "bradygaster/squad"
 aliases:
   - /posts/tech/squad-ai-agent-team-framework/
 date: "2026-03-31T12:50:00+08:00"

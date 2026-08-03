@@ -1,6 +1,7 @@
 ---
 title: "Shannon：生产级多智能体编排框架完全指南"
 slug: "shannon-multi-agent-orchestration-framework-guide"
+github_repo: "Kocoro-lab/Shannon"
 aliases:
   - /posts/tech/shannon-multi-agent-orchestration-framework-guide/
 date: "2026-04-01T10:15:00+08:00"

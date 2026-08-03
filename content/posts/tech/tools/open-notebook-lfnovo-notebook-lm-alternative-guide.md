@@ -2,6 +2,7 @@
 title: "Open Notebook 实战指南：开源版 NotebookLM，18+ 模型 + 1-4 说话人播客的本地知识工作台"
 date: "2026-06-04T23:00:00+08:00"
 slug: "open-notebook-lfnovo-notebook-lm-alternative-guide"
+github_repo: "lfnovo/open-notebook"
 aliases:
   - /posts/tech/open-notebook-lfnovo-notebook-lm-alternative-guide/
 description: "Open Notebook 是 lfnovo 出品的 24K+ stars 开源 NotebookLM 替代，18+ 模型提供方（OpenAI/Anthropic/Ollama）+ 1-4 说话人播客 + 全 REST API + Docker 一键部署，研究数据完全私有。"

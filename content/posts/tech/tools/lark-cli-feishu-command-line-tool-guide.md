@@ -2,6 +2,7 @@
 title: "Lark CLI：飞书官方命令行工具从入门到精通"
 date: "2026-04-01T20:47:00+08:00"
 slug: lark-cli-feishu-command-line-tool-guide
+github_repo: "larksuite/cli"
 aliases:
   - /posts/tech/lark-cli-feishu-command-line-tool-guide/
 categories: ["技术笔记"]

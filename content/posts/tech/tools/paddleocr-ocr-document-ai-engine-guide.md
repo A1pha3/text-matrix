@@ -1,6 +1,7 @@
 ---
 title: "PaddleOCR：全球领先 OCR 工具包与文档 AI 引擎完全指南"
 slug: "paddleocr-ocr-document-ai-engine-guide"
+github_repo: "PaddlePaddle/PaddleOCR"
 aliases:
   - /posts/tech/paddleocr-ocr-document-ai-engine-guide/
 date: "2026-04-01T01:23:00+08:00"

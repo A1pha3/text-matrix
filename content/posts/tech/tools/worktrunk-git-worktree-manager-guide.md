@@ -1,6 +1,7 @@
 ---
 title: "Worktrunk：AI 并行开发 Git Worktree 管理器完全指南"
 slug: "worktrunk-git-worktree-manager-guide"
+github_repo: "max-sixty/worktrunk"
 aliases:
   - /posts/tech/worktrunk-git-worktree-manager-guide/
 date: "2026-03-31T15:35:00+08:00"

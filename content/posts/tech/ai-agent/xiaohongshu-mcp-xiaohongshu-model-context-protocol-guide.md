@@ -1,6 +1,7 @@
 ---
 title: "xiaohongshu-mcp：小红书 MCP 服务完全指南"
 slug: "xiaohongshu-mcp-xiaohongshu-model-context-protocol-guide"
+github_repo: "xpzouying/xiaohongshu-mcp"
 aliases:
   - /posts/tech/xiaohongshu-mcp-xiaohongshu-model-context-protocol-guide/
 date: "2026-03-31T17:05:00+08:00"

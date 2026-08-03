@@ -1,6 +1,7 @@
 ---
 title: "AgentFlow：智能体依赖图编排框架完全指南"
 slug: "agentflow-agent-dependency-graph-guide"
+github_repo: "shouc/agentflow"
 aliases:
   - /posts/tech/agentflow-agent-dependency-graph-guide/
 date: "2026-04-01T01:09:00+08:00"

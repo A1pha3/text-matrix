@@ -2,6 +2,7 @@
 title: "GitHub Copilot SDK 实战指南：把 Copilot Agent 引擎塞进 6 种语言的应用"
 date: "2026-06-04T23:00:00+08:00"
 slug: "github-copilot-sdk-multi-platform-agent-sdk-guide"
+github_repo: "github/copilot-sdk"
 aliases:
   - /posts/tech/github-copilot-sdk-multi-platform-agent-sdk-guide/
 description: "GitHub Copilot SDK 是 GitHub 官方出品的多平台 Agent SDK，覆盖 Python/Node.js/Go/.NET/Java/Rust，通过 JSON-RPC 调 Copilot CLI，支持 BYOK 自带模型 key，零代码迁移把 Agent 能力塞进任意应用。"

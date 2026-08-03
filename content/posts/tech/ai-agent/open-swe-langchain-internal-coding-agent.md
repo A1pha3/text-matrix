@@ -2,6 +2,7 @@
 title: "open-swe：LangChain 开源的 8.7k Stars 企业内部编程 Agent 框架"
 date: "2026-03-28T20:50:00+08:00"
 slug: "open-swe-langchain-internal-coding-agent"
+github_repo: "langchain-ai/open-swe"
 aliases:
   - /posts/tech/open-swe-langchain-internal-coding-agent/
 description: "深度解读 LangChain 开源的 open-swe：8.7k Stars 的企业内部编程 Agent 框架，复刻 Stripe/Ramp/Coinbase 内部 Agent 模式，支持 Slack/Linear/GitHub 触发。"

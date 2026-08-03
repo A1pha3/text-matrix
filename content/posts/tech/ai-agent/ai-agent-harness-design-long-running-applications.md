@@ -2,6 +2,7 @@
 title: "AI 编程 Agent 的 Harness 设计：如何让大模型更稳定地产出高质量代码"
 date: "2026-03-29T23:07:00+08:00"
 slug: ai-agent-harness-design-long-running-applications
+github_repo: "karpathy/autoresearch"
 aliases:
   - /posts/tech/ai-agent-harness-design-long-running-applications/
 categories: ["技术笔记"]

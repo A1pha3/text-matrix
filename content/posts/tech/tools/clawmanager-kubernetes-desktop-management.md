@@ -2,6 +2,7 @@
 title: "ClawManager：Kubernetes 桌面管理平台实战指南"
 date: "2026-03-30T18:22:00+08:00"
 slug: clawmanager-kubernetes-desktop-management
+github_repo: "Yuan-lab-LLM/ClawManager"
 aliases:
   - /posts/tech/clawmanager-kubernetes-desktop-management/
 categories: ["技术笔记"]

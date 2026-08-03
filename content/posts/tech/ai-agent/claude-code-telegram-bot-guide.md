@@ -1,6 +1,7 @@
 ---
 title: "Claude Code Telegram Bot：远程访问 AI 编程助手的完全指南"
 slug: "claude-code-telegram-bot-guide"
+github_repo: "RichardAtCT/claude-code-telegram"
 aliases:
   - /posts/tech/claude-code-telegram-bot-guide/
 date: "2026-04-01T01:08:00+08:00"

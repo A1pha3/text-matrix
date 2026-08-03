@@ -2,6 +2,7 @@
 title: "Qlib：微软亚洲研究院 AI 量化投资平台从入门到精通"
 date: "2026-04-08T15:00:00+08:00"
 slug: qlib-ai-quantitative-investment-platform-guide
+github_repo: "microsoft/qlib"
 aliases:
   - /posts/tech/qlib-ai-quantitative-investment-platform-guide/
 description: "Qlib 是微软亚洲研究院开源的 AI 量化投资平台，本文从功能边界、架构、数据层、模型层、策略层、华炎低代码四大模块全方位深度解析。"

@@ -2,6 +2,7 @@
 title: "Supermemory：从入门到精通 AI 记忆与上下文引擎"
 date: "2026-03-31T01:20:00+08:00"
 slug: supermemory-ai-memory-context-engine
+github_repo: "supermemoryai/supermemory"
 aliases:
   - /posts/tech/supermemory-ai-memory-context-engine/
 categories: ["技术笔记"]

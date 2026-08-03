@@ -1,6 +1,7 @@
 ---
 title: "Flowsint：从入门到架构与扩展的 OSINT 图调查平台指南"
 slug: "flowsint-osint-graph-exploration-guide"
+github_repo: "reconurge/flowsint"
 aliases:
   - /posts/tech/flowsint-osint-graph-exploration-guide/
 date: "2026-03-31T21:21:00+08:00"

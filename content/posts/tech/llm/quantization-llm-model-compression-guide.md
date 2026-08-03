@@ -2,6 +2,7 @@
 title: "Quantization 量化技术完全指南：从原理到 LLM 实战"
 date: "2026-03-29T23:28:00+08:00"
 slug: quantization-llm-model-compression-guide
+github_repo: "ggerganov/llama.cpp"
 aliases:
   - /posts/tech/quantization-llm-model-compression-guide/
 categories: ["技术笔记"]

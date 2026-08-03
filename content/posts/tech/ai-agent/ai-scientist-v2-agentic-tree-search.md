@@ -2,6 +2,7 @@
 title: "AI Scientist-v2：智能体树搜索驱动的自动化科研论文生成"
 date: "2026-03-29T15:47:00+08:00"
 slug: "ai-scientist-v2-agentic-tree-search"
+github_repo: "SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment"
 aliases:
   - /posts/tech/ai-scientist-v2-agentic-tree-search/
 description: "AI Scientist-v2 是首个生成论文被 ICLR Workshop 接收的 AI 科研系统，使用智能体树搜索实现完全自主的科学研究流程：假设生成、实验设计、论文撰写。"
