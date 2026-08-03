@@ -2,6 +2,7 @@
 title: "ShipSwift：AI原生SwiftUI组件库，MCP协议让Claude秒级构建iOS应用"
 date: "2026-05-11T23:00:00+08:00"
 slug: "shipswift-ai-native-swiftui-components"
+github_repo: "signerlabs/ShipSwift"
 description: "深度解析signerlabs/ShipSwift：1.4k星的AI-native SwiftUI组件库，通过MCP协议让AI助手获取production-ready组件代码，支持Animation、Chart、Auth、Paywall等完整模块，开源MIT协议。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Renewlet：一站式自托管订阅管理工具，把所有 SaaS 续费管起来"
 date: "2026-05-17T11:59:04+08:00"
 slug: "renewlet-self-hosted-subscription-manager"
+github_repo: "zhiyingzzhou/renewlet"
 description: "Renewlet 是一个开源自托管订阅管理工具，支持同时管理 SaaS、AI 工具、云服务和开发工具的订阅信息、续费提醒和支出统计，前端用 React 19，后端用 Go + PocketBase，单容器一键部署。"
 draft: false
 categories: ["技术笔记"]

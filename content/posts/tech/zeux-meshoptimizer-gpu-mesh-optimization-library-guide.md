@@ -1,6 +1,7 @@
 ---
 title: "meshoptimizer 深度拆解：GPU 渲染管线的网格优化利器"
 slug: zeux-meshoptimizer-gpu-mesh-optimization-library-guide
+github_repo: "zeux/meshoptimizer"
 date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false

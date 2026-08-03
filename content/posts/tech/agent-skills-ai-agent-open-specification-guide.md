@@ -2,6 +2,7 @@
 title: "Agent Skills：AI Agent 能力扩展开放规范完全指南"
 date: "2026-04-02T17:49:04+08:00"
 slug: "agent-skills-ai-agent-open-specification-guide"
+github_repo: "agentskills/agentskills"
 description: "Agent Skills 是 Anthropic 主导的 AI Agent 能力扩展开放规范。内容覆盖 Skill 格式、工作原理、渐进式披露机制，以及创建、评估和部署生产级 Skill 的完整流程。"
 draft: false
 categories: ["技术笔记"]

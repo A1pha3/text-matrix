@@ -1,4 +1,5 @@
 +++
+github_repo = "apps/pre-commit-ci"
 date = '2026-05-15T10:25:00+08:00'
 draft = false
 title = 'pre-commit-ci：自动化代码质量检查'

@@ -2,6 +2,7 @@
 title: "DreamServer：一条命令跑起完整本地 AI 栈"
 date: "2026-05-17T20:11:45+08:00"
 slug: "dreamserver-local-ai-stack-guide"
+github_repo: "Light-Heart-Labs/DreamServer"
 description: "DreamServer 是 Light-Heart-Labs 开源的全栈本地 AI 解决方案，一条命令自动检测 GPU、选择模型、启动十余个服务（LLM推理、聊天、语音、Agent、工作流、RAG、图片生成），无需云端、无需订阅。本文深入解析其架构、核心机制、安装与使用。"
 draft: false
 categories: ["技术笔记"]

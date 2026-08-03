@@ -2,6 +2,7 @@
 title: "Zig：42.8K Stars·通用编程语言·系统级性能"
 date: "2026-04-12T02:31:39+08:00"
 slug: zig-programming-language-guide
+github_repo: "michal-z/zig-zmath"
 description: "Zig 是 C 的现代替代而非 Rust 的竞争者：用显式分配器、comptime 和无隐藏控制流换取系统编程的可读性与可控性。"
 draft: false
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "rmyndharis/OpenWA"
 date = '2026-05-20T00:00:00+08:00'
 draft = false
 title = 'OpenWA：免费开源自托管 WhatsApp API 网关'

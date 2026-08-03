@@ -5,6 +5,7 @@ draft: false
 categories: ["开源项目"]
 tags: ["OpenRSI", "FrontisAI", "OpenMLE", "AI4AI", "递归自我改进", "开源项目", "强化学习", "进化搜索", "分布式训练"]
 slug: openrsi-engineering-deep-dive
+github_repo: "FrontisAI/OpenRSI"
 description: "从代码结构到训练管线到部署模式，完整解读 FrontisAI 开源的 OpenRSI 技术栈——如何把「AI 改进 AI」从一个概念变成可以 clone 下来跑起来的工程项目。"
 hiddenFromHomePage: false
 ---

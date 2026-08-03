@@ -2,6 +2,7 @@
 title: "Kaneo：以\"少即是多\"为信条的自托管项目管理工具"
 date: 2026-08-02T02:59:48+08:00
 slug: "usekaneo-kaneo-self-hosted-pm"
+github_repo: "usekaneo/kaneo"
 description: "usekaneo/kaneo 是一个 MIT 许可、自托管的项目管理平台，作者把它定位为\"减法设计\"：界面克制、真正快、数据留在自己手里；提供核心任务/看板/团队协作能力，不堆叠企业 SaaS 的多余工作流。"
 draft: false
 categories: ["技术笔记"]

@@ -1,6 +1,7 @@
 ---
 title: "Nuxt 深度拆解:把 Vue 的 SSR、文件路由、Nitro 服务端压成一个约定"
 slug: nuxt-nuxt-vue-fullstack-framework-guide
+github_repo: "nuxt/nuxt"
 date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false

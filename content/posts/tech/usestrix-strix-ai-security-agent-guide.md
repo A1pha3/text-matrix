@@ -2,6 +2,7 @@
 title: "Strix：AI Agent 群跑 PoC 的渗透测试框架"
 date: "2026-06-28T21:08:54+08:00"
 slug: "usestrix-strix-ai-security-agent-guide"
+github_repo: "BerriAI/litellm"
 description: "Strix 是 usestrix 开源的 AI 渗透测试框架，靠多智能体编排 + 真实 PoC 动态验证，区别于传统静态扫描。本文拆解其架构、工具栈与任务流，给出 CI/CD 接入建议。"
 draft: false
 categories: ["技术笔记"]

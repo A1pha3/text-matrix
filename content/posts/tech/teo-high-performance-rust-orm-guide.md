@@ -2,6 +2,7 @@
 title: "TEO：Rust高性能ORM，支持MySQL/PostgreSQL/SQLite/MongoDB四库合一"
 date: "2026-05-11T12:55:00+08:00"
 slug: "teo-high-performance-rust-orm"
+github_repo: "teodevgroup/teo"
 description: "深度解析teodevgroup/teo：Rust原生高性能ORM，0.4版本完全重写，支持MySQL/PostgreSQL/SQLite/MongoDB四大数据库，内置Pipeline中间件、权限系统和自动迁移。"
 draft: false
 categories: ["技术笔记"]

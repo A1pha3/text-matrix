@@ -2,6 +2,7 @@
 title: "微软 AI Agents for Beginners 完全指南：14 节课程从入门到精通"
 date: "2026-04-22T11:30:00+08:00"
 slug: "ai-agents-for-beginners-microsoft-complete-guide"
+github_repo: "microsoft/ai-agents-for-beginners"
 aliases:
     - "/posts/tech/ai-agents-for-beginners-microsoft-guide/"
     - "/posts/tech/microsoft-ai-agents-for-beginners-course/"

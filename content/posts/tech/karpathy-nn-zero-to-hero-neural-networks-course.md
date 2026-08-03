@@ -2,6 +2,7 @@
 title: "从零手写神经网络：Karpathy 的 nn-zero-to-hero 到底在教什么"
 date: "2026-06-02T12:00:00+08:00"
 slug: karpathy-nn-zero-to-hero-neural-networks-course
+github_repo: "karpathy/nn-zero-to-hero"
 description: "Andrej Karpathy 的 nn-zero-to-hero 不是在教你怎么用 PyTorch，而是在逼你面对一个事实：如果你说不清 loss.backward() 里每一层梯度是怎么算出来的，那你其实并不理解自己训练的模型。22.5k stars，8 个 Lecture，从手动反向传播一路写到 GPT。"
 tags: ["Karpathy", "PyTorch", "GPT", "Transformer"]
 categories: ["技术笔记"]

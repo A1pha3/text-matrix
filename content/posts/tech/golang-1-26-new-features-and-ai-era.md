@@ -2,6 +2,7 @@
 title: "Go 1.26 新特性解读：AI 时代为什么 Go 又一次上 trending"
 date: "2026-06-07T12:54:00+08:00"
 slug: "golang-1-26-new-features-and-ai-era"
+github_repo: "golang/go"
 aliases:
   - "/posts/tech/golang-1-26-new-features-and-ai-era/"
 description: "Go 1.26 在 2026 年 2 月发布，1.26.4 是当前最新稳定版。本文按语言、运行时、工具链、标准库、编译器五个层面拆解这一版的关键变化，包括 new(expr) 表达式操作数、自引用泛型约束、Green Tea GC 默认启用、cgo 基线开销降 30%、crypto/hpke 与 simd/archsimd 等新包，并讨论 Go 在 AI Infra 中的位置与升级路径。"

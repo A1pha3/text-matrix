@@ -2,6 +2,7 @@
 title: "Cua：开源计算机控制Agent基础设施完全指南"
 date: "2026-05-14T10:47:00+08:00"
 slug: "cua-computer-use-agent-infrastructure-guide"
+github_repo: "trycua/cua"
 aliases:
     - "/posts/tech/cua-computer-use-framework/"
     - "/posts/tech/cua-computer-use-agent-framework/"

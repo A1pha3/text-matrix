@@ -2,6 +2,7 @@
 title: "codex-shim：让 Codex Desktop 支持任意自定义模型"
 date: "2026-05-23T03:15:00+08:00"
 slug: "codex-shim-local-responses-api-shim-guide"
+github_repo: "sybil-solutions/codex-shim"
 aliases:
   - "/posts/tech/codex-shim-local-responses-api-shim/"
   - "/posts/tech/codex-shim-local-responses-api-shim-codex-desktop/"

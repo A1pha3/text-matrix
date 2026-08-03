@@ -1,6 +1,7 @@
 ---
 title: "李博杰《深入理解 AI Agent》：从 Pine AI 实战视角看 Agent 工程化的真正原则"
 slug: bojieli-ai-agent-book-pine-perspective-deep-dive
+github_repo: "bojieli/ai-agent-book"
 date: 2026-07-18T16:20:00+08:00
 lastmod: 2026-07-18T16:20:00+08:00
 draft: false

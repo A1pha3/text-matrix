@@ -2,6 +2,7 @@
 title: "Svelte 5 Runes：稳定版一年后，前端响应式范式走到哪一步了"
 date: "2026-06-07T12:50:00+08:00"
 slug: "svelte-5-runes-stable-frontend-reactivity"
+github_repo: "sveltejs/svelte"
 aliases:
   - "/posts/tech/svelte-5-runes-stable-frontend-reactivity/"
 description: "Svelte 5 稳定版发布已超过一年，Runes 响应式范式在 5.56.x 持续打磨。本文回顾 runes 的核心机制、为什么 2026 年它重新上 GitHub Trending，以及与 React/Vue/Solid 的对照。"

@@ -1,6 +1,7 @@
 ---
 title: "Next.js 深度拆解：React 全栈框架的事实标准"
 slug: vercel-nextjs-react-fullstack-framework-guide
+github_repo: "reactjs/rfcs"
 date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false

@@ -2,6 +2,7 @@
 title: "Firecrawl：把整个 Web 变成 LLM 能直接吃的 Markdown 上下文 API 完全拆解"
 date: "2026-07-07T02:59:57+08:00"
 slug: "firecrawl-web-crawler-api-architecture-guide"
+github_repo: "firecrawl/firecrawl"
 description: "Firecrawl（146k stars / AGPL-3.0）把网页爬取、JS 渲染、结构化抽取、爬虫调度四件事打包成一个 REST API，专为 LLM 上下文设计：支持 search / scrape / crawl / batch scrape / extract。本文拆解它的接口形态、可靠性边界、与同类工具（jina reader / tavily / playwright）的差异点。"
 draft: false
 categories: ["技术笔记"]

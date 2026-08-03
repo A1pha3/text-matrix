@@ -2,6 +2,7 @@
 title: "DFlash：块扩散模型加速 LLM 推理"
 date: "2026-04-17T16:35:00+08:00"
 slug: "dflash-block-diffusion-speculative-decoding"
+github_repo: "z-lab/dflash"
 description: "1,710 Stars 的 DFlash 是一个轻量级块扩散模型，用于投机解码加速 LLM 推理。支持 Qwen3/LLaMA/GPT-OSS 等多种模型，可在 vLLM/SGLang/Transformers 上部署，实测加速 2-3 倍。"
 draft: false
 categories: ["技术笔记"]

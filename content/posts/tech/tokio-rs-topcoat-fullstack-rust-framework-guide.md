@@ -1,4 +1,5 @@
 +++
+github_repo = "tokio-rs/topcoat"
 title = 'Tokio-rs Topcoat:服务端渲染即客户端响应性——Rust 全栈框架的范式突破'
 date = '2026-07-21T02:57:15+08:00'
 categories = ['技术笔记']
@@ -6,7 +7,6 @@ tags = ['Rust']
 description = '拆解 tokio-rs 团队 Topcoat 框架的两大架构创新——$() 表达式把服务端 Rust 同源翻译成浏览器 JS、shard 机制按需触发服务端重渲染——看清"零客户端构建步骤"背后的类型安全设计。'
 draft = false
 slug = 'tokio-rs-topcoat-fullstack-rust-framework-guide'
-
 +++
 
 ## 一、问题的本质:为什么"全栈"总是意味着"双份代码"

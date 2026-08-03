@@ -3,6 +3,7 @@ title: "n8n 工作流自动化平台：从入门到精通完全指南"
 date: "2026-05-02T10:12:00+08:00"
 lastmod: 2026-05-02T10:12:00+08:00
 slug: n8n-workflow-automation-platform-guide
+github_repo: "en/authentication"
 summary: "n8n 是一款基于 fair-code 模式开源的工作流自动化平台，支持 400 + 集成与原生 AI 能力。涵盖核心概念、执行引擎、架构设计、本地部署配置、Docker 与 npm 安装方式、可视化编辑器使用、实战工作流示例及自定义节点开发路径。"
 description: "n8n 的工作原理、节点架构、执行引擎、AI 原生能力，以及 Docker/npm 安装配置、可视化编辑器实战、自定义节点开发与生产环境部署建议。"
 draft: false

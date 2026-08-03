@@ -2,6 +2,7 @@
 title: "Syll：一个开源多模态 Agent 驾驭框架，让 AI 成为住在电脑里的小精灵"
 date: "2026-05-31T18:59:17+08:00"
 slug: "syll-open-source-agent-harness-teachable-ai"
+github_repo: "THU-SAGE/syll"
 description: "深度解读清华大学 SAGA 实验室开源项目 Syll，设计理念是以 Markdown 文件管理 AI 人格、lore fragments 替代向量检索、Agent 判断的主动沉默、跨通道确认两步模式，附 ETCLOVG 框架拆解与 Demo 分析。"
 draft: false
 categories: ["技术笔记"]

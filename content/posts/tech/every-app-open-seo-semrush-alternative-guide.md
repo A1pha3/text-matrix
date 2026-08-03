@@ -2,6 +2,7 @@
 title: "OpenSEO：把 Semrush/Ahrefs 装进 MCP 里的开源平替"
 date: 2026-06-26T18:01:43+08:00
 slug: "every-app-open-seo-semrush-alternative-guide"
+github_repo: "every-app/open-seo"
 description: "OpenSEO 是一个 MIT 协议的开源 SEO 工具，定位为 Semrush 和 Ahrefs 的平替。它把关键词研究、排名跟踪、外链分析、站点审计、AI 品牌可见度等 7 套工作流打包成一个自带 MCP 服务器的 Web 应用，并配套 8 个面向 Codex/Claude Code 的 Agent Skills。本文带你看清它和传统 SEO 工具的本质差异、5 分钟自托管路径与按量付费的真实成本。"
 draft: false
 categories: ["技术笔记"]

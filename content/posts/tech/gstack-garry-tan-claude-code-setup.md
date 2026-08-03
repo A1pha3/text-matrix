@@ -2,6 +2,7 @@
 title: "gstack：Garry Tan 的 AI 原生开发环境，23 个专家级工具装进 Claude Code"
 date: "2026-05-14T20:33:50+08:00"
 slug: "gstack-garry-tan-claude-code-setup"
+github_repo: "garrytan/gstack"
 description: "gstack 是 Y Combinator CEO Garry Tan 开源的个人开发工具集，将 Claude Code 打造成虚拟工程团队：CEO、设计师、架构师、安全审查员、QA 等 23 个专家角色，8 个强力命令，全部 MIT 协议免费使用。"
 draft: false
 categories: ["技术笔记"]

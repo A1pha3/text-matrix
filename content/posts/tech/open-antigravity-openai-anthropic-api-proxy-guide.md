@@ -1,6 +1,7 @@
 ---
 title: "Open-Antigravity：将Antigravity转为OpenAI/Anthropic兼容API"
 slug: "open-antigravity-openai-anthropic-api-proxy-guide"
+github_repo: "jackwener/open-antigravity"
 date: "2026-04-08T13:00:00+08:00"
 lastmod: 2026-04-08T13:00:00+08:00
 categories: ["技术笔记"]

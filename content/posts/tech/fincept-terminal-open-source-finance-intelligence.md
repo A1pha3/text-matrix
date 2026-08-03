@@ -2,6 +2,7 @@
 title: "FinceptTerminal 完全指南 - 开源金融智终端"
 date: "2026-04-21T11:30:00+08:00"
 slug: fincept-terminal-open-source-finance-intelligence
+github_repo: "Fincept-Corporation/FinceptTerminal"
 description: "一文看懂 FinceptTerminal：它是什么、适合谁、如何上手，以及 37 个 AI 智能体、100+ 数据连接器与量化分析能力该如何正确理解。"
 tags: ["开源", "C++", "Python"]
 categories: ["技术笔记"]

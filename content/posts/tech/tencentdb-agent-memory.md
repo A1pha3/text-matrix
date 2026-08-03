@@ -2,6 +2,7 @@
 title: "TencentDB Agent Memory：把 Agent 记忆从聊天历史改造成分层信息系统"
 date: "2026-05-15T18:22:00+08:00"
 slug: "tencentdb-agent-memory"
+github_repo: "Tencent/TencentDB-Agent-Memory"
 description: "TencentDB Agent Memory 的关键不在于‘多一层记忆’，而在于把跨会话经验沉淀与长任务上下文治理拆成两套系统：L0 到 L3 长期记忆金字塔，以及短期 Context Offload。"
 draft: false
 categories: ["技术笔记"]

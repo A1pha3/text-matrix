@@ -2,6 +2,7 @@
 title: "Biohub/esm：蛋白质世界的世界模型，从序列预测到药物设计"
 date: "2026-05-30T03:05:00+08:00"
 slug: "biohub-esm-protein-world-model-guide"
+github_repo: "Biohub/esm"
 description: "Biohub发布的esm是一个蛋白质生物学世界模型，包含ESMC语言模型、ESMFold2结构预测和ESM Atlas（10亿级蛋白质结构图谱）。本文深入解析其核心架构、三大组件协同机制及在蛋白质设计中的应用边界。"
 draft: false
 categories: ["技术笔记"]

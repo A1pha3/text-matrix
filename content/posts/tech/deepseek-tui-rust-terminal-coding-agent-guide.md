@@ -2,6 +2,7 @@
 title: "DeepSeek-TUI：Rust 终端里的 DeepSeek 编程智能体"
 date: "2026-05-05T20:19:00+08:00"
 slug: "deepseek-tui-rust-terminal-coding-agent-guide"
+github_repo: "Hmbown/DeepSeek-TUI"
 description: "DeepSeek-TUI 把 AI 编程助手从 Electron 应用里拽回了终端。文章从架构拆解到一次完整的修 bug 实录，说明这套 Rust TUI 工具在什么场景下比 IDE 插件好用，什么时候不必折腾。"
 draft: false
 categories: ["技术笔记"]

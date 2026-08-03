@@ -1,4 +1,5 @@
 +++
+github_repo = "NVIDIA-AI-Blueprints/video-search-and-summarization"
 date = '2026-05-15T10:25:00+08:00'
 draft = false
 title = 'NVIDIA AI Blueprint：视频搜索与摘要系统'

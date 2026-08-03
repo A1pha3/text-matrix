@@ -2,6 +2,7 @@
 title: "AvatarAI：把照片+5 秒音频变成实时对话数字人，底层那套流式架构才是护城河"
 date: "2026-06-03T13:15:00+08:00"
 slug: ai-avatar-system-realtime-talking-avatar
+github_repo: "PunithVT/ai-avatar-system"
 description: "ai-avatar-system 是 218 stars 的开源 AI Avatar 平台，串 Whisper+Claude+XTTS+ MuseTalk 成实时唇形同步数字人。"
 draft: false
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "roboflow/supervision"
 date = '2026-05-14T20:17:49+08:00'
 draft = false
 title = 'supervision：模型无关的计算机视觉工具箱'

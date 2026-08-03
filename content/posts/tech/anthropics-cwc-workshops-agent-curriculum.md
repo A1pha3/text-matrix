@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["Anthropic", "Claude", "AI Agent", "MCP"]
 description: "cwc-workshops 是 Anthropic 官方 Code with Claude 工作坊的材料合集，覆盖 10 个 workshop，从模型选型、agent 分解、managed agents 到评测驱动开发，每个都是 Anthropic 团队亲自跑过的实操课。"
 slug: anthropics-cwc-workshops-agent-curriculum
+github_repo: "anthropics/cwc-workshops"
 
 ---
 

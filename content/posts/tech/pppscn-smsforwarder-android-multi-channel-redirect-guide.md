@@ -1,6 +1,7 @@
 ---
 title: "SmsForwarder 深度上手：把 Android 手机变成 13 通道的短信/通知中转站"
 slug: pppscn-smsforwarder-android-multi-channel-redirect-guide
+github_repo: "pppscn/SmsForwarder"
 date: "2026-06-20T21:00:00+08:00"
 draft: false
 categories: ["技术笔记"]

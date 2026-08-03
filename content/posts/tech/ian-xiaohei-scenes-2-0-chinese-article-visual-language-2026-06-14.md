@@ -3,6 +3,7 @@ title: "ian-xiaohei-scenes 2.0 解读:7 张母版 + 4 个不变量,把中文 AI 
 date: "2026-06-14T20:48:00+08:00"
 lastmod: 2026-06-16T22:00:00+08:00
 slug: "ian-xiaohei-scenes-2-0-chinese-article-visual-language-2026-06-14"
+github_repo: "helloianneo/ian-xiaohei-scenes"
 aliases:
     - "/posts/tech/ian-xiaohei-scenes-chinese-visual-language/"
 description: "逐行拆解 helloianneo/ian-xiaohei-scenes 2.0 的 7 张母版、4 个不变量、1B 事实锚定、QA 18 必过项与 18 失败信号。给出标准模式与彩蛋长卷的完整任务流,以及 text-matrix 这类技术站接入视觉语言的迁移路径。"

@@ -2,6 +2,7 @@
 title: "AI 量化交易从 0 到 1：ai-quant-book 多智能体量化系统导读"
 date: "2026-04-23T21:02:46+08:00"
 slug: "ai-quant-book-multi-agent-quant-trading-guide"
+github_repo: "waylandzhang/ai-quant-book"
 description: "系统解读 ai-quant-book 开源量化教程，梳理多智能体架构、22 课课程地图、学习路径，以及从 Regime Detection 到 Risk Agent、Execution Agent 的适用范围。"
 draft: false
 categories: ["技术笔记"]

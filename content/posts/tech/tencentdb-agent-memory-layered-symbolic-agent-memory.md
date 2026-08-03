@@ -2,6 +2,7 @@
 title: "TencentDB Agent Memory：用分层 + 符号化对抗 Agent 上下文膨胀"
 date: "2026-07-09T02:55:00+08:00"
 slug: "tencentdb-agent-memory-layered-symbolic-agent-memory"
+github_repo: "TencentCloud/TencentDB-Agent-Memory"
 description: "TencentDB Agent Memory 是腾讯云开源的 Agent 长期记忆层，主打「符号化短期记忆 + 分层长期记忆」双轴架构。在 OpenClaw 上接入后，长任务 token 消耗下降 61%、任务通过率最高提升 51%。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "CloakBrowser：C++ 源码级指纹修改的隐形 Chromium，零配置 0.9 reCAPTCHA v3"
 date: "2026-06-09T17:59:00+08:00"
 slug: "cloakbrowser-stealth-chromium-cpp"
+github_repo: "CloakHQ/CloakBrowser"
 aliases:
   - "/posts/tech/cloakbrowser-stealth-chromium-cpp/"
 description: "CloakBrowser 在 Chromium 146 源码层做 58 处 C++ 指纹补丁，pip/npm 一行安装即可替换 Playwright/Puppeteer，Cloudflare Turnstile / FingerprintJS / BrowserScan 等 30+ 检测站全部通过，是当前最强的隐形浏览器方案。"

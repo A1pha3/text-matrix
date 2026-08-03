@@ -7,6 +7,7 @@ tags: ["知识图谱", "MCP", "RAG", "AI 编程"]
 categories: ["技术笔记"]
 description: "GitNexus 是一款零服务器的代码智能分析引擎，通过知识图谱为 AI 编程工具（Claude Code、Cursor、Codex 等）提供深层代码上下文，让 AI 不再错过依赖关系、不再打断调用链、不再盲目编辑。Stars 33k+，支持 Tree-sitter 本地解析和 MCP 协议。"
 slug: gitnexus-zero-server-code-intelligence-engine
+github_repo: "abhigyanpatwari/GitNexus"
 author: ""
 ---
 

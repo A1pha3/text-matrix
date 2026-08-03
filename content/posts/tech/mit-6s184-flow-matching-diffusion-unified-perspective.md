@@ -2,6 +2,7 @@
 title: "Flow Matching 与扩散模型的统一视角:MIT 2026 新课 6.S184 精读"
 date: 2026-06-21T13:20:00+08:00
 slug: mit-6s184-flow-matching-diffusion-unified-perspective
+github_repo: "huggingface/diffusers"
 description: "MIT 2026 新开课程 6.S184《Generative AI with Stochastic Differential Equations》的核心论点不是再讲一遍扩散模型,而是把 flow matching 和 denoising diffusion 还原成同一个 ODE/SDE 家族的两种表达。读懂这个统一框架,才能真正看懂 Stable Diffusion 3、Meta Movie Gen、AlphaFold 3、VEO-3 这些当代最强生成模型为什么这样设计。"
 draft: false
 categories: ["技术笔记"]

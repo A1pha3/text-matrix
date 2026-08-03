@@ -2,6 +2,7 @@
 title: "awesome-mac：106K Stars·macOS软件资源大全·开发者工具/设计/媒体/效率工具"
 date: "2026-04-12T02:29:31+08:00"
 slug: awesome-mac-macos-software-resource-guide
+github_repo: "jaywcjlove/awesome-mac"
 description: "awesome-mac 是 jaywcjlove 维护的 macOS 应用资源集合，收录各类 macOS 软件，涵盖开发者工具、设计工具、媒体工具、效率工具、安全工具等领域，截至 2026 年 6 月已积累 106K Stars。"
 draft: false
 categories: ["技术笔记"]

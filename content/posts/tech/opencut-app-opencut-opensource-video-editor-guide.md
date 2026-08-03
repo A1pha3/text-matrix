@@ -2,6 +2,7 @@
 title: "OpenCut：开源 CapCut 替代品的双仓库真相与重写路线图"
 date: 2026-06-26T18:19:00+08:00
 slug: "opencut-app-opencut-opensource-video-editor-guide"
+github_repo: "opencut-app/opencut-classic"
 description: "OpenCut 是 GitHub 上最火的 CapCut 开源替代品（近 6 万 Star），但当前仓库仍处于重写脚手架阶段，真正的产品仍跑在已归档的 classic 版本。本文拆解两个仓库的关系、Rust 引擎 + 插件 + MCP + Headless 的重写路线图，以及如何选型。"
 draft: false
 categories: ["技术笔记"]

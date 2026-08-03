@@ -2,6 +2,7 @@
 title: "Cypress：跑在浏览器内部的 E2E 测试平台，从断言反射到 Cypress Cloud 编排"
 date: "2026-06-15T15:01:13+08:00"
 slug: "cypress-e2e-component-testing-real-browser-architecture-guide"
+github_repo: "cypress-io/cypress"
 description: "Cypress 是 50k stars 的浏览器内 E2E 与组件测试平台，测试代码与被测应用同运行时执行，拆解同运行时架构、自动等待原理与 Cloud 并行化能力。"
 draft: false
 categories: ["技术笔记"]

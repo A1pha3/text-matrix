@@ -1,4 +1,5 @@
 +++
+github_repo = "NVIDIA-AI-Blueprints/video-search-and-summarization"
 date = '2026-05-14T20:17:49+08:00'
 draft = false
 title = 'NVIDIA VSS：构建 GPU 加速的视觉智能体'

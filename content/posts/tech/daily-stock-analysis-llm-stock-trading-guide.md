@@ -2,6 +2,7 @@
 title: "LLM 驱动的股票分析系统：daily_stock_analysis 架构深度解读与零成本部署指南"
 date: "2026-05-18T20:00:00+08:00"
 slug: "daily-stock-analysis-llm-stock-trading-guide"
+github_repo: "ZhuLinsen/daily_stock_analysis"
 aliases:
   - "/posts/tech/daily-stock-analysis-llm-stock-trading-system/"
 description: "daily_stock_analysis 的价值不在「用 AI 看股票」，而在它把数据采集、多模型编排、策略裁决、多渠道推送这一整条链路跑成了可复现的定时流水线。本文拆解其四层架构、并行数据获取机制、15 种策略 Agent 的裁决逻辑，以及 GitHub Actions 零成本部署的全流程。"

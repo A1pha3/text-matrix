@@ -1,4 +1,5 @@
 +++
+github_repo = "KeygraphHQ/shannon"
 date = '2026-05-17T20:15:00+08:00'
 draft = false
 title = 'Shannon：开源 AI 渗透测试引擎'

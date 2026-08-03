@@ -2,6 +2,7 @@
 title: "coreyhaines31/marketingskills：把 50 个营销技能塞进 Claude Code / Cursor / Codex 的开源技能库"
 date: 2026-07-14T03:13:08+08:00
 slug: "coreyhaines31-marketingskills-marketing-skill-library"
+github_repo: "coreyhaines31/marketingskills"
 description: "coreyhaines31/marketingskills 是为 Claude Code、OpenAI Codex、Cursor、Windsurf 等 AI 编码代理准备的 50 个营销技能包（覆盖 CRO、SEO、文案、付费投放、A/B 测试、留存、增长工程、Sales/RevOps 等），遵循 Agent Skills 规范，product-marketing 作为所有技能的前置上下文，安装方式覆盖 npx skills、Claude Code plugin、git submodule、SkillKit 等多种路径。"
 draft: false
 categories: ["技术笔记"]

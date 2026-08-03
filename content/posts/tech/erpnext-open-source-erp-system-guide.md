@@ -2,6 +2,7 @@
 title: "ERPNext：开源ERP系统完整指南"
 date: 2026-05-20T09:09:49+08:00
 slug: "erpnext-open-source-erp-system-guide"
+github_repo: "frappe/erpnext"
 description: "ERPNext 是一款功能完善的开源 ERP 系统，基于 Frappe 框架构建，涵盖会计、订单管理、制造、资产管理、项目管理等多个业务模块。本文从产品定位、核心功能、技术架构和适用场景进行系统解读。"
 draft: false
 categories: ["技术笔记"]

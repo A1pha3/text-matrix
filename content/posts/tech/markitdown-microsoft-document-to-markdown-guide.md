@@ -1,6 +1,7 @@
 ---
 title: "MarkItDown 指南：微软开源的文档转 Markdown 工具"
 slug: "markitdown-microsoft-document-to-markdown-guide"
+github_repo: "microsoft/markitdown"
 description: "深入解析Microsoft MarkItDown——98.7k Stars的文档转换工具，将PDF/Word/Excel/PowerPoint等格式统一转换为Markdown，专为LLM和RAG场景优化。"
 date: "2026-04-10T23:50:00+08:00"
 categories: ["技术笔记"]

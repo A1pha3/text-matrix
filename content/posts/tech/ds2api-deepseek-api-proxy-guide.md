@@ -1,6 +1,7 @@
 ---
 title: "DS2API：为 DeepSeek Web 对话装上 OpenAI/Claude/Gemini 兼容接口"
 slug: "ds2api-deepseek-api-proxy-guide"
+github_repo: "CJackHwang/ds2api"
 description: "DS2API 是一个轻量级 Go 中间件，将 DeepSeek Web 对话能力转换为 OpenAI、Claude 与 Gemini 兼容 API。支持多账号轮询、Vercel Serverless 和 Docker 部署，兼容主流 AI SDK。"
 date: "2026-04-28T11:35:00+08:00"
 categories: ["技术笔记"]

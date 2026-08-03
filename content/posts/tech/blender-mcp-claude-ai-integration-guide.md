@@ -1,4 +1,5 @@
 +++
+github_repo = "ahujasid/blender-mcp"
 date = '2026-04-13T23:51:22+08:00'
 draft = false
 title = 'BlenderMCP：通过 MCP 协议用 Claude 控制 Blender 3D 建模'

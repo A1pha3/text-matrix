@@ -2,6 +2,7 @@
 title: "Harness：把一句话变成一支 Agent 舰队的团队架构工厂"
 date: "2026-05-29T09:06:54+08:00"
 slug: "harness-claude-code-multi-agent-team-architecture-guide"
+github_repo: "affaan-m/everything-claude-code"
 description: "Harness 是一个 Claude Code 插件，输入一句「为此项目构建 Harness」，输出一套完整的多 Agent 团队架构——6 种协作模式、自动生成的 Agent 定义和 Skill 文件、可测量的质量提升（作者 A/B 实测 +60%，15/15 胜率）。"
 draft: false
 categories: ["技术笔记"]

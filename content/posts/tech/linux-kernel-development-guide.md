@@ -3,6 +3,7 @@ title: "Linux 内核开发指南：从源码结构到参与上游社区"
 date: "2026-05-02T15:03:42+08:00"
 lastmod: 2026-06-27T15:17:00+08:00
 slug: "linux-kernel-development-guide"
+github_repo: "torvalds/linux"
 description: "本文系统讲解 Linux 内核源码目录结构、主线开发流程、编译构建方法以及如何参与上游社区贡献，涵盖子系统划分、提交规范、测试框架与 Rust 融入现状等核心内容。"
 draft: false
 categories: ["技术笔记"]

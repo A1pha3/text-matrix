@@ -2,6 +2,7 @@
 title: "withastro/flue：Astro 团队的 Agent Harness 框架"
 date: "2026-06-06T09:50:00+08:00"
 slug: "withastro-flue-agent-harness-framework"
+github_repo: "withastro/flue"
 aliases:
   - "/posts/tech/withastro-flue-agent-harness-framework/"
 description: "withastro/flue 是 Astro 团队推出的 TypeScript Agent Harness 框架，重点不在模型调用，而在 session、sandbox、skills、持久化和跨运行时部署。"

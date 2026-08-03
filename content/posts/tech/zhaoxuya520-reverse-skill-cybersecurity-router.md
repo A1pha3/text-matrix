@@ -2,6 +2,7 @@
 title: "reverse-skill：给编码代理的逆向与渗透技能路由"
 date: 2026-08-02T02:59:48+08:00
 slug: "zhaoxuya520-reverse-skill-cybersecurity-router"
+github_repo: "zhaoxuya520/reverse-skill"
 description: "zhaoxuya520/reverse-skill 是一个面向 AI 编码代理（Claude Code/Codex/Cursor）的网络安全技能路由包，根据代理遇到的 APK/二进制/前端 JS 加密/CTF 题目/渗透目标自动选择对应方法论、检查可用工具并执行可重复流程，而不是让代理凭直觉猜命令。"
 draft: false
 categories: ["技术笔记"]

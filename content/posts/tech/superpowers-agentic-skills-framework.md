@@ -2,6 +2,7 @@
 title: "Superpowers 深度解析：把 AI 编程助手纳入软件工程流程"
 date: "2026-05-21T13:13:00+08:00"
 slug: "superpowers-agentic-skills-framework"
+github_repo: "obra/superpowers"
 description: "结合官方 README、v5.1.0 仓库结构与 Jesse Vincent 的发布说明，解析 Superpowers 如何把 skills、worktree、TDD 与 code review 组装成 coding agent 的强制工程流程，以及如何判断它是否真的生效。"
 draft: false
 categories: ["技术笔记"]

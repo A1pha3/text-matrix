@@ -2,6 +2,7 @@
 title: "Stirling-PDF 架构拆解:82k stars 的开源 PDF 平台,从单 Java 后端演化成 3 模块 Monorepo + Python AI Document Engine"
 date: 2026-06-22T20:59:00+08:00
 slug: "stirling-pdf-open-source-pdf-platform-architecture"
+github_repo: "Stirling-Tools/Stirling-PDF"
 categories: ["技术笔记"]
 tags: ["PDF", "Java", "FastAPI", "Monorepo", "架构分析"]
 description: "Stirling-PDF 是 GitHub 上 stars 最高的 PDF 工具(82k+),从早期单 Spring Boot 应用演化成 app(Java) + frontend(TypeScript) + engine(Python) 三模块 Monorepo,新引入的 engine 用 pydantic-ai + pgvector/sqlite-vec 把 AI 文档处理接进来。"

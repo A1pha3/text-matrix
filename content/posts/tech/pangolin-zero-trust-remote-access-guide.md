@@ -2,6 +2,7 @@
 title: "Pangolin：20K Stars·零信任远程访问平台·基于WireGuard"
 date: "2026-04-12T02:31:39+08:00"
 slug: pangolin-zero-trust-remote-access-guide
+github_repo: "fosrl/pangolin"
 description: "Pangolin 是一个基于 WireGuard 的零信任远程访问平台，提供身份感知的 VPN 功能。"
 draft: false
 categories: ["技术笔记"]

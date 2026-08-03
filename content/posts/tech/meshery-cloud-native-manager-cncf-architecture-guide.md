@@ -2,6 +2,7 @@
 title: "Meshery：CNCF 云原生管理器，380+ 集成的多集群管理平台"
 date: "2026-06-14T21:09:10+08:00"
 slug: "meshery-cloud-native-manager-cncf-architecture-guide"
+github_repo: "meshery/meshery"
 description: "Meshery 是 CNCF 云原生管理器，支持 380+ K8s 集成、多集群管理、可视化 GitOps 与 service mesh 性能基线。本文拆解其架构分层、核心子系统、任务流与采用边界。"
 draft: false
 categories: ["技术笔记"]

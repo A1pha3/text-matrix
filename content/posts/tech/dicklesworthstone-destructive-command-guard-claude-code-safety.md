@@ -1,4 +1,5 @@
 ---
+github_repo: "Dicklesworthstone/destructive_command_guard"
 title: "DCG 实战：把 AI 编码代理挡在破坏性命令之外"
 date: 2026-07-13T03:01:47+08:00
 categories: ["技术笔记"]

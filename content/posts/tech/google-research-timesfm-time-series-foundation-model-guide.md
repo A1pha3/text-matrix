@@ -2,6 +2,7 @@
 title: "TimesFM 2.5 拆解：Google Research 的时间序列基础模型到底在做什么"
 date: "2026-06-25T18:05:25+08:00"
 slug: "google-research-timesfm-time-series-foundation-model-guide"
+github_repo: "google-research/timesfm"
 description: "TimesFM 是 Google Research 开源的 decoder-only 时间序列基础模型，2.5 版本把参数量压到 200M、context 拉到 16k，并通过 XReg 接入协变量。本文拆解 patched-decoder 架构、推理代码、Monash 等 benchmark 的真实信号与采用边界。"
 draft: false
 categories: ["技术笔记"]

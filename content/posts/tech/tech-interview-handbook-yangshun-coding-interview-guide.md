@@ -2,6 +2,7 @@
 title: "Tech Interview Handbook 深度解读：yangshun 大神 10 年心血，盲刷 75 题的演化史"
 date: 2026-06-04T13:54:00+08:00
 slug: tech-interview-handbook-yangshun-coding-interview-guide
+github_repo: "yangshun/tech-interview-handbook"
 description: "Tech Interview Handbook：超 100 万人受益的免费技术面试准备手册，Blind 75 → Grind 75 的演化，与 Cracking the Coding Interview 的差异。"
 draft: false
 categories: ["技术博客"]

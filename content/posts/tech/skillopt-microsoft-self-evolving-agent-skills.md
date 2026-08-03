@@ -2,6 +2,7 @@
 title: "SkillOpt 拆解：微软如何把 Agent Skill 变成可训练、可验证、可迁移的外部状态"
 date: "2026-05-27T16:30:00+08:00"
 slug: "skillopt-microsoft-self-evolving-agent-skills"
+github_repo: "microsoft/SkillOpt"
 description: "深度解读微软与上海交大、复旦、同济联合提出的 SkillOpt。它不微调模型权重，而是把 Skill 文档当成 Agent 的外部状态，用 rollout、reflection、bounded edit 和 validation gate 训练出可部署、可迁移的 best_skill.md。"
 draft: false
 categories: ["技术笔记"]

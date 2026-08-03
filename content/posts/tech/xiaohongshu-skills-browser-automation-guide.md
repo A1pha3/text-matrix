@@ -2,6 +2,7 @@
 title: "xiaohongshu-skills：958 Stars的浏览器自动化方案，用真实账号做小红书运营"
 date: "2026-04-07T18:10:00+08:00"
 slug: xiaohongshu-skills-browser-automation-guide
+github_repo: "autoclaw-cc/xiaohongshu-skills"
 description: "深度解析xiaohongshu-skills项目：基于Chrome扩展的浏览器自动化方案，使用真实已登录账号操作小红书。支持OpenClaw和Claude Code，5大Skills覆盖认证、内容发布、搜索互动、竞品分析和复合运营。"
 categories: ["技术笔记"]
 tags: ["小红书", "浏览器自动化", "Agent Skills", "OpenClaw"]

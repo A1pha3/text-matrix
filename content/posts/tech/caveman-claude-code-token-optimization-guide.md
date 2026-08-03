@@ -1,4 +1,5 @@
 +++
+github_repo = "JuliusBrussee/caveman"
 date = '2026-04-30T11:30:00+08:00'
 draft = false
 title = 'Caveman：用山顶洞人语言砍掉 65% Token 消耗'

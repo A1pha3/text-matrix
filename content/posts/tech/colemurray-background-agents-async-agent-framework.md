@@ -1,4 +1,5 @@
 ---
+github_repo: "ColeMurray/background-agents"
 title: "Open-Inspect 源码剖析：后台 AI 编码代理如何跑起来"
 date: 2026-07-13T03:01:47+08:00
 categories: ["技术笔记"]

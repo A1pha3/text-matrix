@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "Python", "MCP"]
 description: "AstrBot 是 36K+ stars 的国产开源 Agent 桥接框架，把 LLM + Agent + MCP + 插件体系接到 QQ、飞书、钉钉、Slack 等 IM 上，本文拆它的桥接架构、Agent Sandbox 和插件市场。"
 slug: astrbotdevs-astrbot-im-agent-platform
+github_repo: "AstrBotDevs/AstrBot"
 
 ---
 

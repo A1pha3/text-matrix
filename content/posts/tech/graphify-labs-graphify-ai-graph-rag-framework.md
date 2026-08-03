@@ -2,6 +2,7 @@
 title: "Graphify Labs Graphify：把 Claude Code 变成「知识图谱构建器」的本地 RAG 框架"
 date: 2026-07-14T03:13:08+08:00
 slug: "graphify-labs-graphify-ai-graph-rag-framework"
+github_repo: "Graphify-Labs/graphify"
 description: "Graphify 是一个 Claude Code / Codex 用的 /graphify 技能：读取本地代码、PDF、Markdown、图片（甚至多语种截图），用 tree-sitter + Claude Vision + Leiden 社区检测构建带语义边的知识图谱，输出可交互 HTML、Obsidian vault、Wikipedia 风格 wiki 与 GRAPH_REPORT.md，并支持 --watch 自动同步与 post-commit hook。"
 draft: false
 categories: ["技术笔记"]

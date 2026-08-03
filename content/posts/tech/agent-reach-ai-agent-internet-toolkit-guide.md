@@ -2,6 +2,7 @@
 title: "Agent Reach：一个让 CLI Agent 联网的脚手架，不是又一层框架"
 date: "2026-06-06T09:50:00+08:00"
 slug: "agent-reach-ai-agent-internet-toolkit"
+github_repo: "Panniantong/Agent-Reach"
 aliases:
  - "/posts/tech/agent-reach-ai-agent-internet-toolkit/"
 description: "Agent Reach 不包装任何 API，只负责选型、装配和状态检测。装好之后 Agent 直接调 twitter-cli、yt-dlp、rdt-cli 等上游工具，覆盖 16 个平台，零 API 费用。"

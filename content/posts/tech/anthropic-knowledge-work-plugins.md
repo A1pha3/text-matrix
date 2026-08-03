@@ -1,6 +1,7 @@
 ---
 title: "Anthropic Knowledge Work Plugins：把 AI 插件从写代码改成了写 Markdown"
 slug: "anthropic-knowledge-work-plugins"
+github_repo: "anthropics/knowledge-work-plugins"
 description: "Anthropic 开源了 11 款知识工作插件，定义了一套无代码、纯文件驱动的 AI Agent 插件体系。本文拆解 Commands × Skills × MCP Connectors 三层架构，用三个真实任务流还原插件的工作方式，给出团队采纳路径。"
 date: 2026-05-29T19:30:00+08:00
 lastmod: 2026-05-30T12:00:00+08:00

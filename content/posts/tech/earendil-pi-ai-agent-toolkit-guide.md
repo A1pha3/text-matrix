@@ -1,4 +1,5 @@
 +++
+github_repo = "earendil-works/pi"
 date = '2026-05-24T23:07:00+08:00'
 draft = false
 title = 'pi：全能 AI Agent 工具包，CLI+TUI+API+Slack 一站搞定'

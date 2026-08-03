@@ -2,6 +2,7 @@
 title: "Ruflo 完全指南：多智能体编排平台从入门到精通"
 date: "2026-05-02T20:03:00+08:00"
 slug: "ruflo-agent-orchestration-claude-platform-guide"
+github_repo: "your/repo"
 aliases:
   - "/posts/tech/ruflo-claude-code-multi-agent-swarm-guide/"
   - "/posts/tech/ruflo-claude-multi-agent-orchestration-platform/"

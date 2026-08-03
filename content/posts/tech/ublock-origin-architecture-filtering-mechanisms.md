@@ -2,6 +2,7 @@
 title: "uBlock Origin 架构解析：一套把性能压到极致的多层过滤系统"
 date: "2026-04-30T10:07:00+08:00"
 slug: "ublock-origin-architecture-filtering-mechanisms"
+github_repo: "gorhill/uBlock"
 description: "深入拆解 uBlock Origin 的静态过滤、动态过滤和脚本注入三大引擎，以及 BitTrie、Bloom Filter、MRU 缓存如何联手把单次 URL 匹配从 O(n) 压到 O(k)。附带完整请求流转案例和源码阅读路径。"
 draft: false
 categories: ["技术笔记"]

@@ -1,6 +1,7 @@
 ---
 title: "gRPC 深度拆解：现代高性能 RPC 框架的事实标准"
 slug: grpc-grpc-modern-rpc-framework-guide
+github_repo: "grpc/grpc-web"
 date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false

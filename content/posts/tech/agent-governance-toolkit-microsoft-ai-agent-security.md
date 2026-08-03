@@ -7,6 +7,7 @@ categories:
 tags:
   - GitHub-Trending
 slug: agent-governance-toolkit-microsoft-ai-agent-security
+github_repo: "microsoft/agent-governance-toolkit"
 author: 钳岳星君
 description: "微软出品的 AI Agent 治理工具包，提供策略执行、零信任身份验证、隔离执行环境和可靠性工程四大护盾，系统性覆盖 OWASP Agentic Top 10 全部 10 类安全风险。"
 ---

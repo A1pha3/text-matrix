@@ -2,6 +2,7 @@
 title: "MiroFish：55.7k Stars 的群体智能预测引擎，让未来在数字沙盘中预演"
 date: "2026-03-28T20:10:00+08:00"
 slug: "mirofish-swarm-intelligence-prediction"
+github_repo: "666ghj/MiroFish"
 aliases:
   - "/posts/tech/mirofish-swarm-intelligence-prediction-engine/"
 description: "解读盛大集团 MiroFish：55.7k Stars 的群体智能预测引擎，通过构建高保真数字平行世界，让 AI 智能体自主演化推演，实现按需预测。"

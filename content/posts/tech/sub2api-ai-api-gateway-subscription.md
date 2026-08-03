@@ -2,6 +2,7 @@
 title: "Sub2API：一个把订阅配额变成可分发 API Key 的开源网关"
 date: "2026-05-25T16:45:00+08:00"
 slug: "sub2api-ai-api-gateway-subscription"
+github_repo: "Wei-Shaw/sub2api"
 description: "Sub2API 是一款开源 AI API 网关，核心功能是将 AI 产品订阅（如 Claude Code）的配额通过多账号管理和智能调度，实现 API Key 分发给多个用户使用。"
 draft: false
 categories: ["技术笔记"]

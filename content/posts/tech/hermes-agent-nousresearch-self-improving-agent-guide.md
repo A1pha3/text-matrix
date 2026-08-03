@@ -2,6 +2,7 @@
 title: "Hermes Agent 深度解析：从「用完即忘」到「越用越强」的工程路径"
 date: "2026-06-04T15:00:00+08:00"
 slug: hermes-agent-nousresearch-self-improving-agent-guide
+github_repo: "NousResearch/hermes-agent"
 description: "Hermes Agent 不是又一个终端 Copilot。它的真正差异在于把「任务执行→经验沉淀→技能复用→跨会话召回」串成了一条自治循环，配合 FTS5 全文检索、Honcho 辩证式用户建模和 20+ 平台消息网关，是当前开源 Agent 里最接近「会成长的 AI 同事」形态的项目。"
 draft: false
 categories: ["技术笔记"]

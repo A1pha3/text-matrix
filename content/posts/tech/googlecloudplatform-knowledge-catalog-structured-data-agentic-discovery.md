@@ -2,6 +2,7 @@
 title: "Google Cloud Knowledge Catalog：一个面向代理式 AI 的结构化数据与模型上下文目录"
 date: 2026-07-14T03:13:50+08:00
 slug: "googlecloudplatform-knowledge-catalog-structured-data-agentic-discovery"
+github_repo: "GoogleCloudPlatform/knowledge-catalog"
 description: "Knowledge Catalog 是 Google Cloud 推出的 AI 驱动数据目录（前身 Dataplex），配套仓库提供官方 SDK、Discovery Agent 与实验性质的 Open Knowledge Format（OKF）规范。本文从仓库内容出发，拆解它的定位、已发布的工具与样本、以及 OKF 这套新人机通用知识表示的边界。"
 draft: false
 categories: ["技术笔记"]

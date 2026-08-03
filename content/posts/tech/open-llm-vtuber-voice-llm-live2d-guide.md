@@ -2,6 +2,7 @@
 title: "Open-LLM-VTuber：把\"能被打断\"做成一等公民的开源桌面 AI 伴侣"
 date: "2026-06-03T09:05:00+08:00"
 slug: "open-llm-vtuber-voice-llm-live2d-guide"
+github_repo: "Open-LLM-VTuber/Open-LLM-VTuber"
 description: "Open-LLM-VTuber 是支持免提语音打断、本地 LLM、可换 Live2D 形象的开源 AI 伴侣。本文拆解 VAD 状态机、asyncio.Task 取消链与 Agent 装饰器链设计。"
 draft: false
 categories: ["技术笔记"]

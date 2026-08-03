@@ -1,4 +1,5 @@
 +++
+github_repo = "apps/dependabot"
 date = '2026-05-17T00:00:00+08:00'
 draft = false
 title = 'GitHub Dependabot：自动化依赖更新'

@@ -2,6 +2,7 @@
 title: "RTK：Rust 编写的 CLI 代理，让 LLM 开发者节省 60-90% Token 消耗"
 date: "2026-05-19T20:25:00+08:00"
 slug: "rtk-rust-cli-proxy-token-optimization"
+github_repo: "rtk-ai/rtk"
 description: "RTK（Rust Token Killer）是用 Rust 编写的高性能 CLI 代理，单文件无依赖，可将常见开发命令的 LLM Token 消耗降低 60-90%。支持 ls、cat、git、pytest 等 100+ 命令，处理延迟 <10ms。"
 draft: false
 categories: ["技术笔记"]

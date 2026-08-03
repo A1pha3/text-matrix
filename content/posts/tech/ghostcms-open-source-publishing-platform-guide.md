@@ -7,6 +7,7 @@ tags: ["Node.js", "开源"]
 categories:
   - 技术
 slug: ghostcms-open-source-publishing-platform-guide
+github_repo: "TryGhost/Ghost"
 description: "深入解析 Ghost CMS 的架构设计、主要功能、安装配置、自定义开发、API 使用和部署方案，与主流替代方案全面对比。"
 keywords:
   - Ghost CMS

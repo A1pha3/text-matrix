@@ -2,6 +2,7 @@
 title: "TeslaMate：自托管 Tesla 车辆数据记录器，把爱车的每一次出行变成可分析的数据"
 date: "2026-06-15T21:02:07+08:00"
 slug: "teslamate-self-hosted-tesla-data-logger-guide"
+github_repo: "teslamate-org/teslamate"
 description: "TeslaMate 是一款基于 Elixir + Postgres + Grafana + MQTT 的自托管 Tesla 数据记录器，8148+ Stars。它能高精记录行车与充电数据，零额外耗电（vampire drain），并通过 MQTT 接入 Home Assistant。本文覆盖架构、关键特性、docker-compose 部署路径与适用边界。"
 draft: false
 categories: ["技术笔记"]

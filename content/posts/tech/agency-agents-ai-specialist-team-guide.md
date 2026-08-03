@@ -2,6 +2,7 @@
 title: "The Agency：147个专业AI Agent组成的虚拟团队"
 date: "2026-05-05T11:25:00+08:00"
 slug: "agency-agents-ai-specialist-team-guide"
+github_repo: "msitarzewski/agency-agents"
 aliases:
   - "/posts/tech/agency-agents-complete-ai-agency-toolkit/"
   - "/posts/tech/the-agency-open-source-ai-agents-personas/"

@@ -2,6 +2,7 @@
 title: "DeerFlow 2.0：字节跳动长时超级智能体框架深度拆解"
 date: "2026-06-26T18:08:00+08:00"
 slug: "bytedance-deer-flow-long-horizon-superagent-guide"
+github_repo: "bytedance/deer-flow"
 description: "DeerFlow 2.0 是字节跳动开源的长时超级智能体运行时，以 LangGraph 为底座，通过主代理+子代理委派、渐进式技能、沙箱隔离与长期记忆承接分钟到小时级任务，解析其架构与适用边界。"
 draft: false
 categories: ["技术笔记"]

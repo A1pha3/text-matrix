@@ -2,6 +2,7 @@
 title: "Hugging Face Transformers 深度指南：从 Pipeline 到生产部署"
 date: "2026-04-06T22:19:00+08:00"
 slug: "transformers-huggingface-nlp-guide"
+github_repo: "huggingface/text-generation-inference"
 description: "不止于 API 调用。本文深入 Transformers 的设计决策、Pipeline/AutoClass/Trainer 三条主线的工作机制、一个完整的微调任务流案例，以及模型量化、Flash Attention 等生产部署策略。最后给出不同场景的采用路线图。"
 draft: false
 categories: ["技术笔记"]

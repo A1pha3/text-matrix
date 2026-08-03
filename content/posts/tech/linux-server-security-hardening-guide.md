@@ -2,6 +2,7 @@
 title: "Linux服务器安全加固实战指南：从SSH到防火墙的完整清单"
 date: "2026-05-14T10:51:00+08:00"
 slug: "linux-server-security-hardening-guide"
+github_repo: "moltenbit/How-To-Secure-A-Linux-Server-With-Ansible"
 description: "Linux 服务器安全加固的核心是按攻击面分层收敛。本文以 How-To-Secure-A-Linux-Server 为底本，拆解身份认证、网络入口、文件系统、运行时检测四层加固链路，解释每层措施存在的理由、适用边界与过度加固的代价，并给出一次 SSH 暴力破解攻击从尝试到 Fail2Ban 响应再到 CrowdSec 上报的完整任务流案例。"
 draft: false
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "g-truc/yocto-gl"
 date = '2026-04-13T23:51:22+08:00'
 draft = false
 title = 'stb：C/C++ 单文件公共领域库全集'

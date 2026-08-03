@@ -2,6 +2,7 @@
 title: "Godot Engine：开源跨平台 2D/3D 游戏引擎完全指南"
 date: "2026-06-02T03:05:00+08:00"
 slug: "godot-engine-cross-platform-game-engine-guide"
+github_repo: "godotengine/godot"
 description: "Godot Engine 是 MIT 协议的开源 2D/3D 跨平台游戏引擎，本文从架构设计、GDScript 与 C# 双语言、节点系统、渲染管线、跨平台导出、生态版图六个维度系统解析，附完整任务流案例与采用决策框架。"
 draft: false
 categories: ["技术笔记"]

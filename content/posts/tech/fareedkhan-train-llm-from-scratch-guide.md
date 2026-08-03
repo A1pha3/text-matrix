@@ -2,6 +2,7 @@
 title: "TrainLLMFromScratch: 从零训练你自己的大语言模型"
 date: "2026-05-31T10:15:00+08:00"
 slug: "fareedkhan-train-llm-from-scratch"
+github_repo: "FareedKhan-dev/train-llm-from-scratch"
 description: "TrainLLMFromScratch 是一个从零实现 Transformer 架构的 PyTorch 项目，支持百万到十亿参数级别的 LLM 训练。使用 Pile 数据集，单块 GPU 即可训练，提供完整的代码注释和一步步的详细讲解。"
 draft: false
 categories: ["技术笔记"]

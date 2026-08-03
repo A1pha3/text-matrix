@@ -2,6 +2,7 @@
 title: "easy-langent：Datawhale 出品 LangChain/LangGraph 大模型应用开发教程——从入门到精通"
 date: "2026-04-19T23:00:00+08:00"
 slug: "easy-langent-langchain-langgraph-tutorial"
+github_repo: "datawhalechina/easy-langent"
 description: "easy-langent 是 Datawhale 开源的 175 Stars LangChain/LangGraph 学习教程，以「lang+agent」命名，聚焦大模型应用开发实战。教程涵盖 LangChain 核心组件（模型调用、提示词、记忆、工具）、LangGraph 状态工作流、多智能体协作，配有狼人杀 AI、Agentic RAG、数据分析助手等实战项目。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Claude Code Game Studios：49 个 AI 角色、72 个技能、12 个钩子的多 Agent 游戏开发工作流"
 date: "2026-04-16T01:40:00+08:00"
 slug: "claude-code-game-studios-multi-agent-game-dev"
+github_repo: "Donchitos/Claude-Code-Game-Studios"
 aliases:
   - "/posts/tech/ai-agent/claude-code-game-studios/"
 description: "Claude Code Game Studios 将 Claude Code 转变为完整的游戏开发工作室——49 个 AI Agent（导演/主程/美术总监）、72 个技能覆盖设计到发布、12 个钩子自动化验证。"

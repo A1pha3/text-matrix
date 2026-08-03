@@ -2,6 +2,7 @@
 title: "Mirage：AI Agent 统一虚拟文件系统，让智能体用 Bash 操作一切后端"
 date: "2026-05-22T11:10:00+08:00"
 slug: "mirage-unified-virtual-filesystem-ai-agents"
+github_repo: "strukto-ai/mirage"
 description: "Mirage 是一个为 AI Agent 设计的统一虚拟文件系统（VFS），将 S3、Google Drive、Slack、Github、Gmail、MongoDB 等各种后端服务以文件系统语义挂载到同一个目录树下，让 AI 智能体通过熟悉的 bash 命令操作一切数据源，无需学习每个服务的专属 SDK。"
 draft: false
 categories: ["技术笔记"]

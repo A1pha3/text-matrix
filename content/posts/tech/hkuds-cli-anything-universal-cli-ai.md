@@ -1,4 +1,5 @@
 +++
+github_repo = "HKUDS/CLI-Anything"
 date = '2026-05-17T20:15:00+08:00'
 draft = false
 title = 'CLI-Anything：将任意软件变成 AI Agent 可用的 CLI 工具'

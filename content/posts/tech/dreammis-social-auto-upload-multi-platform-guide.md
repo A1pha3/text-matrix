@@ -2,6 +2,7 @@
 title: "SocialAutoUpload 深度解析：7 平台是覆盖面，4 平台 CLI 主线才是现在能跑稳的核心"
 date: "2026-05-31T10:20:00+08:00"
 slug: "dreammis-social-auto-upload-multi-platform"
+github_repo: "dreammis/social-auto-upload"
 description: "从 CLI 入口设计、平台实现差异、账号管理机制到 Agent 集成策略，逐层拆解 SocialAutoUpload 当前主线：7 平台是底层覆盖，真正收敛成统一 CLI 与 Agent skill 的，是抖音、快手、小红书、Bilibili 这 4 条路径。"
 summary: "7 平台是覆盖面，4 平台 CLI 主线才是当前最稳的部分。先把抖音、快手、小红书、Bilibili 跑顺，再考虑视频号、百家号、TikTok。"
 draft: false

@@ -1,6 +1,7 @@
 ---
 title: "Catch2 v3 深度拆解：C++ 单元测试框架的自然选择"
 slug: catchorg-catch2-cpp-unit-test-framework-guide
+github_repo: "catchorg/Catch2"
 date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false

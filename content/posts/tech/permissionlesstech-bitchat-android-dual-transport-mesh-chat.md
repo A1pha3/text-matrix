@@ -2,6 +2,7 @@
 title: "bitchat-android：蓝牙 Mesh 与 Nostr 双传输的去中心化聊天 Android 实现"
 date: 2026-08-03T03:28:00+08:00
 slug: "permissionlesstech-bitchat-android-dual-transport-mesh-chat"
+github_repo: "permissionlesstech/bitchat-android"
 description: "bitchat-android 是 permissionlesstech/bitchat 的 Android 客户端，采用蓝牙 LE Mesh 和 Nostr 双传输架构实现去中心化 P2P 聊天。无需账号、无需手机号、无中心服务器，支持端到端加密、多跳中继和地理位置频道。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Bun v1.3.14：93.4K+ Stars 的 all-in-one JavaScript 工具链完整指南"
 date: "2026-05-16T03:11:38+08:00"
 slug: "bun-javascript-runtime-all-in-one-toolkit"
+github_repo: "oven-sh/bun"
 description: "Bun 真正的差异化不是「快」，而是把运行时、打包、测试、包管理四件事合并到一个二进制里，改变了 JS 工具链的依赖结构。本文拆解 JavaScriptCore 选型动机、四合一架构的工程含义、一次 bun run 的完整执行路径，以及与 Node.js / Deno 的真实取舍和迁移风险。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Datawhale/easy-vibe：一套把想法落成产品的 Vibe Coding 开源课程"
 date: "2026-05-10T16:55:00+08:00"
 slug: "datawhale-easy-vibe-vibe-coding-course-guide"
+github_repo: "datawhalechina/easy-vibe"
 description: "easy-vibe 是 DatawhaleChina 维护的 Vibe Coding 开源课程，围绕从想法、原型、全栈上线到工程化 AI 协作，构建出一条 3 + 1 的学习路径。本文结合 README、中文 README 与 llms.txt，梳理它真正适合谁、每个阶段解决什么问题，以及为什么它不只是一个教程仓库。"
 summary: "这篇文章基于 easy-vibe 的 README、中文 README 和 llms.txt，重新梳理这套课程的 3 + 1 学习结构、适用人群、代表内容、OpenClaw 与 llms.txt 的位置，以及它为什么比普通的 AI 编程入门教程更完整。"
 draft: false

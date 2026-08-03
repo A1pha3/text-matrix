@@ -2,6 +2,7 @@
 title: "Jellyfin：不把媒体库交给云端的自建方案"
 date: "2026-05-05T11:40:00+08:00"
 slug: "jellyfin-open-source-media-server-complete-guide"
+github_repo: "Julianlalrac/Jellyfin-plugin-OpenSubtitles"
 description: "Jellyfin 真正解决的问题不是「播放视频」，而是让媒体库的存储、索引、转码和权限控制完全留在你自己手里。本文从架构、部署、转码到客户端选择，给出可落地的搭建路线。"
 draft: false
 categories: ["技术笔记"]

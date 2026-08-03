@@ -2,6 +2,7 @@
 title: "microsoft/AI-For-Beginners：49k Stars、12 周 24 课的微软 AI 入门课程完全指南"
 date: "2026-06-30T21:10:22+08:00"
 slug: "microsoft-ai-for-beginners-curriculum-guide"
+github_repo: "microsoft/AI-For-Beginners"
 description: "微软 AI-For-Beginners 是 49k Stars 的 12 周 24 节 AI 入门课程，涵盖符号 AI、神经网络、计算机视觉、NLP、Transformer 与 AI 伦理，提供 PyTorch 与 TensorFlow 双版本 Jupyter Notebook、50+ 种语言翻译，本文拆解其内容结构、学习路径与适用人群。"
 draft: false
 categories: ["技术笔记"]

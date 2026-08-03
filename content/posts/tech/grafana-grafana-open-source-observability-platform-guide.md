@@ -2,6 +2,7 @@
 title: "Grafana：开源可观测性平台不是 dashboard 工具，理解它的边界比记住功能更重要"
 date: 2026-06-26T21:03:36+08:00
 slug: grafana-grafana-open-source-observability-platform-guide
+github_repo: "grafana/grafana"
 description: "Grafana 已经从单一 dashboard 工具演化成数据源、面板、告警、探索四模块协同的可观测性平台。本文从架构、模块边界、OSS/Enterprise/Cloud 划分、与 Prometheus/Loki/Tempo 栈的协同关系四个角度重新理解它。"
 draft: false
 categories: ["技术笔记"]

@@ -7,6 +7,7 @@ categories: ["技术笔记"]
 tags: ["GitHub Actions", "Security"]
 description: "actions/checkout v7（2026-06-18 发布）是 GitHub Actions 生态最高频使用的 action，8455 stars、MIT、TypeScript。v7 核心变化是默认拒绝 fork PR 在 pull_request_target / workflow_run 触发器下被 checkout（pwn request 攻击面），并完成 ESM 模块化迁移。"
 slug: "actions-checkout-v7-pwn-request-mitigation-deep-dive"
+github_repo: "actions/checkout"
 author: text-matrix
 ---
 

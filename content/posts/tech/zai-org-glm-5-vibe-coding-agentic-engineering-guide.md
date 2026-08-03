@@ -2,6 +2,7 @@
 title: "GLM-5 全家桶拆解：从 Vibe Coding 到 Agentic Engineering 的开源旗舰模型"
 date: "2026-06-18T21:03:00+08:00"
 slug: "zai-org-glm-5-vibe-coding-agentic-engineering-guide"
+github_repo: "zai-org/GLM-5"
 description: "zai-org/GLM-5 是智谱 AI 开源的 744B-A40B MoE 旗舰模型系列，本文拆解 GLM-5 / 5.1 / 5.2 的演进路线、IndexShare 稀疏注意力、slime 异步 RL 基础设施与本地部署路径。"
 draft: false
 categories: ["技术笔记"]

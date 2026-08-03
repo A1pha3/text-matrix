@@ -2,6 +2,7 @@
 title: "Spec Kit：GitHub 官方推出的规范驱动开发工具包，让规格文档直接生成代码"
 date: "2026-05-14T16:08:00+08:00"
 slug: "spec-kit-spec-driven-development-toolkit"
+github_repo: "github/spec-kit"
 description: "Spec Kit 是 GitHub 官方开源的规范驱动开发工具包，通过将规格文档变成可执行资产，直接生成工作实现而非仅作为编码指导。它包含 Specify CLI 工具和一套完整的开发工作流，支持 Copilot 等多种 AI 编码 Agent 集成。"
 draft: false
 categories: ["技术笔记"]

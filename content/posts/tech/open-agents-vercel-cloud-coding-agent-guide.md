@@ -2,6 +2,7 @@
 title: "Open Agents：Vercel 开源的云端 AI 编码智能体模板"
 date: "2026-05-08T03:11:04+08:00"
 slug: "open-agents-vercel-cloud-coding-agent-guide"
+github_repo: "vercel-labs/open-agents"
 description: "Open Agents 是 Vercel 开源的云端 AI 编码智能体参考模板，基于 Web -> Agent Workflow -> Sandbox VM 三层架构设计。本文详细解析其核心架构、代码执行隔离机制、GitHub 集成方式和快速部署方法。"
 draft: false
 categories: ["技术笔记"]

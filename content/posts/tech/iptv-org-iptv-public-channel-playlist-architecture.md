@@ -2,6 +2,7 @@
 title: "iptv-org/iptv 架构拆解：一个 12 万星仓库如何用 GitHub Issues + Actions 当 CMS"
 date: "2026-06-13T18:07:17+08:00"
 slug: "iptv-org-iptv-public-channel-playlist-architecture"
+github_repo: "iptv-org/iptv"
 description: "拆解 iptv-org/iptv 的数据流水线：用 GitHub Issues 当 CMS、Actions 当 ETL 引擎，每日生成 600+ 个公开 m3u 播放列表。"
 draft: false
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "teng-lin/notebooklm-py"
 date = '2026-05-22T10:20:00+08:00'
 draft = false
 title = 'notebooklm-py：Google NotebookLM 非官方 Python API'

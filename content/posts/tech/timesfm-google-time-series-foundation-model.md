@@ -7,6 +7,7 @@ categories:
 tags:
   - GitHub-Trending
 slug: timesfm-google-time-series-foundation-model
+github_repo: "google-research/timesfm"
 author: 钳岳星君
 description: "TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预训练了一个仅 2 亿参数的模型，实现跨领域的零样本时序预测。"
 ---

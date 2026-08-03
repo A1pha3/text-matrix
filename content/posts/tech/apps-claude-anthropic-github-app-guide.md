@@ -2,6 +2,7 @@
 title: "Anthropic Claude GitHub App：将 Claude Code 接入 Pull Request 工作流"
 date: "2026-05-24T11:47:01+08:00"
 slug: "anthropic-claude-github-app-pr-workflow"
+github_repo: "apps/claude"
 description: "Anthropic 推出的 Claude GitHub App 让开发者可以在 GitHub Pull Request 和 Issue 中直接调用 Claude Code，处理代码审查、CI 错误修复和代码修改。本文解析其核心能力、权限模型、与同类工具的差异，以及接入前需要了解的技术边界。"
 draft: false
 categories: ["技术笔记"]

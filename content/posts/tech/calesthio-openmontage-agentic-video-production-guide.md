@@ -2,6 +2,7 @@
 title: "OpenMontage 架构解析：把 AI 编程助手改造成视频制作工厂的开源尝试"
 date: "2026-06-17T21:01:47+08:00"
 slug: "calesthio-openmontage-agentic-video-production-guide"
+github_repo: "calesthio/OpenMontage"
 description: "calesthio/OpenMontage 是首个开源的智能体视频生产系统，用 12 条流水线、52 个工具、400+ Agent Skills 把 AI 编程助手改造成视频导演。"
 draft: false
 categories: ["技术笔记"]

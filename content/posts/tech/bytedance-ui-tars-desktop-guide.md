@@ -2,6 +2,7 @@
 title: "字节跳动UI-TARS：32k星的多模态AI Agent全栈，支持MCP和浏览器自动化"
 date: "2026-05-11T13:05:00+08:00"
 slug: "bytedance-ui-tars-desktop-multimodal-agent"
+github_repo: "bytedance/UI-TARS-desktop"
 description: "深度解析bytedance/UI-TARS-desktop：字节跳动开源的多模态AI Agent全栈，包含Agent TARS CLI和UI-TARS Desktop两个产品，支持GUI Agent、浏览器自动化和MCP工具集成。"
 draft: false
 categories: ["技术笔记"]

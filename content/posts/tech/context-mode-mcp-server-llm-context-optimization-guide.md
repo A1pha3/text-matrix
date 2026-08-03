@@ -2,6 +2,7 @@
 title: "Context Mode：AI 编程 Agent 上下文治理实战——从 40% 污染到零"
 date: "2026-05-05T20:18:00+08:00"
 slug: "context-mode-mcp-server-llm-context-optimization-guide"
+github_repo: "mksglu/context-mode"
 description: "Context Mode 用沙箱隔离 + SQLite 事件日志 + 脚本优先范式 + 输出压缩四合一，把 AI 编程 Agent 的工具输出污染从 40% 压到接近零。这篇文章不讲概念，讲它到底做了什么、为什么能跑、你该怎么用。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "openscreen：开源项目演示录制工具"
 date: "2026-04-04T11:44:00+08:00"
 slug: openscreen-open-source-demo-creation
+github_repo: "siddharthvaddem/openscreen"
 description: "openscreen是一款开源的demo录制工具，完全免费、无水印、商用友好，是Screen Studio的开源替代品。本文详细介绍其核心功能、技术架构、使用方法和开发指南。"
 draft: false
 categories: ["技术笔记"]

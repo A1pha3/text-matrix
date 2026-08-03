@@ -1,6 +1,7 @@
 ---
 title: "Claude Code Templates：Claude Code 配置与监控全家桶"
 slug: "claude-code-templates-configuration-guide"
+github_repo: "davila7/claude-code-templates"
 description: "Claude Code Templates 是一个面向 Anthropic Claude Code 的配置集合，提供 100+ AI agents、commands、hooks、MCPs 和项目模板，支持一键安装和 Web UI 可视化管理。"
 date: "2026-04-28T11:40:00+08:00"
 categories: ["技术笔记"]

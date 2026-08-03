@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["GitHub", "GitHub Actions", "CI/CD", "DevOps", "自动化"]
 draft: false
 slug: github-actions-ecosystem-deep-dive
+github_repo: "github/gh-aw-actions"
 description: "GitHub Actions 把仓库事件变成自动化触发器。本文拆解事件触发层、Job 编排层、Action 组件层三层抽象，覆盖工作流语法、Context 变量、Secrets 管理和自定义 Action 开发全链路。"
 ---
 

@@ -2,6 +2,7 @@
 title: "ECC：让 AI Agent 真正可用的 Agentic Work 系统"
 date: "2026-05-25T20:16:19+08:00"
 slug: "ecc-agentic-work-system-for-ai-agents"
+github_repo: "affaan-m/ECC"
 description: "ECC 是 Anthropic Hackathon 获奖项目，旨在打造一个 harness 原生的 AI Agent 操作系统。它不只是一堆配置，而是一套覆盖技能、本能反应、记忆优化、持续学习、安全扫描和研究驱动开发的完整系统，支持 Claude Code、Codex、Cursor 等 7 种主流 Agent。"
 draft: false
 categories: ["技术笔记"]

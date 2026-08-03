@@ -2,6 +2,7 @@
 title: "OpenSuperWhisper 深度拆解：macOS 原生 Whisper 实时听写应用，全球键 + 麦克风选择 + 亚洲语种自动校正"
 date: 2026-07-04T21:16:32+08:00
 slug: starmel-opensuperwhisper-macos-whisper-dictation-guide
+github_repo: "huacnlee/autocorrect"
 description: "Starmel/OpenSuperWhisper 是 macOS 原生 Swift 应用，基于 Whisper.cpp + Parakeet 双引擎，提供全局快捷键听写、麦克风切换、亚洲语种自动校正等功能。Homebrew 一键安装，仅支持 Apple Silicon。"
 draft: false
 categories: ["技术笔记"]

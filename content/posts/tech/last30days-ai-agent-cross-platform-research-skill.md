@@ -2,6 +2,7 @@
 title: "last30days-skill 解析：一个 AI agent skill 如何把 Reddit / X / YouTube / Polymarket 跨 13 个平台的事实拼成一份 30 天简报"
 date: "2026-06-07T15:03:00+08:00"
 slug: "last30days-ai-agent-cross-platform-research-skill"
+github_repo: "mvanhorn/last30days-skill"
 description: "2026-06-07 GitHub Trending 当日榜 #1，29,164 stars / 单日 +439。它不是一个 search 工具，而是把'人投票过的事'——Reddit upvote、X like、YouTube view、Polymarket 真金白银——做成交叉信号源，给 agent 喂事实。"
 draft: false
 categories: ["技术笔记"]

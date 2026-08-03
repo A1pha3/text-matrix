@@ -2,6 +2,7 @@
 title: "Free Claude Code：用免费提供商替代 Anthropic API，让 Claude Code 零成本运行"
 date: "2026-04-27T01:04:00+08:00"
 slug: free-claude-code
+github_repo: "Alishahryar1/free-claude-code"
 aliases:
   - "/posts/tech/free-claude-code-anthropic-proxy/"
   - "/posts/tech/free-claude-code-proxy-guide/"

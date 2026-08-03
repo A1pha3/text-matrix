@@ -2,6 +2,7 @@
 title: "agentsview：把 20+ 编程 Agent 的会话、Token 和成本收进一个本地面板"
 date: "2026-06-12T15:11:59+08:00"
 slug: "agentsview-kenn-io-agent-monitoring-tool-guide"
+github_repo: "kenn-io/agentsview"
 description: "kenn-io/agentsview 是 Go 写的本地优先 Agent 监控工具，自动索引各编程 Agent 会话到 SQLite，提供 Web UI 与 CLI 成本统计。"
 draft: false
 categories: ["技术笔记"]

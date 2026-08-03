@@ -1,6 +1,7 @@
 ---
 title: "AWS Agent Toolkit：AWS 官方给 Claude Code / Codex / Cursor / Kiro 准备的 MCP + Skills 工具集"
 slug: "aws-agent-toolkit-for-aws-mcp-skills-plugins-guide"
+github_repo: "aws/agent-toolkit-for-aws"
 date: "2026-06-25T21:05:40+08:00"
 draft: false
 categories: ["技术笔记"]

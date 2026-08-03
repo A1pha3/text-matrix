@@ -2,6 +2,7 @@
 title: "Terax 深度拆解：终端优先 + AI 原生的轻量级开发工作台，Tauri 2 + Rust + WebGL 渲染"
 date: 2026-07-04T21:16:32+08:00
 slug: crynta-terax-ai-terminal-first-ai-dev-workspace-guide
+github_repo: "crynta/terax-ai"
 description: "crynta/terax-ai 是终端优先的 AI 原生开发工作台（ADE），基于 Tauri 2 + Rust + React 19 + xterm.js + CodeMirror 6 构建，集成原生 PTY 后端、WebGL 终端渲染、agentic AI 侧栏、多 provider 支持。安装包约 7-8 MB。"
 draft: false
 categories: ["技术笔记"]

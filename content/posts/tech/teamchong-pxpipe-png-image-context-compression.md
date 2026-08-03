@@ -1,6 +1,7 @@
 ---
 title: "teamchong/pxpipe：把 Claude Code 上下文塞进 PNG，省下 70% token"
 slug: teamchong-pxpipe-png-image-context-compression
+github_repo: "teamchong/pxpipe"
 date: "2026-07-08T19:25:00+08:00"
 description: "pxpipe 是 Anthropic API 的本地代理，把大段 tool_result / system prompt / 历史对话渲染成 PNG 图像块塞回请求，让 vision 通道读上下文，token 削减 59-70%。它有完整的盈利能力门控、缓存对齐、事实摘要回退机制。"
 categories: ["技术笔记"]

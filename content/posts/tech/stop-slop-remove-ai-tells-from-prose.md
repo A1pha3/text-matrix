@@ -2,6 +2,7 @@
 title: "stop-slop：把 AI 写作从套话和模板句里拽出来的 skill"
 date: "2026-05-26T09:40:00+08:00"
 slug: "stop-slop-remove-ai-tells-from-prose"
+github_repo: "hardikpandya/stop-slop"
 description: "stop-slop 是 Hardik Pandya 开源的写作 skill，它把 AI 常见套话、模板句和假动作拆成可执行规则，适合清理英文技术写作里的 AI 味。"
 draft: false
 categories: ["技术笔记"]

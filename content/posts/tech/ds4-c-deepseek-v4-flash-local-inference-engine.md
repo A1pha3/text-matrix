@@ -2,6 +2,7 @@
 title: "ds4.c：DeepSeek V4 Flash 本地推理实现"
 date: "2026-05-09T09:27:03+08:00"
 slug: "ds4-c-deepseek-v4-flash-local-inference-engine"
+github_repo: "antirez/ds4"
 description: "基于 README 与源码整理 ds4.c 的实现边界：单模型专用 Metal 执行路径、单一 live session、磁盘 KV cache，以及 thinking 与工具调用的兼容处理。"
 draft: false
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "thananon/9arm-skills"
 date = '2026-05-21T11:50:00+08:00'
 draft = false
 title = '9arm-skills：让 AI 编程助手按流程干活的合约式 Skills'

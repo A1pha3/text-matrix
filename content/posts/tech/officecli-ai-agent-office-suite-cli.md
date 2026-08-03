@@ -2,6 +2,7 @@
 title: "OfficeCLI：把 Office 三件套切给 AI Agent 的单 binary CLI"
 date: "2026-07-09T02:55:00+08:00"
 slug: "officecli-ai-agent-office-suite-cli"
+github_repo: "iOfficeAI/OfficeCLI"
 description: "OfficeCLI 是一个 Apache 2.0 单文件 CLI，给 AI Agent 提供 .docx / .xlsx / .pptx 读写与渲染能力。本文拆解 L1 阅读/L2 DOM/L3 XML 三层架构、live preview 回环、与 LibreOffice/python-docx 在 Agent 场景下的取舍。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "SkillSpector 架构拆解：NVIDIA 怎么用 64 条规则 + LLM 给 agent skill 打 0-100 分"
 date: "2026-06-12T15:13:51+08:00"
 slug: "skillspector-nvidia-agent-skill-evaluation-guide"
+github_repo: "NVIDIA/SkillSpector"
 description: "拆解 NVIDIA SkillSpector 安全扫描架构：64 条规则 + AST + 污点追踪 + YARA + OSV 实时 CVE + LLM 语义评估，输出 0-100 风险评分。"
 draft: false
 categories: ["技术笔记"]

@@ -6,6 +6,7 @@ categories:
   - 技术笔记
 tags: ["金融数据", "开源项目"]
 slug: ftshare-python-sdk-financial-data-agent-access-layer
+github_repo: "ftshare-lab/ftshare-python-sdk"
 author: 钳岳星君
 description: "上海非凸智能 6-23 开源的 ftshare Python SDK（MIT 协议），用 mixin 组合 + endpoint registry + DataFrame 优先把 176 个金融数据接口变成 pandas 一行调用；它是 ftshare 生态中 agent / MCP / Skill 投研工作流的数据访问层。"
 ---

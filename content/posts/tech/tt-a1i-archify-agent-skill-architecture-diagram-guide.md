@@ -1,6 +1,7 @@
 ---
 title: "Archify 拆解：让 AI Agent 直接生成架构图的 Skill"
 slug: tt-a1i-archify-agent-skill-architecture-diagram-guide
+github_repo: "tt-a1i/archify"
 date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false

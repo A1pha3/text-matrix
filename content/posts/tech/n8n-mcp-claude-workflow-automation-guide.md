@@ -2,6 +2,7 @@
 title: "n8n-MCP：让 AI 编程助手帮你构建 n8n 工作流自动化"
 date: "2026-05-03T20:00:00+08:00"
 slug: "n8n-mcp-claude-workflow-automation-guide"
+github_repo: "czlonkowski/n8n-mcp"
 aliases:
   - "/posts/tech/n8n-mcp-ai-workflow-automation-guide/"
 description: "n8n-MCP 的核心问题不是「能不能调用 n8n」，而是能不能让 AI 助手理解 1,650 个节点的配置方式，并在构建工作流时少犯运行时错误。本文从工具设计、验证策略和任务流转角度拆解这个 MCP 服务器的实际运作方式。"

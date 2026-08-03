@@ -1,6 +1,7 @@
 ---
 title: "ASP.NET Core 深度拆解:38K stars 背后的跨平台运行时与中间件演进"
 slug: dotnet-aspnetcore-cross-platform-web-framework-guide
+github_repo: "dotnet/aspnetcore"
 date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false

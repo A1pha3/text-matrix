@@ -2,6 +2,7 @@
 title: "Presenton：开源 AI 演示文稿生成器，Gamma/Beautiful.ai 的免费替代"
 date: "2026-05-23T20:17:28+08:00"
 slug: "presenton-open-source-ai-presentation-generator"
+github_repo: "presenton/presenton"
 description: "Presenton 是一款开源 AI 演示文稿生成工具，支持自托管、本地运行、多模型提供商（OpenAI/Gemini/Claude/Ollama），可导出完整可编辑的 PPTX 文件，Apache 2.0 开源，适合需要数据隐私或避免 SaaS 订阅的团队。"
 draft: false
 categories: ["技术笔记"]

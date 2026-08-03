@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["GitHub", "Copilot", "Code Review", "自动化"]
 draft: false
 slug: github-copilot-pr-reviewer
+github_repo: "github/copilot-sdk"
 description: "GitHub Copilot PR Reviewer 基于 Copilot SDK，自动分析 PR 改动、识别潜在问题和生成审查意见。本文覆盖配置安装、实践建议和 CI/CD 集成。"
 ---
 

@@ -2,6 +2,7 @@
 title: "Meetily 深度拆解：开源隐私优先的 AI 会议助手，本地 Whisper/Parakeet 实时转写 + 多模型总结"
 date: 2026-07-04T21:16:32+08:00
 slug: zackriya-solutions-meetily-privacy-first-meeting-assistant-guide
+github_repo: "wez/wezterm"
 description: "Meetily（Zackriya-Solutions/meetily）是隐私优先的开源 AI 会议助手，所有转写和总结完全本地运行。基于 Tauri+Rust 后端与 Next.js 前端，支持 Whisper/Parakeet 双引擎与 Ollama/Claude/Groq/OpenRouter 等多种 AI 提供方。"
 draft: false
 categories: ["技术笔记"]

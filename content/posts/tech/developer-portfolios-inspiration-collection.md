@@ -2,6 +2,7 @@
 title: "Developer Portfolios：1684个开发者作品集灵感合集"
 date: "2026-05-31T20:07:02+08:00"
 slug: "developer-portfolios-inspiration-collection"
+github_repo: "emmabostian/developer-portfolios"
 description: "Developer Portfolios 是一个收录了 1684 个开发者个人网站作品集的灵感合集，按字母表从 A 到 Z 排列，涵盖软件工程师、前端、后端、全栈、AI/ML 等多个方向。本文解析该仓库的组织结构、收录标准、以及如何利用它来设计自己的开发者作品集。"
 draft: false
 categories: ["技术笔记"]

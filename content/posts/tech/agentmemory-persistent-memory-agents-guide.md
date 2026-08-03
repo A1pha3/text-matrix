@@ -2,6 +2,7 @@
 title: "agentmemory：为 AI Agent 打造可搜索的持久化记忆系统"
 date: 2026-05-10T16:55:00+08:00
 slug: agentmemory-persistent-memory-agents-guide
+github_repo: "rohitg00/agentmemory"
 aliases:
     - "/posts/tech/agentmemory-persistent-memory-ai-coding-agent/"
     - "/posts/tech/agentmemory-persistent-memory-ai-coding-agents/"

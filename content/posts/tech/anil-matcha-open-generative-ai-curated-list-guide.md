@@ -2,6 +2,7 @@
 title: "Anil-matcha/Open-Generative-AI 指南:200+ 模型的开源 AI 图像/视频/唇同步工作室"
 date: "2026-06-28T15:18:36+08:00"
 slug: "anil-matcha-open-generative-ai-curated-list-guide"
+github_repo: "Anil-matcha/Open-Generative-AI"
 description: "Open Generative AI 是自托管、无内容过滤的 AI 工作室,200+ 模型覆盖图像/视频/唇同步,支持双模式 Studio 与 sd.cpp/Wan2GP 本地推理。"
 draft: false
 categories: ["技术笔记"]

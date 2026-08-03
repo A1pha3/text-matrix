@@ -2,6 +2,7 @@
 title: "LLMs-from-Scratch 完全指南：从零构建 GPT 大语言模型"
 date: "2026-05-14T12:46:00+08:00"
 slug: "llms-from-scratch-build-gpt-from-ground-up"
+github_repo: "rasbt/LLMs-from-scratch"
 description: "LLMs-from-scratch 是 Sebastian Raschka 所著《Build a Large Language Model (From Scratch)》的官方配套代码仓库。本文提供完整的学习路径、核心概念解析、代码实践指导和常见陷阱提醒，帮助你在不依赖高阶数学的前提下真正理解 LLM 的内部工作机制。"
 draft: false
 categories: ["技术笔记"]

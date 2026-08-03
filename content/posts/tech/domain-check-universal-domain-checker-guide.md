@@ -1,4 +1,5 @@
 +++
+github_repo = "saidutt46/domain-check"
 date = '2026-04-13T23:51:22+08:00'
 draft = false
 title = 'Domain Check：通用域名可用性检查引擎'

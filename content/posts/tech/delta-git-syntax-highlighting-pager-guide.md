@@ -2,6 +2,7 @@
 title: "Delta：31.2K Stars·Git语法高亮分页器·Rust高性能"
 date: "2026-04-12T02:31:39+08:00"
 slug: delta-git-syntax-highlighting-pager-guide
+github_repo: "dandavison/delta"
 description: "Delta 是一个 Git 语法高亮分页器，使用 Rust 编写，具有高性能和丰富的语法高亮主题，支持 Side-by-Side 对比视图。"
 draft: false
 categories: ["技术笔记"]

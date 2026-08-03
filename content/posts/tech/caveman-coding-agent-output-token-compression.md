@@ -2,6 +2,7 @@
 title: "Caveman Coding Agent：让 Agent 少讲废话的输出压缩 Skill"
 date: "2026-07-09T02:55:00+08:00"
 slug: "caveman-coding-agent-output-token-compression"
+github_repo: "JuliusBrussee/caveman"
 description: "JuliusBrussee/caveman 是一套给 Claude Code / Codex / Cursor 等 Agent 装的输出压缩 skill，主打嘴变小脑子不变。在 README 公开的 10 prompt benchmark 上平均节省 65% 输出 token，并把代码、命令、错误信息 byte 级保留。"
 draft: false
 categories: ["技术笔记"]

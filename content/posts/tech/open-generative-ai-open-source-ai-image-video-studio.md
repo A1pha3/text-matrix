@@ -2,6 +2,7 @@
 title: "Open Generative AI：一站式开源 AI 图片和视频生成平台"
 date: 2026-05-17T03:05:00+08:00
 slug: "open-generative-ai-open-source-ai-image-video-studio"
+github_repo: "Anil-matcha/Open-Generative-AI"
 description: "Open Generative AI 是开源 AI 图片、视频、口型同步和影院工作室，支持200+模型，提供桌面客户端和网页版，内置本地推理引擎 sd.cpp 和 Wan2GP，无需 API Key 即可离线生成 AI 媒体内容。"
 draft: false
 categories: ["技术笔记"]

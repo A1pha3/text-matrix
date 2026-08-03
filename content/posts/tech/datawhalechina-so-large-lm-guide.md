@@ -2,6 +2,7 @@
 title: "Datawhale 大模型基础：从理论到实战的完整 LLM 知识体系"
 date: "2026-04-23T19:39:08+08:00"
 slug: "datawhalechina-so-large-lm-guide"
+github_repo: "datawhalechina/so-large-lm"
 description: "全面介绍 Datawhale 出品的 so-large-lm 项目，7,167 Stars 的开源 LLM 教程，涵盖 14 章内容体系、学习路径与核心技术深度解读。"
 draft: false
 categories: ["技术笔记"]

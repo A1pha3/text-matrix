@@ -2,6 +2,7 @@
 title: "Pascal Editor：基于React Three Fiber的WebGPU 3D建筑编辑器"
 date: "2026-05-19T20:25:00+08:00"
 slug: "pascal-editor-3d-architecture-webgpu"
+github_repo: "pascalorg/editor"
 description: "Pascal Editor是一个用React Three Fiber和WebGPU构建的3D建筑编辑器，采用Turborepo monorepo架构，核心包@pascal-app/core负责状态管理，@pascal-app/viewer负责3D渲染，可在Next.js应用中集成。"
 draft: false
 categories: ["技术笔记"]

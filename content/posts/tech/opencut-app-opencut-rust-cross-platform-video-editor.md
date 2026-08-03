@@ -6,6 +6,7 @@ categories: ["技术笔记"]
 tags: ["Rust", "Open Source", "MCP"]
 description: "一个从零开始重写的开源视频编辑器，目标是用 Rust 核心统一覆盖 Web、桌面和移动端，并原生支持 AI agent 通过 MCP 协议接入。"
 slug: opencut-app-opencut-rust-cross-platform-video-editor
+github_repo: "OpenCut-app/OpenCut"
 
 ---
 

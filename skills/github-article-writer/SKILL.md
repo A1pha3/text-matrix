@@ -63,20 +63,13 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 3. 脚本返回 `exit 1`（有已写）→ stdout 会列出"已写"的 repo + 命中文件路径，**必须**把这些 repo 从本轮写文章清单中**剔除**，只对脚本标记的"🆕 未写"列表动笔。
 4. 脚本返回 `exit 2`（路径错）→ 立即停下来检查工作区是否在 text-matrix 仓库内，不要在错误目录里继续。
 
-**4 重 grep 兜底原理**（`music-assistant/server` 漏判复盘，2026-06-16 23:20 师父拍板 + 6-25 单段 owner 过杀复盘，2026-06-25 16:02 师父拍板修复）：
+**精确字段去重原理**（2026-08-03 重构，取代旧 4 重 grep + owner 段特判的 159 行脚本）：
 
-- **A 重 - owner 段 basename 前缀匹配**（仅**多段 owner** 启用）：`music-assistant` → 命中 `music-assistant-server-*.md`（处理 `/` vs `-` 不匹配）；只在 basename 前缀匹配，不 grep 内容。单段 owner（flutter/microsoft）不启用，避免 `flutter-*.md` / `microsoft-*.md` 前缀过杀同 owner 未写的新 repo。
-- **B 重 - owner-repo 拼接形式**：同时试 `music-assistant-server` 和大小写保留版，grep 文件内容
-- **C 重 - git log --grep**：按 `owner/repo` 查 commit 标题
-- **D 重 - git log --grep owner 段**（仅**多段 owner** 启用）：补"模糊 commit 标题"（如 `LMCache + music-assistant`）。单段 owner 不启用，避免 git log 含 owner 字符串后过杀所有 owner/* 新 repo。
+每篇文章 frontmatter 的 `github_repo: "owner/repo"` 是结构化身份字段（`backfill_github_repo.py` 回填历史 + 本 skill 写新文时填入，大小写保留）。去重 = 本轮 repo 与已写集合做**精确字符串匹配**（小写归一化）。旧版的 `/` vs `-`、单段/多段 owner 特判、孤儿文件、大小写、bitchat 误杀成 bitchat-android —— 全部消失，精确匹配下这些根本不是问题。
 
-任一命中即视为"已写过"，从本轮清单剔除。
+**姊妹仓库预警**（精确匹配的正确边界）：同 owner 的不同 repo（如 `permissionlesstech/bitchat` 主仓库 vs `permissionlesstech/bitchat-android` 客户端）是不同 repo，精确匹配正确判为"未写"。但内容可能高度重叠（8-03 bitchat-android 与 7-31 bitchat 重复的真实案例）。dedup 脚本对"未写"的 repo 自动报告同 owner 已写篇（输出 `⚠️ 同 owner 已 N 篇`）；看到此标记**必须**动笔前确认本文主轴与已写篇不重叠，重叠则改角度或跳过。
 
-**6-25 修复历史**（2026-06-25 16:02）：原 A 重用 `grep -liE` 对文件内容匹配，单段 owner（如 `microsoft`）会过杀任何含 "Microsoft" 字符串的文章（如 `ace-step-ui-ai-music-generation-guide.md`），单段 owner（如 `flutter`）会过杀任何含 "Flutter" 字符串的文章（如 `flutter-skill-claude-code-gaokao-volunteer-guide.md`）。修复后 A 重只在**多段 owner**（含 `-` 的 owner，如 `music-assistant`）时启用，且只在 basename 前缀匹配，不 grep 内容。15:00 cron 47 个 trending repo 回归测试验证：修复前 47 个全判定已写（14 个过杀），修复后正确识别 33 个已写 + 14 个真未写。
-
-**历史教训**（2026-06-16 复盘）：6-13 trending daily 15:00 写过 `music-assistant/server`（`unified-music-hub-guide.md`），6-16 trending daily+weekly 15:00 **又**把它当"新 repo"写了一遍（`media-orchestration-guide.md`）。根因：6-16 子代理只查 git log，没在 `content/posts/tech/` 做全量 grep 兜底；`/` vs `-` 不匹配让 owner/repo grep 漏判。本 Step + 脚本彻底封死此类问题。
-
-**历史教训**（2026-06-25 复盘）：15:00 cron 抓 47 个 trending repo，dedup-check 全部判定"已写"（exit 1）。人工精确复核发现 3 个高价值过杀（microsoft/presidio / microsoft/Webwright / flutter/flutter）+ 11 个真未写。根因：A 重 grep 内容匹配 owner 字符串（microsoft/flutter 等单段 owner 过杀），D 重 git log --grep owner 字符串（单段 owner 过杀）。修复方案：方案 2.1（A 重 + D 重都只在多段 owner 启用）。详见 `~/.openclaw/workspace/docs/anomaly-decisions/trending-dedup-check-A-owner-segment-overkill-fix-2026-06-25.md` 呈报稿。
+**历史背景**（旧 4 重 grep 时代的案例，精确字段方案下已根除）：6-16 `music-assistant/server` 因 `/` vs `-` 漏判写重 2 篇；6-25 microsoft/flutter 单段 owner 过杀。脚本从 159 行降到 ~50 行，此类问题不再可能。旧版演进细节见 `docs/anomaly-decisions/trending-dedup-check-A-owner-segment-overkill-fix-2026-06-25.md`。
 
 ### Step 1: 仓库取证
 
@@ -200,7 +193,7 @@ gh api "repos/$REPO/contents/" --jq '.[].name'
 - [../hugo-writer/SKILL.md](../hugo-writer/SKILL.md)
 - [references/frontmatter-template.md](references/frontmatter-template.md)
 
-Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个精准名词；date 必须使用生成当下的北京时间且格式完整；description 必须是 50-100 字纯文本摘要。
+Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个精准名词；date 必须使用生成当下的北京时间且格式完整；description 必须是 50-100 字纯文本摘要；**必须包含 `github_repo: "owner/repo"`**（取自 Step 1 `gh repo view` 的 nameWithOwner，大小写原样保留）— trending 去重的结构化身份字段，不依赖正文链接。
 
 除非用户明确要求只输出大纲，否则写作模式默认产物应是“完整文章 + 合法 Frontmatter”。
 
@@ -258,6 +251,7 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 - 发布前完成三轮事实校验
 - 多子系统、并行机制、benchmark 密集的仓库，优先按“原理拆解 / 架构分析”处理
 - **trending 类任务必须在动笔前跑 `scripts/trending-dedup-check.sh` 去重；脚本返回 exit 1 时只能写"未写"列表里的 repo，脚本标记的"已写"必须从本轮清单剔除**
+- **写文章时必须在 frontmatter 填 `github_repo: "owner/repo"`**（取自 `gh repo view` 的 nameWithOwner，大小写与 GitHub 实际一致）。这是 trending 去重的结构化身份字段，漏写会导致未来该 repo 被重复写（如 8-03 Emily2040/seedance 因正文无链接又没填字段，未进入去重库）
 
 ### 禁止
 
@@ -270,6 +264,7 @@ Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个
 - 禁止依赖固定机器路径；始终以当前工作区或用户指定路径为准
 - 禁止为了凑结构补写“最佳实践”“FAQ”“性能优化”之类空章节
 - **禁止 trending 类任务未跑 `scripts/trending-dedup-check.sh` 就动笔写文章**（2026-06-16 复盘：music-assistant/server 6-13/6-16 写重 2 篇的根因）
+- **禁止漏写或大小写错填 `github_repo` 字段**（大小写必须与 GitHub 实际 owner/repo 一致，如 `0xNyk` 不可写成 `0xnyk`；这是 dedup 精确匹配的基础，错填等于没填）
 
 ## 6. 异常处理
 

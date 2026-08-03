@@ -2,6 +2,7 @@
 title: "Deep-Live-Cam：一键实时换脸工具的技术原理与使用指南"
 date: "2026-03-28T22:00:00+08:00"
 slug: "deep-live-cam-realtime-faceswap"
+github_repo: "hacksider/Deep-Live-Cam"
 description: "深度解读 Deep-Live-Cam 实时换脸与视频深度伪造工具，一键操作、仅需一张照片，支持 webcam 直播、视频通话、电影角色扮演等多种场景。"
 draft: false
 categories: ["技术笔记"]

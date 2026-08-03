@@ -3,6 +3,7 @@ title: "OpenCLI：把 Agent 的工具入口收成一棵命令树"
 date: "2026-05-17T09:10:00+08:00"
 lastmod: "2026-06-25T09:30:00+08:00"
 slug: "opencli-ai-agent-browser-cli-framework"
+github_repo: "jackwener/OpenCLI"
 description: "OpenCLI 把站点适配器、登录态浏览器、Electron 应用和本地 CLI 收进同一棵命令树。理解它，要先看命令优先、Browser Bridge、三层会话模型，以及哪些场景其实不该用它。"
 summary: "OpenCLI 不只是 browser 子命令。更顺的用法是先查适配器命令，缺口再退到 browser 原语；用 profile、browser session、siteSession 分别处理身份、流程和站点页生命周期；重复出现的流程，再沉淀成 adapter、plugin 或 external CLI。"
 draft: false

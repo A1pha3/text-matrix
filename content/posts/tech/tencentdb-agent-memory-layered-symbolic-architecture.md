@@ -2,6 +2,7 @@
 title: "TencentDB Agent Memory 架构拆解：用 4 层语义金字塔 + Mermaid 符号图解决 Agent 长记忆的两难"
 date: "2026-06-13T21:03:20+08:00"
 slug: "tencentdb-agent-memory-layered-symbolic-architecture"
+github_repo: "TencentCloud/TencentDB-Agent-Memory"
 description: "拆解 TencentDB Agent Memory 的核心设计：4 层语义金字塔与 Mermaid 符号化短期记忆，解决 Agent 长记忆丢失证据、压缩不可逆的问题。"
 draft: false
 categories: ["技术笔记"]

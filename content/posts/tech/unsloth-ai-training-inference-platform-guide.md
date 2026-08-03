@@ -2,6 +2,7 @@
 title: "Unsloth：61k Stars 的本地 AI 训练与推理平台——省的是显存，不是时间"
 date: "2026-04-12T02:31:39+08:00"
 slug: unsloth-ai-training-inference-platform-guide
+github_repo: "unslothai/unsloth"
 description: "Unsloth 是一个本地 AI 训练与推理平台，可实现 2 倍速度和 70% 显存节省，支持多种开源模型。"
 draft: false
 categories: ["技术笔记"]

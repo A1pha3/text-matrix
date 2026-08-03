@@ -2,6 +2,7 @@
 title: "Lightweight Charts™：TradingView 开源轻量级金融图表库"
 date: "2026-04-12T01:52:00+08:00"
 slug: lightweight-charts-tradingview-financial-charts-guide
+github_repo: "tradingview/awesome-tradingview"
 description: "Lightweight Charts 是 TradingView 开源的轻量级金融图表库，16.3K+ Stars，支持 K线、折线、柱状图等金融图表类型，性能卓越。"
 draft: false
 categories: ["技术笔记"]

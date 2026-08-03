@@ -2,6 +2,7 @@
 title: "TradingAgents 全面指南：多 Agent 大模型金融交易框架从入门到精通"
 date: "2026-05-02T15:04:08+08:00"
 slug: "tradingagents-multi-agent-crypto-trading-framework-guide"
+github_repo: "TauricResearch/TradingAgents"
 aliases:
   - "/posts/tech/tradingagents-multi-agent-llm-trading-framework/"
   - "/posts/tech/tradingagents-multi-agent-llm-financial-trading/"

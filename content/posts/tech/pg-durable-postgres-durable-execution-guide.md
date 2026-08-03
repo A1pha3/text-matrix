@@ -1,4 +1,5 @@
 +++
+github_repo = "microsoft/pg_durable"
 date = '2026-06-07T23:03:00+08:00'
 draft = false
 title = 'pg_durable 解析：把 durable execution 直接搬进 PostgreSQL，Microsoft 给后端工程师的零基础设施工作流'

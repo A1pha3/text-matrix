@@ -2,6 +2,7 @@
 title: "Frigate NVR：本地运行的 AI 摄像头目标检测监控方案"
 date: "2026-05-25T09:12:29+08:00"
 slug: "frigate-nvr-local-ai-camera-detection-guide"
+github_repo: "blakeblackshear/frigate"
 description: "Frigate 是专为 Home Assistant 设计的开源 NVR（网络视频录像机），通过 OpenCV 和 TensorFlow 在本地实现 IP 摄像头目标检测，支持 GPU/AI 加速、MQTT 集成、24/7 录制和 WebRTC 低延迟直播，32.9k Stars。"
 draft: false
 categories: ["技术笔记"]

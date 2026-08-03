@@ -2,6 +2,7 @@
 title: "yt-dlp：命令行音视频下载工具使用与架构指南"
 date: "2026-05-23T03:05:00+08:00"
 slug: "yt-dlp-video-download-tool-guide"
+github_repo: "yt-dlp/yt-dlp"
 description: "yt-dlp 是一款开源命令行音视频下载工具，支持超过一千个站点，基于 youtube-dl 活跃 fork 而来。本文从安装、基础用法、格式选择、元数据处理、Python API、插件开发到架构解析全面覆盖，并给出适用边界与排查路径。"
 draft: false
 categories: ["技术笔记"]

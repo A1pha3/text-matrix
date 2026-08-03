@@ -2,6 +2,7 @@
 title: "GrokSearch：让Claude接入Grok实时搜索的MCP工具，双引擎+自动降级"
 date: "2026-05-11T20:25:00+08:00"
 slug: "groksearch-mcp-llm-realtime-search"
+github_repo: "GuDaStudio/GrokSearch"
 description: "深度解析GuDaStudio/GrokSearch：基于FastMCP构建的MCP服务器，Grok负责AI搜索，Tavily/Firecrawl负责网页抓取，双引擎互补，支持一键禁用Claude Code官方工具强制路由到本工具。"
 draft: false
 categories: ["技术笔记"]

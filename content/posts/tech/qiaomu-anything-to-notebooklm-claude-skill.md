@@ -2,6 +2,7 @@
 title: "Qiaomu 巧木：Anything to NotebookLM，多源内容一键转播客/PPT/思维导图"
 date: "2026-05-16T03:12:12+08:00"
 slug: "qiaomu-anything-to-notebooklm-claude-skill"
+github_repo: "joeseesun/qiaomu-anything-to-notebooklm"
 description: "Qiaomu（巧木）是一个 Claude Code Skill，支持 15+ 种内容源（微信公众号、Twitter、YouTube、PDF、付费文章等）一键转为 NotebookLM 可处理的格式，再生成播客、PPT、思维导图或 Quiz 等多种输出。"
 draft: false
 categories: ["技术笔记"]

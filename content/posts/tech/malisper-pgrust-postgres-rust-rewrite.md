@@ -1,6 +1,7 @@
 ---
 title: "pgrust 架构拆解：用 Rust + AI 重写 PostgreSQL 是怎么做到的"
 slug: malisper-pgrust-postgres-rust-rewrite
+github_repo: "malisper/pgrust"
 date: 2026-07-13T03:03:14+08:00
 lastmod: 2026-07-13T03:03:14+08:00
 draft: false

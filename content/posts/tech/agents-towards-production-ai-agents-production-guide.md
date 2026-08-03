@@ -2,6 +2,7 @@
 title: "Agents Towards Production：AI Agent 生产级开发全栈指南"
 date: "2026-05-17T20:10:00+08:00"
 slug: "agents-towards-production-ai-agents-production-guide"
+github_repo: "NirDiamant/agents-towards-production"
 description: "Agents Towards Production 是 GitHub 上专注于 AI Agent 生产级部署的开源教程仓库，涵盖状态流编排、向量记忆、实时搜索、Docker 容器化、FastAPI 暴露、安全防护、GPU 扩展、多智能体协作、可观测性与评估等 28 个完整教程，覆盖从原型到企业级的完整路径。"
 draft: false
 categories: ["技术笔记"]

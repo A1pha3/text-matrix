@@ -2,6 +2,7 @@
 title: "DFlash：块扩散加速的 LLM 推测解码技术"
 date: "2026-05-08T03:11:04+08:00"
 slug: "dflash-block-diffusion-speculative-decoding-guide"
+github_repo: "z-lab/dflash"
 description: "DFlash 是 z-lab 提出的块扩散式推测解码框架，通过轻量级块扩散模型代替传统自回归草案模型，实现 LLM 推理加速。本文详细解析其核心原理、支持模型列表、效果对比与快速上手方法。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "LMCache 深度解析：把 LLM 推理的 KV Cache 从临时状态改造成可复用资产"
 date: "2026-06-13T15:15:25+08:00"
 slug: "lmcache-llm-kv-cache-optimization-guide"
+github_repo: "LMCache/LMCache"
 description: "LMCache 是一个为 LLM 推理而生的 KV Cache 管理层，目标是让注意力键值缓存从进程内的临时状态变成跨请求、跨进程、跨节点可复用的资产。本文从架构分层、多进程模式、PD 异步预留和 v0.4.7 关键变更出发，解释它如何用独立守护进程 + 多层存储 + L1/L2 缓存策略，把 TTFT 压到原来的 1/13。"
 draft: false
 categories: ["技术笔记"]

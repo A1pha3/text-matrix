@@ -2,6 +2,7 @@
 title: "Anthropic Skills 仓库进阶实战：18个技能覆盖研发全链路"
 date: "2026-05-16T15:10:00+08:00"
 slug: "anthropics-skills-18-skills-full-stack-guide"
+github_repo: "anthropics/skills"
 aliases:
   - "/posts/tech/anthropics-skills-agent-skills-repository-guide/"
 description: "Anthropic 的 Skills 仓库真正解决的不是「AI 能做什么」，而是「怎么让 AI 稳定地产出可控结果」——18 个技能分别从方法论、品质控制和文件格式三个方向施加约束。本文拆解四个最深技能的工程细节，并给出一套按需采用的路线图。"

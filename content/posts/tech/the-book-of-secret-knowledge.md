@@ -2,6 +2,7 @@
 title: "The Book of Secret Knowledge：运维安全从业者的终极工具索引"
 date: "2026-05-23T03:05:00+08:00"
 slug: "the-book-of-secret-knowledge-sysadmin-toolkit"
+github_repo: "starship/starship"
 description: "The Book of Secret Knowledge 是 trimstray 在 GitHub 上维护的一个巨型工具索引仓库，收录 CLI/GUI 工具、Web 服务、渗透测试、系统加固等领域的精选资源，面向系统管理员、DevOps 和安全研究员。本文从项目定位、章节结构、核心亮点三个维度进行全面解读，并给出阅读建议与适用边界分析。"
 draft: false
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "x1xhlol/system-prompts-and-models-of-ai-tools"
 date = '2026-06-09T21:00:00+08:00'
 draft = false
 title = 'x1xhlol/system-prompts-and-models-of-ai-tools 深度导读：30+ 主流 AI 编程工具的 system prompt 与工具定义大合集'

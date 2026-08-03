@@ -1,4 +1,5 @@
 +++
+github_repo = "manaflow-ai/cmux"
 date = '2026-05-24T23:07:00+08:00'
 draft = false
 title = 'cmux：Ghostty 内核 macOS 终端，AI 编程助手专属分屏'

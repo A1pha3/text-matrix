@@ -1,4 +1,5 @@
 ---
+github_repo: "apps/github-merge-queue"
 title: "GitHub Merge Queue 自动化 PR 合入完全指南"
 date: 2026-05-17
 draft: false

@@ -2,6 +2,7 @@
 title: "HyperFrames 深度解析：把 HTML 变成视频，HeyGen 为 Agent 时代设计的新框架"
 date: 2026-06-04T13:50:00+08:00
 slug: hyperframes-html-to-video-agent-framework-guide
+github_repo: "heygen-com/hyperframes"
 description: "HeyGen 开源 HyperFrames：Write HTML. Render video. Built for agents. 一文讲清 HTML→MP4 视频框架的设计哲学、Agent Skills 工作流与 frame.md 设计系统。"
 draft: false
 categories: ["技术博客"]

@@ -2,6 +2,7 @@
 title: "Puppeteer：94k stars 的浏览器自动化事实标准，从 DevTools Protocol 到 WebDriver BiDi"
 date: "2026-06-14T21:06:00+08:00"
 slug: "puppeteer-chrome-firefox-automation-devtools-api-guide"
+github_repo: "ChromeDevTools/chrome-devtools-mcp"
 description: "Puppeteer 是 94.6k stars 的浏览器自动化 Node.js 库，提供 Chrome/Firefox 的高级 API，基于 DevTools Protocol 和 WebDriver BiDi。本文从协议抽象、安装模式、locator API、Chrome DevTools MCP 集成等维度深度拆解。"
 draft: false
 categories: ["技术笔记"]

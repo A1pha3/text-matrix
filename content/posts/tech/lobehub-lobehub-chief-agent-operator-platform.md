@@ -7,6 +7,7 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "Multi-Agent"]
 description: "LobeHub 是 lobehub 的首席 Agent 运营官平台，80k+ stars，把 Agent 作为工作单位：Operator 编排 + IM Gateway + 多 agent 协作 + Personal Memory。"
 slug: "lobehub-lobehub-chief-agent-operator-platform"
+github_repo: "lobehub/lobehub"
 author: text-matrix
 ---
 

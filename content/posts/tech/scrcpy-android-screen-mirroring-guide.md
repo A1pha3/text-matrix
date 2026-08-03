@@ -1,4 +1,5 @@
 +++
+github_repo = "Genymobile/scrcpy"
 date = '2026-05-14T20:17:49+08:00'
 draft = false
 title = 'scrcpy：开源 Android 屏幕投射与设备控制'

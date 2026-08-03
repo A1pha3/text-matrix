@@ -2,6 +2,7 @@
 title: "Pi Subagents：Pi AI助手的异步子Agent委托框架指南"
 date: "2026-05-31T20:07:02+08:00"
 slug: "pi-subagents-async-subagent-delegation-framework-guide"
+github_repo: "nicobailon/pi-subagents"
 description: "Pi Subagents是Pi AI助手的扩展，允许将工作委托给专注的子Agent。它提供了代码审查、并行审核、背景任务、保存工作流等能力，内置8种角色（scout/researcher/planner/worker/reviewer等），无需写配置直接用自然语言驱动。本文详细解析其架构设计、工作流模式和子安全边界。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Taste Skill：AI 前端构建的「反垃圾」技能框架"
 date: "2026-05-25T20:16:19+08:00"
 slug: "taste-skill-anti-slop-frontend-framework-for-ai-agents"
+github_repo: "Leonxlnx/taste-skill"
 description: "Taste Skill 是一套专注于提升 AI 构建前端界面质量的技能框架，提供设计感、版式、动效和间距的可复用规范，让 AI 生成的前端不再千篇一律。配套图像生成技能，可配合 ChatGPT Images 等工具生成设计参考图后交给 Codex、Cursor 或 Claude Code 实现。"
 draft: false
 categories: ["技术笔记"]

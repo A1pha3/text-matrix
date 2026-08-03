@@ -2,6 +2,7 @@
 title: "Awesome AI Apps：80+LLM 应用实战项目合集"
 date: "2026-04-12T02:31:39+08:00"
 slug: awesome-ai-apps-complete-llm-application-guide
+github_repo: "Arindam200/awesome-ai-apps"
 description: "Awesome AI Apps 收录了 80+ 个 LLM 应用实战项目，涵盖 AI Agent、RAG、聊天机器人等多个领域，适合学习和参考。"
 draft: false
 categories: ["技术笔记"]

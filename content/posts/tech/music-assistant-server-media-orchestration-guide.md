@@ -2,6 +2,7 @@
 title: "Music Assistant 深度拆解：2.4K Stars 的开源家庭媒体编排中枢，怎么把 Spotify / Apple Music / Sonos 拼成一张网"
 date: "2026-06-16T14:58:00+08:00"
 slug: music-assistant-server-media-orchestration-guide
+github_repo: "music-assistant/server"
 description: "music-assistant/server 是 Open Home Foundation 旗下的自托管媒体库管理器，把分散的流媒体服务、唱片库、播放器统一抽象成一个可编排的中枢。本文拆解它的多 provider / 多 player 双层架构、sync 机制、Home Assistant 集成与适用边界。"
 tags: ["Home Assistant", "自托管"]
 categories: ["技术笔记"]

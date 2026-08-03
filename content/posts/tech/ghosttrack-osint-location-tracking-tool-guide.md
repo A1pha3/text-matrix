@@ -5,6 +5,7 @@ lastmod: 2026-04-29T03:02:00+08:00
 categories: ["技术笔记"]
 tags: ["OSINT", "开源工具", "信息收集", "Python"]
 slug: "ghosttrack-osint-location-tracking-tool-guide"
+github_repo: "HunxByts/GhostTrack"
 description: "GhostTrack是一款开源OSINT（开源情报）工具，支持IP追踪、电话号码查询、社交媒体用户名搜索等功能，帮助安全研究人员和渗透测试工程师进行信息收集与环境侦察。"
 ---
 

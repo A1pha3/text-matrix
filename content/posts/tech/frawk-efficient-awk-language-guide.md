@@ -2,6 +2,7 @@
 title: "frawk：一只用Rust写的高性能AWK，1.3k星背后的编译器设计"
 date: "2026-05-11T09:00:00+08:00"
 slug: "frawk-efficient-awk-language"
+github_repo: "ezrosent/frawk"
 description: "深度解析ezrosent/frawk：一个用Rust实现的高性能AWK方言，支持CSV/TSV原生解析、类型推导、JIT编译与SIMD并行处理，benchmark击败gawk/mawk达20倍。"
 draft: false
 categories: ["技术笔记"]

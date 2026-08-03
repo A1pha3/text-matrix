@@ -2,6 +2,7 @@
 title: "Flash Attention：把注意力从 HBM 带宽瓶颈里捞出来"
 date: "2026-04-12T02:31:39+08:00"
 slug: flash-attention-fast-exact-attention-guide
+github_repo: "Dao-AILab/flash-attention"
 description: "Flash Attention 是 Tri Dao 提出的 Transformer 注意力加速算法，通过 tiling 和 online softmax 将内存复杂度从 O(N²) 降到 O(N)，在 A100 上实现 2-4 倍加速，被 Llama、Mistral、CodeLlama 等模型内置采用。"
 draft: false
 categories: ["技术笔记"]

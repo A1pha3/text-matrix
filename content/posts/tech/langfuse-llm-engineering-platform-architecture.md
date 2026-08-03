@@ -2,6 +2,7 @@
 title: "Langfuse：25K Stars 开源 LLM 工程平台，架构设计与集成实践解析"
 date: "2026-04-23T14:00:00+08:00"
 slug: "langfuse-llm-engineering-platform-architecture"
+github_repo: "langfuse/langfuse"
 description: "YC W23 孵化的 25K+ Stars 开源 LLM 工程平台。本文解析：Monorepo 架构、PostgreSQL+ClickHouse 双数据库、OpenTelemetry 追踪模型、事件摄取流水线及主流框架集成。"
 draft: false
 categories: ["技术笔记"]

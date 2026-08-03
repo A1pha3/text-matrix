@@ -2,6 +2,7 @@
 title: "deepclaude: Claude Code 自主 Agent 循环遇上 DeepSeek V4 Pro"
 date: "2026-05-06T11:41:17+08:00"
 slug: "deepclaude-claude-code-deepseek-autonomous-agent-guide"
+github_repo: "aattaran/deepclaude"
 description: "deepclaude 保留 Claude Code 的工具循环，让你通过直连或本地 proxy 接入 DeepSeek V4 Pro、OpenRouter、Fireworks，并补上跨 provider 使用时最关键的兼容层。"
 draft: false
 categories: ["技术笔记"]

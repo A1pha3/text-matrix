@@ -2,6 +2,7 @@
 title: 'openai/plugins：Codex 插件如何打包工作流、应用连接与 MCP'
 date: "2026-06-07T15:03:00+08:00"
 slug: "openai-plugins-codex-plugin-examples"
+github_repo: "openai/plugins"
 description: "openai/plugins 是 Codex 插件的官方范例仓库。它展示了如何把 Skills、Apps 和 MCP 配置打包成可安装的工作流，而不只是给 Codex 加一个外部服务入口。"
 draft: false
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "Leonxlnx/taste-skill"
 date = '2026-05-26T16:16:40+08:00'
 draft = false
 title = 'Taste Skill：给 AI 前端注入设计品味，告别千篇一律的 slop UI'

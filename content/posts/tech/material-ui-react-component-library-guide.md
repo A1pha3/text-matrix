@@ -2,6 +2,7 @@
 title: "Material UI：Google Material Design React 组件库完全指南"
 date: "2026-04-06T20:09:00+08:00"
 slug: "material-ui-react-component-library-guide"
+github_repo: "mui/material-ui"
 description: "全面介绍 Material UI React 组件库，涵盖 98k Stars 的核心特性、主题定制、组件实战、性能优化和版本升级指南。"
 draft: false
 categories: ["技术笔记"]

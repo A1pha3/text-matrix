@@ -1,6 +1,7 @@
 ---
 title: "RedditVideoMakerBot：一键自动化Reddit内容视频生成工具"
 slug: "reddit-video-maker-bot-guide"
+github_repo: "elebumm/RedditVideoMakerBot"
 date: "2026-04-08T16:20:00+08:00"
 lastmod: 2026-04-08T16:20:00+08:00
 categories: ["技术笔记"]

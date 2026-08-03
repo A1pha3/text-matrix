@@ -2,6 +2,7 @@
 title: "mellifluous：本地运行的 Markdown TTS 工具，让文档自己\"出声\""
 date: "2026-05-17T12:05:30+08:00"
 slug: "mellifluous-markdown-tts-apple-silicon"
+github_repo: "alexr314/mellifluous"
 description: "mellifluous 是一个运行在 macOS Apple Silicon 上的本地 Markdown 转语音工具，基于 Qwen3-TTS 和 MLX 框架，支持语音克隆，可以把 Markdown 文档解析为结构化朗读节奏，支持公式、代码、链接等内联内容的语音处理。"
 draft: false
 categories: ["技术笔记"]

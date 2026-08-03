@@ -2,6 +2,7 @@
 title: "Compound Engineering：让每次工程工作都为下一次铺路的 Agent 工作流系统"
 date: "2026-05-30T13:13:57+08:00"
 slug: "compound-engineering-plugin-agent-workflow-system"
+github_repo: "EveryInc/compound-engineering-plugin"
 description: "Compound Engineering 把工程工作变成复利：37 个 Skill、51 个 Agent，覆盖 brainstorm → plan → work → review → compound 完整闭环，支持 Claude Code、Cursor、Codex、Copilot、Qwen Code、OpenCode 等 10+ 平台。"
 draft: false
 categories: ["技术笔记"]

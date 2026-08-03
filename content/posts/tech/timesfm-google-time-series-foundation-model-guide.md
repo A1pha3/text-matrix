@@ -2,6 +2,7 @@
 title: "TimesFM 深度解读：Google 用 decoder-only 做时间序列预测，到底跟天气预报有什么不同"
 date: "2026-04-06T21:28:00+08:00"
 slug: "timesfm-google-time-series-foundation-model-guide"
+github_repo: "google-research/timesfm"
 description: "TimesFM 选了一条跟气象模型完全不同的路：不做物理建模，不做多维协变量堆叠，靠 decoder-only 架构和 1-bit token 把时间序列预测做成预训练问题。本文拆解 2.5 版本的架构选择、连续分位数机制和 BigQuery 部署路径。"
 draft: false
 categories: ["技术笔记"]

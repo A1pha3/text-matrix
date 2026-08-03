@@ -2,6 +2,7 @@
 title: "openai/plugins：OpenAI 官方维护的 Codex 插件精选合集"
 date: "2026-06-06T09:50:00+08:00"
 slug: "openai-codex-plugins-curated-collection"
+github_repo: "openai/plugins"
 aliases:
   - "/posts/tech/openai-codex-plugins-curated-collection/"
 description: "openai/plugins 是 OpenAI 官方维护的 Codex 插件精选合集，覆盖 Figma、Notion、iOS/macOS/Web 应用构建、Expo、Netlify、Remotion、Google Slides 等场景，每个插件以 plugin.json 清单为入口，可挂载 skills、agents、commands、hooks、MCP 等组件。"

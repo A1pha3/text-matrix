@@ -1,6 +1,7 @@
 ---
 title: "Asio C++ 库深度拆解：异步网络编程的事实标准"
 slug: chriskohlhoff-asio-cpp-async-network-library-guide
+github_repo: "chriskohlhoff/asio"
 date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false

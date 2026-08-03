@@ -6,6 +6,7 @@ categories: ["技术笔记"]
 tags: ["GIS", "MapLibre", "Tauri", "DuckDB", "开源"]
 description: "GeoLibre 是基于 Tauri v2、MapLibre GL JS 和 DuckDB-WASM Spatial 构建的跨平台开源 GIS 工具，支持 Web、桌面、移动端和 Jupyter 多环境。"
 slug: opengeos-geolibre-cross-platform-gis-guide
+github_repo: "opengeos/GeoLibre"
 
 ---
 

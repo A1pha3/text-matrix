@@ -1,4 +1,5 @@
 +++
+github_repo = "Fincept-Corporation/FinceptTerminal"
 date = '2026-05-23T23:07:56+08:00'
 draft = false
 title = 'FinceptTerminal：现代金融市场分析平台'

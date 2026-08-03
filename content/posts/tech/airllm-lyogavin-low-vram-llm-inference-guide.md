@@ -2,6 +2,7 @@
 title: "AirLLM 完全指南：4GB 显存跑 70B 模型，单 GPU 玩转大模型推理"
 date: "2026-06-04T15:00:00+08:00"
 slug: airllm-lyogavin-low-vram-llm-inference-guide
+github_repo: "lyogavin/airllm"
 description: "AirLLM 是 lyogavin 开源的 LLM 推理优化库，4GB 单卡跑 70B 模型、8GB 跑 405B Llama3.1，无需量化蒸馏剪枝；本文解析其分层加载 + 块级量化加速原理与上手姿势。"
 draft: false
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "maziyarpanahi/openmed"
 date = '2026-06-09T21:04:14+08:00'
 draft = false
 title = 'openmed 深度拆解：1000+ 本地医疗 NER 模型 + HIPAA 级 PII 反识别，把临床 NLP 装进 iPhone 的 Apache-2.0 全栈方案'

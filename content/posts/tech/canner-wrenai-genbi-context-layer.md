@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "RAG"]
 description: "WrenAI 是 Canner 开源的 GenBI 引擎，核心是在 LLM 和数据仓库之间塞一层 reviewable 的 context layer（MDL + 业务语义），让 Agent 生成的 SQL 和 Dashboard 不是幻觉，而是可治理、可版本化的产物。"
 slug: canner-wrenai-genbi-context-layer
+github_repo: "Canner/WrenAI"
 
 ---
 

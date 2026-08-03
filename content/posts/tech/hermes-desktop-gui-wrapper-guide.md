@@ -2,6 +2,7 @@
 title: "Hermes Desktop：把 Hermes Agent 装成开箱即用的桌面 App，14 个工具集 + 16 个 IM 网关"
 date: "2026-06-09T17:59:00+08:00"
 slug: "hermes-desktop-gui-wrapper"
+github_repo: "fathah/hermes-desktop"
 aliases:
   - "/posts/tech/hermes-desktop-gui-wrapper/"
 description: "Hermes Desktop 是 NousResearch Hermes Agent 的官方 Electron 桌面外壳，覆盖安装引导、22 个 slash 命令、14 个工具集、16 个 IM 网关、调度任务、记忆系统、SOUL.md 编辑。Windows / macOS / Linux 三端 native 安装包，自带中文 i18n。"

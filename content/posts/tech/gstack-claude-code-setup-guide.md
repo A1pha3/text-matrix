@@ -2,6 +2,7 @@
 title: "gstack：把 Claude Code 变成虚拟工程团队的 23 个专家技能"
 date: "2026-05-14T20:32:00+08:00"
 slug: "gstack-claude-code-virtual-engineering-team"
+github_repo: "garrytan/gstack"
 description: "gstack 是 Y Combinator 总裁 Garry Tan 开源的工具集，将 Claude Code 扩展为 23 个专科角色——CEO、设计师、工程经理、QA 负责人、安全官、发版工程师——全部通过斜杠命令调用。本文从设计理念、架构解析、技能速览、安装配置四个维度，系统解读这个 9.6 万星的项目。"
 draft: false
 categories: ["技术笔记"]

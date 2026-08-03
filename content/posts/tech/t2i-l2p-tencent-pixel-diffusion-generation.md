@@ -2,6 +2,7 @@
 title: "L2P：腾讯优图开源的高效像素空间扩散生成模型"
 date: 2026-05-22T20:15:00+08:00
 slug: "t2i-l2p-tencent-pixel-space-diffusion-generation"
+github_repo: "TencentYoutuResearch/T2I-L2P"
 description: "L2P是腾讯优图实验室开源的文生图研究，提出了潜在潜在传递（Latent-to-Latent-to-Pixel）范式，通过最小化计算开销和数据需求实现高质量端到端像素空间扩散。技术报告已发布，代码和权重已开源。"
 draft: false
 categories: ["技术笔记"]

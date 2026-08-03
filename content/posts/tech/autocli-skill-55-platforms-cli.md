@@ -1,6 +1,7 @@
 ---
 title: "AutoCLI Skill：AI Agent 多平台浏览器自动化工具"
 slug: autocli-skill-55-platforms-cli
+github_repo: "nashsu/AutoCLI"
 date: "2026-04-22T00:50:00+08:00"
 description: "全面解析 AutoCLI Skill：开源的 55+平台 CLI 工具，让 AI Agent 无需 API Key 即可操控 Twitter/X、B 站、知乎、微博、YouTube 等平台，复用 Chrome 登录态，零配置开箱即用，Rust 编写仅 4.7MB。"
 categories: ["技术笔记"]

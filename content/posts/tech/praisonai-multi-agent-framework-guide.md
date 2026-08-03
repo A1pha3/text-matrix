@@ -2,6 +2,7 @@
 title: "PraisonAI：AutoGen 继任者·100+ LLM 支持·MCP 原生"
 date: "2026-04-12T02:31:39+08:00"
 slug: praisonai-multi-agent-framework-guide
+github_repo: "MervinPraison/PraisonAI"
 description: "PraisonAI 是 AutoGen 的继任者，支持 100+ LLM 和 MCP 原生，提供多智能体框架功能。"
 draft: false
 categories: ["技术笔记"]

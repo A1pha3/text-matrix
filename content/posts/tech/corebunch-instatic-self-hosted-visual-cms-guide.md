@@ -1,6 +1,7 @@
 ---
 title: "Instatic 深度拆解：一个 Bun 服务器把整条 CMS 链路吃干抹净"
 slug: corebunch-instatic-self-hosted-visual-cms-guide
+github_repo: "CoreBunch/Instatic"
 date: 2026-07-01T15:03:41+08:00
 lastmod: 2026-07-01T15:03:41+08:00
 categories: ["技术笔记"]

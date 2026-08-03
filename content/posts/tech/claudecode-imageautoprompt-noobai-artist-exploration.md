@@ -2,6 +2,7 @@
 title: "ClaudeCode操控ComfyUI画涩图：ImageAutoPrompt与noobai画师串探索系统深度解读"
 date: "2026-05-08T09:55:00+08:00"
 slug: "claudecode-imageautoprompt-noobai-artist-exploration"
+github_repo: "crclz/ImageAutoPrompt"
 description: "深度解读VirtualAllocate的B站视频，介绍如何用ClaudeCode驱动ComfyUI结合noobai模型，通过ImageAutoPrompt工具系统化探索danbooru画师标签串，从单画师到多画师权重混合的完整方法论与工作流。"
 draft: false
 categories: ["视频精读"]

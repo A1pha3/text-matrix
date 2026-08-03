@@ -2,6 +2,7 @@
 title: "LongLive 2.0：NVFP4 并行基础架构下的长视频生成指南"
 date: "2026-05-23T20:17:28+08:00"
 slug: "nvlabs-longlive-2-nvfp4-long-video-generation"
+github_repo: "WeianMao/triattention"
 description: "LongLive 2.0 是 NVlabs 开源的长视频生成基础设施，支持 NVFP4 低精度推理、多序列并行与注意力 sink 机制，实现 45.7 FPS 的实时长视频生成。本文从原理到实操完整解析其训练与推理架构。"
 draft: false
 categories: ["技术笔记"]

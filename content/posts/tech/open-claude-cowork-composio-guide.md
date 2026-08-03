@@ -2,6 +2,7 @@
 title: "Open Claude Cowork：3.8K Stars·开源桌面AI助手·Claude Agent SDK"
 date: "2026-04-12T02:31:39+08:00"
 slug: open-claude-cowork-composio-guide
+github_repo: "ComposioHQ/open-claude-cowork"
 description: "Open Claude Cowork 是一个开源桌面 AI 助手，使用 Claude Agent SDK 和 Composio 工具路由，支持 500+ 应用集成。"
 draft: false
 categories: ["技术笔记"]

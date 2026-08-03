@@ -2,6 +2,7 @@
 title: "Senparc.Weixin（微信 .NET SDK）从入门到精通"
 date: "2026-03-30T20:00:00+08:00"
 slug: senparc-weixin-wechat-net-sdk-guide
+github_repo: "JeffreySu/WeiXinMPSDK"
 description: "Senparc.Weixin 是目前使用率最高的微信 .NET SDK。本文从入门到精通，涵盖架构分析、原理深度解析、消息处理、微信支付、小程序开发、分布式缓存等全方位讲解。"
 draft: false
 categories: ["技术笔记"]

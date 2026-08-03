@@ -3,6 +3,7 @@ title: "Kronos 完整指南：从金融时间序列入门到论文复现、微�
 subtitle: "45 个交易所、120 亿 K 线、两阶段架构，以及从跑通示例到提出改进方案的完整学习路径"
 date: "2026-04-11T00:25:00+08:00"
 slug: "kronos-financial-ai-from-zero-to-expert"
+github_repo: "shiyu-coder/Kronos"
 aliases:
   - /posts/tech/kronos-foundation-model-financial-markets-guide/
 summary: "Kronos 是面向金融 K 线的时间序列基础模型。本文从论文、README 与公开代码出发，讲清其离散化编码器、层次化 Token、自回归 Transformer、预测与微调流程，并补一份可直接执行的论文复现实验清单与研究改进路线。"

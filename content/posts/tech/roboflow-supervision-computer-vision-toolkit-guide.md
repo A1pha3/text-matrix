@@ -1,6 +1,7 @@
 ---
 title: "Supervision 深度拆解：Roboflow 开源计算机视觉工具箱的架构与边界"
 slug: roboflow-supervision-computer-vision-toolkit-guide
+github_repo: "roboflow/supervision"
 date: 2026-07-01T15:03:41+08:00
 lastmod: 2026-07-01T15:03:41+08:00
 categories: ["技术笔记"]

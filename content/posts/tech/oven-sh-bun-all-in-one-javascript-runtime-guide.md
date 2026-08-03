@@ -1,6 +1,7 @@
 ---
 title: "Bun 深度拆解:用 Zig + JavaScriptCore 把 Node.js 生态压成一个二进制"
 slug: oven-sh-bun-all-in-one-javascript-runtime-guide
+github_repo: "oven-sh/bun"
 date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false

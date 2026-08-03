@@ -2,6 +2,7 @@
 title: "AI-Trader 源码解读：HKUDS 给 AI Agent 搭的'金融版 USB-C'"
 date: "2026-06-04T19:09:47+08:00"
 slug: ai-trader-agent-native-trading-platform-guide
+github_repo: "HKUDS/AI-Trader"
 description: "HKUDS/AI-Trader 源码级解析：100% Fully-Automated Agent-Native Trading 平台的 Skill 协议设计、agent 零摩擦接入、与 OpenClaw 深度集成、Polymarket 集成。"
 draft: false
 categories: ["技术博客"]

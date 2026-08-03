@@ -3,6 +3,7 @@ title: "OpenWork：让 AI Agent 的能力跨越工具边界的开源协作平台
 date: "2026-07-30T22:00:00+08:00"
 draft: false
 slug: "different-ai-openwork-guide"
+github_repo: "different-ai/openwork"
 description: "OpenWork 是一个开源的桌面端 AI 工作空间，基于 opencode 引擎构建。它把 Skills、MCP 连接、模型配置封装成可共享的能力层，通过一个远程 MCP 服务接入 Claude Code、Codex、Cursor 等任意 Agent——让团队能用同一套配置工作，而不被锁死在单一工具里。"
 categories: ["技术笔记"]
 tags: ["AI Agent", "MCP", "OpenWork", "opencode", "跨工具协作"]

@@ -2,6 +2,7 @@
 title: "DS4Windows：让你的PS手柄在Windows上当成Xbox手柄用"
 date: "2026-05-23T03:15:00+08:00"
 slug: "ds4windows-controller-mapper-windows"
+github_repo: "Ryochan7/DS4Windows"
 description: "DS4Windows是一款开源的PlayStation手柄映射工具，可将DualShock 4和DualSense模拟成Xbox控制器，在Windows 10/11上实现PS手柄的完整支持包括陀螺仪、自适应扳机和触控板。"
 draft: false
 categories: ["技术笔记"]

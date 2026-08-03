@@ -2,6 +2,7 @@
 title: "Webwright：把 Coding Model 变成 Browser Agent，只需 1.5k LoC"
 date: "2026-06-25T15:19:26+08:00"
 slug: "microsoft-webwright-terminal-native-web-agent-2026"
+github_repo: "microsoft/Webwright"
 description: "微软研究院 Lu Yadong 等人的 Webwright 给出了一个反直觉的判断：当 LLM 已经能写代码、能 debug，再把模型锁在「每步预测一个 DOM click」的浏览器 session 里，是对模型能力的浪费。Webwright 用「terminal + browser + model」三件套替代了所有多 agent 框架，把一次 web 任务压缩成一个 re-runnable Python script。本文拆解其 ~1.5k LoC 的 4 层抽象、与 SWE-agent 的设计血缘、对 Claude Code/Codex/OpenClaw/Hermes 的统一 skill 集成，以及在 Online-Mind2Web 86.7%、Odysseys 60.1% 的 long-horizon 基准上它为什么 work、又为什么不适合 short interactive task。"
 draft: false
 categories: ["技术笔记"]

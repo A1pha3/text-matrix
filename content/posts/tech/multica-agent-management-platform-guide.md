@@ -1,6 +1,7 @@
 ---
 title: "Multica 指南：开源 Agent 管理平台，统一调度 Claude Code 与 Codex"
 slug: "multica-agent-management-platform-guide"
+github_repo: "multica-ai/multica"
 description: "开源 Agent 管理平台 Multica 指南，系统拆解 Claude Code、Codex、Runtime、daemon、Skills、自托管部署与团队协作边界，帮助你判断何时该用 Managed Agents。"
 date: "2026-04-11T00:15:00+08:00"
 draft: false

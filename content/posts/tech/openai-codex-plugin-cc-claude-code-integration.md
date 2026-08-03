@@ -7,6 +7,7 @@ categories: ["技术笔记"]
 tags: ["OpenAI Codex", "Claude Code", "Plugin", "Code Review", "AI Agent", "Anthropic"]
 description: "codex-plugin-cc 是 OpenAI 官方维护的 Claude Code 插件，28.9k stars，把 Codex CLI 装进 Claude Code 用 /codex:review 做只读审查、/codex:adversarial-review 做 steerable 挑战、/codex:rescue 派任务、/codex:transfer 接管会话。本文拆解它的 7 个 slash command、codex-companion.mjs 桥接脚本、以及背景任务的实际工作流。"
 slug: "openai-codex-plugin-cc-claude-code-integration"
+github_repo: "openai/codex-plugin-cc"
 author: text-matrix
 ---
 

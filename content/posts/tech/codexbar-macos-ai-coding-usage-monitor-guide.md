@@ -2,6 +2,7 @@
 title: "CodexBar：把 57 家 AI 编程服务的 quota 和重置时间塞进 macOS 菜单栏的小工具"
 date: "2026-07-07T03:00:17+08:00"
 slug: "codexbar-macos-ai-coding-usage-monitor-guide"
+github_repo: "ryoppippi/ccusage"
 description: "CodexBar（steipete/CodexBar，MIT）是一个 macOS 14+ 菜单栏小工具，统一显示 Codex / Claude / Cursor / Gemini / Copilot / Grok / ElevenLabs / AWS Bedrock / OpenRouter / LiteLLM 等 57 家 AI 编程服务的 quota、spend、reset countdown。隐私优先（不复用 provider session 之外的任何凭证），支持 CLI + Linux/Windows 集成。"
 draft: false
 categories: ["技术笔记"]

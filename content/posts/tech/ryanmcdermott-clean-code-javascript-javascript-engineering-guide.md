@@ -8,6 +8,7 @@ tags: ["JavaScript", "工程实践"]
 description: "Ryan McDermott 把《Clean Code》原则落到 JavaScript 的开源笔记，94k Star，12 章节覆盖命名、函数、对象、类、SOLID 与错误处理。"
 author: text-matrix
 slug: ryanmcdermott-clean-code-javascript-javascript-engineering-guide
+github_repo: "ryanmcdermott/clean-code-javascript"
 
 ---
 

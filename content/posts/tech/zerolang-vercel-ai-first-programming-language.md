@@ -2,6 +2,7 @@
 title: "zerolang：Vercel 实验性 AI 优先编程语言，为 Agent 时代重新设计语言体验"
 date: "2026-05-22T11:00:00+08:00"
 slug: "zerolang-vercel-ai-first-programming-language"
+github_repo: "vercel-labs/zerolang"
 description: "zerolang 是 Vercel Labs 推出的实验性编程语言，以「Agent 优先」为核心理念：让 AI 智能体能够边学边用、即时调试、结构化输出，构建一个不依赖外部依赖栈的标准库生态。本文详解其设计哲学、核心语法与快速上手路径。"
 draft: false
 categories: ["技术笔记"]

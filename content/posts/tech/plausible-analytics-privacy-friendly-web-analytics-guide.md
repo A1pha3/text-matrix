@@ -1,4 +1,5 @@
 ---
+github_repo: "ukutaht/awesome-plausible"
 title: "Plausible Analytics 全方位技术指南：隐私优先的开源网站统计平台"
 date: 2026-05-17T20:25:00+08:00
 draft: false

@@ -2,6 +2,7 @@
 title: "ShadowBroker：开源全球威胁情报平台，60+ 数据源实时聚合"
 date: "2026-05-17T20:10:00+08:00"
 slug: "shadowbroker-threat-intelligence-platform-guide"
+github_repo: "BigBodyCobain/Shadowbroker"
 aliases:
   - "/posts/tech/shadowbroker-open-source-intelligence-platform/"
   - "/posts/tech/shadowbroker-global-threat-intelligence-platform/"

@@ -2,6 +2,7 @@
 title: "Telegraf：InfluxDB 开源时序数据采集 Agent，300+插件生态实战指南"
 date: "2026-05-16T15:10:00+08:00"
 slug: "telegraf-influxdb-time-series-agent-guide"
+github_repo: "influxdata/telegraf"
 aliases:
   - "/posts/tech/telegraf-agent-time-series-collection/"
   - "/posts/tech/telegraf-agent-300-plugins-time-series/"

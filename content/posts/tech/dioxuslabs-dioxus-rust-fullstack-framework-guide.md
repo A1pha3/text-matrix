@@ -5,6 +5,7 @@ category: tech
 repo: DioxusLabs/dioxus
 stars: 37575
 slug: dioxuslabs-dioxus-rust-fullstack-framework-guide
+github_repo: "krausest/js-framework-benchmark"
 categories: [技术笔记]
 description: "Dioxus 是 Rust 生态的全栈 UI 框架，采用 React 式声明编程、类型安全组件与跨平台一致性。本文拆解其架构设计、响应式模型与性能优化路径。"
 tags: ["Rust", "全栈框架", "UI", "SSR"]

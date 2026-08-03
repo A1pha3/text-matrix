@@ -2,6 +2,7 @@
 title: "CLI-Anything：让所有软件变成Agent可调用的CLI工具"
 date: "2026-05-20T15:51:00+08:00"
 slug: "cli-anything-agent-native-software-harness"
+github_repo: "HKUDS/CLI-Anything"
 description: "HKUDS出品的AI Agent工具链，通过为各种软件生成标准化CLI接口，让AI Agent能够以统一方式调用任意软件。目前支持18个领域的200+工具（CAD、3D建模、视频编辑等），通过SKILL.md规范和CLI-Hub实现一键安装与版本管理，测试覆盖2,269个用例。"
 draft: false
 categories: ["技术笔记"]

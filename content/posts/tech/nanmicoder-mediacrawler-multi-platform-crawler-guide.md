@@ -2,6 +2,7 @@
 title: "MediaCrawler：多平台自媒体数据采集工具的 CDP 实践"
 date: "2026-06-26T18:02:04+08:00"
 slug: "nanmicoder-mediacrawler-multi-platform-crawler-guide"
+github_repo: "NanmiCoder/MediaCrawler"
 description: "深度解析 GitHub 53k+ Star 的 MediaCrawler 多平台爬虫项目，覆盖小红书/抖音/B站/微博等 7 大平台，基于 Playwright + CDP 模式绕过 JS 逆向。"
 draft: false
 categories: ["技术笔记"]

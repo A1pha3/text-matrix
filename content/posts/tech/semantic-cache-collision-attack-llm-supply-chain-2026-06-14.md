@@ -3,6 +3,7 @@ title: "LLM 服务的隐形后门：86% 响应劫持 + 跨模型迁移 + 金融 
 date: "2026-06-14T20:54:00+08:00"
 lastmod: 2026-06-14T20:54:00+08:00
 slug: "semantic-cache-collision-attack-llm-supply-chain-2026-06-14"
+github_repo: "zilliztech/GPTCache"
 aliases:
     - "/posts/tech/cache-attack-llm-semantic-cache-supply-chain/"
 description: "深度拆解 arXiv 2601.23088《From Similarity to Vulnerability: Key Collision Attack on LLM Semantic Caching》:4 个 RQ 全部交出 (HR 86% / TSR 降 84.5% / 跨模型白盒 >92%) + Generator-Validator 框架 + 3 种防御评估 + 性能-安全不可能三角。文末给出 LLM 服务商/部署方/终端用户/研究者四类决策建议。"

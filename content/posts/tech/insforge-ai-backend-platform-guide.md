@@ -2,6 +2,7 @@
 title: "InsForge：AI编程助手专属后端平台指南"
 date: "2026-05-06T20:05:34+08:00"
 slug: "insforge-ai-backend-platform-guide"
+github_repo: "InsForge/InsForge"
 description: "InsForge是一个专为AI编码助手和AI代码编辑器设计的开源后端开发平台，通过语义层将数据库、身份认证、文件存储、函数计算等后端原语暴露给AI代理，实现端到端的自动化后端操作与检查。"
 draft: false
 categories: ["技术笔记"]

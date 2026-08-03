@@ -2,6 +2,7 @@
 title: "mattpocock/skills：让 AI 编码代理真正靠谱的技能库"
 date: "2026-05-14T20:32:00+08:00"
 slug: "mattpocock-skills-claude-code-engineers-guide"
+github_repo: "mattpocock/skills"
 description: "mattpocock/skills 是一个面向真实工程师的 Claude Code 技能集，涵盖需求对齐、代码质量控制、架构守护等工程实践核心环节。本文详解四大失败模式与对应技能、目录结构、安装配置方式，以及工程实践中的具体用法。"
 draft: false
 categories: ["技术笔记"]

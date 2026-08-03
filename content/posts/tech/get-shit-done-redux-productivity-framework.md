@@ -2,6 +2,7 @@
 title: "get-shit-done-redux 极速上手：用一个六指令循环把 AI 编程拉回巅峰状态"
 date: "2026-05-23T03:15:00+08:00"
 slug: "get-shit-done-redux-productivity-framework"
+github_repo: "open-gsd/get-shit-done-redux"
 description: "get-shit-done-redux 是 open-gsd 维护的 AI 编程工作流框架。它通过结构化 planning 文件、独立子 agent 和 discuss → plan → execute → verify → ship 循环，解决长会话里的 context rot，把 AI 编程收束成可验证的交付流程。"
 draft: false
 categories: ["技术笔记"]

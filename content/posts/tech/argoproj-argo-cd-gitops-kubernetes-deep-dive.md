@@ -2,6 +2,7 @@
 title: "Argo CD 深度拆解：GitOps 控制器的同步、漂移修复与多租户边界"
 date: 2026-07-14T03:13:50+08:00
 slug: "argoproj-argo-cd-gitops-kubernetes-deep-dive"
+github_repo: "argoproj/argo-cd"
 description: "Argo CD 是 Kubernetes 上的声明式 GitOps 持续交付工具，核心由 API Server、Repository Server、Application Controller 三大组件协同。本文拆解其同步机制、漂移修复、Helm/Kustomize/plain 三类任务流，以及多租户边界。"
 draft: false
 categories: ["技术笔记"]

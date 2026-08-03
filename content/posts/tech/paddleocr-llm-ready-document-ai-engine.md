@@ -2,6 +2,7 @@
 title: "PaddleOCR 深度解析：从 PP-OCRv5 到 PaddleOCR-VL-1.6，飞桨的 OCR 工具链怎么从'单任务识别'长成'LLM-ready 文档引擎'"
 date: "2026-06-07T15:03:00+08:00"
 slug: "paddleocr-llm-ready-document-ai-engine"
+github_repo: "PaddlePaddle/PaddleOCR"
 description: "2026-06-07 GitHub Trending 当日榜 #17，81,072 stars / 单日 +433。PaddleOCR 3.6.0 刚发（2026.05.28），PaddleOCR-VL-1.6（0.9B VLM）在 OmniDocBench v1.6 上拿到 96.3% 开源/闭源 SOTA，被 Dify、RAGFlow、Cherry Studio 当作底座。"
 draft: false
 categories: ["技术笔记"]

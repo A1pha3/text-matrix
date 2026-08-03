@@ -2,6 +2,7 @@
 title: "awesome-generative-ai-guide 导读：一份可以当课表的 GenAI 资源中心"
 date: "2026-06-19T21:04:05+08:00"
 slug: "awesome-generative-ai-guide-resource-hub"
+github_repo: "aishwaryanr/awesome-generative-ai-guide"
 description: "aishwaryanr/awesome-generative-ai-guide 是一份以月度论文榜 + 系统化课程为核心的资源仓库，托管 Applied LLMs Mastery、AI Evals for Everyone、OpenClaw Mastery 等系列免费课。本文给出它的结构拆解、适合人群与使用边界。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Papers We Love：105k Stars 计算机科学论文宝库与社区"
 date: "2026-03-28T23:50:00+08:00"
 slug: "papers-we-love-cs-papers-community"
+github_repo: "papers-we-love/papers-we-love"
 description: "深度解读 Papers We Love：105k Stars 的计算机科学论文宝库，涵盖59个领域分类，提供本地分会、技术分享、论文下载，是你建立技术深度知识体系的首选资源。"
 draft: false
 categories: ["技术笔记"]

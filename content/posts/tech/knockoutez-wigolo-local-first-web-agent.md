@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["MCP", "Local-First", "AI Agent", "RAG"]
 description: "wigolo 是一个本地优先的 AI Agent Web 智能层，通过 MCP 把搜索、抓取、爬取、提取、缓存全部装进 ~1.5 GB 磁盘，零云、零 API key、零查询费用，公开 beta 已对接 Claude Code / Cursor / Codex / Gemini CLI。"
 slug: knockoutez-wigolo-local-first-web-agent
+github_repo: "KnockOutEZ/wigolo"
 
 ---
 

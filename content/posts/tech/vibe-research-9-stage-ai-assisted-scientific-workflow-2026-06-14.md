@@ -3,6 +3,7 @@ title: "Vibe Research 的 9 阶段全景：把 40+ AI 科研工具放进一张�
 date: "2026-06-14T20:45:00+08:00"
 lastmod: 2026-06-16T12:00:00+08:00
 slug: "vibe-research-9-stage-ai-assisted-scientific-workflow-2026-06-14"
+github_repo: "modelscope/Awesome-Vibe-Research"
 aliases:
     - "/posts/tech/vibe-research-9-stage-ai-assisted-scientific-workflow/"
 description: "ModelScope 的 awesome-vibe-research 把科研拆成 9 阶段、收录 40+ 项目。文章把项目分进端到端流水线、Skill 套件、单点工具 3 大流派，给出任务流案例、7 种 AI 失败模式与 5 种 HITL 介入模式的选择矩阵，最后给个人 / 团队 / 机构三种落地顺序。"

@@ -4,6 +4,7 @@ date: "2026-05-18T19:56:00+08:00"
 categories: ["技术笔记"]
 tags: ["隐私保护", "开源"]
 slug: "plausible-analytics-privacy-first-web-analytics"
+github_repo: "plausible/analytics"
 description: "Plausible Analytics 是一款开源、隐私优先的无 Cookie 网站分析工具，轻量级脚本、完全兼容 GDPR/CCPA/PECR，是 Google Analytics 的优秀替代方案，支持自托管社区版。"
 ---
 

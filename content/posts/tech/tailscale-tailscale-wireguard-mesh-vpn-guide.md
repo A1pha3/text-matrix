@@ -1,6 +1,7 @@
 ---
 title: "Tailscale 深度拆解：基于 WireGuard 的零配置 mesh VPN"
 slug: tailscale-tailscale-wireguard-mesh-vpn-guide
+github_repo: "tailscale/tailscale"
 date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-07-11T02:50:00+08:00
 draft: false

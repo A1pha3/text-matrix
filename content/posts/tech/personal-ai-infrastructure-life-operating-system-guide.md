@@ -2,6 +2,7 @@
 title: "Personal AI Infrastructure：你的 AI 生活操作系统"
 date: "2026-05-13T20:18:00+08:00"
 slug: "personal-ai-infrastructure-life-operating-system-guide"
+github_repo: "danielmiessler/Personal_AI_Infrastructure"
 aliases:
   - "/posts/tech/personal-ai-infrastructure-life-operating-system/"
   - "/posts/tech/personal-ai-infrastructure-life-os/"

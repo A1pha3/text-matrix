@@ -2,6 +2,7 @@
 title: "kyutai-labs/pocket-tts：把 100M 参数 TTS 装进 CPU 口袋"
 date: 2026-07-10T02:58:08+08:00
 slug: "kyutai-labs-pocket-tts-cpu-text-to-speech"
+github_repo: "kyutai-labs/pocket-tts"
 tags: ["TTS", "PyTorch", "CPU 推理", "开源模型"]
 categories: ["技术笔记"]
 description: "拆解 Kyutai Pocket TTS 的核心机制——一个 100M 参数、纯 CPU 推理、首块延迟 ~200ms 的开源 TTS 框架，及其多语言、流式、声音克隆能力。"

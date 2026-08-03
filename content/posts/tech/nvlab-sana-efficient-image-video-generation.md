@@ -1,4 +1,5 @@
 +++
+github_repo = "NVlabs/Sana"
 date = '2026-05-18T00:00:00+08:00'
 draft = false
 title = 'Sana：NVIDIA 高效图像与视频生成框架'

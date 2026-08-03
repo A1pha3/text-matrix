@@ -2,6 +2,7 @@
 title: "witr：把“这个进程为什么在跑”讲明白的跨平台归因工具"
 date: 2026-05-16T19:45:00+08:00
 slug: "witr-why-is-this-running-guide"
+github_repo: "pranshuparmar/witr"
 description: "witr 是一个跨平台进程归因工具。输入进程名、PID、端口或文件后，它会追出启动链、上游托管来源、上下文信息与风险警告，帮助你更快回答“这个进程为什么在跑？”"
 draft: false
 aliases: ["/posts/tech/witr-agentic-task-runner/"]

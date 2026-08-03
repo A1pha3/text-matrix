@@ -2,6 +2,7 @@
 title: "ljg-skills：李继刚的 Claude Code 技能集，19把刀锻造认知流水线"
 date: "2026-05-14T16:20:00+08:00"
 slug: "ljg-skills-claude-code-skills-collection"
+github_repo: "lijigang/ljg-skills"
 description: "深入解析 lijigang/ljg-skills：一个包含19个 Claude Code 技能的个人工具箱，涵盖论文阅读、内容铸卡、写作引擎、概念解剖、投资分析等场景。剖析每个技能的定位、使用方式和串联逻辑，理解如何用 AI 工具锻造认知流水线。"
 draft: false
 categories: ["技术笔记"]

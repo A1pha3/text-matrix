@@ -2,6 +2,7 @@
 title: "Seedance 2.0 Skill OS：把 AI 视频生成当电影片场来调度的智能体工作流"
 date: 2026-08-03T03:26:34+08:00
 slug: "emily2040-seedance-2-0-directing-os-ai-video"
+github_repo: "Emily2040/seedance-2.0"
 description: "Emily2040/seedance-2.0 是一个围绕字节跳动 Seedance 2.0 视频生成模型构建的模块化智能体技能仓库。它把模糊创意想法路由到导演级提示词工作流，覆盖文本、图像、视频和参考视频四模态输入，提供六语言母语入口和专业制片流程支持。"
 draft: false
 categories: ["技术笔记"]

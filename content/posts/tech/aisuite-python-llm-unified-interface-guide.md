@@ -2,6 +2,7 @@
 title: "andrewyng/aisuite 架构拆解：Python 端 LLM 统一接口的两层抽象（Chat Completions + Agents）和它背后的工程取舍"
 date: "2026-06-13T21:03:20+08:00"
 slug: "aisuite-python-llm-unified-interface-guide"
+github_repo: "andrewyng/aisuite"
 description: "拆解 andrewyng/aisuite 的设计：Chat Completions API 统一多 provider，Agents API 提供生产级 agent harness。"
 draft: false
 categories: ["技术笔记"]

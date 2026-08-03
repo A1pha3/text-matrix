@@ -7,6 +7,7 @@ categories: ["技术笔记"]
 tags: ["AI Agent", "RAG"]
 description: "DeepTutor 是港大 HKUDS 开源的 agent-native 学习工作台，把 9 个能力面统一到同一 agent loop，配套 5 套 RAG 引擎与三层可审计 Memory。"
 slug: "hkuds-deeptutor-agent-native-learning-workspace"
+github_repo: "HKUDS/DeepTutor"
 author: text-matrix
 ---
 

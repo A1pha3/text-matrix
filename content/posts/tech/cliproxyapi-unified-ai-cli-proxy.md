@@ -2,6 +2,7 @@
 title: "CLIProxyAPI 深度指南：把 Claude Code、Gemini CLI、Codex 和 Grok 接成统一 API"
 date: "2026-05-18T08:37:46+08:00"
 slug: "cliproxyapi-unified-ai-cli-proxy"
+github_repo: "router-for-me/CLIProxyAPI"
 description: "从协议面、OAuth 与 auth-files 出发，拆解 CLIProxyAPI 如何把 Claude Code、Gemini CLI、OpenAI Codex、Grok Build 接成统一 API，并讲清部署、路由、多账号与观测边界。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Mattermost：自托管 Slack 替代品的部署与迁移实战"
 date: "2026-06-12T15:12:58+08:00"
 slug: "mattermost-open-source-slack-alternative-guide"
+github_repo: "mattermost/mattermost"
 description: "Mattermost 是 37.4k Stars 的开源自托管协作平台,Go+React 单二进制 + PostgreSQL 后端。本文拆解自部署路径、Slack 迁移、700+ 集成与适用边界。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "CodeGraph 深度解析：把 AI Coding Agent 的代码探索从文件扫
 date: "2026-05-25T20:16:19+08:00"
 lastmod: "2026-05-26T16:30:00+08:00"
 slug: "codegraph-semantic-code-knowledge-graph-for-ai-coding-agents"
+github_repo: "colbymchenry/codegraph"
 aliases:
   - "/posts/tech/codegraph-claude-code-knowledge-graph/"
   - "/posts/tech/codegraph-semantic-code-knowledge-graph-guide/"

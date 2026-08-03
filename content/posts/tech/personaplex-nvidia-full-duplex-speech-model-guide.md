@@ -2,6 +2,7 @@
 title: "PersonaPlex：NVIDIA 全双工对话语音模型完全指南"
 date: "2026-04-06T21:35:00+08:00"
 slug: "personaplex-nvidia-full-duplex-speech-model-guide"
+github_repo: "NVIDIA/personaplex"
 description: "全面介绍 NVIDIA 7k Stars 的 PersonaPlex 全双工语音对话模型，涵盖 Moshi 架构原理、角色控制机制、16种声音类型、安装部署、实时交互服务器启动、以及自定义角色提示词的完整指南。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Pascal Editor：浏览器端 3D 建筑建模编辑器的架构拆解"
 date: 2026-07-30T23:50:00+08:00
 slug: "pascalorg-editor-3d-architecture-guide"
+github_repo: "pascalorg/plugin-trees"
 description: "Pascal Editor 是一个基于 React Three Fiber 和 WebGPU 的 3D 建筑编辑器，拥有 20k Stars。本文从 monorepo 架构、节点模型、脏标记渲染管线、CSG 几何运算、插件机制和垂直建模模型六个维度，拆解其工程设计与取舍。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "iii：Rust 运行时实现零集成的服务编排"
 date: "2026-05-28T10:35:00+08:00"
 slug: "iii-rust-zero-integration-service-orchestration"
+github_repo: "iii-hq/iii"
 aliases:
   - "/posts/iii-real-time-service-orchestration-guide/"
 description: "iii 是一个以 Rust 实现的实时服务编排运行时，通过 Worker、Function、Trigger 三大原语将服务发现、调用、编排压缩到共享运行时刻，无需任何集成配置。"

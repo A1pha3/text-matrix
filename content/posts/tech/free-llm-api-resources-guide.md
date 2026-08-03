@@ -2,6 +2,7 @@
 title: "free-llm-api-resources：免费LLM API资源汇总清单"
 date: "2026-05-06T20:05:34+08:00"
 slug: "free-llm-api-resources-guide"
+github_repo: "cheahjs/free-llm-api-resources"
 description: "free-llm-api-resources是免费LLM API清单，含OpenRouter、Google AI Studio、NVIDIA NIM、Groq等，适合开发者快速测试与探索。"
 draft: false
 categories: ["技术笔记"]

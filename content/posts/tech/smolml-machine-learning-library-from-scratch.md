@@ -2,6 +2,7 @@
 title: "SmolML：纯 Python 实现的机器学习库，从自动微分到完整模型"
 date: "2026-05-17T20:02:25+08:00"
 slug: "smolml-machine-learning-library-from-scratch"
+github_repo: "rodmarkun/SmolML"
 description: "SmolML 是一个完全使用纯 Python 标准库实现的机器学习库，不依赖 NumPy/SciPy 等外部包。通过完整的自动微分引擎 Value 和 N 维数组 MLArray 两大核心模块，构建了从线性回归、神经网络到 SVM、K-Means 的完整模型体系。"
 draft: false
 categories: ["技术笔记"]

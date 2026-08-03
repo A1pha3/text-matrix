@@ -4,6 +4,7 @@ date: 2026-06-30T20:56:00+08:00
 lastmod: 2026-06-30T20:56:00+08:00
 draft: false
 slug: "arxiv-2606-26978-code-execution-cost-effectiveness-llm-program-repair"
+github_repo: "opencode-io/opencode"
 categories: ["论文解读", "AI 模型评测", "Agent 工程"]
 tags: ["SWE-bench", "Claude Code", "Codex", "OpenCode"]
 description: 完整译读 ISSTA 2026 论文 To Run or Not to Run——Analyzing the Cost-Effectiveness of Code Execution in LLM-Based Program Repair——一篇 7745 traces + 3000 修复尝试 + 3 agents + 4 execution paradigms 实证研究，证明 execution 不该是 agent 默认能力，而是有显式成本-收益权衡的资源。

@@ -2,6 +2,7 @@
 title: "MoneyPrinterTurbo: 一键生成高清短视频的AI工具"
 date: "2026-05-30T13:13:57+08:00"
 slug: "moneyprinterturbo-ai-video-generation"
+github_repo: "harry0703/MoneyPrinterTurbo"
 description: "MoneyPrinterTurbo 只需提供一个视频主题或关键词，即可全自动生成文案、视频素材、字幕和背景音乐，合成高清短视频。支持 WebUI 和 API，覆盖竖屏/横屏，集成 DeepSeek/Moonshot/Gemini 等多模型。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Mole：一条命令深度清理Mac，45k Stars的macOS全能维护工具"
 date: "2026-04-07T17:20:00+08:00"
 slug: mole-mac-clean-optimize-tool
+github_repo: "tw93/Mole"
 description: "深度解析Mole：macOS全能维护工具，合并CleanMyMac/AppCleaner/DaisyDisk/iStat于一个二进制，45k Stars，支持深度清理、智能卸载、磁盘分析、实时监控。"
 categories: ["技术笔记"]
 tags: ["macOS", "Go"]

@@ -1,6 +1,7 @@
 ---
 title: "Codeg 多 Agent 协作工作空间指南：ACP 协议统一 11 种编码 Agent"
 slug: "xintaofei-codeg-multi-agent-ai-coding-workspace-guide"
+github_repo: "xintaofei/codeg"
 date: 2026-07-12T12:10:00+08:00
 lastmod: 2026-07-12T12:10:00+08:00
 categories: ["tech"]

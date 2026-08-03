@@ -2,6 +2,7 @@
 title: "Cognee：16K Stars的AI Agent记忆引擎——让大模型拥有持续学习的知识图谱"
 date: "2026-04-17T16:32:00+08:00"
 slug: "cognee-ai-agent-memory-knowledge-engine"
+github_repo: "topoteretes/cognee-integrations"
 description: "16,026 Stars的开源知识引擎。6行代码实现Agent记忆系统，结合向量搜索+知识图谱+认知科学，支持remember/recall/forget/improve四大操作，可部署至Modal/Railway/Fly.io等平台。"
 draft: false
 categories: ["技术笔记"]

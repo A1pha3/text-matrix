@@ -1,4 +1,5 @@
 +++
+github_repo = "gentleman-programming/gentle-ai"
 date = '2026-06-30T00:04:00+08:00'
 draft = false
 title = 'Gentle-AI：AI 编程 Agent 的统一生态配置器'

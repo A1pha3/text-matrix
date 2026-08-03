@@ -2,6 +2,7 @@
 title: "TurboQuant+ 深度解读：LLM KV 缓存极限压缩的工程实践"
 date: "2026-04-23T21:07:12+08:00"
 slug: "turboquant-plus-kv-cache-compression-guide"
+github_repo: "TheTom/turboquant_plus"
 description: "深度解读 TheTom/turboquant-plus 项目：基于 Google ICLR 2026 论文的 KV Cache 压缩实现，3.8-6.4x 压缩率，6,482 Stars，涵盖 PolarQuant、非对称 K/V、Boundary V、Sparse V 等核心优化。"
 draft: false
 categories: ["技术笔记"]

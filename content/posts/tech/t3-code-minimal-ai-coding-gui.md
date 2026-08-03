@@ -2,6 +2,7 @@
 title: "T3 Code：9K Stars的极简AI编程GUI——支持Codex和Claude的Web界面"
 date: "2026-04-18T15:40:00+08:00"
 slug: "t3-code-minimal-ai-coding-gui"
+github_repo: "pingdotgg/t3code"
 description: "T3 Code是pingdotgg出品的极简AI编程Web GUI，让用户通过图形界面使用Codex和Claude进行编程。支持npx直接运行和桌面安装，提供可视化编码体验。"
 draft: false
 categories: ["技术笔记"]

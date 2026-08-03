@@ -2,6 +2,7 @@
 title: "Headunit Revived：把旧 Android 平板变成 Android Auto 主机的开源复活方案"
 date: 2026-06-24T20:55:27+08:00
 slug: "andreknieriem-headunit-revived-android-auto-receiver"
+github_repo: "andreknieriem/headunit-revived"
 description: "Headunit Revived 是一个用 Kotlin 写的 Android Auto 接收端 App，让旧 Android 平板或手机变身为车载主机屏幕，复刻了 mikereidis/headunit 原始项目并补完无线/USB 连接、Helper 配套 App 与 Intent 自动化能力。"
 draft: false
 categories: ["技术笔记"]

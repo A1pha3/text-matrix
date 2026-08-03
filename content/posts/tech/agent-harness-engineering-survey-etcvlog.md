@@ -2,6 +2,7 @@
 title: "Agent Harness Engineering：AI Agent 执行框架的系统化重构"
 date: "2026-05-31T14:39:35+08:00"
 slug: "agent-harness-engineering-survey-etcvlog"
+github_repo: "Picrew/awesome-agent-harness"
 description: "深度解读 2026 年 CMU/耶鲁/亚马逊联合 Survey，介绍 ETCLOVG 七层框架如何重构 AI Agent 执行基础设施，涵盖 E/T/C/L/O/V/G 七层 Taxonomy、开源生态项目分布、五大开放问题及其对 Agent 工程化的意义。"
 draft: false
 categories: ["技术笔记"]

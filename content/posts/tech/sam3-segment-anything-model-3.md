@@ -1,4 +1,5 @@
 +++
+github_repo = "facebookresearch/sam3"
 date = '2026-05-23T13:09:23+08:00'
 draft = false
 title = 'SAM 3：Meta 开源第三代分割一切模型'

@@ -1,6 +1,7 @@
 ---
 title: "Karpathy LLM Wiki：把知识库交给 AI 维护"
 slug: "karpathy-llm-wiki-agent-skill-guide"
+github_repo: "Astro-Han/karpathy-llm-wiki"
 date: "2026-04-08T11:10:00+08:00"
 lastmod: 2026-04-08T11:10:00+08:00
 categories: ["技术笔记"]

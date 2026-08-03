@@ -2,6 +2,7 @@
 title: "PageIndex：无向量数据库的推理型 RAG 基础设施"
 date: "2026-05-08T03:11:04+08:00"
 slug: "pageindex-vectorless-reasoning-rag-guide"
+github_repo: "VectifyAI/PageIndex"
 description: "PageIndex 是基于推理的新型 RAG 框架，通过跳过向量数据库和文档分块，直接利用大语言模型的推理能力实现高质量检索。本文详细解析其核心原理、架构设计、MCP 集成与适用场景。"
 draft: false
 categories: ["技术笔记"]

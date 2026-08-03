@@ -2,6 +2,7 @@
 title: "Botan：C++ 密码学库完全指南"
 date: "2026-03-31T12:45:00+08:00"
 slug: "botan-cpp-cryptography-guide"
+github_repo: "randombit/botan"
 description: "全面解析 Botan：C++ 密码学库（3.3k Stars，BSD-2 许可证）。覆盖 TLSv1.3、X.509、AEAD、后量子密码学（ML-KEM、ML-DSA）等完整功能体系。包含架构分析、原理讲解、C++/Python/C API 使用说明和推荐做法。"
 draft: false
 categories: ["技术笔记"]

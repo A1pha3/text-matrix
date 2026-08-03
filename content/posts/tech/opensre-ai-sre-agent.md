@@ -2,6 +2,7 @@
 title: "OpenSRE：开源 AI SRE Agent 框架，连接 60+ 工具自动调查生产事故"
 date: "2026-04-27T01:12:00+08:00"
 slug: opensre-ai-sre-agent-framework
+github_repo: "Tracer-Cloud/opensre"
 aliases:
        - "/posts/tech/opensre-ai-sre-framework/"
        - "/posts/tech/opensre-ai-sre-agent-toolkit/"

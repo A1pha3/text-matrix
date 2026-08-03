@@ -1,4 +1,5 @@
 +++
+github_repo = "zhangfengcdt/memoir"
 date = '2026-05-13T19:31:11+08:00'
 draft = false
 title = 'Memoir：用版本控制思想重构 AI Agent 记忆系统'

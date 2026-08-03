@@ -2,6 +2,7 @@
 title: "Datawhale hello-agents：44K星从零构建智能体完全指南"
 date: "2026-05-09T03:20:00+08:00"
 slug: "datawhale-hello-agents-from-zero-to-agent"
+github_repo: "datawhalechina/hello-agents"
 description: "hello-agents 是 Datawhale 出品的 44K 星智能体教程，覆盖从基础理论到多智能体系统的完整学习路径。15 章内容包括 ReAct/Reflection 范式、低代码平台、AutoGen/LangGraph 框架、MCP/A2A 协议、Agentic RL 训练与 3 个综合实战项目。本文梳理该教程的主要脉络与关键知识点。"
 draft: false
 categories: ["技术笔记"]

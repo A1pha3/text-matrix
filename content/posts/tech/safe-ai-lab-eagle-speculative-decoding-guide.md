@@ -2,6 +2,7 @@
 title: "EAGLE / EAGLE-2 / EAGLE-3：基于特征外推的 LLM 推测解码全栈指南"
 date: "2026-06-28T15:19:20+08:00"
 slug: "safe-ai-lab-eagle-speculative-decoding-guide"
+github_repo: "SafeAILab/EAGLE"
 description: "拆解 SafeAILab/EAGLE 三代推测解码：EAGLE-1 特征外推、EAGLE-2 动态草稿树、EAGLE-3 训练时测试，对比 Medusa。"
 draft: false
 categories: ["技术笔记"]

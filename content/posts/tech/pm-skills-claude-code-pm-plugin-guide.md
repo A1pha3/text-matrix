@@ -2,6 +2,7 @@
 title: "pm-skills：把 Teresa Torres / Marty Cagan / Alberto Savoia 的 PM 框架做成 AI 工作流，68 个 skill + 42 条 command"
 date: "2026-06-09T17:59:00+08:00"
 slug: "pm-skills-claude-code-pm-plugin"
+github_repo: "phuryn/pm-skills"
 aliases:
   - "/posts/tech/pm-skills-claude-code-pm-plugin/"
 description: "pm-skills 是面向 Claude Code / Codex / Cowork 的 PM 操作系统，9 个插件覆盖 discovery / strategy / execution / GTM 全周期，68 个 skill 编码了 OST / RICE / JTBD 等真实 PM 框架，42 条 command 把它们串成端到端工作流。"

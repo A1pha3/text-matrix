@@ -2,6 +2,7 @@
 title: "ERPNext：Python生态中最成熟的开源企业资源计划系统"
 date: "2026-05-19T20:25:00+08:00"
 slug: "erpnext-open-source-erp-python"
+github_repo: "frappe/erpnext_docker"
 description: "ERPNext是基于Frappe框架开发的开源ERP系统，覆盖会计、库存、项目管理、人力资源等企业核心模块，支持自托管或Frappe Cloud托管，是Python生态中功能最全面的开源ERP方案。"
 draft: false
 categories: ["技术笔记"]

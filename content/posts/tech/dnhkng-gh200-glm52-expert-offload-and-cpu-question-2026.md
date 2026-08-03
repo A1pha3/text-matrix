@@ -2,6 +2,7 @@
 title: "2×GH200 跑 GLM-5.2：从 2.39 tok/s 到 54.92 tok/s，局部性铁律贯穿全文"
 date: "2026-06-25T13:56:24+08:00"
 slug: "dnhkng-gh200-glm52-expert-offload-and-cpu-question-2026"
+github_repo: "vllm-project/vllm"
 description: "David Noel Ng 在双 GH200 工作站上把 754B 的 GLM-5.2 从不可用跑成可用交互速度——FP8 strict local NUMA 把 naive 部署的 2.39 tok/s 拉到 20.31 tok/s（8.5×），再叠加 AWQ INT4 + MTP 嫁接在 batch-1 拿到 43.39 tok/s、并发 4 拿到 54.92 tok/s。本文拆开三条主线（FP8 placement / AWQ + MTP graft / CPU GGUF）的工程权衡，解释 MTP-3 vs MTP-4 为什么不能用同样的标准，量化「局部性铁律」在不同场景下的具体含义。"
 draft: false
 categories: ["技术笔记"]

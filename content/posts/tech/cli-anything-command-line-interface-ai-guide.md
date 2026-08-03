@@ -2,6 +2,7 @@
 title: "CLI-Anything: 一条命令让任意软件变身AI Agent可控工具"
 date: "2026-05-17T20:10:00+08:00"
 slug: "cli-anything-command-line-interface-ai-guide"
+github_repo: "blender/blender"
 description: "CLI-Anything 是一个开源的CLI自动生成框架，通过7阶段流水线将任意软件（Blender、GIMP、LibreOffice等）转化为AI Agent可直接控制的命令行工具，支持Claude Code、OpenClaw、Pi等主流平台，GitHub星标超3.5万。"
 draft: false
 categories: ["技术笔记"]

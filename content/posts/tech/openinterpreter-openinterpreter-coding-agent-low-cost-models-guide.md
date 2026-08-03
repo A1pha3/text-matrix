@@ -8,6 +8,7 @@ tags: ["Coding Agent", "Rust", "Codex", "Harness"]
 description: "Open Interpreter 是 OpenAI Codex CLI 的 Rust fork，65k+ stars，核心创新是 harness emulation：在同一 runtime 里把低成本模型（DeepSeek/Kimi/Qwen/SWE-agent 等）路由到 Claude Code、Codex、Anthropic Messages 不同 wire format 上，让小模型也能跑出大模型的 agent 工作流。"
 author: text-matrix
 slug: openinterpreter-openinterpreter-coding-agent-low-cost-models-guide
+github_repo: "openinterpreter/openinterpreter"
 
 ---
 

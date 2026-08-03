@@ -2,6 +2,7 @@
 title: "Claude for Financial Services：Anthropic 金融服务智能体仓库深度拆解"
 date: "2026-05-06T20:05:34+08:00"
 slug: "anthropics-claude-financial-services-guide"
+github_repo: "anthropics/financial-services"
 description: "基于 anthropics/financial-services 仓库，解析 Claude for Financial Services 的命名智能体、垂直插件、MCP 连接器、Managed Agents 部署路径与工程取舍。"
 draft: false
 categories: ["技术笔记"]

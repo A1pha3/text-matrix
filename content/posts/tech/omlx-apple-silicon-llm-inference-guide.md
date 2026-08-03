@@ -2,6 +2,7 @@
 title: "oMLX：macOS菜单栏管理13k星的LLM推理服务器，连续批处理+SSD缓存"
 date: "2026-05-11T13:10:00+08:00"
 slug: "omlx-apple-silicon-llm-inference-server"
+github_repo: "jundot/omlx"
 description: "深度解析jundot/omlx：Apple Silicon原生LLM推理服务器，支持连续批处理和热冷KV缓存，从菜单栏一键管理，支持Claude Code优化。"
 draft: false
 categories: ["技术笔记"]

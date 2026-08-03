@@ -1,4 +1,5 @@
 +++
+github_repo = "TapXWorld/ChinaTextbook"
 date = '2026-06-07T23:03:00+08:00'
 draft = false
 title = 'ChinaTextbook 深度解析：覆盖小初高到大学的中文 PDF 教材开源仓库，从对抗水印盗版到服务海外华人'

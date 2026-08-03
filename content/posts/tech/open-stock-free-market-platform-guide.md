@@ -1,4 +1,5 @@
 +++
+github_repo = "Open-Dev-Society/OpenStock"
 date = '2026-05-26T23:00:00+08:00'
 draft = false
 title = 'OpenStock：一套可自部署的股市数据中台，免费行情看板只是入口'

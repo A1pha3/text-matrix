@@ -2,6 +2,7 @@
 title: "SmartlyDressedGames/U3-SDK：Unturned 开源世界背后的 Unity 工程实践"
 date: 2026-07-10T02:58:08+08:00
 slug: "smartlydressedgames-u3-sdk-unturned-source-guide"
+github_repo: "SmartlyDressedGames/U3-SDK"
 tags: ["游戏开发", "C#"]
 categories: ["技术笔记"]
 description: "拆解 SmartlyDressedGames 维护的 U3-SDK 仓库——Unturned 这款 Steam 长期热门生存沙盒游戏的完整客户端源码，以及它如何通过 Unity 2022.3 + C# 支撑一个持续运营 9 年的沙盒游戏。"

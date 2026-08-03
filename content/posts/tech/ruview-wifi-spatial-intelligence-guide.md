@@ -2,6 +2,7 @@
 title: "WiFi 空间智能：RuView 如何用 WiFi 信号实现人体感知"
 date: "2026-05-14T20:32:00+08:00"
 slug: "ruview-wifi-spatial-intelligence"
+github_repo: "ruvnet/RuView"
 aliases:
      - "/posts/tech/ruview-wifi-presence-respiration-detection/"
      - "/posts/tech/ruview-wifi-spatial-intelligence-platform/"

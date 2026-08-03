@@ -2,6 +2,7 @@
 title: "academic-research-skills：一套把「AI 辅助学术写作」做成可审计流水线的开源框架"
 date: "2026-05-18T19:56:00+08:00"
 slug: "academic-research-skills-claude-code-research-pipeline"
+github_repo: "Imbad0202/academic-research-skills"
 aliases:
     - "/posts/tech/academic-research-skills-claude-code-scientific-writing/"
 description: "深度分析 academic-research-skills 的 10 阶段流水线设计、Integrity Gate 门控机制、三层引用审计架构，以及 Lu et al. (2026, Nature) 和 Zhao et al. (2026) 两篇论文如何定义了这套工具的设计边界。"

@@ -1,6 +1,7 @@
 ---
 title: "Dear ImGui 架构拆解：为什么 74k 星的 C++ GUI 库选择了即时模式"
 slug: ocornut-imgui-immediate-mode-gui-architecture
+github_repo: "ocornut/imgui"
 date: 2026-07-13T03:03:14+08:00
 lastmod: 2026-07-13T03:03:14+08:00
 draft: false

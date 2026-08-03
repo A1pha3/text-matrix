@@ -6,6 +6,7 @@ categories: ["技术笔记"]
 tags: ["Rust", "LSP", "WASM"]
 description: "Automattic 出品的开源语法检查器，用 Rust 实现全部规则引擎，数据不出本机，内存占用仅为 LanguageTool 的五十分之一。"
 slug: automattic-harper-privacy-first-grammar-checker-rust
+github_repo: "Automattic/harper"
 
 ---
 

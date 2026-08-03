@@ -2,6 +2,7 @@
 title: "Atuin：加密同步的 Shell 历史管理器"
 date: "2026-04-12T01:56:00+08:00"
 slug: atuin-shell-history-manager-guide
+github_repo: "atuinsh/atuin"
 description: "Atuin 是一款用 Rust 编写的 Shell 历史管理器，用 SQLite 替换文本文件历史，支持端到端加密同步。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "turbovec 深度拆解：基于 Google TurboQuant 的 Rust 量化向量索引，10× 内存压缩、SIMD 跑赢 FAISS"
 date: "2026-06-16T14:59:00+08:00"
 slug: turbovec-turboquant-vector-index-rust-guide
+github_repo: "RyanCodrai/turbovec"
 description: "RyanCodrai/turbovec 是基于 Google Research TurboQuant 论文的 Rust 向量索引，10M 文档从 31GB 压到 4GB、ARM SIMD 比 FAISS 快 10-19%。本文拆解其 6 步编码管线、TQ+ 校准、长度重归一化、SIMD 搜索核与适用边界。"
 tags: ["向量检索", "量化", "SIMD", "Rust"]
 categories: ["技术笔记"]

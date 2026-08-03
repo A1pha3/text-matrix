@@ -2,6 +2,7 @@
 title: "Shubhamsaboo/awesome-llm-apps：可运行的 LLM 应用精选集"
 date: "2026-07-14T03:14:51+08:00"
 slug: "shubhamsaboo-awesome-llm-apps-collection-guide"
+github_repo: "Shubhamsaboo/awesome-llm-apps"
 description: "Shubhamsaboo/awesome-llm-apps 是一个 100+ 可直接运行的 LLM 应用精选集，覆盖 AI Agent、MCP、Voice、RAG、Memory、Multi-Agent 等 15 类能力，按能力轴拆解其项目结构与适用人群。"
 draft: false
 categories: ["技术笔记"]

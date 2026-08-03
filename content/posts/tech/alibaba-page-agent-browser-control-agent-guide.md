@@ -2,6 +2,7 @@
 title: "Page Agent v1.10.0：阿里巴巴开源的浏览器控制 Agent 全栈拆解"
 date: "2026-06-28T15:19:20+08:00"
 slug: "alibaba-page-agent-browser-control-agent-guide"
+github_repo: "alibaba/page-agent"
 description: "拆解 alibaba/page-agent v1.10.0 单仓多包架构与 PageAgentCore 异步解耦，对比 browser-use 与 Playwright MCP 的设计取舍。"
 draft: false
 categories: ["技术笔记"]

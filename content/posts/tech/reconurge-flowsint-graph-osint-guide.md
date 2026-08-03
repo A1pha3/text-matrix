@@ -2,6 +2,7 @@
 title: "Flowsint 深度解析：把 OSINT 调查搬上 Neo4j 图谱，以及它和 Maltego / SpiderFoot 的本质区别"
 date: "2026-06-03T09:08:17+08:00"
 slug: "reconurge-flowsint-graph-osint-guide"
+github_repo: "reconurge/flowsint"
 description: "Flowsint 是图谱化、本地化、可扩展的 OSINT 调查平台，统一 Pydantic 实体并写入 Neo4j 调查图。本文拆解其模块分层、Enricher 注册机制、图谱写入路径与适用边界。"
 draft: false
 categories: ["技术笔记"]

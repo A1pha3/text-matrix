@@ -3,6 +3,7 @@ title: "Council of High Intelligence：把「咨询董事会」装进 Claude Cod
 date: "2026-06-30T14:58:34+08:00"
 draft: false
 slug: "0xnyk-council-of-high-intelligence-multi-persona-deliberation-framework"
+github_repo: "0xNyk/council-of-high-intelligence"
 description: "Council of High Intelligence 是 18 个 AI 角色与 7 步协商协议的组合，让 Claude Code 或 Codex 把决策拆给不同思维传统并强制互相质疑，自动跨 6 个 provider 路由模型。"
 categories: ["技术笔记"]
 tags: ["AI Agent", "Claude Code", "Codex"]

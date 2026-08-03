@@ -2,6 +2,7 @@
 title: "Yazi：极快的终端文件管理器"
 date: "2026-04-11T14:20:52+08:00"
 slug: yazi-terminal-file-manager-complete-guide
+github_repo: "sxyazi/yazi"
 description: "Yazi 把异步 I/O、内置图片预览和 Lua 插件三者结合，让终端文件管理器第一次做到不依赖外部工具就能预览图片。本文拆解它的架构取舍与适用边界。"
 draft: false
 categories: ["技术笔记"]

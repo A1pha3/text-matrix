@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["Coding Agent", "Rust", "TUI", "MCP"]
 description: "jcode 是一个用 Rust 写的 next-generation coding agent harness，单 session 仅占 27.8 MB PSS，比 Claude Code 低 13.9 倍。它专为多 session 工作流设计，把启动速度和内存控制在毫秒/百兆级。"
 slug: 1jehuang-jcode-coding-agent-harness
+github_repo: "1jehuang/jcode"
 
 ---
 

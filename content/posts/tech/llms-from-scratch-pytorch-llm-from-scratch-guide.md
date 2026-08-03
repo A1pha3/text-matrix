@@ -2,6 +2,7 @@
 title: "LLMs-from-Scratch：用 PyTorch 从零实现 ChatGPT 级大模型"
 date: "2026-05-13T20:15:00+08:00"
 slug: "llms-from-scratch-pytorch-llm-from-scratch-guide"
+github_repo: "rasbt/LLMs-from-scratch"
 description: "LLMs-from-Scratch 是 Sebastian Raschka 的著作《Build a Large Language Model (From Scratch)》配套代码库，通过 Jupyter Notebook 由浅入深地讲解如何从零构建 GPT 类 LLM，涵盖数据处理、注意力机制、预训练、微调全流程。94k+ Stars，零依赖外部 LLM 库，纯 PyTorch 实现。"
 draft: false
 categories: ["技术笔记"]

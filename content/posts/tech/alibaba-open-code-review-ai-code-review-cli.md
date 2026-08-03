@@ -6,6 +6,7 @@ categories: ["技术笔记"]
 tags: ["CLI", "AI Agent", "DevOps"]
 description: "源自阿里巴巴内部两万人级实战检验的 AI 代码审查工具，用确定性工程约束 agent 行为，在相同模型下精度远超通用 agent，token 消耗仅九分之一。"
 slug: alibaba-open-code-review-ai-code-review-cli
+github_repo: "alibaba/open-code-review"
 
 ---
 

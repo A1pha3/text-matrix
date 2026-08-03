@@ -1,6 +1,7 @@
 ---
 title: "Claude Cookbooks 深度拆解:Anthropic 官方的 47.8K stars 实战模式库"
 slug: anthropics-claude-cookbooks-recipes-and-patterns-guide
+github_repo: "anthropics/claude-cookbooks"
 date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false

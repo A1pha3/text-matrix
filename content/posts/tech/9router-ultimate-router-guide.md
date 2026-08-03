@@ -2,6 +2,7 @@
 title: "9Router 深度解析：AI 编程工具的免费路由层，以及它为什么不是又一个 API 代理"
 date: "2026-04-12T02:31:39+08:00"
 slug: 9router-ultimate-router-guide
+github_repo: "decolua/9router"
 description: "9Router 的真正价值不在路由本身，而在三层自动降级 + RTK Token 压缩 + 订阅额度榨干这三件事的组合。本文从系统设计角度拆解这套机制。"
 draft: false
 categories: ["技术笔记"]

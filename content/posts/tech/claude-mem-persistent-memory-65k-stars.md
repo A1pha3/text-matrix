@@ -1,6 +1,7 @@
 ---
 title: "Claude-Mem：65K Stars的Claude Code持久记忆系统，从架构到实战的全面解析"
 slug: claude-mem-persistent-memory-65k-stars
+github_repo: "thedotmack/claude-mem"
 aliases:
   - "/posts/tech/claude-mem-persistent-memory-system-guide/"
 date: "2026-04-22T07:25:00+08:00"

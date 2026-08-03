@@ -2,6 +2,7 @@
 title: "AI Engineering From Scratch：一份从\"会调用 API\"到\"能独立构建 AI 系统\"的完整路线图"
 date: "2026-05-20T20:25:00+08:00"
 slug: "ai-engineering-from-scratch-guide"
+github_repo: "rohitg00/ai-engineering-from-scratch"
 aliases:
  - "/posts/tech/ai-engineering-from-scratch-complete-guide/"
  - "/posts/tech/ai-engineering-from-scratch-complete-curriculum/"

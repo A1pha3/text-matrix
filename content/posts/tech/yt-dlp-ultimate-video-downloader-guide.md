@@ -1,4 +1,5 @@
 +++
+github_repo = "yt-dlp/yt-dlp"
 date = '2026-05-24T00:00:00+08:00'
 draft = false
 title = 'yt-dlp：开源视频下载器'

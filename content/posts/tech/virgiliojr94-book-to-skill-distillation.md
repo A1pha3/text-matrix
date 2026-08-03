@@ -2,6 +2,7 @@
 title: "book-to-skill：把书/文档蒸馏成可被代理加载的技能"
 date: 2026-08-02T02:59:48+08:00
 slug: "virgiliojr94-book-to-skill-distillation"
+github_repo: "virgiliojr94/book-to-skill"
 description: "virgiliojr94/book-to-skill 把 PDF/EPUB/DOCX/MD/HTML/RTF/MOBI 等任意技术书或文档目录蒸馏成符合 Agent Skills 标准的能力包，按章节拆解、按需加载，让代理回答问题时 token 消耗相比\"整本喂入\"降低 24–51 倍。"
 draft: false
 categories: ["技术笔记"]

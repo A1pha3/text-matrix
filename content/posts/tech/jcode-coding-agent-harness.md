@@ -2,6 +2,7 @@
 title: "jcode：下一代高性能 Coding Agent Harness"
 date: "2026-04-30T10:10:11+08:00"
 slug: "jcode-coding-agent-harness"
+github_repo: "1jehuang/jcode"
 description: "jcode 是 Rust 实现的下一代 Coding Agent Harness，支持语义记忆图、多智能体 Swarm 协作、内置浏览器自动化和 20+ 模型 Provider OAuth 登录，相比 Claude Code 在 RAM 占用和启动速度上有显著优势。"
 draft: false
 categories: ["技术笔记"]

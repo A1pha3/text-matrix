@@ -1,6 +1,7 @@
 ---
 title: "Agency Agents：一组可直接装进 Claude Code / Cursor 的「人格化」AI Agent 角色库"
 slug: "msitarzewski-agency-agents-ai-specialists-collection-guide"
+github_repo: "msitarzewski/agency-agents"
 date: 2026-06-29T21:02:57+08:00
 lastmod: 2026-06-29T21:02:57+08:00
 draft: false

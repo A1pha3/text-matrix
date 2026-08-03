@@ -2,6 +2,7 @@
 title: "LingBot-Map：流式3D重建的几何上下文Transformer"
 date: "2026-06-28T21:06:29+08:00"
 slug: "robbyant-lingbot-map-ai-world-model-guide"
+github_repo: "Robbyant/lingbot-map"
 description: "LingBot-Map 是 Robbyant 团队开源的流式 3D 重建基础模型，基于几何上下文 Transformer 与分页 KV 缓存注意力实现。本文解析其架构设计、关键机制、benchmark 边界与工程实践。"
 draft: false
 categories: ["技术笔记"]

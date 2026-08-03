@@ -2,6 +2,7 @@
 title: "DeepTutor：Agent-Native个性化学习平台"
 date: "2026-04-12T02:31:39+08:00"
 slug: deeptutor-agent-native-personalized-learning-platform
+github_repo: "HKUDS/DeepTutor"
 description: "DeepTutor 是一个 Agent-Native 个性化学习平台，利用 AI Agent 技术提供个性化的学习体验和辅导。"
 draft: false
 categories: ["技术笔记"]

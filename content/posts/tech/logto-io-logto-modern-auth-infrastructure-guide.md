@@ -1,6 +1,7 @@
 ---
 title: "Logto：面向 SaaS 与 AI Agent 的开源现代化认证基础设施"
 slug: "logto-io-logto-modern-auth-infrastructure-guide"
+github_repo: "logto-io/logto"
 date: 2026-06-29T21:02:57+08:00
 lastmod: 2026-06-29T21:02:57+08:00
 draft: false

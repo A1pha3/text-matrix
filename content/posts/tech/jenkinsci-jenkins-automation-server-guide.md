@@ -2,6 +2,7 @@
 title: "Jenkins 自动化服务器深度拆解：2000+ 插件、Java 实现与企业级 CI/CD 事实标准"
 date: "2026-06-18T21:03:00+08:00"
 slug: "jenkinsci-jenkins-automation-server-guide"
+github_repo: "jenkinsci/jenkins"
 description: "jenkinsci/jenkins 是 Java 编写的开源自动化服务器，2000+ 插件覆盖构建、测试、静态分析、部署全链路，本文拆解其双发行线、插件生态与 2026 年的现代 CI/CD 取舍。"
 draft: false
 categories: ["技术笔记"]

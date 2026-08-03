@@ -2,6 +2,7 @@
 title: "DeepSeek-V3 的工程取舍：671B 参数的算力账本"
 date: "2026-04-27T20:00:00+08:00"
 slug: deepseek-v3-technical-analysis
+github_repo: "deepseek-ai/DeepSeek-V3"
 description: "671B 参数只激活 37B——MoE 压参数、MLA 压缓存、无辅助损失路由去掉调参负担，三项设计叠加让 557.6 万美元训出接近 GPT-4o 的模型。"
 draft: false
 categories: ["tech"]

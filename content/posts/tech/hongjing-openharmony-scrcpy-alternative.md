@@ -2,6 +2,7 @@
 title: "鸿镜 HongJing：面向 OpenHarmony 设备的投屏调试工具"
 date: "2026-05-17T12:01:30+08:00"
 slug: "hongjing-openharmony-scrcpy-alternative"
+github_repo: "guoxiucai/ohos-scrcpy-app"
 description: "鸿镜是一个面向 OpenHarmony 5.0+ 设备的投屏调试工具，Flutter 桌面客户端通过 hdc fport 端口转发与设备通信，实时镜像屏幕并提供触控注入、应用管理、终端模拟等功能，是 OpenHarmony 设备开发调试的实用辅助。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "camelAI：把整个 AI 编码 Agent 塞进 Cloudflare Durable Object 的
 date: "2026-07-30T22:00:00+08:00"
 draft: false
 slug: "camelai-cloudflare-durable-object-ai-coding-platform"
+github_repo: "qaml-ai/camelAI"
 description: "camelAI（qaml-ai/camelAI）把 AI 编码 Agent 的整条执行链——聊天状态、Agent 循环、项目文件系统、Code Mode 工具、构建沙箱——全部压在 Cloudflare Workers + Durable Objects 上，不开 VM 也能跑生产级 Coding Agent。本文拆解 ChatThreadDO、WorkspaceFilesystemDO、Code Mode、Workers for Platforms 联邦这四层结构，给出三个真实任务流的端到端路径，并讨论它在自托管、模型灵活性和沙箱可信度上的边界。"
 categories: ["技术笔记"]
 tags: ["Cloudflare", "Durable Objects", "AI Agent", "camelAI", "Workers for Platforms", "架构分析"]

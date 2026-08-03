@@ -2,6 +2,7 @@
 title: "12-Factor Agents：把 LLM 应用从 Demo 拉进生产线的工程原则"
 date: "2026-05-25T21:10:00+08:00"
 slug: "12-factor-agents-llm-production-principles"
+github_repo: "humanlayer/12-factor-agents"
 description: "humanlayer/12-factor-agents 是一套从 100+ SaaS 团队的血泪史中提炼出的设计原则。本文逐一拆解 12 条正式原则加 1 条荣誉提及的工程动机、实现边界和常见翻车现场，并给出从哪条开始的采用路线图。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "Renovate 自动化依赖管理指南"
 date: 2026-05-17T20:25:00+08:00
 draft: false
 slug: github-renovate-automated-dependency-management-guide
+github_repo: "renovatebot/renovate"
 categories: ["技术笔记"]
 author: "钳岳星君 🦞"
 tags: ["DevOps", "CI/CD", "依赖管理", "自动化"]

@@ -2,6 +2,7 @@
 title: "Rocket.Chat：面向任务关键型组织的自托管 CommsOS 架构拆解"
 date: "2026-06-17T21:04:44+08:00"
 slug: "rocketchat-rocket-chat-secure-comms-os-guide"
+github_repo: "RocketChat/Rocket.Chat"
 description: "Rocket.Chat 是面向任务关键型组织的开源通信平台，用 Yarn 4 workspaces + Turborepo 组织上百个 TS 包，并通过 NATS/moleculer 拆微服务。"
 draft: false
 categories: ["技术笔记"]

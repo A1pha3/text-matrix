@@ -2,6 +2,7 @@
 title: "ml-explore/mlx：Apple 官方开源的 Apple Silicon 数组框架，统一内存 + 动态图 + 多后端"
 date: "2026-06-17T15:03:26+08:00"
 slug: "ml-explore-mlx-apple-silicon-array-framework"
+github_repo: "ml-explore/mlx"
 description: "MLX 是 Apple 机器学习研究团队开源的数组框架，深度结合 Apple Silicon 统一内存特性，提供 Python/C++/C/Swift API。本文系统拆解其 lazy 计算图、Primitive 抽象、Metal/CPU/CUDA 后端与分布式运行时。"
 draft: false
 categories: ["技术笔记"]

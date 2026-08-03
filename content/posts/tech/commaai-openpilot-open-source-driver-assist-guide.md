@@ -2,6 +2,7 @@
 title: "commaai/openpilot 深度拆解：开源 L2 驾驶辅助的真正边界在哪里"
 date: "2026-06-26T21:05:21+08:00"
 slug: "commaai-openpilot-open-source-driver-assist-guide"
+github_repo: "commaai/openpilot"
 description: "openpilot 是 comma.ai 开源的 L2 ADAS，覆盖 332 款车。本文拆解 cereal 总线、modeld/controlsd/locationd 架构、安全模型与适用边界。"
 draft: false
 categories: ["技术笔记"]

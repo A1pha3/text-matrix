@@ -2,6 +2,7 @@
 title: "Unciv：用 Kotlin Multiplatform + LibGDX 在低端设备上重制 Civ V 的工程取舍"
 date: "2026-06-17T21:04:44+08:00"
 slug: "yairm210-unciv-android-civ-v-remake-guide"
+github_repo: "yairm210/Unciv"
 description: "Unciv 是基于 LibGDX 与 Kotlin Multiplatform 的开源 Civ V 重制版，把核心规则塞进共享 core 模块并在 Android、桌面、Server 三端复用。"
 draft: false
 categories: ["技术笔记"]

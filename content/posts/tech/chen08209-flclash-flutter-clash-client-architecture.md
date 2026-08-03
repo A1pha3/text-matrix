@@ -2,6 +2,7 @@
 title: "FlClash：45K Stars 的多平台代理客户端，如何用 Flutter + Rust + Go 三语言拼出 ClashMeta 桌面/手机体验"
 date: 2026-07-13T03:03:54+08:00
 slug: chen08209-flclash-flutter-clash-client-architecture
+github_repo: "chen08209/FlClash"
 description: "FlClash 是 ClashMeta 内核的多平台代理客户端，Flutter + Rust + Go 三语言拼装，GPL-3.0、45K Stars。本文拆开它的三层架构（lib/core 事件流、lib/manager 平台集成、lib/plugins 原生桥）、setup.dart 构建脚本、Android NDK/GCC/Inno Setup 工具链与 v0.8.94 CHANGELOG 的关键迭代。"
 draft: false
 categories: ["技术笔记"]

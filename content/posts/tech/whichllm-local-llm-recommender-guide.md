@@ -3,6 +3,7 @@ title: "whichllm 架构拆解：本地 LLM 选型不该只看显存"
 date: "2026-06-09T17:59:00+08:00"
 lastmod: "2026-06-14T12:00:00+08:00"
 slug: "whichllm-local-llm-recommender"
+github_repo: "Andyyyy64/whichllm"
 aliases:
   - "/posts/tech/whichllm-local-llm-recommender/"
 description: "whichllm 把 HuggingFace 候选模型、benchmark 证据、量化惩罚和硬件约束合成排序，帮助开发者为本地机器缩小开源大模型候选集。"

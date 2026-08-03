@@ -1,6 +1,7 @@
 ---
 title: "Datawhale Agent Skills完全指南：吴恩达课程深度解读"
 slug: "datawhale-agent-skills-with-anthropic-guide"
+github_repo: "https-deeplearning-ai/sc-agent-skills-files"
 description: "深入解读Datawhale基于吴恩达DeepLearning.AI课程打造的中文Agent Skills学习资料，掌握Skills的基本概念、架构对比和实战技能。"
 date: "2026-04-10T21:15:00+08:00"
 categories: ["技术笔记"]

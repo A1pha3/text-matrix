@@ -2,6 +2,7 @@
 title: "CLI-Anything：用AI代理的通用接口桥接世界所有软件"
 date: "2026-05-19T20:25:00+08:00"
 slug: "cli-anything-universal-cli-ai-agent"
+github_repo: "HKUDS/CLI-Anything"
 description: "CLI-Anything是香港大学DDS实验室推出的开源项目，通过为各类软件生成标准化CLI接口，让AI代理（Agent）能够以结构化方式控制任意软件，目前支持18+应用并提供可扩展的CLI-Hub生态。"
 draft: false
 categories: ["技术笔记"]

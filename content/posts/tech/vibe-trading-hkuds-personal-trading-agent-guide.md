@@ -2,6 +2,7 @@
 title: "Vibe-Trading 完全指南：HKUDS 团队的「Vibe」式个人交易智能体（Agent）"
 date: "2026-06-04T15:00:00+08:00"
 slug: vibe-trading-hkuds-personal-trading-agent-guide
+github_repo: "HKUDS/Vibe-Trading"
 description: "HKUDS 开源的 Vibe-Trading 个人交易智能体工作台：88 个金融 skills、460+ alpha 因子、12 家券商连接器、9 个市场回测，含 Shadow Account 行为复盘与 Robinhood 受限实盘护栏解析。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Odysseus：一站式自托管 AI 工作台，把 ChatGPT/Claude 体验搬回本地"
 date: "2026-06-04T12:55:00+08:00"
 slug: "odysseus-self-hosted-ai-workspace-guide"
+github_repo: "pewdiepie-archdaemon/odysseus"
 description: "Odysseus 是 PewDiePie 团队推出的开源自托管 AI 工作台，整合聊天/Agent/Deep Research/记忆/邮件/日历/笔记七大模块，目标是 1:1 复刻 ChatGPT 与 Claude 的 UI 体验并跑在本地硬件。本文详解其架构、模块拆解、与同类项目的差异以及部署建议。"
 draft: false
 categories: ["技术笔记"]

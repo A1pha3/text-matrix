@@ -2,6 +2,7 @@
 title: "OpenSpec 深度拆解：把 Spec-Driven Development 写进 25+ AI 编码助手的同一套协议"
 date: 2026-06-28T18:06:10+08:00
 slug: "fission-ai-openspec-spec-driven-development-guide"
+github_repo: "Fission-AI/OpenSpec"
 description: "OpenSpec 是 Fission-AI 开源的轻量级 AI 编码助手 spec 协议层，通过 specs/ 真相 + changes/ 提案 + delta specs 三件套，把「先对齐再写代码」的工作流统一带到 25+ AI 工具。本文拆解其 5 个核心概念、双半架构与跨工具适配设计。"
 draft: false
 categories: ["技术笔记"]

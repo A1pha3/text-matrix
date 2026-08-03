@@ -2,6 +2,7 @@
 title: "n8n：开源工作流自动化平台指南"
 date: "2026-04-06T22:16:00+08:00"
 slug: "n8n-workflow-automation-guide"
+github_repo: "n8n-io/n8n"
 description: "n8n 的真正差异化不是 400+ 集成，而是代码可扩展、自托管、AI LangChain 原生三者结合。本文从系统地图、任务流案例、与 Zapier/Make 的工程取舍、自托管部署、企业级功能到采用顺序，给出一份工程视角的落地指南。"
 draft: false
 categories: ["技术笔记"]

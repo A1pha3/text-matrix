@@ -1,6 +1,7 @@
 ---
 title: "OpenCut 深度拆解：6 万 Star 的开源 CapCut 替代品，正在用 TanStack + Elysia + Rust Core 重写一整个跨端视频编辑器"
 slug: opencut-opensource-capcut-alternative-architecture
+github_repo: "OpenCut-app/opencut-classic"
 date: 2026-06-23T15:04:20+08:00
 draft: false
 categories: ["技术笔记"]

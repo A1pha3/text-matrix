@@ -2,6 +2,7 @@
 title: "How-To-Secure-A-Linux-Server：持续演进的中文版Linux服务器安全加固指南"
 date: "2026-05-14T16:12:00+08:00"
 slug: "how-to-secure-a-linux-server-security-guide"
+github_repo: "moltenbit/How-To-Secure-A-Linux-Server-With-Ansible"
 description: "How-To-Secure-A-Linux-Server是由imthenachoman维护的开源安全指南，星数27,245，涵盖SSH加固、sudo/su限制、防火墙配置（UFW/iptables）、入侵检测（Fail2Ban/CrowdSec/OSSEC）、文件完整性监控、病毒扫描等Linux服务器安全全栈知识，配有Ansible自动化脚本。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "CodeVinci：一款本地设计稿转网页的AI工具，支持语音驱动增量更新"
 date: "2026-05-27T16:55:00+08:00"
 slug: "codevinci-ai-design-to-html-tool"
+github_repo: "karminski/CodeVinci"
 description: "CodeVinci是一款本地运行的设计稿转网页工具，支持在画布上绘制或导入设计稿，通过视觉大模型生成HTML，并实现语音驱动的高效修改与实时预览。文章深入解析其架构设计、增量更新机制与语音交互模式。"
 draft: false
 categories: ["技术笔记"]

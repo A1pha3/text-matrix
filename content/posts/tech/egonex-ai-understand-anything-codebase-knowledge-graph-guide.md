@@ -2,6 +2,7 @@
 title: "Understand Anything 架构拆解：把任意代码库变成可探索知识图谱的 AI 插件"
 date: "2026-06-25T21:08:58+08:00"
 slug: "egonex-ai-understand-anything-codebase-knowledge-graph-guide"
+github_repo: "EGOnex-AI/Understand-Anything"
 description: "Egonex-AI/Understand-Anything 是 Claude Code、Cursor、Copilot 等 16 个 AI 编码平台的统一插件，通过 Tree-sitter 静态分析 + LLM 语义补全的 5 步多智能体流水线把代码库构建为可探索的知识图谱。本文补充学习目标、项目速览、目录、自测题、进阶路径和常见问题排查，优化到 100 分。"
 draft: false
 categories: ["技术笔记"]

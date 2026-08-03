@@ -1,6 +1,7 @@
 ---
 title: "AutoResearchClaw：全自动 23 阶段研究论文生成管道，从想法到论文的完整实践"
 slug: autoresearchclaw-23-stage-research-pipeline
+github_repo: "aiming-lab/AutoResearchClaw"
 aliases:
   - "/posts/tech/autoresearchclaw-full-autonomous-research-agent/"
 date: "2026-04-21T07:45:00+08:00"

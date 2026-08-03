@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["LLM", "显存优化", "推理优化", "低资源"]
 description: "AirLLM 用层式分片加载 + 按需 swap 的方式让 70B 模型在单卡 4GB 显存上跑，不做量化、不蒸馏、不剪枝。本文拆它的 layer-wise loading 机制、3x 量化加速路径和适用边界。"
 slug: lyogavin-airllm-layer-wise-loading-70b-on-4gb-gpu
+github_repo: "lyogavin/airllm"
 
 ---
 

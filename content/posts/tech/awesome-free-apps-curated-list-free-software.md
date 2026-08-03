@@ -2,6 +2,7 @@
 title: "awesome-free-apps：每个平台最值得收藏的免费软件清单"
 date: "2026-05-25T20:16:19+08:00"
 slug: "awesome-free-apps-curated-list-free-software"
+github_repo: "Axorax/awesome-free-apps"
 aliases:
  - "/posts/tech/axorax-awesome-free-apps-guide/"
 description: "awesome-free-apps 是一个按平台和场景分类的免费软件精选清单，覆盖 Windows、macOS、Linux 三大桌面平台和 Android、iOS 两大移动端，按音频、浏览器、开发工具、文档、图像、安全等场景组织，每个条目标注平台兼容性和开源状态。"

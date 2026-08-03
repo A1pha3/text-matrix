@@ -2,6 +2,7 @@
 title: "Awesome Systematic Trading：量化交易从入门到实战的精选资源地图"
 date: 2026-07-30T23:30:00+08:00
 slug: "paperswithbacktest-awesome-systematic-trading-guide"
+github_repo: "paperswithbacktest/awesome-systematic-trading"
 description: "paperswithbacktest/awesome-systematic-trading 是量化资源清单，也是一张从论文、数据、回测到实盘部署的路线图。本文拆解仓库、官网、课程和博客各自的角色，以及哪些地方不能直接照单全收。"
 summary: "把 GitHub 仓库、官网、课程和博客拆开来看，更关心怎么用 paperswithbacktest 建立第一条量化研究闭环，不是跟着 README 的高 Sharpe 列表走。"
 aliases:

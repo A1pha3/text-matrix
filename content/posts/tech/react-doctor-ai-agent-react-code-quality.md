@@ -2,6 +2,7 @@
 title: "React Doctor：给 AI 编码智能体把脉的 React 代码质量工具"
 date: 2026-05-14T12:10:00+08:00
 slug: "react-doctor-ai-agent-react-code-quality"
+github_repo: "millionco/react-doctor"
 aliases:
   - "/posts/tech/react-doctor-ai-coding-agent/"
   - "/posts/tech/react-doctor-react-code-health-score-guide/"

@@ -2,6 +2,7 @@
 title: "huggingface/OpenEnv 架构拆解：Agentic RL 训练环境的 Gymnasium 化标准（WebSocket + Docker + HF Spaces）"
 date: "2026-06-13T21:03:20+08:00"
 slug: "openenv-agentic-rl-execution-framework"
+github_repo: "huggingface/OpenEnv"
 description: "拆解 huggingface/OpenEnv：用 Gymnasium-style API 统一 agentic RL 训练环境，通过 WebSocket、Docker 与 HF Spaces 托管。"
 draft: false
 categories: ["技术笔记"]

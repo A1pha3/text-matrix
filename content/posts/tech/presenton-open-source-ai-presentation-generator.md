@@ -1,4 +1,5 @@
 +++
+github_repo = "presenton/presenton"
 date = '2026-05-24T00:00:00+08:00'
 draft = false
 title = 'Presenton：开源 AI 演示文稿生成器'

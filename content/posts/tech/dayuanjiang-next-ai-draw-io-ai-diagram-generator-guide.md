@@ -1,6 +1,7 @@
 ---
 title: "Next AI Draw.io 深度拆解:33K stars 的「对话式画图」如何重塑架构图工具"
 slug: dayuanjiang-next-ai-draw-io-ai-diagram-generator-guide
+github_repo: "DayuanJiang/next-ai-draw-io"
 date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false

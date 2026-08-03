@@ -2,6 +2,7 @@
 title: "UAD-ng 深度拆解：7K Stars 的开源 Android 卸载神器，跨平台 ADB 工具怎么把 bloatware 一键清理干净"
 date: "2026-06-16T21:03:41+08:00"
 slug: universal-android-debloater-next-generation
+github_repo: "MuntashirAkon/AppManager"
 description: "UAD-ng 是 Rust + Iced 跨平台 ADB debloat 工具，覆盖三星 / 华为 / 小米 / OPPO / vivo / 一加等 OEM 的数据驱动包名清单。"
 tags: ["Android", "Rust"]
 categories: ["技术笔记"]

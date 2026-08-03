@@ -2,6 +2,7 @@
 title: "CloakBrowser：源码级改写的反机器人 Chromium 分发版"
 date: "2026-05-14T12:44:00+08:00"
 slug: "cloakbrowser-stealth-chromium-browser"
+github_repo: "CloakHQ/CloakBrowser"
 aliases:
   - "/posts/tech/cloakbrowser-stealth-chromium-bot-detection/"
   - "/posts/tech/cloakbrowser-stealth-chromium-anti-bot-detection/"

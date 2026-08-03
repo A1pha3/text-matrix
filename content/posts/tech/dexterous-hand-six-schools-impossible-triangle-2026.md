@@ -2,6 +2,7 @@
 title: "灵巧手不可能三角：300 美元级开源手，改写了什么"
 date: "2026-06-13T11:35:06+08:00"
 slug: "dexterous-hand-six-schools-impossible-triangle-2026"
+github_repo: "TetherIA/aero-hand-open"
 description: "从 Shadow Robot、Tesla Optimus、TetherIA Aero Hand Open、Gaia Hand 与 VLA 论文出发，拆解灵巧手在性能、成本、可靠性之间的真实取舍。"
 draft: false
 categories: ["技术笔记"]

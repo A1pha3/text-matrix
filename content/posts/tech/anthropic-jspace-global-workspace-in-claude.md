@@ -1,6 +1,7 @@
 ---
 title: "从 J-space 到全局工作区：Anthropic 如何观察 Claude 的隐藏推理"
 slug: "anthropic-jspace-global-workspace-in-claude"
+github_repo: "anthropics/jacobian-lens"
 date: 2026-07-06
 tags: ["Anthropic"]
 categories: ["技术深潜"]

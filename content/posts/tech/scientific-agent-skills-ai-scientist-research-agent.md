@@ -2,6 +2,7 @@
 title: "Scientific Agent Skills：把 AI 编码助手变成\"AI 科学家\"的 135 个科研技能集合"
 date: 2026-05-14T11:42:48+08:00
 slug: "scientific-agent-skills-ai-scientist-research-agent"
+github_repo: "K-Dense-AI/scientific-agent-skills"
 aliases:
   - "/posts/tech/scientific-agent-skills-research-ai-agent/"
   - "/posts/tech/scientific-agent-skills-ai-scientist-complete-guide/"

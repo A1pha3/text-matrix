@@ -2,6 +2,7 @@
 title: "MCP for Unity 深度拆解：把 Unity Editor 暴露给 AI 编码代理的 MCP 桥接器"
 date: 2026-07-04T21:16:32+08:00
 slug: coplaydev-unity-mcp-ai-game-dev-bridge-guide
+github_repo: "CoplayDev/unity-mcp"
 description: "CoplayDev/unity-mcp（MCP for Unity）是把 Unity Editor 完整能力通过 Model Context Protocol 暴露给 Claude/Codex/VS Code/Cursor 等 AI 编码代理的开源工具，47 个 MCP 工具入口覆盖场景管理、资产操作、C# 脚本编辑、测试运行、性能分析。"
 draft: false
 categories: ["技术笔记"]

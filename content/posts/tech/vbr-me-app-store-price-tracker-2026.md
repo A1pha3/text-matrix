@@ -2,6 +2,7 @@
 title: "vbr.me App Store 价格查询：Spring Boot + Alpine.js + 13 地区汇率转换怎么搭"
 date: "2026-07-11T21:09:58+08:00"
 slug: "vbr-me-app-store-price-tracker-2026"
+github_repo: "hypooo/app-store-price"
 description: "app.vbr.me 是一个轻量级的 App Store 全球比价工具，覆盖 13 个国家/地区（美/中/台/港/日/韩/菲/土/尼/印/巴/巴/埃），支持内购项目对比和人民币汇率换算。本文拆开它的 GitHub 仓库 hypooo/app-store-price（81 commits）的完整实现：前端 Alpine.js + Tailwind CSS CDN + Axios 单一 component 架构、后端 Java 21 + SpringBoot 4 + Jsoup 解析 #serialized-server-data 嵌入 JSON、13 个 AreaEnum 地区定义、Hutool TimedCache + 细粒度锁的缓存策略（应用列表 1 天 + 应用详情 1 天 + 汇率 1 天）、Amazon Corretto 21-alpine 的 Dockerfile 设计、ExchangeRateUtil 通过 open.er-api.com 拉实时汇率的转换算法，并补一段对独立爬虫项目作者可复用的工程经验。"
 draft: false
 categories: ["技术笔记"]

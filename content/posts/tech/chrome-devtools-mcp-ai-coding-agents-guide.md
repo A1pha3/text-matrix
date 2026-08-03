@@ -2,6 +2,7 @@
 title: "chrome-devtools-mcp 完全指南：让 AI 编程助手掌控 Chrome DevTools"
 date: "2026-04-18T11:35:00+08:00"
 slug: "chrome-devtools-mcp-ai-coding-agents-guide"
+github_repo: "ChromeDevTools/chrome-devtools-mcp"
 aliases:
   - "/posts/tech/chrome-devtools-mcp/"
   - "/posts/tech/chrome-devtools-mcp-ai-browser-control/"

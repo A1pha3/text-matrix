@@ -2,6 +2,7 @@
 title: "Twenty：开源CRM的「代码优先」实践，用SDK定义Object、工作流和Agent"
 date: "2026-05-29T09:06:54+08:00"
 slug: "twenty-open-source-crm-sdk-agent-guide"
+github_repo: "twentyhq/twenty"
 description: "Twenty是一款开源CRM，以「代码优先」为核心设计理念——Object定义、工作流配置和AI Agent全部可通过TypeScript代码管理，像发布代码一样发布CRM变更。本文覆盖其核心能力、App开发模式和快速上手路径。"
 draft: false
 categories: ["技术笔记"]

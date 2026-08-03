@@ -2,6 +2,7 @@
 title: "facebook/astryx：Meta 八年沉淀的开源设计系统，150+ 组件为人与 AI 协同样板设计"
 date: "2026-06-30T21:10:22+08:00"
 slug: "facebook-astryx-design-system-guide"
+github_repo: "facebook/astryx"
 description: "Astryx 是 Meta 内部八年沉淀的开源设计系统，对外发布版本为 Beta，150+ 组件、7 套主题、CLI 脚手架，基于 React + StyleX 构建，特别强调人与 AI 助手用同一套 API、文档、CLI 协作。本文拆解其设计理念、组件架构、定制机制与适用边界。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Graphiti：把 RAG 从静态文档索引，推进到时序上下文图"
 date: 2026-06-26T00:00:00+08:00
 slug: graphiti-temporal-context-graph-agent-memory-engine
+github_repo: "getzep/graphiti"
 description: "深度拆解 getzep/graphiti 的设计：一个为 AI Agent 设计的时序知识图谱引擎，以 Episode 为溯源锚点、把事实建模成带有效期的边、用 RRF 把语义/BM25/图遍历三路召回融合起来。重点对比它与 GraphRAG、传统向量 RAG 的工程边界，给出在不同 agent 场景下的采用顺序。"
 categories: ["技术笔记"]
 tags: ["RAG", "AI Agent", "MCP", "结构化输出"]

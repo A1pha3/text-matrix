@@ -3,6 +3,7 @@ title: "colibrì 引擎拆解：在 25GB RAM 上跑 744B MoE 模型，纯 C 实�
 date: 2026-07-13T21:55:00+08:00
 lastmod: 2026-07-13T21:55:00+08:00
 slug: colibri-744b-moe-on-25gb-ram-pure-c-engine
+github_repo: "JustVugg/colibri"
 description: "JustVugg/colibri 仓库深读——一个在 12 核 + 25GB RAM 上跑 GLM-5.2 744B MoE 的纯 C 推理引擎。它在 6x RTX 5090 上跑出 6.84 tok/s,比 vLLM-Moet TP4 快 2.5×。零 Python 运行时依赖,GLM-5.2 完整 int4 推理 740 GB 模型从磁盘流式读取,MLA 压缩 KV cache 57×,MTP 投机解码,CUDA/Metal 双后端。"
 categories: ["技术文章", "AI基础设施", "项目解读"]
 tags: ["GLM-5.2", "MoE", "vLLM"]

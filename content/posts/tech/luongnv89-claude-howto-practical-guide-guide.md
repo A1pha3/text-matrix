@@ -2,6 +2,7 @@
 title: "Claude-Howto 实战指南：一份跟着 Claude Code 节奏同步更新的视觉化教程"
 date: "2026-06-28T15:18:30+08:00"
 slug: luongnv89-claude-howto-practical-guide-guide
+github_repo: "luongnv89/claude-howto"
 description: "luongnv89/claude-howto 是 Claude Code 视觉化教程仓库，覆盖 10 模块、29 hook 事件、MCP/Subagents/Plugins，本文梳理分层与边界。"
 draft: false
 categories: ["技术笔记"]

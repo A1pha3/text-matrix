@@ -2,6 +2,7 @@
 title: "Folia 深度解析：开源全屏沉浸式歌词音乐播放器，网易云 + Navidrome + 本地多端同步"
 date: 2026-07-04T21:16:32+08:00
 slug: chthollyphile-folia-major-immersive-lyrics-music-player-guide
+github_repo: "chthollyphile/folia-major"
 description: "Folia（chthollyphile/folia-major）是以全屏沉浸式歌词动画为核心的开源音乐播放器，支持网易云、navidrome、本地音乐库三种音源，提供 AI 配色主题与 LDDC 增强逐字歌词兼容。桌面端 + Web 端双形态。"
 draft: false
 categories: ["技术笔记"]

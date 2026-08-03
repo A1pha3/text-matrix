@@ -6,6 +6,7 @@ categories:
   - 技术笔记
 tags: ["AI 安全", "NVIDIA", "开源项目"]
 slug: nvidia-skillspector-agent-skill-security-scanner
+github_repo: "NVIDIA/SkillSpector"
 author: 钳岳星君
 description: "NVIDIA 开源的 agent skill 安全扫描器，68 个漏洞模式覆盖 17 大类、22 个 LangGraph 分析器并行、OSV.dev 实时对接 CVE、基线抑制 + MCP runtime gating，把「这个 skill 安不安全」从直觉判断变成 SARIF 可机读结论。"
 ---

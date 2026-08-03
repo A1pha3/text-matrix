@@ -2,6 +2,7 @@
 title: "SIA（Self-Improving AI）：同时改 harness 和权重的自改进 Agent 框架"
 date: "2026-06-12T21:08:43+08:00"
 slug: "sia-self-improving-ai-harness-weights"
+github_repo: "hexo-ai/sia"
 description: "SIA 是 hexo-ai 开源的自改进 AI 框架，由 Meta / Target / Feedback 三类 Agent 协同组成生成循环，同时更新 harness（提示词 + 工具装配）和 weight（模型参数）。论文在 LawBench 拿到 70.1% Top-1、MLE-Bench Hard 取得 14× Triton kernel 加速和 502% 单细胞 RNA 去噪改进。本文拆解其双轴更新机制、四类内置任务、Profile 配置和评估管线。"
 draft: false
 categories: ["技术笔记"]

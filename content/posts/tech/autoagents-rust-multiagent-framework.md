@@ -2,6 +2,7 @@
 title: "AutoAgents：Rust 多智能体框架的模块化设计与生产级实践"
 date: 2026-05-12T13:10:00+08:00
 slug: autoagents-rust-multiagent-framework
+github_repo: "liquidos-ai/AutoAgents"
 description: "AutoAgents 是一个用 Rust 编写的生产级多智能体框架，通过类型安全的智能体模型、结构化工具调用、可配置内存和模块化 LLM 后端，为构建、部署和协调多个智能体提供了完整的技术栈。本文深入解析其架构设计、ReAct 执行器、工具派生宏、WASM 沙盒、多智能体编排与 Python 绑定等核心模块。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "alirezarezvani/claude-skills 深度拆解：5,200 Stars 的 354 个 AI Agent Skills 大库是怎么组织的"
 date: "2026-07-05T14:55:00+08:00"
 slug: "alirezarezvani-claude-skills-agent-skills-library-guide"
+github_repo: "alirezarezvani/claude-skills"
 description: "354 个生产级 Claude Code Skills 跨 13 个 AI 编码工具、18 个领域，593 个零依赖 Python CLI 的开源大库，本文拆解其 Skills/Agents/Personas 三层模型与 SKILL.md 最小可执行结构。"
 draft: false
 categories: ["技术笔记"]

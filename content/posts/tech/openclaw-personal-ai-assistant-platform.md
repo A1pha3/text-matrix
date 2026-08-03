@@ -2,6 +2,7 @@
 title: "OpenClaw：本地优先的个人 AI 助手平台"
 date: "2026-04-27T15:00:00+08:00"
 slug: "openclaw-personal-ai-assistant-platform"
+github_repo: "openclaw/openclaw"
 description: "OpenClaw 真正解决的不是「接更多聊天平台」，而是把个人 AI 助手的控制权从云端拉回本地设备：用一个 Gateway 守护进程统一托管所有渠道的会话生命周期、工具权限和记忆存储。本文从架构视角拆解它的 Gateway 设计、多渠道消息路由、技能系统与安全沙箱模型，并给出一个完整消息的端到端流转路径。"
 draft: false
 categories: ["技术笔记"]

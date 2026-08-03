@@ -2,6 +2,7 @@
 title: "Multica：把 AI 代码代理变成真正的队友"
 date: "2026-05-21T20:16:13+08:00"
 slug: "multica-open-source-managed-agents-platform"
+github_repo: "multica-ai/multica"
 description: "Multica 是一个开源托管代理平台，让 AI 编程代理（Claude Code、Codex 等）变成真正的团队成员，支持任务分配、进度追踪、技能复用和多代理协作。"
 draft: false
 categories: ["技术笔记"]

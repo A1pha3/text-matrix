@@ -2,6 +2,7 @@
 title: "awesome-artificial-intelligence 指南：一份走过 11 年的 AI 学习资源精选清单"
 date: "2026-06-18T21:03:00+08:00"
 slug: "owainlewis-awesome-artificial-intelligence-guide"
+github_repo: "owainlewis/awesome-artificial-intelligence"
 description: "owainlewis/awesome-artificial-intelligence 是走过 11 年的经典 AI 学习资源精选清单，覆盖课程、书籍、视频讲座、论文、博客与开源框架，本文拆解其分类逻辑与使用建议。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "ML Systems Notes 精读：数据移动为何比计算慢 100 倍——量化、分布式与 Roofline 实战笔记"
 date: "2026-06-20T14:55:00+08:00"
 slug: "ml-systems-notes-data-movement-vs-compute"
+github_repo: "JINO-ROHIT/ml-systems-notes"
 description: "从数据移动视角重新理解量化与分布式训练，把 roofline 分析落到 A100/H100 的实际数字上，给 ML 工程师一套可立刻上手的系统思维。"
 tags: ["量化", "PyTorch", "性能优化", "AI Infra"]
 categories: ["技术笔记"]

@@ -1,4 +1,5 @@
 +++
+github_repo = "pipecat-ai/pipecat"
 date = '2026-05-17T20:25:00+08:00'
 draft = false
 title = 'Dograh：开源语音 AI Agent 平台'

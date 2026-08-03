@@ -2,6 +2,7 @@
 title: "离谱的英语学习指南：如何用 Gemini/ChatGPT/Claude 构建完整的英语训练回路"
 date: "2026-05-30T13:13:57+08:00"
 slug: "english-level-up-tips-ai-english-learning-guide"
+github_repo: "byoungd/English-level-up-tips"
 description: "byoungd 的离谱英语学习指南是一份 49.7k Stars 的 AI 驱动英语学习综合教程，覆盖听说读写训练回路、CEFR 等级体系，以及 2026 年版的 Gemini/ChatGPT/Claude 分工使用方案。"
 draft: false
 categories: ["技术笔记"]

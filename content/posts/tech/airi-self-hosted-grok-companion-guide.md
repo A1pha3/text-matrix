@@ -1,4 +1,5 @@
 +++
+github_repo = "moeru-ai/airi"
 date = '2026-05-28T16:18:30+08:00'
 draft = false
 title = 'AIRI：自托管 AI 数字伴侣'

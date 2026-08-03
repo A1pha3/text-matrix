@@ -2,6 +2,7 @@
 title: "Bun：让你可以放弃 npm/yarn/vite/jest 的 JavaScript 运行时"
 date: "2026-05-16T15:10:00+08:00"
 slug: "bun-javascript-runtime-all-in-one"
+github_repo: "oven-sh/bun"
 description: "Bun 是用 Zig 编写的高性能 JavaScript 运行时、bundler、测试框架和包管理器，GitHub 星标已突破 9 万。本文从核心概念、安装配置、运行时、包管理、打包、测试、框架集成六个维度，对这个 2021 年起步、如今已全面生产可用的项目做完整技术解读。"
 draft: false
 categories: ["技术笔记"]

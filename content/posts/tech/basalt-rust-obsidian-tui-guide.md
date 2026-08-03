@@ -2,6 +2,7 @@
 title: "Basalt：用Rust在终端里管理Obsidian笔记，1.2k星的ratatui实战"
 date: "2026-05-11T22:50:00+08:00"
 slug: "basalt-rust-obsidian-tui-notes"
+github_repo: "erikjuhani/basalt"
 description: "深度解析erikjuhani/basalt：用Rust和ratatui构建的Obsidian笔记TUI工具，三窗格布局（Explorer+Editor+Outline），WYSIWYG Markdown渲染，支持Vim模式和TOML配置。"
 draft: false
 categories: ["技术笔记"]

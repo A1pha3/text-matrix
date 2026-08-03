@@ -2,6 +2,7 @@
 title: "张雪峰.skill：把一位高考志愿名师的认知框架打包成 Agent Skill"
 date: "2026-06-12T15:12:00+08:00"
 slug: "zhangxuefeng-skill-claude-code-gaokao-volunteer-guide"
+github_repo: "alchaincyf/zhangxuefeng-skill"
 description: "alchaincyf/zhangxuefeng-skill 把张雪峰的高考志愿思维蒸馏成 SKILL.md，5 心智模型 + 8 决策启发式，50+ runtime 一行安装。"
 draft: false
 categories: ["技术笔记"]

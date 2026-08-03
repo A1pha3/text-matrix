@@ -2,6 +2,7 @@
 title: "Odoo - 开源企业级 ERP / CRM / 业务管理套件"
 date: "2026-05-23T15:30:00+08:00"
 slug: odoo-open-source-erp-crm-business-management
+github_repo: "odoo/odoo"
 description: "Odoo 是全球最流行的开源 ERP 系统，51,231 颗星、32,519 个 Fork，提供 CRM、销售点、发票、会计、项目管理、库存、电商等 100+ 应用模块，Python + PostgreSQL 构建。"
 tags: ["ERP", "CRM", "Python", "PostgreSQL", "Open Source", "企业管理"]
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Understand Anything：把代码库变成 AI 可查询的知识图谱"
 date: "2026-06-14T23:18:18+08:00"
 slug: "understand-anything-knowledge-graph-llm-coding"
+github_repo: "Egonex-AI/Understand-Anything"
 aliases:
   - "/posts/tech/understand-anything-codebase-knowledge-graph/"
   - "/posts/tech/understand-anything-codebase-knowledge-graph-guide/"

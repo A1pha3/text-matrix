@@ -2,6 +2,7 @@
 title: "Arnis：14.8K Stars·Minecraft真实世界地图生成器·OpenStreetMap地理数据"
 date: "2026-04-12T02:31:39+08:00"
 slug: arnis-minecraft-world-generator-guide
+github_repo: "louis-e/arnis"
 description: "Arnis 是一个使用 OpenStreetMap 地理数据生成 Minecraft 真实世界地图的工具，使用 Rust 语言编写，支持高性能渲染。"
 draft: false
 categories: ["技术笔记"]

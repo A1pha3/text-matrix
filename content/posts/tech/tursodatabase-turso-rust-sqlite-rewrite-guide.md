@@ -1,6 +1,7 @@
 ---
 title: "Turso Database 深度拆解：把 SQLite 用 Rust 重写一次，到底解决了什么"
 slug: tursodatabase-turso-rust-sqlite-rewrite-guide
+github_repo: "tursodatabase/turso"
 date: "2026-06-20T20:58:00+08:00"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Repomix：11.4K Stars·把代码库压缩成AI可读的单一文件"
 date: "2026-04-12T01:50:00+08:00"
 slug: repomix-ai-codebase-compression-guide
+github_repo: "yamadashy/repomix"
 description: "Repomix 把 Git 仓库打包成 AI 可读的单一文件，内置安全检查、Token 计数和 Tree-sitter 压缩。从 CLI 到 CI 集成全覆盖。"
 draft: false
 categories: ["技术笔记"]

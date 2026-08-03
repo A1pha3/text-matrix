@@ -2,6 +2,7 @@
 title: "CFnew：Cloudflare Workers 订阅转换与代理管理工具"
 date: 2026-05-23T15:06:34+08:00
 slug: "cfnew-cloudflare-workers-proxy-subscription-tool"
+github_repo: "byJoey/cfnew"
 description: "CFnew 是一款运行在 Cloudflare Workers 上的订阅转换工具，支持 VLESS、Trojan、xhttp 多协议，提供图形化配置界面和全平台客户端订阅输出，当前已积累 14,289 ★。"
 draft: false
 categories: ["技术笔记"]

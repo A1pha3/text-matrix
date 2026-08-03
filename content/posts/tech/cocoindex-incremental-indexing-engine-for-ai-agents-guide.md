@@ -2,6 +2,7 @@
 title: "CocoIndex：为 AI Agent 打造的增量索引引擎"
 date: "2026-05-05T20:18:30+08:00"
 slug: "cocoindex-incremental-indexing-engine-for-ai-agents-guide"
+github_repo: "cocoindex-io/cocoindex"
 aliases:
  - "/posts/tech/cocoindex-incremental-indexing-framework/"
 description: "CocoIndex 是一个开源 Python 框架，把 RAG 系统的全量重新索引默认操作改成只同步 Δ，让运维成本从 O(全量) 降到 O(变化量)。代码变更、文档更新、Slack 新消息涌入后，AI Agent 都能拿到持续新鲜的数据。"

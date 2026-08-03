@@ -6,6 +6,7 @@ categories: ["技术笔记"]
 tags: ["diagram"]
 description: "一个受 C4 模型启发的架构即代码工具，用 DSL 描述系统结构并自动生成实时同步的可视化图表，支持自定义表示法和任意嵌套层级。"
 slug: likec4-likec4-architecture-as-code-diagram-tool
+github_repo: "structurizr/dsl"
 
 ---
 

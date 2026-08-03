@@ -1,4 +1,5 @@
 +++
+github_repo = "Open-Dev-Society/OpenStock"
 date = '2026-05-28T01:00:36+08:00'
 draft = false
 title = 'OpenStock：开源股票工作台'

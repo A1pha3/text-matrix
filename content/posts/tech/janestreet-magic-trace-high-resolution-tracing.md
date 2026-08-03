@@ -2,6 +2,7 @@
 title: "magic-trace：Jane Street 开源的高分辨率程序追踪工具"
 date: "2026-05-23T20:17:28+08:00"
 slug: "janestreet-magic-trace-high-resolution-tracing"
+github_repo: "janestreet/magic-trace"
 description: "magic-trace 是 Jane Street 开源的低开销程序追踪工具，基于 Intel Processor Trace（Intel PT）实现 40ns 分辨率的全函数调用记录。本文从原理到实操完整解析其使用方式与适用场景。"
 draft: false
 categories: ["技术笔记"]

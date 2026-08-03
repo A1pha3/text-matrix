@@ -2,6 +2,7 @@
 title: "Self-Hosting 终极指南：mikeroyal/Self-Hosting-Guide 20.6k Stars 自托管资源合集深度导读"
 date: "2026-06-15T21:03:21+08:00"
 slug: "self-hosting-guide-mikeroyal-complete-local-hosting-handbook"
+github_repo: "mikeroyal/Self-Hosting-Guide"
 description: "mikeroyal/Self-Hosting-Guide 是 20.6k Stars 的自托管资源合集，覆盖 Docker、WireGuard、Home Assistant、Nextcloud 等 34 个主题的中文导读。"
 draft: false
 categories: ["技术笔记"]

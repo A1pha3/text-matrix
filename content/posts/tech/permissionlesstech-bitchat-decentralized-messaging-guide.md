@@ -2,6 +2,7 @@
 title: "BitChat：蓝牙 mesh + Nostr 双传输层，让消息在没有信号时也能离开本地"
 date: "2026-07-31T02:53:07+08:00"
 slug: "permissionlesstech-bitchat-decentralized-messaging-guide"
+github_repo: "permissionlesstech/bitchat"
 aliases:
   - "/posts/tech/permissionlesstech-bitchat-decentralized-messaging-guide/"
 description: "BitChat 用蓝牙 mesh 做离线本地组网，用 Nostr relay 做全球可达，两层之间靠智能路由切换。本文拆解这套双传输层架构如何在一个 Swift 应用里把两个完全异构的网络协议缝合成一条消息路径，以及它的 geohash 频道、Noise XX 握手、私有 envelope 与适用边界。"

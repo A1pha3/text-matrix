@@ -7,6 +7,7 @@ categories: ["技术笔记"]
 tags: ["C++", "游戏开发"]
 description: "Jolt Physics 是 Jorrit Rouwe 写的 C++ 多核友好刚体物理与碰撞检测库，10.9k stars，被《Horizon Forbidden West》与《Death Stranding 2》采用。本文拆解它的核心设计判断（多线程并发读 / 写、不自动唤醒、防确定性退化）、系统地图（Jolt/Physics/Collision/BroadPhase 分层）、与 PhysX/Bullet 的横向对比，以及 GDC 2022 演讲背后的工程取舍。"
 slug: "jrouwe-jolt-physics-multicore-rigid-body-engine"
+github_repo: "jrouwe/JoltPhysics"
 author: text-matrix
 ---
 

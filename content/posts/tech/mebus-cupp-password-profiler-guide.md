@@ -2,6 +2,7 @@
 title: "Mebus/cupp：交互式生成社工密码字典的开源工具"
 date: "2026-06-30T21:10:22+08:00"
 slug: "mebus-cupp-password-profiler-guide"
+github_repo: "Mebus/cupp"
 description: "CUPP（Common User Passwords Profiler）是一款基于目标个人信息的交互式密码字典生成工具，6k Stars、Python、GPL-3.0，可用于合法渗透测试与取证调查，本文讲解其原理、快速上手、命令行选项、配置项与合规边界。"
 draft: false
 categories: ["技术笔记"]

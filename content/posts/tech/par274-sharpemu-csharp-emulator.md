@@ -2,6 +2,7 @@
 title: "SharpEmu：用 C# 从零写的实验性 PS5 模拟器，1148 Stars 的早期项目在 Windows 上走到哪一步"
 date: 2026-07-13T03:03:54+08:00
 slug: par274-sharpemu-csharp-emulator
+github_repo: "par274/sharpemu"
 description: "SharpEmu 是开发者 par274（GitHub ID）维护的实验性 PS5 模拟器项目，C# 编写、GPL-2.0、1148 Stars，主攻 Windows。本文拆开它的 6 个模块（Core/CPU/HLE/Libs/GUI/CLI）、当前能力（eboot.bin 加载、PRX 模块、AGC 初始化）、已测试游戏（Demon's Souls 等），以及「实验性」标签在工程层面的真实含义。"
 draft: false
 categories: ["技术笔记"]

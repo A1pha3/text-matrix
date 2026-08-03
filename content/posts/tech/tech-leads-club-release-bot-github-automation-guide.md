@@ -2,6 +2,7 @@
 title: "tech-leads-club-release-bot：Tech Leads Club 的自动化发布机器人深度解读"
 date: 2026-05-17T20:25:00+08:00
 slug: "tech-leads-club-release-bot-github-automation-guide"
+github_repo: "apps/tech-leads-club-release-bot"
 description: "全面解析 tech-leads-club-release-bot GitHub App 的架构设计、安装配置及在 agent-skills 项目中的实战应用"
 draft: false
 categories: ["技术笔记"]

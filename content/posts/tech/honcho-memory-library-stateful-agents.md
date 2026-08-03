@@ -1,4 +1,5 @@
 +++
+github_repo = "plastic-labs/honcho"
 date = '2026-05-23T13:09:23+08:00'
 draft = false
 title = 'honcho：为有状态 Agent 打造的记忆库'

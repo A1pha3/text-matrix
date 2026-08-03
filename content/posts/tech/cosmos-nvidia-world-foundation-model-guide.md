@@ -2,6 +2,7 @@
 title: "NVIDIA Cosmos 3 深度解析：一个统一 MoT 世界基础模型如何同时吃下 Reasoner 和 Generator"
 date: "2026-06-12T15:20:00+08:00"
 slug: "cosmos-nvidia-world-foundation-model-guide"
+github_repo: "NVIDIA/cosmos"
 description: "拆解 NVIDIA Cosmos 3 统一 MoT 架构、Reasoner/Generator 两种注意力模式的边界、四条集成路径（Diffusers/vLLM-Omni/vLLM/NIM）、benchmark 测什么、Limitations 失效模式与采用顺序。"
 draft: false
 categories: ["技术笔记"]

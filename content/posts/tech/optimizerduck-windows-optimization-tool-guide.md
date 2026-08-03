@@ -2,6 +2,7 @@
 title: "optimizerDuck 深度解读：3.5k Stars 的开源 Windows 优化工具，可一键还原所有修改"
 date: "2026-06-15T21:03:21+08:00"
 slug: "optimizerduck-windows-optimization-tool-guide"
+github_repo: "itsfatduck/optimizerDuck"
 description: "itsfatduck/optimizerDuck 是 3.5k Stars 的开源 Windows 优化工具，基于 WPF + .NET 10，内置 5 类 Revert Step 反悔机制，可一键还原所有修改。"
 draft: false
 categories: ["技术笔记"]

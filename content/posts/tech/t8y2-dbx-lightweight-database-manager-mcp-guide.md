@@ -3,6 +3,7 @@ title: "t8y2/dbx 深度评测：15 MB 的 60+ 数据库客户端，Rust + Tauri 
 date: "2026-07-01T21:03:00+08:00"
 lastmod: "2026-07-01T21:03:00+08:00"
 slug: "t8y2-dbx-lightweight-database-manager-mcp-guide"
+github_repo: "t8y2/dbx"
 description: "DBX 是一个用 Tauri 2 + Vue 3 + Rust 写的 15 MB 跨平台数据库客户端，支持 MySQL/PostgreSQL/SQLite/Redis/MongoDB/DuckDB/ClickHouse 等 60+ 数据库，原生内置 MCP Server 和 AI SQL Assistant。文章从架构、特性、MCP 集成、横向对比、安装部署、适用边界六个维度做完整拆解。"
 categories: ["技术笔记"]
 tags: ["Tauri", "MCP", "Rust", "AI Agent"]

@@ -2,6 +2,7 @@
 title: "herdr 深度解析：它不是 tmux 替代品，而是多 Agent 终端的状态层"
 date: "2026-06-15T21:08:29+08:00"
 slug: herdr-rust-agent-multiplexer-guide
+github_repo: "ogulcancelik/herdr"
 description: "Herdr 把持久化 pane、agent 状态感知和本地编排接口放进同一个 Rust TUI。真正值得看的，不是它像 tmux，而是它让多 Agent 终端工作流第一次有了统一的状态层。"
 tags: ["AI Agent", "Rust", "TUI"]
 categories: ["技术笔记"]

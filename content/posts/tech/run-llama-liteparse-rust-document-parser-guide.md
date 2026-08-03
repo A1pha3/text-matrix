@@ -2,6 +2,7 @@
 title: "LiteParse 深度拆解：LlamaIndex 团队开源的 Rust 文档解析器"
 date: "2026-06-24T18:10:00+08:00"
 slug: "run-llama-liteparse-rust-document-parser-guide"
+github_repo: "run-llama/liteparse"
 description: "run-llama/liteparse 是 LlamaIndex 团队 2026 年开源的轻量级 PDF 文档解析器，基于 PDFium + Tesseract 核心,提供 napi-rs / PyO3 / wasm 多语言绑定,主打本地化与零云依赖。本文拆解其 5 层系统地图、OCR 可插拔体系、Markdown 启发式重建路径,以及与 LlamaParse 的产品矩阵关系。"
 draft: false
 categories: ["技术笔记"]

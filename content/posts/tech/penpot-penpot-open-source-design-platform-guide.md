@@ -2,6 +2,7 @@
 title: "Penpot 架构与生态：开源设计协作平台的 Clojure/ClojureScript 全栈、MCP Server 与自托管路径"
 date: "2026-06-25T21:05:13+08:00"
 slug: "penpot-penpot-open-source-design-platform-guide"
+github_repo: "penpot/penpot"
 description: "penpot/penpot 是为设计-代码协作而生的开源设计平台，2026-06 已经发布 2.16.1。本文拆解其 Clojure/ClojureScript 全栈架构、MCP Server 与设计令牌、与 Figma 的工程取舍差异、自托管路径。"
 draft: false
 categories: ["技术笔记"]

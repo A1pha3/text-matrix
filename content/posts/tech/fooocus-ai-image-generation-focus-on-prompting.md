@@ -1,4 +1,5 @@
 +++
+github_repo = "lllyasviel/Fooocus"
 date = '2026-05-23T13:09:23+08:00'
 draft = false
 title = 'Fooocus：专注提示词与生成的 AI 图像工具'

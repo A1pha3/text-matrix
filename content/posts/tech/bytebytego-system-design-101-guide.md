@@ -2,6 +2,7 @@
 title: "ByteByteGo system-design-101 资源地图：15 个主题、400 篇系统设计图解"
 date: "2026-06-28T21:13:29+08:00"
 slug: "bytebytego-system-design-101-guide"
+github_repo: "donnemartin/system-design-primer"
 description: "ByteByteGo 系统设计图解的开源索引：15 个主题、约 400 篇 guide 链接到 bytebytego.com，价值在覆盖广度不在代码。"
 draft: false
 categories: ["技术笔记"]

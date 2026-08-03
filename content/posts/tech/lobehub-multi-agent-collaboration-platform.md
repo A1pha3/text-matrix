@@ -2,6 +2,7 @@
 title: "LobeHub 76K星：多智能体协作平台从入门到精通"
 date: "2026-05-09T03:11:28+08:00"
 slug: "lobehub-multi-agent-collaboration-platform"
+github_repo: "lobehub/lobehub"
 description: "LobeHub 是一个将 Agent 视为工作单元的多智能体协作平台，76K Stars、10K+ MCP 插件、1万+技能，支持多 Agent 并行协作、个人记忆系统与人类共同进化。本文从核心概念、架构设计到实战使用，全面解析这个 AI Agent 领域的新范式。"
 draft: false
 categories: ["技术笔记"]

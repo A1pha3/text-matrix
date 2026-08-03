@@ -2,6 +2,7 @@
 title: "mimo2codex：让最新 Codex 无缝接入 MiMo/DeepSeek 的本地代理网关"
 date: "2026-05-14T16:15:00+08:00"
 slug: "mimo2codex-codex-local-proxy"
+github_repo: "7as0nch/mimo2codex"
 description: "深入解析 mimo2codex 0.2.4 的架构设计：Responses API 与 Chat Completions 的双向转换、reasoning_content 多轮透传机制、Provider 路由体系，以及如何用它把最新版 Codex CLI 接入小米 MiMo V2.5 或 DeepSeek V4 Pro。"
 draft: false
 categories: ["技术笔记"]

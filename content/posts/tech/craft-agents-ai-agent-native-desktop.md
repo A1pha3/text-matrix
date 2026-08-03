@@ -2,6 +2,7 @@
 title: "Craft Agents：4K Stars的AI Agent原生桌面应用——用自然语言操控Linear/Slack/Gmail"
 date: "2026-04-18T15:45:00+08:00"
 slug: "craft-agents-ai-agent-native-desktop"
+github_repo: "lukilabs/craft-agents-oss"
 description: "Craft Agents是lukilabs出品的AI Agent桌面应用，基于Agent Native软件原则。用自然语言连接Linear/Gmail/Slack等60+服务，支持多LLM提供商，可视化编程体验。"
 draft: false
 categories: ["技术笔记"]

@@ -1,6 +1,7 @@
 ---
 title: "Hallmark 项目导读：用反 AI 味规则让 Claude Code、Cursor、Codex 生成不一致的网页"
 slug: nutlope-hallmark-anti-ai-slop-design-skill
+github_repo: "Nutlope/hallmark"
 date: 2026-07-13T03:03:14+08:00
 lastmod: 2026-07-13T03:03:14+08:00
 draft: false

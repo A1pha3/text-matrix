@@ -2,6 +2,7 @@
 title: "unclecode/crawl4ai：把 Web 抓成 LLM 友好 Markdown 的开源爬虫"
 date: 2026-07-10T02:58:08+08:00
 slug: "unclecode-crawl4ai-llm-friendly-web-scraper"
+github_repo: "unclecode/crawl4ai"
 tags: ["LLM", "RAG", "Python", "Playwright"]
 categories: ["技术笔记"]
 description: "梳理 Crawl4AI 的核心机制——71K+ stars 的开源 Web 爬虫，专注把任意网页转成干净 Markdown，配合 LLM 抽取、CSS 选择器、深度爬取，喂给 RAG / Agent 流水线。"

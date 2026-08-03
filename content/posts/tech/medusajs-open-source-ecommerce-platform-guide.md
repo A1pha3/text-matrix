@@ -1,4 +1,5 @@
 +++
+github_repo = "medusajs/medusa"
 date = '2026-05-17T20:25:00+08:00'
 draft = false
 title = 'MedusaJS：开源 Headless 商务平台'

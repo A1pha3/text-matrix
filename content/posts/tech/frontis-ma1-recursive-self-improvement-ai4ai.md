@@ -5,6 +5,7 @@ draft: false
 categories: ["论文精读"]
 tags: ["Frontis-MA1", "RSI", "递归自我改进", "AI4AI", "OpenMLE", "机器学习工程", "清华大学", "FrontisAI", "进化搜索", "强化学习"]
 slug: frontis-ma1-recursive-self-improvement-ai4ai
+github_repo: "FrontisAI/OpenRSI"
 description: "一个 35B 参数的模型，在单卡 RTX 4090 上，如何通过递归自我改进追平 2.8T 参数的 Kimi K3？清华 FrontisAI 的最新论文给出了答案：OpenMLE 全栈系统 + 四个原子操作符 + 执行接地的进化搜索。"
 hiddenFromHomePage: false
 ---

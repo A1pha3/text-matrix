@@ -2,6 +2,7 @@
 title: "addyosmani/agent-skills：把 24 个生产级工作流封进 Coding Agent"
 date: "2026-07-09T02:55:00+08:00"
 slug: "addyosmani-agent-skills-production-grade-coding-agent"
+github_repo: "addyosmani/agent-skills"
 description: "Addy Osmani 的 agent-skills 把资深工程师的开发流程拆成 24 个可被 AI 调用的 skill，覆盖 Define/Plan/Build/Verify/Review/Ship 全生命周期。本文拆解其分层结构、关键设计原则与 24 个 skill 的依赖图，并讨论与现有 Agent Skills 标准的差异。"
 draft: false
 categories: ["技术笔记"]

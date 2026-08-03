@@ -2,6 +2,7 @@
 title: "transformerlens-skill：将 TransformerLens 机制可解释性工作流模块化"
 date: "2026-05-17T12:04:00+08:00"
 slug: "transformerlens-skill-modular-mechanistic-interpretability"
+github_repo: "Durararananke/transformerlens_skill"
 description: "transformerlens-skill 将 TransformerLens 框架常用的机制可解释性工作流封装为可复用模块，包括激活缓存、因果追踪、归因修补、对数透镜和激活 steering 等，适用于 Llama 3、Qwen 3、Gemma 3 等主流开源大模型。"
 draft: false
 categories: ["技术笔记"]

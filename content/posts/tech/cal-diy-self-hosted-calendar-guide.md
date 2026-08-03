@@ -2,6 +2,7 @@
 title: "Cal.diy：开源社区版 Cal.com 完整自托管调度平台指南"
 date: 2026-05-17T20:10:00+08:00
 slug: "cal-diy-self-hosted-calendar-guide"
+github_repo: "calcom/cal.diy"
 description: "Cal.diy 是 Cal.com 的开源社区分支，移除所有企业功能后完全 MIT 授权。本文解析其架构设计、本地开发环境搭建、Docker 部署流程及与 Cal.com 的核心差异，帮助个人开发者和小型团队快速部署私有调度系统。"
 draft: false
 categories: ["技术笔记"]

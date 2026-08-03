@@ -2,6 +2,7 @@
 title: "Anthropic Claude Code：官方AI编程CLI从入门到精通完全指南"
 date: "2026-05-30T15:05:00+08:00"
 slug: "anthropics-claude-code_official_cli_guide"
+github_repo: "anthropics/claude-code"
 description: "Claude Code是Anthropic官方终端AI编程助手，默认基于Claude Sonnet工作，支持文件编辑、Git操作、多轮对话、Skill扩展和MCP协议，涵盖安装配置、核心用法和自定义选项。"
 draft: false
 categories: ["技术笔记"]

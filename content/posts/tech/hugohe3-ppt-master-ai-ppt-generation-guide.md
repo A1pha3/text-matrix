@@ -2,6 +2,7 @@
 title: "hugohe3/ppt-master 深度拆解：AI 生成可编辑 PPTX 的 SVG→DrawingML 流水线与多角色执行"
 date: "2026-06-28T15:18:36+08:00"
 slug: "hugohe3-ppt-master-ai-ppt-generation-guide"
+github_repo: "hugohe3/ppt-master"
 description: "深度拆解 ppt-master 的 SVG→DrawingML 转换、双角色流水线与 spec_lock 反漂移机制,理解 AI 生成可编辑 PPT 的工程取舍。"
 draft: false
 categories: ["技术笔记"]

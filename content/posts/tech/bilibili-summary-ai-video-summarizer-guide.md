@@ -1,6 +1,7 @@
 ---
 title: "BiliSummary：B站视频AI摘要与知识管理工具"
 slug: "bilibili-summary-ai-video-summarizer-guide"
+github_repo: "jackwener/bilibili-summary"
 date: "2026-04-08T13:10:00+08:00"
 lastmod: 2026-04-08T13:10:00+08:00
 categories: ["技术笔记"]
