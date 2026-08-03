@@ -1,7 +1,7 @@
 ---
 title: "Agent 技术全史精读：苏煜为什么把 2026 看成数字智能体的分水岭"
 date: "2026-05-01T13:50:00+08:00"
-lastmod: "2026-06-19T11:18:00+08:00"
+lastmod: 2026-08-04T10:00:00+08:00
 slug: "agent-technology-history-su-yu"
 description: '基于张小珺与苏煜访谈，结合 Language Agents tutorial、Computer Use、OpenClaw、NeoCognition 等公开材料，梳理 Agent 从逻辑代理到语言代理的演进，解释为什么 2026 年的变化重点已经从"模型会不会回答"转到"Agent 的执行栈、运行时和责任边界"。'
 summary: "这篇访谈精读梳理 Agent 技术史：规则系统写死下一步，策略网络学出下一步，语义解析把语言变成程序，Language Agent 再把语言、工具、记忆、GUI 和日志接进同一条执行链。OpenClaw 是入口和界面的变化，NeoCognition 是长期学习和专业化的尝试。分水岭在于这条执行链能不能跑稳，错误能不能收住，人类能不能接管。"
@@ -17,7 +17,7 @@ hiddenFromHomePage: false
 
 2026 值得单独看，不是因为 Agent 在这一年横空出世，而是数字执行栈终于开始拼到一起了：`Computer Use` 把 GUI、浏览器和桌面纳入接口，Agent SDK 和运行时开始把工具、状态、观测和权限装进同一套框架，OpenClaw 和 NeoCognition 这类新产品又把讨论重心从"能不能演示"推到"能不能长期执行、长期学习、长期负责"。
 
-本文主线围绕四个问题展开：Agent 技术史真正变化的，是"谁在决定下一步"；2026 的分水岭，落在执行栈和运行时，而不只是模型参数；OpenClaw 看的是入口和界面，NeoCognition 看的是长期学习和专业化；真正决定 Agent 能不能进生产的，不是它会不会说，而是它有没有权限边界、可观测性、验证信号和接管机制。
+本文主线围绕四个问题展开：Agent 技术史真正变化的，是"谁在决定下一步"；2026 的分水岭，落在执行栈和运行时，而不只是模型参数；OpenClaw 看的是入口和界面，NeoCognition 看的是长期学习和专业化；Agent 能不能进生产，取决于它有没有权限边界、可观测性、验证信号和接管机制。
 
 资料边界：下文使用节目公开信息、苏煜个人主页、OSU 公告、NeoCognition 新闻稿、OpenClaw 官网，以及 ReAct、Toolformer、Reflexion、Language Agents tutorial、OpenAI Operator、Anthropic Computer Use、Google ADK、Microsoft Agent Framework 等公开材料。NeoCognition 只写公开方向，不外推未发布的架构和算法。
 
@@ -44,11 +44,11 @@ hiddenFromHomePage: false
 | 产品形态 | "问一句答一句"的助手 | 个人数字助手、computer-use agent（计算机使用型 Agent）、expert agent lab（专家型 Agent 实验室） | 用户开始把执行权交出去，而不只是拿建议 |
 | 责任边界 | 出错后重新 prompt | user approval、sandbox、日志、回放、human-in-the-loop 被写进官方文档 | 错误开始被当成生产问题，而不是模型趣事 |
 
-标题里说的"分水岭"不在某个模型突然变聪明，而在执行栈、运行时和责任边界第一次被一起推到产品层面。Agent 也因此不再只是一个 demo，而变成必须对结果负责的系统。
+标题里说的"分水岭"不在某个模型突然变聪明，而在执行栈、运行时和责任边界第一次被一起推到产品层面。Agent 不再只是一个 demo，而变成必须对结果负责的系统。
 
 ## 先看主线：谁决定下一步
 
-Agent 这个词在 AI 里一直存在。经典教材里的定义很朴素：智能体通过传感器感知环境，通过执行器作用于环境。这个定义看起来宽泛，却把边界说清楚了：Agent 不是只输出答案的函数，而是嵌在环境里的行动系统。
+Agent 这个词在 AI 里一直存在。经典教材里的定义很朴素：智能体通过传感器感知环境，通过执行器作用于环境。这个定义把边界说清楚了：Agent 不是只输出答案的函数，而是嵌在环境里的行动系统。
 
 过去 60 年的变化，不是 Agent 突然出现，而是"下一步动作由谁决定"不断迁移。
 
@@ -73,11 +73,11 @@ flowchart LR
 
 苏煜的公开资料显示，他现在是俄亥俄州立大学计算机科学与工程系副教授、Innovation Scholar，并共同领导 OSU NLP group。他在个人主页里把自己的研究兴趣概括为：语言作为推理和交流载体，在人工智能中扮演什么角色；近年的重点则放在 Language Agents 上。2025 年，他获得 Alfred P. Sloan Research Fellowship，OSU 公告也特别提到，他的工作同时推进了对 LLM 的基础理解和能像人一样使用计算机的 AI Agent 系统。
 
-这个背景会改变读法。苏煜一直站在 Semantic Parsing、Language Agent 和 `Computer Use` 这条线上，不是最近才转向 Agent 的创业者。更重要的是，他这几年的公开工作和节目里的几条主线几乎能一一对上：`LLM-Planner` 对应 planning，`Mind2Web` 和 `SeeAct` 对应 web/computer use，`TravelPlanner` 和 `ScienceAgentBench` 对应评估，`HippoRAG` 对应 memory 与 non-parametric continual learning。节目里反复出现的 planning、memory、evaluation、computer use，也正是他这些年反复在做的题目。
+这个背景会改变读法。苏煜一直站在 Semantic Parsing、Language Agent 和 `Computer Use` 这条线上，不是最近才转向 Agent 的创业者。他这几年的公开工作和节目里的几条主线几乎能一一对上：`LLM-Planner` 对应 planning，`Mind2Web` 和 `SeeAct` 对应 web/computer use，`TravelPlanner` 和 `ScienceAgentBench` 对应评估，`HippoRAG` 对应 memory 与 non-parametric continual learning。节目里反复出现的 planning、memory、evaluation、computer use，也正是他这些年反复在做的课题。
 
-这样再回头看整期访谈，重心就清楚了。苏煜顺着自己长期参与过的技术路径，说明 Language Agent 不是"会调工具的聊天模型"，而是一种新的行动控制器。
+苏煜顺着自己长期参与过的技术路径，说明 Language Agent 不是"会调工具的聊天模型"，而是一种新的行动控制器。
 
-语义解析做的事情，是把一句自然语言转成数据库查询、逻辑形式或程序。它一直追着同一个问题：语言怎么变成可执行的东西。到了 Language Agent，这个问题不再停在单句翻译上。模型要在执行过程中不断生成计划、调用工具、读取反馈、修正策略。换句话说，Semantic Parsing 其实已经替 Language Agent 探过一段路了：语言不只是表达工具，也可以成为行动的前端。
+语义解析做的事情，是把一句自然语言转成数据库查询、逻辑形式或程序。它一直追着同一个问题：语言怎么变成可执行的东西。到了 Language Agent，这个问题不再停在单句翻译上。模型要在执行过程中不断生成计划、调用工具、读取反馈、修正策略。Semantic Parsing 已经替 Language Agent 探过一段路：语言不只是表达工具，也可以成为行动的前端。
 
 ## 第一阶段：Logical Agent，把世界写进规则
 
@@ -93,9 +93,9 @@ Logical Agent 的出发点很清楚：只要把世界状态、动作前提、动
 
 Neural Agent 解决了一部分手写规则的麻烦。图像、语音、复杂棋局、连续控制动作，如果全靠规则表达，工程上会非常吃力；换成神经网络去学习表征和策略，就顺得多。强化学习还给了 Agent 一条训练回路：观察状态、采取动作、得到奖励、更新策略。
 
-但这条路也有自己的天花板。很多神经代理在特定环境里很强，换任务、换界面、换目标后就不稳定。它们知道如何在某个游戏里赢，却未必知道如何把"赢"的经验迁移到一个普通人的办公桌面。它们能优化策略，却不善于用自然语言解释自己为什么这样做，也不善于和人类协商任务边界。
+但这条路也有天花板。很多神经代理在特定环境里很强，换任务、换界面、换目标后就不稳定。它们知道如何在某个游戏里赢，却未必知道如何把"赢"的经验迁移到一个普通人的办公桌面。它们能优化策略，却不善于用自然语言解释自己为什么这样做，也不善于和人类协商任务边界。
 
-Language Agent 出现在这个位置。它没有抛弃神经网络，而是把语言模型训练出的通用表征，放到环境交互和工具调用里。
+Language Agent 出现在这个位置。它把语言模型训练出的通用表征，放到环境交互和工具调用里，没有抛弃神经网络。
 
 ## Semantic Parsing：被低估的中间桥梁
 
@@ -168,9 +168,9 @@ OpenClaw Moment 的入口变化更值得盯：数字 Agent 正在从"聊天框�
 
 谈 NeoCognition 时，边界要收紧。公开新闻稿显示，NeoCognition 以 4000 万美元种子轮融资出场，定位是面向 specialized intelligence（专业化智能）和 expert agents（专家智能体）的 AI Agent lab。新闻稿里有一句话基本把方向说清了：他们希望构建能持续学习所处环境的结构、工作流和约束，并通过学习"工作世界模型"（world model of work）成为领域专家的 Agent。
 
-它和普通"通用助手"的叙事不一样。通用助手强调一上来什么都能做；NeoCognition 的公开表达更接近另一条路线：Agent 在使用中慢慢专业化。新闻稿里另一句是：当 general-purpose agents 逐渐变成 table stakes，真正难的部分会转向 expert-level intelligence。它押注的不是"更通用"，而是"更像某个岗位里的熟手"。
+它和普通"通用助手"的叙事不一样。通用助手强调一上来什么都能做；NeoCognition 的公开表达更接近另一条路线：Agent 在使用中慢慢专业化。新闻稿里另一句是：当 general-purpose agents 逐渐变成 table stakes，真正难的部分会转向 expert-level intelligence。它押注的是"更像某个岗位里的熟手"。
 
-"世界模型"这个词容易被误解成机器人或物理仿真里的世界模型。放到 NeoCognition 的语境里，更准确的理解是工作模型（work model），或者某个微型工作世界的结构化模型。它关心的不是杯子掉到地上会不会碎，而是：
+"世界模型"这个词容易被误解成机器人或物理仿真里的世界模型。放到 NeoCognition 的语境里，更准确的理解是工作模型（work model），或者某个微型工作世界的结构化模型。它关心的是：
 
 - 一个企业里的审批链条是什么；
 - 某个团队如何命名文件和写周报；
@@ -178,7 +178,7 @@ OpenClaw Moment 的入口变化更值得盯：数字 Agent 正在从"聊天框�
 - 某类任务失败时，通常是哪一步出错；
 - 某个行业里的例外情况和隐性约束是什么。
 
-问题也正是在这里变难：Agent 要有可塑性，才能适应新环境；又要有可靠性，不能因为持续学习就一路漂移。人类专家之所以值钱，不是因为记住了无限知识，而是因为在某个领域里形成了稳定判断，知道什么可以省略，什么必须确认，什么风险不能碰。
+问题也正是在这里变难：Agent 要有可塑性，才能适应新环境；又要有可靠性，不能因为持续学习就一路漂移。人类专家值钱，不是因为记住了无限知识，而是因为形成了稳定判断，知道什么可以省略，什么必须确认，什么风险不能碰。
 
 NeoCognition 公开材料里反复出现的关键词，可以先放进三类问题里。
 
