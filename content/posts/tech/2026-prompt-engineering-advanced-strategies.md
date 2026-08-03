@@ -8,11 +8,9 @@ draft: false
 categories: ["技术笔记"]
 tags: ["LLM", "Prompt Engineering", "提示词工程", "AI Agent", "ReAct", "Context Engineering", "上下文工程"]
 ---
-> **更新日期**：2026-06-23 | **预计阅读时间**：22 - 30 分钟
->
 > 提示词工程没死，只是长胖了。两年前讨论怎么写好一段话，现在要讨论一组配置：任务怎么定义、上下文怎么组织、工具什么时候启动和停下。措辞改好了能把 87 分推到 93 分，但剩下的分数不在句子里面。
 >
-> **事实边界**：ReAct、Chain-of-Thought 与长上下文位置偏差分别基于公开论文。Expert Panel 与 Compression Protocol 是工程化便捷称呼，不是统一的学术术语。2026 年的写法变化体现在工程化层叠，底层论文多来自 2022-2023 年。
+> **术语说明**：ReAct、Chain-of-Thought 与 Lost in the Middle 分别基于公开论文（2022-2023）。Expert Panel 与 Compression Protocol 是工程化便捷称呼，不是统一的学术术语。
 
 ## 目录
 
@@ -25,20 +23,6 @@ tags: ["LLM", "Prompt Engineering", "提示词工程", "AI Agent", "ReAct", "Con
 7. [四个策略如何接成一条工作流](#7-四个策略如何接成一条工作流)
 8. [最小骨架：一套可以直接重写旧 prompt 的模板](#8-最小骨架一套可以直接重写旧-prompt-的模板)
 9. [结语：下一步做什么](#9-结语下一步做什么)
-10. [资料口径说明](#10-资料口径说明)
-11. [常见问题（FAQ）](#11-常见问题faq)
-12. [延伸阅读](#12-延伸阅读)
-
-## 学习目标
-
-阅读本文后，你将能够：
-
-- 区分 prompt engineering 的四个策略层级，知道每个层级解决什么、解决不了什么
-- 为一个反复迭代的生产级 prompt 选择合适的策略组合，并解释为什么是这个组合
-- 用四层框架诊断一条失效 prompt，定位故障层，而不是盲目改措辞
-- 判断什么时候该停——代价超过收益时，退回更简单的方案
-
----
 
 ## 1. 先把「2026 年的提示词工程」说清楚
 
@@ -61,13 +45,13 @@ tags: ["LLM", "Prompt Engineering", "提示词工程", "AI Agent", "ReAct", "Con
 | **Expert Panel** | 工程化便捷称呼 | 用多角色、不同 KPI 暴露取舍冲突 |
 | **Compression Protocol** | 工程化便捷称呼 | 把任务目标与硬约束压成结构化锚点 |
 
-ReAct 可以直接回到论文语境讨论；Expert Panel 与 Compression Protocol 更适合作为工作中的便利标签。区分这一步在跨团队沟通时尤其必要——说「我们在用 ReAct 做工具循环」和「我们在用 Expert Panel 做评审」是两件完全不同的事。
+ReAct 可以直接回到论文语境讨论；Expert Panel 与 Compression Protocol 更适合作为工作中的便利标签。区分这一步在跨团队沟通时尤其必要——「我们在用 ReAct」和「我们在用 Expert Panel」是两件完全不同的事。
 
 ### 1.3 上下文长了，不等于每个 token 都被公平利用
 
 [Lost in the Middle](https://arxiv.org/abs/2307.03172) 讨论了一个很务实的问题：模型能接收更长的输入，但不会稳定利用每一部分。论文在多文档问答与键值检索任务中发现，相关信息出现在上下文中部时，性能常常低于出现在开头或结尾时。这一点来自论文中的实验设置与评测模型，不是所有模型在所有长上下文场景都一个表现，但它指向一个工程现实：**上下文长度增加不会自动带来等比例的信息利用率。**
 
-Anthropic 的 context engineering 文章把这个现象说得更直白：上下文是有限资源，应该用尽量少但尽量高信号的 token 去完成任务。「少」指的是不要用低价值背景、重复的工具输出、陈旧的历史消息去挤占注意力预算。注意力预算有限，根子在 Transformer 的自注意力机制——每个 token 通过 query-key 点积与其他 token 计算注意力权重，上下文越长，单个 token 分配到的注意力越分散，低信号内容推高的是分母，拉低的是高信号内容被注意到的概率（这是工程化解释，严格机制见 Transformer 原论文）。缩减字数本身不解决问题，关键是区分硬约束和低信号背景——只删背景，不删约束。
+Anthropic 的 context engineering 文章点明了这一点：上下文是有限资源，应该用尽量少但尽量高信号的 token 去完成任务。「少」指的是不要用低价值背景、重复的工具输出、陈旧的历史消息去挤占注意力预算。注意力预算有限，根子在 Transformer 的自注意力机制——每个 token 通过 query-key 点积与其他 token 计算注意力权重，上下文越长，单个 token 分配到的注意力越分散，低信号内容推高的是分母，拉低的是高信号内容被注意到的概率（这是工程化解释，严格机制见 Transformer 原论文）。缩减字数本身不解决问题，关键是区分硬约束和低信号背景——只删背景，不删约束。
 
 ### 1.4 动手调 prompt 之前，先把三样东西备好
 
@@ -590,81 +574,5 @@ graph TD
 
 落到具体行动上，不妨就从手边一个「感觉还行但偶尔抽风」的 prompt 开始。拿四层框架走一遍：它缺了哪一层？如果只改一个字段，改哪个收益最高？修完之后跑三组对比评测，看输出差异度和无效工具调用比例有没有实际变化。有了这一步的数据，你做的已经是工程诊断，不再是凭感觉优化 prompt。
 
----
 
-## 10. 资料口径说明
-
-本文的判断和结论来自以下来源：
-
-1. **主要来源**：ReAct、Chain-of-Thought、Lost in the Middle 的公开论文；Anthropic 的 prompt engineering 和 context engineering 公开文档；OpenAI 和 Google Gemini 的 prompt engineering 指南。Expert Panel 和 Compression Protocol 不是学术术语，是工程实践里的便捷称呼。
-
-2. **技术准确性边界**：文中的策略已在多个生产环境验证，但具体效果受模型版本、上下文长度、工具设计等因素影响。token 消耗和响应时延数据是粗略经验值，实际数值因模型和任务复杂度而异。
-
-3. **适用性边界**：本文面向需要反复迭代的生产级 prompt——系统提示词、Agent 指令、评测模板。三行的一次性提问不需要这套框架。
-
-4. **未覆盖话题**：本文不讨论 prompt 自动优化（如 DSPy）、模型训练/fine-tuning、多模态 prompt 工程。
-
-5. **版本与时效性**：本文基于 2026 年 5 月的公开资料撰写。LLM 的 prompt engineering 最佳实践仍在持续演进，后续更新以各模型厂商的官方文档为准。
-
----
-
-## 11. 常见问题（FAQ）
-
-**Q1：这四个策略和「把 prompt 写长一点」有什么区别？**
-
-四个策略都不靠堆字数起作用。Expert Panel 靠角色间的 KPI 差异制造冲突，Compression Protocol 靠结构化分层提高信息密度，ReAct 靠交替式行动降低猜测成本，四层框架靠分层诊断避免在错误的层面反复修改。只把 prompt 写长，通常只是在写法层增加低信号文本。
-
-**Q2：我已经用了 ReAct，为什么还是会无限循环？**
-
-几乎都是停止规则没写清楚。ReAct 需要三样东西来收敛：何时停止搜索、何时向用户提问、何时承认未知。这三条缺一条，循环就会继续探索下去。先补停止规则，再调其他参数。如果频繁触发 max_steps 上限，可以再看工具返回是否包含足够的终止信号——有时问题不在循环逻辑，而在 observation 的信息密度不够，模型判断不了「证据是否已经充足」。
-
-**Q3：什么时候该用 Expert Panel，什么时候用四层框架就够了？**
-
-如果问题核心是方案取舍（选 A 还是选 B），用 Expert Panel。如果问题是「不知道为什么输出不对」，先用四层框架定位故障层——多数情况下，问题出在规格层或上下文层，写法层只是表象。
-
-**Q4：Compression Protocol 和直接缩短 prompt 长度有什么区别？**
-
-缩短长度可能是在删「看起来不重要」的背景信息。Compression Protocol 是先把硬约束从背景里提炼出来、独立成块，再判断哪些背景不改变输出行为。前者是删减，后者是提炼。实践中一个简单判断标准：删完后跑三组对比评测，看关键约束的遵守率有没有下降——下降了说明删错了对象，约束被当成背景删掉了。
-
-**Q5：这篇文章里的方法有论文出处吗？**
-
-ReAct、Chain-of-Thought、Lost in the Middle 有明确的论文出处（见延伸阅读）。Expert Panel 和 Compression Protocol 是工程化称呼，来自实践经验的归纳。四层框架是本文作者提出的诊断框架，核心思路来自 Anthropic 的 prompt engineering / context engineering 公开资料。区分论文术语和工程标签，在跨团队讨论时尤其重要。
-
-**Q6：这些策略会增加多少成本？**
-
-Expert Panel 增加 token 消耗和输出长度（3-5 倍），Compression Protocol 主要增加前期设计成本（写的时候多花 20-30 分钟，但运行时通常更省 token），ReAct 增加工具调用次数和时延（平均多 2-5 轮交互），四层框架增加诊断时间（20-40 分钟）。第八节的代价表给了每种策略的主要代价和观察指标。从落地经验看，四层框架 + Compression Protocol 组合的 ROI 最高——前期多花 30 分钟设计，后续迭代效率通常有明显提升。如果团队已经有成熟的评测脚本和回归用例，这个 ROI 会更高：Compression Protocol 做一次，评测脚本就能替你验证多次。
-
-**Q7：我团队里每个人对「好 prompt」的标准都不一样，怎么统一？**
-
-先跑一遍四层框架的诊断——大概率问题出在规格层没有共同定义。把「好 prompt」拆成可验证的成功标准、硬约束和停止规则，团队就有了共同的讨论语言。在跨团队评审时，建议直接用第八节的最小骨架模板作为 checklist：Goal、Success Criteria、Constraints、Stop Rules 四个字段填满，基本不会漏掉关键信息。
-
----
-
-## 12. 延伸阅读
-
-**核心论文**
-
-- [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
-- [Chain-of-Thought Prompting Elicits Reasoning in Large Language Models](https://arxiv.org/abs/2201.11903)
-- [Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172)
-
-**工程指南**
-
-- [Effective context engineering for AI agents | Anthropic](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
-- [Prompt engineering overview | Anthropic Docs](https://platform.claude.com/docs/en/docs/build-with-claude/prompt-engineering/overview)
-- [Prompt engineering guide | OpenAI](https://platform.openai.com/docs/guides/prompt-engineering)
-- [Best practices for prompt engineering with OpenAI API](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api)
-- [Prompt design strategies | Google Gemini API](https://ai.google.dev/gemini-api/docs/prompting-strategies)
-
-**自动化提示词优化**
-
-- [DSPy: Programming—not prompting—Foundation Models](https://github.com/stanfordnlp/dspy) — 斯坦福 Hazy Research 出品，用签名和优化器替代手写 prompt
-
-**进阶阅读（来自本文相关线索）**
-
-- [Attention Is All You Need](https://arxiv.org/abs/1706.03762) — Transformer 原论文，理解注意力机制的工程前提
-- [Prompt Engineering Guide | DAIR.AI](https://www.promptingguide.ai/) — 社区维护的综合性提示词工程指南，覆盖从基础到 Agent 的完整路径
-- [Anthropic's Claude prompting guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview) — 本文多处引用的工程实践来源
-
----
 

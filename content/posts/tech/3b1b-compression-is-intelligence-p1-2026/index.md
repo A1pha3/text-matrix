@@ -11,9 +11,9 @@ author: "钳岳"
 canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-2026/"
 ---
 
-> **本文素材**：B 站官方双语 `BV1yVNU6xERx`（3Blue1Brown "Compression is Intelligence Part 1: Reinventing Entropy"，32 分 20 秒，2026-07-14 发布，翻译贰鼠 / 校正畏狐之狐）+ YouTube 原版 `https://youtu.be/l6DKRf-fAAM` 官方英文字幕（`yt-en.en.vtt`，529 cues，49.43 KiB，全片覆盖）+ B 站视频元信息（3Blue1Brown，289,312 播放 / 21,046 点赞）。
+> **视频来源**：B 站 `BV1yVNU6xERx`（3Blue1Brown "Compression is Intelligence Part 1: Reinventing Entropy"，32m20s，2026-07-14，翻译贰鼠 / 校正畏狐之狐）及 YouTube 原版 `https://youtu.be/l6DKRf-fAAM`。播放 289,312 / 点赞 21,046。
 >
-> **本文目的**：把这期视频的核心命题——"prediction 与 compression 在数学上等价"——及其推演路径（猜字母 → 香农信息含量 → 上下文 → cross-entropy → LLM 训练本质）用一篇博客讲透。
+> 以下内容把这期视频的核心命题——"prediction 与 compression 在数学上等价"——及其推演路径（猜字母 → 香农信息含量 → 上下文 → cross-entropy → LLM 训练本质）用一篇博客讲透。
 
 ---
 
@@ -31,7 +31,7 @@ canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-20
 
 4 bits 已经比 ASCII 省一半，但上下文还能再省一半。问题来了——**压缩的极限在哪？**
 
-这就是 1940 年代香农（Claude Shannon）要回答的问题。他的答案不是个数字，是一种新的数学结构。80 年后我们发现，这套结构对训练大语言模型有用到令人意外的程度。
+1940 年代，香农（Claude Shannon）要回答的就是这个问题。他的答案不是个数字，是一种新的数学结构。80 年后我们发现，这套结构对训练大语言模型有用到令人意外的程度。
 
 ---
 
@@ -92,7 +92,7 @@ canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-20
 - 分布越尖锐 → 熵越小（越容易预测）
 - 极端情况：总是同一个字符 → 熵 = 0 bits；完全均匀的 N 字符 → 熵 = log₂(N) bits
 
-这就是**香农熵**。它回答了"理论上最少需要多少 bits 来编码一个符号"。
+这个量就是**香农熵**，它回答的是"理论上最少需要多少 bits 来编码一个符号"。
 
 ---
 
@@ -106,7 +106,7 @@ canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-20
 
 一个训练有素的猜字母选手利用上下文，对英语的熵估计是 **1-1.5 bits/字符**——比 4.5 bits 少了 3-4 bits。
 
-这就是英语能被高效压缩的根源：**不是字符平均熵低，是给定上下文后条件熵低**。
+英语能被高效压缩，根源正在于此：**不是字符平均熵低，是给定上下文后条件熵低**。
 
 > language is compressible because it has structure across long contexts.
 
@@ -160,7 +160,7 @@ L = -(1/N) Σ log(P_θ(token_t | context_t))
 
 所以：**训练 LLM 用 cross-entropy loss，本质上是在优化一个压缩器**——loss 越低，模型对训练集的预测越准，按算术编码每字符占的 bits 越少。
 
-这就是 3B1B 在视频开头说的："when large language models are trained, the math that Shannon developed has turned out to be surprisingly useful for modern machine learning."
+3B1B 在视频开头说的就是这句话："when large language models are trained, the math that Shannon developed has turned out to be surprisingly useful for modern machine learning."
 
 ---
 
@@ -288,6 +288,6 @@ LLM 用 Transformer 的 attention 机制做"超长上下文条件预测"，效�
 
 ---
 
-**最后**：3B1B 这期视频给我最大的启发不是"compression is intelligence"——这是个老命题。真正有价值的是 **"prediction 和 compression 在数学上等价"** 这一句话，它把两个看起来毫无关系的工程领域（无损压缩 + LLM 训练）焊在了同一个数学骨架上。
+**最后**：3B1B 这期视频最大的启发不是"compression is intelligence"——这是个老命题。真正有价值的是 **"prediction 和 compression 在数学上等价"** 这一句话，它把两个看起来毫无关系的工程领域（无损压缩 + LLM 训练）焊在了同一个数学骨架上。
 
-下次有人问你"LLM 到底在学什么"，你可以回答：**在学一个最优压缩器**。它的 loss 函数（cross-entropy）= 它对训练集的预期编码长度。它的训练目标（最小化 loss）= 最大化压缩率。它的扩展方向（longer context / bigger model / more data）= 让压缩率接近香农下界。三件事是同一件事。这是 Shannon 在 1948 年留给 2026 年最深的礼物。
+下次有人问你"LLM 到底在学什么"，你可以回答：**在学一个最优压缩器**。它的 loss 函数（cross-entropy）= 它对训练集的预期编码长度。它的训练目标（最小化 loss）= 最大化压缩率。它的扩展方向（longer context / bigger model / more data）= 让压缩率接近香农下界。三件事是同一件事。这是 Shannon 在 1948 年给 2026 年留下的最深遗产。

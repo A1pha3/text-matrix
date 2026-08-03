@@ -10,39 +10,13 @@ tags: ["Claude Code", "最佳实践", "AI 编程"]
 
 # claude-code-best-practice：把 Claude Code 的最佳实践从 596 行 README 拆给你看
 
-## 学习目标
-
-读完本文后，你应该能够：
-
-- 理解 shanraisshan/claude-code-best-practice 的定位：经过策展的参考手册，不是教程
-- 解释 Command→Agent→Skill 三层编排模式的职责拆分与协作方式
-- 区分 14 个章节的阅读优先级，并根据你的角色（产品/工程/Agent 写作者）找到最佳阅读路径
-- 理解跨模型协作的三种接法（Plugin / MCP / Router）及各自的适用场景
-- 判断这个仓库是否值得被你或你的团队花时间深入研究
-
-## 目录
-
-- [§1 先给判断](#1-先给判断)
-- [§2 项目地图：14 个章节按阅读优先级排](#2-项目地图14-个章节按阅读优先级排)
-- [§3 文章形态：参考手册 + 编排模板 + 社区生态](#3-文章形态参考手册--编排模板--社区生态)
-- [§4 核心架构：Command→Agent→Skill 三层编排的边界](#4-核心架构commandagentskill-三层编排的边界)
-- [§5 任务流案例：从 /weather-orchestrator 走一遍编排](#5-任务流案例从-weather-orchestrator-走一遍编排)
-- [§6 跨模型协作：Claude Code + Codex/Gemini 的三种接法](#6-跨模型协作claude-code--codexgemini-的三种接法)
-- [§7 阅读路径建议](#7-阅读路径建议)
-- [§8 适用边界](#8-适用边界)
-- [§9 外部资源](#9-外部资源)
-- [常见问题（FAQ）](#常见问题faq)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶路径](#进阶路径)
-
 ## §1 先给判断
 
 `shanraisshan/claude-code-best-practice` 不是一套"工具"，是一份**经过策展的参考手册**：到 2026-06-25 仓库有 60.2k+ Stars、6k+ Forks、73MB 内容、596 行 README，覆盖 Claude Code 14 个原语（subagents、commands、skills、hooks、MCP、plugins、settings、memory、checkpointing、CLI flags 等）外加 12 个外部参考仓库、83 条 tips、8 场视频。
 
 它的核心价值不在"教你怎么用 Claude Code"，而在三件事：
 
-1. **把官方文档和社区实战收纳成一张表**——一张 CONCEPTS 表把每个原语的"best-practice + implemented"两条路径并列给出，13 个原语一屏可读。
+1. **把官方文档和社区实战收纳成一张表**——CONCEPTS 表把每个原语的"best-practice + implemented"两条路径并列给出，13 个原语一屏可读。
 2. **把多套工作流学派并列**——DEVELOPMENT WORKFLOWS 章节收录 12 套不同作者的工作流（obra/Superpowers、affaan-m/Everything Claude Code、mattpocock/skills、github/spec-kit、garrytan/gstack、gsd-build/get-shit-done 等），并按"研究→计划→执行→评审→发布"统一对照。
 3. **给出一套可执行的编排模板**——`orchestration-workflow/` 里的 `weather-orchestrator` 演示了 Command→Agent→Skill 三层协作（这是 Anthropic 官方与社区反复使用的标准范式）。
 
@@ -70,9 +44,9 @@ README 第一节"How to Use"明确说："把它当课程读，不是工作流或
 
 ## §3 文章形态：参考手册 + 编排模板 + 社区生态
 
-这一类内容仓库（knowledge base + 模板 + 生态索引）很容易写散——把所有 14 个章节平均分配篇幅，结果读者读完整篇还是不知道"先看哪一节"。本节直接讲清三件事：
+这类内容仓库（knowledge base + 模板 + 生态索引）很容易写散——把所有 14 个章节平均分配篇幅，结果读者读完整篇还是不知道"先看哪一节"。本节直接讲清三件事：
 
-**第一，这是一个参考手册，不是教程。** 教程是"我带你走一遍"，参考手册是"你有问题时来查"。每一节都假设你已经装了 Claude Code（`npm install -g @anthropic-ai/claude-code`），已经知道 `/help` 是什么，已经有了一个本地项目。所以如果你连 Claude Code 都没装过，先去 [anthropics/claude-code](https://github.com/anthropics/claude-code) 读 README，再来读这个仓库。
+**第一，这是参考手册，不是教程。** 教程是"我带你走一遍"，参考手册是"你有问题时来查"。每一节都假设你已经装了 Claude Code（`npm install -g @anthropic-ai/claude-code`），已经知道 `/help` 是什么，已经有了一个本地项目。所以如果你连 Claude Code 都没装过，先去 [anthropics/claude-code](https://github.com/anthropics/claude-code) 读 README，再来读这个仓库。
 
 **第二，它的编排模式值得单独学。** 仓库内置的 `weather-orchestrator` 演示了一种可复用的三层范式：
 
@@ -86,7 +60,7 @@ README 第一节"How to Use"明确说："把它当课程读，不是工作流或
             格式化结果回写到用户
 ```
 
-Command 只负责触发和编排，Agent 负责上下文路由，Skill 负责具体工具调用。这套拆分是为了让"流程逻辑"和"工具实现"解耦——同一套 Skill 可以被不同 Command 复用，同一个 Agent 可以调度不同 Skill。
+Command 只负责触发和编排，Agent 负责上下文路由，Skill 负责具体工具调用。这套拆分让"流程逻辑"和"工具实现"解耦——同一套 Skill 可以被不同 Command 复用，同一个 Agent 可以调度不同 Skill。
 
 **第三，它给出了一张"工作流派系图"。** 12 套工作流不是简单罗列，而是按"研究→计划→执行→评审→发布"对齐成 5 步流水线，每一步配 1–3 个推荐工作流，并标注作者与 Stars 数。这种"按统一标准对照不同实现"的写法本身就是一种范式——下次你自己评估工作流时，可以复用这个表格模板。
 
@@ -103,9 +77,9 @@ Command 只负责触发和编排，Agent 负责上下文路由，Skill 负责具
 
 **为什么这样拆？**
 
-- **Command vs Skill 的边界**：Command 负责"触发 + 编排 + 输出"，Skill 负责"做一件具体的事"。判断标准很简单——"如果你每天做 3+ 次类似动作，就做成 command；如果你做一件事但希望它内部有几步，就做成 skill"。
-- **Agent vs Skill 的边界**：Agent 是"带独立上下文的完整角色"（如 feature-specific engineer），Skill 是"被调用的工具集"。同一个 Skill 可以被多个 Agent 调用；一个 Agent 可以调度多个 Skill。
-- **Hook vs 命令式工具调用的边界**：Hook 是被动触发（在工具调用前后自动跑），命令是主动触发（用户或 Agent 显式调用）。Hook 适合"日志、权限、自动格式化"这类透明动作。
+- **Command vs Skill**：Command 负责"触发 + 编排 + 输出"，Skill 负责"做一件具体的事"。判断标准——"如果你每天做 3+ 次类似动作，就做成 command；如果你做一件事但希望它内部有几步，就做成 skill"。
+- **Agent vs Skill**：Agent 是"带独立上下文的完整角色"（如 feature-specific engineer），Skill 是"被调用的工具集"。同一个 Skill 可以被多个 Agent 调用；一个 Agent 可以调度多个 Skill。
+- **Hook vs 命令式工具调用**：Hook 是被动触发（在工具调用前后自动跑），命令是主动触发（用户或 Agent 显式调用）。Hook 适合"日志、权限、自动格式化"这类透明动作。
 
 这套范式不是 shanraisshan 发明的——Boris Cherny（Claude Code 创造者）在多次访谈（Pragmatic Engineer 2026-03-04、YC 2026-02-17）中反复示范，Thariq（Anthropic，Skills 团队负责）在 2026-03-17 的文章《Lessons from Building Claude Code: How We Use Skills》中正式总结。本仓库做的事是把这些散落的范例"对齐"成一张可读表。
 
@@ -225,26 +199,9 @@ CROSS-MODEL WORKFLOWS 章节给出 3 种并行机制，把"用一个模型"的�
 
 ---
 
-## 练习
-
-### 练习 1：跑通 weather-orchestrator
-
-从仓库复制 weather-orchestrator 的 Command、Agent、Skill 文件到你自己的项目里，修改为查询天气的流程。观察 Command→Agent→Skill 三层在 Claude Code 中的执行路径。
-
-### 练习 2：用 5 步流水线评估你的工作流
-
-把你团队当前的开发流程按"研究→计划→执行→评审→发布"映射，看哪些步骤已经被 Agent 覆盖，哪些还依赖人工。对比 DEVELOPMENT WORKFLOWS 章节里的 12 套工作流，找到最接近你团队的一套。
-
-### 练习 3：为你的项目写一个 Command
-
-选一个你每天做 3+ 次的固定动作（如技术债务清理、代码简化、依赖升级），按三层的思路：写一个 Command 做入口，一个 Agent 做路由，一到多个 Skill 做具体执行。
-
----
-
 ## 进阶路径
 
 1. **[Claude Code 官方文档](https://code.claude.com/docs)**（必读）。14 个原语的权威说明，读这个仓库前建议先读完官方文档的基础部分。
 2. **[Superpowers (obra)](https://github.com/obra/superpowers)**（推荐，如果对工作流感兴趣）。仓库内推荐度最高的开发工作流实现，适合想直接抄一套完整工作流的读者。
 3. **[Everything Claude Code (affaan-m)](https://github.com/affaan-m/everything-claude-code)**（推荐，如果需要更多示例）。67 Agent + 84 Command + 271 Skill 的大型实现，适合需要大量参考的 Agent 写作者。
 4. **[Anthropic 官方 Skills 相关文档](https://code.claude.com/docs/skills)**（可选）。当你想深入理解 Skill 范式的设计原语和最佳实践时阅读。
-

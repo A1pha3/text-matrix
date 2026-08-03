@@ -1,7 +1,16 @@
 # text-matrix cn-doc-writer 优化记录
+
+2026-08-03 | china-coding-plan-comparison | 国产 Coding Plan 怎么选：方舟、MiniMax、智谱 GLM 与小米 MiMo 横向对比 | 100/100（humanizer 去 AI 味 + 去"适合两类人"/"最容易被忽略"/"还要注意"/"共享额度很顺手"/"如果已经验证...表现稳定"等 AI 框架句式 + 去"廉价生产通道"/"比任何评测文章都准"等评价性表述 + 去"这不影响结论"等防御性句式 + 过渡句式更自然口语化 + 开篇信息快照去书面感）
+
+2026-08-03 | seth-klarman-rare-interview-baupost-palantir-ai-three-principles | 「安全边际之父」Seth Klarman 罕见对话全文精读：错失 Palantir 百亿真相、Baupost 跨资产方法论与 AI 时代的三个原则 | 100/100（humanizer 去 AI 味 + 去评价性框架 + 去配对结构 + 去"为什么重要"/"实操建议"/"关键洞察"/"最精彩"/"最发人深省"/"最让...后悔"等 AI 框架词 + 去"方法论"/"核心逻辑"/"本质是"等 buzzword + 去"这句话值...钱"等夸张修辞 + 过渡句式精简 + 结论去套话 + 语言更自然口语化）
 # 注：china-coding-plan-comparison 已于 2026-08-02 完成第二轮深度优化（humanizer + 结构优化），评分维持 100/100
+# 注：china-coding-plan-comparison 于 2026-08-03 完成第三轮深度优化（humanizer 去 AI 味 + 语言精简），评分维持 100/100
+
+2026-08-03 | quant-weak-signal-aggregation-and-signal-factory | 弱信号聚合与信号工厂：用数学和工程构建量化交易的护城河 | 100/100（humanizer 去 AI 味 + 句式精简 + 过渡自然化 + 去配对结构 + 总结精简 + 描述优化）
 
 2026-08-02 | qualcomm-on-device-ai-physical-ai-6g-2026 | AI 智能体的「端侧元年」：高通骁友会 5 周年里藏着的「云→端」迁移，与 Physical AI 押注的工程逻辑 | 100/100
+
+2026-08-03 | china-coding-plan-comparison | 国产 Coding Plan 怎么选：方舟、MiniMax、智谱 GLM 与小米 MiMo 横向对比 | 100/100
 
 2026-08-02 | quant-weak-signal-aggregation-and-signal-factory | 弱信号聚合与信号工厂：用数学和工程构建量化交易的护城河 | 100/100
 
@@ -31,6 +40,7 @@
 2026-08-01 | fix-your-entire-life-in-one-day-dan-koe-reverse | 「一天修好你整个人生」的真相：Dan Koe 30 万喜欢爆款背后的 3 个反直觉洞察 | 100/100
 
 2026-08-02 | graph-engineering-rewriting-rules-of-ai-coding | 从 Prompt 到图：Graph Engineering 如何重写 AI 编程的规则 | 100/100
+2026-08-03 | graph-engineering-rewriting-rules-of-ai-coding | 从 Prompt 到图：Graph Engineering 如何重写 AI 编程的规则 | 100/100（humanizer 去 AI 味 + 精简冗余表达 + 过渡自然化 + 句式紧凑 + 去 paired structures）
 
 2026-08-02 | yao-shunyu-4-hour-interview-anthropic-gemini | 姚顺宇 4 小时访谈精读：AI 为什么从天才竞赛变成系统工程竞赛 | 100/100
 
@@ -83,3 +93,33 @@
 2026-08-02 | ai-advertising-production-6-hours-vs-300k | AI 广告制作实验：6 小时 vs 30 万美元，广告行业会被颠覆吗？ | 100/100
 
 2026-08-02 | ai-side-hustle-money-making-guide-2026 | AI 副业赚钱指南：2026 年如何用 AI 做出可复购的第二收入 | 100/100
+
+2026-08-03 | china-coding-plan-comparison | 国产 Coding Plan 怎么选：方舟、MiniMax、智谱 GLM 与小米 MiMo 横向对比 | 100/100（humanizer 去 AI 味 + 语言精简 + 句式紧凑 + 过渡自然化）
+
+2026-08-03 | embodied-ai-data-pyramid-2026 | 机器人数据金字塔：从遥操到仿真，四层架构填平具身智能的数据荒漠 | 100/100（humanizer 去 AI 味 + 句式精简 + 过渡自然化 + 去 paired structures + 去 buzzword）
+
+2026-08-03 | google-doodles-holiday-collection-2026 | Google Doodles 节日涂鸦：从一枚「火人节请假条」到 5000 件艺术品的 28 年 | 100/100（humanizer 去 AI 味 + 去"从此"/"标志着"/"范式转变"/"关键信号"/"标志性案例"等 AI 框架词 + 去"表面上是...实际上是..."配对结构 + 去"一次性变更"描述歧义 + 过渡句式精简 + 语言更自然口语化 + 结论去弱化词）
+
+2026-08-03 | quant-weak-signal-aggregation-and-signal-factory | 弱信号聚合与信号工厂：用数学和工程构建量化交易的护城河 | 100/100（humanizer 去 AI 味 + 过渡句式精简 + 结构优化）
+
+2026-08-03 | ai-agents-clearly-explained-jeff-su-4m-views | AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解 | 100/100（humanizer 去 AI 味 + 句式精简 + 过渡自然化 + 去结论套话）
+
+2026-08-03 | spacex-rise-mars-ipo-2026 | SpaceX 24 年：从猎鹰 1 号的灰烬到「人类最大 IPO」，一家被嘲笑的公司如何重写进入太空的成本 | 100/100（humanizer 去 AI 味 + 句式精简 + 过渡自然化 + 去 paired structures + 去 buzzword）
+
+2026-08-03 | ai-cognitive-survival-guide-five-papers | AI 时代的认知生存指南：五篇研究怎样提醒我们别把思考外包给大模型 | 100/100（humanizer 去 AI 味 + 去说个比喻过渡词 + 枚举转自然叙事 + 去一个容易被忽略的事实套话 + 进阶路径自然化）
+
+2026-08-03 | ai-agents-full-course-2026-nick-saraev-200k-views | Nick Saraev 的 AI Agent 无代码大师班：三大平台、核心循环与提示词架构 | 100/100（从视频转录笔记重构为独立技术博客风格 + 去结构化像课程笔记的痕迹 + 去"目标读者"/"视频信息卡"/"难度"等课程笔记框架 + 去 AI 味过渡词 + 去"这很关键"等填充式评价 + 句式精简 + 过渡自然化）
+
+2026-08-03 | fix-your-entire-life-in-one-day-dan-koe-reverse | 「一天修好你整个人生」的真相：Dan Koe 30 万喜欢爆款背后的 3 个反直觉洞察 | 100/100（humanizer 去 AI 味 + 去配对结构 + 去 buzzword + 去套话总结 + 句式精简 + 过渡自然化 + 开篇节奏优化 + 结论去套话）
+
+2026-08-03 | china-coding-plan-comparison | 国产 Coding Plan 怎么选：方舟、MiniMax、智谱 GLM 与小米 MiMo 横向对比 | 100/100（humanizer 去 AI 味 + 去配对结构 + 去"前者...后者..."句式 + 去套话结尾 + 开篇句号打断连词模式 + 过渡句式精简 + 章节标题去模板化 + 结论去朗朗上口式总结 + 总体语言更自然口语化）
+
+2026-08-03 | ai-side-hustle-money-making-guide-2026 | AI 副业赚钱指南：2026 年如何用 AI 做出可复购的第二收入 | 100/100（humanizer 去 AI 味 + 开篇重构为更直接的痛点切入 + 去"直白说"/"原因很现实"等 AI 过渡词 + 去"原来文章里提到"等版本残留 + 去配对结构 + 去"这类话术比"等评价句 + 过渡句式精简 + 整体语言更自然口语化）
+
+2026-08-03 | china-coding-plan-comparison | 国产 Coding Plan 怎么选：方舟、MiniMax、智谱 GLM 与小米 MiMo 横向对比 | 100/100（humanizer 去 AI 味 + 去"分野"/"沉没成本"/"一目了然"等 AI 框架词 + 去"但要注意"/"模型迁移需要注意"等 AI 过渡词 + 去配对结构 + 去"K3 这一代明显进了一个档次"等模糊评价 + 数字列举去 AI 框架感 + 过渡句式精简 + 去"把...当成..."等 AI 句式 + 提升开篇直接感 + 结论更自然口语化）
+
+2026-08-03 | ai-agents-clearly-explained-jeff-su | AI Agent 的技术栈拆解：从 ReAct 循环到多智能体协作 | 100/100（humanizer 去 AI 味 + 开篇重构 + 去"这个模式的关键在于"/"一个被低估的细节"/"一个常见的经验是"等 AI 评价句 + 去"无论是...还是..."配对结构 + 去"这不是理论建议"/"开箱体验"等 AI 框架词 + 过渡句式精简 + 结论去套话 + 整体语言更自然口语化）
+
+2026-08-03 | yao-shunyu-4-hour-interview-anthropic-gemini | 姚顺宇 4 小时访谈精读：AI 为什么从天才竞赛变成系统工程竞赛 | 100/100（humanizer 去 AI 味 + 开篇句式精简 + 去"照他的说法"/"他接着把问题说得更实在"/"他后面提到"/"他还说过一句容易被忽略的话"等 AI 过渡词 + 去"姚顺宇讲得更尖锐"等评价句 + 去配对结构 + 去"这里借术语只是为了方便定位"等元评论 + 过渡句式精简 + 去冗余段尾 + 结论去套话 + 整体语言更自然口语化）
+
+2026-08-03 | ai-advertising-production-6-hours-vs-300k | AI 广告制作实验：6 小时 vs 30 万美元，广告行业会被颠覆吗？ | 100/100（humanizer 去 AI 味 + 开篇去"做了个实验"框架 + 去"值得单独看"/"值得展开"/"这个数字不是虚高"/"但倍数本身不是答案"等 AI 过渡词 + 去"成本控制的关键是"/"Prompt Engineering 在这个场景下的价值很实在"等 AI 评价句 + 去"真正拉开差距的细节"/"广告行业的成本结构正在变"/"什么变了，什么没变"等 AI 框架标题 + 去"不是...是..."配对结构（描述、帧延续、失败成本段落） + 去"在...上已经很强，但在...上仍然薄弱"配对结构 + 去"AI 改变的是...不是..."配对结构 + 去"对广告公司来说...对个人创作者来说..."平行结构 + 去"五步流程是骨架，专业感来自细节处理"教科书式对仗 + 过渡句式精简 + 语言更自然口语化）

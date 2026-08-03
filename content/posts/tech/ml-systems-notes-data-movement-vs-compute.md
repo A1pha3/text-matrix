@@ -1,16 +1,14 @@
 ---
-title: "ML Systems Notes 精读：数据移动为何比计算慢 100 倍——一位工程师的量化、分布式与 Roofline 实战笔记"
+title: "ML Systems Notes 精读：数据移动为何比计算慢 100 倍——量化、分布式与 Roofline 实战笔记"
 date: "2026-06-20T14:55:00+08:00"
 slug: "ml-systems-notes-data-movement-vs-compute"
-description: "JINO-ROHIT/ml-systems-notes 全栈精读：从数据移动视角重新理解量化与分布式训练，把 roofline 分析落到 A100/H100 的实际数字上，给 ML 工程师一套可立刻上手的系统思维。"
+description: "从数据移动视角重新理解量化与分布式训练，把 roofline 分析落到 A100/H100 的实际数字上，给 ML 工程师一套可立刻上手的系统思维。"
 tags: ["量化", "PyTorch", "性能优化", "AI Infra"]
 categories: ["技术笔记"]
 draft: false
 ---
 
-> **作者**：钳岳星君 🦞
-> **来源**：JINO-ROHIT/ml-systems-notes（github.com/JINO-ROHIT/ml-systems-notes，2026-06-20 抓取，2026-06-18 首次 commit）
-> **版本**：v3 — 7.1 通信开销表 + 7.2 PyTorch 2.x 迁移路径（final）
+> 来源：JINO-ROHIT/ml-systems-notes（github.com/JINO-ROHIT/ml-systems-notes）
 
 ---
 
@@ -18,29 +16,29 @@ draft: false
 
 JINO-ROHIT 把自己的 ML 系统工程笔记全部公开在了 `ml-systems-notes` 仓库里：分布式训练基础（NCCL 集合通信、MoE、各类并行）、量化（对称 / 非对称 / AWQ / SmoothQuant / GPTQ / Quip）、PyTorch 内部（FX graph、torch.compile）、Roofline 分析练习。整库 4 颗 star，size 1.6MB，2026-06-18 才首次 commit——这是一个**正在生长的活体仓库**，不是整理好的教科书。
 
-但它值得读，不是因为内容有多全，而是因为**作者脑子里有一根主轴**：所有这些技术——量化、并行、Roofline——都在解决同一件事，就是**数据移动**。这一点很少有人写出来。多数博客讲量化讲算法本身，讲分布式讲通信原语，但很少有人从 A100 的 2000 GB/s 内存带宽 vs 312 TFLOPS 算力这个对比里推出整个优化方向。
+但它值得读，不是因为内容有多全，而是因为**作者脑子里有一根主轴**：所有这些技术——量化、并行、Roofline——都在解决同一件事，就是**数据移动**。多数博客讲量化讲算法本身，讲分布式讲通信原语，但很少有人从 A100 的 2000 GB/s 内存带宽 vs 312 TFLOPS 算力这个对比里推出整个优化方向。
 
-我用一句话压住全文：**当你看到 LLM 推理慢的时候，瓶颈几乎从来不在算力，而在于显存和 SRAM 之间来回搬数据。量化、并行、kernel fusion 在做的，都是把要搬的数据变少。**
+一句话压住全文：**当你看到 LLM 推理慢的时候，瓶颈几乎从来不在算力，而在于显存和 SRAM 之间来回搬数据。量化、并行、kernel fusion 在做的，都是把要搬的数据变少。**
 
-下面的内容会按四条线展开，每条都把作者笔记里的关键数字拉出来，加上背景和判断：
+下面按五条线展开，每条都把作者笔记里的关键数字拉出来，加上背景和判断：
 
 - §1 ML 系统的真实瓶颈：算力 vs 数据搬运的真实差距
 - §2 量化的本质：不是减计算，是减数据移动
 - §3 Roofline：算力-带宽墙的实际位置
-- §4 分布式训练的成本结构（v2 补）
-- §5 PyTorch 内部：FX graph + torch.compile（v2 补）
-- §6 给 ML 工程师的 3 条可执行启示（v2 补）
+- §4 分布式训练的成本结构
+- §5 PyTorch 内部：从 meta device 到 torch.compile
+- §6 给 ML 工程师的 3 条可执行启示
 
 ---
 
 ## §1 ML 系统的真实瓶颈：算力比数据搬运快 100 倍
 
-作者在 `quantization/notes.md` 开头给了一个让人停下来的对比：A100 的内存带宽是 2000 GB/s，FP16 算力是 312 TFLOPS。这两个数字单独看都不大，但放在一起除一下，问题立刻浮出来。
+作者在 `quantization/notes.md` 开头给了一个对比：A100 的内存带宽是 2000 GB/s，FP16 算力是 312 TFLOPS。这两个数字单独看都不大，但放在一起除一下，问题立刻浮出来。
 
 假设你在 A100 上跑一个 100B 参数的模型，生成 1 个 token 走一遍：
 
-- **数据搬运**：FP16 每个参数 2 字节，100B 参数就是 200 GB。200 GB ÷ 2000 GB/s = 0.1 秒
-- **计算**：每个参数做 2 次运算（一次乘，一次加），100B × 2 = 200 GFLOPS。200 GFLOPS ÷ 312 TFLOPS = 0.0006 秒
+- **数据搬运**：FP16 每参数 2 字节，100B 参数就是 200 GB。200 GB ÷ 2000 GB/s = 0.1 秒
+- **计算**：每参数 2 次运算（一次乘，一次加），100B × 2 = 200 GFLOPS。200 GFLOPS ÷ 312 TFLOPS = 0.0006 秒
 
 数据搬运 0.1 秒，计算 0.0006 秒。**算力比数据搬运快 166 倍**。换句话说，GPU 在生成这一个 token 的 99.4% 时间里都在等数据，0.6% 的时间才真正在算。
 
@@ -59,8 +57,6 @@ JINO-ROHIT 把自己的 ML 系统工程笔记全部公开在了 `ml-systems-note
 
 每一行背后都是同一句潜台词：**别再让 GPU 干等。**
 
-作者在笔记里没有把这层框架摆出来，但每一节技术都在不自觉地服务这个目标。这是为什么这份笔记值得系统化读一遍——它是一份**ML 系统的数据搬运优化全景图**，只是作者把它拆成了 9 个章节。
-
 ---
 
 ## §2 量化的本质：不是减计算，是减数据移动
@@ -72,7 +68,7 @@ JINO-ROHIT 把自己的 ML 系统工程笔记全部公开在了 `ml-systems-note
 
 **FP8 在 A100 上比 FP16 快多少？** 算力侧差别不大，312 TFLOPS vs 312 TFLOPS（如果硬件原生支持 FP8 矩阵乘的话可能略快）。但搬运侧从 0.1 秒降到 0.05 秒——**直接砍半**。这就是作者反复强调的"this is in principle what all quantization algorithms try to do"。
 
-但量化不是把数字变小了就行，还要解决两件事：
+但量化不只是把数字变小，还要解决两件事：
 
 1. **范围映射（range mapping）**：FP16 的最大值可能远大于 INT8 的 127，怎么把连续浮点值塞进离散整数？两种基本思路：对称量化（让 0 对应 0）和非对称量化（用一个 zero-point 偏移）。
 2. **精度损失（precision loss）**：浮点有 23 位尾数，INT8 只有 7 位，量化的核心问题就是**怎么在 7 位里把对模型输出最重要的信息保留下来**。
@@ -99,7 +95,7 @@ JINO-ROHIT 把自己的 ML 系统工程笔记全部公开在了 `ml-systems-note
 
 > **算力-带宽墙把任何计算任务分成两种状态：compute-bound（受算力限制）或 memory-bound（受带宽限制）。**
 
-判断方式是看**arithmetic intensity**（算术强度），即"每搬 1 字节数据能做多少次运算"。
+判断方式是看 **arithmetic intensity**（算术强度），即"每搬 1 字节数据能做多少次运算"。
 
 笔记里给的 INT8 matmul 例子算得清楚：
 
@@ -167,7 +163,7 @@ DDP 的内存问题：每张卡**都存了完整的 optimizer state + gradient +
 | 1F1B（one forward, one backward） | forward 后立即 backward | 只需存 pp 度个 micro-batch 的 activation |
 | Interleaved 1F1B | 把每个 GPU 的层再拆成交错块 | 通信次数 ↑，但流水线更密 |
 
-**判断**：**TP 受 NVLink 限制只能单机**，**PP 跨 InfiniBand 可行**。生产上**TP=8 + PP=节点数 + DP=剩余卡**是常见组合。pipeline bubble（GPU 空闲时间）随 micro-batch 增加而降低，所以**PP 训练要把 micro-batch 调到能塞满整个流水线**——这是 pipeline utilization 的关键调参。
+**判断**：**TP 受 NVLink 限制只能单机**，**PP 跨 InfiniBand 可行**。生产上 **TP=8 + PP=节点数 + DP=剩余卡** 是常见组合。pipeline bubble（GPU 空闲时间）随 micro-batch 增加而降低，所以 **PP 训练要把 micro-batch 调到能塞满整个流水线**——这是 pipeline utilization 的关键调参。
 
 ### 4.4 MoE：稀疏激活 + expert parallelism
 
@@ -176,7 +172,7 @@ DDP 的内存问题：每张卡**都存了完整的 optimizer state + gradient +
 1. **Load balancing**——某些 expert 被路由到过多 token，其他 expert 空转。gshard 用 **expert capacity** 强制每 expert 处理 token 上限，溢出的 token 跳过。
 2. **Expert parallelism**——把 expert 分布到多卡。但单 token 路由只命中少数 expert，导致**大量 GPU 闲置**，MFU 暴跌。
 
-**判断**：MoE 的"稀疏"是**训练成本稀疏**而不是**推理成本稀疏**——训练时仍要算 all 128 个 expert 的梯度，只是不更新。生产上**用 expert parallelism + token dropping** 是标配，Mixtral-8x7B / Qwen-MoE 都用这个套路。
+**判断**：MoE 的"稀疏"是**训练成本稀疏**而不是**推理成本稀疏**——训练时仍要算 all 128 个 expert 的梯度，只是不更新。生产上 **用 expert parallelism + token dropping** 是标配，Mixtral-8x7B / Qwen-MoE 都用这个套路。
 
 ---
 
@@ -253,7 +249,7 @@ torch.compile 实际效果（实测）：
 
 ---
 
-## §6 给中国 ML 工程师的 3 条可执行启示
+## §6 给 ML 工程师的 3 条可执行启示
 
 **启示一：先看 MFU 再调并行**
 
@@ -327,10 +323,8 @@ FP32 训练                          →  BF16 + torch.autocast
 手写 gradient accumulation          →  FSDP backward hooks 自动处理
 ```
 
-**判断**：从 1.x 迁到 2.x 最大的认知变化是**"tensor 自己知道自己怎么分"**——DTensor 把分布策略作为 tensor 的元数据。这让写自定义并行策略从 500 行代码降到 100 行。
+**判断**：从 1.x 迁到 2.x 最大的认知变化是 **"tensor 自己知道自己怎么分"**——DTensor 把分布策略作为 tensor 的元数据。这让写自定义并行策略从 500 行代码降到 100 行。
 
 ---
 
-> **作者**：钳岳星君 🦞
-> **来源**：github.com/JINO-ROHIT/ml-systems-notes，2026-06-20 抓取（commit 7a7e7a4 之后）
-
+> 来源：github.com/JINO-ROHIT/ml-systems-notes

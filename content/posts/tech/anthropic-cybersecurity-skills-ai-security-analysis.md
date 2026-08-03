@@ -12,9 +12,9 @@ tags = ['安全', 'Claude', 'AI Agent']
 
 Anthropic Cybersecurity Skills 是一个面向 AI Agent 的网络安全技能库，仓库地址 <https://github.com/mukul975/Anthropic-Cybersecurity-Skills>，作者 mukul975，许可证 Apache-2.0。
 
-项目把 817 条结构化安全技能按 29 个领域组织，每条技能映射到 6 个行业框架——MITRE ATT&CK、NIST CSF 2.0、MITRE ATLAS、MITRE D3FEND、NIST AI RMF、MITRE F3 (Fight Fraud)。它兼容 Claude Code、GitHub Copilot、OpenAI Codex CLI、Cursor、Gemini CLI 等 20+ 个以上 AI 平台，但项目性质上属于社区项目，README 明确声明 *Not affiliated with Anthropic PBC*，与 Anthropic 官方没有归属关系。
+项目把 817 条结构化安全技能按 29 个领域组织，每条技能映射到 6 个行业框架——MITRE ATT&CK、NIST CSF 2.0、MITRE ATLAS、MITRE D3FEND、NIST AI RMF、MITRE F3 (Fight Fraud)。它兼容 Claude Code、GitHub Copilot、OpenAI Codex CLI、Cursor、Gemini CLI 等 20+ 个 AI 平台，但项目性质上属于社区项目，README 明确声明 *Not affiliated with Anthropic PBC*，与 Anthropic 官方没有归属关系。
 
-下面要拆开的是这个技能库和传统 SAST（Static Application Security Testing）/DAST（Dynamic Application Security Testing）工具的关系，它能做什么、不能做什么，以及安全团队怎么把它放进现有工作流。
+本文拆解这个技能库和传统 SAST/DAST 工具的关系，它能做什么、不能做什么，以及安全团队怎么把它放进现有工作流。
 
 ## 快速信息卡
 
@@ -47,19 +47,9 @@ Anthropic Cybersecurity Skills 是一个面向 AI Agent 的网络安全技能库
 - [进阶路径](#进阶路径)
 - [小结](#小结)
 
-## 学习目标
-
-读完这篇文章后，你应该能回答以下问题：
-
-1. Anthropic Cybersecurity Skills 是什么形态的项目，由谁维护，和 Anthropic 官方是什么关系。
-2. 一条技能文件的目录结构、frontmatter 字段、Markdown 正文各承担什么职责。
-3. 渐进式披露（progressive disclosure）如何在 754 条技能中控制 token 消耗。
-4. 这个技能库与 SAST/DAST 工具在执行主体、输入输出、可重复性上的差异。
-5. 在自己的团队里引入这个技能库的三步顺序，以及什么情况下不该引入。
-
 ## 项目定位与事实边界
 
-先把几个关键事实列清楚，避免后面把"技能库"和"工具"混为一谈。
+先列几个关键事实，避免后面把"技能库"和"工具"混为一谈。
 
 | 维度 | 事实 |
 |------|------|
@@ -278,10 +268,10 @@ Agent 行为（预期）:
 
 ### 适合的人
 
-- 安全工程师和渗透测试人员：用 Agent 辅助编排测试流程，减少手动查 playbook 的时间。
-- 安全研究员和威胁情报分析师：用技能里的框架映射快速定位 ATT&CK、ATLAS 技术 ID。
-- 企业安全团队：把技能库作为 Agent 的技能文件集合，统一分析口径和报告格式。
-- 安全学习者：通过技能文件学习从业者工作流，每条技能就是一个完整案例。
+- **安全工程师和渗透测试人员**：用 Agent 辅助编排测试流程，减少手动查 playbook 的时间。
+- **安全研究员和威胁情报分析师**：用技能里的框架映射快速定位 ATT&CK、ATLAS 技术 ID。
+- **企业安全团队**：把技能库作为 Agent 的技能文件集合，统一分析口径和报告格式。
+- **安全学习者**：通过技能文件学习从业者工作流，每条技能就是一个完整案例。
 
 ### 不能做的事
 
@@ -371,4 +361,3 @@ Agent 行为（预期）:
 Anthropic Cybersecurity Skills 是一个社区维护的技能文件库，把 754 条安全工作流编码成 AI Agent 可读取的格式，覆盖 26 个领域、映射 5 个行业框架。它本身不执行扫描、不抓包、不跑 exploit，作用是给 Agent 提供决策流程，让 Agent 在面对安全任务时按从业者的工作流执行，避免靠模型自行猜测。
 
 引入这个技能库的前提是团队已经有 AI Agent 工作流。引入顺序是：先挑 3-5 条相关技能试跑，再 fork 仓库按团队流程改 Workflow，最后用框架映射字段产出合规证据。SAST、DAST、SIEM、Volatility3 这些专业工具该用还得用，技能库解决的是 Agent 怎么用这些工具的问题，不替代工具本身。
-

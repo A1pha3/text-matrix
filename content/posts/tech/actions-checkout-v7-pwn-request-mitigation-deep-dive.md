@@ -12,9 +12,9 @@ author: text-matrix
 
 ## 一句话判断
 
-**actions/checkout（[actions/checkout](https://github.com/actions/checkout)）是 GitHub Actions 生态里被引用次数最多的 action——几乎每一个 CI workflow 的第一行都是 `uses: actions/checkout@v4`**。它做的事情表面简单："在 runner 上把仓库克隆到 `$GITHUB_WORKSPACE`"，但 v7（2026-06-18 发布）是一次被安全事件驱动的硬性升级：**默认拒绝 fork pull request 在 `pull_request_target` / `workflow_run` 触发器下被 checkout——也就是业界常说的"pwn request"漏洞类别**。同时 v7 完成了从 CJS 到 ESM 的模块化迁移，以适配新的 `@actions/*` 包版本。8455 stars、MIT、TypeScript 实现，仓库本身**不接收外部 contribution**（README 明确写明），由 GitHub 官方 Actions 团队直接维护。
+**actions/checkout** 是 GitHub Actions 生态里被引用次数最多的 action——几乎每个 CI workflow 的第一行都是 `uses: actions/checkout@v4`。它做的事表面简单：在 runner 上把仓库克隆到 `$GITHUB_WORKSPACE`。但 v7（2026-06-18 发布）是一次被安全事件驱动的硬性升级：**默认拒绝 fork pull request 在 `pull_request_target` / `workflow_run` 触发器下被 checkout——也就是"pwn request"漏洞类别**。同时完成了从 CJS 到 ESM 的模块化迁移。
 
-如果你在维护任何会被外部贡献者提 PR 的 GitHub 仓库，这篇 v7 的 default-deny + ESM 拆解值得读完。
+如果你维护任何会被外部贡献者提 PR 的 GitHub 仓库，这篇值得读完。
 
 ---
 
@@ -72,31 +72,31 @@ author: text-matrix
         └─────────────────────────────────────┘
 ```
 
-这张图最重要的一条路径：**入口 main.ts → 输入解析 → 安全检查（v7 新增 unsafe-pr-checkout-helper） → git command manager → 凭证 / 远端适配 → 落盘 `$GITHUB_WORKSPACE`**。v7 把"安全检查"提为独立模块，是 pwn request 缓解的物理位置。
+v7 最重要的路径：**入口 main.ts → 输入解析 → 安全检查（v7 新增 unsafe-pr-checkout-helper） → git command manager → 凭证/远端适配 → 落盘 `$GITHUB_WORKSPACE`**。"安全检查"被提为独立模块，是 pwn request 缓解的物理位置。
 
 ---
 
 ## 边界与角色划分
 
-actions/checkout v7 的设计边界可以用 5 条不变项概括：
+### 5 条不变项
 
 | 维度 | 不变项 | 含义 |
 |------|--------|------|
 | 运行时 | ESM + Node.js 24 | v7 配合 actions/publish-immutable-action 0.0.4 升级到 ESM |
 | 默认行为 | fork PR 在 `pull_request_target` / `workflow_run` 下被拒 | v7 引入 `allow-unsafe-pr-checkout` 输入，默认 `false` |
-| 默认 fetch depth | 1（单 commit） | 想要全历史需 `fetch-depth: 0`；想要 tags 需 `fetch-tags: true` |
+| 默认 fetch depth | 1（单 commit） | 全历史需 `fetch-depth: 0`；tags 需 `fetch-tags: true` |
 | 凭证管理 | 默认持久化 + post-job 清理 | v6 起凭证存到 `$RUNNER_TEMP` 单独文件，不再直接写 `.git/config` |
 | 外部贡献 | 不接受 | README 明确写 "right now we are not taking contributions" |
 
-不变项之外，**它明确不做的事**：
+### 它明确不做的事
 
-- ❌ **不**做 Git LFS push（只 fetch；`lfs: true` 是 fetch-time 行为）。
-- ❌ **不**管理 GPG signing。commit signing 由用户后续自己 `git config` / `git commit -S` 完成。
-- ❌ **不**做 submodules 自动递归里的 LFS / credentials 嵌套传递（`submodules: recursive` 时按每个子模块独立走同一逻辑）。
-- ❌ **不**内置 GHES / 3rd-party Git server 的 token 注入；用户必须自己通过 `github-server-url` + 自定义 token。
-- ❌ **不**替代 `git` CLI。它在 runner 上调用 `git`，本身不重写 Git 协议。
+- **不**做 Git LFS push（只 fetch；`lfs: true` 是 fetch-time 行为）。
+- **不**管理 GPG signing。commit signing 由用户后续自己完成。
+- **不**做 submodules 自动递归里的 LFS / credentials 嵌套传递。
+- **不**内置 GHES / 3rd-party Git server 的 token 注入；用户必须自己通过 `github-server-url` + 自定义 token。
+- **不**替代 `git` CLI。它在 runner 上调用 `git`，本身不重写 Git 协议。
 
-这 5 条"不做"恰好决定了它的设计取舍——下面拆开看。
+这 5 条"不做"决定了它的设计取舍。
 
 ---
 
@@ -104,13 +104,13 @@ actions/checkout v7 的设计边界可以用 5 条不变项概括：
 
 ### 1. Default-Deny：pwn request 缓解
 
-**问题定义**：在 v7 之前，actions/checkout 在 `pull_request_target` 触发器下默认会 checkout fork PR 的代码。
+**问题定义**：v7 之前，actions/checkout 在 `pull_request_target` 触发器下默认会 checkout fork PR 的代码。
 
 **为什么这是安全问题**：
 
-- `pull_request_target` workflow 跑在**base 仓库**的 context 里，能访问 `secrets`、使用 base 仓库的 `GITHUB_TOKEN`。
+- `pull_request_target` workflow 跑在 **base 仓库**的 context 里，能访问 `secrets`、使用 base 仓库的 `GITHUB_TOKEN`。
 - fork PR 的代码默认是 untrusted。
-- 如果 workflow 第一步用 `actions/checkout` 把 fork 的代码 checkout 到 runner，再 `run: npm ci && npm test` 之类的步骤执行它——攻击者在 fork 仓库里放恶意 `package.json` 的 `postinstall` 脚本，CI 跑起来就拿到了 base 仓库 secret 的访问权。
+- 如果 workflow 第一步用 `actions/checkout` 把 fork 的代码 checkout 到 runner，再 `run: npm ci && npm test` 执行它——攻击者在 fork 仓库里放恶意 `package.json` 的 `postinstall` 脚本，CI 跑起来就拿到了 base 仓库 secret 的访问权。
 - 这就是 GitHub Security Lab 命名的 **"pwn request"** 攻击面。
 
 **v7 的修复**：
@@ -118,26 +118,24 @@ actions/checkout v7 的设计边界可以用 5 条不变项概括：
 ```yaml
 - uses: actions/checkout@v7
   with:
-    # 不再需要手动加 if 条件
-    # v7 默认就拒绝
-    allow-unsafe-pr-checkout: false  # 默认值，显式标注
+    allow-unsafe-pr-checkout: false  # 默认值，v7 默认就拒绝
 ```
 
 v7 新增 `unsafe-pr-checkout-helper.ts` + `workflow-context-helper.ts` 两个模块，在 checkout 流程的最早期判断：
 
 1. 当前事件是不是 `pull_request_target` 或 `workflow_run`？
 2. 当前 PR 是不是来自 fork？
-3. 如果都是 → 默认拒绝；必须显式设 `allow-unsafe-pr-checkout: true` 才允许 checkout fork 代码。
+3. 如果都是 → 默认拒绝；必须显式设 `allow-unsafe-pr-checkout: true` 才允许。
 
-**为什么用 default-deny 而不是 default-allow + 文档提示**：历史教训。v4-v6 期间这个风险被无数次安全公告和 advisories 强调，但总有人不看文档。default-deny 把"易错操作"变成"显式 opt-in"，大幅降低误配概率。
+**为什么是 default-deny 而不是 default-allow + 文档提示**：历史教训。v4-v6 期间这个风险被无数次安全公告强调，但总有人不看文档。default-deny 把"易错操作"变成"显式 opt-in"，大幅降低误配概率。
 
-**显式 opt-in 的代价**：用户在真正需要 checkout fork 代码的场景（比如要给 fork 仓库做 lint）必须显式：
+**显式 opt-in 的代价**：在真正需要 checkout fork 代码的场景（比如给 fork 仓库做 lint）必须显式声明：
 
 ```yaml
 - uses: actions/checkout@v7
   with:
     allow-unsafe-pr-checkout: true
-    # 并且强烈建议：
+    # 强烈建议：
     # 1. 不要用 GITHUB_TOKEN，直接 checkout
     # 2. 不要在后续 step 里用这个代码执行 npm ci / make 等
     # 3. 参考 README 顶部 v7 "What's new" 段官方安全指南
@@ -171,8 +169,7 @@ v6.0.0 引入的 `persist-credentials` 重构，v7 沿用：
 **为什么 v6 要改**：
 
 - 直接把 token 写到 `.git/config` 里，任何后续 `git config` 输出都可能泄露 token 到 log。
-- 拆出去后，token 文件路径独立，且 post-job 阶段被清理；workflow log 里看不到 `http.extraHeader` 这种敏感行。
-- v6.0.3 额外修了 SHA-256 仓库的 init 逻辑（PR #2439），v6.0.2 修了 tag annotation 保留（PR #2356）。
+- 拆出去后，token 文件路径独立，post-job 阶段被清理；workflow log 里看不到 `http.extraHeader` 这种敏感行。
 
 ### 4. 推荐权限最小化
 
@@ -193,8 +190,6 @@ permissions:
 
 ## 任务流案例：v7 在 fork PR 上的实际表现
 
-把上面的零件拼起来跑一次完整 flow：
-
 **Step 1：仓库设置**
 
 假设你维护一个公开仓库 `acme/widget`，有外部贡献者 fork。
@@ -206,7 +201,6 @@ name: CI
 on:
   pull_request:
   pull_request_target:
-    # 关键：pull_request_target 用于跑在 base context
 
 permissions:
   contents: read
@@ -218,17 +212,17 @@ jobs:
       - uses: actions/checkout@v7
         with:
           # v7 新行为：
-          # 如果是 fork PR + pull_request_target 触发 → 报错退出
-          # 如果是 base PR → 正常 checkout
-          # 如果你想真的 checkout fork 代码（lint / spell check），必须显式 opt-in
-          allow-unsafe-pr-checkout: false  # 默认值，可省略
+          # fork PR + pull_request_target → 报错退出
+          # base PR → 正常 checkout
+          # 要 checkout fork 代码（lint/spell check），必须显式 opt-in
+          allow-unsafe-pr-checkout: false
 ```
 
 **Step 3：fork PR 到来**
 
 外部贡献者 fork `acme/widget`，提一个 PR。
 
-**Step 4：CI 实际跑出来的结果**
+**Step 4：CI 实际结果**
 
 - `pull_request` 触发器：v7 正常 checkout fork 代码（安全）。
 - `pull_request_target` 触发器：v7 拒绝 checkout，job fail 并打印明确错误信息，提示用户"如需 checkout fork 代码，请阅读 README 顶部 v7 段官方安全指南后显式 opt-in"。
@@ -239,15 +233,13 @@ jobs:
 - uses: actions/checkout@v7
   with:
     allow-unsafe-pr-checkout: true
-    # 但后续步骤不要执行 untrusted code
 - name: Run lint on read-only files
   run: |
     # 只读扫描，不执行 npm ci / make
     npx eslint . --max-warnings 0
-    # 不传 secrets，不写 .npmrc
 ```
 
-**这是 v7 的核心工作流变化**：把"易错的安全配置"变成"必须显式 opt-in 的高风险操作"。
+**核心工作流变化**：把"易错的安全配置"变成"必须显式 opt-in 的高风险操作"。
 
 ---
 
@@ -261,9 +253,9 @@ jobs:
 | Runtime | ESM + Node 24 | ESM + Node 24 | bash | 不依赖 action |
 | License | MIT | MIT | 用户自有 | 各异 |
 | Stars | 8.5k | 1k+ | — | 各自不同 |
-| 维护方 | GitHub 官方 | GitHub 官方 | 自维护 | 社区 / 商业 |
+| 维护方 | GitHub 官方 | GitHub 官方 | 自维护 | 社区/商业 |
 
-这张表想表达一件事：**v7 的 pwn request 修复不是个例，而是 GitHub Actions 生态在 2024-2026 年逐步收紧 untrusted code checkout 的趋势**——`pull_request_target` 从"默认能 checkout + 文档警告"演化到"默认拒绝 + 显式 opt-in"。
+v7 的 pwn request 修复不是个例，而是 GitHub Actions 生态在 2024-2026 年逐步收紧 untrusted code checkout 的趋势——`pull_request_target` 从"默认能 checkout + 文档警告"演化到"默认拒绝 + 显式 opt-in"。
 
 ---
 
@@ -290,26 +282,11 @@ jobs:
 
 ## 决策建议
 
-按升级路径选：
-
 1. **新 workflow** → 直接用 `actions/checkout@v7`。
 2. **存量 v4 workflow** → 升到 v7 是低风险操作（ESM 改动只在 action 内部，对调用方无感；主要差异是 default-deny 行为）。先在 sandbox repo 验证 fork PR 场景。
 3. **存量 v5 / v6 workflow** → 同上，迁移成本极低。
 4. **fork PR 真的需要 checkout** → 显式 `allow-unsafe-pr-checkout: true`，并确保后续步骤**不执行 untrusted code**（不 `npm ci` / 不 `make` / 不 `bash untrusted.sh`）。
 5. **完全避免 pwn request** → 改 workflow 设计：把"需要 fork 代码"的逻辑放在 `pull_request` 触发器（runner 没有 secrets），把"需要 secrets"的逻辑放在 `pull_request_target` 触发器（runner 不 checkout fork 代码）。
-
----
-
-## 阅读路径
-
-按需读：
-
-- **只想知道 v7 改了什么**：本文 + README 头部 "What's new" 段
-- **想理解 pwn request**：阅读 README 顶部 v7 "What's new" 段引用的官方安全指南（链接见 [actions/checkout](https://github.com/actions/checkout) README）+ `unsafe-pr-checkout-helper.ts` 源码
-- **想理解凭证管理**：`git-auth-helper.ts` + v6.0.0 release notes
-- **想理解 ESM 迁移**：CHANGELOG.md v7.0.0 + PR #2463
-- **想理解 multi-repo 工作流**：README "Scenarios" 段
-- **想理解 sparse-checkout**：README "Fetch only the root files" / "Fetch only the root files and `.github` and `src` folder" 两个例子
 
 ---
 
