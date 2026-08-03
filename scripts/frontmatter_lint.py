@@ -76,6 +76,69 @@ DQ_STRING_RE = re.compile(
 )
 
 
+# ---- github_repo 结构化身份校验（trending 去重的硬保障） -------------------
+# 仅对 content/posts/tech/ 强制：该 section 是 GitHub repo 导向文章，
+# frontmatter github_repo: "owner/repo" 是去重身份字段（见 backfill_github_repo.py
+# 与 scripts/trending-dedup-check.sh）。机器能验「格式合法 + 该填的填了」，
+# 验不了「大小写与 GitHub 实际一致」（那要联网查 API）——后者仍靠
+# github-article-writer 取 gh repo view 的 nameWithOwner。
+GITHUB_REPO_VALUE_RE = re.compile(
+    r"^\s*([A-Za-z0-9](?:[A-Za-z0-9_-]*[A-Za-z0-9])?)/([A-Za-z0-9._-]+)\s*$"
+)
+# 正文里 github.com/owner/repo 的锚点（与 backfill_github_repo.py 同源，宁缺毋滥）
+BODY_REPO_RE = re.compile(
+    r"github\.com/([A-Za-z0-9](?:[A-Za-z0-9_-]*[A-Za-z0-9])?)/([A-Za-z0-9._-]+?)(?![A-Za-z0-9._-])"
+)
+RESERVED_OWNERS = {
+    "sponsors", "orgs", "users", "settings", "search", "topics", "trending",
+    "explore", "notifications", "login", "signup", "features", "marketplace",
+    "about", "pricing", "security",
+}
+PLACEHOLDER_REPOS = {
+    "owner/repo", "user/repo", "username/repo", "account/repo", "org/repo",
+    "your-name/your-repo", "namespace/repo", "example/repo",
+}
+
+
+def check_github_repo(path: Path, data: dict, body: str) -> list[str]:
+    """校验 posts/tech 文章的 github_repo 身份字段（去重硬保障）。
+
+    返回致命错误列表（空 = 通过）：
+    - 有字段但格式非法 / owner 是 GitHub 保留段 / 占位符未替换 → 致命（防错填）
+    - 无字段但正文含合法 github.com/owner/repo 链接 → 致命（防漏填：正文有 repo 却没提身份字段，
+      trending 去重会因此漏判，如 8-03 Emily2040/seedance 的同类根因）
+    - 无字段且正文无合法 repo 链接 → 通过（真·非 repo 文章，如综述/方法论）
+    """
+    parts = path.parts
+    if "posts" not in parts or "tech" not in parts:
+        return []
+    raw = data.get("github_repo")
+    if raw:
+        v = str(raw).strip().strip("/").strip("\"'")
+        owner = v.split("/")[0].lower() if "/" in v else ""
+        if not GITHUB_REPO_VALUE_RE.match(v):
+            return [f"github_repo 格式非法（应为 owner/repo）: {raw!r}"]
+        if owner in RESERVED_OWNERS:
+            return [f"github_repo owner 是 GitHub 保留路径段: {raw!r}"]
+        if v.lower() in PLACEHOLDER_REPOS:
+            return [f"github_repo 是占位符，未替换实际 owner/repo: {raw!r}"]
+        return []
+    # 无字段：扫正文，若含合法 repo 链接则判漏填
+    for m in BODY_REPO_RE.finditer(body or ""):
+        o, r = m.group(1), re.sub(r"\.git$", "", m.group(2))
+        if (
+            len(o) >= 2
+            and len(r) >= 2
+            and o.lower() not in RESERVED_OWNERS
+            and f"{o}/{r}".lower() not in PLACEHOLDER_REPOS
+        ):
+            return [
+                f"正文含 github.com/{o}/{r} 但 frontmatter 缺 github_repo 字段"
+                f"（漏填：trending 去重将漏判此 repo）"
+            ]
+    return []
+
+
 @dataclass
 class FileReport:
     """单文件的校验结果聚合。"""
@@ -204,7 +267,7 @@ def lint_file(path: Path) -> FileReport:
         report.add_warn("没有 frontmatter（--- 或 +++ 包裹）")
         return report
 
-    fence, fm, _body = split
+    fence, fm, body = split
 
     # 致命 #1：frontmatter 解析失败
     try:
@@ -232,6 +295,10 @@ def lint_file(path: Path) -> FileReport:
     # 软警告：date 格式
     if "date" in data and not is_rfc3339_date(data["date"]):
         report.add_warn(f"date 不是 Hugo 接受的时间戳: {data['date']!r}")
+
+    # 致命 #3：posts/tech 的 github_repo 身份字段（格式错填 / 正文有 repo 却漏填）
+    for msg in check_github_repo(path, data, body):
+        report.add_fatal(msg)
 
     return report
 

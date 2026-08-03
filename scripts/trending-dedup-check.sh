@@ -39,7 +39,7 @@ tech, queries = Path(sys.argv[1]), sys.argv[2:]
 # 收集已写 repo:frontmatter github_repo 字段(YAML `:` 与 TOML `=` 都认),小写归一化
 val = re.compile(r'^github_repo\s*[:=]\s*"?([^\s"]+)', re.M)
 written = set()
-for f in tech.glob('*.md'):
+for f in tech.rglob('*.md'):  # rglob:含子目录(ai-agent/ tools/ page bundle),否则身份漏读→重复写
     for m in val.finditer(f.read_text(encoding='utf-8', errors='ignore')):
         written.add(m.group(1).lower().strip('/'))
 old, new = [], []

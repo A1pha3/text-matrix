@@ -101,7 +101,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dry-run', action='store_true')
     args = ap.parse_args()
-    files = sorted(TECH.glob('*.md'))
+    files = sorted(TECH.rglob('*.md'))  # rglob:含子目录(ai-agent/ tools/ page bundle 等)
     stats = Counter(); samples = []
     for f in files:
         status, repo = process(f, args.dry_run)
