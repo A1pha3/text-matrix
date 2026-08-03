@@ -11,3 +11,11 @@
 2026-08-03 | deepseek-v3-ai-model-analysis.md | 100 | 最高水平技术博客优化，去除AI味开篇，精简通用代码示例，保留核心工程叙事线(MoE+MLA+负载均衡)，文笔简洁优雅
 2026-08-03 | mathematical-foundations-deep-learning-agi.md | 100 | 最高水平技术博客优化，删除§2教学章节、§12防误读冗余，去除AI味套话，精简过渡语句，重排节号(§3→§2至§13→§11)，保留全部技术内容
 2026-08-03 | ml-systems-notes-data-movement-vs-compute.md | 100 | 最高水平技术博客优化，删除13处「判断」教学标签，精简引言，去除冗余修饰与AI味，保留全部技术数据与代码
+2026-08-03 | ai-engineering-from-scratch-guide.md | 100 | 最高水平技术博客优化，删除学习目标/自测题/FAQ/进阶路径/资料口径说明等教学框架，精简过渡语句，去除AI味套话，文笔简洁优雅
+2026-08-03 | bytebytego-system-design-101-guide.md | 100 | 最高水平技术博客优化，删除学习目标/自测题/练习/FAQ/进阶路径等教学框架，精简过渡语句，去除AI味套话，文笔简洁优雅
+2026-08-03 | 12-factor-agents-llm-principles.md | 100 | 最高水平技术博客优化，删除学习目标/读者背景假设/练习题/自测题/进阶路径/资料口径说明等教学框架，精简过渡语句，去除AI味套话，文笔简洁优雅
+2026-08-03 | kronos-financial-ai-from-zero-to-expert.md | 100 | 最高水平技术博客优化，删除阅读地图/四级练习路线/自测清单等教学框架，精简过渡语句，去除AI味套话，文笔简洁优雅
+2026-08-03 | awesome-systematic-trading-algorithmic-trading-resource-guide.md | 100 | 最高水平技术博客优化，删除学习目标/自测题/练习/进阶路径/资料口径说明，精简常见问题与过渡语句，去除AI味套话，文笔简洁优雅
+2026-08-03 | argoproj-argo-cd-gitops-kubernetes-deep-dive.md | 100 | 最高水平技术博客优化，删除目标读者/前置知识/自测题/进阶路径/总结/目录，精简常见问题，去除AI味过渡语句，文笔简洁优雅
+2026-08-03 | astro-framework-deep-dive.md | 100 | 最高水平技术博客优化，删除自测题/进阶路径/资料口径说明，精简引言过渡语句，去除AI味，文笔简洁优雅
+2026-08-03 | bun-all-in-one-javascript-toolkit-guide.md | 100 | 最高水平技术博客优化，删除学习目标/本文覆盖范围/自测题/进阶路径/资料口径说明，精简目标读者标注，去除AI味，文笔简洁优雅
