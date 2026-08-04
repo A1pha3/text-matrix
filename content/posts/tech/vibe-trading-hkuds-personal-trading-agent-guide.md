@@ -15,22 +15,22 @@ tags: ["量化交易", "AI Agent", "MCP"]
 
 Vibe-Trading 把这个链条压缩成一句话。你告诉它「帮我看看沪深 300 的动量策略最近还行不行」，它在 Agent Loop 内部自动路由到数据层、因子库、回测引擎，最后出一份带图表的报告。如果授权，它还能在 mandate 约束范围内盯着盘执行交易。
 
-它来自香港大学数据智能实验室（HKUDS），是「AI Agent + 量化研究 + 受限实盘」三位一体的开源工作台。核心思路不是让 AI 替你赚钱，而是让 AI 替你跑通研究流程——你只需要做决策，剩下的验证工作交给系统。
+它来自香港大学数据智能实验室（HKUDS），是「AI Agent + 量化研究 + 受限实盘」三位一体的开源工作台。AI 不替你赚钱，它替你跑通研究流程——你做决策，剩下的验证工作交给系统。
 
-它也是 v0.1.x 早期项目，不托管资金、不构成投资建议。把预期放在「研究加速器」上，而不是「自动印钞机」上。
+它也是 v0.1.x 早期项目，不托管资金、不构成投资建议。预期放在「研究加速器」上，不是「自动印钞机」。
 
 ---
 
 ## 目录
 
-**理解篇：是什么、怎么用、核心能力**
+**理解篇：是什么、怎么用**
 
 - [一、先从地图开始](#一先从地图开始)
-- [二、核心差异](#二核心差异)
+- [二、差异](#二差异)
 - [三、项目地图](#三项目地图)
 - [四、金融术语速查表](#四金融术语速查表)
 - [五、安装与快速上手](#五安装与快速上手)
-- [六、核心能力拆解](#六核心能力拆解)
+- [六、能力拆解](#六能力拆解)
 - [七、任务流案例](#七任务流案例一次完整的研究如何流过系统)
 
 **实践篇：怎么用、边界在哪、出问题怎么办**
@@ -73,12 +73,12 @@ Vibe-Trading 可以理解成一个「交易研究工作平台」。你用自然�
 - **Backtest（回测层）**：用历史数据模拟交易，看这套规则在过去赚了多少、亏了多少
 - **Report（报告层）**：输出指标、图表、run card，所有步骤都可复查
 
-它不是券商，也不托管你的资金。它帮你把「研究想法」变成能实际运行的成果：过程可复查，结果留得下、查得到。
+它不托管资金，也不是券商。它把「研究想法」变成能实际运行的成果：过程可复查，结果留得下、查得到。
 
 ### 读完本文，你能做什么
 
-- 说清 Vibe-Trading 的核心定位：它护城河在哪、跟 OpenBB / Qlib 有什么不同
-- 掌握 9 大核心能力：Skills / Alpha Zoo / Shadow Account / Broker Connector / Robinhood 护栏 / Swarm / Research Goal / Research Autopilot / 持久化记忆
+- 说清 Vibe-Trading 的定位：它护城河在哪、跟 OpenBB / Qlib 有什么不同
+- 掌握 9 项能力：Skills / Alpha Zoo / Shadow Account / Broker Connector / Robinhood 护栏 / Swarm / Research Goal / Research Autopilot / 持久化记忆
 - 完成 pip / Docker 两种安装，跑通 30 秒体验命令
 - 用 Shadow Account 分析自己的交易记录，读懂「规则 vs 实际」的差距
 - 用 Alpha Zoo 跑因子回测，看懂 IC / IR / alive / reversed / dead 分类
@@ -88,16 +88,16 @@ Vibe-Trading 可以理解成一个「交易研究工作平台」。你用自然�
 
 ---
 
-## 二、核心差异
+## 二、差异
 
-Vibe-Trading 在四个维度上与其他开源项目形成差异化：
+Vibe-Trading 在四个维度上与其他开源项目不同：
 
 1. **88 个金融 skills + 68 个研究工具**：覆盖 A 股 / 港股 / 美股 / 加密四大市场，19 个免费数据源按 IP 封禁风险排序自动 fallback，零配置下也无单点故障。
 2. **460+ 个预置 alpha 因子**：来自 Qlib Alpha158、Kakushadze 101、国泰君安 191 与学术因子，附带 AST purity gate + lookahead sentinel test + 网络 kill-switch 三道防作弊闸。一行命令 `vibe-trading alpha bench --zoo gtja191` 就能跑完整个因子动物园。
-3. **Shadow Account（影子账户）**：解析你过去的交易记录，提炼行为规则并用规则跑回测。它输出的不是收益率对比，而是「按你实际执行的规则，本来能赚多少、在哪一步丢了钱」的行为归因。
+3. **Shadow Account（影子账户）**：解析你过去的交易记录，提炼行为规则并用规则跑回测。它输出的是行为归因——「按你实际执行的规则，本来能赚多少、在哪一步丢了钱」，而不是简单的收益率对比。
 4. **Connector-first Broker Architecture（券商连接器优先）**：同一套 CLI 在 12 家券商之间切换（IBKR / Robinhood / 富途 / 老虎 / OKX / 币安等）。Robinhood 实盘带五层硬护栏：mandate 用户承诺 + 文件级 kill switch + fail-closed pre-trade gate + 审计日志 + 自动过期。
 
-一句话概括：**Vibe-Trading = AI Agent + 量化研究工作流 + 受限实盘，三位一体**。
+**Vibe-Trading = AI Agent + 量化研究工作流 + 受限实盘，三位一体**。
 
 ---
 
@@ -185,11 +185,11 @@ flowchart TB
     Brokers --> Audit
 ```
 
-读这张图时注意三个设计细节，容易误解：
+图里三个细节容易误解：
 
-- **智能体层 ≠ 简单 LLM 调用**：Agent Loop 是一个多轮推理循环，88 个 skills 各自带数据接入、参数约定和输出契约，不是「让 LLM 猜」。
+- **智能体层**：Agent Loop 是一个多轮推理循环，88 个 skills 各自带数据接入、参数约定和输出契约，不是简单的 LLM 调用。
 - **数据层自带 fallback 链**：19 个免费数据源按 IP 封禁风险排序，yfinance 被限流时自动切到 Alpha Vantage 或 Tushare，零配置下也不会有单点故障。
-- **执行层的风控横跨研究层**：mandate 在信号生成阶段就要被读取（限制可交易 universe），pre-trade gate 在执行前做最后拦截。两者通过同一个 mandate 配置对象连接，不是独立的两道门。
+- **执行层的风控横跨研究层**：mandate 在信号生成阶段就要被读取（限制可交易 universe），pre-trade gate 在执行前做最后拦截。两者通过同一个 mandate 配置对象连接。
 
 ### 能力矩阵
 
@@ -259,7 +259,7 @@ flowchart TB
 | paper / live | paper 是模拟盘，live 是真实账户 | connector profile 的 `environment` |
 | mandate | 实盘授权边界：能交易哪些标的、单笔多少、最大仓位、每日亏损限制等 | 实盘下单路径的风控门 |
 
-术语有了，接下来动手。先把它装到机器上跑几个命令——从「知道这些词」到「真的跑起来」，距离比你想象的要短。
+术语有了，接下来动手。装到机器上跑几个命令。
 
 ---
 
@@ -324,11 +324,11 @@ vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, an
 - **REST API**：`vibe-trading serve` 起服务后暴露 HTTP 接口，适合二次开发
 - **MCP 服务**：接入 Claude Desktop / Cursor / OpenClaw 等 MCP 客户端，让现有 Agent 直接调金融工具
 
-装好了，跑通了。接下来看它最硬核的部分：88 个 skill、460+ 个因子、Shadow Account 复盘、多 Agent Swarm。
+装好了，跑通了。接下来看 88 个 skill、460+ 个因子、Shadow Account 复盘、多 Agent Swarm。
 
 ---
 
-## 六、核心能力拆解
+## 六、能力拆解
 
 ### 6.1 Skills 库（88 个金融技能 / 9 大类）
 
@@ -353,15 +353,13 @@ vibe-trading run -p "Analyze my trading behavior, extract my shadow strategy, an
 
 注意到上面表格里 Strategy 分类下的 skill 名称了吗？这里说的 Strategy 是交易策略的生成与筛选，不是设计模式里的策略模式（Strategy Pattern）。这种命名冲突在金融软件里不算少见，看语境就能区分。
 
-这 88 个 skill 是 Vibe-Trading 跟通用 Agent 的分水岭。通用 Agent 拿到「分析一下宁德时代」，只能靠通用推理硬猜。
-
-Vibe-Trading 的每个 skill 都带数据接入、参数约定和输出契约。`ashare-pre-st-filter` 会真的去拉 ST 名单，`perp-funding-basis` 会真的去取资金费率。**有金融领域纵深的 Agent**，不是「聊天 + 跑代码」。
+Vibe-Trading 的每个 skill 都带数据接入、参数约定和输出契约。通用 Agent 拿到「分析一下宁德时代」，只能靠通用推理硬猜；`ashare-pre-st-filter` 会真的去拉 ST 名单，`perp-funding-basis` 会真的去取资金费率。**有金融领域纵深的 Agent**，不是「聊天 + 跑代码」。
 
 ### 6.2 Alpha Zoo（460+ 个预置 alpha 因子）
 
 因子可以理解为「排序公式」：每天给多只股票各打一个分，然后看分数高的一组未来表现是否更好。
 
-**因子 ≠ 策略**。因子只回答「哪个标的分数更高」，策略还要回答「买多少、什么时候买、什么时候卖、交易成本多少、是否允许集中持仓」。
+因子和策略是两回事。因子只回答「哪个标的分数更高」，策略还要回答「买多少、什么时候买、什么时候卖、交易成本多少、是否允许集中持仓」。
 
 当前 Alpha Zoo 有 460+ 个 alpha，分成四类：
 
@@ -420,7 +418,7 @@ vibe-trading alpha bench --zoo academic --universe sp500 --period 2020-2025 --st
 
 ### 6.3 Shadow Account（影子账户）
 
-这是 Vibe-Trading 最容易被低估的功能。它解决一个真实痛点：**你实盘做了几百笔交易，但你说不清自己的交易系统到底是什么**。直觉是「低买高卖」，实际上可能一直在追涨杀跌。Shadow Account 把「你以为的」和「你实际做的」都摆到桌面上：
+它解决一个真实痛点：**你实盘做了几百笔交易，但你说不清自己的交易系统到底是什么**。直觉是「低买高卖」，实际上可能一直在追涨杀跌。Shadow Account 把「你以为的」和「你实际做的」都摆到桌面上：
 
 | 步骤 | Agent 输出 |
 |------|------------|
@@ -430,7 +428,7 @@ vibe-trading alpha bench --zoo academic --universe sp500 --period 2020-2025 --st
 | 4. 跑影子 | 用提取出的规则回测，高亮规则破坏 / 提前出场 / 错过信号 / 替代交易路径 |
 | 5. 出报告 | HTML / PDF 报告 + 可复用的策略代码，可存档或再迭代 |
 
-两个工程细节让它比「拍脑袋复盘」可信：
+两个工程细节支撑了复盘的可靠性：
 
 - **PIT（Point-in-Time）安全的入场上下文**：规则里记录的是入场那一刻的 `entry_rsi14`、`prior_5d_return` 等快照，而不是用事后才知道的数据补写入场理由——复盘不会「事后诸葛亮」。2026-07-21 之后，Shadow Account 在日线数据上会跳过入场时段闸门（`mined entry-hour gate`），避免日线级别的入场时段误判。
 - **规则与代码共享同一套 `PRICE_FEATURES` 契约**：提取出的规则和生成的信号引擎代码字段一致，规则说得通，代码就能跑，不存在「报告是一套、实现是另一套」。
@@ -438,11 +436,11 @@ vibe-trading alpha bench --zoo academic --universe sp500 --period 2020-2025 --st
 
 自 2026-07-21 起，交易日志解析器会跳过空白/NaN 的标的行，避免因数据质量问题导致规则扭曲。自 2026-07-23 起，`holding_days` 为空时的校验逻辑也做了加固。
 
-自己实盘 + 自己跑一遍规则回测，diff 出「按规则 vs 实际」的差距。这是行为金融学和量化的混合产物：行为金融学解释「你为什么会亏」，回测引擎量化「你本来能赚多少」。
+自己实盘 + 自己跑一遍规则回测，diff 出「按规则 vs 实际」的差距。行为金融学解释「你为什么会亏」，回测引擎量化「你本来能赚多少」。
 
 ### 6.4 Broker Connector 架构（券商连接器优先）
 
-v0.1.9 落地的核心架构变更：**所有券商统一走 connector profile**。同一套命令，切换券商只改一个参数：
+v0.1.9 落地的架构变更：**所有券商统一走 connector profile**。同一套命令，切换券商只改一个参数：
 
 ```bash
 vibe-trading connector list                  # 列所有可用 connector
@@ -454,11 +452,9 @@ vibe-trading connector orders                # 看订单
 vibe-trading connector quote                 # 看报价
 ```
 
-为什么要用 connector 架构而不是每个券商写死一个插件？因为券商接口千差万别：有的是 REST、有的是 FIX、有的是 OAuth MCP。但交易语义是通用的：账户、持仓、订单、报价、历史。
+券商接口千差万别：有的是 REST、有的是 FIX、有的是 OAuth MCP。但交易语义是通用的：账户、持仓、订单、报价、历史。接入层按适配器模式组织——把通用语义抽成 profile，把差异留在 adapter 里。新接一家券商只写 adapter，上层研究逻辑一行不改。
 
-接入层按适配器模式组织：把通用语义抽成 profile，把差异留在 adapter 里。新接一家券商只写 adapter，上层研究逻辑一行不改。
-
-**connector 和 loader 要分清**：loader 读行情，connector 连接券商账户。很多新手会把两者混淆——loader 不操作你的账户，connector 才操作。
+**connector 和 loader 的区别**：loader 读行情，connector 连接券商账户。loader 不操作你的账户，connector 才操作。
 
 截止 v0.1.12 已支持 12 家：
 
@@ -483,7 +479,7 @@ vibe-trading connector quote                 # 看报价
 | Dhan / Shoonya | 印度券商 | 模拟 + 实盘 |
 | MetaTrader 5（Exness） | 外汇/贵金属 | 可用 |
 
-看 connector 时，不要先问「能不能自动交易」，先看 profile 的安全属性：
+看 connector 时，先看 profile 的安全属性，再考虑能不能自动交易：
 
 | Profile 类型 | 含义 | 适合阶段 |
 |-------------|------|---------|
@@ -491,13 +487,13 @@ vibe-trading connector quote                 # 看报价
 | `paper` | 连接模拟盘或沙盒账户，即使下单也不动用真实资金 | 验证策略、订单字段、成交回报和撤单流程 |
 | `live` | 连接真实账户，任何写操作都必须经过授权边界和审计记录 | 只在完全理解风险后使用 |
 
-### 6.5 Robinhood 实盘护栏（关键安全设计）
+### 6.5 Robinhood 实盘护栏
 
-Robinhood 是**实盘**支持的代表，它的安全设计是「AI 托管真金白银」这类系统的范本。核心问题是：**Agent 拿到下单权限后，怎么保证它无法造成超出你预期的损失？** 答案分五层：
+Robinhood 是**实盘**支持的代表，它的安全设计是「AI 托管真金白银」这类系统的范本。**Agent 拿到下单权限后，怎么保证它无法造成超出你预期的损失？** 答案分五层：
 
 - **Mandate（用户承诺）**：你自己限定 symbol universe / 单笔 order size / 总 exposure / 杠杆 / 每日交易数上限。Agent 的命令只在 mandate 范围内有效。
 - **Kill switch**：文件系统级别的「立即停」，`touch ~/.vibe-trading/KILL_SWITCH` 一行命令，Agent 下一次动作前检查到文件就冻结，不依赖 UI、不依赖网络。设计动机是：当 LLM 失控时，网络可能被阻塞，进程可能被卡死，但文件系统仍然可用。
-- **Fail-closed pre-trade gate**：每笔订单执行前先过校验，任何一项不满足直接拒绝下单——宁可错过也不越界。这是 fail-closed 和 fail-open 的本质区别：系统默认拒绝，而不是默认放行。
+- **Fail-closed pre-trade gate**：每笔订单执行前先过校验，任何一项不满足直接拒绝下单——宁可错过也不越界。系统默认拒绝，不是默认放行。
 - **Audit ledger**：所有动作（谁、什么时间、什么指令、结果如何）全量留痕，出问题能回溯。
 - **Auto-expire mandate**：承诺有过期时间，到点自动失效，避免「我忘了关 Agent」这种最朴素的翻车方式。
 
@@ -542,7 +538,7 @@ v0.1.10 之后新增的端到端流程：**假设 → 研究目标 → 回测**�
 
 ## 七、任务流案例：一次完整的研究如何流过系统
 
-前面拆了各个模块，这一节把它们串起来。假设你是一个量化研究员，想「评估并回测一个沪深 300 动量策略」。以下命令和输出都是**示意**，用来展示流程，不代表真实的因子结果。
+假设你是一个量化研究员，想「评估并回测一个沪深 300 动量策略」。以下命令和输出都是**示意**，用来展示流程，不代表真实的因子结果。
 
 先给一张时序图，把一条 prompt 从输入到输出的完整路径压缩成几秒能看懂的画面，后面再逐步展开：
 
@@ -591,7 +587,7 @@ CLI 收到请求后，Agent Loop 进入 Plan 阶段，先拆解这个 prompt 需
 
 最终 akshare 拿到了 2018-2025 日的 CSI300 OHLCV 数据。系统把它标准化成内部 panel 格式，返回给 Agent Loop。
 
-> 容易混淆的一步：**市场 ≠ 数据源 ≠ 券商账户。** 市场决定交易规则（T+1、涨跌停、做空限制），数据源决定历史数据从哪里来（tushare、akshare、yfinance），券商账户只在你需要读取真实账户或模拟/真实下单时才涉及。新手最容易犯的错是「把数据源当券商」，或者反过来「以为连了券商就能自动拿到所有历史数据」。三者是独立的，图中数据路由只处理数据源，与券商无关。
+> 注意：**市场、数据源、券商账户是三个独立的概念。** 市场决定交易规则（T+1、涨跌停、做空限制），数据源决定历史数据从哪里来（tushare、akshare、yfinance），券商账户只在你需要读取真实账户或模拟/真实下单时才涉及。新手最容易犯的错是「把数据源当券商」，或者反过来「以为连了券商就能自动拿到所有历史数据」。三者是独立的，图中数据路由只处理数据源，与券商无关。
 
 ### Step 3：因子计算
 
@@ -607,7 +603,7 @@ GTJA_042 (reversal_5d):  IC=-0.041, IR=1.02, reversed
 
 ### Step 4：策略生成与回测
 
-> 回测是历史模拟器，不是预测器。它的价值不在于告诉你「未来会赚多少」，而在于让你在投入真实资金之前，先看清一套规则在历史数据里经历过什么：赚了多少、最大回撤幅度、交易频率、是否只在一段特定行情中有效、是否被手续费侵蚀。
+> 回测是历史模拟器，不是预测器。它用历史数据告诉你一套规则过去经历过什么：赚了多少、最大回撤幅度、交易频率、是否只在一段特定行情中有效、是否被手续费侵蚀。它不回答「未来会赚多少」。
 
 Agent Loop 取 IC 最高的 5 个因子，调用 `strategy-generate` skill 合成等权多因子信号，生成 `signal_engine.py`。
 
@@ -624,7 +620,7 @@ Agent Loop 取 IC 最高的 5 个因子，调用 `strategy-generate` skill 合�
 
 ### Step 5：报告输出
 
-`report-generate` skill 把回测结果渲染成 `run_card.json`，记录研究参数、数据版本和结果。同时生成 HTML 报告，包含 IC 热力图、分组收益曲线和因子相关性矩阵。v0.1.13 之后，组合回测还会额外产出 **risk x-ray 工件**（`risk_xray.json`/`.md`），包含集中度、波动率和回撤的头条指标——不只是一个总收益数字，而是风险结构的快照。Agent Loop 把结论写入持久化记忆——下次再问 CSI300 动量策略，它记得这次的结果。
+`report-generate` skill 把回测结果渲染成 `run_card.json`，记录研究参数、数据版本和结果。同时生成 HTML 报告，包含 IC 热力图、分组收益曲线和因子相关性矩阵。v0.1.13 之后，组合回测还会额外产出 **risk x-ray 工件**（`risk_xray.json`/`.md`），包含集中度、波动率和回撤的头条指标——这是风险结构的快照，不是总收益数字。Agent Loop 把结论写入持久化记忆——下次再问 CSI300 动量策略，它记得这次的结果。
 
 ### 这个流程跑通的工程前提
 
@@ -639,7 +635,7 @@ Agent Loop 取 IC 最高的 5 个因子，调用 `strategy-generate` skill 合�
 
 ### 场景 A：A 股量化研究员
 
-A 股研究的核心痛点：手动下载数据、写因子代码、跑回测、出报告，每一步都要切换工具。Vibe-Trading 用一条命令串起整个流程：
+A 股研究的痛点：手动下载数据、写因子代码、跑回测、出报告，每一步都要切换工具。Vibe-Trading 用一条命令串起整个流程：
 
 ```bash
 # 1. bench 整个 191 个 GTJA 因子在 CSI300 的有效性
@@ -722,7 +718,7 @@ Agent 与框架类：
 | Hikyuu | A 股量化框架 | **无 Agent**，无多市场，无因子库 |
 | Qlib | 微软量化平台 | **无 Agent**，无实盘，无 Shadow Account |
 
-Vibe-Trading 的核心差异化是「**AI Agent + 量化研究 + 受限实盘**」三位一体。单看任何一环，都有更强的专用工具：回测深度不如 QuantConnect，实盘执行力不如 Freqtrade。但把三环收进一个自然语言工作台的在开源世界里目前没有第二家。此外，Shadow Account 的行为归因能力在同类中也是独有——没有其他工具能把「交易记录 → 规则提取 → 反事实回测」这条链路跑通。
+Vibe-Trading 把「**AI Agent + 量化研究 + 受限实盘**」收进一个自然语言工作台，这在开源世界里目前没有第二家。单看每一环都有更强的专用工具：回测深度不如 QuantConnect，实盘执行力不如 Freqtrade。Shadow Account 的行为归因能力也是独有的——没有其他工具能把「交易记录 → 规则提取 → 反事实回测」这条链路跑通。
 
 ---
 
@@ -797,7 +793,7 @@ Vibe-Trading 的核心差异化是「**AI Agent + 量化研究 + 受限实盘**�
 
 ### 不适合谁
 
-- 期望「开箱即用稳定赚钱」——量化研究永远是长期投入，工具省的是验证成本不是亏钱。
+- 期望「开箱即用稳定赚钱」——量化研究是长期投入，工具省的是验证成本，不帮你赚钱。
 - 完全没有量化基础——至少要能读懂 IC / IR / drawdown。
 - 强合规场景（国内券商 PB 实盘）——connector 主要支持海外 broker。
 - 完全离线 / 纯内网环境。
@@ -843,7 +839,7 @@ vibe-trading connector list
 
 ## 十五、自测题
 
-### 15.1 Vibe-Trading 的核心差异化是什么？
+### 15.1 Vibe-Trading 的差异化是什么？
 
 <details>
 <summary>点击查看答案</summary>
@@ -1033,7 +1029,7 @@ reversed 表示因子的 IC 显著但方向与原始公式相反。**不要扔�
 
 ## 十九、一句话总结
 
-> Vibe-Trading 是目前「**AI Agent + 量化研究 + 受限实盘**」三位一体覆盖最全的开源方案：88 个 skills、460+ 个 alphas、30 套 swarms、12 家券商连接器、24 个数据源把研究流程串完整，Shadow Account 把交易行为量化成可复盘的差距，Robinhood 实盘护栏是「AI 托管真金白银」的教科书设计；但它是 v0.1.x 早期项目，**模拟盘优先、小资金实盘、严审 mandate、常翻 audit ledger**。
+> Vibe-Trading 是目前「**AI Agent + 量化研究 + 受限实盘**」三位一体覆盖最全的开源方案：88 个 skills、460+ 个 alphas、30 套 swarms、12 家券商连接器、24 个数据源把研究流程串完整，Shadow Account 把交易行为量化成可复盘的差距。但它是 v0.1.x 早期项目，**模拟盘优先、小资金实盘、严审 mandate、常翻 audit ledger**。
 
 ---
 

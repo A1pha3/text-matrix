@@ -11,18 +11,7 @@ tags: ["AI Agent", "Anthropic"]
 
 # Agent Skills：AI Agent 能力扩展开放规范完全指南
 
-Agent Skills 解决的是工具数量增长后上下文被挤占、同一能力跨平台重写两个问题。它把"启动时全量加载工具描述"改成"按需发现并激活"，Agent 启动时只承担元数据开销，未命中的 Skill 始终只占约 100 token。
-
-## 学习目标
-
-读完应该能回答这些问题：
-
-- Agent Skills（智能体技能）解决的是哪类工具调用问题？什么时候不该用它？
-- 怎么写一个符合规范的 `SKILL.md`，frontmatter（前置元数据）每个字段管什么？
-- 从零开始做一个带指令、脚本和参考资料的 Skill，需要走哪些步骤？
-- discovery（发现）、activation（激活）和 progressive disclosure（渐进式披露）三个阶段是怎么串起来的？
-- 在自己团队的 Agent 系统里集成 Skill 支持，要实现哪些接口？
-- 团队引入 Skill 时，按什么顺序试错成本最低？
+Agent Skills 解决的是工具数量增长后上下文被挤占、同一能力跨平台重写两个问题。它把"启动时全量加载工具描述"改成"按需发现并激活"，Agent 启动时只承担元数据开销，未命名的 Skill 始终只占约 100 token。
 
 ## 目录
 
@@ -53,7 +42,7 @@ Agent Skills 解决的是工具数量增长后上下文被挤占、同一能力�
 
 ## 一、为什么需要 Agent Skills
 
-Agent Skills 解决的是工具数量增长后上下文被挤占、同一能力跨平台重写两个问题。它把"启动时全量加载工具描述"改成"按需发现并激活"，Agent 启动时只承担元数据开销，未命中的 Skill 始终只占约 100 token。
+传统工具调用方式在工具数量增长后暴露了三个问题，Agent Skills 用渐进式加载来应对。
 
 官网地址：[https://agentskills.io](https://agentskills.io)
 规范文档：[https://agentskills.io/specification](https://agentskills.io/specification)

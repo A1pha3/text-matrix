@@ -2,19 +2,19 @@
 title: "Pydantic：Python 类型提示数据验证完全指南"
 date: "2026-04-06T22:09:00+08:00"
 slug: "pydantic-python-data-validation-guide"
-description: "从类型提示如何驱动验证、V2 为什么用 Rust 重写 pydantic-core，到 FastAPI 请求的完整验证路径、严格模式取舍与常见踩坑，一篇讲清 Pydantic 的工程定位与使用边界。"
+description: "Pydantic V2 用 Rust 重写了验证核心，性能提升显著。本文讲清楚类型注解怎么变成验证规则、验证和序列化为何成对设计、Rust 核心的实际影响，以及一次 FastAPI 请求的完整验证路径。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Pydantic", "Python", "FastAPI"]
 ---
 
-Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAPI、SQLModel、LangChain 这些下游框架的验证瓶颈被打开了。V1 时代，一个高 QPS 接口里 30%-50% 的 CPU 可能花在 Python 层的字典遍历和类型检查上；V2 把这部分压到 Rust 后，下游框架可以放心地把请求模型做得更复杂，而不必担心验证开销吃掉吞吐。迁移文档里能看到的是 API 表面更一致，看不到的是验证开销从"必须优化掉的成本"变成了"可以放心使用的基建"。
+Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAPI、SQLModel、LangChain 这些下游框架的验证瓶颈被打通了。V1 时代，一个高 QPS 接口里 30%-50% 的 CPU 可能花在 Python 层的字典遍历和类型检查上；V2 把这部分压到 Rust 后，下游框架可以放心地把请求模型做得更复杂，而不必担心验证开销吃掉吞吐。
 
-类型注解怎么变成 Rust 侧的派发表、验证和序列化为什么要成对设计、Rust 核心对 Python 生态的实际影响，以及一次 FastAPI 请求的完整验证路径——这篇文章逐一讲清。
+本文将覆盖：类型注解怎么变成 Rust 侧的派发表、验证和序列化为什么要成对设计、Rust 核心对 Python 生态的实际影响，以及一次 FastAPI 请求的完整验证路径。
 
 ## Pydantic 在 Python 数据栈中的位置
 
-Python 里"用类型注解描述数据"的库不止 Pydantic 一个，但定位差异明显。选型时先看数据来源：信任内部数据用 `dataclasses`，不信任外部数据用 Pydantic，两者之间看是否需要 schema 与模型分离。四个主要选项的对比：
+Python 里"用类型注解描述数据"的库有好几个，选型主要看数据来源：信任内部数据用 `dataclasses`，不信任外部数据用 Pydantic。四个主要选项对比如下：
 
 | 库 | 主要职责 | 是否做运行时验证 | 典型场景 |
 |------|----------|-----------------|----------|
@@ -23,13 +23,13 @@ Python 里"用类型注解描述数据"的库不止 Pydantic 一个，但定位�
 | `marshmallow` | 序列化/反序列化框架，先于类型提示流行 | 是，但 schema 与类型注解分离 | 老 Flask 项目、显式 schema |
 | `Pydantic` | 基于类型提示的运行时验证 + 序列化 + Schema 生成 | 是，且与类型注解合一 | API 边界、配置、领域模型 |
 
-`dataclasses` 和 `attrs` 解决的是"少写样板代码"，它们信任调用方传入的数据；Pydantic 解决的是"不信任外部数据"，需要在系统边界把字典、JSON、查询参数转成可信的 Python 对象。`marshmallow` 也能做这件事，但 schema 单独定义，类型注解和验证规则分离，IDE 提示和 mypy 检查都跟不上。Pydantic 把类型注解本身当成 schema，让静态检查和运行时验证共用同一份事实——一份注解同时驱动 mypy、IDE 补全和运行时验证，省下维护三份独立 schema 的成本。
+`dataclasses` 和 `attrs` 信任调用方传入的数据，只在"少写样板代码"上做文章。Pydantic 处理的是"不信任外部数据"的场景——在系统边界把字典、JSON、查询参数转成可信的 Python 对象。`marshmallow` 也能做类似的事，但 schema 单独定义，类型注解和验证规则分离，IDE 提示和 mypy 检查都跟不上。Pydantic 把类型注解本身当成 schema，静态检查与运行时验证共用同一份事实——一份注解同时驱动 mypy、IDE 补全和运行时验证，省下维护三份独立 schema 的成本。
 
 FastAPI 把这个特性用到路由签名层：`user: CreateUserRequest` 既是 OpenAPI 文档的来源，也是请求体的运行时验证器。路由签名一处声明，文档生成、IDE 补全、运行时验证都从同一处派生，下游框架因此可以把请求模型做得更复杂而不用担心验证开销。
 
 ## 类型提示如何驱动验证
 
-Pydantic 的验证机制依赖一个 Python 语言特性：类型注解在运行时可被读取。这是它能"用类型注解当 schema"的前提——如果类型注解只是给 IDE 看的静态信息，Pydantic 就无从下手。
+Pydantic 的验证机制依赖一个 Python 语言特性：类型注解在运行时可被读取。如果类型注解只是给 IDE 看的静态信息，Pydantic 就做不到"用类型注解当 schema"。
 
 ```python
 from typing import get_type_hints
@@ -42,7 +42,7 @@ print(get_type_hints(User))
 # {'id': <class 'int'>, 'name': <class 'str'>}
 ```
 
-`typing.get_type_hints` 能拿到类上声明的类型映射。Pydantic 在 `BaseModel` 的元类里做类似的事情，但走得更远：它把每个字段的类型注解翻译成一组验证规则，编译成 `pydantic-core` 的内部 schema，再在 Rust 侧执行。这一步发生在类定义时，不是实例化时——类型注解被翻译一次，后续每次实例化都走编译后的 schema。
+`typing.get_type_hints` 能拿到类上声明的类型映射。Pydantic 在 `BaseModel` 的元类里做类似的事情，但更进一步：它把每个字段的类型注解翻译成一组验证规则，编译成 `pydantic-core` 的内部 schema，再在 Rust 侧执行。这一步发生在类定义时，不是实例化时——类型注解被翻译一次，后续每次实例化都走编译后的 schema。
 
 翻译过程大致是：
 
@@ -54,9 +54,9 @@ print(get_type_hints(User))
 
 每条规则在编译后变成 Rust 侧的一个验证函数，运行时按字段顺序依次调用。嵌套模型的规则会递归展开，所以一个 3 层嵌套的模型，编译后的 schema 是一棵树，运行时按树遍历。
 
-这套翻译在类定义时完成一次，运行时验证直接走编译后的 schema，不再重复解析类型注解。V1 每次验证都要在 Python 层走一遍字段循环和类型判断；V2 把这些编译成 Rust 的派发表，运行时只查表不解析。这也是为什么 V2 的"类定义"比 V1 稍慢——编译 schema 有一次性开销，但这个开销在类定义时付一次，后续每次验证都受益。
+这套翻译在类定义时完成一次，运行时验证直接走编译后的 schema，不再重复解析类型注解。V1 每次验证都要在 Python 层走一遍字段循环和类型判断；V2 把这些编译成 Rust 的派发表，运行时只查表不解析。V2 的"类定义"比 V1 稍慢，因为编译 schema 有一次性开销，但这个开销在类定义时付一次，后续每次验证都受益。
 
-类型注解被翻译成 Rust 侧规则后，下面几个日常使用中常被问到的困惑就有了依据。它们都源于宽松模式这个默认行为——宽松模式为了适配 HTTP 输入做了很多隐式转换，转换规则和 Python 原生行为不完全一致：
+类型注解被翻译成 Rust 侧规则后，几个常见问题就清楚了。它们都源于宽松模式默认做了很多隐式转换，转换规则和 Python 原生行为不完全一致：
 
 - **为什么 `bool_field="yes"` 会被转成 `True`**：Pydantic 的 `bool` 规则默认接受 `"yes"/"on"/"true"/"1"` 等常见真值字符串，这是"宽松模式"下的转换约定，不是 Python `bool()` 的行为。Python 的 `bool("yes")` 永远是 `True`（非空字符串），但 Pydantic 会识别字面量。
 - **为什么 `id: int` 接受 `"123"`**：默认模式下 `int` 规则会尝试字符串到整数的转换，转换失败才报错。这是为了适配 HTTP 表单、URL 参数这些天然是字符串的输入源——如果默认严格，每个字符串字段都要先手动转成目标类型再传给 Pydantic。
@@ -66,9 +66,9 @@ print(get_type_hints(User))
 
 V1 的性能瓶颈出在验证循环本身被放在 Python 层跑，单点函数优化救不了。V2 把核心搬到 Rust 解决了这个问题，但提速幅度因场景而异。
 
-V1 的验证循环是纯 Python：每个字段调用一次 `getattr`、一次类型判断、一次转换函数，嵌套模型递归下去。对一个 20 个字段、3 层嵌套的请求模型，单次验证可能触发几百次 Python 函数调用。在 FastAPI 这种"每个请求都要验证一次 body"的场景下，验证开销会挤占业务逻辑的 CPU 预算——这也是为什么 V1 时代很多团队不得不手动优化验证逻辑，或者把请求模型拆得很碎。V2 的 Rust 重写让这种妥协不再必要。
+V1 的验证循环是纯 Python：每个字段调用一次 `getattr`、一次类型判断、一次转换函数，嵌套模型递归下去。对一个 20 个字段、3 层嵌套的请求模型，单次验证可能触发几百次 Python 函数调用。在 FastAPI 这种"每个请求都要验证一次 body"的场景下，验证开销会挤占业务逻辑的 CPU 预算——V1 时代很多团队不得不手动优化验证逻辑，或者把请求模型拆得很碎。V2 的 Rust 重写让这种妥协不再必要。
 
-V2 把验证核心拆成 `pydantic-core` 这个独立 crate，用 Rust 实现。三个关键变化：
+V2 把验证核心拆成 `pydantic-core` 这个独立 crate，用 Rust 实现。三个变化：
 
 - **类型派发**：编译后的 schema 是一张静态派发表，Rust 侧直接 `match` 类型 ID，跳过 Python 的 `isinstance` 链。V1 每次验证都要走 `isinstance(x, int)` → `isinstance(x, str)` → ... 的链式判断，V2 一次 `match` 就到位。
 - **字段循环**：嵌套模型在 Rust 里递归，不回到 Python 层，避免 GIL 上下文切换。V1 嵌套模型每层都要回到 Python 调一次 `__init__`，V2 整棵树在 Rust 里走完。
@@ -78,7 +78,7 @@ V2 把验证核心拆成 `pydantic-core` 这个独立 crate，用 Rust 实现。
 
 - **API 不兼容**：`@validator` → `@field_validator`、`.dict()` → `.model_dump()`、`.parse_obj()` → `.model_validate()`，因为新 API 要让自定义验证器能被 Rust 侧调用，签名必须改。迁移成本主要落在这里，`bump-pydantic` 工具能半自动处理，但动态调用和元编程场景仍需手动检查。
 - **自定义验证器的性能特征变了**：`@field_validator` 仍然是 Python 函数，调用时会从 Rust 侧回到 Python，所以一个模型里挂 10 个 `field_validator` 性能不会比 V1 好太多。真正的提速来自 `Field` 内置约束（`gt`/`min_length`/`pattern`），这些在 Rust 侧直接执行。
-- **严格模式（strict mode）成为一级公民**：V1 的转换行为隐式且不可关闭，V2 提供 `strict=True` 让字段拒绝隐式转换。这是 Rust 核心带来的副产品——派发表里多一个分支就能支持严格模式，V1 要在 Python 层加判断就贵得多。
+- **严格模式（strict mode）成为一级公民**：V1 的转换行为隐式且不可关闭，V2 提供 `strict=True` 让字段拒绝隐式转换。Rust 核心让这个功能更容易实现——派发表里多一个分支就能支持严格模式，V1 要在 Python 层加判断就贵得多。
 
 "V2 比 V1 快 10-100x"这个数字要分场景看：纯 `Field` 约束的简单模型（比如只有 `int`/`str` 加几个 `gt`/`min_length`）提速最大，因为整条验证路径都在 Rust 里走完；挂满自定义 `field_validator` 的复杂模型提速较小，瓶颈回到了 Python 函数调用，每次验证器调用都要从 Rust 回到 Python 一次。官方 benchmark 测的是前者，真实业务里两者混合，实际提升通常在 5-20x 之间。判断自己的模型能拿到多少提速，看 `Field` 约束和自定义验证器的比例即可——`Field` 约束越多，提速越接近上限；自定义验证器越多，提速越接近下限。
 
@@ -110,17 +110,17 @@ print(user.signup_ts)   # 2017-06-01 12:22:00
 print(user.tags)        # [1, 2, 3]
 ```
 
-这个例子展示了 Pydantic 的核心行为：传入字典，拿到验证过的 Python 对象，类型转换在验证过程中完成。`"123"` 变成 `123`，`"2017-06-01 12:22"` 变成 `datetime`，`[1, "2", b"3"]` 变成 `[1, 2, 3]`——这些都是宽松模式下的隐式转换。
+这个例子展示了 Pydantic 的基本行为：传入字典，拿到验证过的 Python 对象，类型转换在验证过程中完成。`"123"` 变成 `123`，`"2017-06-01 12:22"` 变成 `datetime`，`[1, "2", b"3"]` 变成 `[1, 2, 3]`——这些都是宽松模式下的隐式转换。
 
-可变默认值的拷贝行为和 `model_validate` 的入口合并是 V1 → V2 迁移时容易踩的，`model_dump` 替代 `dict()` 则是 API 重命名——`dict()` 和 `model_dump()` 行为不一致会导致序列化结果和预期不同，迁移时建议全局替换，不要新旧 API 混用：
+可变默认值的拷贝行为和 `model_validate` 的入口合并在 V1 → V2 迁移时容易踩；`model_dump` 替代 `dict()` 则是 API 重命名——`dict()` 和 `model_dump()` 行为不一致会导致序列化结果和预期不同，迁移时建议全局替换，不要新旧 API 混用：
 
-- **可变默认值可以直接写**：`tags: list[int] = []` 在 Pydantic 里是安全的，因为 `BaseModel` 会深拷贝默认值，不像 `dataclasses` 需要 `field(default_factory=list)`。这是 Pydantic 比 `dataclasses` 更"宽容"的地方，但也意味着默认值会在每次实例化时拷贝，大对象上要注意——一个默认值是 1000 元素字典的字段，每次实例化都会深拷贝一次。
+- **可变默认值可以直接写**：`tags: list[int] = []` 在 Pydantic 里是安全的，因为 `BaseModel` 会深拷贝默认值，不像 `dataclasses` 需要 `field(default_factory=list)`。但默认值会在每次实例化时拷贝，大对象上要注意——一个默认值是 1000 元素字典的字段，每次实例化都会深拷贝一次。
 - **`model_validate` 是 V2 的统一入口**：V1 的 `parse_obj` / `parse_raw` / `parse_file` 都被合并进来，分别对应 `model_validate(dict)` / `model_validate_json(str)` / 显式读文件后调用。迁移时按这个对照表替换即可。
 - **`model_dump` 替代了 `dict()`**：V2 把所有序列化方法统一到 `model_dump`（返回 dict）和 `model_dump_json`（返回 str），`dict()` 仍可用但会告警，且行为可能与 `model_dump()` 不完全一致。
 
 ### 字段约束：Field 的内置规则
 
-`Field` 是给字段附加约束的主要工具。这些约束会被编译进 Rust schema，性能远高于自定义验证器——这是 V2 提速的核心来源之一，能用 `Field` 解决的约束就不要用 `field_validator`。
+`Field` 是给字段附加约束的主要工具。这些约束会被编译进 Rust schema，性能远高于自定义验证器——V2 提速主要靠这个，能用 `Field` 解决的约束就不要用 `field_validator`。
 
 ```python
 from pydantic import BaseModel, Field
@@ -147,7 +147,7 @@ class Product(BaseModel):
     status: Literal["draft", "published", "archived"] = "draft"
 ```
 
-约束分三类，覆盖了数值、字符串、集合三种主要数据形态：
+Field 约束分三类，覆盖数值、字符串、集合三种数据形态：
 
 | 类别 | 常用参数 | 适用类型 |
 |------|----------|----------|
@@ -161,7 +161,7 @@ class Product(BaseModel):
 
 ### 字段类型分层
 
-按"约束强度"从弱到强，Pydantic 的字段类型大致分四层。选哪一层取决于"数据有多不可信"和"领域规则有多强"：
+按约束强度从弱到强，Pydantic 的字段类型大致分四层，选哪一层取决于数据可信度和领域规则强度：
 
 ```python
 from pydantic import BaseModel, Field, HttpUrl, EmailStr
@@ -187,11 +187,11 @@ class Types(BaseModel):
     raw_payload: Any
 ```
 
-`Any` 是逃生舱：它跳过所有验证，原样接收。在"先收下来，后面再处理"的场景里有用，但每用一个 `Any` 就等于在类型边界上开一个口子，长期看会让静态检查失效。能用前三层就不要用第四层；如果非用不可，在 `field_validator` 里补一道业务校验，避免 `Any` 字段一路裸奔到业务层。
+`Any` 是兜底类型：它跳过所有验证，原样接收。在"先收下来，后面再处理"的场景里有用，但每用一个 `Any` 就等于在类型边界上开一个口子，长期看会让静态检查失效。能用前三层就不要用第四层；如果非用不可，在 `field_validator` 里补一道业务校验，避免 `Any` 字段一路裸奔到业务层。
 
 ## 验证器：Field、field_validator、model_validator 的分工
 
-Pydantic 的验证能力分三层，按"作用范围"递增。选错层会导致性能问题或验证遗漏——`Field` 在 Rust 侧执行，`field_validator` 和 `model_validator` 是 Python 函数，每次验证都要从 Rust 回到 Python。
+Pydantic 的验证能力分三层，作用范围逐层扩大。选错层会导致性能问题或验证遗漏——`Field` 在 Rust 侧执行，`field_validator` 和 `model_validator` 是 Python 函数，每次验证都要从 Rust 回到 Python。
 
 | 层级 | 装饰器/工具 | 作用对象 | 执行位置 |
 |------|-------------|----------|----------|
@@ -199,7 +199,7 @@ Pydantic 的验证能力分三层，按"作用范围"递增。选错层会导致
 | 字段级验证器 | `@field_validator` | 单个字段 | Python 侧 |
 | 模型级验证器 | `@model_validator` | 整个模型 | Python 侧 |
 
-**优先用 `Field`，不够时再用 `field_validator`，最后才用 `model_validator`**。原因在执行位置：`Field` 约束在 Rust 侧执行，没有 Python 调用开销；`field_validator` 和 `model_validator` 是 Python 函数，每次验证都要从 Rust 回到 Python。一个挂满 10 个 `field_validator` 的模型，提速效果会显著低于全用 `Field` 约束的模型。判断标准是：能用 `Field` 参数表达的约束（范围、长度、正则）就用 `Field`，需要自定义逻辑（比如"密码必须包含大写字母"）才用 `field_validator`，需要跨字段（比如"结束时间晚于开始时间"）才用 `model_validator`。
+选择顺序是：先用 `Field`，不够时再用 `field_validator`，最后才用 `model_validator`。原因在执行位置：`Field` 约束在 Rust 侧执行，没有 Python 调用开销；`field_validator` 和 `model_validator` 是 Python 函数，每次验证都要从 Rust 回到 Python。一个挂满 10 个 `field_validator` 的模型，提速效果会显著低于全用 `Field` 约束的模型。判断标准是：能用 `Field` 参数表达的约束（范围、长度、正则）就用 `Field`，需要自定义逻辑（比如"密码必须包含大写字母"）才用 `field_validator`，需要跨字段（比如"结束时间晚于开始时间"）才用 `model_validator`。
 
 ### field_validator：单字段自定义逻辑
 
@@ -243,7 +243,7 @@ class User(BaseModel):
         return v
 ```
 
-装饰器顺序和异常类型是使用问题，返回值替换字段值这条尤其隐蔽——验证器"忘记 return"会导致字段值变成 `None`，且不会报错，这类 bug 在测试覆盖不全时容易漏到生产：
+装饰器顺序和异常类型是使用问题。返回值替换字段值这条容易踩——验证器"忘记 return"会导致字段值变成 `None`，且不会报错，测试覆盖不全时容易漏到生产：
 
 - **`@classmethod` 必须在 `@field_validator` 下面**：装饰器从下往上执行，先 `field_validator` 把函数标记为验证器，再 `classmethod` 把它变成类方法。顺序反了会拿到实例而不是类，且报错信息不直观。
 - **`ValueError` 会被自动包装成 `ValidationError`**：不要自己抛 `ValidationError`，抛 `ValueError` 即可，Pydantic 会收集所有字段的错误一次性返回。这条规则也适用于 `AssertionError`——`assert x > 0` 抛出的异常同样会被收集。
@@ -291,9 +291,9 @@ except ValueError as e:
     #     Value error, 结束时间必须晚于开始时间 [type=value_error, ...]
 ```
 
-`mode="after"` 的验证器可以写多个，Pydantic 会按定义顺序依次执行，所有错误收集完再抛出。用户一次提交能拿到所有字段错误，而不是改一个看到一个——前端表单校验尤其受益于此，用户不用反复提交才能发现下一个错误。
+`mode="after"` 的验证器可以写多个，Pydantic 会按定义顺序依次执行，所有错误收集完再抛出。用户一次提交能拿到所有字段错误，不用反复提交才能发现下一个错误。
 
-### 一个常见踩坑：验证器里的副作用
+### 验证器里的副作用
 
 验证器会被 `model_validate`、`model_validate_json`、`__init__` 调用，每次实例化都会跑一遍。把 IO 操作（写日志、发请求、写数据库）放进验证器是常见错误：
 
@@ -306,11 +306,11 @@ class Order(BaseModel):
         return self
 ```
 
-这段代码的问题在于：从 Redis 缓存反序列化一个 Order 时，也会触发 `db.save(self)`，把缓存里的旧数据写回数据库，覆盖掉最新的业务更新。验证器只做"数据是否合法"的判断，不做"数据要被怎么处理"。需要触发副作用时，在业务层显式调用 `order.save()`，让验证和持久化分开——验证是声明式的、可重入的，持久化是命令式的、有副作用的，两者混在一起会让排查变得困难。
+这段代码的问题在于：从 Redis 缓存反序列化一个 Order 时，也会触发 `db.save(self)`，把缓存里的旧数据写回数据库，覆盖掉最新的业务更新。验证器应该只判断"数据是否合法"，不处理"数据要被怎么处理"。需要触发副作用时，在业务层显式调用 `order.save()`，让验证和持久化分开。
 
 ## 严格模式 vs 宽松模式
 
-Pydantic 默认是"宽松模式"（lax mode）：能转换就转换，`"123"` → `123`、`"yes"` → `True`、`"2026-01-01"` → `datetime`。这对 HTTP 输入很友好，因为 URL 参数、表单字段、JSON 字符串本质上都是字符串——如果默认严格，每个字符串字段都要先手动转成目标类型再传给 Pydantic，代码会变得很啰嗦。
+Pydantic 默认是"宽松模式"（lax mode）：能转换就转换，`"123"` → `123`、`"yes"` → `True`、`"2026-01-01"` → `datetime`。这对 HTTP 输入很友好，因为 URL 参数、表单字段、JSON 字符串都是字符串——如果默认严格，每个字符串字段都要先手动转成目标类型再传给 Pydantic，代码会变得很啰嗦。
 
 宽松模式的代价是它会掩盖调用方的类型错误。一个前端把 `user_id` 误传成字符串 `"123"`，后端静默转换成 `123`，bug 不会暴露，直到某天传了 `"12 3"` 才报错——而这时离 bug 引入已经过去很久，定位成本变高。
 
@@ -342,7 +342,7 @@ StrictUser(id=123.0, name="alice")      # 报错：strict mode 不接受 float �
 
 ## 序列化控制
 
-验证解决"输入是否可信"，序列化解决"输出是否可控"。一个模型从外部接收数据时验证，向外部返回数据时序列化——这两件事必须成对设计，否则会出现"验证通过但输出泄漏敏感字段"的情况。Pydantic 的序列化通过 `model_dump` 和 `model_dump_json` 完成，两者共享一套选项：
+验证和序列化分别对应输入和输出：一个模型从外部接收数据时验证，向外部返回数据时序列化。这两件事必须成对设计，否则会出现"验证通过但输出泄漏敏感字段"的情况。Pydantic 的序列化通过 `model_dump` 和 `model_dump_json` 完成，两者共享一套选项：
 
 ```python
 from datetime import datetime
@@ -394,7 +394,7 @@ user.model_dump(exclude={"address": {"postal_code": True}})
 #  'address': {'city': '上海'}}
 ```
 
-`model_dump` 在 API 开发中的常见用法，"同一个模型需要不同的序列化结果"是这些用法的共同前提。脱敏、过滤、格式转换都可以在序列化层一次性处理，不必在业务层写一堆 if-else 来控制字段暴露。几种典型场景：
+`model_dump` 在 API 开发中常见用法是"同一个模型需要不同的序列化结果"。脱敏、过滤、格式转换都可以在序列化层一次性处理，不必在业务层写一堆 if-else 来控制字段暴露。几种典型场景：
 
 - **API 响应里去掉密码字段**：用 `exclude={"password_hash"}`，或在字段上声明 `Field(exclude=True)` 让它默认不序列化。后者更安全——即使有人忘了在 `model_dump` 里加 `exclude`，字段也不会泄漏。
 - **日志里脱敏**：定义一个 `to_log_dict()` 方法，调用 `model_dump(exclude={"password_hash", "token", "secret"})`，避免敏感字段进日志。日志框架的默认序列化不会走 Pydantic，所以要在打印前显式转成脱敏 dict。
@@ -417,7 +417,7 @@ User.model_validate(orm_user)
 
 ## JSON Schema 生成对 API 文档的意义
 
-Pydantic 能从模型自动生成 JSON Schema。在 FastAPI 生态里，这份 Schema 是关键基础设施——它不只是文档，还是前后端协作的契约。
+Pydantic 能从模型自动生成 JSON Schema。在 FastAPI 生态里，这份 Schema 同时充当文档和前后端协作的契约。
 
 ```python
 import json
@@ -471,13 +471,13 @@ print(json.dumps(User.model_json_schema(), indent=2, ensure_ascii=False))
 }
 ```
 
-这份 Schema 的下游消费者不止 Swagger UI。`Field` 的 `description`、`examples` 这些参数也是 Schema 的一部分——这也是 Pydantic 模型的字段定义比普通 dataclass 更"啰嗦"的原因：每个参数都会进 Schema，被 Swagger UI、openapi-typescript、hypothesis 这些工具消费。三个主要消费者：
+这份 Schema 的下游消费者包括 Swagger UI 和其他工具。`Field` 的 `description`、`examples` 这些参数本身也是 Schema 的一部分——每个参数都会进 Schema，被 Swagger UI、openapi-typescript、hypothesis 等工具消费。三个主要消费者：
 
 - **FastAPI 用它生成 OpenAPI**：路由函数签名里的 `user: User` 会被 FastAPI 转成 `User.model_json_schema()`，嵌入到 OpenAPI 文档里，Swagger UI 直接渲染。
 - **前端可以用它生成 TypeScript 类型**：`openapi-typescript`、`quicktype` 这类工具能从 JSON Schema 生成前端类型定义，让前后端类型一致。改后端字段时前端类型自动更新，省去手动同步。
 - **测试可以用它生成 mock 数据**：`hypothesis` 等属性测试库能从 Schema 生成符合约束的随机数据，覆盖边界值。
 
-`Field` 上的 `description`、`examples`、`title` 会进 Schema，所以写好这些注释不只是文档，是整个工具链的输入——前端拿到的 OpenAPI 文档里会有这些字段，Swagger UI 会渲染它们。`model_config` 里的 `json_schema_extra` 可以追加任意字段，常用来给 OpenAPI 加 `example`：
+`Field` 上的 `description`、`examples`、`title` 会进 Schema，所以写好这些注释就是为整个工具链提供输入——前端拿到的 OpenAPI 文档里会有这些字段，Swagger UI 会渲染它们。`model_config` 里的 `json_schema_extra` 可以追加任意字段，常用来给 OpenAPI 加 `example`：
 
 ```python
 from pydantic import BaseModel, Field
@@ -501,7 +501,7 @@ class CreateUserRequest(BaseModel):
 
 ## pydantic-settings：把配置当成数据来验证
 
-`pydantic-settings` 是 Pydantic 的姊妹库，专门处理应用配置。它把环境变量、`.env` 文件、命令行参数都当成数据源，用同一套 BaseModel 验证规则处理。配置缺失或类型错误在启动时暴露，而不是运行时才报错——手写 `os.getenv` 只在读取时返回字符串，类型转换和校验都要自己写。
+`pydantic-settings` 是 Pydantic 的配套库，专门处理应用配置。它把环境变量、`.env` 文件、命令行参数都当成数据源，用同一套 BaseModel 验证规则处理。配置缺失或类型错误在启动时暴露，不会等到运行时才报错——手写 `os.getenv` 只在读取时返回字符串，类型转换和校验都要自己写。
 
 ```python
 # settings.py
@@ -536,7 +536,7 @@ class Settings(BaseSettings):
 3. `.env` 文件
 4. 字段默认值
 
-按这个优先级，本地开发用 `.env`，生产用环境变量，临时覆盖用参数，不需要改代码。配置错误会在 `Settings()` 实例化时抛 `ValidationError`，应用启动阶段就暴露问题，而不是等到某个请求触发到错误的配置值才崩溃。
+按这个优先级，本地开发用 `.env`，生产用环境变量，临时覆盖用参数，不需要改代码。配置错误会在 `Settings()` 实例化时抛 `ValidationError`，应用启动阶段就暴露问题，不会等到某个请求触发了错误配置才崩溃。
 
 ### 嵌套配置
 
@@ -579,11 +579,11 @@ class Settings(BaseSettings):
 # APP_NAME=MyApp
 ```
 
-`env_nested_delimiter="__"` 让 `DATABASE__HOST` 自动映射到 `settings.database.host`。这比把所有配置拍平成 `DATABASE_HOST`、`REDIS_HOST` 更有结构，也更容易在 docker-compose 里按服务分组——一个服务的所有配置共享同一个前缀，删除或迁移时一目了然。
+`env_nested_delimiter="__"` 让 `DATABASE__HOST` 自动映射到 `settings.database.host`。这样比把所有配置拍平成 `DATABASE_HOST`、`REDIS_HOST` 更有结构，也更方便在 docker-compose 里按服务分组——一个服务的所有配置共享同一个前缀，删除或迁移时一目了然。
 
 ### 配置验证的常见用法
 
-配置验证的常见需求有三类：端口范围限制、日志级别枚举、列表型配置从环境变量读取。下面这个例子覆盖了这三种场景：
+配置验证的常见需求包括端口范围限制、日志级别枚举、列表型配置从环境变量读取。下面这个例子覆盖了这三种场景：
 
 ```python
 from typing import List
@@ -607,11 +607,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="APP_")
 ```
 
-`env_prefix="APP_"` 让所有字段从 `APP_PORT`、`APP_ALLOWED_HOSTS` 读取，避免与系统环境变量冲突。`field_validator(mode="before")` 把逗号分隔的字符串转成列表，这是处理"环境变量只能是字符串"限制的常见模式——环境变量没有列表类型，只能用字符串编码，`before` 验证器在类型转换前介入，把字符串拆成列表再交给 Pydantic。
+`env_prefix="APP_"` 让所有字段从 `APP_PORT`、`APP_ALLOWED_HOSTS` 读取，避免与系统环境变量冲突。`field_validator(mode="before")` 把逗号分隔的字符串转成列表——环境变量没有列表类型，只能用字符串编码，`before` 验证器在类型转换前介入，把字符串拆成列表再交给 Pydantic。
 
 ## 任务流案例：一次 FastAPI 请求的完整验证路径
 
-字段、验证器、序列化、Schema 这四块单独看都好理解，但它们在一次 API 请求里如何协作？拿一个创建用户的接口走一遍，看完整的验证路径。这条路径能回答三个问题：验证错误怎么定位、性能瓶颈在哪一层、验证器该挂在哪一层。
+拿一个创建用户的接口走一遍，看字段、验证器、序列化、Schema 如何协作。这条路径能回答三个问题：验证错误怎么定位、性能瓶颈在哪一层、验证器该挂在哪一层。
 
 假设有一个创建用户的接口，覆盖嵌套模型、Field 约束、field_validator、model_validator、响应模型，能展示 Pydantic 在真实 API 里的完整用法：
 
@@ -693,19 +693,19 @@ def create_user(req: CreateUserRequest) -> CreateUserResponse:
 3. **Rust 侧执行 `Field` 约束**：`username` 长度、`pattern` 匹配、`age` 范围、`address.postal_code` 正则——全部在 Rust 里跑完，不回到 Python。这是 V2 提速的主要来源。
 4. **Rust 侧调用 Python 的 `field_validator`**：`check_password_complexity` 是 Python 函数，Rust 通过 `PyCallable` 回调到 Python，拿到返回值或异常。这一步有 Rust ↔ Python 的上下文切换开销。
 5. **Rust 侧调用 Python 的 `model_validator`**：`check_username_not_in_password` 需要 `self`，所以等所有字段验证完后，在 Python 侧构造实例，再调用这个验证器。
-6. **所有错误收集到 `ValidationError`**：如果 `username` 不合规、`password` 不含大写字母、`age` 超范围，三个错误会一次性返回，而不是改一个看到一个。错误收集在 Rust 侧完成，最后转成 Python 异常。
+6. **所有错误收集到 `ValidationError`**：如果 `username` 不合规、`password` 不含大写字母、`age` 超范围，三个错误会一次性返回。错误收集在 Rust 侧完成，最后转成 Python 异常。
 7. **FastAPI 拿到 `CreateUserRequest` 实例**：传给路由函数 `create_user(req)`，业务代码只处理已验证的数据。
 8. **业务逻辑执行**：`save_to_db`、`hash_password` 等纯业务操作，不掺杂验证逻辑。业务代码不用再写 `if not req.email` 这种判断，验证责任已经被 Pydantic 接走。
-9. **响应序列化**：`response_model=CreateUserResponse` 让 FastAPI 把返回值用 `CreateUserResponse.model_validate(...)` 再验证一次，确保不泄漏 `password_hash` 等字段。响应验证是常被忽略的安全边界。
+9. **响应序列化**：`response_model=CreateUserResponse` 让 FastAPI 把返回值用 `CreateUserResponse.model_validate(...)` 再验证一次，确保不泄漏 `password_hash` 等字段。
 10. **OpenAPI 文档自动生成**：`CreateUserRequest.model_json_schema()` 和 `CreateUserResponse.model_json_schema()` 被嵌入 OpenAPI，Swagger UI 直接渲染请求/响应示例。文档生成发生在应用启动时，不是请求时。
 
-这条路径里，Pydantic 出现了三次：请求验证、响应验证、文档生成。三处共用同一份类型注解——请求模型改字段时，OpenAPI 文档自动更新，前端 TypeScript 类型重新生成，运行时验证规则同步生效，不需要人工同步三处。
+Pydantic 在这条路径里出现了三次：请求验证、响应验证、文档生成。三处共用同一份类型注解——请求模型改字段时，OpenAPI 文档自动更新，前端 TypeScript 类型重新生成，运行时验证规则同步生效，不需要人工同步三处。
 
-## 常见踩坑
+## 常见问题
 
 ### 1. `Field(regex=...)` 在 V2 里不生效
 
-V1 用 `regex`，V2 改成 `pattern`。`regex` 在 V2 里不会报错，但会被忽略，导致约束静默失效——这是 V1 → V2 迁移里最隐蔽的坑，因为代码看起来没问题，测试也可能漏掉（只有特定输入才会触发约束）。
+V1 用 `regex`，V2 改成 `pattern`。`regex` 在 V2 里不会报错，但会被忽略，导致约束静默失效——代码看起来没问题，但测试也可能漏掉（只有特定输入才会触发约束）。
 
 ```python
 # V1（已弃用）
@@ -791,7 +791,7 @@ Strict(flag=1)        # 报错：strict mode 不接受 int → bool
 Strict(flag="true")   # 报错：strict mode 不接受 str → bool
 ```
 
-严格模式下 `bool` 只接受 `True`/`False`，不接受 `0/1/"true"`。如果数据源是数据库的 `TINYINT(1)`，要么用宽松模式，要么在 `field_validator(mode="before")` 里手动转换——后者更安全，因为它把"数据库存储格式"和"业务模型类型"的转换显式化，而不是依赖隐式行为。
+严格模式下 `bool` 只接受 `True`/`False`，不接受 `0/1/"true"`。如果数据源是数据库的 `TINYINT(1)`，要么用宽松模式，要么在 `field_validator(mode="before")` 里手动转换——后者把"数据库存储格式"和"业务模型类型"的转换显式化，不依赖隐式行为。
 
 ### 7. `EmailStr` 需要额外依赖
 
@@ -799,7 +799,7 @@ Strict(flag="true")   # 报错：strict mode 不接受 str → bool
 pip install "pydantic[email]"
 ```
 
-`EmailStr` 依赖 `email-validator` 库，不安装会 `ImportError`。`pydantic[email]` 这个 extras 会自动装上。部署时如果用 `pip install pydantic` 而忘了 `[email]`，本地能跑线上报错——这类问题在 Docker 镜像里尤其常见，因为本地开发环境和 CI 构建环境的 `requirements.txt` 可能不一致。建议在 `pyproject.toml` 里声明 extras，而不是依赖开发者记住装哪个。
+`EmailStr` 依赖 `email-validator` 库，不安装会 `ImportError`。`pydantic[email]` 这个 extras 会自动装上。部署时如果用 `pip install pydantic` 而忘了 `[email]`，本地能跑线上报错——这类问题在 Docker 镜像里尤其常见，因为本地开发环境和 CI 构建环境的 `requirements.txt` 可能不一致。建议在 `pyproject.toml` 里声明 extras，避免依赖开发者记住安装。
 
 ### 8. 生产环境里 `ValidationError` 泄漏敏感输入
 
@@ -829,25 +829,25 @@ V2 的 Rust 核心大幅改善了嵌套模型的验证性能，但 4 层以上�
 
 ### 11. `model_validate` 和 `model_validate_json` 用混导致解析错误
 
-`model_validate` 接收 Python 对象（dict、ORM 对象），`model_validate_json` 接收 JSON 字符串。如果把 JSON 字符串传给 `model_validate`，Pydantic 会把整个字符串当成一个值去验证，而不是解析成对象——结果是把 `{"id": 1}` 当成一个字符串赋给某个字段，类型不匹配时报错，错误信息还很绕。从 HTTP 请求拿到的 `body` 如果是 `bytes` 或 `str`，用 `model_validate_json`；如果已经用 `json.loads` 解析过，用 `model_validate`。FastAPI 内部走的是 `model_validate_json`，所以自己手动验证时要对齐入口。
+`model_validate` 接收 Python 对象（dict、ORM 对象），`model_validate_json` 接收 JSON 字符串。如果把 JSON 字符串传给 `model_validate`，Pydantic 会把整个字符串当成一个值去验证，不会解析成对象——结果是把 `{"id": 1}` 当成一个字符串赋给某个字段，类型不匹配时报错，错误信息还很绕。从 HTTP 请求拿到的 `body` 如果是 `bytes` 或 `str`，用 `model_validate_json`；如果已经用 `json.loads` 解析过，用 `model_validate`。FastAPI 内部走的是 `model_validate_json`，所以自己手动验证时要对齐入口。
 
 ## 与其他库的取舍
 
-选型时不要只看"哪个更好"，要看"数据来源是什么"。内部数据用 `dataclasses`，外部数据用 Pydantic，需要 schema 与模型分离的老项目用 `marshmallow`，需要灵活性和 slots 的库内部 API 用 `attrs`。
+选型主要看数据来源：内部数据用 `dataclasses`，外部数据用 Pydantic，需要 schema 与模型分离的老项目用 `marshmallow`，需要灵活性和 slots 的库内部 API 用 `attrs`。
 
 ### Pydantic vs `dataclasses`
 
-`dataclasses` 适合"信任输入"的场景：内部数据结构、值对象、不需要运行时验证的容器。它没有验证开销，但也没有验证保护。如果数据来自外部（HTTP、文件、消息队列），用 `dataclasses` 等于把验证责任推给调用方，长期看会出 bug——某个调用方忘了校验，脏数据就一路流到业务层。判断标准很简单：数据来源是否在你的控制范围内？是的话用 `dataclasses`，不是的话用 Pydantic。
+`dataclasses` 适合"信任输入"的场景：内部数据结构、值对象、不需要运行时验证的容器。它没有验证开销，但也没有验证保护。如果数据来自外部（HTTP、文件、消息队列），用 `dataclasses` 等于把验证责任推给调用方，长期看会出 bug——某个调用方忘了校验，脏数据就一路流到业务层。数据来源是否在你的控制范围内？是的话用 `dataclasses`，不是的话用 Pydantic。
 
 两者可以混用：API 边界用 Pydantic，内部领域模型用 `dataclasses`，Pydantic 模型通过 `model_dump()` 转成 dict 再构造 dataclass。这种分层让验证开销只发生在边界，内部传递的是轻量级的 dataclass 实例。
 
 ### Pydantic vs `attrs`
 
-`attrs` 比 `dataclasses` 更灵活，支持 slots、自定义 `__init__`、验证器（但需要显式声明）。它的性能比 Pydantic V1 好，但比 V2 差——V2 的 Rust 核心让 `Field` 约束的执行开销低于 `attrs` 的 Python 验证器。`attrs` 的验证器是"可选附加"，不像 Pydantic 把验证作为核心契约。如果项目已经在用 `attrs` 且没有外部数据验证需求，不必迁移；如果是新项目且需要处理 API 输入，Pydantic 更合适。`attrs` 适合库内部 API，因为它的 slots 和内存布局对性能敏感的内部对象更友好。
+`attrs` 比 `dataclasses` 更灵活，支持 slots、自定义 `__init__`、验证器（但需要显式声明）。它的性能比 Pydantic V1 好，但比 V2 差——V2 的 Rust 核心让 `Field` 约束的执行开销低于 `attrs` 的 Python 验证器。`attrs` 的验证器是可选附加，不像 Pydantic 把验证作为基本功能。如果项目已经在用 `attrs` 且没有外部数据验证需求，不必迁移；如果是新项目且需要处理 API 输入，Pydantic 更合适。`attrs` 适合库内部 API，因为它的 slots 和内存布局对性能敏感的内部对象更友好。
 
 ### Pydantic vs `marshmallow`
 
-`marshmallow` 比 Pydantic 早，在 Flask 生态里常见。它的 schema 是单独定义的，与模型类分离——这是它的设计哲学，认为 schema 和模型应该解耦：
+`marshmallow` 比 Pydantic 早，在 Flask 生态里常见。它的 schema 单独定义，与模型类分离：
 
 ```python
 # marshmallow
@@ -861,7 +861,7 @@ class User(BaseModel):
     age: int = Field(ge=0)
 ```
 
-`marshmallow` 的分离设计在"schema 与模型解耦"上有优势，但代价是类型注解和验证规则不共享，IDE 提示和静态检查跟不上。新项目用 Pydantic 更主流；老 Flask 项目迁移成本高时可以保留 `marshmallow`，新接口可以试 `pydantic` + Flask-Pydantic 扩展，逐步替换而不是一次性重写。
+`marshmallow` 的分离设计在"schema 与模型解耦"上有优势，但代价是类型注解和验证规则不共享，IDE 提示和静态检查跟不上。新项目用 Pydantic 更主流；老 Flask 项目迁移成本高时可以保留 `marshmallow`，新接口可以试 `pydantic` + Flask-Pydantic 扩展，逐步替换，不必一次性重写。
 
 ## 错误处理与排查
 
@@ -990,13 +990,13 @@ def get_user(user_id: int) -> UserOut:
     return UserOut.model_validate(orm_user)
 ```
 
-`from_attributes=True` 让 `model_validate` 用 `getattr` 取值，所以 `UserOut.model_validate(orm_user)` 能直接从 SQLAlchemy 对象读字段。`UserOut` 不声明 `hashed_password`，所以即使 ORM 对象上有这个字段，响应里也不会出现——这是"用 schema 控制暴露"的标准模式，比在业务代码里手动 `del orm_user.hashed_password` 更可靠，因为 schema 是声明式的，不会因为某次代码修改而漏掉。
+`from_attributes=True` 让 `model_validate` 用 `getattr` 取值，所以 `UserOut.model_validate(orm_user)` 能直接从 SQLAlchemy 对象读字段。`UserOut` 不声明 `hashed_password`，所以即使 ORM 对象上有这个字段，响应里也不会出现——schema 是声明式的，不会因为某次代码修改而漏掉。
 
-SQLModel 是 Pydantic + SQLAlchemy 的融合方案，把两者合并成一个类，适合中小项目。大型项目里分离 ORM 和 schema 更清晰，因为持久化关注点和 API 边界关注点会逐渐分化——ORM 模型要适应数据库迁移、索引优化，API schema 要适应前端需求变化，两者耦合在一起会让任何一方的改动都牵动另一方。
+SQLModel 是 Pydantic + SQLAlchemy 的融合方案，把两者合并成一个类，适合中小项目。大型项目里分离 ORM 和 schema 是另一种选择，因为持久化关注点和 API 边界关注点会逐渐分化——ORM 模型要适应数据库迁移、索引优化，API schema 要适应前端需求变化，两者耦合在一起会让任何一方的改动都牵动另一方。
 
 ## Webhook 验证
 
-Webhook 是典型的"不信任外部输入"场景：来自 GitHub、Stripe 的 payload 必须验证签名和字段。签名验证保证数据来源可信，字段验证保证数据结构符合预期——两者缺一不可，签名通过但字段结构变化同样会导致处理逻辑出错。
+Webhook 是"不信任外部输入"的场景：来自 GitHub、Stripe 的 payload 必须验证签名和字段。签名验证保证数据来源可信，字段验证保证数据结构符合预期——两者缺一不可，签名通过但字段结构变化同样会导致处理逻辑出错。
 
 ```python
 from typing import Literal
@@ -1033,26 +1033,26 @@ def github_webhook(
     return {"status": "ok"}
 ```
 
-Webhook 集成里有三个细节，没注意到会在生产环境出诡异问题——签名验证失败但日志显示请求正常，或者新事件类型被静默丢弃。按重要性排序：
+Webhook 集成有几个细节需要注意：
 
-- **签名验证用原始 body**：`payload: GitHubWebhook` 已经被 FastAPI 解析过，签名要用 `raw_body: bytes = Body(...)` 拿原始字节算 HMAC，否则换行符、字段顺序差异会导致签名不匹配。这是 Webhook 集成里最常见的坑——签名总是对不上，但代码看起来没问题。
+- **签名验证用原始 body**：`payload: GitHubWebhook` 已经被 FastAPI 解析过，签名要用 `raw_body: bytes = Body(...)` 拿原始字节算 HMAC，否则换行符、字段顺序差异会导致签名不匹配。
 - **`Literal` 限定 action 枚举**：GitHub 新增 action 时，旧版本 Pydantic 会拒绝，避免未处理的 case 静默通过。这条策略的代价是需要定期跟进 GitHub 的 action 新增，否则合法事件会被拒。
 - **`HttpUrl` 规范化 URL**：自动去掉尾部斜杠、补全协议，避免下游处理时出意外。
 
 ## 迁移与采用顺序
 
-新项目和 V1 迁移项目分别有不同的采用路径。Pydantic 的价值在"不信任边界"上最大，越往系统内部、越信任数据，它的收益越小。
+新项目和 V1 迁移项目分别有不同的采用路径。Pydantic 在"不信任边界"上收益最明显，越往系统内部、越信任数据，收益越小。
 
 ### 新项目
 
-直接用 Pydantic V2，没有理由从 V1 开始。`pydantic-settings` 单独装，因为它从 2.0 起独立成包——`pip install pydantic pydantic-settings`。如果用 FastAPI，FastAPI 0.100+ 已原生支持 V2，不需要额外配置。
+直接用 Pydantic V2，新项目没有理由从 V1 开始。`pydantic-settings` 单独装，因为它从 2.0 起独立成包——`pip install pydantic pydantic-settings`。如果用 FastAPI，FastAPI 0.100+ 已原生支持 V2，不需要额外配置。
 
 ### V1 项目迁移
 
 迁移成本主要在三处。前两处是机械性改动，第三处需要重新审视验证逻辑：
 
 1. **API 重命名**：`.dict()` → `.model_dump()`、`.parse_obj()` → `.model_validate()`、`@validator` → `@field_validator`、`Config` 内部类 → `model_config = ConfigDict(...)`。可以用 `bump-pydantic` 工具半自动迁移，但迁移后要逐个检查，工具会漏掉一些动态调用。
-2. **自定义验证器签名变化**：V1 的 `@validator` 接收 `(cls, v, values, config, field)`，V2 的 `@field_validator` 只接收 `(cls, v)` 或 `(cls, v, info)`。依赖 `values` 的逻辑要改成 `model_validator(mode="after")` 里访问 `self`。这一步是迁移里最容易出 bug 的地方，因为 `values` 在 V1 里是已验证字段的字典，在 V2 里改用 `self` 后是字段属性，访问方式不同。
+2. **自定义验证器签名变化**：V1 的 `@validator` 接收 `(cls, v, values, config, field)`，V2 的 `@field_validator` 只接收 `(cls, v)` 或 `(cls, v, info)`。依赖 `values` 的逻辑要改成 `model_validator(mode="after")` 里访问 `self`。`values` 在 V1 里是已验证字段的字典，在 V2 里改用 `self` 后是字段属性，访问方式不同。
 3. **严格模式默认行为**：V1 的某些隐式转换在 V2 里改了，比如 `bool("false")` 在 V1 是 `True`（非空字符串），在 V2 是 `False`（识别 "false" 字面量）。迁移后要重跑测试覆盖这些边界，尤其是依赖隐式转换的测试用例。
 
 ### 采用顺序建议
@@ -1060,9 +1060,9 @@ Webhook 集成里有三个细节，没注意到会在生产环境出诡异问题
 按 ROI 从高到低排序，建议的采用顺序如下。每一步都可以独立交付价值，不需要一次性全做：
 
 - **第一步：API 边界**。把 FastAPI 路由的请求/响应模型用 Pydantic 重写，拿到验证 + 文档 + 类型提示三重收益。API 边界本来就是"不信任数据"的地方，Pydantic 的价值在这里最直接，ROI 最高。
-- **第二步：配置管理**。用 `pydantic-settings` 替代手写的 `os.getenv` 调用，让配置缺失和类型错误在启动时暴露，而不是运行时。改动小，但能消除一类"生产环境配置写错导致运行时崩溃"的 bug。
-- **第三步：内部领域模型**。把核心业务对象用 Pydantic 建模，配合 `strict=True` 让内部传递的类型不匹配尽早暴露。这一步要权衡——内部模型如果频繁变更，Pydantic 的验证开销可能不划算。
+- **第二步：配置管理**。用 `pydantic-settings` 替代手写的 `os.getenv` 调用，让配置缺失和类型错误在启动时暴露，不会等到运行时才报错。改动小，但能消除一类"生产环境配置写错导致运行时崩溃"的 bug。
+- **第三步：内部领域模型**。把业务对象用 Pydantic 建模，配合 `strict=True` 让内部传递的类型不匹配尽早暴露。这一步要权衡——内部模型如果频繁变更，Pydantic 的验证开销可能不划算。
 - **第四步：ORM 集成**。用 Pydantic schema 包装 SQLAlchemy 模型，控制 API 响应的字段暴露，解决"ORM 模型字段和 API 响应字段不一致"的问题。
-- **暂缓**：纯计算函数的输入输出、性能敏感的热路径（每秒百万次调用的代码），这些场景 `dataclasses` 或裸 dict 更合适。判断标准是：如果这段代码已经在用 profiler 优化，验证开销可能就是下一个瓶颈。
+- **暂缓**：纯计算函数的输入输出、性能敏感的热路径（每秒百万次调用的代码），这些场景 `dataclasses` 或裸 dict 更合适。如果这段代码已经在用 profiler 优化，验证开销可能就是下一个瓶颈。
 
 Pydantic 放在边界最经济：内部代码处理已经验证过的 Python 对象。
