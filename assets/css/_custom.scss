@@ -1,10 +1,3 @@
-/* 浮动 pill 顶栏实际高度（padding 1.25 + dock 2.6 + padding 0.75 ≈ 4.6rem）
-   大于主题默认的 --header-height（3.5rem），需要同步抬高，
-   否则 fixed 顶栏会向下溢出，遮挡页面顶部内容。 */
-:root {
-  --header-height: 4.8rem;
-}
-
 /* 品牌标识：纯文字 wordmark，无装饰层 */
 .header-title {
   overflow: visible;
