@@ -143,6 +143,7 @@ gh api "repos/$REPO/contents/" --jq '.[].name'
 - 分类：技术笔记
 - 文风：**准确、专业、优雅、有品味**（2026-07-20 师父拍板，本 skill 全局生效；原文风"专业、克制、可验证"为子集）
 - 目标：帮助读者判断项目价值并完成首次上手
+- **文件路径**：默认单文件 `content/posts/<category>/<slug>.md`；仅当文章含本地图片/资源（截图、架构图等）时才用 Page Bundle `content/posts/<category>/<slug>/index.md`。禁止参照"上一篇文章的形态"来决定，禁止预防性占位。
 
 **风格铁律：准确、专业、优雅、有品味**
 

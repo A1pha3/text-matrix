@@ -127,7 +127,7 @@
 
 ## single-file-deliverable
 
-输入：在一个 Hugo 博客仓库（文章约定为 content/posts/<slug>/index.md）里写一篇新文章；用户只说"写进仓库"，未指定具体文件路径；要求发布级 / S 级质量，且明确不要追问。
+输入：在一个 Hugo 博客仓库（文章约定为 `content/posts/<category>/<slug>.md` 单文件，含本地资源时才用 `content/posts/<category>/<slug>/index.md` Page Bundle）里写一篇新文章；用户只说"写进仓库"，未指定具体文件路径；要求发布级 / S 级质量，且明确不要追问。
 
 失败表现：
 
