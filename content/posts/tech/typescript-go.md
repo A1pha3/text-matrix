@@ -3,7 +3,7 @@ title: "TypeScript Go：微软用 Go 重写 TypeScript 编译器"
 date: "2026-04-27T01:00:00+08:00"
 slug: typescript-go-native-port
 github_repo: "microsoft/typescript-go"
-description: "微软将 TypeScript 编译器（tsc）从 TypeScript/JavaScript 重写为 Go 语言实现，GitHub 25k stars。解析这个 native port 的动机、架构设计、当前进度与未来影响。"
+description: "微软将 TypeScript 编译器（tsc）从 TypeScript/JavaScript 重写为 Go 语言实现，GitHub 26.1K stars。解析这个 native port 的动机、架构设计、当前进度与未来影响。"
 draft: false
 categories: ["技术笔记"]
 tags: ["TypeScript", "Go", "编译器", "微软", "性能优化", "编程语言"]
@@ -11,9 +11,9 @@ tags: ["TypeScript", "Go", "编译器", "微软", "性能优化", "编程语言"
 
 # TypeScript Go：微软用 Go 重写 TypeScript 编译器
 
-2025 年，微软 TypeScript 团队将 tsc 从 TypeScript/JavaScript 重写为 Go。项目 `microsoft/typescript-go` 上线即获 25k stars，目前以 `@typescript/native-preview` npm 包提供预览版。
+2025 年，微软 TypeScript 团队将 tsc 从 TypeScript/JavaScript 重写为 Go。项目 `microsoft/typescript-go` 上线获 26.1K stars，目前以 `@typescript/native-preview` npm 包提供预览版。
 
-收益来自本地机器码、无运行时依赖、接近零的启动延迟、原生多线程。对小型项目感知不强，但百万行级别的 TypeScript 代码库中，增量构建和类型检查的耗时一直是开发体验的瓶颈。
+换成 Go 之后，本地机器码、无运行时依赖、接近零的启动延迟、原生多线程，这些收益直接落地。对小型项目感知不强，但百万行级别的 TypeScript 代码库中，增量构建和类型检查的耗时一直是开发体验的瓶颈。
 
 ---
 
@@ -34,7 +34,7 @@ TypeScript 编译器自诞生以来就是用 TypeScript/JavaScript 写的——�
 | 多核利用 | 受限于事件循环 | Goroutine 原生并发 |
 | 增量编译 | 受语言架构限制 | 成熟的高效实现 |
 
-目标是将 tsc 变为可直接分发、本地执行的高效二进制工具，而非需要 JS 运行时支撑的解释型工具。
+目标是把 tsc 变成可直接分发、本地执行的二进制工具，不再依赖 JS 运行时。
 
 ---
 
@@ -193,7 +193,7 @@ type ObjectType struct {
 
 ## 为什么是 Go 而不是 Rust
 
-Rust 同样可编译为机器码，性能极强、内存安全，但微软选择了 Go：
+Rust 也能编译为机器码，性能强、内存安全，但微软选了 Go：
 
 | 考量 | Go 的优势 |
 |------|----------|
@@ -203,7 +203,7 @@ Rust 同样可编译为机器码，性能极强、内存安全，但微软选择
 | 并发模型 | Goroutine 对编译器这种 IO 密集型任务天然友好 |
 | 学习曲线 | 门槛低，社区贡献者容易上手 |
 
-Rust 在内存控制和零成本抽象上更优，但 Go 的简洁在这个场景里更务实——TypeScript 团队的首要目标是产出与原版行为完全一致的编译器，技术选型服务于这个目标，而非追求理论最优。
+Rust 在内存控制和零成本抽象上更优，但 Go 的简洁在这个场景里更务实——TypeScript 团队的首要目标是产出与原版行为完全一致的编译器，技术选型服务于这个目标，不是追求理论最优。
 
 ---
 
@@ -215,13 +215,13 @@ Rust 在内存控制和零成本抽象上更优，但 Go 的简洁在这个场�
 2. **中期**：所有功能达到 `done` 状态，发布稳定版 npm 包
 3. **长期**：合并回 `microsoft/TypeScript` 主仓库，`tsc` 二进制默认使用 Go 版本
 
-届时，所有 TypeScript 用户将无感地享受到 Go 版本带来的性能提升——只需升级 TypeScript 版本，无需改变任何使用习惯。
+届时，TypeScript 用户只需升级版本，就能拿到 Go 版本的性能提升，使用习惯不需要改变。
 
 ---
 
 **相关链接：**
 
-- GitHub：https://github.com/microsoft/typescript-go（25k stars）
+- GitHub：https://github.com/microsoft/typescript-go（26.1K stars）
 - 公告博客：https://devblogs.microsoft.com/typescript/typescript-native-port/
 - npm：https://www.npmjs.com/package/@typescript/native-preview
 - VS Code 扩展：https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.native-preview

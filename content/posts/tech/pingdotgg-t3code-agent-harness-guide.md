@@ -10,7 +10,7 @@ github_repo: "pingdotgg/t3code"
 
 # T3 Code：Theo 的 Agent 控制台，远程驾驭 Claude Code 与 Codex
 
-AI 编程 agent（智能体）都有一个跑不掉的约束：它们跑在你电脑的终端里，你就得坐在终端前。Claude Code 在跑一个跨文件重构时，你出去吃顿饭，回来发现它停在某个审批点等你——这半小时本可以不用守在屏幕前。T3 Code 拆掉的正是这条绑定：agent 的进程仍在你的机器上，操控面搬到手机、浏览器和桌面，你在哪儿，控制台就在哪儿。
+AI 编程 agent（智能体）都有一个逃不掉的约束：它们跑在你电脑的终端里，你就得坐在终端前。Claude Code 在跑一个跨文件重构时，你出去吃顿饭，回来发现它停在某个审批点等你——这半小时本可以不用守在屏幕前。T3 Code 拆掉的正是这个约束：agent 的进程仍在你的机器上，操控面搬到手机、浏览器和桌面，你在哪儿，控制台就在哪儿。
 
 先把判断亮出来：T3 Code 是壳，不是 agent。它不跑模型、不做代码生成，管理的是你已安装并认证的 agent 进程——把「坐在终端前」变成「躺在沙发上，偶尔低头看一眼」。评估它，标准是这层壳顺不顺手，代码能力不归它管。
 
@@ -55,7 +55,7 @@ T3 Code 的 README 把自己定位为 agent harness control surface——控制�
 
 ## 二、系统地图
 
-T3 Code 的架构可以压缩成一张图：客户端通过一条 WebSocket 连到服务端，服务端通过驱动适配器指挥各个 agent CLI（命令行工具）。远程与否只是连接方式的差异，运行时本身不因客户端在哪而改变。
+T3 Code 的架构可以压缩成一张图：客户端通过一条 WebSocket 连到服务端，服务端通过驱动适配器指挥各个 agent CLI（命令行工具）。这张图里没有「远程模式」和「本地模式」之分——客户端在哪，不影响服务端怎么跑。
 
 ```mermaid
 graph TB
@@ -80,7 +80,7 @@ graph TB
 
 T3 Code 的服务端不直接改应用状态。客户端派发类型化命令，编排引擎把命令变成持久化事件，再由投影器推导出读模型——标准的 event sourcing 结构，落地却一点也不含糊。
 
-`OrchestrationEngine` 内部是一条单 worker 的命令队列，命令处理完全有序：先查持久化收据保证重试幂等，再用纯函数 `decider` 从「命令 + 当前状态」产出事件，最后在同一个 SQL 事务里追加事件、更新内存读模型、写回投影表、记录收据。因为持久化和投影共享一个事务，读模型永远不可能和事件日志不一致。
+`OrchestrationEngine` 内部是一条单 worker 的命令队列，命令处理完全有序：先查持久化收据保证重试幂等，再用纯函数 `decider` 从「命令 + 当前状态」产出事件，最后在同一个 SQL 事务里追加事件、更新内存读模型、写回投影表、记录收据。因为持久化和投影共享一个事务，读模型永远不可能和事件日志不一致。`decider` 保持纯函数不是洁癖——事件要能重放，重放要能得出同样结果，任何副作用（写文件、发请求、读时钟）都会让重放失真。
 
 命令和事件在契约层有明确的命名边界。客户端可以派发 `thread.create`、`thread.turn.start`、`thread.approval.respond` 这类命令；而 `thread.message.assistant.delta`、`thread.turn.diff.complete` 这类事件只能由服务端 reactor 产出，客户端造不出来。turn 何时结束也由投影器判定——session 离开 running 状态的那一刻，而不是检查点收尾的时刻。
 
@@ -119,7 +119,7 @@ T3 Code 的远程模型一句话就能说清：远程只存在于连接层，运
 
 配对流程设计得比传统 token（令牌）登录干净：`t3 serve`（或对运行中的服务器执行 `t3 pair`）签发一次性配对 token，远程设备用它交换会话，之后访问全部基于会话，不需要长期秘密。WebSocket 的认证票据独立签发，默认五分钟过期，且每个 RPC 方法还各自校验权限范围——拿到一条合法连接不代表能调所有方法。会话管理单独交给 `t3 auth`：签发额外凭据、查看活跃会话、吊销不再信任的配对，都在这一条命令下完成。
 
-客户端和远程服务器版本不一致时，连接层不会静默失败：环境描述符携带运行中的服务器版本，UI 据此显示对应的同步操作，服务端也支持更新回滚。远程环境在客户端升级期间保持在线，断线重连由连接管理器统一处理，和普通网络抖动走同一条恢复路径。
+客户端和服务端版本不一致时，连接层不会静默失败：环境描述符携带运行中的服务端版本，UI 据此显示对应的同步操作，服务端也支持更新回滚。远程环境在客户端升级期间保持在线，断线重连由连接管理器统一处理，和普通网络抖动走同一条恢复路径。
 
 ## 五、示例：一次 bug 修复如何流过系统
 
@@ -134,7 +134,7 @@ T3 Code 的远程模型一句话就能说清：远程只存在于连接层，运
 到这里，agent 在服务器上继续跑，手机可以锁屏。异步里程碑由服务端队列推进，与设备是否在线无关：
 
 6. `ProviderRuntimeIngestion` 消费 Claude Code 的事件流，归一化为编排命令
-7. 遇到需要授权的操作，agent 停在审批点，手机收到 `thread.approval.respond` 请求，你点一下批准
+7. 遇到需要授权的操作，agent 停在审批点，手机弹出审批请求，你点一下批准，客户端据此派发 `thread.approval.respond` 命令
 8. `CheckpointReactor` 捕获 turn 完成时的快照，投影出 diff
 9. 服务端通过订阅推送把进度和 diff 实时同步到手机
 10. 你审阅 diff，点一键 PR，分支和变更日志自动就位
@@ -149,13 +149,13 @@ agent 远程控制和编排不是 T3 Code 独有。拿它跟几个常被一起�
 |------|---------|---------------|----------|
 | 多 agent | Codex/Claude/Cursor/Grok/OpenCode | 通用 | 通用 |
 | 远程控制 | ✅ 移动/Web/桌面 | ❌ 仅桌面 | ❌ 仅桌面 |
-| 线程→Git worktree | ✅ | ✅ | 未披露 |
+| 线程→Git worktree | ✅ | 独立 workspace | 未披露 |
 | 一键 PR | ✅ 自动变更日志 | 未披露 | 未披露 |
 | 许可证 | MIT | 不开源 | Elastic 2.0（source-available） |
 
-T3 Code 的差异化优势是远程控制和多 agent 统一入口。Superset 走的是「编辑器形态 + 十路并行」路线，Parallel Code 强调每个 agent 独立 workspace。想离开电脑操作 agent，T3 Code 目前是最直接的选择；如果一次要跑十个 agent，Superset 的方向可能更接近你的需求。
+T3 Code 的取舍很清晰：远程控制和多 agent 统一入口。Superset 走的是「编辑器形态 + 十路并行」路线，Parallel Code 强调每个 agent 独立 workspace。想离开电脑操作 agent，T3 Code 目前是最直接的选择；如果一次要跑十个 agent，Superset 的方向可能更接近你的需求。
 
-它和 Cursor、Copilot 也不是一类东西。后者长在 IDE（集成开发环境）里，是编辑器身上的插件；T3 Code 站在 IDE 之外，管理的是完整的 agent 会话——它不依赖你用哪个编辑器，你甚至可以没有编辑器，只有终端。两者可以共存，不构成替代关系。
+它和 Cursor、Copilot 也不是一类东西。Cursor 是 AI 优先的编辑器，Copilot 是 IDE（集成开发环境）里的插件，都长在编辑生态内；T3 Code 站在 IDE 之外，管理的是完整的 agent 会话——它不依赖你用哪个编辑器，你甚至可以没有编辑器，只有终端。两者可以共存，不构成替代关系。
 
 ## 七、快速上手
 
@@ -167,7 +167,7 @@ npx t3@latest
 npx t3@latest --help
 ```
 
-**前置条件**：至少安装并认证一个 agent——`claude auth login`、`codex login`、`agent login`（Cursor）、`grok login` 或 `opencode auth login`，确认它在终端能正常跑。T3 Code 不产生 agent 能力，它只接管你已经有的。
+**前置条件**：至少安装并认证一个 agent——`claude auth login`、`codex login`、`agent login`（Cursor）、`grok login` 或 `opencode auth login`，确认它在终端能正常跑。T3 Code 不产生 agent 能力，它只驱动你已经有的。
 
 桌面安装走各平台包管理器：Windows 用 `winget install T3Tools.T3Code`，macOS 用 `brew install --cask t3-code`，Arch 用 `yay -S t3code-bin`。远程访问的完整配置见 [remote-access.md](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md)。
 
@@ -180,10 +180,10 @@ npx t3@latest --help
 先确认手机和服务器在同一网络，或已配置 Tailscale。在服务器上运行 `npx t3 pair` 生成二维码扫描配对，不要手输 IP。`--tailscale` 选项要求 Tailscale 已登录并运行。服务器在 NAT 后面时改用 `t3 connect` 中继隧道。桌面 App 用户也可以走 Settings → Connections 的图形化配对流程。
 
 **WebSocket 频繁断连**
-T3 Code 的实时通道依赖 WebSocket，弱网可能断连。优先在稳定网络下使用，或换 SSH 隧道。Linux 上以 systemd 服务运行时，可查看服务日志（如 `journalctl -u t3code`）辅助排查。
+T3 Code 的实时通道依赖 WebSocket，弱网可能断连。优先在稳定网络下使用，或换 SSH 隧道。Linux 上以 systemd 后台服务运行时，用 `npx t3@latest service status` 检查服务状态，`npx t3@latest service update` 修复。
 
 **如何更新 T3 Code**
-`npx t3@latest` 每次运行自动拉最新版；桌面 App 在 GitHub Releases 下载新版，macOS 可 `brew upgrade t3-code`。注意客户端和远程服务器版本不一致时，界面会提示同步操作，更新前先结束进行中的任务——服务端会短暂重启。
+`npx t3@latest` 每次运行自动拉最新版；桌面 App 在 GitHub Releases 下载新版，macOS 可 `brew upgrade t3-code`。注意客户端和服务端版本不一致时，界面会提示同步操作，更新前先结束进行中的任务——服务端会短暂重启。
 
 **T3 Code 免费吗**
 开源免费，MIT 许可证。费用只来自你已有的 agent 订阅——Claude Code、Codex 等各自的账单，T3 Code 本身不额外收费。

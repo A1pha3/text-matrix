@@ -3,7 +3,7 @@ title: "ripienaar/free-for.dev：一份给 DevOps 用的 SaaS 免费 Tier 检索
 date: "2026-06-26T21:05:09+08:00"
 slug: "ripienaar-free-for-dev-developer-resources-curated-list"
 github_repo: "ripienaar/free-for-dev"
-description: "free-for-dev 不是代码项目，是一份聚焦基础设施开发者的 SaaS/PaaS/IaaS 免费 tier 清单，1600+ 人贡献、10 年仍在逐条维护。本文拆解它的收录门槛、PR 流程、anti-AI 政策与典型分类，并讨论中文开发者该如何用以及免费 tier 的真实局限。"
+description: "free-for-dev 不是代码项目，是一份聚焦基础设施开发者的 SaaS/PaaS/IaaS 免费 tier 清单，1600+ 人贡献、11 年仍在逐条维护。本文拆解它的收录门槛、PR 流程、anti-AI 政策与典型分类，讨论中文开发者该如何用以及免费 tier 的真实局限。"
 draft: false
 categories: ["技术笔记"]
 tags: ["GitHub", "SaaS", "DevOps", "Awesome List"]
@@ -13,31 +13,31 @@ tags: ["GitHub", "SaaS", "DevOps", "Awesome List"]
 
 > 这篇文章不是把 README 抄一遍。`ripienaar/free-for-dev` 是一个特殊的 GitHub 仓库——没有可运行代码、没有发布版本，只有一份 237 KB 的分类清单。它要解决的问题也很窄：**当你想自己搭一个 side project、需要 SaaS 后端时，怎么知道哪一家给得起免费 tier、免费到什么程度**。下面拆解这份清单的收录门槛、维护机制、典型分类，以及中文开发者真正用得上的姿势。
 >
-> 来源：GitHub [ripienaar/free-for-dev](https://github.com/ripienaar/free-for-dev)，提交记录截至 2026-06-24。
+> 来源：GitHub [ripienaar/free-for-dev](https://github.com/ripienaar/free-for-dev)，提交记录截至 2026-08-03。
 
 ## 一句话定位
 
-`free-for.dev`（GitHub 仓库）是一份按 60+ 类别组织的 SaaS / PaaS / IaaS 免费开发者层（free tier）清单。它由 1600+ 位贡献者通过 PR 维护，主线任务不是开发功能，而是逐条验证：服务还活着吗、免费 tier 还在不在、限额改了没有。最近一次提交是 2026-06-24 的 `Merge pull request #4504`，10 年没有断更。
+`free-for.dev`（GitHub 仓库）是一份按 60+ 类别组织的 SaaS / PaaS / IaaS 免费开发者层（free tier）清单。它由 1600+ 位贡献者通过 PR 维护，主线任务不是开发功能，而是逐条验证：服务还活着吗、免费 tier 还在不在、限额改了没有。最近一次提交是 2026-08-03 的 `Merge pull request #4686`，11 年没有断更。
 
 ## 项目状态
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 123,500+（仍在缓慢增长） |
-| Forks | 13,040 |
-| Watchers | 1,750+ |
+| Stars | 130,600+（仍在缓慢增长） |
+| Forks | 13,686 |
+| Watchers | 1,781 |
 | 默认分支 | `master` |
 | 收录条目 | 数百条（README 237 KB / 1648 行） |
 | 分类数 | 60+ |
 | 贡献者 | 1600+ |
 | 创建时间 | 2015-03-18 |
-| 最近提交 | 2026-06-24 |
+| 最近提交 | 2026-08-03 |
 | Topics | `awesome-list`、`free-for-developers` |
 | License | README 未声明（社区按 CC 惯例引用） |
 
 ## 这份清单解决的是什么问题
 
-当你想搭一个个人项目：数据库、邮件、对象存储、监控、日志、CI、CDN、API 网关……每个环节都有十几家可以选，但每家的免费 tier 数字藏在官网 Pricing 页第 8 个 tab 里。常见情况是：
+当你想搭一个个人项目：数据库、邮件、对象存储、监控、日志、CI、CDN、API 网关……每个环节都有十几家可以选，但每家的免费 tier 数字藏在官网 Pricing 页深处。常见情况是：
 
 - 注册完发现 "Free trial 30 days" 实际上**不是免费 tier**——过完 30 天就扣信用卡。
 - 用了一个标着 "Free" 的服务，跑了两周发现某个 API 限速到 10 req/day，根本不可用。
@@ -55,7 +55,7 @@ tags: ["GitHub", "SaaS", "DevOps", "Awesome List"]
 
 ## 维护机制：1600 人怎么协作一份 README
 
-清单型项目最大的风险是**信息腐烂**。`free-for.dev` 的维护机制值得专门讲一讲，因为里面有几条不太常见的规则。
+清单型项目最大的风险是**信息腐烂**。`free-for.dev` 的维护机制值得展开，因为里面有几条不太常见的规则。
 
 ### 1. PR 是唯一编辑通道
 
@@ -78,11 +78,11 @@ tags: ["GitHub", "SaaS", "DevOps", "Awesome List"]
 
 翻译过来：让 AI 代写 PR 会被关单+封号。这条规则在 GitHub 社区里很少见——多数 awesome-list 对 AI 写 PR 只是"不鼓励"，这里是直接禁止。维护者 R.I. Pienaar 在 `CONTRIBUTING.md` 里加了一句解释："We do not accept LLM written submissions."
 
-> 实际意义是：你可以让 AI 帮你查一个 SaaS 的免费 tier 数字、生成一段草稿，但**最终 PR 的语言、组织方式必须自己手写**。这是为了防止批量低质提交冲垮 review 队列。
+> 实际意义：你可以让 AI 帮你查一个 SaaS 的免费 tier 数字、生成一段草稿，但**最终 PR 的语言、组织方式必须自己手写**。这是为了防止批量低质提交冲垮 review 队列。
 
 ### 3. 公开维护者协调渠道
 
-仓库自带的 `index.html` 是站点首页 https://free-for.dev/ 的模板，没有外部数据库、没有后台管理脚本。**整套系统就是一个 README + GitHub PR + GitHub Pages**。这种"用 GitHub 当 CMS"的极简架构，反过来让"信息腐烂"问题有迹可循：任何人都能 git blame 某一行，看它最后一次更新是什么时候、谁改的。
+仓库自带的 `index.html` 是站点首页 https://free-for.dev/ 的模板，没有外部数据库、没有后台管理脚本。**整套系统就是一个 README + GitHub PR + GitHub Pages**。这种"用 GitHub 当 CMS"的极简架构，让"信息腐烂"有迹可循：任何人都能 git blame 某一行，看它最后一次更新是什么时候、谁改的。
 
 ### 4. 没有 CI 自动化校验
 
@@ -90,7 +90,7 @@ tags: ["GitHub", "SaaS", "DevOps", "Awesome List"]
 
 ## 分类地图：60+ 类别里最值得看哪些
 
-README 的目录有 60+ 个 H2 分类。按"side project 搭建"路径梳理，下面 12 个分类是最常用的：
+README 的目录有 60+ 个 H2 分类。按"side project 搭建"路径梳理，下面 12 个分类最常用：
 
 | 分类 | 解决的问题 | 典型免费 tier 例子 |
 |------|----------|------------------|
@@ -109,7 +109,7 @@ README 的目录有 60+ 个 H2 分类。按"side project 搭建"路径梳理，�
 
 > 这不是完整列表。`Source Code Repos` 下面还有 11 个、`PaaS` 下面 17+ 个、`APIs, Data, and ML` 下面 100+ 个。完整目录看 [GitHub README 顶部 TOC](https://github.com/ripienaar/free-for-dev#table-of-contents)。
 
-## 几个值得专门看的免费 tier 例子
+## 几个值得看的免费 tier 例子
 
 挑几条**数字有代表性**的，让你直观感受"免费 tier"通常是什么尺度。
 
@@ -162,7 +162,7 @@ Oracle Cloud 的免费层是 IaaS 里**最慷慨**的一档（按 README 列出�
 
 ### Apify 抓取 API
 
-如果你需要爬数据但不想自己写爬虫，`APIs, Data, and ML` 分类下有 100+ 候选。最常用的是 Apify（$5 平台额度/月免费）、Browse AI、ScrapingAnt、SerpApi 等。这条路径在 2024 年之后越来越重要——多数网站开始拦截直接抓取，云端 API 成了唯一稳定通道。
+如果你需要爬数据但不想自己写爬虫，`APIs, Data, and ML` 分类下有 100+ 候选。最常用的是 Apify（$5 平台额度/月免费）、Browse AI、ScrapingAnt、SerpApi 等。2024 年后多数网站开始拦截直接抓取，云端 API 成了唯一稳定通道。
 
 ## 中文开发者怎么用这份清单
 
@@ -194,7 +194,7 @@ Oracle Cloud 的免费层是 IaaS 里**最慷慨**的一档（按 README 列出�
 
 - 阿里云、腾讯云、华为云——**不在本清单**，因为它们的免费 tier 主要面向企业认证。
 - GitHub、Cloudflare、Vercel 的部分功能有非官方中文文档，但官方支持以英文为主。
-- 如果你最终要交付给国内用户，建议把 `free-for.dev` 用来搭原型，再迁移到国内云的等价服务。
+- 如果最终要交付给国内用户，建议把 `free-for.dev` 用来搭原型，再迁移到国内云的等价服务。
 
 ### 4. 真正的"中文友好"子集
 
@@ -212,7 +212,7 @@ Oracle Cloud 的免费层是 IaaS 里**最慷慨**的一档（按 README 列出�
 
 ## 免费 tier 的真实局限
 
-这是读这份清单时**最容易踩的坑**：清单上的"免费"是有边界的。下面这五类边界每个清单条目几乎都存在：
+清单上的"免费"是有边界的。下面这五类边界几乎每个条目都存在：
 
 ### 1. 限速 / 限容量
 
@@ -288,8 +288,8 @@ SaaS 行业每年都有关停。`free-for.dev` 自己的维护工作很大一部
 
 ## 总结
 
-`free-for-dev` 的真正价值不在"列了多少服务"，而在**把"免费 tier"这个含糊的营销话术，拆成可验证的数字 + 明确的边界**。它 11 年没有断更、1600+ 人协作、anti-AI 政策严格、收条门槛清晰——这些维护机制决定了清单里的信息是相对可信的。
+`free-for-dev` 的真正价值不在"列了多少服务"，而在于**把"免费 tier"这个含糊的营销话术，拆成可验证的数字 + 明确的边界**。它 11 年没有断更、1600+ 人协作、anti-AI 政策严格、收条门槛清晰——这些维护机制决定了清单里的信息是相对可信的。
 
 中文开发者用这份清单时，主要做三件事：**用关键词定位候选**、**确认免费 tier 数字**、**认清"免费"背后的限速/限时/限区域边界**。把它当作 side project 阶段的 SaaS 选型参考，而不是生产架构建议。
 
-源仓库：[https://github.com/ripienaar/free-for-dev](https://github.com/ripienaar/free-for-dev)（123,500+ stars，2026-06-24 仍在更新）。
+源仓库：[https://github.com/ripienaar/free-for-dev](https://github.com/ripienaar/free-for-dev)（130,600+ stars，2026-08-03 仍在更新）。
