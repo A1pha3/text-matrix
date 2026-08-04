@@ -10,17 +10,15 @@ author: "钳岳星君"
 
 # 100 年前 Ramanujan 写下素数的秘密，今天一台机器在 Lean 里证明它
 
-1916 年冬天，英国剑桥，Srinivasa Ramanujan 在 G. H. Hardy 寄来的信纸上写下了一串当时无人能解的数学公式。其中一个函数后来被数学家称为 **τ(n)**——取值在 1、−24、252、−1472、4830 之间跳跃的奇怪数列。
+1916 年冬天，英国剑桥，Srinivasa Ramanujan 在 G. H. Hardy 寄来的信纸上写下了一串当时无人能解的公式。其中一个函数后来被数学家称为 **τ(n)**——取值在 1、−24、252、−1472、4830 之间跳跃的奇怪数列。
 
 110 年后，加州帕罗奥图的一间办公室里，一台叫 **AxiomProver** 的机器在 Lean 定理证明器里用 500 步推理节点证明：τ(n) 取素数值的密度，**在 ABC 猜想成立的条件下几乎为零**。这是 Ramanujan 那个让数学家琢磨了一个世纪的问题——τ(n) 取素数值的频率——目前能给出的**最直接的回答**。
 
 这台机器的"教练"之一，是 2025 年离开弗吉尼亚大学讲席教授席位、加入一家叫 Axiom Math 的初创公司的 Ken Ono。Ono 是当代最懂 Ramanujan 的数学家之一——他 2000 年在《Annals of Mathematics》证明 Ramanujan 同余定理，担任过拉马努金传记电影《The Man Who Knew Infinity》的数学顾问和副制片人。
 
-2026 年 6 月 5 日，Axiom Math 创始人兼 CEO Carina Hong 在 SAIR 基金会主办的 2026 Science x AI Summit 上发表了主题演讲。Hong 给出的成绩单没有"AI 颠覆数学"的廉价口号：**自 2026 年 2 月起，Axiom 已发布 7 篇数学研究论文，5 篇涉及形式化定理证明，3 项成果被《Archiv der Mathematik》《Indagationes Mathematicae》等期刊接收**。更让数学家注意的是一个数字：去年 12 月 AxiomProver 解决 Erdos 问题时用了约 50 个推理节点；今年 3 月证明 Ramanujan tau 函数性质时，推理节点从 50 增长到 500——**10 倍跃升**。
+2026 年 6 月 5 日，Axiom Math 创始人兼 CEO Carina Hong 在 SAIR 基金会主办的 2026 Science x AI Summit 上发表主题演讲。成绩单没有"AI 颠覆数学"的廉价口号：**自 2026 年 2 月起，Axiom 已发布 7 篇数学研究论文，5 篇涉及形式化定理证明，3 项成果被《Archiv der Mathematik》《Indagationes Mathematicae》等期刊接收**。更值得注意的数字是：去年 12 月 AxiomProver 解决 Erdos 问题时用了约 50 个推理节点；今年 3 月证明 Ramanujan tau 函数性质时，推理节点从 50 增长到 500——**10 倍跃升**。
 
 本文沿着 Hong 的演讲、Axiom 的论文列表、Ken Ono 的学术轨迹、Ramanujan 的原始笔记四条线展开：**它做到了什么、怎么做到的、和真正的数学家差在哪里、又把数学发现这件事推到了什么位置**。
-
-本文会回答：AxiomProver 的 50→500 推理节点跃升意味着什么；形式化验证为什么是"AI 做数学"的分界线；Axiom 的技术路线如何拆解为多智能体 + 工具调用 + 测试时计算；以及 Lean 形式化验证如何从零开始体验。
 
 ---
 
@@ -52,9 +50,9 @@ Axiom 的 12 篇论文里，**5 篇是"完全由 AI 自主证明并形式化"的
 
 在 Axiom 这种"AI 数学家"出现之前，绝大多数 AI 攻克的数学问题都是**单点突破**。
 
-AI 在国际数学奥林匹克（IMO）上拿过的奖牌，遵循的是"考前刷题 → 考试对线 → 出分"的标准范式。这条范式的问题不在"AI 解不出 IMO 题"，而在"AI 解出 IMO 题不等于 AI 会做数学研究"——**IMO 是 100 米短跑，数学研究是马拉松加铁人三项，规则根本不一样**。
+AI 在国际数学奥林匹克（IMO）上拿过的奖牌，遵循的是"考前刷题 → 考试对线 → 出分"的标准范式。这条范式的问题不在"AI 解不出 IMO 题"，而在"AI 解出 IMO 题不等于 AI 会做数学研究"——**IMO 是 100 米短跑，数学研究是马拉松加铁人三项，规则完全不同**。
 
-2024 年 7 月，Google DeepMind 的 AlphaProof 在国际数学奥林匹克（IMO）拿了一块银牌，这是 AI 第一次在数学竞赛里达到接近金牌的水平。2025 年，DeepMind 推出 Gemini Deep Think 加 AlphaProof 的组合，在 IMO 拿下了金牌级别的成绩。一时间，"AI 攻克数学"成了科技媒体的头条。
+2024 年 7 月，Google DeepMind 的 AlphaProof 在 IMO 获得银牌，这是 AI 首次在数学竞赛中逼近金牌水平。2025 年，DeepMind 将 Gemini Deep Think 与 AlphaProof 组合，拿下金牌级成绩。"AI 攻克数学"成为科技媒体头条。
 
 但 Hong 在演讲里给出了一个批评：**Erdos 问题是这场狂欢里最响亮的一记警钟**。
 
@@ -74,13 +72,13 @@ Erdos 有一句被反复引用的话："数学的进步不是来自解决单个�
 
 ## 第二幕：Axiom 的硬核路径——把 Lean 当成共同作者
 
-Axiom Math 2024 年成立，总部在加州帕罗奥图。官网 axiommath.ai 上挂着一句克制的口号："The Starting Point for Reasoning"。创始数学家 Ken Ono 是公司的科学灵魂，CEO Carina Hong 是商业和工程大脑。
+Axiom Math 2024 年成立，总部在加州帕罗奥图。官网 axiommath.ai 上挂着一句克制的口号："The Starting Point for Reasoning"。Ken Ono 是公司的科学核心，CEO Carina Hong 负责商业和工程。
 
 Ken Ono 1968 年生于费城，父亲 Takashi Ono 是日本数学家。他高中退学后进入芝加哥大学，1989 年拿到本科学位，1993 年在 UCLA 博士毕业。此后辗转普林斯顿高等研究院、宾大、威斯康星、埃默里、弗吉尼亚，担任过美国数学会副主席（2018-2021）、美国科学促进会数学分会主席（2020-2023）。2019 年他与 Don Zagier 在《PNAS》发表了关于黎曼猜想 Jensen-Polya 判据的论文，2014 年与 Michael Griffin 证明 Umbral Moonshine 猜想。2000 年他在《Annals of Mathematics》证明 Ramanujan 同余定理的那篇论文，是把"挂在大数学家遗稿里的猜想"重新激活的经典操作。他还是拉马努金传记电影《The Man Who Knew Infinity》的数学顾问和副制片人——这部电影由 Jeremy Irons 饰演 Hardy、Dev Patel 饰演 Ramanujan。
 
-2025 年，他做了一个让学术圈意外的决定：**离开弗吉尼亚大学 Thomas Jefferson 讲席教授席位，加入一家成立不到一年的初创公司**。理由他在多个访谈里说过：他想做的事是"重塑数学发现的范式"，而这件事只能在工业界完成，学术界的激励机制不允许。
+2025 年他做了一个让学术圈意外的决定：**离开弗吉尼亚大学 Thomas Jefferson 讲席教授席位，加入一家成立不到一年的初创公司**。理由他在多个访谈里说过：他想做的是"重塑数学发现的范式"，而这件事只能在工业界完成，学术界的激励机制不允许。
 
-2025 年之前的 Ken Ono 是 1990 年代那种"学术明星"——拿 NSF CAREER、Packard、Guggenheim、Sloan 四项青年大奖，是美国数学会副主席，是电影《The Man Who Knew Infinity》的副制片。2025 年之后的 Ken Ono 把自己塞进一个不到 50 人的初创公司里写 Lean 代码。在 UVA 数学系给本科生讲了一辈子课的讲席教授，转身去给一个 AI 训练数据集打标签、做 proof 校对——这种转型在数学界并不常见。
+2025 年之前的 Ken Ono 是典型的学术明星——拿 NSF CAREER、Packard、Guggenheim、Sloan 四项青年大奖，美国数学会副主席，电影《The Man Who Knew Infinity》的副制片。2025 年之后的 Ken Ono 把自己塞进一家不到 50 人的初创公司写 Lean 代码。在 UVA 数学系给本科生讲了一辈子课的讲席教授，转身去给 AI 训练数据集打标签、做 proof 校对——这种转型在数学界并不常见。
 
 Axiom 给 Ono 提供的工具，是一个叫 **AxiomProver** 的内部 AI 证明器，以及一个叫 **AXLE** 的开源工具集——AXLE 是 Axiom 推出来让全社区用的"Lean 形式化验证加速器"，可以自动测试证明（test verify_proof）、抽取定理（extract theorems）、做证明变形（experiment with proof transformations）。AXLE Playground 是公开的：axle.axiommath.ai。
 
@@ -120,9 +118,9 @@ AxiomProver 自主生成了主定理的证明，并 autoformalized 成 Lean 形�
 
 Axiom 的做法是工程化的诚实：把"如果 ABC 猜想成立，那么 τ(n) 取素数密度为零"这个**条件命题**先证下来——这本身已经是有分量的工作——然后把无条件版本留给人类数学家。
 
-### 故事 2：几乎所有素数都是部分正则的（论文 #10）
+### 故事 2：几乎所有素数都是部分正则的（论文 #4）
 
-第二篇被《Archiv der Mathematik》接收的论文，主题是"几乎所有素数都是部分正则的"。
+第二篇论文的主题是"几乎所有素数都是部分正则的"，已被《Journal of Combinatorial Theory A》接收。
 
 这个结论属于**代数数论**里的经典问题——Bernoulli 数与分圆域的算术结构。Bernoulli 数是 17 世纪就引入的数论对象，分圆域是研究素数在多项式环中分解行为的工具。数学家在 19 世纪就知道：**有些素数会导致 Bernoulli 数的"反常行为"（称为 irregular prime）**，但到底有多少素数有这种问题，一直没有答案。
 
@@ -160,7 +158,7 @@ Hong 在演讲结尾给出了 Axiom 对未来 1-2 年的路线图：
 - **库学习**（library learning）：让 AI 从 mathlib 这种大型形式化库中自动抽取可重用的引理，而不是每证一个新题都从头搭建。
 - **形式化定理证明与上述两者的深度融合**：猜想 → 证明 → 形式化验证 → 反哺到库，这条流水线一旦跑通，AI 数学家的工作节奏会和人类数学家完全不同。
 
-Hong 引用的方法论核心，也是我见过的对"AI 数学家"这件事最克制的概括：
+Hong 引用的方法论核心，也是对"AI 数学家"最克制的概括：
 
 > **"数学发现的未来不取决于 AI 解题的速度，而取决于每一步推理能否被形式化验证所确认。"**
 >
@@ -168,7 +166,7 @@ Hong 引用的方法论核心，也是我见过的对"AI 数学家"这件事最�
 
 翻译成更直白的话：**AI 不会比高斯更快，但 AI 应该是第一个能证明自己证明的数学家**。
 
-Ramanujan 当年在英国没有朋友、没有学位、没有图书馆，写下的公式要靠 Hardy 转交给其他数学家验证。等验证回来，他常常已经忘了自己是怎么写出来的。110 年后，一台叫 AxiomProver 的机器在 Lean 里给出证明，每一步都可以被任何一台装了 Lean 4 的电脑复现。
+Ramanujan 当年在英国没有朋友、没有学位、没有图书馆，写下的公式要靠 Hardy 转交给其他数学家验证。等验证回来，他常常已经忘了自己是怎么写出来的。110 年后，AxiomProver 在 Lean 里给出证明，每一步都可以被任何一台装了 Lean 4 的电脑复现。
 
 数学发现不再是天才的专利。Axiom 的 12 篇论文、Ken Ono 从学界到工业界的转身、Lean 从 2013 年初版到 2026 年 210,000 定理的积累，让这句话从一个愿景变成了**事实**。
 
@@ -188,7 +186,7 @@ Axiom 的全部成绩建立在 Lean 4 之上。Lean 在这里扮演的角色不�
 - **数据 Agent**：让 LLM 做数据转换 → 用 Great Expectations / dbt tests 当判决者 → 数据异常就回溯。
 - **决策 Agent**：让 LLM 做多步推理 → 用形式化逻辑 / SMT solver 当判决者 → 推理错误就回溯。
 
-Axiom 的核心判断是：**判决者必须独立于生成者**。如果判决者也是 LLM，那就是自己给自己发奖。Lean、编译器、test framework 这些"非 LLM"的判决者才是范式的核心。
+Axiom 的核心判断是：**判决者必须独立于生成者**。如果判决者也是 LLM，等于自己给自己发奖。Lean、编译器、test framework 这些"非 LLM"的判决者才是范式的核心。
 
 ### 2. 多智能体 + 工具调用 + 测试时计算——2026 AI Agent 的"标准三件套"
 
@@ -251,7 +249,7 @@ mathlib 是 Lean 的数学标准库，210,000 定理、100,000 定义。GitHub �
 
 ---
 
-Ramanujan 没有定理证明器，他只能把自己的公式写在信纸上寄给 Hardy 猜。现在 Lean 在你电脑上装好一个 200MB 的程序就可以工作。**100 年前数学发现是天才的特权，2026 年形式化验证让这件事变成了工程问题**。从 Ramanujan 的信纸到 Axiom 的 Lean 终端，数学发现没有变得更简单，但门槛第一次让普通人够得到。
+Ramanujan 没有定理证明器，他只能把公式写在信纸上寄给 Hardy 猜。现在 Lean 在你电脑上装好一个 200MB 的程序就可以工作。**100 年前数学发现是天才的特权，2026 年形式化验证让这件事变成了工程问题**。从 Ramanujan 的信纸到 Axiom 的 Lean 终端，数学发现没有变得更简单，但门槛第一次让普通人够得到。
 
 ---
 

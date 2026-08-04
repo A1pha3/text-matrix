@@ -1,17 +1,15 @@
 ---
-title: "awesome-llm-apps：105k Stars LLM应用精选合集完全指南"
+title: "awesome-llm-apps：130k Stars LLM 应用精选合集"
 date: "2026-04-06T22:40:00+08:00"
 slug: "awesome-llm-apps-curated-llm-application-projects-guide"
 github_repo: "Shubhamsaboo/awesome-llm-apps"
-description: "全面介绍105k Stars的awesome-llm-apps精选合集，涵盖100+ LLM应用项目，包括AI Agent、RAG、MCP、Voice Agents、多Agent协作等，详解Google ADK、OpenAI Agents SDK等框架。"
+description: "awesome-llm-apps 是一个 130k Stars 的 LLM 应用精选合集，收录 100+ 个示例项目，覆盖 AI Agent、RAG、MCP、Voice Agents、多 Agent 协作等能力轴，附带 Google ADK、OpenAI Agents SDK 等框架速成课程。"
 draft: false
 categories: ["技术笔记"]
 tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Google ADK"]
 ---
 
-## 一句话定位
-
-**awesome-llm-apps** 是 LLM 应用的学习样本库与起手模板集，不是生产框架。它把 Agent、RAG、MCP、Voice、Memory 五条能力轴上的 100 多个示例集中到一个仓库，每个示例可独立运行。想找生产框架，去看 LangGraph、CrewAI、Google ADK。想看看 RAG Agent 到底怎么写，这仓库命中率最高。
+**awesome-llm-apps** 把 Agent、RAG、MCP、Voice、Memory 五条能力轴上的 100 多个示例集中到一个仓库，每个示例可独立运行。想找生产框架，去看 LangGraph、CrewAI、Google ADK。想看看 RAG Agent 到底怎么写，这仓库命中率最高。
 
 ---
 
@@ -19,14 +17,14 @@ tags: ["LLM", "AI Agent", "RAG", "MCP", "Multi-Agent", "Google ADK"]
 
 仓库项目按能力轴划分，轴间无强依赖：
 
-| 能力轴 | 解决的问题 | 阅读顺序 |
-|--------|-----------|---------|
-| **Agent** | 让 LLM 调用工具、规划任务 | 入门必看 |
-| **Multi-Agent** | 多个 Agent 分工协作 | Agent 熟练后 |
-| **RAG** | 让 LLM 基于私有数据回答 | 与 Agent 并行 |
-| **MCP** | 标准化 Agent 与外部工具的连接 | 进阶 |
-| **Voice** | 语音输入输出闭环 | 独立支线 |
-| **Memory** | 跨会话保留用户偏好 | 可与任意组合 |
+| 能力轴 | 解决的问题 |
+|--------|-----------|
+| **Agent** | 让 LLM 调用工具、规划任务 |
+| **Multi-Agent** | 多个 Agent 分工协作 |
+| **RAG** | 让 LLM 基于私有数据回答 |
+| **MCP** | 标准化 Agent 与外部工具的连接 |
+| **Voice** | 语音输入输出闭环 |
+| **Memory** | 跨会话保留用户偏好 |
 
 Agent 是其他四条轴的共同前置——RAG Agent、Voice Agent、MCP Agent 都建立在"Agent 调用工具"这个基本结构上。
 
@@ -34,16 +32,14 @@ Agent 是其他四条轴的共同前置——RAG Agent、Voice Agent、MCP Agent
 
 ## 项目概览
 
-### 核心数据
+### 核心数据（截至 2026-08）
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | **105k** |
-| GitHub Forks | **15.3k** |
-| Contributors | **200+** |
-| Commits | **963** |
+| GitHub Stars | **130k** |
+| GitHub Forks | **19.2k** |
 | License | **Apache-2.0** |
-| 最新更新 | **2026-03-28** |
+| 最新更新 | **2026-08-03** |
 
 ### 技术栈
 
@@ -67,7 +63,7 @@ Python 占近七成，大部分项目可直接 `pip install` 跑起来；JS/TS �
 | **Alibaba** | Qwen |
 | **开源本地模型** | Ollama 支持的所有模型 |
 
-模型覆盖面广的好处是：同一个 Agent 例子往往有 OpenAI、Anthropic、本地 Ollama 三个版本的实现，方便对照不同厂商 API 的差异。
+同一个 Agent 例子往往有 OpenAI、Anthropic、本地 Ollama 三个版本的实现，方便对照不同厂商 API 的差异。
 
 ### 目录结构
 
@@ -84,13 +80,13 @@ awesome-llm-apps/
 └── docs/                          # 文档资源
 ```
 
-注意两点：Multi-Agent Teams 没有独立目录，归在 `advanced_ai_agents/` 下；Memory 类应用归在 `advanced_llm_apps/` 下。
+Multi-Agent Teams 没有独立目录，归在 `advanced_ai_agents/` 下；Memory 类应用归在 `advanced_llm_apps/` 下。
 
 ---
 
 ## Starter AI Agents（入门级）
 
-入门级 Agent 的共同特征：单 Agent、单工具链、流程线性。适合理解"Agent = LLM + 工具 + 循环"这个基本结构。
+入门级 Agent 都是单 Agent、单工具链、流程线性，适合理解"Agent = LLM + 工具 + 循环"这个基本结构。
 
 | Agent | 功能 | 特点 |
 |-------|------|------|
@@ -107,9 +103,9 @@ awesome-llm-apps/
 | **OpenAI Research Agent** | 科研助手 | ArXiv 论文分析 |
 | **Web Scraping AI Agent** | 网页爬虫 | 本地+云端 SDK |
 
-### AI Travel Agent 详解
+### AI Travel Agent
 
-这个项目展示 Agent 的最基本形态：LLM 做规划，工具做执行。
+LLM 做规划，工具做执行：
 
 ```python
 class TravelAgent:
@@ -129,7 +125,7 @@ class TravelAgent:
 
 ### AI Data Analysis Agent
 
-这个例子展示 Agent 与传统脚本的区别：传统脚本写死分析步骤，Agent 由 LLM 决定调用哪个工具。
+传统脚本写死分析步骤，Agent 由 LLM 决定调用哪个工具：
 
 ```python
 from langchain.agents import Agent
@@ -173,7 +169,7 @@ result = data_agent.run(
 
 ### Multi-Agent Teams（多 Agent 协作）
 
-Multi-Agent 的核心动机：单个 Agent 的上下文窗口和注意力有限，把任务拆给多个专业 Agent 让每个 Agent 聚焦在自己的领域。代价是协调成本上升——需要解决任务分配、结果聚合、冲突处理。
+Multi-Agent 把任务拆给多个专业 Agent，让每个 Agent 聚焦在自己的领域。代价是协调成本上升——需要处理任务分配、结果聚合、冲突处理。
 
 | Agent Team | 功能 | Agent 数量 |
 |------------|------|-----------|
@@ -257,7 +253,7 @@ class SelfEvolvingAgent:
 
 ## Autonomous Game Playing Agents
 
-游戏 Agent 是 Agent 能力的特殊验证场：环境有明确规则、胜负可量化、回合制天然适合 Agent 循环。传统游戏 AI 用搜索算法（Minimax、MCTS），这里的 Agent 用 LLM 做决策。
+游戏 Agent 的环境有明确规则、胜负可量化、回合制天然适合 Agent 循环。传统游戏 AI 用搜索算法（Minimax、MCTS），这里的 Agent 用 LLM 做决策。
 
 | Agent | 游戏 | 难度 |
 |-------|------|------|
@@ -288,7 +284,7 @@ while not board.is_game_over():
 
 ## Voice AI Agents
 
-语音 Agent 的难点在于把语音通道接入 Agent 循环：STT 把语音转成文本送入 LLM，TTS 把 LLM 输出转回语音。仓库的 4 个项目覆盖了从离线（Whisper）到实时（OpenAI Realtime API）两种实现路径。
+语音 Agent 要把语音通道接入 Agent 循环：STT 把语音转成文本送入 LLM，TTS 把 LLM 输出转回语音。仓库的 4 个项目覆盖了从离线（Whisper）到实时（OpenAI Realtime API）两种实现路径。
 
 | Agent | 功能 | 技术栈 |
 |-------|------|--------|
@@ -381,7 +377,7 @@ class MultiMCPRouter:
 
 ## RAG 检索增强生成
 
-RAG 解决的问题：LLM 的训练数据有截止时间，且不包含私有数据。RAG 在生成前先从外部知识库检索相关片段，把片段塞进 prompt，让 LLM 基于检索结果回答。仓库的 20+ 个 RAG 项目展示了不同变体：本地部署、多模态、知识图谱、错误纠正等。
+RAG 在生成前先从外部知识库检索相关片段，把片段塞进 prompt，让 LLM 基于检索结果回答。仓库的 20+ 个 RAG 项目展示了不同变体：本地部署、多模态、知识图谱、错误纠正等。
 
 | 项目 | 模型 | 特点 |
 |------|------|------|
@@ -400,7 +396,7 @@ RAG 解决的问题：LLM 的训练数据有截止时间，且不包含私有数
 
 ### Agentic RAG
 
-普通 RAG 是"检索一次 → 生成一次"的固定流程，Agentic RAG 把检索工具化：LLM 自己决定是否检索、检索几次、用哪个检索源。
+普通 RAG 是"检索一次 → 生成一次"的固定流程。Agentic RAG 把检索工具化：LLM 自己决定是否检索、检索几次、用哪个检索源。
 
 ```python
 from langchain.agents import Agent
@@ -473,7 +469,7 @@ LLM 本身无状态，每次调用独立。要实现"记住用户偏好""延续�
 
 ### 个性化记忆系统
 
-Memory 的两个关键操作：写入时提取关键信息存入向量库，更新用户画像；读取时按用户过滤检索相关记忆，注入 prompt。
+Memory 的两个操作：写入时提取关键信息存入向量库，更新用户画像；读取时按用户过滤检索相关记忆，注入 prompt。
 
 ```python
 class PersonalizedMemory:
@@ -504,7 +500,7 @@ class PersonalizedMemory:
 
 ## Chat with X 应用
 
-Chat with X 系列的共同模式：把某个外部数据源（GitHub、Gmail、PDF、ArXiv 等）接入 LLM，让用户用自然语言查询。本质是 RAG 的特化——数据源固定、检索方式固定，省去了 Agentic RAG 的路由决策。
+Chat with X 系列把某个外部数据源（GitHub、Gmail、PDF、ArXiv 等）接入 LLM，让用户用自然语言查询。本质是 RAG 的特化——数据源固定、检索方式固定，省去了 Agentic RAG 的路由决策。
 
 | 应用 | 数据源 | 功能 |
 |------|--------|------|
@@ -567,7 +563,7 @@ class ChatWithGitHub:
 | **Swarm Orchestration** | Swarm 编排 |
 | **Routing Logic** | 路由逻辑 |
 
-差异点：ADK 强调 Plugins 和 Callbacks（Google 生态的扩展机制），Agents SDK 强调 Handoffs 和 Swarm（OpenAI 的多 Agent 编排模型）。Function Calling、Structured Outputs、Memory 是两者共有的基础能力。
+ADK 强调 Plugins 和 Callbacks（Google 生态的扩展机制），Agents SDK 强调 Handoffs 和 Swarm（OpenAI 的多 Agent 编排模型）。Function Calling、Structured Outputs、Memory 是两者共有的基础能力。
 
 ### ADK 开发示例
 
@@ -690,8 +686,6 @@ python app.py
 ---
 
 ## 采用建议
-
-把仓库当作索引来用：
 
 1. 先确定要学哪条能力轴
 2. 从 `AI Travel Agent` 或 `AI Data Analysis Agent` 开始跑通，依赖少、流程清晰

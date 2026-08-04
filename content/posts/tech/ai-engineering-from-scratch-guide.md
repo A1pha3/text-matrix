@@ -1,20 +1,20 @@
 ---
-title: "AI Engineering From Scratch：一份从\"会调用 API\"到\"能独立构建 AI 系统\"的完整路线图"
+title: "AI Engineering From Scratch：45.9k Stars 的 AI 工程自学路线图"
 date: "2026-05-20T20:25:00+08:00"
 slug: "ai-engineering-from-scratch-guide"
 github_repo: "rohitg00/ai-engineering-from-scratch"
 aliases:
  - "/posts/tech/ai-engineering-from-scratch-complete-guide/"
  - "/posts/tech/ai-engineering-from-scratch-complete-curriculum/"
-description: "AI Engineering From Scratch 是一个覆盖 20 个阶段、428 节课程的免费 AI 工程教程，涵盖数学基础、机器学习、深度学习、LLM 构建、Agent 开发、多 Agent 系统等完整路径。每课遵循'从零构建→生产库验证→产出可安装工具'的方法，已斩获 8973 Stars。本文深入解析其课程架构、核心方法论与快速上手路径。"
+description: "AI Engineering From Scratch 是一个覆盖 20 个阶段、428 节课程的免费 AI 工程教程，涵盖数学基础、机器学习、深度学习、LLM 构建、Agent 开发、多 Agent 系统等完整路径。每课遵循'从零构建→生产库验证→产出可安装工具'的方法，已获 45.9k Stars。本文解析其课程架构、方法论与快速上手路径。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI工程", "LLM", "MCP", "深度学习"]
 ---
 
-AI 学习材料常见的困境是碎片化：一篇论文解读、一个微调教程、一个 Agent demo 各自独立，但缺少一条主线串起来。学完能调用 API，但说不清楚 Attention 在模型内部做了什么；能跑通 RAG 流程，但不知道 BPE 分词如何训练。
+AI 学习材料常见的问题是碎片化：一篇论文解读、一个微调教程、一个 Agent demo 各自独立，但缺少一条主线串起来。学完能调用 API，但说不清楚 Attention 在模型内部做了什么；能跑通 RAG 流程，但不知道 BPE 分词如何训练。
 
-**AI Engineering From Scratch** 是 Rohit Gupta 编写的一条完整学习路径——从线性代数开始，到能独立构建、部署和维护一个 AI 系统结束。428 节课程，20 个阶段，覆盖 Python、TypeScript、Rust、Julia 四种语言，最终产出 428 个可安装的工具：prompt、skill、agent、MCP server。GitHub 数据（截至 2026 年 5 月）：Stars 8,973，Forks 1,862，MIT 协议，完全免费。
+**AI Engineering From Scratch** 是 Rohit Gupta 编写的一条完整学习路径——从线性代数开始，到能独立构建、部署和维护一个 AI 系统结束。428 节课程，20 个阶段，覆盖 Python、TypeScript、Rust、Julia 四种语言，最终产出 428 个可安装的工具：prompt、skill、agent、MCP server。GitHub 数据（截至 2026 年 8 月）：Stars 45,875，Forks 7,895，MIT 协议，完全免费。
 
 ---
 
@@ -47,7 +47,7 @@ flowchart TB
  P18 --> P19
 ```
 
-依赖图上有四个值得注意的分支点：
+依赖图上有四个分支点：
 
 - **Phase 3（Deep Learning Core）是第一个分叉**。学完深度学习核心后，可分别进入 Vision（P4）、NLP（P5）、Speech（P6）或直接跳到 RL（P9）。视觉、语音、NLP 三条主线共享同一套反向传播和优化器知识，P3 是它们共同的前置。
 - **Phase 7（Transformers）是第二个分叉**。只依赖 NLP（P5），向下分出 GenAI（P8）和 LLMs from Scratch（P10）。Transformers 单独成阶段，因为它既支撑后续的生成式模型，也支撑从零实现的 LLM。
@@ -78,7 +78,7 @@ flowchart LR
 - **USE IT**：用 PyTorch 或 sklearn 实现同一概念，对照 BUILD IT 版本理解框架做了哪些抽象。
 - **SHIP IT**：把本课产出打包成可安装的工具——prompt、skill、agent 或 MCP server。
 
-这个循环绑定了"原理 → 框架 → 产品"三层。多数教程只覆盖中间一层，学完只会调框架 API，遇到 bug 分不清是原理问题还是框架问题。
+这个循环覆盖了"原理 → 框架 → 产品"三层。多数教程只覆盖中间一层，学完只会调框架 API，遇到 bug 分不清是原理问题还是框架问题。
 
 ---
 
@@ -117,7 +117,7 @@ python phases/01-math-foundations/01-linear-algebra-intuition/code/vectors.py
 5. **Phase 14（Agent Engineering）**：ReAct 循环。Agent 接收"总结这个仓库"的指令，调用 GitHub MCP server 拉取 README 和代码，再调用 LLM 生成摘要。
 6. **Phase 17（Infrastructure & Production）**：把 Agent 部署为长时运行的服务，处理重试、超时、成本控制。
 
-这条路径说明一个实际问题：**Phase 14 的 Agent 行为是否可靠，很大程度上取决于 Phase 7 和 Phase 10 的理解深度**。如果对 Attention 和采样策略只有框架层认知，Agent 在长对话中出现的"幻觉"和"工具误调用"将无法定位。
+这条路径说明：**Phase 14 的 Agent 行为是否可靠，很大程度上取决于 Phase 7 和 Phase 10 的理解深度**。如果对 Attention 和采样策略只有框架层认知，Agent 在长对话中出现的"幻觉"和"工具误调用"将无法定位。
 
 ---
 
@@ -134,7 +134,7 @@ Phase 0 → 1 → 2 → 3 → 5 → 7 → 10 → 11。重点在 BUILD IT 阶段�
 **路径 C：目标是多 Agent 系统研究**
 Phase 0 → 1 → 2 → 3 → 5 → 7 → 10 → 11 → 13 → 14 → 15 → 16。Phase 15 和 16 是核心，需要先掌握单 Agent 工程。预计投入 4-5 个月。
 
-**共同注意事项**：
+**注意事项**：
 
 - Phase 0（Setup & Tooling）不能跳过。课程涉及四种语言和大量工具链，环境配置本身就是一道门槛。
 - BUILD IT 阶段用 NumPy 实现看起来低效，但它是后续所有调试能力的根基，不要用框架替代。
@@ -153,9 +153,8 @@ Phase 0 → 1 → 2 → 3 → 5 → 7 → 10 → 11 → 13 → 14 → 15 → 16�
 
 ---
 
-## 局限性
+## 说明
 
 - 课程仍在持续更新，Phase 15-19 的内容可能会调整
 - 时间估算假设全职学习，实际学习时间会因工作/生活安排而延长
-- 未覆盖课程中的 Julia 和 Rust 实现（主要聚焦 Python 和 TypeScript）
-- 未验证所有外部链接（fast.ai、Coursera 等）的有效性和最新内容
+- 本文聚焦 Python 和 TypeScript 实现，未覆盖课程中的 Julia 和 Rust 部分
