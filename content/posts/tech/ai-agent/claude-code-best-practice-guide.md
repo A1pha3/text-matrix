@@ -6,17 +6,17 @@ slug: "claude-code-best-practice-guide"
 github_repo: "shanraisshan/claude-code-best-practice"
 aliases:
   - /posts/tech/claude-code-best-practice-guide/
-description: "深度解读 shanraisshan/claude-code-best-practice 仓库，系统梳理 Claude Code 的核心概念、工作流组织方式、配置结构、扩展边界与团队落地建议。"
+description: "梳理 shanraisshan/claude-code-best-practice 仓库：Claude Code 的核心概念、配置结构、工作流组织方式、扩展边界与团队落地建议。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "AI 编程", "Anthropic", "最佳实践"]
 ---
 
-# Claude Code 推荐做法大全：高热度 AI 编程指南解读
+# Claude Code 最佳实践大全：高热度 AI 编程指南解读
 
-[Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice) 是 GitHub 上 Claude Code 实践资料最集中的仓库之一（31.4k Stars）。它既非官方手册，也非入门教程——它解决的具体问题是：Claude Code 概念多、配置项杂、新特性更新快，开发者容易迷失在功能名词里。
+[Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice) 是 GitHub 上 Claude Code 实践资料最集中的仓库之一（31.4k Stars）。它既不是官方手册，也不是入门教程，它解决的是 Claude Code 使用里的一个实际问题：概念多、配置项杂、新特性更新快，开发者容易在功能名词里绕晕。
 
-本文按三条主线梳理这个仓库：概念分层（Subagents、Commands、Skills、Hooks、MCP、Plugins 各自管什么）、配置地图（`.claude/` 目录结构）、实战路径（从个人配置到团队规范）。
+下面按三条主线梳理这个仓库：概念分层（Subagents、Commands、Skills、Hooks、MCP、Plugins 各自管什么）、配置地图（`.claude/` 目录结构）、实战路径（从个人配置到团队规范）。
 
 ## 一、项目概览
 
@@ -35,7 +35,7 @@ tags: ["Claude Code", "AI 编程", "Anthropic", "最佳实践"]
 
 ## 二、核心概念体系
 
-Claude Code 的功能体系可以分为三个层次和若干扩展模块。
+Claude Code 的功能扩展围绕几个核心模块展开：Subagents、Commands、Skills、Hooks、MCP 和 Plugins。下面逐个说明各自管什么、放在哪里、什么时候用。
 
 ### Subagents（子代理）
 
@@ -188,21 +188,6 @@ Claude Code 的配置按优先级从高到低分为四层：
 
 ## 五、编排工作流详解
 
-### 调用链
-
-```text
-User invokes /command
-        ↓
-    Command loads
-    (prompt template)
-        ↓
-    May spawn Agent
-    (isolated context)
-        ↓
-    Agent uses Skill
-    (reusable capability)
-```
-
 ### 一次代码审查如何流过系统
 
 以 GitHub PR 审查为例，看 Commands、Subagents、Skills 和 Hooks 如何协同：
@@ -214,7 +199,7 @@ User invokes /command
 5. 每个 Subagent 使用工具前，Hook（`pre-tool-use`）记录操作日志
 6. 三个 Subagent 完成后，主会话汇总结果，生成审查报告
 
-这个流程展示了 Subagent 和 Skill 的典型区别：Subagent 提供隔离的执行环境，Skill 提供可复用的审查能力；同一个 Skill 可以被不同的 Subagent 加载使用。
+这里能看出 Subagent 和 Skill 的分工：Subagent 提供隔离的执行环境，Skill 提供可复用的审查能力；同一个 Skill 可以被不同的 Subagent 加载使用。
 
 ### 如何自定义编排
 
@@ -227,7 +212,7 @@ User invokes /command
 
 ### 个人开发者：从哪里开始
 
-**第一周**：先把项目上下文固定下来。在项目根目录创建 `CLAUDE.md`，描述项目结构、技术栈和编码规范。再在 `.claude/rules/` 里放几条规则——比如"提交前必须跑 lint"。这一步不需要理解任何高级概念，收益立竿见影。
+**第一周**：先把项目上下文固定下来。在项目根目录创建 `CLAUDE.md`，描述项目结构、技术栈和编码规范。再在 `.claude/rules/` 里放几条规则——比如"提交前必须跑 lint"。这一步不需要理解任何高级概念，做完马上能看到效果。
 
 **第二周**：挑一个高频操作做成 Command。比如 `/review` 命令用于代码审查，`/deploy` 命令用于部署。Commands 不需要独立上下文，学习成本最低。
 
@@ -239,7 +224,7 @@ User invokes /command
 
 **第二步：建立校验机制**。配置 Hooks（如 `pre-tool-use` 记录日志、`post-tool-use` 校验输出），让每次操作可追溯。如果有 CI 流水线，用 GitHub Actions 做 PR 自动审查。
 
-**第三步：沉淀为可复用资产**。当多个项目需要同一套审查流程或部署脚本时，把它们打包成 Plugin，通过内部市场分发。这时才需要考虑 MCP 连接外部工具（如 Slack、Jira）和 Agent Teams 并行开发。
+**第三步：打包成可复用资产**。当多个项目需要同一套审查流程或部署脚本时，把它们做成 Plugin，通过内部市场分发。这时才需要考虑 MCP 连接外部工具（如 Slack、Jira）和 Agent Teams 并行开发。
 
 ### 什么时候不要急着上
 
