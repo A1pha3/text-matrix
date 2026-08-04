@@ -14,19 +14,9 @@ tags: ["Claude Code", "AI 编程", "Anthropic", "最佳实践"]
 
 # Claude Code 推荐做法大全：高热度 AI 编程指南解读
 
-> **目标读者**：希望系统掌握 Claude Code 推荐做法、提升 AI 编程效率的开发者
-> **前置知识**：了解 Claude Code 基础用法、有编程经验
-
----
-
 [Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice) 是 GitHub 上 Claude Code 实践资料最集中的仓库之一（31.4k Stars）。它既非官方手册，也非入门教程——它解决的具体问题是：Claude Code 概念多、配置项杂、新特性更新快，开发者容易迷失在功能名词里。
 
-这篇文章不会把仓库内容逐页翻译，而是按三条主线帮你建立判断框架：
-1. **概念分层**：Subagents、Commands、Skills、Hooks、MCP、Plugins 各自管什么，什么时候用哪个
-2. **配置地图**：`.claude/` 目录下的 settings、rules、memory、hooks 如何组织
-3. **实战路径**：从个人配置到团队规范，先做什么、后做什么
-
-如果你已经有 Claude Code 使用经验，但配置还散落在各处，这篇文章能帮你把零散操作收敛成一套可维护的工作方法。
+本文按三条主线梳理这个仓库：概念分层（Subagents、Commands、Skills、Hooks、MCP、Plugins 各自管什么）、配置地图（`.claude/` 目录结构）、实战路径（从个人配置到团队规范）。
 
 ## 一、项目概览
 
@@ -42,14 +32,6 @@ tags: ["Claude Code", "AI 编程", "Anthropic", "最佳实践"]
 - **配置示例**：可以直接复用的 `.claude/` 配置文件，覆盖 settings、rules、agents、commands、skills、hooks 等目录
 - **开发工作流**：对比 Superpowers、Spec Kit、BMAD-METHOD 等六套主流 AI 开发方法论
 - **新特性汇总**：梳理 Auto Mode、Channels、Agent Teams、GitHub Actions 等持续演进的 beta 能力
-
-### 仓库的正确用法
-
-这类仓库适合用来建立方法地图，但不适合把全部配置直接"整包复制"进项目。更稳妥的用法：
-
-1. 先理解概念边界
-2. 挑 1 到 2 个收益最高的模块做最小迁移
-3. 根据项目实际情况决定要不要团队化、插件化
 
 ## 二、核心概念体系
 
@@ -243,41 +225,27 @@ User invokes /command
 
 ## 六、实战建议
 
-### 新手入门路径
+### 个人开发者：从哪里开始
 
-**第一阶段（1-2 天）**：
-1. 安装 Claude Code，阅读官方文档
-2. 尝试基本操作：读写文件、运行命令
-3. 体验 `/voice` 语音输入和 `/help` 获取帮助
+**第一周**：先把项目上下文固定下来。在项目根目录创建 `CLAUDE.md`，描述项目结构、技术栈和编码规范。再在 `.claude/rules/` 里放几条规则——比如"提交前必须跑 lint"。这一步不需要理解任何高级概念，收益立竿见影。
 
-**第二阶段（3-7 天）**：
-1. 配置 `.claude/settings.json`
-2. 尝试 Subagents：创建简单子代理
-3. 尝试 Commands：创建自定义命令
-4. 体验 Hooks：添加简单的预工具钩子
+**第二周**：挑一个高频操作做成 Command。比如 `/review` 命令用于代码审查，`/deploy` 命令用于部署。Commands 不需要独立上下文，学习成本最低。
 
-**第三阶段（长期）**：
-1. 构建个人 Skills 库
-2. 配置 MCP Servers 连接常用工具
-3. 探索 Agent Teams 并行开发
-4. 研究适合自己的开发工作流
+**一个月内**：评估是否需要 Subagent 或 Skill。判断标准：如果你发现自己反复对 Claude Code 描述同一段背景信息，就该把它写成 Skill；如果某个任务需要隔离运行且不影响主会话，就该用 Subagent。
 
-### 团队采用建议
+### 团队负责人：从规范到资产
 
-**第一步：制定规范**
-- 确定哪些操作需要人工审批
-- 定义提交消息格式
-- 制定 Code Review 流程
+**第一步：统一上下文入口**。把 `CLAUDE.md` 和各语言规则放入团队仓库的 `.claude/` 目录。新成员克隆仓库后，Claude Code 自动加载团队的上下文规范，不需要口头传授。
 
-**第二步：配置共享**
-- 在团队仓库中创建 `.claude/` 配置
-- 使用 Rules 组织团队规范
-- 共享常用的 Commands 和 Skills
+**第二步：建立校验机制**。配置 Hooks（如 `pre-tool-use` 记录日志、`post-tool-use` 校验输出），让每次操作可追溯。如果有 CI 流水线，用 GitHub Actions 做 PR 自动审查。
 
-**第三步：CI/CD 集成**
-- 配置 GitHub Actions 自动审查
-- 使用 Scheduled Tasks 自动化报告
-- 建立质量门禁
+**第三步：沉淀为可复用资产**。当多个项目需要同一套审查流程或部署脚本时，把它们打包成 Plugin，通过内部市场分发。这时才需要考虑 MCP 连接外部工具（如 Slack、Jira）和 Agent Teams 并行开发。
+
+### 什么时候不要急着上
+
+- **Agent Teams** 仍处于 beta，并行代理的协调成本不低。等团队单个代理的使用已经稳定，再引入多代理。
+- **Channels 远程触发** 适合已有自动化体系的小团队。如果日常工作还在手动执行，先理顺本地工作流。
+- **Plugins 打包分发** 适合跨项目复用场景。个人开发者或单项目团队暂时不需要。
 
 ### 安全与性能
 
@@ -295,48 +263,6 @@ User invokes /command
 | 成本控制 | 使用 Status Line 监控 Token 使用 |
 | 长任务 | 使用 Ralph Wiggum Loop 自主迭代 |
 
-## 七、常见问题
-
-### Q1：这个仓库最适合当"教程"还是"模板库"？
-
-它是方法与模板的结合体。如果只当模板库用，容易复制配置却不理解边界；如果只当教程读，会错过大量可直接迁移的资产。建议先读概念部分，再按需取用配置。
-
-### Q2：我应该一开始就用上 Subagents、Hooks、Plugins 吗？
-
-不建议。更合理的顺序：先固定项目上下文（CLAUDE.md、rules），再固定高频命令（Commands），然后引入最有收益的 Skills 或 Subagents。只有工作流已经稳定、需要团队复用时，再考虑打包和编排。
-
-### Q3：为什么文章里没有把所有新特性都标成"立即可用"？
-
-高热度仓库经常覆盖时间敏感能力，版本演进快。文档需要帮读者建立判断，而不是把每个热词都当成稳定能力推荐。beta 标记和演进速度本身也是判断素材。
-
-### Q4：对于团队负责人，这个仓库最大的价值是什么？
-
-学会把个人经验沉淀为共享的 `.claude/` 资产，比"知道更多功能名词"有用得多。团队在上下文入口、命令入口、校验规则和分工上形成一致的工作流，比每个人各用各的配置更可靠。
-
-## 八、落地建议
-
-### 个人开发者：从哪里开始
-
-**第一周**：先把项目上下文固定下来。在项目根目录创建 `CLAUDE.md`，描述项目结构、技术栈和编码规范。再在 `.claude/rules/` 里放几条规则——比如"提交前必须跑 lint"。这一步不需要理解任何高级概念，收益立竿见影。
-
-**第二周**：挑一个高频操作做成 Command。比如 `/review` 命令用于代码审查，`/deploy` 命令用于部署。Commands 不需要独立上下文，学习成本最低。
-
-**一个月内**：评估是否需要 Subagent 或 Skill。判断标准很简单——如果你发现自己反复对 Claude Code 描述同一段背景信息，就该把它写成 Skill；如果某个任务需要隔离运行且不影响主会话，就该用 Subagent。
-
-### 团队负责人：从规范到资产
-
-**第一步：统一上下文入口**。把 `CLAUDE.md` 和各语言规则放入团队仓库的 `.claude/` 目录。新成员克隆仓库后，Claude Code 自动加载团队的上下文规范，不需要口头传授。
-
-**第二步：建立校验机制**。配置 Hooks（如 `pre-tool-use` 记录日志、`post-tool-use` 校验输出），让每次操作可追溯。如果有 CI 流水线，用 GitHub Actions 做 PR 自动审查。
-
-**第三步：沉淀为可复用资产**。当多个项目需要同一套审查流程或部署脚本时，把它们打包成 Plugin，通过内部市场分发。这时才需要考虑 MCP 连接外部工具（如 Slack、Jira）和 Agent Teams 并行开发。
-
-### 什么时候不要急着上
-
-- **Agent Teams** 仍处于 beta，并行代理的协调成本不低。等团队单个代理的使用已经稳定，再引入多代理。
-- **Channels 远程触发** 适合已有自动化体系的小团队。如果日常工作还在手动执行，先理顺本地工作流。
-- **Plugins 打包分发** 适合跨项目复用场景。个人开发者或单项目团队暂时不需要。
-
 ### 相关资源
 
 | 资源 | 链接 |
@@ -344,7 +270,3 @@ User invokes /command
 | GitHub 仓库 | https://github.com/shanraisshan/claude-code-best-practice |
 | Claude Code 文档 | https://code.claude.com/docs |
 | 官方 Skills | https://github.com/anthropics/skills |
-
----
-
-*文档版本 1.4 | 更新日期：2026-06-02 | Stars: 31.4k*

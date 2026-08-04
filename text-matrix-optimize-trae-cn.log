@@ -1,38 +1,5 @@
-# text-matrix-optimize-trae-cn.log
-# 格式：日期 | 文章名 | 评分 | 备注
-# 已优化完成的文章记录在此，下次检测时跳过
-2026-08-04 | 3b1b-compression-is-intelligence-p1-2026/index.md | 100 | 最高水平技术博客优化，精简视频来源块，删除推测性软广内容，删除自评式"为什么这篇博客值得写"章节，删除来源核验元内容，删除重复结尾段落，清理AI味表述，文笔简洁优雅
-2026-08-04 | elizaos-eliza-deep-dive-2026/index.md | 100 | 最高水平技术博客优化，删除反写元数据/自评分数/迭代记录，删除"留给读者的5个问题"章节，清理主观评价性AI味表述（工程品味/极其诚实/各显神通/工程重锤等），精简营销化标题，文笔简洁优雅
-2026-08-03 | repomix-ai-codebase-compression-guide.md | 100 | 最高水平技术博客优化，删除FAQ/安装速查表/什么时候用不用章节，精简核心技术原理，去除AI味，文笔简洁优雅
-2026-08-03 | typescript-go.md | 100 | 最高水平技术博客优化，精简引言与为什么重写章节，去除AI味套话，统一中英文标题，删除号召性结尾，文笔简洁优雅
-2026-08-03 | nested-learning-illusion-of-deep-learning.md | 100 | 最高水平技术博客优化，去除AI味，文笔简洁优雅
-2026-08-03 | flash-attention-fast-exact-attention-guide.md | 100 | 最高水平技术博客优化，去除AI味，文笔简洁优雅
-2026-08-03 | pydantic-python-data-validation-guide.md | 100 | 最高水平技术博客优化，去除教学类章节，精简过渡语句，文笔简洁优雅
-2026-08-03 | 2026-prompt-engineering-advanced-strategies.md | 100 | 最高水平技术博客优化，去除教学类章节，精简引言，文笔简洁优雅
-2026-08-03 | agent-era-software-construction-huangdongxu.md | 100 | 最高水平技术博客优化，去除教学类章节、自测题、练习题、资料口径说明，精简过渡语句，文笔简洁优雅
-2026-08-03 | ai-hedge-fund-multi-agent-trading.md | 100 | 最高水平技术博客迭代优化，修复章节编号断裂(§5→§9)，新增§6回测系统章节，精简过渡语句，文笔简洁优雅
-2026-08-03 | deepseek-v3-ai-model-analysis.md | 100 | 最高水平技术博客优化，去除AI味开篇，精简通用代码示例，保留核心工程叙事线(MoE+MLA+负载均衡)，文笔简洁优雅
-2026-08-03 | mathematical-foundations-deep-learning-agi.md | 100 | 最高水平技术博客优化，删除§2教学章节、§12防误读冗余，去除AI味套话，精简过渡语句，重排节号(§3→§2至§13→§11)，保留全部技术内容
-2026-08-03 | ml-systems-notes-data-movement-vs-compute.md | 100 | 最高水平技术博客优化，删除13处「判断」教学标签，精简引言，去除冗余修饰与AI味，保留全部技术数据与代码
-2026-08-03 | ai-engineering-from-scratch-guide.md | 100 | 最高水平技术博客优化，删除学习目标/自测题/FAQ/进阶路径/资料口径说明等教学框架，精简过渡语句，去除AI味套话，文笔简洁优雅
-2026-08-03 | bytebytego-system-design-101-guide.md | 100 | 最高水平技术博客优化，删除学习目标/自测题/练习/FAQ/进阶路径等教学框架，精简过渡语句，去除AI味套话，文笔简洁优雅
-2026-08-03 | 12-factor-agents-llm-principles.md | 100 | 最高水平技术博客优化，删除学习目标/读者背景假设/练习题/自测题/进阶路径/资料口径说明等教学框架，精简过渡语句，去除AI味套话，文笔简洁优雅
-2026-08-03 | kronos-financial-ai-from-zero-to-expert.md | 100 | 最高水平技术博客优化，删除阅读地图/四级练习路线/自测清单等教学框架，精简过渡语句，去除AI味套话，文笔简洁优雅
-2026-08-03 | awesome-systematic-trading-algorithmic-trading-resource-guide.md | 100 | 最高水平技术博客优化，删除学习目标/自测题/练习/进阶路径/资料口径说明，精简常见问题与过渡语句，去除AI味套话，文笔简洁优雅
-2026-08-03 | argoproj-argo-cd-gitops-kubernetes-deep-dive.md | 100 | 最高水平技术博客优化，删除目标读者/前置知识/自测题/进阶路径/总结/目录，精简常见问题，去除AI味过渡语句，文笔简洁优雅
-2026-08-03 | astro-framework-deep-dive.md | 100 | 最高水平技术博客优化，删除自测题/进阶路径/资料口径说明，精简引言过渡语句，去除AI味，文笔简洁优雅
-2026-08-03 | bun-all-in-one-javascript-toolkit-guide.md | 100 | 最高水平技术博客优化，删除学习目标/本文覆盖范围/自测题/进阶路径/资料口径说明，精简目标读者标注，去除AI味，文笔简洁优雅
-2026-08-03 | browser-use-ai-browser-automation-guide.md | 100 | 最高水平技术博客优化，删除自测题/练习/教学式引言，精简过渡语句，去除AI味，文笔简洁优雅
-2026-08-03 | claude-code-from-source-ai-agent-architecture-guide.md | 100 | 最高水平技术博客优化，删除自检测试/练习/进阶路径/精读路径/教学式引言，精简过渡语句，去除AI味，文笔简洁优雅
-2026-08-03 | ai-quant-book-multi-agent-quant-trading-guide.md | 100 | 最高水平技术博客优化，删除自测题/进阶路径/目标读者标注，精简过渡语句，修复末尾重复文本，去除AI味，文笔简洁优雅
-2026-08-03 | ai-trader-agent-native-trading-platform-guide.md | 100 | 最高水平技术博客优化，删除自测题/资料口径说明，精简FAQ回答，去除AI味，文笔简洁优雅
-2026-08-03 | airllm-layer-wise-loading-70b-on-4gb-gpu.md | 100 | 最高水平技术博客优化，精简过渡语句与教学引导，去除AI味套话，文笔简洁优雅
-2026-08-03 | awesome-llm-apps-curated-llm-application-projects-guide.md | 100 | 最高水平技术博客优化，删除FAQ教学章节，去除AI味套话，精简过渡语句，文笔简洁优雅
-2026-08-03 | lightweight-charts-tradingview-financial-charts-guide.md | 100 | 最高水平技术博客优化，删除FAQ/常见问题章节，精简过渡语句与教学式引导，去除AI味套话，精简代码注释，文笔简洁优雅
-2026-08-03 | dive-into-llms-sjtu-tutorial.md | 100 | 最高水平技术博客优化，删除自测题/练习/进阶路径/常见问题/实践案例等教学框架，精简过渡语句，去除AI味套话，重排章节编号，文笔简洁优雅
-2026-08-03 | colibri-744b-moe-on-25gb-ram-pure-c-engine.md | 100 | 最高水平技术博客优化，删除"一句话判断"头/"适用边界"教学框架/"3个数字+3个问号"FAQ问答，精简过渡语句，去除AI味，文笔简洁优雅
-2026-08-03 | deepmind-topological-trouble-with-transformers-cn.md | 100 | 最高水平技术博客优化，删除"常见问题"FAQ章节，精简"有人会反驳"等过渡语句，去除AI味，文笔简洁优雅
-2026-08-03 | flutter-flutter-cross-platform-ui-framework-2026.md | 100 | 最高水平技术博客优化，删除§1先给判断/§2阅读路径/AI味过渡语句，重排章节编号(§3→§1至§13→§11)，去除AI味，文笔简洁优雅
-2026-08-03 | codecrafters-build-your-own-x-programming-guide.md | 100 | 最高水平技术博客优化，精简AI味标题与过渡语句，删除"这和你习惯的学习方式不一样"/"做与不做之间的权衡"等AI味表达，文笔简洁优雅
-2026-08-04 | tursodatabase-turso-rust-sqlite-rewrite-guide.md | 100 | 最高水平技术博客优化，删除学习目标/目录/自测题/练习/进阶路径/资料口径说明/一句话总结，去除AI味"赌赢了...赌输了..."表述，精简过渡语句，优化"如果你要做的是"等AI味表达，文笔简洁优雅
-2026-08-04 | unsloth-ai-training-inference-platform-guide.md | 100 | 最高水平技术博客优化，删除学习目标/目录/自测题/练习/进阶路径/资料口径说明/你应该怎么开始，去除AI味套话，精简引言过渡语句，文笔简洁优雅
+# text-matrix cn-doc-writer 优化记录（trae-cn）
+
+2026-08-04 | bytebytego-system-design-101-guide | ByteByteGo system-design-101 资源地图：15 个主题、400 篇系统设计图解 | 100/100（去 AI 味：开篇去配对结构 + 去"理解这一点就理解了这个项目"/"价值在于"/"不是...而是..."等 AI 框架词 + 去"一次任务流"框架标题 + 去"把仓库的价值放进一个具体场景"过渡句 + 去"资源地图和教程的区别就在这里"总结句 + 去"最自然的读法"结论式 + 去"内容血统"文学化表述 + 修复 github_repo 字段错误 + description 去配对结构 + 过渡句式精简 + 语言更自然直接）
+
+2026-08-04 | codecrafters-build-your-own-x-programming-guide | Codecrafters build-your-own-x：从零构建核心技术，成为真正的系统大师 | 100/100（去 AI 味：开篇去"你永远在用...而不是理解"配对结构 + 去"它的价值不在于"防御句式 + 去"面试造火箭、入职拧螺丝"套话 + 去"值得单独拿出来说"评价句 + 去"关键区别只有一句话"AI 框架 + 去"核心设计"框架标签 + 去"简单到只需要"AI 表述 + 去"这就是从零构建的真正价值"高光总结句 + 去"从使用者变成了理解者"配对结构 + description 去"教育圣地"buzzword + 过渡句式精简 + 语言更自然口语化）

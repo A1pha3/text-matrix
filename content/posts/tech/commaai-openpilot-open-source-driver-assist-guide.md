@@ -3,7 +3,7 @@ title: "commaai/openpilot 深度拆解：开源 L2 驾驶辅助的真正边界�
 date: "2026-06-26T21:05:21+08:00"
 slug: "commaai-openpilot-open-source-driver-assist-guide"
 github_repo: "commaai/openpilot"
-description: "openpilot 是 comma.ai 开源的 L2 ADAS，覆盖 332 款车。本文拆解 cereal 总线、modeld/controlsd/locationd 架构、安全模型与适用边界。"
+description: "openpilot 是 comma.ai 开源的 L2 ADAS，覆盖 332 款车。本文从 cereal 消息总线、modeld/controlsd/locationd 架构、panda 安全固件到适用边界，逐层拆解这套开源 L2 系统的真实能力与局限。"
 draft: false
 categories: ["技术笔记"]
 tags: ["自动驾驶", "Python"]
@@ -11,53 +11,21 @@ tags: ["自动驾驶", "Python"]
 
 # commaai/openpilot 深度拆解：开源 L2 驾驶辅助的真正边界在哪里
 
-## 学习目标
-
-读完之后，你应该可以回答下面五件事：
-
-1. openpilot 的核心定位是 L2 ADAS（Advanced Driver Assistance System，先进驾驶辅助系统）而不是 L4 自动驾驶，它的安全模型、硬件要求和"300+ 车型"三个词背后各自承担什么。
-2. cereal 消息总线 + capnp（Cap'n Proto 序列化协议） + msgq（基于共享内存的发布订阅总线）这套"消息驱动多进程"骨架，让 modeld、controlsd、selfdrived、locationd、pandad、card 各自独立运行的机制。
-3. 一次"车道内自动跟车 + 居中"任务，从摄像头帧到 CAN 总线（Controller Area Network，控制器局域网，是车载设备之间通信的协议）字节的真实流转路径。
-4. 为什么 panda 这个用 C 写的安全固件要单独存在，以及 ISO 26262（汽车功能安全国际标准）和 MISRA C（针对嵌入式 C 语言的编码规范）这两条规则链在 openpilot 里卡的是什么。
-5. 什么样的人适合在自己的车上装 openpilot，什么样的人应该立刻走开。
-
-## 目录
-
-- [1. 一句话定位：L2，不是 L4](#1-一句话定位l2-不是-l4)
-- [2. 核心数据与硬件基线](#2-核心数据与硬件基线)
-- [3. 系统地图：消息总线 + 七大进程](#3-系统地图消息总线--七大进程)
-- [4. 子系统边界：把容易混淆的并行机制拆开](#4-子系统边界把容易混淆的并行机制拆开)
-  - [4.1 modeld：端到端驾驶模型](#41-modeld端到端驾驶模型)
-  - [4.2 locationd：纯视觉定位](#42-locationd纯视觉定位)
-  - [4.3 controlsd：横纵向控制器](#43-controlsd横纵向控制器)
-  - [4.4 selfdrived：状态机与告警](#44-selfdrived状态机与告警)
-  - [4.5 card + opendbc：车型接口层](#45-card--opendbc车型接口层)
-  - [4.6 pandad：CAN 总线桥](#46-pandadcan-总线桥)
-  - [4.7 monitoring：驾驶员监控](#47-monitoring驾驶员监控)
-- [5. cereal：所有进程用同一种语言说话](#5-cereal所有进程用同一种语言说话)
-- [6. 一次跟车任务如何流过系统](#6-一次跟车任务如何流过系统)
-- [7. 安全模型：panda 才是"硬刹车"那一道](#7-安全模型panda-才是硬刹车那一道)
-- [8. benchmark 段：测的是什么，不能推出什么](#8-benchmark-段测的是什么不能推出什么)
-- [9. 数据上传、隐私与开源边界](#9-数据上传隐私与开源边界)
-- [10. 适用边界与采用顺序](#10-适用边界与采用顺序)
-- [11. 常见问题与排查指引](#11-常见问题与排查指引)
-- [12. 延伸阅读](#12-延伸阅读)
-
 ## 1. 一句话定位：L2，不是 L4
 
-openpilot 是 [commaai/openpilot](https://github.com/commaai/openpilot) 项目。它在 GitHub 上的描述只有两行：
+openpilot 是 [commaai/openpilot](https://github.com/commaai/openpilot) 项目。GitHub 上的描述只有两行：
 
 > openpilot is an operating system for robotics. Currently, it upgrades the driver assistance system in 300+ supported cars.
 
-把第一行和第二行分开读很重要。第一行讲野心：把整套系统定位成"机器人操作系统"，暗示它的设计目标是承载比驾驶辅助更复杂的东西。第二行讲现状：当前在 332 款车上升级原厂 ADAS。
+第一行讲野心——定位成"机器人操作系统"，设计目标承载比驾驶辅助更复杂的东西。第二行讲现状——当前在 332 款车上升级原厂 ADAS。
 
-理解这两句之后，再看 [docs/SAFETY.md](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md) 的开头：
+再看 [docs/SAFETY.md](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md) 的开头：
 
 > openpilot is an Adaptive Cruise Control (ACC) and Automated Lane Centering (ALC) system. Like other ACC and ALC systems, openpilot is a failsafe passive system and it requires the driver to be alert and to pay attention at all times.
 
-注意几个关键词：`Adaptive Cruise Control`（自适应巡航）、`Automated Lane Centering`（车道居中）、`failsafe passive`（失效安全 + 被动系统）、`requires the driver to be alert`。这就把它的能力边界说死了：自动跟车 + 车道居中，是 SAE 分级里的 L2。README 末尾也明说 "ALPHA QUALITY SOFTWARE FOR RESEARCH PURPOSES ONLY. THIS IS NOT A PRODUCT"。
+关键词：`Adaptive Cruise Control`（自适应巡航）、`Automated Lane Centering`（车道居中）、`failsafe passive`（失效安全 + 被动系统）、`requires the driver to be alert`。这明确了它的能力边界：自动跟车 + 车道居中，SAE 分级里的 L2。README 末尾也明说 "ALPHA QUALITY SOFTWARE FOR RESEARCH PURPOSES ONLY. THIS IS NOT A PRODUCT"。
 
-把它当 L4 用，或者把它当 L4 来评估，是绝大多数关于 openpilot 的误读来源。下文会回到这一边界反复强调。
+把它当 L4 用或当 L4 来评估，是绝大部分关于 openpilot 的误读来源。
 
 ## 2. 核心数据与硬件基线
 
@@ -78,7 +46,7 @@ openpilot 是 [commaai/openpilot](https://github.com/commaai/openpilot) 项目�
 
 数据来源：GitHub REST API `repos/commaai/openpilot`、仓库根目录 `README.md`、`RELEASES.md`、`docs/CARS.md` 顶部 "332 Supported Cars"，访问于 2026-06-26 21:05 BJT。
 
-`openpilot` 在 GitHub 仓库 `tags` 字段里写的是 `advanced-driver-assistance-systems`、`driver-assistance-systems`、`robotics` 三项。第一个就是它在 L2 ADAS 这条赛道上的标准定位。
+`openpilot` 在 GitHub 仓库 `tags` 字段里写的是 `advanced-driver-assistance-systems`、`driver-assistance-systems`、`robotics` 三项——第一个就是它在 L2 ADAS 这条赛道上的标准定位。
 
 ## 3. 系统地图：消息总线 + 七大进程
 
@@ -92,23 +60,19 @@ openpilot/
 └── system/          # 系统服务：camerad / sensord / loggerd / manager / athena / updated / webrtc …
 ```
 
-这张表是后面所有讨论的骨架，记住它就够在源码里找东西了。
-
 | 进程 | 角色 | 关键输入 | 关键输出 | 频率 / 实时性 |
 |------|------|----------|----------|---------------|
 | `camerad` | 摄像头采集，输出 YUV（亮度色度视频帧格式）帧 | 摄像头硬件 | `roadCameraState` / `driverCameraState` / `wideRoadCameraState` | 20 Hz |
 | `modeld` | 跑 driving model，输出轨迹/行为 | `roadCameraState`（+ 历史帧） | `modelV2`（规划点序列、`desiredCurvature`、`shouldStop`） | 约 5 Hz 模型前向，100 Hz 控制读取 |
 | `locationd` | 纯视觉自定位 + IMU 卡尔曼滤波（IMU 即惯性测量单元） | IMU、`roadCameraState` | `livePose`、`liveCalibration`、`liveParameters`、`liveTorqueParameters`、`liveDelay` | 100 Hz |
 | `radard` | 视觉雷达（可选，外部雷达被禁后用视觉补位） | `modelV2`、车距摄像头 | `radarState` | 20 Hz |
-| `card` | 车型指纹识别 + 与 opendbc（Comma DBC，CAN 报文编解码库） 交互 | CAN 帧（`can`） | `carState`、`carParams` | 100 Hz |
+| `card` | 车型指纹识别 + 与 opendbc（Comma DBC，CAN 报文编解码库）交互 | CAN 帧（`can`） | `carState`、`carParams` | 100 Hz |
 | `controlsd` | 横向 + 纵向控制器 | `modelV2`、`liveParameters`、`livePose`、`carState` | `carControl`（扭矩 / 角度 / 加速度） | 100 Hz |
 | `selfdrived` | 状态机 + 告警 + 驾驶员监控仲裁 | 所有上述消息 | `selfdriveState`、`onroadEvents` | 100 Hz |
 | `pandad` | 跟硬件 panda 通信，转换 `sendcan` ↔ `can` | `carControl` | CAN 帧 | 100 Hz |
 | `manager` | 进程监督、热更新、报警 | 进程心跳 | 启停信号 | 持续 |
 
-进程之间不直接互相 import，而是通过 `cereal` 提供的 `PubMaster` / `SubMaster` 订阅发布消息。这条总线是整个 openpilot 的"神经系统"，下面专门拆一节。
-
-下面这张图给出最关键的三个进程（modeld → controlsd → card → pandad → 车）的关系：
+进程之间不直接互相 import，而是通过 `cereal` 提供的 `PubMaster` / `SubMaster` 订阅发布消息。下面这张图给出最关键的三个进程（modeld → controlsd → card → pandad → 车）的关系：
 
 ```text
 ┌─────────────────┐    图像帧     ┌──────────────────┐
@@ -134,9 +98,9 @@ openpilot/
 
 `selfdrived` 没有出现在主链路里，但它订阅了 `carControl` 的所有上游，用来决定整套系统是否处于"enabled / active / 报警"状态。
 
-## 4. 子系统边界：把容易混淆的并行机制拆开
+## 4. 子系统边界
 
-openpilot 里至少有四套机制容易互相串线：模型推理、视觉定位、控制器、安全仲裁。下文把它们各自的边界画清楚。
+openpilot 里有四套机制容易互相串线：模型推理、视觉定位、控制器、安全仲裁。下文把它们各自的边界画清楚。
 
 ### 4.1 modeld：端到端驾驶模型
 
@@ -161,7 +125,7 @@ RELEASES 显示 0.10.0 之后 Experimental 模式从"MPC（Model Predictive Cont
 - 观测：摄像头来的 `posenet` 视觉位姿估计，加速度计、陀螺仪。
 - 输出：`livePose`（位姿）、`liveCalibration`（roll/pitch 安装偏差）、`liveParameters`（`stiffnessFactor`、`steerRatio`）、`liveDelay`（横向延迟）、`liveTorqueParameters`（用于 `LatControlTorque`）。
 
-RELEASES 0.9.8 写过一句关键的话："Localizer rewritten to remove GPS dependency at runtime"。这意味着 openpilot 的定位不依赖 GPS，地下车库也能跑。这条性质对很多人来说反直觉，因为大家都以为自动驾驶需要 GPS。
+RELEASES 0.9.8 写过一句关键的话："Localizer rewritten to remove GPS dependency at runtime"。这意味着 openpilot 的定位不依赖 GPS，地下车库也能跑——这对很多人来说反直觉，因为通常认为自动驾驶需要 GPS。
 
 `locationd` 里有一组显式的 sanity check 常量，比如 `ACCEL_SANITY_CHECK = 100.0 m/s^2`、`ROTATION_SANITY_CHECK = 10.0 rad/s`、`TRANS_SANITY_CHECK = 200.0 m/s`。任何超过这个量级的输入会被视为传感器故障直接丢弃，不会污染滤波器。
 
@@ -227,13 +191,13 @@ def obd_callback(params: Params) -> ObdCallback:
 - 纵向最大加速度限制。
 - "司机踩刹车 / 按键 cancel → 立刻取消一切 control" 优先于一切。
 
-这条约束的"硬"在于：即使 openpilot 上层进程崩溃，panda 也会在固定时间窗内自动切断输出。这就是为什么 [docs/SAFETY.md](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md) 把 panda 当成 "the code enforcing the safety model"。
+这条约束的"硬"在于：即使 openpilot 上层进程崩溃，panda 也会在固定时间窗内自动切断输出。这就是 [docs/SAFETY.md](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md) 把 panda 当成 "the code enforcing the safety model" 的原因。
 
 ### 4.7 monitoring：驾驶员监控
 
 `openpilot/selfdrive/monitoring/` 跑一个独立的 DMSC（Driver Monitoring System Controller，驾驶员监控系统控制器）模型 `dmonitoring_model.onnx`，从 `driverCameraState` 估出当前驾驶员的头部姿态、视线方向、是否在打电话 / 抽烟。`selfdrived` 拿到 `driverMonitoringState.alwaysOnLockout` 后会触发 `EventName.tooDistracted`，把系统挡在 `NO_ENTRY` 状态，直到下次点火循环。
 
-注意一件事：openpilot 里的驾驶员监控是"必须开着"的，任何 fork 都不能禁用或削弱它，否则按 [docs/SAFETY.md](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md) "Failure to comply with these standards will get you and your users banned from comma.ai servers."
+openpilot 里的驾驶员监控是"必须开着"的，任何 fork 都不能禁用或削弱它，否则按 [docs/SAFETY.md](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md) "Failure to comply with these standards will get you and your users banned from comma.ai servers."
 
 ## 5. cereal：所有进程用同一种语言说话
 
@@ -253,9 +217,9 @@ class QueueSize(IntEnum):
   SMALL = 250 * 1024         # 多数服务
 ```
 
-`can` 服务跑 100 Hz、占 `BIG` 队列；`selfdriveState` 跑 100 Hz、占 `SMALL`。队列大小不是随便定的，是按"消费者最坏能承受多长的突发延迟"反推的。
+`can` 服务跑 100 Hz、占 `BIG` 队列；`selfdriveState` 跑 100 Hz、占 `SMALL`。队列大小按"消费者最坏能承受多长的突发延迟"反推。
 
-`cereal` 还有个值得单独说的设计：`custom.capnp` 留了一组保留事件 ID，专门给 fork 用。主线 openpilot 不会动这些 ID，fork 加新事件时如果只用这些 ID 就能保证"fork 的 log 永远能被主线代码读出来"。这是一个给长期演进用的兼容性保险。
+`cereal` 还有一个值得单独说的设计：`custom.capnp` 留了一组保留事件 ID，专门给 fork 用。主线 openpilot 不会动这些 ID，fork 加新事件时如果只用这些 ID，就能保证"fork 的 log 永远能被主线代码读出来"——一个给长期演进用的兼容性保险。
 
 ## 6. 一次跟车任务如何流过系统
 
@@ -295,7 +259,7 @@ class QueueSize(IntEnum):
   selfdrived 在 'selfdriveState.experimentalMode=True' 时会允许用户在仪表上"resume"。
 ```
 
-把这条链路看清楚就够了，因为它基本就是横向（车道居中）的翻版：模型给 `desiredCurvature`，`controlsd` 用对应的 `LatControl*` 把曲率变成转角 / 扭矩，pandad 写 CAN，剩下的横向安全约束也由 panda 固件强制。
+这条链路也是横向（车道居中）的翻版：模型给 `desiredCurvature`，`controlsd` 用对应的 `LatControl*` 把曲率变成转角 / 扭矩，pandad 写 CAN，横向安全约束由 panda 固件强制。
 
 ## 7. 安全模型：panda 才是"硬刹车"那一道
 
@@ -321,7 +285,7 @@ openpilot 上层对安全的处理方式是"信任 panda + 用 selfdrived 兜底
 2. 不能禁用或削弱 excessive actuation 检查。
 3. 如果改 `opendbc/safety/`，必须保留并通过所有 safety tests。
 
-`comma.ai` 的原话是 "Failure to comply with these standards will get you and your users banned from comma.ai servers."。这意味着你 fork 自用可以，但你 fork 的合规问题会直接影响能不能用 comma connect 同步数据。
+`comma.ai` 的原话是 "Failure to comply with these standards will get you and your users banned from comma.ai servers."。这意味着你 fork 自用可以，但合规问题会直接影响能否用 comma connect 同步数据。
 
 ## 8. benchmark 段：测的是什么，不能推出什么
 
@@ -367,7 +331,7 @@ RELEASES.md 0.9.8 写过：
 
 ## 9. 数据上传、隐私与开源边界
 
-README 末尾的两段 collapsed block 是常被忽略的关键信息：
+README 末尾的两段 collapsed block 包含以下关键信息：
 
 1. **默认会上传驾驶数据**到 comma 服务器，可以在 comma connect 看到，使用者也可以在设置里关掉。
 2. **数据范围**：road-facing 摄像头、CAN、GPS、IMU、磁力计、温度传感器、crash、操作系统日志；驾驶员摄像头和麦克风只在 opt-in 时才记录。
@@ -407,107 +371,7 @@ LICENSE 是 MIT，但 [SAFETY.md](https://github.com/commaai/openpilot/blob/mast
 | 当地法律明确禁止改装车辆 | 不要装。openpilot 是辅助系统，但仍会修改 CAN 流量 |
 | 期望 openpilot 替代 L2+ 量产车 | 不要指望。Honda Sensing / Toyota TSS / GM Super Cruise 都有车企级安全流程覆盖，openpilot 走的是开源 + 灰度路径 |
 
-### 10.3 决策检查清单
-
-在动键盘买硬件之前，先把这十条过一遍：
-
-1. 我的车在 `docs/CARS.md` 列表里吗？
-2. 列表里对应行的"Hardware Needed"我可以一次性买齐吗？
-3. 我所在地区对"非 OEM 厂商提供的 L2 系统"有没有明确法律限制？
-4. 我能否接受 comma 默认上传驾驶数据？如果不能，我是否愿意自己改 `system/athena`？
-5. 我能不能保持注意力（驾驶员监控是硬约束）？
-6. 我有没有在事故 / 异响 / 急刹时立即人工接管的能力？
-7. 我是否接受 "ALPHA QUALITY SOFTWARE FOR RESEARCH PURPOSES ONLY" 这条免责声明？
-8. 我有没有至少一次回到 dashcam 模式的回退计划？
-9. 我知不知道 `nightly` 分支是会"do not expect this to be stable"的？
-10. 我知不知道 `Experimental Mode` 与默认模式背后的训练数据不同？
-
-十题中有任何一题答"否"，就先把那一题解决再说。
-
-## 11. 常见问题与排查指引
-
-下面这些不是 FAQ 答案，是 openpilot 这类 L2 系统部署里**真正会反复出现**的工程问题，对应排查方向。
-
-| 现象 | 排查方向 |
-|------|----------|
-| 装好后 `selfdriveState.enabled` 一直是 false | 99% 是 `NO_ENTRY` 事件未消。最常见三类：`carUnrecognized`（车型 fingerprint 失败）、`tooDistracted`（驾驶员监控未通过）、`calibrationIncomplete`（`locationd` 还在累计 roll/pitch） |
-| `pandaStates` 一直报 `controlsAllowed=False` | 大概率是 harness 接反、CAN 速率不匹配、或车辆本身在某种 fail-safe 状态。先看 `pandaStates.safetyModel` 是否是 `silent` |
-| 模型输出曲率震荡、方向盘来回抖 | 先看 `liveParameters.stiffnessFactor` 与 `steerRatio` 是否收敛；再看 `liveDelay` 数值是否合理（方向盘机械延迟通常 0.05-0.2s）。这两个参数未收敛前不要用 Experimental Mode |
-| Experimental Mode 在某条路特别激进 | 这是数据驱动的副作用。回到默认模式，或在 `OnroadEvents` 里看是不是有 `Experimental longitudinal unavailable on this car` 之类的提示 |
-| 升级后摄像头画面偏色 / 帧率掉 | 看 `system/camerad/` 的 commit log。0.9.8 之后 ISP 流水线整体迁移过，camera tuning 参数也调整过 |
-| 上传数据失败 | `system/athena/` 客户端的网络与认证分支；不在本文展开 |
-| fork 后跑 `openpilot selfdrive test process_replay` 报与主线不一致 | `process_replay` 是给开发者保证"我的改动不破坏已知 replay 输出"的 CI 流程，按需加载 `references/blog-deep-dive.md` 的自检项也类似思路 |
-
-## 12. 自测问题
-
-完成阅读后，尝试回答以下问题以检验理解：
-
-1. **openpilot 的核心定位是什么？为什么不能把它当 L4 自动驾驶来用？**
-   <details>
-   <summary>参考答案</summary>
-   openpilot 是 L2 ADAS（自适应巡航 + 车道居中），需要驾驶员始终保持注意力。SAFETY.md 明确写了它是 failsafe passive system，requires the driver to be alert。把它当 L4 用是绝大多数误读的来源。
-   </details>
-
-2. **cereal 消息总线的核心设计是什么？为什么所有字段必须使用 SI 单位制？**
-   <details>
-   <summary>参考答案</summary>
-   cereal 用 Cap'n Proto 序列化 + msgq 共享内存 pub/sub。所有字段用 SI 单位制是为了保证跨进程共享时不用做单位换算，避免单位错误导致的安全问题。
-   </details>
-
-3. **panda 固件的安全模型为什么比 Python 层的检查更"硬"？**
-   <details>
-   <summary>参考答案</summary>
-   panda 固件用 C 写，直接在硬件层校验执行器命令的安全限值。即使上层 Python 进程崩溃，panda 也会在固定时间窗内自动切断输出。这是最后一道安全防线。
-   </details>
-
-4. **locationd 的定位为什么不依赖 GPS？这在什么场景下特别有价值？**
-   <details>
-   <summary>参考答案</summary>
-   locationd 用视觉位姿估计 + IMU 卡尔曼滤波，不依赖 GPS。这在地下车库、隧道等 GPS 信号弱的场景特别有价值，openpilot 在这些地方也能正常跑。
-   </details>
-
-5. **openpilot 的数据上传策略是什么？fork 后能完全切断上传吗？**
-   <details>
-   <summary>参考答案</summary>
-   默认上传驾驶数据到 comma 服务器，可在设置里关闭。但 fork 后要完全切断上传需要自己改 `system/athena/` 和 `system/loggerd/`，因为数据上传路径是 comma 控制的。
-   </details>
-
----
-
-## 13. 练习
-
-### 练习 1：阅读安全文档
-
-**任务**：
-1. 打开 [docs/SAFETY.md](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md)
-2. 找出 3 条关于 panda 安全固件的约束
-3. 理解为什么这些约束必须用 C 写而不是 Python
-
-**参考答案**：
-SAFETY.md 提到的安全约束包括：司机踩刹车必须立刻取消控制、执行器命令必须落在合理范围内、心跳超时自动归零。这些约束用 C 写是因为需要在硬件层强制执行，即使上层 Python 进程崩溃也能保护。
-
-### 练习 2：理解车型支持
-
-**任务**：
-1. 打开 [docs/CARS.md](https://github.com/commaai/openpilot/blob/master/docs/CARS.md)
-2. 找出你的车是否在支持列表中
-3. 如果在，查看需要什么硬件（Hardware Needed）
-
-**提示**：支持列表有 332 款车，但每款车的硬件需求不同。
-
-### 练习 3：分析系统架构
-
-**任务**：
-1. 画出 modeld → controlsd → card → pandad → 车的完整数据流
-2. 标出每个进程的输入和输出
-3. 理解为什么 panda 是最后一道安全防线
-
-**参考答案**：
-参考本文第 3 节的系统地图和第 6 节的跟车任务流程。
-
----
-
-## 14. 延伸阅读
+## 11. 延伸阅读
 
 - 仓库主页：[github.com/commaai/openpilot](https://github.com/commaai/openpilot)
 - 安全文档：[docs/SAFETY.md](https://github.com/commaai/openpilot/blob/master/docs/SAFETY.md)
@@ -519,4 +383,3 @@ SAFETY.md 提到的安全约束包括：司机踩刹车必须立刻取消控制�
 - 训练基础设施：[blog.comma.ai "Learning to Drive from a World Model"](https://blog.comma.ai/)（CVPR 论文，被 RELEASES 0.10.0 引用）
 
 正文里所有数字、命令、文件路径均可在以上链接交叉验证；信息边界已标在第 8 节"benchmark 段"。本文不覆盖 comma connect 的商业化、comma four 的硬件 BOM（Bill of Materials，物料清单）以及 openpilot 与 Voyage（comma.ai 旗下自动驾驶公司）的关系。
-

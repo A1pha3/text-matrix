@@ -9,47 +9,19 @@ categories: ["技术笔记"]
 tags: ["深度学习", "PyTorch", "TensorFlow", "JAX"]
 ---
 
-# D2L-ZH 动手学深度学习：李沐团队开源教材解读
-
 《动手学深度学习》（Dive into Deep Learning，简称 D2L）是 Aston Zhang、Zachary C. Lipton、Mu Li（李沐）和 Alexander J. Smola 合著的开源教材。中文版仓库 d2l-zh 面向中文读者维护，截至 2026 年 4 月，GitHub 星标约 77k，被全球 500 多所高校用作教材或参考书，提供 PyTorch、TensorFlow、JAX、PaddlePaddle 四种框架实现。
 
-本文不堆功能清单，而是把这本教材拆成"它解决什么问题、章节怎么排、配套资源怎么用、环境怎么搭、按什么顺序学"五条线，给打算用它入门或备课的读者一份可执行的参考。
-
-## 目录
-
-- [学习目标](#学习目标)
-- [项目定位：为什么需要一本"能运行"的教材](#项目定位为什么需要一本能运行的教材)
-- [章节结构：从线性回归到 BERT 的 15 章](#章节结构从线性回归到-bert-的-15-章)
-- [配套资源：在线版、视频课、工具包](#配套资源在线版视频课工具包)
-- [环境配置：从 pip 到 Docker 的四种路径](#环境配置从-pip-到-docker-的四种路径)
-- [框架支持：同一份章节，四套实现](#框架支持同一份章节四套实现)
-- [学习路径：5 周入门 + 进阶分流](#学习路径5-周入门--进阶分流)
-- [FAQ：常见问题与错误排查](#faq常见问题与错误排查)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶路径](#进阶路径)
-- [资源链接与引用](#资源链接与引用)
-
-## 学习目标
-
-读完本文并配合教材前 10 章实践后，你应当能够：
-
-- 说清 D2L-ZH 与其他深度学习教材（如"花书"、《深度学习：基础教程》）在定位上的差异，并判断它是否适合你的学习场景。
-- 在本地或云端跑通教材代码，包括 PyTorch 与至少一种备选框架。
-- 按章节顺序解释从线性回归到 Transformer 的递进逻辑，并指出每一章引入的核心概念"为什么被需要"。
-- 根据自己的目标（工程实践、论文复现、教学备课）选择合适的进阶方向，而不是把 15 章从头读到尾。
-
-## 项目定位：为什么需要一本"能运行"的教材
+## 项目定位
 
 D2L-ZH 的核心定位写在仓库首页——"理解深度学习的最佳方法是学以致用"。教材里每一个概念都配有可运行的代码，读者可以修改参数、观察输出，再回到数学公式。
 
 这种"代码 + 数学 + 讨论"的形式，把它和两类常见教材区分开。一类是偏理论的"花书"（Goodfellow 等《Deep Learning》），数学严谨但代码缺位；另一类是偏工程的框架教程，代码齐全但缺乏原理推导。D2L 在两者之间找平衡：用 Jupyter Notebook 承载可运行代码，用 LaTeX 排版数学推导，用讨论区（discuss.d2l.ai）承接读者提问。
 
-作者团队背景决定了教材的气质。Mu Li（李沐）是亚马逊资深首席科学家，Aston Zhang 同样来自亚马逊，Zachary C. Lipton 是卡内基梅隆大学教授，Alexander J. Smola 是亚马逊杰出科学家兼慕尼黑工业大学教授。这个组合让教材既有工业工程视角，也有学术理论严谨性。
+作者团队背景：Mu Li（李沐）是亚马逊资深首席科学家，Aston Zhang 同样来自亚马逊，Zachary C. Lipton 是卡内基梅隆大学教授，Alexander J. Smola 是亚马逊杰出科学家兼慕尼黑工业大学教授。这个组合让教材既有工业工程视角，也有学术理论严谨性。
 
-教材的认可度反映在推荐名单上。学术方面，韩家炜（伊利诺伊大学香槟分校）、Bernhard Schölkopf（马普所智能系统院院长）、周志华（南京大学）、张潼（香港科技大学）等都在仓库 README 中给出了推荐语，可在 [d2l-zh GitHub 首页](https://github.com/d2l-ai/d2l-zh) 查阅。工业方面，黄仁勋（NVIDIA 创始人 & CEO）、余凯（地平线创始人 & CEO）、漆远（复旦大学浩清教授）、沈强（将门创投创始合伙人）同样在 README 中给出了推荐。这些推荐均来自官方页面，可追溯。
+教材的推荐名单可在 [d2l-zh GitHub 首页](https://github.com/d2l-ai/d2l-zh) 查阅。学术方面包括韩家炜（伊利诺伊大学香槟分校）、Bernhard Schölkopf（马普所智能系统院院长）、周志华（南京大学）、张潼（香港科技大学）。工业方面包括黄仁勋（NVIDIA 创始人 & CEO）、余凯（地平线创始人 & CEO）、漆远（复旦大学浩清教授）、沈强（将门创投创始合伙人）。
 
-关于版本：教材当前稳定版本为 v2.0.0，于 2022 年 12 月 8 日发布，对应人民邮电出版社 2023 年出版的纸质书《动手学深度学习（PyTorch 版）》。GitHub 仓库在 v2.0.0 之后仍有持续提交（修复勘误、跟进框架版本），但未发布新的版本号。如果你需要最新内容，建议直接看在线版；如果需要稳定快照，用 v2.0.0 tag。
+关于版本：教材当前稳定版本为 v2.0.0，于 2022 年 12 月 8 日发布，对应人民邮电出版社 2023 年出版的纸质书《动手学深度学习（PyTorch 版）》。GitHub 仓库在 v2.0.0 之后仍有持续提交（修复勘误、跟进框架版本），但未发布新的版本号。需要最新内容看在线版，需要稳定快照用 v2.0.0 tag。
 
 ## 章节结构：从线性回归到 BERT 的 15 章
 
@@ -220,15 +192,15 @@ trainer = tf.keras.optimizers.SGD(learning_rate=0.1)
 d2l.train_ch3(net, train_iter, test_iter, loss, 10, trainer)
 ```
 
-JAX 和 PaddlePaddle 实现的覆盖度不如前两者，部分章节可能只有 PyTorch 版本。如果你不是特别需要这两个框架，建议从 PyTorch 开始。
+JAX 和 PaddlePaddle 实现的覆盖度不如前两者，部分章节可能只有 PyTorch 版本。不是特别需要这两个框架的话，从 PyTorch 开始就够了。
 
 ## 学习路径：5 周入门 + 进阶分流
 
-一个 5 周入门计划，适合每周投入 10-15 小时的读者。按周推进，避免从头读到尾的低效。
+以下是一个 5 周入门计划，按周推进，适合每周投入 10-15 小时的读者。
 
 **第 1 周：基础（第 1-3 章）**
 
-第 1 章快速浏览即可，重点放在第 2 章预备知识。如果你对张量运算、广播机制、自动求导不熟，这一章必须动手敲代码。第 3 章线性回归是全书训练范式的最小完整示例，理解"模型 → 损失 → 优化器 → 训练循环"四件套是后续所有章节的基础。
+第 1 章快速浏览即可，重点放在第 2 章预备知识。对张量运算、广播机制、自动求导不熟的话，这一章得动手敲代码。第 3 章线性回归是全书训练范式的最小完整示例，理解"模型 → 损失 → 优化器 → 训练循环"四件套是后续所有章节的基础。
 
 **第 2 周：从 MLP 到计算图（第 4-5 章）**
 
@@ -254,113 +226,33 @@ JAX 和 PaddlePaddle 实现的覆盖度不如前两者，部分章节可能只�
 - **论文复现方向**：从教材引用的原始论文入手，按"读论文 → 看教材实现 → 自己从头实现 → 对比官方实现"的循环训练。教材每章末尾的"讨论"部分会给出延伸阅读。
 - **教学备课方向**：结合 STAT 157 的课件和作业，按自己的课程节奏重组章节。教材的 Jupyter Notebook 格式方便改造成课堂演示。
 
-## FAQ：常见问题与错误排查
+## 常见问题
 
-**Q1：`pip install d2l` 装的版本和教材代码对不上怎么办？**
+**`pip install d2l` 装的版本和教材代码对不上**：PyPI 包发布频率低于教材代码更新。如果遇到 `AttributeError`，从源码安装：`pip install git+https://github.com/d2l-ai/d2l-zh.git#subdirectory=d2l`。
 
-教材代码持续更新，但 PyPI 上的 `d2l` 包发布频率较低。如果遇到 `AttributeError: module 'd2l.torch' has no attribute 'xxx'`，先从源码安装最新版：`pip install git+https://github.com/d2l-ai/d2l-zh.git#subdirectory=d2l`。如果仍有问题，检查你阅读的在线版章节与本地 `d2l` 版本是否对应同一版本号。
+**`d2l.train_ch3` 报 `NameError: train_iter is not defined`**：代码片段省略了数据加载步骤。完整调用顺序是 `train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size)` 后再传入 `train_ch3`。
 
-**Q2：`d2l.train_ch3` 报 `NameError: train_iter is not defined`**
+**`torch.cuda.is_available()` 返回 False**：依次排查：1）`nvidia-smi` 确认显卡正常；2）CUDA 版本与 PyTorch 安装命令匹配；3）`pip list | grep torch` 确认没有同时装 CPU 版和 GPU 版。
 
-这是因为代码片段省略了数据加载步骤。完整的调用顺序是：先 `train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size)`，再传入 `train_ch3`。本文"框架支持"一节给出了完整示例。
+**Colab 上运行教材代码报 CUDA 相关错误**：在 Notebook 开头加 `!pip install -U torch torchvision` 让 PyTorch 自动适配 CUDA。仍报错则切换运行时为 CPU。
 
-**Q3：GPU 版 PyTorch 安装后 `torch.cuda.is_available()` 返回 False**
+**JAX 实现不完整**：JAX 实现仍在补充中，部分章节只有 PyTorch 版本。必须用 JAX 时可参考 PyTorch 实现自行翻译。
 
-按以下顺序排查：1）确认机器有 NVIDIA 显卡，`nvidia-smi` 能正常输出；2）确认 CUDA 版本与 PyTorch 安装命令匹配，PyTorch 官网的安装命令生成器会给出对应 CUDA 版本的 pip 命令；3）确认没有同时装 CPU 版和 GPU 版，`pip list | grep torch` 只应有一组 `torch` 和 `torchvision`。
-
-**Q4：Colab 上运行教材代码报 CUDA 相关错误**
-
-Colab 的 CUDA 版本可能与教材代码假设的版本不一致。最快的解决办法是在 Notebook 开头加一行 `!pip install -U torch torchvision`，让 PyTorch 自动适配当前 CUDA。如果仍报错，把运行时类型切换为 CPU 也能跑通大部分章节，只是训练慢一些。
-
-**Q5：教材的 JAX 实现不完整**
-
-JAX 实现仍在补充中，部分章节只有 PyTorch 版本。如果你必须用 JAX，可以参考 PyTorch 实现自行翻译，JAX 的 `flax` 和 `optax` 库与 PyTorch 的 `nn.Module` 和 `optim` 在概念上对应得比较清楚。
-
-**Q6：第一版和第二版有什么区别？该读哪个？**
-
-第二版（v2.0.0）新增了注意力机制、BERT、自然语言推断等内容，选 PyTorch 作为主框架，章节结构也做了调整。第一版已不再更新。除非你需要维护基于第一版的旧代码，否则直接读第二版。
-
-## 自测题
-
-以下问题用于检验你对教材核心概念的理解，答案可在对应章节找到。
-
-1. 第 3 章中，线性回归的解析解（normal equation）和梯度下降解各有什么适用场景？为什么教材在引入梯度下降前先讲解析解？
-2. 第 4 章的 Dropout 在训练和预测阶段行为有何不同？如果训练时保留率是 `p`，预测时是否需要做缩放？为什么？
-3. 第 6 章中，1×1 卷积没有在空间维度上聚合信息，它存在的意义是什么？提示：从通道数变化的角度想。
-4. 第 7 章的 ResNet 中，残差连接 `f(x) + x` 为什么能缓解梯度消失？如果把这个加法改成拼接 `concat(f(x), x)`，会有什么不同？
-5. 第 10 章的 Transformer 中，位置编码为什么是必要的？如果去掉位置编码，模型还能区分"猫追狗"和"狗追猫"吗？
-6. 第 11 章的 Adam 优化器结合了 Momentum 和 AdaGrad 的思想，它对稀疏梯度和非平稳目标各有什么优势？
-7. 第 14 章的 BERT 使用双向自注意力，而 GPT 使用单向（因果）自注意力。这种差异如何影响两者在下游任务上的适用范围？
-
-## 练习
-
-完成以下 3 个练习来巩固对教材的理解：
-
-### 练习1：环境配置与跑通（预计30分钟）
-
-**目标**：在本地配置 d2l 环境并跑通第一个示例。
-
-**步骤**：
-1. 选择一种安装路径（pip + venv、Conda、Docker、云 GPU）
-2. 安装 d2l 工具包和框架（PyTorch 或 TensorFlow）
-3. 运行教材第3章的线性回归示例
-4. 修改学习率（从0.1改为0.01和0.001），观察损失曲线变化
-
-**验证标准**：能成功运行示例并解释学习率对训练的影响。
-
----
-
-### 练习2：框架对比（预计1小时）
-
-**目标**：理解同一份教材内容在不同框架下的实现差异。
-
-**步骤**：
-1. 选择教材第6章的一个CNN示例
-2. 分别用PyTorch和TensorFlow实现
-3. 对比两者在模型定义、训练循环、数据处理上的差异
-4. 记录：哪种框架更简洁？哪种更灵活？
-
-**验证标准**：能列出两种框架的至少3个主要差异点。
-
----
-
-### 练习3：从零实现（预计2-3小时）
-
-**目标**：不看教材代码，从零实现一个完整训练循环。
-
-**步骤**：
-1. 选择教材第3章的线性回归或Softmax回归
-2. 从零实现：数据加载、模型定义、损失函数、优化器、训练循环
-3. 不参考教材代码，自己写
-4. 对比教材实现，找出差异
-
-**验证标准**：实现能跑通，输出合理的训练曲线。
-
----
+**第一版和第二版的区别**：第二版（v2.0.0）新增了注意力机制、BERT、自然语言推断等内容，第一版已不再更新。直接读第二版。
 
 ## 进阶路径
 
 教材覆盖深度学习的基础到中级内容，学完后按以下方向深入：
 
-**方向一：Transformer 与大模型**
+**Transformer 与大模型**：教材第 10、14 章是 Transformer 和 BERT 的入门，接下来读论文《Attention Is All You Need》、BERT 原论文、GPT 系列论文，然后上手 Hugging Face Transformers 库。大模型训练的工程细节看 Megatron-LM、DeepSpeed 的文档和源码。
 
-教材第 10、14 章是 Transformer 和 BERT 的入门，接下来读论文《Attention Is All You Need》、BERT 原论文、GPT 系列论文，然后上手 Hugging Face Transformers 库。想理解大模型训练的工程细节，看 Megatron-LM、DeepSpeed 的文档和源码。
+**计算机视觉**：教材第 13 章讲了目标检测和语义分割的基础，进阶看 DETR、Mask R-CNN、Vision Transformer（ViT）的论文。代码实践从 mmdetection 或 Detectron2 入手。
 
-**方向二：计算机视觉**
+**生成模型**：教材对生成模型覆盖较少（只有样式迁移）。想学扩散模型（Diffusion），从论文《Denoising Diffusion Probabilistic Models》开始，配合 Hugging Face Diffusers 库实践。GAN 部分可以看教材英文版的扩展章节。
 
-教材第 13 章讲了目标检测和语义分割的基础，进阶看 DETR、Mask R-CNN、Vision Transformer（ViT）的论文。代码实践从 mmdetection 或 Detectron2 入手。
+**强化学习**：D2L 对强化学习覆盖有限，进阶看 Sutton & Barto 的《Reinforcement Learning: An Introduction》，以及 OpenAI Spinning Up 教程。
 
-**方向三：生成模型**
-
-教材对生成模型覆盖较少（只有样式迁移）。想学扩散模型（Diffusion），从论文《Denoising Diffusion Probabilistic Models》开始，配合 Hugging Face Diffusers 库实践。GAN 部分可以看教材英文版的扩展章节。
-
-**方向四：强化学习**
-
-D2L 对强化学习覆盖有限，进阶看 Sutton & Barto 的《Reinforcement Learning: An Introduction》，以及 OpenAI Spinning Up 教程。
-
-**方向五：系统与工程**
-
-对深度学习系统本身感兴趣（而不是应用），看 MLSys（Machine Learning Systems）方向的内容，如 TVM、XLA、PyTorch 的分布式训练实现。CMU 10-414/10-714（Deep Learning Systems）课程是一个扎实的起点。
+**系统与工程**：对深度学习系统本身感兴趣（而不是应用），看 MLSys（Machine Learning Systems）方向的内容，如 TVM、XLA、PyTorch 的分布式训练实现。CMU 10-414/10-714（Deep Learning Systems）课程是一个扎实的起点。
 
 ## 资源链接与引用
 

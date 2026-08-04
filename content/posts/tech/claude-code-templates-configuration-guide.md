@@ -14,29 +14,11 @@ draft: false
 
 项目地址：[https://github.com/davila7/claude-code-templates](https://github.com/davila7/claude-code-templates)
 
-## 先说结论
-
-如果你在团队里推广 Claude Code，直接装 Templates 比手动配 Agents 和 MCPs 快 5–10 倍。它解决的核心问题是：**把分散在 GitHub、npm、各种教程里的 Claude Code 配置，收拢成一个带版本管理的一键安装器**。
-
-三个判断：
-
-1. **Templates 不是框架，是配置分发器**。它不改变 Claude Code 的运行机制，只是把你本来要手动创建的 `settings.json`、MCP 配置、Agent 定义，变成可复用的模块。
-2. **监控层是差异化能力**。大多数 Claude Code 配置方案只管"怎么装"，Templates 多管了一层"装了之后怎么看效果"。
-3. **适合已经跑通 Claude Code 的团队**。如果你还没在本地跑通过 Claude Code，先去把官方 Quick Start 跑完再回来，否则 Templates 的组件矩阵会让你迷失。
-
-## 前置知识
-
-阅读本文前，建议先确认以下工具已在你的机器上可运行：
-
-- **Claude Code CLI**：能在终端里启动并完成至少一次对话。
-- **Node.js ≥ 18**：`npx` 命令可用。
-- **Git**：能在终端里执行 `git commit`。
-
-如果你这三条任一条不满足，先花 20 分钟把 Claude Code 官方文档的 Quick Start 走完。
+Templates 不是框架，是配置分发器。它不改变 Claude Code 的运行机制，只是把本来需要手动创建的 `settings.json`、MCP 配置、Agent 定义，变成可复用的模块。监控层是它的差异化能力——大多数 Claude Code 配置方案只管"怎么装"，Templates 多管了一层"装了之后怎么看效果"。适合已经跑通 Claude Code 的团队，如果还没在本地跑通过，建议先把官方 Quick Start 走完再来。
 
 ## 组件地图
 
-Templates 的六类组件不是平铺的列表，它们在 Claude Code 的运行时里各司其职。下面这张图展示了组件之间的协作关系：
+Templates 的六类组件在 Claude Code 的运行时里各司其职。下面这张图展示了组件之间的协作关系：
 
 ```mermaid
 flowchart TB
@@ -97,7 +79,7 @@ flowchart TB
 
 入口层有两扇门：CLI 适合脚本化和自动化，Web UI 适合浏览发现。组件矩阵里的六类组件全部注入到 Claude Code 运行时，运行时再通过监控层的四个工具反向暴露状态、性能和诊断信息。
 
-注意图中虚线：Hooks 可以挂载在 Agent 的事件上（比如 pre-completion 校验），Commands 可以调用 MCPs 来访问外部服务，Skills 可以嵌入到 Agent 中作为递进式暴露的能力模块。
+图中虚线表示：Hooks 可以挂载在 Agent 的事件上（比如 pre-completion 校验），Commands 可以调用 MCPs 来访问外部服务，Skills 可以嵌入到 Agent 中作为递进式暴露的能力模块。
 
 ## 六类组件
 
@@ -114,7 +96,7 @@ flowchart TB
 
 ## 安装
 
-你有两种安装途径：CLI 一键安装和 Web UI 交互式浏览。
+有两种安装途径：CLI 一键安装和 Web UI 交互式浏览。
 
 ### CLI
 
@@ -362,61 +344,6 @@ ECC 是社区维护的 Claude Code 资源大全，涵盖文章、视频、工具
 - 提供了可视化的组件管理界面
 
 如果你已经在用 superpowers 或 9arm/skills，迁移到 Templates 不会丢失任何功能，还能获得统一的安装、管理和监控体验。
-
-## FAQ
-
-### 1. 安装组件后，怎么确认它真的生效了？
-
-在 Claude Code 会话中，新安装的 Agent 会体现在模型的响应风格和知识边界上。Commands 可以用 `/help` 查看已注册的命令列表。Hooks 可以通过故意触发事件来验证（比如做一个测试 commit 看 pre-commit hook 是否执行）。最可靠的方式是运行健康检查：
-
-```bash
-npx claude-code-templates@latest --health-check
-```
-
-### 2. 多个 Agent 可以同时生效吗？
-
-Claude Code 同一时间只能以一个 Agent 的角色运行。但你可以通过 Commands 在不同 Agent 之间切换，或者在同一个会话中先后调用不同 Agent。Hooks 不受 Agent 切换影响，它们挂载在事件上，始终生效。
-
-### 3. MCP 连接失败怎么办？
-
-先确认 MCP server 是否在运行。对于 PostgreSQL MCP，检查 `DATABASE_URL` 是否正确、数据库是否接受连接。对于 GitHub MCP，检查 token 是否有效、权限范围是否足够。然后运行健康检查，它会逐项测试 MCP 连接并给出诊断信息。
-
-### 4. Analytics 采集的数据存在哪里？有隐私风险吗？
-
-Analytics 数据默认存储在本地（`~/.claude/analytics/` 目录下），不会上传到任何远程服务器。Conversation Monitor 的 tunnel 模式使用 Cloudflare Tunnel，传输过程加密，但对话内容仍然只在你的机器上。如果你担心隐私，可以只用本地访问模式（不加 `--tunnel`）。
-
-### 5. 如何卸载某个组件？
-
-```bash
-npx claude-code-templates@latest --remove --agent development-tools/code-reviewer
-npx claude-code-templates@latest --remove --mcp database/postgresql-integration
-```
-
-卸载后，对应的配置文件会被清理。可以用健康检查确认组件已完全移除。
-
-### 6. 可以在团队内统一管理 Templates 配置吗？
-
-可以把安装命令写成脚本，团队成员执行同一套命令即可获得一致的配置。更高级的做法是维护一个 `.claude-templates` 配置文件，放在项目仓库中，然后通过 CI 或 Git hook 自动同步：
-
-```bash
-npx claude-code-templates@latest --config .claude-templates --yes
-```
-
-### 7. Templates 和 Claude Code 的版本兼容性如何？
-
-Templates CLI 会检测当前 Claude Code 版本，并安装兼容的组件版本。如果遇到不兼容的情况，健康检查会提示。Claude Code 大版本升级后，建议重新运行一次安装命令，确保组件版本匹配。
-
----
-
-## 资料口径说明
-
-本文关键判断的取径方式：
-
-1. **Claude Code Templates 的组件分类和协作关系**：来自仓库 README 和官方文档，已验证与代码实现一致。
-2. **Analytics 面板的指标含义和诊断价值**：来自仓库 README 和 Analytics 文档，已验证与实现一致。
-3. **与 OpenClaw、ECC、9arm/skills、superpowers 的对比**：来自各项目的 README 和功能对比，已验证准确性。
-4. **安装命令和配置示例**：来自仓库 README 和文档，已验证可运行（假设环境满足前置知识要求）。
-5. **链接有效性**：仓库、文档、Web UI、Discord 社区链接均已验证（2026-04-28），Claude Code 官方文档链接有效。
 
 ---
 

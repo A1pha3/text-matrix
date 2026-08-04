@@ -3,7 +3,7 @@ title: "Deep-Live-Cam：一键实时换脸工具的技术原理与使用指南"
 date: "2026-03-28T22:00:00+08:00"
 slug: "deep-live-cam-realtime-faceswap"
 github_repo: "hacksider/Deep-Live-Cam"
-description: "深度解读 Deep-Live-Cam 实时换脸与视频深度伪造工具，一键操作、仅需一张照片，支持 webcam 直播、视频通话、电影角色扮演等多种场景。"
+description: "Deep-Live-Cam 实时换脸工具：一张照片即可实时换脸，支持 webcam 直播、视频通话、电影角色扮演。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI视频"]
@@ -11,11 +11,7 @@ tags: ["AI视频"]
 
 ## 一、项目概览
 
-### 1.1 为什么值得关注
-
 [Deep-Live-Cam](https://github.com/hacksider/Deep-Live-Cam) 是一键实时换脸与视频深度伪造工具，只需一张照片即可实现实时换脸。
-
-**核心数据：**
 
 | 指标 | 数值 |
 |------|------|
@@ -26,15 +22,11 @@ tags: ["AI视频"]
 | License | AGPL-3.0 |
 | 语言 | Python 100% |
 
-**核心定位：**
-
 > Real-time face swap and video deepfake with a single click and only a single image.
 
-### 1.2 项目定位
+与需要大量训练数据的传统换脸方案不同，Deep-Live-Cam 的特点在于：
 
-与需要大量训练数据的传统换脸方案不同，Deep-Live-Cam 的差异化在于：
-
-- **零训练**：无需针对目标人物训练模型，一张照片即可
+- **零训练**：无需针对目标人物训练模型
 - **实时性**：10-30 秒内完成预处理，之后实时推流
 - **全平台**：覆盖 NVIDIA / AMD / Apple / Intel / CPU
 
@@ -117,11 +109,9 @@ tags: ["AI视频"]
 
 ## 四、快速开始
 
-### 4.1 预构建版本（推荐新手）
+### 4.1 安装
 
-下载地址：https://deeplivecam.net/index.php/quickstart
-
-支持平台：
+**预构建版本**（推荐）：https://deeplivecam.net/index.php/quickstart
 
 | 平台 | 说明 |
 |------|------|
@@ -129,34 +119,17 @@ tags: ["AI视频"]
 | Mac Silicon | Apple Silicon 专用 |
 | CPU | 无需显卡 |
 
-### 4.2 手动安装
-
-**环境要求：**
-
-| 要求 | 说明 |
-|------|------|
-| Python | 3.10+ |
-| NVIDIA/AMD GPU | 可选，建议使用 |
-| ffmpeg | 视频处理必需 |
-
-**安装步骤：**
+**手动安装**（环境要求：Python 3.10+、ffmpeg）：
 
 ```bash
-# 克隆仓库
 git clone https://github.com/hacksider/Deep-Live-Cam.git
 cd Deep-Live-Cam
-
-# 安装依赖
 pip install -r requirements.txt
-
-# 下载模型（从 HuggingFace）
-# https://huggingface.co/hacksider/deep-live-cam/tree/main
-
-# 运行
+# 从 https://huggingface.co/hacksider/deep-live-cam/tree/main 下载模型
 python run.py
 ```
 
-### 4.3 三步实时换脸
+### 4.2 三步实时换脸
 
 ```
 1️⃣ 选择一张人脸照片（Source Face）
@@ -164,38 +137,22 @@ python run.py
 3️⃣ 点击 "Live!" 开始实时换脸
 ```
 
-### 4.4 命令行模式
+### 4.3 命令行模式
 
 ```bash
-# 指定源脸和目标
-python run.py -s source.jpg -t target.mp4
-
-# 指定输出路径
-python run.py -s source.jpg -t target.mp4 -o output/
-
-# 保持原始帧率
-python run.py -s source.jpg -t target.mp4 --keep-fps
-
-# 保持原始音频
-python run.py -s source.jpg -t target.mp4 --keep-audio
-
-# 多人脸模式
-python run.py -s source.jpg -t target.mp4 --many-faces
-
-# 嘴型遮罩
-python run.py -s source.jpg -t target.mp4 --mouth-mask
+python run.py -s source.jpg -t target.mp4                    # 指定源脸和目标
+python run.py -s source.jpg -t target.mp4 -o output/         # 指定输出路径
+python run.py -s source.jpg -t target.mp4 --keep-fps         # 保持原始帧率
+python run.py -s source.jpg -t target.mp4 --keep-audio       # 保持原始音频
+python run.py -s source.jpg -t target.mp4 --many-faces       # 多人脸模式
+python run.py -s source.jpg -t target.mp4 --mouth-mask       # 嘴型遮罩
 ```
 
-### 4.5 Webcam 直播设置
+### 4.4 Webcam 直播设置
 
 ```bash
-# 1. 运行程序
 python run.py
-
-# 2. 选择源脸照片
-# 3. 点击 "Live"
-# 4. 等待预览出现（10-30 秒）
-# 5. 使用 OBS 等工具进行屏幕捕获直播
+# 选择源脸照片 → 点击 "Live" → 等待预览出现（10-30 秒）→ 使用 OBS 等工具进行屏幕捕获直播
 ```
 
 ---
@@ -272,20 +229,3 @@ python run.py
 | 官网 | https://deeplivecam.net/ |
 | 预构建版本 | https://deeplivecam.net/index.php/quickstart |
 | 模型下载 | https://huggingface.co/hacksider/deep-live-cam/tree/main |
-
----
-
-## 九、总结
-
-Deep-Live-Cam 的实际门槛：一张照片 + 一次点击，就能跑出专业级实时换脸效果。
-
-| 传统方式 | Deep-Live-Cam 方式 |
-|----------|-------------------|
-| 专业团队制作 | 只需一张照片 |
-| 复杂配置 | 一键操作 |
-| 离线使用 | 实时 webcam |
-| 高端显卡必需 | CPU 也可运行 |
-
-**核心优势：** 一键操作、单张照片输入、实时预览、全平台覆盖、开源可定制。
-
-**注意事项：** 仅用于正当目的，使用真人脸须获得授权，分享时标注为深度伪造。

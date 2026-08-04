@@ -4,7 +4,7 @@ date: "2026-03-25T09:30:00+08:00"
 slug: "claude-api-authentication-requests-session"
 aliases:
   - /posts/tech/claude-api-authentication-requests-session/
-description: "本文详细介绍了Claude API的认证方式（API Key与Bearer Token）、HTTP请求构建、会话管理机制，以及如何实现结构化输出。适合入门开发者阅读。"
+description: "Claude API的认证方式（API Key与Bearer Token）、HTTP请求构建、会话管理机制与结构化输出实现。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "API", "Python"]
@@ -12,30 +12,24 @@ tags: ["Claude", "API", "Python"]
 
 # Claude API 基础专题（一）：认证、请求与会话管理
 
-Claude 的 Messages API 设计非常简洁——一个 `messages.create()` 调用就能完成一次对话。但简洁不等于简单。认证怎么做、密钥怎么放、多轮对话怎么维护上下文、结构化输出用什么方案最稳——这些问题在官方文档里都有答案，但答案和答案之间缺少一层"工程判断"：什么场景该用什么模式、什么做法会踩坑。
-
-本文从工程实践角度梳理这几个基础问题，代码基于 `anthropic` Python SDK，版本以 `claude-sonnet-4-20250514` 为例。
+Claude Messages API 的入口是一个 `messages.create()` 调用。本文从工程实践角度梳理认证、密钥管理、多轮对话、系统提示词和结构化输出等基础问题，代码基于 `anthropic` Python SDK，模型以 `claude-sonnet-4-20250514` 为例。
 
 ---
 
 ## 1.1 API认证与密钥管理
 
-### 什么是API密钥
-
-API密钥（API Key）是Anthropic分配给你的唯一标识符，用于验证请求来源。每个密钥关联到你的账户，追踪使用量并控制访问权限。
-
-获取步骤：
+### 获取API密钥
 
 1. 访问 [Anthropic Console](https://console.anthropic.com/)
-2. 注册账户（需要信用卡用于计费，但有免费额度）
+2. 注册账户
 3. 在「API Keys」页面创建新密钥
 4. 复制密钥并妥善保存
 
-### 密钥管理的工程实践
+### 密钥管理
 
-密钥硬编码是新手最常见的错误，但后果远不止"不规范"——一旦密钥被提交到 Git 仓库，即使后续删除，Git 历史里仍然可查。某团队曾因三年前提交中的一个密钥被自动化脚本扫描到，导致账户被用于加密货币挖矿，损失数千美元。
+密钥不应硬编码在代码中。一旦提交到 Git 仓库，即使后续删除，历史记录中仍可追溯。
 
-**正确做法：从环境变量读取**
+**开发环境：从环境变量读取**
 
 ```python
 import os
@@ -70,7 +64,7 @@ client = Anthropic(api_key=api_key)
 pip install python-dotenv
 ```
 
-**生产环境推荐：云密钥管理服务**
+**生产环境：云密钥管理服务**
 
 ```python
 import boto3
@@ -92,7 +86,7 @@ api_key = json.loads(response['SecretString'])['api_key']
 anthropic_client = Anthropic(api_key=api_key)
 ```
 
-### SDK初始化推荐做法
+### SDK初始化
 
 ```python
 from anthropic import Anthropic
@@ -136,7 +130,7 @@ response = anthropic.client.messages.create(
 pip install anthropic
 ```
 
-### 同步请求完整示例
+### 同步请求
 
 ```python
 from anthropic import Anthropic
@@ -158,21 +152,19 @@ message = client.messages.create(
 print(message.content[0].text)
 ```
 
-### 参数详解
+### 参数说明
 
-**`model` 参数**
+**`model`**
 
-三个模型按能力和成本排序：
+三个模型按能力和成本递增排序：
 
-- `claude-opus-4-20250514`：最强能力，适合复杂分析和代码生成。成本最高，响应最慢。
-- `claude-sonnet-4-20250514`：平衡之选，日常对话、写作、分析的主力模型。大多数场景下够用。
-- `claude-haiku-3-20250514`：快速响应，适合实时聊天和简单问答。延迟最低，成本最低。
+- `claude-haiku-3-20250514`：延迟最低，适合实时聊天和简单问答
+- `claude-sonnet-4-20250514`：平衡之选，日常对话、写作、分析的主力模型
+- `claude-opus-4-20250514`：最强能力，适合复杂分析和代码生成
 
-选型建议：如果响应时间敏感（如聊天机器人），用 Haiku；如果任务复杂要推理质量，用 Opus；拿不准就从 Sonnet 开始。
+**`max_tokens`**
 
-**`max_tokens` 参数**
-
-控制单次请求最多生成的 token 数。Token 是文本处理的最小单位（1 个 token 约等于 0.75 个英文单词或 1-2 个中文字符）。
+控制单次请求最多生成的 token 数。1 token 约等于 0.75 个英文单词或 1-2 个中文字符。按输出长度预期设置：短回答 100-200，几段话 500-1000，完整文章 2000-4096。
 
 ```python
 message = client.messages.create(
@@ -182,11 +174,9 @@ message = client.messages.create(
 )
 ```
 
-一个常见误区是把 `max_tokens` 设得很大来"保证完整输出"——这会浪费 token（按量计费）。更好的做法是根据输出长度预期设置合理值：短回答 100-200，几段话 500-1000，完整文章 2000-4096。
+**`messages`**
 
-**`messages` 参数**
-
-消息列表，每条消息包含 `role`（`user` 或 `assistant`）和 `content`（字符串内容）：
+消息列表，每条消息包含 `role`（`user` 或 `assistant`）和 `content`：
 
 ```python
 messages=[
@@ -197,8 +187,6 @@ messages=[
 ```
 
 ### 流式响应
-
-需要实时显示打字效果时使用流式响应：
 
 ```python
 from anthropic import Anthropic
@@ -216,13 +204,13 @@ with client.messages.stream(
     print()
 ```
 
-流式响应的核心价值在于用户体验——用户不需要对着空白屏幕等待。对于长文本生成，流式几乎是必须的，因为非流式模式下用户会在数秒到十几秒内看不到任何反馈。
+长文本生成时，非流式模式用户需等待数秒到十几秒。流式响应是生产场景的推荐做法。
 
 ---
 
 ## 1.3 理解响应结构
 
-### Message对象的完整结构
+### Message对象
 
 ```python
 message = client.messages.create(
@@ -230,25 +218,20 @@ message = client.messages.create(
     max_tokens=1024,
     messages=[{"role": "user", "content": "解释光合作用"}]
 )
+
+print(message.id)          # msg_xxxxx
+print(message.type)        # "message"
+print(message.role)        # "assistant"
+print(message.content)     # [ContentBlock(text='...')]
+print(message.model)       # "claude-sonnet-4-20250514"
+print(message.stop_reason) # "end_turn"
+print(message.stop_sequence) # None
+print(message.usage)       # Usage(input_tokens=xx, output_tokens=xx)
 ```
 
-响应结构：
+### 解析内容
 
 ```python
-print(message.id)          # msg_xxxxx - 消息唯一ID
-print(message.type)        # "message" - 消息类型
-print(message.role)        # "assistant" - 角色
-print(message.content)     # [ContentBlock(text='...')] - 内容块列表
-print(message.model)       # "claude-sonnet-4-20250514" - 使用的模型
-print(message.stop_reason) # "end_turn" - 停止原因
-print(message.stop_sequence) # None - 停止序列
-print(message.usage)       # Usage(input_tokens=xx, output_tokens=xx) - token使用量
-```
-
-### 解析响应内容
-
-```python
-# 安全获取文本内容
 for block in message.content:
     if block.type == "text":
         print(block.text)
@@ -256,12 +239,9 @@ for block in message.content:
 
 ### 停止原因
 
-`stop_reason` 的值告诉你为什么响应停止了：
-
-- `"end_turn"`：正常完成，Claude 认为应该停止
+- `"end_turn"`：正常完成
 - `"max_tokens"`：达到 `max_tokens` 限制，响应可能被截断
 - `"stop_sequence"`：遇到指定的停止序列
-- `"only_stop_reason"`：仅当 `stop_reason` 是唯一有效停止信号时
 
 ```python
 if message.stop_reason == "max_tokens":
@@ -277,15 +257,14 @@ print(f"输入token: {message.usage.input_tokens}")
 print(f"输出token: {message.usage.output_tokens}")
 print(f"总token: {message.usage.input_tokens + message.usage.output_tokens}")
 
-# 计算成本（以 Sonnet 模型为例）
+# 计算成本（以 Sonnet 4 为例）
 input_cost_per_1k = 0.003
 output_cost_per_1k = 0.015
 
 input_cost = (message.usage.input_tokens / 1000) * input_cost_per_1k
 output_cost = (message.usage.output_tokens / 1000) * output_cost_per_1k
-total_cost = input_cost + output_cost
 
-print(f"本次请求成本: ${total_cost:.6f}")
+print(f"本次请求成本: ${input_cost + output_cost:.6f}")
 ```
 
 ### 错误处理
@@ -316,9 +295,9 @@ except Exception as e:
 
 ## 1.4 多轮对话与会话管理
 
-多轮对话的核心问题不是"怎么发请求"，而是"怎么维护上下文"。Claude API 本身是无状态的——每次 `messages.create()` 调用都是独立的。所谓"会话"完全由客户端维护的消息列表定义。
+Claude API 本身是无状态的——每次 `messages.create()` 调用都是独立的。会话由客户端维护的消息列表定义。
 
-**单轮对话（无记忆）**：
+**无状态（无记忆）**：
 
 ```python
 response1 = client.messages.create(
@@ -332,7 +311,7 @@ response2 = client.messages.create(
 # Claude不记得"豆豆"
 ```
 
-**多轮对话（有记忆）**：
+**有状态（有记忆）**：
 
 ```python
 conversation_history = []
@@ -340,10 +319,7 @@ conversation_history = []
 while True:
     user_input = input("你: ")
 
-    conversation_history.append({
-        "role": "user",
-        "content": user_input
-    })
+    conversation_history.append({"role": "user", "content": user_input})
 
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
@@ -352,20 +328,14 @@ while True:
     )
 
     assistant_message = response.content[0].text
-
-    conversation_history.append({
-        "role": "assistant",
-        "content": assistant_message
-    })
+    conversation_history.append({"role": "assistant", "content": assistant_message})
 
     print(f"Claude: {assistant_message}")
 ```
 
-### 会话管理的进阶技巧
+### 会话管理技巧
 
-**限制历史消息长度**
-
-对话太长会消耗大量 token，需要限制历史长度：
+**限制历史长度**
 
 ```python
 def trim_conversation(messages, max_turns=10):
@@ -373,16 +343,14 @@ def trim_conversation(messages, max_turns=10):
     system_messages = [m for m in messages if m.get("role") == "system"]
     conversation = [m for m in messages if m.get("role") != "system"]
 
-    trimmed = conversation[-(max_turns * 2):]
-
-    return system_messages + trimmed
+    return system_messages + conversation[-(max_turns * 2):]
 
 messages = trim_conversation(conversation_history, max_turns=5)
 ```
 
 **摘要旧消息**
 
-对于超长对话，可以将旧消息摘要——用更便宜的模型（Haiku）压缩早期对话：
+用 Haiku 模型压缩早期对话，保留关键信息：
 
 ```python
 def summarize_old_messages(messages, summary_turns=5):
@@ -414,7 +382,7 @@ def summarize_old_messages(messages, summary_turns=5):
     ] + recent
 ```
 
-**分离不同话题**
+**分离话题**
 
 ```python
 class ConversationManager:
@@ -463,7 +431,7 @@ messages = manager.get_messages()
 
 ## 1.5 系统提示词
 
-系统提示词（System Prompt）是设置 AI 行为和角色的方式，影响整个对话而非单次请求。它的优先级高于用户消息，且对用户不可见。
+系统提示词（System Prompt）设置 AI 的行为和角色，作用于整个对话。
 
 ```python
 response = client.messages.create(
@@ -474,7 +442,7 @@ response = client.messages.create(
 )
 ```
 
-### 有效的系统提示词模式
+### 常见模式
 
 **角色设定**
 
@@ -493,7 +461,7 @@ system = """你是一位拥有20年经验的高级Python工程师。
 ```python
 system = """你是一个数据分析师。
 
-当回答问题时，必须使用以下格式：
+回答问题时必须使用以下格式：
 
 ## 主要发现
 [最重要的1-2个发现]
@@ -537,11 +505,11 @@ system = """你是一个翻译助手。
 """
 ```
 
-### 系统提示词设计要点
+### 设计要点
 
-好的系统提示词应该具体、一致、可验证。一个常见的反面模式是给相互矛盾的指令——比如同时要求"诚实"和"必要时可以说善意的谎言"，模型会无所适从。另一个是过于模糊的设定，比如"你是AI助手，回答用户问题"——这几乎不提供任何有效约束，和没有系统提示词没有区别。
+系统提示词应具体、一致、可验证。避免相互矛盾的指令（如同时要求"诚实"和"必要时可以说善意的谎言"），以及过于模糊的设定（如"你是AI助手，回答用户问题"）。
 
-### 调试系统提示词
+### 测试系统提示词
 
 ```python
 def test_system_prompt(system_prompt, test_cases):
@@ -562,11 +530,9 @@ def test_system_prompt(system_prompt, test_cases):
 
 ## 1.6 结构化输出
 
-需要 AI 返回特定格式的数据（如 JSON）时，有三种方案，可靠性从低到高排列。
+需要 AI 返回 JSON 等特定格式数据时，有三种方案，可靠性从低到高。
 
-### 方法 1：在提示词中要求 JSON
-
-最简单但最不可靠的方法——模型可能不遵循格式，或者在 JSON 前后加额外文字：
+### 方法 1：提示词中要求 JSON
 
 ```python
 response = client.messages.create(
@@ -625,7 +591,7 @@ data = json.loads(response.content[0].text)
 print(data)
 ```
 
-### 方法 3：使用工具调用（最可靠）
+### 方法 3：工具调用（最可靠）
 
 ```python
 tools = [{
@@ -662,7 +628,7 @@ for content in response.content:
         print(f"Result: {result['result']}")
 ```
 
-### 处理边界情况
+### 边界情况处理
 
 ```python
 def safe_json_parse(text):
@@ -690,18 +656,3 @@ def safe_json_parse(text):
     return None
 ```
 
----
-
-## 常见错误排查
-
-| 错误 | 原因 | 解决 |
-|------|------|------|
-| `AuthenticationError` | API密钥无效或未设置 | 检查环境变量 |
-| `RateLimitError` | 请求太频繁 | 等待后重试，或实现指数退避 |
-| `InvalidRequestError` | 参数错误 | 对照文档检查参数 |
-| 响应被截断 | max_tokens 太小 | 增加 max_tokens |
-| 回答不相关 | 提示词不清晰 | 优化系统提示词，增加具体示例 |
-
----
-
-掌握认证、请求构建和会话管理之后，下一步可以深入提示词工程——如何设计高质量的系统提示词、如何利用工具调用实现复杂工作流。这些内容将在本系列后续文章中展开。

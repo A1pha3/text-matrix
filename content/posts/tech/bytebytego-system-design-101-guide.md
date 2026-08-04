@@ -2,8 +2,8 @@
 title: "ByteByteGo system-design-101 资源地图：15 个主题、400 篇系统设计图解"
 date: "2026-06-28T21:13:29+08:00"
 slug: "bytebytego-system-design-101-guide"
-github_repo: "donnemartin/system-design-primer"
-description: "ByteByteGo 系统设计图解的开源索引：15 个主题、约 400 篇 guide 链接到 bytebytego.com，价值在覆盖广度不在代码。"
+github_repo: "ByteByteGoHq/system-design-101"
+description: "ByteByteGo 系统设计图解的开源索引：15 个主题、约 400 篇 guide 链接到 bytebytego.com，覆盖广度是主要价值。"
 draft: false
 categories: ["技术笔记"]
 tags: ["面试", "技术写作", "系统设计"]
@@ -11,9 +11,9 @@ tags: ["面试", "技术写作", "系统设计"]
 
 # ByteByteGo system-design-101 资源地图
 
-`ByteByteGoHq/system-design-101` 不是一份代码仓库，而是一份自动生成的「系统设计图解清单」——截至 2026-06-28，84.1k stars、9.3k forks，自 2023-09-18 创建以来只经历了 100 多次提交，README 主体就是 15 个分类下的约 400 个图解链接，每一篇都跳到 [bytebytego.com/guides](https://bytebytego.com/guides) 的付费内容。仓库本身只承担索引和元数据维护，**真正的内容在仓库外**，理解这一点就理解了这个项目的边界。
+[ByteByteGoHq/system-design-101](https://github.com/ByteByteGoHq/system-design-101) 是一份自动生成的系统设计图解索引。截至 2026-06-28，84.1k stars、9.3k forks，自 2023-09-18 创建以来经历了 100 多次提交。README 主体是 15 个分类下约 400 个图解链接，每篇跳到 [bytebytego.com/guides](https://bytebytego.com/guides) 的付费内容。仓库只承担索引和元数据维护，内容在仓库外。
 
-这个 repo 是一张「系统设计知识图谱」，价值在于「知道这一类问题在哪些主题下、该按什么顺序读」，而不是「看一份代码学到一种实现」。
+这个 repo 的价值在于告诉你"这类问题在哪些主题下、该按什么顺序读"——不是一份代码实现，是一张主题地图。
 
 ## 仓库结构：数据驱动的清单生成器
 
@@ -29,15 +29,15 @@ flowchart LR
     PR --> Guides
 ```
 
-这张图揭示三条主线：
+这张图对应三条设计主线：
 
-- **数据与生成分离**——`data/` 目录是单一数据源，`scripts/readme.ts` 用 `gray-matter` 解析每个 `.md` 的 frontmatter，再按 `sort` 字段排序生成 TOC。新增一篇 guide，只需在 `data/guides/` 加一个 markdown 文件，README 自动更新。
-- **图片托管在 CDN**——`data/guides/*.md` 的 `image` 字段指向 `https://assets.bytebytego.com/diagrams/0xxx-name.jpg`，仓库本身不存图片，体积始终在 50 MB 以内（GitHub API 显示 `size: 46759` KB）。
+- **数据与生成分离**——`data/` 目录是单一数据源，`scripts/readme.ts` 用 `gray-matter` 解析每个 `.md` 的 frontmatter，按 `sort` 字段排序生成 TOC。新增一篇 guide 只需在 `data/guides/` 加一个 markdown 文件，README 自动更新。
+- **图片托管在 CDN**——`data/guides/*.md` 的 `image` 字段指向 `https://assets.bytebytego.com/diagrams/0xxx-name.jpg`，仓库本身不存图片，体积保持在 50 MB 以内（GitHub API 显示 `size: 46759` KB）。
 - **贡献走 PR**——`.github/` 下的工作流和 `CONTRIBUTING.md` 引导贡献者把新图解发到上游的 bytebytego 私有仓库，再回流到 `data/` 目录。
 
 ## 15 个主题分类
 
-README TOC 的顶层 `*` 一级项就是 15 个分类，按 `sort` 字段排序。挑出 8 个跨方向最常用的：
+README TOC 的顶层 `*` 一级项就是 15 个分类，按 `sort` 字段排序。挑出 8 个跨方向常用的：
 
 | # | 分类 | 典型问题 | 候选阅读起点 |
 |---|---|---|---|
@@ -52,9 +52,9 @@ README TOC 的顶层 `*` 一级项就是 15 个分类，按 `sort` 字段排序�
 
 完整 15 个分类（按 README 排序）：API and Web Development、Real World Case Studies、AI and Machine Learning、Database and Storage、Technical Interviews、Caching & Performance、Payment and Fintech、Software Architecture、DevTools & Productivity、Software Development、Cloud & Distributed Systems、How it Works?、DevOps and CI/CD、Security、Computer Fundamentals。
 
-## 一次「任务流」：从 `URL → 渲染完成`
+## 一个具体场景：从 URL 到渲染完成
 
-把仓库的价值放进一个具体场景看更清楚——这是面试常考的「输入 URL 后浏览器发生了什么」：
+用面试常考的「输入 URL 后浏览器发生了什么」来串仓库的各个分类：
 
 ```mermaid
 flowchart TB
@@ -69,7 +69,7 @@ flowchart TB
     Start --> Step1 --> Step2 --> Step3 --> Step4 --> Step5 --> Step6 --> Done
 ```
 
-这条 6 跳路径里，每一跳对应仓库里的一个分类、对应 5–10 篇图解。**仓库本身没有给出这条路径**——它只是把所有可能的路径铺开，让读者自己挑。资源地图和教程的区别就在这里：仓库告诉你有哪些路口，不替你选路。
+这条路径里每一跳对应仓库的一个分类，每个分类下有 5–10 篇图解。仓库把所有可能的路径铺开，读者自己选。资源地图不替人选路，只告诉路口在哪。
 
 ## 与同类资源的对比
 
@@ -78,23 +78,23 @@ flowchart TB
 | [donnemartin/system-design-primer](https://github.com/donnemartin/system-design-primer) | 中文翻译版广为流传，原版含较多文字总结和示例代码 | 偶发 PR，节奏慢 | 同属「系统设计面试」主题，但偏向文字 + 代码示例，ByteByteGo 偏向图解 |
 | ByteByteGo Books（[System Design Interview](https://bytebytego.com/books) 等 4 卷本） | 出版级深度，每章 15–30 页 | 1–2 年一次新版 | 仓库中的 Real World Case Studies、System Design Cheat Sheet 与书章节几乎一一对应 |
 | ByteByteGo YouTube 频道 | 视频版图解，每周 1–2 期 | 持续更新 | README 中很多「Top N」「Comparison」类图解来自视频截图 |
-| [awesome-system-design](https://github.com/awesome-system-design/awesome-system-design) 等 awesome 列表 | 链接合集，无结构化分类 | 半停滞 | 仓库本身就是一个 awesome list，但有 ByteByteGo 一家的内容血统 |
+| [awesome-system-design](https://github.com/awesome-system-design/awesome-system-design) 等 awesome 列表 | 链接合集，无结构化分类 | 半停滞 | 仓库本身就是一个 awesome list，但只收录 ByteByteGo 的内容 |
 
 ## 适用边界
 
 - **适合**：准备系统设计面试、需要一份「主题地图」快速定位某个领域该读哪些图解、想把 ByteByteGo 系列的图解按主题组织成学习路径。
-- **不适合**：想通过「读一个仓库学到分布式系统实现」——这不是它的定位。也没有代码示例、没有配置教程、没有命令行工具，所有内容都在 bytebytego.com 的付费区。
-- **时效性**：仓库最后 push 是 2025-04-04，之后主要靠外部数据刷新（`updated_at` 仍会变）。把它当作「历史快照式资源地图」比「持续更新的教程」更准确。
+- **不适合**：想通过读一个仓库学到分布式系统实现——这不是它的定位。没有代码示例、没有配置教程、没有命令行工具，所有内容都在 bytebytego.com 的付费区。
+- **时效性**：仓库最后 push 是 2025-04-04，之后主要靠外部数据刷新（`updated_at` 仍会变）。把它当作历史快照式资源地图，比持续更新的教程更准确。
 
 ## 怎么用这份资源地图
 
-1. **先看 `Technical Interviews`** 这一类（只有 5 篇），里头有 [How to Ace System Design Interviews](https://bytebytego.com/guides/how-to-ace-system-design-interviews-like-a-boss) 和 [Recommended Materials for Technical Interviews](https://bytebytego.com/guides/my-recommended-materials-for-cracking-your-next-technical-interview)——这两篇相当于「总入口」。
-2. **再按你薄弱的分类深入**——比如数据库弱就进 [Database and Storage](https://bytebytego.com/guides/database-and-storage) 一次刷完，从 [Types of Databases](https://bytebytego.com/guides/types-of-databases) 到 [8 Data Structures That Power Your Databases](https://bytebytego.com/guides/8-data-structures-that-power-your-databases) 串起来。
+1. **先看 `Technical Interviews`** ——只有 5 篇，里头有 [How to Ace System Design Interviews](https://bytebytego.com/guides/how-to-ace-system-design-interviews-like-a-boss) 和 [Recommended Materials for Technical Interviews](https://bytebytego.com/guides/my-recommended-materials-for-cracking-your-next-technical-interviews)，相当于总入口。
+2. **再按薄弱分类深入**——比如数据库弱就进 [Database and Storage](https://bytebytego.com/guides/database-and-storage) 一次刷完，从 [Types of Databases](https://bytebytego.com/guides/types-of-databases) 到 [8 Data Structures That Power Your Databases](https://bytebytego.com/guides/8-data-structures-that-power-your-databases) 串起来。
 3. **最后用 [Real World Case Studies](https://bytebytego.com/guides/real-world-case-studies) 做交叉验证**——同一类问题在 Netflix / Uber / Pinterest / Figma 的真实架构里怎么落地，能补足纯图解容易缺的真实工程权衡。
 
-仓库不强制这条顺序，但先总入口、再单点深入、最后用真实案例串，是这张地图最自然的读法。
+先总入口、再单点深入、最后用真实案例串，是这张地图最自然的读法。
 
 ---
 
-**本文定位**：ByteByteGo system-design-101 资源地图解读 + 适用边界分析 + 学习路径建议  
-**更新记录**：v1.0 - 2026-06-28 初版发布
+*本文定位：ByteByteGo system-design-101 资源地图解读 + 适用边界分析 + 学习路径建议*
+*更新记录：v1.0 - 2026-06-28 初版发布*

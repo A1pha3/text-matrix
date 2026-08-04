@@ -3,7 +3,7 @@ title: "Home Assistant Core：开源智能家居控制中心的架构与理念"
 date: "2026-04-27T15:00:00+08:00"
 slug: "home-assistant-core-open-source-home-automation"
 github_repo: "home-assistant/core"
-description: "Home Assistant 是开源智能家居领域最活跃的项目之一，以本地优先、私有化为核心理念。本文解析 Home Assistant Core 的实体/状态模型、集成（Integration）架构、自动化引擎与数据流设计，帮助读者理解其为何能支持 2000+ 设备集成。"
+description: "Home Assistant Core 是开源智能家居领域最活跃的项目之一，以本地优先、私有化为核心理念。本文解析其实体/状态模型、集成架构、自动化引擎与数据流设计，说明其为何能支持 2000+ 设备集成。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Home Assistant", "智能家居", "Python", "本地优先"]
@@ -11,19 +11,9 @@ tags: ["Home Assistant", "智能家居", "Python", "本地优先"]
 
 # Home Assistant Core：把 2000 种设备统一到一台本地服务器的背后
 
-## 读完能回答什么
+在一台机器上跑一个 Python 程序，让它替你管所有智能家居设备。能管 2000 多种设备的关键，不是代码量，而是它的数据模型和集成架构。
 
-- Entity/State 数据模型怎么把 2000 种设备统一到一套结构里
-- 集成（Integration）怎么加载、怎么配置、怎么和设备通信
-- 自动化引擎的触发-条件-动作模型和事件总线怎么配合
-- 本地优先（Local-First）设计对隐私意味着什么、代价是什么
-- 一次完整自动化从触发到执行的数据流长什么样
-
----
-
-Home Assistant 做的事说起来很简单：在一台机器上跑一个 Python 程序，让它替你管所有智能家居设备。但让它真正能管 2000 多种不同品牌、不同协议设备的关键，不是代码量，而是它的数据模型和集成架构。
-
-本文不会按功能清单逐章介绍。先帮你划清两条主线——数据怎么统一、控制怎么发生——然后补一个完整的自动化流转案例，再看这两条主线的工程代价和适用边界。
+本文从两条主线展开：数据怎么统一、控制怎么发生。然后补一个完整的自动化流转案例，再看这两条主线的工程代价和适用边界。
 
 ## 1. 系统地图
 
@@ -69,13 +59,6 @@ flowchart TB
     SM --> RC --> DB
     UI --> I1 & I2 & I3 & I4
 ```
-
-两条主线从这里拆开：
-
-| 主线 | 负责什么 | 关键组件 |
-|------|----------|----------|
-| 数据统一 | 把不同协议的设备抽象成统一的 Entity/State | 状态机、集成层、记录器 |
-| 控制执行 | 监听状态变化、匹配规则、执行动作 | 事件总线、自动化引擎、服务调用 |
 
 下面逐层展开。
 
@@ -315,7 +298,7 @@ hass.services.call(
 
 ## 7. 一次完整自动化：追踪「人走灯灭」
 
-前面各节拆开来解释了不同组件，现在用一个具体例子把它们串起来——看一次"检测到无人移动后自动关灯"的完整链路。
+用一个具体例子把前面各节串起来——看一次"检测到无人移动后自动关灯"的完整链路。
 
 **场景**：走廊上装有 Zigbee 人体传感器和 Zigbee 灯泡，通过 ZHA 集成接入 Home Assistant。自动化规则：传感器状态变为 `off` 后，延迟 60 秒关灯。
 
@@ -331,7 +314,7 @@ hass.services.call(
 8. **状态回写**：ZHA 集成收到服务调用，通过 Zigbee 网络向灯泡发送关灯指令。灯泡确认关闭后，集成将 `light.corridor` 的 state 更新为 `"off"`，又触发一次 `state_changed` 事件。
 9. **历史记录**：记录器（Recorder）将两次状态变化写入 SQLite 数据库，后续可在仪表板上查看历史曲线。
 
-这个链路穿过了本文讨论的全部组件：集成、状态机、事件总线、自动化引擎、服务调用、记录器。理解这条链路后，调试自动化时你知道该去哪一层排查——是集成没收到数据、状态没变化、自动化没匹配、还是服务调用没执行。
+这个链路穿过了本文讨论的全部组件：集成、状态机、事件总线、自动化引擎、服务调用、记录器。调试自动化时，可以从这个链路逐层排查——是集成没收到数据、状态没变化、自动化没匹配、还是服务调用没执行。
 
 ---
 
@@ -352,7 +335,7 @@ recorder:
 
 ## 9. 本地优先的代价
 
-Home Assistant 的首要设计原则是本地运行、数据不上云。收益已经说清楚了：互联网断了本地设备照常工作、自动化不需要等云端延迟、数据完全由你控制。
+Home Assistant 的首要设计原则是本地运行、数据不上云。互联网断了本地设备照常工作、自动化不需要等云端延迟、数据完全由你控制。
 
 但本地优先也有代价，选型前需要掂量：
 
@@ -362,19 +345,10 @@ Home Assistant 的首要设计原则是本地运行、数据不上云。收益�
 
 ---
 
-## 10. 从哪里开始
-
-**如果你已经有一台 24 小时开机的 NAS、树莓派或 NUC**，直接装 HAOS（Home Assistant Operating System）是最省心的路径——它自带 Supervisor 管理插件和备份。
-
-**如果你只是想试试，不打算长期维护一台机器**，先装一个 Docker 版体验一下 Entity/State 模型和自动化编辑器。不需要买新硬件，用手机 App（通过 `mobile_app` 集成）就能创建第一批 sensor 实体来玩。
-
-**如果你主要用米家设备**，先查 [集成列表](https://www.home-assistant.io/integrations/) 确认你的设备型号是否有本地集成支持。没有本地集成的话，米家设备需要通过 Xiaomi Gateway 3 或 HACS 第三方集成桥接，延迟和稳定性都比本地协议差一个档次。
-
-**如果你想深入开发**，Home Assistant Core 用 Python 写，Apache-2.0 协议，代码在 [github.com/home-assistant/core](https://github.com/home-assistant/core)。建议先读 [开发者文档](https://developers.home-assistant.io/) 的"Creating a new integration"章节，写一个最小集成只需要实现 `__init__.py` 和 `manifest.json` 两个文件。
-
-延伸资源：
+## 参考资源
 
 - [Home Assistant 官方文档](https://www.home-assistant.io/docs/)
 - [Home Assistant 开发者文档](https://developers.home-assistant.io/)
 - [集成列表](https://www.home-assistant.io/integrations/)
 - [社区论坛](https://community.home-assistant.io/)
+- 仓库：[github.com/home-assistant/core](https://github.com/home-assistant/core)（Apache-2.0）
