@@ -1,0 +1,4 @@
+enableGitInfo = false
+
+[params]
+  fingerprint = "sha256"

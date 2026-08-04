@@ -25,6 +25,9 @@ enableRobotsTXT = true
   description = "面向中文开发者的 AI Agent、AI 开发工作流与开源工具知识库。"
   readingSpeedCJK = 400
   images = ["images/og-cover.png"]
+  # 资源指纹：css/js 文件名带内容 hash，部署后浏览器/CDN 缓存自动失效
+  # （2026-08-04 搜索框黑字问题暴露：无指纹 + CDN max-age=14400，旧 css 会被缓存 4 小时）
+  fingerprint = "sha256"
 
   [params.adsense]
     enabled = true

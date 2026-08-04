@@ -1283,11 +1283,23 @@
   border-radius: 1rem;
   /* input 是 form 控件：UA 默认 color: fieldtext（黑）覆盖继承值，
      而 pagefind-ui.css 只给 .pagefind-ui 根元素设了 color，没给 input 设
-     → dark 下暗底黑字不可见。必须显式绑定主题变量（caret 默认跟随 color，无需另设） */
+     → dark 下暗底黑字不可见。必须显式绑定主题变量。
+     -webkit-text-fill-color 兜底浏览器自动填充（autofill）时强制改字色的行为 */
   color: var(--pagefind-ui-text);
+  -webkit-text-fill-color: var(--pagefind-ui-text);
   box-shadow:
     inset 0 0 0 1px rgba(28, 25, 23, .06),
     0 10px 28px rgba(28, 25, 23, .05);
+}
+
+/* 自动填充：Chrome 会给输入框强加浅蓝背景，用 inset shadow 覆盖为站点背景色，
+   文字色由 -webkit-text-fill-color 保证（见上） */
+.pagefind-search-page .pagefind-ui__search-input:-webkit-autofill {
+  box-shadow: inset 0 0 0 1000px #ffffff;
+
+  [theme=dark] & {
+    box-shadow: inset 0 0 0 1000px #1c1917;
+  }
 }
 
 .pagefind-search-page .pagefind-ui__search-input::placeholder {
