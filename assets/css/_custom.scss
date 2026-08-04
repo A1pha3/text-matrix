@@ -1,5 +1,11 @@
 /* 品牌标识：纯文字 wordmark，无装饰层 */
+/* 用 flex 收敛高度：#header-desktop 继承了主题的 line-height: var(--header-height)，
+   若 .header-title 保持默认的 block，其高度会被撑到一整行 line-height（≈56px），
+   连带把 .header-dock 撑高、溢出 fixed 顶栏的保留区，遮住下方内容。
+   改成 flex 后高度由 wordmark 内容决定（≈29px），所有页面与首页一致，不再溢出。 */
 .header-title {
+  display: flex;
+  align-items: center;
   overflow: visible;
 
   .header-brand {
