@@ -1,19 +1,19 @@
 ---
-title: "OpenCode 完全指南：开源 AI Coding Agent 从入门到精通"
+title: "OpenCode：开源 AI 编程助手，本地运行、模型自由"
 date: "2026-05-02T10:13:00+08:00"
 slug: "opencode-open-source-ai-coding-agent-guide"
 github_repo: "anomalyco/opencode"
-description: "OpenCode 是目前星标数最高的开源 AI 编程助手，采用 TypeScript 构建，支持任意 LLM 提供商，提供内置 LSP 保护、TUI 终端界面和客户端/服务器架构。本文从原理、架构、安装配置、实战演示到二次开发全方位解析这一开源 Coding Agent。"
+description: "OpenCode 是目前星标数最高的开源 AI 编程助手，用 TypeScript 构建，模型提供商可换，内置 LSP 诊断、TUI 终端界面和客户端/服务器架构。本文从核心设计、架构、安装配置、实战演示到二次开发逐层拆解。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Coding Agent", "TypeScript", "LSP", "TUI", "OpenCode"]
 ---
 
-# OpenCode 完全指南：开源 AI Coding Agent 从入门到精通
+# OpenCode：开源 AI 编程助手，本地运行、模型自由
 
-OpenCode 解决的不是"如何让 AI 写代码"，而是"如何让 AI 编程助手真正留在开发者自己的环境里"。它把代码生成、LSP 诊断、文件操作和终端控制全部跑在本地，模型提供商可换，数据不经过第三方——这是它与 GitHub Copilot、Claude Code 等闭源方案最根本的分界线。
+OpenCode 的目标是把 AI 编程助手留在开发者自己的环境里。代码生成、LSP 诊断、文件操作和终端控制都在本地跑，模型提供商可换，数据不经过第三方——这是它与 GitHub Copilot、Claude Code 等闭源方案的根本差别。
 
-截至 2026 年初，OpenCode 在 GitHub 上已获得超过 15.3 万星标、1.77 万分支。它由 Neovim 爱好者和 [terminal.shop](https://terminal.shop) 的创建者联合开发，核心目标是为开发者提供一个完全开放、无绑定提供商的终端编程环境。
+截至 2026 年 8 月，OpenCode 在 GitHub 上已获得超过 19.2 万星标、2.46 万分支。它由 Neovim 爱好者和 [terminal.shop](https://terminal.shop) 的创建者联合开发，核心目标是为开发者提供一个完全开放、无绑定提供商的终端编程环境。
 
 **快速地图：**
 
@@ -160,7 +160,7 @@ paru -S opencode-bin              # AUR 最新版
 **其他：**
 
 ```bash
-mise use -g opencode              # mise 工具链
+mise use -g github:anomalyco/opencode   # mise 工具链
 nix run nixpkgs#opencode          # Nix/NixOS
 ```
 
@@ -172,8 +172,8 @@ nix run nixpkgs#opencode          # Nix/NixOS
 
 | 平台 | 下载文件 |
 |------|----------|
-| macOS (Apple Silicon) | `opencode-desktop-darwin-aarch64.dmg` |
-| macOS (Intel) | `opencode-desktop-darwin-x64.dmg` |
+| macOS (Apple Silicon) | `opencode-desktop-mac-arm64.dmg` |
+| macOS (Intel) | `opencode-desktop-mac-x64.dmg` |
 | Windows | `opencode-desktop-windows-x64.exe` |
 | Linux | `.deb`、`.rpm` 或 AppImage |
 
@@ -185,7 +185,7 @@ brew install --cask opencode-desktop
 
 ### 3.3 配置与权限管理
 
-OpenCode 的配置文件位于项目根目录的 `.opencode/opencode.jsonc`。一个典型配置：
+OpenCode 的配置文件放在项目根目录，文件名是 `opencode.json` 或 `opencode.jsonc`（全局配置在 `~/.config/opencode/opencode.json`）。一个典型配置：
 
 ```jsonc
 {
@@ -239,7 +239,7 @@ OpenCode 的处理链路：
 4. 模型返回修改方案后，Agent 在 apply 前还会再查一次 LSP，确认修改范围内没有引入新的类型冲突。
 5. 用户确认后，Agent 写入文件。如果配置了 `permission.edit` 规则（比如 `db/migration/*` 设为 `deny`），即使模型建议修改这些目录，Agent 也会直接拒绝。
 
-这个流程里，LSP 不是可有可无的辅助——它让 Agent 在生成和验证两个阶段都有精确的类型信息，而不需要靠 token 数量"猜"代码结构。
+这个流程里，LSP 是硬依赖：Agent 在生成和验证两个阶段都有精确的类型信息，不必靠 token 数量"猜"代码结构。
 
 ### 4.2 使用 Plan Agent 探索代码
 
@@ -314,7 +314,7 @@ bun dev /path/to/your/project
 
 **调试配置（VSCode）：**
 
-项目仓库中包含示例配置 [ PROTECTED_68 ](.vscode/settings.example.json) 和 [ PROTECTED_69 ](.vscode/launch.example.json)，复制为正式文件后即可使用。
+项目仓库中包含示例配置 `.vscode/settings.example.json` 和 `.vscode/launch.example.json`，复制为正式文件后即可使用。
 
 调试 OpenCode TUI 时推荐使用 `bun run --inspect=ws://localhost:6499/` 并配合 VSCode 的 "Attach to Node" 配置。如果需要在 TUI 中触发服务端断点，可以在 `packages/opencode/src/index.ts serve` 时单独启动服务器并 attach。
 
@@ -332,8 +332,7 @@ packages/
 .opencode/
 ├── agent/          # 自定义 Agent 配置文件
 ├── skills/         # 自定义 Skill 扩展
-├── plugins/        # 插件目录
-└── opencode.jsonc  # 主配置文件
+└── plugins/        # 插件目录
 ```
 
 ### 5.3 新增 Provider
@@ -366,7 +365,7 @@ OpenCode 在本地运行，所有操作不经过第三方服务器。权限系�
 
 **项目用什么数据库？**
 
-会话和项目元数据使用 SQLite 存储（通过 Drizzle ORM），数据库文件位于 `$HOME/.opencode/` 下。如需迁移或查看数据，可以使用 `opencode db` 命令。
+会话和项目元数据使用 SQLite 存储（通过 Drizzle ORM），数据文件在 `~/.local/share/opencode/` 下。如需迁移或查看数据，可以执行 `opencode db` 命令。
 
 ## 7. 采用建议
 

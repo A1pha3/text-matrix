@@ -1,5 +1,5 @@
 ---
-title: "Repomix：11.4K Stars·把代码库压缩成AI可读的单一文件"
+title: "Repomix：27.6K Stars·把代码库压缩成 AI 可读的单一文件"
 date: "2026-04-12T01:50:00+08:00"
 slug: repomix-ai-codebase-compression-guide
 github_repo: "yamadashy/repomix"
@@ -304,7 +304,7 @@ repomix --compress --include-logs --include-logs-count 20
 
 Claude 在这一次对话里同时看到模块结构、调用关系和变更历史，不需要你来回补充上下文。
 
-这条流水线里，压缩砍掉了实现细节让 Token 不超限，Git 日志提供了改动动机，安全检查在送出去之前拦住了硬编码密钥——三个机制分别解决不同层面的问题。
+这条流水线里，压缩砍掉实现细节让 Token 不超限，Git 日志补上改动动机，安全检查在送出去之前拦住硬编码密钥。三处改动各管一段。
 
 ---
 
@@ -560,7 +560,7 @@ This file contains all the files in the repository combined into one.
 I want to refactor the code, so please review it first.
 ```
 
-将仓库内容放在提示顶部（指令之前），Claude 的响应质量可提升最高 30%——这在 Anthropic 的长上下文实践建议中也有对应建议。
+把仓库内容放在提示顶部（指令之前），Claude 能先读完整上下文再开始干活，响应质量比对着片段好。
 
 **仓库太大。** Token 数接近 LLM 上下文上限时：开 `--compress` 让 Tree-sitter 砍掉实现细节；用 `--include` 只打包关心的目录；用 `--ignore` 排除测试、文档等非核心内容；调 `--include-logs-count` 控制历史条数。
 
