@@ -35,10 +35,13 @@ UTILITY = set(
 )
 
 ICON_PAT = re.compile(r"\bfa-[a-z0-9-]+\b")
+# 动态字形：主题 SCSS/CSS 里通过 --fa:'\fXXX' 覆盖图标码点（如 theme-switch 的太阳/月亮）
+# 这些码点不在 HTML/JS 类名里，必须从样式源直接提取，否则子集字体缺字形 → 图标显示为空白
+DYN_CP_PAT = re.compile(r"--fa:\s*['\"]\\([0-9a-fA-F]{1,6})['\"]")
 
 
 def scan_inventory():
-    """扫描所有可能引用 FA 图标的位置。"""
+    """扫描所有可能引用 FA 图标的位置。返回 (类名集合, 动态码点集合)。"""
     sources = [
         glob.glob(os.path.join(ROOT, "layouts/**/*.html"), recursive=True),
         glob.glob(os.path.join(ROOT, "themes/LoveIt/layouts/**/*.html"), recursive=True),
@@ -57,7 +60,23 @@ def scan_inventory():
             for m in ICON_PAT.findall(text):
                 if m not in UTILITY and not re.match(r"fa-(rotate|flip)-", m):
                     icons.add(m)
-    return icons
+
+    # 样式源：SCSS/CSS 里 --fa:'\fXXX' 动态覆盖的码点（扫描盲区，历史 bug 根因）
+    dyn_cps = set()
+    style_sources = (
+        glob.glob(os.path.join(ROOT, "themes/LoveIt/assets/css/**/*.scss"), recursive=True)
+        + glob.glob(os.path.join(ROOT, "themes/LoveIt/assets/css/**/*.css"), recursive=True)
+        + glob.glob(os.path.join(ROOT, "assets/css/**/*.scss"), recursive=True)
+        + glob.glob(os.path.join(ROOT, "assets/css/**/*.css"), recursive=True)
+    )
+    for f in style_sources:
+        try:
+            text = open(f, encoding="utf-8", errors="ignore").read()
+        except OSError:
+            continue
+        for m in DYN_CP_PAT.findall(text):
+            dyn_cps.add(int(m, 16))
+    return icons, dyn_cps
 
 
 def split_rules(css):
@@ -134,11 +153,12 @@ def subset_font(src, dst, codepoints):
 
 
 def main():
-    icons = scan_inventory()
-    print(f"[1/3] 图标清单：{len(icons)} 个")
+    icons, dyn_cps = scan_inventory()
+    print(f"[1/3] 图标清单：{len(icons)} 个（动态字形码点 {len(dyn_cps)} 个）")
 
     css = open(FA_CSS, encoding="utf-8").read()
     subset_css, codepoints, kept_icons = build_subset_css(css, icons)
+    codepoints |= dyn_cps  # 合并 SCSS 动态字形码点（如 theme-switch 太阳/月亮）
     missing = icons - kept_icons
     if missing:
         print(f"!! 警告：{len(missing)} 个图标在 CSS 中未找到规则: {sorted(missing)}")
