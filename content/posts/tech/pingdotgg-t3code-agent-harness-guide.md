@@ -10,9 +10,9 @@ tags: ["T3 Code", "Agent", "Claude Code", "Codex", "Cursor", "远程开发"]
 
 # T3 Code：Theo 的 Agent 控制台，远程驾驭 Claude Code 与 Codex
 
-AI 编程 agent（智能体）都有一个逃不掉的约束：它们跑在你电脑的终端里，你就得坐在终端前。Claude Code 在跑一个跨文件重构时，你出去吃顿饭，回来发现它停在某个审批点等你——这半小时本可以不用守在屏幕前。T3 Code 拆掉的正是这个约束：agent 的进程仍在你的机器上，操控面搬到手机、浏览器和桌面，你在哪儿，控制台就在哪儿。
+AI 编程 agent（智能体）都有一个逃不掉的约束：它们跑在你电脑的终端里，你就得坐在终端前。Claude Code 在跑一个跨文件重构时，你出去吃顿饭，回来发现它停在某个审批点等你——这半小时本可以不用守在屏幕前。T3 Code 拆掉的正是这个约束：agent 的进程仍在你的机器上，操控面搬到手机、浏览器和桌面，人不必再守在电脑前。
 
-先把判断亮出来：T3 Code 是壳，不是 agent。它不跑模型、不做代码生成，管理的是你已安装并认证的 agent 进程——把「坐在终端前」变成「躺在沙发上，偶尔低头看一眼」。评估它，标准是这层壳顺不顺手，代码能力不归它管。
+先把判断亮出来：T3 Code 是壳，不是 agent。它不跑模型、不做代码生成，管理的是你已安装并认证的 agent 进程，你坐在沙发上，偶尔低头看一眼就行。评估它，标准是这层壳顺不顺手，代码能力不归它管。
 
 README 里有一句它自己的回答，比任何介绍都诚实。被问「你到底在卖什么」时，它写的是「Nothing」——他们做 T3 Code，是因为想要最好用的 agent 开发体验，而 Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 这些现成方案都没到他们的标准。它想做到性能好、能远程、真正开放，并明说「万一走错了方向，你会拿到 fork 和构建自己编辑器所需的一切」。这句「真正开放」不是口号，仓库 MIT、不上传遥测、自带安装包，都是它的兑现。
 
@@ -105,7 +105,7 @@ T3 Code 的服务端不直接改应用状态。客户端派发类型化命令，
 
 客户端面向 provider 的命令也走同一个抽象：`thread.turn.start`、`thread.turn.interrupt`、`thread.approval.respond`、`thread.user-input.respond`、`thread.checkpoint.revert`、`thread.session.stop`，外加两个模式设定 `thread.runtime-mode.set`、`thread.interaction-mode.set`。调用方只认线程，不认 agent。
 
-加一个新 agent 的成本被压得很低：写一个 driver 加一个 adapter，注册进 `BUILT_IN_DRIVERS`，编排层、契约层、客户端一行都不用改。你本机装了什么 agent，T3 Code 就能驱动什么。
+加一个新 agent 的成本被压得很低：写一个 driver 加一个 adapter，注册进 `BUILT_IN_DRIVERS`，编排层、契约层、客户端一行都不用改。
 
 ### 3.4 检查点：每一次 turn 都有快照
 

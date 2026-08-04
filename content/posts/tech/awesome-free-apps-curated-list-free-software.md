@@ -16,45 +16,23 @@ tags: ["Windows", "macOS", "Linux", "开源"]
 | 项目 | 信息 |
 |------|------|
 | **仓库地址** | [Axorax/awesome-free-apps](https://github.com/Axorax/awesome-free-apps) |
-| **Stars** | 6657+ |
-| **Forks** | 351+ |
-| **许可证** | MIT |
+| **Stars** | 7191+ |
+| **Forks** | 412+ |
+| **许可证** | CC-BY-NC-SA-4.0 |
 | **语言** | JavaScript |
-| **最后更新** | 2026-06-20 |
-
-## 学习目标
-
-读完本文你能：
-
-1. **说清这份清单解决什么问题**：不是软件下载站，而是"按场景和平台过滤的免费软件目录"，帮你在广告和算法推荐里找到真实推荐。
-2. **用七个过滤维度快速定位**：Windows Only、macOS Only、Linux Only、Open-source Only、Recommended Only、Android Only、iOS Only，不必在一份长列表里翻找。
-3. **按场景挑到合适的免费软件**：音频制作、隐私浏览器、开发工具、密码管理、系统定制，每个场景都有仓库实际收录的代表条目。
-4. **沿着一条任务流把新机器配齐**：从打开 `filter/windows-only.md` 到逐场景选型，30 分钟内完成。
-5. **参与贡献或成为维护者**：读 `contributing.md` 了解格式，读 `how-to-make-a-pr.md` 学 PR 流程，在 Issue #28 留言加入长期维护。
-
-## 目录
-
-- [核心判断](#核心判断)
-- [仓库结构](#仓库结构)
-- [分类精选](#分类精选)
-- [任务流案例](#任务流案例)
-- [如何参与贡献](#如何参与贡献)
-- [采用建议](#采用建议)
-- [常见问题与故障排查](#常见问题与故障排查)
-- [自测题](#自测题)
-- [进阶路径](#进阶路径)
+| **最后更新** | 2026-08-02 |
 
 ## 核心判断
 
-awesome-free-apps 解决的是"这个场景该用什么免费软件"的决策问题。它靠维护者手动挑选条目，去广告、无营销套路，与搜索引擎的广告排名和应用商店的算法推荐形成对照。截至 2026 年 6 月 22 日，仓库在 GitHub API 上返回 **6657 Stars / 351 Forks**（数据来源：`https://api.github.com/repos/Axorax/awesome-free-apps`），365 次提交，最近一次推送在 2026 年 6 月 20 日，处于活跃维护状态。
+awesome-free-apps 解决的是"这个场景该用什么免费软件"的决策问题。它靠维护者手动挑选条目，去广告、无营销套路，与搜索引擎的广告排名和应用商店的算法推荐形成对照。截至 2026 年 8 月 2 日，仓库在 GitHub API 上返回 **7191 Stars / 412 Forks**（数据来源：`https://api.github.com/repos/Axorax/awesome-free-apps`），最近一次推送在 2026 年 8 月 2 日，处于活跃维护状态。
 
-它与其他 awesome 列表的关键差异在过滤层：仓库把桌面端拆成 Windows Only、macOS Only、Linux Only、Open-source Only、Recommended Only 五个视图，移动端再单独拆出 Android Only 和 iOS Only，共七个过滤维度。读者按平台或属性精准定位，不必在一份长列表里翻找。
+它与其他 awesome 列表的差异在过滤层：README 顶部挂了七个过滤视图，桌面端是 Windows Only、macOS Only、Linux Only、Open-source Only、Recommended Only 五个，移动端是 Android Only 和 iOS Only 两个。`filter/` 目录里每个视图一个文件，另有两个移动端组合视图 open-source-mobile-only 和 recommended-mobile-only。读者按平台或属性精准定位，不必在一份长列表里翻找。
 
 ## 仓库结构
 
 ```
 awesome-free-apps/
-├── README.md              # 主列表（桌面平台，约 806 行）
+├── README.md              # 主列表（桌面平台）
 ├── MOBILE.md              # 移动端专项
 ├── archived.md            # 已归档条目（失效或停止维护）
 ├── contributing.md        # 贡献格式与提交规范
@@ -71,10 +49,12 @@ awesome-free-apps/
     ├── open-source-only.md
     ├── recommended-only.md
     ├── android-only.md
-    └── iOS-only.md
+    ├── iOS-only.md
+    ├── open-source-mobile-only.md
+    └── recommended-mobile-only.md
 ```
 
-`README.md` 是主入口，按场景分 30 余个二级分类；`MOBILE.md` 单独维护移动端；`filter/` 下的七个文件由 `index.js` 自动生成，与主列表保持同步。`archived.md` 收录失效条目，便于追溯历史。
+`README.md` 是主入口，按场景分 30 余个二级分类；`MOBILE.md` 单独维护移动端；`filter/` 下的过滤视图由 `index.js` 自动生成，与主列表保持同步。`archived.md` 收录失效条目，便于追溯历史。
 
 ## 分类精选
 
@@ -107,7 +87,7 @@ awesome-free-apps/
 - **Insomnia** 🪟 🍎 🐧 · API Development — REST/GraphQL 客户端，仓库 ⭐ 推荐。
 - **DBeaver** 🪟 🍎 🐧 · Database — 通用 SQL 数据库工具，仓库 ⭐ 推荐。
 
-代码编辑器在仓库里独立成"Text Editors"分类，VS Code、Neovim、Zed 等都在那里，不在 Developer Tools 下。
+代码编辑器在仓库里独立成 Text Editors 分类，不在 Developer Tools 下。
 
 ### 文档与办公
 
@@ -116,8 +96,6 @@ awesome-free-apps/
 - **Draw.io** 🪟 🍎 🐧 · Graphics Tools — 桌面版流程图工具，开源。
 - **Calibre** 🪟 🍎 🐧 · E-book — 电子书管理器，仓库 ⭐ 推荐。
 - **Sumatra PDF** 🪟 · PDF Tools — 轻量 PDF 阅读器，仓库 ⭐ 推荐。
-
-仓库没有收录 Zotero、Pandoc 等学术工具，需要这类软件得另找清单。
 
 ### 安全工具
 
@@ -128,7 +106,7 @@ awesome-free-apps/
 - **ClamAV** 🪟 🍎 🐧 · Antivirus — 开源杀毒引擎。
 - **SaneHosts** 🍎 · Ad & Tracker Blocking — macOS hosts 文件管理器。
 
-7-Zip 在仓库里归入"Compression and Archiving"，不在安全区。仓库未收录 VeraCrypt、BleachBit，磁盘加密和系统清理需求需要从其他来源找。
+7-Zip 在仓库里归入 Compression and Archiving，不在安全区。磁盘加密、系统清理这类专题，这份清单覆盖有限，需要另找来源。
 
 ### 系统定制
 
@@ -139,7 +117,7 @@ awesome-free-apps/
 - **窗口管理**：Windows — Windhawk；macOS — Rectangle；Linux — KWin、i3、Sway。
 - **任务栏定制**：Windows — ExplorerPatcher；macOS — Hidden Bar。
 
-macOS 启动器和 Linux 任务栏定制在仓库里没有对应条目，需要从其他来源补充。
+macOS 启动器、Linux 任务栏定制这类需求，在清单里覆盖有限，需要从其他来源补充。
 
 ## 任务流案例：在新 Windows 机器上配齐基础工具
 
@@ -170,11 +148,11 @@ macOS 启动器和 Linux 任务栏定制在仓库里没有对应条目，需要�
 - **跨平台用户**：用主列表对照三端兼容性，优先选 🪟 🍎 🐧 三端齐全的工具，减少切换成本。
 - **开源偏好者**：直接走 `open-source-only.md`，跳过闭源条目。
 
-使用时注意两点：一是仓库条目会随维护更新增减，引用具体软件时建议附上访问日期；二是 `archived.md` 里的条目已失效，不要直接采用。如果需要仓库未收录的工具（如磁盘加密、学术文献管理），需要另找专题清单补充。
+使用时注意两点：一是仓库条目会随维护更新增减，引用具体软件时建议附上访问日期；二是 `archived.md` 里的条目已失效，不要直接采用。如果仓库覆盖不到的工具，需要另找专题清单补充。
 
 ## 常见问题与故障排查
 
-**Q1：`filter/` 下的七个文件是手动维护的吗？**
+**Q1：`filter/` 下的过滤视图是手动维护的吗？**
 A：不是，由 `index.js` 自动生成，与主列表保持同步。手动改 `README.md` 后运行 `node index.js` 即可重新生成过滤视图。
 
 **Q2：为什么有些软件在 `recommended-only.md` 里但不在我的平台上？**
@@ -184,49 +162,10 @@ A：⭐ 推荐是维护者按"免费 + 好用"标的，不保证全平台兼容�
 A：阅读 `contributing.md` 了解格式（名称、平台图标、一句话描述、开源状态），然后在 `README.md` 的对应分类里提 PR。`how-to-make-a-pr.md` 有图文教程。
 
 **Q4：仓库里的 Stars 数和我自己看的不一致？**
-A：文章中的数据截至 2026-06-22，来自 GitHub API 快照。开源项目数据持续变化，以仓库实际显示为准。
+A：文章中的数据截至 2026-08-02，来自 GitHub API 快照。开源项目数据持续变化，以仓库实际显示为准。
 
 **Q5：`archived.md` 里的软件还能用吗？**
 A：大部分已失效（官网下线、停止维护、转为付费），不建议直接采用。如果你发现某个归档条目又活了，可以在 Issue 里提，维护者会评估是否移回主列表。
-
-## 自测题
-
-1. **这份清单和其他"最好的 XX 软件"文章的关键差异是什么？举一个使用场景说明过滤视图怎么帮你省时间。**
-   > 差异在过滤层：七维过滤（Windows/macOS/Linux/Open-source/Recommended/Android/iOS）让你按平台或属性精准定位。场景：新装 Windows 机器，直接开 `filter/windows-only.md`，避开跨平台噪音。
-
-2. **`README.md` 和 `MOBILE.md` 的关系是什么？如果你要帮一台 Android 手机配软件，应该先看哪个文件？**
-   > `README.md` 是桌面端主列表，`MOBILE.md` 是移动端专项。配 Android 手机应先看 `MOBILE.md`，再看 `filter/android-only.md` 拿到纯 Android 条目。
-
-3. **仓库用哪三个标记帮你快速判断一个软件是否开源、是否维护者推荐？**
-   > 🔓 图标表示开源；⭐ 图标表示维护者推荐；两者都没有就是闭源且非特别推荐的条目。
-
-4. **假设你需要在一台新 MacBook 上配齐开发环境，写出一个使用这份清单的四步流程。**
-   > 1. 开 `filter/macOS-only.md` 拿 Mac 专用条目；2. 按场景（浏览器、编辑器、终端、密码管理）在对应分类里选；3. 用 `filter/recommended-only.md` 优先选带 ⭐ 的；4. 确认开源状态，优先选带 🔓 的。
-
-5. **列表里没有你要的软件（比如磁盘加密工具），下一步应该怎么办？**
-   > 这份清单有覆盖边界：未收录 VeraCrypt、BleachBit 等。需要这类工具应另找专题清单（如 awesome-security-hardening），或直接在 GitHub 搜关键词。
-
-## 进阶路径
-
-**阶段一：会用（第一次装机）**
-- 按自己的主要平台（Windows/macOS/Linux）打开对应过滤视图。
-- 逐场景（浏览器、编辑器、密码管理、截图、文件搜索）挑 1-2 个带 ⭐ 的条目装上。
-- 把 `archived.md` 加入黑名单，装软件前先核对是否已失效。
-
-**阶段二：会挑（跨平台或换机器）**
-- 对比同软件在不同平台上的替代品，建立自己的跨平台工具矩阵。
-- 学会用 `filter/open-source-only.md` 筛选，降低对闭源软件的依赖。
-- 给每份装机清单附上访问日期，三个月后复查是否有更新版本。
-
-**阶段三：会贡献（参与维护）**
-- 发现好软件但不在列表里，按 `contributing.md` 格式提 PR。
-- 发现条目失效（官网 404、转为付费），提 Issue 或 PR 移到 `archived.md`。
-- 读 `how-to-make-a-pr.md`，学会 fork + branch + PR 的完整流程。
-
-**阶段四：会维护（成为长期维护者）**
-- 在仓库 Discord 或 Issue #28 留言，申请成为维护者。
-- 运行 `index.js` 检查链接可达性，修复失效条目。
-- 为新条目写一句话描述，保持清单的可扫描性（不超过两行）。
 
 GitHub：[Axorax/awesome-free-apps](https://github.com/Axorax/awesome-free-apps)。
 

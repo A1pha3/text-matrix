@@ -96,6 +96,14 @@ def build_subset_css(css, icons):
             kept.append(rule)
             continue
 
+        # FA7 渲染主规则：:is(.fas,.far,...):before{content:var(--fa)/""}
+        # 双值 content 语法是现代浏览器渲染图标的唯一入口；
+        # 它的类集合（fa-solid/fa-regular 等风格类）不在图标清单里，
+        # 若走下方 icons 过滤会被误判为「未使用」而丢弃，导致图标全部不渲染。
+        if re.search(r":before\b", prelude) and re.search(r"content:\s*var\(--fa\)", body):
+            kept.append(rule)
+            continue
+
         classes = set(re.findall(r"\.(fa-[a-z0-9-]+)", prelude))
         is_icon_rule = ("--fa:" in body or "content:" in body) and classes
         if is_icon_rule and not (classes & icons):
