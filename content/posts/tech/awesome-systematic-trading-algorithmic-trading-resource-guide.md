@@ -3,7 +3,7 @@ title: "awesome-systematic-trading：量化交易资源地图与学习路径"
 date: "2026-04-12T02:29:31+08:00"
 slug: awesome-systematic-trading-algorithmic-trading-resource-guide
 github_repo: "paperswithbacktest/awesome-systematic-trading"
-description: "awesome-systematic-trading 是一个按策略分类的量化交易资源导航，涵盖研究论文、代码库、数据集。本文按动量、均值回归、统计套利、机器学习、加密货币五大方向，整理核心论文、代码示例和工具链。"
+description: "awesome-systematic-trading 按策略分类整理了量化交易的研究论文、代码库和数据集。本文按动量、均值回归、统计套利、机器学习、加密货币五大方向，梳理核心论文、代码示例和工具链。"
 draft: false
 categories: ["技术笔记"]
 tags: ["量化交易", "Python", "金融", "算法"]
@@ -11,13 +11,13 @@ tags: ["量化交易", "Python", "金融", "算法"]
 
 ## 这个仓库是什么
 
-[awesome-systematic-trading](https://github.com/paperswithbacktest/awesome-systematic-trading) 是一个按策略分类的论文导航 + 工具链清单（2026 年 4 月观测约 8.4k Stars）。它要解决的问题很具体：量化交易的论文和工具数量庞大，新手很难判断从哪里开始，老手容易漏掉某个方向的奠基工作。仓库本身不提供交易信号或回测平台，定位是知识地图——用于找到每个策略方向的奠基论文、可用的回测库和能拿到行情的数据源。
+[awesome-systematic-trading](https://github.com/paperswithbacktest/awesome-systematic-trading) 是一个按策略分类的论文导航加工具链清单（2026 年 8 月约 12.5k Stars、1.5k Forks）。量化交易的论文和工具数量庞大，新手不知道从哪篇论文开始读，老手也容易漏掉某个方向的奠基工作。仓库本身不提供交易信号或回测平台，它是一张知识地图——每个策略方向的奠基论文、可用的回测库、能拿到行情的数据源，都列在这里。
 
-从零学量化的人，可以用这个仓库缩短「不知道从哪篇论文开始」的时间。量化交易的论文数量巨大，但每个策略方向真正奠基的论文通常只有 3-5 篇，仓库筛出了这些。
+从零学量化的人，可以用这个仓库快速找到该读的论文。量化交易论文数量巨大，但每个策略方向真正奠基的通常只有 3-5 篇，仓库筛出了这些。
 
-已经入门的量化研究者，可以把它当查漏补缺的工具：检查自己有没有漏掉某个方向的经典论文，或者某个 Python 库比自己手写的版本更成熟。
+已经入门的量化研究者，可以拿它查漏补缺：检查自己有没有漏掉某个方向的经典论文，或者某个 Python 库比自己手写的版本更成熟。
 
-> Stars 数会随时间变化，文中提到的 8.4k Stars 为 2026 年 4 月观测值，使用时以仓库当前数据为准。
+> Stars 数会随时间变化，文中提到的 12.5k Stars 为 2026 年 8 月观测值，使用时以仓库当前数据为准。
 
 ---
 
@@ -46,13 +46,13 @@ mindmap
       博客 / 社区 / 基金排名
 ```
 
-仓库内容归为三类：研究材料（论文、书籍）、工具（代码库、回测框架）、原料（数据源）。三类资源对应量化工作的不同阶段。
+仓库内容分三类：研究材料（论文、书籍）、工具（代码库、回测框架）、原料（数据源）。三类资源对应量化工作的不同阶段。
 
 ---
 
 ## 量化工作的三个阶段：研究、回测、实盘
 
-量化交易的工作流拆成三个边界清晰的阶段。
+量化交易的工作流可以拆成三个阶段。
 
 **研究阶段**：读论文，理解策略的经济学直觉和统计假设。产出是策略的逻辑描述和参数范围。
 
@@ -73,9 +73,9 @@ mindmap
 
 ### 动量策略 (Momentum / Trend Following)
 
-动量策略是量化交易中研究最多、证据最充分的方向之一。Jegadeesh & Titman (1993) 的经典论文发现：过去 3-12 个月表现好的股票，在未来 3-12 个月继续跑赢的概率显著高于随机游走。Asness et al. (2013) 进一步证明动量效应在全球多个资产类别中都存在。
+动量策略是量化交易中研究最多的方向之一。Jegadeesh & Titman (1993) 的经典论文发现：过去 3-12 个月表现好的股票，在未来 3-12 个月继续跑赢的概率显著高于随机游走。Asness et al. (2013) 进一步证明动量效应在全球多个资产类别中都存在。
 
-动量效应的成因，学术上有几种解释：投资者对信息反应不足（新信息缓慢反映到价格里）、羊群效应（趋势形成后跟风资金强化趋势）、处置效应（赢家卖得太早、输家拿得太久）。这些行为偏差共同导致价格趋势在时间上有惯性。
+动量效应的成因，学术上有几种解释：投资者对信息反应不足（新信息缓慢反映到价格里）、羊群效应（趋势形成后跟风资金强化趋势）、处置效应（赢家卖得太早、输家拿得太久）。
 
 核心论文：
 - Jegadeesh & Titman (1993) — 动量效应的原始发现
@@ -144,7 +144,7 @@ def pairs_trading_signal(stock1: pd.Series, stock2: pd.Series,
 
 ### 统计套利 (Statistical Arbitrage)
 
-统计套利在均值回归的基础上扩展：从两只股票扩展到多资产组合，用协方差矩阵做权重优化。Avellaneda & Lee (2010) 的论文是统计套利的标准框架，他们用 PCA 提取残差因子，对残差做均值回归。
+统计套利从均值回归扩展到多资产组合：用协方差矩阵做权重优化。Avellaneda & Lee (2010) 的论文是统计套利的标准框架，用 PCA 提取残差因子，对残差做均值回归。
 
 配对交易处理两只股票的价差，统计套利处理一个股票池相对于共同因子的残差。残差更接近白噪声，均值回归的统计性质更好，但对模型假设更敏感。
 
@@ -179,7 +179,7 @@ class StatisticalArbitrage:
 
 ML 在量化交易中的应用集中在两个方向：价格预测（LSTM/Transformer）和因子挖掘（树模型）。Fischer & Krauss (2018) 用 LSTM 预测 S&P 500 成分股，证明深度学习在选股上优于传统模型。
 
-ML 在量化里的主要陷阱是过拟合。金融数据信噪比极低，深度模型容易学到噪声。López de Prado 在《Advances in Financial Machine Learning》里反复强调：金融 ML 首先要解决交叉验证（Purged K-Fold）和特征数量控制，模型复杂度反而是次要因素。
+ML 在量化里的主要问题是过拟合。金融数据信噪比极低，深度模型容易学到噪声。López de Prado 在《Advances in Financial Machine Learning》里反复强调：金融 ML 首先要解决交叉验证（Purged K-Fold）和特征数量控制，模型复杂度反而是次要因素。
 
 核心论文：
 - Dixon et al. (2016) — 机器学习在交易中的应用综述
@@ -190,7 +190,7 @@ ML 在量化里的主要陷阱是过拟合。金融数据信噪比极低，深�
 
 加密货币市场的微观结构与传统市场不同——24/7 交易、无涨跌停、跨交易所价差大。Makarov & Schoar (2020) 系统研究了加密货币的跨交易所套利，发现价差主要来自资本流动摩擦，交易成本反而是次要因素。
 
-加密货币适合作为独立方向研究，因为它的市场参与者结构、流动性分布、监管环境都和股票市场差异很大。同样的动量策略在加密货币上的表现可能和股票市场相反——加密货币的动量更短（周级别），反转更快。
+加密货币的市场参与者结构、流动性分布、监管环境都和股票市场差异很大，适合作为独立方向研究。同样的动量策略在加密货币上的表现可能和股票市场相反——加密货币的动量更短（周级别），反转更快。
 
 核心论文：
 - Makarov & Schoar (2020) — 加密货币跨交易所套利
@@ -242,7 +242,7 @@ yfinance 是非官方接口，Yahoo Finance 可能随时更改 API 导致库失�
 | Twitter API | 社交媒体 | 情绪信号 |
 | 卫星图像 | 物理数据 | 零售、能源趋势 |
 
-另类数据的难点是数据清洗。卫星图像原始数据需要大量预处理才能转成可用信号，个人研究者通常用聚合后的二手数据。
+另类数据的主要问题是数据清洗。卫星图像原始数据需要大量预处理才能转成可用信号，个人研究者通常用聚合后的二手数据。
 
 ---
 
@@ -281,11 +281,11 @@ class MovingAverageStrategy(bt.Strategy):
                 self.order = self.sell()
 ```
 
-backtrader 文档完整、社区活跃，适合新手；zipline 的 API 设计接近 Quantopian 的生产环境，但 Quantopian 已于 2020 年关闭，社区接手了 zipline 的维护（[zipline-reloaded](https://github.com/stefan-j/zipline-reloaded)）。
+backtrader 文档完整、社区活跃，适合新手入门；zipline 的 API 设计接近 Quantopian 的生产环境，但 Quantopian 已于 2020 年关闭，社区接手了 zipline 的维护（[zipline-reloaded](https://github.com/stefan-j/zipline-reloaded)）。
 
 ### R 量化生态
 
-R 在学术量化社区中仍然活跃，quantstrat 是 R 生态中最成熟的回测框架。用 TTR + quantmod 计算双均线信号，比 quantstrat 的完整流程更轻量：
+R 在学术量化社区中仍然活跃。quantstrat 是 R 生态中最成熟的回测框架。用 TTR + quantmod 计算双均线信号，比 quantstrat 的完整流程更轻量：
 
 ```r
 library(quantmod)
@@ -384,7 +384,7 @@ Python 生态更完整，社区大，新手建议从 Python 开始。R 在学术
 
 **机器学习在量化中真的有用吗？**
 
-有用，但前提是处理好过拟合。金融数据信噪比极低，首先要解决交叉验证（Purged K-Fold）和特征选择，模型复杂度是次要问题。
+有用，前提是处理好过拟合。金融数据信噪比极低，先解决交叉验证（Purged K-Fold）和特征选择，模型复杂度是次要问题。
 
 **加密货币量化交易和股票有什么区别？**
 
@@ -400,5 +400,3 @@ Python 生态更完整，社区大，新手建议从 Python 开始。R 在学术
 | [Backtrader](https://www.backtrader.com) | Python 回测框架 |
 | [QuantConnect](https://www.quantconnect.com) | 云端量化平台（含教程） |
 | [zipline-reloaded](https://github.com/stefan-j/zipline-reloaded) | 社区维护的 Zipline 回测引擎 |
-
-

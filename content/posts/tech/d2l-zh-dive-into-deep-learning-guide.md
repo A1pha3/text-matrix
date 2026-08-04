@@ -9,13 +9,13 @@ categories: ["技术笔记"]
 tags: ["深度学习", "PyTorch", "TensorFlow", "JAX"]
 ---
 
-《动手学深度学习》（Dive into Deep Learning，简称 D2L）是 Aston Zhang、Zachary C. Lipton、Mu Li（李沐）和 Alexander J. Smola 合著的开源教材。中文版仓库 d2l-zh 面向中文读者维护，截至 2026 年 4 月，GitHub 星标约 77k，被全球 500 多所高校用作教材或参考书，提供 PyTorch、TensorFlow、JAX、PaddlePaddle 四种框架实现。
+《动手学深度学习》（Dive into Deep Learning，简称 D2L）是 Aston Zhang、Zachary C. Lipton、Mu Li（李沐）和 Alexander J. Smola 合著的开源教材。中文版仓库 d2l-zh 面向中文读者维护，截至 2026 年 8 月，GitHub 星标约 79.4k，被全球 500 多所高校用作教材或参考书，提供 PyTorch、TensorFlow、JAX、PaddlePaddle 四种框架实现。
 
 ## 项目定位
 
-D2L-ZH 的核心定位写在仓库首页——"理解深度学习的最佳方法是学以致用"。教材里每一个概念都配有可运行的代码，读者可以修改参数、观察输出，再回到数学公式。
+D2L-ZH 的出发点写在仓库首页——"理解深度学习的最佳方法是学以致用"。教材里每一个概念都配有可运行的代码，读者可以修改参数、观察输出，再回到数学公式。
 
-这种"代码 + 数学 + 讨论"的形式，把它和两类常见教材区分开。一类是偏理论的"花书"（Goodfellow 等《Deep Learning》），数学严谨但代码缺位；另一类是偏工程的框架教程，代码齐全但缺乏原理推导。D2L 在两者之间找平衡：用 Jupyter Notebook 承载可运行代码，用 LaTeX 排版数学推导，用讨论区（discuss.d2l.ai）承接读者提问。
+这种"代码 + 数学 + 讨论"的形式，和两类常见教材不同。一类是偏理论的"花书"（Goodfellow 等《Deep Learning》），数学严谨但代码缺位；另一类是偏工程的框架教程，代码齐全但缺乏原理推导。D2L 用 Jupyter Notebook 承载可运行代码，用 LaTeX 排版数学推导，用讨论区（discuss.d2l.ai）承接读者提问。
 
 作者团队背景：Mu Li（李沐）是亚马逊资深首席科学家，Aston Zhang 同样来自亚马逊，Zachary C. Lipton 是卡内基梅隆大学教授，Alexander J. Smola 是亚马逊杰出科学家兼慕尼黑工业大学教授。这个组合让教材既有工业工程视角，也有学术理论严谨性。
 
@@ -37,7 +37,7 @@ v2.0.0 版本共 15 章加一个附录，按"基础 → 卷积与循环网络 �
 
 **第三部分：注意力与优化（第 10-12 章）**
 
-第 10 章注意力机制从注意力评分函数讲到自注意力，再到 Transformer，是后续理解 BERT、GPT 的基础。第 11 章优化算法讲 SGD、小批量 SGD、Momentum、AdaGrad、RMSProp、Adam，学习率调度的必要性是这一章的主线。第 12 章计算性能讨论并行计算、异步计算、多 GPU 训练，属于工程化内容。
+第 10 章注意力机制从注意力评分函数讲到自注意力，再到 Transformer，是后续理解 BERT、GPT 的基础。第 11 章优化算法讲 SGD、小批量 SGD、Momentum、AdaGrad、RMSProp、Adam，学习率调度的必要性是这一章的主线。第 12 章计算性能讨论并行计算、异步计算、多 GPU 训练。
 
 **第四部分：应用（第 13-15 章）**
 
@@ -135,7 +135,7 @@ docker run -it -p 8888:8888 d2lai/d2l-zh
 
 教材的章节内容是框架无关的（数学推导、概念解释），但代码实现同时提供 PyTorch、TensorFlow、JAX、PaddlePaddle 四套。在线版网页右上角可切换框架，GitHub 仓库则按目录区分。
 
-PyTorch 是主打实现，章节最完整、测试最充分，也是纸质书选用的框架。下面是一个完整的 PyTorch 训练示例，展示了 d2l 工具包如何把训练循环封装成一行调用：
+PyTorch 是主打实现，章节最完整、测试最充分，也是纸质书选用的框架。下面是一个完整的 PyTorch 训练示例，展示 d2l 工具包如何把训练循环封装成一行调用：
 
 ```python
 import torch
@@ -282,4 +282,3 @@ JAX 和 PaddlePaddle 实现的覆盖度不如前两者，部分章节可能只�
 ```
 
 ---
-

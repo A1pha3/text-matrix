@@ -3,7 +3,7 @@ title: "Browser-Use：让 AI Agent 控制浏览器完成任何任务"
 date: "2026-04-06T20:12:00+08:00"
 slug: "browser-use-ai-browser-automation-guide"
 github_repo: "browser-use/browser-use"
-description: "全面介绍 Browser-Use 开源 AI 浏览器自动化库，涵盖安装配置、Claude Code 集成、自定义工具扩展、生产环境部署和故障排除。"
+description: "Browser-Use 把 LLM 的任务理解、Playwright 的页面控制和可扩展工具集成进一个开源库。本文讲安装配置、Claude Code 集成、自定义工具扩展、生产部署和故障排查。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "浏览器自动化", "Playwright"]
@@ -13,11 +13,13 @@ tags: ["AI Agent", "浏览器自动化", "Playwright"]
 
 | 项目 | 信息 |
 |------|------|
-| **Stars** | 100,616+ |
-| **Forks** | 11,192+ |
+| **Stars** | 107.3K+ |
+| **Forks** | 11.8K+ |
 | **许可证** | MIT |
 | **语言** | Python |
 | **仓库** | [browser-use/browser-use](https://github.com/browser-use/browser-use) |
+
+> Star 数会随时间变化，上面的 107.3K Stars 为 2026 年 7 月观测值，使用时以仓库当前数据为准。
 
 填表单、比价、抓数据这类过去要写专属脚本才能做的事，现在用自然语言描述任务就能跑。Browser-Use 把 LLM 的任务理解、Playwright 的页面控制和可扩展工具塞进了同一个开源库里。
 
@@ -28,16 +30,15 @@ tags: ["AI Agent", "浏览器自动化", "Playwright"]
 - [安装与快速上手](#安装与快速上手)
 - [多 LLM 提供商支持](#多-llm-提供商支持)
 - [实战用例：三类任务的 task 模板](#实战用例三类任务的-task-模板)
-- [CLI 工具详解](#cli-工具详解)
+- [CLI 工具](#cli-工具)
 - [Claude Code Skill 集成](#claude-code-skill-集成)
 - [自定义工具扩展](#自定义工具扩展)
 - [高级配置](#高级配置)
 - [生产环境部署](#生产环境部署)
 - [故障排除](#故障排除)
 - [何时选开源库，何时选云服务](#何时选开源库何时选云服务)
-- [从哪里开始落地](#从哪里开始落地)
-- [自测题](#自测题)
-- [进阶方向](#进阶方向)
+- [上手路径](#上手路径)
+- [扩展与边界](#扩展与边界)
 - [相关资源](#相关资源)
 
 ---
@@ -126,7 +127,7 @@ sequenceDiagram
     A-->>U: 返回结果
 ```
 
-序列图里藏着三个关键机制。
+上面这个流程能拆出三个关键机制。
 
 Agent 把自然语言任务拆成可执行步骤，依赖 LLM 的推理能力。任务描述越具体，拆解越准确——"Find the number of stars of the browser-use repo"直接指明了目标字段，比"查一下那个仓库的星"更少歧义。
 
@@ -316,7 +317,7 @@ if __name__ == "__main__":
 
 ---
 
-## CLI 工具详解
+## CLI 工具
 
 CLI 适合快速调试和探索页面结构，不用每次写完整脚本。
 
@@ -615,7 +616,7 @@ agent = Agent(
 
 ---
 
-## 从哪里开始落地
+## 上手路径
 
 先跑通"查找仓库 Star 数"那个示例，确认 API Key、Chromium、Python 环境都正常。环境不通，后面所有调试都是白费。
 
@@ -631,7 +632,7 @@ agent = Agent(
 
 ---
 
-## 进阶方向
+## 扩展与边界
 
 复杂任务可以拆成多个 Agent，比如一个负责信息收集、一个负责决策、一个负责执行，通过共享状态协调。Browser-Use 的 Tools 机制可以作为 Agent 间通信的入口。
 
