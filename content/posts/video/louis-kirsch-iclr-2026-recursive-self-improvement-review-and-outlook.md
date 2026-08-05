@@ -172,6 +172,8 @@ FME 想拆掉的是"外层元优化器"这个部件。传统做法里总有一�
 
 演讲里那个署名 "Co-Founder @ Stealth Startup"，到 2026 年 5 月已经揭了盖——这家公司叫 **Inherent**（inherentlabs.ai），Kirsch 是联合创始人，头衔是 Chief Superintelligence Officer；共同创始人还有 Tantum Collins、Edward Hughes、Kaloyan Aleksiev。它注册成一家**公益公司（Public Benefit Corporation）**，用意是让"对社会有益的研究"在与利润冲突时也能被优先。
 
+这里有个几乎必然出现的混淆，先厘清：2026 年同期还有一家名字同样带 recursive 的公司 **Recursive Superintelligence**（田渊栋、Richard Socher 等 8 名创始人，2026 年 5 月官宣，估值 46.5 亿美元）。两家都赌自动化科研，路线却不重叠——Inherent 把自我改进的单位放在"人机协同的组织层"，Recursive 要的是端到端自动化"AI 改进 AI"的完整研究闭环。本文只讲 Kirsch 的 Inherent，别把两家混成一家；本站对另一边另有精读（见文末关联文章）。
+
 Inherent 押的是一个更大号的 RSI——**集体递归自我改进（Recursive Collective Self-Improvement）**。他们不把 RSI 放在单个智能体身上，而是放在**整个实验室**上。灵感来自文化进化：在他们看来，人类文化演化本身就是 RSI 的原型——"一个能改进自己改进能力的系统"。一个先进 AI 系统的诞生，牵涉研究讨论、资源分配、硬件、训练数据、学习算法一整张网；AI 可以在每个维度上加速这张网，而这些加速只有在一个"从头就围着递归回路设计"的组织里才会复利。
 
 这正好接上演讲里"人机协同"那一节——自我改进的单位是一个人机组织，不是一个孤零零的模型。更耐人寻味的是，他们把第八节那道最难的坎，直接刻进了公司的开创性问题：
@@ -256,4 +258,4 @@ Inherent 押的是一个更大号的 RSI——**集体递归自我改进（Recur
 
 > **与同仓库 [emergent-garden RSI 文章]({{< relref "emergent-garden-recursive-self-improvement-fractalsearch.md" >}}) 的关系**：两篇是互补视角。本篇是 Schmidhuber 学派、从"怎么保证自我改进为真"切入；那篇是 Karpathy 学派、用 fractalsearch 实测"真跑一个 RSI 循环会撞到什么边界"。一篇讲机制，一篇讲边界，对照着读最省事。
 
-> **信息来源**：Kirsch 个人站公开的 43 页幻灯片原件（已用 pypdf 逐页提取核对）+ SlidesLive 录像页 + Workshop 官网 + Kirsch 个人站与相关 arXiv 论文。未拿到逐字字幕，所有口头引用为据幻灯片的综合转述。
+> **信息来源**：Kirsch 个人站公开的 43 页幻灯片原件（已用 pypdf 逐页提取核对）+ SlidesLive 录像页 + Workshop 官网 + Kirsch 个人站与相关 arXiv 论文。未拿到逐字字幕，所有口头引用为据幻灯片的综合转述；录像全长 27:57，因按幻灯片重建而非按口播转写，本文未逐段标注时间点，回看以上方 SlidesLive / B站 链接为准。

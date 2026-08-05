@@ -3,74 +3,29 @@ title: "Archon：让AI编程变得可重复、可追溯的开源工作流引擎"
 date: "2026-04-09T20:20:00+08:00"
 slug: "archon-ai-coding-workflow-engine-guide"
 github_repo: "coleam00/Archon"
-description: "Archon 是一个面向 AI 编程的工作流引擎，通过 YAML 定义 DAG，把规划、实现、验证、评审与 PR 创建变成可重复、可审计、可复用的开发流程。本文系统拆解其工作流模型、worktree 隔离、默认工作流、上手路径与自定义方式。"
+description: "Archon 是面向 AI 编程的开源工作流引擎：开发流程写成 YAML 定义的 DAG，把规划、实现、验证、评审、批准与 PR 创建编排成可重复执行的工程流水线。本文讲清它的工作流模型、worktree 隔离、默认工作流、上手路径与自定义方式。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI 编程", "Claude Code"]
 ---
 
-用 Claude Code、Codex 这类编码 Agent 一段时间后，会撞上同一个瓶颈：模型能力在涨，开发流程却仍靠临时提示词、人工盯执行、手动补审查维系。Archon 解决的就是这一层——把 Agent 的执行固定成可定义、可审计的工程流程。
+用 Claude Code、Codex 这类编码 Agent 一段时间后，会撞上同一个瓶颈：模型能力在涨，开发流程却仍靠临时提示词、人工盯执行、手动补审查维系。Archon 解决的就是这一层——把 Agent 的执行收束成可审计的工程流程。
 
 Archon 是一个面向 AI 编程的 workflow engine（工作流引擎），同时是一个 AI coding harness builder。开发流程写成 YAML，它负责把规划、实现、验证、评审、批准、PR 创建这些步骤编排成可重复执行的工程流水线。
 
-> 本文基于 2026 年 4 月 11 日公开资料撰写。GitHub About 页显示，Archon 约有 18.3k Stars、2,861 Forks，最新 release 为 v0.3.6，项目采用 MIT 许可证，主体代码为 TypeScript。需要注意的是，官方文档面向入门用户时仍以 17 个核心 workflow 为主目录，但更完整的文档与源码里还能看到 additional workflows；最稳妥的确认方式始终是运行 `archon workflow list`。
+GitHub API 2026-08-05 验证的仓库基本数据：
 
-## 学习目标
+| 指标 | 数值 |
+|------|------|
+| GitHub Stars | 23,073 |
+| Forks | 3,452 |
+| 主语言 | TypeScript |
+| License | MIT |
+| 最新 release | v0.7.1（2026-08-04 发布）|
+| 默认分支 | dev |
+| 仓库描述 | The first open-source harness builder for AI coding. Make AI coding deterministic and repeatable. |
 
-读完本文，可以：
-
-1. 理解 Archon 的真正定位，以及它和"直接对着编码 Agent 下指令"之间的差别。
-2. 说清 workflow、DAG、node、artifact、worktree isolation（工作树隔离）这些核心概念。
-3. 判断 Archon 适合什么团队、不适合什么场景。
-4. 通过官方推荐路径完成首次安装、运行和常用 CLI 操作。
-5. 理解如何把内置 workflow 扩展成团队自己的开发流程。
-6. 识别 Archon 当前文档体系中哪些信息稳定，哪些信息需要以本机实测为准。
-
-## 导读
-
-- 只想判断 Archon 值不值得用：先看"先说结论"和"它适合谁，不适合谁"。
-- 想理解技术含量：重点看"工作流引擎是怎么运作的"和"为什么 worktree 隔离是工程核心"。
-- 准备马上试一遍：直接跳到"三条上手路径"和"真正常用的 CLI 操作"。
-- 打算引入团队流程：重点看"自定义 workflows""边界与注意事项""实践建议"。
-
-## 术语速览
-
-第一次系统接触 Archon，先把下面 6 个词记住，后面的理解成本会立刻下降。
-
-| 术语 | 在 Archon 里的含义 | 先记住什么 |
-| ------ | ------ | ------ |
-| workflow | 用 YAML 定义的一条开发流程 | 它决定步骤、顺序、门禁和输出 |
-| node | workflow 里的单个执行单元 | 可以是 AI、bash、script、approval 等动作 |
-| DAG | 有向无环图执行模型 | 没有依赖的节点可以并行，有依赖的节点顺序执行 |
-| artifact | 运行过程中生成的产物 | 可以是计划、总结、PR 编号、审查结果等 |
-| worktree isolation | 基于 git worktree 的隔离执行环境 | 让多个任务并发运行而不互相污染 |
-| approval gate | 人工审批门 | 让关键动作前的人工判断进入系统，避免靠临时口头介入 |
-
-## 目录
-
-- [术语速览](#术语速览)
-- [先说结论：Archon 到底是什么](#先说结论archon-到底是什么)
-- [它适合谁，不适合谁](#它适合谁不适合谁)
-- [为什么 Archon 值得关注](#为什么-archon-值得关注)
-- [一个真实 workflow 是怎么跑完的](#一个真实-workflow-是怎么跑完的)
-- [工作流引擎是怎么运作的](#工作流引擎是怎么运作的)
-- [为什么 worktree 隔离是 Archon 的工程核心](#为什么-worktree-隔离是-archon-的工程核心)
-- [架构拆解：从一句指令到一次工作流运行](#架构拆解从一句指令到一次工作流运行)
-- [默认 workflows 怎么选，不要一上来就用最重的](#默认-workflows-怎么选不要一上来就用最重的)
-- [三条上手路径](#三条上手路径)
-- [真正常用的 CLI 操作](#真正常用的-cli-操作)
-- [第一次成功的最小闭环](#第一次成功的最小闭环)
-- [新手最容易踩的 5 个坑](#新手最容易踩的-5-个坑)
-- [自定义 workflows](#自定义-workflows)
-- [动手练习](#动手练习)
-- [边界与注意事项](#边界与注意事项)
-- [实践建议](#实践建议)
-- [常见问题](#常见问题)
-- [自测清单](#自测清单)
-- [进阶路径](#进阶路径)
-- [资料口径说明](#资料口径说明)
-
----
+一个需要留意的口径差异：官方入门文档以 17 个核心 workflow 为主目录，更完整的文档与源码里还能看到 additional workflows。最稳妥的确认方式始终是运行 `archon workflow list`。
 
 ## 先说结论：Archon 到底是什么
 
@@ -93,14 +48,14 @@ Archon 解决的是 AI 如何进入工程体系的问题，模型本身的能力
 - **worktree 隔离**：多个 workflow run 之间互不污染，每个写任务独占一个 git worktree。
 - **多入口复用**：CLI、Web UI、聊天平台共享同一套 workflow，入口不同行为一致。
 
-这三层并行是 Archon 区别于普通脚本编排的核心，后文会逐层展开。
+这三层是 Archon 和普通脚本编排的差别所在，下面逐层展开。
 
 ## 它适合谁，不适合谁
 
 ### 适合的场景
 
 - 你已经在高频使用编码 Agent，希望把规划、验证、评审、PR 创建这些步骤标准化。
-- 你所在的团队不只关心"能不能写出来"，还关心"过程是否可审计、可复用、可回放"。
+- 你所在的团队不只关心"能不能写出来"，还关心过程是否可审计、能不能回放。
 - 你有并发任务，且不想让多个 AI 任务互相污染本地工作区。
 - 你准备把团队实践建议沉淀成仓库内的 workflow 文件，避免经验散落在聊天记录里。
 
@@ -112,25 +67,25 @@ Archon 解决的是 AI 如何进入工程体系的问题，模型本身的能力
 
 最短判断标准：如果你的痛点已经从"怎么让 AI 干活"转成"怎么让 AI 稳定地按流程干活"，Archon 才会显著放大价值。
 
-## 为什么 Archon 值得关注
+## Archon 把几个长期问题拉进了同一套系统
 
-Archon 受到关注的原因在于：它把几个长期存在但一直没有工程化解决的问题，一次性拉进了同一套系统。
+下面三个问题，是编码 Agent 用久了都会遇到的。Archon 用 workflow 把它们一并处理。
 
 ### 把随机聊天变成可重复执行的流程
 
 对着 Agent 说"修复这个 bug"，结果常常取决于模型这次有没有先规划、会不会主动运行测试、会不会遵守团队的 PR 模板。Archon 把这些"不一定会发生"的步骤提前写进 workflow，让它们从模型当时的判断变成流程里的固定节点。这样即使模型这次"忘了"跑测试，workflow 里的 bash 节点也会强制执行。
 
-### 把"看结果"升级成"看过程"
+### 把"看结果"换成"看过程"
 
 在团队环境里，最终 diff 只是结果的一小部分。更重要的问题是：它读了哪些上下文、跑了哪些验证、在哪一步卡住、为什么重试、人工是在什么环节介入的。Archon 通过 workflow run、event、artifact、review 这些对象，让过程本身变成可回放资产。排查"为什么这次 PR 没过 review"时，你能回放整条执行链，不必只看最终评论。
 
-### 把单人技巧升级成团队流程资产
+### 把单人技巧变成团队流程资产
 
 如果某个同事写出了一套非常有效的"规划 → 验证 → 审查 → PR"流程，传统做法通常只能把它存成提示词。Archon 的做法更接近基础设施：把流程写成 YAML，随仓库提交，交给整个团队反复复用和演进。新人 clone 仓库后运行 `archon workflow list`，看到的就是团队当前的标准流程。
 
 ## 一个真实 workflow 是怎么跑完的
 
-把 Archon 只理解成"写 YAML 然后交给 AI 跑"还是太抽象。更贴近工程现实的理解方式，是把一次 workflow run 拆成下面这条执行链：
+把 Archon 只理解成"写 YAML 然后交给 AI 跑"还是太抽象。把一次 workflow run 拆开看，是下面这条执行链：
 
 1. 你在 CLI、Web UI 或聊天平台发出需求。
 2. Orchestrator 识别意图，解析 workflow 名称，必要时自动匹配最接近的 workflow。
@@ -142,7 +97,7 @@ Archon 受到关注的原因在于：它把几个长期存在但一直没有工�
 8. 如果流程中包含人工门禁，workflow 会暂停，等待 `approve` 或 `reject` 指令继续。
 9. 完成后，结果、事件、消息、运行状态会被保留下来，供 Web UI、CLI 和后续排查使用。
 
-走完这 9 步，输出会被保存为一条有状态、有产物、有历史、可排查的工程运行记录，不再是聊天框里的一段回复。
+走完这 9 步，输出是一条有状态、有产物、可排查的运行记录，而不是聊天框里的一段回复。
 
 ## 工作流引擎是怎么运作的
 
@@ -152,7 +107,7 @@ Archon 把 workflow 定义成 directed acyclic graph（有向无环图，DAG）�
 
 DAG 模型让流程的顺序、并行和依赖关系都变成显式声明，避免藏在提示词里靠模型自己理解。这对团队协作的意义在于：流程变更会触发 code review，避免某天某个同事改了提示词就悄悄变了。
 
-下面是官方 authoring 文档里的典型结构，能比较准确地反映当前设计方向：
+这是官方 authoring 文档里的典型结构，比较接近当前设计方向：
 
 ```yaml
 name: classify-and-route
@@ -187,7 +142,7 @@ nodes:
     context: fresh
 ```
 
-这个模型有三个工程价值：
+DAG 模型的价值落在三处：
 
 1. **顺序是显式的**：流程不再藏在一大段提示词里，而是写成节点依赖图。
 2. **并行是天然的**：同一依赖层的节点可以并发跑，例如多个 review agent 并行审查。
@@ -207,7 +162,7 @@ nodes:
 | `context: fresh` | 强制节点在新上下文里执行 | 避免长链任务上下文污染 |
 | `provider:` / `model:` | 为节点指定 AI provider / model | 需要按任务类型切模型时 |
 
-`script:` 特别值得关注。从官方 release 信息看，v0.3.3 开始，Archon 支持 script node，允许通过 `bun` 或 `uv` 运行内联 TypeScript / Python 或 `.archon/scripts/` 中的脚本。这让它在 YAML 加提示词的编排器之外，更接近一个真正的工程自动化 runtime。需要解析 JSON、调用内部 API、做复杂条件判断时，script node 比纯 prompt 更可靠。
+`script:` 值得单独说。从官方 release 信息看，v0.3.3 开始，Archon 支持 script node，允许通过 `bun` 或 `uv` 运行内联 TypeScript / Python 或 `.archon/scripts/` 中的脚本。这让它在 YAML 加提示词的编排器之外，更像一个真正的工程自动化 runtime。需要解析 JSON、调用内部 API、做复杂条件判断时，script node 比纯 prompt 更可靠。
 
 ### Human-in-the-loop 有两种模式
 
@@ -243,7 +198,7 @@ Archon 在文档里明确区分了两种常见的人机协同模式。
       max_attempts: 5
 ```
 
-两种模式的差别在于：interactive loop 是多轮对话式协作，approval 是单次门禁式介入。选错模式会让流程要么过于松散，要么过于僵硬。Archon 把人类介入从临时行为提升成流程原语，这是它和普通脚本编排的关键差别之一。
+两种模式差别在于：interactive loop 是多轮对话式协作，approval 是单次门禁式介入。一个松散、一个僵硬，选错模式流程就不对味。Archon 把人类介入从临时行为变成流程原语，这是它和普通脚本编排的一个差别。
 
 ## 为什么 worktree 隔离是 Archon 的工程核心
 
@@ -260,7 +215,7 @@ archon workflow run archon-idea-to-pr "Add CSV export to the reports page"
 archon workflow run archon-assist --no-worktree "How does error handling work here?"
 ```
 
-git worktree 的优势在于它复用了团队已有的 Git 工作流，不需要额外的容器或虚拟机开销，同时天然对齐 PR 生命周期——从 feature 分支到 review，再到 merge，路径一致。
+git worktree 的优势在于它复用了团队已有的 Git 工作流，不需要额外的容器或虚拟机开销。
 
 worktree 隔离直接解决了四个工程痛点：
 
@@ -269,7 +224,7 @@ worktree 隔离直接解决了四个工程痛点：
 - **结果天然可追踪**：每次运行对应一个分支 / worktree，方便回溯和清理。
 - **和 PR 生命周期天然对齐**：从 feature 分支到 review，再到 merge，路径一致。
 
-对团队来说，这几乎是 Archon 和"普通脚本编排 + Agent"之间最关键的差别。没有 worktree 隔离，多个 AI 任务并发时会互相覆盖文件、抢占分支，最终只能串行执行，DAG 并行的价值也会被抵消。
+对团队来说，这是 Archon 和"普通脚本编排 + Agent"之间最关键的差别。没有 worktree 隔离，多个 AI 任务并发时会互相覆盖文件、抢占分支，最终只能串行执行，DAG 并行的价值也会被抵消。
 
 ## 架构拆解：从一句指令到一次工作流运行
 
@@ -283,7 +238,7 @@ worktree 隔离直接解决了四个工程痛点：
 | AI 层 | Claude / Codex 等 Assistant Clients | 在指定节点执行推理、生成代码、做审查 |
 | 数据层 | SQLite / PostgreSQL | 持久化 codebases、conversations、sessions、workflow runs、isolation environments、messages、workflow events |
 
-这套架构的直接后果是：同一套 workflow 在 Web UI、命令行和聊天平台之间行为一致。Archon 是一个可被多入口复用的编排系统，本地 CLI 只是其中一个入口。数据层统一持久化意味着无论从哪个入口触发，运行历史都能在 Web UI 里回放。
+同一套 workflow 在 Web UI、命令行和聊天平台之间行为一致，本地 CLI 只是其中一个入口。数据层统一持久化，无论从哪个入口触发，运行历史都能在 Web UI 里回放。
 
 ## 默认 workflows 怎么选，不要一上来就用最重的
 
@@ -311,7 +266,7 @@ worktree 隔离直接解决了四个工程痛点：
 | `archon-test-loop-dag` | 迭代式测试-修复循环 |
 | `archon-piv-loop` | 带人工审核的 Plan-Implement-Validate 循环 |
 
-### 真正常用的选型建议
+### 选型建议
 
 | 你的目标 | 优先选择 |
 | ------ | ------ |
@@ -322,9 +277,9 @@ worktree 隔离直接解决了四个工程痛点：
 | 你要修 GitHub Issue | `archon-fix-github-issue` |
 | 你要做人机反复协作的开发闭环 | `archon-piv-loop` |
 
-### 一个容易踩坑但必须知道的事实
+### 默认 workflow 数量口径不一致
 
-截至本文撰写时，官方不同位置对"默认 workflows 的数量"并不是完全同一套口径：
+官方不同位置对"默认 workflows 的数量"口径并不一致：
 
 - README 和 Getting Started 强调的是面向用户最常用的 17 个核心 workflows。
 - 更完整的文档还会出现 `archon-interactive-prd`、`archon-adversarial-dev`、`archon-workflow-builder` 等 workflow。
@@ -339,9 +294,9 @@ archon workflow list
 
 如果你准备自己写 workflow，建议把 README 当成概念导览，把 [Authoring Workflows](https://archon.diy/guides/authoring-workflows/) 当成实际语法基准。
 
-## 三条上手路径：别把普通用户、工作流作者、自托管用户混在一起
+## 三条上手路径
 
-不同读者的操作路径需要分开讲，混在一起会让每类读者都找不到自己的入口。Archon 至少有三条常见上手路线。
+不同读者的操作入口不一样，分开讲比混在一起更清楚。Archon 至少有三条常见上手路线。
 
 ### 路线 A：第一次接触，用官方 setup wizard
 
@@ -391,7 +346,7 @@ archon workflow list
 
 Archon 不只有 CLI。官方文档显示，binary installs 可以直接通过 `archon serve` 下载并启动 Web UI；源码运行则可以从 Archon 仓库启动前端开发环境。
 
-Web UI 最值得看的通常有四个页面：
+Web UI 有四个页面值得看：
 
 | 页面 | 你会看到什么 |
 | ------ | ------ |
@@ -400,9 +355,9 @@ Web UI 最值得看的通常有四个页面：
 | Workflow Builder | 可视化拖拽编辑 DAG |
 | Workflow Execution | 节点级进度和历史回放 |
 
-如果你是团队引入者，Web UI 的价值在于让 workflow 运行从个人终端事件变成团队可见事件，它并不替代 CLI。多人协作时，Web UI 让运行状态、审批待办、历史回放对所有人可见，避免"只有跑命令的人知道发生了什么"。
+如果给团队引入，Web UI 让 workflow 运行从个人终端事件变成团队可见事件，它并不替代 CLI。多人协作时，Web UI 让运行状态、审批待办、历史回放对所有人可见，避免"只有跑命令的人知道发生了什么"。
 
-## 真正常用的 CLI 操作
+## 常用 CLI 操作
 
 除了 `archon setup`，实际使用中最常见的命令其实只有下面这些：
 
@@ -436,7 +391,7 @@ archon workflow approve <run-id> "Looks good, proceed"
 archon workflow reject <run-id> "Please split the migration into two steps"
 ```
 
-对实践者来说，有三个细节特别重要：
+三个细节值得注意：
 
 1. 写操作默认优先配合 worktree 隔离，不要把 `--no-worktree` 当常态。
 2. `archon workflow list` 读取的是**当前工作目录**的可用 workflows，没有全局固定目录这一说。
@@ -461,7 +416,7 @@ archon workflow run archon-idea-to-pr --branch feat/hello-archon "Add a tiny doc
 archon workflow status
 ```
 
-当你能稳定完成这四步，才算真正跑通了 Archon 的最小价值闭环：CLI 可用、workflow 可发现、AI 节点可执行、worktree 隔离生效。
+当你能稳定完成这四步，才算跑通 Archon 的最小闭环：CLI 可用、workflow 可发现、AI 节点可执行、worktree 隔离生效。
 
 ## 新手最容易踩的 5 个坑
 
@@ -483,11 +438,11 @@ README 适合快速建立直觉，但不适合作为 workflow authoring 的最�
 
 ### 忘了"同名文件覆盖默认 workflow"
 
-如果仓库里放了和内置 workflow 同名的文件，它会覆盖 bundled default。这个特性非常强大，但也意味着你需要像维护 CI 配置一样认真维护这些 YAML。升级 Archon 版本时，如果内置 workflow 更新了，你的覆盖文件不会自动同步，需要手动 diff。
+如果仓库里放了和内置 workflow 同名的文件，它会覆盖 bundled default。这很有用，但也意味着你需要像维护 CI 配置一样认真维护这些 YAML。升级 Archon 版本时，如果内置 workflow 更新了，你的覆盖文件不会自动同步，需要手动 diff。
 
-## 自定义 workflows：Archon 的上限取决于你怎么建流程
+## 自定义 workflows
 
-Archon 的长期上限不取决于那 17 个默认 workflows。它取决于你能不能把自己的团队流程产品化——写成可提交、可复用、可演进的 workflow 文件。
+Archon 的上限不在那 17 个默认 workflow，而在于你能不能把团队流程写成可提交、可维护的 workflow 文件。
 
 ### 自定义文件放在哪里
 
@@ -526,9 +481,9 @@ nodes:
     depends_on: [approve]
 ```
 
-这种设计比"让 AI 自己 review 自己"强得多，因为它把不可逆动作前的人类判断显式写进了系统。`create-pr` 是不可逆动作（PR 一旦创建就会通知 reviewer、触发 CI），在它前面加 approval gate，能避免 AI 把不成熟的改动直接推到团队视野里。
+它在不可逆动作前把人判断显式写进系统，比"让 AI 自己 review 自己"可靠。`create-pr` 一旦创建就会通知 reviewer、触发 CI，在它前面加 approval gate，能避免 AI 把不成熟的改动直接推到团队视野里。
 
-还有一个细节值得记住：在 Web UI 里，带人工审批门的 workflow 通常还需要 workflow 级的 `interactive: true`，这样它会以前台交互方式运行，避免被完全丢到后台。这个约束在参考文档里写得比 README 更明确。
+另一个细节：在 Web UI 里，带人工审批门的 workflow 通常还需要 workflow 级的 `interactive: true`，这样它会以前台交互方式运行，避免被完全丢到后台。这个约束在参考文档里写得比 README 更明确。
 
 ### 自定义时最值得坚持的 4 条原则
 
@@ -537,51 +492,9 @@ nodes:
 3. 重要决策前加 approval gate，例如数据库迁移、批量删除、PR 创建。判断标准是：这个动作的回滚成本高不高。
 4. 从默认 workflow 复制再改，避免第一天就从空白 YAML 重新发明流程。默认 workflow 经过实战检验，复制再改能少踩很多语法坑。
 
-## 动手练习
-
-如果你想把"看懂"真正变成"会用"，建议按下面顺序做 3 个练习。
-
-### 练习 1：确认你本机的真实 workflow 目录
-
-目标：验证文档和本机 live list 的差异。
-
-```bash
-archon workflow list
-```
-
-做完后回答自己两个问题：
-
-- 你本机看到的默认 workflows，和文章里列出的 17 个核心 workflows 有什么差异？
-- 哪些 workflow 明显更适合你的当前项目，不要只看"看起来最强大"的那个？
-
-### 练习 2：跑一次只读探索加一次隔离写任务
-
-目标：亲手感受 `archon-assist` 和 `archon-idea-to-pr` 的差异。
-
-```bash
-archon workflow run archon-assist "How is this repo structured?"
-archon workflow run archon-idea-to-pr --branch feat/archon-practice "Add a tiny docs improvement"
-```
-
-重点观察三件事：
-
-- 只读问题是否真的不需要进入复杂 workflow。
-- 写任务是否创建了独立 branch / worktree。
-- 运行状态和结果是否比普通聊天式操作更容易回溯。
-
-### 练习 3：自己写一个最小审批流
-
-目标：把"人类审核"从口头习惯变成系统流程。
-
-1. 在 `.archon/workflows/` 新建一个极小 workflow。
-2. 放入一个 review 节点、一个 approval gate、一个 publish 节点。
-3. 用一个 docs-only 改动验证它能否暂停、等待批准并继续。
-
-做完这一步，你就真正跨过了"用户"与"workflow author"之间的门槛。
-
 ## 边界与注意事项
 
-工程选型需要先看边界。Archon 当前至少有 5 个现实限制需要先说明白。
+工程选型先看边界。Archon 当前至少有 5 个限制：
 
 ### Archon 解决的是流程治理，不是模型能力替换
 
@@ -593,7 +506,7 @@ archon workflow run archon-idea-to-pr --branch feat/archon-practice "Add a tiny 
 
 ### 不是所有任务都值得进 workflow
 
-如果只是问一个函数是做什么的、为什么测试失败，直接用 `archon-assist` 或普通 Agent 往往更省成本。Archon 最有价值的地方，是多步、可审计、需验证、需隔离的任务。判断标准是：这个任务会不会被重复执行、需不需要回溯、错了能不能回滚。
+如果只是问一个函数是做什么的、为什么测试失败，直接用 `archon-assist` 或普通 Agent 往往更省成本。Archon 最有价值的地方，是多步、需要验证、需要隔离的任务。判断标准是：这个任务会不会被重复执行、需不需要回溯、错了能不能回滚。
 
 ### 文档目录变化很快，实际以本机 live list 为准
 
@@ -610,6 +523,8 @@ Archon 提供了更好的审批点，但并不意味着你可以在数据库迁�
 - 把 workflow 当仓库资产来维护，和 CI、lint、脚本一样进入版本控制。workflow 变更应该走 code review，避免某个人偷偷改 YAML。
 - 在 workflow 里优先放"组织步骤"和"验证门禁"，不要试图把所有聪明都塞进长 prompt。prompt 越长越难维护，验证门越多流程越稳。
 - 每次升级 Archon 版本后，先运行 `archon workflow list` 和 `archon version`，再决定是否需要同步更新团队的自定义 workflow。内置 workflow 的语法和字段可能随版本变化，覆盖文件需要手动同步。
+
+采用顺序：先在个人项目跑通 `archon-assist` 和 `archon-idea-to-pr` 的最小闭环，确认 worktree 隔离和 approval gate 对你有价值；再把一个团队高频流程（例如 PR 审查）写成自定义 workflow，验证它能否被团队复用；最后再考虑是否把所有开发任务都迁进 Archon。
 
 ## 常见问题
 
@@ -635,35 +550,6 @@ Archon 不是 Claude Code 的替代品。它把 Claude Code、Codex 等编码能
 
 可以，而且这恰恰是很多团队最终最看重的价值：把 workflow 作为仓库内可维护的工程资产，避免实践建议停留在某个成员脑子里。即使不使用内置 workflow，只用自己的 YAML，Archon 的编排引擎、worktree 隔离、approval gate 依然有效。
 
-## 自测清单
-
-如果你读完本文后，能明确回答下面 5 个问题，说明你已经真正理解了 Archon：
-
-1. 为什么 Archon 的关键价值在"更稳定"，不在"更聪明"？
-2. 为什么 worktree isolation 是它区别于普通脚本编排的重要工程能力？
-3. 什么时候该用 interactive loop，什么时候该用 approval with on_reject？
-4. 为什么默认 workflow 数量要以 `archon workflow list` 为准，不能死记某一页文档？
-5. 如果你要把团队的"实现后必须过 lint + test + 人工批准"写成系统流程，你会把哪些步骤做成 node？
-
-## 进阶路径
-
-如果你准备继续深入，推荐按下面顺序推进，避免随机翻文档。
-
-1. 先用 `archon-assist` 和 `archon-idea-to-pr` 跑通一次最小闭环，建立使用直觉。
-2. 再读 Authoring Workflows，重点理解 `depends_on`、`when`、`output_format`、`approval`、`context`。
-3. 然后查看 CLI Reference，把 `run`、`status`、`resume`、`approve`、`reject` 这些高频命令吃透。
-4. 最后再去读 The Book of Archon 和 Architecture 相关文档，把"怎么用"升级成"为什么这样设计"。
-
-这条顺序的目的只有一个：先建立操作感，再建立语法感，最后再建立系统设计感。这样学习成本最低，迁移到团队也最快。
-
-## 总结
-
-Archon 把 AI 编程从一次性聊天升级为可定义、可执行、可审计、可共享的工程流程。
-
-如果你只是偶尔调用编码 Agent，这套编排可能显得偏重。但如果你已经在处理多任务并行、流程漂移、验证缺失、PR 质量不稳、团队经验无法沉淀这些问题，Archon 很可能是当前开源生态里最值得认真对待的一种答案。
-
-采用顺序建议：先在个人项目跑通 `archon-assist` 和 `archon-idea-to-pr` 的最小闭环，确认 worktree 隔离和 approval gate 对你有价值；再把一个团队高频流程（例如 PR 审查）写成自定义 workflow，验证它能否被团队复用；最后再考虑是否把所有开发任务都迁进 Archon。
-
 ## 官方资源
 
 - [GitHub 仓库](https://github.com/coleam00/Archon)
@@ -679,11 +565,11 @@ Archon 把 AI 编程从一次性聊天升级为可定义、可执行、可审计
 
 本文的判断基于以下来源和取径：
 
-1. **项目文档分析**：分析了 `coleam00/Archon` 仓库的 GitHub README、官方文档（archon.diy）、Authoring Workflows 指南（截至 v0.3.6）
+1. **项目文档分析**：分析了 `coleam00/Archon` 仓库的 GitHub README、官方文档（archon.diy）、Authoring Workflows 指南；仓库基本数据经 GitHub API 于 2026-08-05 验证（Stars 23,073、Forks 3,452、MIT、TypeScript、最新 release v0.7.1）
 2. **CLI 命令验证**：基于 `archon workflow list` 的实际输出和官方文档中的命令说明
 3. **架构分析**：基于文章中的 5 层架构拆解（入口层、编排层、执行层、AI 层、数据层）
 4. **技术细节验证**：部分 YAML 语法和 CLI 命令来自官方文档和源码，实际使用时需要参考最新版本
-5. **事实边界**：Archon 仍在快速迭代（v0.3.6），文档和功能的对齐可能需要以本机实测为准
+5. **事实边界**：Archon 仍在快速迭代（截至 v0.7.1），文档和功能的对齐可能需要以本机实测为准
 
 **局限性**：
 
