@@ -1,9 +1,9 @@
 ---
-title: "Agent Skills：addyosmani的生产级AI编程工程技能框架"
+title: "Agent Skills：addyosmani 的生产级 AI 编程工程技能框架"
 date: "2026-04-12T18:02:00+08:00"
 slug: agent-skills-addyosmani-production-engineering-guide
 github_repo: "addyosmani/agent-skills"
-description: "66. 4k Stars 的生产级工程技能框架——23 个结构化技能和 7 条 slash 命令，强制 AI 按 Define→Plan→Build→Test→Review→Ship 的完整生命周期工作。"
+description: "80.8k Stars 的生产级工程技能框架——24 个结构化技能和 8 条 slash 命令，强制 AI 按 Define→Plan→Build→Verify→Review→Ship 的完整生命周期工作。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI 编程", "Claude Code"]
@@ -15,48 +15,9 @@ tags: ["AI 编程", "Claude Code"]
 
 AI 编码 Agent 有个习惯：拿到需求直接写代码，跳过规格说明、省略测试、忽略安全审查。做原型够用，放到生产环境就暴露问题——没有测试的代码不敢重构，没有审查的代码藏着边界缺陷，没有 Spec 的项目在需求变更时失控。
 
-Agent Skills 把这套习惯改过来。它由 Google 前工程师 addyosmani 开源，把资深工程师在真实项目中的工作流封装成 23 个结构化技能和 7 条命令，强制 AI 按 Define → Plan → Build → Test → Review → Ship 的完整生命周期工作。
+Agent Skills 把这套习惯改过来。它由 Google 前工程师 addyosmani 开源，把资深工程师在真实项目中的工作流封装成 24 个结构化技能和 8 条命令，强制 AI 按 Define → Plan → Build → Verify → Review → Ship 的完整生命周期工作。
 
 用 Claude Code 或 Cursor 的团队最常遇到一个困境：AI 产出的代码能跑，但缺测试、没审查、没有 Spec。Agent Skills 把这些环节写成 AI 可执行的步骤，让每次产出都走同一套流程。如果 AI 想跳过测试或审查，内置的 anti-rationalization 表会把它拉回流程内。
-
-读下去之前，先摸清几点：
-
-- 三层组件（命令 → 技能 → 参考清单）是调度链，上一层驱动下一层
-- 6 个阶段有严格的推进条件，Refine 循环允许任何阶段回退
-- 完整任务流案例展示一个用户认证系统如何从头到尾穿过这套框架
-- 不同团队适合的切入节奏不同——先上 `/review` 和 `/test` 的成本最低
-
-## 学习目标
-
-读完这篇文章，你应该能够：
-
-1. **解释** Agent Skills 如何解决 AI 编码 Agent 跳过工程纪律的问题
-2. **列举** 6 个开发阶段及其对应的 slash 命令
-3. **描述** 三层组件（命令、技能、参考清单）之间的调度关系
-4. **使用** 至少 3 条 slash 命令（`/spec`、`/test`、`/review`）来规范 AI 的工作流
-5. **判断** 你的团队是否应该采用 Agent Skills，以及从哪个阶段开始切入
-
-## 目录
-
-- [开篇判断](#开篇判断)
-- [项目概述](#项目概述)
-- [系统总览：三层组件如何配合](#系统总览三层组件如何配合)
-- [6 阶段开发生命周期](#6-阶段开发生命周期)
-- [7 条 slash 命令](#7-条-slash-命令)
-- [23 个结构化技能](#23-个结构化技能)
-- [任务流案例：开发一个用户认证系统](#任务流案例开发一个用户认证系统)
-- [安装配置](#安装配置)
-- [核心工程原则与 Anti-Rationalization](#核心工程原则与-anti-rationalization)
-- [质量门控](#质量门控)
-- [与其他框架对比](#与其他框架对比)
-- [适用边界与采用顺序](#适用边界与采用顺序)
-- [常见问题](#常见问题)
-- [资源链接](#资源链接)
-- [结尾判断](#结尾判断)
-- [实战自测](#实战自测)
-- [进阶路径](#进阶路径)
-
----
 
 ## 项目概述
 
@@ -68,16 +29,16 @@ Agent Skills 的做法是把工程实践写成 AI 可执行的流程：每个技
 
 | 指标 | 数值 |
 |------|--------|
-| GitHub Stars | 66.4k |
-| Forks | 7.2k |
+| GitHub Stars | 80.8k |
+| Forks | 8.7k |
 | 许可证 | MIT |
-| 主要语言 | Shell |
-| 技能数量 | 23 个（22 个生命周期技能 + 1 个元技能） |
-| 命令数量 | 7 条 |
+| 主要语言 | JavaScript |
+| 技能数量 | 24 个（23 个生命周期技能 + 1 个元技能） |
+| 命令数量 | 8 条 |
 | 开发者 | addyosmani（Google 前工程师） |
 | 仓库地址 | https://github.com/addyosmani/agent-skills |
 
-> 数据采集于 2026-06-25。仓库技能数量会随版本迭代变化，最新数量以仓库 README 为准。
+> 数据采集于 2026-08-05。仓库技能数量会随版本迭代变化，最新数量以仓库 README 为准。
 
 ---
 
@@ -89,9 +50,9 @@ Agent Skills 由三层组件构成。三层的关系决定了什么时候该手�
 
 | 层级 | 数量 | 职责 | 触发方式 |
 |------|------|------|----------|
-| **slash 命令** | 7 条 | 开发生命周期的入口点 | 用户手动输入 |
-| **技能（Skills）** | 23 个 | 具体工程流程的执行者 | 命令激活或上下文自动激活 |
-| **参考清单（References）** | 4 份 | 技能按需加载的补充材料 | 技能内部引用 |
+| **slash 命令** | 8 条 | 开发生命周期的入口点 | 用户手动输入 |
+| **技能（Skills）** | 24 个 | 具体工程流程的执行者 | 命令激活或上下文自动激活 |
+| **参考清单（References）** | 7 份 | 技能按需加载的补充材料 | 技能内部引用 |
 
 slash 命令是用户接触框架的入口，每条命令激活一组技能，技能在执行过程中按需加载参考清单。三层之间是"调度 → 执行 → 补充"的链式关系，上一层驱动下一层。
 
@@ -109,7 +70,7 @@ Agent Skills 6 阶段开发周期
                    （测试失败、审查不通过时回退）
 ```
 
-7 条命令对应 6 个阶段，其中 `/code-simplify` 属于 Refine 循环，可在 Build、Verify、Review 任一阶段触发。
+6 条生命周期命令对应 6 个阶段，另外两条各有归属：`/code-simplify` 属于 Refine 循环，可在 Build、Verify、Review 任一阶段触发；`/webperf` 用于审查阶段的 Web 性能审计。
 
 ### 自动技能激活机制
 
@@ -157,7 +118,7 @@ Agent Skills 6 阶段开发周期
 
 ---
 
-## 7 条 slash 命令
+## 8 条 slash 命令
 
 ### 命令一览
 
@@ -168,6 +129,7 @@ Agent Skills 6 阶段开发周期
 | `/build` | Build | One slice at a time | 任何涉及多文件的变更 |
 | `/test` | Verify | Tests are proof | 实现逻辑、修复 bug 或变更行为 |
 | `/review` | Review | Improve code health | 代码审查、合并前 |
+| `/webperf` | Review | Measure before you optimize（先测量再优化） | 审计 Web 性能 |
 | `/code-simplify` | Refine | Clarity over cleverness | 代码能跑但可读性差或复杂度过高 |
 | `/ship` | Ship | Faster is safer | 准备部署到生产环境 |
 
@@ -188,7 +150,7 @@ Agent Skills 6 阶段开发周期
 
 ---
 
-## 23 个结构化技能
+## 24 个结构化技能
 
 ### Meta 阶段
 
@@ -368,11 +330,18 @@ Agent Skills 6 阶段开发周期
 | 用途 | 上线前清单、功能开关生命周期、灰度发布、回滚流程、监控配置 |
 | 使用场景 | 准备部署到生产环境 |
 
+#### observability-and-instrumentation
+
+| 属性 | 说明 |
+|------|------|
+| 用途 | 结构化日志、RED 指标、OpenTelemetry 链路追踪、基于症状的告警——边构建边埋点 |
+| 使用场景 | 添加可观测性，或为任何上生产的内容补监控 |
+
 ---
 
 ## 任务流案例：开发一个用户认证系统
 
-下面用一个真实任务演示 6 阶段、7 命令、23 技能如何配合：开发一个支持邮箱注册、登录、密码重置的用户认证系统。系统不含 OAuth 和第三方登录，技术栈为 Node.js + Express + PostgreSQL。
+下面用一个真实任务演示 6 阶段、8 命令、24 技能如何配合：开发一个支持邮箱注册、登录、密码重置的用户认证系统。系统不含 OAuth 和第三方登录，技术栈为 Node.js + Express + PostgreSQL。
 
 ### 阶段 1：Define（/spec）
 
@@ -627,7 +596,7 @@ git push origin feature/auth
 拿一个你正在做或做过的小功能（不必是认证系统，一个 CRUD 接口也行），问自己三个问题：
 
 - 开发过程中有没有先写 Spec 再动手？如果当时有 `/spec`，哪些需求会在编码前就暴露出来？
-- 有没有测试？如果有，覆盖率大概多少？如果不到 80%，缺的是哪类测试——单元、集成还是端到端？
+- 有没有测试？覆盖率大概多少？如果不到 80%，缺的是哪类——单元、集成还是端到端？
 - 部署前有没有审查和上线前检查？缺了哪一步，事后有没有吃亏？
 
 这三个问题想清楚，Agent Skills 能补上哪些缺口就清楚了。
@@ -665,7 +634,7 @@ claude --plugin-dir /path/to/agent-skills
 
 ### 方式三：Cursor
 
-将任意 `SKILL.md` 复制到 `.cursor/rules/` 目录，或引用完整的 `skills/` 目录。详见 [docs/cursor-setup.md](https://github.com/addyosmani/agent-skills/blob/main/docs/cursor-setup.md)。
+将工作流技能放到 `.cursor/skills/` 目录（从 `agent-skills/skills/` 同步），把简短的策略放进 `.cursor/rules/*.mdc`，不要把完整技能粘进 rules。详见 [docs/cursor-setup.md](https://github.com/addyosmani/agent-skills/blob/main/docs/cursor-setup.md)。
 
 ### 方式四：Gemini CLI
 
@@ -683,15 +652,15 @@ gemini skills install ./agent-skills/skills/
 # 在 Claude Code 中输入
 /help
 
-# 应看到 7 条命令
-/spec  /plan  /build  /test  /review  /code-simplify  /ship
+# 应看到 8 条命令
+/spec  /plan  /build  /test  /review  /webperf  /code-simplify  /ship
 ```
 
 ---
 
 ## 核心工程原则与 Anti-Rationalization
 
-Agent Skills 有七条核心原则。每条原则不是口号，而是有具体的落地方式：
+Agent Skills 有七条核心原则，每条都落到具体的命令行为上：
 
 | 原则 | 含义 | 落地方式 |
 |------|------|----------|
@@ -770,7 +739,7 @@ LangChain、AutoGen、CrewAI 经常和 Agent Skills 放在一起讨论，但定�
 
 - **只用 AI 做原型或 POC 的团队**：原型不需要完整工程纪律，框架的流程开销不划算。
 - **没有固定 AI 编码工具的团队**：框架依赖 Claude Code、Gemini CLI 或 Cursor 的技能系统，没有这些工具无法使用。
-- **单人维护的小项目**：23 个技能的流程对小项目过重，手动控制更直接。
+- **单人维护的小项目**：24 个技能的流程对小项目过重，手动控制更直接。
 - **代码库已进入纯维护阶段**：没有新功能开发时，Define/Plan/Build 阶段用不上。
 
 ### 从哪个阶段切入
@@ -796,15 +765,15 @@ LangChain、AutoGen、CrewAI 经常和 Agent Skills 放在一起讨论，但定�
 
 不是。技能文件是纯 Markdown，任何接受系统提示或指令文件的 AI Agent 都能用。官方提供了 Claude Code、Gemini CLI、Cursor、Windsurf、OpenCode、GitHub Copilot、Kiro IDE 的接入文档。但 slash 命令（`/spec`、`/plan` 等）目前只在 Claude Code 和 Gemini CLI 中原生支持。
 
-### Q2: 23 个技能都要手动激活吗？
+### Q2: 24 个技能都要手动激活吗？
 
-不用。7 条 slash 命令是入口，命令会自动激活相关技能。此外，上下文感知机制会根据任务自动激活技能——设计 API 时自动激活 `api-and-interface-design`，构建 UI 时自动激活 `frontend-ui-engineering`。
+不用。8 条 slash 命令是入口，命令会自动激活相关技能。此外，上下文感知机制会根据任务自动激活技能——设计 API 时自动激活 `api-and-interface-design`，构建 UI 时自动激活 `frontend-ui-engineering`。
 
 ### Q3: 安装后 AI 不执行命令怎么办？
 
 排查步骤：
 
-1. 确认插件已安装：输入 `/help` 查看是否有 7 条命令。
+1. 确认插件已安装：输入 `/help` 查看是否有 8 条命令。
 2. 检查技能目录权限：`ls ~/.claude/skills/` 确认技能文件存在。
 3. 重启 Claude Code 会话：技能在会话启动时加载。
 4. 查看技能加载日志：`/debug skills` 查看是否有加载错误。
@@ -844,129 +813,18 @@ LangChain、AutoGen、CrewAI 经常和 Agent Skills 放在一起讨论，但定�
 
 用这套框架做生产级项目，最稳的切入路径是 `/review` → `/test` → `/build` → `/spec` → `/plan`。先上 `/review` 和 `/test` 不改变团队现有流程，只在代码完成后加一道质量门控，适应成本最低。跑顺了再往前推 `/spec` 和 `/plan`，把工程纪律前移到需求阶段。
 
-23 个技能不必全用上。探索性研究、一次性脚本、教学演示代码不需要完整的 Define → Ship 流程，强行走完只会拖慢节奏。代码需要上线、需要长期维护、需要多人协作时，这套流程才值得引入。
+24 个技能不必全用上。探索性研究、一次性脚本、教学演示代码不需要完整的 Define → Ship 流程，强行走完只会拖慢节奏。代码需要上线、需要长期维护、需要多人协作时，这套流程才值得引入。
 
 **什么时候上**：项目有 CI/CD、团队成员≥2、代码需要部署到生产环境。
 
 **先做什么**：装好 `/review` 和 `/test`，让 AI 在每次提交前强制跑审查和测试。习惯了再逐步往前推。
 
-**什么时候别上**：写原型、写一次性脚本、写教学 Demo。这些场景下，手动控制比 23 个技能更直接。
-
-## 自测题
-
-1. Agent Skills 如何解决 AI 编码 Agent 跳过工程纪律的问题？
-
-   <details>
-   <summary>查看答案</summary>
-
-   Agent Skills 把工程实践写成 AI 可执行的流程：每个技能是一组带步骤、检查点和退出条件的指令，AI 必须按流程走完才能产出代码。内置的 anti-rationalization 表会阻止 AI 跳过测试或审查。
-
-   </details>
-
-2. Agent Skills 的 6 个开发阶段是什么？对应的 slash 命令是什么？
-
-   <details>
-   <summary>查看答案</summary>
-
-   6 个阶段：Define → Plan → Build → Test → Review → Ship
-   对应的 slash 命令：`/spec`、`/plan`、`/build`（或 `/code`）、`/test`、`/review`、`/ship`
-
-   </details>
-
-3. 三层组件（命令、技能、参考清单）之间的调度关系是什么？
-
-   <details>
-   <summary>查看答案</summary>
-
-   三层是"调度 → 执行 → 补充"的链式关系：
-   - slash 命令是入口，用户手动输入，激活一组技能
-   - 技能是执行者，被命令激活或上下文自动激活
-   - 参考清单是补充材料，技能在执行过程中按需加载
-
-   </details>
-
-4. 如果你的团队想采用 Agent Skills，应该从哪个阶段开始切入？
-
-   <details>
-   <summary>查看答案</summary>
-
-   最适合从 `/review` 和 `/test` 开始切入，成本最低。这两个命令让 AI 在每次提交前强制跑审查和测试，不影响现有工作流。习惯了再逐步往前推（`/spec`、`/plan`）。
-
-   </details>
-
-5. 运行 `/spec` 后，AI 应该产出什么？你如何判断产出的质量？
-
-   <details>
-   <summary>查看答案</summary>
-
-   `/spec` 应该产出 PRD（产品需求文档），包含：背景、用户故事、验收条件、边界情况。
-   判断质量：是否有明确的验收条件？是否覆盖了边界情况？是否可以被非技术人员理解？
-
-   </details>
-
-## 动手练习
-
-### 练习一：安装 Agent Skills 并运行 `/spec`
-
-在你的本地环境安装 Agent Skills，然后拿一个你正在做的项目，运行 `/spec` 命令，让 AI 产出 PRD（产品需求文档）。检查产出的 PRD 是否包含：背景、用户故事、验收条件、边界情况。
-
-<details>
-<summary>参考答案</summary>
-
-步骤：
-1. 安装 Agent Skills：按照仓库 README 的指引，把 `skills/` 目录放到对应 AI IDE 的技能目录
-2. 打开一个项目，输入 `/spec`
-3. 描述你要做的功能（如"用户登录功能"）
-4. AI 会产出 PRD，检查是否包含：背景、用户故事、验收条件、边界情况
-5. 如果缺失，手动补充或用 `/spec` 重新生成
-
-</details>
-
-### 练习二：为现有项目配置 `/test` 和 `/review`
-
-拿一个已有代码的项目，运行 `/test` 检查测试覆盖率，运行 `/review` 做代码审查。记录 AI 产出的测试报告和审查报告，对比手动审查的差异。
-
-<details>
-<summary>参考答案</summary>
-
-步骤：
-1. 打开已有项目的 AI IDE
-2. 输入 `/test`，AI 会分析现有测试并建议补充
-3. 输入 `/review`，AI 会审查当前分支的代码
-4. 对比 AI 的审查报告和手动审查的差异
-5. 如果 AI 漏掉了关键问题，检查是否需要在技能中添加团队特定的审查规则
-
-</details>
-
-### 练习三：读取并理解一个技能的结构
-
-直接打开 `skills/` 目录下的一个 `SKILL.md` 文件（如 `spec-driven-development`），理解其结构：「触发条件 → 流程图 → 步骤 → 退出条件」。尝试按这个结构为你的团队写一个自定义技能。
-
-<details>
-<summary>参考答案</summary>
-
-步骤：
-1. 打开 `skills/spec-driven-development/SKILL.md`
-2. 理解结构：触发条件（何时激活）、流程图（步骤顺序）、步骤（具体操作）、退出条件（何时完成）
-3. 为你的团队写一个自定义技能（如 `team-code-review`），按相同结构组织
-4. 放到 AI IDE 的技能目录，测试触发效果
-
-</details>
-
-## 进阶路径
-
-- **想深入理解单个技能**：直接打开 `skills/` 目录下的 `SKILL.md` 文件，每个技能的结构都是「触发条件 → 流程图 → 步骤 → 退出条件」。从 `spec-driven-development` 和 `test-driven-development` 开始读，这两个是大多数项目的入口。
-- **想自定义技能**：参考仓库里的 `docs/skill-anatomy.md`，了解 `SKILL.md` 的格式规范，然后 fork 一份改自己的版本。
-- **想从零构建技能体系**：读 `using-agent-skills` 元技能，理解技能间的调度逻辑和上下文感知机制，再设计自己的技能层级。
-
-🦞
+**什么时候别上**：写原型、写一次性脚本、写教学 Demo。这些场景下，手动控制比 24 个技能更直接。
 
 ## 资料口径说明
 
 1. **技能版本**：本文基于 `agent-skills` 仓库 2026 年版本。具体技能的实现随仓库更新可能变化。
-2. **工具兼容性**：文中提到的 Claude Code、Cursor、OpenClaw 等工具对 Skill 的支持方式可能随版本变化。实际使用时请参考各工具的官方文档。
-3. **技能数量**：文中提到 23 个技能为写作时的数据，实际数量随仓库更新可能增加。
-4. **效果数据**：文中提到的"Spec 驱动开发提升 40% 需求稳定性"等数据为社区经验值，实际效果因项目而异。
-5. **适用范围**：本文的技能体系主要适用于 Claude Code、Cursor 等支持 SKILL.md 的 AI IDE。其他 AI 工具可能需要不同的配置方式。
-6. **原文来源**：本文基于 [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) 开源项目。如需引用，请注明项目链接。
+2. **技能数量**：文中提到 24 个技能为写作时的数据，实际数量随仓库更新可能增加。
+3. **适用范围**：本文的技能体系主要适用于 Claude Code、Cursor 等支持 SKILL.md 的 AI IDE。其他 AI 工具可能需要不同的配置方式。
+4. **原文来源**：本文基于 [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) 开源项目。如需引用，请注明项目链接。
 

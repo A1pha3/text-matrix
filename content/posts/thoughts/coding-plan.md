@@ -50,7 +50,7 @@ tags: ["Coding Plan", "MiniMax", "GLM", "MiMo", "方舟", "TRAE"]
 
 ### 1. 额度单位不能直接换算
 
-方舟按请求数算，GLM 和 MiMo 用积分（Credits），MiniMax 用 Token——四套四种口径，同一个 Claude Code 任务在不同方案里消耗的单位完全不同。长上下文、思考模式、Agent Team 和模型倍率都会进一步改变消耗。
+方舟按请求数算，GLM 用积分、MiMo 用 Credits、MiniMax 用 Token——四套四种口径，同一个 Claude Code 任务在不同方案里消耗的单位完全不同。长上下文、思考模式、Agent Team 和模型倍率都会进一步改变消耗。
 
 "方舟每 5 小时 1,200 次请求"和"GLM 每 5 小时 2,000 积分"看着都能比大小，其实一个数的是模型被调了几次，一个数的是按 token 折算的积分池，直接除没有意义。要靠自己的典型任务在每套方案里跑一遍，看能完成多少次，比翻评测准确。
 

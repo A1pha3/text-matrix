@@ -13,13 +13,12 @@ tags: ["Claude Code", "游戏开发", "多 Agent", "工作流"]
 
 # Claude Code Game Studios：49 个 AI 角色、72 个技能、12 个钩子的多 Agent 游戏开发工作流
 
-一个人用 Claude Code 写游戏，开头很快——但做到第三个功能、第六次重构时，问题不是 AI 不够聪明，而是没人帮你把设计、代码、测试、发布串成一条不会散架的流水线。Claude Code Game Studios 做的事很直接：把 Claude Code 改造成一个模拟真实工作室的多角色协作系统——49 个 AI 角色各管一摊，72 个命令覆盖从头脑风暴到上线的全流程，12 个钩子在提交、推送、会话切换时自动跑检查。
-
-面向独立开发者、AI 应用研究者以及对多 Agent 系统感兴趣的人。需要对 Claude Code 有基本了解。
+一个人用 Claude Code 写游戏，开头很快，但做到第三个功能、第六次重构时，会发现没人帮你把设计、代码、测试、发布串成一条不会散架的流水线。Claude Code Game Studios 把这种协作组织成一家模拟真实工作室的多角色系统：49 个 AI 角色各管一摊，72 个命令覆盖从头脑风暴到上线的全流程，12 个钩子在提交、推送、会话切换时自动跑检查。
 
 > **基本信息**
 > - **GitHub**: [Donchitos/Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios)
-> - **Stars**: 22,332+ | **Forks**: 3,230+ | **License**: MIT
+> - **Stars**: 23,605+ | **Forks**: 3,381+ | **License**: MIT | **语言**: Shell
+> - **形态**: 模板项目（GitHub 标记为 template） | **最近推送**: 2026-05-21
 
 ---
 
@@ -40,7 +39,7 @@ tags: ["Claude Code", "游戏开发", "多 Agent", "工作流"]
 
 给 AI 会话装上真实工作室的结构——把"一个通用助手"替换成 49 个按层级组织的专业化 Agent，各自负责设计、编程、美术、测试中的一摊。
 
-效果是：决定权还在你手里，但现在有一组角色会在你往前冲的时候追问对的问题、在早期拦截错误、把项目从头脑风暴到发布的每个环节串起来。
+决定权还在你手里，但会有一组角色在你往前冲的时候追问对的问题、在早期拦截错误、把项目从头脑风暴到发布的每个环节串起来。
 
 ---
 
@@ -207,22 +206,25 @@ Session 启动时，`session-start.sh` 显示当前分支和近期提交。关�
 
 ## 11 个路径规则
 
-编码标准按文件位置自动执行：
+编码标准按文件位置自动执行，模板内置 11 个规则文件：
 
-| 路径 | 强制规则 |
-|------|----------|
-| `src/gameplay/**` | 数据驱动、Delta Time、无 UI 引用 |
-| `src/core/**` | 热路径零分配、线程安全 |
-| `src/ai/**` | 性能预算、可调试性 |
-| `src/networking/**` | 服务器权威、版本化消息 |
-| `src/ui/**` | 无游戏状态拥有权、本地化就绪 |
-| `design/gdd/**` | 必须 8 章节、公式格式 |
-| `tests/**` | 测试命名、覆盖率要求 |
-| `prototypes/**` | 宽松标准、需 README |
+| 规则 | 覆盖路径 | 强制要点 |
+|------|----------|----------|
+| gameplay-code | `src/gameplay/**` | 数据驱动、Delta Time、无 UI 引用 |
+| engine-code | `src/core/**` | 热路径零分配、线程安全 |
+| ai-code | `src/ai/**` | 每帧 2ms 预算、可调试可视化 |
+| network-code | `src/networking/**` | 服务器权威、版本化消息 |
+| ui-code | `src/ui/**` | 无游戏状态拥有权、本地化就绪 |
+| design-docs | `design/gdd/**` | 必须 8 章节、公式格式 |
+| data-files | `assets/data/**` | JSON 有效、命名规范 |
+| narrative | `design/narrative/**` | 剧情一致性、本地化就绪 |
+| shader-code | 着色器代码 | 渲染规范 |
+| test-standards | `tests/**` | 测试命名、覆盖率要求 |
+| prototype-code | `prototypes/**` | 宽松标准、需 README |
 
 ### 规则示例
 
-`src/gameplay/**` 规则要求必须使用数据驱动值（不能硬编码）、必须使用 delta time、不能直接引用 UI 模块。`src/core/**` 规则要求热路径禁止内存分配、必须线程安全、API 必须稳定。
+`src/gameplay/**` 规则要求必须使用数据驱动值（不能硬编码）、必须使用 delta time、不能直接引用 UI 模块。`src/core/**` 规则要求热路径禁止内存分配、必须线程安全。`design/gdd/**` 规则要求每份设计文档包含 Overview、Player Fantasy、Detailed Rules、Formulas、Edge Cases、Dependencies、Tuning Knobs、Acceptance Criteria 这 8 个章节。
 
 ---
 
@@ -244,7 +246,7 @@ Claude-Code-Game-Studios/
 │   ├── rules/                   # 11个路径规则
 │   └── docs/
 │       ├── workflow-catalog.yaml  # 7阶段管道定义
-│       └── templates/            # 39个文档模板
+│       └── templates/            # 文档模板
 ├── src/                         # 游戏源码
 ├── assets/                      # 美术、音频资源
 ├── design/                      # GDD、叙事文档
@@ -296,7 +298,7 @@ claude
 
 ### 协作协议
 
-每个 Agent 遵循严格的协作协议——你不是在开自动驾驶，而是在和一个会主动提问、给出选项、等你拍板的团队协作：
+每个 Agent 遵循一套协作协议：先提问、给选项，最后由你拍板。你不是在开自动驾驶。
 
 ```
 1. Ask — 提问先于提案
@@ -350,7 +352,7 @@ AI 预测是网络模块还是本地？engine-programmer 判断：本地推演�
 
 Session 结束时 `pre-compact.sh` 把当前进度写进 `active.md`，下次打开 Claude Code 时 `session-start.sh` 恢复上次的分支和近期提交记录——不用手动回忆"上次写到哪了"。
 
-这条路径串起来之后，49 个角色和 72 个命令就不再是一份静态清单，而是一条从思路到可运行原型、每一步都有对应角色出声追问和检查的流水线。
+串起来之后，49 个角色和 72 个命令就是一条从思路到可运行原型、每一步都有对应角色出声追问和检查的流水线。
 
 ---
 
@@ -438,7 +440,7 @@ Godot 4、Unity、Unreal Engine 5 都有专属 agent set。每个引擎有对应
 - 你在做快速原型，代码量和复杂度都不大——一个 Agent 配几个 Slash Command 就够了
 - 你更习惯自己控制所有流程，多 Agent 之间的提问和确认反而打断节奏
 
-采用建议：先从 `/start` 跑通一个完整阶段——比如从 `/brainstorm` 到 `/dev-story` 写出一段可运行的玩法逻辑——再根据痛点逐步打开更多 Agent 和 Hook。别一口气全开：模板过重反而会拖慢前期迭代。另外，把你不玩的引擎对应的 Agent 目录删掉（比如只做 2D 就别留着 UE5 那些），能显著减少无关角色的提问和检查。
+采用建议：先从 `/start` 跑通一个完整阶段——比如从 `/brainstorm` 到 `/dev-story` 写出一段可运行的玩法逻辑——再按痛点逐步打开更多 Agent 和 Hook。别一口气全开，模板过重会拖慢前期迭代。
 
 ---
 

@@ -1,8 +1,8 @@
 ---
-title: "Cline：超越代码补全的 AI 编程助手"
+title: "Cline：把 AI 编程助手从补全推进到自主编程的边界"
 slug: "cline-ai-coding-agent-guide"
 github_repo: "cline/cline"
-description: "Cline 是一个基于 Claude Sonnet 的 AI 编程助手，可以创建和编辑文件、执行终端命令、使用浏览器、创建自定义 MCP 工具。它支持多种 API 提供商，包括 OpenRouter、Anthropic、OpenAI、Google Gemini、AWS Bedrock 等。"
+description: "Cline 是一个开源的 AI 编程智能体（Agent），能创建和编辑文件、执行终端命令、操作浏览器、调用 MCP 工具，每一步变更都需人工审核。它不绑定特定模型，支持 Anthropic、OpenAI、Google Gemini、OpenRouter、AWS Bedrock 等主流 API 提供商。"
 date: "2026-04-24T11:40:00+08:00"
 categories: ["技术笔记"]
 tags: ["AI 编程", "Claude", "VS Code", "MCP", "开源工具"]
@@ -10,15 +10,25 @@ tags: ["AI 编程", "Claude", "VS Code", "MCP", "开源工具"]
 
 # Cline：把 AI 编程助手从补全推进到自主编程的边界
 
-Cline 想回答的不是"AI 能不能写代码"，而是"AI 写代码时，人应该站在哪一层"。它的答案是：**模型负责自主编程能力，人负责每一步变更的审核与放行**。这与 GitHub Copilot 把人放在"接受/拒绝补全建议"那一层完全不同——Copilot 处理的是行级补全，Cline 处理的是"读文件 → 改文件 → 跑命令 → 看结果 → 再改"的多步循环。
+Cline 的核心设计是"人在回路"：模型负责自主编程，人负责每一步变更的审核与放行。它和 GitHub Copilot 的差别不在"会不会写代码"，而在人介入的层级——Copilot 只处理行级补全，Cline 处理的是"读文件 → 改文件 → 跑命令 → 看结果 → 再改"的多步循环。Cline 最早以 VS Code 扩展的形式出现，2025 年起逐步长出 CLI、JetBrains 插件和 SDK，2026 年又加入 Kanban 多 Agent 任务板，定位从"VS Code 里的编程助手"变成"IDE 和终端里的开源编码 Agent"。
 
-Cline 适合谁：需要在 VS Code 里完成多文件改动、跑构建/测试、做端到端验证的开发者，尤其是 Web 应用场景下愿意为每一步变更点确认按钮的人。Cline 不适合谁：只想要行内补全、不想审核任何变更、或者任务本身就是单点问答的人——前者用 Copilot 更轻，后者直接问 Claude Desktop 或 ChatGPT 更直接。它和 Claude Code 的本质差异在入口形态：Cline 是 VS Code 扩展，把 Agent 循环嵌进编辑器；Claude Code 是 CLI，把 Agent 循环嵌进终端。两者底层都能调 Claude Sonnet，但工作流和审核姿态完全不同。
+Cline 适合谁：需要在编辑器里完成多文件改动、跑构建/测试、做端到端验证的开发者，尤其是愿意为每一步变更点确认按钮的人。不适合谁：只想要行内补全、不想审核任何变更、或任务只是单点问答的人——前者用 Copilot 更轻，后者直接问模型客户端更直接。它和 Claude Code 现在都有 CLI 与编辑器入口，真正差异在默认姿态：Cline 把"每一步都确认"做成默认，Claude Code 的默认审核更宽松。两者底层能接同一批模型，但工作流和审核强度不同。
 
 > **项目地址**：[github.com/cline/cline](https://github.com/cline/cline)
 
+## 核心数据（截至 2026-08）
+
+| 项目 | 值 |
+|------|-----|
+| Stars / Forks | 约 6.5 万 / 约 7 千 |
+| 开源协议 | Apache-2.0 |
+| 主要语言 | TypeScript |
+| 产品面 | VS Code 扩展、CLI、JetBrains 插件、SDK、Kanban 任务板 |
+| 安装量 | 逾 800 万（VS Code Marketplace 口径） |
+
 ## 一、Cline 的组件构成与系统地图
 
-Cline 是一个 VS Code 扩展，把 Claude Sonnet 的自主编程能力嵌进编辑器，让 AI 能在你的监督下完成"读文件 → 改文件 → 跑命令 → 看结果 → 再改"的循环。它不是 IDE 之外的独立产品，也不是 CLI——它的工作面就是 VS Code 的工作区。
+Cline 现在是一条产品线，共用同一套 Agent 核心：VS Code 扩展、CLI、JetBrains 插件、SDK，以及网页端的 Kanban 任务板。下面这张图以最常用的 VS Code 扩展为工作面，展示 Agent 循环如何把文件编辑、终端、浏览器和 MCP 四条机制组织起来。
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -63,14 +73,14 @@ Cline 是一个 VS Code 扩展，把 Claude Sonnet 的自主编程能力嵌进�
 
 四个要点：
 
-- **Cline 是 VS Code 扩展**，不是独立 IDE，也不是 CLI。它的工作面就是 VS Code 工作区，文件编辑、终端、diff 视图都复用 VS Code 的能力。
+- **Cline 是一个多入口产品**：VS Code 扩展、CLI、JetBrains 插件共用同一套 Agent 核心，但你最常用到的入口是 VS Code 扩展。
 - **Agent 循环是核心调度层**：分析 → 规划 → 执行 → 验证 → 完成。所有四条机制都由这个循环驱动。
-- **LLM 可替换**：默认走 Claude Sonnet，也支持 OpenRouter、OpenAI、Gemini、AWS Bedrock、本地模型。Cline 不绑死模型。
+- **LLM 可替换**：默认走 Claude 系列，也支持 OpenRouter、OpenAI、Gemini、AWS Bedrock、本地模型。Cline 不绑死模型。
 - **MCP 是能力扩展面**：模型本身不擅长直接操作外部系统（Jira、AWS、PagerDuty），MCP 提供标准协议让 Cline 调用自定义工具。
 
 ## 二、四条并行机制
 
-Cline 不是"一个能力"，而是四条并行机制。它们各自的触发条件、代价和人工审核姿态不同。
+Cline 的能力拆开看是四条并行机制，各自有独立的触发条件、代价和人工审核姿态。
 
 | 机制 | 触发条件 | 代价 | 人工审核 |
 |------|----------|------|----------|
@@ -99,7 +109,7 @@ Cline 借助 VS Code v1.93 的 shell 集成，可以直接在终端里执行命�
 
 ### 2.3 浏览器测试
 
-Web 任务里 Cline 可以启动浏览器、点击元素、输入文本、滚动页面、捕获截图和控制台日志。这一层依赖 Claude Sonnet 的 Computer Use 能力（原因在第四节展开）。
+Web 任务里 Cline 可以启动浏览器、点击元素、输入文本、滚动页面、捕获截图和控制台日志。这一层依赖模型的 Computer Use（看屏幕操作）能力，具体差异在第四节展开。
 
 ### 2.4 MCP 工具
 
@@ -107,30 +117,28 @@ Web 任务里 Cline 可以启动浏览器、点击元素、输入文本、滚动
 
 典型场景：获取 Jira 工单、管理 AWS EC2 实例、获取 PagerDuty 事件详情。
 
-## 三、为什么需要 MCP
+## 三、MCP 解决的外部系统调用问题
 
-一个常见疑问：**为什么不直接让 Cline 在 prompt 里写"调用 Jira API"，而要绕一层 MCP？**
-
-直接调 API 在工程上有三个硬问题：
+让 Cline 直接调外部 API 看似更简单，但直接调 API 有三处硬伤：
 
 1. **凭据管理**：API key 写在 prompt 里会被 LLM 看见，也会进入请求日志。一旦 prompt 被分享或日志被采集，凭据就泄露了。MCP 把凭据留在 server 进程里，LLM 只看到"调用这个工具"的抽象，不接触原始凭据。
 2. **协议稳定性**：Jira、AWS、PagerDuty 各家 API 协议不同，版本迭代频繁。MCP 把"如何调外部系统"封装在 server 端，LLM 只需要知道"有这个工具、参数是什么"。
 3. **可观测性**：直接调 API 时，调用过程对用户不可见。MCP 把每次工具调用都做成可观察的事件——Cline 会展示"即将调用 Jira MCP 工具，参数是 issue=PROJ-123"，用户可以审核、拒绝、追溯。
 
-MCP 把凭据、协议、可观测性三件事从 LLM 那里剥离出来，让 Agent 调用外部系统变得可审核、可维护、可移植。
+这把凭据、协议、可观测性三件事从 LLM 那里挪到 server 进程，Agent 调用外部系统时才可控、可审、可换。
 
-## 四、为什么用 Claude Sonnet 的 Computer Use
+## 四、浏览器自动化与 Computer Use 的代价
 
-浏览器自动化这一层，Cline 依赖的是 Claude Sonnet 的 Computer Use 能力。Computer Use 是 Anthropic 给 Claude Sonnet 训练的"看屏幕、点鼠标、敲键盘"能力。它和传统的 Selenium / Playwright 脚本式自动化不同——后者是"写死步骤"，前者是"看截图决定下一步"。
+浏览器自动化这一层，Cline 依赖模型的 Computer Use 能力——"看屏幕、点鼠标、敲键盘"的视觉操作。它和传统的 Selenium / Playwright 脚本式自动化不同：后者是"写死步骤"，前者是"看截图决定下一步"。
 
 - **优势**：Cline 不需要预先知道页面结构，遇到弹窗、布局变化、动态加载都能自适应。这是脚本式自动化做不到的。
 - **代价一：调用成本**：每次 Computer Use 都要发截图给模型，截图越大、调用越频繁，token 消耗越高。一次完整的"测试这个应用"可能消耗数十次 Computer Use 调用，账单比纯文本对话贵一个数量级。
-- **代价二：模型绑定**：Computer Use 是 Claude Sonnet 的能力，其他模型（GPT、Gemini、本地模型）目前没有等价能力。这意味着浏览器测试这一层事实上绑死 Anthropic——即便 Cline 的其他机制可以换模型，浏览器测试不能。
+- **代价二：模型绑定**：浏览器自动化要吃掉模型的视觉能力，用的是支持 Computer Use 的前端模型——Claude 最成熟，GPT 系列等也有。换成本地小模型后这一层基本不可用；纯后端任务则可以完全绕开，换任何模型都行。
 - **代价三：不确定性**：模型看截图决策不是确定性的，同样的页面、同样的任务，两次运行可能走不同路径。这对回归测试是缺点（不可复现），对探索性测试是优点（能发现脚本测不到的问题）。
 
 如果完全不需要浏览器测试（后端、CLI 工具、库开发），可以忽略这一层，Cline 仍然能用其他模型工作。
 
-## 五、为什么每个变更都要人工审核
+## 五、人工审核防住的三类风险
 
 Cline 的设计原则是人在回路（human-in-the-loop）：每个文件变更和终端命令都需要你审核。自动执行在工程上有三类风险：
 
@@ -138,7 +146,7 @@ Cline 的设计原则是人在回路（human-in-the-loop）：每个文件变更
 2. **终端命令的副作用**：`rm -rf`、`DROP DATABASE`、`kubectl delete`、`terraform destroy` 这类命令一旦执行就不可逆。Cline 不知道你的 `~/.aws/credentials` 是不是生产环境凭据，也不知道当前目录是不是真的项目根目录。人工审核是最后一道防线。
 3. **MCP 工具的外部影响**：MCP 工具能调 Jira、AWS、PagerDuty，意味着 Cline 能改外部系统状态——关 EC2 实例、改 Jira 工单状态、触发 PagerDuty 事件。这些操作的副作用不在本地代码库里，Git 救不了你。
 
-Cline 的检查点机制（每个步骤拍工作区快照）能还原文件变更，但还原不了已经执行的终端命令和已经调用的 MCP 工具。所以"每个变更都要人工审核"不是过度保守，而是把不可逆操作的放行权留在人手里。
+Cline 的检查点机制（每个步骤拍工作区快照）能还原文件变更，但还原不了已经执行的终端命令和已经调用的 MCP 工具。把审核权留在人手里，正是因为这些操作不可逆。
 
 ## 六、任务流案例：修复一个 lint 错误
 
@@ -324,10 +332,10 @@ Cline 会自动在 `cline_mcp_settings.json` 里写入配置。也可以手动�
 查一下 cline/cline 仓库的 Stars 数
 ```
 
-Cline 会识别出这是 MCP 工具 `get_repo_stars` 的调用场景，展示调用参数（`owner=cline, repo=cline`），确认后执行。结果回到聊天面板：
+Cline 会识别出这是 MCP 工具 `get_repo_stars` 的调用场景，展示调用参数（`owner=cline, repo=cline`），确认后执行。结果回到聊天面板（数字是查询时的实时数据，会随仓库增长变化）：
 
 ```
-cline/cline 仓库当前 Stars: 87.2k
+cline/cline 仓库当前 Stars: 65,394
 ```
 
 ### 7.5 排查 MCP 工具加载失败
@@ -346,7 +354,7 @@ Cline 不绑死模型，支持几乎所有主流 AI API 提供商：
 | 提供商 | 说明 |
 |--------|------|
 | **OpenRouter** | 数百种模型，实时获取最新模型列表 |
-| **Anthropic** | Claude 系列（Computer Use 必须走这一家或 OpenRouter） |
+| **Anthropic** | Claude 系列（浏览器自动化能力最成熟） |
 | **OpenAI** | GPT 系列 |
 | **Google Gemini** | Gemini 系列 |
 | **AWS Bedrock** | 亚马逊云 AI 服务 |
@@ -357,7 +365,7 @@ Cline 不绑死模型，支持几乎所有主流 AI API 提供商：
 
 **模型选择策略**：
 
-- **需要浏览器测试**：必须用 Claude Sonnet（Computer Use 绑定 Anthropic）。
+- **需要浏览器测试**：尽量用支持 Computer Use 的前端模型，Claude 最成熟。
 - **纯文件编辑 + 终端执行**：可以换 GPT、Gemini、本地模型。本地模型成本最低，但能力上限受模型规模限制。
 - **复杂多步任务**：Claude Sonnet 综合最稳，尤其是涉及 AST 分析、跨文件改动的场景。
 
@@ -372,7 +380,7 @@ Cline 不绑死模型，支持几乎所有主流 AI API 提供商：
 | `@file` | 添加文件内容，避免浪费 API 请求 |
 | `@folder` | 一次性添加整个文件夹内容 |
 
-`@file` 和 `@folder` 的价值在于显式声明上下文——如果不加，Cline 会自己读文件，但读哪些、读多少由模型决定，可能漏掉关键文件或读太多无关文件浪费 token。
+用 `@file` 和 `@folder` 等于显式声明上下文——如果不加，Cline 会自己决定读哪些文件，可能漏掉关键文件，也可能读太多无关文件浪费 token。
 
 ### 9.2 检查点
 
@@ -382,20 +390,20 @@ Cline 在处理任务时会为每个步骤拍摄工作区快照。你可以用"C
 
 | 维度 | Cline | Claude Code | GitHub Copilot |
 |------|-------|-------------|----------------|
-| **入口形态** | VS Code 扩展 | CLI 工具 | VS Code / JetBrains 扩展 |
+| **入口形态** | VS Code 扩展 / CLI / JetBrains 插件 / SDK | CLI / IDE 扩展 | VS Code / JetBrains / Visual Studio 扩展 |
 | **人介入层级** | 每个文件变更、每条命令 | 每个文件变更、每条命令 | 行内补全建议 |
 | **任务粒度** | 多文件、多步骤 | 多文件、多步骤 | 单行/多行补全 |
-| **终端执行** | ✅ 借助 VS Code shell 集成 | ✅ 直接在终端跑 | ❌ |
-| **浏览器测试** | ✅ Claude Sonnet Computer Use | ✅ | ❌ |
+| **终端执行** | ✅ 原生终端 / CLI | ✅ 原生终端 | ❌ |
+| **浏览器测试** | ✅ 模型 Computer Use | ✅ | ❌ |
 | **MCP 支持** | ✅ 原生支持 | ✅ 支持 | ❌ |
 | **本地模型** | ✅ LM Studio/Ollama | ✅ | ❌ |
 | **企业版** | ✅ SSO/审计/私有部署 | ❌ | ✅ |
-| **适用场景** | VS Code 内多步任务 | 终端优先、脚本化、远程服务器 | 行内补全、轻量建议 |
+| **适用场景** | 编辑器 / 终端内的多步任务 | 终端优先、脚本化、远程服务器 | 行内补全、轻量建议 |
 
 **本质差异**：
 
 - **Cline vs Copilot**：Copilot 处理的是"下一行写什么"，Cline 处理的是"这个任务怎么做完"。前者是补全，后者是 Agent。两者不冲突——很多人同时用 Copilot 做行内补全、用 Cline 做多步任务。
-- **Cline vs Claude Code**：两者都是 Agent，差异在入口形态。Cline 嵌在 VS Code 里，diff 视图、终端、文件管理器都在同一个窗口；Claude Code 是 CLI，不受编辑器限制，Vim/Emacs/ssh 远程服务器都能用，但没有 IDE 内联的 diff 视图。选哪个看你是不是绑 VS Code。
+- **Cline vs Claude Code**：两者都是 Agent，也都有 CLI 和编辑器入口。差异在默认姿态和生态：Cline 把每一步确认做成默认，开放接入任意模型、本地模型和 MCP 工具；Claude Code 更偏终端优先、脚本化和 Anthropic 生态。选哪个主要看你的工作流绑不绑编辑器。
 
 ## 十一、安装与基本使用
 
@@ -483,10 +491,11 @@ SSO（SAML/OIDC）、全局策略和配置、可观测性和审计追踪、私�
 
 ### 什么时候换 Claude Code
 
-- 不在 VS Code 里工作（Vim/Emacs/JetBrains，或 ssh 远程服务器）
-- 需要脚本化 Agent 调用（CI/CD、cron 任务、批量处理）
-- 不需要 diff 视图审核，信任 Agent 变更
-- 任务主要是终端操作（跑命令、看日志、改配置）
+- 深度用 Anthropic 生态（Claude 官方 Skills、插件、Agent 市场）
+- 长期在纯终端环境（Vim / Emacs / ssh）工作，且不想引入 Cline 的 CLI
+- 任务高度脚本化，默认放行、靠 git 回退，不逐条审核
+
+Cline 现在也有 CLI 和 SDK，所以"终端环境"已经不是 Cline 的硬边界，更精确的说法是看生态偏好与审核姿态。
 
 ### 什么时候不必上 Cline
 
