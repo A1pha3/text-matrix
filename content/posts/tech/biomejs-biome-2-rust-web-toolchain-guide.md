@@ -3,7 +3,7 @@ title: "Biome 2.x 全栈 Web 工具链：单二进制替代 Prettier + ESLint �
 date: "2026-06-18T21:03:00+08:00"
 slug: "biomejs-biome-2-rust-web-toolchain-guide"
 github_repo: "biomejs/biome"
-description: "biomejs/biome 是用 Rust 写的一体化 Web 工具链，格式化兼容 Prettier 97%、Linter 收录 500+ 规则、原生支持 JS/TS/JSX/JSON/CSS/GraphQL，本文拆解其架构、安装与 vs Prettier+ESLint 的取舍。"
+description: "biomejs/biome 是用 Rust 写的一体化 Web 工具链，格式化兼容 Prettier 97%、Linter 收录 514 条规则、原生支持 JS/TS/JSX/JSON/CSS/GraphQL，下面拆解其架构、安装与相对 Prettier+ESLint 的取舍。"
 draft: false
 categories: ["技术笔记"]
 tags: ["代码格式化"]
@@ -11,11 +11,11 @@ tags: ["代码格式化"]
 
 > **快速信息卡**
 > - **GitHub**: [biomejs/biome](https://github.com/biomejs/biome)
-> - **Stars**: 25,187+
-> - **Forks**: 1,047+
+> - **Stars**: 25,460+（GitHub API 2026-08-05 验证）
+> - **Forks**: 1,166+
 > - **License**: Apache-2.0
 > - **语言**: Rust
-> - **最后更新**: 2026-06-25
+> - **最后更新**: 2026-08-01
 
 ## 一句话判断
 
@@ -29,7 +29,7 @@ Biome 给前端工具链提供了一个"单二进制替代"的选项。新项目
 ┌─────────────────────────────────────────────────────────┐
 │  Biome 的三层能力                                        │
 │  ├─ Formatter  ── 97% Prettier 兼容（JS/TS/JSX/JSON/CSS）│
-│  ├─ Linter     ── 500+ 规则（来自 ESLint 生态）          │
+│  ├─ Linter     ── 514 条规则（来自 ESLint 生态）         │
 │  └─ Editor     ── VS Code / Open VSX 即时反馈            │
 ├─────────────────────────────────────────────────────────┤
 │  工程取舍                                                 │
@@ -41,21 +41,6 @@ Biome 给前端工具链提供了一个"单二进制替代"的选项。新项目
 │  存量项目 → Prettier 先迁 → ESLint 推荐集 → 清理配置     │
 └─────────────────────────────────────────────────────────┘
 ```
-
-### 目录
-
-- [一、为什么需要 Biome](#一为什么需要-biome)
-- [二、定位：三个核心能力](#二定位三个核心能力)
-- [三、性能：为什么用 Rust](#三性能为什么用-rust)
-- [四、安装与最小上手](#四安装与最小上手)
-- [五、迁移路径：从 Prettier + ESLint 迁过来](#五迁移路径从-prettier--eslint-迁过来)
-- [六、Biome 不适合的场景](#六biome-不适合的场景)
-- [七、与 oxlint / Prettier 的关系](#七与-oxlint--prettier-的关系)
-- [八、采用建议](#八采用建议)
-- [九、常见问题排查](#九常见问题排查)
-- [十、自测题](#十自测题)
-- [十一、进阶路径](#十一进阶路径)
-- [十二、参考与延伸](#十二参考与延伸)
 
 ## 一、为什么需要 Biome
 
@@ -85,13 +70,13 @@ README 把 Biome 定位成三层能力：
 
 > **Biome is a fast formatter** for JavaScript, TypeScript, JSX, JSON, CSS and GraphQL that scores 97% compatibility with Prettier.
 
-这是 Biome 最早的能力。97% 不是 100%——Biome 团队的态度很明确：剩下 3% 是 Prettier 历史设计里不合理的边角，强行兼容只会拖累维护节奏。
+这是 Biome 最早的能力。97% 不是 100%——剩下 3% 落在 Prettier 历史设计里的一些边角，Biome 团队选择不强行兼容，以免拖累维护节奏。
 
 ### 2. 高性能 Linter
 
 > **Biome is a performant linter** for JS / TS / JSX / JSON / CSS / GraphQL that features more than 500 rules from ESLint, typescript-eslint, and other sources. It outputs detailed and contextualized diagnostics.
 
-500+ 规则不是凭空造出来的——是从 ESLint 生态"复刻 + 重写"来的。这意味着从 ESLint 迁过来时大部分规则名、配置选项是兼容的。
+现在规则数到 514 条（biomejs.dev 当前计数），不是凭空造的，是从 ESLint、typescript-eslint 等生态移植加重写来的。规则名和大多数配置选项与原生态对齐，从 ESLint 迁过来时改动面可控。
 
 ### 3. 实时编辑器集成
 
@@ -101,21 +86,17 @@ README 把 Biome 定位成三层能力：
 
 ## 三、性能：为什么用 Rust
 
-Biome 全栈用 Rust 写，最大的收益是**冷启动 + 大仓库 lint 速度**。
+Biome 全栈用 Rust 写，收益集中在冷启动和大仓库的 lint 速度上。
 
-对开发机：
+官方给出的是格式化方向的基准：在 2,104 个文件、171,127 行代码上，Biome 比 Prettier 快约 35 倍（来源：biomejs.dev）。lint 方向没有统一口径，不同基准里相对 ESLint 快 10 倍到上百倍都出现过，同为 Rust 的 oxlint 还能再拉开一截。与其记住某个倍数，不如看它实际省在哪：
 
-- 单文件 lint：`< 10 ms`（来源：Biome 官网性能页）
-- 中型 monorepo（数千文件）：比 ESLint 快 10-50 倍（来源：Biome benchmark 仓库）
+- 对开发机：保存即反馈，编辑器里 lint 基本无感知
+- 对 CI：整仓 check 从"分钟级"压到"秒级"，PR 反馈更快
+- 运维：不用再维护 Node 版本和 npm 依赖
 
-对 CI：
+代价是安装包变成二进制，需要操作系统匹配（GitHub Releases 提供全平台构建）。但单二进制比 npm 几百个传递依赖反而更好管理。
 
-- 从"分钟级"压到"秒级"，PR 反馈更快
-- 不需要维护 Node 版本 / npm 依赖
-
-代价：安装包是二进制（不是 npm script），需要操作系统匹配（README 标注 GitHub Releases 上有全平台构建）。但单二进制比 npm 几百个依赖更容易管理。
-
-> 上面两个数字测的是"单文件 lint 耗时"和"中型仓库全量 lint 耗时"，反映的是 Rust 解析 + 单线程调度相对 Node.js 的差距。它们不能推出"在你的项目里 CI 一定快 10 倍"——真实收益取决于文件数量、规则集大小和 CI 机器规格。
+> 上面的 35x 测的是那个格式化场景，反映的是 Rust 解析 + 并行调度相对 Node.js 单线程的差距。它不能推出"你的 CI 一定快这么多"——真实收益取决于文件数量、规则集大小和 CI 机器规格。更细的基准口径见 biomejs/biome 仓库的 benchmark 目录。
 
 ## 四、安装与最小上手
 
@@ -160,6 +141,26 @@ npx @biomejs/biome ci .
 
 `biome ci` 是为 CI 专门设计的入口——格式化、Lint、import 排序一次性跑完，遇到问题直接非零退出。
 
+一次 `biome check` 在文件上走的路，大致是这样：
+
+```mermaid
+flowchart LR
+    A[源文件<br/>.js / .ts / .jsx / .css] --> B[biome check]
+    B --> C{语言识别}
+    C --> D[Formatter<br/>补齐分号、统一缩进]
+    C --> E[Linter<br/>514 条规则逐条判]
+    C --> F[Assist<br/>import 排序 / 语义动作]
+    D --> G{带 --write?}
+    E --> G
+    F --> G
+    G -- 是 --> H[写回文件]
+    G -- 否 --> I[只输出 diff]
+    H --> J[biome ci<br/>有差异即非零退出]
+    I --> J
+```
+
+Formatter、Linter 与 Assist 三条线并行处理，最后统一决定写回还是只报 diff。这也是为什么 `biome check` 和 `biome ci` 的差别只在"要不要改文件"上。
+
 ### 最小可运行示例
 
 在一个空目录里走一遍，验证安装是否正常：
@@ -200,7 +201,7 @@ Biome 团队提供了官方迁移工具 `biome migrate eslint` / `biome migrate 
 
 ## 六、Biome 不适合的场景
 
-边界要写清楚：
+这几类场景不适合直接换 Biome：
 
 - **需要 100% Prettier 兼容**：现存项目对比 PR 时，3% 差异会肉眼可见
 - **需要 ESLint 高度自定义插件**：Biome 的插件体系还在演进（plugin API 尚未完全等价 ESLint）
@@ -273,35 +274,17 @@ Biome 默认只处理它认识的语言。检查 `formatter.include` 和 `files.
 }
 ```
 
-## 十、自测题
+## 十、再深入：schema、monorepo 与 Git Hook
 
-下面 5 题用来检验是否读进去了。答案在题后。
+跑通最小示例后，下面几点决定 Biome 能不能贴合你的工程约定：
 
-1. Biome 格式化的 Prettier 兼容率是多少？为什么不是 100%？
-2. `biome ci` 和 `biome check` 的差别在哪？为什么 CI 用前者？
-3. 从 Prettier + ESLint 迁过来，为什么建议先迁 Prettier 而不是 ESLint？
-4. 一个用 ESLint 自定义插件做业务规则校验的项目，能不能直接换 Biome？为什么？
-5. Biome 用 Rust 写，但 `npm install @biomejs/biome` 也能装上，这是怎么做到的？
-
-### 参考答案
-
-1. **97%**。剩下 3% 是 Prettier 历史设计里不合理的边角，Biome 团队选择不强行兼容，避免拖累维护节奏。
-2. `biome check` 跑格式化、Lint、import 排序，可以带 `--write` 自动修复；`biome ci` 是专为 CI 设计的入口，不带 `--write`，遇到问题直接非零退出。CI 用 `ci` 是因为它语义明确、退出码可控，不会因为自动修复而掩盖问题。
-3. Prettier 兼容率 97% + 官方迁移工具，风险最低；ESLint 规则集大、自定义多，迁移后误报需要逐条调，风险更高。
-4. 不建议直接换。Biome 的插件 API 还没完全等价 ESLint，业务自定义规则可能没有对应实现。建议先并行跑，确认 Biome 覆盖了所有业务规则后再切。
-5. `@biomejs/biome` 的 npm 包本身是 JS 包装层，真正的 Rust 二进制通过 `optionalDependencies` 按平台分发（如 `@biomejs/biome-darwin-arm64`、`@biomejs/biome-linux-x64-musl`）。`npm install` 时会根据当前 `os` / `cpu` 拉对应平台包。
-
-## 十一、进阶路径
-
-如果已经跑通最小示例，可以按下面顺序继续深入：
-
-1. **读 `biome.json` schema**：`https://biomejs.dev/reference/configuration/` 列出了所有字段。重点看 `assists`、`javascript.globals`、`overrides`，这三个决定了 Biome 能不能贴合你的工程约定。
-2. **跑一遍规则索引**：`https://biomejs.dev/linter/javascript/rules/` 把 500+ 规则按类别分了组。挑出和团队风格冲突的规则，在 `rules` 里关掉或调 `severity`。
-3. **接 monorepo**：Biome 原生支持 monorepo，根目录放一份 `biome.json`，子包可以 `extends`。配合 `files.include` 限定每个子包的检查范围。
+1. **读 `biome.json` schema**：`https://biomejs.dev/reference/configuration/` 列出了所有字段。重点看 `assists`、`javascript.globals`、`overrides`，这三个直接决定工程约定能不能贴合。
+2. **跑一遍规则索引**：`https://biomejs.dev/linter/javascript/rules/` 把 514 条规则按类别分了组。挑出和团队风格冲突的，在 `rules` 里关掉或调 `severity`。
+3. **接 monorepo**：Biome 原生支持，根目录放一份 `biome.json`，子包可以 `extends`，配合 `files.include` 限定每个子包的检查范围。
 4. **接 Git Hook**：用 `husky` + `lint-staged` 把 `biome check --write` 挂到 `pre-commit`，只检查暂存区文件，避免全量扫描。
-5. **看一次源码 issue**：`https://github.com/biomejs/biome/issues` 上有大量真实迁移问题。挑 `migrate` 标签看一遍，能提前避开大部分坑。
+5. **看一次源码 issue**：`https://github.com/biomejs/biome/issues` 上有大量真实迁移问题，挑 `migrate` 标签看一遍能提前避开大部分坑。
 
-## 十二、参考与延伸
+## 十一、参考与延伸
 
 - 仓库：`https://github.com/biomejs/biome`
 - 官网：`https://biomejs.dev`

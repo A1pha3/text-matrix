@@ -14,14 +14,14 @@ description: "TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预�
 
 # TimesFM：时序预测的预训练模型
 
-TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预训练了一个仅 2 亿参数的模型，实现跨领域的零样本时序预测。可以这样理解：TimesFM 把时序预测的接口从「每场景一个模型」切换到了「一个模型接不同数据，直接出预测」。
+TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预训练了一个仅 2 亿参数的模型，实现跨领域的零样本时序预测。它把时序预测的做法从「每个场景单独训一个模型」改成「一个模型接不同数据，直接出预测」。
 
 本文覆盖以下内容：
 
 - TimesFM 为什么用 decoder-only 而不是 encoder-decoder，以及 patching 要解决什么计算瓶颈
 - 如何跑通一个零样本预测，拿到结果
 - 如何判断一个具体业务场景适不适合直接用零样本预测、什么时候该微调
-- TimesFM v2.5 相比 v1 做了什么取舍，尤其是为什么砍掉了频率指示器
+- TimesFM v2.5 相比 v2.0 做了什么取舍，尤其是为什么砍掉了频率指示器
 
 ## 总览：TimesFM 的三条主线
 
@@ -31,7 +31,7 @@ TimesFM 内部有三条容易混淆的主线，先拆开再看细节：
 |------|--------|-----------|
 | **Patching（分块）** | 把连续时间点打包成固定长度的块（patch），作为 transformer 的输入 token | 不 patching 的话，序列太长 transformer 根本推不动；patching 让模型同时学到局部形状和长程趋势 |
 | **Decoder-only 因果推理** | 每个 patch token 只能看到它之前的 token，预测下一个 patch | 和 GPT 一样的自回归逻辑，天然适合"给历史推未来" |
-| **频率感知与归一化** | 输入时做 per-patch 归一化，v1 版本还注入频率标记（v2.5 移除） | 不同场景的量纲差异巨大（零售销量 vs 股价 vs 温度），不归一化模型会把量纲当信号 |
+| **频率感知与归一化** | 输入时做 per-patch 归一化，v2.0 还注入频率标记（v2.5 移除） | 不同场景的量纲差异巨大（零售销量 vs 股价 vs 温度），不归一化模型会把量纲当信号 |
 
 一句话总结：**TimesFM = 把时间序列切成块（patch）→ 扔进一个小型 GPT → 逐块预测未来**。
 
@@ -77,21 +77,23 @@ TimesFM 的架构选型到 2.5 版已经收敛得很明确：
 
 整个过程不需要任何模型训练——权重是 Google 预训练好的。这也就是"零样本预测"的含义：直接把数据喂进去，拿结果。
 
-## 版本变化：v1 → v2.5
+## 版本变化：v1.0 → v2.5
 
-TimesFM 经历了两次重大迭代：
+TimesFM 经历了三次迭代。参数量走过一条「先增后减」的曲线：v1.0 是 200M，v2.0 升到 500M，v2.5 又压回 200M，但上下文从 2,048 一路拉到 16,384。
 
-| 特性 | v1.0 / v2.0 | v2.5 |
-|------|------------|------|
-| 参数量 | 最高 500M | 200M |
+| 特性 | v2.0 | v2.5 |
+|------|------|------|
+| 参数量 | 500M | 200M |
 | 上下文长度 | 2,048 时间点 | 16,384 时间点 |
-| 频率指示器 | 有（注入频率标记） | 移除 |
-| 分位数预测 | 基础 | 连续分位数（最多 1,024 水平） |
-| 框架 | PAX/PyTorch | PyTorch + Flax/JAX 双后端 |
+| 频率指示器 | 有 | 移除 |
+| 分位数预测 | 有限 | 连续分位数头（约 30M 参数） |
+| 协变量输入 | 无 | XReg（2025-10 加入） |
+| 微调 | 无 | LoRA（2026-04 加入） |
+| 框架 | PyTorch | PyTorch + Flax/JAX 双后端 |
 
-v2.5 的有趣之处在于：参数更少了（500M → 200M），但上下文长了 8 倍，还加入了连续分位数预测。这说明 Google 在架构效率上做了不少文章——移除频率指示器是一个信号：per-patch 归一化 + 足够的训练数据本身就能隐式学到频率特征，不需要显式注入。
+参数减半、上下文翻 8 倍，靠的是注意力机制和分块表示本身的效率改进。移除频率指示器是一个信号：per-patch 归一化配合足够的训练数据，模型能自己学到频率特征，不再需要用户显式声明数据是日频、周频还是月频。
 
-分位数预测意味着 TimesFM 不只是给一个点预测，而是可以输出预测区间（比如"第 30 天销量有 90% 概率落在 80～120 之间"），这对库存和安全库存决策有直接价值。
+分位数预测让 TimesFM 不只给一个点预测，还能输出区间（比如"第 30 天销量有 90% 概率落在 80～120 之间"），对库存和安全库存决策有直接价值。2.5 还补上了两条工程能力：2025 年 10 月加入的 XReg 协变量输入，以及 2026 年 4 月加入的 LoRA 微调（走 HuggingFace PEFT）。
 
 ## 安装与快速验证
 
@@ -99,26 +101,33 @@ v2.5 的有趣之处在于：参数更少了（500M → 200M），但上下文�
 pip install timesfm
 ```
 
-零样本预测的最小可跑示例：
+零样本预测的最小可跑示例（直接加载 v2.5 的 PyTorch 权重）：
 
 ```python
-import timesfm as tfm
+import numpy as np
+import timesfm
 
-model = tfm.TimesFM()
-forecast = model.forecast(
-    input_ts=[1.0, 2.1, 3.2, 4.1, 5.0],
-    horizon=24
+model = timesfm.TimesFM_2p5_200M_torch.from_pretrained(
+    "google/timesfm-2.5-200m-pytorch"
 )
-print(forecast)
+model.compile(
+    timesfm.ForecastConfig(
+        normalize_inputs=True,
+        use_continuous_quantile_head=True,
+    )
+)
+point_forecast, quantile_forecast = model.forecast(
+    horizon=12,
+    inputs=[
+        np.linspace(0, 1, 100),          # 一条趋势序列
+        np.sin(np.linspace(0, 20, 67)),  # 一条周期序列
+    ],
+)
+# point_forecast.shape    → (2, 12)：两条序列、各 12 步点预测
+# quantile_forecast.shape → (2, 12, 10)：均值 + 10th~90th 分位数
 ```
 
-实际使用时建议直接用 HuggingFace 加载 v2.5 权重：
-
-```python
-import timesfm as tfm
-
-model = tfm.TimesFM.from_pretrained("google/timesfm-2.5-200m-pytorch")
-```
+`forecast()` 返回点预测和分位数两个结果。想要更长的历史或更远的预测，在 `ForecastConfig` 里调 `max_context` 和 `max_horizon`。
 
 ## 零样本预测的边界
 
@@ -146,7 +155,9 @@ TimesFM 论文和社区评测（GIFT-Eval）主要测试指标是 MAE（平均�
 1. **先上的团队**：有大量不同 SKU/传感器/指标的时序需要预测，但每个序列单独建模不现实。TimesFM 的零样本能力让你先拿到可用基线，再决定哪些序列值得微调。
 2. **可以试试的团队**：已经在用 Prophet 或统计方法做基线的团队。TimesFM 的 point forecast 和分位数区间可以作为第二意见，尤其是在 Prophet 对趋势转折点不敏感的场景。
 3. **不急着上的团队**：只在 1～2 条核心时序上做预测，且已有成熟专用模型。此时 TimesFM 的边际收益有限；但可以关注它的微调路线——在自己的数据上 fine-tune 后替换现有模型。
-4. **需要评估后再决定的团队**：预测严重依赖外部特征（促销、天气、新闻事件）。TimesFM 2.5 支持协变量但文档和生态尚不完善，建议先在代表性序列上跑零样本对比，看与现有带协变量模型的差距。
+4. **需要评估后再决定的团队**：预测严重依赖外部特征（促销、天气、新闻事件）。TimesFM 2.5 的 XReg 支持这类协变量，但要先跑零样本对比，看与现有带协变量模型的差距。
+
+如果不想自己部署模型，TimesFM 2.5 也原生集成在 BigQuery ML、Vertex AI 和 Google Sheets 里，可以直接用 SQL 或表格公式调用，适合已经在 Google Cloud 生态里的团队。
 
 ## 常见问题
 
@@ -172,7 +183,7 @@ Prophet 适合强季节性、需要可解释性的场景（比如"为什么这�
 
 **v2.5 的连续分位数预测怎么用？**
 
-调用 `model.forecast()` 时指定 `quantiles=True`，返回的不只是点预测，还有每个分位数的值。比如"第 30 天销量有 90% 概率落在 80～120 之间"——这对库存和安全库存决策有直接价值。
+在 `ForecastConfig` 里打开 `use_continuous_quantile_head=True`，`model.forecast()` 就会返回分位数结果。可以取任意分位水平，比如"第 30 天销量有 90% 概率落在 80～120 之间"——这对库存和安全库存决策有直接价值。
 
 **TimesFM 的预训练语料包含哪些领域？我的数据不在这些领域怎么办？**
 
@@ -189,4 +200,4 @@ CPU 推理可用但较慢，生产环境建议 GPU。v2.5 移除了频率指示�
 
 ---
 
-**相关工具：** [Telegraf](telegraf-agent-time-series-collection)
+**相关工具：** [Telegraf](telegraf-influxdb-time-series-agent-guide)

@@ -33,9 +33,9 @@ hiddenFromHomePage: true
 
 视频作者 Emergent Garden 在 8 段章节中把 fractalsearch 当成"RSI 在可重复工程上做到了什么"的样板间来展示——他没有动手 fork，没有亲手改 code，但他把这个实验配上"ASI / 智能爆炸 / 沙箱风险"的 RSI 主流议题一起讲。fractalsearch 源码是 Emergent Garden 的论据，不是他自己的产出。
 
-厘清之后，视频里每一段在说什么，就不再是"AI 多厉害"，而是"AI 借助一个 5 分钟训练 budget + 一个 33M 参数的小哈希网格，在一个受限视觉学习问题上能做到什么程度"。这才是更具体、也更值得工程师关心的视角。
+厘清之后，视频里每一段在说什么，就不再是"AI 多厉害"，而是"AI 借助一个 5 分钟训练 budget + 一个 33M 参数的小哈希网格，在一个受限视觉学习问题上能做到什么程度"。这个视角更具体，也更贴近工程师的日常。
 
-需要说明：视频作者 Emergent Garden 的个人背景不在本文覆盖范围内——fractalsearch 仓库的所有者是 `MaxRobinsonTheGreat`（README 和 git commit 明确），视频频道作者未在 BV1w8jL6dE1f 简介里点明是否同一人，本文不做推测。
+需要说明：视频作者 Emergent Garden 的个人背景不在本文覆盖范围内。fractalsearch 仓库的所有者是 `MaxRobinsonTheGreat`（README 和 git commit 明确），视频频道作者未在 BV1w8jL6dE1f 简介里点明是否同一人，本文不做推测。
 
 ### 一张系统地图：fractalsearch 的四个组件各管什么
 
@@ -108,13 +108,13 @@ B站 @黑纹白斑马 在 UP 主简介里给出的 8 段章节时间线是研究
 
 ### Karpathy autoresearch 是怎么被改造的？
 
-README.md 写："This project is directly adapted from Karpathy's autoresearch." 也就是说，"AI 自己跑实验"这件事 Karpathy 在 autoresearch 里已经搭好了，fractalsearch 是把它搬过来。这个换骨不换肉的迁移——"曼德博拟合"代替 autoresearch 原版的"NanoGPT speedrun"目标——恰好让 RSI 的可重复实验在视觉学习问题上被验证了一次。
+README.md 写："This project is directly adapted from Karpathy's autoresearch." "AI 自己跑实验"这件事，Karpathy 在 autoresearch 里已经搭好了，fractalsearch 是把它搬过来：把 autoresearch 原版的"NanoGPT speedrun"目标换成"曼德博拟合"，让 RSI 的可重复实验在一个视觉学习问题上多了一次验证。
 
 ## 二、起点：基准 `baseline_mlp.py` 和第一道墙
 
 `solutions/baseline_mlp.py` 是 53 行的平凡 MLP——两层 hidden 256 维，ReLU，Adam 1e-3，5 分钟 budget 跑完一次。`runs.jsonl` 起始 MSE 是 `0.00413`（run_id 0）和 `0.00554`（run_id 6）这种量级，**远不是我们以为的"MLP 练 5 分钟能学出来的水平"**。原因正是 `groundtruth.py` 的周期化目标——无限边界细节不可能让一个朴素 MLP 跑 5 分钟拟合到位。
 
-**第一道墙**是 escape-time + 周期变换下的"无穷频率"，多层感知机在 [0,1] 输入空间里根本无法解析这种细节。突破它需要一类函数逼近器：能把任意高频信号通过位置编码塞进去的——这就是 _fourier features_ / _positional encoding_ 的领域。`solutions/fourier_mlp.py`（80 行）就是把输入先升维到 Fourier basis 再喂 MLP。从 `runs.jsonl` 看，前期 Fourier 变体的 MSE 大约压到 `0.00049` 量级——比 baseline 好 10×，但还没到 1e-3 这种视觉质量。
+**第一道墙**是 escape-time + 周期变换下的"无穷频率"，多层感知机在 [0,1] 输入空间里根本解析不了这种细节。要突破它，得用一类能把任意高频信号通过位置编码塞进去的函数逼近器，也就是 _fourier features_ / _positional encoding_ 的领域。`solutions/fourier_mlp.py`（80 行）就是把输入先升维到 Fourier basis 再喂 MLP。从 `runs.jsonl` 看，前期 Fourier 变体的 MSE 大约压到 `0.00049` 量级——比 baseline 好 10×，但还没到 1e-3 这种视觉质量。
 
 **视频作者 Emergent Garden 在 24:50 提到"哈希网格大幅提升"，对应到仓库就是 `hashgrid_gtfree.py`（240 行）。** 全名 _Multi-resolution Hash Grid Encoding_——tiny-cuda-nn 的标准技巧在 PyTorch + Triton 下的复刻：把 2D 坐标 `(x, y)` 经过多分辨率哈希查找 + 4 角双线性插值，喂给浅层 MLP。每一级哈希表独立 grid size × feature dim，最终拼接。
 
@@ -169,13 +169,13 @@ TRITON FUSED 22.6/24.0ms = 2x
 
 forward 2×, backward 4×。bottleneck 从 launch overhead 翻入 DRAM 友好——HBM 带宽利用率终于跑满了。这一改**直接让 5 分钟 budget 里的 step 数从 ~600 涨到 ~1600**，5 分钟里能做的迭代次数翻近 3 倍。
 
-更关键的一个**意外副效应**：Triton kernel 全程 fp32 跑，而 champion 之前用 bf16 autocast。fp32 + 更多 step 数双 buff 把 MSE 从 `0.000335` 压到 `0.00032359`——单次改动 -3.4%。**一个常被忽视的事实**：所谓"irreducible floor"很多时候就是"前代框架没把硬件跑满"。当 framework 升级把步数提上去，"floor"往往自己跟着下降。
+这里还有一个连带收益：Triton kernel 全程 fp32 跑，而 champion 之前用 bf16 autocast。fp32 + 更多 step 数双 buff 把 MSE 从 `0.000335` 压到 `0.00032359`，单次改动 -3.4%。所谓"irreducible floor"，很多时候就是"前代框架没把硬件跑满"：当 framework 升级把步数提上去，"floor"往往自己跟着下降。
 
 ## 四、关键突破 2：GT-free Mining + 空间误差场——从 0.000323 到 0.000226
 
 一旦步数翻倍，MSE 下一步就被采样的"硬度信号"卡住。`AGENT.md` 明确说"解决方案自己决定采样策略：uniform / boundary-oversampled / adaptive / multi-resolution / curriculum"——AI 要在 `evaluate.py` 给定 5 分钟预算内自己决定采哪些点。
 
-**GT-free 突破**——
+**GT-free 突破**
 
 `notebook.md` 6-9 第二段："hashgrid_gtfree: 0.00029260 — NEW BEST (-9.6%), first sub-3e-4. Fresh coords each step, mining by finite-diff HF proxy |f(x+2e-4 d)-f(x)| on the model itself (no pool GT), GT only on the selected 768k batch."
 
@@ -188,7 +188,7 @@ forward 2×, backward 4×。bottleneck 从 launch overhead 翻入 DRAM 友好—
 
 效果：**1170 步**（vs pool-4 的 700 步），MSE `0.000293`，**-9.6%**。`boundary_mse` 和 `mse` 几乎相等——错误从"边界堆集"变成"空间扩散"，说明模型在每个位置都有"小难处"，不是在某片区域彻底翻车。
 
-**空间误差场（errfield）登场**——
+**空间误差场（errfield）登场**
 
 GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 ~110ms（220ms/step），又是 5 分钟 budget 的 36%。`notebook.md` 6-9 第三段给出的解法，把这一步的开销压到接近零：
 
@@ -217,7 +217,7 @@ GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 
 
 > 想过 n128l14（Nmax 131072, 14 levels）`mse=0.00022644`——跟 n64l13 在一个水平。结论：1600 step 时分辨率天花板就是 Nmax 65536；再有 step 才往上走。这是经验法则"hardware throughput 越高，architecture 选择空间越大"的一次工程级具体化。
 
-跑完这次后 champion.py 全文 251 行，跑得最久的就是 champion.py 本身——**历史最长的一个 solution 文件就是最终的胜出者**。这恰好点出 RSI 的核心：决定胜负的从来不是某个 solution 静态有多好，而是它能在持续研究循环里被推多远。champion.py 赢在它是被推到最远的那一个。
+跑完这次后 champion.py 全文 251 行，历史最长的 solution 文件就是最终的胜出者。这本身点出 RSI 的一个特征：决定胜负的关键不是某个 solution 静态上有多好，而是它能在持续研究循环里被推多远。champion.py 赢在它是被推到最远的那一个。
 
 ## 六、最终结果：104 次试错全景
 
@@ -250,7 +250,7 @@ champion entry 具体字段：
 - **104 条 runs × 300 秒 = ~8.67 小时** RTX 3090 Ti 单卡时间。
 - 这 8.67 小时跑的不是"调一次参跑通"，是 AI 改 100 个不同 solution 文件、每个跑 5 分钟。期间还掺着人工核对、commit logging、JSON 持久化——wall-clock 时间远不止 8.67 小时。
 
-但**拿到的是 0.0041 → 0.000226**，是 -94.5% 的 MSE 改善——单卡几百元成本，跑出这种量级的视觉拟合。这件事最该记住的成本特征是：试错的边际成本是常数（每次固定 5 分钟），不会随尝试次数膨胀。这是 AI 自主科研能跑起来的经济前提。
+但**拿到的是 0.0041 → 0.000226**，是 -94.5% 的 MSE 改善，单卡几百元成本，跑出这种量级的视觉拟合。成本结构上最值得注意的一点：试错的边际成本是常数（每次固定 5 分钟），不随尝试次数膨胀。这是 AI 自主科研能跑起来的经济前提。
 
 > 截至本文撰写时，仓库 `runs.jsonl` 截止 2026-06-09 15:15:12 session，后续未见新 commit 后的更好结果。0.000226 是目前已知的 fractalsearch 最佳记录。
 
@@ -262,7 +262,7 @@ champion entry 具体字段：
 
 2. **目标度量**：metric 是固定 MSE。AI 没有空间改 metric。如果可以改——比如把 boundary 内权重调到 0——分数会高 100× 但跟原意不符。`harness/evaluate.py` 把这一步 freeze，AI 只能"在规则内最大化"。
 
-3. **新架构自动降质**：champion.py 从 ML 角度写得密密麻麻（triton 调优 + EMA 状态 + 多分辨率哈希），可读性差。`notebook.md` 6-9 第三段也注明："自动优化生成的代码可读性差带来的额外安全隐患"。人不再看得懂，也不再能合理地从中间继续推——**这是一个正在生长的可读性危机**。
+3. **新架构自动降质**：champion.py 从 ML 角度写得密密麻麻（triton 调优 + EMA 状态 + 多分辨率哈希），可读性差。`notebook.md` 6-9 第三段也注明："自动优化生成的代码可读性差带来的额外安全隐患"。人不再看得懂，也不再能合理地从中间继续推，一个可读性危机正在生长。
 
 4. **任务空间封闭**：5 分钟预算 + 固定 metric + 不许改 harness——这个空间不大。每次"新思路"实操上是 new solution 文件 commit。当任务空间封闭时，AI 不会自己溢出，只会卡在 plateau 上。
 
@@ -328,7 +328,7 @@ fractalsearch 实验里 0.000226 是权威——因为它来自 `runs.jsonl` 第
 
 如果把 Anker / 姚顺雨 / 田渊栋 这些 RSI 相关的中文讨论并列起来看，**fractalsearch 是其中唯一一份完全开源、全部可复现、能让读者在自己 GPU 上重跑并验证结果的**——Karpathy autoresearch 框架的一个 PR，人类作者 MaxRobinsonTheGreat，AI 操作者（自己写自己 commits）。
 
-视频作者 Emergent Garden 把这个实验配着 RSI 的宏大议题讲给观众听——但实验的本质是 33M 参数、1600 steps 和 5 分钟 hard kill。这种"宏大叙事 × 工程现状"之间的落差，才是理解"AI 取代科研"这类标题时最该记住的：工程现实比新闻更具体，也更有限。
+视频作者 Emergent Garden 把这个实验配着 RSI 的宏大议题讲给观众听。实验本身是 33M 参数、1600 steps 和 5 分钟 hard kill。宏大叙事与工程现状之间的落差，才是读"AI 取代科研"这类标题时该留住的：工程现实比新闻更具体，也更有限。
 
 ---
 

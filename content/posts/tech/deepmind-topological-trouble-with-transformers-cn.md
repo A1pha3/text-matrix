@@ -10,7 +10,7 @@ tags: ["Transformer", "DeepMind"]
 
 让 Gemini 心里想一个 1 到 100 的数字。你猜 60，它说"更小"；猜 41，它说"更小"；猜 70，它说"更大"。三次回答自相矛盾。即便让它进入"思考"模式，它在思考阶段清清楚楚写下"我选定的数字是 42，60 比 42 大，所以应该说 lower"，等你真猜 42，它依然回答"lower"——刚刚的判断被自己忘得一干二净。
 
-这不是偶发幻觉。2026 年 4 月，Google DeepMind 的 Michael C. Mozer、Shoaib Ahmed Siddiqui、Rosanne Liu 在 arXiv 贴出论文《The Topological Trouble With Transformers》（arXiv:2604.17121v3），把这类失败归到一处：**Transformer 架构本身就不擅长追踪状态**，"思维链（CoT）"只是给结构性缺陷打的补丁。
+这不是偶发幻觉。2026 年 4 月，Google DeepMind 的 Michael C. Mozer、Shoaib Ahmed Siddiqui、Rosanne Liu 在 arXiv 贴出论文《The Topological Trouble With Transformers》（[arXiv:2604.17121](https://arxiv.org/abs/2604.17121)，同年 7 月已更新至 v4），把这类失败归到一处：**Transformer 架构本身就不擅长追踪状态**，"思维链（CoT）"只是给结构性缺陷打的补丁。
 
 第一作者 Michael C. Mozer 不是新人。1991 年他就提出了处理多尺度时序结构的循环网络模型，整个 1990 年代都在研究 RNN 的梯度消失问题——那些工作间接催生了 LSTM。三十年后，他调转方向，挑战的主对手换成了 Transformer。
 
@@ -26,7 +26,7 @@ tags: ["Transformer", "DeepMind"]
 
 但图书馆比喻隐藏着一个根本缺陷：图书馆员每次都"重新翻阅"，而不是"维护一份持续更新的笔记"。论文把这层缺陷命名为**状态追踪（State Tracking）**问题。
 
-状态追踪，是指在对话或推理过程中，模型需要维护一个不断更新的"内部状态"——对话进行到哪一步、当前场景里哪个人在哪里、一道逻辑题现在推理到哪个环节。人类思考时，这种追踪是自动完成的，几乎无成本。但对 Transformer 来说，每整合一条新信息，这个内部状态就被迫"搬到网络更深的层次"——而网络的深度是有限的，搬到底就搬不动了。
+状态追踪，是指在对话或推理过程中，模型需要维护一个不断更新的"内部状态"——对话进行到哪一步、当前场景里哪个人在哪里、一道逻辑题现在推理到哪个环节。论文把这种要对当前环境做紧凑、充分摘要的"内部状态"称作**信念状态（belief state）**。人类思考时，这种追踪是自动完成的，几乎无成本。但对 Transformer 来说，每整合一条新信息，这个内部状态就被迫"搬到网络更深的层次"——而网络的深度是有限的，搬到底就搬不动了。
 
 论文用了一个非常直观的图示来解释这一点：
 
@@ -110,7 +110,7 @@ Model: It is highly likely. Most banks, especially those
 
 关键观察是：**"bank" 的消歧结果被埋在第 6 层**——一个相对较深的位置。当后续 token（比如 "ATM"）从浅层开始重新被处理时，浅层"看不到"第 6 层已经做出的消歧决定，只能依赖粗糙的词频关联来反应。结果就是"上下文翻转"——前一轮选了河岸，后一轮又跳回银行。
 
-这不是偶发错误，是架构性缺陷的必然结果。论文总结了上游研究（McLeish、Lindsey 等 2025 年发表的多篇 Circuit Thread 工作），用一句话点破了本质：
+这个翻转不是偶发错误，而是消歧结果埋得过深，天然会被浅层的词频关联盖过。论文总结了上游研究（McLeish、Lindsey 等 2025 年发表的多篇 Circuit Thread 工作），用一句话点破了本质：
 
 > 状态确实被更新了，但更新的结果埋得太深，后续处理无法访问。
 
@@ -286,7 +286,7 @@ Borazjanizadeh & McClelland 2025 的《Sentence Gestalt》就是这种思路：�
 
 论文分类法最大的价值，不是给出"哪个架构最好"的答案，而是**给整个研究领域提供了一张共享的地图**。过去几年涌现的 Mamba、RWKV、DeltaNet、COCONUT 这些工作虽然名字不同、机制不同，但都落在 9 宫格中的某个格子里。把它们摆在一起看，研究者才能看清：哪些格子已经拥挤，哪些格子还是空白；哪些"新工作"其实是老格子的变体，哪些真正开辟了新维度。
 
-这篇论文最警醒的不是它给出了什么答案，而是它揭示了一个被忽视的事实——过去几年我们在"用 CoT 续命"的同时，把 Transformer 的"状态追踪缺陷"用工程手段遮住了。账单越涨越长，本质问题没人动。Mozer 在 1990 年代研究 RNN 的时候，没有赶上算力的时代；三十年后他回到同一个问题面前，算力终于追上了。这也许是一个隐喻：循环架构不是"历史的回潮"，而是"被推迟的必然"。
+这篇论文最警醒的地方，是它翻出了一个被忽视的事实：过去几年我们在"用 CoT 续命"的同时，一直用工程手段遮住 Transformer 的状态追踪缺陷。账单越涨越长，本质问题没人动。Mozer 在 1990 年代研究 RNN 时没有赶上算力的时代，三十年后他回到同一个问题面前，算力终于追上。循环架构或许不是历史的回潮，而是被推迟的必然。
 
 ## 附录：关键术语对照
 
@@ -309,7 +309,7 @@ Borazjanizadeh & McClelland 2025 的《Sentence Gestalt》就是这种思路：�
 
 ## 参考资源
 
-- **论文原文**：[arXiv:2604.17121v3](https://arxiv.org/abs/2604.17121) — The Topological Trouble With Transformers, Mozer, Siddiqui, Liu (Google DeepMind, 2026)
+- **论文原文**：[arXiv:2604.17121](https://arxiv.org/abs/2604.17121) — The Topological Trouble With Transformers, Mozer, Siddiqui, Liu (Google DeepMind, 2026，最新 v4)
 - **关键引文 1**：Lepori et al. 2025, [Racing thoughts: Explaining contextualization errors in large language models](https://aclanthology.org/), NAACL 2025
 - **关键引文 2**：Ghandeharioun et al. 2024, [Patchscopes: a unifying framework for inspecting hidden representations of language models](https://arxiv.org/abs/2401.06102), ICML 2024
 - **关键引文 3**：Merrill & Sabharwal 2025, [A little depth goes a long way: The expressive power of log-depth transformers](https://arxiv.org/abs/2503.03961)
