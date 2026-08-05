@@ -3,7 +3,7 @@ title: "DeepSeek-V3 的工程取舍：671B 参数的算力账本"
 date: "2026-04-27T20:00:00+08:00"
 slug: deepseek-v3-technical-analysis
 github_repo: "deepseek-ai/DeepSeek-V3"
-description: "671B 参数只激活 37B——MoE 压参数、MLA 压缓存、无辅助损失路由去掉调参负担，三项设计叠加让 557.6 万美元训出接近 GPT-4o 的模型。"
+description: "671B 参数只激活 37B——MoE 压激活参数、MLA 压 KV 缓存、无辅助损失路由省掉调参，三项设计叠加让预训练只花 2.788M H800 GPU 小时、约 557.6 万美元。"
 draft: false
 categories: ["tech"]
 tags: ["LLM", "MoE", "DeepSeek", "开源模型"]
@@ -13,7 +13,7 @@ tags: ["LLM", "MoE", "DeepSeek", "开源模型"]
 
 DeepSeek-V3 671B 参数，每次前向只激活 37B。Llama 3.1 405B 算满 405B，它只算 37B，差了 11 倍。
 
-这个差距来自 MoE。但 MoE 只是起点——真正的工程在于 MLA 如何让 128K 上下文不撑爆显存，以及无辅助损失路由如何让训练不偏离主目标。
+这个差距来自 MoE。但 MoE 只是起点，剩下两处成本同样要压：MLA 让 128K 上下文不撑爆显存，无辅助损失路由让训练少一个要调的权重。三项设计各管一段，叠加起来才把预训练压到 2.788M H800 GPU 小时。
 
 | 指标 | 数值 |
 |------|------|
@@ -23,6 +23,26 @@ DeepSeek-V3 671B 参数，每次前向只激活 37B。Llama 3.1 405B 算满 405B
 | 预训练语料 | 14.8T tokens |
 | 训练成本 | 2.788M H800 GPU 小时（约 $5.576M） |
 | 代码许可 | MIT License |
+
+这张图把三处成本瓶颈和对应的设计对起来，后面逐个展开：
+
+```mermaid
+flowchart LR
+    subgraph 成本[671B 模型的三处成本瓶颈]
+        A1[激活参数高<br/>每个 Token 全量计算]
+        B1[KV 缓存大<br/>128K 上下文压爆显存]
+        C1[负载不均衡<br/>训练要调辅助损失权重]
+    end
+    subgraph 设计[三项设计]
+        A2[DeepSeekMoE<br/>只激活 9 个专家]
+        B2[MLA<br/>低秩压缩 K/V]
+        C2[无辅助损失路由<br/>可学习偏置项]
+    end
+    A1 --> A2
+    B1 --> B2
+    C1 --> C2
+    A2 & B2 & C2 --> D[预训练 2.788M H800 小时<br/>约 557.6 万美元]
+```
 
 ---
 
@@ -86,7 +106,7 @@ DeepSeek-V3 采用 Pre-Norm + 残差连接的 Transformer 堆叠，共 61 层，
 5. **残差与归一化**：聚合结果加上残差，进入下一层
 6. **重复 2-5**：经过 61 层后，最后一层输出经过 LM Head 得到下一个 Token 的概率分布
 
-关键点：每层只有 9 个专家计算，但 257 个专家的参数都要驻留在显存里。这就是 671B 总参数、37B 激活参数的来源——模型容量大，单次计算量小。
+每层只有 9 个专家在算，但 257 个专家的参数都得驻留在显存里。671B 总参数、37B 激活参数就是这个来源：模型容量大，单次计算量小。
 
 ### 2.3 Multi-Head Latent Attention（MLA）
 
@@ -105,7 +125,7 @@ MLA 的做法是对 K/V 做低秩压缩：
 # k, v = kv_proj(latent_kv) 恢复到 [batch, seq, heads, head_dim]
 ```
 
-MLA 相比 MQA/GQA 的优势在于保留了多头注意力的表达能力，压缩发生在低秩空间而非共享头。DeepSeek 在技术报告中给出了 MLA 与 MHA/MQA/GQA 的 KV Cache 对比数据，MLA 在注意力质量接近 MHA 的前提下大幅压缩了缓存体积。具体压缩比取决于模型配置，建议参考技术报告 Table 1。
+MLA 相比 MQA/GQA 的优势在于保留多头注意力的表达能力，压缩发生在低秩空间而非靠共享头。按技术报告，V3 的 KV 缓存能压到约 GQA 的 1/3，注意力质量仍接近 MHA——这是 128K 上下文能塞进显存的关键。
 
 ### 2.4 辅助损失-free 负载均衡
 
@@ -128,7 +148,9 @@ DeepSeekMoE 还采用细粒度专家分割：把每个专家拆成更小的子�
 
 **FP8 混合精度**：大部分计算用 FP8（8 位浮点）进行，关键梯度用 BF16 存储。FP8 的动态范围比 BF16 小，需要在框架层面做细致的数值稳定性处理，包括缩放因子调整和溢出检测。DeepSeek 在技术报告中给出了 FP8 训练的稳定性验证数据。
 
-**通信-计算重叠**：MoE 的路由机制引入跨节点通信（专家分布在不同 GPU 上）。DeepSeek 实现了计算与通信的流水重叠，在前一批专家计算时并行传输下一批所需数据，减少等待时间。这对 MoE 训练的扩展性至关重要——如果通信不能被计算掩盖，跨节点训练的效率会随节点数下降。
+**通信-计算重叠**：MoE 的路由机制引入跨节点通信（专家分布在不同 GPU 上）。DeepSeek 用自研的 DualPipe 算法把前一批的计算和下一批的传输重叠起来，配合自定义的 all-to-all 通信，让通信基本被计算掩盖。这对 MoE 训练的扩展性至关重要——如果通信不能被掩盖，跨节点训练的效率会随节点数下降。
+
+**成本口径**：2.788M 小时不是单一数字。按技术报告拆开：预训练阶段 2.05M 小时（其中 4K 上下文 0.32M、128K 上下文 1.73M），后训练阶段 0.74M 小时。预训练是主体，后训练（SFT、RL 等）占了剩下的四分之一。这套数字只覆盖 DeepSeek-V3 自己的路线，不含数据清洗和多次实验的全部开销，也不能直接外推到其他模型架构。
 
 ---
 
@@ -164,7 +186,7 @@ outputs = llm.generate(["MoE 架构的核心思想是什么？"], params)
 print(outputs[0].outputs[0].text)
 ```
 
-**使用 transformers 加载**（显存 ≥ 80GB 可用）：
+**使用 transformers 加载**（需多卡分片，单卡显存装不下完整权重）：
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -174,7 +196,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     torch_dtype="bfloat16",
-    device_map="auto",
+    device_map="auto",   # 在多卡上按剩余显存自动分片
 )
 
 messages = [{"role": "user", "content": "解释一下 MoE 架构的核心思想"}]
