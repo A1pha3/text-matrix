@@ -6,7 +6,7 @@ summary: "Stanford 2026 秋季新开 CS329A「Self-Improving AI Agents」,Part 1
 tags: ["Stanford", "CS329A", "Self-Improving AI Agents", "Test-Time Compute", "Constitutional AI", "o1", "DeepSeek R1", "课程反写"]
 categories: ["技术文章"]
 authors: ["钳岳"]
-github_repo: "Stanford-CS329A"
+github_repo: "stanford-cs329a/self-improving-ai-agents"
 description: "Stanford 2026 秋季新开 CS329A 自改进 AI Agent Part 1 拆解:Test-Time Compute Scaling + Robust Verification 双主线,从 CoT→Reflexion→Constitutional AI→o1/R1→Self-Play 5 年技术线"
 ---
 
