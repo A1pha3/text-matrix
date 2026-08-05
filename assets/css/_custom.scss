@@ -540,12 +540,11 @@
   }
 
   .topic-hero {
-    grid-template-columns: minmax(0, 1.5fr) minmax(18rem, .9fr);
-    align-items: stretch;
+    /* 单列：右侧 2 个装饰 mini-card 已删除，正文前置信息收敛到 hero-copy 内 */
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .topic-hero-copy,
-  .topic-mini-card,
   .topic-switcher-link,
   .topic-content-shell {
     border: 1px solid rgba(28, 25, 23, .08);
@@ -555,14 +554,13 @@
   }
 
   .topic-hero-copy,
-  .topic-mini-card,
   .topic-content-shell {
     padding: 1.45rem 1.5rem;
   }
 
   .topic-kicker,
-  .topic-mini-label,
-  .topic-switcher-label {
+  .topic-switcher-label,
+  .topic-starter-label {
     margin: 0 0 .45rem;
     color: #0f766e;
     font-size: .74rem;
@@ -570,8 +568,8 @@
     letter-spacing: .05em;
   }
 
-  .topic-intro,
-  .topic-mini-card p {
+  .topic-intro {
+    margin-top: .85rem;
     color: #57534e;
     line-height: 1.78;
   }
@@ -602,16 +600,42 @@
     color: #0f766e;
   }
 
-  .topic-hero-side {
-    display: grid;
-    gap: 1rem;
+  /* starter pack：作为 hero 内的主 CTA（替代原 briefing 三卡 + 右侧 mini-card） */
+  .topic-starter {
+    margin-top: 1.4rem;
+    padding-top: 1.2rem;
+    border-top: 1px dashed rgba(28, 25, 23, .12);
+
+    [theme=dark] & {
+      border-top-color: rgba(94, 234, 212, .16);
+    }
   }
 
-  .topic-mini-card strong {
-    display: block;
+  .topic-starter-list {
+    margin: 0;
+    padding-left: 1.15rem;
+    color: #57534e;
+  }
+
+  .topic-starter-list li {
+    margin-bottom: .5rem;
+    line-height: 1.72;
+  }
+
+  .topic-starter-list a {
     color: #1c1917;
-    font-size: 1rem;
-    line-height: 1.45;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .topic-starter-list a:hover {
+    color: #0f766e;
+  }
+
+  .topic-starter-list span {
+    display: block;
+    color: #78716c;
+    font-size: .94rem;
   }
 
   .topic-switcher {
@@ -637,65 +661,6 @@
     margin-bottom: 1rem;
   }
 
-  .topic-briefing {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.4rem;
-  }
-
-  .topic-brief-card {
-    padding: 1.2rem 1.2rem 1.1rem;
-    border: 1px solid rgba(28, 25, 23, .08);
-    border-radius: .75rem;
-    background: #ffffff;
-    box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
-  }
-
-  .topic-brief-label {
-    margin: 0 0 .45rem;
-    color: #0f766e;
-    font-size: .74rem;
-    font-weight: 700;
-    letter-spacing: .05em;
-  }
-
-  .topic-brief-card h2 {
-    margin: 0 0 .8rem;
-    color: #1c1917;
-    font-size: 1.05rem;
-    line-height: 1.45;
-  }
-
-  .topic-brief-card ul,
-  .topic-starter-list {
-    margin: 0;
-    padding-left: 1.15rem;
-    color: #57534e;
-  }
-
-  .topic-brief-card li,
-  .topic-starter-list li {
-    margin-bottom: .62rem;
-    line-height: 1.72;
-  }
-
-  .topic-starter-list a {
-    color: #1c1917;
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .topic-starter-list a:hover {
-    color: #0f766e;
-  }
-
-  .topic-starter-list span {
-    display: block;
-    color: #78716c;
-    font-size: .94rem;
-  }
-
   .topic-content table {
     display: block;
     width: 100%;
@@ -704,28 +669,22 @@
 
   [theme=dark] & {
     .topic-hero-copy,
-    .topic-mini-card,
     .topic-switcher-link,
-    .topic-content-shell,
-    .topic-brief-card {
+    .topic-content-shell {
       border-color: rgba(255, 255, 255, .06);
       background: rgba(28, 25, 23, .85);
       box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
     }
 
     .topic-intro,
-    .topic-mini-card p,
     .topic-actions a,
     .topic-switcher-link,
-    .topic-brief-card ul,
     .topic-starter-list,
     .topic-starter-list span {
       color: #a8a29e;
     }
 
-    .topic-mini-card strong,
     .topic-switcher-link strong,
-    .topic-brief-card h2,
     .topic-starter-list a {
       color: #f5f5f4;
     }
@@ -755,8 +714,7 @@
 
   .topic-page {
     .topic-hero,
-    .topic-switcher,
-    .topic-briefing {
+    .topic-switcher {
       grid-template-columns: 1fr;
     }
   }

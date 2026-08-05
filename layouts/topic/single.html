@@ -3,8 +3,6 @@
 {{- define "content" -}}
     {{- $params := .Scratch.Get "params" -}}
     {{- $current := .RelPermalink -}}
-    {{- $audience := .Params.audience -}}
-    {{- $outcomes := .Params.outcomes -}}
     {{- $starterPack := .Params.starterPack -}}
     {{- $topicLinks := slice
         (dict "title" "AI Agent 学习路径" "url" "/ai-agent/" "label" "学习路径")
@@ -30,79 +28,33 @@
                 {{- with .Description -}}
                     <p class="topic-intro">{{ . }}</p>
                 {{- end -}}
-                <div class="topic-actions">
-                    <a href="/search/?q={{ .Title | urlquery }}">搜索这个主题</a>
-                    <a href="/categories/技术笔记/">浏览技术笔记</a>
-                    <a href="/contact/">反馈选题 / 合作</a>
+
+                {{- with $starterPack -}}
+                <div class="topic-starter">
+                    <span class="topic-starter-label">如果时间有限，从这里开始</span>
+                    <ol class="topic-starter-list">
+                        {{- range . -}}
+                            <li>
+                                <a href="{{ .url }}">{{ .title }}</a>
+                                {{- with .note -}}<span>{{ . }}</span>{{- end -}}
+                            </li>
+                        {{- end -}}
+                    </ol>
                 </div>
-            </div>
-            <div class="topic-hero-side">
-                <div class="topic-mini-card">
-                    <span class="topic-mini-label">适合阅读方式</span>
-                    <strong>按目标而不是按时间阅读</strong>
-                    <p>这些专题页更适合做路径导航、选型判断和阶段切换，而不是只看最新一篇。</p>
-                </div>
-                <div class="topic-mini-card">
-                    <span class="topic-mini-label">推荐搭配</span>
-                    <strong>专题页 + 搜索 + 标签页</strong>
-                    <p>先用专题建立框架，再通过搜索和标签横向扩展，会比单篇跳转更高效。</p>
-                </div>
+                {{- end -}}
             </div>
         </section>
 
-        <section class="topic-switcher" data-pagefind-ignore="all">
+        <nav class="topic-switcher" data-pagefind-ignore="all" aria-label="专题切换">
             {{- range $topicLinks -}}
                 <a class="topic-switcher-link{{ if eq .url $current }} active{{ end }}" href="{{ .url }}">
                     <span class="topic-switcher-label">{{ .label }}</span>
                     <strong>{{ .title }}</strong>
                 </a>
             {{- end -}}
-        </section>
+        </nav>
 
         <div class="pagefind-document topic-content-shell" data-pagefind-body>
-            {{- if or $audience $outcomes $starterPack -}}
-                <section class="topic-briefing" data-pagefind-ignore="all">
-                    {{- with $audience -}}
-                        <article class="topic-brief-card">
-                            <p class="topic-brief-label">适合谁看</p>
-                            <h2>这页最适合这些读者</h2>
-                            <ul>
-                                {{- range . -}}
-                                    <li>{{ . }}</li>
-                                {{- end -}}
-                            </ul>
-                        </article>
-                    {{- end -}}
-                    {{- with $starterPack -}}
-                        <article class="topic-brief-card">
-                            <p class="topic-brief-label">先看这几篇</p>
-                            <h2>如果时间有限，从这里开始</h2>
-                            <ol class="topic-starter-list">
-                                {{- range . -}}
-                                    <li>
-                                        <a href="{{ .url }}">{{ .title }}</a>
-                                        {{- with .note -}}
-                                            <span>{{ . }}</span>
-                                        {{- end -}}
-                                    </li>
-                                {{- end -}}
-                            </ol>
-                        </article>
-                    {{- end -}}
-                    {{- with $outcomes -}}
-                        <article class="topic-brief-card">
-                            <p class="topic-brief-label">读完你会得到</p>
-                            <h2>这页想帮你建立的判断</h2>
-                            <ul>
-                                {{- range . -}}
-                                    <li>{{ . }}</li>
-                                {{- end -}}
-                            </ul>
-                        </article>
-                    {{- end -}}
-                </section>
-            {{- end -}}
-
             {{- with $params.subtitle -}}
                 <h2 class="single-subtitle">{{ . }}</h2>
             {{- end -}}
