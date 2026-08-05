@@ -5,6 +5,7 @@ categories: ["视频精读"]
 tags: ["月之暗面", "美团龙珠", "Kimi K3", "AI 投资"]
 draft: false
 slug : index
+description: "叶奇意的中国 AI 十年人才图谱:月之暗面 A 轮投资亲历,美团龙珠视角下的两代 AI 迁徙与 AGI 信仰。"
 
 ---
 
