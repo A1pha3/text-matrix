@@ -3,7 +3,7 @@ title: "Hermes Agent 深度解析：从「用完即忘」到「越用越强」�
 date: "2026-06-04T15:00:00+08:00"
 slug: hermes-agent-nousresearch-self-improving-agent-guide
 github_repo: "NousResearch/hermes-agent"
-description: "Hermes Agent 不是又一个终端 Copilot。它的真正差异在于把「任务执行→经验沉淀→技能复用→跨会话召回」串成了一条自治循环，配合 FTS5 全文检索、Honcho 辩证式用户建模和 20+ 平台消息网关，是当前开源 Agent 里最接近「会成长的 AI 同事」形态的项目。"
+description: "Hermes Agent 不是又一个终端 Copilot。它的差异在于把「任务执行→经验沉淀→技能复用→跨会话召回」串成一条自治循环，配合 FTS5 会话检索、Honcho 辩证式用户建模，以及覆盖 Telegram、Discord、Slack、WhatsApp、Signal 等多个平台的消息网关。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Terminal", "Nous Research", "OpenClaw", "Skills", "MCP"]
@@ -15,7 +15,7 @@ tags: ["AI Agent", "Terminal", "Nous Research", "OpenClaw", "Skills", "MCP"]
 
 市面上自称「AI Agent」的项目很多，但绝大多数在同一个问题上翻了车：**跨会话之后，Agent 什么都不记得。** 你花了 20 分钟教它你的项目结构、偏好、踩过的坑，下次打开新对话，一切归零。这不是 Agent 的错——它本来就没有记忆系统。
 
-[Hermes Agent](https://github.com/NousResearch/hermes-agent)（仓库 `NousResearch/hermes-agent`，MIT 许可证，GitHub 150k+ Stars）是 Nous Research 对这个问题的回答。它做了一件别家没拼齐的事：把「任务执行 → 经验沉淀 → 技能复用 → 跨会话召回」串成了一条自治循环。你不用手动维护记忆库，也不用写 `AGENTS.md` 教它——Agent 自己从已完成的任务里提取经验，写成可复用的 skill，下次遇到同类任务直接调用。
+[Hermes Agent](https://github.com/NousResearch/hermes-agent)（仓库 `NousResearch/hermes-agent`，MIT 许可证，GitHub 224k+ Stars，2026-08 经 GitHub API 验证）是 Nous Research 对这个问题的回答。它做了一件别家没拼齐的事：把「任务执行 → 经验沉淀 → 技能复用 → 跨会话召回」串成了一条自治循环。你不用手动维护记忆库，也不用写 `AGENTS.md` 教它——Agent 自己从已完成的任务里提取经验，写成可复用的 skill，下次遇到同类任务直接调用。
 
 下面拆开这个循环的每一层：怎么工作、怎么落地、什么时候不该用。
 
@@ -27,7 +27,7 @@ tags: ["AI Agent", "Terminal", "Nous Research", "OpenClaw", "Skills", "MCP"]
 graph TB
     subgraph 入口层["入口层"]
         CLI["CLI / TUI<br/>终端交互"]
-        GW["Gateway 进程<br/>Telegram / Discord / Slack<br/>WhatsApp / Signal / 飞书 / 钉钉<br/>20+ 平台"]
+        GW["Gateway 进程<br/>Telegram / Discord / Slack<br/>WhatsApp / Signal / Email<br/>Home Assistant"]
     end
 
     subgraph 学习循环["学习循环"]
@@ -44,14 +44,14 @@ graph TB
 
     subgraph 记忆层["记忆层"]
         MEM["Agent-curated Memory<br/>Agent 自行筛选值得记的内容"]
-        FTS5["FTS5 全文检索<br/>SQLite 会话历史 + LLM 摘要"]
-        HONCHO["Honcho 辩证式用户建模<br/>多轮对话推导用户偏好"]
+        FTS5["FTS5 全文检索<br/>SQLite 会话历史全文索引"]
+        HONCHO["Honcho 辩证式用户建模<br/>外部记忆提供方插件"]
         SKILLS["Skills 程序性记忆<br/>agentskills.io 开放标准"]
     end
 
     subgraph 执行层["执行层"]
-        BACKEND["6 种终端后端<br/>local / Docker / SSH<br/>Singularity / Modal / Daytona"]
-        TOOLS["60+ 内置工具<br/>Web 搜索 / 文件操作 / 终端命令<br/>代码执行 / 图像生成 / TTS"]
+        BACKEND["7 种终端后端<br/>local / Docker / SSH / Singularity<br/>Modal / Daytona / Vercel Sandbox"]
+        TOOLS["40+ 内置工具<br/>Web 搜索 / 文件操作 / 终端命令<br/>代码执行 / 图像生成 / TTS"]
         SUB["并行子代理<br/>isolated subagents"]
         MCP["MCP 集成<br/>任意 MCP Server 扩展"]
     end
@@ -70,10 +70,10 @@ graph TB
 
 三层职责的边界：
 
-- **入口层**只管「消息怎么进来」。CLI 和 20+ IM 平台通过同一个 Gateway 进程接入，对话上下文跨平台共享。
+- **入口层**只管「消息怎么进来」。CLI 和 Telegram、Discord、Slack、WhatsApp、Signal、Email、Home Assistant 等消息平台通过同一个 Gateway 进程接入，对话上下文跨平台共享。
 - **学习循环**是 Hermes 区别于其他 Agent 的地方。它嵌在 `AIAgent.run_conversation()` 主循环里，是固定流程，不是附属功能。
 - **记忆层**提供四条互相独立的存储和召回路径，每条路径管一类信息。后面会详细拆开。
-- **执行层**负责「Agent 实际在哪干活、用什么工具」。六种后端让 Agent 可以选择在本地、VPS、容器、HPC 集群或 serverless 环境里执行命令。
+- **执行层**负责「Agent 实际在哪干活、用什么工具」。七种后端让 Agent 可以选择在本地、VPS、容器、HPC 集群或 serverless 环境里执行命令。
 
 ## 一条任务怎么流过整个系统
 
@@ -97,7 +97,7 @@ Agent 在开始推理之前，先做三件事：
 
 ### 第 3 步：工具执行循环
 
-Agent 进入 `run_conversation()` 的主循环（默认最多 90 轮迭代）。它可能：
+Agent 进入 `run_conversation()` 的主循环，反复调用工具、观察输出，直到任务完成或用户中止。它可能：
 
 - 调用 `execute_command` 在 SSH backend 上检查 PostgreSQL 是否可达
 - 调用 `write_file` 创建 Python 脚本
@@ -159,13 +159,13 @@ Skill 不是「生成后就固定」的静态文件。每次 Agent 调用某个 
 
 ### 阶段 4：Periodic Nudge + FTS5 跨会话搜索
 
-前三个阶段都发生在「有任务」的时候。但 Agent 也有「空闲时间」——Hermes 用 cron 调度器周期性地触发 nudge，让 Agent 在没有任务的时候主动整理知识：
+前三个阶段都发生在「有任务」的时候。但 Agent 也有「空闲时间」——Hermes 会周期性地触发 nudge，让 Agent 在没有任务的时候主动整理知识：
 
 - 合并碎片化的 memory 条目
 - 发现多个 skill 之间的重叠，合并或拆分
 - 把短期记忆里「反复出现但还没写成 skill」的模式提升为 skill
 
-FTS5（SQLite 全文搜索引擎）是跨会话搜索的底层。每条会话结束后，Agent 用 LLM 对会话做摘要，摘要文本和元数据一起写入 FTS5 索引。下次新任务开始时，Agent 用任务描述做全文检索，拉出相关历史。检索靠的是摘要文本对原始对话语义的覆盖，而非关键词精确匹配。
+FTS5（SQLite 全文搜索引擎）是跨会话搜索的底层。所有 CLI 和消息平台的会话都以原始消息形式存进 `~/.hermes/state.db`，用 FTS5 建全文索引。下次新任务开始时，Agent 用任务描述做全文检索，命中的会返回实际消息原文，而不是摘要。检索的语义覆盖来自 SQLite 的 FTS5 匹配，而非关键词之外的处理。
 
 ## 记忆层：四条独立路径
 
@@ -175,15 +175,15 @@ FTS5（SQLite 全文搜索引擎）是跨会话搜索的底层。每条会话结
 
 - 存储内容：用户偏好、项目配置、关键决策、踩过的坑
 - 写入方式：Agent 自主判断，非全量
-- 存储位置：`~/.hermes/memory/`
+- 存储位置：`~/.hermes/memories/`
 - 召回方式：每次新对话开始时自动注入 system prompt
 - 典型例子："你习惯用 structlog 而不是 logging"、"这个项目的数据库端口是 5433 不是 5432"
 
 ### 路径 2：FTS5 会话索引（情景记忆）
 
-- 存储内容：每轮对话的 LLM 摘要 + 元数据
-- 写入方式：会话结束后自动触发
-- 存储位置：SQLite 数据库（`~/.hermes/sessions.db`）
+- 存储内容：所有过去会话的原始消息
+- 写入方式：会话进行时自动落盘
+- 存储位置：SQLite 数据库（`~/.hermes/state.db`）
 - 召回方式：任务开始时用任务描述做全文检索
 - 典型例子：搜到「三周前你让我修过一个类似的 PostgreSQL 连接超时 bug」
 
@@ -199,13 +199,13 @@ FTS5（SQLite 全文搜索引擎）是跨会话搜索的底层。每条会话结
 
 - 存储内容：用户偏好的深层原因（"为什么喜欢 X 而不是 Y"）
 - 写入方式：基于多轮对话的辩证分析
-- 存储位置：Honcho 云端（可选，可关闭）
+- 存储位置：外部记忆提供方插件（Honcho 等 8 个之一，可选启用）
 - 召回方式：每次对话持续更新用户画像
 - 典型例子："你偏好异步处理不是因为性能，而是因为你在意可中断性"
 
 Honcho 的辩证式建模和普通「用户画像」的区别：普通画像回答「用户喜欢什么」，Honcho 回答「用户为什么喜欢这个」。后者在 Agent 需要做「没有明确指令的决策」时（比如选哪个库、用哪种错误处理策略）更有用。
 
-但代价也明确：Honcho 需要足够多的对话数据才能构建有意义的画像，而且默认是云端集成——如果数据合规要求零数据出本地，需要关掉它。
+但代价也明确：它是外部记忆提供方插件，默认会把对话交给对应的第三方服务。如果数据合规要求零数据出本地，就不要启用它，继续用本地的 MEMORY.md 和 USER.md 就够了。
 
 ### 记忆系统的内部实现
 
@@ -220,7 +220,7 @@ Agent 的持久记忆只有两个文件，存在 `~/.hermes/memories/` 下：
 | `MEMORY.md` | Agent 自己的笔记——环境事实、项目约定、学到的东西 | 2,200 字符（约 800 tokens） |
 | `USER.md` | 用户画像——偏好、沟通风格、技能水平 | 1,375 字符（约 500 tokens） |
 
-容量上限是硬约束。当 memory 超过 80% 时，Agent 必须先合并或删除旧条目，才能写入新内容。Agent 用 `memory` 工具的三个操作来管理：`add`（新增）、`replace`（用子串匹配替换，不需要完整原文）、`remove`（同样子串匹配删除）。
+容量上限是硬约束：写入会超限时，`memory` 工具直接返回错误，Agent 在同一轮里先合并或删除旧条目，再重试写入。超过 80% 容量时提前合并，是官方建议的做法。Agent 用 `memory` 工具的 `add`（新增）、`replace`（用子串匹配替换，不需要完整原文）、`remove`（同样子串匹配删除）三个操作来管理。
 
 #### 冻结快照模式
 
@@ -306,7 +306,7 @@ hermes bundles create backend-dev \
 
 之后 `/backend-dev refactor the auth middleware` 一条命令同时加载三个 skill。Bundle 的 YAML 文件存在 `~/.hermes/skill-bundles/` 下，可以额外附带 `instruction` 字段写「这几个 skill 一起用时默认遵循的约定」。
 
-## 跨平台网关：一个进程，20+ 平台
+## 跨平台网关：一个进程，多个平台
 
 Hermes 的消息网关不是「每个平台写一个 adapter」的传统方案。它跑在**一个 gateway 进程**里，所有平台共享同一个会话上下文。
 
@@ -326,7 +326,7 @@ hermes gateway start     # 起一个进程，同时暴露所有配置的平台
 
 社区方案 [AaronWong1999/hermesclaw](https://github.com/AaronWong1999/hermesclaw) 实现了微信桥接，能让 Hermes Agent 和 OpenClaw 跑在同一个微信号上。对于国内用户来说，这是缩小「Agent 可及性」和「日常通信工具」之间距离的关键一步。
 
-## 终端后端：6 种执行环境，不只是本地
+## 终端后端：7 种执行环境，不只是本地
 
 | Backend | 适用场景 | 闲时成本 |
 |---------|----------|----------|
@@ -336,15 +336,11 @@ hermes gateway start     # 起一个进程，同时暴露所有配置的平台
 | `Singularity` | HPC 集群，学术计算 | 集群成本 |
 | `Modal` | serverless GPU/CPU，低频任务 | 近乎 0 |
 | `Daytona` | serverless 开发环境，按需唤醒 | 近乎 0 |
+| `Vercel Sandbox` | serverless 沙箱，按需唤醒 | 近乎 0 |
 
-Modal 和 Daytona 的「环境冬眠 + 按需唤醒」模型适合低频使用场景。Agent 的环境在空闲时冻住，你发消息时才唤醒——按秒计费，不是按月。对于「每天只用几次」的个人用户，这种模式比养一台 24 小时开机的 VPS 便宜得多。
+Modal、Daytona 和 Vercel Sandbox 的「环境休眠 + 按需唤醒」模型适合低频使用场景。Agent 的环境在空闲时冻住，你发消息时才唤醒——闲置时几乎不花钱，不是按月养一台常驻实例。对于「每天只用几次」的个人用户，这种模式比养一台 24 小时开机的 VPS 便宜得多。
 
-切换后端不需要改 Agent 的任何配置，只需要在启动时指定：
-
-```bash
-hermes --backend modal
-hermes --backend ssh --host my-vps.example.com
-```
+切换后端不需要改 Agent 的任何配置，只需在启动或配置里指定要用的后端——本地跑、SSH 连 VPS、或交给 serverless 都在同一套 Agent 状态下切换。
 
 ## 安全模型：默认安全，不是事后加锁
 
@@ -395,7 +391,7 @@ Agent 通过 SSH backend 在 VPS 上跑命令、收集输出、把结果发回 T
 ### 场景 B：每天早上 9 点自动跑日报
 
 ```bash
-hermes cron add "0 9 * * *" "拉过去 24h 的关键指标，整理成日报，发到 Slack #ops"
+hermes cron create "0 9 * * *" "拉过去 24h 的关键指标，整理成日报，发到 Slack #ops"
 ```
 
 到点自动执行，Agent 用 Web 搜索 + 终端命令收集数据，生成日报，通过 Gateway 投递到 Slack。
@@ -418,8 +414,8 @@ Agent 的处理流程：
 | 维度 | Hermes Agent | Claude Code | Aider | Open Interpreter | Codex CLI |
 |------|-------------|-------------|-------|-----------------|-----------|
 | 学习循环 | 四阶段自治 | 记忆但无 skill 自创 | 无 | 无 | 仅 recall |
-| IM 网关 | 20+ 平台单进程 | 无 | 无 | 无 | 无 |
-| 终端后端 | 6 种（含 serverless） | 本地 | 本地 | 本地 | 本地 |
+| IM 网关 | 多平台单进程 | 无 | 无 | 无 | 无 |
+| 终端后端 | 7 种（含 serverless） | 本地 | 本地 | 本地 | 本地 |
 | 跨平台 | 是 | 否 | 否 | 部分 | 否 |
 | OpenClaw 迁移 | 一等公民 | 无 | 无 | 无 | 无 |
 | 用户建模 | Honcho 辩证式 | 无 | 无 | 无 | 无 |
@@ -435,13 +431,13 @@ Hermes 的差异化来自「学习-记忆-网关-后端」四者拼在一起之�
 Linux / macOS / WSL2 / Termux：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 ```
 
 Windows 原生（PowerShell，不需要 WSL）：
 
 ```powershell
-iex (irm https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.ps1)
+iex (irm https://hermes-agent.nousresearch.com/install.ps1)
 ```
 
 安装器自动处理：`uv`（Python 包管理）、Python 3.11、Node.js、`ripgrep`、`ffmpeg`，以及便携 Git Bash（MinGit，约 45MB，解压到 `%LOCALAPPDATA%\hermes\git`，不污染系统 Git）。
@@ -468,10 +464,9 @@ Nous Portal 是一条捷径：一个 OAuth 登录覆盖模型访问（300+ 模�
 ## 边界与盲点
 
 - **首次安装依赖较大**：`uv`、Python 3.11、Node、ripgrep、ffmpeg、MinGit 一把装完，国内网络可能不友好，建议提前配好镜像源
-- **FTS5 搜索是 SQLite 引擎**：跨设备同步没有内置方案，需要自己写同步层（比如把 `sessions.db` 放进 syncthing 目录）
-- **Honcho 用户建模是 Optional 且云端集成**：默认开启会采集较多对话数据，如果数据合规要求零数据出本地，必须手动关闭
+- **FTS5 搜索是 SQLite 引擎**：跨设备同步没有内置方案，需要自己写同步层（比如把 `state.db` 放进 syncthing 目录）
+- **Honcho 用户建模是外部插件**：默认不开启，启用后会把对话交给第三方服务；数据合规要求零数据出本地时别启用它
 - **Serverless backend（Modal/Daytona）需要额外账户**：跑通不难，但迁移成本取决于你的具体场景
-- **Voice 端到端在 Windows 上受限制**：浏览器聊天面板需要 WSL2（因为用了 POSIX PTY），CLI 和 gateway 原生 OK
 - **学习曲线比「一键 chat」工具陡**：上手要读一遍 docs，但功能覆盖面也大——它不是只做一件事的工具
 
 ## 采用建议

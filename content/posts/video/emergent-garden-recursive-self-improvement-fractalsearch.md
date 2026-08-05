@@ -10,7 +10,7 @@ tags: ["RecursiveSelfImprovement", "RSI", "Karpathy", "AutoResearch", "AI安全"
 hiddenFromHomePage: false
 ---
 
-2026 年 6 月，技术频道 Emergent Garden 做了一件少见的事：他真跑了一个实验，验证 AI 递归自我改进（Recursive Self-Improvement, RSI）的可能性。三个模型（Claude Opus、GPT-5.5 Codex、Claude Fable）在递归循环里优化一个拟合曼德博集的神经网络，前后烧了约 10 小时、约 300 美元。
+2026 年 6 月，技术频道 Emergent Garden 做了一件少见的事：他真跑了一个实验，验证 AI 递归自我改进（Recursive Self-Improvement, RSI）的可能性。三个模型（Claude 4.8 Opus、GPT-5.5 Codex、Claude Fable）在递归循环里优化一个拟合曼德博集的神经网络，前后烧了约 10 小时、约 300 美元。
 
 结论可以缩成三句话：**RSI 可能、但难、且危险。** 弱 RSI 已经发生，强 RSI 的"智能爆炸"更像渐近线，而非指数。
 
@@ -56,7 +56,7 @@ RSI 也是这个道理。它**已经在发生**：
 - 一切靠智能体"自觉"：它负责提交改动、记录输出、遵守规则。**没有硬性限制**——它可能忘了设超时、忘了 commit，甚至可以在基准上作弊，或者干脆把整个仓库删了。
 - 作者用了 Claude Code / Codex 新出的 **goal** 功能：给一个自然语言目标，让它自己一直干到"觉得达成"为止。目标就是"一直跑到我喊停"。
 
-**实际喂了三个模型**，前后约 10 小时。作者图省事直接开了"unsafe 模式"、跑在自己的个人电脑上——他自己都说这挺蠢。先是 **Claude 4.8 Opus**，约 7 小时后它"放弃了、坚称没什么可改的"（其实不是）；换成 **Codex（GPT-5.5）**跑了约 1 小时；收尾时 Anthropic 正好放出 **Claude Fable**，于是又切过去跑了约 1.5 小时。
+**实际喂了三个模型**，前后约 10 小时。作者图省事直接开了"unsafe 模式"、跑在自己的个人电脑上——他自己都说这挺蠢。先是 **Claude 4.8 Opus**，约 7 小时后它"放弃了、坚称没什么可改的"（其实不是）；换成 **Codex（GPT-5.5）**跑了约 1.5 小时；收尾时 Anthropic 正好放出 **Claude Fable**，于是又切过去跑了约 1.5 小时。
 
 效果最好的优化是一个叫**哈希网格（hash grid）**的结构——作者说，它基于一篇人写的论文，AI 并非从头发明的。早期靠的是他之前的最优解傅里叶网络，后来智能体把绝大部分时间花在打磨哈希网格上——用他的话讲，这是"在优化一个优化器，一个元优化算法"。
 
@@ -172,6 +172,6 @@ Anthropic 限制 Fable 的，是**它帮别人做 AI 研究的能力**，动机�
 
 ---
 
-**信息来源**：本文基于 Emergent Garden 频道 2026-06-13 发布的视频《Recursive Self-Improvement》的英文自动字幕逐句核对写成（约 360 句）。所有引号内的话均为字幕的综合转译。视频链接：[YouTube](https://www.youtube.com/watch?v=t7_ZXgfJVG8) | [B站转载](https://www.bilibili.com/video/BV1w8jL6dE1f/)
+**信息来源**：本文基于 Emergent Garden 频道 2026-06-13 发布的视频《Recursive Self-Improvement》的英文自动字幕逐句核对写成（约 360 句）。所有引号内的话均为字幕的综合转译。视频链接：[YouTube](https://www.youtube.com/watch?v=t7_ZXgfJVG8) | [B 站转载](https://www.bilibili.com/video/BV1w8jL6dE1f/)
 
 — 钳岳星君 2026-08-02

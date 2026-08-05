@@ -4,20 +4,55 @@ date = '2026-05-28T16:18:30+08:00'
 draft = false
 title = 'AIRI：自托管 AI 数字伴侣'
 slug = 'airi-self-hosted-grok-companion-guide'
-description = 'AIRI 是受 Neuro-sama 启发的开源项目，通过 Live2D/VRM 技术将 AI 虚拟角色带到桌面，支持 ChatGPT、Claude 等多款大模型，本地部署，数据完全自持。'
+description = 'AIRI 是 moeru-ai 复现 Neuro-sama 的开源项目：把 Live2D/VRM 虚拟角色带到桌面，能实时语音对话、接入 20+ 大模型提供商，还能进 Minecraft、Factorio 玩游戏，数据自持。'
 categories = ['技术笔记']
 tags = ['开源', 'Live2D', '自托管']
 +++
 
 # AIRI：自托管 AI 数字伴侣
 
-AIRI 是目前开源生态中对 Neuro-sama 复现最完整的项目（截至 2026 年 5 月，依据项目 README 与 moeru-ai 组织公开仓库）。它通过 Live2D/VRM 技术把 AI 虚拟角色带到桌面，支持 ChatGPT、Claude 等多款大模型，本地部署，数据完全自持。AIRI 的工程价值在于把渲染、AI、游戏三条链路收敛到同一调度框架，从而具备普通 AI 陪伴产品缺失的"实时感知 + 外部执行"能力。
+AIRI 是 moeru-ai 组织为了复现 Neuro-sama 做出来的开源项目：把 AI 虚拟角色装进 Live2D/VRM 的身体，能实时语音对话，也能进 Minecraft、Factorio 玩游戏。官方在 GitHub 上把它描述成「you-owned Grok Companion」「数字灵魂容器」，目标是把 Neuro-sama 这类能聊天又能玩游戏的 AI vtuber，做成普通人能自己部署、数据自持的版本。
+
+它跟普通 AI 陪伴产品的分界在架构上：渲染、AI、游戏三条链路收进同一个调度框架，由 Core 统一协调。聊天、看屏幕、玩游戏这三件事不是各拉一套流程，而是共用同一套状态机。这是它区别于「只换皮肤的角色壳子」的地方。
+
+---
+
+## 核心数据
+
+以下数据来自 GitHub API 与仓库 README，观测时间 2026-08-05：
+
+| 项 | 值 |
+|------|------|
+| Stars / Forks | 43,860 / 4,384 |
+| 主要语言 | TypeScript |
+| 开源协议 | MIT |
+| 默认分支 / 最近推送 | main / 2026-07-27 |
+| 最新 release | v0.10.2 |
+| 官方文档 | airi.moeru.ai/docs/ |
+
+下载入口覆盖 Windows（winget / Scoop）、macOS（Homebrew Cask）、Linux，以及浏览器与移动端（PWA）。
 
 ---
 
 ## 系统总览
 
-AIRI 的核心是三条并行链路在同一个调度框架内汇合：
+AIRI 的核心是三条并行链路在同一个 Core 调度层里汇合：
+
+```mermaid
+flowchart LR
+  VAD[VAD 检测 + STT] --> CORE[Core 调度层]
+  VIS[屏幕视觉输入] --> CORE
+  GAME[游戏服务器] --> CORE
+  CORE --> XSAI[xsAI 模型接入层] --> LLM[ChatGPT / Claude / Ollama 等]
+  LLM -->|结构化决策| CORE
+  CORE --> RENDER[Stage UI · Live2D / VRM]
+  CORE --> TTS[TTS 语音输出]
+  CORE --> MC[Minecraft · Mineflayer]
+  CORE --> FAC[Factorio · RCON / autorio]
+  CORE <--> MEM[记忆系统 · RAG · DuckDB / pglite]
+```
+
+三条链路各自的职责：
 
 | 链路 | 入口 | 关键依赖 | 出口 |
 |------|------|----------|------|
@@ -25,49 +60,7 @@ AIRI 的核心是三条并行链路在同一个调度框架内汇合：
 | AI 链路 | LLM API | xsAI、Core | STT 输入、TTS 输出 |
 | 游戏链路 | Minecraft / Factorio 服务器 | Mineflayer、RCON、`autorio` | agent 执行动作 |
 
-三条链路通过 Core 调度层耦合：渲染链路决定角色如何被看见，AI 链路决定角色如何思考与说话，游戏链路决定角色如何对外部世界产生作用。AIRI 与普通"AI 角色壳子"的差异即在此——后者通常只覆盖前两条链路。
-
-[AIRI](https://github.com/moeru-ai/airi) 出生于 moeru-ai 组织，定位是"数字灵魂容器"，目标是把 Neuro-sama 这类 AI vtuber 的交互体验带到普通用户手里。支持平台覆盖 Windows/macOS/Linux，底层依赖 Live2D 和 VRM 两种虚拟角色格式，后端有配套的 `@proj-airi` 组织提供 RAG（检索增强生成）、记忆系统、嵌入式数据库等模块。
-
-Neuro-sama 是目前最知名的游戏+聊天双能力 AI vtuber，但属于商业闭源项目。AIRI 通过逆向其交互逻辑，在开源生态里给出了完整度较高的复现方案，具体体现在四个方面：多模态感知（能读取屏幕内容、分析用户当前操作，对话上下文不局限于文字输入）、多模型灵活切换（默认支持 ChatGPT/Claude，也可接入其他兼容 API 的模型）、完整角色生态（`@proj-airi` 组织持续输出 Live2D 工具、RAG 模块、记忆系统等周边组件）、完全自托管（数据留在本地，不经过任何第三方服务器）。
-
----
-
-## 学习目标
-
-通过本文，你会了解：
-
-1. AIRI 的三条并行链路（渲染、AI、游戏）如何协同工作
-2. xsAI 模型接入层的抽象设计
-3. 游戏代理能力的技术实现
-4. 语音和本地数据层如何支撑"陪伴感"
-5. 如何安装和快速开始使用 AIRI
-
----
-
-## 目录
-
-- [系统总览](#系统总览)
-- [学习目标](#学习目标)
-- [技术骨架](#技术骨架)
-  - [多端部署的三个 Stage](#多端部署的三个-stage)
-  - [xsAI：模型接入层的抽象](#xsai模型接入层的抽象)
-  - [游戏代理能力](#游戏代理能力)
-  - [语音和本地数据层](#语音和本地数据层)
-- [任务流案例：一句"陪我玩 Minecraft"如何流过系统](#任务流案例一句陪我玩-minecraft如何流过系统)
-- [安装与快速开始](#安装与快速开始)
-  - [Windows 用户（推荐 Scoop）](#windows-用户推荐-scoop)
-  - [macOS / Linux](#macos--linux)
-  - [安装前提](#安装前提)
-  - [角色配置](#角色配置)
-- [核心模块与周边生态](#核心模块与周边生态)
-- [适用边界](#适用边界)
-- [采用建议](#采用建议)
-- [常见问题](#常见问题)
-- [故障排查](#故障排查)
-- [练习](#练习)
-- [自测题](#自测题)
-- [进阶路径](#进阶路径)
+渲染链路决定角色如何被看见，AI 链路决定角色如何思考与说话，游戏链路决定角色如何对外部世界产生作用。普通「AI 角色壳子」通常只覆盖前两条，AIRI 把第三条也拉进来了。
 
 ---
 
@@ -75,268 +68,143 @@ Neuro-sama 是目前最知名的游戏+聊天双能力 AI vtuber，但属于商�
 
 ### 多端部署的三个 Stage
 
-AIRI 的多端策略明确分成三个 stage，避免把同一套页面硬塞进不同壳子导致体验割裂：
+AIRI 把同一套逻辑拆成三个 stage，避免把同一种界面硬塞进不同壳子导致体验割裂：
 
-- **Stage Web**：直接在浏览器里运行，承担"零安装体验"的入口角色，重点依赖 WebGPU、WebAssembly、WebAudio 和 WebSocket。选择 Web 技术栈是为了让用户首次接触时无需安装即可试用。
-- **Stage Tamagotchi**：基于 Electron，推理层通过 HuggingFace Candle 走本地 CUDA / Metal 加速桌面端的实时交互。桌面端需要本地 GPU 算力支撑低延迟推理，Candle 在这里的角色是把 PyTorch 生态的模型权重直接搬到 Rust 运行时。
-- **Stage Pocket**：通过 Capacitor 和 PWA 把 Web 代码封装到移动端，覆盖陪伴场景下更自然的入口。复用 Web 代码是为了避免维护两套 UI。
+- **Stage Web**：直接在浏览器里跑，承担零安装体验的入口，重点依赖 WebGPU、WebAssembly、WebAudio 和 WebSocket。官方在 airi.moeru.ai 提供在线试玩。
+- **Stage Tamagotchi**：桌面版，推理层通过 HuggingFace Candle 走本地 CUDA / Metal 加速。Candle 的作用是把 PyTorch 生态的模型权重直接搬到 Rust 运行时，桌面端据此获得低延迟的本地推理。
+- **Stage Pocket**：通过 Capacitor 和 PWA 把 Web 代码封装到移动端，覆盖陪伴场景的随身入口，复用 Web 代码避免维护两套 UI。
 
-三个 stage 的分工对应不同的部署场景：浏览器端负责首次体验，桌面端负责持续运行时的低延迟推理，移动端负责陪伴场景的随身入口。
+三个 stage 的分工对应不同场景：浏览器负责首次体验，桌面端负责持续运行时的低延迟推理，移动端负责随身陪伴。
 
 ### xsAI：模型接入层的抽象
 
-AIRI 的关键基础设施之一是 `xsAI`。它负责把 OpenAI、Claude、Gemini、Grok、Ollama、vLLM 等 20+ 模型提供商（依据项目 README 模型提供商列表）抽象成统一接口。
+模型接入层是一个独立的 `xsAI` 模块（`moeru-ai/xsai`），负责把 OpenAI、Claude、Gemini、Ollama、vLLM、SGLang、DeepSeek、Qwen、xAI、Groq、Mistral 等约 28 个提供商抽象成统一接口。
 
-AIRI 本身不绑定某一个模型品牌。对使用者来说，换模型提供商不需要改核心代码；对开发者来说，这相当于一个面向虚拟角色场景的模型编排层。这种抽象之所以必要，是因为虚拟角色场景对延迟、流式输出、函数调用、多模态输入的要求与普通聊天 API 不完全一致，xsAI 在统一接口之上补齐了这些差异。
+AIRI 本身不绑定某个模型品牌。换提供商不需要改核心代码；对开发者来说，这更像一个面向虚拟角色场景的模型编排层。虚拟角色对延迟、流式输出、函数调用、多模态输入的要求和普通聊天 API 不完全一致，xsAI 在统一接口之上补齐这些差异。
 
 ### 游戏代理能力
 
-AIRI 把 AI 角色接进了真实的游戏运行时：
+AI 角色被接进了真实的游戏运行时：
 
-- **Minecraft**：通过 Mineflayer 把 LLM 生成的决策翻译成移动、攻击、放置方块等操作。Mineflayer 提供了 Node.js 端的 Minecraft bot 协议实现，AIRI 在其之上加了一层"高层目标 → 动作序列"的翻译层。
-- **Factorio**：通过 RCON API 和 `autorio` 把高层目标拆成流水线执行步骤。RCON 是游戏服务器远程控制协议，`autorio` 负责把"建造一条铁板生产线"这类自然语言目标拆解为可执行的指令序列。
+- **Minecraft**：通过 Mineflayer 把 LLM 生成的决策翻译成移动、攻击、放置方块等操作。Mineflayer 提供 Node.js 端的 Minecraft bot 协议实现，AIRI 之上再加一层「高层目标 → 动作序列」的翻译。
+- **Factorio**：通过 RCON 和 `autorio` 把高层目标拆成流水线执行步骤。这一步仍是 WIP，官方仓库 `moeru-ai/airi-factorio` 提供了 PoC 和 demo。
 
-Neuro-sama 风格体验之所以难复现，难点即在于此——LLM 生成文本容易，把文本决策可靠地映射到游戏世界状态难。AIRI 的游戏链路正是针对这层映射做的工程化封装。
+Neuro-sama 风格体验难复现的难点正在于此：LLM 生成文本容易，把文本决策可靠地映射到游戏世界状态很难。AIRI 的游戏链路是针对这层映射做的工程化封装。
 
-### 语音和本地数据层
+### 语音与本地数据层
 
-AIRI 的语音链路和本地数据层是一起设计的，"陪伴感"能持续依赖于此：
+语音链路和本地数据层是一起设计的：
 
-- 语音输入侧有本地 VAD / STT，减少无效上传和延迟。VAD（Voice Activity Detection）先判断是否在说话，再决定是否触发 STT，避免一直上传静音片段。
-- 语音输出侧可以把 LLM 回复回推到浏览器或 Discord 语音频道。
-- 数据侧通过 DuckDB WASM、记忆系统和 RAG 模块，把长期上下文沉淀下来。DuckDB WASM 让浏览器端也能跑嵌入式 SQL，记忆系统负责跨会话的对话摘要与检索，RAG 模块负责外部知识注入。
+- **输入**：客户端侧 VAD（Voice Activity Detection）先判断是否在说话，再触发客户端侧 STT，避免一直上传静音片段。音频输入支持浏览器和 Discord。
+- **输出**：多提供商 TTS，包括 ElevenLabs、Microsoft/Azure Speech、OpenAI-compatible TTS、阿里云 Model Studio，以及本地的 Kokoro TTS。
+- **数据**：DuckDB WASM 或 `pglite` 提供纯浏览器端嵌入式数据库，配合记忆系统与 RAG 模块沉淀跨会话上下文。
 
-语音链路负责实时交互，数据层负责跨会话记忆——两者结合让 AIRI 具备持续积累上下文的能力，而不仅仅是一次性对话演示。
+语音链路负责实时交互，数据层负责跨会话记忆——两者结合，让 AIRI 具备持续积累上下文的能力，而不是一次性对话演示。
 
 ---
 
-## 任务流案例：一句"陪我玩 Minecraft"如何流过系统
+## 任务流案例：一句「陪我玩 Minecraft」如何流过系统
 
-假设用户对角色说"陪我玩 Minecraft"，系统的处理流程大致如下：
+假设用户对角色说「陪我玩 Minecraft」，大致流程如下：
 
-1. **AI 链路入口**：本地 VAD 检测到语音活动，STT 把"陪我玩 Minecraft"转成文本，送入 Core
-2. **Core 调度**：Core 把文本连同当前屏幕状态、游戏服务器连接状态一起打包，通过 xsAI 调用配置好的 LLM。这里 Core 会附带系统提示词，告知 LLM 当前可调用的工具（连接服务器、移动、攻击、说话等）。
-3. **LLM 决策**：LLM 返回结构化决策，例如"连接到 Minecraft 服务器 → 走向玩家 → 说'我来了'"。决策以函数调用格式返回，便于 Core 解析路由。
-4. **游戏链路执行**：Core 把决策路由到 Minecraft agent，Mineflayer 把"走向玩家"翻译成 bot 的 pathfinding 调用。bot 的坐标变化会实时回写到 Core 的状态机。
-5. **渲染链路同步**：角色在 Stage UI 中播放对应的 Live2D/VRM 动作，TTS 把"我来了"合成语音输出。动作触发与语音合成是异步的，避免互相阻塞。
-6. **数据层沉淀**：这次交互被记忆系统记录摘要，下次进入游戏时角色能回忆起"上次和玩家一起玩过"。摘要写入 DuckDB WASM，RAG 模块在下次对话时检索相关片段注入上下文。
+1. **AI 链路入口**：本地 VAD 检测到语音活动，STT 把「陪我玩 Minecraft」转成文本，送入 Core。
+2. **Core 调度**：Core 把文本连同当前屏幕状态、游戏服务器连接状态打包，通过 xsAI 调用配置好的 LLM，并附带系统提示词，告知当前可调用的工具（连接服务器、移动、攻击、说话等）。
+3. **LLM 决策**：LLM 返回结构化决策，例如「连接到 Minecraft 服务器 → 走向玩家 → 说『我来了』」。决策以函数调用格式返回，便于 Core 解析路由。
+4. **游戏链路执行**：Core 把决策路由到 Minecraft agent，Mineflayer 把「走向玩家」翻译成 bot 的寻路调用，bot 的坐标变化实时回写到 Core 的状态机。
+5. **渲染链路同步**：角色在 Stage UI 中播放对应的 Live2D/VRM 动作，TTS 把「我来了」合成为语音输出。动作触发与语音合成是异步的，避免互相阻塞。
+6. **数据层沉淀**：这次交互被记忆系统记录摘要，下次进入游戏时角色能回忆起「上次和玩家一起玩过」。摘要写入 DuckDB WASM，RAG 模块在下次对话时检索相关片段注入上下文。
 
-三条链路是并行触发的——LLM 在生成决策时，渲染层已经在准备动作动画，数据层在异步写入记忆。Core 的职责是协调这些并行任务的时序，避免 LLM 还没返回就触发动作执行，也避免动作执行完才合成语音导致画面与声音不同步。
+三条链路是并行触发的——LLM 在生成决策时，渲染层已经在准备动作动画，数据层在异步写入记忆。Core 的职责是协调这些并行任务的时序，避免 LLM 还没返回就触发动作、动作执行完才合成语音导致画面与声音不同步。
+
+---
+
+## 能力现状与边界
+
+README 的 roadmap 把能力分成四块，大多数已经打勾：
+
+| 模块 | 状态 |
+|------|------|
+| Brain（大脑） | 已能玩 Minecraft；Factorio 为 WIP（有 PoC）；Kerbal Space Program 已宣布 TBD；Helldivers 2 WIP |
+| Brain（通信） | 可接入 Telegram、Discord 聊天 |
+| Memory | DuckDB WASM / pglite 已支持；Memory Alaya 与纯浏览器端（WebGPU）本地推理为 WIP |
+| Ears（听觉） | 浏览器与 Discord 音频输入、客户端侧语音识别与说话检测均完成 |
+| Mouth（发声） | 多提供商 TTS 完成，含本地 Kokoro |
+| Body（身体） | VRM 与 Live2D 支持、动画、自动眨眼、自动注视、待机眼动均完成 |
+
+注意两点：Factorio 和 Helldivers 2 仍是实验状态，游戏集成可能随版本更新变化；Memory Alaya 还没落地，当前跨会话记忆依赖摘要 + 检索，不是完整上下文保留。
 
 ---
 
 ## 安装与快速开始
 
-### Windows 用户（推荐 Scoop）
+不需要从源码编译，有现成的安装入口：
 
-```bash
+- **Windows**：`winget install MoeruAI.AIRI`，或用 Scoop：
+
+```powershell
 scoop bucket add airi https://github.com/moeru-ai/airi
 scoop install airi/airi
 ```
 
-### macOS / Linux
+- **macOS**：`brew install --cask airi`
+- **Linux**：GitHub Releases 提供 Linux 安装包，开发环境也可用 Nix 运行 `nix run github:moeru-ai/airi`
+- **浏览器**：直接访问 airi.moeru.ai 在线试玩，无需安装
 
-项目 README 提供了 Docker 部署路径，适合有 Docker 环境的用户快速上手。
-
-### 安装前提
-
-- Node.js 18+（部分功能依赖）
-- Live2D Cubism SDK（如果要用 Live2D 模型）
-- VRM 模型文件（角色外观）
-
-### 角色配置
-
-项目支持两种主流虚拟角色格式：
-
-| 格式 | 说明 |
-|------|------|
-| Live2D（.moc3/.model3.json） | 2D 纸片人路线，社区资源丰富 |
-| VRM（.vrm） | 3D 模型路线，兼容 VRChat 等平台 |
-
----
-
-## 核心模块与周边生态
-
-AIRI 背后有一个专门的 `@proj-airi` 组织在维护子项目：
-
-| 模块 | 用途 |
-|------|------|
-| RAG 模块 | 让 AI 能基于文档/知识库作答 |
-| 记忆系统 | 持久化对话记忆，角色能记住之前聊过的事 |
-| 嵌入式数据库 | 本地数据存储，不依赖云端 |
-| Live2D 工具 | 角色动画相关工具链 |
-| 图标库 | 角色 UI 相关的图标资源 |
-
-模块化拆分让 AIRI 本身保持入口框架的角色，具体能力由周边模块组合而来。如果只需要其中某几个能力，可以单独引入对应模块。
-
----
-
-## 适用边界
-
-**适合：**
-- 有一定技术背景，想本地部署 AI 虚拟角色的用户
-- 想要类似 Neuro-sama 体验但不希望依赖官方服务的用户
-- 对 Live2D/VRM 虚拟角色有一定了解，愿意自己配置模型的开发者
-
-**不适合：**
-- 完全没有技术背景、想要开箱即用的普通用户（安装步骤有一定门槛）
-- 想用现成 3D 角色的用户（模型需要自己准备或购买）
-- 期待功能与 Neuro-sama 完全一致的用户（开源复现与原版有差距）
-
----
-
-## 采用建议
-
-按以下顺序评估是否采用 AIRI：
-
-1. **先验证模型接入**：本地跑 Stage Web，配置一个已有 API Key 的 LLM，确认 xsAI 抽象层在你的模型提供商上工作正常
-2. **再验证角色渲染**：准备一个 Live2D 或 VRM 模型，确认 Stage UI 能正确加载并播放动作
-3. **最后验证游戏链路**：如果你关心 agent 能力，单独跑 Minecraft 集成，观察 Mineflayer 的动作执行稳定性
-4. **生产部署前**：评估记忆系统和 RAG 模块的存储占用，DuckDB WASM 在浏览器端的内存消耗需要单独压测
-
-如果前三步有任何一步卡住，建议先暂停——AIRI 的价值在于三条链路协同，单链路跑通不等于整体可用。
-
-想深入理解架构的读者，建议按以下顺序阅读源码：先看项目 README 了解整体架构，再进入 `@proj-airi` 组织页面了解周边模块能力，最后优先阅读 `xsAI`、游戏代理和语音链路几个子项目的实现。
+角色配置需要两类文件：Live2D（`.moc3` / `.model3.json`，2D 纸片人路线，社区资源丰富）或 VRM（`.vrm`，3D 路线，兼容 VRChat 等平台）。项目本身不提供模型文件，需要自己准备或购买。
 
 ---
 
 ## 常见问题
 
 **Q: AIRI 能替代 Neuro-sama 吗？**
-A: 不能完全替代。Neuro-sama 是商业闭源项目，有持续的直播互动和社区运营；AIRI 是开源复现方案，功能和体验上有差距，但优势是完全自托管、数据本地化。
+A: 不能。Neuro-sama 是商业闭源项目，有持续的直播互动和社区运营；AIRI 是开源复现方案，功能与体验上有差距，优势是完全自托管、数据本地化。
 
 **Q: 需要什么硬件配置？**
-A: 桌面端需要支持 CUDA 或 Metal 的 GPU 用于本地推理；纯 Web 端不需要 GPU，但推理延迟会较高。建议至少 8GB 显存用于本地模型推理。
-
-**Q: Live2D 和 VRM 模型从哪里获取？**
-A: 社区有一些免费模型资源，也可以自己用 Live2D Cubism 或 Blender 制作。AIRI 项目本身不提供模型文件。
+A: 桌面端做本地推理需要支持 CUDA 或 Metal 的 GPU，显存需求随模型大小、序列长度和并发数变化，社区经验认为 8GB 以上更稳妥；纯浏览器端不需要 GPU，但推理延迟会更高。
 
 **Q: 能接入商业大模型吗？**
-A: 可以。xsAI 支持 20+ 模型提供商，包括 OpenAI、Claude、Gemini、Grok 等。需要自己配置对应的 API Key。
+A: 可以。xsAI 支持约 28 个提供商，包括 OpenAI、Claude、Gemini、Ollama、vLLM 等，需要自己配置对应的 API Key。
 
 **Q: 游戏代理能力稳定吗？**
 A: 不稳定。Minecraft 和 Factorio 的集成是实验性的，游戏版本更新可能导致协议变化。建议只在本地单机世界测试，不要用在多人服务器上。
 
 ---
 
-## 故障排查
+## 适用边界
 
-### 安装阶段
+**适合：**
+- 有一定技术背景、想本地部署 AI 虚拟角色的用户
+- 想要类似 Neuro-sama 体验、又不想依赖官方服务的用户
+- 对 Live2D/VRM 角色格式有了解、愿意自己配置模型的开发者
 
-- **`scoop install airi/airi` 失败**：确认 Scoop 已安装并添加了 airi bucket。先执行 `scoop bucket add airi https://github.com/moeru-ai/airi`，再执行安装命令。
-- **Node.js 版本不兼容**：AIRI 要求 Node.js 18+。用 `node --version` 确认版本，如果低于 18，需要升级 Node.js。
+**不适合：**
+- 完全没有技术背景、想要开箱即用的普通用户（安装和配置模型都有门槛）
+- 想直接用现成 3D 角色的人（模型需要自己准备）
+- 期待功能与 Neuro-sama 完全一致的用户（开源复现与原版有差距）
 
-### 模型接入阶段
+## 采用建议
 
-- **API Key 配置后仍报错**：检查环境变量是否设置正确。Windows 下需要在"系统属性 → 环境变量"里添加，或者 `.bashrc` / `.zshrc` 里 `export`。
-- **本地模型（Ollama）连接失败**：确认 Ollama 已启动并监听默认端口（11434）。可以用 `curl http://localhost:11434/api/tags` 测试连接。
+按以下顺序评估是否采用 AIRI：
 
-### 渲染阶段
+1. **先验证模型接入**：在浏览器跑 Stage Web，配置一个已有 API Key 的 LLM，确认 xsAI 抽象层在你的提供商上工作正常。
+2. **再验证角色渲染**：准备一个 Live2D 或 VRM 模型，确认 Stage UI 能正确加载并播放动作。
+3. **最后验证游戏链路**：如果你关心 agent 能力，单独跑 Minecraft 集成，观察 Mineflayer 的动作执行稳定性。
+4. **落地前评估数据层**：记忆系统和 RAG 模块在浏览器端的内存占用，需要单独压测。
 
-- **Live2D 模型加载失败**：确认模型文件格式正确（`.moc3` 或 `.model3.json`）。有些模型需要手动指定文件路径。
-- **VRM 模型显示异常**：确认 VRM 文件版本兼容。VRM 0.x 和 1.x 有较大差异，AIRI 可能对某些版本支持不完整。
-
-### 游戏代理阶段
-
-- **Minecraft bot 连接失败**：确认 Minecraft 服务器正在运行，并且 bot 使用的用户名未被占用。可以在 `config.json` 里修改 bot 用户名。
-- **Factorio RCON 连接失败**：确认 Factorio 服务器已开启 RCON，并且端口和密码配置正确。
-
----
-
-## 练习
-
-下面三个练习从理解到应用，建议按顺序完成：
-
-### 练习一：跑通三链路中的至少两条
-
-1. 安装 AIRI 的 Stage Web 版本（无需本地 GPU）
-2. 配置一个 LLM API Key（ChatGPT 或 Claude），确认 AI 链路工作正常
-3. 准备一个 Live2D 或 VRM 模型，确认渲染链路能加载并播放动作
-4. 记录：哪条链路最容易跑通？哪条链路遇到最多配置问题？
-
-这个练习的重点是感受三条链路的依赖差异——AI 链路只依赖 API Key，渲染链路依赖模型文件，游戏链路依赖额外的服务器。
-
-### 练习二：观察记忆系统如何跨会话工作
-
-1. 与 AIRI 角色对话 3-5 轮，聊一个具体话题（例如"你最喜欢的游戏"）
-2. 重启 Stage Web 或桌面端
-3. 再次与同一角色对话，问"我们之前聊过什么？"
-4. 记录：角色是否能正确回忆起之前的话题？回忆的准确度与什么有关（对话轮数、话题特异性、时间间隔）？
-
-这个练习帮你理解 AIRI 的记忆系统实现——它依赖摘要和检索，不是完整的上下文保留。
-
-### 练习三：对比三种模型提供商的延迟体验
-
-1. 用同一个角色，分别配置 ChatGPT API、Claude API 和本地 Ollama 三个模型后端
-2. 问同一个问题，记录每个后端的首次响应延迟（从发送消息到开始收到流式输出）
-3. 对比：哪个提供商延迟最低？本地 Ollama 的延迟是否可接受？
-
-这个练习让你理解 xsAI 抽象层的价值——切换模型提供商不需要改核心代码，但不同提供商的延迟特征会直接影响"陪伴感"。
-
----
-
-## 自测题
-
-用以下 5 题检验理解程度。答案折叠在每题下方。
-
-**Q1**: AIRI 的三条并行链路是什么？各自负责什么？
-
-<details>
-<summary>查看答案</summary>
-答：渲染链路（角色如何被看见）、AI 链路（角色如何思考与说话）、游戏链路（角色如何对外部世界产生作用）。
-</details>
-
-**Q2**: xsAI 的作用是什么？
-
-<details>
-<summary>查看答案</summary>
-答：把 20+ 模型提供商抽象成统一接口，让换模型不需要改核心代码。
-</details>
-
-**Q3**: AIRI 的游戏代理能力基于什么实现？
-
-<details>
-<summary>查看答案</summary>
-答：Minecraft 通过 Mineflayer（Node.js 端 Minecraft bot 协议实现），Factorio 通过 RCON API 和 `autorio`。
-</details>
-
-**Q4**: AIRI 的适用边界是什么？
-
-<details>
-<summary>查看答案</summary>
-答：适合有一定技术背景、想本地部署 AI 虚拟角色的用户；不适合完全没有技术背景、想要开箱即用的普通用户。
-</details>
-
-**Q5**: 三个 Stage（Web/Tamagotchi/Pocket）的区别是什么？
-
-<details>
-<summary>查看答案</summary>
-答：Stage Web 负责零安装体验，Stage Tamagotchi 负责桌面端低延迟推理，Stage Pocket 负责移动端随身入口。
-</details>
-
----
-
-## 相关项目
-
-如果你对 AI vtuber 方向感兴趣，同期趋势榜上还有一些相关项目值得关注（Stars 数据截至 2026 年 5 月，可能已变化）：
-
-- [taste-skill](https://github.com/Leonxlnx/taste-skill)（19.7k Stars）——给 AI 编程工具注入"品味"，减少机械感的 skill 文件
-- [knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins)（15.5k Stars）——Anthropic 官方的知识工作插件集
-
----
+前三步任何一步卡住，建议先暂停。AIRI 的价值在于三条链路协同，单链路跑通不等于整体可用。
 
 ---
 
 ## 资料口径说明
 
-本文基于 AIRI 项目官方仓库（github.com/moeru-ai/airi）以及实际部署测试撰写。需要说明的边界：
+本文基于 AIRI 官方仓库（github.com/moeru-ai/airi）与其 README 撰写，核心数据经 GitHub API 于 2026-08-05 验证。需要说明的边界：
 
-1. **版本时效性**：本文基于 AIRI 近期版本（2026 年 5 月）撰写，项目处于活跃开发阶段，Stage 策略、xsAI 接口、游戏链路支持可能随版本变化，请以[官方 GitHub 仓库](https://github.com/moeru-ai/airi)的最新代码为准。
-2. **模型文件依赖**：AIRI 本身不含 Live2D/V RM 模型文件，需要用户自行准备或购买。不同模型格式的动画支持程度不同，本文无法保证所有模型都能完美运行。
-3. **硬件要求**：文中提到的 GPU 显存要求（8GB 以上）为社区经验值，实际所需显存会因模型大小、序列长度、并发数而变化。纯 Web 端不需要 GPU，但推理延迟会较高。
-4. **游戏链路稳定性**：Minecraft 和 Factorio 的集成是实验性的，游戏版本更新可能导致协议变化。建议在本地单机世界测试，不要用在多人服务器上。
-5. **语音链路依赖**：本地 VAD/STT 的识别质量依赖第三方服务或本地模型，本文未验证所有语音识别方案的准确性。语音输出的延迟和音质因 TTS 服务而异。
-6. **数据隐私**：AIRI 支持本地部署，数据完全自持。但接入商业大模型 API（ChatGPT/Claude 等）时，对话内容会发送到对应服务商，请 according to 对应服务商的隐私政策。
+1. **版本时效性**：项目处于活跃开发阶段，Stage 策略、xsAI 接口、游戏链路支持可能随版本变化，请以官方仓库最新代码为准。
+2. **模型文件依赖**：AIRI 本身不含 Live2D / VRM 模型文件，需要用户自行准备。不同模型格式的动画支持程度不同，本文无法保证所有模型都能正常运行。
+3. **硬件要求**：上文提到的显存数值（8GB 以上）为社区经验值，实际需求会因模型大小、序列长度、并发数而变化。
+4. **游戏链路稳定性**：Minecraft 和 Factorio 的集成是实验性的，游戏版本更新可能导致协议变化，建议在本地单机世界测试。
+5. **语音链路依赖**：本地 VAD/STT 的识别质量依赖所选方案，本文未逐一验证；TTS 的延迟与音质随服务而异。
+6. **数据隐私**：本地部署时数据自持，但接入商业大模型 API 时，对话内容会发送到对应服务商，请依据各服务商的隐私政策评估。
 
 ---
 

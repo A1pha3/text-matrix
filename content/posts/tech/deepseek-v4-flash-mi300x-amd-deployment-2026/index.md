@@ -2,12 +2,13 @@
 title: "DeepSeek V4 Flash 单卡 AMD MI300X：ryanzhou 把 vLLM-ROCm 调成 168.6 tok/s 单流 + 64 流 830 tok/s 的工程复盘"
 date: 2026-08-05T09:40:00+08:00
 draft: false
-summary: "ryanzhou 把 DeepSeek V4 Flash(304B MoE)在单张 AMD MI300X 上跑成了生产可用的推理栈。一套 SHA-256 pin 死的 vLLM ROCm nightly + 10 个 byte-for-byte overlay patch + AITER GEMM tuning table,把单流推到 168.6 tok/s、8 流 542 tok/s、64 流 830 tok/s。本文拆开每一处改动:为什么 FNUZ FP8 让 OCP kernel 错两个 scale、MXFP4 bitmatrix padding 是怎么悄悄把 tool name 改名的、DSpark-7 投机解码在 ROCm 上要补哪些因果验证、CPU KV 96 GiB 那条 fence 又是为了修哪个 upstream WAR gap。"
+summary: "ryanzhou 用一套 SHA-256 pin 死的 vLLM ROCm nightly 加 10 个 byte-for-byte overlay patch,把 DeepSeek V4 Flash(304B MoE)在单张 AMD MI300X 上跑成生产推理栈:单流 168.6 tok/s、8 流 542 tok/s、64 流 830 tok/s。本文逐个拆开这些 overlay 背后的工程问题:FP8 格式错配、MXFP4 路由的 padding bug、投机解码的因果验证、CPU KV 的同步 fence,以及为什么 KV cache 池不能开大。"
 tags: ["DeepSeek", "V4 Flash", "MI300X", "vLLM", "ROCm", "AITER", "FP8", "DSpark", "MXFP4", "MoE"]
 categories: ["技术文章"]
 authors: ["钳岳"]
 github_repo: "ryanzhou/deepseek-v4-flash-mi300x"
 description: "DeepSeek V4 Flash 单卡 AMD MI300X 生产部署:304B MoE、156.67 GiB HBM、168.6 tok/s 单流 / 64 流 830 tok/s,拆开 FNUZ FP8 / MXFP4 路由 / DSpark-7 因果 verify / CPU KV fence 等 10 处 overlay。"
+slug : index
 
 ---
 
@@ -23,7 +24,29 @@ DeepSeek V4 Flash 是个 304B 参数的稠密-MoE(checkpoint `deepseek-ai/DeepSe
 
 304B 模型 BF16 权重 ≈ 608 GB,FP8 后 ≈ 304 GB。**单卡塞不下 FP16,只能 FP8 + HBM 192 GB 还差一截**——但 DeepSeek V4 Flash 用 156.67 GiB 装进 HBM,剩 ~36 GB 给 KV cache、graph capture、kernel workspace。这就是 304B 跑在单卡 MI300X 的全部空间账。
 
-不是「穷才用 AMD」,是 **HBM 容量直接决定能不能单卡部署**。H100 装不下 304B FP8(80 GB),必须 2 卡 tensor parallel 或者量化掉精度;MI300X 一次解决。
+选 MI300X 不是预算问题,是容量问题:H100 装不下 304B FP8(80 GB),只能 2 卡 tensor parallel 或量化掉精度;MI300X 单卡就装下了。
+
+整条链路和每处 overlay 修在哪一道关口,先看个总览:
+
+```mermaid
+flowchart LR
+    Q[请求] --> IN[tokenizer + reasoning + tool parser]
+    IN --> PF[prefill<br/>Lightning Indexer sparse attention]
+    PF --> KV[KV cache<br/>20 GB GPU + 96 GiB CPU tier]
+    IN --> RT[MoE 路由<br/>MXFP4 专家]
+    RT --> GE[GEMM / AITER]
+    GE --> DS[DSpark-7 投机解码<br/>static K=7 + block rejection]
+    DS --> CA[ROCm 小头 MLA<br/>因果验证]
+    CA --> O[输出 token]
+    KV <--> CA
+    PF -. ① FNUZ FP8 写缓存 .-> KV
+    RT -. ② MXFP4 padding 修复 .-> RT
+    CA -. ③ DSpark causal overlay .-> CA
+    KV -. ④ CPU→GPU 同步 fence .-> KV
+    GE -. ⑤ gfx942 tile 几何 .-> GE
+```
+
+①–⑤ 对应后文五类 patch:FP8 字节序、MXFP4 路由、投机解码因果、CPU KV 同步、kernel 几何。下面逐个拆开。
 
 ---
 
@@ -88,7 +111,7 @@ DeepSeek V4 Flash 自带 **DSpark**(DeepSeek 自家投机解码模块,96 参数)
 # == vllm/v1/attention/backends/mla/rocm_aiter_mla.py @ 77469c9057bec3212a64877dbbf3b9c48c22d786
 ```
 
-工程上很优雅的写法:**upstream 没合并的修复留着 overlay,upstream 已合并的修复也留着 overlay(因为 pinned nightly 可能还没包含这个 commit)**。Base image 升级时,overlay 才能选择性摘掉。
+这里有个取舍:upstream 已合并的修复,仓库里依然保留同名 overlay——因为 pinned nightly 不一定包含那个 commit。Base image 升级时,这些 overlay 才有机会按需摘掉。
 
 DSpark-7 还有两条精细补丁(`dspark-speculator.independent-draft-gumbel.py` + `spec-decode-utils.independent-draft-gumbel.py`):用 `draft_sample_method=probabilistic` 时,draft 提议的 Gumbel 噪声必须**与 rejection/recovery 噪声独立**,否则 speculative decoding 在长上下文里会偏向某些 token。greedy 路径不需要这两条。
 
@@ -109,13 +132,13 @@ BLOCK_H = 64  # head-512 sparse prefill tile
 
 ---
 
-## 六、Triton OGS tile 几何:`gfx942` MXFP4 专家组的 shape
+## 六、MXFP4 OGS tile 几何与性能总表
 
-`gfx942` 的 L2 cache 和 register file 排布,和 MI300X 后继型号不一样。stock `matmul_ogs_details/opt_flags.py` 在 routed rows 超过 768 时急剧劣化——ryanzhou 测下来 routed rows 一旦上 1536,性能掉一截。
+`gfx942` 的 L2 cache 和 register file 排布,和 MI300X 后继型号不一样。stock `matmul_ogs_details/opt_flags.py` 在 routed rows 超过 768 后性能急降,到 1536 掉得更明显。
 
-修复 `triton-kernels-matmul-ogs-opt-flags.dsv4-mi300x.py`:为 21 个常出现的 `gfx942` GEMM shape 重写 tile 几何(up to 1536 routed rows)。
+修复 `triton-kernels-matmul-ogs-opt-flags.dsv4-mi300x.py`:为 21 个常出现的 `gfx942` GEMM shape 重写 tile 几何(覆盖到 1536 routed rows)。
 
-下面六项优化汇总了 patches/README.md 里记录的全部性能改动,按修复类别归三类:FNUZ FP8 字节序 / MXFP4 MoE 路由 / DSpark MLA 因果 / KV fence / kernel 几何——前文已展开前四类,kernel 几何的数字在此一并列出:
+前几节拆开的是每类修正在做什么,这一节把 patches/README.md 记录的全部性能改动汇总成一张表,方便对照每一项的收益:
 
 | 优化 | 效果 |
 |---|---|
@@ -126,7 +149,7 @@ BLOCK_H = 64  # head-512 sparse prefill tile
 | 2,048 token budget + 1,024 long-prefill cap | 短请求 TTFT 在 52K cold prefill 后从 8.2 s → 0.5 s |
 | 20 GB GPU KV + 96 GiB CPU tier | 1.93M token 长度等效容量;7 个 256K 请求同时接 |
 
-每条优化都对应一个或多个 overlay patch,组合起来才把单流从 stock 的 34.5 tok/s 拉到 168.6 tok/s(含 DSpark)。
+每条优化都对应一到多个 overlay,组合起来才把单流从 stock 的 34.5 tok/s 拉到 168.6 tok/s(含 DSpark)。
 
 ---
 
@@ -172,32 +195,23 @@ Prefill 数据更亮:tuned kernels 让 uncached prefill 跑到 **7.9–8.5K tok/
 
 ---
 
-## 九、830 tok/s 的物理上限在哪里
+## 九、830 tok/s 是不是到头了
 
-830 tok/s @ 64 流 vs 168.6 tok/s @ 1 流——为什么是 830,而不是更高?拿带宽算一遍。
+830 tok/s @ 64 流 vs 168.6 tok/s @ 1 流,为什么是 830,而不是更高?拿带宽粗算一遍。
 
-MI300X HBM3 带宽 **5.3 TB/s**。DeepSeek V4 Flash 是 MoE 模型,decode 阶段每生成一个 token 只需读取**激活参数**的权重(不是全部 304B)。假设 MoE top-k 路由激活约 **B_active ≈ 50B** 参数(DeepSeek V4 Flash 的典型 active/total 比),FP8 每参数 1 byte:
+MI300X HBM3 带宽 **5.3 TB/s**。decode 阶段每生成一个 token 只需读取激活参数的权重(不是全部 304B)。假设 MoE top-k 激活约 **B_active ≈ 50B** 参数、FP8 每参数 1 byte:
 
-```
-单流理论 decode 上限 = 5.3 TB/s ÷ (50B × 1 byte)
-                    = 5.3 × 10¹² ÷ (50 × 10⁹)
-                    = 106 tok/s
+```text
+单流理论 decode 上限 = 5.3 TB/s ÷ (50B × 1 byte) ≈ 106 tok/s
 ```
 
-等一下——实测单流 168.6 tok/s 反而**高于** 106?因为 DSpark 投机解码。speculative decoding 让模型一次 forward pass 验证多个 draft token,decode 阶段有效带宽被放大。假设 DSpark 平均 acceptance ≈ 3.2(DSpark-7 在 ROCm 上的实测值),有效 token/forward ≈ 3.2:
+实测单流 168.6 tok/s 高于这个数,靠 DSpark 投机解码:一次 forward 验证多个 draft token,单 token 的带宽成本被摊薄。这笔账只够做量级校验,不精确——它没算 KV cache 读取、attention、routing kernel 的额外 memory traffic,也没有 DSpark acceptance 的精确测量。把 106 当纯带宽上限、按投机放大粗略外推,能落在 160–210 tok/s 区间,和 168.6 同量级。
 
-```
-DSpark 放大后单流上限 ≈ 106 × 3.2 / 2.0 ≈ 170 tok/s
-```
+多流更难用带宽直接解释。8 流 aggregate 542 tok/s、64 流 830 tok/s,单流都明显低于 106 的纯带宽上限——MoE 的 batch 会让多个请求共享一次权重读取,aggregate 吞吐不随流数线性翻倍,而是被共享带宽和 kernel 调度共同压住。64 流时单流只剩 16.4 tok/s,说明瓶颈已经不在权重带宽,而在 routing kernel 在大 batch 下的延迟、KV offload fence 的 synchronize 开销,和 CU(graphics and compute units,MI300X 有 304 个)的调度争抢。
 
-分母 2.0 是因为 DSpark draft model 自身也要读权重(96 参数,相对小,但非零)。170 vs 实测 168.6——吻合度非常高,差额来自 DSpark draft overhead + memory traffic overhead(KV cache 读取、attention 计算、routing kernel)。
+所以 **830 是 DSpark 加速被 batch 摊薄 + routing 延迟 + fence 开销叠加后的均衡点**,不是"带宽到头了"。想再往上,要么关 DSpark 走 native decode(单流降低,aggregate 未必低),要么等 AMD AITER 优化大 batch routing kernel。
 
-再看多流:
-
-- **8 流 542 tok/s**:理论带宽上限 = 106 × 8 = 848 tok/s(无 DSpark)或更高(有 DSpark)。实测 542 说明 batch 把 DSpark acceptance 压到 ≈ 2.1(8 流共享 KV,speculative 验证路径变长),但 aggregate 吞吐靠 batch 摊薄了权重读取——每 token 只读一次权重,8 个请求共享。
-- **64 流 830 tok/s**:理论上限 = 106 × 64 = 6,784 tok/s(纯 bandwidth bound)。实测 830 只有理论值的 12%。原因:64 流时 DSpark acceptance 跌到 ≈ 1.3(长 prompt + 高并发,speculative 验证几乎退化为逐 token decode),加上 routing kernel 在大 batch 下延迟激增、KV offload fence 的 synchronize 开销、CU(graphics and compute units,MI300X 有 304 个)调度争抢。
-
-**830 是 DSpark acceptance 退化 + routing 延迟 + fence 开销三者叠加的均衡点**。想突破,要么关 DSpark 走 native decode(单流 throughput 降低但 aggregate 可能更高),要么等 AMD AITER 后续版本优化大 batch routing kernel。
+也别拿这张表的数字当通用 benchmark:README 自己写了,DSpark acceptance 随 prompt 变化,这些数据只对这份固定 image 成立。
 
 ---
 
@@ -228,7 +242,7 @@ H100 装不下 304B FP8(80 GB HBM),必须 2 卡 tensor parallel。下面是一�
 
 ## 十一、首次部署要踩的 10 个坑
 
-读完前面所有 patch,你可能已经想在自己机器上跑一遍。以下基于 `compose.yaml` 实际部署命令整理出 10 步操作,每一步都可能卡住——这里把卡点标出来。
+下面的 10 步来自 `compose.yaml` 的实际部署命令,每一步都标出了容易卡住的地方。
 
 **1. 拉 vLLM ROCm nightly image**
 
@@ -296,7 +310,7 @@ README 写得很直白:
 
 > A 30 GB KV pool loads but fails during graph capture with `HSA_STATUS_ERROR_OUT_OF_RESOURCES`. Do not raise `--kv-cache-memory-bytes`; monitor HBM usage for growth.
 
-这就是为什么 **KV cache 池不能开大**——你以为 30 GB 留给 KV,启动时报 `HSA_STATUS_ERROR_OUT_OF_RESOURCES`。`rocm-smi --showmeminfo vram` 是生产必备监控,任何多几百 MB 都要警觉。
+结论是 **KV cache 池不能开大**:你以为 30 GB 留给 KV,启动时报 `HSA_STATUS_ERROR_OUT_OF_RESOURCES`。`rocm-smi --showmeminfo vram` 是生产必备监控,任何多几百 MB 都要警觉。
 
 CPU KV 96 GiB 不是备份——是**真正承担了 1.93M token 长度等效容量**。7 个 256K 请求能同时接,靠的是 CPU tier 兜底。
 
@@ -304,13 +318,13 @@ CPU KV 96 GiB 不是备份——是**真正承担了 1.93M token 长度等效容
 
 ## 十三、工程含义
 
-ryanzhou 这个仓库做的事,提炼成三句话:
+ryanzhou 这个仓库,值得借鉴的是三件事:
 
-1. **pinned image + byte-for-byte overlay + SHA-256 校验**——把「生产用的二进制」和「上游的某个 commit」**同时锁定**。Overlay 是 source of truth,diff 只是文档。GitHub Actions 自动化部署可以借鉴这个模式。
-2. **每一处 patch 都对应一个上游 issue / commit / PR**——overlay 不是「私人魔改」,是**可追溯的工程决策**。`patches/README.md` 把 10 个 overlay 对应的 upstream SHA 列得一清二楚。
-3. **生产栈的 ergonomics**:`vllm-entrypoint.sh` 清 stale `/dev/shm` mapping、`SHA256SUMS` 校验每个 runtime artifact、Caddy IP allowlist + `flush_interval -1` 保流式响应——**这是工程师写的,不是研究员写的**。
+1. **pinned image + byte-for-byte overlay + SHA-256 校验**——把「生产用的二进制」和「上游的某个 commit」同时锁定。overlay 是运行时真正生效的文件,diff 只作文档。GitHub Actions 自动化部署可以照这个模式做。
+2. **每一处 patch 都对应一个上游 issue / commit / PR**——overlay 不是随手改的,都能回溯到来源。`patches/README.md` 把每个 overlay 对应的 upstream SHA 列得一清二楚。
+3. **生产栈的细节是照着真实运维写的**——`vllm-entrypoint.sh` 清 stale `/dev/shm` mapping、`SHA256SUMS` 校验每个 runtime artifact、Caddy IP allowlist + `flush_interval -1` 保流式响应。这些不是 demo 需要的,是线上才需要的。
 
-单卡 MI300X 跑 304B MoE,**HBM 容量直接决定能不能跑**。NV H100 必须双卡或者更激进的量化,AMD MI300X 单卡解决——这不是性价比问题,是「能不能跑」问题。
+单卡 MI300X 跑 304B MoE,决定因素就是 **HBM 容量**:NV H100 要双卡或更激进的量化,AMD MI300X 单卡装下。对 304B 这类 MoE checkpoint,route 的取舍在这里,不在性价比。
 
 ---
 

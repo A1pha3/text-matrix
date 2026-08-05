@@ -1,531 +1,157 @@
 ---
-title: "Everything Claude Code：从入门指南到工作流系统"
+title: "Everything Claude Code：从入门资料库到跨终端 Agent 工作流系统"
 date: "2026-04-02T07:35:00+08:00"
-lastmod: 2026-04-03T23:33:16+08:00
+lastmod: 2026-08-05T12:00:00+08:00
 slug: everything-claude-code-comprehensive-guide
-github_repo: "affaan-m/everything-claude-code"
+github_repo: "affaan-m/ECC"
 aliases:
   - /posts/tech/everything-claude-code-comprehensive-guide/
   - /posts/tech/everything-claude-code-agent-harness-performance/
 categories: ["技术笔记"]
-tags: ["Claude Code", "AI 编程", "Anthropic"]
-description: "基于 affaan-m/everything-claude-code 当前公开仓库状态，讲清这个项目如何从 Claude Code 入门资料演进为覆盖技能、记忆、安全与工作流系统的高热度资源库。"
+tags: ["Claude Code", "AI 编程", "Anthropic", "Agent"]
+description: "基于 affaan-m/ECC 当前公开仓库状态，讲清这个项目如何从一份 Claude Code 入门资料演进为跨 Codex、Claude Code、Cursor 等终端的 Agent 工作流系统，以及 skills、memory、security 这些资产各自解决什么问题。"
 ---
 
-# Everything Claude Code：从入门指南到工作流系统
+# Everything Claude Code：从入门资料库到跨终端 Agent 工作流系统
 
-> 预计阅读时间：30 分钟 | 难度：⭐⭐⭐
+> 预计阅读时间：20 分钟 | 难度：⭐⭐⭐
+
+无论你最初是被"Everything Claude Code"这个名字吸引，还是已经在用 Claude Code 想找一套更完整的配置，都可能低估了这个仓库现在的样子。它早已不是一份"怎么装、怎么用"的资料合集，而是一套跨终端的 Agent 工作流系统——同一份 skills、hooks、rules，能同时落到 Claude Code、Codex、Cursor、Gemini 等多个 editing harness 上。
+
+下文先给一张系统地图，再拆开里面的机制，用一个真实任务把它们串起来，最后说清楚哪些人该用、怎么入手。
 
 ---
 
-## 一、学习目标
+## 一、先看这张地图
 
-本文覆盖以下内容：
+仓库里规整的内容，大致按四层组织。每一层回答一个不同的问题：
 
-- 自己完成 Claude Code 的安装与配置
-- 说清 Claude Code 的四个核心概念（对话上下文、工具使用、文件操作、项目上下文）
-- 用 Slash Commands 替换重复操作
-- 通过环境变量和自定义指令约束 AI 行为
-- 接入 MCP Servers 扩展能力
-- 理解安全配置的边界
-- 知道从新手到专家的路径怎么走
+| 层 | 装在哪 | 回答的问题 |
+|------|----------|----------|
+| 基础使用 | CLI 命令、`install.sh`、`npx ecc` | 怎么把系统装进某个 harness |
+| 工作流资产 | `.claude/skills`、`instincts`、memory hooks | 怎么让 Agent 用得有章法 |
+| 安全边界 | AgentShield、密钥扫描、`.gitignore` | 怎么让 Agent 不踩坑 |
+| 跨终端扩展 | `.codex`、`.cursor`、`.gemini`、`.mcp.json` | 怎么让同一套资产换工具也能用 |
 
-## 二、先说结论：这个仓库已经不只是“Claude Code 新手教程”
+这套结构的关键在于：**资产写一次，装到多个终端**。你不需要为每个工具各维护一份规则，仓库负责把同一份技能和钩子翻译到各 harness 的目录约定里。
 
-一句话结论：**Everything Claude Code 已经从"怎么安装和怎么用"的资料仓库，演进成一个围绕 Claude Code、Agent Harness、安全和工作流设计展开的综合系统。**
+---
 
-这也是为什么旧的“2.8k Stars 的全面指南”式写法已经不够准确。当前公开仓库描述更强调：
+## 二、这个仓库到底是什么
 
-- agent harness performance optimization
-- skills / instincts / memory / security
-- research-first development
-- 不只服务 Claude Code，也覆盖更广的 Agent / coding tooling 语境
-
-这个项目已经从“使用手册”明显演进成“工作流系统”。
-
-## 三、项目概述
-
-### 3.1 什么是 Everything Claude Code
-
-Everything Claude Code（[affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code)）最初很容易被理解成一份“Claude Code 资料大全”。但从当前公开仓库状态看，它的内容和定位已经明显外扩：除了基础使用说明，它还在强调代理工作流、技能体系、记忆设计、安全边界和研究优先的开发方式。
-
-读者在看它时，不能只抱着“找命令说明”的预期，而更应该把它当作一套**工作流资产与实践方法集合**。
-
-### 3.2 项目基本信息
+### 2.1 项目基本信息（GitHub API 2026-08-05 验证）
 
 | 属性 | 值 |
 |------|-----|
-| GitHub | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) |
-| Stars | 135k+ |
-| Forks | 19.9k+ |
-| Watchers | 135k+ |
+| GitHub | [affaan-m/ECC](https://github.com/affaan-m/ECC) |
+| 原仓库名 | affaan-m/everything-claude-code（已更名） |
+| Stars | 237,335 |
+| Forks | 36,084 |
+| Open Issues | 128 |
 | License | MIT |
-| Open Issues | 84 |
-| 分支 | main |
-| 作者 | affaan-m |
+| 主要语言 | JavaScript |
+| 默认分支 | main |
+| 官网 | [ecc.tools](https://ecc.tools) |
 
-> 说明：这类仓库增长很快，正文中最好写“截至某日的公开数据”，而不要把旧数字写进标题或摘要。
+仓库描述自述为 "the agent harness performance optimization system"，覆盖 Claude Code、Codex、Opencode、Cursor 等。README 里自称 **Agent Harness Operating System**，v2.0.0 的公开数据是 261 个 skills。
 
-### 3.3 核心特色
+### 2.2 从"资料库"到"操作系统"
 
-**覆盖范围很广**：从安装配置、高级工作流，到安全与研究方法的讨论，都收在同一个仓库里。
+这个改名的过程，恰好说明了项目定位的迁移。早期它确实是一份 Claude Code 的社区资料库，收录命令、规则和技巧。但随着内容膨胀，作者发现真正值钱的不是"一条条命令说明"，而是把 skills、hooks、rules、memory 组合成一套**可复用的工作流层**，并且能装到不同 harness 上。
 
-**定位正在演进**：不只作为 Claude Code 入门资料，也在吸收更广泛的 Agent / harness 方法论。
+所以现在你看到的是：
 
-**实践导向**：每个概念都配有实际使用示例。
+- 一份原始代码仓库（README 明确说 "This repo is the raw code only"），真正的讲解在配套的 The Shorthand Guide、The Longform Guide、The Security Guide 三份指南里。
+- 一个按 harness 分层的目录：`.claude`、`.codex`、`.cursor`、`.gemini`、`.kimi`、`.opencode`、`.codebuddy`、`.hermes` 等。
+- 一套 npm 包（`ecc-universal`、`ecc-agentshield`）和一个 GitHub App（ECC Tools），把仓库能力变成可安装、可升级的产物。
 
-**社区驱动**：持续更新，吸收社区推荐做法。
+## 三、核心资产：skills、instincts、memory、security
 
-这个仓库里的内容大致落在四个层面：
+仓库反复提到的四类资产，不是四个并列的功能，而是四个不同职责的模块。
 
-| 层面 | 包含内容 | 关键问题 |
-|------|----------|----------|
-| 基础使用 | 安装、配置、CLI 命令 | 怎么用起来 |
-| 工作流方法 | skills、instincts、memory、project context | 怎么用得有条理 |
-| 安全边界 | 密钥管理、权限控制、安全配置 | 怎么用得不踩坑 |
-| 扩展集成 | MCP、自定义命令、CI/CD 接入 | 怎么接入现有工具链 |
+### 3.1 Skills——可调用的技能
 
-后面几章会按这个顺序展开：先基础，再工作流，再安全，最后扩展。
+Skills 是最容易理解的一层：一个 skill 就是一整套提示词、规则和有时会带上脚本的文件夹。调用它，等于给 Agent 一份"这个任务该怎么做"的完整说明。
 
-### 3.4 更适合谁读
+仓库里 skill 数量在持续增长，v2.0.0 时公开为 261 个，覆盖 TypeScript、Python、Go、Java、Kotlin、Rust、C++ 等多个语言生态，也包含运维、视频处理、市场研究等领域的技能。
 
-| 读者类型 | 推荐度 | 原因 |
-|------|------|------|
-| Claude Code 新手 | ⭐⭐⭐⭐ | 可以快速建立概念地图，但要注意别把所有配置都一次装满 |
-| 已有一些使用经验的个人开发者 | ⭐⭐⭐⭐⭐ | 很适合从“会用”升级到“会组织工作流” |
-| 团队负责人 / 平台工程师 | ⭐⭐⭐⭐⭐ | 可以把其中的方法与资产沉淀方式迁移到团队流程里 |
-| 只想查一个命令怎么写的人 | ⭐⭐ | 官方文档通常更直接 |
+值得注意的一点：skill 是按任务类型组织的，不是按工具组织的。同一个 skill 在 Claude Code 和 Codex 里都能被识别，只是落在各自的 `skills/` 目录里。
 
-### 3.5 使用边界
+### 3.2 Instincts——隐性的行为惯性
 
-这个仓库覆盖面很广，但正因为广，直接当成现成配置大礼包容易出两个问题：
+Instincts 和 skills 的区别在"显式与隐式"。Skill 是用户主动点名调用的；Instinct 更像一组默认行为，Agent 在平时工作中会自然遵守的倾向，比如"优先读 README 再动手""改完代码跑一遍测试"。
 
-1. 配置复制了，但不知道为什么这么配。
-2. 工作流看起来很先进，但与你当前项目阶段并不匹配。
+它不是某个单一文件，而是一组分散在规则和系统提示里的行为约束，靠 hooks 在恰当的时机注入。
 
-更合理的用法是：**先借它建立地图，再选择少量最适合你的部分逐步迁移。**
+### 3.3 Memory——跨会话的记忆
 
-## 四、核心概念详解
+Memory 是仓库里最工程化的一块。它靠 hooks 实现：在会话开始（SessionStart）时把上次的上下文加载进来，在会话结束（Stop 阶段）时把摘要写回，这样下次会话不用重新解释一遍项目背景。
 
-### 4.1 对话上下文（Conversation Context）
+仓库的 Longform Guide 里专门讲了 token 优化和 memory persistence，核心思路是用结构化的会话摘要替代原始对话记录，减少上下文占用。
 
-Claude Code 基于对话上下文进行理解和响应。AI 能够记住在同一对话中之前提到的信息，这使得：
+### 3.4 Security——Agent 的安全边界
 
-- 可以先描述一个问题背景，再提出具体问题
-- AI 能够理解复杂的、多步骤的请求
-- 可以进行迭代式的代码改进
+Agent 能读文件、跑命令，安全就变成硬需求。仓库这一层包含：
 
-**推荐做法**：
-- 在开始新任务前，先简要说明项目背景
-- 使用 `/clear` 命令重置对话上下文（当你需要 AI "忘记"之前的讨论时）
-- 长对话中定期总结关键信息，帮助 AI 保持对任务的理解
+- **AgentShield**：一个独立的 npm 包，做安全扫描。
+- **密钥检查**：扫描代码里的硬编码 token、API key。
+- **`.gitignore` 与 `.mcp.json` 治理**：避免敏感信息进版本库。
+- 配套的 Security Guide，讲攻击向量、沙箱、CVE 等。
 
-### 4.2 工具使用（Tool Use）
+README 里有一句很明确：非官方渠道的转发和镜像不被维护，可能带恶意软件，所以安装只走官方渠道（GitHub、npm、GitHub App、插件 slug `ecc@ecc`、官网 ecc.tools）。
 
-Claude Code 具备访问文件系统和执行命令的能力，这是其区别于普通对话式 AI 的核心优势。
+## 四、一个任务如何流过系统
 
-**文件操作工具**：
-
-| 工具 | 功能 |
-|------|------|
-| Read | 读取文件内容 |
-| Edit | 对文件进行修改 |
-| Write | 创建新文件或覆盖现有文件 |
-| Bash | 执行 shell 命令 |
-
-**工具使用原则**：
-- AI 会自动选择合适的工具完成任务
-- 可以显式指定使用特定工具：`use bash to list files`
-- 信任 AI 的工具选择，但可以验证结果
-
-### 4.3 文件操作（Working with Files）
-
-Claude Code 对文件的操作是其日常工作的核心。
-
-**读取文件**：
-- 直接读取任意文本/代码文件
-- 支持大文件自动分析
-- 能够理解文件间的依赖关系
-
-**编辑文件**：
-- 支持行级编辑（Edit）
-- 自动处理文件编码
-- 保持代码格式和缩进
-
-**创建文件**：
-- 可以创建新文件或完整项目
-- 支持多文件同时创建
-- 自动创建必要的目录结构
-
-### 4.4 项目上下文（Project Context）
-
-Claude Code 能够感知当前项目的结构和上下文。
-
-**自动感知的信息**：
-- 编程语言和框架
-- 项目依赖（package.json, requirements.txt 等）
-- 代码风格配置（ESLint, Prettier 等）
-- Git 状态
-
-**CLAUDE.md 配置文件**：
-在项目根目录创建 `CLAUDE.md` 文件，可以为 AI 提供项目特定的行为指导：
-
-```markdown
-# 项目配置
-
-## 技术栈
-- React 18
-- TypeScript 5
-- Next.js 14
-
-## 代码规范
-- 使用 TypeScript 严格模式
-- 组件放在 components/ 目录
-- 样式使用 Tailwind CSS
-
-## 特殊指令
-- 创建新组件时自动导出
-- 提交前运行 lint
-```textbash
-# 设置环境变量
-export ANTHROPIC_API_KEY="your-api-key-here"
-
-# 或使用 .env 文件（推荐在项目根目录创建 .env 文件）
-echo "ANTHROPIC_API_KEY=your-key" > .env
-```textbash
-claude --version
-```textbash
-# .env 文件示例
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_BASE_URL=https://api.anthropic.com  # 可选，默认官方端点
-ANTHROPIC_MODEL=claude-opus-4-5  # 可选，指定模型
-ANTHROPIC_MAX_TOKENS=4096  # 可选，响应最大token数
-```textbash
-# 进入项目目录
-cd my-project
-
-# 启动 Claude Code
-claude
-
-# 让 AI 帮你初始化项目结构
-# 例如：帮我搭建一个 React + TypeScript + Vite 的项目
-```textbash
-cd your-project-path
-```textbash
-claude
-```text
-我想要创建一个用户登录功能，包含：
-1. 用户名密码登录
-2. 注册功能
-3. JWT token 验证
-请帮我实现这个功能。
-```text
-请审查 src/auth/login.ts 的代码，找出潜在的安全问题。
-```text
-在用户提交表单时，控制台显示：
-TypeError: Cannot read property 'name' of undefined
-位置在 src/components/Form.tsx:45
-请帮我修复这个问题。
-```text
-我需要一个排序算法，能够：
-1. 支持升序和降序
-2. 处理大数据集（100万+元素）
-3. 返回排序用时
-请用 JavaScript 实现。
-```text
-请解释 src/utils/algorithm.ts 中 quicksort 函数的实现原理。
-```textmarkdown
-<!-- .claude/commands/code-review.md -->
-
-# Code Review Command
-
-你是一个专业的代码审查员。当用户提供代码时，你会：
-
-1. 检查代码风格是否符合项目规范
-2. 识别潜在的安全漏洞
-3. 评估代码性能
-4. 提出改进建议
-
-请保持回复简洁，使用项目通用的代码风格。
-```textbash
-# 在 .env 文件中存储 API Keys
-ANTHROPIC_API_KEY=sk-ant-xxx
-DATABASE_URL=postgres://...
-SECRET_KEY=your-secret
-
-# 在 .gitignore 中忽略 .env
-echo ".env" >> .gitignore
-```textbash
-# .env.development
-API_URL=http://localhost:3000
-DEBUG=true
-
-# .env.production
-API_URL=https://api.example.com
-DEBUG=false
-```textjson
-{
-  "instructions": "你是一个擅长 React 和 TypeScript 的开发者。所有代码必须使用 TypeScript 严格模式。组件必须包含完整的 PropTypes 定义。",
-  "model": "claude-opus-4-5"
-}
-```text
-请用中文回复。所有代码注释使用中文。
-```textmarkdown
----
-name: my-command
-description: 我的自定义命令
----
-
-# 命令描述和使用说明
-
-[命令的具体行为描述]
-```textmarkdown
----
-name: test-coverage
-description: 运行测试并生成覆盖率报告
----
-
-当用户请求运行测试覆盖率时，你会：
-
-1. 首先检查项目中是否有测试框架配置
-2. 运行覆盖率测试：npm test -- --coverage
-3. 分析覆盖率结果
-4. 指出覆盖率低于 80% 的文件
-5. 提供改进建议
-```textbash
-#!/bin/bash
-# git-assist.sh
-
-# 启动 Claude Code 进行代码审查
-claude << 'EOF'
-请审查最近的 commit：
-EOF
-
-# 根据审查结果决定是否继续
-echo "审查完成，是否继续提交？(y/n)"
-read answer
-if [ "$answer" = "y" ]; then
-    git add -A
-    git commit -m "更新"
-    git push
-fi
-```textyaml
-# .github/workflows/code-review.yml
-name: AI Code Review
-
-on:
-  pull_request:
-    branches: [main]
-
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run AI Review
-        run: |
-          npm install -g @anthropic-ai/claude-code
-          echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" > .env
-          claude << 'EOF'
-          请审查 PR 中的代码变更，给出改进建议。
-          EOF
-```
-
-## 九、适用场景
-
-### 场景一：你想从“会用 Claude Code”升级到“有方法地用 Claude Code”
-
-如果你已经是，不是第一次打开 CLI 开始关心上下文、记忆、工具接入和团队规范，这个仓库会比纯入门文档更有价值。
-
-### 场景二：你想研究高热度 Agent 工作流资产是怎么组织的
-
-Everything Claude Code 适合拿来观察一个高热度仓库如何组织知识、规则、技能和工作流，而不仅仅是拿它当操作说明书。
-
-### 场景三：你想迁移少量高价值做法到自己的项目
-
-比如先迁移：
-
-- 项目级上下文文件
-- 高价值命令模板
-- 少量技能或规则
-- 与安全相关的最小约束
-
-而不是一次性全盘照搬。
-
-下面是场景三的一个具体例子——假设你是一个 React 项目的个人开发者，想引入这个仓库的资产：
-
-1. **先建地图**：浏览仓库的 `CLAUDE.md` 和 `.claude/commands/` 目录，看哪些命令模板和你的日常操作有关。
-2. **只迁移一个**：从 `.claude/commands/` 里选一个你最常用的命令模板（比如 `code-review.md`），复制到你的项目。
-3. **跑一次**：在真实 PR 上用这个命令跑一次审查，观察输出是否贴合你的项目风格。
-4. **调整**：根据结果修改命令模板里的检查项，删掉不相关的，补上你关注的安全规则。
-5. **再迁移下一个**：等这个命令稳定了，再从仓库里挑第二个资产（比如 `test-coverage.md`）。
-
-这个过程的关键是：每一步都有验证，不一上来就全量复制。
-
-## 十、常见问题
-
-### Q1：Claude Code 和普通 AI 助手的区别是什么？
-
-**A**：Claude Code 专注于编程场景，具备以下独特能力：
-- 直接读写文件
-- 执行命令
-- 理解项目结构
-- 集成开发工具链
-
-### Q2：如何处理 API 调用限制？
-
-**A**：
-1. 优化提示词，减少不必要的上下文
-2. 使用缓存减少重复请求
-3. 关注 Anthropic 的官方公告了解限制调整
-
-### Q3：代码安全问题如何处理？
-
-**A**：
-- 不要在提示词中包含真实的 API Keys
-- 使用环境变量管理敏感信息
-- 定期轮换 API Keys
-- 在共享代码前审查 AI 生成的代码
-
-### Q4：如何提高 AI 响应质量？
-
-**A**：
-1. 提供清晰的上下文和约束
-2. 分解复杂任务为多个简单步骤
-3. 使用具体的技术术语
-4. 及时反馈 AI 的错误理解
-
-### Q5：遇到 AI 无法理解的问题怎么办？
-
-**A**：
-1. 简化问题描述
-2. 提供更多上下文
-3. 尝试不同的表述方式
-4. 分解问题为更小的部分
-
-## 十一、FAQ 补充
-
-### Q6：这篇文章为什么不再把它叫做“2.8k Stars 的全面指南”？
-
-**答：** 因为这个仓库的公开热度和定位都已经大幅变化。继续沿用旧数字和旧定位，会直接损害文章的事实准确性。
-
-### Q7：Everything Claude Code 和官方 Claude Code 文档是什么关系？
-
-**答：** 官方文档负责说明正式能力、参数和边界；Everything Claude Code 更像一个社区驱动的工作流与资产仓库，适合学习如何组合使用这些能力。
-
-### Q8：我应该把它看成入门教程，还是高级工作流仓库？
-
-**答：** 两者都有，但现在更接近“从入门延伸到高级工作流系统”的综合资源。对于新手，适合用来建立地图；对于有经验的用户，适合用来观察更成熟的工作流组织方式。
-
-## 十二、总结
-
-Everything Claude Code 最值得看的地方，是，不是内容多它把 Claude Code 的使用经验、工作流方法、记忆与安全实践组织成了可迁移的资产。
-
-本文覆盖了从安装配置到自定义扩展的完整路径，也给出了按需迁移的思路。
-
-**怎么开始，取决于你当前的位置**：
-
-- **刚接触 Claude Code**：先看第五、六章，把安装和日常使用跑通，暂时不用管 MCP 和自定义命令。
-- **已经用了一段时间**：从第七章的 Slash Commands 和自定义指令入手，再回头读第四章的概念，把已有经验系统化。
-- **准备在团队里推广**：先读第九章的迁移案例，从一两个高价值资产开始引入，不要一次性铺开。
-
-**持续学习**：
-1. 定期查阅 [官方文档](https://docs.anthropic.com/claude-code)
-2. 关注社区推荐做法
-3. 在实际项目中迭代自己的配置
-4. 分享经验，帮助他人
-
-**进阶路径**：
-1. 初级：能够使用 Claude Code 完成日常编码任务
-2. 中级：能够配置和优化 Claude Code 行为
-3. 高级：能够扩展 Claude Code 功能，集成到团队工作流
+用一个具体例子把上面四层串起来：你接手一个不熟悉的 TypeScript 项目，想让它改一个 bug。
+
+1. **启动**：SessionStart hook 加载上次会话摘要，Agent 恢复对项目的记忆，不用你重新交代背景。
+2. **读上下文**：Agent 读取根目录的 `CLAUDE.md`（或其他 harness 的等价文件），拿到技术栈、代码规范、约束。
+3. **调用 skill**：你在对话里调用一个 `typescript-debug` 之类的 skill，Agent 收到该 skill 的完整工作流说明。
+4. **执行并验证**：Agent 按 instinct 的默认倾向，改完代码先跑一遍该项目的测试或 lint，而不是直接交差。
+5. **收尾**：Stop 阶段 hook 把这次会话的摘要写回，下次会话能接着用。
+
+这个流程里，四层资产各司其职：memory 管前后衔接，rules 管行为约束，skills 管任务方法，security 在背后防止它乱动不该动的东西。
+
+## 五、数据与规模怎么读
+
+仓库公开了几个数字，需要分清它们各自说明什么：
+
+- **Stars 237k+ / Forks 36k+**：反映的是关注度和二次开发的规模，**不能**直接推出"它的配置在你的项目里也一定好用"。
+- **261 个 skills / 多个语言生态**：说明覆盖面广，但**不能**推出"每个 skill 都适合你"——大量技能是作者在真实产品迭代中为特定场景沉淀的。
+- **"生产就绪、10 个月高强度使用"**：这是作者的自我描述，说明他确实在真实项目里跑过，但迁移到你的项目仍需要按你的技术栈裁剪。
+
+一句话：这些数字说明"系统性"和"覆盖面"，不说明"拿来即用"。
+
+## 六、什么时候该用，怎么入手
+
+### 适合用的人
+
+- **已经在用某款 AI 编程工具**，想从"偶尔用一下"升级到"有方法地用"。
+- **在多款工具之间切换**（比如 Claude Code 和 Codex 混用），想要一套统一的配置。
+- **团队想沉淀**可复用的审查、测试、技术栈规则，而不是每人各写一份。
+
+### 不适合一上来就全量用的人
+
+- **只想快速查一个命令**：官方文档更直接。
+- **项目极其简单**：装一套 261 个 skills 的系统，多半是在给一个用不着复杂度的项目增加维护负担。
+
+### 建议的采用顺序
+
+1. **先用官方渠道装**：按 README 走 `install.sh` 或 `npx ecc`，装 minimal profile，别一次装全。
+2. **只挑一两个 skill 试**：从你最常用的任务类型里选一个 skill，跑一次真实任务，看输出是否贴合你的项目。
+3. **按项目裁剪**：把不需要的语言规则、无关技能删掉，只保留与你技术栈相关的部分。
+4. **稳定后再扩展**：确认第一套资产稳定了，再考虑 memory hooks、GitHub App 等更重的部分。
+
+## 七、结尾
+
+Everything Claude Code 最值得看的地方，不是它有多少个 skill，而是它把"怎么让 Agent 工作得有章法"这件事，从一堆散落的技巧整理成了一层可跨终端复用的系统，并配套了安全边界和采用路径。
+
+它仍在快速增长，数据和定位都会继续变化。阅读时以仓库当前状态为准，把它当作"工作流组织方式的参考"，而不是一份需要照抄的配置清单。
 
 ---
 
-## 十三、自测清单
+## 八、延伸阅读
 
-下面按三个难度层级列出自测项。每一条的检验标准是"做过吗"而非"记住了吗"——动手验证比回忆定义有用得多。
-
-### 基础（⭐）
-
-- [ ] 在任意项目中完成 Claude Code 安装，并且 `claude` 命令可以正常启动
-- [ ] 在项目根目录创建了 `.env` 文件，配置了 `ANTHROPIC_API_KEY`，并且 `.env` 已加入 `.gitignore`
-- [ ] 用 Claude Code 完成过一次真实功能开发（是，不是跑 demo 自己项目里的需求）
-- [ ] 用过 `/clear` 重置对话上下文
-- [ ] 能说出对话上下文、工具使用、文件操作、项目上下文这四个概念分别解决什么问题
-
-### 进阶（⭐⭐）
-
-- [ ] 为项目创建了 `CLAUDE.md`，并且实际使用中观察到 AI 行为有所变化
-- [ ] 自定义过至少一个 Slash Command（放在 `.claude/commands/` 下），并在真实任务中使用过
-- [ ] 通过 `.claude.json` 或环境变量调整过模型行为（比如指定模型、限制输出风格）
-- [ ] 理解 API Key 为什么不能硬编码，并知道至少两种安全传递方式
-- [ ] 在至少一个项目中配置过 MCP Server 并验证连接成功
-
-### 高级（⭐⭐⭐）
-
-- [ ] 设计过一套自己的工作流资产组合（比如 `CLAUDE.md` + 自定义命令 + 项目级指令），各部分互相配合而非零散堆砌
-- [ ] 在 CI/CD 中集成过 Claude Code（比如 PR 审查流水线），并能在失败时定位问题
-- [ ] 能从 Everything Claude Code 仓库中独立挑选资产，迁移到自己的项目里，并说明为什么选这几个而不是全量复制
-- [ ] 遇到过 Claude Code 的上下文限制问题，并知道至少两种应对策略（分步任务 / `/clear` 后重新注入上下文 / 用 `CLAUDE.md` 减少重复说明）
-
-把上面打勾的项目数加起来：0-4 项说明还在基础阶段，建议回到第五、六章巩固日常使用；5-8 项已经能用得有条理，适合开始读第七章和第九章的迁移案例；9 项以上可以考虑把工作流资产沉淀给团队。
-
-## 十四、实战练习
-
-以下三个练习不依赖示例仓库，用你自己的项目就能跑完。每个练习都标注了预期耗时和对应的文章章节。
-
-### 练习一：从零配置一个 Claude Code 项目
-
-**难度**：⭐　**预期耗时**：30 分钟　**对应章节**：第五、六章
-
-选一个你正在做的真实项目（不要新建空项目），完成以下步骤：
-
-1. 安装 Claude Code 并配置 API Key。
-2. 创建 `CLAUDE.md`，至少写入：技术栈、代码规范、一个对 AI 行为的具体约束（比如"所有新增函数必须包含类型注解"）。
-3. 让 Claude Code 完成一个实际任务——比如"在 `src/utils/` 下新增一个日期格式化函数，要求处理边界情况（无效日期、时区）。"
-4. 观察它是否遵守了 `CLAUDE.md` 里的约束。如果没遵守，调整 `CLAUDE.md` 中的措辞，再试一次。
-
-**验收标准**：AI 的输出符合 `CLAUDE.md` 中的约束，并且代码能在项目中直接使用。
-
-### 练习二：写一个可复用的自定义 Slash Command
-
-**难度**：⭐⭐　**预期耗时**：45 分钟　**对应章节**：7.1、8.1
-
-你需要创建一个 Slash Command，它不只是一段 prompt，而是可以在不同项目中复用的检查规则。
-
-1. 在 `.claude/commands/` 下新建一个 `.md` 文件，命令名为 `security-check`。
-2. 这个命令要完成三件事：
-   - 检查当前项目中是否存在硬编码的密钥或 token（包括注释里的）
-   - 检查 `.gitignore` 是否忽略了 `.env` 和敏感目录
-   - 列出项目中所有直接使用 `process.env` 的位置，确认没有在客户端代码中暴露服务端环境变量
-3. 在命令行中用 Claude Code 加载这个命令，对当前项目跑一次安全审查。
-4. 把命令文件复制到另一个项目，再跑一次，检查是否需要调整规则。
-
-**提示**：好的自定义命令不会写死路径或文件名，而是描述"检查什么特征"——这样它才能在跨项目时通用。
-
-**验收标准**：同一个 `security-check.md` 在两个不同项目中都能输出有意义的检查结果。
-
-### 练习三：设计团队的 Claude Code 渐进引入方案
-
-**难度**：⭐⭐⭐　**预期耗时**：60 分钟　**对应章节**：第九章
-
-假设你所在团队（3-8 人）还没有用过 Claude Code，现在需要你出一个引入方案。要求是，不是"让大家都装上"就完了分阶段推进，每个阶段有明确的验收点。
-
-1. 写下你团队的现状：项目技术栈、现有工作流、成员对 AI 编程工具的熟悉程度。
-2. 参照第九章的"五个步骤"框架，设计一个三阶段方案：
-
-| 阶段 | 时间 | 引入内容 | 验收方式 |
-|------|------|----------|----------|
-| 第一阶段 | 1-2 周 | 只引入 `CLAUDE.md` + 一个自定义命令 | 至少 2 人反馈"有帮助" |
-| 第二阶段 | 2-4 周 | 补 2-3 个命令，统一 `.claude.json` 配置 | 代码审查中 AI 辅助的意见被采纳率 > 50% |
-| 第三阶段 | 4-8 周 | MCP 集成 + CI/CD 接入 | 流水线稳定运行 2 周无故障 |
-
-3. 写出每个阶段可能遇到的阻力（比如成员不愿改习惯、安全团队担心密钥泄露），并给出应对策略。
-4. 把这套方案写成一份不超过一页 A4 的 Markdown 文档，作为团队讨论的基础材料。
-
-**验收标准**：方案中的每个阶段都有明确的"停止条件"——什么情况下应该暂停引入、调整方向，而不是硬推。
-
----
-
-🦞
+- [仓库 README](https://github.com/affaan-m/ECC)
+- [官网 ecc.tools](https://ecc.tools)
+- The Shorthand Guide / The Longform Guide / The Security Guide（都在仓库根目录）

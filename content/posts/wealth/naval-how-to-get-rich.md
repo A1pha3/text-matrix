@@ -1,7 +1,7 @@
 ---
 title: "Naval「如何致富」：从财富、运气到杠杆的一套可执行框架"
 date: "2026-05-01T11:55:58+08:00"
-lastmod: 2026-08-04T09:00:00+08:00
+lastmod: 2026-08-06T00:00:00+08:00
 slug: "naval-how-to-get-rich"
 description: "基于 Naval Ravikant 2018 年 39 条推文风暴与后续长篇访谈，系统梳理财富、运气、股权、杠杆、具体知识、责任感、判断力与长期主义，给出一套可执行的财富创造框架。"
 draft: false
@@ -77,6 +77,8 @@ Naval 反复提到 leverage。致富的关键在于让同样一份判断和能�
 
 不是每个人都必须成为程序员。但低复制成本产品的逻辑值得想清楚：只要你的产出能被反复分发，而不是只能反复亲自交付，你就在向财富而不是收入靠近。
 
+Naval 还给这种创造加了一个前提：规模化。*You can get rich by giving society what it wants but does not yet know how to get. At scale.* 只解决一个人的问题，向上是帮忙，不构成财富；要让同一种能力服务一千个、一万个同类问题，才谈得上放大。这也是为什么低复制成本那么关键——它决定了你找到的答案能复制多少次。
+
 ---
 
 ## 值钱的是具体知识，不是热门技能
@@ -122,7 +124,7 @@ Naval 对 judgment 的定义：看见行动的长期后果，并据此做出更�
 2. 足够真实的后果，而不是隔岸观火。
 3. 足够稳定的情绪，不被愤怒、虚荣和自我幻想拖着走。
 
-阅读、写作、算术、说服、编程、数学、逻辑这些能力被 Naval 看得那么重，不是能直接让人发财，而是能提高你识别真伪、抽象问题和校准判断的能力。配上杠杆，差距会被指数级放大。
+阅读、写作、算术、说服、编程、数学、逻辑这些能力被 Naval 看得那么重，不是能直接让人发财，而是能提高你识别真伪、抽象问题和校准判断的能力。配上杠杆，差距会被指数级放大。Naval 用一句话概括过这个位置：*Earn with your mind, not your time.* 用判断而不是工时去换钱。判断力一旦配上杠杆，一次正确的押注，能抵得上你过去几年的劳动。
 
 ---
 
@@ -151,6 +153,8 @@ Naval 对 judgment 的定义：看见行动的长期后果，并据此做出更�
 原因是复利。金钱会复利，关系会复利，信任会复利，声誉也会复利。你在一个行业里长期积累的，不只是经验，还有别人对你可预测性的判断。合作越久，摩擦越小，交易成本越低，能做的事就越大。*Play iterated games. All the returns in life, whether in wealth, relationships, or knowledge, come from compound interest.*
 
 ethics 被放到这套东西里，不是道德说教。失信会让长期复利断裂。Naval 的原话是 ethical wealth creation：靠创造增量价值去拿结果，不是靠欺骗、寻租、违规、垄断。*Don't partner with cynics and pessimists. Their beliefs are self-fulfilling.* 和高智力、高能量、高诚信的人合作，远离犬儒主义者。
+
+还要接受一件反直觉的事：绝大多数努力大概率会白费。Naval 的原话是 *99% of your effort will go to waste*——你不知道哪 1% 会真正起作用，所以只能不断尝试，让每一次尝试都落在同一个长期账本上。没人能提前告诉你哪一次会命中，你能控制的只是提高试错次数，并让它们都发生在信任和复利不被打断的前提下。
 
 ---
 
@@ -206,6 +210,8 @@ Naval 的东西很强，但不是没有边界。
 
 还有一条：它谈的是财富，不是人生的全部。Naval 后来自己补了一句——当你终于变富，你会发现那不是你真正追求的一切。金钱能解决金钱问题，却买不来平静的头脑、健康的身体和充满爱的关系。
 
+最后也是最容易被误读的一点：这套框架把"大致可用的市场、可执行的法律和普遍的互联网基础设施"当成了前提。在资本流动受限、市场不成熟的环境里，同样的原则会以完全不同的形态起作用，不能机械照搬。它提升的是你创造财富的概率和上限，不保证路径本身畅通。
+
 ---
 
 ## 财富的意义是更大的自主权
@@ -222,3 +228,4 @@ Naval 的整套财富观，就是在回答一个问题：你能不能逐步把�
 - [Marc Andreessen, Luck and the Entrepreneur](https://pmarchive.com/luck_and_the_entrepreneur.html)
 - [Paul Graham, How to Make Wealth](http://paulgraham.com/wealth.html)
 - [Peter Thiel, Zero to One](https://zerotoone.com/)
+- [Eric Jorgenson, The Almanack of Naval Ravikant](https://www.navalmanack.com/)

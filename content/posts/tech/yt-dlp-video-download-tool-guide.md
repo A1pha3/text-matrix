@@ -3,7 +3,7 @@ title: "yt-dlp：命令行音视频下载工具使用与架构指南"
 date: "2026-05-23T03:05:00+08:00"
 slug: "yt-dlp-video-download-tool-guide"
 github_repo: "yt-dlp/yt-dlp"
-description: "yt-dlp 是一款开源命令行音视频下载工具，支持超过一千个站点，基于 youtube-dl 活跃 fork 而来。本文从安装、基础用法、格式选择、元数据处理、Python API、插件开发到架构解析全面覆盖，并给出适用边界与排查路径。"
+description: "yt-dlp 是一款开源命令行音视频下载工具，支持超过一千个站点，基于 youtube-dl 活跃 fork 而来。本文从安装、常用用法、格式选择、元数据处理、Python API、插件开发讲到架构解析，并给出适用边界与排查路径。"
 draft: false
 categories: ["技术笔记"]
 tags: ["FFmpeg", "Python", "开源工具"]
@@ -13,31 +13,21 @@ tags: ["FFmpeg", "Python", "开源工具"]
 
 需要从 YouTube、Bilibili、TikTok 等站点批量下载视频、提取音频、嵌入字幕或写元数据时，命令行工具比图形界面更可控、可脚本化、可复现。yt-dlp 是这一场景下维护最活跃的开源实现，覆盖超过一千个站点，从 youtube-dl fork 而来并持续合并上游修复。
 
-本文覆盖安装、常用用法、格式选择、元数据处理、Python API、插件开发，并拆解其内部架构，便于在下载失败、需要自定义提取器或嵌入到自动化流水线时定位问题。读完应能选择合适的安装与更新通道，用 `-f`/`-S` 精确控制下载格式，用输出模板组织文件结构，用 Python API 把下载能力嵌入到代码，并理解 Extractor/Downloader/PostProcessor 三层如何协作——从而判断某个站点失败时该改哪层。
+本文按安装、常用用法、格式选择、元数据处理、Python API、插件开发的顺序展开，最后拆开内部架构——下载失败时，能根据报错判断该改 URL、网络参数还是 ffmpeg 选项。
 
-文章按使用深度组织，建议按顺序阅读：
-
-| 阶段 | 章节 | 目标 |
-|------|------|------|
-| 入门 | 安装、最小示例 | 跑通第一次下载 |
-| 进阶 | 功能详解、输出模板、网络与反封锁 | 控制格式、组织文件、绕过封锁 |
-| 自动化 | 批量下载、Python API | 嵌入脚本和流水线 |
-| 扩展 | 插件系统、架构解析 | 自定义提取器、定位失败层 |
-| 排查 | 常见问题、适用边界 | 解决失败、判断是否选型正确 |
-
-只想快速上手的读者，看完「安装」和「最小示例」即可开始；遇到具体问题再回到对应章节。
+先上手只需看「安装」和「最小示例」；遇到具体问题再回到对应章节。
 
 ## 项目概览
 
 | 指标 | 值 |
 |------|------|
 | GitHub | [yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp) |
-| Stars / Forks | 164,198 / 13,806（2026 年 5 月） |
-| 语言 | Python（3.10+） |
-| 许可证 | Unlicense（源码） |
-| 最新提交 | 2026-05-22 |
+| Stars / Forks | 183k / 16k（2026-08-06 实时） |
+| 语言 | Python（>=3.10） |
+| 许可证 | Unlicense |
+| 维护状态 | 活跃，master 日常推送 |
 
-yt-dlp 是一款功能丰富的命令行音视频下载器，主要能力包括：
+yt-dlp 能做的事集中在这几类：
 
 - 支持超过一千个站点的视频提取，每个站点对应一个 Extractor 类
 - 格式选择与多维度排序（`-f` 按格式 ID，`-S` 按分辨率/codec/文件大小等维度）
@@ -143,7 +133,7 @@ yt-dlp -f "bv*+ba/b" "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 ### 格式选择
 
-格式选择是 yt-dlp 区别于其他下载工具的关键能力。同一视频在不同站点、不同清晰度下往往有多个可用格式，`-f` 和 `-S` 提供两种正交的控制方式：`-f` 按格式 ID 或过滤表达式精确指定，`-S` 按多个维度排序后取最优。
+格式选择是 yt-dlp 用起来和别的下载工具差别最大的地方。同一视频在不同站点、不同清晰度下往往有多个可用格式，`-f` 和 `-S` 提供两种互补的控制方式：`-f` 按格式 ID 或过滤表达式精确指定，`-S` 按多个维度排序后取最优。
 
 #### 列出可用格式
 
@@ -191,7 +181,7 @@ yt-dlp -S "filesize:desc,res:desc" "URL"
 yt-dlp -S "codec:av01" "URL"
 ```
 
-排序优先级依次为：`ext` → `fps` → `resolution` → `codec` → `filesize` → `br` → `vr` → `gen` → `sr`（可叠加使用）。
+默认排序依次考虑 `lang`、`quality`、`res`、`fps`、`hdr`、`vcodec`、`channels`、`acodec`、`size`、`br`、`asr`、`proto`、`ext` 等维度，其中 `hasvid` 和 `ie_pref` 始终优先。用 `-S ""` 可以查看当前生效的默认顺序。
 
 `-S` 与 `-f` 的区别：`-f` 是硬过滤，不满足条件的格式直接排除；`-S` 是软排序，所有格式都参与，只是按指定维度排先后。需要严格限制清晰度时用 `-f` 加过滤表达式，需要在多个维度间权衡时用 `-S`。
 
@@ -342,7 +332,7 @@ yt-dlp --impersonate "chrome:windows-10" "URL"
 yt-dlp --list-impersonate-targets
 ```
 
-底层使用 [curl_cffi](https://github.com/lexiforest/curl_cffi)（curl-impersonate 的 Python 绑定）实现 TLS 指纹伪装。这一功能需要额外安装 `curl_cffi` 依赖，二进制发行版默认包含。
+底层使用 [curl_cffi](https://github.com/lexiforest/curl_cffi)（curl-impersonate 的 Python 绑定）实现 TLS 指纹伪装。这是可选依赖：pip 安装用 `pip install -U yt-dlp[curl-cffi]`，官方二进制已内置。
 
 ### 地理限制绕过
 
@@ -579,7 +569,7 @@ URL 输入 → Extractor.match_id()    # 匹配 URL，确定使用哪个提取�
 2. `_real_extract()`：向目标网站发起请求，解析页面/API，返回视频信息字典
 3. `url_result()`：将提取结果转换为标准化格式
 
-以 YouTube 为例，其 Extractor 还需要处理 signature（签名）解密、n-sig（下一代签名）反混淆等逻辑。YouTube 持续更新签名算法，yt-dlp 需要跟进反混淆逻辑——这是 yt-dlp 持续维护工作量最大的部分，也是为什么遇到 YouTube 下载失败时第一反应应该是更新版本。
+以 YouTube 为例，其 Extractor 还需要处理 signature（签名）解密、n-sig（下一代签名）反混淆等逻辑。YouTube 会持续更新签名算法，yt-dlp 必须同步跟进，所以遇到 YouTube 下载失败时，第一反应先更新版本。
 
 ### Downloader 分层
 
@@ -717,12 +707,4 @@ yt-dlp 适合：批量下载视频、提取音频、归档播放列表、嵌入�
 3. 用 `-v` 查看详细日志，定位失败发生在 Extractor、Downloader 还是 PostProcessor 阶段
 4. 站点不在支持列表时，考虑编写自定义 Extractor 插件
 
-## 进阶路径
-
-按以下顺序深入使用 yt-dlp：
-
-1. **配置文件固化常用选项**：在 `~/.config/yt-dlp/config` 写入默认参数（如 `-o` 模板、`--download-archive` 路径、`--embed-subs`），避免每次命令都带一长串选项。
-2. **写一个批量下载脚本**：用 Python API + `--download-archive` 实现断点续传的播放列表归档，配合 `progress_hooks` 做失败告警。
-3. **开发自定义 Extractor 插件**：为一个 yt-dlp 未支持的内部站点写 Extractor，理解 `_real_extract` 的返回字典结构和 `url_result` 的用法。
-4. **集成到数据处理流水线**：用 `extract_info(download=False)` 抓元数据，用 `jq` 或 Python 过滤后决定下载哪些，配合 cron 或 Airflow 调度。
-5. **阅读源码理解反爬应对**：从 `extractor/youtube.py` 入手，看 signature 解密和 n-sig 反混淆的实现，理解 yt-dlp 为什么需要持续维护。
+再深入可以从三处入手：在 `~/.config/yt-dlp/config` 固化常用选项减少每次输入；用 Python API 加 `--download-archive` 写断点续传的播放列表归档脚本；为内部未支持站点写 Extractor 插件，理解 `_real_extract` 的返回结构。反爬应对则从 `extractor/youtube.py` 的 signature 解密和 n-sig 反混淆看起。

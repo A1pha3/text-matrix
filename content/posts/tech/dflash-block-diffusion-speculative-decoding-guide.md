@@ -3,123 +3,97 @@ title: "DFlash：块扩散加速的 LLM 推测解码技术"
 date: "2026-05-08T03:11:04+08:00"
 slug: "dflash-block-diffusion-speculative-decoding-guide"
 github_repo: "z-lab/dflash"
-description: "DFlash 是 z-lab 提出的块扩散式推测解码框架，通过轻量级块扩散模型代替传统自回归草案模型，实现 LLM 推理加速。本文详细解析其核心原理、支持模型列表、效果对比与快速上手方法。"
+description: "DFlash 用块扩散模型替代推测解码里的自回归草案模型，一次前向生成整块候选 Token，再由目标模型并行验收。论文（ICML 2026）报告无损加速超 6 倍，比 SOTA 的 EAGLE-3 快最多 2.5 倍。本文拆开它的草案生成、上下文条件化与并行验证机制，给出模型列表、四种接入后端与采用边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["LLM", "推理加速"]
 ---
 
-## 学习目标
+DFlash 想解决的，不是把 LLM 生成加速一圈，而是推测解码里最靠串行的那一段——草案生成。传统推测解码用一个小自回归模型来起草，起草本身仍要一步步走；DFlash 把草案模型换成块扩散模型，一次前向就"恢复"出一整块 Token，再由目标模型并行验收。论文报告在典型配置下做到 6 倍以上的无损加速，比当下 SOTA 的 EAGLE-3 最多快 2.5 倍。
 
-读完这篇文章，你可以：
+数据与代码来自 [z-lab/dflash](https://github.com/z-lab/dflash)、论文 [arXiv:2602.06036](https://arxiv.org/abs/2602.06036) 与 Hugging Face 模型集合，本次核验日期 2026-08-05。
 
-1. 理解传统推测解码（Speculative Decoding）的基本原理及其自回归草案模型的局限性。
-2. 解释 DFlash 的块扩散（Block Diffusion）草案模型是如何工作的，以及为什么块级别的扩散比逐 Token 自回归更快。
-3. 查看官方支持模型列表，找到对应 Hugging Face 上的 DFlash 适配模型。
-4. 在本地环境配置 DFlash 并测试其加速效果。
-5. 判断 DFlash 适合哪些硬件配置和使用场景。
+## 一、它解决的是哪一段瓶颈
 
----
+推测解码（Speculative Decoding）的思路分两步：先用一个轻量草案模型快速吐出 K 个候选 Token，再让目标大模型并行验证，接受正确、拒绝错误并重采样。这条路径的每个环节都算得通，但有个容易被忽略的短板——草案模型本身是自回归的。
 
-## 📋 目录
+自回归解码每生成一个 Token 都要等前一个结算完，GPU 在长序列下大量时间花在等待上，利用率起不来。推测解码用小模型先起草，目标模型并行验证，把"串行生成"换成了"并行验证"，所以理论上能提吞吐、不降质量。可草案模型只要还是自回归，起草 K 个 Token 就得串行跑 K 步；起草越快，这个串行段占的时间比重越大，加速的天花板就被它压住。
 
-1. [项目概述](#一项目概述)
-2. [核心原理](#二核心原理)
-3. [支持的模型](#三支持的模型)
-4. [快速开始](#四快速开始)
-5. [适用场景与边界](#五适用场景与边界)
-6. [总结](#六总结)
-7. [相关资源](#相关资源)
+DFlash 的取舍很直接：把草案这一环也改成一次前向出整块，串行段就只剩下扩散模型本身的那几步。
 
----
+## 二、系统总览
 
-## 一、项目概述
+DFlash 的链路里其实有两条并行机会，一条在草案生成，一条在验证。先看整体怎么流动：
 
-### 1.1 什么是 DFlash
-
-**DFlash**（[z-lab/dflash](https://github.com/z-lab/dflash)，3.4k Stars）全称是 "Block Diffusion for Flash Speculative Decoding"——一种基于块扩散的 Flash 推测解码框架。它由 z-lab 团队提出，核心创新是用**轻量级块扩散模型**代替传统推测解码中的自回归草案模型（Draft Model），从而实现更高的推理加速比。
-
-官方资源：
-- 论文：[https://arxiv.org/abs/2602.06036](https://arxiv.org/abs/2602.06036)
-- 博客：[https://z-lab.ai/projects/dflash/](https://z-lab.ai/projects/dflash/)
-- 模型库：[https://huggingface.co/collections/z-lab/dflash](https://huggingface.co/collections/z-lab/dflash)
-
-### 1.2 推测解码的背景
-
-在深入 DFlash 之前，需要理解它解决的问题。
-
-大型语言模型（LLM）普遍使用 **自回归解码（Autoregressive Decoding）**：每生成一个 Token，都需要等待前一个 Token 完成计算才能开始。这种"一步接一步"的模式导致 GPU 利用率低下，尤其在长序列生成时大部分时间花在"等待"上。
-
-**推测解码（Speculative Decoding）** 是一种解决思路：
-
-1. 使用一个轻量级的小模型（Draft Model）快速生成多个候选 Token
-2. 用大模型（Target Model）并行验证这些候选 Token
-3. 正确的候选 Token 被接受，错误的被拒绝并重新生成
-
-这种方法理论上可以让大模型在生成时保持高 GPU 利用率，同时不损失输出质量。但传统推测解码存在一个问题：**Draft Model 本身也是自回归的**，生成 K 个候选 Token 需要 O(K) 次 Forward Pass，在 Draft 质量不高时，加速效果有限。
-
-### 1.3 DFlash 的核心改进
-
-DFlash 的创新在于用**块扩散（Block Diffusion）模型**替代自回归 Draft Model：
-
-- **传统 Draft Model**：逐 Token 自回归生成，生成 K 个 Token 需要 K 次串行生成
-- **DFlash 草案模型**：块级别扩散模型，可以在单次 Forward Pass 中生成多个 Token 的草案
-
-这使得 DFlash 可以更高效地生成多 Token 草案，减少了草案生成阶段的延迟。
-
----
-
-## 二、核心原理
-
-### 2.1 块扩散 vs 自回归草案
-
-传统的推测解码使用自回归模型作为 Draft：
-
-```
-Draft Model: Token_1 -> Token_2 -> Token_3 -> ... (串行)
-Target Model: [Token_1, Token_2, Token_3, ...] (并行验证)
+```mermaid
+flowchart LR
+    P[输入上下文] --> T[Target 大模型]
+    T -->|提取上下文特征| F[上下文特征]
+    F --> D[Block Diffusion 草案模型]
+    D -->|单次前向生成 K 个 Token| B[K Token 草案块]
+    B --> V[Target 并行验证]
+    V -->|接受| A[保留接受 Token]
+    V -->|拒绝| R[拒绝位置重采样]
+    A --> P
+    R --> P
 ```
 
-DFlash 的草案模型是块扩散模型，通过一次前向传播即可生成多个 Token 的草案：
+关键在两条特征：一是草案模型用"块扩散"方式一次生成整块 Token，不再逐 Token 自回归；二是草案模型会被目标模型的上下文特征条件化，特征质量直接决定接受率，而接受率决定最终加速比。这两条是 DFlash 区别于传统草案模型的核心。
 
-```
-DFlash Draft: [Token_1, Token_2, ..., Token_K] <- 一次 Forward（并行）
-Target Model: [Token_1, Token_2, ..., Token_K] (并行验证)
-```
+## 三、核心机制
 
-块扩散的核心思想是：不逐个生成 Token，而是把整个 Token 序列看作一个"信号"，通过扩散模型一次恢复出多个 Token。这类似于图像生成中从噪声一次生成整幅图，而不是逐像素生成。
+### 3.1 一次前向出整块
 
-### 2.2 验证与接受机制
+扩散模型把"生成"看成从噪声里一步步还原信号。图像生成场景里，它一次还原整幅图，而不是一个像素一个像素先生成。DFlash 把这个思路搬到 Token 序列上：把一整块 Token 当作待还原的信号，草案模型从噪声出发，一次前向把整块候选 Token 恢复出来。
 
-DFlash 仍然使用大模型来验证草案：
+对比自回归草案的 K 步串行，块扩散把这块的生成成本压到单次前向附近。代价是扩散本身有降噪步数，草案模型也得更小、更轻，否则省下的时间又会被扩散开销吃回去。
 
-1. 草案模型生成 K 个 Token 的草案序列
-2. Target Model 接收原始上下文 + 草案序列
-3. Target Model 并行验证每个草案 Token
-4. 接受的 Token 直接保留，拒绝的位置触发重新采样
+### 3.2 草案被目标特征条件化
 
-验证机制确保最终输出质量与纯自回归解码完全一致——这是推测解码的重要特性：从不降低输出质量。
+单靠"块扩散"并不能保证草案质量。DFlash 让草案模型接收从目标模型提取的上下文特征——也就是大模型在评估当前输入时产生的那层中间表示。草案读了这层特征再起草，相当于"先理解目标在期待什么，再往下续"。
 
-### 2.3 加速效果
+这是论文里把它和普通扩散草案区分开的关键点，也是接受率能提上去的原因：草案越贴近目标模型会接什么，验证阶段被拒绝的 Token 就越少，一次能向前推进的步数就越多，加速比就越接近理论值。
 
-根据官方论文和博客，DFlash 的加速效果取决于：
+### 3.3 验证仍由目标模型负责
 
-- 目标模型大小：越大的模型加速比越高
-- 草案模型质量：草案接受率越高加速效果越好
-- 输入序列长度：长序列场景下加速效果更明显
+草案只是候选，最终把关的还是目标模型。目标模型拿到"原始上下文 + 草案块"后并行验证每个 Token：接受的保留，拒绝的位置触发重采样。因为验证严格按目标模型自己的分布来，这套机制保持推测解码的"无损"性质——输出在统计上与纯自回归一致，不因提速而改变质量。
 
-官方给出的数据显示，在部分配置下可以实现 **2-3 倍**的 Token 生成速度提升。
+## 四、一次任务如何流过系统
 
----
+以 vLLM 后端跑 Qwen3.5-27B 为例，README 里推荐草案为 `z-lab/Qwen3.5-27B-DFlash`，`num_speculative_tokens` 设 15：
 
-## 三、支持的模型
+1. 用户输入进入目标模型，模型算出一层上下文特征。
+2. 特征喂给 DFlash 草案模型，草案单次前向吐出 15 个候选 Token。
+3. 目标模型把这 15 个候选与原始上下文一起并行验证，接受一部分、拒绝一部分。
+4. 接受的前缀直接输出；第一个被拒绝的位置之后重采样，这段替换为真实生成。
+5. 当前缀推进后，用新的上下文特征重新起草下一块，循环往复。
 
-DFlash 提供了丰富的预训练草案模型，覆盖主流开源大模型：
+这个例子说明一点：DFlash 的收益不是"每块全对"，而是"每块里接受得多、拒绝得少"。接受率上不去，扩散草案省下的起草时间会被反复重采样抵消。
 
-| 目标模型 | DFlash 草案模型 |
-|---------|---------------|
-| gemma-4-26B-A4B-it | [z-lab/gemma-4-26B-A4B-it-DFlash](https://huggingface.co/z-lab/gemma-4-26B-A4B-it-DFlash) |
+## 五、加速多少，怎么读这些数字
+
+论文报告在 gsm8k、math500、humaneval、mbpp、mt-bench 等数据集上，DFlash 做到超过 6 倍的无损加速，并比 EAGLE-3 最多快 2.5 倍。
+
+先说要测的是什么：这是端到端的推测解码加速比，也就是"纯自回归的时间 ÷ 用 DFlash 的时间"，且是无损口径——输出 token 的分布要和自回归一致才算数。6 倍是相对自回归的提升，不是相对 EAGLE-3 的提升；2.5 倍那个数字才是和 EAGLE-3 的横向对比。
+
+因此有几件事不能从论文数字直接推出来：
+
+- 不是所有模型、任务都有 6 倍。加速依赖接受率、目标模型大小、生成长度；小模型、短生成、接受率低的场景收益明显变小。
+- 6 倍是论文评测配置下的结果（含具体草案、上下文长度、批处理方式），部署时要在自己的模型和流量上重测。
+- 无损是对"输出质量"而言，不意味着推理路径本身没有额外开销；草案模型和扩散步数都要占显存和算力。
+
+## 六、支持的模型与接入方式
+
+DFlash 草案模型覆盖主流开源家族，README 当前列出的映射如下：
+
+| 目标模型 | DFlash 草案 |
+|---|---|
 | gemma-4-31B-it | [z-lab/gemma-4-31B-it-DFlash](https://huggingface.co/z-lab/gemma-4-31B-it-DFlash) |
+| gemma-4-26B-A4B-it | [z-lab/gemma-4-26B-A4B-it-DFlash](https://huggingface.co/z-lab/gemma-4-26B-A4B-it-DFlash) |
+| MiniMax-M2.7（Preview） | [z-lab/MiniMax-M2.7-DFlash](https://huggingface.co/z-lab/MiniMax-M2.7-DFlash) |
+| MiniMax-M2.5（Preview） | [z-lab/MiniMax-M2.5-DFlash](https://huggingface.co/z-lab/MiniMax-M2.5-DFlash) |
+| Kimi-K2.6（Preview） | [z-lab/Kimi-K2.6-DFlash](https://huggingface.co/z-lab/Kimi-K2.6-DFlash) |
+| Kimi-K2.5 | [z-lab/Kimi-K2.5-DFlash](https://huggingface.co/z-lab/Kimi-K2.5-DFlash) |
 | Qwen3.6-27B | [z-lab/Qwen3.6-27B-DFlash](https://huggingface.co/z-lab/Qwen3.6-27B-DFlash) |
 | Qwen3.6-35B-A3B | [z-lab/Qwen3.6-35B-A3B-DFlash](https://huggingface.co/z-lab/Qwen3.6-35B-A3B-DFlash) |
 | Qwen3.5-4B | [z-lab/Qwen3.5-4B-DFlash](https://huggingface.co/z-lab/Qwen3.5-4B-DFlash) |
@@ -127,193 +101,94 @@ DFlash 提供了丰富的预训练草案模型，覆盖主流开源大模型：
 | Qwen3.5-27B | [z-lab/Qwen3.5-27B-DFlash](https://huggingface.co/z-lab/Qwen3.5-27B-DFlash) |
 | Qwen3.5-35B-A3B | [z-lab/Qwen3.5-35B-A3B-DFlash](https://huggingface.co/z-lab/Qwen3.5-35B-A3B-DFlash) |
 | Qwen3.5-122B-A10B | [z-lab/Qwen3.5-122B-A10B-DFlash](https://huggingface.co/z-lab/Qwen3.5-122B-A10B-DFlash) |
+| gpt-oss-20b | [z-lab/gpt-oss-20b-DFlash](https://huggingface.co/z-lab/gpt-oss-20b-DFlash) |
+| gpt-oss-120b | [z-lab/gpt-oss-120b-DFlash](https://huggingface.co/z-lab/gpt-oss-120b-DFlash) |
 | Qwen3-Coder-Next | [z-lab/Qwen3-Coder-Next-DFlash](https://huggingface.co/z-lab/Qwen3-Coder-Next-DFlash) |
+| Qwen3-4B（non-thinking） | [z-lab/Qwen3-4B-DFlash-b16](https://huggingface.co/z-lab/Qwen3-4B-DFlash-b16) |
+| Qwen3-8B（non-thinking） | [z-lab/Qwen3-8B-DFlash-b16](https://huggingface.co/z-lab/Qwen3-8B-DFlash-b16) |
 | Qwen3-Coder-30B-A3B | [z-lab/Qwen3-Coder-30B-A3B-DFlash](https://huggingface.co/z-lab/Qwen3-Coder-30B-A3B-DFlash) |
-| Kimi-K2.5 | [z-lab/Kimi-K2.5-DFlash](https://huggingface.co/z-lab/Kimi-K2.5-DFlash) |
-| MiniMax-M2.5 | [z-lab/MiniMax-M2.5-DFlash](https://huggingface.co/z-lab/MiniMax-M2.5-DFlash) |
+| Llama-3.1-8B-Instruct | [z-lab/LLaMA3.1-8B-Instruct-DFlash-UltraChat](https://huggingface.co/z-lab/LLaMA3.1-8B-Instruct-DFlash-UltraChat) |
 
-可以看到覆盖了 Google Gemma、Qwen（通义千问）、Kimi、MiniMax 等主流模型家族。
+DeepSeek-V4-Flash、DeepSeek-V4-Pro、GLM-5.1 标记为 Coming soon。作者称会开源训练配方，届时可为自己跑的模型训练 DFlash 草案。
 
----
+接入有四种后端，适配场景不同：
 
-## 四、快速开始
+| 后端 | 说明 |
+|---|---|
+| Transformers | 仅 Qwen3 与 LLaMA-3.1 支持，适合快速验证 |
+| SGLang | `--speculative-algorithm DFLASH`，服务端部署 |
+| vLLM | v0.20.1+ 内置核心支持；Gemma4 需专用构建 |
+| MLX | Apple Silicon 原生，社区已有多种实现 |
 
-### 4.1 环境要求
+## 七、起步
 
-- Python 3.9+
-- PyTorch 2.0+
-- Transformers 库
-- 最好是 CUDA 支持的 GPU（用于加速验证阶段）
-
-### 4.2 安装
-
-```bash
-pip install dflash
-```
-
-或者从源码安装：
+仓库建议为每个后端单独建虚拟环境，从源码安装：
 
 ```bash
 git clone https://github.com/z-lab/dflash.git
 cd dflash
-pip install -e .
+uv pip install -e ".[transformers]"
 ```
 
-### 4.3 基本使用
+Transformers 后端的用法（草案模型用 `spec_generate` 直接驱动，目标模型作为参数传入）：
 
 ```python
-from dflash import DFlashPipeline
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
 
-# 加载目标模型和 DFlash 草案
-target_model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3.5-9B")
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3.5-9B")
-draft_model = DFlashPipeline.from_pretrained("z-lab/Qwen3.5-9B-DFlash")
+draft = AutoModel.from_pretrained(
+    "z-lab/Qwen3-8B-DFlash-b16", trust_remote_code=True,
+    dtype="auto", device_map="cuda:0",
+).eval()
+target = AutoModelForCausalLM.from_pretrained(
+    "Qwen/Qwen3-8B", dtype="auto", device_map="cuda:0",
+).eval()
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B")
 
-# 启用 DFlash 加速
-target_model.enable_dflash(draft_model)
+messages = [{"role": "user", "content": "How many positive whole-number divisors does 196 have?"}]
+input_ids = tokenizer.apply_chat_template(
+    messages, return_tensors="pt", add_generation_prompt=True,
+    enable_thinking=False,
+).to(draft.device)
 
-# 标准推理接口
-prompt = "解释一下为什么天空是蓝色的"
-inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-outputs = target_model.generate(**inputs, max_new_tokens=200)
-print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+output = draft.spec_generate(
+    input_ids=input_ids, max_new_tokens=2048, temperature=0.0,
+    target=target, stop_token_ids=[tokenizer.eos_token_id],
+)
+print(tokenizer.decode(output[0], skip_special_tokens=False))
 ```
 
-### 4.4 运行官方示例
-
-仓库提供了多个示例脚本，位于 `examples/` 目录：
+生产环境通常走服务端。vLLM 的接入是在启动参数里挂 `--speculative-config`：
 
 ```bash
-# 克隆仓库
-git clone https://github.com/z-lab/dflash.git
-cd dflash
-
-# 运行示例
-python examples/run_qwen.py --model Qwen3.5-9B --draft z-lab/Qwen3.5-9B-DFlash
+vllm serve Qwen/Qwen3.5-27B \
+  --speculative-config '{"method": "dflash", "model": "z-lab/Qwen3.5-27B-DFlash", "num_speculative_tokens": 15}' \
+  --attention-backend flash_attn \
+  --max-num-batched-tokens 32768
 ```
 
----
+## 八、适用边界与采用顺序
 
-## 五、适用场景与边界
+先看什么时候值得用 DFlash：
 
-### 5.1 适合的场景
+- 目标是长序列生成，文章、代码、长对话这类生成长度占大头、串行段占比高的任务。
+- 把加速看作吞吐或时延敏感的服务端优化，而不是单次小请求的优化。
+- 目标模型在官方支持列表里，草案模型现成可下，不用自己训。
 
-- **长序列生成任务**：文章写作、代码生成、长对话等场景
-- **对延迟敏感的在线服务**：需要更快首 Token 或整体吞吐量的场景
-- **服务器端部署**：在 GPU 服务器上部署 LLM 推理服务
-- **已支持模型**：目标模型在官方支持列表中的情况
+可以缓一缓的情况：
 
-### 5.2 不适合的场景
+- 目标模型不在列表里，得等训练配方开源再自己训草案，前期成本不低。
+- 纯 CPU 或显存紧张的环境。草案模型和扩散步数都要占显存，省下的时间可能被内存交换吃掉。
+- 极短生成任务。草案加载、扩散步数、上下文特征提取的固定开销，在小请求里可能抵消加速收益。
 
-- **未支持模型**：如果目标模型没有对应的 DFlash 草案模型，需要自己训练，门槛较高
-- **CPU 推理**：缺乏 GPU 加速，草案模型的扩散推理反而增加开销
-- **极短任务**：任务本身就很短（如单个问答），推测解码的启动开销可能抵消加速收益
+从接入成本排序，建议先走 Transformers 后端把效果跑通，确认接受率和加速比在自己模型上成立，再考虑 SGLang / vLLM 的服务端集成。Apple Silicon 上的 MLX 是低成本的试水路径，但加速比和 CUDA 环境不可直接类比。
 
-### 5.3 效果对比
+## 结语
 
-| 方案 | 生成速度 | 输出质量 | 基础设施需求 |
-|------|---------|---------|------------|
-| 纯自回归 | 基准 | 100% | 低 |
-| 传统推测解码 | 1.5-2x | 100% | 中（需要 Draft Model） |
-| DFlash | 2-3x | 100% | 中（需要 DFlash 草案） |
-
----
-
-## 六、总结
-
-DFlash 代表了 LLM 推理加速领域的一个重要方向——用扩散模型代替自回归模型作为推测解码的草案生成器。块级别的一次性生成比逐 Token 自回归更高效，配合大模型的并行验证，可以在不损失输出质量的前提下显著提升推理速度。
-
-对于在生产环境部署 LLM 的团队，DFlash 是一个值得关注的方案，尤其在目标模型已被官方支持的情况下，接入成本相对可控。但需要注意它不是万能药——对于小模型或短任务，额外的草案模型可能带来净开销。
-
----
-
-## 自测题
-
-1. **传统推测解码的主要瓶颈是什么？**
-   - A. 大模型验证速度慢
-   - B. Draft Model 本身也是自回归的，生成多个候选 Token 需要多次串行生成
-   - C. 内存占用过高
-   - D. 不支持并行计算
-
-2. **DFlash 使用什么模型替代传统自回归 Draft Model？**
-   - A. 更大的自回归模型
-   - B. 块扩散（Block Diffusion）模型
-   - C. 强化学习模型
-   - D. 检索模型
-
-3. **推测解码的一个重要特性是什么？**
-   - A. 输出质量会略有下降
-   - B. 从不降低输出质量
-   - C. 需要重新训练目标模型
-   - D. 只适用于特定任务
-
-4. **DFlash 官方给出的加速效果是多少？**
-   - A. 1.1-1.5 倍
-   - B. 1.5-2 倍
-   - C. 2-3 倍
-   - D. 5 倍以上
-
-5. **以下哪个场景不适合使用 DFlash？**
-   - A. 长序列生成任务
-   - B. 对延迟敏感的在线服务
-   - C. CPU 推理环境
-   - D. 服务器端部署
-
-**答案**：1-B, 2-B, 3-B, 4-C, 5-C
-
----
-
-## 练习
-
-1. **基础练习**：按照快速开始部分的指引，在自己的环境中安装 DFlash，并运行官方示例脚本，观察加速效果。
-
-2. **对比练习**：使用相同的模型和提示词，分别用纯自回归解码和 DFlash 加速解码生成文本，对比生成速度和输出质量。
-
-3. **模型适配练习**：查看官方支持模型列表，选择一个新的目标模型（如 Qwen3.5-27B），配置对应的 DFlash 草案模型并测试。
-
-4. **场景测试练习**：测试不同长度的输入提示词和生成任务，观察 DFlash 在不同场景下的加速效果变化。
-
-5. **原理理解练习**：阅读 DFlash 论文的第二章，深入理解块扩散模型的工作原理，并尝试解释为什么块级别扩散比逐 Token 自回归更快。
-
----
-
-## 进阶路径
-
-1. **深入理解原理**：阅读 DFlash 论文和相关的推测解码、扩散模型论文，理解技术背景和数学原理。
-
-2. **自定义训练**：如果目标模型不在官方支持列表中，学习如何训练自定义的 DFlash 草案模型。
-
-3. **性能优化**：研究如何进一步优化 DFlash 的性能，包括调整草案长度、验证阈值等超参数。
-
-4. **生产部署**：将 DFlash 集成到生产环境的 LLM 推理服务中，考虑负载均衡、资源管理、监控等指标。
-
----
-
-## 常见问题 FAQ
-
-**Q: DFlash 支持哪些深度学习框架？**
-A: DFlash 基于 PyTorch 和 Transformers 库，需要 Python 3.9+ 和 PyTorch 2.0+。
-
-**Q: DFlash 能在 CPU 上运行吗？**
-A: 技术上可以，但缺乏 GPU 加速时，草案模型的扩散推理反而会增加开销，不推荐。
-
-**Q: 如何判断我的模型是否被 DFlash 支持？**
-A: 查看文章中的"支持的模型"表格，或访问 [Hugging Face 模型库](https://huggingface.co/collections/z-lab/dflash)。
-
-**Q: DFlash 会影响模型输出质量吗？**
-A: 不会。推测解码的重要特性是永不降低输出质量，最终输出与纯自回归解码完全一致。
-
-**Q: DFlash 的开源协议是什么？**
-A: 需要查看 GitHub 仓库的 LICENSE 文件，通常在仓库根目录。
-
----
-
----
+DFlash 的价值不在"换了个草案模型"，而在把推测解码里最串行的一环也改成并行。草案从"逐 Token 自回归"变成"一次前向出整块"，再靠目标模型的上下文特征把接受率抬上去，整条链路才真正跑出超过 6 倍的加速。它没有改变"目标模型把关"这一层，所以无损性质保住了。对已经跑长序列服务的团队，这是少有的、接入成本相对可控的加速方向；但能不能吃到这个收益，最终取决于自己的模型和任务在同一条链路上测出来的接受率。
 
 ## 相关资源
 
-- GitHub：[z-lab/dflash](https://github.com/z-lab/dflash)（3.4k Stars）
-- 论文：[https://arxiv.org/abs/2602.06036](https://arxiv.org/abs/2602.06036)
-- 博客：[https://z-lab.ai/projects/dflash/](https://z-lab.ai/projects/dflash/)
-- 模型库：[https://huggingface.co/collections/z-lab/dflash](https://huggingface.co/collections/z-lab/dflash)
+- GitHub：[z-lab/dflash](https://github.com/z-lab/dflash)（MIT 协议，Python，约 5.6k Stars）
+- 论文：[DFlash: Block Diffusion for Flash Speculative Decoding（arXiv:2602.06036）](https://arxiv.org/abs/2602.06036)
+- 博客：[z-lab.ai/projects/dflash](https://z-lab.ai/projects/dflash/)
+- 模型库：[Hugging Face 集合 z-lab/dflash](https://huggingface.co/collections/z-lab/dflash)

@@ -14,7 +14,7 @@ AI 编程 agent（智能体）都有一个逃不掉的约束：它们跑在你�
 
 先把判断亮出来：T3 Code 是壳，不是 agent。它不跑模型、不做代码生成，管理的是你已安装并认证的 agent 进程，所以你可以坐在沙发上，偶尔低头看一眼进度。要不要用，只看这层壳顺不顺手；代码能力不归它管。
 
-README 里被问「你到底在卖什么」时，回答是「Nothing」——他们做 T3 Code，只是想要最好用的 agent 开发体验，而 Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 这些现成方案都没到他们的标准。它想做到性能好、能远程、真正开放，并明说「万一走错了方向，你会拿到 fork 和构建自己编辑器所需的一切」。这句「真正开放」有具体所指：MIT、不上传遥测、自带安装包，都能在仓库里核对。
+README 里被问「你到底在卖什么」时，回答是「Nothing」——他们做 T3 Code，只是想要最好用的 agent 开发体验，而 Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 这些现成方案都没到他们的标准。它想做到性能好、能远程、真正开放，并明说「万一走错了方向，你会拿到 fork（派生）和构建自己编辑器所需的一切」。这句「真正开放」有具体所指：MIT、不上传遥测、自带安装包，都能在仓库里核对。
 
 ## 目录
 
@@ -126,7 +126,7 @@ T3 Code 的远程模型一句话就能说清：远程只存在于连接层，运
 
 配对流程设计得比传统 token（令牌）登录干净：`t3 serve`（或对运行中的服务器执行 `t3 pair`）签发一次性配对 token，远程设备用它交换会话，之后访问全部基于会话，不需要长期秘密。桌面应用里还能用「Create Link」生成一个配对链接，直接分享给另一台设备。WebSocket 的认证票据独立签发，默认五分钟过期，且每个 RPC 方法还各自校验权限范围——拿到一条合法连接不代表能调所有方法。会话管理单独交给 `t3 auth`：签发额外凭据、查看活跃会话、吊销不再信任的配对，都在这一条命令下完成。
 
-托管配对（app.t3.codes）只是个客户端便利，不是中继。它不代理 HTTP 或 WebSocket 流量，浏览器直接连你给的后端地址，配对 token 放在 URL hash 里，连托管页都看不到。前提是后端必须能被浏览器直接访问——HTTPS 页面只能连 HTTPS/WSS 后端，纯 HTTP 的局域网地址还得走桌面或 CLI 的直连配对。
+托管配对（app.t3.codes）只是个客户端便利，不是中继。它不代理 HTTP 或 WebSocket 流量，浏览器直接连你给的后端地址，配对 token 放在 URL hash（哈希）里，连托管页都看不到。前提是后端必须能被浏览器直接访问——HTTPS 页面只能连 HTTPS/WSS 后端，纯 HTTP 的局域网地址还得走桌面或 CLI 的直连配对。
 
 客户端和服务端版本不一致时，连接层不会静默失败：环境描述符携带运行中的服务端版本，UI 据此显示对应的同步操作，服务端也支持更新回滚。远程环境在客户端升级期间保持在线，断线重连由连接管理器统一处理，和普通网络抖动走同一条恢复路径。
 
@@ -168,6 +168,8 @@ T3 Code 的取舍很清晰：远程控制和多 agent 统一入口。Superset �
 
 ## 七、快速上手
 
+### 基础安装
+
 ```bash
 # 最简方式，需 Node.js 22.16+ / 23.11+ / 24.10+
 npx t3@latest
@@ -180,13 +182,112 @@ npx t3@latest --help
 
 桌面安装走各平台包管理器：Windows 用 `winget install T3Tools.T3Code`，macOS 用 `brew install --cask t3-code`，Arch 用 `yay -S t3code-bin`。远程访问的完整配置见 [remote-access.md](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md)。
 
+### 实战：手机从外网连家中机器
+
+第四章讲过「能连」的机制——四种连接目标：本地主连接、Bearer 配对、Relay 中继、SSH。这一节回答更实际的问题：手机在外面（蜂窝网络、公司 Wi-Fi）时，怎么连回家里的机器？实际可用的路径有四条：Tailscale、Relay 中继、SSH 远程环境、托管配对。结论先行：**日常首选 Tailscale，它不可用时用 Relay 中继兜底**；SSH 和托管配对适用于特定场景。下面按「横评 → 推荐组合 → 逐步操作」展开，看完照着做就能跑通。
+
+#### 四种方案横评
+
+| 维度 | Tailscale | Relay 中继 | SSH 远程环境 | 托管配对 |
+|------|-----------|-----------|--------------|----------|
+| 上手成本 | 两台设备各装一个客户端，扫码即用 | 一条命令，零安装 | 家机需开 SSH 服务并配好登录 | 需自备 HTTPS 入口 |
+| 功能 | 稳定地址 + 可选 HTTPS，App 与网页通吃 | 只解决「连上」，无附加能力 | 桌面 App 顺手管理远端机器 | 仅网页版配对 |
+| 网络强壮性 | WireGuard 直连，打洞失败自动回退 DERP 中继，弱网稳定 | 依赖 Cloudflare 隧道，受第三方节点影响 | 依赖家宽上行与 SSH 配置质量 | 依赖你自己的 HTTPS 隧道质量 |
+| 安全 | 端到端加密，服务不暴露公网 | 流量经第三方隧道中转，依赖其可用性 | 需暴露 SSH 端口，攻击面最大 | 配对 token 落在 URL 里 |
+| 手机端要求 | Tailscale + T3 Code 两个 App | 只装 T3 Code App | 由桌面 App 引导，手机不直接参与 | 浏览器即可 |
+
+逐条拆开看：
+
+- **Tailscale**：两端加入同一个 tailnet 后，T3 server 只监听 tailnet 私有地址，公网扫描不到，安全层级最高；WireGuard 在传输层加密，手机切 4G/5G/Wi-Fi 不断线；缺点是两台设备都要装客户端、依赖 Tailscale 账号。**适合绝大多数人，官方也把它列为首选。**
+- **Relay 中继**：`t3 connect` 一条命令穿透 NAT，不需要账号和安装；代价是数据经 Cloudflare 隧道转发、依赖第三方服务，多一跳网络、延迟略高。**适合不想装 Tailscale 的人，或 Tailscale 被网络环境限制时兜底。**
+- **SSH 远程环境**：桌面 App 帮你登录远端、启动 T3 server 并转发端口，适合「用桌面 App 管理一台远程机器」；但它是桌面功能，手机 App 无法发起，对「手机直连家机」这个目标并不直接解决。**适合已有 SSH 基础设施、主要用桌面端的人。**
+- **托管配对**：`app.t3.codes` 网页版直连你的后端，前提是后端能被浏览器经 HTTPS/WSS 访问——也就是说你得先有自己的 HTTPS 入口（比如 Cloudflare Tunnel 配域名）。**适合已经有 HTTPS 隧道的人，其余场景绕远了。**
+
+#### 最优组合：Tailscale 为主，Relay 兜底
+
+两者互补：Tailscale 给到「不暴露 + 强加密 + 弱网稳」，是四条路里性价比最高的；万一在公司网络、酒店等环境里 Tailscale 的 UDP 打洞被拦，一条 `npx t3 connect` 就能临时顶上，不用改任何其他配置。SSH 和托管配对只在它们对应的特定场景里才划算，日常不必考虑。
+
+#### 方案一：Tailscale（首选）
+
+前提：
+
+- 家中机器和手机都安装 [Tailscale](https://tailscale.com/)，用同一个账号登录，加入同一个 tailnet
+- 手机装好 T3 Code App（App Store 或 Google Play 搜索 T3 Code）
+- 家中机器已安装并认证至少一个 agent（见上面的「基础安装」）
+
+**家中机器端，二选一：**
+
+- 服务端还没启动：启动并发布服务，一步到位（手机 App 和网页版都能连）：
+  ```bash
+  npx t3 serve --tailscale-serve
+  ```
+  只想让手机 App 连、不打算用网页版的话，绑 tailnet IP 更省：
+  ```bash
+  npx t3 serve --host "$(tailscale ip -4)"
+  ```
+- 服务端已经在跑：不用重启，直接签发配对二维码：
+  ```bash
+  npx t3 pair --tailscale
+  ```
+
+`--tailscale-serve` 会自动配置 Tailscale Serve 的 HTTPS 映射，把服务发布到 `https://<机器名>.<tailnet名>.ts.net/`。这个映射一直保留，直到你手动关掉：
+
+```bash
+tailscale serve --https=443 off
+```
+
+**手机端：**
+
+1. 打开 T3 Code App
+2. 点击「Add Environment」
+3. 扫描终端显示的二维码，完成配对
+4. 在环境列表选择刚添加的机器，连接
+
+配对一次后，环境会保存下来，之后直接点一下就能连，不需要重复扫码。
+
+**常见问题：**
+
+- 扫完码连不上：确认手机和家机登录了同一个 Tailscale 账号、Tailscale 状态显示 Connected，再试一次
+- 混合内容错误：浏览器里的 app.t3.codes 是 HTTPS 页面，只能连 HTTPS/WSS 端点；如果环境是纯 HTTP 就会报混合内容错误。`--tailscale-serve` 自动配好 HTTPS，正常不会触发
+
+#### 方案二：Relay 中继（兜底）
+
+没有 Tailscale 或它不可用时，用 T3 官方中继隧道穿透 NAT，不需要公网 IP：
+
+```bash
+npx t3 connect
+```
+
+终端打印配对二维码，手机端操作和方案一一样：T3 Code App → Add Environment → 扫码配对。注意两点：中继 Worker 只交换凭据和托管端点，应用流量实际走 Cloudflare 隧道主机名，不经中继服务器；也正因数据多走一跳第三方隧道，延迟和稳定性略逊于 Tailscale，适合临时救急。
+
+#### 方案三：SSH 远程环境（桌面 App 引导）
+
+适合「用桌面 App 管理一台远程机器」，不适合作为手机直连家机的主路径：
+
+1. 桌面 App 打开 Settings → Connections
+2. 在 Remote Environments 里选择 Add environment
+3. 选 SSH 启动流程，填入目标，如 `user@example.com`
+4. 确认启动：App 探测主机，启动或复用远端 T3 server，本地端口转发，保存环境
+
+远程机器需要满足：SSH 可登录；Node.js 版本在 `^22.16 || ^23.11 || >=24.10` 范围内，且非交互 shell 能直接找到 `node` 命令（用 nvm 的话需要 `nvm alias default 24` 这类默认别名，否则启动会报 `node: command not found`）。
+
+#### 方案四：托管配对（已有 HTTPS 入口时）
+
+如果你的家机已经有一个 HTTPS 可达的入口（比如自己配了 Cloudflare Tunnel 加域名），可以直接用网页版配对：
+
+```text
+https://app.t3.codes/pair?host=https://backend.example.com:3773#token=配对码
+```
+
+浏览器直连你的后端，托管页不代理流量，配对 token 放在 URL hash 里。注意纯 HTTP 的局域网地址（`http://192.168.x.x:3773`）不能走这条路——HTTPS 页面连 HTTP 后端会被浏览器拦掉，这种情况回到方案一或方案二。
+
 ## 八、常见问题 FAQ
 
 **Agent 列表为空或显示未认证**
 确认 agent 已在本机安装并完成认证。依次运行 `claude auth login`、`codex login` 等命令，成功后重启服务端刷新状态。
 
 **手机无法连接到服务器**
-先确认手机和服务器在同一网络，或已配置 Tailscale。在服务器上运行 `npx t3 pair` 生成二维码扫描配对，不要手输 IP。`--tailscale` 选项要求 Tailscale 已登录并运行，发布后想关掉映射就执行 `tailscale serve --https=443 off`。服务器在 NAT 后面时改用 `t3 connect` 中继隧道。桌面 App 用户也可以走 Settings → Connections 的图形化配对流程，或直接用 Create Link 生成配对链接。
+先确认手机 Tailscale 已连接且和家中机器在同一个 tailnet。然后按[七、快速上手](#实战手机从外网连家中机器)的 Tailscale 方案操作，用 `npx t3 pair --tailscale` 生成二维码扫描配对，不要手输 IP。没有 Tailscale 时改用 `t3 connect` 中继隧道。桌面 App 用户也可以走 Settings → Connections 的图形化配对流程，或直接用 Create Link 生成配对链接。
 
 **WebSocket 频繁断连**
 T3 Code 的实时通道依赖 WebSocket，弱网可能断连。优先在稳定网络下使用，或换 SSH 隧道。Linux 上以 systemd 后台服务运行时，用 `npx t3@latest service status` 检查服务状态，`npx t3@latest service update` 修复。
@@ -221,7 +322,7 @@ GitHub Issues 提交 bug（不保证修复速度），Discord 社区讨论。项
 
 ## 十、采用建议
 
-个人开发者如果已经在用 Claude Code 或 Codex，从 `npx t3@latest` 开始，花十分钟验证远程流程是否通顺。如果只在本地用终端，T3 Code 的价值有限——它的溢价全在「离开电脑」这个动作上。
+个人开发者如果已经在用 Claude Code 或 Codex，从 `npx t3@latest` 开始。远程场景优先按第七章的 Tailscale 方案搭：两端装好、扫码配对，外网连回家机十分钟内就能验证是否可行，跑通了再决定深入投入。如果只在本地用终端，T3 Code 的价值有限——它的溢价全在「离开电脑」这个动作上。
 
 小团队有人专门负责 agent 机器的话，远程控制和 Git 工作流自动化能省掉「谁在哪个 agent 上跑了什么」的沟通损耗。但项目不收大贡献，遇到特定 bug 别指望能快速修掉，要有自己绕路的准备。
 
