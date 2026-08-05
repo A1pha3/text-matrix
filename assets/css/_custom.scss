@@ -1100,9 +1100,6 @@
 }
 
 .pagefind-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(18rem, .95fr);
-  gap: 1.2rem;
   margin-bottom: 1.25rem;
 }
 
@@ -1118,12 +1115,8 @@
   }
 }
 
-.pagefind-hero-copy,
-.pagefind-hero-grid {
-  position: relative;
-}
-
 .pagefind-hero-copy {
+  position: relative;
   padding: 1.35rem 1.4rem;
   border: 1px solid rgba(28, 25, 23, .08);
   border-radius: .9rem;
@@ -1137,11 +1130,21 @@
   }
 }
 
+/* 搜索框成为 hero 内唯一焦点（Spotlight 式）：首屏即可输入，无冗余说明 */
+.pagefind-search-wrap {
+  margin-top: 1.15rem;
+
+  .pagefind-ui__search-input {
+    min-height: 3.6rem;
+    font-size: 1.02rem;
+  }
+}
+
 .pagefind-suggestion-row {
   display: flex;
   flex-wrap: wrap;
   gap: .58rem;
-  margin-top: 1rem;
+  margin-top: 1.1rem;
 }
 
 .pagefind-suggestion-chip {
@@ -1178,108 +1181,30 @@
   }
 }
 
-.pagefind-hero-grid {
-  display: grid;
-  gap: .9rem;
-}
-
-.pagefind-stat-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 7.2rem;
-  padding: 1rem 1.05rem;
-  border: 1px solid rgba(28, 25, 23, .08);
-  border-radius: .75rem;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
-
-  [theme=dark] & {
-    border-color: rgba(94, 234, 212, .14);
-    background: rgba(18, 17, 16, .94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
-  }
-}
-
-.pagefind-stat-label {
+/* 统计降级为一行辅助小字：信任背书，不再占据首屏焦点 */
+.pagefind-stat-line {
+  margin: 1.15rem 0 0;
   color: #78716c;
-  font-size: .78rem;
-  font-weight: 700;
-  letter-spacing: .05em;
+  font-size: .8rem;
+  letter-spacing: .02em;
+
+  strong {
+    color: #1c1917;
+    font-weight: 700;
+  }
 
   [theme=dark] & {
     color: #a8a29e;
-  }
-}
 
-.pagefind-stat-value {
-  color: #1c1917;
-  font-size: 2.1rem;
-  line-height: 1;
-
-  [theme=dark] & {
-    color: #f5f5f4;
+    strong {
+      color: #f5f5f4;
+    }
   }
 }
 
 .pagefind-search-page .single-title,
 .pagefind-search-page .single-subtitle {
   text-align: left;
-}
-
-.pagefind-search-meta {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: .9rem;
-}
-
-.pagefind-search-card {
-  padding: 1.4rem;
-  border: 1px solid rgba(28, 25, 23, .08);
-  border-radius: .9rem;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(28, 25, 23, .05);
-
-  [theme=dark] & {
-    border-color: rgba(94, 234, 212, .14);
-    background: rgba(18, 17, 16, .94);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
-  }
-}
-
-.pagefind-search-intro,
-.pagefind-search-unavailable {
-  margin: 0 0 1rem;
-  color: #57534e;
-
-  [theme=dark] & {
-    color: #a8a29e;
-  }
-}
-
-.pagefind-search-notes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .48rem;
-}
-
-.pagefind-note-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.9rem;
-  padding: 0 .72rem;
-  border-radius: 999px;
-  background: rgba(231, 229, 228, .82);
-  color: #44403c;
-  font-size: .78rem;
-  font-weight: 700;
-
-  [theme=dark] & {
-    background: rgba(41, 37, 36, .92);
-    color: #a8a29e;
-  }
 }
 
 .pagefind-search-page .pagefind-ui__search-input {
@@ -1367,22 +1292,23 @@
 }
 
 @media (max-width: 680px) {
-  .pagefind-hero {
-    grid-template-columns: 1fr;
-  }
-
   .pagefind-hero-copy {
     padding: 1rem;
     border-radius: .75rem;
   }
 
-  .pagefind-search-meta {
-    flex-direction: column;
+  .pagefind-search-wrap {
+    margin-top: .95rem;
+
+    .pagefind-ui__search-input {
+      min-height: 3.1rem;
+      font-size: .96rem;
+    }
   }
 
-  .pagefind-search-card {
-    padding: 1rem;
-    border-radius: .75rem;
+  .pagefind-stat-line {
+    margin-top: .95rem;
+    font-size: .76rem;
   }
 
   .pagefind-search-page .pagefind-ui__search-input {

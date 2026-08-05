@@ -21,44 +21,26 @@
 
         <h2 class="single-subtitle">跨栏目检索文章与页面内容。</h2>
 
+        <div class="pagefind-search-wrap">
+          <div id="pagefind-search"></div>
+          <noscript>
+            <p class="pagefind-search-unavailable">搜索功能需要启用 JavaScript。</p>
+          </noscript>
+        </div>
+
         <div class="pagefind-suggestion-row">
           {{- range $suggestions -}}
             <a class="pagefind-suggestion-chip" href="?q={{ . | urlquery }}">{{ . }}</a>
           {{- end -}}
         </div>
-      </div>
 
-      <div class="pagefind-hero-grid">
-        <div class="pagefind-stat-card">
-          <span class="pagefind-stat-label">已收录文章</span>
-          <strong class="pagefind-stat-value">{{ $postsCount }}</strong>
-        </div>
-        <div class="pagefind-stat-card">
-          <span class="pagefind-stat-label">已收录页面</span>
-          <strong class="pagefind-stat-value">{{ $pagesCount }}</strong>
-        </div>
-        <div class="pagefind-stat-card">
-          <span class="pagefind-stat-label">可探索标签</span>
-          <strong class="pagefind-stat-value">{{ $tagsCount }}</strong>
-        </div>
+        <p class="pagefind-stat-line" aria-label="站内收录统计">
+          已收录 <strong>{{ $postsCount }}</strong> 篇文章 · <strong>{{ $pagesCount }}</strong> 个页面 · <strong>{{ $tagsCount }}</strong> 个标签
+        </p>
       </div>
     </div>
 
         <div class="content" id="content">
-            <div class="pagefind-search-card">
-        <div class="pagefind-search-meta">
-          <p class="pagefind-search-intro">输入文章标题、标签或正文关键词，结果会按相关性返回。长文会显示章节级子结果，适合快速跳转到具体内容段。</p>
-          <div class="pagefind-search-notes">
-            <span class="pagefind-note-pill">全文搜索</span>
-            <span class="pagefind-note-pill">章节级结果</span>
-            <span class="pagefind-note-pill">双端部署同步</span>
-          </div>
-        </div>
-                <div id="pagefind-search"></div>
-                <noscript>
-                    <p class="pagefind-search-unavailable">搜索功能需要启用 JavaScript。</p>
-                </noscript>
-            </div>
             <section class="search-discovery-grid">
               {{- range $featuredDiscovery -}}
               <article class="search-discovery-card">
