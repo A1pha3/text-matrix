@@ -1,20 +1,23 @@
 {{- define "title" }}
-    {{- .Params.Title | default (T .Section) | default .Section | dict "Some" | T "allSome" }} - {{ .Site.Title -}}
+    {{- .Params.Title | default .CurrentSection.Title | default .Section }} - {{ .Site.Title -}}
 {{- end -}}
 
 {{- define "content" -}}
-    {{- $sectionName := .Params.Title | default (T .Section) | default .Section | dict "Some" | T "allSome" -}}
+    {{- $sectionName := .Params.Title | default .CurrentSection.Title | default .Section -}}
+    {{- $sectionKey := .CurrentSection.Path -}}
     {{- $sectionDescription := "本栏目全部内容，按时间倒序。" -}}
-    {{- if eq .Section "posts" -}}
+    {{- if eq $sectionKey "/posts" -}}
         {{- $sectionDescription = "全部文章，按时间倒序。日报类快讯在「行业快讯」栏目。" -}}
-    {{- else if eq .Section "news" -}}
+    {{- else if eq $sectionKey "/posts/news" -}}
         {{- $sectionDescription = "高频快讯集中在这里。" -}}
-    {{- else if eq .Section "tech" -}}
+    {{- else if eq $sectionKey "/posts/tech" -}}
         {{- $sectionDescription = "系统化的深度内容，适合长期回看。" -}}
-    {{- else if eq .Section "video" -}}
+    {{- else if eq $sectionKey "/posts/video" -}}
         {{- $sectionDescription = "高价值视频的结构化笔记。" -}}
-    {{- else if eq .Section "thoughts" -}}
+    {{- else if eq $sectionKey "/posts/thoughts" -}}
         {{- $sectionDescription = "更新慢，但值得慢读。" -}}
+    {{- else if eq $sectionKey "/posts/wealth" -}}
+        {{- $sectionDescription = "长期复利的工具、方法与记录。" -}}
     {{- end -}}
     <div class="page archive" data-pagefind-ignore="all">
         <div class="discovery-hero">
