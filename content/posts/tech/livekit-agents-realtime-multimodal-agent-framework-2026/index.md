@@ -8,7 +8,6 @@ categories: ["技术文章"]
 authors: ["钳岳"]
 github_repo: "livekit/agents"
 description: "12.4k Stars 的实时多模态 Agent 框架:Agent/AgentSession/AgentActivity 三层模型、EoU 神经 turn detection、Toolset/ToolContext 函数工具体系,以及为什么语音 Agent 必须跑在 WebRTC 媒体服务器上。"
-slug : index
 
 ---
 

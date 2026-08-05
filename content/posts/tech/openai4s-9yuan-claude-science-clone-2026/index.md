@@ -8,7 +8,6 @@ categories: ["技术文章"]
 authors: ["钳岳"]
 github_repo: "PKU-YuanGroup/OpenAI4S"
 description: "9.9 元/月复刻 Claude Science：拆开 OpenAI4S 的双循环引擎、33 个科学 Skill、Seatbelt/bubblewrap 沙箱、与众不同的「账本优先」架构,以及对科研 Agent 赛道的冲击。"
-slug : index
 
 ---
 
