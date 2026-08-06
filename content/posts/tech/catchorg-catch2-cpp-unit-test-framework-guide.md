@@ -3,29 +3,44 @@ title: "Catch2 v3 深度拆解：C++ 单元测试框架的自然选择"
 slug: catchorg-catch2-cpp-unit-test-framework-guide
 github_repo: "catchorg/Catch2"
 date: 2026-07-11T02:50:00+08:00
-lastmod: 2026-07-11T02:50:00+08:00
+lastmod: 2026-08-06T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["C++", "测试框架", "TDD"]
-description: "Catch2 v3 是 C++ 单文件 header-only 测试框架的主力替代品。本文拆解其 TEST_CASE / SECTION 嵌套、Matchers、BDD 风格宏、微基准测试能力，并对比 GoogleTest / doctest 的工程取舍。"
+description: "Catch2 v3 是 C++ 原生测试框架的重要选择。本文拆解其 TEST_CASE / SECTION 嵌套重跑模型、Matchers、BDD 宏、Approx 与微基准能力，并对比 GoogleTest / doctest 的工程取舍。"
 ---
 
 # Catch2 v3 深度拆解：C++ 单元测试框架的自然选择
 
 ## 核心判断
 
-Catch2 v3 的核心价值不是"测试框架"本身，而是**让测试代码读起来像测试意图**。它通过 TEST_CASE + SECTION 嵌套的命名约定，把"测试场景的层级"映射成"测试代码的物理缩进"，你不需要看代码就知道每个 SECTION 在测什么。这点和 GoogleTest 的"扁平的 TEST_F + 多个 EXPECT"风格有根本性的差异。
+Catch2 v3 让测试代码读起来像测试意图。它通过 TEST_CASE + SECTION 嵌套的命名约定，把"测试场景的层级"映射成"测试代码的物理缩进"，不读代码也能看出每个 SECTION 在测什么。这和 GoogleTest 扁平的 TEST_F + 多个 EXPECT 风格差别很大。
 
 ## 项目坐标
 
 | 维度 | 数据 |
 |------|------|
 | 仓库 | catchorg/Catch2 |
-| Stars | 约 20.5k |
+| Stars | 约 2.14 万（2026-08-06 GitHub API） |
+| Forks | 约 3.5 千 |
 | 主语言 | 现代 C++（C++14 / C++17 / C++20） |
 | License | BSL-1.0（业务源码使用免费，分发限制很少） |
-| 当前主版本 | v3（v2.x 已进入维护期） |
+| 当前版本 | v3，最新 tag v3.15.3；默认分支 devel |
 | 文档 | https://catch2-docs.readthedocs.io |
+
+Catch2 的核心机制是 SECTION 的"逐层重跑"模型，下面这张图展示一次测试的执行路径：
+
+```mermaid
+flowchart TD
+    TC["TEST_CASE 前置代码<br/>（SECTION 之前的部分）"] -->|各跑一遍| S1["SECTION A<br/>独立上下文"]
+    TC -->|各跑一遍| S2["SECTION B<br/>独立上下文"]
+    TC -->|各跑一遍| S3["SECTION C<br/>独立上下文"]
+    S1 --> R1["REQUIRE / Matchers 断言<br/>失败即报告表达式与源码位置"]
+    S2 --> R2["REQUIRE / Matchers 断言<br/>失败即报告表达式与源码位置"]
+    S3 --> R3["REQUIRE / Matchers 断言<br/>失败即报告表达式与源码位置"]
+```
+
+每个 SECTION 都把前置代码重新执行一遍，因此天然避免了 fixture 之间的状态泄漏；代价是嵌套越深，重跑的重复代码越多。下面按这个执行模型逐项展开。
 
 ## 一个最小测试
 
@@ -94,7 +109,7 @@ Catch2 风格的取舍：
 
 - **优点**：每个场景独立，前置代码自动复用，物理缩进和逻辑层级一致。
 - **代价**：SECTION 嵌套深度多时执行时间线性增长（每层都重跑前置）；不能共享 SECTION 之间的局部变量。
-- **陷阱**：在 SECTION 里**修改**了前置代码创建的对象，会影响兄弟 SECTION——因为它们是**各自独立的一遍运行**，但 SECTION 之间不会相互污染。
+- **陷阱**：别指望某个 SECTION 里对前置对象的修改能带到下一个 SECTION——每个 SECTION 都把前置代码从头跑一遍，改动不会跨 SECTION 保留。
 
 ## Matchers：声明式断言
 
@@ -157,9 +172,9 @@ SCENARIO("Customer withdrawals", "[bank]") {
 
 ```cpp
 TEST_CASE("Floating point") {
-    REQUIRE(0.1 + 0.2 == Approx(0.3));      // 默认 epsilon = 0
+    REQUIRE(0.1 + 0.2 == Approx(0.3));      // 默认相对 epsilon ≈ 1.19e-5
     REQUIRE(0.1 + 0.2 == Approx(0.3).margin(0.001));   // 绝对误差
-    REQUIRE(0.1 + 0.2 == Approx(0.3).epsilon(0.01));   // 相对误差
+    REQUIRE(0.1 + 0.2 == Approx(0.3).epsilon(0.01));   // 相对误差，覆盖默认值
 }
 ```
 
@@ -206,7 +221,7 @@ include(FetchContent)
 FetchContent_Declare(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v3.5.0
+    GIT_TAG v3.15.3
 )
 FetchContent_MakeAvailable(Catch2)
 ```
@@ -222,7 +237,8 @@ FetchContent_MakeAvailable(Catch2)
 | 嵌套场景 | SECTION（自动重跑前置） | TEST_F + 子测试需手动 fixture |
 | Matchers | 内置 | 部分支持，gMock 强在 mock |
 | Mock | 弱（外部库 Catch2::Catch2WithMocks 提供） | 强（gMock 完整体系） |
-| 死亡测试 | REQUIRE_THROWS 等 | ASSERT_DEATH 等 |
+| 异常断言 | REQUIRE_THROWS 等 | ASSERT_THROW 等 |
+| 进程死亡测试 | 核心不提供，需外部方案 | ASSERT_DEATH 等 |
 | 集成到 IDE | 中（CLI 友好） | 强（VS/xcode 原生） |
 | 性能/启动开销 | 中 | 中 |
 | 文档质量 | 高（官网 + 教程） | 高 |
@@ -258,7 +274,7 @@ TEST_CASE("shared counter") {
 
 ### 2. v2 → v3 迁移
 
-v3 砍掉了所有 v2 的 header-only 入口，需要作为库链接。`CATCH_CONFIG_MAIN` 仍然可用，但更推荐链接 `Catch2::Catch2WithMain`。Matcher's 头文件路径也变了。
+v3 砍掉了所有 v2 的 header-only 入口，需要作为库链接。`CATCH_CONFIG_MAIN` 仍然可用，但更推荐链接 `Catch2::Catch2WithMain`。Matchers 头文件路径也变了。
 
 ### 3. 编译时间
 
@@ -274,5 +290,4 @@ v3 砍掉了所有 v2 的 header-only 入口，需要作为库链接。`CATCH_CO
 
 - 仓库：[https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)
 - 官方文档：[https://catch2-docs.readthedocs.io](https://catch2-docs.readthedocs.io)
-- 从 GoogleTest 迁移指南：仓库 wiki 有详细章节
 - 替代方案 doctest：[https://github.com/doctest/doctest](https://github.com/doctest/doctest)

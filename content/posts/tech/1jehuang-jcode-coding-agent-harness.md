@@ -13,7 +13,7 @@ github_repo: "1jehuang/jcode"
 
 ## 一句话判断
 
-jcode 是 1jehuang 在 2026 年交出的 Rust 系 coding agent harness，单 session PSS（按比例的内存占用）低至 **27.8 MB**（关掉本地 embedding 后），比 Claude Code 的 386.6 MB 低 13.9 倍，比 OpenCode 低 13.4 倍。在多 session 并行的工程现实里，它把每一份内存都换算成可工作的并发。
+jcode 是 1jehuang 在 2026 年交出的 Rust 系 coding agent harness，单 session PSS（按比例的内存占用）低至 **27.8 MB**（关掉本地 embedding 后），是 Claude Code 386.6 MB 的约 1/14，OpenCode 371.5 MB 的约 1/13。在多 session 并行的场景里，省下的内存就是能同时开的 agent 数。
 
 ## 项目定位
 
@@ -30,11 +30,11 @@ jcode 是 1jehuang 在 2026 年交出的 Rust 系 coding agent harness，单 ses
 | 模块 | 责任 | 关键事实 |
 |------|------|----------|
 | Harness runtime | 启动 session、解析 CLI、加载 provider、调度 agent 循环 | PSS 27.8 MB / 单 session |
-| Memory subsystem | 跨 session 的语义记忆 | 内置 `jcode memory-demo` 演示：单次保存全库命中 |
-| Provider / MCP 适配层 | 接入 OpenAI / Anthropic / Gemini 等 LLM 与外部 MCP 工具 | 复用 MCP 协议 |
-| TUI 界面 | 终端交互、命令面板、session 切换 | 内置 shell 命令模式 |
+| Memory subsystem | 跨 session 的语义记忆，把对话变成可检索的图 | 每轮嵌入为向量，余弦相似度检索命中后才注入上下文 |
+| Provider / MCP 适配层 | 接入 Claude / OpenAI / Gemini 等 LLM 与外部 MCP 工具 | 内置 11 种登录流程，复用 MCP 协议 |
+| TUI 界面 | 终端交互、侧边栏、内联渲染 | 侧边栏可当 diff 查看器，mermaid 图内联渲染 |
 
-把模块按资源视角排序，关键问题就是"哪一块在吃 RAM"。README 的对比表给出了答案：单 session 时，绝大部分 RAM 不是模型本身（模型在云端），而是 harness 的本地状态——MCP 子进程、tree-sitter 索引、embedding 缓存。一旦把 embedding 关掉，PSS 从 167.1 MB 直接降到 27.8 MB，差出 6 倍。jcode 把本地 embedding 做成了可关闭的开关，不做默认依赖。
+把模块按资源视角排序，关键问题就是"哪一块在吃 RAM"。README 的对比表给出了答案：单 session 时，绝大部分 RAM 不是模型本身（模型在云端），而是 harness 的本地状态。其中最大的变量是本地 embedding——关掉它，PSS 从 167.1 MB 直接降到 27.8 MB，差出 6 倍。jcode 把本地 embedding 做成可关闭的开关，不做默认依赖。
 
 ## 性能对比的关键数字
 
@@ -51,12 +51,16 @@ README 的对比表直接反映了内存开销的差异：
   - **Claude Code：386.6 MB（13.9×）**
   - Antigravity CLI：243.7 MB（8.8×）
 - **10 active sessions**：
-  - jcode：117.0 MB（baseline） → 260.8 MB（带 embedding）
-  - Claude Code：再乘 10 倍几乎不可用
-  - OpenCode：**3.2 GB**
-  - GitHub Copilot CLI：1.7 GB
+  - jcode（关 embedding）：**117.0 MB**（baseline）→ 带 embedding 260.8 MB
+  - Codex CLI：334.8 MB / pi：833.0 MB / Antigravity CLI：1.0 GB
+  - Cursor Agent：1.6 GB / GitHub Copilot CLI：1.7 GB
+  - **Claude Code：2.3 GB** / **OpenCode：3.2 GB**
 
-**jcode 的内存曲线接近 O(session_count × 常数)，而同类工具是接近线性甚至超线性增长**。对于同时跑 5-10 个 agent session 的开发者，这是决定性优势。
+README 还测了"启动到首帧"的耗时：jcode 14.0 ms，Claude Code 3.4 s（约 245 倍）。
+
+**jcode 的内存曲线接近 O(session 数 × 常数)，而同类工具接近线性甚至超线性增长**。README 的单 session 增量数据说得很清楚：jcode 每加一个 session 约 9.9 MB，OpenCode 约 318 MB，Claude Code 约 213 MB。对同时跑 5-10 个 agent session 的开发者，这是决定性优势。
+
+这组数字来自 README 作者在同一台 Linux 机器上、各工具固定版本下的实测（10 次交互式 PTY 启动），衡量的是空闲 session 的静态 PSS，不是任务进行中的峰值占用。换系统、换配置、换工作负载，数值都会变。它只能说明"开 N 个闲置 session 谁更省内存"这一个维度，不能推出 jcode 在真实任务里更快，也不能推出它在任何机器上都能复制同样的差距。
 
 ## 安装与快速开始
 
@@ -79,13 +83,15 @@ irm https://jcode.sh/install.ps1 | iex
 Coding agent 的 runtime 分为两类：
 
 - **Node / TS 系**（OpenCode、Claude Code、Cursor Agent）：开发快、依赖成熟，但内存开销天然大（V8 baseline + 大量 transitive deps）。
-- **Rust 系**（jcode）：冷启动时间 < 50 ms 级、PSS 接近 native binary、不需要 JIT 预热。
+- **Rust 系**（jcode）：启动到首帧约 14 ms、PSS 接近 native binary、不需要 JIT 预热。
 
 jcode 选 Rust 的原因是：多 session 的瓶颈是**内存**而不是吞吐。10 session 并行时，3 GB 内存和 260 MB 内存的差别就是"你能不能同时跑 3 个项目和 1 个项目的差别"。
 
-### 2. 本地 embedding 作为可选开关
+### 2. 记忆系统：把对话变成可检索的图
 
-jcode 把本地 embedding 作为**可选模块**而不是默认依赖。关掉以后，记忆子系统退化为"基于文件 + 文本索引"的工作方式，但功能依然完整（session 间持久化、命令历史、调用栈记录）。能关掉的能力说明它不是单点依赖。
+jcode 的记忆不是把对话原样囤起来。每轮回复会被嵌入成向量，存进一张记忆图；新一轮对话进来时做一次余弦相似度查询，命中后再喂回上下文。为了让检索更稳，它还配了一个记忆侧 Agent：先校验命中的记忆是否真的相关，必要时再做一轮信息提取，才注入对话。记忆的沉淀是后台进行的——检测到语义漂移、隔了若干轮、或 session 结束时，侧 Agent 抽取新记忆并合并进图；还有 ambient 模式定期整理图，清理过期和互相冲突的条目。另外它保留了显式的记忆工具和跨 session 的 RAG 搜索，Agent 可以主动查，不依赖后台被动索引。
+
+关掉本地 embedding 后，这个记忆图就不加载，这是 PSS 从 167.1 MB 掉到 27.8 MB 的主因。能关掉，说明记忆不是单点依赖——你要的是省内存还是跨 session 记忆，可以自己权衡。
 
 ### 3. MCP 兼容性
 
@@ -95,7 +101,7 @@ jcode 走标准 MCP 协议，这意味着它可以直接复用社区里所有的
 
 假设你同时在三个仓库上工作：一个 Rust 后端、一个 React 前端、一个 Python 数据处理脚本。用 jcode 开三个 session，每个 session 挂不同的 provider（Claude、GPT、Gemini），各自跑 MCP server（git、linter、test runner）。
 
-同等条件下，Claude Code 跑三个 session 会吃掉约 1.1 GB 内存（386.6 MB × 3），你的 16 GB 笔记本还剩 14.9 GB，不致命但已经能感觉到 swap 压力。jcode 三个 session 加起来约 83 MB（关 embedding）或 501 MB（开 embedding），差距在 2-13 倍。当 session 数扩大到 10 个，差距拉到 3.2 GB vs 260 MB——后者意味着你可以在同一个笔记本上同时维护 10 个 agent 工作流，而前者已经让机器开始卡顿。
+同等条件下，Claude Code 跑三个 session 大约 812 MB（第一个 386.6 MB，每加一个约 213 MB），16 GB 笔记本还能扛，但已经能感觉到占用。jcode 三个 session 约 48 MB（关 embedding，每加一个约 9.9 MB）或 188 MB（开 embedding）——差距是十几倍。扩到 10 个 session，差别从"有点紧"变成"能不能跑"：Claude Code 涨到 2.3 GB，OpenCode 直接 3.2 GB，jcode 关 embedding 总共才 117 MB。后者意味着你可以在同一台笔记本上同时维护 10 个 agent 工作流，前者已经让机器开始卡顿。
 
 这个案例揭示 jcode 的核心设计取舍：它牺牲了"单 session 的功能丰富度"（默认不带 embedding、不做 IDE 集成），换取了"多 session 并行时内存不爆炸"。
 
@@ -103,7 +109,7 @@ jcode 走标准 MCP 协议，这意味着它可以直接复用社区里所有的
 
 - **多任务并行开发者**：需要同时跑 3+ 个 session（不同 repo、不同任务）
 - **资源敏感用户**：MacBook Air 8GB、Linux 笔记本 16GB、容器里跑 agent 的 CI 环境
-- **追求冷启动速度的人**：jcode 启动 < 50ms，意味着可以把它当成 shell 工具嵌进 zsh / nushell
+- **追求冷启动速度的人**：jcode 启动到首帧约 14 ms，可以把它当成 shell 工具嵌进 zsh / nushell
 - **不愿意被 vendor lock-in 的人**：jcode 把 provider 抽象做成可插拔，可以同时用 Claude / GPT / Gemini
 
 ## 不适合谁
