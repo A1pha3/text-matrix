@@ -4,8 +4,12 @@ date: 2026-07-28
 categories: ["视频精读"]
 tags: ["月之暗面", "美团龙珠", "Kimi K3", "AI 投资"]
 draft: false
+description: "叶奇意的中国 AI 十年人才图谱:月之暗面 A 轮投资亲历,美团龙珠视角下的两代 AI 迁徙与 AGI 信仰。"
+
+slug: "yeqiyi-ai-talent-map-10yr-2026"
+source_key: "bv:BV1wK3i6NEdQ"
+aliases: ["/posts/kiwi-yeqiyi-yuezhi-anmian-a1-round-2026/"]
 cover: "http://i0.hdslb.com/bfs/archive/31ca77bfb84d20fafde64c49c18026a6ed3138bf.jpg"
-slug: index
 ---
 
 > 本文基于 B 站视频 [《对话叶奇意："寻找"月之暗面杨植麟、中国两代 AI、十年人才迁徙，与 AGI 信仰》](https://www.bilibili.com/video/BV1wK3i6NEdQ/)（硅谷101，2026-07-28）的视频内容、弹幕记录与公开资料整理。因无法获取完整字幕，嘉宾具体表述基于视频简介、弹幕线索与公开资料还原，不虚构原话。涉及 Kimi K3 的技术数据来自 [GitHub 官方仓库](https://github.com/MoonshotAI/Kimi-K3)。

@@ -2,11 +2,14 @@
 title: "veops/oneterm：用 Go 写一台够轻的堡垒机"
 date: 2026-02-03T10:00:00+08:00
 draft: false
-categories: ["技术文章"]
+categories: ["技术笔记"]
 tags: ["堡垒机", "4A 平台", "SSH 跳板", "基础设施管控", "Go 开源"]
 description: "OneTerm 用 Go + Vue 实现了一套覆盖 SSH、RDP、VNC、Telnet 和数据库协议的轻量堡垒机，源码结构清晰，适合中小团队做基础设施统一接入。本文从代码层面拆解它的协议处理、权限模型和部署架构。"
-slug : index
 
+slug: "oneterm-go-bastion-host-2026"
+source_key: "gh:veops/oneterm"
+github_repo: "veops/oneterm"
+aliases: ["/posts/veops-oneterm-bastion-4a-platform-2026/"]
 ---
 
 ## 一台堡垒机要解决什么

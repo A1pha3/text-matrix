@@ -1,12 +1,14 @@
 ---
 title: "Skill Prompt Generator：把 Prompt 工程变成 Skills 架构问题"
 date: 2026-05-10
-categories: ["技术文章"]
+categories: ["技术笔记"]
 tags: ["Skills 系统", "Claude Code", "Prompt Engineering", "AI Agent", "Codex CLI"]
 description: "一个 1445 Star 的开源项目，用 12 个专业 Skill 和 1246 个可复用元素构建 AI 图像提示词生成系统。本文从源码层面拆解其双层架构、跨 Domain 查询引擎和设计变量体系。"
 github_repo: "huangserva/skill-prompt-generator"
-slug : index
 
+slug: "skill-prompt-generator-skills-architecture-2026"
+source_key: "gh:huangserva/skill-prompt-generator"
+aliases: ["/posts/skill-prompt-generator-12-skills-architecture-2026/"]
 ---
 
 # Skill Prompt Generator：把 Prompt 工程变成 Skills 架构问题

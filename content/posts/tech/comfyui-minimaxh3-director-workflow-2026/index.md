@@ -2,11 +2,14 @@
 title: "ComfyUI MiniMax H3 Director：一个导演台节点如何接管多段视频生成"
 date: 2026-08-04T10:45:00+08:00
 draft: false
-categories: ["技术文章"]
+categories: ["技术笔记"]
 tags: ["ComfyUI", "MiniMax H3", "视频生成", "工作流", "视频编辑"]
 description: "拆解 AIMixer/ComfyUI_MiniMaxH3_Director 仓库的 5 套工作流与导演台节点架构，覆盖 T2V、FL2V、R2V、V2V、RV2V 五种模式的能力边界、节点拓扑、模型选型与实战陷阱。"
-slug : index
 
+slug: "comfyui-minimaxh3-director-workflow-2026"
+source_key: "gh:AIMixer/ComfyUI_MiniMaxH3_Director"
+github_repo: "AIMixer/ComfyUI_MiniMaxH3_Director"
+aliases: ["/posts/comfyui-minimaxh3-director-workflow-2026/"]
 ---
 
 ## 仓库信息卡

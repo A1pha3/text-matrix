@@ -1,10 +1,14 @@
 ---
 title: "LoopX：给长程 AI Agent 造一个本地控制平面"
 date: 2026-08-04
-categories: ["技术文章"]
+categories: ["技术笔记"]
 tags: ["Loop Engineering", "AI Agent", "控制平面", "Codex", "Claude Code"]
 description: "LoopX 是轻量 Python 状态内核，为 Codex、Claude Code、Cursor 等编码 Agent 提供跨轮次的目标管理、证据留存、配额调度和可审计交接，MIT 协议，附 200+ 小时真实运行证据。"
-slug: index
+
+slug: "loopx-local-control-plane-agent-2026"
+source_key: "gh:huangruiteng/loopx"
+github_repo: "huangruiteng/loopx"
+aliases: ["/posts/loopx-control-plane-long-running-agent-2026/"]
 ---
 
 ## 仓库信息卡

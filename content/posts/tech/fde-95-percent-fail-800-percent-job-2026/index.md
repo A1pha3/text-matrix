@@ -2,9 +2,13 @@
 title: "95% 的 AI 项目失败了，而这个岗位九个月涨了 800%——读范冰《前线部署工程师》"
 date: 2026-08-04
 description: "范冰新著《前线部署工程师》（FDE）免费公开全文，112 个真实案例拆解 AI 落地最后一公里。从 Palantir 的战场起源到 OpenAI 的百亿部署公司，一本书讲清 AI 时代最稀缺的工程角色。"
-categories: ["技术文章"]
+categories: ["技术笔记"]
 tags: ["FDE", "前沿部署工程师", "企业 AI", "Palantir", "范冰"]
-slug: index
+
+slug: "fde-95-percent-fail-800-percent-job-2026"
+source_key: "gh:xdash/FDE-the-Guidance-Book-of-Forward-Deployed-Engineer"
+github_repo: "xdash/FDE-the-Guidance-Book-of-Forward-Deployed-Engineer"
+aliases: ["/posts/fde-95-percent-fail-800-percent-job-2026/"]
 ---
 
 <!--more-->
