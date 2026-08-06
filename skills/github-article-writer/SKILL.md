@@ -194,17 +194,22 @@ gh api "repos/$REPO/contents/" --jq '.[].name'
 - [../hugo-writer/SKILL.md](../hugo-writer/SKILL.md)
 - [references/frontmatter-template.md](references/frontmatter-template.md)
 
-Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个精准名词；date 必须使用生成当下的北京时间且格式完整；description 必须是 50-100 字纯文本摘要；**必须包含 `github_repo: "owner/repo"`**（取自 Step 1 `gh repo view` 的 nameWithOwner，大小写原样保留）— trending 去重的结构化身份字段，不依赖正文链接。
+Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个精准名词；date 必须使用生成当下的北京时间且格式完整；description 必须是 50-100 字纯文本摘要；**必须包含 `github_repo: "owner/repo"`**（取自 Step 1 `gh repo view` 的 nameWithOwner，大小写原样保留）— trending 去重的结构化身份字段，不依赖正文链接；**必须包含 `source_key: "gh:owner/repo"`**（与 github_repo 同源）— 发布去重/防漏的稳定身份锚点；**`draft` 必须 `true`**（写完暂存，评分达标才翻 `false`）。写完**直接落 `content/posts/tech/<slug>/index.md`，严禁落 `state/` 中间态**。
 
 除非用户明确要求只输出大纲，否则写作模式默认产物应是“完整文章 + 合法 Frontmatter”。
 
 ### Step 6: 发布与落库
 
-只有在用户明确要求发布时，才执行本步骤。
+**免审批自动发布（2026-08-06 师父拍板授权）**：写完跑 cn-doc-writer 三维评分，按分数分级处置——
+
+- **B 级及以上（≥70）**：**获授权自动**翻 `draft: false` → `git add` 仅本文章目录 → commit（message 带 `source_key` + 分数）→ `git push` 上线 → 飞书报告（结论先行：标题/分数/落点/source_key/可撤回方式）。
+- **C/D（<70）**：保持 `draft: true` 不上线，存稿 + 飞书通知师父附三维扣分点，由师父定夺。
+
+**安全边界**：push 前必须做 `source_key` 去重（content 里已有同 source_key 则拒绝，防重复公开页）；`git add` 只 add 本文章目录，不用 `git add -A`；授权仅限"达 B 级"这一情形，其余仍需用户明确指令。
 
 发布前必须确认：
 
-- 文章文件路径
+- 文章文件路径（必须已落 `content/posts/tech/`，非 state/）
 - 当前工作区是否就是目标仓库
 - 用户是否要求同步飞书
 - 用户是否要求更新发布索引

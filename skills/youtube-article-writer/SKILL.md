@@ -141,7 +141,7 @@ cat /tmp/yts/VIDEO_ID.*.vtt   # 读取；auto-sub 可能有重复行，写作前
 
 进入写作时，加载 [../cn-doc-writer/SKILL.md](../cn-doc-writer/SKILL.md)。
 
-文章定位：分类=视频精读，文风=**准确、专业、优雅、有品味**（2026-07-20 师父拍板，本 skill 全局生效；原文风"专业克制可验证"为子集），目标=帮助读者判断视频价值并提取关键信息。**文件路径**：默认单文件 `content/posts/<category>/<slug>.md`；仅当文章含本地图片/资源（截图、架构图等）时才用 Page Bundle `content/posts/<category>/<slug>/index.md`。禁止参照"上一篇文章的形态"来决定，禁止预防性占位。
+文章定位：分类=视频精读，文风=**准确、专业、优雅、有品味**（2026-07-20 师父拍板，本 skill 全局生效；原文风"专业克制可验证"为子集），目标=帮助读者判断视频价值并提取关键信息。**文件路径**：写完**直接落 `content/posts/video/<slug>/index.md`**（Page Bundle），**严禁落 `state/` 中间态**（旧两段式接力是重复发布与误报病根，2026-08-06 已废弃）；落盘即带 `draft: true` 暂存 + `source_key`（`bv:`/`yt:`）。禁止参照"上一篇文章的形态"来决定，禁止预防性占位。
 
 **风格铁律：准确、专业、优雅、有品味**
 
@@ -249,9 +249,17 @@ cat /tmp/yts/VIDEO_ID.*.vtt   # 读取；auto-sub 可能有重复行，写作前
 
 - 伪造观看量、点赞数、订阅数、评论内容
 - 把视频中没有的命令/步骤/结论写成"视频中提到"
-- 未获指令时执行 git push、创建飞书文档、更新索引
 - 依赖固定机器路径；始终以当前工作区或用户指定路径为准
 - 凑结构补写"最佳实践""FAQ""延伸阅读"空章节
+
+### 发布授权（2026-08-06 师父拍板，替代原"未获指令禁 push"）
+
+写完跑 cn-doc-writer 三维评分，按分数分级：
+
+- **B 级及以上（≥70）**：**获授权自动**翻 `draft: false` → `git add` 仅本文章目录 → commit（message 带 `source_key` + 分数）→ `git push` 上线 → 飞书报告。
+- **C/D（<70）**：保持 `draft: true` 不上线，存稿 + 飞书通知师父附扣分点定夺。
+
+**安全边界**：push 前必须做 `source_key` 去重（content 已有同 source_key 则拒绝，防重复公开页）；`git add` 只 add 本文章目录，不用 `git add -A`；授权仅限"达 B 级"情形，其余操作（创建飞书文档、更新索引、未达标稿的 push）仍需用户明确指令。
 
 ## 5. 异常处理
 
@@ -270,6 +278,8 @@ cat /tmp/yts/VIDEO_ID.*.vtt   # 读取；auto-sub 可能有重复行，写作前
 - 数据、观点、结论是否来自可验证材料
 - 是否错误进入了发布模式
 - Frontmatter 是否符合 Hugo 规范（categories: ["视频精读"]）
+- Frontmatter 是否含 `source_key`（`bv:`/`yt:`）、`draft: true`、语义化 slug（**非 `index`**）
+- 落盘路径是否为 `content/posts/video/<slug>/`（**非 state/**）
 - 正文是否包含原视频可点击链接
 
 ## 7. 视频信息卡模板
