@@ -6,8 +6,9 @@ categories: ["视频精读"]
 tags: ["AI Infra", "SGLang", "推理引擎", "GPU 调度"]
 description: '当 GPU 满载却仍有大量算力被浪费在重复计算、缓存搬运和任务等待上，AI Infra 的效率革命才刚刚开始。本文深度拆解硅谷101对 SGLang 与 RadixArk 团队的访谈，梳理推理引擎的核心技术脉络。'
 cover: "http://i1.hdslb.com/bfs/archive/c7b959c9107e91e90807950237330668d2099ed7.jpg"
-slug : index
 
+slug: "silicom-101-sglang-radixark-ai-infra-reverse-write-2026"
+source_key: "bv:BV1FnGA66EPP"
 ---
 
 # "榨"出硅的极限：GPU 为什么"又忙又闲"，推理引擎如何捡回浪费的算力

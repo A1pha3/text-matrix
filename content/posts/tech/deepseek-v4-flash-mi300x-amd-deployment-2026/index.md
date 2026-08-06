@@ -8,8 +8,9 @@ categories: ["技术文章"]
 authors: ["钳岳"]
 github_repo: "ryanzhou/deepseek-v4-flash-mi300x"
 description: "DeepSeek V4 Flash 单卡 AMD MI300X 生产部署:304B MoE、156.67 GiB HBM、168.6 tok/s 单流 / 64 流 830 tok/s,拆开 FNUZ FP8 / MXFP4 路由 / DSpark-7 因果 verify / CPU KV fence 等 10 处 overlay。"
-slug : index
 
+slug: "deepseek-v4-flash-mi300x-amd-deployment-2026"
+source_key: "gh:ryanzhou/deepseek-v4-flash-mi300x"
 ---
 
 ## 一、为什么 304B MoE 要塞进一张 MI300X

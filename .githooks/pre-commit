@@ -10,7 +10,10 @@ cd "$repo_root"
 changed=()
 while IFS= read -r -d '' f; do
   changed+=("$f")
-done < <(git diff --cached --name-only --diff-filter=ACMR -z -- 'content/**/*.md' '*.md')
+done < <(git diff --cached --name-only --diff-filter=ACMR -z -- 'content/**/*.md')
+
+# frontmatter_lint / fill_missing 只作用于 content/ 下的 md（skills/ 等仓内其它 md 不在
+# root=content 内，传入会 relative_to 报错 —— 2026-08-06 修，故 changed 只捕获 content/）
 
 if [ "${#changed[@]}" -gt 0 ]; then
   if command -v uv >/dev/null 2>&1; then

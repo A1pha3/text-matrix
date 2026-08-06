@@ -139,6 +139,79 @@ def check_github_repo(path: Path, data: dict, body: str) -> list[str]:
     return []
 
 
+# source_key 是免审批自动发布管线的稳定身份锚点（2026-08-06 师父拍板，见
+# skills/*/references/frontmatter-template.md）：GitHub 稿 gh:owner/repo、视频稿 bv:/yt:。
+# 发布去重/防漏判定唯一依据，替代旧的"正文 grep bvid / 目录名前缀碰运气"。
+SOURCE_KEY_RE = re.compile(r"^(gh|bv|yt):[^\s]+$")
+# 正文里的 bvid 锚点（视频稿身份）
+BODY_BVID_RE = re.compile(r"\bBV1[A-Za-z0-9]{9}\b")
+
+
+def check_slug_not_index(path: Path, data: dict) -> list[str]:
+    """全局拦截 slug:index 构建毒药（所有 posts 文章）。
+
+    page bundle 的 index.md 的 slug 本就该用目录名当 URL；一旦显式写 slug: index，
+    所有这么写的页面都试图构建到 .../index/index.html，Hugo 报 Duplicate target paths
+    互相覆盖，把文章卡在构建外不上线（2026-08-06 实证，见 memory slug-index-duplicate-target-trap）。
+    """
+    v = str(data.get("slug", "") or "").strip().strip("\"'").lower()
+    if v == "index":
+        return [
+            "slug 不能是 index（会造成全站 Duplicate target paths 冲突，"
+            "把文章卡在构建外）；请改用语义化小写连字符 slug"
+        ]
+    return []
+
+
+def check_source_key(path: Path, data: dict, body: str) -> tuple[list[str], list[str]]:
+    """校验 posts/tech 与 posts/video 文章的 source_key 身份锚点（自动发布去重保障）。
+
+    返回 (fatal_list, warn_list)：
+    - 有字段但格式非法（须 gh:/bv:/yt: 前缀）→ fatal（防错填）
+    - tech 稿 source_key 与 github_repo 不一致 → fatal（防漂移）
+    - 有锚点但缺 source_key（漏填）→ warn（存量文章多，先提醒不阻断；回填后升级 fatal）
+
+    设计权衡：source_key 是 2026-08-06 新增契约，存量 ~900 篇文章尚未回填。
+    若"漏填"即 fatal 会让全站 lint 崩、CI 阻断所有发布。故错填/漂移（确定是错误）
+    fatal，漏填（只是没补齐）warn。新稿由写作 skill 直接带 source_key 落盘，
+    回填完存量后把漏填也升级 fatal。
+    """
+    parts = path.parts
+    in_tech = "posts" in parts and "tech" in parts
+    in_video = "posts" in parts and "video" in parts
+    if not (in_tech or in_video):
+        return [], []
+
+    raw = data.get("source_key")
+    if raw:
+        v = str(raw).strip().strip("\"'")
+        if not SOURCE_KEY_RE.match(v):
+            return [f"source_key 格式非法（须 gh:owner/repo 或 bv:/yt: 前缀）: {raw!r}"], []
+        # tech 稿：source_key 应与 github_repo 一致（同源，防漂移）
+        gh = str(data.get("github_repo", "") or "").strip().strip("\"'")
+        if in_tech and gh:
+            expect = f"gh:{gh}"
+            if v != expect:
+                return [
+                    f"source_key 与 github_repo 不一致（应为 {expect!r}，实际 {raw!r}）"
+                ], []
+        return [], []
+
+    # 无 source_key：有明确身份锚点则提醒漏填（warn，非 fatal）
+    gh = str(data.get("github_repo", "") or "").strip().strip("\"'")
+    if in_tech and gh:
+        return [], [
+            f"缺 source_key（应为 gh:{gh}，与 github_repo 同源）；漏填则自动发布去重判定失灵"
+        ]
+    if in_video:
+        m = BODY_BVID_RE.search(body or "")
+        if m:
+            return [], [
+                f"正文含 {m.group(0)} 但缺 source_key（应为 bv:{m.group(0)}）；漏填则自动发布去重判定失灵"
+            ]
+    return [], []
+
+
 @dataclass
 class FileReport:
     """单文件的校验结果聚合。"""
@@ -299,6 +372,18 @@ def lint_file(path: Path) -> FileReport:
     # 致命 #3：posts/tech 的 github_repo 身份字段（格式错填 / 正文有 repo 却漏填）
     for msg in check_github_repo(path, data, body):
         report.add_fatal(msg)
+
+    # 致命 #4：slug:index 全站构建毒药（所有 posts 文章）
+    for msg in check_slug_not_index(path, data):
+        report.add_fatal(msg)
+
+    # 致命 #5 / 软警告：posts/tech 与 posts/video 的 source_key 身份锚点
+    # （错填/漂移 fatal；漏填 warn——存量未回填，新稿由 skill 带齐落盘）
+    sk_fatal, sk_warn = check_source_key(path, data, body)
+    for msg in sk_fatal:
+        report.add_fatal(msg)
+    for msg in sk_warn:
+        report.add_warn(msg)
 
     return report
 
