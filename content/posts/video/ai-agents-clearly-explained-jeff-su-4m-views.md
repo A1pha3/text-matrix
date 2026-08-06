@@ -10,7 +10,7 @@ tags = ['AI Agent', 'LLM', 'RAG', '工作流']
 
 # AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解
 
-> 2026 年 4 月，Jeff Su 在 YouTube 发布了 [AI Agents Clearly Explained](https://www.youtube.com/watch?v=HvD2RGJfp6s)，播放量超 400 万。以下基于该视频及配套文章，拆解 AI Agent 的三层进化路径。
+> 2025 年 4 月，Jeff Su 在 YouTube 发布了 [AI Agents Clearly Explained](https://www.youtube.com/watch?v=HvD2RGJfp6s)，播放量超 400 万。以下基于该视频及配套文章，拆解 AI Agent 的三层进化路径。
 
 ---
 
@@ -83,20 +83,43 @@ Jeff Su 的视频适合作为第一层认知框架，但真要往下做，几个
 
 ### ReAct 的重点：可中断的循环
 
-ReAct 论文的优势有两层：一层是让模型能在每一步根据观察结果更新计划，另一层是让整个过程更容易被人类检查。它不只是"会调用工具"的别名，而是一种把推理和动作放进同一条可追踪轨迹里的组织方式。
+ReAct 论文（Yao et al., 2022）把"推理"和"行动"拆进同一条循环，每一步交替走三个环节：
 
-论文到工程落地，中间还有一层差异。很多生产系统不会把完整 thought 直接暴露给用户，而是只保留结构化行动、关键摘要和执行日志，以降低 token 成本、泄露风险和调试噪音。这不违背 ReAct 的思想，只是做了工程折中。
+1. **Thought（推理）**——模型解释自己现在为什么做这一步，以及上一步结果意味着什么。
+2. **Action（行动）**——模型选一个工具、填好参数，触发一次调用。
+3. **Observation（观察）**——工具返回的结果，重新喂回上下文，驱动下一轮推理。
+
+循环反复，直到模型判断目标已完成，或达到停止条件。三层一起，才构成一条可追踪、可回放的轨迹。它不只是"会调用工具"的别名，而是把推理和动作放进同一条轨迹里的组织方式。
+
+```python
+# 一个去掉细节的 ReAct 示意循环
+while True:
+    thought = model.generate(thought + action + observation)   # 想
+    action = parse_action(thought)                              # 决定调用什么
+    if action == "finish":
+        break
+    observation = execute_tool(action.get("name"), action.get("args"))  # 观察
+    context.append(observation)
+```
+
+这么拆，就能看出它和另外两种写法的差别。纯思维链（chain-of-thought, CoT）只做推理、不做动作，适合纯文本问答；纯规划式（先规划完再执行）遇到中间结果和预期不符时会卡住。ReAct 把两者交替起来，让模型一边根据观察修正判断，一边推进任务，这正是 Jeff Su 口中"根据中间结果选择下一步"的工程实现。
+
+论文到工程落地，中间还有一层差异。很多生产系统不会把完整 thought 直接暴露给用户，而是只保留结构化行动、关键摘要和执行日志，以降低 token 成本、泄露风险和调试噪音。这不违背 ReAct 的思想，只是做了工程折中——轨迹仍在，只是对外只露必要的部分。
 
 ### Tool Use 的难点：让调用更可靠
 
 工具调用这一层经常被讲得过于轻松。真正的难点不在于"把 API 挂上去"，而在于如何减少误选工具、错误参数和幻觉式调用。Gorilla 这类研究之所以重要，就是因为它把问题讲得很具体：大模型在 API 调用场景下，常见失败点正是参数不准确、文档理解错误和错误调用不存在的接口。
 
-Agent 工具层至少要补上这些东西：
+早一点的 Toolformer（Schick et al., 2023）换了个思路：让模型自己学会"在什么位置、调用什么工具能拿到有用信息"，用结果来验证该不该调用。它指向的事实是，工具调用不是把函数列表塞进 prompt 就完事，"什么时候该调、返回怎么用"本身就需要训练。这两条研究线合起来，说明工具层要解决的不只是接线，还有选择和校验。
 
-- 明确的工具描述和参数模式。
-- 输入校验、超时、重试和失败回退。
-- 权限边界，避免模型"想调什么就调什么"。
-- 记录每次调用的上下文，方便回放和评估。
+到生产环境，工具层至少要补上这些东西：
+
+- 明确的工具描述和参数模式（JSON Schema），让模型少猜参数。
+- 输入校验、超时、重试和失败回退；对幂等的操作用重试，对非幂等的操作要避免重复副作用。
+- 权限边界，避免模型"想调什么就调什么"——只暴露任务需要的工具。
+- 记录每次调用的上下文，方便回放和评估：参数、返回、耗时、token 消耗。
+
+其中"权限边界"和"幂等"经常被忽略，却又最容易出事。前者决定了模型失控时能造成多大损失，后者决定了网络抖动时系统会不会重复扣款、重复发消息。
 
 ### Memory 不只有向量数据库
 
@@ -110,11 +133,24 @@ Agent 工具层至少要补上这些东西：
 
 向量数据库主要适合做语义检索，不是所有记忆都该往里扔。"这次任务执行到第几步了"更像状态；"这个用户偏好什么写作语气"更像长期档案；"这份规范文档的相关段落是什么"才更适合走检索。
 
+这里藏着一个多数人低估的权衡：上下文窗口再大也有限，硬把所有历史塞进去，token 成本、检索噪声和延迟都会涨。所以工程上通常不是"记不记"，而是"什么进窗口、什么进存储、什么被压缩或遗忘"。近几轮对话进窗口，跨会话的用户偏好进长期存储，中间态用摘要压缩。判断依据是：这条信息在当下这一步是否真的需要被模型看到。
+
 ### Multi-Agent 不是入门默认项
 
 Jeff Su 的视频面向初学者，没有把多智能体协作当主轴，这个判断是对的。很多任务并不需要多 Agent，单 Agent 加上几个可靠工具、清晰状态和评估回路，已经足够解决问题。
 
 多 Agent 真正适合的是角色明显分工、任务天然并行、或者需要多视角互审的场景。否则，它带来的往往是更复杂的调度、更多成本和更难排查的故障链路。
+
+### Agentic Workflows 的四个可复用模式
+
+Jeff Su 视频里引用的 Andrew Ng 例子，背后其实是一套被反复验证的框架。Andrew Ng 在 2024 年初的分享里，把 agentic workflow 归纳为四种模式：
+
+1. **反思（Reflection）**——让模型先产出，再自己审视、修改。多一轮"这里哪里不对"的复查，往往比一次憋出完美答案更稳。
+2. **工具调用（Tool Use）**——把搜索、计算、执行代码等能力交给模型，按需调用。就是前文 Tool Use 那一层。
+3. **规划（Planning）**——先把大目标拆成步骤，再逐步执行，遇到意外再调整。对应 Level 3 里"自主拆解步骤"。
+4. **多智能体协作（Multi-agent Collaboration）**——多个角色分工、互查。
+
+这四种模式并不互斥，也不要求一次全上。单一个"反思"就能带来明显的质量提升，成本却很低。想上手的人，通常从这四种里挑一个最贴合任务的开始，比一上来拼一个完整 multi-agent 框架更划算。
 
 ## 从教学 Demo 到生产系统，还差四层护栏
 
@@ -126,6 +162,8 @@ Jeff Su 的视频把概念讲清楚了，但想把它变成可上线的系统，
 | 循环控制 | 一直跑到模型说完成 | 最大步数、预算上限、停止原因、人工接管 |
 | 记忆管理 | 统一塞进上下文或向量库 | 状态分层、保留策略、压缩与遗忘机制 |
 | 调试评估 | 看日志、手动体感判断 | Trace、离线评测、成功率、成本与延迟指标 |
+
+其中"调试评估"最容易被拖到最后。Agent 每一步都可能不同，光靠"这次跑通了"不能证明稳定。更实际的做法是攒一个固定的评测集——几十个有标准答案的任务，每次改动模型或工具后统一跑一遍，看成功率涨还是跌，同时盯住 cost 和延迟两项硬指标。没有这组基线，所谓的优化只是感觉，不是度量。
 
 Agent 一旦拿到决策权，系统风险也会同步上升。你不能只给它更多工具，还得给它更严格的约束、可观测性和回退路径。
 
@@ -140,7 +178,7 @@ Agent 一旦拿到决策权，系统风险也会同步上升。你不能只给�
 
 这里可以顺带理解 LangChain 和 MCP 的位置。LangChain 当前把自己定位为"帮助你快速构建 Agent 和应用的架构层"，更复杂的编排可以下沉到 LangGraph。MCP 则是另一条线，它解决的是"AI 应用如何用统一方式连接外部系统"，实际上是在降低工具接入和迁移成本。两者并不冲突，甚至经常同时出现：前者偏编排，后者偏连接。
 
-如果只从入门成本看，最值得记住的原则反而很简单：先 workflow，后 agent；先单 Agent，后多 Agent；评估补齐之前，别急着加工具。
+如果只从入门成本看，原则反而很简单：先 workflow，后 agent；先单 Agent，后多 Agent；评估补齐之前，别急着加工具。
 
 ## 这支视频的价值与边界
 
@@ -156,9 +194,11 @@ Jeff Su 这支视频最实在的地方是把概念压缩得足够清楚：零基
 - [Jeff Su 配套文章：AI Agents for Curious Beginners](https://www.jeffsu.org/ai-agents-for-curious-beginners/)
 - [ReAct 论文：ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
 - [RAG 论文：Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401)
+- [Toolformer 论文：Language Models Can Teach Themselves to Use Tools](https://arxiv.org/abs/2302.04761)
+- [Gorilla 论文：Large Language Model Connected with Massive APIs](https://arxiv.org/abs/2305.15334)
+- [Andrew Ng：What's next for AI agentic workflows](https://www.youtube.com/watch?v=sal78ACtGTc)
 - [LangChain 官方文档总览](https://docs.langchain.com/oss/python/langchain/overview)
 - [MCP 介绍：What is the Model Context Protocol?](https://modelcontextprotocol.io/introduction)
-- [Gorilla 论文：Large Language Model Connected with Massive APIs](https://arxiv.org/abs/2305.15334)
 
 ## 站内继续读
 

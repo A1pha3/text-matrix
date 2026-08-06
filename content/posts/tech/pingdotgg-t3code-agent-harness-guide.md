@@ -184,7 +184,34 @@ npx t3@latest --help
 
 ### 实战：手机从外网连家中机器
 
-第四章讲过「能连」的机制——四种连接目标：本地主连接、Bearer 配对、Relay 中继、SSH。这一节回答更实际的问题：手机在外面（蜂窝网络、公司 Wi-Fi）时，怎么连回家里的机器？实际可用的路径有四条：Tailscale、Relay 中继、SSH 远程环境、托管配对。结论先行：**日常首选 Tailscale，它不可用时用 Relay 中继兜底**；SSH 和托管配对适用于特定场景。下面按「横评 → 推荐组合 → 逐步操作」展开，看完照着做就能跑通。
+第四章从连接层讲了「能连」的机制——四种连接目标：本地主连接、Bearer 配对、Relay 中继、SSH。这一节换一个角度，回答更实际的问题：手机在外面（蜂窝网络、公司 Wi-Fi）时，怎么连回家里的机器？
+
+先厘清一个容易混淆的点：这里的分类和第四章不是一回事。第四章说的是连接层「这条 WebSocket 怎么建」，属于技术分类；本章说的是使用者「用什么方式接入」，属于操作分类。按操作方式，实际路径有四条：Tailscale、Relay 中继、SSH 远程环境、托管配对。
+
+也许你会问：第四章不是说 Tailscale 不是第五种连接目标吗？对，它确实不是——Tailscale 只是把服务发布成 HTTPS 端点的提供者，手机最终仍走普通 bearer 配对连进来。但站在使用者角度，Tailscale 是「要不要装、要不要用」的独立选择，所以单独算一条路径，也是本章最推荐的方式。
+
+结论先行：**日常首选 Tailscale，它不可用时用 Relay 中继兜底**；SSH 和托管配对适用于特定场景。下面按「认识概念 → 横评 → 推荐组合 → 逐步操作」展开，看完照着做就能跑通。
+
+#### 认识 Tailscale（新手必读）
+
+Tailscale 不是 T3 Code 的一部分，它是独立的组网工具，T3 Code 只是善用了它。很多人第一次接触这两个词容易混淆，先把它讲清楚：
+
+- **它是什么**：一个基于 WireGuard 的组网工具。把「手机」和「家中机器」加入同一个私人虚拟网络（叫 tailnet）后，两台设备就像在同一个局域网里，互相能直接访问——即使它们一个在 4G 网络、一个在公网 IP 都没有的路由器后面。
+- **它不是 VPN 代理**：Tailscale 只在你的设备之间建立加密直连通道，不把流量转发到第三方服务器（极少数 NAT 打洞失败时才走内置的 DERP 中继兜底）。所以手机开着 Tailscale 不影响正常上网，只有访问家中机器时才走这条加密隧道。
+- **为什么 T3 Code 官方推荐它**：它给 T3 Code 提供「稳定地址 + HTTPS 端点 + 不暴露公网」，正好补齐远程控制最需要的三件事。后面用到 `--tailscale-serve` 时你会看到，Tailscale 还能把本机服务发布成 `https://机器名.tailnet名.ts.net/` 这样的 HTTPS 地址。
+
+**注册与安装：**
+
+1. 注册：用 GitHub / Google / Microsoft 账号直接登录，或邮箱注册，一两分钟搞定。免费版包含 3 个用户、100 台设备，个人用完全够，不需要付费。
+2. 家中机器（macOS）：访问 [tailscale.com/download](https://tailscale.com/download) 下载 App，或 `brew install --cask tailscale`，安装后登录你的账号。
+3. 手机（iOS/Android）：App Store / Google Play 搜 Tailscale 安装，登录**同一个账号**。两台设备登录同一账号后，自动加入同一个 tailnet。
+
+**稳定性和维护：**
+
+- 网络：底层是 WireGuard，T3 Code 官方文档专门推荐 tailnet 就是因为稳定。它自动处理 NAT 穿透——两台设备只要能上网就能连上，即使家中机器没有公网 IP。NAT 穿透失败（极少见）时，Tailscale 用内置的 DERP 中继兜底，不会断连。
+- 维护：装好后作为系统服务开机自启、自动重连，不需要手动重启，平时感觉不到它的存在。装一次，长期不用管。
+
+**验证是否就绪：** 在终端跑 `tailscale status`，看到两台设备都在列表里、状态是 Connected，就说明组网成功，可以进入下面的 T3 Code 配对步骤了。
 
 #### 四种方案横评
 
@@ -225,6 +252,7 @@ npx t3@latest --help
   ```bash
   npx t3 serve --host "$(tailscale ip -4)"
   ```
+  这条只监听 tailnet 私有地址，不依赖 Tailscale Serve，也就绕开了下面「常见问题」里那个 Serve 未开启的坑——手机 App 连纯 HTTP 不受浏览器混合内容限制，所以完全够用。
 - 服务端已经在跑：不用重启，直接签发配对二维码：
   ```bash
   npx t3 pair --tailscale
@@ -249,6 +277,7 @@ tailscale serve --https=443 off
 
 - 扫完码连不上：确认手机和家机登录了同一个 Tailscale 账号、Tailscale 状态显示 Connected，再试一次
 - 混合内容错误：浏览器里的 app.t3.codes 是 HTTPS 页面，只能连 HTTPS/WSS 端点；如果环境是纯 HTTP 就会报混合内容错误。`--tailscale-serve` 自动配好 HTTPS，正常不会触发
+- 服务端日志报 `TailscaleCommandTimeoutError`：多半是 **tailnet 没开启 Serve 功能**。`tailscale serve` 需要先在 tailnet 层面授权，否则命令会一直卡到超时。手动跑 `sudo tailscale serve --https=443 http://localhost:3773` 时若提示 `Serve is not enabled on your tailnet`，按提示打开 `https://login.tailscale.com/f/serve?node=<你的节点>` 批准即可。批准后重新执行 `sudo tailscale serve ...`，再改回 `npx t3 serve` 启动（避免重复触发超时调用）
 
 #### 方案二：Relay 中继（兜底）
 
@@ -280,6 +309,30 @@ https://app.t3.codes/pair?host=https://backend.example.com:3773#token=配对码
 ```
 
 浏览器直连你的后端，托管页不代理流量，配对 token 放在 URL hash 里。注意纯 HTTP 的局域网地址（`http://192.168.x.x:3773`）不能走这条路——HTTPS 页面连 HTTP 后端会被浏览器拦掉，这种情况回到方案一或方案二。
+
+#### 桌面 App 用户路线（图形化，零命令行）
+
+前面四个方案大多围绕 CLI 展开。如果你只装了桌面 App、不想碰命令行，按下面两个阶段照做就行，全部在设置界面里完成。
+
+**第一阶段：局域网跑通**
+
+1. Mac mini 打开 T3 Code 桌面 App
+2. Settings → Connections → 找到 This environment → 打开 Network access 开关（App 会重启，后端开始监听所有网络接口）
+3. 点 Create Link 生成配对链接，界面同步显示二维码
+4. 手机打开 T3 Code App → Add Environment → 扫码或粘贴链接
+5. 连接成功，环境保存后随点随连
+
+同一 Wi-Fi 下不需要装任何额外软件。连不上时先确认手机和 Mac 在同一个子网——很多路由器把访客网络和设备隔离开了，手机连了访客网络就扫不到。
+
+**第二阶段：外网接入**
+
+1. Mac mini 和手机都装 Tailscale，登录同一个账号
+2. Mac mini 的 T3 Code App：Settings → Connections → 打开 Tailscale HTTPS 开关（App 自动重启后端，并让 Tailscale Serve 把 HTTPS 代理到本地后端）
+3. Connections 面板出现 HTTPS 端点：`https://<机器名>.<tailnet名>.ts.net/`
+4. 手机 T3 Code App → Add Environment → 用这个 HTTPS 地址配对
+5. 完成。蜂窝网络、公司网络都能连，4G/5G/Wi-Fi 切换不断线
+
+这个路线踩的坑和方案一一致：手机 Tailscale 没显示 Connected 会导致扫码失败；网页版 app.t3.codes 是 HTTPS 页面，连纯 HTTP 的局域网地址会报混合内容错误——开了 Tailscale HTTPS 就不会碰到后者。
 
 ## 八、常见问题 FAQ
 

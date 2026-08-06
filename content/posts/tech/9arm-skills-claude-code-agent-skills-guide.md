@@ -4,48 +4,16 @@ date = '2026-05-21T11:50:00+08:00'
 draft = false
 title = '9arm-skills：让 AI 编程助手按流程干活的合约式 Skills'
 slug = '9arm-skills-claude-code-agent-skills-guide'
-description = '9arm-skills 不是提示词模板，而是一组可执行的合约式 Skills，覆盖版本管理、代码审查、测试生成、文档更新等 9 个编码阶段，让 AI 编程助手老老实实按流程干活。'
+description = '9arm-skills 是一组可执行的合约式 Skills，把调试、复盘、审查、向上沟通写成 AI 必须遵守的触发时机、执行顺序与退出条件，让编程助手在证据不足时停下来而不是硬凑答案。'
 categories = ['技术笔记']
 tags = ['Claude', 'Skills', '开发工具']
 +++
 
 # 9arm-skills：让 AI 编程助手按流程干活的合约式 Skills
 
-## 阅读指引
+AI 编程助手给的建议常常「听起来对但差点意思」：模型能力够了，缺的是让它在证据不足时停下来的约束。9arm-skills 就是为填这个差距做的——把项目里最需要纪律保障的四件事（调试、复盘、审查、向上沟通）分别编码成技能（Skill），每个技能都是一份规定了**触发时机、执行顺序和退出条件**的可执行合约，AI 必须照办，否则就停下来。
 
-**目标读者**：用 Claude Code、Cursor 或类似 AI 编程助手做日常开发的工程师。如果你已经不满足于「AI 给的方案听起来都对但就是差点意思」，这篇文章应该对你有用。
-
-**学习目标**：读完你会理解：
-
-- 把工程流程写成提示词模板和写成 Agent 可执行约束，两种思路的分界线在哪里
-- 9arm-skills 里 4 个核心技能各自管什么、在什么时机触发、拒绝在什么条件下执行
-- 这套设计背后的工程判断，以及它不适用于哪些场景
-
-**前置知识**：需要知道 Claude Code 的「自定义指令」功能，以及 AI 编程助手的基本工作方式。如果你用过 Claude Code 的 `CLAUDE.md` 或 `.claude/skills` 目录，理解起来会更顺畅。
-
-**范围说明**：9arm-skills 仓库整体覆盖 9 个编码阶段，本文只拆其中最需要纪律保障的 4 个核心技能——`debug-mantra`、`post-mortem`、`scrutinize`、`management-talk`。
-
-## 目录
-
-- [一、你遇到过这种情况吗](#一你遇到过这种情况吗)
-- [二、一张图看懂四技能的分工](#二一张图看懂四技能的分工)
-- [三、四个技能的完整拆解](#三四个技能的完整拆解)
-- [四、一个完整的流转案例](#四一个完整的流转案例)
-- [五、这套设计的工程逻辑](#五这套设计的工程逻辑)
-- [六、适用与不适用](#六适用与不适用)
-- [七、局限性](#七局限性)
-- [八、自测](#八自测)
-- [九、实战与进阶](#九实战与进阶)
-- [十、FAQ](#十faq)
-- [十一、收束](#十一收束)
-
-如果你对某个技能已经了解，可以直接跳到[四、一个完整的流转案例](#四一个完整的流转案例)看四个技能怎么配合。
-
----
-
-## 一、你遇到过这种情况吗
-
-AI 助手给的建议常常「听起来对但差点意思」。模型能力够了，缺的是让它在证据不足时停下来的约束。9arm-skills 就是为填这个差距做的。
+## 一、缺的不是能力，是约束
 
 AI 助手说：「建议把这段逻辑抽成一个独立函数，提高复用性。」
 
@@ -53,11 +21,9 @@ AI 助手说：「建议把这段逻辑抽成一个独立函数，提高复用�
 
 再把场景放大一点。你刚修了一个折磨两天的 bug，想让 AI 帮你写复盘文档。它洋洋洒洒给你三段话，看起来结构完整，但仔细一读：没有复现步骤，没有根因追溯链，没有验证方案——写的是一篇「叙事散文」，不是一份工程师之间传递判断的工程记录。
 
-通用模型默认给「最可能有帮助的回答」，但工程流程需要它在证据不足时拒绝回答。
+通用模型默认给「最可能有帮助的回答」，但工程流程需要它在证据不足时拒绝回答。9arm-skills（GitHub: [thananon/9arm-skills](https://github.com/thananon/9arm-skills)，截至 2026-08 约 3.1k Stars）把「拒绝条件」写进了技能的触发逻辑里。
 
-9arm-skills（GitHub: [thananon/9arm-skills](https://github.com/thananon/9arm-skills)，撰写时约 1k Stars）就是为解决这个问题设计的。作者 Thananon Patinyasakdikul（Arm）把项目里最常用、最需要纪律保障的四件事——调试、复盘、代码审查、向上沟通——分别编码成四个技能（Skill）。每个技能是一份**规定了触发时机、执行顺序和退出条件的可执行合约**，AI 必须照办，否则就停下来。
-
----
+仓库底层是 `skills/` 目录，按 `engineering/`、`productivity/`、`misc/`、`personal/`、`in-progress/`、`deprecated/` 分组，目前共 6 个技能。本文只拆其中最需要纪律保障的 4 个——`debug-mantra`、`post-mortem`、`scrutinize`、`management-talk`；另外两个（`qwen-agent` 把琐碎任务委托给便宜的 Qwen 子代理、`qwenchance` 管理长任务的上下文预算）不在本文范围。
 
 ## 二、一张图看懂四技能的分工
 
@@ -78,8 +44,6 @@ graph LR
 
 两条线有明确的交接点：`post-mortem` 产出的是面向工程师的工程真相，如果你需要给 VP 或 PM 看，把这份产出交给 `management-talk`——它负责把函数名、文件路径、commit SHA 翻译成领导层能用来做决策的语言。post-mortem 不删代码标识符，management-talk 不编造事实、不替用户往 Slack 或邮件渠道发帖——两个技能各自守住自己的边界。
 
----
-
 ## 三、四个技能的完整拆解
 
 下面逐一展开每个技能「管什么、怎么执行、在什么条件下拒绝执行」。
@@ -96,16 +60,16 @@ graph LR
    ```bash
    # 启动调试器并附加到进程
    lldb --attach-pid <PID>
-   
+
    # 在可疑函数设置断点
    (lldb) breakpoint set --name tadalaunchPrepare
-   
+
    # 运行到断点
    (lldb) continue
-   
+
    # 检查变量值
    (lldb) frame variable
-   
+
    # 单步执行
    (lldb) step
    ```
@@ -116,11 +80,11 @@ graph LR
    ```c
    // 在关键路径添加带唯一前缀的日志
    #define DBG_PREFIX "[DBG-7af3]"
-   
+
    void tadaLaunchPrepare(...) {
-       log_info("%s Entering tadaLaunchPrepare, numStreams=%d", 
+       log_info("%s Entering tadaLaunchPrepare, numStreams=%d",
                 DBG_PREFIX, scheduler->numStreams);
-       
+
        if (scheduler->numStreams == 1 && !plan->persistent) {
            log_warn("%s Fast path triggered, may skip sync", DBG_PREFIX);
        }
@@ -130,25 +94,18 @@ graph LR
 3. **证伪假设（Falsify the hypothesis）** — 提出 3-5 个排序假设，先跑**证伪实验**。能存活下来的假设才值得继续。只追一个假设会锚定在第一个看起来合理的想法上。
 
    证伪实验记录示例：
-   ```
+
    | 假设 | 实验 | 结果 | 状态 |
    |------|------|------|------|
    | 启动顺序问题 | 延迟 kernel 发布 100ms | 仍挂起 | 排除 |
-   | Scratch 缓冲区竞态 | 强制 numStreams=2 |  bug消失 | 存活 |
+   | Scratch 缓冲区竞态 | 强制 numStreams=2 | bug 消失 | 存活 |
    | IPC 发布未等待 | 添加内存屏障 | 仍挂起 | 排除 |
-   ```
 
-4. **交叉验证每一条线索（Every run is a breadcrumb）** — 维护一份运行账本（ledgger）：每次实验改了哪个变量、观察到什么、排除了什么。新假设必须与账本中**所有**历史记录一致。不一致 → 假设有问题，修正或丢弃。
+4. **交叉验证每一条线索（Every run is a breadcrumb）** — 维护一份运行账本（ledger）：每次实验改了哪个变量、观察到什么、排除了什么。新假设必须与账本中**所有**历史记录一致。不一致 → 假设有问题，修正或丢弃。
 
-**触发时机**：
-
-- `/debug-mantra` 命令
-- 用户报告 bug、说「坏了/报错了/不行」
-- 用户粘贴 stack trace 或 error log
+**触发时机**：`/debug-mantra` 命令；用户报告 bug、说「坏了/报错了/不行」；用户粘贴 stack trace 或 error log。
 
 **关键约束**：除非用户明确说「跳过口诀」，AI 必须在第一条回复里逐字背诵四步口诀，然后按序执行。这是技能强行加在 AI 行为上的闸门。
-
----
 
 ### post-mortem：工程复盘的及格线
 
@@ -162,28 +119,6 @@ graph LR
 - [ ] 修复已验证（原始复现通过、客户负载通过）
 
 如果缺了任何一项，它会列出缺什么然后停下来——而不是凑一篇看着像复盘的「推测性叙事」。
-
-**复盘文档结构（4 个必填段 + 5 个条件段）：**
-
-   post-mortem 输出示例（工程文档片段）：
-   ```markdown
-   ## Summary
-   GPU 训练挂起 (Tada comms) → 根因：单流快速路径跳过同步 → 修复：PR #5751 (移除快速路径 + 设备端 null check) → Owner: Alex
-
-   ## Root Cause
-   1. `tadaLaunchPrepare` 条件 `scheduler->numStreams == 1 && !plan->persistent` 在 dumbModel eval step 坍缩为单流时触发
-   2. 跳过 `launchStream` 与 `deviceStream` 的跨流事件同步
-   3. `scratchBuf` 在 kernel 可见时为 `NULL` → 野指针解引用 → ring ready-flag 读到垃圾内存 → 永久自旋
-
-   ## Fix
-   - PR #5751: 移除不安全的快速路径 + 在解引用前加设备端 null check
-   - 失败尝试: PR #5612 在主端加防御检查, 掩盖了症状但未消除竞态
-
-   ## Validation
-   - 3x 2小时连续跑 + 6小时浸泡跑 + tada-tests 套件全绿
-   - 验证配置: Llama-2-70B / 8 GPU / DeepSpeed
-   - 未在其他负载重测
-   ```
 
 **复盘文档结构（4 个必填段 + 5 个条件段）：**
 
@@ -204,26 +139,19 @@ graph LR
 - 这是**工程师对工程师**的文档。函数名、struct 字段、commit SHA、行号——全部保留。六个月后的你要靠 `grep` 回到现场，不是靠读叙事散文。
 - 它为 `management-talk` 提供源材料。把这份工程文档交给 `management-talk`，后者负责翻译成给 VP 看的版本。
 
----
-
 ### scrutinize：外部视角的端到端审查
 
 `scrutinize` 做一件代码评审里最难自动化的事：先问「这个改动该不该存在」，再查「它到底干了什么」。
 
 大多数 AI 代码审查只读 diff，然后给你一堆风格建议。`scrutinize` 的四步 workflow 顺序不可跳过：
 
-**Step 1 — 意图（Intent）**：用一句话描述这个改动的目标。如果连目标都说不清楚，直接停在这里。然后必须问：有没有更简单或更小的方法达到同样目的？考虑方案包括：
-
-- 不做（问题是真实存在的吗？）
-- 用已有的机制而非新增 surface（暴露面）
-- 更小的改动解决 90% 的问题
-- 在另一个层面解决（配置而非代码、框架而非应用、编译期而非运行时）
+**Step 1 — 意图（Intent）**：用一句话描述这个改动的目标。如果连目标都说不清楚，直接停在这里。然后必须问：有没有更简单或更小的方法达到同样目的？考虑方案包括：不做（问题是真实存在的吗？）、用已有的机制而非新增 surface（暴露面）、更小的改动解决 90% 的问题、在另一个层面解决（配置而非代码、框架而非应用、编译期而非运行时）。
 
 **Step 2 — 追踪（Trace）**：从入口点出发，沿真实调用链通读，包含 diff 两侧未被修改的代码。bug 往往藏在 diff 和周边代码的交界处。
 
 **Step 3 — 验证（Verify）**：对每个声称的行为，显式回答「我走了一遍代码路径，实际发生了 X，所以这个声称成立/不成立」。同时检查什么输入/状态会打破它、它悄悄改了什么（性能语义、错误语义、对外契约）、测试是否真的覆盖了所追踪的路径。
 
-**Step 4 — 报告（Report）**：按严重程度排列，每个发现包含引用（`file:line`），后果、证据、建议改动。结尾给一句话判决：ship / fix-then-ship / rework / reject。
+**Step 4 — 报告（Report）**：按严重程度排列，每个发现包含引用（`file:line`），以及后果、证据、建议改动。结尾给一句话判决：ship / fix-then-ship / rework / reject。
 
 输出不谈「这个 PR 看起来不错」。每条发现带引用。没有发现就说清楚你追了哪些路径、检查了哪些边界。
 
@@ -231,27 +159,25 @@ graph LR
    ```markdown
    ## Review Report: PR #1234
 
-   ### 🔴 Critical（必须修复）
+   ### Critical（必须修复）
    - `src/auth.ts:45` — 移除 null check 后导致未授权访问
      - 后果：攻击者可直接调用 `getUser()` 无需认证
      - 证据：测试用例 `auth-none-user` 在 PR 后通过（应为失败）
      - 建议：恢复 null check 或添加认证守卫
 
-   ### 🟡 Major（建议修复）
+   ### Major（建议修复）
    - `src/session.ts:112` — session 生命周期与文档描述不一致
      - 后果：文档声称 session 在 30min 无活动后过期，代码实现为 24h
      - 证据：`session-manager.ts:89` 中 `MAX_IDLE_TIME = 24 * 60 * 60 * 1000`
      - 建议：对齐代码与文档，或更新文档说明
 
-   ### ⚪ Minor（可选优化）
+   ### Minor（可选优化）
    - `src/utils.ts:233` — 函数 `deepClone` 存在但未被使用
      - 后果：死代码增加维护负担
      - 建议：移除或添加使用场景
 
    **判决**：fix-then-ship — Critical 项修复后可合入
    ```
-
----
 
 ### management-talk：工程事实的语境转换
 
@@ -279,7 +205,7 @@ graph LR
 
    management-talk 输出示例（Slack 草稿）：
    ```markdown
-   **[已修复待合并】Tada 通信库在 DumModel LLM-7B 微调时挂起**（JIRA-12345）
+   **Tada 通信库在 dumbModel LLM-7B 微调时挂起**【已修复待合并】（JIRA-12345）
    - 通信快速路径跳过同步 → GPU 读未初始化内存 → 挂起。潜在数月。
    - 负责人：Alex，PR #5751 审查中。
    - 临时方案：关闭 IPC 注册。
@@ -289,24 +215,22 @@ graph LR
    ```markdown
    **Status: Fixed pending merge.** Bug found, fix validated, PR up for review.
 
-   **Impact:** LLM-7B fine-tuning on 8 GPUs would hang every eval step — blocking entire workload. Affects customers using DumModel.
+   **Impact:** LLM-7B fine-tuning on 8 GPUs would hang every eval step — blocking entire workload. Affects customers using dumbModel.
 
-   **What broke:** GPU comms library (Tada) skipped an internal synchronization step under a config DumModel triggers. GPUs read from uninitialized buffer and got stuck. The unsafe shortcut existed for months but wasn't reached by any real workload until now.
+   **What broke:** GPU comms library (Tada) skipped an internal synchronization step under a config dumbModel triggers. GPUs read from uninitialized buffer and got stuck. The unsafe shortcut existed for months but wasn't reached by any real workload until now.
 
    **Owner:** Alex (Tada team). PR org/platform#5751.
 
    **Next steps:** code review → merge. Workaround until then: disable IPC registration.
    ```
 
----
-
 ## 四、一个完整的流转案例
 
-> **以下案例为虚构示意**：Tada 通信库、dumbModel 等项目名与代码标识符均为虚构，仅用于演示四个技能的配合流程。
+> **以下案例为虚构示意**：Tada 通信库、dumbModel 等项目名与代码标识符均为虚构，仅用于演示四个技能的配合流程。skill 自带的 worked example 也使用了同一套名字，机制一致。
 
 假设你接手了一个 GPU 训练挂起的 bug。
 
-**1. debug-mantra 接管调试 session**（虚构）
+**1. debug-mantra 接管调试 session**
 
 CI 报 `Tada` 通信库在 8-GPU LLM-7B 微调时 eval 阶段永久挂起，无报错、无超时——busy-spin（忙等待）在 `tadaKernel_AllReduce_f32_RING`。
 
@@ -317,7 +241,7 @@ AI 被 debug-mantra 约束，第一条回复先逐字背诵四步口诀，然后
 - Step 3：排出 4 个假设，先跑证伪实验——第一个假设（启动顺序）被调试器推翻；第二个假设（scratch 缓冲区竞态）被埋点日志确认
 - Step 4：关键实验——强制 `numStreams = 2`，bug 消失。根因锁定：单流快速路径跳过了跨流同步事件
 
-**2. 修完后，post-mortem 起草复盘**（虚构）
+**2. 修完后，post-mortem 起草复盘**
 
 修复落地（PR #5751：移除不安全的快速路径 + 收紧设备端 null check），验证通过（3 次 2 小时连续跑 + 6 小时浸泡跑 + `tada-tests` 套件全绿）。
 
@@ -328,7 +252,7 @@ AI 被 debug-mantra 约束，第一条回复先逐字背诵四步口诀，然后
 - 失败的修复尝试：PR #5612 在 IPC publish 后加了主机端防御检查，在部分路径掩盖了症状但没有消除底层竞态——这次也一并回退
 - 怎么漏出去的：单流快速路径 3 月加入时假设 dumbModel 总走多流路径。5 月 dumbModel launcher 把 eval step 坍缩为单流——条件翻转。CI 没有覆盖单流 + IPC + scratch buffer 的组合矩阵
 
-**3. management-talk 翻译给管理层**（虚构）
+**3. management-talk 翻译给管理层**
 
 把 post-mortem 的工程事实交给 management-talk：
 
@@ -351,20 +275,11 @@ Slack 版本（<80 词）：
 > - Owner: Alex, PR #5751 in review.
 > - Workaround: disable IPC registration.
 
-Slack 中文草稿（<80 字）：
-
-> **【已修复待合并】Tada 通信库在 dumbModel LLM-7B 微调时挂起**（JIRA-12345）
-> - 通信快速路径跳过同步 → GPU 读未初始化内存 → 挂起。潜在数月。
-> - 负责人：Alex，PR #5751 审查中。
-> - 临时方案：关闭 IPC 注册。
-
-**4. scrutinize 审查修复 PR**（虚构）
+**4. scrutinize 审查修复 PR**
 
 `scrutinize` 从意图开始：移除不安全快速路径 + 收紧设备端 null check → 目标成立 → 但有没有更简单的方式？→ 已有代码库中不存在更轻量的替代 → 通过。然后端到端追踪代码路径：`tadaLaunchPrepare` → `tadaLaunchKernel` → `tadaLaunchFinish` → 检查移除后的 fallback 路径是否正确覆盖了 `numStreams == 1` 的情况 → 验证 null check 的位置是在解引用之前而非之后。
 
 四个技能在这个流程里各自卡住了 AI 默认会跳过的环节——debug-mantra 拒绝在没复现时推进，post-mortem 拒绝删代码标识符。
-
----
 
 ## 五、这套设计的工程逻辑
 
@@ -405,8 +320,6 @@ AI 一直在变聪明，但你不想它在你还没确认根因时就替你写�
 
 > 上述目录结构基于撰写时的仓库快照，技能增减与归类以仓库 README 当前版本为准。
 
----
-
 ## 六、适用与不适用
 
 9arm-skills 对「已经在按流程走的团队」加成最明显。如果你们已经有一套调试纪律、复盘规范、代码审查惯例，那把这个库拿过来改写成团队的版本，AI 就能直接继承这些判断。
@@ -414,13 +327,13 @@ AI 一直在变聪明，但你不想它在你还没确认根因时就替你写�
 **推荐的采用顺序**：
 
 1. 先装 `debug-mantra`，跑一周。把四步口诀打卡变成肌肉记忆，感受 AI 在「拒绝跳到假设」这件事上的行为变化。
-   **验收信号**：当 AI 在你贴出 stack trace 后第一条回复是逐字背诵四步口诀而不是直接给修复假设，且至少有一次它要求你先提供复现脚本再继续——这一步就跑通了。
+   验收信号：当 AI 在你贴出 stack trace 后第一条回复是逐字背诵四步口诀而不是直接给修复假设，且至少有一次它要求你先提供复现脚本再继续——这一步就跑通了。
 
 2. 再装 `post-mortem`。每次修完 bug 后让 AI 按那 9 段结构起草复盘——你立刻能看出哪些信息你在修 bug 过程中实际上没有收集。
-   **验收信号**：至少有一次 post-mortem 因为缺「可靠复现」或「根因确认」而拒绝起草，并明确列出缺什么——这说明门槛在生效。
+   验收信号：至少有一次 post-mortem 因为缺「可靠复现」或「根因确认」而拒绝起草，并明确列出缺什么——这说明门槛在生效。
 
 3. 再装 `scrutinize` 和 `management-talk`。这两个是锦上添花——审查流程和向上沟通在团队规模扩大后才变成高频需求。
-   **验收信号**：`scrutinize` 至少在一次 PR 审查中质疑了改动本身的必要性（而不只是给风格建议）；`management-talk` 产出的 Slack 草稿里没有函数名和 commit SHA，但 JIRA Key 还在。
+   验收信号：`scrutinize` 至少在一次 PR 审查中质疑了改动本身的必要性（而不只是给风格建议）；`management-talk` 产出的 Slack 草稿里没有函数名和 commit SHA，但 JIRA Key 还在。
 
 **什么时候不必用**：
 
@@ -428,11 +341,11 @@ AI 一直在变聪明，但你不想它在你还没确认根因时就替你写�
 - 单人项目，没有「团队隐性知识」需要传递。你不需要 `management-talk` 翻译给 VP，也不需要 `scrutinize` 模拟一个外部审查者的视角。
 - 主要用 AI 做一次性脚本生成而非持续 coding session。技能的触发条件建立在「AI 始终活跃在 session 中」这个前提上。
 
+**安装方式**：仓库推荐 `npx skills add thananon/9arm-skills`（对任意 agent 都可用）；作者自己的开发循环用 `./scripts/link-skills.sh` 把每个 shippable 技能软链接到 `~/.claude/skills/`。
+
 **如果你要构建自己的技能库**：
 
 9arm-skills 的目录结构和安装机制本身就是一套可复用的骨架。从 `in-progress/` 起手写你的第一个技能，用 `SKILL.md` 的 YAML frontmatter（`name` + `description`）声明元数据，在正文中规定触发时机、执行顺序和退出条件。写完后移到 `engineering/` 或 `productivity/`，跑 `link-skills.sh`，你的 AI session 就能多一条可执行约束。
-
----
 
 ## 七、局限性
 
@@ -444,145 +357,9 @@ AI 一直在变聪明，但你不想它在你还没确认根因时就替你写�
 
 **文化耦合**。四个技能都假设你的团队有工程师自主推动流程的文化。如果团队习惯是主管分配任务、工程师执行，那 `scrutinize` 的「先问这个改动该不该存在」这一步可能跟实际决策权归属不一致。
 
----
+**约束强制力依赖宿主工具**。`SKILL.md` 本质是 Markdown 加 YAML frontmatter，这套格式原生面向 Claude Code 的 `.claude/skills` 机制。其他 AI 编程助手是否能严格遵守「没复现就停下」这类退出条件，取决于它是否提供类似 skills 的显式调用机制。你可以把 SKILL.md 内容拷过去当项目级自定义指令用，但强制力会比在 Claude Code 里弱。
 
-## 八、自测
-
-用下面这组递进式问题检查理解程度。基础题考复述与定位，进阶题考解释原因，开放题考判断与应用。答不上来的条目回看对应章节。
-
-<details>
-<summary>基础题 1：四个技能（debug-mantra、post-mortem、scrutinize、management-talk）分别约束了什么？各自的退出条件是什么？</summary>
-
-- **debug-mantra**：约束调试流程（复现→定位→假设→验证），退出条件是"没有可靠复现就停下来，不准跳到假设阶段"
-- **post-mortem**：约束复盘文档结构（9段结构，每段有必要条件），退出条件是"缺任意一项必要条件就拒绝起草"
-- **scrutinize**：约束审查视角（先问"这个改动该不该存在"），退出条件是"改动本身不必要就停下来，不进入实现层面审查"
-- **management-talk**：约束事实翻译（工程事实→管理层决策语言），退出条件是"证据不足时明确标注未知，不编造数据"
-</details>
-
-<details>
-<summary>基础题 2：能描述四个技能在 GPU 挂起 bug 场景中的完整配合流程吗？</summary>
-
-完整流程：
-1. **debug-mantra 接管**：用户粘贴 stack trace → AI 逐字背诵四步口诀 → 要求先提供复现脚本
-2. **post-mortem 起草**：修完 bug 后 → AI 按 9 段结构起草复盘，缺必要条件就列出缺失项
-3. **management-talk 翻译**：需要向 VP 汇报时 → AI 把复盘文档（含函数名、commit SHA）翻译成管理层能用的决策语言（删技术标识符，保留 JIRA Key）
-4. **scrutinize 审查**：提交修复 PR 时 → AI 先问"这个改动该不该存在"，再进入实现层面审查
-
-每一步交接的具体产物：复现脚本 → 复盘文档 → Slack 草稿 → 审查报告
-</details>
-
-### 进阶题（能解释为什么）
-
-<details>
-<summary>3. post-mortem 保留代码标识符（函数名、文件路径、commit SHA）的原因是什么？management-talk 又为什么要把这些标识符删掉？两份文档各自的受众是谁？</summary>
-
-post-mortem 的受众是工程师——他们需要 grep 回溯、定位到具体代码位置，所以必须保留函数名、文件路径、commit SHA。management-talk 的受众是管理层（VP、PM）——他们不需要知道具体代码位置，只需要知道决策依据和影响范围，所以要把技术标识符删掉，保留 JIRA Key 等业务标识符。这份转换避免了"工程师写了一份满是函数名的报告，VP 看不懂"的问题。
-</details>
-
-<details>
-<summary>4. scrutinize 的四步 workflow 为什么把「意图」放在「追踪」之前？如果先做追踪再做意图判断，会漏掉哪类问题？这一顺序要避免的是哪类浪费？</summary>
-
-先做意图判断（`## 意图`：这个改动该不该存在）能尽早拦截"不必要的改动"——如果改动本身没必要，就不用进入实现层面审查。如果先做追踪（`## 追踪`：逐行看实现），会漏掉"改动本身不必要但实现写得很好"这类问题。这一顺序避免的是"花时间审查一个不该存在的改动"的浪费。
-</details>
-
-<details>
-<summary>5. bug-fix-flow 中 reproduce 的输出被谁消费？如果跳过复现直接进入修复假设，后续哪个技能会拒绝继续？为什么这个拒绝是必要的？</summary>
-
-reproduce 的输出被 post-mortem 消费——post-mortem 需要"可靠复现"作为必要条件之一。如果跳过复现直接进入修复假设，后续 post-mortem 会拒绝起草（因为必要条件"可靠复现"缺失）。这个拒绝是必要的，因为它防止基于假设写复盘——没有可靠复现，根因追溯链就无法验证，复盘文档会变成"叙事散文"而非工程记录。
-</details>
-
-<details>
-<summary>6. 9arm-skills 的目录分层（`engineering/`、`in-progress/`、`deprecated/`、`personal/`）如何防止草稿技能被 AI 意外触发？软链接安装脚本在这里起什么作用？</summary>
-
-软链接安装脚本（`link-skills.sh`）只链接 `shippable` 目录下的技能（`engineering/`、`productivity/`、`misc/`），`deprecated/`、`in-progress/`、`personal/` 全部跳过。这意味着草稿技能（在 `in-progress/` 里）不会被软链接到 AI 工具能扫描到的位置，因此不会被意外触发。正式发布时，把技能从 `in-progress/` 移到 `engineering/`，再跑 `link-skills.sh` 即可。
-</details>
-
-### 开放题（能判断与应用）
-
-<details>
-<summary>7. 能根据团队情况判断是否适合采用 9arm-skills，并给出采用顺序。判断依据是什么？</summary>
-
-判断是否适合：① 团队是否已经有隐性工程纪律（调试流程、复盘规范、代码审查惯例）——有，则适合；② 项目是否处于快速原型阶段——是，则不适合（流程本身在变，硬约束会拖慢探索）。采用顺序：先装 `debug-mantra`（最需要纪律保障的环节），跑一周后再装 `post-mortem`，最后装 `scrutinize` 和 `management-talk`。判断依据：哪个环节最经常"听起来对但差点意思"，就从哪个环节开始。
-</details>
-
-<details>
-<summary>8. 能基于现有技能文件自定义一个团队专属版本——哪些字段必须改、哪些字段可以保留、改完后怎么验证。</summary>
-
-必须改的字段：① 触发时机（改成团队常用的工作流触发方式）；② 退出条件（调整门槛——比如团队不要求 50% 复现率才继续，设一个能接受的值）；③ 输出格式（按团队文档模板改写）。可以保留的字段：执行顺序（四步口诀、9 段结构等方法论本身，只要团队认同就可以保留）。验证方式：用同一个 bug 场景对比原版和定制版的行为差异，记录哪些差异是定制带来的、哪些是因为改动了退出条件导致 AI 走了不同的决策路径。
-</details>
-
----
-
-## 九、实战与进阶
-
-下面三个练习从观察行为到动手改写，覆盖 9arm-skills 的核心使用路径；做完后顺着进阶路径往深度走。
-
-### 实战练习
-
-#### 练习一：用 debug-mantra 跑一次真实调试
-
-找一个你最近遇到过的 bug（已经修完也可以复现）。在 AI 编程助手里加载 debug-mantra，把 bug 描述和报错信息贴给它。观察：
-
-1. AI 的第一条回复是否逐字背诵了四步口诀？（如果不是，检查技能是否正确加载——通常是因为 AI 工具的 skill 目录路径不对）
-2. AI 有没有在没有可靠复现的情况下跳到修复假设阶段？如果有，记下它跳过的步骤。
-3. 四步走完后，AI 提出的根因和你当时实际发现的根因是否一致？如果不一致，是在哪一步分叉的？
-
-跑完这次调试后，回答：debug-mantra 在你的调试习惯里，哪个环节和你的直觉最冲突？（通常答案在"证伪假设"这步——大多数人习惯了先提出最可能的假设然后验证，debug-mantra 要求你先跑证伪实验。）
-
-#### 练习二：让 post-mortem 拒绝起草一次复盘
-
-故意构造一个不满足四个必要条件的场景——比如修了一个 bug 但没有保留复现脚本。让 AI 写复盘，观察 post-mortem 的行为：
-
-1. 它有没有直接拒绝起草？
-2. 它列出的缺失项是否准确？（有没有把"缺复现"错判成"缺验证"？）
-3. 缺的这几项里，哪些你确实没收集、哪些其实是有的但 AI 没检测到？
-
-这个练习的价值不在看 AI 拒绝得多坚决，而在让你意识到：你平时修完 bug 走到"写复盘"这一步时，真正缺了哪些信息。大部分人缺的不是根因，是"可靠复现"——因为修完 bug 之后复现脚本往往被忘了保存。
-
-#### 练习三：基于一个现有技能改出你团队专属版本
-
-选四个技能中和你日常工作最相关的一个。复制它的 SKILL.md，改三个地方：
-
-1. **触发时机**：改成你团队更常用的触发方式（比如你们用 `/debug` 而不是 `/debug-mantra`）
-2. **退出条件**：调整门槛——如果你们团队不要求 50% 复现率才继续，设一个你们能接受的值
-3. **输出格式**：按你团队的文档模板改写输出结构
-
-改完后加载到你的 AI 工具里，用同一个 bug 场景对比原版和定制版的行为差异。记录哪些差异是定制带来的，哪些差异是因为改动了退出条件导致 AI 走了不同的决策路径。
-
-### 进阶路径
-
-1. **读完 9arm-skills 仓库里四个 SKILL.md 的完整源码**：本文概括了核心逻辑，但每个技能还有一些本文没展开的边缘规则——比如 `scrutinize` 对不同语言的审查侧重、`management-talk` 对不同渠道的二次塑形细节。直接读源码比读任何解析都直接。
-2. **把 debug-mantra 的四步口诀改写成你团队的调试纪律**：9arm-skills 的四个技能是作者 Arm 的个人实践，不代表通用真理。如果你的团队靠 bisect 定位而不是调试器，把"追踪失败路径"里的三条路径顺序改成 bisect 优先。这一步是练习三的延伸——从改单个字段到改方法论本身。
-3. **用 `in-progress/` 目录写一个你自己的技能**：9arm-skills 的目录结构和安装机制是一套可复用的骨架。挑一个你团队最没纪律保障的环节——多半是修完 bug 到写复盘之间——写成一份 AI 必须遵守的合约。第一行写退出条件。
-4. **关注仓库的 releases 页面**：作者持续在优化技能文件，关注 CHANGELOG 里退出条件和工作流的变更——这些变更往往反映了"某个退出条件在生产中被发现太松或太紧"。
-
----
-
-## 十、FAQ
-
-**Q：9arm-skills 和 Claude Code 内置的 CLAUDE.md 有什么区别？**
-
-CLAUDE.md 是静态的全局指令，AI 读完之后怎么执行由它自己判断。9arm-skills 的 SKILL.md 把三件事写成硬约束：触发时机（比如用户粘贴 stack trace 时 debug-mantra 必须接管）、执行顺序（四步口诀按序走，不准跳）、退出条件（没有可靠复现就停下来，不准凑答案）。前者是"建议你参考"，后者是"必须照办，否则停下来"。
-
-**Q：技能加载失败怎么排查？**
-
-按这个顺序查：
-
-1. SKILL.md 是否在 AI 工具能扫描到的 skills 目录下。9arm-skills 用 `link-skills.sh` 把 `engineering/`、`productivity/`、`misc/` 三个 shippable 目录软链接到目标位置，`deprecated/`、`in-progress/`、`personal/` 不会被链接——如果你从草稿目录直接加载，自然不生效。
-2. SKILL.md 的 YAML frontmatter 是否齐全。`name` 和 `description` 两个字段是 AI 识别技能入口的依据，缺了就匹配不上。
-3. 软链接是否指向正确路径。换机器或换目录后软链接失效是常见原因。
-
-**Q：能不能只装其中一个技能？**
-
-可以。第六节给的采用顺序就是分步装：先装 `debug-mantra` 跑一周，再装 `post-mortem`，最后装 `scrutinize` 和 `management-talk`。四个技能之间没有硬依赖——`post-mortem` 产出的工程文档可以交给 `management-talk` 翻译，但不装 `management-talk` 也不影响 `post-mortem` 本身起草。按你团队最缺纪律保障的那个环节先装。
-
-**Q：支持 Cursor / 其他 AI 编程助手吗？**
-
-SKILL.md 本质是 Markdown 加 YAML frontmatter，这套格式原生面向 Claude Code 的 `.claude/skills` 机制。文章开头把 Cursor 和类似工具的工程师也列为目标读者，是因为约束式思路对任何 AI 编程助手都适用——但 Cursor 等工具是否能严格遵守退出条件，取决于其是否提供类似 skills 的显式调用机制，需查阅对应工具文档。你可以把 SKILL.md 内容拷过去当项目级自定义指令用，但强制力会比在 Claude Code 里弱。
-
----
-
-## 十一、收束
+## 八、收束
 
 开头那个场景里，AI 给的建议「听起来对但差点意思」，差的是一组约束——告诉它在什么时候执行哪个流程、在什么条件下停下来。
 
@@ -604,9 +381,8 @@ SKILL.md 本质是 Markdown 加 YAML frontmatter，这套格式原生面向 Clau
 
 2. **技术准确性边界**：本文提到的技能设计（debug-mantra、post-mortem、scrutinize、management-talk）是基于作者个人项目经验。不同团队的调试纪律、复盘格式、代码审查标准和沟通需求可能不同，需要根据团队实际情况调整触发时机、执行顺序和退出条件。
 
-3. **适用性边界**：9arm-skills 面向的是"需要纪律保障的编码流程"，对于自由探索、原型开发、一次性脚本等场景，这套约束可能过度。
+3. **适用性边界**：9arm-skills 面向的是「需要纪律保障的编码流程」，对于自由探索、原型开发、一次性脚本等场景，这套约束可能过度。
 
 4. **未覆盖话题**：本文不讨论 Claude Code 的安装配置、其他 AI 编程助手（Cursor、GitHub Copilot 等）的对比评测、多模态编程等话题。
 
-5. **版本与时效性**：本文基于 2026 年 5 月的仓库快照撰写。9arm-skills 仍在持续迭代，后续新增技能或调整以仓库最新版本为准。
-
+5. **版本与时效性**：本文基于 2026 年 5 月的仓库快照撰写，Stars 数据按 2026-08 的 GitHub API 校准。9arm-skills 仍在持续迭代，后续新增技能或调整以仓库最新版本为准。

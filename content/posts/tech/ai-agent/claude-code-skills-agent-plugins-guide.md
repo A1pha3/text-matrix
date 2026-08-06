@@ -7,485 +7,226 @@ aliases:
 date: "2026-03-31T12:35:00+08:00"
 categories: ["技术笔记"]
 tags: ["Claude Code", "AI 编程", "Skills", "OpenClaw", "Cursor"]
-description: "全面解析 Claude Code Skills 项目：205 个生产级 AI 编程技能，支持 11 个平台，涵盖工程、产品、营销等 9 大领域。从入门到精通，包含安装配置、原理分析、架构设计、开发扩展和最佳实践。"
+description: "解析 alirezarezvani/claude-skills：362 个技能、18 个领域、支持 13 个 AI 编码工具的技能库。从技能包结构、Skills/Agents/Personas 分层、Orchestration 编排到安装引入顺序。"
 ---
 
 # Claude Code Skills & Plugins：AI 编程智能体技能库完全指南
 
-> 预计阅读时间：40 分钟 | 难度：⭐⭐⭐⭐
+AI 编程工具缺的往往不是知识，而是可重复的工作流。通用模型知道概念，但不太清楚怎么把概念落成一套能跑、可维护的具体做法。alirezarezvani/claude-skills 做的是把领域专家的决策流程写进文件，让 AI 加载后照着执行，而不是靠训练数据里的模糊记忆临场发挥。
 
-AI 编程工具缺的是工作流，不是知识。Claude Code Skills 把 205 个领域的专家工作流写成了 AI 能直接执行的指令文件——每个技能本质上是一份写死的检查清单、决策框架和工具链的组合。本文不逐个介绍技能功能（官方文档已经做了这件事），重点解析这套系统的设计思路、三层架构分工，以及你在自己项目里应该按什么顺序引入。
-
----
-
-## 学习目标
-
-学完本文档后，可以：
-
-- 理解 Claude Code Skills 的核心概念与设计理念
-- 掌握在 Claude Code、OpenAI Codex、Gemini CLI、OpenClaw 等 11 个 AI 编程工具中安装和使用技能的方法
-- 了解 205 个技能的分类体系与核心功能
-- 学会使用 `convert.sh` 脚本将技能转换为不同工具的原生格式
-- 掌握开发新技能的规范与工作流程
-- 理解 Skills、Agents、Personas 三层架构的适用场景
-- 能够在团队中推广和应用这套技能系统
+截至 2026-08-06，这个仓库收录了 362 个技能、102 个 Agent、7 个 Persona、116 个命令，覆盖 18 个领域，能通过一份 `convert.sh` 分发到 13 个编码工具。真正值得看的地方不是数量，而是三件事：技能包怎么组织、Skills/Agents/Personas 怎么分层、以及一套无框架的编排协议怎么把跨领域的活串起来。
 
 ---
 
-## §2 项目概述
+## 系统地图
 
-### 2.1 什么是 Claude Code Skills
+一个技能包由三部分组成：`SKILL.md` 定义工作流和决策框架，`tools/` 放纯标准库的 Python 脚本，`references/` 放模板和检查清单。仓库里这类技能包有 362 个。
 
-Claude Code Skills（官方仓库：[alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills)，简称 **Skills**）是**目前最全面的开源 AI 编程智能体技能库**，收录了 205 个生产级技能（Skills）和插件（Plugins），支持 11 个主流 AI 编程工具。项目获得了 8,200+ GitHub Stars，973 Forks，由开发者 [alirezarezvani](https://github.com/alirezarezvani) 维护，采用 MIT 许可证开源。
+```mermaid
+flowchart LR
+    S["技能包<br/>SKILL.md + tools/ + references/"]
+    S --> C["convert.sh 多格式转换"]
+    C --> CC["Claude Code · plugins"]
+    C --> CX["OpenAI Codex · agent skills"]
+    C --> GE["Gemini CLI · native skills"]
+    C --> OW["OpenClaw / Hermes / Mistral Vibe"]
+    C --> MT["Cursor / Aider / Windsurf / Kilo Code<br/>OpenCode / Augment / Antigravity"]
+```
 
-这个项目做的事情很直接：**把领域专家的知识写成 AI 能读懂的指令文件，配上一组零依赖的 Python 工具脚本**。AI 加载一个技能后，不需要依赖自身训练数据中的模糊记忆，而是按照文件里的检查清单、决策框架和工具链执行任务。每个技能本质上是一个指令包（SKILL.md + tools/ + references/），AI 加载后就在对应领域按专家路径工作。
+下面这张表把 18 个领域和技能数对应起来，方便你判断哪些领域值得先看。
 
-### 2.2 支持的平台
-
-项目天然支持 11 个主流 AI 编程工具，覆盖市面上几乎所有重要的 AI 辅助编程产品：
-
-| 平台 | 插件名称 | 技能数量 | 官方推荐 |
-|------|---------|---------|---------|
-| **Claude Code** | Plugins | 205 | ✅ 推荐 |
-| **OpenAI Codex** | Agent Skills | 205 | ✅ 推荐 |
-| **Gemini CLI** | Native Skills | 205 | 🆕 新增 |
-| **OpenClaw** | OpenClaw Skills | 205 | 支持 |
-| **Cursor** | .mdc Rules | 156 | 支持 |
-| **Aider** | CONVENTIONS.md | 156 | 支持 |
-| **Windsurf** | .windsurf/skills | 156 | 支持 |
-| **Kilo Code** | .kilocode/rules | 156 | 支持 |
-| **OpenCode** | .opencode/skills | 156 | 支持 |
-| **Augment** | .augment/rules | 156 | 支持 |
-| **Antigravity** | ~/.gemini/antigravity/skills | 156 | 支持 |
-
-> **注意**：部分工具（如 Cursor、Aider）不支持 Python 工具脚本，仅支持指令规则转换，因此技能总数为 156 个而非完整的 205 个。
-
-### 2.3 核心数据
-
-```yaml
-
-### 2.4 为什么需要 AI 编程技能
-
-用 AI 编程工具写过实际项目的人都会碰到一个瓶颈：通用模型知道概念，但不知道怎么落地。举个例子：
-
-- AI 知道"要写测试"，但面对遗留代码时，它不知道该怎么写一份能跑、可维护的 Playwright 集成测试
-- AI 理解"SEO 优化"这个词，但不清楚 Google Core Web Vitals 的评分细则和具体修复步骤
-- AI 会写代码，但设计数据库表结构或 API 版本管理时缺乏工程判断
-
-Skills 解决的就是这个"知道概念 vs 知道怎么干"的落差——直接给出工作流，而非补充背景知识。每个技能包含：
-
-| 组件 | 说明 |
-|------|------|
-| **SKILL.md**（技能定义文件） | 技能的核心指令文件，包含工作流程、决策框架和执行步骤 |
-| **Python 工具**（纯标准库 stdlib-only） | 268 个纯 Python 标准库 CLI 脚本（无任何第三方依赖），提供自动化能力 |
-| **参考文档**（references） | 模板、检查清单、推荐做法文档等支撑材料 |
+| 领域 | 技能数 | 覆盖方向 |
+|------|--------|---------|
+| Engineering — Core | 52 | 架构、前后端、全栈、QA、DevOps、SecOps、Playwright Pro |
+| Engineering — POWERFUL | 84 | Agent 设计、RAG 架构、数据库设计、CI/CD、安全审计、MCP 构建 |
+| Product | 17 | 产品经理、UX 研究、落地页、SaaS 脚手架 |
+| Marketing | 48 | 内容、SEO + AEO、CRO、增长、销售（8 个分组） |
+| Productivity | 11 | capture、email、reflect、weekly-review、deep-work、meetings |
+| Marketing（顶层 landing） | 1 | 单文件 HTML 落地页生成 |
+| Research（学术） | 9 | litreview、grants、patent、deep-research 等 |
+| Research Operations | 5 | 临床研究、研发财务、市场研究、产品研究 |
+| Project Management | 9 | 高级 PM、scrum master、Jira、Confluence |
+| Regulatory & QM | 19 | ISO、FDA、GDPR、SOC 2、CAPA |
+| Compliance OS | 9 | 合规操作系统：控制项、证据、审计就绪 |
+| C-Level Advisory | 68 | 完整 C-suite 顾问 + founder-mode 代理 |
+| Business & Growth | 5 | 客户成功、销售工程、收入运营 |
+| Business Operations | 7 | 流程映射、供应商管理、采购优化 |
+| Commercial | 8 | 定价策略、联合合作、RFP 应答 |
+| Finance | 4 | 财务分析、SaaS 指标、投资顾问 |
+| Loop Library | 1 | 有边界 AI-agent 循环的发现与设计 |
+| Markdown → HTML | 5 | markdown 转交互式 HTML 工具链 |
 
 ---
 
-## §3 原理分析
+## Skills、Agents、Personas：三层分工
 
-### 3.1 技能的本质：模块化专家知识封装
+仓库把智能增强明确分成三层，职责不同，别混着用。
 
-Claude Code Skills 的设计思路很朴素：你给 AI 的指令越具体，它的输出越靠谱。与其希望 AI "恰好知道"某个领域的推荐做法，不如把专家的决策流程写成一份标准化文件，AI 照着执行。
+| 维度 | Skills | Agents | Personas |
+|------|--------|--------|----------|
+| 解决什么 | 怎么执行任务 | 该执行什么任务 | 谁在思考 |
+| 范围 | 单领域 | 单领域 | 跨领域 |
+| 语气 | 中性 | 专业严肃 | 个性化驱动 |
+| 示例指令 | "Follow these steps for SEO" | "Run a security audit" | "Think like a startup CTO" |
 
-一个典型的技能结构如下：
+**Skills** 管"怎么做"。加载 `/seo-auditor` 后，AI 按文件里写好的流程跑检查，而不是随口说一句"优化一下 SEO"。它的价值是把一次性的提示词变成可重复执行的检查清单。
+
+**Agents** 在 Skills 之上加了"该做什么"的判断。`/security-agent` 不等人命令，会自己扫描项目里值得审计的地方，再按需拉起对应技能。
+
+**Personas** 改的是思考框架，不绑定具体任务。给 AI 设定 `"Think like a startup CTO"` 后，它在讨论技术选型时会自动带上成本、团队能力、迁移风险的权衡。仓库预置了 Startup CTO、Growth Marketer、Solo Founder 三个 Persona，用法是复制到 `~/.claude/agents/` 或通过 `convert.sh` 转换。
+
+三层配合使用，而不是只挑一层。仓库为怎么组合它们单独写了编排协议（见下文任务流）。
+
+---
+
+## 核心机制：技能包怎么组织
+
+一个技能包的结构是固定的，`SKILL.md` 是核心，它定义了 AI 在该领域如何提问、执行和验证。
 
 ```text
+<skill-name>/
+├── SKILL.md           # 技能核心定义：流程、决策框架、验证标准
+├── README.md          # 人类可读的使用说明
+├── CLAUDE.md          # AI 智能体的配置与指令
+├── tools/             # 可选：Python 工具脚本
+├── references/        # 可选：模板、检查清单
+└── package.json       # 技能元数据
+```
 
-**SKILL.md 是技能的核心**，它定义了 AI 在该领域应该如何思考、提问、执行和验证。一个高质量的 SKILL.md 包含：
+一份合格的 `SKILL.md` 通常包含：目标声明、前置条件、执行流程、决策框架、验证标准。执行流程里每一步都写明输入、输出和检查点，AI 照着走完就能确认任务质量。
 
-- **目标声明**：明确技能要解决什么问题
-- **前置条件**：使用技能前需要满足什么
-- **执行流程**：分步骤的工作流程，每步都有明确的输入输出
-- **决策框架**：遇到分歧时如何判断
-- **验证标准**：如何确认任务完成质量
+**tools/ 是自动化能力的承重墙**。仓库里 644 个 Python 脚本全部只用标准库，零第三方依赖，这是刻意为之的约束：脚本在任何 Python 环境都能直接跑，不会因为 pip 安装失败而中断一条技能链。每个脚本只做一件事，靠管道组合出复杂功能。外部命令（如 `curl`、`jq`、`git`）在脚本内部有 fallback 或明确的依赖声明。
 
-### 3.2 Skills vs Agents vs Personas：三层架构
+**references/ 是支撑材料**。741 份模板、检查清单和领域知识文件，让技能在具体场景里有可以套用的底稿。
 
-项目区分了三种不同层次的智能增强方式，适用于不同场景：
-
-| 维度 | **Skills** | **Agents** | **Personas** |
-|------|------------|------------|--------------|
-| **核心问题** | 如何执行任务 | 应该执行什么任务 | 谁在思考 |
-| **范围** | 单领域 | 单领域 | 跨领域 |
-| **语气** | 中性专业 | 专业严肃 | 个性化驱动 |
-| **适用场景** | 标准化执行 | 自动化流程 | 创意咨询 |
-| **示例指令** | "Follow these steps for SEO" | "Run a security audit" | "Think like a startup CTO" |
-
-**Skills** 解决"怎么做"。加载 `/seo-auditor` 后，AI 会按文件里写好的流程——检查 meta 标签、跑 Lighthouse、输出按优先级排列的修复列表——而不是随口说一句"优化一下 SEO"。它的价值是把一次性的提示词变成了可重复执行的检查清单。
-
-**Agents** 在 Skills 之上加了"该做什么"的判断。`/security-agent` 不等人命令，它会自己扫描项目里值得审计的地方，然后按需拉起对应的 Skills。你可以把它理解为给 AI 装了一组触发规则。
-
-**Personas** 改的是思考框架，不绑定特定任务。给 AI 设定 `"Think like a startup CTO"` 后，它在讨论技术选型时会自动带上成本、团队能力、迁移风险的权衡——这不是任何一个 Skill 能单独做到的，因为它跨了工程、产品和商业三个维度。
-
-### 3.3 技能分类体系
-
-205 个技能划分为 9 大领域：
-
-| 领域 | 技能数 | 代表技能 | 覆盖方向 |
-|------|--------|---------|---------|
-| **Engineering — Core** | 26 | 架构设计、前后端开发、QA、DevOps | 软件工程全生命周期 |
-| **Playwright Pro** | 9+3 | 测试生成、flaky 修复、Cypress 迁移 | 企业级 UI 自动化测试 |
-| **Self-Improving Agent** | 5+2 | 自动记忆管理、模式提炼、技能提取 | 让 AI 在对话中积累经验 |
-| **Engineering — POWERFUL** | 30 | Agent 设计器、RAG 架构师、CI/CD 构建器 | 复杂系统设计与实现 |
-| **Product** | 14 | 产品经理、UX 研究员、SaaS 脚手架 | 产品思维与用户洞察 |
-| **Marketing** | 43 | SEO 审计、内容营销、社交媒体 | 增长与获客 |
-| **RA/QM** | 12 | 监管合规、质量管理 | 企业合规与质量保障 |
-| **Project Management** | 6 | 敏捷教练、Sprint 规划 | 项目交付管理 |
-| **C-level Advisory** | 28 | CTO/CFO/COO 顾问 | 高管决策支持 |
-| **Finance** | 2 | 金融分析师、SaaS 指标 | 财务分析与商业智能 |
-| **Business & Growth** | 4 | 增长策略、商业模式 | 商业战略 |
-
-### 3.4 Python 工具的设计约束
-
-268 个 Python 工具脚本承载了技能的大部分自动化能力。它们有几条硬约束：
-
-**纯标准库**：所有脚本仅使用 Python 标准库（`stdlib`），**不依赖任何第三方包**。这确保了脚本在任何 Python 环境中都能运行，不会因为 pip 安装问题而失败。
-
-**零外部依赖命令**：工具脚本调用的外部命令（如 `curl`、`jq`、`git`）在脚本内部有 fallback 处理或明确的依赖声明。
-
-**原子化设计**：每个脚本只做一件事，通过管道组合实现复杂功能。这种 Unix 哲学让工具可预测、可测试、可组合。
-
-**跨平台兼容**：脚本经过测试可在 Linux、macOS、Windows（WSL）环境下正常运行。
-
-### 3.5 一次真实任务如何流过三个技能
-
-只看静态结构容易觉得技能就是"进阶版提示词"。放到一次具体任务里看，区别会更清楚。
-
-假设你要给一个新项目设计用户认证系统。你加载了 `database-designer`、`api-designer` 和 `backend-dev` 三个技能，然后对 AI 说："设计一套用户注册登录的数据库和 API。"
-
-AI 不会像没加载技能时那样直接给出一个大概方案。`database-designer` 的 SKILL.md 里写好了：先确认业务实体、再画关系图、再输出 DDL、最后给索引建议。AI 会按这个顺序提问——"用户有几种角色？需要支持第三方登录吗？会话管理用什么策略？"——等你回答完，它产出的是一份带主键、外键、索引策略的完整 schema，而不是一句 "users 表应该有 id、email、password"。
-
-接着 `api-designer` 接管。它的 SKILL.md 规定了 RESTful 端点命名规范、版本号策略和错误响应格式。AI 读入上一步的 schema，输出 `/api/v1/auth/register`、`/api/v1/auth/login` 等端点的完整定义——请求体、响应体、状态码、rate limit 建议——格式与团队已有的 OpenAPI 规范一致。
-
-最后 `backend-dev` 上场。它的指令文件告诉 AI：先检查数据库 schema 和 API 定义是否存在、再决定用什么 ORM、再生成带参数校验和错误处理的代码骨架。AI 发现前两步的产物都在上下文里，直接生成了 Express + Prisma 的实现，每个端点都带了输入校验中间件。
-
-这三个技能单独用也能工作，但串联起来效果不一样：每个技能的输出格式被下一个技能识别为"已知输入"，AI 不需要在每一步重新猜测上下文。这就是技能和零散提示词的根本差别——技能把工作流写进了文件，AI 只需要按检查清单推进。实际使用中，你可以按任务组合不同的技能链：SEO 审计链（auditor → copywriter）、安全评估链（auditor → fixer）、产品设计链（pm → ux → api-designer），每个链的交接点都是预定义的输出格式。
+整套结构解答了一个问题：为什么技能比零散提示词可靠。因为工作流被写进了文件，AI 每一步的输入输出都是预先定义的，交接给下一个技能时不需要重新猜测上下文。
 
 ---
 
-## §4 架构分析
+## 多格式转换与安装
 
-### 4.1 仓库整体结构
-
-```text
-
-### 4.2 多格式转换架构
-
-项目实现了一套巧妙的**多工具格式转换系统**。核心是 `scripts/convert.sh` 脚本，它能自动将基础技能转换为目标工具的原生格式：
-
-```text
-
-转换过程是**无损的**：SKILL.md 中的结构化指令被转换为目标工具的等价格式，Python 工具脚本被包装为符合目标工具规范的执行方式。
-
-### 4.3 安装脚本体系
-
-| 脚本 | 用途 | 支持平台 |
-|------|------|---------|
-| `scripts/gemini-install.sh` | Gemini CLI 快速安装 | Gemini CLI |
-| `scripts/openclaw-install.sh` | OpenClaw 快速安装 | OpenClaw |
-| `scripts/codex-install.sh` | OpenAI Codex 安装 | Codex |
-| `scripts/convert.sh` | 转换为所有工具格式 | 多平台 |
-| `scripts/install.sh` | 安装到目标项目 | 多平台 |
-
-安装流程设计为**幂等操作**：重复执行不会产生副作用，可安全重试。
-
-### 4.4 版本管理策略
-
-项目采用语义化版本号（SemVer），通过 CHANGELOG.md 记录每个版本的变更。最新稳定版本信息可在 GitHub Releases 页面查看。每个技能的版本通过 `package.json` 中的 `version` 字段管理，支持依赖锁定。
-
----
-
-## §5 功能详解
-
-### 5.1 核心工程技能（Engineering — Core）
-
-26 个核心工程技能覆盖软件开发的各个阶段：
-
-**架构与设计**
-- `architecture-design` — 系统架构设计决策
-- `database-designer` — 数据模型与 Schema 设计
-- `api-designer` — RESTful API 设计与版本管理
-
-**前端开发**
-- `frontend-dev` — React/Vue/Angular 推荐做法
-- `css-architect` — CSS 架构与样式指南
-- `accessibility-audit` — WCAG 合规性审计
-
-**后端开发**
-- `backend-dev` — 服务端架构与实现
-- `microservices` — 微服务设计模式
-- `api-security` — API 安全实践
-
-**质量保障**
-- `qa-strategy` — 测试策略制定
-- `e2e-testing` — 端到端测试框架
-- `performance-testing` — 性能基准与优化
-
-**DevOps**
-- `ci-cd-builder` — 持续集成/持续部署流水线
-- `docker-best-practices` — Docker 容器化指南
-- `kubernetes-deployment` — K8s 部署配置
-
-### 5.2 Playwright Pro 测试技能
-
-Playwright Pro 是面向 UI 自动化测试的一组高级技能，提供：
-
-- **智能测试生成** — 根据页面行为自动生成测试用例
-- **Flaky 测试修复** — 自动识别并修复不稳定的测试
-- **框架迁移** — Cypress/Selenium 到 Playwright 的自动迁移
-- **测试管理集成** — TestRail、BrowserStack 等平台对接
-- **55+ 测试模板** — 覆盖常见测试场景
+一份技能库要真正散开，关键是格式转换。`scripts/convert.sh` 负责把技能转成目标工具的原生格式，`scripts/install.sh` 负责装进项目。
 
 ```bash
-# 安装 Playwright Pro 技能
-/plugin install playwright-pro@claude-code-skills
-```textbash
-# 1. 添加技能市场
+# 转换所有技能到所有工具（约 15 秒）
+./scripts/convert.sh --tool all
+
+# 安装到当前项目（带确认）
+./scripts/install.sh --tool cursor --target /path/to/project
+
+# 跳过确认直接装
+./scripts/install.sh --tool aider --target . --force
+
+# 验证安装
+find .cursor/rules -name "*.mdc" | wc -l
+```
+
+各工具的安装入口如下。
+
+**Claude Code（推荐，走插件市场）**：
+
+```bash
 /plugin marketplace add alirezarezvani/claude-skills
 
-# 2. 安装全套技能（按领域分组安装）
-/plugin install engineering-skills@claude-code-skills    # 26 个核心工程技能
-/plugin install engineering-advanced-skills@claude-code-skills  # 30 个 POWERFUL 级技能
-/plugin install product-skills@claude-code-skills      # 14 个产品技能
-/plugin install marketing-skills@claude-code-skills     # 43 个营销技能
-/plugin install ra-qm-skills@claude-code-skills         # 12 个监管/质量技能
-/plugin install pm-skills@claude-code-skills           # 6 个项目管理技能
-/plugin install c-level-skills@claude-code-skills     # 28 个 C-level 顾问技能
-/plugin install business-growth-skills@claude-code-skills  # 4 个商业增长技能
-/plugin install finance-skills@claude-code-skills      # 2 个金融技能
+# 按领域分组安装
+/plugin install engineering-skills@claude-code-skills          # 24 个核心工程
+/plugin install engineering-advanced-skills@claude-code-skills  # 25 个 POWERFUL 级
+/plugin install product-skills@claude-code-skills               # 12 个产品
+/plugin install marketing-skills@claude-code-skills             # 43 个营销
+/plugin install ra-qm-skills@claude-code-skills                 # 12 个监管/质量
+/plugin install pm-skills@claude-code-skills                    # 6 个项目管理
+/plugin install c-level-skills@claude-code-skills               # 28 个 C-level 顾问
+/plugin install business-growth-skills@claude-code-skills       # 4 个商业增长
+/plugin install finance-skills@claude-code-skills               # 2 个金融
 
 # 或安装单个技能
 /plugin install skill-security-auditor@claude-code-skills
 /plugin install playwright-pro@claude-code-skills
 /plugin install self-improving-agent@claude-code-skills
-```textbash
-# 一键安装脚本
-bash <(curl -s https://raw.githubusercontent.com/alirezarezvani/claude-skills/main/scripts/openclaw-install.sh)
-```textbash
-# 克隆仓库
-git clone https://github.com/alirezarezvani/claude-skills.git
-cd claude-skills
-
-# 运行安装脚本
-./scripts/gemini-install.sh
-
-# 在 Gemini CLI 中激活技能
-> activate_skill(name="senior-architect")
-```textbash
-# 使用 npx 安装
-npx agent-skills-cli add alirezarezvani/claude-skills --agent codex
-
-# 或手动克隆
-git clone https://github.com/alirezarezvani/claude-skills.git
-cd claude-skills
-./scripts/codex-install.sh
-```textbash
-# 1. 克隆仓库
-git clone https://github.com/alirezarezvani/claude-skills.git
-cd claude-skills
-
-# 2. 转换为目标工具格式（以 Cursor 为例）
-./scripts/convert.sh --tool cursor
-
-# 3. 安装到项目
-./scripts/install.sh --tool cursor --target /path/to/project
-
-# 4. 验证安装
-find .cursor/rules -name "*.mdc" | wc -l
-# 应该输出 156（转换的技能总数）
-```textbash
-# 1. 克隆仓库
-git clone https://github.com/alirezarezvani/claude-skills.git
-cd claude-skills
-
-# 2. 复制技能文件夹到对应目录
-# Claude Code
-cp -r engineering ~/.claude/skills/
-
-# OpenAI Codex
-cp -r engineering ~/.codex/skills/
-
-# 3. 验证
-ls ~/.claude/skills/engineering/
-```text
-<skill-name>/
-├── SKILL.md           # 必须：技能核心定义
-├── README.md          # 必须：人类可读的使用说明
-├── CLAUDE.md         # 必须：AI 智能体的配置与指令
-├── tools/            # 可选：Python 工具脚本
-│   ├── script1.py
-│   └── script2.sh
-├── references/       # 可选：参考文档
-│   ├── template.md
-│   └── checklist.md
-└── package.json      # 必须：技能元数据
-```textmarkdown
-# 技能名称
-
-## 概述
-简要说明技能的用途和关键能力（2-3 句话）
-
-## 前置条件
-- 使用本技能前需要满足什么？
-- 需要什么样的上下文？
-
-## 适用场景
-- 什么时候应该使用本技能？
-- 什么情况下不应该使用？
-
-## 执行流程
-
-### 步骤 1：阶段名称
-**做什么**：详细说明这一步的具体动作
-
-**输入**：
-- 什么信息/文件是必需的？
-
-**输出**：
-- 这一步应该产出什么？
-
-**检查点**：
-- 如何验证这一步完成了？
-
-### 步骤 2：...
-
-## 决策框架
-遇到以下情况时如何判断：
-- 情况 A vs 情况 B？
-- 优先级的判断标准？
-
-## 验证标准
-任务完成前必须满足的条件列表
-
-## 相关技能
-- 本技能依赖的其他技能
-- 可以与哪些技能配合使用
-```textpython
-#!/usr/bin/env python3
-"""
-技能名称 - 工具描述
-
-功能：简明描述工具做什么
-输入：命令行参数或标准输入
-输出：结构化结果（JSON/TOML）
-依赖：仅使用 Python 标准库
-"""
-
-import sys
-import json
-from pathlib import Path
-
-
-def main():
-    # 实现工具逻辑
-    pass
-
-
-if __name__ == "__main__":
-    main()
-```textjson
-{
-  "name": "skill-<skill-name>",
-  "version": "1.0.0",
-  "description": "技能的简短描述",
-  "author": "你的 GitHub 用户名",
-  "license": "MIT",
-  "homepage": "https://github.com/alirezarezvani/claude-skills",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/alirezarezvani/claude-skills"
-  },
-  "keywords": ["skill", "domain", "ai", "claude-code"],
-  "engines": {
-    "claude-code": ">=1.0.0"
-  },
-  "dependencies": {},
-  "tools": [
-    {
-      "name": "script-name",
-      "file": "tools/script.py",
-      "description": "工具功能描述"
-    }
-  ]
-}
-```textbash
-# 在本地验证技能
-./scripts/validate-skill.sh --skill <skill-name>
-
-# 运行完整的技能测试套件
-./scripts/run-tests.sh
-```textbash
-# 添加为 submodule
-git submodule add https://github.com/alirezarezvani/claude-skills.git vendor/claude-skills
-
-# 切换到稳定版本
-cd vendor/claude-skills
-git checkout v2.1.1
-```text
-team-claude-skills/
-├── README.md
-├── CLAUDE.md
-├── skills/              # 团队共享技能
-│   ├── internal-api-docs/
-│   └── compliance-checker/
-└── scripts/
-    └── install.sh
-```textbash
-# 在 ~/.local/bin/ 创建符号链接
-mkdir -p ~/.local/bin
-ln -s ~/.claude/skills/engineering/tools/* ~/.local/bin/
-```textbash
-# 克隆仓库后
-git pull origin main
-
-# 或更新到特定版本
-git fetch --all
-git checkout v2.1.1
-
-# 更新已安装的技能
-./scripts/update-installed.sh
 ```
 
-### Q4：可以离线使用这些技能吗？
+**Gemini CLI**：
 
-可以。克隆仓库后，所有技能都存储在本地。离线环境下：
-- 技能指令和参考文档完全可用
-- Python 工具脚本完全可用（纯标准库，无网络依赖）
-- 部分需要外部 API 的工具（如 `seo-auditor` 调用 Google PageSpeed API）需要网络
+```bash
+git clone https://github.com/alirezarezvani/claude-skills.git
+cd claude-skills
+./scripts/gemini-install.sh
+# 在 Gemini CLI 中激活
+> activate_skill(name="senior-architect")
+```
 
-### Q5：如何报告技能的问题或提出改进建议？
+**OpenAI Codex**：
 
-- **GitHub Issues**：https://github.com/alirezarezvani/claude-skills/issues
-- **功能请求**：提交 Feature Request 类型 Issue
-- **Bug 报告**：提交 Bug 类型 Issue，包含复现步骤
+```bash
+npx agent-skills-cli add alirezarezvani/claude-skills --agent codex
+# 或：git clone 后运行 ./scripts/codex-install.sh
+```
 
-### Q6：技能支持中文吗？
+**OpenClaw**：
 
-技能指令本身是英文编写，因为 AI 理解英文指令的效果最佳。但技能生成的内容可以是任何语言，包括中文。你可以在 `CLAUDE.md` 中指定输出语言偏好。
+```bash
+bash <(curl -s https://raw.githubusercontent.com/alirezarezvani/claude-skills/main/scripts/openclaw-install.sh)
+```
 
----
+**手动安装**：克隆仓库后，把任意技能目录复制到 `~/.claude/skills/`（Claude Code）或 `~/.codex/skills/`（Codex）。
 
-## §10 从哪里开始
-
-Skills 不是装得越多越好。205 个技能全部加载会给 AI 带来很大的上下文负担，反而降低输出质量。按以下顺序逐步引入比较合理：
-
-**第一步：工程核心（26 个）**。覆盖日常开发最常见的需求——架构设计、前后端、测试、CI/CD。这是最稳的起点。
-
-**第二步：按角色扩展。** 如果你的日常工作包含 UI 测试，加 Playwright Pro；如果想让 AI 在多次对话中逐步改进自己的输出质量，加 Self-Improving Agent。
-
-**第三步：跨域技能。** Product 和 Marketing 技能适合需要 AI 参与产品讨论或内容生产的团队。C-level 顾问技能在技术方案评审、架构决策等场景中有实际价值，但不必日常加载。
-
-**谁该等一等**：如果团队刚接触 AI 编程工具，或者日常任务以简单 CRUD 为主，先装 Engineering Core 就够了。Powerful 级技能和 Agent 模板的收益要在你已经习惯了按技能驱动 AI 工作之后才会体现出来。
-
-**开源协议与社区**：MIT 许可证，可自由使用和修改。仓库活跃度较高（8,200+ Stars，587 commits，截至 2026-03-26）。遇到问题走 GitHub Issues，Pull Request 需要签 CLA。
-
-**链接资源**：
-
-- GitHub 仓库：https://github.com/alirezarezvani/claude-skills
-- 官方文档：https://alirezarezvani.github.io/claude-skills/
-- SkillCheck 验证：https://getskillcheck.com
+工具与格式的对应关系：Claude Code 用 plugins，Codex 用 agent skills，Gemini CLI 用 native skills，Hermes 和 Mistral Vibe 走一次本地同步脚本（`sync-hermes-skills.py` / `vibe-install.sh`），其余 Cursor、Aider、Windsurf、Kilo Code、OpenCode、Augment、Antigravity 都通过 `convert.sh` 转换后安装。
 
 ---
 
-*基于仓库 commit 110348f (2026-03-26) 撰写*
+## 任务流：一次跨领域交付怎么串起来
+
+仓库用一套轻量编排协议（Orchestration）把 Persona、技能和 Agent 组合起来处理跨领域任务，不依赖任何框架。它定义了四种模式：
+
+| 模式 | 做法 | 适用 |
+|------|------|------|
+| Solo Sprint | 跨项目阶段切换 Persona | 个人项目、MVP |
+| Domain Deep-Dive | 一个 Persona + 多个堆叠技能 | 架构评审、合规审计 |
+| Multi-Agent Handoff | 多个 Persona 互相审阅产出 | 高利害决策、上线前检查 |
+| Skill Chain | 纯技能串行，不需要 Persona | 内容流水线、重复检查清单 |
+
+README 用一个 6 周的产品发布示例把机制串起来：
+
+```
+第 1-2 周：startup-cto + aws-solution-architect + senior-frontend → 开发
+第 3-4 周：growth-marketer + launch-strategy + copywriting + seo-audit → 准备
+第 5-6 周：solo-founder + email-sequence + analytics-tracking → 上线并迭代
+```
+
+每一阶段切换 Persona 等于换了思考框架，叠加对应的技能完成具体动作。交接点靠"下一个角色读得到上一个角色的上下文"来保证，不需要额外搭调度系统。Skill Chain 模式还把这种串行复用到了内容生产这类不涉及角色判断的重复流程上。
+
+---
+
+## 数据解读：这套数字说明什么
+
+先说明这些数字在测什么：它们是仓库的自报口径（README 徽章 + 技能总览表），度量的是"技能的静态规模"，不是"技能的运行效果"。基于这个前提，能读出三点：
+
+1. **363 左右的总量里有明显的金字塔结构**。C-Level Advisory（68）和 Engineering（Core 52 + POWERFUL 84）占了近一半。这说明仓库的定位偏向"决策辅助 + 工程落地"，而不是纯代码生成。
+2. **18 个领域是对"AI 编程工具"的泛化**。Marketing、Product、Compliance、Commercial 这些和写代码关系不大的领域也在，意味着它把"编码智能体"做成了"通用工作代理"。
+3. **不能推出**"技能越多越好用"。362 个技能全部加载会给上下文带来巨大负担，反而拖低输出质量。数量是规模信号，不是质量信号。
+
+GitHub 侧的事实（API，2026-08-06 验证）：Stars 23,495、Forks 3,247、主语言 Python、MIT 许可证、默认分支 main、创建于 2025-10-19、最近推送 2026-07-17。项目通过 SkillCheck 验证（getskillcheck.com）。
+
+---
+
+## 从哪里开始引入
+
+技能不是装得越多越好。按这个顺序会稳一些：
+
+**第一步：工程核心**。日常开发最常见的需求都在这里——架构、前后端、测试、CI/CD。这是最稳的起点，也是收益最快的一批。
+
+**第二步：按你的角色扩展**。日常带 UI 测试就加 Playwright Pro；想让 AI 在多次对话里逐步改进输出，加 Self-Improving Agent；要写文档转 HTML，用 Markdown → HTML 那组。
+
+**第三步：跨领域技能**。Product 和 Marketing 适合需要 AI 参与产品讨论或内容生产的团队。C-Level 顾问在技术方案评审、架构决策场景里有实际价值，但不必日常加载。
+
+**谁可以等一等**：如果团队刚接触 AI 编程工具，或者日常任务以简单 CRUD 为主，先装 Engineering Core 就够。POWERFUL 级技能和 Agent 模板的收益，要在你已经习惯按技能驱动 AI 工作之后才体现出来。
+
+**什么时候不必用**：如果你的工具本身不支持插件市场，也不想维护一套转换出来的规则文件，那直接看两眼 README 挑几个手动复制技能目录就够了，不需要引入整套分发流程。
+
+---
+
+## 结语
+
+claude-skills 的价值不在 362 这个数字，而在它把"提示词"从每次手写变成了可复用、可编排、可跨工具分发的文件。SKILL.md + 纯标准库 tools 的结构保证了技能在任何 Python 环境能跑起来，convert.sh 让一份技能库能散到 13 个工具，Orchestration 又给了它跨领域组合的方式。真要评估它，先看你的工作流否需要"跨工具分发 + 跨领域编排"，需要就用，不需要就挑几个技能手动复制。
+
+**开源协议与社区**：MIT 许可证，可自由使用和修改。官方仓库：[alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills)。

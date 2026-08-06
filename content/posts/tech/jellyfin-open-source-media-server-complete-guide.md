@@ -2,26 +2,16 @@
 title: "Jellyfin：不把媒体库交给云端的自建方案"
 date: "2026-05-05T11:40:00+08:00"
 slug: "jellyfin-open-source-media-server-complete-guide"
-github_repo: "Julianlalrac/Jellyfin-plugin-OpenSubtitles"
-description: "Jellyfin 真正解决的问题不是「播放视频」，而是让媒体库的存储、索引、转码和权限控制完全留在你自己手里。本文从架构、部署、转码到客户端选择，给出可落地的搭建路线。"
+github_repo: "jellyfin/jellyfin"
+description: "Jellyfin 让媒体库的存储、索引、转码和权限控制全部留在本地，不依赖任何外部云服务。本文从架构、部署、转码到客户端选择，讲清楚怎么用它自建一套媒体系统。"
 draft: false
 categories: ["技术笔记"]
 tags: ["开源", "Docker"]
 ---
 
-## 这篇文章解决什么问题
+Jellyfin 解决的不是"播放视频"这件小事，而是"你的媒体库要不要交给别人"这件事。Plex 和 Emby 把媒体库索引、播放记录甚至一部分转码能力挂在云端账号上，Jellyfin 把存储、索引、转码、权限控制全部留在本地进程里，从头到尾不向外部服务器发请求。它不追求功能上的花哨，核心是把"媒体服务器"重新掌握在自己手里。
 
-你有一堆电影、剧集和音乐文件，想在任何设备上随时观看，但不想把媒体库索引和播放记录交给 Plex 或 Emby 的云端服务。Jellyfin 是目前唯一一个功能完整、社区活跃、且从头到尾不依赖外部服务器的开源方案。
-
-读完这篇文章，你可以：
-
-- 在 NAS 或 Linux 服务器上把 Jellyfin 跑起来，并配置硬件转码
-- 理解 Jellyfin 的模块划分——媒体库扫描、元数据刮削、实时转码和用户认证各自干了什么
-- 知道什么时候该用 Jellyfin，什么时候不如直接用 SMB + VLC
-
----
-
-## 先把系统地图画出来
+## 系统由几套子系统拼起来
 
 Jellyfin 不是一个单体应用，而是几套独立子系统在同一个进程里协作。用一张图把它们的边界划清楚，后面再逐个展开。
 
@@ -48,7 +38,7 @@ Jellyfin 不是一个单体应用，而是几套独立子系统在同一个进�
           │           │           │
      ┌────┴────┐ ┌────┴────┐ ┌────┴────┐
      │ Web 端  │ │ 移动端  │ │ TV 端   │
-     │ (自带)  │ │ (第三方) │ │ (Android│
+     │ (自带)  │ │ (官方)  │ │ (Android│
      │         │ │         │ │  TV等)  │
      └─────────┘ └─────────┘ └─────────┘
 ```
@@ -84,7 +74,7 @@ Jellyfin 不是一个单体应用，而是几套独立子系统在同一个进�
 | 认证依赖 | 本地，无外部服务 | 需 Plex 账号（部分功能） | 需 Emby Connect（可选） |
 | 元数据刮削 | 开源 Agent，直连 TMDB 等 | 专有 Agent（付费） | 部分付费 |
 | 硬件转码 | 免费（依赖硬件驱动） | Premium 订阅 | Premiere 订阅 |
-| 官方移动端 | 无（社区第三方 App） | 有 | 有 |
+| 官方移动端 | 有（官方 iOS/Android，完善度较低） | 有 | 有 |
 | 数据隐私 | 完全自主 | 部分依赖云服务 | 部分依赖云服务 |
 
 一句话：如果你不想为硬件转码付费、也不想媒体库的任何元数据离开你的服务器，选 Jellyfin。如果你更看重官方移动端 App 的开箱体验，Plex 或 Emby 更省事。
@@ -95,9 +85,9 @@ Jellyfin 不是一个单体应用，而是几套独立子系统在同一个进�
 
 | 组件 | 技术 | 说明 |
 |------|------|------|
-| 后端 | C# / .NET Core | 跨平台，性能足够 |
-| 前端 | Ember.js / TypeScript | 自带 Web UI |
-| 数据库 | SQLite（默认）/ PostgreSQL | 生产环境建议切 PostgreSQL |
+| 后端 | C# / .NET | 跨平台，性能足够 |
+| 前端 | React / TypeScript | 自带 Web 端（2021 年起从 Ember.js 迁移） |
+| 数据库 | SQLite（默认）/ PostgreSQL | 数据量大了再切 PostgreSQL |
 | 媒体处理 | FFmpeg | 所有转码和封装都走 FFmpeg |
 | 认证 | JWT | 无状态 token，不依赖外部服务 |
 
@@ -231,11 +221,11 @@ Jellyfin 默认从 TMDB 和 TVDB 拉取海报、简介和评分，这些服务�
 | 原盘 ISO/BDMV | 电视 | 封装→MP4 | 低 |
 | HEVC 10bit | 老旧电视 | HEVC→H.264, 10bit→8bit | 需要 GPU |
 
-关键认知：**能不转码就不转码**。转码是不得已的手段——当客户端不支持源格式或带宽不够时才触发。如果你的媒体文件已经是 H.264 1080p，大部分设备都能直接播放，Jellyfin 几乎不消耗 CPU。
+能不转码就不转码。转码是兜底——客户端放不了或带宽不够时才触发。文件已经是 H.264 1080p 的话，大部分设备直接放，Jellyfin 几乎不占 CPU。
 
 ### 字幕
 
-Jellyfin 通过插件支持自动下载字幕（OpenSubtitles 等），也支持手动上传。中文用户需要注意字体配置——默认字体可能不包含中文字形，导致字幕渲染为方块。在控制台 → 播放 → 字幕设置里指定一个中文字体路径即可。
+Jellyfin 通过插件支持自动下载字幕（OpenSubtitles 等），也支持手动上传。字幕渲染发生在客户端而不是服务器——Web 端用浏览器字体，桌面端和电视端用系统字体。如果客户端设备缺中文字体，中文会渲染成方块；这时在控制台 → 播放 → 字幕设置里指定一个中文字体路径即可。
 
 ---
 
@@ -245,9 +235,9 @@ Jellyfin 的功能边界由插件定义。以下三个是使用频率最高的�
 
 | 插件 | 解决的问题 |
 |------|-----------|
-| [OpenSubtitles](https://github.com/Julianlalrac/Jellyfin-plugin-OpenSubtitles) | 播放时自动匹配和下载字幕 |
-| [MetaBuddy](https://github.com/oddstr13/jellyfin-metadatabuddy) | 批量修复元数据缺失或错误 |
-| [Telegram Bot](https://github.com/nicknsy/jellyfin-telegram-notify) | 新内容入库时通过 Telegram 推送通知 |
+| [OpenSubtitles](https://github.com/jellyfin/jellyfin-plugin-opensubtitles) | 播放时自动匹配和下载字幕 |
+| MetaBuddy | 批量修复元数据缺失或错误 |
+| Telegram 通知 | 新内容入库时推送到 Telegram |
 
 插件通过 Jellyfin 控制台 → 插件 → 目录 安装，无需手动下载文件。
 
@@ -264,7 +254,7 @@ Jellyfin 的功能边界由插件定义。以下三个是使用频率最高的�
 
 ### 建议先等等，或者选其他方案的情况
 
-- 家里主力设备是 iPhone / iPad，且需要官方 App Store 里的原生客户端。Jellyfin 的 iOS 客户端是社区维护的（Swiftfin），功能不如 Plex 官方 App 完善。
+- 家里主力设备是 iPhone / iPad，且看重 App Store 官方客户端。Jellyfin 官方 iOS 客户端也在持续完善，但离 Plex 官方 App 的成熟度还有距离。
 - 需要开箱即用、不想折腾 Docker 和硬件转码配置。Plex 的安装体验和自动配置明显更友好。
 - 依赖 TV Guide（电子节目单）功能做直播录制——国内源基本不可用。
 - 4K HDR 转码需求大，但服务器没有 GPU 或核显。纯 CPU 转 4K 基本不可用，这种情况下即使用 Plex 也一样需要 GPU，但 Plex 的自动降级策略更成熟。
@@ -277,6 +267,12 @@ Jellyfin 的功能边界由插件定义。以下三个是使用频率最高的�
 4. 最后按需安装字幕插件和通知插件。
 
 ---
+
+## 核心数据
+
+- 仓库：[github.com/jellyfin/jellyfin](https://github.com/jellyfin/jellyfin)，Stars 约 5.5 万、Forks 约 5.3 千
+- 许可证：GPL-2.0，主语言 C#，默认分支 master
+- 验证时间：2026-08-06（shields.io 实时徽章）
 
 ## 参考链接
 
