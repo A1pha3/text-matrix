@@ -3,7 +3,7 @@ title: "Atuin：加密同步的 Shell 历史管理器"
 date: "2026-04-12T01:56:00+08:00"
 slug: atuin-shell-history-manager-guide
 github_repo: "atuinsh/atuin"
-description: "Atuin 是一款用 Rust 编写的 Shell 历史管理器，用 SQLite 替换文本文件历史，支持端到端加密同步。"
+description: "Atuin 用 SQLite 替换纯文本 Shell 历史，记录退出码、目录、主机等上下文，并支持端到端加密同步。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Rust", "SQLite", "加密"]
@@ -11,30 +11,53 @@ tags: ["Rust", "SQLite", "加密"]
 
 # Atuin：把 Shell 历史从纯文本升级成可加密同步的数据库
 
-Shell 自带的历史是一行一行的纯文本，没有退出码、没有目录、没有主机信息，更没有跨机器同步。Atuin 用 SQLite 替换这套机制，把每条命令连同它的上下文一起存进数据库，再通过端到端加密在多台机器间同步。存储变成结构化数据后，按退出码、目录、时间筛选就变成一条 SQL 的事，无需 grep 和管道的组合。
+Shell 自带的 `Ctrl+R` 和 `~/.bash_history` 只能告诉你"敲过什么"，说不清"在哪敲的、成了没有、花了多久"。Atuin 用 SQLite 替换这套纯文本机制，把每条命令连同退出码、目录、主机、会话、时长一起存进数据库，再通过端到端加密在多台机器间同步。历史变成结构化数据后，按退出码、目录、时间筛选就是一条 SQL 的事，不再需要 `grep` 和管道的组合。
 
-> 文中提到的 29.1K Stars 为 2026 年 4 月初的统计时点数据，实际数值请以 [GitHub 仓库](https://github.com/atuinsh/atuin) 当前显示为准。
+数据以 Rust 编写，仓库排在 GitHub [atuinsh/atuin](https://github.com/atuinsh/atuin)（Stars 约 3.1 万，2026-08-07 验证）。本文按"它在解决什么 → 一条命令怎么流过系统 → 并行机制 → 自建服务器 → 选型判断"展开，结尾给出采用顺序和适用边界。
 
-本文按"安装配置 → 日常使用 → 自建服务器 → 选型判断"展开，结尾给出采用顺序和适用边界。
+## 它和 Shell 自带历史差在哪
 
-## 功能总览
-
-Atuin 与 Shell 自带历史的核心差异集中在存储格式、记录字段、跨机器同步和搜索方式上，对照如下：
+两者核心差异集中在存储、字段、同步和搜索四个维度，先看这张对照表再进入细节：
 
 | 维度 | Shell 自带历史 | Atuin |
 |------|---------------|-------|
 | 存储格式 | 文本文件（`~/.bash_history` 等） | SQLite 数据库 |
 | 记录字段 | 命令文本 | 命令、退出码、目录、主机、会话、时长 |
 | 跨机器同步 | 无 | 端到端加密同步 |
-| 搜索 | 线性 grep / `Ctrl+R` | 全屏交互搜索 + 多维筛选 |
+| 搜索 | 线性 `grep` / `Ctrl+R` | 全屏交互搜索 + 多维筛选 |
 | Shell 支持 | 各 Shell 独立 | zsh / bash / fish / nushell 等统一 |
-| 自建服务 | 不适用 | 支持 Docker 部署 |
+| 自建服务 | 不适用 | 支持独立 `atuin-server` 二进制 |
+
+```mermaid
+flowchart LR
+    A[Shell 钩子<br/>precmd / preexec] --> B[本地 SQLite<br/>history.db]
+    B --> C{同步?}
+    C -->|启用| D[端到端加密<br/>Sync 服务器]
+    C -->|关闭| E[纯本地模式]
+    D --> F[其他机器<br/>atuin login + sync]
+    B --> G[全屏搜索 UI<br/>Ctrl+R]
+```
+
+两条主线并行：本地数据库负责记录和搜索，同步链路在加密后才把数据送出去。下文先讲记录，再讲同步，最后讲自建服务器。
+
+## 一条命令的完整旅程
+
+一条命令从敲下到在另一台机器被搜索到，经过六个步骤：
+
+1. **本地记录**：在 zsh 敲下 `npm test`，Atuin 的 shell 钩子（zsh 用 `precmd` / `preexec`）捕获命令文本、工作目录、主机名、会话 ID，命令结束后补上退出码和执行时长。
+2. **写入数据库**：写入本地 SQLite `~/.local/share/atuin/history.db`，离线也能正常工作。
+3. **加密上传**：执行 `atuin sync` 时，数据用注册时生成的密钥加密，再上传到同步服务器。服务器只看得到密文。
+4. **另一台机器拉取**：在另一台已登录同一账号的机器上执行 `atuin sync`，从服务器拉取加密数据。
+5. **本地解密**：拉取的密文用本地密钥解密，合并进本地数据库。
+6. **搜索召回**：按 `Ctrl+R`，输入 `npm test`，Atuin 从本地数据库返回结果，附带退出码、目录、时间等上下文。
+
+这条链路里，服务器始终只拿到密文。即使官方服务器被入侵，攻击者能拿到的也只有加密后的历史，没有本地密钥就无法还原命令内容。
 
 ## 快速上手
 
 ### 安装
 
-Atuin 支持多种安装方式，官方安装脚本适合首次试用：
+官方安装脚本适合首次试用：
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
@@ -58,7 +81,7 @@ pkg install atuin
 
 ### 初始化配置
 
-安装完成后，注册 Atuin 账号、导入现有历史并触发首次同步：
+安装完成后，注册账号、导入现有历史并触发首次同步：
 
 ```bash
 atuin register -u <USERNAME> -e <EMAIL>
@@ -66,7 +89,7 @@ atuin import auto
 atuin sync
 ```
 
-然后重启 Shell 使配置生效。
+然后重启 Shell 使配置生效。注册时 Atuin 会生成一把加密密钥并保存在本地，用 `atuin key` 可以查看。这把密钥是解密历史的关键，请妥善备份——丢了它，已加密的历史无法恢复。
 
 ### 基础使用
 
@@ -86,43 +109,24 @@ atuin search --after "yesterday 3pm"
 atuin search --exit 0 --after "yesterday 3pm" make
 ```
 
-## 一条命令的完整旅程
+`--exit 0 --after "yesterday 3pm" make` 这个组合是官方文档在 README 里直接给出的示例，能同时按退出码、时间和命令文本过滤，是纯文本历史做不到的。
 
-一条命令从敲下到在另一台机器被搜索到，经过六个步骤：
+## 核心机制：加密同步
 
-1. **本地记录**：在 zsh 敲下 `npm test`，Atuin 的 shell 钩子（`precmd` / `preexec`）捕获命令文本、工作目录、主机名、会话 ID，命令结束后补上退出码和执行时长。
-2. **写入数据库**：写入本地 SQLite `~/.local/share/atuin/history.db`，离线也能正常工作。
-3. **加密上传**：执行 `atuin sync` 时，本地数据用注册时生成的密钥加密，再上传到同步服务器。服务器只看到密文。
-4. **另一台机器拉取**：在另一台已登录同一账号的机器上执行 `atuin sync`，从服务器拉取加密数据。
-5. **本地解密**：拉取的密文用本地密钥解密，合并进本地数据库。
-6. **搜索召回**：按 `Ctrl+R`，输入 `npm test`，Atuin 从本地数据库按相关性返回结果，附带退出码、目录、时间等上下文。
+Atuin 的同步在本地完成加密，服务器只负责存储和转发密文。同步配置有两个关键点：服务器地址和加密密钥。
 
-这条链路里，服务器始终只拿到密文。即使官方服务器被入侵，攻击者能拿到的也只有加密后的历史，没有本地密钥就无法还原命令内容。
+服务器地址在配置文件的顶层 `sync_address` 字段指定，默认指向官方服务器：
 
-## 核心功能
-
-### 全局加密同步
-
-Atuin 的同步在本地完成加密，服务器只负责存储和转发密文：
-
-```bash
-# 注册账号（使用官方服务器）
-atuin register -u <USERNAME> -e <EMAIL>
-
-# 或使用自建服务器：先在 ~/.config/atuin/config.toml 中设置
-# sync_address = "https://my-atuin-server.com"
-# 再执行注册
-atuin register -u <USERNAME> -e <EMAIL>
-
-# 手动同步
-atuin sync
+```toml
+# ~/.config/atuin/config.toml
+sync_address = "https://api.atuin.sh"
 ```
 
-自建服务器场景下，需先在 `~/.config/atuin/config.toml` 中设置 `sync_address` 指向自建地址，再执行注册。加密密钥在注册时自动生成，可用 `atuin key` 查看，请妥善备份——密钥丢失后历史数据无法解密。
+加密密钥不在配置文件里，而是注册时生成、单独存在 `key_path`（默认 `~/.local/share/atuin/key`），用 `atuin key` 查看。换机器同步时，需要在新机器上先 `atuin login -u <USERNAME>`，输入密码和密钥，才能解密拉到本地的历史。
 
-自建服务器适合企业内网或对数据主权有要求的场景，下文"自建同步服务器"一节给出 Docker 部署的最小配置。
+同步默认每小时自动执行一次，可用 `sync_frequency` 调整；手动同步用 `atuin sync`，发现漏数据时用 `atuin sync -f` 触发全量同步，把历史数据完整过一遍。
 
-### 命令统计
+## 命令统计
 
 `atuin stats` 基于数据库里的命令记录，统计最常用的命令和按时间段分布的使用频率：
 
@@ -130,11 +134,7 @@ atuin sync
 atuin stats
 ```
 
-输出示例：
-
 ```text
-Welcome to Atuin stats!
-
 Commands:
     git            4821
     ls             2342
@@ -146,111 +146,68 @@ Commands:
 Hours of the day:
     00:00 - 04:00 ████░░░░░░░░░░░░░░░░░░░ 12%
     04:00 - 08:00 ████████░░░░░░░░░░░░░░░░░░ 23%
-    ...
 ```
 
-### Shell 快捷键
-
-全屏搜索界面的常用按键如下，熟悉后可以用键盘完成导航、修改和执行，无需切回鼠标：
-
-| 快捷键 | 功能 |
-|--------|------|
-| `Ctrl+R` | 打开全屏历史搜索 |
-| `↑` / `↓` | 在历史列表中导航 |
-| `Enter` | 执行选中的命令 |
-| `Tab` | 在编辑器中修改命令 |
-| `Alt+数字` | 快速跳转到历史记录 |
-| `Ctrl+C` | 退出搜索 |
-
-### 支持的 Shell
+## 支持的 Shell
 
 zsh、bash、fish 完整支持，nushell 和 xonsh 实验性支持，powershell 次级支持。
 
 ## 配置详解
 
-Atuin 的配置文件位于 `~/.config/atuin.toml`（Linux/macOS）或 `%APPDATA%\atuin\atuin.toml`（Windows）。配置格式是 TOML，所有选项都有默认值，文件里只需要写需要调整的部分。
+Atuin 的配置文件位于 `~/.config/atuin/config.toml`（Windows 为 `%APPDATA%\atuin\config.toml`）。配置格式是 TOML，所有选项都有默认值，文件里只需要写需要调整的部分。
 
-### 同步配置
+### 搜索过滤模式
 
-`[sync]` 段指定服务器地址和加密密钥：
-
-```toml
-[sync]
-host = "https://api.atuin.sh"  # 官方服务器，自建替换地址
-key = "your-encryption-key"    # 注册时自动生成，用 `atuin key` 查看
-```
-
-`key` 由 Atuin 在注册时自动生成，不要手动填写占位字符串。换机器同步时需导入同一密钥才能解密历史数据。密钥丢失后已加密的历史无法恢复，只能重新生成并重新同步。
-
-### 快捷键配置
-
-默认快捷键是 `Ctrl+R`，想改成其他键可以在 `[keybindings]` 段里覆盖：
-
-```toml
-[keybindings]
-# up = "ctrl-r"  # 触发搜索的快捷键（默认 Ctrl+R，按需自定义）
-```
-
-### 历史过滤模式
-
-在搜索界面中按 `Ctrl+R` 可以循环切换过滤范围：
+在搜索界面中按 `Ctrl+R` 可以循环切换过滤范围。官方支持的过滤模式比"全局/目录"更细，包括：
 
 | 模式 | 说明 |
 |------|------|
-| 全局 | 搜索所有历史 |
-| 会话 | 仅当前终端会话 |
-| 目录 | 仅当前目录 |
-| 工作区 | 当前 Git 仓库的工作区 |
+| global | 从全部历史搜索（默认） |
+| host | 只在本机历史中搜索 |
+| session | 仅当前终端会话 |
+| directory | 仅当前目录 |
+| workspace | 当前 Git 仓库的工作区 |
+| session-preload | 当前会话 + 会话开始前的全局历史 |
+
+过滤模式可以在配置里用 `filter_mode` 指定默认值，也可用 `[search] filters` 控制循环切换时包含哪些模式。
 
 ### 忽略规则
 
-`[history]` 段控制哪些命令不入库，常用于过滤无意义命令和含敏感信息的命令。合理配置忽略规则既能减少噪音、提升搜索相关性，也能避免 token、密码等敏感信息被同步到服务器：
+官方用正则表达式控制哪些命令不入库，而不是简单的开关列表。两处过滤点：
 
 ```toml
-[history]
-# 忽略以空格开头的命令
-ignore_blank = true
+# ~/.config/atuin/config.toml
+# 匹配的命令不入库（正则非锚定，会匹配命令任意位置）
+history_filter = [
+    "^secret-cmd",
+    "^innocuous-cmd .*--secret=.+"
+]
 
-# 忽略特定命令
-ignore_cmd = ["exit", "clear", "bg"]
-
-# 忽略特定目录
-ignore_dir = ["/tmp", "/var/log"]
-
-# 忽略子字符串
-ignore_substring = ["password=", "secret="]
+# 匹配的目录不入库（正则非锚定，匹配路径任意位置）
+cwd_filter = [
+    "^/very/secret/directory",
+]
 ```
+
+此外，Atuin 默认开启了 `secrets_filter`，会识别并跳过一批内置的敏感模式——AWS 密钥 ID、GitHub PAT、Slack token、Stripe 密钥、云环境变量（`AWS_ACCESS_KEY_ID` 等）——避免这些信息被意外记入历史并同步到服务器。改完过滤规则后，可用 `atuin prune` 把已入库的旧条目按新规则清掉。
 
 ## 数据存储
 
 Atuin 用 SQLite 替代文本文件，原因在于 Shell 历史天然带结构——退出码、目录、主机、会话、时长都是命令的属性，按这些维度筛选时，SQL 一句就能完成；文本文件要做到同样效果，得靠 `awk`、`grep` 和临时脚本的组合，且无法保证一致性。
 
-数据库文件通常位于：
+数据库文件默认位于 `~/.local/share/atuin/history.db`（macOS 同样遵循 XDG 路径，数据也存在 `~/.local/share/atuin`，除非被 `XDG_*` 环境变量覆盖）。核心字段对应命令的上下文属性：
 
-- Linux: `~/.local/share/atuin/history.db`
-- macOS: `~/Library/Application Support/atuin/history.db`
-- Windows: `%APPDATA%\atuin\history.db`
+| 字段 | 含义 |
+|------|------|
+| `command` | 命令文本 |
+| `cwd` | 执行时的工作目录 |
+| `exit_status` | 退出码 |
+| `duration` | 执行时长 |
+| `hostname` | 主机名 |
+| `session` | 终端会话 ID |
+| `timestamp` | 执行时间 |
 
-### 数据库结构
-
-history 表是核心，字段对应命令的上下文属性。了解字段含义有助于在 `atuin search` 时正确使用 `--cwd`、`--exit` 等筛选条件，也能在直接查库时写出准确的 SQL：
-
-```sql
-CREATE TABLE IF NOT EXISTS history (
-    id TEXT PRIMARY KEY,
-    timestamp INTEGER NOT NULL,
-    hostname TEXT NOT NULL,
-    cwd TEXT NOT NULL,
-    command TEXT NOT NULL,
-    exit_status INTEGER,
-    duration INTEGER,
-    session TEXT NOT NULL,
-    deleted INTEGER DEFAULT 0,
-    created_at INTEGER NOT NULL
-);
-```
-
-`cwd` 记录命令执行时的工作目录，`exit_status` 和 `duration` 让筛选能精确到"在某目录下失败的命令"或"耗时超过阈值的命令"，这些是纯文本历史无法提供的维度。
+`cwd`、`exit_status`、`duration` 让筛选能精确到"在某目录下失败的命令"或"耗时超过阈值的命令"，这些是纯文本历史无法提供的维度。
 
 ### 数据导入
 
@@ -264,66 +221,63 @@ atuin import auto
 atuin import bash
 atuin import zsh
 atuin import fish
-atuin import nu
 ```
 
 早期文档中曾出现 `atuin import < ~/.zsh_history` 的写法，新版本已不推荐此重定向语法，正确做法是使用 `atuin import zsh` 让 Atuin 自动定位并读取 `~/.zsh_history`。历史文件不在默认路径时，参考 `atuin import --help` 查看自定义路径选项。
 
 ## 自建同步服务器
 
-官方同步服务器对个人使用足够，但企业团队或对数据主权有要求的场景更适合自建。服务器组件支持单二进制运行和容器部署。
+官方同步服务器对个人使用足够，但企业团队或对数据主权有要求的场景更适合自建。自 v18.12.0 起，服务器是独立的 `atuin-server` 二进制，不再和客户端 `atuin server` 混在一起。
 
-### Docker 部署
+### 安装与启动
 
-单容器运行适合快速验证，把端口、数据卷和密钥配齐即可启动：
+服务器从 GitHub releases 安装独立二进制：
 
 ```bash
-docker run -d \
-  --name atuin-server \
-  -p 8888:8080 \
-  -v atuin-data:/store \
-  -e ATUIN_SECRET_KEY=<your-secret-key> \
-  ghcr.io/atuinsh/atuin
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/atuinsh/atuin/releases/latest/download/atuin-server-installer.sh | sh
 ```
 
-### Docker Compose 部署
+然后启动：
 
-生产环境推荐用 Compose 管理，便于加上重启策略和健康检查：
-
-```yaml
-version: '3'
-services:
-  atuin:
-    image: ghcr.io/atuinsh/atuin
-    container_name: atuin
-    restart: unless-stopped
-    ports:
-      - "8888:8080"
-    volumes:
-      - atuin-data:/store
-    environment:
-      - ATUIN_SECRET_KEY=<your-secret-key>
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-
-volumes:
-  atuin-data:
+```bash
+atuin-server start
 ```
 
-### 环境变量配置
+### 配置
 
-容器部署时通过环境变量调整端口、数据库路径、密钥和限流策略。下表默认值参考 [Atuin 官方部署文档](https://docs.atuin.sh/self-hosting/)，不同版本可能有差异，以实际镜像说明为准：
+服务器的配置文件在 `~/.config/atuin/server.toml`，与客户端的 `config.toml` 分开。核心要求是提供一个数据库连接串，支持 PostgreSQL 14+ 或 SQLite：
 
-| 变量 | 说明 | 默认值 |
+```toml
+host = "0.0.0.0"
+port = 8888
+open_registration = true
+db_uri = "postgres://user:password@hostname/database"
+```
+
+SQLite 则用：
+
+```toml
+db_uri = "sqlite:///config/atuin.db"
+```
+
+服务端配置同样支持环境变量，关键参数如下：
+
+| 参数 / 环境变量 | 说明 | 默认值 |
 |------|------|--------|
-| `ATUIN_PORT` | 服务端口 | `8080` |
-| `ATUIN_DB_PATH` | 数据库路径 | `/store/history.db` |
-| `ATUIN_SECRET_KEY` | 加密密钥（必填） | - |
-| `ATUIN_MAX_REQUEST_SIZE` | 最大请求大小 | `10485760` (10MB) |
-| `ATUIN_REQUEST_LIMIT_PER_MINUTE` | 每分钟限制 | `240` |
+| `host` / `ATUIN_HOST` | 监听地址 | `127.0.0.1` |
+| `port` / `ATUIN_PORT` | 端口 | `8888` |
+| `open_registration` / `ATUIN_OPEN_REGISTRATION` | 是否接受新用户注册 | `false` |
+| `db_uri` / `ATUIN_DB_URI` | PostgreSQL / SQLite 连接串（必填） | 无 |
+
+TLS 不再由 Atuin 内置支持（旧版 `[tls]` 配置已移除），官方建议用 nginx、Caddy 或 Traefik 做反向代理终结 HTTPS。容器部署时，把 `/config` 目录映射为持久化数据卷。
+
+客户端侧，自建服务器时把 `sync_address` 指向自建地址即可，其余加密逻辑不变：
+
+```toml
+# ~/.config/atuin/config.toml
+sync_address = "https://my-atuin-server.com"
+```
 
 ## 与其他工具对比
 
@@ -352,48 +306,19 @@ Zsh 和 Bash 自带的 `history` 命令配合 `HIST_IGNORE_DUPS`、`HIST_IGNORE_
 **采用顺序建议：**
 
 1. 先在单台机器上安装，导入现有历史，习惯 `Ctrl+R` 的交互。
-2. 注册账号开启官方同步，验证多机器同步是否符合预期。
-3. 如果对数据主权有要求，再部署自建服务器，切换同步地址。
-4. 最后按需调整忽略规则和快捷键，把 Atuin 接到既有工作流里。
+2. 注册账号开启官方同步，验证 `atuin key` 密钥已备份、多机器同步是否符合预期。
+3. 如果对数据主权有要求，再部署自建 `atuin-server`，切换 `sync_address`。
+4. 最后按需调整 `history_filter` / `cwd_filter` 和快捷键，把 Atuin 接到既有工作流里。
 
 ## 常见问题
 
 **同步失败怎么办？** 先检查网络和服务器地址，再确认账号是否登录。`atuin status` 查看同步状态，`atuin key` 查看本地密钥。密钥丢失后历史数据无法解密，只能重新生成密钥并重新同步。
 
-**换机器后历史没同步过来？** 新机器需要先 `atuin login` 用同一账号登录，再 `atuin sync` 拉取。启用了端到端加密的话，必须导入原来的密钥才能解密历史数据。
+**换机器后历史没同步过来？** 新机器需要先 `atuin login -u <USERNAME>` 用同一账号登录，输入密码和密钥后再 `atuin sync` 拉取。启用了端到端加密的话，必须导入原来的密钥才能解密历史数据。漏数据时用 `atuin sync -f` 强制全量同步。
 
-**不想用同步功能可以吗？** 可以。Atuin 完全支持纯本地模式，配置文件里把 `auto_sync` 设为 `false` 即可。
+**不想用同步功能可以吗？** 可以。Atuin 完全支持纯本地模式，不注册账号、不配置 `sync_address` 即可，配置文件里把 `auto_sync` 设为 `false` 更稳妥。
 
 **和 fzf 的历史搜索冲突吗？** 不冲突。Atuin 默认接管 `Ctrl+R`，如果更习惯 fzf 的交互，可以在配置里把 Atuin 的快捷键改成别的，两者并存。
-
-## 自测题
-
-下面 6 道题覆盖存储动机、加密链路、导入语法、配置取舍、故障排查和选型判断。建议先自己作答，再对照参考答案。
-
-1. **存储动机**：Atuin 用 SQLite 替代文本文件存储历史，原因是什么？请举出一个纯文本历史无法直接完成、但 SQL 一句就能搞定的查询场景。
-2. **加密链路**：在"一条命令的完整旅程"中，加密发生在哪一步？服务器拿到的是明文还是密文？换机器同步时为什么必须导入原密钥？
-3. **导入语法**：要把 `~/.zsh_history` 里的历史导入 Atuin，正确的命令是什么？为什么不用 `atuin import < ~/.zsh_history`？
-4. **配置取舍**：`ignore_substring = ["password=", "secret="]` 这条忽略规则解决什么问题？如果只配 `ignore_blank = true` 是否足够保护敏感命令？
-5. **同步失败排查**：执行 `atuin sync` 报错，你会按什么顺序检查？至少列出三个排查方向。
-6. **选型判断**：一位同事只用单台 macOS 机器，对 `Ctrl+R` 已经满意，且公司禁止任何外部同步服务。他是否需要安装 Atuin？理由是什么？
-
-### 参考答案
-
-1. **存储动机**：原因在于 Shell 历史天然带结构（退出码、目录、主机、会话、时长），文本文件无法把这些字段对齐存储。SQL 一句能搞定的场景示例：查找"过去 7 天在 `/srv/app` 目录下退出码非 0 的 `make` 命令"——`SELECT command FROM history WHERE cwd='/srv/app' AND exit_status<>0 AND timestamp>... AND command LIKE 'make%'`，纯文本历史需要 `grep` + `awk` + 时间过滤的组合，且无法可靠关联退出码。
-2. **加密链路**：加密发生在第 3 步"加密上传"，本地用注册时生成的密钥加密后再上传。服务器拿到的是密文。换机器同步时必须导入原密钥，因为解密在本地完成，没有原密钥就无法还原历史命令；密钥丢失后已加密的历史无法恢复。
-3. **导入语法**：正确命令是 `atuin import zsh`，Atuin 会自动定位并读取 `~/.zsh_history`。不用 `atuin import < ~/.zsh_history` 是因为该重定向语法在新版本中已不推荐，且无法让 Atuin 自动识别格式和默认路径。
-4. **配置取舍**：`ignore_substring` 解决的是命令中包含敏感片段（如 `password=`、`secret=`）的记录不入库的问题。只配 `ignore_blank = true` 不够，因为它只忽略空命令，无法过滤像 `curl -H "Authorization: Bearer xxx"` 这类非空但含敏感信息的命令。
-5. **同步失败排查**：可按以下顺序检查——(1) 网络连通性和服务器地址是否正确；(2) 账号是否已登录，用 `atuin status` 查看同步状态；(3) 本地密钥是否匹配，用 `atuin key` 查看密钥是否与注册时一致；(4) 服务器端是否可达（自建服务器检查容器健康状态和端口）。
-6. **选型判断**：不一定需要。单台机器、对 `Ctrl+R` 满意、且禁止外部同步的场景下，Atuin 的跨机器同步和加密优势用不上。但如果他想要按目录、退出码筛选历史，Atuin 的纯本地模式（`auto_sync = false`）仍有价值；否则可以暂缓安装。
-
-### 进阶路径
-
-本文覆盖安装、同步和自建服务器，以下几个方向可以继续深入：
-
-- 阅读 [Atuin 官方文档](https://docs.atuin.sh)，了解搜索语法（如 `--before`、`--cwd`、`--exit` 组合）和自定义主题
-- 研究自建服务器的高可用部署：配合 PostgreSQL 后端、反向代理和 TLS 证书
-- 探索 Atuin 与其他 Shell 工具的集成：如 starship 提示符、direnv、tmux 会话管理
-- 关注 Atuin 的 `atuin search` 命令行模式，将其嵌入脚本实现历史命令的自动化分析
 
 ## 参考链接
 
@@ -402,4 +327,3 @@ Zsh 和 Bash 自带的 `history` 命令配合 `HIST_IGNORE_DUPS`、`HIST_IGNORE_
 - 文档：https://docs.atuin.sh
 - 论坛：https://forum.atuin.sh/
 - Discord：https://discord.gg/Fq8bJSKPHh
-

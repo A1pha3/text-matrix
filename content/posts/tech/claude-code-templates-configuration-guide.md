@@ -1,8 +1,8 @@
 ---
-title: "Claude Code Templates：Claude Code 配置与监控全家桶"
+title: "Claude Code Templates：给 Claude Code 装组件，再看着它跑"
 slug: "claude-code-templates-configuration-guide"
 github_repo: "davila7/claude-code-templates"
-description: "Claude Code Templates 是一个面向 Anthropic Claude Code 的配置集合，提供 100+ AI agents、commands、hooks、MCPs 和项目模板，支持一键安装和 Web UI 可视化管理。"
+description: "面向 Claude Code 的即用型配置集合：把 agents、commands、hooks、MCPs、settings 和 skills 打包成可一键安装的模块，配一套 Web UI 目录和实时监控工具。"
 date: "2026-04-28T11:40:00+08:00"
 categories: ["技术笔记"]
 tags: ["Claude Code", "AI Agent", "MCP", "Claude", "开发工具"]
@@ -10,15 +10,15 @@ hiddenFromHomePage: false
 draft: false
 ---
 
-[Claude Code Templates](https://github.com/davila7/claude-code-templates)（对应 Web 站点 [aitmpl.com](https://aitmpl.com)）是一个面向 Anthropic Claude Code 的即用型配置集合。它把 Agents、Commands、Hooks、MCPs、Settings 和 Skills 六类组件打包成可一键安装的模块，配上一套 Web UI 管理面板和实时监控工具。
+[Claude Code Templates](https://github.com/davila7/claude-code-templates)（Web 站点 [aitmpl.com](https://aitmpl.com)）解决的不是"多装几个组件"，而是把散在各处的 Claude Code 配置变成一套可搜索、可一键安装、装完还能看效果的东西。
 
-项目地址：[https://github.com/davila7/claude-code-templates](https://github.com/davila7/claude-code-templates)
+它不改 Claude Code 的运行机制。`settings.json`、MCP 配置、Agent 定义这些本来要手动写的文件，它替你按模块打包，用 CLI 或 Web UI 装进项目。和多数只管"怎么装"的配置方案不同，它多管了一层"装了之后怎么看"——Analytics 监控、对话查看、健康检查都打包在同一个 CLI 里。
 
-Templates 不是框架，是配置分发器。它不改变 Claude Code 的运行机制，只是把本来需要手动创建的 `settings.json`、MCP 配置、Agent 定义，变成可复用的模块。监控层是它的差异化能力——大多数 Claude Code 配置方案只管"怎么装"，Templates 多管了一层"装了之后怎么看效果"。适合已经跑通 Claude Code 的团队，如果还没在本地跑通过，建议先把官方 Quick Start 走完再来。
+适合已经跑通 Claude Code、想统一管理组件库并观察实际使用情况的团队。如果还没在本地跑通过，建议先把官方 Quick Start 走完再来。
 
 ## 组件地图
 
-Templates 的六类组件在 Claude Code 的运行时里各司其职。下面这张图展示了组件之间的协作关系：
+Templates 的六类组件在 Claude Code 的运行时里各司其职，下面这张图展示它们怎么协作：
 
 ```mermaid
 flowchart TB
@@ -28,12 +28,12 @@ flowchart TB
  end
 
  subgraph 组件矩阵
- Agents["🤖 Agents<br/>领域专家角色"]
- Commands["⚡ Commands<br/>自定义斜杠命令"]
- Hooks["🪝 Hooks<br/>事件触发器"]
- Settings["⚙️ Settings<br/>配置项"]
- MCPs["🔌 MCPs<br/>外部服务集成"]
- Skills["🎨 Skills<br/>可复用技能"]
+ Agents["Agents<br/>领域专家角色"]
+ Commands["Commands<br/>自定义斜杠命令"]
+ Hooks["Hooks<br/>事件触发器"]
+ Settings["Settings<br/>配置项"]
+ MCPs["MCPs<br/>外部服务集成"]
+ Skills["Skills<br/>可复用技能"]
  end
 
  subgraph 运行时
@@ -41,10 +41,10 @@ flowchart TB
  end
 
  subgraph 监控层
- Analytics["📊 Analytics<br/>实时监控"]
- ConvMonitor["💬 Conversation Monitor<br/>对话查看器"]
- HealthCheck["🔍 Health Check<br/>环境诊断"]
- Plugins["🔌 Plugin Dashboard<br/>插件管理"]
+ Analytics["Analytics<br/>实时监控"]
+ ConvMonitor["Conversation Monitor<br/>对话查看"]
+ HealthCheck["Health Check<br/>环境诊断"]
+ Plugins["Plugin Dashboard<br/>插件管理"]
  end
 
  CLI --> Agents
@@ -77,26 +77,24 @@ flowchart TB
  Skills -.->|嵌入| Agents
 ```
 
-入口层有两扇门：CLI 适合脚本化和自动化，Web UI 适合浏览发现。组件矩阵里的六类组件全部注入到 Claude Code 运行时，运行时再通过监控层的四个工具反向暴露状态、性能和诊断信息。
-
-图中虚线表示：Hooks 可以挂载在 Agent 的事件上（比如 pre-completion 校验），Commands 可以调用 MCPs 来访问外部服务，Skills 可以嵌入到 Agent 中作为递进式暴露的能力模块。
+入口有两条：CLI 适合脚本化和自动化，Web UI 适合浏览发现。六类组件装好后注入 Claude Code 运行时，运行时再通过监控层的四个工具反向暴露状态、性能和诊断。图中虚线表示关联：Hooks 可以挂载在 Agent 的事件上，Commands 可以调用 MCPs 访问外部服务，Skills 可以嵌进 Agent 作为递进式暴露的能力模块。
 
 ## 六类组件
 
 | 组件类型 | 做什么 | 几个例子 |
 |----------|--------|---------|
-| **Agents** | 把 Claude Code 切换成特定领域的专家角色。安装后，Claude Code 会以该角色的视角和知识边界来响应。 | 安全审计员、React 性能优化师、数据库架构师、前端开发者 |
-| **Commands** | 注册自定义斜杠命令，类似 `/fix` 或 `/test`，但可以封装任意复杂逻辑。 | `/generate-tests`、`/optimize-bundle`、`/check-security` |
-| **MCPs** | 通过 Model Context Protocol 接入外部服务，让 Claude Code 直接操作 GitHub、数据库、云服务等。 | GitHub、PostgreSQL、Stripe、AWS、OpenAI |
-| **Settings** | 覆盖 Claude Code 的默认配置，比如超时时间、内存限制、输出格式。 | 超时设置、内存配置、输出样式 |
-| **Hooks** | 在特定事件前后自动执行脚本，实现检查、通知、记录等自动化。 | Pre-commit 验证、Post-completion 通知 |
-| **Skills** | 带递进式暴露能力的可复用模块，比 Agent 更轻量，比 Command 更结构化。 | PDF 处理、Excel 自动化、供应链安全检查 |
+| **Agents** | 把 Claude Code 切换成特定领域的专家角色。安装后以该角色的视角和知识边界响应。 | 安全审计员、React 性能优化师、数据库架构师 |
+| **Commands** | 注册自定义斜杠命令，可以封装任意复杂逻辑。 | `/generate-tests`、`/optimize-bundle`、`/check-security` |
+| **MCPs** | 通过 Model Context Protocol 接入外部服务。 | GitHub、PostgreSQL、Stripe、AWS、OpenAI |
+| **Settings** | 覆盖 Claude Code 的默认配置，比如超时、内存、输出格式。 | 超时设置、内存配置、输出样式 |
+| **Hooks** | 在特定事件前后自动执行脚本，做检查、通知、记录。 | Pre-commit 验证、Post-completion 行动 |
+| **Skills** | 带递进式暴露能力的可复用模块，比 Agent 轻量，比 Command 结构化。 | PDF 处理、Excel 自动化、供应链安全检查 |
 
-这些组件来自多个上游仓库的聚合：Anthropic 官方 skills、K-Dense-AI 的 139 个科学计算 skills、obra/superpowers 的 14 个工作流 skills、wshobson 的 48 个 agents，以及社区贡献的各类 commands 和 MCPs。每个组件保留原始许可和归属。
+这些组件聚合自多个上游仓库，每个保留原始许可和归属：K-Dense-AI 的 139 个科学计算 skills、Anthropic 官方 skills（21 个）与 claude-code 开发指南（10 个）、obra/superpowers 的 14 个工作流 skills、alirezarezvani 的 36 个角色 skills、wshobson 的 48 个 agents，以及 awesome-claude-code 的 21 个 commands 等社区来源。
 
 ## 安装
 
-有两种安装途径：CLI 一键安装和 Web UI 交互式浏览。
+两种途径：CLI 一键安装和 Web UI 交互式浏览。
 
 ### CLI
 
@@ -112,23 +110,19 @@ npx claude-code-templates@latest --hook git/pre-commit-validation --yes
 npx claude-code-templates@latest --mcp database/postgresql-integration --yes
 ```
 
-不带参数运行 `npx claude-code-templates@latest` 会进入交互式浏览模式，列出所有可用组件并让你逐项选择。带上 `--yes` 则跳过确认，适合脚本化部署。
+不带参数运行会进入交互式浏览模式，逐个选择要装的组件。带上 `--yes` 跳过确认，适合脚本化部署。
 
 ### Web UI
 
-打开 [aitmpl.com](https://aitmpl.com)，你看到的是一个带搜索和分类筛选的组件目录。每个组件有独立页面展示描述、安装命令和依赖关系。点击安装按钮会生成对应的 CLI 命令，复制到终端执行即可。
+打开 [aitmpl.com](https://aitmpl.com) 是一个带搜索和分类筛选的组件目录。每个组件有独立页面展示描述、安装命令和依赖关系，点击安装按钮会生成对应的 CLI 命令。
 
-Web UI 的价值在浏览阶段——你不需要记住 100+ 组件的名字和路径，搜索"security"就能看到所有安全相关的 agents、commands 和 hooks。
+Web UI 的价值在浏览阶段——不用记住几十上百个组件的路径，搜索 "security" 就能看到所有相关的 agents、commands 和 hooks。
 
-## 三个实战案例
+## 一次安装怎么穿过这套系统
 
-下面从安装到产出，走完三个完整场景。
+下面用一个示意流程说明组件从选到用的路径。组件路径和命令来自目录，具体参数以你装的组件为准。
 
-### 案例一：团队代码审查流水线
-
-**目标**：每次提交代码前，Claude Code 自动以安全审查员角色检查变更，并生成测试用例。
-
-**第一步，安装组件**：
+团队要搭一条代码审查流水线：
 
 ```bash
 npx claude-code-templates@latest --agent development-tools/code-reviewer --yes
@@ -136,143 +130,21 @@ npx claude-code-templates@latest --command testing/generate-tests --yes
 npx claude-code-templates@latest --hook git/pre-commit-validation --yes
 ```
 
-**第二步，验证安装**。安装完成后，在 Claude Code 会话中可以看到 code-reviewer agent 已经注册：
+三条命令分别把 code-reviewer agent、`/generate-tests` 命令、pre-commit 校验 hook 写进 Claude Code 的配置目录。下次在项目里启动会话，agent 就以审查员角色运行；执行 `git commit` 时，hook 会在提交前触发一次自动审查。审查报告通常覆盖安全漏洞、风格偏差和性能隐患，具体输出取决于该 agent 的 SKILL 定义。
 
-```bash
-claude --agents list
-```
+`/generate-tests` 这类命令是对代码的操作入口，作用范围是你当前改动的文件。hooks 和 commands 一个挂在事件上、一个挂在斜杠命令上，两者解决的是不同的触发方式。
 
-**第三步，实际使用**。在项目目录中启动 Claude Code，它现在以 code-reviewer 的角色运行。当你修改代码后执行 `git commit`，pre-commit hook 会在提交前自动触发 Claude Code 对变更进行审查。审查结果会以结构化报告形式输出，包含：
+## 监控层：装完怎么知道有没有用
 
-- 潜在的安全漏洞（SQL 注入、XSS、不安全的反序列化）
-- 代码风格问题（与项目约定不一致的地方）
-- 性能隐患（N+1 查询、不必要的重渲染）
+Templates 的差异化能力在监控，四个工具都挂在同一个 CLI 上。
 
-同时，你可以随时用 `/generate-tests` 命令为当前修改的文件生成单元测试：
-
-```bash
-/generate-tests --framework jest --coverage-target 80
-```
-
-**产出**：每次提交前有自动审查报告，每段新代码有对应的测试用例。审查在本地完成，不依赖外部 CI 管道。
-
-### 案例二：前端性能优化工作流
-
-**目标**：对 React 项目进行打包体积分析和性能优化，把 Lighthouse 分数从 60 拉到 90+。
-
-**第一步，安装组件**：
-
-```bash
-npx claude-code-templates@latest --agent frontend-performance/optimization --yes
-npx claude-code-templates@latest --command performance/optimize-bundle --yes
-```
-
-**第二步，运行分析**。在项目目录中启动 Claude Code 后，执行：
-
-```bash
-/optimize-bundle --analyze
-```
-
-这个命令会触发 Claude Code 做三件事：运行 webpack-bundle-analyzer 生成依赖图，识别体积最大的 chunk；检查组件树中的不必要的重渲染路径；扫描未使用的依赖和重复打包的库。
-
-**第三步，获取优化方案**。Claude Code 会输出一份优化清单，按优先级排列：
-
-1. 树摇（tree-shaking）未生效的模块——通常是 `import *` 写法导致的
-2. 可以拆分的巨型 chunk——建议用 `React.lazy` + `Suspense` 做代码分割
-3. 不必要的 polyfill——目标浏览器已经原生支持 `IntersectionObserver` 和 `fetch`
-4. 图片资源未压缩——建议接入 WebP 或 AVIF 格式
-
-**第四步，执行优化**。你可以让 Claude Code 直接修改代码：
-
-```bash
-/optimize-bundle --apply
-```
-
-**产出**：打包体积从 2.3MB 降到 680KB，首屏加载时间从 4.2s 降到 1.1s，Lighthouse Performance 分数从 62 提升到 94。
-
-### 案例三：数据库驱动的后端开发
-
-**目标**：让 Claude Code 直接连接 PostgreSQL 数据库，在开发过程中实时查询、建表、优化 SQL。
-
-**第一步，安装组件**：
-
-```bash
-npx claude-code-templates@latest --agent development-tools/database-architect --yes
-npx claude-code-templates@latest --mcp database/postgresql-integration --yes
-```
-
-**第二步，配置数据库连接**。安装 PostgreSQL MCP 后，需要在 Claude Code 的 MCP 配置文件中填入连接信息：
-
-```json
-{
- "mcpServers": {
- "postgresql": {
- "command": "npx",
- "args": ["-y", "@anthropic/mcp-server-postgresql"],
- "env": {
- "DATABASE_URL": "postgresql://user:password@localhost:5432/mydb"
- }
- }
- }
-}
-```
-
-**第三步，交互式开发**。启动 Claude Code 后，database-architect agent 会让 Claude Code 以数据库架构师的角色运行。你可以直接提需求：
-
-- "给 users 表加一个 last_login_at 字段，帮我写迁移脚本"
-- "分析这条慢查询，给出优化建议和建索引的 SQL"
-- "根据这个 ER 图生成 Prisma schema"
-
-Claude Code 会通过 MCP 直接连接数据库执行 DDL 和查询，而不是只给你代码让你自己跑。
-
-**第四步，日常使用**。在实际开发中，典型的工作流是：
-
-1. 描述业务需求 → Claude Code 设计表结构
-2. 审查表结构 → Claude Code 指出范式问题和索引缺失
-3. 执行建表 → Claude Code 通过 MCP 直接执行 DDL
-4. 编写查询 → Claude Code 生成参数化查询，避免 SQL 注入
-5. 性能分析 → Claude Code 用 `EXPLAIN ANALYZE` 分析执行计划
-
-**产出**：从需求描述到表结构落地，一个对话完成。
-
-## Claude Code Analytics：监控层详解
-
-Templates 除了组件仓库，还带了一套监控工具。执行以下命令安装 Analytics：
+### Analytics
 
 ```bash
 npx claude-code-templates@latest --analytics
 ```
 
-安装后，Analytics 会在本地启动一个轻量级的监控服务，实时采集 Claude Code 的运行数据。以下是你能看到的具体指标：
-
-### 会话指标
-
-| 指标 | 含义 | 怎么看 |
-|------|------|--------|
-| **会话时长** | 单次 Claude Code 会话的持续时间 | 超过 2 小时的会话可能意味着任务被阻塞，需要检查循环调用 |
-| **对话轮次** | 每个会话中用户与 Claude Code 的交互次数 | 单轮解决率越高越好；如果大量会话超过 20 轮，说明任务分解粒度太粗 |
-| **Token 消耗** | 输入和输出 token 的累计值 | 按 agent 维度拆分，能看出哪个 agent 最"烧 token"；输出 token 占比过低说明 Claude Code 在频繁读取而非产出 |
-| **任务完成率** | 标记为完成的任务占总任务的比例 | 低于 60% 需要检查任务描述是否清晰、agent 选择是否匹配 |
-
-### 性能指标
-
-| 指标 | 含义 | 怎么看 |
-|------|------|--------|
-| **首次响应延迟** | 从发送请求到收到第一个 token 的时间 | 超过 3 秒说明模型 API 或 MCP 服务端有延迟，需要排查 |
-| **工具调用成功率** | MCP 工具调用中成功的比例 | 低于 90% 说明 MCP 配置有问题，或者外部服务不稳定 |
-| **Hook 执行耗时** | 每个 Hook 的平均执行时间 | Pre-commit Hook 超过 5 秒会显著影响开发体验，考虑优化或改为异步 |
-
-### 使用模式
-
-| 指标 | 含义 | 怎么看 |
-|------|------|--------|
-| **Agent 使用分布** | 各 Agent 被调用的频次 | 能看出团队实际在哪些场景下使用 Claude Code 最多 |
-| **Command 使用热力图** | 各 Command 按时间维度的使用频率 | 发现哪些命令被高频使用（值得优化），哪些装了但从未用过（可以卸载） |
-| **错误类型分布** | 按错误类型分类的统计 | 如果 MCP 超时占大头，需要调整 `mcp-timeouts` setting；如果 token 超限占大头，需要拆分任务 |
-
-### 监控面板
-
-Analytics 提供了一个本地 Web 面板（默认端口 `http://localhost:3456`），把所有指标以图表形式展示。你可以按时间范围（最近 1 小时、24 小时、7 天）筛选，按 Agent 或 Command 维度下钻。
+在本地起一个监控服务，实时检测 Claude Code 会话状态并采集性能指标，用一个面板展示。它回答的是"团队到底在哪些任务上花时间、token 烧在哪"这类问题。具体指标和解读口径以 [docs.aitmpl.com](https://docs.aitmpl.com) 为准，这里不展开编造阈值。
 
 ### 对话监控器
 
@@ -280,7 +152,7 @@ Analytics 提供了一个本地 Web 面板（默认端口 `http://localhost:3456
 npx claude-code-templates@latest --chats
 ```
 
-这个命令启动一个移动端适配的界面，实时查看 Claude Code 的对话内容。适合在手机或平板上监控远程开发机上的 Claude Code 会话。加上 `--tunnel` 参数可以通过 Cloudflare Tunnel 从外网安全访问：
+移动端适配的界面，实时查看 Claude Code 的对话内容，适合在手机或平板上盯远程开发机上的会话。加 `--tunnel` 通过 Cloudflare Tunnel 从外网安全访问：
 
 ```bash
 npx claude-code-templates@latest --chats --tunnel
@@ -292,7 +164,7 @@ npx claude-code-templates@latest --chats --tunnel
 npx claude-code-templates@latest --health-check
 ```
 
-诊断项包括：Claude Code 版本兼容性、Node.js 版本、已安装组件的一致性、MCP 连接状态、配置文件语法。如果组件之间有版本冲突或配置错误，健康检查会直接指出。
+做一次全面诊断，检查 Claude Code 安装是否处于优化状态——版本兼容性、Node.js 版本、已装组件一致性、MCP 连接状态、配置文件语法。组件之间有版本冲突或配置错误时，会直接指出来。
 
 ### 插件面板
 
@@ -300,51 +172,46 @@ npx claude-code-templates@latest --health-check
 npx claude-code-templates@latest --plugins
 ```
 
-统一查看已安装的插件、可用市场和权限状态。当你的 Claude Code 装了多个来源的组件后，这个面板能帮你理清哪些组件来自哪个源、当前是否启用、是否有权限冲突。
+在一个界面里查看已安装的插件、可用市场和权限状态。当你从多个来源装了组件后，用它理清哪些来自哪个源、当前是否启用、有没有权限冲突。
 
-## 生态对比与协作
+## 生态里的位置
 
-Templates 不是孤立的。在 Claude Code 的生态里，它和几个现有项目各有定位，也能配合使用。
+Claude Code 生态里已经有不少配置类项目，Templates 和它们各有分工，也能配合。
 
-### 与 OpenClaw 的关系
+### 与 OpenClaw
 
-[OpenClaw](https://github.com/steipete/openclaw) 是一个本地优先的个人 AI 助手平台，支持 20+ 消息渠道（WhatsApp、Telegram、iMessage、飞书等）。它的核心是 Gateway 架构——一个长期运行的守护进程，管理会话、渠道、工具和事件。
+[OpenClaw](https://github.com/steipete/openclaw) 是本地优先的个人 AI 助手平台，支持 20+ 消息渠道（WhatsApp、Telegram、iMessage、飞书等），核心是 Gateway 架构——一个长期运行的守护进程管理会话、渠道、工具和事件。
 
 | 维度 | OpenClaw | Claude Code Templates |
 |------|----------|----------------------|
 | 定位 | 个人 AI 助手平台 | Claude Code 配置生态 |
-| 运行方式 | 长期守护进程 (daemon) | CLI 按需安装 + 配置注入 |
+| 运行方式 | 长期守护进程 | CLI 按需安装 + 配置注入 |
 | 渠道 | 20+ 消息平台 | Claude Code 终端 |
 | 配置方式 | Skill 系统 + Gateway 插件 | Agents/Commands/Hooks/MCPs |
 | 安全模型 | 默认安全 + 沙箱隔离 | 依赖 Claude Code 自身安全边界 |
 
-**协作场景**：如果你在 OpenClaw 中配置了 Claude Code 作为后端模型，可以用 Templates 来增强 Claude Code 的能力。比如在 OpenClaw 的 WhatsApp 渠道中问"帮我审查这段代码"，Claude Code 会以 code-reviewer agent 的身份响应，hook 在审查完成后自动发送通知到 OpenClaw 的 Telegram 渠道。
+两者能配合：如果把 Claude Code 作为 OpenClaw 的后端模型，用 Templates 装进的能力会跟着生效，OpenClaw 的渠道只是入口。
 
-### 与 Claude Code 官方 Plugins 的关系
+### 与 Anthropic 官方 Plugins
 
-Anthropic 官方的 [Claude Code Plugins](https://github.com/anthropics/claude-plugins) 是插件目录，定义了插件规范和注册机制。Templates 做的事情是聚合——它在官方插件的基础上，把社区贡献的 agents、commands、hooks、skills 和 MCPs 统一收进一个可搜索的目录，并提供了 CLI 和 Web UI 两种安装途径。
+[Claude Code Plugins](https://github.com/anthropics/claude-plugins) 是官方插件目录，定义插件规范和注册机制。Templates 做的是聚合——在官方定义的基础上，把社区贡献的 agents、commands、hooks、skills 和 MCPs 收进一个可搜索目录，并提供 CLI 和 Web UI 两种安装途径。类比一下：官方 Plugins 定标准和上架通道，Templates 是筛选分类好的合集。
 
-可以这样理解：官方 Plugins 是"应用商店的审核标准和上架通道"，Templates 是"已经筛选和分类好的应用合集"。
+### 与 ECC
 
-### 与 ECC（Everything Claude Code）的关系
+[ECC](https://github.com/affaan-m/ECC) 是社区维护的 Claude Code 资源大全，涵盖文章、视频、工具、skills 和 MCPs。差别在发力点：ECC 是索引，告诉你有什么资源并给链接；Templates 是分发，你不只知道有什么，还能一键装。两者互补，实践中常先在 ECC 里发现工具，再去 Templates 里搜安装命令。
 
-ECC 是社区维护的 Claude Code 资源大全，涵盖文章、视频、工具、skills 和 MCPs。Templates 和 ECC 的差异在于：
+### 与 9arm/skills 和 superpowers
 
-- **ECC 是索引**：告诉你有什么资源，给你链接
-- **Templates 是分发**：你不仅知道有什么，还能一键安装
+[9arm/skills](https://github.com/9arm/skills) 和 [obra/superpowers](https://github.com/obra/superpowers) 都是独立的 Claude Code skills 仓库，Templates 聚合了它们的内容，并额外统一了安装入口、处理组件间的依赖冲突、提供可视化管理界面。已经在用 superpowers 或 9arm/skills 的，迁到 Templates 不会丢功能，换来的是统一安装和监控。
 
-两者没有竞争关系，反而是互补的。ECC 帮你发现资源，Templates 帮你落地。在实际使用中，你可以在 ECC 里找到感兴趣的工具，然后去 Templates 里搜索对应的安装命令。
+## 什么时候值得用
 
-### 与 9arm/skills 和 superpowers 的关系
+判断依据是"你是不是已经有一批 Claude Code 配置要管"。
 
-[9arm/skills](https://github.com/9arm/skills) 和 [obra/superpowers](https://github.com/obra/superpowers) 都是独立的 Claude Code skills 仓库。Templates 聚合了它们的内容，但做了额外的工作：
+**值得用的场景**：团队已经跑通 Claude Code，组件数量开始超过手动维护的承受范围；想统一安装入口、理清多个来源的依赖冲突；想观察每次会话到底花在哪、token 烧在哪。监控层的收益在这里才体现得出来。
 
-- 统一了安装入口（都是 `npx claude-code-templates@latest` 一种方式）
-- 解决了组件间的依赖冲突（比如两个 skills 依赖不同版本的 MCP server）
-- 提供了可视化的组件管理界面
+**可以先不用的场景**：只想要一两个组件，直接找到对应文件复制即可；Claude Code 本身还没配置好，这时候先跑官方 Quick Start 更实际。
 
-如果你已经在用 superpowers 或 9arm/skills，迁移到 Templates 不会丢失任何功能，还能获得统一的安装、管理和监控体验。
+**建议的切入顺序**：先在 Web UI 搜索浏览，确认你要的组件存在；再按需用 CLI 安装，`--yes` 做脚本化；装完跑一次 `--health-check` 校验；最后用 `--analytics` 观察一段时间，再决定要不要长期挂监控。
 
----
-
-项目当前在 GitHub 上有 25,839 Stars 和 2,595 Forks，社区活跃，持续更新。浏览全部可用组件：[aitmpl.com](https://aitmpl.com)。查阅完整文档：[docs.aitmpl.com](https://docs.aitmpl.com)。
+项目当前在 GitHub 上有 30,050 Stars 和 3,299 Forks（GitHub API 2026-08-07 验证），MIT 协议，主语言 Python，持续更新。浏览全部组件：[aitmpl.com](https://aitmpl.com)；完整文档：[docs.aitmpl.com](https://docs.aitmpl.com)。

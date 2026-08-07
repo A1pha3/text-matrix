@@ -20,7 +20,7 @@ tags: ["Claude", "MCP", "Python"]
 
 LLM 只能处理文本，要让它操作外部世界——读文件、查数据库、发邮件——就得有一套协议把"外部能力"接进来。MCP（Model Context Protocol）就是干这个的。
 
-MCP 把工具定义、发现和调用从厂商私有格式收束为开放协议，让一次开发的工具能在多个 LLM 应用里复用。读完本文，你应该能回答三个问题：MCP 解决了什么厂商锁定问题、客户端与服务器如何握手并交换能力、什么场景下应该选 MCP 而不是直接写工具调用。
+MCP 把工具定义、发现和调用从厂商私有格式收束为开放协议，让一次开发的工具能在多个 LLM 应用里复用。下面从三个角度展开：MCP 究竟解决了什么问题、客户端与服务器如何握手并交换能力、什么场景下值得选 MCP 而不是直接写工具调用。
 
 ## 为什么需要 MCP
 
@@ -74,7 +74,7 @@ MCP 把工具定义、发现和调用从厂商私有格式收束为开放协议�
 
 ### MCP 的思路
 
-MCP 由 Anthropic 牵头，联合多个行业合作伙伴制定，是一个开放标准。它的思路是：**给 LLM 工具调用做一个"USB 接口"——一次开发，到处可用。**
+MCP 由 Anthropic 于 2024 年 11 月开源提出，随规格演化，OpenAI、Google、Microsoft 等厂商也先后加入治理，逐步成为多方共同维护的开放标准。它的思路是：**给 LLM 工具调用做一个"USB 接口"——一次开发，到处可用。**
 
 名字本身揭示了 MCP 的本质：
 - **协议（Protocol）**：基于 JSON-RPC 2.0 的标准化通信规则
@@ -88,7 +88,7 @@ MCP 由 Anthropic 牵头，联合多个行业合作伙伴制定，是一个开�
 | 工具定义格式 | 各厂商私有（OpenAI `parameters`、Anthropic `input_schema`） | 统一 JSON Schema，跨厂商复用 |
 | 工具发现 | 应用启动时硬编码或静态配置 | 运行时通过 `tools/list` 动态发现 |
 | 服务器主动通知 | 无 | 支持 `resources/updated` 等通知 |
-| 传输层 | 与应用同进程，函数调用 | 解耦，可走 stdio / SSE / WebSocket |
+| 传输层 | 与应用同进程，函数调用 | 解耦，可走 stdio / Streamable HTTP |
 | 实现语言 | 必须与宿主应用同语言 | 任意语言，只要实现 JSON-RPC 2.0 |
 | 跨应用复用 | 一个工具绑定一个应用 | 同一服务器可被多个客户端使用 |
 
@@ -96,24 +96,21 @@ MCP 由 Anthropic 牵头，联合多个行业合作伙伴制定，是一个开�
 
 MCP 采用客户端-服务器架构，包含三个核心组件：
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                      LLM 应用层                             │
-│                   （Claude Desktop / IDE）                  │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ MCP 协议
-┌─────────────────────────▼───────────────────────────────────┐
-│                     MCP 客户端                              │
-│              （负责与服务器通信，管理连接）                   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ 
-┌─────────────────────────▼───────────────────────────────────┐
-│                    MCP 服务器                               │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │ 文件系统  │  │  数据库  │  │  Web API │  │ GitHub   │   │
-│  │  服务器  │  │  服务器  │  │  服务器  │  │  服务器  │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    App["LLM 应用层（Claude Desktop / IDE）"]
+    Client["MCP 客户端<br/>连接管理 · 协议解析 · 请求路由"]
+    subgraph Servers["MCP 服务器"]
+        FS["文件系统服务器"]
+        DB["数据库服务器"]
+        API["Web API 服务器"]
+        GH["GitHub 服务器"]
+    end
+    App -- MCP 协议 --> Client
+    Client -- 同一协议通道 --> FS
+    Client --> DB
+    Client --> API
+    Client --> GH
 ```
 
 这种架构的好处是关注点分离：
@@ -156,7 +153,9 @@ MCP 中有一个重要概念：**资源（Resources）vs 工具（Tools）**
 
 ### JSON-RPC 基础
 
-MCP 底层使用 JSON-RPC 2.0 协议通信。选它有几个原因：消息格式只有请求、响应、通知三种，任何语言都能快速实现；与传输层解耦，stdio、SSE、WebSocket 都能跑；基于 JSON，调试时直接打印就能看懂消息内容。
+MCP 底层使用 JSON-RPC 2.0 协议通信。选它有几个原因：消息格式只有请求、响应、通知三种，任何语言都能快速实现；与传输层解耦，stdio、Streamable HTTP 都能跑；基于 JSON，调试时直接打印就能看懂消息内容。
+
+协议版本是带日期的字符串，从 2024-11-05 的初版一路演进到 2025-11-25。客户端和服务器在 initialize 阶段各自声明自己支持的 protocolVersion，协商出一个双方都能用的版本；版本对不上时，较新的一方会降级到对方支持的版本，而不是直接断开。
 
 ### 核心消息类型
 
@@ -167,7 +166,7 @@ MCP 底层使用 JSON-RPC 2.0 协议通信。选它有几个原因：消息格�
     "id": 1,
     "method": "initialize",
     "params": {
-        "protocolVersion": "2024-11-05",
+        "protocolVersion": "2025-11-25",
         "capabilities": {
             "roots": {"list": True},
             "sampling": {}
@@ -184,7 +183,7 @@ MCP 底层使用 JSON-RPC 2.0 协议通信。选它有几个原因：消息格�
     "jsonrpc": "2.0",
     "id": 1,
     "result": {
-        "protocolVersion": "2024-11-05",
+        "protocolVersion": "2025-11-25",
         "capabilities": {
             "tools": {"listChanged": True},
             "resources": {"subscribe": True, "listChanged": True}
@@ -199,26 +198,19 @@ MCP 底层使用 JSON-RPC 2.0 协议通信。选它有几个原因：消息格�
 
 ### 完整交互流程
 
-```text
-时间轴          客户端                          服务器
-   │              │                               │
-   │ ─── initialize ─────────────────────────►  │
-   │              │                               │
-   │              │  ◄────────────────── initialize result ──
-   │              │                               │
-   │ ─── notifications/initialized ─────────►  │
-   │              │                               │
-   │ ─── tools/list ─────────────────────────►  │
-   │              │                               │
-   │              │  ◄──────────────────── tools/list result ──
-   │              │                               │
-   │ ─── tools/call ─────────────────────────►  │
-   │              │                               │
-   │              │  ◄─────────────────────── result ──
-   │              │                               │
-   │ ─── resources/list ────────────────────►  │
-   │              │                               │
-   │              │  ◄────────────────── resources/list result ──
+```mermaid
+sequenceDiagram
+    participant C as MCP 客户端
+    participant S as MCP 服务器
+    C->>S: initialize
+    S-->>C: initialize result
+    C->>S: notifications/initialized
+    C->>S: tools/list
+    S-->>C: tools/list result
+    C->>S: tools/call
+    S-->>C: result
+    C->>S: resources/list
+    S-->>C: resources/list result
 ```
 
 ### 工具调用
@@ -400,7 +392,7 @@ if __name__ == "__main__":
 
 ### 使用 FastMCP 简化开发
 
-FastMCP 是一个高级封装库，用装饰器注册工具，省掉手写 inputSchema 的功夫：
+FastMCP 是官方 Python SDK 里的高级封装（`mcp.server.fastmcp`），用装饰器注册工具，省掉手写 inputSchema 的功夫：
 
 ```python
 from mcp.server.fastmcp import FastMCP
@@ -436,6 +428,8 @@ if __name__ == "__main__":
     mcp.run()
 ```
 
+FastMCP 后来也单独拆成了独立的 `fastmcp` 包，导入路径写成 `from fastmcp import FastMCP`，写法和这里一致。本地调试用官方 SDK 里的版本就够，想用更丰富的传输与插件能力再切到独立包。
+
 ## MCP 客户端开发
 
 ### 连接管理
@@ -464,7 +458,7 @@ async def main():
                 "read_file",
                 arguments={"path": "/tmp/demo.txt"}
             )
-            print("文件内容:", result[0].text)
+            print("文件内容:", result.content[0].text)
 
 asyncio.run(main())
 ```
@@ -515,7 +509,7 @@ MCP 项目在 [modelcontextprotocol/servers](https://github.com/modelcontextprot
 
 ## MCP 与工具调用的选型
 
-判断依据只有一条：**这个工具是否需要被多个应用复用，或者是否需要长期维护。**
+判断依据其实很具体：这个工具是否会被多个应用复用，或者是否需要长期维护。
 
 ### 用普通工具调用的场景
 
@@ -532,7 +526,7 @@ MCP 项目在 [modelcontextprotocol/servers](https://github.com/modelcontextprot
 - **跨语言集成**：宿主是 TypeScript，工具用 Python 写更方便
 - **企业标准化**：需要统一的权限、审计、工具发现机制
 
-代价是：多一层进程间通信，调试链路变长，stdio 传输下日志处理要小心。
+要付出的是一层进程间通信：调试链路变长，stdio 传输下日志处理要小心。
 
 ### 判断流程
 
@@ -574,21 +568,17 @@ stdio 传输把 stdout 用作协议通道，直接 `print` 会污染协议流。
 
 不会。每个服务器在独立进程里运行，客户端为每个服务器维护独立的 `ClientSession`。工具名冲突时，客户端通常按"服务器名.工具名"做命名空间隔离。
 
-## 进阶方向
+## 接着往下走
 
-把本文的内容走通之后，可以按下面三个方向继续深入：
+把本文的示例跑通之后，还有几条路可以深入：
 
-**方向一：实现一个带状态的服务器。** 本文示例的工具都是无状态的。下一步可以做一个跨会话记忆服务器——用 SQLite 存储键值对，暴露 `remember`、`recall`、`forget` 三个工具，并订阅 `resources/updated` 通知客户端记忆变化。
+做一个带状态的服务器。前面示例的工具都是无状态的。可以做一个跨会话记忆服务器——用 SQLite 存键值对，暴露 `remember`、`recall`、`forget` 三个工具，并订阅 `resources/updated` 通知客户端记忆变化。
 
-**方向二：研究传输层切换。** stdio 适合本地进程，远程场景需要 SSE 或 WebSocket。挑一个官方服务器，把它从 stdio 改造成 SSE 传输，观察握手消息和心跳机制的差异。
+研究传输层切换。stdio 适合本地进程，远程场景要换成 Streamable HTTP。挑一个官方服务器，把它从 stdio 改造成 Streamable HTTP，对比握手消息和心跳机制的差异。
 
-**方向三：参与生态建设。** 浏览 [MCP 服务器注册表](https://github.com/modelcontextprotocol/servers)，找一个你熟悉但没有官方实现的服务，写一个社区服务器并发布。过程中你会遇到 OAuth 流程、错误码标准化、工具描述优化等真实工程问题。
+参与生态建设。浏览 [MCP 服务器注册表](https://github.com/modelcontextprotocol/servers)，找一个你熟悉但还没有官方实现的服务，写一个社区服务器发布。过程中你会碰到 OAuth 流程、错误码标准化、工具描述优化这些真实工程问题。
 
-### 接下来读什么
-
-- 继续阅读：Claude Code 与 Computer Use 专题（六）—— 了解 Claude 的计算机操控能力
-- 实践项目：用 MCP 构建一个个人知识助手
-- 参考资料：[MCP 官方文档](https://modelcontextprotocol.io/)
+相关阅读：本系列下一讲是 Claude Code 与 Computer Use 专题（六）；协议细节以 [MCP 官方文档](https://modelcontextprotocol.io/) 为准。
 
 ---
 
