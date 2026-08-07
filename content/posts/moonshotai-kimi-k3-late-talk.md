@@ -3,7 +3,7 @@ title: "详解 Kimi K3：Moonshot 这手牌为什么让 Anthropic / OpenAI 紧�
 date: 2026-08-08T00:32:00+08:00
 draft: false
 tags: ["Kimi K3", "Moonshot AI", "Mixture-of-Experts", "KDA", "AttnRes", "Open Weights", "视频反写"]
-categories: ["技术文章", "LLM 前沿"]
+categories: ["技术笔记", "LLM 前沿"]
 description: "Kimi K3 总参 2.8T / 激活 104B / 1M context，Moonshot 7-27 开权重。晚点聊 115 分钟两位嘉宾拆解的技术含金量 + 它对 frontier lab 估值的真实影响。"
 slug : moonshotai-kimi-k3-late-talk
 

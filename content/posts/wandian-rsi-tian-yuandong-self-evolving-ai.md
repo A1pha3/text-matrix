@@ -3,7 +3,7 @@ title: "对话田渊栋 86 分钟：我从晚点聊里读出的 RSI 五条真东
 date: 2026-08-07T23:17:00+08:00
 draft: false
 tags: ["RSI", "Recursive Self-Improvement", "AI Agent", "Meta AI", "晚点聊 LateTalk", "视频反写"]
-categories: ["技术文章", "AI 前沿"]
+categories: ["技术笔记", "AI 前沿"]
 description: "晚点聊 86 分钟访谈田渊栋，AI 字幕 + 早报上下文交叉验证。我从2580 段字幕里读出 5 条田渊栋没明说、但确实在讲的事。"
 slug : wandian-rsi-tian-yuandong-self-evolving-ai
 
