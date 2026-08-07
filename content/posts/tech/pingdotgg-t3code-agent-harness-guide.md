@@ -10,12 +10,12 @@ tags: ["T3 Code", "Agent", "Claude Code", "Codex", "Cursor", "远程开发"]
 
 # T3 Code：Theo 的 Agent 控制台，远程驾驭 Claude Code 与 Codex
 
-不少 AI 编程 agent（智能体）都有一个缺点：它们跑在你电脑的终端里，你就得坐在终端前。Claude Code 在跑一个跨文件重构时，你出去吃顿饭，回来发现它停在某个审批点等你——这半小时本可以不用守在屏幕前。T3 Code 解决的就是这个痛点：agent 的进程仍在你的机器上，操控面搬到手机、浏览器和桌面，人不必再守在电脑前。
+不少 AI 编程 agent（智能体）都有一个不足：它们跑在你电脑的终端里，你就得坐在终端前。Claude Code 在跑一个跨文件重构时，你出去吃顿饭，回来发现它停在某个审批点等你——这半小时本不必守在屏幕前。T3 Code 解决了这个问题：agent 的进程仍在你的机器上，操控面搬到手机、浏览器和桌面，人不必守在电脑前。
 
-T3 Code 是 agent 套壳，它不跑模型、不做代码生成，只管理你已安装并认证的 agent 进程。你可以坐在沙发上，偶尔低头看一眼进度，然后用语音指挥你的 agent 牛马不停地干活。
+T3 Code 是 agent 套壳，它不跑模型、不做代码生成，只管理你已安装并认证的 agent 进程。你可以坐在沙发上，偶尔低头看一眼进度，随手指挥 agent 干活。
 
-T3 Code 想要的，只是最好用的 agent 开发体验，而 Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 这些现成方案都没到他们的标准。
-T3 Code 想做到性能优秀、能远程、真正开放，并明说「万一走错了方向，你可以 fork（派生）去构建自己编辑器所需的一切」。「真正开放」具体所指：MIT、不上传遥测、自带安装包，都能在仓库里检验。
+T3 Code 想要的，只是最好用的 agent 开发体验。Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 这些现成方案，都没到它的标准。
+它想做到性能好、支持远程、开放是看得见的：仓库里放着 MIT 许可证和 Windows、macOS、Linux 各平台安装包，遥测只在本地做资源监控，不上传。
 
 ## 目录
 
@@ -37,7 +37,8 @@ T3 Code 想做到性能优秀、能远程、真正开放，并明说「万一走
 - [十一、学习目标](#十一学习目标)
 - [十二、自测题](#十二自测题)
 - [十三、进阶方向](#十三进阶方向)
-- [十四、参考资料](#十四参考资料)
+- [十四、源码开发：从源码跑起来，自己改](#十四源码开发从源码跑起来自己改)
+- [十五、参考资料](#十五参考资料)
 
 ## 一、它解决的是什么
 
@@ -49,7 +50,7 @@ T3 Code 想做到性能优秀、能远程、真正开放，并明说「万一走
 | 语言 | TypeScript（Effect 生态） |
 | 许可证 | MIT |
 | 作者 | Theo Browne（pingdotgg） |
-项目 2026 年 2 月 8 日创建，半年出头冲到 16k stars，commit（提交）数 2,200+。增长快，一部分靠 Theo 的号召力，但仓库本身的做法——MIT、不上传遥测、自带各平台安装包、`npx t3@latest` 免安装体验——让新用户从看到到跑通几乎没有门槛。开 issue 数超过 1,000。
+项目 2026 年 2 月 8 日创建，半年冲到 16k stars。增长快，一部分靠 Theo 的号召力，但仓库本身的做法——MIT、不上传遥测、自带各平台安装包、`npx t3@latest` 免安装体验——让新用户从看到到跑通，中间几乎不卡壳。开 issue 数超过 1,000。
 
 ## 二、与同类工具的对比
 
@@ -87,11 +88,11 @@ npx t3@latest --help
 
 文章后半部分「九、远程访问」会从连接层讲「能连」的机制——四种连接目标：本地主连接、Bearer 配对、Relay 中继、SSH。这一节换一个角度，回答更实际的问题：手机在外面（蜂窝网络、公司 Wi-Fi）时，怎么连回家里的机器？
 
-先厘清一个容易混淆的点：这里的分类和「九、远程访问」不是一回事。那里说的是连接层「这条 WebSocket 怎么建」，属于技术分类；本章说的是使用者「用什么方式接入」，属于操作分类。按操作方式，实际路径有四条：Tailscale、Relay 中继、SSH 远程环境、托管配对。
+先分清两套分类：后文「九、远程访问」讲的是连接层「这条 WebSocket 怎么建」，属于技术分类；本章讲的是使用者「用什么方式接入」，属于操作分类。按操作方式，实际路径有四条：Tailscale、Relay 中继、SSH 远程环境、托管配对。
 
-后面说 Tailscale 不是第五种连接目标，这里却单独算了它一条，初看矛盾。其实不矛盾：Tailscale 只是把服务发布成 HTTPS 端点的提供者，手机最终仍走普通 bearer 配对连进来；但站在使用者角度，「要不要装、要不要用 Tailscale」是独立于连接层的选择，所以单独算一条路径，也是本章最推荐的方式。
+后面说 Tailscale 不是第五种连接目标，这里又单独算它一条，看着矛盾。其实不冲突：Tailscale 只是把服务发布成 HTTPS 端点的提供者，手机最终仍走普通的 bearer 配对连进来；装不装 Tailscale 是使用者独立于连接层的选择，所以单独算一条路径，也是本章最推荐的方式。
 
-方向先定下来：**日常首选 Tailscale，它不可用时用 Relay 中继兜底**；SSH 和托管配对只适用于特定场景。下面先把概念讲清楚，再横评、组合、给逐步操作。
+先给定论：**日常首选 Tailscale，它不可用时用 Relay 中继兜底**；SSH 和托管配对只适用于特定场景。下面先把概念讲清楚，再横评、组合、给逐步操作。
 
 #### 认识 Tailscale（新手必读）
 
@@ -99,7 +100,7 @@ Tailscale 不是 T3 Code 的一部分，它是独立的组网工具，T3 Code �
 
 - **它是什么**：一个基于 WireGuard 的组网工具。把「手机」和「家中机器」加入同一个私人虚拟网络（叫 tailnet）后，两台设备就像在同一个局域网里，互相能直接访问——即使它们一个在 4G 网络、一个在公网 IP 都没有的路由器后面。
 - **它不是 VPN 代理**：Tailscale 只在你的设备之间建立加密直连通道，不把流量转发到第三方服务器（极少数 NAT 打洞失败时才走内置的 DERP 中继兜底）。所以手机开着 Tailscale 不影响正常上网，只有访问家中机器时才走这条加密隧道。
-- **为什么 T3 Code 官方推荐它**：它给 T3 Code 提供「稳定地址 + HTTPS 端点 + 不暴露公网」，正好补齐远程控制最需要的三件事。后面用到 `--tailscale-serve` 时你会看到，Tailscale 还能把本机服务发布成 `https://机器名.tailnet名.ts.net/` 这样的 HTTPS 地址。
+- **为什么 T3 Code 官方推荐它**：它给 T3 Code 提供「稳定地址 + HTTPS 端点 + 不暴露公网」，恰好是远程控制最需要的三件事。后面用到 `--tailscale-serve` 时你会看到，Tailscale 还能把本机服务发布成 `https://机器名.tailnet名.ts.net/` 这样的 HTTPS 地址。
 
 **注册与安装：**
 
@@ -133,7 +134,7 @@ Tailscale 不是 T3 Code 的一部分，它是独立的组网工具，T3 Code �
 
 #### 最优组合：Tailscale 为主，Relay 兜底
 
-两者互补：Tailscale 给到「不暴露 + 强加密 + 弱网稳」，是四条路里性价比最高的；万一在公司网络、酒店等环境里 Tailscale 的 UDP 打洞被拦，一条 `npx t3 connect` 就能临时顶上，不用改任何其他配置。SSH 和托管配对只在它们对应的特定场景里才划算，日常不必考虑。
+两者互补：Tailscale 给到「不暴露 + 强加密 + 弱网稳」，四条路里最省心；万一在公司网络、酒店等环境里 Tailscale 的 UDP 打洞被拦，一条 `npx t3 connect` 就能临时顶上，不用改任何其他配置。SSH 和托管配对只在它们对应的特定场景里才划算，日常不必考虑。
 
 #### 方案一：Tailscale（首选）
 
@@ -280,7 +281,7 @@ GitHub Issues 提交 bug（不保证修复速度），Discord 社区讨论。项
 
 小团队有人专门负责 agent 机器的话，远程控制和 Git 工作流自动化能省掉「谁在哪个 agent 上跑了什么」的沟通损耗。但项目不收大贡献，遇到特定 bug 别指望能快速修掉，要有自己绕路的准备。
 
-正在评估 agent 编排方案的话，同时看 T3 Code 和 Superset：前者强在远程和多 agent 统一入口，后者强在并行规模和编辑器形态。两者解决的不是同一个维度的问题。
+正在评估 agent 编排方案的话，同时看 T3 Code 和 Superset：前者强在远程和多 agent 统一入口，后者强在并行规模和编辑器形态，选哪个看你更缺哪种。
 
 ## 七、系统地图
 
@@ -350,7 +351,7 @@ T3 Code 的远程模型很简单：远程只存在于连接层，运行时从不
 
 局域网直连是最简单的方式，手机和服务器在同一个子网即可。服务器在 NAT 后面或要跨公网访问时，走 Relay 中继隧道——注意中继 Worker 只交换凭据和托管端点，应用流量走的是 Cloudflare 隧道主机名，不经过中继本身。Tailscale 用户可以直接用 `npx t3 pair --tailscale` 把服务发布到 tailnet 的 HTTPS 地址，那个映射会一直保留到你手动关掉 `tailscale serve --https=443 off`。桌面应用还能通过 SSH 在远程机器上启动或复用 T3 server，再把端口转发回来。
 
-配对流程设计得比传统 token（令牌）登录干净：`t3 serve`（或对运行中的服务器执行 `t3 pair`）签发一次性配对 token，远程设备用它交换会话，之后访问全部基于会话，不需要长期秘密。桌面应用里还能用「Create Link」生成一个配对链接，直接分享给另一台设备。WebSocket 的认证票据独立签发，默认五分钟过期，且每个 RPC 方法还各自校验权限范围——拿到一条合法连接不代表能调所有方法。会话管理单独交给 `t3 auth`：签发额外凭据、查看活跃会话、吊销不再信任的配对，都在这一条命令下完成。
+配对流程不走传统的长效 token（令牌）登录：`t3 serve`（或对运行中的服务器执行 `t3 pair`）签发一次性配对 token，远程设备用它交换会话，之后访问全部基于会话，不需要长期秘密。桌面应用里还能用「Create Link」生成一个配对链接，直接分享给另一台设备。WebSocket 的认证票据独立签发，默认五分钟过期，且每个 RPC 方法还各自校验权限范围——拿到一条合法连接不代表能调所有方法。会话管理单独交给 `t3 auth`：签发额外凭据、查看活跃会话、吊销不再信任的配对，都在这一条命令下完成。
 
 托管配对（app.t3.codes）只是个客户端便利，不是中继。它不代理 HTTP 或 WebSocket 流量，浏览器直接连你给的后端地址，配对 token 放在 URL hash（哈希）里，连托管页都看不到。前提是后端必须能被浏览器直接访问——HTTPS 页面只能连 HTTPS/WSS 后端，纯 HTTP 的局域网地址还得走桌面或 CLI 的直连配对。
 
@@ -397,7 +398,85 @@ T3 Code 的远程模型很简单：远程只存在于连接层，运行时从不
 - 动手搭一条 SSH 远程环境，观察配对票据的签发与 WebSocket 的鉴权流程，把「连接层 vs 运行时」的抽象亲手验证一遍
 - 读 [remote.md](https://github.com/pingdotgg/t3code/blob/main/docs/internals/remote.md)，对照四种目标类型和端点提供者模型，理解「访问方式」和「启动方式」为什么是两个独立概念
 
-## 十四、参考资料
+## 十四、源码开发：从源码跑起来，自己改
+
+如果你已经装了 agent、跑过 `npx t3@latest`，接下来顺理成章想从源码跑起来，边跑边改。这一节给一套能走通的开发工作流。先说明一点：T3 Code 的构建链是 Vite+（命令叫 `vp`），不是 `pnpm`/`npm` 直接跑，第一次接触容易懵，按下面顺序走就行。以下命令全部来自官方 `docs/internals/scripts.md` 和 `workspace-layout.md`。
+
+**前置要求**
+
+- Node.js 24（`vp` 工具链的要求；只跑发布版 CLI 的话 `^22.16 || ^23.11 || >=24.10` 即可）
+- 至少一个已认证的 agent CLI（见「三、快速上手」的前置条件）
+- 能联网的终端
+
+**第一步：拉代码、装依赖**
+
+```bash
+git clone https://github.com/pingdotgg/t3code.git
+cd t3code
+
+# 安装全局 vp 命令行（Windows 用: irm https://vite.plus/ps1 | iex）
+curl -fsSL https://vite.plus | bash
+
+# 安装工作区依赖（pnpm workspace，由 vp 驱动）
+vp i
+```
+
+**第二步：起开发环境**
+
+```bash
+vp run dev
+```
+
+`vp run dev` 用 watch 模式同时拉起 contracts、server 和 web——改代码自动重载，不用手动重启。启动时它会打印一个一次性配对 URL，浏览器打开它完成首次鉴权（否则第一次页面导航会被拦）。dev 模式下默认端口是：server `13773`、web `5733`，和发布版的端口不是一回事，别拿它去对「远程访问」那几节的示例。
+
+常用变体：
+
+- `vp run dev:server`：只起 server（`node --watch src/bin.ts`，方便打断点）
+- `vp run dev:web`：只起 web 的 Vite dev server
+- `vp run dev:desktop`：起 Electron 壳，连到 dev server
+- `vp run dev --share`：把 web 端口发布到本机 tailnet 的 HTTPS，方便手机一起联调；退出时自动移除映射
+- `vp run dev --browser`：自动开浏览器（默认不开）
+
+在 git worktree 里跑 dev 时，会按 worktree 路径自动算端口偏移，避免多个实例撞端口。想强制隔离，用 `--home-dir <path>` 指定独立数据目录。
+
+**dev 状态目录（划重点）**
+
+主 checkout 里跑 dev，状态放在 `~/.t3/dev`，和正式数据 `~/.t3/userdata` 分开；在 worktree 里跑则用 `<worktree>/.t3`。好处是：你边改边跑，不会污染真正在用的 agent 配置。
+
+**第三步：改代码，验证，测试**
+
+dev 是 watch 模式，改动即时生效。形成「改一下 → 静态检查 → 跑测试」的循环：
+
+```bash
+vp check          # format + lint + typecheck
+vp run typecheck  # 严格 TypeScript 类型检查（check 里 typeCheck 是关的，需单独跑）
+vp run test       # 跑工作区测试
+vp run lint:mobile # 手机端原生静态检查（改了 mobile 才需要）
+```
+
+**第四步：构建产物**
+
+改完想跑生产版或打包：
+
+```bash
+vp run build              # 构建 apps/* 和 packages/*
+vp run build:desktop      # 桌面端（desktop + server）
+vp run start              # 跑生产 server，托管构建好的 web 静态文件
+```
+
+桌面安装包：`vp run dist:desktop:dmg`（macOS 的 .dmg，出在 `./release`）、`dist:desktop:linux`、`dist:desktop:win`。默认未签名，macOS 首次打开要右键 → 打开。
+
+**从哪下手改**
+
+和「八、核心机制」对应着读：想动编排逻辑看 `apps/server/src/orchestration/`；想加 provider 看 `apps/server/src/provider/` 的 driver + adapter；改契约（RPC、命令、事件）在 `packages/contracts/`。仓库里 `docs/internals/` 的 overview、providers、remote 三篇和本文「学习篇」一一对应，边读边改最快。改完跑 `vp run test`，异步边界正好用 DrainableWorker 的 `drain` 等确定性点（见 8.2），不用 sleep 猜进度。
+
+**几个易踩的坑**
+
+- 改 `packages/contracts` 的 RPC / 命令 / 事件定义后，server 和 client 都要重新过类型检查，漏一边会报对不上。
+- provider 的 CLI 必须能被 server 找到：要么在 `PATH` 里，要么在 Settings → 该 provider → Binary path 里显式指定。装了版本管理器把 CLI 挡在 PATH 外的，多半要走显式路径。
+- Cursor 的常见坑：二进制叫 `cursor-agent`，但认证命令是 `agent login`，别搞混。
+
+## 十五、参考资料
 
 - 仓库：[github.com/pingdotgg/t3code](https://github.com/pingdotgg/t3code)
 - 架构总览：[docs/internals/overview.md](https://github.com/pingdotgg/t3code/blob/main/docs/internals/overview.md)
