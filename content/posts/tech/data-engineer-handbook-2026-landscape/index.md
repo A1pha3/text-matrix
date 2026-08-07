@@ -5,7 +5,7 @@ slug: "data-engineer-handbook-2026-landscape"
 github_repo: "DataExpert-io/data-engineer-handbook"
 source_key: "gh:DataExpert-io/data-engineer-handbook"
 description: "DataExpert-io/data-engineer-handbook 是 43k★ 的数据工程资源汇总仓库，覆盖书籍、社区、工具、白皮书、训练营与社交媒体账号。本文按数据工程师的能力维度拆解它收录的资源结构与适用人群，标注每条目录的真正用途。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["数据工程", "学习路径", "开源资源", "DataExpert", "知识地图"]
 ---
