@@ -5,7 +5,7 @@ slug: "tailwindcss-v4-architecture"
 github_repo: "tailwindlabs/tailwindcss"
 source_key: "gh:tailwindlabs/tailwindcss"
 description: "Tailwind CSS v4 是首个把扫描 + 编译 + 压缩全部迁到 Rust（oxide）的主版本。本文基于 97k★ 的 tailwindcss 仓库目录（crates + packages）拆解它从 PostCSS 插件到多 crate workspace 的架构迁移，附 v4 与 v3 的关键边界差异。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["Tailwind CSS", "CSS 工具类", "Rust", "PostCSS", "前端工程化", "oxide"]
 ---
