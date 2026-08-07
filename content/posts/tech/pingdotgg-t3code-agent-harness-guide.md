@@ -14,8 +14,8 @@ tags: ["T3 Code", "Agent", "Claude Code", "Codex", "Cursor", "远程开发"]
 
 T3 Code 是 agent 套壳，它不跑模型、不做代码生成，只管理你已安装并认证的 agent 进程。你可以坐在沙发上，偶尔低头看一眼进度，随手指挥 agent 干活。
 
-T3 Code 想要的，只是最好用的 agent 开发体验。Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 这些现成方案，都没到它的标准。
-它想做到性能好、支持远程、开放是看得见的：仓库里放着 MIT 许可证和 Windows、macOS、Linux 各平台安装包，遥测只在本地做资源监控，不上传。
+T3 Code 所追求的，是一套流畅而高效的 agent 开发基准体验。就这一标准而言，Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 等现有方案，均未触及它的基准线。
+它的设计原则可归纳为三条：性能达标、远程原生、透明度可验证——仓库采用 MIT 许可证，提供 Windows、macOS、Linux 各平台安装包，遥测仅在本地执行资源监控，不上传任何数据。
 
 ## 目录
 
@@ -50,63 +50,87 @@ T3 Code 想要的，只是最好用的 agent 开发体验。Codex 桌面应用�
 | 语言 | TypeScript（Effect 生态） |
 | 许可证 | MIT |
 | 作者 | Theo Browne（pingdotgg） |
-项目 2026 年 2 月 8 日创建，半年冲到 16k stars。增长快，一部分靠 Theo 的号召力，但仓库本身的做法——MIT、不上传遥测、自带各平台安装包、`npx t3@latest` 免安装体验——让新用户从看到到跑通，中间几乎不卡壳。开 issue 数超过 1,000。
+
+项目创建于 2026 年 2 月 8 日，半年间 Stars 突破 16,000。增长速度引人注目，一方面来自 Theo 本人的社区号召力，另一方面则源于仓库本身的几项关键举措——MIT 许可证、零遥测上传、全平台安装包、`npx t3@latest` 免安装体验——共同压低了体验门槛，新用户从知晓到跑通几乎没有阻滞。活跃 Issue 数亦超过 1,000。
 
 ## 二、与同类工具的对比
 
-agent 远程控制和编排不是 T3 Code 独有。拿它跟几个常被一起提起的工具摆在一起看（以下对 Parallel Code、Superset 的描述按其公开产品信息归纳，细节可能随版本变化）：
+Agent 远程控制与编排并非 T3 Code 独有能力。以下将其与几款常被并列提及的工具加以对照（Parallel Code、Superset 的特性按其公开产品信息归纳，细节或随版本演进）：
 
 | 特性 | T3 Code | Parallel Code | Superset |
 |------|---------|---------------|----------|
-| 多 agent | Codex/Claude/Cursor/Grok/OpenCode | 通用 | 通用 |
+| 多 Agent | Codex/Claude/Cursor/Grok/OpenCode | 通用 | 通用 |
 | 远程控制 | ✅ 移动/Web/桌面 | ❌ 仅桌面 | ❌ 仅桌面 |
-| 线程→Git worktree | ✅ | 独立 workspace | 未披露 |
+| 会话隔离 → Git worktree | ✅ | 独立 workspace | 未披露 |
 | 一键 PR | ✅ 自动变更日志 | 未披露 | 未披露 |
 | 许可证 | MIT | 不开源 | Elastic 2.0（source-available） |
 
-T3 Code 的取舍很清晰：远程控制和多 agent 统一入口。Superset 走的是「编辑器形态 + 十路并行」路线，Parallel Code 强调每个 agent 独立 workspace。想离开电脑操作 agent，T3 Code 目前是最直接的选择；如果一次要跑十个 agent，Superset 的方向可能更接近你的需求。
+三者的取舍方向判然有别：T3 Code 定位于远程控制与多 Agent 统一入口；Superset 取「编辑器形态 + 高并发度」路线；Parallel Code 则强调每个 Agent 独立工作空间。对脱离主机操作 Agent 有刚性需求的场景，T3 Code 是当前最为直接的选项；若需要同时运行大量 Agent，Superset 的方向可能更贴合需求。
 
-它和 Cursor、Copilot 也不是一类东西。Cursor 是 AI 优先的编辑器，Copilot 是 IDE（集成开发环境）里的插件，都长在编辑生态内；T3 Code 站在 IDE 之外，管理的是完整的 agent 会话——它不依赖你用哪个编辑器，你甚至可以没有编辑器，只有终端。两者可以共存，不构成替代关系。
+T3 Code 与 Cursor、Copilot 亦不属同一品类。Cursor 是以 AI 为核心的编辑器，Copilot 是嵌于 IDE 内的补全插件，两者均根植于编辑生态；T3 Code 则独立于编辑器之外，管理的是完整的 Agent 会话生命周期——它不绑定任何编辑器，即便仅有终端亦可运行。因此它们之间是互补关系，而非替代关系。
 
 ## 三、快速上手
 
 ### 基础安装
 
+T3 Code 提供两种启动路径：免安装 CLI 体验适合快速验证，桌面应用适合长期使用。
+
+**免安装 CLI 体验**（要求 Node.js 22.16+ / 23.11+ / 24.10+）：
+
 ```bash
-# 最简方式，需 Node.js 22.16+ / 23.11+ / 24.10+
+# 启动本地服务器并打开 Web 控制台
 npx t3@latest
 
-# 完整 CLI 参考
+# 完整命令行参数参考
 npx t3@latest --help
 ```
 
-**前置条件**：至少安装并认证一个 agent——`claude auth login`、`codex login`、`agent login`（Cursor）、`grok login` 或 `opencode auth login`，确认它在终端能正常跑。T3 Code 不产生 agent 能力，它只驱动你已经有的。
+**前置条件**：至少安装并认证一个受支持的 Agent 提供方，确认其在终端可正常运行。T3 Code 不产生 Agent 能力，只调用本机已有的会话。各提供方的认证命令如下：
 
-桌面安装走各平台包管理器：Windows 用 `winget install T3Tools.T3Code`，macOS 用 `brew install --cask t3-code`，Arch 用 `yay -S t3code-bin`。远程访问的完整配置见 [remote-access.md](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md)。
+- Claude Code：`claude auth login`
+- Codex：`codex login`
+- Cursor CLI：`agent login`
+- Grok Build：`grok login`
+- OpenCode：`opencode auth login`
 
-### 实战：手机从外网连家中机器
+**桌面应用安装**（各平台包管理器）：
 
-文章后半部分「九、远程访问」会从连接层讲「能连」的机制——四种连接目标：本地主连接、Bearer 配对、Relay 中继、SSH。这一节换一个角度，回答更实际的问题：手机在外面（蜂窝网络、公司 Wi-Fi）时，怎么连回家里的机器？
+| 平台 | 安装命令 |
+|------|----------|
+| Windows | `winget install T3Tools.T3Code` |
+| macOS | `brew install --cask t3-code` |
+| Arch Linux（AUR） | `yay -S t3code-bin` |
 
-先分清两套分类：后文「九、远程访问」讲的是连接层「这条 WebSocket 怎么建」，属于技术分类；本章讲的是使用者「用什么方式接入」，属于操作分类。按操作方式，实际路径有四条：Tailscale、Relay 中继、SSH 远程环境、托管配对。
+或直接从 [GitHub Releases](https://github.com/pingdotgg/t3code/releases) 下载安装包。远程访问的完整配置参见官方文档 [remote-access.md](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md)，后文「九、远程访问」亦会从连接层展开机制说明。
 
-后面说 Tailscale 不是第五种连接目标，这里又单独算它一条，看着矛盾。其实不冲突：Tailscale 只是把服务发布成 HTTPS 端点的提供者，手机最终仍走普通的 bearer 配对连进来；装不装 Tailscale 是使用者独立于连接层的选择，所以单独算一条路径，也是本章最推荐的方式。
+### 实战：手机从外网连回家中机器
 
-先给定论：**日常首选 Tailscale，它不可用时用 Relay 中继兜底**；SSH 和托管配对只适用于特定场景。下面先把概念讲清楚，再横评、组合、给逐步操作。
+后文「九、远程访问」一节将从连接层视角阐释「链路如何建立」，覆盖四种连接目标：本地主连接、Bearer 配对、Relay 中继、SSH。本节切换到使用者视角，聚焦一个更具体的问题：手机在蜂窝网络或公司 Wi‑Fi 等外部环境下，如何安全、稳定地接入家中机器上的 T3 Code。
+
+首先明确两套分类体系的边界：
+
+- **技术分类**（后文展开）：按 WebSocket 链路的建立方式划分，关注「这条连接怎么建」。
+- **操作分类**（本节展开）：按使用者的接入手段划分，关注「你用什么方式连进去」。
+
+按操作分类，实际可执行的路径共有四条：Tailscale 组网、Relay 中继、SSH 远程环境、托管配对。
+
+一个需要提前说明的问题：Tailscale 并非后文技术分类中的第五种连接目标，与本节将其单独列为路径并不矛盾。原因在于——Tailscale 仅是 HTTPS 端点的发布载体，手机端最终仍通过标准 Bearer 配对链路接入；是否部署 Tailscale 属于使用者在连接层之上的独立选择，因此在操作分类中单列，同时也是本节最推荐的方案。
+
+核心取舍可提前明确：**日常场景优先采用 Tailscale，中继（Relay）作为不可用时的兜底方案**；SSH 与托管配对仅适用于特定场景。下文将先厘清各路径背后的概念，再给出横向对比、组合建议与逐步操作指南。
 
 #### 认识 Tailscale（新手必读）
 
-Tailscale 不是 T3 Code 的一部分，它是独立的组网工具，T3 Code 只是善用了它。很多人第一次接触这两个词容易混淆，先把它讲清楚：
+Tailscale 并非 T3 Code 的组成部分，而是一款独立的组网工具；T3 Code 仅利用其能力实现高质量远程接入。鉴于两者名称首次接触时易产生混淆，本节先明确其定位与核心属性：
 
-- **它是什么**：一个基于 WireGuard 的组网工具。把「手机」和「家中机器」加入同一个私人虚拟网络（叫 tailnet）后，两台设备就像在同一个局域网里，互相能直接访问——即使它们一个在 4G 网络、一个在公网 IP 都没有的路由器后面。
-- **它不是 VPN 代理**：Tailscale 只在你的设备之间建立加密直连通道，不把流量转发到第三方服务器（极少数 NAT 打洞失败时才走内置的 DERP 中继兜底）。所以手机开着 Tailscale 不影响正常上网，只有访问家中机器时才走这条加密隧道。
-- **为什么 T3 Code 官方推荐它**：它给 T3 Code 提供「稳定地址 + HTTPS 端点 + 不暴露公网」，恰好是远程控制最需要的三件事。后面用到 `--tailscale-serve` 时你会看到，Tailscale 还能把本机服务发布成 `https://机器名.tailnet名.ts.net/` 这样的 HTTPS 地址。
+- **产品定位**：基于 WireGuard 的组网工具。将手机与家中机器加入同一私人虚拟网络（tailnet）后，两台设备即可像处于同一局域网般直接互访——即便一方在移动蜂窝网络下，另一方位于无可直接路由公网 IP 的 NAT 之后。
+- **与 VPN 代理的区别**：Tailscale 仅在特定设备之间建立加密直连通道，不将全量流量转发至第三方出口服务器（仅在极少数 NAT 打洞失败时通过内置 DERP 中继兜底）。因此，启用 Tailscale 不影响设备的常规互联网访问，仅在访问 tailnet 内节点时走加密隧道。
+- **T3 Code 推荐的理由**：它一次性提供远程控制场景最需要的三项基础能力——稳定可达的寻址、原生 HTTPS 端点、无需向公网暴露端口。后文涉及 `--tailscale-serve` 参数时将会看到，Tailscale 还可将本机服务直接发布为 `https://机器名.tailnet名.ts.net/` 格式的 HTTPS 地址。
 
-**注册与安装：**
+**注册与安装步骤：**
 
-1. 注册：用 GitHub / Google / Microsoft 账号直接登录，或邮箱注册，一两分钟搞定。免费版包含 3 个用户、100 台设备，个人用完全够，不需要付费。
-2. 家中机器（macOS）：访问 [tailscale.com/download](https://tailscale.com/download) 下载 App，或 `brew install --cask tailscale`，安装后登录你的账号。
-3. 手机（iOS/Android）：App Store / Google Play 搜 Tailscale 安装，登录**同一个账号**。两台设备登录同一账号后，自动加入同一个 tailnet。
+1. **账号注册**：直接使用 GitHub / Google / Microsoft 账号登录，或通过邮箱注册。免费版支持 3 用户、100 台设备，个人使用无需付费。
+2. **家中机器（以 macOS 为例）**：访问 [tailscale.com/download](https://tailscale.com/download) 下载桌面客户端，或通过 Homebrew 执行 `brew install --cask tailscale`，安装后登录上述账号。
+3. **移动设备（iOS / Android）**：在 App Store 或 Google Play 搜索「Tailscale」安装，登录与家中机器**相同的账号**——两台设备登录同一账号后，将自动加入同一 tailnet。
 
 **稳定性和维护：**
 
