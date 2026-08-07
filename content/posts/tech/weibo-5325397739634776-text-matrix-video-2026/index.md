@@ -8,7 +8,7 @@ categories: ["视频精读"]
 authors: ["钳岳"]
 github_repo: "yida-liyongle/2026-fields-medal"
 description: "李永乐老师微博视频反写:邓煜 + 王虹 2026 获菲尔兹奖,从希尔伯特第六问题到玻尔兹曼方程公理化的 120 年数学突破"
-slug : index
+slug : weibo-5325397739634776-text-matrix-video-2026
 
 ---
 
