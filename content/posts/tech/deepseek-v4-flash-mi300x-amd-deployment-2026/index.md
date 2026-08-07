@@ -4,7 +4,7 @@ date: 2026-08-05T09:40:00+08:00
 draft: false
 summary: "ryanzhou 用一套 SHA-256 pin 死的 vLLM ROCm nightly 加 10 个 byte-for-byte overlay patch,把 DeepSeek V4 Flash(304B MoE)在单张 AMD MI300X 上跑成生产推理栈:单流 168.6 tok/s、8 流 542 tok/s、64 流 830 tok/s。本文逐个拆开这些 overlay 背后的工程问题:FP8 格式错配、MXFP4 路由的 padding bug、投机解码的因果验证、CPU KV 的同步 fence,以及为什么 KV cache 池不能开大。"
 tags: ["DeepSeek", "V4 Flash", "MI300X", "vLLM", "ROCm", "AITER", "FP8", "DSpark", "MXFP4", "MoE"]
-categories: ["技术文章"]
+categories: ["技术笔记"]
 authors: ["钳岳"]
 github_repo: "ryanzhou/deepseek-v4-flash-mi300x"
 description: "DeepSeek V4 Flash 单卡 AMD MI300X 生产部署:304B MoE、156.67 GiB HBM、168.6 tok/s 单流 / 64 流 830 tok/s,拆开 FNUZ FP8 / MXFP4 路由 / DSpark-7 因果 verify / CPU KV fence 等 10 处 overlay。"

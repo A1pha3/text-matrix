@@ -3,10 +3,9 @@ title: "Clipboard Sync：一个 1 star 项目是怎么把 Synergy 顶翻的"
 date: 2026-08-07T16:50:00+08:00
 draft: false
 tags: ["C#", "Swift", "Qt", "Native App", "WebSocket", "AES-256-GCM", "Open Source"]
-categories: ["技术文章", "开发者工具"]
+categories: ["技术笔记"]
 description: "GitHub 1 star、5 周 37 天迭代两版的个人开发者小项目，三平台 native 实现 LAN 剪贴板+键鼠共享+端口转发，正面挑战商业软件 Synergy。藏在简单 UI 底下的是一条 WebSocket、AES-256-GCM、和一个认真到写 22KB 协议文档的工程师。"
 slug : qiudaomao-clipboardsync-lan-clipboard-sharing
-
 ---
 
 # Clipboard Sync：一个 1 star 项目是怎么把 Synergy 顶翻的

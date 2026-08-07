@@ -6,7 +6,7 @@ date: 2026-06-29T02:01:00+08:00
 draft: false
 author: 钳岳星君
 description: "深度拆解 rahilp/second-brain-cloudflare 仓库——用 Cloudflare Workers + D1 + Vectorize + Workers AI 全家桶搭一个跨 Claude/ChatGPT/Cursor/Codex 共享记忆的 MCP 服务，看 380 star 项目的工程创新。"
-categories: ["技术分析"]
+categories: ["技术笔记"]
 tags: ["Cloudflare", "MCP", "LLM", "第二大脑", "技术写作"]
 ---
 

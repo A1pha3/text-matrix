@@ -2,7 +2,7 @@
 title: "深度的幻觉：Nested Learning 如何重新定义机器学习的层次"
 date: "2026-08-02T02:48:00+08:00"
 draft: false
-categories: ["论文精读"]
+categories: ["技术笔记"]
 tags: ["Nested Learning", "嵌套学习", "深度学习", "优化器", "联想记忆", "持续学习", "Google Research", "Hope", "M3"]
 slug: nested-learning-illusion-of-deep-learning
 description: "堆更多层真的等于更深的学习吗？Google Research 52 页论文提出 Nested Learning 范式——优化器和架构都是联想记忆，深度可能只是一种幻觉，真正的深度来自嵌套层级而非层数。"

@@ -4,7 +4,7 @@ date: 2026-06-30T15:58:00+08:00
 lastmod: 2026-06-30T16:08:00+08:00
 draft: false
 slug: "vllm-micro-agent-frontier-models-2026"
-categories: ["技术剖析", "AI 基础设施", "LLM 推理"]
+categories: ["技术笔记"]
 tags: ["vLLM"]
 description: 把 vLLM Semantic Router 的 micro-agent 设计完整拆开：5 种 Looper（Confidence / Ratings / ReMoM / Fusion / Workflows）在 router 里如何取代「换更大的模型」，Auto Recipes 怎么用一个模型名对外暴露 4 类协作，3 个 benchmark 记分牌怎么读，以及为什么 frontier model 的下一战场在 router。
 ---

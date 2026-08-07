@@ -5,7 +5,7 @@ draft: false
 slug: "microcodex-cpp-terminal-coding-agent-deep-dive-2026"
 github_repo: "paoloanzn/microcodex"
 tags: ["cpp", "agent", "terminal", "open-source", "architecture"]
-categories: ["tech"]
+categories: ["技术笔记"]
 description: "paoloanzn/microcodex 用纯 C++23 写了一个终端 coding agent，10,208 行代码、49 个源文件、零运行时依赖。本文从源码层面拆解它的架构、工具链和工程取舍。"
 ---
 

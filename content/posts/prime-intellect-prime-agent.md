@@ -3,7 +3,7 @@ title: "Prime Agent：用 Python REPL 当 Agent 编程模型的 RLM 范式"
 date: 2026-08-07T20:50:00+08:00
 draft: false
 tags: ["AI Agent", "RLM", "TypeScript", "Python", "IPython", "Self-Improving", "Open Source"]
-categories: ["技术笔记", "AI Agent"]
+categories: ["技术笔记"]
 description: "GitHub 5.2k stars、Karpathy 站台的 Prime Agent 用 RLM 范式重写 Agent 编程模型——把 Python REPL 当 Agent 的控制平面，让模型程序化管理自己的 context。"
 slug : prime-intellect-prime-agent
 

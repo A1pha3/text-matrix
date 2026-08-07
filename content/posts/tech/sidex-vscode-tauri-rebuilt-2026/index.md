@@ -4,7 +4,7 @@ slug: sidex-vscode-tauri-rebuilt-2026
 date: 2026-08-06T23:44:00+08:00
 draft: false
 tags: ["vscode", "tauri", "electron", "rust", "ide", "open-source", "review"]
-categories: ["tech"]
+categories: ["技术笔记"]
 description: "4 个月大、2652 stars 的 VSCode Tauri 重写版：从 Electron main process 到 Tauri Rust backend 的逐层映射、Rust 接管 fs/pty/git/search/sqlite 的工程哲学、以及它 0.1.3 早期版本的真实边界。"
 keywords: ["sidex", "vscode", "tauri", "electron", "rust", "monaco", "xterm.js", "portable-pty", "open-vsx"]
 github_repo: "Sidenai/sidex"

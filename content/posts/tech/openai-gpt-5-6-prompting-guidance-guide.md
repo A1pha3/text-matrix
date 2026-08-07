@@ -5,8 +5,7 @@ lastmod: 2026-07-15T21:13:25+08:00
 draft: false
 slug: openai-gpt-5-6-prompting-guidance-guide
 description: "OpenAI 官方 Prompting guidance for GPT-5.6 Sol 全文翻译 + 工程化解读。把\"流程式 prompt\"改成\"目的地 + 边界 + 工具路由\"的契约式 prompt，是 OpenAI 在 GPT-5.6 这一代给出的核心建议。"
-categories:
-  - tech
+categories : ["技术笔记"]
 tags:
   - OpenAI
   - GPT-5.6

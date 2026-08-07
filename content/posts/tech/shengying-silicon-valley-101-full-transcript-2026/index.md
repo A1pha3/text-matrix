@@ -4,7 +4,7 @@ date: 2026-08-04T02:39:32+08:00
 draft: false
 slug: "shengying-silicon-valley-101-full-transcript-2026"
 tags: ["硅谷101", "盛颖", "SGLang", "RadixArk", "xAI", "Grok", "AI Infra", "视频播客", "字幕记录"]
-categories: ["播客反写", "AI Infra", "开源", "硅谷101"]
+categories: ["视频精读"]
 source:
   youtube: "https://www.youtube.com/watch?v=svNElhOYajQ"
   bilibili: "https://www.bilibili.com/video/BV1GaM968E6T/"

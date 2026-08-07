@@ -4,7 +4,7 @@ date: 2026-07-01T16:32:00+08:00
 lastmod: 2026-07-01T16:32:00+08:00
 draft: false
 slug: "arxiv-2606-18208-looped-world-models-adaptive-depth-scaling"
-categories: ["论文解读", "强化学习", "世界模型"]
+categories: ["技术笔记"]
 tags: ["世界模型", "强化学习", "论文解读", "Scaling"]
 description: 完整译读 FaceMind Research Asia 的 Looped World Models (LoopWM) 论文——首个把 looped transformer 用在世界模型上的工作，用参数共享的双循环架构在 ScienceWorld 上以 1B 参数击败 Claude Opus 4.6 Max (200B+ 闭源)，平均 EM 提升 21.2%、Lifespan 子任务从 0% 提升到 100%，参数效率 100×。文章拆解谱约束状态保留 + Poisson 训练 + Adaptive Early Exit + Deferred Decoding 四件套，并把它放到 Dreamer / IRIS / DIAMOND / EMERALD / Sora / Genie 谱系里讨论为什么第三轴 scaling（迭代深度）值得做。
 ---

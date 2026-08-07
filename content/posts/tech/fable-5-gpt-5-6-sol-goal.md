@@ -2,7 +2,7 @@
 title: "把 /goal 当开关用是错的：Fable 5 与 GPT-5.6 Sol 在一个 NP-Hard 优化题上的对照实验"
 date: 2026-07-19T19:00:00+08:00
 tags: ["Claude Code", "Benchmark", "Fable5"]
-categories: ["tech"]
+categories: ["技术笔记"]
 slug: fable-5-gpt-5-6-sol-goal
 github_repo: "charles-azam/CLIArena"
 description: "持续机制在 NP-Hard 优化任务上是赌博：胜率 4/6、均值两次都变差。Claude Code 的 /goal 走独立评估器，Codex 走持久化工具。"

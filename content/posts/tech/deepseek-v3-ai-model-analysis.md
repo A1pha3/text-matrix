@@ -5,7 +5,7 @@ slug: deepseek-v3-technical-analysis
 github_repo: "deepseek-ai/DeepSeek-V3"
 description: "671B 参数只激活 37B——MoE 压激活参数、MLA 压 KV 缓存、无辅助损失路由省掉调参，三项设计叠加让预训练只花 2.788M H800 GPU 小时、约 557.6 万美元。"
 draft: false
-categories: ["tech"]
+categories: ["技术笔记"]
 tags: ["LLM", "MoE", "DeepSeek", "开源模型"]
 ---
 

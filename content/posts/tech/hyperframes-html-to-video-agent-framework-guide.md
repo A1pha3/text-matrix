@@ -5,7 +5,7 @@ slug: hyperframes-html-to-video-agent-framework-guide
 github_repo: "heygen-com/hyperframes"
 description: "HeyGen 开源 HyperFrames：Write HTML. Render video. Built for agents. 一文讲清 HTML→MP4 视频框架的设计哲学、Agent Skills 工作流与 frame.md 设计系统。"
 draft: false
-categories: ["技术博客"]
+categories: ["技术笔记"]
 tags: ["视频生成", "AI Agent", "HTML", "开源"]
 hiddenFromHomePage: true
 ---

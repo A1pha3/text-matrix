@@ -5,7 +5,7 @@ lastmod: 2026-08-02T12:00:00+08:00
 slug: emergent-garden-recursive-self-improvement-fractalsearch
 description: "让 AI 在递归循环里优化一个拟合曼德博集的模型，跑 10 小时、烧 300 美元后，实验给出了三个结论：RSI 可能、但难、且危险。弱 RSI 已在发生，强 RSI 的'智能爆炸'被数据、能源、硬件和度量四道坎卡住——是渐近线而非指数。"
 draft: false
-categories: ["技术深度"]
+categories: ["视频精读"]
 tags: ["RecursiveSelfImprovement", "RSI", "Karpathy", "AutoResearch", "AI安全", "智能体"]
 hiddenFromHomePage: false
 ---

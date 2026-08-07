@@ -2,7 +2,7 @@
 title: "OpenRSI 工程全解：把「AI 改进 AI」变成可执行代码的完整技术栈"
 date: "2026-08-01T23:12:00+08:00"
 draft: false
-categories: ["开源项目"]
+categories: ["技术笔记"]
 tags: ["OpenRSI", "FrontisAI", "OpenMLE", "AI4AI", "递归自我改进", "开源项目", "强化学习", "进化搜索", "分布式训练"]
 slug: openrsi-engineering-deep-dive
 github_repo: "FrontisAI/OpenRSI"

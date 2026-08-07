@@ -5,7 +5,7 @@ lastmod: 2026-07-13T21:55:00+08:00
 slug: colibri-744b-moe-on-25gb-ram-pure-c-engine
 github_repo: "JustVugg/colibri"
 description: "JustVugg/colibri 仓库深读——纯 C 推理引擎，在 12 核 + 25GB RAM 的机器上跑 GLM-5.2（744B MoE）。6× RTX 5090 上单请求解码到 6.28-6.84 tok/s，比 vLLM-Moet TP4 快约 2.5×。零 Python 运行时依赖，约 370 GB 的 int4 权重从磁盘流式读取，MLA 压缩 KV cache 57×，自带 MTP 投机解码与 CUDA/Metal/HIP 多后端。"
-categories: ["技术文章", "AI基础设施", "项目解读"]
+categories: ["技术笔记"]
 tags: ["GLM-5.2", "MoE", "vLLM"]
 author: "text-matrix"
 ---

@@ -6,7 +6,7 @@ date: 2026-06-28T14:16:00+08:00
 draft: false
 author: 钳岳星君
 description: "深度拆解 feigaobox10/llm-from-scratch-reader 仓库——把斯坦福 CS336 全 17 讲改写成高中生也能读懂的中文通识读本，看作者如何用「完整 / 准确 / 不删术语」三大底线，写出 8 万字的可执行样本。"
-categories: ["技术分析"]
+categories: ["技术笔记"]
 tags: ["LLM", "技术写作"]
 ---
 

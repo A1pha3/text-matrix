@@ -4,7 +4,7 @@ date: 2026-07-13T15:24:40+08:00
 lastmod: 2026-07-13T15:24:40+08:00
 slug: claude-model-and-effort-level-in-claude-code
 description: "翻译自 Anthropic 官方博客。深度解读 Claude Code 的模型设置与努力度（effort level）两个旋钮的真正区别，以及在什么时候该调哪一个——而不是凭直觉去加大模型。"
-categories: ["技术文章", "翻译", "Claude"]
+categories: ["技术笔记"]
 tags: ["Claude", "Claude Code", "Anthropic", "LLM", "工程实践"]
 author: "原文 Lydia Hallie / 翻译 text-matrix"
 ---

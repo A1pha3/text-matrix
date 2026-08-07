@@ -5,8 +5,7 @@ lastmod: 2026-07-15T21:20:47+08:00
 draft: false
 slug: demis-hassabis-framework-for-frontier-ai
 description: "Demis Hassabis 2026-07-14 X 长文《A Framework for Frontier AI and the Dawning of a New Age》全文翻译 + 框架拆解。把 FINRA 模式搬进 AGI 监管，是这次提案最值得工程化思考的部分。"
-categories:
-  - tech
+categories : ["技术笔记"]
 tags: ["AGI", "cn-doc-writer"]
 ---
 

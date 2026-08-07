@@ -4,10 +4,12 @@ date: 2026-08-05T14:50:00+08:00
 draft: false
 summary: "Stanford 2026 秋季新开 CS329A「Self-Improving AI Agents」,Part 1 Course Overview 33 分钟。本文基于视频标题与 Stanford CS329 系列公开信息,反推课程架构、核心技术栈(Test-Time Compute Scaling + Robust Verification)、历史脉络(CoT→Reflexion→Constitutional AI→o1/R1→Self-Play),以及为什么这门课是「论文前沿升格教学主干」的标志性事件。注意:本次无法直接抓字幕(YouTube bot 验证+jina reader 401),内容基于 Stanford CS329 系列公开知识合理反推,标注「推测」处需读者交叉验证。"
 tags: ["Stanford", "CS329A", "Self-Improving AI Agents", "Test-Time Compute", "Constitutional AI", "o1", "DeepSeek R1", "课程反写"]
-categories: ["技术文章"]
+categories: ["视频精读"]
 authors: ["钳岳"]
 github_repo: "stanford-cs329a/self-improving-ai-agents"
 description: "Stanford 2026 秋季新开 CS329A 自改进 AI Agent Part 1 拆解:Test-Time Compute Scaling + Robust Verification 双主线,从 CoT→Reflexion→Constitutional AI→o1/R1→Self-Play 5 年技术线"
+slug : index
+
 ---
 
 ## 〇、先说清楚:这篇文章没有字幕

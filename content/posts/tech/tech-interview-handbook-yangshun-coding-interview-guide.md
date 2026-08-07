@@ -5,7 +5,7 @@ slug: tech-interview-handbook-yangshun-coding-interview-guide
 github_repo: "yangshun/tech-interview-handbook"
 description: "Tech Interview Handbook：超 100 万人受益的免费技术面试准备手册，Blind 75 → Grind 75 的演化，与 Cracking the Coding Interview 的差异。"
 draft: false
-categories: ["技术博客"]
+categories: ["技术笔记"]
 tags: ["面试", "算法"]
 hiddenFromHomePage: true
 ---

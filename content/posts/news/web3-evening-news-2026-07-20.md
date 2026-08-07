@@ -1,13 +1,10 @@
 ---
 title: Web3晚报 2026-07-20｜加密机构转向审计外信任信号、俄罗斯加密法案周二终读、灰度ETH/SOL质押定期派现
 date: 2026-07-20
-categories:
-  - news
-  - web3
+categories : ["行业快讯"]
 tags: ["Bitcoin", "Ethereum", "Solana", "ETF", "监管", "市场"]
 slug: web3-evening-news-2026-07-20
 description: "2026年7月20日加密市场晚报：涵盖审计信任信号、俄罗斯加密法案、灰度 ETH/SOL 质押等 7 条核心新闻。"
-
 ---
 
 # Web3晚报 2026-07-20

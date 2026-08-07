@@ -4,7 +4,7 @@ date: 2026-08-02T13:55:00+08:00
 draft: false
 slug: re-trac-deep-search-agent-2026
 tags: ["arxiv", "agent", "deep-search", "test-time-scaling", "trajectory-compression", "sft", "icml-2026", "msra"]
-categories: ["tech"]
+categories: ["技术笔记"]
 description: "RE-TRAC 是微软亚洲研究院 + 6 所高校（东南大学 / 早稻田 / 清华 / 布朗 / 浙大）提出的深度搜索 agent 框架，让每轮探索留下一份结构化状态传给下一轮，把 ReAct 线性框架的「计划了却没走完」毛病治好。BrowseComp 上 o3 从 54.9% 推到 69.8%，o4-mini 从 25.7% 推到 46.8%，token 与工具调用随轮次单调下降。"
 keywords: ["RE-TRAC", "deep search agent", "trajectory compression", "ReAct", "test-time scaling", "BrowseComp", "ICML 2026", "MSRA", "structured state"]
 author: "钳岳"

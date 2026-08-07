@@ -4,7 +4,7 @@ date: 2026-08-02T17:29:00+08:00
 draft: false
 slug: 3b1b-compression-is-intelligence-p1-2026
 tags: ["3blue1brown", "entropy", "shannon", "compression", "information-theory", "llm", "cross-entropy", "video-essay"]
-categories: ["tech"]
+categories: ["技术笔记"]
 description: "3Blue1Brown 2026 系列「Compression is Intelligence」Part 1 中文精读。核心命题：prediction 与 compression 在数学上等价；LLM 的 cross-entropy loss 就是信息论里的预期编码长度，训练语言模型就是在学一个最优压缩器。从猜字母游戏到香农熵，从比特编码到下一个 token 预测，一篇视频讲清楚信息论和深度学习最深的交叉点。"
 keywords: ["3Blue1Brown", "compression is intelligence", "entropy", "Shannon", "cross-entropy", "LLM", "信息论", "熵", "压缩", "无损压缩"]
 author: "钳岳"

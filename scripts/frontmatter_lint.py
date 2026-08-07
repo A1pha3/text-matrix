@@ -147,6 +147,31 @@ SOURCE_KEY_RE = re.compile(r"^(gh|bv|yt):[^\s]+$")
 BODY_BVID_RE = re.compile(r"\bBV1[A-Za-z0-9]{9}\b")
 
 
+def check_categories_whitelist(path: Path, data: dict) -> list[str]:
+    """全局拦截非白名单 categories（所有 posts 文章）。
+
+    首页 layouts/index.html 只策展 5 个分类：技术笔记 / 视频精读 / 思考与随笔 /
+    行业快讯 / 财富自由。文章误标其他分类（"技术文章"、"tech"、"技术"、论文类、
+    播客反写 等）会已上线但首页永不显示（2026-08-08 实证 51 篇，见 memory
+    text-matrix-homepage-curated-categories）。白名单以外的词说明写作时偏离了
+    skill 契约（categories 必须是 ["技术笔记"] 或 ["视频精读"]），fatal 拦截。
+    """
+    cats = data.get("categories")
+    if not cats:
+        return []
+    if isinstance(cats, str):
+        cats = [cats]
+    allowed = {"技术笔记", "视频精读", "思考与随笔", "行业快讯", "财富自由"}
+    bad = [c for c in cats if c not in allowed]
+    if bad:
+        return [
+            f"categories 含非白名单分类 {bad}（首页只策展 技术笔记/视频精读/"
+            f"思考与随笔/行业快讯/财富自由），文章将不上首页；请改回 "
+            f"['技术笔记'] 或 ['视频精读']（视频/播客/访谈类），其余细分词放 tags"
+        ]
+    return []
+
+
 def check_slug_not_index(path: Path, data: dict) -> list[str]:
     """全局拦截 slug:index 构建毒药（所有 posts 文章）。
 
@@ -377,7 +402,11 @@ def lint_file(path: Path) -> FileReport:
     for msg in check_slug_not_index(path, data):
         report.add_fatal(msg)
 
-    # 致命 #5 / 软警告：posts/tech 与 posts/video 的 source_key 身份锚点
+    # 致命 #5：categories 白名单（所有 posts 文章，防再写错分类不上首页）
+    for msg in check_categories_whitelist(path, data):
+        report.add_fatal(msg)
+
+    # 致命 #6 / 软警告：posts/tech 与 posts/video 的 source_key 身份锚点
     # （错填/漂移 fatal；漏填 warn——存量未回填，新稿由 skill 带齐落盘）
     sk_fatal, sk_warn = check_source_key(path, data, body)
     for msg in sk_fatal:

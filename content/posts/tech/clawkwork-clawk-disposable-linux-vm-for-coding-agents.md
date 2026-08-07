@@ -6,8 +6,7 @@ draft: false
 slug: clawkwork-clawk-disposable-linux-vm-for-coding-agents
 github_repo: "clawkwork/clawk"
 description: "clawkwork/clawk 仓库深度拆解——给 coding agent 配一次性 microVM 的 Go CLI 工具，基于 Apple Virtualization.framework / Firecracker + gvproxy userspace 网络 + OCI rootfs + AllowList netfilter。"
-categories:
-  - tech
+categories : ["技术笔记"]
 tags: ["Go", "Coding Agent", "Security", "cn-doc-writer"]
 ---
 

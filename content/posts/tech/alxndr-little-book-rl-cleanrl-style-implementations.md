@@ -6,8 +6,7 @@ draft: false
 slug: alxndr-little-book-rl-cleanrl-style-implementations
 github_repo: "alxndrTL/little-book-rl"
 description: "alxndrTL/little-book-rl 仓库深度拆解——一本配套 PyTorch 实现的小型强化学习书，覆盖 tabular MC / SARSA / Q-learning / n-step SARSA / SARSA(λ) / REINFORCE / VPG / SPG / PPO 全套算法。"
-categories:
-  - tech
+categories : ["技术笔记"]
 tags: ["PyTorch", "cn-doc-writer"]
 ---
 

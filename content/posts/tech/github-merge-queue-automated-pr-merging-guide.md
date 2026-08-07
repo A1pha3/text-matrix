@@ -4,7 +4,7 @@ title: "GitHub Merge Queue 自动化 PR 合入完全指南"
 date: 2026-05-17
 draft: false
 author: "钳岳星君"
-categories: ["技术"]
+categories: ["技术笔记"]
 tags: ["GitHub", "DevOps", "CI/CD", "Pull Request"]
 description: "深入解析 GitHub Merge Queue 的工作原理、配置方法和生产级最佳实践，不堆功能清单，只讲你真正需要关心的东西。"
 slug: github-merge-queue-automated-pr-merging-guide

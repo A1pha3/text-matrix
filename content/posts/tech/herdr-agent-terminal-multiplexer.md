@@ -2,7 +2,7 @@
 title: "herdr：为 AI 编程智能体而生的终端复用器"
 date: "2026-08-01T22:28:00+08:00"
 draft: false
-categories: ["技术工具"]
+categories: ["技术笔记"]
 tags: ["herdr", "终端复用器", "AI智能体", "tmux", "Rust", "开发者工具", "终端", "Socket API"]
 slug: herdr-agent-terminal-multiplexer
 description: "herdr 是一个住在终端里的智能体复用器——它让 AI 编程智能体的状态一目了然，分离后继续运行，智能体之间还能互相编排。本文从架构设计到实战使用，完整解读这个 23K star 的 Rust 项目。"

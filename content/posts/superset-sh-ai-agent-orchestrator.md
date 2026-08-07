@@ -3,10 +3,9 @@ title: "Superset：9 个月 12.8k stars 的 AI Agent 指挥舱是怎么长出来
 date: 2026-08-07T16:45:00+08:00
 draft: false
 tags: ["AI Agent", "Developer Tools", "TypeScript", "Electron", "Git Worktree", "Open Source"]
-categories: ["技术文章", "AI Agent 基础设施"]
+categories: ["技术笔记"]
 description: "GitHub 12.8k stars 的 Superset 把 Claude Code、Codex、Cursor、Gemini、Kimi、Grok 全部装进同一个工作台——9 个月 12.8k stars 不靠营销，靠把 git worktree 做成产品。"
 slug : superset-sh-ai-agent-orchestrator
-
 ---
 
 # Superset：9 个月 12.8k stars 的 AI Agent 指挥舱是怎么长出来的

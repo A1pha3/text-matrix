@@ -4,12 +4,11 @@ date: 2026-08-05T14:10:00+08:00
 draft: false
 summary: "roboticcam/machine-learning-notes 是香港浸会大学(HKBU)副教授袁晓鹏 2018 年至今 8 年不间断维护的 ML 讲义仓库,以 70+ 份 PDF 讲义为主,2000+ 页,GitHub 10.1k stars / 1.8k forks。本文拆开它的 7 个递进层次:基础数学 → 概率模型 → 优化 → 深度学习 → 生成模型 → 3D 视觉 → 强化学习 → NLP,以及它和现有大学课程的关键差异——它把学习理论(Concentration Inequality/Rademacher 复杂度/PAC-Bayes/NTK/JL lemma)、贝叶斯非参(Dirichlet Process/HDP-HMM/IBP/DPP)、State Space Model(Kalman/HMM)这些通常散落在研究生课程的硬骨头,搬进了同一本讲义。"
 tags: ["机器学习", "深度学习", "概率模型", "袁晓鹏", "roboticcam", "教学仓库", "DPP", "贝叶斯非参", "MCMC", "GitHub 10k"]
-categories: ["技术文章"]
+categories: ["技术笔记"]
 authors: ["钳岳"]
 github_repo: "roboticcam/machine-learning-notes"
 description: "袁晓鹏 8 年 ML 讲义拆解:从 Learning Theory(Rademacher/NTK/PAC-Bayes)到 BNP(Dirichlet Process/IBP/DPP/HDP-HMM),70+ 份 PDF,2000+ 页,GitHub 10.1k stars,深度教学仓库"
-slug : index
-
+slug : roboticcam-machine-learning-notes-deep-walkthrough-2026
 ---
 
 ## 一、10k Stars 的「野生」机器学习课程

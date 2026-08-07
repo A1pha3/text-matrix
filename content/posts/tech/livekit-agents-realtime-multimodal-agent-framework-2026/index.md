@@ -4,10 +4,11 @@ date: 2026-08-05T09:20:00+08:00
 draft: false
 summary: "LiveKit 把开源 WebRTC 服务端沉淀成了实时多模态 Agent 框架。12.4k stars、84 个官方插件、APache-2.0,覆盖 STT/LLM/TTS/Realtime/MCP/Telephony/Avatar/Turn Detection 全栈。本文拆开它的 Agent/AgentSession/AgentActivity 三层模型、turn detection 与 endpointing 流式管线、Toolset/ToolContext 函数工具体系、一个餐厅订位 Agent 从 handoff 到 MCP 到 EoU 的完整走读、以及 LiveKit Inference 统一网关的算账对比。"
 tags: ["LiveKit", "Agents", "WebRTC", "Realtime AI", "语音 Agent", "MCP", "Telephony", "开源"]
-categories: ["技术文章"]
+categories: ["技术笔记"]
 authors: ["钳岳"]
 github_repo: "livekit/agents"
 description: "12.4k Stars 的实时多模态 Agent 框架:Agent/AgentSession/AgentActivity 三层模型、EoU 神经 turn detection、Toolset/ToolContext 函数工具体系,以及为什么语音 Agent 必须跑在 WebRTC 媒体服务器上。"
+slug : index
 
 ---
 

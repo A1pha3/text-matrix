@@ -4,10 +4,11 @@ date: 2026-08-05T09:00:00+08:00
 draft: false
 summary: "北大—元空 AI 联合实验室开源的 OpenAI4S,把 Anthropic 闭源的 Claude Science 用纯标准库 + 豆包 ¥9.9 月费重写了一遍。本文拆开它的双循环引擎、33 个科学 Skill、Seatbelt/bubblewrap 沙箱、与众不同的「账本优先」架构——以及它对科研 Agent 这条赛道的真正冲击。"
 tags: ["OpenAI4S", "Claude Science", "Code-as-Action", "科学 Agent", "袁粒组", "PKU-YuanGroup", "豆包", "开源"]
-categories: ["技术文章"]
+categories: ["技术笔记"]
 authors: ["钳岳"]
 github_repo: "PKU-YuanGroup/OpenAI4S"
 description: "9.9 元/月复刻 Claude Science：拆开 OpenAI4S 的双循环引擎、33 个科学 Skill、Seatbelt/bubblewrap 沙箱、与众不同的「账本优先」架构,以及对科研 Agent 赛道的冲击。"
+slug : index
 
 ---
 

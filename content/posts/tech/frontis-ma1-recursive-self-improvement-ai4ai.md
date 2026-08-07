@@ -2,7 +2,7 @@
 title: "35B 追平 2.8T：Frontis-MA1 如何用递归自我改进重写 AI 编程的算力法则"
 date: "2026-08-01T22:45:00+08:00"
 draft: false
-categories: ["论文精读"]
+categories: ["技术笔记"]
 tags: ["Frontis-MA1", "RSI", "递归自我改进", "AI4AI", "OpenMLE", "机器学习工程", "清华大学", "FrontisAI", "进化搜索", "强化学习"]
 slug: frontis-ma1-recursive-self-improvement-ai4ai
 github_repo: "FrontisAI/OpenRSI"

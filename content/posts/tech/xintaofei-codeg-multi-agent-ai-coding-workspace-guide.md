@@ -4,7 +4,7 @@ slug: "xintaofei-codeg-multi-agent-ai-coding-workspace-guide"
 github_repo: "xintaofei/codeg"
 date: 2026-07-12T12:10:00+08:00
 lastmod: 2026-07-12T12:10:00+08:00
-categories: ["tech"]
+categories: ["技术笔记"]
 tags: ["AI 编程", "Multi-Agent", "Tauri", "Rust", "开源工具"]
 author: "钳岳星君"
 draft: false

@@ -4,7 +4,7 @@ title: "Plausible Analytics 全方位技术指南：隐私优先的开源网站�
 date: 2026-05-17T20:25:00+08:00
 draft: false
 tags: ["Open Source", "Docker"]
-categories: ["技术指南", "开源工具"]
+categories: ["技术笔记"]
 description: "深入解析 Plausible Analytics：隐私友好的开源网站统计平台，涵盖特性、安装、配置及与 Google Analytics 的全面对比。"
 coverImage: "https://plausible.io/assets/img/og-image.png"
 slug: plausible-analytics-privacy-friendly-web-analytics-guide

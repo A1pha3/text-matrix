@@ -4,7 +4,7 @@ slug: neko-master-traffic-dashboard-2026
 date: 2026-08-06T04:18:00+08:00
 draft: false
 tags: ["network", "dashboard", "open-source", "nextjs", "fastify", "sqlite", "clickhouse", "review"]
-categories: ["tech"]
+categories: ["技术笔记"]
 description: "一个 6 个月大、3141 stars 的全栈流量分析仪表盘：从 Docker 体验到 ClickHouse 双写架构、从 Real-timeStore 的内存 delta 到跨 LAN Agent 协议的工程哲学。"
 keywords: ["neko-master", "traffic dashboard", "Clash", "Mihomo", "Surge", "OpenClash", "Next.js", "Fastify", "WebSocket", "SQLite", "ClickHouse"]
 github_repo: "foru17/neko-master"
