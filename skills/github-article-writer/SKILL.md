@@ -69,6 +69,8 @@ tags: ["github", "article", "hugo", "technical-writing", "workflow"]
 
 **姊妹仓库预警**（精确匹配的正确边界）：同 owner 的不同 repo（如 `permissionlesstech/bitchat` 主仓库 vs `permissionlesstech/bitchat-android` 客户端）是不同 repo，精确匹配正确判为"未写"。但内容可能高度重叠（8-03 bitchat-android 与 7-31 bitchat 重复的真实案例）。dedup 脚本对"未写"的 repo 自动报告同 owner 已写篇（输出 `⚠️ 同 owner 已 N 篇`）；看到此标记**必须**动笔前确认本文主轴与已写篇不重叠，重叠则改角度或跳过。
 
+> 🚨 去重只认 `trending-dedup-check.sh` 输出（脚本末尾 🔒 是最终结论）。禁止再自行 grep github_repo 复核——新 repo 无匹配 exit 1 会触发 exec 误判 abort（8-06/8-07 事故）。详见 `references/trending-iron-laws.md` 禁止 4。
+
 **历史背景**（旧 4 重 grep 时代的案例，精确字段方案下已根除）：6-16 `music-assistant/server` 因 `/` vs `-` 漏判写重 2 篇；6-25 microsoft/flutter 单段 owner 过杀。脚本从 159 行降到 ~50 行，此类问题不再可能。旧版演进细节见 `docs/anomaly-decisions/trending-dedup-check-A-owner-segment-overkill-fix-2026-06-25.md`。
 
 ### Step 1: 仓库取证

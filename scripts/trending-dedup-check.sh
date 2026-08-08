@@ -55,5 +55,7 @@ for q in new:
     else:
         print(f"  🆕 未写: {q}")
 print(f"\n已写 {len(old)} / 未写 {len(new)} / 共 {len(queries)}  |  已写库 {len(written)} 个 repo")
+if new:
+    print('🔒 去重完成,以上"未写"即最终清单,禁止再 grep github_repo 复核——新 repo 无匹配会 exit 1 触发 exec 误判 abort(8-06/8-07 事故)。同 owner 内容是否重叠,直接读上面列出的已写篇文件。')
 sys.exit(1 if old else 0)
 PY
