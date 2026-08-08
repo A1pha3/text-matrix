@@ -5,7 +5,7 @@ slug: "pi-web-coding-agent-ui"
 github_repo: "agegr/pi-web"
 source_key: "gh:agegr/pi-web"
 description: "Pi Web 是 pi 编程代理的本地 Web 界面，提供会话浏览、实时聊天、模型配置和项目管理功能。本文介绍其核心能力、安装方式与适用场景。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["Pi Web", "AI编程代理", "开发者工具", "TypeScript", "开源"]
 ---
