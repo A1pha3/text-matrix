@@ -1,11 +1,11 @@
 ---
 title: "AI副业早报 2026-08-10"
-date: 2026-08-10T07:03:58+08:00
+date: 2026-08-10T07:16:25+08:00
 slug: ai-side-hustle-morning-news-2026-08-10
-description: "2026年8月10日 AI 副业早报，精选过去 24 小时内招聘、独立开发与 AI 产品发布机会。"
+description: "2026年8月10日 AI 副业早报，精选过去 24 小时内 V2EX 招聘帖、独立开发者 SideProject 实战案例与社区经验。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "独立开发", "V2EX", "Reddit"]
+tags: ["AI副业", "招聘", "独立开发", "V2EX", "SideProject"]
 hiddenFromHomePage: true
 ---
 
@@ -13,92 +13,70 @@ hiddenFromHomePage: true
 
 ---
 
-## 💼 招聘与远程机会
+## 💼 招聘 / 求职
 
-### [深圳/上海/南京/广州/珠海] SHEIN 测试岗内推（15-65k）
-来源: V2EX
-发布者: rowena1225
-原文: [原文](https://www.v2ex.com/t/1233076)
-摘要: SHEIN 员工内推整理帖，岗位覆盖 5 个城市的测试开发、平台治理、用户营销、电商业务、AI 视觉专项等方向，薪资区间 15K-65K，其中用户营销测试专家岗可达 45K-65K。原文给出了官网投递内推码 NTA1yhF 和 Moka 投递链接，并明确指出"内推不保证面试或 offer，最终以 HR 和业务筛选为准"——节奏、HC 背景等需要候选人自行与 HR 沟通。
-
-### [北京·海淀] 具身智能创业团队招资深前端
-来源: V2EX
-发布者: goongjl
-原文: [原文](https://www.v2ex.com/t/1233016)
-摘要: 北大教授创办的具身智能创业公司招资深前端，负责数据湖、标注服务、设备管理等平台的前端及机器人 3D 渲染可视化。要求 3 年以上前端经验，熟悉 JavaScript/TypeScript/npm，会 Three.js 加分。北京海淀全职到岗不接受远程，福利含 6km 内租房每月 3,500 元补助、AI 软件开发报销足额、5 天福利年假。
-
-### 五角场靠谱 AI 公司招聘：全栈开发工程师，薪资 40W+期权
+### 五角场 AI 创业公司招全栈：40W 起步 + 期权，要求能独立交付 AIGC 全栈系统
 来源: V2EX
 发布者: fancyfrees
 原文: [原文](https://www.v2ex.com/t/1232983)
-摘要: 上海五角场 AI 公司招全栈开发，要求有真实线上系统独立负责经验，前端 TypeScript+React/Vue、后端 Node.js/Python/Go 至少两头熟，PostgreSQL 扎实，懂 AIGC 基础概念（推理任务、ComfyUI/SD/Flux、LoRA、对象存储、算力计费）加分。薪资 40W+期权，简历微信 fancyfrees。
+摘要: 团队位于上海五角场，招聘全栈开发工程师。JD 明确要求独立负责过至少一个真实线上系统，前端需熟悉 TypeScript + React/Vue 且懂 Canvas，后端至少在 Node.js（Nest/Express）、Python（FastAPI/Django）或 Go 中熟两门，PostgreSQL 要扎实，能在凌晨被叫起来处理线上故障。加分项包括理解推理任务、ComfyUI/SD/Flux、LoRA、对象存储与算力计费等 AIGC 工程概念；薪资 40W 起步加期权，微信 fancyfrees。
 
-## 🚀 独立开发与 AI 产品
+标签: #全栈开发 #AIGC #期权 #V2EX
 
-### clipHarbor：完全本地的 Windows 剪贴板管理器
-来源: Reddit r/SideProject
-发布者: OpsRJ
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vk2xrf/clipharbor_a_clipboard_manager_for_window/)
-摘要: 开发者用 DPAPI 加密、Windows 用户绑定的离线剪贴板管理器，主打"零网络请求"——无账号、无后端、无同步、无分析、无崩溃上报。功能含可搜索历史（按日分组）、Ctrl+Shift+V 唤起、Alt+1…9 直接粘贴最近条目、密码管理器内容自动忽略、置顶/去重/留存控制。商业模型是一次性买断（perpetual licence），免费档 5 条历史+3 置顶+仅文本，Pro 档解锁无限历史/图片/片段/快捷键。仅 Windows 11 x64，无 macOS/Linux 计划。
+### SHEIN 测试岗内推（15-65k）：覆盖电商、AI 视觉、文档知识库等 8 个方向
+来源: V2EX
+发布者: rowena1225
+原文: [原文](https://www.v2ex.com/t/1233076)
+摘要: 发布者整理了 SHEIN 测试方向社招岗位，覆盖广州、南京、上海、深圳、珠海五城，按方向分组给出薪资区间。AI 视觉 / 专项测试在广州方向开 20K-30K+，适合对模型效果验证、图像质量评估有兴趣的候选人；用户营销测试 20K-65K，部分测试专家岗可到 45K-65K；测试开发 / 平台治理方向 20K-40K，更看重自动化与稳定性体系搭建能力。整体结构按场景拆分，对求职者快速匹配岗位很友好。
 
-### CookAI：拍冰箱照片即可生成 3 道菜谱
-来源: Reddit r/SideProject
-发布者: TraVichs12
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vjzi9s/i_built_an_app_that_looks_at_your_fridge_and/)
-摘要: 开发者针对"冰箱剩菜不知道做什么"的小痛点做了免费 Web MVP：拍照或上传食材图片→AI 识别→可手动纠错→生成 3 道可用菜谱。无需注册或安装，托管在 Vercel。作者明确表示核心验证目标是"用户是否会回访"，而不是 AI 识别准不准——欢迎回帖反馈使用意愿、菜谱质量与弃用原因。
+标签: #测试开发 #AI视觉 #电商 #V2EX
 
-### Pinboard Notes：可拖拽贴附的画布笔记应用
-来源: Reddit r/SideProject
-发布者: PassiProductions
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vjzu2y/built_a_canvas_based_note_app_where_you_drag_and/)
-摘要: 一款画布式笔记应用，便签纸用于快速想法、A4 笔记用于长内容，所有内容在画布上自由排布而非刚性文件夹。层级关系是：note=文件、note 堆叠=文件夹、zone=父文件夹，便签可贴附在 A4 页面上跟随滚动。提供工作区导出器保证数据自有，隐私优先。
+### 海淀具身智能创业团队招资深前端：负责机器人 3D 渲染与实时可视化
+来源: V2EX
+发布者: goongjl
+原文: [原文](https://www.v2ex.com/t/1233016)
+摘要: 团队由北大教授创办并带队，融资进展顺利、目前资金充足，前端岗主要参与数据湖、标注服务、采集任务、设备管理等平台建设，并负责机器人 3D 渲染与实时可视化。要求 3 年以上前端经验，熟悉 JavaScript / TypeScript / npm，有复杂管理平台开发经验，熟悉 Three.js 加分。明确不接受远程，需要北京海淀全职到岗，薪资按面试与定级决定但强调"比较有竞争力"。
 
-### Rescript：本地、免费、开源的 Descript 替代品
+标签: #具身智能 #前端 #3D渲染 #V2EX
+
+---
+
+## 🚀 独立项目 / 实战案例
+
+### Descript 开源替代：corevizAI 在设备端剪辑播客
 来源: Reddit r/SideProject
 发布者: corevizAI
 原文: [原文](https://www.reddit.com/r/SideProject/comments/1vjf4na/i_built_a_free_open_source_descript_alternative/)
-摘要: 用 Fable 周末开发出来的视频剪辑工具，核心思路是"编辑转录文本即剪辑视频"：本地转录带逐词时间戳与说话人标签、删除文字即删除对应片段。完全本地运行，免费、开源、离线。GitHub: wassgha/rescript，应用站: getrescript.com。
+摘要: 开发者将作品定位为"免费、开源的 Descript 替代"，主打端侧（on-device）播客剪辑，避开云端转录与隐私顾虑。帖子发布于 24 小时内已获得 79 个赞与 28 条评论，社区讨论集中在本地模型推理延迟与多轨道时间轴支持。对想切入 AI 音频工具赛道的独立开发者而言，这条帖展示了"对标成熟 SaaS + 开源 + 隐私叙事"的清晰切入路径。
 
-### Why.com：让每次搜索都开启三个新方向
-来源: Reddit r/SideProject
-发布者: rasheed106
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vjqjoz/just_launched_whycom/)
-摘要: 1999 年注册的域名用来做反向搜索：每个答案打开三个新方向而不是只给单一结果。评论区对域名的关注度远超产品本身（"RandomUserName323232: Im just amazed you have that domain"获 448 upvote），但也出现对底层 LLM 包装成本可持续性的质疑，开发者回应称利用多源免费额度 + 缓存 + SLM 路由可以撑住高量低延迟。
+标签: #独立开发 #开源 #播客 #SideProject
 
-### Slopcheck：每日一测，识别 AI 生成图
-来源: Reddit r/SideProject
-发布者: No-Meal-9788
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vjuv2w/i_made_a_daily_game_that_teaches_you_to_spot/)
-摘要: 受 r/isThisAI 启发，做了一款每日游戏：每次 6 张图，逐张判断真/AI 生成，每张给出可识别的"破绽线索"。站名 slopcheck.co。开发者反馈"科技圈朋友玩得明显比预期差"，已有用户指出当前识别线索"略主观"，作者计划后续改进。
-
-### Proven Viral Content System：自动化你的 UGC 病毒视频
+### 蹭个人 IP 的 500 用户：swaroopmehetar 公开"前 3 个产品全失败、第 4 个用 meme 起量"打法
 来源: Reddit r/SideProject
 发布者: swaroopmehetar
 原文: [原文](https://www.reddit.com/r/SideProject/comments/1vjo8go/got_my_first_500_users_using_this_hack/)
-摘要: 开发者跑了 3 次 Product Hunt/社区发布都失败后，做了一个自动化 UGC 工具——问答式理解产品/受众/竞品→生成病毒内容创意→自动发布到社媒。一周数据：1,000 万+ 播放、8 万+ 网站访问、500+ 注册、单条视频成本 $0.4。GitHub 开源（swaroop2004/Proven-Viral-Content-System）供其他挣扎于可见性的 builder 试用。
+摘要: 作者自述过去两个月在 Product Hunt 和多个社区发了 3 个应用都失败了，靠朋友转发才能获得第一批用户。转折点来自观察：朋友靠"vibe coded 应用 + 个人 IP 内容"在一天内就拿到 20 个付费用户，于是自己也转做 meme / 内容驱动获客，并在 11 小时前发贴时已经累计到 500 个用户。这条帖子对纯功能型独立开发者最有价值——它把"产品好但没流量"和"内容 + IP 流量放大"两种路径做了明确对比。
 
-## 🛠️ 工具推荐
+标签: #增长 #个人IP #meme营销 #SideProject
 
-### Argos：面向开发者的可视化回归测试
-来源: Product Hunt
-原文: [原文](https://www.producthunt.com/products/argos-2)
-摘要: 自动化视觉回归测试工具，承诺"零配置"接入 GitHub workflow，确保每个像素在生产前都正确。当前 Product Hunt 列表显示 159 followers、2 次发布，最新发布是 2023 年 11 月的 Playwright Testing Cloud。免费档可用，定位类似 Octomind、QA.tech、Cypress.io 这类 AI QA 工具。
+### why.com：用搜索引擎的姿势做"下一个问题"
+来源: Reddit r/SideProject
+发布者: rasheed106
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vjqjoz/just_launched_whycom/)
+摘要: 作者认为大多数搜索在第一个答案后就结束了，于是做了 why.com：每个答案页面再生成三条延伸方向，把"问下一个问题"做成产品形态而不是交给 Google 搜索建议。帖子里直接给出了域名 why.com 并邀请社区"go break it"。这类把搜索 / 学习路径产品化的玩法，是独立开发者最容易用最少代码做出 MVP 的方向。
+
+标签: #搜索产品 #MVP #SideProject
 
 ---
 
 🦞 每日09:00自动更新
 
-**数据来源**：V2EX 酷工作、Reddit r/SideProject、Product Hunt
+**数据来源**：V2EX 酷工作、Reddit r/SideProject
 
 **⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://www.v2ex.com/t/1233076 - V2EX 帖子：SHEIN 测试岗内推（已验证标题、正文、发布者匹配）
-- ✅ https://www.v2ex.com/t/1233016 - V2EX 帖子：具身智能创业团队招前端（已验证）
-- ✅ https://www.v2ex.com/t/1232983 - V2EX 帖子：五角场 AI 公司全栈开发（已验证）
-- ✅ https://www.reddit.com/r/SideProject/comments/1vk2xrf/ - Reddit: clipHarbor（已验证正文匹配）
-- ✅ https://www.reddit.com/r/SideProject/comments/1vjzi9s/ - Reddit: CookAI（已验证）
-- ✅ https://www.reddit.com/r/SideProject/comments/1vjzu2y/ - Reddit: Pinboard Notes（已验证）
-- ✅ https://www.reddit.com/r/SideProject/comments/1vjf4na/ - Reddit: Rescript（已验证）
-- ✅ https://www.reddit.com/r/SideProject/comments/1vjqjoz/ - Reddit: Why.com（已验证）
-- ✅ https://www.reddit.com/r/SideProject/comments/1vjuv2w/ - Reddit: Slopcheck（已验证）
-- ✅ https://www.reddit.com/r/SideProject/comments/1vjo8go/ - Reddit: Proven Viral（已验证）
-- ✅ https://www.producthunt.com/products/argos-2 - Product Hunt: Argos（已验证）
+- ✅ https://www.v2ex.com/t/1232983 - V2EX 五角场 AI 全栈招聘帖，已验标题/正文/发布者
+- ✅ https://www.v2ex.com/t/1233076 - V2EX SHEIN 测试岗内推帖，已验标题/正文/发布者
+- ✅ https://www.v2ex.com/t/1233016 - V2EX 海淀具身智能前端招聘帖，已验标题/正文/发布者
+- ✅ https://www.reddit.com/r/SideProject/comments/1vjf4na/i_built_a_free_open_source_descript_alternative/ - Reddit Descript 开源替代，已验标题/正文/作者
+- ✅ https://www.reddit.com/r/SideProject/comments/1vjo8go/got_my_first_500_users_using_this_hack/ - Reddit 500 用户 meme 起量帖，已验标题/正文/作者
+- ✅ https://www.reddit.com/r/SideProject/comments/1vjqjoz/just_launched_whycom/ - Reddit why.com 发布帖，已验标题/正文/作者
