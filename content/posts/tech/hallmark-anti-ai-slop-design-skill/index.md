@@ -1,12 +1,14 @@
 ---
 title: "Hallmark：让 AI 生成的页面不再长得像 AI 生成的"
 date: 2026-08-10T03:40:00+08:00
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["hallmark", "ai-design", "claude-code", "anti-slop", "frontend"]
 description: "Hallmark 是一个面向 Claude Code、Cursor 和 Codex 的设计技能（skill），通过 21 套主题、57 道 slop-test 检测门和预发射自评机制，系统性地阻止 AI 生成千篇一律的 UI 页面。"
 github_repo: "Nutlope/hallmark"
 source_key: "gh:Nutlope/hallmark"
+slug : index
+
 ---
 
 ## 问题：AI 生成的页面为什么一眼就能认出来
