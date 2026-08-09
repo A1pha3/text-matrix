@@ -2,7 +2,7 @@
 title: "光进铜退：224G 时代 NPO 为什么成了超节点的最优解"
 date: 2026-08-08T16:14:13+08:00
 draft: false
-categories: ["财富自由", "技术笔记"]
+categories: ["财富自由"]
 tags: ["NPO", "近封装光学", "光互联", "硅光", "VCSEL", "AI 算力", "Scale-up", "SerDes", "FAU", "ELSFP", "投资窗口", "国产替代"]
 description: "从 112G 到 224G 时代，铜通道被物理截断、可插拔被功耗压垮、CPO 被良率绊住——NPO 用 13dB 损耗、9-12W 单引擎和独立封装，在三岔路口稳住了超节点对光互联的刚需。本文拆开 SerDes 演进、OIF CEI 五级、光引擎路线、ELS/FAU 价值量、海外三大阵营与华为/阿里/腾讯三线并进，把 NPO 从厂商话术还原成产业判断。"
 slug: "npo-near-packaged-optics-2026"
