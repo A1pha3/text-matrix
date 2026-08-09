@@ -1,12 +1,14 @@
 ---
 title: "code-review-graph：用知识图谱把 AI 代码审查的 token 消耗砍到 1/65"
 date: 2026-08-10T03:45:00+08:00
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["code-review-graph", "mcp", "code-intelligence", "tree-sitter", "rag"]
 description: "code-review-graph 用 Tree-sitter 将代码库解析为知识图谱，通过 blast-radius 分析和 MCP 协议为 AI 编程工具提供精准上下文，在 6 个真实开源项目的基准测试中实现了约 65 倍的 token 消耗缩减。"
 github_repo: "tirth8205/code-review-graph"
 source_key: "gh:tirth8205/code-review-graph"
+slug : index
+
 ---
 
 ## 核心问题：AI 代码审查的 token 浪费
