@@ -5,7 +5,7 @@ slug: "semantica-graph-native-context-infrastructure"
 github_repo: "semantica-agi/semantica"
 source_key: "gh:semantica-agi/semantica"
 description: "Semantica 是一个图原生的上下文基础设施，为 AI Agent 提供知识图谱构建、确定性推理、决策记录与 W3C PROV-O 溯源，支持 RDF/LPG 双模存储和 Databricks/Snowflake 原生连接器，面向金融、医疗等受监管领域的合规需求。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["知识图谱", "AI Agent", "决策智能", "RAG", "合规"]
 ---
