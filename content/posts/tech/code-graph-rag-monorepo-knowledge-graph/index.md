@@ -5,7 +5,7 @@ slug: "code-graph-rag-monorepo-knowledge-graph"
 github_repo: "vitali87/code-graph-rag"
 source_key: "gh:vitali87/code-graph-rag"
 description: "Code-Graph-RAG 用 Tree-sitter 解析多语言代码库，将函数、类、模块及其调用关系导入 Memgraph 知识图谱，再通过自然语言生成 Cypher 查询实现代码检索、编辑和死代码分析。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["RAG", "知识图谱", "代码分析", "Tree-sitter", "Memgraph"]
 ---
