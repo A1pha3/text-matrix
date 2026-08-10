@@ -5,7 +5,7 @@ slug: "drawdb-browser-erd-editor-sql-generator"
 github_repo: "drawdb-io/drawdb"
 source_key: "gh:drawdb-io/drawdb"
 description: "drawDB 是一个纯前端的数据库实体关系图编辑器，无需注册账号即可在浏览器中拖拽建表、设外键、生成多方言 SQL 和迁移脚本，支持 Docker 一键部署。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["数据库设计", "ER图", "SQL生成", "前端工具", "开源"]
 ---
