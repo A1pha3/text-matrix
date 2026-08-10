@@ -5,7 +5,7 @@ slug: "authentik-open-source-identity-provider"
 github_repo: "goauthentik/authentik"
 source_key: "gh:goauthentik/authentik"
 description: "authentik 是一个开源身份提供商（IdP），支持 SAML、OAuth2/OIDC、LDAP、RADIUS 等协议，提供 SSO、多因素认证、用户生命周期管理和可视化认证流程编排，适用于从个人实验室到企业级集群的自部署场景。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["身份认证", "SSO", "IdP", "开源", "安全"]
 ---
