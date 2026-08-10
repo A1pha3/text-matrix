@@ -1,11 +1,11 @@
 ---
 title: "AI副业早报 2026-08-11"
-date: 2026-08-11T07:02:10+08:00
+date: 2026-08-11T07:21:00+08:00
 slug: ai-side-hustle-morning-news-2026-08-11
-description: "2026年8月11日 AI 副业早报，精选过去 24 小时内 AI Agent 工程、私募算法、具身智能前端等岗位与机会。"
+description: "2026年8月11日 AI 副业早报，精选过去 24 小时内招聘、项目、工具与真实赚钱机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "V2EX", "招聘", "Agent"]
+tags: ["AI副业", "招聘", "赚钱", "V2EX"]
 hiddenFromHomePage: true
 ---
 
@@ -13,47 +13,74 @@ hiddenFromHomePage: true
 
 ---
 
-> ⚠️ **精简版**：本窗口（8-10 07:03 ~ 8-11 07:03 CST）V2EX 酷工作仅产出 3 条 AI 相关高质量机会，其余岗位为传统 IT/嵌入式/前端；Reddit 反爬未能获取原文内容，按"必须打开原文验证"铁律舍弃；Product Hunt 8-09 之后无新发布；非 V2EX/Product Hunt 来源（公众号、知乎、即刻）当日未达稳定原文核验标准，故本份仅保留 V2EX 3 条。
+## 💼 招聘
 
-## 💼 招聘 / 求职
-
-### 字节跳动社招 AI Agent 工程师 Aime
-
-来源: V2EX 酷工作
+### 字节跳动 AI Agent 工程师（Aime 产品）
+来源: V2EX
 发布者: eastOneHalf
 原文: [原文](https://www.v2ex.com/t/1233379)
+摘要: 字节跳动 AI Agent 产品 Aime 社招，方向包括上下文组装与压缩、Memory 机制、Skill 体系与扩展能力建设、Agent 端到端效果调优。JD 未限定技术栈，强调 AI 前沿技术落地经验，本科及以上学历。帖子附内推链接，base64 留有联系方式。
+标签: #AI招聘 #Agent #字节跳动
 
-摘要: 字节跳动 AI Agent 产品 Aime 主架构研发岗位，开放社会招聘。JD 覆盖上下文组装与压缩、Memory 机制（短期/长期/情景记忆）、调度机制等核心模块，并要求建设 Skill 体系、扩展能力与端到端效果调优。本科及以上学历、不限技术栈，但要求持续关注 AI 领域且最好具备 Agent 产品或开发者工具研发经验。投递需走内推链接（job.toutiao.com），公众号未给出明确职级与薪资区间。
-
-标签: #字节跳动 #Agent #Aime #Memory
-
-### 头部量化私募招聘大模型预训练/后训练/agent 算法专家
-
-来源: V2EX 酷工作
+### 头部私募大模型预训练/后训练/agent 算法专家
+来源: V2EX
 发布者: xkjack0000
 原文: [原文](https://www.v2ex.com/t/1233331)
+摘要: 国内百亿规模量化私募招大模型方向算法研究员，覆盖千亿到万亿参数预训练、数据 Pipeline、Training Recipe、CUDA/Triton/FlashAttention 底层算子优化。技术团队 90% 来自常青藤/清北复交，要求硕士及以上、ACM/NOI/Kaggle 竞赛背景。base 北上深。
+标签: #AI招聘 #大模型 #私募
 
-摘要: 国内知名量化私募（百亿以上规模）招聘大模型预训练/后训练/agent 算法与 infra 专家，工作地覆盖北京、上海、深圳。技术团队 90% 来自美国常青藤、清北复交，核心团队包含海外对冲基金回流人才与多项国际数学/计算机竞赛高手。预训练岗位负责千亿至万亿级 LLM 预训练、Data Pipeline 与 Scaling Law 探索；后训练/agent 岗位对接 agent 算法与 infra 落地。联系邮箱与微信在正文给出，注明"电话&微信同号"。
+### 北京全栈工程师 · 报销 200 美元 Codex · 15K 不卷
+来源: V2EX
+发布者: ycl10875222
+原文: [原文](https://www.v2ex.com/t/1233340)
+摘要: 十年传统公司招全栈工程师（偏后端），要求擅长一门后端语言并能借助 AI 完成复杂管理页面，有风控/大型 ERP/生产系统经验。公司特色福利：报销 200 美元 Codex、薪资 15 日准时发、双休不卷。5 险 1 金非全额，五险一金需知悉。
+标签: #AI招聘 #全栈 #远程友好
 
-标签: #量化私募 #大模型 #预训练 #Agent
+## 🚀 AI 项目 / 副业机会
 
-### 深圳福田河套招 ToB/ToG 电商/权益平台运营
+### Reddlist 免费为你做 Reddit 推广引流（换取案例）
+来源: Reddit r/SideProject
+发布者: /u/zor_pyx
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vknv6d/)
+摘要: 独立开发者搭建 Reddlist，整理"不会被秒删/影子封禁/激怒 mod"的 promo-friendly subreddit 列表。他正在征集产品换取免费 PR 推广服务——挖出最匹配的 subreddit 列表并代为起草首发文案。早期案例需求，是真实"用 PR 换数据"的副业机会。
+标签: #Reddit推广 #副业机会 #换量
 
-来源: V2EX 酷工作
-发布者: rikchong
-原文: [原文](https://www.v2ex.com/t/1233298)
+### PaperRun.tech 极简科技新闻聚合上线
+来源: Reddit r/SideProject
+发布者: /u/fingerz17
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vkbzbg/)
+摘要: 一位独立开发者自建面向极客的新闻聚合站，定位"零噪音零观点"的科技/科学动态页。技术栈为 Laravel + Vue 3。个人副业小项目，征求社区反馈。
+标签: #独立开发 #新闻聚合 #Laravel
 
-摘要: 坐标深圳福田河套，招 ToB/ToG 电商/权益平台运营岗。要求一本及以上、3 年以上工作经验，熟悉电商平台或权益平台运营，具备强沟通与分析解决问题能力，工作内容包括甲方商品台/权益平台运营与项目对接管理。JD 自陈"双休不内卷"、可接触银行与政府机构项目，未给出具体薪资区间。投递邮箱为 centrino.chong # gmail.com。
+### ZeroSketch 开源系统设计/架构图工具
+来源: Reddit r/SideProject
+发布者: /u/zayshipp
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vki6ad/)
+摘要: 类 Excalidraw 但专注于架构图——自托管、免费、内置 AWS/GCP/K8s 图标库，支持 PNG/SVG 导出，图存本机。开发者自述"过去几周完工"，征求反馈。这是典型的"独立开发者单干 + 开源 + 自托管"组合，定位是 SaaS 替代品。
+标签: #开源 #系统设计 #自托管
 
-标签: #深圳 #运营 #ToB #ToG
+## 📚 经验贴
+
+### 独立开发者 3 个月做出阅读 App 的 4 条教训
+来源: Reddit r/SideProject
+发布者: /u/Pristine-Celery9053
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vkxs12/)
+摘要: 自学工程师妈妈独自开发"适配多阅读水平/多语种"的阅读 App 3 个月后上线。她的复盘四条：(1) 公有领域按国家不同，要逐本核对；(2) 不要在大目录上和巨头拼；(3) 等等关键点她在原帖总结。本帖是典型的"独立开发者独立复盘"案例，含真实踩坑细节。
+标签: #独立开发 #复盘 #阅读App
 
 ---
 
 🦞 每日07:15自动更新
 
-**数据来源**：V2EX 酷工作
+**数据来源**：V2EX 酷工作、Reddit r/SideProject
 
 **⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://www.v2ex.com/t/1233379 - 已验证标题/正文/发布者匹配（字节跳动 Aime agent 工程师 JD）
-- ✅ https://www.v2ex.com/t/1233331 - 已验证标题/正文/发布者匹配（头部私募预训练/后训练/agent 算法）
-- ✅ https://www.v2ex.com/t/1233298 - 已验证标题/正文/发布者匹配（深圳福田河套运营岗）
+- ✅ https://www.v2ex.com/t/1233379 - 已验证字节跳动 AI Agent 招聘正文匹配
+- ✅ https://www.v2ex.com/t/1233331 - 已验证头部私募大模型招聘正文匹配
+- ✅ https://www.v2ex.com/t/1233340 - 已验证全栈工程师+Codex 报销正文匹配
+- ✅ https://www.reddit.com/r/SideProject/comments/1vknv6d/ - 已验证 Reddlist 推广换量正文匹配
+- ✅ https://www.reddit.com/r/SideProject/comments/1vkbzbg/ - 已验证 PaperRun.tech 聚合站正文匹配
+- ✅ https://www.reddit.com/r/SideProject/comments/1vki6ad/ - 已验证 ZeroSketch 系统设计工具正文匹配
+- ✅ https://www.reddit.com/r/SideProject/comments/1vkxs12/ - 已验证 3 个月独立开发复盘正文匹配
+
+**说明**：Product Hunt 当日 RSS 候选时间均超出 24h 窗口，源内 0 条入选；V2EX 中 6 条招聘因主题非 AI/纯远程问答/非 AI 工具被剔除（springboot 银行、嵌入式、MES .net、ToB 电商运营等）；Reddit 因 RSS 速率限制（429）部分 24h 内候选未能完成逐条 body 核验，按"链接失效/未核验"剔除 1vky1si（SecondWeb）、1vkn4bd（Stop Swarm）、1vkyakg（蓝牙 mesh）、1vkp2kc（Voice Murder Mystery）、1vkv269（Countdown App）。
