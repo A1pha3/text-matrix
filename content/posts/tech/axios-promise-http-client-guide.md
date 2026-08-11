@@ -14,52 +14,10 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 > **快速信息卡**
 > - **GitHub**: [axios/axios](https://github.com/axios/axios)
 > - **Stars**: 109k+
-> - **Forks**: 11.6k+
+> - **Forks**: 11.8k+
 > - **License**: MIT
 > - **语言**: JavaScript/TypeScript
-> - **最后更新**: 2026-06-26
-
-## 学习目标
-
-读完本指南，你会掌握：
-
-1. Axios 的核心特性，以及它相比 fetch API 的优势和适用边界
-2. 安装配置、实例创建、拦截器、错误处理、请求取消的完整用法
-3. 在实际项目中引入 Axios 的采用顺序和常见陷阱
-4. 如何通过拦截器统一错误处理、添加认证头、实现请求重试
-5. Axios 的适用场景和不适用场景，以及迁移到 fetch 的考量
-
-## 本文覆盖范围
-
-读完本指南，你会了解：
-
-1. 什么是 Promise-based HTTP 客户端、为什么选 Axios、以及它与 fetch API 的区别
-2. Axios 的安装和配置方式（浏览器、Node.js）
-3. GET、POST、PUT、PATCH、DELETE 等请求方法，以及参数和请求体的传递
-4. 请求拦截器和响应拦截器的使用场景和用法
-5. Axios 的错误处理机制，网络错误和超时的处理
-6. AbortController 和 CancelToken 的用法
-7. 常用的请求配置项和配置优先级规则
-8. 创建 Axios 实例、编写自定义适配器、实现请求限流等扩展
-
-## 目录
-
-- [一、项目概述](#一项目概述)
-- [二、安装与环境配置](#二安装与环境配置)
-- [三、基本使用](#三基本使用)
-- [四、Axios API 详解](#四axios-api-详解)
-- [五、创建 Axios 实例](#五创建-axios-实例)
-- [六、拦截器](#六拦截器)
-- [七、错误处理](#七错误处理)
-- [八、请求取消](#八请求取消)
-- [九、数据序列化](#九数据序列化)
-- [十、配置默认值](#十配置默认值)
-- [十一、速率限制](#十一速率限制)
-- [十二、实践建议](#十二实践建议)
-- [十三、常见问题](#十三常见问题)
-- [十四、采用顺序与总结](#十四采用顺序与总结)
-- [进阶路径](#进阶路径)
-- [自测题](#自测题)
+> - **最后更新**: 2026-08-04
 
 ---
 
@@ -88,13 +46,12 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 
 ### 仓库统计
 
-| 指标 | 数值 |
+| 指标 | 数值（2026-08-04） |
 |------|------|
-| GitHub Stars | 109k |
-| Forks | 11.6k |
-| Commits | 1,888 |
-| Issues | 187 |
-| Pull Requests | 168 |
+| GitHub Stars | 109.2k |
+| Forks | 11.8k |
+| Open Issues | 62 |
+| 默认分支 | v1.x |
 | 许可证 | MIT |
 
 ### Axios vs fetch API
@@ -162,13 +119,13 @@ bower install axios
 **使用 jsDelivr（推荐）**：
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/axios@1.13.2/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.19.0/dist/axios.min.js"></script>
 ```
 
 **使用 unpkg**：
 
 ```html
-<script src="https://unpkg.com/axios@1.13.2/dist/axios.min.js"></script>
+<script src="https://unpkg.com/axios@1.19.0/dist/axios.min.js"></script>
 ```
 
 ### ESM 导入方式
@@ -747,12 +704,13 @@ axios.interceptors.response.use(
   async error => {
     const config = error.config;
 
-    // 只重试网络错误和 5xx 错误
-    if (!error.response && !config._retry) {
+    // 只重试网络错误（无响应）和 5xx，最多 3 次
+    if (!config._retry) {
       config._retry = 0;
     }
 
-    if (config._retry < 3) {
+    const shouldRetry = (!error.response || error.response.status >= 500) && config._retry < 3;
+    if (shouldRetry) {
       config._retry++;
       await new Promise(r => setTimeout(r, 1000 * config._retry));
       return axios(config);
@@ -847,14 +805,23 @@ await axios.post('/upload', formData, {
 
 ### Q：如何设置代理？
 
-```javascript
-const proxyAgent = new https-proxyagent('http://proxy-server:8080');
+Node.js 环境下，Axios v1.x 通过 `proxy` 配置项直接指定代理，不需要手写 agent：
 
-axios.get('/user', {
-  httpAgent: proxyAgent,  // Node.js 环境
-  httpsAgent: proxyAgent
+```javascript
+await axios.get('/user', {
+  proxy: {
+    protocol: 'http',
+    host: 'proxy-server',
+    port: 8080,
+    auth: {
+      username: 'user',
+      password: 'pass'
+    }
+  }
 });
 ```
+
+代理地址也可以放进 `HTTP_PROXY` / `HTTPS_PROXY` 环境变量，Axios 在 Node.js 环境会自动读取并应用。
 
 ---
 
@@ -875,7 +842,7 @@ axios.get('/user', {
 
 ### 生态现状
 
-Axios 是目前最流行的 HTTP 客户端库之一。根据 [npm trends](https://npmtrends.com/axios-vs-got-vs-node-fetch-vs-ky) 的公开数据，Axios 的周下载量长期保持在 5000 万次以上，在浏览器侧 HTTP 客户端类别里下载量排名第一；GitHub 上 109k Stars、11.6k Forks，是 [axios/axios](https://github.com/axios/axios) 仓库的统计口径。
+Axios 是浏览器侧使用最广的 HTTP 客户端。根据 [npm trends](https://npmtrends.com/axios-vs-got-vs-node-fetch-vs-ky) 的公开数据，它的周下载量长期处在本类别的第一梯队；GitHub 上 109.2k Stars、11.8k Forks（[axios/axios](https://github.com/axios/axios)，2026-08-04）。
 
 它被广泛用于以下场景：
 
@@ -895,33 +862,4 @@ Axios 是目前最流行的 HTTP 客户端库之一。根据 [npm trends](https:
 | npm | [https://www.npmjs.com/package/axios](https://www.npmjs.com/package/axios) |
 | 官方博客 | [https://axios-http.com/blog](https://axios-http.com/blog) |
 | npm trends | [https://npmtrends.com/axios](https://npmtrends.com/axios) |
-
----
-
-## 进阶路径
-
-把基础用法用熟之后，可以往这几个方向延伸：
-
-- **自定义适配器**：Axios 的 `adapter` 配置项允许你接管底层请求逻辑。比如在测试环境用 `axios-mock-adapter` 拦截请求返回 mock 数据，在 Electron 主进程里把 HTTP 请求转发到原生 net 模块。
-- **TypeScript 类型扩展**：给 `axios.create` 返回的实例加泛型，让 `api.get<User>('/users/1')` 直接返回 `User` 类型，避免业务层再做类型断言。
-- **配合 OpenAPI 代码生成**：用 [openapi-generator](https://openapi-generator.tech/) 把后端 OpenAPI 规范直接生成基于 Axios 的类型化客户端，省掉手写接口定义。
-- **请求编排**：在拦截器里实现请求去重（相同 URL 的并发请求合并成一个）、请求队列、断网重连，这些是中大型 SPA 的常见诉求。
-- **迁移到 fetch + 包装层**：如果你的项目对包体积极度敏感，可以参考 Axios 的拦截器设计，在 fetch 上封装一层薄包装，保留统一错误处理能力，同时把 bundle 体积降到接近 0。
-
----
-
-## 自测题
-
-回答以下问题，检验你对 Axios 的掌握程度：
-
-1. Axios 的配置优先级从高到低是什么？给一个具体例子说明三层配置如何叠加。
-2. `xsrfCookieName` 和 `xsrfHeaderName` 各自的作用是什么？为什么需要两个配置项而不是一个？
-3. 请求拦截器和响应拦截器的执行顺序是怎样的？多个请求拦截器之间是按什么顺序执行？
-4. 用 `AbortController` 取消请求时，被取消的请求会进入 `catch` 分支还是 `then` 分支？如何区分"被取消"和"网络错误"？
-5. 假设你要给一个 React 项目引入 Axios，团队要求"所有 401 都跳登录页、所有 5xx 都重试 2 次、所有请求都带 traceId"，你会怎么设计拦截器？画出大致结构。
-6. 在 Node.js 18+ 环境下，什么场景下你会选择 Axios 而不是原生 fetch？说出至少两个理由。
-
----
-
-🦞 文档版本：2026-04-03 | Axios 版本：v1.x | 来源：[GitHub](https://github.com/axios/axios)
 

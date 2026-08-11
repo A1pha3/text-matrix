@@ -4,7 +4,7 @@ date: "2026-03-25T11:00:00+08:00"
 slug: "claude-api-computer-use-automation"
 aliases:
   - /posts/tech/claude-api-computer-use-automation/
-description: "本文详细介绍了Claude的Computer Use能力与Claude Code命令行工具，解析了观察-决策-执行循环的工作原理，探讨了安全机制与沙箱环境，并提供了自动化脚本的开发实战案例。"
+description: "剖析Computer Use这个beta功能：它让Claude通过截图、鼠标和键盘操作桌面环境，但真正的执行由调用方在沙箱内完成。介绍observation-decision-execution循环、工具定义与动作清单、agent loop代码示例，以及多沙箱环境与提示注入防御。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "Computer Use", "自动化"]
@@ -16,836 +16,252 @@ tags: ["Claude", "Computer Use", "自动化"]
 
 ---
 
-> **目标读者**：希望让Claude真正操控计算机完成复杂任务的开发者
-> **前置知识**：已完成第一篇《API基础》、第二篇《提示词工程》、第三篇《工具调用》、第四篇《RAG系统》、第五篇《MCP协议》
-> **学习提醒**：Computer Use是Claude最强大的能力之一，但也是最需要谨慎使用的功能
+> **目标读者**：希望让 Claude 操控计算机完成任务的开发者
+> **前置知识**：前三篇的 API 基础、工具调用、MCP 知识
 
 ---
 
-## 章节导航
+Computer Use（计算机使用）是 Anthropic 的 beta 功能：它在 Messages API 里把「截图、鼠标、键盘」打包成一个工具，让 Claude 能对着桌面界面工作。它看起来像 Claude 在亲手操作电脑，实际分工恰恰相反——**Claude 只负责看屏幕、决定下一步，真正的截图、移动光标、敲键盘，必须由你的应用在沙箱里替它执行**。这个边界是理解整个功能的关键。
 
-| 小节 | 主题 | 重要程度 |
-|------|------|----------|
-| 6.1 | 从工具调用到计算机控制 | ⭐⭐⭐⭐⭐ |
-| 6.2 | Computer Use 原理解析 | ⭐⭐⭐⭐⭐ |
-| 6.3 | Claude Code 架构与设计 | ⭐⭐⭐⭐ |
-| 6.4 | 安全机制与沙箱环境 | ⭐⭐⭐⭐⭐ |
-| 6.5 | 开发实战：构建自动化脚本 | ⭐⭐⭐⭐ |
-| 6.6 | 推荐做法与注意事项 | ⭐⭐⭐⭐⭐ |
-
----
+下面从四个角度展开：它把工具调用的边界推到了哪里、观察-决策-执行循环怎么运转、用 API 怎么落地一个 agent loop，以及安全上要额外扛住哪些风险。
 
 ## 6.1 从工具调用到计算机控制
 
-### 从工具调用到计算机控制
+工具调用解决的是「模型知道该调什么，但不知道现实世界长什么样」。它把外部能力封装成一个个函数，模型选择函数、填参数、读返回值。这一切的前提是：**能力边界是预先画好的**。查天气、查数据库、跑代码，都能写成函数；但「这个页面长什么样、提交按钮在哪个坐标」这种信息，工具调用拿不到。
 
-在讨论Computer Use之前，先回答一个问题：**为什么Claude要从"回答问题"演进到"操控计算机"？**
+| 任务类型 | 传统工具调用 | Computer Use |
+|----------|------------|--------------|
+| 查天气、查数据库 | 能，封装成函数即可 | 能 |
+| 填一个没见过结构的表单 | 难，得先知道字段位置 | 能，看截图定位 |
+| 跨应用操作（复制到贴、拖文件） | 很难，每对应用都要专门写 | 能，操作桌面本身 |
+| 自动化 UI 测试遗留系统 | 难，没有 API 可调 | 能，驱动真实界面 |
 
-回顾LLM的能力演进历程：
-
-**第一阶段：纯文本生成（2020年前）**
-
-这个阶段的LLM只能生成文本。用户输入问题，模型输出答案，就这么简单。
-
-**问题**：模型的知识是静态的，无法获取最新信息，无法执行实际操作。
-
-**第二阶段：工具调用（2022-2023）**
-
-LLM开始能够调用外部工具——搜索网页、查询数据库、执行代码。
-
-```
-用户：帮我查一下今天北京的天气
-LLM：调用get_weather工具
-工具：返回"北京今天晴，25度"
-LLM：根据工具返回结果回答用户
-```
-
-**进步**：模型能够获取实时信息并执行具体操作。
-
-**局限**：工具是预先定义好的，能力边界固定。模型无法应对未曾预料的情况。
-
-**第三阶段：Computer Use（2024-至今）**
-
-Claude获得了直接操控计算机的能力——操作鼠标、键盘，打开应用程序，浏览网页。
-
-```
-用户：帮我填一下这个表格
-LLM：
-  1. 先截图看一下表格长什么样
-  2. 分析表格结构
-  3. 操作鼠标点击第一个输入框
-  4. 从文件中读取数据
-  5. 用键盘输入数据
-  6. 点击提交按钮
-```
-
-**为什么需要这种演进？**
-
-因为**任务的复杂性要求越来越强**：
-
-| 任务类型 | 工具调用能否完成？ | Computer Use能否完成？ |
-|----------|------------------|---------------------|
-| 查天气 | ✅ | ✅ |
-| 填表格 | ❌ | ✅ |
-| 自动化测试 | ❌ | ✅ |
-| 写代码并调试 | 部分 | ✅ |
-| 跨应用数据迁移 | ❌ | ✅ |
-
-当任务需要**多步骤、多工具协调、实时视觉反馈**时，传统工具调用就力不从心了。
-
-### 什么是Computer Use？
-
-Computer Use（计算机使用）是Anthropic在2024年推出的一项突破性能力。它让Claude能够：
-
-1. **查看屏幕内容** - 截取屏幕截图，理解UI布局
-2. **操作鼠标** - 点击、拖拽、悬停
-3. **操作键盘** - 输入文本、按下快捷键
-4. **打开关闭应用** - 启动程序、关闭窗口
-5. **浏览网页** - 导航、点击链接、填写表单
-
-**什么？**
-
-意味着 Claude 从一个"能对话的程序"，变成了一个**能直接操控屏幕、键盘和鼠标的程序**。
-
----
+Computer Use 的思路是：**不预先定义能力，而是给模型一套通用的界面操作原语**——截屏、移动鼠标、点击、输入。模型面对任何一个界面，都能通过对截图的观察现学现用。成本是精度和可靠性会打折扣，这是后文要讨论的边界。
 
 ## 6.2 Computer Use 原理解析
 
-### 整体工作流程
+### 观察-决策-执行循环
 
-Computer Use 的核心是一个**观察-决策-执行循环**：
+Computer Use 的核心是一个循环，官方称之为 **agent loop（代理循环）**：
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Computer Use 循环                           │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   ┌──────────────┐                                               │
-│   │  1. 观察     │  ← Claude截取屏幕截图，理解当前状态            │
-│   └──────┬───────┘                                               │
-│          │                                                       │
-│          ▼                                                       │
-│   ┌──────────────┐                                               │
-│   │  2. 决策     │  ← 基于观察结果，决定下一步行动                 │
-│   └──────┬───────┘                                               │
-│          │                                                       │
-│          ▼                                                       │
-│   ┌──────────────┐                                               │
-│   │  3. 执行     │  ← 执行鼠标/键盘操作                          │
-│   └──────┬───────┘                                               │
-│          │                                                       │
-│          └───────────────────────────────────────┐               │
-│                                                  │               │
-│                     循环直到任务完成              │               │
-│                                                  │               │
-└──────────────────────────────────────────────────────────────────┘
+```text
+┌────────────────────────────────────────────────────────────┐
+│                        agent loop                          │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  ① 应用把消息（含截图）发给 Claude                          │
+│        │                                                   │
+│        ▼                                                   │
+│  ② Claude 决定下一步，返回 tool_use（如 left_click）       │
+│        │     stop_reason = "tool_use"                      │
+│        ▼                                                   │
+│  ③ 应用在沙箱里执行该动作（截图/点击/输入）                 │
+│        │                                                   │
+│        ▼                                                   │
+│  ④ 应用把结果作为 tool_result 附回对话                      │
+│        │                                                   │
+│        └──────── 回到 ①，直到 Claude 不再请求工具 ─────────┘
+│                                                            │
+└────────────────────────────────────────────────────────────┘
 ```
 
-### 为什么需要"观察-决策-执行"循环？
+关键点：②和④之间是**你的应用插进去执行**的。Claude 只是输出「要做哪个动作、参数是什么」，比如「在坐标 (512, 384) 左键点击」。真正把光标移过去、点下去，是调用方代码调用系统接口完成的。Claude 不直接连到任何显示器或窗口。
 
-**答案：LLM 无法直接"看到"计算机状态**
+这个循环没有用户参与，Claude 一轮接一轮请求工具、应用一轮接一轮返回结果，直到 Claude 判定任务完成、`stop_reason` 不再是 `tool_use`。为避免无限循环烧钱，应用通常会设一个最大迭代次数。
 
-传统的工具调用是**确定性的**：
+### 计算环境
 
-```python
-# 工具调用：输入确定，输出确定
-result = get_weather(city="北京")
-# 要么成功返回天气，要么抛出异常
-```
+Computer Use 需要一个**沙箱化的计算环境**，官方参考实现跑在 Docker 容器里，包含：
 
-但计算机操作是**非确定性的**：
+- **虚拟显示**：用 Xvfb 起一个虚拟 X11 显示服务，渲染 Claude 截图看到的桌面
+- **桌面环境**：轻量窗口管理（Mutter）加面板（Tint2），提供一致的图形界面
+- **预装应用**：Firefox、LibreOffice、文本编辑器、文件管理器等
+- **工具实现**：把「移动鼠标」「截图」这类抽象请求翻译成对虚拟环境的实际操作
+- **agent loop**：在 Claude 和环境之间传消息的程序
 
-```
-场景：点击"提交"按钮
-问题：
-- 按钮真的在那个位置吗？
-- 按钮是否被其他窗口遮挡？
-- 点击后会发生什么？
-- 如果按钮不存在怎么办？
-```
+Claude 不直接连这个环境。你的应用接收 Claude 的 tool_use 请求 → 翻译成对环境的操作 → 捕获结果（截图、命令输出） → 返回给 Claude。
 
-所以 Claude 需要：
-1. **先观察** - 截图看看当前屏幕状态
-2. **再决策** - 基于观察决定操作
-3. **后执行** - 执行操作
-4. **再观察** - 验证操作效果
+### 工具定义
 
-**这种循环让 Claude 能够应对各种意外情况**，就像人类操作计算机一样——先看看，再操作，再看看效果。
+Computer Use 工具是**无 schema 的**——它不像普通工具那样要你提供 `input_schema`，schema 内置在模型里，不能改。定义它时只需指定以下几个参数：
 
-### 核心技术组件
-
-Computer Use 由以下几个核心组件构成：
-
-```python
-class ComputerUseConfig:
-    """
-    Computer Use 的核心配置
-
-    为什么要这些配置？
-    每个配置都对应着一个现实问题
-    """
-
-    display_size: tuple = (1920, 1080)
-    # 问题：Claude如何知道屏幕有多大？
-    # 答案：通过display_size指定屏幕分辨率
-
-    available_terminals: list = ["bash", "zsh", "powershell"]
-    # 问题：Claude能在哪些环境中执行命令？
-    # 答案：通过available_terminals指定可用的终端
-
-    max_actions_per_turn: int = 10
-    # 问题：一次循环中最多执行多少操作？
-    # 答案：限制max_actions_per_turn防止失控
-
-    screenshot_delay_ms: int = 100
-    # 问题：执行操作后需要等多久才能截图？
-    # 答案：等待UI更新完成后再截图
-```
-
----
-
-## 6.3 Claude Code架构与设计
-
-### Claude Code是什么？
-
-Claude Code是Anthropic官方推出的命令行工具，让开发者能够在终端中与Claude交互。它不仅仅是另一个CLI工具——它是**Computer Use能力的官方载体**。
-
-**为什么Claude要推出自己的CLI工具？**
-
-这里有一个深层次的原因：**工具调用的局限性**
-
-当开发者想让Claude帮助写代码时，工具调用面临以下问题：
-
-| 问题 | 描述 | 后果 |
+| 参数 | 必填 | 说明 |
 |------|------|------|
-| 上下文丢失 | 新会话无法保留之前的决策 | Claude反复问相同问题 |
-| 工具碎片化 | 每个IDE插件各自实现 | 体验不一致 |
-| 安全边界模糊 | 难以控制Claude能做什么 | 风险不可控 |
+| `type` | 是 | 工具版本：`computer_20251124` 或 `computer_20250124` |
+| `name` | 是 | 固定为 `"computer"` |
+| `display_width_px` | 是 | 显示宽度（像素） |
+| `display_height_px` | 是 | 显示高度（像素） |
+| `display_number` | 否 | X11 环境下的显示器编号 |
+| `enable_zoom` | 否 | 仅 `computer_20251124`，开启 zoom 动作，默认 `false` |
 
-Claude Code通过**深度集成**解决了这些问题：
+调用时还需要在请求头带 beta 头：新模型用 `computer-use-2025-11-24`，旧模型（Sonnet 4.5、Opus 4.1 等）用 `computer-use-2025-01-24`。支持的模型主要是 Opus 4.5/4.6/4.7/4.8/5 和 Sonnet 4.6/5。
 
-```python
-# Claude Code的核心理念
-principles = {
-    "continuous_context": "整个开发会话的上下文持久保持",
-    "unified_tools": "统一的文件操作、Git、终端工具",
-    "explicit_consent": "敏感操作需要用户确认",
-    "transparent_actions": "所有操作都记录日志"
-}
-```
+### 可用动作
 
-### Claude Code的核心功能
+工具支持的动作分三档：
 
-**1. 智能代码生成**
+**基础动作（所有版本）**：`screenshot`（截取当前显示）、`left_click`（点击坐标 `[x, y]`）、`type`（输入文本）、`key`（按键盘按键或组合键，如 `ctrl+s`）、`mouse_move`（移动光标）。
 
-```bash
-# 在终端中启动Claude Code
-claude
+**增强动作（`computer_20250124` 起）**：`scroll`（任意方向滚动、可控制量）、`left_click_drag`（拖拽）、`right_click` / `middle_click`、`double_click` / `triple_click`、`left_mouse_down` / `left_mouse_up`（细粒度点击控制）、`hold_key`（按住按键指定秒数）、`wait`（暂停）。
 
-# 简单的代码生成请求
-claude "写一个快速排序算法"
+**`computer_20251124` 新增**：`zoom`（以全分辨率查看屏幕某区域），需要 `enable_zoom: true`，参数 `region` 用 `[x1, y1, x2, y2]` 指定要查看区域的左上角和右下角。
 
-# 复杂的项目级请求
-claude "帮我重构这个React项目，使用TypeScript"
-```
+## 6.3 用 API 实现 Computer Use
 
-**2. Git操作集成**
+### 定义工具并发出请求
 
-```bash
-# 让Claude帮你写commit message
-claude "commit current changes"
-
-# 让Claude帮你分析PR
-claude "review this pull request"
-
-# 让Claude帮你处理merge conflict
-claude "resolve the merge conflict in src/app.tsx"
-```
-
-**3. 终端命令执行**
-
-```bash
-# Claude可以执行终端命令
-claude "run the tests and fix any failures"
-
-# Claude可以安装依赖
-claude "install the required npm packages"
-```
-
-**4. 多文件编辑**
-
-```bash
-# Claude可以同时修改多个文件
-claude """
-创建以下文件：
-- src/api/users.ts - 用户API模块
-- src/api/posts.ts - 文章API模块
-- src/types/index.ts - 类型定义
-"""
-```
-
-### Claude Code vs 传统IDE插件
-
-| 特性 | 传统IDE插件 | Claude Code |
-|------|------------|-------------|
-| 上下文保持 | 差（每次都是新会话） | 强（整个会话持久） |
-| 工具一致性 | 差（各插件实现不同） | 强（统一工具集） |
-| 安全控制 | 弱 | 强（明确授权机制） |
-| 跨项目能力 | 弱 | 强（能跨项目工作） |
-| 学习曲线 | 各插件不同 | 统一体验 |
-
----
-
-## 6.4 安全机制与沙箱环境
-
-### 为什么要这么强调安全？
-
-Computer Use 能力的危险性很容易理解：**如果 LLM 能像人一样操作计算机，它就能执行任何操作——包括删除文件、发送邮件、甚至泄露数据。**
-
-这就引出了一个根本问题：
-
-> **我们如何让 Claude 变得有用，同时又不让它变得危险？**
-
-### Anthropic 的安全策略
-
-Anthropic 采用了**多层防御策略**：
-
-**第一层：明确授权（Explicit Consent）**
+用 Anthropic Python SDK，先定义工具，再发消息：
 
 ```python
-class ConsentManager:
-    """
-    consent_level决定了Claude能做什么
+import anthropic
 
-    为什么需要分层？
-    不同任务需要不同的信任级别
-    """
+client = anthropic.Anthropic()
 
-    levels = {
-        "read_only": {
-            "description": "只读模式",
-            "allowed": ["read_file", "search", "browse"],
-            "denied": ["write_file", "execute", "delete"]
-        },
-        "read_write": {
-            "description": "读写模式",
-            "allowed": ["read_file", "write_file", "search", "browse"],
-            "denied": ["execute", "delete", "send_email"]
-        },
-        "full_access": {
-            "description": "完全访问",
-            "allowed": ["*"],  # 所有操作
-            "requires_confirmation": ["delete", "send_email", "execute"]
+response = client.beta.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    tools=[
+        {
+            "type": "computer_20250124",
+            "name": "computer",
+            "display_width_px": 1024,
+            "display_height_px": 768,
+            "display_number": 1,
         }
-    }
+    ],
+    messages=[{
+        "role": "user",
+        "content": "把一张猫的图片保存到桌面上。",
+    }],
+)
 ```
 
-**第二层：沙箱环境（Sandbox）**
+注意用的是 `client.beta.messages`，因为 Computer Use 是 beta 功能。响应里如果 `stop_reason == "tool_use"`，说明 Claude 想要执行某个动作，动作在返回的 `tool_use` 块里。
+
+### 一个最小的 agent loop
+
+执行循环的一段示意（省略了 `execute_action` 的具体实现，它负责对接你的沙箱）：
 
 ```python
-class SandboxConfig:
-    """
-    沙箱配置
+from anthropic.types import ToolResultBlockParam
 
-    为什么需要沙箱？
-    即使Claude出错，也只会影响沙箱内的模拟环境
-    """
-
-    sandbox_type = "docker"  # Docker容器隔离
-    network_isolation = True   # 网络隔离
-    filesystem_boundary = "/workspace/sandbox"  # 文件系统边界
-    cpu_limit = "2 cores"     # CPU限制
-    memory_limit = "4GB"      # 内存限制
-```
-
-**第三层：操作日志（Audit Log）**
-
-```python
-class AuditLogger:
-    """
-    操作日志
-
-    为什么需要日志？
-    1. 问题追溯：如果出了问题，能知道发生了什么
-    2. 信任建立：用户可以看到Claude在做什么
-    3. 合规要求：某些行业必须保留操作记录
-    """
-
-    def log_action(self, action: dict):
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "action_type": action["type"],
-            "target": action["target"],
-            "parameters": action.get("params", {}),
-            "result": action.get("result", "pending"),
-            "consent_level": self.current_consent_level
-        }
-        self.log_file.write(json.dumps(entry) + "\n")
-```
-
-**第四层：实时监控（Human-in-the-Loop）**
-
-```python
-class HumanOversight:
-    """
-    人工监督机制
-
-    核心思想：关键操作需要人工确认
-    """
-
-    HIGH_RISK_ACTIONS = [
-        "delete_files",
-        "send_emails",
-        "make_purchases",
-        "push_to_production",
-        "modify_security_settings"
-    ]
-
-    def requires_confirmation(self, action: dict) -> bool:
-        """
-        判断操作是否需要确认
-        """
-        return action["type"] in self.HIGH_RISK_ACTIONS
-
-    async def request_confirmation(self, action: dict) -> bool:
-        """
-        请求用户确认
-        返回True表示用户批准，False表示拒绝
-        """
-        print(f"⚠️ Claude想要执行高风险操作：{action['type']}")
-        print(f"目标：{action.get('target', 'N/A')}")
-        response = input("是否允许？(y/n): ")
-        return response.lower() == 'y'
-```
-
-### 开发者的安全实践
-
-作为开发者，我们应该如何安全地使用 Computer Use？
-
-```python
-class SafeComputerUse:
-    """
-    安全使用Computer Use的推荐做法
-    """
-
-    @staticmethod
-    def create_limited_session(config: dict) -> dict:
-        """
-        创建受限会话
-
-        推荐做法1：最小权限原则
-        只给Claude它需要的权限，不要给多了
-        """
-        return {
-            "consent_level": "read_only",  # 除非必要，不用更高权限
-            "allowed_paths": ["/workspace/project"],  # 只允许访问项目目录
-            "denied_paths": [
-                "/etc",           # 系统配置
-                "/home/*/.ssh",   # SSH密钥
-                "/var/secrets"    # 敏感信息
-            ],
-            "max_actions_per_turn": 5,  # 限制单次操作数
-            "enable_audit_log": True     # 开启日志
-        }
-
-    @staticmethod
-    def validate_target(target: str, allowed_paths: list) -> bool:
-        """
-        验证操作目标是否在允许范围内
-
-        推荐做法2：路径验证
-        在执行任何文件操作前，验证路径是否安全
-        """
-        import os
-        real_path = os.path.realpath(target)
-
-        for allowed in allowed_paths:
-            allowed_real = os.path.realpath(allowed)
-            if real_path.startswith(allowed_real):
-                return True
-
-        return False
-```
-
----
-
-## 6.5 开发实战：构建自动化脚本
-
-### 场景：自动填表机器人
-
-让我们通过一个实际例子来学习如何构建基于Computer Use的自动化脚本。
-
-**场景描述**：我们需要让Claude帮助填写一个网页表单。
-
-```python
-import asyncio
-from anthropic import Anthropic
-from computer_use import ComputerUse
-
-class FormFillingBot:
-    """
-    自动填表机器人
-
-    为什么需要这个类？
-    封装常见操作，提供高级API
-    """
-
-    def __init__(self, consent_level: str = "read_write"):
-        self.client = Anthropic()
-        self.computer = ComputerUse(consent_level=consent_level)
-        self.task_history = []  # 记录操作历史
-
-    async def fill_form(self, form_url: str, form_data: dict):
-        """
-        填写表单的主要流程
-
-        为什么分步骤？
-        1. 便于调试 - 出问题能快速定位
-        2. 便于重试 - 失败的操作可以单独重试
-        3. 便于日志 - 详细记录每一步
-        """
-        try:
-            # 步骤1：打开表单页面
-            await self._navigate_to_form(form_url)
-
-            # 步骤2：分析表单结构
-            form_structure = await self._analyze_form()
-
-            # 步骤3：逐个填写字段
-            for field_name, value in form_data.items():
-                await self._fill_field(field_name, value)
-
-            # 步骤4：提交表单
-            await self._submit_form()
-
-            return {"success": True, "steps_completed": len(self.task_history)}
-
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "steps_completed": self.task_history
-            }
-
-    async def _navigate_to_form(self, url: str):
-        """导航到表单页面"""
-        # 1. 先截一张图确认当前位置
-        screenshot = await self.computer.screenshot()
-
-        # 2. 打开新标签页（Ctrl+T）
-        await self.computer.keyboard.press("ctrl+t")
-
-        # 3. 输入URL
-        await self.computer.keyboard.type(url)
-
-        # 4. 按回车
-        await self.computer.keyboard.press("enter")
-
-        # 5. 等待页面加载
-        await asyncio.sleep(2)
-
-        # 6. 再次截图确认页面已加载
-        await self.computer.screenshot()
-
-        self.task_history.append({
-            "step": "navigate",
-            "url": url
-        })
-
-    async def _analyze_form(self) -> dict:
-        """分析表单结构"""
-        # 截取当前屏幕
-        screenshot = await self.computer.screenshot()
-
-        # 让Claude分析截图中的表单字段
-        analysis_prompt = """
-        请分析这个截图中的表单结构。
-        返回JSON格式，包含：
-        - fields: 字段列表，每个字段包含name、type、position
-        - submit_button: 提交按钮的位置
-        """
-
-        response = self.client.messages.create(
-            model="claude-opus-4-20241120",
+def agent_loop(messages, system_prompt, tools, max_iterations=10):
+    for _ in range(max_iterations):
+        response = client.beta.messages.create(
+            model="claude-sonnet-4-5-20250929",
             max_tokens=1024,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {"type": "image", "source": screenshot},
-                    {"type": "text", "text": analysis_prompt}
-                ]
-            }]
+            system=system_prompt,
+            tools=tools,
+            messages=messages,
         )
 
-        return self._parse_form_analysis(response.content[0].text)
+        # 任务完成：Claude 不再请求工具
+        if response.stop_reason != "tool_use":
+            return [
+                block.text
+                for block in response.content
+                if block.type == "text"
+            ]
 
-    async def _fill_field(self, field_name: str, value: str):
-        """填写单个字段"""
-        # 1. 点击字段位置
-        # （实际实现中需要根据_analyze_form的结果确定位置）
-        await self.computer.mouse.click(x=field_name["x"], y=field_name["y"])
+        for block in response.content:
+            if block.type == "tool_use":
+                action = block.input  # 例如 {"action": "left_click", "coordinate": [512, 384]}
 
-        # 2. 输入内容
-        await self.computer.keyboard.type(value)
+                # 你的应用在沙箱里执行动作，拿到结果（通常是新截图）
+                result = execute_action(action)
 
-        # 3. 按Tab跳到下一个字段
-        await self.computer.keyboard.press("tab")
-
-        self.task_history.append({
-            "step": "fill_field",
-            "field": field_name,
-            "value": value
-        })
-
-    async def _submit_form(self):
-        """提交表单"""
-        # 点击提交按钮
-        # （实际实现中需要根据_analyze_form的结果确定位置）
-        await self.computer.mouse.click(x="submit_x", y="submit_y")
-
-        # 等待提交完成
-        await asyncio.sleep(3)
-
-        # 截图确认提交结果
-        result_screenshot = await self.computer.screenshot()
-
-        self.task_history.append({
-            "step": "submit",
-            "screenshot": result_screenshot
-        })
+                # 把 Claude 的决定和你的执行结果都附回对话
+                messages.append({
+                    "role": "assistant",
+                    "content": [block],
+                })
+                messages.append({
+                    "role": "user",
+                    "content": [ToolResultBlockParam(
+                        type="tool_result",
+                        tool_use_id=block.id,
+                        content=result,
+                    )],
+                })
+    raise RuntimeError("超过最大迭代次数，任务未完成")
 ```
 
-### 场景：自动化测试助手
+`execute_action` 是真正干活的地方：按 `action["action"]` 分发到截图、鼠标、键盘的具体实现，执行完把新截图作为 `tool_result` 返回。Claude 看到新截图，才知道上一动作有没有生效，再决定下一步。
 
-```python
-class TestingAssistant:
-    """
-    自动化测试助手
+### 截图尺寸与坐标换算
 
-    使用Computer Use执行UI测试
-    """
+截图发给模型前要控制尺寸。不同模型上限不同：Opus 5/Sonnet 5/Opus 4.8/4.7 接受长边最长 2576 像素；更早的模型是长边 1568 像素、总面积约 1.15 兆像素。超出 8000 像素一侧才会被拒绝，否则 API 会静默降采样——但降采样后 Claude 返回的坐标是对应降采样图的，你需要把坐标按比例映射回真实屏幕，否则点击会偏。
 
-    def __init__(self, app_url: str):
-        self.app_url = app_url
-        self.computer = ComputerUse()
-        self.test_results = []
+一个常踩的坑是 **macOS Retina 屏**：截图按设备像素比 2 输出，图像分辨率是逻辑坐标的两倍。要么发图前缩一半，要么把 Claude 返回的坐标对半再点击，否则每次都点偏。
 
-    async def run_ui_test(self, test_case: dict) -> dict:
-        """
-        执行UI测试
+## 6.4 Claude Code 架构与设计
 
-        测试流程：
-        1. 打开应用
-        2. 执行测试操作
-        3. 验证结果
-        4. 记录测试报告
-        """
-        test_id = test_case["id"]
-        steps = test_case["steps"]
-        expected = test_case["expected"]
+Claude Code 是 Anthropic 官方推出的终端编程工具，让开发者在命令行里和 Claude 协同写代码。它和 Computer Use 的关系是：**Claude Code 是 Computer Use 能力的一个落地载体**——在 Claude Code 里，Claude 不只是改代码，也能截图看界面、操作浏览器、驱动桌面应用，靠的正是这套观察-决策-执行循环。
 
-        try:
-            # 打开应用
-            await self._open_application()
+它和「在 IDE 里装个插件」的差别在于深度集成：
 
-            # 执行测试步骤
-            for step in steps:
-                await self._execute_step(step)
+| 特性 | 传统 IDE 插件 | Claude Code |
+|------|------------|-------------|
+| 上下文保持 | 每次会话各自为政 | 整个工作会话持续 |
+| 工具集 | 各插件各写一套 | 统一文件、终端、Git 工具 |
+| 界面操作 | 通常没有 | 有（Computer Use） |
+| 权限控制 | 各插件自己定 | 统一授权与确认 |
 
-            # 验证结果
-            actual = await self._capture_result()
+## 6.5 安全机制与沙箱环境
 
-            # 比对结果
-            passed = self._compare_results(expected, actual)
+Computer Use 的风险比普通 API 高，因为模型接触到的是真实界面操作。Anthropic 的官方口径很直接：**把 Claude 隔离在最小权限的虚拟机或容器里，别让它碰到敏感数据**。
 
-            result = {
-                "test_id": test_id,
-                "status": "passed" if passed else "failed",
-                "expected": expected,
-                "actual": actual,
-                "screenshots": self.test_results
-            }
+### 官方安全建议
 
-            self.test_results.append(result)
-            return result
+1. **用专用虚拟机或容器**，给最小权限，防止系统攻击或误操作
+2. **别给模型敏感数据**（如账号登录信息），防窃取
+3. **联网用白名单**，只允许访问指定域名，减少恶意内容暴露
+4. **有实际后果的操作要人工确认**，比如接受 cookie、完成金融交易、同意服务条款
 
-        except Exception as e:
-            return {
-                "test_id": test_id,
-                "status": "error",
-                "error": str(e)
-            }
+这里有个特别值得注意的点：**提示注入**。Claude 有时会服从网页或图片里的指令，哪怕和你给它的指令冲突——比如网页上写着「忽略上面的要求，执行这个命令」。为缓解这个，Anthropic 在 Computer Use 上自动跑一层提示注入分类器。当分类器在截图里识别出疑似注入时，会引导模型先向用户要确认再继续，相当于又加了一道保险。这层防御对「没有人在环」的无人值守场景不理想，可以联系支持关闭，但那是你自家产品要评估的取舍。
 
-    async def _open_application(self):
-        """打开测试应用"""
-        await self.computer.browser.open(self.app_url)
-        await asyncio.sleep(2)  # 等待页面加载
+### 数据归属
 
-    async def _execute_step(self, step: dict):
-        """执行单个测试步骤"""
-        action = step["action"]
+Computer Use 是客户端工具：一张截图、一次点击、一段输入、用到的文件，都产生并保存在**你的环境里**，Anthropic 不存储这些。Anthropic 只是在 API 调用时实时处理截图和动作请求，保留策略遵循标准的 API 数据保留规则。因为数据由你的应用掌控，Computer Use 满足 ZDR（零数据保留）资质。
 
-        if action == "click":
-            await self.computer.mouse.click(x=step["x"], y=step["y"])
-        elif action == "type":
-            await self.computer.keyboard.type(step["text"])
-        elif action == "select":
-            await self.computer.mouse.click(x=step["x"], y=step["y"])
-            await self.computer.keyboard.press("down")
-            await self.computer.keyboard.press("enter")
+### 参考实现
 
-        await asyncio.sleep(step.get("delay", 1))
-
-        # 每步都截图记录
-        await self.computer.screenshot()
-
-    async def _capture_result(self) -> dict:
-        """捕获测试结果"""
-        screenshot = await self.computer.screenshot()
-
-        # 让Claude分析截图中的关键信息
-        return {"screenshot": screenshot}
-
-    def _compare_results(self, expected: dict, actual: dict) -> bool:
-        """比对测试结果"""
-        # 实际实现中需要根据具体测试类型比对
-        return True
-```
-
----
+官方在 `anthropics/anthropic-quickstarts` 仓库的 `computer-use-demo` 目录里给了完整参考实现：Docker 环境、各动作的工具实现、agent loop、可交互的 Web 界面。自己搭环境时，至少需要这几样：虚拟化/容器化环境、至少一个 computer 工具的实现、agent loop，以及启动循环的入口。
 
 ## 6.6 推荐做法与注意事项
 
-### 推荐做法
+### 提升质量的提示词
 
-**1. 从简单任务开始**
+- **任务拆小、步骤说清**：一步一个明确指令，别让 Claude 一次猜很多
+- **强迫验证**：提示里要求「每完成一步就截图，确认是否达到预期，没达到就重试，确认成功再进下一步」——Claude 有时会想当然地认为动作成功了，其实没生效
+- **偏难关交互用快捷键**：下拉框、滚动条这类鼠标难操作的，让 Claude 改用键盘快捷键
+- **可复用任务给示例**：把成功结果的截图和调用序列放进提示词
+- **指令文本放在图片前**：构造 `content` 数组时，先放指令文字再放截图，能提升点击准确性
 
-```python
-# 好：先从简单操作开始
-simple_tasks = [
-    "打开浏览器访问 example.com",
-    "截取当前屏幕",
-    "在文本框输入 Hello World"
-]
+### 已知限制
 
-# 差：一开始就尝试复杂流程
-complex_tasks = [
-    "自动登录邮箱，查找特定邮件，提取附件，上传到云存储"
-]
-```
+- **延迟**：对人机交互来说可能偏慢，适合后台信息收集、自动化测试这类对速度不敏感的场景
+- **视觉精度**：Claude 生成坐标时可能出错或幻觉，Extended Thinking 有助于看清它为什么这么选
+- **工具选择**：复杂任务里可能选错工具或采取意外动作；并行操作多个小众应用时可靠性下降
+- **滚动**：滚轮动作在有些应用里不生效，可用 Page Down 等键盘替代
+- **社交平台账号行为**：Claude 能访问网站，但创建账号、发帖、冒充真人等能力是受限的
 
-**原因**：简单任务容易验证和调试，能帮你快速理解 Claude 的行为模式。
+### 坐标系与精度
 
-**2. 总是验证操作结果**
+分辨率别太低，1280×720 是个不错的基线。点了没点中，多数是这几种原因：`display_width_px`/`display_height_px` 和实际发的截图尺寸不一致；目标太小、4K 源缩图后细节丢了；指令含糊导致点错元素。模型选择也影响点击精度——Sonnet 4.6 的机械点击比 Opus 4.6 更稳，Opus 4.7 把差距拉平了。
 
-```python
-async def safe_click(x, y):
-    """
-    安全点击
+### 什么时候不划算
 
-    为什么需要验证？
-    确保点击生效了
-    """
-    # 点击前截图
-    before = await computer.screenshot()
+| 场景 | 为什么不建议 | 替代方案 |
+|------|------------|----------|
+| 纯数据处理 | 绕了界面一大圈 | 直接调 API 或脚本 |
+| 定期批量任务 | 慢且贵 | Cron + 脚本 |
+| 需要精确坐标的操作 | 视觉判断有误差 | 专用 API 或原生驱动 |
+| 涉及敏感账号/资金 | 风险不可控 | 人工执行 |
 
-    # 执行点击
-    await computer.mouse.click(x, y)
-
-    # 等待UI更新
-    await asyncio.sleep(0.5)
-
-    # 点击后截图
-    after = await computer.screenshot()
-
-    # 验证发生了变化
-    if before == after:
-        raise Exception("点击似乎没有生效，请检查")
-
-    return after
-```
-
-**3. 实现超时和重试机制**
-
-```python
-async def execute_with_retry(action, max_retries=3, timeout=10):
-    """
-    带重试的操作执行
-
-    为什么需要重试？
-    1. 网络可能不稳定
-    2. UI响应可能延迟
-    3. 临时性的环境问题
-    """
-    for attempt in range(max_retries):
-        try:
-            return await asyncio.wait_for(action(), timeout=timeout)
-        except TimeoutError:
-            if attempt == max_retries - 1:
-                raise
-            await asyncio.sleep(1)  # 重试前等待
-```
-
-### 常见错误与解决方案
-
-| 错误 | 原因 | 解决方案 |
-|------|------|----------|
-| 截图是空白的 | 页面还在加载 | 增加等待时间 |
-| 点击位置不对 | 分辨率不匹配 | 使用相对坐标或百分比 |
-| 操作超时 | 应用无响应 | 添加超时检测 |
-| 循环无法结束 | 缺乏终止条件 | 设置明确的结束标志 |
-
-### 适用场景判断
-
-**适合使用 Computer Use 的场景**：
-
-| 场景 | 原因 |
-|------|------|
-| 跨应用自动化 | 没有 API，只能操作 UI |
-| 遗留系统测试 | 老系统无法接入现代工具 |
-| 动态 UI 交互 | UI 是动态生成的，无法预先定义 |
-| 复杂表单填写 | 表单结构复杂，需要实时理解 |
-
-**不适合使用 Computer Use 的场景**：
-
-| 场景 | 替代方案 |
-|------|----------|
-| 纯数据处理 | 使用 API 或脚本 |
-| 定期批量任务 | 使用 Cron + 脚本 |
-| 高精度操作 | 使用专用 API |
-| 敏感操作 | 人工执行 |
-
----
-
-## 本章总结
-
-### 核心知识点
-
-| 知识点 | 掌握程度 | 关键点 |
-|--------|----------|--------|
-| 演进路径 | ⭐⭐⭐⭐⭐ | 为什么需要Computer Use |
-| 工作原理 | ⭐⭐⭐⭐⭐ | 观察-决策-执行循环 |
-| Claude Code | ⭐⭐⭐⭐ | 官方CLI工具的能力 |
-| 安全机制 | ⭐⭐⭐⭐⭐ | 多层防御保护 |
-| 开发实战 | ⭐⭐⭐⭐ | 填表机器人、测试助手 |
-| 推荐做法 | ⭐⭐⭐⭐⭐ | 安全、验证、重试 |
-
-### 关键设计思想
-
-| 设计思想 | 为什么重要 |
-|----------|-----------|
-| 观察-决策-执行循环 | 非确定性环境需要反馈机制 |
-| 多层安全防御 | 能力与风险同步增长 |
-| 最小权限原则 | 只给必要的权限 |
-| 人工监督 | 关键操作需要人工确认 |
-
-### 下一步
-
-- 继续阅读：Agent架构专题（七）- 了解多Agent协作系统
-- 实践项目：用Computer Use构建一个自动化测试工具
-- 参考资料：[Anthropic Computer Use文档](https://docs.anthropic.com/)
+一句话：**Computer Use 适合「没有现成 API、只能操作界面」的场景**。能用 API 或脚本解决的就别用它，它是对付遗留系统、动态界面、跨应用工作流的最后手段。
 
 ---
 
 **文档元信息**
-难度：⭐⭐⭐⭐ | 类型：专家设计 | 更新日期：2026-03-25 | 预计阅读时间：50 分钟 | 字数：约 6000 字
+难度：⭐⭐⭐⭐ | 类型：API 解析 | 更新日期：2026-08-08 | 预计阅读时间：40 分钟 | 字数：约 4000 字

@@ -14,44 +14,43 @@ tags: ["T3 Code", "Agent", "Claude Code", "Codex", "Cursor", "远程开发"]
 
 T3 Code 是 agent 套壳，它不跑模型、不做代码生成，只管理你已安装并认证的 agent 进程。你可以坐在沙发上，偶尔低头看一眼进度，随手指挥 agent 干活。
 
-T3 Code 所追求的，是一套流畅而高效的 agent 开发基准体验。就这一标准而言，Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 等现有方案，均未触及它的基准线。
+T3 Code 想做的是最好用的 agent 开发体验——Codex 桌面应用、Conductor、Claude Desktop、Cursor Glass 这些现成方案，都没到它的标准。
 它的设计原则可归纳为三条：性能达标、远程原生、透明度可验证——仓库采用 MIT 许可证，提供 Windows、macOS、Linux 各平台安装包，遥测仅在本地执行资源监控，不上传任何数据。
 
 ## 目录
 
 **实践篇**
 
-- [一、它解决的是什么](#一它解决的是什么)
-- [二、与同类工具的对比](#二与同类工具的对比)
-- [三、快速上手](#三快速上手)
-- [四、常见问题 FAQ](#四常见问题-faq)
-- [五、适用边界](#五适用边界)
-- [六、采用建议](#六采用建议)
+- 一、它解决的是什么
+- 二、与同类工具的对比
+- 三、快速上手
+- 四、常见问题 FAQ
+- 五、适用边界与采用建议
 
 **学习篇**
 
-- [七、系统地图](#七系统地图)
-- [八、核心机制](#八核心机制)
-- [九、远程访问：四种连接目标](#九远程访问四种连接目标)
-- [十、示例：一次 bug 修复如何流过系统](#十示例一次-bug-修复如何流过系统)
-- [十一、学习目标](#十一学习目标)
-- [十二、自测题](#十二自测题)
-- [十三、进阶方向](#十三进阶方向)
-- [十四、源码开发：从源码跑起来，自己改](#十四源码开发从源码跑起来自己改)
-- [十五、参考资料](#十五参考资料)
+- 六、系统地图
+- 七、核心机制
+- 八、远程访问：四种连接目标
+- 九、示例：一次 bug 修复如何流过系统
+- 十、学习目标
+- 十一、自测题
+- 十二、进阶方向
+- 十三、源码开发：从源码跑起来，自己改
+- 十四、参考资料
 
 ## 一、它解决的是什么
 
 | 维度 | 数据 |
 |------|------|
 | 仓库 | pingdotgg/t3code |
-| Stars | 16,000+（2026-08） |
-| Forks | 3,600+ |
+| Stars | 17,600+（2026-08） |
+| Forks | 4,000+ |
 | 语言 | TypeScript（Effect 生态） |
 | 许可证 | MIT |
 | 作者 | Theo Browne（pingdotgg） |
 
-项目创建于 2026 年 2 月 8 日，半年间 Stars 突破 16,000。增长速度引人注目，一方面来自 Theo 本人的社区号召力，另一方面则源于仓库本身的几项关键举措——MIT 许可证、零遥测上传、全平台安装包、`npx t3@latest` 免安装体验——共同压低了体验门槛，新用户从知晓到跑通几乎没有阻滞。活跃 Issue 数亦超过 1,000。
+项目创建于 2026 年 2 月 8 日，半年间 Stars 突破 17,000。增长速度引人注目，一方面来自 Theo 本人的社区号召力，另一方面则源于仓库本身的几项关键举措——MIT 许可证、零遥测上传、全平台安装包、`npx t3@latest` 免安装体验——共同压低了体验门槛，新用户从知晓到跑通几乎没有阻滞。活跃 Issue 数亦超过 1,000。
 
 ## 二、与同类工具的对比
 
@@ -101,11 +100,11 @@ npx t3@latest --help
 | macOS | `brew install --cask t3-code` |
 | Arch Linux（AUR） | `yay -S t3code-bin` |
 
-或直接从 [GitHub Releases](https://github.com/pingdotgg/t3code/releases) 下载安装包。远程访问的完整配置参见官方文档 [remote-access.md](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md)，后文「九、远程访问」亦会从连接层展开机制说明。
+或直接从 GitHub Releases 下载安装包。远程访问的完整配置参见官方文档 remote-access.md，后文「八、远程访问」亦会从连接层展开机制说明。
 
 ### 实战：手机从外网连回家中机器
 
-后文「九、远程访问」一节将从连接层视角阐释「链路如何建立」，覆盖四种连接目标：本地主连接、Bearer 配对、Relay 中继、SSH。本节切换到使用者视角，聚焦一个更具体的问题：手机在蜂窝网络或公司 Wi‑Fi 等外部环境下，如何安全、稳定地接入家中机器上的 T3 Code。
+后文「八、远程访问」一节将从连接层视角阐释「链路如何建立」，覆盖四种连接目标：本地主连接、Bearer 配对、Relay 中继、SSH。本节切换到使用者视角，聚焦一个更具体的问题：手机在蜂窝网络或公司 Wi‑Fi 等外部环境下，如何安全、稳定地接入家中机器上的 T3 Code。
 
 首先明确两套分类体系的边界：
 
@@ -129,7 +128,7 @@ Tailscale 并非 T3 Code 的组成部分，而是一款独立的组网工具；T
 **注册与安装步骤：**
 
 1. **账号注册**：直接使用 GitHub / Google / Microsoft 账号登录，或通过邮箱注册。免费版支持 3 用户、100 台设备，个人使用无需付费。
-2. **家中机器（以 macOS 为例）**：访问 [tailscale.com/download](https://tailscale.com/download) 下载桌面客户端，或通过 Homebrew 执行 `brew install --cask tailscale`，安装后登录上述账号。
+2. **家中机器（以 macOS 为例）**：访问 tailscale.com/download 下载桌面客户端，或通过 Homebrew 执行 `brew install --cask tailscale`，安装后登录上述账号。
 3. **移动设备（iOS / Android）**：在 App Store 或 Google Play 搜索「Tailscale」安装，登录与家中机器**相同的账号**——两台设备登录同一账号后，将自动加入同一 tailnet。
 
 **稳定性和维护：**
@@ -164,31 +163,80 @@ Tailscale 并非 T3 Code 的组成部分，而是一款独立的组网工具；T
 
 前提：
 
-- 家中机器和手机都安装 [Tailscale](https://tailscale.com/)，用同一个账号登录，加入同一个 tailnet
-- 手机装好 T3 Code App（App Store 或 Google Play 搜索 T3 Code）
-- 家中机器已安装并认证至少一个 agent（见上面的「基础安装」）
+- 家中机器和手机均安装 Tailscale，使用同一账号登录并加入同一 tailnet
+- 手机端安装 T3 Code App（App Store 或 Google Play 搜索「T3 Code」）——此为移动端必备，无 CLI 替代
+- 家中机器已安装并认证至少一个 Agent 提供方（参见上文「基础安装」）
+- 家中机器运行 T3 Code 后端，可选用**桌面 App** 或 **CLI 无界面服务器（Headless Server）** 两种路径，下文对两者做横向对比并给出 CLI 安装说明
 
-**家中机器端，二选一：**
+**家中机器：桌面 App vs CLI 横向对比**
 
-- 服务端还没启动：启动并发布服务，一步到位（手机 App 和网页版都能连）：
+T3 Code 在服务端提供两种形态，手机端连接体验完全一致，差异集中在管理、部署和维护层面：
+
+| 维度 | 桌面 App | CLI（`npx t3 serve` / `t3 auth`） |
+|------|----------|-----------------------------------|
+| 安装方式 | 系统包管理器（`winget` / `brew cask` / `yay`）或 GitHub Releases 安装包 | 无需单独安装，通过 `npx t3@latest …` 免安装执行；或 `npm i -g t3` 全局安装（要求 Node.js `^22.16 \|\| ^23.11 \|\| >=24.10`） |
+| 适合场景 | 日常使用、本机有人值守、偏好 GUI 管理 | 远程机器 / 无图形界面主机、希望通过 `systemd` 或 `launchd` 托管、SSH 登录的服务器 |
+| 网络可达 | 在「Settings → Connections」中手动开启「Network access」及 Tailscale HTTPS，重启后生效 | 启动参数显式指定：`--tailscale-serve` 或 `--host "$(tailscale ip -4)"` |
+| 配对二维码 | 界面内「Create Link」或主界面 QR | `serve` 启动时在终端直接打印配对 QR 与链接；运行中服务需补发配对时，通过桌面 App「Create Link」图形化界面，或用 `t3 auth` 子命令在 CLI 中吊销 / 签发会话凭据 |
+| 后台保活 | 桌面应用窗口或托盘存活即可 | 需自行处理（`tmux` / `screen`、`nohup`、或系统级服务）——Linux 官方文档另提供 `background-service.md` 指南 |
+| 版本同步 | 桌面 App 自升级或包管理器升级 | `npx t3@latest` 每次取最新版；全局安装需手动 `npm up -g t3`；版本与手机端 / Web 端不一致时会给出连接提示 |
+| 配置持久化 | 图形化界面保存默认端点、偏好、远程环境列表 | `~/.t3` 目录承载配对会话、环境、密钥，与桌面 App 共用 |
+
+**如何选择：**
+
+- **日常本机 + 有人值守 → 桌面 App**：一键开关网络访问、图形化列出端点、配合 SSH 启动流程管理远程环境，综合门槛最低。
+- **服务器 / 无头机 / SSH 登录机 → CLI**：一条 `npx t3 serve …` 即可，与桌面 App 使用相同的后端代码和配对协议，手机端体验无差别。
+- **临时救急、两者都可 → CLI 免安装**：无需下载安装包，满足 Node 版本要求即可跑起来。
+
+**家中机器 CLI 安装与启动步骤（可选路径）：**
+
+若选择 CLI 而非桌面 App，按以下步骤准备服务端：
+
+1. 确认 Node.js 版本：`node --version` 需满足 `^22.16 || ^23.11 || >=24.10`（T3 Code 服务端 `engines.node` 硬要求）。未达标的通过 nvm / mise / fnm 等版本管理器切换。
+2. 免安装执行或全局安装，二选一：
+   ```bash
+   # 免安装（推荐，始终获取最新版）
+   npx t3@latest --help
+
+   # 或全局安装（之后可直接用 t3 命令）
+   npm install --global t3
+   t3 --help
+   ```
+3. 长期后台运行时，建议通过 `tmux` / `screen` 或系统服务托管；Linux 用户可参阅仓库文档 Running T3 Code in the Background。
+
+**家中机器端启动与配对，二选一：**
+
+- 服务端尚未启动：启动并发布服务（手机 App 与网页版均可用）：
   ```bash
   npx t3 serve --tailscale-serve
   ```
-  只想让手机 App 连、不打算用网页版的话，绑 tailnet IP 更省：
+  仅需手机 App、不打算用 `https://app.t3.codes` 的话，绑定 tailnet IP 更为轻量，且不受浏览器混合内容规则限制：
   ```bash
   npx t3 serve --host "$(tailscale ip -4)"
   ```
-  这条只监听 tailnet 私有地址，不依赖 Tailscale Serve，也就绕开了下面「常见问题」里那个 Serve 未开启的坑——手机 App 连纯 HTTP 不受浏览器混合内容限制，所以完全够用。
-- 服务端已经在跑：不用重启，直接签发配对二维码：
-  ```bash
-  npx t3 pair --tailscale
-  ```
+  该形式仅监听 tailnet 私有地址，不依赖 Tailscale Serve，也绕开了下文「常见问题」中 tailnet 层面未授权 Serve 功能的坑。
+- 服务端已经在运行，需要为新设备补发配对二维码时，按实际部署方式选择：
+  - **桌面 App 启动的服务**：在主界面或「Settings → Connections」点击「Create Link」，图形化生成配对链接或二维码。
+  - **CLI `serve` 启动的服务**：直接使用 `t3 pair` 子命令补发配对二维码：
+    ```bash
+    npx t3 pair --tailscale
+    ```
+    该命令会通过 Tailscale Serve 发布 HTTPS 端点并打印配对二维码。如需签发纯 CLI 环境的额外访问凭据（如查看活跃配对、吊销旧凭据），使用 `t3 auth pairing` / `t3 auth session` 子命令，详细用法见 `t3 auth --help`。
 
-`--tailscale-serve` 会自动配置 Tailscale Serve 的 HTTPS 映射，把服务发布到 `https://<机器名>.<tailnet名>.ts.net/`。这个映射一直保留，直到你手动关掉：
+`--tailscale-serve` 会自动配置 Tailscale Serve 的 HTTPS 映射，将服务发布至 `https://<机器名>.<tailnet名>.ts.net/`。该映射持续生效，直到手动关闭：
 
 ```bash
 tailscale serve --https=443 off
 ```
+
+**CLI 特有注意事项：**
+
+- 版本漂移：`npx t3 serve` 在没有 `@latest` 时可能使用本地缓存的旧版。出现「版本不一致」告警时，改用 `npx t3@latest serve …` 或运行全局升级命令。
+- SSH 启动流程：它是桌面 App 独占功能，CLI 不支持。反向使用 CLI 启动远端、再在桌面 App「Add Environment」手动填入配对 URL 同样可行。
+- 非交互 shell 的 `node` 解析：若通过 `systemd` / cron / 脚本拉起 CLI，务必用与 T3 要求一致的绝对路径或版本管理器激活命令。官方 `remote-access.md` 中提供了一条故障排查命令：
+  ```bash
+  ssh user@example.com 'sh -lc "command -v node && node --version"'
+  ```
 
 **手机端：**
 
@@ -262,11 +310,25 @@ https://app.t3.codes/pair?host=https://backend.example.com:3773#token=配对码
 
 ## 四、常见问题 FAQ
 
+**手机点「Add Environment」报错 MobileSecureStorageError**
+
+错误全文通常为：`Could not load the local connection catalog: MobileSecureStorageError: Mobile secure storage operation read failed for key t3code.connection-catalog.v1`。
+
+这是移动端安全存储（iOS Keychain / Android Keystore）在读取连接目录时的初始化或读取失败，常见于首次安装、系统升级、换机迁移、或长期未重启后存储状态脏掉的情况。按排查优先级尝试以下步骤：
+
+1. **强制退出 App 后重启**：上滑关闭 T3 Code（iOS 双击 Home / 上滑至 App 切换器；Android 多任务键滑出），静置 10 秒后重新打开 App 再尝试。
+2. **确认锁屏安全已启用**：iOS 必须设置锁屏密码（面容 ID / Touch ID / 六位密码），Android 必须设置 PIN / 图案 / 密码——安全存储依赖锁屏保护链，无密码设备会被拒绝写入。
+3. **卸载后重装 App**：最彻底的恢复方式。若旧版升级或迁移导致本地目录损坏，卸载会清除损坏的安全条目。桌面 App / CLI 服务端的配对信息不受影响，重装后重新扫描配对二维码即可。
+4. **iOS 附加步骤**：前往「设置 → T3 Code」，确认「面容 ID 与密码」项下权限未被关闭；再检查「设置 → 密码 → 钥匙串」是否已启用 iCloud Keychain（关闭时本地 Keychain 条目偶发性只读）。
+5. **Android 附加步骤**：在系统「设置 → 应用 → T3 Code → 权限」中确认「生物识别 / 安全存储」未被拒绝；MIUI、ColorOS、One UI 等厂商 ROM 如开启「应用加密」需允许 T3 Code 访问加密存储区域。
+
+若以上步骤均无效，可在桌面或 CLI 端通过 `t3 auth session list` 先确认服务端会话存在，再用手机端 App 内「设置 → 清除本地数据」重置状态后重新扫码。
+
 **Agent 列表为空或显示未认证**
 确认 agent 已在本机安装并完成认证。依次运行 `claude auth login`、`codex login` 等命令，成功后重启服务端刷新状态。
 
 **手机无法连接到服务器**
-先确认手机 Tailscale 已连接且和家中机器在同一个 tailnet。然后按[三、快速上手](#实战手机从外网连家中机器)的 Tailscale 方案操作，用 `npx t3 pair --tailscale` 生成二维码扫描配对，不要手输 IP。没有 Tailscale 时改用 `t3 connect` 中继隧道。桌面 App 用户也可以走 Settings → Connections 的图形化配对流程，或直接用 Create Link 生成配对链接。
+先确认手机 Tailscale 已连接且与家中机器处于同一 tailnet。随后按上文「方案一：Tailscale（首选）」的流程操作：首次配对时在服务端用 `npx t3 serve --tailscale-serve`（或 `--host "$(tailscale ip -4)"`）启动并打印 QR，扫描配对，避免手输 IP 引入混合内容与端口错误；若服务端已在运行，桌面 App 用户直接走「Settings → Connections」中的图形化配对，或使用「Create Link」生成配对链接；CLI 用户直接用 `npx t3 pair --tailscale` 补发二维码。未部署 Tailscale 时改用 `t3 connect` 建立中继隧道。
 
 **WebSocket 频繁断连**
 T3 Code 的实时通道依赖 WebSocket，弱网可能断连。优先在稳定网络下使用，或换 SSH 隧道。Linux 上以 systemd 后台服务运行时，用 `npx t3@latest service status` 检查服务状态，`npx t3@latest service update` 修复。
@@ -283,31 +345,29 @@ T3 Code 的实时通道依赖 WebSocket，弱网可能断连。优先在稳定�
 **如何反馈问题**
 GitHub Issues 提交 bug（不保证修复速度），Discord 社区讨论。项目明确「mostly not accepting contributions yet」，小修复可能被考虑，大功能不要抱期待。
 
-## 五、适用边界
+## 五、适用边界与采用建议
 
-**适合**：
+**适合的人**：
 
 - 已在用 Claude Code / Codex / Cursor 的开发者，想把监控从终端挪到手机
-- 需要跨设备接管编码 agent 的场景（公司机器跑任务，回家继续盯）
-- 同时用多个 agent 后端、想要一个统一入口的人
+- 需要跨设备接管编码 Agent 的场景（公司机器跑任务，回家继续盯）
+- 同时用多个 Agent 后端、想要一个统一入口的人
 - 想要线程自动分支 + 一键 PR 的开发者
 
-**不适合**：
+**不适合的人**：
 
-- 没有 agent 订阅的用户——T3 Code 本身不产生任何智能
+- 没有 Agent 订阅的用户——T3 Code 本身不产生任何智能
 - 需要深度定制或大功能贡献的团队——README 明确「mostly not accepting contributions yet」，目前只收小修复
 - 对 Electron 体积和内存敏感的场景
 - 弱网下对连接稳定性有苛刻要求的场景（需自行验证）
 
-## 六、采用建议
+**如何开始**：
 
-个人开发者如果已经在用 Claude Code 或 Codex，从 `npx t3@latest` 开始。远程场景优先按上文快速上手的 Tailscale 方案搭：两端装好、扫码配对，外网连回家机十分钟内就能验证是否可行，跑通了再决定深入投入。如果只在本地用终端，T3 Code 的价值有限——它的溢价全在「离开电脑」这个动作上。
+- **个人开发者**：已装 Claude Code 或 Codex 的，从 `npx t3@latest connect` 或 `serve` 起步。远程场景按前文「方案一：Tailscale」验证一次流程，跑通了再决定投入。仅在本地终端使用时溢价有限，其核心价值在于脱离主机的操控面。
+- **小团队**：若有人专门维护 Agent 机器，远程控制与 Git 工作流自动化可降低「谁在哪台 Agent 上跑了什么」的同步成本；但社区现阶段只接小修复，遇到特定 Bug 需要自行准备规避路径。
+- **正评估 Agent 编排方案**：T3 Code 与 Superset 建议并列评估——前者见长于远程与多 Agent 统一入口，后者见长于并行规模与编辑器形态，选哪个取决于当前最稀缺的能力。
 
-小团队有人专门负责 agent 机器的话，远程控制和 Git 工作流自动化能省掉「谁在哪个 agent 上跑了什么」的沟通损耗。但项目不收大贡献，遇到特定 bug 别指望能快速修掉，要有自己绕路的准备。
-
-正在评估 agent 编排方案的话，同时看 T3 Code 和 Superset：前者强在远程和多 agent 统一入口，后者强在并行规模和编辑器形态，选哪个看你更缺哪种。
-
-## 七、系统地图
+## 六、系统地图
 
 T3 Code 的架构可以压缩成一张图：客户端通过一条 WebSocket 连到服务端，服务端通过驱动适配器指挥各个 agent CLI（命令行工具）。这张图里没有「远程模式」和「本地模式」之分——客户端在哪，不影响服务端怎么跑。
 
@@ -330,9 +390,9 @@ graph TB
 
 客户端和服务端之间的契约，是 Effect RPC 组，不是自造的推送协议。`rpc.ts` 声明 `WS_METHODS` 并组装 `WsRpcGroup`，每个成员要么是 unary（单次调用）要么是服务端流（`stream: true`）。`orchestration.subscribeThread`、`orchestration.subscribeShell`、`subscribeServerConfig`、`terminal.attach` 这些流式成员，取代了原来那种广播推送总线：客户端只订阅自己需要的，服务端只在对应订阅上推送。想实时看某条线程的 diff，就订阅它；不想看 shell，就不订阅。
 
-## 八、核心机制
+## 七、核心机制
 
-### 8.1 编排：事件溯源，不靠轮询
+### 7.1 编排：事件溯源，不靠轮询
 
 T3 Code 的服务端不直接改应用状态。客户端派发类型化命令，编排引擎把命令变成持久化事件，再由投影器推导出读模型——标准的 event sourcing 结构。命令的入口是唯一一个 RPC 方法 `orchestration.dispatchCommand`，客户端永远不会直接调某个 provider。
 
@@ -342,7 +402,7 @@ T3 Code 的服务端不直接改应用状态。客户端派发类型化命令，
 
 为什么绕这么大一圈？因为 agent 会话天然是长时、异步、跨设备的。轮询 git 状态或定时器猜进度，一旦服务端重启或网络抖动，状态就对不上了。事件溯源让「发生了什么」成为唯一事实来源，任何客户端重连后都能从日志重建视图。
 
-### 8.2 队列：DrainableWorker 与确定性等待
+### 7.2 队列：DrainableWorker 与确定性等待
 
 长时间运行的后续工作（provider 事件归一化、命令反应、检查点处理）跑在基于队列的工作器里。`DrainableWorker` 把事务性队列和事务性的未完成计数配对：入队即原子递增，处理完成必递减，`drain` 一直重试到计数归零。
 
@@ -350,7 +410,7 @@ T3 Code 的服务端不直接改应用状态。客户端派发类型化命令，
 
 `ProviderRuntimeIngestion` 里还有一个取舍：assistant 文本默认走 buffered 交付，不逐字流式推送。缓冲上限是 24,000 字符，一旦某次追加会越过这个值，就把整段累积文本作为单个 delta 吐出去。缓冲并非死等到 turn 结束才清空——在交互边界（审批请求弹出、需要用户输入）时也会整体冲刷。客户端收到的是完整的、可读的块，代价是长回复会有一瞬间的停顿。对远程控制场景，手机上出现一段完整文字，比逐字蹦字更实用。
 
-### 8.3 Provider：五套驱动，一个抽象
+### 7.3 Provider：五套驱动，一个抽象
 
 服务端内置五个驱动：Codex、Claude、Cursor、Grok、OpenCode。每个驱动声明自己的类型、配置 schema（模式），并创建适配器；两个注册表把「配置的实例」和「活的进程」分开管理——`ProviderInstanceRegistry` 管实例，`ProviderAdapterRegistry` 把实例解析成活的适配器，`ProviderService` 路由会话和 turn 操作时根本不知道背后是哪个 agent。
 
@@ -358,11 +418,11 @@ T3 Code 的服务端不直接改应用状态。客户端派发类型化命令，
 
 加一个新 agent 的成本被压得很低：写一个 driver 加一个 adapter，注册进 `BUILT_IN_DRIVERS`，编排层、契约层、客户端一行都不用改。
 
-### 8.4 检查点：每一次 turn 都有快照
+### 7.4 检查点：每一次 turn 都有快照
 
 每个 turn 都被工作区检查点括起来，diff 和回滚因此是精确的。`CheckpointStore` 通过 VCS 驱动把状态存成隐藏的 Git ref——`VcsCheckpointOps` 是存储契约，Git 是当前唯一实现。`CheckpointReactor` 协调基线捕获、turn 完成捕获、diff 投影，以及工作区和 provider 会话的双重回滚；`CheckpointDiffQuery` 负责回答单次 turn 或整条线程的 diff 请求。你在手机上看到的每一处 diff，背后都是一次真实的 Git 快照对比。
 
-## 九、远程访问：四种连接目标
+## 八、远程访问：四种连接目标
 
 T3 Code 的远程模型很简单：远程只存在于连接层，运行时从不拆分。客户端永远只认「一条到某个 T3 server 的 WebSocket」，至于这条 WebSocket 是怎么建立的，有四种目标。容易误判的是 Tailscale：它不是第五种目标类型，只是走普通 bearer 配对路径接入的端点提供者，接不接都不改核心模型。
 
@@ -373,15 +433,15 @@ T3 Code 的远程模型很简单：远程只存在于连接层，运行时从不
 | Relay 中继 | `t3 connect` 托管隧道，穿透 NAT（网络地址转换） |
 | SSH | 桌面应用托管 SSH 远程环境 |
 
-局域网直连是最简单的方式，手机和服务器在同一个子网即可。服务器在 NAT 后面或要跨公网访问时，走 Relay 中继隧道——注意中继 Worker 只交换凭据和托管端点，应用流量走的是 Cloudflare 隧道主机名，不经过中继本身。Tailscale 用户可以直接用 `npx t3 pair --tailscale` 把服务发布到 tailnet 的 HTTPS 地址，那个映射会一直保留到你手动关掉 `tailscale serve --https=443 off`。桌面应用还能通过 SSH 在远程机器上启动或复用 T3 server，再把端口转发回来。
+局域网直连是最简单的方式，手机和服务器在同一个子网即可。服务器在 NAT 后面或要跨公网访问时，走 Relay 中继隧道——注意中继 Worker 只交换凭据和托管端点，应用流量走的是 Cloudflare 隧道主机名，不经过中继本身。Tailscale 用户可通过 `npx t3 serve --tailscale-serve` 或配合 `--host "$(tailscale ip -4)"` 将服务发布到 tailnet 的 HTTPS 地址或私有地址；该 HTTPS 映射会持续保留，直到手动执行 `tailscale serve --https=443 off` 关闭。桌面应用还能通过 SSH 在远程机器上启动或复用 T3 server，再把端口转发回来。
 
-配对流程不走传统的长效 token（令牌）登录：`t3 serve`（或对运行中的服务器执行 `t3 pair`）签发一次性配对 token，远程设备用它交换会话，之后访问全部基于会话，不需要长期秘密。桌面应用里还能用「Create Link」生成一个配对链接，直接分享给另一台设备。WebSocket 的认证票据独立签发，默认五分钟过期，且每个 RPC 方法还各自校验权限范围——拿到一条合法连接不代表能调所有方法。会话管理单独交给 `t3 auth`：签发额外凭据、查看活跃会话、吊销不再信任的配对，都在这一条命令下完成。
+配对流程不走传统的长效 token（令牌）登录：`t3 serve` 在启动阶段签发一次性配对 token，远程设备用它交换会话，之后访问全部基于会话，不需要长期秘密。已在运行中的服务如需新增配对，桌面应用可直接使用「Create Link」生成配对链接或二维码；纯 CLI 场景则由 `t3 auth` 统一处理签发新凭据、查看活跃会话、吊销不再信任的配对等操作。WebSocket 的认证票据独立签发，默认五分钟过期，且每个 RPC 方法还各自校验权限范围——拿到一条合法连接不代表能调所有方法。
 
 托管配对（app.t3.codes）只是个客户端便利，不是中继。它不代理 HTTP 或 WebSocket 流量，浏览器直接连你给的后端地址，配对 token 放在 URL hash（哈希）里，连托管页都看不到。前提是后端必须能被浏览器直接访问——HTTPS 页面只能连 HTTPS/WSS 后端，纯 HTTP 的局域网地址还得走桌面或 CLI 的直连配对。
 
 客户端和服务端版本不一致时，连接层不会静默失败：环境描述符携带运行中的服务端版本，UI 据此显示对应的同步操作，服务端也支持更新回滚。远程环境在客户端升级期间保持在线，断线重连由连接管理器统一处理，和普通网络抖动走同一条恢复路径。
 
-## 十、示例：一次 bug 修复如何流过系统
+## 九、示例：一次 bug 修复如何流过系统
 
 最常见的场景：你在手机上看到 CI 报了一个 TypeScript 类型错误，想远程让 agent 修掉。
 
@@ -401,11 +461,11 @@ T3 Code 的远程模型很简单：远程只存在于连接层，运行时从不
 
 整个过程里，手机上流动的只有指令和状态；代码执行、git 操作、文件变更全部发生在服务器上。
 
-## 十一、学习目标
+## 十、学习目标
 
 读完这篇文章，四个问题应该能回答：T3 Code 在架构上如何实现「远程只存在于连接层」；事件溯源为什么比轮询更适合 agent 会话；五个内置驱动如何做到增删 agent 不动编排层；四种连接目标分别在什么网络条件下使用。能复述「客户端不执行任何 agent 工作」这条边界，说明理解到位了。
 
-## 十二、自测题
+## 十一、自测题
 
 1. 为什么 T3 Code 把 provider 进程、git 操作、文件读取全部放在服务端，而不是客户端？
 2. 事件溯源中，`decider` 为什么要保持纯函数、无副作用？
@@ -413,16 +473,16 @@ T3 Code 的远程模型很简单：远程只存在于连接层，运行时从不
 4. Relay 中继和传统反向代理有什么区别？流量最终走哪条路？
 5. 为什么说 Tailscale 不是第五种连接目标？它接入的路径是什么？
 
-答案都在正文的机制段落里，答不上来的小节回去重读对应章节。
+答案分散在六至九章，答不上来的回去重读对应章节。
 
-## 十三、进阶方向
+## 十二、进阶方向
 
-- 读 [架构文档](https://github.com/pingdotgg/t3code/blob/main/docs/internals/overview.md)，关注 `OrchestrationEngine` 的命令/事件循环和 `DrainableWorker` 的队列语义
-- 读 [providers.md](https://github.com/pingdotgg/t3code/blob/main/docs/internals/providers.md)，理解 driver + adapter 的分工，试着自己为某个 CLI agent 写一个最小驱动
+- 读 架构文档，关注 `OrchestrationEngine` 的命令/事件循环和 `DrainableWorker` 的队列语义
+- 读 providers.md，理解 driver + adapter 的分工，试着自己为某个 CLI agent 写一个最小驱动
 - 动手搭一条 SSH 远程环境，观察配对票据的签发与 WebSocket 的鉴权流程，把「连接层 vs 运行时」的抽象亲手验证一遍
-- 读 [remote.md](https://github.com/pingdotgg/t3code/blob/main/docs/internals/remote.md)，对照四种目标类型和端点提供者模型，理解「访问方式」和「启动方式」为什么是两个独立概念
+- 读 remote.md，对照四种目标类型和端点提供者模型，理解「访问方式」和「启动方式」为什么是两个独立概念
 
-## 十四、源码开发：从源码跑起来，自己改
+## 十三、源码开发：从源码跑起来，自己改
 
 如果你已经装了 agent、跑过 `npx t3@latest`，接下来顺理成章想从源码跑起来，边跑边改。这一节给一套能走通的开发工作流。先说明一点：T3 Code 的构建链是 Vite+（命令叫 `vp`），不是 `pnpm`/`npm` 直接跑，第一次接触容易懵，按下面顺序走就行。以下命令全部来自官方 `docs/internals/scripts.md` 和 `workspace-layout.md`。
 
@@ -492,7 +552,7 @@ vp run start              # 跑生产 server，托管构建好的 web 静态文�
 
 **从哪下手改**
 
-和「八、核心机制」对应着读：想动编排逻辑看 `apps/server/src/orchestration/`；想加 provider 看 `apps/server/src/provider/` 的 driver + adapter；改契约（RPC、命令、事件）在 `packages/contracts/`。仓库里 `docs/internals/` 的 overview、providers、remote 三篇和本文「学习篇」一一对应，边读边改最快。改完跑 `vp run test`，异步边界正好用 DrainableWorker 的 `drain` 等确定性点（见 8.2），不用 sleep 猜进度。
+和「七、核心机制」对应着读：想动编排逻辑看 `apps/server/src/orchestration/`；想加 provider 看 `apps/server/src/provider/` 的 driver + adapter；改契约（RPC、命令、事件）在 `packages/contracts/`。仓库里 `docs/internals/` 的 overview、providers、remote 三篇和本文「学习篇」一一对应，边读边改最快。改完跑 `vp run test`，异步边界正好用 DrainableWorker 的 `drain` 等确定性点（见 7.2），不用 sleep 猜进度。
 
 **几个易踩的坑**
 
@@ -500,12 +560,12 @@ vp run start              # 跑生产 server，托管构建好的 web 静态文�
 - provider 的 CLI 必须能被 server 找到：要么在 `PATH` 里，要么在 Settings → 该 provider → Binary path 里显式指定。装了版本管理器把 CLI 挡在 PATH 外的，多半要走显式路径。
 - Cursor 的常见坑：二进制叫 `cursor-agent`，但认证命令是 `agent login`，别搞混。
 
-## 十五、参考资料
+## 十四、参考资料
 
-- 仓库：[github.com/pingdotgg/t3code](https://github.com/pingdotgg/t3code)
-- 架构总览：[docs/internals/overview.md](https://github.com/pingdotgg/t3code/blob/main/docs/internals/overview.md)
-- Provider 机制：[docs/internals/providers.md](https://github.com/pingdotgg/t3code/blob/main/docs/internals/providers.md)
-- 远程架构：[docs/internals/remote.md](https://github.com/pingdotgg/t3code/blob/main/docs/internals/remote.md)
-- 远程访问指南：[docs/user/remote-access.md](https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md)
-- 资源遥测：[docs/internals/resource-telemetry.md](https://github.com/pingdotgg/t3code/blob/main/docs/internals/resource-telemetry.md)
-- Web App：[app.t3.codes](https://app.t3.codes)
+- 仓库：github.com/pingdotgg/t3code
+- 架构总览：docs/internals/overview.md
+- Provider 机制：docs/internals/providers.md
+- 远程架构：docs/internals/remote.md
+- 远程访问指南：docs/user/remote-access.md
+- 资源遥测：docs/internals/resource-telemetry.md
+- Web App：app.t3.codes

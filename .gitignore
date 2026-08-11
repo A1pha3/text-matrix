@@ -88,3 +88,5 @@ image-cards/
 *.log
 article-scoring-progress.md
 
+.chrome-profile
+

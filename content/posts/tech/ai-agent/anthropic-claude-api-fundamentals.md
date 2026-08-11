@@ -2,9 +2,10 @@
 title: "Claude API基础专题（一）：认证、请求与会话管理"
 date: "2026-03-25T09:30:00+08:00"
 slug: "claude-api-authentication-requests-session"
+github_repo: "anthropics/anthropic-sdk-python"
 aliases:
   - /posts/tech/claude-api-authentication-requests-session/
-description: "Claude API的认证方式（API Key与Bearer Token）、HTTP请求构建、会话管理机制与结构化输出实现。"
+description: "Claude Messages API 的工程上手：API 密钥管理与 SDK 初始化、消息请求构建、响应结构解析、多轮会话管理、系统提示词与结构化输出。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "API", "Python"]
@@ -12,7 +13,7 @@ tags: ["Claude", "API", "Python"]
 
 # Claude API 基础专题（一）：认证、请求与会话管理
 
-Claude Messages API 的入口是一个 `messages.create()` 调用。本文从工程实践角度梳理认证、密钥管理、多轮对话、系统提示词和结构化输出等基础问题，代码基于 `anthropic` Python SDK，模型以 `claude-sonnet-4-20250514` 为例。
+Claude Messages API 的入口是一个 `messages.create()` 调用。本文从工程实践角度梳理认证、密钥管理、多轮对话、系统提示词和结构化输出等基础问题，代码基于 `anthropic` Python SDK，模型以 `claude-sonnet-4-6` 为例。
 
 ---
 
@@ -114,7 +115,7 @@ class AnthropicClient:
 # 使用单例模式
 anthropic = AnthropicClient()
 response = anthropic.client.messages.create(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     messages=[{"role": "user", "content": "Hello"}]
 )
@@ -139,7 +140,7 @@ import os
 client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 message = client.messages.create(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     messages=[
         {
@@ -156,19 +157,23 @@ print(message.content[0].text)
 
 **`model`**
 
-三个模型按能力和成本递增排序：
+三个模型按能力和成本递增排序（价格为每百万 token，输入/输出）：
 
-- `claude-haiku-3-20250514`：延迟最低，适合实时聊天和简单问答
-- `claude-sonnet-4-20250514`：平衡之选，日常对话、写作、分析的主力模型
-- `claude-opus-4-20250514`：最强能力，适合复杂分析和代码生成
+| 模型 | 定位 | 输入 | 输出 |
+|------|------|------|------|
+| `claude-haiku-4-5` | 延迟最低，适合实时聊天、简单问答、大批量任务 | $1 | $5 |
+| `claude-sonnet-4-6` | 平衡之选，日常对话、写作、分析的主力模型 | $3 | $15 |
+| `claude-opus-4-6` | 最强能力，适合复杂推理和代码生成 | $5 | $25 |
+
+模型名随版本迭代更新，本文示例以 `claude-sonnet-4-6` 为准。选模型先看任务对延迟和能力的敏感度：实时交互用 Haiku，兼顾性能与成本用 Sonnet，复杂推理再上 Opus。
 
 **`max_tokens`**
 
-控制单次请求最多生成的 token 数。1 token 约等于 0.75 个英文单词或 1-2 个中文字符。按输出长度预期设置：短回答 100-200，几段话 500-1000，完整文章 2000-4096。
+控制单次请求最多生成的 token（词元）数。1 token 约等于 0.75 个英文单词或 1-2 个中文字符。按输出长度预期设置：短回答 100-200，几段话 500-1000，完整文章 2000-4096。
 
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=4096,
     messages=[{"role": "user", "content": "写一篇2000字的文章..."}]
 )
@@ -195,7 +200,7 @@ import os
 client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 with client.messages.stream(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     messages=[{"role": "user", "content": "讲一个关于程序员的笑话"}]
 ) as stream:
@@ -214,7 +219,7 @@ with client.messages.stream(
 
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     messages=[{"role": "user", "content": "解释光合作用"}]
 )
@@ -223,7 +228,7 @@ print(message.id)          # msg_xxxxx
 print(message.type)        # "message"
 print(message.role)        # "assistant"
 print(message.content)     # [ContentBlock(text='...')]
-print(message.model)       # "claude-sonnet-4-20250514"
+print(message.model)       # "claude-sonnet-4-6"
 print(message.stop_reason) # "end_turn"
 print(message.stop_sequence) # None
 print(message.usage)       # Usage(input_tokens=xx, output_tokens=xx)
@@ -252,17 +257,16 @@ elif message.stop_reason == "end_turn":
 
 ### Token使用量
 
+`usage` 给出本次请求消耗的输入和输出 token（词元），是计算成本、优化提示词长度的依据。
+
 ```python
 print(f"输入token: {message.usage.input_tokens}")
 print(f"输出token: {message.usage.output_tokens}")
 print(f"总token: {message.usage.input_tokens + message.usage.output_tokens}")
 
-# 计算成本（以 Sonnet 4 为例）
-input_cost_per_1k = 0.003
-output_cost_per_1k = 0.015
-
-input_cost = (message.usage.input_tokens / 1000) * input_cost_per_1k
-output_cost = (message.usage.output_tokens / 1000) * output_cost_per_1k
+# 计算成本（以 Sonnet 4.6 为例：输入 $3/M，输出 $15/M）
+input_cost = (message.usage.input_tokens / 1_000_000) * 3
+output_cost = (message.usage.output_tokens / 1_000_000) * 15
 
 print(f"本次请求成本: ${input_cost + output_cost:.6f}")
 ```
@@ -277,7 +281,7 @@ client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 try:
     response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=1024,
         messages=[{"role": "user", "content": "Hello"}]
     )
@@ -301,11 +305,15 @@ Claude API 本身是无状态的——每次 `messages.create()` 调用都是独
 
 ```python
 response1 = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=1024,
     messages=[{"role": "user", "content": "我的狗叫豆豆"}]
 )
 print(response1.content[0].text)
 
 response2 = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=1024,
     messages=[{"role": "user", "content": "它喜欢吃什么？"}]
 )
 # Claude不记得"豆豆"
@@ -322,7 +330,7 @@ while True:
     conversation_history.append({"role": "user", "content": user_input})
 
     response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=1024,
         messages=conversation_history
     )
@@ -370,7 +378,7 @@ def summarize_old_messages(messages, summary_turns=5):
 摘要："""
 
     summary_response = client.messages.create(
-        model="claude-haiku-3-20250514",
+        model="claude-haiku-4-5",
         max_tokens=500,
         messages=[{"role": "user", "content": summary_prompt}]
     )
@@ -435,7 +443,7 @@ messages = manager.get_messages()
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1024,
     system="你是一位专业的产品经理，用词简洁专业。",
     messages=[{"role": "user", "content": "我应该做什么产品？"}]
@@ -470,7 +478,7 @@ system = """你是一个数据分析师。
 [详细的分析内容]
 
 ## 建议
-[基于分析的 actionable 建议]
+[基于分析的可执行建议]
 
 ## 数据来源
 [使用的数据]
@@ -516,7 +524,7 @@ def test_system_prompt(system_prompt, test_cases):
     """测试系统提示词"""
     for i, test in enumerate(test_cases):
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6",
             max_tokens=500,
             system=system_prompt,
             messages=[{"role": "user", "content": test}]
@@ -530,13 +538,15 @@ def test_system_prompt(system_prompt, test_cases):
 
 ## 1.6 结构化输出
 
-需要 AI 返回 JSON 等特定格式数据时，有三种方案，可靠性从低到高。
+需要 AI 返回 JSON 等特定格式数据时，有几种方案，可靠性从低到高。只有结构化输出（方法 2、3）能保证输出格式合法，其余方案都要靠自己的代码兜底。
 
 ### 方法 1：提示词中要求 JSON
 
+在提示词里描述期望的 JSON 结构，再手动解析返回文本。实现最直接，但 Claude 可能包裹代码块、加多余文本、漏字段或类型不对，需要自己清洗和重试。
+
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1000,
     messages=[{
         "role": "user",
@@ -556,83 +566,103 @@ data = json.loads(text.strip())
 print(data)
 ```
 
-### 方法 2：使用 response_format 参数
+### 方法 2：结构化输出（output_config.format）
+
+用 `output_config.format` 声明 JSON Schema，Claude 通过受限解码保证输出是合法 JSON 且字段类型、必填项符合 schema，不再出现 `json.loads` 报错或字段缺失。
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-20250514",
+    model="claude-sonnet-4-6",
     max_tokens=1000,
     messages=[{
         "role": "user",
         "content": "返回3个编程语言的列表"
     }],
-    response_format={
-        "type": "json_object",
-        "json_schema": {
-            "type": "object",
-            "properties": {
-                "languages": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {"type": "string"},
-                            "year": {"type": "integer"},
-                            "paradigm": {"type": "string"}
+    output_config={
+        "format": {
+            "type": "json_schema",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "languages": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "year": {"type": "integer"},
+                                "paradigm": {"type": "string"}
+                            }
                         }
                     }
-                }
+                },
+                "required": ["languages"],
+                "additionalProperties": False
             }
         }
     }
 )
 
+import json
 data = json.loads(response.content[0].text)
 print(data)
 ```
 
-### 方法 3：工具调用（最可靠）
+几个要点：
+
+- 返回的 JSON 齐全时，直接把 `response.content[0].text` 交给 `json.loads` 即可，无需再清洗。
+- 结构化输出保证的是**格式合规，不保证内容正确**。字段类型、必填项一定符合 schema，但值是否合理、事实是否准确仍要自己判断。
+- 首次使用某个 schema 会有一次额外的语法编译延迟，之后会缓存约 24 小时，第二次起明显变快。
+- schema 里 `required` 的字段会排在 `optional` 之前输出，若字段顺序对下游重要，把字段都设为必填或在解析时按关键词取值。
+
+### 方法 3：Pydantic + messages.parse()
+
+不写原始 JSON Schema，用 Pydantic 模型声明结构，配合 SDK 的 `client.messages.parse()`，返回的 `response.parsed_output` 直接是校验过的模型实例。
 
 ```python
-tools = [{
-    "name": "return_data",
-    "description": "返回结构化数据",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "result": {
-                "type": "string",
-                "description": "处理结果"
-            },
-            "status": {
-                "type": "string",
-                "enum": ["success", "error"],
-                "description": "处理状态"
-            }
-        },
-        "required": ["result", "status"]
-    }
-}]
+from pydantic import BaseModel
+from anthropic import Anthropic
+import os
 
-response = client.messages.create(
-    model="claude-sonnet-4-20250514",
+class Language(BaseModel):
+    name: str
+    year: int
+    paradigm: str
+
+class LanguageList(BaseModel):
+    languages: list[Language]
+
+client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+response = client.messages.parse(
+    model="claude-sonnet-4-6",
     max_tokens=1000,
-    tools=tools,
-    messages=[{"role": "user", "content": "处理用户注册"}]
+    messages=[{"role": "user", "content": "返回3个编程语言的列表"}],
+    output_format=LanguageList,
 )
 
-for content in response.content:
-    if content.type == "tool_use":
-        result = content.input
-        print(f"Status: {result['status']}")
-        print(f"Result: {result['result']}")
+print(response.parsed_output)
+print(response.parsed_output.languages[0].name)
 ```
 
-### 边界情况处理
+`output_format` 接受一个 Pydantic 模型类，SDK 会把它转成 JSON Schema 传给 `output_config.format`，再用同一个模型校验返回结果。类型错误在解析阶段就会被拦截，省去手写 schema 和手动验证。
+
+### 边界情况
+
+结构化输出在两种情况下可能不满足 schema：模型因安全原因拒绝回答（`stop_reason` 为 `"refusal"`），或输出被 `max_tokens` 截断（`stop_reason` 为 `"max_tokens"`）。前者按拒绝处理，后者调大 `max_tokens` 重试。
+
+```python
+if message.stop_reason == "refusal":
+    print("模型拒绝回答")
+elif message.stop_reason == "max_tokens":
+    print("输出被截断，建议增加max_tokens")
+```
+
+如果仍需手动解析不可靠的 JSON 文本（比如方法 1 的产物），可以用一个容错解析函数兜底：
 
 ```python
 def safe_json_parse(text):
-    """安全解析JSON，处理各种格式"""
+    """安全解析JSON，处理代码块和多余文本"""
     import json
     import re
 
@@ -645,14 +675,22 @@ def safe_json_parse(text):
     except json.JSONDecodeError:
         pass
 
-    try:
-        start = text.find('{')
-        end = text.rfind('}') + 1
-        if start != -1 and end > start:
+    start = text.find('{')
+    end = text.rfind('}') + 1
+    if start != -1 and end > start:
+        try:
             return json.loads(text[start:end])
-    except:
-        pass
+        except json.JSONDecodeError:
+            pass
 
     return None
 ```
+
+---
+
+**参考资源：**
+- [Anthropic Messages API 文档](https://platform.claude.com/docs/en/api/messages)
+- [Structured outputs 文档](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+- [Anthropic Python SDK（anthropic）](https://github.com/anthropics/anthropic-sdk-python)
+- [Anthropic Console](https://console.anthropic.com/)
 

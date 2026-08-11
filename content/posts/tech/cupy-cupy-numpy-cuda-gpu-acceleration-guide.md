@@ -51,7 +51,7 @@ graph TB
     F --> H[AMD ROCm / HIP<br/>hipblas/hipsparse/rccl/...]
 ```
 
-多后端是一种「在 cupy_backends 这个 C 层做后端选择」的设计，上面 `cupy/`、`cupyx/` 全部复用。结果就是 CUDA 侧跑得厚实（cuBLAS、cuTENSOR、cuSPARSE 都齐），ROCm 侧是「可用但有差」——README 里把 ROCm 7.0 明确标为 experimental，安装包是 `cupy-rocm-7-0`。
+多后端是一种「在 cupy_backends 这个 C 层做后端选择」的设计，上面 `cupy/`、`cupyx/` 全部复用。结果就是 CUDA 侧跑得厚实（cuBLAS、cuTENSOR、cuSPARSE 都齐），ROCm 侧「可用但有差」。README 里把 ROCm 7.0 明确标为 experimental，安装包是 `cupy-rocm-7-0`。
 
 ## 边界拆分：四类用法互不替代
 
@@ -65,7 +65,7 @@ x = cp.arange(6).reshape(2, 3).astype('f')
 x.sum(axis=1)
 ```
 
-这是最浅的一层。`cupy/__init__.py` 把 `_core.ndarray`、各类子模块、NumPy 的 `e/pi/inf` 常量都重新导出。这一层真正的问题是「NumPy 全部 API 的 GPU 子集覆盖到哪」——权威口径看 `docs/source/reference/comparison_table.rst.inc` 的对照表，仓库没有承诺对任何 NumPy 版本 100% 兼容。
+这是最浅的一层。`cupy/__init__.py` 把 `_core.ndarray`、各类子模块、NumPy 的 `e/pi/inf` 常量都重新导出。这一层真正的问题是「NumPy 全部 API 的 GPU 子集覆盖到哪」。权威口径看 `docs/source/reference/comparison_table.rst.inc` 的对照表，仓库没有承诺对任何 NumPy 版本 100% 兼容。
 
 ### B. 与 NumPy/Numba/PyTorch 互操作
 
@@ -199,7 +199,7 @@ my_func             :    CPU:   44.407 us   +/- 2.428 (min:   42.516 / max:   53
 工程里常踩的几处：
 
 1. **dtype 强转**：CuPy 与 NumPy 的混合 dtype 提升并非处处一致，遇到结果和你预期不符时，显式 `.astype(np.float64)` 比猜规则省事。
-2. **稀疏数组**：`cupyx.scipy.sparse` 镜像 SciPy 稀疏，但 COO/CSR/CSC 之间的转换开销不同；调 cuSPARSE 的稀疏-稠密乘积与 SciPy 调 MKL 的行为不完全一致。
+2. **稀疏数组**：`cupyx.scipy.sparse` 镜像 SciPy 稀疏，但 COO（COOrdinate，坐标格式）/CSR（Compressed Sparse Row，压缩稀疏行）/CSC（Compressed Sparse Column，压缩稀疏列）之间的转换开销不同；调 cuSPARSE 的稀疏-稠密乘积与 SciPy 调 MKL 的行为不完全一致。
 3. **NCCL 集合通信**：`cupy.cuda.nccl` 提供 GPU 间直接通信，只在多卡 + NCCL 可用时生效，单卡不会自动 fallback。
 4. **流同步**：`cupy.cuda.Stream.null` 是默认流，跨流数据依赖要显式 `event.wait()`，不靠隐式 sync。
 

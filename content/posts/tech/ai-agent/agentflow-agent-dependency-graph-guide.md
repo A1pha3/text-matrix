@@ -1,102 +1,43 @@
 ---
-title: "AgentFlow：智能体依赖图编排框架完全指南"
+title: "AgentFlow：把几十个 AI 编程 agent 编排成一张可并行、可迭代的图"
 slug: "agentflow-agent-dependency-graph-guide"
-github_repo: "shouc/agentflow"
+github_repo: "berabuddies/agentflow"
 aliases:
   - /posts/tech/agentflow-agent-dependency-graph-guide/
 date: "2026-04-01T01:09:00+08:00"
 categories: ["技术笔记"]
-tags: ["Claude", "Codex", "SSH", "Python"]
-description: "智能体依赖图编排框架，支持并行扇出、迭代循环和零配置远程执行 SSH/EC2/ECS，通过 Graph 管道符实现高效的 AI 智能体工作流编排。"
+tags: ["Claude", "Codex", "Kimi", "agent", "编排"]
+description: "用 DAG + 管道符把 codex、claude、kimi、pi 等编程 agent 编排成依赖图，支持并行扇出、迭代循环、远程执行与模型路由。"
 ---
 
-# AgentFlow：智能体依赖图编排框架完全指南
+# AgentFlow：把几十个 AI 编程 agent 编排成一张可并行、可迭代的图
 
-> 预计阅读时间：30 分钟 | 难度：⭐⭐⭐
+真正难的不是让一个 agent 干活，而是让几十个 agent 按依赖关系同时开工、失败了自己重来、结果最后汇总成一份。AgentFlow 解决的是后一个问题：它把"调度并发、处理重试、归并结果"这些手写脚本才做的事，收进一张用 `>>` 连起来的依赖图里。
 
----
+这个项目来自 UC Irvine 的 Yu Feng 团队（`berabuddies` 组织），和 [gepa](https://github.com/gepa-ai/gepa) 同源。它把 codex、claude、kimi、pi 等编程 agent 当成图中的节点，用几组原语（`fanout`、`merge`、`on_failure`）表达并行、汇总和循环。下面先给一张系统地图，再逐条拆。
 
-## 学习目标
+## 先看这张图
 
-阅读本文后，你将能够：
+![AgentFlow Graph](https://raw.githubusercontent.com/berabuddies/agentflow/master/docs/graph.png)
 
-1. **理解 AgentFlow 的核心概念**：掌握依赖图编排、并行扇出、迭代循环等基本机制
-2. **设计智能体管道**：使用 `>>` 管道符连接节点，构建清晰的依赖链
-3. **实现并行处理**：使用 `fanout()` 实现整数模式、列表模式、字典模式的并行扇出
-4. **配置远程执行**：使用零配置 SSH/EC2/ECS 远程执行智能体
-5. **应用迭代优化**：使用 `on_failure` 和 `success_criteria` 实现自动重试循环
+README 里那张 94 节点的示例图，是一条典型的流水线：plan 拆出 64 个 worker，经过 8 次批量归并，再进 16 个 review，最后两级 merge 收敛到 synthesis。它把"一个 agent 从头干到尾"拆成了"一段并行工作 + 几次收敛"。
 
----
+## 核心数据（GitHub API 2026-08-07 验证）
 
-## 目录
-
-- [§2 项目概述](#§2-项目概述)
-- [§3 核心概念](#§3-核心概念)
-- [§4 并行扇出（Fanout）](#§4-并行扇出 fanout)
-- [§5 迭代循环](#§5-迭代循环)
-- [§6 远程执行](#§6-远程执行)
-- [§7 Scratchboard](#§7-scratchboard)
-- [§8 安装与部署](#§8-安装与部署)
-- [§9 CLI 命令](#§9-cli-命令)
-- [§10 示例管道](#§10-示例管道)
-- [§11 项目结构](#§11-项目结构)
-- [§12 推荐做法](#§12-推荐做法)
-- [§13 常见问题](#§13-常见问题)
-- [§14 总结](#§14-总结)
-- [§15 附录：API 参考](#§15-附录 api-参考)
-
----
-
-## §2 项目概述
-
-### 2.1 什么是 AgentFlow？
-
-**AgentFlow**（[GitHub 仓库](https://github.com/shouc/agentflow)）是一个用于编排代码智能体的框架，支持在依赖图中并行扇出、迭代循环和远程执行。
-
-**官方描述**：
-
-> Orchestrate codex, claude, and kimi agents in dependency graphs with parallel fanout, iterative cycles, and remote execution on SSH/EC2/ECS.
-
-**核心功能**：将多个 AI 智能体（Codex、Claude、Kim）编排为依赖图，实现并行处理、迭代优化和远程执行。
-
-### 2.2 核心数据
-
-| 指标 | 数值 |
+| 项目 | 数值 |
 |------|------|
-| **Stars** | 277 |
-| **Forks** | 52 |
-| **提交数** | 715 |
-| **分支数** | 2 |
-| **贡献者** | 3 (@shouc, @claude, @n-WN) |
+| 仓库 | [berabuddies/agentflow](https://github.com/berabuddies/agentflow) |
+| Stars | 1,365 |
+| Forks | 286 |
+| 语言 | Python |
+| 协议 | MIT |
+| 默认分支 | master |
+| 创建时间 | 2026-03-08 |
+| 最近推送 | 2026-07-03 |
 
-### 2.3 技术栈
+## 编排的核心：一张 DAG，几组原语
 
-| 类别 | 技术 | 占比 |
-|------|------|------|
-| **核心语言** | Python | 90.6% |
-| **前端** | JavaScript | 6.7% |
-| **标记** | HTML | 1.9% |
-
-### 2.4 核心特性
-
-| 特性 | 说明 |
-|------|------|
-| **依赖图编排** | 使用 `>>` 管道符连接节点 |
-| **并行扇出** | 三种模式：整数/列表/字典 |
-| **迭代循环** | 失败时自动重试直到成功 |
-| **远程执行** | 零配置 SSH/EC2/ECS |
-| **共享内存** | Scratchboard 跨智能体文件共享 |
-| **结果归约** | merge 支持批量和分组 |
-
----
-
-## §3 核心概念
-
-### 3.1 依赖图
-
-AgentFlow 使用有向无环图（DAG）组织智能体节点。节点之间通过 `>>` 管道符连接，表示依赖关系。
-
-**基本语法**：
+AgentFlow 用有向无环图（DAG）组织节点。节点之间用 `>>` 连接，表示"前一个的输出进后一个的输入"。上游输出通过模板语法 `{{ nodes.plan.output }}` 引用：
 
 ```python
 from agentflow import Graph, codex, claude
@@ -106,134 +47,55 @@ with Graph("my-pipeline", concurrency=3) as g:
     impl = claude(task_id="impl", prompt="Implement the plan:\n{{ nodes.plan.output }}", tools="read_write")
     review = codex(task_id="review", prompt="Review:\n{{ nodes.impl.output }}")
 
-    plan >> impl >> review  # 依赖链
+    plan >> impl >> review
 
 print(g.to_json())
 ```
 
-### 3.2 节点类型
+`print(g.to_json())` 会把这张图序列化成 JSON——图本身是数据，`agentflow inspect` 能把它展开给人看，`agentflow validate` 能只校验不运行。这意味着管道既可以被检查，也可以被另一个 agent 改写（后面会说到优化轮次）。
 
-| 节点类型 | 说明 | 典型用途 |
-|----------|------|----------|
-| **codex** | Codex 智能体 | 代码生成/审查 |
-| **claude** | Claude 智能体 | 复杂推理/审查 |
-| **fanout** | 并行扇出 | 批量处理 |
-| **merge** | 结果归约 | 汇总结果 |
+框架提供的节点函数不多，真正的工作都压在这几组原语上：
 
-### 3.3 管道操作符
+| 原语 | 作用 |
+|------|------|
+| `codex` / `claude` / `kimi` / `pi` | 对应各家的编程 agent 节点 |
+| `fanout(node, source)` | 把一个节点扇出成多个并行副本 |
+| `merge(node, source, ...)` | 把多个副本的结果归约成一个 |
+| `.on_failure` | 失败时把控制流送回指定的上游节点 |
+| `success_criteria` | 定义"这次算成功"的条件 |
 
-`>>` 用于连接节点，表示「前一个节点的输出作为后一个节点的输入」：
+## 并行：`fanout` 与 `merge`
 
-```python
-plan >> impl >> review
-# plan 的输出 → impl 的输入 → review 的输入
-```
+`fanout(node, source)` 按 `source` 的类型决定展开方式：
 
-### 3.4 模板语法
+- `int`：生成 N 个相同副本，例如 `fanout(node, 128)`。
+- `list`：每个元素一个副本，元素通过 `{{ item.file }}` 传入。
+- `dict`：多轴笛卡尔积，例如 `{"axis1": [...], "axis2": [...]}`。
 
-使用 `{{ nodes.<node_id>.output }}` 引用上游节点的输出：
-
-```python
-impl = claude(
-    task_id="impl",
-    prompt="Implement the plan:\n{{ nodes.plan.output }}"
-)
-```
-
----
-
-## §4 并行扇出（Fanout）
-
-### 4.1 Fanout 概述
-
-`fanout()` 是 AgentFlow 的核心功能之一，将单个节点扇出为多个并行执行实例。
-
-**三种扇出模式**：
-
-| 模式 | 参数类型 | 说明 |
-|------|----------|------|
-| **整数模式** | `int` | N 个相同副本 |
-| **列表模式** | `list` | 每个元素一个副本 |
-| **字典模式** | `dict` | 笛卡尔积 |
-
-### 4.2 整数模式
-
-整数模式创建 N 个完全相同的并行副本：
-
-```python
-fanout(codex(task_id="fuzz", prompt="..."), 128)
-# 创建 128 个完全相同的 codex 实例
-```
-
-### 4.3 列表模式
-
-列表模式为每个元素创建一个副本：
-
-```python
-fanout(
-    codex(task_id="review", prompt="Review {{ item.file }}:\n{{ nodes.scan.output }}"),
-    [
-        {"file": "api.py"},
-        {"file": "auth.py"},
-        {"file": "db.py"}
-    ]
-)
-```
-
-### 4.4 字典模式
-
-字典模式创建笛卡尔积：
-
-```python
-fanout(
-    codex(task_id="test", prompt="..."),
-    {"axis1": ["a", "b"], "axis2": [1, 2]}
-)
-# 4 个组合: (a,1), (a,2), (b,1), (b,2)
-```
-
-### 4.5 代码审查示例
+归约用 `merge`，有批量（`size=N`）和分组（`by=["field"]`）两种。一个典型的代码审查管道是这样扇出再收敛的：
 
 ```python
 from agentflow import Graph, codex, fanout, merge
 
 with Graph("code-review", concurrency=8) as g:
     scan = codex(task_id="scan", prompt="List the top 5 files to review.")
-
     review = fanout(
         codex(task_id="review", prompt="Review {{ item.file }}:\n{{ nodes.scan.output }}"),
-        [{"file": "api.py"}, {"file": "auth.py"}, {"file": "db.py"}]
+        [{"file": "api.py"}, {"file": "auth.py"}, {"file": "db.py"}],
     )
-
-    summary = codex(
-        task_id="summary",
-        prompt="Merge findings:\n{% for r in fanouts.review.nodes %}{{ r.output }}\n{% endfor %}"
-    )
-
+    summary = codex(task_id="summary", prompt=(
+        "Merge findings:\n{% for r in fanouts.review.nodes %}{{ r.output }}\n{% endfor %}"
+    ))
     scan >> review >> summary
+
+print(g.to_json())
 ```
 
----
+`fanouts.review.nodes` 是扇出结果的模板入口，`{% for %}` 是 Jinja2 循环，用它把若干份 review 喂给 summary。这就是"并行出、收敛归"的骨架。
 
-## §5 迭代循环
+## 迭代：`on_failure` 与 `success_criteria`
 
-### 5.1 迭代概述
-
-`on_failure` 属性实现迭代循环，当节点失败时自动重试上游节点，直到满足成功条件或达到最大迭代次数。
-
-### 5.2 成功条件
-
-通过 `success_criteria` 定义成功条件：
-
-```python
-review = claude(
-    task_id="review",
-    prompt="Review:\n{{ nodes.write.output }}\nIf complete, say LGTM. Otherwise list issues.",
-    success_criteria=[{"kind": "output_contains", "value": "LGTM"}]
-)
-```
-
-### 5.3 迭代示例
+并行解决"同时跑很多"，迭代解决"跑完要收敛到合格"。`on_failure` 把失败的控制流送回上游节点，配合 `success_criteria` 和 `max_iterations` 形成写→评→改的闭环：
 
 ```python
 from agentflow import Graph, codex, claude
@@ -242,482 +104,122 @@ with Graph("iterative-impl", max_iterations=5) as g:
     write = codex(
         task_id="write",
         prompt="Write a Python email validator.\n{% if nodes.review.output %}Fix: {{ nodes.review.output }}{% endif %}",
-        tools="read_write"
+        tools="read_write",
     )
-
     review = claude(
         task_id="review",
         prompt="Review:\n{{ nodes.write.output }}\nIf complete, say LGTM. Otherwise list issues.",
-        success_criteria=[{"kind": "output_contains", "value": "LGTM"}]
+        success_criteria=[{"kind": "output_contains", "value": "LGTM"}],
     )
-
     write >> review
-    review.on_failure >> write  # 失败时循环回 write
+    review.on_failure >> write  # loop until LGTM or max_iterations
 
 print(g.to_json())
 ```
 
-**执行流程**：
-1. write 生成代码
-2. review 审查
-3. 如果 review 失败（不是 LGTM），重试 write
-4. 重复直到 review 成功或达到 5 次迭代
+`success_criteria` 用 `output_contains` 这类结构化条件判断"算不算成"，比抓关键词更明确，也更容易被 validate 检查。
 
----
+## 远程执行：零配置的 SSH / EC2 / ECS
 
-## §6 远程执行
-
-### 6.1 远程执行概述
-
-AgentFlow 支持零配置远程执行，无需手动设置基础设施。
-
-### 6.2 EC2 执行
+节点可以在远程机器上跑，`target` 参数声明目标，不需要先建基础设施：
 
 ```python
-codex(
-    task_id="remote",
-    prompt="...",
-    target={"kind": "ec2", "region": "us-east-1"}
-)
+# EC2（自动发现 AMI、密钥对、VPC）
+codex(task_id="remote", prompt="...", target={"kind": "ec2", "region": "us-east-1"})
+# ECS Fargate（自动发现 VPC，构建 agent 镜像）
+codex(task_id="remote", prompt="...", target={"kind": "ecs", "region": "us-east-1"})
+# SSH
+codex(task_id="remote", prompt="...", target={"kind": "ssh", "host": "server", "username": "deploy"})
 ```
 
-**自动发现**：AMI、密钥对、VPC。
-
-### 6.3 ECS Fargate 执行
+多个节点要落在同一台机器上、共享文件，用 `shared` 参数点名同一个实例：
 
 ```python
-codex(
-    task_id="remote",
-    prompt="...",
-    target={"kind": "ecs", "region": "us-east-1"}
-)
+plan = codex(task_id="plan", prompt="...", target={"kind": "ec2", "shared": "dev-box"})
+impl = codex(task_id="impl", prompt="...", target={"kind": "ec2", "shared": "dev-box"})
+plan >> impl  # 同一 EC2 实例，文件在两步之间保留
 ```
 
-**自动发现**：VPC，构建智能体镜像。
+## 模型路由：用 `pi` 接任意 provider
 
-### 6.4 SSH 执行
-
-```python
-codex(
-    task_id="remote",
-    prompt="...",
-    target={"kind": "ssh", "host": "server", "username": "deploy"}
-)
-```
-
-### 6.5 共享实例
-
-使用 `shared` 参数让多个节点共享同一远程实例：
+除了自家 agent，AgentFlow 还能通过 `pi` 这个 agent 当目标节点。`pi` 把 API 调用路由到 Anthropic、OpenAI、Groq、Cerebras、xAI、DeepSeek、Gemini、OpenRouter、Bedrock 等云端 provider，也能通过 OpenAI 兼容或 Anthropic 兼容的协议接本地端点（LMStudio、Ollama）：
 
 ```python
-plan = codex(
-    task_id="plan",
-    prompt="...",
-    target={"kind": "ec2", "shared": "dev-box"}
-)
-impl = codex(
-    task_id="impl",
-    prompt="...",
-    target={"kind": "ec2", "shared": "dev-box"}
-)
-plan >> impl  # 同一 EC2 实例，文件持久化
-```
+from agentflow import Graph, codex, pi
 
----
-
-## §7 Scratchboard
-
-### 7.1 Scratchboard 概述
-
-Scratchboard 是跨所有智能体共享的内存文件，用于在并行任务间共享数据。
-
-### 7.2 使用示例
-
-```python
-with Graph("campaign", scratchboard=True) as g:
-    shards = fanout(
-        codex(task_id="fuzz", prompt="..."),
-        128
+with Graph("mixed") as g:
+    # 外部模型：Claude 走 Pi
+    review = pi(
+        task_id="review",
+        prompt="Review {{ nodes.impl.output }}",
+        model="anthropic/claude-sonnet-4-6:high",
     )
-    # 所有 128 个并行任务可以读写同一文件
+    # 本地模型：先在 ~/.pi/agent/models.json 注册一次 provider
+    scan = pi(
+        task_id="scan",
+        prompt="Scan the repo for TODOs.",
+        model="lmstudio/qwen/qwen3.6-27b",
+        tools="read_only",
+    )
 ```
 
----
+这解决了"图里混跑不同模型"的问题：规划的节点走贵的强模型，机械扫描的节点走便宜的本地模型，同一张图里各取所需。
 
-## §8 安装与部署
+## 推理与进化：把图当训练数据
 
-### 8.1 一键安装（推荐）
+AgentFlow 还有两块直接把图变成系统能力的功能。
+
+**云端推理。** `agentflow inference` 能在 SkyPilot 支持的云上临时起一个 vLLM 或 SGLang 的 OpenAI 兼容端点，把 `base_url` 和 `api_key` 注入图里的 `pi` 节点：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shouc/agentflow/master/install.sh | bash
+agentflow inference Qwen/Qwen2.5-0.5B-Instruct \
+  --gpu aws:1xl4@us-east-1
 ```
 
-这会安装 agentflow、添加到 PATH，并安装 Codex 和 Claude Code 的 skill。
+也可以在 `Graph` 上声明 `inference=InferenceSetup(...)`，AgentFlow 会在调度前起一个共享的 SkyPilot 服务，再把它注入没有显式设 `provider` 的 `pi` 节点。
 
-### 8.2 手动安装
-
-```bash
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -e .[dev]
-```
-
----
-
-## §9 CLI 命令
-
-### 9.1 核心命令
-
-| 命令 | 说明 |
-|------|------|
-| `agentflow run pipeline.py` | 运行管道 |
-| `agentflow run pipeline.py --output summary` | 运行并输出摘要 |
-| `agentflow inspect pipeline.py` | 显示展开的图 |
-| `agentflow validate pipeline.py` | 验证但不运行 |
-| `agentflow templates` | 列出起始模板 |
-| `agentflow init > pipeline.py` | 脚手架起始模板 |
-
----
-
-## §10 示例管道
-
-### 10.1 基础管道
+**Tuned Agent 进化。** 用一次跑通的 Codex 记录当训练数据，生成一个可复用的 tuned agent：
 
 ```python
-# airflow_like.py - Basic pipeline: plan → implement → review → merge
+from agentflow import Graph, codex, evolve
+
+with Graph("improve-codex", working_dir=".") as g:
+    source = codex(task_id="plan", prompt="Inspect this repo and summarize the main risks.")
+    tuned = evolve(source, target="codex", optimizer="codex")
+
+print(g.to_json())
 ```
 
-### 10.2 代码审查
+跑完后 `agentflow evolve <run_id> -n <node_id>` 离线提炼，`agentflow tuned-agents` 列出已注册的 tuned agent。它们存在 `.agentflow/tuned_agents/<name>/versions/<version>/` 下，带完整的 trace、克隆的仓库和版本元数据。目前 tuned agent 只能解析到本地 target。
 
-```python
-# code_review.py - Fan out code review across files, merge findings
-```
+另外 `Graph` 还支持 `optimizer` 和 `n_run`，让 optimizer 在两轮之间改写图结构。注意 README 明确说：validate 只检查改完的管道能加载、能过 schema 校验，**不代表改得语义更好**。
 
-### 10.3 依赖审计
+## 一次真实任务怎么流过这张图
 
-```python
-# dep_audit.py - Audit each dependency for security/license issues
-```
+把上面的机制串起来，看一条"对依赖做安全审计"的管道（受 `examples/dep_audit.py` 启发，示意）：
 
-### 10.4 测试覆盖
+1. 一个 `codex` 节点扫描仓库，列出依赖清单。
+2. `fanout` 把每个依赖分给一个 `codex` 实例，各自查安全公告和许可证问题——这一步是并行的。
+3. `merge(size=N)` 把若干份结果归并成几组。
+4. 一组 `codex` 节点对归并结果做 review。
+5. 若 review 没通过评审标准，`on_failure` 把失败的路径送回对应节点重跑，直到 `success_criteria` 满足或到 `max_iterations`。
+6. 最后 `synthesis` 收敛成一份报告。
 
-```python
-# test_gap.py - Find untested modules, suggest tests per module
-```
+整条链里，agent 只负责单点判断，并行、重试、汇总全由图的语义完成，不靠手写脚本。
 
-### 10.5 多智能体辩论
+## 怎么读这些数字
 
-```python
-# multi_agent_debate.py - Codex vs Claude: independent solve + cross-critique
-```
+Stars 1,365、Forks 286 说明这是个年轻项目（2026-03 创建，几个月内积累），不是航母级框架。它更值得看的是两件事：一是它把"并发调度、失败重试、结果归约"这些通用痛点做成了极简原语，二是它连着一条完整的落地链路（远程执行、模型路由、云端推理、agent 进化）。
 
-### 10.6 发布检查
+从这些数字**推不出**：它在生产环境的稳定性、tuned agent 在真实 bug 上的命中率、大规模扇出时的成本。README 也没有给出任何 benchmark。要判断它是否适合你，得看你的场景是否真的需要"几十个 agent 并行 + 迭代收敛"，而不是看 Star 数。
 
-```python
-# release_check.py - Parallel release gate: tests + security + changelog
-```
+## 谁该先试，谁可以等
 
-### 10.7 迭代实现
+- **适合先试**：已经在用 codex / claude 做多轮代码任务，发现并发和结果汇总靠脚本越写越乱的人；想在一张图里混跑云端强模型和本地便宜模型的人。
+- **可以再等等**：单 agent 就能跑完的简单任务，用不上这套编排；对 graph 的检查与改写能力（optimizer、evolve）没有迫切需求的话，它的核心价值只剩 `fanout` + `merge`，用脚本也能凑合。
 
-```python
-# iterative_impl.py - Write → review → fix cycle until LGTM
-```
+从 `agentflow init > pipeline.py` 起一个模板，跑通 `agentflow inspect` 和 `agentflow validate`，再决定要不要把真实任务迁进来。README 里那 11 个示例（从 `airflow_like.py` 到 `ecs_fargate.py`）覆盖了从基础管道到远程执行的全路径，照着一份份改就能上手。
 
-### 10.8 批量扇出
+## 结语
 
-```python
-# airflow_like_fuzz_batched.py - 128-shard fanout with batch merge + periodic monitor
-```
-
-### 10.9 分组扇出
-
-```python
-# airflow_like_fuzz_grouped.py - Matrix fanout with grouped reducers
-```
-
-### 10.10 远程 EC2
-
-```python
-# ec2_remote.py - Run codex on a remote EC2 instance
-```
-
-### 10.11 远程 ECS
-
-```python
-# ecs_fargate.py - Run codex on ECS Fargate
-```
-
----
-
-## §11 项目结构
-
-### 11.1 目录结构
-
-```
-agentflow/
-├── agentflow/           # 核心源代码
-├── docs/                # 文档
-├── examples/            # 示例管道
-├── skills/
-│   └── agentflow/       # AgentFlow skill
-├── tests/               # 测试
-├── .github/workflows/   # GitHub Actions
-├── pyproject.toml       # Python 项目配置
-├── Makefile            # 构建脚本
-├── install.sh          # 一键安装脚本
-└── README.md          # 项目文档
-```
-
-### 11.2 核心模块
-
-| 模块 | 说明 |
-|------|------|
-| **agentflow/** | 核心 Graph 和节点实现 |
-| **skills/agentflow/** | AgentFlow skill for Codex/Claude |
-| **examples/** | 各种示例管道 |
-
----
-
-## §12 推荐做法
-
-### 12.1 管道设计
-
-| 原则 | 说明 |
-|------|------|
-| **单一职责** | 每个节点只做一件事 |
-| **适度并行** | 并行数不要超过实际需求 |
-| **明确依赖** | 使用清晰的管道连接 |
-
-### 12.2 远程执行
-
-| 建议 | 说明 |
-|------|------|
-| **共享实例** | 同项目节点使用 shared 参数 |
-| **区域选择** | 选择靠近数据的区域 |
-
-### 12.3 迭代循环
-
-| 建议 | 说明 |
-|------|------|
-| **设置上限** | 始终设置 max_iterations |
-| **明确条件** | 使用具体的 success_criteria |
-
----
-
-## §13 常见问题
-
-### Q1：如何选择智能体类型？
-
-| 场景 | 推荐 |
-|------|------|
-| **代码生成** | codex |
-| **复杂推理** | claude |
-| **批量处理** | fanout + codex/claude |
-
-### Q2：如何控制并行度？
-
-通过 `Graph` 的 `concurrency` 参数：
-
-```python
-with Graph("my-pipeline", concurrency=8) as g:
-    ...
-```
-
-### Q3：如何调试管道？
-
-使用 `agentflow inspect` 查看展开的图：
-
-```bash
-agentflow inspect pipeline.py
-```
-
----
-
-## §14 总结
-
-### 14.1 核心优势
-
-| 优势 | 说明 |
-|------|------|
-| **图编排** | 清晰的依赖关系 |
-| **并行处理** | 高效批量任务 |
-| **迭代优化** | 自动修复直到成功 |
-| **零配置远程** | 一行代码部署到云 |
-| **共享内存** | 并行任务数据共享 |
-
-### 14.2 适用场景
-
-| 场景 | 适用性 |
-|------|--------|
-| **代码审查** | 并行审查多文件 |
-| **自动化测试** | 迭代修复直到通过 |
-| **数据处理** | 大规模批量处理 |
-| **模型评估** | 多配置并行实验 |
-
-### 14.3 项目信息
-
-| 项目 | 信息 |
-|------|------|
-| **Stars** | 277 |
-| **Forks** | 52 |
-| **提交数** | 715 |
-| **贡献者** | 3 |
-
-### 14.4 相关链接
-
-| 资源 | 链接 |
-|------|------|
-| **GitHub** | https://github.com/shouc/agentflow |
-| **安装** | `curl -fsSL https://raw.githubusercontent.com/shouc/agentflow/master/install.sh \| bash` |
-
----
-
-## 自测题
-
-### 问题 1：AgentFlow 的核心编排机制是什么？
-
-<details>
-<summary>查看答案</summary>
-
-AgentFlow 使用有向无环图（DAG）组织智能体节点，节点之间通过 `>>` 管道符连接，表示依赖关系。
-
-</details>
-
-### 问题 2：如何实现并行扇出？
-
-<details>
-<summary>查看答案</summary>
-
-使用 `fanout()` 函数，支持三种模式：
-- 整数模式：创建 N 个相同副本
-- 列表模式：为每个元素创建一个副本
-- 字典模式：创建笛卡尔积组合
-
-</details>
-
-### 问题 3：如何实现迭代循环？
-
-<details>
-<summary>查看答案</summary>
-
-使用 `on_failure` 属性实现迭代循环，当节点失败时自动重试上游节点，直到满足成功条件（`success_criteria`）或达到最大迭代次数（`max_iterations`）。
-
-</details>
-
-### 问题 4：如何配置远程执行？
-
-<details>
-<summary>查看答案</summary>
-
-通过 `target` 参数配置远程执行，支持三种方式：
-- EC2：`{"kind": "ec2", "region": "us-east-1"}`
-- ECS Fargate：`{"kind": "ecs", "region": "us-east-1"}`
-- SSH：`{"kind": "ssh", "host": "server", "username": "deploy"}`
-
-</details>
-
-### 问题 5：Scratchboard 的作用是什么？
-
-<details>
-<summary>查看答案</summary>
-
-Scratchboard 是跨所有智能体共享的内存文件，用于在并行任务间共享数据。通过 `Graph(scratchboard=True)` 启用。
-
-</details>
-
----
-
-## 练习
-
-### 练习 1：构建基础代码审查管道
-
-**任务**：创建一个 AgentFlow 管道，使用 Codex 扫描代码文件，然后并行审查多个文件，最后汇总审查结果。
-
-**提示**：
-- 使用 `codex(task_id="scan", prompt="List files to review.")` 扫描文件
-- 使用 `fanout()` 并行审查多个文件
-- 使用 `codex(task_id="summary", prompt="Merge findings: ...")` 汇总结果
-
-**参考答案**：
-```python
-# 参考示例代码在 §4.5 代码审查示例
-```
-
-### 练习 2：实现迭代实现循环
-
-**任务**：创建一个迭代循环，使用 Codex 生成代码，Claude 审查，如果审查不通过（不是 LGTM），则重新生成代码。
-
-**提示**：
-- 使用 `success_criteria=[{"kind": "output_contains", "value": "LGTM"}]` 定义成功条件
-- 使用 `review.on_failure >> write` 实现循环
-
-**参考答案**：
-```python
-# 参考示例代码在 §5.3 迭代示例
-```
-
-### 练习 3：配置远程 EC2 执行
-
-**任务**：修改示例管道，使其在远程 EC2 实例上运行代码生成任务。
-
-**提示**：
-- 使用 `target={"kind": "ec2", "region": "us-east-1"}` 配置远程执行
-- 使用 `shared` 参数让多个节点共享同一实例
-
-**参考答案**：
-```python
-# 参考示例代码在 §6.2 EC2 执行 和 §6.5 共享实例
-```
-
----
-
-## 进阶路径
-
-如果你已经掌握本文内容，可以继续深入以下方向：
-
-1. **贡献到 AgentFlow 项目**：阅读 `CONTRIBUTING.md`，了解如何贡献代码、文档或示例
-2. **探索高级模式**：研究 `examples/` 目录中的高级示例（如多智能体辩论、批量模糊测试）
-3. **集成到 CI/CD**：将 AgentFlow 管道集成到 GitHub Actions 或 Jenkins，实现自动化代码审查
-4. **自定义智能体类型**：扩展 AgentFlow 以支持其他 AI 智能体（如 Kimi、GPT）
-5. **性能优化**：研究如何优化大规模并行执行的性能和成本
-6. **监控和调试**：构建管道执行监控系统，实时查看节点状态和日志
-7. **生产化部署**：将 AgentFlow 部署到生产环境，考虑高可用、容错、安全等因素
-
----
-
-## 资料口径说明
-
-本文档基于以下来源和假设：
-
-1. **信息来源**：本文基于 AgentFlow GitHub 仓库（https://github.com/shouc/agentflow）的 README、示例代码和 API 文档。
-2. **版本时效性**：本文描述的是 AgentFlow 主分支（master）的代码，可能与你使用的版本存在差异。建议对照官方文档验证。
-3. **代码示例**：本文的代码示例来自官方示例，未经完整运行验证。在实际使用前，请先在小规模场景中测试。
-4. **性能数据**：本文未提供性能基准测试数据。实际性能取决于智能体类型、并行度、远程执行配置等因素。
-5. **限制说明**：AgentFlow 是一个相对年轻的项目（Stars 277，提交数 715），可能存在未发现的 Bug 或未完成的功能。生产使用前请充分测试。
-6. **更新记录**：本文最后更新于 2026-04-01。如果项目有重大更新，请及时更新本文档。
-
----
-
-## §15 附录：API 参考
-
-### 15.1 Graph 类
-
-```python
-Graph(name, concurrency=1, max_iterations=None, scratchboard=False)
-```
-
-### 15.2 节点函数
-
-| 函数 | 说明 |
-|------|------|
-| `codex(task_id, prompt, tools, target, success_criteria)` | Codex 节点 |
-| `claude(task_id, prompt, tools, target, success_criteria)` | Claude 节点 |
-| `fanout(node, source)` | 并行扇出 |
-| `merge(node, source, size, by)` | 结果归约 |
-
-### 15.3 管道操作
-
-| 操作 | 说明 |
-|------|------|
-| `>>` | 连接节点 |
-| `.on_failure` | 失败时循环 |
+AgentFlow 的价值不在多了一个调用 agent 的方式，而在于它把"多 agent 协作"从一段不可复用的脚本，变成了可序列化、可检查、可并行、可迭代的图。它把并发、重试、汇总、远程、模型路由这些散落的问题收进同一套原语，让"跑几十个 agent"这件事从工程的边缘事项变成了声明式表达。项目还很年轻，但这条"agent 图 = 可编程数据"的思路，比它当前的 Star 数更值得关注。

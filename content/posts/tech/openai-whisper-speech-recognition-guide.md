@@ -1,645 +1,187 @@
 ---
-title: "OpenAI Whisper：97.2k Stars 通用语音识别完全指南"
+title: "Whisper：一个模型把多语言语音识别管线收进一张 token 序列"
 date: "2026-04-06T22:50:00+08:00"
 slug: "openai-whisper-speech-recognition-guide"
 github_repo: "openai/whisper"
-description: "全面介绍97.2k Stars的OpenAI Whisper语音识别模型，详解Transformer seq2seq架构、6种模型规模、命令行/Python API使用、多语言翻译、Faster Whisper加速、LangChain集成和微调训练。"
+description: "实测约 8 万 Stars 的 OpenAI Whisper，讲清它如何用一个 seq2seq 模型同时做语音识别、语音翻译和语言识别，以及 5 档模型规模、turbo 归属和 faster-whisper 等落地选择。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Whisper", "语音识别", "OpenAI", "ASR", "多语言", "Transformer", "Python"]
 ---
 
-## 这篇文章覆盖什么
+## 一句话判断
 
-- Whisper 的 Transformer seq2seq 架构和多任务设计
-- 6 种模型规模的选择和性能对比
-- 命令行和 Python API 的使用方式
-- 多语言翻译和语言识别功能
-- Faster Whisper、WhisperX 等加速方案
-- 微调训练的注意事项
+Whisper 真正改变的不是"把语音转成文字"这件事本身——语音识别模型一直存在。它把传统识别管线里分属不同环节的活——检测有没有人说话、识别是哪一种语言、把语音转成文字、再把外语翻成英语——全部收进同一个序列到序列（sequence-to-sequence）模型，用一组特殊 token 把它们当成同一类解码问题处理。一段音频进去，decoder 输出哪一类结果，取决于它先吐出的那一个任务 token。
 
----
+## 项目坐标
 
-## 1. 项目概述
+数据来自 GitHub API（2026-08-08 验证）：
 
-### 1.1 是什么
-
-**Whisper** 是 OpenAI 发布的通用语音识别模型，在大规模多样化音频数据集上训练，可以执行多语言语音识别、语音翻译和语言识别。
-
-### 1.2 核心数据
-
-| 指标 | 数值 |
+| 指标 | 值 |
 |------|------|
-| GitHub Stars | **97.2k** |
-| GitHub Forks | **12k** |
-| Watchers | **721** |
-| Contributors | **82+** |
-| Branches | **15** |
-| Tags | **13** |
-| License | **MIT** |
-| 语言 | **Python 100%** |
+| GitHub Stars | 80,317（约 8 万） |
+| GitHub Forks | 9,643 |
+| 许可证 | MIT |
+| 语言 | Python |
+| 默认分支 | main |
+| 创建时间 | 2022-09-16 |
+| 最近推送 | 2025-01-04 |
 
-### 1.3 技术架构
+仓库维持着稳定的维护节奏，功能迭代基本收口，生态上的活更多发生在第三方实现（faster-whisper、whisper.cpp 等）一侧。
 
-Whisper 基于 **Transformer 序列到序列（sequence-to-sequence）模型架构**，训练完成多种语音处理任务：
+## 系统总览
 
-| 任务 | 说明 |
-|------|------|
-| **多语言语音识别** | 将语音转写为文字 |
-| **语音翻译** | 将非英语语音翻译为英语 |
-| **语言识别** | 识别音频所属语言 |
-| **语音活动检测** | 检测是否有人说话 |
+一段音频在 Whisper 里大致走这条链路：
 
-这些任务被统一表示为 token 序列，由 decoder 预测，实现单一模型替代传统语音处理管道的多个阶段。
-
-### 1.4 技术特点
-
-| 特点 | 说明 |
-|------|------|
-| **端到端** | 无需传统语音识别的音素识别、发音词典等组件 |
-| **多语言** | 支持 100+ 语言 |
-| **鲁棒性** | 在多样化音频上训练，抗噪声能力强 |
-| **多功能** | 识别 + 翻译 + 语言识别 |
-
----
-
-## 2. 环境配置
-
-### 2.1 系统依赖
-
-Whisper 依赖 **ffmpeg**，需要提前安装：
-
-```bash
-# Ubuntu / Debian
-sudo apt update && sudo apt install ffmpeg
-
-# Arch Linux
-sudo pacman -S ffmpeg
-
-# macOS (Homebrew)
-brew install ffmpeg
-
-# Windows (Chocolatey)
-choco install ffmpeg
-
-# Windows (Scoop)
-scoop install ffmpeg
+```mermaid
+flowchart LR
+    A[原始音频] --> B[重采样到 16kHz]
+    B --> C[30 秒滑动窗口]
+    C --> D[log-Mel 频谱<br/>80 个频带]
+    D --> E[Encoder]
+    E --> F[Decoder 自回归解码]
+    F --> G[任务 token 决定输出]
+    G --> H1[文本转写]
+    G --> H2[英语翻译]
+    G --> H3[语言识别]
 ```
 
-### 2.2 Python 环境
+核心是最后一步：decoder 不是一次性吐出文本，而是先输出 `<|startoftranscript|>`、`<|zh|>`、`<|transcribe|>` 这类特殊 token，模型用它们决定接下来按什么任务、什么语言、要不要时间戳来生成。这一层设计是全文理解的关键，下面拆开讲。
 
-Whisper 使用 Python 3.9.9 和 PyTorch 1.10.1 训练，但兼容 Python 3.8-3.11 和最新 PyTorch 版本：
+## 它把什么拆平了：传统管线和单模型的分界
 
-```bash
-# 创建虚拟环境
-python -m venv whisper-env
-source whisper-env/bin/activate  # Linux/macOS
-# 或
-whisper-env\Scripts\activate  # Windows
+传统语音识别是一条多阶段链路：先做语音活动检测（voice activity detection，VAD）判断哪里有人声，再靠音素识别、发音词典、语言模型把声学特征拼成词，最后用单独的翻译模型处理跨语言。每一段都要单独训练、单独调参，误差会沿着链路累积。
 
-# 安装 PyTorch（建议 CPU 版本）
-pip install torch torchaudio
+Whisper 把这套东西拆掉，换成两步：把音频切成 30 秒的窗口，转成 log-Mel 频谱喂进 Transformer encoder，再由 decoder 按任务 token 直接生成结果。识别、翻译、语言分类共享同一组参数，模型在 68 万小时弱监督音频上训练，用数据量抵消掉对显式词典和发音规则的依赖。代价是推理成本高——每 30 秒窗口都要完整跑一遍解码，而不是复用上一帧的中间结果。
 
-# 安装 Whisper
-pip install -U openai-whisper
+## 核心机制
 
-# 或从源码安装最新版本
-pip install git+https://github.com/openai/whisper.git
+### 1. 多任务用一组特殊 token 表示
+
+Whisper 不用不同的模型头去分任务，而是把任务本身编码进 token 序列。decoder 生成序列的开头固定是：
+
+```text
+<|startoftranscript|> <|语言|> <|任务|> <|要不要时间戳|> 正文...
 ```
 
-### 2.3 可选依赖
+`<|语言|>` 决定按哪种语言解码，`<|任务|>` 在 `<|transcribe|>`（转写）和 `<|translate|>`（翻成英语）之间选，时间戳 token 决定是否输出逐段起止时间。这套约定让"换任务"变成"换一个 token"，模型结构因此可以保持单一。
+
+### 2. 30 秒滑动窗口 + 自回归解码
+
+`transcribe()` 内部把整段音频按 30 秒窗口滑动处理，每个窗口独立做一次自回归 seq2seq 解码。窗口之间靠 `condition_on_previous_text` 决定是否沿用前一个窗口的文本作为上下文，让长音频的转写更连贯；代价是——如果前文有一处错，可能顺着带偏后面，所以官方把它做成可开关的选项。
+
+### 3. 五档模型规模
+
+README 的主表是 5 档，另有 `.en` 英文专用版：
+
+| 规模 | 参数量 | 英文专用版 | 多语言版 | 所需显存 | 相对速度 |
+|------|--------|-----------|----------|----------|----------|
+| tiny | 39 M | tiny.en | tiny | ~1 GB | ~32x |
+| base | 74 M | base.en | base | ~1 GB | ~16x |
+| small | 244 M | small.en | small | ~2 GB | ~6x |
+| medium | 769 M | medium.en | medium | ~5 GB | ~2x |
+| large | 1550 M | 无 | large | ~10 GB | 1x |
+
+相对速度以 large 为基准，来自 README 的估算，实际受硬件影响很大。`.en` 系列只做英文，在 tiny.en、base.en 上比多语言版效果更好，到 small.en、medium.en 差距就明显缩小。
+
+### 4. turbo：不在这个 pip 包里的"第六档"
+
+很多人会看到 turbo 模型。它确实是 OpenAI 发布的（Hugging Face 上的 `openai/whisper-large-v3-turbo`），从 large-v3 蒸馏压缩而来，速度大约快 8 倍，代价是不支持翻译任务。但要注意：turbo 不在 `openai-whisper` 这个 pip 包的 `load_model` 支持列表里，`whisper.load_model("turbo")` 会直接报错。想用 turbo 得走 faster-whisper 或 transformers 加载。上面模型表不带 turbo，就是把这两件事分开。
+
+## 一次转写流过系统
+
+拿一段中文播客音频举例。`whisper.load_model("medium")` 后调用 `model.transcribe("podcast.mp3", language="zh")`：
+
+1. `load_audio` 用 ffmpeg 转成 16kHz 单声道 float32。
+2. 音频按 30 秒窗口切分，每段补零对齐。
+3. 每段转成 80 个频带的 log-Mel 频谱，进 encoder。
+4. decoder 先输出 `<|startoftranscript|> <|zh|> <|transcribe|>`，再逐 token 生成中文文本。
+5. 结果按窗口合并，`result["text"]` 是全文，`result["segments"]` 是带起止时间戳和置信度的分段。
+
+如果要的是英文翻译，把任务 token 换成 `<|translate|>`（即 `--task translate`），decoder 输出就从中文文字变成英文译文。
+
+## 这些准确率数字怎么读
+
+Whisper 论文在 Common Voice、Fleurs、LibriSpeech 等基准上报告了 WER（词错误率）和 CER（字错误率）。怎么读这些数字：
+
+- **测的是什么**：在标准公开数据集上，把模型输出和人工转写逐词比对算出的错误比例。它衡量的是"这段音频转得准不准"。
+- **数字反映系统的哪部分**：主要反映 encoder 对声学特征的提取质量和 decoder 对语言规律的把握。语言之间的差异往往大于模型规模之间的差异——英文这类高资源语言错误率低很多，低资源语言会明显偏高。
+- **不能推出什么**：不能推出在具体生产音频上的表现——噪声、口音、专业术语、领域方言都会让 WER 上涨；也不能推出推理延迟或某块特定硬件上的速度，那些要看实现和硬件。
+
+## 怎么用起来
+
+安装依赖 ffmpeg，然后任选 pip 包或源码安装：
 
 ```bash
-# tiktoken（快速分词器，Rust 实现）
-pip install tiktoken
-
-# Rust 编译工具链（如 tiktoken 安装失败）
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-export PATH="$HOME/.cargo/bin:$PATH"
-
-# setuptools-rust（如需要）
-pip install setuptools-rust
+pip install -U openai-whisper   # 或 pip install git+https://github.com/openai/whisper.git
 ```
 
----
+命令行最简用法（默认模型是 small，不是 turbo）：
 
-## 3. 模型选择
+```bash
+whisper audio.wav --model medium                # 转写
+whisper japanese.wav --language Japanese        # 指定非英语语言
+whisper japanese.wav --language Japanese --task translate  # 翻成英语
+whisper audio.wav --model medium --format srt   # 出字幕
+```
 
-### 3.1 模型规模对比
-
-Whisper 提供 6 种模型规模，以及英语专用版本：
-
-| 规模 | 参数量 | 英语模型 | 多语言模型 | 显存需求 | 相对速度 |
-|------|--------|---------|-----------|----------|----------|
-| **tiny** | 39M | tiny.en | tiny | ~1GB | ~10x |
-| **base** | 74M | base.en | base | ~1GB | ~7x |
-| **small** | 244M | small.en | small | ~2GB | ~4x |
-| **medium** | 769M | medium.en | medium | ~5GB | ~2x |
-| **large** | 1550M | N/A | large | ~10GB | 1x |
-| **turbo** | 809M | N/A | turbo | ~6GB | ~8x |
-
-### 3.2 模型选择建议
-
-| 场景 | 推荐模型 | 说明 |
-|------|----------|------|
-| **资源极度受限** | tiny / base | CPU 可运行，速度快 |
-| **日常使用** | small / medium | 平衡速度和质量 |
-| **高质量需求** | large / turbo | 最佳识别质量 |
-| **英语场景** | .en 系列 | 英语专用模型效果更好 |
-| **翻译任务** | medium / large | turbo 不支持翻译 |
-
-**注意**：`turbo` 模型是 `large-v3` 的优化版本，推理速度更快但不支持翻译任务。
-
-### 3.3 下载和使用
-
-模型会在首次使用时自动下载。也可手动下载：
+Python 里先加载模型再转写：
 
 ```python
 import whisper
 
-# 首次使用时自动下载
 model = whisper.load_model("base")
-
-# 或手动指定路径
-model = whisper.load_model("base", download_root="./models")
-```
-
----
-
-## 4. 命令行使用
-
-### 4.1 基础识别
-
-```bash
-# 使用默认模型（turbo）转写音频
-whisper audio.flac audio.mp3 audio.wav
-
-# 指定语言
-whisper japanese.wav --language Japanese
-
-# 指定模型
-whisper audio.wav --model small
-
-# 翻译为英语（需使用多语言模型）
-whisper japanese.wav --model medium --language Japanese --task translate
-
-# 输出所有信息（包含语言识别结果）
-whisper audio.wav --model medium --task translate --verbose True
-
-# 纯音频（无说话人分离）
-whisper audio.wav
-```
-
-### 4.2 高级选项
-
-```bash
-# 指定输出格式
-whisper audio.wav --model medium --format json  # JSON
-whisper audio.wav --model medium --format srt   # SRT字幕
-whisper audio.wav --model medium --format vtt   # VTT字幕
-whisper audio.wav --model medium --format txt   # 纯文本
-
-# 温度采样（创造性）
-whisper audio.wav --model medium --temperature 0.0  # 确定性强
-whisper audio.wav --model medium --temperature 1.0  # 创造性强
-
-# 条件分割（用于长音频）
-whisper audio.wav --model medium --condition_on_previous_text True
-
-# 忽略无语音片段
-whisper audio.wav --model medium --word_timestamps True
-
-# 查看帮助
-whisper --help
-```
-
-### 4.3 批量处理
-
-```bash
-# 处理多个文件
-whisper audio1.wav audio2.mp3 audio3.flac --model small
-
-# 使用通配符
-whisper "*.wav" --model small
-
-# 指定输出目录
-whisper audio.wav --model small --output_dir ./transcripts
-```
-
----
-
-## 5. Python API 使用
-
-### 5.1 基础转写
-
-```python
-import whisper
-import torch
-
-# 检测 GPU
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using device: {device}")
-
-# 加载模型
-model = whisper.load_model("base")
-model = model.to(device)
-
-# 转写音频
 result = model.transcribe("audio.mp3")
 print(result["text"])
 ```
 
-### 5.2 详细结果
-
-```python
-import whisper
-
-model = whisper.load_model("medium")
-
-# 获取详细结果
-result = model.transcribe(
-    "audio.mp3",
-    verbose=True,           # 打印进度
-    task="transcribe",      # 或 "translate"
-    language="zh",        # 指定语言
-    temperature=0.0,      # 采样温度
-    condition_on_previous_text=True,  # 条件生成
-    initial_prompt="...",  # 初始提示
-    word_timestamps=True,   # 词级时间戳
-)
-
-# 完整返回结构
-print(result.keys())
-# dict_keys(['text', 'segments', 'language'])
-
-# 文本内容
-print(result["text"])
-
-# 段落级别信息
-for segment in result["segments"]:
-    print(f"[{segment['start']:.2f}s - {segment['end']:.2f}s] {segment['text']}")
-    print(f"  语言: {segment.get('language', 'N/A')}")
-    print(f"  置信度: {segment.get('avg_logprob', 'N/A'):.2f}")
-
-# 词级时间戳
-for segment in result["segments"]:
-    for word in segment.get("words", []):
-        print(f"{word['word']}: {word['start']:.2f}s - {word['end']:.2f}s")
-```
-
-### 5.3 语言检测
+只有 30 秒以内的音频，或想直接拿语言和文本，可以用底层的 `decode`：
 
 ```python
 import whisper
 
 model = whisper.load_model("base")
-
-# 加载音频
 audio = whisper.load_audio("audio.mp3")
 audio = whisper.pad_or_trim(audio)
+mel = whisper.log_mel_spectrogram(audio).to(model.device)
 
-# 生成梅尔频谱
-mel = whisper.log_mel_spectrogram(audio, n_mels=model.dims.n_mels).to(model.device)
-
-# 检测语言
 _, probs = model.detect_language(mel)
-detected_lang = max(probs, key=probs.get)
-print(f"检测到语言: {detected_lang}")
-print(f"语言概率: {probs[detected_lang]:.2%}")
-```
+print(f"语言: {max(probs, key=probs.get)}")
 
-### 5.4 低级 API
-
-```python
-import whisper
-
-model = whisper.load_model("turbo")
-
-# 加载并处理音频
-audio = whisper.load_audio("audio.mp3")
-audio = whisper.pad_or_trim(audio)
-
-# 生成梅尔频谱
-mel = whisper.log_mel_spectrogram(audio, n_mels=model.dims.n_mels).to(model.device)
-
-# 解码
-options = whisper.DecodingOptions(
-    task="transcribe",
-    language="zh",
-    temperature=0.0,
-)
+options = whisper.DecodingOptions()
 result = whisper.decode(model, mel, options)
-
-print(f"文本: {result.text}")
-print(f"语言: {result.language}")
-print(f"是否完成: {result.no_speech_prob:.2f}")
+print(result.text)
 ```
 
----
+`decode` 不做窗口滑动，只处理传入的 30 秒以内的音频，适合需要精细控制解码参数的场景。
 
-## 6. 性能优化
+## 生态与选型
 
-### 6.1 GPU 加速
+Whisper 的模型权重被多个实现复用，选哪个取决于落地约束：
 
-```python
-import torch
-import whisper
+| 实现 | 定位 | 适合 |
+|------|------|------|
+| openai-whisper | 官方参考实现 | 基准测试、原型、需要 word_timestamps 的官方 API |
+| faster-whisper | CTranslate2 重实现，推理快 | 生产转写、GPU/多核 CPU 高吞吐 |
+| whisper.cpp | C/C++，CPU 友好 | 离线、嵌入式、无 Python 环境 |
+| transformers | Hugging Face 生态 | 需要微调、和 Transformers pipeline 混用 |
+| WhisperX | 加 wav2vec2 强制对齐 | 需要词的精确时间戳 |
 
-# 检查 CUDA
-print(f"CUDA available: {torch.cuda.is_available()}")
-print(f"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'None'}")
+微调一般走 transformers：加载 `openai/whisper-small`，配一个标好语言和文本的音频数据集（重采样到 16kHz），用 `--language zh --num_train_epochs 3` 这类参数训练。数据量没有硬性门槛，但目标语言或领域的样本越多、越干净，效果越好。
 
-# 使用 GPU
-model = whisper.load_model("medium")
-model = model.to("cuda")
+## 什么时候值得用
 
-# 转写
-result = model.transcribe("audio.mp3")
-```
+- **先上**：需要多语言识别、跨语言翻译，或者想要一个不依赖商业 API 的离线方案；对精度要求高就上 large，要速度就 small/medium。
+- **可以等**：对词的精细时间戳强要求时，先评估 WhisperX；纯英文、CPU 受限、要极致吞吐时，直接看 faster-whisper 或 whisper.cpp，别从官方实现起步。
+- **别指望**：拿某个基准的 WER 直接当生产预期，也别忘了官方实现推理偏重，长音频和实时场景要单独做性能测试。
 
-### 6.2 批量处理
+## 结尾
 
-```python
-import whisper
-from concurrent.futures import ThreadPoolExecutor
+Whisper 的开源价值，不在它把某一种语言的识别做到多好，而在于它证明了一条更省时的路径：用足够大的弱监督数据，换取对显式语音管线部件的依赖。至于它今天的实用形态，早就不局限于这个仓库——模型的权重散落在 faster-whisper、whisper.cpp、transformers 这些实现里，选型时先分清"模型的条目"和"跑模型的实现"是两回事。
 
-model = whisper.load_model("small")
-audio_files = ["audio1.mp3", "audio2.mp3", "audio3.mp3"]
-
-def transcribe(file):
-    result = model.transcribe(file)
-    return file, result["text"]
-
-# 多线程处理
-with ThreadPoolExecutor(max_workers=4) as executor:
-    results = list(executor.map(transcribe, audio_files))
-
-for file, text in results:
-    print(f"{file}: {text}")
-```
-
-### 6.3 长音频处理
-
-```python
-import whisper
-
-model = whisper.load_model("medium")
-
-# 处理长音频（自动分chunk）
-result = model.transcribe(
-    "long_audio.mp3",
-    chunk_length=30,        # chunk 长度（秒）
-    stride_length=5,      # 相邻 chunk 重叠（秒）
-    condition_on_previous_text=True,  # 使用前一个 chunk 的文本
-)
-
-print(result["text"])
-```
-
-### 6.4 内存优化
-
-```python
-import whisper
-import torch
-
-# CPU 内存优化：使用小模型
-model = whisper.load_model("tiny")
-
-# GPU 内存优化：半精度
-model = whisper.load_model("medium").to("cuda").half()
-
-# 批处理大小
-result = model.transcribe(
-    "audio.mp3",
-    batch_size=8,  # 降低内存占用
-)
-```
-
----
-
-## 7. 微调训练
-
-### 7.1 训练数据准备
-
-```python
-# 准备微调数据（Whisper 格式）
-from whisper import loadTokenizer
-
-tokenizer = whisper.load_tokenizer()
-
-# 你的训练数据格式：
-# {
-#     "audio": "/path/to/audio.wav",
-#     "text": "转写文本内容"
-# }
-```
-
-### 7.2 微调命令
-
-```bash
-# 使用 Hugging Face Transformers 微调
-pip install transformers datasets
-
-python train.py \
-    --model_name_or_path openai/whisper-small \
-    --dataset_name mozilla-foundation/common_voice_11_zh-CN \
-    --language zh \
-    --output_dir ./whisper-finetuned \
-    --num_train_epochs 3 \
-    --per_device_train_batch_size 8 \
-    --learning_rate 1e-5
-```
-
-### 7.3 微调注意事项
-
-| 注意事项 | 说明 |
-|----------|------|
-| **数据质量** | 微调数据质量直接影响模型效果 |
-| **语言适配** | 使用目标语言的音频和文本 |
-| **时长** | 建议总时长 > 100 小时 |
-| **预处理** | 音频需重采样为 16kHz |
-
----
-
-## 8. 生态集成
-
-### 8.1 Hugging Face Transformers
-
-```python
-from transformers import pipeline
-
-# 使用 Hugging Face pipeline
-whisper = pipeline(
-    "automatic-speech-recognition",
-    model="openai/whisper-small"
-)
-
-result = whisper("audio.mp3")
-print(result["text"])
-```
-
-### 8.2 LangChain
-
-```python
-from langchain_community.tools import WhisperTool
-from langchain.agents import Agent
-
-# 创建 Whisper 工具
-whisper_tool = WhisperTool()
-
-# 使用工具
-result = whisper_tool.run("audio.mp3")
-```
-
-### 8.3 Faster Whisper（加速版）
-
-```python
-from faster_whisper import WhisperModel
-
-# 加载加速版模型（CUDA）
-model = WhisperModel(
-    "medium",
-    device="cuda",
-    compute_type="float16"
-)
-
-segments, info = model.transcribe("audio.mp3", beam_size=5)
-
-for segment in segments:
-    print(f"{segment.start:.2f}s - {segment.end:.2f}s: {segment.text}")
-```
-
-### 8.4 WhisperX（带时间戳对齐）
-
-```python
-import whisperx
-
-# 加载模型和音频
-model = whisperx.load_model("medium", device="cuda")
-audio = whisperx.load_audio("audio.mp3")
-
-# 转写
-result = model.transcribe(audio, batch_size=8)
-
-# 时间戳对齐
-result = whisperx.align(
-    result["segments"],
-    model,
-    audio,
-    device="cuda"
-)
-
-# 获取带时间戳的词
-for segment in result["segments"]:
-    for word in segment["words"]:
-        print(f"{word['word']}: {word['start']:.2f}s - {word['end']:.2f}s")
-```
-
----
-
-## 9. 常见问题
-
-### 9.1 安装问题
-
-**问题**：`No module named 'setuptools_rust'`
-
-**解决**：
-```bash
-pip install setuptools-rust
-```
-
-**问题**：`ffmpeg` 找不到
-
-**解决**：确保 ffmpeg 已安装并添加到 PATH
-
-### 9.2 识别质量问题
-
-**问题**：识别结果不准确
-
-**解决**：
-
-| 方法 | 说明 |
-|------|------|
-| 使用更大模型 | small → medium → large |
-| 指定语言 | `--language Chinese` |
-| 提供初始提示 | `--initial_prompt "以下是一段中文对话"` |
-| 清除背景音 | 使用降噪工具预处理音频 |
-
-### 9.3 翻译问题
-
-**问题**：`turbo` 模型翻译效果差
-
-**解决**：使用 `medium` 或 `large` 模型进行翻译，turbo 不适合翻译任务
-
-### 9.4 速度问题
-
-**问题**：推理速度慢
-
-**解决**：
-
-```bash
-# 使用加速版
-pip install faster-whisper
-
-# 或使用更小的模型
-whisper audio.wav --model tiny
-```
-
----
-
-## 10. 应用场景
-
-### 10.1 音频转写
-
-| 场景 | 说明 |
-|------|------|
-| **会议记录** | 自动生成会议文字稿 |
-| **播客字幕** | 为视频生成字幕 |
-| **采访转写** | 将采访录音转为文字 |
-| **有声书** | 将语音转为文本 |
-
-### 10.2 语音翻译
-
-| 场景 | 说明 |
-|------|------|
-| **实时翻译** | 将外语演讲实时翻译 |
-| **内容本地化** | 将外语视频本地化 |
-| **跨国会议** | 多语言会议翻译 |
-
-### 10.3 语言识别
-
-| 场景 | 说明 |
-|------|------|
-| **多语言处理** | 确定音频语言后选择对应模型 |
-| **内容审核** | 检测音频语种分布 |
-| **语音分割** | 用于说话人分离预处理 |
-
----
-
-## 11. 总结
-
-**OpenAI Whisper** 是目前覆盖语言最广的开源语音识别模型之一：
-
-| 维度 | 评价 |
-|------|------|
-| **识别准确率** | ⭐⭐⭐⭐⭐ WER 低至 4% |
-| **多语言支持** | ⭐⭐⭐⭐⭐ 100+ 语言 |
-| **鲁棒性** | ⭐⭐⭐⭐⭐ 嘈杂环境表现好 |
-| **易用性** | ⭐⭐⭐⭐⭐ pip 一键安装 |
-| **生态** | ⭐⭐⭐⭐ 多种集成可选 |
-
-**适用场景**：
-
-- 会议记录和字幕生成
-- 多语言语音翻译
-- 有声书转文字
-- 语音分析和研究
-- 无障碍辅助
-
-**官方资源**：
+## 官方资源
 
 - GitHub：https://github.com/openai/whisper
-- Blog：https://openai.com/blog/whisper
-- Paper：https://arxiv.org/abs/2212.04356
+- 论文：https://arxiv.org/abs/2212.04356
 - Model Card：https://github.com/openai/whisper/blob/main/model-card.md
-- Colab：https://colab.research.google.com/github/openai/whisper/blob/master/notebooks/LibriSpeech.ipynb
+- Colab 示例：https://colab.research.google.com/github/openai/whisper/blob/master/notebooks/LibriSpeech.ipynb

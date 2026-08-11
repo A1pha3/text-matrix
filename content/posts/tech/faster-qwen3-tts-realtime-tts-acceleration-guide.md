@@ -1,154 +1,115 @@
 ---
-title: "Faster Qwen3-TTS：实时语音合成加速完全指南"
+title: "Faster Qwen3-TTS：用 CUDA Graph 把 Qwen3-TTS 压到实时"
 date: "2026-03-31T14:20:00+08:00"
+lastmod: "2026-08-08"
 slug: "faster-qwen3-tts-realtime-tts-acceleration-guide"
 github_repo: "andimarafioti/faster-qwen3-tts"
-description: "全面解析 Faster Qwen3-TTS：使用 CUDA Graph 实现 Qwen3-TTS 实时推理，支持流式和非流式两种模式。无需 Flash Attention/vLLM/Triton，在 RTX 4090 上实现 5-6 倍加速。支持语音克隆、CustomVoice、VoiceDesign 三种模式。"
+description: "Faster Qwen3-TTS 用 torch.cuda.CUDAGraph 捕获解码步骤，不依赖 Flash Attention、vLLM、Triton，在 RTX 4090 上把 0.6B 模型推到 RTF 4.78、首音频 156ms。本文拆解它的 CUDA Graph 与静态 KV Cache 机制，给出全硬件基准与流式 chunk_size 的取舍。"
 draft: false
 categories: ["技术笔记"]
 tags: ["TTS", "语音合成", "Qwen3"]
 ---
 
-# Faster Qwen3-TTS：实时语音合成加速完全指南
+# Faster Qwen3-TTS：用 CUDA Graph 把 Qwen3-TTS 压到实时
 
-## 学习目标
+Faster Qwen3-TTS 要解决的问题很具体：Qwen3-TTS 官方推理代码跑不到实时。它在 Jetson AGX Orin 上 RTF 只有约 0.18——生成 1 秒音频要等 5.7 秒。瓶颈不在模型本身，而在 Python 逐次启动 CUDA 内核的开销。这个项目用 `torch.cuda.CUDAGraph` 把整个解码步骤捕获进一张图统一重放，并配上 `transformers` 的静态 KV Cache，不改任何注意力层就拿到了实时性能。
 
-读完这篇文章后，你应该能够：
-
-1. 理解 CUDA Graph 加速 Qwen3-TTS 的原理，说出它和传统 PyTorch 推理的性能差距在哪里
-2. 根据自己的 GPU 型号，判断用 0.6B 还是 1.7B 模型，以及预期的 RTF/TTFA 是多少
-3. 用 Python API 完成一次语音克隆生成，理解 `xvec_only` 参数的作用
-4. 为不同场景（实时交互、录音制作、长文本生成）选择合适的流式配置和 `chunk_size`
-5. 在生产环境中使用预计算 Speaker Embedding，减少冷启动时延
-
-## 目录
-
-| → | [项目概述](#§2-项目概述) | [技术原理深度解析](#§3-技术原理深度解析) | [语音克隆原理解析](#§4-语音克隆原理解析) | [安装与配置](#§5-安装与配置) | [使用说明](#§6-使用说明) | [基准测试指南](#§7-基准测试指南) | [开发扩展](#§8-开发扩展) | [实践建议](#§9-实践建议) | [常见问题](#§10-常见问题) | [自测](#自测) | [进阶路径](#进阶路径) |
-
----
-
-本文覆盖以下内容：
-
-- Faster Qwen3-TTS 做了什么、怎么加速的
-- CUDA Graph 加速技术的工作机制
-- Python API 语音克隆和生成
-- CLI 工具语音生成
-- Demo UI 实时语音合成
-- OpenAI 兼容 API 服务器部署
-- 不同硬件上的基准测试
-- 流式生成的 chunk_size 参数优化
-- 语音克隆的质量模式和原理解析
-
----
-
-## §2 项目概述
-
-### 2.1 什么是 Faster Qwen3-TTS？
-
-**Faster Qwen3-TTS**（官方仓库：[andimarafioti/faster-qwen3-tts](https://github.com/andimarafioti/faster-qwen3-tts)）是一个基于 **CUDA Graph 加速**的 Qwen3-TTS 实时推理库，实现了无需 Flash Attention、无需 vLLM、无需 Triton 的高性能语音合成。
-
-**官方描述**：
-> Real-time Qwen3-TTS inference using CUDA graph capture. No Flash Attention, no vLLM, no Triton. Just torch.cuda.CUDAGraph. Supports both streaming and non-streaming generation.
-
-翻译：使用 CUDA Graph 捕获实现 Qwen3-TTS 实时推理。不依赖 Flash Attention、vLLM 或 Triton，仅使用 torch.cuda.CUDAGraph。支持流式和非流式两种生成模式。
-
-### 2.2 核心数据
+核心数据（GitHub API 2026-08-08 验证）：
 
 ```
-Stars:     865
-Forks:     122
-贡献者:    5 人
-提交数:   292 次
+Stars:     1,293
+Forks:     190
 许可证:   MIT
-主要语言: Python 96.0%
-最新版本: 0.2.5 (2026-03-27)
-最新提交: 3ee3496 (2026-03-28)
+主要语言: Python
+默认分支: main
+创建:      2026-02-16
+最新版本: v0.3.1 (2026-07-15)
 ```
 
-### 2.3 与其他 TTS 加速方案的区别
+## 项目定位
 
-| 方案 | 依赖 | 加速方式 | 流式支持 |
-|------|------|----------|----------|
-| **Faster Qwen3-TTS** | 仅 PyTorch | CUDA Graph | ✅ 完整流式 |
-| Qwen3-TTS 原生 | PyTorch | 无加速 | ❌ 无流式 |
-| vLLM 加速 | vLLM | PagedAttention | ✅ 流式 |
-| FasterTransformer | TensorRT | 内核优化 | ✅ 流式 |
+官方描述是 **"Real-time text-to-speech with Qwen3-TTS"**——用 CUDA graph capture 做实时推理，不依赖 Flash Attention、vLLM 或 Triton，只用 `torch.cuda.CUDAGraph`，同时支持流式和非流式生成。
 
-### 2.4 技术亮点
+它和别的加速路线的区别在于不换引擎：
 
-| 亮点 | 说明 |
-|------|------|
-| **零依赖** | 不需要 Flash Attention、vLLM、Triton |
-| **CUDA Graph** | 捕获整个解码步骤作为单一 GPU 操作 |
-| **静态 KV Cache** | 预分配固定大小张量，无动态分配开销 |
-| **流式输出** | 支持实时流式音频输出 |
-| **多模式** | 支持 Voice Clone、CustomVoice、VoiceDesign |
+| 方案 | 依赖 | 加速方式 | 流式 |
+|------|------|----------|------|
+| **Faster Qwen3-TTS** | PyTorch + transformers | CUDA Graph + StaticCache | 支持 |
+| Qwen3-TTS 原生 | PyTorch | 无 | 不支持 |
+| vLLM 加速 | vLLM | 换 serving 引擎 | 支持 |
 
-### 2.5 支持的模型
+它不重写模型、不接 vLLM、不手写注意力内核，完全留在 PyTorch/HuggingFace 生态内。这是它和"上 vLLM 换引擎"路线最大的差别，也是它只在一张卡上跑单流时更有优势的原因。
 
-| 模型 | 大小 | 说明 |
+## 支持的模型与三种生成模式
+
+| 模型 | 大小 | 用途 |
 |------|------|------|
-| Qwen/Qwen3-TTS-12Hz-0.6B-Base | 0.6B | 基础模型 |
-| Qwen/Qwen3-TTS-12Hz-1.7B-Base | 1.7B | 基础大模型 |
+| Qwen/Qwen3-TTS-12Hz-0.6B-Base | 0.6B | 基础模型，语音克隆 |
+| Qwen/Qwen3-TTS-12Hz-1.7B-Base | 1.7B | 基础大模型，语音克隆 |
 | Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice | 1.7B | 预定义音色 |
-| Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign | 1.7B | 指令音色设计 |
+| Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign | 1.7B | 指令式音色设计 |
 
----
+三种生成模式共用同一套 CUDA Graph 机制，速度几乎相同（见下文 benchmark）。
 
-## §3 技术原理深度解析
+## 加速原理：捕获解码步骤，而不是优化单个内核
 
-### 3.1 Qwen3-TTS 工作机制
+Qwen3-TTS 每个解码步骤跑两个自回归 Transformer：
 
-Qwen3-TTS 在每个解码步骤运行两个自回归 Transformer：
-
-| 组件 | 层数 | 功能 |
+| 组件 | 层数 | 作用 |
 |------|------|------|
 | **Talker** | 28 层 | 从文本生成第一个码本 token |
-| **Code Predictor** | 5 层 | 生成 15 个额外码本 token |
+| **Code Predictor** | 5 层 | 生成 15 个额外码本 token，组成一帧完整音频 |
 
-每个步骤涉及约 **500 次小型 CUDA 内核启动**，Python 开销导致 GPU 大部分时间在等待下一个内核。
+每个步骤要启动约 **500 次小型 CUDA 内核**。在标准 Python 循环里，GPU 大部分时间在等 CPU 下发下一条指令，而不是在算。瓶颈是内核启动开销（kernel launch overhead），不是算子本身慢。
 
-### 3.2 CUDA Graph 加速原理
-
-**问题**：每个解码步骤需要约 500 次 CUDA 内核调用，每次调用都有 Python 到 CUDA 的切换开销。
-
-**解决方案**：使用 `torch.cuda.CUDAGraph` 捕获整个解码步骤，然后作为单一 GPU 操作重放。
+CUDA Graph 的思路是把这个固定形状的步骤录制成一张图，之后每次直接重放，删掉 Python 与内核之间的往返：
 
 ```
-捕获前：Python → CUDA内核1 → Python → CUDA内核2 → Python → ... → CUDA内核500
-捕获后：Python → CUDAGraph重放（一次性执行全部500个内核）
+捕获前：Python → 内核1 → Python → 内核2 → ... → Python → 内核500
+捕获后：一次 CUDAGraph 重放，GPU 串行执行全部 500 个内核
 ```
 
-### 3.3 静态 KV Cache
+能这样做的前提是**张量形状全程不变**。项目直接用 `transformers` 自带的 `StaticCache`：预先分配固定大小的 KV 张量，注意力层内部用 `cache.update()` 原地写入，配合固定的 `cache_position` 缓冲，单 token 解码时所有形状都固定，天然可捕获。外加一个小的优化：把逐 token 的重复惩罚（repetition penalty）从 Python 循环改成 `torch.where` 一次性向量化，去掉每步的 CPU↔GPU 同步。
 
-| 特性 | 说明 |
-|------|------|
-| **预分配** | 预先分配固定大小的张量 |
-| **无动态分配** | 避免 GPU 内存分配开销 |
-| **固定注意力掩码** | 处理可变长度 KV 的固定缓冲区 |
+## 为什么加速比从 1.2x 到 9.8x 不等
 
-### 3.4 加速效果详解
+CUDA Graph 消除的是 CPU 到 GPU 的内核分发空隙，加速比取决于 CPU/GPU 之间的失衡程度。GPU 比 CPU 快得越多（或 CPU 越弱），能找回的空闲时间越多，加速越明显。
 
-**0.6B 模型基准测试**
+benchmark 里两个例外是 Jetson AGX Orin 和 DGX Spark——它们恰好配了很强的 CPU 配上相对普通的 GPU。DGX Spark 的 72 核 Grace CPU 本身就能把基线推到 RTF 1.19（已经快于实时），可消除的分发开销不多，所以只加 1.2–1.9x。反过来，RTX 4090、H100 这类 GPU 头快、CPU 分发跟不上的组合，加速比普遍落在 3–9x。
 
-| GPU | Baseline RTF | Baseline TTFA | CUDA Graphs RTF | CUDA Graphs TTFA | 加速比 |
-|-----|-------------|---------------|----------------|-----------------|--------|
-| Jetson AGX Orin 64GB | 0.179 | 3,641ms | 1.307 | 597ms | 7.3x / 6.1x |
+## 基准测试：0.6B 模型
+
+| GPU | 基线 RTF | 基线 TTFA | CUDA Graph RTF | CUDA Graph TTFA | 加速比 |
+|-----|---------|-----------|----------------|-----------------|--------|
+| RTX 4090 | 0.82 | 800ms | **4.78** | **156ms** | 5.8x / 5.1x |
+| H100 80GB HBM3 | 0.435 | 1,474ms | **3.884** | **228ms** | 8.9x / 6.5x |
+| RTX 4060 (Windows) | 0.23 | 2,697ms | **2.26** | **413ms** | 9.8x / 6.5x |
 | DGX Spark (GB10) | 1.17 | 567ms | 2.56 | 280ms | 2.2x / 2.0x |
-| RTX 4090 | 0.82 | 800ms | 4.78 | 156ms | 5.8x / 5.1x |
-| RTX 4060 (Windows) | 0.23 | 2,697ms | 2.26 | 413ms | 9.8x / 6.5x |
-| H100 80GB HBM3 | 0.435 | 1,474ms | 3.884 | 228ms | 8.9x / 6.5x |
+| Jetson AGX Orin 64GB | 0.179 | 3,641ms | 1.307 | 597ms | 7.3x / 6.1x |
+| Tesla T4 16GB | 0.467 | 1,671ms | **1.068** | **901ms** | 2.3x / 1.9x |
 
-**说明**：
-- RTF > 1.0 表示快于实时
-- TTFA (Time To First Audio)：首个可播放音频 chunk 的时间
-- 加速比格式：吞吐量加速 / TTFA 加速
+## 基准测试：1.7B 模型
 
-### 3.5 流式生成原理
+| GPU | 基线 RTF | 基线 TTFA | CUDA Graph RTF | CUDA Graph TTFA | 加速比 |
+|-----|---------|-----------|----------------|-----------------|--------|
+| RTX 4090 | 0.82 | 850ms | **4.22** | **174ms** | 5.1x / 4.9x |
+| H100 80GB HBM3 | 0.439 | 1,525ms | **3.304** | **241ms** | 7.5x / 6.3x |
+| RTX 4060 (Windows) | 0.23 | 2,905ms | **1.83** | **460ms** | 7.9x / 6.3x |
+| DGX Spark (GB10) | 1.01 | 661ms | 1.87 | 400ms | 1.9x / 1.7x |
+| Jetson AGX Orin 64GB | 0.183 | 3,573ms | 1.089 | 693ms | 6.0x / 5.2x |
+| Tesla T4 16GB | 0.453 | 1,811ms | **0.925** | **1,096ms** | 2.0x / 1.7x |
 
-CUDA Graph 支持流式输出——音频 chunk 在生成过程中被 yield，具有与非流式模式相同的每步性能。
+**怎么读这张表**：RTF > 1.0 表示快于实时，TTFA 是最先出来可播放音频块的时间，加速比格式是"吞吐量加速 / TTFA 加速"。这里有三点要提醒自己别过度推断：
 
-**流式生成的关键参数 `chunk_size`**：
+- 基线 TTFA 用的是社区 `Qwen3-TTS-streaming` 分支（或本项目无 CUDA Graph 的动态缓存流式路径）。官方 `Qwen3-TTS` 仓库目前不支持流式，只看官方的话它的"TTFA"其实是整段音频全部生成完的时间。
+- RTX 4090 单流 RTF 反超 H100，是因为它的 boost 时钟更高（约 2.5 GHz vs 1.8 GHz）。H100 的强项是批量处理，不是单流。
+- 这些数字是特定版本、固定文本的实测，不能直接推出"我的长文本也快这么多"。T4 上 0.6B 只到 RTF 1.068，边缘设备仍要按自己的硬件实测。
+
+## 流式生成
+
+CUDA Graph 天然支持流式：predictor 和 talker 的图每步照常重放，只是把生成的码本 ID 每 `chunk_size` 步聚一个块，再用滑动窗口（25 帧左上下文，对齐上游 codec 的 `chunked_decode`）解码成音频吐出来。图的逻辑不变，变的只是控制流。
+
+**chunk_size 与性能（Jetson AGX Orin，0.6B）**：
 
 | chunk_size | TTFA | RTF | 每 chunk 音频时长 |
 |------------|------|-----|----------------|
@@ -157,107 +118,89 @@ CUDA Graph 支持流式输出——音频 chunk 在生成过程中被 yield，�
 | 4 | 362ms | 1.251 | 333ms |
 | 8 | 556ms | 1.384 | 667ms |
 | 12 | 753ms | 1.449 | 1000ms |
-| Non-streaming | — | 1.57 | 全部 |
+| 非流式 | — | 1.57 | 全部一次 |
 
-**结论**：
-- 较小的 chunk = 更低延迟但更多解码开销
-- `chunk_size=2` 是 Jetson 上保持实时性的最小值
+规律是：chunk 越小延迟越低，但解码开销越大。`chunk_size=2` 是 Jetson 上保持实时的最小值；在更快的 GPU 上 `chunk_size=1` 通常仍在 RTF 1.0 以上。Python 的流式方法是拉取式生成器，调用方要下一个块才准备下一个块；本地实时播放建议用 `StreamPlayer` 这种队列式播放器，避免每块阻塞导致生成和播放无法重叠。
 
 ---
 
-## §4 语音克隆原理解析
+## 语音克隆：两种模式
 
-### 4.1 克隆模式对比
-
-`generate_voice_clone` 暴露两种模式（通过 `xvec_only` 参数）：
+`generate_voice_clone` 通过 `xvec_only` 参数暴露两种克隆模式：
 
 | 模式 | xvec_only | 特点 |
 |------|-----------|------|
-| **Simple (x-vector)** | True | 仅 speaker embedding，更短视频填充，干净的语言切换，无需 ref_text |
-| **Advanced (ICL)** | False（默认）| 完整参考音频在上下文中，需要准确的 ref_text，可能在开头产生短暂伪影 |
+| **Simple（x-vector）** | True | 只取 speaker embedding，prefill 更短、语言切换干净、不需要 ref_text |
+| **Advanced（ICL）** | False（默认） | 整段参考音频放进上下文，需要准确的 ref_text，开头可能有一点伪影 |
 
-### 4.2 ICL 模式的解码上下文
+默认是 ICL 模式，和上游 Qwen3-TTS 一致。x-vector 模式作为可选留在那，用于更干净的语言切换和更短的 prefill。
 
-12Hz codec 使用因果性 `chunked_decode`：每帧使用先前的帧作为声学上下文进行重构。
+### ICL 模式的解码上下文
 
-在 ICL 模式下，参考音频 codec token 被 prepend 到生成的 token 之前，然后解码时修剪参考部分。
+12Hz codec 用因果的 `chunked_decode`：每帧用前面的帧作为声学上下文重建。ICL 模式下参考音频的 codec token 会被拼到生成 token 前面，解码完再裁剪掉参考部分。没有这一步，codec 解码器冷启动没有声音上下文，模型生成的 token 对会被用错误的音色重建。这一步是自动处理的。
 
-### 4.3 ICL 音素伪影修复
+### ICL 音素伪影与修复
 
-**问题**：在 ICL 模式下，模型的预填充以参考音频的最后一个 codec token 结束，所以第一个生成的 token 以参考结束时的音素为条件。如果参考在单词中间结束，该音素会渗透到生成的语音中。
+ICL 模式下模型的 prefill 以参考音频最后一个 codec token 结尾，所以第一个生成的 token 会以参考末尾的音素为条件。如果参考音频在单词中间结束，那个音素会渗进生成的语音开头——比如参考以 "thumbs" 结尾，开头会带出类似 "mz" 的声音。
 
-**修复方案**（默认应用）：在编码前向参考音频追加 0.5 秒静音，给模型一个干净的起点。
+修复很简单：**在编码前给参考音频末尾拼 0.5 秒静音**。这样模型起始上下文是静音，生成的语音从第一帧就干净。项目在 `_prepare_generation()` 里自动应用，不需要用户手动处理。
 
-```python
-# 设置 append_silence=False 可获得与上游行为完全匹配的结果
-```
+### 预计算 Speaker Embedding
 
-### 4.4 预计算 Speaker Embedding
-
-对于生产用途，可以一次提取 speaker embedding 并重复使用：
+生产环境可以一次性提取 speaker embedding 并复用，省掉每次请求都编码参考音频的开销：
 
 ```python
-# 1. 从参考音频提取speaker embedding（一次性，约10秒）
+# 1. 一次性提取 speaker embedding
 python examples/extract_speaker.py --ref_audio voice.wav --output speaker.pt
 
-# 2. 使用CUDA graphs生成（实时）
+# 2. 之后用 embedding 实时生成（多语言各跑一次）
 python examples/generate_with_embedding.py --speaker speaker.pt --text "Hello!" --language English --output en.wav
+python examples/generate_with_embedding.py --speaker speaker.pt --text "Bonjour!" --language French --output fr.wav
 ```
 
-**x_vector_only 模式的优势**：
-- 无口音漂移：每种语言的原生发音
-- 更短视频填充：10 tokens vs ICL 模式的 80+ tokens
-- 运行时不需参考音频：只需 4KB 的 embedding 文件
+x-vector 模式的优势在于：每种语言用原生发音（无口音漂移）、prefill 更短视频填充少、运行时不需要参考音频，只带一个很小的 embedding 文件。
 
 ---
 
-## §5 安装与配置
+## 安装
 
-### 5.1 环境要求
-
-| 要求 | 版本 |
-|------|------|
-| Python | 3.10+ |
-| PyTorch | 2.5.1+（必须）|
-| NVIDIA GPU | CUDA 支持 |
-
-**⚠️ PyTorch 兼容性说明**：
-CUDA-graph capture 在 `torch<=2.5.0` 上不可靠（捕获可能失败并显示"operation not permitted when stream is capturing"）。已验证 `2.5.1+` 可正常工作。
-
-**⚠️ Blackwell (RTX 50xx) 说明**：
-RTX 50xx / Blackwell GPU 需要 CUDA 12.8 PyTorch wheels。如果默认安装失败，需要安装 `cu128` PyTorch 构建（PyTorch 2.7+）。
-
-### 5.2 安装步骤
-
-**pip 安装（推荐）**
+环境要求：Python 3.10+、PyTorch 2.5.1+、带 CUDA 的 NVIDIA GPU。
 
 ```bash
 pip install faster-qwen3-tts
 ```
 
-**从源码安装**
+**PyTorch 版本**：CUDA-graph capture 在 `torch<=2.5.0` 上不可靠，捕获可能报 "operation not permitted when stream is capturing"。项目验证 2.5.1+ 可用，把它定为最低支持版本。
+
+**Blackwell（RTX 50xx）**：需要 CUDA 12.8 的 PyTorch wheel。默认安装在这类卡上失败的话，装 `cu128` 构建（PyTorch 2.7+）。
+
+**Driver / CUDA 不匹配（T4、A10G 等 CUDA 12.4 主机）**：`pip install` 拉到的默认 PyTorch wheel 基于较新的 CUDA toolkit。如果驱动比 toolkit 旧——AWS、Azure ML、很多 Colab/T4 机器常见——`torch.cuda.is_available()` 会返回 False 并报 "CUDA initialization: The NVIDIA driver on your system is too old"。按 `nvidia-smi` 右上角的 CUDA Version 装匹配的 wheel：
 
 ```bash
-git clone https://github.com/andimarafioti/faster-qwen3-tts
-cd faster-qwen3-tts
-./setup.sh
+pip install "torch==2.5.1" "torchaudio==2.5.1" --index-url https://download.pytorch.org/whl/cu124
 ```
 
-### 5.3 Windows 安装
+### 可选的 GGML 后端
+
+项目还带一个实验性的 GGML 适配器，接 Pascal 的 `qwentts.cpp` 运行时。Torch/CUDA-graph 仍是默认后端，GGML 是选装，用独立的原生 wheel 包，不影响主安装路径：
 
 ```bash
-git clone https://github.com/andimarafioti/faster-qwen3-tts
-cd faster-qwen3-tts
-setup_windows.bat
+pip install "faster-qwen3-tts[ggml]"
+faster-qwen3-tts --backend ggml --quant BF16 design \
+  --model Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign \
+  --instruct "Warm, confident narrator" \
+  --text "Welcome to the show." \
+  --language English \
+  --output out.wav
 ```
+
+GGML 后端会缓存参考音频的 `.spk` 说话人 latent 和 `.rvq` 声学 latent，也支持直接传预计算的引用。注意它的 ABI 缺口：没有 `non_streaming_mode` 开关、拒绝 base 模型的 `instruct`、KV 缓存长度固定，所以还不能算完全对齐 Torch 后端。
 
 ---
 
-## §6 使用说明
+## 使用
 
-### 6.1 Python API 快速开始
-
-**基础语音克隆（非流式）**
+### Python API
 
 ```python
 from faster_qwen3_tts import FasterQwen3TTS
@@ -272,7 +215,7 @@ ref_text = (
     "of training on verifiable outcomes is doomed."
 )
 
-# 非流式生成——返回全部音频
+# 非流式——一次返回全部音频
 audio_list, sr = model.generate_voice_clone(
     text="Hello world!",
     language="English",
@@ -281,10 +224,10 @@ audio_list, sr = model.generate_voice_clone(
 )
 ```
 
-**流式生成**
+流式用 `generate_voice_clone_streaming`，配合仓库 `examples/` 里的 `StreamPlayer` 实时播放：
 
 ```python
-from examples.audio import StreamPlayer  # 仓库examples/中的辅助工具
+from examples.audio import StreamPlayer
 
 play = StreamPlayer()
 try:
@@ -293,16 +236,18 @@ try:
         language="English",
         ref_audio=ref_audio,
         ref_text=ref_text,
-        chunk_size=8,  # 8步 ≈ 每chunk 667ms音频
+        chunk_size=8,  # 8 步 ≈ 每 chunk 667ms 音频
     ):
         play(audio_chunk, sr)
 finally:
     play.close()
 ```
 
-### 6.2 CLI 命令详解
+服务前可以显式调用 `model.warmup(prefill_len=100)` 预配模型（Torch 后端捕获 CUDA Graph，GGML 后端是安全的空操作）；普通生成也会按需做惰性准备。
 
-**语音克隆（参考音频）**
+### CLI
+
+语音克隆（参考音频）：
 
 ```bash
 faster-qwen3-tts clone \
@@ -314,13 +259,10 @@ faster-qwen3-tts clone \
     --output out.wav
 ```
 
-**CustomVoice（预定义音色）**
+CustomVoice（预定义音色）：
 
 ```bash
-# 列出可用音色
 faster-qwen3-tts custom --model Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice --list-speakers
-
-# 使用指定音色
 faster-qwen3-tts custom \
     --model Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice \
     --speaker aiden \
@@ -329,7 +271,7 @@ faster-qwen3-tts custom \
     --output out.wav
 ```
 
-**VoiceDesign（指令式）**
+VoiceDesign（指令式）：
 
 ```bash
 faster-qwen3-tts design \
@@ -340,7 +282,7 @@ faster-qwen3-tts design \
     --output out.wav
 ```
 
-**流式生成到 WAV 文件**
+流式生成并写 WAV（写完后打印 RTF）：
 
 ```bash
 faster-qwen3-tts custom \
@@ -352,42 +294,24 @@ faster-qwen3-tts custom \
     --streaming
 ```
 
-**服务器模式（保持模型热，启动后 exit 退出）**
+### Demo UI
+
+一个最小 Web UI，实时流式出音频并显示 TTFA、RTF 指标。默认走 GGML/qwentts.cpp，带一个后端开关可以和 Torch CUDA-graph 后端对比：
 
 ```bash
-faster-qwen3-tts serve \
-    --mode custom \
-    --model Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice \
-    --speaker aiden \
-    --language English \
-    --streaming
-```
-
-### 6.3 Demo UI 部署
-
-一个最小化 Web UI，实时流式传输音频并显示 TTFA 和 RTF 指标：
-
-```bash
-pip install -e ".[demo]"
-python demo/server.py
+pip install -e ".[demo,ggml]"
+python demo/server.py --backend ggml
 # 打开 http://localhost:7860
 ```
 
-**功能特性**：
-- 语音克隆（上传任意 WAV 或使用麦克风）
-- Voice Design（1.7B-VoiceDesign 模型）
-- 流式/非流式切换
-- 可调整 chunk_size
-- 实时 TTFA/RTF 指标
-- WAV 下载
+功能：上传 WAV 或接麦克风做语音克隆、Voice Design、GGML/Torch 后端切换、流式/非流式切换、可调 chunk_size、实时 TTFA/RTF、WAV 下载。
 
-### 6.4 OpenAI 兼容 API 服务器
+### OpenAI 兼容 API 服务器
 
-暴露遵循 OpenAI TTS API 契约的 `POST /v1/audio/speech` 端点，可与 OpenWebUI、llama-swap 及任何 OpenAI 兼容客户端配合使用。
+`examples/openai_server.py` 暴露遵循 OpenAI TTS 契约的 `POST /v1/audio/speech`，可直接配 OpenWebUI、llama-swap 等客户端：
 
 ```bash
 pip install "faster-qwen3-tts[demo]"
-
 python examples/openai_server.py \
     --ref-audio ref_audio.wav \
     --ref-text "I'm confused why some people..." \
@@ -395,7 +319,7 @@ python examples/openai_server.py \
     --port 8000
 ```
 
-**客户端调用示例**
+调用：
 
 ```bash
 curl http://localhost:8000/v1/audio/speech \
@@ -404,313 +328,60 @@ curl http://localhost:8000/v1/audio/speech \
     --output speech.wav
 ```
 
-**多音色配置**：传递一个 JSON 文件将音色名映射到参考音频配置，通过 `--voices voices.json` 参数。
+暴露多音色时，用 `--voices voices.json` 传一个把音色名映射到参考音频配置的 JSON，请求里的 `voice` 值会路由到对应条目。WAV/PCM 边生成边流式出块，MP3 需要 `pydub`。
 
 ---
 
-## §7 基准测试指南
+## 在自己的硬件上跑基准
 
-### 7.1 测试要求
-
-基准测试从源码运行。只需要 `uv` 和 `./setup.sh`。
-
-**Linux / macOS / WSL**
+基准从源码跑，只需要 `uv` 和 `./setup.sh`：
 
 ```bash
 git clone https://github.com/andimarafioti/faster-qwen3-tts
 cd faster-qwen3-tts
 ./setup.sh
-./benchmark.sh              # 全部模型
-# 或只测单个模型
-./benchmark.sh 0.6B
-./benchmark.sh 1.7B
+./benchmark.sh            # 全部模型；或 ./benchmark.sh 0.6B / 1.7B 只测单个
 ```
 
-**Windows（原生）**
+Windows 原生对应 `setup_windows.bat` 和 `benchmark_windows.bat`。结果存成 `bench_results_<GPU_NAME>.json`，音频样本存为 `sample_0.6B.wav` / `sample_1.7B.wav`。
 
-```bash
-git clone https://github.com/andimarafioti/faster-qwen3-tts
-cd faster-qwen3-tts
-setup_windows.bat
-benchmark_windows.bat      # 全部模型
-benchmark_windows.bat 0.6B
-benchmark_windows.bat 1.7B
-```
+三种生成模式速度几乎一致，用 `benchmarks/compare_modes.py` 可复现。0.6B、`chunk_size=8` 的示例：
 
-**结果保存位置**：
-- 基准测试结果：`bench_results_<GPU_NAME>.json`
-- 音频样本：`sample_0.6B.wav` / `sample_1.7B.wav`
-
-### 7.2 性能指标解读
-
-| 指标 | 说明 | 目标值 |
-|------|------|--------|
-| **RTF** | 实时因子，>1.0 表示快于实时 | 越高越好 |
-| **TTFA** | 首个音频时间 | 越低越好 |
-| **ms/step** | 每步延迟 | 越低越好 |
-
-### 7.3 硬件性能参考
-
-**1.7B 模型基准测试**
-
-| GPU | Baseline RTF | Baseline TTFA | CUDA Graphs RTF | CUDA Graphs TTFA | 加速比 |
-|-----|---------------|---------------|-----------------|------------------|--------|
-| Jetson AGX Orin 64GB | 0.183 | 3,573ms | 1.089 | 693ms | 6.0x / 5.2x |
-| DGX Spark (GB10) | 1.01 | 661ms | 1.87 | 400ms | 1.9x / 1.7x |
-| RTX 4090 | 0.82 | 850ms | 4.22 | 174ms | 5.1x / 4.9x |
-| RTX 4060 (Windows) | 0.23 | 2,905ms | 1.83 | 460ms | 7.9x / 6.3x |
-| H100 80GB HBM3 | 0.439 | 1,525ms | 3.304 | 241ms | 7.5x / 6.3x |
+| 模式 | TTFA (ms) | RTF | ms/step |
+|------|----------|------|---------|
+| VoiceClone xvec | 152 ± 11 | 5.470 ± 0.032 | 15.2 ± 0.1 |
+| VoiceClone full ICL | 149 ± 1 | 5.497 ± 0.026 | 15.2 ± 0.1 |
+| CustomVoice | 148 ± 1 | 5.537 ± 0.020 | 15.0 ± 0.1 |
 
 ---
 
-## §8 开发扩展
+## 常见问题
 
-### 8.1 使用预计算 Speaker Embedding
+**为什么需要 PyTorch 2.5.1+？** CUDA-graph capture 在 `torch<=2.5.0` 上不可靠，会报 "operation not permitted when stream is capturing"。2.5.1+ 已验证可用。
 
-对于生产环境，可以一次提取 speaker embedding 并重复使用：
+**静态缓存和动态缓存有什么区别？** 数学上等价，但内核路径不同。静态缓存用固定最大长度的 KV 缓冲加显式注意力掩码，动态缓存按当前序列长度、常走 `is_causal=True` 免掩码。在 BF16/TF32 下不同内核的求和处理顺序不位精确，输出可能略有差异。项目用动态缓存 parity 模式在测试里保证和上游逻辑一致，快路径优先吞吐。
 
-```python
-# 1. 提取speaker embedding（一次性，约10秒）
-python examples/extract_speaker.py --ref_audio voice.wav --output speaker.pt
+**`non_streaming_mode` 是控制音频输出流式吗？** 不是，它继承自上游 Qwen3-TTS，控制的是**文本输入**是整段喂还是逐步喂（`non_streaming_mode=None` 时各方法保留上游默认值）。和这里的音频输出流式是两回事。在 RTX 4090、1.7B、ICL、chunk_size=8 下，两种文本喂法对性能几乎没影响（TTFA ≈159ms，RTF 4.87 vs 4.85）。
 
-# 2. 使用CUDA graphs生成（实时）
-python examples/generate_with_embedding.py \
-    --speaker speaker.pt \
-    --text "Hello!" \
-    --language English \
-    --output en.wav
+**chunk_size 怎么选？** 实时交互用小一点的（延迟低），追求吞吐用大的。`chunk_size=2` 是 Jetson 上保持实时的下限，快速设备上 `chunk_size=1` 也行。
 
-python examples/generate_with_embedding.py \
-    --speaker speaker.pt \
-    --text "Bonjour!" \
-    --language French \
-    --output fr.wav
-
-python examples/generate_with_embedding.py \
-    --speaker speaker.pt \
-    --text "Hallo!" \
-    --language German \
-    --output de.wav
-```
-
-**Speaker Embedding API 使用**
-
-```python
-import torch
-from faster_qwen3_tts import FasterQwen3TTS
-
-model = FasterQwen3TTS.from_pretrained("Qwen/Qwen3-TTS-12Hz-1.7B-Base")
-
-# 1) 从参考音频计算prompt_items（一次性）
-prompt_items = model.model.create_voice_clone_prompt(
-    ref_audio="voice.wav",
-    ref_text="",
-    x_vector_only_mode=True,
-)
-
-# 2) 直接传递prompt_items
-audio_list, sr = model.generate_voice_clone(
-    text="Hello world!",
-    language="English",
-    voice_clone_prompt=prompt_items,
-)
-
-# 3) 或保存speaker embedding并在后续重建
-spk_emb = prompt_items[0].ref_spk_embedding
-torch.save(spk_emb.detach().cpu(), "speaker.pt")
-
-# 后续加载使用
-spk_emb = torch.load("speaker.pt", weights_only=True).to(model.device)
-voice_clone_prompt = {"ref_spk_embedding": [spk_emb]}
-
-audio_list, sr = model.generate_voice_clone(
-    text="Hello world!",
-    language="English",
-    voice_clone_prompt=voice_clone_prompt,
-)
-```
-
-### 8.2 质量对比样本
-
-项目提供了并排音频样本用于对比 Qwen3TTS（动态缓存）和 FasterQwen3TTS（静态缓存）的质量。
-
-样本使用 1.7B 模型，生成上限约 14 秒。
-
-**可用样本**：
-- CustomVoice (aiden) – Prompt 1/2
-- CustomVoice (serena) – Prompt 1/2
-- ICL (ref_audio.wav) – Prompt 1/2
-- ICL (ref_audio_2.wav) – Prompt 1/2
-- ICL (ref_audio_3.wav) – Prompt 1/2
-
-### 8.3 端到端测试
-
-测试位于 `tests/test_e2e_parity.py`，覆盖：
-
-- Voice clone (x-vector) 与上游的 prefix parity
-- 流式 vs 非流式 parity（快速路径）
-- CustomVoice 完全相等性（parity 模式）
-- VoiceDesign 完全相等性（parity 模式）
-- Voice clone ICL 完全相等性（parity 模式）
-
-**控制测试使用的模型 ID**：
-
-```bash
-export QWEN_TTS_MODEL=Qwen/Qwen3-TTS-12Hz-0.6B-Base
-export QWEN_TTS_CUSTOM_MODEL=Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice
-export QWEN_TTS_VOICE_DESIGN_MODEL=Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign
-```
+**x-vector 和 ICL 模式用哪个？** 不需要指令微调的话 x-vector 更稳，prefill 短、无伪影风险、语言切换干净；ICL 质量上限更高但要求 ref_text 准确，且用 `xvec_only=True` 时 `instruct` 指令遵循不稳定（实验性），ICL 模式下指令遵循更可预测。
 
 ---
 
-## §9 实践建议
+## 什么时候值得用
 
-### 9.1 生产部署建议
+**推荐用**：单卡、单流的实时语音合成——实时语音助手、Demo、本地服务。它的优势正好落在"不想为此上 vLLM 换引擎"的场景，且 4090 级消费卡就能跑到 RTF 4+。
 
-**流式 vs 非流式选择**
-
-| 场景 | 推荐模式 | chunk_size |
-|------|----------|------------|
-| 实时交互 | 流式 | 2-4 |
-| 语音助手 | 流式 | 4-8 |
-| 录音制作 | 非流式 | N/A |
-| 长文本生成 | 流式 | 8-12 |
-
-### 9.2 性能优化技巧
-
-**减少 TTFA（首音频延迟）**
-- 使用较小的 chunk_size
-- 预热模型（首次调用较慢）
-
-**提高吞吐量**
-- 使用较大的 chunk_size
-- 在高端 GPU（如 RTX 4090）上运行
-- 考虑使用 1.7B 模型 vs 0.6B 模型
-
-### 9.3 质量优化技巧
-
-**语音克隆质量**
-- 使用高质量参考音频
-- 参考音频长度建议 5-30 秒
-- 避免参考音频有噪声或回声
-
-**ICL 模式注意事项**
-- 必须提供准确的 ref_text
-- 如果参考音频在单词中间结束，可能产生伪影
-- 可以设置 `append_silence=False` 来匹配上游行为
-
-### 9.4 硬件选择指南
-
-| 硬件 | 适用场景 | 推荐模型 |
-|------|----------|----------|
-| RTX 4090 | 桌面级高性能 | 1.7B |
-| RTX 4060 | 桌面级经济 | 0.6B |
-| Jetson AGX Orin | 嵌入式/边缘部署 | 0.6B |
-| H100 | 服务器/数据中心 | 1.7B |
-| DGX Spark | 开发/小规模部署 | 0.6B/1.7B |
+**先等等**：需要大规模批量推理的，H100 这类卡的优势在批量才体现，且它的单流 RTF 反而不如 4090；已经在用 vLLM 的团队，加一个 CUDA Graph 后端多半不如直接复用现有推理栈。GGML 后端目前还是实验性的，别在生产里当默认。
 
 ---
 
-## §10 常见问题
-
-### Q1：为什么需要 PyTorch 2.5.1+？
-
-CUDA-graph capture 在 `torch<=2.5.0` 上不可靠，捕获可能失败并显示"operation not permitted when stream is capturing"错误。2.5.1+ 已验证可正常工作。
-
-### Q2：静态缓存与动态缓存有什么区别？
-
-数学上等价，但内核路径不同。静态缓存使用固定最大长度 KV 缓冲区和显式注意力掩码，而动态缓存使用更短的 K/V 和 mask-free 方式。在 BF16/TF32 中，不同的内核/归约顺序不是位精确的，因此输出可能略有不同。
-
-### Q3：流式生成的 chunk_size 如何选择？
-
-- **chunk_size=1**：最低延迟（240ms TTFA），但需要强大 GPU
-- **chunk_size=2**：Jetson 上最小实时值
-- **chunk_size=4-8**：延迟与吞吐量的平衡选择
-- **chunk_size=12**：最大吞吐量，但 TTFA 较长
-
-### Q4：Voice Clone 的 x-vector 和 ICL 模式哪个更好？
-
-- **x-vector 模式**：更简单，无伪影风险，更短视频填充
-- **ICL 模式**：更高质量（如果 ref_text 准确），支持指令微调
-
-建议：如果不需要指令微调，使用 x-vector 模式更稳定。
-
-### Q5：支持哪些操作系统？
-
-支持 Linux、macOS、Windows（原生或 WSL）。
-
-### Q6：如何在嵌入式设备上运行？
-
-推荐使用 Jetson AGX Orin 或类似边缘设备。0.6B 模型在 Jetson 上可以达到 1.3x RTF（快于实时）。
-
----
-
-## §11 总结
-
-### 11.1 关键特性
-
-- 零依赖：不需要 Flash Attention、vLLM、Triton
-- RTX 4090 上实现 5-6 倍加速
-- 完整的实时流式音频输出
-- 支持 Voice Clone、CustomVoice、VoiceDesign 三种模式
-- OpenAI 兼容 API，易于集成到现有系统
-
-### 11.2 性能总结
-
-| 模型 | GPU | RTF | TTFA | 加速比 |
-|------|-----|------|------|--------|
-| 0.6B | RTX 4090 | 4.78 | 156ms | 5.8x / 5.1x |
-| 0.6B | Jetson AGX Orin | 1.307 | 597ms | 7.3x / 6.1x |
-| 1.7B | RTX 4090 | 4.22 | 174ms | 5.1x / 4.9x |
-| 1.7B | H100 | 3.304 | 241ms | 7.5x / 6.3x |
-
-### 11.3 下一步
-
-1. **快速体验**：使用 Demo UI 体验实时语音合成
-2. 集成到自己的项目：参考 `examples/` 中的代码
-3. **API 部署**：部署 OpenAI 兼容 API 服务
-4. 在目标硬件上跑基准测试，确认加速比
-5. 生产环境用预计算 speaker embedding 减少冷启动
-
-### 11.4 相关资源
+## 参考资源
 
 | 资源 | 链接 |
 |------|------|
 | GitHub 仓库 | https://github.com/andimarafioti/faster-qwen3-tts |
-| Qwen3-TTS 原生 | https://github.com/QwenLM/Qwen3-TTS |
-| PyTorch | https://pytorch.org/ |
-| CUDA Graph 文档 | https://pytorch.org/docs/stable/generated/torch.cuda.CUDAGraph.html |
-
----
-
-## 自测
-
-1. CUDA Graph 加速的核心原理是什么？为什么它能带来 5-6 倍的加速比？捕获前和捕获后的内核调用方式有什么区别？
-2. 流式生成的 `chunk_size=1` 和 `chunk_size=12` 分别适合什么场景？如果你的应用是实时语音助手，`chunk_size` 应该选多少？
-3. 语音克隆的 `xvec_only=True` 和 `xvec_only=False`（ICL 模式）有什么区别？什么情况下应该用 ICL 模式？
-4. 你有一块 RTX 4060（8GB 显存），想部署 Faster Qwen3-TTS。应该用 0.6B 还是 1.7B 模型？预期 RTF 和 TTFA 大概是多少？
-5. 预计算 Speaker Embedding 的文件大小约 4KB，为什么这么小？生产环境中如何用这个机制减少冷启动时延？
-
----
-
-## 进阶路径
-
-**阶段 1：跑通 Demo UI（今天）**
-
-按文章「Demo UI 部署」节的步骤，安装 `faster-qwen3-tts[demo]`，启动 `demo/server.py`，打开 `http://localhost:7860`。上传一段自己的声音作为参考音频，做一次语音克隆生成，观察 TTFA 和 RTF 指标。
-
-**阶段 2：Python API 集成（本周）**
-
-把 Faster Qwen3-TTS 集成到你自己的项目里。先用水质参考音频跑通非流式生成，再尝试流式生成（`chunk_size=4`）。重点观察：模型加载时间、首音频延迟、吞吐量是否符合你的要求。
-
-**阶段 3：生产部署优化（下周）**
-
-按文章「使用预计算 Speaker Embedding」节，把参考音频的 speaker embedding 提取出来，存成 `.pt` 文件。部署 OpenAI 兼容 API 服务器，用 `--voices voices.json` 配置多音色。这样每次推理不需要重新计算 speaker embedding，冷启动时延会显著降低。
-
-**阶段 4：在自己的数据上微调（下个月）**
-
-如果你有自己的语音数据，可以微调 Qwen3-TTS 模型。0.6B 模型在单卡 RTX 4090 上就能微调，重点是准备好高质量的参考音频（每段 5-30 秒，安静无回声）。
-
----
-
-*文档版本 1.0 | 2026-03-31 | 基于 commit 3ee3496 (2026-03-28) | Stars: 865*
+| 工程博客 | https://github.com/andimarafioti/faster-qwen3-tts/blob/main/BLOG.md |
+| Qwen3-TTS 原生仓库 | https://github.com/QwenLM/Qwen3-TTS |
+| PyTorch CUDAGraph 文档 | https://pytorch.org/docs/stable/generated/torch.cuda.CUDAGraph.html |

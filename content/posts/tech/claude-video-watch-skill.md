@@ -1,172 +1,133 @@
 ---
-title: "Claude Video：让Claude真正「看懂」视频的开源技能"
+title: "Claude Video：给 Claude 补上「看视频」这条输入通道"
 date: 2026-08-04T03:20:00+08:00
 slug: "claude-video-watch-skill"
 github_repo: "bradautomates/claude-video"
-description: "Claude Video 是一个开源技能，让 Claude 能够「观看」视频内容——提取帧画面和字幕，基于画面内容回答问题，支持 YouTube、TikTok 等多种视频源。"
+description: "一个开源技能，把「看视频」拆成下载、抽帧、转录三步，让 Claude 基于画面和字幕回答问题。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "AI视频分析", "开源", "技能", "自动化"]
 ---
 
-## 一句话概览
+Claude 能读网页、跑脚本、浏览代码库，唯独开箱看不了视频。你丢给它一个 YouTube 链接，它要么猜标题，要么拉一段丢了九成画面信息的字幕。Claude Video 的入手点，是把"看视频"拆成 Claude 真正能处理的输入——帧（图片）加字幕（文本），再让 Claude 通读。
 
-[Claude Video](https://github.com/bradautomates/claude-video) 是一个开源技能（Skill），让 Claude 能够"观看"任意视频——自动下载视频、提取关键帧、转录音频，再把画面和文字一起交给 Claude 分析。支持 YouTube、TikTok、Loom、X、Instagram 等主流视频源，GitHub 星标超 1.3 万。
+## 快速定位
+
+[bradautomates/claude-video](https://github.com/bradautomates/claude-video)，MIT 协议，Python 实现，2026-04 创建。截至 2026-08-07，Stars 约 1.4 万（14,366）、Forks 1,377。核心是一个 `/watch` 命令。
 
 ## 它解决什么问题
 
-Claude 是一个强大的语言模型，但它有一个先天缺陷：**看不了视频**。
+视频是动态的：连续画面加音频。Claude 的输入通道只有文本和图片，所以"让 Claude 看视频"要做的是把视频转成这两种东西——帧图、字幕文本。Claude Video 把这条转换链路做成了开箱即用：
 
-你在 YouTube 上看到一段精彩的技术演讲，想让 Claude 帮你总结要点——它做不到。你录了一段屏幕操作视频想排查 bug，把链接丢给 Claude——它只能告诉你"我无法访问视频内容"。
+```text
+视频 URL / 本地路径 → 下载 → 抽帧 → 转录 → 帧 + 字幕交给 Claude
+```
 
-这不是某个功能的缺失，而是架构层面的限制。Claude 处理的是文本和图片，而视频是动态的、包含连续画面和音频的信息流。两者之间存在一道鸿沟。
+| 环节 | 做什么 | 用什么 |
+|---|---|---|
+| 下载 | 抓取视频文件 | yt-dlp |
+| 字幕检测 | 优先取内嵌字幕，无则转音频 | yt-dlp |
+| 抽帧 | 按 detail 模式截画面 | ffmpeg |
+| 转录 | 无字幕时语音转文字 | Whisper（Groq / OpenAI） |
+| 分析 | 帧 + 字幕交给 Claude | Claude 自身 |
 
-Claude Video 做的事情，就是在鸿沟上架一座桥：**把视频拆解成 Claude 能理解的格式——帧（图片）+ 字幕（文本）**，然后让 Claude 像看一本图文并茂的书一样"读完"整段视频。
+## 帧是成本大头
+
+token 开销几乎全在帧上——每帧都是一张图片。抽帧怎么选、怎么去重，直接决定一次 `/watch` 花多少。
+
+### 四种 detail 模式
+
+| 模式 | 抽帧引擎 | 帧上限 | 说明 |
+|---|---|---|---|
+| `transcript` | 不用帧 | 0 | 只取字幕，接近零成本 |
+| `efficient` | 关键帧（`-skip_frame nokey`） | 50 | 只重建关键帧，约 0.5 秒，最快 |
+| `balanced` | 场景切换检测 | 100 | 默认档，日常够用 |
+| `token-burner` | 场景切换检测 | 不设上限 | 长视频、要细节时用 |
+
+注意 `efficient` 只负责抽得快，不负责帧少。低动态画面里关键帧可能比场景切换点还多，所以 efficient 偶尔会返回比 balanced 更多的帧。
+
+### 去重
+
+同一块画面停留很久时，场景检测会产出一堆几乎一样的帧。去重在交给 Claude 之前把这些帧丢掉：先缩成 16×16 灰度缩略图，再与上一张"保留帧"算平均像素差，差值 ≤2.0（0–255 刻度）就判定为重复。逐帧对比的是上一张保留帧而不是紧邻帧，这样慢速淡入淡出也能被抓住。帧数上限在去重之后才生效，预算只花在真正不同的画面上。
+
+## 转录：免费字幕优先
+
+字幕优先用 yt-dlp 拉到的内嵌字幕（手动或自动生成都有），免费且即时。真正没字幕时才走 Whisper 兜底——默认 Groq 的 `whisper-large-v3`（更快更便宜），可切 OpenAI 的 `whisper-1`。连 Whisper 都不想配，用 `--no-whisper` 关掉，只留帧。所以 Whisper 的 API key 不是必需项，只有"没字幕"的场景才碰到。
+
+## 一次"看视频"怎么流过系统
+
+设想你收到一段屏幕录制，对方说 UI 在某处崩了。`/watch bug-repro.mov what's going wrong?`：
+
+1. 本地文件无需下载，直接进入抽帧。
+2. 屏幕录制没有字幕，走 Whisper 兜底，转出一份带时间戳的逐字稿。
+3. 按默认 balanced 做场景检测抽帧，去重后留下有信息量的画面。
+4. 脚本把帧路径（带 `t=MM:SS` 标记）和带时间戳的逐字稿一起交给 Claude。
+5. Claude 并行 Read 每张帧，对照逐字稿定位问题出现的那一帧，通常不用你打开文件就能说出原因。
+
+## 帧预算其实按时长走
+
+每次并不是固定 100 帧。默认预算随视频时长调整，超过 10 分钟会在 capped 模式下被摊薄：
+
+| 时长 | 默认帧数 |
+|---|---|
+| ≤30 秒 | 约 30 |
+| 30 秒–1 分钟 | 约 40 |
+| 1–3 分钟 | 约 60 |
+| 3–10 分钟 | 约 80 |
+| >10 分钟 | 100（触及上限，提示稀疏扫描） |
+
+超长视频建议用 `token-burner`，或 `--start` / `--end` 圈定片段——片段的帧预算更密，比整段稀疏扫一遍有用得多。
+
+## 四种模式实测下来差多少
+
+README 给了一组真实跑数：一段 49 分 08 秒的 YouTube 视频（1280×720、英文自动字幕），长且画面基本静止，正好是压帧数上限最狠的场景。下载一次约 37 秒 / 76 MB，三种抽帧模式共用。
+
+| 模式 | 帧数 | 抽帧耗时 | 估算图片 token |
+|---|---|---|---|
+| `transcript` | 0 | ~4.5 秒 | 0（约 26.6k 文本 token） |
+| `efficient` | 50 | ~0.5 秒 | ~9.8k |
+| `balanced` | 100 | ~20.9 秒 | ~19.7k |
+| `token-burner` | 116 | ~21.0 秒 | ~22.8k |
+
+图片 token 按 Anthropic 的"宽 × 高 / 750"估算，默认 512px 宽度下这些 720p 帧是 512×288，约 197 token/帧；`--resolution 1024` 大约再翻 4 倍。
+
+看这段数字要分清几点：
+- 测的是抽帧引擎的提取耗时和 token 开销，不是端到端问答质量。
+- `efficient` 快约 40 倍，代价是只认关键帧。
+- 不能推出"所有视频都这样"——这段是压迫上限的极端用例。高动态视频里 balanced 会抽满 100、token-burner 会保留全部场景切换帧（可能触发 >250 帧的 token 警告）。
 
 ## 安装
 
-### Claude Code 用户（推荐）
+### Claude Code
 
-两行命令搞定：
-
-```bash
-# 添加技能市场源
+```text
 /plugin marketplace add bradautomates/claude-video
-
-# 安装 watch 技能
 /plugin install watch@claude-video
 ```
 
-安装完成后，在任意对话中输入 `/watch` 即可触发。
+更新用 `/plugin update watch@claude-video`。
 
-### 其他平台（Cursor、Windsurf 等）
-
-通过 npx 安装：
+### Codex、Cursor、Copilot、Gemini CLI 等宿主
 
 ```bash
 npx skills add bradautomates/claude-video -g
 ```
 
-`-g` 表示全局安装，所有项目都能用。
+`-g` 装到用户级（`~/.codex/skills`、`~/.cursor/skills` 等），去掉则装进当前项目。claude.ai 网页版可下载 `watch.skill` 手动导入。
 
-### 依赖说明
+### 依赖
 
-首次运行时，脚本会**自动检查并安装**以下工具（macOS 通过 Homebrew）：
+首次 `/watch` 会跑 setup 检查。macOS 上自动 `brew install ffmpeg yt-dlp`，Linux / Windows 打印对应命令。ffmpeg 负责抽帧，yt-dlp 负责下载和字幕。
 
-- **ffmpeg** — 视频帧提取
-- **yt-dlp** — 视频下载
+## 典型用法
 
-你不需要手动装任何东西，第一次跑 `/watch` 时一切自动就位。
+- 分析别人的内容：`/watch <URL> what hook did they open with?`
+- 诊断 bug：`/watch screen-recording.mov when does the UI break?`
+- 总结长视频：`/watch <URL> summarize this`
+- 播放列表转笔记：把系列里每个视频挨个 `/watch` 成一份带时间戳的笔记
 
-唯一需要你操心的是 **Whisper API key**：当视频本身没有内嵌字幕时，需要调用 Whisper 做语音转文字。如果视频已有字幕（大多数 YouTube 视频都有），这一步完全免费，不需要任何 key。
+## 什么时候值得用
 
-## 工作原理
-
-整个流水线分五步，对用户完全透明：
-
-```
-视频 URL → 下载 → 字幕检测 → 帧提取 → 转录 → 交给 Claude
-```
-
-| 步骤 | 做什么 | 用什么 |
-|------|--------|--------|
-| 下载 | 抓取视频文件 | yt-dlp |
-| 字幕检测 | 检查视频是否自带字幕 | yt-dlp |
-| 帧提取 | 按策略截取画面 | ffmpeg |
-| 转录 | 无字幕时转文字 | Whisper API |
-| 分析 | 帧 + 字幕交给 Claude | Claude 自身 |
-
-关键设计：**帧去重**。视频里大量连续帧画面几乎一模一样（比如一个人坐在镜头前说话）。Claude Video 会自动丢弃视觉相似的重复帧，只保留有信息量的画面。这不是省着玩——每一帧都是要花 token 的。
-
-## 四种详情模式
-
-这是 Claude Video 最核心的配置项，决定了"看多细"：
-
-| 模式 | 帧提取策略 | 帧上限 | 适用场景 |
-|------|-----------|--------|---------|
-| `transcript` | 不提取帧 | 0 | 只要文字内容，零成本 |
-| `efficient` | 关键帧 | 50 | 快速浏览，省 token |
-| `balanced` | 场景切换检测 | 100 | 日常默认选择 |
-| `token-burner` | 场景切换检测 | 无上限 | 不差钱，细节拉满 |
-
-默认模式是 `balanced`。大多数场景下它就够了——100 帧足以覆盖一个 10 分钟视频的所有关键画面变化。
-
-如果你只想要文字内容（比如播客、讲座），用 `transcript` 模式，完全不消耗图片 token。
-
-## 用法示例
-
-### 场景一：总结一个技术演讲
-
-```
-/watch https://www.youtube.com/watch?v=xxxxx --mode balanced
-```
-
-Claude 会看完整个视频，给你一份结构化总结：核心观点、关键论据、时间线。
-
-### 场景二：诊断屏幕录制中的 bug
-
-```
-/watch https://www.loom.com/share/xxxxx --mode token-burner
-```
-
-你录了一段操作复现 bug 的视频，用 `token-burner` 模式不漏任何细节。Claude 能看到每一帧画面变化，帮你定位问题。
-
-### 场景三：只提取文字内容
-
-```
-/watch https://www.youtube.com/watch?v=xxxxx --mode transcript
-```
-
-播客、讲座、纯对话类视频——画面没有信息量，字幕就是一切。这个模式不提取任何帧，零图片消耗。
-
-### 场景四：分析特定片段
-
-```
-/watch https://www.youtube.com/watch?v=xxxxx --start 2:15 --end 2:45
-```
-
-只看视频中 2 分 15 秒到 2 分 45 秒的内容。适合定位到关键片段后深入分析，避免浪费 token 在无关部分上。
-
-### 场景五：播放列表转笔记
-
-把整个播放列表的视频逐个丢给 Claude，让它统一整理成一份结构化笔记。对于系列教程、会议录像这类场景，效率极高。
-
-## 帧预算与成本
-
-每提取一帧画面，Claude 都需要用图片 token 来"看"它。所以帧的数量直接决定了 token 消耗：
-
-- **transcript 模式**：0 帧，纯文本，几乎不花钱
-- **efficient 模式**：上限 50 帧，适合控制成本
-- **balanced 模式**：上限 100 帧，大多数视频的最佳平衡点
-- **token-burner 模式**：无上限，长视频可能提取数百帧，适合重要内容
-
-实际帧数取决于视频内容。一个画面变化很少的讲座视频，即使 `balanced` 模式可能也只提取 20-30 帧（因为去重）。而一个画面快速切换的 MV，可能轻松触及上限。
-
-**建议策略**：先用 `balanced` 快速过一遍，发现需要深入分析的视频再切 `token-burner` 精看。
-
-## 适用边界
-
-### 支持的视频源
-
-基于 yt-dlp，理论上支持数百个平台，实测覆盖：
-
-- YouTube（含播放列表）
-- TikTok
-- Loom
-- X / Twitter
-- Instagram
-
-只要 yt-dlp 能下载的，Claude Video 就能看。
-
-### 不擅长的场景
-
-- **纯音频无画面**——技术上能转录，但 Claude Video 的优势在于"看画面"。纯音频场景直接用转录工具更合适
-- **需要实时分析**——流程是先下载再处理，不是实时流式分析
-- **超长视频**——一部两小时的电影即使 `transcript` 模式也会产生大量文本。建议配合 `--start` / `--end` 分段处理
-- **无字幕且无 Whisper key**——没有字幕的视频需要 Whisper API 做转录，缺少 key 时只能提取帧画面，无法获取音频内容
-
-## 小结
-
-Claude Video 的价值在于：它把"让 AI 看视频"这件本来需要自己搭建流水线的事情，变成了一条 `/watch` 命令。下载、帧提取、转录、去重——全部自动化。
-
-14k 星标说明了一切。如果你在日常工作中需要让 Claude 处理视频内容，这个技能几乎是必装的。
+- 常让 Claude 处理视频内容（分析别人的视频、诊断屏幕录制、把播放列表整理成笔记），值得装上。
+- 纯音频无画面、要实时分析、无字幕且不想配 Whisper key 的场景不太适合：纯音频直接用转录工具更省；实时流式不是它的路线；超长视频建议分段处理。
+- 上手顺序：先 `balanced` 快速过一遍，哪段值得细看再切 `token-burner` 精看。

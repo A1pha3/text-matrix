@@ -30,9 +30,9 @@ summary: "Open-LLM-VTuber 真正解决的不是\"让 LLM 说话\"，而是\"LLM 
 
 ## 一句话核心判断
 
-Open-LLM-VTuber（[仓库地址](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber)，8.3k stars，MIT 后端 / 前端 Live2D 模型单独授权）在 Python 单进程里把"麦克风采样 → VAD 端点检测 → ASR 文字 → 流式 LLM 推理 → 句级切片 → TTS 合成 → Live2D 表情 + 嘴型"做成一条**支持任意环节被打断的实时管线**。当 AI 正在念一长段回答时，你随时可以开口，它能在亚秒级（受 LLM 推理与 TTS 合成链路共同影响）停下、收听你的新输入、然后接话。这种"被打断"的体验，是它和"按一下按钮问一句"的桌面助手在工程复杂度上最关键的鸿沟。
+Open-LLM-VTuber（[仓库地址](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber)，约 1.29 万 stars / 1.5 千 forks，Python，2026-08-07 核实；后端 MIT，前端自 v1.2.0 起为 Open-LLM-VTuber License 1.0，Live2D 示例模型单独授权）在 Python 单进程里把"麦克风采样 → VAD 端点检测 → ASR 文字 → 流式 LLM 推理 → 句级切片 → TTS 合成 → Live2D 表情 + 嘴型"做成一条**支持任意环节被打断的实时管线**。当 AI 正在念一长段回答时，你随时可以开口，它能在亚秒级（受 LLM 推理与 TTS 合成链路共同影响）停下、收听你的新输入、然后接话。这种"被打断"的体验，是它和"按一下按钮问一句"的桌面助手在工程复杂度上最关键的鸿沟。
 
-> 注：项目当前最新 release 为 v1.2.1（2025-08-26），v2.0 正在做完整重写，本文所有源码引用基于 `main` 分支当前快照。
+> 注：项目最新 release 为 v1.2.1（2025-08-26），v2.0 正在做完整重写；本文所有源码引用基于 `main` 分支当前快照（最近推送 2026-05-15）。
 
 ---
 
@@ -49,11 +49,11 @@ graph TB
         WS[websocket_handler<br/>消息路由]
         SC[service_context<br/>每客户端一份]
         VAD[vad/silero<br/>语音活动检测]
-        ASR[asr/*<br/>7 种实现]
+        ASR[asr/*<br/>7+ 种实现]
         AG[agent/<br/>BasicMemoryAgent]
         TF[transformers<br/>sentence_divider 等]
         CONV[conversations/<br/>单聊 / 群聊]
-        TTS[tts/*<br/>19 种实现]
+        TTS[tts/*<br/>十几种实现]
     end
 
     subgraph 后端 "可插拔的外部服务"
@@ -86,7 +86,7 @@ graph TB
     style WS fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
-阅读这张图的关键不是"几个模块"，而是中间那条**竖向红线**（VAD → WS → CONV）：只要这条打断链路成立，无论你换 Ollama 还是 Claude 都没影响；只要它不成立，再多花哨的 Live2D 模型也只是个"按按钮念台词"的木偶。
+这张图值得盯住的是中间那条竖向红线（VAD → WS → CONV）：只要这条打断链路成立，无论你换 Ollama 还是 Claude 都没影响；只要它不成立，再多花哨的 Live2D 模型也只是个"按按钮念台词"的木偶。
 
 ---
 
@@ -113,7 +113,7 @@ graph TB
 
 ### 1. `websocket_handler.py` —— 入口与消息路由
 
-整个服务端只有一个 WebSocket endpoint（`server.py` 注册），所有交互都通过 WS 消息的 `type` 字段分发：
+整个服务端只有一个 WebSocket endpoint（`server.py` 注册），所有交互都通过 WS 消息的 `type` 字段分发。`MessageType` 枚举把消息归成若干家族——`CONVERSATION` 里的 `mic-audio-end` / `text-input` / `ai-speak-signal` 是会话触发入口，`CONTROL` 里的 `interrupt-signal` / `audio-play-start` 是打断与控制信号（此外还有 `GROUP` / `HISTORY` / `DATA` / `CONFIG` 等家族）：
 
 ```python
 # src/open_llm_vtuber/websocket_handler.py
@@ -125,7 +125,7 @@ class MessageType(Enum):
     DATA       = ["mic-audio-data"]
 ```
 
-`WebSocketHandler.handle_new_connection()` 给每个新客户端**复制一份** `ServiceContext`（`model_copy(deep=True)`），这是"多客户端互不污染"的工程基线。每个客户端持有自己的 `asr_engine / tts_engine / vad_engine / agent_engine / live2d_model` 引用。
+`WebSocketHandler.handle_new_connection()` 为每个新客户端初始化一份独立的 `ServiceContext`，其中 `config` / `system_config` / `character_config` 三个配置字段各自 `model_copy(deep=True)`，这是"多客户端互不污染"的工程基线。每个客户端持有自己的 `asr_engine / tts_engine / vad_engine / agent_engine / live2d_model` 引用。
 
 WS 任务表 `current_conversation_tasks: Dict[str, Optional[asyncio.Task]]` 正是打断机制的**核心寄存器**：
 
@@ -139,7 +139,7 @@ self.current_conversation_tasks: Dict[str, Optional[asyncio.Task]] = {}
 
 VAD 是"打断"这件事的**触发器**。如果 VAD 反应慢/反应过激，AI 就会要么话没说完就闭嘴，要么听不见你说话。
 
-仓库里 VAD 抽象是 `VADInterface`，当前内置实现是 Silero VAD（`silero-onnx` + PyTorch），关键参数写在 `SileroVADConfig`：
+仓库里 VAD 抽象是 `VADInterface`，当前内置实现是 Silero VAD，关键参数写在 `SileroVADConfig`：
 
 ```python
 class SileroVADConfig(BaseModel):
@@ -184,16 +184,11 @@ async def handle_individual_interrupt(
         task = current_conversation_tasks[client_uid]
         if task and not task.done():
             task.cancel()                          # 1) 取消正在跑的协程
-            logger.info("🛑 Conversation task was successfully interrupted")
 
-    try:
-        context.agent_engine.handle_interrupt(heard_response)   # 2) 通知 LLM agent
-    except Exception as e:
-        logger.error(f"Error handling interrupt: {e}")
+    context.agent_engine.handle_interrupt(heard_response)   # 2) 通知 LLM agent
 
     if context.history_uid:
         store_message(...)                        # 3) 把被打断的回合存进历史
-        store_message(role="system", content="[Interrupted by user]")
 ```
 
 三步缺一不可：
