@@ -7,8 +7,7 @@ tags: ["hallmark", "ai-design", "claude-code", "anti-slop", "frontend"]
 description: "Hallmark 是一个面向 Claude Code、Cursor 和 Codex 的设计技能（skill），通过 21 套主题、57 道 slop-test 检测门和预发射自评机制，系统性地阻止 AI 生成千篇一律的 UI 页面。"
 github_repo: "Nutlope/hallmark"
 source_key: "gh:Nutlope/hallmark"
-slug : index
-
+slug: "hallmark-anti-ai-slop-design-skill"
 ---
 
 ## 问题：AI 生成的页面为什么一眼就能认出来

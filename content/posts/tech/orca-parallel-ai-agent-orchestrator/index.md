@@ -7,8 +7,7 @@ tags: ["orca", "ai-agent", "parallel-agents", "developer-tools", "open-source"]
 description: "Orca 是一个开源桌面应用，将 Claude Code、Codex、Cursor 等命令行 AI 编程代理统一编排到隔离的 git worktree 中并行执行，配合移动端伴侣、SSH 远程工作树和差异标注审查，覆盖从多代理竞速到远程运维的完整工作流。"
 github_repo: "stablyai/orca"
 source_key: "gh:stablyai/orca"
-slug : index
-
+slug: "orca-parallel-ai-agent-orchestrator"
 ---
 
 ## 它解决什么问题
