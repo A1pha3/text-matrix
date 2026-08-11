@@ -5,7 +5,7 @@ slug: "ladybird-browser"
 github_repo: "LadybirdBrowser/ladybird"
 source_key: "gh:LadybirdBrowser/ladybird"
 description: "Ladybird 是一个真正独立的 Web 浏览器项目，不基于 Chromium 或 Gecko，而是从零构建全新的引擎。本文梳理其架构分层、核心库组成与当前开发状态。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["浏览器引擎", "Ladybird", "C++", "Web 标准", "开源"]
 ---
