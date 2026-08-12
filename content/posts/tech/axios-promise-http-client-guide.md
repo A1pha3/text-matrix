@@ -119,14 +119,16 @@ bower install axios
 **使用 jsDelivr（推荐）**：
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/axios@1.19.0/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
 ```
 
 **使用 unpkg**：
 
 ```html
-<script src="https://unpkg.com/axios@1.19.0/dist/axios.min.js"></script>
+<script src="https://unpkg.com/axios@1/dist/axios.min.js"></script>
 ```
+
+上面的 `@1` 会始终解析到当前最新的 1.x 版本。若想锁定某个具体稳定版，把 `@1` 换成对应版本号即可，例如 `axios@1.7.7`。
 
 ### ESM 导入方式
 
@@ -228,6 +230,31 @@ getUser();
 ```
 
 > **注意**：async/await 是 ECMAScript 2017 的一部分，Internet Explorer 和旧版浏览器不支持，使用时需注意兼容性。
+
+### 理解 response 对象
+
+Axios 请求成功时 resolve 的不是裸数据，而是一个 `response` 对象，最常用的三个字段是 `data`、`status`、`headers`：
+
+| 字段 | 说明 |
+|------|------|
+| `data` | 服务端返回的响应体，JSON 已自动解析成对象或数组 |
+| `status` | HTTP 状态码，如 200、404 |
+| `statusText` | 状态文本，如 `OK` |
+| `headers` | 响应头对象，键名统一为小写 |
+| `config` | 本次请求实际使用的配置对象 |
+| `request` | 底层请求对象（浏览器是 XMLHttpRequest，Node.js 是 ClientRequest） |
+
+所以取数据时要写 `response.data`，而不是 `response` 本身。如果嫌每个调用点都多一层 `.data` 麻烦，可以在响应拦截器里先剥掉外壳：
+
+```javascript
+axios.interceptors.response.use(response => response.data);
+```
+
+之后业务代码拿到的就是解析后的数据：
+
+```javascript
+const users = await apiClient.get('/users'); // users 直接是数组
+```
 
 ---
 
@@ -463,6 +490,19 @@ try {
 }
 ```
 
+### AxiosError 的结构
+
+Axios v1 抛出的错误是 `AxiosError` 实例，用 `error.response`、`error.request`、`error.config`、`error.code` 四个字段就能区分出错误发生在哪一层：
+
+| 字段 | 含义 | 典型场景 |
+|------|------|----------|
+| `error.response` | 服务端返回了响应（4xx/5xx） | 服务器正常响应但状态码非 2xx |
+| `error.request` | 已发出请求但没收到响应 | 网络中断、DNS 失败、服务端无响应 |
+| `error.config` | 触发错误的请求配置 | 排查时回溯请求参数 |
+| `error.code` | 错误代号字符串 | 超时是 `ECONNABORTED`，取消是 `ERR_CANCELED` |
+
+判断顺序应固定为：先看 `error.response`，再看 `error.request`，最后才用 `error.message`。因为 `error.response` 和 `error.request` 一旦存在就说明请求确实发出了，剩下的 `message` 才是配置或其它问题。若需要完整错误快照用于上报，可直接调用 `error.toJSON()`。
+
 ---
 
 ## 八、请求取消
@@ -509,6 +549,12 @@ Promise.all([
 // 批量取消
 controller.abort();
 ```
+
+### v0.x 的 CancelToken 与 v1.x 的差异
+
+如果你在旧代码里见过 `CancelToken`，它基于已被撤回的 Promise 提案设计，自 v0.22.0 起官方就标记为废弃，并推荐改用标准化的 `AbortController`。二者并不等价：`CancelToken` 在 v1 中仍可用，但官方不建议在新项目里使用，新代码应统一用 `signal`。`isCancel(error)` 对两种取消方式产生的错误都返回 `true`，所以上文错误处理里的取消分支无需改动。
+
+升级时不必依赖错误对象的 `code` 字符串去区分取消来源——以 `axios.isCancel(error)` 为准即可，`code` 在不同版本或不同取消方式下并不稳定。
 
 ---
 

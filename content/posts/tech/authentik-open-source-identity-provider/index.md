@@ -1,5 +1,5 @@
 ---
-title: "authentik：可自部署的开源身份提供商，替代 Okta 与 Auth0"
+title: "authentik：把身份认证从拼凑多个系统，变成一套自部署的统一身份层"
 date: 2026-08-11T03:22:16+08:00
 slug: "authentik-open-source-identity-provider"
 github_repo: "goauthentik/authentik"
@@ -10,67 +10,93 @@ categories: ["技术笔记"]
 tags: ["身份认证", "SSO", "IdP", "开源", "安全"]
 ---
 
-## 这个项目解决了什么
+## 这个项目真正解决的是什么
 
-身份认证是几乎所有非平凡应用都需要的基础设施。用云服务（Okta、Auth0、Entra ID）省事但把身份数据交给了第三方，自建又往往意味着拼凑 Keycloak + LDAP + Nginx 的复杂工程。authentik 的定位是：**一个可以完全自部署的身份基础设施，覆盖 SSO、MFA、用户管理、权限治理，同时提供企业级版本满足大规模部署需求**。
+身份认证几乎每个稍微复杂的应用都需要。选云服务（Okta、Auth0、Entra ID）省心，但代价是把身份数据交给第三方；自己搭，传统路线是 Keycloak + LDAP + Nginx 三个系统拼在一起，协议、生命周期、认证流程各管各的，维护成本被摊到多个组件上。
+
+authentik 的切入点不是再提供一个认证单体，而是把上述几件事收进**一个**可自部署的系统：同一套身份源同时服务现代 Web 应用（OIDC/SAML）、传统应用（LDAP）、网络设备（RADIUS），认证流程用可视化编排，用户生命周期（注册、分组、映射、同步）也在同一处管理。它不解决"调用模型"这类问题，解决的是"多套认证基础设施各自为政"这种更常见的工程负担。
 
 核心数据：24.5K Stars、1.9K Forks、Python 为主语言、活跃维护（最近提交 2026-08-10），当前版本 2026.8.0（RC 阶段）。
 
-## 核心能力
+## 系统地图：一次认证请求会穿过什么
 
-### 协议支持
+在进入细节前，先看这套系统由哪几块组成、一次请求如何流动：
 
-authentik 不只做一种认证协议，而是作为统一的身份层同时提供：
+```mermaid
+flowchart LR
+    U[用户浏览器] -->|1 访问应用| P[Proxy Provider<br/>反向代理]
+    P -->|2 未认证,重定向| F[Flow 编排器]
+    F -->|3 依次执行 Stage| S1[Identification]
+    S1 --> S2[Password]
+    S2 --> S3[Authenticator Validate<br/>MFA: TOTP/WebAuthn]
+    S3 -->|4 校验通过| T[Token 与 Session]
+    T -->|5 注入 Cookie/断言| P
+    P -->|6 放行| A[下游应用]
+    F -.->|旁路: LDAP/SCIM 目录同步| D[LDAP / SCIM]
+```
+
+两条主线需要分开看：**认证流程**（Flow + Stage，决定"谁、怎么验证、是否放行"）和**目录同步**（LDAP/SCIM，决定"用户数据如何出入系统"）。前者是实时请求路径，后者是异步同步路径，不要混成一条线。
+
+## 认证流程编排：Flow 与 Stage
+
+authentik 的核心差异在 **Flow**，一个可视化认证流程编辑器。每个 Flow 由一系列 Stage 按顺序组成，Stage 类型覆盖认证的常见环节：
+
+- **Identification**：收集用户名或邮箱
+- **Password**：密码验证
+- **Authenticator Validate**：MFA 验证（TOTP、WebAuthn、Duo、SMS）
+- **Consent**：OAuth 授权同意页
+- **User Write**：注册或更新用户属性
+- **Email**：发送验证邮件
+- **Custom**：自定义 Python 代码
+
+Stage 可以按条件分支，条件包括用户来源、设备信任度、IP 范围等。像"公司内网自动通过 SSO，外部访问要求 MFA"这类策略，在管理界面配置即可，不需要写代码。这套设计把 Keycloak 里靠配置堆出来的 Authentication Flow，变成了一段可读、可复用的流程定义。
+
+### 一次登录如何穿过整个系统
+
+用一个具体任务把上面两条主线串起来：用户访问一个挂载了 Proxy Provider 的自托管应用。
+
+1. 请求先到 authentik 的反向代理，代理检查会话。
+2. 未认证，代理把请求重定向到登录 Flow。
+3. Flow 依次执行 Identification（收集用户名）、Password（校验密码）、Authenticator Validate（若策略要求 MFA，校验 TOTP）。
+4. 校验通过，authentik 生成会话，Proxy Provider 给浏览器注入 Cookie。
+5. 代理带着认证上下文放行，应用正常返回。
+
+如果同一用户信息还要进下游系统，则走 SCIM 同步这条旁路，把用户变更推到订阅了该同步的应用。两条路径一个管"访问当下"，一个管"数据一致"，各自独立。
+
+## 用户生命周期管理
+
+authentik 不只在认证时发一个 token，也管理用户从进入到离开的完整过程：
+
+- **注册**：自助注册、邀请制、管理员创建
+- **分组与角色**：用户分组，基于角色的权限分配
+- **属性映射**：自定义用户属性到 SAML claim / OIDC scope 的映射
+- **恢复**：密码重置流程
+- **SCIM 同步**：用户变更自动同步到下游应用
+
+一个身份源同时服务目录、认证、授权，是这套系统相比"各组件各管一段"的主要价值。
+
+## 协议支持
+
+authentik 作为统一身份层，同时提供：
 
 - **SAML 2.0**：服务提供者（SP）发起和 IdP 发起的 SSO
 - **OAuth2 / OIDC**：现代 Web 和移动应用的标准认证授权
 - **LDAP**：传统应用和基础设施组件的目录服务
 - **RADIUS**：网络设备、VPN、Wi-Fi 认证
 - **SCIM**：用户生命周期同步到下游应用
-- **Proxy Provider**：反向代理模式保护没有原生认证集成的不安全应用
+- **Proxy Provider**：反向代理模式保护没有原生认证集成的应用
 
-这意味着同一个身份源可以同时给现代 Web 应用、传统 LDAP 应用和网络设备提供认证。
+这意味着同一个身份源能同时给现代 Web 应用、传统 LDAP 应用和网络设备提供认证。
 
-### 认证流程编排
+## 企业功能
 
-authentik 的核心特色是 **Flow**——一个可视化的认证流程编辑器。每个 Flow 由一系列 Stage 组成，Stage 类型包括：
-
-- **Identification**：用户输入用户名/邮箱
-- **Password**：密码验证
-- **Authenticator Validate**：MFA 验证（TOTP、WebAuthn、Duo、SMS）
-- **Consent**：OAuth 授权同意页面
-- **User Write**：注册或更新用户属性
-- **Email**：发送验证邮件
-- **Custom**：自定义 Python 代码
-
-Flow 可以根据条件（如用户来源、设备信任度、IP 范围）动态分支。例如"公司内网自动通过 SSO，外部访问要求 MFA"这样的策略不需要写代码，在管理界面配置即可。
-
-### 用户生命周期管理
-
-authentik 不只是"认证完了发个 token"，还管理用户的完整生命周期：
-
-- **注册**：自助注册、邀请制、管理员创建
-- **分组与角色**：用户分组管理，基于角色的权限分配
-- **属性映射**：自定义用户属性到 SAML claim / OIDC scope 的映射
-- **恢复**：密码重置流程
-- **SCIM 同步**：用户变更自动同步到下游应用
-
-### 企业功能
-
-开源版本（MIT）包含全部核心功能。企业版（EE License）额外提供：
-
-- **企业许可管理**
-- **高级 SCIM 集成**
-- **合规报告导出**
-- **优先支持响应**
-
-这不是"核心功能收费"的模式——SSO、MFA、Flow 编排、所有协议在开源版本中完整可用。
+开源版本（MIT）包含全部核心功能；企业版（EE License）额外提供企业许可管理、高级 SCIM 集成、合规报告导出、优先支持响应。SSO、MFA、Flow 编排、所有协议在开源版本中完整可用，不是"核心功能收费"的模式。
 
 ## 部署方式
 
 | 方式 | 推荐场景 | 说明 |
 |------|----------|------|
-| Docker Compose | 小型/测试环境 | 官方推荐入门方式，两个容器（server + worker） |
+| Docker Compose | 小型/测试环境 | 官方推荐入门方式，server + worker 两个容器 |
 | Kubernetes (Helm) | 生产环境 | 官方 Helm Chart，支持水平扩展 |
 | AWS CloudFormation | AWS 部署 | 官方 CloudFormation 模板 |
 | DigitalOcean Marketplace | 快速试用 | 一键部署 |
@@ -78,41 +104,41 @@ authentik 不只是"认证完了发个 token"，还管理用户的完整生命�
 ### Docker Compose 最小部署
 
 ```yaml
-# docker-compose.yml（简化版）
+# docker-compose.yml（最小可运行，需替换密码）
 services:
   postgresql:
     image: docker.io/library/postgres:16
     environment:
       POSTGRES_DB: authentik
       POSTGRES_USER: authentik
-      POSTGRES_PASSWORD: <password>
+      POSTGRES_PASSWORD: <password>   # 需替换为强密码
   redis:
     image: docker.io/library/redis:alpine
   server:
     image: ghcr.io/goauthentik/server:latest
     command: server
     ports:
-      - "9000:9000"
-      - "9443:9443"
+      - "9000:9000"    # HTTP 入口
+      - "9443:9443"    # HTTPS 入口
   worker:
     image: ghcr.io/goauthentik/server:latest
     command: worker
 ```
 
-详细配置参考[官方文档](https://docs.goauthentik.io/docs/install-config/install/docker-compose/)。
+`<password>` 是占位符，启动前替换为强密码；持久化卷与 secret 生成见[官方文档](https://docs.goauthentik.io/docs/install-config/install/docker-compose/)。9000 是 HTTP 入口、9443 是 HTTPS 入口，生产应只暴露 9443。
 
 ## 与同类工具对比
 
 | 维度 | authentik | Keycloak | Authelia | Auth0 (Okta) |
 |------|-----------|----------|----------|--------------|
 | 协议覆盖 | SAML/OIDC/LDAP/RADIUS/SCIM | SAML/OIDC/LDAP | SAML/OIDC | OIDC/SAML |
-| 认证流程编排 | 可视化 Flow 编排 | 基于流程的配置 | 2FA/规则 | Actions/Rules |
+| 认证流程编排 | 可视化 Flow | 配置式 Authentication Flow | 2FA/规则 | Actions/Rules |
 | 自部署 | ✅ Docker/K8s | ✅ Docker/K8s | ✅ Docker | ❌ |
 | 管理界面 | 完整 Web UI | 完整 Web UI | 基础 Web UI | 完整 Web UI |
 | 许可证 | MIT (+ EE) | Apache 2.0 | Apache 2.0 | 商业 |
 | 语言 | Python/Go | Java | Go | — |
 
-authentik 相对于 Keycloak 的主要差异：可视化 Flow 编排（Keycloak 用配置式 Authentication Flow），Python 技术栈（对运维团队更容易贡献），以及对 RADIUS 和 SCIM 的原生支持。
+authentik 相对 Keycloak 的主要差异：可视化 Flow 编排（Keycloak 用配置式 Authentication Flow），Python 技术栈（对运维团队更容易贡献），以及对 RADIUS 和 SCIM 的原生支持。
 
 ## 适用边界
 
@@ -121,7 +147,7 @@ authentik 相对于 Keycloak 的主要差异：可视化 Flow 编排（Keycloak 
 - 需要自部署统一身份基础设施的团队或组织
 - 有多种协议需求（SAML + OIDC + LDAP）的异构应用环境
 - 希望摆脱商业 IdP 供应商锁定的组织
-- 有合规要求需要身份数据留在内网的场景
+- 有合规要求、需身份数据留在内网的场景
 
 **不适合**：
 
@@ -130,4 +156,27 @@ authentik 相对于 Keycloak 的主要差异：可视化 Flow 编排（Keycloak 
 - 无运维能力维护 PostgreSQL + Redis + authentik 三组件的场景
 - Python 生态不熟悉的团队做深度定制（核心逻辑是 Python/Django）
 
-项目开源协议 MIT（核心），当前正处于 2026.8.0 版本 RC 阶段（rc6），迭代频繁。
+## 采用顺序
+
+如果你的场景符合"自部署统一身份层"，建议按这个顺序走：
+
+1. 先用 Docker Compose 起一套，把登录 Flow 和 OIDC 接一个真实应用，验证流程编排是否满足你需要的分支策略。
+2. 确认需要多协议时，再规划 LDAP 目录接入和 SCIM 同步，把现有应用逐步迁入。
+3. 生产环境用 Helm 部署，只暴露 9443，把 PostgreSQL、Redis 与 authentik 三者的持久化与备份纳入现有运维体系。
+
+只有单一协议、单应用的轻量需求，不必上 authentik，Authelia 或一个 OAuth proxy 更省事。
+
+## 常见问题
+
+**忘记管理员密码怎么重置？** 用 authentik 的管理命令重置，之后在管理界面重新设置，不需要重建数据库。
+
+**9000 和 9443 分别是什么？** 9000 是 HTTP 入口、9443 是 HTTPS 入口。生产只暴露 9443，HTTP 用于内部或调试。
+
+**开源版和 EE 版怎么选？** 开源版已含 SSO、MFA、Flow、全部协议；只有需要企业许可管理、高级 SCIM 集成、合规报告导出才需要 EE。
+
+## 维护指引
+
+- 升级前先读官方 release notes，RC 版本（当前 2026.8.0）迭代频繁，生产建议等稳定版。
+- 备份对象是 PostgreSQL 数据库；Redis 为会话缓存，可重建。
+- 修改 Flow 前先在测试环境验证，生产 Flow 变更会影响所有登录入口。
+- 项目开源协议 MIT（核心）。
