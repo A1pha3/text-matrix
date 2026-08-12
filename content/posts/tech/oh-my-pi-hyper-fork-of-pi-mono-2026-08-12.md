@@ -370,9 +370,12 @@ oh-my-pi 做法：把 GitHub 当文件系统——`read pr://1428` 跟 `read src
 
 ### 6.3 特性 #09：Windows 上也能跑
 
-这一条对中文开发者圈可能不重要（绝大多数 coding 工作在 macOS / Linux 完成），但对**企业 IT 环境**和**新人开发者**极其重要——一个 .NET 工程师第一次上手 agent，他/她的机器上**没有 rg、没有 grep、没有 bash、没有 ripgrep**。Claude Code 在 Windows 上要么用 PowerShell（跟 Unix 工具语义差），要么用 WSL（多一层虚拟化）。oh-my-pi 直接给一个 `omp.exe`，跑起来就是 Linux 一样的工具语义——`cat`、`grep`、`find`、`xargs`、`jq` 都在。
+这一条**按使用人群分两层看**：
 
-这是**降低 agent 上手成本**的工程投入——不是技术难度问题，是新手迁移成本问题。
+- **对专业开发者**（macOS / Linux 为主）—— Windows native 不是核心痛点，但他们身边常有 Windows 同事、企业 IT 锁定 Windows 的外包团队、个人开发者用 Windows 笔记本的入门场景。oh-my-pi 给一个 `omp.exe` 让这群人能跑 agent，是**覆盖扩展人群**的工程投入。
+- **对企业 IT 环境和新人开发者**——极其重要。一个 .NET 工程师第一次上手 agent，他/她的机器上**没有 rg、没有 grep、没有 bash、没有 ripgrep**。Claude Code 在 Windows 上要么用 PowerShell（跟 Unix 工具语义差），要么用 WSL（多一层虚拟化）。oh-my-pi 直接给一个 `omp.exe`，跑起来就是 Linux 一样的工具语义——`cat`、`grep`、`find`、`xargs`、`jq` 都在。
+
+这是**降低 agent 上手成本**的工程投入——不是技术难度问题，是新手迁移成本问题。oh-my-pi 把 brush bash fork 进 Rust 不只是为了 Windows，也是为了**让 Unix 工具语义跨平台一致**——同一套 `bash` / `grep` / `find` 命令在 macOS / Linux / Windows 上语义完全相同，agent 不需要写 platform-specific fallback。
 
 ### 6.4 特性 #04 TTSR：流中注入
 
@@ -390,6 +393,16 @@ README 把 TTSR（Time-Traveling Stream Rules）放在特性 #04，它的设计�
 这避免了两种浪费：① 不必要的 rule（每次 turn 都付税）② 不可挽救的错误（rule 在 prompt 开头但 model 已经走到错路上）。
 
 Injects survive compaction, so the fix sticks——这条细节很关键。**compaction 后注入仍然有效**，意味着 rule 不只是"当下这一轮的修正"，是"被压进 long-term memory 的纠正"。
+
+### 6.5 README 为什么按 01–21 编号
+
+README 把 21 个特性按 01–21 线性编号，**不是按工作流 6 阶段组织**（启动/编辑/执行/编排/协作）。这背后是一个产品判断：
+
+- **编号让阅读者跳过**——读者看 README 是扫描状态，不是顺序阅读。编号提供“退出点”（看完 #03 就离开）和“进入点”（从 #15 开始看）。按 6 阶段组织会强迫读者接受阶段顺序，编号不会。
+- **编号让“差异化能力”而不是“依赖层次”成为主角**——oh-my-pi 卖的是 **能力**，不是 **依赖**。能力可以独立选接（LSP 能装、debug 不能装、subagent 能装），依赖层次强迫全部装上。
+- **编号让 README 增量迭代**——未来加 #22 / #23 不需要重构 README 结构。按阶段组织，每加一个能力都要重新划分阶段。
+
+这是 **README 是营销 + 产品手册的双重定位**，不是"架构文档"的判断。架构文档按依赖组织，手册按差异组织。oh-my-pi 选了手册路线——**读 README 的人是“是否选 oh-my-pi”的决策者，不是“是否改 oh-my-pi 代码”的贡献者**。这两个读者重叠但不完全重合。
 
 ## 七、oh-my-pi 在 pi 生态的位置
 
@@ -466,9 +479,13 @@ bun install -g @oh-my-pi/pi-coding-agent
 
 **2. 接入已有的工作流。** omp 自动 inherit 已经在磁盘上的配置文件（Cursor MDC / Cline .clinerules / Codex AGENTS.md / Copilot applyTo 等），不需要迁移。直接把 omp 加进你团队的 CI / dev shell，跑 `omp -p "执行某个任务"`。
 
-**3. 改 fork。** `git clone https://github.com/can1357/oh-my-pi` → `bun setup` → `bun dev`。改了 Rust crate 后跑 `bun run build:native`，改了 TypeScript 后跑 `bun run dev`。AGENTS.md 第一段给的是必读的工程规矩（用 Bun 不要用 node:*、worker 通过 `workerHostEntry()` 重入 cli.ts、prompts 放 `.md` 文件用 handlebars、token-by-token 类型优先 `Promise.withResolvers()`、central utility 不重复实现等）。
+**3. 打开 LSP / DAP / Subagent。** oh-my-pi 装了默认只开 4 个基础工具（read / write / edit / bash）。要发挥 oh-my-pi 的真正威力，需要 `--tools` flag 打开 LSP / DAP / task / memory 等：`omp --tools read,edit,bash,lsp,debug,task,memory`。这六条一开，oh-my-pi 才变成 README 里宣传的那个“IDE wired in” 的产品。
 
-**4. 写自己的 fork。** oh-my-pi 的代码组织方式（Rust crates 做 native，TypeScript 做 session / TUI / config）可以套到任何 coding agent 工程上。门槛不在 Rust 编写（80k 行 Rust 主要是 vendored），在 **「知道哪些事必须 native、哪些事可以 TypeScript」的工程判断**。
+**4. 接 ACP editor。** 想在 Zed 里跑 oh-my-pi：`omp acp` 启动 ACP 协议。Zed 的 Agent Client 面板会出现 omp 选项，点击后 buffer / terminal / permission prompt 全部走 ACP 通道，不需要额外配置。
+
+**5. 改 fork。** `git clone https://github.com/1357/oh-my-pi` → `bun setup` → `bun dev`。改了 Rust crate 后跑 `bun run build:native`，改了 TypeScript 后跑 `bun run dev`。AGENTS.md 第一段给的是必读的工程规矩（用 Bun 不要用 node:*、worker 通过 `workerHostEntry()` 重入 cli.ts、prompts 放 `.md` 文件用 handlebars、token-by-token 类型优先 `Promise.withResolvers()`、central utility 不重复实现等）。
+
+**6. 写自己的 fork。** oh-my-pi 的代码组织方式（Rust crates 做 native，TypeScript 做 session / TUI / config）可以套到任何 coding agent 工程上。门槛不在 Rust 编写（80k 行 Rust 主要是 vendored），在 **「知道哪些事必须 native、哪些事可以 TypeScript」的工程判断**。
 
 ## 十一、一章小结
 
@@ -488,4 +505,6 @@ oh-my-pi 不是「又一个 AI Coding Agent」。它是 **pi-mono 路线上第�
 >
 > **为什么不用 Bun / Node 原生能力把 brush / ripgrep 都 port 进 Node？** Node 的 N-API + Bun 的 FFI 是支持这个方向的，但**生产环境的 native 代码体积、跨平台 FFI 稳定性、binary 分发可控性**都指向 Rust。Rust 的 `unsafe` FFI 模型、LLVM 后端、cargo 工具链——这些是为 native addon 设计的。Node 做 native binding 不是不行，是**生命周期管理、GC 与 native 内存混用、ABI 稳定性**都更痛。oh-my-pi 选 Rust 是工程现实，不是意识形态。
 >
-> **为什么不直接用现成的 brush / ripgrep 二进制而不是 vendored？** 因为"in-process + 0 fork-exec"是 oh-my-pi 的核心承诺。vendored 到 pi-shell / pi-natives 里才能在 libuv 线程池上跑、被 agent 的 cancel / timeout 协议接管、被 session 状态共享。如果 fork 出去跑，就回到 pi-mono 时代"每次 fork 一个新进程"的范式——那 6.7% → 68.3% 的提升就不存在了。**"native 优先"不是性能优化，是架构选择**。
+> **为什么不直接用现成的 brush / ripgrep 二进制而不是 vendored？** 因为“in-process + 0 fork-exec”是 oh-my-pi 的核心承诺。vendored 到 pi-shell / pi-natives 里才能在 libuv 线程池上跑、被 agent 的 cancel / timeout 协议接管、被 session 状态共享。如果 fork 出去跑，就回到 pi-mono 时代“每次 fork 一个新进程”的范式——那 6.7% → 68.3% 的提升就不存在了。**“native 优先”不是性能优化，是架构选择**。
+
+> **为什么 oh-my-pi 不做 agent 互通的标准化协议？** ACP（Agent Client Protocol）是 Zed Industries 推动的 agent-editor 协议，oh-my-pi 是首批实现者之一；但 oh-my-pi 没有进一步推动 agent-agent 互通的协议。原因不难猜：**oh-my-pi 自己已经实现了 31 工具 / 14 LSP ops / 28 DAP ops / 60+ providers，每一个 agent adapter 都是“接入 oh-my-pi”而不是“对接 oh-my-pi”**。推 agent-agent 互通的标准化协议会指走一部分用户到“不用 oh-my-pi”的路线——这是 oh-my-pi 产品定位上的负值。**与其开放互通，不如生态锁定——但 ACP editor 协议例外，因为 editor 是补充不是代替**。这是开源商业项目常见的拉掳边界判断：什么标准化、什么不标准化，由“能否让用户留在 oh-my-pi 里”决定。
