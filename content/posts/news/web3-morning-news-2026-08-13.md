@@ -1,11 +1,11 @@
 ---
 title: "Web3早报 2026-08-13"
-date: 2026-08-13T06:55:00+08:00
+date: 2026-08-13T07:04:09+08:00
 slug: web3-morning-news-2026-08-13
-description: "2026年8月13日 Web3 早报：高盛22.5亿美元收购NEOS切入BTC收益ETF，Solana近冻结，渣打港元稳定币上线，CFTC紧急保住Kalshi。"
+description: "2026年8月13日 Web3 早报：BTC 在 CPI 公布后守稳 6.3 万美元；CoinDesk、The Defiant、Bankless 三大来源汇总监管、机构与链上动态。"
 draft: false
 categories: ["行业快讯"]
-tags: ["Web3", "BTC", "ETH", "高盛", "稳定币", "Solana", "Kalshi"]
+tags: ["Web3", "BTC", "ETH", "监管", "ETF"]
 hiddenFromHomePage: true
 ---
 
@@ -15,82 +15,92 @@ hiddenFromHomePage: true
 
 ## 📊 市场速览
 
-| 币种 | 价格 | 24h涨跌 |
-| ------ | ------ | ------ |
-| BTC | $63,370 | -0.36% |
-| ETH | $1,876 | -0.15% |
-| SOL | $75.46 | -1.04% |
-| XRP | $1.004 | -1.63% |
-| ADA | $0.1819 | -2.42% |
-| BNB | $609.35 | -0.68% |
+| 币种 | 价格 | 24h涨跌 | 7d涨跌 |
+| ------ | ------ | ------ | ------ |
+| BTC | $63,342 | -0.29% | -3.20% |
+| ETH | $1,876.13 | -0.11% | -1.50% |
+| SOL | $75.45 | -0.98% | -2.40% |
+| XRP | $1.003 | -1.63% | -4.10% |
+| ADA | $0.181751 | -2.50% | -5.80% |
+| BNB | $609.52 | -0.63% | -1.90% |
 
-*行情来源：CoinGecko API（2026-08-13 07:00 UTC+8）*
+*行情来源：CoinGecko API · 数据时间：2026-08-13 06:50 Asia/Shanghai*
 
-美国 7 月 CPI 同比增长 3.4%，符合预期，核心 CPI 稳步降至 2.5%。数据公布后 BTC 短暂下探 $64,000 下方，国债收益率回落，市场判断通胀数据为美联储争取了时间但未改变降息节奏。
+> 整体走平偏弱。BTC 在 7 月 CPI 同比 3.4%（符合预期）公布后守住 6.3 万美元一线；ETH 接近 1,900 美元，Solana 受节点掉线事件拖累在 75 美元附近震荡。
 
-## 💼 机构动态
+---
 
-### 高盛 22.5 亿美元收购 NEOS，切入 BTC 收益 ETF 赛道
+## 💼 机构与 ETF
+
+### 高盛 22.5 亿美元收购 Neos，接管比特币/以太坊收益 ETF
 来源: CoinDesk
 原文: [原文](https://www.coindesk.com/business/2026/08/12/goldman-sachs-leaps-into-bitcoin-income-etfs-with-usd2-25-billion-neos-buyout)
-摘要: 高盛以 22.5 亿美元收购 NEOS Investments，获得其规模 11 亿美元的备兑看涨期权 BTC 收益 ETF（年化收益率 27%），直接对标贝莱德同类产品。交易完成后高盛 ETF 衍生品平台总资产将扩至 1300 亿美元，选择收购而非自建产品线，意在快速卡位加密收益型 ETF 赛道。
+摘要: 高盛以 22.5 亿美元收购 Neos Investments，把旗下 Bitcoin High Income ETF、Boosted Bitcoin High Income ETF 与 Ethereum High Income ETF 一并收入囊中。该交易使其衍生品平台管理的 ETF 资产规模跃升至 1,300 亿美元，被分析师解读为直接对标贝莱德 BITA 基金——高盛不再只是"借道"加密，而是把加密收益产品纳入了主线分销。
 
-### Wintermute 计划 10 亿美元投入 AI，非加密收入占比目标 50%
-来源: CoinDesk
-原文: [原文](https://www.coindesk.com/business/2026/08/12/wintermute-plans-usd1-billion-ai-push-beyond-crypto-bloomberg)
-摘要: 做市商 Wintermute 计划在未来三年投入 10 亿美元拓展 AI 业务，目标是到 2027 年非加密收入占比从当前 10% 提升至 50% 以上。据 Bloomberg 报道，公司已在组建专门的 AI 基础设施团队，寻求在加密做市之外建立第二增长曲线。
-
-### Securitize 上市首份财报失利：代币化资产创新高但收入下滑
+### Securitize 上市后首份季报不及预期，盘后重挫 20%
 来源: CoinDesk
 原文: [原文](https://www.coindesk.com/markets/2026/08/12/securitize-falls-20-after-earnings-miss-as-tokenization-revenue-falls-short)
-摘要: 贝莱德代币化合作伙伴 Securitize 公布上市以来首份财报，代币化资产总规模创历史新高、交易活跃度大幅提升，但代币化业务收入不及预期，股价盘后下跌 20%。公司表示收入缺口主要来自一次性整合成本，基本面趋势仍然向上。
+摘要: 现实世界资产代币化（RWA）平台 Securitize 公布上市后首份财报，财报显示代币化资产规模与交易活跃度同步创出新高，但代币化相关收入却低于市场预期，盘后股价下挫 20%。市场关注焦点从"代币化规模"切回到"代币化是否能转化为持续收入"，是判断 RWA 板块商业化成色的关键样本。
 
-### Zerohash 申请美国信托银行牌照受阻，计划重新提交
+### Wintermute 计划 10 亿美元押注 AI，目标 2027 年非加密收入过半
+来源: CoinDesk
+原文: [原文](https://www.coindesk.com/business/2026/08/12/wintermute-plans-usd1-billion-ai-push-beyond-crypto-bloomberg)
+摘要: 据彭博报道，加密做市商 Wintermute 计划投入 10 亿美元布局非加密市场，目标 2027 年非加密业务收入占比从当前 10% 提升至 50% 以上。公司把 AI/传统金融基础设施视为下一阶段增长曲线，意味着头部做市商正在主动"去加密化"对冲周期性。
+
+### BitGo 二季度净亏 1,900 万美元，CFO 即将离职
+来源: The Defiant
+原文: [原文](https://thedefiant.io/converge/cefi/bitgo-cfo-to-exit-as-q2-net-loss-hits-19-million)
+摘要: BitGo 二季度营收同比上涨 80%，但交易与质押业务毛利率承压，净亏损 1,900 万美元。继 6 月裁员后，公司启动 1,500 万美元年化降本计划，CFO 同期宣布将于近期卸任。在多家托管/资管公司同步收缩的背景下，BitGo 业绩是观察"机构基础设施"现金流质量的重要参考。
+
+---
+
+## 🏛️ 监管与合规
+
+### SEC 推进代币化证券豁免框架，24/7 链上交易有望落地
+来源: The Defiant
+原文: [原文](https://thedefiant.io/converge/regulation/sec-advances-tokenized-securities-exemption-that-could-enable-24-7-trading)
+摘要: SEC 在新任主席 Atkins 推动下推进"代币化证券豁免"框架，允许合规链上交易在长期规则成型前先行试点。一旦落地，传统 T+1 结算框架将首次被改写为可 7×24 运转的链上结算——这是 RWA 板块最重要的政策催化剂之一，落地后将对托管、做市与跨链桥产生连锁影响。
+
+### SEC 工作人员豁免 Franklin Templeton 基金使用链上货币基金 FOBXX
+来源: The Defiant
+原文: [原文](https://thedefiant.io/converge/tradfi-and-fintech/sec-staff-clears-franklin-funds-to-use-onchain-money-fund-for-cash-and-collateral)
+摘要: SEC 工作人员以不行动函形式批准 Franklin Templeton 旗下注册基金可持有其关联链上货币基金 FOBXX 作为现金管理与担保品用途，但附带 12 项托管与控制条件。这是主流资管首次把"链上基金纳入传统基金资产负债表"，意味着链上货币市场基金正式进入合规轨道。
+
+### Zerohash 申请美国信托银行牌照遇阻，计划补件
 来源: CoinDesk
 原文: [原文](https://www.coindesk.com/policy/2026/08/12/morgan-stanley-s-infrastructure-partner-zerohash-rebuffed-in-pitch-to-be-u-s-trust-bank)
-摘要: 摩根士丹利旗下 E*Trade 的加密基础设施合作方 Zerohash 向美国监管机构申请信托银行牌照被驳回。Zerohash 表示将重新提交申请并期望尽快解决，这一进展将影响摩根士丹利零售客户加密资产托管路径。
+摘要: 为 Morgan Stanley 旗下 E*Trade 提供加密基础设施的 Zerohash 在申请美国信托银行牌照时被监管驳回，公司表示将补件并寻求快速解决。这条新闻折射出"加密基础设施公司持牌化"的难度——即便有摩根士丹利站台，从州级 MTL 到联邦级信托牌照仍存在实质性监管落差。
 
-## 🔥 今日热点
+---
 
-### CFTC 紧急行使职权，保住 Kalshi 不被纽约州关停
-来源: Bankless
-原文: [原文](https://www.bankless.com/read/news/cftc-invokes-emergency-authority-to-keep-kalshi-operating)
-摘要: 美国商品期货交易委员会（CFTC）援引紧急职权，允许预测市场平台 Kalshi 在纽约州寻求关停的压力下继续运营。CFTC 的介入标志着联邦监管层对预测市场合规地位的明确背书，为 Kalshi 及同类平台提供了临时法律保障。
+## 🔬 技术与生态
 
-### Solana 主网近乎冻结，Marinade Finance 确认节点大规模断线
-来源: CoinDesk
-原文: [原文](https://www.coindesk.com/tech/2026/08/12/smart-contract-blockchain-solana-nearly-froze-wednesday-marinade-finance-says)
-摘要: Solana 主网在 8 月 12 日出现严重性能退化，近 29% 验证者节点因路由 bug 断线，网络一度距离失去最终性仅差 4.5%。Marinade Finance 确认了事件影响，验证者服务商已修复路由配置，网络在数小时内恢复最终性。
-
-### 渣打银行领投 Anchorpoint 推出港元稳定币 HKDAP
-来源: CoinDesk
-原文: [原文](https://www.coindesk.com/business/2026/08/12/standard-chartered-led-anchorpoint-launches-hong-kong-dollar-stablecoin)
-摘要: 由渣打银行牵头的 Anchorpoint 正式推出港元稳定币 HKDAP，HashKey Exchange 和 OSL Group 成为首批授权分销商，面向机构和专业投资者开放铸造与赎回。首批用例聚焦跨境支付和现实世界资产（RWA）结算。
-
-## 🔬 技术前沿
-
-### Gnosis Chain 成为以太坊经济圈（EEZ）首个实施链
+### Gnosis Chain 率先接入"以太坊经济区"路线
 来源: Bankless
 原文: [原文](https://www.bankless.com/read/gnosis-chain-just-made-the-first-move-toward-the-ethereum-economic-zone)
-摘要: Gnosis Chain 宣布成为以太坊经济圈（Ethereum Economic Zone）的首个实施成员，将 EEZ 框架从愿景推进到落地阶段。该框架旨在通过统一的质押、结算和治理标准，将以太坊主网与 Layer2 / 侧链组成更紧密的经济协作体。
+摘要: "以太坊经济区（Ethereum Economic Zone）"在 3 月还只是一个愿景，Gnosis Chain 已正式宣布成为首个落地实施方。Gnosis 计划把自己的费用市场、跨链桥与代币经济学与以太坊主网深度对齐，是 L1/L2 协同叙事从"技术兼容"升级到"经济一体"的标志性事件。
 
-### Eigen Labs 推出 Yukon：开放 AI 研究竞赛平台
+### Eigen Labs 推出 Yukon，把开放 AI 研究搬上 EigenLayer
 来源: Bankless
 原文: [原文](https://www.bankless.com/read/news/eigen-labs-launches-yukon-for-open-ai-research)
-摘要: Eigen Labs 推出开放研究平台 Yukon，人类和 AI 代理可以在该平台上围绕技术挑战展开竞赛。平台建立在 EigenLayer 之上，目标是探索去中心化验证机制在科研激励中的可行性。
+摘要: Eigen Labs 上线 Yukon，一个开放式"自驱研究"平台，人类与 AI Agent 可以在同一竞技场竞争解出任意技术研究挑战。平台底层依赖 EigenLayer 的 restaking 安全模型，是"加密激励 + 开放科学"交叉点上的新实验。
 
-### Miden 推出隐私稳定币 USDCx，基于 Circle xReserve
+### Kalshi 接入 DoubleZero，向机构开放华尔街级订单簿数据
 来源: CoinDesk
-原文: [原文](https://www.coindesk.com/tech/2026/08/12/miden-bets-on-privacy-stablecoins-with-introduction-of-usdcx)
-摘要: 隐私区块链 Miden 推出基于 Circle xReserve 的稳定币 USDCx，用户可以在不公开余额、交易对手和历史记录的前提下进行转账，同时支持选择性披露以满足合规要求。这是隐私链生态首次尝试将稳定币隐私化处理落地为产品。
+原文: [原文](https://www.coindesk.com/business/2026/08/12/solana-platform-taps-prediction-market-kalshi-for-wall-street-style-high-speed-data-feed)
+摘要: Kalshi 成为首家通过 DoubleZero 网络对外广播完整订单簿（含 Level 1/Level 2）的预测市场机构数据。机构交易者从此无需自建重建订单簿的 API 流水线，可直接拿到毫秒级撮合深度数据，预测市场首次具备"机构可交易"的数据基础。
 
-### BitGo 推出比特币量子风险检测工具
-来源: Bankless
-原文: [原文](https://www.bankless.com/bitgo-launches-public-bitcoin-quantum-risk-checker)
-摘要: 加密托管商 BitGo 推出免费的 BTC 地址量子计算风险评分工具，根据地址公钥是否已暴露来量化评估量子攻击风险。工具面向长期持有者，帮助识别需要迁移到抗量子签名方案的资产。
+---
+
+## ⚠️ 风险提示
+
+### CPI 数据公布后加密未跟涨，说明风险偏好并未真正转向
+来源: The Block
+原文: [原文](https://www.theblock.co/news/markets/2026-08-12-bitcoin-dips-under-64000-in-line-cpi-buys-fed-time-not-conviction-analysts-411594)
+摘要: 7 月 CPI 同比 3.4% 符合市场预期，但 BTC 反而跌破 64,000 美元后收于 63,000 美元附近。分析师指出，"符合预期"并未给美联储额外的降息空间，市场拿到的是"时间"而不是"确定性"，意味着短线仍以区间震荡为主，追高需谨慎。
 
 ---
 
 🦞 每日08:00自动更新
 
-**数据来源**：行情：CoinGecko API；新闻：CoinDesk、Bankless
+**数据来源**：行情：CoinGecko API；新闻：CoinDesk、The Defiant、Bankless
