@@ -20,10 +20,21 @@ tags: ["RAG", "知识图谱", "代码分析", "Tree-sitter", "Memgraph"]
 
 Code-Graph-RAG 由两个子系统组成：
 
-```
-源代码 → Tree-sitter 解析器 → AST 分析 → Memgraph 知识图谱
-                                                    |
-用户查询 → AI 模型 (Cypher 生成) → Cypher 查询 → 图查询结果 → 响应
+```mermaid
+flowchart LR
+    subgraph Parser["解析器侧"]
+        SRC["源代码"] --> TS["Tree-sitter 解析器"]
+        TS --> AST["AST 分析"]
+        AST --> KG[("Memgraph 知识图谱")]
+    end
+
+    subgraph RAG["RAG 侧"]
+        UQ["用户自然语言查询"] --> LLM["AI 模型（Cypher 生成）"]
+        LLM --> CQ["Cypher 查询"]
+        CQ --> KG
+        KG --> RES["图查询结果"]
+        RES --> RESP["响应"]
+    end
 ```
 
 **解析器侧**：用 Tree-sitter 对每种语言生成 AST，从 AST 中提取函数、类、方法、模块节点，以及它们之间的调用、引用、导入关系边。所有节点和边统一写入 Memgraph，使用同一套语言无关的图 schema。
@@ -32,7 +43,7 @@ Code-Graph-RAG 由两个子系统组成：
 
 ### 图 schema 要点
 
-图中的节点类型包括 `Function`、`Class`、`Method`、`Module`，边类型包括 `CALLS`（调用）、`REFERENCES`（引用）、`IMPORTS`（导入）、`CONTAINS`（包含）、`FLOWS_TO`（数据流）和 `DEFINED_IN`（定义于）。2026 年新增的数据流追踪边 `FLOWS_TO` 覆盖 C#、Java、C、Go 四种语言，沿赋值、函数调用和 I/O 输出追踪值的传播路径。
+图中的节点类型包括 `Function`、`Class`、`Method`、`Module`，边类型包括 `CALLS`（调用）、`REFERENCES`（引用）、`IMPORTS`（导入）、`CONTAINS`（包含）、`FLOWS_TO`（数据流）和 `DEFINED_IN`（定义于）。最新的数据流追踪边 `FLOWS_TO` 沿赋值、函数调用和 I/O 输出追踪值的传播路径，本轮新增 C#、Java、C、Go 后，整体覆盖扩展到 10 种语言（Python、JavaScript、TypeScript/TSX、Go、Java、Rust、C++、C、C#）。
 
 ### 支持语言
 
@@ -77,7 +88,7 @@ pipx install "code-graph-rag[treesitter-full,semantic]"
 前置依赖：Docker（运行 Memgraph）、cmake、ripgrep。
 
 ```bash
-# 启动 Memgraph + Qdrant（内置 Docker Compose）
+# 启动附带打包好的 Memgraph + Qdrant 栈（不需要自备 Compose 文件）
 cgr daemon up
 
 # 解析仓库到图中
@@ -104,5 +115,11 @@ cgr start --repo-path /path/to/repo
 - 需要 100% 精度的场景（Tree-sitter 解析是语法级的，不做语义分析）
 - 实时性要求极高的场景（图构建需要时间，增量更新有延迟）
 - 需要分析二进制文件或编译产物中代码的场景
+
+## 该怎么决定用不用
+
+判断标准不是"项目大不大"，而是"你的问题是否依赖结构关系"。找死代码、循环依赖、跨语言调用链、某个变量怎么流到 I/O——这些本质是图问题，值得上。查某个函数开不开源、某个符号在哪定义——grep 和 IDE 跳转更快，不必为它们维护一张图。
+
+真要用，从单一目录试点开始：先 `cgr start --repo-path <repo> --update-graph` 建图，再跑一次死代码检测看产出是否符合预期，最后再接 MCP 进日常工具链。小步验证，而不是一上来就全量索引整个 monorepo。
 
 项目 MIT 协议，当前版本 v0.0.589（2026-08-10），3.5K Stars，Python 为主语言，更新频率极高（连续三天三个版本）。需要注意的是 GitHub 账号一度被暂停（README 中有相关注释），stars/forks 徽章暂时不可用。
