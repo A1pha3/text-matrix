@@ -14,7 +14,7 @@ slug: "deepseek-reasonix-coding-agent"
 
 Reasonix 是围绕 DeepSeek prefix cache（前缀缓存）设计的终端 AI 编码 Agent。它的配置、双模型协作、上下文修剪、插件协议，都在回答同一个问题：怎么让一个反复迭代的长会话，token 成本尽量低。通用 Agent 在琢磨怎么让模型更能干，Reasonix 在琢磨怎么让 DeepSeek 缓存更稳。
 
-如果你已经在用 DeepSeek 做编码，并且会在一个会话里反复改同一个仓库，Reasonix 值得替换掉终端里的 `aider` 或 `cline`。如果你的默认模型是 Claude 或 GPT，收益会打折——这套设计锚定在 DeepSeek 的缓存实现上。
+如果你已经在用 DeepSeek 做编码，并且会在一个会话里反复改同一个仓库，Reasonix 值得替换掉终端里的 `aider` 或 `cline`。如果你的默认模型是 Claude 或 GPT，收益会打折——这套设计锚定在 DeepSeek 的缓存实现上。判断的边界就在这里：它省的是"会话变长后的复利"，不是"单次请求变快"。
 
 ## 项目速览
 
@@ -74,7 +74,7 @@ Reasonix 第一条特性写得很直接：Providers、agent、启用的工具和
 
 ## 机制二：多模型可组合（Multi-model & composable）——双模型是缓存的延伸
 
-这是 Reasonix 最见设计的地方。
+双模型是 Reasonix 里最值得单独停下来的设计。
 
 单模型场景下，DeepSeek 的 prefix cache 表现已经不错——只要 system prompt、工具列表和前几轮对话稳定，命中率就能保持。可如果 Agent 在长会话中途要处理高难度规划（比如重写整个模块、设计 schema），常见的做法是把"当前对话全文"塞进 planning prompt，这会破坏缓存边界。
 

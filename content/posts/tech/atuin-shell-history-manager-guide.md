@@ -11,9 +11,16 @@ tags: ["Rust", "SQLite", "加密"]
 
 # Atuin：把 Shell 历史从纯文本升级成可加密同步的数据库
 
+读完后你能做到：
+
+- 说清 Atuin 与 Shell 自带历史在存储、字段、同步、搜索上的差异，判断自己是否需要它。
+- 安装并初始化 Atuin，导入现有历史，用 `Ctrl+R` 和 `atuin search` 找回带上下文的命令。
+- 理解加密同步的链路，备份 `atuin key`，在新机器登录并解密同步的数据。
+- 按需调整过滤规则、自建 `atuin-server`，并依据适用边界决定是否采用。
+
 Shell 自带的 `Ctrl+R` 和 `~/.bash_history` 只能告诉你"敲过什么"，说不清"在哪敲的、成了没有、花了多久"。Atuin 用 SQLite 替换这套纯文本机制，把每条命令连同退出码、目录、主机、会话、时长一起存进数据库，再通过端到端加密在多台机器间同步。历史变成结构化数据后，按退出码、目录、时间筛选就是一条 SQL 的事，不再需要 `grep` 和管道的组合。
 
-数据以 Rust 编写，仓库排在 GitHub [atuinsh/atuin](https://github.com/atuinsh/atuin)（Stars 约 3.1 万，2026-08-07 验证）。本文按"它在解决什么 → 一条命令怎么流过系统 → 并行机制 → 自建服务器 → 选型判断"展开，结尾给出采用顺序和适用边界。
+Atuin 以 Rust 编写，仓库排在 GitHub [atuinsh/atuin](https://github.com/atuinsh/atuin)（Stars 约 3.1 万，2026-08-07 验证）。本文按"它在解决什么 → 一条命令怎么流过系统 → 并行机制 → 自建服务器 → 选型判断"展开，结尾给出采用顺序和适用边界。
 
 ## 它和 Shell 自带历史差在哪
 
@@ -54,6 +61,12 @@ flowchart LR
 这条链路里，服务器始终只拿到密文。即使官方服务器被入侵，攻击者能拿到的也只有加密后的历史，没有本地密钥就无法还原命令内容。
 
 ## 快速上手
+
+### 前置条件
+
+- 一台类 Unix 系统（macOS / Linux），Shell 为 zsh、bash 或 fish 之一。
+- 有 `curl` 或 `brew` 等包管理器可执行安装。
+- 若打算用官方同步，需要能访问外网；纯本地模式可离线使用。
 
 ### 安装
 
@@ -111,6 +124,18 @@ atuin search --exit 0 --after "yesterday 3pm" make
 
 `--exit 0 --after "yesterday 3pm" make` 这个组合是官方文档在 README 里直接给出的示例，能同时按退出码、时间和命令文本过滤，是纯文本历史做不到的。
 
+### 验证安装
+
+跑一遍简单命令确认记录链路通了：
+
+```bash
+atuin --version        # 确认二进制可执行
+ls -la                # 制造一条历史记录
+atuin search ls       # 应能搜到刚执行的 ls
+```
+
+若 `atuin search ls` 搜不到刚才的命令，先确认是否把 Atuin 的钩子加进了 Shell 配置（zsh 是 `.zshrc`，bash 是 `.bashrc`），并重启了 Shell。
+
 ## 核心机制：加密同步
 
 Atuin 的同步在本地完成加密，服务器只负责存储和转发密文。同步配置有两个关键点：服务器地址和加密密钥。
@@ -128,7 +153,7 @@ sync_address = "https://api.atuin.sh"
 
 ## 命令统计
 
-`atuin stats` 基于数据库里的命令记录，统计最常用的命令和按时间段分布的使用频率：
+`atuin stats` 基于数据库里的命令记录，统计最常用的命令，以及按时间段分布的调用频率：
 
 ```bash
 atuin stats
@@ -150,7 +175,7 @@ Hours of the day:
 
 ## 支持的 Shell
 
-zsh、bash、fish 完整支持，nushell 和 xonsh 实验性支持，powershell 次级支持。
+zsh、bash、fish 完整支持，nu 和 xonsh 实验性支持，PowerShell 次级支持。
 
 ## 配置详解
 
