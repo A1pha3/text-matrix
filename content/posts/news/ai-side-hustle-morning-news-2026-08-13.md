@@ -1,106 +1,113 @@
 ---
 title: "AI副业早报 2026-08-13"
-date: 2026-08-13T06:55:00+08:00
+date: 2026-08-13T07:13:00+08:00
 slug: ai-side-hustle-morning-news-2026-08-13
-description: "2026年8月13日 AI副业早报，精选过去24小时内AI招聘机会、副业工具与真实赚钱路径。涵盖AI Agent岗位、AI轻服务接单、数据标注及自动化定制方向。"
+description: "2026年8月13日 AI 副业早报，精选过去 24 小时内 V2EX 酷工作区招聘与项目机会，覆盖大模型基础设施校招、AI Agent 实习、海外账号运维、AI Native 后端与 AI 教育产品客户端。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "AI Agent", "招聘", "自由职业"]
+tags: ["AI副业", "招聘", "V2EX", "Agent", "大模型"]
 hiddenFromHomePage: true
 ---
 
-🦞 每日07:15自动更新
+🦞 每日09:00自动更新
 
 ---
 
-## 💼 招聘机会
+## 🔥 今日热门
 
-### 招聘｜AI Agent 算法实习生｜北京｜海外AI互动内容方向
-来源: V2EX
-发布者: fanshide
-原文: [原文](https://www.v2ex.com/t/1233973)
-摘要: 一支专注海外 AI 互动内容的初创团队招聘 AI Agent 算法实习生，工作地点北京。岗位核心方向包括 Agent 规划与推理（Planning/Reasoning）、工具调用（Function Calling）、短期与长期记忆机制、RAG 检索增强及多轮对话上下文管理。团队核心成员来自一线大厂与顶尖高校，含华为天才少年、字节 Top Seed 等。适合对从 0 到 1 搭建 AI 产品有兴趣的同学。
+### 通义实验室开放 AI Infra 校招岗，容器与 GPU 调度成算力内核新方向
 
-标签: #AI Agent #实习 #北京 #初创团队
-
-### 通义大模型 Token Foundry 招聘 AI Infra 工程师（容器方向）
 来源: V2EX
 发布者: saintube
 原文: [原文](https://www.v2ex.com/t/1233934)
-摘要: 阿里通义大模型团队校招 Token Foundry-AI Infra 工程师（容器方向），毕业时间 2026-11 至 2027-10。核心职责围绕 Kubernetes 生态深度定制：面向 GPU 拓扑感知的调度优化、AI Agent 弹性伸缩与快速拉起、大规模 checkpoint 存储性能调优，以及容器网络在分布式训练中的延迟优化。岗位定位是大模型训练与推理的"算力底座"建设者。
 
-标签: #校招 #阿里 #AI基础设施 #Kubernetes
+摘要: 阿里通义大模型团队 Token Foundry 开放 2026-11 至 2027-10 毕业窗口的 AI Infra 工程师校招,方向聚焦 Kubernetes 生态与容器底座。岗位要求参与面向 GPU 拓扑感知的调度器优化、RDMA/RoCE 网络集成、轻量化容器运行时研发,并直接服务于 Agent 冷启动与推理吞吐优化,体现大模型基础设施岗位正在向「算力内核设计者」角色集中。
 
-### 招聘 Claude/ChatGPT 账号订阅工程师
+标签: #大模型校招 #AInfra #K8s
+
+### 北京 AI 互动内容团队招 Agent 算法实习,ReAct 与多 Agent 协作进入核心模块
+
+来源: V2EX
+发布者: fanshide
+原文: [原文](https://www.v2ex.com/t/1233973)
+
+摘要: 海外 AI 互动内容初创团队招聘 AI Agent 算法实习生(北京),核心成员来自华为天才少年、字节 Top Seed、阿里星。岗位涉及 Planning / Reasoning / Tool Use / RAG / 多轮记忆四大核心模块,以及 ReAct、Plan-and-Execute、Multi-Agent、Reflection 等主流 Agent 工作流落地,并要求搭建 Benchmark 与线上评估体系,是少见的把 Agent 评测体系作为独立模块的实习岗位。
+
+标签: #Agent #实习 #多模态
+
+---
+
+## 💼 招聘 / 外包
+
+### 海外大模型账号订阅工程师,深圳急招需有经验者
+
 来源: V2EX
 发布者: owen800q
 原文: [原文](https://www.v2ex.com/t/1233954)
-摘要: 深圳 AI 接口平台招聘订阅运维工程师，负责 Sub2API 平台及 Claude/ChatGPT 大模型账号的日常运维。岗位要求熟悉 AI 接口调用、密钥管理、并发限流等基础概念，需要有 AI 接口平台或大模型账户运营经验。薪资待遇面议，强调需要有实际经验者。
 
-标签: #深圳 #AI运维 #大模型 #Claude
+摘要: Sub2API 平台招 Claude / ChatGPT 账号订阅工程师,不限学历与专业但强调「需要有经验的」(原帖三次重复强调)。工作内容包括账户运维、API 平台接入、密钥与限流管理,并对接突发问题排查,适合熟悉 AI 接口交易与账户运维行业规则的从业者。岗位位于深圳,接受应届但更倾向具备实际并发与限流处理经验的人。
 
----
+标签: #Claude #账号运维 #深圳
 
-## 💰 赚钱机会
+### 北京 iOS/macOS 客户端工程师,SwiftUI 打造下一代 AI 教育产品
 
-### 2026年8月 AI副业全景：普通人靠AI赚钱的5条真实路径
-来源: 老达AI博客
-原文: [原文](https://laodad.com/ai-side-hustle/7904.html)
-摘要: 文章援引 Bankrate 2026 年调查数据指出，美国副业收入中位数为月 200 美元（约 1400 元），但 Upwork 数据显示 AI 相关自由职业者时薪高出非 AI 工种 44%。作者梳理了 5 条可落地路径：① AI 轻服务接单（文案、PPT、简历优化，月增收 2000-5000 元）；② AI 数据标注与训练（时薪 12-25 美元，专家级可达 50-200 美元）；③ AI 短视频与内容代运营（单条 200-1000 元）；④ AI 自动化与 Agent 定制（单项目 3000-8500 元）；⑤ AI 在线教学与咨询（时薪 180-700 元）。每条路径均附带起步门槛与避坑建议。
+来源: V2EX
+发布者: selah
+原文: [原文](https://www.v2ex.com/t/1233764)
 
-标签: #AI副业 #自由职业 #收入数据
+摘要: 4-5 人小团队招 iOS / macOS 原生开发,核心产品方向为下一代 AI Agent 教育应用,要求 Swift / SwiftUI 深度使用经验与 App Store 上架经验。薪资 25k-35k ×16 薪,团队进度压力大、个人能力要求高,并需使用 Codex 辅助编程。加分项为 App Store 上架过自己作品或开源贡献者,适合希望主导客户端体验的开发者。
 
----
+标签: #iOS #SwiftUI #AIEdTech
 
-## 🚀 AI项目
+### 杭州 / 上海招 Go 全栈,AI Native 团队欢迎 Java 转 Go
 
-### Sidekick™ — Agentic Interface（Product Hunt 今日热门）
-来源: Product Hunt
-发布者: Abdullah Farouk
-原文: [原文](https://www.producthunt.com/products/sidekick-16)
-摘要: Sidekick™ 以"The agentic interface"为定位亮相 Product Hunt，主打为 AI Agent 提供统一交互界面层。产品于 8 月 12 日上线，核心场景是将多个 AI Agent 的能力聚合到一个操作面板中，用户可在同一界面内调度不同模型完成工作流。
+来源: V2EX
+发布者: yuanxing008
+原文: [原文](https://www.v2ex.com/t/1233848)
 
-标签: #AI Agent #ProductHunt #界面层
+摘要: AI Native 开发团队招全栈,薪资 15k-20K ×13 薪,接受线下或远程,工作时间 10:00-19:30 双休。技术栈要求精通 Rust / Go / Python / Next.js 或扎实 Java 背景愿意转 Go,并要求 PostgreSQL / Redis 高并发经验;特别强调「Cursor / Claude 等 AI 工具重度使用者,有能力拆解需求、审计代码并落地工程实践」,AI 工具实际工程能力被列为硬性筛选条件。
 
-### Grok Bot — 你可以分配真实工作的 AI 队友
-来源: Product Hunt
-发布者: Ben Lang
-原文: [原文](https://www.producthunt.com/products/grok)
-摘要: Grok Bot 在 Product Hunt 上以"AI teammates that you can give real work to"为口号发布，定位为可承接实际工作任务的 AI 协作伙伴。产品 8 月 12 日上线，区别于纯对话型 AI，强调将任务委派给 Agent 执行并交付结果。
+标签: #Go后端 #AINative #远程友好
 
-标签: #AI Agent #自动化 #ProductHunt
+### 北京 Java 全栈(智能驾驶),微服务 + Spring Cloud 实战岗
 
-### Chat Agent by Trigger.dev — 关闭页面仍持续运行的 AI 对话
-来源: Product Hunt
-发布者: fmerian
-原文: [原文](https://www.producthunt.com/products/trigger-dev)
-摘要: Trigger.dev 推出 Chat Agent，主打"AI chat that keeps running after you close the tab"。产品 8 月 11 日上线，核心特性是长时任务异步执行：用户发起对话指令后可关闭页面，Agent 在后台持续工作并返回结果，适合需要长时间运行的代码生成、数据处理等场景。对独立开发者而言，这类异步 Agent 架构可作为构建 AI 自动化服务的技术参考。
+来源: V2EX
+发布者: AlexJ8175
+原文: [原文](https://www.v2ex.com/t/1233808)
 
-标签: #异步Agent #Trigger.dev #独立开发
+摘要: 智能驾驶方向内部平台招 Java 全栈工程师,要求 2-8 年 Java 实际经验,熟悉 Spring Boot / Spring Cloud Alibaba 微服务生态。技术栈覆盖 MySQL、Elasticsearch、Redis、Kafka、Nacos,核心业务是自驾数据平台而非外包岗位。适合希望在垂直行业深耕、对智能驾驶数据中台感兴趣的后端工程师。
 
----
+标签: #Java全栈 #智能驾驶 #北京
 
-## 📚 学习资源
+### 台湾企业牧羊人集团招前端后端,base 杭州 / 上海 18k-40k
 
-### 2026年AI副业工具Top 20排行榜：实测推荐
-来源: AiToollab
-原文: [原文](https://www.aitoollab.top/tutorials/ai-side-hustle-tools-top-20-2026/)
-摘要: AiToollab 发布 2026 年 AI 副业工具 Top 20 榜单，覆盖内容创作、图像设计、编程辅助、自动化四大类别。榜单对 ChatGPT、Claude、Midjourney、Cursor 等主流工具进行实测对比，每个工具附带对应变现路径和收入参考。适合刚起步的 AI 副业从业者快速选定工具组合。
+来源: V2EX
+发布者: avenhen
+原文: [原文](https://www.v2ex.com/t/1233702)
 
-标签: #AI工具 #排行榜 #副业入门
+摘要: 台湾牧羊人集团开放前端、后端、测试岗位,base 杭州 / 上海,前端年薪 20-55 万、后端/全栈范围 18k-40k,要求三年以上 React 或 DevOps 经验。岗位强调 Trade-off 思考、Code Review、Infra as Code、Database Schema Design,以及「喜欢参与新创团队」「喜欢研究新技术」,适合愿意在台资创业团队中承担多角色的工程师。
+
+标签: #前端 #后端 #DevOps
 
 ---
 
-🦞 每日07:15自动更新
+## 📌 本期选稿说明
 
-**数据来源**：V2EX酷工作、Product Hunt、老达AI博客、AiToollab
+本期覆盖 7 条 V2EX 酷工作区 24h 内招聘与项目机会,集中在 AI Agent、AI Infra、AI Native 三个维度,适合正在换工作或寻找 AI 相关副业机会的开发者。
 
-**⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://www.v2ex.com/t/1233973 — 已验证：AI Agent 算法实习生招聘帖
-- ✅ https://www.v2ex.com/t/1233934 — 已验证：通义大模型 AI Infra 校招帖
-- ✅ https://www.v2ex.com/t/1233954 — 已验证：Claude/ChatGPT 账号运维招聘帖
-- ✅ https://laodad.com/ai-side-hustle/7904.html — 已验证：AI 副业 5 条路径全文
-- ✅ https://www.producthunt.com/products/sidekick-16 — 已验证：Product Hunt RSS 条目
-- ✅ https://www.producthunt.com/products/grok — 已验证：Product Hunt RSS 条目
-- ✅ https://www.producthunt.com/products/trigger-dev — 已验证：Product Hunt RSS 条目
-- ✅ https://www.aitoollab.top/tutorials/ai-side-hustle-tools-top-20-2026/ — 已验证：AI 工具排行榜
+Reddit SideProject 与 Product Hunt 两源本期因沙箱出口受限无法逐条核验正文,故未采用,以保证每条新闻的标题 / 正文 / 发布者均经过原文页验证。
+
+---
+
+🦞 每日09:00自动更新
+
+**数据来源**:V2EX 酷工作、V2EX 招聘板块
+
+**⚠️ 链接核查清单(已逐条验证,仅列正文实际引用链接)**:
+- ✅ https://www.v2ex.com/t/1233973 - 已验证标题「AI Agent 算法实习」与正文匹配,作者 fanshide
+- ✅ https://www.v2ex.com/t/1233954 - 已验证标题「Claude/ChatGPT 账号订阅工程师」与正文匹配,作者 owen800q
+- ✅ https://www.v2ex.com/t/1233934 - 已验证标题「通义大模型 Token Foundry AI Infra」与正文匹配,作者 saintube
+- ✅ https://www.v2ex.com/t/1233848 - 已验证标题「全栈 Go 后端」与正文匹配,作者 yuanxing008
+- ✅ https://www.v2ex.com/t/1233808 - 已验证标题「Java 全栈 智能驾驶」与正文匹配,作者 AlexJ8175
+- ✅ https://www.v2ex.com/t/1233764 - 已验证标题「iOS/macOS SwiftUI AI 教育产品」与正文匹配,作者 selah
+- ✅ https://www.v2ex.com/t/1233702 - 已验证标题「杭州上海 台湾企业 牧羊人集团」与正文匹配,作者 avenhen
