@@ -119,14 +119,32 @@ fi
 # 从 URL 提取 slug
 url_to_slug() {
   local url="$1"
-  # 取 /news/<slug>/ 或 /<year>/<month>/<day>/<slug> 的末段
+  # 取 /news/<category>/<slug>/ 或 /news/<slug>/ 或 /<year>/<month>/<day>/<slug> 的末段
   if [[ "$url" =~ /news/([^/?#]+) ]]; then
-    echo "${BASH_REMATCH[1]}"
+    local seg="${BASH_REMATCH[1]}"
+    # ⚠️ 8-15 bugfix: The Block 是 /news/<category>/<slug>/ 两级路径，
+    # 旧正则只捕获到分类词 business/markets/regulation → 所有 The Block URL
+    # 共享同一"slug"造成大规模假阳性复用（8 月早报被迫退化 CoinDesk 单源）。
+    # 修法：若 /news/<seg>/ 后面还有一段非空路径，则取下一段作为真实 slug。
+    if [[ "$url" =~ /news/[^/?#]+/([^/?#]+) ]]; then
+      echo "${BASH_REMATCH[1]}"
+    else
+      echo "$seg"
+    fi
   elif [[ "$url" =~ /[0-9]{4}/[0-9]{2}/[0-9]{2}/([^/?#]+) ]]; then
     echo "${BASH_REMATCH[1]}"
   else
     # 取末段
-    echo "${url##*/}" | sed 's/[?#].*//'
+    # ⚠️ 8-15 bugfix: 尾斜杠 URL（如 blocktempo.com/xxx/）末段为空，
+    # grep -lF "" 会匹配所有文件 → 全部误判"严重复用"。空则回退取前一段。
+    local last
+    last=$(echo "${url##*/}" | sed 's/[?#].*//')
+    if [[ -z "$last" ]]; then
+      local trimmed="${url%/}"
+      echo "${trimmed##*/}" | sed 's/[?#].*//'
+    else
+      echo "$last"
+    fi
   fi
 }
 
