@@ -5,7 +5,7 @@ slug: "needle-tiny-tool-calling-model"
 github_repo: "cactus-compute/needle"
 source_key: "gh:cactus-compute/needle"
 description: "Needle 是 cactus-compute 开源的端侧小模型：45M 参数、单个 14MB 二进制，面向工具调用、设备控制与结构化抽取。基于 Simple Attention Network，压缩到 CQ2-bit，带置信度门控与受限内存设计，整场会话约 28MB RAM。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["端侧AI", "小模型", "工具调用", "Simple Attention Network", "边缘计算"]
 ---
