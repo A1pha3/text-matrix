@@ -5,7 +5,7 @@ slug: "celld-distributed-durable-objects"
 github_repo: "denoland/celld"
 source_key: "gh:denoland/celld"
 description: "celld 是 Deno 团队开源的分布式 Durable Objects 守护进程，让 Cloudflare Workers 与 Durable Objects 跑在你自己的机器上。每个对象即一个 SQLite 数据库，节点只通过一个你拥有的 bucket 协调，无控制平面、无共识协议。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["Deno", "Durable Objects", "分布式系统", "SQLite", "Rust"]
 ---
