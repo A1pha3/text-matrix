@@ -5,7 +5,7 @@ slug: "switchyard-llm-routing-proxy"
 github_repo: "NVIDIA-NeMo/Switchyard"
 source_key: "gh:NVIDIA-NeMo/Switchyard"
 description: "Switchyard 是 NVIDIA NeMo 团队开源的 Rust LLM 流量代理与库，负责跨提供方路由请求、在 OpenAI 与 Anthropic API 间翻译、记录运维指标，并提供类型化、可组合的路由算法。目标是让 Claude Code、Codex 等编码智能体原生对接 vLLM、NVIDIA NIM、Ollama 等开源端点。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["LLM", "路由", "Rust", "OpenAI API", "Anthropic API", "NVIDIA"]
 ---
