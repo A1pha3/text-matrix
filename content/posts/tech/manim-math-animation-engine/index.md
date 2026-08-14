@@ -5,7 +5,7 @@ slug: "manim-math-animation-engine"
 github_repo: "3b1b/manim"
 source_key: "gh:3b1b/manim"
 description: "Manim 是 Grant Sanderson（3Blue1Brown）开发的开源数学动画引擎，用精确的程序化动画制作数学讲解视频。本文聚焦作者原版 ManimGL：讲清它和 Manim Community 版的区别、安装、最小示例与使用边界。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["Manim", "动画", "数学", "Python", "3Blue1Brown"]
 ---
