@@ -1,11 +1,11 @@
 ---
-title: "holehe：用"忘记密码"机制探测邮箱注册了哪些网站——OSINT 的利器与边界"
+title: "holehe：借忘记密码机制探测邮箱注册的网站——OSINT 利器与边界"
 date: 2026-08-15T03:24:06+08:00
 slug: "holehe-email-osint"
 github_repo: "megadose/holehe"
 source_key: "gh:megadose/holehe"
-description: "holehe 是一个 OSINT（开源情报）工具，通过各大网站的"忘记密码"功能探测一个邮箱注册过哪些平台，覆盖 Twitter、Instagram、imgur 等 120+ 网站，且不会给目标邮箱发提醒。本文讲清原理、用法与合规边界。"
-draft: true
+description: "holehe 是一个 OSINT（开源情报）工具，通过各大网站的忘记密码功能探测一个邮箱注册过哪些平台，覆盖 Twitter、Instagram、imgur 等 120+ 网站，且不会给目标邮箱发提醒。本文讲清原理、用法与合规边界。"
+draft: false
 categories: ["技术笔记"]
 tags: ["OSINT", "安全", "邮箱", "开源情报", "Python"]
 ---
