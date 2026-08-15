@@ -15,15 +15,15 @@ github_repo: "deepseek-ai/deepseek-harness"
 
 大多数 agent 框架都有一条不许碰的脊柱：模型调用、工具注册表、会话存储焊在主程序里，想换掉其中任何一块，出路通常是 fork 整个仓库。`deepseek-ai/deepseek-harness`（下文简称 DSH，CLI 命令是 `dsh`）把这个默认设定反过来：不存在一个需要 fork 的主程序，平台本体就是插件的组合，连 agent loop 自己也是插件——默认实现 `packages/core/agent-loop` 只有 713 行，挂在任何人都能用的扩展点上，理论上可以被另一个 driver 整个换掉。
 
-规模先摆出来：93,077 stars，2026-08-13 创建，7,412 个文件，`packages/` 下 54 个 workspace（承担 core / extension 角色的 30 多个），`docs/` 62 篇文档。2026 年 8 月开源，当前 v0.x developer preview。
+规模数据先摊开：93,077 stars，2026-08-13 创建并开源，7,412 个文件，`packages/` 下 54 个 workspace（承担 core / extension 角色的 30 多个），`docs/` 62 篇文档，当前 v0.x developer preview。
 
-README 第一句话把定位说得很重：
+README 第一句话就把定位说得很重：
 
 > DeepSeek Harness (`dsh`) is an open-source agent harness developed by DeepSeek AI. It uses an architecture where **everything is a plugin**, and is powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://github.com/cordiverse/paper).
 
 三个词决定整篇文章的走向：everything is a plugin（平台本体是插件组合）、Cordis（vendor 进仓库的插件框架，不是 Koishi 生态里那个 cordis）、Spatiotemporal Composability（Cordis 论文标题，时空可组合性）。
 
-系列定位交代一下。此前三篇反写练习（对源码逐行逆向、再重写成文）拆的是：
+此前三篇反写练习（对源码逐行逆向、再重写成文）拆的是：
 
 - [dsh-at-file](/posts/ai-coding/dsh-at-file-deepseek-harness-at-file-mentions/)（8-12，v0.4.0，1742 行）：DSH 的 `@path` 提及插件，out-of-tree plugin（主仓之外的插件）
 - [dsh-genui](/posts/ai-coding/dsh-genui-deepseek-harness-genui-fence-architecture/)（8-13，v0.8.1，5860 行）：DSH 的 GenUI 渲染层插件，另一个 out-of-tree plugin
@@ -97,7 +97,7 @@ scripts/      repo gates + generators
 website/      VitePress projection of selected bilingual docs/
 ```
 
-一张图看分层——`dsh` 命令在顶上选 profile，profile 叠 bundles，bundles 由 capability packages 组成，所有 package 踩在 vendored Cordis 上：
+`dsh` 命令在顶上选 profile，profile 叠 bundles，bundles 由 capability packages 组成，所有 package 踩在 vendored Cordis 上：
 
 ```mermaid
 flowchart TB
@@ -118,9 +118,9 @@ flowchart TB
   Ext --> Foundation
 ```
 
-两处容易误读的地方先说明。其一，`vendor/cordis`、`vendor/cosmokit` 是 vendored 源码而非 npm 依赖，manifest 和同步流程在 `vendor/README.md`——好处是仓库不依赖外部 npm registry 的可用性，代价是升级 vendored 包时 PR 体积会很大。其二，「54 个 workspace」和「30+ packages」并不矛盾：54 是 `packages/` 下的 workspace 总数，其中 30 多个承担 core / extension 角色，其余是 sdk、support、examples、util、boot 这类配套。
+`vendor/cordis`、`vendor/cosmokit` 是 vendored 源码而非 npm 依赖，manifest 和同步流程在 `vendor/README.md`——好处是仓库不依赖外部 npm registry 的可用性，代价是一旦升级 vendored 包，PR 体积会很大。数字上也容易看岔：「54 个 workspace」和「30+ packages」并不矛盾：54 是 `packages/` 下的 workspace 总数，其中 30 多个承担 core / extension 角色，其余是 sdk、support、examples、util、boot 这类配套。
 
-和两个插件的体量对比：
+体量对比：
 
 | 项目 | 文件数 | 源码规模 | 角色 |
 |---|---|---|---|
@@ -132,7 +132,7 @@ flowchart TB
 
 ## Cordis：everything is a plugin 的机制
 
-DSH 整个平台立在两条不变式上：第一条是 everything is a plugin，本节讲它怎么落地；第二条是 Model-visible means logged，下一节讲。两条都不只是口号——各自带着 runtime 级的强制手段。
+DSH 整个平台立在两条不变式上：第一条是 everything is a plugin，本节讲它怎么实现；第二条是 Model-visible means logged，下一节讲。两条都不只是口号——各自带着 runtime 级的强制手段。
 
 `docs/cordis-primer.md` 用五个 idea 把「插件化」讲到了可操作的程度：
 
@@ -155,15 +155,15 @@ DSH 整个平台立在两条不变式上：第一条是 everything is a plugin�
    - 卸载/重载时 unwinding 可预测
 ```
 
-第五条值得停一下。注册即 effect，意味着任何插件挂上去的东西——一个 tool、一个事件监听、一个 service row——在插件卸载时都会被回滚。这解释了为什么 DSH 敢让 agent 自己改自己的运行时（后文 self-modification 一节）：所有挂载天然可逆，不存在「装上去就摘不干净」的状态。
+第五条最值得展开。注册即 effect，意味着任何插件挂上去的东西——一个 tool、一个事件监听、一个 service row——在插件卸载时都会被回滚。DSH 敢让 agent 自己改自己的运行时（后文 self-modification 一节），靠的就是这一点：所有挂载天然可逆，不存在「装上去就摘不干净」的状态。
 
 第一个结构性后果写在 architecture.md 里：
 
 > There is no privileged core to patch: you extend dsh by mounting a plugin beside the others, and registrations are effects that unwind when their plugin unloads.
 
-没有特权核可供 hot-patch；加能力的方式是往其他插件旁边再挂一个插件。所以 model adapter 是插件、tool registry 是插件、session log 是插件，`packages/core/agent-loop` 的 713 行只是「默认 driver」这个身份，不是「核心循环」这个身份。
+没有特权核可供 hot-patch；加能力的方式是往其他插件旁边再挂一个插件。model adapter 是插件、tool registry 是插件、session log 是插件，`packages/core/agent-loop` 的 713 行只是「默认 driver」这个身份，不是「核心循环」这个身份。
 
-第二个结构性后果是 service key 充当稳定契约。`ctx.llm` 的契约是「`chat()` + `stream()` + 注册 model provider」，至于背后是 DeepSeek、Anthropic、OpenAI 还是本地 Ollama 的 provider，消费者不关心。这正是 capability seam 的雏形：接口钉死在 key 上，实现随时可换——换 provider 等于换实现、换部署目标、换权限边界，所有消费者自动跟上。
+第二个结构性后果是 service key 充当稳定契约。`ctx.llm` 的契约是「`chat()` + `stream()` + 注册 model provider」，至于背后是 DeepSeek、Anthropic、OpenAI 还是本地 Ollama 的 provider，消费者不关心。capability seam 的雏形就在这里：接口钉死在 key 上，实现随时可换——换 provider 等于换实现、换部署目标、换权限边界，所有消费者自动跟上。
 
 ### Profile 与 Bundle：插件树的分层组装
 
@@ -188,7 +188,7 @@ dsh-headless one-shot runner（无 server）
 
 加载顺序是：profile 列出的 bundles 按序 apply 到空 entry list，然后是 profile 的 `cordis.patch.yml`，再是 home 级别的 `cordis.patch.yml`，最后是任何 `--patch` overlay。layer 之间的 patch 语义是「按 id 定位一行、整行替换配置，或插入新行」——不是模糊的字符串替换，这让插件配置可版本化、可追溯、可回滚。
 
-想看当前组装结果，一条命令：
+想看当前组装结果，跑一条命令：
 
 ```sh
 dsh --profile web --dump-config
@@ -202,11 +202,11 @@ dsh --profile web --dump-config
 
 > **Model-visible means logged.** Anything that reaches a model request must be reconstructable from the log, and a runtime invariant asserts it. This is why a new model-visible input requires a new session event: extend `SessionEventMap` and render from the log.
 
-进模型的东西必须能从一条 append-only session log 重构，且有 runtime 断言盯着这条线。推论是：想加一种新的 model-visible 输入，必须先加一种新的 session event——扩展 `SessionEventMap`，然后从 log render。这句话把「先设计事件、再写功能」变成了硬约束，而不只是最佳实践。
+进模型的东西必须能从一条 append-only session log 重构，且有 runtime 断言盯着这条线。推论是：想加一种新的 model-visible 输入，必须先加一种新的 session event——扩展 `SessionEventMap`，然后从 log render。到这一步，「先设计事件、再写功能」就不再是建议，而是硬约束。
 
-它的工程后果分四层展开。
+落到工程上，这条不变式分四层。
 
-**状态管理是事件溯源的，不是可变状态的。** `packages/core/session/src/index.ts`（1157 行）实现 `SessionStore`：append-only 的 `SessionEvent` 流，加上内存 store，再从 log 派生出 LLM message history。`SurfaceManager`（surface.ts，460 行）负责「事件到派生历史」的投影。任何需要重建历史的 feature——fork、resume、transcript、telemetry——都不需要重新实现一遍，订阅同一组事件即可。
+**状态管理是事件溯源的，不是可变状态的。** `packages/core/session/src/index.ts`（1157 行）实现 `SessionStore`：append-only 的 `SessionEvent` 流，加上内存 store，再从 log 派生出 LLM message history。`SurfaceManager`（surface.ts，460 行）负责「事件到派生历史」的投影。任何需要重建历史的 feature——fork、resume、transcript、telemetry——都不需要重新实现，订阅同一组事件即可。
 
 **持久化是插件的事，不是 store 的事。** session 模块的 docstring 说得直接：
 
@@ -216,7 +216,7 @@ dsh --profile web --dump-config
 
 **chunk 级别的保真。** `assistant/chunk` 事件保留原始 token 序列，不只是拼好的 `assistant/message`。每个 chunk 都进 log，「进模型的每一个字节都进 log」才严格成立——如果只存最终消息，流式过程中的中间态就丢了。
 
-**两个插件都踩在这条不变式上。** dsh-at-file 的 `<workspace-reference path="docs/spec.pdf" />` 不是往对话里塞私货，而是走正路：每条引用是一条新事件 `at-file-mention`，进 log、可从 log 重构、模型可见。dsh-genui 的 panel 持久化同理——panel 状态通过事件投影，不另存 mutable state。
+**两个插件都踩在这条不变式上。** dsh-at-file 的 `<workspace-reference path="docs/spec.pdf" />` 不往对话里塞私货，而是走正路：每条引用是一条新事件 `at-file-mention`，进 log、可从 log 重构、模型可见。dsh-genui 的 panel 持久化同理——panel 状态通过事件投影，不另存 mutable state。
 
 ## Turn flow：一个 turn 有多少事件
 
@@ -286,7 +286,7 @@ sequenceDiagram
 | `tools/post-execute` | waterfall | 改 result |
 | `agent/turn-stopping` | serial | 决定 turn 是否提前关闭 |
 
-两类事件的分工也就清楚了。Session events（durable）进 log、能 replay、能 fork、能 resume，`session/event` 是它们的总线；capability events 挂在 seam 上（`fs/*` / `tools/*` / `telemetry/*`），不 import 主 loop。dsh-at-file 监听 `agent/pre-step` 是后者的典型用法——挂在 waterfall 上、读 messages、注入引用消息、`next()` 交还控制权；dsh-genui 的 panel 持久化则挂在 `session/event` 的 emit 链上。
+两类事件的分工至此分明。Session events（durable）进 log、能 replay、能 fork、能 resume，`session/event` 是它们的总线；capability events 挂在 seam 上（`fs/*` / `tools/*` / `telemetry/*`），不 import 主 loop。dsh-at-file 监听 `agent/pre-step` 是后者的典型用法——挂在 waterfall 上、读 messages、注入引用消息、`next()` 交还控制权；dsh-genui 的 panel 持久化则挂在 `session/event` 的 emit 链上。
 
 ## Capability seams：三角色
 
@@ -309,7 +309,7 @@ Consumers:          packages/tool-fs    Read / Write tool
                     packages/shell      bash redirect 到 ctx.fs
 ```
 
-三角色齐了之后，换 provider 的杠杆才真正出现：把 `fs-local` 换成 `e2b`（云端 sandbox），`Read` / `Write` / `Bash` / `PTY` / `LSP` 全部跟着去远程，因为它们共享同一个 execution world。subagent 的 provider 是同构设计——同一个判断对 fs、sandbox、subagent 都成立。
+三角色齐了，换 provider 的杠杆才真正出现：把 `fs-local` 换成 `e2b`（云端 sandbox），`Read` / `Write` / `Bash` / `PTY` / `LSP` 全部跟着去远程，因为它们共享同一个 execution world。subagent 的 provider 是同构设计——同一个判断对 fs、sandbox、subagent 都成立。
 
 ## 「我想加 X，去哪里挂」：18 个扩展点
 
@@ -336,14 +336,14 @@ architecture.md 有一张叫「Where new behavior goes」的表，把 18 种「�
 | Fork a live session | `ctx.sessions.fork(source, boundary?, childSessionId?)` |
 | Scope 注册到一个 agent | 用那个 agent 的 `agent.ctx` |
 
-这张表是「query → action」的映射：读一遍半分钟，但它回答的是插件开发者最常卡住的问题——我的代码应该出现在系统的哪个位置。两个已拆过的插件都能在表里对号入座：
+这张表是「query → action」的映射：读一遍半分钟，回答的却是插件开发者最常卡住的问题——我的代码该出现在系统的哪个位置。两个已拆过的插件都能在表里对号入座：
 
 - dsh-at-file：「拦截 request」→ `agent/pre-step` 监听；不需要 durable state，因为它是无状态的 reference marker
 - dsh-genui：「加 model-facing capability」→ 在 `ctx.tools` 注册 `render_ui` 和 `validate_dsh_ui` 两个 tool；「加 durable session state」→ 扩展 `SessionEventMap`，让 panel 状态从 log 投影
 
 ## 一个具体的 turn：用户输入 review @docs/spec.pdf
 
-抽象的事件流需要落到一段具体对话里才好检验。看数据在 14 跳里怎么走：
+抽象的事件流，落到一段具体对话里才好检验。看数据在 14 跳里怎么走：
 
 **跳 1**：用户输入 `review @docs/spec.pdf`，输入进 inbox。
 
@@ -373,7 +373,7 @@ architecture.md 有一张叫「Where new behavior goes」的表，把 18 种「�
 
 **跳 14**：`turn/end` 进 log，`agent/status = idle`。
 
-到这里，这个 session 的全部事实都在 log 里了：用户输入、dsh-at-file 注入的 reference、每一个 stream chunk、工具调用与结果、step 边界、turn 边界。后续的 fork / resume / transcript / telemetry 全部从这条流派生，不需要任何额外通道。
+到这里，这个 session 的全部事实都在 log 里了：用户输入、dsh-at-file 注入的 reference、每一个 stream chunk、工具调用与结果、step 边界、turn 边界。后续的 fork / resume / transcript / telemetry 全部从这条流派生，不需要额外通道。
 
 ## 钉死的决策与各自的代价
 
@@ -397,7 +397,7 @@ architecture.md 有一张叫「Where new behavior goes」的表，把 18 种「�
 
 ## 它故意没做的事
 
-边界和功能一样值得记录。有五件事是明确不做的，而且不做的原因大多能从架构本身推出来。
+边界和功能一样值得记录。有五件事明确不做，而且不做的原因大多能从架构本身推出来。
 
 跨 session 状态共享不在设计里。每个 session 一条独立 log，fork 是「复制到子 session」，不是共享 mutable state——这是事件溯源的本质；代价是「两个 session 协作」要靠 fork / merge / external sync 自己搭。
 
@@ -411,15 +411,15 @@ multi-tenant 隔离是部署侧责任。service row 可以指定 `isolate` realm
 
 ## 两个信号灯：self-modification 与 hooks
 
-有两个 package 值得单独拎出来，因为它们指示了这个项目的方向，而不只是功能。
+有两个 package 单独拎出来看，因为它们指示的是这个项目的方向，不只是某个功能。
 
-`packages/self-modification/` 让 agent 检查并挂载它自己的插件。结合 Cordis 的 reversible effects——所有 effect 都有 disposer——agent 改自己运行时的动作也是干净可回滚的。「运行时可被居住者修改」这件事，在大多数框架里是事故，在这里是设计出来的能力。
+`packages/self-modification/` 让 agent 检查并挂载它自己的插件。结合 Cordis 的 reversible effects——所有 effect 都有 disposer——agent 改自己运行时的动作也是干净可回滚的。「运行时可被居住者修改」，在大多数框架里是事故，在这里是设计出来的能力。
 
 `packages/hooks/` 提供 Claude Code / Codex 的 hook bridges 加 wire-protocol library，把两家的 hooks 模型映射到 Cordis 事件系统上。仓库里 `CLAUDE.md → AGENTS.md` 是真实的符号链接，Claude Code 直接读 `AGENTS.md`。放在一起读，意图很清楚：别人生态里的插件可以低摩擦迁进来，自己的运行时可以被 agent 自己改——DSH 想做的是插件生态的汇合点，不是又一个孤岛。
 
 ## 谁该现在上手，谁该再等等
 
-先把命题摆正。DSH 回答的根本问题是：
+DSH 回答的根本问题是：
 
 > AI agent 应用的运行时应该是可插拔的——没有 privileged core，没有热补丁，只有 plugin 组合。
 
@@ -427,7 +427,7 @@ multi-tenant 隔离是部署侧责任。service row 可以指定 `isolate` realm
 
 据此分人群：
 
-- **做 agent 产品或平台的团队**：现在就值得读，但先读再依赖。建议顺序是 `docs/architecture.md` → `docs/cordis-primer.md` → `packages/core/session` → `packages/core/agent-loop` → `packages/core/tools` → `docs/capability-seams.md`，读完这六个位置，18 行扩展点表里的每一行都能落到实处。pre-release 无兼容承诺，当生产依赖要慎重。
+- **做 agent 产品或平台的团队**：现在就值得读，但先读再依赖。建议顺序是 `docs/architecture.md` → `docs/cordis-primer.md` → `packages/core/session` → `packages/core/agent-loop` → `packages/core/tools` → `docs/capability-seams.md`，读完这六个位置，18 行扩展点表里的每一行都能对应上。pre-release 无兼容承诺，当生产依赖要慎重。
 - **要开箱即用编码助手的终端用户**：Claude Code / Codex CLI 更合适。dsh 的 ergonomic 面向构建者——要写 cordis.yml、要知道 service key 和 event dispatch mode，这些对终端用户是负担，对构建团队是共用协议。
 - **想参与生态的开发者**：从 out-of-tree plugin 起步，dsh-at-file 和 dsh-genui 是两个现成范本（`dsh plugin --profile web add` 安装），挂点查 18 行表。
 - **Python 团队**：留意 `python/` SDK 是 RPC client 模式——Cordis 是 Node 框架，Python 侧通过 `packages/sdk/` 的 JSON-RPC 调 Node runtime，不是 in-process Python。
