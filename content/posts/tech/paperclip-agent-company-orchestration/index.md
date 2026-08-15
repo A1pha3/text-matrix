@@ -5,7 +5,7 @@ slug: "paperclip-agent-company-orchestration"
 github_repo: "paperclipai/paperclip"
 source_key: "gh:paperclipai/paperclip"
 description: "Paperclip 是开源的多智能体编排控制平面：把 Claude Code、Codex、OpenClaw 等代理纳入组织架构，用任务、心跳、预算与审批管理一支代理团队。本文拆解其十二个子系统与关键执行机制。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "多智能体", "开源", "编排"]
 ---
