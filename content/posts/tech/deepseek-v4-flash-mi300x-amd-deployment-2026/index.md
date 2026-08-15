@@ -15,62 +15,70 @@ source_key: "gh:ryanzhou/deepseek-v4-flash-mi300x"
 
 ## 一、为什么 304B MoE 要塞进一张 MI300X
 
-DeepSeek V4 Flash 是 304B 参数的稠密 + MoE 混合模型（checkpoint `deepseek-ai/DeepSeek-V4-Flash-0731`，MIT）。官方 vLLM recipe 只覆盖 NVIDIA 和 MI325X/MI355X。**MI300X 单卡跑生产，靠的是一整套补丁栈**：先把某个 vLLM ROCm nightly 的镜像 digest 锁死，再往上逐字节打 overlay。本文讲的就是这些 overlay 各修了什么，为什么缺一个都不行。
+DeepSeek V4 Flash 是 304B 参数的稠密 + MoE 混合模型（checkpoint `deepseek-ai/DeepSeek-V4-Flash-0731`，MIT 许可）。官方 vLLM recipe 只覆盖 NVIDIA 和 MI325X/MI355X，MI300X 不在其列——单卡跑生产，靠的是一整套补丁栈：先把一个 vLLM ROCm nightly 的镜像 digest 锁死（`0.26.1rc1.dev229+g124154a88`，ROCm 7.2.3，AITER 0.1.19），再往上逐字节打 10 个 overlay。本文拆这些 overlay 各修了什么，以及为什么缺一个都不行。
 
-先交代 `overlay` 的意思，它是全文的核心词：一个运行时会生效的 patch 文件，逐字节替换掉 pinned image 里对应的原文件。它和 diff 不同——diff 只作文档，overlay 是真正在跑的那份。这套仓库的原则是：生产用的二进制和上游某个 commit 同时锁死，任何一处 hash 对不上就停。
+先交代 overlay 的意思，它是全文的核心词：一个运行时真正生效的 patch 文件，逐字节替换 pinned image 里的原文件。它和 diff 的分工写在仓库里——diff 只作文档，overlay 才是跑在线上的那一份。这套仓库的原则是生产二进制与上游 commit 同时锁死，任何一处 hash 对不上就停。
 
-为什么要硬上 MI300X？三项硬指标压死 H100：
+为什么硬上 MI300X？三项硬指标：
 
-- **192 GB HBM3 vs H100 SXM5 80 GB**——2.4× 容量
-- **5.3 TB/s 内存带宽**
-- **清单价 ≈ H100 一半**（Doubleword 估算）
+- **192 GB HBM3**，是 H100 SXM5 80 GB 的 2.4×
+- **5.3 TB/s** 内存带宽
+- 单卡清单价约为 H100 的一半（Doubleword 估算）
 
-304B 模型 BF16 权重 ≈ 608 GB，FP8 后 ≈ 304 GB。**单卡塞不下 FP16，只能 FP8，但 192 GB HBM 还差一截**——DeepSeek V4 Flash 实际以 156.67 GiB 装进 HBM，剩 ~36 GB 给 KV cache、graph capture、kernel workspace。这就是 304B 跑在单卡 MI300X 的全部空间账。
+304B 模型 BF16 权重 ≈ 608 GB，FP8 后 ≈ 304 GB，哪个都塞不进 80 GB 的 H100。MI300X 单卡也装不下 FP8 全量：实际加载态 156.67 GiB，是专家权重再走 MXFP4（4 位）量化压出来的体积。扣掉权重，HBM 只剩 ~36 GB，要装 KV cache、graph capture 和 kernel workspace——这就是 304B 上单卡 MI300X 的全部空间账，第十三节会回来逐项对一遍。
 
-选 MI300X 不是预算问题，是容量问题：H100 装不下 304B FP8（80 GB），只能 2 卡 TP（tensor parallel，张量并行）或量化掉精度；MI300X 单卡就装下了。
+所以选 MI300X 不是预算问题，是容量问题：H100 只能 2 卡 TP（tensor parallel，张量并行）或更激进的量化；MI300X 单卡装下了。上下文 256K 已验证（架构上支持 1M）。
 
-整条链路和每处 overlay 修在哪一道关口，先看总览：
+整条推理链路与 10 个 overlay 的落点，带圈数字的就是 patch 作用的位置：
 
 ```mermaid
 flowchart LR
-    Q[请求] --> IN[tokenizer + reasoning + tool parser]
-    IN --> PF[prefill<br/>Lightning Indexer sparse attention]
-    PF --> KV[KV cache<br/>20 GB GPU + 96 GiB CPU tier]
-    IN --> RT[MoE 路由<br/>MXFP4 专家]
-    RT --> GE[GEMM / AITER]
-    GE --> DS[DSpark-7 投机解码<br/>static K=7 + block rejection]
-    DS --> CA[ROCm 小头 MLA<br/>因果验证]
-    CA --> O[输出 token]
+    Q["请求"] --> IN["tokenizer + reasoning + tool parser"]
+    IN --> PF["prefill · Lightning Indexer<br/>sparse attention ①④"]
+    PF --> KV["KV cache<br/>20 GB GPU + 96 GiB CPU tier ⑤"]
+    IN --> RT["MoE 路由<br/>MXFP4 专家 ②"]
+    RT --> GE["GEMM / AITER ⑦"]
+    GE --> DS["DSpark-7 投机解码<br/>static K=7 + block rejection ③"]
+    DS --> CA["ROCm 小头 MLA<br/>因果验证 ⑥"]
+    CA --> O["输出 token"]
     KV <--> CA
-    PF -. ① FNUZ FP8 写缓存 .-> KV
-    RT -. ② MXFP4 padding 修复 .-> RT
-    CA -. ③ DSpark causal overlay .-> CA
-    KV -. ④ CPU→GPU 同步 fence .-> KV
-    GE -. ⑤ gfx942 tile 几何 .-> GE
 ```
 
-①–⑤ 对应后文五类 patch：FP8 字节序、MXFP4 路由、投机解码因果、CPU KV 同步、kernel 几何。
+10 个 overlay 对号入座（每个文件的 base commit 逐条登记在 `patches/README.md`）：
+
+| # | overlay（`patches/`） | 修什么 | 备注 |
+|---|---|---|---|
+| 1 | `fused_compress_quant_cache.fnuz-shuffle.py` | Lightning Indexer FP8 缓存写成 FNUZ + 16×16 preshuffle | MI300X（FNUZ）专用 |
+| 2 | `gpt_oss_triton_kernels_moe.pack128-fused-silu-fast-routing.py` | MXFP4 padding mask + fused SiLU + fast routing | 取自 Doubleword `c32932bb9`，not yet upstream |
+| 3 | `mxfp4.fused-silu.py` | fused-SiLU kernel 的 gate/up interleave 布局 | 配合 #2 |
+| 4 | `triton-kernels-matmul-ogs-opt-flags.dsv4-mi300x.py` | gfx942 GEMM tile 几何，21 个 shape | 本仓库 tuning |
+| 5 | `aiter_pa_mqa_logits.i64.py` | paged-MQA logits kernel 偏移升 64 位 | base：ROCm/aiter `4db400a` |
+| 6 | `rocm_aiter_mla_sparse.prefill-bh64.py` | `BLOCK_H=64` + 确定性 topk | 确定性 + 性能 |
+| 7 | `rocm_aiter_mla.dspark-causal.py` | 投机验证的 causal mask | 已 upstream（vLLM `77469c9`） |
+| 8 | `dspark-speculator.independent-draft-gumbel.py` | draft 侧 Gumbel 噪声独立 | probabilistic 路径需要 |
+| 9 | `spec-decode-utils.independent-draft-gumbel.py` | verify 侧 Gumbel 噪声独立 | probabilistic 路径需要 |
+| 10 | `kv_offload_cpu_gpu_worker.load-war.py` | CPU→GPU KV 回写加 fence | PR #47291 未合并 |
+
+①②③⑤⑥ 修「结果对不对」；④ 一半修确定性一半修速度；⑦ 纯修速度。下面按类拆开。
 
 ### 一次请求怎么穿过这条链路
 
-把五处 patch 放进一次真实请求，顺序是这样：
+把 overlay 放进一次真实请求，顺序是：
 
-1. 请求进来先过 tokenizer、reasoning 和 tool parser，进入 prefill。
-2. prefill 由 Lightning Indexer 做 sparse attention。这一步把 KV 写进 cache，走的正是 ① 的 FNUZ FP8 写缓存——字节序一错，后续 attention 的 logits 全错位，DSpark 的 acceptance 直接崩。
-3. KV 分两层：20 GB 在 GPU，96 GiB 在 CPU（`/dev/shm` mmap）。CPU 层回写 GPU 时，靠 ④ 的 fence 保证不覆盖 in-flight compute。
-4. 每个 token 经 MoE 路由挑专家。② 的 MXFP4 padding 修复，保证长 prompt 下路由权重不被"不存在的专家索引"扰动。
-5. 选中的 expert 交给 AITER GEMM，⑤ 的 tile 几何决定这批 shape 能吃多少带宽。
-6. DSpark-7 对 draft token 做投机验证，③ 的 causal 修复保证 future token 看不到不该看的 earlier position；验证通过才输出，同时更新 KV。
-
-①②③④ 修的是"结果对不对"，⑤ 修的是"跑多快"。下面逐个拆开。
+1. 请求先过 tokenizer、reasoning 和 tool parser，进 prefill。
+2. prefill 由 Lightning Indexer 做 sparse attention，tile 尺寸是 ④ 的 `BLOCK_H=64`。KV 写缓存走 ① 的 FNUZ 写入——字节序一错，后续 attention 的 logits 全错位，DSpark 的 acceptance 直接崩。
+3. KV 分两层：20 GB 在 GPU，96 GiB 在 CPU（`/dev/shm` mmap）。CPU 层回写 GPU 靠 ⑤ 的 fence，保证不覆盖 in-flight compute。
+4. 每个 token 经 MoE 路由挑专家，② 的 padding 修复保证长 prompt 下路由权重不被「不存在的专家索引」扰动。
+5. 选中的 expert 交给 AITER GEMM，⑦ 的 tile 几何决定这批 shape 能吃多少带宽。
+6. DSpark-7 对 draft token 做投机验证：⑥ 保证大 KV 池下偏移不溢出，③ 保证 future token 看不到不该看的 earlier position；验证通过才输出，同时更新 KV。
 
 ---
 
 ## 二、FNUZ vs OCP FP8：错一个字节，scale 域差一倍
 
-先看数值格式这一关。模型能塞进单卡，前提是低比特：BF16 权重 608 GB 放不下，FP8 后 304 GB 仍超 192 GB HBM，加载态最终是 156.67 GiB——按文章里的做法，专家权重用 MXFP4（4 位）这类低比特量化把本体压下来。但 FP8 有两个互不兼容的变体：MI300X（CDNA3）用 AMD/Graphcore 的 **FNUZ E4M3**（`fnuz` variant），MI325X 和更新 GPU 才用 **OCP 标准的 E4M3FN**。两者都叫 E4M3，**scale 域差一倍**（FNUZ 的 FP8_MAX=224.0，OCP 为 448.0）。
+模型能塞进单卡，前提是低比特；而 FP8 在 AMD 生态里有互不兼容的两个变体。MI300X（CDNA3）用 AMD 自家的 **FNUZ E4M3**（`torch.float8_e4m3fnuz`），NVIDIA 和 MI355X（CDNA4）用 **OCP 标准的 E4M3FN**。两者都叫 E4M3，编码空间的分配却不一样：FNUZ 消掉了负零，腾出的位型挪去表示 NaN，指数偏置 8，最大有限值 224.0；OCP 保留负零、偏置 7，最大有限值 448.0。一段按 OCP 字节序写的缓存被 FNUZ 消费端读走，数值最多差 2×。
 
-Lightning Indexer 缓存是 DeepSeek V4 的关键路径，FP8 写入。stock vLLM writer 按 OCP 字节序写：
+Lightning Indexer 缓存是 DeepSeek V4 的关键路径，FP8 写入。stock vLLM writer 按 OCP 写：
 
 ```python
 # stock writer: OCP E4M3 bytes, row-major
@@ -78,9 +86,9 @@ quantized = weight.to(dtype=torch.float8_e4m3fn)         # OCP E4M3
 cache[offsets] = quantized.view(torch.uint8)             # row-major
 ```
 
-AITER on MI300X 实际吃的是 **FNUZ E4M3 + 16×16 preshuffled tile 布局**。一段代码把 OCP 当 FNUZ 解读，scale 域最多差 2×，Lightning Indexer 输出直接错位——后面 DSpark 投机解码拿到的 logits 全错，acceptance rate 暴跌。
+AITER 在 MI300X 上吃的是 **FNUZ E4M3 + 16×16 preshuffled tile 布局**。OCP 字节被当 FNUZ 解读，Lightning Indexer 输出直接错位——后面 DSpark 投机解码拿到的 logits 全错，acceptance rate 暴跌。
 
-修复（`patches/fused_compress_quant_cache.fnuz-shuffle.py`）两件事一起改：
+修复（`fused_compress_quant_cache.fnuz-shuffle.py`）两件事一起改：
 
 ```python
 # overlay: FNUZ + 16×16 preshuffle
@@ -89,53 +97,53 @@ shuffled = preshuffle_16x16(quantized)                    # tile-order reorder
 write_with_shuffled_offsets(cache, shuffled, offs)        # match AITER consumer
 ```
 
-MI325X/MI355X 走 OCP，这条 patch **必须拿掉**。这也是 README 里专门强调「其它 AMD GPU 不适用」的根因。
+FNUZ 是 CDNA2/CDNA3 这代（MI200/MI300/MI325X）的格式，AMD 从 CDNA4（MI355X）起改用 OCP。这条 patch 换到 MI355X 上必须拿掉；MI325X 虽然同为 FNUZ，tile 调优又不通用——README 专门写明「其它 AMD GPU 不适用」，两头都对不上是根因。
 
 ---
 
 ## 三、MXFP4 MoE 的 bitmatrix padding：长 prompt 把 tool name 改名的隐藏 bug
 
-MoE 路由那关，也藏着一个字节级 bug。DeepSeek V4 Flash 的专家用 MXFP4（4 位尾数 + E8M0 共享 scale）。Triton 实现的 `gpt_oss_triton_kernels_moe` 算 bitmatrix 时，padding lane 的屏蔽条件写错了：
+MoE 路由那关也藏着一个 bit 级 bug。DeepSeek V4 Flash 的专家权重是 MXFP4（4 位尾数 + E8M0 共享 scale），vLLM 里这条代码路径叫 `gpt_oss_triton_kernels_moe`——MXFP4 的 Triton kernel 最初为 gpt-oss 写，DeepSeek V4 Flash 复用同一实现。算 bitmatrix 时，padding lane 的屏蔽条件写错了：
 
 ```python
-# 原代码（错的）:padding lane 对全局 bound 屏蔽
+# 原代码（错的）：padding lane 对全局 bound 屏蔽
 mask = (offs_global < nonzero_indx_size)
 ```
 
-padding lane 应当按 **logical block size** 屏蔽（padding 是 block 对齐用的，不影响 routing），但原代码按 **全局 tensor size** 屏蔽。在长 prompt 下，global bound 大于 logical block，部分 padding lane 进入实际计算——**这些 lane 携带的是「不存在的专家索引」**，悄悄扰动路由权重。
+padding lane 应当按 **logical block size** 屏蔽（padding 是 block 对齐用的，不该参与路由），原代码却按全局 tensor size 屏蔽。长 prompt 下 global bound 大于 logical block，部分 padding lane 混进实际计算——**这些 lane 携带的是「不存在的专家索引」**，悄悄扰动路由权重。
 
-后果：prompt 越长，越容易把工具调用路由到相似的别的 expert，输出跟 schema 几乎匹配、但 tool name 错位。这就是 README 里写的「near-match tool names and forgotten schemas on long prompts」。
+后果很隐蔽：prompt 越长，越容易把工具调用路由到相似的别的 expert，输出跟 schema 几乎匹配、但 tool name 错位。README 里那句「near-match tool names and forgotten schemas on long prompts」说的就是它。
 
-一行修复（`gpt_oss_triton_kernels_moe.pack128-fused-silu-fast-routing.py`）：
+修复一行（`gpt_oss_triton_kernels_moe.pack128-fused-silu-fast-routing.py`）：
 
 ```python
 mask = (offs_local < BLOCK_SIZE) & (offs_global < nonzero_indx_size)
 ```
 
-取自 Doubleword 的 commit `c32932bb9`，README 标注 **「not yet upstream」**——这条修复目前只有这个仓库在用。修完顺手做了 fused-SiLU 和 fast DeepSeek routing，routing kernel 42.6 → 11.9 µs/layer（-72%）。
+取自 Doubleword 的 commit `c32932bb9`，README 标注 **not yet upstream**——目前只有这个仓库在用。同一个 overlay 顺手做了 fused-SiLU 和 fast DeepSeek routing（配套的 `mxfp4.fused-silu.py` 补 gate/up interleave 布局），routing kernel 从 42.6 降到 11.9 µs/layer，-72%。
 
 ---
 
 ## 四、DSpark-7 投机解码在 ROCm 小头 MLA 上的因果验证
 
-投机解码的因果验证，是 ROCm 特有的坑。DeepSeek V4 Flash 自带 **DSpark**（DeepSeek 自家投机解码模块，96 参数），用 static K=7 + probabilistic drafting + block rejection。NVIDIA 上游 vLLM 实现假设 MLA（Multi-head Latent Attention）注意力路径 **causal flatten**——ROCm 上小头 MLA 的 AITER 后端不保证这一点。
+投机解码的因果验证是 ROCm 特有的坑。DeepSeek V4 Flash 自带投机解码草稿模块 DSpark（启动日志 `DSpark draft model loaded: 96 params`），用 static K=7 + probabilistic drafting + block rejection。NVIDIA 上游 vLLM 假设 MLA（Multi-head Latent Attention）注意力路径满足 causal flatten——ROCm 上小头 MLA 的 AITER 后端不保证这一点。
 
-后果：投机验证阶段算 attention 时，future token 看到了本不该看到的 earlier position，speculative acceptance 虚高，输出串味。README 直接引用 vLLM commit `77469c9` 作为参考——这条修复已经 upstream，但仓库里仍保留一份 overlay，逐字节就是 upstream 文件：
+后果：投机验证阶段算 attention 时，future token 看到了本不该看到的 earlier position，speculative acceptance 虚高，输出串味。修复已进上游（vLLM commit `77469c9`），仓库仍保留一份 overlay，与 upstream 在该 commit 处逐字节一致——diff 文档展示的正是那个 commit 自己的改动：
 
 ```python
 # patches/rocm_aiter_mla.dspark-causal.py
 # == vllm/v1/attention/backends/mla/rocm_aiter_mla.py @ 77469c9057bec3212a64877dbbf3b9c48c22d786
 ```
 
-这里有个取舍：upstream 已合并的修复，仓库里依然保留同名 overlay——因为 pinned nightly 不一定包含那个 commit。Base image 升级时，这些 overlay 才有机会按需摘掉。
+为什么 upstream 已合并还要留 overlay？pinned nightly 不一定包含那个 commit。Base image 升级时，这类 overlay 才有机会按需摘掉。
 
-DSpark-7 还有两条精细补丁（`dspark-speculator.independent-draft-gumbel.py` + `spec-decode-utils.independent-draft-gumbel.py`）：用 `draft_sample_method=probabilistic` 时，draft 提议的 Gumbel 噪声必须与 rejection/recovery 噪声独立，否则 speculative decoding 在长上下文里会偏向某些 token。greedy 路径不需要这两条。
+DSpark-7 还有两条精细补丁（`dspark-speculator.independent-draft-gumbel.py` + `spec-decode-utils.independent-draft-gumbel.py`）：`draft_sample_method=probabilistic` 时，draft 提议的 Gumbel 噪声必须与 rejection/recovery 噪声独立，否则投机解码在长上下文里会偏向某些 token。greedy 路径用不上这两条。
 
 ---
 
-## 五、`BLOCK_H=64` 的稀疏 prefill：sparse attention trace 317 → 142 ms
+## 五、BLOCK_H=64 的稀疏 prefill：sparse attention trace 317 → 142 ms
 
-sparse prefill 的 tile 尺寸，决定 512 head 下还能不能跑。DeepSeek V4 Flash 的 Lightning Indexer 在 prefill 阶段做 sparse attention。stock `gfx942`（MI300X GPU 架构代号）实现用默认 `BLOCK_H` tile，head=512 时 routed rows 过 768 后急剧劣化。
+sparse prefill 的 tile 尺寸，决定 512 head 下还能不能跑。stock `gfx942`（MI300X 的 GPU 架构代号）实现用默认 `BLOCK_H`，head=512 时 routed rows 过 768 后急剧劣化。
 
 修复 `rocm_aiter_mla_sparse.prefill-bh64.py`：
 
@@ -144,17 +152,23 @@ BLOCK_H = 64  # head-512 sparse prefill tile
 # + deterministic torch.topk for reproducible tool calls
 ```
 
-两条一起：**确定性**——确保 tool call 在相同 prompt 下走完全一样的 token 路径，便于回归测试；**`BLOCK_H=64`**——纯性能，实测 sparse attention trace 从 317 ms 砍到 142 ms（-55%）。
+两条各管一头。确定性 topk 让 tool call 在相同 prompt 下走完全一样的 token 路径，回归测试才有抓手；`BLOCK_H=64` 纯管性能，sparse attention trace 从 317 ms 砍到 142 ms，-55%。
 
 ---
 
-## 六、MXFP4 OGS tile 几何与性能总表
+## 六、int32 溢出：20 GB KV 池把偏移顶过 4 GiB
 
-GEMM 的 tile 几何，决定这批 shape 能吃多少带宽。`gfx942` 的 L2 cache 和 register file 排布，和 MI300X 后继型号不一样。stock `matmul_ogs_details/opt_flags.py` 在 routed rows 超过 768 后性能急降，到 1536 掉得更明显。
+又一个字节级的坑，在 attention kernel 内部。AITER 的 paged-MQA logits kernel（ChunkK=256）默认用 32 位偏移寻址 KV，而无符号 32 位的寻址上限就是 4 GiB。这套部署的 GPU KV 池有 20 GB，偏移越过 4 GiB 后 int32 回绕，读写直接指到别的页上。
 
-修复 `triton-kernels-matmul-ogs-opt-flags.dsv4-mi300x.py`：为 21 个常出现的 `gfx942` GEMM shape 重写 tile 几何（覆盖到 1536 routed rows）。
+`aiter_pa_mqa_logits.i64.py`（base：ROCm/aiter `4db400a`）把偏移换成 64 位。它不改变任何数值语义，但没有它，KV 池开大之后出错的位置毫无规律——这类溢出 bug 的典型症状就是「偶尔错、难复现」。
 
-前几节拆的是每类修正在做什么，这一节把 `patches/README.md` 记录的全部性能改动汇总成一张表，方便对照每项收益：
+---
+
+## 七、MXFP4 OGS tile 几何与性能总表
+
+性能侧最大的一刀落在 GEMM。`gfx942` 的 L2 cache 和 register file 排布与后继型号不同，stock `matmul_ogs_details/opt_flags.py` 在 routed rows 超过 768 后性能急降，到 1536 掉得更明显。修复 `triton-kernels-matmul-ogs-opt-flags.dsv4-mi300x.py`：为 21 个常出现的 `gfx942` GEMM shape 重写 tile 几何，覆盖到 1536 routed rows。
+
+前几节拆的是每类修正在做什么，这里把 README 记录的全部性能改动汇总成一张表，方便对照每项收益：
 
 | 优化 | 效果 |
 |---|---|
@@ -162,20 +176,18 @@ GEMM 的 tile 几何，决定这批 shape 能吃多少带宽。`gfx942` 的 L2 c
 | Fused SiLU + fast DeepSeek routing + batch-sensitive expert tile | Native C1 decode 34.5 → 56.6 tok/s（+64%） |
 | `BLOCK_H=64` sparse prefill | Prefill 7.9–8.5K tok/s；sparse-attn trace -55% |
 | Static K=7 + 概率 drafting + causal verify | 119.5 tok/s 单流（正确输出） |
-| 2,048 token budget + 1,024 long-prefill cap | 短请求 TTFT 在 52K cold prefill 后从 8.2 s → 0.5 s |
+| 2,048 token budget + 1,024 long-prefill cap | 短请求 TTFT（time to first token，首 token 延迟）在 52K cold prefill 后从 8.2 s → 0.5 s |
 | 20 GB GPU KV + 96 GiB CPU tier | 1.93M token 长度等效容量；7 个 256K 请求同时接 |
 
 每条优化对应一到多个 overlay，组合起来才把单流从 stock 的 34.5 tok/s 拉到 168.6 tok/s（含 DSpark）。
 
 ---
 
-## 七、CPU KV 那条 fence：vLLM #47282 的 WAR gap
+## 八、CPU KV 那条 fence：vLLM #47282 的 WAR gap
 
-最微妙的一处，是 **CPU → GPU KV restore 的 fence 缺失**。
+最微妙的一处，在 KV 回写。`vllm/v1/kv_offload/cpu/gpu_worker.py` 的 load 路径把 evicted prefix-cache 从 CPU 内存（`/dev/shm`，~103 GB mmap）写回 GPU KV 时，不等 in-flight compute 完成——compute 流还没对这些页做完读写，load 流的回写就插进来了。overlay 文件名里的 `load-war` 点破了性质：load 的写插在 compute 未完成的访问前面，典型的 WAR（write-after-read）冒险。
 
-`vllm/v1/kv_offload/cpu/gpu_worker.py` 的 load 路径把 evicted prefix-cache 从 CPU 内存（`/dev/shm`，~103 GB mmap）写回 GPU KV——但没有等 in-flight compute 完成。结果：compute stream 还没写完的 KV 状态，被 load stream 覆盖。
-
-vLLM issue #47282 记录了这个 bug，PR #47291 提出了 WAR fix，没合并。仓库里的 overlay（`kv_offload_cpu_gpu_worker.load-war.py`）把 PR #47291 的 fence 逻辑挂上：
+vLLM issue #47282 记录了这个 bug，PR #47291 提出 fence 修复，至今未合并（overlay 的 base 是 #46278 合并后的状态）。仓库把 PR 的 fence 逻辑挂上：
 
 ```python
 # compute stream 写完才发起 load
@@ -183,15 +195,13 @@ compute_stream.synchronize()
 load_stream.wait_stream(compute_stream)
 ```
 
-这条 fix 只有 `--kv-offloading-backend native` 才需要，**CPU KV tier 开到 96 GiB 的代价是这条 fence 必须有**。
+这条 fix 只有 `--kv-offloading-backend native` 时需要；CPU KV tier 开到 96 GiB 的代价，就是这条 fence 必须在。
 
 ---
 
-## 八、生产数字：128 → 830 tok/s 的并发曲线
+## 九、生产数字：126 → 830 tok/s 的并发曲线
 
-README 里贴的最终 sweep 数据（每流 400-word 真实 prompt，`temperature=1.0, top_p=0.95`，C1–C8 512 输出 token，C64 256）：
-
-下表汇总 1 到 64 并发的实测数据，三条规律在后文逐条拆解：
+README 贴的最终 sweep 数据（每流 400-word 真实 prompt，`temperature=1.0, top_p=0.95`，C1–C8 各 512 输出 token，C64 256）：
 
 | Streams | Aggregate tok/s | Median per-stream | TTFT p50 |
 |---:|---:|---:|---:|
@@ -201,19 +211,19 @@ README 里贴的最终 sweep 数据（每流 400-word 真实 prompt，`temperatu
 | 8 | 542.3 | 90.3 | 1.027 s |
 | 64 | 830.2 | 16.4 | 2.190 s |
 
-两列口径不同：Aggregate tok/s 是整个并发跑批的总吞吐，Median per-stream 是单个请求的稳态 decode 中位数。单流那一行两者不一致（126.2 vs 168.6），标题与正文讨论的单流能力值取后者 168.6。
+两列口径不同：Aggregate 是整个并发跑批的总吞吐，Median per-stream 是单个请求稳态 decode 的中位数。单流那行两个数对不上（126.2 vs 168.6），标题与正文引用的单流能力取后者。
 
 三条规律：
 
 1. **单流几乎吃满 HBM 带宽**——168.6 tok/s decode，这是 memory-bound 工作负载的典型上限。
-2. **8 流达到 542 tok/s aggregate，每流 90 tok/s**——batch sensitivity 让单位带宽摊薄，但吞吐涨 4.3×。
+2. **8 流 542 tok/s aggregate，每流 90 tok/s**——batch 让多个请求共享一次权重读取，单位带宽被摊薄，但总吞吐涨 4.3×。
 3. **64 流 830 tok/s 时单流跌到 16.4 tok/s**——DSpark acceptance 在长 prompt + 高并发下退化，这是 DSpark 的固有 trade-off。
 
-Prefill 数据更亮：tuned kernels 让 uncached prefill 跑到 **7.9–8.5K tok/s**。生产 profile 用 2,048-token budget 拉延迟隔离，fresh prompt 实测 6,988–7,019 tok/s；1,024-token long-prefill cap 让短请求排在 52K cold prefill 后面的 TTFT 从 8.2 s 砸到 0.5 s。
+Prefill 数据更亮：tuned kernel 让 uncached prefill 跑到 **7.9–8.5K tok/s**。生产 profile 用 2,048-token budget 拉延迟隔离，fresh prompt 实测 6,988–7,019 tok/s；1,024-token long-prefill cap 让短请求排在 52K cold prefill 后面的 TTFT 从 8.2 s 砍到 0.5 s。
 
 ---
 
-## 九、830 tok/s 是不是到头了
+## 十、830 tok/s 是不是到头了
 
 830 tok/s @ 64 流 vs 168.6 tok/s @ 1 流，为什么是 830，而不是更高？拿带宽粗算一遍。
 
@@ -225,42 +235,42 @@ MI300X HBM3 带宽 **5.3 TB/s**。decode 阶段每生成一个 token 只需读�
 
 实测单流 168.6 tok/s 高于这个数，靠 DSpark 投机解码：一次 forward 验证多个 draft token，单 token 的带宽成本被摊薄。这笔账只够做量级校验，不精确——它没算 KV cache 读取、attention、routing kernel 的额外 memory traffic，也没有 DSpark acceptance 的精确测量。把 106 当纯带宽上限、按投机放大粗略外推，能落在 160–210 tok/s 区间，和 168.6 同量级。
 
-多流更难用带宽直接解释。8 流 aggregate 542 tok/s、64 流 830 tok/s，单流都明显低于 106 的纯带宽上限——MoE 的 batch 会让多个请求共享一次权重读取，aggregate 吞吐不随流数线性翻倍，而是被共享带宽和 kernel 调度共同压住。64 流时单流只剩 16.4 tok/s，说明瓶颈已经不在权重带宽，而在 routing kernel 在大 batch 下的延迟、KV offload fence 的 synchronize 开销，和 CU（graphics and compute units，MI300X 有 304 个）的调度争抢。
+多流更难用带宽直接解释。8 流 aggregate 542 tok/s、64 流 830 tok/s，单流都明显低于 106 的纯带宽上限——MoE 的 batch 让多个请求共享一次权重读取，aggregate 吞吐不随流数线性翻倍，而是被共享带宽和 kernel 调度共同压住。64 流时单流只剩 16.4 tok/s，说明瓶颈已经不在权重带宽，而在 routing kernel 在大 batch 下的延迟、KV offload fence 的 synchronize 开销，和 CU（compute unit，MI300X 有 304 个）的调度争抢。
 
-所以 **830 是 DSpark 加速被 batch 摊薄 + routing 延迟 + fence 开销叠加后的均衡点**，不是"带宽到头了"。想再往上，要么关 DSpark 走 native decode（单流降低，aggregate 未必低），要么等 AMD AITER 优化大 batch routing kernel。
+所以 **830 是 DSpark 加速被 batch 摊薄 + routing 延迟 + fence 开销叠加后的均衡点**，不是「带宽到头了」。想再往上，要么关 DSpark 走 native decode（单流降低，aggregate 未必低），要么等 AMD AITER 优化大 batch routing kernel。
 
 也别拿这张表的数字当通用 benchmark：README 自己写了，DSpark acceptance 随 prompt 变化，这些数据只对这份固定 image 成立。
 
 ---
 
-## 十、MI300X 单卡 vs H100 双卡：算一笔总账
+## 十一、MI300X 单卡 vs H100 双卡：算一笔总账
 
-H100 装不下 304B FP8（80 GB HBM），必须 2 卡 tensor parallel。下面是一张估算对比（价格基于 2026 年公开 list price 和 Doubleword 的成本估算，**所有数字均为估算**）：
+H100 装不下 304B FP8（80 GB HBM），必须 2 卡 tensor parallel。下面是一张估算对比（价格基于 2026 年公开 list price 和 Doubleword 的成本估算，**所有价格均为估算**）：
 
 | 维度 | MI300X 单卡 | H100 SXM5 双卡（TP=2） |
 |---|---|---|
 | HBM 容量 | 192 GB | 160 GB（2× 80 GB） |
-| HBM 带宽 | 5.3 TB/s | 6.8 TB/s（2× 3.35 TB/s） |
-| FP8 峰值算力 | 2.61 PFLOPS | 3.9 PFLOPS（2× 1.975） |
+| HBM 带宽 | 5.3 TB/s | 6.7 TB/s（2× 3.35 TB/s） |
+| FP8 峰值算力 | 2.61 PFLOPS | ~3.95 PFLOPS（2× 1.975） |
 | 304B FP8 部署 | ✅ 单卡装下 | ✅ 需 TP 切分 |
-| 单流 decode（估算） | 168.6 tok/s（实测） | ~120 tok/s（估算，TP all-reduce 开销 ~30%） |
-| GPU 采购价（估算） | ~$10K–15K | ~$60K–80K |
+| 单流 decode | 168.6 tok/s（实测） | ~120 tok/s（估算，TP all-reduce 开销 ~30%） |
+| GPU 采购价（估算） | ~$15–20K | ~$60–80K（$30–40K/张） |
 | 部署复杂度 | overlay 栈 10 patches | 标准 vLLM TP，无 patch |
 | 长期维护 | 需跟 vLLM upstream 合并进度 | 主线支持 |
 
 三个要点：
 
 1. **显存账是决定性的**：MI300X 单卡 192 GB 装下 304B FP8 + 20 GB KV + workspace；H100 单卡 80 GB 连模型都放不下，必须 TP=2。TP all-reduce 每步引入 ~0.3 ms 延迟（估算），单流 decode 降到 ~120 tok/s。
-2. **采购价差 4–6×**：MI300X 估算 $10–15K，H100 双卡 $60–80K（两张 H100 SXM5 list price ~$30–40K/张）。单卡 MI300X 的性价比在 304B MoE 场景下碾压。
-3. **维护成本是 MI300X 的短板**：10 个 overlay patch 需要跟 vLLM upstream 同步。PR #47291（KV fence）一旦合并，overlay 可摘掉；FNUZ patch 在迁移到 MI355X（OCP FP8）后也可摘。但在 MI300X（gfx942）上，这些 patch 是生产必需的。
+2. **采购价差 3–5×**：单卡 MI300X 清单价约为 H100 的一半（~$15–20K vs ~$30–40K/张），双卡 H100 总价 $60–80K。对 304B MoE 场景，MI300X 单卡性价比碾压。
+3. **维护成本是 MI300X 的短板**：10 个 overlay patch 需要跟 vLLM upstream 同步。PR #47291（KV fence）一旦合并，overlay 可摘；FNUZ patch 在迁到 MI355X（OCP FP8）后也可摘。但在 MI300X（gfx942）上，这些 patch 是生产必需。
 
-长期看三个变量：vLLM 0.27+ 是否合并 PR #47291（影响 overlay 数量）、MI355X 量产时间（FNUZ patch 可摘、OCP 原生支持）、ROCm 7.3 vs 7.5 的 AITER 兼容性（影响 kernel tuning table 是否需要重做）。
+长期看三个变量：vLLM 0.27+ 是否合并 PR #47291（影响 overlay 数量）、MI355X 量产时间（FNUZ patch 可摘、OCP 原生支持）、ROCm 7.3/7.5 的 AITER 兼容性（tuning table 是否需要重做）。
 
 ---
 
-## 十一、首次部署要踩的 10 个坑
+## 十二、首次部署要踩的 11 个坑
 
-下面的 10 步来自 `compose.yaml` 的实际部署命令，每一步都标出容易卡住的地方。
+下面的步骤来自 `compose.yaml` 的实际部署命令，每一步都标出容易卡住的地方。
 
 **1. 拉 vLLM ROCm nightly image**
 
@@ -270,17 +280,17 @@ image digest 必须完全一致（`vllm/vllm-openai-rocm@sha256:e68d18b2...`）�
 
 `REVISION='7872f01b1d1fe23eabc4c98b48bffcef5a386062'`，不要拉 `main`。main branch 随时可能更新权重和 config，FP8 scale table 和 AITER GEMM tuning table 是针对特定 revision 调的，换了就 mismatch。
 
-**3. `sha256sum -c SHA256SUMS` 校验 12 个 overlay + 3 个 diff 文件**
+**3. `sha256sum -c SHA256SUMS` 校验全部 overlay 和 diff 文件**
 
 任何一个 hash 对不上就停。常见原因：git pull 时 line ending 被 CRLF 污染（Windows clone）、或者编辑器自动加了 BOM。用 `git config core.autocrlf input` 然后 re-clone。
 
 **4. `mkdir -p aiter-cache crash-dumps`**
 
-compose.yaml 把这两个目录 bind mount 进容器，容器内 vLLM user 需要写权限。如果目录不存在，docker compose up 会自动创建——但 owner 是 root，容器内 `ollama` user（uid 1000）写不进去，启动报 `PermissionError`。提前 `mkdir -p` 再 `chown 1000:1000`。
+compose.yaml 把这两个目录 bind mount 进容器，容器内跑 vLLM 的用户要有写权限。目录不存在时 docker compose up 会自动创建——但 owner 是 root，镜像里以非 root（uid 1000）跑的进程写不进去，启动报 `PermissionError`。提前 `mkdir -p` 再 `chown 1000:1000`。
 
 **5. `chmod +x vllm-entrypoint.sh`**
 
-这个脚本做一件关键的事：清理 stale `/dev/shm` mapping。如果上一次容器非正常退出，`/dev/shm/vllm_offload_*.mmap`（103 GB CPU KV pool 的 mmap 文件）会残留。不清理就重启，docker 重新 bind mount 时新旧 mapping 冲突，CPU KV tier 初始化报 `mmap failed: Device or resource busy`。
+这个脚本做一件关键的事：清理 stale `/dev/shm` mapping。上一次容器非正常退出时，`/dev/shm/vllm_offload_*.mmap`（103 GB CPU KV pool 的 mmap 文件）会残留。不清理就重启，docker 重新 bind mount 时新旧 mapping 冲突，CPU KV tier 初始化报 `mmap failed: Device or resource busy`。
 
 **6. `cp Caddyfile.example Caddyfile`**
 
@@ -292,7 +302,7 @@ compose.yaml 把这两个目录 bind mount 进容器，容器内 vLLM user 需�
 
 **8. `docker compose up -d` 然后 `docker compose logs -f inference`**
 
-等大约 5 分钟。vLLM ROCm nightly 首次启动要做 AITER GEMM tuning（把 21 个 `gfx942` shape 的 tuning table 写到 `aiter-cache/`），这一步只跑一次但耗时和主机 CPU 强相关（1–3 分钟）。之后才是 model loading（156.67 GiB，约 90 秒）。
+等大约 5 分钟。vLLM ROCm nightly 首次启动要做 AITER GEMM tuning（把 21 个 `gfx942` shape 的 tuning table 写到 `aiter-cache/`），这一步只跑一次，耗时和主机 CPU 强相关（1–3 分钟）。之后才是 model loading（156.67 GiB，约 90 秒）。
 
 **9. 健康信号 7 条全部出现**
 
@@ -316,13 +326,17 @@ curl -sS "https://your-host/v1/completions" -H 'Content-Type: application/json' 
   -d '{"model":"deepseek-ai/DeepSeek-V4-Flash-0731","prompt":"Calculate 17 * 23. Answer with the number only.","temperature":0,"max_tokens":32}'
 ```
 
-第一条验证 API 活着，第二条验证 inference 能出结果。但第二条的 prompt 很短，走的是 cached prefill 路径。在 admit 生产流量之前，手动发一条长 prompt（>4000 token）触发 uncached prefill——首次 cold prefill 的 TTFT 会高达 5.3 秒（52K token 的 graph capture 预热），后续相同长度请求降到 1.7 秒。不跑这一步，第一个真实用户会撞上 5 秒延迟。
+第一条验证 API 活着，第二条验证 inference 能出结果。但第二条的 prompt 很短，走的是 cached prefill 路径。在 admit 生产流量之前，手动发一条长 prompt（>4000 token）触发 uncached prefill，把 kernel 暖开——8.9K token 的首次 TTFT 5.3 s，warm 后同长度 1.7 s。不跑这一步，第一个真实用户会替你撞上那 5 秒。
+
+**11. 上线前把输出质量基线跑一遍**
+
+overlay 栈改了路由、KV 缓存和投机解码，吞吐对了不等于输出对了。仓库自带一套验收 fixture：BFCL 工具调用基准 74–76/90 exact match、tool-calling fixtures、380K token 长文 needle 检索。升级 image 或 overlay 后都该重跑一遍——尤其 ①②③⑤ 这类动数值路径的 patch，跑分看不出错，fixture 才看得出来。
 
 ---
 
-## 十二、HBM 的剩余空间账
+## 十三、HBM 的剩余空间账
 
-最后算一遍空间账。暖态高水位里，占 HBM 的是三块：**Model 156.67 GiB + 20 GB GPU KV pool + AITER kernel 与 CUDA graph**，合计 **204.5 GiB**。96 GiB CPU KV tier 住在系统内存（`/dev/shm` mmap），不占 HBM——它是给"容量"兜底的，不是给显存加码的。MI300X 物理 205.8 GB，**HBM 只剩 ~1.3 GiB**。
+最后对一遍第一节欠下的空间账。暖态高水位里，占 HBM 的是三块：**Model 156.67 GiB + 20 GB GPU KV pool + AITER kernel 与 CUDA graph**，合计 **204.5 GiB**。96 GiB CPU KV tier 住在系统内存（`/dev/shm` mmap），不占 HBM——它是给「容量」兜底的，不是给显存加码的。MI300X 物理 205.8 GB，**HBM 只剩 ~1.3 GiB**。
 
 README 写得很直白：
 
@@ -330,16 +344,16 @@ README 写得很直白：
 
 结论是 **KV cache 池不能开大**：你以为 30 GB 留给 KV，启动时报 `HSA_STATUS_ERROR_OUT_OF_RESOURCES`。`rocm-smi --showmeminfo vram` 是生产必备监控，任何多几百 MB 都要警觉。
 
-CPU KV 96 GiB 不是备份——是**真正承担了 1.93M token 长度等效容量**。7 个 256K 请求能同时接，靠的是 CPU tier 兜底。
+CPU KV 96 GiB 不是备份——它真正承担了 1.93M token 的长度等效容量。7 个 256K 请求能同时接，靠的就是 CPU tier 兜底。
 
 ---
 
-## 十三、工程含义与采用建议
+## 十四、工程含义与采用建议
 
-ryanzhou 这个仓库，值得借鉴的是三件事：
+ryanzhou 这个仓库值得借鉴的，是三件事：
 
 1. **pinned image + byte-for-byte overlay + SHA-256 校验**——把「生产用的二进制」和「上游的某个 commit」同时锁定。overlay 是运行时真正生效的文件，diff 只作文档。GitHub Actions 自动化部署可以照这个模式做。
-2. **每一处 patch 都对应一个上游 issue / commit / PR**——overlay 不是随手改的，都能回溯到来源。`patches/README.md` 把每个 overlay 对应的 upstream SHA 列得一清二楚。
+2. **每一处 patch 都对应一个上游 issue / commit / PR**——overlay 不是随手改的，都能回溯到来源。`patches/README.md` 把每个 overlay 的 base SHA 列得一清二楚，连「已 upstream 但 nightly 还没带上」这种情况都单独交代。
 3. **生产栈的细节是照着真实运维写的**——`vllm-entrypoint.sh` 清 stale `/dev/shm` mapping、`SHA256SUMS` 校验每个 runtime artifact、Caddy IP allowlist + `flush_interval -1` 保流式响应。这些不是 demo 需要的，是线上才需要的。
 
 照不照搬，看你的处境：
@@ -403,4 +417,5 @@ curl -sS "https://your-host/v1/completions" -H 'Content-Type: application/json' 
 - 关键 upstream commit：[vLLM `77469c9`](https://github.com/vllm-project/vllm/commit/77469c9057bec3212a64877dbbf3b9c48c22d786)、[Doubleword `c32932bb9`](https://github.com/doublewordai/vllm-amd-blog-doubleword/commit/c32932bb9ff6ad30b942e4835dd8b41601e7569e)
 - 未合并的 PR：[vLLM PR #47291（CPU KV fence WAR）](https://github.com/vllm-project/vllm/pull/47291)
 - 硬件：[AMD Instinct MI300X](https://www.amd.com/en/products/accelerators/instinct/mi300/mi300x.html)（192 GB HBM3，5.3 TB/s，2.61 PFLOPS FP8）
+- FP8 编码：[ROCm HIP 文档 · FP8 Numbers](https://rocm.docs.amd.com/projects/HIP/en/docs-6.2.0/reference/fp8_numbers.html)（FNUZ 与 OCP 的位级定义）
 - AITER：[ROCm/aiter](https://github.com/ROCm/aiter)（MIT）
