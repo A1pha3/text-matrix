@@ -34,6 +34,13 @@ enableRobotsTXT = true
     client = "ca-pub-3883067925168693"
     autoAds = true
 
+  # Google Analytics 4（gtag.js），由 layouts/partials/gtag/head.html 注入 <head>。
+  # 注意：勿再配置 [services.googleAnalytics] 或 [params.analytics]（LoveIt 自有配置），
+  # 否则主题插槽 plugin/analytics.html 会在 </body> 前重复注入第二个 Google tag
+  [params.gtag]
+    enabled = true
+    id = "G-9JYVVZSDFF"
+
   [params.author]
     name = "TextMatrix"
 

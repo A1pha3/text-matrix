@@ -1,0 +1,14 @@
+{{- $cfg := .Site.Params.gtag -}}
+<!-- 仅在生产环境、开关打开且配置了衡量 ID 时注入 Google tag (gtag.js)，每个页面只注入一次 -->
+{{- if and (not hugo.IsServer) $cfg.enabled $cfg.id -}}
+<!-- 预热统计脚本域名连接，缩短首次请求耗时 -->
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ $cfg.id }}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '{{ $cfg.id }}');
+</script>
+{{- end -}}
