@@ -74,7 +74,7 @@ flowchart LR
 
 ## 2. 两个前端 + WarpUI 框架
 
-终端模拟器用 Rust 写本身就不常见（多数走 C/GTK/Qt），Warp 更特别的是自研了 UI 框架 WarpUI，而不是挂到某个跨平台框架上。AGENTS.md 里写得很清楚：它有 **GUI 和 TUI 两个前端**，共享 `warp_core` / `warpui` 的 Entity/model 核心，但各自用不同的渲染方式。
+终端模拟器用 Rust 写本身就少见，主流方案大多从 C 生态（GTK/Qt）长出来；Warp 更特别的是没挂现成的跨平台框架，而是自研了 UI 框架 WarpUI。AGENTS.md 里写得很清楚：它有 **GUI 和 TUI 两个前端**，共享 `warp_core` / `warpui` 的 Entity/model 核心，渲染方式各自不同。
 
 WarpUI 的核心是 **Entity-Component-Handle 模式**：
 
@@ -113,13 +113,13 @@ Oz 的作用不止在终端里。Warp 用 Oz 维护它自己的开源仓库，�
 > - Track your own issues with GitHub sign-in
 > - Click into active agent sessions in a web-compiled Warp terminal
 
-也就是说，Oz 不是演示，而是在真实处理这个仓库的 issue 和 PR，并且你可以在浏览器里点进一个编译成 Web 的 Warp 终端，看 agent 会话正在干什么。
+也就是说，Oz 不是演示，而是在真实处理这个仓库的 issue 和 PR，并且你可以在浏览器里点进一个编译成 Web 的 Warp 终端，看 agent 会话正在干什么。"agent 维护开源仓库"在别处多半是口号，这里能点进去看实时过程，是这套设计里少见的可验证部分。
 
 ---
 
 ## 4. 状态与同步：SQLite/Diesel + Warp Drive
 
-本地状态用 **SQLite** 存，通过 **Diesel ORM** 管 schema。迁移在 `crates/persistence/migrations/`，schema 定义在 `crates/persistence/src/schema.rs`。核心状态留在本地，所以离线也可以用；Warp Drive 的云同步是叠加在上面的可选增强层，让对象跨设备同步。
+本地状态用 **SQLite** 存，通过 **Diesel ORM** 管 schema。终端这类桌面应用选 SQLite 有现实理由：单文件、零配置、不需要起一个数据库服务，进程重启后状态直接落在本地文件里，离线也能读。迁移在 `crates/persistence/migrations/`，schema 定义在 `crates/persistence/src/schema.rs`。Warp Drive 的云同步是叠加在上面的可选增强层，让对象跨设备同步；本地是主存储，云同步不改变本地优先的事实。
 
 ---
 
