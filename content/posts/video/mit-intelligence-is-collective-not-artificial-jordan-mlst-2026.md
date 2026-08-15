@@ -10,9 +10,9 @@ tags: ["集体智能", "AI理论", "统计学", "经济学"]
 
 读完这篇文章，你至少能回答一个问题：Jordan 说的"智能是集体的"到底是什么意思，跟我有什么关系。
 
-文章会依次拆解 Jordan 的核心判断——把 AI 系统当市场而不是大脑——然后铺开他的"集体智能三角"（计算 + 推断 + 经济），再用数据市场、AlphaFold 案例和 LLM 过度自信三个实例把三角落地，最后给出研究者、工程师、监管者、学生各自的读法。
+他的核心判断是：把 AI 系统当市场而不是大脑。围绕这个判断，文章会铺开他的"集体智能三角"（计算 + 推断 + 经济），再用数据市场、AlphaFold 案例和 LLM 过度自信三个实例把三角落地，最后给出研究者、工程师、监管者、学生各自的读法。
 
-阅读建议：第一遍按「核心判断 → 系统地图 → 集体智能三角」建立全局视角；第二遍按需跳到数据市场、AlphaFold 案例、LLM 过度自信三章；文末「采用顺序」可作为下一步的行动指南。
+先按「核心判断 → 系统地图 → 集体智能三角」建立全局视角，再按需跳到数据市场、AlphaFold 案例、LLM 过度自信三章；文末「采用顺序」可作为下一步的行动指南。
 
 ### 适合谁读
 
@@ -32,6 +32,7 @@ tags: ["集体智能", "AI理论", "统计学", "经济学"]
 - [采用顺序：四类读者各自的最佳读法](#采用顺序四类读者各自的最佳读法)
 - [结尾判断](#结尾判断)
 - [适用边界：什么时候该用，什么时候不该用](#适用边界什么时候该用什么时候不该用)
+- [术语速查](#术语速查)
 - [进阶路径](#进阶路径)
 - [动手任务](#动手任务)
 - [常见问题](#常见问题)
@@ -181,7 +182,7 @@ AGI 这个术语本身没有清晰的数学定义，它的"作用"是吸引资�
 
 > *"Angelopoulos et al. (2023) showed that AlphaFold can give highly biased confidence intervals (intervals that are overly narrow and do not cover the ground truth) for certain queries involving proteins that exhibit quantum fluctuations."*
 
-AlphaFold 在训练集分布内的预测很准确，但科学家关心的是"知识边缘"——例如"蛋白质的量子涨落是否与磷酸化相关"。这类问题训练数据少，AlphaFold 会给出置信区间过窄（过于自信）的预测。解决方案是 **prediction-powered inference（PPI）**（[Angelopoulos et al. 2023][6]）——把少量 ground-truth 实验数据与大规模模型预测结合，给出统计上有效的置信区间。值得注意的一点：PPI 这篇论文的合著者里就有 Jordan 本人，这条路线正是他团队在做的。
+AlphaFold 在训练集分布内的预测很准确，但科学家关心的是"知识边缘"——例如"蛋白质的量子涨落是否与磷酸化相关"。这类问题训练数据少，AlphaFold 会给出置信区间过窄（过于自信）的预测。解决方案是 **prediction-powered inference（PPI）**（[Angelopoulos et al. 2023][6]）——把少量 ground-truth 实验数据与大规模模型预测结合，给出统计上有效的置信区间。这篇论文的合著者里就有 Jordan 本人，这条路线正是他团队在做的。
 
 ### 论点 11：e-values 与契约理论的等价
 
@@ -189,7 +190,7 @@ AlphaFold 在训练集分布内的预测很准确，但科学家关心的是"知
 
 Jordan 团队发现一个深刻的数学等价：博弈论中"激励相容"（incentive compatibility，代理人愿意如实披露信息）和统计学中"e-values"（一种比 p-values 更灵活的可重复检验工具）是**同一个数学对象**。
 
-为什么说它深：激励相容和 e-value 在做的其实是同一件事——设计一个规则，让"说谎没有好处"。激励相容的契约，让隐瞒真实类型的代理人无法获利；e-value 检验，让"假阳性"的期望值被压到可控范围。两者都在回答"如何设计一个没人能靠造假占便宜的系统"。这条等价意味着设计经济机制和设计统计检验在数学层面是同一类问题，可能催生新一代"机制 + 推断"联合算法。
+这个等价深的地方在于：激励相容和 e-value 在做的其实是同一件事——设计一个规则，让"说谎没有好处"。激励相容的契约，让隐瞒真实类型的代理人无法获利；e-value 检验，让"假阳性"的期望值被压到可控范围。两者都在回答"如何设计一个没人能靠造假占便宜的系统"。这条等价意味着设计经济机制和设计统计检验在数学层面是同一类问题，可能催生新一代"机制 + 推断"联合算法。
 
 ### 论点 12：鸭子纳什均衡
 
@@ -463,7 +464,7 @@ Jordan 在访谈结尾的这段话，把整场讨论收得很准：
 
 > *"I'm trying to become a bit of a historian. I mentioned chemical engineering, electrical engineering... you look back at the history there was something else going on. There were physicists and mathematicians and they had concepts. The current generation is just way too 'oh it's possible to build it.'... let's not give so much credit to the people that did that. It's the people 20, 30 years ago who did that."*
 
-换个角度：当前 AGI 叙事让一代人相信"AGI 就要来了，所以我们没事可做"，这是**双重错误**。错误一：AGI 不会来，至少不是你想象的那种。错误二：即使 AGI 不来，AI 系统能创造的真实价值（在健康医疗、交通、金融的市场设计中）**远远超过当前 LLM demo 展示的能力**。
+换个角度看：当前 AGI 叙事让一代人相信"AGI 就要来了，所以我们没事可做"，这是**双重错误**。错误一：AGI 不会来，至少不是你想象的那种。错误二：即使 AGI 不来，AI 系统能创造的真实价值（在健康医疗、交通、金融的市场设计中）**远远超过当前 LLM demo 展示的能力**。
 
 未来 5 年 AI 学术和工程的主战场，**不是更大的 LLM**，而是**把集体智能三角真正做出来**——把"计算 + 推断 + 经济"三种 thinking styles 结合起来，设计出真正能改善社会福利的 AI 生态系统。这条路比"做出更聪明的 AI"更难，也更有价值。
 

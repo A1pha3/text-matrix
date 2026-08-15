@@ -26,11 +26,13 @@ tags: ["Apple", "macOS", "Swift"]
 6. [当前版本的硬约束](#6-当前版本的硬约束)
 7. [快速上手路径](#7-快速上手路径)
 8. [常见问题排查](#8-常见问题排查)
-9. [自测题](#9-自测题)
-10. [进阶路径](#10-进阶路径)
-11. [这篇文章没覆盖什么](#11-这篇文章没覆盖什么)
-12. [适用人群与采用建议](#12-适用人群与采用建议)
-13. [总结](#13-总结)
+9. [练习](#9-练习)
+10. [自测题](#10-自测题)
+11. [进阶路径](#11-进阶路径)
+12. [这篇文章没覆盖什么](#12-这篇文章没覆盖什么)
+13. [适用人群与采用建议](#13-适用人群与采用建议)
+14. [总结](#14-总结)
+15. [资料口径说明](#15-资料口径说明)
 
 ---
 
@@ -338,9 +340,7 @@ container system start
 
 ---
 
----
-
-## 练习
+## 9. 练习
 
 ### 练习一：安装 apple/container 并运行第一个容器
 
@@ -366,7 +366,7 @@ container system start
 
 ---
 
-## 9. 自测题
+## 10. 自测题
 
 读完上面这些，用下面几道题检验理解。答案在每题下方折叠区。
 
@@ -422,11 +422,11 @@ macOS 15：vmnet 只提供"互不可见"模式，A、B 都挂到 `default` 网�
 
 ---
 
-## 10. 进阶路径
+## 11. 进阶路径
 
 掌握基础用法后，下面几条线值得继续深入。
 
-### 10.1 读源码的入口顺序
+### 11.1 读源码的入口顺序
 
 按调用链从外到内读，最容易建立全局观：
 
@@ -437,11 +437,11 @@ macOS 15：vmnet 只提供"互不可见"模式，A、B 都挂到 `default` 网�
 5. `Sources/ContainerXPC/`：进程间通信 schema。
 6. 配套仓库 [containerization](https://github.com/apple/containerization)：底层容器、镜像、进程管理原语。
 
-### 10.2 自定义 init 镜像
+### 11.2 自定义 init 镜像
 
 `container run --init` 默认用一个轻量 init 镜像。想跑自定义的 eBPF filter、调试探针、VM 层 daemon，可以替换 init 镜像。`docs/technical-overview.md` 的 "Init Images" 一节给了字段说明，构建时把 init 镜像当普通 OCI 镜像构建，再通过 `--init-image` 传入。
 
-### 10.3 多网络与容器互通（macOS 26）
+### 11.3 多网络与容器互通（macOS 26）
 
 macOS 26 下 vmnet 支持多网络，可以搭出"前端网络 + 后端网络"的隔离拓扑：
 
@@ -457,17 +457,17 @@ container run -d --name db --network backend postgres:latest
 
 同网络容器互通，跨网络默认隔离。适合模拟生产环境的网络分段。
 
-### 10.4 写 Swift 客户端直接调 `Containerization`
+### 11.4 写 Swift 客户端直接调 `Containerization`
 
 `container` CLI 本身就是 `Containerization` Swift package 的一个上层封装。如果想在自家工具链里直接编排 VM（比如做 CI runner、做 macOS 上的沙箱执行器），可以直接依赖 `Containerization`，绕开 CLI。API 文档在 [apple.github.io/container/documentation/](https://apple.github.io/container/documentation/)。注意 6.5 提到的稳定性约束——锁 patch 版本。
 
-### 10.5 跟踪 release 节奏
+### 11.5 跟踪 release 节奏
 
 仓库 release 节奏较快，建议订阅 [releases.atom](https://github.com/apple/container/releases.atom)，每次 minor 版本出来先看 release notes 的 Breaking Changes 段，再决定是否升级。`docs/migrating-to-1.0.md` 给了从 0.x 到 1.0 的迁移清单，可作为后续 minor 升级的模板。
 
 ---
 
-## 11. 这篇文章没覆盖什么
+## 12. 这篇文章没覆盖什么
 
 下面这些**没有**在本文给出权威结论：
 
@@ -478,7 +478,7 @@ container run -d --name db --network backend postgres:latest
 
 ---
 
-## 12. 适用人群与采用建议
+## 13. 适用人群与采用建议
 
 适合立刻尝试的场景：
 
@@ -500,7 +500,7 @@ container run -d --name db --network backend postgres:latest
 
 ---
 
-## 13. 总结
+## 14. 总结
 
 `apple/container` 1.0.0 的核心取舍就一句话：用"每容器一台轻量 VM"换"VM 级隔离 + OCI 镜像兼容"，代价是冷启动开销与内存回收的不彻底。这个取舍在 macOS 26 + Apple silicon 上才完整兑现，macOS 15 与 Intel Mac 都有功能裁剪。
 
@@ -510,11 +510,11 @@ container run -d --name db --network backend postgres:latest
 - **使用入口**：一次性任务用 `container run`，长连接服务与开发环境用 `container machine`。两者共享底层 VM 机制，但 `machine` 多了 rootfs 持久化、Home 目录映射、systemd 支持。
 - **版本约束**：1.0.0 之前 minor 版本可能含 breaking change，`system property` 已被 TOML 配置取代，凭证走 Keychain 而非 `~/.docker/config.json`。下游依赖 `Containerization` 的项目要锁 patch 版本。
 
-下一步动作：在 macOS 26 + Apple silicon 上跑一遍第 7 节的最小命令，再按第 8 节的排查清单对照本地环境，最后按第 10 节的进阶路径选一条线深入。
+下一步动作：在 macOS 26 + Apple silicon 上跑一遍第 7 节的最小命令，再按第 8 节的排查清单对照本地环境，最后按第 11 节的进阶路径选一条线深入。
 
 ---
 
-## 资料口径说明
+## 15. 资料口径说明
 
 本文基于 apple/container 仓库（[apple/container](https://github.com/apple/container)）公开文档整理，需要说明的边界：
 

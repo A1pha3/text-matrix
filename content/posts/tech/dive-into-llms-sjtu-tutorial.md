@@ -1,22 +1,25 @@
 ---
-title: "《动手学大模型》：上海交通大学31.5K Stars的LLM编程实践教程——微调/提示工程/知识编辑/RLHF全覆盖"
+title: "《动手学大模型》：上海交大 3 万+ Star 的 LLM 编程实践教程——微调/提示工程/知识编辑/RLHF 全覆盖"
 date: "2026-04-16T01:30:00+08:00"
+lastmod: 2026-08-15T12:00:00+08:00
 slug: "dive-into-llms-sjtu-tutorial"
-github_repo: "FourierTransformer/dive-into-llms"
-description: "dive-into-llms是上海交通大学出品的31.5K Stars大模型教程，用Jupyter Notebook覆盖微调部署、提示学习、思维链、知识编辑、数学推理、文本水印、越狱攻击、隐写术、多模态、GUI Agent、RLHF对齐等11个主题。"
+github_repo: "Lordog/dive-into-llms"
+description: "dive-into-llms 是上海交通大学出品的 3 万+ Star 大模型教程，用 Jupyter Notebook 覆盖微调部署、提示学习、思维链、知识编辑、数学推理、文本水印、越狱攻击、隐写术、多模态、GUI Agent、RLHF 对齐等 11 个主题，并与华为昇腾联合推出国产化教程。"
 draft: false
 categories: ["技术笔记"]
 tags: ["LLM", "RLHF"]
 ---
 
-# 《动手学大模型》：上海交通大学 31.5K Stars 的 LLM 编程实践教程
+# 《动手学大模型》：上海交大 3 万+ Star 的 LLM 编程实践教程
 
-《动手学大模型》是上海交通大学出品的编程实践教程，GitHub 31.5K+ Stars，以 Jupyter Notebook 覆盖微调部署、提示学习、思维链、知识编辑、数学推理、文本水印、越狱攻击、隐写术、多模态、GUI Agent、RLHF 对齐等 11 个主题。课程源自交大《自然语言处理前沿技术》(NIS8021) 和《人工智能安全技术》(NIS3353)，授课教师张倬胜。
+《动手学大模型》是上海交通大学出品的编程实践教程，GitHub 已收获超过 3 万个 Star。它以 Jupyter Notebook 覆盖微调部署、提示学习、思维链、知识编辑、数学推理、文本水印、越狱攻击、隐写术、多模态、GUI Agent、RLHF 对齐等 11 个主题，课程源自交大《自然语言处理前沿技术》（NIS8021）和《人工智能安全技术》（NIS3353），授课教师张倬胜。
+
+这套教程不教"看懂论文"，教"跑通代码"。每个主题都配课件、教程文档和可运行脚本，读者可以用一台机器把流程走一遍，从微调一个模型，一直走到给模型做安全对齐。
 
 | 项目 | 信息 |
 |------|------|
-| GitHub | [FourierTransformer/dive-into-llms](https://github.com/FourierTransformer/dive-into-llms) |
-| Stars | 31,500+ |
+| GitHub | [Lordog/dive-into-llms](https://github.com/Lordog/dive-into-llms) |
+| Stars | 30,000+ |
 | 类型 | 编程实践教程（Jupyter Notebook） |
 | 来源 | 上海交通大学 |
 | 教师 | 张倬胜 |
@@ -26,21 +29,23 @@ tags: ["LLM", "RLHF"]
 
 ## 1. 项目概览
 
-教程完全免费，重实践，每个主题都配有可运行的代码。课程持续更新——2025 年 6 月新增了数学推理、GUI Agent 等内容。联合华为昇腾推出《大模型开发全流程》系列课程，覆盖昇腾 910/310 芯片。
+教程完全免费，属公益项目，重实践。每个主题都有可运行代码，多数章节还带课件（PDF）和中文教程文档，构成"课件 + 文档 + 脚本"三件套。仓库持续更新——2025 年 6 月新增数学推理、GUI Agent、大模型对齐、隐写术等主题，并与华为昇腾社区联合推出国产化《大模型开发全流程》公益教程（含 PPT、实验手册和视频）。
 
-作者团队由张倬胜主导，袁童鑫 (Lordog)、马欣贝、何志威、杜巍、赵皓东、吴宗儒、吴铮、董凌众、张玉龙、费豪（新加坡国立大学）等贡献者参与。
+作者团队由张倬胜主导，袁童鑫（Lordog）、马欣贝、何志威、杜巍、赵皓东、吴宗儒、吴铮、董凌众、张玉龙、费豪（新加坡国立大学）等贡献者参与。
+
+---
 
 ## 2. 教程内容详解
 
 ### 完整课程地图
 
-| # | 主题 | 简介 | 代码 |
+| # | 主题 | 简介 | 脚本 |
 |---|------|------|------|
 | 1 | **微调与部署** | 预训练模型微调与部署 | `dive-tuning.ipynb` |
 | 2 | **提示学习与思维链** | API 调用与推理 | `dive-prompting.ipynb` |
 | 3 | **知识编辑** | 操控模型对特定知识的记忆 | `dive_edit.ipynb` |
 | 4 | **数学推理** | 蒸馏迷你 R1 模型 | `sft_math.ipynb` |
-| 5 | **模型水印** | 文本水印嵌入技术 | `watermark.ipynb` |
+| 5 | **模型水印** | 文本水印嵌入与检测 | `watermark.ipynb` |
 | 6 | **越狱攻击** | 理解并防范越狱攻击 | `dive-jailbreak.ipynb` |
 | 7 | **大模型隐写** | 隐写术：隐藏信息传输 | `llm_stega.ipynb` |
 | 8 | **多模态模型** | MLLM 与 AGI 探索 | `mllms.ipynb` |
@@ -48,233 +53,204 @@ tags: ["LLM", "RLHF"]
 | 10 | **智能体安全** | 开放场景中的安全威胁 | `agent.ipynb` |
 | 11 | **RLHF 安全对齐** | PPO 训练与对齐实验 | `RLHF.ipynb` |
 
+### 三条学习线
+
+11 个主题不是必须按顺序啃完的线性教材，可以切成三条线，按目标选线：
+
+- **核心实践线**（Ch1–Ch4）：微调、提示、知识编辑、数学推理，把"让模型干活"的基础能力走通。
+- **安全与对齐线**（Ch5–Ch7、Ch11）：水印、越狱、隐写、RLHF，理解模型容易被怎样操纵、又该如何约束。
+- **多模态与 Agent 线**（Ch8–Ch10）：MLLM、GUI Agent、智能体安全，看大模型如何感知真实世界并采取行动。
+
 ---
 
 ## 3. 主题一：微调与部署
 
-微调（Fine-tuning）在预训练模型基础上，用特定任务数据进一步训练。教程覆盖四种微调方法：
+微调（Fine-tuning）在预训练模型基础上，用特定任务数据进一步训练。教程用 Transformers 工具包，以"虚假新闻检测"（Kaggle 虚假推文数据集）为完整场景：用 `run_classification.py` 加载数据、微调 `bert-base-uncased`，在开发集上验证、测试集上预测，最后用 Gradio Spaces 把模型部署成在线 Demo。
 
-| 技术 | 说明 | 适用场景 |
-|------|------|----------|
-| **Full Fine-tuning** | 更新所有参数 | 数据充足 |
-| **LoRA** | 低秩适配器 | 资源有限 |
-| **QLoRA** | 量化 + LoRA | 极度资源有限 |
-| **Prefix Tuning** | 添加可学习前缀 | 少参数 |
-
-`dive-tuning.ipynb` 涵盖数据准备与预处理、LoRA/QLoRA 配置、训练监控、模型导出与 vLLM 部署。部署方面给出 vLLM 示例：
+训练脚本的关键参数如下：
 
 ```python
-# 使用 vLLM 部署
-from vllm import LLM
-
-llm = LLM(model="meta-llama/Llama-2-7b")
-output = llm.generate("Hello, world!")
+python run_classification.py \
+    --model_name_or_path bert-base-uncased \
+    --train_file data/train.csv \
+    --validation_file data/val.csv \
+    --test_file data/test.csv \
+    --metric_name accuracy \
+    --text_column_name "text" \
+    --label_column_name "target" \
+    --do_train --do_eval --do_predict \
+    --max_seq_length 512 \
+    --per_device_train_batch_size 32 \
+    --learning_rate 2e-5 \
+    --num_train_epochs 1 \
+    --output_dir experiments/
 ```
+
+教程给了两套工程：解耦可定制版本（`main.py`、`utils_data.py`、`modeling_bert.py` 三文件，方便理解数据加载、模型结构、训练验证三个关键模块）和默认集成版本（直接改超参数调用）。部署环节是 Gradio Spaces：写好 `app.py`、配好 `requirements.txt`，上传到 Hugging Face 即可得到一个可分享的 Demo，作者提供了已部署的 `text-classification` 案例供参考。
+
+轻量化微调（LoRA）在本章是作为延伸学习入口出现的——第 6 节给出对 Llama2 做 LoRA 微调的外部教程链接，属于进阶阅读，不是本章主实验。
 
 ---
 
 ## 4. 主题二：提示学习与思维链
 
-基础提示技巧：直接提问。更有效的是带示例的提示（Few-shot）：
+提示（Prompting）是让模型按预期方式输出的最直接手段。教程覆盖零样本、少样本（Few-shot）、思维链（Chain of Thought）、程序思维（PoT）和自洽性采样，并引入 ReAct 这类"推理 + 行动"循环。
 
-```python
-prompt = """
-Example: 2+2 = 4
-Question: 3+3 = ?
-Answer:"
+思维链的核心是让模型把中间步骤写出来，而不是直接蹦答案。对比两个提示：
+
+```text
+标准提示
+问：小明有 5 个苹果，丢了 2 个，又买了 3 个，现在有几个？
+答：3 个          # 直接答，容易算错
+
+思维链提示
+问：小明有 5 个苹果，丢了 2 个，又买了 3 个，现在有几个？
+请逐步推理后再给出答案。
+答：5 - 2 = 3，3 + 3 = 6，所以是 6 个。
 ```
 
-思维链（Chain of Thought）让模型先推理再给答案。标准提示下模型可能答错简单的算术题，加上中间推理步骤后准确率明显提升：
-
-```python
-# 标准提示
-Q: 小明有5个苹果，丢了2个，又买了3个，现在有几个？
-A: 6个  # 错误
-
-# 思维链提示
-Q: 小明有5个苹果，丢了2个，又买了3个，现在有几个？
-A: 5-2=3，3+3=6，所以是6个。答案是6个。  # 正确
-```
-
-进阶技巧包括角色提示（"你是一位资深数学老师..."）、格式约束（"请用 JSON 格式输出"）、链式验证（"先分析，再总结，最后给出答案"）。
+进阶部分把思维链继续延伸：Auto-CoT 自动生成推理链、Sum-CoT 摘要式思维链、CRITIC 让模型结合外部工具校正结果、ReAct 把"推理 + 行动"串成循环。少样本提示则是给出几个输入输出对作为范例，让模型模仿格式。
 
 ---
 
 ## 5. 主题三：知识编辑
 
-知识编辑（Knowledge Editing）只修改与目标知识相关的参数，不影响其他知识，比重训成本低。教程覆盖四种方法：
+知识编辑（Knowledge Editing）的目标是只修改与目标知识相关的参数，不影响模型其他能力，比重训成本低得多。教程基于 EasyEdit 统一框架，覆盖四种方法路线：
 
-| 方法 | 代表工作 | 说明 |
+| 方法类别 | 代表 | 思路 |
 |------|----------|------|
-| **元学习** | MEND | 学习如何编辑 |
-| **定位+修改** | ROME | 定位知识位置并修改 |
-| **额外参数** | T-Parser | 添加可编辑模块 |
-| **混合方法** | KEPLER | 结合多种策略 |
+| **元学习** | MEND | 学习一个"编辑器"，为原权重输出更新量 |
+| **定位 + 修改** | ROME / MEMIT | 定位知识存储位置，改写对应参数 |
+| **记忆式** | SERAC / T-Patcher | 把新知识存在外部模块，不触碰原参数 |
+| **批量编辑** | MEMIT | 一次编辑多条知识（教程的 Batch edit 案例） |
 
-评估编辑效果有三个维度：编辑后文本是否流畅（fluency）、与原文的相似度（proximity）、是否精准修改目标知识（specificity）。
+ROME 的调用方式体现了 EasyEdit 框架的统一接口——指定编辑数据，剩下的交给库。教程里的具体目标是：把梅西（Lionel Messi）的职业从足球改成篮球。
+
+```python
+from easyeditor import BaseEditor, ROMEHyperParams
+
+hparams = ROMEHyperParams.from_hparams("./hparams/ROME/gpt2-xl.yaml")
+editor = BaseEditor.from_hparams(hparams)
+
+prompts = ["Question: What sport does Lionel Messi play? Answer:"]
+ground_truth = ["football"]
+target_new = ["basketball"]
+subject = ["Lionel Messi"]
+
+metrics, edited_model, _ = editor.edit(
+    prompts=prompts,
+    ground_truth=ground_truth,
+    target_new=target_new,
+    subject=subject,
+    keep_original_weight=False,
+)
+```
+
+编辑效果按四个维度评估：可靠性（编辑后的答案是否正确）、通用性（相关改写是否也能触发新知识）、局部性（无关知识是否被误伤）、可移植性（编辑是否影响同一知识在其他上下文中的表达）。
 
 ---
 
 ## 6. 主题四：数学推理
 
-教程提供"蒸馏"思路——将 o1/o3 的推理能力迁移到小模型：
+教程提供"蒸馏"思路——从 DeepSeek-R1 这类推理模型收集高质量"问题 + 推理过程 + 答案"数据，用有监督微调（SFT）把推理能力迁移到小模型。数据用 DeepMath-103K，目标模型是 Qwen2.5-Math-1.5B。
+
+需要澄清的是：这一步用的是 SFT，不是 PPO。RLHF 的 PPO 强化学习是第 11 章的内容，两者解决的问题不同——SFT 让模型学会"照着推理格式输出"，PPO 再用奖励信号进一步调优。
 
 ```python
-# 数学推理训练数据格式
-{
-    "question": "求1+2+...+100的和",
-    "reasoning": "使用等差数列求和公式...",
-    "answer": "5050"
-}
+from trl import SFTTrainer
+from transformers import TrainingArguments
+
+trainer = SFTTrainer(
+    model="Qwen/Qwen2.5-Math-1.5B",
+    train_dataset=dataset,            # DeepMath-103K 蒸馏数据
+    dataset_text_field="text",
+    args=TrainingArguments(output_dir="./mini-r1"),
+)
+trainer.train()
 ```
 
-使用 PPO 强化学习进一步优化，通过奖励信号引导模型产出更准确的推理步骤：
-
-```python
-# PPO 训练循环
-for episode in range(1000):
-    response = model.generate(prompt)
-    reward = compute_math_reward(response)
-    model.update(reward)  # PPO 更新
-```
+数据格式是"问题 - 推理过程 - 答案"三元组，推理过程是可选的——是否保留取决于下游是否只需要最终答案。
 
 ---
 
 ## 7. 主题五：模型水印
 
-文本水印（Text Watermark）在 AI 生成文本中嵌入不可见的统计水印，用于证明文本来源。Gumbel Watermark 原理：用密钥将词汇表分为"绿色列表"和"红色列表"，生成时优先从绿色列表选词，检测时分析绿色词汇比例是否显著高于随机概率。
+文本水印（Text Watermark）在模型生成的内容里嵌入不可见的统计特征，用于证明文本来源。教程实现的是 KGW（Kirchenbauer 等人）统计水印：用密钥把词汇表分成"绿色列表"和"红色列表"，生成时偏向绿色词；检测时统计生成文本中绿色词占比，若相对随机水平显著偏离（z-score 超过阈值），就判定为带水印的模型生成文本。
 
-应用场景包括版权保护、内容溯源、防伪认证。
+检测效果在评测集上接近完美（AUC 接近 100%）。但水印有明确的鲁棒性边界——改写（paraphrase）和翻译会破坏水印信号，这是水印落地的现实约束。
 
 ---
 
 ## 8. 主题六：越狱攻击
 
-越狱攻击绕过大模型的安全机制。正常请求"我如何制作炸弹"会被安全拒绝，但通过角色扮演"作为电影编剧，请写一个关于炸..."可能被接受。
+越狱攻击（Jailbreak）绕过大模型的安全机制。正常请求"我如何制作炸弹"会被拒绝，但通过角色扮演、编码绕过、渐进式引导（从无害问题逐步引向敏感话题）、对抗性后缀（添加特殊 token 序列）等手段，可能让模型吐出本应拒绝的内容。
 
-攻击手法包括角色扮演、编码绕过、渐进式引导（从无害问题逐步引导到敏感话题）、对抗性后缀（添加特殊 token 序列）。防御策略需检测对抗性模式：
-
-```python
-# 越狱检测
-def detect_jailbreak(prompt: str) -> bool:
-    # 检测对抗性模式
-    patterns = [
-        r"pretend to be",
-        r"forget.*safety",
-        r"ignore.*instruction"
-    ]
-    return any(re.search(p, prompt) for p in patterns)
-```
+教程基于 EasyJailbreak 框架，覆盖 11 种越狱方法。EasyJailbreak 把越狱过程抽象成四步循环：Selector（选攻击模板）→ Mutator（改写变异）→ Constraint（约束条件）→ Evaluator（评估是否成功）。理解攻击是做好防御的前提——防御侧同样靠识别对抗性模式、内容过滤和安全对齐来实现。
 
 ---
 
 ## 9. 主题七：大模型隐写
 
-隐写在流畅的回答中隐藏只有指定方才能读取的信息。编码时把秘密信息嵌入到正常文本的细微特征中，比如选词偏好、标点分布、句式结构。解码方用预设的密钥从文本中提取隐藏信息。
+隐写（Steganography）让模型在流畅回答中携带只有指定方才能读取的信息。教程用"霍夫曼编码 + GPT-2 采样"的组合：先把秘密信息编码成比特流，再让模型在 token 采样时按比特流约束挑选，把信息藏进看似正常的文本。解码方用同一套密钥和编码表，就能从文本中完整提取隐藏信息，且表面文本几乎不可感知。
 
-```python
-# 隐写编码
-hidden_message = "秘密信息"
-cover_text = "今天的天气真不错！"
-
-steganographic_text = encode(cover_text, hidden_message)
-# 输出：今天的天气（真）不错（！）
-
-# 隐写解码
-decoded = decode(steganographic_text)
-# 输出：秘密信息
-```
-
-应用场景包括隐蔽通信、水印追踪、防审查。
+这和主题五的水印是两种思路：水印重在"溯源"，隐写重在"隐蔽传输"。两者的共同点是都在"如何控制模型输出分布"上做文章。
 
 ---
 
 ## 10. 主题八：多模态模型
 
-多模态大语言模型（MLLM）能够理解和生成多种模态内容：文本 + 图像 + 音频 + 视频 → 统一理解。教程介绍 GPT-4V、Gemini、LLaVA、Qwen-VL 等代表模型，并探讨多模态与 AGI 的关系——多模态训练带来能力提升，不同模态的统一语义空间，视觉-语言-动作的结合。
+多模态大语言模型（MLLM）让模型同时理解文本、图像、音频、视频等多种模态。教程以 NExT-GPT 为案例，它用 ImageBind 统一多模态嵌入，接 Vicuna 语言模型做理解，再用扩散模型解码器生成图像、音频、视频，实现"任意模态到任意模态"的转换，训练分三个阶段完成。
+
+教程借此讨论一个判断：多模态是否通向 AGI？答案不是简单的"是"。多模态扩大了感知范围，但"理解"和"生成"之间的语义鸿沟仍然存在，跨模态对齐是当前的主要难点。
 
 ---
 
 ## 11. 主题九：GUI 智能体
 
-GUI Agent 让 AI 代替用户操作电脑或手机。用户说"帮我点外卖"，Agent 自动打开外卖 App、选择店铺、添加购物车、提交订单，最后返回结果。
-
-技术架构分三层：
-
-```python
-class GUIAgent:
-    def __init__(self):
-        self.vision = VisionModel()      # 视觉理解
-        self.planner = PlannerModel()    # 任务规划
-        self.executor = Executor()       # 动作执行
-
-    def run(self, task: str):
-        # 1. 截图获取当前界面
-        screenshot = self.capture_screen()
-        # 2. 视觉理解界面
-        ui_elements = self.vision.parse(screenshot)
-        # 3. 规划下一步行动
-        action = self.planner.decide(task, ui_elements)
-        # 4. 执行动作
-        self.executor.perform(action)
-```
-
-应用场景包括点外卖、购物比价、邮件处理等日常操作。
+GUI Agent 让 AI 代替用户操作电脑或手机——用户说"帮我点外卖"，Agent 打开应用、选店、下单，最后返回结果。教程用 Qwen2-VL-7B 视觉语言模型 + OS-Kairos 数据集，构建"看懂截图 + 预测点击位置"的 Agent，通过全量 SFT 训练。这类模型要同时做视觉理解（界面里有什么）和动作预测（该点哪里），对显存要求高，教程标注的运行配置是 3×80GB A100。
 
 ---
 
 ## 12. 主题十：智能体安全
 
-Agent 可能被诱导执行恶意操作——邮件 Agent 被提示注入后发送钓鱼邮件。
+智能体一旦接入工具和外部环境，就多了被操纵的入口——邮件 Agent 被提示注入后可能发出钓鱼邮件。教程引入 R-Judge 评测框架：覆盖 7 大领域、27 种场景，评估 Agent 在开放环境中的风险识别与安全判断能力。
 
-攻击向量包括提示注入、工具劫持、环境 poisoning、权限滥用。
-
-防御策略需要多层安全检查：
-
-```python
-class SafeAgent:
-    def execute(self, action):
-        # 1. 权限检查
-        if not self.check_permission(action):
-            return "拒绝：权限不足"
-        # 2. 风险评估
-        risk = self.assess_risk(action)
-        if risk > self.threshold:
-            return "拒绝：风险过高"
-        # 3. 人工确认
-        if action.is_destructive:
-            return "等待用户确认"
-        # 4. 执行
-        return self.perform(action)
-```
+攻击向量包括提示注入、工具劫持、环境投毒、权限滥用。防御侧需要多层安全检查：先做权限校验（这个动作允许吗），再做风险评估（副作用有多大），对破坏性操作留人工确认。安全不是单点防护，而是贯穿工具设计、上下文组织和执行策略的一组约束。
 
 ---
 
 ## 13. 主题十一：RLHF 安全对齐
 
-RLHF（Reinforcement Learning from Human Feedback）通过人类反馈进行强化学习：先收集人类偏好数据，再训练奖励模型，最后用 PPO 做强化学习优化。PPO 核心循环如下：
+RLHF（Reinforcement Learning from Human Feedback）用人类反馈训练模型偏好。教程演示基于 PPO 的完整流程，循环为三步：
 
-```python
-# PPO 核心循环
-for epoch in range(num_epochs):
-    # 1. 收集 rollout
-    trajectories = collect_rollout(policy, env)
-    # 2. 计算 advantage
-    advantages = compute_advantage(rewards, values)
-    # 3. PPO 更新
-    for _ in range(ppo_epochs):
-        ratio = pi_new / pi_old
-        clipped_ratio = torch.clamp(ratio, 1-eps, 1+eps)
-        loss = -min(ratio * advantages, clipped_ratio * advantages)
-```
+| 步骤 | 英文名 | 做什么 |
+|------|--------|--------|
+| 1 | Rollout | 用当前策略生成回复 |
+| 2 | Evaluation | 奖励模型（教程用 BERT 情感分类器替代人工）打分 |
+| 3 | Optimization | 按分数更新策略，KL 正则化约束不偏离原模型太远 |
 
-除了 RLHF，教程还介绍了 DPO（直接偏好优化，不需要 PPO）、RLAIF（用 AI 反馈替代人类反馈）、Constitutional AI（基于准则的对齐）等对齐技术。
+用 BERT 情感分类器替代人工反馈，是为了让实验可复现；加 KL 正则化，是防止对齐过程把模型"训坏"——更新策略时不许走太远。
+
+除了 RLHF，教程还介绍了 DPO（直接偏好优化，不需要奖励模型和 PPO）、RLAIF（用 AI 反馈替代人类反馈）、Constitutional AI（基于准则的对齐）等对齐技术，让读者看到"对齐"不是只有一条路。
 
 ---
 
-## 14. 国产化：华为昇腾《大模型开发全流程》
+## 14. 一次任务如何穿过这套教程
 
-教程联合华为昇腾推出《大模型开发全流程》系列课程，覆盖昇腾 910/310 芯片，软件栈为 CANN + MindSpore + ModelArts。课程分三级：
+用知识编辑章的真实任务把链路串起来：教程的案例是让模型"记住梅西的职业从足球改成了篮球"。
+
+1. 先用主题二学到的提示技巧构造测试数据——`prompts=["Question: What sport does Lionel Messi play? Answer:"]`、`ground_truth=["football"]`、`target_new=["basketball"]`、`subject=["Lionel Messi"]`。
+2. 再用主题三的 EasyEdit + ROME 执行编辑：库自动定位存储该知识的 MLP 层，改写对应参数。
+3. 然后按四性评估：同一个提示是否答出篮球（可靠性）、换种问法是否仍答对（通用性）、"梅西的国籍是哪"这类无关知识是否不受影响（局部性）。
+4. 如果这套流程要跑通，需要先掌握主题一的微调环境搭建（transformers 加载模型、GPU 资源），也要会主题二的数据构造方式。
+
+一个章节的任务，横跨了环境、提示、编辑、评估四块能力——这正是"跑通代码"和"看懂论文"的差别。
+
+---
+
+## 15. 国产化：华为昇腾《大模型开发全流程》
+
+教程联合华为昇腾推出《大模型开发全流程》系列课程，覆盖昇腾 910/310 芯片，软件栈为 CANN + MindSpore。课程分三级：
 
 | 级别 | 面向人群 | 内容 |
 |------|----------|------|
@@ -282,7 +258,19 @@ for epoch in range(num_epochs):
 | **中级** | 进阶用户 | 模型训练 → 微调优化 |
 | **高级** | 专业开发者 | 分布式训练 → 性能调优 |
 
-学习路径：昇腾社区 → 大模型开发学习专区 → 选择级别 → 学习路径。
+学习路径：昇腾社区 → 大模型开发学习专区 → 选择级别 → 学习路径。对想脱离 CUDA 生态、在国产算力上跑通全流程的团队，这条线是现成的参考。
+
+---
+
+## 16. 谁该用、怎么用、从哪开始
+
+这套教程的定位是"能跑的实验集合"，不是生产级代码。适合三类人：刚入门想动手的学生、需要快速验证某个 LLM 技术点的研究者、想给团队做内部培训的工程师。
+
+- **刚入门**：从 Ch1 微调与部署开始，先把环境跑通、把一个模型微调出来，再按三条学习线往下走。
+- **做安全对齐方向**：直接切到安全与对齐线（Ch5–Ch7、Ch11），水印、越狱、RLHF 三块一次拿齐。
+- **做多模态或 Agent 方向**：切到多模态与 Agent 线（Ch8–Ch10），注意 Ch9 的 GUI Agent 训练需要多卡大显存，先确认算力再上手。
+
+不建议照着跑的场景：需要生产级性能调优、需要把代码直接搬进业务系统——教程的 notebook 是教学实验，跑通为主，不是发布标准。
 
 ---
 
@@ -291,6 +279,7 @@ for epoch in range(num_epochs):
 | 资源 | 链接 |
 |------|------|
 | GitHub | https://github.com/Lordog/dive-into-llms |
+| EasyEdit（知识编辑框架） | https://github.com/zjunlp/EasyEdit |
 | 昇腾社区 | https://www.hiascend.com/edu/growth/lm-development |
 | 课程教师 | 张倬胜 (bcmi.sjtu.edu.cn) |
 | 主要贡献者 | 袁童鑫 Lordog |

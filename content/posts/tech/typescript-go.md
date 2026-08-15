@@ -1,227 +1,200 @@
 ---
-title: "TypeScript Go：微软用 Go 重写 TypeScript 编译器"
-date: "2026-04-27T01:00:00+08:00"
+title: "TypeScript 用 Go 重写编译器：这次换的是底层，不是语法"
+date: "2026-08-14T01:00:00+08:00"
 slug: typescript-go-native-port
 github_repo: "microsoft/typescript-go"
-description: "微软将 TypeScript 编译器（tsc）从 TypeScript/JavaScript 重写为 Go 语言实现，GitHub 26.1K stars。解析这个 native port 的动机、架构设计、当前进度与未来影响。"
+description: "微软把 TypeScript 编译器从 JavaScript 移植到 Go，2026 年 7 月随 TypeScript 7.0 正式发布。解析这次移植的动机、架构取舍、性能数据与生态影响。"
 draft: false
 categories: ["技术笔记"]
 tags: ["TypeScript", "Go", "编译器", "微软", "性能优化", "编程语言"]
 ---
 
-# TypeScript Go：微软用 Go 重写 TypeScript 编译器
+# TypeScript 用 Go 重写编译器：这次换的是底层，不是语法
 
-2025 年，微软 TypeScript 团队将 tsc 从 TypeScript/JavaScript 重写为 Go。项目 `microsoft/typescript-go` 上线获 26.1K stars，目前以 `@typescript/native-preview` npm 包提供预览版。
+TypeScript 7.0 从底层换掉了编译器：`tsc` 不再是一份跑在 Node.js 上的 JavaScript 程序，而是用 Go 写成的原生二进制。2026 年 7 月 8 日随 7.0 正式发布后，官方宣称在真实代码库上全量构建通常快 8-12 倍，VS Code 一套约 150 万行的代码库，类型检查从 125.7 秒降到 10.6 秒。
 
-换成 Go 之后，本地机器码、无运行时依赖、接近零的启动延迟、原生多线程，这些收益直接落地。对小型项目感知不强，但百万行级别的 TypeScript 代码库中，增量构建和类型检查的耗时一直是开发体验的瓶颈。
+性能提升是真的。但这次改动最值得注意的不是那些数字，而是它的实现路线：**移植，而不是重写**。Go 版本把类型检查逻辑原样搬了过来，语义与 TypeScript 6.0 逐字节对齐——升级后你项目里"该报的错"和"不该报的错"不会变，变的是出错前要等多久。
 
 ---
 
-## 为什么重写：编译器的自我编译困境
+## 为什么换编译器：tsc 的瓶颈在运行时
 
-TypeScript 编译器自诞生以来就是用 TypeScript/JavaScript 写的——一个以"类型检查"为核心价值的工具，自身却运行在动态类型语言之上：
+TypeScript 编译器从诞生起就用 TypeScript/JavaScript 写，一个以"类型检查"为核心价值的工具，自身却跑在动态类型语言之上。对小型项目感知不强，但代码库到了几十万行，等待就变成了每天都要付的税：
 
-- **运行时依赖**：必须装 Node.js 才能跑 tsc
-- **冷启动延迟**：JIT 预热前，编译器大部分时间在暖自己
+- **运行时依赖**：必须装 Node.js 才能跑 `tsc`
+- **冷启动延迟**：JIT 预热之前，编译器大部分时间在暖自己
 - **内存开销**：JS 引擎的堆结构对长时间运行的编译器进程不友好
-- **并行化受限**：事件循环模型下多核利用率低
+- **并行化受限**：事件循环模型下，多核只用得上一个
 
 | 维度 | TypeScript (JS) | Go |
 |------|----------------|-----|
-| 产物形态 | 依赖 JS 运行时 | 本地机器码，无依赖 |
+| 产物形态 | 依赖 JS 运行时 | 原生机器码，无依赖 |
 | 启动延迟 | 高（JIT 冷启动） | 极低（直接执行） |
-| 内存占用 | JS 引擎堆开销大 | 紧凑，GC 可调 |
+| 内存占用 | JS 引擎堆开销大 | 更紧凑，GC 可调 |
 | 多核利用 | 受限于事件循环 | Goroutine 原生并发 |
 | 增量编译 | 受语言架构限制 | 成熟的高效实现 |
 
-目标是把 tsc 变成可直接分发、本地执行的二进制工具，不再依赖 JS 运行时。
+目标很直接：把 `tsc` 变成一个可直接分发、本地执行、默认就能吃满多核的二进制。性能是表层，真正的收益是让"Incremental"和编辑器体验不再被单线程拖住。
 
 ---
 
-## 项目状态：预览阶段，功能表已铺开
+## 现状：从预览到 7.0 正式落地
 
-截至 2026 年 4 月，TypeScript Go 仍处于预览阶段，以 `@typescript/native-preview` npm 包发布。功能覆盖情况：
+这条路线走了一年多，时间线清晰：
+
+| 时间 | 节点 |
+|------|------|
+| 2025 年 3 月 | 微软宣布原生移植，以 `@typescript/native-preview` 发布预览 |
+| 2026 年 4 月 | TypeScript 7.0 Beta 发布 |
+| 2026 年 6 月 | 7.0 Release Candidate 发布 |
+| 2026 年 7 月 8 日 | 7.0 正式发布，`tsc` 默认就是 Go 二进制 |
+
+安装方式随之收敛。预览期用 `@typescript/native-preview`，7.0 起回归到标准包：
+
+```bash
+npm install -D typescript
+npx tsc --version   # 7.0 起指向 Go 实现
+```
+
+功能覆盖到 7.0 时几乎铺满：
 
 | 功能 | 状态 | 说明 |
 |------|------|------|
-| 程序创建 | ✅ done | 与 TS 6.0 相同的文件解析和模块解析 |
-| 解析/扫描 | ✅ done | 与 TS 6.0 完全一致的语法错误 |
-| 命令行和 tsconfig.json 解析 | ✅ done | tsconfig 错误提示可能不如原版 |
-| 类型解析 | ✅ done | 与 TS 6.0 相同的类型系统 |
-| 类型检查 | ✅ done | 相同的错误、位置和消息 |
-| JSX | ✅ done | — |
-| JavaScript 推断和 JSDoc | 🔄 in progress | 大部分完成，部分功能有意缺失 |
-| 声明文件 emit | 🔄 in progress | TypeScript 文件已完成，JS 文件未完成 |
-| Emit（JS 输出） | ✅ done | — |
-| Watch 模式 | 🔧 prototype | 文件变更重建，但无增量重检查 |
-| 构建模式/项目引用 | ✅ done | — |
-| 增量构建 | ✅ done | — |
-| 语言服务（LSP） | 🔄 in progress | 几乎所有功能已实现 |
-| API | ⏳ not ready | 尚未开始或距完成甚远 |
+| 解析 / 扫描 | done | 与 TS 6.0 完全一致的语法错误 |
+| 类型解析 / 类型检查 | done | 相同的错误、位置和消息 |
+| JSX | done | — |
+| 声明文件 emit | done | — |
+| Emit（JS 输出） | done | — |
+| Watch 模式 | done | 基于移植的 Parcel 文件监听器重写 |
+| 构建模式 / 项目引用 | done | 支持并行构建 |
+| 增量构建 | done | 复用 `.tsbuildinfo` 跳过未变更部分 |
+| 语言服务（LSP） | done | 基于语言服务器协议，多线程 |
+| API | 待 7.1 | 7.0 未发布稳定程序化 API |
 
-**状态说明：**
-- **done**：已知无重大缺陷，可正常使用
-- **in progress**：开发中，部分功能可能有效
-- **prototype**：仅概念验证
-- **not ready**：尚未开始
-
-### 预览版安装
-
-```bash
-npm install @typescript/native-preview
-npx tsgo  # 用法与 tsc 完全相同
-```
-
-VS Code 扩展也已上架，配置：
-
-```json
-{
-    "js/ts.experimental.useTsgo": true
-}
-```
+最后一行是当前唯一的硬缺口：`typescript-eslint`、`ts-morph`、自定义 transformer 这类依赖编译器 API 的工具，暂时只能继续用 6.0。微软给出的时间点是 7.1。
 
 ---
 
-## 架构设计：从 TS 到 Go 的技术挑战
+## 架构：同语义移植，不是推倒重来
 
-### 语法兼容性：逐字节对齐
+### 逐字节对齐
 
-TypeScript Go 的首要目标是 **与现有编译器输出完全相同的结果**：
+移植的首要约束是与现有编译器输出完全一致：
 
-- 解析阶段产生的 AST 必须与原版一致
-- 类型检查的错误位置、错误信息必须完全匹配
-- Emit 阶段的 JS 输出必须逐字节相同
+- 解析阶段的 AST 与原版一致
+- 类型检查的错误位置、错误信息完全匹配
+- Emit 阶段的 JS 输出逐字节相同
 
-这通过严格的回归测试套件保证——每个 PR 都会与原版 tsc 的输出做 Diff 对比，确保没有行为漂移。
+这靠一套严格的回归测试保证——每个 PR 都会拿 Go 版本的输出与原版 `tsc` 做 Diff，拦住行为漂移。这也是为什么它能直接标成"行为不变"。
 
-### 模块解析
+### 模块解析与版本收窄
 
-当前版本支持大多数标准模块解析模式，包括 Classic、Node、AMD/UMD/System、esModuleInterop 相关选项。边缘解析模式仍在完善中。
+7.0 把 6.0 里已废弃的模块解析策略清掉了：`amd`、`umd` 和经典 `classic` 解析不再支持，`es5` 目标也一并移除。迁移到 7.0 的团队，主要工作集中在 tsconfig 的收尾，而不是修补一堆新冒出来的类型错误。
 
-### Watch 模式和增量构建
+### Watch 与增量构建
 
-Watch 模式（`tsc --watch`）处于原型阶段——可监听文件变化触发重建，但增量重检查尚未优化，每次变更后仍是全量类型检查。
-
-增量构建已就绪，有 `.tsbuildinfo` 文件时能正确跳过未变更部分。
+Watch 模式在 7.0 里重做，文件变更后能增量重检查，不再像预览期那样每次全量跑。增量构建则继续依赖 `.tsbuildinfo`，正确地跳过未变更部分。
 
 ---
 
-## 与原版 TypeScript 的关系：最终会合并
+## 一次构建如何穿过这套系统
 
-根据项目 README 的说明：
+把 `tsc --build` 跑在一个 monorepo 上，看它一步步做什么：
 
-> **Long-term, we expect that this repo and its contents will be merged into `microsoft/TypeScript`.**
+1. **程序创建**：按项目引用的依赖图找到入口文件，递归解析每个模块，建立整棵程序树。
+2. **并行检查**：类型检查被拆成多个 worker（默认 4 个，可用 `--checkers` 调），多核同时跑，最终汇总成同一份错误列表——错误集合与 6.0 完全一致，只是等得更短。
+3. **增量落盘**：检查通过后写出 `.tsbuildinfo`，记录哪些文件、哪些检查结果没变。
+4. **发射产品**：每个文件转成 JS 与 sourcemap，供打包器使用。
 
-typescript-go 不是永久分叉，最终会合并回 TypeScript 主仓库。这意味着：
-
-1. 用户不需要担心分裂——还是同一个 TypeScript，只是底层从 JS 变成 Go
-2. npm 包只是过渡——合并完成后 `tsc` 本身就是 Go 二进制
-3. 版本号延续——不会因为重写产生"TS 7"
-
----
-
-## 与 TypeScript 6.0 的有意变更
-
-项目维护了一份 [CHANGES.md](https://github.com/microsoft/typescript-go/blob/main/CHANGES.md)，记录了与 TypeScript 6.0 的**有意变更**。这些变更经过设计讨论，不是 bug。预览版中遇到与原版不同的行为，建议先查这份文档——很可能是有意为之。
+下次再跑，只有变更波及的文件会重新检查，其余直接从 `.tsbuildinfo` 跳过。单文件改动在 monorepo 场景下能从秒级压到百毫秒级。
 
 ---
 
-## 性能基准
+## 性能：测什么、能推出什么、不能推出什么
 
-根据微软公布的数据（具体数字因项目规模而异）：
+7.0 的数字来自真实代码库，不是合成基准：
 
-- **编译速度**：冷启动场景下比 Node.js 原版快 **5-10x**
-- **内存占用**：降低约 **40-50%**
-- **增量构建**：接近原版水平（watch 模式的增量重检查仍在优化中）
+| 代码库 | TS 6 | TS 7 | 提升 |
+|--------|------|------|------|
+| VS Code | 125.7 s | 10.6 s | 11.9x |
+| Sentry | 139.8 s | 15.7 s | 8.9x |
+| Bluesky | 24.3 s | 2.8 s | 8.7x |
+| Playwright | 12.8 s | 1.47 s | 8.7x |
+| tldraw | 11.2 s | 1.46 s | 7.7x |
 
-百万行级的企业项目中，`tsc --build` 从 30 秒缩至 5 秒。
+关于这些数字，有三点要分清：
 
----
-
-## 使用场景与局限
-
-### 适合的场景
-
-- **大规模代码库**：性能提升最显著
-- **CI/CD 流水线**：编译速度直接影响构建时间
-- **Monorepo**：多包依赖链的增量构建收益明显
-- **语言服务器（LSP）**：IDE 响应速度改善
-
-### 当前局限
-
-- **API 未完成**：编译器插件作者暂时无法使用 Go 版本
-- **Watch 模式不完善**：增量重检查未完成，文件变更后响应不如原版
-- **三端支持但未全优化**：Windows/Linux/macOS 部分平台的性能调优可能未完成
+- **测的是全量类型检查**。收益主要来自"原生机器码 + 多线程"，跟语法、emit 关系不大；大部分项目的主要瓶颈本来就卡在类型检查。
+- **内存下降幅度比速度温和**。官方数据显示各项目下降约 6%-26%，不是"内存减半"那类夸张说法。
+- **不能推出"所有流程都快 10 倍"**。`tsc --build` 里绑定 emit 的阶段提升小一些（独立测约 3-4 倍），编辑器打开含错误文件从 17.5 秒降到 1.3 秒以下，是另一条独立指标。小项目（几万行以下）收益通常只有 2-5 倍，多线程的收益在大代码库才明显。
 
 ---
 
-## Go 如何实现 TypeScript 的类型系统
+## 与原版的关系：最终并入 TypeScript 主仓库，已经实现
 
-TypeScript 的类型系统以复杂著称——协变/逆变推导、泛型约束、模板字面量类型、分布式条件类型。用 Go 实现意味着面对几个根本性挑战：
+按项目 README 的长期规划，`typescript-go` 最终会并入 `microsoft/TypeScript`。到 7.0 这一步，这个规划已经落地：
 
-### 类型表示
+1. 没有分裂——还是同一个 TypeScript，只是底层从 JS 变成 Go
+2. `typescript` 这个包本身发布的 `tsc` 就是 Go 二进制，预览包只是过渡
+3. 版本号延续——没有因为移植凭空冒出"TS 7"，7.0 就是正常递进
 
-Go 没有泛型模板（泛型通过反射或代码生成实现），TypeScript 的泛型系统在 Go 中需用接口加类型断言模拟，或通过代码生成在编译期展开。typescript-go 将类型表示为 Go 接口的层次结构：
+项目维护了一份 [CHANGES.md](https://github.com/microsoft/typescript-go/blob/main/CHANGES.md)，记录与 TypeScript 6.0 的**有意变更**。这些变更经过设计讨论，不是 bug。预览期遇到与原版不同的行为，先查这份文档，很可能是有意为之。
 
-```go
-type Type interface {
-    Kind() TypeKind
-    String() string
-}
+---
 
-type UnionType struct {
-    Types []Type
-}
+## 用 Go 表示 TypeScript 的类型系统
 
-type ObjectType struct {
-    Properties map[string]Type
-    // ...
-}
-```
+TypeScript 的类型系统以复杂著称：联合类型、泛型、条件类型、模板字面量类型。用 Go 实现时，一个常见的误解要先澄清——**Go 自 1.18 起就有泛型**，但它的泛型模型（类型参数 + 约束）和 TypeScript 的泛型（可实例化的结构化子类型）不是一回事。Go 的原生泛型并不能直接承载 TypeScript 的类型推导，所以 typescript-go 需要自己实现一套类型表示，而不是把 TS 的每个类型映射到一个 Go 泛型。
 
-这种表示方式比 JS 版更紧凑，因为 Go 的 struct 内存布局是确定的，没有 JS 对象的动态属性开销。
+它的做法是把类型定义为 Go 接口的层次结构。好处是内存布局确定：Go 的 struct 是紧凑的定长分配，没有 JS 对象那种动态属性开销，也没有 V8 的堆压力。对编译器这种要长时间持有大量中间结构的工作负载，这个差别会累积成可观的省内存。
 
 ### 错误消息兼容
 
-原版 tsc 的错误消息格式经过多年打磨，许多用户依赖特定格式做解析或国际化。Go 版本必须精确复现这些消息，包括位置信息、错误代码（如 `TS2322`）、建议文本。typescript-go 的做法是将错误模板编译为 Go 常量，运行时按需填充参数，避免字符串拼接的性能损失。
+原版 `tsc` 的错误消息格式经过多年打磨，很多工具链依赖特定格式做解析和国际化。Go 版本必须精确复现这些消息，包括位置信息、错误代码（如 `TS2322`）、建议文本。typescript-go 把错误模板编译成常量，运行时按需填充参数，既保住了格式，也躲开了反复字符串拼接的开销。
 
 ### 源码映射（Source Maps）
 
-编译结果需要携带正确的源码映射，调试时才能正确映射回原始 TypeScript 源码。这部分与 JS 版本完全兼容，由同一个 Go 结构体序列化生成。
+编译结果要携带正确的源码映射，调试时才能映射回原始 TypeScript 源码。这部分与 JS 版本完全兼容，由同一套序列化逻辑生成。
 
 ---
 
 ## 为什么是 Go 而不是 Rust
 
-Rust 也能编译为机器码，性能强、内存安全，但微软选了 Go：
+Rust 也能编译成机器码，性能强、内存安全，但微软最终选了 Go。取舍不是"谁更好"，而是"谁更适合这个目标"：
 
-| 考量 | Go 的优势 |
-|------|----------|
-| 团队技能 | 微软 TypeScript 团队更熟悉 Go（Azure 等项目积累）|
-| 编译速度 | Go 的编译器比 Rust 快得多，更适合频繁重编译场景 |
-| 工具链 | `go build`、`go test` 简单直接，降低维护成本 |
-| 并发模型 | Goroutine 对编译器这种 IO 密集型任务天然友好 |
-| 学习曲线 | 门槛低，社区贡献者容易上手 |
+| 考量 | 为什么选 Go |
+|------|------------|
+| 先例 | esbuild 已经证明 Go 能做出极快的 JS 工具链 |
+| 内存模型 | Go 的 GC 自己管，不用手写内存管理，编译这种长任务更省心 |
+| 架构匹配 | 编译器函数式、递归的代码结构，映射到 Go 的习惯用法很自然 |
+| 并发 | Goroutine 对 check 这种可并行任务天然友好 |
+| 团队熟悉度 | TypeScript 团队在 Go 上有积累 |
+| 迭代速度 | Go 编译快、工具链简单，降低移植的维护成本 |
 
-Rust 在内存控制和零成本抽象上更优，但 Go 的简洁在这个场景里更务实——TypeScript 团队的首要目标是产出与原版行为完全一致的编译器，技术选型服务于这个目标，不是追求理论最优。
-
----
-
-## 时间线与未来展望
-
-没有官方 ETA，从路线图可推断出大致节奏：
-
-1. **近期**：完善 watch 模式的增量重检查、完成 API 层、完成 JS 文件的声明 emit
-2. **中期**：所有功能达到 `done` 状态，发布稳定版 npm 包
-3. **长期**：合并回 `microsoft/TypeScript` 主仓库，`tsc` 二进制默认使用 Go 版本
-
-届时，TypeScript 用户只需升级版本，就能拿到 Go 版本的性能提升，使用习惯不需要改变。
+Rust 在零成本抽象和精细内存控制上更优，但这里的目标是"产出一个与原版行为一致的编译器"，不是追求理论最优。选 Go 是服务于这个目标的技术决策。
 
 ---
 
-**相关链接：**
+## 谁该先用、谁可以等
 
-- GitHub：https://github.com/microsoft/typescript-go（26.1K stars）
-- 公告博客：https://devblogs.microsoft.com/typescript/typescript-native-port/
-- npm：https://www.npmjs.com/package/@typescript/native-preview
-- VS Code 扩展：https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.native-preview
+这个升级的收益和约束都很明确，按团队情况对号入座：
+
+**现在就可以上：**
+- 类型检查是 CI 瓶颈的团队。`tsc --noEmit` 在 CI 里从分钟级压到秒级，收益直接叠加在每次提交上
+- 大 monorepo，编辑器打开和补全经常卡顿的团队，语言服务多线程收益明显
+
+**建议等一等：**
+- 深度依赖编译器 API 的团队——`typescript-eslint` 的类型感知规则、`ts-morph`、自定义 transformer，都要等 7.1 的稳定 API
+- 用 webpack loader 或复杂 emit 管道的项目，7.0 没有 API 面可用，先停在 6.0
+
+迁移前在两件事上花点时间：先升级到 6.0 平滑过渡（7.0 把 6.0 的弃用项变成硬错误），再在分支上验证一遍构建，因为 strict 默认开启和移除的 target 可能翻出之前被压住的问题。
+
+---
+
+## 相关链接
+
+- GitHub：https://github.com/microsoft/typescript-go
+- 原生移植公告：https://devblogs.microsoft.com/typescript/typescript-native-port/
+- TypeScript 7.0 Beta 发布说明：https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/
+- TypeScript 7.0 正式发布：https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/
+- VS Code 团队用 TS 7 加速迭代：https://code.visualstudio.com/blogs/2026/06/26/iterating-faster-with-ts-7

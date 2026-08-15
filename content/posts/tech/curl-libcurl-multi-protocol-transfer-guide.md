@@ -36,7 +36,7 @@ curl 由瑞典开发者 Daniel Stenberg 于 1998 年发起，最初只是给 IRC
 
 | 指标 | 数值（2026-08 核验） |
 |------|------|
-| GitHub Stars | 42,554 |
+| GitHub Stars | 42,600 |
 | GitHub Forks | 7,300 |
 | 主要语言 | C |
 | 维护者 | Daniel Stenberg 主导 |
@@ -78,6 +78,8 @@ curl 项目分两层：上层是命令行工具 `curl`，下层是 C 库 `libcur
 ### 命令行工具 curl
 
 命令行 curl 是 libcurl 的前端消费者。它把用户参数翻译成 libcurl API 调用，再格式化输出结果。
+
+前置条件：本机装有 curl。先跑 `curl --version` 确认版本；`curl -V` 能列出当前构建启用的协议和特性，后面讲协议支持时会用到。
 
 ```bash
 # 最常见的 HTTP GET 请求
@@ -196,6 +198,11 @@ do {
   }
 } while(still_running);
 
+// 清理 multi 前需先移除并清理各 easy handle
+curl_multi_remove_handle(multi, curl1);
+curl_multi_remove_handle(multi, curl2);
+curl_easy_cleanup(curl1);
+curl_easy_cleanup(curl2);
 curl_multi_cleanup(multi);
 ```
 
@@ -224,7 +231,9 @@ CURL *curl2 = curl_easy_init();
 curl_easy_setopt(curl1, CURLOPT_SHARE, share);
 curl_easy_setopt(curl2, CURLOPT_SHARE, share);
 
-// 记得在 cleanup 之前清理 share
+// 先清理 easy handle，再清理 share
+curl_easy_cleanup(curl1);
+curl_easy_cleanup(curl2);
 curl_share_cleanup(share);
 ```
 
@@ -243,7 +252,7 @@ URL 解析看起来简单，陷阱不少：
 - 不同协议对 URL 各部分的规则不同（HTTP 的 `//` 前缀、mailto 没有 `//`、file 的路径规则）
 - IPv6 地址用方括号包裹（`[::1]:8080`），解析时要特殊处理
 - 端口号、认证信息（user:password）、query string 编码等边界情况繁多
-- 没有通用的 `parse_url()` 标准函数——POSIX 只定义了少数协议的格式
+- 系统不提供行为一致的 URL 解析函数——Windows 的解析接口与 POSIX 侧各不相同，curl 要跨平台行为一致，就得自己实现
 
 自己实现 URL 解析，能换来三样东西：
 
@@ -287,6 +296,8 @@ curl_url_cleanup(u);
 
 给定一个 URL 字符串，可以安全地提取各组件，也可以逐步构造一个 URL。格式不合法时 `curl_url_set()` 会返回错误码，不会静默成功。
 
+命令行场景想直接调用这套解析能力，同源的 [trurl](https://github.com/curl/trurl) 工具把它暴露给了 shell——它内部复用的正是 libcurl 的 curl_url 实现。
+
 ---
 
 ## 协议支持：27 种协议是如何实现的
@@ -318,6 +329,8 @@ struct Curl_handler {
 
 不需要改动传输主循环。新协议的接入点明确，维护边界清晰。这是 curl 能持续增加协议而代码不失控的原因——每个协议自己负责自己的实现，主循环只管查表分发。
 
+需要说明的是，27 种协议是 curl 源码支持的完整清单，某个具体构建未必全部启用——SMB/SMBS、GOPHERS 这类协议在部分平台或发行版的默认配置里可能没有编译进去。实际能力以 `curl -V` 输出为准。
+
 ### 代理与 HTTP 版本选择
 
 curl 通过代理和 HTTP 版本开关控制请求路径。调试链路或锁定协议版本时常用：
@@ -336,11 +349,13 @@ curl --http1.1 https://example.com
 curl --http2 https://example.com
 ```
 
+`--http2` / `--http3` 要求 curl 在编译时启用对应支持（HTTP/2 通常依赖 nghttp2，HTTP/3 依赖 quiche 或 ngtcp2），否则会直接报错。先 `curl -V` 确认当前构建支持哪些。
+
 ---
 
 ## SSL/TLS 支持
 
-curl 支持多种 SSL 后端（OpenSSL、GnuTLS、mbedTLS、WolfSSL，macOS 上的 Secure Transport、Windows 上的 Schannel）。编译时通过 `configure` 选项选择后端，同一个二进制可以静态链接一个后端，也可以通过动态库同时支持多个。
+curl 支持多种 SSL 后端：OpenSSL、GnuTLS、mbedTLS、WolfSSL、BearSSL、rustls，以及 macOS 上的 Secure Transport、Windows 上的 Schannel。编译时选择后端（autotools 用 `--with-ssl` 等选项，CMake 构建用对应开关），同一个二进制通常静态链接一个后端，也可以通过动态库同时支持多个。当前启用的是哪一个，看 `curl -V` 中 TLS 一行的输出。
 
 ### 关键配置项
 
@@ -408,6 +423,7 @@ curl_easy_setopt(curl, CURLOPT_CAINFO, "/path/to/ca-bundle.crt");
 | 大文件下载中断 | 网络不稳定或服务器超时 | 用 `-C -` 断点续传；用 `--retry 3` 自动重试 |
 | HTTPS 通过代理失败 | 代理不支持 HTTPS 隧道 | 确认代理支持 `CONNECT` 方法；SOCKS5 代理无需此步骤 |
 | `curl_easy_perform()` 返回 `CURLE_OPERATION_TIMEDOUT` | 超时 | 检查 `CURLOPT_TIMEOUT` 和 `CURLOPT_CONNECTTIMEOUT` 的设置 |
+| `curl: (35) SSL connect error` | TLS 握手失败（服务器不支持该版本、SNI 缺失或中间设备拦截） | 用 `-v` 看握手卡在哪一步；确认服务器的 TLS 版本，必要时用 `--tls-max` 限定 |
 
 ---
 
@@ -423,4 +439,4 @@ curl 的命令行工具只是 libcurl 的前端。libcurl 作为底层库，让�
 4. **多线程共享**：多线程场景下用 share interface 共享 DNS 和 SSL session，避免重复初始化
 5. **独立 URL 解析**：只需要 URL 解析不需要传输时，单独用 curl_url，不引入完整传输栈
 
-想深入源码，Daniel Stenberg 写的 [Everything curl](https://everything.curl.dev/) 是目前最完整的 curl 中文与英文参考书，免费在线阅读，重点看 "How curl works" 和 "libcurl internals" 两章；[libcurl API 参考](https://curl.se/libcurl/c/) 和 [curl 官方文档](https://curl.se/docs/) 适合按需查。注意 Everything curl 是免费在线书，没有中文版，读原文即可。
+想深入源码，Daniel Stenberg 写的 [Everything curl](https://everything.curl.dev/) 是最完整的 curl 参考书，官方在线版免费阅读，重点看 "How curl works" 和 "libcurl internals" 两章；这本书也有社区维护的中文翻译版本（另有人邮社出版的中文纸书《cURL 必知必会》）。[libcurl API 参考](https://curl.se/libcurl/c/) 和 [curl 官方文档](https://curl.se/docs/) 适合按需查。

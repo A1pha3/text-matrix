@@ -16,7 +16,7 @@ author: "钳岳星君"
 
 这台机器的"教练"之一，是 2025 年离开弗吉尼亚大学讲席教授席位、加入一家叫 Axiom Math 的初创公司的 Ken Ono。Ono 是当代最懂 Ramanujan 的数学家之一——他 2000 年在《Annals of Mathematics》证明 Ramanujan 同余定理，担任过拉马努金传记电影《The Man Who Knew Infinity》的数学顾问和副制片人。
 
-2026 年 6 月 5 日，Axiom Math 创始人兼 CEO Carina Hong 在 SAIR 基金会主办的 2026 Science x AI Summit 上发表主题演讲。成绩单没有"AI 颠覆数学"的廉价口号：**自 2026 年 2 月起，Axiom 已发布 7 篇数学研究论文，5 篇涉及形式化定理证明，3 项成果被《Archiv der Mathematik》《Indagationes Mathematicae》等期刊接收**。更值得注意的数字是：去年 12 月 AxiomProver 解决 Erdos 问题时用了约 50 个推理节点；今年 3 月证明 Ramanujan tau 函数性质时，推理节点从 50 增长到 500——**10 倍跃升**。
+2026 年 6 月 5 日，Axiom Math 创始人兼 CEO Carina Hong 在 SAIR 基金会主办的 2026 Science x AI Summit 上发表主题演讲。成绩单没有"AI 颠覆数学"的廉价口号：**自 2026 年 2 月起，Axiom 已发布 7 篇数学研究论文，5 篇涉及形式化定理证明，3 项成果被《Archiv der Mathematik》《Indagationes Mathematicae》等期刊接收**。更关键的数字是：去年 12 月 AxiomProver 解决 Erdos 问题时用了约 50 个推理节点；今年 3 月证明 Ramanujan tau 函数性质时，推理节点从 50 增长到 500——**10 倍跃升**。
 
 本文沿着 Hong 的演讲、Axiom 的论文列表、Ken Ono 的学术轨迹、Ramanujan 的原始笔记四条线展开：**它做到了什么、怎么做到的、和真正的数学家差在哪里、又把数学发现这件事推到了什么位置**。
 
@@ -42,7 +42,7 @@ author: "钳岳星君"
 | **2026-06-05** | **Carina Hong 在 SAIR Summit 演讲** | **Carina Hong** | **方法论定调** |
 | 2026-06-15 | Axiom 论文 #12：Nekrasov-Okounkov + Thakur | Heim + Ono + Axiom | Ono 亲自下场 |
 
-Axiom 的 12 篇论文里，**5 篇是"完全由 AI 自主证明并形式化"的硬成果**，4 篇是"AI + 人类数学家协作"的混合产物，3 篇属于"AI 形式化人类数学家已经写好的证明"。三种模式覆盖了 AI for Math 的全部主要路径。
+Axiom 的 12 篇论文里，**5 篇是"完全由 AI 自主证明并形式化"的硬成果**，4 篇是"AI + 人类数学家协作"的混合产物，3 篇属于"AI 形式化人类数学家已经写好的证明"。三种模式，对应 AI for Math 目前的主要路径。
 
 ---
 
@@ -72,7 +72,7 @@ Erdos 有一句被反复引用的话："数学的进步不是来自解决单个�
 
 ## 第二幕：Axiom 的硬核路径——把 Lean 当成共同作者
 
-Axiom Math 2024 年成立，总部在加州帕罗奥图。官网 axiommath.ai 上挂着一句克制的口号："The Starting Point for Reasoning"。Ken Ono 是公司的科学核心，CEO Carina Hong 负责商业和工程。
+Axiom Math 2025 年成立，总部在加州帕罗奥图。官网 axiommath.ai 上挂着一句克制的口号："The Starting Point for Reasoning"。Ken Ono 是公司的科学核心，CEO Carina Hong 负责商业和工程。
 
 Ken Ono 1968 年生于费城，父亲 Takashi Ono 是日本数学家。他高中退学后进入芝加哥大学，1989 年拿到本科学位，1993 年在 UCLA 博士毕业。此后辗转普林斯顿高等研究院、宾大、威斯康星、埃默里、弗吉尼亚，担任过美国数学会副主席（2018-2021）、美国科学促进会数学分会主席（2020-2023）。2019 年他与 Don Zagier 在《PNAS》发表了关于黎曼猜想 Jensen-Polya 判据的论文，2014 年与 Michael Griffin 证明 Umbral Moonshine 猜想。2000 年他在《Annals of Mathematics》证明 Ramanujan 同余定理的那篇论文，是把"挂在大数学家遗稿里的猜想"重新激活的经典操作。他还是拉马努金传记电影《The Man Who Knew Infinity》的数学顾问和副制片人——这部电影由 Jeremy Irons 饰演 Hardy、Dev Patel 饰演 Ramanujan。
 
@@ -84,7 +84,7 @@ Axiom 给 Ono 提供的工具，是一个叫 **AxiomProver** 的内部 AI 证明
 
 Axiom 的技术路线可以浓缩为一句话：**"开源大模型 + 多智能体协作 + 工具调用 + 测试时计算扩展 + 递归分解与回溯"**。
 
-拆开看：
+拆开是五件事：
 
 - **基础是开源语言模型**，不是闭源的。Hong 强调 Axiom 选这条路的原因是"数学证明需要可审计、可复现"，闭源模型每次版本变化都会让历史证明失效。
 - **多智能体协作**意味着一个证明任务会被拆成多个子任务分给不同 Agent 串行/并行执行，而不是让一个 Agent 从头想到尾。
@@ -158,17 +158,27 @@ Hong 在演讲结尾给出了 Axiom 对未来 1-2 年的路线图：
 - **库学习**（library learning）：让 AI 从 mathlib 这种大型形式化库中自动抽取可重用的引理，而不是每证一个新题都从头搭建。
 - **形式化定理证明与上述两者的深度融合**：猜想 → 证明 → 形式化验证 → 反哺到库，这条流水线一旦跑通，AI 数学家的工作节奏会和人类数学家完全不同。
 
-Hong 引用的方法论核心，也是对"AI 数学家"最克制的概括：
+Hong 引用的方法论内核，也是对"AI 数学家"最克制的概括：
 
 > **"数学发现的未来不取决于 AI 解题的速度，而取决于每一步推理能否被形式化验证所确认。"**
 >
 > ——Carina Hong, 2026 Science x AI Summit
 
-翻译成更直白的话：**AI 不会比高斯更快，但 AI 应该是第一个能证明自己证明的数学家**。
+把这句话落回个体：**AI 不会比高斯更快，但它应该是第一个能证明自己证明的数学家**。
 
 Ramanujan 当年在英国没有朋友、没有学位、没有图书馆，写下的公式要靠 Hardy 转交给其他数学家验证。等验证回来，他常常已经忘了自己是怎么写出来的。110 年后，AxiomProver 在 Lean 里给出证明，每一步都可以被任何一台装了 Lean 4 的电脑复现。
 
 数学发现不再是天才的专利。Axiom 的 12 篇论文、Ken Ono 从学界到工业界的转身、Lean 从 2013 年初版到 2026 年 210,000 定理的积累，让这句话从一个愿景变成了**事实**。
+
+---
+
+## 读这份成绩单，先分清三对概念
+
+第一对，**"接收"和"发表"**。附录里的状态大多是"接收"（accepted）——通过了同行评审、排队等见刊，和正式刊出之间还有一段距离；而这 12 篇的清单本身，来自 Axiom 自己的论文页（axiommath.ai/papers），由公司披露。
+
+第二对，**"AI 证明"和"AI 发现"**。12 篇里只有 5 篇是"100% AI 自主证明并形式化"，其余是"AI + 数学家协作"或"AI 形式化人类已经写好的证明"。Axiom 展示的是"AI 把定理证出来"，不是"AI 提出新问题"——后者还挂在它自己的路线图上，也就是第四幕里的"自动猜想生成"。
+
+第三对，**条件结论和结论**。最重磅的 τ 素数密度论文，前提是"ABC 猜想成立"；而 ABC 猜想本身还没有无条件证明。Axiom 证下的是条件命题，把无条件版本留给人类数学家——这是它最诚实的一步，也最容易在传播里被省略。
 
 ---
 
@@ -186,11 +196,11 @@ Axiom 的全部成绩建立在 Lean 4 之上。Lean 在这里扮演的角色不�
 - **数据 Agent**：让 LLM 做数据转换 → 用 Great Expectations / dbt tests 当判决者 → 数据异常就回溯。
 - **决策 Agent**：让 LLM 做多步推理 → 用形式化逻辑 / SMT solver 当判决者 → 推理错误就回溯。
 
-Axiom 的核心判断是：**判决者必须独立于生成者**。如果判决者也是 LLM，等于自己给自己发奖。Lean、编译器、test framework 这些"非 LLM"的判决者才是范式的核心。
+Axiom 的核心判断是：**判决者必须独立于生成者**。如果判决者也是 LLM，等于自己给自己发奖。Lean、编译器、test framework 这些"非 LLM"的判决者才是这套方法的关键。
 
 ### 2. 多智能体 + 工具调用 + 测试时计算——2026 AI Agent 的"标准三件套"
 
-Hong 在演讲里说 AxiomProver 是"开源大模型 + 多智能体协作 + 工具调用 + 测试时计算扩展 + 递归分解与回溯"五件套。这五件套拆开看，**前四件是 2026 年所有 Agent 框架的共识**，第五件是数学证明这个领域特有的。
+Hong 在演讲里说 AxiomProver 是"开源大模型 + 多智能体协作 + 工具调用 + 测试时计算扩展 + 递归分解与回溯"五件套。这五件套里，**前四件是 2026 年所有 Agent 框架的共识**，第五件是数学证明这个领域特有的。
 
 | 维度 | Axiom 的做法 | 可以推广到 |
 |---|---|---|
@@ -253,6 +263,16 @@ Ramanujan 没有定理证明器，他只能把公式写在信纸上寄给 Hardy 
 
 ---
 
+## 谁该去看原片，谁读这篇就够
+
+想听 Carina Hong 的原话、核对 50→500 推理节点的细节、或者想看 AxiomProver 现场演示的，去 B 站搜 BV1tV7Q6TEUV。文稿只能转述判断，演示的冲击力留在视频里。
+
+只要结论和路线图的——Axiom 做了什么、三条可借鉴方法、怎么上手 Lean——读这篇就够，不必为几条结论专门去翻视频。
+
+想动手的，直接跳到第六幕和附录 B：把 Lean 装起来跑第一个证明，比看任何讲解都直观。
+
+---
+
 ## 附录 A：12 篇论文全表（2025-11 至 2026-06）
 
 | # | 发布日期 | 主题 | 期刊 / 状态 | 关键人物 | AI 参与度 |
@@ -289,7 +309,7 @@ Ramanujan 没有定理证明器，他只能把公式写在信纸上寄给 Hardy 
 
 ## 附录 C：核心参考资料
 
-- 视频原片：B 站 SAIRfoundation《Axiom创始人Carina Hong主题演讲：AI数学家正在攻克数论猜想，形式化验证是关键》（BV1tV7Q6TEUV）
+- 视频原片：B 站 SAIRfoundation《Axiom 创始人 Carina Hong 主题演讲：AI 数学家正在攻克数论猜想，形式化验证是关键》（BV1tV7Q6TEUV）
 - Axiom Math 官网：https://www.axiommath.ai/
 - Axiom 论文列表：https://www.axiommath.ai/papers
 - Ken Ono 维基条目：https://en.wikipedia.org/wiki/Ken_Ono

@@ -22,7 +22,7 @@ DeepSeek-V3 671B 参数，每次前向只激活 37B。Llama 3.1 405B 算满 405B
 | 上下文长度 | 128K |
 | 预训练语料 | 14.8T tokens |
 | 训练成本 | 2.788M H800 GPU 小时（约 $5.576M） |
-| 代码许可 | MIT License |
+| 代码许可 | MIT（模型权重另附 DeepSeek 模型许可） |
 
 这张图把三处成本瓶颈和对应的设计对起来，后面逐个展开：
 
@@ -52,7 +52,7 @@ flowchart LR
 
 Scaling Law 在稠密架构下意味着算力随参数线性增长。GPT-3（175B）、PaLM（540B）、Llama 3.1（405B）都是稠密 Transformer，每个 Token 流经每一层的每个 FFN 块。405B 稠密模型每次前向都要计算 405B 参数，不管 Token 是否需要那么大的计算量。405B 之后的稠密模型训练成本会突破多数团队的预算。
 
-MoE（Mixture of Experts）把 FFN 层替换为多个并行的专家网络，配合路由器决定每个 Token 交给哪些专家。一个 N 专家的 MoE 层输出为：
+MoE（Mixture of Experts，混合专家）把 FFN 层替换为多个并行的专家网络，配合路由器决定每个 Token 交给哪些专家。一个 N 专家的 MoE 层输出为：
 
 ```
 y = Σ(g_i(x) · E_i(x))
@@ -65,13 +65,13 @@ DeepSeek-V3 的 DeepSeekMoE 配置（来自技术报告 Table 1）：
 - 路由专家：256 个
 - 共享专家：1 个（始终激活）
 - 每次激活：1 个共享专家 + top-8 路由专家，共 9 个
-- 专家激活比例：9/257 ≈ 3.5%
+- 激活参数比例：37B / 671B ≈ 5.5%
 
-共享专家承载通用模式，路由专家承载专业化模式。每次前向只有 9 个专家计算，其余 247 个专家的参数不参与本次计算，但仍占用显存——这是 MoE 用显存换算力的基本取舍。
+共享专家承载通用模式，路由专家承载专业化模式。每次前向只有 9 个专家计算，其余 248 个路由专家的参数不参与本次计算，但仍占用显存——这是 MoE 用显存换算力的基本取舍。
 
 ### 1.2 Multi-Token Prediction 的训练信号
 
-传统语言模型预测下一个 Token（NTP）。DeepSeek-V3 引入 Multi-Token Prediction（MTP），同时预测接下来的多个 Token。MTP 在训练阶段作为辅助任务提供额外监督信号，同一个上下文可以同时产生多个预测损失。推理阶段可以不用 MTP 头，按标准 NTP 解码；如果启用 MTP 头做投机解码，可以一次前向产出多个候选 Token 加速推理。
+传统语言模型预测下一个 Token（NTP，Next Token Prediction）。DeepSeek-V3 引入 Multi-Token Prediction（MTP，多 Token 预测），同时预测接下来的多个 Token。MTP 在训练阶段作为辅助任务提供额外监督信号，同一个上下文可以同时产生多个预测损失。推理阶段可以不用 MTP 头，按标准 NTP 解码；如果启用 MTP 头做投机解码，可以一次前向产出多个候选 Token 加速推理。
 
 MTP 的代价是训练时需要额外的前向计算和更复杂的实现，DeepSeek 在技术报告中将其作为可选项，推理时不强制使用。
 
@@ -81,14 +81,15 @@ MTP 的代价是训练时需要额外的前向计算和更复杂的实现，Deep
 
 ### 2.1 整体结构
 
-DeepSeek-V3 采用 Pre-Norm + 残差连接的 Transformer 堆叠，共 61 层，每层包含 1 个 MLA 注意力模块和 1 个 DeepSeekMoE 模块：
+DeepSeek-V3 采用 Pre-Norm + 残差连接的 Transformer 堆叠，共 61 层。前 3 层用稠密 FFN，其余 58 层替换为 DeepSeekMoE；每层都包含 1 个 MLA 注意力模块：
 
 ```
 输入 Token
     ↓
 [MLA Layer] ← Multi-head Latent Attention
     ↓
-[MoE Layer] ← DeepSeekMoE（1 共享专家 + 256 路由专家，top-8）
+[FFN Layer] ← 前 3 层为稠密 FFN
+[MoE Layer] ← 其余 58 层为 DeepSeekMoE（1 共享专家 + 256 路由专家，top-8）
     ↓
 ...（堆叠 61 层）...
     ↓
@@ -101,7 +102,7 @@ DeepSeek-V3 采用 Pre-Norm + 残差连接的 Transformer 堆叠，共 61 层，
 
 1. **Embedding**：Token 转为向量，进入第 1 层
 2. **MLA 注意力**：当前 Token 的 Query 与 KV Cache 中的 latent vector 做注意力计算。KV Cache 存的是压缩后的 latent vector，不是完整 K/V，解码时通过投影矩阵恢复
-3. **MoE 路由**：路由器计算当前 Token 与 256 个路由专家的亲和度分数，选 top-8。被选中的 8 个路由专家 + 1 个共享专家并行计算，其余 247 个路由专家跳过
+3. **MoE 路由**：路由器计算当前 Token 与 256 个路由专家的亲和度分数，选 top-8。被选中的 8 个路由专家 + 1 个共享专家并行计算，其余 248 个路由专家跳过（前 3 层仍是稠密 FFN，不经过路由）
 4. **聚合**：路由器输出的门控权重对 9 个专家的输出加权求和
 5. **残差与归一化**：聚合结果加上残差，进入下一层
 6. **重复 2-5**：经过 61 层后，最后一层输出经过 LM Head 得到下一个 Token 的概率分布
@@ -110,7 +111,7 @@ DeepSeek-V3 采用 Pre-Norm + 残差连接的 Transformer 堆叠，共 61 层，
 
 ### 2.3 Multi-Head Latent Attention（MLA）
 
-标准 MHA 每个 Token 都要缓存所有头的 K/V 向量。128K 上下文、多头模型下，KV Cache 体积会撑爆显存。MQA 和 GQA 通过共享 K/V 头来缓解，但会损失注意力质量。
+标准 MHA（Multi-Head Attention，多头注意力）每个 Token 都要缓存所有头的 K/V 向量。128K 上下文、多头模型下，KV Cache 体积会撑爆显存。MQA（Multi-Query Attention）和 GQA（Grouped-Query Attention）通过共享 K/V 头来缓解，但会损失注意力质量。
 
 MLA 的做法是对 K/V 做低秩压缩：
 
@@ -125,7 +126,7 @@ MLA 的做法是对 K/V 做低秩压缩：
 # k, v = kv_proj(latent_kv) 恢复到 [batch, seq, heads, head_dim]
 ```
 
-MLA 相比 MQA/GQA 的优势在于保留多头注意力的表达能力，压缩发生在低秩空间而非靠共享头。按技术报告，V3 的 KV 缓存能压到约 GQA 的 1/3，注意力质量仍接近 MHA——这是 128K 上下文能塞进显存的关键。
+MLA 相比 MQA/GQA 的优势在于保留多头注意力的表达能力，压缩发生在低秩空间而非靠共享头。技术报告里，每个 Token 只需缓存一个低维潜在向量，而标准 MHA 要缓存所有头、所有维度的 K/V，两者差约一个数量级。正是这个压缩量级，让 128K 上下文不至于撑爆显存。
 
 ### 2.4 辅助损失-free 负载均衡
 
@@ -150,7 +151,7 @@ DeepSeekMoE 还采用细粒度专家分割：把每个专家拆成更小的子�
 
 **通信-计算重叠**：MoE 的路由机制引入跨节点通信（专家分布在不同 GPU 上）。DeepSeek 用自研的 DualPipe 算法把前一批的计算和下一批的传输重叠起来，配合自定义的 all-to-all 通信，让通信基本被计算掩盖。这对 MoE 训练的扩展性至关重要——如果通信不能被掩盖，跨节点训练的效率会随节点数下降。
 
-**成本口径**：2.788M 小时不是单一数字。按技术报告拆开：预训练阶段 2.05M 小时（其中 4K 上下文 0.32M、128K 上下文 1.73M），后训练阶段 0.74M 小时。预训练是主体，后训练（SFT、RL 等）占了剩下的四分之一。这套数字只覆盖 DeepSeek-V3 自己的路线，不含数据清洗和多次实验的全部开销，也不能直接外推到其他模型架构。
+**成本口径**：2.788M 小时不是单一数字。技术报告拆成三段：在 14.8T token 上的预训练约 2.664M 小时（平均每万亿 token 约 18 万小时）；把上下文从 32K 扩展到 128K 的扩展阶段约 119K 小时；后训练（SFT、RL 等）约 5K 小时。三段相加约 2.788M。这套数字只覆盖正式训练的一个前向路线，不含数据清洗、消融实验和失败重跑的开销，也不能直接外推到其他模型架构。
 
 ---
 
@@ -158,7 +159,7 @@ DeepSeekMoE 还采用细粒度专家分割：把每个专家拆成更小的子�
 
 ### 3.1 获取模型
 
-代码 MIT 许可，权重托管在 HuggingFace：
+代码按 MIT 许可开源，模型权重另行使用 DeepSeek 模型许可，托管在 HuggingFace：
 
 - **GitHub**：[deepseek-ai/DeepSeek-V3](https://github.com/deepseek-ai/DeepSeek-V3)
 - **HuggingFace**：[deepseek-ai/DeepSeek-V3](https://huggingface.co/deepseek-ai/DeepSeek-V3)
@@ -211,10 +212,10 @@ DeepSeek-V3 完整 BF16 权重约 1.4TB，单卡无法加载。量化方案对�
 
 | 方案 | 精度 | 显存需求（估算） | 推荐场景 |
 |------|------|-----------------|---------|
-| BF16 | 16-bit | ~1400GB | H100 集群 |
+| BF16 | 16-bit | ~1400GB | H100/H800 集群 |
 | FP8 | 8-bit | ~700GB | H100/H800 |
-| INT4 + AQ | 4-bit | ~350GB | 高端单机（8×80G） |
-| GGUF | 4-bit | ~350GB | 个人开发测试 |
+| INT4 + AWQ | 4-bit | ~350GB | 高端单机（4×80G 或 8×48G） |
+| GGUF | 4-bit | ~350GB | 多卡量化验证 |
 
 以 llama.cpp 量化（INT4）为例：
 
@@ -289,6 +290,12 @@ MoE 模型的推理速度受限于路由机制和专家并行。优化方向：
 确认使用的推理框架支持 128K 上下文。transformers 库需要设置 `max_position_embeddings`，vLLM 需要设置 `--max-model-len 131072`。如果显存不足，可以使用 YaRN 进行上下文外推。
 
 ---
+
+## 五、这套账本说明了什么
+
+DeepSeek-V3 的启发不在单一设计，而在把三个独立瓶颈各用一项设计顶回去：MoE 管激活参数，MLA 管 KV 缓存，无辅助损失路由管训练负载。每一处都不算颠覆，但叠在一起，671B 的预训练成本压到了多数团队能接受的量级。这提醒一点：模型变大的成本，不必全部靠堆算力消化，架构取舍同样能腾出空间。
+
+部署层面，它并不适合所有人——单卡、端侧、强延迟场景都不占优。真正适配的是"要超大模型能力、但推理预算有限"的团队。选用前先想清楚这个匹配，比纠结某一行配置更实在。
 
 ## 参考链接
 

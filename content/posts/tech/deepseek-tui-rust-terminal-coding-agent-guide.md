@@ -13,7 +13,7 @@ tags: ["Rust", "AI 编程", "终端工具", "DeepSeek", "LLM"]
 
 这个项目一开始叫 DeepSeek-TUI，做的是"在终端里用 DeepSeek 写代码"。从 v0.8.41 起它改名为 Codewhale，定位也变了：不再只是 DeepSeek 的终端壳，而是一个**社区驱动的 agent harness**——你给它一个 provider、一个模型、一个任务，它读代码、改文件、跑命令、自查结果，做完就停，需要你的时候再找你。DeepSeek 是第一个 provider，也是默认 provider，但不再是被绑死的那个。
 
-[项目地址：Hmbown/CodeWhale](https://github.com/Hmbown/CodeWhale)，Rust 编写，MIT 协议，GitHub API 于 2026-08-07 验证：40,520 Stars、3,504 Forks，最新发布 v0.9.3（2026-07-31）。
+[项目地址：Hmbown/CodeWhale](https://github.com/Hmbown/CodeWhale)，Rust 编写，MIT 协议，GitHub API 于 2026-08-07 验证：40,520 Stars、3,504 Forks，最新发布 v0.9.1（2026-07-25）。
 
 > 常在终端写代码、通过 SSH 连服务器、或者想用一个 harness 接多家的模型（DeepSeek、Claude、GLM、本地 Ollama）而不是每家用一个工具的人，这篇文章对你有用。习惯 GUI IDE 且不打算离开 Cursor/Copilot 的，可以直接看末尾的适用边界。
 
@@ -119,7 +119,7 @@ macOS 和 Linux 上，官网安装脚本是最短路径，会下载 `codewhale`�
 curl -fsSL https://codewhale.net/install.sh | sh
 ```
 
-也可以用 Cargo（要求 Rust 1.88+）：
+也可以用 Cargo（建议使用较新的稳定版 Rust 工具链）：
 
 ```bash
 cargo install codewhale-cli --locked    # 提供 codewhale 和 codew
@@ -161,11 +161,37 @@ codewhale web                            # 本地浏览器客户端，绑定 127
 
 **渐进采用路径**：先在个人项目里跑一周，用 `codewhale` 的 Plan 模式做只读调查、`exec` 跑一两次无头任务，感受门禁节奏；再逐步放开到 Ask、Auto-Review；确认 constitution 和信任边界后，再让团队里已经在用终端 agent 的 1-2 个人在非关键项目上试 Fleet。不建议一上来就把团队现有的 AI 编码工具整个替换掉。
 
-## 8. 结尾回到系统层
+## 8. 常见问题与排查
+
+**npm 或 cargo 安装失败**
+
+先分清楚是哪一环：`npm install -g codewhale` 失败多与 registry 连通性有关；`cargo install ... --locked` 失败则常见于 Rust 工具链版本偏旧。网络受限时，官网安装脚本和 README 里提到的 CNB 镜像通常是更稳的路径。
+
+**认证配了还是提示缺 key**
+
+`codewhale auth set --provider deepseek` 和 `export DEEPSEEK_API_KEY=...` 是两条独立路径，先确认你用的是哪一条。换 provider 时环境变量名跟着变：DeepSeek 用 `DEEPSEEK_API_KEY`，Anthropic 用 `ANTHROPIC_API_KEY`。
+
+**本地模型切不过去**
+
+本地 vLLM / SGLang / Ollama 不需要 key，但要把 base URL 指向你的服务，并确认端口可达。`/model` 一次切 provider 和模型，切完先确认当前落在本地这条路由上。
+
+**`fleet resume` 没续上**
+
+ledger 是追加式的 `.codewhale/fleet.jsonl`，resume 依赖它还在同一项目目录里、run-id 正确。manager 退出、休眠或重启后，回到原目录再跑 `codewhale fleet status` 看状态。
+
+**从 deepseek-tui 迁移后会话看不到**
+
+改名只动品牌，不动数据。先跑 `codewhale doctor` 对比新旧目录的会话文件，需要时再用 `codewhale sessions` 做增量迁移。
+
+**价格显示 unknown**
+
+这不是报错。未知价格如实显示为 unknown，而不是记成 0 美元，是为了避免你按错误成本做判断。
+
+## 9. 结尾回到系统层
 
 Codewhale 值得看的不是"又一个 RAII 写得很好的 Rust 终端工具"，而是它把三件通常被混在一起的事分开了：模型路由（想用哪个模型）、权限授权（能不能落地）、多任务编排（怎么并行）。分开了，每一层都能独立收紧或放开，这是它从"DeepSeek 的终端壳"变成"社区驱动的 agent harness"的根本原因。
 
-如果你想在终端里用一个工具接多家模型，并且在意 agent 动代码之前那层门禁，Codewhale 值得花一个晚上试。它现在还在高速迭代（v0.9.3，2026-07-31），社区规模也已经不小——40k Stars 意味着边缘问题有人提、有人修，生态支持比早期成熟多了。
+如果你想在终端里用一个工具接多家模型，并且在意 agent 动代码之前那层门禁，Codewhale 值得花一个晚上试。它现在还在高速迭代（v0.9.1，2026-07-25），社区规模也已经不小——40k Stars 意味着边缘问题有人提、有人修，生态支持比早期成熟多了。
 
 ---
 
@@ -174,5 +200,20 @@ Codewhale 值得看的不是"又一个 RAII 写得很好的 Rust 终端工具"�
 - GitHub：[Hmbown/CodeWhale](https://github.com/Hmbown/CodeWhale)（原名 Hmbown/DeepSeek-TUI）
 - Stars：40,520 | Forks：3,504
 - 语言：Rust | License：MIT
-- 创建时间：2026-01-19 | 最新推送：2026-08-06 | 最新发布：v0.9.3（2026-07-31）
+- 创建时间：2026-01-19 | 最新推送：2026-08-06 | 最新发布：v0.9.1（2026-07-25）
 - 定位：Open-source, community-driven agent harness
+
+---
+
+## 附录：术语速览
+
+| 术语 | 含义 |
+|------|------|
+| harness | 把模型、工具、权限、编排打包在一起的框架，Codewhale 的自我定位 |
+| provider | 模型服务商，如 DeepSeek、Anthropic、OpenAI，或本地 vLLM / Ollama |
+| mode（模式） | Plan / Act / Operate 三种交互状态 |
+| posture（权限姿势） | Ask / Auto-Review / Full Access，决定审批打断的频率 |
+| constitution（章程） | 分层写保护，只能收紧、不能授权，Full Access 也绕不过 |
+| ledger | 追加式任务日志 `.codewhale/fleet.jsonl`，支撑 `fleet resume` |
+| Fleet | 多 worker 编排，回答"谁来做" |
+| Workflow | 执行顺序编排，回答"按什么顺序做" |

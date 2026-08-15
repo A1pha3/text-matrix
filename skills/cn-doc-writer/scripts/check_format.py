@@ -124,6 +124,13 @@ class DocChecker:
                 if self._should_skip(lines, line_start):
                     continue
 
+                # Node 术语特例：Node.js / NodeJS / Nodejs 是 JavaScript 运行时专有名词，
+                # 不属于"节点"语义，跳过并继续检查后续出现。
+                if eng.lower() == "node":
+                    following = content[match.end() : match.end() + 4]
+                    if re.search(r"\.?js", following, re.IGNORECASE):
+                        continue
+
                 # 在术语前后 120 字符范围内查找中文标注
                 ctx_start = max(0, match.start() - 120)
                 ctx_end = min(len(content), match.end() + 120)

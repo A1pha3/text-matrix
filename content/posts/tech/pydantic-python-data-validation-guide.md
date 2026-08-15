@@ -12,6 +12,30 @@ Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAP
 
 本文将覆盖：类型注解怎么变成 Rust 侧的派发表、验证和序列化为什么要成对设计、Rust 核心对 Python 生态的实际影响，以及一次 FastAPI 请求的完整验证路径。
 
+## 前置条件
+
+本文面向已经会用 Python 写类、但还没系统用过 Pydantic 的读者。动手前准备：
+
+- Python 3.9+（V2 要求 3.8+，本文示例用 3.9 以上的语法，如 `int | None`）
+- 一个能跑 `pip` 的虚拟环境，避免污染全局环境
+
+安装并验证：
+
+```bash
+python -m pip install "pydantic>=2" pydantic-settings
+python -c "import pydantic; print(pydantic.VERSION.split('.')[0] == '2')"
+```
+
+输出 `True` 说明安装成功。`EmailStr`、`PaymentCardNumber` 这类语义类型还需要 `pydantic[email]`，用到时再装，见常见问题第 7 条。
+
+## 读完本文你能得到什么
+
+- 类型注解如何变成一份同时驱动静态检查、IDE（集成开发环境）补全和运行时验证的单一事实源
+- V2 用 Rust 重写核心后，哪些场景提速明显、哪些场景提速有限
+- `Field`、`field_validator`、`model_validator` 三者的分工与选用顺序
+- 宽松模式与严格模式的取舍，以及边界模型怎么分层
+- 一次 FastAPI 请求从入参到响应的完整验证路径
+
 ## Pydantic 在 Python 数据栈中的位置
 
 Python 里"用类型注解描述数据"的库有好几个，选型主要看数据来源：信任内部数据用 `dataclasses`，不信任外部数据用 Pydantic。四个主要选项对比如下：
@@ -19,8 +43,8 @@ Python 里"用类型注解描述数据"的库有好几个，选型主要看数�
 | 库 | 主要职责 | 是否做运行时验证 | 典型场景 |
 |------|----------|-----------------|----------|
 | `dataclasses` | 标准库，生成 `__init__`/`__repr__` 等样板方法 | 否，只做类型提示 | 内部数据容器、值对象 |
-| `attrs` | 第三方，比 `dataclasses` 更早、更灵活 | 否（可选 `validators`） | 库内部 API、性能敏感对象 |
-| `marshmallow` | 序列化/反序列化框架，先于类型提示流行 | 是，但 schema 与类型注解分离 | 老 Flask 项目、显式 schema |
+| `attrs` | 第三方，比 `dataclasses` 更早、更灵活 | 否（可选 `validators`） | 库内部 API（应用程序接口）、性能敏感对象 |
+| `marshmallow` | 序列化/反序列化框架，先于类型提示流行 | 是，但 schema（模式）与类型注解分离 | 老 Flask 项目、显式 schema |
 | `Pydantic` | 基于类型提示的运行时验证 + 序列化 + Schema 生成 | 是，且与类型注解合一 | API 边界、配置、领域模型 |
 
 `dataclasses` 和 `attrs` 信任调用方传入的数据，只在"少写样板代码"上做文章。Pydantic 处理的是"不信任外部数据"的场景——在系统边界把字典、JSON、查询参数转成可信的 Python 对象。`marshmallow` 也能做类似的事，但 schema 单独定义，类型注解和验证规则分离，IDE 提示和 mypy 检查都跟不上。Pydantic 把类型注解本身当成 schema，静态检查与运行时验证共用同一份事实——一份注解同时驱动 mypy、IDE 补全和运行时验证，省下维护三份独立 schema 的成本。
@@ -314,7 +338,7 @@ Pydantic 默认是"宽松模式"（lax mode）：能转换就转换，`"123"` �
 
 宽松模式的代价是它会掩盖调用方的类型错误。一个前端把 `user_id` 误传成字符串 `"123"`，后端静默转换成 `123`，bug 不会暴露，直到某天传了 `"12 3"` 才报错——而这时离 bug 引入已经过去很久，定位成本变高。
 
-严格模式（strict mode）要求输入类型必须与声明类型匹配，不做隐式转换。它适合"数据已经是 Python 对象"的场景，比如服务间调用、ORM 查询结果——这些数据不应该再有字符串到数字的转换需求。开启方式是 `ConfigDict(strict=True)`：
+严格模式（strict mode）要求输入类型必须与声明类型匹配，不做隐式转换。它适合"数据已经是 Python 对象"的场景，比如服务间调用、ORM（对象关系映射）查询结果——这些数据不应该再有字符串到数字的转换需求。开启方式是 `ConfigDict(strict=True)`：
 
 ```python
 from pydantic import BaseModel, ConfigDict
@@ -338,7 +362,7 @@ StrictUser(id=123.0, name="alice")      # 报错：strict mode 不接受 float �
 - **内部领域模型用严格模式**：服务之间传递的已经是 Python 对象，宽松模式会掩盖类型不匹配。
 - **数值字段单独开严格**：`id: int = Field(strict=True)`，避免 `"123"` 被静默接受，因为 ID 通常不应该来自字符串。
 
-在系统边界用宽松，在内部用严格，是更常见的工程实践。严格模式把"转换"和"拒绝"的边界从隐式变成显式，但全局开严格会让 HTTP 输入处理变得很啰嗦——每个字符串字段都要先手动转成目标类型再传给 Pydantic。一个折中方案是只在数值 ID 和布尔字段上开严格：ID 不应该来自字符串，布尔不应该接受 `0/1`，这两类隐式转换最容易掩盖 bug。其他字段（比如 `age: int` 从表单来的 `"18"`）保留宽松，让 Pydantic 处理转换。
+在系统边界用宽松，在内部用严格，是更常见的工程实践。严格模式把"转换"和"拒绝"的边界从隐式变成显式，但全局开严格又会让 HTTP 输入处理变啰嗦。一个折中方案是只在最容易被伪数据糊弄的字段上开严格：数值 ID 不该来自字符串，布尔不该接受 `0/1`，这两类隐式转换最容易掩盖 bug。其余字段（比如表单来的 `"18"` 转 `age: int`）保留宽松，让 Pydantic 处理转换。
 
 ## 序列化控制
 
@@ -397,7 +421,7 @@ user.model_dump(exclude={"address": {"postal_code": True}})
 `model_dump` 在 API 开发中常见用法是"同一个模型需要不同的序列化结果"。脱敏、过滤、格式转换都可以在序列化层一次性处理，不必在业务层写一堆 if-else 来控制字段暴露。几种典型场景：
 
 - **API 响应里去掉密码字段**：用 `exclude={"password_hash"}`，或在字段上声明 `Field(exclude=True)` 让它默认不序列化。后者更安全——即使有人忘了在 `model_dump` 里加 `exclude`，字段也不会泄漏。
-- **日志里脱敏**：定义一个 `to_log_dict()` 方法，调用 `model_dump(exclude={"password_hash", "token", "secret"})`，避免敏感字段进日志。日志框架的默认序列化不会走 Pydantic，所以要在打印前显式转成脱敏 dict。
+- **日志里脱敏**：定义一个 `to_log_dict()` 方法，调用 `model_dump(exclude={"password_hash", "token", "secret"})`，避免 token（令牌）这类敏感字段进日志。日志框架的默认序列化不会走 Pydantic，所以要在打印前显式转成脱敏 dict。
 - **数据库存储 vs API 返回**：同一个模型可能需要两种序列化结果，用 `model_dump(mode="json")` 给 API（所有值转成 JSON 兼容类型），用 `model_dump()` 给 ORM 转换（保留 Python 对象类型）。
 
 序列化的反向操作是反序列化，V2 统一到 `model_validate`。三个入口对应三种数据源：
@@ -475,7 +499,7 @@ print(json.dumps(User.model_json_schema(), indent=2, ensure_ascii=False))
 
 - **FastAPI 用它生成 OpenAPI**：路由函数签名里的 `user: User` 会被 FastAPI 转成 `User.model_json_schema()`，嵌入到 OpenAPI 文档里，Swagger UI 直接渲染。
 - **前端可以用它生成 TypeScript 类型**：`openapi-typescript`、`quicktype` 这类工具能从 JSON Schema 生成前端类型定义，让前后端类型一致。改后端字段时前端类型自动更新，省去手动同步。
-- **测试可以用它生成 mock 数据**：`hypothesis` 等属性测试库能从 Schema 生成符合约束的随机数据，覆盖边界值。
+- **测试可以用它生成 mock（模拟）数据**：`hypothesis` 等属性测试库能从 Schema 生成符合约束的随机数据，覆盖边界值。
 
 `Field` 上的 `description`、`examples`、`title` 会进 Schema，所以写好这些注释就是为整个工具链提供输入——前端拿到的 OpenAPI 文档里会有这些字段，Swagger UI 会渲染它们。`model_config` 里的 `json_schema_extra` 可以追加任意字段，常用来给 OpenAPI 加 `example`：
 
@@ -579,7 +603,7 @@ class Settings(BaseSettings):
 # APP_NAME=MyApp
 ```
 
-`env_nested_delimiter="__"` 让 `DATABASE__HOST` 自动映射到 `settings.database.host`。这样比把所有配置拍平成 `DATABASE_HOST`、`REDIS_HOST` 更有结构，也更方便在 docker-compose 里按服务分组——一个服务的所有配置共享同一个前缀，删除或迁移时一目了然。
+`env_nested_delimiter="__"` 让 `DATABASE__HOST` 自动映射到 `settings.database.host`，即 database（数据库）配置项。这样比把所有配置拍平成 `DATABASE_HOST`、`REDIS_HOST` 更有结构，也更方便在 docker-compose 里按服务分组——一个服务的所有配置共享同一个前缀，删除或迁移时一目了然。
 
 ### 配置验证的常见用法
 
@@ -1066,3 +1090,22 @@ Webhook 集成有几个细节需要注意：
 - **暂缓**：纯计算函数的输入输出、性能敏感的热路径（每秒百万次调用的代码），这些场景 `dataclasses` 或裸 dict 更合适。如果这段代码已经在用 profiler 优化，验证开销可能就是下一个瓶颈。
 
 Pydantic 放在边界最经济：内部代码处理已经验证过的 Python 对象。
+
+## 术语表
+
+| 术语 | 含义 |
+|------|------|
+| 宽松模式（lax mode） | 默认模式，能转换就转换，把字符串转成目标类型 |
+| 严格模式（strict mode） | 要求输入类型与声明类型完全匹配，不做隐式转换 |
+| `pydantic-core` | V2 用 Rust 实现的验证核心，独立 crate |
+| 类型派发表 | 编译后的 schema，Rust 侧按类型 ID 直接分发验证 |
+| `ValidationError` | 验证失败时抛出的异常，内含所有字段的错误 |
+| `loc` | 错误位置元组，如 `("address", "city")` |
+
+## 版本与维护
+
+本文针对 Pydantic V2 编写。V3 尚在开发章程阶段，落地前 V2 是稳定主线，迁移风险集中在自定义验证器与序列化 API 上。维护时注意三点：
+
+- 升级时先看 `CHANGELOG` 里 `pydantic-core` 的版本匹配，核心与 Python 包必须同版本发布。
+- 项目里全局搜 `regex=`、`.dict()`、`.parse_obj()`、`@validator`，这些 V1 残留不会报错但会静默失效或告警。
+- 自定义验证器签名以官方 `field_validator` / `model_validator` 文档为准，不要照抄网络上的 V1 写法。

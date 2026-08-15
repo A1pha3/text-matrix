@@ -86,7 +86,7 @@ graph TB
     style WS fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
-这张图值得盯住的是中间那条竖向红线（VAD → WS → CONV）：只要这条打断链路成立，无论你换 Ollama 还是 Claude 都没影响；只要它不成立，再多花哨的 Live2D 模型也只是个"按按钮念台词"的木偶。
+这张图值得盯住的是中间那条竖向红线（VAD → WS → CONV）。打断链路成立，换 Ollama 还是 Claude 都不影响体验；链路一旦断了，再多花哨的 Live2D 模型也只是个"按按钮念台词"的木偶。
 
 ---
 
@@ -103,13 +103,13 @@ graph TB
 | 模型可换 | 形象换皮 | 通常锁定云 API | **LLM/ASR/TTS 三类后端都做工厂解耦** |
 | Live2D 表情 | 内置 idle 动画 | 一般不支持 | **后端 prompt 注入表情标签，agent 装饰器链解析** |
 
-所谓"全双工"在代码里就一句：`current_conversation_tasks[client_uid].cancel()`。但要做到这句话安全、可重复、不打架，就要先有完整的"任务登记表 + 状态机 + 装饰器链"。
+所谓"全双工"在代码里就一句：`current_conversation_tasks[client_uid].cancel()`。这句话要安全、可重复、不打架，前提是先有完整的"任务登记表 + 状态机 + 装饰器链"。
 
 ---
 
 ## 关键源码拆解
 
-下面这些路径全部来自仓库 `main` 分支当前快照（路径相对于 `src/open_llm_vtuber/`）。我只挑出和"打断 + 表情 + 多后端解耦"这三条主叙事相关的文件。
+下面这些路径全部来自仓库 `main` 分支当前快照（路径相对于 `src/open_llm_vtuber/`）。我只挑出和"打断 + 表情 + 多后端解耦"这三条叙事相关的文件。
 
 ### 1. `websocket_handler.py` —— 入口与消息路由
 
@@ -137,7 +137,7 @@ self.current_conversation_tasks: Dict[str, Optional[asyncio.Task]] = {}
 
 ### 2. `vad/silero.py` —— 语音活动检测的状态机
 
-VAD 是"打断"这件事的**触发器**。如果 VAD 反应慢/反应过激，AI 就会要么话没说完就闭嘴，要么听不见你说话。
+VAD 是"打断"这件事的触发器。VAD 反应慢或反应过激，AI 就会要么话没说完就闭嘴，要么听不见你说话——这个问题直接决定打断体验成不成立。
 
 仓库里 VAD 抽象是 `VADInterface`，当前内置实现是 Silero VAD，关键参数写在 `SileroVADConfig`：
 
@@ -167,7 +167,7 @@ AI 自己 TTS 出来的声音会通过扬声器回灌麦克风。`db_threshold=6
 
 ### 3. `conversations/conversation_handler.py` —— 打断的实际执行
 
-打断的代码比想象中短，但要读懂它要先把角色分清楚：
+打断的代码比想象中短，但要读懂它得先把角色分清楚：
 
 - 前端通过 WS 发 `mic-audio-end`（VAD 检测到用户说完一段）或 `interrupt-signal`（用户主动中断）
 - 后端走 `handle_individual_interrupt`：
@@ -193,11 +193,11 @@ async def handle_individual_interrupt(
 
 三步缺一不可：
 
-1. **`task.cancel()`** —— Python 协程的取消会顺着 `await` 边界冒泡到所有正在 `await` LLM token / TTS 音频的子协程，让正在排队播放的 TTS 音频立刻停止派发。
+1. **`task.cancel()`** —— 取消会顺着 `await` 边界冒泡到所有正在 `await` LLM token / TTS 音频的子协程，正在排队播放的 TTS 音频立刻停止派发。
 2. **`agent_engine.handle_interrupt(heard_response)`** —— 让 LLM agent 知道"用户刚才那段话我没听完，但会被记录"；具体行为由 agent 实现决定（`interrupt_method="user"` 或 `"system"`，见 `BasicMemoryAgent`）。
 3. **写历史** —— 把 `heard_response`（AI 已经说出的部分）写进 `chat_history_manager`，并插入一条 `[Interrupted by user]` 系统消息，下次会话载入历史时不会丢失上下文。
 
-**群聊的打断几乎是同一套模板**，只不过 task key 从 `client_uid` 换成 `group_id`，且打断时还会广播给群里的所有成员。
+**群聊的打断几乎是同一套模板**，task key 从 `client_uid` 换成 `group_id`，打断时还会广播给群里的所有成员。
 
 ### 4. `agent/transformers.py` —— 把 LLM token 流改写成"能驱动 Live2D"的多路信号
 
@@ -276,7 +276,7 @@ class AgentInterface(ABC):
 
 > Inherit and implement the Agent interface to integrate any Agent architecture, such as HumeAI EVI, OpenAI Her, Mem0, etc.
 
-Open-LLM-VTuber 不打算和你抢 agent 设计的活——它只做"把 agent 输出接上 Live2D 嘴型 + TTS 音频 + 打断通道"这一段，**前端、外观、流式管线三件套**。
+Open-LLM-VTuber 不打算和你抢 agent 设计的活——它只做"把 agent 输出接上 Live2D 嘴型 + TTS 音频 + 打断通道"这一段，也就是**前端、外观、流式管线三件套**。
 
 ### 7. v1.2.0 关键里程碑（来自 Release Notes）
 
@@ -288,13 +288,13 @@ Open-LLM-VTuber 不打算和你抢 agent 设计的活——它只做"把 agent �
 - **B 站直播弹幕接入** —— `live/bilibili_live.py` 把 B 站弹幕转成 `user_input`，理论上可以让 AI 在直播间里"看到"弹幕互动。
 - **LM Studio / SparkTTS / SiliconFlow TTS / MiniMax TTS** —— 后端矩阵再扩。
 
-这一波变更说明项目在"对话质量 + 长期记忆 + 工具调用 + 跨平台直播"四个方向同时推进，但**打断机制本身没改动**——它已经是 v1.0.0 时就稳定下来的核心架构。
+这一波变更说明项目在"对话质量 + 长期记忆 + 工具调用 + 跨平台直播"四个方向同时推进，而**打断机制本身没改动**——它已经是 v1.0.0 时就稳定下来的核心架构。
 
 ---
 
 ### 8. LLM / ASR / TTS 后端矩阵的工程含义
 
-把"插拔"做到这个粒度不是炫技，而是因为"延迟 × 隐私 × 离线"在每一层的取舍完全不同：
+把"插拔"做到这个粒度不是炫技：因为"延迟 × 隐私 × 离线"在每一层的取舍完全不同，分开才能单独调。
 
 - **LLM 层**：云 API（Claude / GPT-4o / Gemini）质量上限高、隐私差；Ollama / vLLM / LM Studio / llama.cpp 是本地化主力，**Ollama 是 v1.2.0 后配置里 `llm_provider` 的预设项**。
 - **ASR 层**：本地离线阵营（sherpa-onnx + SenseVoiceSmall、faster-whisper、whisper.cpp、FunASR）和云 API 阵营（OpenAI Whisper、Groq Whisper、Azure ASR）并行。仓库 release zip 预下载了 `SenseVoiceSmall` 离线模型（**这个文件名是 release notes 写明的**），对内地用户比较友好。
@@ -447,12 +447,12 @@ README 顶部明确写：**v2.0 是一次完整重写**，目前还在早期规�
 
 ## 结语：参考实现，不是产品
 
-Open-LLM-VTuber 的最大价值不是"给你一个完美 AI 女友"，而是它**完整暴露了一套"语音 + LLM + Live2D + 打断"的开源参考架构**：
+Open-LLM-VTuber 的价值在于它完整暴露了一套"语音 + LLM + Live2D + 打断"的开源参考架构，而不是给你一个开箱即用的完美 AI 女友。想验证某个跨模块的机制，直接去对应文件看实现：
 
-- 想知道怎么用 Silero VAD 区分"自己说话 vs 用户说话"？看 `vad/silero.py`。
-- 想知道怎么把 LLM 流式输出切到 Live2D 表情？看 `agent/transformers.py`。
-- 想知道"AI 正在念台词时被插嘴"怎么工程化？看 `conversations/conversation_handler.handle_individual_interrupt`。
-- 想知道怎么给 LLM 装上可插拔 ASR/TTS/MCP？看 `service_context.py` + 各 `*_factory.py`。
+- 想弄清怎么用 Silero VAD 区分"自己说话 vs 用户说话"？看 `vad/silero.py`。
+- 想弄清怎么把 LLM 流式输出切到 Live2D 表情？看 `agent/transformers.py`。
+- 想弄清"AI 正在念台词时被插嘴"怎么工程化？看 `conversations/conversation_handler.handle_individual_interrupt`。
+- 想弄清怎么给 LLM 装上可插拔 ASR/TTS/MCP？看 `service_context.py` + 各 `*_factory.py`。
 
 每个模块都是"**实现 + 工厂 + 接口**"三层，留好扩展点。
 

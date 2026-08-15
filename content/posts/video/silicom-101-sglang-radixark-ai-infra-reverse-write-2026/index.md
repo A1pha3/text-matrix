@@ -43,13 +43,13 @@ source_key: "bv:BV1FnGA66EPP"
 
 ## 一、造芯大战的另一面：算力有了，谁来"调度"
 
-OpenAI、Google、DeepSeek 等头部 AI 实验室在 2025-2026 年打响了一场"造芯大战"。各大芯片厂商推出新一代 GPU，云厂商大举扩建数据中心，市场依然缺卡、缺算力。但买到 GPU 只是第一步——**怎么让手里的 GPU 发挥出更大价值**，正在成为硅谷 AI Infra（基础设施）领域背后千亿美元级的赛道。
+OpenAI、Google、DeepSeek 等头部 AI 实验室在 2025-2026 年打响了一场"造芯大战"。各大芯片厂商推出新一代 GPU，云厂商大举扩建数据中心，市场依然缺卡、缺算力。但买到 GPU 只是第一步——**怎么让手里的 GPU 发挥出更大价值**，正在成为硅谷 AI Infra（基础设施）领域的千亿美元级赛道。
 
-这段视频的切入点正在这里。主持人陈茜与三位嘉宾讨论的核心问题是：当推理（inference）取代训练成为 AI 计算的主要负载，GPU 看似满载运行，实际上仍有大量时间花在了非生产性计算上。这些浪费来自三个方向——重复计算、缓存搬运和任务等待。
+主持人陈茜与三位嘉宾讨论的核心问题是：当推理（inference）取代训练成为 AI 计算的主要负载，GPU 看似满载运行，实际上仍有大量时间花在了非生产性计算上。这些浪费来自三个方向——重复计算、缓存搬运和任务等待。
 
 朱邦华在英伟达担任首席研究科学家期间，研究的就是如何让 GPU 在推理场景下跑得更高效。他从大厂出来联合创立 RadixArk，选择的切入点正是推理引擎的系统优化。视频简介中提到：**SGLang 是推理引擎开源社区中孵化出来的明星项目，RadixArk 则是由 SGLang 团队孵化的商业公司**。
 
-这期视频的看点在于，它把一个通常只在系统工程师圈层讨论的硬核话题——推理调度与底层优化——用相对易懂的方式呈现给了更广泛的受众。
+这期视频把一个平日只在系统工程师圈层讨论的硬核话题——推理调度与底层优化——讲得相对可接近，屏幕上没有代码，主线是"瓶颈在哪、怎么绕开"。
 
 ## 二、"又忙又闲"的 GPU：满载是一个幻觉
 
@@ -130,13 +130,13 @@ SGLang 团队在 2025 年 5 月发布了 [PD 分离 + 大规模专家并行的�
 
 将模型权重和 KV Cache 从 FP16（16 位浮点）压缩到 FP8、FP4 甚至更低的精度。理论上精度减半，计算吞吐和内存带宽都翻倍。实际效果取决于硬件支持和精度损失容忍度。
 
-SGLang 支持多种量化方案：FP4/FP8/INT4/AWQ/GPTQ。2026 年 7 月 SGLang 发布了 [GLM-5.2 NVFP4 推理优化博客](https://lmsys.org/blog/2026-07-13-glm52-optimization/)，展示了在 NVFP4 精度下服务 GLM-5.2 agentic 工作负载的实践，达到 500 TPS（tokens per second）。NVIDIA 的 GB200/GB300 芯片原生支持 FP4 计算，这使得低精度推理从实验走向生产。
+SGLang 支持多种量化方案：FP4/FP8/INT4/AWQ/GPTQ。2026 年 7 月 SGLang 发布的 [GLM-5.2 NVFP4 优化博客](https://lmsys.org/blog/2026-07-13-glm52-optimization/) 里，在 8 张 B300（batch size 1）上服务 GLM-5.2 的 agentic 编码工作负载，达到 500 TPS（tokens per second）；这个数字取自单并发的小批量场景，不代表高并发吞吐。NVIDIA 的 GB200/GB300 芯片原生支持 FP4 计算，这让低精度推理从实验走向生产。
 
 ### 投机采样
 
 投机采样（Speculative Decoding）是另一种加速解码的思路。用一个小的"草稿模型"（draft model）快速生成多个候选 token，再用大模型一次性验证这些候选。如果草稿模型的预测准确率高，等于大模型一次前向传播就能生成多个 token。
 
-SGLang 在 2026 年 6 月与 Z Lab、Modal 合作发布了 [DFlash 和 Spec V2](https://lmsys.org/blog/2026-06-15-next-generation-speculative-decoding-dflash-v2/)。DFlash 采用了一种新颖的"扩散 + KV 注入"策略生成草稿 token，在 Qwen 3.5 397B 模型上达到了 4.3 倍于基线的吞吐量。Spec V2 是 SGLang 新的投机采样引擎，默认启用，消除了草稿生成的主机开销。
+SGLang 在 2026 年 6 月与 Z Lab、Modal 合作发布了 [DFlash 和 Spec V2](https://lmsys.org/blog/2026-06-15-next-generation-speculative-decoding-dflash-v2/)。DFlash 用轻量扩散模型一次前向并行生成整块草稿 token，再通过 KV 注入让草稿贴近目标模型；在 Qwen 3.5 397B 的 HumanEval 编码负载、单并发下，吞吐量超过基线的 4.3 倍。Spec V2 是 SGLang 新的投机采样引擎，默认启用，消除草稿生成的主机开销。
 
 这两个方向的核心逻辑是一致的：**与其让 GPU 做更快的计算，不如让它少做无用功**。
 
@@ -190,7 +190,7 @@ Ethan Xu 作为前微软能源战略经理和突破能源科研总监，其参�
 
 ## 八、SGLang 技术栈全景：从论文到生产线
 
-为了帮助读者更好理解视频中提到的技术概念，以下是 SGLang 核心技术栈的完整图谱。
+下面把视频里提到的 SGLang 技术点串成一张完整图谱，方便对照。
 
 ### 核心引擎能力
 
@@ -216,7 +216,7 @@ SGLang 的硬件覆盖范围是开源推理引擎中最广的：
 
 ### 生态采用
 
-SGLang 被以下组织在生产环境大规模部署：xAI、NVIDIA、AMD、Intel、LinkedIn、Cursor、Oracle Cloud、Google Cloud、Microsoft Azure、AWS、阿里云、腾讯、百度、蚂蚁集团，以及 MIT、Stanford、UC Berkeley、清华等高校。
+SGLang 被以下组织在生产环境大规模部署：xAI、NVIDIA、AMD、Intel、LinkedIn、Cursor、Oracle Cloud、Google Cloud、Microsoft Azure、AWS、Atlas Cloud、Voltage Park、Nebius、DataCrunch、Novita、InnoMatrix，以及 MIT、UCLA、华盛顿大学、Stanford、UC Berkeley、清华等高校。
 
 ## 九、谁该看这期视频
 
@@ -237,7 +237,7 @@ SGLang 被以下组织在生产环境大规模部署：xAI、NVIDIA、AMD、Inte
 
 3. **PD 分离是 2025 年最重要的推理架构创新**。把 prefill（计算密集）和 decode（内存密集）分到不同 GPU 集群，让每种硬件都发挥最大效用。SGLang 在 96 张 H100 上实现了 5 倍于传统方案的输出吞吐。
 
-4. **投机采样正在突破传统加速极限**。DFlash + Spec V2 用"扩散 + KV 注入"的草稿模型实现 4.3 倍加速，这种思路不是让 GPU 算得更快，而是让它少做无用功。
+4. **投机采样正在改掉"逐 token 猜测"的底层假设**。DFlash 用扩散模型一次生成整块草稿、再靠 KV 注入贴近目标模型，在 Qwen 3.5 397B 的 HumanEval 单并发负载下做到超基线 4.3 倍；Spec V2 用重叠调度消掉主机开销。思路不是让 GPU 算得更快，而是让它少做无用功。
 
 5. **AI Infra 的市场逻辑正在从"造芯"转向"调度"**。RadixArk 通过开源 SGLang（推理）+ Miles（RL 训练）建立技术标准，再叠加商业化托管服务。朱邦华从 NVIDIA 首席研究科学家到创业者的转型，折射出系统软件正在成为 AI 产业链中价值增长最快的一环。
 

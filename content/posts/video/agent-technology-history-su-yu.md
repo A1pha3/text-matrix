@@ -1,9 +1,9 @@
 ---
 title: "Agent 技术全史精读：苏煜为什么把 2026 看成数字智能体的分水岭"
 date: "2026-05-01T13:50:00+08:00"
-lastmod: 2026-08-04T10:00:00+08:00
+lastmod: 2026-08-13T10:00:00+08:00
 slug: "agent-technology-history-su-yu"
-description: '基于张小珺与苏煜访谈，结合 Language Agents tutorial、Computer Use、OpenClaw、NeoCognition 等公开材料，梳理 Agent 从逻辑代理到语言代理的演进，解释为什么 2026 年的变化重点已经从"模型会不会回答"转到"Agent 的执行栈、运行时和责任边界"。'
+description: '基于张小珺与苏煜访谈，结合 Language Agents tutorial、Computer Use、OpenClaw、NeoCognition 等公开材料，梳理 Agent 从逻辑代理到语言代理的演进，解释 2026 年的变化重点为何从"模型会不会回答"转到 Agent 的执行栈、运行时与责任边界。'
 summary: "这篇访谈精读梳理 Agent 技术史：规则系统写死下一步，策略网络学出下一步，语义解析把语言变成程序，Language Agent 再把语言、工具、记忆、GUI 和日志接进同一条执行链。OpenClaw 是入口和界面的变化，NeoCognition 是长期学习和专业化的尝试。分水岭在于这条执行链能不能跑稳，错误能不能收住，人类能不能接管。"
 draft: false
 categories: ["视频精读"]
@@ -17,9 +17,9 @@ hiddenFromHomePage: false
 
 2026 值得单独看，不是因为 Agent 在这一年横空出世，而是数字执行栈终于开始拼到一起了：`Computer Use` 把 GUI、浏览器和桌面纳入接口，Agent SDK 和运行时开始把工具、状态、观测和权限装进同一套框架，OpenClaw 和 NeoCognition 这类新产品又把讨论重心从"能不能演示"推到"能不能长期执行、长期学习、长期负责"。
 
-本文主线围绕四个问题展开：Agent 技术史真正变化的，是"谁在决定下一步"；2026 的分水岭，落在执行栈和运行时，而不只是模型参数；OpenClaw 看的是入口和界面，NeoCognition 看的是长期学习和专业化；Agent 能不能进生产，取决于它有没有权限边界、可观测性、验证信号和接管机制。
+下面四条线贯穿全文：Agent 技术史真正变化的，是"谁在决定下一步"；2026 的分水岭落在执行栈和运行时，而不只是模型参数；OpenClaw 看的是入口和界面，NeoCognition 看的是长期学习和专业化；Agent 能不能进生产，取决于它有没有权限边界、可观测性、验证信号和接管机制。
 
-资料边界：下文使用节目公开信息、苏煜个人主页、OSU 公告、NeoCognition 新闻稿、OpenClaw 官网，以及 ReAct、Toolformer、Reflexion、Language Agents tutorial、OpenAI Operator、Anthropic Computer Use、Google ADK、Microsoft Agent Framework 等公开材料。NeoCognition 只写公开方向，不外推未发布的架构和算法。
+资料边界：下文使用节目公开信息、苏煜个人主页、OSU 公告、NeoCognition 新闻稿、OpenClaw 官网，以及 ReAct、Toolformer、Reflexion、Language Agents tutorial、OpenAI Operator、Anthropic Computer Use、Google ADK、Microsoft Agent Framework 等公开材料。NeoCognition 只写公开方向，不外推尚未发布的架构和算法。
 
 ## 节目信息
 

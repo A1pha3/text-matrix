@@ -45,7 +45,7 @@ bb 的自指设计有三个具体含义。
 
 ### 1.1 bb 用 bb 写自己
 
-`apps/server` / `apps/app` / `apps/desktop` 这些 surface 全是 bb 自己的代码。bb 自己用 bb 跑 thread / manager / agent 来 develop bb。这是**自食其言**——产品宣称"agentic IDE"，bb 团队就用 agentic IDE 来 develop 自己的 IDE。
+`apps/server` / `apps/app` / `apps/desktop` 这些 surface 全是 bb 自己的代码。bb 自己用 bb 跑 thread / manager / agent 来 develop bb。这是**言行一致**——产品宣称"agentic IDE"，bb 团队就用 agentic IDE 来 develop 自己的 IDE。
 
 ### 1.2 bb 让用户用 bb 写自己的 software factory
 
@@ -53,7 +53,7 @@ VISION.md 给的描述：
 
 > bb is a programmable workspace for coding agents. It should be a system that users, teams, and agents can shape around their own tools, infrastructure, and workflows.
 
-「用户的 software factory」——每个用户的开发流水线不一样（CI / 内部工具 / 部署系统 / 测试套件）。bb 提供**可编程的工作空间**，让 agent 自己编排这些流水线。不是 bb 替你做，是 bb 让你的 agent 替你的团队做。
+「用户的 software factory」——每个用户的开发流水线不一样（CI / 内部工具 / 部署系统 / 测试套件）。bb 提供**可编程的工作空间**，让 agent 自己编排这些流水线。bb 不替你做事，它让你的 agent 替你的团队把流水线编排起来。
 
 ### 1.3 bb 的"control / customize / automate"三件套
 
@@ -162,7 +162,7 @@ Daemon 做四件事：
 
 > **Thread**: the unit of work. Each thread tracks a conversation with an agent provider, has lifecycle state, and produces an append-only stream of **events** (messages, tool calls, file changes, etc.). Threads can be **standard** (does work directly) or **manager** (coordinates other threads). Threads can own child threads for delegation.
 
-Thread 是 bb 的 **work unit**——不是 session（session 是 provider 的概念），是 bb 自己的概念。
+Thread 是 bb 的 **work unit**，独立于 session：session 是 provider 侧的概念，Thread 是 bb 自己定义、跨 provider 边界的存在。
 
 ### 3.1 Thread 的两个角色
 
@@ -194,7 +194,7 @@ Manager thread
   └─ Child thread 3（跑 CI）
 ```
 
-Manager 监控 child threads 的 progress，决定是否介入 / 继续 / 取消。这是**显式的层级管理**——不是并行调度器的隐式协调。
+Manager 监控 child threads 的 progress，决定是否介入 / 继续 / 取消。这是显式的层级管理，和并行调度器的隐式协调是两回事。
 
 ### 3.4 Environment
 
@@ -208,6 +208,12 @@ Environment 分两种：
 - **Managed**——bb 管生命周期，**最后一个 unarchived thread 退场时自动清理**
 
 这个设计允许**用户自定义 workspace**（unmanaged）和 **bb 创建 workspace**（managed）共存。
+
+### 3.5 一次委托任务怎么流过系统
+
+把前面几段串起来。假设你要 bb 修一个跨模块的 bug。请求先从任一 surface 进到 server，server 在 SQLite 里建一条 Thread 记为 manager；manager thread 把工作拆成几段，各开一条 child thread（改代码、写测试、跑 CI）。每条 child thread 落到一台 host daemon，daemon 在对应 workspace 里拉起 agent provider 进程，把输出作为事件推回 server。server 把事件追加进这条 child thread 的 append-only 流，manager 读到子线程的进度，决定推进、介入还是取消。所有事件都落在 server 的 SQLite 里，所以无论从哪个 surface 打开，看到的都是同一份状态；线程中途退出，也能从事件流重放到断点。
+
+这条流程里，server 只负责状态与编排，真正动手的是 daemon 上的 provider 进程——这就是双进程隔离放进一次真实任务后的样子。
 
 ## 四、Plugin SDK：显式稳定化流程
 
@@ -274,7 +280,7 @@ bb 用 **Drizzle migrations** 处理 SQLite schema 变更——SQLite schema 变
 
 Thread 在 manager / child 之间跨越多个 daemon（host machines）。Server 在中间同步——所有 event 都过 server 的 SQLite。
 
-**跨 machine 的 event 顺序**需要 server 维护全局 event sequence number。bb 文档没明确提到这个机制，但 `apps/server/src/services/` 应该有 timeline / sequence 实现。
+**跨 machine 的 event 顺序**需要一个全局编号来保证可重放。bb 的文档没有说明这个机制由谁维护、怎么实现，这里先标注 unresolved——想深挖的读者可以去 `apps/server/src/services/` 目录看 runtime 实现。
 
 ### 6.3 Archive vs Delete
 
@@ -338,6 +344,8 @@ bb 不争"谁是最好的 agent"——它给用户一个**可编程的工作空�
 
 **7. 跑 bb 自己。** `pnpm dev` + `pnpm dev:desktop`——用 bb 跑 bb 的开发任务，体验 manager thread 协调 child thread。
 
+适用边界：这条路径适合已经在用 Claude Code / Codex 等 provider CLI、想把这几个 agent 统一进一个可编排、可回放的 workspace 的团队。单人单机、也不需要跨机器协作时，继续用单一 provider CLI 就够了——bb 的四个 surface 和双进程配置是为"agent 编排 agent"和多机器协作准备的，先用不上。
+
 ## 九、一章小结
 
 bb 不是又一个 agent IDE。它是**自指的、可编程的、四个 surface 等价的 agentic workspace**——让你用 agent 建自己的 software factory。
@@ -347,13 +355,13 @@ bb 不是又一个 agent IDE。它是**自指的、可编程的、四个 surface
 1. **自指**——bb 用 bb 写 bb，agent 用 bb 跑 bb 的开发任务，user 用 bb 控制 bb 的生命周期
 2. **Server / Daemon 双进程**——server 持有 SQLite 状态，daemon 在每台机器跑 agent provider；双 contract 包强制边界 + `HOST_DAEMON_PROTOCOL_VERSION` 铁律防 wire drift
 3. **Thread 模型**——standard / manager 两种，manager 协调 child threads 做 delegation；append-only event stream 给 audit / replay / migration
-4. **Plugin SDK**——`experimental_` 前缀 + `api_to_audit.md` 显式审计流程，**plugin 稳定化是 deliberate 工程动作**而不是版本号 bump 副作用
+4. **Plugin SDK**——`experimental_` 前缀 + `api_to_audit.md` 显式审计流程，plugin 稳定化是刻意为之的工程动作，不是版本号 bump 的副产品
 
 一句话版本：**Orca 让 agent 编排别人，Paseo 让 agent 在 mobile/voice 里跑，bb 让 agent 编排自己**——前两个是"做产品"，第三个是"做平台"。
 
 ## 为什么不去
 
-> **为什么 bb 用 Server / Daemon 双进程而不是单进程？** 因为 bb 想定位为"user 的 software factory"——多机器协作是必需能力。一台 server + 多台 daemon 是**分布式系统的标准形态**：server 持有状态（SQLite），daemon 持有执行（workspace + provider session）。单进程版本简单，但**没法跨机器**。双进程的代价是 wire protocol 必须严格管理——`HOST_DAEMON_PROTOCOL_VERSION` 铁律 + 双 contract 包就是为了这个代价。**选分布式架构不是技术偏好，是 product 定位的工程后果**。
+> **为什么 bb 用 Server / Daemon 双进程而不是单进程？** 因为 bb 想定位为"user 的 software factory"——多机器协作是必需能力。一台 server + 多台 daemon 是**分布式系统的标准形态**：server 持有状态（SQLite），daemon 持有执行（workspace + provider session）。单进程版本简单，但**没法跨机器**。双进程的代价是 wire protocol 必须严格管理——`HOST_DAEMON_PROTOCOL_VERSION` 铁律 + 双 contract 包就是为了这个代价。选分布式架构是 product 定位的工程后果，不是技术偏好。
 >
 > **为什么 bb 用 Thread 模型而不是 session 模型？** 因为 bb 的核心能力是 **manager delegation**——一个 agent 协调多个 agent 干活。session 概念是 provider 的（provider 管自己的 session），但**跨 provider 协调**需要 bb 自己的概念。Thread 就是这个概念——**bb 拥有的、跨 provider 边界的、可 manager 的 work unit**。session 是 Thread 的实现细节，Thread 是 product 概念。
 >
