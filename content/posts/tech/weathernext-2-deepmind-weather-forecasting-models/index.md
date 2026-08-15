@@ -5,7 +5,7 @@ slug: "weathernext-2-deepmind-weather-forecasting-models"
 github_repo: "google-deepmind/weathernext"
 source_key: "gh:google-deepmind/weathernext"
 description: "WeatherNext 是 Google DeepMind 的全球中期大气与气旋预报模型家族，仓库收纳 WN2、GraphCast、GenCast 三代模型与预训练权重。本文梳理模型谱系、获取数据的四条官方通道与本地运行门槛。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["DeepMind", "气象预报", "机器学习", "JAX"]
 ---
