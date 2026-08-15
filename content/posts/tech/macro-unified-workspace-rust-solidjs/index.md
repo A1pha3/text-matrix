@@ -5,7 +5,7 @@ slug: "macro-unified-workspace-rust-solidjs"
 github_repo: "macro-inc/macro"
 source_key: "gh:macro-inc/macro"
 description: "Macro 是 AGPLv3 全开源的一体化团队工作区：邮件、聊天、文档、任务、CRM 与代理共用一个双向链接图和团队级记忆。本文拆解其数据模型、技术栈与适用边界。"
-draft: true
+draft: false
 categories: ["技术笔记"]
 tags: ["开源", "协同办公", "Rust", "SolidJS"]
 ---
