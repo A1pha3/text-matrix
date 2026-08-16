@@ -17,7 +17,9 @@
 #   4. 仅处理 content/posts/{tech,video} 下的文章（分类映射所在）
 #
 # 用法（写作 agent 拿到评分后调用）：
-#   publish-draft.sh <文章目录或 index.md> --score <三维分数> --grade <S|A|B>
+#   publish-draft.sh --key gh:owner/repo --score <三维分数> --grade <S|A|B>   ← 推荐：身份寻址，对形态免疫
+#   publish-draft.sh <文章路径>            --score <三维分数> --grade <S|A|B>   （路径寻址，兼容保留）
+#     --key <sk>       source_key 身份寻址（gh:/bv:/yt: 前缀），自动反查文章路径
 #     --score <n>      cn-doc-writer 三维评分总分（写进 commit message + 飞书）
 #     --grade <g>      评级 S/A/B（≥70 才应调用本脚本；C/D 由 agent 留 draft 不调用）
 #     --note <text>    额外说明（如触发的门槛），可选
@@ -32,12 +34,15 @@ FEISHU_TO="user:ou_28db2798a35179602c855f46406e63f3"
 VALID_GRADES="S A B"
 
 # ---- 解析参数 ----
-target=""; score=""; grade=""; note=""; dry_run=0; no_push=0; force=0
+target=""; score=""; grade=""; note=""; key=""; dry_run=0; no_push=0; force=0
 target="${1:-}"; shift || true
+# target 位置参数若以 -- 开头则说明调用方直接用了选项（如 --key），不吞
+case "$target" in --*) set -- "$target" "$@"; target="";; esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --score) score="$2"; shift 2;;
     --grade) grade="$2"; shift 2;;
+    --key) key="$2"; shift 2;;
     --note) note="$2"; shift 2;;
     --dry-run) dry_run=1; shift;;
     --no-push) no_push=1; shift;;
@@ -46,19 +51,46 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# ---- 定位 index.md + 校验目录合法 ----
-if [ -z "$target" ]; then echo "用法: $0 <文章目录或index.md> --score N --grade <S|A|B>" >&2; exit 1; fi
-# 解析成绝对路径（兼容相对路径：先按相对 REPO，再按相对 cwd）
-if [ -f "$target" ]; then idx="$target"; else idx="$target/index.md"; fi
-if [ ! -f "$idx" ]; then idx="$REPO/$target"; [ -f "$idx" ] || idx="$REPO/$target/index.md"; fi
-# 规范成绝对路径便于前缀匹配
-idx="$(cd "$(dirname "$idx")" && pwd)/$(basename "$idx")"
+# ---- 定位文章文件 + 校验目录合法 ----
+# 两种寻址方式：路径（target 位置参数）或身份（--key source_key 反查）。
+# 身份寻址优先推荐：agent 只持有 source_key（发布唯一身份），路径由本脚本反查，
+# 链路对形态免疫（normalize 拍平 / 未来迁移都不影响发布）。
+if [ -z "$target" ] && [ -z "$key" ]; then
+  echo "用法: $0 <文章路径> | --key <source_key> --score N --grade <S|A|B>" >&2; exit 1
+fi
+if [ -n "$key" ]; then
+  # 白名单字符校验：key 将嵌入 grep 正则，必须拒绝正则元字符注入。
+  # 合法形态：gh:owner/repo · bv:BVxxxx · yt:video_id（仅 ASCII 字母数字与 : / . _ -）。
+  if ! echo "$key" | grep -qE '^[A-Za-z0-9._:/-]+$'; then
+    echo "❌ --key 含非法字符（仅允许 A-Za-z0-9 . _ : / -）: $key" >&2; exit 3
+  fi
+  key_re="$(printf '%s' "$key" | sed 's/\./\\./g')"   # . 转义，精确匹配
+  key_hits="$(grep -rlE "source_key:[[:space:]]*[\"']?${key_re}[\"']?[[:space:]]*$" "$REPO/content/posts" --include='*.md' 2>/dev/null || true)"
+  # printf 必须 %s\n：command substitution 剥尾换行后 %s 不补，wc -l 数换行符会把单行误计为 0
+  n_hits="$(printf '%s\n' "$key_hits" | sed '/^$/d' | wc -l | tr -d ' ')"
+  case "$n_hits" in
+    0) echo "❌ --key 未命中任何文章: $key" >&2; exit 2;;
+    1) idx="$key_hits";;
+    *) # 多命中=身份不唯一（数据异常）：发布动作宁拒勿错，交人工
+       echo "❌ --key 命中 $n_hits 篇文章（source_key 应全局唯一），拒绝发布:" >&2
+       printf '%s\n' "$key_hits" | sed 's/^/   /' >&2
+       exit 6;;
+  esac
+  idx="$(cd "$(dirname "$idx")" && pwd)/$(basename "$idx")"
+  echo "🔑 --key $key → ${idx#$REPO/}"
+else
+  # 解析成绝对路径（兼容相对路径：先按相对 REPO，再按相对 cwd）
+  if [ -f "$target" ]; then idx="$target"; else idx="$target/index.md"; fi
+  if [ ! -f "$idx" ]; then idx="$REPO/$target"; [ -f "$idx" ] || idx="$REPO/$target/index.md"; fi
+  # 规范成绝对路径便于前缀匹配
+  idx="$(cd "$(dirname "$idx")" && pwd)/$(basename "$idx")"
+  [ -f "$idx" ] || { echo "❌ 找不到文章文件: $target（若已被 normalize 拍平成单文件，改用 --key 身份寻址）" >&2; exit 2; }
+fi
 case "$idx" in
   "$REPO"/content/posts/tech/*) section=tech;;
   "$REPO"/content/posts/video/*) section=video;;
   *) echo "❌ 目标不在 content/posts/tech 或 content/posts/video 下（不支持）: $idx" >&2; exit 2;;
 esac
-[ -f "$idx" ] || { echo "❌ 找不到 index.md: $idx" >&2; exit 2; }
 rel="${idx#$REPO/}"
 
 # ---- 读 frontmatter 关键字段（source_key / title / draft / slug）----
@@ -108,15 +140,27 @@ case " $VALID_GRADES " in
 esac
 
 # ---- 去重保护：content 里是否已有同 source_key 的 draft:false 上线稿 ----
-dup=""
 if [ "$force" != 1 ]; then
   # grep frontmatter 里的 source_key 行（排除当前文件自身）
-  dup="$(grep -rlE "^source_key:\s*[\"']?${sk}[\"']?\s*$" "$REPO/content/posts" 2>/dev/null \
-        | grep -v "^${idx}$" | head -1 || true)"
-  if [ -n "$dup" ]; then
-    echo "❌ 已存在同 source_key 的文章：${dup#$REPO/}" >&2
-    echo "   source_key=$sk 是发布去重命脉。如确认要覆盖，加 --force（会翻旧稿 draft:true 撤下后重发）。" >&2
-    exit 4
+  # 注意 BSD grep(macOS)ERE 不支持 \s、\$ 非行尾锚点：用 [[:space:]] 与裸 $
+  # （此处曾因 \s 退化为可选 s 永不匹配空格，致去重保护长期静默失效，2026-08-16 修复）
+  sk_re="$(printf '%s' "$sk" | sed 's/\./\\./g')"
+  dup_list="$(grep -rlE "^source_key:[[:space:]]*[\"']?${sk_re}[\"']?[[:space:]]*$" "$REPO/content/posts" 2>/dev/null \
+        | grep -v "^${idx}$" || true)"
+  if [ -n "$dup_list" ]; then
+    # 只拦截已上线（draft:false）的重复——同 key 草稿（draft:true）提示后放行
+    dup_live=""
+    while IFS= read -r f; do
+      d="$(grep -m1 -E '^draft:' "$f" | sed 's/^draft:[[:space:]]*//;s/[[:space:]]*$//')"
+      if [ "$d" = "false" ]; then dup_live="$f"; break; fi
+    done <<< "$dup_list"
+    if [ -n "$dup_live" ]; then
+      echo "❌ 已存在同 source_key 的上线稿：${dup_live#$REPO/}" >&2
+      echo "   source_key=$sk 是发布去重命脉。如确认要覆盖，加 --force（会翻旧稿 draft:true 撤下后重发）。" >&2
+      exit 4
+    fi
+    echo "⚠️  存在同 source_key 的未上线草稿（放行，建议人工清理）：" >&2
+    printf '%s\n' "$dup_list" | sed "s|^${REPO}/|   |" >&2
   fi
 fi
 
@@ -168,8 +212,10 @@ fi
 
 # ---- 飞书报告（结论先行 + 评分依据 + 可撤回方式）----
 hash_short="$(cd "$REPO" && git rev-parse --short HEAD)"
+# 展示路径：bundle 显示目录（去 index.md 尾巴），单文件原样显示
+case "$rel" in */index.md) display="${rel%/*}/";; *) display="$rel";; esac
 openclaw message send --channel feishu -t "$FEISHU_TO" -m "🎬 自动发布 · $(date +%H:%M)
-• 《${title}》→ ${rel%/*}/
+• 《${title}》→ ${display}
 • 评级 ${grade}（${score:-?}/100），cn-doc-writer 三维过闸自动上线
 • source_key ${sk}，${status}
 • 无需操作 ✅ 不满意可撤回：把 draft 翻回 true（commit ${hash_short}）" >/dev/null 2>&1 || true

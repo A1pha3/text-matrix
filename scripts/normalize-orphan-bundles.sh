@@ -37,10 +37,22 @@ fi
 orphans=""
 while IFS= read -r idx; do
   d="$(dirname "$idx")"
-  # 孤儿判定：该目录下被 git 追踪的文件恰好只有 index.md 一个
-  # （git ls-files 看 index 区，staged 新文件可见；.DS_Store 等未追踪垃圾不影响判定）
+  # 孤儿判定（双重，缺一不可）：
+  # 1. git 追踪层：该目录下被追踪的文件恰好只有 index.md
+  #    （git ls-files 看 index 区，staged 新文件可见）
+  # 2. 物理层：目录内容 ⊆ {index.md, .DS_Store}——防 untracked 资源被 stranded
+  #    （agent 已生成图片但尚未 git add 时拍平，图会被丢在失去 index.md 的空目录里）
+  # 已知限制：git ls-files 默认 core.quotePath，非 ASCII 文件名会 false negative
+  # （该拍不拍）——方向安全，且 slug 由 lint 强制 kebab-case ASCII，实际不触发。
   tracked="$(git ls-files -- "$d/")"
-  [ "$tracked" = "$d/index.md" ] && orphans="$orphans$d"$'\n'
+  if [ "$tracked" = "$d/index.md" ]; then
+    physical="$(ls -A "$d" | grep -vE '^(\.DS_Store|index\.md)$' || true)"
+    if [ -z "$physical" ]; then
+      orphans="$orphans$d"$'\n'
+    elif [ "$mode" != "staged" ]; then
+      echo "ℹ️  跳过（含未追踪文件，非纯孤儿）: $d → $physical" >&2
+    fi
+  fi
 done <<< "$candidates"
 
 orphans="$(printf '%s' "$orphans" | sed '/^$/d')"
@@ -56,9 +68,14 @@ fi
 count=0
 while IFS= read -r d; do
   target="${d}.md"
-  if [ -e "$target" ]; then
-    echo "⚠️  撞名跳过（$target 已存在）: $d" >&2
-    continue
+  # 撞名必须 fatal 而非跳过：双形态同 slug 共存 = Hugo Duplicate target paths
+  # （全站页面互相覆盖，slug:index 事故同族）。拦下 commit 强制人工合并，
+  # 已拍平的不回滚（脚本幂等，处理后重跑即可）。
+  if [ -e "$target" ] || git ls-files --error-unmatch "$target" >/dev/null 2>&1; then
+    echo "❌ 撞名：$target 已存在，拒绝拍平 $d" >&2
+    echo "   两形态同 slug 共存会导致 Hugo Duplicate target paths（页面互相覆盖）。" >&2
+    echo "   请人工把 $d/index.md 的内容合并进 ${target}、删除该目录后重新提交。" >&2
+    exit 1
   fi
   git mv "$d/index.md" "$target"
   # git mv 不管空目录；.DS_Store 是 macOS 垃圾可直接删，其余残留文件交人工

@@ -145,7 +145,6 @@ gh api "repos/$REPO/contents/" --jq '.[].name'
 - 分类：技术笔记
 - 文风：**准确、专业、优雅、有品味**（2026-07-20 师父拍板，本 skill 全局生效；原文风"专业、克制、可验证"为子集）
 - 目标：帮助读者判断项目价值并完成首次上手
-- **文件路径**：默认单文件 `content/posts/<category>/<slug>.md`；仅当文章含本地图片/资源（截图、架构图等）时才用 Page Bundle `content/posts/<category>/<slug>/index.md`。禁止参照"上一篇文章的形态"来决定，禁止预防性占位。
 
 **风格铁律：准确、专业、优雅、有品味**
 
@@ -196,7 +195,7 @@ gh api "repos/$REPO/contents/" --jq '.[].name'
 - [../hugo-writer/SKILL.md](../hugo-writer/SKILL.md)
 - [references/frontmatter-template.md](references/frontmatter-template.md)
 
-Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个精准名词；date 必须使用生成当下的北京时间且格式完整；description 必须是 50-100 字纯文本摘要；**必须包含 `github_repo: "owner/repo"`**（取自 Step 1 `gh repo view` 的 nameWithOwner，大小写原样保留）— trending 去重的结构化身份字段，不依赖正文链接；**必须包含 `source_key: "gh:owner/repo"`**（与 github_repo 同源）— 发布去重/防漏的稳定身份锚点；**`draft` 必须 `true`**（写完暂存，评分达标才翻 `false`）。写完**直接落 `content/posts/tech/<slug>/index.md`，严禁落 `state/` 中间态**。
+Frontmatter 约束：categories 必须是 ["技术笔记"]；tags 保持 2-5 个精准名词；date 必须使用生成当下的北京时间且格式完整；description 必须是 50-100 字纯文本摘要；**必须包含 `github_repo: "owner/repo"`**（取自 Step 1 `gh repo view` 的 nameWithOwner，大小写原样保留）— trending 去重的结构化身份字段，不依赖正文链接；**必须包含 `source_key: "gh:owner/repo"`**（与 github_repo 同源）— 发布去重/防漏的稳定身份锚点；**`draft` 必须 `true`**（写完暂存，评分达标才翻 `false`）。写完**直接落 `content/posts/tech/` 下（如 `<slug>.md`），严禁落 `state/` 中间态**。
 
 除非用户明确要求只输出大纲，否则写作模式默认产物应是“完整文章 + 合法 Frontmatter”。
 

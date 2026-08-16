@@ -58,7 +58,10 @@ def needs_insert(file_path: Path) -> bool:
     if file_path.suffix.lower() != ".md":
         return False
     name = file_path.name.lower()
-    if name in {"_index.md", "index.md"}:
+    # 只跳 section 索引页。Page Bundle 文章的 index.md 是普通文章页，同样需要
+    # autofill——08-16 前此处误跳 index.md，导致 52 篇 bundle 期文章漏补字段
+    # （knockoutez 篇缺 slug 即实证，拍平后才补上）。
+    if name == "_index.md":
         return False
     return True
 

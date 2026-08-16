@@ -17,7 +17,7 @@ tags: ["标签1", "标签2", "标签3"]
 > **`draft` 与 `source_key` 是免审批自动发布管线的两个开关**（2026-08-06 师父拍板）：
 > - 写完落盘一律 `draft: true`（暂存，Hugo 构建排除、不上线）。
 > - 经 cn-doc-writer 三维评分达 **B 级（≥70）** 才翻 `draft: false` 并 commit+push 上线；<70 留 draft 转人工。
-> - 写完**直接落 `content/posts/tech/<slug>/index.md`**，**严禁落 `state/` 中间态**（旧两段式接力是重复发布与误报的病根，已废弃）。
+> - 写完**直接落 `content/posts/tech/` 下**，**严禁落 `state/` 中间态**（旧两段式接力是重复发布与误报的病根，已废弃）。
 
 ## 字段说明
 

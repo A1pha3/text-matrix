@@ -4,6 +4,10 @@ set -euo pipefail
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
+# 0. 形态不变量：孤儿 bundle（目录里只有 index.md 无资源）自动拍平成单文件
+# 必须先于 changed 收集——git mv 会改写 staged 集合，lint 应拿到拍平后的新路径
+bash scripts/normalize-orphan-bundles.sh
+
 # 1. frontmatter 校验：优先跑本次改动的文件，全量失败则全量再跑一次
 # ⚠️ 7-1 合并：保留 staged version 的 --offline 标志（针对 198.18.0.0/15 隔离网络，PyYAML 已本地缓存）
 # ⚠️ 7-1 合并：保留 staged version 的 --target "${changed[@]}" 简洁写法（vs HEAD 的 target_args 数组）
