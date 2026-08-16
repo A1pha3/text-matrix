@@ -8,6 +8,8 @@ categories: ["技术笔记"]
 authors: ["钳岳"]
 github_repo: "KnockOutEZ/wigolo"
 description: "跳过 MCP 介绍和无 API key 叙事，直入 wigolo 的工程内核：agent loop 状态机、research fan-out 流水线、find_similar 三路融合、cache 变更检测、端侧 ML 栈选型、skill catalog 注入机制、Docker 双镜像策略。所有细节基于 README 一手信息反推，标注置信度。"
+slug : knockoutez-wigolo-local-first-web-intelligence-mcp-2026
+
 ---
 
 ## 一句话判断
