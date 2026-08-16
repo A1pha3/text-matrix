@@ -98,7 +98,7 @@ canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-20
 
 但实际你用的是**整段上下文**。
 
-单独看字母 "u"，概率约 27%。但**在 "q" 后面看到 "u" 的概率接近 100%**——英语里 "qu" 几乎总是连在一起。
+单独看字母 "u"，它在英语里的独立出现频率并不高，大约 2.7%。但**在 "q" 后面看到 "u" 的概率接近 100%**——英语里 "qu" 几乎总是连在一起。
 
 一个训练有素的猜字母选手利用上下文，对英语的熵估计是 **1-1.5 bits/字符**——比 4.5 bits 少了 3-4 bits。
 
@@ -119,6 +119,8 @@ canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-20
 **方向 1：prediction → compression**
 
 如果你有一个完美的预测器 P(next char | context)，你可以用**算术编码**（arithmetic coding）把文本编码成接近 -log₂(P) bits/字符。
+
+为什么算术编码能做到？它不把每个符号单独映射成一段固定的码，而是把整条消息看作 [0,1) 区间里的一个点：每读到一个字符，就把当前区间按预测概率切成几段，取对应字符那段，最后用区间里任意一个二进制小数代表整条消息。概率高的字符占的区间大，需要的小数位就少。于是整条消息的编码长度约等于所有字符 -log₂(P) 之和——这正好是交叉熵的定义。预测越准，区间越"窄"，编码越短。
 
 字符越容易预测（高 P）→ 编码越短。字符越难预测（低 P）→ 编码越长。这就是"用预测概率来压缩"的全部故事。
 
@@ -155,6 +157,8 @@ L = -(1/N) Σ log(P_θ(token_t | context_t))
 如果你有一个语言模型 P_θ，按算术编码每字符的预期长度就是 -log(P_θ)。Cross-entropy loss 就是这个预期长度的**经验平均值**（在训练集上）。
 
 所以：**训练 LLM 用 cross-entropy loss，本质上是在优化一个压缩器**——loss 越低，模型对训练集的预测越准，按算术编码每字符占的 bits 越少。
+
+一个容易混淆的点值得拆开：cross-entropy 是"用模型 P_θ 编码，但按真实分布 P 求期望"，公式是 H(P, P_θ) = -Σ P(x)·log(P_θ(x))。而熵 H(P) 是"用真实分布自己编码自己"的下界。两者的差 H(P, P_θ) − H(P) 叫 **KL 散度**——它度量的不是"文本多难压缩"，而是"你的模型比最优压缩器差多少"。训练 LLM 最小化 cross-entropy，真正在做的是把 KL 散度往 0 压。
 
 3B1B 在视频开头说的就是这句话："when large language models are trained, the math that Shannon developed has turned out to be surprisingly useful for modern machine learning."
 
@@ -193,9 +197,9 @@ Shannon 做了三件事：
 | 一句话 | ~1 bit/字符 | 8x |
 | 一段 | ~0.5 bits/字符 | 16x |
 
-LLM 用 Transformer 的 attention 机制做"超长上下文条件预测"，效果上等价于一个上下文感知压缩器。GPT-3 用 ~50 tokens 上下文时 loss 比 1 token 上下文低几个 bits/字符——对应压缩率翻几倍。GPT-4 的 32K tokens、Claude 的 200K 上下文，压缩率还能再涨。
+LLM 用 Transformer 的 attention 机制做"超长上下文条件预测"，效果上等价于一个上下文感知压缩器。这带来一个可直接验证的效应：同一个模型，喂给它的上下文越长，它对下一个 token 的预测就越准、perplexity 越低——GPT-3 论文里就有上下文长度从 1 到 50 个 token 时 loss 持续下降的曲线。长上下文的价值就在这里，不是"能记住更多事"那么表面，而是更长的 context 直接压低了条件熵。
 
-更长的 context = 更低的条件熵 = 更准的预测 = 更小的 cross-entropy loss = 更好的压缩。五件事在数学上是同一件事。
+更长的 context = 更低的条件熵 = 更准的预测 = 更小的 cross-entropy loss = 更好的压缩。这条链的每一环都有明确定义，不是比喻，是一组等价关系。
 
 ---
 
@@ -216,12 +220,12 @@ LLM 用 Transformer 的 attention 机制做"超长上下文条件预测"，效�
 
 ## 十一、当前 LLM 离理论下界还有多远
 
-2026 年主流开源 LLM 的 loss 曲线从 ~3.0 降到 ~2.0 nats/token 是常见的：
+用一组示意数字感受一下量级（不是某个具体模型的实测，只用来建立直觉）：
 
-- 3.0 nats/token = 4.3 bits/token
-- 2.0 nats/token = 2.9 bits/token
+- 3.0 nats/token ≈ 4.3 bits/token
+- 2.0 nats/token ≈ 2.9 bits/token
 
-压缩率涨 1.5x。但这远没达到英语的理论下界——英语的熵约 0.5-1.5 bits/字符。当前最强的 LLM 在压缩英语这件事上，**离最优压缩器还差 2-5x 的距离**。
+从 3.0 压到 2.0 nats/token，压缩率约涨 1.5 倍。但要和英语的理论下界比——英语文本的熵约在 0.5-1.5 bits/字符量级——当前最强的 LLM 在压缩英语这件事上，离最优压缩器仍有数倍的差距。这个"差多少"没有定论，量级估计大致在 2-5 倍之间，取决于语料和评测口径。
 
 工程含义：
 
@@ -242,3 +246,36 @@ LLM 用 Transformer 的 attention 机制做"超长上下文条件预测"，效�
 | **信道容量** | C = max_{P(X)} I(X;Y) | Autoencoder 瓶颈维度、扩散模型 noise schedule、纠错码设计 |
 
 这套数学在 80 年里作为骨架，支撑了深度学习一半的关键技术。不是 Shannon 当年预见到的，是后人发现这三条定义恰好是 ML 需要的形状。
+
+---
+
+## 十三、读者判断：谁该看原视频
+
+这篇是视频的"核心论证版"，信息论推导和 LLM 的对应关系都已经展开。按自己的情况决定是否补看原片：
+
+**读本文就够的**：想理解"LLM 训练到底在优化什么"这个命题本身，或只想抓住 prediction = compression 这条主线。本文已经把公式、等价关系和工程含义都讲完了。
+
+**建议看原视频的**：
+
+- 视觉化学习者。3Blue1Brown 的动画——区间切割、Huffman 树、熵的几何直观——是文字替代不了的，第 6 节算术编码那段尤其值得看动画版本。
+- 想复现推导的。视频里每一步都有板书，比文章里压缩后的结论更容易跟着算一遍。
+- 想看第 7 节之后 3B1B 如何把同样的工具推到神经网络训练上的人。本文只覆盖 Part 1 的核心，Part 2 的视频才是他把这套框架完整接到 Transformer 上的部分。
+
+**视频信息**：[3Blue1Brown "Compression is Intelligence Part 1"](https://youtu.be/l6DKRf-fAAM)，32 分 20 秒，2026-07-14 发布。本文按主题重组，不逐句转写，未标注时间戳；想回到具体某段，以视频章节列表为准。
+
+## 延伸阅读
+
+想往下挖，按这条线走：
+
+- **Shannon 1951《Prediction and Entropy of Printed English》**：猜字母游戏的原始出处，也是"英语熵 1-1.5 bits/字符"这个估计的来源。
+- **Cover & Thomas《Elements of Information Theory》**：熵、交叉熵、KL 散度的标准教材，第 5 章处理信源编码定理。
+- **Delétang et al.《Language Modeling Is Compression》**（DeepMind，2022）：把"预测 = 压缩"落成实测——用 Chinchilla 系列模型压文本，和 PPM、gzip 这类经典压缩器直接对比。
+- **Hutter Prize**：以压缩率当智能度量的长期竞赛，是"压缩即智能"这条命题的实验侧。看它就知道 LLM 压文本距离熵下界还有多远。
+
+## 自测清单
+
+- [ ] 能解释为什么 -log₂(P) 可以度量"惊讶度"，以及它为什么必须是 log 而不是线性函数
+- [ ] 能说清熵、交叉熵、KL 散度三者分别度量什么，之间的关系是什么
+- [ ] 能讲明白算术编码为什么能让"预测概率"直接变成"编码长度"
+- [ ] 能解释为什么"模型在 'q' 后更确定是 'u'"会让压缩率上升
+- [ ] 能回答：一个训练好的 LLM 的 cross-entropy loss，理论上界的含义是什么

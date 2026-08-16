@@ -2,6 +2,7 @@
 title: "毕英杰的四本书单：AI 时代的精神诊断器"
 date: "2026-06-23T18:10:19+08:00"
 slug: "johnathan-bi-4-books-ai-era-winner-2026"
+source_key: "bv:BV1s37P6AE5d"
 description: "B 站 UP 毕英杰 Johnathan 在视频里给了四本反常识的书：Weber、Aristotle、Girard、Kripal。没有一本讲 AI，没有一本是 self-help。但它们拼成一台诊断器，能回答 AI 时代真正的问题——不是学什么技能，而是怎么重新理解工作、欲望、好生活和意识。"
 draft: false
 categories: ["视频精读"]
@@ -13,7 +14,7 @@ hiddenFromHomePage: false
 
 毕英杰 Johnathan 在 B 站发了一支视频，四本书，跨越两千四百年，没有一本讲 AI。他把这四本拼成一台诊断器，用来回答一个所有 AI 焦虑都绕不开的问题：**你拼命追求的东西，有多少是你真正想要的，多少是别人传染给你的，多少只是一套几百年前偶然形成的宗教系统在驱动你？**
 
-这篇文章拆这四本书各自回答什么、为什么放在 AI 时代读、以及它们怎么拼成一张可重复使用的诊断地图。
+这四本书各自回答什么、为什么偏要放在 AI 时代读、怎么拼成一张可重复使用的诊断地图，下面一条条讲。
 
 > 视频来源：毕英杰 Johnathan，《只读这 4 本书，就能成为 AI 时代的赢家》，[BV1s37P6AE5d](https://www.bilibili.com/video/BV1s37P6AE5d)，2026-06-21。毕英杰，莱斯大学毕业，B 站"人文与科技"频道 UP 主，截至视频发布时粉丝 33 万、Substack 订阅者 3.2 万+。他的工作方式不是"读了书讲给你听"——他选 4–6 本经典压缩成演讲，再找该领域最深的学者做访谈，补回删掉的论证骨架。
 
@@ -39,6 +40,8 @@ hiddenFromHomePage: false
 四本书不是四个并列知识点，是从地基到屋顶的四个楼层。拆开来各讲各的，叠在一起才是完整的诊断器。
 
 ### 第一层：Weber——你"努力奋斗"的背后是一套宗教系统
+
+视频里他这样引入这本书：
 
 > "This first book by Max Weber will correct that error. Because it correctly frames AI not just as an economic challenge, but a religious threat to the dominant religion of our day, which is capitalism, work, success, achievement."
 
@@ -79,7 +82,7 @@ AI 时代的主流"幸福观"正在侵蚀这三个要素：Prompt 一键完成�
 
 ### 第三层：Girard——你的焦虑是从哪里传染来的
 
-René Girard 用了一辈子论证一件事：**人的欲望不是原生的，是被模仿点燃的。**
+René Girard 用了一辈子论证一件事：**人的欲望不是原生的，是被模仿点燃的**——这就是 mimetic desire（模仿欲望）。
 
 小孩子本来对玩具没兴趣，看到另一个孩子想要，他突然也想要。职场人本来对工作挺满意，听到同事晒了 offer，开始想跳槽。你本来对 GPT-5 没感觉，看到 X 上所有人都在聊，你突然焦虑"我是不是落伍了"。
 
@@ -107,7 +110,7 @@ Jeff Kripal 是莱斯大学宗教研究系讲席教授，专攻比较宗教、�
 
 > "The next major revolution in human knowledge will not be technological. It will be the recognition that consciousness is not produced by the brain, but is rather received by the brain—like a television receives a broadcast."
 
-这段话在拆三件事：拒绝把物质主义当默认公理，重新合法化神秘体验作为研究对象，给"人何以为人"提供非生物学答案。
+这段话在做三件事：拒绝把物质主义当默认公理，重新合法化神秘体验作为研究对象，给"人何以为人"提供非生物学答案。
 
 把 Kripal 放到 AI 时代，逻辑链是这样的：主流 AI 科学的强假设是功能主义——意识是信息处理模式，只要模式对了，基质不重要。这套假设在 LLM 越来越像"会思考"的过程中被反复强化。Kripal 的回答是：边界画不出来，是因为我们把"意识"等价于"信息处理"了。意识如果是接收的而不是产生的，AI 永远只是在产生模式，不是在接收。
 

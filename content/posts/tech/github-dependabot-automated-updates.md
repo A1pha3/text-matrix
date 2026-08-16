@@ -1,36 +1,31 @@
-+++
-github_repo = "github/dependabot-action"
-date = '2026-05-15T10:25:00+08:00'
-draft = false
-title = 'GitHub Dependabot：自动化依赖更新'
-slug = 'github-dependabot-automated-updates'
-description = 'Dependabot 把依赖更新的责任从人的记忆力转移到系统上，支持 Alerts、Version Updates 和 Security Updates 三条独立机制，覆盖 npm、pip、Go、Cargo 等主流生态。'
-categories = ['技术笔记']
-tags = ['GitHub', 'DevOps', '依赖管理', '工具']
-+++
+---
+title: "GitHub Dependabot：自动化依赖更新"
+date: "2026-05-15T10:25:00+08:00"
+slug: "github-dependabot-automated-updates"
+github_repo: "github/dependabot-action"
+description: "Dependabot 把依赖更新的责任从人的记忆力转移到系统上，支持 Alerts、Version Updates 和 Security Updates 三条独立机制，覆盖 npm、pip、Go、Cargo 等主流生态。"
+draft: false
+categories: ["技术笔记"]
+tags: ["GitHub", "DevOps", "依赖管理", "工具"]
+---
 
 # GitHub Dependabot：自动化依赖更新
 
-Dependabot 解决的真正问题是把依赖更新的责任从人的记忆力转移到系统上，而非自动发 PR。漏洞出现后小时级响应、版本落后自动追平，这些靠人盯 RSS 或手动 `npm outdated` 做不到。下面先把 Dependabot 的三条机制拆开，再逐条看怎么配、怎么用。
+Dependabot 解决的真正问题是把依赖更新的责任从人的记忆力转移到系统上，而不是自动发 PR。漏洞出现后小时级响应、版本落后自动追平，这些靠人盯 RSS 或手动 `npm outdated` 做不到。下面先把三条机制拆开，再逐条看怎么配、怎么用。
 
 | 机制 | 触发方式 | 产物 | 典型场景 |
 |---|---|---|---|
 | Dependabot Alerts | GitHub Advisory Database 匹配到漏洞 | Security 标签页告警 + 修复建议 | 发现 `lodash` CVE，知道该升到哪个版本 |
 | Version Updates | `.github/dependabot.yml` 中配置的 schedule | 自动创建依赖更新 PR | 每周检查 npm 依赖，把 `react` 从 18.2 升到 18.3 |
-| Security Updates | 检测到 Critical/High 漏洞 | 紧急 PR，绕过正常 schedule | `express` 出现 RCE（远程代码执行）漏洞，不等下周直接发 PR |
+| Security Updates | Alerts 判定有可用补丁的漏洞 | 紧急 PR，绕过正常 schedule | `express` 出现 RCE（远程代码执行）漏洞，不等下周直接发 PR |
 
 三条线独立运作，但在一个仓库里会同时生效。理解这个边界之后，再看细节就不会混。
 
 ## 一、Dependabot 是什么
 
-[Dependabot](https://github.com/dependabot) 是 GitHub 官方出品的自动化依赖更新工具，支持的生态系统包括 npm、Maven、pip、Go、Cargo、NuGet、GitHub Actions 等。
+[Dependabot](https://github.com/dependabot) 是 GitHub 官方出品的自动化依赖更新工具，支持的生态系统包括 npm、Maven、pip、Go、Cargo、NuGet、GitHub Actions、Docker、Composer、Bundler 等。
 
-Dependabot 在 GitHub.com 上分两层：
-
-1. **GitHub 内置功能**（Dependabot alerts + version updates + security updates）—— 在仓库 Settings 中开启即用
-2. **Dependabot Action**（[github/dependabot-action](https://github.com/github/dependabot-action)）—— 用于 GHES（GitHub Enterprise Server）手动同步，或运行自定义 Dependabot 工作流
-
-内置功能是大多数团队日常使用的部分，Action 只在企业私有部署场景下才需要关注。
+GitHub.com 上的 Dependabot 是平台自带的能力，在仓库 Settings 里开启即用，日常使用不必关心它的实现。另有一个开源实现 [dependabot-core](https://github.com/dependabot/dependabot-core)（含官方维护的 [github/dependabot-action](https://github.com/github/dependabot-action)），供 GHES 或自托管场景使用——普通团队用不到，后面第 4 节单独讲。
 
 ## 二、核心功能
 
@@ -77,13 +72,13 @@ updates:
 
 ### 3. Security Updates
 
-Security Updates 绕过正常 schedule，只在出现 Critical 或 High 级漏洞时触发：
+Security Updates 为依赖图中每一个有可用补丁的告警自动创建修复 PR，不受 schedule 约束，升级到能避开漏洞的最小安全版本：
 
-- **自动发起紧急 PR**，不等待 schedule
-- **在 Branch Protection 允许的前提下直接合并**
-- **通过 Dependabot security updates 接口自动修复**
+- **触发条件**：Dependabot Alerts 判定依赖存在有修复版本的漏洞
+- **自动发起 PR**：无需等待 schedule，通常把依赖升到修复版本即可
+- **PR 仍走常规流程**：合并依然受 Branch Protection Rules 约束，CI 不通过不会自动合入
 
-Security Updates 默认依赖 `.github/dependabot.yml` 中的 `security-updates` 配置；没配的话，Alerts 照常触发，但不会自动生成修复 PR。
+Security Updates 与 Version Updates 是两套独立机制：前者在仓库 Settings 的 Advanced Security 中开启，不依赖 `.github/dependabot.yml`；后者靠配置文件驱动。`dependabot.yml` 只能定制 Security Update PR 的行为（标签、分组、`open-pull-requests-limit` 等），不能决定开关——开关始终在 Settings 里。
 
 ## 三、详细配置
 
@@ -167,67 +162,51 @@ updates:
     - dependency-name: "org.springframework.boot:*"
 ```
 
-## 四、在 GitHub Actions 中运行 Dependabot
+## 四、dependabot-action 与 GHES
 
-GitHub.com 上的 Dependabot 通过 [github/dependabot-action](https://github.com/github/dependabot-action) 运行。对于 GitHub Enterprise Server，需要手动同步此 Action。
+GitHub.com 上的 Dependabot 由官方维护的 [github/dependabot-action](https://github.com/github/dependabot-action)（Updater Action）驱动，它在 GitHub 内部负责执行 version 与 security 更新任务。这个 Action **不支持在 workflow 文件中直接使用**——它是给 GitHub 自己的 Dependabot 服务跑的，不是给人手动调用的。
 
-### 手动触发 Dependabot 循环
-
-```yaml
-# .github/workflows/dependabot-trigger.yml
-name: Manual Dependabot Update
-
-on:
-  workflow_dispatch:
-    inputs:
-      package-ecosystem:
-        description: 'Package ecosystem (npm, pip, etc.)'
-        required: true
-        default: 'pip'
-
-jobs:
-  dependabot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Run Dependabot
-        uses: github/dependabot-action@v2
-        with:
-          package-ecosystem: ${{ github.event.inputs.package-ecosystem }}
-          directory: "/"
-          target-branch: main
-```
-
-### GHES 手动同步步骤
-
-如果你的企业在用 GHES，需要手动同步 Dependabot Action：
+需要关注它的只有一种场景：GitHub Enterprise Server。GHES 默认无法访问 GitHub.com 上的 Actions，需要管理员用官方 [actions-sync](https://github.com/actions/actions-sync) 工具把依赖的 action 同步到企业实例：
 
 ```bash
-# 1. 从 GitHub.com 下载 Action
-gh release download v2.40.0 -p dependabot-action -o /path/to/actions
-
-# 2. 上传到 GHES 实例的本地 Action 存储
-cp -r /path/to/actions /var/lib/ghes/actions-runner/_work/
-
-# 3. 配置 GitHub Enterprise Server 使用本地 Action
+# actions-sync 需要在能访问 GitHub.com API 的机器上运行
+# 1. 安装后登录 GitHub.com 与 GHES 的 API
+actions-sync sync \
+  --cache-dir .actions-sync \
+  github/dependabot-action \
+  --target-token $GHES_TOKEN \
+  --target-url https://ghes.example.com
 ```
 
-详见 [GHES 手动同步文档](https://docs.github.com/en/enterprise-server/admin/managing-github-actions-for-your-enterprise/managing-access-to-actions-from-githubcom/manually-syncing-actions-from-githubcom)。
+同步完成后，还需为 Dependabot 更新配置自托管的 runner（Linux + Docker），并让 GHES 能访问内部 registry。这属于企业管理员的工作，普通团队用不到。
+
+对企业内网开发团队而言，另一个选择是自托管 [dependabot-core](https://github.com/dependabot/dependabot-core) 或官方 [Dependabot CLI](https://github.com/dependabot/cli)，在自己的 CI 里跑依赖更新。GitHub.com 用户不需要碰这些。
 
 ## 五、Dependabot 与安全
 
-### 配置漏洞自动修复
+### 开启漏洞自动修复
+
+Security Updates 的开关不在 `dependabot.yml` 里，而在仓库 **Settings → Code security and analysis → Dependabot security updates** 中勾选。开启后，凡是依赖图里出现有修复版本的告警，Dependabot 都会自动创建修复 PR，不受 schedule 约束。
+
+`dependabot.yml` 能影响的是这些修复 PR 长什么样，比如用 `groups` 把同一生态的安全修复合并成一个 PR：
 
 ```yaml
 # .github/dependabot.yml
-security-updates:
-  enabled: true
-  open-pull-requests-limit: 3
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      # 安全修复专用分组：一个 PR 合入一个生态的所有安全更新
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
 ```
 
-启用后，Critical/High 漏洞会触发紧急 PR，不受 `updates` 中 schedule 约束。
+如果只想保留安全更新、关掉常规版本更新，把 `open-pull-requests-limit` 设为 `0` 即可——Alerts 与 Security Update PR 不受这个字段影响。
 
 ### 配合 GitHub Advisory Database
 
@@ -288,7 +267,7 @@ updates:
 
 1. **漏洞入库**：Express 4.18 的一个 RCE 漏洞被收入 GitHub Advisory Database，标记为 Critical。
 2. **Alerts 触发**：GitHub 扫描仓库的 `package-lock.json`，发现依赖树包含 `express@4.18.2`，在 Security 标签页生成告警，同时通知仓库管理员。
-3. **Security Update PR 生成**：因为配了 `security-updates: enabled: true`，Dependabot 不等 weekly schedule，直接创建一个 PR，把 `express` 升到修复版本 `4.19.0`，PR 标题为 `build(deps): bump express from 4.18.2 to 4.19.0`。
+3. **Security Update PR 生成**：因为仓库在 Settings 里开启了 Dependabot security updates，Dependabot 不等 weekly schedule，直接创建一个 PR，把 `express` 升到修复版本 `4.19.0`，PR 标题为 `build(deps): bump express from 4.18.2 to 4.19.0`。
 4. **CI 验证**：PR 触发 GitHub Actions，跑 lint → test → build。如果 CI 挂了——比如某个中间件不兼容 `4.19.0`——PR 不会自动合并，开发者需要手动介入。
 5. **审查与合并**：`CODEOWNERS` 把 `package.json` 分配给 `@org/backend-team`，团队 review changelog、确认 CI 通过后合并。
 6. **自动化兜底**：如果 CI 全绿且 `allow` 配置了 `dependency-type: "development"` 的 auto-merge 策略，patch 级更新可以直接合入——但本例是生产依赖，不走自动合并。
@@ -308,15 +287,17 @@ updates:
 
 ### 2. 设置合并门禁
 
-```yaml
-# Branch Protection Rules 配合
-require_status_checks:
-  - context: "dependabot/npm/version-update"
-  - context: "dependabot/maven/version-update"
+Dependabot 只创建 PR，合不合并由分支保护规则说了算。在仓库 **Settings → Branches** 中给默认分支添加规则，勾选 "Require status checks to pass before merging"，把 CI 的 check 加进去即可。想精确到某类依赖，可以把 CI 按 `package-ecosystem` 拆成多个 job，规则里只对对应的 check 打勾。
 
-rules:
-  required-signature: false
-  dismissal-latest: true
+也可以写成文件式配置（`.github` 下的 branch protection 需要借助第三方 Action 或 `gh api` 脚本，GitHub 没有原生 YAML 管理分支规则）：
+
+```bash
+# 用 gh api 设置 required status checks（示例）
+gh api -X PUT repos/{owner}/{repo}/branches/{branch}/protection \
+  -H "Accept: application/vnd.github+json" \
+  -f "required_status_checks[strict]=true" \
+  -f 'required_status_checks[contexts][]=ci/lint' \
+  -f 'required_status_checks[contexts][]=ci/test'
 ```
 
 ### 3. 使用 CODEOWNERS 控制审查流
@@ -331,31 +312,27 @@ pom.xml @org/java-team
 
 ### 4. 监控 Dependabot 指标
 
-```yaml
-# 使用 GitHub GraphQL API 查询依赖图指标
+用 GitHub GraphQL API 拉取依赖图清单，可以了解仓库依赖的全貌（以下查询需开启 Dependency Graph）：
+
+```bash
 # 将 YOUR_ORG/YOUR_REPO 替换为实际仓库
-jobs:
-  metrics:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get Dependabot metrics
-        run: |
-          gh api graphql -f query='
-            {
-              repository(owner:"YOUR_ORG", name:"YOUR_REPO") {
-                dependencyGraphManifests(first: 10) {
-                  nodes {
-                    filename
-                    dependencies {
-                      nodes {
-                        packageName
-                        requirements { requires }
-                      }
-                    }
-                  }
-                }
-              }
-            }'
+gh api graphql -f query='
+  {
+    repository(owner: "YOUR_ORG", name: "YOUR_REPO") {
+      dependencyGraphManifests(first: 10) {
+        nodes {
+          filename
+          dependencies(first: 20) {
+            nodes {
+              packageName
+              requirements
+              packageManager
+            }
+          }
+        }
+      }
+    }
+  }'
 ```
 
 ## 九、常见问题
@@ -380,17 +357,25 @@ ignore:
 
 **Q: 公司有私有 npm registry（`npm.mycompany.com`），Dependabot 能扫描里面的内部包吗？**
 
-可以，但需要配 registry 认证：
+可以，但需要两步：先在顶级 `registries` 键里定义 registry，再在每个 update 条目里用 `registries` 字段引用它：
 
 ```yaml
+version: 2
 registries:
   my-npm-registry:
     type: "npm-registry"
     url: "https://npm.mycompany.com"
-    token: "${{ secrets.NPM_TOKEN }}"
+    token: "${{secrets.NPM_TOKEN}}"
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    registries:
+      - my-npm-registry
 ```
 
-前提是私有 registry 实现了 npm registry API（应用程序接口）且包版本遵循 semver。如果内部包不走 semver 或 registry 不兼容标准 API，Dependabot 无法解析版本，需要换 Renovate 或自定义方案。
+前提是私有 registry 实现了 npm registry API 且包版本遵循 semver。如果内部包不走 semver 或 registry 不兼容标准 API，Dependabot 无法解析版本，需要换 Renovate 或自定义方案。
 
 **Q: Dependabot 和 Renovate 选哪个？**
 
@@ -404,8 +389,8 @@ Dependabot 的优势是零额外服务、GitHub 原生集成、Security Alerts �
 
 Dependabot 的配置工作量和收益不是线性的。建议按以下顺序落地：
 
-1. **先开 Alerts**（零配置，在仓库 Settings → Code security 中勾选即生效）。这是收益最高的第一步——你至少能知道哪些依赖有已知漏洞。
-2. **再配 Security Updates**（一行 YAML：`security-updates: enabled: true`）。让 Critical/High 漏洞自动生成修复 PR，把响应时间从"下次有人想起来"缩短到小时级。
+1. **先开 Alerts**（零配置，在仓库 Settings → Code security and analysis 中勾选即生效）。这是收益最高的第一步——你至少能知道哪些依赖有已知漏洞。
+2. **再开 Security Updates**（同样在 Settings 里勾选，无需写配置）。让有修复版本的漏洞自动生成修复 PR，把响应时间从"下次有人想起来"缩短到小时级。
 3. **然后上 Version Updates**（写 `.github/dependabot.yml`）。先从一个生态系统开始（比如 npm），跑两周看 PR 质量和 CI 通过率，再扩展到其他生态系统。
 4. **最后加分组和 auto-merge 策略**。前提是 CI 覆盖率够高——如果测试不足以拦住回归，auto-merge 反而引入风险。
 
@@ -414,8 +399,8 @@ Dependabot 的配置工作量和收益不是线性的。建议按以下顺序落
 ## 自测
 
 1. 你的仓库用的是 `requirements.txt`，Dependabot 的 `package-ecosystem` 应该填什么值？`directory` 应该填 `/` 还是 `/backend`？
-2. Dependabot Alerts 和 Security Updates 之间最本质的区别是什么？（不是"一个发告警一个发 PR"——而是时间维度上，Security Updates 绕过了什么？）
-3. 你收到一个标题为 `build(deps): bump express from 4.18.2 to 4.19.0` 的 PR——标题里哪两个前缀让你判断它来自 Dependabot？你能确认它是 Version Update 还是 Security Update 吗？
+2. Dependabot Alerts 和 Security Updates 的本质区别是什么？（不是"一个发告警一个发 PR"——Alerts 只告知，Security Updates 负责行动，它绕过了什么？）
+3. 你收到一个标题为 `build(deps): bump express from 4.18.2 to 4.19.0` 的 PR——标题里的前缀说明它来自 Dependabot，但你能从标题判断它来自 Version Updates 还是 Security Updates 吗？
 4. 团队的一个 Markdown 文档站点没有任何运行时依赖——你应该只开 Alerts 还是配完整的 `.github/dependabot.yml`？给出理由。
 
 **相关资源：**
