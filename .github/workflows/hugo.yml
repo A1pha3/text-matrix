@@ -43,6 +43,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          # 必须全量历史：hugo.toml 开了 enableGitInfo，Hugo 默认 lastmod 链
+          # [":git", "lastmod", ...] 以 git 提交时间优先。默认 fetch-depth:1 的
+          # 浅克隆下每个文件的 GitInfo 都是同一个部署 commit → 全站 sitemap lastmod
+          # 与页面"更新时间"永远等于部署当天（2026-08-17 对抗审查实证）。
+          fetch-depth: 0
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5

@@ -10,7 +10,7 @@ hiddenFromHomePage: true
 ---
 
 > **作者**：钳岳星君
-> **视频**：Emergent Garden《Recursive Self-Improvement》（[YouTube t7_ZXgfJVG8](https://www.youtube.com/watch?v=t7_ZXgfJVG8)，2026-06-13）｜B站 AI 配音版 [BV1w8jL6dE1f](https://www.bilibili.com/video/BV1w8jL6dE1f/)（@黑纹白斑马 译制，YouDub 项目）
+> **视频**：Emergent Garden《Recursive Self-Improvement》（[YouTube t7_ZXgfJVG8](https://www.youtube.com/watch?v=t7_ZXgfJVG8)，2026-06-13）｜B 站 AI 配音版 [BV1w8jL6dE1f](https://www.bilibili.com/video/BV1w8jL6dE1f/)（@黑纹白斑马 译制，YouDub 项目）
 > **源码**：[MaxRobinsonTheGreat/fractalsearch](https://github.com/MaxRobinsonTheGreat/fractalsearch)（GitHub，2026-06-19 公开，104 条 runs.jsonl + 4 个 solution + AGENT.md）
 > **前身**：[MaxRobinsonTheGreat/mandelbrotnn](https://github.com/MaxRobinsonTheGreat/mandelbrotnn)（个人长期 pet 项目）+ [karpathy/autoresearch](https://github.com/karpathy/autoresearch)
 > B 站视频未提供官方字幕轨（AI 配音版通常不含），YouTube 原版 yt-dlp 抓取需要登录 cookie。本文以仓库级事实为核心——AGENT.md 是任务书、README.md 是作者意图、solutions/notebook.md 是 AI 自留的研究笔记、runs.jsonl 是 104 次实跑的硬数据。
@@ -33,13 +33,13 @@ hiddenFromHomePage: true
 
 视频作者 Emergent Garden 在 8 段章节中把 fractalsearch 当成"RSI 在可重复工程上做到了什么"的样板间来展示——他没有动手 fork，没有亲手改 code，但他把这个实验配上"ASI / 智能爆炸 / 沙箱风险"的 RSI 主流议题一起讲。fractalsearch 源码是 Emergent Garden 的论据，不是他自己的产出。
 
-厘清之后，视频里每一段在说什么，就不再是"AI 多厉害"，而是"AI 借助一个 5 分钟训练 budget + 一个 33M 参数的小哈希网格，在一个受限视觉学习问题上能做到什么程度"。这个视角更具体，也更贴近工程师的日常。
+厘清之后，视频里每一段在说什么，就不再是"AI 多厉害"，而是"AI 借助一个 5 分钟训练 budget + 一个 33M 参数的小哈希网格，在一个受限视觉学习问题上能做到什么程度"。这个视角更贴近工程师的日常。
 
 需要说明：视频作者 Emergent Garden 的个人背景不在本文覆盖范围内。fractalsearch 仓库的所有者是 `MaxRobinsonTheGreat`（README 和 git commit 明确），视频频道作者未在 BV1w8jL6dE1f 简介里点明是否同一人，本文不做推测。
 
 ### 一张系统地图：fractalsearch 的四个组件各管什么
 
-先记住这张拆分，否则后面所有数字都对不上号。整个实验里有**四条互不重叠的主线**，很容易被讲成一条故事线：
+整个实验里有**四条互不重叠的主线**，常常被揉成一条故事线讲：
 
 | 组件 | 文件 | 职责 | 谁能动 |
 | --- | --- | --- | --- |
@@ -48,7 +48,7 @@ hiddenFromHomePage: true
 | **选手**（solution） | `solutions/*.py`（baseline / fourier / hashgrid / champion） | AI 提交的拟合算法，每次 commit 一个新文件 | AI 全权改写 |
 | **研究笔记** | `solutions/notebook.md` | AI 跨 session 的连续记忆，记录 bracket、假设、教训 | AI 自己追加 |
 
-一个数字（比如 MSE `0.000226`）必须能同时落到这张表里的三个格子：它由某个**选手**（`champion.py`）在**裁判**（`evaluate.py` 5 分钟 budget）下跑出来、写进**研究笔记**（`notebook.md` 的 best 记录）。后面所有数字都按这张表归位，才不会和视频叙事错位。
+一个数字（比如 MSE `0.000226`）必须能同时落到这张表里的三个格子：它由某个**选手**（`champion.py`）在**裁判**（`evaluate.py` 5 分钟 budget）下跑出来、写进**研究笔记**（`notebook.md` 的 best 记录）。后面所有数字都按这张表归位，才不会被视频叙事带偏。
 
 阅读路线：视频大纲章节把视频 8 段章节对到源码文件；第三到五章拆三次关键突破（Triton fused encoder、GT-free 采样、空间误差场）；第六章是 104 次试错的全景；第七到八章解释为什么这次不会"智能爆炸"；最后给三类读者各自的下一步。
 
@@ -56,9 +56,9 @@ hiddenFromHomePage: true
 
 ## 视频大纲 vs 实际产物：章节对照表
 
-B站 @黑纹白斑马 在 UP 主简介里给出的 8 段章节时间线是研究骨架，下面这张表把它对到 fractalsearch 仓库里**真实存在的**文件，看视频每段在源码里落在哪里：
+B 站 @黑纹白斑马 在 UP 主简介里给出的 8 段章节时间线是研究骨架，下面这张表把它对到 fractalsearch 仓库里**真实存在的**文件，看视频每段在源码里落在哪里：
 
-| B站章节时间线 | B站字幕简介（拿到的） | 源码里的实际对应 |
+| B 站章节时间线 | B 站字幕简介（拿到的） | 源码里的实际对应 |
 | --- | --- | --- |
 | 00:00 RSI 概念引入 + Anthropic / OpenAI 动态 + 视频预告 | 引出 RSI 概念 | `AGENT.md` 顶部 "find the best algorithm to fit the Mandelbrot set" |
 | 02:12 fractalsearch 实验介绍 | 源自 Karpathy AutoResearch，让 AI 在递归循环里迭代优化拟合曼德博集合 + 实验运行机制 + 评估规则 + 初步进展 | `solutions/baseline_mlp.py` + `harness/groundtruth.py`（[0,1] 区间的周期性 log-distance 目标）+ `harness/evaluate.py`（5 分钟固定 budget + 10 分钟 SIGALRM hard kill） |
@@ -69,7 +69,7 @@ B站 @黑纹白斑马 在 UP 主简介里给出的 8 段章节时间线是研究
 | 27:08 实验成本与未来展望 | 公布实验总成本 + 成本偏高 + 肯定 AutoResearch 类方案 + Anthropic Claude Fable 模型限制 | `runs.jsonl` 每条都记 `train_seconds`，约 300 秒/次 × 104 次 = ~8.67 小时单卡时间 |
 | （视频无明确段） | Anthropic 对 Claude Fable 模型的能力限制 | 视频标题外延——视频作者认为 RSI 已经触手可及，但 Anthropic 一篇论文提醒，强 RSI 安全边界仍是开放问题 |
 
-**核心映射**：B站章节把 fractalsearch 当成 RSI 概念的实验装置——`AGENT.md` 是研究框架，`harness/groundtruth.py` 是目标函数，`harness/evaluate.py` 是评估器，`solutions/notebook.md` 是 AI 自留的研究笔记，`runs.jsonl` 是 104 次试错的履历。视频是结果叙事，源码是机制实录，两者拼起来才是完整的 RSI 故事。
+**核心映射**：B 站章节把 fractalsearch 当成 RSI 概念的实验装置——`AGENT.md` 是研究框架，`harness/groundtruth.py` 是目标函数，`harness/evaluate.py` 是评估器，`solutions/notebook.md` 是 AI 自留的研究笔记，`runs.jsonl` 是 104 次试错的履历。视频是结果叙事，源码是机制实录，两者拼起来才是完整的 RSI 故事。
 
 ---
 
@@ -118,7 +118,7 @@ README.md 写："This project is directly adapted from Karpathy's autoresearch."
 
 **视频作者 Emergent Garden 在 24:50 提到"哈希网格大幅提升"，对应到仓库就是 `hashgrid_gtfree.py`（240 行）。** 全名 _Multi-resolution Hash Grid Encoding_——tiny-cuda-nn 的标准技巧在 PyTorch + Triton 下的复刻：把 2D 坐标 `(x, y)` 经过多分辨率哈希查找 + 4 角双线性插值，喂给浅层 MLP。每一级哈希表独立 grid size × feature dim，最终拼接。
 
-一个容易被看漏的工程取舍：作者**没用 NVIDIA 推荐的 tiny-cuda-nn**（Müller et al. 2022 在 SIGGRAPH 上发表的 multiresolution hash grid 原始实现，CUDA + C++ 扩展）。他在 `champion.py` 的 docstring 里写明了：triton 3.5.1 跟 torch 自带同发，"in-scope"。这是工程上的微小但不妥协——确保一切代码在 `pyproject.toml` 列出的依赖里能跑，**不需要外挂 C++ 扩展**，任何拿到仓库的人 `uv sync` 之后就能复现，不必先编译 CUDA。
+一个容易看漏的取舍：作者**没用 NVIDIA 推荐的 tiny-cuda-nn**（Müller et al. 2022 在 SIGGRAPH 上发表的 multiresolution hash grid 原始实现，CUDA + C++ 扩展）。他在 `champion.py` 的 docstring 里写明了：Triton 3.5.1 与所用 PyTorch 版本配套发布，属于依赖范围（in-scope）。这是工程上微小但不妥协的选择——确保一切代码在 `pyproject.toml` 列出的依赖里能跑，**不需要外挂 C++ 扩展**，任何拿到仓库的人 `uv sync` 之后就能复现，不必先编译 CUDA。
 
 ### 一次完整迭代怎么流过这四个组件
 
@@ -169,7 +169,7 @@ TRITON FUSED 22.6/24.0ms = 2x
 
 forward 2×, backward 4×。bottleneck 从 launch overhead 翻入 DRAM 友好——HBM 带宽利用率终于跑满了。这一改**直接让 5 分钟 budget 里的 step 数从 ~600 涨到 ~1600**，5 分钟里能做的迭代次数翻近 3 倍。
 
-这里还有一个连带收益：Triton kernel 全程 fp32 跑，而 champion 之前用 bf16 autocast。fp32 + 更多 step 数双 buff 把 MSE 从 `0.000335` 压到 `0.00032359`，单次改动 -3.4%。所谓"irreducible floor"，很多时候就是"前代框架没把硬件跑满"：当 framework 升级把步数提上去，"floor"往往自己跟着下降。
+这里还有一个连带收益：Triton kernel 全程 fp32 跑，而 champion 之前用 bf16 autocast。fp32 + 更多 step 数双 buff 把 MSE 从 `0.000335` 压到 `0.00032359`，单次改动 -3.4%。所谓"irreducible floor"，很多时候就是"前代框架没把硬件跑满"：当框架升级把步数提上去，"floor"往往自己跟着下降。
 
 ## 四、关键突破 2：GT-free Mining + 空间误差场——从 0.000323 到 0.000226
 
@@ -213,11 +213,11 @@ GT-free 之后又一层枷锁：每 step 跑两次 9.4M-point proxy forward 各 
 
 `notebook.md` 6-9 末段：`hashgrid_n64l13: 0.00022636 — NEW BEST (-4.9%), promoted. Nmax 65536 + 13 levels "tied" historically at ~600 steps but WINS at ~1600 steps: more steps let the finer grid train. The resolution ceiling moves with throughput, as predicted.`
 
-这一改关键不在算法，仍在 throughput——更细的 grid（Nmax 65536 即 65536 cell/level；13 levels 表示最细层分辨率约 65536 cell/level 套上 13 层多分辨率；总共 33M 参数）需要更多 step 才能 train 出有价值的东西。以前 ~600 step 时代，这个 grid "塞参数但不收敛"，现在 ~1600 step 时代它能 train 出"细颗粒"。
+这一改关键不在算法，仍在 throughput——更细的网格（Nmax 65536，即每层 65536 个 cell；13 levels 表示从粗到细共 13 层多分辨率，总共 33M 参数）需要更多 step 才能训练出有价值的东西。以前 ~600 step 时代，这个网格"塞参数但不收敛"，现在 ~1600 step 时代它能训练出"细颗粒"。
 
-> 想过 n128l14（Nmax 131072, 14 levels）`mse=0.00022644`——跟 n64l13 在一个水平。结论：1600 step 时分辨率天花板就是 Nmax 65536；再有 step 才往上走。这是经验法则"hardware throughput 越高，architecture 选择空间越大"的一次工程级具体化。
+> 想过 n128l14（Nmax 131072、14 levels）`mse=0.00022644`——跟 n64l13 在一个水平。结论：1600 step 时分辨率天花板就是 Nmax 65536；再有 step 才往上走。这是经验法则"hardware throughput 越高，architecture 选择空间越大"的一次工程级具体化。
 
-跑完这次后 champion.py 全文 251 行，历史最长的 solution 文件就是最终的胜出者。这本身点出 RSI 的一个特征：决定胜负的关键不是某个 solution 静态上有多好，而是它能在持续研究循环里被推多远。champion.py 赢在它是被推到最远的那一个。
+跑完这次后 champion.py 全文 251 行，历史最长的 solution 文件就是最终的胜出者。这本身就是 RSI 的一个特征：决定胜负的关键不是某个 solution 静态上有多好，而是它能在持续研究循环里被推多远。champion.py 赢在它是被推到最远的那一个。
 
 ## 六、最终结果：104 次试错全景
 
@@ -240,7 +240,7 @@ champion entry 具体字段：
 - device: NVIDIA GeForce RTX 3090 Ti
 - train_seconds: 300.04（5 分钟 budget 几乎用尽）
 - mse: 0.00022636
-- boundary_mse: 0.00022246（错误在边界附近分布均匀）
+- boundary_mse: 0.00022246（边界附近误差与全局相当，错误呈空间均匀分布）
 - psnr: 36.45 dB
 
 ### 两个怎么算都不便宜的数字
@@ -262,11 +262,11 @@ champion entry 具体字段：
 
 2. **目标度量**：metric 是固定 MSE。AI 没有空间改 metric。如果可以改——比如把 boundary 内权重调到 0——分数会高 100× 但跟原意不符。`harness/evaluate.py` 把这一步 freeze，AI 只能"在规则内最大化"。
 
-3. **新架构自动降质**：champion.py 从 ML 角度写得密密麻麻（triton 调优 + EMA 状态 + 多分辨率哈希），可读性差。`notebook.md` 6-9 第三段也注明："自动优化生成的代码可读性差带来的额外安全隐患"。人不再看得懂，也不再能合理地从中间继续推，一个可读性危机正在生长。
+3. **新架构自动降质**：champion.py 从 ML 角度写得密密麻麻（Triton 调优 + EMA 状态 + 多分辨率哈希），可读性差。`notebook.md` 6-9 第三段也提到：自动优化生成的代码可读性差，会带来额外安全隐患。人不再看得懂，也没法在半路接手继续推进，一个可读性危机正在生长。
 
 4. **任务空间封闭**：5 分钟预算 + 固定 metric + 不许改 harness——这个空间不大。每次"新思路"实操上是 new solution 文件 commit。当任务空间封闭时，AI 不会自己溢出，只会卡在 plateau 上。
 
-视频 20:50 提到的"AI 作弊可能性"——这里用结构性 sandbox（不能改 harness / 不能硬编码曼德博逻辑 / 不能加依赖）锁死。fractalsearch 的工程方案**根本性地偏离**了"AGI 自己改坏自己"那种 RSI 科幻叙事。
+视频 20:50 提到的"AI 作弊可能性"——这里用结构性沙箱（sandbox，不能改 harness / 不能硬编码曼德博逻辑 / 不能加依赖）锁死。fractalsearch 的工程方案**根本性地偏离**了"AGI 自己改坏自己"那种 RSI 科幻叙事。
 
 ## 八、视频里没明说但源码透露的事
 
@@ -385,7 +385,7 @@ fractalsearch 的价值不在"它多强"——单卡 8 小时压一个 MSE 到 0
 ### 主要资料
 
 - [Emergent Garden《Recursive Self-Improvement》(YouTube)](https://www.youtube.com/watch?v=t7_ZXgfJVG8) — 2026-06-13 发布英文原版
-- [BV1w8jL6dE1f](https://www.bilibili.com/video/BV1w8jL6dE1f/) — B站 @黑纹白斑马 AI 配音版，本文的章节时间线来源
+- [BV1w8jL6dE1f](https://www.bilibili.com/video/BV1w8jL6dE1f/) — B 站 @黑纹白斑马 AI 配音版，本文的章节时间线来源
 - [MaxRobinsonTheGreat/fractalsearch](https://github.com/MaxRobinsonTheGreat/fractalsearch) — 2026-06-19 公开，104 条 runs.jsonl + 4 个 solution + AGENT.md
 - [MaxRobinsonTheGreat/mandelbrotnn](https://github.com/MaxRobinsonTheGreat/mandelbrotnn) — 作者个人长期 pet 项目
 - [karpathy/autoresearch](https://github.com/karpathy/autoresearch) — framework 起源
@@ -408,5 +408,3 @@ fractalsearch 的价值不在"它多强"——单卡 8 小时压一个 MSE 到 0
 - Python 3.x + uv（依赖管理）
 - PyTorch + Triton 3.5.1（与 torch 自带同发）
 - 5 分钟 / run × N 次，预算可调
-
-

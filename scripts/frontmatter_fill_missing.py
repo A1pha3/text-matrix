@@ -2,7 +2,8 @@
 
 为什么只补这两个？
 -----------------
-- ``slug``：从文件名推（小写英文 + 连字符），零歧义。
+- ``slug``：从文件名推（小写英文 + 连字符），零歧义；Page Bundle 的
+  ``index.md`` 取父目录名（文件名恒为 index，推出的是构建毒药 slug:index）。
 - ``categories``：项目内已有稳定的子目录→分类映射（见 :data:`CATEGORY_BY_DIR`）。
 
 ``description`` 和 ``tags`` 必须读懂正文，由 LLM 或人工处理，本脚本不碰。
@@ -58,9 +59,19 @@ def default_categories_for(rel: Path) -> tuple[str, ...] | None:
     return None
 
 
-def slug_from_filename(name: str) -> str | None:
-    """从文件名（去扩展名）推导 slug。"""
-    stem = name[:-3] if name.endswith(".md") else name
+def slug_from_path(path: Path) -> str | None:
+    """从文件路径推导 slug。
+
+    单文件取文件名 stem；Page Bundle 的 ``index.md`` 文件名没有语义，必须取
+    父目录名——否则会注入 ``slug: index``（lint 判 fatal 的构建毒药：所有这么
+    写的页面争抢 ``.../index/index.html``，2026-08-06 实证事故，2026-08-17 审查
+    发现本脚本正是注入源之一）。
+    """
+    if path.name == "index.md":
+        stem = path.parent.name
+    else:
+        name = path.name
+        stem = name[:-3] if name.endswith(".md") else name
     return stem if SLUG_VALID_RE.match(stem) else None
 
 
@@ -147,7 +158,7 @@ def fill_one(path: Path, root: Path) -> FillResult:
     skipped: list[str] = []
 
     if "slug" not in data or data["slug"] in (None, ""):
-        candidate = slug_from_filename(path.name)
+        candidate = slug_from_path(path)
         if candidate:
             added["slug"] = candidate
         else:

@@ -94,35 +94,50 @@ esac
 rel="${idx#$REPO/}"
 
 # ---- 读 frontmatter 关键字段（source_key / title / draft / slug）----
-meta="$(python3 - "$idx" <<'PY'
+# 同时读 HEAD 里的已提交版本：上线判定必须以 HEAD 为准——工作区的 draft:false
+# 可能是上次 commit 失败的残留（翻 draft 在前、commit 在后），读工作区会把
+# "上次失败"误判成"已上线"，exit 5 自锁拒绝恢复（2026-08-17 实证）。
+head_tmp="$(mktemp -t publish-draft-head)"
+git -C "$REPO" show "HEAD:$rel" > "$head_tmp" 2>/dev/null || true  # 新稿无 HEAD 版本 → 空文件
+meta="$(python3 - "$idx" "$head_tmp" <<'PY'
 import re, sys, json
-c = open(sys.argv[1]).read()
-m = re.match(r'^---\n(.*?)\n---\n', c, re.DOTALL)
-fm = m.group(1) if m else ''
-def field(n):
+
+def split_fm(c):
+    m = re.match(r'^---\n(.*?)\n---\n', c, re.DOTALL)
+    return (m.group(1), True) if m else ('', False)
+
+def field(fm, n):
     mm = re.search(r'^' + n + r'\s*:\s*(.*?)\s*$', fm, re.MULTILINE)
     v = mm.group(1).strip() if mm else ''
-    v = v.strip("\"'")
-    return v
-sk = field('source_key')
+    return v.strip("\"'")
+
+fm, has_fm = split_fm(open(sys.argv[1]).read())
+hfm, _ = split_fm(open(sys.argv[2]).read())
 print(json.dumps({
-    'source_key': sk,
-    'title': field('title'),
-    'draft': field('draft'),
-    'slug': field('slug'),
-    'has_fm': bool(m),
+    'source_key': field(fm, 'source_key'),
+    'title': field(fm, 'title'),
+    'draft': field(fm, 'draft'),
+    'slug': field(fm, 'slug'),
+    'head_draft': field(hfm, 'draft') if hfm else '',
+    'has_fm': has_fm,
 }, ensure_ascii=False))
 PY
 )"
+rm -f "$head_tmp"
 sk="$(echo "$meta" | python3 -c "import json,sys;print(json.load(sys.stdin)['source_key'])")"
 title="$(echo "$meta" | python3 -c "import json,sys;print(json.load(sys.stdin)['title'])")"
 draft_now="$(echo "$meta" | python3 -c "import json,sys;print(json.load(sys.stdin)['draft'])")"
+head_draft="$(echo "$meta" | python3 -c "import json,sys;print(json.load(sys.stdin)['head_draft'])")"
 
-# ---- 硬约束：已 draft:false（上线态）则拒绝重发，防幂等破坏 ----
-if [ "$draft_now" = "false" ] && [ "$force" != 1 ]; then
-  echo "❌ 该文章已是 draft:false（上线态），不应重复发布：${rel}" >&2
+# ---- 硬约束：HEAD 已是 draft:false（已提交上线态）则拒绝重发，防幂等破坏 ----
+if [ "$head_draft" = "false" ] && [ "$force" != 1 ]; then
+  echo "❌ 该文章已提交为 draft:false（上线态），不应重复发布：${rel}" >&2
   echo "   如需重新发布（如内容大改后重上），加 --force。" >&2
   exit 5
+fi
+# 工作区 false 但 HEAD 不是 = 上次 commit 失败的残留：翻 draft 幂等，继续完成即可
+if [ "$draft_now" = "false" ] && [ "$head_draft" != "false" ]; then
+  echo "ℹ️  工作区已是 draft:false（上次发布中断的残留，未提交），继续完成发布"
 fi
 
 # ---- 硬约束：source_key 必须有（发布去重的唯一身份）----
@@ -176,6 +191,10 @@ if [ "$dry_run" = 1 ]; then
 fi
 
 # ---- 翻 draft:true → draft:false（原子，仅改这一行）----
+# 先备份原文件字节：commit 失败时必须回滚，否则残留的 draft:false 会把
+# 工作区留在"已翻未提交"的中间态（旧版在此状态下重跑会误判已上线，见上）。
+bak="$(mktemp -t publish-draft-bak)"
+cp "$idx" "$bak"
 python3 - "$idx" <<'PY'
 import sys, re
 f = sys.argv[1]
@@ -197,7 +216,15 @@ echo "✅ 已翻 draft: false"
 msg="${grade} ${score:-?}/100 · ${title}"
 [ -n "$note" ] && msg="${msg}（${note}）"
 msg="${msg} [${sk}]"
-( cd "$REPO" && git add "$rel" && git commit -m "$msg" -q )
+if ! ( cd "$REPO" && git add "$rel" && git commit -m "$msg" -q ); then
+  cp "$bak" "$idx"                    # 恢复进入脚本时的文件字节
+  git -C "$REPO" reset -q HEAD -- "$rel" 2>/dev/null || true  # 撤回本次暂存（不碰工作区）
+  rm -f "$bak"
+  echo "❌ commit 失败（多为 pre-commit 的 lint/形态检查未过）。" >&2
+  echo "   已回滚 draft 翻转与暂存区，文件保持进入脚本时的状态；修复后可直接重跑。" >&2
+  exit 7
+fi
+rm -f "$bak"
 echo "✅ 已 commit：$msg"
 
 # ---- push ----

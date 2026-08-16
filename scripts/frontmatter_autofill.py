@@ -3,10 +3,11 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import NamedTuple
+from typing import Iterable, NamedTuple
 
 
 class RunResult(NamedTuple):
@@ -21,6 +22,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--recursive", dest="recursive", action="store_true", default=True)
     parser.add_argument("--no-recursive", dest="recursive", action="store_false")
+    parser.add_argument(
+        "--target",
+        action="extend",
+        nargs="+",
+        default=[],
+        help="显式指定要处理的文件（可多个）；传入后不再全量扫描（pre-commit 增量场景）",
+    )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="补全出的 frontmatter 写 draft = false（存量回填专用）；"
+        "默认 draft = true——发布闸门是 draft 布尔位，自动补全不得替它翻闸",
+    )
     return parser.parse_args()
 
 
@@ -44,10 +58,14 @@ def extract_title(text: str, file_path: Path) -> str:
     return file_path.stem.replace("-", " ").replace("_", " ").strip().title()
 
 
-def build_front_matter(title: str) -> str:
+def build_front_matter(title: str, live: bool = False) -> str:
     now = datetime.now().astimezone().isoformat(timespec="seconds")
     safe_title = title.replace("'", "’")
-    return f"+++\ndate = '{now}'\ndraft = false\ntitle = '{safe_title}'\n+++\n\n"
+    # 默认 draft = true：无 frontmatter 的文件可能是未审半成品，draft 布尔位是
+    # 发布唯一闸门，自动补全不得替它翻闸（2026-08-17 对抗审查：draft=false 默认值
+    # 与钩子全量 git add 联级可绕过评分闸静默发版）。存量回填确认要上线用 --live。
+    draft = "false" if live else "true"
+    return f"+++\ndate = '{now}'\ndraft = {draft}\ntitle = '{safe_title}'\n+++\n\n"
 
 
 def normalize_line_endings(text: str) -> str:
@@ -81,9 +99,32 @@ def write_text_atomic(path: Path, text: str) -> None:
     os.replace(temp_name, path)
 
 
-def run(root: Path, dry_run: bool, recursive: bool) -> RunResult:
+def iter_files(root: Path, recursive: bool, targets: Iterable[Path] | None) -> list[Path]:
+    """枚举待处理文件：targets 非空时只处理显式指定的（pre-commit 增量场景）。"""
+    if targets:
+        result = []
+        for t in targets:
+            if not t.is_file():
+                continue
+            try:
+                t.relative_to(root)
+            except ValueError:
+                print(f"[warn] {t} 不在根目录 {root} 下，跳过", file=sys.stderr)
+                continue
+            result.append(t)
+        return sorted(result)
     pattern = "**/*.md" if recursive else "*.md"
-    files = sorted([p for p in root.glob(pattern) if p.is_file() and needs_insert(p)])
+    return sorted([p for p in root.glob(pattern) if p.is_file()])
+
+
+def run(
+    root: Path,
+    dry_run: bool,
+    recursive: bool,
+    targets: Iterable[Path] | None = None,
+    live: bool = False,
+) -> RunResult:
+    files = [p for p in iter_files(root, recursive, targets) if needs_insert(p)]
     changed = 0
     failed = 0
 
@@ -99,7 +140,7 @@ def run(root: Path, dry_run: bool, recursive: bool) -> RunResult:
             continue
 
         title = extract_title(original, path)
-        updated = build_front_matter(title) + original.lstrip("\n")
+        updated = build_front_matter(title, live=live) + original.lstrip("\n")
         changed += 1
 
         if not dry_run:
@@ -115,11 +156,18 @@ def run(root: Path, dry_run: bool, recursive: bool) -> RunResult:
 
 def main() -> None:
     args = parse_args()
-    root = Path(args.root)
+    root = Path(args.root).resolve()
     if not root.exists() or not root.is_dir():
         raise SystemExit(f"目录不存在: {root}")
 
-    result = run(root=root, dry_run=args.dry_run, recursive=args.recursive)
+    targets = [Path(t).resolve() for t in args.target] if args.target else None
+    result = run(
+        root=root,
+        dry_run=args.dry_run,
+        recursive=args.recursive,
+        targets=targets,
+        live=args.live,
+    )
     mode = "预览模式" if args.dry_run else "写入模式"
     print(f"{mode} 扫描 {result.total} 个 Markdown 文件，补齐 {result.changed} 个文件，失败 {result.failed} 个")
     if result.failed > 0:

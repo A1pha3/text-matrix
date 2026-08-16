@@ -5,21 +5,40 @@ repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
 # 0. 形态不变量：孤儿 bundle（目录里只有 index.md 无资源）自动拍平成单文件
-# 必须先于 changed 收集——git mv 会改写 staged 集合，lint 应拿到拍平后的新路径
+# 必须先于 changed 收集——git mv 会改写 staged 集合，后续步骤应拿到拍平后的新路径
 bash scripts/normalize-orphan-bundles.sh
 
-# 1. frontmatter 校验：优先跑本次改动的文件，全量失败则全量再跑一次
-# ⚠️ 7-1 合并：保留 staged version 的 --offline 标志（针对 198.18.0.0/15 隔离网络，PyYAML 已本地缓存）
-# ⚠️ 7-1 合并：保留 staged version 的 --target "${changed[@]}" 简洁写法（vs HEAD 的 target_args 数组）
 changed=()
 while IFS= read -r -d '' f; do
   changed+=("$f")
 done < <(git diff --cached --name-only --diff-filter=ACMR -z -- 'content/**/*.md')
 
-# frontmatter_lint / fill_missing 只作用于 content/ 下的 md（skills/ 等仓内其它 md 不在
+# frontmatter_lint / autofill / fill_missing 只作用于 content/ 下的 md（skills/ 等仓内其它 md 不在
 # root=content 内，传入会 relative_to 报错 —— 2026-08-06 修，故 changed 只捕获 content/）
 
 if [ "${#changed[@]}" -gt 0 ]; then
+  # 顺序铁律（2026-08-17 对抗审查拍板）：补全在前、lint 断后——lint 必须校验补全
+  # 产物，否则补全脚本注入的坏字段会绕过闸门入库（实证：fill_missing 曾给 bundle
+  # 注入 slug:index 构建毒药，因 lint 在前而漏检）。
+  # 作用域铁律：只碰本次提交的文件；全量回填手动跑 --root content。
+
+  # 1. frontmatter 自动补全（无 fm 的文件补 TOML 头，默认 draft=true 未审不上线）
+  if command -v uv >/dev/null 2>&1; then
+    uv run --offline python scripts/frontmatter_autofill.py --root content --target "${changed[@]}"
+  else
+    python3 scripts/frontmatter_autofill.py --root content --target "${changed[@]}"
+  fi
+
+  # 2. 补缺 slug / categories（bundle 的 slug 取父目录名）
+  if command -v uv >/dev/null 2>&1; then
+    uv run --offline --with pyyaml python scripts/frontmatter_fill_missing.py --root content --target "${changed[@]}"
+  else
+    python3 scripts/frontmatter_fill_missing.py --root content --target "${changed[@]}"
+  fi
+
+  # 3. frontmatter 校验（断后：校验的是补全产物）
+  # ⚠️ 7-1 合并：保留 staged version 的 --offline 标志（针对 198.18.0.0/15 隔离网络，PyYAML 已本地缓存）
+  # ⚠️ 7-1 合并：保留 staged version 的 --target "${changed[@]}" 简洁写法（vs HEAD 的 target_args 数组）
   if command -v uv >/dev/null 2>&1; then
     uv run --offline --with pyyaml python scripts/frontmatter_lint.py --root content --target "${changed[@]}" || \
       uv run --offline --with pyyaml python scripts/frontmatter_lint.py --root content
@@ -27,21 +46,10 @@ if [ "${#changed[@]}" -gt 0 ]; then
     python3 scripts/frontmatter_lint.py --root content --target "${changed[@]}" || \
       python3 scripts/frontmatter_lint.py --root content
   fi
-fi
 
-# 2. frontmatter 字段自动补全
-if command -v uv >/dev/null 2>&1; then
-  uv run --offline python scripts/frontmatter_autofill.py --root content
-else
-  python3 scripts/frontmatter_autofill.py --root content
+  # 4. 只回加本次提交的文件，绝不用 git add content——后者把工作区里无关的脏文件/
+  # 未追踪半成品全部卷入本次 commit（2026-08-17 实证），publish-draft 的"只提交本篇"
+  # 约束会被它架空。git add 对 index 里有记录的路径能正确处理 staged-后删除的场景；
+  # normalize 的 git mv 产物已自行暂存，无需在此处理。
+  git add -- "${changed[@]}"
 fi
-
-if [ "${#changed[@]}" -gt 0 ]; then
-  if command -v uv >/dev/null 2>&1; then
-    uv run --offline --with pyyaml python scripts/frontmatter_fill_missing.py --root content --target "${changed[@]}"
-  else
-    python3 scripts/frontmatter_fill_missing.py --root content --target "${changed[@]}"
-  fi
-fi
-
-git add content
