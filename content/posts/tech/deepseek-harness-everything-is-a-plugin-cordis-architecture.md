@@ -15,7 +15,9 @@ github_repo: "deepseek-ai/deepseek-harness"
 
 大多数 agent 框架都有一条不许碰的脊柱：模型调用、工具注册表、会话存储焊在主程序里，想换掉其中任何一块，出路通常是 fork 整个仓库。`deepseek-ai/deepseek-harness`（下文简称 DSH，CLI 命令是 `dsh`）把这个默认设定反过来：不存在一个需要 fork 的主程序，平台本体就是插件的组合，连 agent loop 自己也是插件——默认实现 `packages/core/agent-loop` 只有 713 行，挂在任何人都能用的扩展点上，理论上可以被另一个 driver 整个换掉。
 
-规模数据先摊开：93,077 stars，2026-08-13 创建并开源，7,412 个文件，`packages/` 下 54 个 workspace（承担 core / extension 角色的 30 多个），`docs/` 62 篇文档，当前 v0.x developer preview。
+规模数据先摊开（截至 2026-08-16 检索）：128,058 stars、12,767 forks，7,412 个文件，`packages/` 下 49 个组、219 个 workspace（core 组占 8 个包），`docs/` 215 篇 Markdown——中英双语，含 92 篇 subsystem 文档、16 篇 Cordis 教程、10 篇 postmortem——npm 上 `@deepseek-ai/dsh` 最新版 0.1.0-rc.6，MIT 许可，仍标 developer preview。
+
+时间线值得单独说。GitHub 仓库的创建时间是 2026-08-13，commit 历史却追溯到两个月前的 6 月 10 日，首个 commit 就是初始化 README、AGENTS.md 和 CLAUDE.md 符号链接。换句话说，这不是边写边晒的仓库，而是闭门开发两个月、攒下 12,293 个 commit、19 位贡献者，然后整体公开的项目——本文初稿记录时 9.3 万 stars，8-16 复核已是 12.8 万。仓库描述只有一句话：DeepSeek Harness: Everything is a Plugin.
 
 README 第一句话就把定位说得很重：
 
@@ -41,12 +43,13 @@ README 第一句话就把定位说得很重：
 
 ## 系统地图：7,412 个文件怎么分
 
-主仓库布局：
+主仓库布局（目录为组，组下是可独立发布的 workspace）：
 
 ```text
-vendor/      vendored Cordis 框架源码 + cosmokit/group/hmr/loader 等
-packages/    @deepseek-ai/dsh-<pkg> workspaces（54 个）
-  core/        product API 脊柱
+apps/        产品装配层：apps/cli 持有 dsh bin，apps/web 是浏览器应用
+vendor/      vendored Cordis 4.0.1 + cosmokit/group/hmr/schemastery 源码
+packages/    49 个组、219 个 workspace
+  core/        产品 API 脊柱（8 包）
     session          append-only SessionEvent log (1157 行)
     agent            Agent interface + live registry (706 行)
     agent-loop       默认 driver (713 行)
@@ -58,41 +61,36 @@ packages/    @deepseek-ai/dsh-<pkg> workspaces（54 个）
   api/         Remote BFF assembly + Typert RPC gateway
   typert/      type graph generator + loader + runtime registry
   llm/         LLM capability + DeepSeek providers + replay
+  client/      Web 前端，39 个 workspace——按对话节点/面板拆到包粒度
+  host/        桌面/宿主装配，8 个 workspace
+  shell/ subprocess/ terminal/ fs/ lsp/   执行世界：bash/进程树/PTY/文件系统/LSP
+  sandbox/     沙箱 capability（4 包，与 e2b 的 POC 并列）
   e2b/         E2B POC: sandbox + FS/subprocess adapters
-  shell/       bash capability + local/pwsh providers
-  subprocess/  subprocess capability + local process-tree provider
-  terminal/    persistent terminal sessions
-  fs/          filesystem capability + policy
-  lsp/         language-server capability
+  mcp/         MCP client——外部 MCP 服务器作为工具源接入
   skill/       skill provider registry + catalog/loader
   web/         web capability (search/fetch providers)
+  subagent/    subagent capability + delegation（11 包）
   compaction/  compaction capability + basic provider
   context/     request-context plugins
-  subagent/    subagent capability + delegation
   bundle/      installable dsh --profile patch-layer bundles
   workflow/    workflow capability + worker-thread provider
-  todo/        todo_write tool
-  plan/        plan mode as logged state
-  preset/      per-session agent composition
-  guard/       loop-hygiene + tool-timeout
-  self-modification/   the agent inspects/mounts its own plugins
+  jobs/        background work + job_* tools
+  schedule/    定时任务
+  todo/ plan/ goal/ preset/ guard/   todo 工具 / plan mode / objective / 组合 / loop-hygiene
+  attachment/  多模态附件的本地/宿主运行时服务
+  spill/ storage/ workspace/        溢写、存储、工作区抽象
+  extensions/  agent 自我改造的四件套：cordis-host-runner / cordis-client-runner /
+               tool-cordis / ui-cordis（原 self-modification 重组而来）
   hooks/       Claude Code/Codex hook bridges + wire-protocol
-  session/     durable session data: persistence, projection, titles, telemetry
-  identity/    anonymous identity
-  settings/    user-settings capability
-  credentials/ credential-reference capability
-  acp/         automation-only Agent Client Protocol server
-  interaction/ approval/interaction/permission/commands/ask-user
-  boot/        shared app-bin glue
-  sdk/         JSON-RPC protocol + server + TS client
-  examples/    demo bundles
-  support/     dev/test infrastructure
-  util/        zero-dependency utilities
-python/       Python SDK + bundled runtime
+  session/     durable session data: persistence、projection、titles、telemetry（13 包）
+  session-query/  session log 的导出与查询（4 包）
+  identity/ settings/ credentials/ interaction/ feedback/
+  code-runtime/ runtime-diagnostics/ acp/ boot/ sdk/ examples/ test-support/ util/
+python/       Python SDK + bundled runtime（sdk-runtime 是单文件可执行构建的部署根）
 native/       @deepseek-ai/node-addon-landlock-run source of record
 examples/     runnable cordis.yml leaves
 .agents/      Agent workflows + Agent Notes
-docs/         62 个文档（architecture, generated catalogs, postmortems, cookbook）
+docs/         215 篇文档（architecture、subsystems、generated catalogs、postmortem、cookbook、cordis-tutorial）
 scripts/      repo gates + generators
 website/      VitePress projection of selected bilingual docs/
 ```
@@ -106,9 +104,9 @@ flowchart TB
     Profile["Profile<br/>命名 composition + cordis.patch.yml"]
     Bundles["dsh-base → dsh-web-app / dsh-headless"]
   end
-  subgraph Caps["packages/ · 54 个 workspace"]
-    Core["core：session / agent / agent-loop / tools / system-prompt / scope"]
-    Ext["extension：llm / fs / shell / subprocess / terminal / lsp / skill / web / subagent / workflow / guard / hooks …"]
+  subgraph Caps["packages/ · 49 组 219 workspace"]
+    Core["core 组 8 包：session / agent / agent-loop / tools / system-prompt / scope"]
+    Ext["能力组：llm / fs / shell / subprocess / terminal / lsp / skill / web / subagent / workflow / guard / hooks / mcp …"]
   end
   Foundation["vendor/cordis<br/>service registry + inject + reversible effects"]
   CLI --> Profile --> Bundles
@@ -118,13 +116,15 @@ flowchart TB
   Ext --> Foundation
 ```
 
-`vendor/cordis`、`vendor/cosmokit` 是 vendored 源码而非 npm 依赖，manifest 和同步流程在 `vendor/README.md`——好处是仓库不依赖外部 npm registry 的可用性，代价是一旦升级 vendored 包，PR 体积会很大。数字上也容易看岔：「54 个 workspace」和「30+ packages」并不矛盾：54 是 `packages/` 下的 workspace 总数，其中 30 多个承担 core / extension 角色，其余是 sdk、support、examples、util、boot 这类配套。
+`vendor/` 里的 Cordis（4.0.1）、cosmokit（1.8.2）、group、hmr、schemastery 是 vendored 源码而非普通 npm 依赖，manifest 和同步流程在 `vendor/README.md`；`pnpm-workspace.yaml` 再用 overrides 把这些名字 link 回 vendor 目录——仓库内的构建永远解析到 pinned 源码，不受外部 registry 波动影响。2026-08-13 起，这几个框架包随 dsh family 一起公开发布到 npm，外部消费者拿到的是正常版本号包，仓库内依旧是源码形态；代价不变——升级 vendored 包时 PR 体积会很大。
+
+数字上也容易看岔：「219 个 workspace」和「49 个组」是两个口径：组目录 49 个，组下匹配 `packages/*/*` 的 workspace 219 个。npm 公开发布前，这个数是 54——公开发布把包拆到了可独立消费的粒度，光 `client/`（Web 前端）一家就拆出 39 个，按对话节点、面板、设置页各自成包。core 组始终是 8 个包，一个没多一个没少。
 
 体量对比：
 
 | 项目 | 文件数 | 源码规模 | 角色 |
 |---|---|---|---|
-| deepseek-harness（本文） | 7,412 | core 五包约 5.1K 行；全仓未做完整统计 | 平台本体 |
+| deepseek-harness（本文） | 7,412 | core 五包约 5.1K 行；219 个 workspace 未做完整统计 | 平台本体 |
 | dsh-genui | 32 | 5,860 行 | 主仓外插件：GenUI 渲染层 |
 | dsh-at-file | 17 | 1,742 行 | 主仓外插件：`@path` 提及 |
 
@@ -155,7 +155,7 @@ DSH 整个平台立在两条不变式上：第一条是 everything is a plugin�
    - 卸载/重载时 unwinding 可预测
 ```
 
-第五条最值得展开。注册即 effect，意味着任何插件挂上去的东西——一个 tool、一个事件监听、一个 service row——在插件卸载时都会被回滚。DSH 敢让 agent 自己改自己的运行时（后文 self-modification 一节），靠的就是这一点：所有挂载天然可逆，不存在「装上去就摘不干净」的状态。
+第五条最值得展开。注册即 effect，意味着任何插件挂上去的东西——一个 tool、一个事件监听、一个 service row——在插件卸载时都会被回滚。DSH 敢让 agent 自己改自己的运行时（后文动态插件一节），靠的就是这一点：所有挂载天然可逆，不存在「装上去就摘不干净」的状态。
 
 第一个结构性后果写在 architecture.md 里：
 
@@ -288,9 +288,11 @@ sequenceDiagram
 
 两类事件的分工至此分明。Session events（durable）进 log、能 replay、能 fork、能 resume，`session/event` 是它们的总线；capability events 挂在 seam 上（`fs/*` / `tools/*` / `telemetry/*`），不 import 主 loop。dsh-at-file 监听 `agent/pre-step` 是后者的典型用法——挂在 waterfall 上、读 messages、注入引用消息、`next()` 交还控制权；dsh-genui 的 panel 持久化则挂在 `session/event` 的 emit 链上。
 
+还有一条规则藏在 inbox 里：所有输入走同一个 inbox，但唤醒语义分两档。用户消息会立刻唤醒 driver，`agent.inject()` 注入的上下文不会——它躺在 inbox 里排队，直到下一条会唤醒的消息到达，才随那次 claim 一起进模型。architecture.md 的原话是 "Some messages wake it immediately; injected context waits in the inbox until another message does."。回头看 18 行表里 "Add model-facing context → call `agent.inject()`; it lands in the next admitted request" 的措辞，"next admitted" 说的就是这个：不是下一条消息，而是下一次被 admit 进模型的请求。后台任务想给模型递情报、又不想凭空烧一次推理，靠的就是这条规则。
+
 ## Capability seams：三角色
 
-`docs/capability-seams.md` 是 `scripts/gen-docs-graphs.ts` 生成的 mermaid 图，把 50+ packages 和 30+ services 的依赖关系画了出来。它对 seam 的定义是：
+`docs/capability-seams.md` 是 `scripts/gen-doc-graphs.ts` 生成的 mermaid 图，画出全仓 services 的三类身份——core spine service、swappable capability seam、bundle composition point——以及每个 service 由哪个包声明、哪些包实现、哪些包直接消费。它对 seam 的定义是：
 
 ```text
 A seam = swappable capability with three roles
@@ -409,11 +411,30 @@ billing / metering 不进运行时。`ctx.tokenMeter` 测的是 replay 的 token
 
 multi-tenant 隔离是部署侧责任。service row 可以指定 `isolate` realm，但数据层面的多租户隔离，框架不承诺。
 
-## 两个信号灯：self-modification 与 hooks
+## 公开一周：从源码仓库到 npx 产品
 
-有两个 package 单独拎出来看，因为它们指示的是这个项目的方向，不只是某个功能。
+把 commit 日志按日期摊开，公开前后这一周的信息量不亚于架构文档本身：
 
-`packages/self-modification/` 让 agent 检查并挂载它自己的插件。结合 Cordis 的 reversible effects——所有 effect 都有 disposer——agent 改自己运行时的动作也是干净可回滚的。「运行时可被居住者修改」，在大多数框架里是事故，在这里是设计出来的能力。
+- **8-04**，"cleanup: remove TUI package and legacy dsh entrypoints"——早期内置的 TUI 包和旧入口被整体移除；
+- **8-10**，npm 出现第一个版本 `0.0.1-rc.1`，此时尚未公开；
+- **8-12**，"docs: make Web UI the primary onboarding path"——Web UI 取代终端，成为官方主入口；
+- **8-13**，连发三件事：DSH 全部包改用 MIT 许可（"Adopt MIT for DSH packages"）、dsh family 与 vendored 框架公开发布到 npm、仓库本身公开。
+
+现在的上手方式收敛成一条命令：
+
+```sh
+npx @deepseek-ai/dsh web
+```
+
+默认在 `http://127.0.0.1:3080` 起 Web UI。想跑源码仍然是四步：clone、`pnpm install`、`pnpm run build`、`pnpm dsh web`。
+
+这一周等于做了一次活体实验：同一套平台，TUI 入、TUI 出，Web UI 顶上，CLI 从 legacy 入口收敛为 `apps/cli` 这个持有 bin 的薄壳——`pnpm-workspace.yaml` 的注释写得很直白，"Product assemblies over the package tier; apps/cli owns the `dsh` bin"。产品形态在这套架构里不是天生的，而是 bundles 的又一种组合；换掉终端界面没有动 core 一行代码。everything is a plugin 最终兑现的不是「能换模型、能换沙箱」，而是连「产品长什么样」本身都在插件树上。
+
+## 两个信号灯：动态插件与 hooks
+
+有两组 package 单独拎出来看，因为它们指示的是这个项目的方向，不只是某个功能。
+
+`packages/extensions/` 是 agent 的自我改造能力，公开前叫 `packages/self-modification/`，公开前的最后一轮重构里改组为四个包：`cordis-host-runner`、`cordis-client-runner` 在正确的进程侧执行动态插件，`tool-cordis` 把挂载/卸载暴露为模型可调用的工具，`ui-cordis` 负责把动态插件的状态渲染进 Web UI——commit 的名字就叫 "add dynamic Cordis plugin runtime and UI"。结合 Cordis 的 reversible effects——所有 effect 都有 disposer——agent 改自己运行时的动作也是干净可回滚的。「运行时可被居住者修改」，在大多数框架里是事故，在这里是设计出来的能力。
 
 `packages/hooks/` 提供 Claude Code / Codex 的 hook bridges 加 wire-protocol library，把两家的 hooks 模型映射到 Cordis 事件系统上。仓库里 `CLAUDE.md → AGENTS.md` 是真实的符号链接，Claude Code 直接读 `AGENTS.md`。放在一起读，意图很清楚：别人生态里的插件可以低摩擦迁进来，自己的运行时可以被 agent 自己改——DSH 想做的是插件生态的汇合点，不是又一个孤岛。
 
@@ -427,18 +448,18 @@ DSH 回答的根本问题是：
 
 据此分人群：
 
-- **做 agent 产品或平台的团队**：现在就值得读，但先读再依赖。建议顺序是 `docs/architecture.md` → `docs/cordis-primer.md` → `packages/core/session` → `packages/core/agent-loop` → `packages/core/tools` → `docs/capability-seams.md`，读完这六个位置，18 行扩展点表里的每一行都能对应上。pre-release 无兼容承诺，当生产依赖要慎重。
-- **要开箱即用编码助手的终端用户**：Claude Code / Codex CLI 更合适。dsh 的 ergonomic 面向构建者——要写 cordis.yml、要知道 service key 和 event dispatch mode，这些对终端用户是负担，对构建团队是共用协议。
-- **想参与生态的开发者**：从 out-of-tree plugin 起步，dsh-at-file 和 dsh-genui 是两个现成范本（`dsh plugin --profile web add` 安装），挂点查 18 行表。
-- **Python 团队**：留意 `python/` SDK 是 RPC client 模式——Cordis 是 Node 框架，Python 侧通过 `packages/sdk/` 的 JSON-RPC 调 Node runtime，不是 in-process Python。
+- **做 agent 产品或平台的团队**：现在就值得读，但先读再依赖。建议顺序是 `docs/architecture.md` → `docs/cordis-primer.md`（不熟 Cordis 再补 16 篇 `docs/cordis-tutorial/`）→ `packages/core/session` → `packages/core/agent-loop` → `packages/core/tools` → `docs/capability-seams.md`，读完这六个位置，18 行扩展点表里的每一行都能对应上。pre-release 无兼容承诺，当生产依赖要慎重。
+- **要开箱即用编码助手的终端用户**：`npx @deepseek-ai/dsh web` 起 Web UI 试用已经没有门槛，但 Claude Code / Codex CLI 仍更顺手。dsh 的 ergonomic 面向构建者——要写 cordis.yml、要知道 service key 和 event dispatch mode，这些对终端用户是负担，对构建团队是共用协议。
+- **想参与生态的开发者**：从 out-of-tree plugin 起步，dsh-at-file 和 dsh-genui 是两个现成范本（`dsh plugin --profile web add` 安装），挂点查 18 行表；接外部 MCP 服务器的看 `packages/mcp/mcp-client`，MCP 在这里已经是落地的一等公民，不是路线图。
+- **Python 团队**：留意 `python/` SDK 是 RPC client 模式——Cordis 是 Node 框架，Python 侧通过 `packages/sdk/` 的 JSON-RPC 调 Node runtime，不是 in-process Python；`python/sdk-runtime` 还是单文件可执行构建的部署根。
 
-`Cordis service registry + append-only session log + agent pre-step waterfall + capability seam 三角色`，是这个范式能工程化落地的四根钉子。少一根，要么 plugin 边界失效，要么 replay 失败，要么模型看到 log 看不到的东西，要么换 provider 不能传播。v0.x 阶段的 7,412 个文件是这件事的当前解；下一版本会是什么——multi-tenant 隔离进 core、`dsh-bundle-cloud` 做 SaaS、Python SDK 转 GA、typed streaming 替换部分 webhook 路径——都属于猜测，但按「foundation over blast radius」的原则，继续修地基比堆 feature 的概率大。无论后续怎么走，everything is a plugin 和 Model-visible means logged 这两条不变式，大概率会留下。
+`Cordis service registry + append-only session log + agent pre-step waterfall + capability seam 三角色`，是这个范式能工程化落地的四根钉子。少一根，要么 plugin 边界失效，要么 replay 失败，要么模型看到 log 看不到的东西，要么换 provider 不能传播。v0.x 阶段的 7,412 个文件是这件事的当前解；下一版本会是什么——multi-tenant 隔离进 core、`dsh-bundle-cloud` 做 SaaS、Python SDK 转 GA——都属于猜测，但按「foundation over blast radius」的原则，继续修地基比堆 feature 的概率大。更确定的是方向：MCP 已经以 `mcp-client` 落进主仓，动态插件运行时已经配齐 tool 和 UI。无论后续怎么走，everything is a plugin 和 Model-visible means logged 这两条不变式，大概率会留下。
 
 ## 延伸阅读
 
 - [dsh-at-file 深度解析](/posts/ai-coding/dsh-at-file-deepseek-harness-at-file-mentions/)：`@path` 提及插件，为什么故意不读文件
 - [dsh-genui 深度解析](/posts/ai-coding/dsh-genui-deepseek-harness-genui-fence-architecture/)：GenUI 渲染层，dsh-ui fence 与双渲染通道
 - [Cordis 论文导读](/posts/tech/cordiverse-paper-spatiotemporal-composability-translation/)：_A Programming Paradigm for Spatiotemporal Composability_。时空可组合性里的「时间」指生命周期（plugin 何时装载卸载），「空间」指作用域（注册落在哪个 scope）；`packages/core/scope/` 是 scoped-registration primitive，`agent.ctx` 是这个 scope 的物理载体——读完论文再回看 scope 包，很多设计选择会显得顺理成章
-- 仓库内的 `docs/postmortems/`：62 篇文档里的 postmortem 部分，是理解「哪些地基修过」的最快入口
+- 仓库内的 `docs/postmortem/`：十篇复盘，是理解「哪些地基修过」的最快入口；想看每个包的细节再进 `docs/subsystems/`，92 篇，一包一篇
 
 术语约定：DSH 指平台，`dsh` 指 CLI 命令；waterfall / parallel / serial / emit 四种 dispatch mode 全文保留英文，含义见 Turn flow 一节的表格。

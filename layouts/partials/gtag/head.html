@@ -1,8 +1,12 @@
 {{- $cfg := .Site.Params.gtag -}}
-<!-- 仅在生产环境、开关打开且配置了衡量 ID 时注入 Google tag (gtag.js)，每个页面只注入一次 -->
-{{- if and (not hugo.IsServer) $cfg.enabled $cfg.id -}}
-<!-- 预热统计脚本域名连接，缩短首次请求耗时 -->
+<!-- 仅在生产环境注入。hugo 构建默认即 production（hugo server 才是 development）。
+     用 eq hugo.Environment "production" 而非 not hugo.IsServer：
+     前者还能挡掉非生产环境的预览部署（如 Netlify/Vercel preview），避免污染生产数据。
+     本地开发请用 hugo server，不会注入 -->
+{{- if and (eq hugo.Environment "production") $cfg.enabled $cfg.id -}}
+<!-- 预热加载脚本域名（googletagmanager.com）与数据上报域名（google-analytics.com）连接，缩短首次请求耗时 -->
 <link rel="preconnect" href="https://www.googletagmanager.com">
+<link rel="preconnect" href="https://www.google-analytics.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id={{ $cfg.id }}"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
