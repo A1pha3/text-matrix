@@ -149,21 +149,25 @@ url_to_slug() {
 }
 
 # 从 state file 查 slug → event info
+# 注意：slug 经命令行参数精确传给 python 的 stdin/argv，绝不可字符串插进
+# python -c 源码——旧版把 $slug 拼进代码字符串，恶意/含引号 slug 会命令注入
+# 或 SyntaxError 静默漏检（2026-08-17 对抗审查）
 state_lookup() {
   local slug="$1"
   if [[ "$HAS_STATE" != "true" ]]; then
     return 1
   fi
-  python3 -c "
+  python3 - "$STATE_FILE" "$slug" << 'PYEOF'
 import json, sys
-with open('$STATE_FILE') as f:
+state_file, slug = sys.argv[1], sys.argv[2]
+with open(state_file) as f:
     state = json.load(f)
-ev = state.get('events', {}).get('$slug')
+ev = state.get('events', {}).get(slug, {})
 if ev:
     print(json.dumps(ev, ensure_ascii=False))
 else:
     sys.exit(1)
-" 2>/dev/null
+PYEOF
 }
 
 # 文件系统全量扫（按 slug 在所有 web3 早报里搜，排除"自我命中"）
@@ -171,10 +175,11 @@ fs_lookup() {
   local slug="$1"
   local news_dir="$REPO_ROOT/content/posts/news"
   # 按 slug 模糊匹配（排除今天 + 排除本轮要写的文件）
+  # 用 -- 结束选项：slug 以 - 开头会让 grep 把它当选项而失败（陈旧事故）
   local hits
-  hits=$(grep -lF "$slug" "$news_dir"/web3-morning-news-*.md 2>/dev/null \
-    | grep -v "web3-morning-news-${TODAY}\.md" \
-    | grep -v "web3-morning-news-$(date +%Y-%m-%d)\.md" \
+  hits=$(grep -lF -- "$slug" "$news_dir"/web3-morning-news-*.md 2>/dev/null \
+    | grep -v -- "web3-morning-news-${TODAY}\.md" \
+    | grep -v -- "web3-morning-news-$(date +%Y-%m-%d)\.md" \
     | sort -u || true)
   if [[ -n "$hits" ]]; then
     echo "$hits"
@@ -233,8 +238,19 @@ for url in "${URLS[@]}"; do
       first_seen=$(echo "$fs_dates" | head -1)
       last_seen=$(echo "$fs_dates" | tail -1)
       if [[ -n "$first_seen" && -n "$last_seen" ]]; then
-        first_ts=$(date -j -f "%Y-%m-%d" "$first_seen" +%s 2>/dev/null || echo 0)
-        last_ts=$(date -j -f "%Y-%m-%d" "$last_seen" +%s 2>/dev/null || echo 0)
+        # macOS/BSD `date -j -f` 与 Linux/GNU `date -d` 二选一，按平台探测。
+        # 旧版只写 `date -j -f`，迁到 Linux/CI 时两行都失败 → span 恒 0 →
+        # 严重复用被降级放行（2026-08-17 对抗审查，漏检方向）。
+        local first_ts last_ts
+        first_ts=0
+        last_ts=0
+        if date -j -f "%Y-%m-%d" "$first_seen" +%s >/dev/null 2>&1; then
+          first_ts=$(date -j -f "%Y-%m-%d" "$first_seen" +%s)
+          last_ts=$(date -j -f "%Y-%m-%d" "$last_seen" +%s)
+        elif date -d "$first_seen" +%s >/dev/null 2>&1; then
+          first_ts=$(date -d "$first_seen" +%s)
+          last_ts=$(date -d "$last_seen" +%s)
+        fi
         if [[ "$first_ts" -gt 0 && "$last_ts" -gt 0 ]]; then
           span=$(( (last_ts - first_ts) / 86400 ))
         fi
@@ -288,8 +304,14 @@ PYEOF
     fi
     
     if [[ "$JSON_OUTPUT" == "true" ]]; then
-      # 用 here-doc 生成 JSON 行（避免 bash 转义问题）
-      matched_files_json=$(printf '%s\n' "${matched_files[@]}" | python3 -c 'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
+      # 用 here-doc 生成 JSON 行（避免 bash 转义问题）。
+      # bash 3.2 + set -u 下解引用空数组会 "unbound variable" 崩溃：
+      # 复用仅命中 state、fs 无命中时 matched_files 为空 → 必须先判空再展开
+      if [[ ${#matched_files[@]} -gt 0 ]]; then
+        matched_files_json=$(printf '%s\n' "${matched_files[@]}" | python3 -c 'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
+      else
+        matched_files_json="[]"
+      fi
       json_line=$(python3 - "$url" "$slug" "$severity" "$span" "$is_continuously_updated" "$first_seen" "$last_seen" "$entity" "$hit_a" "$hit_b" "$matched_files_json" << 'PYEOF'
 import json, sys
 url, slug, severity, span, is_cont, first_seen, last_seen, entity, hit_a, hit_b, matched = sys.argv[1:]

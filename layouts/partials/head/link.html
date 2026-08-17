@@ -27,7 +27,17 @@
     {{- end -}}
 {{- end -}}
 
-<link rel="canonical" href="{{ .Permalink }}" />
+{{- /* canonical：镜像站（environment=github-pages）必须指向主域，否则 github.io
+       子路径 URL 与 txtmix.com 构成重复内容稀释权重。github-pages 下 .RelPermalink
+       携带 /text-matrix/ 子路径前缀，需用 .Site.Home.RelPermalink 剥离后再拼主域，
+       否则首页 canonical 会错误变成 https://txtmix.com/text-matrix/ */ -}}
+{{- if eq hugo.Environment "github-pages" -}}
+    {{- $path := strings.TrimPrefix .Site.Home.RelPermalink .RelPermalink -}}
+    {{- /* $path 剥离子路径后无前导斜杠（首页为空），统一以斜杠拼接补回 */ -}}
+    <link rel="canonical" href="{{ printf "https://txtmix.com/%s" $path }}" />
+{{- else -}}
+    <link rel="canonical" href="{{ .Permalink }}" />
+{{- end -}}
 {{- if .PrevInSection -}}
     <link rel="prev" href="{{ .PrevInSection.Permalink }}" />
 {{- end -}}

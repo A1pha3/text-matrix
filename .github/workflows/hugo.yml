@@ -31,7 +31,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      HUGO_VERSION: 0.128.0
+      # 与本地开发（Homebrew 0.161.1）一致。旧值 0.128.0 与本地/Cloudflare 版本
+      # 三处不一致，0.128→0.161 行为差异会制造"本地能构建、CI 不能"的假象
+      # （2026-08-17 对抗审查）。
+      HUGO_VERSION: 0.161.1
     steps:
       - name: Install Hugo CLI
         run: |
@@ -69,7 +72,9 @@ jobs:
         env:
           BASE_URL: ${{ steps.pages.outputs.base_url }}/
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
-          HUGO_ENVIRONMENT: production
+          # 镜像站专用环境：noindex/robots 屏蔽/canonical 指向主域（见
+          # layouts/robots.txt、head/meta.html、head/link.html），且不注入 GA/AdSense
+          HUGO_ENVIRONMENT: github-pages
         run: npm run build:github-pages
       - name: Verify release assets
         run: npm run validate:release-assets

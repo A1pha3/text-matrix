@@ -22,7 +22,7 @@
   python3 backfill_github_repo.py --dry-run    # 只统计 + 抽样,不改文件
   python3 backfill_github_repo.py              # 实写
 """
-import re, argparse
+import re, argparse, os, tempfile
 from pathlib import Path
 from collections import Counter
 
@@ -57,6 +57,20 @@ def extract_repo(text):
     return None
 
 
+def write_atomic(path: Path, text: str):
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 def process(f, dry_run):
     raw = f.read_text(encoding='utf-8')
     m = FM_YAML.match(raw)
@@ -77,7 +91,7 @@ def process(f, dry_run):
         fm = re.sub(r'^github_repo\s*[:=].*$\n', '', fm, flags=re.M)  # 清洗误填
         cleaned = True
 
-    repo = extract_repo(raw)
+    repo = extract_repo(body)  # 只扫正文：frontmatter 的 cover/canonical 等链接不是文章来源
     if repo:
         line = (f'github_repo = "{repo}"\n' if fmt == 'toml' else f'github_repo: "{repo}"\n')
         if fmt == 'yaml':
@@ -93,7 +107,7 @@ def process(f, dry_run):
         return ('no_repo', None)
     if not dry_run:
         sep = '+++' if fmt == 'toml' else '---'
-        f.write_text(f'{sep}\n{new_fm}\n{sep}\n{body}', encoding='utf-8')
+        write_atomic(f, f'{sep}\n{new_fm}\n{sep}\n{body}')
     return ('cleaned' if cleaned else 'done', repo)
 
 

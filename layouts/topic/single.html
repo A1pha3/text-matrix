@@ -10,11 +10,13 @@
         (dict "title" "开源 AI 工具解读" "url" "/open-source-ai-tools/" "label" "工具索引")
     -}}
     {{- $activeLabel := "专题页" -}}
-    {{- if eq $current "/ai-agent/" -}}
+    {{- /* RelPermalink 在镜像站带 /text-matrix/ 前缀，用 HasSuffix 判当前专题，
+          跨 baseURL 形态都正确（2026-08-17 对抗审查：eq 字面量在子路径部署下失效） */ -}}
+    {{- if strings.HasSuffix $current "/ai-agent/" -}}
         {{- $activeLabel = "学习路径" -}}
-    {{- else if eq $current "/coding-agent/" -}}
+    {{- else if strings.HasSuffix $current "/coding-agent/" -}}
         {{- $activeLabel = "工程工作流" -}}
-    {{- else if eq $current "/open-source-ai-tools/" -}}
+    {{- else if strings.HasSuffix $current "/open-source-ai-tools/" -}}
         {{- $activeLabel = "工具索引" -}}
     {{- end -}}
 
@@ -35,7 +37,7 @@
                     <ol class="topic-starter-list">
                         {{- range . -}}
                             <li>
-                                <a href="{{ .url }}">{{ .title }}</a>
+                                <a href="{{ with $.Site.GetPage .url }}{{ .RelPermalink }}{{ end }}">{{ .title }}</a>
                                 {{- with .note -}}<span>{{ . }}</span>{{- end -}}
                             </li>
                         {{- end -}}
@@ -47,7 +49,7 @@
 
         <nav class="topic-switcher" data-pagefind-ignore="all" aria-label="专题切换">
             {{- range $topicLinks -}}
-                <a class="topic-switcher-link{{ if eq .url $current }} active{{ end }}" href="{{ .url }}">
+                <a class="topic-switcher-link{{ if strings.HasSuffix $current .url }} active{{ end }}" href="{{ with $.Site.GetPage .url }}{{ .RelPermalink }}{{ end }}">
                     <span class="topic-switcher-label">{{ .label }}</span>
                     <strong>{{ .title }}</strong>
                 </a>

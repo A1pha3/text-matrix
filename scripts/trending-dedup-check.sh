@@ -28,7 +28,11 @@ if [ $# -eq 0 ]; then
     line="${line//[[:space:]]/}"
     [ -n "$line" ] && args+=("$line")
   done
-  set -- "${args[@]}"
+  # bash 3.2 + set -u：空数组 "${args[@]}" 直接 unbound variable 崩溃，
+  # 空 stdin 时应走"无参数"的用法提示而非 exit 1
+  if [ ${#args[@]} -gt 0 ]; then
+    set -- "${args[@]}"
+  fi
 fi
 [ $# -gt 0 ] || { echo "用法: $0 owner1/repo1 ...  或 stdin 喂入 owner/repo 列表"; exit 2; }
 
@@ -36,12 +40,18 @@ python3 - "$TECH" "$@" <<'PY'
 import re, sys
 from pathlib import Path
 tech, queries = Path(sys.argv[1]), sys.argv[2:]
-# 收集已写 repo:frontmatter github_repo 字段(YAML `:` 与 TOML `=` 都认),小写归一化
-val = re.compile(r'^github_repo\s*[:=]\s*"?([^\s"]+)', re.M)
+# 收集已写 repo:frontmatter github_repo 字段(YAML `:` 与 TOML `=` 都认),小写归一化。
+# 只扫 frontmatter 段——正则扫全文会把正文代码块里行首的 github_repo: 误判为"已写"
+# （2026-08-17 对抗审查）；且 TOML 单引号值 'owner/repo' 的引号要剥掉。
+FM_RE = re.compile(r'^(?:---|\+\+\+)\n(.*?)\n(?:---|\+\+\+)\n', re.S)
+KV_RE = re.compile(r'^github_repo\s*[:=]\s*"?\'?([^\s"\']+)', re.M)
 written = set()
 for f in tech.rglob('*.md'):  # rglob:含子目录(ai-agent/ tools/ page bundle),否则身份漏读→重复写
-    for m in val.finditer(f.read_text(encoding='utf-8', errors='ignore')):
-        written.add(m.group(1).lower().strip('/'))
+    text = f.read_text(encoding='utf-8', errors='ignore')
+    m = FM_RE.match(text)
+    fm = m.group(1) if m else ''
+    for m2 in KV_RE.finditer(fm):
+        written.add(m2.group(1).lower().strip('/'))
 old, new = [], []
 for q in queries:
     (old if q.lower().strip('/') in written else new).append(q)

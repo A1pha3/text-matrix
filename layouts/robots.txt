@@ -1,3 +1,10 @@
+{{- /* GitHub Pages 镜像（--environment github-pages）只作冗余备份：
+       屏蔽全部爬虫，避免与主域 txtmix.com 形成重复内容稀释 SEO。
+       主域（production）维持原策略。 */ -}}
+{{- if eq hugo.Environment "github-pages" -}}
+User-agent: *
+Disallow: /
+{{ else -}}
 User-agent: Mediapartners-Google
 Allow: /
 
@@ -62,3 +69,4 @@ User-agent: ZoominfoBot
 Disallow: /
 
 Sitemap: {{ "/sitemap.xml" | absLangURL }}
+{{- end -}}

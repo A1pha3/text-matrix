@@ -80,26 +80,45 @@ def slug_from_path(path: Path) -> str | None:
 # ---------------------------------------------------------------------------
 
 def _detect_fence(text: str) -> str | None:
-    first = text.lstrip("\n").split("\n", 1)[0].rstrip()
+    # 容忍 BOM 与开头空行，与 autofill/lint 的 strip_bom 行为对齐
+    first = text.lstrip("\ufeff\n").split("\n", 1)[0].rstrip()
     return first if first in ("---", "+++") else None
 
 
-def _split_fm(text: str) -> tuple[str, str, str] | None:
-    """返回 (fence, frontmatter_text, body)。"""
+def _split_fm(text: str) -> tuple[str, str, str, list[str], int] | None:
+    """返回 ``(fence, frontmatter_text, body, lines, end)``。
+
+    ``lines``/``end`` 供 :func:`apply` 按行区间重组文件——不要用
+    ``str.replace(fm, new_fm, 1)`` 做手术：空 frontmatter 时 ``fm == ""``，
+    ``replace("", x, 1)`` 会把字段插到文件第 0 个字符（opening fence 之前），
+    frontmatter 整体失效、draft 闸门丢失（2026-08-17 对抗审查实证）。
+    """
     fence = _detect_fence(text)
     if fence is None:
         return None
-    lines = text.lstrip("\n").splitlines()
+    lines = text.lstrip("\ufeff\n").splitlines()
     try:
         end = next(i for i, ln in enumerate(lines[1:], 1) if ln.rstrip() == fence)
     except StopIteration:
         return None
-    return fence, "\n".join(lines[1:end]), "\n".join(lines[end + 1 :])
+    fm = "\n".join(lines[1:end])
+    body = "\n".join(lines[end + 1 :])
+    return fence, fm, body, lines, end
 
 
-def _parse(fence: str, fm: str) -> dict[str, object]:
+def _parse(fence: str, fm: str) -> dict[str, object] | None:
+    """解析 frontmatter；结果不是键值映射（fence 之间是正文等）时返回 None。
+
+    调用方必须判 None：对 str 做 ``"slug" not in data`` 是子串匹配，
+    会把字段注入正文（2026-08-17 对抗审查：正文以 ``---`` 水平线开头的
+    无 frontmatter 文件被当成有 frontmatter）。
+    """
     loaded = yaml.safe_load(fm) if fence == "---" else toml.loads(fm)
-    return loaded or {}
+    if loaded is None:
+        return {}
+    if not isinstance(loaded, dict):
+        return None
+    return loaded
 
 
 def _indent_for(fm: str) -> str:
@@ -111,7 +130,16 @@ def _indent_for(fm: str) -> str:
     return ""
 
 
+# 这些裸值会被 YAML 1.1 解析成 bool/null——slug: yes 会变成 True
+_YAML_BARE_UNSAFE_RE = re.compile(
+    r"^(?:~|null|Null|NULL|true|True|false|False|yes|Yes|no|No|on|On|off|Off"
+    r"|[+-]?\d+(?:\.\d+)?)$"
+)
+
+
 def _yaml_scalar(value: str) -> str:
+    if _YAML_BARE_UNSAFE_RE.match(value):
+        return f'"{value}"'
     if not value or re.search(r'[:\n"#&*?|<>=!%@`[\]{}]', value):
         escaped = value.replace("\\", "\\\\").replace('"', '\\"')
         return f'"{escaped}"'
@@ -151,8 +179,10 @@ def fill_one(path: Path, root: Path) -> FillResult:
     split = _split_fm(text)
     if split is None:
         return FillResult(path, {}, ["没有 frontmatter"])
-    fence, fm, _body = split
+    fence, fm, _body, _lines, _end = split
     data = _parse(fence, fm)
+    if data is None:
+        return FillResult(path, {}, ["frontmatter 解析结果不是键值映射，跳过（可能是正文水平线被误认）"])
 
     added: dict[str, object] = {}
     skipped: list[str] = []
@@ -189,7 +219,9 @@ def render_fm(fence: str, fm: str, added: dict[str, object]) -> str:
         else:  # slug
             rendered = _yaml_scalar(value) if fence == "---" else _toml_scalar(value)
         new_lines.append(f"{indent}{key} {assignment} {rendered}")
-    return fm.rstrip() + "\n" + "\n".join(new_lines) + "\n"
+    # fm 为空（---\n---）时不得产生前导空行，否则字段行会漂到空行后
+    base = fm.rstrip()
+    return f"{base}\n" + "\n".join(new_lines) + "\n" if base else "\n".join(new_lines) + "\n"
 
 
 def write_atomic(path: Path, text: str) -> None:
@@ -220,9 +252,15 @@ def apply(path: Path, root: Path, dry_run: bool) -> FillResult:
     if split is None:
         print(f"   ! 写入失败: frontmatter 丢失", file=sys.stderr)
         return result
-    fence, fm, _ = split
+    fence, fm, _body, lines, end = split
+    if _parse(fence, fm) is None:
+        print(f"   ! 写入失败: frontmatter 不是键值映射", file=sys.stderr)
+        return result
     new_fm = render_fm(fence, fm, result.added)
-    new_text = text.replace(fm, new_fm, 1)
+    # 按行区间重组：opening fence + 新 fm（render_fm 已含旧内容）+ closing fence
+    # 起的原文。splitlines 会丢掉文件末尾换行，按原样补回
+    trailing = "\n" if text.endswith("\n") else ""
+    new_text = lines[0] + "\n" + new_fm + "\n".join(lines[end:]) + trailing
     write_atomic(path, new_text)
     return result
 

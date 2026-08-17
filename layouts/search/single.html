@@ -45,7 +45,7 @@
               {{- range $featuredDiscovery -}}
               <article class="search-discovery-card">
                 <p class="search-discovery-kicker">专题入口</p>
-                <h3><a href="{{ .url }}">{{ .title }}</a></h3>
+                <h3><a href="{{ with $.Site.GetPage .url }}{{ .RelPermalink }}{{ end }}">{{ .title }}</a></h3>
                 <p>{{ .description }}</p>
               </article>
               {{- end -}}

@@ -49,8 +49,16 @@ def has_front_matter(text: str) -> bool:
 
 
 def extract_title(text: str, file_path: Path) -> str:
+    in_code = False
     for line in text.splitlines():
         stripped = line.strip()
+        # 跳过 fenced code block：代码里的 `# 注释` 不是标题
+        # （2026-08-17 对抗审查：正文以代码块开头的文件曾把注释抓成 title）
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
         if stripped.startswith("# "):
             title = stripped[2:].strip().strip("#").strip()
             if title:

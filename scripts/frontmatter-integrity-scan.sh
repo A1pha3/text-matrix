@@ -57,6 +57,11 @@ COUNT_TOTAL_PROBLEM=0
 # 问题文件清单
 PROBLEM_FILES=()
 
+if [[ "$TOTAL" -eq 0 ]]; then
+  echo "  无 .md 文件，退出"
+  exit 0
+fi
+
 echo "进度："
 processed=0
 for f in "${MD_FILES[@]}"; do
@@ -83,19 +88,26 @@ for f in "${MD_FILES[@]}"; do
     continue
   fi
   
-  # 2. frontmatter 起始 — Hugo 同时支持 YAML (`---`)、TOML (`+++`)、JSON (`{`) 三种
-  first_line=$(head -1 "$f" 2>/dev/null)
+  # 2. frontmatter 起始 — Hugo 同时支持 YAML (`---`)、TOML (`+++`)、JSON (`{`) 三种。
+  #    容忍开头空行：部分早报首行是空行、--- 在第二/三行（Hugo 与 lint 都认，
+  #    不算损坏；旧版 head -1 取空行会误报 NO_OPEN）
+  first_line=$(head -3 "$f" 2>/dev/null | awk 'NF {print; exit}')
   
-  # 2a. TOML 格式 (`+++`) — Hugo 合法，仅在 warning 中提示
+  # 2a. TOML 格式 (`+++`) — Hugo 合法，仅提示、不计入真损坏
   if [[ "$first_line" == "+++" ]]; then
     echo "  ℹ️  [$processed/$TOTAL] TOML  $rel (Hugo 合法格式)"
-    PROBLEM_FILES+=("TOML_INFO:$rel")
     COUNT_TOML=$((COUNT_TOML + 1))
-    # 不计入真损坏
     continue
   fi
-  
-  # 2b. 既不是 YAML 也不是 TOML — 缺起始分隔符
+
+  # 2b/c. JSON 格式 (`{`) 也是 Hugo 合法，仅提示，不算 NO_OPEN
+  if [[ "$first_line" == "{"* ]]; then
+    echo "  ℹ️  [$processed/$TOTAL] JSON  $rel (Hugo 合法格式)"
+    COUNT_TOML=$((COUNT_TOML + 1))  # 与 TOML 一样归类为"合法非 YAML"
+    continue
+  fi
+
+  # 2d. 既不是 YAML 也不是 TOML/JSON — 缺起始分隔符
   if [[ "$first_line" != "---" ]]; then
     echo "  ❌ [$processed/$TOTAL] NO_OPEN  $rel (first line: ${first_line:0:30})"
     PROBLEM_FILES+=("NO_OPEN:$rel")

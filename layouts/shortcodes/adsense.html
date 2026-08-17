@@ -1,8 +1,8 @@
 {{- $cfg := .Site.Params.adsense -}}
 {{- $slot := .Get "slot" -}}
 
-<!-- 仅在生产环境且配置齐全时加载真实广告 -->
-{{- if and (not hugo.IsServer) $cfg.enabled $cfg.client $slot -}}
+<!-- 仅在生产环境且配置齐全时加载真实广告（守卫与 gtag 一致） -->
+{{- if and (eq hugo.Environment "production") $cfg.enabled $cfg.client $slot -}}
 <div class="ad-container" style="min-height: 100px; margin: 2rem 0; overflow: hidden;">
   <ins class="adsbygoogle"
        style="display:block"

@@ -3,14 +3,31 @@
 为文章添加缺少的教学元素（学习目标、目录、自测题、练习、进阶路径、资料口径说明）
 """
 
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 def has_section(content, section_name):
     """检查文章是否包含某个章节"""
     pattern = f"## {section_name}"
     return pattern in content
+
+def write_atomic(file_path, content):
+    fd, tmp = tempfile.mkstemp(
+        dir=os.path.dirname(str(file_path)) or ".",
+        prefix=f".{Path(file_path).name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            f.write(content)
+        os.replace(tmp, file_path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 def add_learning_elements(file_path):
     """为文章添加缺少的教学元素"""
@@ -58,18 +75,27 @@ def add_learning_elements(file_path):
             # 简单的目录生成（基于现有的 ## 标题）
             headers = re.findall(r'^## (.+)$', content, re.MULTILINE)
             if headers:
-                toc = "\n## 📋 目录\n\n"
+                toc = "## 📋 目录\n\n"
                 for header in headers:
                     if header not in ["🎯 学习目标", "学习目标", "📋 目录", "目录", "自测题", "练习", "进阶路径", "资料口径说明", "总结"]:
                         anchor = header.lower().replace(' ', '-').replace('（', '(').replace('）', ')')
                         toc += f"- [{header}](#{anchor})\n"
                 toc += "\n---\n"
-                
-                # 在学习目标后面插入目录
-                content = content.replace("---\n\n", "---\n\n" + toc, 1)
+
+                # 插到学习目标块之后的第一个 --- 线后。不能用
+                # replace("---\n\n", ..., 1)：它会把 frontmatter 闭合 fence
+                # / 正文水平线当锚点（2026-08-17 对抗审查）
+                m = re.search(r'^## (?:🎯 )?学习目标\b', content, re.M)
+                if m:
+                    hr = re.compile(r'^---\s*$', re.M)
+                    m2 = hr.search(content, m.end())
+                    if m2:
+                        insert_at = m2.end()
+                        content = content[:insert_at] + "\n\n" + toc + content[insert_at:]
     
     # 3. 在总结前添加自测题、练习、进阶路径、资料口径说明
-    if "## 总结" in content:
+    # 幂等守卫：已有自测题块则不重复插入（旧版重复运行会重复堆叠 ~90 行模板）
+    if "## 总结" in content and not has_section(content, "自测题"):
         insert_before_summary = """
 ---
 
@@ -162,13 +188,20 @@ def add_learning_elements(file_path):
 ---
 
 ## 总结"""
-        
-        content = content.replace("## 总结", insert_before_summary)
-    
+
+        # 行首锚定 + count=1：裸 replace("## 总结") 会同时命中 ### 总结、
+        # 代码块/正文里的同名字样，且替换全部出现位置
+        content = re.sub(
+            r'^## 总结[ \t]*$',
+            lambda _m: insert_before_summary,
+            content,
+            count=1,
+            flags=re.M,
+        )
+
     # 写回文件
     if content != original_content:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(content)
+        write_atomic(file_path, content)
         print(f"✅ 已优化: {file_name}")
         return True
     else:

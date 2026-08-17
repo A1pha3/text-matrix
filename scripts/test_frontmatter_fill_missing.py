@@ -99,6 +99,86 @@ class FrontmatterFillMissingTests(unittest.TestCase):
 
         self.assertNotIn("slug", result.added)
 
+    # ---- 回归：2026-08-17 对抗审查发现的损坏场景 --------------------------
+
+    def test_apply_on_empty_frontmatter_keeps_fields_inside_fences(self):
+        # 空 frontmatter（---\n---）曾被 text.replace("", new_fm, 1) 把字段插到
+        # 文件第 0 字符，frontmatter 整体失效、draft 闸门丢失
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / "posts/tech/empty-fm.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("---\n---\n# 正文标题\n\n内容。\n", encoding="utf-8")
+
+            self.module.apply(path, root, dry_run=False)
+            out = path.read_text(encoding="utf-8")
+
+        self.assertTrue(out.startswith("---\n"))
+        self.assertIn("\nslug : empty-fm\ncategories : [技术笔记]\n---\n", out)
+        self.assertIn("# 正文标题", out)
+
+    def test_body_starting_with_hr_is_not_treated_as_frontmatter(self):
+        # 正文以 --- 水平线开头、无 frontmatter 的文件不得被注入字段
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / "posts/tech/hr-body.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            original = "---\n\n一段导语。\n\n---\n\n# 标题\n"
+            path.write_text(original, encoding="utf-8")
+
+            result = self.module.apply(path, root, dry_run=False)
+            out = path.read_text(encoding="utf-8")
+
+        self.assertFalse(result.changed)
+        self.assertEqual(out, original)
+
+    def test_apply_preserves_body_and_trailing_newline(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / "posts/tech/plain.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                "---\ntitle: 正常\ndate: 2026-08-17\n---\n正文",
+                encoding="utf-8",
+            )
+
+            self.module.apply(path, root, dry_run=False)
+            out = path.read_text(encoding="utf-8")
+
+        self.assertEqual(out.count("title: 正常"), 1)  # 旧内容不得翻倍
+        self.assertTrue(out.startswith("---\ntitle: 正常"))
+        self.assertTrue(out.endswith("正文"))  # 末尾无换行保持原样
+        self.assertIn("---\n正文".replace("---\n正文", "\n---\n正文"), out)
+
+    def test_bool_like_filename_gets_quoted_slug(self):
+        # yes.md 不加引号会写出 slug: yes → YAML 解析为布尔 True
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / "posts/tech/yes.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("---\ntitle: t\n---\n正文\n", encoding="utf-8")
+
+            self.module.apply(path, root, dry_run=False)
+            out = path.read_text(encoding="utf-8")
+
+        self.assertIn('slug : "yes"', out)
+
+    def test_bom_file_is_handled(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / "posts/tech/bom.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(
+                b"\xef\xbb\xbf---\ntitle: BOM\n---\n\xe6\xad\xa3\xe6\x96\x87\n"
+            )
+
+            result = self.module.apply(path, root, dry_run=False)
+            out = path.read_text(encoding="utf-8")
+
+        self.assertTrue(result.changed)
+        self.assertIn("slug : bom", out)
+        self.assertNotIn("﻿", out)  # BOM 已随重组清除
+
 
 if __name__ == "__main__":
     unittest.main()

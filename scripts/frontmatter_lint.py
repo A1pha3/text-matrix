@@ -69,10 +69,11 @@ TOP_LEVEL_REQUIRED: tuple[str, ...] = (
 )
 
 
-# 匹配 ``key: "value with possible \"escapes\"`` 这种单行双引号字符串。
-# 不跨行、不处理 list-of-strings 缩进场景（那是另一类错误，靠 yaml.safe_load 兜底）。
-DQ_STRING_RE = re.compile(
-    r"""^(\s*[A-Za-z_][\w-]*\s*:\s*)"((?:\\.|[^"\\])*)"\s*$"""
+# ``key: "...`` 形态入口：value 以 ASCII 双引号开头（未闭合 / 内嵌裸引号检测）。
+# 注意不能反过来写"整体匹配合法引号串"的正则——那样的捕获组按构造不可能包含
+# 裸引号，检查会退化成死代码（2026-08-17 对抗审查实证，旧 DQ_STRING_RE 即此坑）
+DQ_PREFIX_RE = re.compile(
+    r"""^(\s*[A-Za-z_][\w-]*\s*:\s*)"(.*)$"""
 )
 
 
@@ -161,6 +162,11 @@ def check_categories_whitelist(path: Path, data: dict) -> list[str]:
         return []
     if isinstance(cats, str):
         cats = [cats]
+    elif not isinstance(cats, (list, tuple)):
+        # 标量（int/bool 等）会让下面的迭代直接 TypeError 崩掉整个 run
+        return [
+            f"categories 必须是列表或字符串，实际是 {type(cats).__name__}: {cats!r}"
+        ]
     allowed = {"技术笔记", "视频精读", "思考与随笔", "行业快讯", "财富自由"}
     bad = [c for c in cats if c not in allowed]
     if bad:
@@ -289,18 +295,34 @@ def split_front_matter(text: str) -> tuple[str, str, str] | None:
 
 
 def check_unterminated_quotes(fm: str) -> list[str]:
-    """扫单行 ``key: "..."``，揪出 value 内未转义的 ASCII 双引号。"""
+    """扫单行 ``key: "..."``，揪出未闭合或内嵌未转义 ASCII 双引号。
+
+    手法：value 以 ``"`` 开头时逐字符剥掉 ``\\"`` 转义后数裸引号——合法形态是
+    恰好 1 个收尾引号，其后只允许空白或 ``# 注释``。
+    """
     issues: list[str] = []
     for ln_no, line in enumerate(fm.splitlines(), 1):
-        m = DQ_STRING_RE.match(line)
+        m = DQ_PREFIX_RE.match(line)
         if not m:
             continue
-        body = m.group(2)
-        # 把合法的 \" 转义去掉再检测，避免误报
-        unescaped = body.replace('\\"', "")
-        if '"' in unescaped:
+        rest = m.group(2)
+        quotes = 0
+        last_end = -1  # 最后一个裸引号之后的下标
+        i = 0
+        while i < len(rest):
+            ch = rest[i]
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == '"':
+                quotes += 1
+                last_end = i + 1
+            i += 1
+        tail = rest[last_end:] if quotes else ""
+        if quotes != 1 or not re.fullmatch(r"\s*(?:#.*)?", tail):
             issues.append(
-                f"line {ln_no}: 双引号字符串内嵌未转义 ASCII 双引号 -> {line.strip()[:120]}"
+                f"line {ln_no}: 双引号字符串未闭合或内嵌未转义 ASCII 双引号"
+                f" -> {line.strip()[:120]}"
             )
     return issues
 
@@ -428,6 +450,14 @@ def iter_markdown(root: Path, targets: Iterable[Path] | None) -> list[Path]:
     return sorted(p for p in root.rglob("*.md") if p.is_file())
 
 
+def display_path(p: Path, root: Path) -> str:
+    """相对 root 显示；--target 传了 root 外文件时不至于 ValueError 崩溃。"""
+    try:
+        return str(p.relative_to(root))
+    except ValueError:
+        return str(p)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -468,21 +498,18 @@ def main() -> int:
     warn_reports = [r for r in reports if r.warn and not r.has_fatal]
 
     for r in fatal_reports:
-        rel = r.path.relative_to(root)
-        print(f"[FATAL] {rel}")
+        print(f"[FATAL] {display_path(r.path, root)}")
         for msg in r.fatal:
             print(f"   - {msg}")
 
     if args.strict:
         for r in warn_reports:
-            rel = r.path.relative_to(root)
-            print(f"[WARN→FATAL] {rel}")
+            print(f"[WARN→FATAL] {display_path(r.path, root)}")
             for msg in r.warn:
                 print(f"   - {msg}")
     else:
         for r in warn_reports:
-            rel = r.path.relative_to(root)
-            print(f"[WARN] {rel}")
+            print(f"[WARN] {display_path(r.path, root)}")
             for msg in r.warn:
                 print(f"   - {msg}")
 

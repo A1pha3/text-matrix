@@ -7,7 +7,7 @@
     {{- $techPosts := first 4 (sort (where $visiblePosts "Params.categories" "intersect" (slice "技术笔记")) "Date" "desc") -}}
     {{- $videoPosts := first 3 (sort (where $visiblePosts "Params.categories" "intersect" (slice "视频精读")) "Date" "desc") -}}
     {{- $thoughtPosts := first 3 (sort (where $visiblePosts "Params.categories" "intersect" (slice "思考与随笔")) "Date" "desc") -}}
-    {{- $latestNews := first 5 (sort (where $allPosts "Params.categories" "intersect" (slice "行业快讯")) "Date" "desc") -}}
+    {{- $latestNews := first 5 (sort (where $visiblePosts "Params.categories" "intersect" (slice "行业快讯")) "Date" "desc") -}}
     {{- $featuredPost := index $techPosts 0 -}}
 
     <div class="page home home-curated"{{ if ne $posts.enable false }} data-home="posts"{{ end }}>
@@ -31,7 +31,7 @@
             <div class="home-section-block">
                 <div class="home-block-heading">
                     <h2>技术笔记</h2>
-                    <a class="home-more" href="/categories/技术笔记/">全部 →</a>
+                    <a class="home-more" href="{{ with .Site.GetPage "/categories/技术笔记" }}{{ .RelPermalink }}{{ end }}">全部 →</a>
                 </div>
                 <div class="home-row-list">
                     {{- range after 1 $techPosts -}}
@@ -46,7 +46,7 @@
             <div class="home-section-block">
                 <div class="home-block-heading">
                     <h2>视频精读</h2>
-                    <a class="home-more" href="/categories/视频精读/">全部 →</a>
+                    <a class="home-more" href="{{ with .Site.GetPage "/categories/视频精读" }}{{ .RelPermalink }}{{ end }}">全部 →</a>
                 </div>
                 <div class="home-row-list">
                     {{- range $videoPosts -}}
@@ -63,7 +63,7 @@
             <div class="home-section-block">
                 <div class="home-block-heading">
                     <h2>行业快讯</h2>
-                    <a class="home-more" href="/categories/行业快讯/">全部 →</a>
+                    <a class="home-more" href="{{ with .Site.GetPage "/categories/行业快讯" }}{{ .RelPermalink }}{{ end }}">全部 →</a>
                 </div>
                 <div class="home-row-list">
                     {{- range $latestNews -}}
@@ -78,7 +78,7 @@
             <div class="home-section-block">
                 <div class="home-block-heading">
                     <h2>思考与随笔</h2>
-                    <a class="home-more" href="/categories/思考与随笔/">全部 →</a>
+                    <a class="home-more" href="{{ with .Site.GetPage "/categories/思考与随笔" }}{{ .RelPermalink }}{{ end }}">全部 →</a>
                 </div>
                 <div class="home-row-list">
                     {{- range $thoughtPosts -}}
@@ -88,7 +88,7 @@
                     </a>
                     {{- end -}}
                     {{- if not $thoughtPosts -}}
-                    <a class="home-row" href="/categories/思考与随笔/">
+                    <a class="home-row" href="{{ with .Site.GetPage "/categories/思考与随笔" }}{{ .RelPermalink }}{{ end }}">
                         <span class="home-row-title">品牌表达、长期观察与慢思考</span>
                     </a>
                     {{- end -}}
@@ -98,9 +98,9 @@
 
         <nav class="home-topic-strip" data-pagefind-ignore="all" aria-label="专题">
             <span class="home-topic-label">专题</span>
-            <a href="/ai-agent/">AI Agent 学习路径 →</a>
-            <a href="/coding-agent/">Coding Agent 工作流 →</a>
-            <a href="/open-source-ai-tools/">开源 AI 工具 →</a>
+            <a href="{{ with .Site.GetPage "/ai-agent" }}{{ .RelPermalink }}{{ end }}">AI Agent 学习路径 →</a>
+            <a href="{{ with .Site.GetPage "/coding-agent" }}{{ .RelPermalink }}{{ end }}">Coding Agent 工作流 →</a>
+            <a href="{{ with .Site.GetPage "/open-source-ai-tools" }}{{ .RelPermalink }}{{ end }}">开源 AI 工具 →</a>
         </nav>
 
         {{- if .Content -}}

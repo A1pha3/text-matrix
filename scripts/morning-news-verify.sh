@@ -29,7 +29,10 @@ echo ""
 
 # ---------- 1. date 字段 ≤ 当前时间 ----------
 echo "→ [1/5] date 字段检查..."
-date_in_file=$(grep -E '^date:' "$FILE" | head -1 | awk '{print $2}' | cut -dT -f1)
+# 带引号的 date: "2026-08-18T..." 经 awk/cut 会残留前引号 "2026-08-18，
+# 字符串比较中 " 恒小于数字 → 未来时间检查被静默绕过（2026-08-17 对抗审查）。
+# 这里把值里所有引号剥掉再比较。
+date_in_file=$(grep -E '^date:' "$FILE" | head -1 | awk '{print $2}' | sed 's/["'"'"']//g' | cut -dT -f1)
 if [[ -z "$date_in_file" ]]; then
   echo "❌ FAIL: 文件缺少 date 字段"
   exit 1
@@ -80,7 +83,7 @@ echo "  ✅ 禁词干净"
 # ---------- 3. 链接 200 验证（最多 50 条 / 5 条失败容忍）----------
 echo ""
 echo "→ [3/5] 链接 200 验证（最多 50 条 / 5 条失败容忍）..."
-links=$(grep -oE 'https?://[^]) ）　，。；,;]+' "$FILE" | sort -u | head -50)
+links=$(grep -oE 'https?://[^]) ）　，。；,;]+' "$FILE" | sort -u | head -50 || true)
 total=$(echo "$links" | grep -cE '^https?://' || true)
 fail_count=0
 fail_list=""
@@ -108,7 +111,8 @@ echo "  ✅ 链接验证通过（失败 $fail_count ≤ 8 容忍，约 16% 容�
 # ---------- 4. 条目数(8-03 师父选 B：源冷场允许精简，按原文链接计数) ----------
 echo ""
 echo "→ [4/5] 条目数检查（≥3；3-6 需标注精简版）..."
-n=$(grep -oE '\]\(https?://[^)]+\)' "$FILE" | wc -l | tr -d ' ')
+# grep 零匹配 → 管道退出非零；set -e 下会无声死亡，加 || true 让下方 FAIL 可见
+n=$(grep -oE '\]\(https?://[^)]+\)' "$FILE" | wc -l | tr -d ' ' || true)
 # 6-12 师父裁决：ai-side-hustle-morning 5## 豁免（cron 850cf6e9 heartbeat #83）
 # ⚠️ 7-18 改: 豁免扩到 *ai-side-hustle-* (覆盖 morning + noon + 未来扩展)
 # 6-12 原豁免: *ai-side-hustle-morning* (只覆盖早报)

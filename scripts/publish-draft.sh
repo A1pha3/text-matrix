@@ -61,11 +61,11 @@ fi
 if [ -n "$key" ]; then
   # 白名单字符校验：key 将嵌入 grep 正则，必须拒绝正则元字符注入。
   # 合法形态：gh:owner/repo · bv:BVxxxx · yt:video_id（仅 ASCII 字母数字与 : / . _ -）。
-  if ! echo "$key" | grep -qE '^[A-Za-z0-9._:/-]+$'; then
-    echo "❌ --key 含非法字符（仅允许 A-Za-z0-9 . _ : / -）: $key" >&2; exit 3
+  if ! echo "$key" | grep -qE '^[A-Za-z0-9._:/*-]+$'; then
+    echo "❌ --key 含非法字符（仅允许 A-Za-z0-9 . _ : / - *）: $key" >&2; exit 3
   fi
-  key_re="$(printf '%s' "$key" | sed 's/\./\\./g')"   # . 转义，精确匹配
-  key_hits="$(grep -rlE "source_key:[[:space:]]*[\"']?${key_re}[\"']?[[:space:]]*$" "$REPO/content/posts" --include='*.md' 2>/dev/null || true)"
+  key_re="$(printf '%s' "$key" | sed 's/[.[\\*^$()+?{|}]/\\&/g')"   # 转义全部 ERE 元字符
+  key_hits="$(grep -rlE -- "source_key:[[:space:]]*[\"']?${key_re}[\"']?[[:space:]]*$" "$REPO/content/posts" --include='*.md' 2>/dev/null || true)"
   # printf 必须 %s\n：command substitution 剥尾换行后 %s 不补，wc -l 数换行符会把单行误计为 0
   n_hits="$(printf '%s\n' "$key_hits" | sed '/^$/d' | wc -l | tr -d ' ')"
   case "$n_hits" in
@@ -159,8 +159,10 @@ if [ "$force" != 1 ]; then
   # grep frontmatter 里的 source_key 行（排除当前文件自身）
   # 注意 BSD grep(macOS)ERE 不支持 \s、\$ 非行尾锚点：用 [[:space:]] 与裸 $
   # （此处曾因 \s 退化为可选 s 永不匹配空格，致去重保护长期静默失效，2026-08-16 修复）
-  sk_re="$(printf '%s' "$sk" | sed 's/\./\\./g')"
-  dup_list="$(grep -rlE "^source_key:[[:space:]]*[\"']?${sk_re}[\"']?[[:space:]]*$" "$REPO/content/posts" 2>/dev/null \
+  # source_key 里的 ERE 元字符（. * ? 等）会让 grep exit 2 被 || true 吞掉 →
+  # 同 key 上线稿检测不到，去重保护静默旁路（2026-08-17 对抗审查），必须转义
+  sk_re="$(printf '%s' "$sk" | sed 's/[.[\\*^$()+?{|}]/\\&/g')"
+  dup_list="$(grep -rlE -- "^source_key:[[:space:]]*[\"']?${sk_re}[\"']?[[:space:]]*$" "$REPO/content/posts" --include='*.md' 2>/dev/null \
         | grep -v "^${idx}$" || true)"
   if [ -n "$dup_list" ]; then
     # 只拦截已上线（draft:false）的重复——同 key 草稿（draft:true）提示后放行
@@ -229,7 +231,17 @@ echo "✅ 已 commit：$msg"
 
 # ---- push ----
 if [ "$no_push" != 1 ]; then
-  ( cd "$REPO" && git push -q )
+  if ! ( cd "$REPO" && git push -q ); then
+    # commit 已成功、仅 push 失败（多为网络抖动/远端领先）。此时不回滚：
+    # 回滚会把已 commit 的 draft:false 留在 HEAD 之外，重跑会因 HEAD 已是
+    # draft:false 而 exit 5 自锁，加 --force 又因翻 draft 幂等空转 → 两条路都死
+    # （2026-08-17 对抗审查）。正确做法：保留 commit，给出确定性的恢复动作。
+    echo "❌ push 失败（commit 已成功保留，如: ${msg}）" >&2
+    echo "   恢复动作（任选其一）：" >&2
+    echo "     1) 网络恢复后重跑: cd $REPO && git push" >&2
+    echo "     2) --no-push 只提交不推（本次已 commit，直接 git push 即可）" >&2
+    exit 8
+  fi
   echo "✅ 已 push 到 origin"
   status="已上线"
 else

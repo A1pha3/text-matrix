@@ -17,6 +17,14 @@ import collections
 import os
 import re
 import sys
+import tempfile
+
+import yaml
+
+try:
+    import tomllib as toml  # type: ignore[import-not-found]
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as toml  # type: ignore[import-untyped,no-redef]
 
 MIN_COUNT = 2  # 删除合并后使用次数 <= 2 的标签
 
@@ -57,6 +65,45 @@ def norm(tag):
     return re.sub(r"[\s\-_/\.]+", "", tag.lower())
 
 
+def parse_inline_list(raw, style):
+    """解析单行 inline 列表 ``["a", "b"]``，返回标签列表；解析失败返回 None。
+
+    裸 ``split(",")`` 不理解引号，会把 ``"a, b"`` 劈成两个标签再写回
+    （2026-08-17 对抗审查），必须走真正的 YAML/TOML 解析。
+    """
+    try:
+        if style == "yaml":
+            value = yaml.safe_load(raw)
+        else:
+            value = toml.loads("tags = " + raw)["tags"]
+    except Exception:
+        return None
+    if not isinstance(value, list):
+        return None
+    return [str(x).strip() for x in value if str(x).strip()]
+
+
+def _quote_tag(tag):
+    escaped = tag.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def write_atomic(path, text):
+    fd, tmp = tempfile.mkstemp(
+        dir=os.path.dirname(path) or ".", prefix=".tag_consolidate.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 def parse_frontmatter(text):
     """返回 (kind, full_match_span, tags, tag_span) 或 None。
 
@@ -72,9 +119,9 @@ def parse_frontmatter(text):
     # YAML inline: tags: ["a", "b"]
     t = re.search(r"^tags:[ \t]*(\[[^\n]*\])[ \t]*$", fm, re.M)
     if t:
-        raw = t.group(1)
-        tags = [x.strip() for x in raw.strip("[]").split(",")]
-        tags = [x.strip("\"'") for x in tags if x.strip()]
+        tags = parse_inline_list(t.group(1), style="yaml")
+        if tags is None:
+            return None
         return ("yaml-inline", m.span(2), tags,
                 (fm_start + t.start(), fm_start + t.end()))
 
@@ -93,9 +140,9 @@ def parse_frontmatter(text):
     # TOML inline: tags = ['a', 'b']
     t = re.search(r"^tags[ \t]*=[ \t]*(\[[^\n]*\])[ \t]*$", fm, re.M)
     if t:
-        raw = t.group(1)
-        tags = [x.strip() for x in raw.strip("[]").split(",")]
-        tags = [x.strip("\"'") for x in tags if x.strip()]
+        tags = parse_inline_list(t.group(1), style="toml")
+        if tags is None:
+            return None
         return ("toml", m.span(2), tags,
                 (fm_start + t.start(), fm_start + t.end()))
 
@@ -205,15 +252,10 @@ def main():
         return
 
     for path, kind, old, new, (s, e), text in changes:
-        if kind == "toml":
-            inner = ", ".join(f"'{t}'" for t in new)
-            replacement = f"tags = [{inner}]"
-        else:
-            inner = ", ".join(f'"{t}"' for t in new)
-            replacement = f"tags: [{inner}]"
+        inner = ", ".join(_quote_tag(t) for t in new)
+        replacement = f"tags = [{inner}]" if kind == "toml" else f"tags: [{inner}]"
         out = text[:s] + replacement + text[e:]
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(out)
+        write_atomic(path, out)
     print(f"\n已写盘 {len(changes)} 个文件")
 
 

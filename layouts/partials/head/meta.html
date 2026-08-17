@@ -1,5 +1,11 @@
 {{- $params := .Scratch.Get "params" -}}
 
+{{- /* GitHub Pages 冗余镜像（environment=github-pages）禁止收录：
+       与主域 txtmix.com 内容重复，只作备份，不进搜索引擎 */ -}}
+{{- if eq hugo.Environment "github-pages" -}}
+<meta name="robots" content="noindex, nofollow" />
+{{- end -}}
+
 <meta name="Description" content="{{ $params.description | default .Site.Params.description }}">
 
 {{- template "_internal/opengraph.html" . -}}

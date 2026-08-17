@@ -68,10 +68,10 @@
     <section class="post-conversion" data-pagefind-ignore="all">
         <span class="post-conversion-label">继续探索</span>
         <div class="post-conversion-links">
-            <a href="/ai-agent/">AI Agent 专题</a>
-            <a href="/coding-agent/">Coding Agent 专题</a>
-            <a href="/open-source-ai-tools/">开源 AI 工具</a>
-            <a href="/contact/">联系</a>
+            <a href="{{ with .Site.GetPage "/ai-agent" }}{{ .RelPermalink }}{{ end }}">AI Agent 专题</a>
+            <a href="{{ with .Site.GetPage "/coding-agent" }}{{ .RelPermalink }}{{ end }}">Coding Agent 专题</a>
+            <a href="{{ with .Site.GetPage "/open-source-ai-tools" }}{{ .RelPermalink }}{{ end }}">开源 AI 工具</a>
+            <a href="{{ with .Site.GetPage "/contact" }}{{ .RelPermalink }}{{ end }}">联系</a>
         </div>
     </section>
 

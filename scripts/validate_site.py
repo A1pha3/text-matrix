@@ -6,7 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-FRONT_MATTER_RE = re.compile(r"\A(?P<delim>\+\+\+|---)\n(?P<body>.*?)(?:\n(?P=delim))\n?", re.DOTALL)
+# 开头容忍 BOM：带 BOM 的文件曾整体跳过未来日期校验（fail-open，2026-08-17 审查）
+FRONT_MATTER_RE = re.compile(r"\A\ufeff?(?P<delim>\+\+\+|---)\n(?P<body>.*?)(?:\n(?P=delim))\n?", re.DOTALL)
 TOML_KV_RE = re.compile(r"^(?P<key>[A-Za-z0-9_]+)\s*=\s*(?P<value>.+?)\s*$", re.MULTILINE)
 YAML_KV_RE = re.compile(r"^(?P<key>[A-Za-z0-9_]+)\s*:\s*(?P<value>.+?)\s*$", re.MULTILINE)
 

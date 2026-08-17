@@ -3,9 +3,27 @@
 文章优化脚本 - 使用 cn-doc-writer 和 humanizer 技能优化文章到满分100分
 """
 
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
+
+
+def write_atomic(file_path, content):
+    fd, tmp = tempfile.mkstemp(
+        dir=os.path.dirname(str(file_path)) or ".",
+        prefix=f".{Path(file_path).name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            f.write(content)
+        os.replace(tmp, file_path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 def score_article(content):
     """根据 cn-doc-writer 五维评分标准评分"""
@@ -81,7 +99,7 @@ def score_article(content):
     return score, total
 
 def humanize_text(content):
-    """使用 humanizer 规则去除AI味道"""
+    """使用 humanizer 规则去除AI味道。fenced 代码块内容不参与替换。"""
     # 去除空泛的重要性表述
     replacements = [
         (r"具有重要意义", "很重要"),
@@ -96,11 +114,12 @@ def humanize_text(content):
         (r"有必要指出", ""),
         (r"总体来看", ""),
     ]
-    
-    for pattern, replacement in replacements:
-        content = re.sub(pattern, replacement, content)
-    
-    return content
+
+    parts = re.split(r"(```.*?```)", content, flags=re.S)  # 奇数索引 = 代码块
+    for i in range(0, len(parts), 2):
+        for pattern, replacement in replacements:
+            parts[i] = re.sub(pattern, replacement, parts[i])
+    return "".join(parts)
 
 def optimize_article(file_path):
     """优化文章到满分100分"""
@@ -121,10 +140,9 @@ def optimize_article(file_path):
     
     # 优化：去除AI味道
     content = humanize_text(content)
-    
+
     # 就地写回原文件，避免生成 -optimized.md 重复副本
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(content)
+    write_atomic(file_path, content)
     print(f"已就地写回原文件: {file_path}")
     
     # 重新评分
