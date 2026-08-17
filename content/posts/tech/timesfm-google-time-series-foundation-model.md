@@ -1,5 +1,5 @@
 ---
-title: "TimesFM: Google Research开源的时序预测基础模型"
+title: "TimesFM: Google Research 开源的时序预测基础模型"
 date: 2026-05-23T13:09:23+08:00
 draft: false
 categories:
@@ -14,7 +14,7 @@ description: "TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预�
 
 # TimesFM：时序预测的预训练模型
 
-TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预训练了一个仅 2 亿参数的模型，实现跨领域的零样本时序预测。它把时序预测的做法从「每个场景单独训一个模型」改成「一个模型接不同数据，直接出预测」。
+TimesFM 用 decoder-only 架构在 1000 亿真实时间点上预训练了一个仅 2 亿参数的模型，实现跨领域的零样本时序预测。它把时序预测的做法从“每个场景单独训一个模型”改成“一个模型接不同数据，直接出预测”。
 
 本文覆盖以下内容：
 
@@ -30,7 +30,7 @@ TimesFM 内部有三条容易混淆的主线，先拆开再看细节：
 | 主线 | 做什么 | 为什么关键 |
 |------|--------|-----------|
 | **Patching（分块）** | 把连续时间点打包成固定长度的块（patch），作为 transformer 的输入 token | 不 patching 的话，序列太长 transformer 根本推不动；patching 让模型同时学到局部形状和长程趋势 |
-| **Decoder-only 因果推理** | 每个 patch token 只能看到它之前的 token，预测下一个 patch | 和 GPT 一样的自回归逻辑，天然适合"给历史推未来" |
+| **Decoder-only 因果推理** | 每个 patch token 只能看到它之前的 token，预测下一个 patch | 和 GPT 一样的自回归逻辑，天然适合“给历史推未来” |
 | **频率感知与归一化** | 输入时做 per-patch 归一化，v2.0 还注入频率标记（v2.5 移除） | 不同场景的量纲差异巨大（零售销量 vs 股价 vs 温度），不归一化模型会把量纲当信号 |
 
 一句话总结：**TimesFM = 把时间序列切成块（patch）→ 扔进一个小型 GPT → 逐块预测未来**。
@@ -55,31 +55,31 @@ TimesFM 的架构选型到 2.5 版已经收敛得很明确：
 
 ### Patching 为什么不是可有可无
 
-不 patching 时，1000 个时间点就是 1000 个 token，transformer 的计算量随序列长度平方增长。patching 把 32 个连续点压缩成一个 token，序列长度当场除以 32。32 这个数字不是随便选的——太短学不到局部模式，太长则在"token 内平滑"和"token 间推理"之间失衡。
+不 patching 时，1000 个时间点就是 1000 个 token，transformer 的计算量随序列长度平方增长。patching 把 32 个连续点压缩成一个 token，序列长度当场除以 32。32 这个数字不是随便选的——太短学不到局部模式，太长则在“token 内平滑”和“token 间推理”之间失衡。
 
 ### Decoder-only 为什么比 encoder-decoder 更合适
 
-时序预测是天然的单向任务：已知过去，推未来。decoder-only 的因果注意力恰好匹配这个约束——不让模型"偷看"未来信息。encoder-decoder 结构在翻译任务里有优势是因为源语言和目标语言的关系不是简单的时间先后，但对时序预测来说，所有输入（历史值、协变量）和输出（预测值）都沿同一个时间轴排列，decoder-only 的结构负担更小。
+时序预测是天然的单向任务：已知过去，推未来。decoder-only 的因果注意力恰好匹配这个约束——不让模型“偷看”未来信息。encoder-decoder 结构在翻译任务里有优势是因为源语言和目标语言的关系不是简单的时间先后，但对时序预测来说，所有输入（历史值、协变量）和输出（预测值）都沿同一个时间轴排列，decoder-only 的结构负担更小。
 
 ## 一条数据怎么流过 TimesFM
 
 以零售 SKU（库存单位）日销量预测为例。假设某个 SKU 过去 512 天的日销量已知，要预测未来 64 天。
 
-**第一步：归一化。** 输入序列的每个 patch 先除以自己的均值（per-patch normalization）。这一步把"日均销量 1000 件的 SKU"和"日均销量 3 件的 SKU"拉到同一量级，让模型专注形状而非绝对值。
+**第一步：归一化。** 输入序列的每个 patch 先除以自己的均值（per-patch normalization）。这一步把“日均销量 1000 件的 SKU”和“日均销量 3 件的 SKU”拉到同一量级，让模型专注形状而非绝对值。
 
 **第二步：分块。** 512 个历史点被切成 16 个 patch，每个 patch 32 个时间点。每个 patch 先过一个小的残差块做投影，得到一个固定维度的向量。
 
 **第三步：transformer 前向。** 16 个 patch token 依次经过多层 causal transformer。第 1 个 token 只能看自己，第 9 个 token 能看前 8 个——和 GPT 生成文本的逻辑一样。
 
-**第四步：输出。** 最后一个 transformer 层的输出 token 走过输出头，预测下一个 patch（未来第 1～32 天）。然后这个预测 patch 被拼回序列末尾，再预测下下个 patch，直到凑满 64 天（2 个 patch）。
+**第四步：输出。** 输出头一次给出 128 个时间点的预测——输出 patch 长 128，是输入 patch（32 点）的 4 倍。要预测未来 64 天，直接从这 128 点里取前 64 点。更远的周期是步进式解码：每轮以“最近的历史点 + 上一轮预测的尾部”作为输入，生成下一个 128 点块，直到凑满目标长度。输入和输出的 patch 长度不一致，是 decoder-only 时序模型的常见设计：输入切小块保留细粒度形状，输出用大块一次多吐未来，减少解码轮数。
 
 **第五步：还原尺度。** 预测值乘以对应 patch 的归一化因子，回到原始量纲。
 
-整个过程不需要任何模型训练——权重是 Google 预训练好的。这也就是"零样本预测"的含义：直接把数据喂进去，拿结果。
+整个过程不需要任何模型训练——权重是 Google 预训练好的。这也就是“零样本预测”的含义：直接把数据喂进去，拿结果。
 
 ## 版本变化：v1.0 → v2.5
 
-TimesFM 经历了三次迭代。参数量走过一条「先增后减」的曲线：v1.0 是 200M，v2.0 升到 500M，v2.5 又压回 200M，但上下文从 2,048 一路拉到 16,384。
+TimesFM 经历了三次迭代。参数量走过一条“先增后减”的曲线：v1.0 是 200M，v2.0 升到 500M，v2.5 又压回 200M，但上下文从 2,048 一路拉到 16,384。
 
 | 特性 | v2.0 | v2.5 |
 |------|------|------|
@@ -89,16 +89,29 @@ TimesFM 经历了三次迭代。参数量走过一条「先增后减」的曲线
 | 分位数预测 | 有限 | 连续分位数头（约 30M 参数） |
 | 协变量输入 | 无 | XReg（2025-10 加入） |
 | 微调 | 无 | LoRA（2026-04 加入） |
-| 框架 | PyTorch | PyTorch + Flax/JAX 双后端 |
+| 框架 | PyTorch + JAX | PyTorch + JAX，v2.5 新增官方 Flax 推理版本（更快） |
 
-参数减半、上下文翻 8 倍，靠的是注意力机制和分块表示本身的效率改进。移除频率指示器是一个信号：per-patch 归一化配合足够的训练数据，模型能自己学到频率特征，不再需要用户显式声明数据是日频、周频还是月频。
+参数从 500M 压到 200M、上下文却从 2,048 翻到 16,384，靠的是架构效率：v2.5 用旋转位置编码（rotary attention）替代绝对位置信号，对查询和键做归一化（QK normalization）并引入逐维度注意力缩放，让 200M 的模型在 16k 上下文下也能稳住注意力分布。移除频率指示器是一个信号：per-patch 归一化配合足够的训练数据，模型能自己学到频率特征，不再需要用户显式声明数据是日频、周频还是月频。
 
-分位数预测让 TimesFM 不只给一个点预测，还能输出区间（比如"第 30 天销量有 90% 概率落在 80～120 之间"），对库存和安全库存决策有直接价值。2.5 还补上了两条工程能力：2025 年 10 月加入的 XReg 协变量输入，以及 2026 年 4 月加入的 LoRA 微调（走 HuggingFace PEFT）。
+分位数预测让 TimesFM 不只给一个点预测，还能输出区间（比如“第 30 天销量有 90% 概率落在 80～120 之间”），对库存和安全库存决策有直接价值。连续分位数头独立于点预测头，是约 30M 参数的输出分支，预测周期最长到 1024 步，而且可以在分位水平上连续取值，不必局限于预设的几个百分点。2.5 还补上了两条工程能力：2025 年 10 月加入的 XReg 协变量输入，以及 2026 年 4 月加入的 LoRA 微调（走 HuggingFace Transformers + PEFT，示例在仓库的 `timesfm-forecasting/examples/finetuning/` 目录）。
 
 ## 安装与快速验证
 
+按后端选装，`[torch]` 是默认推荐：
+
 ```bash
-pip install timesfm
+pip install timesfm[torch]   # PyTorch 后端
+pip install timesfm[flax]    # Flax/JAX 后端，官方口径推理更快
+pip install timesfm[xreg]    # 需要协变量输入（XReg）时额外安装
+```
+
+本地安装（官方推荐用 uv）：
+
+```bash
+git clone https://github.com/google-research/timesfm.git
+cd timesfm
+uv venv && source .venv/bin/activate
+uv pip install -e .[torch]
 ```
 
 零样本预测的最小可跑示例（直接加载 v2.5 的 PyTorch 权重）：
@@ -112,8 +125,13 @@ model = timesfm.TimesFM_2p5_200M_torch.from_pretrained(
 )
 model.compile(
     timesfm.ForecastConfig(
+        max_context=1024,                    # 最多用多少历史点
+        max_horizon=256,                     # 单次最多预测多少步
         normalize_inputs=True,
-        use_continuous_quantile_head=True,
+        use_continuous_quantile_head=True,   # 打开连续分位数头
+        force_flip_invariance=True,          # 时间反转一致性
+        infer_is_positive=True,              # 自动推断非负序列
+        fix_quantile_crossing=True,          # 修正分位数交叉
     )
 )
 point_forecast, quantile_forecast = model.forecast(
@@ -127,7 +145,7 @@ point_forecast, quantile_forecast = model.forecast(
 # quantile_forecast.shape → (2, 12, 10)：均值 + 10th~90th 分位数
 ```
 
-`forecast()` 返回点预测和分位数两个结果。想要更长的历史或更远的预测，在 `ForecastConfig` 里调 `max_context` 和 `max_horizon`。
+`forecast()` 返回点预测和分位数两个结果。`max_context` 限制进入模型的历史点数量（不能超过模型上限 16,384），`max_horizon` 限制单次预测的最大步数，传参的 `horizon` 不能大于它。
 
 ## 零样本预测的边界
 
@@ -141,9 +159,9 @@ point_forecast, quantile_forecast = model.forecast(
 
 ## benchmark：数字在说什么
 
-TimesFM 论文和社区评测（GIFT-Eval）主要测试指标是 MAE（平均绝对误差）和 sMAPE（对称平均绝对百分比误差）。核心结论：
+TimesFM 论文（ICML 2024）和社区评测（GIFT-Eval）主要测试指标是 MAE（平均绝对误差）和 sMAPE（对称平均绝对百分比误差）。核心结论：
 
-- 在 Monash 时序预测基准的多个数据集上，TimesFM 的零样本结果与各数据集上专门训练的最优模型差距在 10%～20% 以内，部分数据集持平。
+- 论文在多个公开时序基准上验证：TimesFM 的零样本准确度与各数据集上专门训练的监督模型持平（论文原文是 on-par accuracy with the best supervised forecasting models in each dataset）。社区评估 GIFT-Eval 在更大范围的未见数据集上进一步确认了跨领域迁移能力。
 - 当目标序列与预训练语料分布接近时（如零售、金融、IoT），零样本效果最好；偏离较大的领域（如流行病传播）效果下降明显。
 
 这些数字**能说明**的是：用一个模型覆盖多个领域是可行的，预训练语料中的时序模式确实可以迁移。**不能说明**的是：TimesFM 可以替代所有专业模型——在需要极高精度且允许投入训练资源的场景，微调后的专用模型仍然有优势。
@@ -179,11 +197,11 @@ TimesFM 论文和社区评测（GIFT-Eval）主要测试指标是 MAE（平均�
 
 **TimesFM 能替代 Prophet 吗？**
 
-Prophet 适合强季节性、需要可解释性的场景（比如"为什么这个月预测偏高"——Prophet 能分解出趋势、季节性、节假日分量）。TimesFM 的优势在"大量不同序列、每个序列单独建模不现实"的场景——比如你有 10,000 个 SKU 的日销量，用 Prophet 逐个建模太慢，TimesFM 零样本一次出结果。建议：先用 TimesFM 出基线，对关键序列再用 Prophet 做可解释分析。
+Prophet 适合强季节性、需要可解释性的场景（比如“为什么这个月预测偏高”——Prophet 能分解出趋势、季节性、节假日分量）。TimesFM 的优势在“大量不同序列、每个序列单独建模不现实”的场景——比如你有 10,000 个 SKU 的日销量，用 Prophet 逐个建模太慢，TimesFM 零样本一次出结果。建议：先用 TimesFM 出基线，对关键序列再用 Prophet 做可解释分析。
 
 **v2.5 的连续分位数预测怎么用？**
 
-在 `ForecastConfig` 里打开 `use_continuous_quantile_head=True`，`model.forecast()` 就会返回分位数结果。可以取任意分位水平，比如"第 30 天销量有 90% 概率落在 80～120 之间"——这对库存和安全库存决策有直接价值。
+在 `ForecastConfig` 里打开 `use_continuous_quantile_head=True`，`model.forecast()` 就会返回分位数结果。可以取任意分位水平，比如“第 30 天销量有 90% 概率落在 80～120 之间”——这对库存和安全库存决策有直接价值。
 
 **TimesFM 的预训练语料包含哪些领域？我的数据不在这些领域怎么办？**
 
