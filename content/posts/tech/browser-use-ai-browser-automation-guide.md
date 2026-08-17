@@ -323,7 +323,7 @@ CLI 适合快速调试和探索页面结构，不用每次写完整脚本。
 
 ### 安装 CLI
 
-CLI 随 browser-use 包一起安装：
+浏览器控制的 CLI 2.0 通过官方脚本独立安装（`curl -fsSL https://browser-use.com/cli/install.sh | bash`），下面这些 `open`、`state`、`click` 等命令均以 CLI 2.0 为准：
 
 ```bash
 # 验证安装
@@ -409,8 +409,7 @@ Agent 自带的浏览器操作能力有限，遇到"查天气""调内部 API""�
 ### 创建自定义工具
 
 ```python
-from browser_use import Agent, Browser
-from browser_use.tools import Tools
+from browser_use import Agent, Browser, ActionResult, Tools
 
 # 创建工具实例
 tools = Tools()
@@ -419,6 +418,7 @@ tools = Tools()
 @tools.action(description='Get the current weather for a city')
 def get_weather(city: str) -> str:
     """获取城市天气"""
+    import json
     import requests
     # 使用 Open-Meteo 的免费 API（无需 API Key）
     # 先通过 geocoding 接口把城市名转成经纬度
@@ -441,7 +441,7 @@ def get_weather(city: str) -> str:
         },
         timeout=10,
     )
-    return weather_resp.json()
+    return json.dumps(weather_resp.json(), ensure_ascii=False)
 
 # 使用自定义工具
 agent = Agent(
@@ -581,13 +581,6 @@ Browser Use Cloud 在开源库能力之上补充了：
 # 启用详细日志
 import logging
 logging.basicConfig(level=logging.DEBUG)
-
-# 截图查看状态
-browser.screenshot("debug.png")
-
-# 打印页面 HTML
-html = browser.get_page_content()
-print(html)
 ```
 
 `logging.DEBUG` 会打印 Agent 每一步的决策过程，包括 LLM 的完整 prompt 和响应。这是定位"Agent 为什么这么决策"的最直接方式——日志里能看到 LLM 看到的页面状态和它给出的下一步动作。

@@ -1,5 +1,5 @@
 ---
-title: "微软 AI Agents for Beginners 完全指南：14 节课程从入门到精通"
+title: "微软 AI Agents for Beginners 完全指南：18 节课程从入门到精通"
 date: "2026-04-22T11:30:00+08:00"
 slug: "ai-agents-for-beginners-microsoft-complete-guide"
 github_repo: "microsoft/ai-agents-for-beginners"
@@ -8,15 +8,15 @@ aliases:
     - "/posts/tech/microsoft-ai-agents-for-beginners-course/"
     - "/posts/tech/microsoft-ai-agents-for-beginners-guide/"
     - "/posts/tech/microsoft-ai-agents-for-beginners-tutorial/"
-description: "微软官方 AI Agents for Beginners 课程完整解析，涵盖 14 节核心课程、Microsoft Agent Framework 与 Azure AI Foundry Agent Service V2 架构详解，以及从工具调用、多 Agent 协作到生产级部署的完整学习路径。"
+description: "微软官方 AI Agents for Beginners 课程完整解析，涵盖 18 节核心课程、Microsoft Agent Framework 与 Microsoft Foundry Agent Service V2 架构详解，以及从工具调用、多 Agent 协作到生产级部署的完整学习路径。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Microsoft"]
 ---
 
-# 微软 AI Agents for Beginners 完全指南：14 节课程从入门到精通
+# 微软 AI Agents for Beginners 完全指南：18 节课程从入门到精通
 
-2025 年 AI Agent 概念泛滥，多数开发者卡在同一个地方：能跑通 demo，却说不清 Agent 和带 function calling 的 LLM 应用到底差在哪。微软的 [ai-agents-for-beginners](https://github.com/microsoft/ai-agents-for-beginners) 试图填这个坑——一份从设计模式到生产部署的工程地图，共 14 节课，57,904 Stars (截至 2026-04)，MIT 许可证，以 Jupyter Notebook + Python 为载体，基于 Microsoft Agent Framework 和 Azure AI Foundry Agent Service V2。
+2025 年 AI Agent 概念泛滥，多数开发者卡在同一个地方：能跑通 demo，却说不清 Agent 和带 function calling 的 LLM 应用到底差在哪。微软的 [ai-agents-for-beginners](https://github.com/microsoft/ai-agents-for-beginners) 试图填这个坑——一份从设计模式到生产部署的工程地图，共 18 节课，MIT 许可证，以 Jupyter Notebook + Python 为载体，基于 Microsoft Agent Framework 与 Microsoft Foundry Agent Service V2。
 
 本文拆解这套课程的核心内容、架构设计和上手路径，帮你判断它是否值得投入时间。
 
@@ -24,8 +24,8 @@ tags: ["AI Agent", "Microsoft"]
 
 - [一、课程总览地图](#一课程总览地图)
 - [二、AI Agent 核心概念：与传统 LLM 应用的根本区别](#二ai-agent-核心概念与传统-llm-应用的根本区别)
-- [三、14 节课程内容详解](#三14-节课程内容详解)
-- [四、核心架构：Microsoft Agent Framework 与 Azure AI Foundry Agent Service V2](#四核心架构microsoft-agent-framework-与-azure-ai-foundry-agent-service-v2)
+- [三、18 节课程内容详解](#三18-节课程内容详解)
+- [四、核心架构：Microsoft Agent Framework 与 Microsoft Foundry Agent Service V2](#四核心架构microsoft-agent-framework-与-microsoft-foundry-agent-service-v2)
 - [五、快速上手：环境配置与第一个 Agent](#五快速上手环境配置与第一个-agent)
 - [六、开发扩展：基于课程的项目实践](#六开发扩展基于课程的项目实践)
 - [七、与微软其他 AI 课程的协同](#七与微软其他-ai-课程的协同)
@@ -40,38 +40,42 @@ tags: ["AI Agent", "Microsoft"]
 
 ## 一、课程总览地图
 
-14 节课程按主题分为四组，每组解决一个工程问题：
+18 节课按主题分为四组，每组解决一个工程问题：
 
 | 主题组 | 节次 | 解决的问题 | 核心产出 |
 |--------|------|-----------|---------|
-| 基础与框架 | 第 1-2 节 | Agent 是什么？该用哪个框架？ | 框架选型对照表 |
-| 设计模式 | 第 3-7 节 | Agent 该怎么组织？ | 四大设计模式代码模板 |
-| 生产化能力 | 第 8-10 节 | 怎么让 Agent 安全可控？ | 评估、监控、知识管理方案 |
-| 协议与生态 | 第 11-14 节 | 怎么和外部系统打通？ | MCP、A2A 协议实践 |
+| 概念与框架 | 第 1-3 节 | Agent 是什么？该用哪个框架？ | 框架选型对照表、设计模式总览 |
+| 核心模式 | 第 4-9 节 | Agent 该怎么组织？ | 主要设计模式代码模板 |
+| 生产化能力 | 第 10-13 节 | 怎么让 Agent 安全可控、可观测？ | 生产、协议、上下文与记忆方案 |
+| 进阶与部署 | 第 14-18 节 | 怎么落地到具体平台与生产？ | 框架实战、浏览器、容器与安全 |
 
 ```mermaid
 graph LR
-    A["第 1-2 节<br/>基础与框架"] --> B["第 3-7 节<br/>设计模式"]
-    B --> C["第 8-10 节<br/>生产化能力"]
-    C --> D["第 11-14 节<br/>协议与生态"]
+    A["第 1-3 节<br/>概念与框架"] --> B["第 4-9 节<br/>核心模式"]
+    B --> C["第 10-13 节<br/>生产化能力"]
+    C --> D["第 14-18 节<br/>进阶与部署"]
 
     A1["Agent 定义"] --> A
     A2["框架对比"] --> A
+    A3["模式总览"] --> A
 
     B1["Tool Use"] --> B
-    B2["Planning"] --> B
-    B3["Multi-Agent"] --> B
-    B4["Reflection"] --> B
+    B2["Agentic RAG"] --> B
+    B3["Planning"] --> B
+    B4["Multi-Agent"] --> B
+    B5["Metacognition"] --> B
 
-    C1["Trust & Safety"] --> C
-    C2["Observability"] --> C
-    C3["Knowledge Mgmt"] --> C
+    C1["安全与可信"] --> C
+    C2["协议 MCP/A2A"] --> C
+    C3["上下文与记忆"] --> C
 
-    D1["MCP"] --> D
-    D2["A2A"] --> D
+    D1["Agent Framework"] --> D
+    D2["浏览器 CUA"] --> D
+    D3["部署与本地"] --> D
+    D4["安全加固"] --> D
 ```
 
-课程按"从概念到生产"的逻辑组织：设计模式是核心，生产化是过渡，协议是扩展。读者按角色选起点（见第八节）。
+课程按"从概念到生产"的逻辑组织：设计模式是核心，生产化是过渡，协议与部署是扩展。读者按角色选起点（见第八节）。
 
 ---
 
@@ -172,38 +176,39 @@ if __name__ == "__main__":
 
 ---
 
-## 三、14 节课程内容详解
+## 三、18 节课程内容详解
 
-### 3.1 第 1-2 节：基础概念与框架选型
+### 3.1 第 1-3 节：基础概念与框架
 
-第 1 节回答"Agent 是什么"，第 2 节回答"该用哪个框架"。第 2 节的框架对比是这门课的第一个工程判断点：Microsoft Agent Framework、LangChain、AutoGen、CrewAI 各有适用场景，课程给出了对照表。
+第 1 节回答"Agent 是什么"，介绍 Agent 及其典型用例；第 2 节回答"该用哪个框架"，给出 Microsoft Agent Framework、LangChain、AutoGen、CrewAI 等方案的对照；第 3 节总览 Agentic 设计模式，为后续逐项展开作铺垫。框架对比是这门课的第一次工程判断：不同框架各有适用场景，没有放之四海皆准的答案。
 
-### 3.2 第 3-7 节：四大设计模式
+### 3.2 第 4-9 节：核心设计模式
 
-这是课程的核心。第 3 节进入第一个设计模式——Tool Use，这一节是后续所有模式的基础：没有工具调用，Planning 和 Multi-Agent 都无从谈起。四种设计模式解决四类不同问题：
+这是课程的主体。主要模式覆盖 Tool Use、Agentic RAG、Planning、Multi-Agent 与 Metacognition，另加第 6 节从信任与安全角度约束 Agent 的行为边界。Tool Use（第 4 节）是最基础的一个——没有工具调用，规划和多 Agent 协作都无从谈起：
 
 | 设计模式 | 解决的问题 | 典型场景 |
 |---------|-----------|---------|
 | Tool Use | Agent 需要外部能力 | 查数据库、调 API、执行代码 |
+| Agentic RAG | 从知识库检索并推理 | 私有文档问答、检索增强生成 |
 | Planning | 任务需要多步分解 | 写报告、做分析、修 Bug |
 | Multi-Agent | 单 Agent 能力不足 | 复杂工作流、角色分工 |
-| Reflection | 输出质量需要验证 | 代码审查、文档校对 |
+| Metacognition | 输出质量需要验证 | 代码审查、自我反思、文档校对 |
 
-第 3 节（Tool Use）讲工具定义、调用、错误处理，是后续所有模式的基础。第 4 节（Planning）讲任务拆解策略，包括 ReAct、Plan-and-Execute 等模式。Multi-Agent 讲多个 Agent 怎么分工、怎么通信、怎么避免死循环。Reflection 讲让 Agent 检查自己的输出并迭代改进。
+Tool Use（第 4 节）讲工具定义、调用与错误处理，是后续所有模式的地基。Agentic RAG（第 5 节）把检索能力接进 Agent，让它能依据私有知识作答。第 6 节（Building Trustworthy Agents）讲怎么防止危险操作：工具调用前的权限校验、输出内容过滤、对敏感操作的二次确认。第 7 节（Planning）讲任务拆解，涵盖 ReAct、Plan-and-Execute 等策略。第 8 节（Multi-Agent）讲多个 Agent 怎么分工、通信、避免死循环。第 9 节（Metacognition，即自我反思）让 Agent 检查自己的输出并迭代改进。
 
-### 3.3 第 8-10 节：生产化能力
+### 3.3 第 10-13 节：生产化能力
 
-这三节是从 demo 到生产的分水岭。Trust & Safety 讲怎么防止 Agent 做危险操作：工具调用前的权限校验、输出内容的安全过滤、对敏感操作的二次确认。Observability & Evaluation 讲怎么知道 Agent 在干什么、干得怎么样：trace 工具调用链、记录每步决策、建立评估指标。第 10 节（Knowledge Management）和第 13 节（Managing Agentic Memory）讲 Agent 怎么获取和管理知识：RAG 检索、长期记忆、知识库更新策略。
+这几节是从 demo 到生产的分水岭。第 10 节（AI Agents in Production）讲上线要补齐的工程能力。第 11 节（Agentic Protocols）讲 MCP、A2A、NLWeb 等协议：MCP 解决工具定义的标准化，不同框架（Microsoft Agent Framework、LangChain、Claude）都能接入同一套工具定义，避免锁定；A2A 解决多个 Agent 的互操作，让不同厂商的 Agent 能协同工作。第 12 节（Context Engineering）讲如何为模型组织更有效的上下文。第 13 节（Managing Agentic Memory）讲短期记忆与长期记忆的取舍和持久化策略。
 
-### 3.4 第 11-14 节：协议与生态
+### 3.4 第 14-18 节：进阶与部署
 
-最后四节关注 Agent 怎么和外部系统打通，重点在协议标准化。第 11 节（MCP）讲 Model Context Protocol，2025 年 Agent 领域最重要的协议标准之一，解决工具定义的标准化问题：不同框架（Microsoft Agent Framework、LangChain、Claude）都能接入同一套工具定义，避免锁定。A2A 讲 Agent-to-Agent 协议，解决多个 Agent 之间的互操作问题，让不同厂商的 Agent 能协同工作。
+最后五节落到具体平台与生产。第 14 节深入 Microsoft Agent Framework 的实际用法。第 15 节讲基于浏览器操作的 Agent（Computer Use，CUA）。第 16 节讲可扩展 Agent 的部署。第 17 节讲如何在本地创建 Agent。第 18 节讲 Agent 的安全加固。对多数读者，第 14-15 节优先级最高——平台实战和浏览器场景最快见到产出。
 
-这两节之外，课程还涉及 Function Calling 的工程细节（参数校验、错误重试、并发调用）和 Human-in-the-loop（关键节点插入人工审核），它们是协议落地时配套的工程能力。
+从第 4 节开始，课程还会在具体示例中穿插 Function Calling 的工程细节（参数校验、错误重试、并发调用）和 Human-in-the-loop（关键节点插入人工审核），它们是协议落地时配套的工程能力。
 
 ---
 
-## 四、核心架构：Microsoft Agent Framework 与 Azure AI Foundry Agent Service V2
+## 四、核心架构：Microsoft Agent Framework 与 Microsoft Foundry Agent Service V2
 
 ### 4.1 Microsoft Agent Framework
 
@@ -211,9 +216,9 @@ Microsoft Agent Framework 是课程的主要载体。它基于 Semantic Kernel �
 
 框架解决的第一个工程问题是工具定义标准化：开发者用装饰器或类声明定义工具，框架自动处理参数校验和序列化，省掉手写 JSON Schema 的工作量。第二个是执行流程编排，内置 Tool Use、Planning 等模式的实现，避免从零写控制流。第三个是状态管理，框架维护对话历史、工具调用记录和中间结果，开发者不用自己拼消息列表。
 
-### 4.2 Azure AI Foundry Agent Service V2
+### 4.2 Microsoft Foundry Agent Service V2
 
-Azure AI Foundry Agent Service V2 是课程的云端运行时。它把 Agent 部署、扩展、监控打包成托管服务：
+Microsoft Foundry Agent Service V2 是课程的云端运行时。它把 Agent 部署、扩展、监控打包成托管服务：
 
 - **托管运行时**：不用自己管服务器，Agent 在 Azure 上运行
 - **内置模型路由**：支持 GPT-4o、o3 等多种模型，按需切换
@@ -286,7 +291,7 @@ python agent_demo.py
 北京今天晴，气温 25°C。
 ```
 
-如果想用 Azure AI Foundry Agent Service，课程提供了对应的 Notebook 示例。核心代码如下，需要 Azure 订阅和 AI Project 资源：
+如果想用 Microsoft Foundry Agent Service，课程提供了对应的 Notebook 示例。核心代码如下，需要 Azure 订阅和 AI Project 资源：
 
 ```python
 import asyncio
@@ -331,13 +336,13 @@ asyncio.run(main())
 
 两种方式的区别：OpenAI 版本自己管理对话状态和工具调用循环；Azure 版本把状态管理和调度交给 Agent Service，代码更短，但依赖 Azure 订阅。
 
-**没有 Azure 订阅时怎么验证 Azure 路径**：Azure AI Foundry Agent Service 的 API 形态（`AIProjectClient`、`create_agent`、`create_thread`、`create_and_process_run`）和 OpenAI Assistants API 高度一致。可以用 OpenAI Assistants API 做等价验证——把 `AIProjectClient` 换成 `OpenAI().beta.assistants`，调用链路几乎一一对应。这样能跑通"托管运行时"的调度逻辑，等有 Azure 订阅后再切回 Agent Service，代码改动集中在 client 初始化和少量字段名。课程 Notebook 里也标注了哪些步骤是 Azure 专属、哪些可以平替。
+**没有 Azure 订阅时怎么验证 Azure 路径**：Microsoft Foundry Agent Service 的 API 形态（`AIProjectClient`、`create_agent`、`create_thread`、`create_and_process_run`）和 OpenAI Assistants API 高度一致。可以用 OpenAI Assistants API 做等价验证——把 `AIProjectClient` 换成 `OpenAI().beta.assistants`，调用链路几乎一一对应。这样能跑通"托管运行时"的调度逻辑，等有 Azure 订阅后再切回 Agent Service，代码改动集中在 client 初始化和少量字段名。课程 Notebook 里也标注了哪些步骤是 Azure 专属、哪些可以平替。
 
 ### 5.3 学习路径建议
 
 - **零基础开发者**：从第 1 节开始，按顺序学习，重点关注第 3、4、7 节的设计模式
 - **有 LLM 开发经验**：从第 2 节框架对比开始，重点学习 Agent 特有的架构思路
-- **产品/架构人员**：重点阅读第 2 节框架对比、第 8 节信任与安全、第 9 节可观测性、第 11 节 MCP 协议
+- **产品/架构人员**：重点阅读第 2 节框架对比、第 6 节可信 Agent、第 10 节生产、第 11 节协议（MCP）
 
 ### 5.4 学习资源
 
@@ -355,7 +360,7 @@ asyncio.run(main())
 
 - **企业内部知识问答 Agent**：基于私有文档库构建，支持自然语言查询、自动摘要和相关文档推荐。核心是 Tool Use + RAG 的组合。
 - **自动化测试 Agent**：理解测试需求 → 编写测试代码 → 执行测试用例 → 生成测试报告。核心是 Planning + Tool Use 的组合。
-- **代码审查 Agent**：集成代码分析工具，自动进行代码质量检查、安全漏洞扫描和性能优化建议。核心是 Multi-Agent + Reflection 的组合。
+- **代码审查 Agent**：集成代码分析工具，自动进行代码质量检查、安全漏洞扫描和性能优化建议。核心是 Multi-Agent + Metacognition 的组合。
 
 以企业内部知识问答 Agent 为例，最小实现骨架如下，工具层接 RAG 检索：
 
@@ -454,23 +459,23 @@ MCP 的价值在于标准化：不同框架（Microsoft Agent Framework、LangCh
 
 ### 谁应该现在就学
 
-- **有 Azure 订阅的团队**：课程直接对接 Azure AI Foundry，学完能立刻上手
+- **有 Azure 订阅的团队**：课程直接对接 Microsoft Foundry，学完能立刻上手
 - **想系统理解 Agent 架构的开发者**：课程的设计模式部分是同类资源里最完整的
 - **正在选型 Agent 框架的技术负责人**：第 2 节框架对比能省掉大量调研时间
 
 ### 谁可以等等
 
 - **只用 LangChain 且不打算换的团队**：课程的框架对比仍有参考价值，但代码示例需要自己迁移
-- **没有 Azure 订阅的个人开发者**：可以用 OpenAI API 跑通大部分示例，但 Azure AI Foundry 相关章节无法实操
+- **没有 Azure 订阅的个人开发者**：可以用 OpenAI API 跑通大部分示例，但 Microsoft Foundry 相关章节无法实操
 - **刚接触 LLM 的新手**：建议先学 Generative AI for Beginners，再进入本课程
 
 ### 从哪里开始
 
-1. 先读第 1-2 节，建立 Agent 概念和框架认知
-2. 跑通第 3 节的 Tool Use 示例，确认环境没问题
-3. 按需跳到第 3-7 节的设计模式，选一个和当前工作相关的深入
-4. 上生产前必读第 8-10 节的安全、可观测性和知识管理
-5. 第 11-14 节按需选学，MCP 优先级最高
+1. 先读第 1-3 节，建立 Agent 概念、框架与设计模式总览认知
+2. 跑通第 4 节的 Tool Use 示例，确认环境没问题
+3. 按需跳到第 4-9 节的设计模式，选一个和当前工作相关的深入
+4. 上生产前必读第 10-13 节的生产、协议、上下文工程与记忆管理
+5. 第 11 节（协议）优先级最高，14-18 节按需选学
 
 ---
 
@@ -487,16 +492,16 @@ MCP 的价值在于标准化：不同框架（Microsoft Agent Framework、LangCh
 
 </details>
 
-2. **课程的四大设计模式分别解决什么问题？**
+2. **课程的主要设计模式分别解决什么问题？**
 
 <details>
 <summary>参考答案</summary>
 
-Tool Use 解决外部能力调用，Planning 解决多步任务分解，Multi-Agent 解决单 Agent 能力不足，Reflection 解决输出质量验证。
+Tool Use 解决外部能力调用，Agentic RAG 解决知识检索推理，Planning 解决多步任务分解，Multi-Agent 解决单 Agent 能力不足，Metacognition 解决输出质量验证。
 
 </details>
 
-3. **Microsoft Agent Framework 和 Azure AI Foundry Agent Service V2 的分工是什么？**
+3. **Microsoft Agent Framework 和 Microsoft Foundry Agent Service V2 的分工是什么？**
 
 <details>
 <summary>参考答案</summary>
@@ -519,7 +524,7 @@ Framework 是 SDK，负责工具定义和执行流程编排；Agent Service 是�
 <details>
 <summary>参考答案</summary>
 
-第 8-10 节。Trust & Safety、Observability、Knowledge Management 三节决定了 Agent 能不能从 demo 走到生产。
+第 10-13 节。生产、协议、上下文工程与记忆管理这一组，决定了 Agent 能不能从 demo 走到生产。
 
 </details>
 
@@ -597,7 +602,7 @@ tools = [
 
 - **想深入 MCP 协议**：学 [MCP for Beginners](https://github.com/microsoft/mcp-for-beginners)
 - **想深入多 Agent 系统**：研究 AutoGen 和 CrewAI 的官方文档
-- **想深入 Agent 评估**：读 Azure AI Foundry 的 evaluation 文档
+- **想深入 Agent 评估**：读 Microsoft Foundry 的 evaluation 文档
 - **想深入生产部署**：学 [AZD for Beginners](https://github.com/Azure-Samples/azure-dev)，掌握 Azure 开发部署流程
 
 ---
@@ -605,7 +610,7 @@ tools = [
 ## 十二、FAQ
 
 **Q：课程需要 Azure 订阅吗？**
-A：不是必须的。大部分示例可以用 OpenAI API 跑通，但 Azure AI Foundry Agent Service 相关的章节需要 Azure 订阅才能实操。
+A：不是必须的。大部分示例可以用 OpenAI API 跑通，但 Microsoft Foundry Agent Service 相关的章节需要 Azure 订阅才能实操。
 
 **Q：课程用什么编程语言？**
 A：Python，以 Jupyter Notebook 为载体。需要基本的 Python 语法和 pip 包管理能力。
@@ -614,15 +619,15 @@ A：Python，以 Jupyter Notebook 为载体。需要基本的 Python 语法和 p
 A：第 2 节会对比 LangChain 和 Microsoft Agent Framework，但代码示例以 Microsoft Agent Framework 为主。想深入 LangChain 可以看 [LangChain for Beginners](https://github.com/gkamradt/langchaincourse)。
 
 **Q：课程更新频率如何？**
-A：微软保持季度更新，跟进新的模型和协议。截至 2026 年 4 月，仓库最新更新于 2026-04-11。
+A：课程仍在演进，框架与服务的命名会随微软产品更新。具体内容以仓库当前 README 为准，这里介绍的是课程的一贯主线。
 
 **Q：学完课程能直接上生产吗？**
-A：不能。课程覆盖了从概念到生产的关键知识点，但生产部署还需要自己补日志、监控、容错、成本控制等工程能力。课程第 8-10 节是切入点。
+A：不能。课程覆盖了从概念到生产的关键知识点，但生产部署还需要自己补日志、监控、容错、成本控制等工程能力。课程第 10-13 节是切入点。
 
 ---
 
 ## 十三、结语
 
-[microsoft/ai-agents-for-beginners](https://github.com/microsoft/ai-agents-for-beginners) 的核心价值在于把 Agent 系统的工程问题拆得足够清楚：设计模式、生产化、协议标准，每一层都有对应的章节和代码。14 节课只是载体，工程判断力才是收获。如果你正在学习 AI Agent，或者计划将 Agent 能力引入产品，这份课程值得投入时间。
+[microsoft/ai-agents-for-beginners](https://github.com/microsoft/ai-agents-for-beginners) 的核心价值在于把 Agent 系统的工程问题拆得足够清楚：设计模式、生产化、协议标准，每一层都有对应的章节和代码。18 节课只是载体，工程判断力才是收获。如果你正在学习 AI Agent，或者计划将 Agent 能力引入产品，这份课程值得投入时间。
 
 课程仓库：[microsoft/ai-agents-for-beginners](https://github.com/microsoft/ai-agents-for-beginners) | 许可证：MIT
