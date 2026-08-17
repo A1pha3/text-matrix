@@ -349,7 +349,7 @@ packages/os/
 
 README 上明说：
 
-> [`packages/os`](packages/os) is the real, bootable distribution. Downloads and hardware are at [os.elizacloud.ai](https://os.elizacloud.ai).
+> [`packages/os`](https://github.com/elizaOS/eliza/tree/HEAD/packages/os) is the real, bootable distribution. Downloads and hardware are at [os.elizacloud.ai](https://os.elizacloud.ai).
 >
 > - **Linux** — boots a full desktop with Eliza built in from a USB stick. amd64 · arm64 · **riscv64**.
 > - **Android** — Eliza is the system launcher and assistant, on Pixel-class devices.

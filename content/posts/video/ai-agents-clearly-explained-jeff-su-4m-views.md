@@ -213,9 +213,9 @@ Jeff Su 这支视频最实在的地方是把概念压缩得足够清楚：零基
 
 ## 站内继续读
 
-- [easy-langent：Datawhale 出品 LangChain/LangGraph 大模型应用开发教程](../tech/easy-langent-langchain-langgraph-tutorial.md)
-- [Cognee：AI Agent 记忆引擎完全指南](../tech/cognee-ai-agent-memory-knowledge-engine.md)
-- [OpenViking：字节跳动开源的 AI Agent 上下文数据库](../tech/ai-agent/openviking-context-database-ai-agents.md)
-- [awesome-llm-apps：LLM 应用与 Agent 项目清单](../tech/awesome-llm-apps-curated-llm-application-projects-guide.md)
+- [easy-langent：Datawhale 出品 LangChain/LangGraph 大模型应用开发教程](/posts/tech/easy-langent-langchain-langgraph-tutorial/)
+- [Cognee：AI Agent 记忆引擎完全指南](/posts/tech/cognee-ai-agent-memory-knowledge-engine/)
+- [OpenViking：字节跳动开源的 AI Agent 上下文数据库](/posts/tech/ai-agent/openviking-context-database-ai-agents/)
+- [awesome-llm-apps：LLM 应用与 Agent 项目清单](/posts/tech/awesome-llm-apps-curated-llm-application-projects-guide/)
 
 从 LLM 到 workflow，再到真正的 agent，变化最大的是"下一步应该怎么做"的决策权从人手里逐渐转移到模型手里。看清这件事，再去看市面上的各种"AI Agent"产品，很多混淆会立刻消失。

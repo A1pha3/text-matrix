@@ -1,29 +1,29 @@
 ---
-title: "袁晓鹏 8 年 ML 讲义拆解：roboticcam 凭什么成为 GitHub 10k+ Stars 的「野生」机器学习课程"
+title: "徐亦达 8 年 ML 讲义拆解：roboticcam 凭什么成为 GitHub 10k+ Stars 的「野生」机器学习课程"
 date: 2026-08-05T14:10:00+08:00
 draft: false
-summary: "roboticcam/machine-learning-notes 是香港浸会大学(HKBU)副教授袁晓鹏 2018 年至今 8 年不间断维护的 ML 讲义仓库,以 70+ 份 PDF 讲义为主,2000+ 页,GitHub 10.1k stars / 1.8k forks。本文拆开它的 7 个递进层次:基础数学 → 概率模型 → 优化 → 深度学习 → 生成模型 → 3D 视觉 → 强化学习 → NLP,以及它和现有大学课程的关键差异——它把学习理论(Concentration Inequality/Rademacher 复杂度/PAC-Bayes/NTK/JL lemma)、贝叶斯非参(Dirichlet Process/HDP-HMM/IBP/DPP)、State Space Model(Kalman/HMM)这些通常散落在研究生课程的硬骨头,搬进了同一本讲义。"
-tags: ["机器学习", "深度学习", "概率模型", "袁晓鹏", "roboticcam", "教学仓库", "DPP", "贝叶斯非参", "MCMC", "GitHub 10k"]
+summary: "roboticcam/machine-learning-notes 是香港浸会大学(HKBU)数学系教授徐亦达(Richard Yi Da Xu)2018 年至今 8 年不间断维护的 ML 讲义仓库,以 70+ 份 PDF 讲义为主,2000+ 页,GitHub 10.3k stars / 1.8k forks。本文拆开它的 7 个递进层次:学习理论 → 基础数学 → 中级数学 → 概率模型 → 深度学习研究 → 优化方法 → 应用领域,以及它和现有大学课程的关键差异——它把学习理论(Concentration Inequality/Rademacher 复杂度/PAC-Bayes/NTK/JL lemma)、贝叶斯非参(Dirichlet Process/HDP-HMM/IBP/DPP)、State Space Model(Kalman/HMM)这些通常散落在研究生课程的硬骨头,搬进了同一本讲义。"
+tags: ["机器学习", "深度学习", "概率模型", "徐亦达", "roboticcam", "教学仓库", "DPP", "贝叶斯非参", "MCMC", "GitHub 10k"]
 categories: ["技术笔记"]
 authors: ["钳岳"]
 github_repo: "roboticcam/machine-learning-notes"
-description: "袁晓鹏 8 年 ML 讲义拆解:从 Learning Theory(Rademacher/NTK/PAC-Bayes)到 BNP(Dirichlet Process/IBP/DPP/HDP-HMM),70+ 份 PDF,2000+ 页,GitHub 10.1k stars,深度教学仓库"
-slug : roboticcam-machine-learning-notes-deep-walkthrough-2026
+description: "徐亦达 8 年 ML 讲义拆解:从 Learning Theory(Rademacher/NTK/PAC-Bayes)到 BNP(Dirichlet Process/IBP/DPP/HDP-HMM),70+ 份 PDF,2000+ 页,GitHub 10.3k stars,深度教学仓库"
+slug: roboticcam-machine-learning-notes-deep-walkthrough-2026
 ---
 
 ## 一、10k Stars 的「野生」机器学习课程
 
 [roboticcam/machine-learning-notes](https://github.com/roboticcam/machine-learning-notes) 在 GitHub 上是个异类。
 
-它不是框架,不是工具,不是论文实现——它是**香港浸会大学(Hong Kong Baptist University, HKBU)副教授袁晓鹏(Xu Yi-da)2018 年至今 8 年持续维护的机器学习讲义集**。内容以 PDF 讲义为主,配合少量 PPTX 和 1 个 Jupyter Notebook,加起来 2000+ 页(README 自己写的是 slides)。GitHub **10.1k stars / 1.8k forks**,2018-02-15 创建,**2026-07-08 还有 commit**(更新周期横跨 8 年)。
+它不是框架,不是工具,不是论文实现——它是**香港浸会大学(Hong Kong Baptist University, HKBU)数学系教授徐亦达(Richard Yi Da Xu)2018 年至今 8 年持续维护的机器学习讲义集**。内容以 PDF 讲义为主,配合少量 PPTX 和 1 个 Jupyter Notebook,加起来 2000+ 页(README 自己写的是 slides)。GitHub **10.3k stars / 1.8k forks**,2018-02-15 创建,**2026-07-08 还有 commit**(更新周期横跨 8 年)。
 
 README 顶部作者写得很直接:
 
 > My continuously updated Machine Learning, Probabilistic Models and Deep Learning notes and demos (2000+ slides)
 
-2022 年起,作者每周日晚上 8:30 在微信群直播 ML 课程;从 2022 年 4 月起,每 2-3 周通过 Zoom 用英文讲 Machine Learning Research Seminar(香港时间晚上 7 点)。2015 年他用中文录过约 10% 的课件——所有讲义正文是英文的,视频在 YouTube/B 站/优酷三处都存。
+2022 年起,作者每周日晚上 8:30 在微信群直播 ML 课程;从 2022 年 4 月起,每 2-3 周通过 Zoom 用英文讲 Machine Learning Research Seminar(香港时间晚上 7 点)。2015 年他用中文录过约 20% 的课件——所有讲义正文是英文的,视频在 YouTube/B 站/优酷三处都存。
 
-这是一门持续更新的课程,不是一份写完就放着的仓库——讲义每年更新,B 站视频链接嵌在每个章节标题下,README 末尾留着 PhD 招生邮箱 `xuyida@hkbu.edu.hk`。作者此前在澳大利亚悉尼大学和阿德莱德大学任教,后加入 HKBU 计算机科学系。
+这是一门持续更新的课程,不是一份写完就放着的仓库——讲义每年更新,B 站视频链接嵌在每个章节标题下,README 末尾留着 PhD 招生邮箱 `xuyida@hkbu.edu.hk`。作者此前在澳大利亚悉尼科技大学(University of Technology Sydney, UTS)任副教授(2010-2021),后加入 HKBU 数学系(兼任计算机科学系)。
 
 ## 二、讲义内容的 7 个层次
 
@@ -87,11 +87,11 @@ NTK 和 PAC-Bayes 是 2018 年后深度学习理论的两条主线。NTK 给了�
 - **Bayesian Non-Parametrics (BNP) basics**:Dirichlet Process (DP) / Chinese Restaurant Process / Slice sampling for DP
 - **BNP extensions**:Hierarchical DP / HDP-HMM / Indian Buffet Process (IBP)
 - **Completely Random Measure**(2015 早期草稿):Lévy-Khintchine representation / Compound Poisson / Gamma / Negative Binomial
-- **Sample correlated integers from HDP and Copula**:作者 IJCAI 2016 论文的另一种推导(注:论文本身有 PDF 链接,但讲义版本「推导不同,故事相同」)
+- **Copula Mixed-Membership Stochastic Blockmodel**:作者 IJCAI 2016 论文的另一种推导(注:论文本身有 PDF 链接,但讲义版本「推导不同,故事相同」)
 - **Determinantal Point Process (DPP)**:DPP 的边缘分布 / L-ensemble / 采样策略 / 作者「时变 DPP」研究
 - **DPP Basics (updated)**:DPP 教程的重写版(无时间变化部分)
 
-DPP 这块是作者自己的研究方向——他在 IJCAI 2016 上发了 Copula-DP 相关论文,讲义里 DPP 教程包含了「时变 DPP」研究的细节。其他章节偏向综合教学,DPP 这一节则是作者自己积累多年的研究主题,写进去的尽是他研究的角落,而不只是教科书里现成的结论。
+DPP 这块是作者自己的研究方向——他与合作者在 IJCAI 2016 上发表了 Copula Mixed-Membership Stochastic Blockmodel 论文,讲义里 DPP 教程包含了他「时变 DPP」研究的相关内容。其他章节偏向综合教学,DPP 这一节则是作者自己积累多年的研究主题,写进去的尽是他研究的角落,而不只是教科书里现成的结论。
 
 ## 五、生成模型篇:从 VAE 到 Flow Matching 的完整时间线
 
@@ -102,7 +102,7 @@ Generative AI / Deep Learning Research 部分,把 2013 年以来的生成模型�
 - **A survey of traditional and state-of-the-art Generative Models**:VAE / IWAE / NF / AVB / Mixture / DPMM / Flow Matching
 - **Infinite Depth: NeuralODE and Adjoint Equation**:Neural ODE + 伴随方程
 
-Flow Matching 在 2024 年之后成为 diffusion 模型训练的主流(Stable Diffusion 3 用 Rectified Flow,SDXL-Turbo 用 consistency flow),而这份讲义已经把 Flow Matching 按 SDE + 流匹配的形式写进去了。
+Flow Matching 在 2024 年之后成为 diffusion 模型训练的主流(Stable Diffusion 3 用 Rectified Flow,SDXL-Turbo 用对抗扩散蒸馏 ADD 做到单步生成),而这份讲义已经把 Flow Matching 按 SDE + 流匹配的形式写进去了。
 
 ## 六、State Space Model 与 Kalman Filter:被现代 LLM 时代重新发现的古典
 
@@ -122,14 +122,14 @@ State Space Model(SSM)章节讲 Kalman Filter 和 Hidden Markov Model(HMM):
 
 包括两章:**3D Geometry Fundamentals**(相机模型 / 内参外参 / 对极几何 / 三维重建 / 深度估计)和 **Recent Deep 3D Geometry based Research**(单图相机模型估计 / 多视图多人 3D 姿态 / GAN 3D 姿态 / Deep Structure-from-Motion / 深度学习深度估计)。
 
-这两章覆盖了从经典多视图几何(Hartley-Zisserman 那一套)到深度学习 3D 视觉的完整时间线——NeRF / 3D Gaussian Splatting 没单独成节,但前面「Single image to Camera Model estimation」和「Deep Structure-from-Motion」是它们的直接前置。
+这两章覆盖了从经典多视图几何(Hartley-Zisserman 那一套)到深度学习 3D 视觉的完整时间线——NeRF / 3D Gaussian Splatting 没单独成节,但前面「Single image to Camera Model estimation」和「Deep Structure-from-Motion」为它们提供了相机几何与三维重建的底子。
 
 ## 八、强化学习:从 DQN 到 PPO/TRPO 的全部数学
 
 强化学习章节同样扎实:
 
 - **Reinforcement Basics**:MDP(Markov Decision Process) / Bellman / Deep Q-Learning(DQN)
-- **Monte Carlo Tree Search**:MCTS + AlphaGo 学习算法(3.6 MB,作者最大的讲义之一)
+- **Monte Carlo Tree Search**:MCTS + AlphaGo 学习算法(3.6 MB)
 - **Policy Gradient**:Policy Gradient Theorem + TRPO(Trust Region Policy Optimization) + Natural Gradient + PPO(Proximal Policy Optimization) + Conjugate Gradient Algorithm
 
 作者在 Policy Gradient 章节写明了 TRPO 信任域优化的数学推导——Natural Gradient + Conjugate Gradient 联立求 step direction。TRPO 是 PPO 之前的算法,没有它的推导就读不懂 PPO 的动机。大多数 RL 教程会跳过 TRPO 直接讲 PPO,作者把它留下,目标显然不是调 stable-baselines 的超参,而是让学生能读得动论文里的推导。
@@ -148,7 +148,7 @@ Gumbel-Max + REBAR 是离散潜变量模型里的可微分技巧——VAE 要处
 
 ## 十、Sinovation DeeCamp:讲义里的「实战课」
 
-DeeCamp 是创新工场 2018-2019 年的 AI 训练营。袁晓鹏在 2018 年和 2019 年分别讲过两场:
+DeeCamp 是创新工场 2018-2019 年的 AI 训练营。徐亦达在 2018 年和 2019 年分别讲过两场:
 
 - **DeeCamp 2019**:Story of Softmax
 - **DeeCamp 2018**:When Probabilities meet Neural Networks(EM + 矩阵胶囊矩阵 / DPP + 神经网络压缩 / Kalman Filter + LSTM / 模型估计 + 二分类)
@@ -184,7 +184,7 @@ roboticcam 相对其他资源最突出的地方是 **BNP / DPP + Learning Theory
 
 README 里没有声明任何开源 license(MIT / Apache / GPL / CC 均无)。这不是吹毛求疵——在法律上,没有 license 意味着默认 "All Rights Reserved",即使代码和 PDF 公开在 GitHub 上。这带来三个具体问题:
 
-1. **不能合法 fork 进自己的项目**——如果你想基于这些讲义做一套中文翻译版,或者改编成公司内训材料,严格来说需要逐封邮件向袁老师申请授权
+1. **不能合法 fork 进自己的项目**——如果你想基于这些讲义做一套中文翻译版,或者改编成公司内训材料,严格来说需要逐封邮件向徐老师申请授权
 2. **不能二次分发**——翻译成其他语言、做衍生讲义、放进自己的课程网站,都需要单独许可
 3. **工业团队引用受限**——公司内部的合规流程通常要求素材有明确 license,没有 license 的仓库会被法务标记为「不可引用」
 
@@ -196,7 +196,7 @@ README 里没有声明任何开源 license(MIT / Apache / GPL / CC 均无)。这
 
 很多 ML 仓库(包括吴恩达的 coursera、fast.ai、李宏毅的机器学习)在讲「入门 + 实战」——目标是让你快速跑通模型。
 
-袁晓鹏的仓库做的是相反的事:假设你已经会跑模型,然后告诉你模型的数学骨架。三个差异:
+徐亦达的仓库做的是相反的事:假设你已经会跑模型,然后告诉你模型的数学骨架。三个差异:
 
 1. **Learning Theory 占顶部 6 章**——绝大多数教学仓库跳过这块,因为它「对找工作没用」
 2. **BNP + DPP + Copula 单独成节**——研究级内容,其他教学仓库没有
@@ -224,7 +224,7 @@ Learning Theory 放在第 6 周而不是第 1 周。先学具体的算法(MCMC /
 
 ## 十六、它对中国 ML 教育的真正意义
 
-袁晓鹏的仓库不是一个网红项目——它是一位研究者 8 年不间断的教学工程。2018 年建仓,2026 年 7 月还在 commit,内容以 70+ 份 PDF 讲义为主,加起来 2000+ 页。一位教授把自己研究领域的数学骨架,无偿开放给中文世界。
+徐亦达的仓库不是一个网红项目——它是一位研究者 8 年不间断的教学工程。2018 年建仓,2026 年 7 月还在 commit,内容以 70+ 份 PDF 讲义为主,加起来 2000+ 页。一位教授把自己研究领域的数学骨架,无偿开放给中文世界。
 
 GitHub 上那 10k stars 是结果,不是目标。真正有用的是这条路径:一个大陆或者港台的本科生,只要愿意花 8 周认真读这些讲义,就能具备读懂 NeurIPS 理论 track 论文的数学底子。这件事在大陆和港台的现有大学课程里很难复现——学习理论、BNP、DPP 这些内容散落在不同教授的不同课程里,没有一个连贯体系把它们串起来。
 
@@ -234,9 +234,9 @@ GitHub 上那 10k stars 是结果,不是目标。真正有用的是这条路径:
 
 ## 参考
 
-- 仓库:[github.com/roboticcam/machine-learning-notes](https://github.com/roboticcam/machine-learning-notes)(10.1k stars / 1.8k forks / 2018-至今 / 70+ PDFs + 少量 PPTX + 1 Jupyter)
-- 作者:袁晓鹏(Xu Yi-da),香港浸会大学(HKBU)计算机科学系副教授,前悉尼大学 / 阿德莱德大学(澳大利亚)
+- 仓库:[github.com/roboticcam/machine-learning-notes](https://github.com/roboticcam/machine-learning-notes)(10.3k stars / 1.8k forks / 2018-至今 / 70+ PDFs + 少量 PPTX + 1 Jupyter)
+- 作者:徐亦达(Richard Yi Da Xu),香港浸会大学(HKBU)数学系教授(兼任计算机科学系),此前在澳大利亚悉尼科技大学(UTS)任副教授
 - 在线直播:每周日 20:30 微信群 / 每 2-3 周 Zoom 英文(HK 19:00,meetup 报名)
 - 视频:YouTube / B 站 / 优酷 三处都存
 - 配套代码:[github.com/roboticcam/matlab_demos](https://github.com/roboticcam/matlab_demos) + [github.com/roboticcam/python_machine_learning](https://github.com/roboticcam/python_machine_learning)
-- 关键研究:袁晓鹏 IJCAI 2016 [Copula DP](https://www.ijcai.org/Proceedings/16/Papers/210.pdf) / 时变 DPP
+- 关键研究:徐亦达 IJCAI 2016 [Copula Mixed-Membership Stochastic Blockmodel](https://www.ijcai.org/Proceedings/16/Papers/210.pdf) / 时变 DPP

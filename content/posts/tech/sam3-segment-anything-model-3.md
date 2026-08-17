@@ -213,4 +213,4 @@ SAM 3 更值得看的地方在“把分割从 2D 平面拉进了 3D 空间”。
 
 ---
 
-**相关工具：** [Supervision](supervision-computer-vision-toolbox)
+**相关工具：** [Supervision](/posts/tech/supervision-computer-vision-toolbox/)

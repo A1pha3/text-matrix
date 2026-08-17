@@ -139,7 +139,7 @@ pxpipe 自己测出了过期的时间点。同样 harness，两个模型：
 
 ## API 限幅：你付了钱但没拿到像素
 
-[legibility audit](docs/LEGIBILITY-AUDIT-2026-07-01.md) 揭了一条隐藏的免费保真杠杆：
+[legibility audit](https://github.com/teamchong/pxpipe/blob/HEAD/docs/LEGIBILITY-AUDIT-2026-07-01.md) 揭了一条隐藏的免费保真杠杆：
 
 > **Anthropic API 把每张图像降采样到同时满足「长边 ≤1568 px」和「~1.15 MP」，然后按 ≈ px/750 计费（每张）。**
 

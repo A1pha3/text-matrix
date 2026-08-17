@@ -192,4 +192,4 @@ Dan Koe 的"1 天重置"对应极简主义——1 天扔掉所有"旧自己"的�
 - James Clear《原子习惯》（Atomic Habits，2018）
 - Gary Keller《最重要的事》（The One Thing，2013）
 - 佐佐木典士《我决定简单地生活》、近藤麻理惠《怦然心动的人生整理魔法》
-- [财富自由专栏说明：覆盖范围、写作边界与阅读方式](wealth-freedom-column-intro.md)
+- [财富自由专栏说明：覆盖范围、写作边界与阅读方式](/posts/wealth/wealth-freedom-column-intro/)

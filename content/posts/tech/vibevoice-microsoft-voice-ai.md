@@ -127,11 +127,11 @@ print(result["text"])
 
 ### vLLM 加速推理
 
-VibeVoice-ASR 支持 vLLM 后端加速，参考 [vllm-asr 文档](docs/vibevoice-vllm-asr.md)。
+VibeVoice-ASR 支持 vLLM 后端加速，参考 [vllm-asr 文档](https://github.com/microsoft/VibeVoice/blob/HEAD/docs/vibevoice-vllm-asr.md)。
 
 ### 本地微调
 
-VibeVoice-ASR 的微调代码已开源，参考 [finetuning-asr/README.md](finetuning-asr/README.md)。
+VibeVoice-ASR 的微调代码已开源，参考 [finetuning-asr/README.md](https://github.com/microsoft/VibeVoice/blob/HEAD/finetuning-asr/README.md)。
 
 ---
 

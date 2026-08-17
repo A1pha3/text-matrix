@@ -231,7 +231,7 @@ dream disable my-service
 dream list                  # 查看所有已注册服务
 ```
 
-如果想自己开发扩展，参考官方文档中的 [Extensions 指南](dream-server/docs/EXTENSIONS.md) 和 [Installer Architecture](dream-server/docs/INSTALLER-ARCHITECTURE.md)。
+如果想自己开发扩展，参考官方文档中的 [Extensions 指南](https://github.com/Light-Heart-Labs/DreamServer/blob/HEAD/dream-server/docs/EXTENSIONS.md) 和 [Installer Architecture](https://github.com/Light-Heart-Labs/DreamServer/blob/HEAD/dream-server/docs/INSTALLER-ARCHITECTURE.md)。
 
 ## 与同类方案的对比
 
@@ -385,7 +385,7 @@ DreamServer 解决的核心问题是**本地 AI 部署的复杂性**。它把原
 
 ---
 
-**官方文档**：[Quickstart](dream-server/QUICKSTART.md) · [Hardware Guide](dream-server/docs/HARDWARE-GUIDE.md) · [Extensions](dream-server/docs/EXTENSIONS.md) · [FAQ](dream-server/FAQ.md)
+**官方文档**：[Quickstart](https://github.com/Light-Heart-Labs/DreamServer/blob/HEAD/dream-server/QUICKSTART.md) · [Hardware Guide](https://github.com/Light-Heart-Labs/DreamServer/blob/HEAD/dream-server/docs/HARDWARE-GUIDE.md) · [Extensions](https://github.com/Light-Heart-Labs/DreamServer/blob/HEAD/dream-server/docs/EXTENSIONS.md) · [FAQ](https://github.com/Light-Heart-Labs/DreamServer/blob/HEAD/dream-server/FAQ.md)
 
 **相关项目**：[llama.cpp](https://github.com/ggml-org/llama.cpp) · [Open WebUI](https://github.com/open-webui/open-webui) · [ComfyUI](https://github.com/comfyanonymous/ComfyUI) · [Qwen](https://github.com/QwenLM/Qwen)
 

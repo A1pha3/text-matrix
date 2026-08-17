@@ -44,6 +44,28 @@ Nginx 在 AI 时代的用途，主要落在"入口代理"这一层，而不是�
 - **内网 LLM 推理服务入口**：vLLM、Ollama 的对外暴露层常用 Nginx 做 TLS 终止、限流、鉴权。
 - **轻量反向代理**：个人项目、内网服务，一个 Nginx 或 Caddy 就够，不需要引入整套服务网格。
 
+这几类用途落到配置上都很薄，核心通常就三段：`limit_req` 限速、`proxy_pass` 转发、TLS 终止。比如一个最小的 LLM API 代理：
+
+```nginx
+limit_req_zone $binary_remote_addr zone=llm:10m rate=10r/s;
+
+server {
+    listen 443 ssl;
+    server_name llm.example.com;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_certificate     /etc/nginx/llm.crt;
+    ssl_certificate_key /etc/nginx/llm.key;
+
+    location /v1 {
+        limit_req zone=llm burst=20 nodelay;   # 超速直接 429，不落后端
+        proxy_pass https://upstream-llm;        # 后端 vLLM / Ollama
+        proxy_set_header Authorization $http_authorization;
+    }
+}
+```
+
+`limit_req_zone` 先在全局按 IP 建了一个限速桶（10 次/秒），`location` 里 `limit_req ... nodelay` 决定超速直接拒绝而不是排队。对 LLM 接口，这比到后端再限流省一次体量最大的推理调用。
+
 ## 与 Caddy / Traefik 的对比
 
 | 维度 | Nginx | Caddy | Traefik |
@@ -55,7 +77,7 @@ Nginx 在 AI 时代的用途，主要落在"入口代理"这一层，而不是�
 | 学习曲线 | 中 | 低 | 低 |
 | 生态 / 文档 | 极多 | 较少 | 较多 |
 
-Nginx 的 `reload` 不是重启：它重读配置、优雅地让老 worker 处理完正在进行的连接后退出，新 worker 带着新配置接手，所以不中断在途请求。机器上多做一次 `nginx -t` 确认语法，再 `nginx -s reload`。
+Nginx 的 `reload` 不是重启：它重读配置、优雅地让老 worker 处理完正在进行的连接后退出，新 worker 带着新配置接手，所以不中断在途请求。改完先在机器上 `nginx -t` 验证语法，再 `nginx -s reload` 让改动生效。
 
 选型建议：个人或小团队直接上 Caddy，零运维；大流量生产环境 Nginx 仍然是性能与生态的首选；K8s 微服务用 Traefik 或 Envoy Gateway；需要完整 API 网关功能（限流、鉴权、计费、Dashboard）再上 Kong 这类基于 OpenResty 的产品。
 

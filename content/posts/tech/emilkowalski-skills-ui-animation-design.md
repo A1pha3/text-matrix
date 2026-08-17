@@ -122,8 +122,8 @@ npx skills@latest add emilkowalski/skills
 
 1. **[README](https://github.com/emilkowalski/skills)**（3 分钟）— 了解项目动机和全景
 2. **[Agents with Taste](https://emilkowal.ski/ui/agents-with-taste)**（8 分钟）— Emil 的博客文章，解释"为什么 AI 需要品味"
-3. **[emil-design-eng](./skills/emil-design-eng/SKILL.md)**（10 分钟）— 主技能，理解 Emil 的设计哲学
-4. **[review-animations/STANDARDS.md](./skills/review-animations/STANDARDS.md)**（15 分钟）— 动画标准参考，最实用的技术细节
+3. **[emil-design-eng](https://github.com/emilkowalski/skills/blob/HEAD/skills/emil-design-eng/SKILL.md)**（10 分钟）— 主技能，理解 Emil 的设计哲学
+4. **[review-animations/STANDARDS.md](https://github.com/emilkowalski/skills/blob/HEAD/skills/review-animations/STANDARDS.md)**（15 分钟）— 动画标准参考，最实用的技术细节
 5. 根据需要查看其他技能文件
 
 ---

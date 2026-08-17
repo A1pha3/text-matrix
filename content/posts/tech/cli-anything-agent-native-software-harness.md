@@ -144,7 +144,7 @@ cli-hub update
 
 - [OpenHuman](https://github.com/tinyhumansai/openhuman)：本地优先的个人 AI Super Intelligence，同样支持通过 Agent 方式操作各种服务
 - [12-factor-agents](/posts/tech/12-factor-agents-production-llm-guide/)：构建生产级 LLM Agent 的核心原则
-- [Claude Code Skills](/posts/tech/andrej-karpathy-skills-guide/)：提升 Claude Code 行为的实战指南
+- [Claude Code Skills](/posts/tech/andrej-karpathy-skills-claude-code-guide/)：提升 Claude Code 行为的实战指南
 
 ---
 

@@ -313,4 +313,4 @@ npx impeccable detect src/  (CI 步骤)
 - [impeccable.style 文档站](https://impeccable.style)——完整 hooks 文档 + 案例研究（Neo Mirai before/after）
 - [npx impeccable CLI](https://www.npmjs.com/package/impeccable)——跟随 releases，star 包以便更新
 - [Anthropic frontend-design](https://github.com/anthropics/skills/tree/main/skills/frontend-design)——Impeccable 的"前身"，理解它为什么"在 frontend-design 基础上扩展"必读
-- [DEVELOP.md](docs/DEVELOP.md)——贡献者指南和构建说明
+- [DEVELOP.md](https://github.com/pbakaus/impeccable/blob/HEAD/docs/DEVELOP.md)——贡献者指南和构建说明

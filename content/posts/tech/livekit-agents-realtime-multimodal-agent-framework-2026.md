@@ -488,4 +488,4 @@ npx skills add livekit/agent-skills --skill livekit-agents
 - 主仓（媒体服务器）:[github.com/livekit/livekit](https://github.com/livekit/livekit)
 - SIP:[github.com/livekit/sip](https://github.com/livekit/sip)
 - 客户端 SDK 全家桶:Browser / Swift / Android / Flutter / React Native / Rust / Node / Python / Unity / ESP32 / C++
-- 框架:[Apache-2.0](LICENSE),turn detection 模型:[LiveKit Model License](MODEL_LICENSE)
+- 框架:[Apache-2.0](https://github.com/livekit/agents/blob/HEAD/LICENSE),turn detection 模型:[LiveKit Model License](https://github.com/livekit/agents/blob/HEAD/MODEL_LICENSE)

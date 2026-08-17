@@ -303,4 +303,4 @@ sequenceDiagram
 
 如果你正面对「AI 生成的 PPT 没法改、不可控、不能成为正式交付」的痛点,这个仓库是 2026 年值得认真读 `docs/technical-design.md` 的开源项目之一。如果你只是要 Gamma 那种「几秒钟出一份能看的 deck」,它大概率不是你的菜。
 
-仓库地址:[github.com/hugohe3/ppt-master](https://github.com/hugohe3/ppt-master),作者主页:[hehugo.com](https://www.hehugo.com/)。已发表的相关解读:[PPT Master 入门到上手](/posts/tech/ppt-master/) 侧重「快速上手与能力地图」,本文侧重「为什么这样设计、为什么不做别的」。
+仓库地址:[github.com/hugohe3/ppt-master](https://github.com/hugohe3/ppt-master),作者主页:[hehugo.com](https://www.hehugo.com/)。已发表的相关解读:[PPT Master 入门到上手](/posts/tech/ppt-master-ai-editable-pptx/) 侧重「快速上手与能力地图」,本文侧重「为什么这样设计、为什么不做别的」。

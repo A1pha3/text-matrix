@@ -11,9 +11,9 @@ tags: ["汇编", "嵌入式系统", "航空航天", "历史"]
 
 # Apollo-11：阿波罗 11 号制导计算机源码探秘——人类登月的编程遗产
 
-GitHub 仓库 [chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11) 保存了 1969 年人类登月时阿波罗制导计算机（AGC）的源码，截至 2026 年 8 月累计 55,298 Stars、6,868 Forks，语言标记为 Assembly。仓库由 Chris Garry 于 2014 年把 MIT 博物馆的扫描件转录整理而成，最近一次提交停在 2023 年 8 月——它是一份历史档案，不是活跃维护的项目。
+GitHub 仓库 [chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11) 保存了 1969 年人类登月时阿波罗制导计算机（AGC）的源码，截至 2026 年 8 月累计约 70,600 Stars、7,900 Forks，语言标记为 Assembly。仓库由 Chris Garry 于 2014 年把 MIT 博物馆的扫描件转录整理而成，最近一次提交停在 2023 年——它是一份历史档案，不是活跃维护的项目。
 
-这份代码以 AGC 汇编写成，包含 Comanche055（指令舱）和 Luminary099（月球舱）两套程序，共约 110,000 行。它的价值不在怀旧，而在第一次把"优先级调度、故障恢复、实时中断"三件事放进同一台飞行计算机，并且真的飞到了月球。在 4KB RAM、85K IPS 的约束下，工程师要决定哪些任务必须毫秒级响应、哪些可以丢、哪些重启后必须接着跑。这些取舍今天依然对应着嵌入式系统、卫星控制和任何对延迟与可靠性同时敏感的工程场景。
+这份代码以 AGC 汇编写成，包含 Comanche055（指令舱）和 Luminary099（月球舱）两套程序，共约 110,000 行。它的价值不在怀旧，而在把"优先级调度、故障恢复、实时中断"三件事放进同一台飞行计算机，并且真的飞到了月球。在 4KB RAM、85K IPS 的约束下，工程师必须决定哪些任务要毫秒级响应、哪些可以丢弃、哪些重启后必须接着跑。这套取舍至今仍是嵌入式与航天软件的底色。
 
 理解 AGC 源码，先分清三组关系：硬件约束如何塑造指令集和内存模型；Comanche 与 Luminary 两套程序如何分工；以及 1202 报警那几分钟里软件做了什么，让登月没有中止。
 
@@ -28,7 +28,7 @@ GitHub 仓库 [chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11) 
 | 版本号含义 | 指令舱程序第 55 次修订 | 月球舱程序第 99 次修订 |
 | 代码量 | 约 50,000 行 AGC 汇编 | 约 60,000 行 AGC 汇编 |
 
-两套程序跑在同一型号 AGC 硬件上，任务阶段不同、关键算法不同。Comanche 的难点在再入大气层的姿态控制——角度差 0.5 度就会弹回太空或烧毁；Luminary 的难点在登月下降——从月轨到月面要在 12 分钟内把速度从 1.7 km/s 降到 0，同时避开障碍。
+两套程序跑在同一型号 AGC 硬件上，任务阶段不同、关键算法不同。Comanche 的难点在再入大气层——再入走廊很窄，角度偏高会被弹回太空，偏低则会在稠密大气中烧毁；Luminary 的难点在登月下降——从月轨到月面要在约 12 分钟内把速度从约 1.7 km/s 降到 0，同时避开障碍。
 
 ### AGC 硬件参数一览
 
@@ -103,17 +103,19 @@ AGC 的指令地址只有 12 位，最多直接寻址 4K 字，但 Fixed 内存�
 
 ### I/O 通道：与飞船对话
 
-AGC 通过 I/O 通道（channel）与飞船各系统通信，所有外设寄存器都映射到通道端口。每个通道是一个 16 位端口，按编号分配功能。
+AGC 通过 I/O 通道（channel）与飞船各系统通信，外设寄存器映射到通道端口，每个通道是一个 16 位端口。通道分配在指令舱（Comanche）与月球舱（Luminary）之间并不相同，权威依据是仓库里的 `INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc`。以下为月球舱（Luminary099）的常用分配：
 
 | 通道 | 功能 | 方向 |
 |------|------|------|
-| 10-13 | DSKY（显示/键盘，宇航员界面） | 双向 |
-| 14, 15 | IMU（惯性测量单元）姿态数据 | 输入 |
-| 16 | 引擎控制 | 输出 |
-| 30-33 | 雷达系统 | 输入 |
-| 34 | 通信系统 | 双向 |
+| 3-4 | 时间计数器（HISCALAR/LOSCALAR），任务计时 | 输入 |
+| 5-6 | RCS 姿态喷口控制（俯仰/滚转） | 输出 |
+| 10-11 | DSKY 显示、报警与状态灯（OUT0/DSALMOUT） | 输出 |
+| 12-14 | IMU 控制、雷达、发动机万向节 | 输出 |
+| 15 | DSKY 键盘输入（MNKEYIN） | 输入 |
+| 16 | 光学标记与导航面板输入（NAVKEYIN） | 输入 |
+| 30-33 | 雷达状态、推进器状态、温度等硬件监测 | 输入 |
 
-I/O 通道是 AGC 实时性的关键。IMU 数据通过通道 14/15 以固定频率送入，AGC 用硬件中断响应，保证姿态控制循环的周期稳定。
+I/O 通道是 AGC 实时性的关键。IMU 与雷达数据通过输入通道送入，AGC 用硬件中断响应；姿态与推进指令从输出通道下发。同一套接口在不同任务阶段被复用，程序通过通道编号与位定义区分用途。
 
 ---
 
@@ -200,107 +202,90 @@ INDEX	Q		# INDEX，用 Q 的内容作为下一条指令的地址修改
 
 ### 自检模块（AGC_BLOCK_TWO_SELF-CHECK）
 
-这是 AGC 启动时首先运行的模块。
+文件头的功能描述比任何教程都清楚：
 
-```assembly
-AGC_BLOCK_TWO_SELF-CHECK.agc
-
-Page
-THIS ROUTINE PERFORMS A CHECK OF THE ERASABLE MEMORY AREAS
-AND THE FIXED MEMORY AREAS.
-
-		BLOCK	02
-		SETLOC	2000		# 固定在地址 02000
-		BANK
-
-SELF-CHECK	CAF	0		# 从地址 0 开始测试
-ENDTEST		TS	TEMPGRD		# 存储测试结果
-		RETURN			# 返回调用者
+```text
+# PROGRAM HAS TWO MAIN PARTS. THE FIRST IS SELF-CHECK WHICH RUNS AS A ZERO
+# PRIORITY JOB WITH NO CORE SET, AS PART OF THE BACK-UP IDLE LOOP. THE SECOND
+# IS SHOW-BANKSUM WHICH RUNS AS A REGULAR EXECUTIVE JOB WITH ITS OWN STARTING
+# VERB.
+#     THE PURPOSE OF SELF-CHECK IS TO CHECK OUT VARIOUS PARTS OF THE COMPUTER...
+#     IN ALL THERE ARE 7 POSSIBLE OPTIONS IN THIS BLOCK.
 ```
 
-测试策略：对每个 erasable 内存地址写入和读取模式，验证数据完整性，报告任何错误。登月任务中，AGC 一旦在飞行中出错，宇航员没有时间排查是内存故障还是程序 bug。自检模块在每次启动时验证 erasable 和 fixed 内存的校验和，确保硬件状态正常才进入主循环。这个设计今天在航天器、医疗设备和汽车 ECU 里依然常见。
+SELF-CHECK 以零优先级任务的身份挂在后备空闲循环里，不占用 core set；SHOW-BANKSUM 则作为普通 Executive 任务运行，可由动词启动。它按选项逐一检查内存与计算机各部件，故障时点亮对应指示。这个"空闲时间做自检、不干扰关键任务"的思路，今天在航天器和汽车 ECU 里依然常见。
 
 ### 报警模块（ALARM_AND_ABORT）
 
-报警是 AGC 处理异常情况的核心机制。
+报警是 AGC 处理异常情况的核心机制。Luminary099 的 `ALARM_AND_ABORT.agc` 文件头写明了调用约定：
 
 ```assembly
-ALARM_AND_ABORT.agc
-
-Page
-THE FOLLOWING SUBROUTINE MAY BE CALLED TO DISPLAY A NON-ABORTIVE ALARM
-CALLING SEQUENCE:
-TC	ALARM
-OCT	NNNNN 报警代码
-
-ALARM		INHINT		# 禁止中断（原子操作）
-
-		CA	Q		# 获取返回地址
-ALARM2		TS	ALMCADR		# 存储报警程序地址
-		INDEX	Q
-		CA	0		# 获取报警代码
-BORTENT		TS	L		# 存储到 L (Linkage)
-```
-
-`INHINT` 指令禁止中断，保证报警代码的写入是原子的——如果报警过程中被中断打断，报警状态可能丢失，宇航员就看不到报警信息。
-
-**报警代码示例**：
-
-| 代码 | 含义 |
-|------|------|
-| `OCT 00101` | IMU 未校准 |
-| `OCT 00102` | 雷达数据无效 |
-| `OCT 00204` | 推进剂不足 |
-| `OCT 00504` | 月球表面接触 |
-
-报警分两类：non-abortive（非中止性）和 abort（中止性）。非中止性报警只提醒宇航员，任务可以继续；中止性报警会触发任务中止流程。1202 属于非中止性报警——这正是 Armstrong 能喊 "GO" 的前提。
-
-### 姿态控制（CM_BODY_ATTITUDE）
-
-这个模块在指令舱再入大气层时运行。
-
-```assembly
-CM_BODY_ATTITUDE.agc
-
-PURPOSE: TO CONTROL THE ATTITUDE OF THE COMMAND MODULE
-DURING THE ENTRY PHASE OF THE MISSION
-
-		SETLOC	4000
+# CALLING SEQUENCE IS AS FOLLOWS:
+#     TC   ALARM
+#     OCT  AAANN
+# ALARM NO. NN IN GENERAL AREA AAA.
+# (RETURNS HERE)
+		BLOCK	02
+		SETLOC	FFTAG7
 		BANK
-
-RATE-INIT	CA	0		# 读取目标角速率
-		TS	OVERB		# 存储过载值
-		CA	1		# 读取当前姿态
-		TS	CURATT		# 存储当前值
+		EBANK=	FAILREG
+ALARM		INHINT
+		CA	Q
+ALARM2		TS	ALMCADR
+		INDEX	Q
+		CA	0
+BORTENT		TS	L
 ```
 
-再入角度的允许范围非常窄——过陡会烧毁，过浅会弹回太空。AGC 必须以固定周期读取 IMU 数据、计算偏差、输出姿态控制指令，整个循环的周期不能漂移，否则控制就会失稳。
+调用方 `TC ALARM` 后在紧跟的一个字里放报警代码 `AAANN`：AAA 是报警所属区域，NN 是区域内编号。`INHINT` 先关中断，保证报警处理不会被中途打断；返回地址暂存在 Q，随后换入 L 继续处理。
+
+报警分两类：non-abortive（非中止性）只提醒宇航员，任务可以继续；abort（中止性）会进入中止流程。下文中 1201/1202 属于非中止性报警——这正是任务控制中心判断"可以继续"的前提。
+
+### 姿态计算（CM_BODY_ATTITUDE）
+
+这个模块在指令舱再入大气层时计算姿态。进入解释性指令后，它把 IMU/CDU 的角度换算成再入需要的姿态角：
+
+```assembly
+CM/POSE		TC	INTPRET
+		SETPD	VLOAD
+			0
+			VN		# KVSCALE = (12800/ .3048) /2VS
+		VXSC	PDVL
+			-KVSCALE
+			UNITW
+		VXV	VXSC		# VREL = V - WE*R
+			UNITR
+			KWE
+		VAD	STADR
+		STORE	-VREL
+```
+
+`TC INTPRET` 让 CPU 进入解释性指令执行模式：这一层指令（VLOAD、VXV、VAD 等）直接操作向量，配套的 `SETPD`/`STORE` 管理伪堆栈（PD list），再配合 `ARCCOS`、`SIN`、`COS` 等例程做三角运算。再入时 AGC 以固定周期读取 IMU 数据、更新姿态角并输出控制指令，整个循环周期不能漂移，否则控制就会失稳。
 
 ### 导航算法（ANGLFIND）
 
+`ANGLFIND.agc`（Colossus 2A，即 Comanche055）做的事情是：由当前与目标姿态的方向余弦矩阵，求出要转过的角度和旋转轴。关键几步：
+
 ```assembly
-ANGLFIND.agc
-
-PURPOSE: TO COMPUTE THE ANGLE BETWEEN TWO VECTORS
-
-		SETLOC	6000
-		BANK
-
-ARCTAN		CAE	Y		# 读取 Y 分量
-		EXTEND
-		MP	A		# Y²
-		XCH	L		# 暂存到 L
-		CAE	X		# 读取 X 分量
-		EXTEND
-		MP	A		# X²
-		ADD	L		# X² + Y²
-		EXTEND
-		BZF	ARCTAN2		# 如果结果为 0，跳转
+# CALCULATE AM AND PROCEED ACCORDING TO ITS MAGNITUDE
+		DLOAD	DAD
+			MFI
+			MFI +16D
+		DSU	DAD
+			DP1/4TH
+			MFI +8D
+		STORE	CAM		# CAM = (MFI0+MFI4+MFI8-1)/2 HALF SCALE
+		ARCCOS
+		STORE	AM		# AM=ARCCOS(CAM)  (AM SCALED BY 2)
+		DSU	BPL
+			MINANG
+			CHECKMAX
+		EXIT			# MANEUVER LESS THAN 0.25 DEG
 ```
 
-`EXTEND` 前缀把下一条指令扩展为额外指令集——AGC 的指令编码只有 4 位操作码，基础指令集很小，`EXTEND` 让它能访问更多指令（如 `MP`、`DV`、`BZF` 的扩展版本）。`CAE` 是 `EXTEND` + `CA` 的组合，用于访问扩展地址空间。
+注意这里没有 `MP`/`ADD` 这类基础指令——数学全在解释性指令层完成。AGC 有两套指令：基础指令集（34 条，含 `CA`、`TS` 及 `EXTEND` 扩展）负责控制流与数据搬运；解释性指令集（`INTPRET` 进入，含 `VLOAD`、`DLOAD`、`ARCCOS`、`SQRT` 等）负责向量与三角运算，数据在伪堆栈（PD list）里流转。AGC 没有硬件浮点单元，所有三角与开方都靠解释性例程里的定点算法完成，注释里的 `SCALED BY 2`、`HALF SCALE` 就是程序员手工维护的定点比例尺。
 
-这段代码计算两个向量的夹角，是导航计算的基础。AGC 没有浮点运算单元，所有三角函数都用定点数和查表实现，每一步都要小心溢出和精度损失。
+这段代码求出姿态机动（attitude maneuver）的角度与转轴，是再入、对接前的姿态调整的基础。
 
 ---
 
@@ -337,9 +322,9 @@ ARCTAN		CAE	Y		# 读取 Y 分量
 
 ### 1202 报警就发生在这条链路里
 
-下降阶段开始后不久，AGC 触发了 1202 报警。问题出在调度器，与导航或制导算法本身无关：着陆雷达的电源开关被打开后，雷达数据以比预期更高的频率送入 AGC，导致调度器（Executive）找不到空闲的核心集（core set）来排队新任务。
+下降阶段开始后不久，AGC 连续触发了 5 次报警（4 次 1202、1 次 1201）。问题出在调度器，与导航或制导算法本身无关：交会雷达（rendezvous radar）作为中止预案一直保持通电，但它的角度转换电路与 AGC 的 800 Hz 参考信号相位不一致，产生了一连串虚假的计数请求，通过"周期窃取"（cycle stealing）消耗掉约 13% 的 CPU 时间。下降程序本来就把处理器跑得很满，这个额外负载把 Executive 推过了极限——没有空闲 core set 时报 1202，没有空闲 VAC（向量累加器区）时报 1201。
 
-调度器在过载时丢弃低优先级任务、保留高优先级任务，避免崩溃。下降阶段的导航和制导是最高优先级，所以即使 1202 反复触发，关键计算仍在继续。Armstrong 看到 DSKY 上的报警灯，但飞船响应正常，于是喊了 "GO"。
+调度器在过载时丢弃低优先级任务、保留高优先级任务，避免崩溃。下降阶段的导航和制导是最高优先级，所以即使报警反复触发，关键计算仍在继续。机组成员在 DSKY 上看到报警代码，飞船响应正常，地面的 "GO" 也随之传来。
 
 AGC 的可靠性体现在出错后仍能完成关键功能。这是今天谈"韧性工程"（resilience engineering）时仍在引用的经典设计。
 
@@ -373,11 +358,11 @@ Margaret Hamilton 领导团队编写了阿波罗制导计算机的所有飞行�
 
 > 原文与部分科普文章把 1202 解释为 "no jobs"，这是不准确的。AGC 错误代码表（来自 Virtual AGC 项目文档）明确写作 "Executive overflow - no core sets"。core set 是 AGC 调度器存放待执行任务上下文的结构，数量固定；当所有 core set 都被占用时，新任务无法入队，触发 1202。
 
-处理过程：宇航员 Armstrong 保持冷静，报告 "GO"；软件自动重启，排除非必要任务；最终成功登月。
+处理过程：地面飞控在十几秒内做出判断——制导数据仍然连续、计算机在两次报警之间能自行恢复，于是由 Capcom Charlie Duke 向机组传达 "GO"；软件自动重启、排除非关键任务；最终成功登月。
 
 **Margaret Hamilton 的回忆**：
 
-> "当时没人知道 1202 报警意味着什么。但如果是我们设计之外的任何情况发生，我们就会失败。"
+她后来多次讲述这段经历，大意是：没人事先见过 1202，但软件里"过载时降级、保留关键任务"的设计，正是为这种没有排练过的情况准备的；如果当时需要处理的是设计之外的意外，任务很可能就失败了。
 
 ### 代码中的签名
 
@@ -399,16 +384,16 @@ Margaret H. Hamilton | Colossus Programming Leader<br>Apollo Guidance and Naviga
 
 ```
 Apollo-11/
-├── Comanche055/          # 指令舱源码（.agc 文件）
-│   ├── AGC_BLOCK_TWO_SELF-CHECK.agc
-│   ├── ALARM_AND_ABORT.agc
-│   ├── ANGLFIND.agc
-│   ├── CM_BODY_ATTITUDE.agc
-│   └── ... （共约 150+ 个 .agc 文件）
-├── Luminary099/          # 月球舱源码
-│   ├── ...
-├── LUM99Roo/            # 额外的月球舱资源
-├── Virtual%20AGC/        # Virtual AGC 项目
+├── Comanche055/          # 指令舱源码（Colossus 2A）
+│   ├── AGC_BLOCK_TWO_SELF-CHECK.agc   # 自检
+│   ├── ANGLFIND.agc                   # 姿态机动角计算
+│   ├── CM_BODY_ATTITUDE.agc           # 再入姿态计算
+│   └── ...                            # 约一百多个 .agc 文件
+├── Luminary099/          # 月球舱源码（Luminary 1A）
+│   ├── ALARM_AND_ABORT.agc            # 报警与中止
+│   ├── INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc  # I/O 通道位定义
+│   ├── PINBALL_GAME_BUTTONS_AND_LIGHTS.agc        # DSKY 交互
+│   └── ...
 └── README.md
 ```
 
@@ -453,19 +438,11 @@ Virtual AGC 项目维护着 AGC 模拟器、yaYUL 汇编器、DSKY 模拟器以�
 
 ### yaYUL 在线编译
 
-MIT 提供了一个在线 yaYUL 编译环境：访问 http://www.ibiblio.org/apollo/，选择 AGC 或 Luminary 模拟器，加载 Comanche055 或 Luminary099。
+Virtual AGC 项目提供在线运行环境：访问 http://www.ibiblio.org/apollo/，选择 AGC 或 Luminary 模拟器，即可加载 Comanche055 或 Luminary099，在浏览器里看到 DSKY 面板。
 
-### 在真实硬件上运行
+### 用 yaYUL 重新编译
 
-```bash
-# 使用 yaYUL 编译
-yaYUL -o output.bin input.agc
-
-# 在 AGC 模拟器中加载
-loadAGC output.bin
-```
-
-> 命令语法以 Virtual AGC 项目实际文档为准，不同版本的 yaYUL 命令行参数可能有差异。
+进入 Virtual AGC 的 `yaYUL/` 目录按 README 构建后，`yaYUL` 以 `.agc` 源码为输入、输出可加载的 rope 镜像；命令行参数随版本略有差异，以项目文档为准。想零成本体验的话，用上面的在线环境更快。
 
 ---
 
@@ -556,7 +533,7 @@ A：1960 年代的高级语言（如 FORTRAN）编译器生成的代码效率不
 
 **Q5: 1202 报警的完整含义是什么？**
 
-A：1202 表示 "Executive overflow - no core sets"。core set 是 AGC 调度器（Executive）存放待执行任务上下文的结构，数量固定。当所有 core set 都被占用时，新任务无法入队，触发 1202。软件设计允许在过载时丢弃低优先级任务，保留高优先级任务继续执行。1203 是类似但不同的报警："Waitlist overflow - too many tasks"。
+A：1202 表示 "Executive overflow - no core sets"。core set 是 AGC 调度器（Executive）存放待执行任务上下文的结构，数量固定：月球舱有 7 个 core set、5 个 VAC（向量累加器）区，指令舱为 6 个 core set。当所有 core set 都被占用时，新任务无法入队，触发 1202；当调度请求还需要 VAC 区而 VAC 区也耗尽时，则触发 1201。软件设计允许在过载时丢弃低优先级任务，保留高优先级任务继续执行。1203 是类似但不同的报警："Waitlist overflow - too many tasks"。
 
 **Q6: Luminary 和 Comanche 有什么区别？**
 

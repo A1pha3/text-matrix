@@ -200,4 +200,4 @@ CPU 推理可用但较慢，生产环境建议 GPU。v2.5 移除了频率指示�
 
 ---
 
-**相关工具：** [Telegraf](telegraf-influxdb-time-series-agent-guide)
+**相关工具：** [Telegraf](/posts/tech/telegraf-influxdb-time-series-agent-guide/)

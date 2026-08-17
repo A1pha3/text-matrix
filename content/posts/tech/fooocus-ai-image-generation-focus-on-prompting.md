@@ -202,4 +202,4 @@ Midjourney  quality 更高但闭源、按订阅收费。Fooocus 开源免费，�
 
 ---
 
-**相关工具：** [Vimax Agentic Video](vimax-agentic-video-generation-hku) · [Supervision](supervision-computer-vision-toolbox)
+**相关工具：** [Vimax Agentic Video](/posts/tech/vimax-agentic-video-generation-hku/) · [Supervision](/posts/tech/supervision-computer-vision-toolbox/)

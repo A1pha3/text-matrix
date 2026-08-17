@@ -306,14 +306,14 @@ README 甚至把“viewer 看记住了什么，iii console 看它做了什么”
 | 项目 | 更接近什么 | 更适合谁 | 和 agentmemory 的关键差异 |
 | --- | --- | --- | --- |
 | agentmemory | 记忆引擎 + MCP server + 本地运行时 | 已经在用 Claude Code、Cursor、Codex CLI、Gemini CLI 等现成 Agent，希望跨会话、跨 Agent 共享记忆的开发者 | 不要求你换掉现有 Agent，只是在外部补上一层共享记忆基础设施 |
-| [claude-mem](claude-mem-persistent-memory-system-guide.md) | 更偏 Claude Code 工作流的持久化记忆 / 压缩系统 | 主要围绕 Claude Code 或相近编码助手工作，希望尽快得到自动记忆与压缩收益的用户 | 更聚焦单个编码工作流的记忆增强；跨 Agent 的基础设施视角通常不如 agentmemory 强 |
+| [claude-mem](/posts/tech/claude-mem-persistent-memory-65k-stars/) | 更偏 Claude Code 工作流的持久化记忆 / 压缩系统 | 主要围绕 Claude Code 或相近编码助手工作，希望尽快得到自动记忆与压缩收益的用户 | 更聚焦单个编码工作流的记忆增强；跨 Agent 的基础设施视角通常不如 agentmemory 强 |
 | mem0 | 通用 memory layer / SDK / API 平台 | 在做应用级 AI assistant、客服、个性化系统，需要 SDK、API、self-hosted 或 cloud 多种交付形态的团队 | 本质上更偏应用层 memory platform；如果目标只是给本地编码 Agent 补记忆，它不是最顺手的入口 |
 | Letta | 带高级记忆能力的 stateful agent 平台 | 想直接构建长期运行、可自我改进的 agent 系统，而非只给现有 Agent 加一层 recall 的团队 | 它是一套完整的 agent runtime，不只是 memory add-on；采用成本和架构绑定都更高 |
 
 实际选择时，可以按下面四条判断：
 
 - **已经有现成的编码 Agent，只是缺长期记忆**：先看 agentmemory。
-- **主要围绕 Claude Code 工作流，想要更贴身的记忆压缩体验**：可以同时对照 [claude-mem](claude-mem-persistent-memory-system-guide.md)。
+- **主要围绕 Claude Code 工作流，想要更贴身的记忆压缩体验**：可以同时对照 [claude-mem](/posts/tech/claude-mem-persistent-memory-65k-stars/)。
 - **在做面向最终用户的 AI 应用，需要 API、SDK、托管与自托管多种形态**：mem0 往往更顺手。
 - **目标是引入一个 stateful agent 平台，而不是外挂记忆层**：Letta 更适合直接当作主方案采用。
 
@@ -426,10 +426,10 @@ agentmemory 的 README 自己就把 mem0 和 Letta 放在对比表里，结论�
 
 ## 14. 延伸阅读
 
-- [claude-mem：面向 Claude Code 的持久化记忆系统](claude-mem-persistent-memory-system-guide.md)
-- [yourmemory：基于遗忘曲线的 Agent Memory 设计](yourmemory-ebbinghaus-agent-memory.md)
-- [Hindsight：另一种 Agent 记忆系统实现思路](hindsight-agent-memory-system-guide.md)
-- [Chrome DevTools MCP：理解 MCP 工具接入的另一条路径](chrome-devtools-mcp.md)
+- [claude-mem：面向 Claude Code 的持久化记忆系统](/posts/tech/claude-mem-persistent-memory-65k-stars/)
+- [yourmemory：基于遗忘曲线的 Agent Memory 设计](/posts/tech/yourmemory-ebbinghaus-agent-memory/)
+- [Hindsight：另一种 Agent 记忆系统实现思路](/posts/tech/hindsight-agent-memory-system-guide/)
+- [Chrome DevTools MCP：理解 MCP 工具接入的另一条路径](/posts/tech/chrome-devtools-mcp-ai-coding-agents-guide/)
 - [agentmemory GitHub 仓库](https://github.com/rohitg00/agentmemory)
 - [agentmemory 官网](https://agent-memory.dev/)
 - [agentmemory benchmark 目录](https://github.com/rohitg00/agentmemory/tree/main/benchmark)

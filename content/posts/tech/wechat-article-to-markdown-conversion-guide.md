@@ -281,7 +281,7 @@ output/
 
 **Markdown 内容示例**：
 
-```markdown
+````markdown
 ---
 title: "微信公众号文章标题"
 author: "公众号名称"
@@ -301,7 +301,7 @@ def hello():
 ```
 
 ![图片描述](../images/img_001.png)
-```
+````
 
 ## 6. AI Agent Skill 集成
 

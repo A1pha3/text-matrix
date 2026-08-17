@@ -288,8 +288,8 @@ AI 副业不是额外打工，而是逐步放大的能力曲线。一个可参�
 
 ## 延伸阅读
 
-- [财富自由专栏说明：覆盖范围、写作边界与阅读方式](wealth-freedom-column-intro.md)
-- [Naval「如何致富」：从财富、运气到杠杆的一套可执行框架](naval-how-to-get-rich.md)
+- [财富自由专栏说明：覆盖范围、写作边界与阅读方式](/posts/wealth/wealth-freedom-column-intro/)
+- [Naval「如何致富」：从财富、运气到杠杆的一套可执行框架](/posts/wealth/naval-how-to-get-rich/)
 
 ## 参考资料
 

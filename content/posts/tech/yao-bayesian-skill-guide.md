@@ -518,12 +518,12 @@ python3 scripts/generate_report_bundle.py input_file.json output_dir/
 
 - **GitHub 仓库**：[yaojingang/yao-open-skills](https://github.com/yaojingang/yao-open-skills/tree/main/skills/yao-bayesian-skill)
 - **参考文档**：
-  - [Intake Contract](references/intake-contract.md) — 请求转决策简报
-  - [Multi-turn Dialogue Loop](references/multi-turn-dialogue-loop.md) — 多轮对话机制
-  - [Evidence Prior Playbook](references/evidence-prior-playbook.md) — 证据分级和先验设置
-  - [Decision Report Contract](references/decision-report-contract.md) — 报告结构规范
-  - [Report Export Pipeline](references/report-export-pipeline.md) — 报告导出流程
-  - [Sensitivity And Safety](references/sensitivity-and-safety.md) — 敏感性和安全性分析
+  - [Intake Contract](https://github.com/yaojingang/yao-open-skills/blob/HEAD/references/intake-contract.md) — 请求转决策简报
+  - [Multi-turn Dialogue Loop](https://github.com/yaojingang/yao-open-skills/blob/HEAD/references/multi-turn-dialogue-loop.md) — 多轮对话机制
+  - [Evidence Prior Playbook](https://github.com/yaojingang/yao-open-skills/blob/HEAD/references/evidence-prior-playbook.md) — 证据分级和先验设置
+  - [Decision Report Contract](https://github.com/yaojingang/yao-open-skills/blob/HEAD/references/decision-report-contract.md) — 报告结构规范
+  - [Report Export Pipeline](https://github.com/yaojingang/yao-open-skills/blob/HEAD/references/report-export-pipeline.md) — 报告导出流程
+  - [Sensitivity And Safety](https://github.com/yaojingang/yao-open-skills/blob/HEAD/references/sensitivity-and-safety.md) — 敏感性和安全性分析
 
 ---
 

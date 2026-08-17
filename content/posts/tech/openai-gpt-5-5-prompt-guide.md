@@ -421,6 +421,6 @@ Produce a clear, useful draft that separates sourced facts from creative wording
 
 如果你准备把这套方法继续落到评测、提示词资产管理和跨模型对照上，可以继续看站内这几篇：
 
-- [Promptfoo：LLM 评测与 Red Teaming 实战指南](llm/promptfoo-llm-evaluation-testing-guide.md)
-- [Prompts.chat：开源提示词平台、自托管方案与 MCP 集成完全指南](llm/prompts-chat-open-source-prompt-library-guide.md)
-- [Claude API 基础专题（二）：提示词工程](ai-agent/anthropic-claude-api-prompting.md)
+- [Promptfoo：LLM 评测与 Red Teaming 实战指南](/posts/tech/llm/promptfoo-llm-evaluation-testing-guide/)
+- [Prompts.chat：开源提示词平台、自托管方案与 MCP 集成完全指南](/posts/tech/prompts-chat-open-source-ai-prompt-library/)
+- [Claude API 基础专题（二）：提示词工程](/posts/tech/ai-agent/claude-api-prompting-engineering/)

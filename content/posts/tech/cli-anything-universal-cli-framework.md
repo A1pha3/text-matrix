@@ -13,7 +13,7 @@ tags: ["CLI", "AI Agent", "开源"]
 
 > **目标读者**：想了解 CLI-Anything 项目概览和核心理念的开发者
 > **预计阅读时间**：15 分钟
-> **前置知识**：[CLI-Anything 完整指南](/posts/tech/cli-anything-command-line-interface-ai-guide.md) ⭐
+> **前置知识**：[CLI-Anything 完整指南](/posts/tech/cli-anything-command-line-interface-ai-guide/) ⭐
 
 ---
 

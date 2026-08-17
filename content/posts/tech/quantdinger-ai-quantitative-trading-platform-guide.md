@@ -194,7 +194,7 @@ df["sell"] = sell.fillna(False).astype(bool)
 
 ### 跨截面策略
 
-QuantDinger 还支持跨截面（Cross-Sectional）策略，即在多个标的之间比较信号强度，选取最优者交易。官方文档中有专门的[跨截面策略指南](docs/CROSS_SECTIONAL_STRATEGY_GUIDE_EN.md)，适合多标的轮动或相对强弱类策略。
+QuantDinger 还支持跨截面（Cross-Sectional）策略，即在多个标的之间比较信号强度，选取最优者交易。官方文档中有专门的[跨截面策略指南](https://github.com/brokermr810/QuantDinger-Vue/blob/HEAD/docs/CROSS_SECTIONAL_STRATEGY_GUIDE_EN.md)，适合多标的轮动或相对强弱类策略。
 
 ## 多市场接入
 
@@ -453,11 +453,11 @@ QuantDinger 的做法不同。AI 市场分析结果会存入历史记录，供�
 | 视频演示 | https://www.youtube.com/watch?v=tNAZ9uMiUUw |
 | Telegram 社区 | https://t.me/quantdinger |
 | Discord 社区 | https://discord.com/invite/tyx5B6TChr |
-| 中文项目概览 | [docs/README_CN.md](docs/README_CN.md) |
-| 策略开发指南 | [docs/STRATEGY_DEV_GUIDE.md](docs/STRATEGY_DEV_GUIDE.md) |
-| 云端部署指南 | [docs/CLOUD_DEPLOYMENT_EN.md](docs/CLOUD_DEPLOYMENT_EN.md) |
-| IBKR 接入指南 | [docs/IBKR_TRADING_GUIDE_EN.md](docs/IBKR_TRADING_GUIDE_EN.md) |
-| MT5 接入指南 | [docs/MT5_TRADING_GUIDE_CN.md](docs/MT5_TRADING_GUIDE_CN.md) |
+| 中文项目概览 | [docs/README_CN.md](https://github.com/brokermr810/QuantDinger-Vue/blob/HEAD/docs/README_CN.md) |
+| 策略开发指南 | [docs/STRATEGY_DEV_GUIDE.md](https://github.com/brokermr810/QuantDinger-Vue/blob/HEAD/docs/STRATEGY_DEV_GUIDE.md) |
+| 云端部署指南 | [docs/CLOUD_DEPLOYMENT_EN.md](https://github.com/brokermr810/QuantDinger-Vue/blob/HEAD/docs/CLOUD_DEPLOYMENT_EN.md) |
+| IBKR 接入指南 | [docs/IBKR_TRADING_GUIDE_EN.md](https://github.com/brokermr810/QuantDinger-Vue/blob/HEAD/docs/IBKR_TRADING_GUIDE_EN.md) |
+| MT5 接入指南 | [docs/MT5_TRADING_GUIDE_CN.md](https://github.com/brokermr810/QuantDinger-Vue/blob/HEAD/docs/MT5_TRADING_GUIDE_CN.md) |
 | 前端源码 | https://github.com/brokermr810/QuantDinger-Vue |
 
 ## 小结

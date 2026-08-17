@@ -583,7 +583,7 @@ presidio 在 PII 编辑领域的事实标准地位来自**完整度**，不是�
 
 CHANGELOG unreleased 段和 docs/index.md 都写着一个重要消息：
 
-> "Presidio is transitioning to a community-owned project. Read the full announcement [here](project_transition.md)."
+> "Presidio is transitioning to a community-owned project. Read the full announcement [here](https://github.com/microsoft/presidio/blob/HEAD/project_transition.md)."
 
 **这件事的工程意义**：
 

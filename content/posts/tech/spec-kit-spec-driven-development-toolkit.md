@@ -205,4 +205,4 @@ README 中列出了多个开发阶段，从基础 CLI 工具到完整工作流�
 
 ---#
 
-**延伸阅读**：[官方文档](https://github.github.io/spec-kit/) · [GitHub 仓库](https://github.com/github/spec-kit) · [Specify CLI 安装指南](./docs/install/uv.md)
+**延伸阅读**：[官方文档](https://github.github.io/spec-kit/) · [GitHub 仓库](https://github.com/github/spec-kit) · [Specify CLI 安装指南](https://github.com/github/spec-kit/blob/HEAD/docs/install/uv.md)

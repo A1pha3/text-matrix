@@ -431,7 +431,7 @@ n8n 内置了 400+ 种服务的连接器，Agent 的能力上限取决于你接�
 
 ## 知识关联
 
-- **前置**：[AI Agent 基本概念详解](ai-agents-clearly-explained-jeff-su-4m-views) ⭐⭐⭐⭐
+- **前置**：[AI Agent 基本概念详解](/posts/video/ai-agents-clearly-explained-jeff-su-4m-views/) ⭐⭐⭐⭐
 - **延伸**：n8n 官方文档 [docs.n8n.io](https://docs.n8n.io/) ⭐⭐⭐ | [ReAct 论文](https://arxiv.org/abs/2210.03629) ⭐⭐⭐
 - **进阶**：[Multi-Agent 系统设计（MetaGPT）](https://github.com/geekan/MetaGPT) ⭐⭐⭐⭐ | [LangChain Agent 深度实战](https://python.langchain.com/docs/) ⭐⭐⭐⭐
 

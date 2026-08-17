@@ -17,3 +17,4 @@ fi
 sh ./scripts/build_hugo.sh $build_args
 sh ./scripts/run_pagefind.sh public
 python3 ./scripts/validate_site.py expected-files --site-dir public --manifest ./scripts/expected-public-files.txt
+python3 ./scripts/check_internal_links.py --site-dir public --base https://txtmix.com

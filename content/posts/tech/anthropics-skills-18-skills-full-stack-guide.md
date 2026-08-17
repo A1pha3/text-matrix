@@ -598,9 +598,9 @@ Skill Creator 的关键设计决策落在 L1 的 ~100 词怎么写得让触发�
 - [anthropics/skills](https://github.com/anthropics/skills)
 - [Agent Skills 规范](https://agentskills.io)
 - [Equipping Agents for the Real World with Agent Skills](https://anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
-- [Anthropics Skills 仓库全解析（入门篇）](/tech/anthropics-skills-agent-skills-repository-guide)
-- [Skill Creator 开发框架完全指南](/tech/skill-creator-anthropic-skill-authoring-guide)
-- [Agent Skills 开放规范完全指南](/tech/agent-skills-ai-agent-open-specification-guide)
+- Anthropics Skills 仓库全解析（入门篇）
+- [Skill Creator 开发框架完全指南](/posts/tech/skill-creator-anthropic-skill-authoring-guide/)
+- [Agent Skills 开放规范完全指南](/posts/tech/agent-skills-ai-agent-open-specification-guide/)
 
 ---
 

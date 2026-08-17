@@ -318,8 +318,8 @@ Agent 把每次生成都记下来：提示词、模型、结果、留下还是�
 
 ### 进阶阅读
 
-- [Anthropic Claude Code：把 Loop Engineering 拆成你今天就能用的四块](../tech/anthropic-claude-code-loop-engineering-2026.md) 适合补 agent harness 视角
-- [Seedance 2.0 视频制作实战指南：从提示词到分镜的全流程教程](./seedance-2-video-production-guide.md) 更适合补镜头与提示词这一侧的基本功
+- [Anthropic Claude Code：把 Loop Engineering 拆成你今天就能用的四块](/posts/tech/anthropic-claude-code-loop-engineering-2026/) 适合补 agent harness 视角
+- [Seedance 2.0 视频制作实战指南：从提示词到分镜的全流程教程](/posts/video/seedance-2-video-production-guide/) 更适合补镜头与提示词这一侧的基本功
 - Higgsfield CLI 与 skill 仓库：[higgsfield-ai/skills](https://github.com/higgsfield-ai/skills)
 - 镜头与静帧资料源：frameset.app、shotdeck.com、fancaps.net、savee.com、cosmos.so、eyecannndy.com
 - Seedance 2.0 官方文档与定价（Higgsfield 内置）

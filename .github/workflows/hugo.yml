@@ -73,6 +73,8 @@ jobs:
         run: npm run build:github-pages
       - name: Verify release assets
         run: npm run validate:release-assets
+      - name: Check internal links
+        run: npm run validate:internal-links
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

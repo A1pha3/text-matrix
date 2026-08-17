@@ -66,15 +66,15 @@ hiddenFromHomePage: true
 
 | 文章 | 主题 | 关键词 |
 | --- | --- | --- |
-| [MLCC 行业深度技术分析](mlcc-industry-deep-analysis-2026.md) | 被动元件 | MLCC、国产替代、AI 算力、人形机器人 |
-| [ABF 膜与 ABF 载板产业深度解析](abf-film-substrate-industry-deep-analysis.md) | 半导体材料 | ABF 膜、味之素、国产替代、AI 芯片 |
-| [mSAP 工艺产业全景](msap-process-16t-optical-module-pcb-capacity-war.md) | PCB 工艺 | mSAP、1.6T 光模块、PCB 产能、铜箔 |
-| [电子布行业深度技术分析](electronic-cloth-industry-deep-analysis-2026.md) | 被动元件材料 | 电子布、玻纤布、国产替代、高频高速 |
-| [Micro LED 光互连赛道方案分析](micro-led-optical-interconnect-ai-compute.md) | 光通信 | Micro LED、光互连、AI 算力、MOSAIC |
-| [弱信号聚合与信号工厂](weak-signal-aggregation-signal-factory.md) | 量化交易 | 弱信号聚合、信号工厂、量化因子、数学建模 |
-| [「安全边际之父」Seth Klarman 罕见对话全文精读](seth-klarman-rare-interview-baupost-palantir-ai-three-principles.md) | 投资方法 | 价值投资、Baupost、安全边际、跨资产 |
-| [Naval「如何致富」框架解读](naval-how-to-get-rich.md) | 财富方法论 | 杠杆、具体知识、判断力、长期主义 |
-| [Dan Koe「一天修好你整个人生」拆解](dan-koe-fix-your-entire-life-in-one-day-reverse.md) | 自我管理 | 反向规划、执行框架、精力管理 |
-| [先卖再做：Apple × 浙大营销课拆解](sell-before-you-build-mengkepm-apple-zju-marketing.md) | 创业方法 | 先卖后做、需求验证、定价策略、MVP |
-| [AI 副业赚钱指南](ai-side-hustle-trends-2026.md) | 副业方法 | AI 副业、验证方法、报价、风险边界 |
-| [本地 AI 时代的搞钱地图](local-ai-money-making-guide.md) | 副业方法 | 本地 AI、隐私优先、独立开发、SaaS |
+| [MLCC 行业深度技术分析](/posts/wealth/mlcc-industry-deep-analysis-2026/) | 被动元件 | MLCC、国产替代、AI 算力、人形机器人 |
+| [ABF 膜与 ABF 载板产业深度解析](/posts/wealth/abf-film-substrate-industry-deep-analysis/) | 半导体材料 | ABF 膜、味之素、国产替代、AI 芯片 |
+| [mSAP 工艺产业全景](/posts/wealth/msap-process-16t-optical-module-pcb-capacity-war/) | PCB 工艺 | mSAP、1.6T 光模块、PCB 产能、铜箔 |
+| [电子布行业深度技术分析](/posts/wealth/electronic-cloth-industry-deep-analysis-2026/) | 被动元件材料 | 电子布、玻纤布、国产替代、高频高速 |
+| [Micro LED 光互连赛道方案分析](/posts/wealth/micro-led-optical-interconnect-ai-compute/) | 光通信 | Micro LED、光互连、AI 算力、MOSAIC |
+| [弱信号聚合与信号工厂](/posts/wealth/quant-weak-signal-aggregation-and-signal-factory/) | 量化交易 | 弱信号聚合、信号工厂、量化因子、数学建模 |
+| [「安全边际之父」Seth Klarman 罕见对话全文精读](/posts/wealth/seth-klarman-rare-interview-baupost-palantir-ai-three-principles/) | 投资方法 | 价值投资、Baupost、安全边际、跨资产 |
+| [Naval「如何致富」框架解读](/posts/wealth/naval-how-to-get-rich/) | 财富方法论 | 杠杆、具体知识、判断力、长期主义 |
+| [Dan Koe「一天修好你整个人生」拆解](/posts/wealth/fix-your-entire-life-in-one-day-dan-koe-reverse/) | 自我管理 | 反向规划、执行框架、精力管理 |
+| [先卖再做：Apple × 浙大营销课拆解](/posts/wealth/sell-before-you-build-mengkepm-apple-zju-marketing/) | 创业方法 | 先卖后做、需求验证、定价策略、MVP |
+| [AI 副业赚钱指南](/posts/wealth/ai-side-hustle-money-making-guide-2026/) | 副业方法 | AI 副业、验证方法、报价、风险边界 |
+| [本地 AI 时代的搞钱地图](/posts/wealth/local-ai-money-making-guide/) | 副业方法 | 本地 AI、隐私优先、独立开发、SaaS |

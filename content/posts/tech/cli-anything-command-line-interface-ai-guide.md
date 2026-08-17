@@ -13,7 +13,7 @@ tags: ["AI Agent", "CLI", "Claude Code", "OpenClaw", "Python"]
 
 > **目标读者**：有基础编程经验的开发者，已了解 AI Agent 基本概念，想把 AI Agent 能力扩展到真实专业软件
 > **预计阅读时间**：25 分钟
-> **前置知识**：[AI Agent 入门指南](/posts/tech/ai-agents-for-beginners-microsoft-complete-guide.md) ⭐
+> **前置知识**：[AI Agent 入门指南](/posts/tech/ai-agents-for-beginners-microsoft-complete-guide/) ⭐
 
 ---
 

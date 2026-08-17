@@ -298,7 +298,7 @@ sequenceDiagram
 
 README 里的隐私声明非常明确：
 
-> **UAD-ng does not collect or transmit any user data.** The only external connections are `GET` requests to GitHub for fetching the [package list](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/blob/main/resources/assets/uad_lists.json) ([src/core/uad_lists.rs](src/core/uad_lists.rs)) and checking for updates ([src/core/update.rs](src/core/update.rs)).
+> **UAD-ng does not collect or transmit any user data.** The only external connections are `GET` requests to GitHub for fetching the [package list](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/blob/main/resources/assets/uad_lists.json) ([src/core/uad_lists.rs](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/blob/HEAD/src/core/uad_lists.rs)) and checking for updates ([src/core/update.rs](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/blob/HEAD/src/core/update.rs)).
 
 具体含义：
 

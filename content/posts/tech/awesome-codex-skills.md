@@ -252,7 +252,7 @@ Sentry 报警来了，传统流程是：复制堆栈帧 → 打开代码 → 手
 
 ## 七、构建自己的 Skill
 
-ACS 提供了完整的 [skill-creator](./skill-creator/) 指导，以及 [template-skill](./template-skill/) 起步模板。构建流程分三步。
+ACS 提供了完整的 [skill-creator](https://github.com/ComposioHQ/awesome-codex-skills/tree/HEAD/skill-creator/) 指导，以及 [template-skill](https://github.com/ComposioHQ/awesome-codex-skills/tree/HEAD/template-skill/) 起步模板。构建流程分三步。
 
 ### 第一步：定义触发条件（description）
 

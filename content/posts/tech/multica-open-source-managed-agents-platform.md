@@ -11,7 +11,7 @@ tags: ["Claude Code", "MCP", "开源"]
 
 # Multica：把 AI 代码代理变成真正的队友
 
-![Multica: humans and agents, side by side](docs/assets/banner.jpg)
+![Multica: humans and agents, side by side](https://raw.githubusercontent.com/multica-ai/multica/HEAD/docs/assets/hero-board.png)
 
 **Multica 做的事情更接近把一群 AI 代理变成能接 issue、报进度、复用技能、互相协调的团队成员，而不是跑完就消失的一次性脚本——Claude Code、Codex 已经在"帮你写代码"了，但它们跑完就没了。**
 

@@ -128,7 +128,7 @@ note = "把工具判断延伸到上下文、记忆和长期可维护性。"
 1. [Browser Use：AI 浏览器自动化指南](/posts/tech/browser-use-ai-browser-automation-guide/)
 2. [Browserbase Skills：让 Claude Code 拥有浏览器自动化能力](/posts/tech/browserbase-skills-claude-code-browser-automation-guide/)
 3. [Playwright CLI：高 token 效率浏览器自动化](/posts/tech/playwright-cli-token-efficient-browser-automation/)
-4. [GrokSearch MCP：LLM 搜索工具指南](/posts/tech/groksearch-mcp-llm-search-guide/)
+4. [GrokSearch MCP：LLM 搜索工具指南](/posts/tech/groksearch-mcp-llm-realtime-search/)
 
 ## 如果你只想先看 6 篇
 

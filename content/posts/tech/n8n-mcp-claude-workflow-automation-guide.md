@@ -502,7 +502,7 @@ MCP_MODE=http node dist/mcp/index.js
 npm run start:http
 ```
 
-仓库提供了详细的 [HTTP Deployment 文档](./docs/HTTP_DEPLOYMENT.md) 和 [N8N HTTP Streamable Setup](./N8N_HTTP_STREAMABLE_SETUP.md)。
+仓库提供了详细的 [HTTP Deployment 文档](https://github.com/czlonkowski/n8n-mcp/blob/HEAD/docs/HTTP_DEPLOYMENT.md) 和 [N8N HTTP Streamable Setup](https://github.com/czlonkowski/n8n-mcp/blob/HEAD/N8N_HTTP_STREAMABLE_SETUP.md)。
 
 ## 支持的 IDE
 

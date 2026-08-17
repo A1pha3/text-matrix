@@ -311,7 +311,7 @@ Leave unspecified: [没有证据的镜头参数 / seed / 后期步骤]
 
 这些东西当然会影响成片，但视频没给够证据时，硬塞进去只会让 prompt 更像行话，不会让结果更像原片。
 
-要从正向写 prompt、拆镜头表和稳定出片这条线建立手感，可以接着读 [Seedance 2.0 视频制作实战指南：从提示词到分镜的全流程教程](../video/seedance-2-video-production-guide.md)。那篇更偏“怎么拍”这一侧。
+要从正向写 prompt、拆镜头表和稳定出片这条线建立手感，可以接着读 [Seedance 2.0 视频制作实战指南：从提示词到分镜的全流程教程](/posts/video/seedance-2-video-production-guide/)。那篇更偏“怎么拍”这一侧。
 
 ## 9. 常见失败与修复
 
@@ -392,7 +392,7 @@ verification:
 
 整理完之后，回到原视频前 `3` 秒，对照 `subject` 和 `camera` 两栏做一次 spot-check。只要这两栏没有凭空长出新内容，这份初稿通常就站得住。
 
-想把这些字段收进真正可搜索、可复用的资产层，可以接着读 [Prompts.chat：开源提示词平台、自托管方案与 MCP 集成完全指南](./llm/prompts-chat-open-source-prompt-library-guide.md)。那篇更适合处理 prompt 片段的沉淀和检索。
+想把这些字段收进真正可搜索、可复用的资产层，可以接着读 [Prompts.chat：开源提示词平台、自托管方案与 MCP 集成完全指南](/posts/tech/prompts-chat-open-source-ai-prompt-library/)。那篇更适合处理 prompt 片段的沉淀和检索。
 
 ## 11. 练手顺序，可以这样排
 
@@ -442,7 +442,7 @@ verification:
 
 如果你要把这套方法放进真实商业环境，版权、商标、人物肖像和平台条款仍是另一套问题。模型能描述出来，不代表你就应该原样复刻。
 
-这些字段真正落到出片、转场和后期拼接里是什么样，可以接着读 [AI 广告制作实验：6 小时 vs 30 万美元，广告行业会被颠覆吗？](../video/ai-advertising-production-6-hours-vs-300k.md)。那篇更接近真实视频制作链路里的取舍。
+这些字段真正落到出片、转场和后期拼接里是什么样，可以接着读 [AI 广告制作实验：6 小时 vs 30 万美元，广告行业会被颠覆吗？](/posts/video/ai-advertising-production-6-hours-vs-300k/)。那篇更接近真实视频制作链路里的取舍。
 
 ## 14. 结论：把它当成“视频版 prompt diff”来用
 

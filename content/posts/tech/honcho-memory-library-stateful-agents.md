@@ -731,4 +731,4 @@ context = mem.retrieve("查询文本")
 
 ---
 
-**相关工具：** [Hermes Agent](hermes-agent-growing-ai-agent-framework) · [Superpowers](superpowers-agentic-development-methodology) · [Academic Research Skills](academic-research-skills-claude-code-scientific-writing)
+**相关工具：** [Hermes Agent](/posts/tech/ai-agent/hermes-agent-self-improving-ai-framework/) · [Superpowers](/posts/tech/superpowers-coding-agent-development-methodology/) · [Academic Research Skills](/posts/tech/academic-research-skills-claude-code-research-pipeline/)

@@ -206,5 +206,5 @@ Compound Engineering 解决的是「如何让第 100 个任务比第 1 个任务
 ## 相关阅读
 
 - [12-factor-agents：构建生产级LLM应用的原则](/posts/tech/12-factor-agents-production-llm-guide/)
-- [Andrej Karpathy Skills：提升Claude Code的实战指南](/posts/tech/andrej-karpathy-skills-guide/)
+- [Andrej Karpathy Skills：提升Claude Code的实战指南](/posts/tech/andrej-karpathy-skills-claude-code-guide/)
 - [Claude Code Plugins 官方目录](/posts/tech/anthropics-claude-plugins-official-guide/)

@@ -373,7 +373,7 @@ Web UI 是 CAR 的主控制平面，提供最完整的功能：
 - **文档聊天编辑**：通过 AI 对话编辑文档（适合移动端）
 - **Usage Analytics**：使用统计分析
 
-> ⚠️ **安全提示**：Web UI 涉及暴露服务在公网，请阅读 [web UI security posture](docs/web/security.md) 了解安全配置。
+> ⚠️ **安全提示**：Web UI 涉及暴露服务在公网，请阅读 [web UI security posture](https://github.com/Git-on-my-level/codex-autorunner/blob/HEAD/docs/web/security.md) 了解安全配置。
 
 **CLI（最智能体友好）**
 
@@ -537,7 +537,7 @@ docker run -it \
 
 **步骤 1：传递设置指南给 AI**
 
-将 [AGENT_SETUP_GUIDE.md](docs/AGENT_SETUP_GUIDE.md) 的内容发送给喜欢的 AI 智能体，它会交互式地引导完成安装和配置。
+将 [AGENT_SETUP_GUIDE.md](https://github.com/Git-on-my-level/codex-autorunner/blob/HEAD/docs/AGENT_SETUP_GUIDE.md) 的内容发送给喜欢的 AI 智能体，它会交互式地引导完成安装和配置。
 
 **步骤 2：初始化项目**
 
@@ -589,7 +589,7 @@ codex-autorunner config set telegram.enabled true
 codex-autorunner telegram
 ```
 
-详细配置请阅读：[AGENT_SETUP_TELEGRAM_GUIDE.md](docs/AGENT_SETUP_TELEGRAM_GUIDE.md)
+详细配置请阅读：[AGENT_SETUP_TELEGRAM_GUIDE.md](https://github.com/Git-on-my-level/codex-autorunner/blob/HEAD/docs/AGENT_SETUP_TELEGRAM_GUIDE.md)
 
 ### 6.5 Discord 集成
 
@@ -604,7 +604,7 @@ codex-autorunner config set discord.enabled true
 codex-autorunner discord
 ```
 
-详细配置请阅读：[AGENT_SETUP_DISCORD_GUIDE.md](docs/AGENT_SETUP_DISCORD_GUIDE.md)
+详细配置请阅读：[AGENT_SETUP_DISCORD_GUIDE.md](https://github.com/Git-on-my-level/codex-autorunner/blob/HEAD/docs/AGENT_SETUP_DISCORD_GUIDE.md)
 
 ### 6.6 Docker 运行时执行
 
@@ -621,7 +621,7 @@ codex-autorunner repo set-image my-project --image python:3.11-slim
 codex-autorunner run --runtime docker
 ```
 
-详细配置请阅读：[destinations.md](docs/configuration/destinations.md)
+详细配置请阅读：[destinations.md](https://github.com/Git-on-my-level/codex-autorunner/blob/HEAD/docs/configuration/destinations.md)
 
 ---
 

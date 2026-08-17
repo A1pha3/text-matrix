@@ -342,5 +342,5 @@ README 把这个技能描述为"a simulated board of advisors staffed by special
   - [SkillKit](https://github.com/rohitg00/skillkit)
 - 作者：[Corey Haines](https://corey.co) / [Conversion Factory](https://conversionfactory.co) / [Swipe Files](https://swipefiles.com) / [Magister](https://magistermarketing.com) / [AI Marketing Training](https://conversionfactory.co/offers/ai-marketing-training)
 - 配套入门：[Coding for Marketers](https://codingformarketers.com)
-- 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
+- 贡献指南：[CONTRIBUTING.md](https://github.com/coreyhaines31/marketingskills/blob/HEAD/CONTRIBUTING.md)
 - 许可证：MIT

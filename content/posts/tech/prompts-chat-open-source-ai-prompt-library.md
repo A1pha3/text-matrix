@@ -79,7 +79,7 @@ prompts.chat 以多种格式提供数据：
 |----------|------|
 | 网页浏览 | [prompts.chat/prompts](https://prompts.chat/prompts) |
 | Markdown 全文 | [PROMPTS.md](https://raw.githubusercontent.com/f/prompts.chat/main/PROMPTS.md) |
-| CSV 格式 | [prompts.csv](prompts.csv) |
+| CSV 格式 | [prompts.csv](https://github.com/f/prompts.chat/blob/HEAD/prompts.csv) |
 | Hugging Face Dataset | [huggingface.co/datasets/fka/prompts.chat](https://huggingface.co/datasets/fka/prompts.chat) |
 
 ## 🔧 二、快速上手：如何使用提示词
@@ -110,7 +110,7 @@ npx prompts.chat
 /plugin install prompts.chat@prompts.chat
 ```
 
-详细文档见 [CLAUDE-PLUGIN.md](CLAUDE-PLUGIN.md)。
+详细文档见 [CLAUDE-PLUGIN.md](https://github.com/f/prompts.chat/blob/HEAD/CLAUDE-PLUGIN.md)。
 
 ### 2.4 MCP 服务器
 
@@ -222,8 +222,8 @@ npm install && npm run setup
 设置向导会引导配置品牌定制、主题、身份验证（支持 GitHub / Google / Azure AD）以及功能开关。
 
 更多细节请参考：
-- 📖 [SELF-HOSTING.md](SELF-HOSTING.md)
-- 🐳 [DOCKER.md](DOCKER.md)
+- 📖 [SELF-HOSTING.md](https://github.com/f/prompts.chat/blob/HEAD/SELF-HOSTING.md)
+- 🐳 [DOCKER.md](https://github.com/f/prompts.chat/blob/HEAD/DOCKER.md)
 
 ## 💖 六、贡献与社区
 

@@ -147,6 +147,7 @@ graph TD
 
     PodsCLI --> vLLM
     vLLM --> GPU
+```
 ```text
 pi-mono/
 ├── .github/              # GitHub Actions CI/CD
@@ -177,6 +178,7 @@ pi-mono/
 ├── biome.json            # Biome 配置
 ├── package.json          # Workspace 根配置
 └── tsconfig.base.json   # TypeScript 基础配置
+```
 ```mermaid
 sequenceDiagram
     participant User as 用户代码
@@ -193,6 +195,7 @@ sequenceDiagram
     API-->>User: { content, usage, model }
 
     Note over User,LLM: 同理支持 claude-3, gemini-pro 等
+```
 ```typescript
 import { createLLM } from '@mariozechner/pi-ai';
 
@@ -227,6 +230,7 @@ const response = await openai.chat({
 
 console.log(response.content);  // 模型输出
 console.log(response.usage);  // Token 使用量
+```
 ```typescript
 import { Agent } from '@mariozechner/pi-agent-core';
 import { createLLM } from '@mariozechner/pi-ai';
@@ -254,6 +258,7 @@ const response = await agent.run({
 });
 
 console.log(response.content);
+```
 ```bash
 # 安装
 npm install -g @mariozechner/pi-coding-agent
@@ -263,6 +268,7 @@ npm install -g @mariozechner/pi-coding-agent
 
 # 或直接运行编译后的 CLI
 pi
+```
 ```bash
 # 安装
 npm install -g @mariozechner/pi-mom
@@ -274,6 +280,7 @@ export PI_CODING_AGENT_URL=http://localhost:3000
 
 # 运行
 pi-mom
+```
 ```typescript
 import { render, Box, Text } from '@mariozechner/pi-tui';
 
@@ -283,6 +290,7 @@ render((
     <Text color="green">Hello, Pi!</Text>
   </Box>
 ));
+```
 ```texthtml
 <!DOCTYPE html>
 <html>
@@ -302,6 +310,7 @@ render((
   </script>
 </body>
 </html>
+```
 ```bash
 # 安装
 npm install -g @mariozechner/pi-pods
@@ -320,6 +329,7 @@ pi-pods status
 
 # 删除部署
 pi-pods delete --model llama2
+```
 ```bash
 # 1. 克隆代码仓库
 git clone https://github.com/badlogic/pi-mono.git
@@ -339,11 +349,13 @@ npm run check
 
 # 6. 运行 Coding Agent（交互模式）
 ./pi-test.sh
+```
 ```bash
 # 安装核心包
 npm install @mariozechner/pi-ai
 npm install @mariozechner/pi-agent-core
 npm install @mariozechner/pi-tui
+```
 ```bash
 # 克隆代码仓库
 git clone https://github.com/badlogic/pi-mono.git
@@ -351,12 +363,14 @@ cd pi-mono
 
 # 运行测试环境
 docker compose -f docker-compose.dev.yml up
+```
 ```text
 .pi/
 └── coding-agent/
     ├── config.json      # Agent 配置
     ├── prompts/         # 自定义提示词
     └── memory/          # 记忆存储
+```
 ```json
 {
   "model": "gpt-4",
@@ -370,6 +384,7 @@ docker compose -f docker-compose.dev.yml up
   ],
   "systemPrompt": "你是一个专业的程序员助手。"
 }
+```
 ```bash
 # 1. 创建新分支
 git checkout -b feature/my-feature
@@ -388,6 +403,7 @@ git commit -m "feat: add new feature"
 
 # 6. 推送并创建 PR
 git push origin feature/my-feature
+```
 ```bash
 # .env 文件
 OPENAI_API_KEY=sk-xxx
@@ -403,6 +419,7 @@ SLACK_SIGNING_SECRET=xxx
 
 # vLLM 集群
 VLLM_API_BASE=http://gpu-pod:8000
+```
 ```typescript
 // packages/ai/src/providers/my-provider.ts
 import { createProvider, type ProviderConfig } from '../types';
@@ -442,6 +459,7 @@ export const myProvider = createProvider({
     };
   }
 });
+```
 ```typescript
 // packages/agent/src/tools/database-tool.ts
 import { Tool, type ToolResult } from '../types';
@@ -480,6 +498,7 @@ const agent = new Agent({
     new WriteFileTool()
   ]
 });
+```
 ```typescript
 import { Memory, type MemoryEntry } from '@mariozechner/pi-agent-core';
 
@@ -511,6 +530,7 @@ const agent = new Agent({
   llm,
   memory: new PostgresMemory()
 });
+```
 ```typescript
 const agent = new Agent({
   llm,
@@ -522,6 +542,7 @@ const agent = new Agent({
     }
   }
 });
+```
 ```bash
 # 安装 PM2
 npm install -g pm2
@@ -536,6 +557,7 @@ pm2 save
 
 # 设置开机自启
 pm2 startup
+```
 ```textnginx
 server {
     listen 443 ssl;
@@ -552,6 +574,7 @@ server {
         proxy_set_header Host $host;
     }
 }
+```
 ```bash
 # .env.production
 NODE_ENV=production
@@ -565,6 +588,7 @@ ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 AGENT_MAX_BUDGET=1000      # 最大 Token 预算
 AGENT_TIMEOUT=300000       # 超时 5 分钟
 AGENT_ALLOWED_COMMANDS=git,node,npm  # 允许的命令白名单
+```
 ```typescript
 const stream = await openai.chat({
   messages: [{ role: 'user', content: '讲个故事' }],
@@ -574,12 +598,14 @@ const stream = await openai.chat({
 for await (const chunk of stream) {
   process.stdout.write(chunk.content);
 }
+```
 ```bash
 # 开启调试日志
 DEBUG=pi-* ./pi-test.sh
 
 # 查看特定模块
 DEBUG=pi-agent ./pi-test.sh
+```
 ```typescript
 const tui = new TUI({
   locale: 'zh-CN',

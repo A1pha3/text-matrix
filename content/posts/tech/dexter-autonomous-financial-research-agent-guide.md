@@ -108,7 +108,7 @@ cp env.example .env
 
 `.env` 里必填 `OPENAI_API_KEY` 和 `FINANCIAL_DATASETS_API_KEY`；Anthropic、Google、xAI、OpenRouter 可选，`OLLAMA_BASE_URL` 指向本地模型，两组搜索 key 按 Exa→Tavily 顺序降级。运行用 `bun start`（交互模式）或 `bun dev`（热重载）。
 
-WhatsApp 集成走网关：`bun run gateway:login` 扫码关联手机号，然后 `bun run gateway`。之后给自己发消息即可被处理，结果从同一频道返回。详细配置见 [WhatsApp Gateway README](src/gateway/channels/whatsapp/README.md)。
+WhatsApp 集成走网关：`bun run gateway:login` 扫码关联手机号，然后 `bun run gateway`。之后给自己发消息即可被处理，结果从同一频道返回。详细配置见 [WhatsApp Gateway README](https://github.com/virattt/dexter/blob/HEAD/src/gateway/channels/whatsapp/README.md)。
 
 ## 适用边界
 

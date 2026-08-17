@@ -121,7 +121,7 @@ CROSS-MODEL WORKFLOWS 章节给出 3 种并行机制，把"用一个模型"的�
 
 - **产品 / PM（不写代码）**：先读 README 第 1 节 CONCEPTS 表格 + 第 5 节 VIDEOS（Karpathy 02 May 2026 必看），再读 STARTUPS/BUSINESSES 表理解 Claude 各项能力在替代哪些产品。
 - **后端 / 全栈工程师**：CONCEPTS → ORCHESTRATION WORKFLOW（跑一遍 weather-orchestrator） → TIPS AND TRICKS 的 CLAUDE.md + Session Management + Workflows Advanced 三节。
-- **Agent 写作者 / 工具链工程师**：CONCEPTS → ORCHESTRATION WORKFLOW → TIPS 的 Skills/Commands/Sub-agents/Hooks 四节 → REPORTS 里的 9 篇深度报告（特别是 [claude-skills-for-larger-mono-repos](reports/claude-skills-for-larger-mono-repos.md) 和 [claude-advanced-tool-use](reports/claude-advanced-tool-use.md)）。
+- **Agent 写作者 / 工具链工程师**：CONCEPTS → ORCHESTRATION WORKFLOW → TIPS 的 Skills/Commands/Sub-agents/Hooks 四节 → REPORTS 里的 9 篇深度报告（特别是 [claude-skills-for-larger-mono-repos](https://github.com/shanraisshan/claude-code-best-practice/blob/HEAD/reports/claude-skills-for-larger-mono-repos.md) 和 [claude-advanced-tool-use](https://github.com/shanraisshan/claude-code-best-practice/blob/HEAD/reports/claude-advanced-tool-use.md)）。
 - **技术 lead / 流程设计**：DEVELOPMENT WORKFLOWS（12 套工作流对比表） → CROSS-MODEL WORKFLOWS → TIPS 里的 Planning + Workflows 两节。
 
 ## §8 适用边界
@@ -143,7 +143,7 @@ CROSS-MODEL WORKFLOWS 章节给出 3 种并行机制，把"用一个模型"的�
 - [仓库主页](https://github.com/shanraisshan/claude-code-best-practice) — 596 行 README 是入口
 - [Orchestration Workflow 详解](https://github.com/shanraisshan/claude-code-best-practice/blob/main/orchestration-workflow/orchestration-workflow.md) — Command→Agent→Skill 三层模式
 - [Development Workflows 对照表](https://github.com/shanraisshan/claude-code-best-practice#-development-workflows) — 12 套工作流按 Research→Plan→Execute→Review→Ship 对齐
-- [Boris Cherny 13 Tips (03/Jan/26)](tips/claude-boris-13-tips-03-jan-26.md) — Claude Code 创造者的工作流
+- [Boris Cherny 13 Tips (03/Jan/26)](https://github.com/shanraisshan/claude-code-best-practice/blob/HEAD/tips/claude-boris-13-tips-03-jan-26.md) — Claude Code 创造者的工作流
 - [Thariq Lessons from Building Claude Code: How We Use Skills (17/Mar/26)](https://x.com/trq212/status/2033949937936085378) — Skills 范式的官方总结
 - [Superpowers (obra)](https://github.com/obra/superpowers) — 仓库内推荐度最高的开发工作流
 - [Everything Claude Code (affaan-m)](https://github.com/affaan-m/everything-claude-code) — 67 Agent + 84 Command + 271 Skill 的大型实现

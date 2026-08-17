@@ -327,6 +327,6 @@ Open WebUI (./scripts/start_openwebui.sh) → 完整 agentic demo + Jupyter 代�
 - [PrismML-Eng/Bonsai-demo 仓库](https://github.com/PrismML-Eng/Bonsai-demo)——主仓库，README 的 "Upstream Status" 段是判断 fork 必要性的关键
 - [Prism ML HF Collections](https://huggingface.co/collections/prism-ml/bonsai-27b)——27B vision-language 模型集
 - [Whitepapers: Bonsai 27B / 1-bit Bonsai 8B / Ternary-Bonsai 8B](https://github.com/PrismML-Eng/Bonsai-demo/tree/main)——设计原理与质量数据
-- [VISION.md](VISION.md) / [TOOLS.md](TOOLS.md) / [SPECULATIVE.md](SPECULATIVE.md) / [KV-CACHE.md](KV-CACHE.md)——27B 各项能力的详细文档
+- [VISION.md](https://github.com/PrismML-Eng/Bonsai-demo/blob/HEAD/VISION.md) / [TOOLS.md](https://github.com/PrismML-Eng/Bonsai-demo/blob/HEAD/TOOLS.md) / [SPECULATIVE.md](https://github.com/PrismML-Eng/Bonsai-demo/blob/HEAD/SPECULATIVE.md) / [KV-CACHE.md](https://github.com/PrismML-Eng/Bonsai-demo/blob/HEAD/KV-CACHE.md)——27B 各项能力的详细文档
 - [PrismML-Eng/llama.cpp release prism-b9591-62061f9](https://github.com/PrismML-Eng/llama.cpp/releases/tag/prism-b9591-62061f9)——demo 默认下载的预编译二进制
 - [PrismML-Eng/mlx branch prism](https://github.com/PrismML-Eng/mlx)——MLX 1-bit 上游合入前的 fork

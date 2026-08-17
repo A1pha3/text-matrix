@@ -214,7 +214,7 @@ notebooklm-py 的关键价值在于**把 NotebookLM 的交互式能力变成了�
 1. **非官方项目**：使用 Google NotebookLM 后端，非 Google 官方维护，存在账号封禁风险（目前社区反馈稳定）
 2. **依赖 Google 服务**：需要稳定访问 Google NotebookLM 服务
 3. **Cookie 有效期**：Google Cookie 会过期，长时间运行可能需要重新认证
-4. **Linux Playwright 问题**：`playwright install chromium` 在某些 Linux 环境可能失败，详见 [troubleshooting](docs/troubleshooting.md#linux)
+4. **Linux Playwright 问题**：`playwright install chromium` 在某些 Linux 环境可能失败，详见 [troubleshooting](https://github.com/teng-lin/notebooklm-py/blob/HEAD/docs/troubleshooting.md#linux)
 
 ---
 
@@ -336,7 +336,7 @@ result = nlp.ask("Compare the approach in this paper with recent advances in RAG
 1. **非官方项目**：使用 Google NotebookLM 后端，非 Google 官方维护，存在账号封禁风险（目前社区反馈稳定）。
 2. **依赖 Google 服务**：需要稳定访问 Google NotebookLM 服务。
 3. **Cookie 有效期**：Google Cookie 会过期，长时间运行可能需要重新认证。
-4. **Linux Playwright 问题**：`playwright install chromium` 在某些 Linux 环境可能失败，详见 [Troubleshooting](docs/troubleshooting.md#linux)。
+4. **Linux Playwright 问题**：`playwright install chromium` 在某些 Linux 环境可能失败，详见 [Troubleshooting](https://github.com/teng-lin/notebooklm-py/blob/HEAD/docs/troubleshooting.md#linux)。
 
 </details>
 
