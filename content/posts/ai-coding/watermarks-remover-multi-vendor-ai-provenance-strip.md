@@ -313,9 +313,58 @@ README 列了 5 个可选后端，**其中 2 个从未发布 Docker 镜像**：
 
 ---
 
-## 7 · 边界、争议、与它不解决的问题
+## 7 · 作者 + 边界、争议、与它不解决的问题
 
-这个项目在仓库 README 和 GitHub issue 里都明确讲了它**不做**的事：
+### 7.0 作者：Guillaume Meyer（Microsoft MVP / 14 年 GitHub 老兵）
+
+GitHub 资料：
+
+- 姓名：**Guillaume Meyer (The Opinionated Man)**
+- 身份：Entrepreneur, CTO and CPO, **Microsoft MVP**
+- 位置：Paris, FR
+- 个人站：theopinionatedman.com
+- GitHub 加入：2012-01-27（14 年老兵）
+- 公开仓库：36 / followers：261
+
+历史仓库轨迹（API `sort=updated`）：
+
+- 2026-08-17 **watermarks-remover** 11.5K stars ← 当前主角
+- 2026-08-16 tmon (Go, "zero-config agents fleet manager for tmux")
+- 2026-08-14 terminal-browser
+- 2026-08-12 hermes-agent ("agent that grows with you")
+- 2026-08-12 trendy (TypeScript)
+- 2023-08-22 cli-microsoft365 (SharePoint Framework)
+- 2020-05 winget / shields.io / PnP-PowerShell 等 Microsoft 生态贡献
+
+**画风推断**：长期 Microsoft 生态（Power Automate / 365 CLI / winget 包管理），MVP 头衔印证。**2026-08-12 到 8-17 一周内突然转向 agent + AI provenance 主题**（4 个新仓库同周内涌现）——说明他不是从零开始写，而是带着 14 年的工程肌肉进入 AI 工具领域。
+
+Hugging Face 探针：`/api/users/guillaumemeyer` 返回 404，`/api/models?author=guillaumemeyer` 返回 `[]`。**作者在 HF 没有公开账户或模型**。
+
+### 7.1 它不洗"图片上的水印"
+
+仓库的 `clean_image.py` 处理的是 **EXIF / XMP / C2PA 元数据** 和 **像素层面的 SynthID score**——不是图片角落的 logo / 半透明文字 / 网格。要洗这类视觉水印得用 inpainting（LaMa / SD inpaint / IOPaint），不是这个工具的范围。
+
+### 7.2 它不绕过 copyright / DMCA
+
+README 强调 `for privacy and hygiene on content you own`。如果有人用它洗掉别人作品的 C2PA 签名，**那是使用者的法律问题，不是工具的问题**。
+
+### 7.3 它不偷偷干
+
+Layer B 默认 `print-prompt`（只打印改写 prompt，不调模型）。`--strip-emoji-glue` 是显式 flag。`--strip-bidi` 是显式 flag。`--aggressive-homoglyphs` 是显式 flag。`--force-text` 是显式 flag。
+
+每个不可逆操作都需要用户**显式开关**——这是它跟很多 "AI cleanup tool" 的核心区别。
+
+### 7.4 它在浏览器侧基本无解
+
+C2PA 可以验签，但 **prompt-level 隐写**（比如 Claude 在 prompt 里插不可见指令）必须在你拿到的内容进浏览器之前清洗。GitHub README 一句："Cursor does not expose a deterministic pre-send filter for final chat responses" —— Cursor 没有真正的"输出前清洗"机制，watermarks-remover 的 skill 是 model-selected 而非 deterministic pre-send。
+
+### 7.5 法律层面背景
+
+- **Claude 2026-08-02 起**：所有新模型 worldwide 标水印（Anthropic Help Center `support.claude.com/en/articles/16266773`）
+- **EU AI Act Article 50(2)**：要求 AI 内容可追溯
+- **SynthID-Text** Nature 2024：去除 token-sampling 水印论文明确论证了"对抗可行性"
+
+watermarks-remover 的立场是：法律要求 AI 内容可追溯，工具帮创作者清洗**自己产出**内容上的痕迹——这两件事**不冲突**。
 
 ### 7.1 它不洗"图片上的水印"
 
@@ -376,9 +425,10 @@ C2PA 可以验签，但 **prompt-level 隐写**（比如 Claude 在 prompt 里�
 ## 附录 A · 本文事实来源
 
 - GitHub 仓库：`github.com/guillaumemeyer/watermarks-remover`（截至 2026-08-17 08:43 GMT+8）
-  - 11,469 stars / 1,200 forks / 55 watchers
+  - 11,469 stars / 1,200 forks / 55 watchers / 15 open issues / 8 open PRs
   - Created: 2026-08-11T16:32:38Z / Updated: 2026-08-17T00:43:17Z / Pushed: 2026-08-17T00:43:31Z
-  - License: 见 `LICENSE` (1KB)
+  - License: **MIT**
+  - 主语言: Python 494 KB (>90%)
 - 5 个 release（按时间排）：
   - v0.2.0 (2026-08-12) — c2patool false-positive fix
   - v0.3.0 (2026-08-12) — optional SynthID pixel scoring
@@ -424,7 +474,7 @@ C2PA 可以验签，但 **prompt-level 隐写**（比如 Claude 在 prompt 里�
 
 ## 附录 B · 已知缺口
 
-- **作者 `guillaumemeyer` 背景**：未拿到 bio / LinkedIn / 个人网站（需要 Sonner 子代理调研补充或人工查 GitHub profile 页）
-- **同类项目对比**：未深入对比 WatermarkRemover.io / Aiseesoft / HitPaw / LaMa Cleaner / IOPaint 等（需要后续反写稿或专题调研）
+- **同类项目深度对比**：本文仅列同类项目清单（WatermarkRemover.io / Aiseesoft / HitPaw / LaMa Cleaner / IOPaint / MarkLLM / MarkDiffusion 等），未做功能矩阵对比（需要后续专题调研）
 - **6 天 11k stars 的真实用户分布**：仓库 issue / discussion 数据未抽取
 - **AI 公司对这类工具的官方态度**：OpenAI / Google / Anthropic 各自的回应（如果有）—— 这是反 AI 追溯工具的伦理上限
+- **作者个人站 theopinionatedman.com 与 LinkedIn**：web_fetch 被 sandbox 拦截（"Blocked: private/internal/special-use IP"），未能直读
