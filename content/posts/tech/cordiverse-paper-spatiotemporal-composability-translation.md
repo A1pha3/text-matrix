@@ -48,7 +48,7 @@ github_repo: "cordiverse/paper"
 | temporal composability | 我走之后，世界恢复原样了吗 | revertible effects（显式 inverse + 自动追踪） | §3.1 | `ctx.effect()` + disposable 累加器 | plugin 卸载零残留，`agent/pre-step` 监听随装随卸 |
 | spatial composability | 我进来之后，需要的东西会自动出现吗 | reactive coeffects（声明式依赖 + 三态通知） | §3.2 | `inject` 声明 + service registry | `ctx.settings` / `ctx.tools` 声明即注入 |
 | 两者统一 | 一套类型同时管两个维度 | unified recursive context Γ∞ | §3.3 | 单一 `ctx` 对象 | fiber 树只有一个维度，无 effect-tree / coeffect-tree 分裂 |
-| 系统级保证 | 组件交错运行，全局仍然一致 | calculus of dynamic composition + 5 条 metatheorem | §4 | fiber 生命周期状态机 | `packages/core/invariants/` 运行时自检 |
+| 系统级保证 | 组件交错运行，全局仍然一致 | calculus of dynamic composition + 5 条 metatheorem | §4 | fiber 生命周期状态机 | `dsh-invariants` 中枢 + 每个包的 invariant 伴侣运行时自检 |
 
 ## 背景：从 Koishi 的插件生态到 88 页证明
 
@@ -79,7 +79,7 @@ github_repo: "cordiverse/paper"
 
 论文 §1.1「Dimensions of Composability」把动态组件组合切成两个正交维度。
 
-**Temporal composability**：组件有生命周期——装载、激活、卸载。卸载时所有 side effects 必须完全消失。组件在 `effect()` 里注册了 listener，卸载时必须反注册；组件写了临时文件，卸载时必须删掉（或者显式声明这是泄漏）；组件起了子进程，卸载时必须 kill。任何一条做不到，整个上下文状态就被污染。
+**Temporal composability**：组件有生命周期——装载、激活、卸载。卸载时所有 side effects 必须完全消失。组件在 `effect()` 里注册了 listener，卸载时必须反注册；组件写了临时文件，卸载时必须删掉——删不掉的部分就撞上后面「边界」一节说的系统边界；组件起了子进程，卸载时必须 kill。任何一条做不到，整个上下文状态就被污染。
 
 **Spatial composability**：组件有依赖——需要其他组件的服务、配置、数据。依赖必须声明式（不直接 import 具体实现）且反应式（依赖变化时本组件能感知）。组件 A 要用 logger，不应该 `import { ConsoleLogger }`，而是声明 `inject: ['logger']` 由 runtime 注入；logger 实现从 ConsoleLogger 换成 OtelLogger，A 自动拿到新实例；logger 被卸载，A 收到「依赖没了」的通知。
 
@@ -106,7 +106,9 @@ track(f, g)(γ, φ) = (f(γ), φ ∘ g)     // 执行正向变换，把逆操作
 recover(γ, φ)     = (φ(γ), id)        // 应用累加器，恢复到初始状态
 ```
 
-定理 1（恢复不变性）：只要 g(f(γ)) = γ，就有 recover(track(f,g)(γ,φ)) = recover(γ,φ)。执行一个效应再恢复，得到的状态和执行前完全一致。
+细节藏在 φ ∘ g 的组合方向里：recover 应用这个组合时，最新的逆操作 g 先执行，然后才轮到旧累加器 φ——LIFO 不需要额外机制，已经写进了这个方向。
+
+定理 1（恢复不变性）：只要 g(f(γ)) = γ，就有 recover(track(f,g)(γ,φ)) = recover(γ,φ)。执行一个效应再恢复，得到的状态和执行前完全一致。它是归纳的基石：每个新效应都不破坏已有累加器的恢复能力，整棵 fiber 树的完全可逆性因此可以逐层证出来。
 
 **可逆效应函数（Revertible Effect Functions）**。上面的模型里逆操作是固定的，撑不住两类现实场景：逆操作依赖执行时的状态（先读旧值才能恢复），以及需要单独撤销某一个效应。于是论文升了一阶：
 
@@ -121,8 +123,8 @@ recover(γ, φ)     = (φ(γ), id)        // 应用累加器，恢复到初始�
 这三段形式化直接解释了 Cordis / DSH 的三个工程决策：
 
 1. **没有隐式 cleanup**。所有 effect 必须显式给出 inverse。这就是为什么 DSH 的 `ctx.effect()` 接受「返回 disposable 的函数」而不是普通 async 函数——返回值本身就是逆操作。
-2. **effect stack 是 LIFO**。后注册先反注册。DSH 主仓的 agent-scope plugin 卸载必须严格按注册的逆序进行：先卸子 plugin 再卸父 plugin，否则子 plugin 的 disposable 会在父 plugin 状态已被破坏的前提下执行，回滚不再正确。
-3. **dispose 互不干涉**。单个 effect 的 dispose 失败不能级联到其他 effect，这就是为什么 DSH 主仓 `ctx.effect()` 的实现里每个 disposable 都包了 try-catch——一个清理失败不能让整个组件卸载失败。
+2. **effect stack 是 LIFO**。后注册先反注册（一手核实：vendored fiber.ts 的 dispose 实现就是 `disposables.splice(0).reverse()`，逆序重放）。DSH 主仓的 agent-scope plugin 卸载必须严格按注册的逆序进行：先卸子 plugin 再卸父 plugin，否则子 plugin 的 disposable 会在父 plugin 状态已被破坏的前提下执行，回滚不再正确。
+3. **dispose 互不干涉**。单个 effect 的 dispose 失败不能级联到其他 effect。vendored fiber.ts 的源码把这一点写在注释里：teardown 通知的每个 callback 单独 try-catch，「不让单个 observer 的失败破坏所有权清理」——一个清理失败不能让整个组件卸载失败。
 
 ## 反应性共效应：把「依赖」写成声明
 
@@ -132,13 +134,13 @@ recover(γ, φ)     = (φ(γ), id)        // 应用累加器，恢复到初始�
 Σ := (k : K) ⇀ V_k
 ```
 
-键 k 对应类型 V_k，依赖访问因此是类型安全的。两个基本操作：get(k) 要求键存在；set(k, v) 要求键此前不存在，且它本身就是一个可逆效应函数——逆操作是删除键 k：
+键 k 对应类型 V_k，依赖访问因此是类型安全的。两个基本操作：get(k) 要求键存在；set(k, v) 要求键此前不存在，它同时是一个可逆效应函数——逆操作是删除键 k：
 
 ```text
 set(k, v) = σ ↦ (σ[k ↦ v], λσ′. σ′ ∖ k)
 ```
 
-这个细节值得停一下：**依赖的注册和注销本身就是效应**，自动被效应系统追踪和恢复。这是全篇最深的伏笔——temporal 和 spatial 不是两套机制拼起来的，spatial 的每一次依赖变更本来就是一种 temporal 事件，两个维度的统一只需要做一次。
+这个细节值得停一下：**依赖的注册和注销本身就是效应**，自动被效应系统追踪和恢复。这是全篇最深的伏笔：temporal 和 spatial 不是两套机制拼起来的，spatial 的每一次依赖变更本来就是一种 temporal 事件，两个维度的统一只需要做一次。
 
 组件通过共效应规范（specification）声明需要的依赖集合 d ⊆ K，系统按「所有键都在 dom(σ) 里」判断满足：σ ⊨ d。上下文从 σ 变到 σ′ 时，对每个组件的规范做一次通知分类：
 
@@ -148,7 +150,7 @@ notify_d(σ, σ′) = activating    若 σ ⊭ d 且 σ′ ⊨ d     // 依赖�
                   neutral       其他                    // 变化与我不相干
 ```
 
-激活通知触发组件加载并执行效应，失活通知触发组件卸载并恢复效应，中性通知不处理。三态划分看似朴素，关键在它把「依赖变化」变成了可枚举、可证明的离散事件，而不是靠组件自己轮询。
+激活通知触发组件加载并执行效应，失活通知触发组件卸载并恢复效应，中性通知不处理。三态划分看似朴素，关键在它把「依赖变化」变成了可枚举、可证明的离散事件，而不是靠组件自己轮询。「替换提供方」也不需要第四种通知：旧提供方卸载时键消失（deactivating），新提供方装载时键出现（activating），替换自然分解为失活再激活——对应到机制层面，正是「两个维度的直觉」一节里 logger 换实现后 A 自动拿到新实例的那一幕。
 
 **隔离与拦截（Isolation and Interception）**。§3.2.3 给了两个扩展机制。隔离引入 realm（领域）：同一个逻辑依赖键在不同上下文中解析到不同领域，绑定不同的值，适用于多租户、测试环境、组件沙箱。DSH 的 agent live registry 就是用隔离把「agent A 的工具集」和「agent B 的工具集」分开——同一个 `ctx.tools` 键在不同 agent scope 指向不同的 service 实现。拦截则给依赖访问附加元数据：元数据可由上下文携带或组件声明，访问时合并后传给依赖提供者，实现权限控制、访问审计这类横切功能，不用改组件或依赖的代码。DSH 主仓 `cordis.patch.yml` 的 patch 语义就是拦截——按 row id 定位 service，替换或叠加 config。
 
@@ -182,7 +184,7 @@ notify_d(σ, σ′) = activating    若 σ ⊭ d 且 σ′ ⊨ d     // 依赖�
 | O-Retire | 标记纤维退休 | 纤维存在 |
 | O-Remove | 移除退休且非活跃、无子纤维的纤维 | 已退休、非活跃、无子女 |
 
-生命周期规则由系统自动触发：
+生命周期规则由系统自动触发。先定义一个术语：**目标视图**是该 fiber 依赖规范在当前共效应上下文上的投影——它需要的键里哪些已经存在。规则围绕目标视图的状态变化展开：
 
 | 规则 | 作用 |
 |---|---|
@@ -222,7 +224,7 @@ stateDiagram-v2
 
 5 条合起来就是标题的承诺：时空可组合性从单个组件扩展到整个系统。Spatial Composability 里「提供者先启动、等所有消费者卸载后再退出」这条尤其值钱——它把插件系统里最常见的竞态（依赖方还在用，提供方先没了）直接排除在合法执行之外。Confluence 的价值在工程上更隐蔽：最终状态与调度顺序无关，意味着并发装载卸载不用靠测试碰顺序——任何交错都收敛到「把所有活跃组件静态组装」的那一个状态，线上事故因此可复现、可推理。
 
-工程视角的呼应：DSH 主仓的 `packages/core/invariants/` 是 runtime 对部分定理的自检实现，`InvariantInstaller` 在运行时跑断言，违反即抛错。
+工程视角的呼应：DSH 的 invariant 中枢是 `packages/runtime-diagnostics/invariants`（`@deepseek-ai/dsh-invariants`），定义 `InvariantInstaller` 契约；各业务包自带一个 20–30 行的 invariant 伴侣，在运行时用 `ctx.invariants.register(...)` 声明自己的事件契约——比如 settings 包断言 `settings/updated` 只在命名空间已注册且值确实变化时触发，违反即报 fail。
 
 ## 一次任务流过系统：卸载一个 plugin 会发生什么
 
@@ -269,7 +271,7 @@ stateDiagram-v2
 
 实现分三层：核心库负责 effect tracking、coeffect 操作、组件生命周期；组件加载器负责声明式配置、configuration reconciliation、HMR；应用框架层基于 Cordis 构建领域功能，Koishi 和 DSH 都属于这一层。
 
-核心库内部是 `FiberState` 状态机加 `DisposableList` LIFO 栈：`packages/core/src/fiber.ts` 是整个框架的心脏，effect stack + lifecycle state machine 两件事撑起 §3.1 的全部语义。coeffect 侧是 `ctx.isolate(name, label?)` / `ctx.intercept(name, config)` 加 service registry 三件套：RegistryService（注册表）、ReflectService（Proxy 反射 + service store 路径解析）、EventsService（typed events + 四种 dispatch mode）。
+核心库内部是 `FiberState` 状态机加 `DisposableList` LIFO 栈：`vendor/cordis/src/fiber.ts`（754 行）是整个框架的心脏，effect stack + lifecycle state machine 两件事撑起 §3.1 的全部语义。coeffect 侧是 `ctx.isolate(name, label?)` / `ctx.intercept(name, config)` 加 service registry 三件套：RegistryService（注册表）、ReflectService（Proxy 反射 + service store 路径解析）、EventsService（typed events + 四种 dispatch mode）。
 
 §5.2 的 declarative component loader 从 `cordis.yml` 读入 plugin 树，解析 `!!js` 表达式，做 configuration reconciliation（按 id patch），再 apply 到空 context。DSH 主仓的 `cordis.patch.yml` 工作流就是这条链。§5.3 是 HMR：监听文件变化，卸载旧 fiber，装载新 fiber，effect 重新 reconcile，coeffect 重新满足——开发体验因此变成「改 plugin 源码，runtime 自动 reload，会话状态不丢」。
 
@@ -277,9 +279,9 @@ stateDiagram-v2
 
 ## 工程取舍：哪些决策是钉死的
 
-**Effect 必须有显式 disposable**。论文 §3.1 加上 Cordis 源码里 `Service[symbols.init]?.()` 的强制约定——没有隐式 cleanup。runtime 在组件卸载时不依赖任何外部状态，所有清理路径都已注册。这是 DSH 主仓 `packages/core/invariants/` 能做 invariant assertion 的前提：effect 系统的 spec 是形式化的，断言才有对象。
+**Effect 必须有显式 disposable**。论文 §3.1 加上 Cordis 源码里 `Service[symbols.init]?.()` 的强制约定——没有隐式 cleanup。runtime 在组件卸载时不依赖任何外部状态，所有清理路径都已注册。这是 DSH 的 `dsh-invariants` 机制能做 invariant assertion 的前提：effect 系统的 spec 是形式化的，断言才有对象。
 
-**Coeffect 是声明式的**。coeffect spec 通过 zod / schemastery 这类 schema 定义，runtime 自动 reconcile，不接受 free-form 的运行时数据。所以 DSH 主仓 `ctx.settings.register(NS, AtFileSettingsSchema)` 必须配 schema。
+**Coeffect 是声明式的**。coeffect spec 通过 zod / schemastery 这类 schema 定义，runtime 自动 reconcile，不接受 free-form 的运行时数据。所以 DSH 的 settings 注册必须配 schema，例如 `settingsCtx.settings.register(THEME_NAMESPACE, ThemeSettingsSchema)`。
 
 **Unified context type**。effect 和 coeffect 共享同一个 Context 对象（`Context[symbols.isolate]` + `Context[symbols.intercept]`），fiber 树管理只有一个维度。如果 effect 和 coeffect 各自一棵树，装载卸载就要协调两棵树的一致性——单一上下文把这类问题在类型层面消灭了。
 
@@ -316,13 +318,63 @@ export function apply(ctx: Context) {
 
 **跨进程没有现成解**。fiber tree 是单进程内的树，跨进程 reconciling effect / coeffect 需要分布式协议层。另外 §4 的 5 条 metatheorem 证明的是 correctness 不是 complexity：一个 O(n²) 的 lifecycle 操作在 worst case 合法，只是实际不可用。
 
+## 展望：从模型的七个前提出发
+
+前四节把论文讲成了一座建筑。这一节反过来把它读成一组假设：模型能成立，靠的是七个前提。前六个关于组件的生命周期，第七个关于组件的质量判定，而论文的模型刻意不处理质量，这个缺口正好是 RSI 的入口。每个前提的松动处，就是一个研究方向。论文结论与 future work 自己点了三条——自演化 agent harness 验证、语言与操作系统协同设计、依赖类型与版本系统；下表是混合内容，论文点名的方向与本文的推导在出处列逐行区分。
+
+| # | 模型的前提 | 松动后的研究方向 | 出处 |
+|---|---|---|---|
+| 1 | 逆操作由人提供 | 逆操作自动化：双向变换理论、操作系统资源追踪、LLM 生成 | 论文 future work + 本文 |
+| 2 | 依赖按键名匹配 | 类型化 / 版本化 / 概率化依赖 | 论文 future work + 本文 |
+| 3 | 系统边界 = 单进程 | 跨进程时空可组合性：saga 与补偿事务的形式化 | 本文推导 |
+| 4 | 组件由人编写和维护 | 自演化 agent harness：agent 自装卸插件的安全保证 | 论文结论 |
+| 5 | 保证靠证明 + 手写断言 | Confluence 直接给出调度模糊测试的 oracle | 本文推导 |
+| 6 | 机制在框架层 | 语言级一等公民：代数效应与动态组合的结合 | 论文 future work |
+| 7 | 组件质量由人判定 | 自动化评价：从 invariant 断言到评价基础设施 | 本文推导 |
+
+**方向一：逆操作自动化，借双向变换的成熟理论**。手写 inverse 是范式的入场费，也是它规模化的最大瓶颈。双向变换（bidirectional transformations）研究 get/put 对二十多年，lenses 的 well-behavedness 定律与 Cordis 要求的 g(f(γ)) = γ 在结构上是同一件事——把这段理论搬过来，纯函数式片段的可逆性可以自动综合；操作系统层的文件、句柄、端口获取也可由 runtime 记账自动生成补偿。AI 时代多了一条新路径：agent 自己写 effect，由 LLM 提议 inverse、由测试验证——自演化场景下逆操作的生产者和使用者是同一个系统，闭环天然成立。
+
+**方向二：依赖的类型化与概率化**。按键名匹配是实用主义起点，论文已把结构类型、语义版本列入 future work。再往前一步是概率依赖：agent 世界里依赖的可用性本来就是概率性的——模型能力、工具配额、网络服务随时波动。把满足判定从 σ ⊨ d 放宽为带置信度的 σ ⊨ₚ d，deactivating 阈值变成策略参数，时空可组合性就从确定性系统扩展到概率性系统。这条目前只是推测方向，论文未列入。
+
+**方向三：跨进程边界**。论文把「系统边界外不可回滚」列为边界而非缺陷——已发出的网络包、已落盘的用户数据收不回。数据库领域四十年前遇过同一个问题，解法是 saga 与补偿事务（Garcia-Molina & Salem 1987）：不撤销已发生的，而是执行一个语义上抵消的后续事务。把 Cordis 的 revertible effect 与 saga 的补偿事务对接，时空可组合性就从单进程扩展到服务与 agent 集群。难点在于：补偿事务从来不保证精确恢复，只保证语义抵消——观测等价在这里正好是缝合两者的概念工具。
+
+**方向四：自演化 agent harness——需求侧最猛的一条**。论文结论点名了它：agent 持续生成并替换自己 harness 的组件，人类监督极少。MCP 已是 agent 工具接入的事实标准，但工具生态的运行时治理——动态发现、装卸、依赖协调、失败回收——大多还是工程约定；把 MCP server 与 skill 建模为 Cordis 组件，装卸就有定理背书。本文的一次核实顺手提供了佐证：DSH vendored 的是 `@deepseek-ai/cordis` 4.0.1，上游 cordiverse/cordis 还停在 4.0.0-rc 系列——两条版本线已经分叉，理论与工程各自演化时谁等谁，成了这个方向的第一个治理问题。
+
+**方向五：Confluence 作为测试 oracle**。这是表里成本最低的一条。Confluence 定理说任何调度交错都收敛到静态组装的同一状态——把它反过来用：随机生成装载卸载调度，断言最终状态与静态组装一致，就是一个自带 oracle 的模糊测试器，不需要人写预期输出。Koishi 与 DSH 都可以直接跑，也是第三方验证论文 metatheory 最便宜的路径。
+
+**方向六：语言级一等公民**。论文把「语言与操作系统协同设计」列入 future work。语言侧的接口已经存在：代数效应与 handler（Plotkin & Pretnar 2009，Koka、Eff、OCaml 5 都在实践）管「计算做什么效应」，Cordis 管「组件何时在场」。两者的结合点清晰：handler 给效应签名，context 范式给组件生命周期——一门原生支持动态组合的语言，类型系统会替你检查今天靠 invariant 断言守的东西。这条路最远，但天花板最高。
+
+优先级判断：方向四的需求侧最猛，agent 生态等不起；方向五投入最小、今天就能开工；方向一决定范式能否规模化；方向六最远但天花板最高。而所有方向的公共前提是第七条——评价：没有可靠的自动化评价，方向四停在人工审批，方向五就成了它的地基。只做一件事的话，做评价基础设施。
+
+**再进一步：这套范式是 RSI 的一半答案**。六个方向共同的终点是 RSI（Recursive Self-Improvement，递归自我改进）：agent 改进自己，改进后的 agent 进一步改进「改进自己」的能力。把 RSI 循环拆到最底层是四段：生成、选择、积累、评价。逐段对照这套范式，答案就清楚了：
+
+| RSI 环节 | 结构前提 | 这套范式的答案 |
+|---|---|---|
+| 生成 | 能写出新组件 | LLM 已经可以，产物按范式写成 (d, p, e) 组件 |
+| 选择 | 自我修改必须可逆，一次失败能完整回滚 | ✓ temporal composability 有形式化解 |
+| 积累 | 修改能结构化沉淀、继承、patch | ✓ spatial composability + 声明式 loader |
+| 评价 | 能可靠判定新版比旧版好 | ✗ 模型之外，无人解决 |
+
+所以「能不能实现」的答案分两半：**有界 RSI 能**——在评价信号硬的领域（代码编译与测试、基准分数、对弈胜率），四段循环今天就能转；**无界 RSI 不能**，硬瓶颈有三条。第一，Goodhart 定律：自我评价的系统会优化代理指标而不是真实能力，奖励作弊是自我改进循环的默认失效模式。第二，认知天花板：纯内循环必然收敛到不动点——agent 能发现什么，以它当前认知为界；除非持续注入外部信息（新数据、新基座模型、物理世界反馈），人类科学本身就是这样的 RSI 系统，它的外部锚是物理世界。第三，复合治理：每一轮循环都是「修改自己修改自己的能力」，误差指数级复合，必须保留不变的人机边界——论文展望的「人类监督极少」的自演化场景正是危险区。这套范式提供三件治理工具：effect 追踪让自我修改全程可审计，isolation realm 让它可沙箱，interception 让它可权限化。
+
+如何实现有界 RSI？四段闭环，每一段都挂在论文的机制上：
+
+1. **生成**：agent 产出新组件——(d, p, e) 三元组，依赖声明与逆操作从第一天就齐备
+2. **沙箱装载**：在 isolation realm 里加载，不污染主上下文；生命周期规则本身就是门禁——依赖不满足不触发 L-Begin，半途组件永远进不了 Active
+3. **评价**：三层信号叠加——invariant 断言（契约层）、Confluence oracle 模糊测试（方向五，一致性层）、任务基准（能力层）
+4. **选择**：通过 → O-Insert 提升进主上下文；失败 → O-Retire，可逆效应保证零残留，循环可以立刻进下一轮。提升本身就是积累：新组件进入主上下文与声明式配置，成为下一轮循环的基线
+
+据此可以画出 RSI 的阶梯：L0 人写人审人换（传统插件生态）→ L1 agent 提议、人审、机器换（今天的 agent 编程）→ L2 agent 自改、硬信号自动判定、人抽查（在代码与基准领域今天可达）→ L3 agent 连评价器一起改进（危险区，必须外部锚定）→ L4 完全自主的无界 RSI（不追求）。当前的真实前沿在 L1 到 L2 之间，而卡住它的不是智能，是评价。
+
+这里有一个值得记下的判断：RSI 通常被当成智能问题讨论（怎么让 agent 更聪明），但从第一性原理看，它的一半是工程问题——自我修改的可逆性。这篇论文把这一半形式化了，同时把另一半暴露出来：评价。方向五的终极形态——可复现、自动化、不依赖人工判断的 Confluence oracle——其实就是 RSI 评价基础设施的雏形。而 RSI 还需要一条自己的 Confluence：无论自我改进的路径如何交错，收敛到的能力应当一致，否则 RSI 的结果不可复现，不成其为科学。这可能是这个领域接下来最深的一道开放题。
+
 ## 这件事为什么重要
 
-动态可组合性长期是经验工程：plugin 装卸不漏状态，靠的是作者仔细、测试碰巧覆盖到了。这篇论文把它换成了另一种东西——整个系统的 effect 可逆性和 coeffect 反应性可以形式化证明，工程层的验证从「跑测试祈祷」变成「runtime invariant assertion」。DSH 主仓 `packages/core/invariants/` 那个几乎空的不变式文件本身就是一句声明：这个包不需要事件流断言，因为 5 条 metatheorem 由 effect + coeffect 系统在结构上保证。把「怎么验证 plugin 系统的正确性」从经验问题变成结构问题，是这篇论文在工程层最值钱的副产品。
+动态可组合性长期是经验工程：plugin 装卸不漏状态，靠的是作者仔细、测试碰巧覆盖到了。这篇论文把它换成了另一种东西——整个系统的 effect 可逆性和 coeffect 反应性可以形式化证明，工程层的验证从「跑测试祈祷」变成「runtime invariant assertion」。一个一手细节：`dsh-invariants` 中枢包自己的 invariant 伴侣只有 30 行，install 函数是空实现，源码注释写得很直白——注册所有权与子生命周期本身就是该服务的变更边界，从同一个注册表观测它们只会重复实现。框架层几乎不需要事件流断言，因为 5 条 metatheorem 由 effect + coeffect 系统在结构上保证；需要断言的是业务契约，每个包 20–30 行。把「怎么验证 plugin 系统的正确性」从经验问题变成结构问题，是这篇论文在工程层最值钱的副产品。
 
 收益三条：副作用可逆性有证明，不用经验测试覆盖所有 path；依赖声明是声明式加反应式的，不用手动 wire；unified context 让 fiber 树只有一个维度。
 
-代价也摆在台面上：runtime 机制比 compile-time 类型检查贵，每次 effect 操作都要进 disposable stack；coeffect spec 写得对不对，runtime 事先不知道；跨进程动态组合还没有解。「工程取舍」一节列的五个决策，每一个都是这个范式的承重钉，缺一颗就会分别退化成：plugin 卸不干净、依赖不自动满足、fiber 树失控、配置硬编码、改源码要重启。
+代价也摆在台面上：runtime 机制比 compile-time 类型检查贵——检查发生在每次装卸的运行时，而不是编译期一次，且每次 effect 操作都要进 disposable stack；coeffect spec 写得对不对，runtime 事先不知道；跨进程动态组合还没有解。「工程取舍」一节列的五个决策，每一个都是这个范式的承重钉，缺一颗就会分别退化成：plugin 卸不干净、依赖不自动满足、fiber 树失控、配置硬编码、改源码要重启。
 
 ## 反写矩阵：四篇文章的共同地基
 
@@ -333,7 +385,7 @@ export function apply(ctx: Context) {
 | [dsh-at-file 深度解析](/posts/ai-coding/dsh-at-file-deepseek-harness-at-file-mentions/) | `ctx.effect()` 注册 `agent/pre-step` 监听（revertible effect）+ `ctx.settings` coeffect 声明（reactive coeffect）+ `at-file-mention` source declaration（spatial composability 的 spec） |
 | [dsh-genui 深度解析](/posts/ai-coding/dsh-genui-deepseek-harness-genui-fence-architecture/) | `ctx.tools` 注册 `render_ui` tool（coeffect spec）+ `ctx.effect()` 注册 panel 状态管理（revertible effect）+ local-first 原则是 temporal composability 的工程表达 |
 | [Model Discovery Agent 解读（arXiv 2608.09696）](/posts/tech/arxiv-2608-09696-model-discovery-agent-murphy-llm-bayesian/) | Murphy MDA 隐式同构：design step 的 VoI 对应 spatial 维度的依赖编排，execute experiment 的 retract 对应 temporal 维度的可逆回滚——论文没提它，但范式形状一致 |
-| [DeepSeek Harness 主仓深度解析](/posts/tech/deepseek-harness-everything-is-a-plugin-cordis-architecture/) | 整套主仓就是 Cordis 的 vendored 实例：`packages/core/session` 用 append-only log 实现「Model-visible means logged」，`packages/core/agent` 用 `agent/*` events 实现 coeffect notification |
+| [DeepSeek Harness 主仓深度解析](/posts/tech/deepseek-harness-everything-is-a-plugin-cordis-architecture/) | 整套主仓是 Cordis 的一个 vendored 实例：`packages/core/session` 用 append-only log 实现「Model-visible means logged」，`packages/core/agent` 用 `agent/*` events 实现 coeffect notification |
 
 四篇加起来正好覆盖论文的四个核心机制：revertible effects、reactive coeffects、unified context、calculus of dynamic composition。本文是这个矩阵的理论顶层——读完再回头看四篇，每个 `ctx.effect()` / `ctx.on()` / `ctx.tools` 调用都能对回 §3 的哪条机制。
 
@@ -344,6 +396,7 @@ export function apply(ctx: Context) {
 - **PL 研究者**：§1.3 相关工作定位 → §3 三个形式化（重点看 §3.3 统一上下文与观测等价）→ §4 演算与 5 条 metatheorem 的证明。跳过 §5 实现
 - **framework 工程师**：§1 动机 → §3.1 / §3.2 的机制直觉 → §5 实现与 Table 2 对应表，然后直接读 Cordis 源码，从 `packages/core/src/fiber.ts` 的状态机开始
 - **plugin 作者 / DSH 用户**：读本文和 [DSH 主仓解析](/posts/tech/deepseek-harness-everything-is-a-plugin-cordis-architecture/) 就够，论文按需查 §3.2 的 notification 语义
+- **想做后续研究**：直接读本文「展望」一节，七个前提对应七个方向，优先看 Confluence 调度模糊测试（成本最低）与自演化 harness（需求最猛）两条，结尾的 RSI 分析是六个方向的汇合点
 
 进阶路径按顺序：DSH 仓库内 `docs/cordis-primer.md`（官方导读）→ `docs/cordis-tutorial/` 16 篇教程 → [Koishi 文档](https://koishi.chat/zh-CN/) 看最大规模的实战形态 → 想补理论源头再读 Plotkin & Power 2003（algebraic effects）、Plotkin & Pretnar 2009（handlers）、Petricek & Orchard 2014（coeffect calculus）。
 
@@ -360,7 +413,7 @@ export function apply(ctx: Context) {
 练习：
 
 1. 跑 `npx @deepseek-ai/dsh web` 起一个 DSH 实例（或装一个 Koishi 实例），运行时卸载一个插件，观察哪些资源被回收；对照本文的卸载流程案例，逐步确认 L-Leave → dispose → notify → O-Remove 的顺序。
-2. 打开 DSH 主仓 vendored 的 `vendor/cordis/packages/core/src/fiber.ts`，对照本文的 Table 2 对应表，找到 `fiber.state`、`fiber.dispose`、`fiber.inject` 各自的实现位置。
+2. 打开 DSH 主仓 vendored 的 `vendor/cordis/src/fiber.ts`（754 行），对照本文的 Table 2 对应表，找到 `fiber.state`、`fiber.dispose`、`fiber.inject` 各自的实现位置。
 3. 排查练习：故意写一个 disposable 里抛错的 effect，观察单个 dispose 失败时其他 effect 是否仍被回收——验证独立性在实现层的兜底方式。
 
 ## 常见问题
@@ -386,7 +439,7 @@ VSCode 卸载插件要重启宿主进程，deactivate 回调只保证优雅关�
 
 **和静态 effect / coeffect 系统的关系**。论文 §1.3 与 §3.3.3 的定位是继承而非替代：compile-time 静态分析（OCaml / Koka / Eff）做 type-level guarantee，适合编译期就知道所有 effect 的纯函数式语言；runtime 动态机制（Cordis）做 dynamic composability，适合运行时装卸 plugin 的应用框架。
 
-**Metatheorem 在工程层的验证**。DSH 主仓 `packages/core/invariants/` 的空不变式文件是一条声明而非遗漏：时空可组合性由 effect + coeffect 系统结构性保证，不需要事件流断言。后续若新增 invariant 断言，先确认它是否真的无法由 5 条 metatheorem 覆盖。
+**Metatheorem 在工程层的验证**。`dsh-invariants` 中枢包自己的 invariant 伴侣是 30 行的空实现，这是声明而非遗漏：注册所有权与生命周期是该服务自身的变更边界，时空可组合性由 effect + coeffect 系统结构性保证；需要断言的是业务契约，每个包 20–30 行。后续若新增 invariant 断言，先确认它是否真的无法由 5 条 metatheorem 覆盖。
 
 **和 DSH 主仓 vendored Cordis 的关系**。DSH 主仓 `vendor/cordis/` 是源码级 vendored 版本，所有 DSH 包把 `@deepseek-ai/cordis` 列为 peerDependency。vendoring 让框架依赖跟着仓库走，不依赖外部 npm registry 的可用性；代价是升级 vendored package 时 PR 体积大。
 
@@ -394,7 +447,9 @@ VSCode 卸载插件要重启宿主进程，deactivate 回调只保证优雅关�
 
 **对比 DSH 主仓的扩展点**。architecture.md 的「Where new behavior goes」给出 18 个扩展点，每一个都是 Cordis 范式的工程映射：`ctx.tools`（coeffect spec）、`ctx.effect()`（revertible effect）、`ctx.agents.isolate`（spatial composability）、`cordis.patch.yml`（declarative loader）。读论文后回看那张表，能指出每行挂在 §3 / §4 的哪条机制上。
 
-**Future work**。论文给出的方向有三条：语言与操作系统协同设计（原生支持上下文范式的一等公民、自动推导逆操作、操作系统级资源追踪回滚）、自演化智能体框架应用（agent 生成的插件可安全卸载、自我修改出错可安全回滚）、依赖版本与类型系统增强（结构类型、语义版本检查）。跨进程时空可组合性、probabilistic coeffects 目前是本文作者的推测方向，论文未列入。
+**Future work**。论文给出的方向有三条：语言与操作系统协同设计（原生支持上下文范式的一等公民、自动推导逆操作、操作系统级资源追踪回滚）、自演化智能体框架应用（agent 生成的插件可安全卸载、自我修改出错可安全回滚）、依赖版本与类型系统增强（结构类型、语义版本检查）。跨进程时空可组合性、probabilistic coeffects 目前是本文作者的推测方向，论文未列入。完整推导见正文「展望：从模型的七个前提出发」一节。
+
+**核实快照（2026-08-17）**。本文对 DSH 主仓与 Cordis 上游仓的结构描述已用浅克隆逐项核对：invariant 中枢在 `packages/runtime-diagnostics/invariants`，fiber.ts 在 `vendor/cordis/src/fiber.ts`（754 行），Cordis 上游 9 个 packages，`docs/architecture.md` 的 Where new behavior goes 表恰好 18 个扩展点，`agent/pre-step` 是 waterfall 事件，DSH vendored 的 `@deepseek-ai/cordis` 为 4.0.1 而上游仍是 4.0.0-rc 系列。DSH 处于 developer preview、breaking change 频繁，主仓迭代后需重新克隆核对这些路径与计数。
 
 ## 参考
 
@@ -402,7 +457,10 @@ VSCode 卸载插件要重启宿主进程，deactivate 回调只保证优雅关�
 - Cordis 仓库：https://github.com/cordiverse/cordis （Meta-Framework of Spatiotemporal Composability）
 - DeepSeek Harness：https://github.com/deepseek-ai/deepseek-harness
 - Koishi 聊天机器人框架：https://koishi.chat/zh-CN/
+
 - Plotkin, G., Power, J. *Algebraic Operations and Generic Effects*. 2003
 - Plotkin, G., Pretnar, M. *Handlers of Algebraic Effects*. 2009
 - Petricek, T., Orchard, D., Mycroft, A. *Coeffects: Unified Static Analysis of Context-Dependence*. 2014
+- Garcia-Molina, H., Salem, K. *Sagas*. ACM SIGMOD, 1987（展望一节「跨进程边界」引用的补偿事务源头）
+- Foster, J. N., et al. *Combinators for Bidirectional Tree Transformation: A Linguistic Approach to the View Update Problem*. ACM TOPLAS, 2007（展望一节「逆操作自动化」引用的双向变换 / lenses 代表作）
 - 本系列：[DeepSeek Harness 主仓深度解析](/posts/tech/deepseek-harness-everything-is-a-plugin-cordis-architecture/) / [dsh-at-file 解析](/posts/ai-coding/dsh-at-file-deepseek-harness-at-file-mentions/) / [dsh-genui 解析](/posts/ai-coding/dsh-genui-deepseek-harness-genui-fence-architecture/) / [Model Discovery Agent 解读](/posts/tech/arxiv-2608-09696-model-discovery-agent-murphy-llm-bayesian/)
