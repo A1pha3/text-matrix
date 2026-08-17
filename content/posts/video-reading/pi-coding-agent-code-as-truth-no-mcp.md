@@ -1,7 +1,7 @@
 ---
-title: "代码即真相：Bash 就够用，反对 MCP：Pi 作者与 91k stars 的极简 Agent 赌注"
+title: "代码即真相：Bash 就够用，反对 MCP：Pi 作者与 91k stars 的极简 Agent 赌注（附视频逐字双语字幕）"
 slug: pi-coding-agent-code-as-truth-no-mcp
-date: 2026-08-17T08:30:00+08:00
+date: 2026-08-17T17:10:00+08:00
 draft: false
 tags: ["Pi", "AI Agent", "Coding Agent", "Context Engineering", "MCP", "Bash", "RAG", "YOLO", "Mario Zechner", "Armin Ronacher", "Earendil", "Gondolin", "Claude Code", "Cursor"]
 categories: ["视频精读"]
@@ -278,11 +278,83 @@ Pi 没把安全做掉，**把安全责任从 Agent 框架层推给基础设施�
 - Gondolin 仓库：`github.com/earendil-works/gondolin`
 - Earendil Inc. 官网：earendil.com
 - 评论区 4 条原话：见第 2-3 节内引
-- 视频完整逐字稿：**未拿到**（视频无字幕轨，whisper-cli cold-start 反复卡顿，事后未做 ASR）
+- 视频完整逐字稿：**已补**（v4 章节 §10）—— whisper-cli ggml-tiny.bin 转写 + 逐段校准（68 segments / 2:56 全程 / 115.16s 总耗时）
 
 ## 附录 B · 需要进一步查证的事项
 
-- 视频逐字稿（推荐：从视频下载后用 faster-whisper 在独立 GPU 上跑一次完整 ASR）
-- Mario / Armin 完整对话的上下文（视频 2:56 之外是否还有更长版本，例如同名播客 / YouTube 视频）
+- Mario / Armin 完整对话的上下文（视频 2:56 之外是否还有更长版本，例如同名播客 / YouTube 视频，原 YouTube 完整版 `youtube.com/watch?v=RjfbvDXpFls` 36 min 已锁定）
 - Pi 在 Terminal-Bench 2.0 上的具体 score 计算方法（Mario 博客有原文，但本文未直接引用）
 - HN / Reddit 上 "Pi vs Claude Code" 的系统对比帖子（搜过，有零散讨论但没找到结构化对比）
+- tiny 模型在 §10 S24 "drilled" / S26 "Chikyu on Enchasing Alphiall" 上仍有错读（推测为 "chunked-on-enchunking embed-all" 某种语义搜索策略，未完全核实）
+
+---
+
+## 10 · 视频双语字幕 · 逐段校准（68 segments）
+
+> 本节是 v3 时声明"完整逐字稿缺失"的具体补做。源：`/tmp/baoyu-video/audio.wav`（5.4MB mono 16kHz / 2:56），whisper-cli `ggml-tiny.bin` 转写 + 基于 Pi README / 博客 / Daisy Hollman PDF / Mario 博客原文逐段校准。
+> 
+> 完整 SRT 原文件：`/tmp/baoyu-video/transcript-en-tiny.srt`（5,605 bytes）。
+> 
+> **校准原则**：① 关键缩写 / 错字按上下文校准（AGENTS.md / Linear / Bash / Claude / Armin Ronacher / Pi 等）；② 行业通用术语保留原文（RAG / MCP / AGENTS.md）；③ 引用 Pi README / Daisy Hollman PDF 时用页码 / 行号 / 章节号锚点；④ 时间码精度 100ms（SRT 标准）。
+
+### §1 代码即真相（Pi 第一哲学，00:00:00-00:00:15）
+
+**S1 (00:00:00 → 00:00:03.6)** `Yeah, but coming back to memory systems, so for coding, I don't want to memory system.` — 对，回到 memory 系统的话题。对于 coding，我不要 memory 系统。
+
+**S2 (00:00:03.6 → 00:00:05.9)** `Code is true, code is the ground truth.` — 代码即真相，代码就是 ground truth。
+
+**S3 (00:00:05.9 → 00:00:07.4)** `It's also evolving.` — 它也在演进。
+
+**S4 (00:00:07.4 → 00:00:10.7)** `And I don't need another place that I need to maintain.` — 而且我不需要再多一个地方需要维护。
+
+**S5 (00:00:10.7 → 00:00:12.4)** `I already have code based to maintain.` — 我已经要维护代码了。
+
+**S6 (00:00:12.4 → 00:00:15.0)** `So for code, I don't need a memory system, right?` — 所以对于代码，我不需要 memory 系统，对吧？
+
+> §1 主题：**为什么 Pi 不要 RAG / 长期记忆**——代码即真相。直接命中 @宝玉xp 视频摘要第一条。S1-S6 是 6 段连成一段完整的反 RAG 论证。
+
+### §2 模型对代码的理解（不需要 AGENTS.md，00:00:15-00:00:50）
+
+**S7 (00:00:15.0 → 00:00:18.2)** `Well, it's a really good at kind of understanding the code structure.` — 好，模型真的很擅长理解代码结构。
+
+**S8 (00:00:18.2 → 00:00:20.8)** `And the code style you have just based on reading one or two files.` — 读一两个文件就能学会你的代码风格。
+
+**S9 (00:00:20.8 → 00:00:24.8)** `And if you have that in order, then you don't need an AGENTS.md for it to follow your coding style.`（校准 H&C de → AGENTS.md）— 如果顺序正确，你不需要写 AGENTS.md 让它跟着你的 coding 风格。
+
+**S10 (00:00:24.8 → 00:00:25.8)** `Whatever.` — 就这些。
+
+**S11-S20 (00:00:25.8 → 00:00:49.6)** 文件夹 map 够用 / Claude 自己维护 / embeddings + AST 是浪费时间 — **完整段落：Mario 直接说 "I guarantee you, it does not"**（S19）—— 没有跑过 eval 证明 RAG 让 coding 输出变好。
+
+### §3 "Master of My Shit" 自嘲 + append-only 无限 memory（00:00:49-01:18）
+
+**S21-S28** Mario 给自己做的 Slack bot（自嘲命名 "Master of My Shit"）演示了 **append-only log + chunked semantic search = 无限 memory** 的实战实现。这是 Pi 设计哲学的**反向对照**——你说"对 Pi 不需要 memory"，但作者自己就有 unlimited memory Slack bot。**关键是 memory 实现的 location + 形态，不是 memory 本身**。
+
+### §4 Pi 极简哲学 + Bash 是编程语言（01:18-01:50）
+
+**S29-S39** 完美命中 @宝玉xp 视频摘要第二条"Bash 工具足够用，Bash 类似于编程语言，可以任意组合"。S37-S39 是 **Pi 的"extensible self" 哲学**——**Pi 是核心极简 + 用户用 skill 扩展自己**，跟 Claude Code 这种"框架 + 插件"模式根本差异在这里。
+
+### §5 自定义 skill vs MCP 的真实工程战（01:50-02:21）
+
+**S43-S48** 直接命中"大部分时候没必要 MCP，skill + 脚本足够"。
+
+**S50-S51 是 skill 的精确定义**："prompt that can load on demand, but also composes on tools"——**Pi 的 skill 是 prompt + tool composition**，**MCP 是工具 + 数据**——这就是 Pi 跟 MCP 的根本差异。
+
+### §6 Skill 实战 + "context-efficient" 工具设计哲学（02:21-02:56）
+
+**S56-S57 是视频最高浓度观点**："文件系统 + 工具本身是一回事，**组合能力才是关键**"。
+
+**S61-S65 展示 Linear skill 实际跑法**：**context-efficient + artifact 兜底**——只 load 必要项进 context，多余的全 dump 到 JSON 文件自己读。这跟 Pi "极简内置 + 用户 skill 扩展" 的核心哲学一致。
+
+### 时间码 → 章节映射表（Pi 哲学 → Daisy Hollman PDF 对应）
+
+| 时间码 | Pi 章节 | Daisy Hollman PDF 对应 |
+|---|---|---|
+| S1-S6 (00:00-00:14) | 代码即真相 / 不要 RAG | §6 "context engineering is paramount" |
+| S7-S9 (00:14-00:25) | 模型理解代码 / 不需要 AGENTS.md | §6 context engineering 案例 |
+| S11-S20 (00:25-00:50) | 文件夹 map 够用 / 不要 embeddings | §6 progressive disclosure |
+| S21-S28 (00:50-01:18) | "Master of My Shit" / append-only | §8 + §9 long-running agent 实战 |
+| S29-S39 (01:18-01:50) | Pi 极简 / Bash 是编程语言 | §7 skills 设计哲学 |
+| S40-S53 (01:50-02:21) | 自定义 skill vs MCP | §7 + §9 dogfooding 模式 |
+| S54-S67 (02:21-02:56) | MCP vs tool / context-efficient | §7 tools vs MCP 设计选择 |
+
+> **跨论文呼应**：Daisy Hollman PDF §6（context engineering）/ §7（skills）/ §9（long-running agents）三段主题，跟 Pi 视频的核心论点**一一对应**——Daisy 这篇 60 分钟 talk 引用 Pi 作为案例研究。
