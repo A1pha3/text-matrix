@@ -11,9 +11,11 @@ tags: ["Astro"]
 
 # Astro：内容优先的现代化 Web 框架
 
+## 平台定位
+
 博客、文档站、营销页、电商详情页，90% 以上的内容是静态的。但过去十年，SSR 框架的默认做法是：服务端渲染 HTML，浏览器收到后，再加载整个框架运行时，把组件树在客户端重建一遍（水合，hydration）。即使页面里只有一个点赞按钮需要交互，用户也要等几十 KB 甚至上百 KB 的 JS 下载、解析、执行完，才能看到首屏。
 
-Astro 把这个默认值反过来：**默认只给 HTML，不给 JS。需要交互的组件，单独声明激活策略。** 截至 2026 年 4 月，[Astro](https://github.com/withastro/astro) 在 GitHub 上累计 58,820 Stars、3,387 Forks，由 [Astro](https://astro.build/) 团队维护。
+Astro 把这个默认值反过来：**默认只给 HTML，不给 JS。需要交互的组件，单独声明激活策略。** 截至 2026 年 4 月，[Astro](https://github.com/withastro/astro) 在 GitHub 上累计 58,820 Stars、3,387 Forks，由 [Astro](https://astro.build/) 团队维护。本文以 2026 年初的 Astro v5 为基准，涉及版本差异的写法会在对应小节标注适用版本。
 
 ## 总览：Astro 负责什么，不负责什么
 
@@ -29,6 +31,8 @@ Astro 是一个**构建编排层**，不负责 UI 框架和数据库的具体实
 | 部署 | 通过适配器对接 Vercel/Cloudflare/Netlify/Node | 服务器运维 |
 | 样式方案 | 原生支持 Scoped CSS、Tailwind、CSS Modules | 设计系统 |
 | 数据获取 | `fetch()` + `Astro.glob()` + 文件系统 | ORM、数据库直连 |
+
+下面先解释它是怎么从一个"默认零 JS"的框架默认值出发解决首屏问题的，再拆请求路径、内容管理和部署选型。
 
 ---
 
@@ -146,7 +150,9 @@ Astro v2 引入了 **Content Collections**（内容集合），为 Markdown/MDX 
 import { defineCollection, z } from 'astro:content';
 
 const blog = defineCollection({
-  type: 'content', // v5 新语法
+  // 沿用的旧语法（v4 及更早）；Astro v5 引入 Content Layer API，
+  // 已移除 type 字段，改用 glob() loader 声明内容来源
+  type: 'content',
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -248,7 +254,7 @@ const { slug } = Astro.params;
 ---
 ```
 
-混合模式从 Astro v3 开始成为默认选项：内容页保持静态，API 路由和需要实时数据的页面单独开 SSR，避免为少数动态页面把整站拖进 SSR 运行时。
+混合模式从 Astro v3 起提供，通过 `output: 'hybrid'` 显式开启，不是框架默认：内容页保持静态预渲染，需要实时数据的页面单独开 SSR。默认的 `output: 'static'` 依然是内容站的主流选择，不要为少数动态页面提前把整站拖进 SSR 运行时。
 
 ---
 
@@ -283,9 +289,10 @@ Astro 的集成（integrations）支持主流 UI 框架和部署平台。
 | `@astrojs/mdx` | MDX（Markdown + JSX） |
 | `@astrojs/sitemap` | 自动生成 sitemap.xml |
 | `@astrojs/partytown` | 第三方脚本延迟到 Web Worker |
-| `@astrojs/db` | 边缘数据库（基于 libsql/Turso） |
-| `astro-rss` | RSS/Atom Feed 生成 |
+| `@astrojs/rss` | RSS/Atom Feed 生成 |
 | `@astrojs/check` | TypeScript 类型检查 |
+
+关于 `@astrojs/db`：Astro 曾提供边缘数据库方案，但该项目已停止维护（EOL），官方建议改用 Turso/LibSQL 等方案；新项目不应再以它为默认选择。
 
 ---
 
@@ -445,6 +452,10 @@ import { ViewTransitions } from 'astro:transitions';
 - **复杂交互型应用**：看板、在线文档、多人协作工具——需要大量客户端状态和实时更新，React/Vue 生态更成熟
 - **需要服务端数据库直连的 CRUD 应用**：Astro 的 SSR 模式可以做，但配套的 ORM、认证、权限体系不如 Next.js/Nuxt 完善
 - **强状态管理需求**：Astro 官方不提供状态管理方案，需要自行引入 Zustand/Jotai/Pinia
+
+### 上手顺序
+
+先跑通 `npm create astro@latest` 的博客模板，把 Content Collections 的 schema 建起来；再引入一个交互组件（计数器、评论区），观察它如何影响产物的 JS 体积。大多数内容站用默认静态输出就够了，等真正出现需要实时数据的页面时，再按需加 `@astrojs/node` 或平台适配器开混合模式——不必为「将来可能用到」提前上 SSR。
 
 ---
 

@@ -179,6 +179,17 @@ python run.py --execution-provider openvino    # Intel
 
 需要说清楚：**内置审核防的是明显违禁内容，防不住「用某个熟人的脸做恶作剧」这类灰色用途**。工具本身是中性的，但真人授权和标注义务要靠使用者自己遵守。这也是为什么它在 2024 年走红后引发过媒体对 fraud 风险的讨论。
 
+## 一手材料与延伸阅读
+
+上面「零训练」「2.7 重写」「性能」三节的判断，都建立在原始仓库的公开材料上。想核实数字或深入源码，可以直接读这些一手来源，而不是转述：
+
+- 仓库与 README：[github.com/hacksider/Deep-Live-Cam](https://github.com/hacksider/Deep-Live-Cam)——零训练定位、道德声明、手工安装流程都在这里
+- Release Notes：[仓库 Releases 页](https://github.com/hacksider/Deep-Live-Cam/releases)——2.7 Ultimate「约 35,000 行」「TensorRT 最高 3 倍」等口径的原文出处
+- Quickstart：[deeplivecam.net quickstart](https://deeplivecam.net/index.php/quickstart)——预构建包（Lite / Ultimate）的官方下载入口
+- 面向真实用户的实操与合规讨论：社区论坛与各视频平台上的部署记录（来源混杂，需自行核对硬件与版本）
+
+其中「最高 3 倍」「35,000 行」「30+ 独有功能」都是官方 release notes 的自述口径，本文据此转述，未做独立基准复测。要用于决策时，建议先在自己硬件上跑一遍官方 Quickstart，再下结论。
+
 ## 谁该先上，谁可以等
 
 **值得先试的**：内容创作者、虚拟主播、想做实时换脸 demo 的 AI 开发者。用预构建包，从下载到第一次 Live 的投入很低，能快速验证「实时换脸」到底适不适合你的场景。

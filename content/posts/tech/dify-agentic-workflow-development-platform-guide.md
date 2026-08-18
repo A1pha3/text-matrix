@@ -11,11 +11,26 @@ tags: ["LLM", "AI Agent", "RAG", "工作流", "Python"]
 
 # Dify：开源 Agentic Workflow 开发平台从入门到精通指南
 
+## 目录
+
+1. 平台定位与整体架构
+2. 原理分析
+3. 架构分析
+4. 安装配置
+5. 实战演示
+6. 开发扩展
+7. 采用顺序与适用边界
+附录：术语速查
+
+## 1. 平台定位与整体架构
+
 [Dify](https://github.com/langgenius/dify) 把 AI 工作流、RAG 管道、Agent、模型管理整合到一个可视化界面里，开发者从原型到生产可以在一个平台上完成。
+
+这篇指南写给已经调过模型 API、但被「多步流程、日志、权限」这类与模型无关的活拖住的开发者。看完你应当能独立完成四件事：用 Docker Compose 部署一套可用的 Dify；把知识库问答和多步骤 Agent 工作流推到线上；用日志、标注和 A/B 对比持续改进 Prompt；在选型时能说清 Dify 和 LangChain 各自该什么时候用。
 
 取舍很清楚：Dify 的定制化上限受平台约束，极致灵活的团队更适合 LangChain/LangGraph。多数团队如果需求落在「快速验证 + 生产可观测」这个区间，Dify 效率更高。
 
-下面拆 Dify 的内部结构、部署方式和扩展点。
+下面依次拆平台的内部结构、部署方式和扩展点。
 
 ---
 
@@ -99,7 +114,7 @@ Agentic Workflow 把 AI 任务的执行单元从单次调用扩展到多步循�
 
 ### 3.1 整体架构
 
-Dify 采用微服务架构，所有组件通过 Docker 容器化部署。从功能层次上分四层：
+Dify 由多个职责独立的组件组成，全部通过 Docker 容器化部署。从功能层次上分四层：
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -147,7 +162,7 @@ Dify 的核心实体有以下几类：
 
 **Conversation（会话）** 关联一个 App 和一个终端用户，记录完整的多轮对话历史。每个 Message 属于一个 Conversation，支持人工标注和反馈。
 
-**Workflow（工作流）** 是 Dify v1.0+ 引入的核心能力。它由多个 **Node（节点）** 和 **Edge（边）** 组成，Node 代表一个处理单元（如 LLM 调用、条件分支、数据转换），Edge 代表数据流向。工作流支持条件分支、并行执行、循环等复杂控制流。
+**Workflow（工作流）** 是 Dify 编排复杂任务的核心能力，由多个 **Node（节点）** 和 **Edge（边）** 组成，Node 代表一个处理单元（如 LLM 调用、条件分支、数据转换），Edge 代表数据流向。工作流支持条件分支、并行执行、循环等复杂控制流。
 
 **Dataset（知识库）** 是 Dify 的 RAG 能力载体。每个 Dataset 包含多个 Document，文档经过切片（Chunking）处理后存入向量数据库（默认是 pgvector，PostgreSQL 的向量扩展）。Dify 支持从 PDF、PPT、Word、Markdown 等格式直接导入。
 
@@ -214,7 +229,11 @@ cp .env.example .env
 docker compose up -d
 ```
 
-启动完成后，打开浏览器访问 `http://localhost/install`，按照引导完成管理员账号创建和基础配置。整个过程不超过五分钟。
+启动完成后，打开浏览器访问 `http://localhost/install`，按引导创建管理员账号。部署是否健康，看三处：
+
+- `docker compose ps`：所有服务应为 `running`，没有 `Restarting` 或 `Exited`。
+- 首次访问 `/install` 是安装引导页；配置完成后访问 `/signin` 应进入登录页。
+- `docker compose logs -f api`：启动过程没有连接 PostgreSQL / Redis 失败的堆栈；第一次调用模型后，日志正常记录 token 消耗。
 
 `.env` 文件中需要关注几个关键配置项：
 
@@ -260,6 +279,9 @@ server {
 
     ssl_certificate /path/to/cert.pem;
     ssl_certificate_key /path/to/key.pem;
+
+    # 下面 location /api 用到的 api_limit zone，需在 http 上下文先定义，例如：
+    # limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
 
     client_max_body_size 100M;
 
@@ -486,7 +508,7 @@ for chunk in response:
 
 ### 6.3 插件机制
 
-Dify v1.0+ 引入插件系统，允许以插件形式扩展平台能力，无需修改核心代码。官方示例包括：SAML SSO（对接企业身份提供商）、自定义模型（接入官方未直接支持的模型服务）、Webhook 增强（在特定事件触发自定义业务逻辑）。插件开发文档在 Dify 官方文档的「扩展开发」章节，涉及 Python 打包、权限声明和生命周期钩子等标准机制。
+Dify 的插件系统（Plugin）允许以插件形式扩展平台能力，无需修改核心代码。官方示例包括：SAML SSO（对接企业身份提供商）、自定义模型（接入官方未直接支持的模型服务）、Webhook 增强（在特定事件触发自定义业务逻辑）。插件开发文档在 Dify 官方文档的「扩展开发」章节，涉及 Python 打包、权限声明和生命周期钩子等标准机制。
 
 ## 7. 采用顺序与适用边界
 
@@ -497,5 +519,22 @@ Dify v1.0+ 引入插件系统，允许以插件形式扩展平台能力，无需
 **采用顺序：** 先用 Docker Compose 跑通单机版，熟悉工作流编排和知识库；选一个真实业务场景做试点（推荐从 RAG 问答开始，门槛最低）；验证效果后迁移到生产配置（外部数据库 + S3 + Nginx）；按需开发自定义工具和插件。
 
 **深入方向：** 官方文档 docs.dify.ai；GitHub Discussions 社区；DAG 编排、条件分支、循环处理等高级工作流特性；Embedding 模型选择、分块策略、混合检索等 RAG 优化；插件生态还处于早期，适合贡献自定义工具。
+
+## 附录：术语速查
+
+| 术语 | 说明 |
+|------|------|
+| Application（应用） | Dify 的统一工作单元，聊天助手、Agent、工作流、RAG 应用都归到这一类 |
+| Agent App | 基于 ReAct 或 Function Calling 循环决策的应用 |
+| Workflow（工作流） | 用节点（Node）和边（Edge）编排的任务图 |
+| Node / Edge | Node 是处理单元，Edge 表示数据流向 |
+| Tenant（租户） | Dify 的顶级隔离单位，对应一个独立用户体系与应用配置 |
+| Dataset（知识库） | RAG 载体，文档切片后存入向量数据库 |
+| Chunking（切片） | 把长文档切块以便检索，策略影响检索质量 |
+| pgvector | PostgreSQL 的向量扩展，Dify 默认向量存储 |
+| Conversation / Message | 一次会话及其中的消息，支持人工标注与反馈 |
+| Model Runtime / Config | 底层对接模型商家的实现层 / 每租户的模型配置 |
+| Sandbox | 隔离执行用户代码的独立容器 |
+| Celery / Worker | 异步任务框架，承担日志写入、导出等耗时任务 |
 
 
