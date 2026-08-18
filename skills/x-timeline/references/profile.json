@@ -1,0 +1,12 @@
+{
+  "priority_authors": {
+    "tier1": [],
+    "tier2": [],
+    "tier3": []
+  },
+  "interest_domains": ["AI Agent", "量化交易", "独立开发"],
+  "muted_keywords": ["airdrop", "giveaway"],
+  "max_posts_per_day": 40,
+  "timeline_tab": "following",
+  "show_original_in_details": true
+}

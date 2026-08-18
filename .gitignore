@@ -82,6 +82,9 @@ scripts/check_article_elements.py
 
 image-cards/
 
+# 根目录 JS 依赖仅 bun-types（纯类型声明），无需 lockfile（2026-08-19 裁定）
+bun.lock
+
 # === 本地运行日志 pattern（per 2026-08-04 清理：删除历史，挡未来漏网）===
 # 历史 checklog/health-check 堆积已删除（本就因第 26/35 行不进 git）。
 # 这里补齐此前漏网的 pattern，挡 cron 未来再写进根目录。
