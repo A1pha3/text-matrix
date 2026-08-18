@@ -10,13 +10,13 @@ categories: ["技术笔记"]
 tags: ["数据工程", "学习路径", "开源资源", "DataExpert", "知识地图"]
 ---
 
-> **先给判断**：data-engineer-handbook 不是一本书，也不是一门课。它是一份 2026 年仍在被维护的资源地图——按"想成为数据工程师需要什么"这条主轴，把书、社区、工具、白皮书和社交媒体账号分成 12 个能力域。本文只做一件事：把它当成一张目录，告诉你每个抽屉里放的什么、什么时候去翻。
+> **先给判断**：data-engineer-handbook 不是一本书，也不是一门课。它是一份 2026 年仍在被维护的资源地图——按"想成为数据工程师需要什么"这条主轴，把书、社区、工具、白皮书和社交媒体账号归拢起来。本文只做一件事：把它当成一张目录，告诉你每个抽屉里放的什么、什么时候去翻。
 
 ## 1. 仓库身份与读者定位
 
-- **定位**：仓库自述为 "a repo with links to everything you'd ever want to learn about data engineering"。
+- **定位**：仓库自述为 "This repo has all the resources you need to become an amazing data engineer!"。
 - **规模**：43k★ / 8.9k forks，主要语言被标记为 Jupyter Notebook（README 中包含的训练营笔记本和可视化），但实质是一个 Markdown 资源索引。
-- **节奏**：最近一次 README 更新是 2026-08-03，说明维护活跃度并不只是"旧仓库刷星"。
+- **节奏**：2026 年 8 月初仍有新提交（README 及 `databricks-ai-bootcamp/` 均在持续更新），维护活跃度并不只是"旧仓库刷星"。
 - **License**：仓库本身未声明 License（README 仅注明引用第三方资源），写作前需要确认每个被引用资源的 License 兼容性。
 
 适合把它当入口的读者：
@@ -40,7 +40,7 @@ README 把资源切成 7 类，每一类都对应到 `*.md` 文件：
 | Books | `books.md` | 25+ | 主题书单与"必读三本" |
 | Communities | `communities.md` | 10+ | 答疑 / 招人 / 二手信息流 |
 | Companies / Tools | 嵌入 README | 12 段、120+ 链接 | 横向比较工具时用 |
-| Boot camps | `beginner-bootcamp/` `intermediate-bootcamp/` `databricks-ai-boot-camp/` | 3 个训练营 | 系统课 |
+| Boot camps | `beginner-bootcamp/` `intermediate-bootcamp/` `databricks-ai-bootcamp/` | 3 个训练营 | 系统课 |
 | Projects / Interviews | `projects.md` `interviews.md` | 2 份 | 实战 + 求职 |
 | Whitepapers / Blogs / Social | 嵌入 README | 11+ 公司博客、10 篇白皮书、YouTube 列表 | 信号源 |
 
@@ -72,7 +72,7 @@ LLM 应用库              → LangChain / LlamaIndex / AdalFlow
 
 - **`beginner-bootcamp/`**（4 周）：导论 + 软件清单。给零基础人群。
 - **`intermediate-bootcamp/`**（6 周）：导论 + 软件清单。给已经写过 SQL / Python 的人。
-- **`databricks-ai-boot-camp/`**：Databricks 平台专项，2026-08-03 启动报名，README 里直接给了免费注册入口。
+- **`databricks-ai-bootcamp/`**：Databricks 平台专项，2026-08-03 启动报名，README 里直接给了免费注册入口。
 
 三个训练营的 `introduction.md` 与 `software.md` 是 README 里指向的本地文件，意味着你读完 README 后还要再切到对应子目录读具体内容。
 
@@ -84,7 +84,7 @@ README 列了 25+ 本书的清单，但给了 3 本"必读三件套"：
 2. *Designing Data-Intensive Applications*（Martin Kleppmann）——分布式数据系统圣经。
 3. *Designing Machine Learning Systems*（Chip Huyen）——MLOps 视角补充。
 
-白皮书段给了 10 篇关键论文/报告，包括 Lakehouse 原始论文（CIDR 2021）、Google File System、MapReduce、Tidy Data 等。所有引用都给出了 arXiv 或 dl.acm.org 链接，方便溯源。
+白皮书段给了 10+ 篇关键论文/报告，包括 Lakehouse 原始论文（CIDR 2021）、Google File System、MapReduce、Tidy Data 等。所有引用都给出了 arXiv 或 dl.acm.org 链接，方便溯源。
 
 ## 6. 真正能用上的 3 个用法
 
@@ -101,11 +101,11 @@ README 列了 25+ 本书的清单，但给了 3 本"必读三件套"：
 ## 8. 入口
 
 ```text
-仓库：A1pha3 与 DataExpert-io 同源，地址 https://github.com/DataExpert-io/data-engineer-handbook
+仓库：https://github.com/DataExpert-io/data-engineer-handbook
 目录：
   - README.md
   - books.md / communities.md / interviews.md / newsletters.md / projects.md
-  - beginner-bootcamp/ / intermediate-bootcamp/ / databricks-ai-boot-camp/
+  - beginner-bootcamp/ / intermediate-bootcamp/ / databricks-ai-bootcamp/
 ```
 
 把这份地图作为"该学什么的清单"使用比当作"该读什么的书单"更准确——它的价值是覆盖面与节奏感，不是单点深度。

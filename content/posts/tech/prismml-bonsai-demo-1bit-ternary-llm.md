@@ -13,7 +13,7 @@ author: text-matrix
 
 ## 一句话判断
 
-**Bonsai-demo（[PrismML-Eng/Bonsai-demo](https://github.com/PrismML-Eng/Bonsai-demo)）是 PrismML 团队为 1-bit Bonsai 与 Ternary-Bonsai 两个家族的 LLM 提供的"本地一行启动"演示仓库，截至 2026-07 在 GitHub 上约 1.5k stars，Apache-2.0。** 它不是一个模型仓库（模型在 HuggingFace `prism-ml` 命名空间下），而是 **把模型 + llama.cpp fork + MLX fork + chat server + Open WebUI agentic demo + 12 路安装路径** 拼装成一条"在 Mac / Linux / Windows 上跑 27B 1-bit 视觉模型"的工程流水线。
+**Bonsai-demo（[PrismML-Eng/Bonsai-demo](https://github.com/PrismML-Eng/Bonsai-demo)）是 PrismML 团队为 1-bit Bonsai 与 Ternary-Bonsai 两个家族的 LLM 提供的"本地一行启动"演示仓库，截至 2026-07 在 GitHub 上约 1.5k stars，Apache-2.0。** 它不是一个模型仓库（模型在 HuggingFace `prism-ml` 命名空间下），而是 **把模型 + llama.cpp fork + MLX fork + chat server + Open WebUI agentic demo + 多平台安装路径** 拼装成一条"在 Mac / Linux / Windows 上跑 27B 1-bit 视觉模型"的工程流水线。
 
 如果你正在评估"在笔记本 / iPhone / 工位机上本地跑 27B 视觉 + 工具调用 LLM"的可行性，或者想搞清楚"1-bit / Ternary 和 Q4_K_M 究竟差多少内存、能装进什么设备"，这篇文章值得完整读完。
 
@@ -42,7 +42,7 @@ Bonsai-demo 的真实架构不是 README 顶部的 logo，而是"模型层 + 运
 └─────────────────────────────────┬────────────────────────────────────┘
                                   │
 ┌─────────────────────────────────▼────────────────────────────────────┐
-│  部署形态 (12 路 install / build paths)                                │
+│  部署形态 (各平台 install / build 路径)                                │
 │   macOS Apple Silicon (Metal) / macOS Intel (CPU)                    │
 │   Linux CPU / Linux CUDA / Linux Vulkan / Linux ROCm                 │
 │   Windows CUDA / Windows CPU                                         │
@@ -131,8 +131,8 @@ README 给出的 27B 内存对比表（weights + activations + FP16 KV cache + ~
 
 **关键观察**：
 
-- 27B 1-bit 比 27B 16-bit 内存压缩 **13.5 倍**（47.73 → 3.53 GiB）
-- 27B 1-bit 比 27B Q4_K_M 还省 **4.5 倍**（15.73 → 3.53 GiB）
+- 相比 27B 16-bit，27B 1-bit 内存约为其 **1/13.5**（47.73 → 3.53 GiB）
+- 相比 27B Q4_K_M，27B 1-bit 内存约为其 **22%**（15.73 → 3.53 GiB）
 - 启用 `BONSAI_KV4=1`（4-bit KV cache）后，100K ctx 从 ~13.7 GiB 降到 ~9.2 GiB
 - 100K context 在 Q1_0 上"很多消费设备都能装"（10.8 GiB）
 
@@ -296,7 +296,7 @@ Open WebUI (./scripts/start_openwebui.sh) → 完整 agentic demo + Jupyter 代�
 4. **试 vision + thinking + tool calling**——上传图片 + 开灯 + 选 MCP server
 5. **按需启用 BONSAI_SPECULATIVE=1 / BONSAI_KV4=1**——慢硬件上这两个对体验影响最大
 6. **再考虑 Open WebUI**——只在想要 code interpreter + 完整 agentic demo 时启用
-7. **想要 build from source**——按 README 给的 7 路 build 指引（macOS Apple Silicon / macOS Intel / Linux CPU / CUDA / Vulkan / ROCm / Windows CUDA / Windows CPU）
+7. **想要 build from source**——按 README 给的 build 指引（macOS Apple Silicon / macOS Intel / Linux CPU / CUDA / Vulkan / ROCm / Windows CUDA / Windows CPU）
 
 ### 适用边界
 

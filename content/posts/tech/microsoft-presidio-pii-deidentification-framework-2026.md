@@ -199,7 +199,7 @@ result = engine.anonymize(
 
 ### 6.1 Pattern recognizer 的核心是 checksum
 
-`CreditCardRecognizer` 不只是用正则匹配 16 位数字，它**先**匹配 `^(?:4[0-9]{12}(?:[0-9]{3})? | 5[1-5][0-9]{14} | ...)` 这种卡组织前缀正则，**再**用 Luhn 算法验证（Visa / Mastercard / Amex / Discover 各自的前缀 + Luhn 校验）。13 位 Unix 时间戳（`1748503543012` 这种）因此被 2.2.361 修复拒识别——之前的正则没考虑到这个边界条件。
+`CreditCardRecognizer` 不只是用正则匹配 16 位数字，它**先**匹配 `^(?:4[0-9]{12}(?:[0-9]{3})? | 5[1-5][0-9]{14} | ...)` 这种卡组织前缀正则，**再**用 Luhn 算法验证（Visa / Mastercard / Amex / Discover 各自的前缀 + Luhn 校验）。13 位 Unix 时间戳（`1748503543012` 这种）因此在 2.2.362 里被修复拒识别——之前的正则没考虑到这个边界条件，会把一串毫秒级时间戳误判成信用卡号。
 
 `CaSinRecognizer`（Canadian SIN，2026 新加）走的是 Luhn；`ZaIdNumberRecognizer`（South African ID，2026 新加）走 Luhn + 出生日期提取；`PhTinRecognizer`（Philippines TIN，2026 新加）走加权 modulo 11 checksum；`DeTaxIdRecognizer`（Germany Steueridentifikationsnummer）走 ISO 7064 Mod 11,10；`SePersonnummerRecognizer`（Sweden）走 Luhn 变体 + 支持 samordningsnummer（coordination numbers）。
 

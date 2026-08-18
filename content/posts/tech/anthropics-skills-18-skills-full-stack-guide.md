@@ -1,5 +1,5 @@
 ---
-title: "Anthropic Skills 仓库进阶实战：18个技能覆盖研发全链路"
+title: "Anthropic Skills 仓库进阶实战：18 个技能覆盖研发全链路"
 date: "2026-05-16T15:10:00+08:00"
 slug: "anthropics-skills-18-skills-full-stack-guide"
 github_repo: "anthropics/skills"
@@ -21,7 +21,7 @@ tags: ["Claude", "Agent Skills", "Anthropic", "MCP", "工作流自动化"]
 > - **Forks**: 18,257+
 > - **License**: 无（部分技能为 Proprietary）
 > - **语言**: Python
-> - **最后更新**: 2026-06-25
+> - **最后更新**: 2026-06-28（主干最近一次提交；README 主体 2026 年 5 月更新）
 
 **学习目标**：读完你能回答——
 - MCP Builder 四阶段流程里，哪一步最容易跳过，跳过以后会在哪一步栽跟头
@@ -32,17 +32,16 @@ tags: ["Claude", "Agent Skills", "Anthropic", "MCP", "工作流自动化"]
 先扫一眼这张三层分类表，再进入单个技能的细节，避免把不同层级的东西混在一起理解：
 
 **目录**
-- [一、MCP Builder：MCP 服务器开发的系统性方法论](#一 mcp-builder-mcp-服务器开发的系统性方法论)
-- [二、Frontend Design：用设计约束打破 AI 默认审美](#二 frontend-design 用设计约束打破-ai-默认审美)
-- [三、文档技能：支撑 Claude 文件能力的幕后架构](#三文档技能支撑-claude-文件能力的幕后架构)
-- [四、Skill Creator：从编写到评估的迭代闭环](#四 skill-creator 从编写到评估的迭代闭环)
-- [五、把这些技能串起来：一个完整的跨技能任务](#五把这些技能串起来一个完整的跨技能任务)
-- [六、技能速览与分类索引](#六技能速览与分类索引)
-- [七、安装与使用](#七安装与使用)
-- [FAQ](#faq)
-- [自测](#自测)
-- [采用路线图](#采用路线图)
-- [进阶路径](#进阶路径)
+- 一、MCP Builder：MCP 服务器开发的系统性方法论
+- 二、Frontend Design：用设计约束打破 AI 默认审美
+- 三、文档技能：支撑 Claude 文件能力的幕后架构
+- 四、Skill Creator：从编写到评估的迭代闭环
+- 五、把这些技能串起来：一个完整的跨技能任务
+- 六、技能速览与分类索引
+- 七、安装与使用
+- FAQ
+- 自测
+- 采用路线图
 
 | 层级 | 解决的问题 | 代表技能 | 输入 → 输出 |
 |------|-----------|----------|-------------|
@@ -51,13 +50,6 @@ tags: ["Claude", "Agent Skills", "Anthropic", "MCP", "工作流自动化"]
 | **文件格式层** | Agent 怎么读写真实世界的文件 | `docx`、`pdf`、`pptx`、`xlsx` | 自然语言指令 → .docx / .pdf / .pptx / .xlsx 文件 |
 
 这篇文章从三层中各挑一个最深的拆开：方法论层的 MCP Builder（四阶段开发流程）、品质控制层的 Frontend Design（反 AI 美学的设计约束）、文件格式层的四个文档技能（ZIP + XML 的内部实现），再加上横跨方法论层的 Skill Creator（技能开发的迭代闭环）。
-
-读完你能回答：
-
-- MCP Builder 四阶段流程里，哪一步最容易跳过，跳过以后会在哪一步栽跟头
-- Frontend Design 怎么用字体、配色、布局三个维度的约束让 AI 生成不像 AI 的界面
-- .docx 本质是 ZIP + XML——Agent 怎么读写这个结构
-- Skill Creator 的渐进式披露怎么降 token 成本
 
 ---
 
@@ -526,70 +518,9 @@ Skill Creator 的关键设计决策落在 L1 的 ~100 词怎么写得让触发�
 
 **如果你在做文档密集型工作**：四个文档技能（`docx`、`pdf`、`pptx`、`xlsx`）+ `doc-coauthoring`。注意许可证——文档技能是 Proprietary 的，如果是商业产品，建议自己封装文件读写逻辑。
 
-**如果你时间有限**：只盯 `skill-creator`。因为它能帮你把其他工具（不管是 Anthropic 技能还是你自建的）组装成一条可复用链路——这就是第五节的周报例子想说明的模式。
+**你时间有限**：只盯 `skill-creator`。它能帮你把其他工具（不管是 Anthropic 技能还是你自建的）组装成一条可复用链路——这就是第五节的周报例子想说明的模式。
 
----
-
----
-
-## 练习
-
-为了把本文真正学扎实，建议你完成下面三个练习：
-
-### 练习 1：开发一个自定义 MCP 服务器
-
-参考 `mcp-builder` 技能的四阶段流程，开发一个简单的 MCP 服务器：
-
-1. 选择一个简单的功能（如读取本地文件、调用外部 API）
-2. 使用 `@modelcontextprotocol/typescript-sdk` 创建 MCP 服务器
-3. 实现工具命名规范（`前缀_动作_资源`）
-4. 测试 MCP 服务器的运行和错误处理
-
-**目标**：掌握 MCP 服务器开发的基本流程，理解四阶段开发方法。
-
-### 练习 2：使用 Frontend Design 技能约束 AI 生成
-
-参考 `frontend-design` 技能的设计约束，创建一个自定义界面：
-
-1. 选择一个简单的界面场景（如登录页面、数据表格）
-2. 定义字体、配色、布局三个维度的约束
-3. 使用 Claude Code 生成界面
-4. 评估生成结果是否符合设计约束，是否像 AI 生成的界面
-
-**目标**：理解设计约束如何打破 AI 默认审美，掌握 `frontend-design` 技能的使用方法。
-
-### 练习 3：创建一个自定义文档技能
-
-参考四个文档技能（`.docx`、`.pdf`、`.pptx`、`.xlsx`），创建一个自定义的文档技能：
-
-1. 选择一个文档格式（如 Markdown、HTML）
-2. 理解 ZIP + XML 的内部实现
-3. 创建技能目录结构（`.claude-plugin/plugin.json`、`.mcp.json`、`commands/`、`skills/`）
-4. 测试技能的读写功能
-
-**目标**：理解文档技能的内部实现，掌握如何创建自定义文档技能。
-
----
-
-## 进阶路径
-
-### 阶段一：如果你刚接触 Agent Skills（1-2 周）
-- 从 `claude-api` 和 `skill-creator` 开始
-- 先搞清楚 Claude API 的调用模式
-- 再用 Skill Creator 把一个你重复过 3 次以上的工作流打包成技能
-
-### 阶段二：如果你在做内部工具（2-4 周）
-- `mcp-builder` + `docx` / `xlsx`
-- 先给团队的数据源写 MCP 服务器
-- 再用文档技能把数据变成可分发文件
-
-### 阶段三：如果你在做对外产品（1-3 个月）
-- `frontend-design` + `canvas-design` + `algorithmic-art`
-- 在 UI 和品牌物料上跟 AI 默认风格拉开距离
-
-### 阶段四：如果你在做文档密集型工作（3 个月+）
-- 四个文档技能（`docx`、`pdf`、`pptx`、`xlsx`）+ `doc-coauthoring`
-- 注意许可证——文档技能是 Proprietary 的
+这些路径对应的时间投入大致是：`claude-api` + `skill-creator` 一两周见效，`mcp-builder` + 文档技能用于内部工具需要两到四周，对外产品的设计技能组合则要尽量早开始，因为界面的累积迭代比一次性返工更省事。
 
 ---
 

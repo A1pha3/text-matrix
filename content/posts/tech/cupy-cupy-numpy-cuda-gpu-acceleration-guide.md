@@ -87,6 +87,8 @@ x.sum(axis=1)
 
 第三种是后来加的，目标是吸收 Numba CUDA 的写法，同时保留 CuPy 自己的 NDarray 内存模型。`cupyx/jit/` 子目录（`__init__.py`、`_builtin_funcs.py`、`_compile.py`、`_cuda_types.py`、`_interface.py`）就是这条线的实现。
 
+三条的取舍：**`ElementwiseKernel` 最省事**——自动处理广播、索引与 dtype，适合规整的元素级运算；**`RawKernel` 给你完整的 C++ 控制**，但广播与边界要自己写；**`cupyx.jit.rawkernel`** 用 Python 语法兼顾可读性，代价是首次调用要先做一次 AST 翻译。大多数场景从 `ElementwiseKernel` 起步就够，不必一上来就上 `RawKernel`。
+
 ### D. 厂商库直调与底层 CUDA
 
 `cupy.cuda.runtime`、`cupy.cuda.cublas`、`cupy.cuda.cusolver`、`cupy.cuda.cutensor`、`cupy.cuda.cusparse`、`cupy.cuda.nccl`、`cupy.cuda.graph` 这一批，是对 NVIDIA 库的 Python 直通封装，给那些要绕开 NumPy API 直接调 GPU 库的场景，比如稀疏求解、批量 einsum、跨 GPU 通信。
