@@ -1,11 +1,11 @@
 ---
 title: "AI副业早报 2026-08-19"
-date: 2026-08-19T06:59:15+08:00
+date: 2026-08-19T07:10:00+08:00
 slug: ai-side-hustle-morning-news-2026-08-19
-description: "2026年8月19日 AI 副业早报，精选过去 24 小时内的远程招聘、兼职机会、独立开发变现复盘与 AI 工具发布。"
+description: "2026年8月19日 AI 副业早报，精选过去 24 小时内招聘、项目、工具与真实赚钱机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "远程招聘", "独立开发", "V2EX"]
+tags: ["AI副业", "招聘", "V2EX", "ProductHunt", "独立开发"]
 hiddenFromHomePage: true
 ---
 
@@ -13,79 +13,64 @@ hiddenFromHomePage: true
 
 ---
 
-## 🔥 今日热门
+## 💼 招聘 / 求职
 
-### 独立开发者复盘：给"没有付费能力的受众"做了 7-8 个月产品，1 万访问 900 注册 0 付费
-来源: Reddit r/SideProject
-发布者: u/Same_Feature_2317
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vros67/i_spent_78_months_building_for_an_audience_that/)
-摘要: 作者辞去会计工作、开网约车覆盖房租，全职开发一款面向 TikTok 创作者的音频 Web 应用。短视频引流带来 1 万访客和 900 注册，但付费转化始终为 0，核心原因是目标受众本身没有付费能力。这条复盘对选择副业赛道的参考价值在于：流量数据好看不等于商业模式成立，先验证受众付费意愿再 all-in。
+### [全球远程] AI Power Labs 招 2 名全栈 AI 原生开发工程师（税前 30-50K/月 · 12 薪）
+来源: V2EX 酷工作
+发布者: AI Power Labs（hr@aipowerlabs.io 招聘）
+原文: [原文](https://www.v2ex.com/t/1235445)
+摘要: 团队面向欧洲时区招全栈 AI Native 工程师，要求约 5 年经验、能用 LLM/Agent 解决真实生产问题。流程分三段：30 分钟初聊、60-90 分钟项目与技术深聊、CEO 对齐远程协作与合同条件，期望申请人在简历里直接附 1-2 个最具代表性的项目和一条生产环境 AI/Agent 案例，匹配度高的候选人承诺会认真回复。投递邮箱 hechenxia@aipowerlabs.io。
 
-标签: #独立开发 #付费转化
+标签: #远程 #AI原生 #Agent #全栈
 
-## 💼 招聘/求职
-
-### 创作者 BD（Creator BD）：区块链支付创作者激励平台，纯远程合作
-来源: V2EX
-发布者: sheniandaji2026
-原文: [原文](https://www.v2ex.com/t/1235310)
-摘要: 一款基于区块链支付的创作者激励平台（订阅、打赏、付费内容，加密货币结算）招募创作者 BD，负责中腰部及头部创作者的招募与维护，帮助平台冷启动。要求 1 年以上创作者运营或网红 BD 经验，熟悉订阅制与付费内容变现模式，有 OnlyFans、Patreon 或国内直播平台经验者优先。
-
-标签: #创作者运营 #Web3
-
-### 兼职远程 UI/UX 设计师：海外 AI App 方向，项目制结算
-来源: V2EX
-发布者: iconboomup
+### 兼职远程 · 海外 AI App UI/UX 设计师（项目制结算）
+来源: V2EX 酷工作
 原文: [原文](https://www.v2ex.com/t/1235211)
-摘要: 招聘有海外项目经验的兼职 UI/UX 设计师，参与 AI 类 App 产品设计，需熟悉欧美用户审美，能独立完成视觉、界面到动效与演示视频的完整交付。合作以项目为单位结算，明确交付清单与时间节点，适合时间宽裕、想接海外 AI 项目的设计师。
+摘要: 招聘方向是欧美市场 AI 类 App 的兼职 UI/UX 设计师，要求熟悉欧美审美、能独立完成视觉规范到动效展示的完整链路。工作内容覆盖核心页面设计、转化路径建议、App Store 与广告素材制作，按项目或阶段结算，期望长期稳定合作。联系邮箱 iconboomup@gmail.com。
 
-标签: #兼职设计 #远程接单
+标签: #远程兼职 #UIUX #AIApp #海外项目
 
-### 高级后端工程师（DBA 方向）remote，20k-40k
-来源: V2EX
-发布者: wangluowangwang
-原文: [原文](https://www.v2ex.com/t/1235428)
-摘要: 远程岗位要求 8 年以上后端经验，PHP 与 Go 均有线上系统交付经历，主导过系统级重构或迁移。值得注意的是 JD 明确要求简历体现 Claude Code、Codex、Cursor 等 AI 编程工具的实际使用——AI 工具熟练度已成为远程后端岗位的硬性筛选项。
+### 武汉懒猫微服 · 应用交付全栈工程师（AI Coding 100%）
+来源: V2EX 酷工作
+原文: [原文](https://www.v2ex.com/t/1235323)
+摘要: 岗位明确写「工作需要 100% AI Coding，公司提供无限 token」，要求候选人有 Golang / Node.js / Python 后端经验、网络原理基础与 C 端审美。加分项包括项目经理或产品经历，以及美术/摄影/字体/排版等视觉设计功底——本质是「技术 + 审美 + AI Coding」三合一的复合岗位。简历投递 553359543@qq.com。
 
-标签: #后端开发 #远程招聘
+标签: #AICoding #武汉 #全栈 #产品审美
 
-### 远程 Web3 产品经理/项目经理岗：月薪 4000-7000 美元
-来源: V2EX
-发布者: wangxiaoer12138
+### 帮别人发 · 远程产品经理（CEX / DEX）
+来源: V2EX 酷工作
 原文: [原文](https://www.v2ex.com/t/1235388)
-摘要: 代发的远程岗位：cex 项目经理月薪 5500-7000 美元，产品经理岗位（cex/dex 均可）4000-6000 美元，要求有相关经验，通过 Telegram 联系。薪资信息以帖内为准，此类代发岗位建议自行核实雇主背景后再投递。
+摘要: 某 Web3 团队招远程产品经理，方向同时覆盖中心化交易所（CEX）与去中心化交易所（DEX）两条业务线。原文帖子正文给出了产品方向与工作内容，候选人可直接联系帖主转发简历。适合同时熟悉两条业务、有交易产品经验的产品候选人。
 
-标签: #Web3 #产品经理
+标签: #远程 #产品经理 #Web3 #CEX #DEX
 
-## 🛠️ 工具推荐
+## 🚀 AI 项目 / 工具
 
-### ElevenLabs MCP 登陆 Claude：在对话里创建和管理语音智能体
-来源: Product Hunt
-原文: [原文](https://www.producthunt.com/products/elevenlabs-mcp-2)
-摘要: ElevenLabs 发布的 MCP 集成允许用户直接在 Claude 对话中创建和管理语音智能体（voice agents），把语音开发流程嵌进现有工作流。对做语音类副业（客服机器人、有声内容自动化）的开发者，这是降低接入门槛的直接工具。
-
-### Shepherd Terminal：让 Codex 和 Claude 并排跑的常驻终端
+### Shepherd Terminal：让 Codex 与 Claude 并行常驻的开发者终端
 来源: Product Hunt
 原文: [原文](https://www.producthunt.com/products/shepherd-terminal-designed-for-agent)
-摘要: 一款为多智能体编程工作流设计的常驻终端，支持 Codex 与 Claude 并排使用。对同时用多个 AI 编程工具接单的开发者，可以减少窗口切换、统一管理会话，属于典型的"卖铲子"工具。
+摘要: Shepherd Terminal 把多 AI 编码代理的会话持久化作为核心卖点：关闭应用后会话依然存活，并自动追踪每个 agent 当前是「工作中」还是「等待中」，方便开发者随时回到对应文件与改动。代理本身能感知 Shepherd 的当前上下文，控制 tabs 与 panes，并支持通过浏览器侧 review 收集反馈。卖点介于「IDE 化终端」和「agent 编排面板」之间，主打多 agent 长时间协作场景。
 
-### Taku AI：直接借用他人调好的 AI 工作流配置
-来源: Product Hunt
-原文: [原文](https://www.producthunt.com/products/taku-ai)
-摘要: 主打"Borrow the best AI setups and make them yours"，让用户复用社区里验证过的 AI 工具配置。对想快速上手 AI 工作流又不想自己逐项调参的副业新手，是一个降低试错成本的入口。
+标签: #ProductHunt #AI工具 #Agent #开发者工具
+
+### Reddit 独立开发反思：7-8 个月、10k 访客、900 注册、0 付费
+来源: Reddit r/SideProject
+发布者: Same_Feature_2317
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vros67/i_spent_78_months_building_for_an_audience_that/)
+摘要: 作者原本是会计出身，辞掉工作并开 Uber 补贴房租，给 TikTok 创作者做了一款 8D 音频 web 工具，结果 7-8 个月下来 10k 访客、900 注册、0 付费，最后关停。25 条复盘里他总结了三条核心教训：目标用户是青少年玩票，没付费习惯也没预算；免费同类工具已经够好；自己在第 4 个月才接入支付，前批用户根本没看到价格。作者发帖目的是问其他独立开发者「你怎么在上线前就验证用户真的会付费」。对所有 AI 副业 / 独立开发候选人来说，这条都是「受众 ≠ 付费用户」的鲜活反面教材。
+
+标签: #独立开发 #复盘 #付费转化 #Reddit
 
 ---
 
 🦞 每日09:00自动更新
 
-**数据来源**：V2EX 酷工作、Reddit r/SideProject、Product Hunt
+**数据来源**：V2EX 酷工作、Product Hunt、Reddit r/SideProject
 
 **⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://www.v2ex.com/t/1235310 - 已验证内容匹配
-- ✅ https://www.v2ex.com/t/1235211 - 已验证内容匹配
-- ✅ https://www.v2ex.com/t/1235428 - 已验证内容匹配
-- ✅ https://www.v2ex.com/t/1235388 - 已验证内容匹配
-- ✅ https://www.reddit.com/r/SideProject/comments/1vros67/i_spent_78_months_building_for_an_audience_that/ - 已验证内容匹配
-- ✅ https://www.producthunt.com/products/elevenlabs-mcp-2 - RSS 源核验（发布于 8-17，24h 窗口内）
-- ✅ https://www.producthunt.com/products/shepherd-terminal-designed-for-agent - RSS 源核验（发布于 8-17，24h 窗口内）
-- ✅ https://www.producthunt.com/products/taku-ai - RSS 源核验（发布于 8-16，24h 窗口内）
+- ✅ https://www.v2ex.com/t/1235445 - 已验证：全球远程 AI Fullstack 招聘正文与标题一致
+- ✅ https://www.v2ex.com/t/1235211 - 已验证：AI App UI/UX 兼职招聘正文与标题一致
+- ✅ https://www.v2ex.com/t/1235323 - 已验证：武汉懒猫微服 AI Coding 全栈正文与标题一致
+- ✅ https://www.v2ex.com/t/1235388 - 已验证：远程 CEX/DEX 产品经理正文与标题一致
+- ✅ https://www.producthunt.com/products/shepherd-terminal-designed-for-agent - 已验证：多 agent 持久终端描述与发布内容一致
+- ✅ https://www.reddit.com/r/SideProject/comments/1vros67/i_spent_78_months_building_for_an_audience_that/ - 已验证：7-8 个月 0 付费复盘正文与标题一致
