@@ -81,6 +81,7 @@ interface Post {
   retweeted_by: string | null;
   is_promoted: boolean;
   entry_created_at: string; // ISO，入场时间（窗口判定用）
+  entry_time_reliable: boolean; // 入场时间是否可靠：GraphQL 恒真；DOM 兜底仅普通推为真、转推为假（原推时间≠入场时间）
   created_at: string; // ISO，原推发布时间（展示用）
   text: string;
   lang: string;
@@ -198,6 +199,7 @@ function extractTweet(node: any, entryMs: number | null): Post | null {
       is_promoted: promoted,
       // 入场时间：转推取外层（转推动作时间），普通推取自身发布时间
       entry_created_at: new Date(entryMs ?? outerCreatedAt ?? Date.now()).toISOString(),
+      entry_time_reliable: true, // GraphQL 路径有外层 created_at 作入场时间，双时间轴可靠
       created_at: new Date(parseTwitterDate(orig.legacy?.created_at ?? '') ?? outerCreatedAt ?? Date.now()).toISOString(),
       text: orig.legacy?.full_text ?? '',
       lang: orig.legacy?.lang ?? '',
@@ -446,8 +448,16 @@ async function ensureFollowingTab(cdp: Cdp): Promise<void> {
 
 // ============ DOM 兜底路径解析 ============
 
-export function parseDomItems(items: any[]): number[] {
-  const entryTimes: number[] = [];
+/**
+ * DOM 兜底解析。返回 {added, closableTimes}：
+ * - added：本页新增条目数（含转推），用于空页判定；
+ * - closableTimes：仅「普通推」的入场时间（DOM 上 time[datetime] 对普通推 = 入场时间、单调递减，
+ *   可作可靠翻页游标）。转推的 datetime 是原推时间（≠入场时间），绝不参与窗口闭合判定，
+ *   否则「旧帖新转」会误触发闭合、漏采其后全部新帖（设计文档 §3.3 双时间轴硬性规则）。
+ */
+export function parseDomItems(items: any[]): { added: number; closableTimes: number[] } {
+  const closableTimes: number[] = [];
+  let added = 0;
   for (const it of items ?? []) {
     try {
       if (it.tombstone) { state.tombstones++; continue; }
@@ -466,8 +476,9 @@ export function parseDomItems(items: any[]): number[] {
         is_retweet: isRetweet,
         retweeted_by: null, // DOM 兜底无法可靠区分转推者，留空
         is_promoted: /推广|Ad$/i.test(socialText),
-        // 兜底路径限制：time[datetime] 是原推时间，转推的双时间轴语义不可得（设计文档 §3.3）
+        // 兜底路径限制：time[datetime] 是原推时间；转推入场时间不可得，标记 entry_time_reliable=false
         entry_created_at: new Date(t).toISOString(),
+        entry_time_reliable: !isRetweet,
         created_at: new Date(t).toISOString(),
         text: it.text ?? '',
         lang: '',
@@ -477,11 +488,15 @@ export function parseDomItems(items: any[]): number[] {
         link_cards: (it.links ?? []).filter(Boolean),
         counts: { likes: 0, retweets: 0 },
       });
-      entryTimes.push(t);
-      state.earliestEntryMs = Math.min(state.earliestEntryMs, t);
+      added++;
+      if (!isRetweet) {
+        // 仅普通推的入场时间可靠，用于闭合判定与「最早入场时间」统计
+        closableTimes.push(t);
+        state.earliestEntryMs = Math.min(state.earliestEntryMs, t);
+      }
     } catch { /* 跳过损坏条目 */ }
   }
-  return entryTimes;
+  return { added, closableTimes };
 }
 
 const DOM_EXTRACT_JS = `(() => {
@@ -527,14 +542,14 @@ async function main() {
   }
   log(`CDP 端口：${port}`);
 
-  // 2. 打开 x.com/home
-  const wsUrl = await newTab(port, HOME_URL);
+  // 2. 新建空白标签并连接 CDP（先不导航，避免首屏 GraphQL 早于监听发出）
+  const wsUrl = await newTab(port, 'about:blank');
   const cdp = new Cdp(wsUrl);
   await cdp.connect();
   await cdp.send('Page.enable');
   await cdp.send('Network.enable', { maxTotalBufferSize: 100 * 1024 * 1024 });
 
-  // 3. GraphQL 响应拦截（先挂监听再等页面加载，防止漏首批请求）
+  // 3. GraphQL 响应拦截（必须先挂监听、再导航到 home，否则漏首屏 HomeLatestTimeline 响应）
   const pendingBodies: Promise<void>[] = [];
   let lastResponseAt = Date.now();
   cdp.on('Network.responseReceived', (p) => {
@@ -566,6 +581,9 @@ async function main() {
         .catch(() => { /* 响应体不可读，忽略 */ }),
     );
   });
+
+  // 监听就绪后再导航到 home，确保首屏 HomeLatestTimeline 响应不被漏拦（GraphQL 竞态修复）
+  await cdp.send('Page.navigate', { url: HOME_URL });
 
   // 4. 登录态检查（轮询至多 30 秒，避免冷启动加载慢导致误判）
   let status: 'ok' | 'login' | 'captcha' | 'loading' = 'loading';
@@ -614,12 +632,17 @@ async function main() {
 
     if (fallbackEngaged) {
       const items = await cdp.evaluate<any[]>(DOM_EXTRACT_JS).catch(() => []);
-      const times = parseDomItems(items);
+      const { added, closableTimes } = parseDomItems(items);
       state.pages++;
       flushRaw();
-      if (times.length > 0) {
+      if (added > 0) {
         emptyStreak = 0;
-        if (Math.min(...times) <= WINDOW_START) { state.window_closed = true; break; }
+        // 仅用普通推的可靠入场时间判定闭合；转推原推时间不参与，避免「旧帖新转」误判闭合
+        if (closableTimes.length > 0 && Math.min(...closableTimes) <= WINDOW_START) {
+          state.window_closed = true;
+          state.closed_reason = 'window_reached';
+          break;
+        }
       } else if (++emptyStreak >= EMPTY_STREAK_LIMIT) {
         log('连续空页，停止采集（窗口未闭合）');
         break;
