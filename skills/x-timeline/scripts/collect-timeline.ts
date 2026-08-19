@@ -350,7 +350,7 @@ async function launchChrome(profileDir: string, chromePath: string): Promise<num
     '--disable-gpu',
     '--disable-blink-features=AutomationControlled',
     '--start-maximized',
-    HOME_URL,
+    'about:blank', // 启动标签留空；采集标签由 newTab 建后先挂监听再导航，避免首屏 GraphQL 逃逸拦截
   ], { detached: true, stdio: 'ignore' });
   child.unref();
   // 等待 CDP 就绪

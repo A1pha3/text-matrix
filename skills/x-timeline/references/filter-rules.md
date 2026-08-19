@@ -15,7 +15,7 @@
 | 类型 | 判定信号 |
 | ------ | ------ |
 | 广告 | `is_promoted`/`promotedMetadata` 标记；"Ad""推广""Promoted" 文案 |
-| 时间窗外 | **入场时间**（转推 = 转推动作时间）早于窗口起点 |
+| 时间窗外 | **入场时间**（转推 = 转推动作时间）早于窗口起点；DOM 兜底路径 `entry_time_reliable=false` 的转推入场时间不可得，**不做超窗硬过滤**（采集游标已保证其在窗口内），避免「旧帖新转」误裁 |
 | 无法溯源 | 无有效 permalink（`post_id` 或作者缺失） |
 | 墓碑条目 | 原帖已删除/账号停用的占位项（GraphQL `TweetTombstone`、DOM 中 "This post is unavailable" 类文案） |
 

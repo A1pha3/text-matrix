@@ -135,5 +135,19 @@ parseDomItems(domItems); // 同一批节点跨滚动持久存在，重复提取�
 check('DOM 残留重复提取不膨胀 duplicates', state.duplicates === before.dups, `实际 ${state.duplicates}，期望 ${before.dups}`);
 check('DOM 条目总数不变', state.posts.size === before.posts + 2);
 
+// ---- T7: DOM 双时间轴闭合游标（缺陷B回归：旧帖新转不得误判闭合） ----
+console.log('T7 DOM 闭合判定只认普通推时间');
+const boundaryItems = [
+  { id: '600', handle: 'gina', name: 'Gina', datetime: '2026-08-18T07:00:00.000Z', text: 'fresh normal post', socialContext: '', tombstone: false, mediaAlts: [], links: [] },
+  { id: '601', handle: 'hank', name: 'Hank', datetime: '2020-01-01T00:00:00.000Z', text: 'old post freshly reposted', socialContext: 'Ivan 转推了', tombstone: false, mediaAlts: [], links: [] },
+];
+const domRet = parseDomItems(boundaryItems);
+check('返回结构含 added/closableTimes', typeof domRet.added === 'number' && Array.isArray(domRet.closableTimes));
+check('本页新增计数含转推（2 条）', domRet.added === 2, `实际 ${domRet.added}`);
+check('普通推入场时间进入闭合游标', domRet.closableTimes.includes(Date.parse('2026-08-18T07:00:00.000Z')));
+check('转推原推旧时间不进入闭合游标（防旧帖新转误判闭合）', !domRet.closableTimes.includes(Date.parse('2020-01-01T00:00:00.000Z')));
+check('转推标记入场时间不可靠', state.posts.get('601')?.entry_time_reliable === false);
+check('普通推标记入场时间可靠', state.posts.get('600')?.entry_time_reliable === true);
+
 console.log(failures === 0 ? '\n全部通过 ✅' : `\n${failures} 项失败 ❌`);
 process.exit(failures === 0 ? 0 : 1);
