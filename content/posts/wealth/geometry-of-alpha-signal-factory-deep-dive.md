@@ -607,8 +607,8 @@ AI 让这件事出现了一个新的拐点。验证流程一旦被冻结成纪�
 
 站内相关阅读：
 
-- [弱信号聚合与信号工厂：用数学和工程构建量化交易的护城河](https://txtmix.com/posts/quant-weak-signal-aggregation-and-signal-factory/)——本系列第三篇，本文的骨架来源。
-- [AGI 的数学基础到底是什么：从流形假设、对称性到信息几何](https://txtmix.com/posts/mathematical-foundations-deep-learning-agi-chern-simons/)——"四重境界"框架在深度学习语境下的校准版本。
+- [弱信号聚合与信号工厂：用数学和工程构建量化交易的护城河](https://txtmix.com/posts/wealth/quant-weak-signal-aggregation-and-signal-factory/)——本系列第三篇，本文的骨架来源。
+- [AGI 的数学基础到底是什么：从流形假设、对称性到信息几何](https://txtmix.com/posts/tech/mathematical-foundations-deep-learning-agi-chern-simons/)——"四重境界"框架在深度学习语境下的校准版本。
 
 ---
 
