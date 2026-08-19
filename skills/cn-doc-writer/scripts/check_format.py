@@ -28,6 +28,7 @@ from utils import (
     count_consecutive_blank_lines,
     is_in_inline_code,
     is_in_latex,
+    is_in_link_url,
     _parse_fence,
 )
 
@@ -87,6 +88,7 @@ class DocChecker:
         - YAML frontmatter / 代码块（由 should_skip 处理）
         - 行内代码 `...`（由 is_in_inline_code 处理）
         - LaTeX 公式 $...$（由 is_in_latex 处理）
+        - 链接 URL / 锚点 `](...)`（由 is_in_link_url 处理）
         - Markdown 换行符（行尾恰好 2 个空格）
         """
         errors = []
@@ -100,11 +102,13 @@ class DocChecker:
                     trailing = line[len(stripped):]
                     if trailing == "  ":
                         continue  # 恰好 2 个空格 = Markdown <br>
-                # 逐个匹配，跳过行内代码和 LaTeX 公式内的匹配
+                # 逐个匹配，跳过行内代码、LaTeX 公式和链接 URL 内的匹配
                 found = False
                 for m in info["pattern"].finditer(line):
                     col = m.start()
                     if is_in_inline_code(line, col) or is_in_latex(line, col):
+                        continue
+                    if is_in_link_url(line, col):
                         continue
                     found = True
                     break

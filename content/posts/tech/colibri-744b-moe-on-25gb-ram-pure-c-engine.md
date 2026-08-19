@@ -1,260 +1,227 @@
 ---
 title: "colibrì 引擎拆解：在 25GB RAM 上跑 744B MoE 模型，纯 C 实现，比 vLLM-Moet 快 2.5 倍"
 date: 2026-07-13T21:55:00+08:00
-lastmod: 2026-07-13T21:55:00+08:00
 slug: colibri-744b-moe-on-25gb-ram-pure-c-engine
 github_repo: "JustVugg/colibri"
-description: "JustVugg/colibri 仓库深读——纯 C 推理引擎，在 12 核 + 25GB RAM 的机器上跑 GLM-5.2（744B MoE）。6× RTX 5090 上单请求解码到 6.28-6.84 tok/s，比 vLLM-Moet TP4 快约 2.5×。零 Python 运行时依赖，约 370 GB 的 int4 权重从磁盘流式读取，MLA 压缩 KV cache 57×，自带 MTP 投机解码与 CUDA/Metal/HIP 多后端。"
+description: "JustVugg/colibri 仓库深读——纯 C 推理引擎，在 12 核 + 25GB RAM 的机器上跑 GLM-5.2（744B MoE）。6× RTX 5090 满驻留单请求解码 6.28-6.84 tok/s，比 vLLM-Moet TP4 快约 2.5×。所有数字对照仓库 README、docs/benchmarks.md 与源码逐条核实。"
 categories: ["技术笔记"]
 tags: ["GLM-5.2", "MoE", "vLLM"]
-author: "text-matrix"
 ---
 
-**[colibrì](https://github.com/JustVugg/colibri)** 把"小内存跑大模型"做到了工程上的极限：纯 C + OpenMP + AVX2/NEON，零 Python 运行时依赖，单文件 `c/glm.c` 加一组小 headers，就能在 12 核 + 25GB RAM 的笔记本上跑 744B 参数的 GLM-5.2（MoE，每 token 激活约 40B 参数）。
+# colibrì 引擎拆解：在 25GB RAM 上跑 744B 大模型，纯 C 实现
 
-在 6× RTX 5090 满配机器上，它单请求解码能到 6.28-6.84 tok/s，比同期 vLLM-Moet TP4 的 2.5-2.7 tok/s 快约 2.5 倍（[作者实测](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md)）。
+**[colibrì](https://github.com/JustVugg/colibri)** 把"小内存跑大模型"做到了工程极限：纯 C + OpenMP + AVX2/NEON，引擎本体零依赖，单个 `c/colibri.c` 加一组共享头文件，就能在 12 核 + 25GB RAM 的开发机上跑 744B 参数的 GLM-5.2——一个 MoE（混合专家模型），每个 token（词元）只激活约 40B 参数。
 
-## 系统地图：3 层抽象 + 4 个核心组件
+在 6× RTX 5090 满配机器上，全部 expert 驻留后单请求解码 6.28-6.84 tok/s，比同机 vLLM-Moet TP4 的 2.3-2.7 tok/s 快约 2.5 倍（[作者实验记录](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md)）。数字先摆在这里，下文逐个核对它们的来源和适用边界。
+
+## 目录
+
+- 学习目标
+- 系统地图：三层驻留 + 流式读取
+- 实测数字：18 台机器的社区 benchmark
+- 三个关键工程决策
+- 任务流示例：一条消息怎么流过引擎
+- 6x5090 优化阶梯：从 2.30 到 6.84 tok/s
+- 生态定位：CPU-first 的边界实验
+- 常见问题与排查
+- 练习与自测
+- 进阶阅读
+- 参考文献
+
+## 学习目标
+
+读完本文，你应该能回答：
+
+- 744B 参数为什么能装进 25GB RAM，瓶颈到底卡在哪一层；
+- colibrì 的量化为什么分成 int4、f32、int8 三档，各自解决什么问题；
+- MLA 如何把 KV 状态压到原来的约 1/57，以及压完之后还能持久化意味着什么；
+- 哪些 benchmark 结论可以外推到自己的机器，哪些不能。
+
+## 系统地图：三层驻留 + 流式读取
 
 ```mermaid
 flowchart TB
-    subgraph Tier1["Tier 1: 内存 (~9.9 GB resident)"]
-        D1["dense part (int4)<br/>attention + shared expert + embedding<br/>~17B params · 9.9 GB"]
-    end
-    subgraph Tier2["Tier 2: 磁盘 (~370 GB streaming)"]
-        D2["21,504 routed experts<br/>75 MoE layers × 256 experts + MTP head<br/>~19 MB each · on-demand stream"]
-    end
-    subgraph Tier3["Tier 3: VRAM (optional, opt-in)"]
-        D3["CUDA / Metal pinned experts<br/>hottest per .coli_usage history<br/>0.16-150 GB configurable"]
-    end
-
+    D1["Tier 1 RAM（~9.9 GB 常驻）<br/>dense：attention + shared expert + embedding · int4"]
+    D2["Tier 2 磁盘（~370 GB 流式）<br/>19,456 routed experts · 每个约 19 MB"]
+    D3["Tier 3 VRAM（可选）<br/>CUDA / Metal / Vulkan 钉住热门 experts"]
     D1 --> D2
-    D1 --> D3
     D2 -->|async readahead| D2
     D3 -.->|cold fall-through| D2
-
-    style D1 fill:#d4f0d4,stroke:#4a8
-    style D2 fill:#fff4cc,stroke:#c80
-    style D3 fill:#d4e8ff,stroke:#48c
 ```
 
-先回答最直接的问题：744B 参数怎么塞进 25GB？不是靠压缩，是靠**分层驻留 + 流式读取**：
+744B 参数塞进 25GB，靠的不是压缩，而是**分层驻留 + 流式读取**。GLM-5.2 每个 token 只激活约 40B 参数，其中随 token 变化的 routed experts 只占约 11 GB——模型不需要整个装进快内存，只需要在被路由到时及时到场：
 
-- **Tier 1（RAM, ~9.9 GB）**：GLM-5.2 的 dense 部分（attention + shared expert + embedding + lm_head），共 ~17B 参数，int4 量化后 9.9 GB，整个对话保持常驻。
-- **Tier 2（NVMe/SSD, ~370 GB）**：19,456 个 routed experts（75 个 MoE 层 × 256 + MTP head 的 256 个），每个约 19 MB（int4 容器）。按 layer 加载，每 token 激活约 8 个 experts，从磁盘流式读取 + per-layer LRU cache + OS page cache 作为免费 L2。
-- **Tier 3（VRAM, optional）**：opt-in 的 CUDA / Metal 后端，把 `.coli_usage` 历史里最热的 experts 钉到 GPU 显存。
+- **Tier 1（RAM，约 9.9 GB）**：dense 部分——attention（注意力机制）、shared expert、embedding（嵌入向量）——约 17B 参数，int4 容器，整个会话常驻。
+- **Tier 2（磁盘，约 370 GB）**：19,456 个 routed experts（75 个 MoE 层 × 256，加 MTP head），每个约 19 MB（int4）。每 token 每层激活 8 个，按需从磁盘流式读取，配合 per-layer LRU cache（缓存）和操作系统 page cache。
+- **Tier 3（显存，可选）**：opt-in 的 CUDA / Metal / Vulkan 后端（backend），把 `.coli_usage` 历史里最热的 experts 钉进 GPU。
 
-分层之外，还有个容易被忽略的决策：Norm/router/bias 全部保持 f32（"small and sensitive"），只对 matmul 的权重做 int4/int8 量化。路由层因此不会因量化抖动。
+README 把这个思路称作"给权重做 JIT"：像即时编译器只编译热路径一样，引擎只把被路由证明需要的 expert 搬进快层。分层之外还有一个容易被忽略的决策：norm、router（路由器，给每个 token 的 expert 打分的网络）、bias 全部保持 f32——源码注释直说它们"小且敏感"，量化只发生在 matmul 权重上，路由因此不会被量化噪声带偏。
 
-## 真实硬件上的真实数字：13 个社区 benchmark
+## 实测数字：18 台机器的社区 benchmark
 
-仓库 README 里有 13 个真实机器的 benchmark（[issue #2, #4, #5, #12, #31, #39, #72, #87, #101, #103, #104, #107, #113](https://github.com/JustVugg/colibri/issues)），挑 6 个有代表性的：
+全部实测数据在 [docs/benchmarks.md](https://github.com/JustVugg/colibri/blob/main/docs/benchmarks.md)，覆盖 18 台真实机器，挑有代表性的 9 行：
 
-| 机器 | RAM | Disk | 配置 | 测得 tok/s | 关键观察 |
-|---|---|---|---|---|---|
-| WSL2, 12 cores, **25 GB**, VHDX | 25 | 1 GB/s buffered | 默认 | **0.05-0.10** | 作者的开发机基线 |
-| M5 Max 18C / 128GB unified / SSD | 128 | 4 GB/s cold | 默认, MTP off | **1.06** | 笔记本跑 744B 达 ~1 tok/s |
-| M5 Max + **Metal backend** | 128 | — | 46.9 GB warm pin, MTP off | **2.06** | Metal fastest datapoint yet |
-| Mac Mini M4 Pro 48GB + Metal | 48 | 6.59 GB/s F_NOCACHE | --ram 38 | 0.30 | 1/3 RAM 击败 32-core 9950X |
-| Ryzen 9 9950X 32T / 123GB / **PCIe 3** | 123 | 1.51 GB/s buffered | 默认 | 0.10 | profile: 66% disk |
-| 同机换 **PCIe 5.0** (8.81 GB/s O_DIRECT) | 123 | **8.81 GB/s** | 同 history | **0.28** | ×5.8 disk → ×2.9 tokens，profile flips to **57% matmul** |
-| EPYC 7443 24C / **430 GB** / VM | 430 | ~1 GB/s (VM) | 77.5 GB pin, MTP off | **1.00** | hit 98%, disk eliminated → matmul bound |
-| Ryzen 7 9800X3D 16T / 70GB / PCIe 5.0 / RTX 5090 | 70 | **10.51 GB/s** O_DIRECT | MTP off, pin 24GB | 0.41 | disk-bound,**CUDA expert tier ≈ 0%**(AVX-512 CPU matches 5090) |
-| 6× RTX 5090 + 251GB RAM, **full residency** | 251 | 0 (full VRAM+RAM) | REPIN=16, OMP_BIND=spread | **6.28-6.84** | 比 vLLM-Moet TP4 快 2.5× |
+| 机器 | RAM | 磁盘读速 | 配置 | tok/s | 观察 |
+|---|---|---|---|---:|---|
+| WSL2 12 核（作者开发机） | 25 GB | ~1 GB/s | 默认 | 0.05-0.10 | 项目起点的诚实基线 |
+| M5 Max 18 核 | 128 GB | ~4 GB/s cold | 默认，MTP off | 1.06 | 笔记本跑 744B |
+| M5 Max + Metal 后端 | 128 GB | — | 46.9 GB warm pin | 2.06 | 目前最快的单点数据 |
+| Mac Mini M4 Pro | 48 GB | 6.59 GB/s F_NOCACHE | `--ram 38` | 0.30 | 1/3 的 RAM 跑过 32 线程 9950X |
+| Ryzen 9 9950X · PCIe 3 | 123 GB | 1.51 GB/s | 默认 | 0.10 | profile：66% 在磁盘 |
+| 同机换 PCIe 5.0 盘 | 123 GB | 8.81 GB/s O_DIRECT | 同历史 | 0.28 | 盘速 ×5.8 → token ×2.9，profile 翻转为 57% matmul |
+| EPYC 7443 · 虚拟机 | 430 GB | ~1 GB/s | 77.5 GB pin | 1.00 | expert 命中 98%，磁盘出局 |
+| Ryzen 7 9800X3D + RTX 5090 | 70 GB | 10.51 GB/s O_DIRECT | pin 24 GB | 0.41 | CUDA expert 层收益 ≈ 0% |
+| 6× RTX 5090 · 251 GB | 251 GB | 全驻留 | REPIN=16 | 6.28-6.84 | 比 vLLM-Moet TP4 快约 2.5× |
 
-从这些数字里能抽出四条结论：
+从这些数字里能抽出四条站得住的结论：
 
-1. **小 RAM 机器 → RAM cap 是瓶颈**。24GB RAM 的 270K Plus 即使 disk 比作者快 2.7×，decode 仍 cold——engine auto-cap 只能放 2 个 expert/layer。
-2. **128+ GB RAM → matmul-bound**。EPYC 7443 430GB RAM 跑出 98% expert hit rate，disk 几乎消失。
-3. **Disk swap 实验最干净**。9950X 同机换盘 ×5.8 bandwidth → ×2.9 tokens，**profile 翻盘**（66% disk → 57% matmul）。
-4. **CUDA expert tier 不一定赢**。9800X3D 上 AVX-512 CPU matmul 已匹配 5090，CUDA tier 收益 ~0%——CUDA 价值在 CPU 弱时才显现。
+1. **小 RAM 机器上，RAM cap 才是瓶颈。** 24GB RAM 的机器引擎自动把 expert cache 压到每层 2 个，盘再快 decode 也是冷的。
+2. **RAM 足够大时瓶颈转向 matmul。** 430GB 的 EPYC 7443 跑出 98% 命中率，磁盘等待基本消失。
+3. **换盘实验是最干净的证据。** 同一台 9950X、同一段使用历史，只换盘：带宽（bandwidth）×5.8 换来 token ×2.9，profile 从 66% disk 翻成 57% matmul。
+4. **GPU 层不是默认划算。** 9800X3D 上 AVX-512 CPU matmul 与 RTX 5090 打平，CUDA expert 层收益接近零——仓库自己的原话："GPU 层只有当 CPU 是短板时，才挣回它占的显存。"
 
-## 三个最关键的工程决策
+## 三个关键工程决策
 
-### 1. int4 量化分两层：dense int8 per-row + streamed int4 packed
+### 1. 量化分三档：int4 主体、f32 敏感层、int8 MTP 头
 
-colibrì 的量化是分层的，不是统一一种格式：
+colibrì 的量化（用低比特存权重以省空间和带宽）不是一刀切，而是按角色分档。`c/colibri.c` 文件头注释把两条关键决策写在最前面：
 
 ```c
-/* glm.c:93 - 量化容器定义 */
-/* fmt: 0 F32, 1 INT8, 2 INT4 (2/byte), 3 INT2 (4/byte). q4 ospita sia int4 che int2 packed. */
-typedef struct { int fmt; float *qf; int8_t *q8; uint8_t *q4; float *s; int O, I; } QT;
+/* c/colibri.c 文件头（摘译） */
+/* - router sigmoid + noaux_tc (n_group=1) 配合 routed_scaling_factor */
+/* - Norm/router/bias 保持 f32（小且敏感） */
 ```
 
-**dense 部分（attention / shared expert / embedding）**：
-- **int8 per-row + per-row scale**（dequant-on-use）
-- 因为 dense 部分是常驻 RAM，量化质量影响整个对话
-- 用 `maddubs` (AVX2) / `vmlal_s8` (NEON) 整数点积
-- 实测 int8 matmul 119 GFLOP/s，比 f32 快 1.4-2.5×
+- **dense 部分与 routed experts 都走 int4 容器**：dense 约 17B 参数驻留 9.9 GB；expert 每个约 19 MB，总量约 370 GB。官方推荐 gs64（64 个权重共享一个缩放因子）容器。
+- **norm / router / bias 保持 f32**：这些张量小、对误差敏感，量化省不了多少空间，却会让路由抖动。
+- **MTP head 必须 int8**：int4 的 MTP head 草稿接受率只有 0-4%，投机解码等于没开（[#8](https://github.com/JustVugg/colibri/issues/8)）。
 
-**streamed experts**：
-- **packed int4 (2 值/字节) + per-row scale**
-- 因为 experts 是 disk-resident（容量敏感），越小越好
-- 同样的 per-row scale，dequant-on-use 进 matmul
+为什么不把精度压得更狠？仓库用受控 A/B 回答了代价：在 OLMoE（7B 的开源 MoE）上做 fp16 vs int4 对照，纯量化损失约 -8.2pp；按行缩放的 int4 在难题上侵蚀 logit 余量，gs64 分组缩放能找回约 63% 的损失（[#108](https://github.com/JustVugg/colibri/issues/108)、[#225](https://github.com/JustVugg/colibri/issues/225)）。
 
-**为什么不直接全 int4？**
-仓库 docs 里 colibrì 给出的 [2026-07-11 6x5090 实验](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md) 实测：
-- int4 single-row stays f32（int4 单行比 f32 慢——kernel overhead > 节省）
-- int4 batch 1.8× speedup
-- int8 普遍 1.4-2.5× speedup
+### 2. MLA 把 KV 状态压到约 1/57，还能持久化
 
-所以 colibrì 实际是混合精度——用哪一档由实测形状决定，而不是套"全 int4 最快"的结论。
+GLM-5.2 用 MLA（Multi-head Latent Attention，多头潜在注意力）：每个 token 只保留压缩后的 latent 向量。摊到每个 token，KV 状态从约 32,768 个 float 降到 576 个，约 57×——README 与 `c/colibri.c` 源码注释给的是同一组数字。
 
-### 2. MLA 压缩 KV-cache：576 floats/token（vs 32,768 原始）
+两个实现要点：
 
-GLM-5.2 用 **MLA（Multi-head Latent Attention）**——和 DeepSeek-V3 一样的 trick：
+**a) weight absorption。** 解码时不逐 token 重建 K/V，而是把投影吸进 query（查询）一侧，只在 prefill 阶段算一次，decode 路径的注意力开销因此与历史长度解耦。Metal / CUDA / Vulkan 路径都有对应的 absorb 注意力核心。
 
-```c
-/* glm.c:145 - KV-cache MLA COMPRESSA */
-/* KV-cache MLA COMPRESSA: per token si tiene solo il latente normato [kv_lora] */
+**b) 持久化到 `.coli_kv`。** 源码注释写明每个 token 约 182 KB，append-only 文件。会话重开时零 re-prefill，README 声称输出与不中断的会话逐字节一致。按此估算：8 轮对话、每轮 4096 token，约产生 6 GB 持久化数据，第二天 reopen 可直接续聊，不付任何 prefill 成本。
+
+### 3. MTP 投机解码与 DSA：哪里赚、哪里亏
+
+GLM-5.2 自带 MTP（Multi-Token Prediction，多 token 预测）head：由它起草 token，主模型一次批量验证，有效时每 forward 产出 2.2-2.8 个 token。colibrì 在这里交过两笔学费，都记录在案：
+
+- **int4 head 不可用。** 接受率只有 0-4%，投机静默失效，只剩 15-18% 的验证开销（[6x5090 实验记录](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md)）。换 int8 head 后，干净文本上链式 top-1 接受率 69-79%。
+- **满驻留时投机反而亏。** MoE 里验证 batch 的每个位置路由到不同 expert，单 forward 的 expert 开销随 batch 近乎线性增长（实测 S=1 80 ms、S=2 168 ms、S=4 306 ms），摊薄不存在——即使 79% 接受率，DRAFT=1 仍亏约 5%。所以这台机器的 benchmark 要显式 `DRAFT=0`。
+
+DSA 稀疏注意力用 lightning indexer（闪电索引器）给每个 query（查询）只保留 top-k 个 key，k 由模型配置的 `index_topk` 决定。验证方式很硬：强制选全部 key，输出与稠密注意力逐 token 一致。结构化输出走另一条路：`GRAMMAR=file.gbnf` 语法强制 draft 在受约束的 JSON 场景下接受率接近免费。
+
+## 任务流示例：一条消息怎么流过引擎
+
+假设用户问"解释一下 MoE offloading"：
+
+```text
+Step 0: coli plan —— 读 safetensors 头，报告布局与 RAM/VRAM 预算（JSON 输出）
+Step 1: coli doctor —— 只读体检：模型目录、分片、引擎、RAM；exit 0 就绪 / exit 1 发现问题
+Step 2: load（约 30-32 秒）—— dense int4 进 RAM（9.9 GB）；异步 I/O 池（PIPE_WORKERS 默认 8 线程）；router-lookahead 预取线程（PILOT=1）
 ```
 
-**数字**：传统 MHA 的 KV 缓存摊到每个 token 约 **32,768 floats**（fp32），MLA 压缩后只剩 **576 floats**，约 **57× 缩小**。
+接着是每个 token 的循环：
 
-**两个关键的实现 trick**：
-
-**a) MLA weight absorption**（`g_absorb` 自适应）：
-```c
-/* glm.c:1407 */
-/* attenzione MLA con weight absorption: no per-token k/v reconstruction */
-/* q absorbs kv_b → context is projected after attention */
-```
-传统 MLA 实现需要在每 token 重建 K/V 矩阵。absorption 把 kv_b 矩阵吸到 Q 上，使得 **decode 路径不需要重建 K/V**——只在第一次 prefill 算一次。这是 decode 路径从 O(D²) 降到 O(D) 的关键。
-
-**b) 持久化到 .coli_kv**：
-```c
-/* glm.c:2832 - KV-cache persistence */
-/* costa ~182 KB/token. File <SNAP>/.coli_kv append-only: header (magic + dimensioni + ...) */
-```
-每 turn 结束后 KV-cache append 到 `.coli_kv`。第二天 reopen 时 zero re-prefill——[validated byte-identical to an uninterrupted session](https://github.com/JustVugg/colibri#kv-cache-persistence)。
-
-**对一个 4 小时对话**：8 turns × 182 KB/token × 4096 tokens = **6 GB 持久化**——一个会话可以"reopen"在第二天接续而无需任何额外 prefill。
-
-### 3. MTP 投机解码 + DSA 闪电索引器
-
-GLM-5.2 自带 **MTP head**（多 token 预测）。colibrì 的实现是 lossless + 有几个非显然的发现：
-
-**MTP head 必须是 int8**（int4 head acceptance 0%）：
-```
-The original mirror ships int4 MTP heads, which give 0% draft acceptance —
-speculation silently never engages and you lose the ~2× MTP lever.
-The int8 head gives the measured 39–59% acceptance.
-```
-int4 量化下，draft head 的 logits 精度不够，top-1 几乎永远选错——speculation 等于没用。int8 下接受率 39-59%，2.2-2.8 tokens/forward。
-
-**MTP 不是 byte-exact**：
-```
-Lossless in exact arithmetic — but not byte-identical to non-speculative greedy
-in practice. This isn't MTP-specific: colibrì's quantized integer kernels are
-shape-dependent, so any batched (S>1) or GPU forward rounds slightly differently
-from the single-token path, and int4 GLM-5.2 sits close enough to argmax ties
-that such a rounding change can flip a token.
-```
-**Argmax ties 触发**：int4 GLM-5.2 量化后，top-2 logits 经常打平——只要 forward 路径（batch 大小 / GPU vs CPU）变了，ties 会随机打破，token 翻转。
-
-**这就是为什么 colibrì 同时支持三种"draft 来源"**：
-- `DRAFT=n` — MTP head（int8）
-- `GRAMMAR=g.gbnf` — 语法强制 draft（JSON / 函数调用场景，~100% acceptance）
-- `--topp` — nucleus sampling 不直接 draft，但控制 expert 路由
-
-**DSA sparse attention**（`out-idx-*` 权重）：
-GLM-5.2 用 DeepSeek 风格的 **lightning indexer**，每个 query 选 top-2048 key（full/shared indexer layers）。验证：forcing selection to keep every key reproduces dense attention token-for-token。
-
-## 任务流案例：一次 chat 怎么流过整引擎
-
-假设用户问："解释一下 MoE offloading"。
-
-```
-Step 0: coli plan
-  → 读 safetensors headers
-  → 报告 dense=9.9 GB / 19456 experts × 19 MB ≈ 370 GB / RAM budget=9.9 GB / VRAM=0
-  → JSON 输出共享给 CLI / API server / Web UI / desktop shell
-
-Step 1: coli doctor (read-only)
-  → 验证 model dir / config / tokenizer / safetensors headers / engine exe / RAM
-  → exit 0 = ready, exit 1 = unsafe RAM, exit 2 = invalid CLI
-
-Step 2: load (~32s)
-  → dense int4 进 RAM (9.9 GB)
-  → 启动 8 个 async I/O threads (default IO_THREADS=8)
-  → 启动 router-lookahead pilot thread (PILOT=1)
-
-Step 3: forward(token)
-  → attention (dense int8, RAM)
-  → shared expert (dense int8, RAM)
-  → router (sigmoid + noaux_tc, f32)
-  → top-8 experts per token
-  → per-layer LRU cache lookup
-    → hit: 直接 matmul
-    → miss: pread + fadvise WILLNEED
-  → async I/O: 下一个 layer 的 experts 已经 prefetch
-  → MLA weight absorption (decode path)
-  → MTP draft head: 2-3 tokens/forward
-
-Step 4: KV-cache persist
-  → append MLA KV (~182 KB/token) 到 .coli_kv
-  → crash-safe (atomic rename)
-
-Step 5: 下一个 token (loop)
+```text
+Step 3: forward(token)，每层依次：
+  attention / shared expert（RAM 常驻）→ router 打分（f32）取 top-8 experts
+  per-layer LRU cache：命中直接 matmul；未命中 pread + WILLNEED hint，异步 I/O 同时搬下一层
+  MLA absorb 解码注意力
+Step 4: KV 追加写 .coli_kv（每 token 约 182 KB，crash-safe）
+Step 5: 下一个 token
 ```
 
 流式路径上有四个容易被忽略的细节：
 
-- **Router-lookahead prefetch**（`PILOT=1`）：71.6% 的 next-layer expert 可以从 current layer post-attention state 预测出来。dedicated I/O thread prefetch → 隐藏 disk latency。但作者实测在 dev box 上 disk 已经 ~80% 饱和，所以 measure neutral——它对 balanced 机器（disk / matmul 各 50%）才有效。
-- **Per-layer LFRU**：`--policy balanced` 启用 lossless live placement，每个 token 替换最冷的 4 个 pinned experts。
-- **Cap auto-raise**（[since 2026-07-10](https://github.com/JustVugg/colibri)）：128GB 机器的 expert cache cap 从 8 自动升到你的 RAM budget。**之前所有 benchmark 数据被低 cap 限制**——rerun 才能拿到真实数字。
-- **学习 cache**：`.coli_usage` 记录每次 session 实际路由到哪些 experts，startup 时自动 pin 最热的——colibrì 用得越多越快。
+- **Router-lookahead 预取**：下一层的路由有 71.6% 可以提前一层预测（源码注释的实测值），专用线程提前搬运，以隐藏磁盘延迟（latency）。但它只对磁盘与计算接近平衡的机器有效——作者的 dev box 磁盘已近饱和，收益测不出来；6x5090 上叠加 GPU staging 的版本甚至端到端变慢（5.39-5.44 tok/s），被回退。
+- **驱逐策略可调**：`--policy quality|balanced|experimental-fast` 三档，缓存驱逐用带滞后的 LFRU（最近最少使用 + 频率），避免把刚要热的 expert 踢出去。
+- **Cap auto-raise**：RAM 预算富余时，expert cache 上限自动抬高（[#12](https://github.com/JustVugg/colibri/issues/12)），`CAP_RAISE=0` 可关。这也意味着早期低 cap 时代的一些 benchmark 数字需要重跑才作数。
+- **学习 cache**：`.coli_usage` 每轮记录实际路由到的 experts，启动时自动钉住最热的——引擎用得越多越快。
 
-## benchmark 段：6x5090 的 5 步优化 ladder
+## 6x5090 优化阶梯：从 2.30 到 6.84 tok/s
 
-[2026-07-12 的 6× RTX 5090 实验](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md) 给了 colibrì 完整驻留后达到 **6.28-6.84 tok/s** 的优化路径：
+[实验记录](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md) 的完整阶梯，每步累加：
 
 | 优化步骤 | tok/s | 关键证据 |
 |---|---:|---|
-| Baseline: 150GB VRAM + 150GB RAM fixed placement | **2.30** | 4.15 s of disk waits per 20 tokens |
-| Full residency: 19,456 experts 全部 VRAM+RAM | **5.77** | 100% expert hit, zero disk waits |
-| In-session dynamic GPU repinning (REPIN=16) | **6.00** | expert compute 6.76s → 5.96s |
-| **24 cores + OMP_PROC_BIND=spread** | **+39.6% vs unpinned** | unpinned 3.64 → pinned 5.08 tok/s |
-| Prefill 校正全部 75 MoE layers once (454 ms, TTFT) + decode swap cap 32→16 | **6.28-6.84** | swap cost 0.18 → 0.09 s/round |
+| 基线：150 GB VRAM + 150 GB RAM 固定布局 | 2.30 | 每 20 token 有 4.15 s 在等盘 |
+| 全驻留：19,456 experts 全进 VRAM+RAM | 5.77 | 命中 100%，磁盘等待归零 |
+| 会话内动态重钉（REPIN=16） | 6.00 | expert 计算 6.76 s → 5.96 s |
+| 24 核 + OMP_PROC_BIND=spread | +39.6% | 未绑核 3.64 → 绑核 5.08 |
+| Prefill 一次校正全部 75 层（454 ms，计入 TTFT） | 6.05-6.08 | GPU expert 调用 36,865 → 37,285 |
+| decode swap cap 32 → 16 | 6.10-6.28 | swap 开销 0.18 → 0.09 s/轮 |
 
-**最终自动找到的 layout**：
+最终 96 token 贪心基准 6.28 tok/s，256 token 跑 6.84 tok/s——更长的解码摊薄了固定开销，所以引用速率必须带 token 数。自动找到的布局：
 
-```
-GPU experts:  9,343 / 19,456  (176.73 GB across six cards)
+```text
+GPU experts:  9,343 / 19,456  (六卡共 176.73 GB)
 RAM experts: 10,113 / 19,456  (~191.3 GB)
-Disk service/wait during decode: 0 s
+Decode 期间磁盘服务/等待: 0 s
 ```
 
-**benchmark 数字的三条限制**：
+这些数字有三条使用限制：
 
-**1. colibrì 并非总是比 vLLM 快。** 同 6×5090 上 vLLM-Moet TP4 是 2.5-2.7 tok/s，colibrì full residency 6.28-6.84 tok/s 快约 2.5×，但 cold cache 时只有 0.12 tok/s。
+1. **不是总快。** 同一台机器冷缓存的早上只有 0.12 tok/s；这里比的也只是单请求解码，vLLM-Moet 在高并发生产场景的吞吐量（throughput）优势不在此列。
+2. **GPU 层不是默认划算。** 9800X3D 上 AVX-512 CPU 已打平 5090；没有 AVX-512/VNNI 的老 CPU 不能外推这个结论。
+3. **量化损失要拆开归因。** int4 容器在 hellaswag/arc/mmlu 0-shot 均值 62.5%（[#108](https://github.com/JustVugg/colibri/issues/108)）；0-shot 打分不给推理模型"思考"机会，协议本身就会造成分数差，不能全记在量化头上。干净的量化代价测量是 OLMoE fp16 vs int4 同 harness A/B：-8.2pp。
 
-**2. Metal/CUDA 并非总是比 CPU 快。** 9800X3D 上 AVX-512 CPU matmul 已匹配 5090，CUDA tier 收益接近 0。colibrì 自己的说法："The GPU tier earns its VRAM only when the CPU is the weak link, not by default."
+## 生态定位：CPU-first 的边界实验
 
-**3. int4 量化有精度损失，但损失不能全归给量化。** 判断量化代价要拆开看：
+colibrì 在 LLM（大语言模型）inference（推理）生态里的位置很特殊——它测的是资源下限：
 
-- **评估协议本身也会造成分数差。** 0-shot log-likelihood MC scoring 不给 reasoning model "think" 机会。GLM-5.2 需要 chain-of-thought 输出，同一道题用 greedy completion 评分 vs log-likelihood MC 评分可能相差 20-30pp——这是评估协议问题，不是量化问题。
-- **量化损失的干净测量方式是 OLMoE fp16-vs-int4 A/B**。OLMoE 是 6.9B 参数的 MoE 开源模型，可在一台机器上跑 fp16 和 int4 两个版本，用同一套评测 harness。fp16-int4 delta 即为量化代价。仓库已备好 `c/coli bench` + `c/tools/eval_glm.py`。
-- **这些数字不能直接复制。** 6x5090 实验的 6.28-6.84 tok/s 是单请求 decode 速度，不是 aggregate throughput。9800X3D 上 AVX-512 CPU 匹配 5090 是 Zen4+ 的特例，老一代 Zen3 没有 AVX-512/VNNI。
+| 项目 | 定位 | 与 colibrì 的关系 |
+|---|---|---|
+| llama.cpp | 通用 CPU/GPU，dense 模型为主 | 同为轻量 C 系，MoE 流式不是主线 |
+| vLLM / SGLang | GPU 生产级 serving，连续批处理 | 目标是高并发，不是单机最小资源 |
+| ktransformers | MoE + CPU offload | 同类思路、更成熟；colibrì README 致谢里明确引用 |
+| colibrì | 小内存跑前沿 MoE 的极限实验 | 单文件纯 C、25GB RAM、引擎零依赖 |
 
-## 系统层判断
+colibrì 的护城河不在"快"，在"边界"：前沿 700B+ MoE 不一定需要 H100 多机集群，量化、分层、流式、投机、KV 持久化凑齐，25GB RAM + 1 GB/s 的盘也能回答问题——慢，但正确。它也不适合生产：单进程，HTTP 请求走有界 FIFO 队列（默认 8 个），最多 16 个独立 KV slot，没有 continuous batching。README 把自己定位成研究平台：列了一张开放假设表，并明确请求社区连同负结果一起发布——"一个受控的失败，比一个解释不通的快数字更有价值"。
 
-colibrì 处在 LLM inference 生态里一个很特殊的位置：**CPU-first 的工程边界测试**。
+## 常见问题与排查
 
-| 项目 | 定位 | 关键技术 | 速度（vs colibrì） |
-|---|---|---|---|
-| **llama.cpp** | 通用 CPU/GPU, dense 模型为主 | GGUF, metal/CUDA/Vulkan | colibrì 类似量级，但 MoE 不如 |
-| **vLLM** | GPU production serving | PagedAttention, continuous batching | 快 10-100× for production |
-| **SGLang** | Structured generation | RadixAttention, cache reuse | 类似 vLLM |
-| **ktransformers** | MoE + CPU offload | expert routing, AMX/AVX-512 | 与 colibrì 同类，更成熟 |
-| **colibrì** | **小内存跑前沿 MoE 极限** | int4 + streaming + MLA + MTP + DSA + 学习 cache | **单文件纯 C, 25GB RAM, 0 依赖** |
+**25GB 机器真的能跑 744B 吗？** 能，但要对速度有预期：作者的 25GB 开发机冷缓存 0.05-0.1 tok/s。README 的说法是"慢但正确"，速度主要由磁盘随机读决定。
 
-**colibrì 的护城河不在"快"，在"边界"**：前沿 700B+ MoE 模型不一定需要 H100 + 多机多卡，只要工程足够细致（量化 + 分层 + 流式 + 投机解码 + 持久化 KV），它就能在 25GB RAM + 1 GB/s NVMe 上回答问题。它不适合 production——单进程、单序列（或 8-slot FIFO queue），没有 continuous batching。更重要的是，它把自己定位成研究平台：README 里列了一堆开放假设，并明确请求社区发布"受控的负结果"——一个严谨的失败比一个解释不通的快数字更有价值。把每个优化都当假设、用端到端 A/B 验证的姿态，比"快多少"本身更难被复制。
+**需要 GPU 吗？** 不需要。仓库的支持表里五个模型家族全部标注不需要 GPU，GPU 只是可选加速层。
 
-## 参考资源
+**怎么判断我的盘够不够快？** 用仓库自带的 `iobench` 按引擎的真实读法测（19 MB 并行随机读）。注意 #86 的坑：buffered 模式在大内存机器上测到的是 page cache，要看真数字用 O_DIRECT；macOS 没有 O_DIRECT，F_NOCACHE 也挡不住已被缓存的页。
 
-- **仓库**：[JustVugg/colibri](https://github.com/JustVugg/colibri)（Apache 2.0）
-- **核心代码**：`c/glm.c` + `c/olmoe.c` + CUDA / Metal / HIP(ROCm) 后端（AMD GPU 支持于 2026-07 加入）
-- **实验文档**：[6× RTX 5090 完整驻留 6.28-6.84 tok/s](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md) + README 13 个社区 benchmark
-- **配套组件**：`c/doctor.py` | `c/resource_plan.py` | `c/openai_server.py` | `web/` | `desktop/`
-- **GLM-5.2 权重**：[Z.ai 发布](https://huggingface.co/THUDM/glm-5.2)（MIT license）
+**开了 MTP 反而更慢？** 满驻留场景下投机净亏 10-37%，而 `DRAFT` 默认自动开启 3 层草稿。显式 `DRAFT=0` 关掉再对比。
+
+**输出陷入重复、不结束？** 先确认用的是 gs64 容器：早期按行缩放的 int4 镜像测出差约 9pp，正是 think-mode 死循环的根因（[#455](https://github.com/JustVugg/colibri/issues/455)）；MTP head 也要确认是 int8 文件。
+
+**服务返回 HTTP 429？** FIFO 队列满了或等超时（默认队列 8、超时 300 秒），`GET /health` 可看排队计数。
+
+## 练习与自测
+
+**练习 1**：用 `iobench` 测自己机器的磁盘读速，对照 [docs/benchmarks.md](https://github.com/JustVugg/colibri/blob/main/docs/benchmarks.md) 的 back-of-envelope 预测表，看你的机器落在哪一档。
+
+**练习 2**：不想下载 372 GB？先跑 OLMoE（约 4 GB 权重、8 GB RAM 即可）：`make -C c olmoe` 编译后指向转换好的模型目录，观察 `coli plan` 输出的布局 JSON 和 `coli doctor` 的体检项。
+
+**自测三题**（答案散在上文）：
+
+1. 744B 模型在 25GB RAM 上能跑，是因为权重压得更狠，还是因为别的？
+2. MTP head 为什么必须 int8，而主体权重可以用 int4？
+3. 9950X 换盘实验为什么被认为是最干净的瓶颈证据？
+
+## 进阶阅读
+
+- [docs/tuning.md](https://github.com/JustVugg/colibri/blob/main/docs/tuning.md)：全部调优开关与策略。
+- [docs/benchmarks.md](https://github.com/JustVugg/colibri/blob/main/docs/benchmarks.md)：基准协议与全部社区数据点。
+- README 的开放假设表：路由历史 vs LRU、双 SSD、投机盈亏面——每一行都是一个可认领的实验。
+- 对照阅读：[ktransformers](https://github.com/kvcache-ai/ktransformers)（同类 MoE offload）、[llama.cpp](https://github.com/ggml-org/llama.cpp)。
+
+## 参考文献
+
+- 仓库：[JustVugg/colibri](https://github.com/JustVugg/colibri)（Apache 2.0；GLM-5.2 权重由 Z.ai 以 MIT 许可发布）
+- 实验记录：[GLM-5.2 on 6× RTX 5090（2026-07-12）](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md)
+- 基准数据：[docs/benchmarks.md](https://github.com/JustVugg/colibri/blob/main/docs/benchmarks.md)
+- 推荐权重容器：[mastouri/GLM-5.2-colibri-int4-g64-with-int8-mtp](https://huggingface.co/mastouri/GLM-5.2-colibri-int4-g64-with-int8-mtp)
+- 相关 issue：[#8（int4 MTP head 缺陷）](https://github.com/JustVugg/colibri/issues/8)、[#108 与 #225（量化代价测量）](https://github.com/JustVugg/colibri/issues/108)、[#455（gs64 容器修复）](https://github.com/JustVugg/colibri/issues/455)

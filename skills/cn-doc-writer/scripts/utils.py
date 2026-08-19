@@ -339,6 +339,40 @@ def is_in_inline_code(line: str, col: int) -> bool:
     return False
 
 
+def is_in_link_url(line: str, col: int) -> bool:
+    """检查指定列位置是否在 Markdown 链接的 URL 部分 `](...)` 内
+
+    链接 URL / 锚点（如 `](#中文anchor)`）是机器生成内容，
+    无法插入空格，不应参与中英文空格等文本格式检查。
+
+    Args:
+        line: 行文本。
+        col: 列位置（0-based）。
+
+    Returns:
+        True 表示在链接 URL 内。
+    """
+    i = 0
+    while i < len(line):
+        start = line.find("](", i)
+        if start == -1:
+            return False
+        url_start = start + 2
+        depth = 1
+        j = url_start
+        while j < len(line) and depth > 0:
+            if line[j] == '(':
+                depth += 1
+            elif line[j] == ')':
+                depth -= 1
+            j += 1
+        # URL 跨度为 [url_start, j - 1)
+        if url_start <= col < j - 1:
+            return True
+        i = j
+    return False
+
+
 def count_consecutive_blank_lines(lines: List[str]) -> List[Tuple[int, int]]:
     """找到连续空行超过 2 行的位置
 

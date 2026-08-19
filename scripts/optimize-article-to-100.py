@@ -61,8 +61,14 @@ def score_article(content):
     if re.search(r'[\u4e00-\u9fa5] [a-zA-Z]', content) or re.search(r'[a-zA-Z] [\u4e00-\u9fa5]', content):
         score["可读性"] += 5
     # 段落长度
+    # 纯列表/表格等结构化块不受 10 行限制（目录超 9 项属常态），只约束长文本段落
     paragraphs = content.split('\n\n')
-    if all(len(p.split('\n')) < 10 for p in paragraphs if p.strip()):
+
+    def is_structured_block(p):
+        lines = [l for l in p.split('\n') if l.strip()]
+        return bool(lines) and all(re.match(r'^\s*([-*+] |\d+[.)] |\|)', l) for l in lines)
+
+    if all(len(p.split('\n')) < 10 or is_structured_block(p) for p in paragraphs if p.strip()):
         score["可读性"] += 5
     # 自然表达 - 检查AI味道
     ai_patterns = ["值得注意的是", "不难发现", "从某种意义上说", "可以看出", "在此基础上"]

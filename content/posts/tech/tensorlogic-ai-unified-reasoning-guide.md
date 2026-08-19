@@ -4,7 +4,6 @@ date: "2026-04-24T19:10:00+08:00"
 slug: "tensorlogic-ai-unified-reasoning-guide"
 github_repo: "Kocoro-lab/tensorlogic"
 description: "TensorLogic 是基于 Pedro Domingos 论文的 Python 实现，通过 Tensor 方程统一神经推理和符号推理。Boolean 模式零幻觉、RESCAL 自动谓词发明、Transformer/RNN 全部用 Tensor 方程表达，FB15k-237 MRR 0.347 超越 LibKGE 参考实现。"
-draft: false
 categories: ["技术笔记"]
 tags: ["知识图谱", "Transformer"]
 ---
@@ -13,15 +12,15 @@ tags: ["知识图谱", "Transformer"]
 
 <!-- truncate -->
 
-## 学习目标
+## 读完本文你应该能做到
 
-阅读本文后，你应该能够：
+读完本文，你应该能够：
 
 1. **理解 TensorLogic 的核心价值**——为什么需要神经符号统一推理，它解决了什么痛点
 2. **掌握两种推理模式**——Boolean 模式的零幻觉符号推理 vs Continuous 模式的可学习概率推理
-3. **运用 TensorLogic 进行知识图谱推理**——从嵌入学习到多跳关系组合
+3. **运用 TensorLogic 进行知识图谱推理**——从嵌入向量学习到多跳关系组合
 4. **实现谓词自动发明**——用 RESCAL 分解从数据中自动发现隐藏关系
-5. **评估适用场景**——知道什么时候用 TensorLogic，什么时候用 LLM
+5. **评估适用场景**——知道什么时候用 TensorLogic，什么时候用 LLM（大语言模型）
 
 ---
 
@@ -35,17 +34,17 @@ tags: ["知识图谱", "Transformer"]
 2. [概念详解](#二概念详解)
    - Tensor Programs（张量程序）
    - Boolean 模式 vs Continuous 模式
-   - Embedding Space（嵌入空间推理）
+   - Embedding Space（嵌入向量空间推理）
    - Predicate Invention（谓词自动发明）
 3. [系统架构分析](#三系统架构分析)
    - 整体架构
    - 核心模块详解
-   - Transformer 与 RNN 实现
+   - Transformer（Transformer 架构）与 RNN 实现
 4. [快速入门](#四快速入门)
    - 环境要求
    - 安装方式
    - 示例运行
-   - API 最小使用
+   - API（应用程序接口）最小使用
 5. [基准测试与性能分析](#五基准测试与性能分析)
    - FB15k-237 知识图谱基准
    - 内部基准测试套件
@@ -59,10 +58,9 @@ tags: ["知识图谱", "Transformer"]
    - 与 LLM 的互补关系
 8. [局限性与未来方向](#八局限性与未来方向)
 9. [总结](#九总结)
-10. [自测题](#自测题)
-11. [练习](#练习)
-12. [进阶路径](#进阶路径)
-13. [常见问题](#常见问题)
+10. [自测与练习](#自测与练习)
+11. [继续深入](#继续深入)
+12. [常见问题](#常见问题)
 
 ---
 
@@ -107,14 +105,14 @@ tags: ["知识图谱", "Transformer"]
 
 ### 1.4 与 Kocoro-lab 其他项目的关系
 
-TensorLogic 与同组织的 **ShanClaw**（macOS 原生 AI Agent CLI）形成互补：
+TensorLogic 与同组织的 **ShanClaw**（macOS 原生 AI Agent（智能体）CLI（命令行工具））形成互补：
 
 | 项目 | 定位 | 技术栈 |
 |------|------|--------|
 | **TensorLogic** | 推理引擎/底层框架 | Python + PyTorch |
-| **ShanClaw** | Agent 上层应用 | macOS 原生 CLI + Shannon Gateway |
+| **ShanClaw** | Agent 上层应用 | macOS 原生 CLI + Shannon Gateway（网关） |
 
-```
+```text
 ShanClaw (Agent应用)
     ↓ 调用
 TensorLogic (推理引擎) ←→ 知识图谱/规则库
@@ -163,7 +161,8 @@ TensorLogic 支持两种推理模式，适用不同场景：
 | **审计追溯** | 合规性检查 | 每步可追溯 |
 
 **机制**：
-```
+
+```text
 事实: parent(Alice, Bob) = 1
 规则: grandparent(X, Y) :- parent(X, Z) ∧ parent(Z, Y)
 
@@ -176,7 +175,7 @@ TensorLogic 支持两种推理模式，适用不同场景：
 - 输出概率值（0-1 之间）
 - 可学习的嵌入和关系矩阵
 - 完全可微，可纳入神经网络 pipeline
-- 支持 temperature 控制确定性
+- 支持 temperature（温度）控制确定性
 
 **适用场景**：
 
@@ -188,7 +187,8 @@ TensorLogic 支持两种推理模式，适用不同场景：
 | **嵌入学习** | 实体/关系向量化 | 端到端训练 |
 
 **机制**：
-```
+
+```text
 score(subject, relation, object) = subject^T × relation_matrix × object
 
 # 分数 > threshold → 关系成立
@@ -224,7 +224,8 @@ W_grandparent = W_parent @ W_parent
 ```
 
 **训练过程**：
-```
+
+```text
 1. 初始化：随机实体嵌入 + 随机关系矩阵
 2. 批量加载：正样本三元组 + 负样本三元组
 3. 前向计算：score(head, relation, tail)
@@ -247,7 +248,8 @@ W_grandparent = W_parent @ W_parent
 | **可解释性** | 取决于人工设计 | ✅ 关系矩阵可查看 |
 
 **RESCAL 分解原理**：
-```
+
+```text
 输入：知识图谱 → 三维张量 X ∈ R^{n×n×m}
      n = 实体数，m = 关系数
      X[i,j,k] = 1 表示 entity_i --relation_k--> entity_j
@@ -270,45 +272,14 @@ W_grandparent = W_parent @ W_parent
 
 ### 3.1 整体架构
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      TensorLogic                             │
-├─────────────────────────────────────────────────────────────┤
-│  examples/                                                   │
-│  ├── family_tree_symbolic.py      # Boolean模式示例          │
-│  ├── family_tree_embedding.py     # Continuous模式示例       │
-│  ├── learnable_demo.py            # Composer多跳推理         │
-│  ├── predicate_invention_demo.py  # RESCAL谓词发明           │
-│  ├── fb15k237_benchmark.py        # 标准KG基准测试           │
-│  ├── benchmark_suite.py           # 内部基准测试套件         │
-│  ├── transformer_reasoning_demo.py # Transformer推理          │
-│  └── shakespeare/                 # 语言模型训练              │
-├─────────────────────────────────────────────────────────────┤
-│  tensorlogic/                                               │
-│  ├── core/              # TensorProgram                 │
-│  │   └── program.py     # TensorProgram定义                 │
-│  ├── reasoning/         # 推理引擎                           │
-│  │   ├── embed.py       # EmbeddingSpace                    │
-│  │   ├── composer.py    # GatedMultiHopComposer             │
-│  │   ├── closure.py     # 闭包推理                          │
-│  │   ├── decomposition.py # 张量分解                        │
-│  │   └── predicate_invention/ # RESCAL谓词发明              │
-│  ├── learn/             # 训练模块                           │
-│  │   ├── trainer.py     # 训练器基类                        │
-│  │   ├── embedding_trainer.py # 嵌入训练                     │
-│  │   └── losses.py      # 损失函数                         │
-│  ├── utils/            # 工具                                │
-│  │   ├── diagnostics.py # 梯度诊断                          │
-│  │   ├── init.py        # 初始化策略                        │
-│  │   ├── sparse.py      # 稀疏张量                          │
-│  │   └── visualization.py # 可视化                           │
-│  └── transformers/     # Transformer/RNN实现                 │
-│      ├── transformer.py # 标准Transformer                   │
-│      ├── lstm.py        # LSTM/GRU                         │
-│      └── decoder_lm.py  # Decoder-only LM                  │
-├─────────────────────────────────────────────────────────────┤
-│  PyTorch 2.0+ / NumPy / Python 3.8+                          │
-└─────────────────────────────────────────────────────────────┘
+```text
+examples/                 # 官方示例：家族推理、谓词发明、FB15k-237 基准、Transformer 演示
+tensorlogic/core/         # TensorProgram 定义（Tensor 方程的核心抽象）
+tensorlogic/reasoning/    # 推理引擎：嵌入空间、多跳组合、张量分解、RESCAL 谓词发明
+tensorlogic/learn/        # 训练器与损失函数
+tensorlogic/utils/        # 梯度诊断、初始化策略、稀疏张量、可视化
+tensorlogic/transformers/ # Transformer/RNN/LSTM 的 Tensor 方程实现
+依赖：PyTorch 2.0+ / NumPy / Python 3.8+
 ```
 
 ### 3.2 模块详解
@@ -318,14 +289,13 @@ W_grandparent = W_parent @ W_parent
 `TensorProgram`是所有 tensor 程序的基类，封装了前向计算和反向传播。
 
 **主要接口**：
+
 ```python
 class TensorProgram:
     def forward(self, inputs) -> Tensor:
         """执行前向计算"""
-        
     def backward(self, grad_outputs) -> List[Tensor]:
         """执行反向传播"""
-        
     def to_tensor_equations(self) -> List[str]:
         """导出为tensor方程字符串"""
 ```
@@ -478,7 +448,7 @@ for eq in equations:
 ```
 
 **主要特点**：
-- **Multi-head Attention** = `Q×K^T/√d → softmax → ×V`
+- **Multi-head Attention（注意力机制）** = `Q×K^T/√d → softmax → ×V`
 - 编码器-解码器架构，带交叉注意力
 - 可添加知识图谱约束的符号 mask
 - 完全可微，可与符号推理模块联合训练
@@ -578,7 +548,8 @@ python3 examples/family_tree_symbolic.py
 ```
 
 **输出示例**：
-```
+
+```text
 Facts:
   parent(Alice, Bob) = True
   parent(Bob, Charlie) = True
@@ -600,7 +571,8 @@ python3 examples/family_tree_embedding.py
 ```
 
 **学习过程**：
-```
+
+```text
 Epoch 100, Loss: 0.0234, MRR: 0.892
 
 # 学习到的嵌入可以用于：
@@ -615,8 +587,9 @@ Epoch 100, Loss: 0.0234, MRR: 0.892
 python3 examples/learnable_demo.py
 ```
 
-**学习"祖父"关系**：
-```
+**学习“祖父”关系**：
+
+```text
 # 输入数据：只有parent(X, Y)三元组
 # 学习目标：从少量样本学习grandparent = parent ∘ parent
 
@@ -634,7 +607,8 @@ python3 examples/predicate_invention_demo.py
 ```
 
 **发现隐藏关系**：
-```
+
+```text
 Input: 基础家庭关系（parent, sibling）
 RESCAL分解: rank=20, invented=3
 
@@ -821,16 +795,7 @@ TensorLogic 是 LLM 的互补工具，不是替代品：
 | 需要学习的复杂模式 | LLM |
 | 小模型/边缘部署 | TensorLogic |
 
-**混合架构示例**：
-```
-用户查询
-    ↓
-LLM理解意图 + 实体识别
-    ↓
-TensorLogic执行确定性推理
-    ↓
-LLM生成自然语言回答
-```
+**混合架构示例**：LLM 理解意图 → TensorLogic 执行确定性推理 → LLM 生成自然语言回答。
 
 ---
 
@@ -871,7 +836,7 @@ TensorLogic 把神经推理和符号推理统一到 Tensor 方程这一种计算
 | 知识感知生成 | Transformer Hybrid |
 | 时序+规则推理 | RNN Boolean |
 
-### 9.3 资源链接
+### 9.2 资源链接
 
 - 🌐 项目主页：https://github.com/Kocoro-lab/tensorlogic
 - 📄 论文：https://arxiv.org/abs/2510.12269
@@ -881,7 +846,9 @@ TensorLogic 把神经推理和符号推理统一到 Tensor 方程这一种计算
 
 ---
 
-## 自测题
+## 自测与练习
+
+### 自测题
 
 **问题 1：TensorLogic 的核心创新是什么？**
 <details>
@@ -910,14 +877,14 @@ MRR = 0.347，相比 LibKGE RESCAL 参考实现（0.304）提升 14%。
 **问题 5：TensorLogic 的模型大小大概是多少？为什么这么小？**
 <details>
 <summary>查看答案</summary>
-10-500KB。因为它不需要存储海量参数来做语言建模，只需要学习实体嵌入和关系矩阵，且关注意识形态统一而非模型规模。
+10-500KB。因为它不需要存储海量参数来做语言建模，只需要学习实体嵌入和关系矩阵，且关注的是计算原语的统一而非模型规模。
 </details>
 
 ---
 
-## 练习
+### 练习
 
-### 练习 1：运行 Boolean 模式家族推理
+#### 练习 1：运行 Boolean 模式家族推理
 
 **任务**：克隆 TensorLogic 仓库，运行 `examples/family_tree_symbolic.py`，观察零训练推理的输出。
 
@@ -933,7 +900,7 @@ python3 examples/family_tree_symbolic.py
 - 规则 `grandparent(X, Y) :- parent(X, Z) ∧ parent(Z, Y)` 是如何被执行的？
 - 如果添加 `great_grandparent` 规则，应该如何定义？
 
-### 练习 2：修改嵌入维度观察效果
+#### 练习 2：修改嵌入维度观察效果
 
 **任务**：运行 `examples/family_tree_embedding.py`，尝试不同的 `embedding_dim`（32, 64, 128），观察 MRR 变化。
 
@@ -951,18 +918,18 @@ space = EmbeddingSpace(
 - 嵌入维度越大效果越好吗？有没有过拟合现象？
 - 小规模数据集（如家族关系）需要多少维度？
 
-### 练习 3：实现自定义谓词发明
+#### 练习 3：实现自定义谓词发明
 
 **任务**：基于 `examples/predicate_invention_demo.py`，在你的领域数据上运行 RESCAL 分解。
 
 **示例数据**（电影推荐场景）：
+
 ```python
 triplets = [
     (user1, watched, movie1),
     (user1, watched, movie2),
-    (user2, watched, movie1),
     (movie1, belongs_to, genre_action),
-    (movie2, belongs_to, genre-comedy),
+    (movie2, belongs_to, genre_comedy),
     # ... 更多三元组
 ]
 
@@ -984,29 +951,20 @@ for pred in invented:
 - 发明出的谓词是否有实际意义？
 - 如何评估谓词发明的质量？
 
-### 练习 4：混合推理实战
+#### 练习 4：混合推理实战
 
 **任务**：构建一个"知识感知问答系统"——用 LLM 理解问题，用 TensorLogic 执行推理。
 
-**架构**：
-```
-用户提问："爱因斯坦的导师是谁？"
-    ↓
-LLM 提取实体和关系：(爱因斯坦, 导师, ?)
-    ↓
-TensorLogic 查询：space.query(head=einstein, relation=mentor)
-    ↓
-LLM 生成自然语言回答
-```
+**架构**：用户提问“爱因斯坦的导师是谁？”→ LLM 提取实体和关系，得到 (爱因斯坦, 导师, ?) → TensorLogic 执行查询 `space.query(head=einstein, relation=mentor)` → LLM 生成自然语言回答。
 
 **实现提示**：
 - 用 `transformers` 库加载 LLM
 - 用 TensorLogic 构建知识图谱
-- 编写 prompt 让 LLM 输出结构化三元组
+- 编写 prompt（提示词）让 LLM 输出结构化三元组
 
 ---
 
-## 进阶路径
+## 继续深入
 
 ### 初级阶段（已完成本文内容）
 
@@ -1071,7 +1029,7 @@ LLM 生成自然语言回答
 
 ### Q3：TensorLogic 支持大规模知识图谱吗（如 Wikidata）？
 
-**A**：目前支持，但性能可能不是最优。FB15k-237（14K 实体）没问题，但 Wikidata（1亿+ 实体）需要：
+**A**：目前支持，但性能可能不是最优。FB15k-237（14K 实体）没问题，但 Wikidata（1 亿+ 实体）需要：
 - 稀疏矩阵优化（当前实现未充分优化）
 - 分布式训练
 - 子图采样
@@ -1121,4 +1079,8 @@ plt.show()
 from tensorlogic.utils.diagnostics import diagnose_gradient
 diagnose_gradient(model, data_loader)
 ```
+
+### Q9：运行 examples 时报 ModuleNotFoundError 错误怎么排查？
+
+**A**：这类错误通常是 Python 找不到 `tensorlogic` 包。按安装方式二选一处理：开发安装先执行 `pip install -e .`；若按“手动安装依赖”方式只装了 requirements，运行脚本前必须设置 `PYTHONPATH=.`（见 4.2 节方式三），否则示例脚本无法导入项目源码。
 
