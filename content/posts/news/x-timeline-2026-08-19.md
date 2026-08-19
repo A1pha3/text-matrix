@@ -1,9 +1,9 @@
 ---
 title: "X时间线精选 2026-08-19"
 date: 2026-08-19T14:21:35+08:00
-slug: x-timeline-digest-2026-08-19
+slug: x-timeline-2026-08-19
 description: "2026年8月19日 X 时间线 24 小时精选：OpenAI 安全暂停训练、宇树科创板上市暴涨、办公 Agent 实测等 12 条值得关注的 AI、市场与创业内容。"
-draft: true
+draft: false
 categories: ["行业快讯"]
 tags: ["X精选", "时间线", "AI Agent", "市场"]
 hiddenFromHomePage: true

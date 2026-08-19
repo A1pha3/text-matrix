@@ -99,6 +99,8 @@ export const state = {
   duplicates: 0,
   pages: 0,
   graphqlResponses: 0,
+  graphqlOps: {} as Record<string, number>, // 所有 graphql 操作名计数，定位「HomeLatestTimeline 未命中」真因
+  uiLang: '', // 界面语言；DOM 兜底的转推/广告识别依赖中英文案
   path: opts.flags.has('force-fallback') ? 'dom' : 'graphql',
   window_closed: false,
   closed_reason: null as string | null, // window_reached | timeline_exhausted

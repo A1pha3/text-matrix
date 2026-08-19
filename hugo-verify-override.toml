@@ -1,4 +1,5 @@
 enableGitInfo = false
+theme = "LoveIt"
 
 [params]
   fingerprint = "sha256"
