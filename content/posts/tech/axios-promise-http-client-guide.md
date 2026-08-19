@@ -21,11 +21,31 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 
 ---
 
+## 阅读地图
+
+- [一、项目概述](#一项目概述)：Axios 是什么、核心特性、与 fetch 的取舍
+- [二、安装与环境配置](#二安装与环境配置)：npm / CDN 安装，环境与导入方式
+- [三、基本使用](#三基本使用)：GET / POST、并发、async/await、response 结构
+- [四、Axios API 详解](#四axios-api-详解)：请求方式与配置项
+- [五、创建 Axios 实例](#五创建-axios-实例)：实例的作用与默认值继承
+- [六、拦截器](#六拦截器)：请求/响应拦截器
+- [七、错误处理](#七错误处理)：AxiosError 分层判断
+- [八、请求取消](#八请求取消)：AbortController 替代 CancelToken
+- [九、数据序列化](#九数据序列化)：URL 编码与 FormData
+- [十、配置优先级](#十配置默认值)：请求、实例、全局的覆盖顺序
+- [十一、速率限制](#十一速率限制)：请求间隔控制
+- [十二、实践建议](#十二实践建议)：统一错误、重试、监控封装
+- [十三、常见问题](#十三常见问题)、[十四、自测与采用顺序](#十四自测与采用顺序)
+
+适合已经有 JavaScript 基础、会用 `async/await` 的读者。读完后你应该能独立完成下列事情：跑通一次 GET 与 POST 请求；用一个 `axios.create` 实例收敛 baseURL 与超时；通过拦截器统一注入请求头并归一错误；用 `AbortController` 在页面切换或超时时取消请求；最后把这一套封装成一个可直接接入项目、带重试和监控的客户端。
+
+---
+
 ## 一、项目概述
 
 ### Axios 是什么
 
-**Axios** 是一个基于 Promise 的 HTTP 客户端，用于浏览器和 Node.js 环境。它提供了简洁易用的 API，能够轻松发送异步 HTTP 请求。
+**Axios** 是一个基于 Promise 的 HTTP 客户端，走一套同时跑在浏览器和 Node.js 的 API。它没有带来新的网络概念，更多是把你常写的那段"发请求、等响应、判错误、拆数据"样板代码收拢进库，再用拦截器、实例和超时这些约定把重复逻辑抽走。它的价值几乎都落在"省包装"上：用 `fetch` 得自己封装错误判断和拦截，而 Axios 把这些写进了库本身。后面各节会逐步展开这些能力。
 
 **官方网站**：[https://axios-http.com](https://axios-http.com)
 **GitHub 仓库**：[https://github.com/axios/axios](https://github.com/axios/axios)
@@ -68,9 +88,7 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 
 ### 什么时候优先选 Axios
 
-如果你需要统一错误处理、请求拦截器、超时控制和更直接的请求配置接口，Axios 往往比原生 `fetch` 更省心。
-
-如果你的项目对额外依赖极度敏感，且只需要少量基础请求，直接使用 `fetch` 也完全合理。
+如果业务里常见"同一个 baseURL、统一加请求头、统一处理 4xx/5xx、控制超时"这类重复逻辑，Axios 的实例、拦截器和 `AxiosError` 分层判断能少写不少样板；这类需求出现得越多，省下的代码越明显。反过来，如果项目对依赖数量很敏感，或只是偶尔发一两个基础请求，原生 `fetch` 加上一两个小封装就够，不必为这些场景引入一个库。
 
 ---
 
@@ -247,7 +265,15 @@ Axios 请求成功时 resolve 的不是裸数据，而是一个 `response` 对�
 所以取数据时要写 `response.data`，而不是 `response` 本身。如果嫌每个调用点都多一层 `.data` 麻烦，可以在响应拦截器里先剥掉外壳：
 
 ```javascript
+// 全局生效
 axios.interceptors.response.use(response => response.data);
+```
+
+若你用的是上一节创建的实例，把拦截器注册在实例上，只影响该实例的请求：
+
+```javascript
+const apiClient = axios.create({ baseURL: 'https://api.example.com' });
+apiClient.interceptors.response.use(response => response.data);
 ```
 
 之后业务代码拿到的就是解析后的数据：
@@ -340,10 +366,24 @@ const response = await axios({
 | auth | object | HTTP Basic 认证 {username, password} |
 | responseType | string | 响应类型：json/blob/document/stream/text |
 | withCredentials | boolean | 是否携带跨域 cookies |
+| validateStatus | function | 定义哪些状态码算成功，返回 false 时拒绝该请求 |
+| maxContentLength | number | 响应体体积上限（字节），超限直接抛错 |
+| maxBodyLength | number | 请求体体积上限（字节），主要用于 Node.js |
+| onDownloadProgress | function | 下载进度回调 |
 | xsrfCookieName | string | XSRF token 读取的 cookie 名，默认 `XSRF-TOKEN` |
 | xsrfHeaderName | string | XSRF token 写入的请求头名，默认 `X-XSRF-TOKEN` |
 
-XSRF 防护由 `xsrfCookieName` 和 `xsrfHeaderName` 两个配置项共同完成：Axios 会从 `xsrfCookieName` 指定的 cookie 中读取 token，再写入 `xsrfHeaderName` 指定的请求头里发给后端。两者默认值分别是 `XSRF-TOKEN` 和 `X-XSRF-TOKEN`，如果后端约定了不同的字段名，需要在创建实例时显式覆盖。
+`validateStatus` 默认是「200-299 都算成功」，想放宽或收紧就覆盖它，例如把 304 也归入成功：
+
+```javascript
+const resp = await axios.get('/page', {
+  validateStatus: (status) => status >= 200 && status < 300 || status === 304
+});
+```
+
+`responseType` 若设为 `stream`，只在 Node.js 环境生效，浏览器端的响应式类型受 XMLHttpRequest 限制，只能取 `json`、`text`、`blob`、`arraybuffer`、`document`。
+
+XSRF 防护由 `xsrfCookieName` 和 `xsrfHeaderName` 两个配置项共同完成：Axios 会从 `xsrfCookieName` 指定的 cookie 中读取 token，再写入 `xsrfHeaderName` 指定的请求头里发给后端。两者默认值分别是 `XSRF-TOKEN` 和 `X-XSRF-TOKEN`，如果后端约定了不同的字段名，需要在创建实例时显式覆盖。要注意边界：cookie 只能被同源页面读取，跨域请求通常碰不到那个 token，所以 XSRF 这套只对同源请求有意义，不能拿来当作跨域安全机制。
 
 ---
 
@@ -820,7 +860,13 @@ Axios 本身不处理 CORS，CORS 需要后端配置。如果遇到 CORS 问题�
 // 浏览器端文件下载
 async function downloadFile(url, filename) {
   const response = await axios.get(url, {
-    responseType: 'blob'
+    responseType: 'blob',
+    onDownloadProgress: (progressEvent) => {
+      const percentCompleted = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total
+      );
+      console.log(`下载进度: ${percentCompleted}%`);
+    }
   });
 
   const link = document.createElement('a');
@@ -830,6 +876,8 @@ async function downloadFile(url, filename) {
   URL.revokeObjectURL(link.href);
 }
 ```
+
+下载时要把 `responseType` 设为 `blob`，进度通过 `onDownloadProgress` 监听；对超大文件，`progressEvent.total` 可能缺失，进度计算前要做判空。
 
 ### Q：如何处理大文件上传？
 
@@ -871,7 +919,17 @@ await axios.get('/user', {
 
 ---
 
-## 十四、采用顺序与总结
+## 十四、自测与采用顺序
+
+### 自测清单
+
+对照下面的问题检查自己理解到了哪一层，答不出的回到对应章节再看一遍：
+
+1. 为什么 `axios.get()` 成功时得到的不是数据本身，而是 `response`？如何让调用方直接拿到数据？
+2. `axios.create()` 的实例、全局 `axios.defaults` 和单次请求的 config 三者，优先级谁最高？
+3. 响应拦截器里如何区分"拿到了 4xx 响应"和"根本没收到响应"？依据是哪两个字段？
+4. 用 `AbortController` 取消请求后，错误对象有哪些特征？`axios.isCancel()` 为什么比看 `error.code` 可靠？
+5. 上传和下载进度分别由哪两个回调监听？它们各自在什么阶段触发？
 
 ### 采用顺序建议
 

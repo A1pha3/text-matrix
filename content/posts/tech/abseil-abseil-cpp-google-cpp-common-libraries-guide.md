@@ -106,15 +106,21 @@ User u = *result;
 
 ### 3. `absl::Time` vs `absl::Duration`：把"瞬时"和"间隔"分开
 
-`absl::Time` 是某个绝对时刻（纳秒精度，从 Unix epoch 起算）；`absl::Duration` 是两个时刻之间的差。它们严格不互转，必须显式调用 `ToCivilTime()` 或 `ToUnixNanos()` 才能拿到人能读的形式。
+`absl::Time` 是某个绝对时刻（纳秒精度，从 Unix epoch 起算）；`absl::Duration` 是两个时刻之间的差。它们严格不互转，必须走显式转换函数才能拿到人能读的形式，例如 `absl::ToCivilSecond(time, time_zone)` 把时刻转成日历字段，`absl::ToUnixNanos(time)` 取回 Unix 纳秒计数。
 
 Google 坚持这个切分，是因为在跨时区、跨夏令时、跨 NTP 校准的服务里，把"瞬时"和"间隔"混用是 bug 的头号来源。Google SRE 内部反复强调：墙上时间不可信，时间间隔可信。`absl::Time` 会受外部校准影响而跳变，`absl::Duration` 只表示差值，与这些因素无关。
 
 ## 一条路径怎么穿过这些组件
 
-把上面三个组件拼进一个真实函数，能看清它们各自管哪一段：
+把上面三个组件拼进一个真实函数，能看清它们各自管哪一段（用到的头文件都在注释里，方便直接照着搭）：
 
 ```cpp
+#include "absl/container/flat_hash_map.h"
+#include "absl/log/log.h"              // ABSL_LOG(INFO)
+#include "absl/status/statusor.h"
+#include "absl/synchronization/mutex.h" // Mutex / MutexLock
+#include "absl/time/time.h"             // Now / ToDoubleMilliseconds
+
 // flat_hash_map 做缓存，Mutex 保护并发，Time/Duration 记录耗时，StatusOr 返回结果
 absl::flat_hash_map<std::string, User> cache;
 absl::Mutex mu;

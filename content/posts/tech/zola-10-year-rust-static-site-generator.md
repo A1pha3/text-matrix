@@ -5,7 +5,7 @@ date: 2026-08-17T13:50:00+08:00
 
 tags: ["Zola", "Gutenberg", "Rust", "Static Site Generator", "SSG", "Tera", "Hugo", "Jekyll", "11ty", "Astro", "mdBook", "axum", "tokio", "Single Binary", "EUPL", "MIT", "Content First", "i18n", "Pagination", "Taxonomy", "Search"]
 categories: ["技术笔记"]
-description: "深度解读 github.com/getzola/zola。一个 10 年维护的 Rust 单二进制静态站点生成器：从作者 Vincent Prouillet 因厌恶 Hugo 模板引擎而写，到 Tera 模板 / 12 个 workspace crate / cargo edition 2024 / EUPL+MIT 双协议 / 中文索引 feature flag / 一键部署 Netlify+Vercel+Cloudflare Pages。本文基于 6 个核心 commit hash + Cargo.toml + 12 个 components crate 整合而成。"
+description: "深度解读 github.com/getzola/zola。一个 10 年维护的 Rust 单二进制静态站点生成器：作者 Vincent Prouillet 因厌恶 Hugo 模板引擎而写，如今自带 Tera 模板 / 12 个 workspace crate / EUPL+MIT 双协议 / 可选中文搜索 / 一键部署。全文基于 README、Cargo.toml、12 个 components crate 与核心 commit hash 核实而成，保留全部事实来源。"
 author: 钳岳
 github_repo: getzola/zola
 source_key: gh:getzola/zola
@@ -13,33 +13,27 @@ source_key: gh:getzola/zola
 
 # 嫌 Hugo 模板烂就自己写一个：Zola 十年，Rust 单二进制 SSG 的全部家底
 
-> 来源：GitHub 仓库 `github.com/getzola/zola`（截至 2026-08-17 13:32 GMT+8：17,346 stars / 1,178 forks / 90 watchers / 最新 release v0.23.3 / commit（提交）`7fe17ab` / 仓库 10 年 8 个月）。
+> 来源：GitHub 仓库 `github.com/getzola/zola`（截至 2026-08-17 13:32 GMT+8：17,346 stars / 1,178 forks / 90 watchers / 最新 release v0.23.3 / commit `7fe17ab` / 仓库 10 年 8 个月）。
 >
-> 本文基于仓库 `README.md` 全文 + `Cargo.toml` 完整依赖清单 + 12 个 `components/` workspace crate + 6 个核心 commit hash（哈希） + GitHub 应用程序接口（API）整合而成。
+> 本文基于仓库 `README.md` 全文 + `Cargo.toml` 完整依赖清单 + 12 个 `components/` workspace crate + 6 个核心 commit hash + GitHub API 整合而成。
 
-## 写在前面：为什么这个十年老 SSG 还值得拆
+## 这台十年老 SSG 真正解决的是什么
 
-2026 年的静态站点生成器（SSG）市场已经被三个重量级角色定型：
+Zola 值不值得拆，不在它快，也不在它生态大。它是在一片被 Hugo、Jekyll、Astro 定型的红海里，凭一个不算主流的理由活了 10 年：作者不喜欢 Hugo 的模板引擎，于是给自己重写了一个顺手的。这种由真实工程厌恶驱动的项目，通常比瞄准某条性能 benchmark 优化出来的项目更禁得起读。
 
-- **Hugo**（Go，速度之王，模板体验被反复诟病）
-- **Jekyll**（Ruby，老牌，生态成熟，慢）
-- **Astro**（JS，island architecture 现代派）
-
-Zola 在这片红海里活了 10 年不倒，**核心卖点不是比 Hugo 快，而是"作者嫌 Hugo 模板烂，自己重写了一个顺手的"**。这种由真实工程厌恶驱动的项目，往往比"性能 benchmark 优化"的项目更耐看。
-
-仓库 README 原文（精准引用，来自 `raw.githubusercontent.com/getzola/zola/master/README.md` L11–L12）：
+仓库 README 把这个动机写得很直白（引自 `raw.githubusercontent.com/getzola/zola/master/README.md` L11–L12）：
 
 > "This tool and its template engine [tera](https://keats.github.io/tera/) were born from an intense dislike of the (insane) Golang template engine and therefore of Hugo that I was using before for 6+ sites."
 
-`zola (né Gutenberg)` —— 仓库名里的 `né` 是法语"born as / formerly known as"。改名是 SSG 圈公认的"Gutenberg 同名歧义"——跟 Project Gutenberg（电子书项目）和 WordPress Gutenberg 编辑器撞名。**不是 Jekyll 移植或 Rust 重写**：README 明说作者之前用 Hugo 给 6+ 个站做。
+仓库原名 `zola (né Gutenberg)`：`né` 是法语"本名 / 曾用名"。改名是因为 Gutenberg 在 SSG 圈里有明显撞名——和电子书项目 Project Gutenberg、WordPress 的 Gutenberg 编辑器都重名。注意它不是 Jekyll 移植，也不是 Rust 重写 Hugo：README 明说作者在此前用 Hugo 搭了 6+ 个站。
 
-> **一句话总览**：Zola 是 Vincent Prouillet 因为用 Hugo 给 6+ 个站做完后"实在受不了 Go 模板"，决定自己用 Rust 写一个**单二进制 + 模板顺手 + 内置搜索（elasticlunr-rs）+ 内置 Sass（grass）+ 内置语法高亮（giallo 0.5）+ 内置图像处理**的静态站点生成器。10 年维护至今，17k stars，**唯一一个把 EUPL-1.2 + MIT 双协议挂在 Cargo.toml license 字段**的 Rust SSG。v0.22 (2026-01-09) 引入 Giallo 替代 Syntect + 切 EUPL；v0.23 (2026-08-05) 强制升级到 Tera v2 + Components 替代 shortcodes。
+一句话记住它：作者 Vincent Prouillet 受够了 Go 模板，用 Rust 写了一个单二进制、模板顺手、自带搜索（elasticlunr-rs）、自带 Sass（grass）、自带语法高亮（giallo，自研）、自带图像处理的 SSG。两个版本号值得记：v0.22（2026-01-09）把高亮从 Syntect 换成 Giallo，并把协议切到 EUPL 1.2；v0.23（2026-08-05）强制升级 Tera v2，用 Component 取代 shortcodes。
 
 ---
 
 ## 1 · 十年项目的工程肌肉
 
-仓库年龄是最直观的信号：
+先看一张对照表，把 Zola 在主流程里的定位立住：
 
 | 指标 | Zola | Hugo | Astro | 11ty |
 |---|---|---|---|---|
@@ -52,12 +46,12 @@ Zola 在这片红海里活了 10 年不倒，**核心卖点不是比 Hugo 快，
 | 内置 Sass | ✅ grass 0.13 | ❌ | ❌ | ❌ |
 | 内置语法高亮 | ✅ giallo 0.5（自研） | ✅ chroma | ✅ shiki | ✅ prism |
 | 内置图像处理 | ✅ imageproc + webp | ✅ Imaging | ❌ | ❌ |
-| 多语言 | ✅ (basic i18n) | ✅ | ✅ | ✅ (manual) |
-| CLI（命令行工具）dev server | ✅ axum + live reload | ✅ | ✅ Vite | ✅ |
+| 多语言 | ✅（basic i18n） | ✅ | ✅ | ✅（manual） |
+| dev server | ✅ axum + live reload | ✅ | ✅ Vite | ✅ |
 
-Zola 不是最快（Go 编译优化更强），不是生态最大（npm 生态宇宙级），**但它把"开箱即用"这件事做到了 SSG 里的极致**——单二进制 + 内置 Sass + 内置搜索 + 内置图像处理，零运行时依赖。
+Zola 不是最快的（Go 的编译优化更强），也不是生态最大的（npm 生态体量不同）。它的"开箱即用"在 SSG 里做得很彻底：单二进制、自带 Sass、自带搜索、自带图像处理、零运行时依赖，装一个文件就能跑。
 
-> **值得停下来想想**：Zola 用 Rust 编译出来 + release profile（`lto = true / codegen-units = 1 / strip = true`，`Cargo.toml` L140–142）做到了 SSG 里最小。仓库 API 显示 122,579 KB 是**源码 + 子模块 + docs + test fixtures**，不是最终用户拿到的二进制大小。
+release profile 也往这个方向推：`lto = true`、`codegen-units = 1`、`strip = true`（`Cargo.toml` L140–142），把构建产物尽量压小。顺带澄清一个口径：仓库 API 显示的 122,579 KB 是源码 + 子模块 + docs + test fixtures 的体积，不是用户下载到的二进制大小。
 
 最近 6 个核心 commit（按时间倒序，hash 已核实）：
 
@@ -70,7 +64,7 @@ b2653d5  2026-08-13  Link to components section in changelog for 0.23 migration
 8751ab8  2026-08-13  Remove shortcodes from README
 ```
 
-8-13 那天一连串 commit 都是 **v0.23 migration 文档更新**——"Remove shortcodes from README"特别有意思，因为 **Zola 在 v0.23 把 shortcodes 系统迁移到了 components（组件）crate**（changelog 提到的 "component example"），这是一个**架构级重构**。shortcodes 从一个内嵌功能变成独立可重用的 Rust crate。
+8 月 13 日这一批 commit 全部是 v0.23 migration 的文档更新。最值得留意的是 "Remove shortcodes from README"：Zola 在 v0.23 把 shortcodes 迁成了独立的 `components` crate（changelog 里的 "component example" 指的就是它）。shortcodes 从内嵌功能变成可独立复用、可单独测试的 Rust crate，算是这次大版本里最结构性的一处改动。
 
 ---
 
@@ -104,14 +98,14 @@ edition = "2024"
 | `templates` | Tera 模板封装 + 自定义函数 |
 | `utils` | 通用工具（字符串 / 路径 / 时间） |
 
-12 个 crate 之间的依赖关系是**严格分层的**：`site` 在顶层，`content` / `templates` / `render` / `search` 各管一摊，`errors` 在底层。这种分层让以下几件事变得简单：
+12 个 crate 之间的依赖是单方向分层的：`site` 在最顶层做编排，`content` / `templates` / `render` / `search` 各自管一摊，`errors` 垫在底层。这套分层的收益很直接：
 
-- **增量编译**：改 `imageproc` 不会重编 `markdown`，整个 build 时间被分摊
-- **独立测试**：每个 crate 都有自己的 test + 集成测试
-- **重用可能性**：理论上 `search` 或 `imageproc` 可以独立发布给其他 Rust 项目用
-- **Release profile 加持**：`lto = true`（跨 crate 内联） + `codegen-units = 1`（单 codegen 单元，最大优化） + `strip = true`（剥除符号表），最终二进制控制在 10MB 量级
+- 增量编译：改 `imageproc` 不会拖着重编 `markdown`，构建时间被分摊开
+- 独立测试：每个 crate 都带自己的单元测试和集成测试
+- 可复用：理论上 `search`、`imageproc` 都能单独拎出来发给别的 Rust 项目
+- release profile 兜底：`lto = true`（跨 crate 内联）+ `codegen-units = 1`（单 codegen 单元，最大优化）+ `strip = true`（剥符号表），产物在可移植的前提下尽量小
 
-> **跟 Astro / 11ty 这种 JS 生态 SSG 的对比**：JS 项目的 module 划分天然松散（ESM / CommonJS / tree shaking（摇树优化）），但运行时依赖、版本冲突、依赖审计成本都高。Zola 的 cargo workspace + edition 2024 是 Rust 生态**对 JS 依赖地狱的正面回应**。
+把这套和 JS 生态的 SSG 对比能看出两种路线：JS 项目的模块依赖靠 ESM / CommonJS / tree shaking 拆，但运行时依赖、版本冲突、依赖审计的成本都落在无形处。Zola 用 cargo workspace + edition 2024 把依赖关系交给了 Cargo 这个编译期工具，算是对"依赖地狱"的一次正面回应。
 
 ---
 
@@ -135,13 +129,13 @@ reqwest = { workspace = true }
 
 ### 3.1 `axum 0.8` 而非 `actix-web` / `warp`
 
-Zola 选了 axum——Tokio 生态的官方 web 框架。`default-features = false` 加上 `features = ["http1", "tokio", "ws"]` 是教科书级的"只开需要的 feature"模式：
+Zola 选了 axum，Tokio 生态的官方 web 框架。`default-features = false` 加上 `features = ["http1", "tokio", "ws"]`，是"只开要用到的 feature"的用法：
 
-- 关掉了 axum 的 `http2` 支持（dev server 不需要）
-- 关掉了 `json` / `multipart` / `query`（查询）等不需要的 feature
+- 关掉 `http2` 支持（dev server 用不到）
+- 关掉 `json`、`multipart`、`query` 等没用的 feature
 - 只开 `tokio`（异步运行时）和 `ws`（live reload 用的 WebSocket）
 
-结果是 **axum 编译出来的二进制只包含需要的代码**，最终 Zola 单二进制约 10MB。
+这样 axum 编译进二进制的只可能是被用到的代码，不会把整个 web 框架拖进来。
 
 ### 3.2 `notify-debouncer-full` 实现 live reload
 
@@ -153,22 +147,20 @@ Zola 选了 axum——Tokio 生态的官方 web 框架。`default-features = fal
 
 ### 3.4 `open = "5"` 给 `zola serve`
 
-`open` crate 是跨平台"在默认浏览器打开 URL"的小工具。`zola serve` 会自动打开 `http://127.0.0.1:1111`，这是开发者体验上的细节。
+`open` crate 是跨平台"在默认浏览器打开 URL"的小工具。`zola serve` 启动后会自动打开 `http://127.0.0.1:1111`，省掉手动输地址的动作。
 
-> **取舍的清晰度**：所有依赖都只为 `serve` / `check` / `build` 三个核心命令服务。`zola` 二进制的依赖是"为它服务的命令最小集"，不是"为它可能用到的所有功能的最大集"。
+把 3.1–3.4 连起来看，依赖清单很克制：每一条都只为 `serve` / `check` / `build` 三个命令服务。Zola 的二进制依赖遵循的是"命令要用到的最小集"，而不是"将来可能要用的功能的最大集"。
 
 ---
 
 ## 4 · Tera 模板引擎：作者把不满意的东西自己重写了
 
-Zola 项目名是 `zola`，**但作者同时维护两个项目**：
+要理解 Zola，得同时看两个仓库：作者 Vincent Prouillet 不是只维护静态站点生成器，而是把模板引擎也单独拆了出来：
 
 1. `getzola/zola` —— 静态站点生成器
 2. `Keats/tera` —— 通用模板引擎库（Jinja2 风格）
 
-Tera 是 Zola 的核心模板引擎，**Zola 没选 Go template / Handlebars / Liquid，而是让作者自己写了一个**。
-
-Tera 跟同类模板引擎的对比：
+Tera 是 Zola 的核心模板引擎。它没有用现成的 Go template、Handlebars 或 Liquid，而是自己写了一个。放回同类里看它的位置：
 
 | 模板引擎 | 语言 | 风格 | 哲学 |
 |---|---|---|---|
@@ -176,18 +168,16 @@ Tera 跟同类模板引擎的对比：
 | Jinja2 | Python | 表达式友好 | Django 风格 |
 | Liquid | Ruby | 安全（沙箱） | Shopify 电商限制 |
 | Handlebars | JS | 极简逻辑 | Mustache 派生 |
-| **Tera** | Rust | Jinja-like + Rust 类型 | "把 Jinja2 用 Rust 重写并加上 Rust 类型安全" |
+| **Tera** | Rust | Jinja-like + Rust 类型 | 用 Rust 重写 Jinja2 并加类型安全 |
 
-Tera 的关键设计：
+关键设计有四处：
 
-- **Jinja2-like 语法**：`{% if %} {% for %}` 跟 Jinja2 几乎一致——降低从 Python Web 迁移过来的学习成本
-- **Rust 类型系统约束**：模板变量绑定到 Rust 结构体，编译期检查字段名拼写错误
-- **沙箱模式**（`autoescape` 默认开）：防止 XSS（跨站脚本攻击）
-- **过滤器 / 函数扩展机制**：用户可以注册自定义 filter（如 `{{ date | as_duration }}`）
+- 语法走 Jinja2-like：`{% if %}`、`{% for %}` 和 Jinja2 几乎一致，从 Python Web 转过来的学习成本低
+- 受 Rust 类型系统约束：模板变量绑定到 Rust 结构体，字段名拼错会在编译期暴露
+- 默认开 `autoescape`，收紧沙箱，挡掉 XSS
+- 支持过滤器与自定义函数，可以注册自己的 filter（如 `{{ date | as_duration }}`）
 
-> **README 原文**：`This tool and its template engine tera were born from an intense dislike of the (insane) Golang template engine`
->
-> 这句话的工程含义：**作者把对 Go template 的不满变成了两个独立的 Rust 项目**——Tera 是通用模板引擎（任何 Rust 项目都可以用），Zola 是用 Tera 做的 SSG。
+README 那句对 Go template 的抱怨，落到工程上其实是两件事：Tera 是可复用的通用模板库（任何 Rust 项目都能用），Zola 只是用它的第一个 SSG。
 
 ### 4.1 Tera 独立仓库的数据
 
@@ -200,7 +190,7 @@ Tera 的关键设计：
 
 ### 4.2 Tera v2 + Components 替代 shortcodes（2026-08-05）
 
-Zola v0.23.0 在 2026-08-05 强制升级到 Tera v2，**最大变化是 Components 替代了 shortcodes**：
+Zola v0.23.0（2026-08-05）强制升级到 Tera v2，最大变化是 Component 取代了 shortcodes：
 
 ```jinja2
 {% component youtube(id, autoplay=false) %}
@@ -211,34 +201,31 @@ Zola v0.23.0 在 2026-08-05 强制升级到 Tera v2，**最大变化是 Componen
 {{ <youtube id="..." autoplay={true} /> }}
 ```
 
-**对比旧 shortcodes**：
-- 旧 shortcodes 是 Zola 内部的概念（HTML escape 处理 / 参数解析 / 全局注册表）
-- 新 components 是 Tera v2 模板引擎原生语法（block + parameters + body 自动暴露为 `body` 变量）
-- 新 syntax 可以直接在 `.md` 内容里调（无需 import）
+和旧 shortcodes 的差别在归属：
+- 旧 shortcodes 是 Zola 内部的概念，负责 HTML escape、参数解析、全局注册表
+- 新 components 是 Tera v2 引擎的原生语法，参数与 body 自动暴露为变量
+- 新写法可以直接出现在 `.md` 正文里，无需 import
 
-**配套 commit**（2026-08-13 一次性文档迁移）：
+配套的文档迁移在 8 月 13 日一次完成：`c53d269`、`b2653d5`、`2c87db8`、`8751ab8` 四个 commit 就把 changelog 示例、迁移指引和 README 里的 shortcodes 全部改掉。
 
-- `c53d269` Add macro/shortcodes → component example in changelog
-- `b2653d5` Link to components section in changelog for 0.23 migration
-- `2c87db8` Link to changelog in overview
-- `8751ab8` Remove shortcodes from README
-
-**为什么这是架构级变更**：CHANGELOG 开篇就说 v0.23.0 "This is probably the most breaking version of Zola that will happen"——shortcodes 被完全移除，旧主题里的 shortcode 都要重写成 component。作者自己实测：升级以 Tera 语法为主的 Zola 官方文档站花了约 20 分钟。
+为什么说这是架构级变更：CHANGELOG 开篇就说 v0.23.0 "This is probably the most breaking version of Zola that will happen"。shortcodes 被彻底移除，旧主题里的 shortcode 都要重写成 component。作者自己实测，迁移以 Tera 语法为主的官方文档站大约用掉 20 分钟。
 
 ---
 
 ## 5 · 内容优先 + 内置搜索：Zola 的核心哲学
 
-README 里跟 Hugo / 11ty 最大的差异，是这两个 feature：
+README 里跟 Hugo / 11ty 拉开距离的是两个能力：
 
-- **Search with no servers or any third parties involved**
-- **Sass compilation**
+- Search with no servers or any third parties involved
+- Sass compilation
+
+下面四块都靠内置实现，这也是"单二进制零运行时"能成立的关键。
 
 ### 5.1 内置搜索：`search` crate + elasticlunr-rs 3.0.2 + 可选分词
 
-Zola 的内置搜索基于 **elasticlunr-rs 3.0.2**——elasticlunr 是 JS 生态 lunr.js 的衍生版（更接近 Elasticsearch 的索引算法），Rust 端口由 Zola 作者社区维护。
+内置搜索基于 `elasticlunr-rs 3.0.2`。elasticlunr 是 JS 生态 `lunr.js` 的衍生版，索引算法更接近 Elasticsearch；它的 Rust 端口由 Zola 作者社区维护。
 
-`Cargo.toml` 里 `elasticlunr-rs` feature flags 一长串：默认 + `da/no/de/du/es/fi/fr/hu/it/pt/ro/ru/sv/tr/ko` 15 种语言 + 通过 `indexing-zh/indexing-ja` feature 开 ja/zh。
+`Cargo.toml` 里 `elasticlunr-rs` 的 language feature 列了一长串：默认一种，加上 `da/no/de/du/es/fi/fr/hu/it/pt/ro/ru/sv/tr/ko` 共 15 种，中日文则单独走 `indexing-zh` / `indexing-ja`：
 
 ```toml
 [features]
@@ -246,17 +233,15 @@ indexing-zh = ["search/indexing-zh"]
 indexing-ja = ["search/indexing-ja"]
 ```
 
-**Cargo.toml 里专门留了两个 feature flag 给中日文**——`indexing-zh` 和 `indexing-ja`。默认不开，因为中文 / 日文需要 jieba / lindera 之类的分词器，加进去会让二进制变大很多。开了之后 `search` crate 会用对应的分词器预处理文本。
+这两个 flag 默认不开。原因很直白：中日文搜索要接 jieba / lindera 这类分词器，编进去会明显撑大二进制。开了之后，`search` crate 会用对应分词器预处理文本再建索引。
 
-> **取舍**：默认支持 15 种语言 + 空格分词。需要中文 / 日文搜索的用户自己开 feature flag 自己编译。这跟 Hugo "全 feature 编进去 + 单二进制巨大"是反向设计选择——Zola 把可选 feature 放在编译期，让用户决定。
+这个设计等于把"要哪国语言"的决定权放到了编译期：默认 15 种语言靠空格分词，需要中日文的用户自己开 feature 自己编。Hugo 是倾向于什么 feature 都编进去、二进制因此偏大；Zola 相反，把可选能力收窄到编译期，由用户按需取舍。
 
 ### 5.2 内置 Sass：grass 0.13 编译期预处理
 
-`zola build` 时会把 `sass/` 目录下的所有 `.scss` 文件编译成 `.css`，产物放到 `public/`。**不依赖 Node.js / npm / 单独的 sass 二进制**。
+`zola build` 会把 `sass/` 目录下的 `.scss` 编译成 `.css`，产物落到 `public/`，全程不依赖 Node.js、npm 或单独的 sass 二进制——编译器（`grass 0.13`）直接编进 Zola 可执行文件。这点正好戳中 Hugo 与 Jekyll 的软肋：Hugo 不内置 Sass，要你自己装 `dart-sass` 或 Node 上的 sass；Jekyll 早期依赖 Ruby 的 `sass` gem，慢。
 
-Hugo 不内置 Sass，要用户自己装 `dart-sass` 或 Node.js 上的 sass 实现。Jekyll 早期用 Ruby 的 `sass` gem（速度慢）。Astro 走 Vite 插件。
-
-> **取舍**：Zola 把 Sass 编译器（应该是 `grass` crate 或 `sass-rs`）编进二进制，单文件即可用。Astro 走 Vite 插件是因为它的 island architecture 需要在 client-side bundle CSS。
+Astro 走 Vite 插件则是另一条路线：它的 island 架构需要在客户端按组件拆 CSS，所以模板与样式依赖 Node 工具链。Zola 没必要引入这层，因为它输出的是纯静态页面。
 
 ### 5.3 内置图像处理：`imageproc` + `webp` crate
 
@@ -269,21 +254,23 @@ thumb = "image.jpg"
 +++
 ```
 
-`zola build` 会用 `imageproc` + `webp` crate 处理：缩到指定宽度 / 转格式 / 改质量 / 生成 WebP / 通过 `svg_metadata 0.6` 读 SVG 元数据。`imageproc` 是 Rust 生态的图像处理 crate，编译进 Zola 二进制。
-
-> **取舍**：内置图像处理让 Zola 完全独立，但限制了能用的高级特性（如智能裁剪 / 人脸识别）。Hugo 通过外部 `imagemagick` / `libvips` 调用可以做更复杂的事。
+构建时 `imageproc` + `webp` 负责处理：缩到指定宽度、转格式、调质量、生成 WebP，`svg_metadata 0.6` 用来读 SVG 元数据。内置的代价是高级特性受限——智能裁剪、人脸识别这类能力带不进来；Hugo 靠外部 `imagemagick` / `libvips` 能做得更复杂，代价是部署时要多带外部工具。
 
 ### 5.4 内置语法高亮：giallo 0.5（getzola 自研，v0.22 引入）
 
-Zola 用自家仓库的 `giallo` crate 做 syntax highlighting——**不是** syntex / highlight.js / chroma / shiki 这些常规选项。giallo **起源是 v0.22.0 (2026-01-09)**，CHANGELOG.md "### Breaking" 段：
+语法高亮没有用 Syntect、highlight.js、chroma、shiki 这些常规选项，而是自家仓库的 `giallo` crate。它起源于 v0.22.0（2026-01-09），CHANGELOG 的 "### Breaking" 段写清了切换：
 
 > "Syntect has been replaced with [Giallo](https://github.com/getzola/giallo) and all the highlighting options of the `markdown` section in the config file have been moved/changed in `[markdown.highlighting]`."
 
-v0.23.0 (2026-08-05) 跟着 Zola 主版本又重写了一次（commit `24c9ffd  2026-08-14  Update what giallo classes look into` 直接对应）。
+v0.23.0（2026-08-05）跟着主版本又重写了一次，commit `24c9ffd`（2026-08-14，Update what giallo classes look into）直接对应这次改动。`Cargo.toml` 里 `giallo 0.5` 开了 `["dump"]` feature，`dump` 是调试用，用来输出 token class 名。
 
-`Cargo.toml`：`giallo 0.5`，feature `["dump"]`——`dump` 是 debug 用，输出 token class 名。
+高亮是"必须常驻 + 跨语言 + 性能敏感"的组件，Zola 选择自研：这样它可以自由改 token class 名和 HTML 输出结构，不会在外部 crate 升级时被破坏向后兼容。代价是团队要长期维护一个复杂度不低的 crate。
 
-> **取舍**：语法高亮这种"必须常驻 + 跨语言 + 性能敏感"的组件，自研比依赖外部 crate 更可控——因为 Zola 可以改 token（词元）class CSS class 名 / 改 HTML 输出结构，外部 crate 升级时会破坏向下兼容。代价是团队要长期维护一个高复杂度 crate。
+### 5.5 一篇短文怎么穿过头 12 个 crate
+
+把这几个 crate 拼起来能看清一次完整构建：先在 `content/` 里放一篇带 TOML frontmatter 的 Markdown，`zola build` 启动后，`content` crate 读目录和 frontmatter，`markdown` crate 把它经 `pulldown-cmark` 编译成 HTML 并处理 Zola 扩展语法，`templates` crate 用 Tera 把 HTML 填进页面模板并跑自定义函数，`render` crate 负责模板分发和输出，最后 `site` crate 汇总所有页面、分类、索引，把成品写进 `public/`。依赖 `imageproc` 的缩略图、`search` 的搜索索引、`sass` 目录（经 `grass`）同时在这条管线里被处理。
+
+对读者来说，这一串内部机制都是透明的；你只需要 `zola build` 或 `zola serve`，剩下的由 crate 边界各管一段。
 
 ---
 
@@ -324,9 +311,7 @@ Zola 的部署方式极其简单——`zola build` 产物是纯静态文件 `pub
 | Vercel | `vercel.json` | `zola build` 输出 `public/` |
 | Cloudflare Pages | 环境变量 `ZOLA_VERSION` + 构建命令 | `zola build` 输出 `public/` |
 
-Zola 在 2023 之前官方推荐 Netlify + Vercel；2024 起 Cloudflare Pages 直接支持 Zola（无需自己配 build command），因为 Cloudflare Pages 加了 "framework auto-detect" 列表。
-
-> **取舍**：Zola 不像 Next.js 那样跟 Vercel 强绑定。它的产物是 universal 静态文件，**跟哪个平台都不锁**。
+Zola 在 2023 之前官方推荐 Netlify + Vercel；2024 年起 Cloudflare Pages 把 Zola 放进了 "framework auto-detect" 列表，无需自己配 build command 就能跑。这点和 Next.js 跟 Vercel 的绑定关系正好相反：Zola 的产出是通用静态文件，跟哪个平台都锁不死。
 
 ---
 
@@ -341,44 +326,35 @@ README "License" 段（精准引用）：
 >
 > See `LICENSE` and `LICENSE-MIT` for details."
 
-这是 Rust 生态里**非常罕见**的 license 设计——**MIT 代码 + EUPL-1.2 新代码**。EUPL（European Union Public License）是欧盟 2017 年通过的"开源许可证"，强 copyleft 但允许商业使用，且要求 derivative work 同样开源。
+这在 Rust 生态里是个少见的设计：老代码 MIT + v0.22 之后的新代码走 EUPL-1.2。EUPL（European Union Public License）是欧盟 2017 年纳入的开源许可证，偏强 copyleft 但允许商业使用，同时要求派生作品同样开源。
 
-**CHANGELOG.md 锚点**（`raw.githubusercontent.com/getzola/zola/master/CHANGELOG.md`）：
+两个来源互相佐证：
+- CHANGELOG（`raw.githubusercontent.com/getzola/zola/master/CHANGELOG.md`）L128 的 `## 0.22.0 (2026-01-09)` 段，在 "### Other" 最后一条写了 `Licence changed to EUPL 1.2`——这是官方时间点
+- README 给出代码边界：commit `3c9131db0d203640b6d5619ca1f75ce1e0d49d8f` 之前的代码保留 MIT，包括后续版本
 
-- L128：`## 0.22.0 (2026-01-09)` 段，"### Other" 子段最后一条明确写 `Licence changed to EUPL 1.2`——这是 license 切换的官方时间点
-- 切换的 commit 锚点是 `3c9131db0d203640b6d5619ca1f75ce1e0d49d8f`，该 commit 之前的代码保留 MIT，包括后续版本
+关于动机，属于推测（中置信）：作者在欧洲（法国），可能出于三方面考虑——自己倾向 copyleft，希望修改版必须公开；响应欧盟推动的开源合规；以及借 EUPL 约束云厂商，避免 AWS / Azure / GCP 拿去封装成付费服务却不回馈社区。
 
-两个事实**互相佐证**：CHANGELOG 给官方时间（v0.22.0 / 2026-01-09），README 给代码边界（commit `3c9131db`之前的代码保留 MIT）。
-
-具体动机推测（中置信）：作者 Vincent Prouillet 在欧洲（法国），可能：
-
-1. **个人哲学**：copyleft 信仰——希望 Zola 的修改版必须公开
-2. **欧盟政策**：响应 EU 推动的开源合规（EUPL 是欧盟官方认证的 license）
-3. **对抗云厂商滥用**：EUPL 比 MIT 更能阻止 AWS / Azure / GCP 把 Zola 包成付费服务却不回馈社区
-
-`Cargo.toml` 的 `license = "EUPL-1.2"` 字段只标记了主包，但仓库里 `LICENSE` + `LICENSE-MIT` 两个文件共存。
-
-> **取舍的工程含义**：MIT 老代码保留兼容，EUPL 新代码推动开源治理。**如果一个公司派生（fork）Zola 做商业产品且不公开修改，按 EUPL 是违规的**——这是 Zola 的护城河之一。
+具体落地是：`Cargo.toml` 的 `license = "EUPL-1.2"` 只标记主包，仓库里 `LICENSE` + `LICENSE-MIT` 两个文件并存。实际效果值得留意：如果哪家公司 fork 出商业产品又不公开修改，按 EUPL 是违规的。这点对 Zola 是治理上的护城河，不是技术上的。
 
 ---
 
 ## 8 · 跟 Hugo / Astro / 11ty 的真实取舍
 
-Zola 不是 SSG 的"最佳选择"，它是 SSG 的一种**特定取舍**：
+Zola 不是 SSG 里的"最佳选择"，它是一份很明确的取舍。把三个最常被拿来对比的对象分开看。
 
 ### 8.1 vs Hugo
 
 | 维度 | Zola | Hugo |
 |---|---|---|
 | 语言 | Rust | Go |
-| 模板体验 | Tera（Jinja-like） | Go template（强类型 / 模板作者诟病） |
-| 编译速度 | 中（单核 ~5s/100 页） | **极快（Go AOT，单核 ~1s/100 页）** |
-| 二进制大小 | ~10MB | ~30MB |
+| 模板体验 | Tera（Jinja-like） | Go template（强类型 / 常被模板作者诟病） |
+| 编译性能 | 中档 | 更快（Go 的 AOT 编译优势） |
+| 二进制体积 | 单文件、相对小 | 单文件、更大 |
 | License | MIT + EUPL | Apache-2.0 |
 | 生态成熟度 | 中（10 年） | 高（13 年） |
 | 学习曲线 | 较平（Jinja-like） | 较陡（Go template 习惯） |
 
-**结论**：Hugo 适合**超大规模站点 + 极端性能需求**（万页 + 多语言），Zola 适合**模板体验 + Rust 生态认同 + 单二进制可移植**。
+两者的分水岭在规模与理念：Hugo 更适合超大型站点和极端性能需求（上万页、多语言），Zola 更适合看重模板体验、认同 Rust 生态、想要单二进制可移植的团队。注意这里的"编译更快 / 更小"是比较性描述，不是我在本机实测的结论。
 
 ### 8.2 vs Astro
 
@@ -390,7 +366,7 @@ Zola 不是 SSG 的"最佳选择"，它是 SSG 的一种**特定取舍**：
 | 客户端交互 | 几乎为零 | island（按需 hydrate） |
 | 学习曲线 | Tera + Markdown | React/Vue/Svelte 任选 + config |
 
-**结论**：Astro 适合**客户端有交互的内容站**（dashboard（仪表盘） / interactive blog），Zola 适合**纯内容站 + 不想要任何 JS**（个人博客 / 文档 / 营销站）。
+差距在"要不要前端交互"：Astro 适合客户端有交互的内容站（仪表盘、interactive blog），Zola 适合纯内容站、且不想要一寸可选 JS 的场景（个人博客 / 文档 / 营销页）。
 
 ### 8.3 vs 11ty
 
@@ -398,12 +374,12 @@ Zola 不是 SSG 的"最佳选择"，它是 SSG 的一种**特定取舍**：
 |---|---|---|
 | 范式 | 编译期生成 | 编译期生成 |
 | 模板 | Tera | Nunjucks / Liquid / JS |
-| 构建速度 | 快（Rust 并行） | 慢（Node.js 单核） |
+| 依赖形态 | 单二进制 | Node.js 工具链 |
 | 多语言 | 内置 | 手动 |
 | 内置搜索 | ✅ | ❌ |
-| 部署 | 单二进制产物 | node_modules 依赖 |
+| 部署 | 拷一个文件 | node_modules 依赖 |
 
-**结论**：11ty 适合**JS 生态重度用户**（已经有 Node.js 工程），Zola 适合**想要"装个二进制就能跑"的人**。
+这一对都是编译期生成，最直观的差别在安装方式：11ty 服务 JS 生态重度用户（手边已经有 Node 工程），Zola 服务的是想"下个二进制就能跑"的人。
 
 ---
 
@@ -439,13 +415,13 @@ v0.23 系列四连发集中在 8 月 5 日到 11 日之间，问题修了就发�
 
 Zola 不是"更好的 SSG"，它是"作者写给自己的 SSG"：
 
-1. **模板引擎的不满是真实的工程动机**。Go template 在 Hugo 项目里被反复诟病，但官方拒绝换。Vincent Prouillet 用 Rust 写 Tera + Zola 是个人行为，最终贡献了 Rust 生态最好的 Jinja-like 模板引擎。这种 "scratch your own itch" 模式在 Rust 生态特别高产。
+1. **模板引擎的不满是真实的工程动机**。Go template 在 Hugo 项目里被反复诟病，但官方一直没换。Vincent Prouillet 自己用 Rust 写 Tera + Zola，顺带为 Rust 生态贡献了一个可复用的 Jinja 风格模板引擎。这种 "scratch your own itch" 的模式，在 Rust 生态里常能沉淀出独立的通用库。
 
-2. **单二进制不是性能选择，是部署选择**。Hugo 也单二进制但 30MB；Zola 单二进制 10MB 是 Rust 的硬优势。**Astro / 11ty 在 Cloudflare Pages / Vercel 上部署必须传 node_modules，Zola 不需要**——这一点的实际收益是部署体积小 + 冷启动快 + 依赖审计零成本。
+2. **单二进位买的不是性能，而是部署省事**。Zola 把产物收敛成一个文件，CI 里不需要搬 node_modules，不存在版本冲突，部署体积和依赖审计成本都更可控。相比之下 Astro / 11ty 这类 Node 系 SSG 在 Cloudflare Pages / Vercel 上要先处理好 Node 工具链。至于二进制的体积到底差多少，属于环境相关，作者只关心够不够小到可移植，我没有实测。
 
-3. **License 切换反映项目治理成熟度**。MIT → MIT+EUPL 双协议不是技术决策，是**开源治理决策**。这说明作者对"别人怎么用我的代码"这件事是想清楚的。EUPL 比 MIT 更"带刺"，但也更"保护开发者社区"。
+3. **License 切换是治理决策，不是技术决策**。MIT → MIT + EUPL 双协议，说明作者对"别人该怎么用我的代码"有明确的立场。EUPL 比 MIT 更带约束，代价是少了一部分宽松许可的作者。
 
-4. **Cargo workspace 是 Rust 生态的"工程肌肉"**。12 个 crate 不是过度工程，是把"将来想换"这件事做成低成本。比如 `search` crate 现在是 trigrams，未来要换 Tantivy（基于 BM25），改一个 crate 不影响其他。
+4. **Cargo workspace 把"将来想换"做了低成本**。12 个 crate 不是过度设计，是把某个子系统替换成别的实现这件事的成本压下来：假设有一天 `search` 要从 trigram 换成基于 BM25 的 Tantivy，只动 `search` 一个 crate，其他模块不牵动。只是一个假设，并非已经发生。
 
 ---
 

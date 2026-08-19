@@ -37,9 +37,9 @@ tags: ["Transformer", "深度学习", "GPU"]
 
 Flash Attention 不是近似注意力算法。它重排标准 Attention 的计算，让 GPU 内存层级能高效处理：在片上 SRAM 里完成 softmax 与加权求和，避免把 N×N 的中间矩阵写回 HBM 再读回来。同一组数学运算，内存复杂度从 O(N²) 降到 O(N)，A100 上 2-4 倍墙钟时间加速，与标准 Attention 在数学上等价（FP16 下误差通常 < 1e-3）。
 
-瓶颈在 HBM 带宽，不在 FLOPs。FA1/FA2/FA3 三代的设计都围绕这一点展开：tiling 必须配 online softmax 才能在分块下保持全局归一化；FA2 重新切分 warp 才能把 batch 维度的并行吃满；FA3 在 H100 上靠 warp-specialization 把 matmul 和 softmax 重叠起来，压住 Hopper 架构的 Tensor Core 空窗。
+瓶颈在 HBM 带宽，不在 FLOPs。FA1/FA2/FA3 三代的设计都围绕这一点展开：tiling 必须配 online softmax 才能在分块下保持全局归一化；FA2 把序列维也纳入并行网格、重划 warp 分工，把 GPU 占用率拉满；FA3 在 H100 上靠 warp-specialization 把 matmul 和 softmax 重叠起来，压住 Hopper 架构的 Tensor Core 空窗。
 
-本文覆盖 FA1/FA2/FA3 三代的原理差异、安装与 API 调用、与主流框架的集成、benchmark 解读、训练与推理场景的注意点、常见报错排查。CUTLASS 内核细节、Triton 实现版本、Flash Attention-4（Blackwell 专属，仍在快速迭代）不在范围内。
+本文覆盖 FA1/FA2/FA3 三代的原理差异、安装与 API 调用、与主流框架的集成、benchmark 解读、训练与推理场景的注意点、常见报错排查。CUTLASS 内核细节、Triton 实现版本、Flash Attention-4（面向 Hopper 与 Blackwell，仍在快速迭代）不在范围内。
 
 建议先读"标准 Attention 的瓶颈在哪里"和"Tiling + Online Softmax"两节建立直觉，再按需跳到安装、API、集成等实操章节。
 
@@ -75,7 +75,7 @@ def standard_attention(Q, K, V, scale=None):
 
 三行代码里，`scores` 和 `attn_weights` 都是 `(batch, seq_len, seq_len)` 的张量。对 LLaMA-7B 训练时常见的 `seq_len=4096`、`batch=8`、`heads=32`、`head_dim=128` 配置，单个 `attn_weights` 就是 8 × 32 × 4096 × 4096 × 2 bytes ≈ 8 GB 的 FP16 矩阵，要写一次、读一次，再写一次。
 
-A100 的 HBM 带宽是 2.0 TB/s（SXM4 版本，PCIe 版为 1.9 TB/s），H100 SXM5 是 3.35 TB/s。除以一次 attention 里要搬运的 N² 数据量，墙钟时间就上去了。FLOPs 反而不是瓶颈——A100 SXM4 的 Tensor Core 算力是 312 TFLOPS（FP16，稠密），算 QK^T 和 PV 的 FLOPs 用不了那么多时间。
+A100 的 HBM 带宽是 2.0 TB/s（SXM4 版本，PCIe 版为 1.9 TB/s），H100 SXM5 是 3.35 TB/s。除以一次 attention 里要搬运的 N² 数据量，墙钟时间就上去了。FLOPs 反而不是瓶颈——A100 SXM4 的 Tensor Core FP16 算力是 156 TFLOPS（稠密；2:4 结构化稀疏可翻倍到 312 TFLOPS，但 attention 的矩阵碰不上这种稀疏），算 QK^T 和 PV 的 FLOPs 用不了那么多时间。
 
 ```mermaid
 flowchart LR
@@ -253,10 +253,10 @@ Stars 反映生态接受度，和性能没有直接关系——性能要看后�
 | 版本 | 主要瓶颈 | 解决方式 | 相对前代加速 |
 |------|----------|----------|--------------|
 | FA1 | HBM 带宽（N×N 矩阵来回搬运） | Tiling + online softmax | 2-4x vs 标准 Attention |
-| FA2 | GPU 占用率低（只沿 seq 维度并行） | 沿 batch 和 seq 双维度并行，重切 warp | 1.5-2x vs FA1 |
-| FA3 | H100 的 Tensor Core 利用率低（~35%） | warp-specialization 重叠 matmul 与 softmax，FP8 低精度 | 1.5-2x vs FA2（FP16），FP8 再多 ~1.2x |
+| FA2 | GPU 占用率低（只在 batch × heads 上并行，序列维由单个 block 顺序扫描） | 把序列维（行块）也纳入并行网格，重划 warp 分工 | 约 2x vs FA1 |
+| FA3 | H100 的 Tensor Core 利用率低（~35%） | warp-specialization 重叠 matmul 与 softmax，TMA 异步搬运，支持 FP8 | 1.5-2x vs FA2（FP16） |
 
-FA1 解决 HBM 带宽后，FA2 面对的是 GPU 占用率——FA1 只在 sequence 维度做并行，长序列时 batch 维度闲置；FA2 把并行扩展到 batch × seq，并重新分配 warp 使负载更均衡。FA3 要处理 Hopper 下的 Tensor Core 利用率：FA2 在 H100 上只能跑到 ~35% 的理论 FP16 峰值，FA3 通过 warp-specialization（一部分 warp 做 matmul，另一部分做 softmax，两者重叠）和异步数据搬运（TMA 指令），把 H100 的 FP16 利用率推到 ~75%，FP8 更高。
+FA1 解决 HBM 带宽后，FA2 面对的是 GPU 占用率——FA1 的并行只覆盖 batch × heads，序列维由单个 block 顺序扫描，长序列时 GPU 尾部大量闲置；FA2 把序列维（行块）也纳入并行网格，并重新划分 warp 分工（前向时 2 个 warp 算 QK^T、2 个算 PV），减少同步和资源空转。FA3 要处理 Hopper 下的 Tensor Core 利用率：FA2 在 H100 上只能跑到 ~35% 的理论 FP16 峰值，FA3 通过 warp-specialization（一部分 warp 做 matmul，另一部分做 softmax，两者重叠）和异步数据搬运（TMA 指令），把 H100 的 FP16 利用率推到 ~75%，FP8 更高。
 
 FA3 仍然是精确算法。它的 FP8 模式因为低精度量化会引入数值误差，但与 Linformer、Performer 那类通过数学近似降低复杂度的算法属于不同类别。FA3 的 FP16/BF16 路径与标准 Attention 数学等价。
 
@@ -266,12 +266,12 @@ FA3 仍然是精确算法。它的 FP8 模式因为低精度量化会引入数�
 
 | 要求 | 说明 |
 |------|------|
-| GPU | NVIDIA GPU（H100、A100、RTX 3090/4090、V100 等） |
+| GPU | NVIDIA GPU（Ampere 及以上：H100、A100、RTX 3090/4090 等；FA1 额外支持 V100） |
 | CUDA | 12.0+（FA3 beta 建议 12.3+，最佳性能用 12.8+） |
 | PyTorch | 2.2+ |
 | Python | 3.9+ |
 
-不支持 CPU。不支持 AMD GPU（社区有 ROCm 移植，但非官方维护）。V100（sm_70）能用 FA1/FA2，FA3 需要 Hopper（sm_90）。FA3 目前以 beta 形式发布在仓库的 `hopper/` 目录，需要单独编译（`cd hopper && python setup.py install`），导入入口是 `flash_attn_interface`，与主包 `flash_attn` 不同。FA4 面向 Hopper 和 Blackwell，单独发布为 `pip install flash-attn-4`。
+不支持 CPU。不支持 AMD GPU（社区有 ROCm 移植，但非官方维护）。V100（sm_70）只能跑 FA1（对应 v1.x 老包）；FA2 起要求 Ampere（sm_80）及以上；FA3 需要 Hopper（sm_90）。FA3 目前以 beta 形式发布在仓库的 `hopper/` 目录，需要单独编译（`cd hopper && python setup.py install`），导入入口是 `flash_attn_interface`，与主包 `flash_attn` 不同。FA4 面向 Hopper 和 Blackwell，单独发布为 `pip install flash-attn-4`。
 
 ### 安装方式
 
@@ -363,7 +363,7 @@ diff = (flash_out.float() - standard_out.float()).abs().max()
 print(f"Max difference: {diff.item():.6f}")  # 通常 < 1e-3
 ```
 
-误差来源是 FP16 累加顺序不同，算法本身是精确的。换 BF16 误差会更小，换 FP32 会几乎为 0（但 FA 不直接支持 FP32）。
+误差来源是 FP16 累加顺序与舍入不同，算法本身是精确的。BF16 动态范围更大，长序列下不容易因中间值过大而溢出，但尾数位更少（7 位 vs FP16 的 10 位），逐次乘加的相对精度其实低于 FP16；两种精度在什么形状、什么数据上误差更大，以实测为准。FP32 下误差会趋近于 0，但 FA 不直接支持 FP32。
 
 ### QKV 打包格式：`flash_attn_qkvpacked_func`
 
@@ -465,34 +465,38 @@ Megatron-LM 在 `megatron.core.extensions` 里有 Flash Attention 的封装，�
 
 ## Benchmark 怎么读
 
-以下数字来自 FA 论文与官方仓库的典型测量条件。
+FA 的加速比是相对值，随 GPU、序列长度、batch、head 数和软件版本变化。论文给的是量级和趋势，精确数字必须在自己的环境里实测——本节末尾附可运行的测量脚本。
 
-### 速度对比
+### 速度对比（量级与趋势）
 
-| 配置 | 标准 Attention | Flash Attention | 加速比 |
-|------|---------------|-----------------|--------|
-| A100-80GB（FP16, seq=4096） | ~100 ms | ~25 ms | ~4x |
-| H100-SXM（FP16, seq=4096） | ~100 ms | ~17 ms（FA3） | ~6x |
-| RTX 3090（FP16, seq=2048） | ~100 ms | ~40 ms | ~2.5x |
+| 对比 | 加速范围 | 说明 |
+|------|----------|------|
+| FA1 vs 标准 Attention（A100, FP16） | 2-4x | FA1 论文结论；序列越长越接近上限 |
+| FA2 vs FA1（A100/H100, FP16） | 约 2x | FA2 论文头版结论 |
+| FA3 vs FA2（H100, FP16） | 1.5-2x | FA3 论文结论；依赖 Hopper 专属指令 |
 
-数字来自 FA1 论文 Table 1 和 FA3 论文 Table 2，测量条件为 causal=False、FP16、batch=8、heads=32。
+趋势上，序列越长、batch 越大，加速比越高——N×N 矩阵的 HBM 读写占 attention 总耗时的比例随 N 增大而增大。别把某个形状下的单点数字当成横跨所有配置的常数。
 
-### 内存对比
+### 内存对比（batch=8, heads=32, head_dim=128, FP16，只算 attention 阶段峰值）
 
-| 序列长度 | 标准 Attention（N×N 矩阵） | Flash Attention | 内存节省 |
-|----------|---------------------------|-----------------|----------|
-| 512 | ~1 GB | ~256 MB | ~4x |
-| 2048 | ~16 GB | ~1 GB | ~16x |
-| 4096 | ~64 GB | ~4 GB | ~16x |
+标准实现会把 `scores` 和 `attn_weights` 两个 N×N 矩阵完整驻留内存，峰值约 2 × batch × heads × N² × 2 字节；FA 的峰值内存只包含 O(N) 大小的输出、running max/sum 以及 Q/K/V 本身。
+
+| 序列长度 | 标准 Attention（两个 N×N 矩阵） | Flash Attention（O(N) 激活） | 差距 |
+|----------|-------------------------------|------------------------------|------|
+| 2048 | ~4.3 GB | ~0.5 GB | 约 8x |
+| 4096 | ~17 GB | ~1.1 GB | 约 16x |
+| 8192 | ~69 GB | ~2.2 GB | 约 32x |
+
+内存差距随序列长度近似线性拉大，这是 O(N²) 与 O(N) 的直接后果。注意这不算 KV cache——KV cache 同样随序列长度线性增长，超过 32k 后它才是主瓶颈。
 
 ### 这些数字测的是什么
 
-- **测的是**：单次 attention 前向计算的墙钟时间，包含 HBM 读写和 Tensor Core 计算。`seq_len` 固定，`batch` 和 `heads` 固定，FP16 精度，causal mask 关闭。
+- **测的是**：attention 内核本身的耗时或吞吐（FA1/FA2 论文的加速比含前向与反向；FA3 报告的是 H100 上前向峰值利用率），不包含 FFN、QKV 投影、优化器通信。
 - **反映的是**：HBM 带宽利用率和 Tensor Core 占用率的综合表现。FA 的加速主要来自减少 HBM 读写，所以序列越长（N² 增长越快），加速比越明显。
 - **不能推出**：
   - 端到端训练速度提升。训练里 attention 只占总时间的一部分（通常 20-40%），FFN 和优化器通信也占大头。FA 把 attention 加速 4x，端到端可能只快 1.2-1.5x。
   - 推理场景的加速比。推理时 `seq_len` 短、batch 小，FA 的优势不明显，甚至可能因 kernel launch 开销变慢。
-  - 跨 GPU 架构外推。H100 上的 6x 是 FA3 用了 Hopper 专属指令（TMA、warp-specialization）的结果，A100 上跑 FA3 拿不到这个数。
+  - 跨 GPU 架构外推。H100 上 FA3 的高加速依赖 Hopper 专属指令（TMA、warp-specialization），A100 上跑 FA3 拿不到这个数。
 
 ### 自己测一次
 
@@ -570,7 +574,7 @@ class FlashAttentionLayer(nn.Module):
 
 ### 反向传播
 
-FA 的反向传播也是 IO-aware 的，会重新计算前向的中间量（recomputation），而不是存 checkpoint。反向传播的 FLOPs 大约是前向的 2 倍，但 HBM 读写量没增加——FA 在训练里也能加速，靠的就是这一点。代价是反向时多算一次 QK^T 和 softmax，但 Tensor Core 算这些很快，省下的 HBM 带宽远比多算的 FLOPs 值钱。
+FA 的反向传播也是 IO-aware 的，会重新计算前向的中间量（recomputation），而不是存 checkpoint。反向传播的 FLOPs 大约是前向的 2 倍，但不会为保存 N×N 中间量增加 HBM 读写——FA 在训练里也能加速，靠的就是这一点。代价是反向时多算一次 QK^T 和 softmax，但 Tensor Core 算这些很快，省下的 HBM 带宽远比多算的 FLOPs 值钱。
 
 ### DDP 与 FSDP
 
@@ -635,7 +639,7 @@ BF16 通常比 FP16 更稳，因为动态范围大，不容易溢出。训练时
 如果 FA 输出和标准 Attention 的误差远超 1e-3，检查：
 
 1. 输入是否含 NaN 或 Inf——FA 的 online softmax 对异常值更敏感。
-2. 是否混用了 FP16 和 BF16——两种精度的累加顺序不同，混用会放大误差。
+2. 输入是否混用了 FP16 和 BF16——FA 要求 Q/K/V 同精度，混用要么直接报错，要么因隐式转换引入额外误差。
 3. `causal` 参数是否一致——标准 Attention 实现里手动加 mask 容易出错。
 
 ### OOM 在长序列时
@@ -658,15 +662,15 @@ FA 把 attention 的内存从 O(N²) 降到 O(N)，但整个模型还有 FFN、K
 
 FA 是精确算法，但有些场景下近似算法更合适。下表列出各自的适用场景：
 
-| 算法 | 精确度 | 复杂度 | 适用场景 |
-|------|--------|--------|----------|
-| **Flash Attention** | 精确 | O(N) 时间、O(N) 内存 | 序列长度 < 32k，GPU 内存够装 KV |
-| **Reformer** | 近似（LSH） | O(N log N) | 极长序列（>32k），可接受精度损失 |
-| **Linformer** | 近似（低秩投影） | O(N) | 序列长度固定，离线训练 |
-| **Performer** | 近似（随机特征） | O(N) | 需要可逆性，对精度要求低 |
-| **Longformer / BigBird** | 近似（稀疏模式） | O(N) | 文档级任务，有明确的局部+全局模式 |
+| 算法 | 精确度 | 时间/内存复杂度 | 适用场景 |
+|------|--------|----------------|----------|
+| **Flash Attention** | 精确 | O(N²) 时间、O(N) 内存 | 序列长度 < 32k，GPU 内存够装 KV |
+| **Reformer** | 近似（LSH） | O(N log N) / O(N) | 极长序列（>32k），可接受精度损失 |
+| **Linformer** | 近似（低秩投影） | O(N) / O(N) | 序列长度固定，离线训练 |
+| **Performer** | 近似（随机特征） | O(N) / O(N) | 需要可逆性，对精度要求低 |
+| **Longformer / BigBird** | 近似（稀疏模式） | O(N) / O(N) | 文档级任务，有明确的局部+全局模式 |
 
-FA 出现后，近似算法在生产环境的使用明显减少。在大多数实际序列长度（< 32k）下，FA 既精确又快，省去了近似算法的精度调优成本。超过 32k 的超长序列，FA 在 H100 上仍能跑到 128k+，但 KV cache 内存会成为新瓶颈，这时候 Ring Attention、YARN 这类方案更合适。
+FA 出现后，近似算法在生产环境的使用明显减少。在大多数实际序列长度（< 32k）下，FA 又精确又快，近似算法省下的计算量往往被精度调优成本抵消。超过 32k 的超长序列，FA 在 H100 上仍能跑到 128k+，但 KV cache 内存会成为新瓶颈，这时候 Ring Attention、PagedAttention 这类方案更合适。
 
 ## 采用顺序与决策建议
 
@@ -690,7 +694,7 @@ FA 出现后，近似算法在生产环境的使用明显减少。在大多数�
 
 ### 原理层
 
-1. 标准 Attention 的墙钟时间主要花在 FLOPs 还是 HBM 读写上？为什么 A100 的 312 TFLOPS FP16 算力用不满？
+1. 标准 Attention 的墙钟时间主要花在 FLOPs 还是 HBM 读写上？为什么 A100 的 156 TFLOPS（稠密 FP16）算力用不满？
 2. Online softmax 为什么必须保留 running max $m$ 和 running sum $l$ 两个状态？只保留 $l$ 会出什么问题？
 3. Tiling 把 N×N 矩阵的生命周期压缩到一个 block 内，FLOPs 减少了吗？如果没有，加速从哪里来？
 4. FA 反向传播用 recomputation 而不是存 checkpoint，这两者的区别是什么？为什么 FA 选前者？
@@ -715,7 +719,7 @@ FA 出现后，近似算法在生产环境的使用明显减少。在大多数�
 2. 对照本文伪代码，在 `csrc/flash_attn/flash_api.cpp` 和 `flash_fwd_kernel.h` 里找到 online softmax rescale 的 CUDA 实现。
 3. 读 FA3 论文第 3 节，理解 `cp.async` 和 TMA 指令如何重叠数据搬运与计算。
 4. 想自己写 tiling kernel，从 Triton 的 `flash_attention` 教程入手，比直接读 CUTLASS 容易。
-5. FA4（Blackwell 专属）仍在快速迭代，不建议生产环境追新版。
+5. FA4（面向 Hopper 与 Blackwell）仍在快速迭代，不建议生产环境追新版。
 
 ## 引用
 

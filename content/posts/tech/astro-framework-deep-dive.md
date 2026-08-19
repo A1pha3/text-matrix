@@ -34,6 +34,8 @@ Astro 是一个**构建编排层**，不负责 UI 框架和数据库的具体实
 
 下面先解释它是怎么从一个"默认零 JS"的框架默认值出发解决首屏问题的，再拆请求路径、内容管理和部署选型。
 
+读完这篇，你应该能替两个问题拿判断：一个内容站要不要上 Astro；真要上，哪些页面走静态、哪些开混合或 Server Islands。这两个判断不需要背概念，把「哪种渲染方式对应哪种开销」这条线拎清楚就有了。
+
 ---
 
 ## 默认零 JS：从框架默认值到组件激活策略
@@ -94,7 +96,7 @@ const data = await fetch('https://api.example.com/stats').then(r => r.json());
 
 ### 与 React Server Components 的区别
 
-React 社区在 2023 年引入的 Server Components 解决类似的问题，但实现路径不同：
+React 的 Server Components（RSC）解决的是同类问题，但实现路径不同：
 
 | 维度 | Astro Islands | React Server Components |
 |------|--------------|------------------------|
@@ -143,7 +145,7 @@ Astro 在这条路径里的选择围绕一个判断：**这个组件需要浏览
 
 ## Content Collections：内容管理范式
 
-Astro v2 引入了 **Content Collections**（内容集合），为 Markdown/MDX 文件提供类型安全的组织方式；v5 用 Content Layer API 重构了内容加载层，引入 loader 概念替代旧的 `type` 字段。下面的示例沿用 v5 之前的 `type` 语法，迁移到 v5 时需改用 `glob()` loader。
+Astro v2 引入了 **Content Collections**（内容集合），为 Markdown/MDX 文件提供类型安全的组织方式；v5 用 Content Layer API 重构了内容加载层，引入 loader 概念替代旧的 `type` 字段。迁移到 v5 时，配置会从 `src/content/config.ts` 移到 `src/content.config.ts`，用 `glob()` 声明内容来源；下面的示例沿用 v5 之前的 `type` 语法，仅用于说明 schema 校验这套心智。
 
 ```typescript
 // src/content/config.ts
@@ -256,6 +258,28 @@ const { slug } = Astro.params;
 
 混合模式从 Astro v3 起提供，通过 `output: 'hybrid'` 显式开启，不是框架默认：内容页保持静态预渲染，需要实时数据的页面单独开 SSR。默认的 `output: 'static'` 依然是内容站的主流选择，不要为少数动态页面提前把整站拖进 SSR 运行时。
 
+### Server Islands：把动态渲染收进页面里的小块
+
+混合模式切的是「整页」：要么整页静态，要么整页 SSR。Astro 5 的 **Server Islands** 把粒度再缩小到组件：一个静态页面里可以嵌几个在请求时渲染的动态块，其余部分保持纯静态。用法是在组件上加 `server:defer`，配 `<Fragment slot="fallback">` 提供加载态：
+
+```astro
+---
+// src/pages/product/[id].astro，绝大部分是静态内容
+import ProductStock from '../../components/ProductStock.astro';
+---
+
+<main>
+  <h1>商品详情</h1>
+  <p>静态介绍文字……</p>
+  <!-- 库存随请求动态渲染，页面外壳和其他内容保持静态 -->
+  <ProductStock server:defer>
+    <Fragment slot="fallback">库存计算中……</Fragment>
+  </ProductStock>
+</main>
+```
+
+这条思路让「静态外壳 + 局部动态数据」成为一等公民：页面主体仍由 CDN 直接吐出，只有库存这类实时数据在请求时补齐。需要注意：Server Islands 在请求时渲染，需要一次服务端运行，因此要配合 SSR 适配器（如 `@astrojs/node`、`@astrojs/vercel`），并为它接一个可降级的 `fallback`。它和混合模式解决的不是同一个问题——混合模式是整页 SSR 与整页静态并存，Server Islands 是在同一个静态页面里嵌动态块；大多数页面仍要静态缓存、只有少量数据要实时时，优先考虑后者。
+
 ---
 
 ## 官方集成生态
@@ -267,9 +291,9 @@ Astro 的集成（integrations）支持主流 UI 框架和部署平台。
 | 集成 | 用途 |
 |------|------|
 | `@astrojs/react` | React 18+ 组件支持 |
-| `@astrojs/preact` | Preact（3KB React 替代品） |
+| `@astrojs/preact` | Preact（约 3KB 的 React 替代品） |
 | `@astrojs/solid-js` | SolidJS 响应式组件 |
-| `@astrojs/svelte` | Svelte 4 组件 |
+| `@astrojs/svelte` | Svelte 5 组件（Svelte 3/4 需用旧版 `@astrojs/svelte@5`） |
 | `@astrojs/vue` | Vue 3 组件 |
 | `@astrojs/alpinejs` | Alpine.js 轻量交互 |
 
@@ -292,7 +316,7 @@ Astro 的集成（integrations）支持主流 UI 框架和部署平台。
 | `@astrojs/rss` | RSS/Atom Feed 生成 |
 | `@astrojs/check` | TypeScript 类型检查 |
 
-关于 `@astrojs/db`：Astro 曾提供边缘数据库方案，但该项目已停止维护（EOL），官方建议改用 Turso/LibSQL 等方案；新项目不应再以它为默认选择。
+关于 `@astrojs/db`：这个边缘数据库包已经停止维护。Astro DB 底层跑的本来就是 libSQL（SQLite 的开源分支），官方现在的建议是在项目里直接用 Drizzle / Kysely 这类客户端连接 SQLite 或 libSQL，而不是依赖 `@astrojs/db` 这层封装；新项目不必再把它当作默认选择。
 
 ---
 
@@ -429,7 +453,7 @@ import { ViewTransitions } from 'astro:transitions';
 | 框架 | 定位 | Islands 支持 | 多框架 | 部署灵活性 |
 |------|---------|-------------|--------|-----------|
 | **Astro** | 内容网站 | 原生 Islands | ✅ | 高（适配器生态） |
-| **Next.js** | 应用框架 | RSC（Partial Prerendering） | 仅 React | 中（Vercel 优先） |
+| **Next.js** | 应用框架 | RSC、PPR（部分预渲染） | 仅 React | 中（Vercel 优先） |
 | **Nuxt** | Vue 应用框架 | Nuxt Island（实验性） | 仅 Vue | 中（节点适配器） |
 | **SvelteKit** | Svelte 应用框架 | 无原生 Islands | 仅 Svelte | 高 |
 | **Remix** | SSR 应用框架 | 无 Islands | 仅 React | 高 |

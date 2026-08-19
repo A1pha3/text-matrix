@@ -19,7 +19,7 @@ tags: ["Kubernetes"]
 
 归纳出三条核心判断：
 
-- **判断 1：Argo CD 是 Kubernetes 的控制器，不是 CI 流水线**。它跑在集群里，和 Deployment/ReplicaSet 一样由 `kube-scheduler` 调度、由 `controller-manager` 守护；它和外部世界唯一的协议是 Git（pull 模型），而不是 webhook（push 模型）。这条直接决定了它的部署模型、灾备模型和权限模型。
+- **判断 1：Argo CD 是 Kubernetes 的控制器，不是 CI 流水线**。它跑在集群里，以工作负载（Deployment/StatefulSet）的形式受 Kubernetes 调度与生命周期管理；它和外部世界唯一的协议是 Git（pull 模型），而不是 webhook（push 模型）。这条直接决定了它的部署模型、灾备模型和权限模型。
 - **判断 2：Application 不是一组 manifest，而是一个 CRD**。Application 是 Argo CD 自己定义的 Kubernetes Custom Resource，里面写的是"我想要的最终态"。Argo CD 只关心这份期望的最终态，并把它和集群里真实的对象逐个对比。manifest 只是 Application 的一部分字段。
 - **判断 3：sync 是一次幂等操作，Reconcile 才是核心循环**。Sync 是用户或控制器主动触发的一次"对齐"动作；Reconcile 是控制器对每个 Application 周期性跑的那段 reconcile loop（对照 live vs target、修正 sync status、清理孤儿资源）。理解这两件事的区别，drift detection、self-heal、prune 这些功能才好分清顺序。
 
@@ -43,7 +43,7 @@ Argo CD 在集群内部署成 3 个核心组件 + 1 组 CRD + N 个集群凭证�
 
 Argo CD 在集群注册一组 CRD，核心是 3 个：
 
-- **Application**：最小的"想交付到哪个集群"的单位。spec 里写明 source（Git repo URL + revision + path）、destination（目标集群名 + 命名空间）、sync policy、ignore differences 规则等。status 里实时同步 sync status 与 health。Argo CD 周期性地比对 spec 与目标集群状态，把差异算到 OutOfSync / Healthy / Degraded / Suspended。
+- **Application**：最小的"想交付到哪个集群"的单位。spec 里写明 source（Git repo URL + revision + path）、destination（目标集群名 + 命名空间）、sync policy、ignore differences 规则等。Argo CD 周期性地比对 spec 与目标集群状态，把结果分两轨写进 status：sync 状态（Synced / OutOfSync）和健康状态（Healthy / Degraded / Suspended）。
 - **AppProject**：项目级别的"业务隔离面"。一个 AppProject 内有 source 仓库白名单、destination 集群白名单 + 命名空间白名单、cluster resource 白名单、可签发的 SyncWindow、可调的 RBAC policy 列表。Application 必须挂在 AppProject 下，越界就拒收。
 - **ApplicationSet**：Application 的 generator（生成器）。用来从 Git 目录、Cluster list、PR/MR、ScmProvider 等输入"扇出"出大量 Application。同一份 helm chart 在 12 个环境部署，靠 ApplicationSet + 模板而不是写 12 个 YAML。
 
@@ -85,7 +85,7 @@ Argo CD 部署在"中心集群"，管理一组"外部集群"（包括自身 in-c
 | 工具 | 何时启用 | 如何被 Argo CD 调起 |
 |------|----------|--------------------|
 | **Plain (Directory)** | repo 根目录直接就是 K8s YAML | repo-server 直接遍历，校验 K8s schema |
-| **Helm** | source.path 指向含 `Chart.yaml` 的目录 | 通过 Helm v2/v3 CLI / Helm libs 渲染，可填 `helm.values` |
+| **Helm** | source.path 指向含 `Chart.yaml` 的目录 | 通过 Helm v3 CLI / Helm libs 渲染，可填 `helm.values` |
 | **Kustomize** | source.path 指向含 `kustomization.yaml` 的目录 | 通过 kubectl 内嵌或独立 kustomize binary 调用 |
 | **Jsonnet** | source.path 是 .jsonnet 文件 | 通过 jsonnet 命令行渲染 |
 | **Plugin** | sidecar / config management plugin | repo-server 启动时通过 ConfigMap 声明 `<name>.yaml` |
@@ -129,7 +129,7 @@ Application Controller 在每个 application 上跑一个 reconcile loop：
 
 `selfHeal` 是 drift 修复的核心开关。打开它之后，任何外部方式（人手 kubectl / 别套 CD 工具 / 节点漂移）造成的偏差，都会在下一个 reconcile 周期被 Argo CD 追回。关掉它的话，Argo CD 只标记 OutOfSync 等用户主动 sync。
 
-Reconcile 周期可在 controller 的 `--sync`（默认 3s）和 `--status` flag（默认 5s）调整，但 Argo CD 也支持 Webhook 推送，Git 端 commit 后几分钟内就能触发 reconcile。
+controller 默认按 `--app-resync`（120 秒加最多 60 秒抖动）周期性兜底轮询，即使没有 webhook 也不会永久停在旧状态；`--self-heal-timeout-seconds`（默认 5 秒）单独控制自愈检查间隔。配合 Git Webhook，commit 后可以立即触发 reconcile，不必等完整一轮轮询。
 
 ### Prune：孤儿资源
 
@@ -156,7 +156,7 @@ SyncWindow 不是控制同步频率，而是限制哪些时间窗口内允许 sy
 
 ### 步骤 1：开发者 push PR → main 合并
 
-开发者改了 `deploy/prod/values.yaml`，PR 合入 main。GitHub 通过 webhook 通知 Argo CD API Server（argocd-server 的 `argocd-server --enable-gzip` 选项之外，webhook 接收器默认监听 `/api/webhook`）。Argo CD 把这次 commit 信息插入 Application 的 `spec.source.targetRevision` 候选，并在 Application Controller 里记一个 hint。
+开发者改了 `deploy/prod/values.yaml`，PR 合入 main。GitHub 通过 webhook 通知 Argo CD API Server（默认监听 `/api/webhook`），Argo CD 把这次 commit 信息写入 Application 的 `spec.source.targetRevision` 候选，并在 Application Controller 里记一个 hint。
 
 ### 步骤 2：Application Controller 触发 Reconcile
 
@@ -166,9 +166,9 @@ Controller 看到 hint 后立刻 reconcile（不等 3 分钟 reconcile 周期）
 
 repo-server 内部：
 
-1. 用 ApplicationSpec 里指定的 git creds（从 Secret 拿 ssh key / https token）走 `git ls-remote + git archive`，不真正 clone，减少 IO；
-2. 把 path 目录喂给工具检测：`deploy/prod/Chart.yaml` 存在 → 调 Helm v3，把 Helm Values + 模板渲染成 K8s object list；
-3. 把渲染结果按文件 hash 缓存，下次同 commit 命中。
+1. 用 Application 的 Git 凭证（Secret 里的 ssh key / https token）先解析目标 revision：`git ls-remote` 把 branch/tag 解析成具体 commit；
+2. 拉取并检出该 commit 的文件到缓存目录，交工具检测：`deploy/prod/Chart.yaml` 存在 → 调 Helm v3，把 Helm Values + 模板渲染成 K8s object list；
+3. 渲染结果按 commit hash 缓存，下次相同 commit 命中直接复用。
 
 如果 path 下同时存在 `kustomization.yaml`，用户可在 `spec.source.kustomize` 里强制走 kustomize；要混用工具，就在 Chart.yaml 内部再嵌入 Kustomize 钩子。
 
@@ -184,7 +184,7 @@ repo-server 内部：
 - Spec 里有 sync hook（pre-sync/sync/post-sync）的对象按顺序执行（例如 Job）；
 - Prune 阶段跳过，因为没变更清单删除项。
 
-`status.sync.status` 在 controller 写完 Deployments 之后被改成 `Synced`，`status.health.status` 在 Pod ready 之后被改成 `Healthy`。Application Controller 自己不直接读 Pod，它写一个 Synthetic ReplicaSet（`app.kubernetes.io/instance=app-name` label tracking），通过 tracker 找到所有派生对象。
+`status.sync.status` 在 controller 写完 Deployments 之后被改成 `Synced`，`status.health.status` 在 Pod ready 之后被改成 `Healthy`。健康状态靠资源跟踪判断：Controller 按 Application 的跟踪规则（默认 label 或 tracking 注解）找出所有派生对象，再据此推断是否 ready，而不是逐个读 Pod 细节。
 
 ### 步骤 6：失败回滚
 
