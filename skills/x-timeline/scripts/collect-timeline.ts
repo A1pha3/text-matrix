@@ -364,11 +364,17 @@ async function launchChrome(profileDir: string, chromePath: string): Promise<num
 
 async function newTab(port: number, url: string): Promise<string> {
   const target = `http://127.0.0.1:${port}/json/new?${encodeURIComponent(url)}`;
-  let res = await fetch(target, { method: 'PUT', signal: AbortSignal.timeout(5000) }).catch(() => null);
-  if (!res || !res.ok) res = await fetch(target, { signal: AbortSignal.timeout(5000) });
-  const tab = (await res.json()) as { webSocketDebuggerUrl?: string };
-  if (!tab.webSocketDebuggerUrl) throw new Error('无法创建新标签页');
-  return tab.webSocketDebuggerUrl;
+  // Chrome 冷启动时 DevTools HTTP 服务就绪晚于 /json/version 探测，需重试容忍竞态
+  for (let i = 0; i < 5; i++) {
+    try {
+      let res = await fetch(target, { method: 'PUT', signal: AbortSignal.timeout(5000) }).catch(() => null);
+      if (!res || !res.ok) res = await fetch(target, { signal: AbortSignal.timeout(5000) });
+      const tab = (await res.json()) as { webSocketDebuggerUrl?: string };
+      if (tab.webSocketDebuggerUrl) return tab.webSocketDebuggerUrl;
+    } catch { /* 重试 */ }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error('无法创建新标签页（Chrome DevTools HTTP 服务持续无响应）');
 }
 
 // ============ 登录态 / 风控检查 ============
@@ -381,14 +387,25 @@ async function checkPageStatus(cdp: Cdp): Promise<'ok' | 'login' | 'captcha' | '
   const hasLoginForm = await cdp.evaluate<boolean>(
     `Boolean(document.querySelector('input[autocomplete="username"]'))`,
   ).catch(() => false);
-  return hasLoginForm ? 'login' : 'ok';
+  if (hasLoginForm) return 'login';
+  // 未登录时 x.com/home 可能不跳转、只展示登录/注册墙（无 username 输入框），需额外识别
+  const loggedOut = await cdp.evaluate<boolean>(`(() => {
+    const hasTimeline = Boolean(document.querySelector('article[data-testid="tweet"]'));
+    const hasLoginEntry = Boolean(document.querySelector('a[href="/login"], a[href="/i/flow/signup"], [data-testid="loginButton"]'));
+    return hasLoginEntry && !hasTimeline;
+  })()`).catch(() => false);
+  return loggedOut ? 'login' : 'ok';
 }
 
 async function clickFollowingTab(cdp: Cdp): Promise<boolean> {
   return cdp.evaluate<boolean>(`(() => {
     const re = ${TAB_TEXT_RE};
-    const els = [...document.querySelectorAll('nav[role="navigation"] a[role="link"], [role="tab"], a[href="/home"]')];
-    const hit = els.find((el) => re.test(el.getAttribute('aria-label') || '') || re.test(el.textContent || ''));
+    const els = [...document.querySelectorAll('nav[role="navigation"] a[role="link"], [role="tab"], a[href="/home"], header a, [data-testid="TopNavBar"] a')];
+    // 只匹配自身文本短小的元素，避免误中父容器（其 textContent 会同时含两个 Tab 名）
+    const hit = els.find((el) => {
+      const t = (el.textContent || '').trim();
+      return t.length <= 20 && (re.test(el.getAttribute('aria-label') || '') || re.test(t));
+    });
     if (hit) { hit.click(); return true; }
     return false;
   })()`).catch(() => false);
@@ -398,8 +415,21 @@ function verifyFollowingTab(cdp: Cdp): Promise<boolean> {
   return cdp.evaluate<boolean>(`(() => {
     const re = ${TAB_TEXT_RE};
     return [...document.querySelectorAll('[aria-selected="true"]')]
-      .some((el) => re.test(el.textContent || '') || re.test(el.getAttribute('aria-label') || ''));
+      .some((el) => (el.textContent || '').trim().length <= 20 && re.test(el.textContent || el.getAttribute('aria-label') || ''));
   })()`).catch(() => false);
+}
+
+/** 采集页面 Tab 导航结构快照，用于中止时排查选择器失配 */
+function dumpTabDebug(cdp: Cdp): Promise<any> {
+  return cdp.evaluate(`(() => {
+    const pick = (el) => ({ tag: el.tagName, role: el.getAttribute('role'), label: el.getAttribute('aria-label'), selected: el.getAttribute('aria-selected'), text: (el.textContent || '').trim().slice(0, 40) });
+    return {
+      href: location.href,
+      tabs: [...document.querySelectorAll('[role="tab"]')].map(pick),
+      homeLinks: [...document.querySelectorAll('a[href="/home"]')].map(pick),
+      navLinks: [...document.querySelectorAll('nav a[role="link"]')].map(pick).slice(0, 12),
+    };
+  })()`).catch((e) => ({ error: String(e) }));
 }
 
 /** 确认当前处于「正在关注」：失败则重试点击一次；仍失败则中止（宁可失败，不可误采推荐流） */
@@ -408,8 +438,9 @@ async function ensureFollowingTab(cdp: Cdp): Promise<void> {
   await clickFollowingTab(cdp);
   await sleep(2000);
   if (await verifyFollowingTab(cdp)) return;
-  log('无法确认当前处于「正在关注」Tab，为避免误采「For you」推荐流，中止采集');
-  flushRaw({ abort_reason: 'following_tab_unverified' });
+  const debug = await dumpTabDebug(cdp);
+  log('无法确认当前处于「正在关注」Tab，为避免误采「For you」推荐流，中止采集（DOM 快照已写入 raw JSON）');
+  flushRaw({ abort_reason: 'following_tab_unverified', tab_debug: debug });
   process.exit(1);
 }
 
