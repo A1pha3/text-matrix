@@ -102,7 +102,7 @@ bun skills/x-timeline/scripts/collect-timeline.ts \
 | 翻译质量 | 非中文全部翻译；无臆造事实 |
 | frontmatter | date ≤ 写入时刻 − 5min；含 `draft: false` 与 `hiddenFromHomePage: true`；slug 固定模式 |
 | 只读承诺 | 全程无点赞/关注/发帖等写操作 |
-| 统计一致 | 采集报告数字与正文条目数一致 |
+| 统计一致 | 数字取自 raw 的 `stats` + 处理层机器计数，**禁止人工估填**；采集总数 − 结构合并 − 过滤数 = 收录数 = 正文条目数，四者闭合 |
 
 ## 禁止项
 
