@@ -18,7 +18,7 @@ tags: ["机器学习", "ONNX", "微软", "推理加速", "PyTorch"]
 
 ## 一句话判断
 
-ONNX Runtime（简称 ORT）解决的不是"模型跑不快"这一个点，而是"模型训练完该怎么发布"这整条链路：训练框架（PyTorch、TensorFlow）只负责产出模型，不负责部署；生产环境里 CPU、GPU、手机 NPU、浏览器各有各的加速路径，逐个去适配是重复劳动。ORT 用 ONNX 做统一中间格式，再靠一套 Execution Provider（执行后端）机制，把"同一个模型"调度到不同硬件上。推理是它的主战场，训练加速是附加能力。最新稳定版 v1.28.0（2026-08 发布），MIT 协议。
+ONNX Runtime（简称 ORT）解决的不是"模型跑不快"这一个点，而是"模型训练完该怎么发布"这整条链路：训练框架（PyTorch、TensorFlow）只负责产出模型，不负责部署；生产环境里 CPU、GPU、手机 NPU、浏览器各有各的加速路径，逐个去适配是重复劳动。ORT 用 ONNX 做统一中间格式，再靠一套 Execution Provider（执行后端）机制，把"同一个模型"调度到不同硬件上。推理是它的主战场，训练加速是附加能力。最新稳定版 v1.29.0（2026-08 发布），MIT 协议。
 
 ## 项目概览
 
@@ -28,7 +28,7 @@ ONNX Runtime（简称 ORT）解决的不是"模型跑不快"这一个点，而�
 | 语言 | C++ / C / C# / Python / Rust / JavaScript |
 | 协议 | MIT |
 | 官网 | [onnxruntime.ai](https://onnxruntime.ai/) |
-| 最新版本 | v1.28.0（2026-08）；main 分支已推进到 1.30 |
+| 最新版本 | v1.29.0（2026-08） |
 | GitHub Stars | 约 21k（2026-08，以仓库为准） |
 | 定位 | 跨平台推理 + 训练加速，ONNX 格式的运行时 |
 
@@ -87,13 +87,13 @@ ORT 加载模型后先做图级优化，再交给 EP。几个主要手段：
 
 EP 是"把算子执行交出去"的插件接口。主流后端：
 
-- **CUDA EP**：NVIDIA GPU。注意 CUDA 12 支持已在 1.27.0 移除，当前 GPU 包面向 CUDA 13。
+- **CUDA EP**：NVIDIA GPU。注意 CUDA 12 支持已在 1.27.0 移除，当前 GPU 包面向 CUDA 13。官方正把 CUDA 运行时从 ORT 核心包里拆出来，做成独立的 CUDA Plugin EP（插件执行后端）分发，第三方不用重编 ORT 就能接入。
 - **TensorRT EP**：NVIDIA 的高性能推理引擎，比通用 CUDA kernel 更激进，但首次构建有额外开销，适合固定形状的线上服务。
 - **DirectML EP**：Windows 专属，走 DirectX 12，好处是不挑显卡品牌，AMD / Intel 核显也能用。
 - **Core ML EP**：Apple 生态，能利用 Neural Engine。
 - **ROCm EP**：AMD GPU，Linux 为主。
 - **OpenVINO EP**：Intel CPU / GPU / NPU。
-- **WebGPU / WebNN EP**：浏览器与 JS 环境的加速路径。
+- **WebGPU / WebNN EP**：浏览器与 JS 环境的加速路径。v1.29 起官方宣布 `onnxruntime-web` 弃用 WebGL 和 JSEP，原生 WebGPU EP 是后续推荐方向。
 
 ### 3. 会话选项
 

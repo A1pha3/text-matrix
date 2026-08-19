@@ -3,13 +3,29 @@ title: "curl 与 libcurl：互联网数据传输基石的架构解析"
 date: "2026-04-27T15:00:00+08:00"
 slug: "curl-libcurl-multi-protocol-transfer-guide"
 github_repo: "curl/curl"
-description: "curl 是互联网数据传输领域最不可或缺的基础设施之一。本文从架构视角解析 curl 命令行工具与 libcurl 库的设计关系，介绍 easy / multi / share 三种编程接口的区别与应用场景，以及 curl_url 等核心组件的设计思路。"
+description: "curl 是互联网数据传输领域最不可或缺的基础设施之一。本文从架构视角解析 curl 命令行工具与 libcurl 库的设计关系，介绍 easy / multi / share 三种编程接口的区别与应用场景、curl_url 的独立设计，并用一次完整请求串起整个调用链，最后附自测与进阶路径。"
 categories: ["技术笔记"]
 tags: ["HTTP", "C语言", "开源"]
 draft: false
 ---
 
 # curl 与 libcurl：互联网数据传输基石的架构解析
+
+## 目录
+
+- [项目概览与架构总览](#项目概览与架构总览)
+- [curl 命令行与 libcurl 库：两个层级的抽象](#curl-命令行与-libcurl-库两个层级的抽象)
+- [libcurl 三种编程接口](#libcurl-三种编程接口)
+- [curl_url：为什么要自己做 URL 解析](#curl_url为什么要自己做-url-解析)
+- [协议支持：27 种协议是如何实现的](#协议支持27-种协议是如何实现的)
+- [一次请求如何流过 libcurl](#一次请求如何流过-libcurl)
+- [SSL/TLS 支持](#ssltls-支持)
+- [适用场景、优势与边界](#适用场景优势与边界)
+- [常见问题排查](#常见问题排查)
+- [采用建议](#采用建议)
+- [自测](#自测)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
 
 > **项目地址**：[curl/curl](https://github.com/curl/curl)
 > **维护者**：Daniel Stenberg
@@ -20,10 +36,12 @@ draft: false
 
 curl 有两个名字。命令行工具叫 `curl`，承载传输逻辑的 C 库叫 `libcurl`，两者共用同一套协议实现。多数人只把 curl 当成一个发 HTTP 请求的命令，真正被长期链接进应用的是 libcurl。搞清这层关系，才能判断什么时候用命令行、什么时候嵌库、嵌库时用哪套接口。
 
+读完本文，你应该能：说清命令行工具与 libcurl 的分工；在 easy / multi / share 里为手头的并发场景选对接口；解释 curl_url 为什么独立成组件、27 种协议如何挂进一张表；最后能跟着一次请求的完整路径，把上面这些机制串起来。
+
 顺着这条线，下面拆几个平时不会细想的问题：
 
 - easy / multi / share 三种接口差在哪，为什么有了 easy 还要有 multi、有了 multi 还要有 share
-- curl 支持 27 个协议，每个协议怎么接进来，加新协议要不要动主循环
+- curl 支持 27 种协议，每个协议怎么接进来，加新协议要不要动主循环
 - URL 解析为什么不依赖系统库，要自己做一套 curl_url
 
 ---
@@ -32,12 +50,10 @@ curl 有两个名字。命令行工具叫 `curl`，承载传输逻辑的 C 库�
 
 curl 的价值不在命令行本身，而在它把二十多种协议的传输逻辑收敛进一套可复用的 C 库里。命令行工具只是这套库的最薄一层前端，真正被 Git、PHP 的 cURL 扩展、各类下载器依赖的是底层的 libcurl。理解这套分层，对网络编程、协议调试、嵌入式开发都有直接帮助。
 
-curl 由瑞典开发者 Daniel Stenberg 于 1998 年发起，最初只是给 IRC 频道上传文件的工具。二十多年过去，它出现在几乎每一台服务器和每一条自动化脚本里，Daniel 至今保持持续提交，项目没有常见的"完成后失修"问题。
+curl 由瑞典开发者 Daniel Stenberg 于 1998 年发起，最初只是给 IRC 频道上传文件的工具。二十多年过去，它出现在几乎每一台服务器和每一条自动化脚本里，Daniel 至今保持持续提交，项目没有常见的“完成后失修”问题。
 
-| 指标 | 数值（2026-08 核验） |
+| 指标 | 数值 |
 |------|------|
-| GitHub Stars | 42,600 |
-| GitHub Forks | 7,300 |
 | 主要语言 | C |
 | 维护者 | Daniel Stenberg 主导 |
 | 支持协议 | 27 种（见标题下方项目信息） |
@@ -69,7 +85,7 @@ curl 项目分两层：上层是命令行工具 `curl`，下层是 C 库 `libcur
 └─────────────────────────────────────────────────┘
 ```
 
-命令行能做的，libcurl 都能做；但 libcurl 能做的（比如在多线程里共享 DNS 缓存），命令行没法直接暴露。理解这个分层，后面讲接口和协议接入就都落在这张图上。
+命令行能做的，libcurl 都能做；但 libcurl 能做的（比如在多线程里共享 DNS 缓存），命令行没法直接暴露。后面讲接口、协议接入和一次请求的完整路径，都落在这张图上。
 
 ---
 
@@ -206,11 +222,11 @@ curl_easy_cleanup(curl2);
 curl_multi_cleanup(multi);
 ```
 
-`curl_multi_poll()` 底层用 `poll()`（或 `select()`、`epoll()`，取决于平台和编译选项），能在单个线程里高效处理大量并发连接。这是 libcurl 比"每个连接一个线程"更省资源的原因。
+`curl_multi_poll()` 底层用 `poll()`（或 `select()`、`epoll()`，取决于平台和编译选项），能在单个线程里高效处理大量并发连接。这是 libcurl 比“每个连接一个线程”更省资源的原因。
 
 ### Share Interface（共享接口）
 
-Share Interface 让多个 curl handle 共享数据，避免重复初始化，降低开销。
+Share 接口让多个 curl handle 共享数据，避免重复初始化，降低开销。
 
 **适用场景**：
 
@@ -237,7 +253,7 @@ curl_easy_cleanup(curl2);
 curl_share_cleanup(share);
 ```
 
-多线程环境下用 share interface，需要设置 `CURLSHOPT_LOCKFUNC` 和 `CURLSHOPT_UNLOCKFUNC` 提供锁机制，否则会有数据竞争。
+多线程环境下用 share 接口，需要设置 `CURLSHOPT_LOCKFUNC` 和 `CURLSHOPT_UNLOCKFUNC` 提供锁机制，否则会有数据竞争。
 
 ---
 
@@ -310,22 +326,24 @@ libcurl 内部维护一张协议 handler 表。每个协议实现以下函数指
 
 ```c
 struct Curl_handler {
-  const char *scheme;           // 协议名，如 "http", "ftp"
-  int  (*setup)(struct Curl_easy *data);
-  CURLcode (*connect_it)(struct Curl_easy *data);
-  CURLcode (*doing)(struct Curl_easy *data);
-  CURLcode (*done)(struct Curl_easy *data);
-  ssize_t (*send)(struct Curl_easy *data, const void *buf, size_t len);
-  ssize_t (*recv)(struct Curl_easy *data, void *buf, size_t len);
+  const char *scheme;              // 协议名，如 "http", "ftp"
+  CURLcode (*setup)(struct Curl_easy *data);
+  CURLcode (*connect_it)(struct Curl_easy *data, bool *done);
+  CURLcode (*do_it)(struct Curl_easy *data, bool *done);
+  CURLcode (*done)(struct Curl_easy *data, CURLcode, bool);
+  Curl_send *send;                 // 发送数据
+  Curl_recv *recv;                 // 接收数据
   /* ... 更多函数指针 ... */
 };
 ```
 
+真实源码里的字段比这多，`Curl_handler` 还包含 `readwrite`、`connection_check`、`disconnect` 等回调，用于传输中读写、连接状态检查和清理。这里保留发送 / 接收两个核心入口，便于理解分发逻辑。
+
 接入一个新协议只需要：
 
-1. 实现 `struct Curl_handler` 里的一组函数
-2. 在 `lib/curl_setup.h` 里声明
-3. 在 `lib/{protocol}.c` 里定义，并注册到全局表
+1. 实现 `struct Curl_handler` 里的一组函数，放在 `lib/` 下对应协议的文件（如 `http.c`、`ftp.c`）里
+2. 在 libcurl 的协议注册表中登记该 handler，按 scheme 关联
+3. 在构建系统里启用对应的编译开关
 
 不需要改动传输主循环。新协议的接入点明确，维护边界清晰。这是 curl 能持续增加协议而代码不失控的原因——每个协议自己负责自己的实现，主循环只管查表分发。
 
@@ -350,6 +368,47 @@ curl --http2 https://example.com
 ```
 
 `--http2` / `--http3` 要求 curl 在编译时启用对应支持（HTTP/2 通常依赖 nghttp2，HTTP/3 依赖 quiche 或 ngtcp2），否则会直接报错。先 `curl -V` 确认当前构建支持哪些。
+
+---
+
+## 一次请求如何流过 libcurl
+
+把前面的机制串起来看一次实际请求。下面这个最小程序用 easy 接口下载一个文件，它走完的路径基本覆盖了 libcurl 的核心调用链。
+
+```c
+#include <stdio.h>
+#include <curl/curl.h>
+
+static size_t write_cb(void *ptr, size_t size, size_t nmemb, void *userdata) {
+  return fwrite(ptr, size, nmemb, (FILE *)userdata);
+}
+
+int main(void) {
+  FILE *out = fopen("index.html", "wb");
+  CURL *curl = curl_easy_init();
+  if (curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, out);
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK)
+      fprintf(stderr, "failed: %s\n", curl_easy_strerror(res));
+    curl_easy_cleanup(curl);
+  }
+  fclose(out);
+  return 0;
+}
+```
+
+`curl_easy_perform()` 内部大致分五步：
+
+1. **解析 URL**。`curl_easy_setopt(curl, CURLOPT_URL, ...)` 并不立刻联网，它把 URL 字符串交给 curl_url 引擎解析，拆出 scheme、host、port、path。解析失败（比如 `htp://` 拼错）会直接返回错误，不会发起连接。
+2. **按 scheme 查表**。libcurl 用解析出的 scheme 在协议 handler 表里查找对应的 `Curl_handler`，拿到 http 对应的 `do_it`、`send`、`recv` 等函数指针。
+3. **建立连接**。DNS 解析 → TCP 握手 → TLS 协商（HTTPS 时）。如果启用了 share 接口，DNS 结果和 SSL session 会先查共享缓存。
+4. **执行传输**。调用 handler 里的发送 / 接收回调，把响应数据交给 `CURLOPT_WRITEFUNCTION`（上面示例里是写进文件）。重定向、断点续传这类逻辑也在这个阶段处理。
+5. **收尾**。`done` 回调清理传输状态，连接放回连接池（保持 keep-alive），`curl_easy_perform()` 返回 `CURLcode`。
+
+这个调用链里值得注意的一点：URL 解析发生在协议查表之前，所以 curl_url 对全部 27 种协议都适用——这正好回答了前面的问题，为什么 URL 解析要独立成一套组件而不是散在各协议里。
 
 ---
 
@@ -435,8 +494,41 @@ curl 的命令行工具只是 libcurl 的前端。libcurl 作为底层库，让�
 
 1. **命令行调试**：直接用 `curl -v` 排查 HTTP 请求、证书、代理问题，零成本上手
 2. **脚本化传输**：在 shell 脚本里用 curl 做定时下载、API 调用、健康检查
-3. **嵌入 libcurl**：在 C/C++ 应用里链接 libcurl，从 easy interface 起步，需要并发再上 multi interface
-4. **多线程共享**：多线程场景下用 share interface 共享 DNS 和 SSL session，避免重复初始化
+3. **嵌入 libcurl**：在 C/C++ 应用里链接 libcurl，从 easy 接口起步，需要并发再上 multi 接口
+4. **多线程共享**：多线程场景下用 share 接口共享 DNS 和 SSL session，避免重复初始化
 5. **独立 URL 解析**：只需要 URL 解析不需要传输时，单独用 curl_url，不引入完整传输栈
 
-想深入源码，Daniel Stenberg 写的 [Everything curl](https://everything.curl.dev/) 是最完整的 curl 参考书，官方在线版免费阅读，重点看 "How curl works" 和 "libcurl internals" 两章；这本书也有社区维护的中文翻译版本（另有人邮社出版的中文纸书《cURL 必知必会》）。[libcurl API 参考](https://curl.se/libcurl/c/) 和 [curl 官方文档](https://curl.se/docs/) 适合按需查。
+想深入源码，Daniel Stenberg 写的 [Everything curl](https://everything.curl.dev/) 是最完整的 curl 参考书，官方在线版免费阅读，重点看 “How curl works” 和 “libcurl internals” 两章。[libcurl API 参考](https://curl.se/libcurl/c/) 和 [curl 官方文档](https://curl.se/docs/) 适合按需查。
+
+---
+
+## 自测
+
+1. 命令行 curl 和 libcurl 是什么关系？
+   <details><summary>查看答案</summary>命令行 curl 是 libcurl 的前端消费者，把参数翻译成 libcurl API 调用；真正承载传输逻辑的是 libcurl 库。</details>
+
+2. 一次只能处理一个传输、要并发换什么接口？多线程里共享 DNS 缓存用什么接口？
+   <details><summary>查看答案</summary>单个传输用 easy 接口；并发多传输用 multi 接口（一个线程内管理多个 easy handle）；多线程共享数据用 share 接口。</details>
+
+3. curl_url 是什么时候引入的？它解决的问题是什么？
+   <details><summary>查看答案</summary>从 curl 7.62.0 开始引入，是独立的 URL 解析 API。解决不同协议 URL 规则不同、系统库跨平台行为不一致、以及安全审计需要统一入口的问题。</details>
+
+4. 新协议接入 libcurl，要不要改传输主循环？
+   <details><summary>查看答案</summary>不用。每个协议实现 `Curl_handler` 的一组函数指针并注册到 handler 表，主循环按 scheme 查表分发即可。</details>
+
+5. `curl -k` 关闭了什么校验？生产环境为什么禁止？
+   <details><summary>查看答案</summary>关闭对端证书验证（`CURLOPT_SSL_VERIFYPEER`）。关闭后 HTTPS 会接受任意证书，包括中间人攻击的证书，加密保护形同虚设，生产环境永远不应关闭。</details>
+
+## 练习
+
+1. 跑一次 `curl -v https://example.com`，把输出按“URL 解析 → DNS → TCP → TLS → HTTP 请求/响应”五段标注出来，对照本文的调用链。
+2. 写一个 C 程序，用 easy 接口下载两个文件；再改成 multi 接口并发下载，对比两者的完成时间。
+3. 用 `curl_url` API 解析 `https://user:pass@example.com:8080/path?query=1#frag`，分别取出 host、port、path，再把 scheme 改成 `http` 看结果变化。
+4. 在脚本里用 `curl --retry 3 --retry-delay 2` 下载一个会间歇失败的 URL，观察重试日志，理解“没有内置重试”这条边界如何被弥补。
+
+## 进阶路径
+
+- **从命令行到源码**：读完 Everything curl 的 “How curl works”，再对照 libcurl 源码里 `http.c`、`urlapi.c` 的实现，看 handler 表和 curl_url 的实际代码。
+- **从 easy 到 multi**：把单线程下载器改造成事件驱动并发下载器，理解 `curl_multi_poll` 如何用单个线程管理大量连接。
+- **从客户端到协议**：用 `curl -v` 对比 HTTP/1.1 与 HTTP/2 的帧交互，再进一步看 QUIC/HTTP/3 的传输差异。
+- **从使用到安全**：研究 curl 历年的 CVE 公告，看 URL 解析、TLS 校验相关的漏洞是如何被发现和修复的，理解安全披露流程。

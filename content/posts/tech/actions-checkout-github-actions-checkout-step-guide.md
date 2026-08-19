@@ -1,11 +1,11 @@
 ---
 title: "actions/checkout 实战指南：从零开始掌握 GitHub Actions 的第一步"
 date: "2026-07-02T21:02:26+08:00"
-lastmod: "2026-07-02T21:02:26+08:00"
+lastmod: "2026-08-20T00:00:00+08:00"
 draft: false
 categories: ["技术笔记"]
 tags: ["GitHub Actions", "CI/CD", "DevOps", "TypeScript"]
-description: "拆解 actions/checkout 的 v7 安全默认、v6 凭据持久化机制与常见场景：sparse-checkout、fetch-depth、多仓库与子模块，走向可靠 CI。"
+description: "拆解 actions/checkout 的 v7 安全默认（含 2026-07-20 对 v4/v5/v6 的回移植）、v6 凭据持久化机制与常见场景：sparse-checkout、fetch-depth、多仓库与子模块。"
 author: text-matrix
 slug: actions-checkout-github-actions-checkout-step-guide
 
@@ -43,11 +43,16 @@ runner 是 GitHub 提供的临时虚拟机，初始状态是干净的 Ubuntu/Win
 
 ## v7 默认行为变化：拒绝 fork PR 代码
 
-v7 在 README "What's new" 节里写了一句话："checkout now refuses to check out fork pull request code by default when the workflow is triggered by `pull_request_target` or `workflow_run`."
+v7 于 2026-06-18 发布，README "What's new" 节的核心只有一条变化："checkout now refuses to check out fork pull request code by default when the workflow is triggered by `pull_request_target` or `workflow_run`."
 
-这是这一代最重要的一条变更。背景是：`pull_request_target` 与 `workflow_run` 触发器运行在 base 仓库上下文里，使用 base 的 `GITHUB_TOKEN`、secrets 和 runner 资源。如果此时直接把 fork 仓库的 PR 代码 checkout 下来并执行，等于把不可信代码放进了高权限环境，攻击者可以用 fork 里的恶意脚本窃取 secret、修改 release 工件。这就是常说的 "pwn request"。
+这一代最重要的就是这条。背景是：`pull_request_target` 与 `workflow_run` 触发器运行在 base 仓库上下文里，使用 base 的 `GITHUB_TOKEN`、secrets 和 runner 资源。如果此时直接把 fork 仓库的 PR 代码 checkout 下来并执行，等于把不可信代码放进了高权限环境——攻击者可以用 fork 里的恶意脚本窃取 secret、污染构建产物。这就是常说的 "pwn request"，也是 2025 年 tj-actions/changed-files（CVE-2025-30066）和 2026 年 7 月 AsyncAPI 等真实供应链事件的根因套路。
 
-v7 之前默认会 checkout；v7 之后默认拒绝。要继续 checkout fork 代码必须显式设置：
+v7 的默认拒绝并不是一刀切，只在以下条件同时成立时才会拦：
+
+- PR 来自 fork（而非同一仓库）；
+- 在 `pull_request_target` 或 `workflow_run` 上下文里，本次 checkout 的目标命中二者之一：`repository` 输入解析到 fork 仓库，或 `ref` 匹配 `refs/pull/<N>/head`、`refs/pull/<N>/merge`（含改写后落到 fork PR 的 head / merge commit SHA）。
+
+要继续 checkout fork 代码，必须显式设置：
 
 ```yaml
 - uses: actions/checkout@v7
@@ -55,7 +60,9 @@ v7 之前默认会 checkout；v7 之后默认拒绝。要继续 checkout fork �
     allow-unsafe-pr-checkout: true
 ```
 
-`allow-unsafe-pr-checkout` 的注释里写明"Set to `true` only after reviewing the risks at <https://gh.io/securely-using-pull_request_target>"。换句话说：这不是一个无害的兼容性开关，是一次必须自己判断风险后的显式 opt-in。
+`allow-unsafe-pr-checkout` 的注释写明 "Set to `true` only after reviewing the risks at <https://gh.io/securely-using-pull_request_target>"。这不是一个无害的兼容性开关，是要自己判断风险后的一次显式 opt-in。
+
+这里有两个容易误判的点。其一，这项保护于 2026-07-20 起被回移植到仍受支持的各 major 版本（v4/v5/v6 等）：只要 workflow 用的是 `actions/checkout@v4` 这类 Floating major tag，就会自动继承新行为；只有 pin 到具体 SHA 或 minor/patch 的 workflow 不会自动获得，需要按正常升级流程显式升上来。其二，大多数 `pull_request_target` 用例（打 label、发评论、跑只读检查）本身不需要 checkout fork 代码，遇到拦截时应先问自己"我是不是真的要在高权限上下文里执行某人的 fork 代码"。
 
 ## v6 凭据持久化：从 `.git/config` 移到 `$RUNNER_TEMP`
 
@@ -267,8 +274,9 @@ GitHub Enterprise Server 上还要设 `github-server-url`，否则 checkout 会�
 2. 内部 docker 镜像如果 `RUN` 步骤里用 git 凭据，确认 runner ≥ v2.329.0（v6 引入 `$RUNNER_TEMP` 凭据存储的最低版本）。
 3. self-hosted runner 用 node24 跑 v5 之前要确认 ≥ v2.327.1。
 4. 在私有 fork 流程里，刻意构造一个 fork PR，验证新默认是否真的拒绝了 fork 代码——避免"以为安全实则绕开"。
+5. 即便没升级，也要复核所有沿用 Floating major tag（`@v4`/`@v5`/`@v6`）的 `pull_request_target` workflow——它们可能已在 2026-07-20 继承了新保护，单测通过并不代表线上容器不报警。
 
-如果需要紧急回退到上一个 major，把 pin 改回 `@v6` 或 `@v5` 即可；运行时差异在 README 的 "What's new" 里都列了。
+如果需要紧急回退到上一个 major，把 pin 改回 `@v6` 或 `@v5` 即可；运行时差异在 README 的 "What's new" 里都列了。但要注意：回退只能换回凭据存储与 runtime 行为，2026-07-20 之后受支持 major 上的 fork PR 保护是默认继承的，靠换 tag 并不能绕开安全默认。
 
 ## 它不是什么
 
@@ -303,6 +311,10 @@ GitHub Enterprise Server 上还要设 `github-server-url`，否则 checkout 会�
 **Q1: v4/v5/v6/v7 之间能直接升级吗？**
 
 不能。每个 major 版本有运行时差异（node 版本、凭据存储位置、安全默认），升级前应先在测试 workflow 上验证。README 的 "What's new" 节列出了完整变更。
+
+**Q1b: 我才 pin 在 `@v4`，怎么突然就收到了 fork PR 被拦的错误？**
+
+这不是升级。2026-07-20 起，v7 的 fork PR 保护被回移植到仍受支持的各 major 版本，只要你的 workflow 用的是 Floating major tag（如 `@v4`、`@v5`），会自动继承新默认。所以即便你多年没动 checkout 这一行，行为也可能已经变了。只有 pin 到具体 SHA 或 minor/patch 的不会自动获得，需要显式升级。
 
 **Q2: `persist-credentials: false` 后怎么 push？**
 
@@ -397,4 +409,11 @@ true（默认）把模式解析为"包含祖先目录"，适合拉整个子目�
 - 在生产项目中配置多仓库 checkout
 - 处理子模块和 Git LFS 场景
 - 从 v4/v5 升级到 v7，跑完整测试
+
+## 参考资料
+
+- actions/checkout v7 README（含 v5/v6/v7 的 "What's new" 与全部输入参数）：<https://github.com/actions/checkout>
+- GitHub Changelog：Safer `pull_request_target` defaults for GitHub Actions checkout：<https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/>
+- 官方安全指引："Securely using pull_request_target"（GitHub 文档）：<https://docs.github.com/en/actions/security-guides/securing-workflows-and-running/understanding-the-workflow#securely-using-pull_request_target>
+- CVE-2025-30066（tj-actions/changed-files 供应链事件）：<https://github.com/advisories/GHSA-mrrh-fwg8-r2c3>
 
