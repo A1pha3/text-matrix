@@ -4,7 +4,7 @@ date: 2026-08-12T21:50:00+08:00
 draft: false
 tags: ["AI Agent", "技术写作", "抽象层", "软件工程", "Engineering", "Programming"]
 categories: ["技术笔记"]
-description: "siddontang《AI 编程缺失的抽象层》不是又一篇'AI 抢工作'焦虑文——它把'AI Coding 是什么'放到计算机抽象升级史里看，给出三组判断：编程关系从人→Lang→Computer 变成人→Intent→Agent→Lang→Computer；新基本功 = Spec + Decomposition + Verification + Context Engineering；'AI 时代的 C 语言'可能是一组新抽象 Intent+Spec+Context+Tools+Memory+Policy+Runtime+Eval。这篇文章拆的是 siddontang 论点的内在结构、为什么这个结构现在才被看清，以及它对 Junior Engineer 训练梯子的具体含义。"
+description: "siddontang《AI 编程缺失的抽象层》不是又一篇'AI 抢工作'焦虑文——它把'AI Coding 是什么'放到计算机抽象升级史里看，给出三组判断：编程关系从人→Programming Language→Computer 变成人→Intent→Agent→Programming Language→Computer；新基本功 = Spec + Decomposition + Verification + Context Engineering；'AI 时代的 C 语言'可能是一组新抽象 Intent+Spec+Context+Tools+Memory+Policy+Runtime+Eval。这篇文章拆的是 siddontang 论点的内在结构、为什么这个结构现在才被看清，以及它对 Junior Engineer 训练梯子的具体含义。"
 slug: "ai-programming-missing-abstraction-layer"
 band: "essay"
 gates: ["事实性", "去AI味", "观点依据"]
@@ -181,7 +181,7 @@ siddontang 的论断是元视角——它讲"AI 编程的结构"，不是"今天
 | 判据 | 对今天的工程含义 |
 |---|---|
 | 代码从 interface 变成 artifact | 写"被 Agent 读"的代码比写"被程序员读"的更优先——命名、接口、注释、目录结构都在 Agent 视野里 |
-| 编程关系从人→Lang→Computer 变成人→Intent→Agent→Lang→Computer | Intent 和 Spec 是新瓶颈，Type system、Property-based test、Eval harness 的投入应该加码 |
+| 编程关系从人→Programming Language→Computer 变成人→Intent→Agent→Programming Language→Computer | Intent 和 Spec 是新瓶颈，Type system、Property-based test、Eval harness 的投入应该加码 |
 | 抽象真空期 | 别在某个 Agent 框架上押重注，但要在"怎么指挥 Agent"上积累能力 |
 | Junior 训练梯子断了 | 在团队里主动设计 Agent 时代的"训练任务"——让 Junior 负责 Spec、Verification、Context 设计，不要把他们从这些任务里挤出去 |
 | 四个新基本功 | 自己学 + 带团队学：写 Spec、设计人机 Decomposition、设计 Verification 流、设计 Context 的能力 |
@@ -195,13 +195,13 @@ siddontang 的论断是元视角——它讲"AI 编程的结构"，不是"今天
 
 这些不是"AI 时代新话术"——它们是具体的工程任务，能在团队里直接执行。
 
-## 九、一章小结
+## 九、小结：三个判据，一个时间窗
 
 siddontang 那篇文章真正在讲的不是"AI 编程的现状"，是**"AI 编程处在哪一段历史"**。他给出三个判据：
 
-1. **结构判据**——编程关系从 `人 → Lang → Computer` 变成 `人 → Intent → Agent → Lang → Computer`，代码从 interface 变成 artifact。
+1. **结构判据**——编程关系从 `人 → Programming Language → Computer` 变成 `人 → Intent → Agent → Programming Language → Computer`，代码从 interface 变成 artifact。
 2. **方法论判据**——能力下一代，方法论没跟上，新基本功（Spec / Decomposition / Verification / Context Engineering）正在重新定义。
-3. **历史坐标判据**——我们处在 "AI Programming 的 Assembly Era"，最终稳定的可能是 `Intent + Spec + Context + Tools + Memory + Policy + Runtime + Eval` 一组新抽象。
+3. **历史坐标判据**——我们处在 "AI Programming 的 Assembly Era"，最终稳定的可能是 `Intent + Specification + Context + Tools + Memory + Policy + Runtime + Eval` 一组新抽象。
 
 这三个判据连起来，他给的不是一份"AI 时代程序员生存指南"，而是一个**判断时间窗的工具**：慢段已经过去、快段正在发生、真空期还看不到头。在这个窗口里，最值得投入的不是某个具体工具，而是**那几个可能成为未来一等抽象的候选能力**。
 
@@ -214,3 +214,11 @@ siddontang 那篇文章真正在讲的不是"AI 编程的现状"，是**"AI 编�
 > **为什么 siddontang 不给"AI 时代的 C 语言"一个明确候选，而是列一串抽象？** 因为他很诚实地承认"没人知道"。那一串词（Intent / Specification / Context / Tools / Memory / Policy / Runtime / Eval）是候选集，不是答案。它的价值不在"选哪个"，在"问题问对了"。**问题问对 = 抽象层真空期里最稀缺的事**——它告诉我们该往哪几个方向投入验证精力。
 >
 > **为什么"四大新基本功"不是"AI 时代新话术"？** 因为它们每一个都对应具体的工程任务，能在团队里直接执行。Spec 训练 → 写完整功能描述文档并 review；Decomposition 训练 → 拆"谁做 / 谁 review / Agent 在哪一步"；Verification 训练 → 设计 Agent 生成代码的 test 流；Context Engineering 训练 → 维护 CLAUDE.md、project rule、tool registry、permission matrix。这些不是 buzzword，是**可以排进 sprint 的训练任务**。
+
+## 来源与延伸阅读
+
+本文的论点骨架来自 siddontang 的《AI 编程缺失的抽象层》原文；文中引语均出自该文，未找到可公开引用的稳定链接，如需原文可循作者博客查找。下面是三组与论证直接相关的可验证延伸材料：
+
+- **抽象层历史观的原型**——Andrej Karpathy 在 2017 年提出 "Software 2.0"：把"写代码"重新定义为"为神经网络准备数据"，是"抽象层迁移"这一思考方式的最早普及版。 [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35)
+- **Agent 工程实践的官方说明**——Anthropic 的 "Building effective agents" 用"工作流 vs 智能体"的二分，实际划出了"设计 intelligence 的 control flow"的工程边界。 [Building effective agents](https://www.anthropic.com/research/building-effective-agents)
+- **抽象候选词的当前形态**——文中的 MCP 一项，官方协议文档可查。 [Model Context Protocol 文档](https://modelcontextprotocol.io/)
