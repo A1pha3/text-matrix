@@ -12,6 +12,7 @@
 - 过强作者在场感
 - 教学控制句过密
 - 模板化标题标签重复出现
+- 采集过程细节泄漏（取证层内部记录混入正文）
 """
 
 import json
@@ -64,6 +65,26 @@ class AIToneChecker:
             "前置知识",
             "预计阅读时间",
         }
+        # 采集过程细节泄漏信号（2026-08-21 新增，源于视频精读文章把
+        # B 站字幕接口抓取失败日志写成正文「来源声明」块的事故）
+        self.collection_leak_phrases = [
+            "抓取失败",
+            "字幕接口",
+            "接口对未登录",
+            "未登录用户不可达",
+            "登录态",
+            "字幕列表为空",
+            "逐字字幕抓取",
+        ]
+        # 蛇形命名 token 白名单： Hugo/Markdown 生态常规字段，不算取证泄漏
+        self.snake_case_allowlist = {
+            "draft",
+            "relref",
+            "no_translate",
+            "site.webmanifest",
+            "draft_false",
+        }
+        self.snake_case_pattern = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)+")
 
     def _collect_phrase_hits(self, lines: List[str]) -> Dict:
         counts = Counter()
@@ -113,10 +134,40 @@ class AIToneChecker:
                 })
         return hits
 
+    def _collect_collection_leaks(self, lines: List[str]) -> Dict:
+        """检测取证过程内部细节泄漏进正文
+
+        两组信号：
+        1. 蛇形命名 token（如 need_login_subtitle / view_points）出现在
+           正文/行内代码中 —— 正常中文技术写作不会引用原始 JSON 字段名；
+        2. 取证失败类短语（如"字幕接口对未登录用户不可达"）。
+        代码块、frontmatter、HTML 注释内的内容不参与检测。
+        """
+        snake_hits = []
+        phrase_hits = []
+
+        for line_number, line in enumerate(lines, 1):
+            if should_skip(lines, line_number):
+                continue
+            for match in self.snake_case_pattern.finditer(line):
+                token = match.group(0)
+                if token in self.snake_case_allowlist:
+                    continue
+                if is_in_latex(line, match.start()):
+                    continue
+                snake_hits.append({"line": line_number, "token": token})
+            for phrase in self.collection_leak_phrases:
+                idx = line.find(phrase)
+                if idx != -1 and not is_in_inline_code(line, idx):
+                    phrase_hits.append({"line": line_number, "phrase": phrase})
+
+        return {"snake_hits": snake_hits, "phrase_hits": phrase_hits}
+
     def check_content(self, content: str) -> Dict:
         lines = content.split("\n")
         phrase_data = self._collect_phrase_hits(lines)
         heading_hits = self._collect_template_headings(lines)
+        leak_data = self._collect_collection_leaks(lines)
 
         issues = []
         warnings = []
@@ -153,6 +204,21 @@ class AIToneChecker:
             issue_headings = "，".join(hit["heading"] for hit in heading_hits[:4])
             issues.append(f"检测到 {len(heading_hits)} 个模板化标题标签：{issue_headings}")
 
+        if leak_data["snake_hits"]:
+            tokens = sorted({hit["token"] for hit in leak_data["snake_hits"]})
+            issues.append(
+                "正文混入采集过程细节（蛇形命名字段名，疑似取证层内部记录）："
+                + "，".join(tokens[:6])
+                + "；请删除或改写为一句话材料性质说明"
+            )
+        if leak_data["phrase_hits"]:
+            phrases = sorted({hit["phrase"] for hit in leak_data["phrase_hits"]})
+            issues.append(
+                "正文混入采集过程细节（取证失败描述）："
+                + "，".join(phrases[:6])
+                + "；读者不关心抓取过程，只保留材料性质结论"
+            )
+
         gate_passed = len(issues) == 0
 
         return {
@@ -165,9 +231,14 @@ class AIToneChecker:
                 "teaching_control_hits": teaching_hits,
                 "author_presence_hits": author_hits,
                 "template_heading_hits": len(heading_hits),
+                "collection_leak_hits": len(leak_data["snake_hits"]) + len(leak_data["phrase_hits"]),
             },
             "matches": phrase_data["matches"][:20],
             "template_headings": heading_hits[:20],
+            "collection_leaks": {
+                "snake_hits": leak_data["snake_hits"][:20],
+                "phrase_hits": leak_data["phrase_hits"][:20],
+            },
             "gate_effect": (
                 "通过：脚本覆盖的高频信号未命中；完整门槛仍需对照 quality.md 去 AI 味门槛评估"
                 if gate_passed
@@ -207,6 +278,7 @@ def _print_result(result: Dict):
         print(f"  - 教学控制句: {summary.get('teaching_control_hits', 0)}")
         print(f"  - 作者在场感: {summary.get('author_presence_hits', 0)}")
         print(f"  - 模板化标题: {summary.get('template_heading_hits', 0)}")
+        print(f"  - 采集细节泄漏: {summary.get('collection_leak_hits', 0)}")
 
     if result["issues"]:
         print("问题:")
@@ -222,6 +294,13 @@ def _print_result(result: Dict):
             print(
                 f"  - 第 {hit['line']} 行 [{hit['category']}]：{hit['phrase']}"
             )
+    leaks = result.get("collection_leaks", {})
+    leak_examples = leaks.get("snake_hits", [])[:4] + leaks.get("phrase_hits", [])[:4]
+    if leak_examples:
+        print("采集细节泄漏示例:")
+        for hit in leak_examples:
+            detail = hit.get("token") or hit.get("phrase")
+            print(f"  - 第 {hit['line']} 行：{detail}")
 
 
 def main():

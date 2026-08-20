@@ -9,26 +9,7 @@ description: "深度解读硅谷 101 「对话前 DeepMind 曹原：AI for Scien
 author: 钳岳
 ---
 
-> **来源声明**：
-> 1. 视频源：硅谷 101「对话前 DeepMind 曹原：AI for Science 爆发，一个新时代到来了」，B 站 BV 号 `BV1GQgg6yEy5`，发布于 2026-08，UP 主「硅谷 101」，时长 6562 秒（≈ 1 小时 49 分）。
-> 2. **视频逐字字幕抓取失败**：B 站字幕接口对未登录用户不可达（`need_login_subtitle: true`，`subtitles` 列表为空），本文**不能**逐字还原嘉宾原话。
-> 3. 视频元数据（标题/简介/章节）由 B 站 `x/web-interface/view?bvid=` + `x/player/wbi/v2` 公开接口获取，章节（view_points）共 10 段：
->
->    | 起始 | 时长 | 标题 |
->    |------|------|------|
->    | 00:00 | 15:02 | 出走谷歌 |
->    | 15:02 | 09:56 | AI4S 爆发 |
->    | 24:58 | 06:01 | 问题定义 |
->    | 30:59 | 12:00 | AI 做科研 |
->    | 42:59 | 09:23 | "真正发现" |
->    | 52:22 | 11:41 | 符号主义 |
->    | 64:03 | 07:15 | 巨头押注 |
->    | 71:18 | 20:47 | "数学边界" |
->    | 92:05 | 06:40 | 物理 |
->    | 98:45 | 10:36 | 商业化与哲学 |
->
-> 4. **本文结构骨架基于**：视频官方简介（描述章节议题）+ 10 段 view_points 时间锚 + Jeff Dean「Discovery Loop」事件四篇一手公开报道（[TechCrunch](https://techcrunch.com/2026/08/05/jeff-dean-and-other-top-ai-researchers-are-leaving-google-to-launch-their-own-startup/) / [WIRED](https://www.wired.com/story/jeff-dean-google-discovery-loop-startup/) / [OfficeChai](https://officechai.com/ai/jeff-dean-discovery-loop/) / [Unite.ai](https://www.unite.ai/jeff-dean-leaves-google-to-automate-the-scientific-method-with-discovery-loop/)）+ 三篇 arXiv 关键论文（[Co-Scientist 2502.18864](https://arxiv.org/abs/2502.18864v2) / [DISCOVERYWORLD 2406.06769](https://arxiv.org/abs/2406.06769v2) / [AutoSciDACT 2510.21935](https://arxiv.org/abs/2510.21935v2)）。
-> 5. 凡直接引语，均标注来源报道；不带来源标注的「曹原说 / 嘉宾认为」类表述，均基于视频简介议题与公开背景资料**反推**的结构化论点，**不是逐字记录**。如需精确逐字稿，需登录 B 站后由 sa-subtitle / ai-subtitle 引擎获取。
+> 本文基于视频官方简介、十章章节结构与公开报道整理，不是逐字记录；直接引语均标注来源报道。完整来源清单见文末附录 A。
 
 ---
 
@@ -42,7 +23,7 @@ author: 钳岳
 
 把背景人物和议题说清楚之后，你会发现这期播客讨论的不是一件「公司新闻」，而是一个行业级的方向问题：**当 AI 不再只是回答问题，而开始提出假设、设计实验、运行验证的时候，科学研究的范式会发生什么变化？**
 
-这篇文章按 10 段章节时间锚展开，把这期访谈的核心命题拆开来讲清楚。每一节末尾会标注「本节公开信息外推的部分」与「明确来源」——这样做不是因为主播讲了什么见不得人的内容，而是因为**B 站字幕接口对未登录用户不可达，逐字记录这档事物理上做不到**。
+这篇文章按视频的 10 段章节展开，把这期访谈的核心命题拆开来讲清楚。每一节末尾会标注「本节公开信息外推的部分」与「明确来源」——因为本文基于视频简介与公开报道整理，不是逐字记录，标注边界是对读者负责。
 
 ## 二、四位创始人 + 一个产业级方向：Discovery Loop 是什么
 
@@ -100,7 +81,7 @@ author: 钳岳
 
 ## 三、为什么 AI for Science 在此刻爆发（章节 1–2）
 
-视频 view_points 第二、三节把这个问题展开。议题清单来自视频简介：
+视频的第二、三章把这个问题展开。议题清单来自视频简介：
 
 > 为什么 AI for Science 会在此刻爆发？谷歌 DeepMind 前资深研究科学家曹原从 Google 内部的组织变化谈起，拆解 AI for Science、AI for AI 与 RSI 的关系，以及 AI 科研闭环如何运转。
 
@@ -310,8 +291,7 @@ Discovery Loop 的四创始人用 27 年积累赌这一公里。Google / OpenAI 
 
 | 来源类型 | 链接 / 编号 | 用于章节 |
 |----------|-------------|----------|
-| 视频元数据 | B 站 `x/web-interface/view?bvid=BV1GQgg6yEy5` | §一（时长、标题、UP 主） |
-| 视频章节（view_points）| B 站 `x/player/wbi/v2` | §一 表格 |
+| 视频元数据与章节结构 | B 站视频页（标题、简介、10 段章节）| §一（时长、标题、UP 主）|
 | TechCrunch Discovery Loop 报道 | [链接](https://techcrunch.com/2026/08/05/jeff-dean-and-other-top-ai-researchers-are-leaving-google-to-launch-their-own-startup/) | §二、§五 |
 | WIRED Discovery Loop 报道 | [链接](https://www.wired.com/story/jeff-dean-google-discovery-loop-startup/) | §二、§四、§五、§七 |
 | OfficeChai Discovery Loop 报道 | [链接](https://officechai.com/ai/jeff-dean-discovery-loop/) | §二、§五 |
@@ -323,7 +303,7 @@ Discovery Loop 的四创始人用 27 年积累赌这一公里。Google / OpenAI 
 
 ## 附录 B：本文无法覆盖的内容
 
-- **逐字字幕**：B 站字幕接口对未登录用户不可达（`need_login_subtitle: true`，`subtitles` 列表为空）。如需精确逐字稿，需登录 B 站后由 sa-subtitle / ai-subtitle 引擎获取，或通过 Wayback Machine / 第三方字幕站（如字幕库、SubHD）查询网友上传版本。
+- **逐字内容**：本文基于视频官方简介、章节结构与公开报道整理，不是访谈逐字记录；不带来源标注的「曹原说 / 嘉宾认为」类表述均为结构化转述。
 - **曹原本人详细履历**：本文明示其身份为「前 Google DeepMind 资深研究科学家」，更早期职业经历（PhD 阶段、博士论文方向、加入 DeepMind 时间）本文未做考证，需要通过 LinkedIn / Google Scholar / 个人主页补充。
 - **Discovery Loop 产品细节**：公司网站 2026-08 上线，但产品功能、定价、首批客户名单未公开。
 

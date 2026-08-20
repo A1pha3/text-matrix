@@ -676,6 +676,33 @@ class TestAIToneChecker(unittest.TestCase):
         result = self.checker.check_content(content)
         self.assertTrue(result["gate_passed"])
 
+    def test_detects_collection_leak_snake_case(self):
+        """正文出现取证层蛇形字段名应触发门槛失败"""
+        content = (
+            "字幕接口返回 `need_login_subtitle: true`，`subtitles` 列表为空。\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertFalse(result["gate_passed"])
+        self.assertTrue(any("采集过程细节" in item for item in result["issues"]))
+        self.assertGreater(result["summary"]["collection_leak_hits"], 0)
+
+    def test_detects_collection_leak_phrases(self):
+        """取证失败描述类短语应触发门槛失败"""
+        content = "B 站字幕接口对未登录用户不可达，逐字记录做不到。\n"
+        result = self.checker.check_content(content)
+        self.assertFalse(result["gate_passed"])
+        self.assertTrue(any("取证失败描述" in item for item in result["issues"]))
+
+    def test_collection_leak_ignores_code_block_and_allowlist(self):
+        """代码块内的蛇形 token 与白名单字段不应计入门槛"""
+        content = (
+            "```json\n{\"need_login_subtitle\": true}\n```\n"
+            "正文提到 frontmatter 的 draft 字段，不含取证细节。\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertTrue(result["gate_passed"])
+        self.assertEqual(result["summary"]["collection_leak_hits"], 0)
+
     def test_format_check_skips_html_comment(self):
         """格式检查应跳过 HTML 注释内容"""
         checker = DocChecker(TERM_JSON_PATH)
