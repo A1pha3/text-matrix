@@ -676,32 +676,77 @@ class TestAIToneChecker(unittest.TestCase):
         result = self.checker.check_content(content)
         self.assertTrue(result["gate_passed"])
 
-    def test_detects_collection_leak_snake_case(self):
-        """正文出现取证层蛇形字段名应触发门槛失败"""
+    def test_detects_collection_leak_failure_narrative(self):
+        """失败叙事短语命中即阻断，蛇形字段名作为佐证"""
         content = (
-            "字幕接口返回 `need_login_subtitle: true`，`subtitles` 列表为空。\n"
+            "字幕抓取失败：接口返回 `need_login_subtitle: true`，字幕列表为空。\n"
         )
         result = self.checker.check_content(content)
         self.assertFalse(result["gate_passed"])
         self.assertTrue(any("采集过程细节" in item for item in result["issues"]))
+        self.assertTrue(any("佐证" in item for item in result["issues"]))
         self.assertGreater(result["summary"]["collection_leak_hits"], 0)
 
+    def test_detects_incident_original_text(self):
+        """回归：曹原文事故的原始「来源声明」文本必须被阻断"""
+        content = (
+            "视频逐字字幕抓取失败：B 站字幕接口对未登录用户不可达"
+            "（`need_login_subtitle: true`，`subtitles` 列表为空）。\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertFalse(result["gate_passed"])
+
     def test_detects_collection_leak_phrases(self):
-        """取证失败描述类短语应触发门槛失败"""
+        """失败叙事短语在普通正文中也应触发门槛失败"""
         content = "B 站字幕接口对未登录用户不可达，逐字记录做不到。\n"
         result = self.checker.check_content(content)
         self.assertFalse(result["gate_passed"])
-        self.assertTrue(any("取证失败描述" in item for item in result["issues"]))
+        self.assertTrue(any("失败叙事描述" in item for item in result["issues"]))
 
-    def test_collection_leak_ignores_code_block_and_allowlist(self):
-        """代码块内的蛇形 token 与白名单字段不应计入门槛"""
+    def test_snake_case_alone_only_warns(self):
+        """合法技术内容里的蛇形标识符不应阻断门槛，仅提示"""
         content = (
-            "```json\n{\"need_login_subtitle\": true}\n```\n"
-            "正文提到 frontmatter 的 draft 字段，不含取证细节。\n"
+            "调用 `from_pretrained` 加载权重，`max_tokens` 与 `api_key` 按需配置。\n"
+            "介电常数记作 $\\varepsilon_r$，这里没有失败描述。\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertTrue(result["gate_passed"])
+        self.assertTrue(any("蛇形命名标识符" in w for w in result["warnings"]))
+
+    def test_collection_leak_ignores_code_block(self):
+        """代码块内的失败叙事与蛇形 token 不应计入门槛"""
+        content = (
+            "```json\n{\"error\": \"抓取失败\", \"need_login_subtitle\": true}\n```\n"
+            "正文描述功能边界，不含取证细节。\n"
         )
         result = self.checker.check_content(content)
         self.assertTrue(result["gate_passed"])
         self.assertEqual(result["summary"]["collection_leak_hits"], 0)
+
+    def test_phrase_scan_covers_all_occurrences(self):
+        """一行内多次出现失败短语应全部计入，不因首现位置漏检"""
+        content = "第一次抓取失败后重试，再次抓取失败则降级。\n"
+        result = self.checker.check_content(content)
+        self.assertFalse(result["gate_passed"])
+        self.assertGreaterEqual(result["summary"]["collection_leak_hits"], 2)
+
+    def test_faq_question_line_exempted(self):
+        """FAQ 短疑问行描述读者故障场景，不应阻断"""
+        content = (
+            "**Q: 抓取失败，提示页面不存在？**\n"
+            "A: 先检查链接是否有效。\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertTrue(result["gate_passed"])
+
+    def test_long_disguised_question_not_exempted(self):
+        """长句伪装疑问行不应获得豁免"""
+        content = (
+            "需要说明的是本次视频逐字字幕抓取失败，"
+            "因为字幕接口对未登录用户完全不可达，所以我们拿不到任何可用的字幕数据，这一点明白了吗？\n"
+        )
+        result = self.checker.check_content(content)
+        self.assertFalse(result["gate_passed"])
 
     def test_format_check_skips_html_comment(self):
         """格式检查应跳过 HTML 注释内容"""

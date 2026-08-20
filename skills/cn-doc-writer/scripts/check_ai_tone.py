@@ -66,24 +66,16 @@ class AIToneChecker:
             "预计阅读时间",
         }
         # 采集过程细节泄漏信号（2026-08-21 新增，源于视频精读文章把
-        # B 站字幕接口抓取失败日志写成正文「来源声明」块的事故）
+        # B 站字幕接口抓取失败日志写成正文「来源声明」块的事故；
+        # 同日对抗性审查重构：判别锚点是"失败叙事短语"而非蛇形标识符——
+        # 后者在技术文章里是合法内容，单独出现只提示不阻断）
         self.collection_leak_phrases = [
             "抓取失败",
-            "字幕接口",
-            "接口对未登录",
             "未登录用户不可达",
-            "登录态",
+            "接口对未登录",
             "字幕列表为空",
             "逐字字幕抓取",
         ]
-        # 蛇形命名 token 白名单： Hugo/Markdown 生态常规字段，不算取证泄漏
-        self.snake_case_allowlist = {
-            "draft",
-            "relref",
-            "no_translate",
-            "site.webmanifest",
-            "draft_false",
-        }
         self.snake_case_pattern = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)+")
 
     def _collect_phrase_hits(self, lines: List[str]) -> Dict:
@@ -137,10 +129,17 @@ class AIToneChecker:
     def _collect_collection_leaks(self, lines: List[str]) -> Dict:
         """检测取证过程内部细节泄漏进正文
 
-        两组信号：
-        1. 蛇形命名 token（如 need_login_subtitle / view_points）出现在
-           正文/行内代码中 —— 正常中文技术写作不会引用原始 JSON 字段名；
-        2. 取证失败类短语（如"字幕接口对未登录用户不可达"）。
+        升级矩阵（判别锚点是失败叙事，不是标识符）：
+        1. 失败叙事短语（"抓取失败""未登录用户不可达"等）描述的是
+           "作者的采集动作"，几乎不可能成为读者向文章的正当主题，
+           命中即阻断；不豁免行内代码（取证 JSON 恰在行内代码里），
+           扫描一行内的全部出现位置；
+        2. 蛇形命名 token（如 need_login_subtitle）在技术文章里是合法
+           内容（函数名/配置项/数学下标），单独出现只提示不阻断，
+           与失败短语共现时作为佐证计入同一阻断；
+        3. 疑问句豁免：短疑问行（≤60 字符且以 ？/? 结尾，如
+           "Q: 抓取失败怎么办？"）描述的是读者的故障场景而非作者的
+           采集叙事，不阻断；长度上限防止长句伪装疑问行绕过。
         代码块、frontmatter、HTML 注释内的内容不参与检测。
         """
         snake_hits = []
@@ -150,16 +149,24 @@ class AIToneChecker:
             if should_skip(lines, line_number):
                 continue
             for match in self.snake_case_pattern.finditer(line):
-                token = match.group(0)
-                if token in self.snake_case_allowlist:
-                    continue
                 if is_in_latex(line, match.start()):
                     continue
-                snake_hits.append({"line": line_number, "token": token})
+                snake_hits.append({"line": line_number, "token": match.group(0)})
+            stripped = line.rstrip()
+            # 剥掉行尾 Markdown 强调符（如 **Q: ...？**），再判疑问行
+            cleaned_tail = stripped.rstrip("*_~ ")
+            is_question_line = (
+                cleaned_tail.endswith(("？", "?")) and len(stripped) <= 60
+            )
             for phrase in self.collection_leak_phrases:
-                idx = line.find(phrase)
-                if idx != -1 and not is_in_inline_code(line, idx):
-                    phrase_hits.append({"line": line_number, "phrase": phrase})
+                start = 0
+                while True:
+                    idx = line.find(phrase, start)
+                    if idx == -1:
+                        break
+                    if not is_question_line:
+                        phrase_hits.append({"line": line_number, "phrase": phrase})
+                    start = idx + len(phrase)
 
         return {"snake_hits": snake_hits, "phrase_hits": phrase_hits}
 
@@ -204,19 +211,23 @@ class AIToneChecker:
             issue_headings = "，".join(hit["heading"] for hit in heading_hits[:4])
             issues.append(f"检测到 {len(heading_hits)} 个模板化标题标签：{issue_headings}")
 
-        if leak_data["snake_hits"]:
-            tokens = sorted({hit["token"] for hit in leak_data["snake_hits"]})
-            issues.append(
-                "正文混入采集过程细节（蛇形命名字段名，疑似取证层内部记录）："
-                + "，".join(tokens[:6])
-                + "；请删除或改写为一句话材料性质说明"
-            )
         if leak_data["phrase_hits"]:
             phrases = sorted({hit["phrase"] for hit in leak_data["phrase_hits"]})
+            corroboration = ""
+            if leak_data["snake_hits"]:
+                tokens = sorted({hit["token"] for hit in leak_data["snake_hits"]})
+                corroboration = "，伴蛇形字段名佐证：" + "，".join(tokens[:4])
             issues.append(
-                "正文混入采集过程细节（取证失败描述）："
+                "正文混入采集过程细节（失败叙事描述）："
                 + "，".join(phrases[:6])
+                + corroboration
                 + "；读者不关心抓取过程，只保留材料性质结论"
+            )
+        elif leak_data["snake_hits"]:
+            tokens = sorted({hit["token"] for hit in leak_data["snake_hits"]})
+            warnings.append(
+                f"正文含 {len(tokens)} 个蛇形命名标识符（如 {tokens[0]}）；"
+                "技术文章中通常合法，仅当伴随抓取失败类描述时才需按采集细节泄漏处理"
             )
 
         gate_passed = len(issues) == 0
