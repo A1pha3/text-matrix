@@ -7,7 +7,8 @@
     {{- $techPosts := first 4 (sort (where $visiblePosts "Params.categories" "intersect" (slice "技术笔记")) "Date" "desc") -}}
     {{- $videoPosts := first 3 (sort (where $visiblePosts "Params.categories" "intersect" (slice "视频精读")) "Date" "desc") -}}
     {{- $thoughtPosts := first 3 (sort (where $visiblePosts "Params.categories" "intersect" (slice "思考与随笔")) "Date" "desc") -}}
-    {{- $latestNews := first 5 (sort (where $visiblePosts "Params.categories" "intersect" (slice "行业快讯")) "Date" "desc") -}}
+    {{- /* 行业快讯：每日早报多带 hiddenFromHomePage，若沿用 $visiblePosts 会先被过滤掉、只剩旧内容；这里直接在全量文章里按日期取最新 */ -}}
+    {{- $latestNews := first 5 (sort (where $allPosts "Params.categories" "intersect" (slice "行业快讯")) "Date" "desc") -}}
     {{- $featuredPost := index $techPosts 0 -}}
 
     <div class="page home home-curated"{{ if ne $posts.enable false }} data-home="posts"{{ end }}>
