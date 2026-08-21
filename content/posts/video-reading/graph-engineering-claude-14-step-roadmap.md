@@ -25,7 +25,9 @@ author: 钳岳
 
 LINEAR（一条线）把所有事情串起来，等着前面跑完才走下一步，4x time 是基本代价。GRAPH（独立节点扇出、汇聚）让四件独立的事并行执行，跑完再合流——同样的四件事，时间从 4x 压成 1x。
 
-这不是性能优化，这是范式迁移。
+性能不是这里的主角。把"串行等待"改成"并行扇出 + 合流"，改变的是系统被建模的方式；这一步迈过去，后面 13 步才有立足点。
+
+**一句话总览**：这是一条把 Claude Code 当"图执行引擎"用的进阶路线——先用 6 张方法论图定位领域，再用 14 步把 Agent 的内部结构建模成图（节点是 Subagent / 任务 / 阶段，边是依赖与消息），最后用一张终极组装图把全部原则收拢成可运行系统。全文基于原推 17 张图的 OCR 文字校核，解读与代码示例为作者所加，原图内容不改写。
 
 下面这张封面图，把所有 14 步浓缩在一页里：
 
@@ -123,7 +125,7 @@ Human Society                Model Context Protocol (MCP)
 
 **核心产出**：一张 fan-out / merge 图，每条边必须有"数据/控制依赖"语义。
 
-**解读**：4x time 不是性能 benchmark，是范式声明。Linear 不是"慢"，是"结构不匹配"。把"四件事做完才做下四件"改成"四件事并发做完才合流"，是 14 步路线的总开关。
+**解读**：4x time 说的是结构代价，不是单次执行慢了。Linear 的每一环都背着前面所有环节的完成时间；把"四件事做完才做下四件"改成"四件事并发做完才合流"，省下的是等待本身。这一步是整条路线的总开关，后面出现的 Diamond、pipeline、worktree 都是从这里起步的并发形态。
 
 ---
 
@@ -146,9 +148,9 @@ Human Society                Model Context Protocol (MCP)
 
 **核心产出**：`Anchor → Downstream` 清单。
 
-**解读**：Anchor 不是"最重要的"，是"被最多次穿越的"。关系型建模里这是 join 频次最高的表；图建模里它是 fan-out / fan-in 双高的节点。Step 2 的产出直接决定 Step 4 的 Subagent 团队拓扑——Anchor 节点会成为 Main Agent 自己，Downstream 节点会拆给 Subagent。
+**解读**：Anchor 的地位来自"被穿越的次数"，而不是业务重要性。关系型建模里对应 join 频次最高的表；图建模里它是 fan-out / fan-in 双高的节点。选 Anchor 直接影响 Step 4 的团队拓扑：Anchor 节点由 Main Agent 自己持有，Downstream 节点拆给 Subagent。
 
-**怎么找 Anchor**：跑一次 `MATCH (n)-[r]-() RETURN n, count(r) AS degree ORDER BY degree DESC LIMIT 5`，返回的前 5 个就是候选 Anchor。对应到 Neo4j 的 Cypher：
+**怎么找 Anchor**：跑一次度数统计，返回最高的前 5 个节点就是候选；可按节点类型过滤（封面图的示例是 `WHERE n.type = 'User'`）。对应到 Neo4j 的 Cypher：
 
 ```cypher
 // 找出图中最常被穿越的 5 个节点
@@ -177,7 +179,7 @@ LIMIT 5;
 
 **核心产出**：`schema/*.golden.json` + 双向契约测试套件。
 
-**解读**：Graph Engineering 失败的常见原因不是"图设计错"，是"节点没契约"。Step 3 是从"画图"到"图可验证"的转折点。
+**解读**：多数 Graph Engineering 项目栽在"节点没有对外契约"，而不是图本身画错。先定 Schema(golden)，再让 Mock / Provider / Consumer 三方对着同一份契约测试开发，图从"画出来"变成"可验证"。这一步也是 Step 6（CI Pipeline）的前提——没有 golden schema，CI 里根本不知道拿什么当基线。
 
 ---
 
@@ -204,7 +206,7 @@ LIMIT 5;
 
 **核心产出**：Subagent 拓扑图（节点 = Subagent，边 = 通信链路）+ Task List 协议。
 
-**解读**：Step 4 是 14 步里"图思维"浓度最高的一步。Agent 团队的协作协议本质是有向图：节点是 Subagent，边是消息。
+**解读**：这里第一次把"团队"画成图：节点是 Subagent，边是消息，Shared Task List 充当消息总线。Main Agent 只保留"拆任务 + 收结果 + 路由"三个动作，其余全部下沉。Step 2 选的 Anchor 节点落在 Main Agent 手里，Downstream 节点对号入座分给各 Subagent。
 
 ---
 
@@ -230,9 +232,9 @@ LIMIT 5;
 
 **核心产出**：AADL（Architecture Analysis & Design Language）风格的架构模型。
 
-**解读**：图 7 把"嵌入式 ECU / CAN bus"和"AI Agent 内部数据流"画在了同一张图里。这是 Graph Engineering 的跨界洞察：**所有并发系统（不论是车还是 Agent）底层都是 Data-flow graph**。
+**解读**：图 7 把"嵌入式 ECU / CAN bus"和"AI Agent 内部数据流"画在同一张图里：每个 Task 有明确的输入 Msg 与输出 Msg，传感器 / 执行器是图的边界节点。无论载体是车还是 Agent，所有并发系统的底层都是 Data-flow graph。
 
-AADL（Architecture Analysis & Design Language）本是嵌入式航电系统的建模语言，把它的「数据流 + 端口 + 调度」三件套搬到 Agent 内部，等于给 Agent 装上航空级的形式化验证骨架——这是 Step 12（Observed Agent）的前置设施。
+AADL（Architecture Analysis & Design Language）本来是嵌入式航电系统的建模语言。把它的"数据流 + 端口 + 调度"搬到 Agent 内部，等于给 Agent 装上航空级的形式化骨架——这是 Step 12（Observed Agent）可观测性设计的前置设施。
 
 ---
 
@@ -286,9 +288,9 @@ AADL（Architecture Analysis & Design Language）本是嵌入式航电系统的�
 
 **核心产出**：Verifier gate 配置 + 投票记录。
 
-**解读**：Step 7 是 14 步里"质量保证"的钥匙。单 Agent 自我审查有盲区，Diverse-Lens 用"刻意质疑"补盲——这是 Anthropic Constitutional AI 的工程化落地。
+**解读**：单 Agent 的自我审查有固定盲区——它很难看出自己推理链里的洞。Diverse-Lens 用"刻意质疑"补盲：让不同视角的 Skeptic 轮流挑刺，本质是 Anthropic Constitutional AI 思路在工程上的落地。
 
-**为什么是 2/3 而不是 3/3 或 1/3**：1/3 容忍太多单点错误，3/3 让强异议卡死正常流程；2/3 是少数服从多数的最小可行多数——和陪审团制度同源。Skeptic 池要刻意「多样化」：correct? 看逻辑、secure? 看攻击面、repro? 看实证。视角重叠越多，Diverse-Lens 越失效。
+**为什么是 2/3 而不是 3/3 或 1/3**：1/3 容忍太多单点错误，3/3 让一次强异议卡死正常流程；2/3 是少数服从多数的最小可行多数。Skeptic 池要刻意保持视角分散：correct? 看逻辑、secure? 看攻击面、repro? 看实证——视角越重叠，这套门越形同虚设。
 
 ---
 
@@ -314,16 +316,18 @@ AADL（Architecture Analysis & Design Language）本是嵌入式航电系统的�
 
 **核心产出**：Diamond 节点模板（可复用的 fan-out/reduce 子图）。
 
-**解读**：Diamond 是 14 步里"并发"的统一抽象。MapReduce 的 Map+Reduce、CUDA 的 Kernel、Actor 模型的 Router——背后都是同一个 Diamond。
+**解读**：Diamond 是"并发"的最小统一抽象：Split 分片、fan-out 并行、Barrier 对齐、Reduce 合并。MapReduce 的 Map+Reduce、CUDA 的 Kernel、Actor 模型的 Router，拆开看都是同一个 Diamond。Step 11 会讨论它的变体——当某个阶段不需要等齐全部结果时，Diamond 就退化成 pipeline。
 
 **Diamond 的 Python 实现骨架**：
 
 ```python
+import asyncio
+
 async def diamond(parts: list, fan_out_fn, reduce_fn):
     """Step 8 Diamond: Split → fan-out → Barrier → Reduce"""
-    # Fan-out：所有 parts 并发跑同一个 fan_out_fn
+    # Split + Fan-out：所有 parts 并发跑同一个 fan_out_fn
     tasks = [asyncio.create_task(fan_out_fn(p)) for p in parts]
-    # Barrier：等所有任务完成才放行
+    # Barrier：gather 等所有任务完成后才返回
     results = await asyncio.gather(*tasks)
     # Reduce & Synthesize
     return await reduce_fn(results)
@@ -351,7 +355,13 @@ graph.add_node("reduce", reduce_node)
 graph.add_edge("split", "search_1")
 graph.add_edge("split", "search_2")
 graph.add_edge("split", "search_3")
-graph.add_edge(["search_1", "search_2", "search_3"], "reduce")  # Barrier
+# LangGraph 在所有入边都完成后才执行 reduce，天然形成 Barrier
+graph.add_edge("search_1", "reduce")
+graph.add_edge("search_2", "reduce")
+graph.add_edge("search_3", "reduce")
+
+graph.set_entry_point("split")
+graph.set_finish_point("reduce")
 ```
 
 ---
@@ -374,7 +384,7 @@ graph.add_edge(["search_1", "search_2", "search_3"], "reduce")  # Barrier
 
 **核心产出**：Router 决策表 + 复杂度的轻量分类 prompt。
 
-**解读**：Step 9 是 14 步里"成本控制"的核心。不让所有任务都跑 14 步全流程，让简单任务在 Step 9 之前就快路径出去。
+**解读**：成本控制的开关放在这里：不是所有任务都值得跑完整 14 步。Router 先用轻量模型分个类，高复杂度走"多 Agent + 并行审计"，低复杂度一条快速 pass 就出去。分类器判断错了最多多花一次重试，比每次都跑全流程省得多。Step 13 的 `/model` 路由就是这个节点的具体实现。
 
 ---
 
@@ -453,7 +463,7 @@ pipeline()（NO BARRIER）
 
 **核心产出**：并发模式选择矩阵。
 
-**解读**：Step 11 是 14 步里"工程纪律"最严的一步。`parallel()` + Barrier 听起来对，但默认用它会把快任务拖慢。@0xCodez 直接写了默认规则：**DEFAULT TO PIPELINE**。
+**解读**：`parallel()` + Barrier 听起来总没错，默认用它却会把快任务拖慢到慢任务的节奏。图 13 给的是相反的顺序：默认 pipeline，只有当某个 Stage 必须一次性拿到全部前置结果时才用 Barrier。这条纪律和 Step 8 的 Diamond 互为表里——Diamond 只在汇聚点强 Barrier，链路其余部分保持流水。
 
 ---
 
@@ -483,7 +493,7 @@ pipeline()（NO BARRIER）
 
 **核心产出**：Observed Agent schema + 三类日志存储。
 
-**解读**：Step 12 把"Agent 黑盒"打开成图。图 14 是 14 步里信息密度最高的一张——一张图胜过千行运行时文档。
+**解读**：Step 12 把 Agent 从"黑盒"摊成可观测的解剖图：Alignment（guardrails + fallback）、Reflection（self-critique 日志）、Execution（工具输入输出 trace）三大子系统各留一条记录通道。图 14 一张图覆盖了整套运行时需要落盘的日志种类，直接指导 Step 5 的 Data-flow graph 该在哪埋探针。
 
 ---
 
@@ -538,7 +548,7 @@ pipeline()（NO BARRIER）
 
 **核心产出**：动态工作流 prompt 模板 + 自动闭环验证。
 
-**解读**：Step 14 是 14 步路线的"集大成"——Opus 4.8 + ultracode + auto mode 把前面 13 步全部装进了单个 Agent 调用。这是 Graph Engineering 的"最终形态"。
+**解读**：到 Step 14，前面 13 步被装进一次 Agent 调用：输入一句话目标，Opus 4.8 自己构造 Graph——识别文件、生成迁移、跑测试、验证 diff，auto mode 下持续执行到闭环。这是图 17（终极组装图）的运行时版本：一个真正把"图即代码"跑起来的实例。
 
 ---
 
@@ -630,7 +640,7 @@ FREE REDUCE EDGE, A VERIFIER GATE, ONE TOP-TIER SYNTHESIS
 图不是免费的。把 Linear 改成 Graph，会付出三类成本：
 
 - **调度成本**——fan-out 节点越多，Reduce 阶段越重；5 路搜索是 sweet spot，超过 10 路 Reduce 边际收益骤降。
-- **可观测性成本**——图越大 trace 越多，每条边的延迟、错误率、重试次数都要可观测；Step 12（Observed Agent）是这条成本的买单凭证。
+- **可观测性成本**——图越大 trace 越多，每条边的延迟、错误率、重试次数都要可观测；Step 12（Observed Agent）就是为这条成本准备的可观测骨架。
 - **纪律成本**——图结构一旦散乱，重构代价远高于一段线性代码；Step 3（Schema 即黄金）和 Step 11（默认 Pipeline 而非 Barrier）是防止散乱的纪律。
 
 ### 可观测性
@@ -647,7 +657,47 @@ FREE REDUCE EDGE, A VERIFIER GATE, ONE TOP-TIER SYNTHESIS
 2. **Step 7 的 2/3 Skeptic**——验证门而不是终点，少数派失败不阻塞流程。
 3. **Step 11 的 pipeline()**——默认异步流而非强同步 Barrier，是抗雪崩的第一道防线。
 
-17 张图、14 步、5 条原则、1 个终极组装图、3 类成本、3 条救命绳——这就是 2026 年从 0 到 Graph Architect 的完整路线图。
+从 17 张图能带走的是这套顺序：14 步排好节奏，5 条原则随时自查，1 张终极组装图兜底。成本记在前面，失败模式记在动手前，剩下的就是按 14 步往下走——至少不会在第一步把四条线等成 4x。
+
+---
+
+## 6 · 读者判断：谁该去看原推，谁读本文就够
+
+**读本文就够的**：
+
+- 想快速掌握"Graph Engineering" 14 步框架，并把它映射到 Claude Code / Subagent / LangGraph 上的人
+- 已经在跑 Agent 任务、想给 Agent 团队加上"并行 + 验证 + 路由"结构的人
+- 想为"Agent 为什么要按图建模"找一个完整论证的人
+
+**应该去看原推的**：
+
+- 想看 17 张原图细节的——本文的代码块是文字还原，丢掉了原图的配色、版式和排版层次
+- 想核对本文订正处（图 1 的 "9 14 STEPS"）或自己再跑一遍 OCR 的
+- 想跟随 @0xCodez 后续更新（路线图的后续版本）的
+
+**只读本文还不够的**：
+
+- Anthropic Boris Cherny 的 Graph Engineering 系列——@0xCodez 路线图的方法论源头（见附录 B）
+- Claude Code 官方文档与 `/model` 路由的实际行为——Step 13 引用的版本号会随发布变化
+
+---
+
+## 7 · 常见问题（FAQ）
+
+**Q1：这套 14 步路线图和 LangGraph 是什么关系？**
+LangGraph 是落地运行框架之一：它的 StateGraph 天然支持"多入边 Barrier""条件边""节点化"，Step 8 / Step 9 的抽象可以直接映射（正文 Step 8 附了对应代码）。路线图本身与具体框架无关，Claude Code 的 Subagent、git worktree 是另一类落点。
+
+**Q2：一定要用图数据库吗？Neo4j 在 14 步里占多大比重？**
+只有 Step 2 的 Anchor 查找用到 Cypher，而且只是为了度量节点的穿越频次。14 步的"图"主要是建模意义上的（节点 / 边 / 依赖），数据库只是其中一种载体。不熟 Neo4j 也可以先按 Step 1 用白板或现有代码结构把其余步骤走完。
+
+**Q3：Step 8 说"5 路搜索是 sweet spot，超过 10 路 Reduce 边际收益骤降"，依据是什么？**
+这是正文"成本账"里的工程判断，不是可复现的 benchmark 结论：fan-out 规模越大，Reduce 要聚合、对齐、去重的输入越多，多路结果的增量价值递减，同时 Barrier 等待的方差变大。属于经验性指导线。
+
+**Q4：Step 13 / Step 14 的版本号（Claude Code v2.0.51）和模型名（Opus 4.5 / Opus 4.8 ultracode）现在还对吗？**
+它们来自原推 17 张图的 OCR，是对 @0xCodez 成稿时点的忠实还原。Claude Code 与 Anthropic 模型更新频繁，动手前以官方 release notes 为准（附录 B 已列 Claude Opus 4.5 发布说明链接）。
+
+**Q5：能直接照抄这套路线图到自己的项目吗？**
+建议先按顺序做 Step 1-3 的"诊断 + 契约"：画出真实依赖、选出 Anchor、给关键节点补契约测试。跳过这三步直接上 Step 4 的 Subagent 拓扑，容易把并行复杂度堆在没有验证基线的代码上。
 
 ---
 

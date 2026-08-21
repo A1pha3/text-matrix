@@ -1,14 +1,14 @@
 ---
-title: "代码即真相、Bash 够用、反对 MCP：Pi 作者与 92k stars 的极简智能体（Agent）赌注（附视频逐字双语字幕）"
+title: "代码即真相、Bash 够用、反对 MCP：Pi 作者与 90k stars 的极简智能体（Agent）赌注（附视频逐字双语字幕）"
 slug: pi-coding-agent-code-as-truth-no-mcp
 date: 2026-08-17T17:10:00+08:00
 tags: ["Pi", "AI Agent", "Coding Agent", "Context Engineering", "MCP", "Bash", "RAG", "YOLO", "Mario Zechner", "Armin Ronacher", "Earendil", "Gondolin", "Claude Code", "Cursor"]
 categories: ["视频精读"]
-description: "深度解读 @宝玉xp 转发的一段 Pi 创始人访谈视频。Pi = github.com/earendil-works/pi，由 libGDX 创始人 Mario Zechner 与 Flask 创造者 Armin Ronacher 共同打造，92k stars，TypeScript，MIT 协议，v0.84.2。两位作者的核心主张：代码即真相，不需要 RAG（检索增强生成）；Bash 足够用，反对 MCP（模型上下文协议）；YOLO by default，permission popup 是 security theater。从 system prompt < 1000 tokens 到 4 个内置工具，把该减的全减完。"
+description: "深度解读 @宝玉xp 转发的一段 Pi 创始人访谈视频。Pi = github.com/earendil-works/pi，由 libGDX 创始人 Mario Zechner 与 Flask 创造者 Armin Ronacher 共同打造，90k stars，TypeScript，MIT 协议，v0.84.2。两位作者的核心主张：代码即真相，不需要 RAG（检索增强生成）；Bash 足够用，反对 MCP（模型上下文协议）；YOLO by default，permission popup 是 security theater。从 system prompt < 1000 tokens 到 4 个内置工具，把该减的全减完。"
 author: 钳岳
 ---
 
-# 代码即真相、Bash 够用、反对 MCP：Pi 作者与 92k stars 的极简智能体（Agent）赌注
+# 代码即真相、Bash 够用、反对 MCP：Pi 作者与 90k stars 的极简智能体（Agent）赌注
 
 > 来源：微博视频 `https://video.weibo.com/show?fid=1034:5332798752358424`，`@宝玉xp` 于 2026-08-17 转发，时长 2:56。原视频是 Pi 创始人访谈的二手转述，**`@宝玉xp` 是技术博主本人撰写的摘要，非第三方转写**。摘要里两位 Pi 作者的核心观点：
 >
@@ -21,7 +21,7 @@ author: 钳岳
 > - 8-17 07:34 来自广东麒麟飞狐：「然后让大模型随意发挥？」
 > - 8-17 07:51 来自日本莫比乌斯环黑洞：「平时用 Vibe coding 写着玩可以，但是给企业做系统、做产品，没有知识库、没有记忆体，就是给系统和产品埋雷挖坑。没有 AI 的时代需要软件工程，有了 AI 之后也需要 harness 工程。没有知识库和记忆体，harness 玩不起来。」
 
-本文基于该视频摘要、评论区 4 条与 Pi 官方仓库数据（截至 2026-08-18）整合而成，原视频完整逐字稿见 §10。**凡是从视频摘要之外补充的事实，全部标注来源**。
+本文基于该视频摘要、评论区 4 条与 Pi 官方仓库数据（截至 2026-08-21）整合而成，原视频完整逐字稿见 §10。**凡是从视频摘要之外补充的事实，全部标注来源**。
 
 ## 写在前面：为什么这两个反直觉观点值得拆
 
@@ -82,11 +82,11 @@ Mario 对底层 API 的吐槽很有代表性：市面上统一 LLM API 大多"�
 
 ### 1.2 仓库数据快照
 
-Pi 仓库地址：`github.com/earendil-works/pi`。数据截至 2026-08-18：
+Pi 仓库地址：`github.com/earendil-works/pi`。数据截至 2026-08-21：
 
-- Stars：92,234
-- Forks：11,430
-- Open issues：136
+- Stars：90,390
+- Forks：11,214
+- Open issues：135
 - License：MIT
 - Language：TypeScript
 - 首次发布：2025-08-09
@@ -118,7 +118,7 @@ Mario 博客原文（mariozechner.at/posts/2025-11-30-pi-coding-agent）：
 
 Cursor 的 codebase 索引（codebase index）就是一个典型例子：每次会话都要消耗几万个 token，往上下文里塞一段代码库总结。这部分开销不小，更关键的是——这段总结的质量决定了模型后续每一次决策的基底，好坏完全取决于索引怎么写。（此例未见于 Mario 博客原文，可能出自访谈的未转写部分；"Pi 默认不索引"的事实本身来自博客原文。）
 
-这里的对立其实是两种信息形态的对立：**原始事实与派生副本**。代码本身可执行、可验证、永远是最新的；索引和向量库是从代码压缩出来的快照，生成那一刻就开始落后，丢了的信息也永远补不回来。逐字稿 S3 的 "It's also evolving" 说的正是这层——代码在演进，任何快照都是过时的。
+对立的两端是两种信息形态：**原始事实与派生副本**。代码本身可执行、可验证、永远是最新的；索引和向量库是从代码压缩出来的快照，生成那一刻就开始落后，丢了的信息也永远补不回来。逐字稿 S3 的 "It's also evolving" 说的正是这层——代码在演进，任何快照都是过时的。
 
 Pi 的应对：默认不索引。你想看哪个文件，自己 `read` 进来；想找什么东西，用 `grep` / `find` / `ls` 扫。模型每次 forward（前向推理）都拿到的是 "你让它看的东西"，不是 "AI 工具猜它应该看的东西"。
 
@@ -142,7 +142,7 @@ Pi 的应对：默认不索引。你想看哪个文件，自己 `read` 进来；
 
 ### 2.3 一个反例：Mario 自己就有无限记忆的 Slack bot
 
-值得注意的细节（来自 §10 逐字稿 S21-S28）：Mario 给自己写过一个 Slack bot，自嘲命名 "Master of My Shit"。它用 **append-only log + chunked semantic search（分块语义搜索）** 实现了无限 memory。
+§10 逐字稿 S21-S28 里有段记录：Mario 给自己写过一个 Slack bot，自嘲命名 "Master of My Shit"。它靠 **append-only log + chunked semantic search（分块语义搜索）** 实现了无限 memory。
 
 这看起来和 "不要 memory" 自相矛盾，其实正好划出了他的边界：**memory 放哪里、用什么形态，比要不要 memory 更重要**。Slack bot 面对的是聊天流——不断追加的日志天生适合 append-only + 语义检索；而代码库不是聊天流，代码本身就是事实，强行套一套记忆系统反而多一个要维护的地方。
 
@@ -269,7 +269,7 @@ Pi 没把安全做掉，**把安全责任从 Agent 框架层推给基础设施�
 
 ### 4.2 供应链安全反而做得比谁都严
 
-有意思的反差：工具层全裸奔，npm 供应链安全却抓得很严（来源：社区分析文章）——固定所有依赖版本、强制延迟同步 npm 包、严格的锁文件审计。这不是矛盾，而是分层策略：放弃行为层防御（已被证明是剧场），把有限的安全预算压在供应链这个确定、可审计的维度上——prompt injection（提示注入）防不住，但至少别让依赖链成为注入点。另外 Pi 默认**没有 web search / fetch 工具**。官方态度是：curl 和读文件已经给了足够的注入面，多一个 fetch 只是多一个口子（来源：Mario 博客原文）。
+反差也明显：工具层全裸奔，npm 供应链安全却抓得很严（来源：社区分析文章）——固定所有依赖版本、强制延迟同步 npm 包、严格的锁文件审计。这不是矛盾，而是分层策略：放弃行为层防御（已被证明是剧场），把有限的安全预算压在供应链这个确定、可审计的维度上——prompt injection（提示注入）防不住，但至少别让依赖链成为注入点。另外 Pi 默认**没有 web search / fetch 工具**。官方态度是：curl 和读文件已经给了足够的注入面，多一个 fetch 只是多一个口子（来源：Mario 博客原文）。
 
 ---
 
@@ -295,7 +295,7 @@ Pi 没把安全做掉，**把安全责任从 Agent 框架层推给基础设施�
 - **background bash**：用 `tmux`。agent 在 tmux 里起 dev server / LLDB 调试会话，你可以随时 `tmux attach` 进去一起看，还能列出所有活跃会话。Mario 的原话是 "There's simply no need for background bash. Claude Code can use tmux too, you know."（博客原文，配了一张 Pi 在 LLDB 里调试崩溃 C 程序的截图）。
 - **sub-agents**：让 Pi 通过 bash 自己 spawn 自己，比如他写了一个 code review（代码审查）slash command，用 `pi --print` 起一个只读子会话跑审查，输出全部可见（博客原文）。Mario 对并行 sub-agent 的态度很明确："除非你不在乎代码库烂成一堆垃圾，否则并行 spawn 多个 sub-agent 是反模式"（博客原文）。他自己的观察：模型仍然不擅长找到实现功能所需的全部上下文——训练让它们习惯只读文件片段，导致它们不敢读完整文件，于是错过关键信息。他拿 pi-mono 的 issue 区举证：相当一部分合并请求被关闭或返工，就因为 agent 没能完整理解需求，结论是 "we trust our agents too much"（我们太信任 agent 了）（博客原文）。这也是他反对代码索引的另一个隐性理由。
 
-这里有个有意思的张力：§10 逐字稿里 Mario 说 "不需要写 AGENTS.md"，但 Pi 本身支持 AGENTS.md 分层加载，system prompt 之后唯一注入的就是这个文件——Mario 的原话是 "This is where you can customize pi to your liking. You can even replace the full system prompt"（博客原文）。不强制你写，但留好入口，这是 Pi 式的 "可选"。
+这里有个张力：§10 逐字稿里 Mario 说 "不需要写 AGENTS.md"，但 Pi 本身支持 AGENTS.md 分层加载，system prompt 之后唯一注入的就是这个文件——Mario 的原话是 "This is where you can customize pi to your liking. You can even replace the full system prompt"（博客原文）。不强制你写，但留好入口，这是 Pi 式的 "可选"。
 
 甚至能跑 Doom——官方包列表里 `pi install git:github.com/badlogic/pi-doom` 是真实存在的。
 
@@ -327,7 +327,7 @@ Pi 没把安全做掉，**把安全责任从 Agent 框架层推给基础设施�
 | Background bash | 无，用 tmux | Claude Code 有但 observability 差 |
 | Sub-agents | 无，自己 spawn | 全部支持 |
 
-**Benchmark（中置信）**：Mario 在 Terminal-Bench 2.0 上跑了 Pi + Opus 4.5 的完整评测——每个任务 5 次 trial，结果提交给官方 leaderboard，榜单快照时间 2025-12-02（来源：Mario 博客原文）。跑分过程有两个有意思的细节。一是他发现错误率在 PST 时区上线后变差，于是加跑了一轮只在 CET 时段的对照；二是 leaderboard 上的 **Terminus 2**：Terminal-Bench 团队自己的极简 agent，只给模型一个 tmux 会话——模型用文本发命令、自己解析终端输出，没有任何花哨工具。它的排名却比肩一堆工具复杂的 agent——而且 Terminus 2 出自 Terminal-Bench 官方团队之手，相当于 "极简路线" 的一次独立第三方对照实验，比 Mario 自己的跑分更有说服力。社区文章转述的结论是 Pi 与 Codex、Cursor、Windsurf 一同位列 Terminal-Bench 2.0 前五（2026-03 社区报道）。博客还开源了 bench runner 供任何人复现，Mario 甚至附上省钱提示：用 Claude 订阅跑，别用按量付费。
+**Benchmark（中置信）**：Mario 在 Terminal-Bench 2.0 上跑了 Pi + Opus 4.5 的完整评测——每个任务 5 次 trial，结果提交给官方 leaderboard，榜单快照时间 2025-12-02（来源：Mario 博客原文）。跑分过程里有两处细节。一是他发现错误率在 PST 时区上线后变差，于是加跑了一轮只在 CET 时段的对照；二是 leaderboard 上的 **Terminus 2**：Terminal-Bench 团队自己的极简 agent，只给模型一个 tmux 会话——模型用文本发命令、自己解析终端输出，没有任何花哨工具。它的排名却比肩一堆工具复杂的 agent——而且 Terminus 2 出自 Terminal-Bench 官方团队之手，相当于 "极简路线" 的一次独立第三方对照实验，比 Mario 自己的跑分更有说服力。社区文章转述的结论是 Pi 与 Codex、Cursor、Windsurf 一同位列 Terminal-Bench 2.0 前五（2026-03 社区报道）。博客还开源了 bench runner 供任何人复现，Mario 甚至附上省钱提示：用 Claude 订阅跑，别用按量付费。
 
 Mario 自己也承认 "benchmark 不代表真实世界"，立场依然是：**工具越少，模型决策越准——至少在终端任务上是这样**。
 
@@ -346,9 +346,9 @@ Mario 自己也承认 "benchmark 不代表真实世界"，立场依然是：**�
 
 Mario 没有明着总结过这句——这一段是本文的归纳——但从 "If I don't need it, it won't be built" 到 "状态放文件"，每一个决策都指向同一根坐标轴。理解了这根轴，你能预测 Pi 的下一个决策；不理解它，只会觉得 Pi 功能贫瘠。
 
-视频没有给出 "Pi 2.0 路线图"——但截至 2026-08-17，仓库数据给我们几个值得记下的数字：
+视频没有给出 "Pi 2.0 路线图"——但截至 2026-08-21，仓库数据给我们几个值得记下的数字：
 
-- 一年时间从 0 到 92k stars
+- 一年时间从 0 到 90k stars
 - 最近 3 天（08-14 ~ 08-16）有 **20 个 commit（提交） + 1 个 release（发布）**（v0.84.2），活跃度比肩主流 Agent
 - 来自 Python 圈、libGDX 圈、独立开发者圈的贡献者明显占了相当比例
 
@@ -371,7 +371,7 @@ Mario 没有明着总结过这句——这一段是本文的归纳——但从 "
 
 **读本文就够的**：
 
-- 想了解 Pi 这个项目大致是什么、谁在做、为什么最近 92k stars 的
+- 想了解 Pi 这个项目大致是什么、谁在做、为什么最近 90k stars 的
 - 想理解 "代码即真相 / Bash 足够 / YOLO by default" 三个反直觉观点背后的工程权衡
 - 想给 "AI Agent 到底应该多复杂" 这个争议找一份对立方的代表立场
 
@@ -511,7 +511,7 @@ Mario 没有明着总结过这句——这一段是本文的归纳——但从 "
 ## 附录 A · 参考文献与事实来源
 
 - 视频来源：微博 `https://video.weibo.com/show?fid=1034:5332798752358424`（`@宝玉xp` 转发，2026-08-17 GMT+8，2:56 时长）；评论区 4 条原话见第 2-3 节内引
-- Pi 仓库：`github.com/earendil-works/pi`（数据截至 2026-08-18：92,234 stars / 11,430 forks / 136 open issues / MIT / TypeScript / v0.84.2 发布于 2026-08-14）；官网 pi.dev（"Not features" 清单、extension 机制）
+- Pi 仓库：`github.com/earendil-works/pi`（数据截至 2026-08-21：90,390 stars / 11,214 forks / 135 open issues / MIT / TypeScript / v0.84.2 发布于 2026-08-14）；官网 pi.dev（"Not features" 清单、extension 机制）
 - Mario 博客原文：mariozechner.at/posts/2025-11-30-pi-coding-agent（system prompt 全文、工具定义、YOLO 论证、Terminal-Bench 2.0 细节均出自此文）
 - Gondolin 仓库：`github.com/earendil-works/gondolin`（工具路由微 VM 细节另见 Pi 官方安全文档与社区教程）；Earendil Inc. 官网：earendil.com
 - 社区资料：OpenClaw 与 Pi 的继承关系、225 tokens 工具集案例、pi-share-hf、供应链安全实践（2026-03 ~ 2026-07 多篇社区文章，正文已逐一标注）
