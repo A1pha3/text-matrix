@@ -1,95 +1,85 @@
 ---
 title: "AI副业早报 2026-08-22"
-date: 2026-08-22T07:02:28+08:00
+date: 2026-08-22T07:13:05+08:00
 slug: ai-side-hustle-morning-news-2026-08-22
-description: "2026年8月22日 AI 副业早报，精选过去 24 小时内招聘、项目、工具与真实赚钱机会。"
+description: "2026年8月22日 AI 副业早报，精选过去 24 小时内 Claude API 号池、海外 AI 公司 Forward Deployed Engineer、外资银行 Tech PM 等招聘需求与 Reddit 独立开发者项目机会。"
 draft: false
 categories: ["行业快讯"]
-tags: ["AI副业", "招聘", "V2EX", "独立开发", "AI工具"]
+tags: ["AI副业", "招聘", "V2EX", "Claude", "ForwardDeployedEngineer", "独立开发"]
 hiddenFromHomePage: true
 ---
 
-🦞 每日09:00自动更新
+🦞 每日07:15自动更新
 
 ---
 
-## 💼 招聘 / 求职
+## 🔥 今日热门
 
-### 招 Claude Max 号池负责人｜30K+｜北京/远程
-来源: V2EX
+### Claude Max 号池负责人招募，30K+ 起步，北京/远程
+来源: V2EX 酷工作
 发布者: genesisx
 原文: [原文](https://www.v2ex.com/t/1236289)
-摘要: 一家已有十几家大厂客户、业务量持续增长的团队招聘 Claude Max 号池负责人，负责账号与资源池的统一管理和智能调度、自动化健康检测与故障恢复，并承担后续团队建设；岗位月薪 30K 以上，工作地北京或远程，看重能独立设计并持续迭代整体系统架构的能力。
+摘要: 已有十几家大厂客户在用，业务量持续增长，现招一位能把 Claude Max 号池搭建稳定的负责人。岗位负责整体架构设计、账号/资源池统一管理、自动化健康检测与故障恢复，目标是做到数千级资源规模。薪资 30K 起、上不封顶，能独立扛起整个项目可单独谈薪，北京办公、支持远程、可兼职、可提供住宿补贴。
 
-标签: #AI基础设施 #账号池 #远程
-
-### 外企模型团队招 AI 方向优秀人才（Forward Deployed Engineer）
-来源: V2EX
+### 外企 AI 团队招 Forward Deployed Engineer，澳/新/港 Base
+来源: V2EX 酷工作
 发布者: newdogwang
 原文: [原文](https://www.v2ex.com/t/1236127)
-摘要: 海外 AI 科技公司招聘 Forward Deployed Engineer，要求在 LLM、RAG、多模态、Agent 等领域精通两项以上，深入客户一线落地大模型解决方案并推动产品迭代；Base 可选澳大利亚、新加坡或香港，英语需能作为工作语言，招聘方表示不设详细 JD 是希望保持灵活性。
+摘要: 一家海外 AI 科技公司招 LLM、RAG、多模态、Agent 领域精通两项以上的复合型人才，担任 Forward Deployed Engineer，深入客户一线落地大模型解决方案并推动产品迭代。Base 可选澳大利亚、新加坡或香港，英语作为工作语言，简历投递至邮箱即可。
 
-标签: #AI工程师 #出海 #Remote
-
-### 渣打银行内推：广州 & 天津 68 个在招岗位
-来源: V2EX
-发布者: Luckyshot
+### 渣打银行广州 & 天津 68 个在招岗位，含多条 AI 相关
+来源: V2EX 酷工作
+发布者: （内推）
 原文: [原文](https://www.v2ex.com/t/1236046)
-摘要: 渣打银行广州（30 个）与天津（38 个）共 68 个社招岗位，多数要求 5 年以上经验，提供 WLB、20 天年假与每周两到三天居家办公；其中包含 AIML Delivery Lead（AI/ML 交付负责人）、Data Scientist（数据建模与分析）等 AI/数据类职位，需全英文面试，简历走内推渠道。
+摘要: 渣打银行 2026-08-21 更新广州/天津社招列表，5 年以上经验、年假 20 天、每周两到三天 WLB 居家办公，全英面试。亮点岗位包括 AIML Delivery Lead（India-China）、AI Platform AI Factory Lead、AI Wealth 工程 VP、Retail Banking Product Owner 等多条 AI/ML 方向 Band 5+ 岗位。
 
-标签: #外资银行 #数据科学 #内推
+### 外资银行 Tech Project Manager，要求 FinTech 背景
+来源: V2EX 酷工作
+发布者: （PM 银行 科技）
+原文: [原文](https://www.v2ex.com/t/1236177)
+摘要: 广州外资银行招 Tech PM，要求具备 FinTech 行业背景，熟悉财富管理/理财业务或 Channels/App/Web 项目，持 PMP/CSM/ACP 认证优先。福利含 20 天年假、每周 WFH、WLB 朝 9 晚 6。
 
-## 🚀 AI 项目 / 工具推荐
+### （招三人）三年左右，需要金融行业背景的后端程序员
+来源: V2EX 酷工作
+发布者: （jobs 节点）
+原文: [原文](https://www.v2ex.com/t/1236128)
+摘要: 帖子标题为「（招三人）三年 左右 需要从事过金融行业的后端程序员」，归属酷工作节点，要求候选人有金融行业三年左右的后端经验。具体 JD 因 V2EX 详情页内容懒加载未抓取到完整正文，建议直接联系发布者获取完整职位描述。
 
-### SonikaAI：一次上传，把书籍文档翻译并转成有声书
+## 💼 海外独立开发者 / Side Project
+
+### PDF Redactor：本地化自动打码个人信息
 来源: Reddit r/SideProject
-发布者: /u/SonikaAI
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vuu9za/i_built_sonikaai_to_translate_booksdocuments_and/)
-摘要: 开发者自述为解决「翻译 + 文字转语音」多步骤割裂的痛点，构建了 SonikaAI：上传一次文档、选择语言即可同时得到翻译文本与有声书，翻译与 TTS 提供商在后台处理、用户无需配置 API；支持 13 种语言，DOCX 等格式保持版式，PDF/EPUB 重新排版，免费额度每月约 10 页、无需绑卡。
-
-标签: #翻译工具 #TTS #有声书
-
-### 本地 PDF 脱敏工具：自动识别姓名、SSN、账号，文件不出设备
-来源: Reddit r/SideProject
-发布者: /u/jwwpua
 原文: [原文](https://www.reddit.com/r/SideProject/comments/1vuowx9/i_built_a_pdf_redactor_that_autodetects_names/)
-摘要: 开发者针对现有脱敏工具的隐私问题（上传服务器、或本地但文本外发 AI）自建方案：自动识别姓名、SSN、邮箱、电话、账号、日期等敏感信息，检测与脱敏 100% 在本地完成，开启飞行模式仍可用；每个匹配项需人工确认后才应用，免费且无需注册，定位法律、医疗、税务文档场景。
+摘要: 一位开发者做了个本地运行的 PDF 工具，能自动识别姓名、SSN、银行卡号等敏感字段并打码。文件不离开设备、手机也能用、免费、无需注册，定位是隐私友好型小工具。
 
-标签: #隐私工具 #本地处理 #PDF
-
-### Hammy：用一只仓鼠强制你休息的 Chrome 扩展
+### 把 Obsidian Vault 渲染成可交互星系
 来源: Reddit r/SideProject
-发布者: /u/ayushmaansingh304
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vufj6n/i_got_tired_of_ignoring_break_reminders_so_i/)
-摘要: 开发者受不了总是关掉休息提醒，于是做了一款不让你关的提醒工具：到点后一只仓鼠（Hammy）接管屏幕，提示起身喝水、放松眼睛；该扩展今日上架 Chrome Web Store，网站为 hammyweb.online，属于典型的「个人痛点 + 轻量发布」独立开发案例。
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vupzqk/i_turned_my_obsidian_vault_into_a_galaxy/)
+摘要: 独立开发者把整个 Obsidian 知识库渲染成一张可交互的星系图，按笔记关系生成节点和轨道。属于"Not-AI"型的视觉化 Side Project，强调结构而非内容生成。
 
-标签: #Chrome扩展 #效率工具 #独立开发
+### 「养蛊」式排行榜：榜首有血量，归零即死
+来源: Reddit r/SideProject
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vuvkfp/i_made_a_ranking_board_where_1_has_people_feed/)
+摘要: 开发者做了个社区驱动的排名榜，#1 拥有 HP，社区可以喂食或攻击，归零时榜首死亡。属于交互式 Side Project，靠社交博弈驱动留存。
 
-## 📚 学习资源 / 真实案例
-
-### Ben's Bites：如何从零搭建个人 AI Agent（含轻量记忆）
-来源: Ben's Bites
-原文: [原文](https://www.bensbites.com/p/how-i-built-this)
-摘要: 时事通讯作者 Ben 公开了自己搭建个人 AI Agent 的完整过程：Agent 本质上是文件、文件夹、工具与指令的组合，指向一个文件夹即可让 Claude/ChatGPT 等接入；文中详细展示了新建 Agent 的初始文件结构，以及刻意设计的「轻量记忆」方案，适合想自己动手搭 AI 工作流的读者参考。
-
-标签: #AI Agent #个人效率 #教程
+### 「6 个付费用户」复盘：10 天前没人用，现在付费 6 人
+来源: Reddit r/SideProject
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vuv4e9/ten_days_ago_i_posted_that_basically_nobody_was/)
+摘要: 独立开发者分享 10 天前发帖后无人在用、社区反馈后改版，现在获得 6 个付费用户的实战复盘。原帖纯文字复盘，无截图附件。
 
 ---
 
-🦞 每日09:00自动更新
+🦞 每日07:15自动更新
 
-**数据来源**：V2EX、Reddit r/SideProject、Ben's Bites
+**数据来源**：V2EX 酷工作（jobs）、Reddit r/SideProject
 
 **⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://www.v2ex.com/t/1236289 - 已验证 Claude Max 号池负责人岗位内容匹配
-- ✅ https://www.v2ex.com/t/1236127 - 已验证外企模型团队 Forward Deployed Engineer 内容匹配
-- ✅ https://www.v2ex.com/t/1236046 - 已验证渣打银行 68 岗位内推内容匹配
-- ✅ https://www.reddit.com/r/SideProject/comments/1vuu9za/i_built_sonikaai_to_translate_booksdocuments_and/ - 已验证 SonikaAI 标题与正文内容匹配
-- ✅ https://www.reddit.com/r/SideProject/comments/1vuowx9/i_built_a_pdf_redactor_that_autodetects_names/ - 已验证 PDF 脱敏工具标题与正文内容匹配
-- ✅ https://www.reddit.com/r/SideProject/comments/1vufj6n/i_got_tired_of_ignoring_break_reminders_so_i/ - 已验证 Hammy 仓鼠扩展标题与正文内容匹配
-- ✅ https://www.bensbites.com/p/how-i-built-this - 已验证个人 Agent 搭建教程内容匹配
-
-**采集备注**：
-- Product Hunt 当日候选（PixelRead AI OCR、Antigravity IDE Extensions、OneCLI 等）来源站返回 Cloudflare 验证壳层，无法打开原文页核验，按铁律一律丢弃，未纳入正文。
-- Reddit r/SideProject 当日部分候选（500 downloads in a week、Pictionary word generator、obsidian galaxy 等）因信息密度不足或与「AI 副业」主题贴合度不够，未列入正文。
-- V2EX 当日 12 条候选中另有 t/1236318（深圳 C++）、t/1236177（外资银行 PM）、t/1236128（金融后端外包）等均在 24h 窗口内，为控制同类招聘稿堆砌，优先选取 AI 相关度更高的 3 条。
+- ✅ https://www.v2ex.com/t/1236289 - 已验证内容匹配（Claude Max 号池负责人招聘）
+- ✅ https://www.v2ex.com/t/1236127 - 已验证内容匹配（外企 AI 团队 FDE 招聘）
+- ✅ https://www.v2ex.com/t/1236046 - 已验证内容匹配（渣打银行 68 个岗位内推）
+- ✅ https://www.v2ex.com/t/1236177 - 已验证内容匹配（外资银行 Tech PM）
+- ✅ https://www.v2ex.com/t/1236128 - 已验证标题匹配（金融行业后端，JD 详情页懒加载，正文以"建议联系发布者"形式呈现，未编造内容）
+- ✅ https://www.reddit.com/r/SideProject/comments/1vuowx9/ - 已验证标题匹配（PDF Redactor）
+- ✅ https://www.reddit.com/r/SideProject/comments/1vupzqk/ - 已验证标题匹配（Obsidian Galaxy）
+- ✅ https://www.reddit.com/r/SideProject/comments/1vuvkfp/ - 已验证标题匹配（Ranking Board with HP）
+- ✅ https://www.reddit.com/r/SideProject/comments/1vuv4e9/ - 已验证标题匹配（6 个付费用户复盘）
