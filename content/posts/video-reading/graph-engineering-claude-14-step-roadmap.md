@@ -232,7 +232,7 @@ LIMIT 5;
 
 **核心产出**：AADL（Architecture Analysis & Design Language）风格的架构模型。
 
-**解读**：图 7 把"嵌入式 ECU / CAN bus"和"AI Agent 内部数据流"画在同一张图里：每个 Task 有明确的输入 Msg 与输出 Msg，传感器 / 执行器是图的边界节点。无论载体是车还是 Agent，所有并发系统的底层都是 Data-flow graph。
+**解读**：图 7 把"嵌入式 ECU / CAN bus"和"AI Agent 内部数据流"画在同一张图里：Task 之间靠 Msg 端口传数据，传感器与执行器是图的边界。无论载体是车还是 Agent，并发系统的底层都是同一张数据流图——差别只在节点是 ECU 还是 agent，边是 CAN 总线还是消息队列。
 
 AADL（Architecture Analysis & Design Language）本来是嵌入式航电系统的建模语言。把它的"数据流 + 端口 + 调度"搬到 Agent 内部，等于给 Agent 装上航空级的形式化骨架——这是 Step 12（Observed Agent）可观测性设计的前置设施。
 
@@ -340,10 +340,32 @@ results = await diamond(
 )
 ```
 
-对应到 LangGraph：
+对应到 LangGraph，把 `DiamondState` 和节点函数补齐，这段就可以直接运行（需要 `pip install langgraph`）：
 
 ```python
+from typing import Annotated, TypedDict
+import operator
 from langgraph.graph import StateGraph
+
+class DiamondState(TypedDict):
+    """Split 分片后的查询，以及各路 search 的搜索结果。"""
+    queries: list[str]
+    results: Annotated[list[str], operator.add]  # 多条入边自动累加
+
+def split_node(state: DiamondState) -> dict:
+    return {"queries": ["query1", "query2", "query3"]}
+
+def search_1_node(state: DiamondState) -> dict:
+    return {"results": [f"search_1 命中 {state['queries'][0]}"]}
+
+def search_2_node(state: DiamondState) -> dict:
+    return {"results": [f"search_2 命中 {state['queries'][1]}"]}
+
+def search_3_node(state: DiamondState) -> dict:
+    return {"results": [f"search_3 命中 {state['queries'][2]}"]}
+
+def reduce_node(state: DiamondState) -> dict:
+    return {"results": [f"共 {len(state['results'])} 路结果"]}
 
 graph = StateGraph(DiamondState)
 graph.add_node("split", split_node)
@@ -363,6 +385,8 @@ graph.add_edge("search_3", "reduce")
 graph.set_entry_point("split")
 graph.set_finish_point("reduce")
 ```
+
+`results` 用 `operator.add` 作 reducer，`reduce` 节点的入边每完成一路就自动累加一条，这正是 Barrier 语义在状态层的一次落地：图结构决定并发，reducer 决定合流时怎么攒数据。
 
 ---
 
@@ -385,6 +409,28 @@ graph.set_finish_point("reduce")
 **核心产出**：Router 决策表 + 复杂度的轻量分类 prompt。
 
 **解读**：成本控制的开关放在这里：不是所有任务都值得跑完整 14 步。Router 先用轻量模型分个类，高复杂度走"多 Agent + 并行审计"，低复杂度一条快速 pass 就出去。分类器判断错了最多多花一次重试，比每次都跑全流程省得多。Step 13 的 `/model` 路由就是这个节点的具体实现。
+
+最小实现是把"分类"和"路由"拆成两层，模型只产出 `high / low` 一个标签，分支逻辑全部留在代码里：
+
+```python
+def classify(task: str) -> str:
+    """最小分类器，按关键词打标签；生产环境换成模型调用，输出仍是 high/low"""
+    return "high" if any(k in task for k in ["migration", "refactor", "audit"]) else "low"
+
+def quick_pass(task: str) -> str:
+    return f"快速 pass：{task}"
+
+def audit_pass(task: str) -> str:
+    return f"审计 pass：{task}"
+
+complexity = classify(task)                # 模型只分类，不决定下一步
+if complexity == "high":
+    results = audit_pass(task)             # 代码负责路由：走审计分支
+else:
+    results = quick_pass(task)             # 低复杂度：一次快速 pass
+```
+
+分类器换成真实模型后，唯一变化是 `classify` 内部的实现，接口和分支结构原样保留——这层隔离就是"模型分类，代码路由"在代码上的落点。模型说错最多浪费一次重试，路由逻辑始终由代码掌握，不会被带偏。真实系统里，审计分支内部再挂 Step 8 的 Diamond 做多路并行即可。
 
 ---
 
@@ -494,6 +540,22 @@ pipeline()（NO BARRIER）
 **核心产出**：Observed Agent schema + 三类日志存储。
 
 **解读**：Step 12 把 Agent 从"黑盒"摊成可观测的解剖图：Alignment（guardrails + fallback）、Reflection（self-critique 日志）、Execution（工具输入输出 trace）三大子系统各留一条记录通道。图 14 一张图覆盖了整套运行时需要落盘的日志种类，直接指导 Step 5 的 Data-flow graph 该在哪埋探针。
+
+落到运行时，一个 step 的 trace 长这样——三类记录各占一块，彼此用 agent_id + step 对齐：
+
+```json
+{
+  "agent_id": "search_1",
+  "step": 4,
+  "reflection": {"score": 0.6, "note": "结果未覆盖用户提到的 latest branch"},
+  "tool_calls": [
+    {"tool": "bash", "input": "grep -rn \"fetch(\" src/api/", "output": "12 matches", "latency_ms": 140}
+  ],
+  "guardrail": "passed"
+}
+```
+
+Alignment 决定这条 trace 能否继续（guardrail 拦截就停），Reflection 给下一轮自己看，Execution 给排查的人看。三类记录合起来，才是 Step 5 里 Agent 内部那条数据流真正流过的痕迹。
 
 ---
 

@@ -1,17 +1,18 @@
 ---
 title: "Riley Brown 用 Codex 跑 1.5M+ 粉丝内容生意：把每个反复干的活变成 Skill，是单人内容创业的真护城河"
 date: 2026-08-19T20:30:00+08:00
-draft: false
+lastmod: 2026-08-22T00:00:00+08:00
 slug: riley-brown-codex-content-business-1-5m
 categories: ["视频精读"]
 tags: ["Riley Brown", "Codex", "Peter Yang", "AI Agent", "Skills", "Content Creator", "Vibecode", "Chorus", "Excalidraw", "Paper", "Remotion", "Wispr Flow", "Supadata", "SerpAPI", "Typefully", "Notion", "Claude", "GPT", "GLM 5.2", "Vibecoding", "Short Form", "Long Form"]
 description: "Peter Yang 主持的 41 分钟长访谈。Riley Brown 现场演示一个 1.5M+ 跨平台粉丝的内容创业者怎么用 Codex + 自建 Skill 链跑内容生意：本地存储、computer use、Remotion 插件、internet image puller、YouTube researcher、hook outline、Excalidraw diagrams、YouTube thumbnail、Paper、Typefully、Notion。重点提炼：quality > batching、outcome-based 测试 Skill、Chain prompting、不离开 Codex 这条核心工作流哲学。"
+
 author: 钳岳
 ---
 
 # Riley Brown 用 Codex 跑 1.5M+ 粉丝内容生意：把每个反复干的活变成 Skill，是单人内容创业的真护城河
 
-> 来源：YouTube 视频 `https://www.youtube.com/watch?v=N34zz1-RSGw` ——Peter Yang 主持的《How I Run My 1.5M+ Follower Content Business With Codex | Riley Brown》，发布于 Peter Yang 频道（`@PeterYangYT`，频道描述：「Practical AI tutorials and expert interviews for busy people」），时长 **41:47**。本文逐字稿由 kome.ai 拉取 + 笔者校核，全文与视频原话逐句对齐。
+> 来源：YouTube 视频 `https://www.youtube.com/watch?v=N34zz1-RSGw` ——Peter Yang 主持的《How I Run My 1.5M+ Follower Content Business With Codex | Riley Brown》，发布于 Peter Yang 频道（`@PeterYangYT`，频道描述：「Practical AI tutorials and expert interviews for busy people」），时长 **41:47**。本文依据视频逐字稿撰写，全文与视频原话逐句对齐，引号内均为原话。
 
 ## 写在前面：为什么这一期值得拆
 
@@ -23,6 +24,19 @@ author: 钳岳
 
 这背后是 Peter Yang 一开始就点出的「创作-分发-流程」三层模型——**YouTube 是创作枢纽，Instagram / TikTok / X 各自做 native 内容，剪辑最近才开始接触 AI**——以及 Riley 在每层上铺开的具体 Skill 链。下面我把整期内容按主题拆成 6 段，每段直接落到「为什么这样做 / 这样做换来了什么」。
 
+**阅读目标**：读完这篇，你应该能回答三件事——Riley Brown 怎么把 Codex 当操作系统跑一个 1.5M+ 粉丝的内容生意；哪些反复干的活值得沉淀成 Skill、怎么用 outcome-based 方式迭代；这套打法的适用边界在哪里。
+
+**目录**
+
+1. Codex 不是 ChatGPT：本地存储与 computer use 的底层差异
+2. Remotion 插件与 Internet Image Puller：素材准备交给 Skill
+3. YouTube Researcher 与开场钩子大纲：把「模仿爆款」做成 Skill
+4. Excalidraw + Wispr Flow：把「讲清楚一件事」做成 Skill
+5. Paper + Codex：缩略图工作流的工程化
+6. Chain prompting + outcome-based 调试：让 AI 自己长出新 Skill
+7. 横向对比：Riley 与其他智能体玩法的位置
+8. 7 条可落地建议、读完自测与待追问的问题
+
 ## 一、Codex 不是 ChatGPT：本地存储 + computer use 是底层差异
 
 Riley 上场先把 Codex 跟 ChatGPT 的工程性区别讲清楚——这一段值得单独拎出来**，**因为很多人用 Codex 用了很久都没意识到这一点：
@@ -33,13 +47,13 @@ Riley 上场先把 Codex 跟 ChatGPT 的工程性区别讲清楚——这一段�
 
 1. **本地存储 ≠ 隐私优先选择**——是「computer use 能落地的前提」。如果上传的文件留在云端、本地 Codex 看不到，那 Codex 就不可能用 Finder / 编辑器 / 浏览器这些本地工具协作。本地存储是基础设施，不是 feature。
 2. **Computer use 已经是内置 Skill**——不是后期接的 plugin，是 Codex 平台默认能力。Riley 在视频里直接调 Remotion 插件、SerpAPI、本地文件——这套动作全靠 computer use 在后台调度。
-3. **这跟 Claude Code 在架构上同源**——两家都在赌「LLM 是新的 runtime，不是新的 chatbot」。Riley 没有做两家对比，但他隐含承认 Codex / Claude Code 走的是同一条路。
+3. **这跟 Claude Code 在架构上同源**——两家都在赌「LLM（大语言模型）是新的 runtime，不是新的 chatbot」。Riley 没有做两家对比，但他隐含承认 Codex / Claude Code 走的是同一条路。
 
-这一段对工程读者的启示是：**评估 agent 平台时，「是否本地存储」比「上下文窗口多大」更基础**。前者决定能不能做 computer use，后者只决定能不能聊得更长。
+这一段对工程读者的启示是：**评估 agent（智能体）平台时，「是否本地存储」比「上下文窗口多大」更基础**。前者决定能不能做 computer use，后者只决定能不能聊得更长。
 
 ## 二、Remotion 插件 + Internet Image Puller：把素材准备从「找人做」改成「问 Skill」
 
-Riley 演示视频开场动画时给出的流程，是我整期看到的**最有工程含量**的一段：
+Riley 演示视频开场动画时给出的流程，核心思路是 pull（拉取）互联网素材，是我整期看到的**最有工程含量**的一段：
 
 ```text
 @remotion  →  Skill: Remotion best practices（自带 creator brand 色系）
@@ -53,11 +67,11 @@ internet image puller  →  SerpAPI → Google Images  →  自动按 video tran
 
 Riley 自己说：「`Remotion best practices`」这个 Skill 是他把 Codex 用了一阵以后**自己攒出来的**。它不是 OpenAI 官方插件，是 Riley 在 Codex 设置里**手写一份「creator brand」规范**（配色、字体、动效节奏），然后让 Codex 记住——下次调用 `@remotion` 时自动套用。
 
-这背后是一个在 AI 工程里被反复验证的范式：**LLM 的「行为」本质上是 prompt + context 的组合**。把「我想要 Riley 那种开场动画」拆成一段 Remotion best practices markdown，比让模型每次重新从零学起更省 token、更稳、更可调试。
+这背后是一个在 AI 工程里被反复验证的范式：**LLM 的「行为」本质上是 prompt（提示词）+ context 的组合**。把「我想要 Riley 那种开场动画」拆成一段 Remotion best practices 的 Markdown 规范文档，比让模型每次重新从零学起更省 token（词元）、更稳、更可调试。
 
 ### 2.2 Internet Image Puller 用 SerpAPI 解决了「素材找不到」问题
 
-Riley 在演示里直接说：「I have a skill, I actually, I think it's called, um, image pull, internet image puller. There it is. So this internet image puller is one where it'll go off, it'll actually use something called the SerpAPI. Um, and so it uses Google Images within the SerpAPI, and it will actually find the relevant logos related to whatever video it is.」
+SerpAPI 是一款搜索结果 API（应用程序接口），Riley 用它做图片检索。他在演示里直接说：「I have a skill, I actually, I think it's called, um, image pull, internet image puller. There it is. So this internet image puller is one where it'll go off, it'll actually use something called the SerpAPI. Um, and so it uses Google Images within the SerpAPI, and it will actually find the relevant logos related to whatever video it is.」
 
 链条是：
 
@@ -69,9 +83,9 @@ Riley 在演示里直接说：「I have a skill, I actually, I think it's called
 
 这等于**把「找 logo」这件事从「我得手动 Google → 截图 → 拖进 Figma」压缩成「我说一句话」**。Riley 进一步演示 chain prompting——可以同时说「pull the relevant logos and then make a graphic for this」让两个 Skill 串起来。
 
-## 三、YouTube Researcher + Hook Outline：用 Supadata 把「模仿爆款」做成 Skill
+## 三、YouTube Researcher + Hook（钩子）Outline：用 Supadata 把「模仿爆款」做成 Skill
 
-Riley 在讲他的 hook 生成工作流时提到了**两个核心 Skill**：
+Riley 在讲他的 hook（钩子，视频开场钩子）生成工作流时提到了**两个核心 Skill**：
 
 ```text
 YouTube researcher  →  Supadata API → 1 秒拉全 transcript
@@ -90,7 +104,7 @@ hook outline        →  按某个爆款视频的 intro 结构 → 生成新视�
 2. **Supadata 是远端 API**：直出 transcript，调用一次就能拿到整段文字。
 3. **Codex 的 sub-agent UI**：能把「拉 6 个频道的 transcript」拆成 6 个并发 agent，30 秒扫完整个频道。
 
-**这一段对工程读者的启示是：当某个工程链路有「本地重资源版本」和「远端 API 版本」时，永远优先选远端 API 版本**。前者把重活压在自己机器上，后者把重活压给 SaaS 平台——后者永远更便宜、更可扩展、更省 token。
+**这一段对工程读者的启示是：当某个工程链路有「本地重资源版本」和「远端 API 版本」时，永远优先选远端 API 版本**。前者把重活压在自己机器上，后者把重活压给 SaaS（软件即服务）平台——后者永远更便宜、更可扩展、更省 token。
 
 ### 3.2 Hook Outline：把「模仿爆款」做成可复用结构
 
@@ -134,7 +148,7 @@ Excalidraw diagrams skill（自带 Riley 风格 sections）
 
 ## 五、Paper + Codex 替换 Alex Hormozi 头像：thumbnail 工作流的工程化
 
-这一段是整期最有「**AI 视觉 + AI 编排**」含量的一段。Riley 用 Codex 替换 thumbnail 里的 Alex Hormozi 头像变成自己的脸，工程链路是：
+这一段是整期最有「**AI 视觉 + AI 编排**」含量的一段。Riley 用 Codex 替换 thumbnail 里的 Alex Hormozi 头像变成自己的脸，工程链路示例如下：
 
 ```text
 1. Codex 调 Paper API（AI-native Figma）
@@ -183,7 +197,7 @@ Riley 在最后讲了一段**关于怎么持续做 Skill 的方法论**：
 | prime-agent（8-15） | persistent Python REPL 当 control plane | 小步 evidence-backed 更新 + rollback | harness 持久，model 可换 |
 | Pi（8-17） | 代码即真相 / bash 够用 | 系统最小化（4 个内置工具 + < 1000 token system prompt） | 拒绝整套 MCP 生态 |
 | Claude Code / OpenAI Codex | LLM 是新 runtime | computer use + plugin 体系 | 不强调 |
-| LangGraph / Dify / n8n | workflow 编排，可视化 | 显式 node-edge 图 | 不强调 |
+| LangGraph / Dify / n8n | workflow 编排，可视化 | 显式 node（节点）-edge 图 | 不强调 |
 
 Riley 这一期跟 prime-agent 在「harness 持久、model 可换」上同源；跟 Pi 在「反对 complexity 堆叠」上同源；跟传统 workflow 工具完全反向——他不画 workflow 图，他让 AI 自己长出 Skill。
 
@@ -199,6 +213,12 @@ Riley 这一期跟 prime-agent 在「harness 持久、model 可换」上同源�
 6. **Paper 这种 AI-native 工具**优先于 Figma 这种 AI-friendly 工具——前者能由 agent 写入，后者只能由人拖。
 7. **「quality > batching」**：Riley 反复强调——batching 长期会让内容变 soulless，单条视频质量沉淀比日更数量重要。
 
+**常见执行错误与排查**：按这套打法落地时，三个最容易踩的坑，都来自本期视频里 Riley 的明确提醒：
+
+1. **手写 / 手改 Skill 文件**。Riley 明确反对，理由是这是在为某个模型优化 prompt，模型一升级就失效；排查方式：看自己是否经常打开 skill 文件改字句，是就该换成 outcome-based 迭代。
+2. **在旧 chat 里测试改过的 Skill**。旧上下文会污染测试结果，改完 Skill 必须开新 chat 再测——这是 Riley 流程里的固定动作。
+3. **高风险流程也照搬 outcome-based**。客户、付款、敏感文档相关的 workflow，Riley 自己也会回去人工分析 skill 文件；内容创作低风险可以放开，别的场景不能照搬。
+
 ## 九、几个值得追问的工程问题
 
 这期 Riley 没有展开但值得追问的事：
@@ -207,16 +227,22 @@ Riley 这一期跟 prime-agent 在「harness 持久、model 可换」上同源�
 2. **「outcome-based skill 维护」的 debug 可观测性**：Riley 不读 skill 文件，那出问题怎么 trace？比如某个 hook 突然变得很烂，是哪个 skill 改坏了？
 3. **「Mac mini 跑 Codex 自动化」的工程含义**：Riley 提到「I have Codex running on my little Mac mini, I have some automations there」——这种「个人自动化 farm」的可靠性 vs Claude agents in cloud 的对比，值得单独写一篇。
 
-## 十、引用致谢 + 下一步
+**读完自测**：三个问题检验这套方法你是否真的接住了。
+
+1. 你能列出自己每周至少做 3 次的重复动作，并判断哪些值得做成 Skill 吗？
+2. 你能说出 outcome-based 迭代为什么必须开新 chat 测试吗？
+3. 你能分清哪些任务该交给 Claude / GLM 5.2、哪些交给 GPT 吗？
+
+## 十、引用、参考与下一步
 
 ### 数据来源
 - 视频：`https://www.youtube.com/watch?v=N34zz1-RSGw`
 - 频道：`@PeterYangYT`（Peter Yang），频道描述「Practical AI tutorials and expert interviews for busy people」
 - 嘉宾：`@RileyBrownAI`（Riley Brown），1.5M+ 跨平台粉丝；公司 Chorus（agent orchestration），前作 Vibecode
-- 逐字稿：kome.ai transcript 拉取 + 笔者校核，全文 41:47，逐句与视频原话对齐；落盘 `~/.openclaw/workspace/memory/2026-08-19/riley-brown-transcript.json`
-- 平台元数据：Peter Yang 频道为「Practical AI tutorials and expert interviews for busy people」定位
+- 逐字稿：从视频逐字稿提取，笔者逐句校核，全文 41:47 与视频原话对齐
 
 ### 提到的工具一览
+
 - **Codex / ChatGPT**（OpenAI）—— local-first + computer use + plugin 体系
 - **Claude / Claude Code**（Anthropic）—— transcript 复述 policy 更开放
 - **GLM 5.2**（智谱）——「open models don't care either」
@@ -239,7 +265,4 @@ Riley 这一期跟 prime-agent 在「harness 持久、model 可换」上同源�
 
 ---
 
-> **写作元数据**：
-> - 本文按 project-review 文体包（30/35/35）撰写
-> - 数据点全部从 41:47 逐字稿提取，引号内为 Riley/Yang 原话
-> - 涉及 Codex / Claude / GPT / GLM / SerpAPI / Supadata / Excalidraw / Wispr Flow / Paper / Remotion / Typefully / Notion / Chorus 等第三方工具，版本与功能随上游更新可能漂移——本文截稿日 2026-08-19 20:30 GMT+8
+> 截稿日 2026-08-19 20:30 GMT+8。数据点全部从 41:47 逐字稿提取，引号内为 Riley / Yang 原话；文中第三方工具版本与功能随上游更新可能漂移。
