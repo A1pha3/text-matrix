@@ -1,8 +1,8 @@
 ---
 title: "AI副业早报 2026-08-23"
-date: 2026-08-23T07:00:51+08:00
+date: 2026-08-23T07:20:00+08:00
 slug: ai-side-hustle-morning-news-2026-08-23
-description: "2026年8月23日 AI 副业早报，精选过去 24 小时内 V2EX 酷工作招聘、Reddit 独立开发变现案例与 Product Hunt 新品机会。"
+description: "2026年8月23日 AI 副业早报，精选过去 24 小时内 V2EX 酷工作招聘、Reddit SideProject 独立开发变现机会与 Product Hunt AI 工具新品。"
 draft: false
 categories: ["行业快讯"]
 tags: ["AI副业", "招聘", "远程工作", "独立开发"]
@@ -19,73 +19,95 @@ hiddenFromHomePage: true
 来源: V2EX 酷工作
 发布者: islaohu
 原文: [原文](https://www.v2ex.com/t/1236485)
-摘要: TapNow 以一个真实生产事件切入：高分辨率视频任务失败后被队列反复重投，根因横跨资源调度、重试策略与运行时状态。团队要找的工程师负责回答"当下一次首先抵达现场的是 Agent，它如何区分症状与原因"，把答案做成平台。岗位方向为 Agent 平台 + SRE，深圳办公，适合有线上系统排障经验的工程师。
+摘要: 岗位从一个生产事件切入：超高分辨率视频任务失败后被队列反复重投，问题横跨任务设计、资源调度、重试策略与运行时状态。团队想回答的是「如果下一次先抵达现场的是 Agent，它怎样区分症状与原因、获得足够权限行动又不会放大风险」，并把答案做成平台。SRE 在这里被定位为 Agent 组织的平台角色。TapNow 在做 Creative OS，让用户带着想法来、带着完整作品离开，Agent 贯穿策略、任务、图像、视频与粗剪全过程。
 
 标签: #Agent #SRE #深圳招聘
 
-### 区块链创作者激励平台招创作者 BD / 运营（加密结算，类 OnlyFans 模式）
+### 远程全栈开发工程师（Golang + Vue），100% AI Coding 协作
+来源: V2EX 酷工作
+发布者: chris1ding1
+原文: [原文](https://www.v2ex.com/t/1236452)
+摘要: 团队以 Golang + Vue 为主，需要后端转全栈、有真实前端项目经验的工程师。日常工作 100% 由 AI Coding 完成（GPT / Claude / SuperPower 等），候选人需要熟悉架构与需求拆解、有产品审美、能主动发现问题并对自己的产出负责。岗位明确适合「因家庭或生活地点无法长期驻大城市、希望稳定远程」的人，试用期通过后公司提供 Claude 或 GPT 订阅二选一。投递方式藏在 base64 编码的 Telegram 链接里。
+
+标签: #远程工作 #AI编程 #全栈
+
+### 区块链创作者激励平台招创作者 BD / 运营（稳定币结算，类 OnlyFans 模式）
 来源: V2EX 酷工作
 发布者: sheniandaji2026
 原文: [原文](https://www.v2ex.com/t/1236419)
-摘要: 一款基于区块链支付的创作者激励平台招募创作者 BD，负责早期核心创作者的招募与维护：通过社群、私域等渠道触达中腰部及头部创作者，讲解高分成、稳定币结算、低门槛提现等平台优势并完成转化，同时策划激励活动、输出创作者数据分析。岗位适合有创作者资源或社区运营经验、想切入加密内容赛道的运营人员。
+摘要: 平台定位「基于区块链支付的创作者激励平台」，支持订阅、打赏、付费内容，纯加密货币结算。当前积极招募创作者 BD，负责中腰部及头部创作者的招募与维护，主打「高分成 + 稳定币到账 + 低门槛提现」的转化路径，同时负责激励活动策划与数据分析。候选人需 1 年以上创作者运营、网红 BD 或社交平台相关经验，懂 MetaMask / OKX Wallet 加分。
 
-标签: #创作者运营 #Web3 #BD岗位
+标签: #Web3 #创作者经济 #运营
 
-### 远程全栈开发工程师（Golang + Vue），工作以 100% AI Coding 为主
-来源: V2EX 酷工作
-发布者: charlenehe43
-原文: [原文](https://www.v2ex.com/t/1236452)
-摘要: 招聘方要求后端转全栈、有实际前端项目经验，最关键的门槛是"工作以 100% AI Coding 为主"——需熟练使用 GPT、Claude 等工具且不抵触 AI 编程，同时具备架构与需求拆解能力。岗位为长期远程，明确适合因家庭或生活地点原因无法留在大城市、但希望获得稳定远程开发机会的工程师，薪资需与远程模式互相匹配。
+---
 
-标签: #远程工作 #AICoding #全栈
+## 🚀 独立开发 / 副业机会
 
-## 💰 赚钱机会
-
-### Shy Combinator 创始人免费为 3 个 SaaS 制作发布视频
-来源: Reddit r/SideProject
-发布者: /u/yungwaris
+### Shy Combinator 免费为 3 个 SaaS 拍 launch video
+来源: Reddit SideProject
+发布者: yungwaris
 原文: [原文](https://www.reddit.com/r/SideProject/comments/1vva44s/drop_your_saas_and_i_will_make_free_launch_videos/)
-摘要: 发布视频制作团队 Shy Combinator 创始人在评论区征集 SaaS 项目，承诺从中选出 3 个最好的免费制作发布视频，其过往作品在社交媒体累计数百万播放。发帖人指出很多独立开发者的产品讲解视频输在叙事和留存上。对预算有限的独立开发者，这是一次零成本补齐营销素材的机会；同时这种"免费作品换案例"的获客打法本身也值得做服务类副业的人参考。
+摘要: Shy Combinator 创始人 Waris 在 SideProject 公开征集 3 个 SaaS 创业项目，免费制作 launch video 作为内容资产交换。工作室过往作品已在社交媒体累计数百万播放，重点弥补独立开发者在产品讲解、发布片叙事能力上的短板。本质是「视频换曝光」的合作机会，适合产品已上线、卡在冷启动阶段的独立开发者。
 
-标签: #SaaS #营销素材 #独立开发
+标签: #独立开发 #SaaS #冷启动
 
-## 🚀 AI项目
+### 经济数据驱动 3D 地球仪：globenomics.world，10 周、零运行时 API
+来源: Reddit SideProject
+发布者: Pecherskymikel11
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vvqrku/i_built_an_explorable_3d_globe_of_the_world/)
+摘要: 作者用 10 周独立开发了一款基于真实经济数据构建的可交互 3D 地球仪（globenomics.world），点选任意国家即可查看 GDP、薪资、通胀、最大企业与 34 项指标的全球排名，并基于同一数据集延伸出 18 款地理小游戏。整套应用号称零运行时 API 调用（数据全部静态打包），展示了「数据可视化 + 游戏化」组合的副业变现路径。技术方向适合想做 niche 数据产品的开发者参考。
 
-### AI 健身演示视频项目更新：作者决定自己动手做视频
-来源: Reddit r/SideProject
-发布者: /u/Medium-Criticism1297
-原文: [原文](https://www.reddit.com/r/SideProject/comments/1vvo2td/ai_fitness_demo_videos_update/)
-摘要: 该项目用 AI 生成健身演示视频，作者在最新更新中表示"决定不再等待，直接自己动手做视频"，展示了从外包依赖转向自产内容的迭代路径。帖子附带了最新生成的 demo 截图，属于还在活跃迭代的早期 AI 内容项目，适合关注 AI 视频生成落地场景的读者跟踪。
+标签: #数据可视化 #独立开发 #游戏化
 
-标签: #AI视频 #健身内容 #SideProject
+### 加拿大油气与矿业岗位免费匹配工具
+来源: Reddit SideProject
+发布者: (Community Member)
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vvibvw/i_built_a_free_canadian_oil_gas_and_mining_job/)
+摘要: 作者独立搭建了一个免费的加拿大油气、采矿行业岗位聚合与匹配工具，把分散在多个公司招聘页与区域站点的岗位信息统一索引，面向求职者和雇主两端的供需对接。属于典型的「垂直行业 + 长尾关键词」副业路径，以免费工具换取流量与潜在付费雇主挂位。
 
-## 🛠️ 工具推荐
+标签: #垂直招聘 #免费工具 #SEO
 
-### AutoClaw：跨桌面、浏览器与聊天的工作 Agent
+### Reddit SideProject 创作者反思：被下架不是内容问题，是分发问题
+来源: Reddit SideProject
+发布者: Economy-Cupcake6148
+原文: [原文](https://www.reddit.com/r/SideProject/comments/1vvp89q/7_removals_in_a_month_convinced_me_the_problem/)
+摘要: 作者一个月内连续 7 次被 Reddit 各版块下架帖子，最初归因于内容本身，仔细复盘后意识到根因在分发侧：版规差异、语调匹配与时间窗这些「基础设施」没做对。贴文是少数公开承认「渠道运营本身就是独立开发核心技能」的反思帖，对想用 Reddit / Hacker News / 即刻 / V2EX 等社区做冷启动的副业开发者很有借鉴价值。
+
+标签: #社区运营 #冷启动 #复盘
+
+---
+
+## 🛠️ 工具与产品
+
+### Z.ai 推出 AutoClaw：GLM 全系模型官方 Playground，MIT 许可
 来源: Product Hunt
+发布者: Z.ai
 原文: [原文](https://www.producthunt.com/products/z-ai)
-摘要: 8 月 21 日上线 Product Hunt 的 AI 工作代理，横跨桌面、浏览器和聊天三个入口执行任务。对想用 Agent 自动化日常重复工作（如文件整理、跨应用操作）的自由职业者，这类跨端 Agent 是当前降低单人产能瓶颈的直接工具选项。
+摘要: Z.ai 官方平台正式上线，直接承接 GLM Base、Reasoning、Rumination 三类最新 MIT 许可模型。界面刻意做轻、聚焦「模型交互」本身，免费开放。对做副业产品的开发者意味着：又多了一个对标 OpenAI 的开源可选模型后端，可以基于 GLM 路线搭建 agent、写作、代码类付费工具。
 
-标签: #AIAgent #效率工具 #自动化
+标签: #开源模型 #GLM #开发工具
 
-### Open Analytics：AI 原生的 Google Analytics 替代品
+### Port Radar：macOS 菜单栏实时扫描占用端口的小工具
 来源: Product Hunt
-原文: [原文](https://www.producthunt.com/products/open-analytics-2)
-摘要: 8 月 21 日上线，定位为"面向现代 Web 的 AI 原生网站分析工具"，对标 Google Analytics。做独立网站或内容副业的开发者可以用更低门槛拿到流量洞察，属于副业站点运营链路里的实用新选项。
+发布者: (PH Community)
+原文: [原文](https://www.producthunt.com/products/port-radar-for-macos)
+摘要: 开发者工具型产品。Port Radar 把 macOS 上所有正在占用端口的进程以「人话」形式列在菜单栏里——Vite、Next.js、Docker、忘记关掉的本地服务一眼可辨，并支持一键关闭。同时集成 Apple Intelligence，让用户直接问「这是啥、可以安全关掉吗」。属于「解决开发者日常痛点、可作为副业产品形态参考」的典型小工具。
 
-标签: #网站分析 #独立站 #AI原生
+标签: #开发者工具 #macOS #小而美
 
 ---
 
 🦞 每日09:00自动更新
 
-**数据来源**：V2EX 酷工作、Reddit r/SideProject、Product Hunt
+**数据来源**：V2EX 酷工作、Reddit SideProject、Product Hunt（仅列正文实际引用来源）
 
 **⚠️ 链接核查清单（已逐条验证，仅列正文实际引用链接）：**
-- ✅ https://www.v2ex.com/t/1236485 - 已打开验证，标题与正文匹配（TapNow Agent 平台工程师招聘）
-- ✅ https://www.v2ex.com/t/1236419 - 已打开验证，标题与正文匹配（创作者 BD 招聘，发布于 2026-08-22 17:00 +08:00）
-- ✅ https://www.v2ex.com/t/1236452 - 已打开验证，标题与正文匹配（远程全栈，发布于 2026-08-22 20:44 +08:00）
-- ✅ https://www.reddit.com/r/SideProject/comments/1vva44s/drop_your_saas_and_i_will_make_free_launch_videos/ - 已打开验证，作者 /u/yungwaris，更新于 2026-08-22 11:37 UTC
-- ✅ https://www.reddit.com/r/SideProject/comments/1vvo2td/ai_fitness_demo_videos_update/ - 已打开验证，作者 /u/Medium-Criticism1297，更新于 2026-08-22 23:05 UTC
-- ✅ https://www.producthunt.com/products/z-ai - 经官方 RSS 验证，AutoClaw，发布于 2026-08-21 09:04 PDT
-- ✅ https://www.producthunt.com/products/open-analytics-2 - 经官方 RSS 验证，Open Analytics，发布于 2026-08-21 08:08 PDT
+- ✅ https://www.v2ex.com/t/1236485 - 标题与正文匹配（TapNow Agent 平台工程师）
+- ✅ https://www.v2ex.com/t/1236452 - 标题与正文匹配（远程全栈 Golang + Vue）
+- ✅ https://www.v2ex.com/t/1236419 - 标题与正文匹配（创作者 BD / 运营）
+- ✅ https://www.reddit.com/r/SideProject/comments/1vva44s/drop_your_saas_and_i_will_make_free_launch_videos/ - 标题与正文匹配（Shy Combinator 拍 launch video）
+- ✅ https://www.reddit.com/r/SideProject/comments/1vvqrku/i_built_an_explorable_3d_globe_of_the_world/ - 标题与正文匹配（globenomics.world）
+- ✅ https://www.reddit.com/r/SideProject/comments/1vvibvw/i_built_a_free_canadian_oil_gas_and_mining_job/ - 标题与正文匹配（加拿大油气矿业匹配工具）
+- ✅ https://www.reddit.com/r/SideProject/comments/1vvp89q/7_removals_in_a_month_convinced_me_the_problem/ - 标题与正文匹配（分发侧复盘）
+- ✅ https://www.producthunt.com/products/z-ai - 标题与正文匹配（Z.ai AutoClaw GLM）
+- ✅ https://www.producthunt.com/products/port-radar-for-macos - 标题与正文匹配（Port Radar macOS）
