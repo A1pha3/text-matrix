@@ -2,7 +2,7 @@
 title: "Linux服务器安全加固实战指南：从SSH到防火墙的完整清单"
 date: "2026-05-14T10:51:00+08:00"
 slug: "linux-server-security-hardening-guide"
-github_repo: "moltenbit/How-To-Secure-A-Linux-Server-With-Ansible"
+github_repo: "imthenachoman/How-To-Secure-A-Linux-Server"
 description: "Linux 服务器安全加固的核心是按攻击面分层收敛。本文以 How-To-Secure-A-Linux-Server 为底本，拆解身份认证、网络入口、文件系统、运行时检测四层加固链路，解释每层措施存在的理由、适用边界与过度加固的代价，并给出一次 SSH 暴力破解攻击从尝试到 Fail2Ban 响应再到 CrowdSec 上报的完整任务流案例。"
 draft: false
 categories: ["技术笔记"]
@@ -13,7 +13,7 @@ tags: ["Linux", "SSH", "DevOps"]
 
 Linux 服务器安全加固的核心是按攻击面分层收敛——身份认证、网络入口、文件系统、运行时检测——每一层都有最小必要措施，也都有过度加固的代价。工具装多了不一定更安全：规则互相冲突会让合法流量被误伤，日志被噪声淹没会让真正的入侵信号沉到底部。
 
-底本是社区共建项目 **How-To-Secure-A-Linux-Server**（GitHub: imthenachoman/How-To-Secure-A-Linux-Server，27,000+ Stars，持续更新）。项目本身是一份很好的 Checklist，缺的是"为什么这一项排在前面""什么时候不该照搬"——这两件事正是下面要补的。
+底本是社区共建项目 **How-To-Secure-A-Linux-Server**（GitHub: [imthenachoman/How-To-Secure-A-Linux-Server](https://github.com/imthenachoman/How-To-Secure-A-Linux-Server)，30,000+ Stars，持续更新）。项目本身是一份很好的 Checklist，缺的是"为什么这一项排在前面""什么时候不该照搬"——这两件事正是下面要补的。
 
 ## 这篇指南适合谁、解决什么问题
 
@@ -117,7 +117,7 @@ AllowUsers user@10.0.0.0/8
 AllowUsers user@192.168.1.0/24
 ```
 
-`AllowUsers` 比 `PasswordAuthentication no` 更靠前的一道防线：不在白名单里的来源连 TCP 握手都过不了 SSH 进程。代价是来源 IP 变了就得改配置——出差、临时办公网络、家庭宽带动态 IP 都会让这条规则变成"自己锁死自己"。生产环境通常配合堡垒机或 VPN 使用，让 SSH 来源收敛到一个固定网段。
+`AllowUsers` 比 `PasswordAuthentication no` 更靠前的一道防线：不在白名单里的来源连 TCP 握手都过不了 SSH 进程。代价是来源 IP 变了就得改配置——出差、临时办公网络、家庭宽带动态 IP 都会让这条规则把自己拒之门外。生产环境通常配合堡垒机或 VPN 使用，让 SSH 来源收敛到一个固定网段。
 
 ### 2FA：在密钥泄露和密钥未泄露之间加一道时间窗
 
@@ -137,7 +137,7 @@ auth required pam_google_authenticator.so
 AuthenticationMethods publickey,keyboard-interactive
 ```
 
-`AuthenticationMethods publickey,keyboard-interactive` 这一行把认证从"任一通过即可"改成"两者都要通过"。注意 OpenSSH 8.2 之前的版本对 `keyboard-interactive` 的支持有限，老系统升级前先确认版本。
+`AuthenticationMethods publickey,keyboard-interactive` 这一行把认证从"任一通过即可"改成"两者都要通过"。要确认 `KbdInteractiveAuthentication yes` 已开启（老版本 OpenSSH 对应配置项叫 `ChallengeResponseAuthentication`），否则 keyboard-interactive 不会生效；Ubuntu 20.04 及以上默认已启用。
 
 2FA 的代价是运维负担：每个用户都要在自己机器上跑一次 `google-authenticator`、扫码绑定、保存应急码。用户换手机、丢手机、应急码丢失都会导致账号锁死。团队规模大时建议配合中央身份系统（如 FreeIPA、JumpCloud）统一管理 TOTP，而不是每台机器各自配置。
 
@@ -146,7 +146,7 @@ AuthenticationMethods publickey,keyboard-interactive
 SSH 加固最容易踩的坑是"改完配置重启 sshd 后自己进不去了"。两个原则：
 
 - 改 `sshd_config` 前先开第二个会话作为回滚通道，验证新配置生效后再关闭
-- 用 `sudo sshd -t` 在重启前做语法检查，能挡住 90% 的配置错误
+- 用 `sudo sshd -t` 在重启前做语法检查，能挡住绝大多数配置错误
 
 如果真的被锁在外面，回滚路径通常是：云厂商控制台的 VNC/串口 控制台、带外管理（IPMI/iLO）、或者挂载磁盘改配置。这些路径在生产环境不一定都开放，所以"改前先验证"比"出事再救"成本低得多。
 
@@ -199,11 +199,11 @@ sudo dpkg-reconfigure -plow unattended-upgrades
 
 ```bash
 Unattended-Upgrade::Mail "root@your-domain.com";
-Unattended-Upgrade::AutomaticReboot "true";
-Unattended-Upgrade::AutomaticRebootTime "03:00";
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "03:00";
 ```
 
-`unattended-upgrades` 默认只装安全补丁，不装功能升级，所以稳定性风险较低。这里要权衡的是 `AutomaticReboot "true"`：内核补丁需要重启才生效，自动重启意味着服务会中断一次。对个人服务器和小规模服务可以接受；对有严格 SLA 的生产服务，更常见的做法是 `AutomaticReboot "false"`，把重启纳入维护窗口统一调度。
+`unattended-upgrades` 默认只装安全补丁，不装功能升级，所以稳定性风险较低。这里要权衡的是 `Automatic-Reboot "true"`：内核补丁需要重启才生效，自动重启意味着服务会中断一次。对个人服务器和小规模服务可以接受；对有严格 SLA 的生产服务，更常见的做法是 `Automatic-Reboot "false"`，把重启纳入维护窗口统一调度。
 
 `Mail` 配置很重要——它让你知道"今天装了什么补丁"。补丁管理最容易出问题的环节是"以为装了其实没装"，邮件报告比"我去检查一下"靠谱得多。
 
@@ -241,7 +241,7 @@ sudo ufw allow from 10.0.0.0/8 to any port 22
 sudo ufw status verbose
 ```
 
-`ufw enable` 之前一定要先 `ufw allow 22/tcp`，否则 SSH 会话会被立即切断。这是 UFW 最经典的"自己锁死自己"场景。`default deny incoming` 配合 `default allow outgoing` 是最稳的默认策略——入站严格白名单，出站默认放行，避免业务应用因为出站被拒而出现诡异故障。
+`ufw enable` 之前一定要先 `ufw allow 22/tcp`，否则 SSH 会话会被立即切断——这是 UFW 最典型的翻车现场。`default deny incoming` 配合 `default allow outgoing` 是最稳的默认策略——入站严格白名单，出站默认放行，避免业务应用因为出站被拒而出现诡异故障。
 
 ### Fail2Ban：基于日志的本地封禁
 
@@ -274,11 +274,11 @@ Fail2Ban 的工作方式是：扫描日志（`logpath`），用正则（`filter`
 ### CrowdSec：基于社区情报的协同封禁
 
 ```bash
-# 安装
-curl -s https://packagecloud.io/install/repositories/crowdsec/crowdsec/script.deb.sh | sudo bash
+# 安装（官方一键脚本，配置 apt 源并安装 agent）
+curl -s https://install.crowdsec.net | sudo sh
 sudo apt install crowdsec crowdsec-firewall-bouncer-iptables
 
-# 注册场景（自动下载防御规则）
+# 查看场景与集合
 sudo cscli scenarios list
 sudo cscli scenarios enable crowdsecurity/http-crawlers
 sudo cscli collections install crowdsecurity/linux
@@ -324,7 +324,7 @@ sequenceDiagram
     S->>C: 新连接到达
     C->>H: 查询该 IP 是否在黑名单
     H-->>C: 在黑名单（其他机器已上报）
-    C->>I: 插入 crowdsec chain 规则，封禁 6 个月
+    C->>I: 插入 crowdsec chain 规则，按场景时长封禁
     Note over A,I: 攻击者两个 IP 都被拦，且第二个 IP 在握手阶段就被挡
 ```
 
@@ -429,21 +429,22 @@ Logwatch 把 `/var/log` 下的日志按服务汇总成每日邮件报告。它�
 ## /proc 与内核参数：多租户环境的关键隔离
 
 ```bash
-# 隐藏 PID（防止窥探进程）
-sudo sysctl kernel.pid_max=99999
+# 隐藏其他用户的进程（/proc 挂载选项，重挂载立即生效）
+sudo mount -o remount,hidepid=2 /proc
 
-# 禁止查看其他用户进程
+# 禁止普通用户 ptrace 其他用户进程
 sudo sysctl kernel.yama.ptrace_scope=2
 
 # /etc/sysctl.conf 永久配置
 kernel.yama.ptrace_scope = 2
-kernel.pid_max = 99999
 fs.suid_dumpable = 0
 ```
 
-这一组参数在个人服务器上几乎无感，但在多租户环境里是关键隔离。`ptrace_scope = 2` 意味着普通用户不能 `ptrace` 别人的进程——这挡住了"用 `strace` 偷看邻居进程内存"这类攻击。`pid_max` 限制 PID 取值范围，间接限制了信息泄露面（虽然 99999 仍然不小）。`fs.suid_dumpable = 0` 禁止 SUID 程序产生 core dump，避免敏感信息（如 `/etc/shadow` 的内容）通过 core dump 落到磁盘被读取。
+这一组设置对单用户服务器几乎无感，但在多租户环境里是关键隔离。`hidepid=2` 通过 `/proc` 的挂载选项实现：非 root 用户在 `/proc` 里看不到其他用户的进程目录，`ps`、`top` 只能列自己的进程。它比 sysctl 更直接——`kernel.pid_max` 只是限制 PID 编号范围，并不隐藏进程，别拿它当隔离手段。需要 root 之外的账号也能看全进程时，用 `hidepid=2,gid=某组` 给指定组放行。
 
-多租户场景特别需要这些参数，因为攻击者本身就是合法用户——他有账号、能登录、能跑进程。前几层"挡住外人"的思路在这里失效，必须靠内核参数限制"登录之后能看到什么"。共享主机、CI runner、教学用服务器都属于这类场景。
+`ptrace_scope = 2` 意味着只有 root（具备 CAP_SYS_PTRACE）能 `ptrace` 别的进程，挡住"用 `strace` 偷看邻居进程内存"这类攻击。`fs.suid_dumpable = 0` 禁止 SUID 程序产生 core dump，避免敏感数据（如 `/etc/shadow` 的内容）随 core dump 落到磁盘。
+
+多租户场景特别需要这些限制，因为攻击者本身就是合法用户——他有账号、能登录、能跑进程。前几层"挡住外人"的思路在这里失效，必须靠内核参数限制"登录之后能看到什么"。共享主机、CI runner、教学用服务器都属于这类场景。
 
 ## 适用边界与采用顺序
 
@@ -458,7 +459,7 @@ fs.suid_dumpable = 0
 
 采用顺序上，建议按收益从高到低排：
 
-1. **第一天**：密钥认证 + 禁用密码登录 + UFW 默认拒绝 + unattended-upgrades。这三项挡住 90% 的自动化攻击
+1. **第一天**：密钥认证 + 禁用密码登录 + UFW 默认拒绝 + unattended-upgrades。这几项挡住绝大多数自动化攻击
 2. **第一周**：Fail2Ban + sudo 收敛 + Lynis 首次审计。把"已经能登录"之后的权限边界收紧
 3. **第一个月**：2FA + CrowdSec + Logwatch。建立持续检测和日报机制
 4. **按需**：OSSEC、ClamAV、Rkhunter、/proc 隔离。根据威胁模型决定是否上
@@ -467,7 +468,7 @@ fs.suid_dumpable = 0
 
 ## 快速部署清单
 
-下面这份清单对应"第一天 + 第一周"的最小必要集，Ubuntu 22.04 验证通过：
+下面这份清单对应"第一天 + 第一周"的最小必要集，以 Ubuntu 22.04 为例：
 
 ```bash
 # 一键安全加固（Ubuntu 22.04）
@@ -501,11 +502,11 @@ sudo systemctl enable fail2ban && sudo systemctl start fail2ban
 
 **Q：CrowdSec 上报会泄露本机信息吗？**
 
-会上报攻击者的 IP、攻击类型、时间戳，不上报本机业务数据。社区情报是去标识化的。如果合规要求严格，可以配置 `api.server.disable_ssl` 之外的字段过滤，或干脆只拉取情报不上报（但这样失去了社区贡献价值）。
+会上报攻击者的 IP、攻击类型、时间戳，不上报本机业务数据。是否参与社区双向同步可以控制：不向 CrowdSec 控制台注册（`cscli console enroll`）时，agent 只拉取社区 blocklist、不上传本地检测结果，本地检测和封禁仍然工作；注册后才会贡献检测信号。合规要求严格的场景，按"只拉取、不上报"部署即可。
 
 **Q：unattended-upgrades 自动重启把生产服务打挂了？**
 
-把 `AutomaticReboot` 改成 `false`，重启纳入维护窗口。或者用 `Unattended-Upgrade::AutomaticRebootTime` 配置在业务低峰期。内核补丁不重启不生效，但功能补丁不需要重启——`unattended-upgrades` 默认只装安全补丁，重启频率比想象中低。
+把 `Automatic-Reboot` 改成 `false`，重启纳入维护窗口。或者用 `Unattended-Upgrade::Automatic-Reboot-Time` 配置在业务低峰期。内核补丁不重启不生效，但功能补丁不需要重启——`unattended-upgrades` 默认只装安全补丁，重启频率比想象中低。
 
 **Q：Lynis 报告里几百条告警，怎么处理？**
 
@@ -513,7 +514,7 @@ sudo systemctl enable fail2ban && sudo systemctl start fail2ban
 
 **Q：启用 UFW 后 SSH 会话被切断了？**
 
-这是 UFW 最经典的"自己锁死自己"场景。`ufw enable` 会立即激活默认策略，如果之前没有执行 `ufw allow 22/tcp`，SSH 会话会被立即切断。回滚路径：通过云厂商控制台的 VNC/串口控制台登录，执行 `sudo ufw allow 22/tcp` 或 `sudo ufw disable`。预防方法：先 `ufw allow 22/tcp` 再 `ufw enable`，并在另一个终端里验证 SSH 连接正常后再关闭当前会话。
+`ufw enable` 会立即激活默认策略，如果之前没有执行 `ufw allow 22/tcp`，当前 SSH 会话会当场断开。回滚路径：通过云厂商控制台的 VNC/串口控制台登录，执行 `sudo ufw allow 22/tcp` 或 `sudo ufw disable`。预防方法：先 `ufw allow 22/tcp` 再 `ufw enable`，并在另一个终端里验证 SSH 连接正常后再关闭当前会话。
 
 **Q：CrowdSec 误封了办公室 NAT 出口 IP，整个办公室都连不上了？**
 

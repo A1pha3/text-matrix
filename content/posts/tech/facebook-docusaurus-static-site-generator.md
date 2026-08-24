@@ -7,13 +7,13 @@ tags: ["github", "docusaurus", "静态站点生成器", "SSG", "文档站", "Met
 description: "Docusaurus v3.10 是 Meta 开源的内容站静态生成器：React + MDX + 插件 + 主题四层架构，i18n、versioning、Algolia 搜索开箱即用。它真正解决的问题不是 Markdown 渲染，而是把内容、主题、构建解耦后留给工程师的扩展空间。"
 github_repo: "facebook/docusaurus"
 source_key: "gh:facebook/docusaurus"
-slug : facebook-docusaurus-static-site-generator
+slug: facebook-docusaurus-static-site-generator
 
 ---
 
 # facebook/docusaurus 深度解析：Meta 把文档站做成了 React 单页应用的脚手架
 
-把 Docusaurus 塞进"静态站点生成器"那一栏和 Hugo、Hexo、MkDocs 并列很容易。读完 v3.10 整个 monorepo（一个仓库里管理多个 npm 包）后，我更愿意把它归到另一类：**它是一个面向文档站的 React 应用脚手架**，SSG 只是它交付产物的形态。Markdown 文件只是数据源，真正撑起它的是 React 组件、MDX、插件生命周期和一套分层的主题系统。这篇文章想回答的不是"Docusaurus 是什么"，而是"它为什么这样设计，谁该用，谁不必用"。
+把 Docusaurus 塞进"静态站点生成器"那一栏和 Hugo、Hexo、MkDocs 并列很容易。读完 v3.10 整个 monorepo（一个仓库里管理多个 npm 包）后，我更愿意把它归到另一类：**它是一个面向文档站的 React 应用脚手架**，SSG 只是它交付产物的形态。Markdown 文件只是数据源，真正撑起它的是 React 组件、MDX、插件生命周期和一套分层的主题系统。这篇文章想回答的不是"Docusaurus 是什么"，而是"它为什么这样设计，谁该用，谁不必用"。读完之后，你应该能落地回答四件事：四层架构各管什么、插件和主题为什么能各自演化而不互相依赖、一次构建的数据是怎么流动的、以及你自己的项目到底该不该选它。
 
 本文基于 2026-07-10 发布的 **v3.10.2** 源码、`website/docs/` 全部 markdown 文档和 `packages/docusaurus` 的 CLI 实现撰写。仓库地址：[facebook/docusaurus](https://github.com/facebook/docusaurus)。
 
@@ -207,14 +207,14 @@ faster: {
 
 ## 谁在生产环境用 Docusaurus
 
-仓库 `website/src/data/users.tsx` 维护了一份 showcase 清单，官方页 [docusaurus.io/showcase](https://docusaurus.io/showcase) 截至 v3.10 时收录了 600+ 站点。值得点名的几类：
+仓库 `website/src/data/users.tsx` 维护了一份 showcase 清单，官方页 [docusaurus.io/showcase](https://docusaurus.io/showcase) 收录了数百个站点。值得点名的几类：
 
-- **Meta 自家**：React 文档、React Native、MobX、Flux、Hermes、Lexical、Jest 系文档生态。这部分案例的有信息量之处不在于"我们用了 Docusaurus"，而在于它们面对的真实流量和 PR 提交量——这反过来证明了 v3 的构建/增量能力。
-- **大型基础设施**：Apache APISIX、Chaos Mesh、Supabase（部分文档）、Ionic、Create React App（归档版）。
-- **云与开发者工具**：Algolia DocSearch（搜索厂商用 Docusaurus 展示自己的搜索文档，本身有自指趣味）、ConfigCat、BoxyHQ、Clutch、ChatKitty。
-- **前端 / 框架文档**：Solid、Astro、Redux（v4 从 GitBook 迁过来，原因写在 [issue #3161](https://github.com/reduxjs/redux/issues/3161)）、Rsbuild、Prettier。
+- **Meta 自家**：React 与 React Native 的官方文档是规模最大的案例，showcase 里还挂着带 `meta` 标签的 Create React App、Draft.js、Component Kit。这部分的信息量不在于"我们用了 Docusaurus"，而在于它们每天面对的真实流量和 PR 提交量——这反过来验证了 v3 的构建与增量能力。
+- **大型基础设施**：Apache APISIX、Chaos Mesh，都属于需要多语言、多版本文档的网关 / 云原生项目。
+- **云与开发者工具**：Algolia DocSearch（搜索厂商用自己的文档展示如何接入搜索，本身有自指趣味）、Bandwidth、ConfigCat、ChatKitty、BoxyHQ。
+- **SDK 与框架类**：Dyte（大站点 + versioning 的范例）、DevSpace、Botonic、EverShop、Enarx。
 
-值得注意的缺位：Vercel 自己的文档用 Next.js，Tailwind 用 Nextra，Vue 用 VitePress——这些不是"竞品避让"，而是因为 Docusaurus 的 React 锁定在这些团队看来是约束，不是优势。
+值得注意的缺位：Vercel 的文档用 Next.js，Tailwind 用 Nextra，Vue 用 VitePress，Astro 官方文档也迁去了 Starlight。这些不是"竞品避让"，而是这些团队各自的生态里已有更顺手的文档方案，或者不想被锁死在 React 上。Docusaurus 的适用边界，本质上是"团队愿不愿意接受 React 作为主题语言"。
 
 ## 适用边界：什么时候用，什么时候不要
 
@@ -262,6 +262,13 @@ npm run deploy     # 推 GitHub Pages（SSH key 已配好的情况下）
 3. **主题接管**：`npm run swizzle @docusaurus/theme-classic Footer -- --wrap` 拿到 Footer 组件后包一层自己的版本。渐进式自定义由此开始。
 
 升级方面，Docusaurus 团队对 v2 → v3 给了一份完整的 migration guide（含 MDX 1 → MDX 3、`mdxOptions` 字段迁移、Infima 5 升级等），v3 内 minor 升级通常无需手动干预，patch 升级偶尔需要 `npm run clear` 清缓存。
+
+上手之后，几个高频坑可以先留个心眼：
+
+- **改动"没生效"**：先跑 `npm run clear` 清掉 `node_modules/.cache/docusaurus` 再重建，很多困惑其实卡在缓存。
+- **eject 过的组件升级后行为变了**：Docusaurus 不会自动更新你炸进 `src/theme/` 的副本，升级前按 changelog 逐文件 diff，决定保留还是回滚。
+- **想开 `faster` 又怕不稳**：先在克隆的一份仓库上跑一遍 `npm run build` 对比产物，再决定要不要在正式站全开；部分开关在 v3.10 仍是 experimental。
+- **部署默认偏向 GitHub Pages**：`docusaurus deploy` 内置的是 git push 工作流，换 Vercel 或 Netlify 要写自定义 workflow。
 
 ## 结尾判断
 

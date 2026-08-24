@@ -8,7 +8,7 @@ categories: ["技术笔记"]
 tags: ["Pydantic", "Python", "FastAPI"]
 ---
 
-Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAPI、SQLModel、LangChain 这些下游框架的验证瓶颈被打通了。V1 时代，一个高 QPS 接口里 30%-50% 的 CPU 可能花在 Python 层的字典遍历和类型检查上；V2 把这部分压到 Rust 后，下游框架可以放心地把请求模型做得更复杂，而不必担心验证开销吃掉吞吐。
+Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAPI、SQLModel、LangChain 这些下游框架的验证瓶颈被打通了。V1 的验证循环是纯 Python 的，在高 QPS 接口里，验证开销会明显挤占业务逻辑的 CPU；V2 把这部分压到 Rust 后，下游框架可以放心地把请求模型做得更复杂，而不必担心验证开销吃掉吞吐。
 
 本文将覆盖：类型注解怎么变成 Rust 侧的派发表、验证和序列化为什么要成对设计、Rust 核心对 Python 生态的实际影响，以及一次 FastAPI 请求的完整验证路径。
 
@@ -16,7 +16,7 @@ Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAP
 
 本文面向已经会用 Python 写类、但还没系统用过 Pydantic 的读者。动手前准备：
 
-- Python 3.9+（V2 要求 3.8+，本文示例用 3.9 以上的语法，如 `int | None`）
+- Python 3.9+（Pydantic 2.11 起不再支持 3.8），本文示例用了 3.10 的 `int | None` 联合类型语法
 - 一个能跑 `pip` 的虚拟环境，避免污染全局环境
 
 安装并验证：
@@ -26,7 +26,7 @@ python -m pip install "pydantic>=2" pydantic-settings
 python -c "import pydantic; print(pydantic.VERSION.split('.')[0] == '2')"
 ```
 
-输出 `True` 说明安装成功。`EmailStr`、`PaymentCardNumber` 这类语义类型还需要 `pydantic[email]`，用到时再装，见常见问题第 7 条。
+输出 `True` 说明安装成功。语义类型需要额外依赖：`EmailStr` 要 `pydantic[email]`，`PaymentCardNumber` 要 `pydantic-extra-types`，用到时再装，见常见问题第 7 条。
 
 ## 读完本文你能得到什么
 
@@ -78,7 +78,7 @@ print(get_type_hints(User))
 
 每条规则在编译后变成 Rust 侧的一个验证函数，运行时按字段顺序依次调用。嵌套模型的规则会递归展开，所以一个 3 层嵌套的模型，编译后的 schema 是一棵树，运行时按树遍历。
 
-这套翻译在类定义时完成一次，运行时验证直接走编译后的 schema，不再重复解析类型注解。V1 每次验证都要在 Python 层走一遍字段循环和类型判断；V2 把这些编译成 Rust 的派发表，运行时只查表不解析。V2 的"类定义"比 V1 稍慢，因为编译 schema 有一次性开销，但这个开销在类定义时付一次，后续每次验证都受益。
+运行时验证直接走编译后的 schema，不再重复解析类型注解。V1 每次验证都在 Python 层走一遍字段循环和类型判断；V2 只查编译好的 Rust 派发表。代价是 V2 的类定义阶段比 V1 稍慢——编译 schema 有一次性的开销，但在类定义时付一次，后续每次验证都受益。
 
 类型注解被翻译成 Rust 侧规则后，几个常见问题就清楚了。它们都源于宽松模式默认做了很多隐式转换，转换规则和 Python 原生行为不完全一致：
 
@@ -104,7 +104,7 @@ V2 把验证核心拆成 `pydantic-core` 这个独立 crate，用 Rust 实现。
 - **自定义验证器的性能特征变了**：`@field_validator` 仍然是 Python 函数，调用时会从 Rust 侧回到 Python，所以一个模型里挂 10 个 `field_validator` 性能不会比 V1 好太多。真正的提速来自 `Field` 内置约束（`gt`/`min_length`/`pattern`），这些在 Rust 侧直接执行。
 - **严格模式（strict mode）成为一级公民**：V1 的转换行为隐式且不可关闭，V2 提供 `strict=True` 让字段拒绝隐式转换。Rust 核心让这个功能更容易实现——派发表里多一个分支就能支持严格模式，V1 要在 Python 层加判断就贵得多。
 
-"V2 比 V1 快 10-100x"这个数字要分场景看：纯 `Field` 约束的简单模型（比如只有 `int`/`str` 加几个 `gt`/`min_length`）提速最大，因为整条验证路径都在 Rust 里走完；挂满自定义 `field_validator` 的复杂模型提速较小，瓶颈回到了 Python 函数调用，每次验证器调用都要从 Rust 回到 Python 一次。官方 benchmark 测的是前者，真实业务里两者混合，实际提升通常在 5-20x 之间。判断自己的模型能拿到多少提速，看 `Field` 约束和自定义验证器的比例即可——`Field` 约束越多，提速越接近上限；自定义验证器越多，提速越接近下限。
+"V2 比 V1 快 4-50x"（官方基准平均约 17x）这个数字要分场景看：纯 `Field` 约束的简单模型（比如只有 `int`/`str` 加几个 `gt`/`min_length`）提速最大，因为整条验证路径都在 Rust 里走完；挂满自定义 `field_validator` 的复杂模型提速较小，瓶颈回到了 Python 函数调用，每次验证器调用都要从 Rust 回到 Python 一次。官方 benchmark 测的是前者，真实业务里两者混合，实际提升通常落在 5-20x 之间。判断自己的模型能拿到多少提速，看 `Field` 约束和自定义验证器的比例即可——`Field` 约束越多，提速越接近上限；自定义验证器越多，提速越接近下限。
 
 ## BaseModel 与字段定义
 
@@ -136,7 +136,7 @@ print(user.tags)        # [1, 2, 3]
 
 这个例子展示了 Pydantic 的基本行为：传入字典，拿到验证过的 Python 对象，类型转换在验证过程中完成。`"123"` 变成 `123`，`"2017-06-01 12:22"` 变成 `datetime`，`[1, "2", b"3"]` 变成 `[1, 2, 3]`——这些都是宽松模式下的隐式转换。
 
-可变默认值的拷贝行为和 `model_validate` 的入口合并在 V1 → V2 迁移时容易踩；`model_dump` 替代 `dict()` 则是 API 重命名——`dict()` 和 `model_dump()` 行为不一致会导致序列化结果和预期不同，迁移时建议全局替换，不要新旧 API 混用：
+V1 → V2 迁移时，下面三个地方最容易踩坑：
 
 - **可变默认值可以直接写**：`tags: list[int] = []` 在 Pydantic 里是安全的，因为 `BaseModel` 会深拷贝默认值，不像 `dataclasses` 需要 `field(default_factory=list)`。但默认值会在每次实例化时拷贝，大对象上要注意——一个默认值是 1000 元素字典的字段，每次实例化都会深拷贝一次。
 - **`model_validate` 是 V2 的统一入口**：V1 的 `parse_obj` / `parse_raw` / `parse_file` 都被合并进来，分别对应 `model_validate(dict)` / `model_validate_json(str)` / 显式读文件后调用。迁移时按这个对照表替换即可。
@@ -204,8 +204,8 @@ class Types(BaseModel):
 
     # 第三层：语义类型，内置领域规则
     homepage: HttpUrl                    # URL 规范化 + 协议校验
-    email: EmailStr                      # RFC 邮箱格式
-    # card: PaymentCardNumber            # Luhn 校验，需要 pydantic[email] 之外的额外依赖
+    email: EmailStr                      # RFC 邮箱格式，需 pydantic[email]
+    # card: PaymentCardNumber            # Luhn 校验，需安装 pydantic-extra-types
 
     # 第四层：逃生舱，不做任何校验
     raw_payload: Any
@@ -223,7 +223,7 @@ Pydantic 的验证能力分三层，作用范围逐层扩大。选错层会导�
 | 字段级验证器 | `@field_validator` | 单个字段 | Python 侧 |
 | 模型级验证器 | `@model_validator` | 整个模型 | Python 侧 |
 
-选择顺序是：先用 `Field`，不够时再用 `field_validator`，最后才用 `model_validator`。原因在执行位置：`Field` 约束在 Rust 侧执行，没有 Python 调用开销；`field_validator` 和 `model_validator` 是 Python 函数，每次验证都要从 Rust 回到 Python。一个挂满 10 个 `field_validator` 的模型，提速效果会显著低于全用 `Field` 约束的模型。判断标准是：能用 `Field` 参数表达的约束（范围、长度、正则）就用 `Field`，需要自定义逻辑（比如"密码必须包含大写字母"）才用 `field_validator`，需要跨字段（比如"结束时间晚于开始时间"）才用 `model_validator`。
+选择顺序是：先用 `Field`，不够时再用 `field_validator`，最后才用 `model_validator`。判断标准：能用 `Field` 参数表达的约束（范围、长度、正则）就用 `Field`；需要自定义逻辑（比如"密码必须包含大写字母"）才用 `field_validator`；需要跨字段（比如"结束时间晚于开始时间"）才用 `model_validator`。
 
 ### field_validator：单字段自定义逻辑
 
@@ -362,7 +362,7 @@ StrictUser(id=123.0, name="alice")      # 报错：strict mode 不接受 float �
 - **内部领域模型用严格模式**：服务之间传递的已经是 Python 对象，宽松模式会掩盖类型不匹配。
 - **数值字段单独开严格**：`id: int = Field(strict=True)`，避免 `"123"` 被静默接受，因为 ID 通常不应该来自字符串。
 
-在系统边界用宽松，在内部用严格，是更常见的工程实践。严格模式把"转换"和"拒绝"的边界从隐式变成显式，但全局开严格又会让 HTTP 输入处理变啰嗦。一个折中方案是只在最容易被伪数据糊弄的字段上开严格：数值 ID 不该来自字符串，布尔不该接受 `0/1`，这两类隐式转换最容易掩盖 bug。其余字段（比如表单来的 `"18"` 转 `age: int`）保留宽松，让 Pydantic 处理转换。
+严格模式把"转换"和"拒绝"的边界从隐式变成显式，但全局开严格会让 HTTP 输入处理变啰嗦。一个更精细的折中：只在最容易被伪数据糊弄的字段上开严格——数值 ID 不该来自字符串，布尔不该接受 `0/1`，这两类隐式转换最容易掩盖 bug；其余字段（比如表单来的 `"18"` 转 `age: int`）保留宽松，让 Pydantic 处理转换。
 
 ## 序列化控制
 
@@ -501,7 +501,7 @@ print(json.dumps(User.model_json_schema(), indent=2, ensure_ascii=False))
 - **前端可以用它生成 TypeScript 类型**：`openapi-typescript`、`quicktype` 这类工具能从 JSON Schema 生成前端类型定义，让前后端类型一致。改后端字段时前端类型自动更新，省去手动同步。
 - **测试可以用它生成 mock（模拟）数据**：`hypothesis` 等属性测试库能从 Schema 生成符合约束的随机数据，覆盖边界值。
 
-`Field` 上的 `description`、`examples`、`title` 会进 Schema，所以写好这些注释就是为整个工具链提供输入——前端拿到的 OpenAPI 文档里会有这些字段，Swagger UI 会渲染它们。`model_config` 里的 `json_schema_extra` 可以追加任意字段，常用来给 OpenAPI 加 `example`：
+`model_config` 里的 `json_schema_extra` 可以追加任意字段，常用来给 OpenAPI 加 `example`：
 
 ```python
 from pydantic import BaseModel, Field
@@ -713,7 +713,7 @@ def create_user(req: CreateUserRequest) -> CreateUserResponse:
 请求从 HTTP 入口到业务逻辑的路径：
 
 1. **FastAPI 接收请求体**：原始 JSON 字符串 `{"username": "alice", "email": "alice@example.com", ...}`。这一步 FastAPI 还没碰 Pydantic，只是把 body 读进来。
-2. **FastAPI 调用 `CreateUserRequest.model_validate_json(payload)`**：这一步在 Rust 侧完成 JSON 解析 + 类型转换 + `Field` 约束检查。整个解析+验证在一次 Rust 调用里完成，不回到 Python。
+2. **FastAPI 解析 JSON 并调用验证**：FastAPI 用 Starlette 的 `await request.json()` 把 JSON 字符串解析成 dict（这一步用的是标准库 json，不在 pydantic-core 里），再调用 `CreateUserRequest.model_validate(payload)`（内部走 `TypeAdapter.validate_python`）。JSON 解析之后，类型转换和 `Field` 约束检查都在 Rust 侧完成。
 3. **Rust 侧执行 `Field` 约束**：`username` 长度、`pattern` 匹配、`age` 范围、`address.postal_code` 正则——全部在 Rust 里跑完，不回到 Python。这是 V2 提速的主要来源。
 4. **Rust 侧调用 Python 的 `field_validator`**：`check_password_complexity` 是 Python 函数，Rust 通过 `PyCallable` 回调到 Python，拿到返回值或异常。这一步有 Rust ↔ Python 的上下文切换开销。
 5. **Rust 侧调用 Python 的 `model_validator`**：`check_username_not_in_password` 需要 `self`，所以等所有字段验证完后，在 Python 侧构造实例，再调用这个验证器。
@@ -845,7 +845,7 @@ return {"detail": safe_errors}
 
 ### 9. 嵌套模型超过 3 层时性能不如预期
 
-V2 的 Rust 核心大幅改善了嵌套模型的验证性能，但 4 层以上嵌套仍有可测量的开销——每层嵌套在 Rust 侧递归调用，字段越多、嵌套越深，schema 树越大。如果 profiler 显示 `model_validate` 占用大量 CPU，先检查嵌套深度，考虑把深层嵌套拆成扁平结构或单独的子模型分批验证。判断自己的模型能拿到多少提速，看 `Field` 约束和自定义验证器的比例——详见"V2 为什么要用 Rust 重写 pydantic-core"一节关于提速上下限的讨论。
+V2 的 Rust 核心大幅改善了嵌套模型的验证性能，但 4 层以上嵌套仍有可测量的开销——每层嵌套在 Rust 侧递归调用，字段越多、嵌套越深，schema 树越大。如果 profiler 显示 `model_validate` 占用大量 CPU，先检查嵌套深度，考虑把深层嵌套拆成扁平结构或单独的子模型分批验证。
 
 ### 10. `bump-pydantic` 迁移后动态调用场景漏改
 
@@ -853,7 +853,7 @@ V2 的 Rust 核心大幅改善了嵌套模型的验证性能，但 4 层以上�
 
 ### 11. `model_validate` 和 `model_validate_json` 用混导致解析错误
 
-`model_validate` 接收 Python 对象（dict、ORM 对象），`model_validate_json` 接收 JSON 字符串。如果把 JSON 字符串传给 `model_validate`，Pydantic 会把整个字符串当成一个值去验证，不会解析成对象——结果是把 `{"id": 1}` 当成一个字符串赋给某个字段，类型不匹配时报错，错误信息还很绕。从 HTTP 请求拿到的 `body` 如果是 `bytes` 或 `str`，用 `model_validate_json`；如果已经用 `json.loads` 解析过，用 `model_validate`。FastAPI 内部走的是 `model_validate_json`，所以自己手动验证时要对齐入口。
+`model_validate` 接收 Python 对象（dict、ORM 对象），`model_validate_json` 接收 JSON 字符串。如果把 JSON 字符串传给 `model_validate`，Pydantic 会把整个字符串当成一个值去验证，不会解析成对象——结果是把 `{"id": 1}` 当成一个字符串赋给某个字段，类型不匹配时报错，错误信息还很绕。从 HTTP 请求拿到的 `body` 如果是 `bytes` 或 `str`，用 `model_validate_json`；如果已经用 `json.loads` 解析过，用 `model_validate`。FastAPI 内部先 `await request.json()` 把字符串解析成 dict，再走 `model_validate`，所以自己手动验证时，入口要对齐你手上数据的状态。
 
 ## 与其他库的取舍
 
@@ -1060,7 +1060,7 @@ def github_webhook(
 Webhook 集成有几个细节需要注意：
 
 - **签名验证用原始 body**：`payload: GitHubWebhook` 已经被 FastAPI 解析过，签名要用 `raw_body: bytes = Body(...)` 拿原始字节算 HMAC，否则换行符、字段顺序差异会导致签名不匹配。
-- **`Literal` 限定 action 枚举**：GitHub 新增 action 时，旧版本 Pydantic 会拒绝，避免未处理的 case 静默通过。这条策略的代价是需要定期跟进 GitHub 的 action 新增，否则合法事件会被拒。
+- **`Literal` 限定 action 枚举**：`action` 只接受声明的三个值，GitHub 新增 action 时会被验证拒绝，避免未处理的 case 静默通过。代价是需要定期跟进 GitHub 的 action 新增，否则合法事件会被拒。
 - **`HttpUrl` 规范化 URL**：自动去掉尾部斜杠、补全协议，避免下游处理时出意外。
 
 ## 迁移与采用顺序

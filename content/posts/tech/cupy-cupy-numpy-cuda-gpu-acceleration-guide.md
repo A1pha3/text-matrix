@@ -9,17 +9,21 @@ categories: ["技术笔记"]
 tags: ["CUDA"]
 ---
 
+# CuPy 架构拆解：把 NumPy/SciPy 移植到 GPU 的分层与边界
+
 ## 开场判断
 
-CuPy 想做的事，是把 NumPy/SciPy 这套 Python 数值计算体系，从 CPU 生态端到端搬到 GPU 生态，同时让上层 API 几乎不变。它不是「把某个算子加速」，而是「生态平移」。判断它值不值得用，看的是代码里有没有两块同时成立的东西：已经写好的 NumPy/SciPy 资产，以及明确想用 GPU 的意图。
+CuPy 想做的事，是把 NumPy/SciPy 这套 Python 数值计算体系，从 CPU 生态端到端搬到 GPU 生态，同时让上层 API 几乎不变。它不是「把某个算子加速」，而是「生态平移」。判断它值不值得用，只看代码里是否同时满足两个前提：已经写好的 NumPy/SciPy 资产，以及明确想用 GPU 的意图。
 
-它有约 1.2 万 Stars、1.1k Forks（shields.io 实时），MIT 协议，由 Preferred Networks 和社区维护。之所以有这种地位，靠的是三件事：
+它有约 1.2 万 Stars、1.1k Forks（shields.io 实时），MIT 协议，由 Preferred Networks 和社区维护。这份地位来自三条技术选择：
 
 1. 用 `cupy.ndarray` 镜像 `numpy.ndarray`，多数场景改个 import 名就能跑；
 2. 用 `cupy_backends/` 把 CUDA 和 ROCm（HIP）收敛在同一套 C-API 后面，上层 Cython 代码不需要为不同厂商各写一份；
 3. 用运行时 NVRTC（NVIDIA Runtime Compilation，CUDA 动态编译库）即时合成 kernel，并把 cuBLAS、cuSOLVER、cuTENSOR、cuSPARSE、NCCL 这些厂商库包装成 `cupyx.linalg`、`cupy.cuda.*` 等用户 API。
 
 和另外两条 GPU 路线分清楚有帮助：PyTorch 面向深度学习 tensor 与自动求导；Numba CUDA 是 Python 子集 + 手写 kernel；CuPy 则是把既有 NumPy/SciPy 生态用 GPU 重做一遍，重头戏在「不动业务代码，只换底层」。HPC（High Performance Computing，高性能计算）、信号处理、计算化学、辐射成像这些领域，正需要既有 NumPy 代码又想吃 GPU 红利，CuPy 是顺手的入口。
+
+下文先摊开四层结构，再拆四类用法，接着走一遍内核合成和一个具体任务流，最后用 benchmark 与兼容性收口，落到采用顺序。读完你应该能回答两个问题：一套已有的 NumPy/SciPy 代码要不要迁到 CuPy；要迁的话，从哪一层下手。
 
 ## 系统地图：CuPy 的四层结构
 
@@ -226,7 +230,7 @@ my_func             :    CPU:   44.407 us   +/- 2.428 (min:   42.516 / max:   53
 
 **落地顺序**：
 
-1. 选匹配 CUDA 版本的安装包：CUDA 12.x 用 `pip install cupy-cuda12x`，CUDA 13.x 用 `pip install cupy-cuda13x`，AMD ROCm 7.0 用 `cupy-rocm-7-0`（experimental），或用 `conda install -c conda-forge cupy`；
+1. 选匹配 CUDA 版本的安装包：CUDA 12.x 用 `pip install cupy-cuda12x`，CUDA 13.x 用 `pip install cupy-cuda13x`，AMD ROCm 7.0 用 `cupy-rocm-7-0`（experimental），或用 `conda install -c conda-forge cupy`；v14 起还可以直接装 PyPI 上的 CUDA wheel，用 `pip install 'cupy-cuda13x[ctk]'` 让 pip 一并拉取 CUDA 运行时，免装系统级 CUDA Toolkit；
 2. 用 `cupy.cuda.is_available()` 和 `cupy.cuda.runtime.getDeviceCount()` 探明环境；
 3. 把现有 NumPy 代码的 `import numpy as np` 改成 `import cupy as cp`，跑一遍测试；
 4. 跑 `cupyx.profiler.benchmark` 对比 CPU/GPU 耗时，确认小规模输入下不会反而变慢；
@@ -237,7 +241,7 @@ my_func             :    CPU:   44.407 us   +/- 2.428 (min:   42.516 / max:   53
 
 CuPy 不是把某个算子榨到最快的库，也不是最容易上手的 CUDA 工具。它的价值是把 NumPy/SciPy 生态整体铺到 GPU 上，值钱在生态完整性，不在单点峰值。要不要上它，不看 star 数，只看手里的代码是不是「已存在的 NumPy/SciPy 资产」和「明确想用 GPU」同时成立。
 
-读这份仓库，关键不是逐文件看完，而是抓三件事：
+读这份仓库不用逐文件看，记住三件事就够：
 
 1. `cupy_backends/cuda` 与 `cupy_backends/hip` 的对称结构，决定了多后端能力的真实边界；
 2. `_core/core.pyx` + `_kernel.pyx` + `_reduction.pyx` + `cupy/cuda/compiler.py` 这条链，是 kernel 合成与缓存的命门；

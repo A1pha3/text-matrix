@@ -11,11 +11,11 @@ tags: ["Python", "开源"]
 
 # PostHog：开源 all-in-one 产品工程平台
 
-PostHog 官方给自己的定位是：**all-in-one developer platform for building successful products**。
+PostHog 真正解决的不是"少装一个分析工具"，而是把分散在各处的产品数据，收拢到同一个事件模型上。Google Analytics 看流量、Mixpanel 看事件、FullStory 看回放、Sentry 看报错——各管一段，互不相通；PostHog 把这四段拼成了一条时间线，一次埋点，全平台通用。
 
-主仓库 [PostHog/posthog](https://github.com/PostHog/posthog) 已有 3 万余 stars，MIT 协议开源（`ee/` 目录的企业功能除外），代码库结构清晰，团队甚至把自己的**公司手册（handbook）也开源了**——从战略到工作方式到流程全透明。
+它给自己的定位是：**all-in-one developer platform for building successful products**。主仓库 [PostHog/posthog](https://github.com/PostHog/posthog) 已有 3 万余 stars，MIT 协议开源（`ee/` 目录的企业功能除外）。更少见的，是团队连自己的**公司手册（handbook）也开源了**——从战略到工作方式到流程全透明。
 
-下面拆成三块来看：产品矩阵、技术架构、以及工程团队的开源方法论。
+下面拆成三条主线来看：产品矩阵、技术架构、开源策略。它们分别回答"能做什么""怎么组织代码""为什么敢把一切摊开"。
 
 ---
 
@@ -35,6 +35,21 @@ PostHog 官方给自己的定位是：**all-in-one developer platform for buildi
 3. **发布险**：Feature flag 能力弱，改个参数要重新发版，灰度全靠运气
 
 PostHog 的解题思路是：**把所有产品构建需要的数据能力聚合到一个平台**，一次安装，全套拥有。
+
+先给一张总览，后面每个模块只展开一次，不会再翻回来：
+
+| 你要做的事 | 对应痛点 | 用到的模块 |
+|-----------|---------|-----------|
+| 看用户在做什么 | 数据散、定位慢 | 产品分析（autocapture） |
+| 看网站流量和转化 | 数据散 | Web 分析 |
+| 还原用户报错现场 | 定位慢 | 会话回放 + 错误追踪 |
+| 安全发布新功能 | 发布险 | Feature Flags + 实验 |
+| 测一个改动是否有效 | 发布险 | 实验（A/B） |
+| 了解用户想法 | 定位慢 | 调研 |
+| 把外部数据和产品事件联合分析 | 数据散 | 数据仓库 |
+| 观测 LLM 应用 | 数据散 | AI 可观测性 |
+
+这张表也是一个快速检索：读到"会话回放"时，把它当作"还原报错现场"的答案来记，而不是一个孤立的录制工具。下文每一节都会回到这张表的某个格子。
 
 ---
 
@@ -167,6 +182,19 @@ Services 是独立部署的微服务，有自己的领域逻辑，既不是 glue
 
 PostHog 自研了 HogQL——一个类似 ClickHouse SQL 风格的查询语言，用于在 PostHog 内部做事件分析。这是 PostHog 查询层的核心，让用户可以用 SQL 的方式分析产品数据。
 
+### 3.6 一次结账失败如何穿过整个平台
+
+静态讲模块容易，配一个动态案例才立得住。假设用户 A 在结账页按支付按钮后报错，但反馈里说不清卡在哪一步。PostHog 里，这条链路是这样走的：
+
+1. **事件入站**：前端 SDK 自动捕获 `checkout_submit`，后端在抛错处手动上报 `payment_error`。两条事件都挂在用户 A 的同一时间线上。
+2. **数据分析**：Product Analytics 里，`checkout_submit → payment_error` 的瀑布图上没有中间事件，说明问题出在提交本身，不是跳转或支付弹窗。
+3. **回放还原**：点进用户 A 的 Session Replay，看到按钮点击后页面无响应、按钮一直禁用，判定是请求卡住而非用户误操作。
+4. **错误追踪**：`payment_error` 的堆栈指向后端 validate 超时，Error Tracking 自动把这条记录和用户 A 的回放关联起来。
+5. **定位范围**：把报错用户按 Feature Flag 分组，发现全集中在开了"快速结账"flag 的 5% 灰度组里，其余 95% 正常——回归来源被锁在这个灰度。
+6. **验证修复**：回滚该 flag，用 Experiments 对比前后转化率，确认修复有效后再全量放量。
+
+整段排查在同一平台、同一用户模型下完成，唯一的跨工具动作是把用户 A 的 ID 从回放里复制出来这一步。分散方案里，这六步要在四个工具各来一遍，而且每一步都带着独立的用户身份。
+
 ---
 
 ## 四、SDK 生态：多端全覆盖
@@ -243,16 +271,7 @@ npm install posthog-node
 
 ## 七、适用场景
 
-| 场景 | PostHog 能力 |
-|------|------------|
-| 想看用户在产品里做了什么 | Product Analytics (autocapture) |
-| GA 类的网站流量分析 | Web Analytics |
-| 还原用户报错前的操作路径 | Session Replay + Error Tracking |
-| 安全灰度发布新功能 | Feature Flags + Experiments |
-| 快速做 A/B 测试 | Experiments |
-| 收集用户反馈 | Surveys |
-| LLM 应用可观测性 | AI Observability |
-| 自动化用户触达 | Workflows |
+上面的总览表已经把"场景 → 模块"一一对应好了。补充两条判断：场景越贴近"事件级交互分析"，PostHog 越值得换；只是看页面流量的内容站，Google Analytics 通常够用。切换到本文第八节常见问题，能看到更具体的迁移决策。
 
 ---
 

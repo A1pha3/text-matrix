@@ -13,18 +13,27 @@ tags: ["Python", "LLM", "MCP", "AI Agent", "OpenAI"]
 
 > 核心判断：aisuite 在 Chat Completions 统一接口之上加了一层 Agents API（Toolkits / MCP / Tool Policies / State Stores），并把"如何用这些能力搭一个生产级 Agent harness"做成参考实现 OpenCoworker 一起发布。仓库的设计重心是让作者本人快速搭 Agent，切换不同 LLM 只是底层能力之一。
 
-## 一、项目坐标
+## 目录
 
-| 字段 | 值 |
-|------|------|
-| 仓库 | [andrewyng/aisuite](https://github.com/andrewyng/aisuite) |
-| 主语言 | Python（包名 `aisuite`） |
-| Stars | 约 14k（截至 2026-06，数据来自 GitHub） |
-| License | MIT |
-| 配套产物 | OpenCoworker（macOS / Windows 桌面应用，源码在 `platform/`） |
-| Provider 支持 | OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、OpenRouter 等 |
-
-README 第一屏就是 OpenCoworker 的下载链接，这透露出仓库的发布形态：`pip install aisuite` 拿到库，下载 dmg/exe 拿到参考实现，二者共用一套核心抽象。Andrew Ng 把自己的名字放进仓库名，意味着这个项目是他本人搭 Agent 的工作台，顺便开源给社区用。
+- [一、项目坐标](#一项目坐标)
+- [二、与 LiteLLM 的分叉点](#二与-litellm-的分叉点)
+- [三、系统地图：两层抽象](#三系统地图两层抽象)
+- [四、Chat Completions API：统一接口的细节](#四chat-completions-api统一接口的细节)
+- [五、Tool calling：max_turns 自动循环](#五tool-callingmax_turns-自动循环)
+- [六、Agents API：Agent + Runner](#六agentsapiagent--runner)
+- [七、Toolkits：预制工具集](#七toolkits预制工具集)
+- [八、Tool Policies：审批与拦截](#八tool-policies审批与拦截)
+- [九、State Stores：断点续跑](#九state-stores断点续跑)
+- [十、MCP：作为一等公民](#十mcp作为一等公民)
+- [十一、安装与依赖管理](#十一安装与依赖管理)
+- [十二、和同类方案的对比](#十二和同类方案的对比)
+- [十三、采用建议](#十三采用建议)
+- [十四、常见问题 FAQ](#十四常见问题-faq)
+- [十五、故障排查](#十五故障排查)
+- [十六、自测题](#十六自测题)
+- [十七、练习](#十七练习)
+- [十八、进阶路径](#十八进阶路径)
+- [十九、资料口径说明](#十九资料口径说明)
 
 ---
 
@@ -40,28 +49,18 @@ README 第一屏就是 OpenCoworker 的下载链接，这透露出仓库的发�
 
 ---
 
-## 目录
+## 一、项目坐标
 
-- [一、项目坐标](#一项目坐标)
-- [二、与 LiteLLM 的分叉点](#二与-litellm-的分叉点)
-- [三、系统地图两层抽象](#三系统地图两层抽象)
-- [四、Chat Completions API统一接口的细节](#四chat-completions-api统一接口的细节)
-- [五、Tool callingmax_turns 自动循环](#五tool-callingmax_turns-自动循环)
-- [六、Agents APIAgent--Runner](#六agents-apiagent--runner)
-- [七、Toolkits预制工具集](#七toolkits预制工具集)
-- [八、Tool Policies审批与拦截](#八tool-policies审批与拦截)
-- [九、State Stores断点续跑](#九state-stores断点续跑)
-- [十、MCP作为一等公民](#十mcp作为一等公民)
-- [十一、安装与依赖管理](#十一安装与依赖管理)
-- [十二、和同类方案的对比](#十二和同类方案的对比)
-- [十三、采用建议](#十三采用建议)
-- [十四、常见问题](#十四常见问题)
-- [十五、故障排查](#十五故障排查)
-- [十六、自测题](#十六自测题)
-- [十七、练习](#十七练习)
-- [十八、常见问题 FAQ](#十八常见问题-faq)
-- [十九、进阶路径](#十九进阶路径)
-- [二十、资料口径说明](#二十资料口径说明)
+| 字段 | 值 |
+|------|------|
+| 仓库 | [andrewyng/aisuite](https://github.com/andrewyng/aisuite) |
+| 主语言 | Python（包名 `aisuite`） |
+| Stars | 约 14k（截至 2026-06，数据来自 GitHub） |
+| License | MIT |
+| 配套产物 | OpenCoworker（macOS / Windows 桌面应用，源码在 `platform/`） |
+| Provider 支持 | OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、OpenRouter 等 |
+
+README 第一屏就是 OpenCoworker 的下载链接，这透露出仓库的发布形态：`pip install aisuite` 拿到库，下载 dmg/exe 拿到参考实现，二者共用一套核心抽象。Andrew Ng 把自己的名字放进仓库名，意味着这个项目是他本人搭 Agent 的工作台，顺便开源给社区用。
 
 ---
 
@@ -367,22 +366,39 @@ aisuite 的差异化集中在工具相关抽象（Toolkits / MCP / Policies / St
 
 ---
 
-## 十四、常见问题
+## 十四、常见问题 FAQ
 
-**Q: aisuite 和 LiteLLM 能一起用吗？**
-A: 可以。aisuite 负责统一接口和 Agent harness，LiteLLM 负责 provider 路由。如果你已经用 LiteLLM 且只需要路由，不必换；如果需要 Agent 能力，可以迁移到 aisuite。
+### Q1：aisuite 和 LiteLLM 有什么区别？能一起用吗？
 
-**Q: OpenAI Agents SDK 和 aisuite 该选哪个？**
-A: 如果用 OpenAI 且不需要跨 provider，选 OpenAI Agents SDK（官方生态迭代快）；如果需要跨 provider + 统一工具调用抽象，选 aisuite。
+LiteLLM 提供一层抽象（统一 provider 路由）；aisuite 在其上加了一层 Agent harness（Toolkits / MCP / Tool Policies / State Stores）。两者可以共存：如果你已经用 LiteLLM 且只需要切 provider，不必换；如果需要 Agent 抽象，可以迁到 aisuite。
 
-**Q: State Store 用 Postgres 是不是太重了？**
-A: 对于生产级 Agent，State Store 需要事务保证和并发控制，Postgres 是合适选择；开发测试阶段用 `file` 或 `in-memory` 即可。
+### Q2：OpenAI Agents SDK 和 aisuite 该选哪个？
 
-**Q: Tool Policy 会影响 Agent 的自主性和灵活性吗？**
-A: 会。Tool Policy 的本质是在"让 Agent 自主决策"和"防止 Agent 做危险操作"之间做权衡。建议先设 `RequireApprovalPolicy` 只拦危险工具，后续根据运行数据调整策略。
+如果只用 OpenAI 且不需要跨 provider，选 OpenAI Agents SDK，官方生态迭代快；如果需要跨 provider 加统一工具调用抽象，选 aisuite。
 
-**Q: MCP 服务器启动失败怎么排查？**
-A: 先确认命令和参数正确（`npx -y @modelcontextprotocol/server-filesystem /path` 能在本机跑通），再检查框架的 MCPClient 日志。如果是网络隔离环境，需要提前把 MCP server 的 npm 包缓存到本地。
+### Q3：可以先学 Chat Completions API，再学 Agents API 吗？
+
+可以，而且推荐这样做。下层更简单，适合快速上手；上层更复杂，用于构建生产级 Agent。先跑通一层，再进二层，能少踩不少坑。
+
+### Q4：State Store 用 Postgres 是不是太重了？
+
+生产级 Agent 的状态是结构化的，需要事务保证和并发控制，Postgres 合适；开发测试阶段用 `file` 或 `in-memory` 就够了。
+
+### Q5：Tool Policy 会影响 Agent 的自主性吗？
+
+会。它本质是在"让 Agent 自主决策"和"防止危险操作"之间做权衡。建议先用 `RequireApprovalPolicy(tools=["shell.run", "git.push"])` 只拦危险工具，再根据运行数据调整。
+
+### Q6：如何给 Agent 添加工具调用能力？
+
+挂载 toolkit 即可，例如 `tools=[*ai.toolkits.files(root="."), *ai.toolkits.shell(root=".")]`，也可以混搭自定义工具；需要审批时再加 `tool_policy`。
+
+### Q7：aisuite 支持哪些 provider？
+
+OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、OpenRouter 等，完整列表见官方文档。用不到的 provider SDK 按需安装，不必一次装齐。
+
+### Q8：MCP 服务器启动失败怎么排查？
+
+先确认命令和参数能在本机直接跑通（`npx -y @modelcontextprotocol/server-filesystem /path`），再看框架的 MCPClient 日志。网络隔离环境需提前把 npm 包缓存到本地。
 
 ---
 
@@ -477,31 +493,7 @@ A: 先确认命令和参数正确（`npx -y @modelcontextprotocol/server-filesys
 
 ---
 
-## 十八、常见问题 FAQ
-
-### Q1：aisuite 和 LiteLLM 有什么区别？
-
-aisuite 提供两层抽象（Chat Completions API 和 Agents API），而 LiteLLM 只提供一层抽象（统一 API）。aisuite 的 Agent 抽象更完整，支持 tool policy、state store、MCP 集成，而 LiteLLM 更轻量。
-
-### Q2：我可以先学 Chat Completions API，再学 Agents API 吗？
-
-可以，而且推荐这样做。Chat Completions API 更简单，适合快速上手；Agents API 更复杂，适合构建生产级 Agent。先掌握第一层抽象，再进入第二层抽象。
-
-### Q3：aisuite 的 Agents API 和 OpenAI Agents SDK 有什么区别？
-
-aisuite 的 Agents API 更轻量，更专注于统一接口；OpenAI Agents SDK 更完整，提供了更多内置功能（如 code interpreter、file search）。如果你需要快速切换 provider，aisuite 更合适；如果你需要完整的功能，OpenAI Agents SDK 更合适。
-
-### Q4：如何为 aisuite Agent 添加工具调用能力？
-
-使用 `ToolCollection` 挂载 toolkit，如 `FileSystemToolkit`、`ShellToolkit`。然后定义 tool policy 来控制工具调用的权限和审批流程。
-
-### Q5：aisuite 支持哪些 provider？
-
-支持 OpenAI、Anthropic、Google、AWS、Azure 等主流 LLM provider。具体支持列表参见官方文档。
-
----
-
-## 十九、进阶路径
+## 十八、进阶路径
 
 ### 深入理解 aisuite 架构
 
@@ -523,7 +515,7 @@ aisuite 的 Agents API 更轻量，更专注于统一接口；OpenAI Agents SDK 
 
 ---
 
-## 二十、资料口径说明
+## 十九、资料口径说明
 
 本文基于 andrewyng/aisuite 仓库的公开代码和 README 整理。以下说明关键判断的取径方式：
 
@@ -541,6 +533,4 @@ aisuite 的 Agents API 更轻量，更专注于统一接口；OpenAI Agents SDK 
 
 ---
 
----
-
-> **下一步**：从 `pip install aisuite` 开始，跑通一个最小示例，然后逐步加上 toolkit、MCP、policy、state store。比单纯读文档更有效。
+> **下一步**：从 `pip install aisuite` 开始，跑通一个最小示例，再逐步加上 toolkit、MCP、policy、state store。

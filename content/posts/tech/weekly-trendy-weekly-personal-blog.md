@@ -1,680 +1,204 @@
 ---
-title: "Weekly潮流周刊：记录工程师Tw93的263期不枯燥生活，一个独特的技术人周报"
-date: "2026-04-07T17:25:00+08:00"
+title: "潮流周刊 Weekly：用六年 278 期写出来的个人品牌"
+date: "2026-08-21T00:00:00+08:00"
 slug: weekly-trendy-weekly-personal-blog
 github_repo: "tw93/Weekly"
-description: "深度解析Weekly周刊：一个持续263期的个人周报项目，Astro静态网站，记录工程师Tw93的旅行、美食、摄影与生活，标题诗意，风格独特。"
+description: "解析 tw93/Weekly：从 2020 年 11 月连载至今的潮流周刊，Astro 静态站、中英双语、Pagefind 搜索、PhotoSwipe 灯箱，内容以封面照片和随笔为主，每周一更新。"
 categories: ["技术笔记"]
-tags: ["Astro", "Tailwind CSS"]
+tags: ["Astro", "Tailwind CSS", "周刊", "个人博客"]
 draft: false
 ---
 
-# Weekly 潮流周刊：记录工程师的不枯燥生活
+# 潮流周刊 Weekly：用六年 278 期写出来的个人品牌
 
-## 🎯 学习目标
+## 学习目标
 
-完成本文档后，你将能够：
+读完本文，你会知道：
 
-- ✅ 理解 Weekly 项目的核心定位与独特价值
-- ✅ 掌握 Weekly 的技术架构（Astro + Tailwind CSS）
-- ✅ 学会 Fork 和定制自己的周报系统
-- ✅ 了解个人品牌建设的实践方法
-- ✅ 获取持续创作和运营的启发
+- Weekly 是一份什么样的周刊，一期内容由哪些部分组成
+- 这个站点的技术栈与内容管线如何组织（Astro + Tailwind + 静态 Markdown）
+- 一期内容从拍摄、写作到上线要经过哪些环节
+- 想 Fork 自用或借鉴时，该从哪里入手，哪些部分不必照搬
 
----
+## 目录
 
-## 📋 目录
-
-- [为什么存在 Weekly？](#为什么存在-weekly)
-- [内容特色](#内容特色)
+- [它是什么](#它是什么)
+- [数据快照](#数据快照)
+- [一期的内容长什么样](#一期的内容长什么样)
 - [技术架构](#技术架构)
-- [功能设计](#功能设计)
-- [使用指南](#使用指南)
-- [与同类项目对比](#与同类项目对比)
-- [运营分析](#运营分析)
-- [商业化探索](#商业化探索)
-- [成功因素分析](#成功因素分析)
+- [一期从拍摄到上线](#一期从拍摄到上线)
+- [站点周边的工程能力](#站点周边的工程能力)
+- [什么时候值得 Fork](#什么时候值得-fork)
 - [自测题](#自测题)
 - [练习](#练习)
 - [进阶路径](#进阶路径)
 - [资料口径说明](#资料口径说明)
-- [总结](#总结)
 
 ---
 
-**Weekly**（潮流周刊）是由[twa](https://github.com/tw93)（也是 Pake、Kaku、Mole 的作者）创建的个人周报项目，核心定位是**记录工程师 Tw93 的不枯燥生活**。这个项目已经持续更新了**263 期**，每一期都是一篇精心撰写的博客文章，记录旅行、美食、摄影和生活感悟。
+## 它是什么
+
+**Weekly**（潮流周刊，[github.com/tw93/Weekly](https://github.com/tw93/Weekly)）是杭州产品工程师 Tw93 的一份个人周刊，官方描述是「记录工程师 Tw93 的不枯燥生活，每周一发布」。Tw93 也是 Pake、Mole、Kaku、MiaoYan、Waza、Kami 等开源项目的作者。
+
+先给一个判断：这个项目的价值不在技术方案有多精巧，而在于它把「每周记录一次生活」坚持了六年，并且围绕它攒出了一套低维护成本的自动化管线。对想建立个人品牌、想验证长期主义的技术人来说，它比大多数「周报脚手架」更有参考价值——内容真实、可回溯，工程也足够轻。
+
+第 1 期「安吉黄昏」发布于 2020 年 11 月 24 日，当时的定位是「记录每周看到的前端潮流技术」；到第 278 期「大巧若拙」（2026 年 8 月 17 日），它已经演变成以封面照片和随笔为主体、顺带推荐好工具的生活周刊。期数标题普遍很短，三到六个字，比如硬件之美、飞机飞丢、春天小姐、去太子湾。
+
+## 数据快照
+
+以下数据来自 GitHub API 与周刊站点，采集于 2026-08-21：
 
 | 指标 | 数值 |
 |------|------|
-| **GitHub Stars** | 848 |
-| **Forks** | 134 |
-| **最新版本** | V0.8 Smarter (2025-10-19) |
-| **编程语言** | CSS 59.9%, Astro 25.7%, JavaScript 12.4%, TypeScript 2.0% |
-| **许可证** | MIT |
-| **代码提交** | 1,306 次 |
-| **已发布期数** | 263 期+ |
-| ** Contributors** | 3 (tw93, jiangyangcreate, KoriIku) |
+| 仓库 | [tw93/Weekly](https://github.com/tw93/Weekly) |
+| 仓库创建时间 | 2022-02-21（内容连载始于 2020-11-24） |
+| Star | 868 |
+| Fork | 133 |
+| Watch | 35 |
+| 已发布期数 | 278（截至 2026-08-17） |
+| 提交数 | 1,389 |
+| 标签 | V0.8、V0.7.0、V0.6.0、V0.5.0、V0.4.0、V0.1 |
+| 主要语言 | CSS 约 46%、Astro 约 25%、TypeScript 约 16%、JavaScript 约 13% |
+| 许可证 | package.json 声明 MIT，仓库未单独放置 LICENSE 文件 |
+| 贡献者 | 4 人，tw93 占 1,418 次提交，其余 3 人各 1 次 |
+| 站点 | https://weekly.tw93.fun |
+| RSS | https://weekly.tw93.fun/rss.xml |
 
-**官方网站**：https://weekly.tw93.fun
+几点说明：Star 数增长不快（六年不到 900），但换来了稳定的读者订阅和讨论区互动。语言占比是 GitHub 按字节统计的当前快照，随提交变化，不必当作精确值。网站仓库 2022 年才创建，更早的内容曾以 GitHub Readme 等形式存在，后来用 Astro 重建了官网才迁到 GitHub。
 
-**官方定位**：🩴 Trendy Weekly records my non-boring life. 记录工程师 Tw93 的不枯燥生活，欢迎订阅，也欢迎推荐你的好东西，Fork 自用可见。
+## 一期的内容长什么样
 
----
+以第 263 期「硬件之美」为例，一期正文由下面几块组成：
 
-## 为什么存在 Weekly？
+- **封面照片加一段封面语**：交代照片背后的场景或心情。
+- **新文章发布**：Tw93 在个人博客（tw93.fun）新写的长文，附一段自荐。
+- **产品发布、产品更新**：作者自己的开源项目动态，比如 Waza、Kaku 的版本更新。
+- **潮流工具**：这一周看到的好工具或好内容，附上手体验。
+- **随便写写**：一段随笔，常常藏着方法论。
 
-在这个信息爆炸的时代，我们每天都在消费大量的技术内容、新闻资讯。但很少有人记录**真实的个人生活**——那些旅行中的风景、偶然发现的小店、旅途中的思考。
+它不是单纯的生活流水账，而是「个人生活 + 作者自己的项目 + 工具推荐 + 思考」的混合体。封面照片负责情绪，正文负责信息量。
 
-Tw93 选择用 Weekly 来记录他的生活：
-- 不是技术教程
-- 不是产品评测
-- 而是**真实的生活片段**
-
-这种独特的定位让 Weekly 在 GitHub 上脱颖而出，成为一股清流。
-
----
-
-## 内容特色
-
-### 263 期标题赏析
-
-Weekly 的标题独具诗意，每一期都像一首短诗：
-
-| 期数 | 标题 | 风格 |
-|------|------|------|
-| 第 263 期 | 硬件之美 | 科技与生活 |
-| 第 262 期 | 飞机飞丢 | 旅途趣事 |
-| 第 261 期 | 春天小姐 | 诗意浪漫 |
-| 第 260 期 | 去太子湾 | 户外探索 |
-| 第 259 期 | 空中径山 | 登山健行 |
-| 第 258 期 | 赛博充电 | 科技生活 |
-| 第 257 期 | 春节快乐 | 节日特辑 |
-| 第 256 期 | 上野天空 | 异国风情 |
-| 第 255 期 | 好吃鸡翅 | 美食探店 |
-| 第 254 期 | 二零二六 | 年度总结 |
-| ... | ... | ... |
-| 第 1 期 | 安吉黄昏 | 起点 |
-
-### 内容结构
-
-每一期 Weekly 通常包含：
-
-```markdown
-## 📍 地点/主题
-
-- 🖼️ 照片故事
-- 🍜 美食体验
-- 💭 思考感悟
-- 🔧 技术相关（偶尔）
-- 📱 工具推荐（偶尔）
-```
-
-### 特色元素
-
-| 元素 | 说明 |
-|------|------|
-| **emoji 使用** | 每期开头都有 emoji 表情，如🩴、🍜、✈️ |
-| **地点标签** | 记录去过的地方 |
-| **美食探店** | 餐厅/咖啡馆评价 |
-| **摄影作品** | 旅途风景 |
-| **生活感悟** | 随机思考 |
-
----
+标题短是刻意的设计。传统技术周报习惯起「第 N 期：某某技术专题」这样的长名，Weekly 的短标题降低了每一期的创作门槛——随手就能定，不用为起名纠结。标题门槛低，是六年持续更新的前提之一。
 
 ## 技术架构
 
-### 框架选择：Astro
-
-Weekly 使用[Astro](https://astro.build/)作为静态网站框架：
-
-```javascript
-// astro.config.mjs
-import { defineConfig } from 'astro/config';
-
-export default defineConfig({
-  // SSG模式，生成静态HTML
-  output: 'static',
-  
-  // Markdown/MDX支持
-  integrations: [...],
-  
-  // Tailwind CSS集成
-  tailwind: {...},
-});
-```
-
-**为什么选择 Astro**：
-
-| 特性 | Astro | Next.js | Gatsby |
-|------|-------|--------|--------|
-| 性能 | ⚡⚡⚡⚡⚡ | ⚡⚡⚡ | ⚡⚡⚡ |
-| SEO 优化 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| 内容创作 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
-| 构建速度 | ⚡⚡⚡⚡⚡ | ⚡⚡ | ⚡⚡ |
-
-Astro 的**Island Architecture**非常适合内容主导的网站：
-- 静态 HTML 优先
-- 按需加载 JavaScript
-- 极快的首屏加载速度
-
-### 样式方案：Tailwind CSS
-
-```html
-<!-- 使用Tailwind编写样式 -->
-<div class="max-w-2xl mx-auto px-4 py-8">
-  <article class="prose prose-lg">
-    {{ content }}
-  </article>
-</div>
-```
-
-Tailwind CSS 的优势：
-- 🚀 无需编写自定义 CSS
-- 📦 极小的 CSS 体积（Tree-shaking）
-- 🎨 一致的设计系统
-- ⚡ 开发体验极佳
-
-### 内容管理：Markdown/MDX
-
-```markdown
----
-title: "第263期 - 硬件之美"
-date: 2026-04-06
-location: 杭州
-weather: 晴
----
-
-# 硬件之美
-
-今天去看了一个新的硬件展览...
-
-![硬件照片](hardware.jpg)
-
-## 几个印象深刻的展品
-
-1. 最新的M4芯片演示
-2. 机械键盘展区
-3. 奇怪的无人机
-```
-
-**优势**：
-- 📝 写作体验极佳（Markdown）
-- 🔍 易于搜索
-- 📦 内容与代码分离
-- 🔄 版本控制友好
-
-### 图片处理
-
-```javascript
-// rehype-image.js - 自定义图片处理
-import { visit } from 'unist-util-visit';
-
-export function rehypeImage() {
-  return (tree) => {
-    visit(tree, 'element', (node) => {
-      if (node.tagName === 'img') {
-        // 添加懒加载
-        node.properties.loading = 'lazy';
-        // 添加渐进式加载
-        node.properties.className = ['blur-load'];
-      }
-    });
-  };
-}
-```
-
-**图片优化策略**：
-- 懒加载（Native lazy loading）
-- 渐进式加载（Blur-up 效果）
-- WebP 格式自动转换
-- 响应式图片（srcset）
-
-### 部署架构
-
-```
-GitHub Repository
-     ↓ Push/Merge
-GitHub Actions
-     ↓ 自动构建
-Vercel/GitHub Pages
-     ↓ CDN分发
-全球用户
-```
-
-**自动化部署**：
-- 每次更新自动构建
-- 500+次部署记录
-- 生产环境自动同步
-
----
-
-## 功能设计
-
-### 响应式设计
-
-```css
-/* Mobile First */
-.weekly-card {
-  @apply p-4 mb-4 bg-white rounded-lg shadow;
-}
-
-/* Tablet+ */
-@media (min-width: 768px) {
-  .weekly-card {
-    @apply p-6 mb-6;
-  }
-}
-```
-
-### 夜间模式
-
-```javascript
-// 自动跟随系统主题
-const theme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-  ? 'dark' 
-  : 'light';
-
-document.documentElement.classList.toggle('dark', theme === 'dark');
-```
-
-### 搜索功能
-
-```javascript
-// posts.json - 所有文章索引
-[
-  {
-    "slug": "263",
-    "title": "硬件之美",
-    "date": "2026-04-06",
-    "tags": ["硬件", "杭州"],
-    "excerpt": "今天去看了一个新的硬件展览..."
-  },
-  // ...
-]
-```
-
-### 评论区：Giscus
-
-```json
-// giscus.json
-{
-  "repo": "tw93/Weekly",
-  "repoId": "xxx",
-  "category": "Announcements",
-  "mapping": "pathname",
-  "reactionsEnabled": true,
-  "commenting": "public"
-}
-```
-
-Giscus 基于 GitHub Discussions，支持：
-- 💬 评论
-- 👍  reactions
-- 📝 讨论帖
-
----
-
-## 使用指南
-
-### 订阅 Weekly
-
-**方式一：GitHub Watch**
-```bash
-# 在GitHub上Watch项目
-https://github.com/tw93/Weekly
-```
-
-**方式二：RSS 订阅**
-```xml
-<!-- RSS feed URL -->
-https://weekly.tw93.fun/rss.xml
-```
-
-**方式三：邮件订阅**
-- 访问官网提交邮箱
-- 每周自动推送新期
-
-### Fork 自建
-
-如果你想定制自己的周报：
-
-```bash
-# 1. Fork项目
-git clone https://github.com/YOUR_USERNAME/Weekly.git
-
-# 2. 安装依赖
-pnpm install
-
-# 3. 本地开发
-pnpm dev
-
-# 4. 部署
-# 连接Vercel或GitHub Pages
-```
-
-### 自定义配置
-
-```javascript
-// 修改个人信息
-const author = {
-  name: 'Your Name',
-  bio: '你的简介',
-  avatar: '/avatar.jpg',
-  links: {
-    twitter: 'https://twitter.com/xxx',
-    github: 'https://github.com/xxx',
-  }
-};
-
-// 修改网站信息
-const site = {
-  title: '我的周刊',
-  description: '记录我的生活',
-  url: 'https://my-weekly.vercel.app',
-};
-```
-
----
-
-## 与同类项目对比
-
-| 项目 | 类型 | Stars | 特色 |
-|------|------|-------|------|
-| **Weekly** | 个人周报 | 848 | 诗意标题、生活记录 |
-| **小秘书** | 技术周报 | 2.3k | 工具推荐、效率技巧 |
-| **阮一峰日志** | 技术周报 | 11k | 技术深度、ES6 |
-| **科技爱好者** | 科技新闻 | 1.5k | 科技资讯 |
-
-### Weekly 的独特价值
-
-1. **真实生活**：不是技术内容，是真实的生活记录
-2. **诗意表达**：每期标题都精心设计
-3. **长期坚持**：263 期，持续多年
-4. **个人品牌**：成为 Tw93 的标志性项目
-
----
-
-## 运营分析
-
-### 发布频率
-
-```javascript
-// 263期的时间跨度分析
-const startDate = new Date('2020-01-01');
-const endDate = new Date('2026-04-07');
-const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
-const weeks = totalDays / 7;
-
-// 实际发布频率
-const publishRate = 263 / weeks; // ~75%的周数有更新
-```
-
-**统计**：
-- 发布频率：约 75%（不是每周必更）
-- 平均字数：约 800-1500 字
-- 更新周期：通常 1-2 周一期
-
-### 社区互动
-
-| 指标 | 数值 |
-|------|------|
-| **Stars** | 848 |
-| **Watchers** | 35 |
-| **Forks** | 134 |
-| **Issues** | 52 |
-| **Discussions** | 活跃 |
-
-**社区贡献**：
-- 3 位 Contributors
-- 多人通过 Fork 创建自己的周报
-- 定期有读者反馈
-
----
-
-## 商业化探索
-
-### 可能的变现方式
-
-虽然 Weekly 目前是纯个人项目，但类似的模式可以探索：
-
-| 方式 | 可行性 | 说明 |
-|------|--------|------|
-| **邮件订阅** | ⭐⭐⭐⭐ | Substack 类似，提供付费订阅 |
-| **品牌合作** | ⭐⭐⭐ | 探店/旅行中的品牌植入 |
-| **周边产品** | ⭐⭐ | 摄影集、文创产品 |
-| **付费社区** | ⭐⭐ | 私密讨论群 |
-
-### Weekly 的可持续性
-
-Tw93 的其他项目（Pake、Mole 等）都是开源免费项目。Weekly 更像是一个**个人品牌建设**：
-- 展示写作能力
-- 建立读者信任
-- 为其他项目导流
-
----
-
-## 成功因素分析
-
-### 为什么 Weekly 能持续 263 期？
-
-1. **热爱驱动**：不是为了流量，是真的喜欢记录
-2. **低门槛创作**：每期不需要很长
-3. **正向反馈**：读者喜欢，Star 支持
-4. **时间投资**：每周几小时，可持续
-
-### 可以借鉴的地方
-
-| 经验 | 应用 |
-|------|------|
-| **持续输出** | 任何项目都需要坚持 |
-| **独特定位** | 差异化是关键 |
-| **真实内容** | 读者能感受到真诚 |
-| **精美设计** | 第一印象很重要 |
-
----
+把站点拆开看，有两条并行线：一条是内容（Markdown 文章如何变成页面），一条是样式与交互（Tailwind 与前端能力）。先拆边界，再分别看。
+
+### 内容线：Astro 静态生成，文件名即元数据
+
+站点基于 Astro（当前为 Astro 5）以 SSG 模式构建，一期文章就是 `src/pages/posts/` 下的一页 Markdown，例如 `263-硬件之美.md`。
+
+关键设计在 `astro.config.mjs` 的 defaultLayoutPlugin：它从文件名解析出期数和标题写入 frontmatter（issueNumber、issueTitle、numericUrl），生成 `/posts/263` 这样的数字路由；同时从正文第一张图片提取封面，从正文抽取 description，日期缺省时用文件创建时间兜底。作者写文章时几乎不用维护元数据，期数、封面、摘要都自动推导。
+
+i18n 配置了 zh 与 en 两种语言，默认中文，英文版放在 `/en/posts/`。仓库内还有一套基于 Grok API 的自动化翻译工作流脚本，负责把中文期同步成英文。
+
+### 样式与交互线：Tailwind 加图片处理
+
+样式用 Tailwind CSS（`tailwind.config.cjs`，Tailwind 3）。图片是这个站的重头，处理链条比较完整：
+
+- `rehype-image.js`：仓库根目录的自定义 rehype 插件（约 6 KB，基于 unist-util-visit），统一处理文章图片。
+- 懒加载：lozad（devDependencies 中可见 @types/lozad）。
+- 灯箱：PhotoSwipe 5，配合提交记录里的「图片缩放支持键盘导航与动态背景」。
+- 构建前探测：`prebuild` 跑 `scripts/probe-images.js`，用 probe-image-size 检查图片是否失效，避免发布死链。
+- 社交图：第 110 期起使用 `weekly.tw93.fun/assets/{期数}.jpg` 作为 Twitter 卡片图。
+
+### 搜索与部署
+
+- 站内搜索：Pagefind，`postbuild` 阶段生成索引（`pagefind --site dist`），配 @pagefind/default-ui。
+- 部署：仓库根目录有 `vercel.json`，站点托管在 Vercel。
+- 其他脚本：`sync:content` 同步内容并生成 AI skill 文件；`check:content` 校验中英文内容一致性；`tests/*.test.js` 用 node:test 做单元测试。
+
+## 一期从拍摄到上线
+
+把上面的机制串起来，一期内容的完整路径大致是：
+
+1. 拍一张封面照片，写一段封面语和几段正文，落成一个 Markdown 文件，文件名是「期数-标题.md」。
+2. push 到 main 分支。
+3. 构建前 `probe-images.js` 探测文中图片是否有效。
+4. Astro 构建：defaultLayoutPlugin 解析期数与标题、抽封面与摘要，生成 `/posts/{期数}` 页面；rehype-image 处理图片（懒加载、灯箱属性）。
+5. 构建后 Pagefind 生成搜索索引。
+6. Vercel 部署上线，RSS（@astrojs/rss）同步更新。
+7. 自动化翻译工作流用 Grok API 生成英文版，落到 `/en/posts/`。
+8. 在 Twitter、GitHub 上分发。
+
+这八步里，作者手工参与的集中在第 1 步（写作）和第 8 步（分发），中间基本全是自动化。这也是这个站能长期低成本运行的原因。
+
+## 站点周边的工程能力
+
+- **交流**：仓库启用了 GitHub Discussions，README 邀请读者通过 discussions/22 推荐好东西。
+- **AI 运维**：仓库维护了 AGENTS.md、CLAUDE.md 和 `.agents/skills/github-ops`、`.claude/skills/github-ops`，用 AI 编码代理参与发布与仓库维护，提交记录里能看到这类自动化提交。
+- **内容校验**：`check:content` 对比中英文内容一致性，`test:unit` 跑单元测试，测试通过才走发布。
+- **商业化**：Weekly 本身没有商业化动作，Tw93 的付费尝试发生在另一个产品（Mole for Mac）上，与周刊无关。
+
+## 什么时候值得 Fork
+
+把 Weekly 当「周报脚手架」用时，几点建议：
+
+- 想搭一个类似的照片加随笔周刊：值得 Fork。内容管线（文件名即元数据、图片探测、Pagefind、双语）是现成且验证过的，按仓库里的 Deploy.md 走即可。
+- 想直接复制它的「生活方式」：不必。它的核心资产是六年积累的真实内容与读者信任，这部分无法复制；能复制的只有工程结构和发布节奏。
+- 只想要一个静态博客：不必从它开始。用 Astro 官方模板更贴合需求，Weekly 的长处不在通用性。
+
+一句话结论：Weekly 值得借鉴的是「低维护成本的内容管线 + 每周一次的稳定节奏」，而不是某一个具体功能。
 
 ## 自测题
 
-1. **Weekly 项目已经持续更新了多少期？**
+1. **Weekly 第一期发布于什么时候，当时的定位是什么？**
    <details>
    <summary>查看答案</summary>
-   263 期+。项目从 2020 年开始，已经持续更新了 263 期以上。
+   2020 年 11 月 24 日，第 1 期「安吉黄昏」。当时定位是记录每周看到的前端潮流技术，后来演变为以封面照片和随笔为主的生活周刊。
    </details>
 
-2. **Weekly 使用什么技术栈构建？**
+2. **站点的技术栈是什么？**
    <details>
    <summary>查看答案</summary>
-   Astro + Tailwind CSS。Astro 用于静态网站生成，Tailwind CSS 用于样式设计。
+   Astro 5（SSG）+ Tailwind CSS 3，文章是 src/pages/posts/ 下的 Markdown；搜索用 Pagefind，图片灯箱用 PhotoSwipe，懒加载用 lozad，部署在 Vercel。
    </details>
 
-3. **Weekly 的内容定位是什么？**
+3. **期数和标题是从哪里来的？**
    <details>
    <summary>查看答案</summary>
-   记录真实的个人生活——旅行、美食、摄影和生活感悟，不是技术教程或产品评测。
+   从文件名解析。defaultLayoutPlugin 把「263-硬件之美.md」拆成期数 263 和标题「硬件之美」，据此生成 /posts/263 路由。
    </details>
 
-4. **Weekly 的标题有什么特点？**
+4. **构建前后各有一个自动化脚本，分别做什么？**
    <details>
    <summary>查看答案</summary>
-   标题独具诗意，每一期都像一首短诗（如"硬件之美"、"飞机飞丢"、"春天小姐"）。
+   prebuild 的 probe-images.js 用 probe-image-size 探测图片是否有效，避免死链；postbuild 的 Pagefind 生成站内搜索索引。
    </details>
 
-5. **如何订阅 Weekly？**
+5. **英文版内容是怎么来的？**
    <details>
    <summary>查看答案</summary>
-   三种方式：GitHub Watch、RSS 订阅（https://weekly.tw93.fun/rss.xml）、邮件订阅。
+   i18n 配置了 zh/en，仓库内有基于 Grok API 的自动化翻译工作流脚本，把中文期同步为 /en/posts/ 下的英文版。
    </details>
-
----
 
 ## 练习
 
-### 练习 1：访问并浏览 Weekly
+### 练习 1：读两期，总结栏目
 
-访问 https://weekly.tw93.fun，浏览最近 5 期的文章，记录下你最喜欢的一期标题和原因。
+打开 weekly.tw93.fun，挑第 263 期和最近一期，分别列出正文包含哪些栏目，对比它们是否一致。
 
-### 练习 2：Fork 并本地运行
+### 练习 2：追踪一次翻译提交
 
-Fork Weekly 项目到你的 GitHub 账号，然后克隆到本地，安装依赖并运行开发服务器，查看是否能正常访问。
+在仓库提交历史里找最近一次「feat: add issue NNN with English translation」，看它改动了哪些文件，理解翻译工作流如何触发。
 
-### 练习 3：定制你的周报
+### 练习 3：本地跑起来
 
-修改 Weekly 项目的配置文件，将个人信息替换为你自己的信息（姓名、简介、头像、社交链接），然后重新构建并部署到 Vercel 或 GitHub Pages。
-
----
+Fork 仓库，`pnpm install` 后 `pnpm dev`，在 src/pages/posts/ 下新增一页 Markdown，观察路由、封面、摘要是否按文件名自动生成。
 
 ## 进阶路径
 
-1. **了解 Astro 静态网站生成器**
-   - 阅读 Astro 官方文档
-   - 理解 Island Architecture 的优势
-   - 学习 Markdown/MDX 内容管理
-
-2. **掌握 Tailwind CSS**
-   - 学习 Tailwind 的实用类优先（Utility-First）思想
-   - 了解响应式设计和暗黑模式实现
-   - 掌握 Tailwind 的自定义配置
-
-3. **添加更多功能**
-   - 搜索功能（基于 posts.json）
-   - 评论系统（Giscus 或 Disqus）
-   - 分析统计（Vercel Analytics 或 Google Analytics）
-
-4. **优化与部署**
-   - 图片优化（WebP、响应式图片、懒加载）
-   - SEO 优化（sitemap、meta tags、Open Graph）
-   - CI/CD 自动化部署
-
-5. **建立个人品牌**
-   - 持续输出高质量内容
-   - 在社交媒体上分享你的周报
-   - 与其他创作者互动和合作
-
----
+1. 学 Astro 的内容管线：了解 content collections 与自定义 remark/rehype 插件，理解 defaultLayoutPlugin 这类「文件名即元数据」的做法。
+2. 学 Tailwind 与图片性能：把懒加载、灯箱、图片探测这套组合拆开，研究为什么先探测再构建能省事。
+3. 学双语站点的翻译流程：i18n 路由与自动化翻译脚本的配合方式。
+4. 想把个人品牌做起来，可以参考的方向是：固定节奏、低创作门槛、内容可回溯，而不是追求单篇爆款。
 
 ## 资料口径说明
 
-本文基于以下来源编写：
+本文数据来自以下来源，采集时间 2026-08-21：
 
-1. **项目信息**：来自 Weekly 项目的 GitHub 仓库（https://github.com/tw93/Weekly）
-2. **技术栈描述**：基于 Astro 和 Tailwind CSS 的官方文档
-3. **统计数据**：GitHub Stars、Forks、贡献者数量等来自 GitHub API（统计时间：2026-04-07）
-4. **内容特色**：基于对项目已发布文章的观察和分析
-5. **运营分析**：基于公开可观察的数据和一般性运营经验，非官方数据
-6. **局限性**：
-   - 未实际部署和运行项目，部分技术细节未验证
-   - 商业化探索部分基于类似项目的常见模式，非 Weekly 官方声明
-   - 部分内容基于对项目的解读和推断
+- GitHub API：仓库信息、Star/Fork/提交数、语言占比、标签、贡献者（api.github.com/repos/tw93/Weekly）。
+- 周刊站点：期数与标题、栏目结构、第一期发布日期（weekly.tw93.fun）。
+- 仓库源码：package.json、astro.config.mjs、README.md、提交记录。
 
----
-
-
----
-
-## 自测题
-
-1. **本项目的主要功能是什么？**
-   <details>
-   <summary>查看答案</summary>
-   请根据文章内容回答。
-   </details>
-
-2. **如何安装和配置本项目？**
-   <details>
-   <summary>查看答案</summary>
-   请根据文章内容回答。
-   </details>
-
-3. **本项目的技术栈是什么？**
-   <details>
-   <summary>查看答案</summary>
-   请根据文章内容回答。
-   </details>
-
-4. **如何使用本项目？**
-   <details>
-   <summary>查看答案</summary>
-   请根据文章内容回答。
-   </details>
-
-5. **本项目适合什么场景？**
-   <details>
-   <summary>查看答案</summary>
-   请根据文章内容回答。
-   </details>
-
----
-
-## 练习
-
-### 练习 1：安装并运行项目
-
-按照文章中的步骤，安装并运行项目，验证基本功能是否正常。
-
-### 练习 2：自定义配置
-
-根据文章中的说明，修改配置文件，尝试自定义功能。
-
-### 练习 3：扩展开发
-
-参考文章中的扩展指南，尝试开发自定义功能模块。
-
----
-
-## 进阶路径
-
-1. **深入理解项目架构**
-   - 阅读项目源码
-   - 理解核心模块的设计思路
-   - 掌握关键技术栈
-
-2. **掌握高级功能**
-   - 学习高级配置选项
-   - 掌握性能优化方法
-   - 了解最佳实践
-
-3. **参与开源贡献**
-   - 提交 Issue 报告问题
-   - 提交 Pull Request 贡献代码
-   - 参与社区讨论
-
-4. **应用到实际项目**
-   - 在实际工作中使用本项目
-   - 根据需求进行定制开发
-   - 分享使用心得和经验
-
----
-
-## 资料口径说明
-
-本文基于以下来源编写：
-
-1. **项目信息**：来自项目的 GitHub 仓库和官方文档
-2. **技术描述**：基于相关技术的官方文档和社区最佳实践
-3. **代码示例**：部分为说明性示例，实际使用时需要参考官方 API 文档
-4. **局限性**：
-   - 未实际部署和运行部分功能，技术细节可能需要进一步验证
-   - 代码示例为说明性目的，可能需要根据实际情况调整
-   - 部分功能描述基于文档和源码分析，实际效果需要验证
-
----
-
-## 总结
-
-Weekly 是一个独特的个人项目，它证明了：
-
-1. **内容比技术更重要**：好的内容不需要复杂的技术
-2. **坚持是核心竞争力**：263 期的积累是壁垒
-3. **个人品牌需要载体**：Weekly 成为 Tw93 的名片
-
-**推荐关注**：
-- ✅ 喜欢生活方式内容的人
-- ✅ 想要建立个人品牌的人
-- ✅ 寻找创作灵感的人
-
-**项目地址**：[https://github.com/tw93/Weekly](https://github.com/tw93/Weekly)
-**官方网站**：https://weekly.tw93.fun
-
----
-
-*本文基于 Weekly 项目编写，发布时间：2026-04-07*
+处理原则：随提交变化的数据（Star、语言占比、提交数）标注了快照时间；许可证以 package.json 声明与仓库实际文件为准；翻译工作流等细节以提交记录为准，未逐一运行验证。

@@ -1,7 +1,7 @@
 ---
 title: "actions/checkout v7 拆解：GitHub 最常用的 Action 如何用 default-deny + ESM 迁移解决 pwn request 这类 fork PR 攻击面"
 date: 2026-07-17T02:58:00+08:00
-lastmod: 2026-07-17T02:58:00+08:00
+lastmod: 2026-08-20T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["GitHub Actions", "Security"]
@@ -22,55 +22,49 @@ author: text-matrix
 ## 系统地图
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                    actions/checkout v7 内部                            │
-│                                                                          │
-│  ┌─────────────────────┐    ┌────────────────────────────────────┐    │
-│  │  入口与配置          │    │  Git 操作层                          │    │
-│  │  ─────────────────── │    │  ────────────────────────────────  │    │
-│  │  src/main.ts         │    │  git-command-manager.ts            │    │
-│  │  src/input-helper.ts │    │  git-source-provider.ts             │    │
-│  │  src/state-helper.ts │    │  git-source-settings.ts             │    │
-│  └──────────┬──────────┘    │  ref-helper.ts                      │    │
-│             │               │  git-directory-helper.ts            │    │
-│             ▼               │  fs-helper.ts                       │    │
-│  ┌─────────────────────┐    └────────────────┬───────────────────┘    │
-│  │  安全层（v7 新增）    │                     │                         │
-│  │  ─────────────────── │                     │                         │
-│  │  unsafe-pr-checkout-│                     │                         │
-│  │    helper.ts         │                     │                         │
-│  │  workflow-context-   │                     │                         │
-│  │    helper.ts         │                     │                         │
-│  │  regexp-helper.ts    │                     │                         │
-│  └──────────┬──────────┘                     │                         │
-│             │                                │                         │
-│             ▼                                ▼                         │
-│  ┌──────────────────────────────────────────────────────────────┐      │
-│  │  凭证与远端适配层                                             │      │
-│  │  ────────────────────────────────────────────────────────── │      │
-│  │  git-auth-helper.ts（PAT / SSH / OAuth App / GitHub App）    │      │
-│  │  github-api-helper.ts（Git 协议 fallback，REST API）          │      │
-│  │  url-helper.ts（GHES / GitHub.com URL 适配）                  │      │
-│  │  git-version.ts（Git ≥ 2.18 优先，旧版 REST API 兜底）        │      │
-│  └──────────┬───────────────────────────────────────────────────┘      │
-│             │                                                           │
-│             ▼                                                           │
-│  ┌─────────────────────────────┐    ┌──────────────────────────────┐  │
-│  │  杂项                        │    │  ADR（决策记录）              │  │
-│  │  ──────────────────────────  │    │  ─────────────────────────── │  │
-│  │  retry-helper.ts            │    │  adrs/0153-checkout-v2.md    │  │
-│  │  misc/                      │    │  （决策归档）                │  │
-│  └─────────────────────────────┘    └──────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────┘
-                          ▼
-        ┌─────────────────────────────────────┐
-        │  下游消费者                          │
-        │  ────────────────────────────────  │
-        │  $GITHUB_WORKSPACE/                 │
-        │  ← 仓库被 checkout 到这里          │
-        │  ← .git/config 里有 token（默认）  │
-        │  ← post-job 时清理（默认）         │
-        └─────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                      actions/checkout v7 内部                           │
+│                                                                        │
+│  ┌──────────────────┐    ┌──────────────────────────────────────┐     │
+│  │ 入口与配置        │    │ Git 操作层                           │     │
+│  │ src/main.ts      │    │ git-command-manager.ts               │     │
+│  │ src/input-helper.ts│  │ git-source-provider.ts               │     │
+│  │ src/state-helper.ts│  │ git-source-settings.ts               │     │
+│  └────────┬─────────┘    │ ref-helper.ts                         │     │
+│           │             │ git-directory-helper.ts               │     │
+│           ▼             │ fs-helper.ts                          │     │
+│  ┌──────────────────┐    └──────────────────┬───────────────────┘     │
+│  │ 安全层（v7 新增） │                  │                             │
+│  │ unsafe-pr-checkout-│                    │                          │
+│  │   helper.ts       │                    │                          │
+│  │ workflow-context-  │                    │                          │
+│  │   helper.ts       │                    │                          │
+│  │ regexp-helper.ts  │                    │                          │
+│  └────────┬─────────┘                    │                           │
+│           │                              │                           │
+│           ▼                              ▼                           │
+│  ┌──────────────────────────────────────────────────────────────┐    │
+│  │ 凭证与远端适配层                                             │    │
+│  │ git-auth-helper.ts（PAT / SSH / OAuth App / GitHub App）      │    │
+│  │ github-api-helper.ts（Git 协议 fallback，REST API）           │    │
+│  │ url-helper.ts（GHES / GitHub.com URL 适配）                   │    │
+│  │ git-version.ts（Git ≥ 2.18 优先，旧版 REST API 兜底）         │    │
+│  └──────────────────────┬───────────────────────────────────────┘    │
+│                          │                                            │
+│                          ▼                                            │
+│  ┌───────────────────────────────────────────┐  ┌───────────────────┐ │
+│  │ 杂项                                       │  │ ADR（决策记录）   │ │
+│  │ retry-helper.ts                            │  │ adrs/0153-...    │ │
+│  │ misc/                                      │  │ （决策归档）      │ │
+│  └───────────────────────────────────────────┘  └───────────────────┘ │
+└──────────────────────────────┬─────────────────────────────────────────┘
+                               ▼
+                 ┌─────────────────────────────────────────────┐
+                 │ 下游消费者                                   │
+                 │ $GITHUB_WORKSPACE/ ← 仓库被 checkout 到这里 │
+                 │ .git/config 里有 token（默认）              │
+                 │ post-job 时清理（默认）                     │
+                 └─────────────────────────────────────────────┘
 ```
 
 v7 最重要的路径：**入口 main.ts → 输入解析 → 安全检查（v7 新增 unsafe-pr-checkout-helper） → git command manager → 凭证/远端适配 → 落盘 `$GITHUB_WORKSPACE`**。"安全检查"被提为独立模块，是 pwn request 缓解的物理位置。
@@ -97,11 +91,13 @@ v7 最重要的路径：**入口 main.ts → 输入解析 → 安全检查（v7 
 - **不**内置 GHES / 3rd-party Git server 的 token 注入；用户必须自己通过 `github-server-url` + 自定义 token。
 - **不**替代 `git` CLI。它在 runner 上调用 `git`，本身不重写 Git 协议。
 
-这 5 条"不做"决定了它的设计取舍。
+这些边界把 checkout 的职责收得很窄：它只负责把代码取下来、落好凭证，签名、推送、构建这些后续动作都留给用户自己的 step。
 
 ---
 
-## 关键机制：v7 的两件大事
+## 关键机制：v7 的实际变化
+
+v7 最核心的变化有两处：`default-deny` 拒绝 fork PR checkout，以及 ESM 模块化迁移。下面两小节展开它们；凭证存储与权限最小化并非 v7 新引入，但它们是决定安全是否真正奏效的持续设计，单独列出。
 
 ### 1. Default-Deny：pwn request 缓解
 
@@ -113,6 +109,8 @@ v7 最重要的路径：**入口 main.ts → 输入解析 → 安全检查（v7 
 - fork PR 的代码默认是 untrusted。
 - 如果 workflow 第一步用 `actions/checkout` 把 fork 的代码 checkout 到 runner，再 `run: npm ci && npm test` 执行它——攻击者在 fork 仓库里放恶意 `package.json` 的 `postinstall` 脚本，CI 跑起来就拿到了 base 仓库 secret 的访问权。
 - 这就是 GitHub Security Lab 命名的 **"pwn request"** 攻击面。
+
+**攻击面从哪来**：关键不在 checkout 本身，而在 job 运行的 context。`pull_request` 触发器始终以 PR 属主（fork 仓库）的 context 运行，README 明确声明它不向 fork 提供 secrets，`GITHUB_TOKEN` 也是只读；而 `pull_request_target` 以 base 仓库的 context 运行，能拿到 base 仓库的 `GITHUB_TOKEN` 与 secrets，但 head 仍是不可信的 fork 代码。checkout 一旦把 fork 代码落盘，就给了攻击者一个"在拥有 secrets 的 runner 上执行任意代码"的入口。
 
 **v7 的修复**：
 
@@ -172,6 +170,8 @@ v6.0.0 引入的 `persist-credentials` 重构，v7 沿用：
 - 直接把 token 写到 `.git/config` 里，任何后续 `git config` 输出都可能泄露 token 到 log。
 - 拆出去后，token 文件路径独立，post-job 阶段被清理；workflow log 里看不到 `http.extraHeader` 这种敏感行。
 
+**`includeIf` 的作用**：凭证写进独立文件后，再靠 `includeIf "gitdir:..."` 让 Git 只在匹配该目录（本次 checkout 的工作区）时才加载那个文件。这样 token 不会污染 runner 上其它仓库的 Git 配置，其它 git 操作读不到它；用后即焚的清理因此也干净，不会留下持久凭证。
+
 ### 4. 推荐权限最小化
 
 v4.3.0 引入的"Recommended permissions"段在 v7 沿用：
@@ -225,8 +225,9 @@ jobs:
 
 **Step 4：CI 实际结果**
 
-- `pull_request` 触发器：v7 正常 checkout fork 代码（安全）。
+- `pull_request` 触发器：v7 正常 checkout fork 代码（安全，因为 job 运行在 fork 的 context，无 secrets）。
 - `pull_request_target` 触发器：v7 拒绝 checkout，job fail 并打印明确错误信息，提示用户"如需 checkout fork 代码，请阅读 README 顶部 v7 段官方安全指南后显式 opt-in"。
+- 判定只看两件事：事件是否为 `pull_request_target` / `workflow_run`，以及 PR 是否来自 fork（`head repo` 与 base repo 不同属主）。两者同时成立才会触发默认拒绝。
 
 **Step 5：base 仓库维护者想 lint fork 代码**
 
@@ -240,7 +241,7 @@ jobs:
     npx eslint . --max-warnings 0
 ```
 
-**核心工作流变化**：把"易错的安全配置"变成"必须显式 opt-in 的高风险操作"。
+这段流程的核心变化是：是否 checkout fork 代码，由你在 workflow 里显式声明，action 不再替你默许。
 
 ---
 

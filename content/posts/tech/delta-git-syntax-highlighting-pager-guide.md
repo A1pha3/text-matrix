@@ -66,7 +66,8 @@ tags: ["Git", "Rust", "终端"]
     - [官方资源](#121-官方资源)
     - [安装包](#122-安装包)
 13. [自测题](#十三自测题)
-14. [进阶路径](#十四进阶路径)
+14. [常见问题](#十四常见问题)
+15. [进阶路径](#十五进阶路径)
 
 ---
 
@@ -93,28 +94,28 @@ tags: ["Git", "Rust", "终端"]
 
 ### 1.3 核心定位
 
-| 维度 | 说明 |
+| 定位 | 说明 |
 |------|------|
-| 📝 **语法高亮** | 代码语法着色 |
-| 📖 **分页器** | 交互式浏览 |
-| 🔍 **Diff** | 代码对比 |
-| 📊 **grep** | 搜索结果高亮 |
-| 👉 **blame** | 代码历史 |
+| 分页器 | 交互式浏览 |
+| 语法高亮 | 代码着色 |
+| Diff | 代码对比 |
+| grep | 搜索结果高亮 |
+| blame | 代码历史 |
 
 ### 1.4 核心特性
 
 | 特性 | 说明 |
 |------|------|
-| ✅ **语法高亮** | 与 bat 相同主题 |
-| ✅ **词级别 Diff** | Levenshtein 编辑推断 |
-| ✅ **Side-by-Side** | 双栏对比视图 |
-| ✅ **行号** | 代码行号导航 |
-| ✅ **导航** | n/N 键跳转文件 |
-| ✅ **合并冲突** | 改进的冲突显示 |
-| ✅ **blame** | 历史代码高亮 |
-| ✅ **grep** | 搜索结果着色 |
-| ✅ **Hyperlinks** | 提交链接 |
-| ✅ **主题** | 20+ 配色主题 |
+| 语法高亮 | 与 bat 同源的 syntect 引擎 |
+| 词级别 Diff | 基于 Levenshtein 编辑推断 |
+| Side-by-Side | 双栏对比视图，自动换行 |
+| 行号 | 显示代码行号 |
+| 导航 | n / N 键跳转文件 |
+| 合并冲突 | 改进的冲突展示 |
+| blame | 历史代码高亮，commit 转链接 |
+| grep | 搜索结果着色 |
+| Hyperlinks | 超链接 |
+| 主题 | 20+ 配色主题 |
 
 ## 二、安装
 
@@ -267,10 +268,10 @@ delta --show-syntax-themes --light
 
 ```ini
 [delta]
-    theme = Monokai Extended
-    # 或使用多项高亮
-    syntax-theme = GitHub Dark
+    syntax-theme = Monokai Extended
 ```
+
+把 `Monokai Extended` 换成 `delta --show-syntax-themes --dark` 里看到的任意名字即可。主题名若带空格，整体作为一项书写，不要拆开。
 
 ## 五、导航功能
 
@@ -296,11 +297,11 @@ delta --navigate
 ### 5.3 grep 结果导航
 
 ```bash
-# 高亮的 grep 结果
-rg "pattern" --pretty
-
-# 导航到匹配位置
+rg "pattern" | delta
+git grep "pattern" | delta
 ```
+
+grep 输出接上 delta 就会着色，`n` / `N` 在命中行之间跳转。与 rg 的更多配合见「grep 集成」一章。
 
 ## 六、高级配置
 
@@ -333,27 +334,25 @@ rg "pattern" --pretty
 
 ### 6.4 代码复制
 
-```ini
-[delta]
-    # 复制时移除 +/ - 标记
-    plus-style = syntax #35D135 green
-    minus-style = syntax #E12727 red
-    raw-style = true
-```
+从 diff 里复制代码很方便：Delta 会把新增行和删除行的 `+`、`-` 前缀去掉，只保留颜色作为视觉标记，这样在终端里选中复制到的就是干净代码。该行为默认开启，不需要额外配置。
 
 ## 七、grep 集成
 
 ### 7.1 ripgrep 输出
 
-```bash
-# 高亮的 rg 输出
-rg "pattern" --pretty | delta
+Delta 可以直接处理 rg 的输出。最省事的方式是管道：
 
-# 或配置 rg 直接使用 delta
-export RIPGREP_CONFIG_PATH=~/.ripgreprc
-# 在 ~/.ripgreprc 中:
---pretty | delta
+```bash
+rg "pattern" | delta
 ```
+
+这里不需要 `--pretty`，因为着色和分页都由 delta 接管。如果希望 rg 自带的分页也落到 delta，就在 `~/.ripgreprc` 里配置其分页命令：
+
+```text
+--pager=delta
+```
+
+再用 `export RIPGREP_CONFIG_PATH=~/.ripgreprc` 指向它即可。注意 rg 的配置文件只接受命令行选项，不能直接写管道。
 
 ### 7.2 git grep
 
@@ -362,35 +361,34 @@ export RIPGREP_CONFIG_PATH=~/.ripgreprc
 git grep "pattern" | delta
 ```
 
-## 八、性能对比
+## 八、性能与对比
 
-### 8.1 与其他工具对比
+### 8.1 与同类工具的能力边界
 
-| 工具 | 启动时间 | 内存 | 语法高亮 |
-|------|----------|------|----------|
-| **Delta** | ~50ms | ~10MB | ✅ |
-| **diff-so-fancy** | ~100ms | ~5MB | ⚠️ 基础 |
-| **diff-highlight** | ~80ms | ~3MB | ❌ |
-| **cat + less** | ~20ms | ~2MB | ❌ |
+官方没有发布跨工具的基准测试，网上流传的启动耗时、内存占用数字大多缺乏可复现方法，这里只对比能力边界：
 
-### 8.2 优化建议
+| 工具 | 语法高亮 | 词级 Diff | Side-by-Side | 跨文件导航 | 实现 |
+|------|----------|-----------|--------------|------------|------|
+| **Delta** | ✅ | ✅ | ✅ | ✅ n/N | Rust |
+| diff-so-fancy | ❌ | ⚠️ 单行内 | ❌ | ❌ | Perl |
+| diff-highlight | ❌ | ✅ 词级着色 | ❌ | ❌ | Shell/Perl |
+| 原生 git + less | ❌ | ❌ | ❌ | ❌ | — |
 
-```bash
-# 使用并行处理
-delta --highlights-per-line 2
+Delta 的语法高亮与主题来自 syntect（与 bat 同一引擎），词级高亮基于 Levenshtein 编辑推断。它真正拉开差距的是工作流能力：跨文件导航、行号、合并冲突重排，以及 blame 里把 commit 变成可点击链接。
 
-# 缓存语法高亮
-export DELTA_CACHE_DIR=~/.cache/delta
-```
+### 8.2 设计取舍
 
-## 九、Vs 其他方案
+- 超大 diff 的首次渲染比之后慢，属正常现象，不代表后续每次都会这样。
+- 需要给其他工具喂带色的局部输出时，用 `delta --color-only` 走管道；分页职责交给 delta 本身更合适。
+- 常用参数组合可以用 `--features` 打包成命名集合，避免每次敲一长串参数。
 
-| 工具 | 语法高亮 | Side-by-Side | 导航 | 性能 |
-|------|----------|--------------|------|------|
-| **Delta** | ✅ 20+主题 | ✅ | ✅ n/N | ⚡ Rust |
-| diff-so-fancy | ⚠️ 基础 | ❌ | ❌ | 🐢 Perl |
-| diff-highlight | ❌ | ❌ | ❌ | 🐢 Perl |
-| bat | ✅ | ❌ | ❌ | ⚡ |
+## 九、怎么选
+
+一句话判断：想要完整的语法高亮、双栏对比和跨文件导航，Delta 是目前最省事的选项；只是想让输出稍微好看一点，Git 自带的 `contrib/diff-highlight` 也够用。
+
+- 主力工作流：直接配 Delta，一次设置，git / diff / grep / blame 全部接管。
+- 只想看词级着色、不想引入新依赖：用 Git 自带的 `contrib/diff-highlight`（为 `git config pager.diff` 指一下即可）。
+- 终端不支持真彩色：语法高亮会退化成普通着色，Delta 的优势变小，轻量方案更合适。
 
 ## 十、实践建议
 
@@ -399,27 +397,25 @@ export DELTA_CACHE_DIR=~/.cache/delta
 ```ini
 [core]
     pager = delta
-    autocrlf = input
 
 [interactive]
-    diffFilter = delta --color-only --features=interaction
+    diffFilter = delta --color-only
 
 [delta]
     navigate = true
+    dark = true
     show-line-numbers = true
     line-numbers-minus-style = cyan
     line-numbers-plus-style = cyan
     syntax-theme = GitHub Dark
     side-by-side = true
     side-by-side-line-length = 120
-    hyperlinks = true
-    merge.conflictStyle = zdiff3
-    hyperlinks.commit-format = "{commit} ({short_commit})"
-    hyperlinks.file-format = "{path}"
-    decorations.all = true
     file-style = bold blue underline
     hunk-header-style = "syntaxbold syntaxcyan"
     hunk-header-decoration-style = "ul above"
+
+[merge]
+    conflictStyle = zdiff3
 
 [pager]
     log = delta
@@ -427,6 +423,8 @@ export DELTA_CACHE_DIR=~/.cache/delta
     diff = delta
     blame = delta
 ```
+
+> 提示：`merge.conflictStyle = zdiff3` 属于 Git 的 `[merge]` 段，不属于 delta，把它放对位置才生效。`core.autocrlf` 与 delta 无关，属于 Git 行尾处理，不要顺手加在这里。
 
 ### 10.2 主题切换脚本
 
@@ -472,15 +470,15 @@ fi
 | `--dark` | 暗色主题 | `--dark` |
 | `--light` | 亮色主题 | `--light` |
 | `--show-syntax-themes` | 显示所有主题 | `--show-syntax-themes` |
-| `-- hyperlinks` | 超链接 | `--hyperlinks` |
+| `--hyperlinks` | 把 commit 变成超链接 | `--hyperlinks` |
 
 ### 11.2 环境变量
 
 | 变量 | 说明 |
 |------|------|
-| `DELTA_CACHE_DIR` | 缓存目录 |
-| `BAT_THEME` | bat 主题 |
-| `GIT_PAGER` | Git 分页器 |
+| `DELTA_FEATURES` | 空格分隔的 feature 名，效果等同 gitconfig 里的 `--features` |
+| `GIT_PAGER` | Git 使用的分页器，设成 delta 即全局接管 |
+| `COLORTERM` | 设为 `truecolor` 启用 24 位色，保证高亮正常 |
 
 ## 十二、资源链接
 
@@ -529,11 +527,30 @@ fi
 2. **基础配置**：运行 `git config --global core.pager delta` 等命令，把 Delta 配成默认分页器。
 3. **换个主题**：运行 `delta --show-syntax-themes --dark`，挑一个你喜欢的主题，然后用 `git config --global delta.theme <theme-name>` 切换过去。
 4. **看一次 Side-by-side 对比**：改一下某个文件，然后 `git diff`，打开 Side-by-side 视图看效果。
-5. **配一次 ripgrep**：运行 `rg "pattern" --pretty | delta`，看搜索结果的高亮效果。
+5. **配一次 ripgrep**：运行 `rg "pattern" | delta`，看搜索结果的高亮效果。
 
 ---
 
-## 十四、进阶路径
+## 十四、常见问题
+
+**为什么我的 diff 没有高亮？**
+多数情况是终端没开真彩色。在 shell 配置里加上 `COLORTERM=truecolor`，并确认终端支持 24 位色；再跑 `git config --get core.pager` 确认分页器确实指向了 delta。
+
+**想临时不用 delta 怎么看 diff？**
+单次跳过即可：`git --no-pager diff`，或临时改分页器 `GIT_PAGER=less git diff`。
+
+**side-by-side 对不齐、错位怎么办？**
+调大 `side-by-side-line-length`，或先回单栏排障：`git config --global delta.side-by-side false`。
+
+**我想要亮色主题，但自动检测成了暗色？**
+显式指定：`git config --global delta.light true`，反之用 `delta.dark true`。
+
+**配色弄乱了想恢复默认？**
+`git config --global --remove-section delta` 会删掉 delta 段，回到 Git 默认输出，再重新贴配置即可。
+
+---
+
+## 十五、进阶路径
 
 如果你希望深入掌握 Delta，可以参考以下进阶路径：
 
@@ -555,7 +572,7 @@ fi
 
 ---
 
-## 十五、总结
+## 十六、总结
 
 如果你每天要用 git diff 看代码变更，Delta 值得试一试。
 

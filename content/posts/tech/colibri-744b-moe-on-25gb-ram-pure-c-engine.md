@@ -34,7 +34,7 @@ tags: ["GLM-5.2", "MoE", "vLLM"]
 
 - 744B 参数为什么能装进 25GB RAM，瓶颈到底卡在哪一层；
 - colibrì 的量化为什么分成 int4、f32、int8 三档，各自解决什么问题；
-- MLA 如何把 KV 状态压到原来的约 1/57，以及压完之后还能持久化意味着什么；
+- MLA 如何把 KV（Key-Value 缓存，键值缓存）状态压到原来的约 1/57，以及压完之后还能持久化意味着什么；
 - 哪些 benchmark 结论可以外推到自己的机器，哪些不能。
 
 ## 系统地图：三层驻留 + 流式读取
@@ -224,4 +224,4 @@ colibrì 的护城河不在"快"，在"边界"：前沿 700B+ MoE 不一定需�
 - 实验记录：[GLM-5.2 on 6× RTX 5090（2026-07-12）](https://github.com/JustVugg/colibri/blob/main/docs/experiments/glm52-6x5090-2026-07-12.md)
 - 基准数据：[docs/benchmarks.md](https://github.com/JustVugg/colibri/blob/main/docs/benchmarks.md)
 - 推荐权重容器：[mastouri/GLM-5.2-colibri-int4-g64-with-int8-mtp](https://huggingface.co/mastouri/GLM-5.2-colibri-int4-g64-with-int8-mtp)
-- 相关 issue：[#8（int4 MTP head 缺陷）](https://github.com/JustVugg/colibri/issues/8)、[#108 与 #225（量化代价测量）](https://github.com/JustVugg/colibri/issues/108)、[#455（gs64 容器修复）](https://github.com/JustVugg/colibri/issues/455)
+- 相关 issue：[#8（int4 MTP head 缺陷）](https://github.com/JustVugg/colibri/issues/8)、[#108（OLMoE 量化代价）](https://github.com/JustVugg/colibri/issues/108)、[#225（按行缩放 int4 的 logit 侵蚀）](https://github.com/JustVugg/colibri/issues/225)、[#455（gs64 容器修复）](https://github.com/JustVugg/colibri/issues/455)

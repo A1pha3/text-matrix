@@ -9,7 +9,7 @@ categories: ["技术笔记"]
 tags: ["GPU", "CUDA", "LLM"]
 ---
 
-CUTLASS、cuBLAS 都能写出 FP8 内核，DeepGEMM 换了一种做法。它不追求 CUTLASS 那种覆盖全场景的模板扩展性，而是把 Hopper（SM90）/ Blackwell（SM100）上 LLM 计算最常用的那几类 GEMM——FP8/FP4/BF16 的普通 GEMM、融合 MoE（Mega MoE）、MQA 评分、HyperConnection——收进一个约万行、可读、运行时 JIT 编译的代码库。代价是形状覆盖会比 CUTLASS 窄，换来的是安装时不需要 CUDA 编译、代码可改、支持的形状上首调即峰值。
+CUTLASS、cuBLAS 都能写出 FP8 内核，DeepGEMM 换了一种做法。它不追求 CUTLASS 那种覆盖全场景的模板扩展性，而是把 Hopper（SM90）/ Blackwell（SM100）上 LLM 计算最常用的那几类 GEMM——FP8/FP4/BF16 的普通 GEMM、融合 MoE（Mega MoE）、MQA 评分、HyperConnection——收进一个核心内核约 300 行、整体风格简洁、运行时 JIT 编译的代码库。代价是形状覆盖会比 CUTLASS 窄，换来的是安装时不需要 CUDA 编译、代码可改、支持的形状上首调即峰值。
 
 面向 GPU 内核工程师、深度学习框架开发者、LLM 推理优化工程师。读这篇需要 CUDA 编程基础、GEMM 计算原理和混合精度训练/推理的经验。
 
@@ -151,7 +151,16 @@ A_fp8 = quantize(A, scale=global_scale)
 A_fp8 = quantize(A, scale=per_block_scale)
 ```
 
-每个 block 用自己的 scale，能把 FP8 的 8 位用满。额外的代价是 scale 张量本身占内存，且 GEMM 内核要在每个 block 边界做一次反缩放。DeepGEMM 把反缩放做进了 Tensor Core 的累加器里，开销基本可忽略。
+不同端的缩放粒度还不一样：activations 按 1×128 的 tile 缩放，weights 按 128×128 的 block 缩放。这样分布更分散的 activation 拿到更细的 scale，weight 的 scale 表又能做得紧凑。每个 block 用自己的 scale，能把 FP8 的 8 位用满；额外代价是 scale 张量本身占内存，且内核要在 block 边界做一次反缩放。
+
+### 累加精度：两级累加的取舍
+
+FP8 真正难的不只是输入量化，还有累加。Hopper 的 Tensor Core 累加器精度有限（约相当于 FP22），全程在它里面累加很快就会被误差吃掉。DeepGEMM 的处理是把精度控制的责任拆成两层：
+
+1. **Tensor Core 先算一段**：每推进约 128 列（对应若干次 WGMMA 指令），让 Tensor Core 在自己的累加器里算一小段部分和。
+2. **CUDA Core 兜底累加**：把这小段部分和提出来，在 CUDA Core 的 FP32 累加器里做最终求和，同时乘上两侧的 scale 因子。
+
+这样 FP8 的算力照常由 Tensor Core 提供，精度由 CUDA Core 的 FP32 累加器接管，两级的投入都只花在刀刃上。到了 Blackwell（SM100），`tcgen05.mma` 指令 + TMEM 原生支持 block 缩放，走了更省心的另一条路径，不再需要显式做 CUDA Core 提升。
 
 ---
 
@@ -165,7 +174,7 @@ CUTLASS 用多层 C++ 模板在编译期生成所有可能的内核组合，代�
 |------|---------|----------|
 | 模板复杂度 | 极高，多层嵌套 | 有限数量的核心函数 |
 | 编译方式 | 预编译，安装时需要 CUDA 工具链 | JIT 运行时编译，安装时不需要 nvcc |
-| 代码量 | 10 万行以上级别 | 约 1 万行 |
+| 核心内核代码量 | 万行级模板 | 约 300 行 |
 | 学习曲线 | 陡峭 | 平缓 |
 | 扩展性 | 高 | 中等 |
 
@@ -413,10 +422,10 @@ export DG_JIT_USE_NVRTC=1
 | 组件 | 要求 |
 |------|------|
 | GPU | NVIDIA SM90（Hopper）或 SM100（Blackwell） |
-| CUDA | 12.3+（SM90，官方建议 12.9+ 以获得最佳性能），12.9+（SM100） |
+| CUDA | 12.3+（SM90，官方建议 12.8+ 以获得最佳性能），12.9+（SM100） |
 | Python | 3.8+ |
 | PyTorch | 2.1+（Mega MoE 需要 2.9+） |
-| CUTLASS | 4.0+（Git submodule 拉取） |
+| CUTLASS | 3.6+（Git submodule 拉取） |
 | {fmt} | 最新版 |
 | 编译器 | C++20 支持 |
 
@@ -614,6 +623,26 @@ DeepGEMM 的独占点落在 FP4/FP8×FP4、Mega MoE 融合和 JIT 编译上。cu
 - 用 `DG_JIT_DUMP_SASS=1` 看生成的汇编，确认配置选择是否合理。
 
 DeepGEMM 不会自动让推理服务快 2 倍。它只把 GEMM 这一环做到接近峰值，attention、KV cache、MoE 路由、网络通信这些瓶颈它管不到。先 profile 找到瓶颈，再决定要不要换。
+
+---
+
+## 常见疑问
+
+**Q：装了之后 import 报错，说我缺 CUDA，可我明明装了驱动？**
+
+驱动和 CUDA 运行库是两回事。DeepGEMM 安装时不用 nvcc，但运行时 JIT 编译仍需机器上有 NVIDIA 驱动和运行 CUDA 库（NVRTC/NVCC）。先确认 `nvidia-smi` 能列出 GPU，再看 Python 里 `torch.cuda.is_available()`。
+
+**Q：第一次调用等了好几秒，是不是卡死了？**
+
+不是。那是 JIT 在按当前形状编译内核，秒级延迟正常；编译结果写进 `~/.deep_gemm`，后续同形状调用直接复用。生产环境务必在服务启动时 warmup。
+
+**Q：为什么我只加了一个 scale 参数？**
+
+缩放因子和输入张量的布局、转置是绑定的，光给张量不够。SM90 要求 LHS 的 scale 是 TMA 对齐且转置的 FP32 布局，SM100 则是打包的 UE8M0。用 `transform_sf_into_required_layout` / `get_mn_major_tma_aligned_tensor` 这类工具函数转换后再传入。
+
+**Q：输出我选 FP8 行不行？**
+
+可以，但精度损失会累积，通常只有下游算子也是 FP8 时才值得。默认输出 BF16，大多数下游算子直接吃，优先级更高。
 
 ---
 

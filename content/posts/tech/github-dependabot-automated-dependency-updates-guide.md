@@ -11,7 +11,7 @@ tags = ['GitHub', 'DevOps', '教程', '依赖管理']
 
 # GitHub Dependabot：自动化依赖更新
 
-第三方依赖是漏洞的主要入口，手动追踪更新既耗时又容易遗漏——Log4Shell 爆发时，不少项目就因为一个遗忘的 `npm audit` 而中招。
+第三方依赖是漏洞的主要入口，手动追踪更新既耗时又容易遗漏——Log4Shell 爆发时，不少项目就栽在一个长期没人更新的 log4j 老版本上。
 
 GitHub Dependabot（[github.com/apps/dependabot](https://github.com/apps/dependabot)）是 GitHub 原生集成的依赖更新工具，以 Pull Request 形式自动提交更新建议，把安全补丁和版本迭代变成可审查的 PR 流程。
 
@@ -29,16 +29,25 @@ GitHub Dependabot（[github.com/apps/dependabot](https://github.com/apps/dependa
 
 ## 目录
 
-| → | [Dependabot 是什么](#1-dependabot-是什么) | [工作原理详解](#2-工作原理详解) | [完整配置：dependabot.yml](#3-完整配置dependabotyml) | [Security Updates 进阶配置](#4-security-updates-进阶配置) |
-|---|---|---|---|---|
-| → | [Version Updates 实践建议](#5-version-updates-实践建议) | [与 CI/CD 流水线的集成](#6-与-cicd-流水线的集成) | [常见问题（FAQ）](#7-常见问题faq) | [替代方案对比](#8-替代方案对比) |
-| → | [自检清单](#9-自检清单) | [参考链接](#10-参考链接) | [自测题](#自测题) | [练习](#练习) | [进阶路径](#进阶路径) |
+1. [Dependabot 是什么](#1-dependabot-是什么)
+2. [工作原理详解](#2-工作原理详解)
+3. [完整配置：dependabot.yml](#3-完整配置dependabotyml)
+4. [Security Updates 进阶配置](#4-security-updates-进阶配置)
+5. [Version Updates 实践建议](#5-version-updates-实践建议)
+6. [与 CI/CD 流水线的集成](#6-与-cicd-流水线的集成)
+7. [常见问题（FAQ）](#7-常见问题faq)
+8. [替代方案对比](#8-替代方案对比)
+9. [自检清单](#9-自检清单)
+10. [参考链接](#10-参考链接)
+11. [自测题](#自测题)
+12. [练习](#练习)
+13. [进阶路径](#进阶路径)
 
 ---
 
 ## 1. Dependabot 是什么
 
-Dependabot 是 GitHub 官方维护的自动化依赖更新应用（GitHub App），于 2019 年被 GitHub 收购并深 度集成到 GitHub 平台。它能够：
+Dependabot 是 GitHub 官方维护的自动化依赖更新应用（GitHub App），于 2019 年被 GitHub 收购并深度集成到 GitHub 平台。它能够：
 
 - **监控** 项目依赖清单文件（如 `package.json`、`Gemfile`、`requirements.txt`、`go.mod` 等）
 - **检测** 可用的新版本和已知安全漏洞
@@ -50,13 +59,13 @@ Dependabot 分为两大更新类型：
 | 类型 | 说明 | 触发方式 |
 |------|------|----------|
 | **Version Updates** | 检测依赖新版本（功能迭代） | 按计划（每日/每周）或手动触发 |
-| **Security Updates** | 针对存在 CVE 的依赖紧急更新 | 实时（收到 GitHub Advisory Database 更新的几小时内） |
+| **Security Updates** | 针对存在已知漏洞的依赖更新 | 自动触发（GitHub Advisory Database 收录后创建 PR） |
 
 ### 支持的生态
 
 Dependabot 支持主流包管理器的依赖清单文件：
 
-| 包管理器 | 清单文件 | 触发方式 |
+| 包管理器 | 清单文件 | 更新类型 |
 |----------|----------|----------|
 | npm | `package.json` | 版本 + 安全 |
 | Yarn | `yarn.lock` | 版本 + 安全 |
@@ -222,7 +231,7 @@ updates:
       - "dependencies"
       - "python"
 
-  # ── Docker (GitHub Actions 生态) ─────────────
+  # ── Docker 容器镜像 ─────────────────────
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -230,14 +239,6 @@ updates:
     labels:
       - "dependencies"
       - "docker"
-
-# Security Updates 配置（可选）
-registries:
-  dockerhub:
-    type: "docker-registry"
-    url: "https://registry.hub.docker.com"
-    username: "${{ secrets.DOCKERHUB_USERNAME }}"
-    password: "${{ secrets.DOCKERHUB_TOKEN }}"
 ```
 
 ### 3.3 配置字段详解
@@ -257,7 +258,7 @@ registries:
 | `labels` | list | 自动添加的 PR 标签 | `["dependencies"]` |
 | `reviewers` | list | PR 审核人 | `["team:frontend"]` |
 | `registries` | object | 私有仓库认证 | 见上方示例 |
-| `allow` | list | 允许更新的依赖白名单 | 与 `ignore` 互斥 |
+| `allow` | list | 允许更新的依赖白名单 | 常与 `ignore` 搭配使用 |
 
 ### 3.4 commit-message 选项
 
@@ -273,7 +274,22 @@ commit-message:
 
 ## 4. Security Updates 进阶配置
 
-Security Updates 在大多数场景下是自动开启的，但可以通过 `dependabot.yml` 精细控制：
+安全更新（Security Updates）和版本更新（Version Updates）是两条独立链路。安全更新针对有已知漏洞的依赖自动创建 PR，开关在仓库设置里，不依赖 `dependabot.yml`；版本更新则必须由 `dependabot.yml` 定义生态和目录才能运行。
+
+两者可在同一生态并存：给某个 `package-ecosystem` 写了配置后，该生态既按计划跑版本更新，也响应安全更新。安全更新不按 schedule 排队，漏洞在 GitHub Advisory Database 收录后即创建 PR。
+
+`dependabot.yml` 里的大部分选项（`labels`、`reviewers`、`assignees`、`commit-message`、`allow`、`ignore`、`groups`）对安全更新同样生效，只是应用到下一次安全 PR 创建时。
+
+有两点要分清楚：不能用 `dependabot.yml` 配置 alerts 本身；安全更新只在能解析到"处于版本范围之内、且已修复"的版本时才会建 PR，否则只会告警、不会动作。
+
+### 4.1 只开安全更新，不跑常规版本更新
+
+想让"只在有漏洞时收到更新 PR、不做每周例行升级"，直接的做法是**不配置常规版本更新的生态条目**：
+
+1. 在仓库 Settings → Code security and analysis 开启 `Dependabot alerts` 和 `Dependabot security updates`。
+2. 不为常规依赖写 `dependabot.yml` 的 version updates 条目（或只给少数确需跟进的生态配置）。
+
+开关在仓库设置里完成，不需要 YAML。只有想给安全 PR 打标签、分审核人，或约束哪些依赖参与更新，才需要 `dependabot.yml`：
 
 ```yaml
 # .github/dependabot.yml
@@ -283,41 +299,43 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    # Security Updates 专属配置
+    # 以下选项同时作用于安全更新 PR
+    labels: ["dependencies", "security"]
     open-pull-requests-limit: 3
-    # 忽略所有手动触发的安全更新（不建议）
-    # rebase-strategy: "auto"
 ```
 
-### 4.1 启用/禁用 Security Updates
-
-通过 GitHub 仓库设置页面：
-
-```
-Settings → Security & analysis → Dependabot alerts → Enable/Disable
-```
-
-或在 `.github/dependabot.yml` 中通过 `package-ecosystem` 配置即可激活对应的安全更新。
+> 不要把"只收安全更新"写成 `allow` 的 `update-types: ["security"]`——`update-types` 只接受 `version-update:semver-patch`、`version-update:semver-minor`、`version-update:semver-major` 三种值，`security` 不是合法取值。限制安全更新，靠的是仓库设置里单独的安全更新开关。
 
 ### 4.2 私有注册表支持
 
-如果依赖来自私有 npm registry、Gemfury 或 Docker Hub，需要配置认证：
+依赖来自私有 npm registry、Python index 或 Docker Registry 时，先在顶层配置 `registries` 认证，再在对应 `updates` 条目里引用：
 
 ```yaml
+version: 2
 registries:
   private-npm:
     type: "npm-registry"
     url: "https://registry.mycompany.com"
     username: "${{ secrets.REGISTRY_USERNAME }}"
     password: "${{ secrets.REGISTRY_PASSWORD }}"
-    replaces-base: true   # 替换 base URL
+    replaces-base: true   # 替换默认 registry 的 base URL
 
   private-pypi:
     type: "python-index"
     url: "https://pypi.mycompany.com/simple"
     username: "${{ secrets.PYPI_USERNAME }}"
     password: "${{ secrets.PYPI_PASSWORD }}"
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    registries:
+      - private-npm
+    schedule:
+      interval: "weekly"
 ```
+
+凭证通过 GitHub 的 secrets 引用，不要把明文写进仓库。
 
 ---
 
@@ -406,20 +424,31 @@ mutation {
 
 ### 5.4 使用 `allow` 精细控制
 
+`allow` 只能写一次，用多个条目并列（不要重复 `allow:` 键）。它和 `ignore` 常常配合使用：
+
 ```yaml
 updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
-    # 只允许安全更新，不做常规版本更新
-    allow:
-      - dependency-name: "*"
-        update-types: ["security"]
-    # 或者白名单方式
+    # 只跟进白名单里的依赖（未列出的一律不更新）
     allow:
       - dependency-name: "lodash"
       - dependency-name: "axios"
+```
+
+按更新级别收窄，用 `ignore` 更直接（`update-types` 只接受 `version-update:semver-*`，没有 `security` 值）：
+
+```yaml
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]  # 大版本手动处理
 ```
 
 ---
@@ -487,7 +516,7 @@ jobs:
 
 **排查步骤：**
 
-1. 确认 `.github/dependabot.yml` 文件存在且路径正确（注意是 `.github/` 不是 `.github/`）
+1. 确认 `.github/dependabot.yml` 文件存在且路径正确（GitHub 只读取这一条固定路径）
 2. 检查 GitHub App "Dependabot" 是否已安装到仓库：仓库 Settings → Integrations → Dependabot
 3. 查看 Dependabot 面板：`Insights → Dependency graph → Dependabot`
 4. 检查 "Alerts" 是否被安全设置阻止
@@ -506,22 +535,16 @@ python3 -c "import yaml; yaml.safe_load(open('.github/dependabot.yml'))"
 2. 将更新频率从 `daily` 调整为 `weekly`
 3. 设置 `open-pull-requests-limit` 限制并发 PR 数量
 4. 对稳定依赖添加 `ignore` 规则
-5. 使用 `allow` 只允许 patch/minor 更新，major 版本手动处理
+5. 用 `ignore` 忽略 major 大版本更新，只留 patch/minor 自动跟进
 
 ### Q3: 如何只接收安全更新，不做常规版本更新？
 
-```yaml
-version: 2
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    allow:
-      # 只允许安全更新类型
-      - dependency-name: "*"
-        update-types: ["security"]
-```
+安全更新和版本更新是两套独立开关。只收安全更新，就不要为常规依赖配置版本更新条目：
+
+1. 在仓库设置的 Code security and analysis 里开启 `Dependabot alerts` 和 `Dependabot security updates`。
+2. 不为常规依赖写 `dependabot.yml` 的 version updates 条目（或不给对应生态写配置）。
+
+这样只有漏洞触发时才会出现安全更新 PR，不会收到每周例行升级。注意不要用 `allow` 的 `update-types: ["security"]` 来做——这是个无效写法。如果确实想给某个生态配置 labels、审核人等，可以在 `dependabot.yml` 里保留条目，但安全更新的开关始终在仓库设置里。
 
 ### Q4: 如何更新 GitHub Actions 自身？
 
@@ -618,7 +641,7 @@ gh api graphql -f query='
 | 工具 | 类型 | 定价 | 特点 | 与 Dependabot 对比 |
 |------|------|------|------|---------------------|
 | **Renovate** | SaaS + Self-hosted | 免费 + 商业版 | 功能最丰富，支持 monorepo、Dockerfile 更新、Auto-merge 配置更细 | 开源，自托管更灵活，配置复杂度高 |
-| **Dependabot** | GitHub 原生 SaaS | 免费（公开仓库）/ 付费（私有） | 原生集成，开箱即用，Security Updates 深度集成 | 配置简单，但定制化空间相对小 |
+| **Dependabot** | GitHub 原生 SaaS | 免费（所有 GitHub 套餐，含私有仓库） | 原生集成，开箱即用，Security Updates 深度集成 | 配置简单，但定制化空间相对小 |
 | **Snyk** | SaaS + CLI | 免费 + 商业版 | 专注安全，修复建议更智能，许可证合规 | 安全能力更强，但主要是安全视角 |
 | **WhiteSource Renovate** | 企业级 | 商业版 | 大规模企业支持，策略控制强 | 与 Renovate 同源，附加企业治理能力 |
 | **npm outdated / yarn upgrade** | CLI | 免费 | 零配置，手动执行 | 适合小项目，不适合自动化 |

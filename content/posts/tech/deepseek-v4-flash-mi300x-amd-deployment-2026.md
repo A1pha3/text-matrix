@@ -2,7 +2,7 @@
 title: "DeepSeek V4 Flash 单卡 AMD MI300X：ryanzhou 把 vLLM-ROCm 调成 168.6 tok/s 单流 + 64 流 830 tok/s 的工程复盘"
 date: 2026-08-05T09:40:00+08:00
 draft: false
-summary: "ryanzhou 用一套 SHA-256 pin 死的 vLLM ROCm nightly 加 10 个 byte-for-byte overlay patch,把 DeepSeek V4 Flash(304B MoE)在单张 AMD MI300X 上跑成生产推理栈:单流 168.6 tok/s、8 流 542 tok/s、64 流 830 tok/s。本文逐个拆开这些 overlay 背后的工程问题:FP8 格式错配、MXFP4 路由的 padding bug、投机解码的因果验证、CPU KV 的同步 fence,以及为什么 KV cache 池不能开大。"
+summary: "ryanzhou 用一套 SHA-256 锁死的 vLLM ROCm nightly 加 10 个 byte-for-byte overlay patch,把 DeepSeek V4 Flash(304B MoE)在单张 AMD MI300X 上跑成生产推理栈:单流 168.6 tok/s、8 流 542 tok/s、64 流 830 tok/s。逐个拆开这些 overlay 背后的问题:FP8 格式错配、MXFP4 路由 padding bug、投机解码因果验证、CPU KV 同步 fence,以及为什么 KV cache 池不能开大。"
 tags: ["DeepSeek", "V4 Flash", "MI300X", "vLLM", "ROCm", "AITER", "FP8", "DSpark", "MXFP4", "MoE"]
 categories: ["技术笔记"]
 authors: ["钳岳"]
@@ -78,7 +78,7 @@ flowchart LR
 
 模型能塞进单卡，前提是低比特；而 FP8 在 AMD 生态里有互不兼容的两个变体。MI300X（CDNA3）用 AMD 自家的 **FNUZ E4M3**（`torch.float8_e4m3fnuz`），NVIDIA 和 MI355X（CDNA4）用 **OCP 标准的 E4M3FN**。两者都叫 E4M3，编码空间的分配却不一样：FNUZ 消掉了负零，腾出的位型挪去表示 NaN，指数偏置 8，最大有限值 224.0；OCP 保留负零、偏置 7，最大有限值 448.0。一段按 OCP 字节序写的缓存被 FNUZ 消费端读走，数值最多差 2×。
 
-Lightning Indexer 缓存是 DeepSeek V4 的关键路径，FP8 写入。stock vLLM writer 按 OCP 写：
+Lightning Indexer 缓存是 DeepSeek V4 的关键路径，FP8 写入。stock vLLM writer 按 OCP 写。下面两段是示意写法，只保留字节序差异，完整实现以 `patches/` 对应文件为准：
 
 ```python
 # stock writer: OCP E4M3 bytes, row-major
@@ -103,7 +103,7 @@ FNUZ 是 CDNA2/CDNA3 这代（MI200/MI300/MI325X）的格式，AMD 从 CDNA4（M
 
 ## 三、MXFP4 MoE 的 bitmatrix padding：长 prompt 把 tool name 改名的隐藏 bug
 
-MoE 路由那关也藏着一个 bit 级 bug。DeepSeek V4 Flash 的专家权重是 MXFP4（4 位尾数 + E8M0 共享 scale），vLLM 里这条代码路径叫 `gpt_oss_triton_kernels_moe`——MXFP4 的 Triton kernel 最初为 gpt-oss 写，DeepSeek V4 Flash 复用同一实现。算 bitmatrix 时，padding lane 的屏蔽条件写错了：
+MoE 路由那关也藏着一个 bit 级 bug。DeepSeek V4 Flash 的专家权重是 MXFP4（4 位尾数 + E8M0 共享 scale），vLLM 里这条代码路径叫 `gpt_oss_triton_kernels_moe`——MXFP4 的 Triton kernel 最初为 gpt-oss 写，DeepSeek V4 Flash 复用同一实现。算 bitmatrix 时，padding lane 的屏蔽条件写错了（示意代码，只保留 mask 一行；完整 kernel 见 patch 文件）：
 
 ```python
 # 原代码（错的）：padding lane 对全局 bound 屏蔽

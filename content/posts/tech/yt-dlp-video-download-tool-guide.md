@@ -13,9 +13,9 @@ tags: ["FFmpeg", "Python", "开源工具"]
 
 需要从 YouTube、Bilibili、TikTok 等站点批量下载视频、提取音频、嵌入字幕或写元数据时，命令行工具比图形界面更可控、可脚本化、可复现。yt-dlp 是这一场景下维护最活跃的开源实现，覆盖超过一千个站点，从 youtube-dl fork 而来并持续合并上游修复。
 
-本文按安装、常用用法、格式选择、元数据处理、Python API、插件开发的顺序展开，最后拆开内部架构——下载失败时，能根据报错判断该改 URL、网络参数还是 ffmpeg 选项。
+后面先讲安装和常用命令，再讲格式选择、元数据处理、Python API 和插件，最后拆开内部架构。拆架构不是为了好看，而是下载失败时能据报错判断该改 URL、网络参数还是 ffmpeg 选项。
 
-先上手只需看「安装」和「最小示例」；遇到具体问题再回到对应章节。
+只求先上手，看「安装」和「最小示例」就够；遇到具体问题再翻对应章节。
 
 ## 项目概览
 
@@ -36,7 +36,7 @@ yt-dlp 能做的事集中在这几类：
 - 插件扩展（自定义 Extractor 和 PostProcessor）
 - 内置自动更新通道（stable / nightly / master）
 
-相比原版 youtube-dl，yt-dlp 在 YouTube 反爬应对（n-sig 反混淆、Shorts、Clips）、格式排序粒度、并发分片下载和插件系统上都做了重写，是当前 youtube-dl 生态里更新频率最高的分支。
+相比原版 youtube-dl，yt-dlp 的改动重点在跟得上网站节奏：YouTube 的 n-sig 反混淆、Shorts、Clips，格式排序的粒度，分片并发，以及插件系统。这也是当前 youtube-dl 生态里更新最频繁的分支。
 
 ---
 

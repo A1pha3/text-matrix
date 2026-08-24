@@ -106,30 +106,46 @@ atuin sync
 
 ### 基础使用
 
-Atuin 提供两个搜索入口：交互式全屏搜索（`Ctrl+R` 呼出）用于实时翻找，命令行搜索（`atuin search`）适合写进脚本或精确筛选：
+Atuin 提供两个搜索入口：交互式全屏搜索（`Ctrl+R` 呼出）用方向键实时翻找，命令行搜索（`atuin search`）适合写进脚本或精确筛选。
+
+全屏搜索界面里几个键很常用：
+
+- `Enter` 直接执行选中的命令。
+- `Tab` 只把命令带回编辑框，不立即执行，方便先改再跑。
+- `Alt+数字` 跳到对应序号的结果。
+- `Ctrl+R` 循环切换过滤模式（见下文"搜索过滤模式"）。
+
+命令行搜索按需组合过滤参数：
 
 ```bash
 # 搜索历史命令
 atuin search <关键词>
 
-# 按退出码筛选
-atuin search --exit 0
+# 只看当前目录跑过的命令
+atuin search --cwd . <关键词>
 
-# 按时间筛选
+# 只看某台机器的历史
+atuin search --host <主机名> <关键词>
+
+# 只看成功的命令（--exit 0）或失败的（--exit 1）
+atuin search --exit 0 <关键词>
+atuin search --exit 1 <关键词>
+
+# 按时间筛选，看昨天下午 3 点之后的
 atuin search --after "yesterday 3pm"
 
-# 组合筛选：查找昨天下午 3 点后所有成功的 make 命令
+# 组合：昨天下午 3 点后所有成功的 make 命令
 atuin search --exit 0 --after "yesterday 3pm" make
 ```
 
-`--exit 0 --after "yesterday 3pm" make` 这个组合是官方文档在 README 里直接给出的示例，能同时按退出码、时间和命令文本过滤，是纯文本历史做不到的。
+最后一个组合是官方文档在 README 里直接给出的示例，能同时按退出码、时间和命令文本过滤，纯文本历史做不到。想复盘某次"在某目录下失败的构建"，`atuin search --cwd <项目目录> --exit 1` 一句就能定位，不用再靠 `grep` 加管道的组合。
 
 ### 验证安装
 
 跑一遍简单命令确认记录链路通了：
 
 ```bash
-atuin --version        # 确认二进制可执行
+atuin --version  # 确认二进制可执行
 ls -la                # 制造一条历史记录
 atuin search ls       # 应能搜到刚执行的 ls
 ```
@@ -147,7 +163,7 @@ Atuin 的同步在本地完成加密，服务器只负责存储和转发密文�
 sync_address = "https://api.atuin.sh"
 ```
 
-加密密钥不在配置文件里，而是注册时生成、单独存在 `key_path`（默认 `~/.local/share/atuin/key`），用 `atuin key` 查看。换机器同步时，需要在新机器上先 `atuin login -u <USERNAME>`，输入密码和密钥，才能解密拉到本地的历史。
+加密密钥不在配置文件里，而是注册时生成、单独存在 `key_path`（默认 `~/.local/share/atuin/key`），用 `atuin key` 查看。注册的账号密码只用来登录和鉴权，不参与解密；解密依赖的是这把本地密钥。换机器同步时，需要在新机器上先 `atuin login -u <USERNAME>` 输入密码，再配合导入的密钥，才能解密拉到本地的历史。密钥和账号密码分属两套凭证，丢了密钥，即使账号密码还在，已加密的历史也无法还原。
 
 同步默认每小时自动执行一次，可用 `sync_frequency` 调整；手动同步用 `atuin sync`，发现漏数据时用 `atuin sync -f` 触发全量同步，把历史数据完整过一遍。
 
@@ -175,7 +191,7 @@ Hours of the day:
 
 ## 支持的 Shell
 
-zsh、bash、fish 完整支持，nu 和 xonsh 实验性支持，PowerShell 次级支持。
+zsh、bash、fish 成熟稳定；nushell 和 xonsh 处于实验性支持；PowerShell 的支持成熟度低于前几个。核心差异在钩子机制：zsh 原生提供 `precmd` / `preexec`，Atuin 直接挂载；bash 不自带这类钩子，需要先装 `bash-preexec` 才能正常记录命令，官方安装脚本会一并处理。Windows 通过 PowerShell 使用，数据目录走 `%APPDATA%\atuin`。
 
 ## 配置详解
 

@@ -44,8 +44,6 @@ flowchart TD
 | 授权与安全 | 授权管线 | Plan/Act/Operate 模式、Ask/Auto-Review/Full Access 姿势、constitution |
 | 编排 | Fleet + Workflow | 持久 worker、ledger、`fleet resume` |
 
-下面分别展开。
-
 ## 2. 模型路由：一个 harness，30 多个 provider
 
 Codewhale 的卖点不是"又一个壳"，而是**一个 runtime、一套工具，接尽量多的模型**。README 的说法是：hosted、gateway、local 都接，open models 优先，谁都不特权。
@@ -74,7 +72,7 @@ DeepSeek 仍是默认 provider，模型 ID 是 `deepseek-v4-pro`、`deepseek-v4-
 
 **constitution**（章程）是更深的一层。它分三层：编译进二进制的全局底层、`~/.codewhale/constitution.json` 的用户全局层、仓库里的 `.codewhale/constitution.json` 的 repo 层。repo 层的 `protected_invariants` 可以写成带 `paths` 的对象，这会**编译成机械的写保护**——工具门禁在写入前评估它，Full Access 也绕不过。章程只能收紧，不能授权，所以构造一个 constitution 无法削弱某个门禁。
 
-这套授权是九层管线（`AUTHORIZATION_ORDER.md`），从配置与姿势、模式与工具准入、hooks、注册工具基线、`permissions.toml` 类型化规则、自动审查与安全底线、repository law、人工审批，到工具执行与沙箱。关键是它**单调收紧**：后面的层可以加提示或阻断，但不能把前面的阻断或提示变成未审查的执行。
+这套授权是九层管线（`AUTHORIZATION_ORDER.md`），从配置与姿势、模式与工具准入、hooks、注册工具基线、`permissions.toml` 类型化规则、自动审查与安全底线、repository law、人工审批，到工具执行与沙箱。最后落地的沙箱按平台做系统级隔离：Linux 用 landlock、macOS 用 seatbelt、Windows 用 AppContainer，Windows 原生没有等价机制，要走 WSL2。关键是它**单调收紧**：后面的层可以加提示或阻断，但不能把前面的阻断或提示变成未审查的执行。
 
 ## 4. 编排：Fleet 与 Workflow
 
@@ -113,11 +111,7 @@ npm install -g codewhale
 codewhale --version
 ```
 
-macOS 和 Linux 上，官网安装脚本是最短路径，会下载 `codewhale`、`codew`、`codewhale-tui` 三个二进制并校验 sha256：
-
-```bash
-curl -fsSL https://codewhale.net/install.sh | sh
-```
+macOS、Linux 和 Windows 都可以从 GitHub Releases 页面下载平台归档，解压出 `codewhale`、`codew`、`codewhale-tui` 三个二进制和 `install.sh` / `install.bat`，归档自带 sha256 校验清单。认准官方渠道：GitHub 的 [Hmbown/CodeWhale](https://github.com/Hmbown/CodeWhale) 与 npm 包 `codewhale`。`codewhale.*` 这类域名变体并不是作者维护的，`curl | sh` 运行任何非官方脚本都存在风险，应避免。
 
 也可以用 Cargo（建议使用较新的稳定版 Rust 工具链）：
 

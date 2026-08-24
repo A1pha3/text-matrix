@@ -1,217 +1,146 @@
 ---
-title: "BitNet：微软 1-bit LLM 推理框架完全指南"
+title: "BitNet：把 LLM 权重压进三个值，让推理在 CPU 上无损跑起来"
 date: "2026-04-06T21:21:00+08:00"
 slug: "bitnet-microsoft-1bit-llm-inference-guide"
 github_repo: "microsoft/BitNet"
-description: "全面介绍微软官方 BitNet 1-bit LLM 推理框架，涵盖 37.2k Stars 的核心原理、I2_S/TL1/TL2 量化内核、CPU/GPU 高效推理、性能优化和部署指南。"
+description: "微软官方 bitnet.cpp 是 1-bit LLM 推理框架：三元权重让矩阵乘法退化为整数加法，在 CPU 上无损运行。介绍 1.58 bit 原理、I2_S/TL1/TL2 内核、性能边界与部署路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["微软", "llama.cpp", "CPU 推理"]
+tags: ["微软", "llama.cpp", "CPU 推理", "量化"]
 ---
 
-## 一、项目概述
+# BitNet：把 LLM 权重压进三个值，让推理在 CPU 上无损跑起来
 
-### 1.1 是什么
+大模型的推理成本大头在矩阵乘法：每个权重都是浮点数，乘一次点一次浮点乘法。bitnet.cpp 换了一条路——训练时就把权重钉死在 {-1, 0, +1} 三个值上，乘一个权重要么原样保留、要么取反、要么跳过，整个矩阵乘法退化成整数加法，浮点乘法从推理里消失了。省下的不只是算力，还有搬权重所需的内存带宽，这正是 CPU 推理的瓶颈所在。
 
-BitNet 是微软官方发布的 **1-bit LLM 推理框架**，核心理念是让 1-bit 大语言模型（如 BitNet b1.58）在 CPU 和 GPU 上实现快速、无损的推理。它提供了一套优化内核，支持在各种硬件平台高效运行 1-bit 模型。
+它是微软官方的 1-bit LLM 推理框架（仓库 [microsoft/BitNet](https://github.com/microsoft/BitNet)，约 4 万 Stars、MIT 协议，2026-08 验证）。官方模型 BitNet-b1.58-2B-4T 用 2.4B 参数在 4 万亿 token 上训练，技术报告给出的数据是：x86 CPU 提速 2.37–6.17 倍、能耗降 71.9%–82.2%；ARM CPU 提速 1.37–5.07 倍、能耗降 55.4%–70.0%；100B 参数模型在单颗 CPU 上能跑到 5–7 tokens/s，接近人类阅读速度。这些数字来自 [arXiv:2410.16144](https://arxiv.org/abs/2410.16144)，对照组是 llama.cpp 的 FP16 推理，具体怎么读后面会单独讲。
 
-### 1.2 核心数据
+本文按"1.58 bit 是什么 → 一条推理请求怎么穿过系统 → 三套内核 → 性能数字怎么看 → 支持矩阵 → 部署 → 选型建议"展开。
 
-| 指标 | 数值 |
-|------|------|
-| GitHub Stars | **37.2k** |
-| GitHub Forks | **3.3k** |
-| 贡献者 | **16** |
-| License | **MIT** |
+## 1.58 bit 到底指什么
 
-### 1.3 技术栈
+"1.58 bit"常被误读成"每个权重占 1.58 bit 存储"。实际它来自信息论：一个权重取三个值 {-1, 0, +1}，三选一的信息量是 log₂(3) ≈ 1.58 bit。这是理论上限，不是存储格式。bitnet.cpp 落地时，I2_S 内核把每个权重用 2 bit 打包（每字节塞 4 个权重），1.58 只是表示"这套量化逼近了三态编码的信息极限"。
 
-| 语言 | 占比 |
-|------|------|
-| Python | 50.2% |
-| C++ | 45.9% |
-| Shell | 2.9% |
+权重怎么变成三元值：BitNet b1.58 在训练时就用 absmean 量化，把每个权重除以全层权重绝对值的均值，再四舍五入截断到 [-1, 1] 区间，得到 {-1, 0, +1}。激活值动态量化为 8-bit 整数。这跟常见的"训练完再压缩"（PTQ）不同，是从头训练就量化（QAT），模型自己学会了在三值约束下工作，所以低比特下的精度损失远小于事后量化。
 
-### 1.4 性能亮点
+值域很小，但信息没白丢。加入 0 值让模型能显式"关掉"某些连接，相当于做特征筛选，这是它比纯二值 {-1, +1} 建模能力更强的原因。加上整数加法替代浮点乘法，能耗从算法层面就被压下来——芯片上整数加法器的面积和功耗都远小于浮点乘法器。
 
-BitNet 在各类 CPU 上实现了显著的加速和能耗降低：
+## 系统地图：一条推理请求穿过什么
 
-| 平台 | 加速比 | 能耗降低 |
-|------|---------|----------|
-| ARM CPU | **1.37x - 5.07x** | **55.4% - 70.0%** |
-| x86 CPU | **2.37x - 6.17x** | **71.9% - 82.2%** |
+bitnet.cpp 不是独立的推理引擎，而是搭在 llama.cpp 上的定制层。两条主线要分开看：**模型怎么被量化打包**（离线），**内核怎么解包计算**（在线）。
 
-更重要的是，BitNet 能在**单个 CPU** 上运行 100B 参数的 BitNet b1.58 模型，达到 **5-7 tokens/秒**——与人类阅读速度相当。
-
----
-
-## 二、1-bit LLM 原理
-
-### 2.1 什么是 1-bit LLM
-
-传统 LLM 用 16-bit 或 32-bit 浮点数存储权重，而 **1-bit LLM 将权重限制为三个值：-1、0、+1**。
-
-| 量化方式 | 值域 | 存储需求 |
-|----------|------|---------|
-| FP16 | 任意浮点数 | 16 bits/参数 |
-| INT8 | 256 个整数值 | 8 bits/参数 |
-| **1-bit (Ternary)** | **-1, 0, +1** | **1.58 bits/参数** |
-
-> BitNet b1.58 实际上是 **1.58 bits/参数**，因为 -1 和 +1 出现频率高于 0，信息熵计算下来平均每个参数需 1.58 bits 表示。
-
-### 2.2 为什么用 1-bit
-
-| 优势 | 说明 |
-|------|------|
-| **内存占用低** | 1.58 bits/参数，内存需求大幅降低 |
-| **计算效率高** | 乘法变为符号运算，无需浮点乘 |
-| **能耗降低** | 硬件友好，显著节能 |
-| **推理速度快** | 优化内核实现高速推理 |
-
-### 2.3 BitNet b1.58 架构
-
-BitNet b1.58 基于 Transformer 架构，但权重使用三元量化：
-
-```python
-# 伪代码：BitNet 线性层
-def bitnet_linear(x, weight):
-    # weight 是三元张量 (-1, 0, +1)
-    result = x @ sign(weight)  # 符号函数
-    return quantized_activation(result)
+```mermaid
+flowchart LR
+    Q["离线：模型转换<br/>convert-helper-bitnet.py<br/>safetensors → GGUF"] --> M["GGUF 模型<br/>三元权重按内核打包"]
+    M --> S["setup_env.py<br/>按 CPU 架构生成<br/>并编译匹配内核"]
+    S --> L["llama.cpp / ggml<br/>模型加载、tokenizer、解码调度"]
+    L --> K["bitnet 定制内核<br/>I2_S / TL1 / TL2"]
+    K --> G["GEMV<br/>整数加法 / 查表实现"]
+    G --> O["逐 token 输出"]
+    B["e2e_benchmark.py<br/>测量吞吐与能耗"] -.-> L
 ```
 
----
+离线那条线决定权重在磁盘和内存里长什么样；在线那条线决定怎么算。两者由内核类型（I2_S / TL1 / TL2）绑定：模型按哪种内核打包，推理就必须用同一种内核解包。
 
-## 三、核心特性
+## 一条命令怎么流过系统
 
-### 3.1 多后端支持
+用一个具体任务串起来：在 Mac 上把官方 2B 模型跑起来。
 
-| 后端 | 支持情况 | 说明 |
-|------|---------|------|
-| **x86 CPU** | ✅ 全面支持 | Intel/AMD 处理器 |
-| **ARM CPU** | ✅ 全面支持 | Apple Silicon、移动设备 |
-| **NVIDIA GPU** | ✅ 全面支持 | CUDA 加速 |
-| **NPU** | ⏳ 开发中 | 敬请期待 |
+1. 下载预量化模型。`huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf --local-dir models/BitNet-b1.58-2B-4T`，拿到按 I2_S 打包的 GGUF 文件。
+2. 生成并编译匹配的内核。`python setup_env.py -md models/BitNet-b1.58-2B-4T -q i2_s` 检测本机 CPU 架构，生成对应指令集的内核代码，连同 llama.cpp 一起编译。这一步决定了后面走 NEON（ARM）还是 AVX2（x86）。
+3. 加载模型。`python run_inference.py -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf -p "You are a helpful assistant" -cnv` 启动对话，底层是 llama.cpp 的 `llama-cli`。
+4. 逐 token 生成。每次前向计算，权重是 2 bit 解包出的三元值，激活是 8-bit 整数，矩阵乘在特化内核里以整数加法完成，没有浮点乘。
 
-### 3.2 量化内核类型
+从敲命令到出 token，用户只感知到第 1、3 两步；第 2 步的架构检测和第 4 步的内核执行是 bitnet.cpp 替你做的。
 
-| 内核类型 | 说明 | 适用场景 |
-|----------|------|---------|
-| **I2_S** | INT8 激活 + 符号权重 | 通用场景 |
-| **TL1** | Token-level INT8 | 低延迟 |
-| **TL2** | Token-level INT8 v2 | 优化吞吐量 |
+## 三套内核：I2_S、TL1、TL2
 
-### 3.3 最新优化
+| 内核 | 目标平台 | 权重打包 | 计算方式 | 适用场景 |
+|------|---------|---------|---------|---------|
+| I2_S | x86 / ARM | 每权重 2 bit，每字节 4 个 | 解包回原值后做常规 GEMV | 通用；线程充足时编译器能流水化指令，收益最大 |
+| TL1 | ARM（NEON / DOTPROD） | 每 2 个权重合成一个 4 bit 索引 | 查表（LUT） | ARM 上的内存/带宽受限场景 |
+| TL2 | x86（AVX2） | 每 3 个权重合成一个 5 bit 索引 | 查表（LUT），压缩率更高 | x86 上的内存/带宽受限场景 |
 
-最新版本引入了**并行内核实现**和**可配置平铺**：
+I2_S 是三套里最直观的：权重离线压成 2 bit，计算时解包回 {-1, 0, +1} 再做矩阵乘。它不做任何奇技淫巧，胜在可移植——x86 和 ARM 都能跑，也是 `setup_env.py` 支持的内核之一。
 
-- 多线程优化
-- 嵌入量化支持，进一步降低内存
-- **额外加速 1.15x - 2.1x**
+TL1 和 TL2 是同一种思路的两种实现，都来自微软 T-MAC 的查表方法：把一小段权重连同激活的可能组合预先算好存成查找表，计算时直接查表求和，省去逐权重解包。区别在于压缩粒度——TL1 每 2 个权重合一个 4 bit 索引，TL2 每 3 个权重合一个 5 bit 索引。TL2 的索引更密，模型体积比 TL1 再小约 1/6，内存带宽压力更低；代价是指令集绑定，只适用于 AVX2。官方支持矩阵里，2B 模型 x86 走 I2_S + TL2、ARM 走 I2_S + TL1，正是按这个分工配置的。
 
-### 3.4 与 llama.cpp 的关系
+## 性能数字怎么看
 
-BitNet 基于 **llama.cpp** 框架构建，但专注于 1-bit LLM 的优化：
+报告里的提速和降耗数据，测的是**同一模型、同一硬件上 bitnet.cpp 相对 llama.cpp FP16 基线**的 CPU 推理吞吐和能耗。它反映的是"权重复制 2 bit 后，内存带宽瓶颈被大幅缓解"这件事——模型越大、权重占比越高，收益越明显，这也是 100B 模型能挤出 5–7 tokens/s 的原因。
 
-```
-llama.cpp（通用框架）
-    ↓
-BitNet（1-bit 专用）
-    ├── 量化内核优化
-    ├── 1-bit 特殊算子
-    └── CPU/GPU 高效实现
-```
+这些数字不能外推到几类结论：
 
----
+- 不是"任何模型压缩成三值都更快"。推理速度取决于权重是否能以整数加法完成计算，常规 FP16/INT4 模型走 llama.cpp 主分支，不适用这套内核。
+- 不代表 GPU 结论。报告测的是 CPU；GPU 有官方内核（`gpu/` 目录），但加速比和能耗是另一组数据。
+- 实际值随硬件型号、线程数、模型规模浮动。报告给的是区间，不是保证值，落地前用 `e2e_benchmark.py` 在自己机器上量一遍。
 
-## 四、官方模型
-
-### 4.1 官方发布模型
-
-| 模型 | 参数 | CPU 支持 | GPU 支持 |
-|------|------|---------|---------|
-| **BitNet-b1.58-2B-4T** | 2.4B | ✅ x86, ARM | ✅ |
-
-### 4.2 支持的第三方模型
-
-| 模型 | 参数 | x86 CPU | ARM CPU | GPU |
-|------|------|---------|---------|-----|
-| bitnet_b1_58-large | 0.7B | ✅ | ✅ | ✅ |
-| bitnet_b1_58-3B | 3.3B | ❌ | ✅ | ✅ |
-| Llama3-8B-1.58-100B | 8B | ✅ | ✅ | ✅ |
-| Falcon3-1B | 1B | ✅ | ✅ | ✅ |
-| Falcon3-3B | 3B | ✅ | ✅ | ✅ |
-| Falcon3-7B | 7B | ✅ | ✅ | ✅ |
-| Falcon3-10B | 10B | ✅ | ✅ | ✅ |
-
-### 4.3 模型下载
+跑基准：
 
 ```bash
-huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf \
-    --local-dir models/BitNet-b1.58-2B-4T
+python utils/e2e_benchmark.py -m /path/to/model -n 200 -p 256 -t 4
 ```
 
----
+`-n` 是生成 token 数（默认 128），`-p` 是 prompt token 数（默认 512），`-t` 是线程数（默认 2）。
 
-## 五、安装与构建
+## 官方模型与支持矩阵
 
-### 5.1 环境要求
+官方发布三款模型，均为从头训练的原生 1-bit 模型：
 
-| 依赖 | 版本要求 |
-|------|---------|
-| Python | >= 3.9 |
-| CMake | >= 3.22 |
-| Clang | >= 18 |
-| conda | 推荐使用 |
+| 模型 | 参数量 | 说明 |
+|------|--------|------|
+| BitNet-b1.58-2B-4T | 2.4B | 首个官方 1-bit 语言模型，4 万亿 token 训练，对话与推理通用 |
+| BitNet-embedding-0.6B | 0.6B | 1-bit 嵌入模型，x86 prefill 相对 F16 提速 1.42–2.28 倍 |
+| BitNet-embedding-270M | 270M | 轻量嵌入模型，面向资源受限环境 |
 
-### 5.2 安装步骤
+内核支持矩阵（来自官方 README）：
 
-**1. 克隆仓库**
+| 模型 | 参数量 | x86 | ARM |
+|------|--------|-----|-----|
+| BitNet-b1.58-2B-4T | 2.4B | I2_S、TL2 | I2_S、TL1 |
+| BitNet-embedding-0.6B | 0.6B | I2_S | — |
+| BitNet-embedding-270M | 270M | I2_S | — |
+
+社区模型（官方用于演示推理能力，非微软训练）：
+
+| 模型 | 参数量 | x86 | ARM |
+|------|--------|-----|-----|
+| bitnet_b1_58-large | 0.7B | I2_S、TL2 | I2_S、TL1 |
+| bitnet_b1_58-3B | 3.3B | TL2 | TL1 |
+| Llama3-8B-1.58-100B-tokens | 8B | I2_S、TL2 | I2_S、TL1 |
+| Falcon3 Family | 1B–10B | I2_S、TL2 | I2_S、TL1 |
+| Falcon-E Family | 1B–3B | I2_S、TL2 | I2_S、TL1 |
+
+注意嵌入模型目前只提供 x86 的 I2_S 内核，ARM 位是空的——别拿它到 Apple Silicon 上跑。`setup_env.py -q` 接受的内核类型为 `i2_s` 与 `tl1`，需要哪种就按表选。
+
+## 部署：从安装到跑通
+
+环境要求：Python ≥ 3.10、CMake ≥ 3.22、Clang ≥ 18，conda 推荐。克隆并装依赖：
 
 ```bash
 git clone --recursive https://github.com/microsoft/BitNet.git
 cd BitNet
-```
 
-**2. 创建 conda 环境**
-
-```bash
-conda create -n bitnet-cpp python=3.9
+conda create -n bitnet-cpp python=3.10
 conda activate bitnet-cpp
 pip install -r requirements.txt
 ```
 
-**3. Windows 特殊配置**
-
-Windows 用户需安装 Visual Studio 2022，选择以下组件：
-- Desktop development with C++
-- C++ CMake Tools for Windows
-- Git for Windows
-- C++ Clang Compiler for Windows
-- MS-Build Support for LLVM-Toolset (clang)
-
-**4. Debian/Ubuntu 安装 clang**
+Windows 上必须在 VS2022 的 Developer Command Prompt / PowerShell 里执行后续命令，并确保安装以下组件：Desktop development with C++、C++ CMake Tools for Windows、Git for Windows、C++ Clang Compiler for Windows、MS-Build Support for LLVM-Toolset (clang)。Debian/Ubuntu 装 Clang 18 可用官方脚本：
 
 ```bash
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 ```
 
----
-
-## 六、快速上手
-
-### 6.1 下载并量化模型
+下载官方模型并按 I2_S 打包、构建：
 
 ```bash
-# 下载官方模型
 huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf \
     --local-dir models/BitNet-b1.58-2B-4T
-
-# 或用脚本下载
 python setup_env.py -md models/BitNet-b1.58-2B-4T -q i2_s
 ```
 
-### 6.2 运行推理
+推理：
 
 ```bash
 python run_inference.py \
@@ -220,271 +149,65 @@ python run_inference.py \
     -cnv
 ```
 
-### 6.3 参数说明
+`run_inference.py` 的 `-cnv` 打开对话模式（此时 `-p` 作为 system prompt），`-t` 指定线程数，`-n` 控制生成 token 数，`-c` 设上下文长度。
 
-| 参数 | 说明 | 默认值 |
-|------|------|---------|
-| `-m` | 模型文件路径 | 必需 |
-| `-p` | 提示词 | 必需 |
-| `-n` | 生成 token 数 | 128 |
-| `-t` | 线程数 | 2 |
-| `-c` | 上下文大小 | -1 |
-| `-cnv` | 启用对话模式 | False |
+GPU 与 CPU 是两条独立路径。官方 GPU 推理内核见仓库的 `gpu/README.md`，按 `setup_env.py` 之后的镜像或容器流程走；NPU 支持官方标注为"开发中"。嵌入模型的量化与转换有专门指南（`docs/bitnet-embeddings-i2s-guide.md`）。
 
----
-
-## 七、GPU 推理
-
-### 7.1 构建 GPU 版本
-
-参考 `gpu/README.md` 构建支持 CUDA 的版本。
-
-### 7.2 GPU 推理示例
+从 safetensors 自己转换模型：
 
 ```bash
-python run_inference.py \
-    -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf \
-    -p "Explain quantum computing in simple terms" \
-    --use-gpu
-```
-
----
-
-## 八、性能基准测试
-
-### 8.1 基准测试脚本
-
-```bash
-python utils/e2e_benchmark.py \
-    -m models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf \
-    -n 200 \
-    -p 256 \
-    -t 4
-```
-
-### 8.2 参数说明
-
-| 参数 | 说明 | 默认值 |
-|------|------|---------|
-| `-m` | 模型路径 | 必需 |
-| `-n` | 生成 token 数 | 128 |
-| `-p` | 提示词 token 数 | 512 |
-| `-t` | 线程数 | 2 |
-
-### 8.3 生成虚拟模型测试
-
-对于不支持的模型布局，可生成虚拟模型测试：
-
-```bash
-python utils/generate-dummy-bitnet-model.py \
-    models/bitnet_b1_58-large \
-    --outfile models/dummy-bitnet-125m.tl1.gguf \
-    --outtype tl1 \
-    --model-size 125M
-
-python utils/e2e_benchmark.py \
-    -m models/dummy-bitnet-125m.tl1.gguf \
-    -p 512 \
-    -n 128
-```
-
----
-
-## 九、模型转换
-
-### 9.1 从 safetensors 转换
-
-```bash
-# 下载 bf16 模型
 huggingface-cli download microsoft/bitnet-b1.58-2B-4T-bf16 \
     --local-dir ./models/bitnet-b1.58-2B-4T-bf16
-
-# 转换为 gguf 格式
-python ./utils/convert-helper-bitnet.py \
-    ./models/bitnet-b1.58-2B-4T-bf16
+python ./utils/convert-helper-bitnet.py ./models/bitnet-b1.58-2B-4T-bf16
 ```
 
-### 9.2 量化选项
+## 与其他低比特方案对比
 
-| 量化类型 | 命令参数 | 说明 |
-|----------|---------|------|
-| I2_S | `-q i2_s` | INT8 激活 + 符号权重 |
-| TL1 | `-q tl1` | Token-level INT8 v1 |
-| TL2 | `-q tl2` | Token-level INT8 v2 |
+| 方案 | 权重精度 | 训练方式 | 计算方式 | 定位 |
+|------|---------|---------|---------|------|
+| llama.cpp + FP16 | 16 bit | 全精度训练 | 浮点矩阵乘 | 通用基线 |
+| 常规 PTQ（INT4/INT8） | 4–8 bit | 事后量化 | 整型矩阵乘 | 通用低比特部署 |
+| bitnet.cpp（I2_S/TL1/TL2） | 三元 {-1, 0, +1} | 从头 QAT | 整数加法 / 查表 | 1-bit 模型专用，CPU 优先 |
+| T-MAC | 依赖输入模型 | — | 查表 | 通用低比特 LUT 推理库 |
 
----
+关键差异在训练方式：PTQ 是"先训练好再压缩"，比特数降到 4 以下精度断崖；BitNet 是"带着三值约束从头训练"，模型结构和数值分布都为三值设计。bitnet.cpp 借用了 llama.cpp 的调度骨架和 T-MAC 的查表方法，但只服务于 1-bit 模型——这正是它比通用方案激进的原因，也是它的边界：非三值模型用不上这套内核。
 
-## 十、技术架构深度解析
+## 采用顺序与适用边界
 
-### 10.1 整体架构
+**适合先用上：**
 
-```
-BitNet 推理框架
-├── src/
-│   ├── kernel/          # 核心计算内核
-│   │   ├── i2_s/       # I2_S 量化内核
-│   │   ├── tl1/        # TL1 量化内核
-│   │   └── tl2/        # TL2 量化内核
-│   ├── model/           # 模型加载和执行
-│   └── quant/          # 量化工具
-├── gpu/                # GPU 支持
-├── 3rdparty/llama.cpp  # 基于 llama.cpp
-└── utils/              # 工具脚本
-```
+- 想在普通 CPU（笔记本、服务器、边缘设备）上本地跑模型，且能接受用 1-bit 模型替代同规模全精度模型。
+- 吃内存带宽的场景，比如多路并发、嵌入检索、批量推理，1-bit 权重的带宽优势直接变现。
+- 看重能耗，想在一台机器上常驻推理服务。
 
-### 10.2 I2_S 内核原理
+**可以暂缓：**
 
-I2_S（INT8 激活 + 符号权重）是 BitNet 的核心量化方案：
+- 追求 SOTA 精度，模型质量优先于部署成本——三值量化毕竟有信息损失，2B 规模对标同参数全精度可以，但不是越大越好用。
+- 有成熟 GPU 集群，瓶颈不在带宽和能耗——GPU 上这套内核的收益与 CPU 不同，先跑基准再决定。
+- 模型不在支持矩阵里，且不想自己走转换链路。
 
-```cpp
-// I2_S 内核伪代码
-void i2_s_kernel(const float* x, const int8_t* w, float* y) {
-    for (int i = 0; i < hidden_size; i++) {
-        float sum = 0;
-        for (int j = 0; j < vocab_size; j++) {
-            sum += x[j] * sign(w[i * vocab_size + j]);
-        }
-        y[i] = sum;
-    }
-}
-```
+**建议顺序：**
 
-### 10.3 并行优化
+1. 先用官方 2B-4T 模型在目标机器上跑通 `run_inference.py`，用 `e2e_benchmark.py` 量一次吞吐和内存，确认收益真实存在。
+2. 有嵌入需求再评估 `BitNet-embedding-0.6B`，先确认你的场景在 x86 上（ARM 无内核）。
+3. 内存或带宽紧张时，x86 换 TL2、ARM 换 TL1 打包的 GGUF，对比体积与速度。
+4. 需要 GPU 再走 `gpu/` 官方内核流程，别拿 CPU 结论直接套。
 
-最新版本引入并行内核实现：
+## 常见问题
 
-```cpp
-#pragma omp parallel for
-for (int i = 0; i < batch_size; i++) {
-    compute_i2_s_kernel(x[i], w, y[i]);
-}
-```
+**Windows 下编译报找不到 clang？** 大概率没用 VS2022 的 Developer Command Prompt / PowerShell。这个环境的 PATH 里才有正确的编译工具链，普通终端里 conda 找不到 clang 是正常现象。
 
----
+**内存不够，选哪个内核？** 在支持的平台上选 TL2（x86）或 TL1（ARM）。两者都是查表实现，TL2 索引更密，模型体积比 TL1 小约 1/6，带宽压力更低。
 
-## 十一、常见问题
+**模型不在支持矩阵里能跑吗？** 可以用 `generate-dummy-bitnet-model.py` 生成指定布局的虚拟模型先量性能，再走 `convert-helper-bitnet.py` 转换链路自己转换，但需要模型本身是三值训练的。
 
-### 11.1 编译错误：std::chrono
+**这框架只支持 CPU？** 不是。官方有独立 GPU 内核（`gpu/README.md`），NPU 支持在开发中；CPU 是当前优化最成熟、文档最全的路径。
 
-**问题**：构建时出现 `std::chrono` 相关错误。
-
-**解决**：这是 llama.cpp 最新版本引入的问题，参考 [此 commit](https://github.com/abetlen/llama-cpp-python/issues/) 修复。
-
-### 11.2 Windows conda 环境 clang 问题
-
-**问题**：Windows 下 conda 环境找不到 clang。
-
-**解决**：确保 Visual Studio Tools 已正确初始化：
-
-```powershell
-# Command Prompt
-"C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\VsDevCmd.bat" -startdir:none -arch=x64 -host_arch=x64
-
-# PowerShell
-Import-Module "C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
-Enter-VsDevShell 3f0e31ad -SkipAutomaticLocation -DevCmdArguments "-arch=x64 -host_arch=x64"
-```
-
----
-
-## 自测题
-
-1. **BitNet b1.58 的权重值域是什么？为什么叫 1.58 bits/参数？**
-
-   <details>
-   <summary>查看答案</summary>
-
-   权重限制为三个值：-1、0、+1。称为 1.58 bits/参数是因为 -1 和 +1 出现频率高于 0，信息熵计算下来平均每个参数需 1.58 bits。
-
-   </details>
-
-2. **BitNet 支持哪些后端？**
-
-   <details>
-   <summary>查看答案</summary>
-
-   x86 CPU、ARM CPU（全面支持）、NVIDIA GPU（全面支持）、NPU（开发中）。
-
-   </details>
-
-3. **I2_S、TL1、TL2 三种量化内核有什么区别？**
-
-   <details>
-   <summary>查看答案</summary>
-
-   I2_S 是 INT8 激活 + 符号权重，通用场景；TL1 是 Token-level INT8，低延迟；TL2 是 Token-level INT8 v2，优化吞吐量。
-
-   </details>
-
-4. **如何在 CPU 上运行 BitNet 推理？**
-
-   <details>
-   <summary>查看答案</summary>
-
-   下载模型后运行 `python run_inference.py -m <模型路径> -p "提示词"`，加 `-cnv` 启用对话模式，加 `--use-gpu` 使用 GPU。
-
-   </details>
-
-5. **BitNet 和 llama.cpp 的关系是什么？**
-
-   <details>
-   <summary>查看答案</summary>
-
-   BitNet 基于 llama.cpp 框架构建，专注于 1-bit LLM 的优化（量化内核优化、1-bit 特殊算子、CPU/GPU 高效实现）。
-
-   </details>
-
----
-
-## 练习
-
-1. 按安装步骤完成环境配置、模型下载和首次推理，对比 CPU 和 GPU 模式下的推理速度。
-2. 运行 `python utils/e2e_benchmark.py`，记录不同线程数下的 token/秒，绘制线程数与推理速度的曲线。
-3. 用 `-q i2_s`、`-q tl1`、`-q tl2` 生成不同量化类型的模型，比较文件大小和推理速度。
-
----
-
-## 进阶路径
-
-1. 阅读 `src/kernel/i2_s/` 目录下的代码，理解 I2_S 内核的实现原理。
-2. 研究并行内核实现（OpenMP），理解 CPU 多核性能最大化的方法。
-3. 向 BitNet 仓库提交 PR，修复 bug 或优化特定平台的性能。
-4. 深入研究 1-bit LLM 的量化感知训练（QAT）原理，理解三元量化为何能保持精度。
-5. 研究将 BitNet 部署到边缘设备（树莓派、手机）的方案。
-
----
-
-## 资料口径说明
-
-1. **信息来源**：本文基于 BitNet 仓库 README、技术报告（arXiv:2410.16144）和可验证的代码示例编写。
-2. **版本时效性**：BitNet 处于活跃开发阶段，性能数据、支持的后端、量化内核类型可能随版本变化。
-3. **性能数据边界**：加速比和能耗降低数据来自技术报告，实际数值因硬件、模型规模、线程数而异。
-4. **模型可用性**：预训练模型下载链接取决于 HuggingFace 和微软的发布策略。
-5. **硬件要求**：构建步骤假设读者有基本的 Python、CMake 和 C++ 编译环境使用经验。
-
----
-
-## 总结
-
-BitNet 代表了高效 LLM 推理的重要方向：
-
-| 优势 | 说明 |
-|------|------|
-| **内存效率高** | 1.58 bits/参数，远低于 FP16 |
-| **推理速度快** | 最高 6x 加速 |
-| **能耗低** | 最高 82% 能耗降低 |
-| **支持 CPU 和 GPU** | 灵活部署 |
-| **微软官方** | 持续更新维护 |
-
-**适用场景：** 边缘设备部署、低延迟推理、能耗敏感场景、资源受限环境。
-
-**不适用的场景：** 需要最高精度的任务（使用完整精度模型）、非 1-bit 模型推理（使用 llama.cpp）。
-
----
-
-**附录：相关资源**
+## 参考链接
 
 - GitHub：https://github.com/microsoft/BitNet
-- 技术报告：https://arxiv.org/abs/2410.16144
+- 技术报告（CPU 推理）：https://arxiv.org/abs/2410.16144
+- 系统论文（bitnet.cpp）：https://arxiv.org/abs/2502.11880
+- 基础论文（BitNet b1.58）：https://arxiv.org/abs/2402.17764
 - 官方模型：https://huggingface.co/microsoft/BitNet-b1.58-2B-4T
 - 在线 Demo：https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/

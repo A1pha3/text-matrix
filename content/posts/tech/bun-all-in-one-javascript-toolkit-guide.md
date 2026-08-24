@@ -13,7 +13,7 @@ tags: ["JavaScript", "Bun", "Rust", "Node.js", "TypeScript"]
 
 Bun 把运行时、打包器、测试运行器、包管理器四件事压进同一个二进制。这套合并带来的工程含义，不止是「启动快 4 倍」这么简单：它改变了 JS 工具链的依赖管理方式——以前一个项目要 `node` + `esbuild` + `jest` + `npm` 四个独立工具，升级节奏对不齐、报错栈跨工具、锁版本要分别管，现在只有一个版本号要追。换来的代价是 Node.js 兼容性不是 100%，部分原生模块仍要回退到 Node。
 
-下面从引擎选型、四合一架构、执行路径、迁移判断四个层面展开。版本基线 v1.3.14（2026-05-13），90,566 Stars，已越过实验阶段，进入生产可用区间。生产可用不等于零风险——文末给出具体的迁移边界。
+下面从引擎选型、四合一架构、执行路径、迁移判断四个层面展开。版本基线 v1.3.14（2026-05-13），约 93.4K Stars，已越过实验阶段，进入生产可用区间。生产可用不等于零风险——文末给出具体的迁移边界。
 
 ---
 
@@ -21,10 +21,10 @@ Bun 把运行时、打包器、测试运行器、包管理器四件事压进同�
 
 | 项目 | 信息 |
 |------|----------|
-| **Stars** | 93,471+ |
-| **Forks** | 4,734+ |
-| **许可证** | NOASSERTION |
-| **语言** | Rust + Zig |
+| **Stars** | 约 93.4K（截至 2026-05） |
+| **Forks** | 约 4.7K |
+| **许可证** | MIT |
+| **语言** | Zig（核心运行时） |
 | **仓库** | [oven-sh/bun](https://github.com/oven-sh/bun) |
 
 ---
@@ -66,9 +66,9 @@ Bun 与 Deno 的技术分歧在引擎选型。Deno 选 V8，原因是 V8 最成�
 
 **冷启动开销低**。JavaScriptCore 的初始化路径比 V8 短。V8 启动时要构建完整的 isolate、初始化 JIT 编译器、加载内置库，这套开销在长期运行的服务端进程里被摊薄，但在 CLI 工具、Serverless 函数、脚本这类「跑一次就退出」的场景里占比很高。Bun 的目标场景里冷启动是常态，JSC 的这个特性刚好对上——Serverless 函数的冷启动延迟直接进用户感知的 P99，CLI 工具的启动延迟则卡在开发者每一次保存-运行的循环里。
 
-**内存占用更紧凑**。JSC 的内存模型对短生命周期进程更友好。同样跑一个 Hello World HTTP 服务，Bun 的常驻内存通常比 Node.js 低 30-50%。在容器化部署、函数计算场景里，这直接影响实例密度——同样的内存预算下，能跑更多 Bun 实例，单位成本更低。
+**内存占用更紧凑**。JSC 的内存模型对短生命周期进程更友好。在官方和社区的基准里，同样跑一个 Hello World HTTP 服务，Bun 的常驻内存通常比 Node.js 低一到三成上下，具体数字随进程负载和环境摆动。在容器化部署、函数计算场景里，这直接影响实例密度——同样的内存预算下，能跑更多 Bun 实例，单位成本更低。
 
-**Zig 在这个位置的作用**。Bun 团队用 Zig 直接调用 JSC 的 C API，绕过了 V8 的 C++ 抽象层。Zig 的手动内存管理和 comptime 特性让 Bun 能在编译期做更多检查，运行时开销更低。这是 Bun 团队的技术判断，行业里没有共识——Deno 团队认为 V8 + Rust 的组合更稳，因为 V8 的成熟度和 Rust 的内存安全各有保障。
+**Zig 在这个位置的作用**。JavaScriptCore 的嵌入接口是 C API，正好和 Zig 手写的 FFI 配合；而 V8 把嵌入层做成了 C++ 抽象，这也是 Bun 不选 V8 的工程原因之一——用 Zig 去绑定 V8 的 C++ 类要平白多一层 glue。Zig 的手动内存管理和 comptime 特性让 Bun 能在编译期做更多检查，运行时开销更低。这是 Bun 团队的技术判断，行业里没有共识——Deno 团队认为 V8 + Rust 的组合更稳，因为 V8 的成熟度和 Rust 的内存安全各有保障。
 
 代价是兼容性。Node.js 生态里有一批包直接调用了 V8 的内部 API（典型的有 `node-bindings`、部分 native addon、用了 `v8.h` 的包），这些在 Bun 上跑不起来。Bun 通过 `node:` 模块兼容层覆盖了 `fs`、`path`、`process`、`Buffer` 等常用模块，但涉及 V8 内部接口的包需要 polyfill 或替代方案。具体的兼容性状态可以查 [Bun 的 Node.js 兼容性列表](https://bun.com/docs/runtime/nodejs-compat)——迁移前先跑一遍现有测试套件，比看文档更可靠。
 
@@ -220,12 +220,19 @@ Bun install 和 pnpm 的取舍取决于团队对锁文件格式和 workspace 特
 
 ## v1.3.14 改了什么（2026-05-13）
 
-v1.3.14 是 2026 年 5 月中旬的稳定版本，11 位贡献者参与。这个版本的方向是「兼容性收尾」——TypeScript 6 对齐和 SQLite 性能优化都是把已有能力做稳，没有开新坑。对评估迁移的团队来说，这种版本比大版本更说明问题：兼容性收敛意味着之前因为边缘语法或性能问题卡住的场景可能解封。主要更新：
+v1.3.14 是 2026 年 5 月中旬的稳定版本。这个版本不是兼容性收尾，而是把 Bun 从「更快的 Node.js」往「自带基础设施的运行时」推了一大步。主要更新集中在图像处理、安装链路和 HTTP 现代协议三个方面：
 
-- **TypeScript 6 支持**：`--tsconfig` 全面对齐 TypeScript 6 的新语法特性。TypeScript 6 本身还在迭代，部分边缘语法可能仍有兼容问题，遇到问题查 [Bun 的 TypeScript 兼容性文档](https://bun.com/docs/runtime/typescript)。如果项目刚升 TS 6，这个版本是第一个能稳定跑的 Bun 版本。
-- **SQLite 性能优化**：`bun:sqlite` 的查询性能进一步提升，主要在 prepared statement 复用路径上。对用 `Bun.sql` 做 embedded 数据库的场景（本地缓存、单机服务）收益直接；对走外部 Postgres / MySQL 的服务无影响。
-- **bun build 改进**：支持更多输出格式，包括 ESM/CJS 双格式 bundle。这对发布到 npm 的库有意义——一次构建同时产出 ESM 和 CJS 入口，不用再配 `tsup` 或 `microbundle`。
-- **Bug 修复**：涵盖 Windows arm64 兼容性、HTTP/2 流处理等问题。Windows arm64 的修复对 Surface 设备和 ARM 服务器场景是硬需求，HTTP/2 流修复对用 Bun 做 HTTP 反向代理或流式响应的服务是重要修复。
+- **Bun.Image：内置图像处理**。这是本版本最大的新能力，取代了 Node.js 生态里必须靠 `sharp`（原生 C++ 模块，装一次就要 node-gyp 编译环境）才能做的活。Bun.Image 直接内置 JPEG、PNG、WebP、GIF、BMP 的静态编解码；HEIC、AVIF、TIFF 在 macOS / Windows 上走系统后端。官方 benchmark（对比 sharp 0.34.5）：读取元数据 `metadata()` 快约 70 倍，常见 resize 快 1.2-1.4 倍。省掉 `sharp` 意味着 CI 不再为了一个缩略图场景去装 libvips，也不用担心架构不匹配导致的原生二进制报错。
+
+- **全局虚拟存储（Global Virtual Store）**。`bun install` 的 isolated linker 新增 `install.globalStore = true`，把每个包只在全局缓存中实例化一次，项目 `node_modules` 里只放指向它的 symlink。官方对约 1,400 个包的前端项目的预热安装测试：优化前约 841 ms、`clonefileat` 调用约 1,387 次，开启后降到约 115 ms、0 次——快了约 7 倍。热点在 CI 的反复重建路径。注意这是实验特性，默认关闭，且只有来自不可变缓存源、无受信生命周期脚本的包才有资格进全局存储。
+
+- **HTTP/3（QUIC）支持**。`Bun.serve` 加一个 `http3: true` 标志就能同时监听 TCP（HTTP/1.1+2）和 UDP（HTTP/3），现有 `fetch` 处理函数三种协议通吃，官方标称静态路由吞吐约 509k req/s（对比 HTTPS/1.1 约 189k req/s）。同为实验特性，官方明确警示不要在生产部署。
+
+- **fetch() 的 HTTP/2 / HTTP/3 客户端（实验）**。新增 `{ protocol: "http2" }` / `{ protocol: "http3" }` 选项，同一 origin 的并发请求可共享一条多路复用连接；HTTP/3 客户端还能根据 `Alt-Svc` 头自动把后续请求升级到 QUIC。
+
+- **重写的 `fs.watch` 后端**。Linux / macOS / FreeBSD 上改为直接对接 inotify、FSEvents、kqueue，修了递归监听漏掉新增目录、文件删除重建后不再触发 `change` 等问题。
+
+- **`--no-orphans`**。父进程死掉（哪怕被 SIGKILL）时 Bun 自动退出，并递归终止自己派生的所有子进程，适合被 Electron、CI runner 这类 supervisor 拉起、中途强杀的场景。
 
 > [完整 Release Notes](https://bun.com/blog/bun-v1.3.14)
 
@@ -233,7 +240,7 @@ v1.3.14 是 2026 年 5 月中旬的稳定版本，11 位贡献者参与。这个
 
 ## 性能数字：测的是什么，不能推出什么
 
-Bun 官方和社区的基准测试数据（因环境而异，仅供参考）：
+先澄清：下面列的是社区常见的代表性数量级，具体数字随参数、机型和负载变化很大，不建议当成精确结论。这段的重点不是数字本身，而是它们各自在测什么、不能推出什么：
 
 | 操作 | Node.js | Bun | 倍数 |
 |---|---|---|---|
@@ -313,7 +320,7 @@ bun upgrade
 
 **Bun 的 TypeScript 支持和 tsc 一样吗？** 不一样。Bun 只做语法转换，不做类型检查。`bun run` 会跑过有类型错误的代码。类型检查要单独跑 `tsc --noEmit` 或在 IDE 里做。这个差异源于职责不同——tsc 的类型检查是静态分析工具，Bun 的 transpiler 是运行时组件。把类型检查放在 CI 或 pre-commit hook 里，比让运行时承担类型诊断更合理。
 
-**`bun.lockb` 为什么是二进制？** 为了解析速度。二进制格式读取比 JSON 快，但不可读。查依赖变化用 `bun pm why <pkg>` 或 `bun install --dry-run`。如果团队对锁文件可读性有硬性要求（比如要在 code review 里看依赖 diff），可以配 `bun install --save-yaml-lockfile` 生成 `bun.lock` 的 YAML 版本，可读性接近 `package-lock.json`。
+**`bun.lockb` 为什么是二进制？** 为了解析速度。二进制格式读取比 JSON 快，但不可读。查依赖变化用 `bun install --dry-run`（预览将要发生的变化）或 `bun pm ls` / `bun pm tree`（查看依赖树）。如果团队在 code review 里要看依赖 diff，一个折中是同时维护 npm 的 `package-lock.json`（先 `npm install --package-lock-only` 生成一次）做对照，或把 `bun.lockb` 的变化量限制在每次 upgrade 时单独 review。
 
 **Bun 和 Deno 该选哪个？** 看你对 npm 生态的依赖程度。重度依赖现有 npm 包选 Bun（兼容性更好）；从零开始、想要更干净的权限模型和 TypeScript 优先体验选 Deno。两者都在向对方靠拢——Deno 加了 `npm:` 兼容，Bun 在加强权限模型。具体判断：如果项目要跑在 Cloudflare Workers / Deno Deploy 这类边缘运行时上，Deno 的权限模型和部署体验更顺；如果要跑在传统 VPS / 容器 / Serverless 函数上，Bun 的 Node.js 兼容性让迁移路径更短。
 

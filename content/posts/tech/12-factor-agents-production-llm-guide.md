@@ -98,7 +98,6 @@ flowchart TD
     subgraph 执行层
         G
         J
-        P
     end
     subgraph 控制层
         I
@@ -107,7 +106,7 @@ flowchart TD
     end
     subgraph 架构层
         B
-        C
+        P
         O
     end
 ```
@@ -728,7 +727,7 @@ def test_reducer_is_deterministic():
 <details>
 <summary>3. Factor 12（无状态 reducer）模式下，怎么处理需要调用真实 LLM 的场景？测试时怎么办？</summary>
 
-`agent_step` 函数内部仍然调用 LLM，但 LLM 调用的输入完全由传入的 `State` 决定，输出被封装成新的 `State` 返回。测试时 mock 掉 LLM 调用，就能验证 reducer 逻辑本身是否正确。集成测试和回放测试再覆盖真实 LLM 调用的部分。关键是 reducer 本身是纯函数——给定相同的 `State` 和 `Event`，输出总是相同。
+LLM 调用发生在外圈，不在 reducer 内部。正文里 `review_reducer` 是刻意保持纯粹的：它只把 `(状态, 输入)` 映射成 `(新状态, 副作用描述)`。真正调 LLM 的是承载它的循环——循环拿到 LLM 的判断，把它封装成 `AgentInput` 喂给 reducer，reducer 算出新状态，副作用再由外部代码执行。测试时只需要测 reducer 这一层：给定相同的 `AgentState` 和 `AgentInput`，输出永远相同，不需要 mock。LLM 调用本身用 mock、集成测试或回放测试单独覆盖。
 </details>
 
 <details>

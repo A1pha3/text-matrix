@@ -1,26 +1,31 @@
 ---
-title: "apache/maven：4.4k Stars 的 Java 构建工具，21 年后为什么还在 Trending"
+title: "Apache Maven 4：打破 POM 冻结的 20 年最大一次大版本"
 date: "2026-07-03T20:57:00+08:00"
-lastmod: "2026-07-03T20:57:00+08:00"
+lastmod: "2026-08-20T00:00:00+08:00"
 draft: false
 slug: "apache-maven-build-tool-today-trending-guide"
-description: "Apache Maven 核心仓库今日再登 GitHub Trending，单日 +53 Stars。本文拆解 Maven 4.x 主线：CLI 重写、Wrapper 默认化、Resilience4j 集成、CI 构建缓存改进，以及为什么一个 21 年的工具还在被维护。"
+description: "Maven 4 的第一个判断：它真正解决的不是构建速度，而是 POM 模型 4.0.0 被冻结近二十年、无法演进的问题。本文拆解 consumer POM、模型 4.1.0、subprojects、生命周期改树结构、mvnup 迁移工具，以及当前 RC 阶段的采用边界。"
 categories: ["技术笔记"]
 tags: ["Java", "Apache"]
 author: "text-matrix"
 ---
 
-Apache Maven 核心仓库今天再次登上 GitHub Trending，单日 +53 Stars。一个 21 年的项目还能上榜，不是因为什么明星新功能，而是 Maven 4.x 主线仍在持续推进。本文回答三件事：今天为什么会再次上榜、4.x 主线改了什么、采用边界在哪里。
+Maven 4 的贡献不在快，而在格式。`pom.xml` 的模型版本 4.0.0 自 2005 年 Maven 2 引入以来用到了今天，近二十年没有动过。Maven 团队想改 schema 都改不动，因为整个 Java 生态——Maven Central、IDE、其他构建工具——都绑死在它上面。Maven 4 是第一次真正打破这层冻结的大版本，方法是不动消费者看到的 POM，只在构建侧放开。
+
+截至 2026 年 8 月，Maven 4.0.0 尚未发布正式版，最新候选版是 4.0.0-rc-6（2026-08-04）。本文基于官方发布说明和文档，拆解 4.x 主线到底改了什么、和 Maven 3 的边界在哪、现在能不能用。
 
 ## 目录
 
 - [一、先给判断](#一先给判断)
-- [二、项目地图：核心模块构成](#二项目地图核心模块构成)
-- [三、Maven 4.x 主线：5 个值得知道的方向](#三maven-4x-主线5-个值得知道的方向)
-- [四、今日热提交：3 个值得关注的方向](#四今日热提交3-个值得关注的方向)
-- [五、采用边界](#五采用边界)
-- [六、和 Gradle / Bazel 的边界](#六和-gradle-bazel-的边界)
-- [七、起步建议](#七起步建议)
+- [二、总览：三条并行主线](#二总览三条并行主线)
+- [三、仓库结构：核心模块与插件分离](#三仓库结构核心模块与插件分离)
+- [四、问题起点：POM 为什么被冻结](#四问题起点pom-为什么被冻结)
+- [五、模型层：consumer POM 与模型 4.1.0](#五模型层consumer-pom-与模型-410)
+- [六、生命周期层：从图到树](#六生命周期层从图到树)
+- [七、工程层：Java 17、mvnup 与插件兼容](#七工程层java-17mvnup-与插件兼容)
+- [八、一个具体案例：库作者迁移到 Maven 4](#八一个具体案例库作者迁移到-maven-4)
+- [九、如何看待性能数字](#九如何看待性能数字)
+- [十、采用顺序与适用边界](#十采用顺序与适用边界)
 - [最小可运行示例](#最小可运行示例)
 - [自测题](#自测题)
 - [练习](#练习)
@@ -29,238 +34,266 @@ Apache Maven 核心仓库今天再次登上 GitHub Trending，单日 +53 Stars�
 
 ## 一、先给判断
 
-Apache Maven 仓库今天（2026-07-03）再次登上 GitHub Trending，单日 +53 Stars。拆成两层看：
+Maven 4 是一个大版本，但它的价值不在性能，而在格式解冻。三句话概括这条主线：
 
-**第一层：Maven 已经 21 年了。** 从 2004 年 1.0 发布到现在，它是 Java 生态最长寿的构建工具。登上 Trending 不是因为明星新功能，而是 Maven 4.x 主线仍在持续推进——这是个「稳定演进期」项目，不是「维护期」项目。
+- **模型升级**：构建侧 POM 升级到模型 4.1.0，消费者侧仍保持 4.0.0，生态不破。
+- **生命周期重构**：生命周期从图改成树，新增 `before:` / `after:` 阶段，执行顺序可控。
+- **工程配套**：运行要求 Java 17，内置 `mvnup` 迁移工具，部分插件需要升级。
 
-**第二层：单日 +53 是合理流量。** Maven 主仓库的提交节奏相对稳定（每周约 30 commits），不像新项目那样爆发式增长。+53 Stars 大部分来自 Java 社区对 4.x 路线图的关注——尤其是 CLI 重写、Wrapper 默认化等已经落地或接近落地的变化。
+## 二、总览：三条并行主线
 
-过去 24 小时的提交（2026-07-02 ~ 2026-07-03）给出几个核心信号：
+Maven 4 的改动可以拆成三条相对独立的主线，先分清边界再进入细节：
 
-- **CLI 重写（mvnsh）**：把 Maven CLI 用 Java 21 + GraalVM native 重写
-- **Wrapper 默认化**：Maven Wrapper（mvnw）从可选变成默认推荐
-- **Resilience4j 集成**：网络重试、断路器成为核心插件
-- **构建缓存改进**：基于 `${session.topology}` 的增量缓存
+| 主线 | 改了什么 | 谁受益 |
+|------|----------|--------|
+| 模型层 | consumer POM、模型 4.1.0、`<subprojects>`、bom 打包类型 | 库作者、多模块项目 |
+| 生命周期层 | 图 → 树、`before:` / `after:` 阶段、条件式 profile 激活 | 插件开发者、复杂构建 |
+| 工程层 | Java 17 要求、`mvnup` 迁移工具、插件兼容性清理 | 所有升级用户 |
 
-## 二、项目地图：核心模块构成
+三条主线可以独立采用：只用模型层特性不碰生命周期，反之亦然。迁移指南也按这个思路分步骤。
 
-Maven 是一个 Java 仓库（Java 21 + Maven 自举——Maven 用 Maven 构建），按职责切成多个模块：
+## 三、仓库结构：核心模块与插件分离
+
+`apache/maven` 主仓库只包含 Maven 核心，插件是独立的 `apache/maven-*` 仓库，各自按 release train 发版。这是 Maven 的架构约定，也是 4.x 能独立于插件演进的前提。
 
 | 模块 | 职责 |
 | --- | --- |
 | `maven-core` | 核心执行引擎（lifecycle、phase、goal） |
-| `maven-model` | POM（Project Object Model，项目对象模型）数据结构 |
-| `maven-resolver` | 依赖解析（基于 Apache Resolver / Aether） |
-| `maven-settings` | 用户/全局 settings.xml 处理 |
+| `maven-model` | POM 数据结构（4.x 引入模型 4.1.0） |
+| `maven-resolver` | 依赖解析（基于 Apache Resolver） |
+| `maven-settings` | 用户 / 全局 settings.xml 处理 |
 | `maven-embedder` | 把 Maven 嵌入 IDE / CI 的 API |
-| `maven-cli` | 命令行入口（4.x 重写为 mvnsh） |
-| `maven-resolver-*` | 依赖解析的具体实现（transport、connector） |
+| `maven-cli` | 命令行入口（4.x 起独立成模块） |
 
-Maven 主仓库只包含「Maven 核心」。插件（compiler、surefire、jar、war、deploy 等）是独立仓库 `apache/maven-*`，按 release train 独立发版。
+插件（compiler、surefire、jar、war、deploy 等）不在主仓库。核心发版与插件发版互不牵制，插件只承诺 API 兼容到 Maven 3.9.0。
 
-## 三、Maven 4.x 主线：5 个值得知道的方向
+## 四、问题起点：POM 为什么被冻结
 
-Maven 4.0 于 2023-07 发布，4.x 主线是当前活跃分支。每个版本都对应一批重要变化：
+Maven 之所以停在小版本迭代那么多年，根因在 POM 承担了两种职责：构建自己的信息和消费方需要的信息。产物发布后，构建配置对消费者没有意义，但两者挤在同一个 `pom.xml` 里，任何 schema 改动都会逼着整个生态适配。
 
-### 1. CLI 重写：mvnsh
+Maven 核心开发者 Hervé Boutemy 在 2021 年 Java Advent 上把这种状态称为"模型被冻在琥珀里"：
 
-- **Maven 4.0**：CLI 用 Java 21 重新实现，替换老版本的反射式实现
-- **启动时间**：从约 1.5s 降到约 400ms（冷启动）
-- **GraalVM native image**：可选原生镜像，启动时间 < 100ms
+> 构建模型被彻底固定后，我们很难再做迭代优化，只能停留在 Maven 3 小版本迭代，无法落地那些需要大幅调整 POM 结构的改进方案。
 
-CI 频繁调用 `mvn` 命令，启动时间在构建总时间里占比可观。`mvnsh` 把启动时间从 1.5s 降到 400ms，一次典型构建（20 个 `mvn` 调用）能省约 22 秒。
+Maven 4 的解法是先把这两种信息拆开：构建信息留在本地 `pom.xml`（模型 4.1.0），消费信息单独生成一份扁平化的 consumer POM 发布到仓库（模型 4.0.0）。下游依赖者看到的还是 4.0.0，生态不用跟着改。
 
-### 2. Wrapper 默认化
+## 五、模型层：consumer POM 与模型 4.1.0
 
-- **Maven 3.x**：Wrapper 是 `maven-wrapper` 插件，要手动配置
-- **Maven 4.x**：Wrapper 是默认推荐方式，`mvn wrapper:wrapper` 一键生成 `.mvn/wrapper/`
-- **作用**：团队成员/CI 不需要预先安装 Maven，Wrapper 自动下载指定版本
+### 5.1 构建 POM 与 consumer POM 分离
 
-Wrapper 默认化解决了「团队成员 Maven 版本不一致」这个老问题——以前新人入职第一天就要 `apt install maven`，现在 clone 仓库后直接 `./mvnw`。
+Maven 4 在构建时生成一份精简的 consumer POM，只保留消费者需要的依赖信息，去掉插件配置、profile、父 POM 引用等构建细节。发布到远程仓库的是这份 consumer POM，而不是原始 `pom.xml`。
 
-### 3. Resilience4j 集成
+consumer POM 的扁平化默认关闭，避免意外改变发布行为。需要开启时设置属性：
 
-Maven 4.x 把网络重试、断路器从「推荐配置」变成「内置默认」：
+```xml
+<properties>
+  <maven.consumer.pom.flatten>true</maven.consumer.pom.flatten>
+</properties>
+```
 
-- **重试**：默认 3 次，指数退避
-- **断路器**：当 Maven Central 响应慢时自动断路
-- **超时**：默认连接超时 30s、读超时 60s
+也可以写在 reactor 根目录的 `.mvn/maven-user.properties` 里统一生效。
 
-Maven Central 偶发故障时，以前要 CI 重新跑，现在是自动重试。
+### 5.2 模型版本 4.1.0 只用于构建侧
 
-### 4. 构建缓存改进
+源码库中的构建 POM 可升级到模型版本 4.1.0（命名空间 `http://maven.apache.org/POM/4.1.0`），consumer POM 仍生成 4.0.0。这意味着不升级到 4.1.0 也能用 Maven 4 构建，只是用不了新模型特性。
 
-- **基于 `${session.topology}` 的缓存键**：相同 reactor build 的不同模块共享缓存
-- **远程缓存协议**：4.x 引入远程缓存规范（类似 Gradle Build Cache），CI 可以在多次构建间共享产物
-- **增量构建改进**：Maven 4.x 的增量构建（Incremental Build）API 稳定化
+### 5.3 模块改名 subprojects
 
-Maven「比 Gradle 慢」的印象，部分原因就是缓存机制不够完善。4.x 的缓存改进把两者在构建速度上的差距缩小了 30-50%。
+Java 9 引入模块系统后，`<modules>` 里的 "module" 和 JPMS 的 "module" 概念冲突。Maven 4 把模块改名为子项目，4.1.0 模型新增 `<subprojects>` 元素，`<modules>` 仍可用但已废弃。
 
-### 5. POM 模型简化
+```xml
+<subprojects>
+  <subproject>service</subproject>
+  <subproject>dao</subproject>
+  <subproject>web</subproject>
+</subprojects>
+```
 
-- **Maven 4.0 移除 `build/extensions`**：改用 `extensions.xml` 独立文件
-- **parent POM 链简化**：默认最多 1 层继承
-- **CI-friendly 版本**：`${revision}`、`${sha1}`、`${changelist}` 三个变量默认启用
+### 5.4 子项目自动发现
 
-POM 简化对大型 polyrepo 场景有帮助——继承链从平均 3-4 层降到 1-2 层。
+父 POM 是 `pom` 打包类型、且没有声明 `<modules>` / `<subprojects>` 时，Maven 4 会自动发现子目录里含 `pom.xml` 的项目。新增子项目不再需要改父 POM，少一处 merge 冲突源。
 
-## 四、今日热提交：3 个值得关注的方向
+### 5.5 父版本自动推断
 
-从 `commits/main.atom` 看过去 24 小时的提交，三个方向比较突出：
+这是 2005 年就提出的需求（issue MNG-624）。使用模型 4.1.0 时，子项目可以不写父 POM 的 `version`，Maven 沿相对路径向上推断；同 reactor 内跨子项目的依赖版本也可省略。升级父版本只改父 POM 一处。
 
-### 1. mvnsh 性能优化
+### 5.6 bom 打包类型
 
-- `perf(mvnsh): reduce classpath scanning overhead`
-- `feat(mvnsh): support Java 21 virtual threads`
-- `docs(mvnsh): update installation guide for Windows`
+Maven 4 新增 `bom` 打包类型，把"管理依赖清单"的 BOM 与"作为父 POM"的角色区分开：
 
-mvnsh 用 Java 21 虚拟线程（virtual threads）替换老线程模型，意味着 CLI 在大量并行插件调用时的吞吐量提升。
+```xml
+<packaging>bom</packaging>
+```
 
-### 2. Wrapper 校验
+BOM 的依赖导入支持 exclusion，依赖管理更精确。
 
-- `feat(wrapper): verify checksum of wrapper jar`
-- `fix(wrapper): handle missing distributionUrl gracefully`
+### 5.7 新构件类型
 
-Wrapper 自动下载 Maven 发行版，校验和验证防止中间人篡改。
+4.0 新增 `classpath-jar`、`modular-jar` 等构件类型，明确控制构件进 classpath 还是 module path，对 JPMS 项目更友好。CI 友好版本变量（`${revision}` 等）不再需要 flatten-maven-plugin 的额外配置，开启 consumer POM 扁平化即可由 Maven 4 原生处理。注意边界：未开启扁平化的项目使用 `${revision}` 仍可能遇到缺失版本错误，这是 RC-6 官方列出的已知问题。
 
-### 3. 依赖解析改进
+## 六、生命周期层：从图到树
 
-- `fix(resolver): handle BOM imports in transitive dependencies`
-- `perf(resolver): reduce memory in version range computation`
+Maven 3 的生命周期是一个有向图，执行顺序存在歧义。Maven 4 把生命周期改成树结构，执行顺序确定，同时新增一组阶段钩子：
 
-依赖解析是 Maven 最复杂的部分，BOM（Bill of Materials）导入的传递依赖处理是经典 bug 点。
+- `before:all` / `after:all`：在整次构建前后执行。
+- `before:each` / `after:each`：在每个子项目执行前后触发。
+- 插件执行可以用 `before:` / `after:` 精确指定相对某个 phase 的位置。
 
-## 五、采用边界
+profile 激活也支持条件表达式（基于属性、JDK 版本等），替代部分需要在 `pom.xml` 里写脚本的旧做法。
 
-### 适合
+## 七、工程层：Java 17、mvnup 与插件兼容
 
-- **传统 Java EE / Spring 企业应用**：Maven 的 XML 配置对企业流程友好
-- **多模块单仓库（monorepo）**：Maven 的 reactor build 天然支持
-- **CI 构建速度敏感**：Maven 4.x 的构建缓存改进对 CI 帮助大
-- **团队熟悉 Maven**：学习曲线低，新人入职成本低
-- **生产环境稳定性**：Maven 的中央仓库 + Wrapper 校验是 Java 生态最稳定的依赖方案
+### 7.1 运行要求 Java 17
 
-### 不太适合
+Maven 4 运行本身要求 Java 17。注意这只是运行 Maven 的要求：项目仍可用 `-source 8 -target 8` 编译旧版 Java，编译目标不受限制。
 
-- **超大规模 monorepo（> 1000 模块）**：Gradle 的任务图（task graph）优化更深入
-- **Kotlin / Scala 项目**：Gradle + Kotlin DSL 的体验更好
-- **需要复杂自定义构建逻辑**：Maven 的插件机制（绑定到 lifecycle）比 Gradle 的 task DAG（有向无环图）僵硬
-- **polyrepo 跨仓库构建**：Maven 4.x 引入 `mvn -f` 多 POM 支持，但 Gradle 的 composite build 更成熟
-- **追求极致增量构建**：Gradle 的 configuration cache + task caching 比 Maven 4.x 更激进
+### 7.2 mvnup 迁移工具
 
-### 升级建议
+Maven 4.0.0-rc-4 起发行包内置升级工具，两阶段使用：
 
-- **Maven 3.6.x / 3.8.x → 4.x**：4.x 引入 breaking changes（部分插件不兼容、XML 简化），需要灰度
-- **Gradle → Maven 4.x**：评估标准不是「哪个更好」而是「团队维护成本」。Gradle 的 build.gradle.kts 学习曲线比 Maven POM 陡
-- **Bazel / Pants 用户**：Maven / Gradle 都不适合超大规模 monorepo（> 5000 模块），直接上 Bazel
+```bash
+# 检测项目里的潜在问题
+mvnup check
 
-## 六、和 Gradle / Bazel 的边界
+# 自动应用推荐的修复
+mvnup apply
+```
 
-| 维度 | Maven 4.x | Gradle 8.x | Bazel 7.x |
-| --- | --- | --- | --- |
-| 配置语言 | XML | Kotlin DSL / Groovy | Starlark |
-| 学习曲线 | 低 | 中 | 高 |
-| 构建速度 | 中（4.x 缓存改进） | 快 | 极快 |
-| 增量构建 | 支持（4.x 稳定化） | 支持（成熟） | 一等公民 |
-| 远程缓存 | 实验 | 一等公民 | 一等公民 |
-| 插件生态 | 极广（Java 生态默认） | 广 | 较窄 |
-| 适用规模 | 中（< 500 模块） | 中（< 2000 模块） | 大（任意规模） |
+工具覆盖插件版本升级、POM 结构调整、被废弃属性的替换等常见问题。
 
-传统 Java 项目和中型 monorepo 用 Maven 4.x 最稳。Kotlin/Scala 和大型 monorepo 用 Gradle 更合适。超大规模 monorepo 和跨语言构建，Bazel 是更专业的工具。
+### 7.3 插件兼容性
 
-## 七、起步建议
+Maven 4 优先保证与 Maven 3 的兼容，但部分插件和扩展需要特定版本才能配合。以 4.0.0-rc-6 官方已知问题为例：Tycho 5.0 以下、Quarkus 3.20 以下与 Maven 4 的依赖注入机制不兼容；`pgpverify-maven-plugin` 1.20 以下会抛 `ClassCastException`；`maven-shade-plugin` 的 `dependency-reduced-pom.xml` 可能触发 parent cycle 报错。依赖 Maven extensions 的项目可能要等扩展作者适配，官方建议直接联系扩展维护者确认计划。
 
-1. **新项目直接用 Maven 4.x + Wrapper**：`mvn wrapper:wrapper` 生成 `.mvn/wrapper/`，提交到 git
-2. **CI 启用构建缓存**：Maven 4.x 的远程缓存协议 + CI 缓存目录（GitHub Actions cache）配合使用
-3. **POM 简化**：删掉继承链超过 2 层的 parent POM，迁移到 BOM 导入
-4. **监控构建时间**：CI 启用 Maven 4.x 的 `--show-version --batch-mode`，看每个 phase 耗时
-5. **升级路径**：Maven 3.x 升级到 4.x 前先跑 `mvn validate -P apache-release` 验证插件兼容性
+两个明确的破坏性变化值得注意：
 
-Maven 今天的 Trending 表现来自「稳定流量 + 4.x 主线演进」。CLI 重写、Wrapper 默认化、Resilience4j 集成、构建缓存改进这四条主轴同时推进，说明 Maven 团队仍在认真维护这个工具。
+- **install / deploy 移到构建末尾**：不再按模块逐个安装，而是整次构建结束后统一执行（rc-4 起）。
+- **部分目录属性被替换**：`${project.basedir}` 等引用方式有调整，迁移文档列了替换清单。
+
+## 八、一个具体案例：库作者迁移到 Maven 4
+
+把上面的机制串成一个真实任务：一个发布到 Maven Central 的多模块库，从 Maven 3.9 迁移到 Maven 4。
+
+1. **准备（Maven 3 侧）**：把插件升到最新 3.x 版本，确认运行环境支持 Java 17。
+2. **测试（并行构建）**：安装 4.0.0-rc-6，跑 `mvn clean verify` 对比结果。这一步用 Maven 4 的最小改动模式，POM 不动也能构建，目的是暴露不兼容插件。
+3. **迁移（启用新特性）**：跑 `mvnup check` / `mvnup apply` 处理已知问题；再升级到模型 4.1.0，把 `<modules>` 改成 `<subprojects>`，删掉子项目里的父版本号，启用 consumer POM 扁平化。
+4. **发布**：确认 `install` 在构建末尾执行后产物齐全，发布到 Central，检查仓库里落的是扁平化 consumer POM 而不是原始 `pom.xml`。
+
+这条路径里，第 1、2 步是 Maven 4 的兼容保证，第 3 步是模型层和工程层特性，第 4 步验证的是构建 POM 与 consumer POM 分离是否真正生效。
+
+## 九、如何看待性能数字
+
+关于 Maven 4 性能的讨论很多，但需要先厘清一件事：**Maven 官方没有发布统一的 benchmark**。社区流传的"性能提升百分之几十"大多来自个别项目、特定机器、特定构建的复现，口径不一，不能当作选型依据。
+
+能从官方信息确定的是：Maven 4 在模型构建、依赖解析等环节有大量内部优化提交，方向是减少内存分配和提升并行度，但没有可复现的公开基准数字。要验证自己的项目是否变快，正确做法是在同一台机器上分别用 Maven 3.9.16 和 Maven 4 RC 跑同一构建，比较实测耗时，而不是引用别人的结论。
+
+另外，构建缓存不是 Maven 4 核心自带的功能，而是独立扩展 `maven-build-cache-extension`（要求 Maven 3.9.0+，含 4.x），本地和远程缓存都支持。想缩短 CI 时间，直接评估这个扩展，不必等 Maven 4。
+
+## 十、采用顺序与适用边界
+
+**谁可以先上**：库作者和开源项目维护者。consumer POM 扁平化、bom 打包类型、父版本推断对发布方收益最直接，且 Maven 4 的兼容保证让低风险试水成为可能。官方也鼓励 OSS 项目用 RC 版发布到 Central，为 GA 前积攒真实反馈。
+
+**谁可以等**：生产环境的大型私有项目。4.0.0 尚未 GA，RC 阶段不适合直接上生产；建议先在分支上做并行验证，等 GA 后再切换。
+
+**谁不必着急**：只用 Maven 做内部构建、对 POM 格式无痛点的团队。Maven 3.9.16 仍在维护，4.x 的多数收益集中在多模块和发布场景，不升级不影响日常使用。
+
+**升级顺序建议**：先 Maven 3.9 升级插件 → 并行用 Maven 4 RC 验证 → `mvnup` 处理兼容 → 再逐步启用 4.1.0 模型特性。不要一步到位全量改造。
+
+Maven 4 的定位很清楚：它是给"POM 被冻住"的 Java 生态开的锁，不是一次性能翻新。理解这一点，就明白为什么它值得关注，也明白哪些项目现在就该开始准备。
 
 ## 最小可运行示例
 
-把四条主轴串成一个任务流：生成 Wrapper、开启远程构建缓存、用 BOM 简化 POM 继承链，最后在 CI 看每个 phase 的耗时。
+把一个 Maven 3 多模块项目切成 Maven 4 可用的最小形态。
 
 ```bash
-# 1) 生成 Wrapper（把 .mvn/wrapper/ 提交到 git，新人 clone 后直接 ./mvnw）
-mvn wrapper:wrapper -Dmaven=4.0.0
+# 1) 用 Maven 4 RC 构建现有项目（POM 不用改，先验证兼容）
+./mvn -version            # 确认运行环境 Java 17+
+./mvn clean verify        # 发现不兼容插件并逐个升级
 
-# 2) 用 Wrapper 构建，并让 CI 复用本地缓存目录
-./mvnw clean verify -Dmaven.repo.local=$CI_CACHE_DIR
-
-# 3) 看每个 phase 的耗时，定位瓶颈
-./mvnw --show-version --batch-mode validate
+# 2) 运行内置迁移工具
+mvnup check               # 检测潜在问题
+mvnup apply               # 自动修复已知问题
 ```
 
 ```xml
-<!-- BOM 导入：把 parent POM 继承链从 3-4 层降到 1-2 层 -->
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-framework-bom</artifactId>
-      <version>6.1.0</version>
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
+<!-- 父 POM：启用 consumer POM 扁平化，声明根目录 -->
+<project xmlns="http://maven.apache.org/POM/4.1.0" root="true">
+  <modelVersion>4.1.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>parent</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <properties>
+    <maven.consumer.pom.flatten>true</maven.consumer.pom.flatten>
+  </properties>
+  <!-- 不写 <modules>，让 Maven 4 自动发现子项目 -->
+</project>
 ```
 
-这条链里，Wrapper 解决版本不一致，远程缓存解决重复下载与重建，BOM 解决继承链过长导致难以维护。
+```xml
+<!-- 子项目：模型 4.1.0，父版本自动推断，不用写 version -->
+<project xmlns="http://maven.apache.org/POM/4.1.0">
+  <modelVersion>4.1.0</modelVersion>
+  <parent>
+    <relativePath>..</relativePath>
+  </parent>
+  <artifactId>service</artifactId>
+</project>
+```
+
+这条链里，自动发现解决"加模块要改父 POM"的问题，父版本推断解决"升级父版本要全项目改"的问题，consumer POM 扁平化解决"发布内容带无关构建信息"的问题。
 
 ## 自测题
 
-1. **Maven 主仓库包含什么？为什么 compiler / surefire / jar 这些插件是独立仓库？**
-   <details><summary>查看答案</summary>主仓库只有 Maven 核心（`maven-core`、`maven-model`、`maven-resolver` 等）。插件是独立仓库，按 release train 独立发版，核心引擎不用跟着插件一起升级。</details>
+1. **Maven 4 为什么要把构建 POM 和 consumer POM 分开？**
+   <details><summary>查看答案</summary>POM 同时承担构建信息和消费信息，schema 一改就逼整个生态适配，导致格式冻结。拆开后构建侧可以用新模型 4.1.0，消费侧仍发布 4.0.0，生态不受影响。</details>
 
-2. **mvnsh 把 CLI 重写了什么？冷启动时间从多少降到多少？**
-   <details><summary>查看答案</summary>CLI 用 Java 21 重新实现，冷启动从约 1.5s 降到约 400ms；可选 GraalVM native image 进一步降到 < 100ms。</details>
+2. **Maven 4 的模型版本 4.1.0 用在哪些文件上？consumer POM 用什么版本？**
+   <details><summary>查看答案</summary>4.1.0 只用于源码库中的构建 POM；发布到远程仓库的 consumer POM 仍是 4.0.0。</details>
 
-3. **Wrapper 默认化解决了什么问题？`./mvnw` 和 `mvn` 的区别是什么？**
-   <details><summary>查看答案</summary>解决团队/CI 的 Maven 版本不一致——Wrapper 自动下载指定版本，新人 clone 后直接 `./mvnw`。`mvnw` 是 Wrapper 启动器，`mvn` 是系统预装的 Maven。</details>
+3. **`<modules>` 和 `<subprojects>` 什么关系？子项目自动发现的条件是什么？**
+   <details><summary>查看答案</summary>`<subprojects>` 是 4.1.0 里取代 `<modules>` 的新元素，后者已废弃但可用。父 POM 为 pom 打包类型且不声明这两个元素时，Maven 自动发现子目录中含 `pom.xml` 的项目。</details>
 
-4. **Maven 4.x 把 Resilience4j 集成的默认值开成了什么？**
-   <details><summary>查看答案</summary>重试默认 3 次（指数退避），Maven Central 响应慢时自动断路，连接超时 30s、读超时 60s。</details>
+4. **Maven 4 运行要求什么 Java 版本？这是否限制项目的编译目标？**
+   <details><summary>查看答案</summary>运行 Maven 本身要求 Java 17。不限制编译目标，项目仍可编译 Java 8 等旧版本。</details>
 
-5. **为什么说「Maven 比 Gradle 慢」部分原因是缓存？4.x 把差距缩小了多少？**
-   <details><summary>查看答案</summary>老版本缓存机制不完善，每次构建重复下载与重建；4.x 引入基于 `${session.topology}` 的增量缓存和远程缓存规范，把差距缩小了 30-50%。</details>
+5. **mvnup 工具做什么？迁移分哪几步？**
+   <details><summary>查看答案</summary>`mvnup check` 检测问题，`mvnup apply` 自动修复。官方建议三步：先在 Maven 3.9 升级插件，再并行用 Maven 4 RC 验证，最后启用可选的新特性。</details>
 
-6. **Maven 在哪些场景不太适合？**
-   <details><summary>查看答案</summary>超大规模 monorepo（> 1000 模块）、Kotlin/Scala 项目、需要复杂自定义构建逻辑、polyrepo 跨仓库构建、追求极致增量构建。</details>
+6. **"Maven 4 比 Maven 3 快百分之几十"这类说法为什么不能直接信？**
+   <details><summary>查看答案</summary>Maven 官方没有发布统一 benchmark，社区数字来自不同项目、不同机器的实测，口径不一。要验证应在同一台机器分别跑两个版本比较。</details>
 
 ## 练习
 
-1. 在一个新项目跑 `mvn wrapper:wrapper`，把 `.mvn/wrapper/` 提交 git，再在一台没装 Maven 的机器上 clone 后直接 `./mvnw` 验证可用。
-2. 开启 Maven 4.x 远程构建缓存，配合 GitHub Actions cache 复用产物，对比二次构建的耗时差异。
-3. 把一个继承链超过 2 层的 parent POM 拆成 BOM 导入，验证拆分前后构建产物一致。
-4. 在 CI 里用 `--show-version --batch-mode` 输出每个 phase 的耗时，定位最慢的瓶颈 phase。
-5. 拿一个 3.8.x 项目升级到 4.x，先跑 `mvn validate -P apache-release` 验证插件兼容性，再处理 breaking changes。
+1. 用 Maven 4 RC 构建一个现有 Maven 3 项目，记录 `mvnup check` 报出的问题类别，确认你的项目主要属于哪一类。
+2. 把一个小型多模块项目升级到模型 4.1.0，删除 `<modules>` 声明验证自动发现是否生效。
+3. 启用 `maven.consumer.pom.flatten` 后发布一个构件，对比 Central 上 consumer POM 与本地 `pom.xml` 的差异，确认构建配置已被剔除。
+4. 写一个带 `before:each` / `after:each` 插件执行的多模块构建，观察执行顺序是否符合预期。
+5. 在 CI 里评估 `maven-build-cache-extension`，对比开启前后二次构建耗时。
 
 ## 进阶路径
 
-- **从「能构建」到「构建快」**：开启远程构建缓存、调 `maven-resolver` 内存占用、利用 Java 21 虚拟线程做并行插件调用。
-- **从「单仓库」到「多模块」**：reactor build 调优、模块边界合理划分、用 BOM 统一依赖版本避免冲突。
-- **从「构建」到「发布」**：`mvn deploy`、release plugin、私有仓库（Nexus / Artifactory）集成与制品晋级。
-- **从「Maven」到「生态」**：开发自己的 plugin 与 `extensions.xml`、在多语言 monorepo 里与 Gradle / Bazel 按项目规模分工。
+- **从"构建"到"发布"**：consumer POM 扁平化、bom 打包类型、CI 友好版本变量，把发布产物的干净度做到位。
+- **从"单模块"到"多模块"**：subprojects 自动发现、父版本推断、reactor 行为变化，理解多模块构建的新边界。
+- **从"用户"到"开发者"**：生命周期树结构、`before:` / `after:` 阶段、新插件 API，这是插件开发者迁移 Maven 4 的必修课。
+- **从"Maven"到"生态"**：对比 Gradle 的 task graph 与 Bazel 的规则，Maven 4 在哪个规模区间依然是最稳的选择。
 
 ## 常见问题 FAQ
 
-1. **升级到 4.x 后老插件报错，怎么排查？**
-   先在 3.8.x 跑 `mvn validate -P apache-release` 验证插件兼容性；不兼容的插件需升级到支持 4.x 的版本，或暂时锁定旧版。
+1. **Maven 4.0.0 正式版什么时候发布？现在能用吗？**
+   官方未给具体日期，截至 2026-08 最新候选版为 4.0.0-rc-6，官方明确 RC 不适合生产。可以在分支上验证兼容，等 GA 再上生产。
 
-2. **Wrapper 下载的 Maven 被中间人篡改怎么办？**
-   Wrapper 默认校验下载 jar 的 checksum，校验失败会拒绝启动；务必使用官方 `distributionUrl`，不要指向未知源。
+2. **升级到 4 后老插件报错怎么办？**
+   先升级到插件的 Maven 4 兼容版本——以 RC-6 已知问题为例，Tycho 需 5.0.3+、Quarkus 需 3.20+、pgpverify 需 1.20+，shade 的 reduced POM 报错需处理。仍报错就运行 `mvn -e` 拿完整堆栈，按 issue 模板反馈。
 
-3. **依赖传递里的 BOM 导入出错怎么处理？**
-   4.x 改进了 BOM 的传递依赖解析；检查 `dependencyManagement` 的导入顺序与版本范围，必要时显式锁定。
+3. **不升级到模型 4.1.0 能用 Maven 4 吗？**
+   可以。4.0.0 模型的 POM 在 Maven 4 下正常构建，4.1.0 只是可选的新特性入口。
 
 4. **构建还是太慢，从哪里入手？**
-   开远程构建缓存、在 CI 缓存本地 repo（`-Dmaven.repo.local`）、避免反复调用 `mvn`（把多个 goal 串成一次调用，如 `./mvnw clean verify`）。
+   先在同一台机器实测 Maven 3.9.16 与 Maven 4 RC 的差异，再评估 `maven-build-cache-extension`（要求 Maven 3.9.0+）。不要根据无出处的性能数字做决定。
 
-5. **超大规模 monorepo 怎么选构建工具？**
-   > 1000 模块评估 Gradle 的 task graph 优化；> 5000 模块直接上 Bazel，Maven / Gradle 都不擅长这种体量。
+5. **消费者收到新格式 POM 会不会出问题？**
+   不会。发布到仓库的 consumer POM 仍是模型 4.0.0，依赖解析结果与 Maven 3 兼容。扁平化功能默认关闭，只有显式开启才改变发布内容。
 
-6. **Maven 和 Gradle 该怎么分工？**
-   传统 Java 项目、中型 monorepo 用 Maven 最稳；Kotlin / Scala、大型 monorepo 用 Gradle；超大规模跨语言构建用 Bazel。按团队维护成本而非「哪个更好」选型。
+6. **用了 Maven 4 还能换回 Maven 3 吗？**
+   只改到模型 4.0.0、未启用新特性时，项目可双向切换。一旦升级到 4.1.0 模型并用上 `root="true"`、`<subprojects>` 等新元素，换回 Maven 3 需要回退这些改动。

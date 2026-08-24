@@ -1,729 +1,359 @@
 ---
-title: "Voicebox：开源语音合成工作站——本地运行、支持5大TTS引擎、17.9K Stars的 ElevenLabs替代方案"
+title: "Voicebox：把语音克隆、生成与听写都留在本地的开源语音工作室"
 date: "2026-04-16T01:10:00+08:00"
 slug: "voicebox-open-source-voice-synthesis-studio"
 github_repo: "jamiepine/voicebox"
-description: "Voicebox是17.9K Stars的开源语音合成工作室，支持Qwen3-TTS/LuxTTS/Chatterbox等5大TTS引擎、23种语言、本地运行保护隐私。内置音频特效、无限时长、Stories编辑器、REST API。"
+description: "Voicebox 是本地优先的开源 AI 语音工作室，用几秒音频零样本克隆音色，支持 7 个 TTS 引擎、23 种语言，内置全局听写、Stories 多轨编辑、REST 与 MCP API，作为 ElevenLabs 与 WisprFlow 的本地一体化替代方案运行在你自己的机器上。"
 draft: false
 categories: ["技术笔记"]
-tags: ["语音合成", "TTS", "开源"]
+tags: ["语音合成", "TTS", "开源", "本地优先"]
 ---
 
-# Voicebox：开源语音合成工作站——本地运行、支持 5 大 TTS 引擎、17.9K Stars 的 ElevenLabs 替代方案
+# Voicebox：把语音克隆、生成与听写都留在本地的开源语音工作室
 
-> **目标读者**：语音应用开发者、AI 音频研究者、内容创作者、隐私敏感用户
-> **预计阅读时间**：50-70 分钟
-> **前置知识**：语音合成基本概念、Python/TypeScript 基础、了解 TTS 模型
-> **难度定位**：⭐⭐⭐⭐ 专家设计
+语音生意被两家云服务分成了两半：ElevenLabs 负责让机器说话，WisprFlow 负责听懂你说话。Voicebox 想做的，是把这两半合进一套开源应用，而且模型和数据都不离开你的机器。它定位成 ElevenLabs 和 WisprFlow 的本地替代，附带一个内置的本地大语言模型来润色语音和构造角色人格——这套东西不是某一家竞品的镜像，而是把「人说 → 字 → Agent 说 → 声」整条语音回路在单机上闭环的尝试。
 
----
+先看它覆盖的能力边界，再进入细节：
 
-## §1 本文覆盖内容
+| 语音回路的半边 | 云端头号玩家 | Voicebox 对应能力 |
+|------|------|------|
+| 输出（TTS 生成与克隆） | ElevenLabs | 7 个 TTS 引擎、零样本克隆、音效后处理 |
+| 输入（听写与转录） | WisprFlow | 全局热键听写、Whisper 转录、Captures |
+| 串联（Agent 语音、人格） | 各家 API | MCP `voicebox.speak`、本地 LLM 人格 |
 
-1. **Voicebox 的定位**：为何它是 ElevenLabs 的开源替代方案
-2. **5 大 TTS 引擎的优劣**：根据场景选择合适的引擎
-3. **核心功能使用**：语音克隆、特效处理、Stories 编辑器
-4. **本地运行的技术架构**：Tauri + FastAPI + MLX/CUDA
-5. **REST API 集成**：将语音合成接入自己的应用
-6. **部署与开发**：多平台安装、源码开发、自定义模型扩展
+后面 7 节依次讲：它到底是什么，7 个引擎怎么选，核心功能，技术架构，API 集成，部署方式，以及什么时候该用、什么时候不必用它。
 
----
+## §1 定位：它真正在解决什么问题
 
-## §2 背景与动机：为何需要 Voicebox
+云 TTS 与服务型听写各有各的约束，而这些约束在本地方案里可以同时消失。
 
-### 2.1 语音合成的现状
+**数据不出机器。** 声音采样、口述内容和生成音频都留在本机，不上传第三方。对声纹敏感的用户、有保密要求的商业旁白，这一点是硬需求，而不是卖点。
 
-语音合成（TTS）在过去几年经历了很大变化。从传统的拼接合成到基于深度学习的 WaveNet、Transformer TTS，音质和自然度有了质的飞跃。但商业化方案如 ElevenLabs 虽然效果出色，存在几个问题：
+**成本随量不线性上升。** 云 API 的计价随生成字数增长。批量做有声书、长播客时，本地推理的成本基本恒定在电费和显存占用上。
 
-- **数据隐私问题**：音频和语音数据需要上传到云端
-- **成本问题**：免费额度有限，高质量输出需要付费
-- **封闭性**：无法自托管，无法自定义模型
+**工具链可以闭环。** 云方案往往输入输出各用一家。Voicebox 把 TTS、STT、本地 LLM 和 Agent 语音输出放进同一处，Cursor、Claude Code 这类 MCP 客户端叫一次 `voicebox.speak` 就能用克隆声线说话。
 
-### 2.2 Voicebox 的由来
+**模型可选。** 不同的文本长度、语言、情感要求和显存预算对应不同引擎，每次都可在音色、成本和语言覆盖之间权衡。
 
-Voicebox 由 jamiepine 开发，目标是做一个**本地优先的语音合成工作室**：
-
-- **完全开源**：MIT 许可证，代码透明可审计
-- **本地运行**：模型和数据留在用户机器上
-- **多引擎支持**：整合多个 TTS 引擎，让用户根据需求选择
-- **功能完整**：从语音克隆到特效处理，从单语音生成到多轨编辑
-
-### 2.3 项目概览
+## §2 项目概况与能力总览
 
 | 属性 | 值 |
 |------|------|
-| **Stars** | 17,995 ⭐ |
-| **Forks** | 2,091 |
-| **语言** | TypeScript (前端) + Python (后端) + Rust (桌面应用) |
+| **Stars** | 51,000+（持续增长） |
+| **Forks** | 6,300+ |
+| **技术栈** | TypeScript（前端）+ Python（后端）+ Rust（桌面壳） |
 | **许可证** | MIT |
 | **创建时间** | 2026-01-25 |
-| **官网** | https://voicebox.sh |
+| **官网 / 仓库** | https://voicebox.sh / https://github.com/jamiepine/voicebox |
 
-### 2.4 核心特色一览
+能力清单可以浓缩成四条主线，避免被罗列淹没：
 
-- 🎙️ **5 大 TTS 引擎**：Qwen3-TTS、LuxTTS、Chatterbox Multilingual、Chatterbox Turbo、TADA
-- 🌍 **23 种语言**：覆盖英语、中文、阿拉伯语、日语、印地语等
-- 🔒 **本地隐私**：所有处理在本地完成，数据不外传
-- 🎛️ **8 种音效**：Pitch Shift、Reverb、Delay、Chorus 等
-- ⏱️ **无限时长**：自动分 chunk + crossfade 处理长文本
-- 🎭 **情感标签**：`[laugh]`、`[sigh]`、`[gasp]` 等表达性标签
-- 📝 **Stories 编辑器**：多轨时间线，编辑播客、对话
-- 🔄 **REST API**：轻松集成到自己的应用
+1. **语音克隆与生成**——几秒参考音频零样本克隆；7 个引擎按需切换；每个档案还能挂一个自由描述的人格（persona）。
+2. **无限时长与后处理**——长文本自动按句切分、跨 chunk 交叉淡化拼接；8 种由 Spotify pedalboard 驱动的声音特效。
+3. **输入与编辑**——全局热键在任何应用里听写；Whisper 转录；Stories 多轨时间线做播客、对话和叙事。
+4. **对外集成**——REST API 加内置 MCP server，任何 MCP 客户端都能让应用「开口」。
 
----
+## §3 七大 TTS 引擎：按场景选，不是按名气选
 
-## §3 五大 TTS 引擎深度解析
+Voicebox 目前接入 7 个引擎。选择的关键在语言、文本长度、表达需求和显存预算这几项，而不是谁更知名。
 
-### 3.1 引擎总览
-
-Voicebox 整合了 5 个不同的 TTS 引擎，按场景选择：
-
-| 引擎 | 参数量 | 语言数 | 核心优势 |
+| 引擎 | 参数量 | 语言数 | 主要特点 |
 |------|--------|--------|----------|
-| **Qwen3-TTS** | 0.6B / 1.7B | 10 | 高质量多语言克隆，支持指令控制 |
-| **LuxTTS** | - | 英语 | 轻量级 (~1GB VRAM)，48kHz 输出，CPU 150 倍实时 |
-| **Chatterbox Multilingual** | - | 23 | 最广语言覆盖，阿拉伯语/希伯来语/印地语等 |
-| **Chatterbox Turbo** | 350M | 英语 | 快速，支持情感/声音标签 |
-| **TADA** | 1B / 3B | 10 | HumeAI 语音-语言模型，700 秒+连贯音频 |
+| **Qwen3-TTS** | 0.6B / 1.7B | 10 | 高质量多语言克隆，支持指令控制（如「慢点说」「耳语」） |
+| **Qwen CustomVoice** | — | 10 | 9 个精修预设音色，用自然语言描述语速与情绪，无需参考音频 |
+| **LuxTTS** | — | 英语 | 轻量（约 1 GB 显存），48 kHz 输出，CPU 可达 150 倍实时 |
+| **Chatterbox Multilingual** | — | 23 | 语言覆盖最广（阿拉伯语、丹麦语、芬兰语、希腊语、希伯来语、印地语、马来语、挪威语、波兰语、斯瓦希里语、瑞典语、土耳其语等） |
+| **Chatterbox Turbo** | 350M | 英语 | 速度快，理解 `[laugh]`、`[sigh]` 这类副语言标签 |
+| **HumeAI TADA** | 1B / 3B | 10 | 语音-语言模型，可生成 700 秒以上连贯音频，文本-声学双对齐 |
+| **Kokoro** | 82M | 8 | 50 个曲库预设音色，模型极小，CPU 推理快 |
 
-### 3.2 Qwen3-TTS：阿里通义千问语音
+### Qwen3-TTS：可指令的多语言克隆
 
-**Qwen3-TTS** 是阿里巴巴通义千问系列的一部分，提供两个版本：
-
-- **0.6B**：轻量版，适合快速推理
-- **1.7B**：高质量版，效果更好
-
-**核心能力**：
-
-```python
-# 支持指令控制生成
-"Speak slowly and whisper"  # 控制语速和风格
-"Please add emphasis on the word IMPORTANT"  # 强调特定词
-```
-
-**支持语言**（10 种）：
-英语、中文、西班牙语、法语、德语、韩语、俄语、葡萄牙语、意大利语、波兰语
-
-**适用场景**：
-- 需要精准控制语音输出的场景
-- 多语言产品演示
-- 高质量语音助手
-
-### 3.3 LuxTTS：轻量级英语专家
-
-**LuxTTS** 专为英语语音合成优化，主打**轻量化和高效率**：
-
-- **VRAM 占用**：约 1GB（相比之下其他模型通常需要 4-8GB）
-- **输出采样率**：48kHz（高于常见的 16kHz 或 24kHz）
-- **CPU 性能**：150 倍实时（可在没有 GPU 的机器上流畅运行）
-
-**适用场景**：
-- 资源受限环境（轻量级设备、CPU 推理）
-- 需要快速迭代的开发测试
-- 对采样率有较高要求的专业音频制作
-
-### 3.4 Chatterbox Multilingual：23 种语言全覆盖
-
-**Chatterbox Multilingual** 的核心优势是**最广泛的语言覆盖**：
-
-支持语言（23 种）：
-英语、阿拉伯语、丹麦语、芬兰语、希腊语、希伯来语、印地语、马来语、挪威语、波兰语、斯瓦希里语、瑞典语、土耳其语、中文、捷克语、荷兰语、法语、德语、匈牙利语、意大利语、日语、韩语、葡萄牙语、罗马尼亚语、俄语、西班牙语、泰语、土耳其语、乌克兰语、越南语
-
-**适用场景**：
-- 多语言内容制作
-- 小语种语音合成需求
-- 全球化产品的本地化测试
-
-### 3.5 Chatterbox Turbo：情感表达专家
-
-**Chatterbox Turbo**（350M 参数）是专门为**情感表达**优化的英语模型：
-
-**情感标签系统**：
-
-```
-[laugh]      # 笑声
-[chuckle]    # 轻笑
-[gasp]       # 喘息
-[cough]      # 咳嗽
-[sigh]       # 叹息
-[groan]      # 呻吟
-[sniff]      # 吸鼻子
-[shush]      # 嘘声
-[clear throat]  # 清嗓子
-```
-
-**使用示例**：
+阿里通义千问系列的语音模型，0.6B 偏快、1.7B 偏稳。它支持指令控制语速和风格，例如让模型「说得慢一点」「用耳语」：
 
 ```text
-"Hello everyone [laugh] welcome to the show! [sigh] I'm so excited to be here today."
+Speak slowly and whisper          # 控制语速与音量
+Please emphasize the word IMPORTANT   # 强调某个词
 ```
 
-**适用场景**：
-- 播客和有声书（需要自然情感）
-- 游戏对话（NPC 情感表达）
-- 动画配音（多情感角色）
+支持英语、中文、西班牙语、法语、德语、韩语、俄语、葡萄牙语、意大利语、波兰语共 10 种语言。适合需要精确控制输出的产品演示和语音助手。
 
-### 3.6 TADA：HumeAI 语音-语言模型
+### Qwen CustomVoice：免参考音频的预设音色
 
-**TADA**（1B / 3B）是基于 **HumeAI** 的语音-语言模型，特点：
+同样是通义系，但它不需要上传参考片段。内置 9 个精修预设音色，语速和情绪通过自然语言描述控制。想要快速得到一个不那么「机器味」的默认声道，这是最省事的选择。
 
-- **超长音频**：支持 700 秒以上的连贯音频生成
-- **文本-音频双对齐**：更精确的音素与时间戳对应
-- **上下文理解**：能理解上下文的语义和情感
+### LuxTTS：显存和 CPU 友好的英语专家
 
-**适用场景**：
-- 长文本语音合成（有声书、课程）
-- 对时间对齐有精确要求的场景
-- 需要高度上下文理解的语音生成
+约 1 GB 显存即可跑，输出 48 kHz，CPU 上能到 150 倍实时。没有独显的开发机、或者在迭代测试阶段想快速出结果的场景，它最合适。
 
-### 3.7 引擎选择指南
+### Chatterbox Multilingual：语言覆盖最广
+
+覆盖 23 种语言，含阿拉伯语、希伯来语、印地语、斯瓦希里语这类较冷门的语种。做全球化的本地化配音，以它为基底，用其他引擎兜底细节。
+
+### Chatterbox Turbo：唯一理解情感标签的引擎
+
+350M 参数，专为英语的情感表达优化。这里有一个容易踩的边界：**副语言标签只有 Chatterbox Turbo 会解释成笑声、叹息；Qwen3-TTS、LuxTTS、Chatterbox Multilingual 和 TADA 会把 `[laugh]` 这类标签按字面读出来。** 选中 Turbo 后，在文本输入框敲 `/` 会弹出标签插入器，可内联加入：
+
+```
+[laugh] [chuckle] [gasp] [cough] [sigh] [groan] [sniff] [shush] [clear throat]
+```
+
+例：
+```text
+Hello everyone [laugh] welcome to the show! [sigh] I'm so excited to be here today.
+```
+
+### HumeAI TADA：长文对齐
+
+基于 Llama 3.2 的语音-语言模型，1B 侧重英语、3B 多语言。它由一个因果语言模型加流式匹配扩散解码器组成，能生成 700 秒以上的连贯音频，文本与声学的时间戳严格对齐。有声书、课程这类长文本，以及要求音素与时间精确对应的场景优先选它。
+
+### Kokoro：最小最快的曲库
+
+82M 参数，随包带 50 个曲库预设音色，CPU 就能飞快推理。对音质要求不苛求、想开箱即用得到一堆人声时，它最低成本。
+
+### 引擎选择速查
 
 | 需求 | 推荐引擎 |
 |------|----------|
-| 快速原型开发 | LuxTTS |
+| 快速原型 / 无独显 | LuxTTS |
 | 高质量英语配音 | Qwen3-TTS 1.7B |
-| 多语言支持 | Chatterbox Multilingual |
+| 免参考音频快速成声 | Qwen CustomVoice |
+| 多语言覆盖 | Chatterbox Multilingual |
 | 情感表达丰富 | Chatterbox Turbo |
-| 超长文本 | TADA |
-| 轻量级部署 | LuxTTS |
-| 精确时间对齐 | TADA |
+| 超长文本、精确对齐 | HumeAI TADA |
+| 曲库音色、轻量部署 | Kokoro |
 
----
+## §4 核心功能
 
-## §4 核心功能详解
+### 语音克隆与档案管理
 
-### 4.1 语音克隆：从几秒音频到完整声音
+从一个音频样本克隆音色是零样本的：上传 10-30 秒的 MP3、WAV 或 M4A，或在应用里直接录一段就能得到声音档案。想提升克隆质量，可以传多个内容不同的样本（朗读、对话、不同情绪），也让每个档案绑定默认的特效链。
 
-Voicebox 支持从短音频样本中克隆声音，这是其最核心的功能之一。
+档案与生成记录都存在本地 SQLite，理论上不上传任何服务器。档案支持导入导出，方便备份或分享。
 
-**创建声音档案**：
+### 语音人格：让声音「有人设」
 
-```bash
-# 方式1：从音频文件
-上传 10-30 秒的音频文件（MP3、WAV、M4A 等）
+给任何一个档案附加一段自由描述——这是谁、怎么说话、在意什么。设置后生成框会出现两个动作，由一个本地 Qwen3 大模型驱动，全程不出机器：
 
-# 方式2：应用内录音
-点击录音按钮，直接在应用中录制
+- **Compose（写一句）**：点一下，模型为这个人设现写一句台词进文本框，可编辑后合成，也可再点换一句。
+- **Speak in character（入戏）**：打开开关后，输入文本会先经人设 LLM 改写成该声音的口吻，再送进 TTS。
+
+Agent 端通过 MCP 传 `personality: true` 复用同一条改写管线，等于把 `voicebox.speak` 变成「文本 → 人设 LLM → TTS」的三段式通道。本地 LLM 可选 Qwen3 0.6B / 1.7B / 4B，与 TTS 共用同一套推理运行时。
+
+### 无限时长生成
+
+模型对单次输入长度有上限。Voicebox 的解法是先把文本按句边界切开，每段独立生成再交叉淡化拼接：
+
+- 自动分 chunk，长度可在 100-5,000 字符间配置
+- 相邻 chunk 的 crossfade 时长 0-200 ms 可调
+- 单次最大 50,000 字符
+- 分句时能识别缩写（C.O.D.、Mr.）、CJK 标点，并保持 `[标签]` 完整
+
+### 8 种音效后处理
+
+由 Spotify 的 `pedalboard` 库驱动，生成后可实时预览，也能存成可复用预设：
+
+| 效果 | 说明 |
+|------|------|
+| Pitch Shift | 上下最多 12 个半音 |
+| Reverb | 房间大小、阻尼、干湿混合可调 |
+| Delay | 延迟、反馈与混合比可调的回声 |
+| Chorus / Flanger | 金属感或丰润质感的调制延迟 |
+| Compressor | 动态范围压缩 |
+| Gain | 音量调整（-40 到 +40 dB） |
+| High-Pass Filter | 切除低频 |
+| Low-Pass Filter | 切除高频 |
+
+内置 4 套预设（Robotic、Radio、Echo Chamber、Deep Voice），支持自定义，也允许把特效链设成档案默认。
+
+### Stories 多轨时间线
+
+做对话、播客、多角色叙事的编辑器：多轨拖拽排布、时间线上直接裁剪分割、播放头全轨同步、每个轨道片段可固定到某个版本。角色配音、旁白、背景音乐分层放置，是一次性拼出多角色对话的可视化方式。
+
+### 录音、听写与 Captures
+
+语音输入的半边是一个全局热键：在任何应用里按住键说话，松开后 macOS 上字幕会直接粘进当前聚焦的输入框（带目标感知粘贴，并原子化保存/还原剪贴板）。按住说话、点按切换两种触发方式都可重新绑定；压住 Push-to-Talk 时再拍一下空格，能把会话无缝升级成持续听写，中间不丢音频。
+
+转录由 Whisper 驱动，按平台走 MLX（Apple Silicon）或 PyTorch（CUDA / ROCm / DirectML / CPU）。Base / Small / Medium / Large 是标准质量阶梯，Turbo 比 Large 快约 8 倍且质量损失较小。每次听写、录音和上传的文件都会落在 Captures 页：可以回放、换任意 Whisper 尺寸重新转写，或把原始转写经本地 LLM 用不同标志再清洗一遍（去掉语气词、去自我修正、保留术语）。点一个按钮，还能把某条 capture 直接转成某个克隆声线的语音样本。
+
+### 生成版本与队列
+
+每次生成都保留版本：
+
+- **Original**：干净的原始输出，始终保留
+- **Effects versions**：从任一源版本套不同特效链
+- **Takes**：换随机种子重新生成出变体
+- **Source tracking**：每个版本记录它的来源
+- **Favorites**：给常用生成加星
+
+生成全程非阻塞：提交后立刻可以写下一条。串行执行队列避免显存争抢，SSE 流式回报状态，失败可重试，崩溃遗留的陈旧任务在下次启动时自动恢复。
+
+## §5 技术架构
+
+### 三层结构
+
+```
+┌──────────────────────────────────────────────┐
+│  桌面客户端（Tauri + React）                 │
+│  生成面板 / 声音档案 / Stories 关键位置        │
+├──────────────────────────────────────────────┤
+│  状态层：Zustand + React Query               │
+├──────────────────────────────────────────────┤
+│  后端（FastAPI）                             │
+│  routes（校验输入） → services（业务逻辑）    │
+│  → backends（TTS/STT 推理） → utils（音频）  │
+├──────────────────────────────────────────────┤
+│  推理运行时：MLX / PyTorch（CUDA·ROCm·DirectML·CPU）│
+└──────────────────────────────────────────────┘
 ```
 
-**多样本支持**：
-为了获得更高质量的克隆效果，可以上传多个不同内容的音频样本：
+用 Tauri 而不是 Electron 做桌面壳：安装包小、内存占用低、启动快，前端在系统 WebView 里跑；推理逻辑在 Python 的 FastAPI 里，利用成熟的数据科学生态。代价是跨了 Rust + Python + 前端三套工具链，首次构建配置项偏多——这是本地优先架构愿意付的成本。
 
-```
-voice_profile/
-├── sample_1.wav  # 朗读内容
-├── sample_2.wav  # 对话内容
-└── sample_3.wav  # 不同情绪
-```
+请求路径很清晰：HTTP 请求进 `routes/` 做校验，落到 `services/` 处理业务逻辑，再由 `backends/` 里的 TTS/STT 引擎接管，最后 `utils/` 做音频处理。可观测的入口有 `app.py`（FastAPI 应用工厂）、`main.py`（uvicorn 入口）、`server.py`（Tauri sidecar 启动器与父进程看门狗）。
 
-**隐私保证**：
-所有音频处理在本地完成，声音档案存储在本地 SQLite 数据库中，不会上传到任何服务器。
+### 一次生成任务怎么过系统
 
-### 4.2 无限时长生成
+把抽象结构串起来看：你在生成框输入一段话并选中档案 Morgan。
 
-长文本语音合成一直是 TTS 的难点，因为模型对单次输入的长度有限制。Voicebox 通过**自动分 chunk + crossfade** 解决这个问题：
+1. 后端把请求收进串行的任务队列，返回任务 ID，界面立刻可以输入下一条。
+2. `services/generation.py` 若发现文本超长，按句边界切成 chunk。
+3. `backends/` 里你选的引擎分 chunk 生成音频，chunk 间交叉淡化。
+4. 若该档案挂了默认特效链，`utils/` 用 pedalboard 加上音效。
+5. 结果落盘并在 SQLite 里写入一条生成记录，附带原始版本、来源与时间戳。
+6. 页面经 SSE 收到完成事件，Stories 编辑器里可直接拖进时间线。
 
-**工作原理**：
+一次「说话」也能从键鼠端起头：按住全局热键说话 → Whisper 转写（可走 LLM 清洗）→ 粘回输入框 → 选引擎与档案生成语音；Agent 走同一条通道，用 MCP 调 `voicebox.speak` 把结果直接播给用户。
 
-```
-原始文本 → 智能分句 → 独立生成 → crossfade合并 → 完整音频
-     ↓
-分句规则：
-- 按句号、问号、感叹号分句
-- 智能处理缩写（C.O.D.、Mr.）
-- 保留 [标签] 的完整性
-- CJK 标点特殊处理
-```
+### GPU 支持矩阵
 
-**参数配置**：
-
-| 参数 | 默认值 | 范围 | 说明 |
-|------|--------|------|------|
-| 自动分 chunk 长度 | 500 chars | 100-5000 | 超过此长度自动分割 |
-| Crossfade 时长 | 50ms | 0-200 | 相邻 chunk 的混合时长 |
-| 最大文本长度 | 50,000 chars | - | 单次生成的最长文本 |
-
-### 4.3 音效处理：8 种专业效果
-
-Voicebox 内置了 Spotify 的 **Pedalboard** 音频特效库，提供 8 种专业音效：
-
-| 效果 | 参数 | 说明 |
+| 平台 | 后端 | 说明 |
 |------|------|------|
-| **Pitch Shift** | ±12 半音 | 调整音高，不改变语速 |
-| **Reverb** | room size, damping, wet/dry | 混响效果 |
-| **Delay** | time, feedback, mix | 延迟/回声效果 |
-| **Chorus/Flanger** | rate, depth | 镶边/合唱效果 |
-| **Compressor** | threshold, ratio | 动态范围压缩 |
-| **Gain** | -40 to +40 dB | 音量调整 |
-| **High-Pass Filter** | 截止频率 | 切除低频 |
-| **Low-Pass Filter** | 截止频率 | 切除高频 |
+| macOS Apple Silicon | MLX（Metal） | 借助神经网络单元约 4-5 倍加速 |
+| Windows/Linux NVIDIA | PyTorch CUDA | `just setup` 自动识别并配置 |
+| AMD GPU | PyTorch ROCm | Windows/Linux 均支持 |
+| 通用 Windows/其余 GPU | DirectML | 无专用后端时兜底 |
+| 任意平台 | CPU | 通用支持，速度较慢 |
 
-**内置预设**：
+## §6 REST API 与 MCP 集成
 
-```
-预设名称        | 使用的特效组合
-----------------|----------------------------------
-Robotic         | Pitch +4 半音, Chorus, Compressor
-Radio           | High-pass 300Hz, Low-pass 3kHz
-Echo Chamber    | Reverb (大房间), Delay 200ms
-Deep Voice      | Pitch -3 半音, Reverb
-```
+Voicebox 是 API-first 的。后端在本机跑起来后默认工作流的地址是 `http://127.0.0.1:17493`，完整字段以 `/docs`（OpenAPI）为准。
 
-**实时预览**：
-所有特效调整都支持实时预览，可以在应用内即时听到调整后的效果。
-
-### 4.4 Stories 编辑器：多轨时间线
-
-Stories 编辑器是 Voicebox 的**专业级多轨音频编辑功能**：
-
-**核心功能**：
-
-```
-时间线结构：
-┌─────────────────────────────────────────────────────┐
-│ Track 1: 旁白     │ ████████ │ ████████████ │ ██ │
-├─────────────────────────────────────────────────────┤
-│ Track 2: 角色A   │     │ ████████████ │          │
-├─────────────────────────────────────────────────────┤
-│ Track 3: 角色B   │          │ ██████████████ │   │
-├─────────────────────────────────────────────────────┤
-│ Track 4: 背景音乐 │ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
-└─────────────────────────────────────────────────────┘
-```
-
-- **多轨支持**：同时编辑多条音轨
-- **拖拽调整**：调整每条音轨的内容和位置
-- **内联裁剪**：在时间线上直接裁剪和分割音频
-- **播放同步**：播放头在所有轨上同步移动
-- **版本固定**：每个 clip 可以固定特定版本
-
-**适用场景**：
-
-| 场景 | 使用方式 |
-|------|----------|
-| 播客制作 | 旁白 + 多人对话 + 背景音乐 |
-| 有声书 | 多个角色配音 + 旁白 |
-| 对话演示 | 产品对话模拟 |
-| 视频配音 | 与画面同步的多轨音频 |
-
-### 4.5 录音与转录
-
-**录音功能**：
+**生成语音：**
 
 ```bash
-# 录音模式
-- 内置麦克风录音（带波形可视化）
-- 系统音频捕获（macOS / Windows）
-- 实时输入电平监测
-```
-
-**转录功能**：
-集成 OpenAI Whisper（或 Whisper Turbo）进行自动语音识别：
-
-```bash
-# 支持的 Whisper 版本
-- Whisper (PyTorch): 通用场景
-- Whisper Turbo: 快速转录
-- Whisper MLX: Apple Silicon 优化
-```
-
-**导出格式**：
-WAV、MP3、M4A 等多种格式。
-
----
-
-## §5 技术架构深度解析
-
-### 5.1 整体架构
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Voicebox Desktop App                 │
-│                    (Tauri + React)                      │
-├─────────────────────────────────────────────────────────┤
-│                    Frontend (React)                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐    │
-│  │ Voice    │  │ Generation│  │ Stories          │    │
-│  │ Profiles │  │ Controls  │  │ Timeline         │    │
-│  └──────────┘  └──────────┘  └──────────────────┘    │
-├─────────────────────────────────────────────────────────┤
-│              State: Zustand + React Query              │
-├─────────────────────────────────────────────────────────┤
-│                    Backend (FastAPI)                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐    │
-│  │ TTS      │  │ Effects  │  │ Transcription    │    │
-│  │ Engines  │  │ (Pedalboard) │ (Whisper)     │    │
-│  └──────────┘  └──────────┘  └──────────────────┘    │
-├─────────────────────────────────────────────────────────┤
-│           Inference: MLX / PyTorch (CUDA)              │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 5.2 Tauri 桌面应用
-
-Voicebox 使用 **Tauri** 而不是 Electron 来构建桌面应用：
-
-**Tauri vs Electron**：
-
-| 维度 | Tauri | Electron |
-|------|-------|----------|
-| 体积 | 2-10 MB | 100-200 MB |
-| 内存占用 | 极低 | 较高 |
-| 启动速度 | 秒级 | 较慢 |
-| 底层语言 | Rust | Node.js |
-| 安全性 | 更高 | 需额外配置 |
-| Web 兼容性 | 依赖系统 WebView | 自带 Chromium |
-
-Tauri 的优势：
-- **轻量**：安装包小，下载快
-- **快速**：启动时间短，用户体验好
-- **原生感**：使用系统 WebView，更贴近原生应用
-
-### 5.3 后端架构：FastAPI + Python
-
-后端使用 **FastAPI** 构建，提供 REST API：
-
-```python
-# 后端核心结构
-backend/
-├── main.py              # FastAPI 入口
-├── routers/
-│   ├── generate.py      # TTS 生成接口
-│   ├── profiles.py      # 声音档案管理
-│   ├── effects.py       # 音效处理
-│   └── transcription.py # 转录接口
-├── engines/
-│   ├── qwen3.py         # Qwen3-TTS 引擎
-│   ├── luxtts.py        # LuxTTS 引擎
-│   ├── chatterbox.py    # Chatterbox 引擎
-│   └── tada.py          # TADA 引擎
-├── effects/
-│   └── pedalboard.py    # Pedalboard 特效
-└── models/
-    └── whisper.py       # Whisper 转录
-```
-
-### 5.4 GPU 支持矩阵
-
-| 平台 | 后端 | 加速方式 |
-|------|------|----------|
-| **macOS Apple Silicon** | MLX | Neural Engine，4-5x 加速 |
-| **Windows NVIDIA** | PyTorch CUDA | GPU 加速，自动下载 CUDA |
-| **Linux NVIDIA** | PyTorch CUDA | 同上 |
-| **Linux AMD** | PyTorch ROCm | 自动设置 HSA_OVERRIDE_GFX_VERSION |
-| **Windows 任意 GPU** | DirectML | 通用 Windows GPU 支持 |
-| **Intel Arc** | IPEX/XPU | Intel 独显加速 |
-| **任意平台** | CPU | 通用支持，速度较慢 |
-
-### 5.5 数据库：SQLite
-
-声音档案和配置信息存储在本地 **SQLite** 数据库中：
-
-```sql
--- 声音档案表
-CREATE TABLE voice_profiles (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    language TEXT,
-    created_at TIMESTAMP,
-    audio_samples TEXT,  -- JSON 数组，存储样本路径
-    effects_preset TEXT,
-    description TEXT
-);
-
--- 生成记录表
-CREATE TABLE generations (
-    id TEXT PRIMARY KEY,
-    profile_id TEXT,
-    engine TEXT,
-    text TEXT,
-    audio_path TEXT,
-    created_at TIMESTAMP,
-    metadata TEXT  -- JSON，存储版本信息
-);
-```
-
----
-
-## §6 REST API 与集成
-
-### 6.1 API 概览
-
-Voicebox 提供完整的 REST API，可以独立使用后端服务：
-
-```bash
-# 基础 URL
-http://localhost:17493
-
-# API 文档
-http://localhost:17493/docs
-```
-
-### 6.2 核心 API 端点
-
-**生成语音**：
-
-```bash
-curl -X POST http://localhost:17493/generate \
+curl -X POST http://127.0.0.1:17493/generate \
   -H "Content-Type: application/json" \
   -d '{
-    "text": "Hello world, this is a test of the Voicebox API.",
-    "profile_id": "abc123",
-    "engine": "qwen3",
-    "language": "en"
+    "text": "Hello, this is a test of the Voicebox API.",
+    "voice": "Morgan"
   }'
 ```
 
-**响应**：
+具体请求/响应字段因引擎而异，调试时打开 `http://127.0.0.1:17493/docs` 查看交互式 schema，比套用任何固定模板都可靠。
 
-```json
-{
-  "id": "gen_xyz789",
-  "status": "completed",
-  "audio_url": "/audio/gen_xyz789.wav",
-  "duration_seconds": 3.2
-}
+**让 Agent 说话：**
+
+MCP 客户端（Claude Code、Cursor、Cline、Windsurf、VS Code）装好协议后，一条工具调用即可：
+
+```ts
+await voicebox.speak({
+  text: "Deploy complete.",
+  profile: "Morgan",
+});
 ```
 
-**声音档案管理**：
-
-```bash
-# 列出所有声音档案
-curl http://localhost:17493/profiles
-
-# 创建新档案
-curl -X POST http://localhost:17493/profiles \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "My Voice Clone",
-    "language": "en"
-  }'
-
-# 上传音频样本
-curl -X POST http://localhost:17493/profiles/{id}/samples \
-  -F "audio=@sample.wav"
-```
-
-**音效处理**：
-
-```bash
-# 应用特效
-curl -X POST http://localhost:17493/effects \
-  -H "Content-Type: application/json" \
-  -d '{
-    "audio_id": "gen_xyz789",
-    "effects": [
-      {"type": "reverb", "room_size": 0.8},
-      {"type": "pitch_shift", "semitones": 2}
-    ]
-  }'
-```
-
-### 6.3 集成场景
-
-| 场景 | 集成方式 | 示例 |
-|------|----------|------|
-| 游戏开发 | REST API | NPC 对话、剧情语音 |
-| 播客制作 | Stories Editor | 多角色播客合成 |
-| 无障碍工具 | REST API | 文本转语音朗读 |
-| 语音助手 | REST API | 自托管语音助手 |
-| 内容自动化 | REST API | 自动生成多语言配音 |
-
----
+非 MCP 的一方（脚本、自制 harness）通过 `POST /speak` 拿到同样能力。每个客户端还能在 Settings → MCP 里绑定固定的声线（比如 Claude Code 用 Morgan、Cursor 用 Scarlett），靠提示浮层和 `last_seen_at` 判断声音到底从哪个 Agent 出来，避免静默后台发声。转录走 `/transcribe`，健康检查走 `/health`。
 
 ## §7 部署与安装
 
-### 7.1 支持的平台
+| 平台 | 安装方式 |
+|------|----------|
+| macOS Apple Silicon / Intel | 官方 DMG，Apple Silicon 走 MLX |
+| Windows | 官方 MSI / Setup，CUDA 或 DirectML |
+| Linux | 暂无预编译包，源码编译（见 voicebox.sh/linux-install） |
+| Docker | 仓库内 `docker compose up` |
 
-| 平台 | 安装包 | 说明 |
-|------|--------|------|
-| macOS (Apple Silicon) | DMG | 推荐 MLX 加速 |
-| macOS (Intel) | DMG | CPU 版本 |
-| Windows | MSI | CUDA 加速 |
-| Linux | 源码编译 | 暂无预编译包 |
-| Docker | Docker Compose | 跨平台 |
-
-### 7.2 Docker 部署
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  voicebox:
-    image: ghcr.io/jamiepine/voicebox:latest
-    ports:
-      - "17493:17493"
-    volumes:
-      - ./data:/app/data
-      - ./models:/root/.cache/huggingface
-    environment:
-      - VOICEBOX_MODELS_DIR=/root/.cache/huggingface
-```
-
-```bash
-docker compose up
-```
-
-### 7.3 开发者环境搭建
-
-**前置依赖**：
-
-```bash
-# macOS
-brew install just python@3.11 rust bun
-
-# Ubuntu/Debian
-sudo apt install build-essential python3.11 python3.11-venv
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-curl -fsSL https://bun.sh/install | bash
-```
-
-**快速启动**：
+开发者环境在官方推荐 `just` 工作流下最省事：
 
 ```bash
 git clone https://github.com/jamiepine/voicebox.git
 cd voicebox
-
-just setup   # 创建 Python venv，安装所有依赖
-just dev     # 启动后端 + 桌面应用
+just setup   # Python venv + JS 依赖 + 开发 sidecar，自动识别平台后端
+just dev     # 后端 + Tauri 桌面应用
 ```
 
-**构建**：
+常用命令：`just dev-backend` 只起后端、`just build` 构建、`just check` 做静态检查、`just docs` 打开 `http://127.0.0.1:17493/docs`、`just db-reset` 重置数据库。
 
-```bash
-just build          # 构建 CPU 服务器 + Tauri 应用
-just build-local    # Windows: 构建 CPU + CUDA 版本
-```
+## §8 扩展：接入新 TTS 引擎
 
----
+多引擎架构让接新模型成为标准动作，官方还提供了让 AI 编码助手代劳的 agent skill。手工接入的核心三步：
 
-## §8 扩展开发：添加新的 TTS 引擎
-
-### 8.1 多引擎架构
-
-Voicebox 的多引擎架构设计使得添加新的 TTS 引擎非常方便。官方提供了[详细指南](https://docs.voicebox.sh/developer/tts-engines)。
-
-### 8.2 添加引擎的步骤
-
-**第一步：后端实现**
+**后端实现：**
 
 ```python
-# backend/engines/my_engine.py
+# backend/backends/my_engine.py
 from .base import TTSEngine
 
 class MyEngine(TTSEngine):
     name = "my-tts"
     supported_languages = ["en", "zh"]
 
-    async def generate(
-        self,
-        text: str,
-        voice_profile: str,
-        **kwargs
-    ) -> bytes:
-        """生成音频，返回 WAV 格式字节"""
-        # 实现 TTS 推理逻辑
-        pass
+    async def generate(self, text: str, voice_profile: str, **kwargs) -> bytes:
+        """生成音频，返回 WAV 字节"""
+        ...
 
-    async def clone_voice(
-        self,
-        audio_samples: List[bytes]
-    ) -> str:
-        """克隆声音，返回 profile_id"""
-        pass
+    async def clone_voice(self, audio_samples: list[bytes]) -> str:
+        """克隆声音，返回档案 ID"""
+        ...
 ```
 
-**第二步：注册引擎**
+**注册到引擎字典：**
 
 ```python
-# backend/engines/__init__.py
+# backend/backends/__init__.py
 from .my_engine import MyEngine
 
-ENGINES = {
-    "my-tts": MyEngine(),
-    # ... 其他引擎
-}
+ENGINES = {"my-tts": MyEngine(), ...}
 ```
 
-**第三步：前端集成**
+**前端接入选择器：** 在引擎下拉里加一项，并把 `supported_languages`、显存占用等元数据补齐。之后把「为 Voicebox 接入 XTTS v2」这类需求交给 agent skill，它会自己研究依赖、写后端协议、连前端并配置打包。
 
-```typescript
-// app/components/EngineSelector.tsx
-const engines = [
-  { id: 'qwen3', name: 'Qwen3-TTS', languages: 10 },
-  { id: 'my-tts', name: 'My TTS', languages: 2 },
-  // ...
-];
-```
+## §9 常见问题
 
-### 8.3 AI 编码助手支持
+**Q1：Voicebox 和 ElevenLabs 比效果如何？**
+定位不同。Voicebox 换的是自由与隐私：完全免费、本地运行、开源可控。音质在多数场景已经接近商业方案，但想要超越性高质量克隆时，云方案在极窄的需求下仍有优势。先跑通了自己的数据链路，再判断值不值当。
 
-Voicebox 还提供了 [agent skill](https://github.com/jamiepine/voicebox/blob/main/.agents/skills/add-tts-engine/SKILL.md)，可以让 AI 编码助手自主完成整个引擎集成工作：
+**Q2：需要什么硬件？**
+最低：能跑 Python 的机器就能用 CPU 推理。推荐：macOS 用 Apple Silicon（MLX 加速），Windows 用 NVIDIA GPU（4 GB+ 显存，CUDA）。16 GB+ 内存、主频高一点的 CPU 体验最好。
 
-```
-提示词示例：
-"Add support for the XTTS v2 model to Voicebox"
-```
+**Q3：支持中文语音克隆吗？**
+支持。Qwen3-TTS 与 Chatterbox Multilingual 都覆盖中文；LuxTTS 和 Chatterbox Turbo 仅英语。
 
-AI 会自动：
-1. 研究 XTTS v2 的依赖和接口
-2. 实现后端协议
-3. 连接前端
-4. 配置 PyInstaller 打包
+**Q4：长文本怎么处理？**
+自动按句切 chunk、chunk 间交叉淡化拼接，单次上限 50,000 字符。跨 chunk 的参数在设置里可调。
 
----
+**Q5：可以商用吗？**
+Voicebox 本体是 MIT，可商用。但每套 TTS 引擎各有自己的模型许可证，接新引擎或换模型前要分别核对；克隆他人声音涉及授权与法律问题，只对自己的声音或已获授权的声音做克隆。
 
-## §9 常见问题 FAQ
+**Q6：怎么在服务器上跑？**
+两种方式：`docker compose up` 跑完整应用；或只用后端起一个纯 API 服务（不带 GUI），暴露 `/generate`、`/speak` 给下游集成。注意远程访问时后端默认只绑 `127.0.0.1`，需要显式绑 `0.0.0.0`。
 
-**Q1: Voicebox 和 ElevenLabs 相比效果如何？**
+## §10 采用建议与适用边界
 
-A：Voicebox 的目标是提供一个**本地、可控**的解决方案。对于大多数场景，音质已经非常接近商业方案。但 ElevenLabs 在某些特定场景（如超高质量语音克隆）仍有优势。Voicebox 的优势在于：完全免费、本地运行、开源可控。
+Voicebox 不是所有人都该立刻迁移。判断标准看两件事：一是你的声纹数据能否出机器，二是你会不会长期做语音创作。
 
-**Q2: 需要什么硬件配置？**
+- **现在就值得用的**：隐私敏感的内容团队、长期做播客/有声书/H5 配音的创作者、想把固定声线交给 Cursor/Claude Code 的开发者和 Agent 用户。本地推理的回本点在于高频批量生成，量越大越划算。
+- **可以再等等的**：只为偶尔一两次合成、且能接受云 MSI 账单的个人用户；对某个云模型「忠于原厂音色」有硬性依赖、不容许音质偏差的商用项目。
+- **动手顺序**：先装桌面端跑通一次克隆与生成，确认音质过线；再按需试不同的引擎和音效；稳定后把 `POST /speak` 或 MCP 接进自己的应用。没有现成需求的，不必为「接一个框架」而接。
 
-A：
-- **最低配置**：任何能运行 Python 的机器（CPU 推理可用）
-- **推荐配置**：
-  - macOS: Apple Silicon (M1+) — MLX 加速
-  - Windows: NVIDIA GPU (4GB+ VRAM) — CUDA 加速
-- **最佳体验**：16GB+ RAM，高性能 CPU
+一句话收束：这东西不是让你换一家 TTS，而是让你把语音输入、生成和 Agent 语音都搬回自己的机器，把语音的支配权留在本地。
 
-**Q3: 支持中文语音克隆吗？**
-
-A：是的！Qwen3-TTS 支持中文，Chatterbox Multilingual 也支持中文。LuxTTS 和 Chatterbox Turbo 仅支持英语。
-
-**Q4: 如何处理长文本？**
-
-A：Voicebox 内置自动分 chunk 机制：
-- 按句子边界智能分割
-- 相邻 chunk 之间使用 crossfade 混合
-- 最大支持 50,000 字符
-
-**Q5: 可以商用吗？**
-
-A：Voicebox 使用 MIT 许可证，可以商用。但需注意：
-- 各 TTS 引擎可能有自己的许可证要求
-- 克隆他人声音可能涉及法律问题
-- 建议仅克隆自己授权的声音
-
-**Q6: 如何在服务器上运行？**
-
-A：有两种方式：
-1. **Docker**：使用 `docker compose up` 运行完整应用
-2. **纯 API 模式**：仅启动后端 API 服务，不带 GUI
-
----
-
-## §10 相关资源
+## 相关资源
 
 | 资源 | 链接 |
 |------|------|
 | GitHub | https://github.com/jamiepine/voicebox |
 | 官网 | https://voicebox.sh |
 | 文档 | https://docs.voicebox.sh |
-| 下载 | https://voicebox.sh/download |
-| API 文档 | http://localhost:17493/docs（启动后） |
-
----
-
-**🦞 作者：钳岳星君 | 来源：GitHub jamiepine/voicebox**
+| 安装（含 Linux 源码） | https://voicebox.sh/linux-install |
+| API 文档 | http://127.0.0.1:17493/docs（本地启动后） |

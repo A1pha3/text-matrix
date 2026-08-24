@@ -14,38 +14,64 @@ description: "Asio 是 C++ 异步网络与并发编程的事实标准库，Boost
 
 ## 核心判断
 
-Asio 不是"网络库"——它是**异步 I/O 与并发编程的统一框架**，网络只是其中一个应用方向。它的核心是 `io_context` 调度器 + 零拷贝事件多路复用 + 简洁的回调模型。在 Boost.Asio 进入 Boost 之前，Asio 就是许多高性能 C++ 服务的首选（游戏服务器、交易所后端、量化系统）。它的设计哲学对后来 C++ 协程的 API 形态影响深远。
+Asio 常被归进"网络库"，但它的设计重心是**通用的异步 I/O 调度框架**：`io_context` 负责把完成通知分发给你注册的回调，TCP / UDP / 定时器 / 串口只是它支持的一类服务。这个框架先于 C++ 标准协程出现，却早早就确定了"发起异步操作、完成时回调"的 API 形态，后来被 C++20 协程的原生语法承接。C++ 侧的许多高性能服务——游戏服务器、交易所后端、量化行情——直接建立在它之上。
 
 ## 项目坐标
 
 | 维度 | 数据 |
 |------|------|
 | 仓库 | chriskohlhoff/asio（独立版）/ Boost.Asio（Boost 子集） |
-| Stars | 约 6k |
+| Stars | 约 6.2k（波动，以仓库为准） |
 | 主语言 | 现代 C++（C++11 / C++14 / C++17 / C++20） |
 | License | BSL-1.0（独立版）/ Boost Software License（Boost 版） |
 | 起源 | 作者 Christopher Kohlhoff，2003 年起持续维护 |
-| 关系 | 独立版是"上游"，Boost 版本周期同步 |
+| 关系 | 独立版是"上游"，Boost 版本周期同步；截至 2026 年独立版已到 1.38.x |
 
-> 两个版本共享同一个代码库——独立版在 BSL-1.0 下，Boost 版由 Boost 维护者同步打包。如果你项目禁用 Boost，独立版可以直接拉源码用。
+两个版本共享同一份代码库——独立版在 BSL-1.0 下发布，Boost 版由 Boost 维护者同步打包。若项目禁用 Boost，独立版可直接拉源码编译，不引入 Boost 依赖。
+
+整体结构先有个地图，后面的章节按它展开：
+
+```
+      业务代码（协程 co_await / 回调 handler）
+                    │  发起异步操作
+        ┌───────────▼────────────┐
+        │      io_context        │   事件分发 + 待执行队列
+        └───────────┬────────────┘
+                    │ 执行器 executor / strand（串行化）
+       ┌────────────┼─────────────┐
+       ▼            ▼             ▼
+     epoll        kqueue         IOCP
+    (Linux)      (macOS/BSD)   (Windows)
+                    │  I/O 完成
+        ┌───────────▼────────────┐
+        │  完成通知：回调 / future / resume()  │
+        └────────────────────────┘
+```
 
 ## 为什么 Asio 重要
 
-在 Asio 出现之前，C++ 网络编程只有几个选择：
+在 Asio 出现之前，C++ 网络编程的选择很有限：
 
-- 原始 BSD socket + `select()` / `poll()`（啰嗦、难扩展）
-- ACE（C++ 网络框架，1990 年代，API 重）
-- libevent（libevent2 不错，但 API 是 C 风格的）
+- 原始 BSD socket + `select()` / `poll()`——啰嗦，连接多了难以扩展
+- ACE——1990 年代的老牌 C++ 网络框架，API 沉重
+- libevent——2.x 之后不错，但是 C 风格，类型与对象模型弱
 
-Asio 带来了三个根本变化：
+Asio 带来三点根本变化：
 
-1. **类型安全**：把 socket、acceptor、serial port 等统一抽象成模板化的"基础服务"，编译期就能查错。
-2. **异步模型**：把 I/O 完成通知（Proactor 模式）作为一等公民，回调机制与未来引入的协程（Coroutines）一脉相承。
-3. **跨平台**：在 Linux 上用 epoll，Windows 上用 IOCP，BSD 上用 kqueue——同一套 API，零运行时分支。
+1. **类型安全**：把 socket、acceptor、serial port 抽象成模板化的"基础服务"，许多错误被挪到编译期暴露。
+2. **完成通知式异步**：以"操作完成即回调"（Proactor 模型）为一等公民，同一套模型向后延伸到了 C++20 协程。
+3. **跨平台同一 API**：Linux 用 epoll，BSD 用 kqueue，Windows 用 IOCP，外部接口一致，没有平台分支。
+
+值得说破的是第 2 点在不同平台上的落地差异。Asio 对外暴露的语义是 Proactor——你发起操作、等它完成、再取结果。但实现分两类：
+
+- **Windows** 走 IOCP，是真正的 Proactor。操作系统自己等待 I/O 并向完成端口投递一个完成包，应用直接拿到结果。
+- **Linux / BSD** 的 epoll、kqueue 本质是 Reactor——只通知"可读/可写"。Asio 在 Reactor 之上补一层：先注册兴趣，等就绪事件，再由 Asio 自己执行一次非阻塞 I/O，然后把完成结果交给 handler。
+
+所以同一套"完成时回调"的 API 在两类平台都成立，代价是 Linux 上比 Windows 多了一次"就绪 → 完成"的内部转发。理解这一点，才能看懂为什么"完成通知"是 Asio 的心智模型，而不是"读写就绪"。
 
 ## io_context：Asio 的调度核心
 
-所有异步操作都要绑定到一个 `io_context`：
+所有异步操作都绑定到一个 `io_context`：
 
 ```cpp
 #include <asio.hpp>
@@ -53,17 +79,19 @@ Asio 带来了三个根本变化：
 
 int main() {
     asio::io_context io;
-    
+
     asio::steady_timer timer(io, std::chrono::seconds(2));
     timer.async_wait([](const asio::error_code& ec) {
         std::cout << "timer fired: " << ec.message() << "\n";
     });
-    
-    io.run();   // 阻塞直到所有异步操作完成
+
+    io.run();   // 阻塞，直到没有待执行工作
 }
 ```
 
-`io_context.run()` 内部是事件循环：等待 OS 通知 I/O 完成，回调用户注册的 handler。可以开多线程调 `run()`，handler 会自动被多个 worker 拉取执行——这是无锁的，前提是 handler 自己不要共享可变状态。
+`io_context.run()` 内部是事件循环：等待 OS 的完成通知，再把用户注册的 handler 交给执行器执行。可以开多个线程分别调用 `run()`，待执行的 handler 会被这些 worker 拉取分配，多线程拉取本身不锁；前提是 handler 各自不共享可变状态，若有共享就用 strand（见后文）。
+
+`io_context` 自身不持线程。多线程并发是这么来的：你先建好若干线程，各自 `run()` 同一个 `io_context`；或者用官方封装 `asio::thread_pool`，由它为你开 worker 线程。另一个常用点是 `asio::make_work_guard(io)` 创建的 `executor_work_guard`——它会阻止 `run()` 在暂时没有任务时提前返回，适合"事件循环要一直活着"的守护进程场景。
 
 ## 一个 TCP echo 服务端
 
@@ -77,9 +105,9 @@ using asio::ip::tcp;
 class Session : public std::enable_shared_from_this<Session> {
 public:
     Session(tcp::socket socket) : socket_(std::move(socket)) {}
-    
+
     void start() { do_read(); }
-    
+
 private:
     void do_read() {
         auto self = shared_from_this();
@@ -90,7 +118,7 @@ private:
                 }
             });
     }
-    
+
     void do_write(std::size_t length) {
         auto self = shared_from_this();
         asio::async_write(socket_, asio::buffer(data_, length),
@@ -98,7 +126,7 @@ private:
                 if (!ec) do_read();
             });
     }
-    
+
     tcp::socket socket_;
     enum { max_length = 1024 };
     char data_[max_length];
@@ -110,7 +138,7 @@ public:
         : acceptor_(io, tcp::endpoint(tcp::v4(), port)) {
         do_accept();
     }
-    
+
 private:
     void do_accept() {
         acceptor_.async_accept(
@@ -121,7 +149,7 @@ private:
                 do_accept();
             });
     }
-    
+
     tcp::acceptor acceptor_;
 };
 
@@ -133,11 +161,32 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-这是 Asio 的"经典回调风格"。每个异步操作返回一个 token，token 触发时调用 handler。
+这是 Asio 最经典的"回调风格"。两个细节值得记住：
+
+- 每个异步操作都返回一个 token——在回调写法里，token 决定"完成后调用哪个 handler"。
+- `async_read_some` 一次**可能只读到部分数据**。echo 对回显无所谓，但解析固定长度协议时必须改用 `asio::async_read`；后者是**组合操作**（composed operation），内部循环调用 `async_read_some` 直到缓冲区收满或出错。`asio::async_read` 与 `asio::async_write` 同属这一类组合操作。
+
+## 完成记号：一次发起，多种写法
+
+同一套异步操作能适配三种书写风格，靠的是"完成记号"（completion token）在编译期选择 handler 的形态：
+
+```cpp
+// 1) 回调：最省事，最简单
+socket.async_read_some(asio::buffer(buf),
+    [](asio::error_code ec, std::size_t n) { /* ... */ });
+
+// 2) use_future：异步发起，同步等待，适合测试或做同步点
+std::future<std::size_t> f = socket.async_read_some(asio::buffer(buf), asio::use_future);
+
+// 3) use_awaitable：配合 C++20 协程，co_await 挂起等待
+std::size_t n = co_await socket.async_read_some(asio::buffer(buf), asio::use_awaitable);
+```
+
+关键认识：异步操作本身只有一种实现，完成记号决定"回调怎么被包装"。换个写法不需要重写 I/O 逻辑，这正是 Asio 能在回调、future、协程三种范式间切换的原因。
 
 ## C++20 协程集成
 
-Asio 从 1.19（2020）开始原生支持 C++20 协程。同样的 echo 服务可以写成同步风格：
+Boost.Asio 在 1.74（2020 年 8 月，对应独立版 1.19）起支持 C++20 协程。同样一个 echo 服务，可以写成几乎同步的风格：
 
 ```cpp
 asio::awaitable<void> session(tcp::socket socket) {
@@ -168,90 +217,106 @@ int main() {
 }
 ```
 
-协程风格的优势：
+协程带的优势是表达力，不是性能：
 
-- **同步语义的异步性能**——代码看起来像阻塞，但底层是非阻塞。
-- **局部变量跨挂起点保留**——不需要 `enable_shared_from_this`。
-- **错误处理用 try/catch**——handler 链式错误处理不再用 `error_code` 透传。
+- **同步的外表、非阻塞的内核**——代码按顺序写，底层仍是异步分发。
+- **局部变量跨挂起保留**——不再需要 `enable_shared_from_this`。
+- **错误用 try/catch**——`co_await` 出错时把 `error_code` 转成 `system_error` 抛出，告别逐级透传 error_code。
 
-代价：要求 C++20 编译器支持（GCC 10+、Clang 14+、MSVC 19.28+）。
+代价：要求编译器和标准库真正支持 C++20 协程（GCC 10+、Clang 14+、MSVC 19.28+）。`co_spawn` 的第一个参数是**执行器**，它决定了协程恢复后在哪条线程、以什么次序继续跑。
+
+## strand：让共享状态免锁
+
+回调风格里，同一个 handler 的两次执行不会重叠——Asio 保证单个 socket 的操作不重入。但**不同 socket**（或不同协程）的 handler 完全可能并发。要让多份共享状态免于加锁，Asio 的答案是 `strand`：
+
+```cpp
+// 把需要串行访问的 socket/写缓冲包进同一个 strand
+asio::strand<asio::io_context::executor_type> strand_ = asio::make_strand(io);
+tcp::socket socket_(strand_);
+
+strand_.post([this]{ /* 这段代码与同 strand 的其他任务互斥 */ });
+```
+
+同一条 strand 上的 handler 严格串行执行，读共享状态无需锁；不同 strand 之间则可以并行。它把"哪部分可以并发、哪部分必须串行"从编译边界提前到设计层面，配合"handler 里不阻塞"两条一起用，多线程模型才好把控。
 
 ## 与 Boost.Beast 的关系
 
-Boost.Beast 是基于 Asio 的 HTTP/WebSocket 协议层：
+Boost.Beast 是构建在 Asio 之上的 HTTP / WebSocket 协议层：
 
-- **Asio**：提供传输层（TCP/UDP/串口/定时器、协程支撑）
-- **Boost.Beast**：提供 HTTP/1.1、WebSocket 协议解析器、序列化器
+- **Asio**：负责传输层——TCP / UDP / 定时器 / 串口，以及协程支撑。
+- **Boost.Beast**：负责协议状态机——HTTP/1.1 的解析与序列化、WebSocket 帧收发。
 
-如果你要做 HTTP 服务端/客户端，标准路径是 Asio + Beast——Asio 处理 socket，Beast 处理 HTTP 协议。生产环境 WebSocket 反向代理、HTTP/2 推送网关、API gateway 都能在这个组合上稳定运行。
+写一个 HTTP 服务端，标准路径是 Asio 管 socket，Beast 管 HTTP 报文。吞吐高、要自控协议细节的网关（反向代理的 HTTP/2 入口、API 网关）常见这个组合。需要注意：Beast 不实现 HTTP/2 与 HTTP/3，协议能被组合过来的主要是 HTTP/1.1 与 WebSocket。
 
 ## 与 libevent / libuv 的取舍
 
 | 维度 | Asio | libevent | libuv |
 |------|------|----------|-------|
 | 语言 | C++ 原生 | C | C |
-| 协程支持 | C++20 协程 | 无 | 无（Node.js 风格 callback） |
-| 文件 I/O | ✅（Linux only 通过 io_uring） | 有限 | ✅ |
-| HTTP 协议 | 需 Beast | 需 libevent-http | 内置 |
-| 性能 | 高（接近 OS 原生） | 高 | 高 |
+| 协程支持 | C++20 协程 | 无 | 无（Node 风格 callback） |
+| 文件 I/O | ✅（Asio 1.23+，Linux 走 io_uring） | 有限 | ✅（含磁盘/文件） |
+| HTTP 协议 | 需 Beast | 需 libevent-http | 内置部分 |
 | 学习曲线 | 中 | 中 | 低（Node 风格） |
-| 文档 | 优（书 + docs） | 中 | 良 |
+| 文档 | 优（专著 + 官方 docs） | 中 | 良 |
 
-Asio 的优势在于**C++ 生态深度集成**：和 STL 类型无缝衔接，编译期类型检查，回调 API 与协程 API 共存。libuv 在 Node.js 之外用得不多（除了一些命令行工具）。
+Asio 的护城河是**C++ 生态的深度集成**：与 STL 类型无缝衔接、编译期类型检查、回调 API 与协程 API 共享同一实现。libevent 的价值在于纯 C、依赖轻；libuv 在于它同时把磁盘文件 I/O 也统一进来，且社区熟悉度来自 Node.js。若你只有 Node 背景、没有 C++ 异步心智，第一选择不一定是 Asio。
 
 ## 性能特征
 
-Asio 在 Linux 上后端是 epoll（默认），Windows 是 IOCP，macOS/BSD 是 kqueue。性能与手写 epoll 程序相当：
+后端分布：Linux = epoll，Windows = IOCP，BSD = kqueue。单次分发到底层事件循环的开销，Asio 与直接手写 epoll 处于同一量级，它不构成相对原生方案的性能短板。
 
-- **吞吐量**：在 10GbE 网卡上跑 TCP echo，单 Asio 实例能处理 ~5-6 Gbps（依赖业务逻辑）
-- **延迟**：P99 在微秒级（视业务逻辑）
-- **扩展性**：io_context 多线程模式可以横向扩展到 64+ 核，前提是业务无锁
+这里需要压一个误导点：**不存在能直接照搬的"Asio 能跑多快"的数字**。一条连接上完成一次读写的耗时里，Asio 分发 handler 的开销只占很小一部分；真正决定吞吐和延迟的是业务逻辑、报文大小，以及是否发生跨线程同步。任何"达到 XXX Gbps / P99 多少微秒"的说法，都必须在你自己的负载与机器上实测才算数，从别的项目迁移数字没有意义。
 
-> Asio 没有自己实现 thread pool。`asio::thread_pool`（v1.11+）是官方封装：内部多个 worker 线程共享一个 io_context，回发自然负载均衡。
+可以放心说的只有两点：
+
+- Asio 不会把你拉到手写 epoll 之下，它的价值是把样板代码收进库，而不是在性能上领先原生。
+- 若在 handler 里做阻塞、加锁或要求强同步，再高效的分发模型都救不回来——性能先设计"连接数与共享状态"，再谈堆线程。
+
+扩展性上，多线程 `run()` 或 `thread_pool` 都只是把 handler 分发到更多 CPU；能利用多少核取决于业务是否可以无锁拆分，先设计好 strand 的串行边界，比盲目加线程可靠。
 
 ## 常见坑
 
 ### 1. handler 生命周期
 
-回调风格的 Asio 经典坑：handler 持有对象引用，但异步操作完成时对象已被析构。解决：用 `shared_from_this` 延长生命周期（见上面 Session 类）。
+回调风格最经典的坑：handler 里引用了对象，但异步操作完成时对象已被析构。解法是用 `shared_from_this` 把会话生命周期绑定到操作上（见本文件上面的 `Session` 类）。缓冲区同理——`async_read_some` 持有的缓冲区引用必须活到 handler 执行完。
 
-### 2. 线程安全
+### 2. 线程安全与重入
 
-`io_context.run()` 可以从多线程调用，但**同一个 socket 的回调不会并发触发**——Asio 保证不重入。这让你可以在 handler 里写非线程安全的代码（前提是不跨 handler 共享状态）。
+`io_context.run()` 可被多线程调用，但**同一个 socket 的 handler 不会并发触发**，Asio 保证不重入。这允许你在单个 handler 里写非线程安全代码；一旦状态要被不同 socket 的 handler 共享，就得用 strand 或锁。
 
-### 3. 错误处理
+### 3. 错误处理：抛异常还是 error_code
 
-每个异步函数都接收 `error_code` 参数。**默认行为是抛异常**——你必须显式调用 `asio::error_code` 参数重载才不会抛。新手最常见的崩溃源。
+每个异步函数都可以接收 `error_code`，但**回调风格里默认是抛异常**——只有显式传出 `error_code` 参数的重载才不抛。新手的崩溃源大多从这里来。协程风格里 `co_await` 出错会抛 `system_error`，用 try/catch 接住。
 
-### 4. C++20 协程的栈空间
+### 4. 协程帧的栈
 
-协程挂起时分配一块"协程帧"，通常几 KB 到几十 KB。大量并发协程要小心栈积累。Asio 没有强制栈大小，但 debug 模式下每协程可能占 ~1KB。
+C++20 协程在挂起点会分配一块"协程帧"，通常几 KB 到几十 KB。大量并发协程会累积内存，Profile 时不要忽略。
 
 ## 何时用 / 何时不用
 
 **适合 Asio**：
 
-- 高并发 TCP/UDP 服务（IM、游戏后端、金融行情）
+- 高并发 TCP / UDP 服务（IM、游戏后端、金融行情）
 - 嵌入式网络协议栈
-- 跨平台网络代码（Linux + Windows + macOS）
-- 想用 C++20 协程写同步风格异步代码
+- 要跨 Linux + Windows + macOS 一套代码
+- 想用 C++20 协程写"同步风格"的异步代码
 
 **不适合**：
 
-- 简单 HTTP 调用——直接用 cpr/curl 或 HTTP 客户端库
-- 已经深度绑定某个框架（如 gRPC、Thrift）——它们有自己的 I/O 抽象
-- 需要 HTTP/3、QUIC 等新协议——Asio 还在演进中，生态不如 nghttp2 成熟
+- 只做简单 HTTP 调用——直接用 cpr / curl 之类 HTTP 客户端库更省事
+- 已深度绑定某框架（如 gRPC、Thrift）——那套框架有自己的 I/O 层
+- 需要 HTTP/3、QUIC——Asio 生态还在演进，协议成熟度不如 nghttp2 等专司的方案
 
 ## 阅读路径
 
-1. 官方文档 [Asio Documentation](https://think-async.com/Asio/)——序章 + 教程章节先读
-2. 《Asio C++ Network Programming Cookbook》——实战导向
-3. 源码 `asio/include/asio/`——从 `io_context` 开始追
-4. Boost.Beast 示例——了解 HTTP 服务端如何搭建
+1. 官方文档 [Asio Documentation](https://think-async.com/Asio/)——先读 Overview 与 Tutorial。
+2. 《Asio C++ Network Programming Cookbook》——偏实战取舍。
+3. 源码 `asio/include/asio/`——从 `io_context` 出发，跟踪一次异步读的调用链。
+4. Boost.Beast 示例——看 HTTP 服务端如何搭建在 Asio 之上。
 
 ## 参考资源
 
 - 独立版仓库：[https://github.com/chriskohlhoff/asio](https://github.com/chriskohlhoff/asio)
 - 官方文档：[https://think-async.com/Asio/](https://think-async.com/Asio/)
 - Boost.Beast：[https://www.boost.org/doc/libs/release/libs/beast/](https://www.boost.org/doc/libs/release/libs/beast/)
-- C++ Now 历年演讲：Christopher Kohlhoff 的讲座覆盖设计动机
+- C++ Now 历年演讲：Christopher Kohlhoff 的讲座覆盖设计动机与演进

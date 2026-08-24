@@ -1,8 +1,7 @@
 ---
-title: "Zig：42.8K Stars·通用编程语言·系统级性能"
+title: "Zig：通用编程语言·系统级性能·C 的现代替代"
 date: "2026-04-12T02:31:39+08:00"
 slug: zig-programming-language-guide
-github_repo: "michal-z/zig-zmath"
 description: "Zig 是 C 的现代替代而非 Rust 的竞争者：用显式分配器、comptime 和无隐藏控制流换取系统编程的可读性与可控性。"
 draft: false
 categories: ["技术笔记"]
@@ -68,7 +67,7 @@ graph TD
 
 Zig 和 C 落在同一个象限：手动内存、无运行时、可直接操作硬件。差别在于 Zig 用现代语法、显式错误类型和 `comptime` 把 C 里那些靠约定和宏维持的东西变成语言特性。Rust 则在另一个象限——编译器强制约束，Zig 让程序员自己约束。Zig 的学习曲线更平缓，但不会在编译期拦下你写出的内存错误，这是路线选择带来的取舍。
 
-- Zig 目前未发布 1.0，标准库和编译器 API 仍在变动，跨版本升级经常需要改代码。
+- Zig 目前未发布 1.0，当前稳定版为 0.16.0（2026 年 4 月发布），标准库和编译器 API 仍在变动，跨版本升级经常需要改代码。
 - Zig 自带 LLVM，可以作为 C/C++ 的交叉编译工具链使用（`zig cc`、`zig c++`）。
 - Zig 没有垃圾回收、没有异常、没有隐式分配、没有隐藏的控制流跳转。
 - 官方仓库已迁移到 Codeberg，GitHub 上的镜像不再同步。
@@ -93,9 +92,10 @@ Zig 的语言手册里反复出现一句话："显式优于隐式"（explicit is
 graph LR
     S[".zig 源码"] --> P["Parser<br/>词法 + 语法分析"]
     P --> A["AST"]
-    A --> SM["Sema<br/>语义分析 + 类型检查"]
-    SM --> Z["ZIR<br/>Zig 中间表示"]
-    Z --> CG["CodeGen<br/>生成 LLVM IR"]
+    A --> AG["AstGen<br/>生成 ZIR"]
+    AG --> Z["ZIR<br/>未类型化中间表示"]
+    Z --> SM["Sema<br/>类型检查 + comptime 求值"]
+    SM --> CG["CodeGen<br/>LLVM IR 或原生后端"]
     CG --> L["LLVM IR"]
     L --> O["目标代码<br/>x86_64 / aarch64 / wasm32 / riscv64"]
     O --> F[".o / 可执行文件"]
@@ -105,13 +105,15 @@ graph LR
 
 **Parser 阶段**只做词法和语法分析，把源码变成 AST。这一阶段不做任何类型检查，也不求值。Zig 的语法刻意保持简单——没有宏、没有复杂的预处理器，Parser 的实现相对直接。
 
-**Sema 阶段**是 Zig 编译器的核心。这一步做类型检查、语义分析，并把 AST 翻译成 ZIR（Zig Intermediate Representation）。`comptime` 求值就发生在这里——所有标记为 `comptime` 的表达式、所有可以用编译期信息推导的类型参数，都在 Sema 阶段求值并替换成具体值。`comptime` 因此不是"宏展开"，而是"语言级元编程"：它发生在类型系统内部，求值结果直接参与类型推导。
+**AstGen 阶段**把 AST 翻译成 ZIR（Zig Intermediate Representation），一种未做类型检查的中间表示。ZIR 与 AST 一一对应，但去掉了语法糖、解析了运算符优先级，语义已经固定，后续阶段不再依赖源码。之所以要这一层，是因为 LLVM 的类型系统不足以表达 Zig 的语义——`comptime`、错误联合、可选类型都需要在进 LLVM 之前先定下来。
 
-**CodeGen 阶段**把 ZIR 翻译成 LLVM IR。Zig 没有自己实现后端优化，而是把优化交给 LLVM（也支持自带的 x86_64 后端用于快速 debug 构建）。Zig 能轻松支持几十个目标平台，靠的就是复用 LLVM 的目标代码生成能力。
+**Sema 阶段**是编译器的核心。它读入 ZIR，做类型检查与语义分析。`comptime` 求值就发生在这里——所有标记为 `comptime` 的表达式、所有可以用编译期信息推导的类型参数，都在 Sema 阶段求值并替换成具体值。`comptime` 因此不是"宏展开"，而是"语言级元编程"：它发生在类型系统内部，求值结果直接参与类型推导。
 
-**目标代码生成**由 LLVM 完成，输出 `.o` 文件或可执行文件。Zig 自带 LLVM、Clang 和 MinGW 的头文件与运行时，`zig cc` 因此可以直接作为 C/C++ 交叉编译器使用——它实际上是一个打包好的 LLVM 工具链。
+**CodeGen 阶段**把 Sema 的结果翻译成 LLVM IR，或由自托管的原生后端直接生成机器码。0.15 起 Zig 的自托管 x86_64 后端成为 Debug 构建的默认后端，调试编译速度提升了约 5 倍；到 0.16，x86_64 和 aarch64 两个自托管后端都已能为一级目标平台不依赖 LLVM 直接生成机器码。Release 构建通常仍走 LLVM，这也是 Zig 能支持几十个目标平台的原因。
 
-ZIR 这一层解决的是把 `comptime` 求值和类型推导放在 LLVM 之前——LLVM 的类型系统不够表达 Zig 的语义；Zig 能做交叉编译，是因为它把 LLVM 和目标平台的运行时全部打包进发行版，不需要用户额外配置 sysroot。
+**目标代码生成**由 LLVM 或原生后端完成，输出 `.o` 文件或可执行文件。Zig 自带 LLVM、Clang 和 MinGW 的头文件与运行时，`zig cc` 因此可以直接作为 C/C++ 交叉编译器使用——它实际上是一个打包好的 LLVM 工具链。
+
+Zig 能做交叉编译，是因为它把 LLVM 和目标平台的运行时全部打包进发行版，不需要用户额外配置 sysroot。
 
 ## comptime：把元编程收进类型系统
 
@@ -150,7 +152,7 @@ pub fn main() void {
 
 `comptime` 的另一个工程价值是"编译期断言"。Zig 标准库里大量使用 `comptime` 在编译期检查不变量——比如容器大小是否是 2 的幂、枚举值是否唯一、结构体字段是否对齐。这些检查不产生运行时代码，但能在编译期拦下整类错误。C 程序员用 `_Static_assert` 和宏勉强能做到一部分，Zig 把它变成通用机制。
 
-需要说明的边界：`comptime` 求值发生在 Sema 阶段，能调用的函数必须是"编译期可执行"的——不能调用外部 C 函数、不能做 I/O、不能访问运行时内存。标准库会标注哪些函数是 `comptime` 友好的，违反约束会得到编译错误而不是运行时错误。
+需要说明的边界：`comptime` 求值发生在 Sema 阶段，能执行的代码必须是"编译期可执行"的——不能调用外部 C 函数、不能做 I/O、不能访问运行时内存。一个函数能否在 `comptime` 下调用，取决于它是否依赖这类运行时能力，标准库的纯计算函数大多可以；违反约束会得到编译错误而不是运行时错误。
 
 ## 内存管理：手动，但每一步都可见
 
@@ -161,48 +163,44 @@ Zig 标准库提供几种 allocator，对应不同的工程场景：
 ```zig
 const std = @import("std");
 
-pub fn main() !void {
-    // 页分配器：直接向操作系统申请页，适合大块分配
-    const page_alloc = std.heap.page_allocator;
+pub fn main(init: std.process.Init) !void {
+    // 0.16 的 "Juicy Main"：init 直接提供进程级分配器，不必自己构造
+    const gpa = init.gpa; // Debug 构建下是 DebugAllocator，退出时检测泄漏
 
-    // Arena 分配器：一次性分配，整体释放，适合短生命周期场景
-    var arena = std.heap.ArenaAllocator.init(page_alloc);
-    defer arena.deinit();
-    const arena_alloc = arena.allocator();
+    // 局部 Arena：以 gpa 为后备，一次性分配、整体释放，适合短生命周期场景
+    var local_arena = std.heap.ArenaAllocator.init(gpa);
+    defer local_arena.deinit();
+    const arena_alloc = local_arena.allocator();
 
-    // GPA：通用分配器，适合长期运行的服务
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const gpa_alloc = gpa.allocator();
-
-    // 使用 arena 分配的内存会在 arena.deinit() 时统一释放
+    // page_allocator 依然存在：直接向操作系统申请页，适合大块、长期存活的内存
     const buf = try arena_alloc.alloc(u8, 1024);
     std.debug.print("allocated {d} bytes\n", .{buf.len});
 }
 ```
 
-这里的关键是工程含义。`ArenaAllocator` 适合请求处理、命令行工具这种"做完就整体释放"的场景——大量小分配只调用一次 `deinit`，分配开销摊薄到几乎为零。`GeneralPurposeAllocator` 适合长期运行的服务，它在释放时会检测双重释放和内存泄漏，是 debug 阶段的安全网。`page_allocator` 是最底层的，直接对应操作系统的 `mmap`/`VirtualAlloc`。
+这里的关键是工程含义。`ArenaAllocator` 适合请求处理、命令行工具这种"做完就整体释放"的场景——大量小分配只调用一次 `deinit`，分配开销摊薄到几乎为零。旧版的 `GeneralPurposeAllocator` 在 0.16 被移除，替换它的 `DebugAllocator` 会在 `deinit` 时检测双重释放和内存泄漏，是 Debug 阶段的安全网——Juicy Main 的 `init.gpa` 在 Debug 构建下就是它，长期运行的服务因此无需自己构造。`page_allocator` 是最底层的，直接对应操作系统的 `mmap`/`VirtualAlloc`。
 
 显式 allocator 让内存策略成为函数签名的一部分。一个函数签名是 `fn process(data: []const u8, allocator: Allocator) !void`，读这个签名就知道：这个函数会分配内存，分配器由调用方决定。调用方可以根据场景传入 arena、GPA 或者一个 mock allocator 做测试。C 语言里这种信息靠注释维持，Zig 用类型强制。
 
 `defer` 和 `errdefer` 是这套机制的配套。`defer` 在函数返回时无条件执行，`errdefer` 只在错误返回时执行。两者一起覆盖了 C 语言里 `goto cleanup` 的所有场景，但作用域更清晰：
 
 ```zig
-fn readFile(path: []const u8, allocator: std.mem.Allocator) ![]u8 {
-    const file = try std.fs.cwd().openFile(path, .{});
-    defer file.close();  // 无论成功失败都关闭
+fn readFile(io: std.Io, path: []const u8, allocator: std.mem.Allocator) ![]u8 {
+    const file = try std.Io.Dir.cwd().openFile(io, path, .{});
+    defer std.Io.File.close(file, io); // 无论成功失败都关闭
 
-    const stat = try file.stat();
-    const buf = try allocator.alloc(u8, stat.size);
-    errdefer allocator.free(buf);  // 只有后续步骤失败时才释放
+    var buf: [1024]u8 = undefined;
+    var fr = std.Io.File.reader(file, io, &buf);
+    const contents = try fr.interface.allocRemaining(allocator, .limited(1 << 20));
+    errdefer allocator.free(contents); // 只有后续步骤失败时才释放
 
-    const n = try file.readAll(buf);
-    if (n != stat.size) return error.ShortRead;
-    return buf;  // 成功时 buf 的所有权转移给调用方
+    return contents; // 成功时 contents 的所有权转移给调用方
 }
 ```
 
-这段代码的释放路径完全显式：`file.close()` 一定执行，`allocator.free(buf)` 只在出错时执行，成功时所有权转移给调用方。没有 RAII、没有析构函数、没有 `Drop` trait，但每一步资源释放都写在它该出现的位置。
+这段代码的释放路径完全显式：`std.Io.File.close(file, io)` 一定执行，`allocator.free(contents)` 只在出错时执行，成功时所有权转移给调用方。没有 RAII、没有析构函数、没有 `Drop` trait，但每一步资源释放都写在它该出现的位置。注意 0.16 之后所有文件操作都要显式传入一个 `std.Io` 实例（调用方从 `std.process.Init` 里取 `init.io` 传入）——连"怎么读写"都变成参数的一部分，这就是"无隐式"在 I/O 层面的延伸。
+
+`std.Io.File.reader` 返回的是 `File.Reader`，一个具体实现；通用读操作（`allocRemaining`、`readSliceAll`、按行读取等）都定义在它内部的 `interface` 接口上，所以示例里要先取 `fr.interface` 再调用。这个"具体实现 + 接口"的两层结构贯穿整个 0.16 标准库：读、写、目录、网络都遵循同一套接口约定，换底层实现（文件、socket、内存缓冲）时上层代码不用改。
 
 ## 错误处理：错误是类型，不是异常
 
@@ -234,12 +232,11 @@ fn parseHex(s: []const u8) ParseError!u32 {
 }
 
 pub fn main() !void {
-    const stdout = std.io.getStdOut().writer();
     const value = parseHex("DEADBEEF") catch |err| {
-        try stdout.print("parse failed: {}\n", .{err});
+        std.debug.print("parse failed: {s}\n", .{@errorName(err)});
         return;
     };
-    try stdout.print("result: {d}\n", .{value});
+    std.debug.print("result: {d}\n", .{value});
 }
 ```
 
@@ -256,7 +253,7 @@ Zig 工具链自带 LLVM、Clang 和 MinGW 运行时，`zig cc` 和 `zig c++` �
 zig cc -target x86_64-windows-gnu hello.c -o hello.exe
 
 # 用 zig cc 交叉编译到 macOS arm64
-zig cc -target aarch64-macos-gnu hello.c -o hello_mac
+zig cc -target aarch64-macos hello.c -o hello_mac
 
 # 用 zig cc 交叉编译到 WebAssembly
 zig cc -target wasm32-wasi hello.c -o hello.wasm
@@ -264,19 +261,32 @@ zig cc -target wasm32-wasi hello.c -o hello.wasm
 
 工程上的价值在于：你不再需要为每个目标平台配置独立的 sysroot、MinGW、cross toolchain。Zig 的发行版把所有平台的运行时和头文件打包在一起，`-target` 参数切换目标平台，剩下的交给工具链处理。对于需要交叉编译的 CI 流水线、嵌入式开发、多平台发布，这能省掉大量环境配置工作。
 
-Zig 也能直接导入 C 头文件并调用 C 函数，通过 `@cImport`：
+Zig 也能直接导入 C 头文件并调用 C 函数。0.16 起 `@cImport` 被标记为弃用，官方推荐把 C 翻译（C Translation）放到构建系统里，通过 `b.addTranslateC` 生成一个翻译好的模块，再以模块导入：
 
 ```zig
-const c = @cImport({
-    @cInclude("stdio.h");
+// build.zig：把 src/c.h 翻译成可导入的 Zig 模块
+const translate_c = b.addTranslateC(.{
+    .root_source_file = b.path("src/c.h"),
+    .target = target,
+    .optimize = optimize,
 });
 
-pub fn main() void {
-    _ = c.printf("hello from C: %d\n", 42);
-}
+// 在创建模块时把翻译结果以 "c" 为名挂进 imports，源码里 @import("c") 即可使用
+const exe = b.addExecutable(.{
+    .name = "myprogram",
+    .root_module = b.createModule(.{
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "c", .module = translate_c.createModule() },
+        },
+    }),
+});
+// 等价的另一种写法：创建后用 exe.root_module.addImport("c", translate_c.createModule())
 ```
 
-这让 Zig 可以渐进式替换 C 代码——新模块用 Zig 写，老模块保持 C，两者通过 `@cImport` 互操作。Zig 作为"C 替代者"的路线在这里具体体现：不需要一次性重写整个代码库，新模块可以逐步用 Zig 写，老模块继续维护，迁移节奏由团队自己控制。
+`@cImport` 在 0.16 仍能编译（只是弃用警告），但新代码应优先走构建系统方案，旧代码迁移也只在需要时进行。官方给出的 0.16 迁移方式，是在 `build.zig` 里用 `b.addTranslateC` 把 C 头文件翻译为 Zig 模块，再通过模块的 `addImport` 挂给目标可执行文件，源码里统一用 `@import` 引用，不再用内嵌的 `@cImport` 块。
 
 ## 交叉编译与目标平台
 
@@ -287,25 +297,25 @@ Zig 内置的交叉编译支持覆盖了主流平台，下表列出官方支持�
 | Linux | x86_64, aarch64, riscv64, arm, thumb |
 | macOS | x86_64, aarch64 |
 | Windows | x86_64, aarch64 |
-| FreeBSD | x86_64 |
-| NetBSD | x86_64 |
+| FreeBSD | x86_64, aarch64, riscv64, arm |
+| NetBSD | x86_64, aarch64, arm |
 | WebAssembly | wasm32 |
 | SPIR-V | spirv32, spirv64 |
 
-交叉编译的命令统一通过 `-target` 参数指定：
+交叉编译的命令通过 `-Dtarget` 参数指定（`zig build` 的标准选项，对应 `standardTargetOptions`）：
 
 ```bash
-# Linux 到 Windows
-zig build -target x86_64-windows-gnu
+# 到 Windows
+zig build -Dtarget=x86_64-windows-gnu
 
-# Linux 到 macOS arm64
-zig build -target aarch64-macos-gnu
+# 到 macOS arm64
+zig build -Dtarget=aarch64-macos
 
 # 到 WebAssembly
-zig build -target wasm32-wasi
+zig build -Dtarget=wasm32-wasi
 
-# 指定 CPU 基线（避免使用目标平台不支持的指令集）
-zig build -target x86_64-native -Dcpu=baseline
+# 指定 CPU 基线（默认针对本机 CPU 优化；baseline 只用该架构的基础指令集，兼容性最好）
+zig build -Dcpu=baseline
 ```
 
 需要留意的边界：交叉编译到某些平台需要目标平台的 libc，Zig 自带了 musl 和 MinGW，但 glibc 版本可能和目标系统不完全匹配；SPIR-V 目标目前还在实验阶段，API 可能变动。
@@ -321,11 +331,14 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    // 0.16：先创建一个模块，再挂给可执行文件
     const exe = b.addExecutable(.{
         .name = "myprogram",
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
 
     b.installArtifact(exe);
@@ -338,24 +351,29 @@ pub fn build(b: *std.Build) void {
 }
 ```
 
+0.16 起 `addExecutable` 不再直接收 `.root_source_file`，而是要求先 `b.createModule` 得到一个模块，再通过 `.root_module` 传入。模块（module）成为构建系统的核心单元：一个模块有自己的根源文件、目标和优化模式，依赖、C 翻译结果、编译期选项都通过 `addImport`/`addOptions` 挂在模块上。这样同一份源文件可以被可执行文件、测试、库以不同的模块配置复用。
+
 包依赖通过 `build.zig.zon` 声明，这是 Zig 的包管理清单。`.zon` 是 Zig 的数据格式（类似 JSON 但支持注释和原始字符串）：
 
 ```zig
 .{
-    .name = "myproject",
+    .name = .myproject,
     .version = "0.1.0",
+    .fingerprint = 0x9d2b4f6a1c8e3a55, // 0.16 起要求：创建项目时由工具链自动生成
+    .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .zmath = .{
             .url = "https://github.com/michal-z/zig-zmath/archive/refs/tags/v0.1.0.tar.gz",
             .hash = "1220abc123...",
         },
     },
+    .paths = .{ "build.zig", "build.zig.zon", "src" },
 }
 ```
 
-`hash` 字段是包内容的完整性校验值，由 `zig fetch --save <url>` 自动生成并写入。手动填写或留空会导致依赖校验失败，实际项目里不要直接复制上面的示意值。
+`fingerprint` 是 0.16 起新增的必填字段：一个 64 位整数，项目首次创建时由工具链自动生成并写入，之后保持不变，与 `name` 一起构成包的全局唯一标识——Zig 靠它判断某个包是不是另一个包的升级版本，缺失时 `zig build` 会报错并提示应填写的值。`paths` 也是必填字段（早于 0.16 就已要求）：声明随包发布、参与 hash 计算的文件与目录，未列出的文件不会进入包。这两项都建议用 `zig init` 生成的项目骨架做模板，不要手搓。`hash` 字段仍是包内容的完整性校验值，由 `zig fetch --save <url>` 自动生成并写入；手动填写或留空会导致依赖校验失败，实际项目里不要直接复制上面的示意值。
 
-依赖在 `build.zig` 里通过 `b.dependency` 引入，使用时 `@import` 对应的包名。Zig 的包管理目前还在演进中，包注册中心（https://pkg.zigtools.org/）已经上线，但生态规模和 Rust 的 crates.io、Go 的 proxy 相比还有差距。
+依赖在 `build.zig` 里通过 `b.dependency` 引入，使用时 `@import` 对应的包名。Zig 的包管理基于"URL + 内容 hash"分发：没有像 crates.io 那样由官方托管的集中式注册中心，包通常从源码仓库的 tarball 直接拉取，用 hash 锁定内容（hash 才是包的真正身份，URL 只是获取途径之一）。社区有一些非官方的索引站点（如 Zig Index）辅助发现包，但生态规模和 Rust 的 crates.io、Go 的 module proxy 相比还有明显差距。
 
 常用构建命令：
 
@@ -404,7 +422,7 @@ zig build install --prefix ~/.local
 
 **不适合评估 Zig 的场景**：
 
-- 需要 1.0 稳定性保证的生产系统。Zig 当前版本（0.13/0.14 阶段）API 仍在变动，跨版本升级有成本。
+- 需要 1.0 稳定性保证的生产系统。Zig 当前稳定版 0.16.0 API 仍在变动，跨版本升级有成本。
 - 依赖大量第三方库的项目。Zig 生态还在早期，很多领域没有成熟库。
 - 团队对内存安全有硬性要求且无法靠纪律保证。这种场景 Rust 的编译期检查更可靠。
 - Web 服务端、CRUD 应用。这些场景 Go、Java、Python 的生态和开发效率优势更大。
@@ -414,7 +432,7 @@ zig build install --prefix ~/.local
 
 **Zig 没有 GC 也没有借用检查器，内存安全怎么保证？**
 
-靠四道防线：显式 allocator 让分配来源可见、`GeneralPurposeAllocator` 在 debug 构建时检测双重释放和泄漏、`defer`/`errdefer` 让释放路径可见、测试和代码审查。这套机制靠工程纪律维持，没有编译器强制。和 C 相比，Zig 把"分配"和"释放"都搬到类型系统里，让错误更容易被审查发现；和 Rust 相比，Zig 不会在编译期拦下内存错误，需要靠测试覆盖。学习曲线更平缓的代价，就是这个缺口要靠纪律和测试补上。
+靠四道防线：显式 allocator 让分配来源可见、`DebugAllocator`（0.16 中 Juicy Main 的 `init.gpa` 在 Debug 构建下就是它）在退出时检测双重释放和泄漏、`defer`/`errdefer` 让释放路径可见、测试和代码审查。这套机制靠工程纪律维持，没有编译器强制。和 C 相比，Zig 把"分配"和"释放"都搬到类型系统里，让错误更容易被审查发现；和 Rust 相比，Zig 不会在编译期拦下内存错误，需要靠测试覆盖。学习曲线更平缓的代价，就是这个缺口要靠纪律和测试补上。
 
 **`comptime` 求值有运行时开销吗？**
 
@@ -422,11 +440,11 @@ zig build install --prefix ~/.local
 
 **Zig 的 `async`/`await` 现在能用吗？**
 
-需要看版本。`async`/`await` 在 0.10 到 0.12 期间经历过较大调整，0.12 之后被移除并计划基于新的执行模型重新设计。依赖异步 I/O 的项目要先确认目标 Zig 版本的支持情况，不要假设 API 稳定。当前版本里做并发主要靠 `std.Thread`，异步 I/O 的官方方案还在演进。
+`async`/`await` 是 Zig 早期的实验特性，0.15 发布说明正式宣布移除——官方明确"语言中不会有 async/await 关键字"，异步 I/O 改由标准库承担：0.16 的 `std.Io` 接口本身就是围绕异步设计的，提供 `Future`、`Group`、`Batch`、取消机制和事件循环（`Io.Threaded`/`Io.Kqueue`/`Io.Uring`）等原语。当前版本里，多线程并发用 `std.Thread`，异步 I/O 用 `std.Io` 的事件循环与 `Future`。依赖异步 I/O 的项目要先确认目标 Zig 版本的支持情况，不要假设 API 稳定。
 
 **Zig 能和 C++ 互操作吗？**
 
-可以，但不如和 C 那么直接。`@cImport` 只能导入 C 头文件，C++ 的类、模板、命名空间需要先写一层 C 风格的 wrapper（`extern "C"`）才能被 Zig 调用。反向（C++ 调用 Zig）也类似——Zig 导出的函数用 `export fn` 标注，C++ 侧当作普通 C 函数调用。复杂项目里这层 wrapper 的维护成本需要评估。
+可以，但不如和 C 那么直接。Zig 调用 C 头文件通过构建系统的 C 翻译（0.16 起用 `b.addTranslateC`，`@cImport` 已弃用），但 C++ 的类、模板、命名空间不在翻译范围内——C++ 侧需要先写一层 C 风格的 wrapper（`extern "C"`）才能被 Zig 调用。反向（C++ 调用 Zig）也类似——Zig 导出的函数用 `export fn` 标注，C++ 侧当作普通 C 函数调用。复杂项目里这层 wrapper 的维护成本需要评估。
 
 **`zig cc` 能完全替代 gcc/clang 吗？**
 
@@ -440,12 +458,12 @@ zig build install --prefix ~/.local
 - `error: unable to evaluate comptime expression`：`comptime` 求值失败。检查表达式是否依赖了运行时值、是否调用了不支持 `comptime` 的函数（如外部 C 函数、I/O）。
 - `error: expected error set, found 'T'`：错误集声明和实际 `return error.Xxx` 不一致。把函数签名改成 `!T`（任意错误集）可以先让代码跑通，再补全具体错误集。
 - `error: container 'X' has no member named 'Y'`：通常是导入路径或命名空间写错。`@import` 返回的是文件对应的 struct，访问其成员要用 `.` 而不是 `->`。
-- 内存泄漏排查：在 debug 构建里用 `GeneralPurposeAllocator`，程序退出时 `gpa.deinit()` 会打印未释放的分配地址和大小，配合 `std.debug.print` 的地址输出可以定位到泄漏点。
+- 内存泄漏排查：在 debug 构建里用 Juicy Main 的 `init.gpa`（Debug 下是 `DebugAllocator`），程序退出时 `deinit` 会打印未释放的分配地址和大小，配合 `std.debug.print` 的地址输出可以定位到泄漏点。
 - 交叉编译 libc 报错：`zig cc` 自带 musl 和 MinGW，但 glibc 版本可能和目标系统不匹配。用 `-target x86_64-linux-gnu.2.31` 这样的带版本号三元组可以指定 glibc 版本。
 
 **生产环境里 Zig 程序崩溃了，怎么拿到可读的堆栈？**
 
-Release 构建默认会剥离调试信息，直接看 core dump 只能看到地址。两个做法：构建时用 `-Doptimize=ReleaseSafe` 并保留调试信息（`-fno-strip`），这样崩溃时能打印符号化的堆栈；或者用 `zig build -Ddebug-extensions` 之类的方式保留 DWARF 信息，再用 `lldb` 或 `gdb` 解析。对应"构建系统与包管理"里 `ReleaseSafe` 的说明——它保留运行时安全检查，崩溃时会主动打印 panic 堆栈，比 `ReleaseFast` 更适合线上排查。线上长期跑的服务建议至少在灰度环境用 `ReleaseSafe`。
+Debug 和 ReleaseSafe 构建默认保留调试信息，ReleaseFast、ReleaseSmall 默认剥离。线上用 `ReleaseSafe` 并显式保留调试信息（`-fno-strip`）时，崩溃能打印符号化的 panic 堆栈，再用 `lldb` 或 `gdb` 解析即可；`ReleaseFast`/`ReleaseSmall` 默认剥离调试信息，直接看 core dump 只能看到地址，需要时用 `-fno-strip` 保留。对应"构建系统与包管理"里 `ReleaseSafe` 的说明——它保留运行时安全检查，崩溃时会主动打印 panic 堆栈，比 `ReleaseFast` 更适合线上排查。线上长期跑的服务建议至少在灰度环境用 `ReleaseSafe`。
 
 **Zig 程序性能不达预期，从哪里入手定位？**
 
@@ -453,7 +471,7 @@ Release 构建默认会剥离调试信息，直接看 core dump 只能看到地�
 
 **从 C 代码库迁移到 Zig，常见的坑有哪些？**
 
-几类高频问题。C 的隐式转换在 Zig 里全部失效：`if (a)` 要改成 `if (a != 0)`，`void*` 泛型要改成 `comptime T: type` 的泛型函数。C 的 `errno` 模式要改成 error union，每个可能失败的调用都要 `try` 或 `catch`，迁移初期会让代码变长。C 的宏（`#define`）没有直接对应物，常量用 `const`，函数式宏用 `inline fn` 或 `comptime` 函数替代。C 的 `goto cleanup` 模式要改成 `defer`/`errdefer`，作用域语义不同，迁移时容易漏掉释放路径。建议从新模块开始用 Zig，老模块通过 `@cImport` 互操作，对应"作为 C 编译器的 Zig"里渐进式替换的策略。
+几类高频问题。C 的隐式转换在 Zig 里全部失效：`if (a)` 要改成 `if (a != 0)`，`void*` 泛型要改成 `comptime T: type` 的泛型函数。C 的 `errno` 模式要改成 error union，每个可能失败的调用都要 `try` 或 `catch`，迁移初期会让代码变长。C 的宏（`#define`）没有直接对应物，常量用 `const`，函数式宏用 `inline fn` 或 `comptime` 函数替代。C 的 `goto cleanup` 模式要改成 `defer`/`errdefer`，作用域语义不同，迁移时容易漏掉释放路径。建议从新模块开始用 Zig，老模块通过构建系统的 C 翻译（`b.addTranslateC`，替代已弃用的 `@cImport`）互操作，对应"作为 C 编译器的 Zig"里渐进式替换的策略。
 
 **错误集该怎么设计？用 `!T` 还是显式声明错误集？**
 
@@ -477,7 +495,7 @@ Release 构建默认会剥离调试信息，直接看 core dump 只能看到地�
 
 1. **跑通安装和第一个程序**。从官方下载页（https://ziglang.org/download/）取对应平台的二进制，写一个 `hello.zig`，用 `zig build-exe hello.zig` 编译。这一步建立工具链直觉。
 2. **过一遍 Ziglings**（https://ziglings.org/）。这是一套交互式练习，每个文件一个知识点，改错就能跑通。覆盖语法和标准库基础。
-3. **读标准库源码**。Zig 标准库就是 Zig 写的，可读性高，是最好的进阶材料。从 `std/mem.zig`、`std/fs.zig` 开始，看 allocator 接口和文件 API 的设计。
+3. **读标准库源码**。Zig 标准库就是 Zig 写的，可读性高，是最好的进阶材料。从 `std/mem.zig`、`std/Io.zig` 开始，看 allocator 接口和 I/O 接口的设计——0.16 的 I/O 抽象（`std.Io`）是理解新标准库的钥匙。
 4. **写一个真实的小项目**。比如一个简单的 HTTP 静态文件服务器、一个 JSON 处理 CLI、一个小的数据结构库。这一步会逼你处理错误、管理内存、用 `comptime`。
 5. **读 Zig 编译器源码**（https://codeberg.org/ziglang/zig）。如果对语言实现感兴趣，编译器源码就是 Zig 大型项目范例，能看到 `comptime`、错误处理、构建系统的真实用法。
 
@@ -498,7 +516,7 @@ Release 构建默认会剥离调试信息，直接看 core dump 只能看到地�
 - **未到 1.0**。标准库 API、编译器内部接口、构建系统 API 都还在变动。跨版本升级经常需要改代码，生产使用要锁定版本并评估升级成本。
 - **仓库迁移**。官方仓库已从 GitHub 迁移到 Codeberg，GitHub 上的镜像不再同步。引用源码、提交 issue、跟踪 roadmap 以 Codeberg 为准。
 - **生态规模**。包管理、第三方库、工具链（调试器、profiler）的成熟度还不如 C/Rust/Go。复杂项目可能需要自己造轮子。
-- **语言演进**。一些特性（如 `async`/`await`、错误集推导）在不同版本间有过较大调整，跟踪官方 RFC 和 changelog 是必要的。
+- **语言演进**。一些特性（如 `async`/`await` 关键字移除、`@cImport` 弃用、I/O 接口重写）在不同版本间有过较大调整，跟踪官方 changelog 是必要的。
 
 Zig 的设计方向清晰，但"是否适合你的项目"取决于你能否接受这些成本——1.0 之前的 API 不稳定和生态规模限制这两项，会直接决定维护负担。
 

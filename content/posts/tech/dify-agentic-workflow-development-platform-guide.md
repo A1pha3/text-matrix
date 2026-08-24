@@ -164,7 +164,7 @@ Dify 的核心实体有以下几类：
 
 **Workflow（工作流）** 是 Dify 编排复杂任务的核心能力，由多个 **Node（节点）** 和 **Edge（边）** 组成，Node 代表一个处理单元（如 LLM 调用、条件分支、数据转换），Edge 代表数据流向。工作流支持条件分支、并行执行、循环等复杂控制流。
 
-**Dataset（知识库）** 是 Dify 的 RAG 能力载体。每个 Dataset 包含多个 Document，文档经过切片（Chunking）处理后存入向量数据库（默认是 pgvector，PostgreSQL 的向量扩展）。Dify 支持从 PDF、PPT、Word、Markdown 等格式直接导入。
+**Dataset（知识库）** 是 Dify 的 RAG 能力载体。每个 Dataset 包含多个 Document，文档经过切片（Chunking）处理后存进向量数据库。Dify 支持 pgvector、Weaviate、Qdrant、Milvus 等向量库，容器内默认用 pgvector（PostgreSQL 的向量扩展）。Dify 支持从 PDF、PPT、Word、Markdown 等格式直接导入。
 
 ### 3.3 推理调用链路
 
@@ -348,7 +348,7 @@ Docker Compose 默认占用端口 `80`（Nginx）、`5432`（PostgreSQL）、`63
 
 安装阶段的问题大多集中在端口和 API Key，运行时的问题更分散。
 
-**工作流节点执行失败但日志信息有限。** 先在「日志」页面找到对应的工作流运行记录，展开各节点的输入输出和耗时。如果节点输入为空，通常是上游变量的传递路径配置错误——检查节点之间的变量映射是否对齐了字段名和类型；如果节点输入正常但输出异常，进入节点详情查看 LLM 的原始响应和错误码。流式响应中断时，检查 Nginx 或反向代理是否关闭了 `proxy_buffering`，SSE 链路被中间层缓冲会导致 chunk 丢失。
+**工作流节点执行失败但日志信息有限。** 先到「日志」页面定位对应的运行记录，展开各节点的输入、输出和耗时。节点输入为空，多半是上游变量的传递路径配置错了——逐一核对节点间的变量映射，字段名和类型是否对齐；输入正常但输出异常，就进节点详情看 LLM 的原始响应和错误码。流式响应中断时，确认 Nginx 或反向代理有没有关闭 `proxy_buffering`，SSE 链路被中间层缓冲会丢 chunk。
 
 **模型调用超时或限流。** Dify 的 Model Runtime 层会透传上游提供商的错误码。OpenAI 兼容接口返回 429 时，先在「模型供应商」页面降低该模型的并发上限，或在 Nginx 层加 `limit_req` 做全局限流。超时问题需要区分是模型本身慢还是网络链路慢——可以在 Dify 容器内直接 `curl` 模型 API 测基线延迟，再对比 Dify 日志里的耗时。本地模型（Ollama、LM Studio）首次调用慢通常是模型加载耗时，预热一次后再测。
 
@@ -434,33 +434,41 @@ Dify 还支持在「日志」页面对同一条用户输入，用不同 Prompt �
 
 Dify 的工具系统支持通过 OpenAPI Schema 定义自定义 HTTP 工具，新版本也兼容 [MCP](https://modelcontextprotocol.io/)。开发一个自定义工具只需几步：
 
-在「工具」→「自定义工具」中新建工具，填写基本信息，然后编写接口定义：
+在「工具」→「自定义工具」中新建工具，填写基本信息。接口定义以 OpenAPI 规范导入，指定目标服务可访问的地址即可拉取；也可以直接粘一份 OpenAPI 描述：
 
-```json
-{
-  "schema": {
-    "name": "get_weather",
-    "description": "查询指定城市的当前天气",
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "city": {
-          "type": "string",
-          "description": "城市名称，如北京、上海"
-        },
-        "unit": {
-          "type": "string",
-          "enum": ["celsius", "fahrenheit"],
-          "default": "celsius"
-        }
-      },
-      "required": ["city"]
-    }
-  }
-}
+```yaml
+openapi: 3.1.0
+info:
+  title: 天气查询工具
+  description: 查询指定城市的当前天气
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+paths:
+  /weather:
+    get:
+      operationId: getWeather
+      description: 查询指定城市的当前天气
+      parameters:
+        - name: city
+          in: query
+          required: true
+          schema:
+            type: string
+            description: 城市名称，如北京、上海
+        - name: unit
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [celsius, fahrenheit]
+            default: celsius
+      responses:
+        "200":
+          description: 成功返回天气信息
 ```
 
-然后填写目标 API 的地址、认证方式（API Key / Bearer Token / 无认证），以及请求体构造方式。Dify 支持将用户输入的对话参数自动映射到 API 请求参数中。在工具配置页面填写测试参数验证调用结果，确认正常后即可在工作流和 Agent 中使用。
+导入后，在配置页面对应每个 `servers` 条目填写认证方式（API Key / Bearer Token / 无认证）。Dify 会读取 OpenAPI 里的参数定义，把用户输入或对话中提取到的值映射到请求参数上。在工具配置页面填写测试参数验证调用结果，确认正常后即可在工作流和 Agent 中使用。
 
 ### 6.2 API 集成
 
@@ -531,7 +539,7 @@ Dify 的插件系统（Plugin）允许以插件形式扩展平台能力，无需
 | Tenant（租户） | Dify 的顶级隔离单位，对应一个独立用户体系与应用配置 |
 | Dataset（知识库） | RAG 载体，文档切片后存入向量数据库 |
 | Chunking（切片） | 把长文档切块以便检索，策略影响检索质量 |
-| pgvector | PostgreSQL 的向量扩展，Dify 默认向量存储 |
+| pgvector | PostgreSQL 的向量扩展，Dify 容器内默认的向量存储 |
 | Conversation / Message | 一次会话及其中的消息，支持人工标注与反馈 |
 | Model Runtime / Config | 底层对接模型商家的实现层 / 每租户的模型配置 |
 | Sandbox | 隔离执行用户代码的独立容器 |

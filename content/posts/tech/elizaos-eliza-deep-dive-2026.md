@@ -28,7 +28,7 @@ description: "18,902 stars 的 elizaOS/eliza 不只是又一个 agent 框架。�
 | 部署形态 | Python/Node 包，嵌入到你的 app | 一套完整 OS（可启动的 Linux desktop、Android system image）+ 跨平台 app（web/desktop/mobile）+ runtime + cloud |
 | 数据归属 | 调用方服务，数据上云 | **local-first**，agent、数据、模型全在设备上，cloud 完全可选 |
 | 模型来源 | 单一 provider 或多 provider 调用 | 自家 **Eliza-1** 端侧模型 + OpenAI / Anthropic / Gemini / Grok / Llama 全部可选 |
-| 运行时 | 一次推理调用 | **AgentRuntime** 11k 行类，长期驻留进程 |
+| 运行时 | 一次推理调用 | **AgentRuntime**（约 1.1 万行的类），长期驻留进程 |
 | 边界 | 业务代码 | **app 一等公民**——plugin 可以成为 surface，在 runtime 里被 install/launch/track，跨重启存活 |
 
 LangChain 是写一个调用 LLM 的程序。elizaOS 是装一个会说话的操作系统。差别是部署形态、生命周期和资产归属三个维度同时翻转。
@@ -101,8 +101,7 @@ packages/
 
 `@elizaos/core/src/runtime.ts` 是整个仓库的"宪法"。文件头注释（原文翻译）：
 
-> `AgentRuntime` 是每个 Eliza agent 跑在上面的中央编排器，具体实现 `IAgentRuntime`。一个实例拥有一个 agent 的整个世界：它的 actions / providers / evaluators / services、model-handler registry 和 `useModel` dispatch/routing/fallback 层、plugin 集和它的生命周期（register / unload / reload / config）、memory 和 state（database adapter / embeddings / `stateCache` / working memory），以及跑 provider → model → action → evaluator 的 message loop。Plugin 贡献 capability，runtime 装配并跑它们。**`@elizaos/core` 几乎全部和每个 plugin 最终都和这个类对话**。
->
+> `AgentRuntime` 是每个 Eliza agent 跑在上面的中央编排器，具体实现 `IAgentRuntime`。一个实例拥有一个 agent 的整个世界：它的 actions / providers / evaluators / services、model-handler registry 和 `useModel` dispatch/routing/fallback 层、plugin 集和它的生命周期（register / unload / reload / config）、memory 和 state（database adapter / embeddings / `stateCache` / working memory），以及跑 provider → model → action → evaluator 的 message loop。Plugin 贡献 capability，runtime 装配并跑它们。**`@elizaos/core` 里几乎所有的代码，以及每个 plugin，最终都要和这个类对话**。
 > 文件大约 1 万行——**按符号导航，不要从上往下读**。
 
 ### 3.1 三条不变式
@@ -155,6 +154,19 @@ message → providers(state/context)
 3. `maybeReroute` 处理错误重路由
 
 **模型无关**（model-agnostic）的意思是换 provider 只是配置改动，不用改代码。
+
+### 3.3 一条消息完整流过一次 runtime
+
+把上面这条 loop 套到一次具体对话，看各层到底各干了什么。假设用户从 app 里发来一句"给 Alex 打个招呼"：
+
+1. **providers** 先把外部上下文摊进提示词——当前页面摘要、用户状态、角色设定，统一拼给模型。
+2. **dynamicPrompt** 把内容切成 system 与 user 两块，其中稳定段标记为可缓存。
+3. **useModel** 经 `resolveChain` 选中一个 provider，`executeChainWithFallback` 发起生成；失败就沿 fallback chain 换下一家。
+4. 模型返回的动作命中 §5.1 的 `GREET_USER`，handler 回调把"Hello, Alex!"写回对话。
+5. **evaluators** 对刚发生的一段对话做后置评估，判断是否值得沉淀成 memory。
+6. **memory persist** 把 state 写回 adapter，`stateCache` 随后刷新。
+
+同样的胶水代码挂在 app、plugin、OS 镜像上时，变的只是最外层壳，loop 本身不动——这是"OS 而不是框架"最直观的地方。
 
 ## 4. 2026 年的最新演进：从 CHANGELOG 看到的三个方向
 

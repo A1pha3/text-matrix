@@ -3,7 +3,7 @@ title: "12-Factor Agents：把 LLM 应用从 Demo 拉进生产线的工程原则
 date: "2026-05-25T21:10:00+08:00"
 slug: "12-factor-agents-llm-production-principles"
 github_repo: "humanlayer/12-factor-agents"
-description: "humanlayer/12-factor-agents 是一套从 100+ SaaS 团队的血泪史中提炼出的设计原则。本文逐一拆解 12 条正式原则加 1 条荣誉提及的工程动机、实现边界和常见翻车现场，并给出从哪条开始的采用路线图。"
+description: "humanlayer/12-factor-agents 是一套从 100+ 位 AI 工程师的实战访谈中提炼出的设计原则。本文逐一拆解 12 条正式原则加 1 条荣誉提及的工程动机、实现边界和常见翻车现场，并给出从哪条开始的采用路线图。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "LLM", "工程实践", "上下文工程", "Python"]
@@ -13,7 +13,7 @@ tags: ["AI Agent", "LLM", "工程实践", "上下文工程", "Python"]
 
 ## 核心判断
 
-humanlayer 创始人 Dex 访谈了 100 多个 SaaS 创始人后，发现一条规律：**真正交付到生产用户手里的 LLM 软件，绝大多数是软件加 LLM 步骤的混合体，不是纯 Agent。**
+humanlayer 创始人 Dex 访谈了 100 多位创始人、构建者和工程师后，发现一条规律：**真正交付到生产用户手里的 LLM 软件，绝大多数是软件加 LLM 步骤的混合体，不是纯 Agent。**
 
 每一个原则背后都有具体的踩坑故事。比如有团队用 LangChain 搭了客服 Agent，demo 跑得不错，一上生产就炸——用户问"我的订单状态"，Agent 先调了知识库搜索、情感分析，最后才想起查订单表。模型不笨，问题是工具设计和上下文组织没做好。
 
@@ -23,7 +23,7 @@ humanlayer 创始人 Dex 访谈了 100 多个 SaaS 创始人后，发现一条�
 - 从 demo 到生产级之间，缺的是模型能力还是工程结构？
 - 不用框架、自己搭的话，先做哪一块？
 
-仓库地址是 [github.com/humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)，配套有视频讲解、脚手架 `npx/uvx create-12-factor-agent`、Discord 社区和开源参考实现 `got-agents/agents`。团队一般拿它做两件事：审视现有实现里哪些环节失控，以及指导新项目从第一行代码开始的结构。
+仓库地址是 [github.com/humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)，配套有视频讲解、脚手架 `npx/uvx create-12-factor-agent`、Discord 社区和由 Dex 维护的开源参考实现 `got-agents/agents`。团队一般拿它做两件事：审视现有实现里哪些环节失控，以及指导新项目从第一行代码开始的结构。
 
 ## 目录
 
@@ -654,7 +654,7 @@ Factor 8 把 while loop 的终止条件、重试次数、人工升级写在 `age
 
 ### 这套原则不覆盖什么
 
-作者 Dex 明确划分了几个话题边界：
+先划一条定位线：12-Factor Agents 不是行业标准，也不是必须照搬的框架，而是一份可以逐条对照的架构清单。它不提供运行时，只给出判断标准；作者 Dex 明确划分了几个话题边界：
 
 - **MCP（Model Context Protocol）**：不讨论。MCP 是工具发现和调用的协议层，12-Factor Agents 是 Agent 工程的设计层——可以在这套原则上实现 MCP 客户端，但原则本身不绑定任何协议。
 - **框架对比**：不涉及 LangChain vs LangGraph vs CrewAI 的横向评测。它告诉你好框架为什么好，但不帮你选框架。
@@ -727,7 +727,7 @@ Agent 的所有进度存在一个 Python 进程的局部变量里。进程重启
 
 ### Q4：Agent Loop 上限设多少合适？
 
-取决于任务复杂度和单步成本。Dex 在参考实现里用的是 25 步（参见 `got-agents/agents` 仓库 `examples/` 目录下的客服与部署示例），覆盖大多数客服、部署、数据处理场景。如果任务天然需要更多步骤（比如代码生成 Agent），考虑拆成多个小 Agent（Factor 10）串联，而不是把单 Loop 上限拉到 100。
+取决于任务复杂度和单步成本。Dex 在参考实现里用的是 25 步（参见 `got-agents/agents` 仓库 `deploybot-ts` 与 `linear-assistant-ts` 目录下的部署、客服示例），覆盖大多数典型场景。如果任务天然需要更多步骤（比如代码生成 Agent），考虑拆成多个小 Agent（Factor 10）串联，而不是把单 Loop 上限拉到 100。
 
 ### Q5：无状态 reducer 怎么处理需要调用真实 LLM 的场景？
 
@@ -815,7 +815,7 @@ uvx create-12-factor-agent
 - [Deep Dive 视频](https://www.youtube.com/watch?v=yxJDyQ8v6P0)（更深入的技术细节，链接有效性以发布时为准）
 - [Discord 社区](https://humanlayer.dev/discord)（链接有效性以发布时为准）
 - [The Outer Loop 博客](https://theouterloop.substack.com)（Dex 持续更新的工程笔记）
-- [got-agents/agents](https://github.com/got-agents/agents)：社区按此方法论构建的开源 Agent 参考实现（链接有效性以发布时为准）
+- [got-agents/agents](https://github.com/got-agents/agents)：Dex 与多位贡献者维护的开源 Agent 参考实现，内含 `deploybot-ts`、`linear-assistant-ts` 等体现这套原则的示例（链接有效性以发布时为准）
 
 > **项目地址**：[github.com/humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)
 > **内容许可**：CC BY-SA 4.0 | **代码许可**：Apache 2.0

@@ -213,26 +213,33 @@ import { sql, SQL } from 'bun'
 const pg = new SQL('postgres://user:pass@localhost/db')
 const users = await sql`SELECT * FROM users WHERE active = ${true}`
 
-// Redis 客户端（Bun.RedisClient）
-// 注意：API 名称以官方文档为准
-// import { RedisClient } from 'bun'
-// const redis = new RedisClient('redis://localhost:6379')
+// Redis 客户端（内置，Bun 1.3+）
+import { redis } from 'bun'
+await redis.set('greeting', 'Hello from Bun!')
+const greeting = await redis.get('greeting')
+
+// S3 / R2 对象存储客户端（内置，Bun 1.2+，支持 AWS S3、R2、MinIO 等）
+import { S3Client } from 'bun'
+const s3 = new S3Client({ bucket: 'my-bucket' })
+await s3.file('data.json').write(JSON.stringify({ ok: true }))
+// const data = await s3.file('data.json').json()
 
 // Cron 定时任务
 // Bun.cron('*/5 * * * *', () => {
 //   console.log('Runs every 5 minutes')
 // })
 
-// 无头浏览器（Bun.WebView，macOS）
+// 无头浏览器（Bun.WebView，macOS，实验性）
 // import { WebView } from 'bun'
 ```
 
 几点说明：
 
-- `Bun.SQL` 是大写，从 `bun` 包导入（不是 `bun:sql`），支持 PostgreSQL、MySQL、SQLite 三种数据库，用标记模板字面量执行查询，自带参数化防注入。
-- `bun:sqlite` 是独立模块，与 `Bun.SQL` 的 SQLite 模式有重叠但 API 风格不同。`bun:sqlite` 更接近 `better-sqlite3` 的同步 API，`Bun.SQL` 更现代。
-- `Bun.RedisClient`、`Bun.WebView`、`Bun.cron` 等较新的 API 在不同版本间可能有变化，使用前请查阅 [官方文档](https://bun.sh/docs/runtime/bun-apis) 确认当前版本的支持情况。
-- 原文提到的 `bun:s3`、`bun:redis`、`bun:webview` 等模块名在官方 API 列表中不存在，正确写法是 `Bun.WebView`（从 `bun` 包导入）和 `Bun.RedisClient`。S3 客户端目前不是 Bun 内置 API，需要用 `@aws-sdk/client-s3` 等第三方库。
+- `Bun.SQL` 是从 `bun` 包导出的大写 `SQL`/`sql`（不是 `bun:sql` 模块）。它用标记模板字面量执行查询，`${}` 占位符会被自动参数化，防 SQL 注入。Bun 1.3 起用同一套 API 覆盖 PostgreSQL、MySQL、MariaDB、SQLite 四种数据库；PostgreSQL 客户端更早在 1.2 就可用。注意它只能以标记模板方式调用，当普通函数调用会抛错。
+- `bun:sqlite` 是独立模块，API 更接近 `better-sqlite3` 的同步风格（`.query(...).all()`），`Bun.SQL` 返回 Promise，风格更现代。两者 SQLite 能力有重叠，按项目习惯二选一。
+- `Bun.S3`（`S3Client` / `s3`，Bun 1.2+）是内置的 S3 兼容对象存储客户端，可用于 AWS S3、Cloudflare R2、DigitalOcean Spaces、MinIO 等，无需引入 `@aws-sdk`。
+- `Bun.redis`（Bun 1.3+）是内置 Redis 客户端，覆盖常用命令；Bun 官方基准称其比 `ioredis` 快 7.9 倍，但集群、流和 Lua 脚本仍待后续版本补齐。
+- `Bun.cron`、`Bun.WebView`（macOS）等较新 API 仍在演进，使用前以 [官方文档](https://bun.sh/docs/runtime/bun-apis) 为准。
 
 ## 包管理器：与 npm/yarn/pnpm 的性能对比
 
@@ -581,6 +588,9 @@ npm 上的包大多数可以在 Bun 上运行，但某些包的特定功能（�
 **5. 版本稳定性**
 Bun 仍在活跃开发中，版本之间可能有 breaking change。使用 `bun.lockb` 锁定依赖版本，避免升级导致的不兼容。
 
+**6. Bun.SQL 的批量插入仍有已知缺陷**
+`sql(rows)` 批量插入若含可空列，Bun 会对每种 null 组合各编译一条预编译语句，导致数据库端预编译语句不断累积，极端情况下把服务内存撑爆（相关 issue：#28980）。批量写入的列含可空字段时，先小批量压测再上生产。
+
 ## FAQ：常见问题与错误排查
 
 **Q1：`bun install` 报 `ENOENT` 或网络错误**
@@ -612,7 +622,7 @@ Bun 的 mock API 与 Jest 高度兼容但不完全一致。常见差异：`jest.
 
 **Q6：Bun 的 `Bun.SQL` 和 `bun:sqlite` 该用哪个？**
 
-`bun:sqlite` 是早期就有的同步 SQLite 接口，API 风格接近 `better-sqlite3`，适合简单场景。`Bun.SQL` 是 1.3 引入的统一 SQL 客户端，支持 PostgreSQL/MySQL/SQLite，用标记模板字面量，自带连接池和参数化。新项目建议用 `Bun.SQL`，老项目用 `bun:sqlite` 也没问题。
+`bun:sqlite` 是早期就有的同步 SQLite 接口，API 风格接近 `better-sqlite3`，适合简单场景。`Bun.SQL` 是 1.3 统一的 SQL 客户端，支持 PostgreSQL/MySQL/MariaDB/SQLite，用标记模板字面量，自带连接池和参数化。新项目建议用 `Bun.SQL`，老项目用 `bun:sqlite` 也可以。
 
 ## 自测题
 

@@ -19,8 +19,9 @@ tags: ["C++", "测试框架", "TDD"]
 - Matchers：声明式断言
 - BDD（行为驱动开发）风格宏
 - Approx：浮点比较
+- 数据驱动测试：GENERATE
 - 微基准测试
-- CMake 集成
+- CMake 与 CTest 集成
 - 与 GoogleTest 的取舍
 - 常见坑与排查
 - 动手练习
@@ -189,6 +190,34 @@ TEST_CASE("Floating point") {
 
 `Approx` 默认的相对误差是 `std::numeric_limits<float>::epsilon() * 100`，约 1.19e-5；`.margin(x)` 切换为绝对误差，`.epsilon(x)` 覆盖相对误差。注意默认 epsilon 基于 float 精度，比较 double 计算结果时通常要显式调小。
 
+还要留意一个容易忽略的点：`Approx` 的相对误差判断会同时参照目标值和被比较的值，两边数值量级差太远时结果可能与其直觉不符。用 `margin`（绝对误差）做"固定容差"更直观；用默认 epsilon 时确保两个值量级接近即可。
+
+## 数据驱动测试：GENERATE
+
+数据驱动测试（data-driven testing）把"同一逻辑、多组输入"拆成多轮执行。Catch2 的 `GENERATE` 宏用起来直接：
+
+```cpp
+#include <catch2/generators/catch_generators_all.hpp>
+
+TEST_CASE("range generators") {
+    // 对 2、3、5、7 各跑一遍测试体
+    auto n = GENERATE(2, 3, 5, 7);
+    REQUIRE(n % 2 == 0 || n % 3 == 0 || n % 5 == 0);
+}
+```
+
+`GENERATE` 像并列的 SECTION 那样展开多轮执行，每轮独立运行、独立报告结果。配合内置生成器还能自动组合：
+
+```cpp
+TEST_CASE("cartesian product") {
+    auto a = GENERATE(1, 2);
+    auto b = GENERATE(values({"x", "y"}));   // 用 values 从容器取值
+    // 组合出 (1,"x") (1,"y") (2,"x") (2,"y") 四轮
+}
+```
+
+内置生成器还有 `range`、`filter`、`take`、`repeat` 等，大多是惰性求值的。GENERATE 本身不算断言，它的价值在于把数据从测试逻辑里抽出来，改数据不用动断言。
+
 ## 微基准测试
 
 Catch2 提供 `BENCHMARK` 宏，可以做简单基准（不替代专用库如 Google Benchmark）：
@@ -218,7 +247,7 @@ TEST_CASE("Benchmark vector vs list") {
 
 Catch2 对样本做 bootstrap 统计，默认输出平均耗时与 95% 置信区间。够日常性能对比用——真要严格基准用 Google Benchmark。
 
-## CMake 集成
+## CMake 与 CTest 集成
 
 Catch2 v3 通过 CMake config 文件导出 target：
 
@@ -240,6 +269,24 @@ FetchContent_MakeAvailable(Catch2)
 > Catch2 有两个 target：`Catch2::Catch2`（不生成 main，自己写 `main` 或注册自定义入口）和 `Catch2::Catch2WithMain`（自带 main，不需要在测试里定义 `CATCH_CONFIG_MAIN`）。
 
 日常推荐 `Catch2WithMain`：省掉每个测试文件顶部的 `CATCH_CONFIG_MAIN` 宏，也避免多人协作时"多个文件都想生成 main"的链接错误。
+
+### 用 CTest 自动注册
+
+每个 `TEST_CASE` 在运行时是独立的测试节点，可以交给 CTest 统一检索。官方提供 `catch_discover_tests`：
+
+```cmake
+find_package(Catch2 REQUIRED)
+
+enable_testing()
+add_executable(my_tests test_main.cpp test_foo.cpp)
+target_link_libraries(my_tests PRIVATE Catch2::Catch2WithMain)
+
+include(CTest)
+include(Catch)               # 来自 Catch2 安装包或 extras/ 目录
+catch_discover_tests(my_tests)
+```
+
+`catch_discover_tests` 通过运行测试二进制并解析 `--list-test` 输出来枚举用例，加一个 `TEST_CASE` 不用改 CMake；代价是结果依赖测试二进制能正常启动。用 FetchContent 时要把 `extras/` 追加到 `CMAKE_MODULE_PATH`，否则 `include(Catch)` 找不到模块。CTest 顺带解决了"按用例细跑"的需求：`ctest -R <正则>` 过滤某个测试，`ctest --output-on-failure` 只看失败详情。
 
 ## 与 GoogleTest 的取舍
 
@@ -319,16 +366,19 @@ REQUIRE(result == Approx(3.14).epsilon(1e-9));
 
 **练习 3：迁移一个 v2 工程。** 建一个用 `catch.hpp` + `CATCH_CONFIG_MAIN` 的最小工程，按"常见坑 2"的四步迁到 v3，跑通后删掉宏定义，观察编译时间变化。
 
+**练习 4：用 GENERATE 重写数据。** 把"练习 1"的 `factorial` 测试改成 `GENERATE(0, 1, 10)` + 一个 `CAPTURE(n)` 断言，运行后看报告里出现了几个测试用例，体会"一个参数化表达式展开成多轮"的行为。
+
 **自测题**：
 
 - 一个 TEST_CASE 里有 3 个并列 SECTION，测试会执行几次前置代码？
 - `REQUIRE` 失败后当前测试继续还是终止？`CHECK` 呢？
 - `Catch2::Catch2` 和 `Catch2::Catch2WithMain` 的区别是什么？
 - Approx 默认 epsilon 是多少？为什么它不适合高精度 double 比较？
+- 一个 TEST_CASE 里 `GENERATE(1, 2)` 和另一个 `GENERATE(1, 2)` 并列，会展开成几轮执行？
 
 ## 进阶方向
 
-- **Generators**：`GENERATE` 宏做数据驱动测试，一个 TEST_CASE 自动展开多组输入（文档：`docs/generators.md`）。
+- **Generators 组合**：`GENERATE` 可与 `range`、`filter`、`take` 组合出更复杂的输入集（文档：`docs/generators.md`）。多个 `GENERATE` 并列时按笛卡尔积展开。
 - **Test fixtures**：`docs/test-fixtures.md` 的 `TEST_CASE_METHOD`，需要构造复杂前置对象时比 SECTION 更省事。
 - **Reporters 与 Event listeners**：定制输出格式、接入 CI 系统（`docs/reporters.md`）。
 - **Mock 方案**：Catch2 官方不提供 mock，社区常用 trompeloeil、FakeIt 与 Catch2 配合（`docs/opensource-users.md` 有使用案例）。
@@ -338,5 +388,6 @@ REQUIRE(result == Approx(3.14).epsilon(1e-9));
 
 - 仓库：[https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)
 - 官方文档：[https://catch2-docs.readthedocs.io](https://catch2-docs.readthedocs.io)
+- CMake 集成：[docs/cmake-integration.md](https://github.com/catchorg/Catch2/blob/devel/docs/cmake-integration.md)
 - v2 迁移指南：[docs/migrate-v2-to-v3.md](https://github.com/catchorg/Catch2/blob/devel/docs/migrate-v2-to-v3.md)
 - 替代方案 doctest：[https://github.com/doctest/doctest](https://github.com/doctest/doctest)
