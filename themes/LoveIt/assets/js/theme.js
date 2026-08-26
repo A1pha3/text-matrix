@@ -740,22 +740,91 @@ var Theme = /*#__PURE__*/function () {
         }
         if (this.config.comment.giscus) {
           var giscusConfig = this.config.comment.giscus;
-          var giscusScript = document.createElement('script');
-          giscusScript.src = 'https://giscus.app/client.js';
-          giscusScript.setAttribute('data-repo', giscusConfig.repo);
-          giscusScript.setAttribute('data-repo-id', giscusConfig.repoId);
-          giscusScript.setAttribute('data-category', giscusConfig.category);
-          giscusScript.setAttribute('data-category-id', giscusConfig.categoryId);
-          giscusScript.setAttribute('data-lang', giscusConfig.lang);
-          giscusScript.setAttribute('data-mapping', giscusConfig.mapping);
-          giscusScript.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled);
-          giscusScript.setAttribute('data-emit-metadata', giscusConfig.emitMetadata);
-          giscusScript.setAttribute('data-input-position', giscusConfig.inputPosition);
-          if (giscusConfig.lazyLoading) giscusScript.setAttribute('data-loading', 'lazy');
-          giscusScript.setAttribute('data-theme', this.isDark ? giscusConfig.darkTheme : giscusConfig.lightTheme);
-          giscusScript.crossOrigin = 'anonymous';
-          giscusScript.async = true;
-          document.getElementById('giscus').appendChild(giscusScript);
+          var giscusContainer = document.getElementById('giscus');
+          var retryDelays = [1000, 4000];
+          var retryIndex = 0;
+          var clearGiscusAttempt = function clearGiscusAttempt() {
+            var script = giscusContainer.querySelector('script[data-giscus-loader]');
+            var widget = giscusContainer.querySelector('.giscus');
+            var fallback = giscusContainer.querySelector('.giscus-fallback');
+            if (script) script.remove();
+            if (widget) widget.remove();
+            if (fallback) fallback.remove();
+          };
+          var showGiscusFallback = function showGiscusFallback() {
+            clearGiscusAttempt();
+            var fallback = document.createElement('div');
+            var message = document.createElement('span');
+            var retry = document.createElement('button');
+            var discussions = document.createElement('a');
+            fallback.className = 'giscus-fallback';
+            fallback.setAttribute('role', 'status');
+            message.textContent = '评论服务暂时无法加载。';
+            retry.type = 'button';
+            retry.textContent = '重试';
+            retry.addEventListener('click', function () {
+              retryIndex = 0;
+              _loadGiscus();
+            }, false);
+            discussions.href = "https://github.com/".concat(giscusConfig.repo, "/discussions");
+            discussions.target = '_blank';
+            discussions.rel = 'noopener noreferrer';
+            discussions.textContent = 'GitHub Discussions';
+            fallback.append(message, retry, discussions);
+            giscusContainer.appendChild(fallback);
+          };
+          var _loadGiscus = function loadGiscus() {
+            clearGiscusAttempt();
+            var giscusScript = document.createElement('script');
+            var settled = false;
+            var timeout;
+            var fail = function fail() {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timeout);
+              if (retryIndex < retryDelays.length) {
+                var delay = retryDelays[retryIndex++];
+                window.setTimeout(function () {
+                  if (!giscusContainer.querySelector('iframe.giscus-frame')) _loadGiscus();
+                }, delay);
+              } else {
+                showGiscusFallback();
+              }
+            };
+            var succeed = function succeed() {
+              if (settled) return;
+              if (!giscusContainer.querySelector('iframe.giscus-frame')) {
+                fail();
+                return;
+              }
+              settled = true;
+              window.clearTimeout(timeout);
+            };
+            giscusScript.src = 'https://giscus.app/client.js';
+            giscusScript.dataset.giscusLoader = 'true';
+            giscusScript.setAttribute('data-repo', giscusConfig.repo);
+            giscusScript.setAttribute('data-repo-id', giscusConfig.repoId);
+            giscusScript.setAttribute('data-category', giscusConfig.category);
+            giscusScript.setAttribute('data-category-id', giscusConfig.categoryId);
+            giscusScript.setAttribute('data-lang', giscusConfig.lang);
+            giscusScript.setAttribute('data-mapping', giscusConfig.mapping);
+            giscusScript.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled);
+            giscusScript.setAttribute('data-emit-metadata', giscusConfig.emitMetadata);
+            giscusScript.setAttribute('data-input-position', giscusConfig.inputPosition);
+            if (giscusConfig.lazyLoading) giscusScript.setAttribute('data-loading', 'lazy');
+            giscusScript.setAttribute('data-theme', _this10.isDark ? giscusConfig.darkTheme : giscusConfig.lightTheme);
+            giscusScript.crossOrigin = 'anonymous';
+            giscusScript.async = true;
+            giscusScript.addEventListener('load', succeed, {
+              once: true
+            });
+            giscusScript.addEventListener('error', fail, {
+              once: true
+            });
+            timeout = window.setTimeout(fail, 8000);
+            giscusContainer.appendChild(giscusScript);
+          };
+          _loadGiscus();
           this._giscusOnSwitchTheme = this._giscusOnSwitchTheme || function () {
             var message = {
               setConfig: {

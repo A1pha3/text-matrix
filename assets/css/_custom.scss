@@ -58,6 +58,57 @@
   }
 }
 
+/* Giscus 加载失败时的有限退路：不隐藏故障，不打断正文。 */
+.giscus-fallback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .7rem 1rem;
+  padding: 1.25rem;
+  color: #78716c;
+  border: 1px solid rgba(28, 25, 23, .12);
+  border-radius: .35rem;
+  font-size: .9rem;
+
+  button {
+    padding: .35rem .75rem;
+    color: #fafaf9;
+    background: #0f766e;
+    border: 0;
+    border-radius: .3rem;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: #115e59;
+    }
+  }
+
+  a {
+    color: #0f766e;
+  }
+
+  [theme=dark] & {
+    color: #a8a29e;
+    border-color: rgba(231, 229, 228, .12);
+
+    button {
+      color: #13201e;
+      background: #5eead4;
+
+      &:hover,
+      &:focus-visible {
+        background: #99f6e4;
+      }
+    }
+
+    a {
+      color: #5eead4;
+    }
+  }
+}
+
 /* ========== 首页：纸墨编辑风（hairline 分区，零卡片） ========== */
 .home-curated {
   .home-featured,

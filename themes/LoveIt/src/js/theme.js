@@ -625,27 +625,96 @@ class Theme {
 
             if (this.config.comment.giscus) {
                 const giscusConfig = this.config.comment.giscus;
-                const giscusScript = document.createElement('script');
-                giscusScript.src = 'https://giscus.app/client.js';
-                giscusScript.setAttribute('data-repo', giscusConfig.repo);
-                giscusScript.setAttribute('data-repo-id', giscusConfig.repoId);
-                giscusScript.setAttribute('data-category', giscusConfig.category);
-                giscusScript.setAttribute('data-category-id', giscusConfig.categoryId);
-                giscusScript.setAttribute('data-lang', giscusConfig.lang);
-                giscusScript.setAttribute('data-mapping', giscusConfig.mapping);
-                giscusScript.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled);
-                giscusScript.setAttribute('data-emit-metadata', giscusConfig.emitMetadata);
-                giscusScript.setAttribute('data-input-position', giscusConfig.inputPosition);
-                if (giscusConfig.lazyLoading) giscusScript.setAttribute('data-loading', 'lazy');
-                giscusScript.setAttribute('data-theme', this.isDark ? giscusConfig.darkTheme : giscusConfig.lightTheme);
-                giscusScript.crossOrigin = 'anonymous';
-                giscusScript.async = true;
-                document.getElementById('giscus').appendChild(giscusScript);
+                const giscusContainer = document.getElementById('giscus');
+                const retryDelays = [1000, 4000];
+                let retryIndex = 0;
+
+                const clearGiscusAttempt = () => {
+                    const script = giscusContainer.querySelector('script[data-giscus-loader]');
+                    const widget = giscusContainer.querySelector('.giscus');
+                    const fallback = giscusContainer.querySelector('.giscus-fallback');
+                    if (script) script.remove();
+                    if (widget) widget.remove();
+                    if (fallback) fallback.remove();
+                };
+
+                const showGiscusFallback = () => {
+                    clearGiscusAttempt();
+                    const fallback = document.createElement('div');
+                    const message = document.createElement('span');
+                    const retry = document.createElement('button');
+                    const discussions = document.createElement('a');
+                    fallback.className = 'giscus-fallback';
+                    fallback.setAttribute('role', 'status');
+                    message.textContent = '评论服务暂时无法加载。';
+                    retry.type = 'button';
+                    retry.textContent = '重试';
+                    retry.addEventListener('click', () => {
+                        retryIndex = 0;
+                        loadGiscus();
+                    }, false);
+                    discussions.href = `https://github.com/${giscusConfig.repo}/discussions`;
+                    discussions.target = '_blank';
+                    discussions.rel = 'noopener noreferrer';
+                    discussions.textContent = 'GitHub Discussions';
+                    fallback.append(message, retry, discussions);
+                    giscusContainer.appendChild(fallback);
+                };
+
+                const loadGiscus = () => {
+                    clearGiscusAttempt();
+                    const giscusScript = document.createElement('script');
+                    let settled = false;
+                    let timeout;
+                    const fail = () => {
+                        if (settled) return;
+                        settled = true;
+                        window.clearTimeout(timeout);
+                        if (retryIndex < retryDelays.length) {
+                            const delay = retryDelays[retryIndex++];
+                            window.setTimeout(() => {
+                                if (!giscusContainer.querySelector('iframe.giscus-frame')) loadGiscus();
+                            }, delay);
+                        } else {
+                            showGiscusFallback();
+                        }
+                    };
+                    const succeed = () => {
+                        if (settled) return;
+                        if (!giscusContainer.querySelector('iframe.giscus-frame')) {
+                            fail();
+                            return;
+                        }
+                        settled = true;
+                        window.clearTimeout(timeout);
+                    };
+                    giscusScript.src = 'https://giscus.app/client.js';
+                    giscusScript.dataset.giscusLoader = 'true';
+                    giscusScript.setAttribute('data-repo', giscusConfig.repo);
+                    giscusScript.setAttribute('data-repo-id', giscusConfig.repoId);
+                    giscusScript.setAttribute('data-category', giscusConfig.category);
+                    giscusScript.setAttribute('data-category-id', giscusConfig.categoryId);
+                    giscusScript.setAttribute('data-lang', giscusConfig.lang);
+                    giscusScript.setAttribute('data-mapping', giscusConfig.mapping);
+                    giscusScript.setAttribute('data-reactions-enabled', giscusConfig.reactionsEnabled);
+                    giscusScript.setAttribute('data-emit-metadata', giscusConfig.emitMetadata);
+                    giscusScript.setAttribute('data-input-position', giscusConfig.inputPosition);
+                    if (giscusConfig.lazyLoading) giscusScript.setAttribute('data-loading', 'lazy');
+                    giscusScript.setAttribute('data-theme', this.isDark ? giscusConfig.darkTheme : giscusConfig.lightTheme);
+                    giscusScript.crossOrigin = 'anonymous';
+                    giscusScript.async = true;
+                    giscusScript.addEventListener('load', succeed, { once: true });
+                    giscusScript.addEventListener('error', fail, { once: true });
+                    timeout = window.setTimeout(fail, 8000);
+                    giscusContainer.appendChild(giscusScript);
+                };
+
+                loadGiscus();
                 this._giscusOnSwitchTheme = this._giscusOnSwitchTheme || (() => {
                     const message = {
                         setConfig: {
                             theme: this.isDark ? giscusConfig.darkTheme : giscusConfig.lightTheme,
-                            reactionsEnabled: false,
+                            reactionsEnabled: giscusConfig.reactionsEnabled,
                         }
                     };
                     const iframe = document.querySelector('iframe.giscus-frame');
