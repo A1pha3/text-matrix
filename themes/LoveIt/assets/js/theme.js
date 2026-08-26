@@ -760,7 +760,7 @@ var Theme = /*#__PURE__*/function () {
             var message = {
               setConfig: {
                 theme: _this10.isDark ? giscusConfig.darkTheme : giscusConfig.lightTheme,
-                reactionsEnabled: false
+                reactionsEnabled: giscusConfig.reactionsEnabled
               }
             };
             var iframe = document.querySelector('iframe.giscus-frame');
