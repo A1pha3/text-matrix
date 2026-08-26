@@ -51,6 +51,25 @@ enableRobotsTXT = true
     title = "Text Matrix"
     svgFavicon = "/favicon.svg"
 
+  # Giscus：仅生产环境由 LoveIt 注入；这些 ID 是公开标识，不是 secret。
+  # 评论仓库：A1pha3/text-matrix-comments；评论分类：Comments（Announcement）。
+  [params.page.comment]
+    enable = true
+    [params.page.comment.giscus]
+      enable = true
+      repo = "A1pha3/text-matrix-comments"
+      repoId = "R_kgDOUE3brg"
+      category = "Comments"
+      categoryId = "DIC_kwDOUE3brs4DEO3_"
+      lang = "zh-CN"
+      mapping = "pathname"
+      reactionsEnabled = "0"
+      emitMetadata = "0"
+      inputPosition = "bottom"
+      lazyLoading = true
+      lightTheme = "github-light"
+      darkTheme = "github-dark"
+
   [params.footer]
     copyright = false
     custom = '''
