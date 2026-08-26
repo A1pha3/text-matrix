@@ -63,7 +63,8 @@ enableRobotsTXT = true
       categoryId = "DIC_kwDOUE3brs4DEO3_"
       lang = "zh-CN"
       mapping = "pathname"
-      reactionsEnabled = "0"
+      # 显示文章对应 Discussion 的主帖反应（包括 👍），作为文章点赞。
+      reactionsEnabled = "1"
       emitMetadata = "0"
       inputPosition = "bottom"
       # 关闭延迟加载：评论区是文章末尾的核心交互，避免部分浏览器、扩展或
