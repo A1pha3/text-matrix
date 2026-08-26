@@ -8,7 +8,7 @@ description: "LoopX 是轻量 Python 状态内核，为 Codex、Claude Code、Cu
 slug: "loopx-local-control-plane-agent-2026"
 source_key: "gh:huangruiteng/loopx"
 github_repo: "huangruiteng/loopx"
-aliases: ["/posts/loopx-control-plane-long-running-agent-2026/"]
+aliases: ["/posts/loopx-control-plane-long-running-agent-2026/", "/posts/video/loopx-local-control-plane-agent-reverse-write-2026/"]
 ---
 
 ## 仓库信息卡

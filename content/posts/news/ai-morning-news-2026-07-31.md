@@ -2,6 +2,7 @@
 title: "AI新闻早报 2026-07-31"
 date: 2026-07-31T08:32:00+08:00
 slug: ai-morning-news-2026-07-31
+aliases: ["/posts/news/ai-morning-news-2026-07-31-v2/", "/posts/news/ai-morning-news-2026-07-31-v3/"]
 description: "2026年7月31日 AI 新闻早报，精选 GPT-5.6 递归自进化、Gemini Robotics 2 与 NVIDIA 手术仿真、本周 AI 安全聚焦、MirrorCode 周级编程、Harness 反思、AlphaFold 团队解散、ChatGPT 突破 10 亿、AI 论文造假等关键动态。"
 draft: false
 categories: ["行业快讯"]

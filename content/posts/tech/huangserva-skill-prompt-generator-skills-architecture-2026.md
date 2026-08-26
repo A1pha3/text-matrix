@@ -8,7 +8,7 @@ github_repo: "huangserva/skill-prompt-generator"
 
 slug: "skill-prompt-generator-skills-architecture-2026"
 source_key: "gh:huangserva/skill-prompt-generator"
-aliases: ["/posts/skill-prompt-generator-12-skills-architecture-2026/"]
+aliases: ["/posts/skill-prompt-generator-12-skills-architecture-2026/", "/posts/video/skill-prompt-generator-skills-architecture-reverse-write-2026/"]
 ---
 
 # Skill Prompt Generator：把 Prompt 工程变成 Skills 架构问题

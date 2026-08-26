@@ -8,7 +8,7 @@ description: "叶奇意的中国 AI 十年人才图谱:月之暗面 A 轮投资�
 
 slug: "yeqiyi-ai-talent-map-10yr-2026"
 source_key: "bv:BV1wK3i6NEdQ"
-aliases: ["/posts/kiwi-yeqiyi-yuezhi-anmian-a1-round-2026/"]
+aliases: ["/posts/kiwi-yeqiyi-yuezhi-anmian-a1-round-2026/", "/posts/video/yueqi-yiqi-ai-talent-map-10yr-reverse-write-2026/"]
 cover: "http://i0.hdslb.com/bfs/archive/31ca77bfb84d20fafde64c49c18026a6ed3138bf.jpg"
 ---
 

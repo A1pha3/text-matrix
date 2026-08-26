@@ -9,7 +9,7 @@ description: "OneTerm 用 Go + Vue 实现了一套覆盖 SSH、RDP、VNC、Telne
 slug: "oneterm-go-bastion-host-2026"
 source_key: "gh:veops/oneterm"
 github_repo: "veops/oneterm"
-aliases: ["/posts/veops-oneterm-bastion-4a-platform-2026/"]
+aliases: ["/posts/veops-oneterm-bastion-4a-platform-2026/", "/posts/video/veops-oneterm-go-bastion-host-reverse-write-2026/"]
 ---
 
 ## 一台堡垒机要解决什么

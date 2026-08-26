@@ -8,7 +8,7 @@ tags: ["FDE", "前沿部署工程师", "企业 AI", "Palantir", "范冰"]
 slug: "fde-95-percent-fail-800-percent-job-2026"
 source_key: "gh:xdash/FDE-the-Guidance-Book-of-Forward-Deployed-Engineer"
 github_repo: "xdash/FDE-the-Guidance-Book-of-Forward-Deployed-Engineer"
-aliases: ["/posts/fde-95-percent-fail-800-percent-job-2026/"]
+aliases: ["/posts/fde-95-percent-fail-800-percent-job-2026/", "/posts/video/fde-book-95-percent-ai-projects-fail-reverse-write-2026/"]
 ---
 
 <!--more-->

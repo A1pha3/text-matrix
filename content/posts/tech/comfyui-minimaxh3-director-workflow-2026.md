@@ -8,7 +8,7 @@ description: "拆 AIMixer/ComfyUI_MiniMaxH3_Director 的导演台节点与 5 份
 slug: "comfyui-minimaxh3-director-workflow-2026"
 source_key: "gh:AIMixer/ComfyUI_MiniMaxH3_Director"
 github_repo: "AIMixer/ComfyUI_MiniMaxH3_Director"
-aliases: ["/posts/comfyui-minimaxh3-director-workflow-2026/"]
+aliases: ["/posts/comfyui-minimaxh3-director-workflow-2026/", "/posts/video/comfyui-minimax-h3-director-video-pipeline-reverse-write-2026/"]
 ---
 
 这个项目真正解决的不是"怎么生成一段视频"。官方 ComfyUI 已经给了 MiniMax H3 的原子节点，动手连四五下也能出片。AIMixer 的 `MiniMaxH3Director` 把这条原子链收进一个带时间轴的节点，让多段视频的长片生成、逐段重跑、缓存复用和段间衔接变成同一个界面里的事。难点从"连对节点"移到了"编排时间轴"。
