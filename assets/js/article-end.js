@@ -27,7 +27,7 @@
       const exposureObserver = new IntersectionObserver((entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
         track('article_end_view', {
-          content_type: 'post',
+          content_type: articleEnd.dataset.contentType || 'post',
           topic: articleEnd.querySelector('[data-topic]')?.dataset.topic || '',
         });
         exposureObserver.disconnect();
@@ -160,7 +160,6 @@
     const status = section.querySelector('.giscus-status');
     const fallback = section.querySelector('[data-giscus-fallback]');
     const retryButton = section.querySelector('[data-giscus-retry]');
-    const fixedLink = document.getElementById('view-comments');
     let state = 'idle';
     let attempt = 0;
     let timeoutID = 0;
@@ -273,20 +272,17 @@
       window.requestAnimationFrame(() => heading.focus({ preventScroll: true }));
     };
 
+    // 悬浮评论按钮由 baseof 静态渲染为 #discussion-title，但主题 theme.js 会在
+    // DOMContentLoaded 时把它的 href 改写为 #comments；两个片段都指向评论区，
+    // 这里按两种取值同时匹配，避免与主题脚本做时序竞态。
     document.addEventListener('click', (event) => {
-      const link = event.target.closest('a[href="#discussion-title"]');
+      const link = event.target.closest('a[href="#discussion-title"], a[href="#comments"]');
       if (!link) return;
       startGiscus();
       focusDiscussionHeading();
     }, false);
 
     retryButton?.addEventListener('click', startGiscus, false);
-
-    const syncFixedCommentLink = () => {
-      if (fixedLink) fixedLink.href = '#discussion-title';
-    };
-    syncFixedCommentLink();
-    window.setTimeout(syncFixedCommentLink, 150);
 
     const themeObserver = new MutationObserver(() => {
       const iframe = root.querySelector('iframe.giscus-frame');

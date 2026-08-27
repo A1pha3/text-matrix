@@ -563,6 +563,11 @@
   scroll-margin-top: 5rem;
 }
 
+/* 片段目标是评论标题而非整个区段：固定顶栏下原生跳转与 focus 都需要预留空间 */
+#discussion-title {
+  scroll-margin-top: 5rem;
+}
+
 .post-discussion-header {
   margin-bottom: 1.25rem;
 

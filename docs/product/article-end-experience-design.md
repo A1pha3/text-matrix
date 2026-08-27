@@ -4,9 +4,9 @@
 
 | 项目 | 内容 |
 | --- | --- |
-| 文档版本 | V2.0 |
+| 文档版本 | V2.1 |
 | 更新时间 | 2026-08-27 |
-| 状态 | 设计已审查，待实施 |
+| 状态 | 已实施（含对抗性审查修复：评论入口竞态、讨论标题 scroll-margin、content_type 埋点、验证器断言补全） |
 | 适用范围 | `content/posts/**` 生成的文章详情页 |
 | 目标读者 | 产品设计、前端开发、Hugo 模板维护者、内容运营 |
 | 关联文档 | [Text Matrix 产品设计文档](./text-matrix-product-design.md)、[Giscus 评论实施方案](../comment/comment-system-architecture-design.md) |
