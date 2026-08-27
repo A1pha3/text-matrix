@@ -11,7 +11,7 @@ tags: ["开源", "跨平台"]
 
 # Godot Engine：开源跨平台 2D/3D 游戏引擎完全指南
 
-游戏引擎市场长期被 Unity 与 Unreal 两套闭源商业方案占据，独立开发者要么接受 Unity 2024 之后的按安装量计费，要么接受 Unreal 5% 营收分成。Godot 是过去十年里少数崛起至生产可用、并被大量独立开发者与中小型工作室实际采用的开源替代品之一——MIT 协议、111K+ Stars、2D 与 3D 共用同一套节点继承体系、覆盖桌面/移动/Web/主机全平台。
+游戏引擎市场长期被 Unity 与 Unreal 两套闭源商业方案主导，两者都按商业授权收费；过去几年里，Unity 的授权策略反复（从订阅到短暂推出按安装量计费、又因抵触而废止），Unreal 在营收超过 100 万美元后按 5% 分成。在这些反复里，Godot 是少数崛起至生产可用、并被大量独立开发者与中小型工作室实际采用的开源替代品——MIT 协议、约 11.5 万 Stars、2D 与 3D 共用同一套节点继承体系、覆盖桌面/移动/Web/主机全平台。
 
 下一个项目如果是 2D Roguelike、3D 独立游戏、横版动作或像素模拟器，Godot 已经是绕不开的候选。本文按架构、脚本系统、节点范式、渲染管线、导出能力、生态与商业化的顺序展开，目标是让读完的人能独立做出技术选型判断，并跑通一个最小可发布原型。
 
@@ -34,7 +34,7 @@ tags: ["开源", "跨平台"]
 | 项目概览 | Godot 是什么、有多成熟 | 第一次接触 Godot |
 | 架构：场景、节点、信号 | 为什么节点式架构统一 2D/3D | 想理解设计哲学 |
 | 脚本系统 | 为什么 GDScript 而不是 Lua/Python | 选语言阶段 |
-| 渲染与物理 | 三条管线测的是什么、怎么选 | 准备定目标平台 |
+| 渲染管线与物理 | 三条管线测的是什么、怎么选 | 准备定目标平台 |
 | 跨平台导出 | 一次开发到导出的完整路径 | 准备出包 |
 | 与 Unity/Unreal 取舍 | 真实工程权衡，不只是协议 | 做技术选型 |
 | 任务流案例 | 一个 2D 角色移动游戏从 0 到导出 | 想动手 |
@@ -43,21 +43,20 @@ tags: ["开源", "跨平台"]
 
 ## 项目概览
 
-Godot 不是新项目。Juan Linietsky 与 Ariel Manzur 在 2014 年开源前已私下维护多年，开源后由 Godot Foundation 作为非营利实体托管，目前 daily commit 持续，2026-06-01 仍处于高频提交状态。
+Godot 不是新项目。Juan Linietsky 与 Ariel Manzur 在 2014 年开源前已私下维护多年，开源后由 Godot Foundation 作为非营利实体托管，开发至今保持高频提交。
 
 | 指标 | 数值 |
 |------|------|
 | 仓库 | [godotengine/godot](https://github.com/godotengine/godot) |
-| Stars | 111,573 |
-| Forks | 25,503 |
-| 主要语言 | C++（引擎主体，~70%）+ 自有脚本与 GDScript 运行时 |
+| Stars | 约 114,000（2026 年中） |
+| Forks | 约 26,000 |
+| 主要语言 | C++（引擎主体，约 70%）+ GDScript 运行时 |
 | 协议 | MIT（允许商用、修改、闭源分发，无版税） |
 | 创建时间 | 2014-01-04 开源 |
-| 最近活跃 | daily commit 持续 |
-| Open Issues | 18,320（多数为功能请求与教学性问题） |
+| 最近活跃 | 持续高频提交 |
+| Open Issues | 约 18,500（多为功能请求与教学性问题） |
 | Topics | game-engine、gamedev、multi-platform、open-source、godot |
 | 官方站 | [godotengine.org](https://godotengine.org) |
-| 体积 | 1.78 GB（含 third-party 子模块与历史） |
 | 基金会 | [Godot Foundation](https://godot.foundation/)（非营利） |
 
 MIT 协议允许私有 fork、商用、修改后闭源分发，没有任何版税；2D 与 3D 节点在场景图层级就完全分离，而不是把 2D 当成 3D 的退化情形；导出模板由官方维护，覆盖桌面、移动、Web、主机四类平台。这三条让独立开发者和小团队零成本启动，不用承担厂商风险，还能 fork 修改。
@@ -149,7 +148,7 @@ func _on_player_died() -> void:
 
 大型项目里，这套机制让代码组织更直接。Unity 开发者常纠结"到底该用 Singleton、EventBus、还是 ScriptableObject"，Godot 不需要做这个选择：节点之间默认通过信号或 `get_node()` 路径访问，跨场景的全局状态用 Autoload（单例）。
 
-## 脚本系统：GDScript、C#、C++、Visual Script
+## 脚本系统：GDScript、C# 与 GDExtension
 
 Godot 4.x 把脚本系统做成"可插拔"——同一份场景里不同节点可以使用不同语言实现。语言选择按模块边界划分，不必全局统一。
 
@@ -233,7 +232,7 @@ Godot 内置两套物理引擎：
 - **2D 物理**：Godot Physics 2D（默认，刚体动力学 + 碰撞检测 + 关节）
 - **3D 物理**：Godot Physics 3D（默认，刚体 + 软体） + **Rapier**（可通过 GDExtension 启用，社区热选）
 
-3D 物理是 Godot 历来被诟病的短板，自研 Godot Physics 3D 在大规模刚体场景下性能与稳定性都不理想。社区因此转向 Rapier（Rust 写的开源物理引擎），通过 GDExtension 接入。Godot 官方也在评估将 Rapier 设为 3D 默认后端，但目前仍需手动启用。
+3D 物理是 Godot 历来被诟病的短板，自研 Godot Physics 3D 在大规模刚体场景下性能与稳定性都不理想。社区因此转向 Rapier（Rust 写的开源物理引擎）与 Jolt，通过 GDExtension 接入后在 `Project Settings → Physics → 3D → Physics Engine` 切换为对应后端，原有物理节点基本不用改。Rapier 不是默认后端，Godot Physics 仍是默认；要不要把 3D 物理换成社区后端，取决于你的场景是否属于刚体密集类。
 
 导航系统基于 **NavigationMesh** 与 **NavigationAgent**，支持动态避障、群体路径（基于 RVO 2D / 3D）：
 
@@ -265,7 +264,7 @@ Godot 的"一键导出"覆盖：
 - **Web**：HTML5 + WebAssembly，输出 `index.html` + `.wasm` + `.pck`，可托管在任意静态服务器
 - **主机**：PlayStation 4/5、Xbox One/Series、Switch——需要厂商资质，Godot 官方提供导出模板
 
-导出模板（Export Templates）独立于编辑器下载，避免了"换平台重新编译编辑器"的痛点。Web 导出需要注意：WebAssembly 单文件最大约 2 GB（受浏览器限制），iOS Safari 对 WebGL2 的内存上限较紧（约 384 MB），大型 3D 项目在 Web 端可能跑不起来。
+导出模板（Export Templates）独立于编辑器下载，避免了"换平台重新编译编辑器"的痛点。Web 导出需要注意：WebAssembly 的单文件体积受浏览器内存分配上限约束，目录 / 文件过大时容易触发 OOM；Safari 对 WebGL/WebGPU 的内存限制比 Chrome/Firefox 更紧，大型 3D 项目在 Web 端可能跑不起来。
 
 ## 性能与上限：测的是什么
 
@@ -273,7 +272,7 @@ Godot 的定位是覆盖独立游戏开发的主流需求，不追求与 Unreal 
 
 - **单场景节点数**：建议 10K 以下（典型 2D/3D 独立游戏在 1K-5K 量级）。这个数字测的是场景树遍历与 `_process` 调用开销，不反映渲染压力——一个 100 节点的场景如果每个节点都挂了高多边形 Mesh，依然会卡。
 - **MultiMesh 渲染**：可渲染百万级同模型实例（如森林、粒子）。测的是 GPU 实例化能力，前提是所有实例共用同一材质与网格，不同材质需要拆成多个 MultiMesh。
-- **3D 性能对比**：4.x 的 Vulkan 后端在桌面 3D 与 Unity URP 持平，与 Unreal Nanite/Lumen 有 20-40% 差距。这个对比测的是中端硬件上的典型独立游戏场景（10 万级三角形 + 单方向光）。AAA 级画面差距主要来自 Lumen/Nanite 这类 Godot 暂未实现的技术，所以这个数字不能用来判断 Godot 的 3D 底层能力。
+- **3D 性能对比**：4.x 的 Vulkan 后端在桌面 3D、同一画面档位下表现接近 Unity URP；与 Unreal 的 Nanite/Lumen 这类实时虚拟几何与全局光照方案仍有代际差距。这个对比反映的是中端硬件上典型独立游戏场景（10 万级三角形 + 单方向光）的帧率，差距主要来自 Nanite/Lumen 这类依赖专用硬件与海量工程投入的技术——所以不能据此判断 Godot 的 3D 底层能力，也不能把它当成 3A 画面的差距报价。
 - **内存占用**：实测空项目启动后的 RSS 明显低于 Unity（无 Mono/.NET 全局开销，但用 C# 时部分抵消）。该数字不代表游戏运行时的实际占用。
 
 ## 工具链与生态
@@ -313,7 +312,7 @@ Godot 的定位是覆盖独立游戏开发的主流需求，不追求与 Unreal 
 
 | 维度 | Godot | Unity | Unreal |
 |------|-------|-------|--------|
-| 协议 | MIT | 闭源 + 商业分成 | 闭源 + 5% 营收分成 |
+| 协议 | MIT | 闭源 + 订阅 | 闭源 + 5% 营收分成 |
 | 2D 支持 | 一等公民 | 强但偏 3D 思维 | 较弱 |
 | 3D 表现力 | 中等 | 中-高 | 顶级 |
 | 资产商店生态 | 中 | 最大 | 大（但偏向 AAA） |
@@ -322,7 +321,7 @@ Godot 的定位是覆盖独立游戏开发的主流需求，不追求与 Unreal 
 | 主机发布 | 需厂商资质 | 需厂商资质 | 需厂商资质 |
 | 大型团队 | 1-10 人甜区 | 10-100 人 | 50+ 人 |
 
-协议差异的真实影响要分场景看。Unity 2024 按安装量收费后，免费档项目的每次安装都会计入成本，对超休闲游戏（hyper-casual）这种低 ARPU 高安装量品类是致命的；Unreal 5% 分成在营收 100 万美元后才触发，对独立游戏影响有限，但分成计算口径与发票周期需要法务介入。Godot 的 MIT 协议意味着你可以 fork 引擎修 bug、私有分发、甚至把修改后的引擎作为自家工具链保密——这对长期项目规避厂商风险有实质价值。
+协议差异的真实影响要分场景看。Unity 在 2023 年公布按安装量计费（Runtime Fee），因开发者强烈抵触，于 2024–2025 年废止并改回订阅制；Unreal 5% 分成在营收超过 100 万美元后才触发，对独立游戏影响有限，但分成计算口径与发票周期需要法务介入。Godot 的 MIT 协议意味着你可以 fork 引擎修 bug、私有分发、甚至把修改后的引擎作为自家工具链保密——这对长期项目规避厂商策略变更风险有实质价值。
 
 生态差异往往比协议更影响日常开发。Unity Asset Store 有大量成熟中间件（FMOD、Wwise、EasySave、Behavior Designer），Godot 的插件生态在 2024 年后才快速追赶，仍缺少某些垂直领域的成熟方案。项目强依赖某个 Unity 资产（比如特定 RPG 制作套件）时，迁移成本会高于协议节省。
 
@@ -531,7 +530,7 @@ Web 导出会生成 `index.html` + `.wasm` + `.pck`，把整个目录上传到�
 
 按项目阶段给出采用顺序：
 
-1. **新项目（2026 之后启动）**：规模在独立或中小团队，**Godot 4.7+ 应该是默认候选**。Unity 2024 的按安装量收费政策 + Unreal 5% 营收分成，在这两条政策下，Godot 的 MIT 协议对独立开发者的成本结构影响是直接的。
+1. **新项目（2026 之后启动）**：规模在独立或中小团队，**Godot 4.7+ 稳定版应该是默认候选**。在 Unity 订阅制与 Unreal 分成模型之下，Godot 的 MIT 协议对独立开发者的成本结构影响是直接的，也免去了授权策略变更的厂商风险。
 2. **学习路径**：先做官方 2D 教程（2 小时）→ 完成一个 30 天小型项目（Pixel Art Roguelike / Platformer）→ 评估是否进入生产。
 3. **CI/CD 集成**：`godot --headless --export-release "Linux/X11" build/game.x86_64` 适合无头构建；GitHub Actions 官方有现成 workflow 模板。
 4. **风险预案**：关键代码写在 GDScript 业务层而非场景里（场景不可热重载全部改动），复杂模块用 GDExtension 隔离；3D 物理密集场景提前评估 Rapier。
@@ -550,4 +549,4 @@ Web 导出会生成 `index.html` + `.wasm` + `.pck`，把整个目录上传到�
 
 ---
 
-*本文以 Godot 4.x 稳定版为例。所有示例代码在 Godot 4.x + GDScript 2.0 上验证。*
+*本文以 Godot 4.x 稳定版（当前主线 4.7）为例。所有示例代码在 Godot 4.x + GDScript 2.0 上验证。*
