@@ -48,6 +48,11 @@
   {{- $contentType = index . 0 -}}
 {{- end -}}
 
+{{- /* 微博/X 静态分享：纯链接无第三方 SDK，点击才离开本站。
+     safeURL 拼接查询串（属性上下文已做 HTML 转义），避免 querify 二次编码。 */ -}}
+{{- $weiboShare := printf "url=%s&title=%s" (.Permalink | urlquery) (.Title | urlquery) | safeURL -}}
+{{- $xShare := printf "url=%s&text=%s" (.Permalink | urlquery) (.Title | urlquery) | safeURL -}}
+
 <footer class="post-footer" id="post-footer" data-article-end data-source-section="article_end" data-content-type="{{ $contentType }}" data-pagefind-ignore="all">
   <div class="post-end-meta">
     <span class="post-end-updated">
@@ -85,6 +90,24 @@
         data-share-url="{{ .Permalink }}"
         hidden
       >分享</button>
+      <a
+        class="post-social"
+        href="https://service.weibo.com/share/share.php?{{ $weiboShare }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-event="article_share"
+        data-target-kind="weibo"
+        data-target="weibo"
+      >微博</a>
+      <a
+        class="post-social"
+        href="https://x.com/intent/tweet?{{ $xShare }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-event="article_share"
+        data-target-kind="x"
+        data-target="x"
+      >X</a>
       <span class="post-share-status" role="status" aria-live="polite"></span>
     </span>
   </div>

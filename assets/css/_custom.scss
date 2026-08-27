@@ -355,6 +355,7 @@
 }
 
 .post-share,
+.post-social,
 .post-discussion-link,
 .post-end-context,
 .post-context-link {
@@ -363,7 +364,8 @@
 }
 
 .post-discussion-link,
-.post-end-context {
+.post-end-context,
+.post-social {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -399,18 +401,19 @@
 }
 
 .post-continuation {
-  margin-top: 1.5rem;
+  margin-top: 1.8rem;
 
   h2 {
     margin: 0;
-    color: #1c1917;
-    font-size: 1.3rem;
-    line-height: 1.35;
-    text-wrap: balance;
+    color: #78716c;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .22em;
+    line-height: 1.6;
   }
 
   [theme=dark] & h2 {
-    color: #f5f5f4;
+    color: #a8a29e;
   }
 }
 
@@ -418,9 +421,9 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  margin-top: .45rem;
+  margin-top: .4rem;
   color: #0f766e;
-  font-size: .92rem;
+  font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
 
@@ -573,10 +576,11 @@
 
   h2 {
     margin: 0;
-    color: #1c1917;
-    font-size: 1.3rem;
-    line-height: 1.35;
-    text-wrap: balance;
+    color: #78716c;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .22em;
+    line-height: 1.6;
   }
 
   p {
@@ -587,7 +591,7 @@
   }
 
   [theme=dark] & h2 {
-    color: #f5f5f4;
+    color: #a8a29e;
   }
 
   [theme=dark] & p {
