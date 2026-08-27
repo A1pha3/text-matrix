@@ -133,8 +133,8 @@ Announcements 分类只允许具有维护权限的人和 Giscus 创建新的 Dis
     emitMetadata = "0"
     inputPosition = "bottom"
     lazyLoading = true
-    lightTheme = "github-light"
-    darkTheme = "github-dark"
+    lightTheme = "light"
+    darkTheme = "dark"
 ```
 
 这些值中没有服务端 secret；不要向 Hugo 仓库、GitHub Actions 或 Cloudflare Pages 添加 GitHub token。
@@ -255,7 +255,7 @@ CF_PAGES_URL=https://txtmix.com \
 | 普通页面也出现评论 | 是否仍在 `_default/single.html` 或 `topic/single.html` 调用了 `comment.html` |
 | 提示 origin 不允许 | `giscus.json` 是否精确包含 `https://txtmix.com`；不要包含末尾 `/` |
 | 一篇文章出现新线程 | 检查 URL 是否变化；确认仍使用 `mapping = "pathname"` |
-| 深色模式异常 | 保持 `github-light` / `github-dark`；不要覆盖 LoveIt 的 Giscus 初始化脚本 |
+| 深浅色模式异常 | 使用 Giscus 内置的 `light` / `dark`；不要使用 LoveIt/Utterances 的 `github-light` / `github-dark` |
 | 评论不能发布 | 检查评论者已授权 Giscus App，且 Discussion 未被锁定；确认不是 GitHub interaction limits 拦截 |
 | 看不到主帖 reaction | 这是 V1 的预期：主帖 reaction 展示已关闭；不要将评论回复的 GitHub reaction 视为站内点赞 |
 

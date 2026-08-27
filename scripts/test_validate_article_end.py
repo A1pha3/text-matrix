@@ -27,6 +27,8 @@ VALID_PAGE = """<!DOCTYPE html><html><body>
 <footer class="post-footer" data-article-end>
   <div class="post-end-meta">
     <button class="post-share" type="button" data-share hidden>分享</button>
+    <a class="post-social" href="https://service.weibo.com/share/share.php?url=x&amp;title=t" target="_blank" rel="noopener noreferrer" data-event="article_share" data-target-kind="weibo">微博</a>
+    <a class="post-social" href="https://x.com/intent/tweet?url=x&amp;text=t" target="_blank" rel="noopener noreferrer" data-event="article_share" data-target-kind="x">X</a>
   </div>
   <nav class="post-continuation" aria-label="后续阅读">
     <a class="post-recommendation-link" data-target-kind="related" href="/posts/other/">
@@ -39,7 +41,7 @@ VALID_PAGE = """<!DOCTYPE html><html><body>
 </footer>
 <section id="comments" class="post-discussion">
   <h2 id="discussion-title">参与讨论</h2>
-  <div data-giscus-root></div>
+  <div data-giscus-root data-light-theme="light" data-dark-theme="dark"></div>
 </section>
 <a id="back-to-top" aria-label="回到顶部" href="#"></a>
 <a id="view-comments" aria-label="查看评论" href="#discussion-title"></a>
@@ -138,10 +140,31 @@ class ValidateArticleEndTests(unittest.TestCase):
         errors = self.run_html(html)
         self.assertTrue(any("继续理解" in e for e in errors), errors)
 
+    def test_both_static_share_targets_are_required(self):
+        html = VALID_PAGE.replace(
+            '<a class="post-social" href="https://x.com/intent/tweet?url=x&amp;text=t" target="_blank" rel="noopener noreferrer" data-event="article_share" data-target-kind="x">X</a>',
+            "",
+        )
+        errors = self.run_html(html)
+        self.assertTrue(any("微博和 X" in e for e in errors), errors)
+
+    def test_static_share_target_structure_is_validated(self):
+        html = VALID_PAGE.replace(
+            "https://x.com/intent/tweet?url=x&amp;text=t",
+            "https://x.com/share?url=x&amp;text=t",
+        )
+        errors = self.run_html(html)
+        self.assertTrue(any("x 分享链接结构无效" in e for e in errors), errors)
+
     def test_discussion_enabled_requires_unique_title(self):
         html = VALID_PAGE.replace('<h2 id="discussion-title">', "<h2>")
         errors = self.run_html(html)
         self.assertTrue(any("discussion-title" in e for e in errors), errors)
+
+    def test_giscus_requires_supported_light_and_dark_themes(self):
+        html = VALID_PAGE.replace('data-light-theme="light"', 'data-light-theme="github-light"')
+        errors = self.run_html(html)
+        self.assertTrue(any("内置 light/dark" in e for e in errors), errors)
 
     # ---------- 内容契约断言 ----------
 

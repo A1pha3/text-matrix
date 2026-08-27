@@ -359,10 +359,25 @@
 }
 
 .post-share,
+.post-social,
 .post-recommendation-link,
 .post-context-link {
   touch-action: manipulation;
   -webkit-tap-highlight-color: rgba(15, 118, 110, .14);
+}
+
+.post-social {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: .2em;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration-color: currentColor;
+  }
 }
 
 .post-share {
@@ -547,6 +562,34 @@
 
   [theme=dark] & {
     color: #a8a29e;
+  }
+}
+
+/* Giscus 是跨域 iframe：外层明确提供主题底色和最小高度，避免加载、主题切换或
+   iframe 自身透明背景时出现浅色文字落在浅色页面上的低对比度状态。 */
+[data-giscus-root] {
+  min-height: 9rem;
+  border: 1px solid rgba(28, 25, 23, .12);
+  border-radius: .4rem;
+  background: #ffffff;
+  color-scheme: light;
+
+  [theme=dark] & {
+    border-color: rgba(231, 229, 228, .16);
+    background: #0f0e0d;
+    color-scheme: dark;
+  }
+}
+
+[data-giscus-root] .giscus-frame {
+  display: block;
+  width: 100%;
+  min-height: 9rem;
+  border: 0;
+  background: #ffffff;
+
+  [theme=dark] & {
+    background: #0f0e0d;
   }
 }
 

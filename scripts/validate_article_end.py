@@ -6,7 +6,7 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Optional
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 
 VOID_ELEMENTS = {
@@ -18,7 +18,7 @@ VOID_ELEMENTS = {
 REMOVED_CLASSES = {
     "post-conversion", "post-related-grid", "post-related-card", "post-tags",
     "post-related-list", "post-related-item", "post-related-meta",
-    "post-end-context", "post-discussion-link", "post-social", "post-series",
+    "post-end-context", "post-discussion-link", "post-series",
 }
 
 
@@ -35,7 +35,10 @@ class ArticleEndParser(HTMLParser):
         self.continuation_nav_count = 0
         self.discussion_count = 0
         self.giscus_root_count = 0
+        self.giscus_themes: list[tuple[str, str]] = []
         self.share_button_count = 0
+        self.social_share_kinds: list[str] = []
+        self.social_share_links: list[tuple[str, str]] = []
         self.recommendation_links: list[str] = []
         self.recommendation_kinds: list[str] = []
         self.recommendation_reason_count = 0
@@ -82,6 +85,10 @@ class ArticleEndParser(HTMLParser):
             self.recommendation_reason_count += 1
         if "data-giscus-root" in data:
             self.giscus_root_count += 1
+            self.giscus_themes.append((
+                data.get("data-light-theme", ""),
+                data.get("data-dark-theme", ""),
+            ))
         if tag == "button" and "data-share" in data and self.footer_depth > 0:
             self.share_button_count += 1
 
@@ -98,6 +105,10 @@ class ArticleEndParser(HTMLParser):
                     self.errors.append(f"新窗口链接缺少 noopener noreferrer: {href}")
             if "post-context-link" in classes:
                 self.context_link_count += 1
+            if "post-social" in classes:
+                social_kind = data.get("data-target-kind", "")
+                self.social_share_kinds.append(social_kind)
+                self.social_share_links.append((social_kind, href))
             if "post-discussion-link" in classes:
                 self.discussion_link_count += 1
             if "post-recommendation-link" in classes:
@@ -243,7 +254,26 @@ def validate_html(path: Path, public_root: Path, site_prefix: str = "") -> tuple
     if parser.context_link_count != 1:
         errors.append(f"主题全集入口数量应为 1，实际为 {parser.context_link_count}")
     if parser.share_button_count != 1:
-        errors.append(f"分享操作数量应为 1，实际为 {parser.share_button_count}")
+        errors.append(f"系统分享按钮数量应为 1，实际为 {parser.share_button_count}")
+    if sorted(parser.social_share_kinds) != ["weibo", "x"]:
+        errors.append(f"静态平台分享入口必须恰好包含微博和 X: {parser.social_share_kinds}")
+    expected_social_targets = {
+        "weibo": ("service.weibo.com", "/share/share.php", {"url", "title"}),
+        "x": ("x.com", "/intent/tweet", {"url", "text"}),
+    }
+    for kind, href in parser.social_share_links:
+        if kind not in expected_social_targets:
+            continue
+        host, target_path, required_query = expected_social_targets[kind]
+        parsed = urlsplit(href)
+        query_fields = set(parse_qs(parsed.query, keep_blank_values=True))
+        if (
+            parsed.scheme != "https"
+            or parsed.netloc != host
+            or parsed.path != target_path
+            or not required_query.issubset(query_fields)
+        ):
+            errors.append(f"{kind} 分享链接结构无效: {href}")
     if parser.id_counts.get("post-continuation-title", 0):
         errors.append("不应恢复可见的“继续理解”标题")
 
@@ -267,6 +297,8 @@ def validate_html(path: Path, public_root: Path, site_prefix: str = "") -> tuple
             errors.append("评论开启时必须存在唯一的 #discussion-title")
         if parser.giscus_root_count != 1:
             errors.append(f"Giscus 根容器数量应为 1，实际为 {parser.giscus_root_count}")
+        if parser.giscus_themes != [("light", "dark")]:
+            errors.append(f"Giscus 必须使用内置 light/dark 主题: {parser.giscus_themes}")
     elif parser.discussion_link_count:
         errors.append("评论关闭时仍存在正文后讨论入口")
 

@@ -83,8 +83,9 @@ enableRobotsTXT = true
       inputPosition = "top"
       # 评论区接近视口或用户主动跳转时再加载；项目脚本提供超时、重试和外部入口。
       lazyLoading = true
-      lightTheme = "github-light"
-      darkTheme = "github-dark"
+      # Giscus 内置主题名；不要使用 LoveIt/Utterances 的 github-light / github-dark。
+      lightTheme = "light"
+      darkTheme = "dark"
 
   [params.footer]
     copyright = false
