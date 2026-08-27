@@ -7,6 +7,7 @@ if [ -z "${CF_PAGES_URL:-}" ]; then
 fi
 
 python3 ./scripts/validate_site.py future-dates
+python3 ./scripts/validate_hugo_template_compatibility.py
 
 # 环境判定：只有 main 分支才用 production（注入 GA/AdSense）。
 # 预览分支（PR/其他 branch）必须用非 production 环境——gtag/adsense 模板都以
@@ -19,8 +20,8 @@ else
   build_args="$build_args --baseURL ${CF_PAGES_URL}/"
 fi
 
-# Hugo 版本自钉：CF Pages 内置 hugo 由后台 HUGO_VERSION 决定，未配置时用旧版，
-# 曾导致 .Site.Language.Locale 等新 API 全站渲染失败（2026-08-27 事故）。
+# Hugo 版本自钉：CF Pages 内置 hugo 由后台 HUGO_VERSION 决定，未配置时可能过旧；
+# 模板同时只使用跨版本稳定 API，避免单点版本差异中断全站渲染。
 # 不依赖控制台配置：版本不匹配时自行下载与 CI 一致的 extended 版，经 HUGO_BIN 构建。
 required_hugo="0.161.1"
 if [ "$(uname -s)" = "Linux" ]; then

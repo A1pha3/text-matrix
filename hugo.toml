@@ -1,7 +1,7 @@
 baseURL = 'https://txtmix.com/'
 #locale = 'en-us'
 locale = "zh-CN"
-# 部署链统一锁定 Hugo 0.161.1；模板使用当前规范字段 .Site.Language.Locale。
+# 模板使用跨 Hugo 版本稳定的 .Site.Language.Lang，避免云端旧版本无法渲染。
 hasCJKLanguage = true
 defaultContentLanguage = "zh-cn"
 title = 'Text Matrix'
