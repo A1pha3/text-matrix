@@ -19,9 +19,23 @@ else
   build_args="$build_args --baseURL ${CF_PAGES_URL}/"
 fi
 
-# 提示：CF Pages 项目后台的构建命令会把本脚本作为 Build command；
-# Hugo 二进制版本由项目设置 HUGO_VERSION 决定——为与本仓库 CI（0.161.1）
-# 保持一致，请在 CF 项目设置里把 HUGO_VERSION 设为 0.161.1。
+# Hugo 版本自钉：CF Pages 内置 hugo 由后台 HUGO_VERSION 决定，未配置时用旧版，
+# 曾导致 .Site.Language.Locale 等新 API 全站渲染失败（2026-08-27 事故）。
+# 不依赖控制台配置：版本不匹配时自行下载与 CI 一致的 extended 版，经 HUGO_BIN 构建。
+required_hugo="0.161.1"
+if [ "$(uname -s)" = "Linux" ]; then
+  current_hugo="$(hugo version 2>/dev/null | sed -n 's/.*v\([0-9][0-9.]*\).*/\1/p' | head -1)"
+  if [ "$current_hugo" != "$required_hugo" ]; then
+    hugo_dir="${HOME}/.cache/hugo-pin/hugo_extended_${required_hugo}"
+    if [ ! -x "${hugo_dir}/hugo" ]; then
+      echo "Hugo 版本不匹配（当前：${current_hugo:-未安装}），下载 v${required_hugo}…"
+      mkdir -p "$hugo_dir"
+      curl -fsSL "https://github.com/gohugoio/hugo/releases/download/v${required_hugo}/hugo_extended_${required_hugo}_Linux-64bit.tar.gz" \
+        | tar -xz -C "$hugo_dir" hugo
+    fi
+    export HUGO_BIN="${hugo_dir}/hugo"
+  fi
+fi
 
 sh ./scripts/build_hugo.sh $build_args
 sh ./scripts/run_pagefind.sh public

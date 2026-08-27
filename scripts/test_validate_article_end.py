@@ -136,7 +136,7 @@ class ValidateArticleEndTests(unittest.TestCase):
             self.write_content(relative, frontmatter)
         topics_path = self.public / "topics.yaml"
         topics_path.write_text(topics, encoding="utf-8")
-        return MODULE.validate_content(content_root, topics_path)
+        return MODULE.validate_content(content_root, topics_path, self.public)
 
     def test_missing_categories_is_blocked(self):
         errors = self.run_content({"posts/a.md": "title: A"})
@@ -161,6 +161,25 @@ class ValidateArticleEndTests(unittest.TestCase):
         self.assertTrue(any("b.md" in e and "自身" in e for e in errors), errors)
         self.assertTrue(any("c.md" in e and "重复" in e for e in errors), errors)
         self.assertTrue(any("c.md" in e and "recommend: false" in e for e in errors), errors)
+
+    def test_alias_reference_resolves_via_built_site(self):
+        # aliases 路径在内容树解析不到，但构建产物里有重定向页，不应误报。
+        alias_dir = self.public / "posts" / "old-name"
+        alias_dir.mkdir(parents=True, exist_ok=True)
+        (alias_dir / "index.html").write_text("<html></html>", encoding="utf-8")
+        errors = self.run_content({
+            "posts/a.md": 'categories: ["技术笔记"]\nnext: /posts/old-name/',
+            "posts/b.md": 'categories: ["技术笔记"]\nrelatedPosts:\n  - /posts/old-name/',
+        })
+        self.assertFalse(any("不存在" in e for e in errors), errors)
+
+    def test_quoted_and_commented_scalar_values_are_parsed(self):
+        errors = self.run_content({
+            "posts/a.md": 'categories: ["技术笔记"]\nprev: "/posts/ghost/"',
+            "posts/b.md": 'categories: ["技术笔记"]\nnext: /posts/ghost/ # 行内注释',
+        })
+        self.assertTrue(any("a.md" in e and "不存在" in e and '"' not in e.split()[-1] for e in errors), errors)
+        self.assertTrue(any("b.md" in e and "不存在" in e and "注释" not in e for e in errors), errors)
 
     def test_series_violations_are_blocked(self):
         errors = self.run_content({

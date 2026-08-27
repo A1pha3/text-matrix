@@ -23,7 +23,7 @@
         "@context": "http://schema.org",
         "@type": "WebSite",
         "url": "{{ .Permalink }}",
-        {{- with .Site.Language.Locale -}}
+        {{- with .Site.LanguageCode -}}
             "inLanguage": "{{ . }}",
         {{- end -}}
         {{- with .Site.Params.Author.name -}}
@@ -71,7 +71,7 @@
         "@context": "http://schema.org",
         "@type": "BlogPosting",
         "headline": {{ .Title | safeHTML }},
-        "inLanguage": "{{ .Site.Language.Locale }}",
+        "inLanguage": "{{ .Site.LanguageCode }}",
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "{{ .Permalink }}"

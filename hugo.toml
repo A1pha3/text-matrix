@@ -1,6 +1,9 @@
 baseURL = 'https://txtmix.com/'
 #locale = 'en-us'
 locale = "zh-CN"
+# 显式声明而非依赖 .Site.Language.Locale 推断：后者仅新版 Hugo 支持，
+# Cloudflare Pages 旧版 Hugo 上会导致全站模板渲染失败（2026-08-27 事故）。
+languageCode = "zh-CN"
 hasCJKLanguage = true
 defaultContentLanguage = "zh-cn"
 title = 'Text Matrix'

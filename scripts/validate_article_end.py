@@ -137,6 +137,9 @@ class ArticleEndParser(HTMLParser):
 
 
 def internal_link_exists(href: str, public_root: Path) -> bool:
+    # //cdn.example.com/… 是协议相对外部 URL，不是站内链接。
+    if href.startswith("//"):
+        return True
     # HTML 中的中文路径是百分号编码的，磁盘目录是原始 Unicode，需先解码。
     path_part = unquote(urlsplit(href).path).strip("/")
     if not path_part:
@@ -237,8 +240,14 @@ def extract_list_values(frontmatter: str, field: str) -> list[str]:
 
 
 def extract_scalar_value(frontmatter: str, field: str) -> Optional[str]:
-    match = re.search(rf"^{field}\s*(?::|=)\s*['\"]?([^'\"\n]+?)['\"]?\s*$", frontmatter, re.MULTILINE)
-    return match.group(1).strip() if match else None
+    # 值可带单/双引号，也可带 YAML 行内注释；只禁止换行。
+    match = re.search(rf"^{field}\s*(?::|=)\s*([^\n]+)$", frontmatter, re.MULTILINE)
+    if not match:
+        return None
+    value = re.sub(r"\s+#.*$", "", match.group(1)).strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        value = value[1:-1]
+    return value or None
 
 
 def page_rel_path(path: Path, content_root: Path) -> str:
@@ -254,7 +263,7 @@ def page_rel_path(path: Path, content_root: Path) -> str:
 
 def resolve_content_file(content_root: Path, ref: str) -> Optional[Path]:
     rel = ref.strip().strip("/")
-    if not rel or "://" in rel:
+    if not rel or "://" in rel or rel.startswith("//"):
         return None
     for candidate in (
         content_root / rel / "index.md",
@@ -271,7 +280,7 @@ def has_recommend_false(target: Path) -> bool:
     return bool(re.search(r"^recommend\s*:\s*false\s*$", frontmatter, re.MULTILINE))
 
 
-def validate_content(content_root: Path, topics_path: Path) -> list[str]:
+def validate_content(content_root: Path, topics_path: Path, public_root: Optional[Path] = None) -> list[str]:
     topic_text = topics_path.read_text(encoding="utf-8")
     allowed_topics = set(re.findall(r"^([a-z0-9][a-z0-9-]*):\s*$", topic_text, re.MULTILINE))
     errors: list[str] = []
@@ -298,13 +307,19 @@ def validate_content(content_root: Path, topics_path: Path) -> list[str]:
         for ref in related_refs:
             target = resolve_content_file(content_root, ref)
             if target is None:
-                errors.append(f"{path}: relatedPosts 指向不存在页面 {ref}")
-            elif page_rel_path(target, content_root) == self_path:
-                errors.append(f"{path}: relatedPosts 指向自身 {ref}")
-            elif has_recommend_false(target):
-                errors.append(f"{path}: relatedPosts 指向 recommend: false 页面 {ref}")
+                # 内容树解析不到时可能是 aliases 路径：Hugo 构建产物里有对应重定向页，
+                # 交给生成 HTML 层判定存在性，避免与 GetPage 语义不一致的误报。
+                if not (public_root and internal_link_exists(ref, public_root)):
+                    errors.append(f"{path}: relatedPosts 指向不存在页面 {ref}")
+            else:
+                if page_rel_path(target, content_root) == self_path:
+                    errors.append(f"{path}: relatedPosts 指向自身 {ref}")
+                if has_recommend_false(target):
+                    errors.append(f"{path}: relatedPosts 指向 recommend: false 页面 {ref}")
         if len(related_refs) != len(set(related_refs)):
             errors.append(f"{path}: relatedPosts 包含重复路径")
+        if self_path in related_refs:
+            errors.append(f"{path}: relatedPosts 指向自身 {self_path}")
 
         prev = extract_scalar_value(frontmatter, "prev")
         next_ = extract_scalar_value(frontmatter, "next")
@@ -313,8 +328,11 @@ def validate_content(content_root: Path, topics_path: Path) -> list[str]:
                 continue
             target = resolve_content_file(content_root, ref)
             if target is None:
-                errors.append(f"{path}: {field} 指向不存在页面 {ref}")
+                if not (public_root and internal_link_exists(ref, public_root)):
+                    errors.append(f"{path}: {field} 指向不存在页面 {ref}")
             elif page_rel_path(target, content_root) == self_path:
+                errors.append(f"{path}: {field} 指向自身 {ref}")
+            if ref == self_path:
                 errors.append(f"{path}: {field} 指向自身 {ref}")
         if prev is not None and prev == next_:
             errors.append(f"{path}: prev 与 next 指向同一页面 {prev}")
@@ -336,7 +354,7 @@ def main() -> int:
     content_root = Path(args.content_root).resolve()
     topics_path = Path(args.topics).resolve()
 
-    failures = validate_content(content_root, topics_path)
+    failures = validate_content(content_root, topics_path, public_root)
     checked_html = 0
     for path in sorted((public_root / "posts").rglob("index.html")):
         html_failures, checked = validate_html(path, public_root)

@@ -10,7 +10,7 @@
 {{- $topics := .Params.topics | default slice -}}
 {{- if gt (len $topics) 0 -}}
   {{- $topicSlug := index $topics 0 -}}
-  {{- $topic := index hugo.Data.topics $topicSlug -}}
+  {{- $topic := index site.Data.topics $topicSlug -}}
   {{- if not $topic -}}
     {{- errorf "%s: topics 包含未登记值 %q" .File.Path $topicSlug -}}
   {{- else -}}
