@@ -17,6 +17,8 @@ VOID_ELEMENTS = {
 # 设计 §1.3 已删除的结构；出现任一 class 即回归。
 REMOVED_CLASSES = {
     "post-conversion", "post-related-grid", "post-related-card", "post-tags",
+    "post-related-list", "post-related-item", "post-related-meta",
+    "post-end-context", "post-discussion-link", "post-social", "post-series",
 }
 
 
@@ -30,9 +32,13 @@ class ArticleEndParser(HTMLParser):
         self.hidden_depth = 0
         self.footer_count = 0
         self.continuation_count = 0
+        self.continuation_nav_count = 0
         self.discussion_count = 0
         self.giscus_root_count = 0
-        self.related_links: list[str] = []
+        self.share_button_count = 0
+        self.recommendation_links: list[str] = []
+        self.recommendation_kinds: list[str] = []
+        self.recommendation_reason_count = 0
         self.internal_links: list[str] = []
         self.context_link_count = 0
         self.discussion_link_count = 0
@@ -68,8 +74,16 @@ class ArticleEndParser(HTMLParser):
 
         if "post-continuation" in classes:
             self.continuation_count += 1
+            if tag == "nav":
+                self.continuation_nav_count += 1
+                if not data.get("aria-label", "").strip():
+                    self.errors.append("后续阅读 nav 缺少 aria-label")
+        if "post-recommendation-reason" in classes:
+            self.recommendation_reason_count += 1
         if "data-giscus-root" in data:
             self.giscus_root_count += 1
+        if tag == "button" and "data-share" in data and self.footer_depth > 0:
+            self.share_button_count += 1
 
         in_article_end = self.footer_depth > 0 or self.discussion_depth > 0
         if tag == "a" and in_article_end:
@@ -86,8 +100,9 @@ class ArticleEndParser(HTMLParser):
                 self.context_link_count += 1
             if "post-discussion-link" in classes:
                 self.discussion_link_count += 1
-            if data.get("data-target-kind") == "related":
-                self.related_links.append(href)
+            if "post-recommendation-link" in classes:
+                self.recommendation_links.append(href)
+                self.recommendation_kinds.append(data.get("data-target-kind", ""))
             if href.startswith("/"):
                 self.internal_links.append(href)
             if self.current_anchor is None:
@@ -216,19 +231,27 @@ def validate_html(path: Path, public_root: Path, site_prefix: str = "") -> tuple
     if parser.footer_count != 1:
         errors.append(f"文章结束区数量应为 1，实际为 {parser.footer_count}")
     if parser.continuation_count != 1:
-        errors.append(f"继续理解模块数量应为 1，实际为 {parser.continuation_count}")
-    if not 0 <= len(parser.related_links) <= 3:
-        errors.append(f"相关推荐数量应为 0～3，实际为 {len(parser.related_links)}")
-    if len(parser.related_links) != len(set(parser.related_links)):
-        errors.append("相关推荐包含重复 URL")
+        errors.append(f"后续阅读模块数量应为 1，实际为 {parser.continuation_count}")
+    if parser.continuation_nav_count != 1:
+        errors.append(f"后续阅读必须使用唯一 nav，实际为 {parser.continuation_nav_count}")
+    if not 0 <= len(parser.recommendation_links) <= 1:
+        errors.append(f"后续推荐数量应为 0～1，实际为 {len(parser.recommendation_links)}")
+    if any(kind not in {"next", "editorial", "related"} for kind in parser.recommendation_kinds):
+        errors.append(f"后续推荐来源标签无效: {parser.recommendation_kinds}")
+    if parser.recommendation_reason_count != len(parser.recommendation_links):
+        errors.append("每条后续推荐必须有且仅有一个准确来源标签")
     if parser.context_link_count != 1:
-        errors.append(f"上下文主入口数量应为 1，实际为 {parser.context_link_count}")
+        errors.append(f"主题全集入口数量应为 1，实际为 {parser.context_link_count}")
+    if parser.share_button_count != 1:
+        errors.append(f"分享操作数量应为 1，实际为 {parser.share_button_count}")
+    if parser.id_counts.get("post-continuation-title", 0):
+        errors.append("不应恢复可见的“继续理解”标题")
 
     page_path = current_page_path(path, public_root, site_prefix)
-    for href in parser.related_links:
+    for href in parser.recommendation_links:
         href_path = unquote(urlsplit(href).path)
         if href_path.rstrip("/") == page_path.rstrip("/"):
-            errors.append(f"相关推荐包含当前文章: {href}")
+            errors.append(f"后续推荐包含当前文章: {href}")
 
     # 主题、分类、系列与推荐目标都必须真实存在（无效链接直接阻断）
     for href in sorted(set(parser.internal_links)):
@@ -238,8 +261,8 @@ def validate_html(path: Path, public_root: Path, site_prefix: str = "") -> tuple
     if parser.discussion_count:
         if parser.discussion_count != 1:
             errors.append(f"评论区数量应为 1，实际为 {parser.discussion_count}")
-        if parser.discussion_link_count != 1:
-            errors.append(f"正文后讨论入口数量应为 1，实际为 {parser.discussion_link_count}")
+        if parser.discussion_link_count:
+            errors.append("收尾行不应重复显示讨论入口")
         if parser.id_counts.get("discussion-title", 0) != 1:
             errors.append("评论开启时必须存在唯一的 #discussion-title")
         if parser.giscus_root_count != 1:

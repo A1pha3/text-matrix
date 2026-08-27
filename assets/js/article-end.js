@@ -278,6 +278,12 @@
     document.addEventListener('click', (event) => {
       const link = event.target.closest('a[href="#discussion-title"], a[href="#comments"]');
       if (!link) return;
+      if (!link.dataset.event) {
+        track('article_discussion_click', {
+          target_kind: link.id === 'view-comments' ? 'fixed' : 'anchor',
+          target_url: '#discussion-title',
+        });
+      }
       startGiscus();
       focusDiscussionHeading();
     }, false);

@@ -1,5 +1,5 @@
 {{- $page := . -}}
-{{- $related := slice -}}
+{{- $recommendation := dict -}}
 {{- $seen := newScratch -}}
 {{- $seen.Set $page.RelPermalink true -}}
 
@@ -26,25 +26,26 @@
   {{- else if eq $candidate.Params.recommend false -}}
     {{- errorf "%s: relatedPosts 指向 recommend=false 页面 %q" $page.File.Path $ref -}}
   {{- else -}}
-    {{- $related = $related | append $candidate -}}
     {{- $seen.Set $candidate.RelPermalink true -}}
+    {{- if not $recommendation -}}
+      {{- $recommendation = dict "page" $candidate "reason" "编辑推荐" "kind" "editorial" -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
-{{- if and (lt (len $related) 3) (gt (len $topics) 0) -}}
+{{- if and (not $recommendation) (gt (len $topics) 0) -}}
   {{- $categories := $page.Params.categories | default slice -}}
   {{- if gt (len $categories) 0 -}}
     {{- $primaryCategory := index $categories 0 -}}
     {{- $pool := where site.RegularPages "Params.categories" "intersect" (slice $primaryCategory) -}}
     {{- $options := dict "document" $page "indices" (slice "topics") -}}
     {{- range $candidate := $pool.Related $options -}}
-      {{- if ge (len $related) 3 -}}{{- break -}}{{- end -}}
       {{- if and (not ($seen.Get $candidate.RelPermalink)) (ne $candidate.Params.recommend false) -}}
-        {{- $related = $related | append $candidate -}}
-        {{- $seen.Set $candidate.RelPermalink true -}}
+        {{- $recommendation = dict "page" $candidate "reason" "同主题" "kind" "related" -}}
+        {{- break -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
 
-{{- return (first 3 $related) -}}
+{{- return $recommendation -}}

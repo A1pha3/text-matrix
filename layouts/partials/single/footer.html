@@ -1,9 +1,5 @@
 {{- .Scratch.SetInMap "this" "articleEnd" true -}}
 
-{{- $comment := .Scratch.Get "comment" | default dict -}}
-{{- $giscus := $comment.giscus | default dict -}}
-{{- $discussionEnabled := and $comment.enable $giscus.enable -}}
-
 {{- $contextTitle := "" -}}
 {{- $contextURL := "" -}}
 {{- $contextKind := "category" -}}
@@ -40,18 +36,39 @@
   {{- errorf "%s: 文章必须至少提供一个有效 topics 或 categories 值" .File.Path -}}
 {{- end -}}
 
-{{- $related := partial "single/related.html" . -}}
+{{- /* 显式序列目标优先于编辑推荐和自动相关项。prev 只做契约校验；文末只提供向前路径。 */ -}}
+{{- $prevPage := false -}}
+{{- $nextPage := false -}}
+{{- with .Params.prev -}}
+  {{- $prevPage = site.GetPage . -}}
+  {{- if not $prevPage -}}{{- errorf "%s: prev 指向不存在页面 %q" $.File.Path . -}}{{- end -}}
+{{- end -}}
+{{- with .Params.next -}}
+  {{- $nextPage = site.GetPage . -}}
+  {{- if not $nextPage -}}{{- errorf "%s: next 指向不存在页面 %q" $.File.Path . -}}{{- end -}}
+{{- end -}}
+{{- if and $prevPage (eq $prevPage.RelPermalink .RelPermalink) -}}
+  {{- errorf "%s: prev 不能指向当前文章" .File.Path -}}
+{{- end -}}
+{{- if and $nextPage (eq $nextPage.RelPermalink .RelPermalink) -}}
+  {{- errorf "%s: next 不能指向当前文章" .File.Path -}}
+{{- end -}}
+{{- if and $prevPage $nextPage (eq $prevPage.RelPermalink $nextPage.RelPermalink) -}}
+  {{- errorf "%s: prev 与 next 不能指向同一页面" .File.Path -}}
+{{- end -}}
+
+{{- $recommendation := dict -}}
+{{- if $nextPage -}}
+  {{- $recommendation = dict "page" $nextPage "reason" "下一篇" "kind" "next" -}}
+{{- else -}}
+  {{- $recommendation = partial "single/related.html" . -}}
+{{- end -}}
 
 {{- /* 内容类型 = 第一分类（设计 §5.2），供埋点分层分析；无分类时回退 post */ -}}
 {{- $contentType := "post" -}}
 {{- with .Params.categories -}}
   {{- $contentType = index . 0 -}}
 {{- end -}}
-
-{{- /* 微博/X 静态分享：纯链接无第三方 SDK，点击才离开本站。
-     safeURL 拼接查询串（属性上下文已做 HTML 转义），避免 querify 二次编码。 */ -}}
-{{- $weiboShare := printf "url=%s&title=%s" (.Permalink | urlquery) (.Title | urlquery) | safeURL -}}
-{{- $xShare := printf "url=%s&text=%s" (.Permalink | urlquery) (.Title | urlquery) | safeURL -}}
 
 <footer class="post-footer" id="post-footer" data-article-end data-source-section="article_end" data-content-type="{{ $contentType }}" data-pagefind-ignore="all">
   <div class="post-end-meta">
@@ -60,26 +77,6 @@
         更新于 <time datetime="{{ $.Lastmod.Format "2006-01-02T15:04:05Z07:00" }}">{{ . }}</time>
       {{- end -}}
     </span>
-
-    <span class="post-end-separator" aria-hidden="true">·</span>
-    <a
-      class="post-end-context"
-      href="{{ $contextURL }}"
-      data-event="article_continue_click"
-      data-target-kind="{{ $contextKind }}"
-      data-target="{{ $contextURL }}"
-      data-topic="{{ with $topics }}{{ index . 0 }}{{ end }}"
-    >{{ $contextTitle }}</a>
-
-    {{- if $discussionEnabled -}}
-      <span class="post-end-separator" aria-hidden="true">·</span>
-      <a
-        class="post-discussion-link"
-        href="#discussion-title"
-        data-event="article_discussion_click"
-        data-target="#discussion-title"
-      >参与讨论 <span aria-hidden="true">↓</span></a>
-    {{- end -}}
 
     <span class="post-end-actions">
       <button
@@ -90,97 +87,36 @@
         data-share-url="{{ .Permalink }}"
         hidden
       >分享</button>
-      <a
-        class="post-social"
-        href="https://service.weibo.com/share/share.php?{{ $weiboShare }}"
-        target="_blank"
-        rel="noopener noreferrer"
-        data-event="article_share"
-        data-target-kind="weibo"
-        data-target="weibo"
-      >微博</a>
-      <a
-        class="post-social"
-        href="https://x.com/intent/tweet?{{ $xShare }}"
-        target="_blank"
-        rel="noopener noreferrer"
-        data-event="article_share"
-        data-target-kind="x"
-        data-target="x"
-      >X</a>
       <span class="post-share-status" role="status" aria-live="polite"></span>
     </span>
   </div>
 
-  <section class="post-continuation" aria-labelledby="post-continuation-title">
-    <h2 id="post-continuation-title">继续理解</h2>
+  <nav class="post-continuation" aria-label="后续阅读">
+    {{- with $recommendation -}}
+      <a
+        class="post-recommendation-link"
+        href="{{ .page.RelPermalink }}"
+        {{- if eq .kind "next" }} rel="next"{{ end }}
+        data-event="article_continue_click"
+        data-target-kind="{{ .kind }}"
+        data-target="{{ .page.RelPermalink }}"
+        data-position="1"
+      >
+        <span class="post-recommendation-copy">
+          <span class="post-recommendation-reason">{{ .reason }}</span>
+          <span class="post-recommendation-title">{{ .page.Title | emojify }}</span>
+        </span>
+        <span class="post-recommendation-arrow" aria-hidden="true">→</span>
+      </a>
+    {{- end -}}
+
     <a
-      class="post-context-link"
+      class="post-context-link{{ if not $recommendation }} is-primary{{ end }}"
       href="{{ $contextURL }}"
       data-event="article_continue_click"
       data-target-kind="{{ $contextKind }}"
       data-target="{{ $contextURL }}"
       data-topic="{{ with $topics }}{{ index . 0 }}{{ end }}"
-    >查看“{{ $contextTitle }}”中的全部文章 <span aria-hidden="true">→</span></a>
-
-    {{- with $related -}}
-      <ul class="post-related-list">
-        {{- range $index, $candidate := . -}}
-          <li class="post-related-item">
-            <a
-              href="{{ $candidate.RelPermalink }}"
-              data-event="article_continue_click"
-              data-target-kind="related"
-              data-target="{{ $candidate.RelPermalink }}"
-              data-position="{{ add $index 1 }}"
-            >
-              <span class="post-related-copy">
-                {{- with $candidate.Params.categories -}}
-                  <span class="post-related-meta">{{ index . 0 }}</span>
-                {{- end -}}
-                <span class="post-related-title">{{ $candidate.Title | emojify }}</span>
-              </span>
-              <span class="post-related-arrow" aria-hidden="true">→</span>
-            </a>
-          </li>
-        {{- end -}}
-      </ul>
-    {{- end -}}
-  </section>
-
-  {{- $prevPage := false -}}
-  {{- $nextPage := false -}}
-  {{- with .Params.prev -}}
-    {{- $prevPage = site.GetPage . -}}
-    {{- if not $prevPage -}}{{- errorf "%s: prev 指向不存在页面 %q" $.File.Path . -}}{{- end -}}
-  {{- end -}}
-  {{- with .Params.next -}}
-    {{- $nextPage = site.GetPage . -}}
-    {{- if not $nextPage -}}{{- errorf "%s: next 指向不存在页面 %q" $.File.Path . -}}{{- end -}}
-  {{- end -}}
-  {{- if and $prevPage (eq $prevPage.RelPermalink .RelPermalink) -}}
-    {{- errorf "%s: prev 不能指向当前文章" .File.Path -}}
-  {{- end -}}
-  {{- if and $nextPage (eq $nextPage.RelPermalink .RelPermalink) -}}
-    {{- errorf "%s: next 不能指向当前文章" .File.Path -}}
-  {{- end -}}
-  {{- if and $prevPage $nextPage (eq $prevPage.RelPermalink $nextPage.RelPermalink) -}}
-    {{- errorf "%s: prev 与 next 不能指向同一页面" .File.Path -}}
-  {{- end -}}
-  {{- if or $prevPage $nextPage -}}
-    <nav class="post-series" aria-label="系列导航">
-      {{- with $prevPage -}}
-        <a href="{{ .RelPermalink }}" rel="prev">
-          <span class="post-series-label">系列上一篇</span>
-          <span>{{ .Title | emojify }}</span>
-        </a>
-      {{- end -}}
-      {{- with $nextPage -}}
-        <a href="{{ .RelPermalink }}" rel="next">
-          <span class="post-series-label">系列下一篇</span>
-          <span>{{ .Title | emojify }}</span>
-        </a>
-      {{- end -}}
-    </nav>
-  {{- end -}}
+    >{{ $contextTitle }}中的全部文章 <span aria-hidden="true">→</span></a>
+  </nav>
 </footer>

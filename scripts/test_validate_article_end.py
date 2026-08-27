@@ -26,17 +26,16 @@ MODULE = load_module()
 VALID_PAGE = """<!DOCTYPE html><html><body>
 <footer class="post-footer" data-article-end>
   <div class="post-end-meta">
-    <a class="post-end-context" href="/topic/">主题</a>
-    <a class="post-discussion-link" href="#discussion-title">参与讨论</a>
-    <button class="post-share" type="button" hidden>分享</button>
+    <button class="post-share" type="button" data-share hidden>分享</button>
   </div>
-  <section class="post-continuation">
+  <nav class="post-continuation" aria-label="后续阅读">
+    <a class="post-recommendation-link" data-target-kind="related" href="/posts/other/">
+      <span class="post-recommendation-reason">同主题</span>
+      <span class="post-recommendation-title">推荐标题</span>
+      <span aria-hidden="true">→</span>
+    </a>
     <a class="post-context-link" href="/topic/">查看全部文章</a>
-    <ul>
-      <li><a data-target-kind="related" href="/posts/other/">推荐标题<span aria-hidden="true">→</span></a></li>
-    </ul>
-  </section>
-  <nav class="post-series"><a href="/posts/prev-article/">系列上一篇</a></nav>
+  </nav>
 </footer>
 <section id="comments" class="post-discussion">
   <h2 id="discussion-title">参与讨论</h2>
@@ -73,14 +72,17 @@ class ValidateArticleEndTests(unittest.TestCase):
 
     def test_icon_only_link_without_accessible_name_is_blocked(self):
         html = VALID_PAGE.replace(
-            'data-target-kind="related" href="/posts/other/">推荐标题',
-            'data-target-kind="related" href="/posts/other/"><i class="fas fa-arrow-right"></i>',
+            '<span class="post-recommendation-reason">同主题</span>\n      <span class="post-recommendation-title">推荐标题</span>',
+            '<span class="post-recommendation-title"><i class="fas fa-arrow-right"></i></span>',
         )
         errors = self.run_html(html)
         self.assertTrue(any("可访问名称" in e for e in errors), errors)
 
     def test_aria_hidden_text_is_not_an_accessible_name(self):
-        html = VALID_PAGE.replace(">推荐标题<", "><span aria-hidden='true'>装饰文字</span><")
+        html = VALID_PAGE.replace(
+            '<span class="post-recommendation-reason">同主题</span>\n      <span class="post-recommendation-title">推荐标题</span>',
+            '<span aria-hidden="true">装饰文字</span>',
+        )
         errors = self.run_html(html)
         self.assertTrue(any("可访问名称" in e for e in errors), errors)
 
@@ -97,12 +99,16 @@ class ValidateArticleEndTests(unittest.TestCase):
         errors = self.run_html(html)
         self.assertFalse(any("链接目标不存在" in e for e in errors), errors)
 
-    def test_fourth_related_item_is_blocked(self):
-        item = '<li><a data-target-kind="related" href="/posts/other/">推荐标题<span aria-hidden="true">→</span></a></li>'
-        html = VALID_PAGE.replace(item, item * 4)
-        self.assertIn(item * 4, html)
+    def test_second_recommendation_is_blocked(self):
+        item = """    <a class="post-recommendation-link" data-target-kind="related" href="/posts/other/">
+      <span class="post-recommendation-reason">同主题</span>
+      <span class="post-recommendation-title">推荐标题</span>
+      <span aria-hidden="true">→</span>
+    </a>"""
+        html = VALID_PAGE.replace(item, item * 2)
+        self.assertIn(item * 2, html)
         errors = self.run_html(html)
-        self.assertTrue(any("0～3" in e for e in errors), errors)
+        self.assertTrue(any("0～1" in e for e in errors), errors)
 
     def test_self_reference_in_related_is_blocked(self):
         html = VALID_PAGE.replace("/posts/other/", "/posts/current/")
@@ -111,11 +117,26 @@ class ValidateArticleEndTests(unittest.TestCase):
 
     def test_removed_structure_class_is_blocked(self):
         html = VALID_PAGE.replace(
-            '<section class="post-continuation">',
-            '<div class="legacy post-tags x">标签</div><section class="post-continuation">',
+            '<nav class="post-continuation" aria-label="后续阅读">',
+            '<div class="legacy post-tags x">标签</div><nav class="post-continuation" aria-label="后续阅读">',
         )
         errors = self.run_html(html)
         self.assertTrue(any("post-tags" in e for e in errors), errors)
+
+    def test_recommendation_requires_valid_kind_and_reason(self):
+        html = VALID_PAGE.replace('data-target-kind="related"', 'data-target-kind="category"')
+        html = html.replace('<span class="post-recommendation-reason">同主题</span>', "")
+        errors = self.run_html(html)
+        self.assertTrue(any("来源标签无效" in e for e in errors), errors)
+        self.assertTrue(any("准确来源标签" in e for e in errors), errors)
+
+    def test_visible_continuation_title_is_blocked(self):
+        html = VALID_PAGE.replace(
+            '<nav class="post-continuation" aria-label="后续阅读">',
+            '<nav class="post-continuation" aria-label="后续阅读"><h2 id="post-continuation-title">继续理解</h2>',
+        )
+        errors = self.run_html(html)
+        self.assertTrue(any("继续理解" in e for e in errors), errors)
 
     def test_discussion_enabled_requires_unique_title(self):
         html = VALID_PAGE.replace('<h2 id="discussion-title">', "<h2>")
