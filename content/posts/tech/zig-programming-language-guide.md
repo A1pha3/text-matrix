@@ -6,6 +6,8 @@ description: "Zig 是 C 的现代替代而非 Rust 的竞争者：用显式分�
 draft: false
 categories: ["技术笔记"]
 tags: ["Zig", "编程语言"]
+github_repo: "michal-z/zig-zmath"
+source_key: "gh:michal-z/zig-zmath"
 ---
 
 # Zig：把 C 重写一遍，而不是把 Rust 再造一遍

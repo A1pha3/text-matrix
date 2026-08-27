@@ -1,7 +1,7 @@
 {{- partial "init.html" . -}}
 
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="{{ .Site.Language.Locale }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,13 +32,14 @@
 
           /* theme-color 跟随实际主题（含手动切换）：观察 body[theme] 属性变化 */
           const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-          if (metaThemeColor) {
-            const syncThemeColor = () => metaThemeColor.setAttribute(
-              'content', document.body.getAttribute('theme') === 'dark' ? '#131211' : '#faf9f7');
-            syncThemeColor();
-            new MutationObserver(syncThemeColor)
-              .observe(document.body, { attributes: true, attributeFilter: ['theme'] });
-          }
+          const syncThemeChrome = () => {
+            const isDark = document.body.getAttribute('theme') === 'dark';
+            document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+            metaThemeColor?.setAttribute('content', isDark ? '#131211' : '#faf9f7');
+          };
+          syncThemeChrome();
+          new MutationObserver(syncThemeChrome)
+            .observe(document.body, { attributes: true, attributeFilter: ['theme'] });
         </script>
 
         <div id="mask" data-pagefind-ignore="all"></div>

@@ -8,6 +8,8 @@ tags: ["GitHub Actions", "CI/CD", "DevOps", "TypeScript"]
 description: "拆解 actions/checkout 的 v7 安全默认（含 2026-07-20 对 v4/v5/v6 的回移植）、v6 凭据持久化机制与常见场景：sparse-checkout、fetch-depth、多仓库与子模块。"
 author: text-matrix
 slug: actions-checkout-github-actions-checkout-step-guide
+github_repo: "actions/checkout"
+source_key: "gh:actions/checkout"
 
 ---
 
@@ -416,4 +418,3 @@ true（默认）把模式解析为"包含祖先目录"，适合拉整个子目�
 - GitHub Changelog：Safer `pull_request_target` defaults for GitHub Actions checkout：<https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/>
 - 官方安全指引："Securely using pull_request_target"（GitHub 文档）：<https://docs.github.com/en/actions/security-guides/securing-workflows-and-running/understanding-the-workflow#securely-using-pull_request_target>
 - CVE-2025-30066（tj-actions/changed-files 供应链事件）：<https://github.com/advisories/GHSA-mrrh-fwg8-r2c3>
-

@@ -8,7 +8,7 @@
   {{- errorf "%s: topics 必须是数组" $page.File.Path -}}
 {{- end -}}
 {{- range $topic := $topics -}}
-  {{- if not (index site.Data.topics $topic) -}}
+  {{- if not (index hugo.Data.topics $topic) -}}
     {{- errorf "%s: topics 包含未登记值 %q" $page.File.Path $topic -}}
   {{- end -}}
 {{- end -}}

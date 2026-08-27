@@ -136,12 +136,58 @@ class ArticleEndParser(HTMLParser):
                 break
 
 
-def internal_link_exists(href: str, public_root: Path) -> bool:
+def detect_site_prefix(public_root: Path) -> str:
+    """从首页品牌链接推导 GitHub Pages 等子路径部署前缀。"""
+    index_path = public_root / "index.html"
+    if not index_path.exists():
+        return ""
+    raw = index_path.read_text(encoding="utf-8")
+
+    class HomeLinkParser(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__(convert_charrefs=True)
+            self.path = ""
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, Optional[str]]]) -> None:
+            if self.path or tag != "a":
+                return
+            data = {key: value or "" for key, value in attrs}
+            if "header-brand" not in data.get("class", "").split():
+                return
+            href_path = unquote(urlsplit(data.get("href", "")).path)
+            if href_path.startswith("/"):
+                self.path = href_path.strip("/")
+
+    home_link = HomeLinkParser()
+    home_link.feed(raw)
+    if home_link.path:
+        return home_link.path
+
+    # 无品牌链接的自定义首页以 canonical 兜底；主域部署时结果为空。
+    canonical = re.search(
+        r'<link\b(?=[^>]*\brel=["\']canonical["\'])(?=[^>]*\bhref=["\']([^"\']+)["\'])[^>]*>',
+        raw,
+        re.IGNORECASE,
+    )
+    if not canonical:
+        return ""
+    return unquote(urlsplit(canonical.group(1)).path).strip("/")
+
+
+def strip_site_prefix(path_part: str, site_prefix: str) -> str:
+    normalized = path_part.strip("/")
+    prefix = site_prefix.strip("/")
+    if prefix and (normalized == prefix or normalized.startswith(f"{prefix}/")):
+        return normalized[len(prefix):].strip("/")
+    return normalized
+
+
+def internal_link_exists(href: str, public_root: Path, site_prefix: str = "") -> bool:
     # //cdn.example.com/… 是协议相对外部 URL，不是站内链接。
     if href.startswith("//"):
         return True
     # HTML 中的中文路径是百分号编码的，磁盘目录是原始 Unicode，需先解码。
-    path_part = unquote(urlsplit(href).path).strip("/")
+    path_part = strip_site_prefix(unquote(urlsplit(href).path), site_prefix)
     if not path_part:
         return (public_root / "index.html").exists()
     return (
@@ -150,14 +196,15 @@ def internal_link_exists(href: str, public_root: Path) -> bool:
     )
 
 
-def current_page_path(html_path: Path, public_root: Path) -> str:
+def current_page_path(html_path: Path, public_root: Path, site_prefix: str = "") -> str:
     relative = html_path.relative_to(public_root)
+    prefix = f"/{site_prefix.strip('/')}" if site_prefix else ""
     if relative.name == "index.html":
-        return f"/{relative.parent.as_posix().strip('/')}/"
-    return f"/{relative.as_posix().strip('/')}"
+        return f"{prefix}/{relative.parent.as_posix().strip('/')}/"
+    return f"{prefix}/{relative.as_posix().strip('/')}"
 
 
-def validate_html(path: Path, public_root: Path) -> tuple[list[str], bool]:
+def validate_html(path: Path, public_root: Path, site_prefix: str = "") -> tuple[list[str], bool]:
     raw = path.read_text(encoding="utf-8")
     if "data-article-end" not in raw:
         return [], False
@@ -177,7 +224,7 @@ def validate_html(path: Path, public_root: Path) -> tuple[list[str], bool]:
     if parser.context_link_count != 1:
         errors.append(f"上下文主入口数量应为 1，实际为 {parser.context_link_count}")
 
-    page_path = current_page_path(path, public_root)
+    page_path = current_page_path(path, public_root, site_prefix)
     for href in parser.related_links:
         href_path = unquote(urlsplit(href).path)
         if href_path.rstrip("/") == page_path.rstrip("/"):
@@ -185,7 +232,7 @@ def validate_html(path: Path, public_root: Path) -> tuple[list[str], bool]:
 
     # 主题、分类、系列与推荐目标都必须真实存在（无效链接直接阻断）
     for href in sorted(set(parser.internal_links)):
-        if not internal_link_exists(href, public_root):
+        if not internal_link_exists(href, public_root, site_prefix):
             errors.append(f"文章结束区链接目标不存在: {href}")
 
     if parser.discussion_count:
@@ -280,7 +327,12 @@ def has_recommend_false(target: Path) -> bool:
     return bool(re.search(r"^recommend\s*:\s*false\s*$", frontmatter, re.MULTILINE))
 
 
-def validate_content(content_root: Path, topics_path: Path, public_root: Optional[Path] = None) -> list[str]:
+def validate_content(
+    content_root: Path,
+    topics_path: Path,
+    public_root: Optional[Path] = None,
+    site_prefix: str = "",
+) -> list[str]:
     topic_text = topics_path.read_text(encoding="utf-8")
     allowed_topics = set(re.findall(r"^([a-z0-9][a-z0-9-]*):\s*$", topic_text, re.MULTILINE))
     errors: list[str] = []
@@ -309,7 +361,7 @@ def validate_content(content_root: Path, topics_path: Path, public_root: Optiona
             if target is None:
                 # 内容树解析不到时可能是 aliases 路径：Hugo 构建产物里有对应重定向页，
                 # 交给生成 HTML 层判定存在性，避免与 GetPage 语义不一致的误报。
-                if not (public_root and internal_link_exists(ref, public_root)):
+                if not (public_root and internal_link_exists(ref, public_root, site_prefix)):
                     errors.append(f"{path}: relatedPosts 指向不存在页面 {ref}")
             else:
                 if page_rel_path(target, content_root) == self_path:
@@ -328,7 +380,7 @@ def validate_content(content_root: Path, topics_path: Path, public_root: Optiona
                 continue
             target = resolve_content_file(content_root, ref)
             if target is None:
-                if not (public_root and internal_link_exists(ref, public_root)):
+                if not (public_root and internal_link_exists(ref, public_root, site_prefix)):
                     errors.append(f"{path}: {field} 指向不存在页面 {ref}")
             elif page_rel_path(target, content_root) == self_path:
                 errors.append(f"{path}: {field} 指向自身 {ref}")
@@ -353,11 +405,12 @@ def main() -> int:
     public_root = Path(args.site_dir).resolve()
     content_root = Path(args.content_root).resolve()
     topics_path = Path(args.topics).resolve()
+    site_prefix = detect_site_prefix(public_root)
 
-    failures = validate_content(content_root, topics_path, public_root)
+    failures = validate_content(content_root, topics_path, public_root, site_prefix)
     checked_html = 0
     for path in sorted((public_root / "posts").rglob("index.html")):
-        html_failures, checked = validate_html(path, public_root)
+        html_failures, checked = validate_html(path, public_root, site_prefix)
         if checked:
             checked_html += 1
         failures.extend(f"{path}: {message}" for message in html_failures)

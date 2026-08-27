@@ -303,9 +303,13 @@
 }
 
 .post-footer {
+  height: auto;
+  width: auto;
   margin-top: 3rem;
-  padding-top: 1.2rem;
+  padding: 1.2rem 0 0;
   border-top: 1px solid rgba(28, 25, 23, .12);
+  line-height: inherit;
+  text-align: left;
 
   [theme=dark] & {
     border-top-color: rgba(231, 229, 228, .12);
@@ -681,6 +685,26 @@
 .post-discussion a:focus-visible,
 .post-discussion button:focus-visible,
 #discussion-title:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 3px;
+
+  [theme=dark] & {
+    outline-color: #5eead4;
+  }
+}
+
+.fixed-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(15, 118, 110, .14);
+}
+
+.fixed-button:focus-visible {
   outline: 2px solid #0f766e;
   outline-offset: 3px;
 
@@ -1632,6 +1656,17 @@
 /* 无语言标记的代码块（ASCII 图等）使用正文颜色，避免继承行内代码的红色强调色 */
 .single .content pre > code:not([data-lang]) {
   color: inherit;
+}
+
+/* 超长代码只在代码块内部滚动，不能把文章及结束区撑出移动端视口 */
+.single .content {
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.single .content .highlight {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* 首页 hero：左对齐定位语句（编辑风，不再重复巨大 wordmark） */

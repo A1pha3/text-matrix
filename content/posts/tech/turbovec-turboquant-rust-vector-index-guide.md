@@ -6,6 +6,8 @@ slug = 'turbovec-turboquant-rust-vector-index-guide'
 description = 'RyanCodrai/turbovec 是基于 Google Research 论文 TurboQuant（arXiv:2504.19874，ICLR 2026）的 Rust 向量索引 + Python 绑定：无码本训练、在线 ingest、NEON/AVX-512 SIMD 内核、按 ID 过滤搜索。项目自报在 4-bit 下平均比 FAISS IndexPQFastScan 快约 3.4 倍，将 10M float32 向量集从 31 GB 压缩到 2-bit 约 4 GB。'
 categories = ['技术笔记']
 tags = ['向量检索', 'RAG', 'Rust', 'Python', 'SIMD', '量化', '开源项目深拆']
+github_repo = 'RyanCodrai/turbovec'
+source_key = 'gh:RyanCodrai/turbovec'
 +++
 
 # turbovec 深度解析：基于 Google TurboQuant 的 Rust 向量索引，10M 文档从 31 GB 砍到 4 GB
