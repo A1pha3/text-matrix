@@ -211,6 +211,11 @@
 {{- /* Theme script */ -}}
 {{- dict "Source" "js/theme.js" "Minify" true "Fingerprint" $fingerprint | dict "Scratch" .Scratch "Data" | partial "scratch/script.html" -}}
 
+{{- /* 文章结束区：项目级分享、埋点、焦点同步与 Giscus 状态机 */ -}}
+{{- if (.Scratch.Get "this").articleEnd -}}
+    {{- dict "Source" "js/article-end.js" "Minify" true "Fingerprint" $fingerprint | dict "Scratch" .Scratch "Data" | partial "scratch/script.html" -}}
+{{- end -}}
+
 {{- /* mermaid 懒加载器（须在 theme.js 之后：消费其经 stub 排队的 render 调用） */ -}}
 {{- with (.Scratch.Get "this").mermaidLazyURL -}}
     {{- $loader := printf `(function(){var stub=window.mermaid;if(!stub||!stub._q)return;var pending=stub._q;var loaded=false;function flush(){mermaid.initialize(stub._cfg||{startOnLoad:false});for(var i=0;i<pending.length;i++){mermaid.render(pending[i].id,pending[i].src).then(pending[i].resolve)}pending.length=0}function load(){if(loaded)return;loaded=true;var s=document.createElement("script");s.src=%q;s.onload=flush;document.body.appendChild(s)}var els=document.getElementsByClassName("mermaid");if(!els.length)return;if(!("IntersectionObserver" in window)){load();return}var io=new IntersectionObserver(function(entries){for(var i=0;i<entries.length;i++){if(entries[i].isIntersecting){io.disconnect();load();break}}},{rootMargin:"600px 0px"});for(var i=0;i<els.length;i++){io.observe(els[i])}})();` . -}}

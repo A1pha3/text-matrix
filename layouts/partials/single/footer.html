@@ -1,131 +1,158 @@
 {{- $params := .Scratch.Get "params" -}}
+{{- .Scratch.SetInMap "this" "articleEnd" true -}}
 
-<div class="post-footer" id="post-footer">
-    <div class="post-info">
-        <div class="post-info-line">
-            <div class="post-info-mod">
-                <span>
-                    {{- with .Site.Params.dateformat | default "2006-01-02" | .Lastmod.Format -}}
-                        {{- dict "Date" . | T "updatedOnDate" -}}
-                        {{- if $.Site.Params.gitRepo -}}
-                            {{- with $.GitInfo -}}
-                                &nbsp;<a class="git-hash" href="{{ printf `%v/commit/%v` $.Site.Params.gitRepo .Hash }}" target="_blank" title="commit by {{ .AuthorName }}({{ .AuthorEmail }}) {{ .Hash }}: {{ .Subject }}">
-                                    <i class="fas fa-hashtag" aria-hidden="true"></i>{{- .AbbreviatedHash -}}
-                                </a>
-                            {{- end -}}
-                        {{- end -}}
-                    {{- end -}}
-                </span>
-            </div>
-            {{- if eq .Site.Params.analytics.enable true -}}
-            <div id="page-views" class="post-info-mod">
-            </div>
-            {{- end -}}
-            {{- with $params.license | string -}}
-            <div class="post-info-license">
-                <span>
-                    {{- . | safeHTML -}}
-                </span>
-            </div>
-            {{- end -}}
-        </div>
-        <div class="post-info-line">
-            <div class="post-info-md">
-                {{- if $params.linktomarkdown -}}
-                    {{- with .OutputFormats.Get "markdown" -}}
-                        <span>
-                            <a class="link-to-markdown" href="{{ .RelPermalink }}" target="_blank">
-                                {{- T "readMarkdown" -}}
-                            </a>
-                        </span>
-                    {{- end -}}
-                {{- end -}}
-            </div>
-            <div class="post-info-share">
-                <span>
-                    {{- partial "plugin/share.html" . -}}
-                </span>
-            </div>
-        </div>
-    </div>
+{{- $comment := .Scratch.Get "comment" | default dict -}}
+{{- $giscus := $comment.giscus | default dict -}}
+{{- $discussionEnabled := and $comment.enable $giscus.enable -}}
 
-    <div class="post-info-more">
-        <section class="post-tags">
-            {{- with .Params.tags -}}
-                <i class="fas fa-tags" aria-hidden="true"></i>&nbsp;
-                {{- range $index, $value := . -}}
-                    {{- if gt $index 0 }},&nbsp;{{ end -}}
-                    {{- $tag := partialCached "function/path.html" $value $value | printf "/tags/%v" | $.Site.GetPage -}}
-                    <a href="{{ $tag.RelPermalink }}">{{ $tag.Title }}</a>
-                {{- end -}}
-            {{- end -}}
-        </section>
-        <section>
-            <span><a href="javascript:void(0);" onclick="window.history.back();">{{ T "back" }}</a></span>&nbsp;|&nbsp;<span><a href="{{ .Site.Home.RelPermalink }}">{{ T "home" }}</a></span>
-        </section>
-    </div>
-
-    <section class="post-conversion" data-pagefind-ignore="all">
-        <span class="post-conversion-label">继续探索</span>
-        <div class="post-conversion-links">
-            <a href="{{ with .Site.GetPage "/ai-agent" }}{{ .RelPermalink }}{{ end }}">AI Agent 专题</a>
-            <a href="{{ with .Site.GetPage "/coding-agent" }}{{ .RelPermalink }}{{ end }}">Coding Agent 专题</a>
-            <a href="{{ with .Site.GetPage "/open-source-ai-tools" }}{{ .RelPermalink }}{{ end }}">开源 AI 工具</a>
-            <a href="{{ with .Site.GetPage "/contact" }}{{ .RelPermalink }}{{ end }}">联系</a>
-        </div>
-    </section>
-
-    {{- $related := slice -}}
-    {{- $tagged := slice -}}
-    {{- with .Params.tags -}}
-        {{- $tagged = first 3 (where $.Site.RegularPages "Params.tags" "intersect" .) -}}
+{{- $contextTitle := "" -}}
+{{- $contextURL := "" -}}
+{{- $contextKind := "category" -}}
+{{- $topics := .Params.topics | default slice -}}
+{{- if gt (len $topics) 0 -}}
+  {{- $topicSlug := index $topics 0 -}}
+  {{- $topic := index hugo.Data.topics $topicSlug -}}
+  {{- if not $topic -}}
+    {{- errorf "%s: topics 包含未登记值 %q" .File.Path $topicSlug -}}
+  {{- else -}}
+    {{- $topicPage := site.GetPage $topic.url -}}
+    {{- if not $topicPage -}}
+      {{- errorf "%s: 主题 %q 指向不存在页面 %q" .File.Path $topicSlug $topic.url -}}
+    {{- else -}}
+      {{- $contextTitle = $topic.title -}}
+      {{- $contextURL = $topicPage.RelPermalink -}}
+      {{- $contextKind = "topic" -}}
     {{- end -}}
-    {{- $categorized := slice -}}
-    {{- with .Params.categories -}}
-        {{- $categorized = first 3 (where $.Site.RegularPages "Params.categories" "intersect" .) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if not $contextURL -}}
+  {{- with .Params.categories -}}
+    {{- $categoryName := index . 0 -}}
+    {{- $categoryPath := partialCached "function/path.html" $categoryName $categoryName | printf "/categories/%v" -}}
+    {{- with site.GetPage $categoryPath -}}
+      {{- $contextTitle = .Title -}}
+      {{- $contextURL = .RelPermalink -}}
     {{- end -}}
-    {{- $related = $tagged | append $categorized -}}
-    {{- $related = where $related "RelPermalink" "!=" .RelPermalink -}}
-    {{- $related = first 4 ($related | uniq) -}}
-    {{- if gt (len $related) 0 -}}
-    <section class="post-related" data-pagefind-ignore="all">
-        <div class="post-related-header">
-            <p class="post-related-kicker">继续阅读</p>
-            <h2>与这篇内容相关的文章</h2>
-        </div>
-        <div class="post-related-grid">
-            {{- range $related -}}
-            <article class="post-related-card">
-                {{- with .Params.categories -}}
-                <p class="post-related-meta">{{ index . 0 }}</p>
-                {{- end -}}
-                <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-                <p>{{ .Description | default (.Summary | plainify) }}</p>
-            </article>
-            {{- end -}}
-        </div>
-    </section>
+  {{- end -}}
+{{- end -}}
+
+{{- if not $contextURL -}}
+  {{- errorf "%s: 文章必须至少提供一个有效 topics 或 categories 值" .File.Path -}}
+{{- end -}}
+
+{{- $related := partial "single/related.html" . -}}
+
+<footer class="post-footer" id="post-footer" data-article-end data-source-section="article_end" data-pagefind-ignore="all">
+  <div class="post-end-meta">
+    <span class="post-end-updated">
+      {{- with .Site.Params.dateformat | default "2006-01-02" | .Lastmod.Format -}}
+        更新于 <time datetime="{{ $.Lastmod.Format "2006-01-02T15:04:05Z07:00" }}">{{ . }}</time>
+      {{- end -}}
+    </span>
+
+    <span class="post-end-separator" aria-hidden="true">·</span>
+    <a
+      class="post-end-context"
+      href="{{ $contextURL }}"
+      data-event="article_continue_click"
+      data-target-kind="{{ $contextKind }}"
+      data-target="{{ $contextURL }}"
+      data-topic="{{ with $topics }}{{ index . 0 }}{{ end }}"
+    >{{ $contextTitle }}</a>
+
+    {{- if $discussionEnabled -}}
+      <span class="post-end-separator" aria-hidden="true">·</span>
+      <a
+        class="post-discussion-link"
+        href="#discussion-title"
+        data-event="article_discussion_click"
+        data-target="#discussion-title"
+      >参与讨论 <span aria-hidden="true">↓</span></a>
     {{- end -}}
 
-    <div class="post-nav">
-        {{- $prevPage := false -}}
-        {{- $nextPage := false -}}
-        {{- if or (.Params.prev) (.Params.next) -}}
-            {{- with .Params.prev -}}
-                {{- $prevPage = $.Site.GetPage . -}}
-            {{- end -}}
-            {{- with .Params.next -}}
-                {{- $nextPage = $.Site.GetPage . -}}
-            {{- end -}}
-        {{- else -}}
-            {{- $prevPage = .PrevInSection -}}
-            {{- $nextPage = .NextInSection -}}
+    <span class="post-end-actions">
+      <button
+        class="post-share"
+        type="button"
+        data-share
+        data-share-title="{{ .Title }}"
+        data-share-url="{{ .Permalink }}"
+        hidden
+      >分享</button>
+      <span class="post-share-status" role="status" aria-live="polite"></span>
+    </span>
+  </div>
+
+  <section class="post-continuation" aria-labelledby="post-continuation-title">
+    <h2 id="post-continuation-title">继续理解</h2>
+    <a
+      class="post-context-link"
+      href="{{ $contextURL }}"
+      data-event="article_continue_click"
+      data-target-kind="{{ $contextKind }}"
+      data-target="{{ $contextURL }}"
+      data-topic="{{ with $topics }}{{ index . 0 }}{{ end }}"
+    >查看“{{ $contextTitle }}”中的全部文章 <span aria-hidden="true">→</span></a>
+
+    {{- with $related -}}
+      <ul class="post-related-list">
+        {{- range $index, $candidate := . -}}
+          <li class="post-related-item">
+            <a
+              href="{{ $candidate.RelPermalink }}"
+              data-event="article_continue_click"
+              data-target-kind="related"
+              data-target="{{ $candidate.RelPermalink }}"
+              data-position="{{ add $index 1 }}"
+            >
+              <span class="post-related-copy">
+                {{- with $candidate.Params.categories -}}
+                  <span class="post-related-meta">{{ index . 0 }}</span>
+                {{- end -}}
+                <span class="post-related-title">{{ $candidate.Title | emojify }}</span>
+              </span>
+              <span class="post-related-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
         {{- end -}}
-        {{- with $prevPage -}}
-            <a href="{{ .RelPermalink }}" class="prev" rel="prev" title="{{ .Title }}"><i class="fas fa-angle-left" aria-hidden="true"></i>{{ .Title | emojify }}</a>
-        {{- end -}}
-        {{ with $nextPage }}
-            <a href="{{ .RelPermalink }}" class="next" rel="next" title="{{ .Title }}">{{ .Title | emojify }}<i class="fas fa-angle-right" aria-hidden="true"></i></a>
-        {{- end -}}
-    </div>
-</div>
+      </ul>
+    {{- end -}}
+  </section>
+
+  {{- $prevPage := false -}}
+  {{- $nextPage := false -}}
+  {{- with .Params.prev -}}
+    {{- $prevPage = site.GetPage . -}}
+    {{- if not $prevPage -}}{{- errorf "%s: prev 指向不存在页面 %q" $.File.Path . -}}{{- end -}}
+  {{- end -}}
+  {{- with .Params.next -}}
+    {{- $nextPage = site.GetPage . -}}
+    {{- if not $nextPage -}}{{- errorf "%s: next 指向不存在页面 %q" $.File.Path . -}}{{- end -}}
+  {{- end -}}
+  {{- if and $prevPage (eq $prevPage.RelPermalink .RelPermalink) -}}
+    {{- errorf "%s: prev 不能指向当前文章" .File.Path -}}
+  {{- end -}}
+  {{- if and $nextPage (eq $nextPage.RelPermalink .RelPermalink) -}}
+    {{- errorf "%s: next 不能指向当前文章" .File.Path -}}
+  {{- end -}}
+  {{- if and $prevPage $nextPage (eq $prevPage.RelPermalink $nextPage.RelPermalink) -}}
+    {{- errorf "%s: prev 与 next 不能指向同一页面" .File.Path -}}
+  {{- end -}}
+  {{- if or $prevPage $nextPage -}}
+    <nav class="post-series" aria-label="系列导航">
+      {{- with $prevPage -}}
+        <a href="{{ .RelPermalink }}" rel="prev">
+          <span class="post-series-label">系列上一篇</span>
+          <span>{{ .Title | emojify }}</span>
+        </a>
+      {{- end -}}
+      {{- with $nextPage -}}
+        <a href="{{ .RelPermalink }}" rel="next">
+          <span class="post-series-label">系列下一篇</span>
+          <span>{{ .Title | emojify }}</span>
+        </a>
+      {{- end -}}
+    </nav>
+  {{- end -}}
+</footer>

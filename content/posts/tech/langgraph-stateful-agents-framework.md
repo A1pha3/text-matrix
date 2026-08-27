@@ -6,6 +6,7 @@ github_repo: "langchain-ai/langgraphjs"
 description: "LangGraph 真正解决的不是如何调用 LLM，而是把多步 Agent 执行改造成可观测、可恢复、可干预的状态机。受 Pregel/Apache Beam/NetworkX 启发，提供 StateGraph、Checkpoint、Node、Edge、Reducer 五个核心抽象，支撑 Durable Execution、Human-in-the-Loop、Comprehensive Memory 三项生产级能力。"
 draft: false
 categories: ["技术笔记"]
+topics: ["ai-agent"]
 tags: ["AI Agent", "LangChain", "LLM", "Python"]
 ---
 

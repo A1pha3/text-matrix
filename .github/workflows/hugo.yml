@@ -78,6 +78,8 @@ jobs:
         run: npm run build:github-pages
       - name: Verify release assets
         run: npm run validate:release-assets
+      - name: Validate article end experience
+        run: npm run validate:article-end
       - name: Check internal links
         run: npm run validate:internal-links
       - name: Upload artifact

@@ -1,0 +1,49 @@
+{{- $comment := .Scratch.Get "comment" | default dict -}}
+{{- $giscus := $comment.giscus | default dict -}}
+{{- if and $comment.enable $giscus.enable -}}
+  {{- .Scratch.SetInMap "this" "articleEnd" true -}}
+  <section id="comments" class="post-discussion" aria-labelledby="discussion-title" data-pagefind-ignore="all">
+    <header class="post-discussion-header">
+      <h2 id="discussion-title" tabindex="-1">参与讨论</h2>
+      <p>需使用 GitHub 登录。欢迎补充事实、提出异议或分享实践经验。</p>
+    </header>
+
+    <div
+      id="giscus"
+      class="comment"
+      data-giscus-root
+      data-repo="{{ $giscus.repo }}"
+      data-repo-id="{{ $giscus.repoId }}"
+      data-category="{{ $giscus.category }}"
+      data-category-id="{{ $giscus.categoryId }}"
+      data-lang="{{ $giscus.lang | default "zh-CN" }}"
+      data-mapping="{{ $giscus.mapping | default "pathname" }}"
+      data-reactions-enabled="{{ $giscus.reactionsEnabled | default "1" }}"
+      data-emit-metadata="{{ $giscus.emitMetadata | default "0" }}"
+      data-input-position="{{ $giscus.inputPosition | default "top" }}"
+      data-loading="lazy"
+      data-light-theme="{{ $giscus.lightTheme | default "github-light" }}"
+      data-dark-theme="{{ $giscus.darkTheme | default "github-dark" }}"
+      data-discussions-url="https://github.com/{{ $giscus.repo }}/discussions"
+      aria-busy="false"
+    ></div>
+
+    <p class="giscus-status" role="status" aria-live="polite" hidden></p>
+
+    <div class="giscus-fallback" data-giscus-fallback role="status" aria-live="polite" hidden>
+      <p>讨论暂时无法加载。</p>
+      <div class="giscus-fallback-actions">
+        <button type="button" data-giscus-retry>重试</button>
+        <a href="https://github.com/{{ $giscus.repo }}/discussions" target="_blank" rel="noopener noreferrer">前往 GitHub Discussions</a>
+      </div>
+    </div>
+
+    <noscript>
+      <p class="giscus-noscript">
+        当前浏览器未启用 JavaScript。你仍可前往
+        <a href="https://github.com/{{ $giscus.repo }}/discussions" target="_blank" rel="noopener noreferrer">GitHub Discussions</a>
+        参与讨论。
+      </p>
+    </noscript>
+  </section>
+{{- end -}}

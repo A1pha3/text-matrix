@@ -6,6 +6,7 @@ github_repo: "NirDiamant/agents-towards-production"
 description: "Agents Towards Production 是 GitHub 上专注于 AI Agent 生产级部署的开源教程仓库，涵盖状态流编排、向量记忆、实时搜索、Docker 容器化、FastAPI 暴露、安全防护、GPU 扩展、多智能体协作、可观测性与评估等 28 个完整教程，覆盖从原型到企业级的完整路径。"
 draft: false
 categories: ["技术笔记"]
+topics: ["ai-agent"]
 tags: ["AI Agent", "GenAI", "LangGraph", "RAG", "Docker", "FastAPI", "多智能体", "可观测性"]
 ---
 
@@ -496,4 +497,3 @@ class VersionedMemory:
 ---
 
 *本文对应仓库版本为 README.md 中记录的 28 个教程，更新时间请参考 [GitHub 仓库](https://github.com/NirDiamant/agents-towards-production) 最新版本。文中所有外部链接的有效性以发布时为准。*
-

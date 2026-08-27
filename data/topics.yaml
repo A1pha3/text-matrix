@@ -1,0 +1,14 @@
+ai-agent:
+  title: AI Agent 学习路径
+  url: /ai-agent/
+  description: 从概念、框架和核心部件进入 AI Agent 的系统学习路径。
+
+coding-agent:
+  title: Coding Agent 工作流
+  url: /coding-agent/
+  description: 聚焦 Claude Code、Codex、MCP 与真实软件工程协作。
+
+open-source-ai-tools:
+  title: 开源 AI 工具解读
+  url: /open-source-ai-tools/
+  description: 用长期工具栈视角理解开源 AI 产品、框架与基础设施。

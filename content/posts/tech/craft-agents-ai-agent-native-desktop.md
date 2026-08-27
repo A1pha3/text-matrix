@@ -6,6 +6,7 @@ github_repo: "lukilabs/craft-agents-oss"
 description: "Craft Agents是lukilabs出品的AI Agent桌面应用，基于Agent Native软件原则。用自然语言连接Linear/Gmail/Slack等60+服务，支持多LLM提供商，可视化编程体验。"
 draft: false
 categories: ["技术笔记"]
+topics: ["open-source-ai-tools"]
 tags: ["AI Agent", "桌面应用", "MCP", "工作流自动化"]
 ---
 
@@ -452,4 +453,3 @@ Agent 会自动发现并迁移你的 Skills 配置。
 ---
 
 *🦞 撰写于 2026 年 4 月 18 日*
-

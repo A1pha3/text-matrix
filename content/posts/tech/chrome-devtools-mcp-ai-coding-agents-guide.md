@@ -11,6 +11,7 @@ aliases:
 description: "全面解析 ChromeDevTools/chrome-devtools-mcp 项目：MCP 协议如何桥接 AI 编码助手与 Chrome DevTools，puppeteer 底层原理、架构设计、所有工具函数详解、开发扩展方法与最佳实践。"
 draft: false
 categories: ["技术笔记"]
+topics: ["coding-agent"]
 tags: ["MCP", "Chrome DevTools", "Puppeteer", "AI Agent", "浏览器自动化", "Claude"]
 ---
 
@@ -820,4 +821,3 @@ Chrome Performance Trace（`.chrometrace` 格式）可能从几十 MB 到数 GB�
 4. **性能优化**：学习 Chrome Performance Trace 的分析方法，使用 `chrome-devtools-mcp` 的 `start_performance_trace` 和 `stop_performance_trace` 工具，对比代码变更前后的性能差异。
 
 ---
-

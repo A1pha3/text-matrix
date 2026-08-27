@@ -1,0 +1,50 @@
+{{- $page := . -}}
+{{- $related := slice -}}
+{{- $seen := newScratch -}}
+{{- $seen.Set $page.RelPermalink true -}}
+
+{{- $topics := $page.Params.topics | default slice -}}
+{{- if and $topics (not (reflect.IsSlice $topics)) -}}
+  {{- errorf "%s: topics 必须是数组" $page.File.Path -}}
+{{- end -}}
+{{- range $topic := $topics -}}
+  {{- if not (index hugo.Data.topics $topic) -}}
+    {{- errorf "%s: topics 包含未登记值 %q" $page.File.Path $topic -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $explicit := $page.Params.relatedPosts | default slice -}}
+{{- if and $explicit (not (reflect.IsSlice $explicit)) -}}
+  {{- errorf "%s: relatedPosts 必须是数组" $page.File.Path -}}
+{{- end -}}
+{{- range $ref := $explicit -}}
+  {{- $candidate := site.GetPage $ref -}}
+  {{- if not $candidate -}}
+    {{- errorf "%s: relatedPosts 指向不存在页面 %q" $page.File.Path $ref -}}
+  {{- else if $seen.Get $candidate.RelPermalink -}}
+    {{- errorf "%s: relatedPosts 包含自身或重复页面 %q" $page.File.Path $ref -}}
+  {{- else if eq $candidate.Params.recommend false -}}
+    {{- errorf "%s: relatedPosts 指向 recommend=false 页面 %q" $page.File.Path $ref -}}
+  {{- else -}}
+    {{- $related = $related | append $candidate -}}
+    {{- $seen.Set $candidate.RelPermalink true -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if and (lt (len $related) 3) (gt (len $topics) 0) -}}
+  {{- $categories := $page.Params.categories | default slice -}}
+  {{- if gt (len $categories) 0 -}}
+    {{- $primaryCategory := index $categories 0 -}}
+    {{- $pool := where site.RegularPages "Params.categories" "intersect" (slice $primaryCategory) -}}
+    {{- $options := dict "document" $page "indices" (slice "topics") -}}
+    {{- range $candidate := $pool.Related $options -}}
+      {{- if ge (len $related) 3 -}}{{- break -}}{{- end -}}
+      {{- if and (not ($seen.Get $candidate.RelPermalink)) (ne $candidate.Params.recommend false) -}}
+        {{- $related = $related | append $candidate -}}
+        {{- $seen.Set $candidate.RelPermalink true -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- return (first 3 $related) -}}

@@ -8,6 +8,7 @@ aliases:
   - /posts/tech/everything-claude-code-comprehensive-guide/
   - /posts/tech/everything-claude-code-agent-harness-performance/
 categories: ["技术笔记"]
+topics: ["coding-agent"]
 tags: ["Claude Code", "AI 编程", "Anthropic", "Agent"]
 description: "基于 affaan-m/ECC 当前公开仓库状态，讲清这个项目如何从一份 Claude Code 入门资料演进为跨 Codex、Claude Code、Cursor 等终端的 Agent 工作流系统，以及 skills、memory、security 这些资产各自解决什么问题。"
 ---

@@ -150,7 +150,7 @@
 
 主题入口按以下顺序选择：
 
-1. `topics` 的第一个值；链接到对应主题 taxonomy 页面。
+1. `topics` 的第一个值；通过 `data/topics.yaml` 链接到对应策展专题页。
 2. `categories` 的第一个值；链接到对应分类页。
 3. 两者都不存在时不渲染入口，也不输出空链接。
 
@@ -220,7 +220,7 @@ recommend: true
 - `recommend: false`：禁止该文章出现在任何自动推荐中。
 - `recommend` 未填写时按 `true` 处理。
 
-`topics` 不是标签的别名。标签可以具体到技术、人物和工具；主题回答“这篇内容帮助读者持续理解什么问题”。允许值维护在 `data/topics.yaml`，每项包含 `slug`、中文名称和可选说明。
+`topics` 不是标签的别名。标签可以具体到技术、人物和工具；主题回答“这篇内容帮助读者持续理解什么问题”。允许值维护在 `data/topics.yaml`，每项以 slug 为键，包含中文名称、专题 URL 和可选说明。
 
 ### 5.2 内容类型边界
 
@@ -241,13 +241,12 @@ recommend: true
 
 ### 5.4 Hugo 配置
 
-在 taxonomy 中加入主题：
+主题入口复用现有策展专题页，不再生成一套内容重复的 taxonomy 页面。`data/topics.yaml` 提供稳定映射：
 
-```toml
-[taxonomies]
-  category = "categories"
-  tag = "tags"
-  topic = "topics"
+```yaml
+ai-agent:
+  title: AI Agent 学习路径
+  url: /ai-agent/
 ```
 
 Related Content 只允许结构化主题产生候选：
@@ -359,7 +358,7 @@ failed → loading（用户主动重试）
 | `assets/js/article-end.js` | 分享、焦点同步、评论状态机和事件上报 |
 | `assets/css/_custom.scss` | 项目级布局、交互状态和主题覆盖 |
 | `data/topics.yaml` | 受控主题词表 |
-| `hugo.toml` | taxonomy、Related Content 和 Giscus 配置 |
+| `hugo.toml` | Related Content、分享和 Giscus 配置 |
 | `scripts/validate_article_end.py` | 内容关系与生成 HTML 的自动断言 |
 
 主题升级后只比较 LoveIt 的评论参数、主题切换消息和项目覆盖入口。项目逻辑不得依赖主题内部未公开的选择器，除 Giscus 固定容器外都使用项目自有 class。

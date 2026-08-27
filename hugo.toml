@@ -1,7 +1,6 @@
 baseURL = 'https://txtmix.com/'
 #locale = 'en-us'
-locale = 'zh_CN'
-languageCode = "zh-cn"
+locale = "zh-CN"
 hasCJKLanguage = true
 defaultContentLanguage = "zh-cn"
 title = 'Text Matrix'
@@ -19,6 +18,16 @@ enableRobotsTXT = true
 [taxonomies]
   category = "categories"
   tag = "tags"
+
+# 相关推荐只由受控 topics 字段建立候选；标签、分类和日期不能单独制造推荐。
+[related]
+  includeNewer = true
+  threshold = 80
+  toLower = true
+
+  [[related.indices]]
+    name = "topics"
+    weight = 100
 
 [params]
   title = "Text Matrix"
@@ -51,7 +60,11 @@ enableRobotsTXT = true
     title = "Text Matrix"
     svgFavicon = "/favicon.svg"
 
-  # Giscus：仅生产环境由 LoveIt 注入；这些 ID 是公开标识，不是 secret。
+  # 文章结束区使用单一“分享”按钮，不加载 LoveIt 的第三方平台分享器。
+  [params.page.share]
+    enable = false
+
+  # Giscus：仅生产环境由项目级 comment partial 注入；这些 ID 是公开标识，不是 secret。
   # 评论仓库：A1pha3/text-matrix-comments；评论分类：Comments（Announcement）。
   [params.page.comment]
     enable = true
@@ -66,10 +79,9 @@ enableRobotsTXT = true
       # 显示文章对应 Discussion 的主帖反应（包括 👍），作为文章点赞。
       reactionsEnabled = "1"
       emitMetadata = "0"
-      inputPosition = "bottom"
-      # 关闭延迟加载：评论区是文章末尾的核心交互，避免部分浏览器、扩展或
-      # 网络环境下 IntersectionObserver 未触发而只显示空白容器。
-      lazyLoading = false
+      inputPosition = "top"
+      # 评论区接近视口或用户主动跳转时再加载；项目脚本提供超时、重试和外部入口。
+      lazyLoading = true
       lightTheme = "github-light"
       darkTheme = "github-dark"
 

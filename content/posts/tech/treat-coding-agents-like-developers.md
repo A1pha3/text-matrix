@@ -6,6 +6,7 @@ github_repo: "gptduck/yolobox"
 description: "本文深入介绍了如何用yolobox工具将AI编程Agent当作真实开发者来管理，包括完整工作目录拷贝、Docker Compose命名空间隔离、.localhost反向代理等核心机制，解决多Agent并行时的Git冲突、文件系统混乱和容器互相践踏等问题。"
 draft: false
 categories: ["技术笔记"]
+topics: ["coding-agent"]
 tags: ["Docker", "Git"]
 ---
 
