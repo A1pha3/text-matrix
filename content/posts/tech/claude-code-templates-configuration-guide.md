@@ -88,7 +88,7 @@ flowchart TB
 | **MCPs** | 通过 Model Context Protocol 接入外部服务。 | GitHub、PostgreSQL、Stripe、AWS、OpenAI |
 | **Settings** | 覆盖 Claude Code 的默认配置，比如超时、内存、输出格式。 | 超时设置、内存配置、输出样式 |
 | **Hooks** | 在特定事件前后自动执行脚本，做检查、通知、记录。 | Pre-commit 验证、Post-completion 行动 |
-| **Skills** | 带递进式暴露能力的可复用模块，比 Agent 轻量，比 Command 结构化。 | PDF 处理、Excel 自动化、供应链安全检查 |
+| **Skills** | 带递进式暴露能力的可复用模块，比 Agent 轻量，比 Command 结构化。 | PDF 处理、Excel 自动化、科学计算 |
 
 这些组件聚合自多个上游仓库，每个保留原始许可和归属：K-Dense-AI 的 139 个科学计算 skills、Anthropic 官方 skills（21 个）与 claude-code 开发指南（10 个）、obra/superpowers 的 14 个工作流 skills、alirezarezvani 的 36 个角色 skills、wshobson 的 48 个 agents，以及 awesome-claude-code 的 21 个 commands 等社区来源。
 
@@ -130,7 +130,7 @@ npx claude-code-templates@latest --command testing/generate-tests --yes
 npx claude-code-templates@latest --hook git/pre-commit-validation --yes
 ```
 
-三条命令分别把 code-reviewer agent、`/generate-tests` 命令、pre-commit 校验 hook 写进 Claude Code 的配置目录。下次在项目里启动会话，agent 就以审查员角色运行；执行 `git commit` 时，hook 会在提交前触发一次自动审查。审查报告通常覆盖安全漏洞、风格偏差和性能隐患，具体输出取决于该 agent 的 SKILL 定义。
+三条命令分别把 code-reviewer agent、`/generate-tests` 命令、pre-commit 校验 hook 写进 Claude Code 的配置目录。下次在项目里启动会话，agent 就以审查员角色运行；执行 `git commit` 时，hook 会在提交前触发一次自动审查。审查报告的具体覆盖点取决于该 agent 的 SKILL 定义，通常是安全、风格或效率相关的检查项。
 
 `/generate-tests` 这类命令是对代码的操作入口，作用范围是你当前改动的文件。hooks 和 commands 一个挂在事件上、一个挂在斜杠命令上，两者解决的是不同的触发方式。
 
@@ -214,4 +214,4 @@ Claude Code 生态里已经有不少配置类项目，Templates 和它们各有�
 
 **建议的切入顺序**：先在 Web UI 搜索浏览，确认你要的组件存在；再按需用 CLI 安装，`--yes` 做脚本化；装完跑一次 `--health-check` 校验；最后用 `--analytics` 观察一段时间，再决定要不要长期挂监控。
 
-项目当前在 GitHub 上有 30,050 Stars 和 3,299 Forks（GitHub API 2026-08-07 验证），MIT 协议，主语言 Python，持续更新。浏览全部组件：[aitmpl.com](https://aitmpl.com)；完整文档：[docs.aitmpl.com](https://docs.aitmpl.com)。
+项目当前在 GitHub 上有 30,373 Stars 和 3,433 Forks（GitHub API 2026-08-28 验证），MIT 协议，GitHub 语言标签为 Python，经 npm 包 `claude-code-templates` 分发（`npx claude-code-templates@latest`），持续更新。浏览全部组件：[aitmpl.com](https://aitmpl.com)；完整文档：[docs.aitmpl.com](https://docs.aitmpl.com)。

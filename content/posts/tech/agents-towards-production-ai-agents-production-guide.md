@@ -182,7 +182,7 @@ flowchart TD
 
 [AWS Bedrock AgentCore](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/aws_agentcore) 演示如何将本地开发的 Agent 部署到 AWS Bedrock 的托管运行时，享受自动扩缩容、请求追踪和标准化通信模式。已经用 AWS 生态、不想自己运维推理集群的团队会用到这条路径。
 
-从 Docker 到 Ollama、RunPod、AWS Bedrock，每一步解决一个新约束：环境一致性、数据隐私、算力弹性、运维托管。每一步在上一步基础上解决新的约束，四条路径可以并存——本地推理和云上托管并不冲突，按场景切换即可。
+从 Docker 到 Ollama、RunPod、AWS Bedrock，每一步解决一个新约束：环境一致性、数据隐私、算力弹性、运维托管。四条路径可以并存——本地推理和云上托管并不冲突，按场景切换即可。
 
 ## 多智能体协作
 
@@ -194,7 +194,7 @@ flowchart TD
 
 ### LlamaFirewall：防御侧
 
-[Comprehensive Agent Security with LlamaFirewall](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-security-with-llamafirewall) 覆盖了 Agent 安全的三个维度：**输入安全**（防止提示注入）、**输出安全**（内容过滤和脱敏）以及**工具安全**（限制工具调用权限）。教程提供了预配置的护栏方案，适合需要快速为 Agent 添加安全保障的生产项目。
+[Comprehensive Agent Security with LlamaFirewall](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-security-with-llamafirewall) 用 Meta 开源的 LlamaFirewall（Purple Llama 项目）做护栏。它由几道可叠加的扫描器组成：PromptGuard 2 在输入侧检测提示注入与越狱尝试，AlignmentCheck 在推理过程中审计 Agent 的目标是否被劫持，CodeShield 在输出侧检查 Agent 生成的代码是否含不安全模式，此外还有可自定义规则的正则与提示词扫描器。教程提供了预配置的护栏方案，适合需要快速为 Agent 加安全兜底的生产项目。
 
 ### Apex：攻击侧
 
