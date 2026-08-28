@@ -1,567 +1,243 @@
 ---
-title: "Langfuse：25K Stars 开源 LLM 工程平台，架构设计与集成实践解析"
+title: "Langfuse：把 LLM 调用变成可查询、可评分、可回放的对象"
 date: "2026-04-23T14:00:00+08:00"
 slug: "langfuse-llm-engineering-platform-architecture"
 github_repo: "langfuse/langfuse"
-description: "YC W23 孵化的 25K+ Stars 开源 LLM 工程平台。本文解析：Monorepo 架构、PostgreSQL+ClickHouse 双数据库、OpenTelemetry 追踪模型、事件摄取流水线及主流框架集成。"
+description: "Langfuse 是 MIT 许可的开源 LLM 工程平台。本文解析其双容器架构（Web + Worker）、存储层（PostgreSQL + ClickHouse + Redis + S3）、追踪数据模型、摄取流水线及与主流框架的对接，并给出按规模选型的建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Langfuse", "ClickHouse", "PostgreSQL", "LangChain"]
+tags: ["Langfuse", "ClickHouse", "PostgreSQL", "OpenTelemetry", "LangChain"]
 ---
 
-# Langfuse：25K Stars 开源 LLM 工程平台，架构设计与集成实践解析
+# Langfuse：把 LLM 调用变成可查询、可评分、可回放的对象
 
-## 一、为什么需要 Langfuse？
+Langfuse 解决的不是「怎么更顺滑地调模型」，而是把一次 LLM 调用的输入、输出、成本、延迟和错误记录成结构化对象，让它在调试、评估和迭代阶段都能被查询。它把观测（tracing）、评估（evaluation）和 Prompt 管理放进同一套数据模型，这是它和普通日志平台的分界点。
 
-LLM 应用开发与传统软件有本质区别：AI 输出的不确定性、多步骤 Agent 的复杂调用链路、海量 Prompt 版本迭代需求，以及"效果到底好不好"这个难以量化的问题。
+读完你能判断三件事：Langfuse 的写入链路为什么拆成 Web 和 Worker 两段；观测数据为什么丢进 ClickHouse 而不是留在 PostgreSQL；以及你的团队在什么规模下值得接入它。
 
-Langfuse 解决的是 LLM 工程中四个具体问题：
+## 一、它解决的具体问题
 
-- **观测（Observability）**：LLM 调用长什么样？Token 消耗多少？延迟多长？哪一步出错了？
-- **评估（Evaluation）**：上线前后的效果对比如何量化？用户反馈如何自动化收集？
-- **管理（Management）**：Prompt 如何版本控制？跨团队如何共享？
-- **调试（Debugging）**：一次复杂的 Agent 对话，如何定位是哪一步出了问题？
+LLM 应用和普通后端服务的差异集中在不确定性：输出不固定、调用链路是多步 Agent 嵌套出来的、Prompt 经常改。对应到工程上，Langfuse 覆盖四个场景：
 
-Langfuse 最初于 2023 年 5 月开源，获得 Y Combinator W23 孵化，GitHub  Stars 已突破 **25,757**，成为 LLM 工程化领域最活跃的开源项目之一。
+- **观测**：一次调用的模型名、输入输出、token 数、延迟、错误，能不能一眼定位到出错的那一步。
+- **评估**：上线前后同一批问题答得如何，能不能量化对比。
+- **管理**：Prompt 有没有版本、能不能回滚、团队怎么共用。
+- **调试**：一段含工具的 Agent 对话，哪一步结果不对。
 
-> 📌 **数据卡片**：Langfuse 是目前 GitHub 上 Stars 最多的开源 LLM 观测平台，超越 Phoenix（Amlabs）、Weave（Weights & Biases）等竞品。
+四件事的共同前提是先把调用数据规整起来，这就是 Langfuse 的建模目标。
 
-## 二、整体架构：TypeScript Monorepo
+## 二、系统地图：两条执行线，存储层
 
-### 2.1 Monorepo 结构
-
-Langfuse 采用 **pnpm Workspace** 构建 Monorepo，核心目录结构如下：
+Langfuse 的架构容易把几条并行机制混在一起看。拆开看其实是「两条执行线」加「存储层」：
 
 ```
-langfuse/
-├── web/                    # Next.js 14 前端应用
-│   └── src/
-│       ├── app/            # Next.js App Router
-│       ├── features/        # 按功能模块划分的 Feature 目录
-│       ├── server/          # 服务端 API 逻辑
-│       └── workers/         # 后台任务处理器
-├── packages/
-│   └── shared/             # 核心共享包（后端逻辑、数据访问）
-│       └── src/
-│           ├── server/     # 核心服务端逻辑
-│           │   ├── ingestion/     # 事件摄取
-│           │   ├── llm/          # LLM 调用处理
-│           │   ├── otel/         # OpenTelemetry 处理
-│           │   ├── datasets/     # 数据集管理
-│           │   └── ...
-│           ├── clickhouse/ # ClickHouse 迁移脚本
-│           ├── prisma/     # Prisma Schema（PostgreSQL）
-│           └── encryption/  # 加密工具
-├── worker/                 # 独立 Worker 进程（后台任务）
-├── ee/                     # 企业版功能
-└── fern/                   # API 文档 OpenAPI 规范
+           ┌──────────────────────────────────────────────┐
+           │            Langfuse 部署                       │
+           │                                                │
+  SDK/API ─▶│  Web（Next.js）     Worker（Express）          │
+            │  鉴权/校验/入队 ◀──── 消费队列/写库/执行评估     │
+           └──────┬───────────────┬───────────┬───────────┘
+                  │队列/缓存       │           │
+           ┌──────▼──────┐ ┌──────▼──────┐ ┌──▼──────────────┐
+           │  Redis/      │ │ ClickHouse   │ │ S3 / Blob      │
+           │  Valkey      │ │ (OLAP 观测)   │ │ (原始事件/多媒体)│
+           │  (队列+缓存)  │ │              │ │                │
+           └─────────────┘ └─────────────┘ └─────────────────┘
+                       PostgreSQL（OLTP 事务）
 ```
 
-**关键设计决策**：Langfuse 没有将前后端分离为独立 Repo，而是将所有代码放在一个 Monorepo 中，通过 pnpm Workspace 实现包共享。这带来两个好处：
+**两条执行线**分别是：
 
-1. **类型安全**：前后端共享 `@langfuse/shared` 包，API 的 TypeScript 类型在编译时就能发现不匹配
-2. **开发体验**：一次 `pnpm install` 即可配置好完整开发环境
+- **Web（Next.js）**：提供 UI 和里外全部 API。应用上报的事件在这里完成鉴权和结构校验，随后写入队列即返回，不在请求线程里做重活。
+- **Worker（Express）**：独立进程，专门异步消费队列，执行「写库、跑评估、导出、Prompt 补全」这类后台任务。
 
-### 2.2 技术栈全景
+**存储层的四个组件**各管一段数据：
 
-| 层次 | 技术选型 |
-|------|---------|
-| 前端框架 | Next.js 14（App Router）+ React |
-| UI 组件 | MUI（Material UI） + 自定义组件 |
-| 状态管理 | TanStack Query（服务器状态）+ Zustand（客户端状态） |
-| 后端框架 | Next.js API Routes + tRPC（类型安全 API） |
-| ORM | Prisma（PostgreSQL） |
-| 分析数据库 | ClickHouse（trace/observation/score 存储） |
-| 消息队列 | Redis + BullMQ |
-| 追踪标准 | OpenTelemetry（OTLP） |
-| 认证 | NextAuth.js |
-| 部署 | Docker Compose / Kubernetes Helm |
+| 存储 | 角色 | 存放内容 |
+|------|------|---------|
+| PostgreSQL | OLTP 事务库 | 用户、组织、项目、API Key、Prompt、数据集、评估配置 |
+| ClickHouse | OLAP 分析库 | Trace、Observation、Score 及其聚合查询 |
+| Redis / Valkey | 队列 + 缓存 | BullMQ 事件队列；缓存 API Key 与 Prompt |
+| S3 / Blob | 对象存储 | 原始摄取事件、多模态附件、大文件导出 |
 
-## 三、核心数据模型：Trace → Span → Observation
+两条执行线靠 Redis 队列解耦，这是 Langfuse 能扛吞吐的基础。它最初跑在 Vercel 和 Supabase 上，v1、v2 全部数据都在 PostgreSQL，能撑到每分钟数万事件；等头部用户把数据库 IOPS 打满、仪表盘聚合查询变慢之后，才在 2024 年 12 月的 v3 把追踪数据迁到 ClickHouse。2026 年 1 月，ClickHouse 公司收购了 Langfuse。
 
-Langfuse 的观测模型遵循 **OpenTelemetry 语义约定**，并在其上构建了更适合 LLM 场景的抽象。
+## 三、数据模型：Trace 之下是 Observation
 
-### 3.1 三层数据模型
+Langfuse 的追踪模型遵循 OpenTelemetry 语义约定，再叠一层面向 LLM 的抽象。
 
 ```
-Trace
-├── metadata（元数据）
-├── session（会话）
-├── user（用户）
-└── Observations
-    ├── Generation（LLM 调用）
-    │   ├── model
-    │   ├── prompt
-    │   ├── completion
-    │   ├── inputTokens / outputTokens
-    │   ├── latency
-    │   └── usage
-    ├── Span（一个操作区间）
-    │   ├── startTime / endTime
-    │   ├── input / output
-    │   └── nested Observations
-    └── Event（时间点事件）
+Trace（一次请求的顶级容器）
+├── metadata / session / user
+└── Observation 节点
+    ├── Generation（一次 LLM 调用：模型、提示、补全、用量、延迟）
+    ├── Span（一段有时间跨度的操作，可嵌套，如 RAG 检索）
+    └── Event（一个瞬时事件）
 ```
 
-**Trace** 是一次完整请求的顶级容器，比如用户的一次 Agent 对话。**Observation** 是 Trace 中的具体操作节点——Generation 对应 LLM 调用，Span 对应一个有时间跨度的操作（如 RAG 检索），Event 对应一个瞬时事件。
+差别在 Observed 的粒度：Generation 对应真实的模型往返，Span 是中间步骤，Event 是时间点标记。多步 Agent 的完整轨迹，就是靠这种嵌套结构还原出来的。
 
-这种层级结构让 Langfuse 能完美还原一个复杂 Agent 的完整执行轨迹。
+**双库分工**：PostgreSQL 只存事务元数据（项目、Key、Prompt、数据集），Observation 的具体内容落在 ClickHouse。这套产品把观测数据放进列式库而不是行式库，是因为 agent 工作负载同时在写量、跟踪深度、分析读三个方向上压存储：单条 trace 可能嵌上千个 operation，行又重（输入输出常是几 MB 大字符串），而查询多是「按项目加时间的高基数组聚合」。列式存储只在投影被过滤到的列上做 IO，多 MB 的输入输出载荷留在磁盘，直到查询真正需要它。
 
-### 3.2 Prisma Schema：PostgreSQL 中的实体关系
+## 四、一次用户消息如何穿过系统
 
-Langfuse 使用 **Prisma ORM** 管理 PostgreSQL 中的核心实体，主要模型包括：
+把抽象机制合起来看，最简单的路径是一次普通 LLM 调用的上报：
 
-```prisma
-model Project {
-  id          String   @id @default(cuid())
-  orgId       String
-  name        String
-  retentionDays Int?   // 数据保留天数配置
-  hasTraces   Boolean @default(false)
+1. 应用侧用 SDK 或封装好的一次调用，拼成一个地 Trace 事件。
+2. 事件发到 `POST /api/public/ingestion`，Web 容器做鉴权和结构校验。
+3. Web 把事件推入 Redis / BullMQ 队列，立刻返回成功；应用主线程不被阻塞。
+4. Worker 从队列取出事件，写 ClickHouse（观测数据）与 PostgreSQL（必要的元数据），同时把原始事件落到 S3，供回放和重算。
+5. 在 UI 里，同一批事件按 Trace 聚合展示，仪表盘跑的是 ClickHouse 上的聚合查询。
 
-  // 关联
-  apiKeys     ApiKey[]
-  datasets    Dataset[]
-  Prompts     Prompt[]
-  Models      Model[]
-  EvalTemplates EvalTemplate[]
-  scoreConfig ScoreConfig[]
-}
+关键点在第 3 步：响应与写入分离。上传方拿到 200 只代表「已收下并排队」，不代表「已落库」，真正写库发生在 Worker。这份解耦让 SDK 侧可以批量合并再上报，短生命周期应用在退出前需要显式 flush。
 
-model ApiKey {
-  id        String   @id @default(cuid())
-  projectId String
-  key       String   @unique  // 加密存储
-  name      String
-  expiresAt DateTime?
-  project   Project  @relation(fields: [projectId], references: [id])
-}
+## 五、与框架的对接方式
 
-model Prompt {
-  id        String   @id @default(cuid())
-  projectId String
-  name      String   // 如 "customer-support-v2"
-  version   Int
-  isActive  Boolean
-  prompt    String   // 支持模板变量 {{variable}}
-  config    Json     // 模型配置（temperature, max_tokens 等）
-  project   Project  @relation(...)
-}
+Langfuse 提供了两种接入风格：改 import 的零侵入封装，或显式回调。下面三组是文档里最常见、也确实能跑的写法。
+
+**OpenAI SDK（Python 透明替换）**——只换 import，配置走环境变量：
+
+```python
+# pip install langfuse
+# 环境变量：LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST
+# LANGFUSE_HOST 默认 https://cloud.langfuse.com，美国区为 us.cloud.langfuse.com
+from langfuse.openai import openai
+
+completion = openai.chat.completions.create(
+    name="chat-demo",
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "写一段关于 Langfuse 的介绍"}],
+)
 ```
 
-### 3.3 ClickHouse：海量 Trace 的存储引擎
+**LangChain（回调注入）**——不动链路的搭建逻辑：
 
-PostgreSQL 存储**元数据**（Project、ApiKey、Prompt 版本等结构化配置），而所有 **Trace、Observation、Score 的具体内容** 均存入 ClickHouse。
+```python
+from langfuse.callback import CallbackHandler
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
-这是因为 LLM 应用会产生海量的调用数据：
+langfuse_handler = CallbackHandler()   # 可选 user_id / metadata 参数
 
-- 一个中等规模的 AI 产品每天可产生 **数百万条 traces**
-- 每条 trace 包含多层的嵌套 spans、完整的 prompt/completion 内容
-- 需要做聚合分析（按模型、按时间、按用户的用量统计）
+model = ChatOpenAI(model="gpt-4o")
+prompt = ChatPromptTemplate.from_template("解释一下 {topic}")
+chain = prompt | model
 
-ClickHouse 的列式存储和向量化查询让这类分析查询在秒级完成。Langfuse 的 ClickHouse Schema 包括：
-
-```sql
--- traces 表：存储完整调用链
-CREATE TABLE traces (
-    id          String,
-    project_id  String,
-    timestamp   DateTime,
-    name        String,
-    user_id     String,
-    metadata    Map(String, String),
-    -- ... 其他字段
-) ENGINE = MergeTree()
-ORDER BY (project_id, timestamp);
-
--- observations 表：嵌套的操作节点
-CREATE TABLE observations (
-    trace_id    String,
-    project_id  String,
-    type        Enum('GENERATION', 'SPAN', 'EVENT'),
-    -- LLM 相关字段
-    model       String,
-    prompt      String,
-    completion  String,
-    usage        Map(String, Int64),
-    -- ...
-) ENGINE = MergeTree();
+chain.invoke(
+    {"topic": "Langfuse 的架构"},
+    config={"callbacks": [langfuse_handler]},
+)
 ```
 
-Langfuse 在 `packages/shared/clickhouse/migrations/` 中维护了完整的 ClickHouse 迁移脚本，这也意味着用户可以在自托管时灵活调整 Schema。
+**OpenAI SDK（JS/TS 封装）**——TypeScript 这边基于 OpenTelemetry，需要初始化 LangfuseSpanProcessor：
 
-## 四、SDK 与集成：应用如何对接 Langfuse
+```typescript
+import OpenAI from "openai";
+import { observeOpenAI } from "@langfuse/openai";
 
-### 4.1 Python SDK
+const openai = observeOpenAI(new OpenAI());
+
+const res = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: "Langfuse 是什么？" }],
+});
+```
+
+除了这三类，官方还维护 `@langfuse/otel` 与 OpenTelemetry 协议（OTLP）对接，非 JS/TS 语言可直接上报 OTel span。
+
+**Prompt 管理**——服务端存版本，客户端缓存读取：
 
 ```python
 from langfuse import Langfuse
 
 langfuse = Langfuse()
-
-# 追踪一次 LLM 调用
-trace = langfuse.trace(name="customer-support")
-
-response = model.chat(
-    messages=[{"role": "user", "content": "我想退换货"}]
+# 创建并立即启用一个版本的 Prompt
+langfuse.create_prompt(
+    name="travel_consultant",
+    prompt=template,
+    is_active=True,
 )
-
-trace.generation(
-    name="gpt-4-generation",
-    model="gpt-4",
-    messages=[...],
-    input_tokens=...,
-    output_tokens=...,
-    # Langfuse 自动计算延迟、成本
-)
-
-trace.log(
-    name="retrieval",
-    span={
-        "query": "退货政策",
-        "results": [...],
-    }
-)
+# 读取生产版本，客户端可配置缓存 TTL
+p = langfuse.get_prompt("travel_consultant", cache_ttl_seconds=300)
+system_message = SystemMessagePromptTemplate.from_template(p.prompt)
 ```
 
-### 4.2 LangChain 集成
+Prompt 每次修改生成新的不可变版本，历史版本可回滚；服务端用 Redis 缓存，SDK 侧维护本地缓存，两者叠加让迭代不引入额外一次数据库往返。
 
-LangChain 提供了原生 Langfuse Callback Handler，无需修改业务代码即可完成插桩：
+## 六、摄取与查询怎么扛量
 
-```python
-from langfuse.callback import CallbackHandler
-from langchain_openai import ChatOpenAI
-from langchain.chains import RetrievalQA
+把吞吐放在队列后面，是 Langfuse 的关键设计：
 
-langfuse_handler = CallbackHandler(
-    user_id="user-123",
-    metadata={"session": "support-ticket-456"}
-)
+- **写入**：Web 只负责鉴权和入队，Worker 批量消费后写 ClickHouse。ClickHouse 本就适合高吞吐批量插入，配合队列天然契合。
+- **查询**：追踪表按「项目 + 时间」排序、按月分区、对高频过滤列建跳数索引，任何查询都带项目和时间过滤，便于剪裁分区。
+- **API 契约**：v2 之后的 observations / metrics 接口要求时间过滤并用 token 分页。这不是随手加的规矩，而是为了让查询顺着 ClickHouse 的存储剪裁设计，而不是逆着它扫全表。
 
-llm = ChatOpenAI()
-chain = RetrievalQA(llm=llm, retriever=retriever)
+这是个容易被忽略的取舍：ClickHouse 快，但「无界时间查询」这类对行存很自然的请求在列存上是反模式。
 
-# 通过 callback 参数注入 Langfuse
-result = chain.invoke(
-    "退货政策是什么？",
-    config={"callbacks": [langfuse_handler]}
-)
-```
+## 七、评估：把「效果」变成可执行对象
 
-### 4.3 OpenAI SDK 集成
+评估的难点在主观判断，Langfuse 把它拆成几条可配置的通道：
 
-Langfuse 提供 OpenAI SDK 的**透明替换**，只需修改 import：
+- **LLM-as-a-Judge**：由 Worker 代为调用外部强模型，对固定样本打分，适合自动化回归。
+- **用户反馈**：App 内的点赞 / 差评按钮，采集真实体验。
+- **人工标注**：标注员对特定 case 打分，适合争议样本。
+- **代码评估（Code Evaluator）**：自定义评分脚本，经 CodeEvalDispatcher 派发到独立的 Lambda 运行器执行，避免堵住 Worker。
 
-```python
-# 之前
-from openai import OpenAI
-client = OpenAI(api_key="...")
+各通道最终落入统一的 Score 对象，和 Trace、Dataset 挂在一起，评估结果可在仪表盘里与具体 trace 关联回看。
 
-# 之后：替换为 Langfuse 的 OpenAI 兼容客户端
-from langfuse.openai import OpenAI
-client = OpenAI(
-    api_key="sk-langfuse-...",
-    base_url="https://cloud.langfuse.com/api/public/v1"
-)
-```
+## 八、部署与资源规模
 
-所有 `client.chat.completions.create(...)` 调用自动被 Langfuse 拦截和记录，零代码侵入。
+三种部署跑的是同一套代码和 schema，可在任何时候切换：OSS 自托管、企业自托管、Langfuse Cloud。
 
-### 4.4 LlamaIndex 集成
-
-```python
-from langfuse.callback import CallbackHandler
-from llama_index.core import Settings
-from llama_index.core.query_engine import RetrieverQueryEngine
-
-Settings.callback_manager.add_handler(CallbackHandler())
-
-query_engine = RetrieverQueryEngine.from_args(...)
-response = query_engine.query("退货政策")
-# Langfuse 自动记录 RAG retrieval + synthesis 两个阶段
-```
-
-## 五、摄取流水线（Ingestion Pipeline）
-
-### 5.1 高并发摄取设计
-
-Langfuse 的摄取 API 需要处理极高的写入吞吐（一个中大型应用可能每秒数百至数千次 LLM 调用）。其设计考虑了以下目标：
-
-- **低延迟**：应用发起的 LLM 调用不应被 Langfuse 显著阻塞
-- **高吞吐**：支持每秒百万级事件摄取
-- **容错性**：网络抖动或 Langfuse 服务暂时不可用时不应影响主应用
-
-### 5.2 摄取流水线源码解析
-
-Langfuse 的摄取逻辑位于 `packages/shared/src/server/ingestion/`，核心流程：
-
-```
-1. 接收事件批次（/api/public/ingestion）
-   ↓
-2. processEventBatch.ts — 批量解析 + 格式校验
-   ↓
-3. 采样决策（sampling.ts）— 按配置决定是否采样
-   ↓
-4. validateAndInflateScore.ts — 评分校验与补全
-   ↓
-5. ClickHouse 写入（异步，不阻塞响应）
-   ↓
-6. 返回 200 OK（应用无需等待 ClickHouse 完成）
-```
-
-**采样机制**是摄取流水线的关键优化。当流量极大时，存储每一条调用会产生高昂的 ClickHouse 成本。Langfuse 支持基于规则和基于成本的采样策略：
-
-```typescript
-// sampling.ts 中的采样逻辑
-export function shouldSample(event: TracerEvent, config: SamplingConfig): boolean {
-    // 策略1：强制采样（重要用户/生产错误）
-    if (config.always.sample === true) return true;
-
-    // 策略2：概率采样（如 10% 流量）
-    if (Math.random() < config.sample.rate) return true;
-
-    // 策略3：成本感知采样（低价值调用优先丢弃）
-    const estimatedCost = event.usage.totalTokens * config.costPerToken;
-    if (estimatedCost < config.sample.minCostThreshold) return false;
-
-    return true;
-}
-```
-
-### 5.3 异步写入与响应分离
-
-Langfuse 摄取 API 的响应流程：
-
-```typescript
-// 摄取 API 伪代码
-async function ingestEvents(events: Event[]) {
-    // Step 1: 同步验证 + 鉴权（< 5ms）
-    await validateApiKey(events[0].publicKey);
-
-    // Step 2: 异步写入 ClickHouse（不阻塞响应）
-    ingestQueue.add(() => writeToClickHouse(events));
-
-    // Step 3: 立即返回成功
-    return { status: "success", ingested: events.length };
-}
-```
-
-应用侧的平均摄取延迟 < **10ms**，完全不会对 LLM 调用的主流程产生影响。
-
-## 六、Prompt 管理层：版本控制与热更新
-
-### 6.1 Prompt 版本管理
-
-Langfuse 的 Prompt 管理解决了工程中的核心痛点：**Prompt 也是代码，需要版本控制**。
-
-```typescript
-// 从 Langfuse 读取当前活跃版本的 Prompt
-const prompt = await langfuse.prompt.get("customer-support-v2");
-
-// Prompt 内容支持模板变量
-// "请根据用户 {{user_name}} 的订单 {{order_id}} 回答：{{question}}"
-
-const rendered = prompt.render({
-    user_name: "张三",
-    order_id: "ORD-2024-001",
-    question: "我的快递到哪了？"
-});
-```
-
-每个 Prompt 有版本号，每次修改会创建新版本（不可变）。历史版本可随时回滚。
-
-### 6.2 服务端缓存：零延迟迭代
-
-Langfuse 在服务端实现了**强缓存策略**，确保 Prompt 迭代不引入额外延迟：
-
-1. **服务端缓存**：Prompt 读取后缓存在 Redis 中，TTL 内无需访问数据库
-2. **客户端缓存**：SDK 侧维护本地 Prompt 缓存，基于 hash 检测变化
-
-```typescript
-// packages/shared/src/server/prompts/cache.ts
-export const PROMPT_CACHE_TTL = 60_000; // 1 分钟
-
-export async function getPrompt(projectId: string, name: string) {
-    const cacheKey = `prompt:${projectId}:${name}`;
-
-    const cached = await redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
-
-    const prompt = await db.prompt.findUnique({...});
-    await redis.setex(cacheKey, PROMPT_CACHE_TTL, JSON.stringify(prompt));
-
-    return prompt;
-}
-```
-
-## 七、评估体系：LLM-as-a-Judge
-
-### 7.1 评估模型的多层设计
-
-Langfuse 的评估体系支持多种评分方式：
-
-| 评估类型 | 描述 | 适用场景 |
-|---------|------|---------|
-| **LLM-as-a-Judge** | 用强模型（如 GPT-4）评估弱模型输出 | 快速自动化评分 |
-| **用户反馈收集** | 应用内 👍/👎 按钮 | 真实用户体验数据 |
-| **人工标注** | 标注员对特定 case 打分 | 高价值/争议 case |
-| **自定义评分函数** | 通过 SDK 编写评分逻辑 | 精确的业务指标 |
-
-### 7.2 Dataset 与 EvalTemplate
-
-Langfuse 的数据集（Dataset）和评估模板（EvalTemplate）支持将测试集管理与评估流水线结合：
-
-```typescript
-// 定义评估模板
-const template = await langfuse.evalTemplate.create({
-    name: "回答质量评估",
-    prompt: `你是一个严格的评审员。评估以下回答对问题的帮助程度（1-5分）。
-问题：{{question}}
-回答：{{answer}}
-评分理由：`
-});
-
-// 创建数据集（测试用例）
-await langfuse.datasetItem.create({
-    datasetName: "退货问题集",
-    input: { question: "我的订单什么时候发货？" },
-    expectedOutput: "应在 24 小时内发货"
-});
-
-// 运行评估
-const run = await langfuse.eval.run({
-    template: "回答质量评估",
-    dataset: "退货问题集",
-    model: "gpt-4"
-});
-```
-
-## 八、自托管部署：从 Docker 到 Kubernetes
-
-### 8.1 Docker Compose 单机部署（5 分钟启动）
+**本地起一套（Docker Compose）**：
 
 ```bash
 git clone https://github.com/langfuse/langfuse.git
 cd langfuse
-
-# 复制环境变量配置
 cp .env.dev.example .env
-
-# 启动全部服务（PostgreSQL + ClickHouse + Redis + Langfuse）
 docker compose up
 ```
 
-访问 `http://localhost:3000`，即可使用 Langfuse Web UI。
+访问 `http://localhost:3000`。Compose 会一并带起 PostgreSQL、ClickHouse、Redis。
 
-### 8.2 生产级 Kubernetes 部署
-
-Langfuse 提供 Helm Chart，支持 AWS、Azure、GCP 三大云平台的生产部署：
+**生产（Kubernetes + Helm）**：
 
 ```bash
-# 添加 Helm Repo
 helm repo add langfuse https://langfuse.github.io/helm-charts
 helm repo update
-
-# 部署到 Kubernetes
 helm install langfuse langfuse/langfuse \
     --set database.url="postgresql://user:pass@pg:5432/langfuse" \
     --set clickhouse.url="clickhouse://clickhouse:9000" \
     --set redis.url="redis://redis:6379"
 ```
 
-Helm Chart 默认配置了：
-- HPA（Horizontal Pod Autoscaler）自动扩缩容
-- PodDisruptionBudget 保证高可用
-- 持久化存储（PVC）配置
-- TLS 入口配置
+选型时注意三点：一是 ClickHouse 是按磁盘和内存规划的资源大头，观测数据量大时磁盘会花钱；二是若要回放原始事件或存放图片、音频等多模态附件，得配对象存储（S3 或类 S3）；三是整套产品依赖 PostgreSQL + ClickHouse + Redis 三个组件，最少是三件事要拉起来，比单库方案部署成本高一点。
 
-### 8.3 环境变量关键配置
+## 九、开源边界与企业版
 
-```bash
-# 数据库
-DATABASE_URL=postgresql://langfuse:password@localhost:5432/langfuse
-DIRECT_URL=postgresql://langfuse:password@localhost:5432/langfuse_direct
+Langfuse 核心代码是 MIT 许可、无用量上限，云端和自托管跑的是同一套代码与 schema。这是「开源与商业化并存」的典型做法：
 
-# ClickHouse
-CLICKHOUSE_URL=http://localhost:8123
-CLICKHOUSE_USER=default
-CLICKHOUSE_PASSWORD=password
+- **OSS 自托管**：包含全部产品功能，无 license key，任意扩展、商用。
+- **企业版 / Enterprise Edition（EE）**：代码位于独立 `/ee` 目录，以源码形式随仓库分发，但需要 license key 才能运行。影响的是内建：SCIM 身份供应、审计日志、数据保留策略等安全与合规增强。
 
-# Redis
-REDIS_URL=redis://localhost:6379
+值得带一句：所谓「企业多租户隔离」如果被描述成「每个组织独享一套数据库 Schema」，是不准确的。Langfuse 的三套部署共用同一 schema，组织间按访问控制隔离数据，企业协议的溢价主要落在安全与合规增强上。
 
-# Auth
-NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3000
+## 十、按规模选型：谁先上、谁可以等
 
-# Langfuse Cloud（可选，用于 License 管理）
-LANGFUSE_CLOUD_LICENSE_KEY=...
-```
+结合观测负担和回报，接入顺序大致是：
 
-## 九、企业版：多租户隔离与高级功能
+1. **已经开始用 LLM 做产品、并在为「某步结果不对」而排查的人**——先用 Langfuse Cloud 免费档，花半小时把 tracing 接上，能立刻看到调用链。这一步几乎零成本。
+2. **需要对 Prompt 做版本化或跑自动化评估的团队**——接 Langfuse 的 Prompt Management 与 Evaluation，把「改 Prompt」从口头变成可回滚对象。
+3. **有合规、数据主权或大规模用量需求的团队**——再考虑自托管（Docker Compose 起步，按需迁 Helm / Terraform），并按数据量提前规划 ClickHouse 磁盘与对象存储。
 
-Langfuse 的企业版（`ee/` 目录）提供了大规模部署所需的功能：
-
-### 9.1 多租户隔离
-
-企业版支持**完全数据隔离**的多租户架构：
-
-- 每个组织的数据库 Schema 隔离（而非仅逻辑隔离）
-- 基于属性的访问控制（ABAC）替代简单的 RBAC
-- SOC 2 Type II 合规支持
-
-### 9.2 数据脱敏与合规
-
-在事件摄取阶段，企业版支持**PII 数据自动脱敏**：
-
-```typescript
-// packages/shared/src/server/ee/ingestionMasking/
-export function maskPII(event: TraceEvent): TraceEvent {
-    return {
-        ...event,
-        metadata: maskFields(event.metadata, ["email", "phone", "ssn"]),
-        user_id: hashUserId(event.user_id)  // 不可逆哈希
-    };
-}
-```
-
-### 9.3 私有部署 License 管理
-
-企业版通过 `eeLICENSE_CHECK` 机制验证部署的合法性，确保在无 Internet 连接的环境中也能完成授权校验。
-
-## 十、架构亮点
-
-Langfuse 的架构设计有几个值得注意的点：
-
-### 双数据库架构
-
-PostgreSQL（结构化元数据）+ ClickHouse（海量分析数据）的组合，是 LLM 应用观测平台的常见实践。Prisma 管理 PostgreSQL 提供了类型安全的实体操作，ClickHouse 的列式存储让聚合查询极快。
-
-### 异步非阻塞摄取
-
-应用发起的 LLM 调用不应被观测平台拖慢。Langfuse 通过异步队列 + 快速响应的设计，实现了 < 10ms 的摄取延迟，对主流程零影响。
-
-### OpenTelemetry 原生支持
-
-Langfuse 的追踪模型与 OpenTelemetry 语义完全兼容：
-- 可以用标准 OTLP 协议将数据导出到其他观测平台（如 Grafana Tempo）
-- 可以用 OpenTelemetry SDK 的跨语言支持对接非 JS/TS 应用
-
-### 框架集成深度
-
-不仅支持 LangChain、LlamaIndex，还支持 DSPy、Instructor、AutoGen 等新兴框架，覆盖了主流 LLM 工程工具链。
-
-### Prompt 即代码
-
-将 Prompt 的版本管理、模板变量、热更新与 Git 工作流结合，解决了 LLM 应用中 Prompt 难以版本化和协作的问题。
+可以用「是否需要回头看一次历史调用」当作判断信号：如果只是偶尔查日志，别急着上整套基建；如果每天都要复盘 Agent 的分支、改 Prompt 要对比前后效果，那么当一个可查询、可评分、可回放的调用对象，就值得。
 
 ## 参考链接
 
 - **GitHub**：https://github.com/langfuse/langfuse
 - **官方文档**：https://langfuse.com/docs
-- **在线 Demo**：https://langfuse.com/demo
-- **Langfuse Cloud**：https://cloud.langfuse.com
-- **Self-Hosting 指南**：https://langfuse.com/docs/deployment/self-host
-- **GitHub Stars**：25,757 ⭐（持续增长中）
-
-🦞 钳岳星君
+- **架构总览（Handbook）**：https://langfuse.com/handbook/product-engineering/architecture
+- **ClickHouse 实践（v3 迁移与存储设计）**：https://langfuse.com/resources/engineering/clickhouse-at-agent-scale
+- **Self-Hosting 指南**：https://langfuse.com/self-hosting
+- **OpenAI 集成（Python）**：https://langfuse.com/docs/openai
+- **Observability 入门**：https://langfuse.com/docs/observability/get-started

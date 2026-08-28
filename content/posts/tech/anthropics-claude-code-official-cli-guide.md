@@ -17,12 +17,11 @@ CLI 方式相比 IDE 插件的核心差异在**入口位置**：Vim、Emacs、na
 
 这篇文章覆盖从安装到精通的关键路径：安装配置、核心命令、自定义选项、Skill 扩展系统、MCP 协议集成，以及日常高频场景的操作指南。
 
-> **快速信息卡**
-> - **Stars**: 134,555+
-> - **Forks**: 21,731+
-> - **License**: 未指定（npm 包）
-> - **语言**: TypeScript/Python
-> - **最后更新**: 2026-06-26
+> **快速信息卡**（GitHub 指标持续变化，以仓库实时数据为准）
+> - **Stars**: 约 12 万
+> - **License**: 修改版 MIT（以仓库 LICENSE 为准）
+> - **语言**: TypeScript 为主
+> - **默认模型**: Claude Sonnet 5（可在对话中用 `/model` 切换）
 
 ## 学习目标
 
@@ -93,7 +92,7 @@ Claude Code 解决的核心问题是**在真实代码库里完成多步任务**�
 
 ### 2. 安装命令
 
-通过 npm 全局安装：
+官方现在更推荐原生安装方式：macOS/Linux 用 curl 安装脚本，Windows 用 PowerShell，部分平台也支持 Homebrew。npm 方式仍可用，但已不是官方首选。下面给出 npm 方式作示例（各平台的具体命令以官方 README 为准）：
 
 ```bash
 npm install -g @anthropic-ai/claude-code
@@ -261,12 +260,12 @@ Claude 会读文件、分析改动点、给你方案
 
 ### 1. 全局配置文件
 
-`~/.claude.json` 控制 Claude Code 的全局行为：
+`~/.claude.json` 控制 Claude Code 的全局行为。下面的 JSON 是简化示意，用于说明常见配置项的含义；实际字段名、层级和取值范围随版本演进，以官方 `.claude.json` schema 和文档为准：
 
 ```json
 {
   "api_key": "sk-ant-api03-...",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-5",
   "max_tokens": 8192,
   "temperature": 1,
   "api_base": "https://api.anthropic.com"
@@ -288,13 +287,13 @@ Claude 会读文件、分析改动点、给你方案
 
 ### 3. 模型选择
 
-Claude Code 默认使用 `claude-sonnet-4`，也可以在配置里切换其他模型（以下版本号以官方发布为准，Anthropic 的模型迭代较快，使用前请到 [anthropics/claude-code](https://github.com/anthropics/claude-code) 仓库确认当前可用版本）：
+Claude Code 默认使用 `claude-sonnet-5`，可以用 `/model` 命令在对话中切换其他模型。下表列出当前主线可用的模型（示例列表基于 2026 年中官方模型概览；Anthropic 迭代较快，最新可用版本与定价以官方 [models overview](https://platform.claude.com/docs/en/about-claude/models/overview) 为准）：
 
-| 模型 | 适用场景 |
-|------|----------|
-| `claude-sonnet-4-20250514` | 日常编程任务（默认） |
-| `claude-opus-4-20250514` | 复杂架构分析、超大代码库 |
-| `claude-haiku-4-20250514` | 简单、快速的单轮任务 |
+| 模型 ID | 适用场景 |
+|---------|----------|
+| `claude-sonnet-5` | 日常编程任务（默认） |
+| `claude-opus-4-8` | 复杂架构分析、超大代码库、多智能体编排 |
+| `claude-haiku-4-5` | 简单、快速的单轮任务 |
 
 ### 4. Permission System
 
