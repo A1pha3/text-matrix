@@ -4,7 +4,7 @@ date: 2026-08-19T20:30:00+08:00
 lastmod: 2026-08-22T00:00:00+08:00
 slug: riley-brown-codex-content-business-1-5m
 categories: ["视频精读"]
-tags: ["Riley Brown", "Codex", "Peter Yang", "AI Agent", "Skills", "Content Creator", "Vibecode", "Chorus", "Excalidraw", "Paper", "Remotion", "Wispr Flow", "Supadata", "SerpAPI", "Typefully", "Notion", "Claude", "GPT", "GLM 5.2", "Vibecoding", "Short Form", "Long Form"]
+tags: ["Riley Brown", "Codex", "Peter Yang", "AI Agent", "Skills", "Content Creator", "Vibecode", "Agent Native", "Excalidraw", "Paper", "Remotion", "Wispr Flow", "Supadata", "SerpAPI", "Typefully", "Notion", "Claude", "GPT", "GLM 5.2", "Vibecoding", "Short Form", "Long Form"]
 description: "Peter Yang 主持的 41 分钟长访谈。Riley Brown 现场演示一个 1.5M+ 跨平台粉丝的内容创业者怎么用 Codex + 自建 Skill 链跑内容生意：本地存储、computer use、Remotion 插件、internet image puller、YouTube researcher、hook outline、Excalidraw diagrams、YouTube thumbnail、Paper、Typefully、Notion。重点提炼：quality > batching、outcome-based 测试 Skill、Chain prompting、不离开 Codex 这条核心工作流哲学。"
 
 author: 钳岳
@@ -29,17 +29,19 @@ author: 钳岳
 **目录**
 
 1. Codex 不是 ChatGPT：本地存储与 computer use 的底层差异
-2. Remotion 插件与 Internet Image Puller：素材准备交给 Skill
+2. Remotion 插件 + Internet Image Puller：把素材准备交给 Skill
 3. YouTube Researcher 与开场钩子大纲：把「模仿爆款」做成 Skill
 4. Excalidraw + Wispr Flow：把「讲清楚一件事」做成 Skill
 5. Paper + Codex：缩略图工作流的工程化
 6. Chain prompting + outcome-based 调试：让 AI 自己长出新 Skill
 7. 横向对比：Riley 与其他智能体玩法的位置
-8. 7 条可落地建议、读完自测与待追问的问题
+8. 7 条可落地建议与常见误区
+9. 值得追问的工程问题与读完自测
+10. 引用、参考与下一步
 
 ## 一、Codex 不是 ChatGPT：本地存储 + computer use 是底层差异
 
-Riley 上场先把 Codex 跟 ChatGPT 的工程性区别讲清楚——这一段值得单独拎出来**，**因为很多人用 Codex 用了很久都没意识到这一点：
+Riley 上场先把 Codex 跟 ChatGPT 的工程性区别讲清楚——这一段值得单独拎出来，因为很多人用 Codex 用了很久都没意识到这一点：
 
 > "Normally when you come to Codex, it looks like this, right? It looks like ChatGPT. But when you go to ChatGPT, everything that you upload to it, if you were to upload an image, many people have done that, uploaded images or PDFs etc, all of that's stored in the cloud. When you use Codex, all of it's stored locally. And so Codex, just like Claude Code, can fully control your computer, and in fact it has a computer use skill built into the platform."
 
@@ -104,7 +106,7 @@ hook outline        →  按某个爆款视频的 intro 结构 → 生成新视�
 2. **Supadata 是远端 API**：直出 transcript，调用一次就能拿到整段文字。
 3. **Codex 的 sub-agent UI**：能把「拉 6 个频道的 transcript」拆成 6 个并发 agent，30 秒扫完整个频道。
 
-**这一段对工程读者的启示是：当某个工程链路有「本地重资源版本」和「远端 API 版本」时，永远优先选远端 API 版本**。前者把重活压在自己机器上，后者把重活压给 SaaS（软件即服务）平台——后者永远更便宜、更可扩展、更省 token。
+**顺着工程读者的话说：当同一条链路既有「本地重资源版本」又有「远端 API 版本」时，永远优先选后者**。前者把重活压在自己机器上，后者压给 SaaS（软件即服务）平台——后者永远更便宜、更可扩展、更省 token。
 
 ### 3.2 Hook Outline：把「模仿爆款」做成可复用结构
 
@@ -165,7 +167,7 @@ Riley 在这里反复强调一个工程观点：
 
 **「AI-native」 vs 「AI-friendly」 的区别**：AI-friendly 是「保留旧 UX，加 AI 插件」；AI-native 是「从第一天起就假设 AI 是主用户」。Paper 把 board 设计成「**可以由 agent 写入**」，而不是「**只能由人拖拽**」——这是 Riley 能用 Codex 自动化 thumbnail 流程的根本原因。
 
-这条对工程读者的启示是：**评估一个新工具时，「AI-native vs AI-friendly」是一个比 surface-level UX 更根本的维度**。前者可自动化，后者只能当 chatbot 用。
+**这套判断放在工程选型里同样成立：「AI-native vs AI-friendly」是比表面 UX 更根本的维度**。前者可自动化，后者只能当 chatbot 用。
 
 ## 六、Chain prompting + outcome-based Skill 调试：让 AI 自己长出新 Skill
 
@@ -238,7 +240,7 @@ Riley 这一期跟 prime-agent 在「harness 持久、model 可换」上同源�
 ### 数据来源
 - 视频：`https://www.youtube.com/watch?v=N34zz1-RSGw`
 - 频道：`@PeterYangYT`（Peter Yang），频道描述「Practical AI tutorials and expert interviews for busy people」
-- 嘉宾：`@RileyBrownAI`（Riley Brown），1.5M+ 跨平台粉丝；公司 Chorus（agent orchestration），前作 Vibecode
+- 嘉宾：`@RileyBrownAI`（Riley Brown），1.5M+ 跨平台粉丝，Agent Native 创始人，早年 vibe coding 产品 Vibecode 作者
 - 逐字稿：从视频逐字稿提取，笔者逐句校核，全文 41:47 与视频原话对齐
 
 ### 提到的工具一览
@@ -254,7 +256,7 @@ Riley 这一期跟 prime-agent 在「harness 持久、model 可换」上同源�
 - **Paper**—— AI-native Figma，AI-first board
 - **Typefully**—— Twitter 草稿队列
 - **Notion**—— 视频数据库，Codex 写入 + 读出 link
-- **Chorus / Vibecode**（Riley 自己产品）—— Claude agents / 任何 model 编排
+- **Vibecode**（Riley 早期 vibe coding 产品）—— 用 Claude Code 以自然语言生成应用；现任职创业公司 **Agent Native**
 
 ### 后续工作
 - 下一期建议拆：Peter Yang 自己的 Codex 玩法 + Claude agent 在 Slack 里的编排哲学
