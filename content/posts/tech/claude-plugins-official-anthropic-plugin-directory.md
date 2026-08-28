@@ -2,6 +2,8 @@
 title: "Claude Plugins Official：Anthropic 官方插件目录深度解读"
 date: 2026-05-20T09:09:49+08:00
 slug: "claude-plugins-official-anthropic-plugin-directory"
+github_repo: "anthropics/claude-plugins-official"
+source_key: "gh:anthropics/claude-plugins-official"
 description: "Claude Plugins Official 是 Anthropic 官方维护的 Claude Code 高质量插件目录，分为内部插件和外部插件两类。本文详细解析了其目录结构、插件机制、安装方式及生态定位，帮助开发者快速上手并为社区贡献插件。"
 draft: false
 categories: ["技术笔记"]

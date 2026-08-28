@@ -2,7 +2,8 @@
 title: "Claude Code Plugins 官方插件生态完全指南"
 date: "2026-05-23T03:05:00+08:00"
 slug: "anthropics-claude-plugins-official-guide"
-github_repo: "chrislgarry/Apollo-11"
+github_repo: "anthropics/claude-plugins-official"
+source_key: "gh:anthropics/claude-plugins-official"
 description: "claude-plugins-official是Anthropic官方维护的Claude Code插件市场与开发工具包，含35+官方插件与数百第三方插件，覆盖开发、数据库、安全、监控等场景。本文详解其架构、核心组件与开发工作流。"
 draft: false
 categories: ["技术笔记"]
