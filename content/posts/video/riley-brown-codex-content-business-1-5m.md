@@ -67,7 +67,7 @@ internet image puller  →  SerpAPI → Google Images  →  自动按 video tran
 
 ### 2.1 Remotion best practices 这个 Skill 是怎么诞生的
 
-Riley 自己说：「`Remotion best practices`」这个 Skill 是他把 Codex 用了一阵以后**自己攒出来的**。它不是 OpenAI 官方插件，是 Riley 在 Codex 设置里**手写一份「creator brand」规范**（配色、字体、动效节奏），然后让 Codex 记住——下次调用 `@remotion` 时自动套用。
+「`Remotion best practices`」这个 Skill，是 Riley 把 Codex 用了一阵以后**自己攒出来的**。它不是 OpenAI 官方插件，是 Riley 在 Codex 设置里**手写一份「creator brand」规范**（配色、字体、动效节奏），然后让 Codex 记住——下次调用 `@remotion` 时自动套用。
 
 这背后是一个在 AI 工程里被反复验证的范式：**LLM 的「行为」本质上是 prompt（提示词）+ context 的组合**。把「我想要 Riley 那种开场动画」拆成一段 Remotion best practices 的 Markdown 规范文档，比让模型每次重新从零学起更省 token（词元）、更稳、更可调试。
 
@@ -116,7 +116,7 @@ Riley 的 hook 工作流是：
 2. 调 hook outline → 让 Codex 把这个视频的 hook 结构抽出来
 3. 把自己的新视频想法喂进去 → 让 Codex 按这个结构写新 hook
 
-为什么这样做？因为「**前 30 秒决定 70% 的留存**」——Riley 自己说「the intro is the most important part, and then the rest of the video is kind of free flowing」。这意味着对内容创业来说，**最值得抽象、最值得做成 Skill 的，恰好是 intro 这一段**。其他段反而应该自由流动。
+为什么这样做？因为开场几乎决定整支视频的去留——Riley 自己说「the intro is the most important part, and then the rest of the video is kind of free flowing」。这意味着对内容创业来说，**最值得抽象、最值得做成 Skill 的，恰好是 intro 这一段**。其他段反而应该自由流动。
 
 ### 3.3 GPT vs Claude vs GLM 5.2 的工程分歧
 
@@ -146,11 +146,11 @@ Excalidraw diagrams skill（自带 Riley 风格 sections）
 80% 可用 diagram → Riley 自己改 20–30 分钟
 ```
 
-这条工作流解决的是「**内容创业者最难的一件事**」——把脑里的想法结构化。Riley 没用 Todoist 没用 Notion template，而是**让 Wispr Flow 把脑子直接 dump 出来，让 Codex 把 dump 转成可视结构**。这条链省的不是时间，是「脑子里想清楚再写清楚」之间的那道翻译税。
+这条工作流解决的是「**内容创业者最难的一件事**」——把脑里的想法结构化。Riley 没用 Todoist、没用 Notion template，而是**让 Wispr Flow 把脑子直接 dump 出来，让 Codex 把 dump 转成可视结构**。这条链省的不是时间，是「脑子里想清楚再写清楚」之间的那道翻译税。
 
 ## 五、Paper + Codex 替换 Alex Hormozi 头像：thumbnail 工作流的工程化
 
-这一段是整期最有「**AI 视觉 + AI 编排**」含量的一段。Riley 用 Codex 替换 thumbnail 里的 Alex Hormozi 头像变成自己的脸，工程链路示例如下：
+这是整期在「**AI 视觉 + AI 编排**」上含量最高的一段。Riley 用 Codex 替换 thumbnail 里的 Alex Hormozi 头像变成自己的脸，工程链路示例如下：
 
 ```text
 1. Codex 调 Paper API（AI-native Figma）
@@ -197,7 +197,7 @@ Riley 在最后讲了一段**关于怎么持续做 Skill 的方法论**：
 | --- | --- | --- | --- |
 | Riley Brown（本期） | Codex 当 OS，agent 在 OS 上跑 | outcome-based，AI 自己维护 | 「model 变了我让 AI 重写 skill」 |
 | prime-agent（8-15） | persistent Python REPL 当 control plane | 小步 evidence-backed 更新 + rollback | harness 持久，model 可换 |
-| Pi（8-17） | 代码即真相 / bash 够用 | 系统最小化（4 个内置工具 + < 1000 token system prompt） | 拒绝整套 MCP 生态 |
+| Pi（8-17） | 代码即真相 / bash 够用 | 系统最小化（4 个内置工具 + 不足 1000 token system prompt） | 拒绝整套 MCP 生态 |
 | Claude Code / OpenAI Codex | LLM 是新 runtime | computer use + plugin 体系 | 不强调 |
 | LangGraph / Dify / n8n | workflow 编排，可视化 | 显式 node（节点）-edge 图 | 不强调 |
 
