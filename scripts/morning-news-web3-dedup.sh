@@ -241,7 +241,8 @@ for url in "${URLS[@]}"; do
         # macOS/BSD `date -j -f` 与 Linux/GNU `date -d` 二选一，按平台探测。
         # 旧版只写 `date -j -f`，迁到 Linux/CI 时两行都失败 → span 恒 0 →
         # 严重复用被降级放行（2026-08-17 对抗审查，漏检方向）。
-        local first_ts last_ts
+        # ⚠️ 8-29 bugfix: local outside function crashed on macOS bash
+        first_ts=0; last_ts=0
         first_ts=0
         last_ts=0
         if date -j -f "%Y-%m-%d" "$first_seen" +%s >/dev/null 2>&1; then
