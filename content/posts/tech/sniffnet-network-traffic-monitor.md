@@ -13,7 +13,7 @@ tags: ["Rust", "跨平台"]
 
 | 属性 | 值 |
 |------|-----|
-| **GitHub Stars** | 36,000+ |
+| **GitHub Stars** | 37,000+ |
 | **GitHub Forks** | 1,400+ |
 | **主要语言** | Rust（edition 2024） |
 | **开源协议** | MIT OR Apache-2.0 |
@@ -35,7 +35,7 @@ Sniffnet 真正解决的不是"怎么抓到数据包"——抓包这件事 libpc
 - 区分 Sniffnet 的模块职责（networking、gui、chart、notifications）
 - 成功从源码构建 Sniffnet，并理解 pcap 抓包流程
 - 针对你的场景判断 Sniffnet 是否合适（替代 Wireshark？补充监控？）
-- 理解跨平台差异处理（Windows 进程关联、macOS 权限、Linux capabilities）
+- 理解跨平台差异处理（Windows 权限、macOS 授权、Linux capabilities、程序识别来源差异）
 
 ---
 
@@ -60,7 +60,7 @@ Sniffnet 真正解决的不是"怎么抓到数据包"——抓包这件事 libpc
 
 ## 项目背景与定位
 
-Sniffnet 是意大利开发者 Giuliano Bellini 用 Rust 写的开源网络流量监控应用，GitHub 标星超过 36,000，Fork 超过 1,400，支持 Windows、macOS、Linux 三大平台，界面翻译超过 20 种语言。
+Sniffnet 是意大利开发者 Giuliano Bellini 用 Rust 写的开源网络流量监控应用，GitHub 标星超过 37,000，Fork 超过 1,400，支持 Windows、macOS、Linux 三大平台，界面翻译超过 20 种语言。
 
 它想服务的既不是资深安全研究员的取证需求，也不是运维手里的全流量分析平台，而是"我想知道我电脑现在到底在和谁说话"的普通用户。这个定位决定了它靠直觉完成的事，多数监控工具要靠命令行参数完成。
 
@@ -73,8 +73,8 @@ Sniffnet 是意大利开发者 Giuliano Bellini 用 Rust 写的开源网络流�
 | PCAP 导入导出 | 兼容 Wireshark 生态 |
 | 实时统计 | 流量速率、连接数、协议分布 |
 | 地理定位 | 基于 MaxMind GeoIP 定位 IP 归属地 |
-| 协议识别 | 内置约 12000 条常用端口到服务的映射 |
-| 程序级监控 | Windows 上关联进程与网络活动 |
+| 协议识别 | 内置 6000+ 上层服务、协议、木马、蠕虫识别 |
+| 程序级监控 | 识别产生网络流量的应用（Windows/macOS/Linux/BSD） |
 | 告警通知 | 自定义规则触发系统通知 |
 
 ---
@@ -242,11 +242,11 @@ pub struct ParsedPacket {
     pub dst_port: u16,
     pub protocol: TransportProtocol,
     pub payload_size: usize,
-    pub process_id: Option<u32>,  // Windows 上可用
+    pub process_id: Option<u32>,  // v1.5 起三端可用
 }
 ```
 
-应用层识别依赖项目根目录的 `services.txt`。这份文件有看点：**它不在运行时被反复遍历**。`build.rs` 在编译期把它读进来，烘焙进一张由 `phf` 生成的静态完美哈希表，并用 `assert_eq!(num_entries, ...)` 锁死条目数——当前是 **12093 条**。也就是说，运行时根据"端口 + 传输协议"定位服务名是 O(1) 的精确查找，代价是改一次表就要重编译。这个取舍对静态文件合理，但对"想热更新协议库"的开发者就要注意。
+应用层识别依赖项目根目录的 `services.txt`。这份文件有看点：**它不在运行时被反复遍历**。`build.rs` 在编译期把它读进来，烘焙进一张由 `phf` 生成的静态完美哈希表，覆盖 **6000+ 上层服务**（含协议、木马、蠕虫）。也就是说，运行时根据"端口 + 传输协议"定位服务名是 O(1) 的精确查找，代价是改一次表就要重编译。这个取舍对静态文件合理，但对"想热更新协议库"的开发者就要注意。
 
 服务名查找键是 `(端口, TCP/UDP)` 二元组，这就是为什么同样的端口号 TCP 和 UDP 可能对应不同协议。
 
@@ -312,17 +312,19 @@ codegen-units = 1 # 单 codegen 单元，换取更多优化空间
 
 ## 跨平台差异处理
 
-跨平台是 Sniffnet 复杂度最高的地方，也是最容易看得出设计功力的部分。抓包读包逻辑三端共用，差异被压在"获取权限""进程关联"这两个点上。
+跨平台是 Sniffnet 复杂度最高的地方，也是最容易看得出设计功力的部分。抓包读包逻辑三端共用，差异被压在"获取权限""程序识别"这两个点上。
+
+在 v1.5 之前，"这个连接是哪个程序发的"只在 Windows 上可查（因为它能从系统连接表拿到进程归属），另两端无从判断。**v1.5 把程序识别扩展到了 Windows、Linux、macOS 甚至 BSD**——各端通过不同的内部机制拿到进程信息：Windows 走系统连接表 API（`netstat -ano` 的数据源），Linux 借助 `netlink` 套接字读取连接对应的进程，macOS 则遍历系统打开的 socket 到进程的映射。三端用不同的底层来源，对外暴露的是同一套能力：在 `Inspect` 页看"这条连接是 Chrome 发的"。
 
 ### Windows
 
 Windows 抓包底层用 **npcap**（libpcap 的 Windows 移植），需要管理员权限。安装包为 MSI，支持静默安装和组策略批量部署。
 
-Windows 独有能力是**进程关联**：通过查询系统连接表 API（对应 `netstat -ano` 的数据源），拿到"本地端口 → 拥有该连接进程"的映射，再把这个 PID 填进 `ParsedPacket.process_id`。你就能直接看到"这个连接是 Chrome 发出去的"。这是三端里唯一能在库层面拿到进程归属的系统。
+进程归属的信息来源是系统连接表 API：据"本地端口"反查"拥有该连接的进程 PID"，再把这个 PID 填进 `ParsedPacket.process_id`。
 
 ### macOS
 
-macOS 同样依赖 libpcap，抓包需要以安装了授权后的权限运行（首次会提示授权）。安装包为 DMG。
+macOS 同样依赖 libpcap，抓包需要以授权后的权限运行（首次会提示授权）。安装包为 DMG。程序的进程识别通过遍历系统 socket 到进程的映射获得。
 
 ### Linux
 
@@ -332,15 +334,15 @@ Linux 抓包也依赖 libpcap，但提供了最灵活的权限方案。RPM/DEB �
 setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet
 ```
 
-Linux 还支持 AppImage——把运行时、库、资源打成一个可执行文件，不污染系统。
+进程识别走 `netlink` 套接字读取连接与进程的对应关系。Linux 还支持 AppImage——把运行时、库、资源打成一个可执行文件，不污染系统。
 
-三端权限差异总结：
+三端权限与能力差异总结：
 
-| 平台 | 底层库 | 权限方式 | 独有能力 |
-|------|--------|----------|----------|
-| Windows | npcap | 管理员权限 | 进程关联 |
-| macOS | libpcap | 授权提示 | - |
-| Linux | libpcap | setcap capabilities | 非 root 可跑 |
+| 平台 | 底层库 | 权限方式 | 程序识别来源 |
+|------|--------|----------|--------------|
+| Windows | npcap | 管理员权限 | 系统连接表 API |
+| macOS | libpcap | 授权提示 | socket → 进程遍历 |
+| Linux | libpcap | setcap capabilities | netlink 套接字 |
 
 ---
 
@@ -396,11 +398,13 @@ sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet
 3. **权限问题**：确认已正确配置权限。
 4. **网络活动**：所选适配器上是否有真实的出流量。
 
-### Q: 如何关联进程和端口（Windows）？
+### Q: 为什么看不到"是哪个程序发的"？
 
-1. 以管理员身份运行 Sniffnet。
-2. 在设置里开启"进程关联"。
-3. 稍等片刻让系统连接表建立出进程映射。
+程序识别在 v1.5 起覆盖 Windows、macOS、Linux（乃至 BSD），但各端条件略有差别：
+
+- **Windows**：以管理员身份运行，稍等片刻让系统连接表建立出进程映射。
+- **macOS**：授予抓包相关权限后可用。
+- **Linux**：授予 `CAP_NET_RAW` 后走 netlink 读取连接对应的进程。
 
 ---
 
@@ -410,7 +414,7 @@ sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet
 2. Sniffnet 的两条主线和它们之间的边界各是什么？
 3. BPF 过滤器在哪一层起作用？如何设置只捕获 HTTPS 流量？
 4. `services.txt` 为什么是编译期的？运行时改成无效吗？
-5. 在 Linux 上让非 root 用户运行 Sniffnet 需要做什么？Windows 独有的能力是什么？
+5. 在 Linux 上让非 root 用户运行 Sniffnet 需要做什么？程序识别在 v1.5 前/后有何不同？
 
 <details>
 <summary>参考答案</summary>
@@ -421,9 +425,9 @@ sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet
 
 **题 3**：双在内核层。BPF 过滤程序由内核执行，不匹配的包不进用户空间。`tcp dst port 443` 只留 HTTPS 出流量。
 
-**题 4**：因为 12093 条映射在 `build.rs` 里编译成 phf 静态哈希表，运行时是 O(1) 查找。运行时改 `services.txt` 不会生效，需要重新编译（且要同步更新条目数断言）。
+**题 4**：因为 6000+ 条映射在 `build.rs` 里编译成 phf 静态哈希表，运行时是 O(1) 查找。运行时改 `services.txt` 不会生效，需要重新编译（且要同步更新条目数断言）。
 
-**题 5**：Linux 用 `setcap cap_net_raw,cap_net_admin=eip` 授予能力；Windows 独有能力是进程关联，通过查询系统连接表拿到占用端口的进程。
+**题 5**：Linux 用 `setcap cap_net_raw,cap_net_admin=eip` 授予能力；程序识别在 v1.5 前仅 Windows 能做（查系统连接表），v1.5 起扩展到 Windows、macOS、Linux 与 BSD，各端用不同来源（系统连接表 API / socket 遍历 / netlink）拿到进程归属。
 
 </details>
 

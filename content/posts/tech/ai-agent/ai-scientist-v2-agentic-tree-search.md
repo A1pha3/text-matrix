@@ -21,6 +21,15 @@ v1（SakanaAI/AI-Scientist）里，模型能产出的东西被人类模板框住
 
 v2 把这一步也交给模型。给定一个宽泛的研究主题，系统自己提出假设、自己决定实验怎么做、失败了自己换个方向。这从"在一条固定路径上填参数"变成了"在一棵实验树上搜索"。README 里说得很直白：v2 不必定比 v1 好，有强起始模板时 v1 成功率更高、产出更稳，v2 是给开放式探索用的。
 
+| 维度 | v1 | v2 |
+|------|-----|-----|
+| 代码来源 | 人类写好的领域模板 | 模型自主生成、自主修改 |
+| 实验推进 | 线性流水线，走完即止 | 最优优先树搜索，并行生长多分支 |
+| 适用范围 | 特定领域（NanoGPT、2D Diffusion、Grokking） | 领域通用，不受模板限制 |
+| 失败分支 | 没有退路，只能硬走 | 放弃失败路径，收缩到最有希望的方向 |
+| 评审与图表 | 标准自动评审 | 引入 VLM 反馈循环，优化图表与正文一致性 |
+| 定位 | 目标明确时成功率更高 | 开放式探索，成功率为代价换取广度 |
+
 ## 二、系统总览
 
 三段流水线，中间那段是 v2 的命门。
@@ -42,7 +51,9 @@ flowchart TD
     D5 --> D1
 ```
 
-阶段二里，实验管理器（`ai_scientist/treesearch/agent_manager.py`）在几棵树之间调度资源。每个 Worker 独立探索一条分支，实验失败就触发自适应调试重试，管理器按 best-first 把预算分给更有希望的分支。这套树搜索实现搭在 [AIDE](https://github.com/WecoAI/aideml) 之上。
+阶段二里，实验管理器（`ai_scientist/treesearch/agent_manager.py`）在几棵树之间调度资源。每个 Worker 独立探索一条分支，实验失败就触发自适应调试重试，管理器按 best-first 把预算分给更有希望的分支。这套树搜索没有沿用 v1 的线性流水线，而是引入了 Forster 团队在 [AIDE](https://github.com/WecoAI/aideml) 里验证过的"结合贪心爬山与宽度优先搜索"思路，据此实现自己的最优优先树搜索。
+
+阶段三里还有一处 v1 没有的增强：论文的自动评审（reviewer）接入了视觉语言模型（VLM）反馈循环。它不只读文字，还会看图表，针对图的质量、标题和正文叙述之间的对应关系反复提修改意见，让最后写出来的论文图文一致。
 
 ## 三、树搜索：把"下一步做什么"变成可搜索的状态
 
@@ -101,6 +112,8 @@ python launch_scientist_bfts.py \
 - 评审中暴露了 AI 系统的毛病：它把"基于 LSTM 的网络"错误引用到了 Goodfellow 2016，而正确出处是 Hochreiter 与 Schmidhuber 1997。
 
 所以正确的读法是：这证明了"AI 能生成达到 workshop 接收标准的论文"这件事发生了，但离"达到顶会主会议标准"还有距离。数字本身（6.33、60%-70%）是评估的语境，不是能力的上限。
+
+这套验证的原始材料都公开了：系统论文见 [arXiv:2504.08066](https://arxiv.org/abs/2504.08066)（Yamada, Lange, Lu, Hu, Lu, Foerster, Clune, Ha；Sakana AI 与 UBC、Vector Institute、Oxford 合作），官方博客《[The AI Scientist: First AI-Generated Peer-Reviewed Publication](https://sakana.ai/ai-scientist-first-publication/)》，三篇投稿论文及评审细节放在 [SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment](https://github.com/SakanaAI/AI-Scientist-ICLR2025-Workshop-Experiment) 仓库，主代码在 [SakanaAI/AI-Scientist-v2](https://github.com/SakanaAI/AI-Scientist-v2)（Apache 2.0）。想核实任何数字，直接看这三处原始出处。
 
 ## 六、适用边界与采用建议
 

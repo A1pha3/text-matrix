@@ -78,8 +78,8 @@ AirLLM 重新组织加载流程：
 
 - **FP8 模型原生支持**：原生加载 FP8 精度的预训练模型，权重体积比 FP16 再小一半
 - **DeepSeek-V3（671B）**：MoE 架构的 671B 模型，FP8 下通过逐层加载只需约 12GB 显存
-- **Qwen3-235B**：235B 参数的稠密模型，只需约 3GB 显存
-- **更强的预取调度**：对 MoE 模型的 expert routing 做了优化，避免预取未激活的专家层
+- **Qwen3-235B 与 Kimi K3**：同为 MoE 架构，分别只需约 3GB、3.7GB 显存
+- **更强的预取调度**：对 MoE 模型的 expert routing 做了优化，只加载当前 token 实际路由到的专家层，避免预取未激活的专家
 
 ## 性能权衡：延迟 vs 显存的取舍
 
@@ -87,7 +87,7 @@ AirLLM 重新组织加载流程：
 
 ### 首字延迟显著放大
 
-以 70B FP16、4GB GPU、单层 ~1.7GB 为例：每生成一个 token 要依次加载 80 层，每层涉及磁盘读 + PCIe 传 + GPU 初始化。即使有预取掩盖，纯 I/O 等待也会让单 token 时间从几十毫秒（整模型加载下）上升到几百毫秒甚至秒级。对交互式对话（期望 100ms–500ms 首字响应），这个延迟通常不可接受。
+生成是逐层的，延迟却不只是"单层加载"的量级。以 70B FP16、4GB GPU 为例：每生成一个 token 都要依次读完整份模型（约 140GB），即使有预取掩盖，I/O 等待也会把单 token 时间推到秒级甚至数十秒（见下文磁盘测算），对比整模型驻留时毫秒级。对交互式对话（期望 100ms–500ms 首字响应），这个延迟通常不可接受。
 
 ### 吞吐受限但可批处理
 
@@ -95,7 +95,11 @@ AirLLM 重新组织加载流程：
 
 ### 磁盘是新的"显存"
 
-AirLLM 把显存约束转嫁到磁盘带宽和容量。模型权重的"工作集"仍在磁盘上，只是把"全量驻留显存"换成了"按层滚动"。这意味着：
+AirLLM 把显存约束转嫁到磁盘带宽和容量。模型权重的"工作集"仍在磁盘上，只是把"全量驻留显存"换成了"按层滚动"。这里有两个容易被低估的现实：
+
+**磁盘速度决定单 token 耗时。** 每生成一个 token，都要把整份模型读一遍。粗略看，`单 token 耗时 ≈ 模型磁盘体积 ÷ 磁盘读速`。以 70B FP16（约 140GB）为例：Gen4 NVMe（约 7GB/s）约 20 秒，Gen3 NVMe（约 3.5GB/s）约 40 秒，SATA SSD（约 0.5GB/s）则到分钟级——HDD 基本不可用。社区实测 70B 常见 5–35 秒/token，慢速盘上更高。对比之下，llama.cpp 在 RTX 4090 上量化 70B 能到 8–15 token/s。这就是"AirLLM 不是让 70B 变快，而是让它在 4GB 显卡上变得可能"这句实话的由来。
+
+**逐层切分会占用大量磁盘。** 推理前需把模型按层切分成独立 safetensors 分片，磁盘占用约翻倍，且持续预留缓存空间。好在有 `delete_original` 选项可在切分后删除原始权重回收空间。因此：
 
 - 模型文件必须常驻本地磁盘，不能放在慢速网络盘
 - NVMe SSD 几乎是必需品，SATA SSD 也能跑但延迟更高
@@ -122,17 +126,22 @@ AirLLM 把显存约束转嫁到磁盘带宽和容量。模型权重的"工作集
 
 ```bash
 pip install airllm
+# 使用 4bit/8bit 块级压缩加速时，还需安装量化内核依赖
+pip install -U bitsandbytes
 ```
 
 ```python
 from airllm import AutoModel
 
+# 不量化：完整精度，仅逐层加载
 model = AutoModel.from_pretrained("meta-llama/Meta-Llama-3-70B-Instruct")
-input_ids = ...
-output = model.generate(input_ids, max_new_tokens=128)
+
+# 需要更快时叠加块级压缩（精度损失极小，瓶颈是权重 IO）
+from airllm import AutoModel
+model = AutoModel.from_pretrained("meta-llama/Meta-Llama-3-70B-Instruct", compression="4bit")
 ```
 
-支持 Linux + macOS 双平台，模型覆盖 Llama 3.x/4、Qwen3、DeepSeek V2/V3、Phi-4、Gemma、ChatGLM、Mistral 等主流架构。
+接口与 HuggingFace `AutoModel` 高度一致，仅需替换 import 即可，无需手动切分模型。常用参数还有 `layer_shards_saving_path`（指定分片保存目录）与 `delete_original`（切分后删除原始权重释放磁盘）。支持 Linux 与 Apple Silicon macOS（走 MLX），模型覆盖 Llama 3.x/4、Qwen3、DeepSeek V2/V3、Phi-4、Gemma、ChatGLM、Mistral 等主流架构。
 
 ## 结论
 

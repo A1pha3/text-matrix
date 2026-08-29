@@ -19,7 +19,7 @@ tags: ["GraphQL", "gRPC", "Electron"]
 
 ## 一、核心判断
 
-[Insomnia](https://github.com/Kong/insomnia) 是一个**老牌、跨协议、跨平台**的开源 API 客户端，主仓库由 Kong 维护，最近一次 push 在 2026-06-25，仓库存在 10 年（2016-04-23 创建），39,703 stars、2,346 forks，TypeScript + Electron，Apache-2.0 协议。
+[Insomnia](https://github.com/Kong/insomnia) 是一个**老牌、跨协议、跨平台**的开源 API 客户端，主仓库由 Kong 维护。仓库创建于 2016-04-23，至今已 10 年，约 40K stars、2.4K forks，TypeScript + Electron，Apache-2.0 协议，截至 2026-08 仍保持高频提交。
 
 它要解决的问题不是"再做一个 Postman"，而是把**多协议（REST / GraphQL / WebSockets / SSE / gRPC）+ 多存储（Local Vault / Git Sync / Cloud Sync）+ 多形态（桌面 GUI + inso CLI）**在同一份 collection 模型上串起来，并通过 Kong 的商业化产品（Cloud Sync、Mock Server、Enterprise SSO）提供付费增值。
 
@@ -39,9 +39,10 @@ tags: ["GraphQL", "gRPC", "Electron"]
 | 包 | 角色 |
 |------|------|
 | `packages/insomnia` | Electron + React 桌面端，路由层用 react-router |
-| `packages/insomnia-inso` | Node.js CLI，主入口 `src/cli.ts`/`src/index.ts`，子命令 `lint-specification` / `run-collection` / `export-specification` / `script` |
+| `packages/insomnia-inso` | Node.js CLI，入口 `bin/inso`，子命令 `lint-specification` / `run test` / `script` / `export-specification` |
 | `packages/insomnia-api` | 不依赖 Electron 的 API 业务逻辑 |
 | `packages/insomnia-data` | 数据持久化抽象（NeDB 兼容、SQLite 后端迁移中） |
+| `packages/insomnia-vcs` | Git Sync 的版本控制引擎，负责与任意 Git 仓库同步 collection |
 | `packages/insomnia-scripting-environment` | 脚本沙箱，对接 ndb / request / response / 环境变量对象 |
 | `packages/insomnia-testing` | 单元测试工具与 collection runner |
 | `packages/insomnia-smoke-test` | Playwright 端到端测试 |
@@ -59,7 +60,7 @@ Insomnia 的差异化在存储层。同一份 collection 可以选择三种落�
 | **Git Sync** | 团队想用 Git 做 collection 协作 | 任意第三方 Git 仓库（GitHub、GitLab、内部 Gitea） |
 | **Cloud Sync** | 多设备、跨地域协作 | Kong 提供的云端，可选端到端加密（E2EE） |
 
-README 强调："拥有 Insomnia 账号不强制你把数据上云"——账号只用于产品能力和云端协作，敏感 collection 仍可走 Local Vault 或 Git Sync。
+README 强调："拥有 Insomnia 账号不强制你把数据上云"——账号只用于产品能力和云端协作，敏感 collection 仍可走 Local Vault 或 Git Sync。其中 Git Sync 的同步逻辑封装在 `packages/insomnia-vcs`，这也是 Git 生态协作模型的落点。
 
 另外有一个 **Private Environments** 特性：环境变量永远存在本地，从不进入云，与所选存储后端解耦，对企业里"环境变量不能出公司"是重要卖点。
 
@@ -100,7 +101,7 @@ inso 的子命令覆盖四大场景：
 | 子命令 | 用途 |
 |--------|------|
 | `lint-specification` | 校验 OpenAPI/AsyncAPI 规范 |
-| `run-collection` | 在 CI 里跑 collection（也可走 `run test`） |
+| `run test` | 在 CI 里跑 collection 的测试套件 |
 | `export-specification` | 把 collection 导出成 spec |
 | `script` | 执行预请求/后响应脚本，便于回归测试 |
 
@@ -116,23 +117,24 @@ inso run test "Echo Test Suite" -w ./fixtures --env Dev --verbose
 # 3. CI 失败时直接退出非零状态
 ```
 
-Node.js 与 Electron 用的 `node-libcurl` 预编译版本不同，README 给出切换命令：
+Node.js 与 Electron 依赖不同的 `node-libcurl` 预编译产物，根 `package.json`（`@getinsomnia/node-libcurl`）提供两个脚本按需切换：
 
 ```shell
-npm run install-libcurl-node      # inso 用
-npm run install-libcurl-electron  # 桌面端用
+npm run install-libcurl-node      # inso 运行环境（Node runtime）
+npm run install-libcurl-electron  # 桌面端运行环境（Electron runtime）
 ```
 
 ## 六、插件与扩展
 
-桌面端开放插件系统，[Insomnia Plugin Hub](https://insomnia.rest/plugins/) 提供官方与社区插件。常见用途：
+桌面端开放插件系统，[Insomnia Plugin Hub](https://insomnia.rest/plugins/) 提供官方与社区插件，常见用途包括自定义主题、第三方认证/OAuth 流程、自定义渲染器、文档生成等。
 
-- 自定义主题（`insomnia-plugin-documenter`）
-- 文档生成（`insomnia-documenter`，把 collection 导出成静态文档站）
-- 第三方认证/OAuth 流程
-- 自定义渲染器（把响应体渲染为 Markdown、PlantUML 等）
+README 列出的社区项目值得关注：
 
-`packages/insomnia-scripting-environment` 把脚本里能访问的对象（`pm`/`insomnia`/`require`/网络模块）封在沙箱里，避免插件影响主进程。
+- [Insomnia Documenter](https://github.com/jozsefsallai/insomnia-documenter)——配合 `insomnia-plugin-documenter` 插件，或直接拿 collection 的 export 文件，生成静态 API 文档站
+- [GitHub API Spec Importer](https://github.com/swinton/github-rest-apis-for-insomnia)——把 GitHub REST API 全套路由规格导入 Insomnia
+- [Swaggymnia](https://github.com/mlabouardy/swaggymnia)——从已有 API 生成 Swagger 文档
+
+`packages/insomnia-scripting-environment` 把插件脚本能访问的对象（`pm`/`insomnia`/`require`/网络模块）封在沙箱里，避免插件影响主进程安全。
 
 ## 七、安全与合规
 
@@ -147,10 +149,10 @@ README 明确写到 Insomnia 账号体系的合规边界：
 
 ## 八、维护状态
 
-- **活跃度高**：最近一次 push 在 2026-06-25，2026-06-25 元数据仍在刷新。
-- **桌面端**走 Electron + React；插件兼容旧 API，但 README 提示 v1.108+ 才有 .copilot-plugin 自动发现（与 Understand Anything 那条无关）。
-- **inso CLI** 单独发版，当前 12.5.1-alpha.0。
-- **Kong 收购后定位**：核心功能持续开源，Cloud Sync / 高级协作走付费；不存在"突然闭源"的风险，但要注意 license 是 Apache-2.0，第三方可商用但不可用 Insomnia 商标。
+- **活跃度高**：截至 2026-08 仍有近期提交，社区维护健康，star 增速平稳。
+- **桌面端**走 Electron + React；插件系统持续演进，仓库也引入 `.codegraph`、`.claude` 等约定用于 Agent 协作开发。
+- **发版节奏**：项目改用统一的 `core@` 版本号发布，最新为 core@13.2.0（2026-08-25），inso 随之一同发布。
+- **Kong 收购后定位**：核心功能持续开源，Cloud Sync / 高级协作走付费；不存在"突然闭源"的风险。license 为 Apache-2.0，第三方可商用但不可使用 Insomnia 商标。
 
 ## 九、采用顺序与边界
 
