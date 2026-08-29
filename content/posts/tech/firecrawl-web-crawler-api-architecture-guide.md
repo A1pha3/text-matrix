@@ -3,7 +3,7 @@ title: "Firecrawl：把 Web 转成 LLM 能直接读的 Markdown"
 date: "2026-07-07T02:59:57+08:00"
 slug: "firecrawl-web-crawler-api-architecture-guide"
 github_repo: "firecrawl/firecrawl"
-description: "Firecrawl 把网页爬取、JS 渲染、Markdown 转换、结构化抽取打包成 REST API，专供 LLM 和 Agent 当上下文用：search / scrape / crawl / batch scrape / extract。拆接口形态、自托管边界，以及什么时候用它、什么时候自己写。"
+description: "Firecrawl 把网页爬取、JS 渲染、Markdown 转换、结构化抽取打包成 REST API，专供 LLM 和 Agent 当上下文用：search / scrape / map / crawl / batch scrape / extract。拆接口形态、异步编排、自托管边界，以及什么时候用它、什么时候自己写。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "API"]
@@ -33,9 +33,9 @@ flowchart LR
 
 外部的接法有四种：REST API、Python/Node SDK、CLI、MCP server。对 Agent 来说，最常用的是 MCP——一行配置就能让 Claude Code 这类工具多出联网能力，见下文。
 
-先拆开两条容易被混在一起读的主线，后面才不会看晕：一条是**内容管线**，处理「单个 URL 怎么变成干净 Markdown / JSON」，决定输出质量；另一条是**任务编排**，处理「一批 URL 或整个站点怎么送进来、怎么拿结果」，决定使用是方便还是繁琐。`scrape` 只走内容管线；`crawl`、`batch scrape` 和 `search` 在编排层做批量与调度；`extract` 在内容管线末端加一步 LLM 抽取。
+先拆开两条容易被混在一起读的主线，后面才不会看晕：一条是**内容管线**，处理「单个 URL 怎么变成干净 Markdown / JSON」，决定输出质量；另一条是**任务编排**，处理「一批 URL 或整个站点怎么送进来、怎么拿结果」，决定使用是方便还是繁琐。`scrape` 只走内容管线；`crawl`、`batch scrape`、`map` 和 `search` 在编排层做批量、发现与调度；`extract` 在内容管线末端加一步 LLM 抽取。
 
-## 四个端点对应四类场景
+## 核心端点与各自场景
 
 Firecrawl 把「读 Web」切成几个端点，每个对应一类用法：
 
@@ -43,12 +43,17 @@ Firecrawl 把「读 Web」切成几个端点，每个对应一类用法：
 |------|------|----------|
 | `search` | 搜并返回完整页面内容 | 搜「LLM evaluation 论文」带全文 |
 | `scrape` | 单 URL 转 markdown / HTML / screenshot / JSON | 单页结构化抽取 |
+| `map` | 只列站点上的 URL，不抽正文 | 爬之前先看全站有哪些路径 |
 | `crawl` | 从种子 URL 出发跟随链接全站爬取 | 整个 docs site、整个博客 |
 | `batch scrape` | 只爬给定的一批 URL，不跟随链接 | 一次性把一堆已知 URL 拉成 markdown |
 
-`search` 和传统搜索 API 的区别在于返回粒度：它带回的是清洗后的完整正文，而不是标题 + 摘要——这决定了它能不能直接被拿去当 RAG 语料。`crawl` 与 `batch scrape` 的区别在编排策略：前者不知道目标页有哪些，靠链接发现；后者你手上一份 URL 清单，它不扩散。按「要不要跟链接」来判断用哪个，比记端点名更可靠。
+`search` 和传统搜索 API 的区别在返回粒度：它带回的是清洗后的完整正文，而不是标题 + 摘要——这决定了它能不能直接被拿去当 RAG 语料。它还能用 `sources` 参数限定来源（`web` / `news` / `images`）。
 
-外加一个 `extract`：用自然语言或 JSON Schema 描述想要的结构，Firecrawl 在服务端用 LLM 从页面里抠出字段。
+`map` 干的事最轻：不给正文，只返回站点的 URL 清单。它的价值在规划——爬一个不熟悉的站之前先 map 一遍，看清有哪些路径，`includePaths` / `excludePaths` 自然就知道怎么写，省掉一整轮瞎爬。
+
+`crawl` 与 `batch scrape` 的区别在编排策略：前者不知道目标页有哪些，靠链接发现；后者你手上一份 URL 清单，它不扩散。按「要不要跟链接」来判断用哪个，比记端点名更可靠。
+
+还有几个端点偏向「更主动地读 Web」：`extract` 用自然语言或 JSON Schema 描述想要的结构，服务端用 LLM 从页面里抠出字段；`interact` 对已抓取的页面执行 click / 填表 / 翻页这类交互后再抽；`agent` 让一个浏览代理自主导航完成目标；`parse` 不吃 URL，直接解析你上传的本地文件（HTML / PDF / DOCX / XLSX）。后三者属于重活，多数场景用不到，知道存在即可。
 
 ## 为什么是 LLM Context API，而不是爬虫
 
@@ -60,23 +65,39 @@ Firecrawl 把「读 Web」切成几个端点，每个对应一类用法：
 4. **绕过反爬**：内置代理轮换、UA 轮换、stealth 模式。效果取决于目标站点的反爬强度，自托管时还要自己配代理池。
 5. **交互序列**：可以 click / scroll / write / wait / press 之后再抽取，处理「点开翻页才看到列表」这类场景。
 
-输出默认是 Markdown（保留可读性，也贴合 LLM 的上下文长度），也可以按需取 HTML、screenshot 或 JSON。
+输出默认是 Markdown（保留可读性，也贴合 LLM 的上下文长度），也可以按需取 HTML、screenshot 或 JSON。`formats` 一次可以要多个：
+
+| format | 内容 |
+|--------|------|
+| `markdown` | 清洗后的正文（默认） |
+| `html` / `rawHtml` | 渲染后 / 原始的 HTML |
+| `json` | 按 schema 或提示词抽出的字段 |
+| `screenshot` | 整页或指定视口截图 |
+| `links` | 页面内链接清单 |
+| `images` | 页面图片清单 |
+| `summary` | LLM 生成的摘要 |
+| `changeTracking` | 与上次抓取对比的变化 |
+
+v2 还默认开了几项省事的设置：响应缓存（`maxAge` 默认 2 天，相同 URL 短期内不重复抓）、`blockAds` 去广告、`removeBase64Images` 去掉内嵌 base64 图片。缓存意味着同一个 URL 反复调用不会每次都重渲染，成本和延迟一起降。
 
 ## 最小可跑示例
 
 ```python
 from firecrawl import Firecrawl
 
-app = Firecrawl(api_key="fc-...")
+app = Firecrawl(api_key="fc-...")  # 没配 key 也能跑，只是受按 IP 限流
 
-# 1. 单 URL → Markdown
+# 1. 单 URL → Markdown（formats 还能要 html / json / screenshot / links / summary）
 doc = app.scrape("https://example.com/article", formats=["markdown"])
 print(doc.markdown)
 
 # 2. 搜索并带回全文
 results = app.search("LLM evaluation benchmarks 2026", limit=5)
 
-# 3. 整站爬取（阻塞等完成；要异步轮询就用 start_crawl 拿 job id）
+# 3. 先 map 看全站结构，再定 include/exclude 怎么写
+links = app.map("https://docs.example.com", search="guide")
+
+# 4. 整站爬取：crawl 是阻塞版；要异步就用 start_crawl 拿 job id 后轮询 / 收 webhook
 job = app.crawl(
     url="https://docs.example.com",
     limit=500,
@@ -84,31 +105,43 @@ job = app.crawl(
     exclude_paths=["/api/*"],
 )
 
-# 4. extract：用 schema 从页面抠字段
-schema = {
-    "type": "object",
-    "properties": {
-        "name": {"type": "string"},
-        "price": {"type": "number"},
-    },
-}
+# 5. extract：v2 把 urls 和 schema 收进同一个参数对象
 extracted = app.extract(
-    ["https://shop.example.com/p1", "https://shop.example.com/p2"],
-    schema=schema,
+    urls=["https://shop.example.com/p1", "https://shop.example.com/p2"],
+    schema={
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "price": {"type": "number"},
+        },
+    },
 )
 ```
 
-CLI 是全局安装的 `firecrawl-cli`：
+CLI 是全局安装的 `firecrawl-cli`，一行同时完成安装、登录、给 agent 装 skills：
 
 ```bash
-npm install -g firecrawl-cli
-firecrawl login
-firecrawl scrape https://example.com --format markdown
+npx -y firecrawl-cli@latest init --all --browser   # 装 CLI + 浏览器登录 + 装 agent skills
+firecrawl login                                    # 之后可单跑
+firecrawl https://example.com --only-main-content  # 只要正文，去掉导航 / 页脚 / 广告
+firecrawl search "LLM evaluation benchmarks 2026" --scrape
 ```
 
 ## MCP：让 Agent 联网变成一行配置
 
-Firecrawl 提供 [MCP server](https://docs.firecrawl.dev)，不用写 Python 绑定，直接让 Claude Code / Cursor / Continue 这类 MCP-aware 的 agent 通过 `mcp.json` 接入：
+Firecrawl 提供 [MCP server](https://docs.firecrawl.dev)，不用写 Python 绑定，直接让 Claude Code / Cursor / Codex / OpenCode 这类 MCP-aware 的 agent 通过 `mcp.json` 接入。首选官方托管的远程 server：
+
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "url": "https://mcp.firecrawl.dev/v2/mcp-oauth"
+    }
+  }
+}
+```
+
+`/v2/mcp-oauth` 走 OAuth 浏览器登录；另有免登录的 `/v2/mcp`（只开放 search / scrape / parse 等子集，按 IP 限流）。MCP 客户端不支持远程或 OAuth 时，再退回本地 server 方式：
 
 ```json
 {
@@ -122,7 +155,7 @@ Firecrawl 提供 [MCP server](https://docs.firecrawl.dev)，不用写 Python 绑
 }
 ```
 
-接好之后，agent 多了 `firecrawl_scrape` / `firecrawl_crawl` / `firecrawl_search` 三个工具。把「给 agent 联网」从手写 Python 调用，简化成声明式地加一个 MCP server。
+接好之后，agent 拿到一组 `firecrawl_scrape` / `firecrawl_search` / `firecrawl_crawl` / `firecrawl_map` / `firecrawl_extract` / `firecrawl_batch_scrape` / `firecrawl_interact` / `firecrawl_deep_research` / `firecrawl_agent` 工具。把「给 agent 联网」从手写 Python 调用，简化成声明式地加一个 MCP server。
 
 ## 一个任务流：从商品页抽出结构化字段
 
@@ -133,6 +166,8 @@ Firecrawl 提供 [MCP server](https://docs.firecrawl.dev)，不用写 Python 绑
 3. 注意 `extract` 背后是 LLM 调用，长页面会把大量内容送进模型，token 成本随页面长度浮动，批量前先试一两个页面估成本。
 
 这条链路把「渲染、转换、抽取」三个环节串进一次调用，读 Web 对应用层保持一个简单接口。
+
+清单一旦变长，就别对每个 URL 各发一次 `scrape`：整份清单丢给 `batch scrape`。量小用阻塞版，量大用 `startBatchScrape` 拿 job id 后轮询 `getBatchScrapeStatus`，或注册 webhook 让完成事件推回来。`crawl` 的异步版同理是 `startCrawl`，想盯一个 job 的变化可以挂 `watcher`。
 
 ## 它拿不到的页面
 
@@ -164,10 +199,11 @@ Firecrawl 提供 [MCP server](https://docs.firecrawl.dev)，不用写 Python 绑
 2. **反爬代理池**：自托管默认没有商业代理，跑一段时间就会被 Cloudflare 类防护拦下，得自己配 proxy rotation。
 3. **JS 渲染成本**：headless Chrome 是吃内存大户，worker 起得越多，单机内存占用越高，按规模预留资源。
 4. **LLM 抽取的 token 成本**：`extract` 背后是模型调用，长页面 token 消耗要算进账单。
+5. **功能不是全量**：`agent`、deep research 等部分能力依赖云端组件，自托管版本未必都支持，以官方「自托管功能支持」对照表为准。CLI 可以用 `firecrawl config --api-url` 或环境变量 `FIRECRAWL_API_URL` 指到本地实例。
 
 ## 什么时候用 hosting，什么时候自己写
 
-给内部 agent 补联网、不介意付费，hosted 版本最省事：不用维护渲染集群，也拿到了代理池和反爬。要尽量省钱，先试无 key 的免费档（限流、按 IP），或者用 jina reader 配合自己写的一层批量调度。
+给内部 agent 补联网、不介意付费，hosted 版本最省事：不用维护渲染集群，也拿到了代理池和反爬。要尽量省钱，Firecrawl 本身支持无 key 起步——注册前 scrape / search / parse / interact 就能用，只是按 IP 限流；免费账号送 1,000 额度。或者用 jina reader 配合自己写的一层批量调度。
 
 做 to C 产品且预算吃紧，优先自己写 Playwright + parse 层，把 Firecrawl 这类服务当成兜底而不是默认路径。
 
@@ -177,8 +213,8 @@ Firecrawl 提供 [MCP server](https://docs.firecrawl.dev)，不用写 Python 绑
 
 ## 仓库数据
 
-- 仓库：`firecrawl/firecrawl`
+- 仓库：`firecrawl/firecrawl`（2024-04 创建）
 - 主页：https://firecrawl.dev
 - 协议：AGPL-3.0（自托管强制开源）
-- 主语言：TypeScript（API server）+ Python SDK + Node SDK
-- stars：158.5k / forks 9.0k（GitHub API 2026-08-05 验证）
+- 主语言：TypeScript（API server）；官方 SDK 为 Python 与 Node.js
+- stars：173.7k / forks 9.6k（GitHub API 2026-08-29 验证）

@@ -2,10 +2,10 @@
 title: "Abseil C++ 通用库深度拆解：Google 的 C++ 标准库补完计划"
 slug: abseil-abseil-cpp-google-cpp-common-libraries-guide
 date: 2026-07-11T02:50:00+08:00
-lastmod: 2026-07-11T02:50:00+08:00
+lastmod: 2026-08-29T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
-tags: ["C++", "Google"]
+tags: ["C++", "Google", "Abseil"]
 description: "Abseil 是 Google 从自身 C++ 代码库中提炼出的通用组件集合，目标是在 C++ 标准库尚不完善时填补空白，并最终将成熟部分推进 C++ 标准。本文给出其模块切分与核心组件的取舍判断，以及引入时的适用边界。"
 ---
 
@@ -20,7 +20,7 @@ Abseil 做的事情很具体：把 Google 内部 C++ 代码库里长期打磨、
 | 维度 | 数据 |
 |------|------|
 | 仓库 | abseil/abseil-cpp |
-| Stars | 约 1.8 万（18,055） |
+| Stars | 约 1.8 万 |
 | Forks | 约 3.2 千 |
 | 主语言 | C++（C++17） |
 | License | Apache 2.0 |
@@ -78,7 +78,7 @@ flowchart LR
 
 取舍落在三处：
 
-- **留住的**：查询/插入常数因子更小，迭代器稳定性更好，整体内存占用更低（没有每节点分配头）。
+- **留住的**：查询/插入常数因子更小，内存连续、缓存局部性好，整体占用更低（没有每节点分配头）。
 - **付出的**：插入/删除时的"墓碑标记"会让极端删除场景下 hash 表退化；每个 slot 要多付一个控制字节的元数据。
 - **不该用的**：元素极多但查询极稀疏，或删除比例高过插入的场景。`flat_hash_map` 是为"紧凑 + 高频读写"设计的，标准 `unordered_map` 在极端删除下反而更稳。
 
@@ -102,7 +102,7 @@ User u = *result;
 
 这套体系给大型代码库的好处是错误路径与正常路径语法对称——`StatusOr<T>` 强制调用者拆包，编译器不会悄悄吞掉失败。代价是没有 stack trace，不像异常能在多层调用间自动带上下文，调试时要手动补。
 
-这个思路已经在 2022 年 11 月通过 `std::expected` 进入 C++23 标准。Abseil 的策略在这里得到验证：先在真实代码里跑通抽象，再反向输入给标准委员会，而不是反过来。
+这个思路已经落地为 `std::expected`：提案 P0323R12 在 2022 年 2 月的 WG21 会议上被接受进入 C++23 工作草案，并随 C++23 正式发布成为标准设施。Abseil 的策略在这里得到验证：先在真实代码里跑通抽象，再反向输入给标准委员会，而不是反过来。
 
 ### 3. `absl::Time` vs `absl::Duration`：把"瞬时"和"间隔"分开
 
@@ -203,5 +203,5 @@ deps = ["com_google_absl//absl/strings"]
 
 - 官方文档：[https://abseil.io](https://abseil.io)
 - 设计原则（"Why Abseil"）：[https://abseil.io/about/philosophy](https://abseil.io/about/philosophy)
-- Swiss Table 原始论文：Google Research, 2018
+- Swiss Table 设计思路：Matt Kulukundis, CppCon 2017《Designing a Fast, Efficient, Cache-friendly Hash Table, Step by Step》
 - `std::expected` 提案：[P0323](https://wg21.link/p0323)

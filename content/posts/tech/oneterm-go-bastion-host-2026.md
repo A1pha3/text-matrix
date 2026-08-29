@@ -20,14 +20,14 @@ aliases: ["/posts/veops-oneterm-bastion-4a-platform-2026/", "/posts/video/veops-
 
 veops/oneterm 选择了一个差异化的位置：**轻量**。整个项目用 Go 写后端，Vue.js 写前端，docker compose up -d 一把启动六个容器就能跑。没有复杂的微服务拆分，没有消息队列，没有 Elasticsearch。MySQL 存业务数据，Redis 做缓存，guacd 容器处理 RDP/VNC 协议——这就是全部依赖。
 
-这种定位适合两类场景：中小团队的内部运维接入，以及需要等保合规但不想采购重型方案的企业。AGPL v3 许可证意味着你可以免费用源码，但如果你基于它做 SaaS 服务对外提供，需要开放修改后的代码。
+这种定位适合两类场景：中小团队的内部运维接入，以及需要等保合规但不想采购重型方案的企业。AGPL v3 允许免费使用和修改源码，但如果你基于它修改后做成对外提供的网络服务（SaaS），必须向用户开放修改后的完整源码。
 
 > **仓库信息卡**
 >
 > | 项目 | 内容 |
 > |------|------|
 > | 仓库 | [veops/oneterm](https://github.com/veops/oneterm) |
-> | Stars / Forks | 1,563 / 161 |
+> | Stars / Forks | 1,734 / 181（2026-08-28 快照） |
 > | 语言 | Go（后端）+ Vue.js（前端） |
 > | 许可证 | AGPL v3.0 |
 > | 创建时间 | 2024-01-30 |
@@ -36,6 +36,23 @@ veops/oneterm 选择了一个差异化的位置：**轻量**。整个项目用 G
 > | 官网 | [veops.cn/oneterm](https://veops.cn/oneterm) |
 
 ## 代码架构：一个二进制里的三个角色
+
+先给一张系统地图。OneTerm 的访问路径可以拆成四段：用户从两种入口进来，落到同一个 Go 进程的三个角色上，再经协议连接层代理到目标资产。
+
+```mermaid
+flowchart LR
+    B[浏览器 Web 终端] --> A[API 服务<br/>端口 8888]
+    C[ssh 命令行客户端] --> S[SSH 服务<br/>端口 2222]
+    A --> P1[SSH / Telnet 直连]
+    A --> P2[guacd 中转<br/>RDP / VNC]
+    A --> P3[PTY + CLI<br/>数据库协议]
+    A --> P4[反向代理<br/>Web 资产]
+    S --> P1
+    P1 --> T[目标服务器]
+    P2 --> T
+    P3 --> T
+    P4 --> W[内部 Web 应用]
+```
 
 阅读 `backend/cmd/server/main.go`，能看到 OneTerm 后端的入口非常简洁。它用 [oklog/run](https://github.com/oklog/run) 管理三个并行的 goroutine 组：
 
@@ -149,7 +166,7 @@ Web 资产支持认证模式（none / smart / manual）、访问策略（full_ac
 
 ## 一次 SSH 会话如何流过系统
 
-把上面的模块串起来，看一个完整的任务流：用户通过浏览器连接一台 SSH 资产。
+以上是各模块的静态拆解。下面用一个具体任务把它们串起来：用户通过浏览器连接一台 SSH 资产。
 
 1. **前端发起**：用户在 Web 界面选择资产、账号、协议，前端通过 WebSocket 连接 `/api/oneterm/v1/connect/:asset_id/:account_id/:protocol`
 2. **权限校验**：AuthMiddleware 验证用户身份，`AuthorizationV2` 模型检查该用户对指定资产+账号+协议是否有 `connect` 权限，同时校验时间模板（是否在允许的时间段内）和命令控制规则
@@ -160,7 +177,7 @@ Web 资产支持认证模式（none / smart / manual）、访问策略（full_ac
 7. **文件传输**：SSH 会话建立后，SSH client 被缓存在 Session 对象中（`SetSSHClient`），SFTP 文件传输复用这条连接，避免二次认证
 8. **会话结束**：用户断开、超时、管理员强制关闭、或时间模板过期都会触发会话终止。Asciinema 文件保存到本地或云存储
 
-这条链路里有一个设计细节值得注意：SSH 连接复用。`session.go` 里用 `sync.RWMutex` 保护 `SSHClient` 字段，`ConnectSsh` 成功后存入 client，SFTP 操作时取出复用。这避免了文件传输需要重新建立 SSH 连接的开销。
+这条链路里有个值得单独说的细节：SSH 连接复用。`session.go` 里用 `sync.RWMutex` 保护 `SSHClient` 字段，`ConnectSsh` 成功后存入 client，SFTP 操作时取出复用。文件传输因此不用重新建立 SSH 连接。
 
 ## 权限模型：从 V1 到 V2
 
@@ -262,7 +279,7 @@ veops 开源生态中还有 [CMDB](https://github.com/veops/cmdb)（配置管理
 | mysql | mysql:8.2.0 | 业务数据存储 |
 | redis | redis:7.2.3 | 缓存 |
 
-所有容器在同一个 Docker 网络（`oneterm_network`，172.30.0.0/24）内通信。对外暴露三个端口：8666（Web UI）、2222（SSH）、13306（MySQL，调试用）。
+所有容器在同一个 Docker 网络（`oneterm_network`，172.30.0.0/24）内通信。对外暴露五个端口：8666 是 Web UI，2222 是 SSH，13306 把 MySQL 映射出来便于调试，16379 与 14822 分别是 Redis 和 guacd。
 
 部署脚本 `setup.sh` 会生成随机密码或让用户自定义，更新所有配置文件并创建备份。开发环境通过 `dev-start.sh` 分别启动前端（热更新）和后端的开发容器。
 
@@ -277,7 +294,7 @@ veops 开源生态中还有 [CMDB](https://github.com/veops/cmdb)（配置管理
 | 用户管理 | 外部 ACL 系统 | 内置 | 内置 / OIDC | 无（依赖容器） |
 | 部署复杂度 | 6 容器 | ~10+ 容器 | 单二进制 + Proxy | 单容器 |
 | 许可证 | AGPL v3 | GPL v3 | Apache 2.0（社区版） | Apache 2.0 |
-| Stars | 1,563 | 25,000+ | 17,000+ | 2,800+ |
+| Stars | 1,734 | 25,000+ | 17,000+ | 2,800+ |
 
 OneTerm 的 Star 数远低于 JumpServer，但这不是唯一的评判维度。从代码结构看，OneTerm 的后端比 JumpServer 更简洁——Go 的静态类型和 oklog/run 的极简并发模型让整个服务在一个进程里跑完三个角色。JumpServer 用 Celery + Flower 做异步任务，组件更多。
 

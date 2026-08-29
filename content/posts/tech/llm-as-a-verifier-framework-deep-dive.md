@@ -81,7 +81,7 @@ $$
 - $\phi(v_g)$ = 把字母映射成标量值（A→20, B→19, ..., T→1）
 - $p_\theta(v_g \mid \dots)$ = 模型在打分位置对字母 $v_g$ 分配的概率
 
-直觉上是这样：模型在 `<score_A>` 后面输出 A 的概率是 0.6、输出 B 的概率是 0.3、输出 C 的概率是 0.1——这一次打分的期望分 = 0.6×20 + 0.3×19 + 0.1×18 / 20 = 0.95（归一化后）。**比让模型直接输出 19 拿到的离散分多出 0.95 - 0.95 = 0 的信息量，但比"15 分还是 16 分"的争议小一个数量级**。
+直觉上是这样：模型在 `<score_A>` 后面给 A 的概率是 0.6、给 B 是 0.3、给 C 是 0.1——这一次打分的期望分 = (0.6×20 + 0.3×19 + 0.1×18) / 20 = 0.975（归一化后）。**这里有个关键细节：离散打分只能看"最可能的那个字母"，会丢掉 0.6/0.3/0.1 这层置信度信息；logprob 期望把这层信息接住了**。同样是判 A 的两条轨迹，一条可能 0.9 坚挺、另一条 0.55 勉强，离散版看起来一样"都是 A"，logprob 版却能把它们分开——这就是 Judge 只看见标签、Verifier 看见分布的分界线。
 
 仓库实现细节（`fine_grained_reward.py`）：
 
@@ -111,7 +111,7 @@ def extract_score(text, tokens, position_logprobs, tag):
 
 ## 四、核心机制 2——概率化 pivot tournament：O(N²) → O(Nk)
 
-N=5 的 best-of-5 全 pairwise 比需要 C(5,2)=10 次；N=8 就 28 次；N=20 就 190 次。工程上不可持续。
+N=5 的 best-of-5 全 pairwise 两两比需要 N(N−1)=20 次 directed 比较；N=8 就 56 次；N=20 就 380 次。工程上不可持续。
 
 仓库 `pivot_tournament.py` 把这砍成两步：
 
@@ -144,7 +144,7 @@ def pivot_round_pairs(n, pivots):
     return pairs
 ```
 
-环打分后取 top-k 作 pivot set，所有「非 pivot × pivot」对 + pivot 内部 pair 全部跑一遍。**总次数 = N + k(N-k) + C(k,2)**——N=5、k=2 时只有 5 + 2×3 + 1 = 12 次（比 10 还多，但赢在能容错重复）；N=20、k=2 时只有 20 + 2×18 + 1 = 57 次（比 190 砍 70%）。**
+环打分后取 top-k 作 pivot set，所有「非 pivot × pivot」对 + pivot 内部 pair 全部跑一遍。**总次数 = N + k(N-k) + C(k,2)**——N=5、k=2 时只有 5 + 2×3 + 1 = 12 次（对比全 pairwise 的 20 次省 40%）；N=20、k=2 时只有 20 + 2×18 + 1 = 57 次（对比 380 次砍 85%）。**
 
 **为什么 pivot 数 2 就够**——论文给的直觉是：top-2 pivot 把「真正可能赢」的候选覆盖了，剩下的候选只需要跟这两个对比就行。**k 越大越准但越贵，k=2 是工程上的甜点**。仓库 `benchmarks.py` 里 `pivots: int = 2` 是全部 4 个 benchmark 的默认值。
 
@@ -264,19 +264,19 @@ print(result.ranking)       # [1, 0, 2]
 6. **Phase B 跑 pivot rounds**：`pivot_round_pairs(3, {1, 0})` 返回 [(2,1), (2,0), (1,0)]，3 个新 pair 再走 12 次 verifier 调用（cache 命中率从 Phase A 暖出）。
 7. **聚合 + 选赢家**：`accumulate` 合并两轮，(w_i / c_i) 最高的轨迹 1 胜出。
 
-总成本：**24 次 verifier API**（12 + 12），与全 pairwise directed（3 条轨迹 × 2 个方向 = 6 directed pairs × 12 calls/pair = 72）的 72 calls 相比持平，但 N=3 时 PPT 主要换的是「位置偏置对消 + Bradley-Terry 软胜出」——**真正开始省钱要 N≥8**。
+总成本：**72 次 verifier API**（Phase A 环 3 对 × 12 + Phase B pivot 3 对 × 12），与全 pairwise directed（3 条轨迹 × 2 个方向 = 6 directed pairs × 12 calls/pair = 72）的 72 calls 相比完全持平——N=3 时 PPT 调用量不减，它换的是「位置偏置对消 + Bradley-Terry 软胜出」；**省钱要到 N≥5 才显现**。
 
-PPT vs 全 pairwise directed 的成本对照（每对 directed pair × 3 criteria × n_eval=4 = 12 calls/pair）：
+PPT vs 全 pairwise directed 的成本对照（每对 directed pair × 3 criteria × n_eval=4 = 12 calls/pair；全 pairwise directed = N(N−1) 对）：
 
 | N | directed pairs 全 pairwise | PPT pairs（k=2） | 全 pairwise calls | PPT calls | PPT 节省 |
 |---|---|---|---|---|---|
 | 3 | 6 | 6 | 72 | 72 | 0%（持平） |
-| 5 | 10 | 12 | 120 | 144 | -20%（反而多） |
-| 8 | 28 | 21 | 336 | 252 | 25% |
-| 20 | 190 | 57 | 2280 | 684 | 70% |
-| 50 | 2450 | 197 | 29400 | 2364 | 92% |
+| 5 | 20 | 12 | 240 | 144 | 40% |
+| 8 | 56 | 21 | 672 | 252 | 62.5% |
+| 20 | 380 | 57 | 4560 | 684 | 85% |
+| 50 | 2450 | 147 | 29400 | 1764 | 94% |
 
-**关键拐点是 N=8**——小于 8 时 PPT 主要换「位置偏置对消 + Bradley-Terry 软胜出」而不是省钱；N≥20 后 PPT 优势才完全释放。**论文给的 4 个 benchmark 都在 N=3-5 之间，所以 PPT 的真正收益是验证质量提升而不是 call 成本下降**。
+**PPT pairs 公式**：N 条环向边 + (N−2)×2 条非 pivot×pivot + C(2,2) 条 pivot 内部 = 3N−3。**N=5 就是省钱起点**——它比全 pairwise 的 20 对直接省 40%；N≥8 后降到三分之一以下。**论文给的 4 个 benchmark 多在 N=3-5（尤其是 best-of-3 的 SWE-Bench）**，这一区间 PPT 的主要收益确实是验证质量而非调用成本，但一旦 N 上去就两端通吃。
 
 ---
 
@@ -293,7 +293,7 @@ PPT vs 全 pairwise directed 的成本对照（每对 directed pair × 3 criteri
 | Terminal-Bench 2.1 (self-verification) | deepseek-v4-flash (Best-of-3) | 79.4% | **86.5% ± 1.1%** | 92.1% | 同模型既是 agent 又是 verifier |
 | Terminal-Bench 2.1 (self-verification) | deepseek-v4-flash (Best-of-5) | 78.7% | **88.0% ± 0.6%** | 96.6% | 同模型既是 agent 又是 verifier |
 
-**Terminal-Bench 2.0 那一行**回答「同 agent 同轨迹池，verifier 选得比随机好多少」——86.5% vs 83.1% Pass@1 = **+3.4pp 绝对提升**，4 个百分点的相对收益是 verifier 这种轻量级方案的天花板了。Oracle 92.1% 意味着如果 verifier 是完美 oracle，N=5 还能再提 5.6pp。
+**Terminal-Bench 2.0 那一行**回答「同 agent 同轨迹池，verifier 选得比随机好多少」——86.5% vs 83.1% Pass@1 = **+3.4pp 绝对提升（相对约 4%）**，这是 verifier 这种轻量级方案的天花板了。Oracle 92.1% 意味着如果 verifier 是完美 oracle，N=5 还能再提 5.6pp。
 
 **SWE-Bench Verified 那一行**回答「真实软件工程任务能不能也用」——78.2% vs 76.1% = +2.1pp，相对收益约 2.8%。这个数字看起来比 Terminal-Bench 低，但**绝对难度高一个数量级**——SWE-Bench Verified 的隐藏测试是真的仓库跑测试，Terminal-Bench 是看 stdout。**Oracle 84.4% 说明即使 oracle 也只能到 84%，verifier 已经吃到 78.2% 距离上限只剩 6pp**。
 

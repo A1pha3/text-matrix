@@ -55,8 +55,8 @@ flowchart TB
     G -->|信息收集| I[/proc 隔离]
     G -->|持久化| J[Lynis / OSSEC / Rkhunter]
     J --> K[运行时检测层]
-    C --> K
-    K --> L[告警 / 封禁 / 审计报告]
+    C --> L[告警 / 封禁 / 审计报告]
+    K --> L
 ```
 
 四层职责对照如下：
@@ -67,8 +67,6 @@ flowchart TB
 | 网络入口 | 端口扫描、未授权服务暴露 | UFW 默认拒绝、Fail2Ban、CrowdSec | 规则过严导致业务流量被误伤 |
 | 文件系统 | 提权、信息泄露、持久化后门 | sudo 收敛、PAM 策略、/proc 隔离 | 多租户场景下误杀正常用户 |
 | 运行时检测 | 已被攻破但未发现 | Lynis 体检、OSSEC 完整性监控、Logwatch | 告警噪声过大，真实事件被淹没 |
-
-每一层先说"为什么需要"，再给具体配置，最后给排查与回滚。
 
 ## 第一道关口：SSH 从开放服务收成受邀入口
 
@@ -160,7 +158,7 @@ SSH 加固挡住了"外人登录"，但登录之后的权限管理同样重要�
 # 查看当前 sudo 组成员
 getent group sudo
 
-# 限制只有特定用户组可以使用 sudo
+# 把 sudo 组的标准授权写入独立的 sudoers.d 文件（不要直接编辑 /etc/sudoers）
 echo "%sudo ALL=(ALL) ALL" | sudo tee /etc/sudoers.d/sudo-group
 
 # 为特定用户配置无密码 sudo（谨慎使用）
@@ -185,7 +183,7 @@ lcredit = -1  # 至少一位小写
 maxclassrepeat = 4  # 同一字符最多连续出现4次
 ```
 
-如果已经禁用了密码登录，密码策略还有没有用？有。本地控制台登录、`su` 切换、`sudo` 提权、单用户模式恢复——这些场景仍然走密码。密码策略管的是这些"非 SSH"路径的兜底强度。`pwquality` 的规则只能挡住"明显弱"的密码，挡不住"符合规则但出现在泄露字典里"的密码——配合 `libpam-cracklib` 或订阅 Have I Been Pwned 之类的泄露库查询能进一步收敛，但成本和复杂度也更高。
+如果已经禁用了密码登录，密码策略还有没有用？有。本地控制台登录、`su` 切换、`sudo` 提权、单用户模式恢复——这些场景仍然走密码。密码策略管的是这些"非 SSH"路径的兜底强度。`pwquality` 的规则只能挡住"明显弱"的密码，挡不住"符合规则但出现在泄露字典里"的密码——`libpwquality` 底层已内置 cracklib 词库，会直接拒绝常见弱密码；再配合订阅 Have I Been Pwned 这类泄露库查询能进一步收敛，但成本和复杂度也更高。
 
 ### 自动化安全更新：补丁装没装，得有邮件回执
 
@@ -278,10 +276,15 @@ Fail2Ban 的工作方式是：扫描日志（`logpath`），用正则（`filter`
 curl -s https://install.crowdsec.net | sudo sh
 sudo apt install crowdsec crowdsec-firewall-bouncer-iptables
 
-# 查看场景与集合
+# 查看已安装的场景与集合
 sudo cscli scenarios list
-sudo cscli scenarios enable crowdsecurity/http-crawlers
+sudo cscli collections list
+
+# 安装 Linux 基线集合（含 SSH 爆破等系统级场景）
 sudo cscli collections install crowdsecurity/linux
+
+# 需要检测 HTTP 爬虫扫描时，安装含 http-crawl-non_statics 场景的 nginx 集合
+sudo cscli collections install crowdsecurity/nginx
 ```
 
 CrowdSec 和 Fail2Ban 的关键区别在情报来源。Fail2Ban 只看本机日志，封禁决策基于"这台机器上发生了什么"；CrowdSec 把本机检测到的攻击行为上报到社区中心，同时从社区拉取全球攻击者列表，在本机直接封禁。所以即使一台机器第一次被某个 IP 探测，只要这个 IP 在别处作过恶，CrowdSec 就能提前封掉。
@@ -316,23 +319,24 @@ sequenceDiagram
     S->>L: Failed password for root
     A->>S: ssh root@server (尝试 3)
     S->>L: Failed password for root
-    L->>F: 扫描到 3 次失败
+    L->>F: Fail2Ban 扫描到 3 次失败
     F->>I: 插入 f2b-sshd 规则，封禁 1 小时
-    F->>C: 上报本次攻击行为
-    C->>H: 上报到社区中心
+    L->>C: CrowdSec 独立采集同一份日志
+    C->>C: 场景检测到 SSH 爆破
+    C->>H: 上报攻击者 IP
+    H-->>C: 拉取社区共识封禁列表
+    C->>I: 写入 CROWDSEC chain
     A->>S: 换 IP 再试
-    S->>C: 新连接到达
-    C->>H: 查询该 IP 是否在黑名单
-    H-->>C: 在黑名单（其他机器已上报）
-    C->>I: 插入 crowdsec chain 规则，按场景时长封禁
-    Note over A,I: 攻击者两个 IP 都被拦，且第二个 IP 在握手阶段就被挡
+    S->>I: 连接尝试到达，命中 CROWDSEC 规则
+    I-->>S: DROP，握手阶段被挡
+    Note over A,I: 两个工具独立解析同一份日志，各自通过 iptables 落地封禁，互不依赖
 ```
 
 这次攻击的几个关键点：
 
 - Fail2Ban 响应快（秒级），但只看本机日志，挡不住"换 IP"
-- CrowdSec 响应稍慢（依赖社区上报），但能跨机器共享情报
-- 两者都通过 iptables 落地，所以封禁是内核层的，不会消耗用户态进程
+- CrowdSec 先在本机做场景检测，再把结果同步到社区，同时拉取社区 blocklist 提前封禁
+- 两者不直接通信，都通过 iptables 落地，所以封禁是内核层的，不会消耗用户态进程
 
 ### iptables + PSAD
 
@@ -381,8 +385,12 @@ flowchart LR
 ```
 
 ```bash
-# 服务端安装
-sudo apt install ossec-hids
+# Ubuntu 官方源没有 OSSEC 包，先添加 Atomicorp 仓库
+wget -q -O - https://updates.atomicorp.com/installers/atomic | sudo bash
+sudo apt update
+
+# 服务端安装（Agent-Server 架构中的分析端）
+sudo apt install ossec-hids-server
 
 # 监控配置（/var/ossec/etc/ossec.conf）
 <localfile>
@@ -502,7 +510,7 @@ sudo systemctl enable fail2ban && sudo systemctl start fail2ban
 
 **Q：CrowdSec 上报会泄露本机信息吗？**
 
-会上报攻击者的 IP、攻击类型、时间戳，不上报本机业务数据。是否参与社区双向同步可以控制：不向 CrowdSec 控制台注册（`cscli console enroll`）时，agent 只拉取社区 blocklist、不上传本地检测结果，本地检测和封禁仍然工作；注册后才会贡献检测信号。合规要求严格的场景，按"只拉取、不上报"部署即可。
+会上报攻击者的 IP、场景名、攻击起止时间，不上报本机业务数据和日志原文。信号共享默认开启（opt-out）：安装后即通过 CAPI 参与社区，上报本地检测信号并拉取社区 blocklist；`cscli console enroll` 只是连接 Web 控制台做可视化和管理，不影响是否参与共享。合规要求严格的场景，在 `/etc/crowdsec/config.yaml` 的 `api.server.online_client` 下设置 `sharing: false` 关闭信号上报（仍可保留 blocklist 拉取），重启 `crowdsec` 生效。
 
 **Q：unattended-upgrades 自动重启把生产服务打挂了？**
 
@@ -518,7 +526,14 @@ sudo systemctl enable fail2ban && sudo systemctl start fail2ban
 
 **Q：CrowdSec 误封了办公室 NAT 出口 IP，整个办公室都连不上了？**
 
-CrowdSec 的社区情报是共享的，如果某个 IP 在别处有过恶意行为，CrowdSec 会直接封禁。NAT 出口 IP 被封会导致整个办公室都无法访问。回滚路径：通过 VNC 登录后执行 `sudo cscli decisions delete --ip YOUR_OFFICE_IP`。预防方法：在 `/etc/crowdsec/acquis.yaml` 里将办公室 IP 段加入 `whitelists` 配置。
+CrowdSec 的社区情报是共享的，如果某个 IP 在别处有过恶意行为，CrowdSec 会直接封禁。NAT 出口 IP 被封会导致整个办公室都无法访问。回滚路径：通过 VNC 登录后执行 `sudo cscli decisions delete --ip YOUR_OFFICE_IP`。预防方法：用 `cscli` 的 AllowLists 把办公室网段加入白名单（CrowdSec 1.6.8+ 支持，改动即时生效）：
+
+```bash
+sudo cscli allowlists create office
+sudo cscli allowlists add office 203.0.113.0/24
+```
+
+1.6.8 之前的版本没有 AllowLists，需要在 `/etc/crowdsec/parsers/s02-enrich/` 下新建一个白名单文件（该目录默认已有一条 whitelists 软链接，不要直接改它），改完重启 `crowdsec` 生效。
 
 **Q：所有工具都装完后，/var/log 增长很快，磁盘报警了？**
 

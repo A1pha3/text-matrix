@@ -1,5 +1,5 @@
 ---
-title: "Claude API基础专题（一）：认证、请求与会话管理"
+title: "Claude API 基础专题（一）：认证、请求与会话管理"
 date: "2026-03-25T09:30:00+08:00"
 slug: "claude-api-authentication-requests-session"
 github_repo: "anthropics/anthropic-sdk-python"
@@ -13,13 +13,25 @@ tags: ["Claude", "API", "Python"]
 
 # Claude API 基础专题（一）：认证、请求与会话管理
 
-Claude Messages API 的入口是一个 `messages.create()` 调用。本文从工程实践角度梳理认证、密钥管理、多轮对话、系统提示词和结构化输出等基础问题，代码基于 `anthropic` Python SDK，模型以 `claude-sonnet-4-6` 为例。
+Claude Messages API（应用程序接口）的入口是一个 `messages.create()` 调用：给它模型名、消息列表和最大输出长度，它返回一条完整的回复。本文把这套调用的工程细节拆开讲——密钥怎么管、请求怎么发、响应怎么解析、多轮对话怎么维护、系统提示词怎么写、结构化输出怎么拿到合法 JSON。代码基于 `anthropic` Python SDK（软件开发包），示例模型统一用 `claude-sonnet-4-6`。
+
+读完本文，你能拿到一份可以直接改着用的请求模板，以及排查 401、429、输出截断这类常见问题时的判断顺序。只关心某个环节时，按标题跳读即可。
+
+## 前置条件
+
+- Python 3.8 及以上
+- 一个 [Anthropic Console](https://console.anthropic.com/) 账户和 API 密钥
+- 已安装 `anthropic` SDK：
+
+```bash
+pip install anthropic
+```
 
 ---
 
-## 1.1 API认证与密钥管理
+## 认证与密钥管理
 
-### 获取API密钥
+### 获取 API 密钥
 
 1. 访问 [Anthropic Console](https://console.anthropic.com/)
 2. 注册账户
@@ -28,7 +40,7 @@ Claude Messages API 的入口是一个 `messages.create()` 调用。本文从工
 
 ### 密钥管理
 
-密钥不应硬编码在代码中。一旦提交到 Git 仓库，即使后续删除，历史记录中仍可追溯。
+密钥只存在于运行它的环境里，不写进代码。一旦提交到 Git 仓库，即使后续删除，历史记录中仍可追溯。
 
 **开发环境：从环境变量读取**
 
@@ -38,7 +50,7 @@ from anthropic import Anthropic
 
 api_key = os.environ.get("ANTHROPIC_API_KEY")
 if not api_key:
-    raise ValueError("ANTHROPIC_API_KEY环境变量未设置")
+    raise ValueError("ANTHROPIC_API_KEY 环境变量未设置")
 
 client = Anthropic(api_key=api_key)
 ```
@@ -46,7 +58,7 @@ client = Anthropic(api_key=api_key)
 **开发环境推荐：.env 文件**
 
 ```bash
-# .env文件（不要提交到Git！）
+# .env 文件（不要提交到 Git！）
 ANTHROPIC_API_KEY=<your-real-key>
 ```
 
@@ -87,14 +99,16 @@ api_key = json.loads(response['SecretString'])['api_key']
 anthropic_client = Anthropic(api_key=api_key)
 ```
 
-### SDK初始化
+### SDK 初始化
+
+每次 `Anthropic()` 都会建立新的连接池。同一个进程里复用一个客户端实例，避免反复建连：
 
 ```python
 from anthropic import Anthropic
 import os
 
 class AnthropicClient:
-    """Anthropic API客户端封装"""
+    """Anthropic API 客户端封装"""
 
     _instance = None
 
@@ -121,15 +135,11 @@ response = anthropic.client.messages.create(
 )
 ```
 
+`timeout=30` 是单次请求的秒数上限，`max_retries=3` 让 SDK 对网络抖动和 429 限流自动重试。这两个参数是生产接入的常见起点，不是越多越好——重试过多会放大下游压力。
+
 ---
 
-## 1.2 发送第一个请求
-
-### 安装 SDK
-
-```bash
-pip install anthropic
-```
+## 发送第一个请求
 
 ### 同步请求
 
@@ -153,11 +163,13 @@ message = client.messages.create(
 print(message.content[0].text)
 ```
 
+`message.content` 是内容块列表，取 `[0].text` 就是模型生成的文本。运行这段代码，终端打印出回复，就说明密钥、SDK、网络链路都通了。
+
 ### 参数说明
 
 **`model`**
 
-三个模型按能力和成本递增排序（价格为每百万 token，输入/输出）：
+三个模型按能力和成本递增排序（价格为每百万 token（词元），输入/输出，随版本调整，接入前以官方定价页为准）：
 
 | 模型 | 定位 | 输入 | 输出 |
 |------|------|------|------|
@@ -209,13 +221,13 @@ with client.messages.stream(
     print()
 ```
 
-长文本生成时，非流式模式用户需等待数秒到十几秒。流式响应是生产场景的推荐做法。
+长文本生成时，非流式模式用户需等待数秒到十几秒。流式响应是生产场景的推荐做法——首字更快到达，用户不用干等整段生成完。
 
 ---
 
-## 1.3 理解响应结构
+## 理解响应结构
 
-### Message对象
+### Message 对象
 
 ```python
 message = client.messages.create(
@@ -242,6 +254,8 @@ for block in message.content:
         print(block.text)
 ```
 
+`content` 不一定是纯文本：模型可能返回工具调用块或思考块。逐块判断 `type`，比直接取 `[0].text` 更稳。
+
 ### 停止原因
 
 - `"end_turn"`：正常完成
@@ -255,7 +269,7 @@ elif message.stop_reason == "end_turn":
     print("响应正常完成")
 ```
 
-### Token使用量
+### Token 使用量
 
 `usage` 给出本次请求消耗的输入和输出 token（词元），是计算成本、优化提示词长度的依据。
 
@@ -290,14 +304,16 @@ except RateLimitError:
     import time
     time.sleep(5)
 except APIError as e:
-    print(f"API错误: {e}")
+    print(f"API 错误: {e}")
 except Exception as e:
     print(f"未知错误: {e}")
 ```
 
+按异常类型分分支处理，别把限流和参数错误混在一起：限流适合退避重试，参数错误重试多少次都是同样的结果。兜底的 `Exception` 分支只用于记录日志，不要在这里吞掉错误继续业务。
+
 ---
 
-## 1.4 多轮对话与会话管理
+## 多轮对话与会话管理
 
 Claude API 本身是无状态的——每次 `messages.create()` 调用都是独立的。会话由客户端维护的消息列表定义。
 
@@ -316,7 +332,7 @@ response2 = client.messages.create(
     max_tokens=1024,
     messages=[{"role": "user", "content": "它喜欢吃什么？"}]
 )
-# Claude不记得"豆豆"
+# Claude 不记得“豆豆”
 ```
 
 **有状态（有记忆）**：
@@ -341,7 +357,11 @@ while True:
     print(f"Claude: {assistant_message}")
 ```
 
+关键在最后一步：把模型这次的回复追加回 `conversation_history`，下一轮它才看得到自己说过什么。
+
 ### 会话管理技巧
+
+对话越长，token 消耗越大，模型也越容易抓不住重点。下面三种做法按成本从低到高。
 
 **限制历史长度**
 
@@ -390,6 +410,8 @@ def summarize_old_messages(messages, summary_turns=5):
     ] + recent
 ```
 
+把摘要放进 `system` 而非普通消息，是让它持续生效又不占最近几轮的位置。
+
 **分离话题**
 
 ```python
@@ -435,9 +457,11 @@ manager.switch_conversation("技术支持")
 messages = manager.get_messages()
 ```
 
+多话题场景把每个会话的上下文分桶管理，互不串扰。
+
 ---
 
-## 1.5 系统提示词
+## 系统提示词
 
 系统提示词（System Prompt）设置 AI 的行为和角色，作用于整个对话。
 
@@ -449,6 +473,8 @@ response = client.messages.create(
     messages=[{"role": "user", "content": "我应该做什么产品？"}]
 )
 ```
+
+它和 `messages` 是独立的参数，不进历史列表，也不占用对话轮次。
 
 ### 常见模式
 
@@ -498,7 +524,7 @@ system = """你是一位财经记者。
 """
 ```
 
-**示例注入（Few-shot in System）**
+**示例注入（Few-shot in system）**
 
 ```python
 system = """你是一个翻译助手。
@@ -515,9 +541,11 @@ system = """你是一个翻译助手。
 
 ### 设计要点
 
-系统提示词应具体、一致、可验证。避免相互矛盾的指令（如同时要求"诚实"和"必要时可以说善意的谎言"），以及过于模糊的设定（如"你是AI助手，回答用户问题"）。
+系统提示词应具体、一致、可验证。避免相互矛盾的指令（如同时要求"诚实"和"必要时可以说善意的谎言"），以及过于模糊的设定（如"你是 AI 助手，回答用户问题"）。角色、格式、约束、示例四类模式可以组合，但每一类都要能直接对照检查输出是否符合。
 
 ### 测试系统提示词
+
+下面这个函数把一批测试输入跑一遍，逐条打印输出，适合在调整提示词时做回归对比。假设 `client` 已在上面定义：
 
 ```python
 def test_system_prompt(system_prompt, test_cases):
@@ -536,7 +564,7 @@ def test_system_prompt(system_prompt, test_cases):
 
 ---
 
-## 1.6 结构化输出
+## 结构化输出
 
 需要 AI 返回 JSON 等特定格式数据时，有几种方案，可靠性从低到高。只有结构化输出（方法 2、3）能保证输出格式合法，其余方案都要靠自己的代码兜底。
 
@@ -568,7 +596,7 @@ print(data)
 
 ### 方法 2：结构化输出（output_config.format）
 
-用 `output_config.format` 声明 JSON Schema，Claude 通过受限解码保证输出是合法 JSON 且字段类型、必填项符合 schema，不再出现 `json.loads` 报错或字段缺失。
+用 `output_config.format` 声明 JSON Schema（模式），Claude 通过受限解码保证输出是合法 JSON 且字段类型、必填项符合 schema，不再出现 `json.loads` 报错或字段缺失。
 
 ```python
 response = client.messages.create(
@@ -688,9 +716,36 @@ def safe_json_parse(text):
 
 ---
 
+## 常见问题与排查
+
+**401 authentication_error：密钥无效**
+
+请求返回 `authentication_error` 时，先确认 `ANTHROPIC_API_KEY` 真的被读到了——本地 `.env` 文件没被加载是最常见的原因。其次检查密钥是否过期或被轮换，以及是否写错成了环境变量名。
+
+**429 rate_limit_error：请求过频**
+
+SDK 默认会按指数退避重试。若仍频繁触发，检查是否每次请求都新建了 `Anthropic()` 实例（应复用同一个 client），以及 `max_retries` 是否被调小。
+
+**400 invalid_request_error：参数不合法**
+
+通常是 `messages` 结构不对或 `model` 名过期。先对照错误信息里的字段名定位，再核对 [Messages API 文档](https://platform.claude.com/docs/en/api/messages)。
+
+**响应被截断**
+
+回复中途断掉且 `stop_reason` 是 `max_tokens`，说明 `max_tokens` 设小了。调大后重试；输出本身很长时，改用流式读取，用户不用等整段生成完。
+
+**请求超时**
+
+短请求频繁超时，先检查网络代理或防火墙，再考虑调小 `timeout` 并配合重试。注意 `timeout` 与 `max_retries` 是乘数关系：重试会放大总耗时。
+
+**模型名与价格过期**
+
+文中模型名与定价随版本迭代更新，接入前以 Anthropic 官方模型文档与定价页为准。锁版本时把 `anthropic==<版本>` 写进依赖，避免升级引入不兼容。
+
+---
+
 **参考资源：**
 - [Anthropic Messages API 文档](https://platform.claude.com/docs/en/api/messages)
 - [Structured outputs 文档](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
 - [Anthropic Python SDK（anthropic）](https://github.com/anthropics/anthropic-sdk-python)
 - [Anthropic Console](https://console.anthropic.com/)
-

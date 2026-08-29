@@ -3,7 +3,7 @@ title: "Bun：让你可以放弃 npm/yarn/vite/jest 的 JavaScript 运行时"
 date: "2026-05-16T15:10:00+08:00"
 slug: "bun-javascript-runtime-all-in-one"
 github_repo: "oven-sh/bun"
-description: "Bun 是用 Zig 编写的高性能 JavaScript 运行时、bundler、测试框架和包管理器，GitHub 星标已突破 9 万。本文从核心概念、安装配置、运行时、包管理、打包、测试、框架集成六个维度，对这个 2021 年起步、如今已全面生产可用的项目做完整技术解读。"
+description: "Bun 是用 Zig 编写的高性能 JavaScript 运行时、bundler、测试框架和包管理器。本文从核心概念、安装配置、运行时、包管理、打包、测试、框架集成六个维度，对这个 2021 年起步、如今已全面生产可用的项目做完整技术解读。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Bun", "JavaScript", "TypeScript", "测试框架", "Zig", "Node.js", "性能优化"]
@@ -11,7 +11,7 @@ tags: ["Bun", "JavaScript", "TypeScript", "测试框架", "Zig", "Node.js", "性
 
 # Bun：让你可以放弃 npm/yarn/vite/jest 的 JavaScript 运行时
 
-2026 年 5 月，Bun 的 GitHub 星标突破 90,685，最新稳定版本 1.3.14。这个项目从 2021 年起步，到 2024 年起进入多家头部公司的生产环境，已经不再是"值得关注的实验品"。
+2021 年起步的 Bun，到 2024 年起进入多家头部公司的生产环境，早已不是"值得关注的实验品"。它把运行时、bundler、测试框架和包管理器收进一个可执行文件，工程界也因此开始重算前端与后端工具链的搭建方式。Bun 迭代很快，本文写于 2026 年 5 月，涉及的具体版本号以 [官方发布页](https://github.com/oven-sh/bun/releases) 为准。
 
 Bun 是一个可执行文件，同时是运行时、bundler、测试框架和包管理器。你不再需要 node + npm + vite + jest，只需要 `bun`。
 
@@ -91,7 +91,7 @@ bun upgrade
 bun upgrade --canary
 ```
 
-当前稳定版本 `1.3.14`。
+版本号变化很快，具体值以官方发布页为准；安装后可用 `bun --version` 确认本机版本。
 
 ### 快速上手
 
@@ -154,7 +154,44 @@ const server = Bun.serve({
 console.log(`Listening on http://localhost:${server.port}`)
 ```
 
-`Bun.serve` 底层的事件循环实现是平台相关的：在 Linux 上基于 io_uring，在 macOS 上基于 kqueue，在 Windows 上基于 IOCP。这种平台特化让它在各平台都能用上最优的异步 I/O 接口。在同等硬件下，Bun HTTP 服务器的吞吐量通常是 Node.js + Express 的 2-4 倍（具体数字见后文"性能基准"一节，需注意测试条件）。
+`Bun.serve` 底层的事件循环实现是平台相关的：在 Linux 上基于 io_uring，在 macOS 上基于 kqueue，在 Windows 上基于 IOCP。这种平台特化让它在各平台都能用上尽可能优的异步 I/O 接口。在同等硬件下，Bun HTTP 服务器的吞吐量通常明显高于 Node.js + Express 组合，但差距有多大取决于路由与业务逻辑的复杂程度，别拿 Hello World 的数字去推生产负载。
+
+### Bun.serve 进阶：声明式路由与服务器选项
+
+手写 `fetch` 里一串 `if (req.url)` 很快会失控。`Bun.serve` 支持对象形式的 `routes`，把路径、方法和处理器写在一起，类型也能被自动推导：
+
+```typescript
+const server = Bun.serve({
+  port: 3000,
+  development: true,          // 开发模式：开启 HMR 相关特性
+  idleTimeout: 10,            // 空闲连接断开时间（秒），0 表示不限制
+  onError(error) {
+    console.error(error)
+    return new Response('Something went wrong', { status: 500 })
+  },
+  routes: {
+    // 静态路由
+    '/': () => new Response('home'),
+    // 路径参数，自动注入到回调
+    '/users/:id': (req) => {
+      const id = req.params.id
+      return Response.json({ id })
+    },
+    // 按方法区分
+    '/api/users': {
+      GET: () => Response.json([{ id: 1 }]),
+      POST: async (req) => Response.json({ created: true }, { status: 201 }),
+    },
+  },
+})
+```
+
+几个值得留意的选项：
+
+- `development: true` 会在响应里带上带源码位置的错误页，适合本地调试；生产环境记得关掉。
+- `idleTimeout` 对长连接、WebSocket 场景要按需调整，默认行为以[官方 `serve` 文档](https://bun.sh/docs/api/http)为准。
+- `onError` 统一兜底未捕获异常，配合日志中间件能收敛线上错误面。
+- 相对路径可配 `static` 托管静态资源、`fetch` 兜底其余请求，几个处理器可以同时存在。
 
 ### Web API 全覆盖
 
@@ -238,8 +275,59 @@ await s3.file('data.json').write(JSON.stringify({ ok: true }))
 - `Bun.SQL` 是从 `bun` 包导出的大写 `SQL`/`sql`（不是 `bun:sql` 模块）。它用标记模板字面量执行查询，`${}` 占位符会被自动参数化，防 SQL 注入。Bun 1.3 起用同一套 API 覆盖 PostgreSQL、MySQL、MariaDB、SQLite 四种数据库；PostgreSQL 客户端更早在 1.2 就可用。注意它只能以标记模板方式调用，当普通函数调用会抛错。
 - `bun:sqlite` 是独立模块，API 更接近 `better-sqlite3` 的同步风格（`.query(...).all()`），`Bun.SQL` 返回 Promise，风格更现代。两者 SQLite 能力有重叠，按项目习惯二选一。
 - `Bun.S3`（`S3Client` / `s3`，Bun 1.2+）是内置的 S3 兼容对象存储客户端，可用于 AWS S3、Cloudflare R2、DigitalOcean Spaces、MinIO 等，无需引入 `@aws-sdk`。
-- `Bun.redis`（Bun 1.3+）是内置 Redis 客户端，覆盖常用命令；Bun 官方基准称其比 `ioredis` 快 7.9 倍，但集群、流和 Lua 脚本仍待后续版本补齐。
+- `Bun.redis`（Bun 1.3+）是内置 Redis 客户端，覆盖常用命令；Bun 官方基准称其明显快于 `ioredis`，但集群、流和 Lua 脚本仍待后续版本补齐。
 - `Bun.cron`、`Bun.WebView`（macOS）等较新 API 仍在演进，使用前以 [官方文档](https://bun.sh/docs/runtime/bun-apis) 为准。
+
+### Bun.shell：把 Shell 脚本写进 JavaScript
+
+`Bun.shell`（从 `bun` 导出为 `$`）帮你用标记模板把命令拼成可调用的脚本，环境变量、错误处理和并发都能直接写在一起：
+
+```typescript
+import { $ } from 'bun'
+
+// 逐字执行命令，捕获输出
+const result = await $`echo hello`
+console.log(result.stdout.toString()) // "hello"
+
+// 临时变量会做转义，命令行注入风险低
+const name = 'bob'
+await $`echo ${name}`
+
+// 命令输出与变量互换
+const files = (await $`ls`).stdout.toString().trim().split('\n')
+
+// 出错即抛异常，可用 try/catch 拦截
+try {
+  await $`exit 1`
+} catch (err) {
+  console.error('命令失败', err)
+}
+
+// Promise.all 并发执行，适合批量任务
+await Promise.all([
+  $`git pull`,
+  $`bun install`,
+])
+```
+
+在 Node.js 生态里做类似的事通常要 `execSync`/`spawn` 加一堆引号处理与转义；`Bun.shell` 把这些收进模板字面量，输出会从原生文件描述符直接流式出来，不会像 `child_process` 那样默认缓冲全部内存。写脚本、做适配器、跑批量任务的场景很顺手。
+
+### 子进程与文件 I/O
+
+`Bun.spawn` 提供了比 `node:child_process` 更直白的子进程接口，配合 `Bun.file` / `Bun.write` 做文件读写：
+
+```typescript
+import { spawn } from 'bun'
+
+// 起一个子进程，拿到 stdout 给 Bun.file 用
+const child = spawn(['echo', 'hello'], { stdout: 'pipe' })
+const out = await new Response(child.stdout).text() // "hello"
+
+// 直写文件，不必先 Buffer
+await Bun.write('out.txt', 'hello world')
+const file = Bun.file('out.txt')
+console.log(await file.text()) // "hello world"
+```
 
 ## 包管理器：与 npm/yarn/pnpm 的性能对比
 
@@ -488,7 +576,7 @@ bun run next dev  # 仍使用 Next.js 的打包器，但 Bun 处理依赖安装
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
-// Drizzle ORM（性能更好）
+// Drizzle ORM（有直接适配 bun:sqlite 的驱动）
 import { drizzle } from 'drizzle-orm/bun-sqlite'
 import { sql } from 'drizzle-orm'
 
@@ -549,25 +637,25 @@ concurrency = 8
 
 ## 性能基准：测的是什么，不能说明什么
 
-Bun 官方基准测试（在 M2 MacBook Pro 上）：
+不直接给精确数字，因为具体值随版本、硬件和被测负载浮动，抄一份数字很容易骗到你自己。按[Bun 官方基准](https://bun.sh/blog)与非官方复测的稳定结论，可以放心记住的是相对量级：
 
-| 操作 | Node.js | Bun | 提速比 |
-|------|---------|-----|--------|
-| `bun run` 冷启动（空文件） | ~80ms | ~8ms | **10x** |
-| `bun install`（500 包，hot cache） | ~18s | ~1.2s | **15x** |
-| HTTP QPS（Hello World，linux-aarch64） | ~72k | ~198k | **2.7x** |
-| `bun test` 运行 1000 个测试用例 | ~12s | ~1.8s | **6.7x** |
-| 打包 1000 个 TS 文件（prod minify） | esbuild: ~0.8s | ~0.6s | **1.3x** |
+| 操作 | 量级结论 | 主要来自哪部分开销 |
+|------|---------|------------------|
+| 冷启动（空脚本） | Bun 显著更快，常为数量级差 | JavaScriptCore 初始化 + 模块解析 |
+| 依赖安装（缓存命中） | Bun 明显更快 | 下载并发 + 解压 + 硬链接复用 |
+| 依赖安装（冷缓存） | 差距缩小 | 网络下载本身成为瓶颈 |
+| HTTP QPS（空响应） | Bun 更高 | 事件循环 + HTTP 解析器 |
+| 测试运行（纯断言） | Bun 更快 | 测试框架启动 + 用例调度 |
+| 打包（纯转译） | 与 esbuild 接近 | 解析 + 转译 + 写盘 |
 
-这些数字分别测的是：
+这些量级只反映各自最容易命中"快"的那一段，别外推到别的场景：
 
-- **冷启动**：进程从 fork 到脚本执行完毕的端到端时间，反映的是 JavaScriptCore 初始化 + 模块加载的开销，不能推出业务逻辑运行时的性能。
-- **包安装**：500 个常见 npm 包在缓存命中场景下的安装耗时，反映的是下载并发度 + 解压 + 硬链接策略，不能推出冷缓存场景的表现（冷缓存下差距会缩小）。
-- **HTTP QPS**：Hello World 级别的请求每秒数，反映的是事件循环 + HTTP 解析器的开销，不能推出带业务逻辑（数据库查询、JSON 序列化复杂对象）的真实服务吞吐。
-- **测试运行**：1000 个空 `expect(1).toBe(1)` 用例的执行时间，反映的是测试框架启动 + 用例调度开销，不能推出含大量 I/O 的集成测试表现。
-- **打包**：1000 个空 TS 文件的打包时间，反映的是解析 + 转译 + 写盘开销，不能推出含大型依赖和代码分割的真实项目表现。
-
-实际表现因项目规模、硬件和操作系统而异。在大规模项目中，Bun 的优势通常会更明显，但建议用自己的项目做基准测试，而不是直接套用官方数字。
+- **冷启动**的优势不等于业务逻辑运行得快。它测的是进程起动与模块加载，业务代码一旦真正执行，优势可能被抹平。
+- **包安装**在缓存命中时差距最大；第一次装（冷缓存）更多受网络带宽约束，收益明显收窄。
+- **HTTP QPS**用空响应测，反映事件循环与 HTTP 层；真实接口带着数据库查询、复杂 JSON 序列化时，瓶颈会转移。
+- **测试**用纯断言测，启动快是共识；但含大量磁盘/网络 I/O 的集成测试，收益要看读写本身。
+- **打包**接近 esbuild 是 Bun 官方目标，但插件生态与复杂项目分割场景仍可能存在差异。
+- 任何一份数字都受硬件、操作系统、Bun 与依赖版本影响。真要评估换不换，用自己项目跑一遍[官方基准脚本](https://bun.sh/docs/guides)或直接 `time` 三个命令对比，比抄别人的表可靠。
 
 ## 已知限制
 
@@ -588,8 +676,8 @@ npm 上的包大多数可以在 Bun 上运行，但某些包的特定功能（�
 **5. 版本稳定性**
 Bun 仍在活跃开发中，版本之间可能有 breaking change。使用 `bun.lockb` 锁定依赖版本，避免升级导致的不兼容。
 
-**6. Bun.SQL 的批量插入仍有已知缺陷**
-`sql(rows)` 批量插入若含可空列，Bun 会对每种 null 组合各编译一条预编译语句，导致数据库端预编译语句不断累积，极端情况下把服务内存撑爆（相关 issue：#28980）。批量写入的列含可空字段时，先小批量压测再上生产。
+**6. Bun.SQL 的批量插入在某些数据形态下开销大**
+`sql(rows)` 批量插入若含可空列，Bun 会对不同 null 组合各编译预编译语句，数据库端语句可能不断累积，极端情况推高内存。真实命中过的话，可在项目 issue 里搜 `Bun.SQL batch nullable` 确认当时是否已修复。批量写入的列含可空字段时，先小批量压测再上生产。
 
 ## FAQ：常见问题与错误排查
 
@@ -762,10 +850,10 @@ bun run src/index.ts
 
 **仓库链接**：https://github.com/oven-sh/bun
 **文档地址**：https://bun.sh/docs
-**当前版本**：bun-v1.3.14（2026-05-13）
+**版本**：以 [Bun 发布页](https://github.com/oven-sh/bun/releases) 为准
 
 ---
 
 ---
 
-_本文基于 Bun 1.3.14 及官方文档（bun.sh/docs）整理。API 名称、模块路径以 [Bun 官方文档](https://bun.sh/docs) 为准。_
+_本文基于 Bun 文档（bun.sh/docs）整理。API 名称、模块路径与版本以 [Bun 官方文档](https://bun.sh/docs) 为准。文中涉及的具体版本能力（如 Bun 1.2/1.3 新增的内置客户端）请以对应版本号查证。_

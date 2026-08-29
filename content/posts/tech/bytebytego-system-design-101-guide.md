@@ -3,7 +3,7 @@ title: "ByteByteGo system-design-101 资源地图：15 个主题、400 篇系统
 date: "2026-06-28T21:13:29+08:00"
 slug: "bytebytego-system-design-101-guide"
 github_repo: "ByteByteGoHq/system-design-101"
-description: "ByteByteGo 系统设计图解的开源索引：15 个主题、约 400 篇 guide 链接到 bytebytego.com，覆盖广度是主要价值。本文拆解仓库的数据驱动生成机制，给出按主题组织学习路径的方法，并标注这份资源地图的适用边界。"
+description: "ByteByteGo 系统设计图解的开源合集：15 个主题、400 篇图文 guide，正文文字在仓库内、配图托管在 CDN，README 由脚本生成目录。本文拆解仓库的数据驱动生成机制，给出按主题组织学习路径的方法，并标注这份资源的适用边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["面试", "技术写作", "系统设计"]
@@ -11,9 +11,9 @@ tags: ["面试", "技术写作", "系统设计"]
 
 # ByteByteGo system-design-101 资源地图
 
-[ByteByteGoHq/system-design-101](https://github.com/ByteByteGoHq/system-design-101) 不是一份教程，而是一张目录。它把 ByteByteGo 分布在官网上的数百篇系统设计图解，按主题整理成一份可检索的清单。截至 2026-06-28，仓库拥有 84.1k stars、9.3k forks，自 2023-09-18 创建以来经历了 100 多次提交。README 的主体是 15 个分类下约 400 个图解链接，每篇都跳到 [bytebytego.com/guides](https://bytebytego.com/guides)。真正的讲解内容在仓库之外，仓库只负责组织和索引。
+[ByteByteGoHq/system-design-101](https://github.com/ByteByteGoHq/system-design-101) 是一份可以读的系统设计图解合集。`data/guides/` 里存放 400 篇图文说明：正文文字在仓库内直接可读，配图托管在 CDN；README 由脚本生成，把 400 篇按 15 个分类整理成目录，每篇都同时指向 [bytebytego.com/guides](https://bytebytego.com/guides) 的在线版本。截至 2026-08-29，仓库拥有 87.7k stars、9.8k forks，自 2023-09-18 创建以来一共只有 25 次提交。分类与索引是它最常被用到的价值，但正文并不在仓库之外——只是每篇篇幅短，深度有限。
 
-读这份资源地图，价值不在仓库本身，而在于它回答了三个问题：系统设计有哪些主题、每个主题下有哪些图解、按什么顺序读。它是面试准备的主题地图，不是实现参考。
+把它当一张地图读，价值在于回答三个问题：系统设计有哪些主题、每个主题下有哪些图解、按什么顺序读。它是面试准备的主题地图，不是实现参考。
 
 ## 目录
 
@@ -28,23 +28,23 @@ tags: ["面试", "技术写作", "系统设计"]
 
 ## 仓库结构：数据驱动的清单生成器
 
-整个仓库只有几样东西：`data/categories/*.md`（15 个分类元数据）+ `data/guides/*.md`（约 400 篇 guide 的 frontmatter）+ `scripts/readme.ts`（拼装 README 的脚本）+ `.github/`（贡献指南和工作流）。源码不到 100 行，README 由脚本生成，不靠手动维护。
+仓库的构成很精简：`data/categories/*.md`（15 个分类元数据）+ `data/guides/*.md`（400 篇图文 guide，每篇含 frontmatter 和正文）+ `scripts/readme.ts`（拼装 README 的脚本，82 行）+ `.github/`（贡献指南和欢迎工作流）。README 由脚本生成，不靠手动维护。
 
 ```mermaid
 flowchart LR
     Cat["data/categories/<br/>15 个分类<br/>(sort + title)"] --> Gen[scripts/readme.ts<br/>tsx + gray-matter]
     Guides["data/guides/<br/>~400 篇<br/>(title, image, createdAt,<br/>categories, tags)"] --> Gen
-    Gen --> README["README.md<br/>400 行 TOC"]
+    Gen --> README["README.md<br/>(400 个条目的 TOC)"]
     Gen --> Site["bytebytego.com/guides<br/>(图片 CDN: assets.bytebytego.com)"]
-    PR["社区 PR<br/>(参考 guides repo)"] --> Cat
+    PR["社区 PR<br/>(新增/修正 guide)"] --> Cat
     PR --> Guides
 ```
 
 这张图对应三条设计主线，每条都回答一个"为什么"：
 
-- **数据与生成分离**——`data/` 目录是单一数据源，`scripts/readme.ts` 用 `gray-matter` 解析每个 `.md` 的 frontmatter，按 `sort` 字段排序生成 TOC。新增一篇 guide 只需在 `data/guides/` 加一个 markdown 文件，README 自动更新。仓库维护者不需要手动编辑那 400 行的 README，改数据就行，目录不会和内容脱节。
-- **图片托管在 CDN**——`data/guides/*.md` 的 `image` 字段指向 `https://assets.bytebytego.com/diagrams/0xxx-name.jpg`，仓库本身不存图片，体积保持在 50 MB 以内（GitHub API 显示 `size: 46759` KB）。图片跟着官网走，仓库更新内容时不需要改仓库里的二进制。
-- **贡献走 PR**——`.github/` 下的工作流和 `CONTRIBUTING.md` 引导贡献者把新图解发到上游的 bytebytego 私有仓库，再回流到 `data/` 目录。索引的增补有流程约束，避免出现"内容在别处、这里各写各的"的漂移。
+- **数据与生成分离**——`data/` 目录是单一数据源，`scripts/readme.ts` 用 `gray-matter` 解析每个 `.md` 的 frontmatter，分类按 `sort`、guide 按 `createdAt` 排序，拼出 TOC。新增一篇 guide 只需在 `data/guides/` 加一个 markdown 文件，README 自动更新。仓库维护者不需要手动编辑那 400 个条目的 README，改数据就行，目录不会和内容脱节。
+- **图片托管在 CDN**——`data/guides/*.md` 的 `image` 字段指向 `https://assets.bytebytego.com/diagrams/0xxx-name.jpg`，guide 的配图不存仓库，仓库体积保持在 50 MB 以内（GitHub API 显示 `size: 46759` KB）。图片跟着官网走，更新图解时不需要在仓库里改二进制。
+- **贡献走 PR**——`CONTRIBUTING.md` 约定贡献方式：每个 PR 聚焦单一主题，不要跨多个主题改动；发现图解错误时开 issue 而不是直接改图（源图在上游，由维护者修复后统一发布）；并明确禁止用 AI 工具生成内容。`.github/` 下的工作流只在首次贡献时自动发一条欢迎消息，提醒贡献者遵循指南。
 
 ## 15 个主题分类
 
@@ -82,14 +82,14 @@ flowchart TB
     Start --> Step1 --> Step2 --> Step3 --> Step4 --> Step5 --> Step6 --> Done
 ```
 
-这条路径里每一跳对应仓库的一个分类，每个分类下有 5–10 篇图解。仓库把所有可能的路径铺开，读者自己选。资源地图不替人选路，只告诉路口在哪。
+这条路径里每一跳对应仓库的一个分类，但分类规模并不均匀：API and Web Development 有 50 多篇，Database and Storage、Cloud & Distributed Systems 各 40 多篇，Technical Interviews 只有 5 篇。仓库把所有可能的路径铺开，读者自己选。资源地图不替人选路，只告诉路口在哪。
 
 ## 与同类资源的对比
 
 | 资源 | 内容深度 | 更新频率 | 与 ByteByteGo 的关系 |
 |---|---|---|---|
 | [donnemartin/system-design-primer](https://github.com/donnemartin/system-design-primer) | 中文翻译版广为流传，原版含较多文字总结和示例代码 | 偶发 PR，节奏慢 | 同属「系统设计面试」主题，但偏向文字 + 代码示例，ByteByteGo 偏向图解 |
-| ByteByteGo Books（[System Design Interview](https://bytebytego.com/books) 等 4 卷本） | 出版级深度，每章 15–30 页 | 1–2 年一次新版 | 仓库中的 Real World Case Studies、System Design Cheat Sheet 与书章节几乎一一对应 |
+| ByteByteGo Books（[System Design Interview](https://bytebytego.com) 系列，已出版多卷） | 出版级深度，章节成体系 | 纸质书出版后内容固定，出新版才更新 | 仓库中的 Real World Case Studies、System Design Cheat Sheet 与书章节几乎一一对应 |
 | ByteByteGo YouTube 频道 | 视频版图解，每周 1–2 期 | 持续更新 | README 中很多「Top N」「Comparison」类图解来自视频截图 |
 | [awesome-system-design](https://github.com/awesome-system-design/awesome-system-design) 等 awesome 列表 | 链接合集，无结构化分类 | 半停滞 | 仓库本身就是一个 awesome list，但只收录 ByteByteGo 的内容 |
 
@@ -97,7 +97,7 @@ flowchart TB
 
 ## 怎么用这份资源地图
 
-1. **先看 `Technical Interviews`** ——只有 5 篇，里头有 [How to Ace System Design Interviews](https://bytebytego.com/guides/how-to-ace-system-design-interviews-like-a-boss) 和 [Recommended Materials for Technical Interviews](https://bytebytego.com/guides/my-recommended-materials-for-cracking-your-next-technical-interviews)，相当于总入口。
+1. **先看 `Technical Interviews`** ——只有 5 篇，里头有 [How to Ace System Design Interviews](https://bytebytego.com/guides/how-to-ace-system-design-interviews-like-a-boss) 和 [Recommended Materials for Technical Interviews](https://bytebytego.com/guides/my-recommended-materials-for-cracking-your-next-technical-interview)，相当于总入口。
 2. **再按薄弱分类深入**——比如数据库弱就进 [Database and Storage](https://bytebytego.com/guides/database-and-storage) 一次刷完，从 [Types of Databases](https://bytebytego.com/guides/types-of-databases) 到 [8 Data Structures That Power Your Databases](https://bytebytego.com/guides/8-data-structures-that-power-your-databases) 串起来。
 3. **最后用 [Real World Case Studies](https://bytebytego.com/guides/real-world-case-studies) 做交叉验证**——同一类问题在 Netflix / Uber / Pinterest / Figma 的真实架构里怎么落地，能补足纯图解容易缺的真实工程权衡。
 
@@ -106,18 +106,18 @@ flowchart TB
 ## 适用边界
 
 - **适合**：准备系统设计面试、需要一份「主题地图」快速定位某个领域该读哪些图解、想把 ByteByteGo 系列的图解按主题组织成学习路径。
-- **不适合**：想通过读一个仓库学到分布式系统实现——这不是它的定位。没有代码示例、没有配置教程、没有命令行工具，所有内容都在 bytebytego.com 的付费区。
-- **时效性**：仓库最后 push 是 2025-04-04，之后主要靠外部数据刷新（`updated_at` 仍会变）。把它当作历史快照式资源地图，比持续更新的教程更准确。面试题分类是稳定的，图解链接可能失效，用到时以官网为准。
+- **不适合**：想通过读一个仓库学到分布式系统实现——这不是它的定位。没有代码示例、没有配置教程、没有命令行工具，每篇 guide 只是一张图解加几句说明，图文在仓库和官网都免费可读，但深度有限。要成体系的内容，得另买书籍或课程。
+- **时效性**：仓库最后 push 是 2025-04-04，之后没有新提交。把它当作一份历史快照：分类稳定、内容变动少，图解链接或细节需要确认时，以官网为准。
 
 ## 常见问题
 
-**Q：为什么 README 不直接在仓库里写内容，要跳转到官网？**
+**Q：为什么 README 里只放链接，不直接贴内容？**
 
-因为仓库定位是索引。ByteByteGo 的图解内容同时服务官网、书籍和视频，放一份在仓库里会造成三处不同步。仓库只维护 `data/` 元数据，内容统一在官网，链接不会因为内容更新而失效。
+因为 README 是脚本生成的目录，不是内容载体。内容在 `data/guides/` 里每篇一个 markdown 文件，正文可读、配图走 CDN；README 只负责把 400 篇按分类排成清单，方便扫读。每篇同时给出官网链接，是因为官网的在线版本排版更好、更新更快。
 
 **Q：想给仓库加一篇图解，流程是什么？**
 
-按 `CONTRIBUTING.md` 走：先在上游 bytebytego 私有仓库提供新图解，再通过 PR 在 `data/guides/` 加一个带 frontmatter 的 markdown 文件。加完后 `scripts/readme.ts` 自动把新条目排进 TOC，不需要手动改 README。
+按 `CONTRIBUTING.md` 走：PR 聚焦单一主题，不要跨多个主题改动；发现图解错误时开 issue，不要直接改图——源图在上游，由维护者修复后统一发布；明确禁止用 AI 生成内容。合入后 `scripts/readme.ts` 自动把新条目排进 TOC，不需要手动改 README。
 
 **Q：图片在仓库里搜不到，正常吗？**
 
@@ -125,11 +125,11 @@ flowchart TB
 
 **Q：仓库很久没更新，是不是没人维护了？**
 
-不是没人维护，是结构决定它不需要频繁 push。内容更新在上游仓库和官网，`data/` 只在有新增 guide 时变化，所以 commit 频率低不代表内容陈旧。判断内容新旧看官网 `updated_at` 比看 commit 更准。
+不是没人维护，是结构决定它不需要频繁 push。`data/` 只在有新增 guide 时变化，现有内容也很少改动，所以 commit 频率低不代表内容陈旧。判断内容新旧，看官网每篇标注的更新时间比看 commit 更直接。
 
 **Q：只看这个仓库能过系统设计面试吗？**
 
-不能。它只提供"该看什么"的目录，不提供"为什么这么设计"的深度。真正的准备需要配合 [System Design Interview 书籍](https://bytebytego.com/books) 或 system-design-primer 的完整文字解释，再用图解做速查。地图替代不了走路，但它能告诉你路在哪。
+不能。它提供的是入门级图文速览，不是"为什么这么设计"的深度。真正的准备需要配合 System Design Interview 系列书籍（Alex Xu 著）或 system-design-primer 的完整文字解释，再用图解做速查。地图替代不了走路，但它能告诉你路在哪。
 
 ## 读完自测
 
@@ -138,6 +138,6 @@ flowchart TB
 1. **这个仓库的三条设计主线分别解决什么问题？** 数据与生成分离、图片 CDN 托管、贡献走 PR，各自避免哪种维护上的坑？
 2. **15 个分类里，哪几个是面试高频、哪几个偏科普？** 你能说出 `Technical Interviews` 和 `Real World Case Studies` 定位的差别吗？
 3. **"从 URL 到渲染完成"这条路径串了哪些分类？** 换一个问题（比如"设计一个 URL shortener"），你会走哪几个分类？
-4. **为什么不推荐用这个仓库学系统设计实现？** 它的内容形态（链接到付费区、无代码示例）决定了它适合什么、不适合什么？
+4. **为什么不推荐用这个仓库学系统设计实现？** 它的内容形态（图解加简短说明、无代码示例）决定了它适合什么、不适合什么？
 
 答得上来，说明你把它当目录用对了；答不上来，回去看对应的章节。

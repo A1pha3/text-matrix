@@ -10,7 +10,7 @@ categories: ["技术笔记"]
 tags: ["Tailwind CSS", "CSS 工具类", "Rust", "PostCSS", "前端工程化", "oxide"]
 ---
 
-> **先给判断**：Tailwind v4 的实质变化不是"加几个 utility"，而是把 utility-first 框架从 PostCSS 流水线里整体剥出来，放进 Rust 多 crate workspace。JS 端只留 CLI、PostCSS 适配、Vite/Webpack/Turbopack 插件等"接口层"——核心扫描、生成、压缩全部在 `oxide` 与 `node` crate 里。这一步决定了 Tailwind 在 2025 年之后还能维持"工程规模下毫秒级编译"的成本结构。
+> **先给判断**：Tailwind v4 的实质变化不是「加几个 utility」，而是把 utility-first 框架从 PostCSS 流水线里整体剥出来，放进 Rust 多 crate workspace。JS 端只留 CLI、PostCSS 适配、Vite/Webpack/Turbopack 插件等「接口层」——核心扫描、生成、压缩全部在 `oxide` 与 `node` crate 里。这一步决定了 Tailwind 在 2025 年之后还能维持「工程规模下毫秒级编译」的成本结构。
 
 ## 1. 仓库身份与版本位置
 
@@ -31,9 +31,9 @@ crates/
 └── classification-macros/  # procedural macros（推测用于分类/属性派生）
 ```
 
-`oxide` 是 v4 的灵魂 crate，负责把"HTML/Vue/Svelte/Ruby/Markdown 等源文件"扫出 class 名，再编译为最终 CSS。`ignore` crate 让 oxide 直接复用 Git 的 ignore 规则做排除，2026-08-07 的 commit "Don't scan ignored folders using `.gitignore` safelist setup (#20397)" 就是这个 crate 的实际落地。
+`oxide` 是 v4 的灵魂 crate，负责把「HTML/Vue/Svelte/Ruby/Markdown 等源文件」扫出 class 名，再编译为最终 CSS。`ignore` crate 让 oxide 直接复用 Git 的 ignore 规则做排除，2026-08-07 的 commit "Don't scan ignored folders using `.gitignore` safelist setup (#20397)" 就是这个 crate 的实际落地。
 
-`node` crate 提供 NAPI 绑定，让 Node 端通过 `tailwindcss/node` 子包调到 Rust 代码。这一层把"PostCSS 时代的 JS 解析"换成"oxide 的 Rust 解析"，但仍然保留 PostCSS 兼容入口（见下节）。
+`node` crate 提供 NAPI 绑定，让 Node 端通过 `tailwindcss/node` 子包调到 Rust 代码。这一层把「PostCSS 时代的 JS 解析」换成「oxide 的 Rust 解析」，但仍然保留 PostCSS 兼容入口（见下节）。
 
 ## 3. packages/：JS 适配层
 
@@ -55,7 +55,7 @@ crates/
 
 **工具与升级**：`@tailwindcss-upgrade`（v3 → v4 迁移工具）、`internal-example-plugin`（自定义插件示例）。
 
-整套 JS 层没有任何"扫描源文件"的实现——所有路径最终都把请求交给 `@tailwindcss/node` → oxide。
+整套 JS 层没有任何「扫描源文件」的实现——所有路径最终都把请求交给 `@tailwindcss/node` → oxide。
 
 ## 4. v4 与 v3 的关键边界差异
 
@@ -73,12 +73,12 @@ crates/
 ## 5. 一个任务流案例：Vite 项目里的 Tailwind v4
 
 1. 用户安装 `@tailwindcss/vite` + `@tailwindcss/node`。
-2. Vite 插件 `@tailwindcss/vite` 接到 Vite 的构建钩子，把"扫描这些源文件 → 编译 → 注入 CSS"的请求转给 `@tailwindcss/node`。
+2. Vite 插件 `@tailwindcss/vite` 接到 Vite 的构建钩子，把「扫描这些源文件 → 编译 → 注入 CSS」的请求转给 `@tailwindcss/node`。
 3. `@tailwindcss/node` 通过 NAPI 调到 `crates/oxide`：oxide 用 `crates/ignore` 解析 `.gitignore`，扫所有源文件、抽出 class 名、编译成 CSS。
 4. oxide 把生成的 CSS 回传给 `@tailwindcss/node`，再由 `@tailwindcss/vite` 注入 Vite 的资源管线。
 5. 用户的 `app.css` 用 `@import "tailwindcss";` 与 `@theme { ... }` 完成 CSS-first 配置，PostCSS 入口由 `@tailwindcss/postcss` 兼容包兜底。
 
-整个链路里 JS 只在"边界层"出现：解析请求、把请求塞给 oxide、把结果塞回 Vite。中间那条 Rust 链路是 v4 真正的工程价值。
+整个链路里 JS 只在「边界层」出现：解析请求、把请求塞给 oxide、把结果塞回 Vite。中间那条 Rust 链路是 v4 真正的工程价值。
 
 ## 6. 自定义内容的接入点
 
@@ -87,7 +87,7 @@ crates/
 - `integrations/`：框架级集成测试（PostCSS / Vite / Webpack / Turbopack / CLI），不是用户扩展点。
 - `packages/internal-example-plugin/`：展示如何在 Tailwind 里注册自定义扫描规则、新 utility、新 variant。
 
-要新增"扫描我们公司内部的 `.tpl` 模板里的 class"，最干净的做法是仿 `internal-example-plugin` 写一个包，调用 `@tailwindcss/node` 暴露的扩展 API，再把它装进 Vite 插件链路。
+要新增「扫描我们公司内部的 `.tpl` 模板里的 class」的能力，最干净的做法是仿 `internal-example-plugin` 写一个包，调用 `@tailwindcss/node` 暴露的扩展 API，再把它装进 Vite 插件链路。
 
 ## 7. 性能边界与采用顺序
 
@@ -103,7 +103,17 @@ crates/
 - 团队刚接触 utility-first CSS，先把 v3 跑稳，v4 的 CSS-first 配置反而是额外认知负担。
 - 需要在浏览器里即时编译（`@tailwindcss/browser` 仍在，但体积敏感场景慎用）。
 
-## 8. 入口
+## 8. 从 v3 迁移到 v4
+
+仓库自带迁移工具 `@tailwindcss-upgrade`（见 §3 的「工具与升级」），它会自动改写大部分配置，但迁移后的检查不能省略。以下三个位置是 v3 → v4 最容易走形的地方：
+
+**配置位置搬迁**。v3 的 `tailwind.config.js` 在 v4 里大部分要落进 CSS：`theme.extend` 的取色、间距、字体应转成 `@theme { --color-*: …; --spacing-*: …; }`，`content` 数组转成 `@source` 指令。跑完迁移工具后，建议逐个核对 `@theme` 里是否保留了原配置里真正被用到的变量，而不是整段搬过来。
+
+**自定义插件的写法**。v3 里 `plugin(function({ addUtilities }) { … })` 的写法在 v4 仍可用兼容入口，但新增能力应优先用 CSS-first 的方式表达：`@utility` 定义自定义工具类，`@variant` 定义自定义变体。内部示例包 `internal-example-plugin` 就是这两者的现成范本。
+
+**验证迁移是否完成**。迁移不报错不等于迁移成功。合理的验收是三件事：跑一次生产构建，`diff` 迁移前后的 CSS 产物，确认没有出现样式丢失或意外新增的 utility；在页面里抽查几个高频 class（响应式断点、暗色模式）是否不受影响；确认构建耗时没有退回到 v3 量级——v4 的 Rust 内核如果被绕过了（比如还在走 PostCSS 兼容包的老路径），这一步会直接暴露出来。
+
+## 9. 入口
 
 ```text
 仓库：https://github.com/tailwindlabs/tailwindcss
@@ -118,4 +128,4 @@ crates/
 文档：https://tailwindcss.com（仓库 README 直接指向）
 ```
 
-读 Tailwind v4 的代码，先把 `crates/oxide` 当成"全部真相"，再回看 `packages/*` 是怎么把真相切给不同打包器的——这是它从 utility-first 框架演化成"工程化 CSS 编译器"的最关键设计选择。
+读 Tailwind v4 的代码，先把 `crates/oxide` 当成「全部真相」，再回看 `packages/*` 是怎么把真相切给不同打包器的——这是它从 utility-first 框架演化成「工程化 CSS 编译器」的最关键设计选择。

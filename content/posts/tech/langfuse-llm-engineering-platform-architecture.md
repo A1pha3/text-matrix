@@ -3,7 +3,7 @@ title: "Langfuse：把 LLM 调用变成可查询、可评分、可回放的对�
 date: "2026-04-23T14:00:00+08:00"
 slug: "langfuse-llm-engineering-platform-architecture"
 github_repo: "langfuse/langfuse"
-description: "Langfuse 是 MIT 许可的开源 LLM 工程平台。本文解析其双容器架构（Web + Worker）、存储层（PostgreSQL + ClickHouse + Redis + S3）、追踪数据模型、摄取流水线及与主流框架的对接，并给出按规模选型的建议。"
+description: "Langfuse 是 MIT 许可的开源 LLM 工程平台。本文解析其双容器架构（Web + Worker）、存储层（PostgreSQL + ClickHouse + Redis + S3）、追踪数据模型、摄取流水线及与主流框架的对接，梳理 v3 到 v4 的架构演进，并给出按规模选型的建议。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Langfuse", "ClickHouse", "PostgreSQL", "OpenTelemetry", "LangChain"]
@@ -60,7 +60,7 @@ Langfuse 的架构容易把几条并行机制混在一起看。拆开看其实�
 | Redis / Valkey | 队列 + 缓存 | BullMQ 事件队列；缓存 API Key 与 Prompt |
 | S3 / Blob | 对象存储 | 原始摄取事件、多模态附件、大文件导出 |
 
-两条执行线靠 Redis 队列解耦，这是 Langfuse 能扛吞吐的基础。它最初跑在 Vercel 和 Supabase 上，v1、v2 全部数据都在 PostgreSQL，能撑到每分钟数万事件；等头部用户把数据库 IOPS 打满、仪表盘聚合查询变慢之后，才在 2024 年 12 月的 v3 把追踪数据迁到 ClickHouse。2026 年 1 月，ClickHouse 公司收购了 Langfuse。
+两条执行线靠 Redis 队列解耦，这是 Langfuse 能扛吞吐的基础。它最初跑在 Vercel 和 Supabase 上，v1、v2 全部数据都在 PostgreSQL，能撑到每分钟数万事件；等头部用户把数据库 IOPS 打满、仪表盘聚合查询变慢之后，才在 2024 年 12 月的 v3 把追踪数据迁到 ClickHouse。2026 年 1 月，ClickHouse 公司收购了 Langfuse；2026 年 3 月，团队公开了 v4 的新数据模型——把观测数据收敛进一张宽表、基本不可变的 ClickHouse 表，消除读路径上的 join 与去重。v4 先在 Cloud 上验证，2026 年 6 月随 v4.0.0 正式发布并开放自托管迁移；v3 的维护期延续到 2027 年 1 月底。
 
 ## 三、数据模型：Trace 之下是 Observation
 
@@ -75,18 +75,20 @@ Trace（一次请求的顶级容器）
     └── Event（一个瞬时事件）
 ```
 
-差别在 Observed 的粒度：Generation 对应真实的模型往返，Span 是中间步骤，Event 是时间点标记。多步 Agent 的完整轨迹，就是靠这种嵌套结构还原出来的。
+差别在 Observation 的粒度：Generation 对应真实的模型往返，Span 是中间步骤，Event 是时间点标记。多步 Agent 的完整轨迹，就是靠这种嵌套结构还原出来的。
 
 **双库分工**：PostgreSQL 只存事务元数据（项目、Key、Prompt、数据集），Observation 的具体内容落在 ClickHouse。这套产品把观测数据放进列式库而不是行式库，是因为 agent 工作负载同时在写量、跟踪深度、分析读三个方向上压存储：单条 trace 可能嵌上千个 operation，行又重（输入输出常是几 MB 大字符串），而查询多是「按项目加时间的高基数组聚合」。列式存储只在投影被过滤到的列上做 IO，多 MB 的输入输出载荷留在磁盘，直到查询真正需要它。
+
+v3 到 v4 的演进把这一思路推到极致：v4 不再维护独立的 traces / observations 两张表，而是把所有观测行写进同一张宽表，并把 user、session、metadata 这类原本挂在 trace 上的属性复制到每一行。代价是写放大，换来的是读路径彻底免 join——任何一条查询都是单表扫描，这也是 ClickHouse 最擅长的形态。
 
 ## 四、一次用户消息如何穿过系统
 
 把抽象机制合起来看，最简单的路径是一次普通 LLM 调用的上报：
 
-1. 应用侧用 SDK 或封装好的一次调用，拼成一个地 Trace 事件。
+1. 应用侧用 SDK 或封装好的一次调用，拼成一个完整的 Trace 事件。
 2. 事件发到 `POST /api/public/ingestion`，Web 容器做鉴权和结构校验。
-3. Web 把事件推入 Redis / BullMQ 队列，立刻返回成功；应用主线程不被阻塞。
-4. Worker 从队列取出事件，写 ClickHouse（观测数据）与 PostgreSQL（必要的元数据），同时把原始事件落到 S3，供回放和重算。
+3. Web 把原始事件落到 S3，再把 S3 引用推入 Redis / BullMQ 队列，立刻返回成功；应用主线程不被阻塞。
+4. Worker 从队列取出引用、读取 S3 原始事件，写 ClickHouse（观测数据）与 PostgreSQL（必要的元数据），供回放和重算。
 5. 在 UI 里，同一批事件按 Trace 聚合展示，仪表盘跑的是 ClickHouse 上的聚合查询。
 
 关键点在第 3 步：响应与写入分离。上传方拿到 200 只代表「已收下并排队」，不代表「已落库」，真正写库发生在 Worker。这份解耦让 SDK 侧可以批量合并再上报，短生命周期应用在退出前需要显式 flush。
@@ -170,9 +172,11 @@ Prompt 每次修改生成新的不可变版本，历史版本可回滚；服务�
 
 - **写入**：Web 只负责鉴权和入队，Worker 批量消费后写 ClickHouse。ClickHouse 本就适合高吞吐批量插入，配合队列天然契合。
 - **查询**：追踪表按「项目 + 时间」排序、按月分区、对高频过滤列建跳数索引，任何查询都带项目和时间过滤，便于剪裁分区。
-- **API 契约**：v2 之后的 observations / metrics 接口要求时间过滤并用 token 分页。这不是随手加的规矩，而是为了让查询顺着 ClickHouse 的存储剪裁设计，而不是逆着它扫全表。
+- **API 契约**：observations / metrics 接口要求时间过滤并用 token 分页。这不是随手加的规矩，而是为了让查询顺着 ClickHouse 的存储剪裁设计，而不是逆着它扫全表。
 
 这是个容易被忽略的取舍：ClickHouse 快，但「无界时间查询」这类对行存很自然的请求在列存上是反模式。
+
+到 v4 这一步更彻底：摄取端废弃了按事件类型的 batch 端点（traces / generations / spans），统一走 OpenTelemetry 协议；读取端只剩 Observations / Metrics v2 这一类按存储剪裁的接口。也就是说，「顺着存储结构设计 API」从建议变成了强制。
 
 ## 七、评估：把「效果」变成可执行对象
 
@@ -232,6 +236,8 @@ Langfuse 核心代码是 MIT 许可、无用量上限，云端和自托管跑的
 
 可以用「是否需要回头看一次历史调用」当作判断信号：如果只是偶尔查日志，别急着上整套基建；如果每天都要复盘 Agent 的分支、改 Prompt 要对比前后效果，那么当一个可查询、可评分、可回放的调用对象，就值得。
 
+最后补一条时间线：v3 的安全补丁只维护到 2027 年 1 月底。现在才决定接入的团队，直接以 v4 起步（Python SDK v4 / JS SDK v5），没必要在 v3 上重复建设；存量自托管用户把迁移排上日程，升级指南给了两条路——后台自动回填历史数据，或保留双写直到数据保留期自然滚动过去。
+
 ## 参考链接
 
 - **GitHub**：https://github.com/langfuse/langfuse
@@ -241,3 +247,6 @@ Langfuse 核心代码是 MIT 许可、无用量上限，云端和自托管跑的
 - **Self-Hosting 指南**：https://langfuse.com/self-hosting
 - **OpenAI 集成（Python）**：https://langfuse.com/docs/openai
 - **Observability 入门**：https://langfuse.com/docs/observability/get-started
+- **v4 新数据模型（技术深度解析）**：https://langfuse.com/blog/2026-03-10-simplify-langfuse-for-scale
+- **v3 到 v4 迁移指南（自托管）**：https://langfuse.com/self-hosting/upgrade/upgrade-guides/upgrade-v3-to-v4
+- **ClickHouse 收购公告**：https://langfuse.com/blog/joining-clickhouse

@@ -74,20 +74,21 @@ Botan（官方仓库：[randombit/botan](https://github.com/randombit/botan)）�
 以下数据是本文撰写时的快照，数字会随时间变动：
 
 ```
-Stars:      约 3,300
-Forks:      约 650
+Stars:      3,308
+Forks:      659
 许可证:     BSD-2-Clause
-语言:       C++ 91.2%, Python 6.6%, C 1.9%
+语言:       C++ 约 90%, Python 约 7%, C 约 2%
+创建时间:   2013-03（GitHub API 2026-08-29 核验）
 ```
 
 ### 版本体系
 
 | 版本 | 状态 | 本文对应版本 | 说明 |
 |------|------|------------|------|
-| **Botan 3.x** | 活跃开发 | 3.11.0 | Botan 3 主线，本文示例均依据它 |
+| **Botan 3.x** | 活跃开发 | 3.13.0 | Botan 3 主线，本文示例均依据它 |
 | **Botan 2.x** | 已停止维护（EOL） | 2.19.5 | 已于 2024 年底停止维护 |
 
-Botan 3 采用季度发布节奏，通常在 2 月、5 月、8 月、11 月的第一个周二发版。新项目应直接使用 Botan 3；Botan 2 只适合维护存量代码。
+Botan 3 以季度为发布节奏，通常落在 2 月、5 月、8 月、11 月（3.13.0 于 2026-08-13 发布）。新项目应直接使用 Botan 3；Botan 2 只适合维护存量代码。
 
 ### 为什么选择 Botan
 
@@ -354,9 +355,14 @@ int main() {
 
 class PostQuantumPolicy : public Botan::TLS::Policy {
   public:
-    std::vector<std::string> allowed_key_exchange_methods() override {
-        // 经典曲线与 ML-KEM 混合，保证后量子前向保密
-        return { "ECDH_P256_MLKEM768", "ECDH_X25519_MLKEM768" };
+    std::vector<Botan::TLS::Group_Params> key_exchange_groups() const override {
+        // 经典曲线与 ML-KEM 混合组一起列出，保证后量子前向保密
+        return {
+            Botan::TLS::Group_Params::X25519,
+            Botan::TLS::Group_Params::SECP256R1,
+            Botan::TLS::Group_Params::HYBRID_X25519_ML_KEM_768,
+            Botan::TLS::Group_Params::HYBRID_SECP256R1_ML_KEM_768,
+        };
     }
 };
 ```
@@ -373,13 +379,13 @@ class PostQuantumPolicy : public Botan::TLS::Policy {
 // 生成密钥
 Botan::RSA_PrivateKey rsa_key(rng, 3072);
 
-// 签名（EMSA3 即 RSA-PSS，这里用 SHA-256）
-Botan::PK_Signer signer(rsa_key, rng, "EMSA3(SHA-256)");
+// 签名：PSS（旧名 EMSA4）是推荐填充；EMSA3 指更旧的 PKCS#1 v1.5
+Botan::PK_Signer signer(rsa_key, rng, "PSS(SHA-256)");
 signer.update(message);
 std::vector<uint8_t> signature = signer.signature();
 
 // 验签
-Botan::PK_Verifier verifier(rsa_key, "EMSA3(SHA-256)");
+Botan::PK_Verifier verifier(rsa_key, "PSS(SHA-256)");
 verifier.update(message);
 bool valid = verifier.check_signature(signature);
 ```
@@ -400,14 +406,14 @@ std::vector<uint8_t> ed_sig = ed_signer.signature();
 ```cpp
 #include <botan/ml_dsa.h>
 
-// ML-DSA-65，目标安全性大致对应 AES-192
-Botan::MLDSA_PrivateKey mldsa_key(rng, Botan::MLDSA::Mode::MLDSA_65);
+// ML_DSA_6x5 即 NIST 的 ML-DSA-65，目标安全性大致对应 AES-192
+Botan::ML_DSA_PrivateKey mldsa_key(rng, Botan::ML_DSA_Mode::ML_DSA_6x5);
 Botan::PK_Signer mldsa_signer(mldsa_key, rng, "Raw");
 mldsa_signer.update(message);
 std::vector<uint8_t> mldsa_sig = mldsa_signer.signature();
 ```
 
-注意：`PK_Signer` 的 EMSA 参数因算法而异（RSA 用 `EMSA3(...)`、Ed25519 用 `Pure`、ML-DSA 用 `Raw`）。拿不准时以官方 [pubkey 手册](https://botan.randombit.net/handbook/api_ref/pubkey.html) 为准。
+注意：`PK_Signer` 的填充参数因算法而异（RSA 用 `PSS(...)`，需要兼容旧协议时用 `PKCS1v15(...)`；Ed25519 用 `Pure`；ML-DSA 用 `Raw`）。拿不准时以官方 [pubkey 手册](https://botan.randombit.net/handbook/api_ref/pubkey.html) 为准。
 
 ### 对称加密
 
@@ -464,13 +470,13 @@ std::vector<uint8_t> hash512 = blake2b->final();
 
 auto& rng = Botan::system_rng();
 
-// Argon2id：family=2，M 是内存（KiB 为单位），t 是迭代次数，p 目前仅支持 1
+// Argon2id：y=2；参数顺序为 p、M（KiB）、t、y
 std::string hash = Botan::argon2_generate_pwhash(
     password.data(), password.size(),
     rng,
-    /*p*/ 1,
+    /*p*/ 1,           // 并行度，Argon2id 官方建议 1
     /*M*/ 64 * 1024,   // 64 MiB 内存
-    /*t*/ 3,           // 三次 pass
+    /*t*/ 1,           // pass 次数，Argon2id 官方建议 1
     /*y*/ 2,           // Argon2id
     /*salt_len*/ 16,
     /*output_len*/ 32);
@@ -574,7 +580,7 @@ print(sha256.final().hex())
 # AES-256-GCM 认证加密
 key = RandomNumberGenerator().get(32)       # 256-bit 密钥
 nonce = RandomNumberGenerator().get(12)     # 96-bit nonce（GCM 默认）
-cipher = SymmetricCipher("AES-256/GCM")
+cipher = SymmetricCipher("AES-256/GCM", encrypt=True)
 cipher.set_key(key)
 cipher.start(nonce)
 ct = cipher.finish(b"secret message")        # 密文（含认证标签）
@@ -590,7 +596,7 @@ Botan 提供基于 FFI 的 C 绑定（`botan/ffi.h`，即头文件 `botan.h`）�
 #include <botan/ffi.h>
 
 botan_pubkey_t pubkey;
-botan_load_pubkey(&pubkey, "key.pem");
+botan_pubkey_load_file(&pubkey, "key.pem");   // 从 PEM/DER 文件加载公钥
 
 botan_hash_t hash;
 botan_hash_init(&hash, "SHA-256", 0);
@@ -606,10 +612,12 @@ Botan 自带 CLI（需要在构建时启用），覆盖哈希、加密、随机�
 
 ```bash
 botan hash --algo=SHA-256 data.txt
-botan encrypt --algo=AES-256/GCM ... # 详见 botan encrypt --help
-botan rng --bytes=32
-botan keygen --algo=RSA --bits=3072
-botan verify server.pem --ca-certs ca.pem --hostname example.com
+botan cipher --cipher=AES-256/GCM --key=<hex-key> --nonce=<hex-nonce> data.bin      # 加密
+botan cipher --decrypt --cipher=AES-256/GCM --key=<hex-key> --nonce=<hex-nonce> data.bin.enc
+botan keygen --algo=RSA --params=3072        # RSA 位长走 --params（默认 3072）
+botan sign --hash=SHA-256 key.pem data.txt   # RSA 默认用 PSS 填充
+botan verify --hash=SHA-256 pubkey.pem data.txt signature.bin
+botan cert_verify server.pem ca.pem          # 校验证书链
 ```
 
 各子命令的参数随版本可能微调，具体以 `botan --help` 和对应子命令的 `--help` 为准。
@@ -709,18 +717,22 @@ Botan::ECDSA_PrivateKey ecdsa_key(rng, secp256r1);
 
 class SecurePolicy : public Botan::TLS::Policy {
   public:
-    std::vector<std::string> allowed_tls13_ciphersuites() const override {
-        return { "AES-256-GCM", "ChaCha20Poly1305" };
+    // TLS 1.2 / 1.3 共用的 cipher 名（注意用斜杠，不是连字符）
+    std::vector<std::string> allowed_ciphers() const override {
+        return { "AES-256/GCM", "ChaCha20Poly1305" };
     }
-    std::vector<std::string> allowed_key_exchange_methods() const override {
-        return { "ECDH_X25519", "ECDH_P256",
-                 "ECDH_X25519_MLKEM768", "ECDH_P256_MLKEM768" }; // 后量子混合
+    // 曲线与后量子混合组由 key_exchange_groups() 控制
+    std::vector<Botan::TLS::Group_Params> key_exchange_groups() const override {
+        return {
+            Botan::TLS::Group_Params::X25519,
+            Botan::TLS::Group_Params::HYBRID_X25519_ML_KEM_768, // 后量子混合
+        };
     }
     bool allow_tls12() const override { return false; }
 };
 ```
 
-注意 TLS 1.3 的套件是按字符串（如 `AES-256-GCM`）在 `allowed_tls13_ciphersuites()` 里配置的；TLS 1.2 走 `allowed_ciphersuites()` 返回 RFC 密码套件编号，两套接口不要混用。
+注意：cipher 名（如 `AES-256/GCM`）是 TLS 1.2 与 1.3 共用的字符串，统一在 `allowed_ciphers()` 里配置；曲线与后量子混合组则走 `key_exchange_groups()`。TLS 1.2 若要更细粒度，再叠加 `allowed_macs()` 与 `allowed_key_exchange_methods()`，或用 `ciphersuite_list()` 全量定制。
 
 ### 密码学参数选择
 
@@ -870,8 +882,11 @@ sudo ldconfig
 
 class PostQuantumPolicy : public Botan::TLS::Policy {
   public:
-    std::vector<std::string> allowed_key_exchange_methods() override {
-        return { "ECDH_P256_MLKEM768", "ECDH_X25519_MLKEM768" };
+    std::vector<Botan::TLS::Group_Params> key_exchange_groups() const override {
+        return {
+            Botan::TLS::Group_Params::X25519,
+            Botan::TLS::Group_Params::HYBRID_X25519_ML_KEM_768,
+        };
     }
     bool allow_tls12() const override { return false; }
 };
@@ -920,4 +935,4 @@ Botan 是覆盖面很全的 C++ 密码学库，BSD-2 许可证让商业闭源使
 - 安全页面：https://botan.randombit.net/security.html
 - 发行说明：https://botan.randombit.net/news.html
 
-*本文撰写于 2026-03-31，示例均基于 Botan 3.11.0。*
+*本文修订于 2026-08-29，示例均基于 Botan 3.13.0；仓库数据经 GitHub API 核验。*

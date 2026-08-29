@@ -1,13 +1,13 @@
-+++
-github_repo = "thananon/9arm-skills"
-date = '2026-05-21T11:50:00+08:00'
-draft = false
-title = '9arm-skills：让 AI 编程助手按流程干活的合约式 Skills'
-slug = '9arm-skills-claude-code-agent-skills-guide'
-description = '9arm-skills 是一组可执行的合约式 Skills，把调试、复盘、审查、向上沟通写成 AI 必须遵守的触发时机、执行顺序与退出条件，让编程助手在证据不足时停下来而不是硬凑答案。'
-categories = ['技术笔记']
-tags = ['Claude', 'Skills', '开发工具']
-+++
+---
+github_repo: "thananon/9arm-skills"
+date: '2026-05-21T11:50:00+08:00'
+draft: false
+title: "9arm-skills：让 AI 编程助手按流程干活的合约式 Skills"
+slug: "9arm-skills-claude-code-agent-skills-guide"
+description: "9arm-skills 是一组可执行的合约式 Skills，把调试、复盘、审查、向上沟通写成 AI 必须遵守的触发时机、执行顺序与退出条件，让编程助手在证据不足时停下来而不是硬凑答案"
+categories: ["技术笔记"]
+tags: ["Claude", "Skills", "开发工具"]
+---
 
 # 9arm-skills：让 AI 编程助手按流程干活的合约式 Skills
 
@@ -21,9 +21,9 @@ AI 助手说：「建议把这段逻辑抽成一个独立函数，提高复用�
 
 再把场景放大一点。你刚修了一个折磨两天的 bug，想让 AI 帮你写复盘文档。它洋洋洒洒给你三段话，看起来结构完整，但仔细一读：没有复现步骤，没有根因追溯链，没有验证方案——写的是一篇「叙事散文」，不是一份工程师之间传递判断的工程记录。
 
-通用模型默认给「最可能有帮助的回答」，但工程流程需要它在证据不足时拒绝回答。9arm-skills（GitHub: [thananon/9arm-skills](https://github.com/thananon/9arm-skills)，截至 2026-08 约 3.1k Stars）把「拒绝条件」写进了技能的触发逻辑里。
+通用模型默认给「最可能有帮助的回答」，但工程流程需要它在证据不足时拒绝回答。9arm-skills（GitHub: [thananon/9arm-skills](https://github.com/thananon/9arm-skills)，截至 2026 年 6 月约 960 Stars）把「拒绝条件」写进了技能的触发逻辑里。
 
-仓库底层是 `skills/` 目录，按 `engineering/`、`productivity/`、`misc/`、`personal/`、`in-progress/`、`deprecated/` 分组，目前共 6 个技能。本文只拆其中最需要纪律保障的 4 个——`debug-mantra`、`post-mortem`、`scrutinize`、`management-talk`；另外两个（`qwen-agent` 把琐碎任务委托给便宜的 Qwen 子代理、`qwenchance` 管理长任务的上下文预算）不在本文范围。
+仓库底层是 `skills/` 目录，技能按 bucket 分组。截至撰写时的快照，实际只有三个 bucket——`engineering/`、`productivity/`、`misc/`（`misc` 暂空），共 6 个技能；README 里规划的 `personal/`、`in-progress/`、`deprecated/` 尚未落地。本文只拆其中最需要纪律保障的 4 个——`debug-mantra`、`post-mortem`、`scrutinize`、`management-talk`；另外两个（`qwen-agent` 把琐碎任务委托给便宜的 Qwen 子代理、`qwenchance` 管理长任务的上下文预算）不在本文范围。
 
 ## 二、一张图看懂四技能的分工
 
@@ -309,14 +309,14 @@ AI 一直在变聪明，但你不想它在你还没确认根因时就替你写�
 
 ### 实验空间与发布门槛分治
 
-9arm-skills 的目录分层本身是一套治理模型：
+9arm-skills 的 bucket 划分是一套治理模型的雏形。作者在 README 里把它规划成两组：对外可暴露的（`engineering/`、`productivity/`、`misc/`）、不对外暴露的（`personal/`、`in-progress/`、`deprecated/`）：
 
-- `engineering/`、`productivity/`、`misc/` —— 对外暴露的技能，必须同时在 README 和 `plugin.json` 里有入口
-- `personal/` —— 跟个人配置绑定，不出现在公开索引中
-- `in-progress/` —— 草稿空间，可以试错但不影响可用技能列表
-- `deprecated/` —— 正式退出通道，不跟活跃技能混在一起
+- `engineering/`、`productivity/`、`misc/` —— 对外暴露的技能，要进 README 的引用清单，AI 才有入口
+- `personal/` —— 规划中跟个人配置绑定，不出现在公开索引
+- `in-progress/` —— 规划中的草稿空间，试错但不影响可用技能列表
+- `deprecated/` —— 规划中的退出通道，不跟活跃技能混在一起
 
-软链接安装脚本（`link-skills.sh`）只链接 shippable 目录下的技能，`deprecated/`、`in-progress/`、`personal/` 全部跳过。草稿不会污染可用技能列表，废弃有正式的退出通道——你可以放心在 `in-progress/` 里试探新流程，而不必担心它被 AI 意外触发。
+需要说清楚的是：目前仓库实际只落了前三个（`misc` 暂空），后三个是 README 里写下的既定规划，还没有实体目录。软链接安装脚本（`link-skills.sh`）按 README 的定位只链可对外暴露的技能——这套「草稿不入列、废弃有出口」的分层，才是你自己搭技能库时真正值得抄的设计。
 
 > 上述目录结构基于撰写时的仓库快照，技能增减与归类以仓库 README 当前版本为准。
 
@@ -350,6 +350,8 @@ AI 一直在变聪明，但你不想它在你还没确认根因时就替你写�
 ## 七、局限性
 
 9arm-skills 本身有明确的适用范围。
+
+**仓库近乎个人作品**。截至撰写时的快照，仓库只有 4 次提交、技能全部是 Shell 脚本，代码贡献者除作者 Thananon（Arm）外，还有 `claude` 与 `narze`（Manassarn「Noom」Manoonchai）。它本质上是一套「把一两个人的工程纪律固化成技能」的范本，不是开箱即用的成品库——拿来当骨架改写可以，原样照单全收不建议。
 
 **技能质量绑定作者经验**。`debug-mantra` 的四步口诀是作者自己在工程实践中验证过的调试方法论。如果你的团队的调试习惯不同——比如你们靠 bisect 定位而非调试器——那这个技能就需要改写，而不是照搬。
 
@@ -385,4 +387,4 @@ AI 一直在变聪明，但你不想它在你还没确认根因时就替你写�
 
 4. **未覆盖话题**：本文不讨论 Claude Code 的安装配置、其他 AI 编程助手（Cursor、GitHub Copilot 等）的对比评测、多模态编程等话题。
 
-5. **版本与时效性**：本文基于 2026 年 5 月的仓库快照撰写，Stars 数据按 2026-08 的 GitHub API 校准。9arm-skills 仍在持续迭代，后续新增技能或调整以仓库最新版本为准。
+5. **版本与时效性**：本文基于 2026 年 6 月中旬的仓库快照撰写（`qwen-agent`、`qwenchance` 于 2026-06-15 并入后共 6 技能）。Stars 数字引自公开转载时点的约 960，无法保证实时精确。9arm-skills 仍在持续迭代，后续新增技能或调整以仓库最新版本为准。
