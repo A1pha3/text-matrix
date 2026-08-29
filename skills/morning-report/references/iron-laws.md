@@ -11,7 +11,7 @@
 | 编号 | 触发日期 | 铁律内容 | 来源飞书 |
 |------|---------|---------|----------|
 | 6-9 | 2026-06-09 | 隐私铁律：早报正文严禁暴露 CDP/PID/JSON 路径等采集实现细节 | om_x100b6b... |
-| 6-10 | 2026-06-10 | 早报自动 push + verify gate：AI 验证通过即可 push，不等师父确认 | om_x100b6b... |
+| 6-10 | 2026-08-29 | 生成禁 git + 发布归 reconcile：agent 只写文件+verify，publish(gh api PUT)/verify 线上/投递全归 morning-fix.sh（2026-06-10 原版"AI 自动 push"经 8-28 事故废弃） | om_x100b6b... |
 | 6-19 | 2026-06-19 | Web3 早报事件级去重：采集后必须先跑 dedup.sh 剔除严重复用 URL | om_x100b6c7e... |
 | 6-30 | 2026-06-30 | pre-commit 钩子激活（双层防御，仓库级 .git/config 已生效） | om_x100b6b03... |
 | 7-06 | 2026-07-06 | quota-guard Step 0：连续错误 > 2 自动跳过本 run | om_x100b6b86... |
@@ -39,22 +39,22 @@
 
 ---
 
-## ⚠️ 6-10 自动 push + 投递归 reconcile 铁律（永久，2026-08-02 方向1：单一投递路径）
+## ⚠️ 6-10 生成禁 git + 发布投递全归 reconcile 铁律（永久，2026-08-29 重写；原版 2026-06-10 / 修订 2026-08-02）
 
-> **verify 通过 = 早报价值已生成。git push best-effort（失败告警不挂任务，根治 commit/push 竞态误判）。飞书正文投递由 `早报自动收口` reconcile cron 统一负责——agent 不自投递正文。**
+> **verify 通过 = 早报价值已生成，agent 到此为止。严禁 agent 执行任何 git 命令（add/commit/push 一律禁止）——发布（gh api PUT）、线上验证（HTTP 200+标题）、飞书投递全部由 `morning-fix.sh` reconcile（7e6c42fe）唯一收口。**
 
-**为什么投递归 reconcile 而非 agent**（2026-08-02 对抗审查第四轮发现）：
-- 曾尝试"agent verify 通过即自投递正文"（②），但与 reconcile 补投**功能重叠且冲突**——agent 自投递不更新 morning-fix state → reconcile 30min 后又投一次 → **用户收两份正文**（状态分裂）。
-- reconcile 是确定性 bash，比 LLM agent 可靠执行投递；单一投递路径消除分裂；早报非实时，30min 内送达可接受。
-- 故**投递正文唯一路径 = reconcile cron**（检测"文件在 + state.delivered=false" → 补投 → 更新 state），agent 只负责"生成 + push"。
+**为什么连 push 也拿走**（2026-08-28 事故复盘）：
+- 8-28 Web3 早报：生成 ok、飞书投递 ok、cron 状态 ok——四道绿灯，但线上缺文 5 小时。根因：MiniMax 生成会话执行"自动 push"无声失败，**无人监控 push 这一环**。
+- 8-02 版"push best-effort（失败告警不挂任务）"把 push 定义为可失败项——best-effort = 没人兜底。
+- LLM 的自觉不可作为系统承重墙：发布是声明式操作（gh api PUT contents，幂等 API 契约），必须由确定性代码执行。
+- reconcile 收口后单一 writer，无 commit/push 竞态，无"谁该推没推"的悬念。
 
-**实施**：
-1. ✅ `bash scripts/morning-news-verify.sh <目标文件绝对路径>` exit 0 才继续
-2. ✅ exit 0 → git push origin main（**best-effort**：失败发飞书告警，但任务不因此 error）
-3. ✅ git push 后核对 `gh run list --limit 1`（失败仅告警）
-4. ✅ exit ≠ 0 → 飞书告警（失败原因+文件路径）→ 不 push，等处理
-5. ✅ agent 最终回复 = 简短汇报（供框架 post-delivery 作"任务完成"信号；**正文不在此发**）
-6. ✅ **飞书正文投递 = `早报自动收口` reconcile cron（7e6c42fe，每30min）自动检测补投**，agent 不自投递（防重复）
+**实施**（agent 侧）：
+1. ✅ 生成文件到目标路径（仅写文件，**禁止任何 git 命令**）
+2. ✅ `bash scripts/morning-news-verify.sh <目标文件绝对路径>` exit 0 才算完成
+3. ✅ exit ≠ 0 → 飞书告警（失败原因+文件路径）→ 停
+4. ✅ agent 最终回复 = 简短汇报（完成信号；正文/发布均不在此做）
+5. ✅ 发布+线上验证+飞书投递 = `morning-fix.sh reconcile`（每30min）自动收口：publish(gh api PUT) → verify(HTTP 200+标题断言) → deliver(飞书)；任一失败必告警，无静默路径
 
 **工具强制**：verify.sh 包含 4 项检查：
 - date ≤ now（不是未来时间）
@@ -62,7 +62,7 @@
 - 链接 200 验证（User-Agent 模拟真浏览器，最多 50 条 / 8 条失败容忍）
 - 新闻条数 ≥ 6
 
-**记忆来源**：2026-06-10 14:33 师父裁决（自动 push）；2026-08-02 对抗审查（push best-effort 治竞态 + 投递归 reconcile 单一路径；曾试 agent 自投递②因与 reconcile 冲突→用户收两份正文→回退）
+**记忆来源**：2026-06-10 14:33 师父裁决（自动 push）；2026-08-02 对抗审查（push best-effort + 投递归 reconcile）；2026-08-28 事故（四绿灯线上空→best-effort 无兜底）+ 8-29 师父拍板 v4（gh api PUT 引擎、生成禁 git、verified 终态、失败必报）
 
 ---
 
@@ -147,15 +147,14 @@ Chrome CDP 采集 <SOURCE_LIST>，逐条打开原文验证。
 
 # Step 3: 铁律检查（外部引用）
 ⚠️ 铁律铁门：详见 skills/morning-report/references/iron-laws.md
-   - 6-9 隐私铁律 + 6-10 自动 push + 6-19 Web3 去重（如适用） + 6-30 pre-commit（仓库级已激活）
+   - 6-9 隐私铁律 + 6-10 生成禁 git（发布/投递归 reconcile） + 6-19 Web3 去重（如适用）
 
-# Step 4: push（best-effort，2026-08-02 方向1；正文投递归 reconcile，不在此发）
-1. bash scripts/morning-news-verify.sh <目标文件绝对路径>，exit 0 才继续
-2. exit 0 → git push origin main（best-effort，失败告警不挂任务）
-3. git push 后核对 gh run list --limit 1（失败仅告警）
-4. exit ≠ 0 → 飞书告警 → 不 push
+# Step 4: 本地 verify（不 push！2026-08-29 6-10 重写：发布归 reconcile）
+1. bash scripts/morning-news-verify.sh <目标文件绝对路径>，exit 0 才算完成
+2. exit ≠ 0 → 飞书告警 → 停
+3. ⛔ 禁止 git add/commit/push 任何 git 写命令——发布(gh api PUT)+线上验证+飞书投递由 morning-fix.sh reconcile 统一收口
 
-# Step 5: agent 最终回复 = 简短汇报（供框架 post-delivery 作完成信号；正文由 reconcile cron 投，agent 不自投递防重复）
+# Step 5: agent 最终回复 = 简短汇报（供框架 post-delivery 作完成信号；发布与正文均由 reconcile cron 处理）
 ```
 
 ---
