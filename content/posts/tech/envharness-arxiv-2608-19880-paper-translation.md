@@ -282,7 +282,7 @@ class _Contract(Contract):
 - 论文：Huang et al., 2026, "EnvHarness: Awakening Static Worlds for Agent Learning", [arXiv 2608.19880](https://arxiv.org/abs/2608.19880)
 - 仓库：[github.com/google-research/envharness](https://github.com/google-research/envharness)
 - 项目页：[envharness.com](https://envharness.com/)
-- 同源仓库版反写：8-23 我写过一篇 [EnvHarness：给静态环境装一层可编程壳，让 agent 训练场自己长](https://txtmix.com/posts/tech/google-research-envharness/)——本文是其论文版，新增方法论 + 实验数字 + RL + 跨模型泛化 + Chain 价值 + 跨域软件工程实现。
+- 同源仓库版反写：8-23 曾写过一篇仓库反写稿《EnvHarness：给静态环境装一层可编程壳，让 agent 训练场自己长》（未单独发布）——本文是其论文版，新增方法论 + 实验数字 + RL + 跨模型泛化 + Chain 价值 + 跨域软件工程实现。
 
 ---
 
