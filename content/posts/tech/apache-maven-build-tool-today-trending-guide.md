@@ -1,7 +1,7 @@
 ---
 title: "Apache Maven 4：打破 POM 冻结的 20 年最大一次大版本"
 date: "2026-07-03T20:57:00+08:00"
-lastmod: "2026-08-20T00:00:00+08:00"
+lastmod: "2026-08-30T00:00:00+08:00"
 draft: false
 slug: "apache-maven-build-tool-today-trending-guide"
 description: "Maven 4 的第一个判断：它真正解决的不是构建速度，而是 POM 模型 4.0.0 被冻结近二十年、无法演进的问题。本文拆解 consumer POM、模型 4.1.0、subprojects、生命周期改树结构、mvnup 迁移工具，以及当前 RC 阶段的采用边界。"
@@ -12,7 +12,7 @@ author: "text-matrix"
 
 Maven 4 的贡献不在快，而在格式。`pom.xml` 的模型版本 4.0.0 自 2005 年 Maven 2 引入以来用到了今天，近二十年没有动过。Maven 团队想改 schema 都改不动，因为整个 Java 生态——Maven Central、IDE、其他构建工具——都绑死在它上面。Maven 4 是第一次真正打破这层冻结的大版本，方法是不动消费者看到的 POM，只在构建侧放开。
 
-截至 2026 年 8 月，Maven 4.0.0 尚未发布正式版，最新候选版是 4.0.0-rc-6（2026-08-04）。本文基于官方发布说明和文档，拆解 4.x 主线到底改了什么、和 Maven 3 的边界在哪、现在能不能用。
+截至 2026 年 8 月，Maven 4.0.0 尚未发布正式版，最新候选版是 4.0.0-rc-6（2026-07-28）。同一份候选版还引入了 Maven Resolver 2.0.x 的依赖解析内核。本文基于官方发布说明和文档，拆解 4.x 主线到底改了什么、和 Maven 3 的边界在哪、现在能不能用。文中所有数字与引用均以官方 "What's new in Maven 4"、迁移指南和升级工具文档为准。
 
 ## 目录
 
@@ -159,16 +159,31 @@ mvnup check
 mvnup apply
 ```
 
-工具覆盖插件版本升级、POM 结构调整、被废弃属性的替换等常见问题。
+工具覆盖插件版本升级、POM 结构调整、被废弃属性的替换等常见问题。关键在它默认只把模型升级到 **4.0.0**——这一步产物仍能被 Maven 3 构建，属于纯兼容修复；只有显式指定目标模型 `4.1.0`，才会引入仅 Maven 4 支持的特性：
 
-### 7.3 插件兼容性
+```bash
+# 默认目标 4.0.0，保持 Maven 3 兼容
+mvnup check
+mvnup apply
+
+# 显式指定目标 4.1.0，启用新模型特性
+mvnup apply --model-version 4.1.0
+```
+
+这样三条主线可以按迁移意愿分步落地：先 `apply` 到 4.0.0 保证可回退，等确认无误后再单独把模型推到 4.1.0。
+
+### 7.3 插件兼容性与依赖解析内核
 
 Maven 4 优先保证与 Maven 3 的兼容，但部分插件和扩展需要特定版本才能配合。以 4.0.0-rc-6 官方已知问题为例：Tycho 5.0 以下、Quarkus 3.20 以下与 Maven 4 的依赖注入机制不兼容；`pgpverify-maven-plugin` 1.20 以下会抛 `ClassCastException`；`maven-shade-plugin` 的 `dependency-reduced-pom.xml` 可能触发 parent cycle 报错。依赖 Maven extensions 的项目可能要等扩展作者适配，官方建议直接联系扩展维护者确认计划。
+
+依赖解析层面，Maven 4 从 Resolver 1.x 换到了 Resolver 2.0.x。两者在 API 上不向后兼容，第三方依赖解析相关的扩展同样需要对应升级。
 
 两个明确的破坏性变化值得注意：
 
 - **install / deploy 移到构建末尾**：不再按模块逐个安装，而是整次构建结束后统一执行（rc-4 起）。
 - **部分目录属性被替换**：`${project.basedir}` 等引用方式有调整，迁移文档列了替换清单。
+
+还有一个隐形但重要的边界：**消费者侧的 consumer POM 并不总是能降级到 4.0.0**。对 POM 打包的父项目，Maven 4 默认会在 consumer POM 里保留 `<parent>` 引用和部分 4.1.0 特性，导致其 modelVersion 仍停留在 4.1.0（官方 issue #11772，JLine 4.0.0 已在 Central 实测触发）。这意味着用模型 4.1.0 的父 POM 发布出来的构件，可能无法被 Maven 3 或 Gradle 直接消费。判断是否启用 4.1.0 时，要把"下游是否只有 Maven 4"一并考虑进去。
 
 ## 八、一个具体案例：库作者迁移到 Maven 4
 
@@ -293,7 +308,7 @@ mvnup apply               # 自动修复已知问题
    先在同一台机器实测 Maven 3.9.16 与 Maven 4 RC 的差异，再评估 `maven-build-cache-extension`（要求 Maven 3.9.0+）。不要根据无出处的性能数字做决定。
 
 5. **消费者收到新格式 POM 会不会出问题？**
-   不会。发布到仓库的 consumer POM 仍是模型 4.0.0，依赖解析结果与 Maven 3 兼容。扁平化功能默认关闭，只有显式开启才改变发布内容。
+   发布到仓库的 consumer POM 默认仍是模型 4.0.0，扁平的子构件正常构建即可被 Maven 3 / Gradle 解析。**但存在例外**：POM 打包的父项目（`packaging=pom`）的 consumer POM 可能停在 4.1.0（官方 issue #11772），进而影响引用它的 Maven 3 / Gradle 消费方。公开多模块库启用 4.1.0 前，要把下游工具的兼容性一并评估。
 
 6. **用了 Maven 4 还能换回 Maven 3 吗？**
    只改到模型 4.0.0、未启用新特性时，项目可双向切换。一旦升级到 4.1.0 模型并用上 `root="true"`、`<subprojects>` 等新元素，换回 Maven 3 需要回退这些改动。
