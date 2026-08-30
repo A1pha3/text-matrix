@@ -1,11 +1,11 @@
 ---
 title: "EnvHarness 论文解读：给冻结环境装一层可编程壳，让 agent 训练场自己长——arXiv 2608.19880"
-date: 2026-08-25T01:10:00+08:00
-draft: true
+date: 2026-08-30T10:47:00+08:00
+draft: false
 tags: ["AI Agent", "Environment Generation", "Harness", "Co-Evolution", "Google Research", "Paper Translation", "Reinforcement Learning"]
 categories: ["技术笔记"]
 description: "Google Cloud AI Research 与 Wustl 联合发布 arXiv 2608.19880，提出 EnvHarness 与 EnvRigger 双件套：给冻结环境套一层 Stage/Contract/Chain 可编程壳，用黑盒 rollout 诊断 policy 弱点并自动合成针对性训练信号；4 领域 5 基准最高 +9.0 分（ALFWorld OOD）、执行步数减少 9.8%、跨 4 个 LLM 全模型家族泛化，且能为 GRPO 提供独立 RL 信号。"
-slug : envharness-arxiv-2608-19880
+slug: envharness-arxiv-2608-19880
 github_repo: "google-research/envharness"
 source_key: "gh:google-research/envharness"
 ---
