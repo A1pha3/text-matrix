@@ -1,7 +1,7 @@
 ---
 title: "Agent Browser：面向 AI Agent 的原生浏览器自动化 CLI 指南"
 date: "2026-04-12T11:40:00+08:00"
-lastmod: 2026-08-08T00:00:00+08:00
+lastmod: 2026-08-30T00:00:00+08:00
 slug: agent-browser-vercel-ai-browser-automation-guide
 github_repo: "vercel-labs/agent-browser"
 summary: "本文基于官方 README 与 CLI 帮助信息，讲清 Agent Browser 的安装方法、snapshot + ref 工作流、会话与认证管理、安全控制、调试观测与 Agent 集成边界。"
@@ -60,9 +60,11 @@ tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
 
 ### 1.1 它是什么
 
-`agent-browser` 是一个用 Rust 编写的浏览器自动化 CLI（命令行接口），面向 Agent 工作流设计。命令行是它的统一入口：终端里连续执行 `open`、`snapshot`、`click`、`fill`、`wait`、`get` 等命令，浏览器状态由后台进程持续复用。
+`agent-browser` 是一个用 Rust 编写的浏览器自动化 CLI（命令行接口），面向 Agent 工作流设计。命令行是它的统一入口：终端里连续执行 `open`、`snapshot`、`click`、`fill`、`wait`、`get` 等命令，浏览器状态由后台 daemon 进程持续复用。
 
-AI Agent 任务往往不需要先搭测试项目，也不必围绕 SDK 写胶水代码。Agent 拿到任务后，通常会走这几步：打开页面、获取结构化快照、依据快照里的元素引用执行动作、在页面变化后重新获取快照、最后产出截图或文本信息。
+它采用客户端 + daemon 两段式架构：Rust CLI 负责解析命令，后台 daemon 直接走 CDP（Chrome DevTools Protocol，Chrome 开发者工具协议）驱动浏览器，不依赖 Node.js 运行时。浏览器实例由 daemon 在后台持续持有，多次命令之间复用同一进程，省去反复启动的开销。
+
+AI Agent 任务往往不需要先搭测试项目，也不必围绕 SDK 写胶水代码。Agent 拿到任务后，通常会走这几步：打开页面、获取结构化快照、依据快照里的元素引用执行动作、在页面变化后重新获取快照、最后产出截图或文本信息。除了这套"开浏览器"的路径，它还提供 `read` 命令直接抓取网页正文，以及 `mcp` 命令对外暴露 MCP（Model Context Protocol）服务，两条路都不需要先写代码。
 
 ### 1.2 为什么它对 AI Agent 友好
 
@@ -112,6 +114,8 @@ graph TD
 ```
 
 这套模式比直接堆 CSS 选择器更可靠：`ref` 是快照上下文里的确定性引用，不会因为页面重渲染而漂移。识别元素和执行动作被拆成两步，Agent 先观察再行动；页面变化后重新快照，引用始终对应当前 DOM。临时猜出来的 CSS 选择器在重渲染后往往直接失效，`ref` 把这个不确定性消掉了。
+
+一个常见的失败形态：目标被别的元素盖住，比如同意横幅或弹窗。此时 `click` 会提前失败，报错里会带上遮挡元素（例如 `covered by <div#consent-banner>`）。处理办法是先关掉遮挡元素，重新 `snapshot`，再用新的 ref 重试——不要硬点旧 ref。
 
 ### 2.2 一个最小可运行示例
 
@@ -172,6 +176,8 @@ agent-browser install
 
 #### 从源码构建
 
+需要 Node.js 24+、pnpm 11+ 和 Rust：
+
 ```bash
 git clone https://github.com/vercel-labs/agent-browser.git
 cd agent-browser
@@ -183,6 +189,12 @@ agent-browser install
 ```
 
 `agent-browser install` 这一步不能省。它会下载 Chrome for Testing；如果系统里已经存在 Chrome、Brave、Playwright 或 Puppeteer 相关浏览器，也会尝试自动检测。安装 CLI 和准备浏览器是两步，只做前一步会导致后续命令找不到浏览器。
+
+三个维护命令值得知道：
+
+- `agent-browser upgrade`：检测安装方式（npm / Homebrew / Cargo）并自动升级
+- `agent-browser install --with-deps`：Linux 下补装系统依赖，装不全会以非零码退出
+- `agent-browser doctor`：体检环境、Chrome 安装、daemon 状态、配置、加密密钥与网络可达性，并做一次真实的无头启动测试；`--fix` 会执行破坏性修复（重装 Chrome、清理旧状态等），`--json` 输出给 Agent 解析
 
 ### 3.2 最小验证
 
@@ -228,13 +240,20 @@ agent-browser screenshot ./hn-new.png
 | `click <sel>` | 点击元素 | `agent-browser click @e2` |
 | `dblclick <sel>` | 双击元素 | `agent-browser dblclick ".card"` |
 | `hover <sel>` | 悬停元素 | `agent-browser hover @e5` |
+| `focus <sel>` | 聚焦元素 | `agent-browser focus @e3` |
 | `type <sel> <text>` | 模拟键入 | `agent-browser type @e3 "hello"` |
 | `fill <sel> <text>` | 清空后填入 | `agent-browser fill @e3 "user@example.com"` |
 | `press <key>` | 发送按键 | `agent-browser press Enter` |
+| `keyboard type <text>` | 用真实按键输入（不限选择器） | `agent-browser keyboard type "hello"` |
+| `keyboard inserttext <text>` | 不触发按键事件插入文本 | `agent-browser keyboard inserttext "hello"` |
 | `select <sel> <val>` | 选择下拉项 | `agent-browser select @e4 beijing` |
 | `check` / `uncheck` | 复选框状态控制 | `agent-browser check @e6` |
+| `scroll <dir> [px]` | 滚动页面 | `agent-browser scroll down 300` |
+| `scrollintoview <sel>` | 把元素滚进视口 | `agent-browser scrollintoview @e5` |
 | `upload <sel> <files>` | 上传文件 | `agent-browser upload @e7 ./report.pdf` |
 | `drag <src> <tgt>` | 拖拽元素 | `agent-browser drag @e8 @e9` |
+
+`click` 支持 `--new-tab` 在新标签页打开链接；`focus` 适合先聚焦再输入的场景。`keyboard type` 和 `type` 的区别在于前者不绑定选择器，作用于当前焦点，适合先 `click` 或 `focus` 再输入的流程。
 
 `type` 和 `fill` 的区别：
 
@@ -250,13 +269,18 @@ agent-browser screenshot ./hn-new.png
 | `snapshot` | 获取可访问性树与引用 | `agent-browser snapshot -i --json` |
 | `get text <sel>` | 取文本 | `agent-browser get text @e1` |
 | `get html <sel>` | 取 HTML | `agent-browser get html "#main"` |
+| `get value <sel>` | 取输入框值 | `agent-browser get value @e3` |
 | `get attr <sel> <attr>` | 取属性 | `agent-browser get attr @e3 href` |
+| `get count <sel>` | 统计匹配元素数 | `agent-browser get count ".item"` |
+| `get box <sel>` | 取元素包围盒 | `agent-browser get box @e2` |
+| `get styles <sel>` | 取计算样式 | `agent-browser get styles @e2` |
 | `get title` | 取标题 | `agent-browser get title` |
 | `get url` | 取当前 URL | `agent-browser get url` |
+| `get cdp-url` | 取 CDP WebSocket 地址 | `agent-browser get cdp-url` |
 | `screenshot [path]` | 截图 | `agent-browser screenshot ./page.png` |
 | `pdf <path>` | 导出 PDF | `agent-browser pdf ./page.pdf` |
 
-给 LLM 用时，`snapshot --json` 输出结构化数据，适合文本推理；`screenshot --annotate` 在截图上标注元素 ref，适合视觉模型或人工复核页面布局。
+给 LLM 用时，`snapshot --json` 输出结构化数据，适合文本推理；`screenshot --annotate` 在截图上标注元素 ref，适合视觉模型或人工复核页面布局。`--annotate` 截图之后 ref 会被缓存，可以直接继续用 `click @e2` 操作标注出来的元素，不用再跑一次 `snapshot`。截图还支持 `--full`（整页）、`--screenshot-dir`、`--screenshot-format jpeg` 和 `--screenshot-quality` 等参数。
 
 ### 4.4 语义化查找与状态检查
 
@@ -264,16 +288,29 @@ agent-browser screenshot ./hn-new.png
 agent-browser find role button click --name "Submit"
 agent-browser find text "Sign In" click
 agent-browser find label "Email" fill "test@example.com"
+agent-browser find placeholder "Search" type "agent-browser"
+agent-browser find testid "submit-btn" click
+agent-browser find first ".item" click
+agent-browser find nth 2 "a" text
 agent-browser is visible @e2
 agent-browser is enabled @e2
 agent-browser is checked @e6
 ```
+
+`find` 的完整族包括 `role`、`text`、`label`、`placeholder`、`alt`、`title`、`testid`，以及按选择器取 `first`、`last`、`nth`。动作统一为 `click`、`fill`、`check`、`hover`、`text`。按 role 过滤可访问名时用 `--name`；要精确匹配（默认是不区分大小写的子串）用 `--exact`。隐式角色也可用：`<h2>` 就是 `heading`，`<ul>` 就是 `list`，顶层 `<header>` 就是 `banner`。
 
 这些命令比直接写 CSS 更适合 Agent 的场景。业务页面不断迭代，类名和 DOM 层级会变，但按钮角色、可访问名称、标签文本往往稳定得多。语义定位让 Agent 接近"看懂页面再行动"，减少对脆弱选择器的依赖。
 
 ### 4.5 批量执行
 
 ```bash
+# 参数模式：每个引号参数就是一条完整命令
+agent-browser batch "open https://example.com" "snapshot -i" "screenshot"
+
+# 加 --bail 遇到第一个错误就停
+agent-browser batch --bail "open https://example.com" "click @e1" "screenshot"
+
+# stdin 模式：按 JSON 数组喂入命令
 echo '[
   ["open", "https://example.com"],
   ["wait", "--load", "networkidle"],
@@ -287,6 +324,23 @@ echo '[
 - 已经确定步骤顺序的 Agent 子任务
 - 需要减少命令调用开销的采集任务
 - 希望统一处理失败停止逻辑的场景，例如 `batch --bail`
+
+### 4.6 不启动浏览器抓取正文：`read`
+
+只想拿正文、不想开浏览器时，用 `read`：
+
+```bash
+agent-browser read https://example.com/article
+agent-browser read https://example.com/article --filter overview   # 只保留含关键词的章节
+agent-browser read https://example.com/article --outline          # 只输出标题大纲
+agent-browser read https://docs.example.com --llms index --filter auth
+agent-browser read https://example.com/article --json
+agent-browser read                                                # 读当前活动标签页渲染后的 DOM
+```
+
+`read` 走 HTTP 直接抓取，不启动 Chrome，更快也更省资源。它默认带 `Accept: text/markdown` 请求，优先要 Markdown；拿不到就沿路径向上找最近的 `llms.txt` 定位文档链接，最后退回从 HTML 提取可读正文。`--require-md` 可以强制要求服务端返回 Markdown，`--raw` 直接打印响应原文。它同样受 `--allowed-domains`、`--content-boundaries`、`--max-output` 这些全局安全开关约束。
+
+不带 URL 的 `read` 会读当前活动标签页的渲染结果，能拿到登录态和客户端渲染后的内容——这是无头 fetch 拿不到的东西。
 
 ## §5 会话、认证与安全
 

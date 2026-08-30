@@ -15,7 +15,7 @@ tags: ["Kubernetes"]
 
 很多人把 Argo CD 当成"会 watch Git 的 kubectl"。它的核心价值不是把 `kubectl apply` 自动化，而是把"集群的实时状态"和"Git 上声明的目标状态"做成两份独立可对比的事实（live state vs target state），并以 Kubernetes 控制器的形式持续把前者收敛到后者。
 
-仓库地址是 [github.com/argoproj/argo-cd](https://github.com/argoproj/argo-cd)，Apache-2.0 协议，目前 master 分支的最新提交时间是 2026-07-13，仓库累计 Star 数 2.37w、Forks 约 7.6k（README 与 GitHub API 实时数据）。CNCF 毕业项目，OpenSSF Scorecard 和 CII Best Practices 都打了卡；发布版带 SLSA 3 等级的供应链元数据。从工程量级看，它就是安装到集群里的"GitOps 控制器 + 一组 CRD + 一个 UI + 一组 CLI"。
+仓库地址是 [github.com/argoproj/argo-cd](https://github.com/argoproj/argo-cd)，Apache-2.0 协议，累计 Star 数 2.37w、Forks 约 7.6k（README 与 GitHub API 实时数据）。CNCF 毕业项目，OpenSSF Scorecard 和 CII Best Practices 都打了卡；最新的 v3.5.x 发布版里，容器镜像全部用 cosign 签名，并生成满足 SLSA Level 3 的 provenance。从工程量级看，它就是安装到集群里的"GitOps 控制器 + 一组 CRD + 一个 UI + 一组 CLI"。
 
 归纳出三条核心判断：
 
@@ -108,7 +108,12 @@ Argo CD 的多租户能力来自四层隔离：datasource 隔离靠 Git 仓库 +
 
 ### sync：一次幂等操作
 
-sync 是单次操作：把"target state"应用一次到目标集群。Argo CD 选用 `kubectl apply --prune` 的升级版——它会先算出 desired object list，再走 server-side apply 或 strategic merge patch 到 kube-apiserver，而不是直接 apply 整个 yaml。核心代码在 Application Controller 的 `appcontroller` 包里。
+sync 是单次操作：把"target state"应用一次到目标集群。核心代码在 Application Controller 的 `appcontroller` 包里，它的底层并不是"直接 apply 整个 yaml"，而是先算出 desired object list，再逐对象写入 kube-apiserver。写入走哪条语义，取决于有没有开 Server-Side Apply：
+
+- 默认（未开 SSA）：走 kubectl 式 3-way merge——也就是给每个对象维护 `kubectl.kubernetes.io/last-applied-configuration` 注解，算出 diff 后做 strategic merge patch（CRD 这类无 scheme 的类型退化为 JSON merge patch）。这和 `kubectl apply` 是同一套语义，能正确删除"从上次 apply 里消失的字段"。
+- 开启 SSA（`syncOptions: [ServerSideApply=true]`）：改用 Kubernetes 原生的 Server-Side Apply，由 API server 管理字段所有权（field manager）和冲突检测，客户端不再需要 last-applied 注解。
+
+这条区别值得记住：默认模式下 Argo CD 依赖客户端维护 last-applied，跨工具变更（比如同时被别的 CD 或 kubectl 碰过）容易踩"last-applied 不完整"的坑；SSA 把合并逻辑搬进了 API server，冲突时能给出明确报错。
 
 sync 的几个关键开关，都写在 Application CR 里：
 
@@ -180,11 +185,13 @@ repo-server 内部：
 
 `automated=true` + `selfHeal=true` 时，Controller 直接发起 sync：
 
-- 走 server-side apply 把新 Deployment 写入 production 集群；selector 标签变化时由 Kubernetes 创建新 ReplicaSet、逐 pod 滚动；
+- 按上文"默认 3-way merge / 开启后 SSA"的方式把新 Deployment patch 进 production 集群；selector 标签变化时由 Kubernetes 创建新 ReplicaSet、逐 pod 滚动；
 - Spec 里有 sync hook（pre-sync/sync/post-sync）的对象按顺序执行（例如 Job）；
 - Prune 阶段跳过，因为没变更清单删除项。
 
-`status.sync.status` 在 controller 写完 Deployments 之后被改成 `Synced`，`status.health.status` 在 Pod ready 之后被改成 `Healthy`。健康状态靠资源跟踪判断：Controller 按 Application 的跟踪规则（默认 label 或 tracking 注解）找出所有派生对象，再据此推断是否 ready，而不是逐个读 Pod 细节。
+`status.sync.status` 在 controller 写完 Deployments 之后被改成 `Synced`，`status.health.status` 在 Pod ready 之后被改成 `Healthy`。健康状态靠资源跟踪判断：Controller 按 Application 的跟踪规则找出所有派生对象，再据此推断是否 ready，而不是逐个读 Pod 细节。
+
+**这里有一层默认隐藏的机制**：Argo CD 凭什么知道"这个 Deployment 属于哪个 Application"？靠的是给托管对象打的跟踪标记。默认的 `trackingMethod` 是 `annotation.label`——既打 `app.kubernetes.io/instance: <appName>` 标签、又写 `argocd.argoproj.io/tracking-id` 注解；另外还有纯 `annotation`、`annotation+managedfields` 等可选方案。它决定了三件事：健康推断时收集哪些对象、diff 时怎么对齐、prune 时哪些算"本应用该管的"。所以让两个 Application 控制同一批对象（共用 instance 标签）会出现健康状态互相干扰——这也是前面"跨 Application 共享对象容易互相踩"的底层原因。
 
 ### 步骤 6：失败回滚
 

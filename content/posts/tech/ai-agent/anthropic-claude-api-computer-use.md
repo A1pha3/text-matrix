@@ -8,6 +8,8 @@ description: "剖析Computer Use这个beta功能：它让Claude通过截图、�
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "Computer Use", "自动化"]
+github_repo: "anthropics/anthropic-quickstarts"
+source_key: "gh:anthropics/anthropic-quickstarts"
 ---
 
 # Claude API 基础专题（六）：Claude Code 与 Computer Use
@@ -23,7 +25,27 @@ tags: ["Claude", "Computer Use", "自动化"]
 
 Computer Use（计算机使用）是 Anthropic 的 beta 功能：它在 Messages API 里把「截图、鼠标、键盘」打包成一个工具，让 Claude 能对着桌面界面工作。它看起来像 Claude 在亲手操作电脑，实际分工恰恰相反——**Claude 只负责看屏幕、决定下一步，真正的截图、移动光标、敲键盘，必须由你的应用在沙箱里替它执行**。这个边界是理解整个功能的关键。
 
-下面从四个角度展开：它把工具调用的边界推到了哪里、观察-决策-执行循环怎么运转、用 API 怎么落地一个 agent loop，以及安全上要额外扛住哪些风险。
+下面从五个角度展开：它把工具调用的边界推到了哪里、观察-决策-执行循环怎么运转、用 API 怎么落地一个 agent loop、安全上要额外扛住哪些风险，以及常见的坑和排查顺序。
+
+**本文目录**
+
+- 6.1 从工具调用到计算机控制
+- 6.2 Computer Use 原理解析
+- 6.3 用 API 实现 Computer Use
+- 6.4 Claude Code 架构与设计
+- 6.5 安全机制与沙箱环境
+- 6.6 推荐做法与注意事项
+- 6.7 常见问题与排查
+
+## 学习目标
+
+读完本文，你应该能：
+
+- 说清 Computer Use 里模型与应用的分工边界，以及它和普通工具调用的区别
+- 画出观察-决策-执行循环，并说明每个环节由谁执行
+- 用 Python SDK 搭出一个能跑的最小 agent loop，处理好坐标换算
+- 列出官方安全建议和提示注入防御，判断自己的场景是否适合无人值守
+- 判断一个任务该用 Computer Use 还是直接调 API，并解释理由
 
 ## 6.1 从工具调用到计算机控制
 
@@ -83,18 +105,24 @@ Claude 不直接连这个环境。你的应用接收 Claude 的 tool_use 请求 
 
 ### 工具定义
 
-Computer Use 工具是**无 schema 的**——它不像普通工具那样要你提供 `input_schema`，schema 内置在模型里，不能改。定义它时只需指定以下几个参数：
+Computer Use 工具是**无 schema 的**——它不像普通工具那样要你提供 `input_schema`，schema 内置在模型里，不能改。定义它时，早期版本需要你指定分辨率等参数：
 
 | 参数 | 必填 | 说明 |
 |------|------|------|
-| `type` | 是 | 工具版本：`computer_20251124` 或 `computer_20250124` |
+| `type` | 是 | 工具版本：`computer_toolset_20260801`、`computer_20251124` 或 `computer_20250124` |
 | `name` | 是 | 固定为 `"computer"` |
 | `display_width_px` | 是 | 显示宽度（像素） |
 | `display_height_px` | 是 | 显示高度（像素） |
 | `display_number` | 否 | X11 环境下的显示器编号 |
 | `enable_zoom` | 否 | 仅 `computer_20251124`，开启 zoom 动作，默认 `false` |
 
-调用时还需要在请求头带 beta 头：新模型用 `computer-use-2025-11-24`，旧模型（Sonnet 4.5、Opus 4.1 等）用 `computer-use-2025-01-24`。支持的模型主要是 Opus 4.5/4.6/4.7/4.8/5 和 Sonnet 4.6/5。
+工具和模型的对应关系在更新：
+
+- **`computer_toolset_20260801`**：2026 年 8 月推出的新版 client toolset，一次声明 `{"type": "computer_toolset_20260801"}` 就能获得 17 个成员工具（`screenshot`、`left_click`、`type`、`zoom` 等），**不需要 beta 头**，由 Opus 4.7 及更新的模型支持
+- **`computer_20251124`**：需要 beta 头 `computer-use-2025-11-24`，由 Opus 4.5/4.6、Sonnet 4.6 等支持
+- **`computer_20250124`**：需要 beta 头 `computer-use-2025-01-24`，由 Sonnet 4.5、Haiku 4.5、Opus 4.1、Sonnet 4、Opus 4、Sonnet 3.7 等支持
+
+已有的 `computer_20251124` 集成可以继续工作；要升级到新版时，官方提供了迁移说明，改动主要是去掉 beta 头、把 `type` 换成 toolset 声明。判断用哪个版本，直接查官方文档的兼容性表格，不要凭模型名字猜——同一模型家族不同代际，支持的工具版本可能不同。
 
 ### 可用动作
 
@@ -105,6 +133,8 @@ Computer Use 工具是**无 schema 的**——它不像普通工具那样要你�
 **增强动作（`computer_20250124` 起）**：`scroll`（任意方向滚动、可控制量）、`left_click_drag`（拖拽）、`right_click` / `middle_click`、`double_click` / `triple_click`、`left_mouse_down` / `left_mouse_up`（细粒度点击控制）、`hold_key`（按住按键指定秒数）、`wait`（暂停）。
 
 **`computer_20251124` 新增**：`zoom`（以全分辨率查看屏幕某区域），需要 `enable_zoom: true`，参数 `region` 用 `[x1, y1, x2, y2]` 指定要查看区域的左上角和右下角。
+
+**`computer_toolset_20260801`**：把动作收敛成 17 个成员工具，`screenshot`、`left_click`、`type`、`zoom` 都在其中，每个工具调用的返回块带 `"toolset_name": "computer"` 标识。它在同一个响应里可以一次返回多个动作（官方叫 batch action），应用按顺序逐个执行、每个动作回一个 `tool_result`。
 
 ## 6.3 用 API 实现 Computer Use
 
@@ -118,8 +148,9 @@ import anthropic
 client = anthropic.Anthropic()
 
 response = client.beta.messages.create(
-    model="claude-sonnet-4-5-20250929",
+    model="claude-sonnet-4-5",
     max_tokens=1024,
+    betas=["computer-use-2025-01-24"],  # 旧工具版本需要 beta 头
     tools=[
         {
             "type": "computer_20250124",
@@ -136,7 +167,7 @@ response = client.beta.messages.create(
 )
 ```
 
-注意用的是 `client.beta.messages`，因为 Computer Use 是 beta 功能。响应里如果 `stop_reason == "tool_use"`，说明 Claude 想要执行某个动作，动作在返回的 `tool_use` 块里。
+注意用的是 `client.beta.messages`，因为 `computer_20250124` 这类旧版本 Computer Use 工具是 beta 功能，还要在 `betas` 参数里带上对应的 beta 头。如果换用 `computer_toolset_20260801` 新版工具集，就不需要 beta 头，直接走 `client.messages.create`。响应里如果 `stop_reason == "tool_use"`，说明 Claude 想要执行某个动作，动作在返回的 `tool_use` 块里。
 
 ### 一个最小的 agent loop
 
@@ -148,8 +179,9 @@ from anthropic.types import ToolResultBlockParam
 def agent_loop(messages, system_prompt, tools, max_iterations=10):
     for _ in range(max_iterations):
         response = client.beta.messages.create(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-sonnet-4-5",
             max_tokens=1024,
+            betas=["computer-use-2025-01-24"],
             system=system_prompt,
             tools=tools,
             messages=messages,
@@ -190,7 +222,9 @@ def agent_loop(messages, system_prompt, tools, max_iterations=10):
 
 ### 截图尺寸与坐标换算
 
-截图发给模型前要控制尺寸。不同模型上限不同：Opus 5/Sonnet 5/Opus 4.8/4.7 接受长边最长 2576 像素；更早的模型是长边 1568 像素、总面积约 1.15 兆像素。超出 8000 像素一侧才会被拒绝，否则 API 会静默降采样——但降采样后 Claude 返回的坐标是对应降采样图的，你需要把坐标按比例映射回真实屏幕，否则点击会偏。
+截图发给模型前要控制尺寸。不同模型上限不同：Opus 4.7 及更新的模型接受长边最长 2576 像素、总面积约 3.75 兆像素；更早的模型是长边 1568 像素、总面积约 1.15 兆像素。超出上述阈值，API 会**静默降采样**——模型看到的是一张被缩小的图，Claude 返回的坐标对应的也是这张缩放后的图。你不换算就按原始分辨率去点击，坐标会系统性偏移。
+
+因此正确的做法不是放任 API 降采样，而是**主动把截图缩到上限之内再发**：长边 1280、短边 720（1280×720）是一个稳妥的默认值，能让坐标空间与你声明的 `display_width_px` / `display_height_px` 一致，点击才准。换用 Opus 4.7 这类高上限模型时，可以上到 1080p 换取更清晰细节。
 
 一个常踩的坑是 **macOS Retina 屏**：截图按设备像素比 2 输出，图像分辨率是逻辑坐标的两倍。要么发图前缩一半，要么把 Claude 返回的坐标对半再点击，否则每次都点偏。
 
@@ -222,7 +256,7 @@ Computer Use 的风险比普通 API 高，因为模型接触到的是真实界�
 
 ### 数据归属
 
-Computer Use 是客户端工具：一张截图、一次点击、一段输入、用到的文件，都产生并保存在**你的环境里**，Anthropic 不存储这些。Anthropic 只是在 API 调用时实时处理截图和动作请求，保留策略遵循标准的 API 数据保留规则。因为数据由你的应用掌控，Computer Use 满足 ZDR（零数据保留）资质。
+Computer Use 是客户端工具：一张截图、一次点击、一段输入、用到的文件，都产生并保存在**你的环境里**，Anthropic 不存储这些。Anthropic 只是在 API 调用时实时处理截图和动作请求，保留策略遵循标准的 API 数据保留规则。因为数据由你的应用掌控，Computer Use 符合 ZDR（零数据保留，Zero Data Retention）方向——但官网明确标注该资质排除部分受覆盖型号（Covered Models），具体模型是否满足 ZDR 要在数据保留文档里逐项核对，别想当然认为所有模型都满足。
 
 ### 参考实现
 
@@ -261,7 +295,52 @@ Computer Use 是客户端工具：一张截图、一次点击、一段输入、�
 
 一句话：**Computer Use 适合「没有现成 API、只能操作界面」的场景**。能用 API 或脚本解决的就别用它，它是对付遗留系统、动态界面、跨应用工作流的最后手段。
 
+## 6.7 常见问题与排查
+
+### Q1：Claude 每次点击都偏一小段距离
+
+优先查坐标空间不一致。三件套逐项对：声明给模型的 `display_width_px` / `display_height_px` 是否和实际发出的截图分辨率一致；截图有没有被 API 静默降采样（若原始尺寸超出模型上限，先主动缩到 1280×720 一类合规尺寸）；是不是 Retina 屏没做设备像素比换算。这三处错一处，偏移都是系统性的，不是偶发。
+
+### Q2：报错信息提示 beta 头不对或工具版本不支持
+
+核对模型与工具版本的对应表。同一个模型家族不同代际，支持的计算机工具版本可能不同；版本选错，接口会拒绝或行为异常。换用 `computer_toolset_20260801` 新版时，记得去掉旧的 beta 头并把 `type` 改成 toolset 声明，否则请求仍按旧路径处理。
+
+### Q3：agent loop 卡在无限循环，费用一直涨
+
+loop 里 `max_iterations` 就是兜底。设成一个任务合理需要的上界（通常是 10—20），超限抛异常或返回未完成，别让它无限跑。另外 batch action 一次会返回多个 `tool_use`，每个都要回 `tool_result`，漏回一个下次请求会被拒。
+
+### Q4：滚轮滚动在某些应用里没反应
+
+这是已知限制。改用键盘替代：提示词里要求 Claude 用 `Page Down`、方向键或快捷键来滚动，比硬调滚轮可靠。
+
+### Q5：提示注入分类器拦住了无人值守的流程
+
+分类器识别到疑似注入时会让模型先征求用户确认，这本身是保守的安全设计。对「没有人在环」的场景它确实碍事，可以联系支持关闭，但要先想清楚：关了这层防御，你的沙箱是否仍有足够的隔离兜底。
+
+### 排查顺序
+
+先把「报什么错」记下来，再决定从哪查：
+
+```text
+请求被拒 / 报错
+├── beta 头或工具版本不匹配 → 查模型兼容表
+├── tool_result 漏回 / 格式错 → 核对每个 tool_use 都要回
+└── 正常返回但点不准
+    ├── 坐标空间不一致 → 对 display_width/height 与截图分辨率
+    ├── 截图超限被降采样 → 主动缩到合规尺寸
+    └── Retina 未换算 → 做设备像素比换算
+```
+
 ---
 
+### 参考文献
+
+- Anthropic 官方文档 · Computer use tool：https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool
+- 参考实现 anthropic-quickstarts / computer-use-demo：https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo
+- 工具与模型兼容性： https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-reference
+- 数据保留与 ZDR： https://platform.claude.com/docs/en/manage-claude/api-and-data-retention
+
+> **维护提示**：Computer Use 的工具版本与对应模型迭代较快，正文中 `computer_toolset_20260801`、`computer_20251124`、`computer_20250124` 与各 beta 头会随官方调整。更新时以「参考文献」中的官方兼容性表格为准，不要只凭文章正文判断版本。
+
 **文档元信息**
-难度：⭐⭐⭐⭐ | 类型：API 解析 | 更新日期：2026-08-08 | 预计阅读时间：40 分钟 | 字数：约 4000 字
+难度：⭐⭐⭐⭐ | 类型：API 解析 | 更新日期：2026-08-30 | 预计阅读时间：45 分钟 | 字数：约 4600 字

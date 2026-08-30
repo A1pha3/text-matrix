@@ -1,11 +1,11 @@
 ---
 title: "actions/checkout v7 拆解：GitHub 最常用的 Action 如何用 default-deny + ESM 迁移解决 pwn request 这类 fork PR 攻击面"
 date: 2026-07-17T02:58:00+08:00
-lastmod: 2026-08-20T00:00:00+08:00
+lastmod: 2026-08-30T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["GitHub Actions", "Security"]
-description: "actions/checkout v7（2026-06-18 发布）是 GitHub Actions 生态最高频使用的 action，8455 stars、MIT、TypeScript。v7 核心变化是默认拒绝 fork PR 在 pull_request_target / workflow_run 触发器下被 checkout（pwn request 攻击面），并完成 ESM 模块化迁移。"
+description: "actions/checkout v7（2026-06-18 发布）是 GitHub Actions 生态最高频使用的 action，8.7k+ stars、MIT、TypeScript。v7 核心变化是默认拒绝 fork PR 在 pull_request_target / workflow_run 触发器下被 checkout（pwn request 攻击面），并完成 ESM 模块化迁移；该安全加固已 backport 到 v6.1.0 / v5.1.0，自 2026-07-20 起对所有受支持 major 强制执行。"
 slug: "actions-checkout-v7-pwn-request-mitigation-deep-dive"
 github_repo: "actions/checkout"
 author: text-matrix
@@ -13,7 +13,7 @@ author: text-matrix
 
 ## 一句话判断
 
-**actions/checkout** 是 GitHub Actions 生态里被引用次数最多的 action——几乎每个 CI workflow 的第一行都是 `uses: actions/checkout@v4`。它做的事表面简单：在 runner 上把仓库克隆到 `$GITHUB_WORKSPACE`。但 v7（2026-06-18 发布）是一次被安全事件驱动的硬性升级：**默认拒绝 fork pull request 在 `pull_request_target` / `workflow_run` 触发器下被 checkout——也就是"pwn request"漏洞类别**。同时完成了从 CJS 到 ESM 的模块化迁移。
+**actions/checkout** 是 GitHub Actions 生态里被引用次数最多的 action——几乎每个 CI workflow 的第一行都是 `uses: actions/checkout@v4`。它做的事表面简单：在 runner 上把仓库克隆到 `$GITHUB_WORKSPACE`。但 v7（2026-06-18 发布）是一次被安全事件驱动的硬性升级：**默认拒绝 fork pull request（fork 即派生、PR 即拉取请求）在 `pull_request_target` / `workflow_run` 触发器下被 checkout——也就是"pwn request"漏洞类别**。同时完成了从 CJS 到 ESM 的模块化迁移。到 2026-07-20，这个安全加固又随 v6.1.0 / v5.1.0 backport 回旧版本，GitHub 在当日对所有受支持的 checkout major 强制执行新默认行为——所以即使你还在 `@v4`，行为也已经变了。
 
 如果你维护任何会被外部贡献者提 PR 的 GitHub 仓库，这篇值得读完。
 
@@ -21,7 +21,7 @@ author: text-matrix
 
 ## 系统地图
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                      actions/checkout v7 内部                           │
 │                                                                        │
@@ -62,7 +62,7 @@ author: text-matrix
                  ┌─────────────────────────────────────────────┐
                  │ 下游消费者                                   │
                  │ $GITHUB_WORKSPACE/ ← 仓库被 checkout 到这里 │
-                 │ .git/config 里有 token（默认）              │
+                 │ 凭证存 $RUNNER_TEMP 独立文件（v6+）          │
                  │ post-job 时清理（默认）                     │
                  └─────────────────────────────────────────────┘
 ```
@@ -77,19 +77,19 @@ v7 最重要的路径：**入口 main.ts → 输入解析 → 安全检查（v7 
 
 | 维度 | 不变项 | 含义 |
 |------|--------|------|
-| 运行时 | ESM + Node.js 24 | v7 配合 actions/publish-immutable-action 0.0.4 升级到 ESM |
-| 默认行为 | fork PR 在 `pull_request_target` / `workflow_run` 下被拒 | v7 引入 `allow-unsafe-pr-checkout` 输入，默认 `false` |
-| 默认 fetch depth | 1（单 commit） | 全历史需 `fetch-depth: 0`；tags 需 `fetch-tags: true` |
+| 运行时 | ESM + Node.js 24 | v7 起 action 本体编译为 ESM，运行在 node24 runtime |
+| 默认行为 | fork PR 在 `pull_request_target` / `workflow_run` 下被拒 | v7 引入 `allow-unsafe-pr-checkout` 输入，默认 `false`；v6.1.0 / v5.1.0 已 backport 同一行为 |
+| 默认 fetch depth | 1（commit，即单次提交） | 全历史需 `fetch-depth: 0`；tags 需 `fetch-tags: true` |
 | 凭证管理 | 默认持久化 + post-job 清理 | v6 起凭证存到 `$RUNNER_TEMP` 单独文件，不再直接写 `.git/config` |
 | 外部贡献 | 不接受 | README 明确写 "right now we are not taking contributions" |
 
 ### 它明确不做的事
 
-- **不**做 Git LFS push（只 fetch；`lfs: true` 是 fetch-time 行为）。
+- **不**做 Git LFS push（推送），只 fetch；`lfs: true` 是拉取时行为。
 - **不**管理 GPG signing。commit signing 由用户后续自己完成。
 - **不**做 submodules 自动递归里的 LFS / credentials 嵌套传递。
-- **不**内置 GHES / 3rd-party Git server 的 token 注入；用户必须自己通过 `github-server-url` + 自定义 token。
-- **不**替代 `git` CLI。它在 runner 上调用 `git`，本身不重写 Git 协议。
+- **不**内置 GHES / 第三方 Git 服务器的 token（令牌）注入；用户必须自己通过 `github-server-url` + 自定义 token。
+- **不**替代 `git` 命令行工具（CLI）。它在 runner 上调用 `git`，本身不重写 Git 协议。
 
 这些边界把 checkout 的职责收得很窄：它只负责把代码取下来、落好凭证，签名、推送、构建这些后续动作都留给用户自己的 step。
 
@@ -128,6 +128,14 @@ v7 新增 `unsafe-pr-checkout-helper.ts` + `workflow-context-helper.ts` 两个�
 
 **为什么是 default-deny 而不是 default-allow + 文档提示**：历史教训。v4-v6 期间这个风险被无数次安全公告强调，但总有人不看文档。default-deny 把"易错操作"变成"显式 opt-in"，大幅降低误配概率。
 
+**2026-07-20 起，这个默认对所有受支持版本生效**。GitHub 官方公告（[Safer pull_request_target defaults for GitHub Actions checkout](https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/)）把 default-deny 行为 backport 到所有受支持的 checkout 版本，并在 2026-07-20 强制执行（原定 07-16，后推迟）；同日发布 v6.1.0 与 v5.1.0，正式带上 `allow-unsafe-pr-checkout` 输入。这对存量用户意味着：
+
+- 固定到浮动 major tag（`actions/checkout@v6`、`@v5`、`@v4`）的 workflow 会自动拿到新行为——fork PR + `pull_request_target` 会直接 fail。
+- 固定到具体 SHA / minor / patch（如 `@v6.0.3`）的 workflow 不受影响，需 Dependabot 或手动升级到含修复的版本。
+- v1 是唯一明确不收此变更的版本。
+
+这条回溯不是可选的：GitHub 把 default-deny 推到了所有仍在维护的分支，pinned 到 `@v4` 同样受影响。
+
 **显式 opt-in 的代价**：在真正需要 checkout fork 代码的场景（比如给 fork 仓库做 lint）必须显式声明：
 
 ```yaml
@@ -142,7 +150,7 @@ v7 新增 `unsafe-pr-checkout-helper.ts` + `workflow-context-helper.ts` 两个�
 
 ### 2. ESM 迁移
 
-**变更动机**：v7 升级 `@actions/core` / `@actions/tool-cache` 等依赖到新版本，这些新版只发布 ESM。CJS 用户升级时会撞墙。
+**变更动机**：v7 升级 `@actions/core` / `@actions/tool-cache`（工具缓存）等依赖到新版本，这些新版只发布 ESM。CJS 用户升级时会撞墙。
 
 **v7 的具体改动**（来自 CHANGELOG）：
 
@@ -155,6 +163,12 @@ v7 新增 `unsafe-pr-checkout-helper.ts` + `workflow-context-helper.ts` 两个�
 - 如果 workflow 里有自己的 JS step import `@actions/core`，那些 step 也需要切 ESM（`import` 而不是 `require`）。
 - actions/checkout 本身是 ESM，但 runner 仍能正常调用——这是 action 内部的实现细节，对调用方无感。
 - 这条改动本身不是安全问题，是 dependency hygiene。
+
+**v7.0.1（2026-07-20 发布）的后续修正**：
+
+- `allow-unsafe-pr-checkout` 保持默认值时跳过安全检查的重复运行（[#2518](https://github.com/actions/checkout/pull/2518)），把默认路径的开销降到最低。
+- `branch`（分支）参数只裁剪 ASCII 空白（[#2521](https://github.com/actions/checkout/pull/2521)）、`git config --unset` 传值做转义（[#2530](https://github.com/actions/checkout/pull/2530)），属于边界加固。
+- 该版本与 v6.1.0 / v5.1.0 同日发布，三个 major 的安全行为保持一致。
 
 ### 3. 凭证存储的演化（v6 → v7）
 
@@ -171,6 +185,8 @@ v6.0.0 引入的 `persist-credentials` 重构，v7 沿用：
 - 拆出去后，token 文件路径独立，post-job 阶段被清理；workflow log 里看不到 `http.extraHeader` 这种敏感行。
 
 **`includeIf` 的作用**：凭证写进独立文件后，再靠 `includeIf "gitdir:..."` 让 Git 只在匹配该目录（本次 checkout 的工作区）时才加载那个文件。这样 token 不会污染 runner 上其它仓库的 Git 配置，其它 git 操作读不到它；用后即焚的清理因此也干净，不会留下持久凭证。
+
+**对容器 action 的兼容性影响**：Docker container action 默认只挂载 `$GITHUB_WORKSPACE`，看不到 `$RUNNER_TEMP` 里的凭证文件。要让容器内跑认证 git 命令，runner 需要 ≥ [v2.329.0](https://github.com/actions/runner/releases/tag/v2.329.0)，这个版本会把凭证上下文透传给容器；旧 runner 会静默失败或退回未认证操作。
 
 ### 4. 推荐权限最小化
 
@@ -241,23 +257,23 @@ jobs:
     npx eslint . --max-warnings 0
 ```
 
-这段流程的核心变化是：是否 checkout fork 代码，由你在 workflow 里显式声明，action 不再替你默许。
+整个流程把决定权交回给你：是否 checkout fork 代码，由你在 workflow 里显式声明，action 不再默许。
 
 ---
 
-## 与同类项目的横向对照
+## 与同类方案的横向对照
 
-| 维度 | actions/checkout v7 | `actions/setup-node@v4` | 自托管 checkout script | GitHub App-based checkout |
+| 维度 | checkout v7 | checkout v5 / v6（backport 后） | 自托管 checkout script | GitHub App-based checkout |
 |---|---|---|---|---|
-| 角色 | 官方默认 checkout | node 环境 | runner 内 bash script | 第三方细粒度 token 工具 |
-| 安全 | ✅ default-deny pwn | ✅ OIDC token 支持 | ❌ 全靠自己 | ✅ 短时 token |
-| 凭证存储 | `$RUNNER_TEMP` 独立文件 | 不存凭证 | 任意 | 不存凭证 |
-| Runtime | ESM + Node 24 | ESM + Node 24 | bash | 不依赖 action |
+| 角色 | 官方默认 checkout | 官方旧版 + 安全 backport | runner 内 bash script | 第三方细粒度 token 工具 |
+| fork PR 默认行为 | ✅ default-deny | ✅ 同 v7（v6.1.0 / v5.1.0 起） | ❌ 全靠自己 | ✅ 短时 token |
+| 凭证存储 | `$RUNNER_TEMP` 独立文件 | `$RUNNER_TEMP` 独立文件 | 任意 | 不存凭证 |
+| Runtime | ESM + Node.js 24 | CJS + Node.js 24 | bash | 不依赖 action |
 | License | MIT | MIT | 用户自有 | 各异 |
-| Stars | 8.5k | 1k+ | — | 各自不同 |
+| Stars | 8.7k | 共用同一仓库 | — | 各自不同 |
 | 维护方 | GitHub 官方 | GitHub 官方 | 自维护 | 社区/商业 |
 
-v7 的 pwn request 修复不是个例，而是 GitHub Actions 生态在 2024-2026 年逐步收紧 untrusted code checkout 的趋势——`pull_request_target` 从"默认能 checkout + 文档警告"演化到"默认拒绝 + 显式 opt-in"。
+v7 的 pwn request 修复不是个例，而是 GitHub Actions 生态在 2024-2026 年逐步收紧 untrusted code checkout 的趋势——`pull_request_target` 从"默认能 checkout + 文档警告"演化到"默认拒绝 + 显式 opt-in"，并且这个默认被强制推到了所有仍在维护的版本。
 
 ---
 
@@ -267,13 +283,13 @@ v7 的 pwn request 修复不是个例，而是 GitHub Actions 生态在 2024-202
 
 - 任何公开仓库（fork PR 是常态）。
 - 任何使用 `pull_request_target` / `workflow_run` 触发器的 workflow。
-- 任何追求 Node 24 + ESM 现代依赖链的工程团队。
+- 任何追求 Node.js 24 + ESM 现代依赖链的工程团队。
 - 任何想要"显式声明安全姿态"的团队。
 
 **不推荐使用 v7**：
 
 - 强依赖 v4 / v5 旧 workflow 文件（迁移成本极低，但旧依赖若有兼容问题需要评估）。
-- 在 runner 上跑老旧 Node 16 工具链（v7 要求 Node 24，actions runner 需 ≥ v2.327.1）。
+- 在 runner 上跑老旧 Node.js 16 工具链（v7 要求 Node.js 24，actions runner 需 ≥ v2.327.1）。
 
 **不推荐自己 fork 维护**：
 
@@ -285,23 +301,47 @@ v7 的 pwn request 修复不是个例，而是 GitHub Actions 生态在 2024-202
 ## 决策建议
 
 1. **新 workflow** → 直接用 `actions/checkout@v7`。
-2. **存量 v4 workflow** → 升到 v7 是低风险操作（ESM 改动只在 action 内部，对调用方无感；主要差异是 default-deny 行为）。先在 sandbox repo 验证 fork PR 场景。
-3. **存量 v5 / v6 workflow** → 同上，迁移成本极低。
+2. **存量 v4 / v5 / v6 workflow** → 若 pinned 到浮动 major tag（`@v5`、`@v6`），2026-07-20 起已自动拿到 default-deny 加固；若 pinned 到具体版本（如 `@v6.0.3`），先升到 v5.1.0 / v6.1.0，或直接升 v7。v7 是省心的终点：安全默认与旧版一致，另获 ESM 迁移与依赖修复。
+3. **只想补安全、不动 major** → 升到 v6.1.0 / v5.1.0 即可拿到同一 default-deny，但拿不到 v7 的 ESM 迁移与新依赖。
 4. **fork PR 真的需要 checkout** → 显式 `allow-unsafe-pr-checkout: true`，并确保后续步骤**不执行 untrusted code**（不 `npm ci` / 不 `make` / 不 `bash untrusted.sh`）。
 5. **完全避免 pwn request** → 改 workflow 设计：把"需要 fork 代码"的逻辑放在 `pull_request` 触发器（runner 没有 secrets），把"需要 secrets"的逻辑放在 `pull_request_target` 触发器（runner 不 checkout fork 代码）。
 
 ---
 
+## 常见问题与排查
+
+**Q1：fork PR 触发 `pull_request_target`，checkout 直接 fail，为什么？**
+
+这是 v7（以及 2026-07-20 之后的 v5.1.0 / v6.1.0）的预期行为：fork PR 代码默认不被 checkout。先确认你是否真的需要那份代码——如果不需要，把 checkout 从该 workflow 里移除即可；如果需要，见 Q3。
+
+**Q2：我 pinned 到 `@v4`，为什么行为也变了？**
+
+因为 GitHub 把 default-deny 强制推到了所有受支持的 major。浮动 major tag（`@v4`、`@v5`、`@v6`）在 2026-07-20 后自动指向含加固的版本；固定到具体 SHA / minor / patch 的 workflow 行为不变，但需要主动升级才能拿到防护。
+
+**Q3：我确实要 checkout fork 代码做 lint / spell check，怎么配？**
+
+显式 `allow-unsafe-pr-checkout: true`，且后续步骤只做只读扫描，不执行 untrusted code（不 `npm ci` / 不 `make`）。更稳妥的做法是把这类逻辑放到 `pull_request` 触发器——那里没有 base 仓库 secrets。
+
+**Q4：Docker container action 里 git 认证失败或静默退回未认证？**
+
+v6 起凭证在 `$RUNNER_TEMP`，容器默认看不到。升级 runner 到 ≥ v2.329.0，让它把凭证上下文透传给容器。
+
+**Q5：怎么确认我的 workflow 拿到了加固？**
+
+在沙箱（sandbox）仓库用 fork 提一个空 PR，观察 `pull_request_target` 触发时 checkout 是否 fail；或升级到最新版本后核对 release notes。
+
+---
+
 ## 边界声明
 
-本文基于 [actions/checkout](https://github.com/actions/checkout) 仓库 README（2026-07-17 抓取）、`action.yml`、`src/` 目录列表、`CHANGELOG.md`、`adrs/0153-checkout-v2.md` 公开文件。
+本文基于 [actions/checkout](https://github.com/actions/checkout) 仓库 README、`action.yml`、`src/` 目录列表、`CHANGELOG.md`（2026-08-30 复核），以及 [GitHub 官方 changelog 公告](https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/)。
 
 **重要事实**：
 
 - 仓库 README 明确写 "right now we are not taking contributions"——所有外部贡献当前不被接受，bug 报告走 GitHub Community Discussions。
-- v7 的具体版本：v7.0.0 发布于 2026-06-18；v7 后续小版本（如 v7.0.1 等）尚未发布（截至 2026-07-17）。
-- v4 / v5 / v6 各版本的具体变更以对应 release tag 为准，本文按 README "What's new" 段归纳。
-- `allow-unsafe-pr-checkout` 是 v7 新增输入；v6 / v5 / v4 没有这个输入，对应行为是默认 checkout（不安全）。
+- v7 版本线：v7.0.0 发布于 2026-06-18；v7.0.1 发布于 2026-07-20。
+- 安全 backport：v6.1.0 与 v5.1.0 于 2026-07-20 同日发布，把 `allow-unsafe-pr-checkout` 带回 v5 / v6；GitHub 当日对所有受支持 major 强制执行 default-deny（v1 除外）。
+- `allow-unsafe-pr-checkout` 默认 `false`，在 v7 / v6.1.0 / v5.1.0 均存在；更早版本（如 v6.0.x、v5.0.x）没有该输入，对应行为是默认 checkout（不安全）。
 - 仓库 License 是 MIT，但分支内的 GitHub 官方 runners、GitHub Actions 服务条款与本 action 本身的 MIT license 是两层——使用 GitHub Actions 服务仍受 GitHub 服务条款约束。
 
 如果你的 workflow 在 fork PR 触发下出错，第一时间排查的就是 `pull_request_target` + `actions/checkout` 的组合；按本文 Step 5 的方式显式 opt-in 或改 workflow 设计即可。

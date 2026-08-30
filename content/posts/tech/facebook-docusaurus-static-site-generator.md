@@ -15,7 +15,7 @@ slug: facebook-docusaurus-static-site-generator
 
 把 Docusaurus 塞进"静态站点生成器"那一栏和 Hugo、Hexo、MkDocs 并列很容易。读完 v3.10 整个 monorepo（一个仓库里管理多个 npm 包）后，我更愿意把它归到另一类：**它是一个面向文档站的 React 应用脚手架**，SSG 只是它交付产物的形态。Markdown 文件只是数据源，真正撑起它的是 React 组件、MDX、插件生命周期和一套分层的主题系统。这篇文章想回答的不是"Docusaurus 是什么"，而是"它为什么这样设计，谁该用，谁不必用"。读完之后，你应该能落地回答四件事：四层架构各管什么、插件和主题为什么能各自演化而不互相依赖、一次构建的数据是怎么流动的、以及你自己的项目到底该不该选它。
 
-本文基于 2026-07-10 发布的 **v3.10.2** 源码、`website/docs/` 全部 markdown 文档和 `packages/docusaurus` 的 CLI 实现撰写。仓库地址：[facebook/docusaurus](https://github.com/facebook/docusaurus)。
+本文基于 **v3.10**（2026-04-07 发布，也是 v3.x 系列的收官版本）源码、`website/docs/` 全部 markdown 文档和 `packages/docusaurus` 的 CLI 实现撰写。仓库地址：[facebook/docusaurus](https://github.com/facebook/docusaurus)。
 
 ## 一句话判断
 
@@ -183,9 +183,9 @@ docs/             ← 当前未发布版本
 
 这是工程取舍。Algolia DocSearch 对开源项目免费（需要申请），首屏搜索体验工业级，但要求你的站点对公网开放。对内网/防火墙后的项目，文档明确建议自建 DocSearch 爬虫。我个人的判断：如果你的项目值得被搜到，就申请 DocSearch；如果不值得，自建搜索的工程成本远高于早期不接搜索。
 
-## 性能和 "faster" 实验
+## 性能和 faster 优化
 
-Docusaurus 3.9 起引入 `faster` 配置块。它的目标是把构建和产物体积往下打：
+Docusaurus 3.9 起引入 `faster` 配置块，到 3.10 转正为稳定能力（且在 3.10 中，若干实验性开关被移除）。它的目标是把构建和产物体积往下打：
 
 ```js
 faster: {
@@ -201,7 +201,7 @@ faster: {
 }
 ```
 
-这一组开关的意义在于：Docusaurus 承认 Webpack 在大型 monorepo 文档站上的构建时间已经成为痛点。SWC + lightningcss + Rspack 三件套是 React 生态的当代答案，对应 Eslint v9、Vite 7 的同类迁移。`faster: true` 一键全开是 3.9 之后的事实推荐配置。注意：faster 下的若干项在 3.10 仍然标 experimental（实验性），开启前建议先在小仓库跑一遍 build 看产物差异。
+这一组开关的意义在于：Docusaurus 承认 Webpack 在大型 monorepo 文档站上的构建时间已经成为痛点。SWC + lightningcss + Rspack 三件套是 React 生态的当代答案，对应 Eslint v9、Vite 7 的同类迁移。`faster: true` 一键全开，是 3.10 之后的事实推荐配置，v4 将默认开启；新增项目甚至默认就在 `faster` 之上。注意：这组能力从"实验"到"稳定"只隔了一个 minor，启用前建议先在小仓库跑一遍 build 看产物差异，个别组件（如依赖特定 loader 的主题）需要手动关掉某项——比如 API 转文档类的插件在部分组合下与 SWC loader 不完全兼容。
 
 它和 Rspress 的核心区别就在这里：Docusaurus 选择在保留原有插件生命周期的前提下做性能改进，Rspress 一开始就构建在 Rspack 之上。如果你的项目已经是 3.x 文档站不想迁移，`faster` 是低风险升级路径；如果从零开始，可以两边都评估。
 
@@ -261,21 +261,21 @@ npm run deploy     # 推 GitHub Pages（SSH key 已配好的情况下）
 2. **插件定制**：加 `plugins: [['content-docs', { sidebarPath: require.resolve('./sidebars.js') }]]` 这类带选项的写法。插件选项可以是函数，回调里能拿到 `siteConfig`，这是 Docusaurus 留给插件作者的最常用的扩展点。
 3. **主题接管**：`npm run swizzle @docusaurus/theme-classic Footer -- --wrap` 拿到 Footer 组件后包一层自己的版本。渐进式自定义由此开始。
 
-升级方面，Docusaurus 团队对 v2 → v3 给了一份完整的 migration guide（含 MDX 1 → MDX 3、`mdxOptions` 字段迁移、Infima 5 升级等），v3 内 minor 升级通常无需手动干预，patch 升级偶尔需要 `npm run clear` 清缓存。
+升级方面，Docusaurus 团队对 v2 → v3 给了一份完整的 migration guide（含 MDX 1 → MDX 3、`mdxOptions` 字段迁移、Infima 5 升级等），v3 内 minor 升级通常无需手动干预，patch 升级偶尔需要 `npm run clear` 清缓存。v4 的破坏性变更集中在 `future.v4: true` 开关下逐项试运行——`fasterByDefault`、`siteStorageNamespacing`、`mdx1CompatDisabledByDefault` 都是先立开关、后转默认，升级前把对应开关逐个打开跑一遍测试，就能把 v4 的迁移成本摊到日常维护里。
 
 上手之后，几个高频坑可以先留个心眼：
 
 - **改动"没生效"**：先跑 `npm run clear` 清掉 `node_modules/.cache/docusaurus` 再重建，很多困惑其实卡在缓存。
 - **eject 过的组件升级后行为变了**：Docusaurus 不会自动更新你炸进 `src/theme/` 的副本，升级前按 changelog 逐文件 diff，决定保留还是回滚。
-- **想开 `faster` 又怕不稳**：先在克隆的一份仓库上跑一遍 `npm run build` 对比产物，再决定要不要在正式站全开；部分开关在 v3.10 仍是 experimental。
+- **想开 `faster` 又怕不稳**：先在克隆的一份仓库上跑一遍 `npm run build` 对比产物，再决定要不要在正式站全开；个别接管了底层 loader 的主题需要手动关掉特定项，其余可按需开启。
 - **部署默认偏向 GitHub Pages**：`docusaurus deploy` 内置的是 git push 工作流，换 Vercel 或 Netlify 要写自定义 workflow。
 
 ## 结尾判断
 
-Docusaurus 不是一个新框架——v1 在 2017 年立项，v2 在 2022 年发布，v3 在 2023 年接棒，到 3.10.2 的今天仍然保持着每月级 patch、季度级 minor 的节奏。它做的事也不性感：把一堆 Markdown 文件做成一个能搜、能换语言、能换版本的 React 静态应用。
+Docusaurus 不是一个新框架——v1 在 2017 年立项，v2 在 2022 年发布，v3 在 2023 年接棒，到 3.10（2026 年 4 月）正式收官，官方把下一阶段的重心放到了 v4。它做的事也不性感：把一堆 Markdown 文件做成一个能搜、能换语言、能换版本的 React 静态应用。
 
 它仍然能拿出来的核心壁垒，是 **Markdown 写作者和 React 组件开发者能在同一个项目里无缝协作** 这种结构性的解耦能力。Rspress 更新，Rsbuild 更激进，但插件生态、主题接管模型和 i18n 的工程深度，Docusaurus 仍然领先一个身位——这种领先建立在七八年的真实项目用例上，不是单点特性可比。
 
-对新项目，从一行 `npm create docusaurus@latest` 开始。对已有 v2 文档站，3.10 是一次低风险升级。被 Webpack 构建时间折磨的团队，先开 `faster: true` 再决定要不要迁。
+对新项目，从一行 `npm create docusaurus@latest`（默认启用 `faster`）开始。对已有 v2/v3 文档站，3.10 是一次低风险升级，v4 的 breaking change 已在 `future.v4` 开关里逐项试运行。被 Webpack 构建时间折磨的团队，先开 `faster: true` 再决定要不要迁。
 
-更值得讨论的，是下一个问题：当 MDX 生态继续往 React Server Components 方向演化时，Docusaurus 会在哪一版接受 RSC（React Server Components）？这会决定它在 2027 年是不是这份名单的第一行——也会决定你今天押注的工具栈，两年后是不是要重写一遍主题层。
+更值得讨论的，是下一个问题：当 MDX 生态继续往 React Server Components 方向演化时，Docusaurus 会在 v4 的哪一版接受 RSC（React Server Components）？这会决定它到 2027 年还是不是这份名单的第一行——也会决定你今天押注的工具栈，两年后是不是要重写一遍主题层。

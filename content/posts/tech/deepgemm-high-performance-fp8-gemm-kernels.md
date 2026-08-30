@@ -219,23 +219,19 @@ DeepGEMM 的普通 GEMM 命名遵循 `fp8_gemm_<A布局><B布局>`，算的是 `
 | `fp8_gemm_tn` | col-major | row-major | 仅 SM100 |
 | `fp8_gemm_tt` | col-major | col-major | 仅 SM100 |
 
+完整可运行的调用示例放在「安装与使用 → 快速开始」，这里只集中讲布局相关的那几个参数：
+
 ```python
-import torch
-import deep_gemm
-
-M, N, K = 1024, 4096, 4096
-device = "cuda"
-
-# FP8 输入 A、B 的量化与缩放因子布局需要由调用方完成
+# FP8 输入 A、B 的量化与缩放因子布局由调用方完成
 # SM90 上 LHS 缩放因子要求 FP32 格式，且 TMA 对齐、转置布局
-A_fp8, A_scale = quantize_fp8(A)   # A_fp8 [M, K] E4M3，A_scale 见上
-B_fp8, B_scale = quantize_fp8(B)
+A_fp8, A_scale = quantize_fp8(A)   # A_fp8 [M, K] E4M3，A_scale 按 1×128 tile
+B_fp8, B_scale = quantize_fp8(B)   # B_fp8 [N, K] E4M3，B_scale 按 128×128 block
 
 D = deep_gemm.fp8_gemm_nt(
     A_fp8, B_fp8,
     lhs_scale=A_scale,
     rhs_scale=B_scale,
-    D_dtype=torch.bfloat16,
+    D_dtype=torch.bfloat16,        # D [M, N]，输出默认 BF16
 )
 ```
 
@@ -460,7 +456,8 @@ M, N, K = 1024, 4096, 4096
 A = torch.randn(M, K, device='cuda', dtype=torch.bfloat16)
 B = torch.randn(N, K, device='cuda', dtype=torch.bfloat16)
 
-# 量化与缩放因子布局由调用方完成
+# 量化与缩放因子布局由调用方完成：
+# A_scale 按 1×128 tile，B_scale 按 128×128 block；SM90 上 LHS scale 需转置且 TMA 对齐
 A_fp8, A_scale = quantize_fp8(A)
 B_fp8, B_scale = quantize_fp8(B)
 
@@ -473,7 +470,7 @@ D = deep_gemm.fp8_gemm_nt(
 print(D.shape)  # [1024, 4096]
 ```
 
-首次运行有编译延迟，JIT 在编译 `(1024, 4096, 4096)` 的内核，第二次运行就快了。
+`quantize_fp8` 是调用方自己的量化函数，DeepGEMM 不提供封装；实际使用时按上面 scale 的 tile/block 布局实现。首次运行有编译延迟，JIT 在编译 `(1024, 4096, 4096)` 的内核，第二次运行就快了。
 
 ---
 

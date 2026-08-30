@@ -42,7 +42,7 @@ tags: ["AI Agent", "软件工程", "Coding Agent", "LLM", "Skill", "Harness Engi
 - **方法判断**：对"怎样更有效"的工程结论，值得试，但需在本团队验证。
 - **趋势推演**：对产业结构和软件形态的预测，重点看方向，别当时间表。文中所有标注"趋势："的观点均属此类。
 
-黄东旭的原始分享（演讲视频、公众号文章等）暂未在公开渠道统一归档，可关注其微信公众号（ID：黄东旭的碎碎念）及 TiDB/PingCAP 官方渠道获取原始材料。
+黄东旭的原始分享（演讲视频、公众号文章等）暂未在公开渠道统一归档，可关注其微信公众号及 TiDB/PingCAP 官方渠道获取原始材料。
 
 ---
 
@@ -669,4 +669,4 @@ Rollback:
 
 ---
 
-*本文基于黄东旭在 2026 年 4 月的公开分享整理。黄东旭是 TiDB 联合创始人兼 CTO，其观点源自高强度一线实践，文中趋势推演部分需要更多行业样本验证。延伸阅读：[Anthropic Claude Code](https://docs.anthropic.com/en/docs/claude-code)、[OpenClaw](https://openclaw.ai)、[TiDB Cloud](https://www.pingcap.com/products/tidbcloud/)。*
+*本文基于黄东旭在 2026 年 4 月 QCon 全球软件开发大会上的主题演讲《The Age of Autonomous Systems（自主系统的时代）》整理。黄东旭是 TiDB 联合创始人兼 CTO，观点源自高强度一线实践，文中趋势推演部分需要更多行业样本验证。延伸阅读：[Anthropic Claude Code](https://docs.anthropic.com/en/docs/claude-code)、[OpenClaw](https://openclaw.ai)、[TiDB Cloud](https://www.pingcap.com/products/tidbcloud/)。*

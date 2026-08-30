@@ -14,7 +14,7 @@ source_key: "gh:michal-z/zig-zmath"
 
 把 Zig 放在 Rust 的对立面去比较，是大多数技术选型文章的第一处误判。Zig 真正要对标的是 C——1972 年定下的那套"程序员信任机器、机器信任程序员"的契约。Rust 选择在编译期用借用检查器强制内存安全，Zig 选择保留手动内存管理，但把所有"隐式"的东西——分配、控制流、类型转换——全部搬到台面上让你看见。
 
-这不是退步——系统编程里大量场景本来就在手动管理内存，问题不在"是否手动"——系统编程本来就手动——而在"手动时能不能看见所有分配和释放路径"。Zig 的设计围绕这个问题展开：显式分配器作为一等公民、`comptime` 把元编程收进类型系统、`defer`/`errdefer` 让资源释放路径可见、错误作为类型而不是异常。
+这不是退步。系统编程里大量场景本就在手动管理内存，问题从来不是"该不该手动"，而是"手动时能不能看清每一条分配和释放路径"。Zig 的整套设计都围绕这个问题展开：分配器是显式的，`comptime` 把元编程收进类型系统，`defer`/`errdefer` 让释放路径可见，错误是类型而不是异常。
 
 > 仓库迁移提示：Zig 官方仓库已从 GitHub 迁移到 Codeberg（https://codeberg.org/ziglang/zig），GitHub 上的镜像不再同步更新。引用源码或提交 issue 时以 Codeberg 为准。
 
@@ -30,8 +30,6 @@ source_key: "gh:michal-z/zig-zmath"
 
 阅读建议：刚接触系统编程的读者，先读"设计哲学"和"内存管理"两节建立直觉，再回头看编译流水线；已经熟悉 C 或 Rust 的读者，可以直接跳到"与 C 和 Rust 的工程取舍"对照选型维度，再按需回看具体机制。
 
-> 导航：[下一节：本文结构](#本文结构) →
-
 ## 本文结构
 
 - **学习目标**：读完本文应掌握的五项能力
@@ -44,6 +42,7 @@ source_key: "gh:michal-z/zig-zmath"
 - **作为 C 编译器的 Zig**：`zig cc` 与交叉编译
 - **交叉编译与目标平台**：`-target` 参数与平台覆盖
 - **构建系统与包管理**：`build.zig` 与 `build.zig.zon`
+- **最小项目：从空目录到跑起来**：两个文件加一条命令的完整闭环
 - **与 C 和 Rust 的工程取舍**：具体维度对比
 - **适用边界**：什么时候该评估 Zig，什么时候不该
 - **常见问题**：内存安全、`comptime` 开销、`async`/`await`、C++ 互操作、编译错误排查
@@ -189,10 +188,10 @@ pub fn main(init: std.process.Init) !void {
 ```zig
 fn readFile(io: std.Io, path: []const u8, allocator: std.mem.Allocator) ![]u8 {
     const file = try std.Io.Dir.cwd().openFile(io, path, .{});
-    defer std.Io.File.close(file, io); // 无论成功失败都关闭
+    defer file.close(io); // 无论成功失败都关闭
 
     var buf: [1024]u8 = undefined;
-    var fr = std.Io.File.reader(file, io, &buf);
+    var fr = file.reader(io, &buf);
     const contents = try fr.interface.allocRemaining(allocator, .limited(1 << 20));
     errdefer allocator.free(contents); // 只有后续步骤失败时才释放
 
@@ -200,9 +199,9 @@ fn readFile(io: std.Io, path: []const u8, allocator: std.mem.Allocator) ![]u8 {
 }
 ```
 
-这段代码的释放路径完全显式：`std.Io.File.close(file, io)` 一定执行，`allocator.free(contents)` 只在出错时执行，成功时所有权转移给调用方。没有 RAII、没有析构函数、没有 `Drop` trait，但每一步资源释放都写在它该出现的位置。注意 0.16 之后所有文件操作都要显式传入一个 `std.Io` 实例（调用方从 `std.process.Init` 里取 `init.io` 传入）——连"怎么读写"都变成参数的一部分，这就是"无隐式"在 I/O 层面的延伸。
+这段代码的释放路径完全显式：`file.close(io)` 一定执行，`allocator.free(contents)` 只在出错时执行，成功时所有权转移给调用方。没有 RAII、没有析构函数、没有 `Drop` trait，但每一步资源释放都写在它该出现的位置。注意 0.16 之后所有文件操作都要显式传入一个 `std.Io` 实例（调用方从 `std.process.Init` 里取 `init.io` 传入）——连"怎么读写"都变成参数的一部分，这就是"无隐式"在 I/O 层面的延伸。
 
-`std.Io.File.reader` 返回的是 `File.Reader`，一个具体实现；通用读操作（`allocRemaining`、`readSliceAll`、按行读取等）都定义在它内部的 `interface` 接口上，所以示例里要先取 `fr.interface` 再调用。这个"具体实现 + 接口"的两层结构贯穿整个 0.16 标准库：读、写、目录、网络都遵循同一套接口约定，换底层实现（文件、socket、内存缓冲）时上层代码不用改。
+`file.reader(io, &buf)` 返回的是 `File.Reader`，一个具体实现；通用读操作（`allocRemaining`、`readSliceAll`、按行读取等）都定义在它内部的 `interface` 接口上，所以示例里要先取 `fr.interface` 再调用。这个"具体实现 + 接口"的两层结构贯穿整个 0.16 标准库：读、写、目录、网络都遵循同一套接口约定，换底层实现（文件、socket、内存缓冲）时上层代码不用改。
 
 ## 错误处理：错误是类型，不是异常
 
@@ -400,6 +399,42 @@ zig build install --prefix ~/.local
 
 `ReleaseSafe` 启用优化但保留运行时安全检查（整数溢出、越界访问）；`ReleaseFast` 关闭安全检查追求最大性能；`ReleaseSmall` 优化二进制体积。这三个选项对应不同的工程取舍：`ReleaseSafe` 适合需要兼顾性能和可调试性的服务端，`ReleaseFast` 适合性能敏感且已充分测试的发布构建，`ReleaseSmall` 适合嵌入式或带宽受限的部署场景。
 
+## 最小项目：从空目录到跑起来
+
+前面拆了不少机制，这里把最小的可运行闭环串起来。一个 Zig 项目只需要两个文件：
+
+```text
+myproject/
+├── build.zig       # 构建脚本（本身是 Zig 程序）
+└── src/
+    └── main.zig    # 入口源码
+```
+
+`src/main.zig` 用 0.16 的 Juicy Main，入口直接拿到进程注入的分配器和 I/O：
+
+```zig
+const std = @import("std");
+
+pub fn main(init: std.process.Init) !void {
+    const gpa = init.gpa; // Debug 构建下是 DebugAllocator，退出时检测泄漏
+    const io = init.io;   // 0.16 的 I/O 接口实例
+
+    const buf = try gpa.alloc(u8, 16);
+    defer gpa.free(buf);
+
+    _ = io; // 本例不真正执行 I/O，仅演示如何拿到实例
+    std.debug.print("hello, zig 0.16\n", .{});
+}
+```
+
+`build.zig` 用"构建系统与包管理"一节里那个最小脚本即可。然后在项目根目录：
+
+```bash
+zig build run
+```
+
+`zig build` 完成编译与链接，`run` 步骤直接执行产物，屏幕上出现 `hello, zig 0.16`。如果只想快速验证一段代码而不建项目骨架，`zig build-exe src/main.zig` 会直接产出可执行文件；`zig test` 则会把源码里的 `test` 块全部跑一遍——自测就写在源码里，这是 Zig 的常规姿势。
+
 ## 与 C 和 Rust 的工程取舍
 
 选型时需要看清 Zig 和 C、Rust 在具体维度上的差别，光停留在"哪个更好"的层面给不出可执行的结论。
@@ -442,7 +477,7 @@ zig build install --prefix ~/.local
 
 **Zig 的 `async`/`await` 现在能用吗？**
 
-`async`/`await` 是 Zig 早期的实验特性，0.15 发布说明正式宣布移除——官方明确"语言中不会有 async/await 关键字"，异步 I/O 改由标准库承担：0.16 的 `std.Io` 接口本身就是围绕异步设计的，提供 `Future`、`Group`、`Batch`、取消机制和事件循环（`Io.Threaded`/`Io.Kqueue`/`Io.Uring`）等原语。当前版本里，多线程并发用 `std.Thread`，异步 I/O 用 `std.Io` 的事件循环与 `Future`。依赖异步 I/O 的项目要先确认目标 Zig 版本的支持情况，不要假设 API 稳定。
+`async`/`await` 是 Zig 早期的实验特性，0.15 发布说明正式宣布移除——官方明确"语言中不会有 async/await 关键字"，异步 I/O 改由标准库承担：0.16 的 `std.Io` 接口本身就是围绕异步设计的，提供 `Future`、`Group`、`Batch`、取消机制和事件循环等原语，后端可替换——`Io.Threaded` 走线程池和阻塞式系统调用，`Io.Evented` 在 Linux 上基于 `io_uring`、在 macOS 上基于 Grand Central Dispatch。当前版本里，多线程并发用 `std.Thread`，异步 I/O 用 `std.Io` 的事件驱动后端与 `Future`。依赖异步 I/O 的项目要先确认目标 Zig 版本的支持情况，不要假设 API 稳定。
 
 **Zig 能和 C++ 互操作吗？**
 
@@ -495,7 +530,7 @@ Debug 和 ReleaseSafe 构建默认保留调试信息，ReleaseFast、ReleaseSmal
 
 评估 Zig 的切入顺序，从能跑起来的最小例子逐步深入：
 
-1. **跑通安装和第一个程序**。从官方下载页（https://ziglang.org/download/）取对应平台的二进制，写一个 `hello.zig`，用 `zig build-exe hello.zig` 编译。这一步建立工具链直觉。
+1. **跑通安装和第一个程序**。从官方下载页（https://ziglang.org/download/）取对应平台的二进制，按"最小项目"一节建好骨架，用 `zig build run` 跑通。这一步建立工具链直觉。
 2. **过一遍 Ziglings**（https://ziglings.org/）。这是一套交互式练习，每个文件一个知识点，改错就能跑通。覆盖语法和标准库基础。
 3. **读标准库源码**。Zig 标准库就是 Zig 写的，可读性高，是最好的进阶材料。从 `std/mem.zig`、`std/Io.zig` 开始，看 allocator 接口和 I/O 接口的设计——0.16 的 I/O 抽象（`std.Io`）是理解新标准库的钥匙。
 4. **写一个真实的小项目**。比如一个简单的 HTTP 静态文件服务器、一个 JSON 处理 CLI、一个小的数据结构库。这一步会逼你处理错误、管理内存、用 `comptime`。
@@ -521,16 +556,3 @@ Debug 和 ReleaseSafe 构建默认保留调试信息，ReleaseFast、ReleaseSmal
 - **语言演进**。一些特性（如 `async`/`await` 关键字移除、`@cImport` 弃用、I/O 接口重写）在不同版本间有过较大调整，跟踪官方 changelog 是必要的。
 
 Zig 的设计方向清晰，但"是否适合你的项目"取决于你能否接受这些成本——1.0 之前的 API 不稳定和生态规模限制这两项，会直接决定维护负担。
-
-> 导航：← [上一节：学习路径与资源](#学习路径与资源) →
-
----
-
-相关资源：
-
-| 资源 | 链接 |
-|------|------|
-| Codeberg 仓库 | https://codeberg.org/ziglang/zig |
-| 官方文档 | https://ziglang.org/documentation/ |
-| Ziglings | https://ziglings.org/ |
-| 社区入口 | https://ziglang.org/community/ |

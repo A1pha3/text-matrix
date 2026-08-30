@@ -3,7 +3,7 @@ title: "Cognee：让 Agent 拥有会自我修正的长期记忆"
 date: "2026-04-17T16:32:00+08:00"
 slug: "cognee-ai-agent-memory-knowledge-engine"
 github_repo: "topoteretes/cognee"
-description: "1.6 万＋ Star 的开源 AI 记忆平台。围绕 remember/recall/improve/forget 四个动词构建 Agent 长期记忆：会话缓存与知识图谱双存储，反馈驱动的自改进闭环，支持多格式数据、多种图/向量后端，可自托管或部署到云平台。"
+description: "3 万＋ Star（截至 2026-08）的开源 AI 记忆平台。围绕 remember/recall/improve/forget 四个动词构建 Agent 长期记忆：会话缓存与知识图谱双存储，反馈驱动的自改进闭环，支持多格式数据、多种图/向量后端，可自托管或部署到云平台。"
 draft: false
 categories: ["技术笔记"]
 topics: ["open-source-ai-tools"]
@@ -26,7 +26,7 @@ Cognee（[topoteretes/cognee](https://github.com/topoteretes/cognee)）常被概
    └─ 永久图谱（慢但持久）
 
 读 ── recall：问题进来
-   └─ 自动路由 → 13＋ 种检索策略之一
+   └─ 自动路由 → 十多种检索策略之一
 
 改 ── improve：答案被判定后
    └─ 反馈权重 → 重新排布图谱与缓存
@@ -61,7 +61,7 @@ await cognee.remember(
 
 ### recall：读出
 
-`recall` 用自然语言提问，返回的是锚定在图谱上的回答，而不是凭空的上下文拼接。不显式指定检索类型时，它会自动路由，选一个合适的策略再检索。
+`recall` 用自然语言提问，返回的是锚定在图谱上的回答，而不是凭空的上下文拼接。不显式指定检索类型时，它会自动路由，选一个合适的策略再检索。带 `session_id` 时先走快路径：命中会话语义缓存就直接返回，不做图遍历；没命中才落到知识图谱做语义检索。
 
 ```python
 answers = await cognee.recall(
@@ -74,7 +74,7 @@ answers = await cognee.recall(
 
 ### improve：让记忆自我修正
 
-`improve` 是 Cognee 与普通 RAG 拉开差距的地方。它把「反馈」转成图谱里的权重变化：一条答案被确认、被纠正或被打回，这个判定会变成命中了该答案的记忆节点/边上的信号——确认的记忆检索权重升高，被纠正或误导的记忆被压低。
+`improve` 是 Cognee 与普通 RAG 拉开差距的地方。它把「反馈」转成图谱里的权重变化：一条答案被确认、被纠正或被打回，这个判定会变成命中了该答案的记忆节点/边上的信号——确认的记忆检索权重升高，被纠正或误导的记忆被压低。它还会把已有事实拼出新连接：知道了「Vasilije 创建了 Cognee」与「Cognee 位于柏林」，就能推出「Vasilije 在柏林」，下次要做多跳查询时这个结论已经现成。
 
 ```python
 # 手动触发改进，可限定数据集或指定会话
@@ -107,11 +107,13 @@ Cognee 把三种存储分开，各自可替换。本地开发用嵌入式默认�
 | 向量 | LanceDB | Chroma、pgvector、Qdrant、Weaviate、Milvus |
 | 关系/会话缓存 | SQLite | PostgreSQL、Redis |
 
+Cognee 1.0 之后，也可以用**单个 PostgreSQL 实例**同时承载关系、嵌入、会话与元数据，把整个记忆层收敛到一个后端上，减少首装时维护多套服务的成本。
+
 权限上也做了多层设计：数据分数据集（Dataset）承载，配 User/Permission 控制谁能读；会话缓存按 `{user_id}:{session_id}` 组织，支持跨用户共享数据集与权限隔离。
 
 ## 检索面：多种策略与规则路由
 
-`recall` 的自动路由不是靠 LLM 判断，而是一套基于关键词权重的规则分类器。它把查询分派到 13＋ 种搜索类型里的一种，常见的有：
+`recall` 的自动路由不是靠 LLM 判断，而是一套基于关键词权重的规则分类器。它把查询分派到十多种搜索类型里的一种，常见的有：
 
 - `GRAPH_COMPLETION`（默认）：LLM 结合图谱上下文作答
 - `GRAPH_COMPLETION_COT`、`GRAPH_SUMMARY_COMPLETION`：更深的图推理模式
@@ -129,7 +131,7 @@ Cognee 把三种存储分开，各自可替换。本地开发用嵌入式默认�
 
 Cognee 的两处设计让反馈能真正落进记忆：
 
-- **反馈加权边**：图里的边带 `feedback_weight` 与 `importance_weight` 两个字段。用户确认过的记忆，对应边权重上调，未来的查询排序会更靠前；被打回的则下调。这让图谱的演化来自 Agent 的真实使用，而不只是批量导入文件。
+- **用法驱动的权重**：图谱的演化来自 Agent 的真实使用，而不是批量导入文件。回答被判定后，这条信号会按使用、反馈、重要性与频率持续重新加权相关记忆——被确认的记忆变强，后续查询更靠前；被纠正或误导的记忆被压低。
 - **三元组嵌入**：大多数 GraphRAG 只给节点做嵌入，Cognee 的 memify 额外给（主语，谓语，宾语）三元组做嵌入。于是可以按语义搜「关系本身」——想找所有和「某人就职于某机构」语义相似的三元组，也能做。
 
 这两点合起来，回答了「记忆会越用越准吗」这个一般框架不回答的问题。
@@ -212,11 +214,11 @@ asyncio.run(main())
 ```bash
 cognee-cli remember "Cognee turns documents into agent memory."
 cognee-cli recall "What does cognee do?"
-cognee-cli improve
+cognee-cli improve --dataset-name main_dataset   # 对指定数据集跑一轮改进
 cognee-cli -ui   # 启动本地 Web 界面
 ```
 
-`cognee-cli doctor` 能先检查环境是否可正常运行；`remember` 的 `--dry-run` 可以在真正调用 LLM 前估算 token 用量与费用。早期的 `add / cognify / search / delete` 也仍保留为底层接口。
+`cognee-cli doctor` 能先检查配置与本地服务是否可运行；`remember` 的 `--dry-run` 可以在真正调用 LLM 前估算 token 用量与费用。反馈也能从命令行灌入：`cognee-cli feedback add <session> <qa_id> --score 5` 给某次回答打分，`improve` 时把这些分数加权进图谱。`datasets` 子命令可以查看数据集与入库状态。新流程统一用 `remember / recall / improve / forget` 四个动词；旧接口 `add / cognify / search / delete` 仍保留为底层命令。
 
 ### 部署
 
