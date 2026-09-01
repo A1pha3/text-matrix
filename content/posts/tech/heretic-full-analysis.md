@@ -6,7 +6,8 @@ description: "Heretic 把方向性消融 + Optuna 超参数优化拧成一条全
 categories: ["技术笔记"]
 tags: ["LLM", "Python", "PyTorch"]
 slug: heretic-full-analysis
-github_repo: "user-attachments/assets"
+github_repo: "p-e-w/heretic"
+source_key: "gh:p-e-w/heretic"
 aliases:
   - "/posts/tech/p-e-w-heretic-analysis/"
 katex: false
