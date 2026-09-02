@@ -1,9 +1,9 @@
 ---
-title: "SymPy：14.6K Stars·纯Python符号计算系统"
+title: "SymPy：纯 Python 符号计算系统"
 date: "2026-04-12T02:31:39+08:00"
 slug: sympy-python-computer-algebra-guide
 github_repo: "sympy/sympy"
-description: "SymPy 是一个纯 Python 符号计算系统，是科学 Python 生态系统的核心组成部分，广泛应用于数学、物理和工程领域。"
+description: "SymPy 是纯 Python 的符号计算系统，是科学 Python 生态的核心组成，用于数学、物理与工程中的符号推导。本文覆盖安装、表达式操作、微积分、方程求解、矩阵、数论、物理模块与代码生成，并标注与数值计算的边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Python"]
@@ -11,21 +11,34 @@ tags: ["Python"]
 
 # SymPy：纯 Python 符号计算系统
 
-SymPy 是一个纯 Python 编写的计算机代数系统（Computer Algebra System, CAS），用于符号数学计算。不依赖外部库，适合教学、科研和工程应用。
+## 为什么需要符号计算
+
+写 `x + 1 == 2`，得到的应该是 `x == 1`，而不是一个浮点数。这个"带着未知量推导"的需求，就是符号计算（Symbolic Computation）存在的理由：它把表达式当作对象来化简、求导、积分、解方程，结果仍是精确的符号表达式，而不是近似数值。
+
+NumPy 计算 `sqrt(2)` 得到 `1.414...`，SymPy 保留 `sqrt(2)` 本身；对它求导得到 `1/(2*sqrt(2))`，再代入某个值才会变成数字。符号与数值的分工大致是：**推导用 SymPy，算数用 NumPy/SciPy**。前者保证正确性与通用性，后者提供性能。
+
+## 项目坐标
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 14.6k ⭐ |
-| 贡献者 | 1,365 |
-| 提交数 | 62,002 |
-| 最新版本 | 1.14.0 (2025-04-28) |
+| Stars | 14.9k（2026-09 实测） |
+| 贡献者 | 1,503（官方 AUTHORS 清单） |
+| 最新版本 | 1.14.0（2025-04-27） |
 | 许可证 | New BSD |
+| 依赖 | 纯 Python，无外部必需依赖 |
 
-项目始于 2005 年，Ondřej Čertík 夏季开始编写代码。2007 年通过 GSoC 迎来 5 名学生贡献者，Pearu Peterson 重写核心后性能提升 10-100 倍。2011 年起由 Aaron Meurer 接手维护至今。
+SymPy 始于 2005 年，2007 年通过 Google Summer of Code 引入第一批学生贡献者，此后由社区持续维护至今。它被 SciPy、Jupyter、SageMath 等生态广泛依赖。
 
-核心特性：纯 Python 无外部依赖、符号表达式操作与简化、求导/积分/极限、矩阵运算、方程/微分方程求解、物理模块（经典力学、量子力学）、LaTeX/ASCII/Unicode 输出。
+## 学习目标
 
-## 安装
+读完本文，你应该能：
+
+- 说清符号计算与数值计算的差别，以及各自的适用边界
+- 安装 SymPy 并用表达式、微积分、方程、矩阵完成常见推导
+- 用 `lambdify` 把符号表达式转成 NumPy 数值函数
+- 知道物理模块、绘图、LaTeX 输出在哪里，能查文档继续深入
+
+## 安装与验证
 
 ```bash
 pip install sympy
@@ -43,31 +56,36 @@ conda install -c anaconda sympy
 
 ## 快速入门
 
-### 基础符号计算
+### 表达式与化简
+
+符号（Symbol）是表达式的原子，加减乘除和函数作用在其上构成表达式树：
 
 ```python
->>> from sympy import Symbol, cos, sin, exp, sqrt
->>> from sympy import integrate, diff, limit, series
+>>> from sympy import Symbol, cos, sin, expand, simplify, trigsimp
 
 >>> x = Symbol('x')
 >>> y = Symbol('y')
 
 # 表达式创建与展开
 >>> e = (x + y)**2
->>> e
-(x + y)**2
 >>> e.expand()
 x**2 + 2*x*y + y**2
 
-# 三角函数化简
->>> cos(x)**2 + sin(x)**2
+# 恒等式化简
+>>> trigsimp(sin(x)**2 + cos(x)**2)
 1
+
+# 通用化简
+>>> simplify((x**2 + 2*x + 1)/(x + 1))
+x + 1
 ```
+
+注意 `simplify` 是启发式的，不同表达式化简效果差异很大；对三角函数用 `trigsimp`、对有理式用 `cancel`、对幂指函数用 `powsimp`，通常比 `simplify` 更可控。
 
 ### 微积分
 
 ```python
->>> x = Symbol('x')
+>>> from sympy import diff, integrate, limit, series, exp, oo
 
 # 求导
 >>> diff(x**3, x)
@@ -81,35 +99,37 @@ x**3/3
 >>> integrate(1, (x, 0, 1))
 1
 
-# 极限
+# 单侧极限
 >>> limit(1/x, x, 0, dir='+')
 oo
 
-# 泰勒展开
+# 泰勒展开（O(x**10) 表示余项）
 >>> series(exp(x), x, 0, 10)
 1 + x + x**2/2 + x**3/6 + x**4/24 + x**5/120 + x**6/720 + x**7/5040 + x**8/40320 + x**9/362880 + O(x**10)
 ```
 
+`limit` 的 `dir` 参数控制趋近方向：`'+'` 从右侧、`'-'` 从左侧，处理不连续点时二者结果可能不同。
+
 ### 方程求解
 
 ```python
->>> from sympy import solve, solveset, dsolve, Function
-
->>> x, y = Symbol('x'), Symbol('y')
+>>> from sympy import solve, dsolve, Function
 
 # 代数方程
 >>> solve(x**2 - 4, x)
 [-2, 2]
 
-# 微分方程
+# 线性方程组
+>>> solve([x + y - 2, x - y], [x, y])
+{x: 1, y: 1}
+
+# 常微分方程：f'(x) - f(x) = 0
 >>> f = Function('f')
 >>> dsolve(f(x).diff(x) - f(x), f(x))
-f(x) == C1*e**x
-
-# 方程组
->>> solve([x + y - 2, x - y - 0], [x, y])
-{x: 1, y: 1}
+Eq(f(x), C1*exp(x))
 ```
+
+`dsolve` 的返回是 `Eq(左式, 右式)` 形式，`C1` 是待定常数。高阶、非线性或带初始条件的方程，先查 `dsolve` 的 `hint` 参数与文档中支持的类型表。
 
 ### 矩阵运算
 
@@ -121,19 +141,15 @@ f(x) == C1*e**x
 -2
 >>> M.inv()
 Matrix([
-[ -2,   1],
+[-2,   1],
 [3/2, -1/2]])
 >>> M.eigenvals()
-{-2: 1, 3: 1}
->>> M * M
-Matrix([
-[ 7, 10],
-[15, 22]])
+{5/2 - sqrt(33)/2: 1, 5/2 + sqrt(33)/2: 1}
 ```
 
-## 核心模块
+特征值以符号表达式给出，这正是符号计算的价值：不经过浮点近似，特征值可以直接是 `sqrt(33)` 的精确组合。
 
-常用函数速查：
+## 核心模块速查
 
 | 模块 | 函数 | 说明 |
 |------|------|------|
@@ -145,7 +161,9 @@ Matrix([
 | `sympy.factor` | `factor(expr)` | 因式分解 |
 | `sympy.expand` | `expand(expr)` | 展开 |
 | `sympy.simplify` | `simplify(expr)` | 化简 |
-| `sympy.subs` | `subs(x, y)` | 替换 |
+| `sympy.trigsimp` | `trigsimp(expr)` | 三角化简 |
+| `sympy.cancel` | `cancel(expr)` | 有理式通分化简 |
+| `sympy.subs` | `expr.subs(x, 2)` | 代入求值 |
 | `sympy.lambdify` | `lambdify(x, expr)` | 转数值函数 |
 
 ## 高级功能
@@ -153,164 +171,179 @@ Matrix([
 ### LaTeX 输出
 
 ```python
->>> from sympy import latex, Symbol, Integral
->>> x = Symbol('x')
->>> print(latex(x**2 + cos(x)))
-x^{2} + \cos\left(x\right)
->>> print(latex(Integral(x**2, x)))
-\int x^{2}\,dx
+>>> from sympy import latex, Integral
+
+>>> latex(x**2 + cos(x))
+x^{2} + \cos{\left(x \right)}
+>>> latex(Integral(x**2, x))
+\int x^{2}\, dx
 ```
+
+生成的 LaTeX 可直接嵌入 Markdown 的 `$$` 公式块，或用于 Jupyter Notebook 的数学渲染。
 
 ### 代码生成
 
 ```python
->>> from sympy import lambdify
+>>> from sympy import lambdify, Symbol, sin, cos
+>>> import numpy as np
+
 >>> x = Symbol('x')
->>> expr = x**2 + 2*x + 1
+>>> expr = sin(x) + cos(x)
 
-# 转换为 NumPy 函数
+# 转成 NumPy 数值函数，支持向量化输入
 >>> f = lambdify(x, expr, 'numpy')
->>> f(3)
-16
+>>> f(np.array([0, np.pi/2, np.pi]))
+[ 1.  1. -1.]
 
-# 使用 mpmath 高精度
+# 用 mpmath 提供高精度
 >>> import mpmath as mp
->>> f_mp = lambdify(x, expr, 'mpmath')
+>>> f_mp = lambdify(x, x**2 + 2*x + 1, 'mpmath')
 >>> f_mp(mp.mpf('0.5'))
 2.25
 ```
 
-### 符号矩阵
+`lambdify` 是符号与数值的分界线：推导阶段用符号，批量计算阶段把表达式编译成数值函数，避免逐次调用 `subs` 的 Python 层开销。
+
+### 符号矩阵进阶
 
 ```python
 >>> from sympy import Matrix, symbols
+
 >>> a, b, c = symbols('a b c')
 >>> M = Matrix([[a, b], [c, a]])
+
 >>> M.charpoly()
 PurePoly(lambda**2 - 2*a*lambda + a**2 - b*c, lambda, domain='ZZ[a,b,c]')
+
 >>> M.eigenvects()
-[(a - sqrt(b*c), 1, [Matrix([[-b/(a - sqrt(b*c))], [1]])]),
- (a + sqrt(b*c), 1, [Matrix([[-b/(a + sqrt(b*c))], [1]])])]
+[(a - sqrt(b*c), 1, [Matrix([
+[-a/c + (a - sqrt(b*c))/c],
+[                       1]])]),
+ (a + sqrt(b*c), 1, [Matrix([
+[-a/c + (a + sqrt(b*c))/c],
+[                       1]])])]
 ```
+
+`eigenvects` 返回 `(特征值, 重数, 特征向量列表)` 的三元组列表，特征向量同样以符号形式给出。
 
 ### 数论
 
 ```python
 >>> from sympy import isprime, prime, factorint, totient
+
 >>> isprime(97)
 True
->>> prime(100)
-547
+>>> prime(100)   # 第 100 个素数
+541
 >>> factorint(123456)
 {2: 6, 3: 1, 643: 1}
->>> totient(100)
+>>> totient(100)  # 欧拉函数
 40
 ```
+
+`isprime` 对较小的数走确定性判别，对大数使用概率性 Miller-Rabin 测试；`prime` 内部使用素数筛缓存，频繁取第 n 个素数时效率可接受。
 
 ## 物理模块
 
 ### 经典力学
 
+动力学符号（dynamicsymbols）自动带上时间依赖，求导即为速度、加速度：
+
 ```python
->>> from sympy.physics.mechanics import *
->>> from sympy import symbols, Function
->>> q1, q2 = dynamicsymbols('q1 q2')
->>> q1_d, q2_d = dynamicsymbols('q1 q2', 1)
->>> M = Matrix([[2, 0], [0, 2]])
->>> F = Matrix([[2*q2_d**2], [0]])
+>>> from sympy.physics.mechanics import dynamicsymbols
+
+>>> q1 = dynamicsymbols('q1')
+>>> q1
+q1(t)
+>>> q1.diff()   # 对时间求导
+Derivative(q1(t), t)
 ```
+
+完整的拉格朗日或牛顿方法在 `sympy.physics.mechanics` 下：`LagrangesMethod`、`Particle`、`ReferenceFrame` 等类把多体系统的方程搭建与求解封装起来，适合机器人学与刚体动力学。
 
 ### 量子力学
 
+用玻色子算符示例对易关系：
+
 ```python
->>> from sympy.physics.quantum import *
->>> from sympy import symbols, I, hbar
->>> a = AnnihilationOperator('a')
->>> a_d = CreationOperator('a')
->>> a * a_d  # 不对易
-I + a_d*a
->>> a_d * a  # 粒子数算符
-a_d*a
+>>> from sympy.physics.quantum.boson import BosonOp
+>>> from sympy.physics.quantum import Commutator
+
+>>> ann = BosonOp('a')          # 湮灭算符
+>>> cre = BosonOp('a', False)   # 产生算符
+>>> Commutator(ann, cre).doit() # [a, a†] = 1
+1
 ```
+
+`BosonOp` 的构造参数第二个位置控制升/降算符。更复杂的态矢量、位置动量算符在 `sympy.physics.quantum` 下按模块组织，按需导入对应子模块。
 
 ## 绘图
 
 ```python
->>> from sympy import symbols, plot, sin, cos, exp, plot3d
+>>> from sympy import symbols, plot, sin, cos, exp
+
 >>> x = symbols('x')
-
-# 2D 基础绘图
 >>> p1 = plot(sin(x), (x, -pi, pi))
-# 多函数
 >>> p2 = plot(sin(x), cos(x), exp(-x), (x, -2*pi, 2*pi))
-# 保存
 >>> p2.save('plot.png')
-
-# 3D 绘图
->>> x, y = symbols('x y')
->>> plot3d(x**2 + y**2, (x, -5, 5), (y, -5, 5))
 ```
 
-## 性能优化
+3D 绘图用 `plot3d`，曲面、等高线、参数曲线分别有独立入口。绘图默认返回 `Plot` 对象，`save` 支持常见图片格式；在 Jupyter 中直接显示对象即可内联渲染。
 
-SymPy 是纯 Python 实现，性能不如 C/C++ 实现的专业 CAS（如 Mathematica）。但对于中小规模的符号计算，性能足够。大规模计算建议使用 NumPy/SciPy 进行数值计算，或使用 `lambdify()` 将符号表达式转为数值函数。
+## 性能边界与优化
 
-内置的自动简化和记忆化机制能有效减少重复计算：
+SymPy 是纯 Python 实现，大型符号计算（如高阶多项式、复杂定积分）可能明显慢于 Mathematica 等原生 CAS。两条缓解路径：
 
-```python
->>> from sympy import simplify, trigsimp, N, sqrt, pi
+1. **推导阶段**：优先化简到最小表达式再继续，避免表达式膨胀——`factor`/`cancel`/`trigsimp` 选对方向通常比 `simplify` 快。
+2. **数值阶段**：用 `lambdify` 转成 NumPy/SciPy，或在 `numpy` 后端上批量向量化。
 
-# 三角简化
->>> trigsimp(sin(x)**2 + cos(x)**2)
-1
-# 通用简化
->>> simplify((x**2 + 2*x + 1)/(x + 1))
-x + 1
-
-# 高精度数值计算
->>> N(sqrt(2))
-1.41421356237310
->>> N(pi, dps=50)
-3.1415926535897932384626433832795028841971693993751
-```
+对超大规模数值计算，直接使用 NumPy/SciPy，符号层只负责离线推导公式。
 
 ## 与其他工具集成
 
 ```python
-# NumPy/SciPy
+# NumPy：向量化求值
 >>> import numpy as np
->>> from sympy import lambdify
+>>> from sympy import lambdify, Symbol, sin, cos
 >>> x = Symbol('x')
->>> expr = sin(x) + cos(x)
->>> f = lambdify(x, expr, 'numpy')
->>> f(np.array([0, pi/2, pi]))
-array([ 1.        ,  1.41421356,  -1.        ])
+>>> f = lambdify(x, sin(x) + cos(x), 'numpy')
+>>> f(np.array([0, np.pi/2, np.pi]))
+[ 1.  1. -1.]
 
-# Matplotlib
+# Matplotlib：绘制符号函数
 >>> import matplotlib.pyplot as plt
 >>> p = plot(sin(x), (x, 0, 2*pi), show=False)
 >>> p.xlabel = 'x'
 >>> p.ylabel = 'sin(x)'
 >>> p.show()
 
-# LaTeX 文档嵌入
+# LaTeX：输出公式
 >>> from sympy import latex, Integral
->>> expr = Integral(x**2, (x, 0, 1))
->>> print(latex(expr))
-\int_{0}^{1} x^{2}\,dx
+>>> print(latex(Integral(x**2, (x, 0, 1))))
+\int\limits_{0}^{1} x^{2}\, dx
 ```
 
 ## 常见问题
 
-**SymPy 和 Mathematica/MATLAB 的符号计算工具箱相比如何？**
+**SymPy 和 Mathematica / MATLAB 的符号工具箱相比如何？**
 
-SymPy 是开源免费的，Mathematica/MATLAB 是商业软件。功能上 SymPy 覆盖了符号计算的大部分常见需求，但在大规模多项式计算、专业数学领域工具箱上可能不如商业软件。对大多数用户来说 SymPy 已经足够。
+SymPy 免费开源，覆盖符号计算的绝大部分日常需求；Mathematica 在超大多项式、专业数学领域工具箱与整体性能上更强。对大多数教学与工程推导，SymPy 足够。
 
-**可以在生产环境中使用 SymPy 吗？**
+**可以在生产环境使用 SymPy 吗？**
 
-可以，但需要注意性能。建议用 `lambdify()` 将符号表达式转为数值函数，避免在生产中进行复杂的符号推导。性能关键部分考虑用 C/C++ 实现。
+可以，但注意性能边界。建议用 `lambdify` 把符号表达式转成数值函数投入运行，避免在生产路径上反复做符号推导；性能关键部分改用 NumPy/SciPy。
+
+**为什么 `simplify` 结果和我预期不同？**
+
+`simplify` 是启发式搜索，方向不对就返回原式。针对性使用 `trigsimp`（三角）、`cancel`（有理式）、`factor`（多项式）、`powsimp`（幂指）通常更可控。
+
+**`subs` 和 `lambdify` 有什么区别？**
+
+`subs` 做符号替换，每次返回新表达式，适合少量代入；`lambdify` 编译成数值函数，支持向量化与高性能批量计算。
 
 ## 引用
+
+若在论文中使用 SymPy，官方建议引用：
 
 ```bibtex
 @article{meurer2017sympy,

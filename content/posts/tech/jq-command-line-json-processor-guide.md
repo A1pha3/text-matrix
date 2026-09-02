@@ -2,7 +2,7 @@
 title: "jq 完全指南：命令行 JSON 处理工具"
 slug: "jq-command-line-json-processor-guide"
 github_repo: "repos/jqlang"
-description: "深入解析jq——34.2k Stars的命令行JSON处理工具。零依赖纯C编写，sed/awk/grep般的便捷体验，轻松切片、过滤、映射、转换结构化数据。"
+description: "深入解析jq——34.6k+ Stars的命令行JSON处理工具。零依赖纯C编写，sed/awk/grep般的便捷体验，轻松切片、过滤、映射、转换结构化数据。"
 date: "2026-04-11T00:25:00+08:00"
 categories: ["技术笔记"]
 tags: ["C语言", "工具"]
@@ -197,8 +197,10 @@ echo '{"a":1,"b":2}' | jq 'keys'
 # 输出: ["a", "b"]
 
 # 获取所有值
-echo '{"a":1,"b":2}' | jq 'values'
-# 输出: [1, 2]
+echo '{"a":1,"b":2}' | jq '.[]'
+# 输出:
+# 1
+# 2
 
 # 获取键值对
 echo '{"a":1,"b":2}' | jq 'to_entries'
@@ -289,8 +291,8 @@ echo '[1,2,3]' | jq 'unique'     # [1,2,3]
 echo '[1,1,2,2,3]' | jq 'unique'  # [1,2,3]
 
 # 对象函数
-echo '{"b":2,"a":1}' | jq 'sort_by(.a)'
-# 输出: [{"a":1,"b":2}]
+echo '[{"a":2},{"a":1}]' | jq 'sort_by(.a)'
+# 输出: [{"a":1},{"a":2}]
 echo '[{"n":"b"},{"n":"a"}]' | jq 'sort_by(.n)'
 # 输出: [{"n":"a"},{"n":"b"}]
 ```
@@ -435,12 +437,26 @@ echo '5' | jq 'def fact: if . <= 1 then 1 else . * (. - 1 | fact) end; fact'
 
 ### 8.2 模块系统
 
-```bash
-# 使用模块
-jq -L '~/.jq/lib' 'include "mylib"; myfunc'
+模块把常用过滤程序沉淀成可复用的 `.jq` 文件。例如写入 `~/.jq/lib/mylib.jq`：
 
-# 导入远程模块 (需要网络)
-jq -s 'import "stdlib" as std; std::round(.temperature)'
+```jq
+# mylib.jq
+def double: . * 2;
+def add_tax(rate): . * (1 + rate);
+```
+
+然后在命令中引用：
+
+```bash
+# include 引入模块定义
+echo '21' | jq -L '~/.jq/lib' 'include "mylib"; double'
+# 输出: 42
+echo '100' | jq -L '~/.jq/lib' 'include "mylib"; add_tax(0.06)'
+# 输出: 106
+
+# import 则用命名空间限定，避免重名冲突
+echo '21' | jq -L '~/.jq/lib' 'import "mylib" as m; m::double'
+# 输出: 42
 ```
 
 ### 8.3 正则表达式

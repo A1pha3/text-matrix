@@ -1,758 +1,319 @@
 ---
-title: "LazyGit：76K Stars·Go语言编写·Git终端UI·可视化版本控制"
+title: "LazyGit：Git 终端可视化的日常操作指南"
 date: "2026-04-12T02:29:31+08:00"
 slug: lazygit-git-terminal-ui-guide
 github_repo: "jesseduffield/lazygit"
-description: "LazyGit 是一个简单的 Git 终端 UI，使用 Go 语言编写。它旨在通过可视化界面让 Git 版本控制更加用户友好，支持交互式 Rebase、冲突解决等功能。"
+description: "LazyGit 是 Go 编写的 Git 终端 UI，用面板把暂存、提交、分支、变基、冲突解决等操作可视化。本文从安装配置讲起，按面板介绍常用快捷键，一步步走通提交、变基和冲突解决的完整流程。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Git", "Go", "终端", "TUI"]
 ---
 
-# LazyGit：76K Stars·Go 语言编写·Git 终端 UI·可视化版本控制·交互式 Rebase·冲突解决
+# LazyGit：Git 终端可视化的日常操作指南
 
-## 学习目标
+LazyGit 解决的问题很具体：Git 命令行能做所有事，但交互式变基（interactive rebase）、逐行暂存、Cherry-pick 这类操作要记一堆参数，敲错了只能重来。LazyGit 把这些操作放进一个终端里的 TUI（Text User Interface，文本用户界面），用面板分开展示，按一个键就执行对应的 `git` 命令。
 
-通过本文，您将掌握：
+它没有重新实现 Git，而是把你常用的 Git 操作封装成不到一两个按键的动作，并实时展示执行结果。本文针对「已经会用 `git`，想在日常开发里取代命令行」的读者，按面板介绍快捷键，再带你把提交、变基、冲突解决走一遍。
 
-1. **理解 LazyGit 的价值**：为什么需要可视化 Git 终端 UI
-2. **掌握安装配置**：在 macOS/Linux/Windows 上安装和配置 LazyGit
-3. **熟练使用核心功能**：文件管理、提交管理、分支管理、远程操作
-4. **掌握高级功能**：交互式 Rebase、冲突解决、Stash 管理
-5. **提升日常效率**：将 LazyGit 集成到日常开发工作流
+## 前置条件
 
-## 目录
+- 已安装 Git（macOS 与 Linux 建议 2.32 及以上；Windows 用户可通过官方安装包获取）
+- 能打开终端，基本会用 `cd`、`git status`
 
-- [一，项目概述](#一项目概述)
-- [二，核心原理](#二核心原理)
-- [三，安装与配置](#三安装与配置)
-- [四，快速开始](#四快速开始)
-- [五，核心功能](#五核心功能)
-- [六，高级功能](#六高级功能)
-- [七，配置文件](#七配置文件)
-- [八，实践建议](#八实践建议)
-- [九，快捷键速查表](#九快捷键速查表)
-- [十，常见问题](#十常见问题)
-- [十一，总结](#十一总结)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶路径](#进阶路径)
-- [资料口径说明](#资料口径说明)
+## 一、项目概况
 
----
+### 1.1 它到底是什么
 
-## 一，项目概述
+LazyGit 是一个开源的 Git 终端 UI，用 Go 编写，基于 `gocui` 绘制界面。它自己不处理 Git 的底层逻辑，而是通过内部命令层调用系统的 `git` 可执行文件来完成实际操作——你在界面上做的每一步，对应的都是一条真实的 `git` 命令。
 
-### 1.1 LazyGit 是什么
+这样做的好处是行为与命令行完全一致：LazyGit 显示的分支、提交、状态就是 `git` 的输出，不引入另一套语义。它替你省下的是「记忆命令 + 敲参数」这部分，而不是改变 Git 本身的行为。
 
-**LazyGit** 是一个简单的 **Git 终端 UI**，使用 Go 语言编写。它旨在通过可视化界面让 Git 版本控制更加用户友好。
+### 1.2 数据口径
 
-> "A simple terminal UI for git commands"
+以下数据从 GitHub 仓库两次调用中核对，供参考。Stars、Forks 会随时间增长，以仓库页面为准。
 
-**核心理念**：让 Git 命令行操作变得可视化，无需记忆复杂命令，点击即可完成版本控制。
+| 指标 | 数值（2026-08 核实） |
+|------|---------------------|
+| 语言 | Go |
+| 开源协议 | MIT |
+| Stars | 约 8.2 万 |
+| Forks | 约 3,000 |
+| 最新稳定版 | v0.64（2026-08 发布） |
 
-### 1.2 核心数据
+## 二、安装与启动
 
-| 指标 | 数值 |
-|------|------|
-| Stars | **76.5k** ⭐ |
-| Forks | 2,757 |
-| 贡献者 | **3,000+** |
-| 提交数 | **2,000+** |
-| 最新版本 | **v0.61.1** (2026-04) |
-| 许可证 | **GPL-3.0** |
-| 语言 | **Go 98.7%** |
+按你的平台选择一种即可。装好后在任一 Git 仓库目录里运行 `lazygit` 就能进入界面；不在仓库目录里运行会提示找不到 Git 仓库。
 
-### 1.3 成绩单
+### 2.1 macOS
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    LazyGit 成绩单                                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   🌟 GitHub: 76.5k Stars                                     │
-│   🔧 语言: Go 98.7%                                          │
-│   📦 安装: brew / go install                                 │
-│   🎯 定位: Git 可视化终端界面                               │
-│   ✨ 特点: 轻量、快速、用户友好                              │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## 二，核心原理
-
-### 2.1 架构概览
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    LazyGit 架构                                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│                         用户交互                                   │
-│                            ↓                                       │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │              LazyGit TUI (gocui)                           │   │
-│   │   ┌──────────────┐  ┌──────────────┐               │   │
-│   │   │  文件面板   │  │  提交面板   │               │   │
-│   │   │ (Files)    │  │ (Commits)   │               │   │
-│   │   └──────────────┘  └──────────────┘               │   │
-│   │   ┌──────────────┐  ┌──────────────┐               │   │
-│   │   │  分支面板   │  │  标签面板   │               │   │
-│   │   │ (Branches) │  │  (Tags)     │               │   │
-│   │   └──────────────┘  └──────────────┘               │   │
-│   └─────────────────────────────────────────────────────┘   │
-│                            ↓                                       │
-│                    libgit2 / go-git                              │
-│                            ↓                                       │
-│                         Git 仓库                                   │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 2.2 工作流程
-
-```bash
-# LazyGit 内部工作流程
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   用户操作   │ ──▶ │   TUI 渲染   │ ──▶ │  Git 执行   │
-│  (键盘/鼠标) │     │  (gocui)    │     │ (libgit2)   │
-└──────────────┘     └──────────────┘     └──────────────┘
-```
-
-## 三，安装与配置
-
-### 3.1 macOS 安装
-
-```bash
-# 方式一：Homebrew（推荐）
+```sh
 brew install lazygit
-
-# 方式二：MacPorts
-sudo port install lazygit
 ```
 
-### 3.2 Linux 安装
+### 2.2 Linux
 
-```bash
-# Ubuntu/Debian
-sudo apt-get install lazygit
+- **Ubuntu / Debian**：无官方 apt 包时，走 GitHub Releases 下载预编译二进制。仓库 `Releases` 页面提供 `lazygit_<版本>_Linux_x86_64.tar.gz`，解压后放入 `PATH`：
 
-# Fedora
-sudo dnf install lazygit
+  ```sh
+  sudo install lazygit /usr/local/bin
+  ```
 
-# Arch Linux
-sudo pacman -S lazygit
+- **Arch 及其衍生**：AUR 里可直接安装：
 
-# Snap
-snap install lazygit
+  ```sh
+  yay -S lazygit
+  ```
+
+- **其他发行版**：同样使用 Releases 页面下载对应架构的压缩包即可，也可用官方 `brew.sh` 的 Linux 版。
+
+### 2.3 从源码安装
+
+适合想改代码或跟进最新分支的场景：
+
+```sh
+go install github.com/jesseduffield/lazygit@latest
 ```
 
-### 3.3 Windows 安装
+装完确认二进制在 `PATH` 中。Go 版本过低或环境变量未配好时，可先看 `go env GOPATH` 把对应的 `bin` 目录加入 `PATH`。
 
-```bash
-# 方式一：Scoop
-scoop install lazygit
+### 2.4 Windows
 
-# 方式二：Chocolatey
-choco install lazygit
+通过 Winget 或 Scoop 安装：
 
-# 方式三：WinGet
+```sh
 winget install JesseDuffield.LazyGit
+# 或
+scoop install lazygit
 ```
 
-### 3.4 Go 安装
+## 三、界面与导航
 
-```bash
-# 安装最新版本
-go install github.com/jesseduffield/lazygit@latest
+### 3.1 五个面板
 
-# 或安装特定版本
-go install github.com/jesseduffield/lazygit@latest
-```
+LazyGit 启动后界面主要分成五个面板，用数字键或 `Tab` 切换：
 
-### 3.5 从源码安装
+| 数字键 | 面板 | 作用 |
+|--------|------|------|
+| `1` | 状态（Status） | 仓库信息、当前分支、检查更新 |
+| `2` | 文件（Files） | 工作区改动：暂存区与未暂存文件的增删改 |
+| `3` | 分支（Local Branches） | 本地分支，`Enter` 查看某分支的提交 |
+| `4` | 提交（Commits） | 提交历史，`Enter` 查看某次提交改动的文件 |
+| `5` | 储藏（Stash） | 储藏（stash）列表 |
 
-```bash
-# 克隆仓库
-git clone https://github.com/jesseduffield/lazygit.git
-cd lazygit
+主面板在右侧，展示当前选中条目的 diff（差异）或操作预览。任意时刻按 `?` 打开当前面板的快捷键帮助。
 
-# 编译
-make build
+### 3.2 通用快捷键
 
-# 安装
-sudo make install
-```
+这些键在任何面板都有效：
 
-## 四，快速开始
-
-### 4.1 基本使用
-
-```bash
-# 进入 Git 仓库目录
-cd my-project
-
-# 启动 LazyGit
-lazygit
-```
-
-### 4.2 快捷键概览
-
-| 快捷键 | 功能 |
-|--------|------|
-| **文件操作** | |
-| `s` | Stage 文件（暂存） |
-| `u` | Unstage 文件（取消暂存） |
-| `a` | Stage 所有文件 |
-| `i` | 忽略文件 |
-| **提交操作** | |
-| `c` | 创建提交 |
-| `w` | 修改最近提交 |
-| `r` | Rebase 当前分支 |
-| **分支操作** | |
-| `n` | 新建分支 |
-| `b` | 切换分支 |
-| `d` | 删除分支 |
-| **远程操作** | |
-| `p` | Push 到远程 |
-| `f` | Fetch 远程 |
-| `P` | Pull 远程 |
-| **通用** | |
+| 键 | 动作 |
+|-----|------|
+| `?` | 打开 / 关闭当前面板快捷键菜单 |
 | `q` | 退出 |
-| `?` | 帮助 |
-| `/` | 搜索 |
-| `t` | 查看标签 |
+| `Tab` / 数字键 | 切换面板 |
+| `↑↓` 或 `jk` | 上下移动选中项 |
+| `Enter` | 进入选中项（如查看某提交改了什么） |
+| `/` | 在当前面板内按文本搜索 |
+| `:` | 执行一条自定义 shell 命令 |
+| `z` | 撤销上一次 Git 操作（借助 reflog，试验性） |
 
-## 五，核心功能
+## 四、文件面板：暂存与提交
 
-### 5.1 文件管理
+文件面板是你最常用的地方，展示所有未提交的改动。选择文件用 `space` 切换暂存状态，`Enter` 进入逐行（line-by-line）暂存视图——这是 LazyGit 比命令行 `git add -p` 顺手的地方。
 
-```bash
-# Stage 单个文件
-s
+| 键 | 动作 |
+|-----|------|
+| `space` | 暂存 / 取消暂存当前文件 |
+| `a` | 暂存 / 取消暂存全部文件 |
+| `Enter` | 进入逐行暂存视图（按 `hunk` 或单行暂存） |
+| `Enter`（目录上） | 展开 / 收起目录 |
+| `s` | 储藏全部改动（进入储藏面板） |
+| `d` | 放弃当前文件的改动（弹出选项） |
+| `D` | 重置 / 放弃全部改动（弹出选项） |
+| `c` | 提交暂存的改动 |
+| `w` | 提交暂存的改动（跳过 pre-commit 钩子） |
+| `A` | 用已暂存的改动补充到最近一次提交（amend） |
+| `e` | 用系统编辑器打开当前文件 |
+| `i` | 把当前文件加入 `.gitignore` |
+| `M` | 打开外部合并工具（`git mergetool`）解决冲突 |
 
-# Unstage 单个文件
-u
+逐行暂存视图里，`space` 暂存光标所在的块或行，`s`（小写）保存并返回。这一模式适合做「只提交某个改动的一小部分」这种事。
 
-# Stage 所有文件
-a
+## 五、提交面板：历史与变基
 
-# 查看文件差异
-d
+提交面板列出提交历史。它最强大的能力是交互式变基（`interactive rebase`）——在历史里选定一个起点，然后用一组键对每个提交做 pick / reword / squash / fixup，边看 diff 边改历史。
 
-# 放弃文件更改
-D
-```
+| 键 | 动作 |
+|-----|------|
+| `Enter` | 查看选中提交改动的文件清单 |
+| `r` | 修改某提交的提交信息（reword） |
+| `s` | 把当前提交压缩到上一个（squash） |
+| `f` | 把当前提交标记为 fixup（合并但丢弃信息） |
+| `d` | 删除当前提交 |
+| `e` | 从该提交开始进入交互式变基 |
+| `n` | 基于该提交新建分支 |
+| `c` | 复制当前提交（Cherry-pick） |
+| `v` | 粘贴已复制的提交（Cherry-pick） |
+| `A` | 用暂存改动补充最近一次提交（amend） |
 
-### 5.2 提交管理
+### 5.1 交互式变基流程
 
-```bash
-# 创建提交
-c
+要压缩最近三个提交为一个：
 
-# 修改最近提交
-w
+1. 进入提交面板（`4`），选中倒数第三个提交。
+2. 按 `e` 进入以它为基点的交互式变基界面。该提交及其之后的提交会列出来。
+3. 在列表中选中一个提交后，按以下键改它的动作：
+   `p` pick（保留）、`r` reword（改成提交信息）、`s` squash（合并到上一个）、`f` fixup（合并但丢信息）、`d` drop（丢弃）。
+4. 全部设置好后按 `enter` 拉出确认弹窗，确认后 LazyGit 执行 `git rebase` 并回到提交面板。
 
-# Squash 提交（压缩）
-r
+变基途中若想放弃，按 `m` 打开变基选项菜单，选择 Abort 即可回到起点状态。
 
-# 查看提交历史
-h
+### 5.2 Cherry-pick 流程
 
-# Cherry-pick 提交
-C
-```
+1. 在提交面板选中要复制的提交，按 `c`。
+2. 切到目标分支，回到提交面板按 `v`，选中仓库粘贴。选中项会被复制为一次新提交。
 
-### 5.3 分支管理
+## 六、分支面板
 
-```bash
-# 新建分支
-n
+分支面板处理本地分支与远程跟踪。`space` 是切换分支最常用的动作。
 
-# 切换分支
-b
+| 键 | 动作 |
+|-----|------|
+| `space` | 切换（checkout）到选中分支 |
+| `n` | 新建分支 |
+| `c` | 按名字输入并切换到某分支 |
+| `r` | 把当前分支变基到选中分支上 |
+| `M` | 把选中分支合并进当前分支 |
+| `d` | 删除选中分支 |
+| `R` | 重命名分支 |
+| `u` | 设置 / 取消上游跟踪（upstream） |
+| `f` | 从上游快进当前分支 |
+| `T` | 为选中分支打标签 |
 
-# 删除分支
-d
+实际项目多用「分支 + Rebase」而非频繁合并：切到功能分支，在分支面板按 `r` 变基到 `main`，解决了冲突再推上去，历史是线性的，干净。
 
-# 合并分支
-m
+## 七、储藏面板
 
-# 重命名分支
-R
-```
+储藏（stash）用于把当前改动临时收起来，切换到别的分支再取回。
 
-### 5.4 远程操作
+| 键 | 动作 |
+|-----|------|
+| `space` | 应用选中的储藏（不删除它） |
+| `g` | 应用并移除选中的储藏（pop） |
+| `d` | 删除选中的储藏 |
 
-```bash
-# Fetch 远程
-f
+在文件面板按 `s` 会创建一个储藏并跳到储藏面板；之后随时到这里 `g` 取回。
 
-# Pull 远程
-P
+## 八、配置
 
-# Push 到远程
-p
+默认配置通常够用，只有想改主题或默认行为时才需要写配置文件。
 
-# 查看远程
-o
-```
+### 8.1 配置文件位置
 
-## 六，高级功能
+| 平台 | 全局配置文件 |
+|------|--------------|
+| Linux | `~/.config/lazygit/config.yml` |
+| macOS | `~/Library/Application Support/lazygit/config.yml` |
+| Windows | `%LOCALAPPDATA%\lazygit\config.yml` |
 
-### 6.1 交互式 Rebase
+另外支持仓库级配置：放在仓库内的 `.git/lazygit.yml` 只对该仓库生效；放在仓库的某个上级目录、命名为 `.lazygit.yml`，则对该目录下的所有仓库都生效，适合给一组相关项目统一设置。仓库级配置会覆盖全局配置。
 
-```bash
-# 进入 rebase 模式
-r
-
-# 在 rebase 界面中：
-# - 选择提交
-# - p: pick（保留）
-# - s: squash（压缩）
-# - d: drop（删除）
-# - e: edit（编辑）
-# - r: reword（修改信息）
-# - f: fixup（压缩并保留消息）
-
-# 保存并完成
-:write
-:quit
-```
-
-### 6.2 冲突解决
-
-```bash
-# 打开 LazyGit
-lazygit
-
-# 进入合并冲突界面
-m
-
-# 选择文件解决冲突
-# - 选择ours版本
-# - 选择theirs版本
-# - 手动编辑
-
-# 标记为已解决
-space
-
-# 继续 rebase
-c
-```
-
-### 6.3 Stash 管理
-
-```bash
-# 创建 stash
-s
-
-# 查看 stash 列表
-stash 面板
-
-# 应用 stash
-a
-
-# 应用并删除 stash
-A
-
-# 删除 stash
-d
-
-# 查看 stash 内容
-d
-```
-
-### 6.4 子模块操作
-
-```bash
-# 进入子模块
-submodule 面板
-
-# 更新子模块
-u
-
-# 初始化子模块
-i
-```
-
-## 七，配置文件
-
-### 7.1 配置文件位置
-
-```bash
-# 优先级（从高到低）
-~/.config/lazygit/config.yml
-~/.lazygit.yml
-./.lazygit.yml
-```
-
-### 7.2 配置文件示例
+### 8.2 常用配置项
 
 ```yaml
-# ~/.config/lazygit/config.yml
-
-# 主题配置
 gui:
+  # 选中行与活动边框的颜色
   theme:
-    activeBorderColor:
-      - green
-    selectedLineBgColor:
-      - blue
+    activeBorderColor: [green]
+    selectedLineBgColor: [blue]
 
-# 默认分支
-git:
-  defaultBranch: main
-
-# 别名
-promptToSquashWithinFirstCommit: true
-```
-
-### 7.3 命令别名
-
-```bash
-# 在 ~/.gitconfig 中添加
-[alias]
-    lg = lazygit
-    lga = lazygit --all
-```
-
-## 八，实践建议
-
-### 8.1 日常工作流
-
-```bash
-# 1. 启动 LazyGit
-lazygit
-
-# 2. 查看状态
-# → 文件面板显示已修改文件
-
-# 3. Stage 要提交的文件
-s
-
-# 4. 创建提交
-c
-
-# 5. Push 到远程
-p
-```
-
-### 8.2 分支管理流程
-
-```bash
-# 1. 从 main 创建新分支
-n
-
-# 2. 输入分支名
-feature/my-feature
-
-# 3. 开发并提交
-c
-
-# 4. Rebase 到最新 main
-r
-# → 选择 main 分支
-# → 自动 rebase
-
-# 5. Push 到远程
-p
-
-# 6. 创建 PR/MR
-```
-
-### 8.3 冲突解决流程
-
-```bash
-# 1. Pull 远程更改
-P
-
-# 2. 发现冲突
-# → LazyGit 显示冲突文件
-
-# 3. 解决冲突
-# → 选择版本或手动编辑
-
-# 4. Stage 已解决的文件
-s
-
-# 5. 继续 rebase
-c
-
-# 6. 完成
-```
-
-## 九，快捷键速查表
-
-### 9.1 主面板
-
-| 快捷键 | 功能 |
-|--------|------|
-| `q` | 退出 |
-| `?` | 帮助菜单 |
-| `/` | 搜索 |
-| `↑↓` | 上下导航 |
-| `←→` | 左右面板 |
-| `space` | 选中/取消 |
-| `enter` | 进入/确认 |
-
-### 9.2 文件面板
-
-| 快捷键 | 功能 |
-|--------|------|
-| `s` | Stage 文件 |
-| `u` | Unstage 文件 |
-| `a` | Stage 所有 |
-| `A` | Unstage 所有 |
-| `d` | 查看 diff |
-| `D` | 放弃更改 |
-| `i` | 添加到 .gitignore |
-
-### 9.3 提交面板
-
-| 快捷键 | 功能 |
-|--------|------|
-| `c` | 创建提交 |
-| `w` | 修改提交信息 |
-| `r` | Rebase |
-| `s` | Squash |
-| `f` | Fixup |
-| `d` | 删除提交 |
-| `C` | Cherry-pick |
-| `v` | 查看补丁 |
-
-### 9.4 分支面板
-
-| 快捷键 | 功能 |
-|--------|------|
-| `n` | 新建分支 |
-| `b` | 切换分支 |
-| `B` | 创建并切换 |
-| `d` | 删除分支 |
-| `R` | 重命名 |
-| `m` | 合并分支 |
-| `f` | 变基到当前 |
-
-### 9.5 远程面板
-
-| 快捷键 | 功能 |
-|--------|------|
-| `f` | Fetch |
-| `P` | Pull |
-| `p` | Push |
-| `u` | 设置上游 |
-| `o` | 查看远程 |
-
-## 十，常见问题
-
-### 10.1 安装问题
-
-```bash
-# Go 版本问题
-go version  # 确保 Go 1.18+
-
-# 权限问题
-sudo chown -R $(whoami) /usr/local/bin
-
-# PATH 问题
-echo 'export PATH="$PATH:~/go/bin"' >> ~/.zshrc
-```
-
-### 10.2 使用问题
-
-```bash
-# Git 仓库外运行
-cd my-git-repo
-lazygit
-
-# 使用指定仓库
-lazygit --path /path/to/repo
-
-# 使用指定配置文件
-lazygit --config /path/to/config.yml
-```
-
-### 10.3 性能问题
-
-```bash
-# 大仓库优化
-# 在配置文件中添加
 git:
   paging:
     color: always
-  skipHookReload: true
 ```
 
-## 十一，总结
+配置是覆盖式的：只写你想改的键，其余用默认值。官方文档的 `Config.md` 列出了全部可配置项，改之前先去那里确认某个键的准确名称，避免填了无效字段。
 
-LazyGit 是 **76.5k Stars 的 Git 终端 UI**：
+### 8.3 命令别名
 
-| 维度 | 说明 |
-|------|------|
-| 🌟 **人气** | 76.5k Stars，2,757 Forks |
-| 🔧 **语言** | Go 98.7%，高性能 |
-| 🎯 **定位** | Git 可视化终端界面 |
-| ⚡ **特点** | 轻量、快速、用户友好 |
-| 📦 **安装** | brew / go install / 源码 |
+在 `~/.gitconfig` 里加两行，之后用 `git lg` 快速进入：
 
-**核心优势**：
-- ✅ 简单易用：点击即可完成 Git 操作
-- ✅ 快速高效：Go 语言编写，响应迅速
-- ✅ 功能完整：覆盖日常 Git 操作
-- ✅ 跨平台：macOS/Linux/Windows
-- ✅ 免费开源：GPL-3.0
-
----
-
-## 自测题
-
-**1. LazyGit 的核心价值是什么？**
-
-<details>
-<summary>点击查看参考答案</summary>
-
-LazyGit 的核心价值在于让 Git 命令行操作变得可视化，无需记忆复杂命令，点击即可完成版本控制。它使用 Go 语言编写，轻量、快速、用户友好。
-
-</details>
-
-**2. 如何在 macOS 上安装 LazyGit？**
-
-<details>
-<summary>点击查看参考答案</summary>
-
-在 macOS 上可以使用 Homebrew 安装：
-```bash
-brew install lazygit
+```ini
+[alias]
+    lg = lazygit
 ```
 
-也可以使用 MacPorts：
-```bash
-sudo port install lazygit
-```
+## 九、常见问题
+
+### 9.1 启动时报找不到 Git 仓库
+
+在非 Git 目录里运行会报错。进入仓库目录再启动，或用 `lazygit --path <仓库路径>` 指定。
+
+### 9.2 后台开着的终端卡住、方向键无反应
+
+LazyGit 启动时会显示一个提示弹窗并要求确认（内容包含赞助与使用提示）。方向键没反应通常是因为焦点在提交信息或搜索输入框里，先按 `Esc` 退出输入，再操作列表。
+
+### 9.3 想撤销上一步操作
+
+按 `z`，LazyGit 通过 `reflog` 推断上一条 Git 命令并回退。注意它覆盖的是提交类操作，工作区里未提交的改动不会被撤销，别用它处理文件内容层面的误删。
+
+### 9.4 合并冲突怎么处理
+
+冲突发生时，冲突文件会出现在文件面板。用 `Enter` 进入冲突的文件，主面板会展示冲突段落；按 `m` 打开合并选项，或用外部合并工具（`M`）解决。每解决完一个文件，用 `space` 暂存它标记为已解决，最后提交。具体冲突段的选择可用 `e` 打开编辑器手动改。
+
+### 9.5 版本和快捷键对不上
+
+LazyGit 迭代较快，个别键位会变。以界面内 `?` 实时帮助为准，其次是官方 `Keybindings_en.md`。本文章程以 v0.64 为准。
+
+## 十、自测
+
+**1.** 文件面板里，`space` 和 `a` 各自做什么？进入逐行暂存视图的键是哪个？
+
+<details><summary>参考答案</summary>
+
+`space` 暂存或取消暂存当前选中的文件；`a` 暂存或取消暂存全部文件。`Enter`（选中某个文件时）进入逐行暂存视图。
 
 </details>
 
-**3. LazyGit 中 Stage 文件的快捷键是什么？**
+**2.** 想把最近三次提交压缩成一个，完整操作顺序是什么？
 
-<details>
-<summary>点击查看参考答案</summary>
+<details><summary>参考答案</summary>
 
-在文件面板中，按 `s` 键可以 Stage 文件（暂存）。
-按 `u` 可以 Unstage 文件（取消暂存）。
+进入提交面板，选中从底部数第三个提交；按 `e` 进入交互式变基；把最后两个提交的动作改为 `s`（squash，或 `f` fixup）；`Enter` 确认并完成变基。
 
 </details>
 
-**4. 如何使用 LazyGit 解决合并冲突？**
+**3.** 你在功能分支上，想把主分支的改动并到自己这边，用分支面板的哪个键？与 `M` 有何不同？
 
-<details>
-<summary>点击查看参考答案</summary>
+<details><summary>参考答案</summary>
 
-解决合并冲突的步骤：
-1. 打开 LazyGit：`lazygit`
-2. 进入合并冲突界面：按 `m`
-3. 选择文件解决冲突（选择 ours 版本、theirs 版本或手动编辑）
-4. 标记为已解决：按 `space`
-5. 继续 rebase：按 `c`
+按 `r` 把当前分支变基到选中分支（这里选中主分支）；`M` 是把选中的分支合并进当前分支。前者重写历史为线性，后者保留合并提交。
 
 </details>
 
-**5. 如何配置 LazyGit 的默认分支？**
+**4.** 一个文件既有你不想提交的改动，也想提交其中一部分，怎么做？
 
-<details>
-<summary>点击查看参考答案</summary>
+<details><summary>参考答案</summary>
 
-在配置文件中设置：
-```yaml
-# ~/.config/lazygit/config.yml
-git:
-  defaultBranch: main
-```
+在文件面板选中该文件按 `Enter` 进入逐行暂存视图，用 `space` 只暂存想提交的块或行，回到文件面板按 `c` 提交，剩下的改动留在工作区。
 
 </details>
-
----
 
 ## 练习
 
-### 练习 1：基本工作流
+**练习 1**：在任意仓库里完成一次「暂存 → 提交 → 推送」。要求：只用 `space`、`c`、`P`（`P` 是 push，`p` 才是 pull）完成，不敲一条 `git commit`、`git push`。
 
-**任务**：使用 LazyGit 完成一次完整的提交流程
+**练习 2**：在提交面板，把最近两次提交压缩成一个 `fixup` 再改提交信息。确认历史从三条变成一条。
 
-1. 在现有 Git 仓库中启动 LazyGit：`lazygit`
-2. Stage 修改的文件：选中文件按 `s`
-3. 创建提交：按 `c`，输入提交信息
-4. Push 到远程：按 `p`
+**练习 3**：用 `z` 撤销练习 2 的提交操作，确认提交历史恢复到压缩前。
 
-**参考答案**：熟悉 LazyGit 的基本操作流程，理解各个面板的作用。
+## 资料口径
 
-### 练习 2：交互式 Rebase
+本文数据与快捷键基于官方 GitHub 仓库 `jesseduffield/lazygit` 的 README、官方 `Keybindings_en.md` 与仓库 Releases 页面（v0.64，2026-08 核实）。Stars、Forks 随时间增长；键位随版本演进，以界面内 `?` 帮助为最终依据。未验证的功能未写入本文，性能类描述来自二手资料、不给出具体数字。
 
-**任务**：使用 LazyGit 压缩最近的 3 次提交
+## 相关资源
 
-1. 打开 LazyGit
-2. 进入提交历史：按 `h`
-3. 选择最近的 3 次提交，进入 rebase 模式：按 `r`
-4. 将后面的 2 次提交标记为 `squash`
-5. 保存并完成 rebase
-
-**参考答案**：掌握交互式 Rebase 的基本操作，理解 squash 的作用。
-
-### 练习 3：冲突解决
-
-**任务**：模拟一次冲突并解决
-
-1. 创建两个分支，修改同一个文件的同一行
-2. 合并分支，触发冲突
-3. 使用 LazyGit 解决冲突
-4. 完成合并
-
-**参考答案**：理解冲突解决的流程，掌握 LazyGit 的冲突解决工具。
-
----
-
-## 进阶路径
-
-如果您已经掌握 LazyGit 的基本使用，可以参考以下进阶路径：
-
-1. **自定义快捷键**：修改配置文件，设置符合自己习惯的快捷键
-2. **集成到编辑器**：在 VSCode/Vim/Emacs 中配置 LazyGit 插件
-3. **编写自定义命令**：使用 LazyGit 的 API 编写自定义工作流
-4. **贡献到社区**：参与 LazyGit 的开发，提交 PR 或文档改进
-5. **探索高级功能**：深入研究 Stash 管理、子模块操作、里程碑管理等功能
-
----
-
-## 资料口径说明
-
-本文基于以下来源撰写：
-
-1. **官方 GitHub 仓库**：https://github.com/jesseduffield/lazygit
-   - Stars、Forks、贡献者数量等数据来自 GitHub API
-   - 最新版本信息来自仓库的 Releases 页面
-
-2. **官方文档**：https://github.com/jesseduffield/lazygit#readme
-   - 安装方法、快捷键、功能说明来自官方文档
-
-3. **版本时效性**：
-   - 本文基于 LazyGit v0.61.1（2026-04）编写
-   - 新版本可能引入新功能或改变快捷键，请以官方文档为准
-
-4. **事实边界**：
-   - 本文提供的信息基于公开可查的官方资料
-   - 未经验证的功能或第三方插件未包含在本文中
-   - 性能数据来自社区反馈，实际体验可能因环境而异
-
----
-
-**🔗 相关资源：**
-
-| 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/jesseduffield/lazygit |
-| 文档 | https://github.com/jesseduffield/lazygit#readme |
-| 快捷键 | https://github.com/jesseduffield/lazygit/blob/main/docs/keybindings/Keybindings_en.md |
-| 最新版 | https://github.com/jesseduffield/lazygit/releases |
-
----
-
-_🦞 本文由钳岳星君撰写，基于 LazyGit (76.5k Stars)_
+- 官方仓库：https://github.com/jesseduffield/lazygit
+- 官方快捷键文档：https://github.com/jesseduffield/lazygit/blob/master/docs/keybindings/Keybindings_en.md
+- 官方配置文档：https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
+- 更新日志：https://github.com/jesseduffield/lazygit/releases

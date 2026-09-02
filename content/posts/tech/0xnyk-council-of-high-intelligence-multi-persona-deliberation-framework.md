@@ -37,19 +37,22 @@ tags: ["AI Agent", "Claude Code", "Codex"]
 10. [采用顺序与适用边界](#十采用顺序与适用边界)
 11. [结尾：回到系统层价值](#十一结尾回到系统层价值)
 12. [常见问题](#十二常见问题)
+13. [自测题](#自测题)
+14. [练习](#练习)
+15. [资料口径说明](#资料口径说明)
 
 ---
 
 ## 一、先给判断：这套 skill 不是把 18 个 prompt 串起来，而是把"单模型自信地猜"换成"多模型被强制对抗"
 
-把同一个问题丢给 Claude，绝大多数时候会得到一段**结构工整、措辞自信、细节可疑**的回答。**真正的风险不是模型说错，而是模型用同一个家族的归纳偏差把同一个错回答得很自信。** Council of High Intelligence（[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)，CC0 协议，今日 trending daily 第一、star 2,124）做的事不是 prompt 模板，而是把"决策"重构成一次**带协议约束的多智能体协商**：
+把同一个问题丢给 Claude，绝大多数时候会得到一段结构工整、措辞自信、细节可疑的回答。真正的风险不是模型说错，而是模型用同一个家族的归纳偏差，把同一个错也答得很自信。 Council of High Intelligence（[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)，MIT 协议，今日 trending daily 第一、star 2,124）做的事不是 prompt 模板，而是把"决策"重构成一次**带协议约束的多智能体协商**：
 
 - 角色不是装饰品，而是**带极性配对的对手**——Socrates 负责拆假设、Feynman 负责从第一性原理重建，两人在同一议题上必须形成张力。
 - 决策不是平均分，而是**结构化立场 + 强制多数决**——每位成员最后一轮必须输出一行 `STANCE:`，由领域内成员加权投票，达到 2/3 加权多数才算共识，否则直接呈报分歧。
 - 模型不是单一来源，而是**跨 provider 强制分流**——极性配对的两个人必须落在不同模型家族（Claude / OpenAI / Gemini / Ollama / NVIDIA NIM / Cursor），避免一个模型的家族偏差同时传染给两个互相对抗的角色。
 - 协议不是无限循环，而是**有界轮次预算**——full 模式 3 轮、quick 模式 2 轮、duo 模式 3 轮；任何一对成员互相应答超过 2 条消息就强制切断（"hemlock rule"）。
 
-因此本文不打算把它当作"又一个多 agent 框架"来介绍，而是按**机制**拆：18 个角色的极性如何成对、3 套预置 panel 如何分工、7 步协议如何把对话变成投票、自动路由如何把 6 个 CLI 编排成一张"决策板凳"。
+下面按机制拆开讲：18 个角色的极性如何成对、3 套预置 panel 如何分工、7 步协议如何把对话变成投票、自动路由如何把 6 个 CLI 编排成一张"决策板凳"。
 
 ---
 
@@ -84,13 +87,13 @@ flowchart TB
 3. **Triad 是 3 人小组**（20 个领域组合），通过 `/council --triad <domain>` 选择，例如 `--triad strategy` 拉 Sun Tzu + Machiavelli + Aurelius。
 4. **Provider 是底层模型**（Claude / Codex / Gemini / Ollama / NVIDIA NIM / Cursor），通过自动路由决定每个成员跑在哪个模型上。
 
-> 读者拿到这套 skill 时最容易踩的坑：**把"18 personas"当成"18 个 prompt"，结果发现它们之间根本不互相引用——persona 只是身份标签，真正产生对抗的是协议步（cross-examination + dissent quota）。**
+> 读者最容易踩的坑：把"18 personas"当成"18 个 prompt"，结果发现它们之间根本不互相引用。persona 只是身份标签，真正产生对抗的是协议步（cross-examination + dissent quota）。
 
 ---
 
 ## 三、18 personas 的本质：不是百科词条，而是极性配对
 
-直接看名单容易误读——以为是"找一个会哲学的 prompt"或者"找一个会工程的 prompt"。**README 真正想表达的判断是：单点最强没用，必须把观点放在互相对抗的位置上。** 下面把 18 人按"互相撕扯的双方"重新分组：
+直接看名单容易误读，以为是"找一个会哲学的 prompt"或者"找一个会工程的 prompt"。README 真正想表达的是：单点最强没用，必须把观点放在互相对抗的位置上。下面把 18 人按"互相撕扯的双方"重新分组：
 
 | 极性对 | 一方（拆 / 反对 / 反例） | 另一方（建 / 主张 / 正例） |
 |--------|----------------------|----------------------|
@@ -108,7 +111,9 @@ flowchart TB
 | Taleb ↔ Karpathy | Taleb 关注隐藏灾难尾部 | Karpathy 看平滑经验曲线 |
 | Rams ↔ Ada | Rams 看用户要什么 | Ada 看计算能做什么 |
 
-> **设计意图：每个角色没有"客观正确答案"，每个角色都站在另一极的对立面。** 一份诚实的评估应该由对立的双方同时陈述，而不是任一方独占。
+上表只保留"每个角色至少出现一次"的 13 组；SKILL.md 的完整极性对表还有两组：Sutskever ↔ Machiavelli（安全理想 vs 行业激励）、Socrates ↔ Watts（拆假设 vs 换框架）。
+
+> 设计上，每个角色没有"客观正确答案"，都站在另一极的对立面；一份诚实的评估该让对立双方同时陈述，而不是任一方独占。
 
 这也直接决定了**为什么必须多 provider**——如果 Socrates 和 Feynman 都跑在同一个 Claude 模型上，他们的"对立"只是同一个归纳偏差的两副面具。这就是自动路由的硬约束（见第五节）。
 
@@ -124,7 +129,9 @@ README 给出的 3 个 panel 不是"豪华套餐"，而是**用人数换视角�
 | `exploration-orthogonal` | 12 | 探索未知未知数 | 中：偏向反直觉组合 |
 | `execution-lean` | 5 | 决策→执行 | 快：5 人 + ship-now triad |
 
-`execution-lean` 只有 5 个人：Torvalds、Feynman、Sun Tzu、Aurelius、Ada。**设计意图是"决策会议不要把所有人都拉进来"——能上桌的只有真的能下决定的人**。这与传统"决策要民主、人多保险"的做法相反，README 的隐含假设是：**人多 = 共识噪声变大；人少 + 强约束 = 真分歧浮现。**
+三套 panel 的成员构成（来自 SKILL.md）：`classic` 是全部 18 人；`exploration-orthogonal` 是 Socrates、Feynman、Sun Tzu、Machiavelli、Ada、Lao Tzu、Aurelius、Torvalds、Karpathy、Sutskever、Kahneman、Meadows 共 12 人，另配 unknowns、market-entry、system-design、reframing、ai-frontier、blind-spots 六组探索 triad；`execution-lean` 是 Torvalds、Feynman、Sun Tzu、Aurelius、Ada 共 5 人，配 ship-now、launch-strategy、stability 三组。
+
+`execution-lean` 的设计意图是"决策会议不要把所有人都拉进来"——能上桌的只有真能下决定的人。这与"决策要民主、人多保险"的传统做法相反。README 的隐含假设是：人一多，共识噪声跟着涨；人少但约束强，真正的分歧才浮得出来。
 
 因此"用哪个 panel"的选择本身也是一次决策：
 
@@ -177,7 +184,7 @@ full 模式的 7 步是最值得展开的一段，因为它直接决定了 Counc
 | 6 | Round 3 Final | 100 词立场陈述 |
 | 7 | Verdict Synthesis | 结构化 `STANCE:` 行 + 加权 2/3 多数决 |
 
-> **强制结构（enforcement）是 Council 真正的护城河。** 没有这几条 enforcement，整个系统就退化成"18 个 prompt 各自发言"——读起来热闹，但没有任何"决策机制"。
+> 强制结构（enforcement）是 Council 真正的护城河。没有这几条，整个系统就退化成"18 个 prompt 各自发言"——读起来热闹，但没有"决策机制"。
 
 具体 enforcement 三条线：
 
@@ -220,7 +227,7 @@ README 的 quickstart 例子是这套 skill 最完整的端到端展示。把 RE
    - Taleb: `STANCE: 反对 / 开源暴露被监管盯上的尾部`
 7. **Verdict Synthesis**：加权 2/3 多数未达成 → 输出 unresolved questions + 全票计票 + next steps，不合成假共识。
 
-**真实用户看到的不是"18 个人各自发言"，而是一份带分歧地图的决策稿**——这才是这套 skill 真正的产出形态。
+真实用户看到的不是"18 个人各自发言"，而是一份带分歧地图的决策稿——这才是这套 skill 真正的产出形态。
 
 ---
 
@@ -228,17 +235,30 @@ README 的 quickstart 例子是这套 skill 最完整的端到端展示。把 RE
 
 README 把 20 个常用 triad 直接列在表里。这个设计的关键不是"建议"，而是**预先把"哪些角色对哪些问题有用"压成可枚举的入口**：
 
-| 领域 | Triad | 三人 | 为什么是这三人 |
-|------|------|------|--------------|
+| 领域 | 三人 | 为什么是这三人 |
+|------|------|--------------|
 | architecture | Aristotle + Ada + Feynman | 分类 + 形式化 + 第一性原理 |
 | strategy | Sun Tzu + Machiavelli + Aurelius | 地形 + 激励 + 道德地基 |
+| ethics | Aurelius + Socrates + Lao Tzu | 责任 + 质疑 + 自然秩序 |
 | debugging | Feynman + Socrates + Ada | 自底向上 + 假设质疑 + 形式化验证 |
+| innovation | Ada + Lao Tzu + Aristotle | 抽象 + 涌现 + 分类 |
+| conflict | Socrates + Machiavelli + Aurelius | 揭露 + 预测 + 定锚 |
+| complexity | Lao Tzu + Aristotle + Ada | 涌现 + 分类 + 形式化 |
+| risk | Sun Tzu + Aurelius + Feynman | 威胁 + 韧性 + 实证验证 |
+| shipping | Torvalds + Musashi + Feynman | 务实 + 时机 + 第一性原理 |
+| product | Torvalds + Machiavelli + Watts | 落地 + 激励 + 换框架 |
+| founder | Musashi + Sun Tzu + Torvalds | 时机 + 地形 + 工程现实 |
+| ai | Karpathy + Sutskever + Ada | 经验 ML + 规模前沿 + 形式边界 |
+| ai-product | Karpathy + Torvalds + Machiavelli | ML 能力 + 落地务实 + 激励 |
 | ai-safety | Sutskever + Aurelius + Socrates | 前沿安全 + 道德清晰 + 假设破坏 |
 | decision | Kahneman + Munger + Aurelius | 偏见识别 + 反向思考 + 道德锚定 |
+| systems | Meadows + Lao Tzu + Aristotle | 反馈回路 + 涌现 + 分类 |
+| uncertainty | Taleb + Sun Tzu + Sutskever | 尾部风险 + 地形 + 规模前沿 |
+| design | Rams + Torvalds + Watts | 用户清晰 + 可维护 + 换框架 |
 | economics | Munger + Machiavelli + Sun Tzu | 模型 + 激励 + 竞争 |
-| ... | ... | ... | ... |
+| bias | Kahneman + Socrates + Watts | 认知偏见 + 假设破坏 + 框架审计 |
 
-> **Triad 的核心价值：把"应该问谁"从开放问题降级为枚举选项。** 用户不需要记住 18 个人谁跟谁合得来，只需要选领域。
+> Triad 的价值在于把"应该问谁"从开放问题降级为枚举选项：用户不需要记住 18 个人谁跟谁合得来，只需要选领域。
 
 这种做法在用户体验上和"用 RAG 检索相关 agent"等价，但**省去了 RAG 系统本身的工程成本**——一次 `git clone` + `./install.sh` 就拿到全部 20 个 triad。
 
@@ -327,8 +347,6 @@ cd council-of-high-intelligence
 
 ---
 
----
-
 ## 十一、结尾：回到系统层价值
 
 Council 的价值不在 18 个 persona 的"模拟"，而在三件事：
@@ -339,7 +357,7 @@ Council 的价值不在 18 个 persona 的"模拟"，而在三件事：
 
 因此它的真正定位是**给 Claude Code / Codex 用户的一份"决策协议附件"**——不是替代 Claude，而是给 Claude 加一个结构化的对手席。
 
-如果你已经在 Claude Code / Codex 上工作，面临"再问一次还是一样答案"的瓶颈，**Council 提供的不是更多答案，而是让现有答案**先**互相撕一遍。**
+如果你已经在 Claude Code / Codex 上工作，面临"再问一次还是一样答案"的瓶颈，Council 提供的不是更多答案，而是让现有答案先互相撕一遍。
 
 ---
 
@@ -355,7 +373,7 @@ Council 的价值不在 18 个 persona 的"模拟"，而在三件事：
 不会。Council 是按需触发的——只有输入 `/council` 命令时才启动协议。平时正常使用 Claude Code 不受影响。
 
 **Q: weighted 2/3 多数决的"领域权重"怎么指定？**
-在 `/council` 命令前加 `--domain <领域>` 参数，例如 `/council --domain strategy Should we...`。领域权重在协议开始前指定，避免事后加权。
+领域权重座位（domain-weight seat）在协议开始前就锁定：协调者按问题匹配最相关的成员，给 ta 1.5× 的平票权重，并在 `[CHECKPOINT]` 里明示；锁定时点必须在任何立场形成之前，避免事后加权。若两个成员同样贴题，则不设权重座位，平票时按等权处理。
 
 **Q: 如果未达成 2/3 共识，输出是什么？**
 Council 不会合成虚假共识，而是直接输出：完整计票结果 + 各成员 `STANCE:` 行 + unresolved questions + recommended next steps。由用户决定如何继续。
@@ -389,7 +407,7 @@ Step 4 Round 2 Cross-Examination（交叉质询）。这一步强制每位成员
 <details>
 <summary>查看答案</summary>
 
-因为技术决策需要快速执行，人数少可以减少共识噪声，强制约束（hemlock rule）防止过度讨论。README 的隐含假设是：人多 = 共识噪声变大；人少 + 强约束 = 真分歧浮现。
+因为技术决策需要快速执行，人数少可以减少共识噪声，强制约束（hemlock rule）防止过度讨论。README 的隐含假设是：人一多，共识噪声跟着涨；人少但约束强，真正的分歧才浮得出来。
 
 </details>
 
@@ -400,8 +418,6 @@ Step 4 Round 2 Cross-Examination（交叉质询）。这一步强制每位成员
 Council 不会合成虚假共识，而是直接输出：完整计票结果 + 各成员 `STANCE:` 行 + unresolved questions + recommended next steps。由用户决定如何继续。
 
 </details>
-
----
 
 ---
 
@@ -450,8 +466,9 @@ Council 不会合成虚假共识，而是直接输出：完整计票结果 + 各
 
 ## 资料口径说明
 
-- 仓库：[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)，CC0 协议。
-- 本文中 18 personas 表、3 panel、20 triad、7 步协议、6 provider 表均来自 README 截至 2026-06-30 的版本。
+- 仓库：[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)，MIT 协议。
+- 本文中 18 personas 表、3 panel、20 triad、7 步协议、6 provider 表均来自 README 截至 2026-06-30 的版本；"极性对完整表"与"20 个 triad 全表"补齐自仓库 SKILL.md 的同名表格。
+- 仓库现已同时支持 Gemini CLI 与 OpenCode（`./install.sh --gemini-only`、`./install.sh --opencode-only`），也可通过 `/plugin marketplace add 0xNyk/council-of-high-intelligence` 装成 Claude Code 插件；本文主体仍以 2026-06-30 的 Claude Code / Codex 口径为准。
 - "极性配对"、"execution-lean"、"weighted 2/3 majority"、"hemlock rule" 等术语均沿用 README 原文。
 - Trending 数据来源：github.com/trending daily 2026-06-30 15:00 (Asia/Shanghai)。
 - 文章不依赖任何特定 provider 的可用性；具体 provider 配置请参考 `configs/provider-model-slots.example.yaml`。
