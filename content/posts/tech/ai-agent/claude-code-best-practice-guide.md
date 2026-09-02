@@ -61,7 +61,7 @@ Command 是注入到当前上下文的提示词模板，用户通过 `/command-n
 | 特性 | Subagent | Command |
 |------|----------|---------|
 | 上下文 | 全新隔离上下文 | 共享现有上下文 |
-| 调用方式 | 代码中调用 | `/command-name` |
+| 调用方式 | 主代理按需唤起 | `/command-name` 手动调用 |
 | 适用场景 | 复杂独立任务 | 简单工作流 |
 | 状态隔离 | 完全隔离 | 共享状态 |
 
@@ -78,6 +78,21 @@ Skill 是一个高度可配置的知识模块，Claude Code 会自动发现并�
 
 Claude Code 官方维护了一系列预置 Skills，存放在 [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills) 仓库中。
 
+一个 Skill 的最小结构是 `.claude/skills/<name>/SKILL.md`，顶部用 YAML frontmatter 声明元数据：
+
+```markdown
+---
+name: security-review
+description: 在隔离上下文中对代码做安全审查，适合 PR 合并前调用
+---
+
+# Security Review
+
+按以下步骤审查传入的代码：……（正文描述指挥模型如何一步步执行）
+```
+
+`description` 是模型判断"何时该加载这个 Skill"的依据，要写成可判断的触发条件（"适合 PR 合并前调用"），而不是一句功能口号（"提供安全能力"）。
+
 ### Hooks（钩子）
 
 Hook 在智能体循环外部运行，由特定事件触发。事件发生时，可以执行脚本、发起 HTTP 请求、注入提示词或启动子代理。
@@ -86,21 +101,24 @@ Hook 在智能体循环外部运行，由特定事件触发。事件发生时，
 
 **事件类型**：
 
-| 事件 | 说明 |
-|------|------|
-| `pre-tool-use` | 工具使用前触发 |
-| `post-tool-use` | 工具使用后触发 |
-| `on-conversation-start` | 对话开始时触发 |
-| `on-conversation-end` | 对话结束时触发 |
+| 事件 | 说明 | 常见用途 |
+|------|------|----------|
+| `PreToolUse` | 工具使用前触发 | 拦截危险命令、记录操作日志 |
+| `PostToolUse` | 工具使用后触发 | 校验工具输出、落盘审计 |
+| `UserPromptSubmit` | 用户提交提示词时触发 | 注入额外上下文、做关键词拦截 |
+| `Stop` | 一轮智能体循环结束时触发 | 汇总本轮 token 消耗、通知外部系统 |
+
+> 说明：事件名以 PascalCase 或 kebab-case 书写均可，例如 `PreToolUse` 与 `pre-tool-use` 指同一事件；优先级 `PreToolUse` 高于 `PostToolUse`，同一个事件可挂多个 Hook，按在 `settings.json` 中的声明顺序依次执行。
 
 **使用示例**：
 
 ```javascript
-// .claude/hooks/pre-tool-use.js
-export const preToolUse = async (tool, args) => {
-  console.log(`About to use tool: ${tool}`);
-  return { tool, args };
-};
+// .claude/hooks/pre_tool_use.js
+// 导出的事件函数名必须与事件一致（PascalCase），参数为对象解构
+export async function PreToolUse({ tool_name }) {
+  console.error(`[pre-tool-use] ${tool_name}`);
+  return {}; // 返回空对象表示不拦截，放行工具调用
+}
 ```
 
 ### MCP（模型上下文协议）
@@ -143,22 +161,48 @@ User invokes /command
     (reusable capability)
 ```
 
+把六个模块放进一张心智地图会更清楚：`Hooks` 横切整个循环，在事件边界上做拦截与记录；`MCP` 与 `Plugins` 属于扩展层，一个管"连外部工具"，一个管"打包分发实践"；真正驱动对话推进的是 `Command → Subagent → Skill` 这条主线。
+
 ## 三、配置与个性化
 
 ### 配置文件层级
 
-Claude Code 的配置按优先级从高到低分为四层：
+Claude Code 的配置要分清两个维度：**设置（settings）** 与 **上下文（context）**，二者的合并规则不同，混在一起极易踩坑。
 
-1. **项目级**：`./.claude/` 目录中的 settings、rules、agents、commands、skills、hooks
-2. **用户级**：`~/.claude/` 目录中的对应的配置
-3. **CLAUDE.md**：项目根目录的上下文文件，描述项目结构、技术栈和编码规范（优先级高于 rules 但低于 settings）
-4. **CLI 参数**：启动时通过 `--flag` 传入的临时配置
+**设置（settings.json）** 按优先级从高到低合并，高优先级的同名键覆盖低优先级：
 
-### 项目上下文配置
+1. **CLI 参数**：启动时通过 `--flag` 临时传入，优先级最高
+2. **项目级** `./.claude/settings.json`：随仓库分发，团队共享
+3. **用户级** `~/.claude/settings.json`：开发者本机偏好
+
+**上下文（context）** 负责告诉模型"这个项目是什么"，按加载顺序拼接：
+
+1. **CLAUDE.md**：项目根目录描述文件，写清结构、技术栈、编码规范；层级越深的子目录会先于父目录加载
+2. **`./.claude/rules/*.md`**：规则文件，追加到 CLAUDE.md 之后，共同构成初始系统提示词
+
+> 常见误区：把 `CLAUDE.md` 和 `settings.json` 当作同一种优先级排序。实际上一个提供"项目背景"，一个提供"运行配置"，互不覆盖。
+
+### 一个 CLAUDE.md 示例
 
 ```markdown
-使用 @path/to/file 可以将任意文件内容导入上下文
+# Project: my-service
+
+技术栈：Python 3.12 + FastAPI + PostgreSQL
+
+## 目录结构
+- `app/`    业务逻辑
+- `tests/`  单元测试
+
+## 编码规范
+- 单行不超过 100 字符
+- 提交前必须运行 `uv run pytest`
+- 修改 API 需同步更新 `openapi.yaml`
+
+## 协作约定
+需要把指定文件带进当前上下文时，直接用 @ 提及，例如："读取 @app/main.py 后开始重构"。
 ```
+
+好的 `CLAUDE.md` 只写"稳定不变"的信息——结构、技术栈、硬性规范。那些一周一变的信息（某功能改到哪一步了）不该放这里，否则每次对话都在消耗宝贵的上下文预算。
 
 ### 目录结构
 

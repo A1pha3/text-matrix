@@ -1,12 +1,12 @@
 ---
-title: "Codecrafters build-your-own-x：从零构建核心技术，成为真正的系统大师"
+title: "build-your-own-x：GitHub 上 star 最多的仓库，只是一份从零实现的教程清单"
 date: "2026-04-25T11:20:00+08:00"
-lastmod: 2026-04-25T11:20:00+08:00
+lastmod: 2026-09-02T00:00:00+08:00
 slug: codecrafters-build-your-own-x-programming-guide
 github_repo: "codecrafters-io/build-your-own-x"
 aliases:
  - /posts/tech/build-your-own-x-programming-by-rebuilding/
-description: "Codecrafters build-your-own-x 项目：近50万星的教育资源，通过从零重构 BitTorrent、Git、Docker 等核心技术，帮助程序员理解底层原理。"
+description: "build-your-own-x：一份按 30 个技术方向整理的外部教程清单，约 53 万 star，GitHub 上最受关注的仓库。它不教你背 API，而是让你从零写出 Git、Docker、BitTorrent。"
 draft: false
 categories: ["技术笔记"]
 tags: ["教育", "编程语言", "系统设计", "学习路径"]
@@ -14,150 +14,82 @@ tags: ["教育", "编程语言", "系统设计", "学习路径"]
 
 大部分程序员的学习路径是：先学会用某个工具，然后读文档，遇到问题去搜答案。这套方法对付日常开发够用，但很难深入——你一直在用技术，很少真正理解它。
 
-Codecrafters 的 [build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) 仓库换了一条路：**从零实现你每天依赖的技术**。不是读源码，不是看教程，是亲手写出一个能跑的 Git、一个能下载文件的 BitTorrent 客户端、一个能隔离进程的 Docker 容器。
+[build-your-own-x](https://github.com/codecrafters-io/build-your-own-x) 仓库换了一条路：**从零实现你每天依赖的技术**。不是读源码，不是看教程，是跟着一份份手把手的教程，写出一个能跑的 Git、一个能下载文件的 BitTorrent 客户端、一个能隔离进程的容器。
 
-这个项目 2018 年创建，至今积累 **519k+ Stars**、**49.1k+ Forks**，是 GitHub 上最受欢迎的编程学习项目之一。它把"从零构建"这件事系统化了——每个技术方向都提供了需求规范、测试用例和多语言参考实现，你只需要动手。
+这个仓库 2018 年由 Daniel Stefanovic 创建，2022 年转入 Codecrafters 组织维护。它的内容只有一个 README，整理着 **30 个技术方向、30+ 种语言的外部教程链接**，如今累计约 **53 万 Stars**，是 GitHub 上 star 最多的仓库。
+
+先说清它到底是什么：这不是一个自带代码的教程项目，而是一份**精选的教程清单**。它不提供需求规范和测试用例，只负责把散落在各处的「从零实现某个技术」的优秀教程按主题归类。判断它有没有价值，要看它选进来的教程质量，而不是它自己写了什么。
 
 ## 与传统学习方式的区别
 
-看文档学会的是 API 调用顺序，不是设计决策背后的权衡。读源码面临的是信息过载——你打开 Linux 内核的 TCP/IP 栈实现，几万行代码扑面而来，根本不知道从哪入手。
+看文档学会的是 API 调用顺序，不是设计决策背后的权衡。读源码面临的是信息过载——你打开 Linux 内核的 TCP/IP 协议栈实现，几万行代码扑面而来，根本不知道从哪入手。
 
-build-your-own-x 换了一种方式：
+build-your-own-x 收录的教程换了一种方式：
 
-```
+```text
 学习理论 → 从零实现简化版本 → 对比官方实现 → 理解设计权衡
 ```
 
-每个项目给你"做什么"（需求规范）和"怎么验"（测试用例），你自己解决"怎么做"。主动构建知识比被动接收知识的留存率高出数倍，这是 Problem-Based Learning 的基本结论。
+每篇教程给你「做什么」和「怎么做」的完整路径，你自己动手解决其中的细节。主动构建知识比被动接收知识的留存率更高，这是 Problem-Based Learning 的基本结论。
 
-## 八大技术领域，覆盖从入门到大师
+## 30 个技术方向，从入门到大师
 
-项目按技术方向分为 8 个领域，累计 30+ 个方向。以下是各领域最具代表性的项目：
+仓库按技术方向归类教程。以下是几个代表性方向及其收录的知名教程：
 
-### 开发工具类
+| 方向 | 代表教程 | 语言 |
+|------|----------|------|
+| Git | [Write yourself a Git（wyag）](https://wyag.thb.lt/)、[Gitlet](http://gitlet.maryrosecook.com/docs/gitlet.html)、[ugit](https://www.leshenko.net/p/ugit/) | Python / JavaScript |
+| Docker | [Linux containers in 500 lines of code](https://blog.lizzie.io/linux-containers-in-500-loc.html)、[bocker（约 100 行 bash）](https://github.com/p8952/bocker) | C / Shell |
+| 数据库 | [Let's Build a Simple Database](https://cstack.github.io/db_tutorial/)、[Build Your Own Redis from Scratch](https://build-your-own.org/redis)、[Build Your Own Database from Scratch](https://build-your-own.org/database/) | C / C++ / Go |
+| BitTorrent | [Building a BitTorrent client from the ground up in Go](https://blog.jse.li/posts/torrent/)、[A BitTorrent client in Python 3.5](http://markuseliasson.se/article/bittorrent-in-python/) | Go / Python |
+| 编程语言 | [Build Your Own Lisp](http://www.buildyourownlisp.com/)、[Crafting Interpreters](http://www.craftinginterpreters.com/)、[Write Yourself a Scheme in 48 Hours](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours) | C / Java / Haskell |
+| 操作系统 | [os-tutorial](https://github.com/cfenollosa/os-tutorial)、[Writing an OS in Rust](https://os.phil-opp.com/)、[Operating Systems: From 0 to 1](https://tuhdo.github.io/os01/) | C / Rust |
+| 3D 渲染 | [Ray Tracing in One Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html)、[tinyrenderer](https://github.com/ssloy/tinyrenderer/wiki) | C++ |
+| 前端框架 | [Build your own React（pomb.us）](https://pomb.us/build-your-own-react/)、[Redux: Implementing Store from Scratch](https://egghead.io/lessons/react-redux-implementing-store-from-scratch) | JavaScript |
 
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
-|------|-------|------|------|----------|
-| Build your own Docker | 28k+ | Go | ⭐⭐⭐⭐ | 容器化原理、namespace/cgroup、镜像分层 |
-| Build your own Git | 25k+ | Python | ⭐⭐⭐⭐ | 对象模型、DAG、分支实现、协议解析 |
-| Build your own Webpack | 18k+ | JavaScript | ⭐⭐⭐ | 模块打包、AST 变换、依赖图构建 |
-| Build your own React | 15k+ | JavaScript | ⭐⭐⭐ | 虚拟 DOM、Fiber 架构、Hooks 原理 |
-| Build your own npm | 8k+ | JavaScript | ⭐⭐⭐ | 包管理协议、semver 解析、依赖解析 |
-
-### 网络与协议类
-
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
-|------|-------|------|------|----------|
-| Build your own HTTP server | 30k+ | Go | ⭐⭐⭐ | HTTP 协议解析、路由、中间件 |
-| Build your own BitTorrent | 22k+ | Python | ⭐⭐⭐ | P2P 协议、tracker 通信、piece 选择算法 |
-| Build your own DNS server | 15k+ | Go | ⭐⭐⭐ | DNS 协议、缓存策略、递归查询 |
-| Build your own WebSocket server | 12k+ | Go | ⭐⭐⭐ | WebSocket 握手、心跳、帧协议 |
-| Build your own IRC client | 10k+ | Python | ⭐⭐ | IRC 协议、状态机、消息解析 |
-
-### 数据库类
-
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
-|------|-------|------|------|----------|
-| Build your own Redis | 35k+ | C | ⭐⭐⭐⭐⭐ | 内存存储、SDS/跳表/压缩列表、RESP 协议 |
-| Build your own SQLite | 20k+ | C | ⭐⭐⭐⭐ | B-Tree 页面管理、事务处理、SQL 解析 |
-| Build your own ORM | 18k+ | Python | ⭐⭐⭐ | SQL 解析、关系映射、查询构建器 |
-| Build your own NoSQL database | 12k+ | C | ⭐⭐⭐⭐ | LSM 树、B-Tree 索引、WAL |
-| Build your own PostgreSQL | 8k+ | C | ⭐⭐⭐⭐ | 存储引擎、查询规划、MVCC |
-
-### 游戏引擎类
-
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
-|------|-------|------|------|----------|
-| Build your own Game Boy Emulator | 25k+ | C++ | ⭐⭐⭐⭐ | 指令集仿真、图形渲染、循环调度 |
-| Build your own Voxel Engine | 18k+ | C++ | ⭐⭐⭐⭐ | 3D 渲染、内存布局、性能优化 |
-| Build your own Chess AI | 15k+ | Python | ⭐⭐⭐ | 博弈树搜索、Alpha-Beta 剪枝、评估函数 |
-| Build your own Mario | 12k+ | JavaScript | ⭐⭐⭐ | 物理引擎、游戏循环、Sprite 渲染 |
-| Build your own Path Tracer | 10k+ | C++ | ⭐⭐⭐⭐ | 光线追踪、蒙特卡洛采样、PBR |
-
-### 编程语言类
-
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
-|------|-------|------|------|----------|
-| Build your own TypeScript | 25k+ | TypeScript | ⭐⭐⭐⭐ | 编译器前端、类型检查、AST 变换 |
-| Build your own Lisp | 22k+ | Python | ⭐⭐⭐⭐ | 词法分析、解析器、字节码虚拟机 |
-| Build your own JavaScript engine | 20k+ | C++ | ⭐⭐⭐⭐ | JS 引擎架构、GC 算法、JIT 基础 |
-| Build your own Ruby | 8k+ | C | ⭐⭐⭐⭐⭐ | 虚拟机架构、对象模型、GC |
-
-### 基础设施类
-
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
-|------|-------|------|------|----------|
-| Build your own Load Balancer | 15k+ | Go | ⭐⭐⭐ | 轮询/最少连接算法、健康检查 |
-| Build your own Kubernetes | 10k+ | Go | ⭐⭐⭐⭐⭐ | API Server、Controller 模式、Etcd |
-| Build your own Terraform | 8k+ | Go | ⭐⭐⭐ | HCL 解析、状态管理、执行计划 |
-
-### 前端类
-
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
-|------|-------|------|------|----------|
-| Build your own Webpack | 18k+ | JavaScript | ⭐⭐⭐ | 模块打包、Loader/Plugin 机制 |
-| Build your own React | 15k+ | JavaScript | ⭐⭐⭐ | 虚拟 DOM diff 算法、Fiber 架构 |
-| Build your own Redux | 10k+ | JavaScript | ⭐⭐⭐ | 状态管理、纯函数 Reducer、中间件 |
-| Build your own Vue | 8k+ | JavaScript | ⭐⭐⭐ | 响应式原理、虚拟 DOM、模板编译 |
-
-### 加密与安全类
-
-| 项目 | Stars | 语言 | 难度 | 核心收获 |
-|------|-------|------|------|----------|
-| Build your own Blockchain | 40k+ | Python | ⭐⭐⭐ | 共识算法、Merkle 树、钱包地址 |
-| Build your own Cryptocurrency | 25k+ | Python | ⭐⭐⭐ | Token 标准、智能合约、DEX |
-| Build your own TLS | 12k+ | Go | ⭐⭐⭐⭐ | 密钥交换、证书验证、握手协议 |
-| Build your own Password Manager | 8k+ | Rust | ⭐⭐⭐ | 加密存储、KDF、浏览器集成 |
+完整分类清单（3D Renderer、AI Model、Blockchain、Database、Docker、Emulator、Game、Git、Network Stack、Neural Network、Operating System、Programming Language、Shell、Web Browser、Web Server 等）见仓库 README 顶部的目录。
 
 ## 项目组织方式
 
-这个仓库的设计决策本身就是一份很好的"如何设计教育项目"的案例。
+这个仓库的取舍值得拆开看。
 
-**需求导向，而非源码导向。** 每个 challenge 提供一份需求规范，而不是让你去读数万行源码后自己总结需求。这降低了入门门槛，也避免了信息过载——你不是在被动接收，而是在主动解决。
+**按主题归类，每个主题配多个语言版本。** 想深入数据库底层，可以按 C → C++ → Go 的顺序读三篇不同实现，看到的是同一问题在不同语言里的不同解法。
 
-**测试驱动验证。** 每个项目都附带测试用例。你不需要「标准答案」来判断自己的实现是否正确——跑一遍测试就知道了。这个反馈闭环是学习效率的关键：你写了一行代码，立刻知道它对不对，而不是等到最后才发现方向错了。
+**链接外部教程，不自建教程。** 仓库维护者只负责筛选和归类，内容质量由社区和原文作者背书。代价是链接可能失效、教程深度参差；好处是能收录不同作者的视角，避开单一团队的「标准答案」。
 
-**多语言支持。** 同一个技术栈通常提供多种语言的实现。C 版本让你深入理解底层数据结构，Go 版本让你理解并发模型，Python 版本让你快速原型验证。同一个项目，换一种语言，学到的东西完全不同。
+**和 Codecrafters 付费平台互补。** 同一个团队维护的 [Codecrafters 平台](https://codecrafters.io) 把这套「从零实现」做成了带自动化测试的挑战：你在本地写代码，`git push` 后平台跑测试给反馈。GitHub 仓库是免费的教程索引，平台是付费的练习场。
 
-## 深入两个典型项目的架构
+## 深入两个典型教程的架构
 
-### Build your own Git：理解内容寻址
+### 从 wyag 理解 Git 的内容寻址
 
-以 Git 为例，项目的架构分层如下：
+[Write yourself a Git（wyag）](https://wyag.thb.lt/) 用 Python 从零实现 Git 的核心命令。它带出的 Git 内部架构大致分这几层：
 
-```
+```text
 ┌─────────────────────────────────────────┐
-│ User Interface Layer                    │
-│ (命令行参数解析、帮助信息、用户交互)         │
+│ 用户命令层（git init / add / commit）       │
 ├─────────────────────────────────────────┤
-│ Porcelain Commands Layer                │
-│ (commit / push / pull / branch 等)       │
+│ 命令分派层（解析子命令、参数与帮助）          │
 ├─────────────────────────────────────────┤
-│ Plumbing Commands Layer                 │
-│ (cat-file / hash-object / ls-tree 等)    │
+│ 对象模型层（Blob / Tree / Commit / Tag）    │
 ├─────────────────────────────────────────┤
-│ Object Model Layer                      │
-│ (Blob / Tree / Commit / Tag 对象)        │
+│ 仓库层（.git 目录、refs、HEAD、索引）         │
 ├─────────────────────────────────────────┤
-│ Repository Layer                        │
-│ (.git 目录结构、索引、配置)                │
-├─────────────────────────────────────────┤
-│ Packfile & Delta Layer                  │
-│ (压缩存储、增量传输)                       │
+│ 存储层（对象文件、压缩与哈希）                │
 └─────────────────────────────────────────┘
 ```
 
-实现完这个项目后，你会对 Git 产生全新的理解：
+跟着教程实现一遍后，你会对 Git 产生全新的理解：
 
-- **Git 的对象模型是 DAG（有向无环图）**，blob 存文件内容，tree 存目录结构，commit 存提交信息。三者通过 SHA-1 哈希关联，构成一个不可变的历史链。
-- **分支只是一个 41 字节的文件**，指向某个 commit。所以创建和切换分支是 O(1) 操作——不是 Git 做了魔法优化，而是它的数据模型本来就是这么设计的。
-- **`git push` 传输的不是文件差异，而是 packfile**。Git 会把多个对象打包成一个 packfile，用增量压缩算法减少传输量。这就是为什么 Git 处理大型二进制文件很慢——它针对文本做了优化。
+- **Git 的对象模型是 DAG（有向无环图）**。blob 存文件内容，tree 存目录结构，commit 存提交信息。三者通过 SHA-1 哈希互相引用，构成一个不可变的历史链。
+- **分支只是一个指向 commit 的引用**。在 `.git/refs/heads/` 下，分支就是一个包含 40 位哈希的文本文件。创建分支只是写一个小文件，所以分支操作接近 O(1)——不是 Git 做了魔法优化，而是数据模型本来就是这样设计的。
+- **`git push` 传输的不是文件差异，而是对象**。Git 会把对象打包、增量压缩后传输。这也是为什么 Git 处理大型二进制文件很慢——它针对文本场景做了优化。
 
-### Build your own Docker：理解容器化本质
+### 从 500 行 C 代码理解容器本质
 
-Docker 项目的架构揭示了容器和虚拟机的根本区别：
+[Linux containers in 500 lines of code](https://blog.lizzie.io/linux-containers-in-500-loc.html) 用一段 500 行的 C 代码，展示了容器和虚拟机的根本区别：
 
-```
+```text
 传统虚拟机：
 ┌─────────┐ ┌─────────┐ ┌─────────┐
 │ App A   │ │ App B   │ │ App C   │
@@ -165,7 +97,7 @@ Docker 项目的架构揭示了容器和虚拟机的根本区别：
 │ Guest   │ │ Guest   │ │ Guest   │
 │ OS      │ │ OS      │ │ OS      │
 ├─────────┤ ├─────────┤ ├─────────┤
-│ Hypervisor (硬件抽象层)                │
+│ Hypervisor（硬件抽象层）                │
 ├───────────────────────────────────────┤
 │ Host Hardware                         │
 └───────────────────────────────────────┘
@@ -176,9 +108,9 @@ Docker 项目的架构揭示了容器和虚拟机的根本区别：
 ├─────────┤ ├─────────┤ ├─────────┤
 │ Libs    │ │ Libs    │ │ Libs    │
 ├─────────┤ ├─────────┤ ├─────────┤
-│ Namespaces (PID/Net/Mount/...)        │
+│ Namespaces（PID/Net/Mount/...）        │
 ├───────────────────────────────────────┤
-│ Cgroups (资源限制)                     │
+│ Cgroups（资源限制）                     │
 ├───────────────────────────────────────┤
 │ Host Kernel                           │
 └───────────────────────────────────────┘
@@ -186,17 +118,16 @@ Docker 项目的架构揭示了容器和虚拟机的根本区别：
 
 关键区别：**虚拟机虚拟化硬件，容器虚拟化操作系统接口。**
 
-虚拟机通过 Hypervisor 模拟完整的硬件层，每个 Guest OS 运行在自己的虚拟硬件上，彼此完全隔离。代价是重——每个 VM 包含完整的操作系统，启动以分钟计。
+虚拟机通过 Hypervisor 模拟完整的硬件层，每个 Guest OS 运行在自己的虚拟硬件上，隔离彻底但代价重——每个 VM 包含完整操作系统，启动以分钟计。
 
-容器通过 Linux 的 namespace 和 cgroup 实现隔离。namespace 让进程「看到」不同的系统视图（PID、网络、挂载点等），cgroup 限制进程能使用的资源（CPU、内存、磁盘 I/O）。它们共享 Host Kernel，所以启动是毫秒级的。
+容器通过 Linux 的 namespace 和 cgroup 实现隔离。namespace 让进程「看到」不同的系统视图（PID、网络、挂载点），cgroup 限制进程能使用的资源（CPU、内存、磁盘 I/O）。它们共享 Host Kernel，所以启动是毫秒级的。
 
-Build your own Docker 需要实现的关键功能：
+这篇教程带你实现的关键功能：
 
-1. 创建隔离的文件系统（`chroot` / `pivot_root`）
-2. 实现资源限制（cgroups CPU/内存控制）
-3. 实现进程隔离（`unshare` / namespaces）
-4. 实现网络隔离（bridge / veth pair）
-5. 实现镜像分层（AUFS / OverlayFS）
+1. 用 `unshare` 创建隔离的进程视图（namespaces）
+2. 用 `chroot` / `pivot_root` 切换根文件系统
+3. 用 cgroup 限制 CPU 和内存
+4. 处理 pid 1 的孤儿进程回收问题
 
 做完这些，你就明白 Docker 容器比虚拟机轻量不是优化问题，而是架构问题。
 
@@ -204,85 +135,81 @@ Build your own Docker 需要实现的关键功能：
 
 ### 按难度梯度
 
-**入门级（⭐⭐，适合 1-2 年经验）**
-- Build your own HTTP Server → 理解 Web 开发基础
-- Build your own Web Framework → 理解 MVC 原理
-- Build your own Game of Life → 理解细胞自动机
+仓库本身不标难度，以下是一般认为的进阶顺序：
 
-**进阶级（⭐⭐⭐，适合 2-4 年经验）**
-- Build your own BitTorrent → 理解 P2P 网络
-- Build your own Git → 理解版本控制设计
-- Build your own Webpack → 理解打包原理
+**入门级（适合 1-2 年经验）**
+- 写一个 Web Server → 理解 HTTP 与并发基础
+- 写一个 Shell → 理解进程与系统调用
+- 写一个 Text Editor → 理解终端与缓冲
 
-**高级（⭐⭐⭐⭐，适合 4+ 年经验）**
-- Build your own Docker → 理解容器化底层
-- Build your own Redis → 理解内存存储设计
-- Build your own Database → 理解存储引擎
+**进阶级（适合 2-4 年经验）**
+- 写一个 BitTorrent 客户端 → 理解 P2P 网络
+- 写一个 Git → 理解版本控制设计
+- 写一个 Redis 原型 → 理解内存数据存储
 
-**大师级（⭐⭐⭐⭐⭐，适合架构师/系统工程师）**
-- Build your own Lisp → 理解语言设计
-- Build your own Operating System → 理解系统编程
-- Build your own Compiler → 理解语言转换
+**高级（适合 4+ 年经验）**
+- 写一个 Docker / 容器 → 理解隔离与内核接口
+- 写一个数据库 → 理解存储引擎
+- 写一个 3D Renderer → 理解图形管线
+
+**大师级（适合想深入系统底层的人）**
+- 写一个编程语言（Lisp / 解释器）→ 理解语言设计
+- 写一个操作系统 → 理解系统编程
+- 写一个 Network Stack → 理解协议栈
 
 ### 按职业方向
 
-**后端工程师：** Redis → Docker → Git → HTTP Server → Database，选做 Message Queue、Load Balancer、RPC Framework。
+**后端工程师：** 数据库 → Git → Web Server → BitTorrent → Network Stack。
 
-**前端工程师：** Webpack → React → Redux → Web Framework，选做 Browser Engine、CSS Parser、Template Engine。
+**前端工程师：** 前端框架（React/Redux）→ Web Browser → Shell，选做 Template Engine、Regex Engine。
 
-**基础架构工程师：** Docker → Kubernetes → Load Balancer → Database，选做 Operating System、Network Stack、Filesystem。
+**基础架构工程师：** Docker → 操作系统 → Network Stack → 数据库，选做 Processor、Memory Allocator。
 
-**安全工程师：** TLS → Password Manager → Blockchain → Vulnerability Scanner，选做 Reverse Shell、Exploit Framework。
+**安全工程师：** 从 Blockchain / Cryptocurrency 方向的教程入手，理解哈希与共识机制，再结合 Network Stack 方向理解协议攻击面。
 
 ## 使用建议
 
 ### 学习流程
 
-每个 challenge 都有 REQUIREMENTS.md 文件。在开始写代码之前：
+以 wyag 为例，一篇教程通常这样推进：
 
-1. 仔细阅读需求规范
-2. 理解测试用例的设计意图——每个测试覆盖了一个边界 case
-3. 画出简单的架构草图
-4. 再开始实现
+1. 通读教程，先画出你要实现的核心数据结构（对 Git 来说就是对象模型）
+2. 按依赖顺序实现子命令：`init` → `hash-object` → `cat-file` → `write-tree` → `commit-tree`
+3. 每实现一步，用官方 `git` 对照验证输出是否一致
+4. 完成后再看官方源码，思考你的实现和真实实现之间的差距
 
-**不要**直接去看参考实现。照抄代码能通过测试，但什么都学不到。完成自己的实现后，再去对比官方源码，你会注意到自己遗漏的边界 case。
+**不要**直接抄别人的实现。照抄能通过测试，但什么都学不到。卡住 20 分钟以上再翻提示，看完后合上自己重写一遍。
 
-### 以 Git 为例的学习流程
+### 以 Git 为例的验证方法
 
-Step 1: 阅读需求
+wyag 教程的建议是：实现后用你自己的命令重建一次提交，再让官方 Git 读取你生成的对象。
+
 ```bash
-cd build-your-own-git
-cat REQUIREMENTS.md
+./wyag init test-repo
+cd test-repo
+# 实现 hash-object 后：
+../wyag hash-object -w README.md
+# 期望：输出一个 40 位 SHA-1，且官方 git cat-file 能读到它
+git cat-file -p <上一步的输出>
 ```
 
-Step 2: 理解测试框架
-```bash
-ls solutions/python/
-./test.sh
-# 期望看到：所有测试失败（因为你还没实现）
-```
-
-Step 3: 逐层实现——从 `git init` 开始，逐步实现 `hash-object`、`cat-file`，每一步都让更多的测试通过。
-
-Step 4: 对比优化——查看官方 Git 源码，思考你的实现和官方实现之间的差距。
+验证通过，说明你的对象格式和官方一致——这比任何单元测试都更能证明你理解了 Git。
 
 ### 和 Codecrafters 付费平台互补
 
-| 功能 | GitHub 仓库 | Codecrafters 平台 |
+| 维度 | GitHub 仓库 | Codecrafters 平台 |
 |------|-------------|-------------------|
-| 需求规范 | ✅ | ✅ |
-| 测试用例 | ✅ | ✅（更自动化） |
-| 参考实现 | ✅ | ❌ |
-| 官方解答 | ❌ | ✅ |
+| 内容 | 外部教程索引 | 自建的分阶段挑战 |
+| 测试反馈 | 无，靠自我对照 | ✅ 自动化测试 |
 | 进度追踪 | ❌ | ✅ |
-| 社区讨论 | ❌ | ✅ |
-| 费用 | 免费 | 付费（$49/月起） |
+| 官方解答 | ❌（需自行对比） | ✅ |
+| 成本 | 免费 | 免费试用 + 付费订阅 |
 
-先用 GitHub 仓库学习，如果某个项目特别感兴趣，再考虑用平台深化。
+先用 GitHub 仓库找到感兴趣的方向，如果某个项目想系统性练透，再考虑用平台获得自动化反馈。
 
 ## 从实现 BitTorrent 客户端理解 P2P 协议
 
-用 BitTorrent 客户端做一个完整拆解，直观感受"从零构建"的过程。
+用 [Building a BitTorrent client from the ground up in Go](https://blog.jse.li/posts/torrent/) 做一个完整拆解，直观感受「从零构建」的过程。
 
 ### .torrent 文件结构
 
@@ -304,7 +231,7 @@ Step 4: 对比优化——查看官方 Git 源码，思考你的实现和官方�
 
 Tracker 是一个中心化的目录服务，维护着所有 peer 的列表：
 
-```
+```text
 请求：announce?info_hash=XXX&peer_id=XXX&port=6881&uploaded=0&downloaded=0&left=1234567
 响应：{"interval": 1800, "peers": [{"ip": "1.2.3.4", "port": 6881}, ...]}
 ```
@@ -314,10 +241,12 @@ Tracker 是一个中心化的目录服务，维护着所有 peer 的列表：
 Rarest First 是 BitTorrent 的核心算法之一。统计每个 piece 在所有 peer 中的分布，优先下载拥有者最少的 piece。这样做有两个好处：
 
 1. 稀有 piece 尽快扩散，降低「所有 peer 都缺同一块」的概率
-2. 整体下载速度更快——你不会在最后阶段发现某个 piece 只有一台机器有，而它掉线了
+2. 不会在下载最后阶段才发现某个 piece 只剩一台机器持有，而它刚好掉线
 
 ```python
-def select_piece_to_download(self, available_pieces, peer_pieces):
+from collections import Counter
+
+def select_piece_to_download(available_pieces, peer_pieces):
     piece_rarity = Counter()
     for peer in peer_pieces:
         for piece in peer:
@@ -329,7 +258,7 @@ def select_piece_to_download(self, available_pieces, peer_pieces):
 
 BitTorrent 使用 B 编码（Bencode）作为数据序列化格式，只包含四种类型：
 
-```
+```text
 字符串：4:spam    → "spam"
 整数：  i3e       → 3
 列表：  li3e4:spame → [3, "spam"]
@@ -338,35 +267,35 @@ BitTorrent 使用 B 编码（Bencode）作为数据序列化格式，只包含�
 
 ## 局限与价值
 
-这个仓库的价值和局限来自同一个事实：它让你从零构建，但构建的是简化版本。
+这个仓库的价值和局限来自同一个事实：它收录的教程构建的是**简化版本**。
 
-你实现的 Redis 不会像真正的 Redis 那样处理几十万个并发连接，你实现的 Docker 不会生产级地管理 overlay network。但如果你能亲手实现 SDS、跳表、事件循环，你对"Redis 为什么这么快"的理解就不再是背诵面试答案，而是基于每一步时间复杂度的直觉。
+你按教程实现的 Redis 不会像真正的 Redis 那样处理几十万个并发连接，你写的容器不会生产级地管理 overlay network。但如果你亲手实现过跳表、事件循环、RESP 协议解析，你对「Redis 为什么这么快」的理解就不再是背诵面试答案，而是基于每一步时间复杂度的直觉。
 
-同样的，如果你亲手实现过 `unshare`+`pivot_root`，理解了 namespace 和 cgroup 的关系，Docker 在你眼里就不再是一个"运行容器的工具"，而是一个"使用 Linux 内核特性进行进程隔离的封装"。
+同样的，如果你亲手实现过 `unshare` 和 `pivot_root`，理解了 namespace 和 cgroup 的关系，Docker 在你眼里就不再是一个「运行容器的工具」，而是一个「使用 Linux 内核特性进行进程隔离的封装」。
 
 从零构建的真正价值，是把你和工具之间的关系，从使用者变成理解者。
 
 ## 延伸阅读
 
 **官方资源**
-- [Codecrafters 官网](https://codecrafters.io)
 - [build-your-own-x GitHub](https://github.com/codecrafters-io/build-your-own-x)
+- [Codecrafters 官网](https://codecrafters.io)
 - [codecrafters-io/interview](https://github.com/codecrafters-io/interview) - 系统设计面试题
 
-**补充项目**
-- [danistefanovic/build-your-own-x](https://github.com/danistefanovic/build-your-own-x) - 涵盖更多语言
+**相关资源**
+- [danistefanovic/build-your-own-x](https://github.com/danistefanovic/build-your-own-x) - 本仓库的原地址，创建者 Daniel Stefanovic 在 2022 年将其转交给 Codecrafters 组织
 - [open-source-ideas/open-source-ideas](https://github.com/open-source-ideas/open-source-ideas) - 新项目创意
 
 **书籍推荐**
 
-| 书籍 | 关联项目 | 你会学到 |
+| 书籍 | 关联方向 | 你会学到 |
 |------|----------|----------|
-| 《Linux 高性能服务器编程》 | Build your own HTTP Server | 深入理解网络编程 |
-| 《Redis 设计与实现》 | Build your own Redis | 理解 Redis 内部原理 |
-| 《自己动手写 Docker》 | Build your own Docker | 理解容器化技术 |
-| 《操作系统真象还原》 | Build your own OS | 系统编程入门 |
-| 《编译原理》龙书 | Build your own Lisp | 编译器基础 |
+| 《Linux 高性能服务器编程》 | Web Server / 网络编程 | 深入理解网络编程 |
+| 《Redis 设计与实现》 | 数据库（Redis） | 理解 Redis 内部原理 |
+| 《自己动手写 Docker》 | Docker / 容器 | 理解容器化技术 |
+| 《操作系统真象还原》 | 操作系统 | 系统编程入门 |
+| 《编译原理》龙书 | 编程语言 | 编译器基础 |
 
 ---
 
-*本文基于 [codecrafters-io/build-your-own-x](https://github.com/codecrafters-io/build-your-own-x)（519k+ Stars，MIT License）编写。*
+*本文基于 [codecrafters-io/build-your-own-x](https://github.com/codecrafters-io/build-your-own-x)（2026 年 8 月约 53 万 Stars，CC0 许可）编写。*

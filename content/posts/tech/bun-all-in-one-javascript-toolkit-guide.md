@@ -72,6 +72,8 @@ Bun 与 Deno 的技术分歧在引擎选型。Deno 选 V8，原因是 V8 最成�
 
 代价是兼容性。Node.js 生态里有一批包直接调用了 V8 的内部 API（典型的有 `node-bindings`、部分 native addon、用了 `v8.h` 的包），这些在 Bun 上跑不起来。Bun 通过 `node:` 模块兼容层覆盖了 `fs`、`path`、`process`、`Buffer` 等常用模块，但涉及 V8 内部接口的包需要 polyfill 或替代方案。具体的兼容性状态可以查 [Bun 的 Node.js 兼容性列表](https://bun.com/docs/runtime/nodejs-compat)——迁移前先跑一遍现有测试套件，比看文档更可靠。
 
+> **实现语言的时效说明**：本文写作于 2026-05，基线锁定 v1.3.14，此时运行时核心仍是 Zig。2026-07 官方发布《Rewriting Bun in Rust》，将核心从 Zig 迁至 Rust，并随 2026-08 的 v1.4 正式发布；官方称这次迁移以内存安全为目标，保持行为一致。若你读到本文时已经用上 v1.4+，文中有关 Zig 的实现细节应以新版本为准。
+
 ---
 
 ## 一次 `bun run` 怎么流过系统
@@ -222,11 +224,11 @@ Bun install 和 pnpm 的取舍取决于团队对锁文件格式和 workspace 特
 
 v1.3.14 是 2026 年 5 月中旬的稳定版本。这个版本不是兼容性收尾，而是把 Bun 从「更快的 Node.js」往「自带基础设施的运行时」推了一大步。主要更新集中在图像处理、安装链路和 HTTP 现代协议三个方面：
 
-- **Bun.Image：内置图像处理**。这是本版本最大的新能力，取代了 Node.js 生态里必须靠 `sharp`（原生 C++ 模块，装一次就要 node-gyp 编译环境）才能做的活。Bun.Image 直接内置 JPEG、PNG、WebP、GIF、BMP 的静态编解码；HEIC、AVIF、TIFF 在 macOS / Windows 上走系统后端。官方 benchmark（对比 sharp 0.34.5）：读取元数据 `metadata()` 快约 70 倍，常见 resize 快 1.2-1.4 倍。省掉 `sharp` 意味着 CI 不再为了一个缩略图场景去装 libvips，也不用担心架构不匹配导致的原生二进制报错。
+- **Bun.Image：内置图像处理**。这是本版本最大的新能力，取代了 Node.js 生态里必须靠 `sharp`（原生 C++ 模块，装一次就要 node-gyp 编译环境）才能做的活。Bun.Image 直接内置 JPEG、PNG、WebP、GIF、BMP 的静态编解码；HEIC、AVIF、TIFF 在 macOS / Windows 上走系统后端。官方 benchmark（对比 sharp 0.34.5）：读取元数据 `metadata()` 快约 70 倍，常见 resize 快 1.2-1.4 倍。API 是链式的，`.resize()` → `.rotate()` → `.webp()` 一路接下去；接收路径、`ArrayBuffer`、`Blob` 或 `Bun.file` 作为输入，用 `.bytes()` / `.buffer()` / `.write(dest)` 落盘，还能把实例直接当 `Response` body 返回、由运行时自动设 `Content-Type`。省掉 `sharp` 意味着 CI 不再为了一个缩略图场景去装 libvips，也不用担心架构不匹配导致的原生二进制报错。
 
 - **全局虚拟存储（Global Virtual Store）**。`bun install` 的 isolated linker 新增 `install.globalStore = true`，把每个包只在全局缓存中实例化一次，项目 `node_modules` 里只放指向它的 symlink。官方对约 1,400 个包的前端项目的预热安装测试：优化前约 841 ms、`clonefileat` 调用约 1,387 次，开启后降到约 115 ms、0 次——快了约 7 倍。热点在 CI 的反复重建路径。注意这是实验特性，默认关闭，且只有来自不可变缓存源、无受信生命周期脚本的包才有资格进全局存储。
 
-- **HTTP/3（QUIC）支持**。`Bun.serve` 加一个 `http3: true` 标志就能同时监听 TCP（HTTP/1.1+2）和 UDP（HTTP/3），现有 `fetch` 处理函数三种协议通吃，官方标称静态路由吞吐约 509k req/s（对比 HTTPS/1.1 约 189k req/s）。同为实验特性，官方明确警示不要在生产部署。
+- **HTTP/3（QUIC）支持**。`Bun.serve` 加一个 `http3: true` 标志就能同时监听 TCP（HTTP/1.1+2）和 UDP（HTTP/3），现有 `fetch` 处理函数三种协议通吃，官方标称静态路由吞吐约 509k req/s，约为同环境标准 HTTPS 的两倍。同为实验特性，官方明确警示不要在生产部署。
 
 - **fetch() 的 HTTP/2 / HTTP/3 客户端（实验）**。新增 `{ protocol: "http2" }` / `{ protocol: "http3" }` 选项，同一 origin 的并发请求可共享一条多路复用连接；HTTP/3 客户端还能根据 `Alt-Svc` 头自动把后续请求升级到 QUIC。
 

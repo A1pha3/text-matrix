@@ -1,759 +1,233 @@
 ---
-title: "BiliSummary：B站视频AI摘要与知识管理工具"
+title: "BiliSummary：把 B 站视频变成可检索的 Markdown 笔记"
 slug: "bilibili-summary-ai-video-summarizer-guide"
 github_repo: "jackwener/bilibili-summary"
 date: "2026-04-08T13:10:00+08:00"
-lastmod: 2026-04-08T13:10:00+08:00
+lastmod: 2026-09-02T08:00:00+08:00
 categories: ["技术笔记"]
 tags: ["Python", "B站", "FastAPI", "知识管理"]
-description: "BiliSummary 是一个桌面优先的 B站视频 AI 摘要工具，支持视频字幕提取、AI 摘要生成、收藏夹批量管理、统一阅读体验。"
+description: "BiliSummary 是一个桌面优先的 B 站视频 AI 摘要工具：字幕优先、ASR 兜底，把视频整理成结构化 Markdown，支持 URL、UP 主、收藏夹三种输入模式。"
 draft: false
 ---
 
-# BiliSummary：B 站视频 AI 摘要与知识管理工具
+# BiliSummary：把 B 站视频变成可检索的 Markdown 笔记
 
-BiliSummary 把"B 站视频 → 可沉淀的 Markdown 摘要"这条链路做成了桌面应用。它的判断很明确：字幕优先、ASR 兜底，三种输入模式共用同一条摘要管道。需要把 UP 主连载或收藏夹里的视频批量转成可检索本地文本时，它比浏览器插件和移动端笔记应用更合适。
+BiliSummary 把"B 站视频 → 结构化 Markdown 笔记"这条链路做成了桌面应用。它优先读视频的 CC 字幕，拿不到字幕时下载音频做语音识别，再把文本交给大模型整理成摘要，落盘为 Markdown。README 给自己的定位是：
 
-> **"Desktop-first Bilibili summarizer with AI-generated Markdown output, favorites workflow, and unified browse/reading UX."**
+> Desktop-first Bilibili summarizer with AI-generated Markdown output, favorites workflow, and unified browse/reading UX.
 
-## 适合谁用，能解决什么
+读这篇笔记，你会明白它的摘要管道为什么这样设计、三种输入模式各自的边界在哪、以及什么场景下值得用它而不是浏览器插件或移动端笔记应用。
 
-读完后你应该能回答三个问题：BiliSummary 的摘要管道为什么这样设计、三种输入模式各自的边界在哪、什么场景下该选它胜过其他工具。
+## 它能做什么
 
-| 痛点 | 解决方案 | 为什么这样选 |
-|------|---------|-------------|
-| B 站视频信息难以沉淀 | 转换为本地 Markdown 文件 | Markdown 可被 Obsidian、VS Code 等工具直接检索，不依赖平台 |
-| 批量视频处理繁琐 | 收藏夹批量摘要功能 | 手动逐个处理 50+ 视频不现实，需要增量更新机制 |
-| 视频没有字幕 | ASR 语音识别降级处理 | B 站约三成视频无 CC 字幕，纯字幕方案会漏掉这部分内容 |
-| 分散的观看体验 | 统一卡片式阅读界面 | 在浏览器、笔记、摘要之间切换会打断阅读节奏 |
+- **URL 模式**：粘贴视频链接，生成单条摘要。
+- **UP 主模式**：按 UP 主名称或 UID 拉取最近视频，批量生成摘要。
+- **收藏夹模式**：扫码登录，读取收藏夹，批量摘要未处理的视频；取消收藏后留一个短窗口可撤销。
+- **浏览模式**：统一的卡片系统，缩略图 / 紧凑两种视图切换，点开进入阅读页。
+- **阅读体验**：内容页顶部放统一操作按钮，内容区与侧栏之间有全局返回按钮，减少来回跳转。
+- **ASR 兜底**：无字幕的视频走"下载音频 → 语音识别 → 摘要"流程，不直接跳过。
 
-> **快速信息卡**
-> - **GitHub**: [jackwener/bilibili-summary](https://github.com/jackwener/bilibili-summary)
-> - **Stars**: 16+
-> - **Forks**: 4+
-> - **License**: NOASSERTION
-> - **语言**: Python
-> - **最后更新**: 2026-04-08
+## 快速信息卡
 
-## 目录
+- GitHub：[jackwener/bilibili-summary](https://github.com/jackwener/bilibili-summary)
+- Stars / Forks：21 / 6
+- License：MIT（README 声明）
+- 主要语言：Python
+- 创建 / 最近提交：2026-02-15 / 2026-02-24
+- 描述：AI-powered Bilibili video summarizer with ASR support
 
-- [快速信息卡](#快速信息卡)
-- [适合谁用，能解决什么](#适合谁用能解决什么)
-- [系统总览](#系统总览)
-- [摘要生成管道](#摘要生成管道)
-- [安装与配置](#安装与配置)
-- [使用指南](#使用指南)
-- [开发指南](#开发指南)
-- [实践建议](#实践建议)
-- [常见问题](#常见问题)
-- [与类似工具对比](#与类似工具对比)
-- [采用建议](#采用建议)
-- [自测题](#自测题)
-- [进阶路径](#进阶路径)
+## 技术栈
 
-## 系统总览
+| 组件 | 选型 |
+|------|------|
+| 后端 | FastAPI + Uvicorn |
+| 前端 | Vanilla JS + CSS（tokenized design system） |
+| 桌面壳 | pywebview |
+| B 站集成 | bilibili-api-python |
+| AI 摘要 | Anthropic 兼容 API |
+| ASR | GLM ASR |
+| 音频处理 | PyAV |
 
-### 技术栈与分层
+选 pywebview 而不是 Electron，是为了桌面窗口和浏览器访问共用同一份 FastAPI 代码：窗口里嵌的就是本地起在 `127.0.0.1:18520` 的服务，前端没有构建步骤。
 
-BiliSummary 是典型的 Python 后端 + 原生前端 + 桌面壳结构。选 pywebview 不选 Electron，是为了让桌面应用和服务器模式共用同一份 FastAPI 代码，避免维护两套后端。
-
-语言占比（数据来源：GitHub 语言统计，截至 2026-04-08）：
+## 项目结构
 
 ```
-├── Python 36.7% — 后端核心
-├── JavaScript 35.8% — 前端交互
-├── CSS 20.6% — 样式设计
-├── HTML 6.7% — 页面结构
-└── Shell 0.2% — 构建脚本
+app.py          # 桌面入口（pywebview + 后台线程起 FastAPI）
+server.py       # FastAPI 应用与路由注册
+summarize.py    # 摘要管道：字幕提取、CLI、批量处理
+routes/         # API 路由模块
+  deps.py       # 共享状态：登录凭证、AI 客户端、SSE 进度、批处理
+  asr.py        # ASR 摘要路由
+  auth.py       # 登录
+  favorites.py  # 收藏夹相关
+  settings.py   # 设置
+static/         # 前端资源（index.html / app.js / style.css）
+docs/           # 设计系统与项目状态
+config.toml     # 默认待处理视频列表
+summary/        # 生成的摘要，按 standalone / favorites / users 分组
 ```
 
-核心技术选型：
+## 摘要管道
 
-| 组件 | 技术 | 选型理由 |
-|------|------|---------|
-| 后端 | FastAPI + Uvicorn | 异步原生支持，适合批量并发摘要 |
-| 前端 | Vanilla JS + CSS（令牌化设计系统） | 无构建步骤，桌面应用启动快 |
-| 桌面壳 | pywebview | 复用 FastAPI 后端，无需 Electron 体积 |
-| B 站集成 | bilibili-api-python | 社区维护的逆向 API，覆盖视频/收藏夹/登录 |
-| AI 摘要 | Anthropic 兼容 API | 可对接 GLM、Claude 等多家模型 |
-| ASR | GLM ASR 集成 | 中文识别效果优于通用 Whisper |
-| 音频处理 | PyAV | 处理 B 站 DASH/FLV 多种音频流封装 |
+### 字幕优先，ASR 兜底
 
-### 整体架构
+B 站相当一部分视频带 AI 生成的 CC 字幕。字幕接口是现成的 JSON，取文本几乎零成本；音频下载加语音识别要花时间、花 API 额度。所以管道先试字幕，拿不到才降级到 ASR。
 
-```
-┌─────────────────────────────────────┐
-│ 桌面应用层 (pywebview)              │
-│ 用户界面 ←→ 窗口管理 ←→ 系统集成    │
-└─────────────────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ 前端层 (Vanilla JS/CSS)             │
-│ 卡片系统 ←→ 阅读界面 ←→ 收藏夹管理  │
-└─────────────────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ 后端层 (FastAPI)                    │
-│ /routes/ ←→ /summarize.py ←→ AI API │
-└─────────────────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ 服务集成层                          │
-│ bilibili-api-python ←→ GLM ASR      │
-└─────────────────────────────────────┘
-```
+字幕获取在 `get_subtitle` 里完成：取分 P 信息拿 cid → 用 cid 请求播放器信息、读字幕列表 → 优先选中文字幕，下载字幕 JSON，把逐条文本拼成纯文本。同一份字幕还会转存成 ASS 文件（`ass/<分组>/`），供后续编辑或查看。
 
-### 模块结构
+### 无字幕时：GLM-ASR 转写
 
-```
-bilibili-summary/
-├── app.py          # 桌面应用入口 (pywebview)
-├── server.py       # FastAPI 应用
-├── summarize.py    # 摘要生成管道
-├── routes/         # API 路由模块
-│   ├── __init__.py
-│   ├── favorites.py # 收藏夹相关
-│   ├── video.py     # 视频相关
-│   └── asr.py       # ASR 相关
-├── static/         # 前端资源
-│   ├── index.html
-│   ├── app.js
-│   └── style.css
-├── docs/           # 设计文档
-├── config.toml     # 配置文件
-└── requirements.txt # 依赖
-```
+`routes/asr.py` 负责兜底，链路是：
 
-### 三种输入模式的边界
+1. 取音频流。刻意选最低码率（64K，禁杜比、禁 Hi-Res），控制下载体积；DASH 格式取音频轨，FLV/MP4 取合并流。
+2. 用 PyAV 解码，重采样成 16 kHz 单声道，按 29 秒切成 wav 段。GLM-ASR 单文件限 30 秒，切短一档留余量。
+3. 每段并发调 GLM-ASR（模型 `glm-asr-2512`，5 路并发），429 或 5xx 指数退避重试 3 次。
+4. 把转写文本拼起来，交给摘要步骤。
 
-BiliSummary 有三套并行的输入模式，它们共用 `summarize.py` 这条摘要管道，但触发条件和适用场景不同。理解这条边界，才能选对模式。
+ASR 路径要求登录（`/api/asr-summarize` 未登录直接返回 401），因为拉取音频流通常要带凭证。
 
-| 模式 | 输入 | 适用场景 | 登录要求 |
+### 摘要生成
+
+`summarize_with_claude` 把字幕文本和标题一起发给 Anthropic 兼容接口，提示词要求输出三段式笔记：**内容整理**（去口语化、按话题分段）、**核心观点**（先一句话概括，再列支撑的例子、数据或类比）、**行动建议**（有方法论才写）。默认模型 `GLM-4-FlashX-250414`，`max_tokens` 8192；命中限流按指数退避重试，最多 5 次。
+
+### 落盘
+
+每个视频产出两个文件到 `summary/<分组>/`：
+
+- `<标题>.md`：Markdown 摘要，头部带 BV 号、视频链接、作者、时长、生成时间；
+- `<标题>.meta.json`：标题、BV 号、链接、时长、作者、封面等元数据，前端卡片用它渲染缩略图。
+
+无字幕的摘要放进 `<分组>/no_subtitle/` 子目录，同一视频最多重试 3 次，重试计数记在 `no_subtitle/.retries.json`。
+
+## 三种输入模式
+
+| 模式 | 输入 | 登录要求 | 适用场景 |
 |------|------|---------|---------|
-| URL 模式 | 单个视频链接 | 临时摘要某个视频 | 可选 |
-| UP 主模式 | UP 主名称或 UID | 跟踪特定 UP 主的连载 | 可选 |
-| 收藏夹模式 | 收藏夹 ID | 处理自己收藏的视频集合 | 必须登录 |
+| URL | 单个视频链接 | 否 | 临时摘要某个视频 |
+| UP 主 | UP 主名称或 UID | 否 | 跟踪连载；给名称时自动搜索 UID |
+| 收藏夹 | 默认收藏夹 | 必须 | 批量沉淀自己收藏的视频 |
 
-## 摘要生成管道
+名称转 UID 走搜索接口，拿不到会明确报"未找到 UP 主"。
 
-### 字幕优先，ASR 降级
+## 安装与启动
 
-摘要管道的核心设计是"字幕优先 + ASR 降级"。之所以这样设计，是因为 B 站 CC 字幕的获取成本远低于音频下载 + ASR 识别：字幕接口几乎瞬时返回，而 ASR 需要下载音频流再调用识别服务，耗时和 API 成本都高一个数量级。先用字幕，拿不到再降级到 ASR，能在大多数场景下把延迟压到最低。
-
-**URL 模式工作流**：
-
-```
-1. 用户粘贴 B 站视频 URL
-   ↓
-2. 后端解析 URL，提取视频 ID
-   ↓
-3. 调用 bilibili-api-python 获取视频信息
-   ↓
-4. 检查字幕：
-   - 有字幕 → 直接提取字幕文本
-   - 无字幕 → 触发 ASR 降级流程
-   ↓
-5. 将字幕发送给 AI API 生成摘要
-   ↓
-6. 输出 Markdown 文件
-```
-
-**ASR 降级流程**：
-
-```
-1. 检测视频无字幕
-   ↓
-2. 下载视频音频流（DASH/FLV/MP4）
-   ↓
-3. 提取音频片段
-   ↓
-4. 调用 GLM ASR 进行语音识别
-   ↓
-5. 将识别结果发送 AI API 生成摘要
-   ↓
-6. 输出 Markdown 文件
-```
-
-### 摘要生成调用
-
-`summarize.py` 里的摘要函数把字幕文本和提示词一起发给 AI API，要求输出结构化 Markdown：
-
-```python
-# summarize.py
-async def generate_summary(text: str, model: str = "glm-4") -> str:
-    prompt = f"""请为以下内容生成简洁的摘要：
-
-{text}
-
-要求：
-1. 提取核心观点
-2. 按逻辑结构组织
-3. 保留关键细节
-4. 输出 Markdown 格式
-"""
-
-    response = await ai_client.chat(prompt, model=model)
-    return response
-```
-
-### 字幕提取与 ASR 降级
-
-字幕提取的逻辑直接：调用 `video.get_subtitle()`，有就直接取文本，没有就进 ASR 降级分支。
-
-```python
-# 检查字幕可用性
-subtitle = video.get_subtitle()
-if subtitle:
-    text = subtitle.extract_text()
-else:
-    # 触发 ASR 降级
-    text = await asr_process(video)
-```
-
-ASR 降级支持三种音频封装格式，因为 B 站不同视频的可用音频流格式不一致：
-
-| 格式 | 说明 | 适用场景 |
-|------|------|---------|
-| DASH | B 站默认格式 | 大部分新视频 |
-| FLV | 备用格式 | 老视频或特殊分区 |
-| MP4 | 部分视频支持 | 移动端缓存视频 |
-
-```python
-async def asr_process(video):
-    # 1. 获取音频流
-    audio_url = video.get_audio_url(format="mp4")
-
-    # 2. 下载音频
-    audio_data = await download_audio(audio_url)
-
-    # 3. ASR 识别
-    text = await gl_asr.recognize(audio_data)
-
-    # 4. 生成摘要
-    summary = await generate_summary(text)
-
-    return summary
-```
-
-### 任务流案例：一个视频如何变成摘要
-
-把上面的机制串起来看一个具体案例。假设用户粘贴了 `https://www.bilibili.com/video/BV1xx411c7mD`：
-
-1. **URL 解析**：`routes/video.py` 提取 BV 号 `BV1xx411c7mD`
-2. **视频信息**：`bilibili-api-python` 返回标题、UP 主、时长、字幕列表
-3. **字幕检查**：该视频有官方 CC 字幕，直接 `extract_text()` 拿到全文
-4. **摘要生成**：`summarize.py` 把字幕文本发给 GLM-4，提示词要求输出 Markdown
-5. **文件落盘**：摘要写入本地 Markdown 文件，前端卡片显示预览
-
-如果第 3 步发现没有字幕，会跳到 ASR 分支：下载音频 → GLM ASR 识别 → 再走第 4 步。整条管道对前端透明，用户只看到"生成中"和"完成"两个状态。
-
-## 安装与配置
-
-### 环境要求
-
-- Python 3.8+
-- Node.js 18+（可选，用于开发前端）
-- Chrome/Chromium（用于渲染页面）
-
-### 安装步骤
-
-**克隆仓库**：
-
-```bash
-git clone https://github.com/jackwener/bilibili-summary.git
-cd bilibili-summary
-```
-
-**创建虚拟环境**：
+源码用了 `list[str]`、`Path | None` 这类新式类型标注，需要 Python 3.10+。安装：
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # Linux/macOS
-# 或
-.\venv\Scripts\activate   # Windows
-```
-
-**安装依赖**：
-
-```bash
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**配置环境变量**：
-
-创建 `.env.local` 文件：
+在项目根目录建 `.env.local`：
 
 ```bash
 ANTHROPIC_AUTH_TOKEN=your_api_key
 ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/anthropic
 ```
 
-**启动桌面应用**：
+AI 客户端按 `base_url` + `api_key` 初始化，只要是 Anthropic 兼容网关都能接；示例指向智谱开放平台的 Anthropic 端点。
+
+可选环境变量：
+
+| 变量 | 作用 |
+|------|------|
+| `DEFAULT_MODEL` | 覆盖默认模型 `GLM-4-FlashX-250414` |
+| `BILIBILI_SESSION_TOKEN` / `BILIBILI_BILI_JCT` / `BILIBILI_AC_TIME_VALUE` | B 站登录凭证（cookie 三件套） |
+| `BILISUMMARY_DATA_DIR` | 数据目录（默认项目根目录；打包后为 `~/Library/Application Support/BiliSummary`） |
+
+启动：
 
 ```bash
-python app.py
+python app.py      # 桌面窗口，内嵌 FastAPI（127.0.0.1:18520）
+python server.py   # 只跑服务，浏览器访问 http://127.0.0.1:18520
 ```
 
-### 配置文件说明
+## 配置：config.toml
 
-`config.toml` 控制应用模式、B 站集成、AI 模型和 ASR 行为：
+`config.toml` 只做一件事：放默认待处理的视频 URL。命令行不带参数运行时处理的就是这份列表。
 
 ```toml
-[app]
-mode = "desktop"        # desktop / server
-port = 8000             # 服务端口
-
-[bilibili]
-cookie = ""             # 可选，登录态 Cookie
-quality = "follow_page" # 视频画质
-
-[ai]
-model = "glm-4"         # AI 模型
-temperature = 0.7       # 创造性
-max_tokens = 2000       # 最大输出
-
-[asr]
-enabled = true          # 启用 ASR 降级
-model = "glm-asr"       # ASR 模型
+summary-videos = [
+  "https://www.bilibili.com/video/BV1xxxxxxxxx",
+]
 ```
 
-`mode` 决定运行方式：`desktop` 启动 pywebview 窗口，`server` 只跑 FastAPI 供浏览器访问。`asr.enabled = false` 时，无字幕视频会被跳过，不会触发降级处理。
+## 命令行用法
 
-## 使用指南
-
-### URL 模式
-
-最基础的单视频摘要流程：
+`summarize.py` 可以直接当脚本跑（脚本头 `#!/usr/bin/env python3`）：
 
 ```
-1. 启动应用后，在 URL 输入框粘贴 B 站视频链接
-2. 点击「开始摘要」
-3. 等待 AI 生成摘要
-4. 查看/编辑生成的 Markdown
+python summarize.py                        # 处理 config.toml 里的视频
+python summarize.py --user UID --count N   # 处理某 UP 主最新 N 个视频
+python summarize.py --login                # 扫码登录，自动保存凭证
+python summarize.py --favorite             # 处理收藏夹里的视频
 ```
 
-支持的 URL 格式：
+## 网页端 API
 
-| 格式 | 示例 |
-|------|------|
-| 普通视频 | `https://www.bilibili.com/video/BV1xx411c7mD` |
-| 弹幕视频 | `https://www.bilibili.com/video/BV1xx411c7mD?p=1` |
-| 收藏视频 | 同上 |
+桌面和浏览器访问的是同一个 FastAPI 服务。`server.py` 注册的路由：
 
-### UP 主模式
+| 方法与路径 | 作用 |
+|-----------|------|
+| `GET /` | 返回前端页面 |
+| `GET /api/status` | 是否已登录、AI 是否已配置 |
+| `GET /api/summaries` | 按分类列出全部摘要（独立视频 / 收藏 / UP 主） |
+| `GET /api/summary/{path}` | 读取某篇摘要的 Markdown |
+| `POST /api/summarize/url` | 批量摘要一批 URL（最多 200 个） |
+| `POST /api/summarize/user` | 按 UP 主名或 UID 摘要，默认最近 50 个 |
+| `POST /api/summarize/favorites` | 收藏夹批量（需登录），默认 20 个 |
+| `GET /api/progress/{task_id}` | SSE 实时进度流 |
+| `POST /api/asr-summarize/{bvid}` | 对无字幕视频走 ASR 摘要（需登录） |
 
-按 UP 主名称或 UID 获取近期视频，适合跟踪连载更新。功能包括批量生成摘要和增量更新（只处理新视频）。
+批量任务异步执行，通过 SSE 推进度：启动、逐条 skip / processing / completed、结束时带汇总（成功 / 跳过 / 无字幕 / 失败计数）。进度按事件历史保存，前端断了可以带 `Last-Event-ID` 续传。并发默认 12，请求体里用 `concurrency` 调到 1-20。
 
-```
-1. 输入 UP 主名称或 UID
-2. 点击「获取视频列表」
-3. 选择要摘要的视频
-4. 点击「批量摘要」
-5. 等待完成
-```
+## 开发要点
 
-### 收藏夹模式
-
-收藏夹模式需要登录 B 站账号，因为收藏夹接口要求鉴权。登录通过扫码完成，不存储明文密码。
-
-**功能**：
-
-- 二维码登录 B 站账号
-- 加载收藏夹和视频
-- 批量摘要未处理视频
-- 短期撤销取消收藏
-
-**登录流程**：
-
-```
-1. 点击「登录」
-2. 扫描显示的二维码
-3. 确认授权
-4. 登录成功
-```
-
-**命令行批量处理**：
-
-```bash
-python -m summarize --mode favorites --uid 12345678
-```
-
-### 阅读界面
-
-统一卡片系统把摘要和原视频放在同一界面，避免在浏览器和笔记之间切换：
-
-```
-┌─────────────────────────────────────┐
-│ [缩略图]                            │
-│ 视频标题                            │
-│ UP 主 · 播放量 · 时长               │
-│ [摘要预览...]                       │
-│                                     │
-│ [查看摘要] [原始视频]               │
-└─────────────────────────────────────┘
-```
-
-视图切换：
-
-| 模式 | 说明 |
-|------|------|
-| 缩略图模式 | 大图卡片，适合浏览 |
-| 紧凑模式 | 小卡片，适合批量管理 |
-
-## 开发指南
-
-### 扩展 AI 提供商
-
-AI 调用通过 `AIProvider` 抽象基类统一接口。新增提供商的步骤是继承并实现 `chat` 方法，再注册到 `ai_registry`：
-
-```python
-# routes/ai.py
-class AIProvider:
-    async def chat(self, prompt: str, model: str) -> str:
-        raise NotImplementedError
-
-class AnthropicProvider(AIProvider):
-    async def chat(self, prompt: str, model: str) -> str:
-        # 调用 Anthropic API
-        ...
-
-class OpenAIProvider(AIProvider):
-    async def chat(self, prompt: str, model: str) -> str:
-        # 调用 OpenAI API
-        ...
-
-# 注册提供商
-ai_registry.register("anthropic", AnthropicProvider())
-ai_registry.register("openai", OpenAIProvider())
-```
-
-### 扩展 ASR 提供商
-
-ASR 同样用抽象基类隔离具体实现。如果 GLM ASR 不满足需求，可以接入 Whisper 或其他识别服务：
-
-```python
-# routes/asr.py
-class ASRProvider:
-    async def recognize(self, audio_data: bytes) -> str:
-        raise NotImplementedError
-
-class GLMProvider(ASRProvider):
-    async def recognize(self, audio_data: bytes) -> str:
-        # 调用 GLM ASR
-        ...
-
-# 注册提供商
-asr_registry.register("glm", GLMProvider())
-```
-
-### 路由开发
-
-新增 API 路由遵循 FastAPI 标准模式。下面是收藏夹相关路由的示例：
-
-```python
-# routes/favorites.py
-from fastapi import APIRouter
-
-router = APIRouter()
-
-@router.get("/favorites/{uid}")
-async def get_favorites(uid: str):
-    favorites = await bilibili.get_favorites(uid)
-    return favorites
-
-@router.post("/favorites/{fid}/summarize")
-async def summarize_favorite(fid: str):
-    videos = await bilibili.get_favorite_videos(fid)
-    results = []
-    for video in videos:
-        summary = await summarize.generate_summary(video)
-        results.append(summary)
-    return results
-```
-
-### 前端开发
-
-前端是纯静态资源，无构建步骤，直接修改 `static/` 下的文件即可：
-
-```
-static/
-├── index.html      # 主页面
-├── app.js          # 应用逻辑
-├── style.css       # 样式
-└── components/     # 组件
-```
-
-**本地开发服务器**：
-
-```bash
-cd static
-python -m http.server 8080
-```
-
-修改 `app.js` 中的 API 地址指向后端：
-
-```javascript
-const API_BASE = "http://localhost:8000"
-```
-
-## 实践建议
-
-### 批量处理参数
-
-批量场景下需要控制并发和增量范围，避免触发 B 站或 AI API 的限流：
-
-| 场景 | 建议 |
-|------|------|
-| 收藏夹批量摘要 | 使用 `--favorite` 模式 |
-| 增量更新 | 添加 `--since` 参数 |
-| 并发限制 | 设置 `--concurrency` 控制 |
-
-```bash
-python -m summarize --mode favorites --uid 12345678 \
-  --concurrency 12 --favorite
-```
-
-### 性能优化
-
-| 优化项 | 方法 | 收益 |
-|--------|------|------|
-| 缓存字幕 | 存储到本地 `.subtitle/` | 重复处理同一视频时跳过网络请求 |
-| 并发处理 | 使用 `asyncio` 并发摘要 | 批量场景吞吐量提升明显 |
-| 音频压缩 | 降低采样率再 ASR | 减少 ASR API 调用成本和延迟 |
-| API 限流 | 添加延迟和重试 | 避免触发 429 限流 |
-
-### 错误处理模式
-
-摘要管道会遇到三类常见错误，分别对应不同的恢复策略：
-
-```python
-try:
-    summary = await summarize(video)
-except VideoNotFoundError:
-    return {"error": "视频不存在或已被删除"}
-except SubtitleUnavailableError:
-    # 触发 ASR 降级
-    summary = await asr_summarize(video)
-except AIAPIError as e:
-    # 重试或降级到备用 API
-    summary = await summarize_with_backup(video)
-```
-
-`VideoNotFoundError` 直接返回错误，`SubtitleUnavailableError` 触发 ASR 降级，`AIAPIError` 走重试或备用 API。这种分层处理避免了把所有错误都丢给用户。
-
-### 登录态维护
-
-B 站 Cookie 会过期，需要定期刷新。`BilibiliAPI` 封装了登录态检查和刷新逻辑：
-
-```python
-# 保持登录态
-bilibili = BilibiliAPI(cookie=os.getenv("BILIBILI_COOKIE"))
-
-# 刷新登录态
-if not bilibili.is_logged_in():
-    bilibili.refresh_login()
-```
+- 新增路由按 FastAPI `APIRouter` 写在 `routes/` 下，在 `server.py` 里 `include_router` 注册。
+- 换 AI 模型不用改代码：设 `DEFAULT_MODEL` 即可；换网关改 `.env.local` 的 `ANTHROPIC_BASE_URL`。
+- 无字幕重试、SSE 进度、批量调度都集中在 `routes/deps.py`，是理解全项目最快的入口。
+- 打包用 `BiliSummary.spec`（PyInstaller）+ `build_mac.sh`；`benchmark_all.py`、`benchmark_rate_limits.py` 用来对比模型、摸清接口限流。
 
 ## 常见问题
 
-**Q: 桌面应用启动失败？**
+**收藏夹 / ASR 提示未登录？** 这两条路径都要 B 站凭证。命令行先跑 `python summarize.py --login` 扫码；网页端走登录接口。凭证存进 `.env.local`（`BILIBILI_*`），过期了重新登录。
+
+**无字幕视频为什么不直接跳过？** 会走 ASR，但要登录，且同一视频最多重试 3 次，3 次都没拿到字幕才放弃。重试计数在 `summary/<分组>/no_subtitle/.retries.json`。
+
+**摘要接口被限流？** 429 会自动指数退避重试 5 次；批量场景把并发从 12 调低。
+
+**端口冲突？** 服务固定监听 `127.0.0.1:18520`，被占用时需要改 `app.py` / `server.py` 里的 `uvicorn.run` 端口。
+
+**想换模型？** 设 `DEFAULT_MODEL`，例如：
 
 ```bash
-# 确保 pywebview 已安装
-pip install pywebview
-
-# 或使用服务器模式
-python server.py
-# 然后浏览器访问 http://localhost:8000
+DEFAULT_MODEL=GLM-4-Flash python app.py
 ```
 
-**Q: 视频获取失败？**
+## 适用边界
 
-```bash
-# 检查 Cookie 是否过期，重新登录获取新 Cookie
-# 更新 .env.local
-ANTHROPIC_AUTH_TOKEN=new_token
-```
+适合：个人把关注的 UP 主、收藏夹沉淀成可检索的本地文本，之后用 Obsidian、VS Code 继续整理。批量处理（已有摘要直接跳过）是它的主场。
 
-**Q: ASR 识别效果差？**
+不适合：
 
-```bash
-# 检查音频质量，使用更高码率的音频流
-bilibili.set_quality("80")
+- 只支持 B 站（`bilibili-api-python`），其他平台不行；
+- 本地单机应用，没有账号体系，不适合团队协作；
+- 摘要要走"下载字幕 / 音频 + 调用模型"的链路，秒级延迟，不适合实时场景。
 
-# 或手动提供字幕文件
-bilibili.upload_subtitle(video_id, "subtitle.srt")
-```
-
-**Q: AI 摘要质量不好？**
-
-```python
-# 调整参数
-summarize.set_temperature(0.5)   # 降低创造性
-summarize.set_max_tokens(3000)   # 增加输出
-```
-
-**Q: 批量处理被限流？**
-
-```bash
-# 降低并发数
-python -m summarize --concurrency 3
-
-# 添加延迟
-python -m summarize --delay 2
-```
-
-## 与类似工具对比
-
-| 工具 | 平台 | AI 摘要 | ASR | 收藏夹 |
-|------|------|---------|-----|--------|
-| BiliSummary | 桌面应用 | ✅ | ✅ | ✅ |
-| B 站助手 | 浏览器插件 | ❌ | ❌ | 部分 |
-| 视频笔记 | 移动端 | ✅ | ❌ | ❌ |
-
-BiliSummary 的差异点集中在三处：桌面应用离线可用、ASR 降级覆盖无字幕视频、收藏夹批量管理。浏览器插件受限于沙箱无法做 ASR，移动端应用受限于系统权限难以批量处理。
-
-## 采用建议
-
-按以下顺序判断是否采用 BiliSummary，每一步对应一种使用模式：
-
-1. **单视频临时摘要**：URL 模式足够，无需登录，适合试用。如果只是偶尔摘要几个视频，到这里就够了。
-2. **跟踪特定 UP 主**：UP 主模式 + 增量更新，适合连载跟踪。需要定期跑批处理脚本。
-3. **构建本地知识库**：收藏夹模式 + 批量摘要，适合把分散收藏沉淀为可检索文本。需要登录 B 站账号。
-
-不适合的场景：需要实时摘要（管道延迟在秒级以上）、需要处理非 B 站视频（仅支持 B 站）、需要团队协作（单机桌面应用无多用户支持）。
-
----
+项目规模还小（21 stars），功能迭代频繁，行为和配置都可能变化，动手前以仓库最新 README 为准。
 
 ## 自测题
 
-1. **BiliSummary 的"字幕优先、ASR 降级"管道是什么？为什么这样设计？**
-   - 参考答案：摘要管道先检查视频是否有 CC 字幕，有就直接提取字幕文本；没有就触发 ASR 降级流程（下载音频流 → GLM ASR 识别 → 生成摘要）。这样设计是因为 B 站 CC 字幕的获取成本远低于音频下载 + ASR 识别，先用字幕能把大多数场景的延迟压到最低。
+1. `config.toml` 里只能配什么？
+2. 无字幕视频走哪条路径？为什么它要求登录？
+3. 收藏夹批量摘要默认取多少个视频？并发默认多少、能怎么调？
+4. 服务监听哪个端口？桌面和纯服务模式怎么切换？
+5. `DEFAULT_MODEL` 和 `ANTHROPIC_BASE_URL` 分别解决什么问题？
 
-2. **BiliSummary 的三种输入模式各适合什么场景？**
-   - 参考答案：URL 模式（输入单个视频链接，适合临时摘要某个视频）；UP 主模式（输入 UP 主名称或 UID，适合跟踪特定 UP 主的连载）；收藏夹模式（输入收藏夹 ID，适合处理自己收藏的视频集合，需登录）。
+## 资料口径
 
-3. **BiliSummary 支持哪些 AI 模型和 ASR 模型？如何扩展？**
-   - 参考答案：AI 模型支持 Anthropic 兼容 API（可对接 GLM、Claude 等多家模型）；ASR 模型集成 GLM ASR（中文识别效果优于通用 Whisper）。扩展通过 `AIProvider` 和 `ASRProvider` 抽象基类实现，继承并实现对应方法后注册到 registry。
-
-4. **BiliSummary 适合直接用于生产环境吗？为什么？**
-   - 参考答案：取决于使用场景。如果是个人知识管理、UP 主连载跟踪、收藏夹批量摘要，适合使用。如果需要实时摘要、处理非 B 站视频、团队协作，不适合使用。
-
-5. **如果你想评估 BiliSummary 是否适合你的需求，你会从哪几个方面测试？**
-   - 参考答案：1) 用 URL 模式摘要单个视频，熟悉基本流程；2) 用 UP 主模式跟踪特定 UP 主，测试增量更新；3) 用收藏夹模式批量处理，评估 ASR 降级效果和摘要质量；4) 检查许可证状态，确认商用可行性。
-
----
-
-## 进阶路径
-
-### 阶段一：快速验证（1 周）
-- 目标：理解 BiliSummary 的摘要管道和三种输入模式
-- 行动：安装 BiliSummary，用 URL 模式摘要几个视频，观察字幕提取和 ASR 降级的区别
-- 验收：能解释"字幕优先、ASR 降级"管道的设计理由，熟练使用 URL 模式
-
-### 阶段二：实际场景试用（2-4 周）
-- 目标：用 BiliSummary 管理真实场景的视频摘要，评估适用边界
-- 行动：选择一个 UP 主或用收藏夹，批量生成摘要，观察增量更新机制，评估摘要质量
-- 验收：能判断 BiliSummary 是否适合你的使用场景，识别需要改进的地方（如 ASR 识别效果、摘要质量）
-
-### 阶段三：高级功能与定制化（1-3 个月）
-- 目标：理解配置系统、扩展 AI/ASR 提供商、定制摘要提示词
-- 行动：阅读配置文档，修改 `config.toml` 调整 AI 参数，尝试扩展自定义 AI 或 ASR 提供商
-- 验收：能根据需求调整配置，扩展自定义功能，并贡献到官方仓库
-
-### 阶段四：生态集成与自动化（长期）
-- 目标：与现有知识管理工具集成，构建自动化流程
-- 行动：集成到 Obsidian、VS Code 等知识管理工具，构建定时批量处理脚本，开发与其他工具的联动
-- 验收：能把 BiliSummary 完整接入个人的知识管理工作流，并实现自动化
-
----
-
-## 学习目标
-
-读完本文应能：
-
-- 说清 BiliSummary 的"字幕优先、ASR 降级"摘要管道设计理由
-- 识别三种输入模式（URL、UP主、收藏夹）的适用边界
-- 完成一次"安装 → 配置 → 摘要生成"的完整流程
-- 评估 BiliSummary 在你的知识管理场景中的适用性和局限
-
----
-
-许可证状态为 NOASSERTION（SPDX 标识，表示许可证未明确声明），商用前需联系作者确认。
-
----
-
-## 练习
-
-### 练习1：完成一次完整的视频摘要生成
-
-**任务**：安装 BiliSummary，配置 AI API，生成一个 B站视频的摘要。
-
-**步骤**：
-1. 安装 BiliSummary（参考"安装与配置"章节）
-2. 配置 AI API（如 GLM API）
-3. 输入一个 B站视频的 URL
-4. 等待摘要生成
-5. 查看生成的 Markdown 文件
-
-**参考答案**：
-- 成功完成后，你应该能在输出目录看到生成的 Markdown 文件
-- 如果视频有字幕，摘要应该基于字幕生成
-- 如果视频没有字幕，应该触发 ASR 语音识别
-
----
-
-### 练习2：批量处理收藏夹
-
-**任务**：选择一个 B站收藏夹，批量生成摘要。
-
-**步骤**：
-1. 在 BiliSummary 中打开收藏夹功能
-2. 输入收藏夹 ID 或链接
-3. 启动批量摘要生成
-4. 观察增量更新机制（如果收藏夹中有新视频）
-5. 查看生成的摘要文件
-
-**参考答案**：
-- 成功完成后，你应该能看到收藏夹中所有视频的摘要
-- 如果之前已经生成过部分视频的摘要，应该只处理新视频
-- 可以在配置中调整批量处理的数量限制和并发数
-
----
-
-### 练习3：评估摘要质量并调整提示词
-
-**任务**：生成几个视频的摘要，评估摘要质量，然后调整 AI 提示词。
-
-**步骤**：
-1. 生成 5-10 个视频的摘要
-2. 阅读摘要，评估质量（是否抓住了视频关键点、是否过于冗长、是否遗漏重要信息）
-3. 修改配置中的摘要提示词
-4. 重新生成摘要，对比质量变化
-
-**参考答案**：
-- 摘要质量取决于 AI 模型和提示词
-- 可以在配置中调整提示词，让摘要更符合你的需求
-- 不同的视频类型（教程、评测、访谈）可能需要不同的提示词
-
----
-
-## 资料口径说明
-
-1. **信息来源与时效性**：本文基于 BiliSummary GitHub 仓库（https://github.com/jackwener/bilibili-summary）的 README、代码和文档，信息截至 2026-04-08。项目只有 16+ stars，可能处于早期阶段或更新不频繁，功能和文档可能变化。
-
-2. **技术细节验证**：本文描述的摘要生成管道、三种输入模式、技术栈等技术细节来自仓库文档和代码分析。由于项目使用 bilibili-api-python 对接 B站 API，技术细节可能受 B站 API 变化影响。
-
-3. **判断与建议的边界**：本文对 BiliSummary 适用场景和风险的判断基于其功能边界（桌面应用、Markdown 输出、收藏夹批量管理）。BiliSummary 不适合移动端使用，不适合需要实时摘要的场景，不适合 B站 API 无法访问的环境。
-
-4. **未覆盖的内容**：本文未深入讨论 bilibili-api-python 的具体使用方法、AI 提示词的详细配置、ASR 语音识别的准确性评估。这些内容需要参考相应项目的官方文档。
-
-5. **术语使用说明**：本文使用"ASR"（自动语音识别）、"Markdown"、"FastAPI"等技术术语。这些术语在目标读者中应该是已知的，所以没有每次都附英文原词。
-
-6. **更新记录**：本文撰写于 2026-04-08，基于 BiliSummary 的稳定版本。如果项目有重要更新（如支持新的 AI 模型、改变摘要管道、添加云端同步），本文可能过时。建议读者在使用前查看项目最新文档。
-
-许可证状态为 NOASSERTION（SPDX 标识，表示许可证未明确声明），商用前需联系作者确认。
-
+- 事实来源：GitHub 仓库的 README、源码（`summarize.py`、`server.py`、`app.py`、`routes/*`、`config.toml`）与仓库元数据。仓库最近一次提交为 2026-02-24；Stars / Forks 为 2026-09-02 查询值。
+- 文中的命令、环境变量、API 路径均来自源码核对，未核验的细节没有写入。
+- README 里指向 `docs/design-system.md`、`docs/project-status.md` 的链接是本机绝对路径（`/Users/jakevin/...`），发布到 GitHub 后不可用，本文不引用。

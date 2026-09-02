@@ -19,17 +19,17 @@ tags: ["AI Agent", "多智能体", "MCP", "OpenClaw", "Shannon"]
 
 下面先给一张总览地图，再按四条主线拆解核心机制，最后给一个任务流案例和不同读者的采用建议。
 
-## 核心数据（GitHub API 2026-08-07 验证）
+## 核心数据（GitHub API 2026-09-01 验证）
 
 | 指标 | 数值 | 备注 |
 |------|------|------|
-| Stars | 325 | 2026-08-07 采集，仍在增长 |
-| Forks | 60 | 同上 |
+| Stars | 363 | 2026-09-01 采集，仍在增长 |
+| Forks | 62 | 同上 |
 | 作者 | Wayland Zhang | Kocoro-lab 核心贡献者 |
 | 章节 | 9 部 33 章 + 3 附录 | 附录含术语表 / 模式选择指南 / FAQ |
 | 语言 | 中文 / English / 日本語 | 三语全部完成 |
 | 书籍许可 | CC BY-NC-SA 4.0 | 非商用、相同方式共享 |
-| 参考实现 | Shannon | 主语言 Go，MIT |
+| 参考实现 | Shannon | 主语言 Go，MIT，2.2k+ Stars |
 
 ## 总览地图：9 部 33 章实际上在讲四条主线
 
@@ -234,17 +234,23 @@ Part 9（第 27-33 章）覆盖新兴场景的落地形态。这部分时效性�
 
 ## 参考实现：Shannon
 
-[Shannon](https://github.com/Kocoro-lab/Shannon) 是配套的开源参考实现，采用前述三层架构：
+[Shannon](https://github.com/Kocoro-lab/Shannon) 是配套的开源参考实现。仓库描述"A production-oriented multi-agent orchestration framework."，定位生产向的多 Agent 编排框架，主语言 Go，许可证 MIT，2026-09-01 时点约 2.2k Stars。
+
+它的代码实现比书里讲的三层更细——书里的"三层"是概念层，Shannon 跑起来是一条链：
 
 ```
-Orchestrator (Go)    - 编排、预算、策略
-Agent Core (Rust)    - 执行、沙箱、限流
-LLM Service (Python) - 推理、工具、向量
+Client → Gateway (Go) → Orchestrator (Go) → Agent Core (Rust) → LLM Service (Python) → Providers
 ```
 
-仓库描述是"A production-oriented multi-agent orchestration framework."，定位生产向的多 Agent 编排框架：内置 Temporal 工作流做持久化执行和时间旅行调试、硬性的 Token 预算与模型自动降级、实时事件流 + Prometheus 指标 + OpenTelemetry 追踪、WASI 沙箱 + OPA 策略 + 多租户隔离，并且不绑定单一模型提供商（支持 OpenAI、Anthropic、Google、DeepSeek、xAI 以及本地 Ollama）。许可证是 MIT。
+- **Gateway**（Go）：对外 REST API、认证、速率限制，屏蔽内部服务。
+- **Orchestrator**（Go）：Temporal 工作流、任务分解、预算管理、复杂度和执行策略路由。
+- **Agent Core**（Rust）：执行网关、WASI 沙箱、Token 计数。
+- **LLM Service**（Python）：模型提供商抽象、MCP 工具、Agent 主循环、上下文管理。
+- **Playwright**（Python，默认不启动）：浏览器自动化。
 
-Shannon 不是唯一选择——LangGraph、CrewAI、AutoGen 都能实现类似能力。它的价值在于把书里的设计模式完整落地了，可以对照代码验证概念。学模式时看 Shannon，落地时按自己团队的技术栈选框架。
+这套实现覆盖了书里的关键模式：Temporal 持久化执行 + 时间旅行调试、硬性 Token 预算与模型自动降级、实时事件流 + Prometheus 指标 + OpenTelemetry 追踪、WASI 沙箱 + OPA 策略 + 多租户隔离。模型提供商不止 OpenAI / Anthropic——README 列了 10+ 家：Google（Gemini）、DeepSeek、xAI（Grok）、MiniMax、Groq、Qwen、GLM、Kimi，以及本地 Ollama / LM Studio / vLLM 任意 OpenAI 兼容端点，还带自动故障转移。
+
+Shannon 不是唯一选择——LangGraph、CrewAI、AutoGen 都能做类似的事。它的价值在于把书里的设计模式完整落地了，可以对照代码验证概念。学模式时看 Shannon，落地时按自己团队的技术栈选框架。
 
 ## 采用建议
 
@@ -279,6 +285,10 @@ Shannon 不是唯一选择——LangGraph、CrewAI、AutoGen 都能实现类似�
 - **Shannon 实现滞后**：Shannon 的功能覆盖和书的章节对应关系可能随开发进展变化，部分书里讲到的模式，Shannon 未必已完整实现，直接看 Shannon 的 README 和最新代码为准。
 - **MCP 生态早期**：第 4 章讲的 MCP 协议 2024 年 11 月才推出，工具数量、稳定性、兼容性都在快速变化。
 - **代码是示意**：文中涉及的代码片段（ReAct 循环、DAG 编排、三层架构）都用于说明设计模式，实际实现参考 Shannon 源码或自己动手，不能直接拿去跑。
+
+## 一句话收束
+
+这本书真正回答的不是"怎么用某个框架"，而是"Agent 系统从单机跑通到可上线、可治理，中间有哪些躲不开的架构决策"。它把决策按主线拆开，又用 Shannon 给了可验证的落地。骨架这类取舍不会因为框架换代而失效——读它之前不用先想好要用哪个框架。
 
 ## 资源链接
 

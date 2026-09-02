@@ -1,7 +1,7 @@
 ---
 title: "Everything Claude Code：从入门资料库到跨终端 Agent 工作流系统"
 date: "2026-04-02T07:35:00+08:00"
-lastmod: 2026-08-05T12:00:00+08:00
+lastmod: 2026-09-01T12:00:00+08:00
 slug: everything-claude-code-comprehensive-guide
 github_repo: "affaan-m/ECC"
 aliases:
@@ -40,15 +40,16 @@ description: "基于 affaan-m/ECC 当前公开仓库状态，讲清这个项目�
 
 ## 二、这个仓库到底是什么
 
-### 2.1 项目基本信息（GitHub API 2026-08-05 验证）
+### 2.1 项目基本信息（GitHub API 2026-09-01 验证）
 
 | 属性 | 值 |
 |------|-----|
 | GitHub | [affaan-m/ECC](https://github.com/affaan-m/ECC) |
 | 原仓库名 | affaan-m/everything-claude-code（已更名） |
-| Stars | 237,335 |
-| Forks | 36,084 |
-| Open Issues | 128 |
+| Stars | 244,959 |
+| Forks | 37,013 |
+| Open Issues | 122 |
+| Commits | 2,422 |
 | License | MIT |
 | 主要语言 | JavaScript |
 | 默认分支 | main |
@@ -117,7 +118,7 @@ README 里有一句很明确：非官方渠道的转发和镜像不被维护，�
 
 仓库公开了几个数字，需要分清它们各自说明什么：
 
-- **Stars 237k+ / Forks 36k+**：反映的是关注度和二次开发的规模，**不能**直接推出"它的配置在你的项目里也一定好用"。
+- **Stars 245k / Forks 37k**：反映的是关注度和二次开发的规模，**不能**直接推出"它的配置在你的项目里也一定好用"。
 - **261 个 skills / 多个语言生态**：说明覆盖面广，但**不能**推出"每个 skill 都适合你"——大量技能是作者在真实产品迭代中为特定场景沉淀的。
 - **"生产就绪、10 个月高强度使用"**：这是作者的自我描述，说明他确实在真实项目里跑过，但迁移到你的项目仍需要按你的技术栈裁剪。
 
@@ -155,4 +156,6 @@ Everything Claude Code 最值得看的地方，不是它有多少个 skill，而
 
 - [仓库 README](https://github.com/affaan-m/ECC)
 - [官网 ecc.tools](https://ecc.tools)
-- The Shorthand Guide / The Longform Guide / The Security Guide（都在仓库根目录）
+- [`the-shortform-guide.md`](https://github.com/affaan-m/ECC/blob/main/the-shortform-guide.md)｜从安装、基础到设计哲学，官方建议最先读
+- [`the-longform-guide.md`](https://github.com/affaan-m/ECC/blob/main/the-longform-guide.md)｜token 优化、memory persistence、evals、并行化
+- [`the-security-guide.md`](https://github.com/affaan-m/ECC/blob/main/the-security-guide.md)｜攻击向量、沙箱、sanitization、CVE、AgentShield

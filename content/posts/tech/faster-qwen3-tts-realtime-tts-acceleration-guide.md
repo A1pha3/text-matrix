@@ -14,6 +14,13 @@ tags: ["TTS", "语音合成", "Qwen3"]
 
 Faster Qwen3-TTS 要解决的问题很具体：Qwen3-TTS 官方推理代码跑不到实时。它在 Jetson AGX Orin 上 RTF 只有约 0.18——生成 1 秒音频要等 5.7 秒。瓶颈不在模型本身，而在 Python 逐次启动 CUDA 内核的开销。这个项目用 `torch.cuda.CUDAGraph` 把整个解码步骤捕获进一张图统一重放，并配上 `transformers` 的静态 KV Cache，不改任何注意力层就拿到了实时性能。
 
+先读结论：
+
+- **加速对象**：非算子本身，而是解码单步约 500 次 CUDA 内核的启动空隙。GPU 比 CPU 快得越多，能找回的空闲越多，加速越明显。
+- **0.6B 实时标杆**：RTX 4090 单流 RTF 4.78、首音频 156ms；H100 单流反而不及 4090，强项在批量。`RTF > 1.0` 即快于实时。
+- **流式是分层的**：CUDA Graph 每步照常重放，只是把码本 ID 按 `chunk_size` 聚块、用 25 帧左上下文滑窗解码成音频。chunk 越小延迟越低、解码开销越大。
+- **适合场景**：单卡单流实时合成；大批量 batch 或已在用 vLLM 的团队，收益不大。
+
 核心数据（GitHub API 2026-08-08 验证）：
 
 ```
@@ -75,7 +82,7 @@ CUDA Graph 的思路是把这个固定形状的步骤录制成一张图，之后
 
 CUDA Graph 消除的是 CPU 到 GPU 的内核分发空隙，加速比取决于 CPU/GPU 之间的失衡程度。GPU 比 CPU 快得越多（或 CPU 越弱），能找回的空闲时间越多，加速越明显。
 
-benchmark 里两个例外是 Jetson AGX Orin 和 DGX Spark——它们恰好配了很强的 CPU 配上相对普通的 GPU。DGX Spark 的 72 核 Grace CPU 本身就能把基线推到 RTF 1.19（已经快于实时），可消除的分发开销不多，所以只加 1.2–1.9x。反过来，RTX 4090、H100 这类 GPU 头快、CPU 分发跟不上的组合，加速比普遍落在 3–9x。
+benchmark 里两个例外是 Jetson AGX Orin 和 DGX Spark——它们恰好配了很强的 CPU 配上相对普通的 GPU。DGX Spark（GB10）的 20 核 Arm CPU 本身就能把基线推到 RTF 1.19（已经快于实时），可消除的分发开销不多，所以只加 1.2–1.9x。反过来，RTX 4090、H100 这类 GPU 头快、CPU 分发跟不上的组合，加速比普遍落在 3–9x。
 
 ## 基准测试：0.6B 模型
 
@@ -99,7 +106,12 @@ benchmark 里两个例外是 Jetson AGX Orin 和 DGX Spark——它们恰好配�
 | Jetson AGX Orin 64GB | 0.183 | 3,573ms | 1.089 | 693ms | 6.0x / 5.2x |
 | Tesla T4 16GB | 0.453 | 1,811ms | **0.925** | **1,096ms** | 2.0x / 1.7x |
 
-**怎么读这张表**：RTF > 1.0 表示快于实时，TTFA 是最先出来可播放音频块的时间，加速比格式是"吞吐量加速 / TTFA 加速"。这里有三点要提醒自己别过度推断：
+**怎么读这张表**：
+- `RTF` = Real-Time Factor，生成 1 秒音频所用的秒数。**RTF > 1.0 表示快于实时**，越大越快。例如 RTF 4.78 意味着生成 1 秒音频只需要约 0.21 秒。
+- `TTFA` = Time-to-First-Audio，从开始生成到第一块可播放音频出来的延迟。
+- 加速比格式是「吞吐量加速 / TTFA 加速」。
+
+这里有三点要提醒自己别过度推断：
 
 - 基线 TTFA 用的是社区 `Qwen3-TTS-streaming` 分支（或本项目无 CUDA Graph 的动态缓存流式路径）。官方 `Qwen3-TTS` 仓库目前不支持流式，只看官方的话它的"TTFA"其实是整段音频全部生成完的时间。
 - RTX 4090 单流 RTF 反超 H100，是因为它的 boost 时钟更高（约 2.5 GHz vs 1.8 GHz）。H100 的强项是批量处理，不是单流。

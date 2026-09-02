@@ -1,7 +1,7 @@
 ---
 title: "OpenCode：开源 AI 编程助手，本地运行、模型自由"
 date: "2026-05-02T10:13:00+08:00"
-slug: "opencode-open-source-ai-coding-agent-guide"
+slug: "opencode-open-source-coding-agent-guide"
 github_repo: "anomalyco/opencode"
 description: "OpenCode 是目前星标数最高的开源 AI 编程助手，用 TypeScript 构建，模型提供商可换，内置 LSP 诊断、TUI 终端界面和客户端/服务器架构。本文从核心设计、架构、安装配置、实战演示到二次开发逐层拆解。"
 draft: false
@@ -13,19 +13,19 @@ tags: ["Coding Agent", "TypeScript", "LSP", "TUI", "OpenCode"]
 
 OpenCode 的目标是把 AI 编程助手留在开发者自己的环境里。代码生成、LSP 诊断、文件操作和终端控制都在本地跑，模型提供商可换，数据不经过第三方——这是它与 GitHub Copilot、Claude Code 等闭源方案的根本差别。
 
-截至 2026 年 8 月，OpenCode 在 GitHub 上已获得超过 19.2 万星标、2.46 万分支。它由 Neovim 爱好者和 [terminal.shop](https://terminal.shop) 的创建者联合开发，核心目标是为开发者提供一个完全开放、无绑定提供商的终端编程环境。
+截至 2026 年 8 月，OpenCode 在 GitHub 上已获得超过 18 万星标、约 2 万分支。它由 Neovim 用户与 [terminal.shop](https://terminal.shop) 的创建者联合打造，现在由 Anomaly（原 SST 团队）维护，目标是提供一个完全开源、不绑定任何模型提供商的终端编程环境。
 
-**快速地图：**
+先看一张总览表，它把 OpenCode 的五个层次、对应组件和各自要解决的问题放在一起：
 
 | 分层 | 组件 | 核心问题 |
 |------|------|----------|
-| 交互层 | TUI（SolidJS）/ Web UI / 桌面（Tauri） | 用户通过什么界面与 Agent 对话 |
+| 交互层 | TUI（SolidJS）/ Web UI / 桌面（Electron） | 用户通过什么界面与 Agent 对话 |
 | 服务层 | Node.js/Bun 服务器（HTTP/WebSocket） | 会话管理、文件操作、LSP 进程控制 |
 | Agent 层 | build / plan / general 三种 Agent | 不同权限和交互模式下的代码生成策略 |
 | 模型层 | Provider 路由器（Claude / OpenAI / 本地模型） | 模型可替换，不绑定单一提供商 |
 | 数据层 | SQLite（Drizzle ORM）+ 文件系统 | 会话持久化、项目元数据、配置文件 |
 
-本文覆盖原理分析、架构解读、多平台安装配置、典型场景演示，以及二次开发路径。前置要求：基本编程经验、熟悉 CLI 工具和至少一门主流语言。
+下面依次讲原理分析、架构解读、多平台安装配置、典型场景演示和二次开发路径。前置要求：基本编程经验、熟悉 CLI 工具和至少一门主流语言。
 
 ## 1. 核心设计理念
 
@@ -33,9 +33,9 @@ OpenCode 与闭源编程助手（如 GitHub Copilot、Claude Code）的差异，
 
 **完全开源，代码可见。** 整个项目采用 MIT 许可证，核心逻辑对社区完全透明。任何人都可以审计其行为、报告安全问题或自行修改后分发。这在企业内网场景中尤为重要——OpenCode 可以部署在私有服务器上，数据不必流出到第三方。
 
-**不绑定特定 LLM 提供商。** OpenCode 推荐通过 [OpenCode Zen](https://opencode.ai/zen) 获取模型，但同时支持 Claude、OpenAI、Google 以及本地模型。模型能力趋同、价格下降时，用户换模型不必换工具链——provider-agnostic 策略直接保护的就是这个选择权。
+**不绑定特定 LLM 提供商。** OpenCode 推荐通过 [OpenCode Zen](https://opencode.ai/zen) 获取模型，但底层兼容 75+ 家提供商：Claude、OpenAI、Google、本地模型都在列。模型能力趋同、价格波动时，换模型不用换工具链，provider-agnostic 保留的是用户的模型选择权。
 
-**终端优先的交互范式。** 团队来自 Neovim 社区，产品的核心交互界面是 TUI（终端用户界面），而不是 Web UI 或 IDE 插件。Web UI 和桌面应用同样可用，但 TUI 是第一公民，也是理解 OpenCode 设计思路的关键入口。
+**终端优先的交互范式。** 团队来自 Neovim 社区，核心交互界面是 TUI（终端用户界面），不是 Web UI 或 IDE 插件。Web UI 和桌面应用同样可用，但 TUI 是第一公民。
 
 ## 2. 架构解析
 
@@ -47,7 +47,7 @@ OpenCode 采用客户端/服务器分离架构：
 ┌─────────────────────────────────────────────────────────┐
 │                     Client Layer                        │
 │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐ │
-│  │  TUI (SolidJS)│  │ Web UI       │  │ Desktop (Tauri) │ │
+│  │  TUI (SolidJS)│  │ Web UI       │  │ Desktop        │ │
 │  └──────┬──────┘  └──────┬───────┘  └────────┬────────┘ │
 └─────────┼────────────────┼───────────────────┼──────────┘
           │                │                   │
@@ -65,7 +65,7 @@ OpenCode 采用客户端/服务器分离架构：
 └──────────────────────────────────────────────────────────┘
 ```
 
-服务器层运行在本地，监听 HTTP/WebSocket 请求，提供会话管理、文件操作、LSP 进程控制等核心能力。客户端层通过 REST API 与之通信，这意味着 TUI 只是可选的前端——服务器可以完全脱离 UI 独立运行，甚至支持远程连接，移动端也可以作为操控端。
+服务器层运行在本地，监听 HTTP/WebSocket 请求，提供会话管理、文件操作、LSP 进程控制等核心能力。客户端层通过 REST API 与之通信，TUI 只是其中一个可选前端——服务器能脱离 UI 独立运行，也支持远程连接，移动端同样可以作为操控端。
 
 ### 2.2 核心模块
 
@@ -86,7 +86,7 @@ OpenCode 采用客户端/服务器分离架构：
 - **Effect** — 层级化依赖注入（Layer/Context/Service），替代传统 class DI
 - **Zod** — 运行时 schema 验证，配合 Effect 的 Schema 系统实现类型安全的配置管理
 - **Drizzle ORM** — 数据库访问层（SQLite），用于持久化会话记录和项目元数据
-- **Tauri** — 桌面应用外壳，Rust 后端提供原生系统集成
+- **Electron** — 桌面应用外壳，包装 `packages/app` 的 Web UI（早期版本用 Tauri，2026 年起迁移到 Electron）
 
 ### 2.4 多 Agent 机制
 
@@ -98,7 +98,7 @@ OpenCode 内置三种 Agent，可在对话中通过 `Tab` 键切换：
 
 **general**——内部调用的子 Agent，处理复杂搜索和多步任务。用户也可以在消息中输入 `@general` 直接调用。
 
-这三个 Agent 通过 `packages/opencode/src/agent/` 下的 prompt 模板驱动，prompt 本身以 `.txt` 文件形式存储在仓库中，社区可以自行修改或创建新 Agent。
+这三个 Agent 通过 `packages/opencode/src/agent/` 下的 prompt 模板驱动，prompt 本身以 Markdown 文件形式存放在仓库中，社区可以自行修改或创建新 Agent。
 
 ### 2.5 内置 LSP 支持
 
@@ -185,7 +185,7 @@ brew install --cask opencode-desktop
 
 ### 3.3 配置与权限管理
 
-OpenCode 的配置文件放在项目根目录，文件名是 `opencode.json` 或 `opencode.jsonc`（全局配置在 `~/.config/opencode/opencode.json`）。一个典型配置：
+OpenCode 的项目配置放在项目根目录（`opencode.json` / `opencode.jsonc`，或 `.opencode/opencode.json`），全局配置在 `~/.config/opencode/opencode.json`。一个典型配置：
 
 ```jsonc
 {
@@ -265,7 +265,7 @@ opencode serve --port 4096
 opencode attach http://localhost:4096
 ```
 
-这种分离式架构在远程开发场景中直接可用——OpenCode 服务运行在服务器上，开发者通过本地 TUI 或 Web UI 远程操控。
+这种分离式架构在远程开发场景中直接可用——OpenCode 服务运行在服务器上，开发者通过本地 TUI 或 Web UI 远程操控。对外暴露时用 `--hostname 0.0.0.0` 绑定所有网卡，并通过环境变量 `OPENCODE_SERVER_PASSWORD` 开启 HTTP 基本认证（默认用户名 `opencode`），避免端口裸奔。
 
 ### 4.4 Web UI 模式
 
@@ -316,18 +316,19 @@ bun dev /path/to/your/project
 
 项目仓库中包含示例配置 `.vscode/settings.example.json` 和 `.vscode/launch.example.json`，复制为正式文件后即可使用。
 
-调试 OpenCode TUI 时推荐使用 `bun run --inspect=ws://localhost:6499/` 并配合 VSCode 的 "Attach to Node" 配置。如果需要在 TUI 中触发服务端断点，可以在 `packages/opencode/src/index.ts serve` 时单独启动服务器并 attach。
+调试 OpenCode TUI 时推荐使用 `bun run --inspect=ws://localhost:6499/` 并配合 VSCode 的 "Attach to Node" 配置。如果需要在 TUI 中触发服务端断点，可以单独启动服务器（`bun run --inspect=ws://localhost:6499/ --cwd packages/opencode ./src/index.ts serve --port 4096`），再用 `opencode attach http://localhost:4096` 把 TUI 接上去。
 
 ### 5.2 项目结构概览
 
 ```
-packages/
+packages/                 # 约 30 个包，这里列核心部分
 ├── opencode/       # 核心业务逻辑、CLI 入口、TUI（SolidJS + opentui）
 ├── app/            # 共享 Web UI 组件（SolidJS）
-├── desktop/        # Tauri 桌面应用外壳
-├── core/           # 跨包共享的工具库和全局配置
-├── sdk/            # 对外 SDK，供第三方应用调用 OpenCode API
-└── ui/             # 设计系统和 UI 组件库
+├── desktop/        # 桌面应用外壳（Electron，包装 app）
+├── web/ console/   # Web 前端与网页控制台
+├── server/ client/ # 服务端与协议客户端
+├── core/ sdk/ ui/  # 共享工具库、对外 SDK、设计系统
+└── llm/ schema/    # 模型抽象与 schema 校验
 
 .opencode/
 ├── agent/          # 自定义 Agent 配置文件
@@ -365,7 +366,7 @@ OpenCode 在本地运行，所有操作不经过第三方服务器。权限系�
 
 **项目用什么数据库？**
 
-会话和项目元数据使用 SQLite 存储（通过 Drizzle ORM），数据文件在 `~/.local/share/opencode/` 下。如需迁移或查看数据，可以执行 `opencode db` 命令。
+会话和项目元数据使用 SQLite 存储（通过 Drizzle ORM），数据文件在 `~/.local/share/opencode/` 下，用任何 SQLite 工具都能直接查看。
 
 ## 7. 采用建议
 

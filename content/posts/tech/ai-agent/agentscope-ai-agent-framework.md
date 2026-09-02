@@ -1,11 +1,11 @@
 ---
 title: "AgentScope：生产级 AI Agent 框架完全指南"
-date: "2026-04-01T00:04:44+08:00"
+date: "2026-09-01T00:04:44+08:00"
 slug: "agentscope-ai-agent-framework"
 github_repo: "agentscope-ai/agentscope"
 aliases:
   - /posts/tech/agentscope-ai-agent-framework/
-description: "系统解读 AgentScope 的 ReAct Agent、MCP、A2A、记忆、Realtime、TTS、Tuner 与多 Agent 架构，涵盖核心抽象层、能力层、编排层的设计解析。"
+description: "基于 AgentScope v1.0，系统解读 ReAct Agent、MCP、A2A、Agent Skill、Middleware、记忆、Realtime、TTS、Tuner 与多 Agent 架构，涵盖核心抽象层、能力层、编排层的设计解析。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "ReAct", "MCP", "多智能体"]
@@ -19,7 +19,9 @@ tags: ["AI Agent", "ReAct", "MCP", "多智能体"]
 
 要一句判断：**值得认真读官方设计**。
 
-截至 2026-04-01，AgentScope 的 GitHub 页面显示约 **22.6k Stars**、**2.3k Forks**。它是一套面向生产环境的 **Agent 开发框架 + 协议集成层 + 运行时生态**。
+截至 2026-09-01，AgentScope 的 GitHub 页面显示约 **2.96 万 Stars**、**3.4 千 Forks**。它是一套面向生产环境的 **Agent 开发框架 + 协议集成层 + 运行时生态**。
+
+先交代版本边界：官方文档（doc.agentscope.io）的稳定线是 **AgentScope v1.0**，本文的代码与类名都以这条线为准。仓库主分支已在推进 **AgentScope 2.0**（README 要求 Python 3.11），两条线并行；如果你跟的是 v2，别把这里的具体 API 直接照搬。
 
 官方给它的定位很清楚：
 
@@ -82,7 +84,8 @@ AgentScope 先建模再扩展，而不是“先拼功能再回头补抽象”。
 ├─ AgentBase / ReActAgent / Msg / Formatter / Toolkit / Memory / State
 │
 能力层
-├─ MCP / A2A / TTS / Realtime / RAG / Evaluation / Tuner / Plan
+├─ MCP / A2A / Agent Skill / Middleware / Embedding / RAG
+├─ Realtime / TTS / Plan / Evaluation / Tuner / Tracing
 │
 编排层
 ├─ MsgHub / sequential_pipeline / fanout_pipeline / ChatRoom
@@ -186,11 +189,11 @@ MCP 在 AgentScope 里被并入统一工具系统，不是外挂。
 
 长期记忆方面，官方教程展示了：
 
-- `Mem0LongTermMemory`
-- ReMe 相关示例
-- `agent_control`
-- `static_control`
-- `both`
+- `Mem0LongTermMemory`：基于 mem0 的示例实现
+- ReMe 系列：ReMePersonal / ReMeTask / ReMeTool 等按场景拆分
+- `agent_control` / `static_control` / `both`
+
+v1.0 的记忆后端不只有 mem0 这一条：官方提供基类 `LongTermMemoryBase`，之上同时给 Mem0 与 ReMe 两套实现，还有配套的存储后端（InMemory、AsyncSQLAlchemy、Redis、Tablestore 等）。选型取决于你要的是上手最快，还是和你既有存储体系贴合。
 
 这 3 种模式非常值得理解：
 
@@ -290,7 +293,7 @@ AgentScope 的调优把 **Agent 行为本身** 作为调优对象，而不是只
 
 ### 5.1 安装
 
-官方要求 **Python 3.10+**。
+本文对应的 **v1.0 要求 Python 3.10+**；若想直接跟主分支的 2.0，则需要 **Python 3.11+**。
 
 ```bash
 pip install agentscope
@@ -824,7 +827,8 @@ Realtime 更偏会话事件处理，TTS 更偏语音合成。它们可以组合�
 | 官方文档首页 | [doc.agentscope.io](https://doc.agentscope.io/) |
 | 官方教程 | [tutorial](https://doc.agentscope.io/tutorial/) |
 | API 文档 | [API](https://doc.agentscope.io/api/agentscope.html) |
-| 论文 | [arXiv 2402.14034](https://arxiv.org/abs/2402.14034) |
+| 论文 | [arXiv 2402.14034](https://arxiv.org/abs/2402.14034)（AgentScope）：以消息交换为核心的灵活多 Agent 平台 |
+| 论文 | [arXiv 2508.16279](https://arxiv.org/abs/2508.16279)（AgentScope 1.0）：面向开发者、强调 see / understand / trust 的 v1.0 定位 |
 | Discord | [社区入口](https://discord.gg/eYMpfnkG8h) |
 
 建议阅读顺序：

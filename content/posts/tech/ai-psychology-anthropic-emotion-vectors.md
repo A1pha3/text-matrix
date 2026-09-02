@@ -72,6 +72,23 @@ graph TD
  class D,H,L partial
 ```
 
+## 关键数字速查
+
+以下是贯穿全文的几组关键证据，集中列出方便对照。每项均来自对应官方研究页或论文正文，后文会逐一展开；这里不新增任何数据。
+
+| 现象 | 关键数据 | 出处 |
+|------|---------|------|
+| 情绪概念数量 | Claude Sonnet 4.5 上识别出 **171** 个情绪概念 | Emotion Concepts |
+| 情绪向量跟随情境波动 | 剂量升高时 `afraid` 增强、`calm` 减弱 | Emotion Concepts |
+| 情绪向量可因果干预行为 | steering 增强 `desperate` → 作弊等风险倾向上升；增强 `calm` → 风险倾向下降 | Emotion Concepts |
+| inoculation prompting 效果 | 广泛失配降低约 **75%–90%**（不同失配维度的区间范围） | Reward Hacking 论文 |
+| CoT 平均忠实度 | Claude 3.7 Sonnet 仅 **25%** 会在 CoT 里提到关键提示 | Reasoning models don't always say what they think |
+| 敏感场景忠实度 | 未授权访问信息类提示 **41%**；DeepSeek R1 同类 **19%**（后者来自 Anthropic 官方研究页跨模型对比） | 同上 |
+| 对齐伪装基线比例 | Claude 3 Opus 约 **12%** 样本在基线场景出现对齐伪装 | Alignment faking |
+| RL 训练下对齐伪装比例 | scratchpad 中出现策略性配合推理的样本比例可达 **78%** | Alignment faking |
+
+> 读表提醒：上述数字全部来自受控实验或特定评估设置，正文会给出各自限定条件。不要把"实验模型数字"直接当成"生产模型现况"。
+
 ## 事实边界
 
 本文区分三类内容：

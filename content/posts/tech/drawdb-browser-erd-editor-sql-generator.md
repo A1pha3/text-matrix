@@ -26,7 +26,7 @@ drawDB 的功能如果平铺成清单会显得又多又散。拆成一条主线�
 |------|----------|-----------|
 | 主线：画图 → 出 SQL | 可视化建表、关系连线、多方言导出、迁移脚本 | 设计完直接拿到能跑的建表语句 |
 | 支线一：反向工程 | 从 SQL DDL 导入并重建 ER 图 | 读懂没有图的老库 |
-| 支线二：零摩擦使用 | 免注册、IndexedDB 本地存储、PWA 离线、自托管 | 数据不出你的浏览器 |
+| 支线二：零摩擦使用 | 免注册、IndexedDB 本地存储、断网可续画、自托管 | 数据不出你的浏览器 |
 
 主线决定"从想法到 SQL 的最快路径"，两条支线分别解决"既有库怎么读明白"和"用完怎么不把设计泄露出去"。下面逐条展开。
 
@@ -34,11 +34,11 @@ drawDB 的功能如果平铺成清单会显得又多又散。拆成一条主线�
 
 ### 可视化建表，先有"为什么"
 
-很多建模工具要你先记字段类型的语法细节，drawDB 把这一步图形化：在画布上放一张表卡片，逐个加字段，定义名称、类型、约束（`NOT NULL`、`UNIQUE`、主键、自增）。这里的关键不是"拖拽很爽"，而是它把**设计与实现解耦**——你只需要表达"这张表有哪些列、什么约束"，具体的语法交给工具在导出时处理。
+很多建模工具要你先记字段类型的语法细节，drawDB 把这一步图形化：在画布上放一张表卡片，逐个加字段，定义名称、类型、约束（`NOT NULL`、`UNIQUE`、主键、自增）。拖拽只是表象，真正值钱的是它把**设计与实现解耦**：你只需要表达"这张表有哪些列、什么约束"，具体的语法交给工具在导出时处理。
 
 ### 多方言导出：一件事，为什么配七种语法
 
-同一个设计，落到不同数据库，自增和类型写法完全不同：PostgreSQL 用 `SERIAL`，MySQL 用 `AUTO_INCREMENT`，SQLite 没有原生 `ALTER TABLE` 语义。如果设计工具只认一种方言，换个库就得重画，这个成本往往被低估。
+同一个设计，落到不同数据库，自增和类型写法完全不同：PostgreSQL 用 `SERIAL`，MySQL 用 `AUTO_INCREMENT`，SQLite 的 `ALTER TABLE` 支持很受限。如果设计工具只认一种方言，换个库就得重画，这个成本往往被低估。
 
 drawDB 支持的方言有七种：MySQL、PostgreSQL、SQLite、MariaDB、SQL Server、Oracle（仍标 Beta）以及一个跨库建模用的 Generic 通用模式。画布上的设计是"通用层"，导出时才针对所选方言翻译成对应 DDL——设计一次，换库不重画。
 
@@ -52,11 +52,11 @@ drawDB 支持的方言有七种：MySQL、PostgreSQL、SQLite、MariaDB、SQL Se
 
 ## 支线一：反向工程，从 DDL 重建一张图
 
-接手一个没有文档的旧库，往往只有一坨建表脚本。drawDB 支持把粘贴进来的 SQL DDL 反向解析成 ER 图：识别 `CREATE TABLE`、补全字段、根据外键自动拉出表间连线。你不需要手动重画，贴进去几秒就得到一张可拖拽、可缩放的关系图。这条支线和主线正好互逆——主线是"图 → SQL"，它是"SQL → 图"。
+接手一个没有文档的旧库，往往只有一坨建表脚本。drawDB 支持把粘贴进来的 SQL DDL（也支持 DBML）反向解析成 ER 图：识别 `CREATE TABLE`、补全字段、根据外键自动拉出表间连线。你不需要手动重画，贴进去几秒就得到一张可拖拽、可缩放的关系图。这条支线和主线正好互逆——主线是"图 → SQL"，它是"SQL → 图"。
 
 ## 支线二：零摩擦使用，数据留在本地
 
-免费版不用注册，设计保存在浏览器的 **IndexedDB** 里（注意不是 LocalStorage，容量更大、适合存结构数据）。这意味着三件事：数据不出网、可以完全离线用（应用支持 PWA）、也可以自托管把一切留在内网。既然是本地存储，换设备或清浏览器缓存前，记得导出一次 JSON 备份。
+免费版不用注册，设计保存在浏览器的 **IndexedDB** 里（注意不是 LocalStorage，容量更大、适合存结构数据）。因为是纯前端应用、不请求任何后端，数据不离开浏览器，页面加载后断网也能继续画。需要说清楚的是：drawDB 没有 Service Worker，不算严格意义的 PWA，别指望离线安装；换设备或清缓存前，记得导出一次 JSON 备份。
 
 ## 一个例子：把上面的机制串起来
 
@@ -69,15 +69,29 @@ drawDB 支持的方言有七种：MySQL、PostgreSQL、SQLite、MariaDB、SQL Se
 
 第二步，把 `orders` 的 `user_id` 拖到 `users` 的 `id` 上，建立外键关系，图里出现一条连线。
 
-第三步，打开 SQL 面板，方言选 PostgreSQL，复制生成的 `CREATE TABLE` 语句——你会发现 `users.id` 导出成了 `SERIAL PRIMARY KEY`，而 MySQL 方言下会是 `AUTO_INCREMENT`。
+第三步，打开 SQL 面板，方言选 PostgreSQL，复制生成的 `CREATE TABLE` 语句——你会发现 `users.id` 导出成了 `SERIAL PRIMARY KEY`，而 MySQL 方言下会是 `AUTO_INCREMENT`。字段类型取决于你在画布上选的，这里按常见选择导出，大致长这样：
 
-第四步，回到画布给 `users` 加一列 `created_at`，再切到迁移面板，让它比较修改前后，生成对应的 `ALTER TABLE users ADD COLUMN created_at ...`。
+```sql
+CREATE TABLE "users" (
+  "id" SERIAL PRIMARY KEY,
+  "email" VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE "orders" (
+  "id" SERIAL PRIMARY KEY,
+  "user_id" INTEGER NOT NULL,
+  "amount" DECIMAL(10, 2) NOT NULL,
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+);
+```
+
+第四步，回到画布给 `users` 加一列 `created_at`，再切到迁移面板，让它比较修改前后，生成对应的 `ALTER TABLE` 增量语句，而不是手写 diff。
 
 到这里，"画图 → 建表 → 迁移"这条主线就被完整走了一遍，而且全程没碰过 SQL 编辑器。
 
 ## 技术实现与自托管
 
-drawDB 是纯前端应用：React + Vite + Tailwind CSS。表格卡片以 DOM 节点渲染在无限画布上，表间连线走 SVG 路径，整体不依赖后端，所以既能静态部署，也能离线使用。核心数据指标：仓库约 3.9 万 Star、3.2K Fork（2026-08），AGPLv3 协议，以 JavaScript 为主。
+drawDB 是纯前端应用：React + Vite + Tailwind CSS。表格卡片以 DOM 节点渲染在无限画布上，表间连线走 SVG 路径，整体不依赖后端，所以能静态部署。核心数据指标：仓库约 3.8 万 Star、3.1K Fork（2026-09），AGPLv3 协议，约 99% 是 JavaScript，项目仍保持活跃维护。
 
 本地开发：
 
@@ -98,9 +112,20 @@ cd drawdb
 docker compose up -d
 ```
 
-启动后同样访问 `http://localhost:5173`。生产部署也可以 `npm run build` 产出静态文件，交给任意静态服务器或 Nginx 托管。
+启动后同样访问 `http://localhost:5173`。注意 compose 起的是 Vite 开发服务器，适合内网自用和试跑；对外稳定服务，用 `npm run build` 产出静态文件交给 Nginx，或按 README 的 Dockerfile 构建镜像（`docker run -p 3000:80`）。
 
 需要分享功能（比如通过 GitHub Gist 发链接给团队评审）时，才额外部署配套的 [drawdb-server](https://github.com/drawdb-io/drawdb-server)，按 `.env.sample` 配置环境变量。不部署它，画图和导出 SQL 不受影响。
+
+## 顺手能用上的细节
+
+主线之外还有几样免费功能，不展开讲，用到时知道有就行：
+
+- **模板**：内置几套常见场景的预设表结构，起步不用从空画布开始；自己常用的结构也能存成自定义模板，下次直接加载。
+- **快捷键**：常用操作都配了快捷键，官方文档有完整清单。
+- **演示模式**：把画布全屏投出来，适合评审会上对着大屏讲表结构。
+- **编辑辅助**：撤销 / 重做、复制粘贴、复制表，还能把表归进"主题区域"、给表加备注。
+
+这些都在免费版里，不需要注册。
 
 ## 适用边界
 
@@ -124,7 +149,7 @@ docker compose up -d
 存在浏览器的 IndexedDB 里。同设备同浏览器不清缓存就不会丢；换设备、换浏览器或清缓存之前，先用导出功能备份一份 JSON。
 
 **必须联网才能用吗？**
-不用。免费编辑器是本地存储，应用支持 PWA，离线时画图和导出照常。
+页面加载之后不用。设计存在浏览器本地，画图和导出都不依赖网络；但项目没有 Service Worker，清掉缓存后首次打开仍需联网拉取应用资源。
 
 **Oracle 支持到什么程度？**
 官方标注为 Beta。常规建表与导出可用，涉及 Oracle 特有语法时建议先跑一个小样例验证，别直接上生产库。

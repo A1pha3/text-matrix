@@ -3,7 +3,7 @@ title: "awesome-go：Go 语言最权威的开源生态导航站"
 date: "2026-08-20T20:00:00+08:00"
 slug: "awesome-go-go-ecosystem-curated-list"
 github_repo: "avelino/awesome-go"
-description: "awesome-go 是 GitHub 星标量超过 17 万的 Go 语言开源框架和库精选列表，涵盖 Web 框架、数据库、CLI、机器学习等数十个领域，是 Go 开发者寻找轮子和了解生态的首选入口。"
+description: "awesome-go 是 GitHub 星标量接近 18 万的 Go 语言开源框架和库精选列表，涵盖 Web 框架、数据库、CLI、机器学习等数十个领域，是 Go 开发者寻找轮子和了解生态的首选入口。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Go", "开源"]
@@ -39,7 +39,7 @@ tags: ["Go", "开源"]
 
 [awesome-go](https://github.com/avelino/awesome-go) 是由 [Avelino](https://github.com/avelino) 维护的一个精选列表（Curated List），专门收录 Go 语言生态中优质的**开源框架、库和软件**。它脱胎于 [awesome-python](https://github.com/vinta/awesome-python) 的思路，目前是 GitHub 上星标数最高的 Go 语言资源列表。
 
-截至 2026 年，该项目获得 **17 万+** 颗星标，收录了数千个经过社区筛选的开源项目，常见使用场景有三类：
+截至 2026 年，该项目获得约 **18 万**颗星标，收录了数千个经过社区筛选的开源项目，常见使用场景有三类：
 
 - **寻找轮子**：拿到一个需求后，先在列表里翻一遍现成实现，避免重复造代码。
 - **生态调研**：评估某个领域的库数量与成熟度，判断是否值得自研。
@@ -377,12 +377,24 @@ awesome-go 的官方站点 [awesome-go.com](https://awesome-go.com/) 提供了�
 提交 PR 需满足以下基本条件（详见 [CONTRIBUTING.md](https://github.com/avelino/awesome-go/blob/main/CONTRIBUTING.md)）：
 
 1. **项目在 GitHub 上公开可见**，有活跃的维护记录
-2. **Star 数量达到一定门槛**（通常 50+ 或有特殊价值）
-3. **README 文档完整**，易于上手
-4. **不在已收录列表中**（避免重复）
-5. **描述信息准确**，说明项目解决的问题
+2. **工程门槛达标**：带 `go.mod` 的 Go 项目、有 SemVer 版本号、MIT 等开源许可
+3. **文档完整**：README 本身往往需要规范的 pkg.go.dev 页面、Go Report Card 等链接，便于他人一眼评估质量
+4. **不在已收录列表中**（避免重复），并按字母顺序插到对应分类
+5. **描述信息准确**：一行说明项目解决的问题，避免营销语、以句号结尾
 
-维护者会定期清理失效链接和长期不更新的项目，列表里条目的活跃度因此有基本保障。
+由于被筛选过的项目质量相对可靠，列表里条目的活跃度有基本保障；作为反例，新仓库历史过短（通常不足几个月）的项目即便功能不错也常被要求等一段时间再投。
+
+想提高合并概率，PR 描述里直接贴一份"自检清单"最省事——维护者看得又快又可信，例如：
+
+```text
+- 项目仓库：https://github.com/<owner>/<repo>
+- pkg.go.dev：https://pkg.go.dev/<module-path>
+- Go Report Card：https://goreportcard.com/report/<module-path>
+- 开源许可：MIT；是否有 go.mod 与 SemVer 标签
+- 贡献说明：一句话解决的问题、与已有条目的差异、建议放入的分类
+```
+
+审核本质上只关心三件事：**不重复、够活跃、值不值得收**。把这几条一次性交代清楚，被合并的概率会高不少。
 
 ---
 

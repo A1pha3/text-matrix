@@ -11,9 +11,9 @@ tags = ['开源', 'Live2D', '自托管']
 
 # AIRI：自托管 AI 数字伴侣
 
-AIRI 是 moeru-ai 组织为了复现 Neuro-sama 做出来的开源项目：把 AI 虚拟角色装进 Live2D/VRM 的身体，能实时语音对话，也能进 Minecraft、Factorio 玩游戏。官方在 GitHub 上把它描述成「you-owned Grok Companion」「数字灵魂容器」，目标是把 Neuro-sama 这类能聊天又能玩游戏的 AI vtuber，做成普通人能自己部署、数据自持的版本。
+AIRI 是 moeru-ai 为复现 Neuro-sama 而做的开源项目：把 AI 角色装进 Live2D/VRM 的身体，能实时语音对话，也能进 Minecraft、Factorio 玩游戏。官方在 GitHub 上称它为「you-owned Grok Companion」「数字灵魂容器」，目标是让普通人也能自己部署这样一个能聊天又能玩游戏的 AI vtuber。
 
-它跟普通 AI 陪伴产品的分界在架构上：渲染、AI、游戏三条链路收进同一个调度框架，由 Core 统一协调。聊天、看屏幕、玩游戏这三件事不是各拉一套流程，而是共用同一套状态机。这是它区别于「只换皮肤的角色壳子」的地方。
+把 AIRI 和普通「AI 陪伴壳子」区分开的关键在架构：渲染、AI、游戏三件事收进同一个 Core 调度层，共用一套状态机，而不是各拉一套流程。这个架构决定了它跟只换皮肤的聊天壳子不是一类，也决定了它在多人游戏等真实场景下的稳定性上限，后文会回到这一点。
 
 ---
 
@@ -99,7 +99,7 @@ Neuro-sama 风格体验难复现的难点正在于此：LLM 生成文本容易�
 - **输出**：多提供商 TTS，包括 ElevenLabs、Microsoft/Azure Speech、OpenAI-compatible TTS、阿里云 Model Studio，以及本地的 Kokoro TTS。
 - **数据**：DuckDB WASM 或 `pglite` 提供纯浏览器端嵌入式数据库，配合记忆系统与 RAG 模块沉淀跨会话上下文。
 
-语音链路负责实时交互，数据层负责跨会话记忆——两者结合，让 AIRI 具备持续积累上下文的能力，而不是一次性对话演示。
+语音链路管实时交互，数据层管跨会话记忆：VAD 抓到的一段音频，STT 转成文本后既要立刻交给 LLM 决定怎么说，也要按主题沉淀进 DuckDB，下次提到相关内容时由 RAG 捞出来注入上下文。这是 AIRI 能越聊越"记得你是谁"、而不是每次从零开始的来源。
 
 ---
 

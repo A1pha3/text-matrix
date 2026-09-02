@@ -3,7 +3,7 @@ title: "TON 智能合约开发工具链完全指南：从 FunC 编写到链上�
 date: "2026-05-14T10:55:00+08:00"
 slug: "acton-ton-smart-contract-toolchain-guide"
 github_repo: "ton-blockchain/acton"
-description: "TON 生态的工具链由 Blueprint 脚手架、FunC/Tolk 编译器、@ton/sandbox 本地沙盒、@ton/test-utils 测试断言库等独立工具组成，没有单一官方工具链。本文以一个 Jetton 代币合约为例，串联编写、编译、测试、调试、部署、验证七个阶段，给出工具选型、采用顺序和常见错误排查。"
+description: "TON 生态的工具链正从 Blueprint、FunC/Tolk 编译器、@ton/sandbox 本地沙盒、@ton/test-utils 测试断言库组成的拼装链路，向官方推荐的 Acton 一体化工具链演进。本文以一个 Jetton 代币合约为例，串联编写、编译、测试、调试、部署、验证七个阶段，给出工具选型、采用顺序和常见错误排查。"
 draft: false
 categories: ["技术笔记"]
 tags: ["智能合约", "TypeScript"]
@@ -11,7 +11,7 @@ tags: ["智能合约", "TypeScript"]
 
 # TON 智能合约开发工具链完全指南：从 FunC 编写到链上验证
 
-TON（The Open Network）生态没有单一官方工具链。Blueprint 脚手架、FunC/Tolk 编译器、`@ton/sandbox`、`@ton/test-utils` 各自独立维护，靠目录约定和 Node.js API 串成完整开发链路。Acton 是 TON 官方推出的 Rust 实现智能合约工具链（[github.com/ton-blockchain/acton](https://github.com/ton-blockchain/acton)），提供编译、测试、部署的一体化 CLI，但社区主流教程仍围绕 Blueprint + func-js 生态展开。本文用一个 Jetton（TON 上的代币标准，类似 ERC-20）代币合约作为线索，依次过编写、编译、测试、调试、部署、验证七个阶段，每个阶段给出工具选型、采用顺序和常见错误排查。
+TON（The Open Network）生态正经历工具链换代：官方在 2026 年 5 月推出 Acton（[github.com/ton-blockchain/acton](https://github.com/ton-blockchain/acton)），一个围绕 Tolk 语言构建的一体化开发平台，官方文档把 Acton 列为新建项目的第一推荐工具；而社区里大量存量教程和项目仍在使用 Blueprint 脚手架、FunC 语言、`@ton/sandbox`、`@ton/test-utils` 这套较老的 TypeScript 生态。两条链路各管一段，靠目录约定和 Node.js API 串起来，互相不冲突。本文用一个 Jetton（TON 上的代币标准，类似 ERC-20）代币合约作为线索，先走一遍 Blueprint + FunC 的老链路（编写、编译、测试、调试、部署、验证），再说明什么时候适合切到 Acton + Tolk。
 
 ## 学习目标
 
@@ -46,15 +46,15 @@ TON 合约开发涉及两条并行链路：**编译链路**把源码变成 TVM �
 
 | 阶段 | 主力工具 | 备选或旧工具 | 说明 |
 |------|----------|--------------|------|
-| 项目脚手架 | Blueprint（`@ton/blueprint`） | 手动 `package.json` | 管理目录约定、编译脚本、部署脚本 |
-| 合约编写 | FunC、Tolk | — | FunC 是 TON 原生函数式合约语言；Tolk 是 2024 年起官方主推的现代合约语言 |
-| 编译 | `@ton-community/func-js`、`tolk` CLI | `func` 二进制 | 输出 TVM Cell（TON 虚拟机的二进制格式） |
+| 项目脚手架 | Acton（新项目）、Blueprint（存量） | 手动 `package.json` | Acton 是官方推荐的新工具；Blueprint 依然维护，用于存量项目 |
+| 合约编写 | Tolk、FunC | — | Tolk 是官方主推、语法接近 TypeScript 的现代合约语言；FunC 是早期函式语言，存量合约大量使用 |
+| 编译 | `tolk` CLI、`@ton-community/func-js` | `func` 二进制 | 输出 TVM Cell（TON 虚拟机的字节码容器） |
 | 本地测试 | `@ton/sandbox`、`@ton/test-utils` | `ton-contract-executor`（已废弃） | sandbox 提供 `Blockchain` 类模拟 TVM；test-utils 提供 Jest 断言 |
 | 链上交互 | `@ton/ton`、`@ton/crypto` | `ton` CLI | `TonClient4` 连接 Testnet 或 mainnet（主网） |
 | 部署 | Blueprint `run` 脚本 | `ton-cli` | 用 TypeScript 脚本发送部署消息 |
 | 验证 | tonverifier.app | tonscan.org | 比对链上合约代码与本地源码 |
 
-`ton-contract-executor` 在 2023 年后已被 `@ton/sandbox` 取代，新项目不应再用。`func` 二进制和 `tolk` CLI 是底层编译器，Blueprint 通过 `@ton-community/func-js` 在 Node.js 进程内调用，通常不需要手动安装二进制。
+`ton-contract-executor` 在 2023 年后已被 `@ton/sandbox` 取代，新项目不应再用。`func` 二进制和 `tolk` CLI 是底层编译器；Blueprint 通过 `@ton-community/func-js` 在 Node.js 进程内调用，通常不需要手动安装二进制。
 
 ## 任务流案例：Jetton 代币合约全生命周期
 
@@ -124,7 +124,7 @@ int get_total_supply() method_id {
 
 `recv_internal` 是合约接收内部消息的入口。`load_uint(32)` 读取 32 位操作码，`load_coins()` 读取变长整数（TON 的代币金额编码）。`0x178d4519` 是 Jetton 标准定义的 Mint 操作码。
 
-Tolk 的等价写法语法更现代（类型注解、对象参数），但 Tolk 仍在活跃迭代，截至 2026 年 5 月尚未发布 v1.0 稳定版，生产项目优先选 FunC，等 Tolk 稳定后再迁移。下面示例统一用 FunC。
+Tolk 的等价写法语法更现代、类型更完整，Tolk v1.0 已在 2025 年发布，且是 Acton 的默认语言。对新项目，官方推荐直接用 Tolk（经由 Acton）；但对存量 FunC 项目，FunC 仍被官方支持，没有废弃时间表，可以按团队节奏逐步迁移。下面的示例沿用 FunC，是为了展示 Blueprint 这条仍被大量教程使用的老链路。
 
 ### 3. 编译：func-js 与 tolk 编译器
 
@@ -353,20 +353,20 @@ npx blueprint run deployJettonMinter --network testnet
 
 新团队接入 TON 合约开发，可以按下面这个顺序推进：
 
-1. **先上 Blueprint + FunC + @ton/sandbox**：这是当前文档和社区案例最多的组合。用 `npm create ton@latest` 起步，按本文流程操作可跑通本地测试。
-2. **再接 @ton/ton + Testnet 部署**：本地测试稳定后，用 `TonClient4` 连 Testnet，验证合约在真实网络环境下的 Gas 消耗和消息流。
-3. **最后评估 Tolk 迁移**：Tolk 语法更现代，但仍在迭代。等 Tolk 发布稳定版（官方路线图指向 2026 年，具体时间以 ton-blockchain/tolk 仓库公告为准）且社区库完善后再迁移存量合约。
+1. **新项目直接上 Acton + Tolk**：这是官方当前推荐的组合，脚手架、编译、测试、部署、验证收进一个 CLI，学习成本更低，文档和示例也围绕它更新。用 `acton new` 起步，模板自带 Jetton、NFT、Counter 等参考实现。
+2. **存量 FunC 项目继续用 Blueprint**：如果团队已有在跑的合约和测试，不必立刻迁移。Blueprint + FunC 依然稳定，社区教程多、排错资料全。
+3. **评估迁移时机**：FunC 没有废弃时间表，官方也保留支持。等到新特性、团队人手或安全审计要求确实需要 Tolk 的更强类型系统时，再用官方的 `func2tolk` 迁移工具分批转换。
 
 哪些团队不必急着上 Tolk：
 
 - 合约已上线且稳定运行的团队：迁移成本高于收益
 - 团队对 FunC 已熟练：FunC 仍被官方支持，没有废弃时间表
-- 安全审计要求高的团队：Tolk 工具链（fuzzing、形式化验证）还不成熟
+- 安全审计要求高的团队：存量合约在 FunC 上已通过审计，迁移会引入新的审计面
 
 哪些团队可以先用 Tolk：
 
 - 新项目、合约逻辑复杂、团队有 TypeScript 背景
-- 愿意承受工具链迭代风险的早期项目
+- 愿意跟随生态演进、用官方新工具链起步的早期项目
 
 ## 常见问题与错误排查
 
@@ -483,14 +483,14 @@ TON 的 Gas 按 TVM 指令计费。用 `@ton/sandbox` 的 `result.transactions[0
 - **FunC 进阶**：读 [TON 官方文档](https://docs.ton.org/v3/guidelines/smart-contracts/) 的 Jetton 标准实现，理解 masterchain 与 workchain 的消息流——Jetton 的 mint 操作实际上涉及 minter 合约 → wallet 合约 → 用户余额三层的消息传递。
 - **TVM 底层**：读 [TVM 概览](https://docs.ton.org/v3/documentation/tvm/tvm-overview)，理解栈式虚拟机、Continuation 和 Gas 计费模型。关键概念：TVM 一条指令的 Gas 由指令类型和操作数大小共同决定——`load_uint(256)` 比 `load_uint(32)` 贵，主因是读取的 cell 数据更多，指令本身的复杂度差异不大。
 - **安全审计**：用 FunC 静态扫描工具（如 [ton-blockchain/ton-sec-tools](https://github.com/ton-blockchain/ton-sec-tools)，该仓库链接需核实，截至写作时未确认存在）做静态扫描，重点关注重入、整数溢出、权限校验缺失。jetton-minter.fc 的 `recv_internal` 没有检查 `msg_value`——如果你收到的 TON 数量为 0，合约仍然会执行 mint 逻辑（消耗的是合约自身的余额），这是一个常见的 gas 耗尽攻击面。
-- **Tolk 迁移**：跟踪 [ton-blockchain/tolk](https://github.com/ton-blockchain/tolk) 仓库，等 v1.0 稳定后评估迁移。迁移时要特别注意：Tolk 的 `receive` 函数签名和 FunC 的 `recv_internal` 在 `msg_value` 的处理上有细微差异——Tolk 里 `msg_value` 是显式参数，FunC 里它被隐式传入。
+- **Tolk 迁移**：Tolk v1.0 已在 2025 年发布，是 Acton 的默认语言。官方提供 `func2tolk` 自动转换工具（见 [ton-blockchain/tolk](https://github.com/ton-blockchain/tolk) 仓库），迁移存量合约时可先用它做机械转换，再人工核对确保语义一致。迁移时要特别注意：Tolk 的 `receive` 函数签名和 FunC 的 `recv_internal` 在 `msg_value` 的处理上有细微差异——Tolk 里 `msg_value` 是显式参数，FunC 里它被隐式传入。
 
 ## 资料口径说明
 
 本文基于以下来源撰写，请读者注意时效性和局限性：
 
 1. **工具版本**：本文涉及的 npm 包版本（如 `@ton-community/func-js`、`@ton/sandbox`、`@ton/test-utils`、`@ton/blueprint`）以 2026 年 5 月 npm 注册中心（registry.npmjs.org）的 latest 标签为准。TON 生态工具链迭代较快，实际版本可能已更新，请以 `npm view <package> version` 命令查询结果为准。
-2. **Tolk 稳定性**：文中提到"Tolk 仍在活跃迭代，截至 2026 年 5 月尚未发布 v1.0 稳定版"，该判断基于 [ton-blockchain/tolk](https://github.com/ton-blockchain/tolk) 仓库的 Releases 页面和 TON 官方文档（docs.ton.org）的 Tolk 章节。Tolk 的稳定版发布时间以官方公告为准。
+2. **Tolk 稳定性**：文中称"Tolk v1.0 已在 2025 年发布"，基于 [ton-blockchain/tolk](https://github.com/ton-blockchain/tolk) 仓库的 Releases 页面和 TON 官方文档（docs.ton.org）的 Tolk/Acton 章节。Tolk 仍在持续迭代（截至 2026 年中已到 1.x 多个小版本），使用前请以具体版本为准。
 3. **编译器版本**：FunC 编译器的版本号由 `compileFunc` 的 `compilerVersion()` 函数返回，文中未给出具体版本号。实际使用时请在 `wrappers/` 目录下打印该函数返回值，并用相同版本在 tonverifier.app 进行源码验证。
 4. **链上验证工具**：文中使用 tonverifier.app 作为验证工具，该工具链接有效性以发布时为准。如遇失效，请使用 TON 官方推荐的验证工具（以 [docs.ton.org](https://docs.ton.org) 的"Smart Contract Verification"章节为准）。
 5. **Gas 消耗数据**：文中未给出具体的 Gas 消耗数值，仅说明查看方法。实际 Gas 消耗因合约逻辑、数据量、网络状态而异，请在 `@ton/sandbox` 中实际测试后获取基准数据。

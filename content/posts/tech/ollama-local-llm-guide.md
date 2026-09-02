@@ -53,10 +53,10 @@ tags: ["Ollama", "本地大模型", "LLM", "隐私计算", "开源", "GPU加速"
 
 Ollama 不是「本地版的 GPT-4」。它的定位是：**让开源大模型能在本地跑起来，且尽可能地好用**。
 
-| 维度 | 云 API（GPT-4o） | Ollama（Llama 3.2 90B） | 说明 |
-|-------|---------------------|--------------------------|------|
-| 模型能力 | 最强 | 接近但稍有不及 | 对于大多数应用，差距已经很小 |
-| 响应延迟 | 低（服务端GPU 集群） | 取决于本地硬件 | M2 Max 上跑 7B 模型，延迟 ~50ms |
+| 维度 | 云 API（GPT-4o） | Ollama（Qwen3:8b） | 说明 |
+|-------|-----------------|--------------------|------|
+| 模型能力 | 最强 | 差一到两代 | 日常任务够用，复杂推理仍有差距 |
+| 响应延迟 | 低（服务端 GPU 集群） | 取决于本地硬件 | 7B 级模型在 Apple Silicon、消费级 GPU 上可交互 |
 | 数据隐私 | 经过服务商 | 完全本地 | Ollama 不联网也能工作 |
 | 成本 | 按 token 付费 | 硬件一次性投入 | 高用量下本地更划算 |
 | 定制化 | 有限（prompt） | 完全控制 | 可以微调、改架构、加工具 |
@@ -78,18 +78,18 @@ Ollama 不是「本地版的 GPT-4」。它的定位是：**让开源大模型�
 在安装之前，先搞清楚你的硬件能跑什么量级的模型。这不是精确科学，但是一个实用的估算公式：
 
 ```
-所需内存（GB）≈ 参数量（B）× 2
+所需内存（GB）≈ 参数量（B）× 每个参数的字节数
 ```
 
-原因是：每个参数需要 ~2 字节（FP16 或 INT8 量化）。
+未量化（FP16）时每参数 2 字节；Ollama 下载的模型默认是 4-bit 量化（GGUF Q4_K_M），每参数约 0.5-0.6 字节。同一个模型，两种口径相差近 4 倍。
 
-| 模型参数量 | 最低内存 | 推荐内存 | 能不能跑（M 系列芯片） |
-|-----------|----------|----------|---------------------------|
-| 1B-3B | 4GB | 8GB | ✅ M1 都能跑 |
-| 7B-8B | 16GB | 16GB | ✅ M2 及以后 |
-| 13B-14B | 28GB | 32GB | ⚠️ M1 Max 16GB 会 Swap |
-| 30B-34B | 64GB | 64GB | ⚠️ 只有 M2 Ultra 及以后 |
-| 70B+ | 140GB+ | 不推荐 | ❌ 消费级硬件不现实 |
+| 模型参数量 | FP16 理论内存 | Q4 量化后 | 能不能跑（M 系列芯片） |
+|-----------|--------------|-----------|---------------------------|
+| 1B-3B | 2-6 GB | 0.6-2 GB | ✅ M1 都能跑 |
+| 7B-8B | 14-16 GB | 4-5 GB | ✅ M2 及以后 |
+| 13B-14B | 26-28 GB | 8-9 GB | ⚠️ 16 GB 内存的 M 芯片建议量化 |
+| 30B-34B | 60-68 GB | 18-21 GB | ⚠️ 需要 32 GB+ 统一内存 |
+| 70B+ | 140 GB+ | 40 GB+ | ❌ 消费级硬件不现实 |
 
 **量化能把需求压下来多少？**
 
@@ -151,8 +151,8 @@ ollama run llama3.2
 # 另一个终端：
 ollama ps
 # 输出应该显示 PROCESSOR 是 GPU 而不是 CPU
-# NAME            ID           SIZE      PROCESSOR    UNTIL
-# llama3.2       xxxxxx       2.0GB     100% GPU    2 minutes ago
+# NAME             ID              SIZE      PROCESSOR    CONTEXT    UNTIL
+# llama3.2         xxxxxx          2.0GB     100% GPU     4096       4 minutes from now
 ```
 
 **如果没有用 GPU：**
@@ -174,38 +174,40 @@ system_profiler SPDisplaysDataType | grep "Metal"
 
 Ollama 支持 100+ 开源模型，但大多数用户只需要了解几个主要系列：
 
-| 模型系列 | 代表模型 | 参数量 | 适合场景 | 中文能力 |
-|---------|----------|--------|---------|---------|
-| **Llama** | llama3.2, llama3.1 | 1B-405B | 通用对话、推理 | 有限（训练数据以英文为主） |
-| **Qwen** | qwen2.5, qwen2.5-coder | 0.5B-72B | 中文任务、代码生成 | ⭐⭐⭐⭐⭐ 最佳选择 |
-| **Gemma** | gemma3, gemma2 | 2B-27B | 轻量高效，适合端侧 | 一般 |
-| **Mistral** | mistral, mixtral | 7B-8x22B | 推理、代码 | 一般 |
-| **Code** | codellama, deepseek-coder | 7B-34B | 专门做代码 | 代码不需要中文 |
-| **Llava** | llava, llava-llama3 | 7B-34B | 多模态（图像+文本） | 取决于基础模型 |
+| 模型系列 | 代表模型 | 规模 | 适合场景 | 备注 |
+|---------|----------|------|---------|------|
+| **Qwen** | qwen3, qwen3-coder | 0.6B-235B | 中文、代码、推理 | 中文能力最强的开源系列之一 |
+| **Llama** | llama4-scout, llama3.3, llama3.2 | 1B-405B | 通用对话、Agent | Scout 为 MoE，超大上下文 |
+| **DeepSeek** | deepseek-r1 | 1.5B-671B | 数学、推理 | R1 及其蒸馏小模型 |
+| **Gemma** | gemma3 | 1B-27B | 轻量、端侧 | 部分版本带视觉 |
+| **Mistral** | mistral-small, mixtral | 7B-8x22B | 推理、结构化输出 | 擅长 function calling |
+| **多模态** | llama3.2-vision, qwen3-vl | 2B-90B | 图像理解 | 已取代老牌 llava |
+| **Embedding** | nomic-embed-text, bge-m3 | - | RAG 向量化 | 不对话，只产出向量 |
 
 **选择建议：**
 
-- 做中文应用 → 用 Qwen2.5 系列
-- 做代码助手 → 用 qwen2.5-coder 或 codellama
-- 想要最好的通用能力 → 用 llama3.2 或 llama3.1（但中文需要用英文 prompt）
-- 硬件有限（< 8GB 内存）→ 用 1B-3B 版本的模型
+- 做中文应用 → 用 Qwen3 系列
+- 做代码助手 → 用 qwen3-coder 或 deepseek-coder-v2
+- 要推理能力（数学、逻辑） → 用 deepseek-r1 或小尺寸蒸馏版
+- 做 RAG 知识库 → 配一个 embedding 模型（如 nomic-embed-text）
+- 硬件有限（< 8GB 内存） → 用 1B-4B 版本的模型
 
 ### 3.2 下载与管理
 
 ```bash
 # 下载指定版本
-ollama pull llama3.2:3b      # 3B 参数（最快，适合开发测试）
-ollama pull llama3.2:11b     # 11B 参数（平衡）
-ollama pull llama3.2:70b     # 70B 参数（需要大内存）
+ollama pull qwen3:8b         # 8B 参数，中文与通用能力均衡
+ollama pull qwen3:30b        # 30B 参数（MoE），需要 16GB+ 内存
+ollama pull llama3.1:70b     # 70B 参数，需要 40GB+ 内存
 
 # 查看已下载的模型
 ollama list
 
 # 查看模型详情（包括 Modelfile 内容）
-ollama show llama3.2
+ollama show qwen3:8b
 
 # 删除模型
-ollama rm llama3.2:70b
+ollama rm llama3.1:70b
 
 # 复制模型（用于创建自定义版本的基础）
 ollama cp llama3.2 my-llama
@@ -305,11 +307,11 @@ top_p = 0.5  → 只考虑累计概率前 50% 的词元（更保守）
 
 **num_ctx（上下文长度）**
 
-模型一次能「看到」多少 token。
+模型一次能「看到」多少 token。Ollama 现在按显存动态设置默认值：显存 < 24 GiB 默认 4096，24-48 GiB 默认 32768，≥ 48 GiB 默认 262144。
 
-- 默认值是 2048（大约 1500 个中文字）
-- 如果你需要处理长文档，需要调大（4096、8192、16384）
-- **代价**：上下文越长，内存占用越大，响应越慢
+- 处理长文档、跑 Agent 或代码工具时，官方建议至少 64000
+- 通过 `OLLAMA_CONTEXT_LENGTH=8192 ollama serve` 改全局默认
+- **代价**：上下文越长，KV Cache 占用越大，响应越慢；超过模型原生上限无效
 
 **repeat_penalty（重复惩罚）**
 
@@ -326,7 +328,7 @@ top_p = 0.5  → 只考虑累计概率前 50% 的词元（更保守）
 
 ### 4.4 系统提示词模板设计
 
-系统提示词的质量直接决定模型表现。以下是几个经过验证的模板模式：
+系统提示词的质量直接决定模型表现。下面是两个常见场景的模板，先照抄，再按自己的任务调整：
 
 **代码助手模板：**
 
@@ -466,22 +468,23 @@ server {
 }
 ```
 
+**更稳妥的基线**：`OLLAMA_HOST` 只绑内网地址（默认 `127.0.0.1:11434`），对外统一走反向代理；用 `OLLAMA_ORIGINS` 限制允许跨域访问的来源。Ollama 没有内置 API Key 机制，认证必须放在反向代理层。
+
 ---
 
 ## §6 多模态模型
 
 ### 6.1 什么是多模态
 
-多模态模型可以「看懂」图片，然后回答关于图片的问题。Ollama 支持的多模态模型主要是 LLaVA 系列（Large Language and Vision Assistant）。
+多模态模型可以「看懂」图片，然后回答关于图片的问题。Ollama 库里这类模型从早期的 LLaVA，到现在的 llama3.2-vision、qwen3-vl，选择比两年前多得多。
 
-### 6.2 使用 LLaVA
+### 6.2 使用视觉模型
 
 ```bash
-# 下载 LLaVA（基于 Llama 3.2）
-ollama pull llava
-
-# 运行
-ollama run llava
+# 按能力和硬件选一个
+ollama pull llava              # 老牌轻量视觉模型
+ollama pull llama3.2-vision    # 11B 视觉模型
+ollama pull qwen3-vl           # 阿里视觉模型，中文更好
 ```
 
 **通过 API 分析图片：**
@@ -534,8 +537,9 @@ LLaVA 的能力边界：
 # 1. 换用更小的模型
 ollama pull qwen2.5:3b   # 而不是 7b 或更大
 
-# 2. 减少上下文长度
-ollama run qwen2.5:7b --num-ctx 2048  # 默认可能是 8192
+# 2. 减少上下文长度（进入对话后设置）
+ollama run qwen2.5:7b
+>>> /set parameter num_ctx 2048
 
 # 3. 查看内存使用情况
 ollama ps
@@ -635,43 +639,40 @@ sudo powermetrics --samplers gpu  # macOS，需要 sudo
 
 ### 10.1 并发请求处理
 
-Ollama 默认串行处理请求。如果有多个并发请求，后面的会排队。
+Ollama 默认 `OLLAMA_NUM_PARALLEL=1`，同一模型一次只处理一个请求，其余排队；队列上限由 `OLLAMA_MAX_QUEUE`（默认 512）控制，满了直接返回 503。
 
-**解决方案**：跑多个 Ollama 实例，前面加负载均衡：
+**开并发**：让一个已加载的模型同时处理多个请求：
 
 ```bash
-# 实例 1
-OLLAMA_HOST=0.0.0.0:11434 ollama serve &
-
-# 实例 2
-OLLAMA_HOST=0.0.0.0:11435 ollama serve &
-
-# Nginx 负载均衡配置
-upstream ollama {
-    server localhost:11434;
-    server localhost:11435;
-}
+# 服务端设置并行数（需重启生效）
+OLLAMA_NUM_PARALLEL=4 ollama serve
 ```
 
-### 10.2 KV Cache 复用
+**代价**：每个并行槽位都会额外占用 KV Cache 显存。经验上每加一个槽位，7B 模型约多占基础显存的 15-25%。显存有余量再往上加。
 
-如果应用场景是「很多用户问类似的问题」，可以复用 KV Cache（键值缓存）来加速：
+如果多个模型经常切换，用 `OLLAMA_MAX_LOADED_MODELS` 控制同时驻留内存的模型数，避免频繁换入换出。
+
+### 10.2 模型常驻与上下文延续
+
+每次新请求如果模型已卸载，都要重新加载权重，这是最慢的一步。Ollama 默认把模型在内存里保留 5 分钟（`keep_alive`），期间后续请求直接复用已加载的模型和 KV Cache，首 token 延迟大幅下降。
 
 ```python
-# Ollama 支持通过 session_id 复用上下文
-response1 = client.chat.completions.create(
-    model="qwen2.5:7b",
+# 请求级控制常驻时间（秒）：-1 表示常驻不卸载
+client.chat.completions.create(
+    model="qwen3:8b",
     messages=[{"role": "user", "content": "什么是 Python？"}],
-    extra_body={"session_id": "user-123"}  # 复用这个 session 的 KV Cache
+    extra_body={"keep_alive": -1},
 )
 
-# 同一个 session_id 的后续请求会更快
-response2 = client.chat.completions.create(
-    model="qwen2.5:7b",
-    messages=[{"role": "user", "content": "它有什么优缺点？"}],
-    extra_body={"session_id": "user-123"}  # 复用
+# 用完改回 0，立即卸载释放内存
+client.chat.completions.create(
+    model="qwen3:8b",
+    messages=[{"role": "user", "content": "结束"}],
+    extra_body={"keep_alive": 0},
 )
 ```
+
+服务端可用 `OLLAMA_KEEP_ALIVE` 设置全局默认值。`ollama ps` 的 `UNTIL` 列会显示模型预计驻留到什么时候，据此判断是否需要调大 `keep_alive`。
 
 ---
 

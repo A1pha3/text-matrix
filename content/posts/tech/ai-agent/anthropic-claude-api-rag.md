@@ -236,30 +236,40 @@ class SemanticChunker(ChunkingStrategy):
 
 ### 嵌入模型选择
 
+> **注意**：Anthropic 官方当前并不提供 embedding API，其 RAG 文档推荐使用第三方嵌入服务或本地开源模型完成向量化。因此下面的选型以 OpenAI 与开源模型为主，Claude 仅负责最后的生成环节。
+
 ```python
 class EmbeddingModel:
+    # cost_per_1k 为公开定价（单位：美元 / 1K tokens），bge 为首创本地模型，记为 0
     MODELS = {
-        "text-embedding-ada-002":  {"provider": "OpenAI",   "dimensions": 1536, "max_tokens": 8191, "cost_per_1k": 0.0001},
-        "text-embedding-3-small":  {"provider": "OpenAI",   "dimensions": 1536, "max_tokens": 8191, "cost_per_1k": 0.00002},
-        "claude-embeddings":       {"provider": "Anthropic","dimensions": 1536, "max_tokens": 2048, "cost_per_1k": 0.00008},
-        "bge-large-zh":            {"provider": "BAAI",     "dimensions": 1024, "max_tokens": 512,  "cost_per_1k": 0},
+        "text-embedding-3-small":  {"provider": "OpenAI", "dimensions": 1536, "max_tokens": 8191, "cost_per_1k": 0.00002},
+        "text-embedding-3-large":  {"provider": "OpenAI", "dimensions": 3072, "max_tokens": 8191, "cost_per_1k": 0.00013},
+        "text-embedding-ada-002":  {"provider": "OpenAI", "dimensions": 1536, "max_tokens": 8191, "cost_per_1k": 0.0001},
+        "bge-large-zh":            {"provider": "BAAI",   "dimensions": 1024, "max_tokens": 512,  "cost_per_1k": 0},
     }
 
-    def __init__(self, model_name: str = "text-embedding-ada-002"):
+    def __init__(self, model_name: str = "text-embedding-3-small"):
         self.model_name = model_name
-        self.config = self.MODELS.get(model_name, self.MODELS["text-embedding-ada-002"])
+        self.config = self.MODELS.get(model_name, self.MODELS["text-embedding-3-small"])
 
     def embed(self, texts: List[str]) -> List[List[float]]:
         if self.model_name.startswith("text-embedding"):
             return self._openai_embed(texts)
-        elif self.model_name == "claude-embeddings":
-            return self._anthropic_embed(texts)
-        return self._custom_embed(texts)
+        return self._local_embed(texts)
 
     def _openai_embed(self, texts: List[str]) -> List[List[float]]:
-        import openai
-        response = openai.Embedding.create(model=self.model_name, input=texts)
-        return [item["embedding"] for item in response["data"]]
+        import os
+        from openai import OpenAI
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        # 单次请求输入不应超过 8191 token，超长需分批发送
+        response = client.embeddings.create(model=self.model_name, input=texts)
+        return [item.embedding for item in response.data]
+
+    def _local_embed(self, texts: List[str]) -> List[List[float]]:
+        # 本地开源模型，中文场景常选 BAAI/bge-large-zh-v1.5
+        from sentence_transformers import SentenceTransformer
+        model = SentenceTransformer("BAAI/bge-large-zh-v1.5")
+        return model.encode(texts, normalize_embeddings=True).tolist()
 ```
 
 ### 向量数据库
@@ -357,8 +367,14 @@ class RetrievalEngine:
         return [r for r in results if r["score"] >= min_score]
 
 class HybridRetrieval(RetrievalEngine):
-    """向量检索 + BM25 关键词检索混合"""
+    """向量检索 + BM25 关键词检索混合。
+
+    BM25 需要对全量文档做词频扫描，因此仅支持在内存中持有全部原文的
+    SimpleVectorDB；连续库（Chroma/Pinecone）请自行实现基于元数据的关键词召回。
+    """
     def __init__(self, vector_db: VectorDatabase, embedder: EmbeddingModel, bm25_weight: float = 0.3):
+        if not hasattr(vector_db, "documents"):
+            raise TypeError("HybridRetrieval 需要内存型 SimpleVectorDB（含 documents 字段）")
         super().__init__(vector_db, embedder)
         self.bm25_weight = bm25_weight
 

@@ -87,7 +87,20 @@ Securo 的认证设计细节比大多数自托管项目考究。
 
 已有账号迁移到 SSO 由 `OIDC_EXISTING_USER_LINK_MODE` 控制：默认 `disabled`（永不自动关联）；`verified_email` 在 Provider 声明 `email_verified=true` 且邮箱相同时关联；`email` 仅凭邮箱匹配就关联——README 明确警告：只有当你完全信任 Provider 对每个邮箱的所有权时才用它，因为能在 Provider 侧设置某个邮箱的人就能认领对应的 Securo 账号。这种"把信任边界写进文档"的做法很加分。
 
-还支持可选的角色同步（`OIDC_SYNC_ROLES`），把 Provider 的 groups 映射到 Securo 的 admin 与 workspace 角色。
+还支持可选的角色同步（`OIDC_SYNC_ROLES=true`），默认取 `groups` 声明，可换成 `OIDC_ROLES_CLAIM` 指定的其他字段。它把 Provider 的群组/角色映射进 Securo 内置权限：
+
+```
+OIDC_SYNC_ROLES=true
+OIDC_ROLES_CLAIM=groups
+OIDC_ADMIN_ROLES=securo-admins
+OIDC_WORKSPACE_ROLE_MAP={"securo-owners":"owner","securo-editors":"editor","securo-viewers":"viewer"}
+```
+
+- `OIDC_ADMIN_ROLES`：每次 OIDC 登录时授予或吊销 Securo 的 admin（`is_superuser`）
+- `OIDC_WORKSPACE_ROLE_MAP`：把 Provider 群组映射到个人 workspace 的 `owner` / `editor` / `viewer` 三档，多条映射命中时取最高权限
+- 保持 `OIDC_SYNC_ROLES=false` 则所有项目内角色仍由 Securo 本地管理
+
+新 OIDC 用户默认自动开通（`OIDC_AUTO_REGISTER=true`），用 Provider 声明的已验证邮箱建立账号；设 `false` 则只允许邮箱与 Provider 声明匹配的存量 Securo 用户登录。纯 SSO 的全新实例有个启动门槛：必须保证首次登陆者能成为 admin——通常保持 `OIDC_AUTO_REGISTER=true`、开 `OIDC_SYNC_ROLES=true`，并让该身份的角色声明命中 `OIDC_ADMIN_ROLES` 中的某个值，否则第一个账号不会是管理员。
 
 ## 可选 AI Agent：自托管 LLM + MCP 工具调用
 
@@ -100,9 +113,22 @@ COMPOSE_PROFILES=agents
 
 支持 OpenAI、Anthropic、Ollama 及 OpenAI 兼容端点多 Provider 接入，通过 **MCP**（Model Context Protocol）对你的记账数据做工具调用，每个 Agent 配独立 RAG 知识库，前端有 ⌘J 全局聊天面板。默认关闭、关闭时零成本——不想让任何 LLM 碰数据的用户可以完全无视这个模块。
 
-非 Docker 部署（裸机/LXC）时 `COMPOSE_PROFILES=agents` 只是让 Compose 启动额外的 `mcp-server` 容器，裸机场景只设 `AGENTS_ENABLED=true`，手动把内置 MCP server（同虚拟环境里的 uvicorn 应用）跑在 API 旁边即可。
+非 Docker 部署（裸机/LXC）时 `COMPOSE_PROFILES=agents` 只是让 Compose 启动额外的 `mcp-server` 容器，裸机场景只设 `AGENTS_ENABLED=true`，手动把内置 MCP server（同虚拟环境里的 uvicorn 应用）跑在 API 旁边即可——具体是起一个 `uvicorn mcp_server.main:app`，监听 `127.0.0.1:8765`，再用 `AGENTS_BUILTIN_MCP_URL=http://127.0.0.1:8765/mcp` 指给后端。注意：**MCP server 不在时 Agent 仍能聊天，但没有任何工具、读不到你的数据**，后端日志会记录它连不上哪个 MCP server——这又是一个"可降级但不静默"的设计。
 
 多币种场景配一个免费的 Open Exchange Rates key 即可自动汇率换算；不配则跨币种按 1:1 兜底并在界面上给出视觉警告——又一次"不静默出错"。
+
+## 技术栈一览
+
+README 明确列出的技术栈（选型相当主流，维护成本低、上手容易）：
+
+| 层 | 技术 |
+|---|---|
+| 后端 | FastAPI + SQLAlchemy + Alembic（迁移）+ Celery（异步任务） |
+| 前端 | React + TypeScript + Vite + Tailwind CSS |
+| 数据库 | PostgreSQL |
+| 队列 | Redis + Celery |
+
+对自托管使用者，这套选择意味着两件实际的好事：一是**文档与生态极其成熟**，遇到问题搜得到；二是需要的中间件就两个——PostgreSQL 与 Redis，docker-compose 一步起齐，Homelab 玩家基本都有现成的。
 
 ## 工程质量观察
 

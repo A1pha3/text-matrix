@@ -30,7 +30,7 @@ tags: ["AI 推理", "Apple Silicon", "Metal", "C 语言", "MiniMax-H3"]
 
 先把它和常见选项区分开。llama.cpp 走的是「计算图 + 多后端」路线，MLX 走的是「NumPy 式数组 + 惰性求值」路线，两者的前提都是：模型会变，算子要通用，所以先建一座通用桥，让不同的模型都能从桥上走过去。h3-metal 的前提相反：模型就一个（H3-Base，768p，24 fps），硬件就一类（Apple Silicon 的 GPU 加统一内存），那就没必要建桥——直接铺一根从权重文件到 mp4 的管子，管子的每一段都为这一个模型、这一类硬件量身裁。
 
-管子的构成一眼能看清，16 个核心源文件各司其职。`h3.c`（1731 行）是总装线；`h3_safetensors.c`（584 行）负责读 safetensors 权重；`h3_host.c`（647 行）负责 host 侧的确定性调度；`h3_dit.c`（3151 行）是 DiT（Diffusion Transformer，即扩散模型里的 Transformer 架构主干，负责逐步去噪）的完整前向，全仓库最大的 C 文件；`h3_video_vae.c`（1252 行）和 `h3_audio_vae.c`（1343 行）各管一头的 VAE（变分自编码器，负责像素/波形与隐空间之间的双向翻译）——视频一路、音频一路，两条路径独立实现、互不共享代码；`h3_text_encoder.c`（835 行）处理 prompt（提示词）编码；`h3_video_encoder.c`（814 行）和 `h3_vision_encoder.c`（633 行）伺候参考输入；`h3_multimodal.c`（360 行）把多模态条件缝起来；`h3_ffmpeg.c`（755 行）负责出片；`h3_weights.c`（202 行）管权重装载的生命周期；`h3_cli.c`（793 行）把 41 个 CLI（命令行工具）选项路由进去，也承载交互会话；`h3_terminal.c`（304 行）实现 Kitty、iTerm2 等终端图形协议，负责在终端里直接预览帧；`h3_dit_schedule.c`（485 行）管去噪调度。GPU 侧的活全部压进 `h3_shaders.metal` 那 4332 行里。
+管子的构成一眼能看清，16 个核心源文件各司其职。`h3.c`（1731 行）是总装线；`h3_safetensors.c`（584 行）负责读 safetensors 权重；`h3_host.c`（647 行）负责 host 侧的确定性调度；`h3_dit.c`（3151 行）是 DiT（Diffusion Transformer，即扩散模型里的 Transformer 架构主干，负责逐步去噪）的完整前向，全仓库最大的 C 文件；`h3_video_vae.c`（1252 行）和 `h3_audio_vae.c`（1343 行）各管一头的 VAE（变分自编码器，负责像素/波形与隐空间之间的双向翻译）——视频一路、音频一路，两条路径独立实现、互不共享代码；`h3_text_encoder.c`（835 行）处理 prompt（提示词）编码；`h3_video_encoder.c`（814 行）和 `h3_vision_encoder.c`（633 行）伺候参考输入；`h3_multimodal.c`（360 行）把多模态条件缝起来；`h3_ffmpeg.c`（755 行）负责出片；`h3_weights.c`（202 行）管权重装载的生命周期；`h3_cli.c`（793 行）把 41 个 CLI（命令行工具）选项路由进去，也承载交互会话；`h3_terminal.c`（304 行）实现 Kitty、Ghostty、iTerm2、WezTerm、Konsole 等终端图形协议，负责在终端里直接预览帧——它默认按 2 倍显示尺寸输出，适配 macOS Retina 屏，非 HiDPI 屏用 `--zoom 1` 调回；`h3_dit_schedule.c`（485 行）管去噪调度。GPU 侧的活全部压进 `h3_shaders.metal` 那 4332 行里。
 
 这个分工有个很 antirez 的特点：**每个模块的行数都控制在一个人能完整装进脑子的量级**。最大的 `h3_dit.c` 三千出头，其余大多在几百到一千出头。对比主流推理库里动辄上万行的融合算子文件，这里的意图很明显——他要的是随时能通读、能改、能推倒重写的代码，而不是一座敬而远之的算子大教堂。行数即认知预算，这是老 C 程序员的肌肉记忆：Redis 就是这么写成的。
 
@@ -49,7 +49,7 @@ tags: ["AI 推理", "Apple Silicon", "Metal", "C 语言", "MiniMax-H3"]
 - `--steps`：扩散采样步数。默认 20，激进档 4–7，reference 档 50。
 - `--reuse`：跨步特征复用级别。1 是 close（贴近参考），2 是 fast，3 是 aggressive。
 - `--layers`：参与计算的 DiT 层数。50 是 exact，45 是 fast，40 是 aggressive。
-- `--core-reuse`：核心块复用粒度，取 1/4/6。
+- `--core-reuse`：核心块复用粒度，取 1/4/6。它每步刷新 patch/head，只让昂贵核心少跑——6 就是激进预览上限，更大的值在验证里丢了主体保真度，直接不暴露。
 
 先说说这些名字。`--reuse` 不叫 `--velocity-reuse`，`--layers` 不叫 `--active-layer-count`——antirez 给旋钮起名的原则是「高频敲的东西要短」，一个要在终端里反复试的参数，每多一个音节都是摩擦。这是 Redis 命令式的老癖好：`GET`/`SET`/`INCR`，一个动词一个参数，敲错都难。旋钮本身是给人用的 API（应用程序接口），命名学在这里不是审美问题，是交互成本问题。
 
@@ -89,7 +89,7 @@ h3-metal 有三种用法：`--info` 看模型布局和权重清单（不映射�
 
 这个设计的张力在于：视频生成是秒级到分钟级任务，调参的人却要试几十轮——改一帧、换个种子、调半档 steps。单次模式每轮都要重载权重、重编码 prompt，固定成本摊不掉。交互模式把这些成本一次性付清——会话里始终留着精确的 BF16 prompt 条件、准备好的 DiT 和视频解码器，让你在一个热会话里连续改条件，像调 synthesizer 一样调视频模型。甚至 streaming 模式下首块会在末块执行期间被预取，热会话的下一轮直接命中。
 
-`!first`/`!last` 和 Ref2VA（ordered reference to video/audio，有序的图像/视频/音频参考输入机制）之间有明确的边界：两套条件机制互相独立、不可混用——首尾帧是「钉住时间轴的两端」，Ref2VA 是「给模型看一组有序素材」，语义不同，混用没有定义好的行为，所以直接禁止。而且参考文件的文件名无意义——模型看到的是 `<Picture 1>`、`<Picture 2>` 这样的顺序占位符，不是 `sunset_beach.jpg`。这类「文件名是给人看的，顺序才是给模型的」说明，写文档的人显然被这个坑咬过，而且咬得不轻。
+`!first`/`!last` 和 Ref2VA（ordered reference to video/audio，有序的图像/视频/音频参考输入机制）之间有明确的边界：两套条件机制互相独立、不可混用——首尾帧是「钉住时间轴的两端」，Ref2VA 是「给模型看一组有序素材」，语义不同，混用没有定义好的行为，所以直接禁止。参考文件用 `!refs` 查顺序、`!ref-remove N` 删一条、`!refs clear` 全清；首尾帧则用 `!first clear`/`!last clear` 解除。而且参考文件的文件名无意义——模型看到的是 `<Picture 1>`、`<Picture 2>` 这样的顺序占位符，不是 `sunset_beach.jpg`。这类「文件名是给人看的，顺序才是给模型的」说明，写文档的人显然被这个坑咬过，而且咬得不轻。
 
 ## 测试分层：四条不同的验收线
 
@@ -123,6 +123,8 @@ make -j8
 ```
 
 第一条命令看模型布局，确认权重就位；第二条用激进档出第一条片子，感受一下 4-7 步去噪的速度。练手可以从三条路线往下走。一是把 `--steps` 从 4 一路加到 50，配合 `--show` 观察每一步的细节增量，理解为什么 README 说「4 到 7 步之间每加一步都改善细节和运动」。二是用 `--profile` 对比 `--layers 50` 与 `--layers 40` 的 phase 耗时，把「层瘦身省了什么」落到数字上。三是开 `--token-reduction` 和 `--ssd-streaming` 各跑一遍同一 prompt，对照 SSIM 表验证本文说的互斥和 trade-off。
+
+写 prompt 也有一层。H3 的发布工作流期待 Context-IR 式的结构化描述，而非一句话：「场景是什么」（Scene）、「发生什么动作」（Action）、「机位怎么摆」（Camera）、「光线风格」（Look）、「要什么声音」（Audio）拆开交代，反而比堆砌形容词更省你真调参的回合数。身份和物体数量关键时写死——两只鸟就是「two birds」，一个 rider 一块板就明说，模型不会替你脑补。种子默认是 42，`--seed N` 接管随机流；要在不同分档之间公平对比，务必保证 prompt、seed、分辨率、帧数、步数五者一致，只动你要测的那一个旋钮。若 FFmpeg 不在手边，`-o ''` 可关掉 MP4 编码，配合 `--frames-dir` 把每帧回调写成 PPM，回头再慢慢合成。
 
 几个常见的错误组合提前排掉：`--reuse` 和 `--core-reuse` 同时开会被参数校验拒绝；`--token-reduction` 叠上 `--layers 40 --reuse 3` 会出振铃和鬼影；`--ssd-streaming` 和 `--use-int8-row-fc2` 不能共存；`--seconds` 和 `--frames` 互斥。真踩了这些，README 里的校验和数字就是你的排查地图。
 

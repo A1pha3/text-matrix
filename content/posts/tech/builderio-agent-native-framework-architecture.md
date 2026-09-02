@@ -3,29 +3,29 @@ title: "BuilderIO/agent-native 拆解：一个让 Agent 和 UI 共享状态的�
 date: "2026-06-19T21:04:05+08:00"
 slug: "builderio-agent-native-framework-architecture"
 github_repo: "BuilderIO/agent-native"
-description: "BuilderIO 发布的 agent-native 框架把 GUI 与 Agent 视为同等公民，用一条 defineAction 把 UI、HTTP、MCP、A2A、CLI、Agent Tool Call 六种调用入口打通。本文从核心抽象、三种产品形态、协议栈、决策边界四个角度做原理拆解。"
+description: "BuilderIO 发布的 agent-native 框架把 GUI 与 Agent 视为同等公民，用一条 defineAction 把 UI、HTTP、MCP、A2A、CLI、Scheduled Jobs、Agent Tool Call 七类调用入口打通。本文从核心抽象、三种产品形态、协议栈、决策边界四个角度做原理拆解。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "MCP"]
 ---
- 
+
 ## 快速信息卡
 
 | 项目 | 信息 |
 |------|------|
-| **Stars** | 2,504+ |
-| **Forks** | 244+ |
-| **许可证** | 未指定 |
+| **Stars** | 2,500+ |
+| **Forks** | 240+ |
+| **许可证** | MIT |
 | **语言** | TypeScript |
 | **仓库** | [BuilderIO/agent-native](https://github.com/BuilderIO/agent-native) |
 
 agent-native 是 Builder.io 用来把自家 SaaS 改造成"Agent + UI 双形态"产品的底座。
 
 ## 学习目标
- 
+
 读完本文后你应当能够：
 
-1. 说清 `defineAction` 为什么能让一个工作单元被 6 种入口消费，以及框架在运行时如何选择执行路径
+1. 说清 `defineAction` 为什么能让一个工作单元被 7 类入口消费，以及框架在运行时如何选择执行路径
 2. 区分 Headless / Rich chat / Whole app 三种产品形态的边界与升级路径
 3. 列出框架默认携带的协议适配清单，并解释"协议随框架一起更新"对工程维护成本的影响
 4. 判断自己的产品是否适合引入 agent-native，并给出可量化的取舍依据
@@ -48,7 +48,7 @@ agent-native 是 Builder.io 用来把自家 SaaS 改造成"Agent + UI 双形态"
 
 ## 核心判断
 
-agent-native 是 Builder.io 用来把自家 SaaS 改造成"Agent + UI 双形态"产品的底座。它最关键的设计是**让一个 Action 同时被 6 种入口消费**：UI 点击、Agent 对话、HTTP API、MCP Server、A2A 调用、CLI 命令。
+agent-native 是 Builder.io 用来把自家 SaaS 改造成"Agent + UI 双形态"产品的底座。它最关键的设计是**让一个 Action 同时被 7 类入口消费**：UI 点击、Agent 对话、HTTP API、MCP Server、A2A 调用、CLI 命令、Scheduled Jobs（定时任务）。
 
 ```ts
 export default defineAction({
@@ -75,6 +75,7 @@ export default defineAction({
 │                 ├─> MCP Server                                │
 │                 ├─> A2A                                       │
 │                 ├─> CLI                                       │
+│                 ├─> Scheduled Jobs                            │
 │                 └─> Agent Tool Call                           │
 │                                                              │
 │   共享：SQL 状态 + 身份 + Skills + Memory + Jobs + Observability │
@@ -105,7 +106,7 @@ README 给出的"决策指南"建议先用 Headless 验证业务流程，再升�
 - **A2A**（Agent-to-Agent）：Agent 之间相互发现并跨应用调用
 - **MCP** + **MCP Apps** + **远程 MCP OAuth** + **MCP Client**
 - **AG-UI**、**OpenAI**、**Claude Agent SDK**、**Vercel AI SDK** 聊天 runtime
-- **HTTP / CLI** Action 调用、**原生 chat widget**、**deep link**
+- **HTTP / CLI** Action 调用、**原生 chat widget**、**deep link**、**Scheduled Jobs**（同一个 `defineAction` 定时触发）
 
 把协议适配放进框架核心层，带来的工程收益是：当 MCP 规范更新或 A2A 新增能力时，升级一个依赖即可让所有 Action 同步获得新协议版本，避免了"先做 chat，再补 MCP，再补 A2A，每个新协议都改一遍核心层"的常见维护路径。代价是团队需要接受框架对协议实现深度的判断，无法自行替换底层 client。
 
@@ -199,7 +200,7 @@ export default defineAction({
 3. 框架执行 `run` 方法，写入数据库
 4. 用户的日历 UI 实时更新
 
-这个案例展示了 `defineAction` 的核心价值：**一个 Action 定义，六种调用方式，共享状态同步**。
+这个案例展示了 `defineAction` 的核心价值：**一个 Action 定义，七类调用方式，共享状态同步**。
 
 ---
 
@@ -212,7 +213,7 @@ export default defineAction({
 <details>
 <summary>参考答案</summary>
 
-传统 server action 绑定单一调用方（通常是 UI），而 `defineAction` 绑定的是契约本身。一个 `defineAction` 定义的工作单元可以被 6 种入口消费：UI 点击、Agent 对话、HTTP API、MCP Server、A2A 调用、CLI 命令。
+传统 server action 绑定单一调用方（通常是 UI），而 `defineAction` 绑定的是契约本身。一个 `defineAction` 定义的工作单元可以被 7 类入口消费：UI 点击、Agent 对话、HTTP API、MCP Server、A2A 调用、CLI 命令、Scheduled Jobs。
 
 </details>
 
@@ -275,7 +276,7 @@ export default defineAction({
 1. **CRDT 合并 + live presence**：人和 Agent 同时编辑同一份文档，光标 / 选区 / 谁在看哪一页都同步
 2. **Per-user workspace**：每个用户一份 SQL 后端的 Skills、Memory、Instructions、Sub-agents、MCP Servers 配置
 3. **Reusable integrations**：在 Dispatch 里"一次接入，授权给多个 app 共享凭证"，避免每个 Agent 重复 OAuth
-4. **`defineAction`**：一个 Action 定义，六种调用方式，共享状态同步
+4. **`defineAction`**：一个 Action 定义，七类调用方式，共享状态同步
 
 </details>
 

@@ -314,9 +314,9 @@ README 直接提到：
 
 ### 8.2 WebMCP：浏览器侧暴露工具给模型
 
-WebMCP 不是 Puppeteer 的功能，而是 W3C Web Machine Learning Community Group 起草的浏览器标准（目前为 [Draft Community Group Report](https://webmachinelearning.github.io/webmcp/)），由 Google 与 Microsoft 的工程师共同编辑，在 Chrome 上以 origin trial 形式逐步开放。它的思路与 MCP 相反：不是 Agent 驱动浏览器，而是网页通过 `navigator.modelContext.registerTool()` 主动声明一组结构化工具（名称、描述、JSON Schema、execute 回调），让浏览器侧的 Agent 直接调用。
+WebMCP 不是 Puppeteer 的功能，而是 W3C Web Machine Learning Community Group 起草的浏览器标准（目前为 [Draft Community Group Report](https://webmachinelearning.github.io/webmcp/)），由 Google 与 Microsoft 的工程师共同编辑，在 Chrome 上以 origin trial 形式逐步开放。它的思路与 MCP 相反：不是 Agent 驱动浏览器，而是网页通过 `document.modelContext.registerTool()` 主动声明一组结构化工具（名称、描述、JSON Schema、execute 回调），让浏览器侧的 Agent 直接调用。
 
-Puppeteer 在 [v24.41.0](https://pptr.dev/guides/webmcp) 加入了对该 API 的原生支持，可以在 Node 侧枚举页面注册的工具并执行它们。这条路径还很新，值得当作长期信号记下来：
+Puppeteer 在 [v24.41.0](https://pptr.dev/guides/webmcp) 加入了对该 API 的原生支持，可以在 Node 侧枚举页面注册的工具并执行它们。它目前要求 Chrome 150 及以上版本，并用 `--enable-features=WebMCP` 启动浏览器才开放。这条路径还很新，值得当作长期信号记下来：
 
 | 方向 | 谁主动 | 典型用例 |
 | --- | --- | --- |

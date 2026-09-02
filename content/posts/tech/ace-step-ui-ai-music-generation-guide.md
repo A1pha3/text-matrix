@@ -2,7 +2,7 @@
 title: "Ace-Step-UI：开源版 Suno 来了，Spotify 风格的本地 AI 音乐生成界面"
 date: "2026-04-29T16:41:29+08:00"
 slug: ace-step-ui-ai-music-generation-guide
-github_repo: "ace-step/ACE-Step"
+github_repo: "ace-step/ACE-Step-1.5"
 description: "Ace-Step-UI 是 ACE-Step 1.5 AI 音乐生成模型的专业 Web UI，Spotify 风格界面，完全本地运行、免费无限制，是 Suno 的开源替代方案。"
 draft: false
 categories: ["技术笔记"]
@@ -53,7 +53,7 @@ tags: ["React", "TypeScript", "AI音乐", "Tailwind CSS", "开源"]
   - [8.1 最佳使用场景](#81-最佳使用场景)
   - [8.2 当前局限性](#82-当前局限性)
 - [9. 常见问题与排查](#9-常见问题与排查)
-  - [9.1 后端连不上](#91-后端连不上)
+  - [9.1 引擎或服务端连不上](#91-引擎或服务端连不上)
   - [9.2 生成失败或一直不返回](#92-生成失败或一直不返回)
   - [9.3 音频无法播放](#93-音频无法播放)
   - [9.4 历史记录丢失](#94-历史记录丢失)
@@ -69,7 +69,7 @@ tags: ["React", "TypeScript", "AI音乐", "Tailwind CSS", "开源"]
 
 ### 1.1 Ace-Step-UI 是什么
 
-**Ace-Step-UI** 是 [ACE-Step 1.5](https://github.com/ace-step/ACE-Step) AI 音乐生成模型的第三方 Web UI，由社区开发者 fspecii 维护，仓库地址为 [fspecii/ace-step-ui](https://github.com/fspecii/ace-step-ui)。它把 ACE-Step 模型包装成接近 Spotify 的交互界面，让本地生成音乐的操作步骤从命令行参数和脚本调用，收敛到填 Prompt、调参数、点生成这三步。
+**Ace-Step-UI** 是 [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) AI 音乐生成模型的第三方 Web UI，由社区开发者 fspecii 维护，仓库地址为 [fspecii/ace-step-ui](https://github.com/fspecii/ace-step-ui)。它把 ACE-Step 模型包装成接近 Spotify 的交互界面，让本地生成音乐的操作步骤从命令行参数和脚本调用，收敛到填 Prompt、调参数、点生成这三步。
 
 与需要联网和付费的 Suno 不同，Ace-Step-UI 跑在你自己的机器上，没有使用次数限制，无收入分成，也没有平台审核。你可以用它生成任意风格的音乐——从流行到古典，从电子到爵士——全部在本地完成。
 
@@ -80,13 +80,13 @@ tags: ["React", "TypeScript", "AI音乐", "Tailwind CSS", "开源"]
 | Stars | 截至 2026 年 4 月，2,000+ ⭐ |
 | 语言 | TypeScript 60.3%，CSS 33.3% |
 | 框架 | React 18，TailwindCSS |
-| 最近一次提交 | 2026 年 6 月（截至 2026 年 6 月访问时） |
-| 推荐版本 | ACE-Step v1.5+ |
-| 许可证 | 开源（许可证见 GitHub 仓库 README） |
+| 最近一次提交 | 持续开发中（数据采集时） |
+| 推荐版本 | ACE-Step 1.5 引擎 + Ace-Step-UI 最新版 |
+| 许可证 | 开源（两者许可证以各自 GitHub 仓库 README 为准） |
 | GitHub | [fspecii/ace-step-ui](https://github.com/fspecii/ace-step-ui) |
-| 后端模型 | [ace-step/ACE-Step](https://github.com/ace-step/ACE-Step) |
+| 后端引擎 | [ace-step/ACE-Step-1.5](https://github.com/ace-step/ACE-Step-1.5) |
 
-数据来源：[fspecii/ace-step-ui](https://github.com/fspecii/ace-step-ui) 仓库 Insights 页，访问于 2026-04-29。
+数据来源：[fspecii/ace-step-ui](https://github.com/fspecii/ace-step-ui) 仓库 Insights 页与仓库 `README`，访问于 2026-04-29。Star 数量、最近提交时间等指标会随仓库变化，请以实际页面为准。
 
 ### 1.3 为什么需要 Ace-Step-UI
 
@@ -101,29 +101,28 @@ Ace-Step-UI 把生成过程搬到本地 GPU/CPU 上，Web UI 只负责交互。�
 
 ### 1.4 系统总览
 
-Ace-Step-UI 是一个纯前端项目，本身不含模型。它通过 HTTP 与后端 ACE-Step 服务通信，浏览器负责交互和音频播放，后端负责模型推理和文件存储。三者边界如下：
+Ace-Step-UI 是一个**全栈项目**，不是纯前端：浏览器里跑的是 React 前端，机器上还有一个 Node.js 服务端（Express + SQLite），由它统一承接浏览器请求、落库生成历史，并把生成任务转交给真正的模型服务——ACE-Step 1.5 的 Gradio REST API。浏览器负责交互和音频播放，Express 服务端负责代理请求与持久化，模型负责推理与产出音频文件。三者边界如下：
 
 ```text
-┌─────────────────────────────┐         ┌─────────────────────────────┐
-│  浏览器：Ace-Step-UI         │         │  后端：ACE-Step 服务         │
-│                              │  HTTP   │                              │
-│  PromptInput ──► services    │ ──────► │  /api/generate ──► 任务队列  │
-│                       │      │         │                       │      │
-│  Zustand Store ◄──────┘      │ ◄────── │  ◄──── /api/status/{id}    │
-│       │                      │  轮询   │                              │
-│       ▼                      │         │  ACE-Step 1.5 推理           │
-│  AudioPlayer ◄───────────────│ ◄────── │  ──► /api/result/{id}       │
-│  (Web Audio API)             │  拉取   │  (返回音频 URL)              │
-└─────────────────────────────┘         └─────────────────────────────┘
+┌────────────────────────────┐      ┌─────────────────────────────────┐      ┌────────────────────────┐
+│ 浏览器：Ace-Step-UI 前端     │      │ 服务端：Express + SQLite          │      │ 引擎：ACE-Step 1.5      │
+│                            │ HTTP │                                 │ HTTP │  (Gradio REST API)     │
+│ PromptInput ──► services   │─────►│  /api/generate ──► 任务队列      │─────►│                        │
+│                  │         │      │        │                        │      │  ──► 推理，输出音频文件 │
+│ Zustand Store ◄──┘         │◄─────│  ◄──── /api/status/{id}        │◄─────│  ◄───── 轮询生成状态   │
+│       │                    │ 轮询  │        │                        │      │                        │
+│       ▼                    │      │ /api/result/{id} 返回音频 URL   │      │                        │
+│ AudioPlayer (Web Audio API)│      │ SQLite 持久化生成历史           │      │                        │
+└────────────────────────────┘      └─────────────────────────────────┘      └────────────────────────┘
 ```
 
-三个边界各自负责：
+三层各自负责：
 
-- **浏览器**：接收用户输入、管理状态、播放音频，所有 UI 逻辑都在这里。
-- **后端 API**：接收生成请求、排队、轮询状态、返回结果，是前端和模型之间的桥梁。
-- **模型推理**：ACE-Step 1.5 模型在前端不可见的地方跑推理，输出音频文件。
+- **浏览器（前端）**：接收用户输入、管理状态、播放音频，所有 UI 逻辑都在这里，只和 Express 服务端对话，不直接接触模型。
+- **服务端（Express + SQLite）**：前端和模型之间的桥梁。它接收生成请求、排队调度、轮询模型状态、把结果 URL 回给前端，并把每一条生成历史写进本地 SQLite。引擎参数、模型地址这些配置也在这里。
+- **引擎（ACE-Step 1.5）**：真正跑推理的地方，以 Gradio 服务形式暴露 REST API，输出音频文件。它独立于 UI，可单独启动。
 
-这条边界决定了后续的排查思路：生成慢找 GPU，播放卡找浏览器音频层或网络，连不上找后端进程或网络配置。第 4 节会用一次具体任务把这条链路走一遍。
+这条边界决定了排查方向：生成慢找引擎 GPU，播放卡找浏览器音频层或网络，连不上先分清是 Express 服务端没起，还是模型 Gradio 服务没起。第 4 节会用一次具体任务把这条链路走一遍。
 
 [↑ 回到目录](#目录)
 
@@ -178,7 +177,9 @@ Ace-Step-UI 的技术栈围绕"快速搭建可维护的本地工具"这一目标
 
 这套组合不需要额外搭建配置体系，维护者能把精力放在交互细节上。
 
-### 3.2 前端架构
+### 3.2 前端架构与仓库布局
+
+仓库按"前端 + 服务端"分两半，本文主要讲前端的 `src/`：
 
 ```text
 src/
@@ -188,26 +189,30 @@ src/
 │   ├── History/      # 生成历史
 │   └── Controls/     # 参数控制面板
 ├── hooks/            # 自定义 React Hooks
-├── services/         # 与后端 API 通信
+├── services/         # 与 Express 服务端 API 通信
 ├── stores/           # 状态管理（Zustand）
 └── utils/            # 工具函数
+
+server/               # Node.js 服务端（Express + SQLite）
+├── routes/           # /api/generate、/api/status、/api/result 等接口
+└── data/             # SQLite 数据库文件与迁移
 ```
 
 **组件化设计**：每个功能模块都是一个独立组件，通过 props（属性）和 context 传递数据。
 
-**状态管理**：使用 Zustand（React 状态管理库）管理全局状态，包括当前播放歌曲、生成队列、历史记录等。相比 Redux，Zustand 的 API 更加简洁，样板代码更少。
+**状态管理**：使用 Zustand（React 状态管理库）管理全局状态，包括当前播放歌曲、生成队列、历史记录等。相比 Redux，Zustand 的 API 更加简洁，样板代码更少。仓库的同名 `server/` 目录用 SQLite 做服务端持久化，与前端 `localStorage` 具体如何分工、历史面板从哪一层读，随版本在变，改动前先看当前代码。
 
 ### 3.3 与后端 ACE-Step 的通信
 
-Ace-Step-UI 本身不包含音乐生成模型，它是一个**纯前端 UI**，通过 HTTP API 与后端的 ACE-Step 模型服务通信。
+Ace-Step-UI 本身不包含音乐生成模型，模型推理委托给独立的 ACE-Step 1.5 Gradio 服务。浏览器**不直接**访问模型，而是先打到 Ace-Step-UI 自己的 Express 服务端，由服务端把生成请求转发给模型，再轮询结果。这样模型地址、鉴权、队列这些细节都收敛在服务端，前端只面对一组干净的 REST 接口。
 
 典型的工作流程：
 
 1. 用户在前端填写 Prompt 和参数。
-2. 前端将请求 POST 到后端 API：`POST /api/generate`。
-3. 后端调用 ACE-Step 1.5 模型生成音乐。
-4. 后端返回音频文件或音频 URL。
-5. 前端接收结果，添加到播放列表并自动播放。
+2. 前端将请求 POST 到 Express 服务端：`POST /api/generate`。
+3. Express 服务端把任务转交 ACE-Step 1.5 的 Gradio API，进入模型生成队列。
+4. 服务端轮询模型生成状态，完成后拿到音频文件地址。
+5. 服务端向前端返回音频 URL，前端加入播放列表并自动播放。
 
 以下为示意代码，非仓库原貌，仅用于说明请求结构：
 
@@ -234,11 +239,11 @@ async function generateMusic(req: GenerateRequest): Promise<string> {
 
 ### 3.4 实时反馈机制
 
-AI 音乐生成是耗时操作，可能需要几十秒到几分钟。Ace-Step-UI 用三种方式提供实时反馈：
+AI 音乐生成是耗时操作，可能需要几十秒到几分钟。Ace-Step-UI 的 Express 服务端维护一个生成队列，用三种方式提供实时反馈：
 
-- **进度指示器**：轮询后端获取生成进度（如果后端提供）。
+- **进度指示器**：前端轮询 Express 服务端获取生成进度，服务端再向下游模型查询。
 - **生成状态文字**：显示"正在生成…""排队中""已完成"等状态。
-- **取消机制**：支持取消正在排队的生成任务。
+- **取消机制**：支持取消正在排队的生成任务（能否中断已开始的推理，视当前版本与模型而定）。
 
 [↑ 回到目录](#目录)
 
@@ -261,9 +266,9 @@ AI 音乐生成是耗时操作，可能需要几十秒到几分钟。Ace-Step-UI
 }
 ```
 
-**步骤 2：提交到后端并获取任务 ID**
+**步骤 2：提交给服务端并获取任务 ID**
 
-服务层调用 `submitGeneration`，POST 到 `${API_BASE}/api/generate`。后端 ACE-Step 服务收到请求后，把任务排入队列，立即返回一个 `id`（例如 `"task_8f3a2b"`），前端用这个 ID 后续轮询状态。此时 Zustand store 里的生成队列新增一条"排队中"记录，UI 上对应卡片显示"排队中"。
+服务层调用 `submitGeneration`，POST 到 `${API_BASE}/api/generate`——这里的 `API_BASE` 指向 Ace-Step-UI 自己的 Express 服务端，不是模型。服务端收到请求后，把任务排入自己的队列（必要时再转交 ACE-Step 1.5 Gradio 服务），立即返回一个 `id`（例如 `"task_8f3a2b"`）。前端用这个 ID 后续轮询状态。此时 Zustand store 里的生成队列新增一条"排队中"记录，UI 上对应卡片显示"排队中"。
 
 **步骤 3：轮询状态直到完成**
 
@@ -271,7 +276,7 @@ AI 音乐生成是耗时操作，可能需要几十秒到几分钟。Ace-Step-UI
 
 **步骤 4：拉取音频 URL 并交给播放器**
 
-状态完成后，前端调用 `fetchAudioUrl(id)` 拿到音频文件地址（例如 `http://localhost:8000/outputs/task_8f3a2b.wav`）。这个 URL 被传给 `AudioPlayer` 实例，`AudioPlayer` 内部用 `HTMLAudioElement` 加载音频，同时通过 Web Audio API 把分析节点接到波形可视化组件上。
+状态完成后，前端调用 `fetchAudioUrl(id)` 拿到音频文件地址（由服务端返回，具体端口以部署配置为准）。这个 URL 被传给 `AudioPlayer` 实例，`AudioPlayer` 内部用 `HTMLAudioElement` 加载音频，同时通过 Web Audio API 把分析节点接到波形可视化组件上。
 
 **步骤 5：写入历史记录**
 
@@ -281,7 +286,7 @@ AI 音乐生成是耗时操作，可能需要几十秒到几分钟。Ace-Step-UI
 
 用户点击播放按钮，`AudioPlayer.play()` 触发 `HTMLAudioElement.play()`，底部迷你播放器开始展示进度。如果用户点击下载，前端直接对音频 URL 发起 GET 请求，浏览器以 WAV 或 MP3 文件保存到本地。
 
-第 9 节会按这条链路给出排查清单：生成慢找 GPU，播放卡找浏览器音频层或网络，连不上找后端进程或网络配置。
+第 9 节会按这条链路给出排查清单：生成慢找引擎 GPU，播放卡找浏览器音频层或网络，连不上先分清单是 Express 服务端没起，还是模型 Gradio 服务没起。
 
 [↑ 回到目录](#目录)
 
@@ -295,43 +300,42 @@ AI 音乐生成是耗时操作，可能需要几十秒到几分钟。Ace-Step-UI
 
 ### 5.2 安装步骤
 
-**步骤一：克隆项目**
+Ace-Step-UI 有"引擎 + UI"两段依赖，且两者都启动后 UI 才能用。仓库为 Linux/macOS 与 Windows 各提供了一键启动脚本（`start-all.sh` / `start-all.bat`），也支持通过 Pinokio 一键安装。下面先给最短路径，再给手动拆解。
+
+**最短路径：先把引擎跑起来，再一键启动**
+
+1. 先把 ACE-Step 1.5 引擎跑起来，打通它的 Gradio REST API。启动方式见 [ACE-Step-1.5](https://github.com/ace-step/ACE-Step-1.5) 仓库 README（Windows 官方提供内置 Python 的便携版）。
+2. 克隆 UI 仓库，在根目录运行一键脚本：
 
 ```bash
 git clone https://github.com/fspecii/ace-step-ui.git
 cd ace-step-ui
+./start-all.sh    # Linux/macOS；Windows 用 start-all.bat
 ```
 
-**步骤二：安装依赖**
+脚本会把 Express 服务端和前端一起拉起。启动后按脚本打印的地址访问（多数配置下是 `http://localhost:3000`，端口以实际输出为准）。
+
+**手动模式（可选）**
+
+如果不想用一键脚本，按下面分步启动：
 
 ```bash
+# 1. 安装依赖
 npm install
-# 或者使用 yarn
-yarn install
-```
 
-**步骤三：配置后端地址**
-
-如果 ACE-Step 后端不在本地运行，需要配置 API 地址：
-
-```bash
-# 创建环境变量文件
+# 2. 复制环境变量文件并按注释填写
 cp .env.example .env
-# 编辑 .env 文件
-VITE_API_BASE_URL=http://your-ace-step-server:port
+#    两处地址分别指向不同地方：
+#    - 前端 → 服务端：VITE_API_BASE_URL=http://localhost:3000
+#    - 服务端 → 模型：ACESTEP_API_URL=http://localhost:8001   ← ACE-Step 1.5 Gradio
+#    变量名与默认端口以仓库 .env.example 为准
+
+# 3. 分别启动服务端与前端（命令以仓库 README 为准）
 ```
 
-**步骤四：启动开发服务器**
+端口与变量名随版本可能变化，迁移前先看仓库 `.env.example` 与 `README`。
 
-```bash
-npm run dev
-# 或
-yarn dev
-```
-
-浏览器自动打开 `http://localhost:5173`，即可看到 Ace-Step-UI 界面。
-
-**步骤五：构建生产版本**
+**构建生产版本**
 
 ```bash
 npm run build
@@ -340,23 +344,23 @@ npm run preview  # 本地预览生产构建
 
 ### 5.3 Docker 部署
 
-如果你的 ACE-Step 后端已经通过 Docker 运行，可以一起编排部署。以下为示意配置，非仓库原貌。确认实际字段的方式：克隆仓库后执行 `cat docker-compose.yml`，或直接在 GitHub 上查看 [仓库根目录的 docker-compose.yml](https://github.com/fspecii/ace-step-ui/blob/main/docker-compose.yml)。示例配置如下：
+如果你的 ACE-Step 引擎已经通过 Docker 运行，可以一起编排部署。以下为示意配置，非仓库原貌。确认实际字段的方式：克隆仓库后查看 `.env.example` 与 `README`，以实际镜像名和端口为准。示意如下：
 
 ```yaml
-# docker-compose.yml（示例）
+# docker-compose.yml（示意，非仓库原貌）
 version: '3.8'
 services:
-  ace-step-backend:
-    image: ace-step-model:latest
+  ace-step-engine:            # ACE-Step 1.5 Gradio REST API
+    image: ace-step-1.5:latest
     ports:
-      - "8000:8000"
-
+      - "8001:8001"
   ace-step-ui:
     build: .
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_BASE_URL=http://ace-step-backend:8000
+      - ACESTEP_API_URL=http://ace-step-engine:8001   # UI 服务端 → 模型引擎
+      - VITE_API_BASE_URL=http://localhost:3000       # 前端 → UI 服务端
 ```
 
 ```bash
@@ -512,7 +516,7 @@ export class AudioPlayer {
 
 ```typescript
 // services/aceStep.ts
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export interface GenerateParams {
   duration?: number;
@@ -723,7 +727,7 @@ export const useHistoryStore = create<HistoryStore>()(
 4. 再调参数和批量生成（稳定后再尝试温度、种子、风格等参数）
 5. 最后考虑二次开发（fork（派生）仓库改组件）
 
-**为什么后端先跑通**：Ace-Step-UI 是纯前端 UI，本身不含模型。如果后端没跑通，前端所有操作都会失败（连不上、`Failed to fetch`）。先验证后端能独立生成音频，才能隔离问题——是模型/显存问题，还是前端/网络问题。
+**为什么引擎先跑通**：前端不直接跑模型，模型在独立的 ACE-Step 1.5 引擎里。如果引擎没起来，UI 服务端转交失败，前端所有操作都会报错（连不上、`Failed to fetch`）。先验证引擎能独立生成音频，才能隔离问题——是模型/显存问题，还是 UI/网络问题。
 
 （对应章节：10.1）
 
@@ -755,21 +759,21 @@ export const useHistoryStore = create<HistoryStore>()(
 
 下面把部署和使用中容易踩的坑集中列出，按"现象 → 排查 → 修复"的顺序写。遇到问题先在这里找一遍，再去看后端日志。
 
-### 9.1 后端连不上
+### 9.1 引擎或服务端连不上
 
 **现象**：前端点击"生成"后立刻报错，控制台出现 `Failed to fetch` 或 `NetworkError`，卡片状态一直停在"排队中"。
 
-**排查**：
+**排查**：请求要过两跳——浏览器 → Express 服务端 → ACE-Step 引擎。先分清是哪一跳断了：
 
-1. 确认 ACE-Step 后端进程在跑：`curl http://localhost:8000/` 看是否有响应（端口以你实际启动的为准）。
+1. 确认 Express 服务端在跑：把浏览器访问的地址在地址栏里打开，能见到页面说明前端已就绪；再按 5.2 节的 `.env` 配置核对 `ACESTEP_API_URL` 是否指向引擎。直接 `curl http://localhost:8001/`（端口以你实际启动的为准）看引擎 Gradio 是否有响应。
 2. 确认 `VITE_API_BASE_URL` 配置正确。本地开发时这个变量在 `.env` 文件里读取，注意 Vite 的环境变量必须以 `VITE_` 前缀才能在前端代码中访问。
 3. 浏览器 DevTools → Network 面板，看请求实际打到的 URL 和端口，确认没有走错地址。
-4. 如果后端在远程机器上，确认防火墙放行了对应端口，且没有走 VPN（虚拟专用网络）拦截。
+4. 如果引擎在远程机器上，确认防火墙放行了对应端口，且没有走 VPN（虚拟专用网络）拦截。
 
 **修复**：
 
-- `.env` 文件改完后必须重启 `npm run dev`，Vite 不会热加载环境变量。
-- 如果是跨域问题（控制台报 CORS（跨域资源共享）错误），需要在 ACE-Step 后端允许 Ace-Step-UI 的来源，或在 Vite 配置里加 `server.proxy`（代理）把 `/api` 转发到后端。
+- `.env` 文件改完后必须重启对应的服务端进程，环境变量不会自动热加载。
+- 如果是跨域问题（控制台报 CORS（跨域资源共享）错误），需要在引擎或 Express 服务端一侧允许 UI 的来源，或在服务端配置里加代理，避免浏览器直接跨域。
 
 ### 9.2 生成失败或一直不返回
 
@@ -839,8 +843,8 @@ export const useHistoryStore = create<HistoryStore>()(
 
 上手 Ace-Step-UI 建议按以下顺序推进，每一步验证通过再进入下一步：
 
-1. **先跑通 ACE-Step 后端**：Ace-Step-UI 是纯 UI 项目，模型推理完全依赖后端。先按照 [ace-step/ACE-Step](https://github.com/ace-step/ACE-Step) 仓库的说明把 Gradio 服务跑起来，确认能从命令行生成一段音频。
-2. **再启动 Ace-Step-UI**：后端就绪后，克隆 UI 仓库，配置 `VITE_API_BASE_URL` 指向后端地址，运行 `npm run dev`。第一次启动时只验证"能连上后端、能发请求"。
+1. **先跑通 ACE-Step 引擎**：前端不跑模型，模型在独立的 ACE-Step 1.5 引擎里。先按照 [ACE-Step-1.5](https://github.com/ace-step/ACE-Step-1.5) 仓库的说明把 Gradio 服务跑起来，确认能从命令行生成一段音频。
+2. **再启动 Ace-Step-UI**：引擎就绪后，克隆 UI 仓库，用一键脚本或手动模式启动（参考 5.2 节），配置 `.env` 里的 `ACESTEP_API_URL` 指向引擎地址。第一次启动只验证"UI 能连引擎、能发请求"。
 3. **用简单 Prompt 验证链路**：首次生成用简短英文 Prompt（如 `"lo-fi hip hop, 90 BPM"`），确认音频能播放、能下载、能进历史记录。
 4. **再调参数和批量生成**：链路稳定后，再尝试调温度、固定种子复现、批量生成对比风格。
 5. **最后考虑二次开发**：如果需要定制 UI 或接入工作流，再 fork 仓库改组件。
@@ -867,7 +871,7 @@ export const useHistoryStore = create<HistoryStore>()(
 
 跑通基本流程后，下面几条方向可以按兴趣挑选：
 
-1. **读 ACE-Step 模型源码**：克隆 [ace-step/ACE-Step](https://github.com/ace-step/ACE-Step)，重点看推理入口和音频后处理模块，理解 Prompt 如何变成音频帧。
+1. **读 ACE-Step 模型源码**：克隆 [ace-step/ACE-Step-1.5](https://github.com/ace-step/ACE-Step-1.5)，重点看推理入口和音频后处理模块，理解 Prompt 如何变成音频帧。
 2. **尝试 LoRA（低秩适配）微调**：用自己收藏的曲目做数据集，对 ACE-Step 1.5 做 LoRA 微调，让模型在特定风格（如某类民乐）上更稳定。微调流程以 ACE-Step 仓库 README 为准。
 3. **改造 AudioPlayer 支持多轨**：在现有 `AudioPlayer` 基础上扩展多个 `HTMLAudioElement` 实例，配合 `GainNode` 做混音，为后续多轨编辑功能打基础。
 4. **接入工作流编排**：把 `submitGeneration` 封装成命令行脚本或 CI 步骤，实现批量生成、自动归档到指定目录。
@@ -887,10 +891,10 @@ export const useHistoryStore = create<HistoryStore>()(
 
 ## 资料口径说明
 
-本文基于 Ace-Step-UI 官方仓库（github.com/fspecii/ace-step-ui）、ACE-Step 模型仓库（github.com/ace-step/ACE-Step）以及实际部署测试撰写。需要说明的边界：
+本文基于 Ace-Step-UI 官方仓库（github.com/fspecii/ace-step-ui）、ACE-Step 1.5 引擎仓库（github.com/ace-step/ACE-Step-1.5）以及实际部署测试撰写。需要说明的边界：
 
-1. **版本时效性**：本文基于 Ace-Step-UI 近期版本（2026 年 4-6 月）撰写，项目处于活跃开发阶段，UI 布局、组件结构、API 端点可能随版本变化，请以[官方 GitHub 仓库](https://github.com/fspecii/ace-step-ui)的最新代码为准。
-2. **ACE-Step 模型依赖**：Ace-Step-UI 本身不含音乐生成模型，必须依赖后端 ACE-Step 服务。模型推理质量、支持的参数、生成速度取决于 ACE-Step 版本和硬件条件，本文无法保证在所有环境下的一致性体验。
+1. **版本时效性**：本文基于 Ace-Step-UI 近期版本（2026 年 4 月）撰写，项目处于活跃开发阶段，UI 布局、组件结构、API 端点可能随版本变化，请以[官方 GitHub 仓库](https://github.com/fspecii/ace-step-ui)的最新代码为准。
+2. **引擎依赖**：Ace-Step-UI 本身不含音乐生成模型，必须依赖独立的 ACE-Step 1.5 引擎（以 Gradio REST API 形式运行）。模型推理质量、支持的参数、生成速度取决于引擎版本和硬件条件，本文无法保证在所有环境下的一致性体验。
 3. **硬件要求**：文中提到的 GPU 显存要求（4GB 以上）为社区经验值，实际所需显存会因 `duration`、模型版本、并发数而变化。无 GPU 时的 CPU 模式生成时间可能远超预期，请以实际测试为准。
 4. **代码示例性质**：第 6 节的代码均为示意代码，用于说明组件结构、状态管理和通信逻辑，不是仓库原貌。实际实现请参考仓库源码，本文代码仅供参考。
 5. **浏览器兼容性**：Web Audio API 和 `HTMLAudioElement` 的行为在不同浏览器（Chrome/Firefox/Safari/Edge）上存在差异，尤其是 `canplaythrough` 事件和 `load()` 方法的 Promise 支持。本文第 6.2 节已标注 Safari 兼容性注意事项，实际部署时请充分测试目标浏览器。

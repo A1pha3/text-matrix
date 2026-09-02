@@ -1,9 +1,9 @@
 ---
-title: "scrcpy：138k Stars Android 屏幕镜像完全指南"
-date: "2026-04-06T22:23:00+08:00"
+title: "scrcpy：148k Stars Android 屏幕镜像完全指南"
+date: "2026-09-01T10:00:00+08:00"
 slug: "scrcpy-android-screen-mirror-guide"
 github_repo: "Genymobile/scrcpy"
-description: "全面介绍 138k Stars 的 scrcpy Android 屏幕镜像工具，涵盖安装配置、USB/无线连接、屏幕录制、音频转发、键盘鼠标/游戏手柄控制、OTG 模式、摄像头镜像、性能优化等全部功能。"
+description: "全面介绍 148k Stars 的 scrcpy Android 屏幕镜像工具，涵盖安装配置、USB/无线连接、屏幕录制、音频转发、键盘鼠标/游戏手柄控制、OTG 模式、摄像头镜像、性能优化等全部功能。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Android"]
@@ -60,13 +60,13 @@ tags: ["Android"]
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | **138k** |
-| GitHub Forks | **12.9k** |
-| Contributors | **150+** |
-| Releases | **50+** |
-| 最新版本 | **v3.3.4** (2025-12-18) |
+| GitHub Stars | **148k** |
+| GitHub Forks | **13.7k** |
+| Contributors | **166** |
+| Releases | **52** |
+| 最新版本 | **v4.1** (2026-07-13) |
 | License | **Apache-2.0** |
-| 语言 | **C 63.9%**，Java 31.8% |
+| 语言 | **C 63.1%**，Java 32.7% |
 
 ### 1.3 项目特点
 
@@ -297,14 +297,20 @@ scrcpy --record=screen.mp4 -m 1920
 ### 4.3 音频转发
 
 ```bash
-# Android 11+ 支持音频转发
-scrcpy --audio
+# Android 11+ 支持音频转发（默认开启）
+scrcpy
+
+# 显式指定音频源（v3.2+ 支持多种来源）
+scrcpy --audio-source=output        # 设备扬声器输出（默认）
+scrcpy --audio-source=mic           # 麦克风
+scrcpy --audio-source=mic-unprocessed   # 未处理的麦克风原始音频
+scrcpy --audio-source=voice-communication  # 语音通话（含回声消除）
 
 # 录制音频 + 视频
-scrcpy --record=output.mp4 --audio
+scrcpy --record=output.mp4
 ```
 
-> **注意**：音频转发需要 Android 11 以上，且某些设备可能因为厂商定制 ROM 而不支持。
+> **注意**：音频转发需要 Android 11 以上，且某些设备可能因为厂商定制 ROM 而不支持。从 v2.0 起音频默认开启，不需要显式加 `--audio`；想关闭用 `--no-audio`。v3.2+ 通过 `--audio-source` 选择捕获来源（如麦克风、语音通话等），详见官方 audio 文档。
 
 ### 4.4 屏幕关闭镜像
 
@@ -312,14 +318,14 @@ scrcpy --record=output.mp4 --audio
 # 镜像时关闭设备屏幕（节省电量，同时减少发热）
 scrcpy --turn-screen-off
 
-# 或按快捷键 Ctrl+Shift+O 切换屏幕开关
+# 或按快捷键 MOD+O 关闭屏幕 / MOD+Shift+O 重新点亮（保持镜像）
 ```
 
 **适用场景**：已经熟悉操作后，可以关闭手机屏幕，只用电脑显示器。
 
 ### 4.5 复制粘贴
 
-scrcpy 支持剪贴板同步：
+scrcpy 支持剪贴板双向同步：
 
 ```bash
 # 自动同步剪贴板（默认启用）
@@ -331,8 +337,11 @@ scrcpy --no-clipboard-autosync
 
 **操作方式**：
 
-- 电脑 → 设备：在 scrcpy 窗口中按 `Ctrl+V`
-- 设备 → 电脑：在设备上复制，然后在电脑上按 `Ctrl+C`（需要 scrcpy 窗口处于焦点状态）
+- 电脑 → 设备：在 scrcpy 窗口中按 `MOD+v`（同步并粘贴，需 Android 7+）
+- 设备 → 电脑：在设备上复制，然后在 scrcpy 窗口按 `MOD+c`（复制设备剪贴板到电脑）
+- 若应用不支持粘贴（如 Termux），可用 `MOD+Shift+v` 将电脑剪贴板内容作为按键序列注入
+
+> 注意：这里用 `MOD` 指代修饰键，默认是 `Alt` 或 `Super`（Windows/Command 键），可用 `--shortcut-mod` 自定义。下文所有快捷键同理。
 
 ---
 
@@ -343,56 +352,69 @@ scrcpy --no-clipboard-autosync
 | 操作 | 说明 |
 |------|------|
 | **左键点击** | 相当于点击设备屏幕对应位置 |
-| **右键点击** | 返回键 |
+| **右键点击** | 返回键（屏幕亮时）；点亮屏幕（屏灭时） |
 | **中键点击** | HOME 键 |
 | **滚轮** | 滚动列表（相当于滑动手势） |
-| **拖拽文件到窗口** | 将文件推送到设备 `/sdcard/Download/` |
+| **拖入 APK 文件** | 安装 APK 到设备 |
+| **拖入其他文件** | 将文件推送到设备 `/sdcard/Download/` |
 
 ### 5.2 键盘控制
 
+scrcpy 默认用 `MOD`（Alt 或 Super 键）作为快捷键前缀。所有 `Ctrl+*` 组合键会原样透传给设备，由设备上的应用处理。
+
 | 快捷键 | 功能 |
 |--------|------|
-| **Ctrl+H** | 返回键 |
-| **Ctrl+S** | HOME 键 |
-| **Ctrl+M** | 多任务键 |
-| **Ctrl+↑/↓** | 音量调节 |
-| **Ctrl+P** | 电源键（唤醒/锁屏） |
+| **MOD+H** | 返回键（Home） |
+| **MOD+B** | 返回键（Back） |
+| **MOD+S** | 多任务键（App Switch） |
+| **MOD+M** | 菜单键 |
+| **MOD+↑/↓** | 音量调节 |
+| **MOD+P** | 电源键（唤醒/锁屏） |
 | **打字** | 直接在设备输入框中输入 |
 
 ### 5.3 游戏手柄支持
 
-scrcpy 支持通过 USB HID 模拟游戏手柄输入：
+scrcpy 支持将电脑上插着的物理手柄模拟为设备的 HID 游戏手柄：
 
 ```bash
-# 启用游戏手柄控制（需要 Linux，且需要 uinput 权限）
+# UHID 模式（默认关闭，需要启用）
 scrcpy --gamepad=uhid
-
 # 或使用短参数
 scrcpy -G
 ```
 
-**支持的游戏手柄按钮映射**：
+**两种模式**：
 
-- 左/右摇杆：相当于触摸滑动
+- **UHID**（`--gamepad=uhid` / `-G`）：通过设备内核 UHID 模块模拟物理手柄，跨平台通用。老版本 Android 可能因权限问题不可用。
+- **AOA**（`--gamepad=aoa`）：走 AOAv2 协议在 USB 层直接工作，仅在 USB 连接时可用，不需要 ADB/USB 调试，可在 OTG 模式下使用。Windows 上镜像时可能无法使用（USB 设备已被 adb 占用）。
+
+**支持的手柄按钮映射**：
+
+- 左/右摇杆：对应触摸滑动
 - A/B/X/Y 按钮：点击屏幕对应区域
 - LB/RB：菜单按钮
 - Start/Select：返回/主页
 
-> **注意**：游戏手柄支持在 Linux 上最稳定。Windows 和 macOS 可能需要额外配置。
-
 ### 5.4 OTG 模式
 
-OTG 模式允许你只使用键盘和鼠标控制设备，不需要 USB 调试：
+OTG 模式允许你只使用键盘和鼠标控制设备，不需要 USB 调试（ADB）：
 
 ```bash
 # OTG 模式（只需要 USB 连接，不需要 ADB）
 scrcpy --otg
 
-# 只启用键盘和鼠标（不需要 ADB，适合设备无法开启 USB 调试的场景）
-scrcpy --otg --keyboard=uhid --mouse=uhid
+# 禁用键盘或鼠标（默认两者都启用）
+scrcpy --otg --keyboard=disabled
+scrcpy --otg --mouse=disabled
+
+# 同时启用游戏手柄（默认关闭）
+scrcpy --otg --gamepad=aoa
+scrcpy --otg -G # 短参数
 ```
 
-**适用场景**：设备无法开启 USB 调试（例如某些 IoT 设备），或者只想用键盘鼠标操作而不需要屏幕镜像。
+**工作原理**：OTG 模式下视频和音频被禁用，scrcpy 隐式启用 `--keyboard=aoa` 和 `--mouse=aoa`，通过 AOAv2 协议把电脑键盘、鼠标模拟成直接插在设备上的物理外设——等效于用 OTG 线连接。该模式仅适用于 USB 连接。
+
+**注意**：OTG 的目的是"免 USB 调试控制设备"。如果只是想"不投屏、仅控制"且 USB 调试已开启，不必用 OTG，直接用 `--no-video --no-audio -KMG`（UHID 模式，还支持无线）即可。
 
 ---
 
@@ -411,9 +433,15 @@ scrcpy --video-source=camera --camera-facing=front
 
 # 指定分辨率
 scrcpy --video-source=camera --camera-size=1920x1080
+
+# 指定帧率（默认 30fps）
+scrcpy --video-source=camera --camera-fps=60
+
+# 列出设备可用的摄像头与分辨率
+scrcpy --list-cameras
 ```
 
-**为什么这个功能有用？** 可以把 Android 设备当作电脑的高清摄像头使用，用于视频会议等场景。
+**为什么这个功能有用？** 可以把 Android 设备当作电脑的高清摄像头使用，用于视频会议等场景。摄像头模式下音频源会自动切换为麦克风（可用 `--audio-source=output` 改回设备扬声器）。相关参数：`--camera-id`（按 ID 选择）、`--camera-zoom`（变焦）、`--camera-torch`（手电筒，动态用 `MOD+T`/`MOD+Shift+T` 开关）。
 
 ### 6.2 V4L2 作为 webcam（Linux）
 
@@ -432,11 +460,15 @@ scrcpy --video-source=camera --camera-facing=front --v4l2-sink=/dev/video0
 # 创建 1920x1080 虚拟显示器并自动启动 VLC 播放器
 scrcpy --new-display=1920x1080 --start-app=org.videolan.vlc
 
-# 创建自定义尺寸
+# 创建自定义尺寸（v3.0+ 支持 /DPI 后缀）
 scrcpy --new-display=1280x720
+scrcpy --new-display=1920x1080/420
+
+# Flex 可变尺寸显示器（v4.0+，-x 表示尺寸可在窗口缩放时调整）
+scrcpy --new-display -x --start-app=org.videolan.vlc
 ```
 
-**为什么需要虚拟显示器？** 某些应用场景下，你希望设备在后台运行某个 App，同时在电脑上操作另一个 App，互不干扰。
+**为什么需要虚拟显示器？** 某些应用场景下，你希望设备在后台运行某个 App，同时在电脑上操作另一个 App，互不干扰。v4.0 新增的 Flex display 可在运行中随窗口大小调整分辨率（需要编码器支持），配合 `--keep-active` 可防止显示器休眠。
 
 ### 6.4 窗口管理
 
@@ -488,9 +520,15 @@ scrcpy --video-codec=h265
 
 # 使用 H.264（更广泛兼容，老旧设备推荐）
 scrcpy --video-codec=h264
+
+# 使用 AV1（v3.1+，需设备支持）
+scrcpy --video-codec=av1
+
+# 使用 VP9 / VP8（v4.1+，部分设备不支持 H.264/H.265/AV1 时可用）
+scrcpy --video-codec=vp9
 ```
 
-**H.265 vs H.264**：H.265 在相同画质下带宽占用比 H.264 低约 30%~50%，但需要设备硬件支持。如果启动时报错，换回 H.264。
+**H.265 vs H.264**：H.265 在相同画质下带宽占用比 H.264 低约 30%~50%，但需要设备硬件支持。如果启动时报错，换回 H.264。VP8/VP9 面向少数不支持 H.26x/AV1 的设备，编码效率介于两者之间。
 
 ### 7.4 组合优化方案
 
@@ -601,33 +639,48 @@ export PULSE_SERVER=unix:/tmp/pulse-socket
 
 ### 9.1 基础快捷键
 
-| 快捷键 | 功能 |
-|--------|------|
-| **Ctrl+H** | 返回 |
-| **Ctrl+M** | 多任务 |
-| **Ctrl+S** | HOME |
-| **Ctrl+P** | 电源（唤醒/锁屏） |
-| **Ctrl+B** | 返回（替代方式） |
-| **Alt+F** | 全屏 |
-| **Alt+Enter** | 全屏（替代方式） |
-
-### 9.2 屏幕控制
+`MOD` 默认是 `Alt` 或 `Super`（Windows 键 / Command 键），可用 `--shortcut-mod` 修改。
 
 | 快捷键 | 功能 |
 |--------|------|
-| **鼠标中键** | HOME |
-| **右键** | 返回 |
-| **滚轮上/下** | 音量 +/- |
-| **Ctrl+滚轮** | 缩放显示 |
+| **MOD+H** | Home（返回桌面） |
+| **MOD+B** | Back（返回） |
+| **MOD+S** | App Switch（多任务） |
+| **MOD+M** | Menu（菜单） |
+| **MOD+P** | 电源（唤醒/锁屏） |
+| **MOD+Q** | 退出 scrcpy |
+| **MOD+F** 或 **F11** | 全屏 |
+| **MOD+G** | 窗口 1:1（像素完美） |
+| **MOD+W** | 去除黑边（或双击黑边） |
 
-### 9.3 文本输入
+### 9.2 屏幕与显示控制
+
+| 快捷键 | 功能 |
+|--------|------|
+| **鼠标右键** | 返回（屏幕亮时）/ 点亮屏幕（屏灭时） |
+| **鼠标中键** | Home |
+| **MOD+←/→** | 旋转显示方向 |
+| **MOD+Shift+←/→** | 水平翻转 |
+| **MOD+Shift+↑/↓** | 垂直翻转 |
+| **MOD+Z** | 暂停/继续显示 |
+| **MOD+R** | 旋转设备屏幕 |
+| **MOD+O** | 关闭设备屏幕（保持镜像） |
+| **MOD+Shift+O** | 重新点亮设备屏幕 |
+| **Ctrl+拖拽** | 捏合缩放/旋转 |
+| **MOD+N** | 展开通知栏 |
+| **MOD+N+N** | 展开设置面板 |
+
+### 9.3 剪贴板与文本输入
 
 | 操作 | 说明 |
 |------|------|
-| **Ctrl+Z** | 启用/禁用文本注入模式 |
+| **MOD+C** | 将设备剪贴板复制到电脑（Android 7+） |
+| **MOD+X** | 剪切（设备 → 电脑） |
+| **MOD+V** | 同步剪贴板并粘贴到设备 |
+| **MOD+Shift+V** | 将电脑剪贴板内容作为按键序列注入 |
 | **直接打字** | 输入英文（中文输入需要在设备上操作） |
-| **Ctrl+V** | 从电脑剪贴板粘贴到设备 |
-| **Ctrl+C** | 从设备复制（部分应用支持） |
+| **拖入 APK 文件** | 安装 APK |
+| **拖入其他文件** | 推送文件到设备 |
 
 ---
 

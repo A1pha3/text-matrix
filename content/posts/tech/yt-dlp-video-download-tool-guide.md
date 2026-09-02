@@ -11,11 +11,58 @@ tags: ["FFmpeg", "Python", "开源工具"]
 
 # yt-dlp：命令行音视频下载工具使用与架构指南
 
+> **目标读者**：需要批量下载视频、提取音频、嵌入字幕或写元数据的工程师；想在脚本、服务或流水线里调用下载能力的开发者。
+> **核心问题**：怎么装、怎么挑格式、怎么排反爬、报错时改哪里。架构部分为排查服务，不要求先读完。
+> **事实边界**：命令、选项与架构依据 `yt-dlp/yt-dlp` 仓库 README 整理；站点支持与反爬策略随网站变动，文中数字以标注日期为准。
+
 需要从 YouTube、Bilibili、TikTok 等站点批量下载视频、提取音频、嵌入字幕或写元数据时，命令行工具比图形界面更可控、可脚本化、可复现。yt-dlp 是这一场景下维护最活跃的开源实现，覆盖超过一千个站点，从 youtube-dl fork 而来并持续合并上游修复。
 
-后面先讲安装和常用命令，再讲格式选择、元数据处理、Python API 和插件，最后拆开内部架构。拆架构不是为了好看，而是下载失败时能据报错判断该改 URL、网络参数还是 ffmpeg 选项。
+## 阅读导航
 
-只求先上手，看「安装」和「最小示例」就够；遇到具体问题再翻对应章节。
+- 想先上手：直接看「安装」和「最小示例」
+- 想挑格式：看「功能详解 → 格式选择」
+- 想排反爬：看「网络与反封锁」和「常见问题」
+- 想嵌入代码：看「Python API」
+- 报错后想定位：看「架构解析」和「常见问题」
+
+## 学习目标
+
+读完本文，你应该能：
+
+- 在 Linux / macOS / Windows 上装好 yt-dlp 与 ffmpeg，并验证安装
+- 用 `-f` 和 `-S` 按清晰度、编码、文件大小等维度挑格式，说清两者的区别
+- 处理字幕、元数据、缩略图、章节与播放列表的常见场景
+- 被反爬拦截时，按顺序尝试更新、伪装、代理与 Cookie
+- 用 Python API 在代码里取元数据、下载并挂进度回调
+- 根据报错位置（Extractor / Downloader / PostProcessor）判断该改什么
+
+## 一条下载命令的完整路径
+
+先看一次下载请求会经过哪些环节。后面排查时，报错出现在哪一段，答案基本就在那一段：
+
+```text
+URL
+ │
+ ▼
+Extractor        匹配 URL、向站点请求并解析视频信息
+                 （站点改版常报 "Unable to extract ..."）
+ │
+ ▼
+Format Selector  按 -f / -S 规则筛出要下载的流
+ │
+ ▼
+Downloader       按协议下载（HTTP / HLS / DASH，可并发分片）
+                 （网络问题常报 HTTP 403 / 429）
+ │
+ ▼
+PostProcessor    ffmpeg 合并音视频、嵌字幕、写元数据
+                 （环境问题常报 ffmpeg not found）
+ │
+ ▼
+输出文件
+```
+
+各阶段的报错与改法对应关系，在「架构解析」里展开。
 
 ## 项目概览
 
@@ -23,7 +70,7 @@ tags: ["FFmpeg", "Python", "开源工具"]
 |------|------|
 | GitHub | [yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp) |
 | Stars / Forks | 183k / 16k（2026-08-06 实时） |
-| 语言 | Python（>=3.10） |
+| 语言 | Python 3.10+（推荐 3.11+） |
 | 许可证 | Unlicense |
 | 维护状态 | 活跃，master 日常推送 |
 
@@ -111,6 +158,17 @@ yt-dlp --update-to stable
 
 由于视频站点经常调整反爬策略，yt-dlp 的 Extractor 需要持续跟进修复。遇到原本能下载的站点突然失败，第一步通常是更新到 nightly 再试。
 
+### 验证安装
+
+装完后确认两个程序都在 PATH 里：
+
+```bash
+yt-dlp --version
+ffmpeg -version | head -n 1
+```
+
+预期输出分别是 `2026.07.04` 之类的版本号和 `ffmpeg version ...`。`yt-dlp --version` 能跑通说明程序本身可用；ffmpeg 缺失不影响下载单文件流，但合并分离的音视频流、嵌入字幕这类操作会失败，建议一起装好。
+
 ---
 
 ## 最小示例
@@ -128,6 +186,8 @@ yt-dlp -f "bv*+ba/b" "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
 `bv*` 匹配最佳视频流（含纯视频和音视频合一），`ba` 匹配最佳音频流，`/b` 是兜底选项。YouTube 等站点的高码率流通常是视频和音频分离的——这是 DASH（Dynamic Adaptive Streaming over HTTP）和 HLS 自适应流媒体的标准做法：分离后客户端可以根据带宽单独选择视频清晰度和音频码率，避免低带宽用户被迫下载高码率音频。代价是下载后需要 ffmpeg 把两条流合并成单个文件。
+
+下载成功时终端会出现 `[download] 100% of ...` 的进度行，文件落在当前目录。若出现以 `ERROR:` 开头的行，说明本次下载中止，具体改法见「常见问题」。
 
 ## 功能详解
 
@@ -191,8 +251,8 @@ yt-dlp -S "codec:av01" "URL"
 # 只选择大于 720p 的视频
 yt-dlp -f "bestvideo[height>=720]+bestaudio/best[height>=720]" "URL"
 
-# 排除 webm 格式
-yt-dlp -f "bestvideo-webm/bestaudio-webm" "URL"
+# 排除 webm 格式（用过滤器 [ext!=webm]）
+yt-dlp -f "bestvideo[ext!=webm]+bestaudio[ext!=webm]/best[ext!=webm]" "URL"
 ```
 
 ### 字幕处理
@@ -299,7 +359,7 @@ yt-dlp -P "/path/to/download" "URL"
 yt-dlp -P "home:/data/videos" -P "temp:/tmp/yt-dlp" "URL"
 ```
 
-`-P` 的 `home:` 和 `temp:` 前缀分别控制最终输出目录和临时文件目录。把临时目录设到 SSD、最终目录设到 NAS，可以避免下载过程中网络抖动导致的部分写入问题。
+`-P` 的 `home:` 和 `temp:` 前缀分别控制最终输出目录和临时文件目录。临时文件先落在 temp、处理完才移入 home，下载中断时目标目录不会留下残缺文件；把 temp 放到 SSD 也能加快分片写入。
 
 ---
 
@@ -369,20 +429,29 @@ yt-dlp -a urls.txt
 
 ### 预设别名（Preset Aliases）
 
-预定义常用选项组合，减少重复输入：
+yt-dlp 内置几个常用组合，用 `--preset-alias` 调用：
 
 ```bash
-# 下载为 mp3（预设）
+# 提取音频并转成 mp3
 yt-dlp --preset-alias mp3 "URL"
 
-# 下载为 mp4（预设）
+# 下载为 mp4（优先 mp4 容器并嵌入元数据）
 yt-dlp --preset-alias mp4 "URL"
-
-# 自定义别名
-yt-dlp --alias my-audio "-X -S aext:mp3,abr" "URL"
 ```
 
-`--alias` 把一长串选项绑定到一个短名，后续直接用 `--preset-alias <name>` 调用。适合在团队内部统一下载规格。
+内置预设包括 `mp3`、`mp4`、`mkv` 等。`mp3` 相当于 `-x --audio-format mp3 --audio-quality 0`，`mp4` 相当于 `-f bv*+ba -S ext:mp4,m4a --embed-metadata`。
+
+更常用的组合用 `--alias <名称> "<选项串>"` 自定义，通常写进配置文件 `~/.config/yt-dlp/config`，之后直接以 `--<名称>` 调用：
+
+```bash
+# 配置文件里定义
+--alias my-audio "-x --audio-format m4a -S aext:m4a,abr"
+
+# 命令行里调用
+yt-dlp --my-audio "URL"
+```
+
+适合在团队内部统一下载规格：把规格写进共享配置，成员各自用 `--<名称>` 调用即可。
 
 ### 日志与输出
 
@@ -683,7 +752,7 @@ yt-dlp 相比原版 youtube-dl 的主要改进（来自官方 README）：
 
 | 差异 | yt-dlp | youtube-dl |
 |------|--------|-------------|
-| Python 版本 | 3.10+ | 2.6+/3.2+ |
+| Python 版本 | 3.10+（推荐 3.11+） | 2.6+/3.2+ |
 | 格式排序 | 默认按分辨率/codec | 默认按比特率 |
 | 默认容错 | `--no-abort-on-error` | 中断 |
 | YouTube 支持 | n-sig 反混淆+Clips+Shorts | 基础 |
@@ -707,4 +776,21 @@ yt-dlp 适合：批量下载视频、提取音频、归档播放列表、嵌入�
 3. 用 `-v` 查看详细日志，定位失败发生在 Extractor、Downloader 还是 PostProcessor 阶段
 4. 站点不在支持列表时，考虑编写自定义 Extractor 插件
 
-再深入可以从三处入手：在 `~/.config/yt-dlp/config` 固化常用选项减少每次输入；用 Python API 加 `--download-archive` 写断点续传的播放列表归档脚本；为内部未支持站点写 Extractor 插件，理解 `_real_extract` 的返回结构。反爬应对则从 `extractor/youtube.py` 的 signature 解密和 n-sig 反混淆看起。
+## 自测清单
+
+能独立回答以下问题，说明本文内容基本消化：
+
+- 高码率视频为什么常下载视频、音频两条流再合并？合并依赖哪个外部工具？
+- `-f "bv*+ba/b"` 与 `-S "res:1080"` 分别是哪种控制方式，什么时候用哪个？
+- 下载被限速时，按什么顺序尝试更新、伪装、代理、Cookie？
+- `--write-info-json` 对批量下载有什么价值？`--load-info-json` 解决什么问题？
+- 报错 `Unable to extract`、`HTTP Error 403`、`ffmpeg not found` 分别对应哪一层？
+- 下载纯音频为 mp3、给视频嵌入字幕、按章节切片，分别用哪条命令？
+- 站点不在支持列表时，最小成本的支持方式是改主仓库还是写插件？
+
+## 进阶路径
+
+- **固化常用选项**：把 `--impersonate chrome --embed-thumbnail --write-info-json` 这类固定参数写进 `~/.config/yt-dlp/config`，省去每次输入。
+- **增量归档脚本**：用 Python API 配合 `--download-archive`，实现只补新视频的播放列表增量同步。
+- **写自定义 Extractor**：对照「插件系统」的示例为内部站点写提取器，理解 `_real_extract` 返回的字段结构。
+- **读源码**：从 `extractor/youtube.py` 的 signature 解密与 n-sig 反混淆入手，理解反爬应对的边界。

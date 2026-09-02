@@ -1,39 +1,58 @@
 ---
 title: "AgentFlow：把几十个 AI 编程 agent 编排成一张可并行、可迭代的图"
 slug: "agentflow-agent-dependency-graph-guide"
-github_repo: "berabuddies/agentflow"
+github_repo: "agentenv/agentflow"
 aliases:
   - /posts/tech/agentflow-agent-dependency-graph-guide/
 date: "2026-04-01T01:09:00+08:00"
 categories: ["技术笔记"]
 tags: ["Claude", "Codex", "Kimi", "agent", "编排"]
-description: "用 DAG + 管道符把 codex、claude、kimi、pi 等编程 agent 编排成依赖图，支持并行扇出、迭代循环、远程执行与模型路由。"
+description: "用 DAG + 管道符把 codex、claude、kimi、pi 等编程 agent 编排成依赖图，支持并行扇出、迭代循环、Docker/SSH/EC2/ECS 执行与模型路由。"
 ---
 
 # AgentFlow：把几十个 AI 编程 agent 编排成一张可并行、可迭代的图
 
 真正难的不是让一个 agent 干活，而是让几十个 agent 按依赖关系同时开工、失败了自己重来、结果最后汇总成一份。AgentFlow 解决的是后一个问题：它把"调度并发、处理重试、归并结果"这些手写脚本才做的事，收进一张用 `>>` 连起来的依赖图里。
 
-这个项目来自 UC Irvine 的 Yu Feng 团队（`berabuddies` 组织），和 [gepa](https://github.com/gepa-ai/gepa) 同源。它把 codex、claude、kimi、pi 等编程 agent 当成图中的节点，用几组原语（`fanout`、`merge`、`on_failure`）表达并行、汇总和循环。下面先给一张系统地图，再逐条拆。
+这个项目由 [agentenv](https://github.com/agentenv) 组织维护，代码来自论文《Synthesizing Multi-Agent Harnesses for Vulnerability Discovery》（Yu Feng 团队，arXiv:2604.20801）。它把 codex、claude、kimi、pi 等编程 agent 当成图中的节点，用几组原语（`fanout`、`merge`、`on_failure`）表达并行、汇总和循环。下面先给一张系统地图，再逐条拆。
 
 ## 先看这张图
 
-![AgentFlow Graph](https://raw.githubusercontent.com/berabuddies/agentflow/master/docs/graph.png)
+![AgentFlow Graph](https://raw.githubusercontent.com/agentenv/agentflow/master/docs/graph.png)
 
 README 里那张 94 节点的示例图，是一条典型的流水线：plan 拆出 64 个 worker，经过 8 次批量归并，再进 16 个 review，最后两级 merge 收敛到 synthesis。它把"一个 agent 从头干到尾"拆成了"一段并行工作 + 几次收敛"。
 
-## 核心数据（GitHub API 2026-08-07 验证）
+## 核心数据（GitHub API 2026-08-30 验证）
 
 | 项目 | 数值 |
 |------|------|
-| 仓库 | [berabuddies/agentflow](https://github.com/berabuddies/agentflow) |
-| Stars | 1,365 |
-| Forks | 286 |
+| 仓库 | [agentenv/agentflow](https://github.com/agentenv/agentflow) |
+| Stars | 1,379 |
+| Forks | 288 |
 | 语言 | Python |
 | 协议 | MIT |
 | 默认分支 | master |
 | 创建时间 | 2026-03-08 |
-| 最近推送 | 2026-07-03 |
+| 最近推送 | 2026-08-25 |
+
+配套论文发表在 arXiv（2604.20801，2026-04）：AgentFlow 在 TerminalBench-2 上拿到 84.3%（Claude Opus 4.6），对照当时公开榜单是最高分；在 Google Chrome 上发现了 10 个此前未知的零日漏洞（Kimi K2.5），其中 2 个是 Critical 级别的沙箱逃逸（CVE-2026-5280、CVE-2026-6297）。这是它的来头，也是理解它设计动机的钥匙——那篇论文要解决的正是"harness 怎么写才让 agent 找得到漏洞"。
+
+## 安装与上手
+
+一键安装会装好 agentflow、加入 PATH，并为 Codex 和 Claude Code 各装一个 skill：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/agentenv/agentflow/master/install.sh | bash
+```
+
+也可以手动装：
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e .[dev]
+```
+
+装完 skill 之后，甚至不用自己写管道，直接在 Codex 里说一句：*"Use agentflow to fan out 10 codex agents, each telling a unique joke, then merge their outputs and pick the funniest one. Write the pipeline and run it."* skill 会自动生成管道文件并执行。想亲手写，看下面的例子。
 
 ## 编排的核心：一张 DAG，几组原语
 
@@ -119,9 +138,57 @@ print(g.to_json())
 
 `success_criteria` 用 `output_contains` 这类结构化条件判断"算不算成"，比抓关键词更明确，也更容易被 validate 检查。
 
-## 远程执行：零配置的 SSH / EC2 / ECS
+## 执行目标：从本地到远程
 
-节点可以在远程机器上跑，`target` 参数声明目标，不需要先建基础设施：
+节点默认在本地跑，`target` 参数可以把执行挪到别的环境。当前支持四类目标：
+
+**Docker。** 先把包含全部 agent CLI 的镜像构建一次：
+
+```bash
+docker build -t agentflow-agents:latest .
+```
+
+之后 `kind: "docker"` 就用这个镜像。AgentFlow 会自动把管道工作区 bind-mount 进容器，并为每个节点挂一个可写的运行时目录：
+
+```python
+codex(
+    task_id="review",
+    prompt="Review the repository without changing it.",
+    tools="read_only",
+    target={
+        "kind": "docker",
+        "workdir_read_only": True,
+        "mounts": [
+            {"source": "./docs", "target": "/reference", "read_only": True},
+        ],
+        "network_policy": "bridge",
+    },
+)
+```
+
+`network_policy` 支持 `none` / `bridge` / `host` / 自定义网络；自定义网络可以接到运维管理的出口代理或防火墙后面做更窄的访问。`mount_docker_daemon: true` 会把宿主 Docker 守护进程的 socket 挂进容器——这等于把宿主 Docker 的 root 级控制权交给了 agent，README 明确警告不要对不可信的 prompt 开启；`dind: true` 则是在容器内起一个隔离的守护进程，需要 `privileged: true`，两者不能同时用。
+
+**Cloud Hypervisor（KVM 虚拟机）。** 每个节点在一个临时的 KVM 虚拟机里启动，比容器隔离更强：只读根文件系统来自上面那个 all-agent 镜像，用 virtio-fs 共享工作区、vsock 传命令和流式输出，控制面不需要 guest SSH：
+
+```python
+codex(
+    task_id="vm-review",
+    prompt="Review the repository in an isolated VM.",
+    target={
+        "kind": "cloud_hypervisor",
+        "kernel": ".agentflow/cloud-hypervisor/vmlinux-x86_64",
+        "rootfs": ".agentflow/cloud-hypervisor/rootfs",
+        "cpus": 4,
+        "memory_mib": 8192,
+        "workdir_read_only": True,
+        "network_policy": "none",
+    },
+)
+```
+
+默认策略不建任何网络设备；需要模型/API 访问时用显式 TAP 策略挂一个宿主管的接口，路由、NAT、防火墙仍是宿主责任。host 凭据默认不继承，除非显式 `inherit_credentials: true`。
+
+**远程机器：EC2 / ECS / SSH。** `target` 参数声明目标，不需要先建基础设施：
 
 ```python
 # EC2（自动发现 AMI、密钥对、VPC）
@@ -163,7 +230,17 @@ with Graph("mixed") as g:
     )
 ```
 
-这解决了"图里混跑不同模型"的问题：规划的节点走贵的强模型，机械扫描的节点走便宜的本地模型，同一张图里各取所需。
+临时用一次的 provider 不必写进 models.json，直接传一个完整的 `ProviderConfig`：
+
+```python
+scan = pi(
+    task_id="scan",
+    prompt="Scan the repo.",
+    provider={"type": "openai_compatible", "base_url": "http://host:11434/v1", "api_key": "..."},
+)
+```
+
+AgentFlow 会在本次运行里生成一份作用域受限的 models.json（参考 `examples/pi_local_lmstudio.py`）。这解决了"图里混跑不同模型"的问题：规划的节点走贵的强模型，机械扫描的节点走便宜的本地模型，同一张图里各取所需。
 
 ## 推理与进化：把图当训练数据
 
@@ -176,7 +253,24 @@ agentflow inference Qwen/Qwen2.5-0.5B-Instruct \
   --gpu aws:1xl4@us-east-1
 ```
 
-也可以在 `Graph` 上声明 `inference=InferenceSetup(...)`，AgentFlow 会在调度前起一个共享的 SkyPilot 服务，再把它注入没有显式设 `provider` 的 `pi` 节点。
+默认开 spot，关掉用 `--no-spot`；批量跑 JSONL 任务用 `--mode batch`。也可以在 `Graph` 上声明 `inference=InferenceSetup(...)`，AgentFlow 会在调度前起一个共享的 SkyPilot 服务，再把它注入没有显式设 `provider` 的 `pi` 节点：
+
+```python
+from agentflow import Graph, InferenceSetup, pi
+
+with Graph(
+    "my-pipeline",
+    concurrency=3,
+    inference=InferenceSetup(
+        gpu="aws:8x8xb200@us-east-2",
+        model="Qwen/Qwen2.5-0.5B-Instruct",
+        engine="sglang",
+    ),
+) as g:
+    pi(task_id="answer", prompt="Use the shared inference service.")
+```
+
+GPU 选择器支持单节点和多节点形态，例如 `aws:8xb200@us-east-1` 和 `aws:8x8xb200@us-east-2`；在 AWS B200 上，AgentFlow 会从 AWS SSM 解析当前支持 Blackwell 的 DLAMI，除非你显式传 `--image-id`。
 
 **Tuned Agent 进化。** 用一次跑通的 Codex 记录当训练数据，生成一个可复用的 tuned agent：
 
@@ -192,7 +286,37 @@ print(g.to_json())
 
 跑完后 `agentflow evolve <run_id> -n <node_id>` 离线提炼，`agentflow tuned-agents` 列出已注册的 tuned agent。它们存在 `.agentflow/tuned_agents/<name>/versions/<version>/` 下，带完整的 trace、克隆的仓库和版本元数据。目前 tuned agent 只能解析到本地 target。
 
-另外 `Graph` 还支持 `optimizer` 和 `n_run`，让 optimizer 在两轮之间改写图结构。注意 README 明确说：validate 只检查改完的管道能加载、能过 schema 校验，**不代表改得语义更好**。
+另外 `Graph` 还支持 `optimizer` 和 `n_run`，让 optimizer 在两轮之间改写图结构，每轮的产物和日志存在 `.agentflow/runs/<run_id>/optimization/round-XXX/` 下。注意 README 明确说：validate 只检查改完的管道能加载、能过 schema 校验，**不代表改得语义更好**。
+
+## Scratchboard：跨 agent 共享的便签
+
+扇出出来的节点彼此独立，想让他们共享同一条上下文怎么办？`scratchboard=True` 会在所有 agent 之间共享一个内存文件，每个 agent 都能读别人的、也往里写自己的。适合"一堆 agent 共同维护一份候选清单"的场景：
+
+```python
+from agentflow import Graph, codex, fanout
+
+with Graph("campaign", scratchboard=True) as g:
+    shards = fanout(codex(task_id="fuzz", prompt="..."), 128)
+```
+
+## 本地 Web UI 与 CLI
+
+`agentflow serve` 在 `127.0.0.1:8000` 起一个本地 Web UI 和 API，可以在浏览器里看管道状态。安全设计值得注意：`/api/runs` 和 `/api/runs/validate` 这两个端点只接受 `application/json`，且默认禁用了 `pipeline_path` 参数——浏览器面对的控制面不能仅凭引用一个路径就去执行本地的 `.py` 管道文件。确实要在可信环境里从文件系统路径加载管道，需要显式 `AGENTFLOW_API_ALLOW_PIPELINE_PATH=1 agentflow serve`，README 说这个开关只该给运维控制的受信工作流用。
+
+CLI 命令一览：
+
+```bash
+agentflow run pipeline.py            # 运行管道
+agentflow run pipeline.py --output summary
+agentflow inspect pipeline.py        # 展开显示图结构
+agentflow validate pipeline.py       # 只校验不运行
+agentflow evolve <run_id> -n plan    # 从之前的 Codex trace 提炼 tuned agent
+agentflow tuned-agents               # 列出本地已注册的 tuned agent
+agentflow tuned-agent codex_tuned    # 查看某个 tuned agent
+agentflow templates                  # 列出起始模板
+agentflow init > pipeline.py         # 生成一个起始模板
+agentflow serve                      # 启动本地 Web UI / API（127.0.0.1:8000）
+```
 
 ## 一次真实任务怎么流过这张图
 
@@ -209,16 +333,16 @@ print(g.to_json())
 
 ## 怎么读这些数字
 
-Stars 1,365、Forks 286 说明这是个年轻项目（2026-03 创建，几个月内积累），不是航母级框架。它更值得看的是两件事：一是它把"并发调度、失败重试、结果归约"这些通用痛点做成了极简原语，二是它连着一条完整的落地链路（远程执行、模型路由、云端推理、agent 进化）。
+Stars 1,379、Forks 288 说明这是个年轻项目（2026-03 创建，几个月内积累），不是航母级框架。它更值得看的是两件事：一是它把"并发调度、失败重试、结果归约"这些通用痛点做成了极简原语；二是它连着一条完整的落地链路（容器/KVM 执行、模型路由、云端推理、agent 进化），并且背后有一篇论文在验证"harness 结构本身就能显著改变 agent 找漏洞的能力"。
 
-从这些数字**推不出**：它在生产环境的稳定性、tuned agent 在真实 bug 上的命中率、大规模扇出时的成本。README 也没有给出任何 benchmark。要判断它是否适合你，得看你的场景是否真的需要"几十个 agent 并行 + 迭代收敛"，而不是看 Star 数。
+从这些数字**推不出**：它在生产环境的稳定性、tuned agent 在真实 bug 上的命中率、大规模扇出时的成本。README 没有给出独立 benchmark，论文里的 84.3% 和 10 个零日是研究场景下的结果，不代表开箱即用的工程数据。要判断它是否适合你，得看你的场景是否真的需要"几十个 agent 并行 + 迭代收敛"，而不是看 Star 数。
 
 ## 谁该先试，谁可以等
 
 - **适合先试**：已经在用 codex / claude 做多轮代码任务，发现并发和结果汇总靠脚本越写越乱的人；想在一张图里混跑云端强模型和本地便宜模型的人。
 - **可以再等等**：单 agent 就能跑完的简单任务，用不上这套编排；对 graph 的检查与改写能力（optimizer、evolve）没有迫切需求的话，它的核心价值只剩 `fanout` + `merge`，用脚本也能凑合。
 
-从 `agentflow init > pipeline.py` 起一个模板，跑通 `agentflow inspect` 和 `agentflow validate`，再决定要不要把真实任务迁进来。README 里那 11 个示例（从 `airflow_like.py` 到 `ecs_fargate.py`）覆盖了从基础管道到远程执行的全路径，照着一份份改就能上手。
+从 `agentflow init > pipeline.py` 起一个模板，跑通 `agentflow inspect` 和 `agentflow validate`，再决定要不要把真实任务迁进来。README 里那 13 个示例（从 `airflow_like.py` 的基础流水线到 `cloud_hypervisor_target.py` 的 KVM 执行）覆盖了从入门到远程执行的全路径，照着一份份改就能上手。
 
 ## 结语
 

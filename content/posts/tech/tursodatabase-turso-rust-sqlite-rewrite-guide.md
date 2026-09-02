@@ -6,7 +6,7 @@ date: "2026-06-20T20:58:00+08:00"
 draft: false
 categories: ["技术笔记"]
 tags: ["SQLite", "Rust", "MCP"]
-description: "Turso Database 是 tursodatabase 团队用 Rust 重写 SQLite 的 in-process SQL 引擎，23.7K+ stars，v0.7.2（2026-07-30）。它把 SQLite 演进成一个可编译多种 SQL 方言的虚拟机（官方借 LLVM 的比喻）：SQLite 是主前端，Postgres 前端（实验）已能通过自己的方言和 wire 协议接入。原生支持 MVCC BEGIN CONCURRENT、io_uring 异步 I/O、CDC、向量搜索和 9 个工具的 MCP server，已在生产环境运行但未到 1.0。"
+description: "Turso Database 是 tursodatabase 团队用 Rust 重写 SQLite 的 in-process SQL 引擎，24K+ stars，v0.7.2（2026-07-30）。它把 SQLite 演进成一个可编译多种 SQL 方言的虚拟机（官方借 LLVM 的比喻）：SQLite 是主前端，Postgres 前端（实验）已能通过自己的方言和 wire 协议接入。原生支持 MVCC BEGIN CONCURRENT、io_uring 异步 I/O、CDC、向量搜索和 9 个工具的 MCP server，已在生产环境运行但未到 1.0。"
 ---
 
 ## 核心判断
@@ -17,13 +17,14 @@ Turso Database（`tursodatabase/turso`）是一个数据库。它把 SQLite 用 
 
 按 README 的说法，这个数据库已经在多个组织跑生产，包括 Turso Cloud、Kin AI 助手和 Spice.ai。但项目还没到 1.0，部分特性仍标 experimental。官方自己建议按对待数据库的常规纪律保留独立备份。
 
-仓库：https://github.com/tursodatabase/turso，23,738 stars / 1,242 forks，Rust，MIT 协议，v0.7.2（2026-07-30 发布），创建于 2023-08-26。
+仓库：https://github.com/tursodatabase/turso，24,103 stars / 1,296 forks，Rust，MIT 协议，v0.7.2（2026-07-30 发布，写本文时最新 release），创建于 2023-08-26。
 
 ## 关键事实表
 
 | 维度 | 数据 |
 |---|---|
 | 形态 | in-process SQL database（嵌入式） |
+| SQLite 兼容基线 | 方言、文件格式、C API 三层追踪 SQLite 3.50.4 |
 | 核心架构 | SQL 编译进 VDBE 字节码虚拟机，多前端共享同一核心 |
 | 前端 | SQLite（主，`COMPAT.md` 列兼容矩阵）、Postgres（实验，`postgres/COMPAT.md`） |
 | 写并发 | `BEGIN CONCURRENT` + MVCC（多版本并发控制） |
@@ -57,9 +58,13 @@ flowchart LR
 
 这段架构解释了 Turso 和普通「SQLite 替代品」的区别。SQL 不是唯一能编译进虚拟机的语言，Postgres 只是第二个前端，后面还可以继续加。存储层走 SQLite 原版 B-tree page 格式。写入路径在 `BEGIN CONCURRENT` 下走多版本快照，避免 reader 阻塞 writer。
 
+VM 的通用程度不是口号。官方用了一个能直接验证的例子：在 VDBE 字节码上跑起了 Doom（[turso-vdbe-doom-example](https://github.com/tursodatabase/turso-vdbe-doom-example)）。字节码只依赖虚拟机指令集，跟具体前端无关，这是「LLVM of databases」想表达的东西。
+
+SQLite 兼容是硬指标。README 说兼容对齐到 SQLite 3.50.4，覆盖方言、文件格式和 C API，现有 `.db` 文件可以直接打开；`COMPAT.md` 逐条跟踪还没对齐的部分，并把「完全兼容」列为 1.0 的发布前提。
+
 ## 重写动机：fork（派生）还是 rewrite
 
-Turso 团队 2023 年在 [We will rewrite SQLite, and we are going all-in](https://turso.tech/blog/we-will-rewrite-sqlite-and-we-are-going-all-in) 明确了这个选择。核心论点是：fork 模式每追一个上游 patch 都要做 merge（合并）conflict 调解。rewrite 模式把 Rust 生态的 async/await、内存安全、io_uring 等能力直接落到执行器和存储层。如此迭代速度反而更快。
+Turso 团队先 fork 出 libSQL，2024 年 12 月发布 [Introducing Limbo](https://turso.tech/blog/introducing-limbo-a-complete-rewrite-of-sqlite-in-rust) 宣布从头重写，2025 年 1 月又用 [We will rewrite SQLite, and we are going all-in](https://turso.tech/blog/we-will-rewrite-sqlite-and-we-are-going-all-in) 把取舍讲透。核心论点是：fork 模式每追一个上游 patch 都要做 merge（合并）conflict 调解。rewrite 模式把 Rust 生态的 async/await、内存安全、io_uring 等能力直接落到执行器和存储层。如此迭代速度反而更快。
 
 **和 libSQL 的关系**：libSQL 是同一个团队之前对 SQLite 的 fork，Turso 是后续的 Rust 重写。两者现在定位不同——Turso 是进程内嵌的库，不提供 server 端。如果你要的是服务端或托管形态的 SQLite 兼容方案，可以看 libSQL 那条线。要程序内嵌的 Rust 原生 SQLite 替代，选 Turso。
 
@@ -111,11 +116,11 @@ tursodb your_database.db --mcp
 
 MCP server 暴露 9 个工具：`open_database`、`current_database`、`list_tables`、`describe_table`、`execute_query`（只读 SELECT）、`insert_data`、`update_data`、`delete_data`、`schema_change`。设计边界很清晰：schema 修改和 DML 分开成不同工具，SELECT 单独锁成只读，避免 AI agent 误调 `DROP TABLE`。底层走 JSON-RPC 2.0 over stdio，协议版本 `2024-11-05`。你可以用 `cat << EOF | tursodb --mcp` 直接喂 JSON-RPC 请求做脚本化测试。
 
-**为什么 MCP 对 Turso 是加分项**：SQLite 的传统定位是「应用内嵌的存储」。AI agent 时代这个边界在变。agent 需要直接对数据库做 schema 探索、查询和修改，而不是经由应用层。把 MCP server 嵌进 CLI，等于让 SQLite 文件本身变成 agent 的工具集，不需要应用暴露 API。同类里 DuckDB 有单独的 `duckdb-mcp`。Turso 把 MCP server 直接装进 CLI，用起来更省一步。
+**MCP 补的是哪块**：SQLite 的传统定位是应用内嵌的存储，接口经应用层暴露。AI agent 想直接对数据库做 schema 探索、查询和修改时，应用层就成了多余的中间人。把 MCP server 嵌进 CLI，等于让数据库文件自己暴露成 agent 可调的工具集。同类里 DuckDB 要单独装 `duckdb-mcp`，Turso 内置在 CLI 里，少一次配置。
 
 ## 多语言绑定：production 的 7 条路径
 
-每个 binding 都是仓库内独立子目录 + 独立发布。Rust 端用 `Builder`（建造者模式）构造本地连接，其余语言各有对应入口：
+每个 binding 都是仓库内独立子目录，多数各自发布到对应生态。Rust 端用 `Builder`（建造者模式）构造本地连接，其余语言各有对应入口：
 
 | 语言 | 安装命令 | 典型用法 |
 |---|---|---|
@@ -123,11 +128,11 @@ MCP server 暴露 9 个工具：`open_database`、`current_database`、`list_tab
 | JavaScript | `npm i @tursodatabase/database` | `connect('sqlite.db')` → `db.prepare(...).all()` |
 | Python | `uv pip install pyturso` | `turso.connect("sqlite.db")` → `cur.execute("SELECT...")` |
 | Go | `go get turso.tech/database/tursogo` | `sql.Open("turso", "sqlite.db")`（走 `database/sql`） |
-| Java | Maven `tech.turso:turso` | JDBC 集成，详见 `bindings/java/README.md` |
+| Java | Maven `tech.turso:turso`（未发布到中央仓库，本地构建） | JDBC 集成，详见 `bindings/java/README.md` |
 | .NET | NuGet `Turso` | `new TursoConnection("Data Source=:memory:")` |
 | WebAssembly | `@tursodatabase/database` 浏览器版 | 浏览器内嵌 SQLite 兼容 DB，无后端 |
 
-`pyturso` 上 PyPI，`@tursodatabase/database` 上 npm，Rust 端 `turso` crate 上 crates.io，Java 端 `tech.turso:turso` 上 Maven Central，发布管道齐全。Go 绑定走 `database/sql` 标准接口。这意味着任何兼容 `database/sql` 的 ORM（对象关系映射）都能直接对接。
+`pyturso` 上 PyPI，`@tursodatabase/database` 上 npm，Rust 端 `turso` crate 上 crates.io，发布管道齐全。Java 端是个例外：JDBC 驱动还没发布到 Maven Central，需要 `make publish_local` 本地构建、部署到 maven local 再用。Go 绑定走 `database/sql` 标准接口，任何兼容 `database/sql` 的 ORM（对象关系映射）都能直接对接。
 
 ## 实验性特性：5 条还在孵化的能力
 
@@ -147,7 +152,7 @@ README 的 roadmap 现在只列了 1 条：
 
 > Vector indexing for fast approximate vector search, similar to libSQL vector search
 
-现在的 Turso 已经能做向量 exact search（线性扫描）。也能用 vector manipulation（`vector_distance_cosine()` 之类 SQL 函数）做向量运算。但 ANN（approximate nearest neighbor）索引还没合进 main。libSQL 的 vector search 走 HNSW + DiskANN 路线。Turso 之后大概率会复用同套思路或自研。
+现在的 Turso 已经能做向量 exact search（线性扫描）。也能用 vector manipulation（`vector_distance_cosine()` 之类 SQL 函数）做向量运算。但 ANN（approximate nearest neighbor）索引还没合进 main。libSQL 的 vector search 走 HNSW（分层可导航小世界图）近似索引路线，Turso 大概率会复用同套思路或自研。
 
 **对应用层的判断**：几千条向量的精确检索，现在够用。百万级向量的语义检索，还要等 ANN 索引。
 
@@ -212,9 +217,10 @@ let res = conn.query("SELECT * FROM users", ()).await?;
 
 ```js
 import { connect } from '@tursodatabase/database';
-const db = await connect(':memory:');  // 浏览器内 in-memory
+const db = await connect('sqlite.db');
 const stmt = db.prepare('SELECT * FROM users');
-console.log(stmt.all());
+const users = stmt.all();
+console.log(users);
 ```
 
 **AI agent 直连**（Claude Code）：
@@ -223,4 +229,14 @@ console.log(stmt.all());
 claude mcp add my-database -- tursodb ./path/to/your/database.db --mcp
 # 重启 Claude Code 后即可用自然语言操作数据库
 ```
+
+## 资料来源与延伸阅读
+
+- 仓库与兼容矩阵：[tursodatabase/turso](https://github.com/tursodatabase/turso)、[COMPAT.md](https://github.com/tursodatabase/turso/blob/main/COMPAT.md)、[postgres/COMPAT.md](https://github.com/tursodatabase/turso/blob/main/postgres/COMPAT.md)
+- 用户手册：[Turso Database Manual](https://github.com/tursodatabase/turso/blob/main/docs/manual.md)
+- 官方博客：[Introducing Limbo: A complete rewrite of SQLite in Rust](https://turso.tech/blog/introducing-limbo-a-complete-rewrite-of-sqlite-in-rust)（2024-12）、[We will rewrite SQLite. And we are going all-in](https://turso.tech/blog/we-will-rewrite-sqlite-and-we-are-going-all-in)（2025-01）
+- VDBE 通用性演示：[turso-vdbe-doom-example](https://github.com/tursodatabase/turso-vdbe-doom-example)
+- 向量路线参考：[libSQL vector search](https://turso.tech/vector)
+
+数据核对时间 2026-09-01：stars 24,103 / forks 1,296，最新 release v0.7.2。
 

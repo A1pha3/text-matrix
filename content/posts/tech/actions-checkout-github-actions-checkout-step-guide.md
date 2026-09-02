@@ -1,7 +1,7 @@
 ---
 title: "actions/checkout 实战指南：从零开始掌握 GitHub Actions 的第一步"
 date: "2026-07-02T21:02:26+08:00"
-lastmod: "2026-08-20T00:00:00+08:00"
+lastmod: "2026-08-30T00:00:00+08:00"
 draft: false
 categories: ["技术笔记"]
 tags: ["GitHub Actions", "CI/CD", "DevOps", "TypeScript"]
@@ -19,7 +19,21 @@ source_key: "gh:actions/checkout"
 
 ## 目录
 
-| → | [学习目标](#学习目标) | [解决的问题](#它解决了什么问题) | [v7 安全默认](#v7-默认行为变化拒绝-fork-pr-代码) | [v6 凭据持久化](#v6-凭据持久化从-gitconfig-移到-runner_temp) | [常见场景与配置](#常见场景与最小配置) | [认证方式选择](#认证方式的选择) | [升级路径](#升级路径与回退) | [自测题](#自测题) | [练习](#练习) | [进阶路径](#进阶路径) | [常见问题 FAQ](#常见问题-faq) |
+- [学习目标](#学习目标)
+- [解决的问题](#解决了什么问题)
+- [v7 默认行为变化：拒绝 fork PR 代码](#v7-默认行为变化拒绝-fork-pr-代码)
+- [v6 凭据持久化：从 .git/config 移到 $RUNNER_TEMP](#v6-凭据持久化从-gitconfig-移到-runner_temp)
+- [v4/v5：基础输入契约](#v4v5基础输入契约)
+- [常见场景与最小配置](#常见场景与最小配置)
+- [推荐权限](#推荐权限)
+- [认证方式的选择](#认证方式的选择)
+- [浅克隆与历史相关的边界情况](#浅克隆与历史相关的边界情况)
+- [clean 与 set-safe-directory 的角色](#clean-与-set-safe-directory-的角色)
+- [升级路径与回退](#升级路径与回退)
+- [常见问题 FAQ](#常见问题-faq)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
 
 ## 学习目标
 
@@ -47,6 +61,8 @@ runner 是 GitHub 提供的临时虚拟机，初始状态是干净的 Ubuntu/Win
 
 v7 于 2026-06-18 发布，README "What's new" 节的核心只有一条变化："checkout now refuses to check out fork pull request code by default when the workflow is triggered by `pull_request_target` or `workflow_run`."
 
+两条边界需要先看清。其一，`workflow_run` 的限定比 `pull_request_target` 更窄——只有在 `workflow_run` 的触发事件本身是某个 `pull_request*` 事件时（即 `workflow_run.event` 是 `pull_request` / `pull_request_target` 等）才拦截，其他类型的 `workflow_run` 不受影响。其二，同一仓库内部的 PR 不在此列，`pull_request` 触发器的行为也完全不变——这份保护针对的只有"来自 fork 的 PR 代码在高权限上下文里执行"这一个模式。
+
 这一代最重要的就是这条。背景是：`pull_request_target` 与 `workflow_run` 触发器运行在 base 仓库上下文里，使用 base 的 `GITHUB_TOKEN`、secrets 和 runner 资源。如果此时直接把 fork 仓库的 PR 代码 checkout 下来并执行，等于把不可信代码放进了高权限环境——攻击者可以用 fork 里的恶意脚本窃取 secret、污染构建产物。这就是常说的 "pwn request"，也是 2025 年 tj-actions/changed-files（CVE-2025-30066）和 2026 年 7 月 AsyncAPI 等真实供应链事件的根因套路。
 
 v7 的默认拒绝并不是一刀切，只在以下条件同时成立时才会拦：
@@ -64,7 +80,9 @@ v7 的默认拒绝并不是一刀切，只在以下条件同时成立时才会�
 
 `allow-unsafe-pr-checkout` 的注释写明 "Set to `true` only after reviewing the risks at <https://gh.io/securely-using-pull_request_target>"。这不是一个无害的兼容性开关，是要自己判断风险后的一次显式 opt-in。
 
-这里有两个容易误判的点。其一，这项保护于 2026-07-20 起被回移植到仍受支持的各 major 版本（v4/v5/v6 等）：只要 workflow 用的是 `actions/checkout@v4` 这类 Floating major tag，就会自动继承新行为；只有 pin 到具体 SHA 或 minor/patch 的 workflow 不会自动获得，需要按正常升级流程显式升上来。其二，大多数 `pull_request_target` 用例（打 label、发评论、跑只读检查）本身不需要 checkout fork 代码，遇到拦截时应先问自己"我是不是真的要在高权限上下文里执行某人的 fork 代码"。
+这里有两个容易误判的点。其一，这项保护于 2026-07-20 起被回移植到除 v1 外的所有受支持 major 版本（v4/v5/v6 等；官方在 2026-07-15 的编辑注中明确 v1 不接收此变更）：只要 workflow 用的是 `actions/checkout@v4` 这类 Floating major tag，就会自动继承新行为；只有 pin 到具体 SHA 或 minor/patch 的 workflow 不会自动获得，需要按正常升级流程显式升上来。其二，大多数 `pull_request_target` 用例（打 label、发评论、跑只读检查）本身不需要 checkout fork 代码，遇到拦截时应先问自己"我是不是真的要在高权限上下文里执行某人的 fork 代码"。
+
+还有一层要说明：这份保护只拦 checkout 这一步。它不识别 `run:` 块里手写的 `git fetch`、`gh pr checkout`、其他第三方拉取行为，也不会拦 `issue_comment` 等事件的 fork 代码执行——这些仍属于 pwn request 攻击面，需要靠工作流设计本身（低权限 job 处理不可信代码、高权限 job 只信任元数据）来兜底。
 
 ## v6 凭据持久化：从 `.git/config` 移到 `$RUNNER_TEMP`
 
@@ -415,6 +433,7 @@ true（默认）把模式解析为"包含祖先目录"，适合拉整个子目�
 ## 参考资料
 
 - actions/checkout v7 README（含 v5/v6/v7 的 "What's new" 与全部输入参数）：<https://github.com/actions/checkout>
-- GitHub Changelog：Safer `pull_request_target` defaults for GitHub Actions checkout：<https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/>
+- GitHub Changelog：Safer `pull_request_target` defaults for GitHub Actions checkout（含 2026-07-15 编辑注与 v1 例外说明）：<https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/>
 - 官方安全指引："Securely using pull_request_target"（GitHub 文档）：<https://docs.github.com/en/actions/security-guides/securing-workflows-and-running/understanding-the-workflow#securely-using-pull_request_target>
 - CVE-2025-30066（tj-actions/changed-files 供应链事件）：<https://github.com/advisories/GHSA-mrrh-fwg8-r2c3>
+- AsyncAPI npm 供应链事件分析（2026-07-14，Datadog Security Labs）：<https://securitylabs.datadoghq.com/articles/compromised-asyncapi-npm-packages/>

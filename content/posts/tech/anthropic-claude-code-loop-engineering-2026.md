@@ -11,9 +11,22 @@ hiddenFromHomePage: false
 
 # Anthropic Claude Code 101：一门免费课把 Loop Engineering 讲透
 
+## 目录
+
+- 1. 这门课
+- 2. Loop Engineering 是什么
+- 3. agentic loop 三阶段
+- 4. Hooks：99% 开发者忽略的功能
+- 5. Sub-agents：把子任务委派给专门的子代理
+- 6. 为什么声音胜于写作
+- 7. Draft PR：自动代码评审
+- 8. Fable 5 用于非代码工作
+- 9. 给独立 Agent 项目作者的 5 条工程经验
+- 10. 关键资源与延伸阅读
+
 ## 1. 这门课
 
-2026 年 7 月，Anthropic 在 Skilljar 上架了免费课程 Claude Code 101，讲的是 loop engineering，配 Claude (Fable) 5 和 Claude Code。precis0x 在 X 上转发推荐，原话是西语："Este curso gratuito reemplaza cualquier tutorial de pago de claude code"（这门免费课能替代任何付费的 Claude Code 教程）。
+2026 年 7 月，Anthropic 在 Skilljar 上架了免费课程 Claude Code 101，讲的是 loop engineering，配 Claude Fable 5 和 Claude Code。precis0x 在 X 上转发推荐，原话是西语："Este curso gratuito reemplaza cualquier tutorial de pago de claude code"（这门免费课能替代任何付费的 Claude Code 教程）。
 
 视频 1 小时 1 分 04 秒，按 6 段展开：
 
@@ -24,7 +37,7 @@ hiddenFromHomePage: false
 - `32:34` — 用 Draft PR 自动审代码
 - `58:39` — Fable 5 用于非代码工作
 
-课程的可取之处在配套。Anthropic 把 Claude Code 文档从 `docs.claude.com` 迁到 `code.claude.com/docs/en/`，hooks、sub-agents、MCP、skills 四个扩展点的 reference 和 quickstart 都写得很细。课程里的每个示例，都能在文档里找到对应章节的真实代码。
+这门课的加分项在配套资料。Anthropic 把 Claude Code 文档从 `docs.claude.com` 迁到 `code.claude.com/docs/en/`，hooks、sub-agents、MCP、skills 四个扩展点的 reference 和 quickstart 都写得很细。课程里的每个示例，都能在文档里找到对应章节的真实代码。
 
 ## 2. Loop Engineering 是什么
 
@@ -76,6 +89,8 @@ loop engineering 是这 5 类工作流之上抽出来的一条共通主线：一
 - **MCP** —— 连接外部服务（database / API / SaaS 工具）
 - **Hooks** —— 在循环的关键节点自动跑命令（自动验证 / 自动 lint / 自动格式化）
 - **Sub-agents** —— 把子任务委派给专门的子代理（探索 / 规划 / 实现）
+
+把三阶段和这些工具拼起来，一个典型改动任务的长相是这样：Claude 先读目标文件和相关调用，定位改动点（Gather，靠 File operations 和 Search）；然后改代码、跑测试（Act，靠 Execution）；测试没过，它读报错、再改、再跑（Verify，又回到 Gather / Act）。文档里那句 "A bug fix cycles through all three phases repeatedly" 落到实操，就是这一圈一圈的循环。任务越大，循环嵌套得越深，hooks 和 sub-agent 的价值也越明显——它们是往这个循环里插工程挂点的东西。
 
 下面几节逐个展开 hooks、sub-agents、voice、Draft PR、Fable 5 五块。
 
@@ -220,9 +235,9 @@ YAML frontmatter 字段：
 | `permissionMode` | 权限模式（acceptEdits / bypassPermissions / default） |
 | `hooks` | sub-agent 专属 hooks |
 
-最值得说的是 `tools` 字段。一个 code reviewer 不该有 `Write` 工具，因为它的职责是"读 + 评论"，不是"读 + 改"。这种最小权限是 sub-agent 设计的关键。
+`tools` 字段值得单独拎出来说。一个 code reviewer 不该有 `Write` 工具，因为它的职责是"读 + 评论"，不是"读 + 改"。这种最小权限是 sub-agent 设计的关键。
 
-另一个重要的点：sub-agent 的 context 是隔离的。Explore / Plan 拿到结果后，只把摘要返回主对话，自己的完整 context 不进主对话，避免探索性操作把主对话 context 灌满。
+sub-agent 的 context 还是隔离的。Explore / Plan 拿到结果后，只把摘要返回主对话，自己的完整 context 不进主对话，避免探索性操作把主对话 context 灌满。
 
 ## 6. 为什么声音胜于写作
 
@@ -233,7 +248,7 @@ YAML frontmatter 字段：
 - **Hooks 是"机器可读的语言"** —— 用 JSON schema、命令、shell 表达意图
 - **Voice 是"自然语言的高密度变体"** —— 说话比打字带的信息密度高
 
-对 loop engineering 的启示：如果你发现自己反复输入相同 prompt，先看 hooks 能不能解决（机械化），再看 voice 能不能替代（自然化），剩下的纯重复 prompt 才考虑做 / 命令封装。
+落到 loop engineering 上：如果你发现自己反复输入同一段 prompt，先想 hooks 能不能把它机械化掉，再想 voice 能不能说得更省，剩下的纯重复 prompt 才值得封装成 / 命令。
 
 ## 7. Draft PR：自动代码评审
 
@@ -241,7 +256,7 @@ YAML frontmatter 字段：
 
 流程是这样：Claude 改完一组相关文件 → 自动跑 hooks（lint / format / type-check）→ 把 diff 推到远端开一个 Draft PR → 通知 reviewer 审阅。
 
-这套链路把"agent 写代码 → CI 验证 → 团队审阅"接起来，不用人从 IDE 跳出来。这是 loop engineering 在团队协作层面的落地：agent 不是代替开发者，而是把开发者从"写完代码再手动验证"里解放出来，改成评审 agent 写的代码。
+这套链路把"agent 写代码 → CI 验证 → 团队审阅"接起来，人不用从 IDE 跳出来。loop engineering 在这里落在团队协作上：agent 不是替开发者写代码，而是把开发者从"写完再手动验证"里解放出来，改成评审 agent 写的代码。
 
 文档给的一句定义：
 

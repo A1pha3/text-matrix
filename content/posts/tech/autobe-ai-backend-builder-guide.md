@@ -1,5 +1,5 @@
 ---
-title: "AutoBE：1.2K Stars·AI后端构建器·从需求到生产的完整解决方案"
+title: "AutoBE：1.3K Stars·AI后端构建器·从需求到生产的完整解决方案"
 date: "2026-04-12T02:31:39+08:00"
 slug: autobe-ai-backend-builder-guide
 github_repo: "wrtnlabs/autobe"
@@ -17,8 +17,8 @@ tags: ["TypeScript", "NestJS"]
 >
 > | 指标 | 数值 |
 > |------|------|
-> | ⭐ Stars | 1,348+ |
-> | 🍴 Forks | 160+ |
+> | ⭐ Stars | 1,359+ |
+> | 🍴 Forks | 157+ |
 > | 📜 License | AGPL-3.0 |
 > | 💻 主要语言 | TypeScript |
 > | 📅 最后更新 | 2026-06-24 |
@@ -59,17 +59,17 @@ AutoBE 把"自然语言到可编译后端"做成了可复现的工程流程：40
 
 AutoBE 由韩国团队 wrtnlabs 开源（GitHub 仓库 `wrtnlabs/autobe`），定位是"AI backend builder"：输入自然语言需求，输出包含数据库 Schema、API 控制器、DTO、E2E 测试和 NestJS 实现的完整后端工程。生成物自带类型安全的前端 SDK，前端可以直接 `import` 调用。
 
-截至 2026-04-10（v0.31.1），仓库数据如下，来源为 GitHub 仓库 README 与官网：
+截至 2026-09-01，仓库数据如下，来源为 GitHub API 与仓库 README：
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 1.2k |
-| Forks | 141 |
-| 贡献者 | 15（含 AI 协作者） |
-| 最新版本 | v0.31.1（2026-04-10） |
-| 提交数 | 1,651 commits |
-| 许可证 | AGPL-3.0（生成代码不受约束，见后文） |
-| 主语言 | TypeScript 86.7%，MDX 10.0% |
+| Stars | 1,359 |
+| Forks | 157 |
+| 贡献者 | 13 |
+| 最新版本 | v0.31.1（2026-04-10，仍为最新 tag） |
+| 提交数 | 1,654 commits |
+| 许可证 | AGPL-3.0（生成代码可另行授权，见后文） |
+| 主语言 | TypeScript |
 
 **适合的场景**：快速验证一个后端想法、生成 MVP 骨架、给前端联调提供可编译的 mock 后端、对比不同 LLM 在代码生成任务上的表现。
 
@@ -95,11 +95,20 @@ AutoBE 由韩国团队 wrtnlabs 开源（GitHub 仓库 `wrtnlabs/autobe`），�
 
 ### 2.2 AST 编译管道（质量兜底）
 
-这是 AutoBE 区别于"直接让 LLM 吐代码"的关键。LLM 产出的是语言中立的 AST，再由确定性编译器转成 TypeScript/Prisma 源码：
+这是 AutoBE 区别于"直接让 LLM 吐代码"的关键。LLM 产出的是语言中立的 AST，再由确定性编译器转成各阶段产物，每台编译器都做类型校验（官方称 Compiler Feedback）：
 
 ```
 需求 → Agent 产出 AST（语言中立）→ 类型验证 → 代码生成 → 编译检查
 ```
+
+五个阶段中四台编译器各管一段：
+
+| 阶段 | 编译器 | 校验对象 |
+|------|--------|----------|
+| Database | Database Compiler | Prisma Schema 类型 |
+| Interface | OpenAPI Compiler | API 规范（OpenAPI + JSON Schema） |
+| Test | Test Compiler | E2E 测试代码 |
+| Realize | Hybrid Compiler | NestJS 实现代码 |
 
 为什么走 AST 这一层：结构错误在概念阶段就能捕获，不依赖 LLM 自己写对 TypeScript 语法；同时为多语言扩展留出口子——Java/Spring 生成正在开发中。代价是 Agent 产出受 AST 表达能力约束，复杂业务逻辑可能需要 Implementation Agent 在源码层补齐。
 
@@ -124,7 +133,7 @@ pnpm install
 pnpm run playground
 ```
 
-启动后访问 `http://localhost:5713`，Playground 提供 Chat 界面、编译成功仪表盘和会话 Replay 功能。
+启动后访问 `http://localhost:5173`，Playground 提供 Chat 对话界面与会话 Replay 功能，Replay 可回看官方测试与 Benchmark 的会话记录。
 
 典型对话流如下，每一步对应一个 Agent 阶段：
 
@@ -138,7 +147,7 @@ API 规范："创建 API 接口规范。"
 
 ## 五、任务流案例：ERP 项目如何从需求走到代码
 
-以仓库内置的 `erp` 示例为例，跟踪一次完整生成。ERP 之所以有代表性，是因为它涉及多实体关联、复杂权限和大量 API，能暴露出 Agent 协作中的典型问题。
+以官方示例仓库 `wrtnlabs/autobe-examples` 中的 `erp` 项目为例，跟踪一次完整生成。ERP 之所以有代表性，是因为它涉及多实体关联、复杂权限和大量 API，能暴露出 Agent 协作中的典型问题。
 
 **阶段 1：需求分析**。Requirements Agent 读取自然语言描述，产出结构化分析报告，存放在 `docs/analysis/`。报告内容包含领域实体清单、业务规则、用例列表。
 
@@ -193,24 +202,32 @@ SDK 由 AST 编译管道同步生成，字段类型与后端 DTO 完全一致。
 
 ## 七、Benchmark：测的是什么，能推出什么
 
-评估覆盖 7 个维度：Compilation（编译通过）、Documentation（文档质量）、Requirements Coverage（需求覆盖率）、Test Coverage（测试覆盖率）、Logic Completeness（逻辑完整性）、API Completeness（API 完整性）、AI Analysis（安全性、幻觉、代码质量的 LLM 评审）。
+评估分两层：先过 Gate（TypeScript 编译 + ESLint，不过直接判定失败），再按六项加权打分（榜单权重来自官网 Benchmark 页）：Golden Set（黄金集 E2E 场景，40%）、Logic（逻辑完整性，24%）、Req（需求覆盖，14%）、Test（测试覆盖，14%）、API（API 完整性，4%）、Doc（文档质量，4%）。此外默认启用三个 AI 评审 Agent——Security、LLM Quality、Hallucination——分别检查安全性、代码质量，以及识别未实现函数与伪造逻辑。
 
 **测的是什么**：在固定 4 个项目（todo、reddit、shopping、erp）上，给定相同需求输入，比较各 LLM 生成产物的工程完整度。数字反映的是"在该项目规模下，模型能产出多完整的可编译后端"。
 
-**不能推出什么**：不能直接外推到自定义业务场景的表现——4 个项目覆盖的实体关系和 API 模式有限；不能推出运行时正确性——Compilation 维度只检查 `tsc` 通过；不能推出长期维护成本——评估只看首次生成质量。
+**不能推出什么**：不能直接外推到自定义业务场景的表现——4 个项目覆盖的实体关系和 API 模式有限；不能推出运行时正确性——Gate 只检查编译和静态检查，E2E 场景（Golden Set）覆盖有限；不能推出长期维护成本——评估只看首次生成质量。
 
-截至 2026-04 的部分模型对比（来源：官网 benchmark 页面）：
+截至 2026-07-06 的完整榜单（来源：官网 Benchmark 页面，56 次运行）：
 
 | 模型 | Todo | Reddit | Shopping | ERP | 平均 |
 |------|------|--------|---------|-----|------|
-| minimax-m2.7 | 90 (A) | 71 (C) | 77 (C) | 79 (C) | 79 |
-| glm-5 | 88 (B) | 87 (B) | 82 (B) | 87 (B) | 86 |
-| claude-sonnet-4.6 | 87 (B) | 85 (B) | 72 (C) | 85 (B) | 82 |
-| gpt-5.4-mini | 89 (B) | 87 (B) | 74 (C) | 78 (C) | 82 |
-| qwen3-coder-next | 86 (B) | 76 (C) | 75 (C) | 88 (B) | 81 |
-| qwen3.5-27b | 88 (B) | 81 (B) | 77 (C) | 78 (C) | 81 |
+| glm-5 | 80 (B) | 84 (B) | 83 (B) | 84 (B) | 83 (B) |
+| gpt-5.4-mini | 84 (B) | 83 (B) | 77 (C) | 86 (B) | 83 (B) |
+| qwen3.5-27b | 81 (B) | 85 (B) | 77 (C) | 84 (B) | 82 (B) |
+| qwen3.5-35b-a3b | 83 (B) | 82 (B) | 79 (C) | 80 (B) | 81 (B) |
+| qwen3.5-397b-a17b | 88 (B) | 82 (B) | 73 (C) | 81 (B) | 81 (B) |
+| deepseek-v4-pro | 85 (B) | 82 (B) | 73 (C) | 82 (B) | 81 (B) |
+| kimi-k2.5 | 88 (B) | 74 (C) | 75 (C) | 85 (B) | 81 (B) |
+| qwen3.5-122b-a10b | 83 (B) | 80 (B) | 78 (C) | 78 (C) | 80 (B) |
+| deepseek-v4-flash | 83 (B) | 79 (C) | 74 (C) | 82 (B) | 80 (B) |
+| minimax-m2.7 | 90 (A) | 79 (C) | 73 (C) | 75 (C) | 79 (C) |
+| gpt-5.4 | 80 (B) | 76 (C) | 78 (C) | 78 (C) | 78 (C) |
+| qwen3.6-27b | 80 (B) | 74 (C) | 73 (C) | 83 (B) | 78 (C) |
+| claude-sonnet-4.6 | 86 (B) | 85 (B) | 73 (C) | 58 (F) | 76 (C) |
+| gpt-5.4-nano | 77 (C) | 63 (D) | 65 (D) | 71 (C) | 69 (D) |
 
-观察：glm-5 在四个项目上表现最稳定；ERP 这种复杂场景下 qwen3-coder-next 和 glm-5 领先；Shopping 是所有模型的弱项，可能与电商领域实体关系复杂度有关。选模型时优先看与目标项目复杂度最接近的那一列，不要只看平均分。
+观察：glm-5 与 gpt-5.4-mini 并列平均最高且各项目都稳定在 B；qwen3.5 系列整体均衡；Shopping 是几乎全部模型的弱项，可能与电商领域实体关系复杂度有关；claude-sonnet-4.6 在 ERP 上出现 58 (F) 的明显异常，拉低了平均分。选模型时优先看与目标项目复杂度最接近的那一列，不要只看平均分。评分权重：Golden Set 40%、Logic 24%、Req 14%、Test 14%、API 4%、Doc 4%。
 
 运行 Benchmark 的命令：
 
@@ -263,26 +280,36 @@ pnpm estimate -- --model glm-5 --project shopping
 | 前端 | TypeScript，React（Playground） |
 | 后端 | NestJS，TypeScript |
 | 数据库 | Prisma ORM |
-| AI | 多 LLM 支持（OpenAI、Anthropic、Google、开源模型） |
+| AI | 多 LLM 支持（Anthropic、OpenAI、Qwen、GLM、Kimi、MiniMax、DeepSeek 等） |
 | 协议 | WebSocket（RPC） |
 | CLI | pnpm |
 
-目录结构：
+目录结构（来源：GitHub 仓库根目录，2026-09-01）：
 
 ```
 autobe/
-├── apps/              # 应用目录
-│   └── playground/    # Web 界面
-├── internals/         # 内部核心
-│   ├── agent/         # AI Agent 实现
-│   ├── compiler/      # AST 编译管道
-│   └── estimate/      # Benchmark 系统
+├── apps/              # 应用
+│   ├── playground-ui/ # Playground Web 界面
+│   ├── playground-server/  # Playground 后端
+│   ├── playground-api/     # Playground API 定义
+│   ├── dashboard-ui/       # Benchmark 仪表盘
+│   ├── hackathon-*/        # 黑客松示例应用
+│   └── vscode-extension/   # VSCode 扩展
+├── internals/         # 内部实现
+│   ├── config/        # 配置
+│   ├── dependencies/  # 依赖管理
+│   ├── template/      # 模板
+│   └── website-examples/  # 官网示例
 ├── packages/          # npm 包
-│   ├── api/           # API 定义
-│   ├── protocol/      # 通信协议
-│   └── validate/      # 验证引擎
-├── test/              # 测试
-├── website/           # 官网
+│   ├── agent/         # Agent 引擎
+│   ├── benchmark/     # Benchmark 数据
+│   ├── compiler/      # 编译管道
+│   ├── estimate/      # 评估系统
+│   ├── filesystem/    # 文件系统抽象
+│   ├── interface/     # AST 定义
+│   ├── rpc/           # RPC 协议
+│   ├── ui/            # 共享 UI
+│   └── utils/         # 工具函数
 └── deploy/            # 部署配置
 ```
 
@@ -295,16 +322,9 @@ autobe/
 | Token 消耗 | 复杂项目 Token 开销大 | 正在优化 RAG |
 | 维护能力 | 不提供长期维护功能 | 建议结合 Claude Code 维护 |
 
-Token 消耗参考（来源：官方文档，复杂度越高开销越大）：
+Token 消耗参考（来源：官方文档 Current Limitations 一节）：简单 todo 项目约 4M tokens；复杂项目总体落在 30M-250M+ 区间，电商类复杂项目可达 250M+。官方没有公布逐项目类型的细分数字，具体项目建议先小规模实测再估算成本。
 
-| 项目类型 | Token 消耗 |
-|----------|-----------|
-| 简单 To Do | 约 4M tokens |
-| 中等 Reddit | 约 30M-50M tokens |
-| 复杂 E-commerce | 约 100M-150M tokens |
-| 超大型 ERP | 约 250M+ tokens |
-
-复杂项目的 Token 成本需要纳入选型评估。ERP 级别生成按当前主流模型定价计算，单次完整生成可能消耗数十美元。
+复杂项目的 Token 成本必须纳入选型评估，尤其在使用高阶商用模型时，单次完整生成的调用开销不可忽视。
 
 ## 十、发展路线图
 
@@ -313,7 +333,7 @@ Token 消耗参考（来源：官方文档，复杂度越高开销越大）：
 | Alpha | 完成 | 基础架构，100% 编译成功率 |
 | Beta | 完成 | RAG、模块化、补充机制 |
 | Gamma | 完成 | 快速迭代功能上线 |
-| Delta | 进行中 | 稳定性优先，深度优化 |
+| Delta | 完成 | 从横向扩展转向纵深加固（官方 roadmap 已标注 done） |
 
 Delta 阶段重点方向：
 
@@ -325,6 +345,8 @@ Delta 阶段重点方向：
 | 设计完整性 | Database ↔ Interface 阶段设计一致性 |
 | 多语言支持 | Java/Spring 代码生成（进行中） |
 | 人工修改支持 | 解析用户修改代码回写 AST |
+
+其中 Hybrid Search（Vector + BM25）、JSON Schema 验证器、动态 K 检索等已在 Delta 阶段落地；Java/Kotlin 多语言支持是 Delta 的重点方向。
 
 ## 十一、许可证
 
@@ -364,12 +386,12 @@ AutoBE 当前的工程价值在于把"AI 生成后端"从一次性 demo 推进�
 | API | https://autobe.dev/api |
 | Discord | https://discord.gg/aMhRmzkqCx |
 | npm | https://www.npmjs.com/package/@autobe/agent |
-| Playground | http://localhost:5713 |
-| Replay | http://localhost:5713/replay/index.html |
+| Playground | http://localhost:5173 |
+| Replay | http://localhost:5173/replay/index.html |
 
 ---
 
-_本文基于 AutoBE v0.31.1（2026-04-10）撰写，仓库数据与 Benchmark 数字均以该时间点为准。_
+_仓库数据核验于 2026-09-01（GitHub API）；Benchmark 数据来自官网页面（2026-07-06 更新）。_
 
 ---
 

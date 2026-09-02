@@ -50,7 +50,7 @@ MCP/HTTP 服务器
 
 ### 1. 单一 writer 与「编译而非检索」
 
-所有观察经钩子 POST 到服务器，由**单个 SQLite writer** 串行落盘，再编译成 Markdown 页面。与「每次对话都全量检索向量库」的方案不同，它把记忆固化为结构化页面，靠 SQLite FTS5 全文检索、实体匹配与图邻居 RRF 混合召回（可选加向量 RRF），并对非全局检索做 bounded raw-observation fallback。
+所有观察经钩子 POST 到服务器，由**单个 SQLite writer** 串行落盘，再编译成 Markdown 页面。坚持单一 writer，是把 SQLite 的写锁竞争挡在设计外：所有写入串行执行，读走一个可克隆的只读连接池，会话高并发也只需考虑读扩展。与「每次对话都全量检索向量库」的方案不同，它把记忆固化为结构化页面，靠 SQLite FTS5 全文检索、实体匹配与图邻居 RRF 混合召回（可选加向量 RRF），并对非全局检索做 bounded raw-observation fallback。
 
 ### 2. 生命周期捕获是零摩擦的
 
@@ -63,6 +63,36 @@ MCP/HTTP 服务器
 ### 4. 跨 Agent 交接与 managed workstreams
 
 「退出 Claude Code 中途换 Codex，几小时后在相同目录启动，下一位 Agent 在第一条 prompt 前看到 where you left off 区块」——这是它的招牌场景。进一步，`ai-memory run` 提供可选的 **managed workstreams**：对 Claude Code、Codex、OpenCode、Pi、Crush、Kimi Code、Command Code、Kiro CLI、OMP、Grok Build CLI、Antigravity CLI 等多套 harness 做透明的跨工具连续性（自动选 harness、原生 resume、参数透传、ledger 搜索）。直接启动（direct launch）的轻量路径不受影响。
+
+### 5. 捕获豁免与后台自动完善：compile 的另一半
+
+「编译」不是只在会话结束时跑一次。两条机制把 Karpathy 式 wiki 的「越用越新」补全：
+
+- **捕获豁免有两档**。默认距最近标记文件（`.ai-memory.toml` 的 `[capture] ignore_paths`）最近的豁免策略，会在事件进入本地 spool / 服务器前，直接丢弃匹配的 file-tool 事件——敏感文件连轨迹都不落盘。更强的 `install-hooks --capture-mode allowlist` 则反转为**白名单**：一个仓库没有放置 marker，钩子就完全不产生任何生命周期事件。两者取舍相反：默认档是「漏掉 marker 只损失覆盖率」，白名单档是「漏掉 marker 只损失召回而保护机密」。后者的豁免只由原生 `ai-memory hook` 命令强制执行。配合既有按项目隔离，这是数据本地化诉求的第三道闸。
+- **consolidation 与后台调度让记忆持续固化**。配置 `AI_MEMORY_LLM_PROVIDER` 后，会话结束时先生成一条**规则式**（不调 LLM）的 `sessions/<id>.md` 摘要；`memory_consolidate` 再把它重写成更持久的页面，或按 `concepts/`、`decisions/`、`gotchas/` 拆成多页并互加 wikilink。一个后台调度器在 hook 延迟之外遍历新完成会话，把审过的提议写进 pending-writes 审计、再默认自动合并回 wiki；管理员可设 `[auto_improve] require_approval = true` 改为人工审批，或直接关闭调度。每个 consolidation 与每个 session-end，`wiki/` 里都会落一次持久 git commit。**「编译」因此是增量维护，不是一次性快照。**
+
+## 一次跨 CLI 交接：断点在哪，记忆如何跟上
+
+把这套抽象落到一条真实工作线里，比单看机制图更接近使用时的判断：
+
+```
+① 搭环境：ai-memory run claude（Claude Code）
+② 会话 1：修一个 flaky 集成测试
+   PreToolUse/PostToolUse 钩子上报 sanitized 观察
+   prompt 与压缩后摘要 ≤16 KiB，通知与工具摘录 ≤2 KB
+   单个 SQLite writer 串行落盘，wiki/ 落一次 git commit
+③ 退出：true SessionEnd → 规则式 sessions/<id>.md 摘要
+   + 开一条 Handoff；若配了 LLM provider，
+   memory_consolidate 展开成 concepts/decisions/gotchas 页
+④ 半天后：同一目录 ai-memory run codex --yolo
+   Codex 原生会话恢复 + 未消费 handoff 注入（包带版本化 origin marker）
+   第一条 prompt 前读到 "where you left off"
+   ——含结构、失败过的方案、待决问题，不用你重述架构
+⑤ 提问：memory_query 走 FTS5 + 实体 + 图邻居 RRF
+   编译结果 miss 时退回 bounded raw-observation 检索
+```
+
+几条值得留意的细节：第 ③ 步的摘要由规则生成，不消耗 token，也不会在无 LLM 配置时阻塞会话结束；第 ④ 步里不同 harness 的注入通道不一——Grok、Zero、Pool 不消费 `SessionStart` stdout，需经 MCP 的 `memory_handoff_accept` 取回手递；Codex 没有真正的 session-end 钩子，衔接交接依赖 managed 模式下 `ai-memory run codex` 的原生会话恢复。项目是否真能"无缝交接"，在第 ④ 步才见分晓。
 
 ## 支持矩阵（节选）
 
@@ -100,7 +130,7 @@ LLM 提供商支持 Anthropic、OpenAI、GitHub Copilot、Gemini、OpenCode Zen/
 
 **适合**：经常在多套 AI 编码 CLI 间切换、厌倦反复重述项目架构的开发团队；希望记忆以可 grep 的 Markdown + git 形式存在、而非黑盒向量库的用户；自托管、重视数据本地化的场景。
 
-**需注意**：钩子捕获是 bounded 的（非完整转录），保真度上限明确；managed workstreams 是 opt-in，直接启动才是默认路径；不同 harness 的交接能力差异大（有的无 handoff 注入，只能经 MCP 恢复）；多用户场景的 `[slots] per_user` 是上下文注入隔离而非 RBAC。项目版本节奏很快（v1.29.0 于 2026-08-19 发布），使用前留意 release 变更。
+**需注意**：钩子捕获是 bounded 的（非完整转录），保真度上限明确；managed workstreams 是 opt-in，直接启动才是默认路径；不同 harness 的交接能力差异大（有的无 handoff 注入，只能经 MCP 恢复）；多用户场景的 `[slots] per_user` 是上下文注入隔离而非 RBAC。项目迭代极快（截至 2026-08-30 已到 v1.38.0），使用前留意 release 变更。
 
 ## 一句话总结
 

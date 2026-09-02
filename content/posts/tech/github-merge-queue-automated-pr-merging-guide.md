@@ -1,40 +1,40 @@
 ---
 github_repo: "apps/github-merge-queue"
-title: "GitHub Merge Queue 自动化 PR 合入完全指南"
+title: "GitHub 原生 Merge Queue 自动化合入完全指南"
 date: 2026-05-17
 draft: false
 author: "钳岳星君"
 categories: ["技术笔记"]
 tags: ["GitHub", "DevOps", "CI/CD", "Pull Request"]
-description: "深入解析 GitHub Merge Queue 的工作原理、配置方法和生产级最佳实践，不堆功能清单，只讲你真正需要关心的东西。"
+description: "GitHub 原生 Merge Queue 是官方提供的合并队列，本文讲清它的设计模型、配置项、与 GitHub Actions 的集成，以及为什么它和 Mergify 的 Group Merging 不是一回事。"
 slug: github-merge-queue-automated-pr-merging-guide
 ---
 
-# GitHub Merge Queue 自动化 PR 合入完全指南
+# GitHub 原生 Merge Queue 自动化合入完全指南
 
-GitHub Merge Queue 解决的不是"怎么合 PR"，而是"多个 PR 同时就绪时，怎么避免每次合入都重新排队等 CI、重新解决冲突"。它把合入从单次手动操作变成批量自动验证流水线。
+合并队列不是为了解决"怎么合 PR"——那本来有按钮。它解决的是：多个 PR 同时就绪时，怎么让合入不再变成"每次都得手动排队等 CI、再手动解决新冲突"。GitHub 原生 Merge Queue 把这件事自动化：PR 通过分支保护检查后进入队列，系统把排在队首的若干 PR 和最新目标分支合并成一个临时提交、跑到这些 PR**合并后**的完整状态，再据此合入。
 
-本文覆盖 GitHub 原生 Merge Queue 的完整配置链路，以及 [github-merge-queue](https://github.com/apps/github-merge-queue) App 的增强能力：这套机制在什么场景下省时间、在什么场景下反而添乱，以及怎么配才能让它真正跑起来。
+这篇文章基于 [GitHub 官方文档](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue)，讲清无自带模板的配置链路：什么样的团队适合、怎么配分支保护才能让 CI 真正在 `merge_group` 事件下跑起来、哪些"功能"其实是第三方工具而不是 GitHub 原生。
 
 <!--more-->
 
 ## 本文覆盖
 
-- [ ] 说清 Merge Queue 三条核心线（Batch、Group Merging、Stack）各自管什么、不管什么
+- [ ] 说清原生 Merge Queue 的设计模型：FIFO 队列 + 临时 merge_group 分支
 - [ ] 写一份能同时处理 `pull_request` 和 `merge_group` 事件的 GitHub Actions workflow
 - [ ] 判断自己团队的 PR 量和 CI 形态是否适合上 Merge Queue
-- [ ] 避开 batch 过大、分组误配、auto-merge 互斥这三个最常见的坑
+- [ ] 分清哪些能力是原生的、哪些要引入 Mergify 等第三方工具
 
 ## 目录
 
 1. [先看全景：Merge Queue 里到底发生了什么](#一先看全景merge-queue-里到底发生了什么)
-2. [核心机制：Batch、Merge Group 与合并策略](#二核心机制batchmerge-group-与合并策略)
+2. [核心机制：临时分支、合并策略与构建并发](#二核心机制临时分支合并策略与构建并发)
 3. [一次完整流转：从 PR 入队到合入](#三一次完整流转从-pr-入队到合入)
-4. [GitHub 原生配置](#四github-原生配置)
+4. [原生配置：启用与关键开关](#四原生配置启用与关键开关)
 5. [GitHub Actions 集成](#五github-actions-集成)
-6. [Group Merging：不同 PR 走不同通道](#六group-merging不同-pr-走不同通道)
-7. [Stack PR 与 Drop 行为](#七stack-pr-与-drop-行为)
-8. [附：github-merge-queue App 增强功能](#八附github-merge-queue-app-增强功能)
+6. [队列参数调优：构建并发与合并上限](#六队列参数调优构建并发与合并上限)
+7. [失败与跳队行为](#七失败与跳队行为)
+8. [第三方能力：Mergify 的 Group Merging 与 Stack PR](#八第三方能力mergify-的-group-merging-与-stack-pr)
 9. [最佳实践](#九最佳实践)
 10. [故障排查](#十故障排查)
 11. [常见问题 (FAQ)](#十一常见问题-faq)
@@ -44,218 +44,160 @@ GitHub Merge Queue 解决的不是"怎么合 PR"，而是"多个 PR 同时就绪
 
 ## 一、先看全景：Merge Queue 里到底发生了什么
 
-先看一张系统地图，再看怎么配。Merge Queue 的核心机制可以拆成三条线：
+一句话：Merge Queue 用"先合并、再验证、最后只合入能过的"来保证目标分支始终是绿的。它不替代 code review，只接管"验证 + 合入"的编排。
 
 ```mermaid
 flowchart TB
     subgraph IN["入队"]
-        A["PR 入队<br/>标签 / API / 手动"]
+        A["PR 满足分支保护<br/>进入队列 FIFO 排队"]
     end
 
     subgraph QUEUE["Merge Queue"]
-        B["Batch 编组"]
-        C["CI 验证<br/>(merge_group 事件)"]
-        D["合入 / 丢弃"]
+        B["编成 merge_group<br/>(队首若干 PR + 最新 main)"]
+        C["创建临时分支<br/>gh-readonly-queue/main/xxx"]
+        D["触发 merge_group 事件<br/>跑合并后 CI"]
     end
 
-    subgraph PARA["并行机制"]
-        E["Group Merging<br/>不同标签走不同验证通道"]
-        F["Stack PR<br/>有依赖关系的 PR 按序合入"]
-        G["Drop<br/>CI 失败时跳过，不阻塞队列"]
+    subgraph RES["结果"]
+        E["CI 通过 → 合入 main"]
+        F["CI 失败 → 失败的 PR 被移出队列"]
     end
 
-    IN --> B --> C --> D
-    B -.-> E
-    B -.-> F
-    B -.-> G
+    IN --> B --> C --> D --> E
+    D --> F
 ```
 
-三条线各自独立，但共享同一个队列：
+这套机制和"手动合入"的关键区别在于**验证的对象**：单 PR 合入 CI 跑的是你的分支；Merge Queue 跑的是"你的 PR + 队列里排你前面的 PR + 最新 main"合并后的 **merge_group 提交**。因此能提前暴露跨 PR 的集成冲突。
 
-| 机制 | 解决的问题 | 不负责的事 |
-|------|-----------|-----------|
-| **Batch（批次）** | 把多个 PR 合并成一个临时 commit 一起跑 CI，减少重复验证 | 不管 PR 之间有没有代码冲突 |
-| **Group Merging（分组）** | 不同类型 PR 走不同验证通道（文档改动不跑 e2e） | 不管分组间的优先级排序 |
-| **Stack（栈式 PR）** | 按依赖顺序逐个合入，不会把依赖链打乱 | 不检测循环依赖，也不自动 rebase 栈中 PR |
+| 能力 | 原生提供 | 它管什么 |
+|------|---------|---------|
+| FIFO 排队 | ✅ | 按入队顺序合入，先入先出 |
+| 合并后验证 | ✅ | 在 merge_group 临时提交上跑 CI，不是单个 PR |
+| 失败移出 | ✅ | 失败的 PR 被移出队列，其余重建后继续 |
+| 构建并发控制 | ✅ | 限制同时派发的 `merge_group` webhook 数量 |
+| 合并数量上限 | ✅ | 限制一次合入的最大 / 最小 PR 数 |
+| 按标签分流 CI | ❌ | 这是 Mergify 的 Group Merging，原生没有 |
+| Stack PR 依赖合入 | ❌ | 原生不感知 PR 间依赖关系 |
+
+> ⚠️ 网上大量"Merge Queue 配置"教程把 `group_name`、标签分流规则写成 GitHub 原生配置——它们其实是 [Mergify](https://mergify.com) 等第三方的语法。本文后面单列一节讲清楚界限。
 
 ---
 
-## 二、核心机制：Batch、Merge Group 与合并策略
+## 二、核心机制：临时分支、合并策略与构建并发
 
-### 2.1 队列如何工作
+### 2.1 核心抽象：merge_group 与临时分支
 
-PR 入队后的完整路径：
+PR 被加入队列后，GitHub 会：
 
-1. **入队（Enqueue）**：PR 通过 label、`/merge` 命令或 API 加入队列
-2. **编组（Batch）**：队列按配置将连续的 PR 编为一组。默认最少 2 个 PR 才触发批次
-3. **合并验证（Mergeability Check）**：GitHub 创建一个临时合并提交，把 batch 内所有 PR 按队列顺序合并到目标分支，在这个临时 commit 上跑 CI
-4. **合入（Merge）**：CI 通过 → 批量合入；CI 失败 → 整个 batch 标记失败，不会部分合入
+1. 按顺序把队首的若干 PR 与**当前最新目标分支**合并；
+2. 把合并结果放到一个以 `gh-readonly-queue/{base_branch}` 为前缀的**临时分支**上（例如 `gh-readonly-queue/main/pr-2`）；
+3. 向你的 CI 派发一个类型为 `checks_requested` 的 `merge_group` 事件；
+4. CI 在这个临时分支上验证合并后的结果。
 
-### 2.2 Merge Group：临时验证提交
+这一步直接决定了 Actions workflow 的写法——你必须 checkout 的是 `merge_group` 提供的 sha，而不是任何一个单独 PR 的 `pull_request.head.sha`。
 
-Merge Group 是 GitHub 在验证阶段动态创建的一个临时 commit：
+### 2.2 合并策略
 
-```
-base: main
-  └─ commit: merge #101 + #102 + #103 → merge_group_sha
-```
+在仓库分支保护规则的 Merge Queue 设置里可选三种合并方式（对应 Community/Enterprise 均可）：
 
-CI 跑在这个临时 commit 上，而不是跑在任何一个单独的 PR 上。这一点直接决定了 Actions workflow 的写法——你需要 checkout `merge_group.head_sha`，而不是 `pull_request.head.sha`。
+- **Squash**：合并时把 PR 的 commit 压成一个，main 历史干净，推荐采用。
+- **Rebase**：把 PR 的 commit 逐个变基到目标分支顶端。
+- **Merge**：创建合并提交，保留完整 commit 历史。
 
-### 2.3 合并策略
+> 若团队没有强制的线性历史要求，优先选 **Squash**。Rebase 在批量合入时会在多个 PR 之间重建 commit 顺序，容易引入非预期的冲突。
 
-在仓库 Settings → Pull Requests 中配置，三种策略：
+### 2.3 构建并发（Build concurrency）
 
-- **Squash and merge**：推荐。每个 PR 的全部 commit 压成一个，合入后 main 分支历史干净
-- **Merge commit**：保留 PR 的完整 commit 历史，创建合并提交
-- **Rebase and merge**：将 PR 的 commit 逐个变基到目标分支顶端
+这是原生一个很实用的开关：限制同时派发的 `merge_group` webhook 数量（取值 1–100）。它直接决定"同一时刻能并行跑多少批合并验证"。值设得小，目标分支更稳但吞吐受限；设得大，跑得快但 CI 负载和并发成本高。它是原生限流 CI 的手段，**不是**把它和 Mergify 的 Group Merging 混为一谈的入口。
 
-> ⚠️ Rebase and merge 在 Merge Queue 场景下行为复杂。每个 PR 的 commit 历史会被重新构建，如果 batch 内有多个 PR，rebase 顺序可能产生非预期的冲突。除非团队有明确的线性历史要求，否则优先选 **Squash and merge**。
+### 2.4 合并数量上限（Merge limits）
 
-### 2.4 批次大小：不是越大越好
+原生允许你同时设置**最小** / **最大**合并 PR 数（1–100）以及一个等待时间：
 
-队列需要达到 `min_group_size` 个 PR 后才触发批量合入。默认 2，小仓库可设 1，大仓库设 5-10。
+- **最大合并 PR 数**：防止一次合入太多、触发部署或大量结果连发；
+- **最小合并 PR 数**：希望攒够 PR 再成批合、少跑几轮部署时用；
+- **等待时间**：达到最小合并数之前持续等待的最大时长，超过后即使不足最小数也先行合并。
 
-但 `max_group_size` 设太大反而有害：batch 越大，其中任意一个 PR 的 CI 失败都会把整个 batch 打回，吞吐量反而下降。经验值是 `max_group_size ≤ 10`。
+这是"批大小"的官方归宿——它只约束合并进 main 的数量，不约束构建。别把界面上那个 `min_group_size` 当成原生字段，那是第三方工具对合并上限的另一种封装。
 
 ---
 
 ## 三、一次完整流转：从 PR 入队到合入
 
-假设你维护一个中型前端仓库，现在有 3 个 PR 同时通过 review：
+假设你维护一个中型仓库，`Require merge queue` 已开启，现在三个 PR 依次通过 review：
 
-- PR #201：修复登录页按钮样式（`fast-track` 标签）
+- PR #201：修复登录页按钮样式
 - PR #202：重构认证中间件
 - PR #203：新增支付模块集成测试
 
-**第 1 步：路由到分组**
+**第 1 步：入队与编组**
 
-```
-PR #201 (fast-track) → fast-track 组 → 只跑 lint + typecheck
-PR #202 (无标签)     → standard 组  → 跑完整 CI
-PR #203 (无标签)     → standard 组  → 跑完整 CI
-```
+PR #201 先加入队列，系统创建临时分支 `gh-readonly-queue/main/pr-1`（含 PR #201 + latest main）并派发 `merge_group` 事件。随后 PR #202 加入，创建 `gh-readonly-queue/main/pr-2`（含 PR #201 + PR #202 + latest main）。
 
-**第 2 步：编组与验证**
+**第 2 步：合并验证**
 
-- `fast-track` 组当前只有 #201 一个 PR，`min_group_size=1`，直接触发合并验证。GitHub 创建 `merge_group_sha`，跑 lint 和 typecheck，10 秒通过 → #201 合入 main。
-- `standard` 组有 #202 和 #203，`min_group_size=2`，编为一个 batch。GitHub 创建包含两个 PR 的临时 commit，跑完整 CI（lint + typecheck + unit + integration + e2e）。
+CI 在第一个 merge_group 分支上报成功。GitHub 把它合入 main（假设你设了足够的最小合并数，它会等后面的 PR 一起合）。
 
-**第 3 步：一个失败，全 batch 回退**
+**第 3 步：失败移出**
 
-#203 的集成测试因为数据库迁移脚本冲突而失败。整个 batch 标记失败。#202 和 #203 都**不会**合入。
+PR #202 提供的集成测试因为数据库迁移脚本冲突失败。GitHub 会**把 PR #202 从队列中移出**（timeline 上会注明原因），而不是把整个 batch 回退。PR #201 若已通过则不受影响。
 
-**第 4 步：修复与重试**
+**第 4 步：重建与重试**
 
-#203 的作者修了迁移脚本，推了新 commit。#203 重新入队，#202 仍在队列中等待。下一轮 batch 重新编组验证，这次两个都通过 → 批量合入。
+PR #203 仍在队列。GitHub 去掉失败的 #202，用 #203 重建一个新的 merge_group 临时分支重新验证。作者修好 #202 后需重新加入队列。
 
-这事说明两点：batch 共享 CI 结果能省时间，但一个 PR 失败会拖累同 batch 的其他 PR。也是为什么 `max_group_size` 不宜太大。
+这条流程说明原生模型真正的价值：**失败的是"那一个 PR"，不是"那一段"**。这跟 Mergify 的 Group Merging 有本质区别，见第八节。
 
 ---
 
-## 四、GitHub 原生配置
+## 四、原生配置：启用与关键开关
 
-### 4.1 仓库级别开启
+原生 Merge Queue 不是仓库级开关，而是**分支保护规则的一部分**。
 
-GitHub 仓库 Settings → Pull requests → **Merge queue**：
+### 4.1 开启步骤
 
-```yaml
-PUT /repos/{owner}/{repo}
-{
-  "merge_queue": {
-    "minimize_dialog": true,
-    "method": "squash",
-    "min_group_size": 2,
-    "max_group_size": 8
-  }
-}
-```
+在仓库 **Settings → Branches → Edit protection rule**（或 Rulesets）：
 
-### 4.2 分支保护规则
+1. 选定目标分支（`main` 等）；
+2. 勾选 **Require merge queue**；
+3. 在展开的 Merge Queue 配置里设置下面几项。
 
-在 Branch Protection Rules 中启用 merge queue 要求：
+要点：
 
-```yaml
-PUT /repos/{owner}/{repo}/branches/{branch}/protection
-{
-  "required_status_checks": {
-    "strict": true,
-    "contexts": ["ci/build", "ci/test"]
-  },
-  "enforce_admins": true,
-  "required_pull_request_reviews": {
-    "require_approving_reviewers": 1
-  },
-  "restrictions": null,
-  "flags": ["MERGE_QUEUE_OWNER"]
-}
-```
+- **分支名不能用通配符**（`*`）。官方明确：带通配符的分支保护规则无法启用 merge queue。
+- Merge Queue 只对**组织拥有的公开仓库**可用，或对**使用 GitHub Enterprise Cloud 的组织私有仓库**可用。个人仓库、非组织私有仓库目前不行。
+- 必须启用 `Require branches to be up to date before merging` 之外、让入队 PR 满足**所有必需检查**，否则 CI 不会在入队时被正确触发。
 
-### 4.3 通过标签自动入队
+### 4.2 关键配置项一览
 
-```yaml
-# .github/mergeable.yml
-name: Add to merge queue
+| 配置项 | 作用 | 建议初始值 |
+|--------|------|-----------|
+| Merge method | 合并方式：squash / rebase / merge | squash |
+| Build concurrency | 同时派发的 `merge_group` 数量（1-100） | 2-3 |
+| Only merge non-failing PRs | 是否只合入全部检查通过的 PR | 开启 |
+| Status check timeout | 等待 CI 上报结果的超时 | 5-10 min |
+| Max / Min merge limit | 一次合入最多 / 最少 PR 数 | 3 / 1 |
+| Merge wait time | 等待达到最小合并数的最长时长 | 5 min |
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  add-to-queue:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Add merge label
-        run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "merge"
-```
-
-或者在 PR 描述或评论中直接写 `/merge`。
+> 界面上没有 `min_group_size` 或 `max_group_size` 这类英文键名；需要把"批大小"落到上面的 **Max/Min merge limit** 上。看到用 `min_group_size` 命名的配置，说明那是第三方的。
 
 ---
 
 ## 五、GitHub Actions 集成
 
-### 5.1 `merge_group` 触发器
+### 5.1 为什么必须用 `merge_group` 事件
 
-PR 入队后，GitHub 触发 `merge_group` 事件，而不是 `pull_request` 事件：
+PR 入队后，GitHub 派发的是 `merge_group` 事件，不是 `pull_request`。如果你的 workflow 只监听 `pull_request`，入队时检查根本不会跑，合并会因"必需检查未上报"而失败。所以合并队列的 CI workflow **必须**补一个 `merge_group` 触发器。
+
+### 5.2 最小可用 workflow
 
 ```yaml
 name: Merge Queue CI
 
 on:
+  pull_request:
   merge_group:
-    types: [checks_requested]
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.merge_group.sha }}
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Run tests
-        run: npm test
-```
-
-要点：`ref` 必须指向 `merge_group.sha`，这是包含整个 batch 的临时合并 commit，不是任何一个单独 PR 的 head。
-
-### 5.2 同一 workflow 同时处理 PR 和 merge group
-
-```yaml
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -265,14 +207,21 @@ jobs:
           ref: ${{ github.event.merge_group.head_sha || github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Build and test
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install, build and test
         run: |
           npm ci
           npm run build
           npm test
 ```
 
-### 5.3 完整多阶段 Pipeline
+关键就一行：`ref` 必须指向 `github.event.merge_group.head_sha`。这是包含整个 merge_group 的临时提交 sha，不是任何一个单独 PR 的 head。复用 `||` 是让它同时兼容普通 PR 推代码时的 `pull_request` 触发。
+
+### 5.3 多阶段 Pipeline 常见范式
 
 ```yaml
 name: CI Pipeline
@@ -281,13 +230,14 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened]
   merge_group:
-    types: [checks_requested]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  CI_REF: ${{ github.event.merge_group.head_sha || github.sha }}
 
 jobs:
   quality-checks:
@@ -295,14 +245,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.merge_group.head_sha || github.sha }}
+          ref: ${{ env.CI_REF }}
           fetch-depth: 0
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Type check
-        run: npm run typecheck
+      - name: Lint & typecheck
+        run: |
+          npm run lint
+          npm run typecheck
 
   unit-tests:
     needs: quality-checks
@@ -310,10 +258,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.merge_group.head_sha || github.sha }}
-
+          ref: ${{ env.CI_REF }}
       - name: Run unit tests
-        run: npm test -- --coverage
+        run: npm test
 
   integration-tests:
     needs: unit-tests
@@ -325,471 +272,225 @@ jobs:
           POSTGRES_DB: test_db
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_pass
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
         ports:
           - 5432:5432
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.merge_group.head_sha || github.sha }}
-
+          ref: ${{ env.CI_REF }}
       - name: Run integration tests
         env:
           DATABASE_URL: postgres://test_user:test_pass@localhost:5432/test_db
         run: npm run test:integration
-
-  e2e-tests:
-    needs: unit-tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.merge_group.head_sha || github.sha }}
-
-      - name: Playwright E2E tests
-        uses: microsoft/playwright@v1.42.0
-        with:
-          install-browser: true
-          script: npm run test:e2e
-
-  build:
-    needs: [unit-tests, integration-tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.merge_group.head_sha || github.sha }}
-
-      - name: Build Docker image
-        run: |
-          docker build -t myapp:${{ github.sha }} .
-          docker tag myapp:${{ github.sha }} myapp:latest
-
-      - name: Push to registry
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push myapp:latest
 ```
 
-### 5.4 CI 成本：artifact 缓存
+把 `CI_REF` 提到 `env`，所有 job 共用，避免每个 job 都重写一遍 `||` 判断。
 
-Batch 内共享 artifact 是 Merge Queue 的天然优势：
+### 5.4 一个常见坑：check 名称必须对上
 
-```yaml
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.merge_group.head_sha || github.sha }}
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: npm-deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Build
-        run: npm run build
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact
-          path: dist/
-          retention-days: 1
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifact
-```
+同一个 job 在 `pull_request` 和 `merge_group` 事件下，上报的 check 名称可能不同。分支保护要求必需检查的名称和实际上报**精确匹配**。如果 merge_group 触发时 CI 没跑，先对照分支保护里"必需检查"的名称和 workflow 实际上报的名称是否一致。
 
 ---
 
-## 六、Group Merging：不同 PR 走不同通道
+## 六、队列参数调优：构建并发与合并上限
 
-大型仓库里，文档改动和核心逻辑变更不应该跑同一套 CI。Group Merging 按标签把 PR 路由到不同的验证通道：
+调队列不是越"满"越好，而是找到吞吐与稳定性的平衡。
+
+| 仓库规模 | Build concurrency | Max merge limit | 说明 |
+|----------|-------------------|-----------------|------|
+| 小型（<10 PR/天） | 1 | 1 | 串行即可，避免并行走查 |
+| 中型（10-50 PR/天） | 2-3 | 3 | 常用配置，兼顾吞吐 |
+| 大型（>50 PR/天） | 4-8 | 5-10 | 大幅并行，注意 CI 负载 |
+
+**合并上限设得过大反而有害**：一次合入的 PR 越多、结果集越大，出问题后定位责任越模糊。经验是 Max merge limit 建议 ≤ 10。
+
+`Only merge non-failing PRs` 默认开启，即"所有 PR 都必须通过必需检查才能合入"。若你常被偶发测试假阳性卡住队列，可以考虑关掉它——这样允许"失败 PR 只要不是队尾，就能先合入已通过的部分"。这是一把双刃剑，会让 main 混进个别未过检查的变更，务必确认团队接受这个风险。
+
+---
+
+## 七、失败与跳队行为
+
+### 7.1 失败：PR 被移出，不是整批回退
+
+官方模型下，一个 merge_group 里的 checks 失败时，**该 PR 会被移出队列**（timeline 显示原因），后续 PR 会去掉它重建临时分支重新验证。不存在"整个 batch 一起回退"这回事。这会让你少一层恐慌：一个 PR 的失败不会拖垮排队的其他人。
+
+### 7.2 跳队（Jump to the top）
+
+把某个 PR 移到队首是允许的，但**会打断临时分支的继承链**：队里的其他 PR 都要基于新队首重建、全量重跑一次 CI。滥用跳队会明显拖慢合并吞吐，能用的时候再用。
+
+### 7.3 与 auto-merge 的关系
+
+这里的"互斥"容易误传。实际上原生 Merge Queue 常和 **auto-merge 配合使用**：PR 通过所有检查后由 auto-merge 自动加入队列，省去手动点加入。两者不是单选题——auto-merge 负责"满足条件即入队"，merge queue 负责"入队后排队验证合入"。
+
+---
+
+## 八、第三方能力：Mergify 的 Group Merging 与 Stack PR
+
+GitHub 原生 Merge Queue **不提供**按标签分流 CI、也不感知 PR 依赖链。这两类常见需求来自第三方，最典型的是 [Mergify](https://mergify.com)。
+
+### 8.1 Group Merging（按标签走不同验证通道）
+
+大型仓库里"文档改动不该跑 e2e"。Mergify 允许按 label 给 PR 分组，各组走不同的检查通道。这类配置写在 Mergify 的规则里，**不是** GitHub 的仓库设置：
 
 ```yaml
-# .github/merge_group_rules.yml
-merge_rules:
+# .github/mergify.yml（Mergify 专属，非 GitHub 原生）
+queue_rules:
   - name: fast-track
-    merging_mode: squash
-    min_group_size: 1
-    max_group_size: 3
-    required_check_runs:
-      - lint
-      - typecheck
+    queue_conditions:
+      - label = fast-track
+    merge_method: squash
 
-  - name: standard
-    merging_mode: squash
-    min_group_size: 2
-    max_group_size: 5
-    required_check_runs:
-      - lint
-      - typecheck
-      - unit-tests
-      - integration-tests
-
-  - name: security
-    merging_mode: squash
-    min_group_size: 1
-    max_group_size: 2
-    required_check_runs:
-      - lint
-      - typecheck
-      - unit-tests
-      - security-scan
-      - penetration-tests
+pull_request_rules:
+  - name: fast-track 直接合
+    conditions:
+      - label = fast-track
+    actions:
+      queue:
+        name: fast-track
 ```
 
-标签路由：
+换成原生是你做不到按标签分流 CI 的——原生只按 FIFO 排一座队。如果团队确实需要"文档走快通道、核心代码走全量"，再上 Mergify。
 
-```yaml
-name: Route to merge group
+### 8.2 Stack PR
 
-on:
-  pull_request:
-    types: [labeled]
+Stack PR 是一组 base 相互依赖的 PR（`#101` base main、`#102` base #101、`#103` base #102）。原生 merge queue 不识别这种依赖，只会当普通 PR 排队。想要"自动按依赖顺序逐层合入"，依赖 Mergify 的 stack 支持或类似工具。
 
-jobs:
-  route:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Route based on label
-        run: |
-          LABELS="${{ github.event.pull_request.labels.*.name }}"
-          if echo "$LABELS" | grep -q "fast-track"; then
-            echo "group=fast-track" >> $GITHUB_OUTPUT
-          elif echo "$LABELS" | grep -q "security"; then
-            echo "group=security" >> $GITHUB_OUTPUT
-          else
-            echo "group=standard" >> $GITHUB_OUTPUT
-          fi
-```
-
-分组按定义顺序处理：`security` → `standard` → `fast-track`。安全相关 PR 优先合入。
+所以结论很直接：**先只用原生，跑顺了再谈要不要引入 Mergify**。原生覆盖 80% 团队的核心需求（FIFO + 合并后验证 + 失败移出 + 并发/数量上限），额外的分组编排成本不低。
 
 ---
 
-## 七、Stack PR 与 Drop 行为
-
-### 7.1 Stack PR 场景
-
-Stack 是一组有依赖关系的 PR：
-
-```
-PR #101: Add feature A  (base: main)
-PR #102: Use feature A in module X  (base: PR #101)
-PR #103: Add tests for module X  (base: PR #102)
-```
-
-### 7.2 队列中的 Stack 处理
-
-Merge Queue 按依赖顺序逐个合入，不把依赖链打乱：
-
-```
-Queue: [#101, #102, #103]
-Batch 1: [#101] → merge to main
-Batch 2: [#102] → now mergeable since #101 is in main
-Batch 3: [#103] → now mergeable since #102 is in main
-```
-
-每个 batch 只合入当前可合并的 PR。
-
-### 7.3 Drop 行为
-
-CI 失败时：
-
-| 场景 | 行为 |
-|------|------|
-| PR #102 在队列中 CI 失败 | #102 被丢弃，跳到下一个 |
-| 依赖 #102 的 PR #103 | 不会被自动丢弃，但合入时会遇到冲突 |
-| 需要手动干预 | 维护者需要取消/关闭失败的 PR |
-
-### 7.4 auto-merge 与 Merge Queue 互斥
-
-⚠️ `auto-merge` 和 `merge queue` 不要同时开启。同时启用时，GitHub 优先走 auto-merge 路径，可能绕过队列机制。
-
-```yaml
-name: Enable merge queue
-
-on:
-  pull_request:
-    types: [opened, synchronize]
-
-jobs:
-  enable-merge-queue:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Disable auto-merge
-        run: |
-          gh pr edit ${{ github.event.pull_request.number }} --disable-auto-merge
-```
-
----
-
-## 八、附：github-merge-queue App 增强功能
-
-[github-merge-queue](https://github.com/apps/github-merge-queue) 是 GitHub Marketplace 上的一个 App，在原生 Merge Queue 之上提供了三个额外能力：
-
-- **可视化仪表板**：队列深度、各 batch 状态、平均等待时间、CI 成功率趋势
-- **精细化优先级**：通过 `urgent` / `wip` 等标签控制 PR 在队列中的位置
-- **失败通知 Webhook**：支持 Slack、邮件等渠道，batch 失败时自动通知
-
-```yaml
-priorities:
-  - name: urgent
-    label: "urgent"
-    position: 1
-
-  - name: normal
-    label: ""
-    position: 2
-
-  - name: low-priority
-    label: "wip"
-    position: 99
-```
-
-```yaml
-webhooks:
-  on_failure:
-    - type: slack
-      url: ${{ secrets.SLACK_WEBHOOK_URL }}
-      message: "Merge queue batch failed: {{ batch_id }}"
-    - type: email
-      recipients: ${{ vars.DEVOPS_TEAM_EMAIL }}
-```
-
-> **注意：** GitHub 从 2023 年开始在 `pull_request` 和 `merge_group` 事件中提供原生 merge queue 支持。如果你使用的是 GitHub Enterprise Cloud，原生功能可能已经覆盖了你大部分需求。App 的价值主要在仪表板和通知——如果团队已经有 Grafana / Datadog 等监控栈，App 不一定必要。
-
----
-
-## 九、实践建议
+## 九、最佳实践
 
 ### 9.1 CI 配置
 
-1. 用 `merge_group` 触发器单独处理批次验证，不要和普通 PR CI 共用同一个 workflow 的所有 job
-2. merge group 的 CI 只放必要检查——它的延迟直接影响队列吞吐
-3. 利用 artifact 在 batch 内共享构建结果
+1. `merge_group` 触发器的 CI 只放**必需**检查，它的延迟直接拖慢队列吞吐。
+2. 千万别让 merge_queue CI 和普通 PR CI 共用一套很重的流程，分开写更省事。
+3. 把 `CI_REF` 提到 `env` 复用，减少每个 job 的重复判断。
 
 ### 9.2 队列规模
 
-| 仓库规模 | min_group_size | max_group_size |
-|----------|---------------|---------------|
-| 小型（<10 PR/天）| 1 | 3 |
-| 中型（10-50 PR/天）| 2 | 5 |
-| 大型（>50 PR/天）| 5 | 10 |
+按第六节表格起步，用两周数据再调：看平均排队时长和 check 超时次数，而不是拍脑袋。
 
 ### 9.3 常见陷阱
 
-1. **同一仓库混用不同合并策略**：merge queue 应统一使用一种合并策略
-2. **batch 过大**：`max_group_size > 10` 时，单个 PR 失败的回滚成本太高
-3. **队列堵塞不监控**：等待时间超过 30 分钟说明 CI 存在瓶颈
-4. **WIP PR 进入队列**：用标签过滤掉未完成的 PR
-
-```yaml
-name: Block WIP PRs from merge queue
-
-on:
-  pull_request:
-    types: [labeled]
-
-jobs:
-  block-wip:
-    if: contains(github.event.pull_request.labels.*.name, 'wip')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Comment and set status
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} \
-            --body "⛔ PR marked as WIP. Please remove WIP label when ready for merge queue."
-          exit 1
-```
-
-### 9.4 队列健康监控
-
-```yaml
-name: Merge Queue Monitor
-
-on:
-  schedule:
-    - cron: '*/15 * * * *'
-
-jobs:
-  monitor:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check queue health
-        run: |
-          QUEUE_COUNT=$(gh api repos/${{ github.repository }}/merge_queue --jq '.length' 2>/dev/null || echo "0")
-          echo "Current queue depth: $QUEUE_COUNT"
-
-          if [ "$QUEUE_COUNT" -gt 20 ]; then
-            echo "::warning::Queue depth exceeds 20, please investigate"
-          fi
-```
+1. **分支保护用通配符**：`*` 分支无法启用 merge queue。
+2. **合并上限设太大**：>10 后出问题难定位，main 暴露面失控。
+3. **队列堵塞不监控**：排队超过 status check timeout 说明 CI 有瓶颈，先去查 CI 而不是调队列。
+4. **把 Mergify 语法当成原生**：看到 `group_by`、`queue_conditions` 时先分清它属于哪套系统。
 
 ---
 
 ## 十、故障排查
 
-### 10.1 PR 卡在队列中不动
+### 10.1 PR 卡在队列里不动
 
 **可能原因：**
-- CI 仍在运行（checks_pending）
-- 分支保护规则要求额外审查
-- 有冲突（merge_conflict）
+- CI 还没对 `merge_group` 上报通过（最常见：workflow 漏了 `merge_group` 触发器）
+- 分支保护要求额外的必需检查
+- 合并时发现新冲突
 
-**排查命令：**
-```bash
-gh api repos/{owner}/{repo}/pulls/{pr_number}/merge_queue
-```
+**排查动作：**
+先在 PR timeline 找被移出的原因记录；再去 Actions 看 `merge_group` 事件的 run 是否真的被触发。
 
-### 10.2 Batch 持续失败
+### 10.2 合并时提示缺少必需检查
 
 **可能原因：**
-- Batch 中存在冲突的代码变更
-- CI 配置在 `merge_group` 触发器下行为不同
-- 共享依赖在批次间不兼容
+- 分支保护里列的 check 名称，和 workflow 在 `merge_group` 事件下实际上报的名称对不上
+- workflow 只监听了 `pull_request`，入队后没有 run
 
 **排查步骤：**
-1. 查看失败 batch 的详细 CI 日志
-2. 确认 `merge_group` 触发器的 CI 和普通 PR CI 行为一致
-3. 手动触发合并以复现问题
+1. 确认 workflow 的 `on` 里带 `merge_group`。
+2. 对比分支保护"必需检查"名称与 Actions 上报名称是否完全一致（含大小写、空格）。
+3. 把 `ref` 固定为 `merge_group.head_sha` 后再跑一次。
 
-### 10.3 "Missing MERGE_QUEUE_OWNER permission"
+### 10.3 能开启但一直失败
 
-GitHub App 权限不足。在 App 权限设置中启用：
-- Repository permissions → Merge approvals: Read & Write
-- Repository permissions → Pull requests: Read & Write
+**可能原因：**
+- 分支保护的必需检查（`required_status_checks`）没配齐
+- `Only merge non-failing` 开启且存在假阳性，把整个队列卡死
+
+**处置：** 先关掉 `Only merge non-failing PRs` 看是否能恢复合并，再逐步排查具体是哪个检查假阳性。
 
 ---
 
 ## 十一、常见问题 (FAQ)
 
-### Q1：我把一个新 commit 推到了已入队的 PR 上，队列会怎么处理？
+### Q1：我把一个新 commit 推到已入队的 PR 上，队列怎么处理？
 
-假设你的 PR #42 已经进了 merge queue 正在排队，这时你发现一个 typo，`git push` 了一个修正 commit。GitHub 会自动把 #42 从队列中移除，用最新 commit 重新入队——相当于从头排队。这是为了保证 CI 跑的是 PR 最新状态。
+PR 内容变了，GitHub 会把它移出队列、基于新 commit 重新排队，等于从头验证。这是为了确保 CI 跑的是 PR 最新状态，不是 bug。所以合并队列 CI 尽量跑得快，别让作者等太久。
 
-如果你用的是 [github-merge-queue](https://github.com/apps/github-merge-queue) App，可以开启 `re-enqueue on push`，让它自动帮你重新加入而不需要手动操作。
+### Q2：`merge_group` 的 CI 红了，我本地跑咋全绿？
 
-### Q2：Merge Queue 的 CI 红了，但我本地跑同样的测试全绿，怎么回事？
+因为 CI 跑在**合并后的临时分支**上——包含排你前面的 PR 的全部改动，而不是你 PR 分支单独的样子。最常见两类原因：
 
-CI 跑在 `merge_group_sha` 上——这是一个把 batch 内所有 PR 合并在一起的临时 commit。你本地跑的是自己的 PR 分支，没有和其他人的改动合并。最常见的原因：
+1. 你的 PR 和前面某 PR 合并后才暴露的集成问题（如共享 util 改了签名）；
+2. workflow 在 `merge_group` 事件下 checkout 了错误的 ref。
 
-1. 你的 PR 和同 batch 里的另一个 PR 在合并后产生了集成问题（比如某个 shared util 被改了签名）
-2. 你的 workflow 在 `merge_group` 事件下 checkout 了错误的 ref
+排查：在 Actions 日志里拿到 merge_group 的 sha，`git checkout` 到该 sha 重跑一遍。能复现就是合并后的真冲突。
 
-排查方法：在 CI 日志里找到 `merge_group_sha`，本地 `git checkout` 这个 sha，重跑同样的命令。如果复现了，说明是 batch 合入后的冲突问题，需要和同 batch 的 PR 作者协调。
+### Q3：hotfix 想绕过队列直接合，可以吗？
 
-### Q3：能只对部分 PR 启用 Merge Queue 吗？hotfix 我想绕过队列直接合。
+可以。把 hotfix 的 PR 不进队列即可——但分支保护仍会强制你跑必需检查。也就是说绕过队列绕不过 CI，这是期望行为。别试图通过关分支保护来"加快"hotfix，那会连带放开所有人。
 
-可以。Merge Queue 本身通过 label 触发——不给 hotfix PR 加 merge label，它就走传统合入流程。配合 Branch Protection Rules，你可以在 required status checks 里把 merge queue 设为"非强制"，这样不带 label 的 PR 不受队列约束。
+### Q4：必需检查报"缺 check"，但 workflow 明明跑了？
 
-但注意：绕过队列直接 push 到 main 之前，确保你的 CI 也跑了——Branch Protection 的 required checks 仍然生效。
+常见于 workflow 同时监听 `pull_request` 和 `merge_group`，同一个 job 在两个事件下上报了不同的 check 名称，而分支保护只认其中一个。解法是让两种事件下上报的名称统一（在 workflow 里显式固定 check name），或者把两者分别加进必需检查列表。
 
-### Q4：Merge Queue 和 Branch Protection 的 required_status_checks 打架了——队列过不了，说缺 check，怎么办？
+### Q5：一个 PR 失败会不会拖垮整个 batch？
 
-这是最常见的配置陷阱。Branch Protection 要求 provider 返回的 check 名称必须和 workflow 实际发回的名称精确匹配。当 workflow 同时触发 `pull_request` 和 `merge_group` 事件时，同一个 job 可能以不同 check 名称上报。
-
-解决方法：
-```yaml
-# Branch Protection 里配这两个：
-required_status_checks:
-  contexts:
-    - "ci/build"          # PR 事件返回的 check 名
-    - "ci/build (merge_group)"  # merge_group 事件返回的 check 名
-```
-
-或者在 workflow 里显式指定 check 名称：
-```yaml
-- name: Set merge group check status
-  if: github.event_name == 'merge_group'
-  uses: actions/github-script@v7
-  with:
-    script: |
-      github.rest.checks.create({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        name: 'ci/build',
-        head_sha: context.payload.merge_group.head_sha,
-        status: 'completed',
-        conclusion: 'success'
-      });
-```
-
-### Q5：Batch 里一个 PR CI 失败，整个 batch 都回退——能不能只踢掉失败的，保留其他的？
-
-原生 Merge Queue 不支持部分合入——这是一个设计选择，不是 bug。因为 batch 内所有 PR 共享同一个 `merge_group_sha`，CI 在这个合并后的代码上验证，无法简单拆分"谁通过谁不通过"。
-
-两种折中：
-1. 把 `max_group_size` 设小（比如 3），降低单个失败的波及面
-2. 把风险差异大的 PR 分到不同 merge group（比如 security 敏感改动用独立 group，`max_group_size=1`）
+不会。原生模型是"失败 PR 被移出队列、其余重建后继续"，不是整批回退。这是它比传统手动批量合入更稳的地方。如果担心假阳性耗尽队列，配合第八节做法：先关 `Only merge non-failing` 观察，或引入 Mergify 做更细的分组。
 
 ---
 
 ## 十二、该不该上 Merge Queue：一份决策指南
 
-Merge Queue 不是银弹。它的收益取决于你的团队形态。
+Merge Queue 不是银弹，它的收益取决于团队形态和 CI 健康度。
 
 **优先上的团队：**
 
-- 每天合入 10 个以上 PR，维护者花大量时间盯 CI 状态
-- 多个 PR 经常同时通过 review，但合入时频繁冲突
+- 每天合入 10 个以上 PR，维护者大量时间浪费在盯 CI 和手动排队
+- 多个 PR 常同时通过 review，但合入时频繁冲突
 - CI 耗时较长（>10 分钟），串行合入的等待成本明显
-- 已有完善的分支保护规则和 CI pipeline，只是缺一个合入编排层
+- 已有清晰的分支保护规则和 CI pipeline，只是缺一层合入编排
 
-**可以先等等的团队：**
+**可以先不上的团队：**
 
-- PR 量小（每天 <5 个），手动合入没有成为瓶颈
-- CI 覆盖率低，merge group 的验证价值有限
-- 团队还在磨合分支策略和 code review 流程，先稳定这些再说
-- 使用 GitHub Free 计划——Merge Queue 目前主要面向 Enterprise Cloud 和部分 Pro/Team 仓库
+- 每天合入 <5 个 PR，手动合入没成为瓶颈
+- CI 本身不稳定（频繁假阳性）——合并队列会把 CI 的不稳定放大成排队拥堵
+- 分支策略、code review 流程还在磨合期，先稳定这些
+- 用的是个人仓库或非组织私有仓库——原生 merge queue 不可用，要么升级组织计划，要么提前引入 Mergify
 
-**如果决定上，建议的推进顺序：**
+**如果决定上，建议推进顺序：**
 
-1. 先在  PROTECTED_67  的小配置下跑一周，验证 CI 在  PROTECTED_68  事件下行为正常
-2. 确认无误后，逐步调大  PROTECTED_69  到 2-5
-3. 引入 Group Merging，先把文档类 PR 分到 fast-track 通道
-4. 最后接入监控（队列深度告警、CI 失败率趋势）
+1. 先把 Merge Queue 配置到最小的量级（Build concurrency = 1、Max merge limit = 1、merge method = squash），跑一周确认 CI 确实在 `merge_group` 事件下正常上报。
+2. 稳定后逐步提高并发和合并上限，观察排队与失败率。
+3. 确认原生满足需求后，再评估要不要为按标签分流引入 Mergify。
+4. 最后接监控：队列深度、check 超时次数、合并失败率，用数据决定下一轮的参数。
 
 ---
 
 ## 自测：你是否理解了 Merge Queue
 
-1. **Merge Group 到底是什么？** CI 跑在哪个 commit 上——是每个 PR 的 head，还是一次性合并了 batch 内所有 PR 的临时 commit？
+1. **CI 到底跑在哪个 commit 上？**
    <details><summary>点击查看答案</summary>
-   Merge Group 是 GitHub 在验证阶段动态创建的临时合并 commit（`merge_group_sha`），把 batch 内所有 PR 合并到目标分支上。CI 跑在这个临时 commit 上，不是任何一个单独 PR 的 head。所以你在 workflow 里要 checkout `merge_group.head_sha` 而不是 `pull_request.head.sha`。
+   跑在 merge_group 的临时提交（`merge_group.head_sha`）上——它把队首若干 PR 与最新目标分支合并后的结果。不是任何一个单独 PR 的 head。所以 workflow 里要 checkout `merge_group.head_sha`。
    </details>
 
-2. **一个 batch 有 5 个 PR，其中第 3 个 CI 失败，会怎样？** 前 2 个会合入吗？后 2 个呢？
+2. **一个 merge_group 里某个 PR 的 CI 失败，其他 PR 会怎样？**
    <details><summary>点击查看答案</summary>
-   整个 batch 标记失败，5 个 PR 都不会合入。这是 Merge Queue 的原子性保证——batch 内所有 PR 共享一次 CI 验证结果。失败后需要修复问题 PR，重新入队、重新编组、重新验证。
+   失败的 PR 被移出队列，其余 PR 去掉它重建 merge_group 重新验证并继续。不是整个 batch 一起回退。这是原生模型和"整批回退"写法的本质区别。
    </details>
 
-3. **Stack PR（有依赖链的 PR 组）在 Merge Queue 中如何合入？** 是先合入底层 PR 还是顶层 PR？一次一个 batch 还是整个链一起？
+3. **原生 Merge Queue 支持按标签分流 CI（Group Merging）吗？**
    <details><summary>点击查看答案</summary>
-   从底层到顶层，逐个合入。底层 PR（如 `#101: base main`）先单独编为一个 batch 合入 main，然后 `#102: base #101` 的 base 变成 main 后才可以合入，以此类推。一次一个 batch，不会把整个依赖链打乱。
+   不支持。按标签走不同验证通道、以及 Stack PR 依赖合入，都是 Mergify 等第三方能力。原生只提供 FIFO 排队 + 合并后验证 + 失败移出 + 构建并发 / 合并上限控制。
    </details>
 
 4. **什么情况下 Merge Queue 反而降低效率？** 列举至少两个场景。
    <details><summary>点击查看答案</summary>
-   （1）团队 PR 量很小（每天 < 5 个），手动合入没有成为瓶颈，引入 Merge Queue 只是多了一套配置要维护。（2）CI 覆盖率低或 CI 不稳定（频繁假阳性），batch 中任意一个 CI 红都会拖累全组，反而比单独合入更慢。（3） PROTECTED_75  设得过大（> 10），一个失败回滚成本太高，队列吞吐下降。
+   （1）团队 PR 量很小（每天 <5 个），手动合入没成瓶颈，只是多维护一套配置。（2）CI 不稳定（频繁假阳性），队列会把假阳性放大成整体拥堵，比单独合入更慢。（3）合并上限设得过大或并发控制失当，出问题时责任边界模糊、定位成本高。
    </details>
 
 ---
 
-*本文基于 GitHub Enterprise Cloud 的 Merge Queue 功能编写，部分 API 和配置可能因 GitHub 版本不同而有所差异。实际使用时请查阅 [GitHub Merge Queue 官方文档](https://docs.github.com/en/repositories/configuring-branches-and-numbers-in-your-repository/configuring-pull-request-merges/using-gitops-and-merge-queue)。*
+*本文事实依据 [GitHub 官方 Managing a merge queue 文档](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue)，部分计划/版本条款（如 Merge Queue 对非组织私有仓库的限制、个别 Enterprise 选项）可能随 GitHub 版本调整，实际以官方文档和你的计划为准。*

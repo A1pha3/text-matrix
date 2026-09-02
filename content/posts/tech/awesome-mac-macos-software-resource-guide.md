@@ -59,7 +59,7 @@ tags: ["macOS", "开发工具"]
 |------|------|
 | Stars | 106K ⭐ |
 | Forks | 7.9K |
-| 许可证 | CC0-1.0（公共领域） |
+| 许可证 | MIT |
 | 最新更新 | 2026-06-18 |
 | 数据来源 | [GitHub API](https://api.github.com/repos/jaywcjlove/awesome-mac) |
 
@@ -113,7 +113,7 @@ graph LR
 
 ### 3.1 IDE 与编辑器
 
-IDE 和轻量编辑器分工不同：IDE 内置语言服务器、调试器、重构工具，适合主力项目；轻量编辑器启动快，适合改配置文件、看日志。同时装一个 JetBrains 全家桶成员加 VS Code，能覆盖 90% 场景。
+IDE 和轻量编辑器分工不同：IDE 内置语言服务器、调试器、重构工具，适合主力项目；轻量编辑器启动快，适合改配置文件、看日志。同时装一个 JetBrains 全家桶成员加 VS Code，能覆盖绝大多数的日常需求。
 
 | 软件 | 说明 | 安装命令 | 许可证 |
 |------|------|---------|--------|
@@ -370,7 +370,7 @@ RSS 阅读器的选择取决于同步范围：本地用 NetNewsWire，跨平台�
 
 | 软件 | 说明 | 安装命令 | 许可证 |
 |------|------|---------|--------|
-| Little Flocker | 防火墙 | `brew install --cask little-flocker` | 商业 |
+| Little Snitch | 出站防火墙 | `brew install --cask little-snitch` | 商业 |
 | Knock | 用 iPhone 解锁 Mac | `brew install --cask knock` | 商业 |
 | LuLu | 开源防火墙 | `brew install --cask lulu` | 免费 |
 | RansomWhere? | 勒索检测 | Web 下载 | 免费 |
@@ -616,17 +616,17 @@ eval "$(/usr/local/bin/brew shellenv)"
 xattr -cr "/Applications/XXX.app"
 ```
 
-这条命令清除扩展属性中的 `com.apple.quarantine` 标记。仅对信任来源的软件使用,不要对来源不明的应用执行此操作。
+这条命令清除扩展属性中的 `com.apple.quarantine` 标记，仅对信任来源的软件使用，不要对来源不明的应用执行此操作。
 
 ### Docker Desktop 启动后立即退出
 
-**现象**：Docker Desktop 启动后进程消失,容器无法运行。
+**现象**：Docker Desktop 启动后进程消失，容器无法运行。
 
 **排查步骤**：
 
-1. 检查是否为 M 系列 Mac 上的 Intel 镜像问题:运行 `docker run hello-world` 看报错
-2. 检查磁盘空间:`df -h /`,Docker 至少需要 10GB 可用空间
-3. 重置 Docker Desktop:点击应用图标右键 → Troubleshoot → Reset to factory defaults
+1. 检查是否为 M 系列 Mac 上的 Intel 镜像问题：运行 `docker run hello-world` 看报错
+2. 检查磁盘空间：`df -h /`，Docker 至少需要 10GB 可用空间
+3. 重置 Docker Desktop：点击应用图标右键 → Troubleshoot → Reset to factory defaults
 
 ---
 
@@ -688,7 +688,7 @@ Raycast 是 macOS 上的快速启动器，可以替代 Spotlight 并做更多事
 3. **代码片段管理**：保存常用代码片段，随时调用
 4. **窗口管理**：配合 Rectangle 实现快捷键窗口布局
 
-**实际效果**：每天节省 20-30 次鼠标点击和菜单导航。
+**实际效果**：把高频的启动、粘贴、代码插入收进快捷键，能明显减少鼠标导航。
 
 ### 案例3：用 1Password 管理开发相关密码
 
