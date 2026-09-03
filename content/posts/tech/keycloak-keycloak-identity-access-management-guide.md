@@ -2,7 +2,7 @@
 title: "Keycloak：开源身份与访问管理（IAM/SSO）的工程现实与 Realm 模型"
 date: "2026-06-28T15:26:02+08:00"
 slug: "keycloak-keycloak-identity-access-management-guide"
-description: "Keycloak 是 CNCF 旗下的开源 IAM（身份与访问管理）/ SSO（单点登录）服务器，原生支持 OAuth2、OIDC、SAML 2.0；以 Realm / Client / Role / User 为核心模型，通过 Quarkus 发行版对外分发；本文从协议面、模型面、部署面三轴拆解，并给出与 Auth0 / Keycloak 的选型决策。"
+description: "Keycloak 是 CNCF 旗下的开源 IAM（身份与访问管理）/ SSO（单点登录）服务器，原生支持 OAuth2、OIDC、SAML 2.0；以 Realm / Client / Role / User 为核心模型，通过 Quarkus 发行版对外分发；本文从协议面、模型面、部署面三轴拆解，并给出自建 Keycloak 与 Auth0 / Okta 等托管服务的选型决策。"
 draft: false
 categories: ["技术笔记"]
 tags: ["OAuth2", "OIDC", "身份认证", "SSO"]
@@ -28,9 +28,10 @@ tags: ["OAuth2", "OIDC", "身份认证", "SSO"]
 6. [Keycloak vs Auth0：自建与托管的工程权衡](#keycloak-vs-auth0自建与托管的工程权衡)
 7. [适用边界与采用顺序](#适用边界与采用顺序)
 8. [决策清单](#决策清单)
-9. [动手练习](#动手练习)
-10. [自测清单](#自测清单)
-11. [进阶路径](#进阶路径)
+9. [常见问题与排查](#常见问题与排查)
+10. [动手练习](#动手练习)
+11. [自测清单](#自测清单)
+12. [进阶路径](#进阶路径)
 
 ## 项目定位：开源 IAM/SSO 的事实标准之一
 
@@ -110,7 +111,7 @@ Realm 之间不共享用户、客户端、角色，这是 Realm 与 Auth0 Organi
 
 - `clientId`：应用的逻辑标识，与 OAuth2 的 `client_id` 对应。
 - `protocol`：`openid-connect` 或 `saml`，决定用 OIDC 还是 SAML 接入。
-- `accessType`：`confidential`（有 secret）、`public`（SPA / 移动 App）、`bearer-only`（纯校验 token，不参与流程）。
+- `accessType`：`confidential`（有 secret）、`public`（SPA / 移动 App）、`bearer-only`（纯校验 token，不参与流程）。在当前的 Admin REST `ClientRepresentation` 里，这三个状态对应 `publicClient` 与 `bearerOnly` 两个布尔字段：`publicClient=true` 即公开客户端，`bearerOnly=true` 即纯校验；`confidential` 则二者均为 false，客户端持有 secret、在后端安全保存。Admin Console 上对应 "Client authentication" 与 "public client" 两个开关。
 
 一个常见但错误的认知是"每个应用必须单独建 Client"。实际上，同一个 Realm 里多个共享同一身份协议的应用，可以共享 Client Scope 与 Role，避免重复配置。
 
@@ -192,7 +193,7 @@ Keycloak 集群模式依赖外部 Infinispan（分布式缓存）做 session 同
 
 ## 系统地图：从浏览器登录到访问受保护资源的完整链路
 
-下面这张流程图把一次"用户通过 OIDC 登录到 Keycloak，再访问受保护的 SPA"的全过程串起来，所有节点都对应 Keycloak 真实的 crate / 目录：
+下面这张流程图把一次"用户通过 OIDC 登录到 Keycloak，再访问受保护的 SPA"的全过程串起来，每个步骤都对应 Keycloak 实际发生的事件：
 
 ```mermaid
 sequenceDiagram
@@ -239,7 +240,7 @@ sequenceDiagram
 | 运维责任 | 数据库、Infinispan、备份、灾备、版本升级 | Auth0 团队负责 |
 | 合规 | 取决于自建环境合规设计 | SOC2 / ISO 27001 / HIPAA / GDPR 由 Auth0 持有 |
 | 学习曲线 | 中（SPI 与 Quarkus 启动选项需要学习） | 低（Web 控制台 + 文档） |
-| 长期成本 | 基础设施 + 运维人天 | 按 MAU（Mountain per Active User）计费 |
+| 长期成本 | 基础设施 + 运维人天 | 按 MAU（Monthly Active Users，月度活跃用户）计费 |
 
 "自建 Keycloak"和"接入 Auth0"是两种不同的工程路线，不是简单的"开源 vs 商业"。下面三条是常见的决策点：
 
@@ -282,7 +283,24 @@ Keycloak 解决的是"统一身份与访问管理"的需求。它不解决：身
 - [ ] 团队规模足够大，单凭托管服务的费用结构已不划算？
 - [ ] 已有用户库（LDAP / AD / 自建）需要联邦进来？
 
-五个全勾，再决定采用 Keycloak。任意一项打勾不到，意味着先要补齐前置条件或重新评估托管服务。
+五项全勾，再决定采用 Keycloak。任意一项打勾不到，意味着先要补齐前置条件或重新评估托管服务。
+
+## 常见问题与排查
+
+接入和运行中最常卡住的几类故障，先定位再动手：
+
+- **登录后一直弹回登录页**。多数是 Client 的 `Redirect URIs` 或 `Valid post logout redirect URIs` 与回调地址不匹配。核对回调是否写了精确匹配（如 `http://localhost:3000/*`），别用裸域名。
+- **换新 token 前接口反复 401**。Realm 设置里的 `access_token_lifespan` 默认只有 5 分钟，到期后携带旧 token 访问资源服务会被拒绝。正确处理是让前端用 refresh token 换新 token，而不是让用户重新登录。
+- **联邦登录失败**。先确认你在外部 IdP（如 Google 的 Authorized redirect URIs）后台登记的回跳地址与 Keycloak 一致，再看属性映射是否能把外部声明映射到本地 User。
+- **集群或重启后 session/缓存异常**。session 与缓存放在外部 Infinispan，确认它的配置与 Keycloak 版本匹配，否则重启后状态丢失。
+
+### 维护与升级
+
+Keycloak 的部署是有状态的，日常维护绕不开数据库与缓存：
+
+- 定期备份持久化的关系数据库，Realm / Client / User 全部在里面。
+- 升级前先做数据导出或数据库备份；大版本（如 25→26）通常是破坏性变更，先在独立环境验证再切换。
+- 集群里 session 与缓存依赖 Infinispan，变更配置前先在测试环境压一遍，别直接动生产。
 
 ## 动手练习
 
