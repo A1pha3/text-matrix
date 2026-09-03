@@ -15,7 +15,9 @@ tags: ["JavaScript", "TypeScript", "金融"]
 
 Lightweight Charts™ 是 TradingView 开源的金融图表库，压缩后约 40KB（gzip），专为网页端金融数据可视化设计。基于 Canvas 渲染，在大数据量场景下性能优于 SVG，可流畅处理 10 万根 K 线。
 
-项目由 TradingView 官方维护，Apache-2.0 开源协议，最新版本 v5.2.0（2026 年 4 月）。适用场景：页面 JS 已较重，再引入图表库会拖慢加载；或数据量大，ECharts/Highcharts 已出现卡顿。
+项目由 TradingView 官方维护，Apache-2.0 开源协议，当前最新稳定版为 v5.2.1（2026 年 8 月发布）。适用场景：页面 JS 已较重，再引入图表库会拖慢加载；或数据量大，ECharts/Highcharts 已出现卡顿。
+
+需要注意，Lightweight Charts 是纯客户端库，不用于 Node.js 等服务端场景；运行要求浏览器支持 ES2020 语法。
 
 ## 核心架构
 
@@ -76,11 +78,11 @@ npm install https://pkg.pr.new/lightweight-charts@master
 **npm 模块方式**：
 
 ```javascript
-import { createChart } from 'lightweight-charts';
+import { createChart, LineSeries } from 'lightweight-charts';
 
 const container = document.getElementById('chart');
 const chart = createChart(container, { width: 400, height: 300 });
-const line = chart.addSeries('Line', { color: '#2962FF' });
+const line = chart.addSeries(LineSeries, { color: '#2962FF' });
 line.setData([
     { time: '2019-04-11', value: 80.01 },
     { time: '2019-04-12', value: 96.63 },
@@ -111,6 +113,8 @@ line.setData([
 创建图表时可以传入丰富的配置选项：
 
 ```javascript
+import { createChart, CrosshairMode } from 'lightweight-charts';
+
 const chart = createChart(document.body, {
     width: 800,           // 图表宽度
     height: 400,          // 图表高度
@@ -123,7 +127,7 @@ const chart = createChart(document.body, {
         horzLines: { color: '#e0e0e0' },  // 水平网格线
     },
     crosshair: {
-        mode: LightweightCharts.CrosshairMode.Normal,
+        mode: CrosshairMode.Normal,
     },
     rightPriceScale: {
         borderColor: '#d1d1d1',
@@ -138,14 +142,39 @@ const chart = createChart(document.body, {
 
 ## 图表类型详解
 
-支持 4 种图表类型。
+v5 共提供 6 种系列类型：Area、Bar、Baseline、Candlestick、Histogram、Line。下方详解 4 种最常用的，Bar（柱状 K 线）与 Baseline（基线图）用法类似，可在官方文档查阅。
+
+### 柱状 K 线图（BarSeries）
+
+与 K 线图信息相同，但以竖线加两侧短横线表示；开盘价在左，收盘价在右。
+
+```javascript
+const bar = chart.addSeries(BarSeries, { upColor: '#26a69a', downColor: '#ef5350' });
+bar.setData([
+    { time: '2023-01-01', open: 100, high: 105, low: 98, close: 103 },
+]);
+```
+
+### 基线图（BaselineSeries）
+
+在一条水平基准线之上显示为一种颜色、之下显示为另一种颜色，适合净值相对 0 轴或某基线的涨跌。
+
+```javascript
+const baseline = chart.addSeries(BaselineSeries, {
+    topLineColor: '#26a69a', bottomLineColor: '#ef5350',
+});
+baseline.setData([
+    { time: '2023-01-01', value: 100 },
+    { time: '2023-01-02', value: 95 },
+]);
+```
 
 ### 折线图（LineSeries）
 
 只画收盘价，适合看趋势。不展示开盘价、最高价、最低价。
 
 ```javascript
-const line = chart.addSeries('Line', { color: '#2962FF', lineWidth: 2 });
+const line = chart.addSeries(LineSeries, { color: '#2962FF', lineWidth: 2 });
 line.setData([
     { time: '2023-01-01', value: 100 },
     { time: '2023-01-02', value: 105 },
@@ -160,7 +189,7 @@ line.setData([
 一根蜡烛展示开盘、收盘、最高、最低四个价。
 
 ```javascript
-const candlestick = chart.addSeries('Candlestick', {
+const candlestick = chart.addSeries(CandlestickSeries, {
     upColor: '#26a69a',
     downColor: '#ef5350',
     borderUpColor: '#26a69a',
@@ -181,7 +210,7 @@ candlestick.setData([
 适合展示成交量或 MACD 等指标。
 
 ```javascript
-const histogram = chart.addSeries('Histogram', {
+const histogram = chart.addSeries(HistogramSeries, {
     color: '#26a69a',
     priceFormat: { type: 'volume' },
     priceScaleId: 'volume',
@@ -200,7 +229,7 @@ histogram.setData([
 折线图的变体，在折线和横轴之间填充颜色。适合展示净值曲线、资金流向等。
 
 ```javascript
-const area = chart.addSeries('Area', {
+const area = chart.addSeries(AreaSeries, {
     topColor: 'rgba(41, 98, 255, 0.28)',
     bottomColor: 'rgba(41, 98, 255, 0.05)',
     lineColor: '#2962FF',
@@ -277,29 +306,37 @@ Lightweight Charts 没有内置数据分页，需自行实现：监听 `subscrib
 ```javascript
 chart.applyOptions({
     crosshair: {
-        mode: 0, // 0=Normal, 1=Magnet（吸附到最近数据点）
-        vertLine: { color: '#758696', width: 1, style: 2, labelBackgroundColor: '#2B2B43' },
-        horzLine: { color: '#758696', width: 1, style: 2, labelBackgroundColor: '#2B2B43' },
+        mode: LightweightCharts.CrosshairMode.Magnet, // Normal/Magnet/Hidden/MagnetOHLC
+        vertLine: { color: '#758696', width: 1, visible: true },
+        horzLine: { color: '#758696', width: 1, visible: true },
     },
 });
 ```
 
-Magnet 模式让十字线吸附到最近数据点，适合精确读数；Normal 模式跟随鼠标位置。
+CrosshairMode 枚举：`Normal`（自由移动）、`Magnet`（吸附到最近数据点）、`Hidden`（隐藏十字线）、`MagnetOHLC`（吸附至开盘/最高/最低/收盘价）。关闭十字线用 `Hidden`，而非设置 `mode: -1`。关闭线条用 `vertLine.visible`/`horzLine.visible` 设为 `false`。
 
-### 价格线和时间线
+### 价格线与时间标记
 
-支持在图表上绘制价格线（横线）和时间线（竖线），用于标记支撑位、压力位、重要时间点。
+支持在图表上绘制价格线（横线）和标记重要时间点，用于标注支撑位、压力位、关键事件。
+
+价格线（横线）通过系列创建（`.createPriceLine`）；时间标记（阿拉伯数字小圆标）通过系列的 `setMarkers` 设置。核心库没有 `chart.createTimeLine` 方法：
 
 ```javascript
+// 价格线（横线），由系列创建
 const supportLine = line.createPriceLine({
     price: 100, color: '#b71c1c', lineWidth: 1, lineStyle: 2,
     axisLabelVisible: true, title: '支撑位',
 });
-const eventLine = chart.createTimeLine({
-    time: '2023-01-01', color: '#2196F3', lineWidth: 1, lineStyle: 1, title: '财报发布',
-});
+// 不再需要时移除
 line.removePriceLine(supportLine);
+
+// 时间标记（竖线），附着于系列，time 用该系列的时间格式
+line.setMarkers([
+    { time: '2023-01-01', position: 'aboveBar', color: '#2196F3', shape: 'circle', text: '财报发布' },
+]);
 ```
+
+`position` 可选 `aboveBar`（一侧靠上）或 `belowBar`（另一侧靠下）；`shape` 可选 `circle`、`square`、`arrowUp`、`arrowDown`。
 
 ### 响应式调整
 
@@ -340,27 +377,26 @@ window.addEventListener('resize', () => {
 
 插件用于扩展图表功能，如添加技术指标、自定义绘制、事件处理等。
 
-### 内置技术指标
+### 技术指标示例
 
-库内置 SMA、EMA、MACD、RSI 等指标，需单独 import：
+核心库本身不含现成指标。官方在 `indicator-examples` 目录提供了一批自包含示例（如 SMA、EMA、MACD、平均价格等），每个指标含两种写法：
+
+- **Helper 函数**（推荐）：如 `applyMovingAverageIndicator(sourceSeries, options)`，自动创建指标序列，并在源数据更新时同步重算。
+- **纯函数**：如 `calculateMovingAverageIndicatorValues(data)`，从静态数据集直接计算。
+
+示例不被发布到 npm，需复制源码到项目，或自行执行 `indicator-examples` 目录的编译脚本后引入编译产物。以官方 Moving Average 为例，复制 `indicator-examples/src/indicators/moving-average/` 与 `helpers/timestamp-data.ts` 后：
 
 ```javascript
 import { createChart, CandlestickSeries, LineSeries } from 'lightweight-charts';
-import { SMA } from 'lightweight-charts/indicators';
+import { applyMovingAverageIndicator } from './indicators/moving-average/moving-average';
 
 const chart = createChart(container);
 const candlestick = chart.addSeries(CandlestickSeries);
 candlestick.setData(candleData);
-
-const sma = new SMA(14);
-sma.subscribe(smaData => {
-    const smaLine = chart.addSeries(LineSeries, { color: '#FF9800', lineWidth: 2 });
-    smaLine.setData(smaData);
-});
-sma.update(candleData);
+applyMovingAverageIndicator(candlestick, { period: 14 });
 ```
 
-用法：先 `new` 指标对象，`subscribe` 计算结果，`update` 传入数据。
+若只是想叠加一条自定义指标曲线，也可直接计算好数据后用 `addSeries(LineSeries, {...})` 绘制，不必引入示例代码。
 
 ### 自定义插件
 
@@ -437,7 +473,13 @@ series.applyOptions({ upColor: '#00C853', downColor: '#FF1744' });
 
 ### 渲染优化
 
-- **关掉不需要的功能**：`crosshair: { mode: -1 }` 关闭十字线减少计算。
+- **利用数据合并（Conflation）**：v5.1+ 提供 `enableConflation` 选项，图表缩小时自动合并相邻数据点，让数万根 K 线的渲染在大缩放级别下依然流畅（默认关闭，需显式开启）：
+  ```javascript
+  const chart = createChart(container, {
+      timeScale: { enableConflation: true, conflationThresholdFactor: 2.0 },
+  });
+  ```
+- **关掉不需要的功能**：`crosshair: { mode: CrosshairMode.Hidden }` 隐藏十字线减少计算。
 - **批量更新**：用 `requestAnimationFrame` 合并频繁更新：
 
 ```javascript
@@ -462,16 +504,10 @@ websocket.onmessage = event => {
 Apache-2.0 协议。使用要求：
 
 1. 分发修改版本需保留原始版权声明。
-2. 在项目中添加 NOTICE 文件，说明使用了 Lightweight Charts。
-3. 在网页显著位置添加 [TradingView](https://www.tradingview.com/) 链接。
+2. 在网页显著位置添加 [TradingView](https://www.tradingview.com/) 链接。
+3. 若分发构建产物，附上官方 `NOTICE` 文件，说明使用了 Lightweight Charts。
 
-可在图表上显示 TradingView 的 logo 和链接：
-
-```javascript
-chart.applyOptions({
-    layout: { attributionLogo: true, attributionText: 'TradingView' },
-});
-```
+官方要求以可读方式标注 TradingView 为产品创作者，但库没有内置的 attribution 开关配置，需在页面中自行放置链接与版权声明。
 
 ## 参考资源
 

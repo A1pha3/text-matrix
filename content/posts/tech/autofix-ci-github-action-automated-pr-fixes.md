@@ -44,9 +44,9 @@ autofix.ci 解决的核心问题：**CI 里已经跑通的格式化工具，自�
 
 - **GitHub Actions 基础**：能在 `.github/workflows/` 里创建 YAML 文件并触发运行。一句话理解：autofix.ci 是以 GitHub Action 的形式接入你的 CI 流水线的。
 - **代码格式化工具**：`cargo fmt`（Rust）、`prettier`（JS/TS）、`ruff format`（Python）至少用过一种。一句话理解：autofix.ci 不内置格式化能力，它只收集你已有工具的产出。
-- **Git 基本操作**：理解 `staged changes`、`commit`、`push`、`PR branch` 之间的关系。一句话理解：autofix.ci 的本质是"帮你自动 commit 并 push 格式化后的变更"。
+- **Git 基本操作**：理解 `staged changes`、`commit`、`push`、`PR branch` 之间的关系。抓住本质：autofix.ci 帮你自动 commit 并 push 格式化后的变更。
 
-如果这三条任一条不满足，先花 20 分钟跑通一个最小的 GitHub Actions workflow（比如 `actions/checkout@v4` + `cargo fmt`），再回来读。
+如果这三条任一条不满足，先花 20 分钟跑通一个最小的 GitHub Actions workflow（比如 `actions/checkout@v7` + `cargo fmt`），再回来读。
 
 ## 学习目标
 
@@ -67,7 +67,7 @@ autofix.ci 由两端组成，边界清晰：
 | GitHub Action（`autofix-ci/action`） | 在 CI 末端收集变更、上报任务 | 是（MIT，TypeScript） |
 | 后端服务（`autofix-api.maximilianhils.com`） | 接收 artifact、生成 commit、push 回 PR | 否（Rust） |
 
-Action 只负责"收集 + 上报"，commit 构造和 push 发生在云端后端。这种拆分让 Action 保持轻量（代码量 ~500 行 TypeScript），代价是修复链路必须经过第三方服务。
+Action 只负责"收集 + 上报"，commit 构造和 push 发生在云端后端。这种拆分让 Action 保持轻量（主体就是一个 `index.ts` 文件），代价是修复链路必须经过第三方服务。
 
 **安全机制**：
 - Artifact 通过 GitHub Actions 加密传输，保留 1 天后自动删除
@@ -78,7 +78,7 @@ Action 只负责"收集 + 上报"，commit 构造和 push 发生在云端后端�
 |------|------|
 | GitHub App slug | `autofix-ci` |
 | Action 仓库 | `autofix-ci/action` |
-| Action Stars | 228（截至 2026-05，源自仓库公开数据） |
+| Action 体量 | 单个 `index.ts`（main 分支约 24 次提交，截至本文写作时） |
 | 主要语言 | TypeScript（Action），Rust（后端服务） |
 | 许可证 | MIT |
 | 后端开源 | 否（API 地址：`autofix-api.maximilianhils.com`） |
@@ -118,7 +118,7 @@ autofix-ci/action 在流水线末端被调用
 关键约束有两条：
 
 1. **workflow 必须命名为 `autofix.ci`**。Action 启动时校验 `GITHUB_WORKFLOW` 环境变量，名称不匹配会直接抛错。这是安全机制：防止恶意 PR 通过其他 workflow 触发 autofix.ci 写入。
-2. **Action 禁止修改 `.github` 目录**。一旦 staged 文件中包含 `.github` 路径，Action 抛错退出。这条规则阻止 PR 通过 autofix.ci 改动 workflow 自身，避免权限提升。
+2. **Action 禁止修改 `.github` 目录**。一旦 staged 文件路径包含 `.github`，Action 会抛错退出。注意源码注释的说明：真正的强制校验在**服务端**，Action 侧先检查只是为了让报错更好懂——这条规则防止 PR 借 autofix.ci 之手改动 workflow 自身，避免权限提升。
 
 ### Action 源码关键路径
 
@@ -195,6 +195,8 @@ const url =
 
 修复 artifact 通过 GitHub Actions artifact 机制上传（保留 1 天），后端收到通知后拉取 artifact 并执行修复。Action 本身不接触修复逻辑，只完成"打包 + 通知"。
 
+**一个反直觉的细节：修复成功启动时，workflow 会被标成失败**。源码里，Action 收到后端 `200` 响应后调用的是 `setFailed("✅ Autofix task started.")`——也就是说，修复任务正常提交后，当前这次运行反而会变红。这是有意为之的：红，意味着"修复正在路上"，提醒你别急着 review。等 autofix.ci App 把 `autofix` commit 推回 PR 后，新触发的那轮 CI 才会真正通过。所以看到 `✅ Autofix task started.` 时不用慌，那不是出错。
+
 ## 接入：从零到第一次自动修复
 
 ### 第一步：安装 GitHub App
@@ -221,10 +223,10 @@ on:
 jobs:
  autofix:
  runs-on: ubuntu-latest
+ permissions:
+ contents: read
  steps:
- - uses: actions/checkout@v4
- with:
- ref: ${{ github.event.pull_request.head.sha }}
+ - uses: actions/checkout@v7
 
  # ↓ 这里放你自己的格式化工序 ↓
  - run: cargo fmt
@@ -235,14 +237,14 @@ jobs:
  fail-fast: false
 ```
 
-> **安全加固建议**：将 Action 固定到特定 commit hash 而非 tag，例如 `autofix-ci/action@8bc06253bec489732e5f9c52884c7cace15c0160`，以降低供应链攻击风险。
+> **安全加固建议**：将 Action 固定到特定 commit hash 而非 tag，以降低供应链攻击风险。具体 hash 去官方 [setup 页](https://autofix.ci/setup) 复制当前给出的值即可——它会随版本滚动，别沿用本文或其他旧文里的例子。
 
 ### 第三步：配置参数（可选）
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `fail-fast` | `true` | 当某个 commit 触发修复时，取消其他并行 workflow |
-| `commit-message` | `autofix` | 自定义修复 commit 的提交信息 |
+| `commit-message` | 空 | 自定义修复 commit 的提交信息；为空时使用内置的 `autofix` |
 | `comment` | 无 | 在 PR 中添加自定义评论 |
 
 示例：
@@ -387,9 +389,9 @@ jobs:
 
 暂时没有 per-PR 的开关。如果需要临时禁用，可以将对应 workflow 的 `autofix-ci/action` step 注释掉，或在 workflow 中加入条件判断。
 
-**Q: 修复失败怎么办？**
+**Q: 修复"失败"了怎么办？**
 
-后端处理失败时，Action 会输出错误信息并将 workflow 标为失败，同时打印需要手动修复的内容。
+先区分两种情况。如果日志显示 `✅ Autofix task started.`，那是**成功信号**，workflow 变红是设计使然（见"工作原理"一节），等 `autofix` commit 到达即可。如果后端真的返回错误，Action 会输出错误信息并把这次运行标为失败，同时用 `git diff --staged` 打印需要手动处理的改动。
 
 ## 自测题
 
@@ -428,7 +430,7 @@ jobs:
 
 1. 找一个你有权限的 GitHub 仓库（可以是测试仓库），确认它已经有 CI 格式化工序（比如 `ruff format` 或 `prettier --write`）。
 2. 访问 [https://autofix.ci](https://autofix.ci)，安装 GitHub App 到这个仓库。
-3. 创建 `.github/workflows/autofix.yml`（注意文件名就是 workflow 名，必须为 `autofix.ci`），填入官方示例内容（记得把格式化工序放在 `autofix-ci/action` 之前）。
+3. 创建 `.github/workflows/autofix.yml`。关键在于把 YAML 里的 `name:` 字段写成 `autofix.ci`（文件名无关紧要），再填入官方示例内容，并把格式化工序放在 `autofix-ci/action` 之前。
 4. 故意在代码里加几个格式问题（比如把 import 顺序搞乱），push 到分支并开 PR。
 5. 等待 CI 运行，观察是否出现 `autofix` commit。
 

@@ -1,363 +1,340 @@
 ---
-title: "Quarkdown：Markdown 的超能力进化，从想法到论文、演示、知识库的全流程工具"
+title: "Quarkdown：给 Markdown 装上计算能力，一份源文件编译出论文、幻灯片和知识库"
 date: "2026-04-29T16:41:29+08:00"
 slug: quarkdown-markdown-superpowers-complete-guide
 github_repo: "iamgio/quarkdown"
-description: "Quarkdown 是一个基于 Kotlin 的 Markdown 扩展语言，支持函数调用和 Turing-complete 扩展，可编译为书籍、论文、幻灯片、网站和知识库等多种格式。"
+description: "Quarkdown 是构建在 CommonMark 与 GFM 之上的 Markdown 超集，通过图灵完备的函数系统为文档引入计算能力，可把单一源文件编译成 HTML、PDF、Markdown 与纯文本。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Kotlin", "Markdown", "编译器", "知识库"]
+tags: ["Kotlin", "Markdown", "编译器", "排版", "知识库"]
 ---
 
-读这篇文章前，先想一个问题：你写 Markdown 时，有没有遇到过"代码块没法运行""表格数据要手动填""同一份文档要出 HTML 又要出 PDF 还得做 PPT"这些场景？传统 Markdown 写什么就是什么，没有计算、没有逻辑、没有动态内容。Quarkdown 把 Markdown 从"纯文本标记"变成了"可执行的文档编程语言"——你可以在文档里定义函数、调用函数、执行代码，并把结果嵌入输出。
+写文档时你多半遇到过的场景：同一份内容要出网页、出 PDF，还要做演示文稿；文档里有表格、有公式，还想让读者动动手就运行一段代码。传统 Markdown 写什么就是什么，没有计算、没有变量、没有逻辑，这些需求往往被拆成三份工具来维护。Quarkdown 想用一套语法把这些收拢回一个源文件：你在文档里写函数、定义变量、做条件判断和循环，编译器负责算出结果并决定最终输出成哪一种形态。
 
-## 一、项目概述
+## 一、它是什么
 
-### Quarkdown 是什么
+Quarkdown 是一个由 Kotlin 编写的 Markdown 超集与排版系统，口号是"Markdown with superpowers"。它从 CommonMark 和 GFM 出发，给 Markdown 加上了能在文档内部执行的函数系统，以及一套持续扩充的标准库，覆盖布局、I/O、数学、条件与循环。同一个 `.qd` 源文件可以编译成印刷级书籍、学术论文、知识库和交互式演示文稿四种形态。
 
-**Quarkdown** 是一个基于 Kotlin 构建的 Markdown 扩展语言，口号是"Markdown with superpowers"。它是一个完整的文档编译系统——远超纯文本标记语法——能够将一份源文件编译成书籍、学术论文、幻灯片、网站和知识库等多种输出格式。
-
-传统 Markdown 里写代码示例无法运行、无法调用函数、无法处理数据。Quarkdown 的扩展机制图灵完备（Turing-complete），可以在文档里写真正的程序逻辑。
+它的关键不是"多几种输出格式"，而是让文档具备计算能力：文档不再是被动的静态文本，而是一个可以运行的程序。
 
 ### 核心数据
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 15,589+ |
-| 语言 | Kotlin 94.4%, Qotlin 4.4% |
-| 许可证 | GPL v3 |
+| Stars | 16.0k+ |
+| 主语言 | Kotlin |
+| 许可证 | GPL-3.0 |
+| 首次发布 | 2024-01 |
 | GitHub | [iamgio/quarkdown](https://github.com/iamgio/quarkdown) |
 
-### 为什么需要 Quarkdown
+### 它和 Markdown、LaTeX 的关系
 
-传统 Markdown 写什么就输出什么，没有计算、没有逻辑、没有动态内容。写技术文档时，代码块的运行结果只能手动写死，而 Quarkdown 可以**实际执行代码并把结果嵌入文档**。
+三者不是替代关系，而是摆在不同位置的工具。Markdown 简单但对版式和计算几乎无能为力；LaTeX 排版能力顶级，学习曲线陡、写起来冗长；Typst 平衡了语法与能力，但生态较新。Quarkdown 的选择是保留 Markdown 的简洁写作体验，把 LaTeX 那类需要的能力（公式、图表、分页排版）通过函数调用藏进标准库里，写作时你不用先学会一门完整排版语言。
 
-学术写作也有类似问题：论文需要 LaTeX 的公式能力，但 LaTeX 门槛高、排版复杂。Quarkdown 的做法是用 Markdown 的简洁语法写作，编译时自动生成符合学术规范的输出。
+## 二、核心概念
 
-## 二、原理分析
+### 一份源，多种形态
 
-### 编译器架构
+文档类型由 `.doctype` 函数在源码内声明，编译时据此决定排版方式：
 
-Quarkdown 的核心是一个**基于 Kotlin 的文档编译器**。它的工作流程分为三个阶段：
+- `.doctype {plain}`：连续流，类似 Notion/Obsidian，适合静态站点与知识管理，这也是默认值
+- `.doctype {paged}`：分页，适合论文、文章与书籍
+- `.doctype {slides}`：幻灯片，适合交互式演示
+- `.doctype {docs}`：文档站点，适合 wiki 与大型知识库
 
-**第一阶段：词法分析与语法解析**
-Quarkdown 源文件（`.qmd`）首先被送入词法分析器（Lexer），将文本流切分为 Token 序列。然后语法分析器（Parser）根据 Quarkdown 的语法规则构建抽象语法树（AST）。这个 AST 保留了文档的完整结构信息：标题、段落、代码块、公式、函数调用、扩展块等。
+同一份源文件不必为不同用途各写一份，改这个函数即可切换输出目标。
 
-**第二阶段：语义处理与执行**
-解析完成后，编译器遍历 AST，对不同节点执行相应的处理逻辑：
+### 函数调用：贯穿一切的核心
 
-- 普通文本节点 → 直接输出
-- 代码块节点 → 调用对应的解释器执行
-- 函数调用节点 → 解析参数并调用 Kotlin 函数
-- 扩展块 → 进入专门的处理流程（图表、公式、交互组件等）
-
-**第三阶段：输出生成**
-处理完语义后，编译器根据目标格式（HTML、PDF、PPT 等）选择对应的渲染器（Renderer），将处理结果转换为最终输出。
-
-### 函数调用机制
-
-Quarkdown 最强大的特性之一是**函数调用**。在文档中，你可以这样写：
+Quarkdown 的一切扩展都以函数调用为入口。一个调用以点号开头，参数放在花括号里，可以用位置传参，也可以命名（`name:{value}`）：
 
 ```
-@fun myFunction(arg1, arg2) {
-  // Kotlin 代码
-}
+.somefunction {arg1} {arg2}
+    Body argument
 ```
 
-然后在正文中调用：
+调用可以嵌套，也可以用 `::` 链式书写，把左侧的值当作右侧函数的第一个参数：
 
 ```
-@myFunction("hello", 42)
+.multiply {.pow {3} to:{2}} by:{.pi}
 ```
 
-编译器会执行这段 Kotlin 代码，并将结果插入文档。这个机制的关键在于：函数定义和调用都在同一个 `.qmd` 文件里，不需要额外的构建脚本或配置文件——文档本身就是可执行的程序。
+函数调用不仅生成文字，还能直接参与计算。整段文档因此变成了一个可执行程序：写 Markdown，就是在写逻辑。
 
-### Turing-complete 扩展系统
+### 变量与自定义函数
 
-Quarkdown 的扩展块（Extension Blocks）让文档拥有了真正的编程能力。一个扩展块以 `@` 开头，后面跟着扩展名称和代码体：
-
-```
-@ExtensionName {
-  // 扩展代码
-}
-```
-
-常见的扩展包括：
-- `@Chart` — 生成交互式图表
-- `@Plot` — 数据可视化
-- `@Include` — 嵌入外部文件
-- `@Eval` — 动态求值表达式
-
-这些扩展不是模板替换，而是**在编译器内部执行 Kotlin 代码**。Kotlin 本身图灵完备，Quarkdown 的扩展系统也因此获得了图灵完备性——理论上可以用 Quarkdown 文档完成任何可计算的文档处理任务。
-
-### 多格式输出原理
-
-不同输出格式的生成依赖于**渲染器抽象**。编译器定义了统一的渲染接口（Renderer Interface），每种输出格式都有对应的实现：
-
-- `HtmlRenderer` — 生成静态 HTML，适合网站和博客
-- `PdfRenderer` — 生成 PDF，通过 LaTeX 中转实现高质量排版
-- `PptxRenderer` — 生成 PowerPoint 幻灯片
-- `DocxRenderer` — 生成 Microsoft Word 文档
-
-这种架构下，新增输出格式只需实现一个新的 Renderer，不需要改动核心编译器。
-
-## 三、架构设计
-
-### 模块划分
-
-Quarkdown 编译器的代码库大致分为以下几个模块：
+变量用 `.var` 定义，赋值后能像无参函数一样反复引用：
 
 ```
-quarkdown/
-├── compiler/          # 核心编译器
-│   ├── lexer/         # 词法分析
-│   ├── parser/        # 语法分析
-│   ├── ast/           # 抽象语法树定义
-│   ├── evaluator/     # 语义处理与执行
-│   └── renderer/      # 多格式渲染
-├── extensions/        # 官方扩展实现
-│   ├── chart/         # 图表扩展
-│   ├── plot/          # 绘图扩展
-│   └── include/       # 文件嵌入
-└── cli/               # 命令行工具
+.var {name} {Quarkdown}
+Hello, **.name**!
 ```
 
-模块化设计的好处是编译器核心不依赖任何特定扩展，扩展可以独立开发。社区可以自由为 Quarkdown 开发新扩展，不需要深入编译器内核。
+自定义函数用 `.function`，参数列在函数体第一行；因为参数可以带默认标记，函数既能传值也能留空。函数没有 `return`——凡是执行到的语句都会成为输出的一部分：
 
-### 插件系统
+```
+.function {greet}
+    to from:
+    **Hello, .to** from .from!
 
-Quarkdown 支持插件（Plugins），允许第三方扩展编译器的功能。插件机制基于 Java 的 ServiceLoader 实现，遵循以下约定：
+.greet {world} from:{iamgio}
+```
 
-1. 插件在 `META-INF/services` 目录下声明实现类
-2. 编译器启动时扫描所有插件
-3. 插件通过实现特定接口来注册新的扩展和渲染器
+### 条件与循环
 
-### 编译上下文
+文档里可以写真正的控制流。`.if` 满足条件才输出其主体，`.ifnot` 取其反；`.foreach` 遍历一个序列，`.` 隐式指代当前项：
 
-编译器维护一个**编译上下文（Compile Context）**，贯穿整个编译过程。这个上下文包含：
+```
+.foreach {1..5}
+    n:
+    .multiply {.n} by:{.n}
+```
 
-- **环境变量** — 定义了可在文档中访问的函数和数据
-- **资源管理器** — 管理图片、数据文件等外部资源的加载
-- **日志记录器** — 记录编译过程中的警告和错误
-- **输出目标** — 指定输出格式和输出路径
+这些能力叠加起来，Quarkdown 就是一个写在文档内部的图灵完备脚本语言。
 
-编译上下文的生命周期从编译开始到结束，所有处理阶段共享同一个上下文实例，保证状态一致。
+### 数学公式
 
-## 四、安装与使用
+Quarkdown 原生支持 TeX 数学公式，HTML 端由 MathJax 渲染。内联公式用单个 `$` 包裹，公式前后需要留白或处于行首尾：
 
-### 环境要求
+```
+Let $ \overline v = \frac {\Delta x} {\Delta t} $ be the **average velocity** of an object.
+```
 
-- **JDK** 17 或更高版本
-- **Gradle**（构建工具，项目中包含 Gradle Wrapper）
-- 支持 macOS、Linux、Windows
+独立成块的公式可以直接放在段落里，多行公式则用三个 `$` 作为定界符：
 
-### 安装步骤
+```
+$$$ f(x) = \begin{cases}
+    0 & \text{if } x = 0 \\
+    1 & \text{if } x \neq 0
+\end{cases} $$$
+```
 
-**方式一：从源码编译**
+## 三、输出能力
+
+Quarkdown 的目标不是单一格式，而是一份源对接所有需要交付的产物：
+
+| 目标 | 覆盖的文档类型 | 说明 |
+|------|---------------|------|
+| HTML | plain / paged / slides / docs | paged 走 paged.js，slides 走 reveal.js，docs 适合知识库与 wiki |
+| PDF | 全部 | 依赖 Node.js、npm 与 Puppeteer 生成 |
+| Markdown | GFM | 导出为通用的 Markdown |
+| Plain text | — | 通用纯文本导出 |
+
+把 HTML 定义为第一等目标，再在其上叠加 PDF 导出，是它区别于"各格式写一套渲染器"的关键：多数排版能力只要实现一次。
+
+### 编译速度与实时预览
+
+Quarkdown 原生支持低时延的实时预览：官方 wiki 有 100 多个子文档，编译只需约 2 秒。配合 CLI 的 `-p`（编译后自动刷新预览）和 `-w`（监听源码目录，文件变动即重编译），写作时能边写边看结果。
+
+### 编辑器支持
+
+- VS Code 官方扩展
+- IntelliJ IDEA 插件（社区为非官方维护）
+
+### 权限与代理友好
+
+Quarkdown 默认限制了文档对系统资源的访问（权限系统），从设计上减少"文档即程序"这一特性带来的安全面。标准库之外，项目还内置了一个面向 coding agent 的 skill，让语言模型写 Quarkdown 时能遵循主管道而不用猜语法。这里需要区分两类概念：Quarkdown 的"函数"是文档排版与计算的抽象，与别的项目里"工具调用/Agent 函数"并非一回事。
+
+## 四、安装与环境要求
+
+安装前先确认机器上有 Java 运行时，因为编译工具链基于 JVM。PDF 导出额外需要 Node.js、npm 和 Puppeteer，仅做 HTML/文本输出时不需要。
+
+### 方式一：官方安装脚本（Linux/macOS）
 
 ```bash
-git clone https://github.com/iamgio/quarkdown.git
-cd quarkday
-
-# 编译（自动下载 Gradle Wrapper）
-./gradlew build
-
-# 安装 CLI 工具
-./gradlew installDist
+curl -fsSL https://raw.githubusercontent.com/quarkdown-labs/get-quarkdown/refs/heads/main/install.sh | sudo env "PATH=$PATH" bash
 ```
 
-**方式二：使用已发布的 JAR**
+脚本会把程序装到 `/opt/quarkdown`，并在 `/usr/local/bin` 建立 `quarkdown` 快捷命令。若机器没有 Node.js，脚本会通过系统包管理器自动补装。
 
-从 GitHub Releases 页面下载最新的 `quarkdown.jar`，然后通过 Java 直接运行：
+### 方式二：Homebrew（macOS/Linux）
 
 ```bash
-java -jar quarkday.jar --help
+brew install quarkdown-labs/quarkdown/quarkdown
 ```
 
-**方式三：集成到 Gradle 项目**
+### 方式三：Windows
 
-如果你想在现有 Kotlin/Gradle 项目中使用 Quarkdown 编译器，可以添加依赖：
+PowerShell 安装脚本：
 
-```kotlin
-// build.gradle.kts
-plugins {
-    id("io.github.iamgio.quarkdown") version "最新版本"
-}
-
-quarkdown {
-    outputFormat.set("html")
-    outputDir.set(layout.buildDirectory.dir("docs"))
-}
+```powershell
+irm https://raw.githubusercontent.com/quarkdown-labs/get-quarkdown/refs/heads/main/install.ps1 | iex
 ```
 
-### 基本使用
+或用 Scoop：
 
-创建一个 `.qmd` 文件，比如 `hello.qmd`：
+```powershell
+scoop bucket add quarkdown https://github.com/quarkdown-labs/scoop-quarkdown
+scoop install quarkdown
+```
 
-```markdown
+### 方式四：手动安装
+
+从 [latest release](https://github.com/iamgio/quarkdown/releases/latest) 下载 `quarkdown.zip` 解压，或用 `gradlew installDist` 从源码构建。若希望随处可用，把 `<install_dir>/bin` 加入 `PATH`。
+
+安装完成后运行 `quarkdown --help` 验证命令可用。
+
+## 五、快速上手
+
+### 创建项目
+
+`quarkdown create [directory]` 会启动交互式向导，自动生成带文档元数据（metadata）和初始内容的项目骨架。
+
+### 写并编译第一份文档
+
+新建一个源文件，比如 `hello.qd`：
+
+```
+.doctype {paged}
 # 我的第一篇 Quarkdown 文档
 
-这是一段普通文本。
+这是一段普通文本。下面把公式写进标记里：
 
-@Chart {
-    type: bar
-    data: [10, 20, 30, 40]
-    labels: ["A", "B", "C", "D"]
-}
+Let $ E = mc^2 $ be a start.
 
-下面是一个函数调用：
+.function {greet}
+    to from:
+    **Hello, .to** from .from!
 
-@Eval { 2 + 3 * 4 }  @[输出结果]
+.greet {world} from:{iamgio}
 ```
 
-编译为 HTML：
+编译并预览：
 
 ```bash
-./quarkdown hello.qmd --output ./output --format html
+quarkdown c hello.qd
 ```
 
-编译为 PDF：
+`quarkdown c FILE` 编译指定文件并把结果写到目标。若项目有多个源文件，命令行传入的必须是根文件，即负责 include 其他文件的那个入口文件。`quarkdown c hello.qd -p` 会在编译后自动打开预览，配合 `-w` 得到实时预览：
 
 ```bash
-./quarkdown hello.qmd --output ./output --format pdf
+quarkdown c hello.qd -p -w
 ```
 
-### 生成幻灯片
-
-Quarkdown 支持将文档编译为 PowerPoint 幻灯片。约定每个一级标题（`#`）生成一张新幻灯片，二级标题（`##`）生成子标题：
-
-```markdown
-# 第一张幻灯片
-这是第一张的内容
-
-# 第二张幻灯片
-这是第二张的内容
-```
+要输出 PDF，追加 `--pdf`：
 
 ```bash
-./quarkdown presentation.qmd --output ./slides --format pptx
+quarkdown c hello.qd --pdf
 ```
 
-## 五、代码示例
+想边读边试语法，可以用交互模式：
 
-### 基础函数定义与调用
-
-```markdown
-# 函数调用示例
-
-定义一个加法函数：
-
-@fun add(a: Int, b: Int): Int {
-    return a + b
-}
-
-调用结果：@add(3, 5) @[]
+```bash
+quarkdown repl
 ```
 
-编译后，`@[...]` 标记的位置会被函数执行结果替换。
+### 生成幻灯片和知识库
 
-### 数据可视化
+改变文档类型即可切换产物。想出一套幻灯片，把 `hello.qd` 开头改为 `.doctype {slides}`，再编译同一个文件；想建知识库，则用 `.doctype {docs}` 并把多个 `.qd` 文件通过 include 函数组织起来。同一个源，输出随你的声明而变。
 
-```markdown
-# 数据图表
+## 六、完整示例
 
-@Plot {
-    title: "月度销售额"
-    type: line
-    data: [120, 132, 101, 134, 90, 230, 210]
-    xAxis: ["1月","2月","3月","4月","5月","6月","7月"]
-    color: "#4A90E2"
-}
+下面这组是可直接放进 `.qd` 文件验证的片段。
+
+### 变量复用一段布局
+
+变量可以存一整段布局内容，再在文档里反复调用：
+
+```
+.var {myrow}
+    .row gap:{2cm}
+        A
+        B
+        C
+
+.container background:{teal} padding:{1cm}
+    .myrow
 ```
 
-### 数学公式（学术写作）
+### 函数复用与链式计算
 
-Quarkdown 支持 LaTeX 风格的数学公式渲染：
-
-```markdown
-# 学术论文示例
-
-设有一函数 $f(x) = \sum_{i=0}^{n} x_i^2$，其中：
-
-$$
-\frac{\partial f}{\partial x_i} = 2x_i
-$$
-
-上述偏导数说明了梯度下降中每个维度的更新方向。
 ```
+.function {area}
+    width height:
+    .multiply {.width} by:{.height}
+
+The area is **.area {4} {2}**.
+```
+
+链式写法把嵌套调用变成左到右的序列，读起来更像自然语言：
+
+```
+.pow {3} {2}::subtract {1}::sum {2}
+```
+
+等价于 `.sum {.subtract {.pow {3} {2}} {1}} {2}`，两者结果相同，前者可读性更好。
 
 ### 条件渲染
 
-```markdown
-@fun renderBadge(version: String) {
-    if (version == "stable") {
-        return "✅ 稳定版"
-    } else {
-        return "🚧 开发版"
-    }
-}
-
-当前版本：@renderBadge("stable") @[]
+```
+.let {.iseven {3}}
+    condition:
+    .if {.condition}
+        3 is even!
+    .ifnot {.condition}
+        3 is odd!
 ```
 
-## 六、适用场景与局限性
+### 循环生成序列
+
+```
+.row alignment:{spacearound}
+    .foreach {1..5}
+        n:
+        .multiply {.n} by:{.n}
+```
+
+`.repeat {n}` 是 `.foreach {1..n}` 的缩写，遍历整数区间可省略 1 的起点。
+
+## 七、适用场景与局限
 
 ### 适合的场景
 
-- **技术博客与文档**：需要嵌入可运行的代码示例、动态图表
-- **学术论文**：追求 LaTeX 质量但希望降低写作门槛
-- **幻灯片制作**：技术人员不想学 PowerPoint，但又需要做演示
-- **知识库建设**：需要输出多种格式（网站、PDF、PPT）的内容团队
-- **数据报告**：需要嵌入动态数据可视化的定期报告
+- **技术博客与文档**：想在正文里嵌入可计算的内容、公式和图表
+- **学术写作**：要 LaTeX 的公式与分页质量，但不想付出完整 LaTeX 学习成本
+- **演示文稿**：不想切换工具，直接用 Markdown 出幻灯片
+- **知识库**：内容经常要同步到站点、文档中心与演示，希望单源维护
+- **数据报告**：定期报告里嵌动态图表，数字随数据源变化
 
-### 当前局限性
+### 与同类工具的取舍
 
-- **生态尚在早期**：相比 Pandoc、LaTeX 等成熟工具，插件和模板社区较小
-- **JVM 依赖**：需要在机器上安装 JDK 17+，对于纯前端项目可能偏重。不过 Quarkdown 提供预编译二进制文件，Kotlin 运行时已打包在内，不需要额外安装 Kotlin
-- **PDF 输出依赖 LaTeX**：若要生成 PDF，需要系统安装 LaTeX 环境
-- **调试体验**：文档内的函数出错时，错误信息可读性还有提升空间。函数调用虽强大，但滥用会让文档难以维护——设计哲学是"文档即程序"，简单文档不需要函数调用，复杂文档（学术论文、技术书籍）用函数调用集中管理计算逻辑
+和 Typst 相比，Quarkdown 保留了 Markdown 的书写感；和 AsciiDoc、MDX 相比，它把脚本能力内建而非依赖外部框架。代价是它的生态仍在早期，文档级插件与模板数量还不及 Pandoc、LaTeX 社区。
 
-## 七、快速上手
+### 当前局限
 
-如果你想尝试 Quarkdown，建议从以下路径开始：
+- **JVM 依赖**：编译依赖 Java 运行时，安装脚本会自动处理，但纯前端项目会觉得偏重
+- **PDF 依赖链**：PDF 导出需要 Node.js、npm 与 Puppeteer，不是开箱即得的单一二进制
+- **生态规模小**：标准库可用但第三方扩展和模板远少于成熟排版工具
+- **调试体验**：文档内函数出错时，错误信息可读性还有提升空间；函数虽强大，滥用会让文档难以维护
 
-1. **克隆官方示例仓库**，运行几个现成的 `.qmd` 文件感受一下输出效果
-2. **从一个小型幻灯片开始**，体验"写 Markdown 出幻灯片"的效率提升
-3. **尝试嵌入代码块**，感受"文档即程序"的编程式写作体验
-4. **阅读源码**，特别是 `compiler/evaluator` 模块，理解函数调用的执行机制
+几句取舍上的建议：简单文档不必引入函数，纯静态内容用 Markdown 就好；只有出现重复内容、动态数值或要跨格式维护时，才值得把文档升级成 "文档即程序" 的写法。
 
-Quarkdown 体现了一种不同的文档写作思路——文档是可执行的程序，不是静态文本。需要频繁输出多格式技术文档的团队和个人可以试试这条路。
+## 八、排错与常见问题
 
-**相关资源：**
-- GitHub：[iamgio/quarkdown](https://github.com/iamgio/quarkdown)
-- 官方文档：项目 README 中的 Quick Start
+**`quarkdown` 命令找不到**：确认安装路径的 `bin` 目录已加入 `PATH`；用安装脚本装过的话，检查 `/usr/local/bin/quarkdown` 是否存在。
 
-## 八、进阶路径
+**PDF 导出失败**：它依赖 Node.js、npm 与 Puppeteer，先确认三者已正确安装，再重新编译。仅做 HTML 或文本输出时不受影响。
 
-### 第一步：理解编译器架构（1-2 周）
+**实时预览不刷新**：确认用了 `-p -w` 组合；`-w` 监听的是源目录，改动文件需落在监听范围内。
 
-- 深入阅读 Quarkdown 源码（`src/` 目录），理解词法分析器、语法分析器、AST、渲染器的实现
-- 尝试修改编译器逻辑，观察对输出结果的影响
+**多文件项目编译报错**：命令行传入的必须是根文件（include 其他文件的那一个），不是任意子文件。
 
-### 第二步：扩展 Quarkdown 的能力（2-3 周）
+**函数不生效、原样输出**：检查调用是否以点号开头、参数是否在花括号内；模块缩进至少要两个空格或一个 Tab，若缩进混入四空格会意外被当成代码块。
 
-- 学习如何编写自定义扩展块（`@ExtensionName`）
-- 理解渲染器接口，尝试实现新的输出格式（如 EPUB、LaTeX 源文件）
-- 学习 Quarkdown 的插件机制
+**依赖外部的数据或资源时打不开**：Quarkdown 默认限制文档进程对系统资源的访问权限，属预期行为；需要访问外部资源时按权限系统规则显式授权。
 
-### 第三步：将 Quarkdown 集成到工作流（1-2 周）
+## 九、进阶与资源
 
-- 配置自动化编译流程（如 Git Hook、CI/CD）
-- 将 Quarkdown 与文档版本管理系统（如 Git）结合
+想深入，可以从这几个方向走：
 
-### 第四步：深入 Kotlin 和编译器技术（持续）
+1. **把编译器当黑盒看**：先跑 `mock` 示例工程（`quarkdown c mock/main.qd -p`）感受各文档类型的排版差异，再定位到 `compiler/` 下的 lexer、parser、renderer 模块，理解一次编译里各阶段做了什么
+2. **写自己的函数库**：用 `.function` 把重复的版式收成一条调用，体会"复用"在文档里的形态
+3. **接入 CI**：用官方 setup 把编译放进 GitHub Actions，实现文档随源码自动构建发布
+4. **对照脚本特性**：官方 wiki 对变量、条件、循环、链式调用都有独立页面，按需查阅
 
-- 学习 Kotlin 的协程、扩展函数、DSL 构建等高级特性
-- 阅读编译器相关的书籍（如《编译原理》《高级编译器设计与实现》）
-- 尝试实现一个简化版的 Markdown 编译器，理解编译器的核心难点
+参考资料：
 
-### 第五步：参与开源社区（持续）
-
-- 阅读 `CONTRIBUTING.md`，了解如何参与贡献
-- 从修复文档、添加测试用例等小任务开始
-- 逐步参与到核心能力的讨论和开发中
+- GitHub 仓库：[iamgio/quarkdown](https://github.com/iamgio/quarkdown)
+- 官方 Wiki：[quarkdown.com/wiki](https://quarkdown.com/wiki)
+- 官方文档：[quarkdown.com/docs](https://quarkdown.com/docs)
+- 安装脚本项目：[get-quarkdown](https://github.com/quarkdown-labs/get-quarkdown)

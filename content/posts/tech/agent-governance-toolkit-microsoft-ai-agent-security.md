@@ -24,7 +24,7 @@ OWASP 在 [Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/
 
 **项目地址：** [github.com/microsoft/agent-governance-toolkit](https://github.com/microsoft/agent-governance-toolkit)
 
-**核心数据（GitHub API 2026-08-07 验证）：** Python 主语言、MIT 许可证、main 分支、Stars 约 5.6k、Forks 约 970、创建于 2026-03-02、最近推送 2026-08-06、当前版本 v5.0.0（Public Preview，2026-06-25）。仓库定位"Policy enforcement, zero-trust identity, execution sandboxing, and reliability engineering for autonomous AI agents"。
+**核心数据（GitHub API 2026-09-03 验证）：** Python 主语言、MIT 许可证、main 分支、Stars 约 6.2k、Forks 约 1.1k、创建于 2026-03-02、最近推送 2026-09-02、最新标签 v5.0.0（提交于 2026-07-27）。一个容易混淆的点：PyPI 上 core/cli/integrations/protocols 四个发行版已是 5.0.0，但 meta 包 `agent-governance-toolkit` 仍停在 4.1.0；整体处于 Public Preview。仓库定位"Policy enforcement, zero-trust identity, execution sandboxing, and reliability engineering for autonomous AI agents"。
 
 ## 系统地图：四条独立主线，一层审计横切
 
@@ -210,15 +210,15 @@ README 里除了 `govern()`，还有两类接入：
 
 ## 模块从 45 个收成 5 个：理解包结构
 
-v4.1.0 起，Python 侧的 45 个包合并成 5 个顶层发行版，v5.0.0 沿用这个结构：
+v4.1.0 起，Python 侧的 45 个包被合并成 5 个顶层发行版（含 1 个元包），v5.0.0 沿用这个结构。以 PyPI 实际发布的清单为准：
 
 | 发行版 | 包含什么 |
 |-------|---------|
-| `agent-governance-toolkit-core` | 策略引擎、能力模型、审计、MCP 网关、零信任身份、信任评分 |
-| `agent-governance-toolkit-runtime` | 特权环、saga 编排、终止控制、执行计划校验、命令 denylist |
-| `agent-governance-toolkit-sre` | SLO、错误预算、混沌工程、熔断器 |
-| `agent-governance-toolkit-cli` | `agt` CLI、OWASP 验证、完整性检查、策略 lint |
-| `agent-governance-toolkit[full]` | 元包，装上面全部 |
+| `agent-governance-toolkit[full]` | 元包，`[full]` extra 一键拉齐下述全部（当前停在 v4.1.0） |
+| `agent-governance-toolkit-core` | 策略引擎、agentmesh、agent-os 核心运行时、能力模型、审计、MCP 网关、零信任身份、信任评分 |
+| `agent-governance-toolkit-cli` | `agt`/`agent-sre` CLI、SRE（熔断、Kill switch、SLO、混沌）、特权环沙箱——合并自 agent-sre、agent-sandbox、mcp-trust-server |
+| `agent-governance-toolkit-integrations` | 框架适配层：LangChain、CrewAI、OpenAI Agents、pydantic-ai 等 |
+| `agent-governance-toolkit-protocols` | 协议实现：MCP governance、信任协议、A2A、MCP receipts |
 
 旧包名（`agent-os-kernel`、`agentmesh-*` 等）保留为 stub 包，装了会重定向到新发行版。五门语言 SDK（Python、TypeScript、.NET、Rust、Go）都实现核心治理（策略、身份、信任、审计），Python 是唯一有完整栈的。
 
@@ -278,7 +278,7 @@ except GovernanceDenied as e:
 
 ## 资料口径说明
 
-本文基于 GitHub API 与仓库 README、CHANGELOG、OWASP 合规文档（2026-08-07 验证）编写。核心数据（Stars、Forks、语言、许可证、版本、最近推送）来自 GitHub API，随仓库变化会过时，引用时以当时 API 为准。
+本文基于 GitHub API 与仓库 README、CHANGELOG、OWASP 合规文档（2026-09-03 验证）编写。核心数据（Stars、Forks、语言、许可证、版本、最近推送）来自 GitHub API，随仓库变化会过时，引用时以当时 API 为准。
 
 两点边界需要说明：
 

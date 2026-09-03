@@ -48,7 +48,7 @@ tags: ["n8n", "工作流自动化", "AI Agent", "LangChain", "开源"]
 
 把 n8n 放到 Zapier、Make（原 Integromat）旁边比较时，集成数量并不构成护城河。n8n 官方维护 400+ 核心节点，叠加社区包后集成总数超过 1500，但 Zapier 的应用目录在 8000 个量级，Make 的可视化编排也更顺。比数量比不过。n8n 在企业场景里能站住脚，靠的是代码扩展、自托管、AI LangChain 原生集成这三者同时具备。
 
-这三者组合起来，直接影响采购决策：当工作流需要处理客户数据、内部知识库或受合规约束的凭证时，Zapier 和 Make 的云端模型会让数据必须经过第三方 SaaS，而 n8n 自托管可以把数据流限制在企业网络内；工作流逻辑复杂到无代码表达式无法表达时，n8n 的 Code 节点允许直接写 JavaScript 或 Python，并安装 npm 包；而工作流的核心是 LLM 调用而非传统 API 编排时，n8n 内置的 LangChain 节点把 Agent、Tool、Memory、Vector Store 做成了一等公民，而不是通过 HTTP Request 节点拼装。
+这三者组合起来，直接影响采购决策：当工作流需要处理客户数据、内部知识库或受合规约束的凭证时，Zapier 和 Make 的云端模型会让数据必须经过第三方 SaaS，而 n8n 自托管可以把数据流限制在企业网络内；工作流逻辑复杂到无代码表达式无法表达时，n8n 的 Code 节点允许直接写 JavaScript 或 Python，自托管还能按文档启用额外的 npm 模块；而工作流的核心是 LLM 调用而非传统 API 编排时，n8n 内置的 LangChain 节点把 Agent、Tool、Memory、Vector Store 做成了一等公民，而不是通过 HTTP Request 节点拼装。
 
 代价是运维投入：n8n 自托管意味着要自己管 Docker、PostgreSQL、Redis、备份和升级。Sustainable Use License 也不是纯 OSS——它允许内部和商业使用，但禁止把 n8n 本身打包成 SaaS 转售，这与 MIT/Apache 的许可范围有明确差异，采购前需要法务确认。
 
@@ -70,7 +70,7 @@ n8n 的核心可以拆成五层，理解这五层的边界，比记集成数量�
                          ▼
 ┌─────────────────────────────────────────────────────────┐
 │  节点层    集成节点（OpenAI、PostgreSQL、Slack…）        │
-│           Code 节点（JS / Python + npm 包）              │
+│           Code 节点（JS / Python + 可选外部模块）          │
 │           AI 节点（LangChain Agent / Tool / Memory）     │
 │           逻辑节点（IF / Switch / Merge / Loop）         │
 └────────────────────────┬────────────────────────────────┘
@@ -502,17 +502,21 @@ n8n 的企业级功能按需开启，单团队用不上就别开。
 
 ### SSO 配置
 
-SSO 是 n8n 企业版功能，支持 SAML 2.0 与 OIDC（OpenID Connect），另有独立的 LDAP/Active Directory 登录。企业已有身份提供商时强制走 SSO，把认证收口到一处，避免本地账号泄露后在多用户间横向移动。
+SSO 是 n8n 企业版功能，支持 SAML 2.0 与 OIDC（OpenID Connect），另有独立的 LDAP/Active Directory 登录。企业已有身份提供商时强制走 SSO，把认证收口到一处，避免本地账号泄露后在多用户间横向移动。两者都是 Business/Enterprise 计划的功能。
 
 n8n 2.x 的 SSO 默认在编辑器左侧 **Settings → SSO** 界面配置：选择协议、填入 IdP 提供的元数据或发现端点、Client ID 与密码，保存后激活即可，不需要碰环境变量。只有当你想用基础设施即代码（IaC）自动批铺实例时，才需要把 SSO 交给环境变量管理——这是 n8n v2.18.0 才支持的能力，且必须先把主开关打开，否则对应变量会被忽略：
 
 ```yaml
 # 环境变量（生产环境通过密钥管理服务注入，不要写进 docker-compose.yml）
 N8N_SSO_MANAGED_BY_ENV=true
-# 协议相关的变量（OIDC / SAML 各有专属常量）按官方文档核实后补充
+N8N_SSO_OIDC_LOGIN_ENABLED=true
+N8N_SSO_OIDC_CLIENT_ID=your-client-id
+N8N_SSO_OIDC_CLIENT_SECRET=your-client-secret
+N8N_SSO_OIDC_DISCOVERY_ENDPOINT=https://your-idp.com/.well-known/openid-configuration
+N8N_SSO_USER_ROLE_PROVISIONING=instance_role
 ```
 
-开启 env 管理后，UI 里对应的 SSO 控件会变成只读，n8n 每次启动都用环境变量覆盖配置。涉及 OAuth 的密钥这类敏感值，不要写进 docker-compose.yml 提交到 Git。SSO 变量名在不同版本间有调整，部署前以 [n8n 官方环境变量文档](https://docs.n8n.io/hosting/configuration/settings-env-vars/) 为准。
+开启 env 管理后，UI 里对应的 SSO 控件会变成只读，n8n 每次启动都用环境变量覆盖配置。走 SAML 时把 `N8N_SSO_OIDC_*` 换成 `N8N_SSO_SAML_LOGIN_ENABLED` 与 `N8N_SSO_SAML_METADATA_URL`（或以 `N8N_SSO_SAML_METADATA` 直接传 XML）。`N8N_SSO_OIDC_CLIENT_SECRET` 这类敏感值必须通过密钥管理服务注入，不要写进 docker-compose.yml 提交到 Git。SSO 相关环境变量名在不同 n8n 版本间有调整，部署前以 [n8n 官方环境变量文档](https://docs.n8n.io/hosting/configuration/environment-variables/) 为准。
 
 ### 空中隔离部署
 
@@ -869,7 +873,7 @@ docker rm n8n
 ### 落地顺序
 
 1. **先跑通一个非关键工作流**。选一个数据不敏感、失败可接受的工作流（如每日报告推送），用 Docker 单机部署验证。这一步验证的是 Docker 部署、`WEBHOOK_URL` 配置、凭证加密存储是否正常工作。
-2. **再迁移一个 AI 工作流**。把一个现有的 LLM 调用脚本改造成 n8n 工作流，体验 LangChain 节点的编排能力。重点看 Code 节点的 npm 包安装、LangChain Agent 节点的工具回调机制、以及 Webhook 触发器的超时限制。
+2. **再迁移一个 AI 工作流**。把一个现有的 LLM 调用脚本改造成 n8n 工作流，体验 LangChain 节点的编排能力。重点看 Code 节点在自托管下如何启用外部模块、LangChain Agent 节点的工具回调机制、以及 Webhook 触发器的超时限制。
 3. **然后做凭证和权限治理**。把散落在各处的 API Key 收敛到 n8n 凭证系统，按团队划分项目。这一步验证的是凭证的 OAuth2 Token 刷新、项目隔离的权限模型、以及 `N8N_ENCRYPTION_KEY` 的备份策略。
 4. **最后做高可用和监控**。工作流数量上 50 条、有核心业务依赖后，再上多副本和监控。盯三个指标：执行成功率、P95 耗时、队列积压，分别对应工作流稳定性、长尾任务和 Redis 队列健康度。
 
