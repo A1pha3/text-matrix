@@ -29,7 +29,7 @@ Terraform 之所以成为 IaC（基础设施即代码）的事实标准，不是
 | Stars | 约 49k |
 | 主语言 | Go |
 | License | BSL 1.1（v1.5+ 从 MPL 改为 BSL，部分使用受限） |
-| 当前主版本 | 1.9+（截至 2026 年） |
+| 当前主版本 | 1.10+（截至 2026 年） |
 | 配置语言 | HCL（HashiCorp Configuration Language） |
 | 状态后端 | 本地文件 / S3 / Terraform Cloud / GCS / Azure Storage |
 
@@ -114,6 +114,99 @@ Terraform will perform the following actions:
 Plan: 2 to add, 0 to change, 0 to destroy.
 ```
 
+## HCL 语言速览
+
+HCL 的价值在于"声明意图"而非"描述步骤"，同时保留表达式能力。一个 `.tf` 文件的基本单元是块（block）：
+
+```hcl
+resource "aws_instance" "web" {   # 块类型 + 两个标签
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t3.small"
+}
+```
+
+同一份资源要建多份，用 `count` 或 `for_each`：
+
+```hcl
+# count：按整数派生，适合"正好 N 份"
+resource "aws_instance" "web" {
+  count         = 3
+  instance_type = "t3.small"
+}
+
+# for_each：迭代一组键（map / set），适合键与取值有关联
+resource "aws_instance" "app" {
+  for_each      = toset(["api", "web", "worker"])
+  instance_type = "t3.small"
+  tags          = { Name = each.key }
+}
+```
+
+分别用 `count.index` 与 `each.key` 区分每一份。嵌套块的数量取决于执行期才知道的列表时，用 `dynamic` 生成：
+
+```hcl
+resource "aws_security_group" "web" {
+  dynamic "ingress" {
+    for_each = var.allowed_ports
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+}
+```
+
+两个高频内置值：`local.<name>` 缓存模块内复用的表达式；`terraform.workspace` 取当前工作区名，常用于区分环境。
+
+`terraform init` 还会生成 **`.terraform.lock.hcl` 锁文件**，逐条记录每个 Provider 的版本与校验和。务必提交进 Git，团队因此能锁死 Provider 版本、避免被静默升级。
+
+## 生命周期：何时更新、何时重建
+
+每类资源都有自己的更新策略：能原地改的属性走"更新"，必须替换的属性默认"先删后建"。用 `lifecycle` 块改写默认行为：
+
+```hcl
+resource "aws_instance" "web" {
+  ami           = var.ami
+  instance_type = "t3.small"
+
+  lifecycle {
+    prevent_destroy       = true   # 明确禁止本资源被删除
+    ignore_changes        = [tags] # 标签交给别处管，Terraform 不去较真
+    create_before_destroy = true   # 需要平滑切换时先建新的再删旧的
+  }
+}
+```
+
+内置的**前提 / 后置条件校验**（Terraform 1.2+）把错误拦在 `plan` 阶段：
+
+```hcl
+resource "aws_instance" "web" {
+  ami           = var.ami
+  instance_type = "t3.small"
+
+  lifecycle {
+    precondition {
+      condition     = var.region != ""
+      error_message = "region 不能为空"
+    }
+  }
+}
+```
+
+## Workspaces：切换环境
+
+Workspace 让同一套配置在不同状态文件间切换，前提是"配置相同、参数不同"：
+
+```bash
+terraform workspace new dev
+terraform workspace new prod
+terraform workspace select dev
+```
+
+它本质是**状态隔离**（每个 workspace 一份 tfstate），适合 dev / staging / prod 这类参数化环境。若环境差异大（网络拓扑、region、模块都不一样），更推荐按目录拆配置，而不是堆 workspace。
+
 ## Provider 生态
 
 截至 2026 年，HashiCorp 官方维护 **3000+ Provider**，覆盖：
@@ -161,9 +254,21 @@ module "staging_vpc" {
 }
 ```
 
+模块的输入变量建议加 `validation` 校验，参数错了在 `plan` 阶段报出来，而不是等 `apply` 失败再排错：
+
+```hcl
+variable "cidr_block" {
+  type = string
+  validation {
+    condition     = can(cidrhost(var.cidr_block, 0))
+    error_message = "cidr_block 必须是合法 CIDR，例如 10.0.0.0/16"
+  }
+}
+```
+
 社区生态：
 
-- **Terraform Registry**：[registry.terraform.io](https://registry.terraform.io) 收录 18,000+ 模块
+- **Terraform Registry**：[registry.terraform.io](https://registry.terraform.io) 收录 2 万+ 模块
 - **Terragrunt**：Wrapping Terraform，简化多环境/多 region 复用
 - **Terratest**：Go 写的 Terraform 集成测试框架
 

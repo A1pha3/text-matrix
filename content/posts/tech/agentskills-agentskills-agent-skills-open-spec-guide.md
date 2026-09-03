@@ -51,6 +51,8 @@ github_repo: "agentskills/agentskills"
 
 把它当成 LLM 工具链的"VS Code 扩展目录"会更容易理解：一个 skill 是一个带元数据的文件夹，agent 在启动时只看 `name` 与 `description`（≈100 tokens），匹配任务时才把完整 `SKILL.md` 读进上下文（<5000 tokens 推荐），需要时再去翻 `scripts/`、`references/`、`assets/`。这种三段式加载（progressive disclosure）是整个规范的设计核心——它决定了 frontmatter 字段为什么是 6 个而不是 30 个，也决定了为什么 `SKILL.md` 推荐 500 行以内。
 
+需要先说清一件事：这套规范并不归某一家公司私有。它由 Anthropic 率先设计并开放为一个生态标准，规范的权威文本托管在 agentskills.io，规范源码与参考实现则维护在 `agentskills/agentskills` 仓库——本文拆解的就是这个仓库。正因为标准是公开的，Claude Code、GitHub Copilot、Codex、Cursor、Gemini CLI 等竞品才愿意在同一份 `SKILL.md` 格式上对齐，而不是各自另造一套。
+
 ## 系统地图：规范的四层结构
 
 Agent Skills 规范一共由四个层次组成，按"必选到可选"的顺序排：
@@ -121,6 +123,16 @@ mentions PDFs, forms, or document extraction.
 
 `CONTRIBUTING.md` 里那句"it is much easier to add things to a specification than to remove them"映射到字段表上，就是这四个字段目前都还挂在"可选"位置上的原因。
 
+另外要区分"标准字段"和"客户端扩展"。开放标准只规定上面六个字段，但各客户端会在其基础上叠加自己的字段。以实现最成熟的 Claude Code 为例，它明确遵循 agentskills.io 开放标准，同时又支持几个标准之外的前置元数据：
+
+- `disable-model-invocation`：设为 `true` 后，模型不会自动加载该 skill，只能由用户通过 `/skill-name` 手动触发；
+- `user-invocable`：设为 `false` 后，skill 从 `/` 菜单里隐藏，仅供模型在相关场景自动加载；
+- `model`：指定该 skill 激活时使用的模型；
+- `context: fork`：在独立的子上下文（子代理）里运行该 skill，避免占用主会话上下文；
+- `argument-hint`：在 `/skill-name` 后面给出参数补全提示。
+
+这些扩展不属于规范本体，却恰好解释了"标准为什么能保持得这么小"：核心只承诺六个字段的跨客户端兼容，厂商需要的差异化能力全部挂在标准之外的外围字段上，既不污染规范，也不破坏向后兼容。
+
 ## 渐进披露三阶段
 
 `docs/specification.mdx` 用一段话讲清了 agent 怎么读 skill：
@@ -158,7 +170,7 @@ quickstart 的"roll a d20"任务流恰好把三阶段都走了一遍：
 
 ## 42 个兼容客户端意味着什么
 
-`docs/snippets/clients.jsx` 列出了 42 个已经接入 Agent Skills 格式的 agent 产品（README 里说 "a large number of AI tools and agentic clients"）。从里面挑几个有代表性的：
+`docs/snippets/clients.jsx` 于写作时点列出 42 个已经接入 Agent Skills 格式的 agent 产品（README 里的说法是 "a large number of AI tools and agentic clients"）；接入仍在持续，这个数字只是一份随时间增长的快照，不同来源口径从 20 出头到 40 多不等。从里面挑几个有代表性的：
 
 - **Claude Code** 与 **Claude**：Anthropic 自家主力，是规范的原始实现方。
 - **GitHub Copilot** 与 **VS Code**：仓库自身的 quickstart 教程就是用 VS Code Copilot 的 Agent 模式。
