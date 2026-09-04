@@ -51,7 +51,7 @@ Python 里"用类型注解描述数据"的库有好几个，选型主要看数�
 
 `dataclasses` 和 `attrs` 信任调用方传入的数据，只在"少写样板代码"上做文章。Pydantic 处理的是"不信任外部数据"的场景——在系统边界把字典、JSON、查询参数转成可信的 Python 对象。`marshmallow` 也能做类似的事，但 schema 单独定义，类型注解和验证规则分离，IDE 提示和 mypy 检查都跟不上。Pydantic 把类型注解本身当成 schema，静态检查与运行时验证共用同一份事实——一份注解同时驱动 mypy、IDE 补全和运行时验证，省下维护三份独立 schema 的成本。
 
-FastAPI 把这个特性用到路由签名层：`user: CreateUserRequest` 既是 OpenAPI 文档的来源，也是请求体的运行时验证器。路由签名一处声明，文档生成、IDE 补全、运行时验证都从同一处派生，下游框架因此可以把请求模型做得更复杂而不用担心验证开销。
+FastAPI 把这个特性用到路由签名层：`user: CreateUserRequest` 既是 OpenAPI 文档的来源，也是请求体的运行时验证器。文档生成、IDE 补全、运行时验证都从路由签名这一处派生，改一个字段，三处同步更新。
 
 ## 类型提示如何驱动验证
 
@@ -110,7 +110,7 @@ V2 把验证核心拆成 `pydantic-core` 这个独立 crate，用 Rust 实现。
 
 ## BaseModel 与字段定义
 
-`BaseModel` 是 Pydantic 的入口。继承它之后，类体里的类型注解会被收集成字段，默认值会成为字段默认。这一步发生在类定义时，不是实例化时——类型注解被翻译成 Rust 侧的 schema，后续每次实例化都走这份 schema。
+`BaseModel` 是 Pydantic 的入口。继承它之后，类体里的类型注解会被收集成字段，默认值会成为字段默认。正如上一节所说，这个收集动作同样发生在类定义时，一次翻译成 Rust 侧 schema，后续每次实例化都复用它。
 
 ```python
 from datetime import datetime
@@ -589,7 +589,7 @@ print(json.dumps(User.model_json_schema(), indent=2, ensure_ascii=False))
 }
 ```
 
-这份 Schema 的下游消费者包括 Swagger UI 和其他工具。`Field` 的 `description`、`examples` 这些参数本身也是 Schema 的一部分——每个参数都会进 Schema，被 Swagger UI、openapi-typescript、hypothesis 等工具消费。三个主要消费者：
+`Field` 的 `description`、`examples` 这些参数本身也是 Schema 的一部分——每个参数都会进 Schema。下游有三个主要消费者：
 
 - **FastAPI 用它生成 OpenAPI**：路由函数签名里的 `user: User` 会被 FastAPI 转成 `User.model_json_schema()`，嵌入到 OpenAPI 文档里，Swagger UI 直接渲染。
 - **前端可以用它生成 TypeScript 类型**：`openapi-typescript`、`quicktype` 这类工具能从 JSON Schema 生成前端类型定义，让前后端类型一致。改后端字段时前端类型自动更新，省去手动同步。
@@ -843,11 +843,14 @@ class Config(BaseModel):
     rules: dict = {"complex": {"nested": {"data": [...] * 1000}}}
 ```
 
-`BaseModel` 会深拷贝默认值，避免实例间共享可变状态。但大对象上这个拷贝开销不可忽略——一个 1000 元素的字典默认值，每次实例化都会深拷贝一次。改用 `default_factory` 可以让默认值按需构造：
+`BaseModel` 会深拷贝默认值，避免实例间共享可变状态。但大对象上这个拷贝开销不可忽略——一个 1000 元素的字典默认值，每次实例化都会深拷贝一次。改用 `Field(default_factory=...)` 可以把构造推迟到实例化时，代价是每次实例化都要执行一次工厂函数：
 
 ```python
+DEFAULT_RULES = {"complex": {"nested": {"data": range(1000)}}}
+
+
 class Config(BaseModel):
-    rules: dict = Field(default_factory=lambda: load_rules_from_file())
+    rules: dict = Field(default_factory=lambda: DEFAULT_RULES)
 ```
 
 ### 3. `model_validator(mode="after")` 里修改字段不会触发重新验证
@@ -961,7 +964,7 @@ V2 的 Rust 核心大幅改善了嵌套模型的验证性能，但 4 层以上�
 
 ### Pydantic vs `attrs`
 
-`attrs` 比 `dataclasses` 更灵活，支持 slots、自定义 `__init__`、验证器（但需要显式声明）。它的性能比 Pydantic V1 好，但比 V2 差——V2 的 Rust 核心让 `Field` 约束的执行开销低于 `attrs` 的 Python 验证器。`attrs` 的验证器是可选附加，不像 Pydantic 把验证作为基本功能。如果项目已经在用 `attrs` 且没有外部数据验证需求，不必迁移；如果是新项目且需要处理 API 输入，Pydantic 更合适。`attrs` 适合库内部 API，因为它的 slots 和内存布局对性能敏感的内部对象更友好。
+`attrs` 比 `dataclasses` 更灵活，支持 slots、自定义 `__init__`、验证器（但需要显式声明）。它在验证器路径上走 Python，与 V2 的 Rust 核心是不同的实现路线，两者没有公开的可直接对比的官方基准；实践上 `attrs` 的优势在内存布局（slots、`__slots__`）和属性级可配置，Pydantic V2 的优势在 `Field` 约束这类声明式规则全部落在 Rust 侧。`attrs` 的验证器是可选附加，不像 Pydantic 把验证作为基本功能。如果项目已经在用 `attrs` 且没有外部数据验证需求，不必迁移；如果是新项目且需要处理 API 输入，Pydantic 更合适。`attrs` 适合库内部 API，因为它的 slots 和内存布局对性能敏感的内部对象更友好。
 
 ### Pydantic vs `marshmallow`
 
@@ -1006,11 +1009,11 @@ except ValidationError as e:
         # {'type': 'less_than_equal', 'loc': ('age',), 'msg': 'Input should be less than or equal to 150', 'input': 200, 'ctx': {'le': 150}}
 ```
 
-`errors()` 返回一个列表，每项包含五个字段，分别覆盖错误类型、位置、信息、输入和上下文：
+`errors()` 返回一个列表，每项包含五个核心字段（新版还会带 `url` 文档链接），分别覆盖错误类型、位置、信息、输入和上下文：
 
 - `type`：错误类型枚举（`string_too_short`、`less_than_equal`、`value_error` 等），可以用来做 i18n 或前端错误映射。前端按 `type` 显示对应的本地化文案，比按 `msg` 字符串匹配更稳定。
 - `loc`：错误位置元组，嵌套字段是 `("address", "city")`，列表元素是 `("tags", 0)`。`loc` 是元组不是字符串，因为列表索引是整数，用点分字符串会丢失类型信息。
-- `msg`：人类可读的错误信息。默认是英文，可以通过 `errors()` 的 `include_url` 参数控制是否包含文档链接。
+- `msg`：人类可读的错误信息。默认是英文，可通过 `errors()` 的 `include_url` 参数控制是否带文档链接。
 - `input`：触发错误的原始输入值。调试时很有用，可以看到"用户到底传了什么"。
 - `ctx`：约束参数（`{"min_length": 3}`、`{"le": 150}`），用于自定义错误信息。前端可以用它显示"密码至少需要 8 位"这种带具体数字的提示。
 
@@ -1205,11 +1208,16 @@ Pydantic 放在边界最经济：内部代码处理已经验证过的 Python 对
 | 类型派发表 | 编译后的 schema，Rust 侧按类型 ID 直接分发验证 |
 | `ValidationError` | 验证失败时抛出的异常，内含所有字段的错误 |
 | `loc` | 错误位置元组，如 `("address", "city")` |
+| `extra` | 模型配置项，控制未声明字段的处理（`ignore`/`allow`/`forbid`） |
+| `alias` | 字段别名，映射外部命名与 Python 字段名 |
+| `TypeAdapter` | 不依赖模型类、直接包装任意类型做验证的工具 |
+| `Annotated` | 把类型与 `Field` 约束打包成可复用别名的标准库工具 |
 
 ## 版本与维护
 
-本文针对 Pydantic V2 编写。V3 尚在开发章程阶段，落地前 V2 是稳定主线，迁移风险集中在自定义验证器与序列化 API 上。维护时注意三点：
+本文针对 Pydantic V2 编写。官方已发布 V3 路线图（将把 `pydantic-core` 并入主仓库、采用新 JSON 解析器等），V3 仍处于开发阶段，落地前 V2 是稳定主线，V1 只修安全问题和关键 bug 到 V3 发布。迁移风险集中在自定义验证器与序列化 API 上。维护时注意：
 
 - 升级时先看 `CHANGELOG` 里 `pydantic-core` 的版本匹配，核心与 Python 包必须同版本发布。
 - 项目里全局搜 `regex=`、`.dict()`、`.parse_obj()`、`@validator`，这些 V1 残留不会报错但会静默失效或告警。
 - 自定义验证器签名以官方 `field_validator` / `model_validator` 文档为准，不要照抄网络上的 V1 写法。
+- Python 支持范围是硬约束：2.11 起移除 3.8（要求 3.9+），2.14 起将移除 3.9、要求 3.10+。升级 Pydantic 前先确认目标 Python 版本在此范围内，否则装不上新版 wheel。

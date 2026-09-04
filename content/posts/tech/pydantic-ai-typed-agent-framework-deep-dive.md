@@ -4,7 +4,7 @@ slug: pydantic-ai-typed-agent-framework-deep-dive
 github_repo: "pydantic/pydantic-ai"
 source_key: "gh:pydantic/pydantic-ai"
 date: 2026-09-03T10:45:00+08:00
-lastmod: 2026-09-03T10:45:00+08:00
+lastmod: 2026-09-04T18:30:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["Pydantic AI", "AI Agent", "类型安全", "LLM 框架", "Python"]
@@ -15,7 +15,7 @@ description: "Pydantic AI 是 Pydantic 团队推出的类型安全 Agent 框架�
 
 ## 核心判断
 
-在 Agent 框架多如牛毛的 2026 年，Pydantic AI（GitHub 近两万 star，v2.37.0，MIT 协议）押注的不是"功能最多"，而是一个看似朴素的命题：**LLM 应用从原型到生产的距离，本质上是"无类型"到"有类型"的距离。**
+在 Agent 框架多如牛毛的 2026 年，Pydantic AI（GitHub 近两万 star，v2.39.0，MIT 协议）押注的不是"功能最多"，而是一个看似朴素的命题：**LLM 应用从原型到生产的距离，本质上是"无类型"到"有类型"的距离。**
 
 这个判断有资格由 Pydantic 团队来做。他们的验证库是 OpenAI SDK、Anthropic SDK、Google ADK、LangChain 和大半个 AI 生态的验证层，也是 FastAPI 得以成立的地基。这些框架在 Python 世界推广类型注解这件事上做的事，比任何语言委员会都多。现在他们把同一套哲学搬进了 Agent 领域：**你的 IDE、类型检查器和编码 agent，都应该知道你的 agent 返回什么。**
 
@@ -32,32 +32,48 @@ description: "Pydantic AI 是 Pydantic 团队推出的类型安全 Agent 框架�
 
 ## 一个最小样本，先看气质
 
-不读文档，先读代码。这是官方文档里的轮盘赌例子：
+不读文档，先读代码。以下是仓库 examples 目录里的轮盘赌示例（`roulette_wheel.py`）的骨架：
 
 ```python
+from dataclasses import dataclass
+from typing import Literal
+
 from pydantic_ai import Agent, RunContext
 
+
+@dataclass
+class Deps:
+    winning_number: int
+
+
 roulette_agent = Agent(
-    'openai:gpt-5.2',
-    deps_type=int,
+    'groq:llama-3.3-70b-versatile',
+    deps_type=Deps,
+    retries=3,
     output_type=bool,
-    system_prompt='Use the `roulette_wheel` function ...',
+    system_prompt='Use the `roulette_wheel` function to determine if the customer has won.',
 )
 
-@roulette_agent.tool
-async def roulette_wheel(ctx: RunContext[int], square: int) -> str:
-    """check if the square is a winner"""
-    return 'winner' if square == ctx.deps else 'loser'
 
-result = roulette_agent.run_sync('Put my money on square eighteen', deps=18)
-print(result.output)  # True，类型是 bool，不是 str
+@roulette_agent.tool
+async def roulette_wheel(
+    ctx: RunContext[Deps], square: int
+) -> Literal['winner', 'loser']:
+    """Check if the bet square is a winner."""
+    return 'winner' if square == ctx.deps.winning_number else 'loser'
+
+
+result = roulette_agent.run_sync(
+    'Put my money on square eighteen', deps=Deps(winning_number=18)
+)
+print(result.output)  # True，在 IDE 里被推断为 bool，不是 str
 ```
 
-四行定义，三个类型信息：依赖是 `int`，输出是 `bool`，工具签名是 `(ctx, square: int) -> str`。工具的 JSON Schema 直接从函数签名和 docstring 生成，模型传错参数会在你的代码执行**之前**被 Pydantic 拦截；`result.output` 在 IDE 里被推断为 `bool`——不是 `Any`，不是需要 `json.loads` 再手动转换的字符串。
+三处类型信息：依赖是 `Deps`（dataclass）、输出是 `bool`、工具签名是 `(ctx, square: int) -> Literal['winner', 'loser']`。工具的 JSON Schema 直接从函数签名和 docstring 生成，模型传错参数会在你的代码执行**之前**被 Pydantic 拦截；`result.output` 被推断为 `bool`——不是 `Any`，不是需要 `json.loads` 再手动转换的字符串。
 
 大多数框架把"结构化输出"做成可选的高级功能，Pydantic AI 把它做成默认的骨架。`output_type` 接受 Pydantic Model、`TypedDict`、dataclass、标量、联合类型，运行结束前模型必须交出能通过验证的数据，否则带着校验错误重试。产出物从"一段需要人眼的文本"变成"一个可以放心参与后续程序流的值"。
 
-结构化输出本身还有三档模式可选：默认的 **ToolOutput** 把输出类型注册为一次工具调用（官方实测这是跨模型表现最稳的路径）；**NativeOutput** 走供应商原生的 JSON Schema 输出（在支持的模型上约束更强）；**PromptedOutput** 把 Schema 直接写进提示词，照顾那些既不支持工具也不支持结构化输出的模型。三档模式对应 ModelProfile 里的能力位——同一个 Agent，换一个模型，输出路径自动降级，业务代码不动。
+结构化输出默认走工具调用：框架把输出类型注册成一次工具调用，官方文档说这一路径"在广泛模型上表现良好"（OpenAI 的模型档案里 `default_structured_output_mode` 就落在 `'tool'`）。`output_mode` 参数可以换路——**NativeOutput** 走供应商原生的 JSON Schema 输出（在支持的模型上约束更强）；**PromptedOutput** 把 Schema 写进提示词，照顾那些既不支持工具也不支持结构化输出的模型。三条路对应 ModelProfile 里的能力位：同一个 Agent，换一个模型，输出路径自动降级，业务代码不动。
 
 ## 三大抽象：这个框架真正的产品
 
@@ -67,11 +83,11 @@ print(result.output)  # True，类型是 bool，不是 str
 
 `models/` 目录下躺着 Anthropic、OpenAI、Google、Bedrock、Groq、Mistral、xAI、Ollama 等二十多个模型实现；`providers/` 目录下是三十多个供应商接入。对使用者的承诺是：`Agent('openai:gpt-5.2')` 换成 `Agent('anthropic:claude-fable-5')`，其余代码一行不改。
 
-有意思的是夹在中间的 **ModelProfile**。每家模型的能力差异——是否支持工具、是否支持原生 JSON Schema 输出、思考标签是什么格式——被建模成一个声明式的字典。框架根据 profile 自动降级：不支持原生结构化输出的模型走工具调用路径，连工具都不支持的模型走提示词路径。**适配层差异的工程，从"每个使用者的 if-else"收拢为"框架内部的一张能力表"。** 这是把浏览器兼容性问题做成 caniuse 的思路。
+有意思的是夹在中间的 **ModelProfile**。每家模型的能力差异——默认走哪档结构化输出、能否支持严格工具定义、思考内容用什么格式传——被建模成一个声明式的数据描述。框架据此自动降级：档案里 `default_structured_output_mode` 落在 `'tool'` 的走工具调用，落在 `'native'` 的走原生 JSON Schema，连工具都不支持的模型则落到提示词路径。**适配层差异的工程，从"每个使用者的 if-else"收拢为"框架内部的一张能力表"。** 这是把浏览器兼容性问题做成 caniuse 的思路。
 
 ### 二、Capability 与 Toolset：一个原语统治所有扩展
 
-这是整个框架 2026 年最激进的重构。旧版本的扩展点是零散的（工具、指令、钩子各走各的注册路径），新版把它们统一成一个原语：**Capability**——可复用地捆绑工具、指令、钩子、原生工具和模型设置的单元。
+这是当前版本扩展系统的中心：工具、指令、钩子、原生工具、模型设置，都被收进同一个原语——**Capability**，可复用地捆绑在一起的单元。`capabilities/` 目录下的 hooks、native_tool、web_search、web_fetch、image_generation、thinking 等二十多个子类，把形形色色的扩展都做成同一种形态。
 
 README 里那个银行客服示例最能说明问题：
 
@@ -100,7 +116,7 @@ support_agent = Agent('openai:gpt-5.6-sol', capabilities=[customer_context, refu
 
 **中间件语义与拓扑排序**：Capability 链遵循中间件模型，每个能力可以包裹模型请求、工具执行、输出校验的完整生命周期。多个能力的先后顺序不再靠数组顺序碰运气——每个能力可以声明 `outermost`/`innermost` 位置约束和相互依赖，`CombinedCapability` 用标准库 `graphlib.TopologicalSorter` 做拓扑排序，声明冲突（缺依赖、成环）在构造期就抛 `UserError`。**"组合的行为可预测"从口头承诺变成构造期校验。**
 
-工具层面同样有体系：`FunctionToolset` 把 Python 函数变成工具，`CombinedToolset`/`FilteredToolset`/`RenamedToolset`/`ApprovalRequiredToolset` 等包装器完成组合、过滤、改名、人工审批。MCP 服务器也是一个 Capability（`MCP('https://...')` 一行接入，支持本地代理与原生转发两种模式）。
+工具层面同样有体系：`FunctionToolset` 把 Python 函数变成工具，`CombinedToolset`/`FilteredToolset`/`RenamedToolset`/`ApprovalRequiredToolset` 等包装器完成组合、过滤、改名、人工审批。MCP 服务器同样是 Capability：`MCP()` 传 URL 接远程服务器（Streamable HTTP/SSE），`local=` 传脚本走 stdio，再给 `native=True` 就能让支持原生 MCP 的模型直接拿到同一批工具。
 
 ### 三、Graph：Agent 循环的底座是一个独立的类型化图库
 
@@ -128,9 +144,9 @@ Pydantic AI 的母公司卖可观测性产品（Logfire），所以框架的埋�
 
 实事求是地讲代价。
 
-**抽象面积不小。** Agent 构造函数的参数列表很长，Capability 的绑定分两个阶段，工具集的包装器有十来种。对"只想调一次 API"的用户，这里有学习曲线。团队在贡献指南里的自我定位倒是诚实——"强原语、强抽象、通用方案优先于窄方案"，这本身就意味着不为最小场景做特化。
+**抽象面积不小。** Agent 构造函数的参数列表很长，Capability 的绑定分两个阶段，工具集的包装器有十来种。对"只想调一次 API"的用户，这里有学习曲线。仓库根目录的 AGENTS.md 里写着团队的价值排序——"我们偏好强原语、强抽象、通用方案与扩展点，胜过为特定用例做的窄方案"——这本身就意味着不为最小场景做特化。
 
-**版本迭代快。** 一个月内从 v2.35 走到 v2.37，Capability 体系是相对晚近的重构，早期用户的代码经历过迁移。好在团队对向后兼容的政策写得极其严格，破坏性变更有明确的版本策略约束。
+**版本迭代以天计。** v2.37.0（9 月 1 日）、v2.38.0（9 月 3 日）、v2.39.0（9 月 4 日），三天三个版本，README 里的 API 面貌换得很快。好在仓库的 AGENTS.md 把兼容性写进了贡献守则——任何改动"不得改变未触及该问题的用户行为"，重构不得以破坏既有代码为代价。
 
 **生态位上，Harness 是分开的仓库。** 记忆管理、子代理、上下文压缩、完整编码 Agent 这些"重装备"在 `pydantic-ai-harness` 里，核心库刻意保持轻。喜欢一站式全家桶的人要多装一个包；喜欢核心干净的人会感激这条边界。
 
