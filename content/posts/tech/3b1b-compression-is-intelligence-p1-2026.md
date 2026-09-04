@@ -29,7 +29,7 @@ canonical: "https://txtmix.com/posts/tech/3b1b-compression-is-intelligence-p1-20
 
 3Blue1Brown 从最朴素的问题切入：**ASCII 编码每字符 8 个 bit，太浪费了**。
 
-英语只有 26 个字母，加空格、大小写、标点不过 100 个符号。理论上每字符 log₂100 ≈ 6.6 bits 就够了。ASCII 给了 8 bits——多出来的 1.4 bits 是纯粹的冗余。
+英语只有 26 个字母，加空格、大小写、标点不过 100 个符号。理论上每字符 log₂100 ≈ 6.6 bits 就够了。严格说标准 ASCII 是 7 位编码（可以表示 128 个符号，刚好盖住英语字母加标点），但电脑实际存储时习惯按整字节计，每个字符占 8 bits；3B1B 这里就按 8 bits 讲——比理论上限多出来的 1.4 bits 是纯粹的冗余。
 
 看一组对比：
 
@@ -228,7 +228,7 @@ LLM 用 Transformer 的 attention 做"超长上下文条件预测"，效果上�
 
 - **目标函数**：不是"预测下一个 token"，而是"用更少的 bits 编码这段文本"
 - **达成方式**：cross-entropy loss = 算术编码的预期长度
-- **评估指标**：bits per character (BPC) / bits per token (BPT) / perplexity——三者是同一个东西的三个刻度
+- **评估指标**：bits per character (BPC) / bits per token (BPT) / perplexity——三者是同一个东西的三个刻度。换算很简单：一个 token 平均占 L bits 时，perplexity = 2^L，读作"平均每个 token 有多少种等可能的选择"；反过来 L = log₂(perplexity)。BPC 与 BPT 之间再按"平均多少 token 组成一个字符"折算即可
 - **训练目标**：最小化 cross-entropy loss = 最大化压缩率 = 让模型更"懂"这门语言
 
 ---
@@ -241,6 +241,8 @@ LLM 用 Transformer 的 attention 做"超长上下文条件预测"，效果上�
 
 - 3.0 nats/token ≈ 4.3 bits/token
 - 2.0 nats/token ≈ 2.9 bits/token
+
+换算依据是 1 nat = 1/ln 2 bits ≈ 1.44 bits（因为 log₂x = ln x / ln 2，而模型常把 loss 记成以 e 为底的自然对数）。
 
 从 3.0 压到 2.0 nats/token，每 token 的期望编码长度降为原来的约 0.67（省约 1/3）。这反映的是模型对语料的建模能力，不代表架构上限本身。
 

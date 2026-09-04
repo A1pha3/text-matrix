@@ -8,9 +8,9 @@ categories: ["技术笔记"]
 tags: ["Pydantic", "Python", "FastAPI"]
 ---
 
-Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAPI、SQLModel、LangChain 这些下游框架的验证瓶颈被打通了。V1 的验证循环是纯 Python 的，在高 QPS 接口里，验证开销会明显挤占业务逻辑的 CPU；V2 把这部分压到 Rust 后，下游框架可以放心地把请求模型做得更复杂，而不必担心验证开销吃掉吞吐。
+Pydantic V2 把验证核心搬到 Rust 实现的 `pydantic-core` 之后，FastAPI、SQLModel、LangChain 这些下游框架的验证瓶颈被打通了。V1 的验证循环是纯 Python 的，在高 QPS 接口里，验证开销会明显挤占业务逻辑的 CPU；V2 把这部分压到 Rust 后，请求模型可以做得更复杂，而不必担心验证开销吃掉吞吐。
 
-本文将覆盖：类型注解怎么变成 Rust 侧的派发表、验证和序列化为什么要成对设计、Rust 核心对 Python 生态的实际影响，以及一次 FastAPI 请求的完整验证路径。
+本文想讲清楚四件事：类型注解怎么变成 Rust 侧的派发表、验证和序列化为什么要成对设计、Rust 核心实际带来多少收益（以及哪些场景收益有限）、一次 FastAPI 请求从入参到响应的完整验证路径。
 
 ## 前置条件
 
@@ -35,6 +35,8 @@ python -c "import pydantic; print(pydantic.VERSION.split('.')[0] == '2')"
 - `Field`、`field_validator`、`model_validator` 三者的分工与选用顺序
 - 宽松模式与严格模式的取舍，以及边界模型怎么分层
 - 一次 FastAPI 请求从入参到响应的完整验证路径
+
+看完全文，你应该能回答：自己的接口该用 `Field` 约束还是写 `field_validator`，模型放宽松还是严格，深浅嵌套怎么选，以及性能瓶颈出在哪一层。每节末尾的示例都是可直接运行的完整代码，建议边读边跑。
 
 ## Pydantic 在 Python 数据栈中的位置
 
@@ -104,7 +106,7 @@ V2 把验证核心拆成 `pydantic-core` 这个独立 crate，用 Rust 实现。
 - **自定义验证器的性能特征变了**：`@field_validator` 仍然是 Python 函数，调用时会从 Rust 侧回到 Python，所以一个模型里挂 10 个 `field_validator` 性能不会比 V1 好太多。真正的提速来自 `Field` 内置约束（`gt`/`min_length`/`pattern`），这些在 Rust 侧直接执行。
 - **严格模式（strict mode）成为一级公民**：V1 的转换行为隐式且不可关闭，V2 提供 `strict=True` 让字段拒绝隐式转换。Rust 核心让这个功能更容易实现——派发表里多一个分支就能支持严格模式，V1 要在 Python 层加判断就贵得多。
 
-"V2 比 V1 快 4-50x"（官方基准平均约 17x）这个数字要分场景看：纯 `Field` 约束的简单模型（比如只有 `int`/`str` 加几个 `gt`/`min_length`）提速最大，因为整条验证路径都在 Rust 里走完；挂满自定义 `field_validator` 的复杂模型提速较小，瓶颈回到了 Python 函数调用，每次验证器调用都要从 Rust 回到 Python 一次。官方 benchmark 测的是前者，真实业务里两者混合，实际提升通常落在 5-20x 之间。判断自己的模型能拿到多少提速，看 `Field` 约束和自定义验证器的比例即可——`Field` 约束越多，提速越接近上限；自定义验证器越多，提速越接近下限。
+"V2 比 V1 快 4-50x"（官方基准平均约 17x）这个数字要分场景看：纯 `Field` 约束的简单模型（比如只有 `int`/`str` 加几个 `gt`/`min_length`）提速最大，因为整条验证路径都在 Rust 里走完；挂满自定义 `field_validator` 的复杂模型提速较小，瓶颈回到了 Python 函数调用，每次验证器调用都要从 Rust 回到 Python 一次。官方 benchmark 测的是前者；真实业务里两者混合，提速位置由两类规则的占比决定：`Field` 约束越多越接近上限，自定义验证器越多越接近下限。判断自己模型能拿到多少，先数模型里 `Field` 和验证器各占几成即可。
 
 ## BaseModel 与字段定义
 
@@ -212,6 +214,33 @@ class Types(BaseModel):
 ```
 
 `Any` 是兜底类型：它跳过所有验证，原样接收。在"先收下来，后面再处理"的场景里有用，但每用一个 `Any` 就等于在类型边界上开一个口子，长期看会让静态检查失效。能用前三层就不要用第四层；如果非用不可，在 `field_validator` 里补一道业务校验，避免 `Any` 字段一路裸奔到业务层。
+
+### 用 Annotated 复用约束
+
+同一个约束经常要在多个模型里重复：用户名、邮箱、排序字段，每个模型都写一遍 `Field(min_length=..., pattern=...)`，改规则时容易漏掉一处。`typing.Annotated` 可以把"类型 + 约束"打包成一个可复用的类型别名：
+
+```python
+from typing import Annotated
+from pydantic import BaseModel, Field
+
+Username = Annotated[str, Field(min_length=3, max_length=20, pattern=r"^[a-zA-Z0-9_]+$")]
+PriceCents = Annotated[int, Field(ge=0, multiple_of=1)]
+
+
+class UserCreate(BaseModel):
+    username: Username
+    created_by: Username
+
+
+class ProductCreate(BaseModel):
+    name: str
+    price: PriceCents
+    discount_price: PriceCents | None = None
+```
+
+`Username` 复用了两处，`PriceCents` 复用了两处（其中一个还可空）。规则定义在别名里，mypy 能识别 `Annotated` 里的元数据，编辑器提示和运行时验证都从同一处读取。比直接在类里复制 `Field(...)` 参数少一类"改一处漏一处"的 bug，也比继承中间模型更贴合"约束属于字段类型"这个语义。
+
+用 `Annotated` 需要一点克制：约束一旦被打包，它在整个项目里就固定了。如果两个模型对同一字段的要求不同（一个允许 3 个字、一个必须 8 个字），不要硬复用别名，各自写 `Field` 更清楚。
 
 ## 验证器：Field、field_validator、model_validator 的分工
 
@@ -363,6 +392,71 @@ StrictUser(id=123.0, name="alice")      # 报错：strict mode 不接受 float �
 - **数值字段单独开严格**：`id: int = Field(strict=True)`，避免 `"123"` 被静默接受，因为 ID 通常不应该来自字符串。
 
 严格模式把"转换"和"拒绝"的边界从隐式变成显式，但全局开严格会让 HTTP 输入处理变啰嗦。一个更精细的折中：只在最容易被伪数据糊弄的字段上开严格——数值 ID 不该来自字符串，布尔不该接受 `0/1`，这两类隐式转换最容易掩盖 bug；其余字段（比如表单来的 `"18"` 转 `age: int`）保留宽松，让 Pydantic 处理转换。
+
+### model_config：其他高频开关
+
+`strict` 只是 `model_config` 的众多开关之一。还有四个在实际项目里碰到就要用上：
+
+```python
+from pydantic import BaseModel, ConfigDict
+
+
+class ApiModel(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",              # 拒绝未知字段，默认是 ignore（静默丢弃）
+        validate_assignment=True,    # 属性赋值也走验证
+        str_strip_whitespace=True,   # str 字段自动去首尾空白
+        populate_by_name=True,       # 允许用 Python 字段名赋值（配合 alias 用）
+    )
+```
+
+- **`extra`**：处理"模型没声明的字段"。默认 `ignore` 会静默丢掉未知字段，前端多传一个字段接口也不报错，排错时难察觉；`extra="forbid"` 会把未知字段变成校验错误直接暴露。API 边界模型建议开 `forbid`，内部领域模型可以保持默认。
+- **`validate_assignment`**：默认 Pydantic 只在实例化时验证，之后 `obj.field = value` 赋值不重新校验。开了这个开关，赋值也会走字段验证——拦截"对象构造合法、后来被改坏"的情况。
+- **`str_strip_whitespace`**：把所有 `str` 字段的输入自动去掉首尾空白，避免 `" alice"` 这种脏输入通过校验。
+- **`populate_by_name`**：字段声明了 `alias` 时，默认只能用别名传参；打开它之后字段原名也能用，见下面的别名说明。
+
+### 字段别名：alias 与 populate_by_name
+
+外部数据（HTTP 请求、第三方 API）用的是 snake_case 或与类字段不同的命名时，用 `Field(alias=...)` 映射：
+
+```python
+from pydantic import BaseModel, Field
+
+
+class ExternalUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    full_name: str = Field(alias="fullName")
+    user_id: int = Field(alias="userId")
+
+
+u = ExternalUser.model_validate({"fullName": "Alice", "userId": 42})
+print(u.full_name, u.user_id)   # Alice 42
+```
+
+序列化方向默认 `model_dump()` 用字段名而不是别名，需要按别名输出时加 `by_alias=True`。`populate_by_name=True` 让两种名字都能赋值，迁移期的老调用方不受影响。
+
+### TypeAdapter：不建模型也能验证
+
+不是所有验证都需要一个 `BaseModel`。单个查询参数、一维列表、或者"只用一次"的复杂类型，为它定义一个模型过于笨重。`TypeAdapter` 可以直接把任意类型包装成验证器：
+
+```python
+from typing import Annotated
+from pydantic import TypeAdapter, Field
+
+PositiveInt = Annotated[int, Field(gt=0)]
+
+parse_int = TypeAdapter(PositiveInt)
+print(parse_int.validate_python("42"))       # 42（宽松转换）
+print(parse_int.validate_python(42))         # 42
+
+try:
+    parse_int.validate_python(-1)            # ValidationError
+except Exception as e:
+    print("negative rejected")
+```
+
+`TypeAdapter` 的性能特征与 `BaseModel` 一致：类型注解同样被编译进 Rust schema，`validate_python` 走同一套派发表。适合脚本、路由参数、批量数据的临时校验，不必为此定义模型类。
 
 ## 序列化控制
 
@@ -1023,11 +1117,21 @@ SQLModel 是 Pydantic + SQLAlchemy 的融合方案，把两者合并成一个类
 Webhook 是"不信任外部输入"的场景：来自 GitHub、Stripe 的 payload 必须验证签名和字段。签名验证保证数据来源可信，字段验证保证数据结构符合预期——两者缺一不可，签名通过但字段结构变化同样会导致处理逻辑出错。
 
 ```python
+import hashlib
+import hmac
+import os
 from typing import Literal
 from fastapi import FastAPI, Header, Body, HTTPException, status
 from pydantic import BaseModel, HttpUrl, Field
 
 app = FastAPI()
+
+
+def verify_signature(raw_body: bytes, signature: str) -> bool:
+    # GitHub 用 HMAC-SHA256 对原始 body 签名，格式 "sha256=<hex>"
+    secret = os.environ["GITHUB_WEBHOOK_SECRET"]
+    expected = "sha256=" + hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
 
 
 class GitHubWebhook(BaseModel):
@@ -1047,7 +1151,7 @@ def github_webhook(
     raw_body: bytes = Body(...),
 ):
     # 1. 验证签名（用 raw_body，不是解析后的 payload）
-    if not verify_signature(raw_body, x_hub_signature_256, secret):
+    if not verify_signature(raw_body, x_hub_signature_256):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid signature")
 
     # 2. payload 已经是验证过的 GitHubWebhook 实例

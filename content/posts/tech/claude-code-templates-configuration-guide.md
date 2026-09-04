@@ -10,11 +10,11 @@ hiddenFromHomePage: false
 draft: false
 ---
 
-[Claude Code Templates](https://github.com/davila7/claude-code-templates)（Web 站点 [aitmpl.com](https://aitmpl.com)）解决的不是"多装几个组件"，而是把散在各处的 Claude Code 配置变成一套可搜索、可一键安装、装完还能看效果的东西。
+[Claude Code Templates](https://github.com/davila7/claude-code-templates)（Web 站点 [aitmpl.com](https://aitmpl.com)）把散在各处的 Claude Code 配置收拢成一套可搜索、可一键安装、装完还能看效果的系统。`settings.json`、MCP 配置、Agent 定义这些原本要手动写的文件，它按模块打包，用 CLI 或 Web UI 装进项目。
 
-它不改 Claude Code 的运行机制。`settings.json`、MCP 配置、Agent 定义这些本来要手动写的文件，它替你按模块打包，用 CLI 或 Web UI 装进项目。和多数只管"怎么装"的配置方案不同，它多管了一层"装了之后怎么看"——Analytics 监控、对话查看、健康检查都打包在同一个 CLI 里。
+与多数只解决"怎么装"的配置方案不同，它多管了一层"装了之后怎么看"——Analytics 监控、对话查看、健康检查打包在同一个 CLI 里。
 
-适合已经跑通 Claude Code、想统一管理组件库并观察实际使用情况的团队。如果还没在本地跑通过，建议先把官方 Quick Start 走完再来。
+适用对象是已经跑通 Claude Code、想统一管理组件库并观察实际使用情况的团队。还没在本地跑通过的话，建议先走完官方 Quick Start 再来。
 
 ## 组件地图
 
@@ -94,7 +94,7 @@ flowchart TB
 
 ## 安装
 
-两种途径：CLI 一键安装和 Web UI 交互式浏览。
+两种途径：CLI 一键安装和 Web UI 交互式浏览。二者都写进项目的 `.claude/` 目录（或用户级 `~/.claude/`），不改变 Claude Code 本身的运行方式。
 
 ### CLI
 
@@ -110,7 +110,17 @@ npx claude-code-templates@latest --hook git/pre-commit-validation --yes
 npx claude-code-templates@latest --mcp database/postgresql-integration --yes
 ```
 
-不带参数运行会进入交互式浏览模式，逐个选择要装的组件。带上 `--yes` 跳过确认，适合脚本化部署。
+不带参数运行会进入交互式浏览模式，逐个选择要装的组件。带上 `--yes` 跳过确认，适合脚本化部署。另外三个参数值得先知道：
+
+- `--dry-run`：只打印将要安装的组件清单，不实际写入，用来在动手前核对路径；
+- `--directory`：把组件装进指定目录而不是当前项目；
+- `--help`：列出全部可选参数。
+
+```bash
+npx claude-code-templates@latest --dry-run
+npx claude-code-templates@latest --directory /path/to/project
+npx claude-code-templates@latest --help
+```
 
 ### Web UI
 
@@ -133,6 +143,19 @@ npx claude-code-templates@latest --hook git/pre-commit-validation --yes
 三条命令分别把 code-reviewer agent、`/generate-tests` 命令、pre-commit 校验 hook 写进 Claude Code 的配置目录。下次在项目里启动会话，agent 就以审查员角色运行；执行 `git commit` 时，hook 会在提交前触发一次自动审查。审查报告的具体覆盖点取决于该 agent 的 SKILL 定义，通常是安全、风格或效率相关的检查项。
 
 `/generate-tests` 这类命令是对代码的操作入口，作用范围是你当前改动的文件。hooks 和 commands 一个挂在事件上、一个挂在斜杠命令上，两者解决的是不同的触发方式。
+
+### 组件落在哪个目录
+
+安装的本质是把组件文件写进 Claude Code 的配置目录，位置决定了它对当前项目生效还是对所有项目生效：
+
+| 组件类型 | 项目级位置 | 用户级位置 |
+|----------|-----------|-----------|
+| Agents | `.claude/agents/*.md` | `~/.claude/agents/*.md` |
+| Commands | `.claude/commands/*.md` | `~/.claude/commands/*.md` |
+| Settings / Hooks | `.claude/settings.json` | `~/.claude/settings.json` |
+| MCPs | `.mcp.json` | `~/.claude.json`（用户级全局配置） |
+
+用 `--directory` 指定了目标目录，组件就落在该目录下；不指定则写进当前项目。想全局生效的组件（比如各项目通用的角色 agent），可以装到用户级目录。判断组件到底装没装对，先看文件落点是否符合预期，再跑 `--health-check` 校验一致性。
 
 ## 监控层：装完怎么知道有没有用
 
@@ -174,6 +197,24 @@ npx claude-code-templates@latest --plugins
 
 在一个界面里查看已安装的插件、可用市场和权限状态。当你从多个来源装了组件后，用它理清哪些来自哪个源、当前是否启用、有没有权限冲突。
 
+## 常见问题与排查
+
+### 组件装了但没生效
+
+先看落盘位置（见"组件落在哪个目录"）：当前项目启动会话时只加载 `.claude/` 下的组件，想全局生效要装到 `~/.claude/`。位置没错的话，重启 Claude Code 会话再试——新装的 agent、command 和 hook 在已有会话里不会热加载。
+
+### 装了一堆组件后担心冲突
+
+跑一次 `--health-check`。它会检查已装组件的一致性、MCP 连接状态和配置文件语法，组件之间有版本冲突或配置错误会直接指出来。多个来源混装后，用 `--plugins` 面板按来源理清已装项和权限状态。
+
+### 不确定某个组件要不要装
+
+先 `--dry-run` 看它实际会写哪些文件，再决定。这会列出将要安装的组件清单而不写入任何东西，比在 Web UI 里反复对比描述更直接。
+
+### CLI 提示命令不存在或行为异常
+
+确认用的是 `npx claude-code-templates@latest`（带 `@latest`），避免本地缓存了旧版本；`--help` 可查看当前版本支持的全部参数。仍异常时参考 [docs.aitmpl.com](https://docs.aitmpl.com) 的故障排查章节。
+
 ## 生态里的位置
 
 Claude Code 生态里已经有不少配置类项目，Templates 和它们各有分工，也能配合。
@@ -214,4 +255,4 @@ Claude Code 生态里已经有不少配置类项目，Templates 和它们各有�
 
 **建议的切入顺序**：先在 Web UI 搜索浏览，确认你要的组件存在；再按需用 CLI 安装，`--yes` 做脚本化；装完跑一次 `--health-check` 校验；最后用 `--analytics` 观察一段时间，再决定要不要长期挂监控。
 
-项目当前在 GitHub 上有 30,373 Stars 和 3,433 Forks（GitHub API 2026-08-28 验证），MIT 协议，GitHub 语言标签为 Python，经 npm 包 `claude-code-templates` 分发（`npx claude-code-templates@latest`），持续更新。浏览全部组件：[aitmpl.com](https://aitmpl.com)；完整文档：[docs.aitmpl.com](https://docs.aitmpl.com)。
+项目当前在 GitHub 上有 30,515 Stars 和 3,454 Forks（GitHub API 2026-09-04 验证），MIT 协议，GitHub 语言标签为 Python，经 npm 包 `claude-code-templates` 分发（`npx claude-code-templates@latest`），持续更新。浏览全部组件：[aitmpl.com](https://aitmpl.com)；完整文档：[docs.aitmpl.com](https://docs.aitmpl.com)。

@@ -9,11 +9,11 @@ categories: ["技术笔记"]
 tags: ["Cloudflare", "DNS", "域名"]
 ---
 
-# 🌐 Cloudflare + GitHub Pages 自定义域名配置指南
+# Cloudflare + GitHub Pages 自定义域名配置指南
 
 > 更新时间：2026 年 3 月 24 日｜整理：钳岳星君 🦞
 >
-> 适用场景：Spaceship 购买域名 → Cloudflare DNS 解析 → GitHub Pages 托管
+> 适用场景：Spaceship 购买域名 → Cloudflare 边缘代理 → GitHub Pages 托管
 
 ---
 
@@ -33,7 +33,7 @@ tags: ["Cloudflare", "DNS", "域名"]
 
 ### 什么是域名？
 
-**域名（Domain）** 是网站的地址，例如 `example.com`。它代替了难以记忆的 IP 地址（如 `185.199.108.153`。
+**域名（Domain）** 是网站的地址，例如 `example.com`。它代替了难以记忆的 IP 地址（如 `185.199.108.153`）。
 
 **域名的结构：**
 
@@ -97,16 +97,17 @@ blog.example.com  ← 子域名
 ```
 用户请求 www.example.com
         ↓
-   Cloudflare DNS 解析
-   （免费 DNS 服务，速度快）
+   用户本机 / 运营商 DNS 解析
+   得到 Cloudflare 的 IP
         ↓
-   GitHub Pages 服务器
+   Cloudflare 边缘代理
+   （橙云：SSL、CDN、重定向在这里生效）
+        ↓
+   GitHub Pages 源站服务器
    (username.github.io)
         ↓
    你的静态网站
-        ↓
-   🔒 HTTPS 加密
-   （Cloudflare + GitHub 双重保障）
+      返回并🔒 HTTPS 加密传输
 ```
 
 **为什么用 Cloudflare？**
@@ -308,7 +309,7 @@ GitHub Pages 使用的固定 IP 地址：
 | Type | `A` | A 记录类型 |
 | Name | `@` | 表示根域名（你的域名本身） |
 | IPv4 address | `185.199.108.153` | GitHub Pages 的第一个 IP |
-| Proxy status | **DNS only**（⚪ 灰色云） | ⚠️ GitHub Pages 必须用灰色云！ |
+| Proxy status | **Proxied**（☁️ 橙云） | 让 Cloudflare 提供 SSL/CDN/重定向（见下文说明） |
 
 点击 **Save**。
 
@@ -331,7 +332,7 @@ GitHub Pages 使用的固定 IP 地址：
 | Type | `CNAME` | CNAME 记录类型 |
 | Name | `www` | www 子域名 |
 | Target | `username.github.io` | ⚠️ 把 `username` 换成你的 GitHub 用户名 |
-| Proxy status | **DNS only**（⚪ 灰色云） | ⚠️ GitHub Pages 必须用灰色云！ |
+| Proxy status | **Proxied**（☁️ 橙云） | 让 Cloudflare 提供 SSL/CDN/重定向（见下文说明） |
 
 点击 **Save**。
 
@@ -340,23 +341,19 @@ GitHub Pages 使用的固定 IP 地址：
 ```
 | 类型 | 名称 | IPv4 地址 / 目标           | 代理状态 |
 |------|------|---------------------------|----------|
-| A    | @    | 185.199.108.153          | DNS only |
-| A    | @    | 185.199.109.153          | DNS only |
-| A    | @    | 185.199.110.153          | DNS only |
-| A    | @    | 185.199.111.153          | DNS only |
-| CNAME| www  | username.github.io        | DNS only |
+| A    | @    | 185.199.108.153          | Proxied |
+| A    | @    | 185.199.109.153          | Proxied |
+| A    | @    | 185.199.110.153          | Proxied |
+| A    | @    | 185.199.111.153          | Proxied |
+| CNAME| www  | username.github.io        | Proxied |
 ```
 
-> ⚠️ **代理状态（Proxy Status）必须是灰色云！**
+> ⚠️ **代理状态（Proxy Status）决定 Cloudflare 是否真正接管流量**
 >
-> 橙色云 ☁️ = Cloudflare CDN 代理
-> 灰色云 ⚪ = 仅 DNS 解析
+> 橙云 ☁️ = Proxied，流量先经过 Cloudflare（SSL、CDN、重定向规则才生效）
+> 灰云 ⚪ = DNS only，Cloudflare 只做 DNS 解析，上述功能全部不生效
 >
-> **GitHub Pages 的 DNS 记录必须设为灰色云**，因为：
-> 1. Cloudflare 的 CDN 代理会干扰 GitHub 的 SSL 证书自动验证
-> 2. GitHub 要求直接连接到他们的服务器
->
-> 你可以为其他子域名（如 `api.example.com`）使用橙色云，但 **@ 和 www** 这两条 GitHub Pages 的记录必须用灰色云。
+> 本文主线使用**橙云（Proxied）**，因为它能让 Cloudflare 的 SSL、重定向和缓存规则真正起作用。GitHub Pages 源站带有 Let's Encrypt 有效证书，配合橙云时务必把 SSL 模式设成 **Full (strict)**（见第四节），否则会出现证书校验失败或重定向循环。若你只想用 Cloudflare 做纯 DNS、让 GitHub 直接托管，也可以全部改灰云，但那样第四节的重定向规则和 HTTP 跳转都不会生效，www 到根域名的跳转需在站点源码里自行实现。
 
 ---
 
@@ -490,11 +487,11 @@ Cloudflare 提供四种 SSL/TLS 加密模式：
 | **Full** | 端到端加密，Cloudflare 验证源站证书 | 源站有证书但非有效 CA 颁发 |
 | **Full (strict)** | 端到端加密，Cloudflare 验证源站证书且必须为有效 CA | 源站有有效证书（推荐） |
 
-> 💡 **对于 GitHub Pages：推荐使用 Flexible 或 Full**
+> 💡 **对于 GitHub Pages：使用 Full (strict)**
 >
-> - GitHub Pages 本身已经提供 HTTPS
-> - Cloudflare 作为中间层，使用 Flexible 即可
-> - Full 模式也可以，因为 GitHub 的 Let's Encrypt 证书是有效 CA 颁发的
+> - GitHub Pages 源站本身使用 Let's Encrypt 签发的有效证书
+> - 橙云（Proxied）下，Cloudflare 到源站的这一段要校验该证书，正好满足 **Full (strict)** 的要求
+> - 不要用 **Flexible**：它让 Cloudflare 到源站不加密，遇到源站强制跳转 HTTPS 时容易陷入重定向循环
 
 ### 推荐配置步骤
 
@@ -504,7 +501,7 @@ Cloudflare Dashboard → 你的域名 → **SSL/TLS**。
 
 **2. 设置加密模式**
 
-**Encryption Mode** 选择 **Flexible**。
+**Encryption Mode** 选择 **Full (strict)**。
 
 **3. 开启始终使用 HTTPS**
 
@@ -520,7 +517,9 @@ Cloudflare Dashboard → 你的域名 → **SSL/TLS**。
 
 ## 五、www 子域名跳转到根域名
 
-当用户访问 `www.example.com` 时，自动跳转到 `example.com`。
+当用户访问 `www.example.com` 时，自动 301 跳到 `example.com`，且保留之后的路径（如 `www.example.com/blog` 跳到 `example.com/blog`）。
+
+> 前提：这一步依赖 Cloudflare 代理流量，必须使用第三节的**橙云（Proxied）**。若你的记录是灰云（DNS only），重定向规则不会触发，需要从 GitHub 侧另想办法（例如只配置根域名、在站点 HTML 里加跳转脚本），本文不展开。
 
 ### 方法：在 Cloudflare 配置重定向规则
 
@@ -540,12 +539,13 @@ Cloudflare Dashboard → 你的域名 → **Rules** → **Redirect Rules**。
 |--------|-----|
 | Rule name | `Redirect www to root` |
 | When incoming requests match | **Hostname equals** `www.example.com` |
-| Then redirect to | `https://example.com/{path}` |
-| Redirect type | **Static**（301 Permanent） |
+| Then redirect to | Dynamic → 表达式 `concat("https://example.com", http.request.uri.path)` |
+| Preserve query string | 开启（保留 `?` 后的参数） |
+| Redirect type | `301`（Permanent） |
 
 **4. 保存并部署**
 
-点击 **Save and Deploy**。
+点击 **Save and Deploy**。之后访问 `http(s)://www.example.com/任意路径` 都会返回 `301` 并重定向到 `https://example.com/任意路径`。
 
 ---
 
@@ -632,9 +632,10 @@ GitHub 会自动续期，但如果有问题：
 
 **解决方法：**
 
-1. 确认 GitHub Pages 的 DNS 记录**必须是灰色云**（DNS only）
-2. 检查是否误将记录设为橙色云（CDN 代理）
-3. 如果问题仍然存在，等待 10 分钟后重试（GitHub 可能暂时不可用）
+1. 确认源站地址正确：`@` 的 4 条 A 记录指向 GitHub 的 4 个 IP，`www` 的 CNAME 指向 `username.github.io`
+2. 先直接访问 `https://username.github.io`，确认 GitHub Pages 本身在线
+3. SSL 模式保持 **Full (strict)**；若误设成 Flexible，源站强制跳转 HTTPS 时可能与 Cloudflare 之间握手失败
+4. 若刚改过记录，等待几分钟再刷新请求（Cloudflare 边缘连接源站需要短暂收敛）
 
 ---
 
@@ -652,9 +653,9 @@ GitHub 会自动续期，但如果有问题：
 
 ## 七、进阶优化（可选）
 
-### 1. 开启 Cloudflare CDN（适用于非 GitHub 流量）
+### 1. 让 Cloudflare 缓存帮你加速
 
-Cloudflare CDN 可以加速静态资源（如图片、CSS、JS）。
+主线使用橙云后，`www` 与 `@` 的流量已经经过 Cloudflare CDN，无需再单独开启代理。
 
 **原理：**
 
@@ -663,18 +664,13 @@ Cloudflare CDN 可以加速静态资源（如图片、CSS、JS）。
     ↓
 Cloudflare CDN 边缘节点
     ↓
-如果缓存命中 → 直接返回（极速）
+如果缓存命中 → 直接返回
 如果缓存未命中 → 回源获取 → 缓存 → 返回
 ```
 
-**为非关键子域名开启 CDN：**
+静态站的 HTML、CSS、JS、图片变化不频繁，适合让 Cloudflare 缓存。可以到 **Caching → Cache Rules** 给静态资源目录（如 `assets`、`images`）加一条稍长的缓存规则，减少回源请求。
 
-| 类型 | 名称 | 目标 | 代理状态 |
-|------|------|------|----------|
-| A | assets | 你的服务器 IP | ☁️ CDN 代理 |
-| A | cdn | 你的服务器 IP | ☁️ CDN 代理 |
-
-> ⚠️ 注意：GitHub Pages 的 `www` 和 `@` 记录不要开启 CDN！
+> ⚠️ 改完内容后，Cloudflare 可能仍提供旧缓存。到 **Caching → Purge Cache** 一键清空，或临时关闭缓存再刷新验证。
 
 ### 2. 开启 Cloudflare Speed 优化
 
@@ -682,13 +678,13 @@ Cloudflare CDN 边缘节点
 
 **设置方法：**
 
-Cloudflare Dashboard → 你的域名 → **Speed** → **Optimization**：
+Cloudflare Dashboard → 你的域名 → **Speed**：
 
 | 功能 | 说明 |
 |------|------|
-| **Auto Minify** | 自动压缩 HTML/CSS/JS（减少文件大小） |
-| **Brotli** | 比 Gzip 更好的压缩算法 |
-| **Polish** | 图片优化（压缩/转换为 WebP） |
+| **Brotli** | 比 Gzip 压缩率更高的文本压缩算法，对 HTML/CSS/JS 有效 |
+| **Early Hints** | 提前推送关键资源，缩短首屏等待 |
+| **Content Optimization → Polish** | 图片压缩或转 WebP（依赖你的图片是静态文件） |
 
 ### 3. 开启 Cloudflare 安全防护
 
@@ -781,10 +777,10 @@ Cloudflare Dashboard → 你的域名 → **Analytics & Threats**：
    DNS 规范规定 CNAME 记录不能与其他记录类型共存。根域名通常需要同时存在 SOA、NS、A 等记录，所以根域名不能使用 CNAME。
    </details>
 
-2. **Cloudflare 的代理状态（Proxy Status）为什么必须是灰色云（DNS only）？**
+2. **Cloudflare 的代理状态（Proxy Status）怎么选？**
    <details>
    <summary>参考答案</summary>
-   GitHub Pages 的 DNS 记录必须设为灰色云，因为：① Cloudflare 的 CDN 代理会干扰 GitHub 的 SSL 证书自动验证；② GitHub 要求直接连接到他们的服务器。
+   新流量经过 Cloudflare＝橙云（Proxied），SSL、CDN、重定向规则才生效；只做 DNS 解析＝灰云（DNS only）。本文主线用橙云，并把 SSL 模式设成 Full (strict)。若用灰云，Cloudflare 的 SSL/重定向功能无效，www 到根域名的跳转需在站点源码里实现。
    </details>
 
 3. **DNS 传播通常需要多长时间？为什么这么慢？**
@@ -796,7 +792,7 @@ Cloudflare Dashboard → 你的域名 → **Analytics & Threats**：
 4. **如果你在 GitHub Pages 设置中看到"DNS check failed"，你会按什么顺序排查？**
    <details>
    <summary>参考答案</summary>
-   ① 确认 DNS 记录已正确配置（A 记录指向 GitHub IPs，CNAME 指向 username.github.io）；② 等待 5-10 分钟；③ 检查是否使用了 Cloudflare 橙色云代理（改为灰色云）；④ 使用 `dig` 命令检查 DNS 是否已生效；⑤ 清除浏览器缓存。
+   ① 确认 DNS 记录已正确配置（`@` 的 4 条 A 记录指向 GitHub IPs，`www` 的 CNAME 指向 username.github.io）；② 等待 5-10 分钟后重试；③ 若启用橙云，确认 SSL 模式为 Full (strict)；④ 用 `dig` 检查 DNS 是否已生效；⑤ 清除浏览器缓存。
    </details>
 
 5. **为什么 GitHub Pages 要求自定义域名必须勾选"Enforce HTTPS"？**
@@ -819,9 +815,9 @@ Cloudflare Dashboard → 你的域名 → **Analytics & Threats**：
 
 **A**: Cloudflare 的"Always Use HTTPS"是将 HTTP 请求重定向到 HTTPS；GitHub 的"Enforce HTTPS"是要求 GitHub Pages 必须使用 HTTPS 连接。两者应该同时开启。
 
-### Q4: 我可以使用 Cloudflare 的页面规则（Page Rules）来加速 GitHub Pages 吗？
+### Q4: 我可以使用 Cloudflare 的缓存/规则功能来加速 GitHub Pages 吗？
 
-**A**: 可以，但要小心。你可以为静态资源（如图片、CSS、JS）开启 Cloudflare CDN（橙色云），但 GitHub Pages 的 `www` 和 `@` 记录不要开启 CDN。
+**A**: 可以。主线用橙云时，站点流量已全局走 Cloudflare。想再精确控制，可到 **Caching → Cache Rules** 给静态资源（图片、CSS、JS）设置更长的缓存时间，或用 **Rules → Origin Rules** 调整回源行为。
 
 ### Q5: 如果我的 GitHub Pages 网站突然无法访问，我应该先检查什么？
 
@@ -858,15 +854,16 @@ Cloudflare Dashboard → 你的域名 → **Analytics & Threats**：
 ```
 □ Spaceship: Nameservers 已改为 Cloudflare
 □ Cloudflare: 域名已添加
-□ Cloudflare: @ A 记录（4条）已添加，灰色云
-□ Cloudflare: www CNAME 已添加，灰色云
-□ Cloudflare: SSL/TLS 模式设为 Flexible
+□ Cloudflare: @ A 记录（4条）已添加，橙云 Proxied
+□ Cloudflare: www CNAME 已添加，橙云 Proxied
+□ Cloudflare: SSL/TLS 模式设为 Full (strict)
 □ Cloudflare: Always Use HTTPS 已开启
+□ Cloudflare: Redirect Rule 实现 www → 根域名 301
 □ GitHub: Pages 已启用
 □ GitHub: 自定义域名已配置
 □ GitHub: Enforce HTTPS 已勾选
 □ 浏览器: https://example.com 可以访问（显示锁图标）
-□ 浏览器: https://www.example.com 可以访问
+□ 浏览器: https://www.example.com 访问后 301 跳到根域名
 ```
 
 ---

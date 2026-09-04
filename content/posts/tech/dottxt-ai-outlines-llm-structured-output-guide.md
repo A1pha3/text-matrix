@@ -105,7 +105,46 @@ parsed = ProductReview.model_validate_json(review)
 
 ### 4. 语法层：正则、上下文无关文法、XML、FHIR
 
-类型和 Pydantic 覆盖不了的部分，比如一段必须匹配正则的文本、XML 结构、FHIR 资源，走最底层的语法约束。这一层是 Outlines 相对其他库的差异点——它支持完整的 JSON Schema 规范、正则和上下文无关文法，而不只是 JSON。
+类型和 Pydantic 覆盖不了的部分，走最底层的语法约束：一段必须匹配固定格式的文本，交给正则；XML、FHIR 这类带嵌套结构的文档，交给上下文无关文法（context-free grammar，CFG）。这一层才是 Outlines 相对其他库的差异点——大多数结构化生成库只支持 JSON，Outlines 把完整的 JSON Schema 规范、正则、CFG 一并纳入，还允许用 EBNF 或 Lark 语法描述你想要的任何格式。
+
+这一档和前面几档的本质区别在于：`Literal`、`int` 偏自 Python 的类型系统，Pydantic 偏自数据模型，而 CFG 是真正意义上的"语言"——它不再依赖模型碰巧学会的格式习惯，而是直接规定整门语言里哪些串合法。
+
+### 5. 函数调用：让输出直接是可调用的
+
+面向 Agent 的场景，输出不想停在"一段文本"，而是想直接变成"一次函数调用"。Outlines 用 Open functions 支持这一点：把函数签名当作约束，生成的输出在结构上就是一个合法的调用，参数名、参数类型都已按签名对齐。和前几档的区别在于，约束的粒度从"值的形状"抬升到"能跑起来的接口"——这是工具调用、Agent 场景里最直接的落地方式。
+
+## 一档约束，装上就能跑
+
+先别急着纠结架构，用起来就是一行初始化、一个输出类型。装出来：
+
+```bash
+pip install outlines
+pip install outlines transformers         # Hugging Face 本地模型
+pip install outlines llama-cpp-python     # llama.cpp
+pip install outlines vllm                 # vLLM 高吞吐
+```
+
+背后只有一个统一约定：`model(prompt, output_type)`。换后端只改 `from_transformers`、`from_ollama`、`from_openai` 这种初始化行，其余代码不动。用本地模型跑起来长这样：
+
+```python
+import outlines
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from typing import Literal
+
+model = outlines.from_transformers(
+    AutoModelForCausalLM.from_pretrained(
+        "microsoft/Phi-3-mini-4k-instruct", device_map="auto"),
+    AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct"),
+)
+
+reply = model(
+    "Analyze: 'This product completely changed my life!'",
+    Literal["positive", "negative", "neutral"],
+)
+# 只会是三者之一，不会是别的词
+```
+
+过程中有个自动发生的细节：当已有前缀把下一个位置逼到只剩唯一合法 token 时，模型连采样都省了，直接填入。这正是它自称"免费"的原因——约束不只挡掉非法输出，很多时候还帮你跳过那些注定单调的 token。
 
 ## 一个流程案例：产品评论结构化分析
 
@@ -118,6 +157,14 @@ parsed = ProductReview.model_validate_json(review)
 5. 每一步，如果模型想选一个不在当前合法集合里的 token，Outlines 把它的 logits 压掉，让模型从剩余合法 token 里重选。
 6. 生成结束，得到的字符串一定落在 `ProductReview` 允许的结构里。
 7. `ProductReview.model_validate_json(review)` 直接解析，不需要错误处理分支。
+
+## 性能：算法遗产的接力
+
+说到性能，得先把"库"和"引擎"分开。Outlines 有两个身份：对开发者，它是一个描述约束的库；对 serving 框架，它曾经也是那个在每一步做 logits 掩码的引擎。如今 vLLM、SGLang 这类框架做结构化输出时，默认更多落到更快的新引擎——XGrammar、llguidance——上，很少有人还直接把 Outlines 挂在 serving 层。
+
+这些新引擎快在哪，给个量级：XGrammar（论文 arXiv:2411.15100）靠缓存上下文无关的 token、维持一个持久执行栈、把文法计算和 GPU 前向重叠，声称每 token 的语法处理比朴素实现快最高 100 倍、端到端接近零开销；llguidance 是纯 Rust 引擎，对一个 128k 词表约 50 微秒就能算出一张完整的 token 掩码。具体到配置：vLLM 的 backend 设 `auto` 时优先挑 XGrammar；SGLang 默认也是 XGrammar，同时保留 Outlines 和 llguidance 作为选项。
+
+对读者，含义是：如果你已经在用 vLLM、SGLang 服务，结构化能力框架自带了，不必为了它再引入 Outlines，你缺的只是"描述输出形状"的那一层接口；而如果想要在 Python 里直接对模型对象声明输出类型、拿到结果就读对象，Outlines 作为库仍是最顺手的入口。它是引擎意义上的开创者，今天更多是描述层意义上更好用的那个。
 
 ## 边界：100% 是目标，不是绝对承诺
 
@@ -136,6 +183,8 @@ parsed = ProductReview.model_validate_json(review)
 - 纯文本生成，写文章、讲故事，不需要结构约束。
 - 只调某一家云厂商的 API：它自带的 structured output 已经接近一等公民，底层可能用的是 XGrammar 这类更快的引擎，没必要再绕一层库。
 - 已经把服务托管在 vLLM、SGLang 上：这些框架默认就自带结构化引擎（通常是 XGrammar），单独引 Outlines 反而多一层依赖。
+
+如果还在 Outlines、Instructor、BAML 之间犹豫，给一条大致的分界线：Outlines 和 Instructor 都致力于"用 Python 描述输出"，适合做原型、直连模型对象；BAML 偏工程化、带独立的 DSL，适合要集中维护 schema 的团队；而约束最终落到 vLLM、SGLang 上时，真正执行的是 XGrammar 这类引擎，库只负责替你描述形状。所以挑库看的是"描述是否顺手"，而不是引擎本身——那一层早已由 serving 栈替你决定了。
 
 ## 结尾
 

@@ -3,7 +3,7 @@ title: "restic 拆解：34.3K Stars 的 Go 备份工具，如何把加密、内�
 date: "2026-06-12T15:11:35+08:00"
 slug: "restic-go-backup-tool-architecture-guide"
 github_repo: "restic/restic"
-description: "restic 是 Go 编写的开源备份工具，34.3K Stars、v0.19.0。拆解四层架构、CDC 去重、Pack 加密、快照树与多后端，给出 backup→restore 任务流与维护边界。"
+description: "restic 是 Go 编写的开源备份工具，34K Stars、v0.19.1。拆解四层架构、CDC 去重、Pack 加密、快照树与多后端，给出 backup→restore 任务流与维护边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Go", "加密", "架构分析"]
@@ -96,19 +96,21 @@ graph TB
 │   │   └── 00abc... # 实际的 pack 文件
 │   ├── 01/
 │   └── ff/
-├── index/          # 仓库索引（明文，记录 blob → pack 映射）
+├── index/          # 仓库索引（加密，记录 blob → pack 映射）
 │   └── <hash>
 ├── snapshots/      # 所有 snapshot 的 JSON 清单
 │   └── <snapshot-id>
 ├── keys/           # 仓库主密钥的加密副本
 │   └── <key-id>
-└── locks/          # 并发锁，防止同时两个进程写仓库
-    └── <lock-id>
+├── locks/          # 并发锁，防止同时两个进程写仓库
+│   └── <lock-id>
+└── tmp/            # 临时文件，写 pack / 上传时暂存，用完即清
 ```
 
 几个值得专门说一下的边界：
 
-- **`data/` 是加密的，索引和快照是明文。** 这是一个关键设计：snapshot 列表、文件名、目录结构是明文可见的；只有内容（blob 数据和 pack header）走加密。这一点会直接决定你能不能用 restic 做「端到端加密的备份」（可以），但能不能用 restic 做「文件名也加密的备份」（不可以）。
+- **`data/` 目录的 pack 文件按 blob 独立加密，其他所有文件也都加密。** 官方设计明确：除 `keys` 和 `data` 两个目录外，`config`、`index`、`snapshots` 里的文件全部用 AES-256-CTR 加密 + Poly1305 认证。也就是说，快照里的文件名、目录结构、索引里的 blob 映射——这些**明文都藏在加密载荷里**，攻击者对着仓库本身读不出来。这一点会决定你能不能用 restic 做「端到端加密」（可以），但能不能做「内容 + 元数据都不可观测」的备份（仍有限制，见下一点）。
+- **可观测性残留是「文件层次」而非「内容层次」。** 每份文件（pack、index、snapshot）的**对象 id（即内容 SHA-256）和文件大小是明文可见的**——后端 / 中间人能统计「有多少对象、各自多大」，从规模上推断你备份了什么、改了多少。但原始的文件名、目录结构、contents 都藏在加密里，无法直接读出。这一点直接决定了 restic 的威胁模型边界：它不信任存储本身，但也不承诺「连备份规模都藏起来」。
 - **`data/xx/xx...` 的两级目录分片**让 S3 这类对单前缀下文件数敏感的后端可以撑住几百万 pack 文件的体量。这不是装饰——它直接决定了仓库能不能「忘了清理也能继续写」。
 - **`index/` 是一个可重建的派生数据。** 它由 snapshot + data 推算出来，因此丢了一个 index 文件不会丢数据，只会让下一次 `backup` 多花时间重建。
 - **`keys/` 才是真核心。** 仓库主密钥（对称）只在这里以「用用户口令派生出来的密钥」再加密一次存放；丢了口令，主密钥解不开，仓库等于归零。
@@ -135,22 +137,22 @@ CDC 的好处是「改 4 KiB 引导扇区只会让平均 1 MiB 的那一块发�
 一个 pack 文件的内部结构（按 `pack/pack.go` 命名约定的层次）大致是：
 
 ```text
-+--------+--------+--------+--------+
-| header | blob 1 | blob 2 | blob 3 |  ...
-+--------+--------+--------+--------+
-
-blob 内部：
-  +------+----------+----+----------+------+
-  | type | length   | SZ | SHA-256  | data | (blob header 明文在 pack 内可见)
-  +------+----------+----+----------+------+
++----------+----------+----------+
+| blob 1   | blob 2   | blob 3   |  ...   (各 blob 顺序排列)
++----------+----------+----------+
+|           header（blob 元信息）      |       (在文件末尾)
++------+------+----+----+
+| blob 内部（独立加密 + 认证）：
+|  IV(16) | type | length | SHA-256 | data(密文) | MAC(16)
++------+------+----+----+------+
 ```
 
-仓库代码里通常把 `header` 当作一个特殊的「blob 自身」来处理——它记录了 pack 里所有 blob 的 `(type, length, SHA-256)` 元信息。把 header 视作 blob 自身有两个好处：
+一个 pack 文件由一串**各自独立加密**的 blob 拼接而成，file 末尾附一份 `header`：它记录了当前 pack 里所有 blob 的 `(type, length, SHA-256)` 等元信息，最后 4 字节写 header 的长度，整个 header 自身也走加密 + 认证。把 header 跟 payload 一视同仁有两个工程上的好处：
 
-- **header 自身也要走加密 + 认证**，和 payload 一视同仁。
-- **header 自身也有 id（SHA-256 of plaintext header bytes）**，这意味着「在索引里找 pack 文件」和「在索引里找 blob」用的是同一套寻址机制。
+- **header 自身也加密 + 认证**，防止中间人篡改「哪个 blob 在哪、多大」这些寻址元信息。
+- **header 的 id 就是明文 header 字节的 SHA-256**，于是「在索引里找 pack」和「在索引里找 blob」用同一套内容寻址机制。
 
-加密层用的是 AES-256-CTR（自 0.14 起默认是 chacha20-poly1305）的流式加密，对 pack 的明文做整体加密，再附加一个 Poly1305 认证标签。这是有意为之的——CBC、OCFB 等块模式都要求对齐到块边界，而 CDC 切出来的 blob 没有对齐保证。流式加密（CTR、chacha20）+ AEAD（Poly1305）让「pack 头 + 任意字节长度的 blob 序列」都能被一次性处理。
+加密默认是 **AES-256-CTR 流式加密 + Poly1305-AES 认证**（每份 blob / 文件独立一个随机 IV 和 MAC，总开销 32 字节）；自 0.14 起又引入可选算法（AES-256-GCM、ChaCha20-Poly1305），可在创建仓库时指定，但从未改变「普通新建仓库默认 AES-256-CTR」这一事实。之所以用流式加密而不是 CBC / OCB：CDC 切出来的 blob 长度任意、不对齐块边界，流式模式（CTR、chacha）+ AEAD（Poly1305）正好能一次处理「任意字节长度的 blob 序列」。
 
 ## §5 快照模型与 tree 树引用
 
@@ -204,7 +206,7 @@ $ restic -r /tmp/backup backup ~/work
 2. **加载索引（`repository.Index`）**。读 `index/` 下所有索引文件，把 `blob-id → (pack-id, offset, length)` 全部塞进一个内存 map。这一步把「逻辑上引用一个 blob」变成「物理上知道它在哪个 pack 文件的什么位置」。如果仓库很大（>1M blob），这一步会成为启动瓶颈，仓库维护操作里会用 `rebuild-index` 优化。
 3. **扫描 `~/work`**。默认 restic 会调用 `archiver/archiver.go` 里的 walker 走一遍目录树，得到「文件 + 元数据 + 内容流」的列表。walker 跳过 `node_modules`、`.git/`、被 exclude 规则命中的条目。
 4. **对每个文件做 CDC 分块（`chunker/`）**。文件内容被切成一串 chunk（blob）。每个 blob 计算 SHA-256，**先查本地索引**：如果这个 blob 已经在仓库里，直接复用；如果不在，进入第 5 步。
-5. **聚合到 pack 文件（`pack/`）**。新 blob 进入一个内存中的「待写 pack 缓冲」。当缓冲满（默认 8 MiB 左右）或 backup 结束时，把缓冲连同 header 一起序列化、整体加密、上传到后端。
+5. **聚合到 pack 文件（`pack/`）**。新 blob 进入一个内存中的「待写 pack 缓冲」。当缓冲达到默认目标大小（16 MiB）或 backup 结束时，把缓冲连同末尾 header 一起序列化、整体加密、上传到后端。
 6. **生成 tree 链（`archiver/`）**。在分块和上传的并行过程中，archiver 会构造当前目录的 tree——每写完一个文件就更新父目录 tree 的对应 entry；每写完一个目录就生成一个新 tree blob 并把它的 id 记到父目录的 entry 里。
 7. **生成 snapshot（`repository.Snapshot`）**。所有文件写完后，构造一份 snapshot JSON，包含「hostname、time、paths、root tree id、tag、hostname、username」等元数据，把 snapshot 自身作为 blob 写入 `snapshots/`。
 8. **刷新索引（`repository.SaveIndex`）**。把本次新增 / 访问过的 blob 映射写回 `index/` 下的新文件。索引是「最后一致」的派生数据——这次 backup 没写完，下次 backup 启动时还能重建。
@@ -257,13 +259,13 @@ restic 在 README 里没有给出统一 benchmark 数字——这是有意的，
 
 - **CDC 让「文件级修改」的去重率显著高于「整文件备份」**。例如 1 GiB 的 PostgreSQL data directory 在一次 `VACUUM FULL` 之后，page-level 变化可能只占 5%，按固定 1 MiB 块切会得到 ~30% 的新块；按 CDC 切，新块比例通常能压到 8% - 12%（仅当数据流局部相关性较强时）。**这是「平均而言」，不是任何场景下的承诺。**
 - **后端带宽往往是真正瓶颈**。restic 在内部已经做了：(a) pack 级别的整体加密上传，(b) 索引里的 blob 去重（已经在仓库里的 blob 不重传），(c) 多文件并发上传（默认 `--pack-size` 控制的并行度）。剩下的时间大部分花在「client 读源 + 后端 I/O 写远端」上。**这意味着：在 1 Gbps 本地磁盘 + 100 Mbps S3 出口的机器上，backup 速率不会超过 100 Mbps。**
-- **`v0.19.0` 的多项性能改进集中在内存与索引**。仓库的 `CHANGELOG.md`（README 未列出具体数字，源码里能看到对应提交）显示 0.19 系列对「在 100 万 blob 量级下的索引加载 / 保存」做了重构。这部分改进**只在「仓库已经很大」时才显式生效**，在小型仓库（< 10K blob）几乎不可观测。
+- **`v0.19` 系列的性能改进集中在内存与索引**。仓库的 `CHANGELOG`（README 未列出具体数字，源码里能看到对应提交）显示 0.19 系列对「在 100 万 blob 量级下的索引加载 / 保存」做了重构。这部分改进**只在「仓库已经很大」时才显式生效**，在小型仓库（< 10K blob）几乎不可观测。
 
 **不能推出的：**
 
 - **「restic 比 Borg 快 X%」** 这类跨工具对比。它们的分块策略、加密模式、压缩选项、保留策略都不同，benchmark 的输入数据稍有差异，结论就会反转。仓库 README 也只说「restic should only be limited by your network or hard disk bandwidth」，没有给出绝对数字。
 - **「restic 在 X 后端上等价于原生客户端」**。比如 S3 backend 走的是 restic 自己的 REST-over-HTTPS 协议（对 S3 是用 AWS SDK 直接调 S3 API），它和 `aws s3 cp` 的吞吐并不一定相等——前者是「per pack 文件的 HTTPS PUT」，后者是「单对象的 multipart upload」，多对象并发时前者往往更快、但单大文件时后者更快。
-- **「restic 的压缩率」**。restic 默认在 blob 层用 zstd（或不压缩，由 `--compression` 控制），但 pack header 和 snapshot JSON 不压缩。仓库 README 没有给出「压缩率」指标，因为它本质上是「输入数据 + 压缩参数 + chunk size」的函数，不存在单一数字。
+- **「restic 的压缩率」**。仓库格式 v2 起可在 blob 层用 zstd 压缩，`--compression` 三档：`auto`（默认，只会压明显可压缩的数据，省 CPU）、`max`（更高的压比、更耗 CPU）、`off`（不压缩）；pack header 和快照元数据不压缩。仓库 README 没有给出「压缩率」指标，因为它本质上是「输入数据 + 压缩参数 + chunk size」的函数，不存在单一数字。
 
 ## §10 采用顺序与适用边界
 
@@ -280,7 +282,7 @@ restic 在 README 里没有给出统一 benchmark 数字——这是有意的，
 - **数据库热备（GB / 小时级别写入）**。restic 不是为「持续、低延迟、流式增量」设计的；PostgreSQL / MySQL 应该先做物理 / 逻辑备份落盘，再把那份快照喂给 restic。
 - **几十 GB 级的单文件流式备份**（如虚拟机磁盘镜像、容器镜像层）。restic 在设计上能处理，但 CDC 切块的代价 + 加密 + pack 聚合的链路会让单文件恢复粒度变粗。`qemu-img` + 对象存储 / ZFS send 通常更直接。
 - **需要 P2P / 多副本 / 跨地域同步**。restic 是「单 client → 多 backend」模型，没有内置的多对多同步。需要跨机房复制要靠后端层自己解决（CRR、rclone bisync 等）。
-- **需要「文件名也加密」**。restic 的 snapshot 和 tree 是明文存储的，攻击者能看到目录结构、文件名、文件大小、修改时间。如果威胁模型要求文件名也加密（whistleblower backup 这一类），要换别的工具（borg 的 `--encryption=blake2-aes` 也仍保留目录结构；真正满足这条需要的是 borg 1.3+ 的 repokey 模式叠加 tar 风格预处理，或专门的工具）。
+- **需要「连备份规模都不可观测」**。restic 保证内容与文件名加密，但**对象数量、pack 大小、备份节奏是明文可见**的——有强隐蔽需求的用户（如 whistleblower）会嫌这一步不够。这类需求不是「换一种加密」能解决，而是要把仓库藏在加密隧道 / 匿名存储后面，或用流量混淆层掩盖访问模式。注意：restic 的**文件名、目录结构本身就是加密的**，不存在「文件名也要单独加密」这类额外要求。
 
 **采用顺序的实操建议：**
 
@@ -293,7 +295,7 @@ restic 在 README 里没有给出统一 benchmark 数字——这是有意的，
 
 把 §1 - §10 收回来看，restic 的工程取舍是清晰的：
 
-- **它选 AES-256 + Poly1305 而不是文件级 / 目录级加密**——代价是「snapshot 和 tree 是明文」，收益是「可以在不解密的情况下列出 / 索引 / 复用 blob」。
+- **它选端到端加密（AES-256-CTR + Poly1305）**——这覆盖了内容、文件名、目录结构、索引；代价是「batch 规模（对象数、大小）仍然可观测」，收益是「后端完全不可信时的确定性安全」。
 - **它选 CDC 而不是固定偏移**——代价是「blob 数量不可预测、index 大」，收益是「增量修改只重传受影响的小窗口」。
 - **它选 pack 聚合而不是 per-blob 上传**——代价是「单 blob 读要把整个 pack 拉回来的一部分」，收益是「S3 友好、PUT 计费低」。
 - **它选 5 原则里的「Easy」**——代价是「保留策略被拆成 forget / prune 两步，对新人不直观」，收益是「运维误删风险被显式化，不会一不小心把历史清空」。
@@ -304,12 +306,12 @@ restic 在 README 里没有给出统一 benchmark 数字——这是有意的，
 
 ## §12 事实核验与引用
 
-- **仓库全名与最新发布**：`restic/restic`，最新 tag `v0.19.0`（来自仓库 HTML 元数据中的 releases 链接；34.3K Stars、1.788K Forks、Go 作为主语言、BSD-2-Clause License）。
+- **仓库全名与最新发布**：`restic/restic`，写作时最新 tag `v0.19.1`（34K+ Stars、BSD-2-Clause License、Go 作为主语言）。
 - **后端列表**：来自 README 的 "Backends" 段，包含 local / SFTP / REST server / Amazon S3 / OpenStack Swift / BackBlaze B2 / Microsoft Azure Blob Storage / Google Cloud Storage / rclone。
 - **五大设计原则**：来自 README 的 "Design Principles" 段（Easy / Fast / Verifiable / Secure / Efficient），逐条与原文一致。
 - **可复现构建**：来自 README "Reproducible Builds" 段，「The binaries released with each restic version starting at 0.6.1 are reproducible」。
 - **包名边界**：`chunker/`（CDC 分块）、`pack/`（pack 文件生成）、`backend/`（后端接口）、`repository/`（仓库级状态机）均与仓库目录结构对应，但具体函数签名与默认值不在本文范围内——读者应直接读 `chunker/chunker.go`、`pack/pack.go`、`backend/backend.go` 与 `doc/Design.md` 确认。
-- **未在 README 中显式给出、但本文提及的具体数值**（chunker 默认窗口 64 字节、平均 1 MiB、最小 512 KiB、最大 8 MiB；pack size 8 MiB；blob id = SHA-256(plaintext) + length + type；自 0.14 起默认加密为 chacha20-poly1305）——这些来自仓库源码的常见默认值与公开 issue 讨论，**本文不作为强承诺**，建议读者通过 `chunker -h` 与 `restic version` 在自己环境里核实。
+- **本文提及的数值出处**：chunker 默认窗口 64 字节、平均 1 MiB、最小 512 KiB、最大 8 MiB，来自官方 [References](https://restic.readthedocs.io/en/latest/100_references.html) 与 `restic/chunker` 包源码常量；默认 pack 目标大小 16 MiB、MinPackSize 4 MiB / MaxPackSize 128 MiB，来自标准库 `internal/repository` 的 `DefaultPackSize` 常量与官方 [Tuning Backup Parameters](https://restic.readthedocs.io/en/v0.14.0/047_tuning_backup_parameters.html)；**默认加密为 AES-256-CTR + Poly1305-AES**（官方 References），自 0.14 起可选 AES-256-GCM / ChaCha20-Poly1305，但默认不变。读者仍可在自己环境用 `restic version` 核实。
 - **本文不覆盖**：(a) restic 0.x 各版本之间的兼容性承诺；(b) `rclone` 30+ 后端的具体行为差异；(c) `restic copy` 与 `restic rewrite` 的内部实现；(d) FUSE `restic mount` 在不同操作系统上的可用性边界。这些主题需要单开一篇文章。
 
 ---

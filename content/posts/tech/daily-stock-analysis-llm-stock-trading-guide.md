@@ -48,12 +48,12 @@ tags: ["LLM", "金融", "Python"]
 
 拆开看，这背后有几件事在工程上并不简单：
 
-1. 不同市场（A 股 / 港股 / 美股）的数据源接口、交易日历、字段语义各不相同，需要一套统一的适配层。
+1. 不同市场（A 股 / 港股 / 美股 / 日股 / 韩股 / 台股）的数据源接口、交易日历、字段语义各不相同，需要一套统一的适配层。
 2. LLM 输出的分析结论天然不稳定——同一只股票，两次 Prompt 可能给出相反的评分。系统需要把 LLM 输出约束到结构化字段上，并在推送前做完整性校验。
 3. 多条策略线（均线、缠论、资金流、事件驱动）同时跑，结果需要合并成一份「决策仪表盘」，而不是各说各话。
 4. 推送渠道超过 10 种，每种渠道的消息格式、长度限制、Markdown 支持程度都不一样——飞书支持 Markdown 卡片，Telegram 需要 MarkdownV2 转义，企业微信只认纯文本。
 
-这套系统用 3.6 万+ Star 证明了一件事：个人投资者确实需要这么一个东西，而且它跑得通。
+这套系统靠活跃的开源社区证明了这件事——截至 v3.30.0，仓库累计 953 次提交、104 位贡献者，且仍在持续迭代。个人投资者确实需要这么一套现成的链路，而且它跑得通。
 
 ---
 
@@ -138,17 +138,17 @@ flowchart TB
 
 ### 行情数据源矩阵
 
-| 数据源 | 覆盖市场 | 数据内容 | 降级优先级 |
-|---|---|---|---|
-| TickFlow | A 股、港股 | 实时行情、K 线 | 主力源 |
-| AkShare | A 股、港股 | 行情、财务、资金流 | 主力源 |
-| Tushare | A 股 | 行情、基本面（需 Token） | 可选 |
-| Baostock | A 股 | 历史行情 | 降级兜底 |
-| Yahoo Finance | 美股、港股 | 实时行情、K 线 | 主力源 |
-| Longbridge | 港股、美股 | 实时行情、K 线 | 可选 / 降级 |
-| Pytdx | A 股 | 通达信协议行情 | 可选 |
+| 数据源 | 覆盖市场 | 类型 |
+|---|---|---|
+| AkShare | A 股、港股 | 免费默认 |
+| Baostock | A 股 | 免费默认 |
+| Yahoo Finance（YFinance） | 美股、港股等海外市场 | 免费默认 |
+| TickFlow | A 股、港股 | Token 源，更稳行情 |
+| Tushare | A 股 | Token 源，提升历史行情稳定性 |
+| Longbridge | 港股、美股 | Token 源，补齐量比/换手率/PE 等字段 |
+| Pytdx | A 股 | 通达信协议行情 |
 
-每个市场至少有两套数据源可用。A 股的主力路径是 TickFlow → AkShare → Baostock 三级降级，美股的主力路径是 Yahoo Finance → Longbridge 两级降级。降级是自动的，不需要用户感知。
+项目默认内置 AkShare、Baostock、YFinance 等免费源，可零配置运行；免费源受上游限流、接口变动和网络波动影响，稳定性不保证。长期定时、批量分析或更稳定行情，建议配置 TickFlow、Tushare、Longbridge 等 token 型数据源。降级是自动的——例如 A 股默认走 AkShare，挂了切 Baostock；海外市场默认走 YFinance，需要更全字段可配 Longbridge，用户无需感知。
 
 ### 新闻搜索源矩阵
 
@@ -247,7 +247,7 @@ Prompt 要求 LLM 输出严格 JSON，字段包括：
 
 ### GitHub Actions 免费额度
 
-GitHub 免费计划每月提供 2000 分钟 Actions 运行时间。一次全量分析（10 只股票 + 新闻搜索 + LLM 调用）约耗时 3-5 分钟，每月 22 个交易日，总消耗约 66-110 分钟——远在免费额度之内。
+GitHub Actions 免费额度：公共仓库完全免费；私有仓库每月 2000 分钟免费额度。一次全量分析（10 只股票 + 新闻搜索 + LLM 调用）约耗时 3-5 分钟，每月 22 个交易日，总消耗约 66-110 分钟——即便是私有仓库也远在免费额度之内。
 
 ### 注意事项
 
@@ -301,6 +301,8 @@ docker compose up -d          # Docker 部署
 | 指数增强策略 | 跑赢基准指数的配置 | 指数化投资优化 |
 | 可转债策略 | 转股溢价 + 正股联动 | 可转债套利 |
 | ETF 轮动策略 | 行业/宽基 ETF 轮动信号 | 指数化轮动 |
+
+仓库明确列举的内置策略包括均线、缠论、波浪、趋势、热点题材、事件驱动、成长质量、预期重估等，README 宣称共 15 种；上表整理了常见方向，**具体清单以仓库 `strategies/` 目录为准**，不同版本可能有增减。
 
 ### 实战案例：多策略并行分析
 
@@ -420,7 +422,7 @@ Agent 的底层是一个有状态的多轮对话系统：
 
 按这个顺序深入，每步解决一个具体问题：
 
-1. **[daily_stock_analysis 源码](https://github.com/ZhuLinsen/daily_stock_analysis)**（先读）。如果你想理解"Pipeline 具体怎么实现的"、"Agent 怎么编排的"，这是起点。重点关注 `pipeline/` 和 `agent/` 两个目录。
+1. **[daily_stock_analysis 源码](https://github.com/ZhuLinsen/daily_stock_analysis)**（先读）。重点读这几个目录：`strategies/`（15 种策略）、`data_provider/`（数据源适配与降级）、`src/`（核心处理流程）、`api/`（Web/服务）。
 
 2. **[LiteLLM 文档](https://docs.litellm.ai/)**（第二读）。当你想理解"统一路由是怎么做的"、"如何配置多个 LLM 渠道的负载均衡"时，读这个。daily_stock_analysis 的 LLM 调用全部通过 LiteLLM，不理解它就很难定制模型配置。
 
@@ -502,7 +504,7 @@ GitHub Actions 免费额度：公共仓库完全免费；私有仓库每月 2000
 <details>
 <summary>查看答案</summary>
 
-裁决逻辑在 `agent/strategy_arbitrator.py` 中：为每种策略分配权重（可配置），综合打分后输出最终建议。如果相反信号，裁决器会标注"冲突"并给出各自理由，最终评分会偏向风险更保守的方向。可在 `STRATEGY_WEIGHTS` 中调整权重。
+裁决逻辑在策略编排层中实现：为每种策略分配权重（可配置），综合打分后输出最终建议。如果信号冲突，裁决器会标注"冲突"并给出各自理由，最终评分会偏向风险更保守的方向。权重可在配置中调整。
 </details>
 
 ---
@@ -515,12 +517,12 @@ GitHub Actions 免费额度：公共仓库完全免费；私有仓库每月 2000
 
 **步骤**：
 1. Fork 仓库并克隆到本地
-2. 配置至少一个大模型 API Key（推荐 DeepSeek-V3）
-3. 在 `config/stock_list.json` 中配置 1 只股票（如 `600519`）
-4. 手动运行：`python main.py`
-5. 观察输出：是否生成 JSON 报告、是否推送到配置的渠道
+2. 复制 `.env.example` → `.env`，配置至少一个大模型 API Key（推荐 DeepSeek-V3）
+3. 在 `.env` 中配置 `STOCK_LIST=600519`（1 只股票）
+4. 安装依赖并手动运行：`pip install -r requirements.txt && python main.py`
+5. 观察输出：完成分析后推送是否到达配置渠道
 
-**检验**：检查 `data/reports/` 目录下是否有今日报告；检查推送渠道是否收到消息。
+**检验**：检查数据库中是否记录今日分析；检查推送渠道是否收到消息。
 
 ---
 
@@ -529,10 +531,10 @@ GitHub Actions 免费额度：公共仓库完全免费；私有仓库每月 2000
 **目标**：理解推送层的抽象机制。
 
 **步骤**：
-1. 选择一个本文未详细讲的渠道（如 Slack 或 Discord）
-2. 在 `notifier/` 目录下创建对应的通知器文件
-3. 实现 `send(message: str)` 方法，调用对应 Webhook
-4. 在 `config/notification.json` 中添加渠道配置
+1. 选择一个本文未详细讲的渠道（如 Slack 或 Gotify）
+2. 在通知相关源码目录中创建对应的通知器，接入统一的推送接口
+3. 实现 `send()` 方法，调用对应 Webhook
+4. 在 `.env` 中添加对应渠道的密钥配置
 5. 测试推送
 
 **检验**：能收到来自新渠道的测试消息。
@@ -544,9 +546,9 @@ GitHub Actions 免费额度：公共仓库完全免费；私有仓库每月 2000
 **目标**：理解回测框架的使用。
 
 **步骤**：
-1. 对过去 30 天的分析结果运行回测：`python backtest.py --days 30`
+1. 在 Web 工作台的「回测」功能中，对过去 30 天的分析结果执行回测
 2. 观察输出：胜率、盈亏比、最大回撤
-3. 如果胜率低于 50%，调整 `STRATEGY_WEIGHTS`（降低表现差的策略权重）
+3. 如果胜率低于 50%，调整策略权重配置
 4. 重新运行回测，对比结果
 
 **检验**：调整后的胜率是否提升？如果仍低，考虑更换股票池或策略组合。
@@ -560,18 +562,18 @@ GitHub Actions 免费额度：公共仓库完全免费；私有仓库每月 2000
 ### 第一步：Fork 并跑通全流程（预计 1 小时）
 
 1. Fork [ZhuLinsen/daily_stock_analysis](https://github.com/ZhuLinsen/daily_stock_analysis)
-2. 配置 `config/stock_list.json`（1-3 只股票）
-3. 配置 `config/notification.json`（至少 1 个推送渠道）
-4. 手动运行 `python main.py`
+2. 复制 `.env.example` → `.env`，配置自选股和至少一个推送渠道、一个大模型 Key
+3. 手动运行 `python main.py --dry-run`（干跑验证配置）
+4. 全量运行 `python main.py`
 5. 预期结果：收到第一条分析报告
 
 **验证标准**：能收到完整报告，JSON 字段齐全。
 
-### 第二步：读懂 Pipeline 源码（预计 2-3 小时）
+### 第二步：读懂核心流程源码（预计 2-3 小时）
 
-1. 打开 `pipeline/` 目录
-2. 逐模块阅读：`data_fetcher.py`（数据层）、`llm_analyzer.py`（AI 决策层）、`notifier/`（推送层）
-3. 记录：数据降级逻辑在哪里？LLM 输出校验怎么做？推送格式如何适配？
+1. 打开 `src/`、`data_provider/`、`strategies/` 目录
+2. 逐模块阅读：`data_provider/`（数据源适配与降级）、`strategies/`（策略定义）、`api/` 与 `bot/`（Web 与机器人推送，含通知适配）
+3. 记录：数据降级逻辑在哪里？LLM 输出完整性校验怎么做？不同渠道格式如何适配？
 
 **交付物**：一份模块依赖图（可以手画拍照存到团队 Wiki）。
 
@@ -584,11 +586,11 @@ GitHub Actions 免费额度：公共仓库完全免费；私有仓库每月 2000
 
 **验收条件**：GitHub Actions 面板显示绿色对勾，推送渠道收到报告。
 
-### 第四步（可选）：组合 AlphaShift 做多因子选股（预计 1-2 天）
+### 第四步（可选）：组合 AlphaSift 做多因子选股（预计 1-2 天）
 
-1. Fork [ZhuLinsen/AlphaShift](https://github.com/ZhuLinsen/AlphaShift)
+1. Fork [ZhuLinsen/AlphaSift](https://github.com/ZhuLinsen/AlphaSift)
 2. 配置选股策略
-3. 将 AlphaShift 的选股结果作为输入，传给 daily_stock_analysis 做分析
+3. 将 AlphaSift 的选股结果作为输入，传给 daily_stock_analysis 做分析
 4. 形成完整链路：选股 → 分析 → 推送
 
 **交付物**：一套组合使用的配置文件。

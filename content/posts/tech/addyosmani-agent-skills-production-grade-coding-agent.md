@@ -42,7 +42,20 @@ skill 包按开发生命周期组织，前后两道门（defining 与 shipping�
 | Review（把关） | 4 | 质量/安全/性能/可读性 |
 | Ship（上线） | 6 | 部署、迁移、可观测、文档 |
 
-这种划分方式最大价值是：**让 Agent 不再"为一个 prompt 跨阶段"**——问"一个新项目怎么开始"时它跑 `/spec` + `/plan`，问"如何修这个 bug"时它跑 `/test` + `/debug`。每条命令进入一条独立链路，而不是一锅烩。
+这种划分方式最大价值是：**让 Agent 不再"为一个 prompt 跨阶段"**——问"怎么开始一个新项目"时它跑 `/spec` + `/plan`，问"这个 bug 为什么坏了"时它跑 `/test` 钻进验证链路，而不是一条 prompt 一锅烩。
+
+这里的 6 个阶段和 8 个斜杠命令并非一一对应：除每个阶段一个主命令外，还多出两个横跨的检查命令。完整清单：
+
+| 场景 | 命令 | 核心原则 |
+| --- | --- | --- |
+| 决定做什么 | `/spec` | 先 spec 后代码 |
+| 计划怎么做 | `/plan` | 小而原子的任务 |
+| 增量构建 | `/build` | 一次只做一片 |
+| 证明它可用 | `/test` | 测试即证明 |
+| 合并前评审 | `/review` | 提升代码健康 |
+| 审计前端性能 | `/webperf` | 先测后优化 |
+| 简化代码 | `/code-simplify` | 清晰胜于聪明 |
+| 上生产 | `/ship` | 更快即更安全 |
 
 ## 关键设计原则
 
@@ -101,7 +114,7 @@ Skills 也支持**自动激活**：当你让 Agent 设计 API，会自动激活 
 - `test-driven-development`：Red-Green-Refactor，强制写测试。
 - `context-engineering`：会话内喂规则文件、context packing、MCP 集成。
 - `source-driven-development`：引用官方文档、标注未验证——避免 AI 答假。
-- `doubt-driven-development`：CLAIM → EXTRACT → DOUBT → RECONCILE → STOP，对高风险决策做对抗性审阅。
+- `doubt-driven-development`：对每个非平凡决策做对抗性的 fresh-context 审阅，趁"此刻验证"而不是"事后补 debug"。
 - `frontend-ui-engineering`：组件架构、设计系统、状态管理、响应式、WCAG 2.1 AA。
 - `api-and-interface-design`：契约优先、Hyrum's Law、One-Version Rule、错误语义、边界校验。
 - 7 个 skill 共享"写之前先论证、别无脑堆代码"的纪律。
@@ -109,12 +122,12 @@ Skills 也支持**自动激活**：当你让 Agent 设计 API，会自动激活 
 ### Verify（验证）
 
 - `browser-testing-with-devtools`：Chrome DevTools MCP，DOM/console/network/performance 联动。
-- `debugging-and-error-and-recovery`：复现→定位→最小化→修复→加护栏。
+- `debugging-and-error-recovery`：五步分诊（复现→定位→收敛→修复→护栏），stop-the-line 规则。
 - 两个 skill 接外部工具（DevTools / debugger），让验证不只靠单元测试。
 
 ### Review（把关）
 
-- `code-review-and-quality`：五维 review、change ~100 行、Nit/Optional/FYI 严重度。
+- `code-review-and-quality`：五轴 review、change ~100 行、严重度标签、评审速度规范。
 - `code-simplification`：Chesterton's Fence、Rule of 500、保留行为简化复杂度。
 - `security-and-hardening`：OWASP Top 10、auth、密钥、依赖审计、三层边界。
 - `performance-optimization`：先测后优化、Core Web Vitals 目标、bundle 分析。
@@ -164,7 +177,12 @@ Claude Code 用 marketplace：
 /plugin install agent-skills@addy-agent-skills
 ```
 
-Cursor 把任何 `SKILL.md` 拷到 `.cursor/rules/`。
+Cursor 把工作流 skill 同步到 `.cursor/skills/`，短策略放 `.cursor/rules/*.mdc`，而不是把完整 skill 塞进 rules（见官方 cursor-setup 文档）。
+
+两个容易踩的坑：
+
+- 单装限制：`npx skills add --skill <name>` 只复制 `skills/<name>/`，不会带上仓库层的 `references/` 共享清单目录。该 skill 仍能用，但指向共享清单的路径会失效（上游 issue #361）。要么整仓接入，要么克隆仓库，要么把所需 checklist 拷进已装 skill 的 `references/`。
+- SSH 报错：Claude Code 的 marketplace 默认走 SSH 克隆；未配置 SSH key 时改用 HTTPS 完整 URL 即可绕过。
 
 ## 适用边界
 

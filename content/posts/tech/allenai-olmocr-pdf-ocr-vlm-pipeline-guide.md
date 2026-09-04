@@ -4,7 +4,7 @@ date: "2026-07-01T21:03:00+08:00"
 lastmod: "2026-07-01T21:03:00+08:00"
 slug: "allenai-olmocr-pdf-ocr-vlm-pipeline-guide"
 github_repo: "allenai/olmocr"
-description: "Ai2 的 olmOCR 是一个把 PDF、扫描件、图片转成自然阅读顺序 Markdown/纯文本的 7B VLM 工具链，v0.4.0 在自建 olmOCR-Bench 上拿到 82.4 总体分（7B 模型，百万页约 200 美元以内），模型、训练代码与推理代码全部开源。本文拆它的 prompt 结构、结构化解码、多节点 S3 队列、bench 设计，以及在 LLM 训练数据准备里的位置。"
+description: "Ai2 的 olmOCR 是一个把 PDF、扫描件、图片转成自然阅读顺序 Markdown/纯文本的 7B VLM 工具链：v1 用大模型离线标注数据微调小模型，v0.4.0 引入 RLVR（6 类单元测试当奖励 + 合成数据），在 olmOCR-Bench 上拿到 82.4 总体分（7B 模型，百万页 200 美元以内），模型、训练代码与推理代码全部开源。本文拆它的 prompt 结构、结构化解码、训练配方、多节点 S3 队列、bench 设计，以及在 LLM 训练数据准备里的位置。"
 categories: ["技术笔记"]
 tags: ["OCR", "VLM", "PDF", "vLLM"]
 draft: false
@@ -24,11 +24,13 @@ Ai2（Allen Institute for AI）的答案是换一条路：直接用 7B 视觉语
 | 定位 | 把 PDF / 扫描件 / 图片线性化为干净 Markdown 的 7B VLM 工具链 |
 | 模型 | allenai/olmOCR-2-7B-1025-FP8，7B 参数，默认 FP8 |
 | 许可证 | Apache-2.0 |
-| 成本 | 百万页约 200 美元以内（论文口径约 176 美元） |
+| 成本 | 百万页低于 200 美元（v1 论文成本分析：L40S 约 176 美元、H100 约 178 美元） |
 | olmOCR-Bench 总评 | 82.4 ± 1.1 |
-| 开源范围 | 模型权重 + 训练代码 + 推理代码 + bench |
+| 开源范围 | 模型权重 + 训练代码 + 推理代码 + 数据 + bench |
 
 与 Mistral OCR 这类 API 服务的差别在于：权重、训练代码、推理代码全开源。你可以微调自己的版本，也可以从 v0.2.0 起的干净训练代码重新训练一个针对自己 PDF 分布的领域模型。
+
+成本账同样值得先看。同一份论文表里，走 GPT-4o Batch API 转一百万页要 6,240 美元以上，olmOCR 约 176 美元，差距来自模型规模与推理引擎：7B 模型 + vLLM 多卡扩展，和调用闭源大模型的 token 计费不在一个量级。
 
 ## 一张图看懂四层流水线
 
@@ -59,7 +61,9 @@ flowchart TD
 
 ### 页面渲染与 anchor text
 
-olmOCR 依赖 `poppler-utils` 把 PDF 渲染成位图，同时抽出文字层。渲染分辨率由 `--target_longest_image_dim` 控制最长边。抽出的文字层会拼进 prompt 作为 anchor text——它只是"待校对的原稿"，不要求完整可靠。这样把任务从"从图像里抠字符"降级成"理解版面 + 对着 hint 校对文字"，准确率明显提升。
+olmOCR 依赖 `poppler-utils` 把 PDF 渲染成位图，同时抽出文字层。渲染分辨率由 `--target_longest_image_dim` 控制最长边。抽出的文字层会拼进 prompt 作为 anchor text——它只是"待校对的原稿"，不要求完整可靠。
+
+这一步在 v1 论文里叫 document anchoring，是整个方案里最反直觉的一点：born-digital PDF 内部本来就带着文字坐标，直接放弃它、让模型从位图里凭空读，是浪费。把文字层塞进 prompt 后，任务从"从图像里抠字符"降级成"理解版面 + 对着 hint 校对文字"，准确率明显提升。纯扫描件没有文字层时，prompt 里这段留空，模型退回纯视觉阅读。
 
 系统依赖：
 
@@ -79,7 +83,7 @@ prompt 不是"OCR 这张图"这种开放指令，而是一份规定输出格式�
 - 数学公式用 LaTeX 记法，表格输出 Markdown 表格
 - 不输出 "Here is the transcription:" 之类的前缀
 
-这些规则保证了输出能被下游解析器稳定处理。
+这些规则写进 prompt 而不是交给模型临场发挥，因为下游是批量脚本：输出格式一不稳定，后处理代码就要跟着改。
 
 ### 结构化输出（guided decoding）
 
@@ -95,21 +99,42 @@ natural_text: |
   <自然阅读顺序的正文>
 ```
 
-这样做的直接好处是后处理方便：下游脚本可以解析出 `is_diagram: true` 的页直接跳过，不必再跑一遍模型。方向判断是早期版本的高频错误源，v0.3.0 的模型发布专门修了自动旋转检测，v0.4.0 继续沿用这套结构化输出。
+这样做的直接好处是后处理方便：下游脚本可以解析出 `is_diagram: true` 的页直接跳过，不必再跑一遍模型。方向判断是早期版本的高频错误源，v0.3.0 的模型发布专门修了自动旋转检测，也修了空白页幻觉——空文档不再被脑补出内容；v0.4.0 继续沿用这套结构化输出。
 
 ### 推理后端
 
-默认本地 vLLM，从 v0.1.75 起由 SGLang 切到 vLLM，v0.2.1 起默认 FP8（README 口径：跑得更快、单文档重试明显变少）。也支持任何 OpenAI 兼容端点，`--server` 指向远程 vLLM、Cirrascale、DeepInfra、Parasail 等已验证的供应商。本地单卡最低 12 GB 显存（RTX 4090 / L40S / A100 / H100），另需约 30 GB 磁盘。
+默认本地 vLLM。README 的版本记录显示，v0.1.75 起推理管线从 SGLang 切到 vLLM（Docker 镜像同步升到 CUDA 12.8），v0.2.1 起默认 FP8——README 口径是跑得更快、单文档重试明显变少。也支持任何 OpenAI 兼容端点，`--server` 指向远程 vLLM、Cirrascale、DeepInfra、Parasail 等已验证的供应商。本地单卡最低 12 GB 显存（RTX 4090 / L40S / A100 / H100），另需约 30 GB 磁盘。
 
-## 训练流水线：SFT → RLVR + 合成数据
+大规模跑的时候，工程细节比模型本身更影响吞吐。v1 论文里的推理管线包含重试、旋转修正、重复处理和降级回退四层防护：单页解码失败会带着随机种子重试；检测到旋转就按角度修正后重跑；输出出现长串重复文本时回退到更保守的采样参数。这些逻辑大多不用改代码，通过 `--max_page_retries`、`--pages_per_group` 这类参数控制。
+
+## 训练流水线：从 SFT 到 RLVR
 
 v0.2.0 起开源了清理过的训练代码，这才是仓库里值得单独看的部分。
 
-**SFT 基线**：从 Qwen2.5-VL 微调而来，训练数据是合成 HTML 渲染图 + 真实 PDF 的对齐。v1 论文里训练集是 olmOCR-mix-0225，26 万页来自 10 万+ 抓取的 PDF，覆盖图形、手写、低质量扫描。
+### v1：大模型标注，小模型服务
 
-**v0.4.0 引入 RLVR**：OCR 这任务难做强化学习，因为"输出对不对"没有稳定的奖励信号。olmOCR 2 的做法是定义一组二进制的单元测试当奖励——比如"这页里有几张表格"、"公式 `$...$` 是否闭合"、"页码是否连续"。模型用可验证奖励的强化学习（RLVR）训练，同一输入采样多个候选，按测试通过情况更新。配套论文《olmOCR 2: Unit Test Rewards for Document OCR》（arXiv:2510.19817，2025-10）。
+v1 的做法是 teacher-student。训练集 olmOCR-mix-0225 有 26 万页，来自 10 万+ 抓取的 PDF，覆盖图形、手写、低质量扫描；标注不是人做的，而是让 GPT-4o 按结构化输出格式把页面转成文本当 ground truth，再用这份数据微调 7B 学生模型（基座是 Qwen2-VL-7B-Instruct）。这也是"7B 打平闭源大模型"的成本结构来源：贵的大模型只用于离线标注一次，线上推理跑的是便宜的小模型。
 
-**合成数据**：为了规模化造单元测试，团队做了生成合成文档的流水线——抓 HTML 文档，渲染成"模拟 PDF"，用 HTML 源码当 ground truth，再自动旋转、加噪、注入页眉页脚。v0.4.0 靠合成数据 + RL 在 olmOCR-Bench 上提了约 4 分。
+### v2：单元测试当奖励
+
+v0.4.0 引入 RLVR（可验证奖励的强化学习）。OCR 这任务难做强化学习，因为"输出对不对"没有稳定的奖励信号——编辑距离这类传统度量会惩罚合法但不同的写法：浮动图注放图前还是图后都算对，公式换个等价写法也算对，编辑距离却照样扣分。
+
+olmOCR 2 的做法是把判对错拆成一组成/败的二进制单元测试，模型用 GRPO 训练，同一输入采样多个候选，按测试通过情况更新：
+
+| 测试类型 | 检查什么 |
+|---|---|
+| 文本存在性 | 关键短语、公式是否精确出现在输出里 |
+| 文本不存在性 | 页眉、页脚、页码这类噪声是否被误收进正文 |
+| 自然阅读顺序 | 句子/段落的先后是否符合人类阅读顺序 |
+| 表格准确性 | 单元格的相对位置与数值是否正确 |
+| 数学公式准确性 | 用 KaTeX 渲染模型输出与参考公式，比较视觉结构 |
+| 基线鲁棒性 | 无长重复 n-gram、无非目标语言字符 |
+
+论文给的配方很朴素：先在 olmOCR-mix-1025 上做一 epoch SFT（基座换成 Qwen2.5-VL-7B），再在合成数据集 olmOCR2-synthmix-1025 上做一 epoch RL，然后重复 RL 并做 checkpoint 平均（souping）。效果上，olmOCR 2 在 olmOCR-Bench 拿到 82.4，比半年前的初版高 14.2 分，提升最集中的正是单元测试盯得最紧的公式、表格和多列版面。
+
+### 合成数据怎么规模化
+
+单元测试需要 ground truth 才能判对错，手写一页文档的测试要花数小时，撑不起 RL 训练。团队的做法是把"造测试"流水线化：从真实 PDF 里挑难例（arXiv 数学论文、旧扫描、多列版式），让通用 VLM 把页面重写成 HTML——HTML 的语义标签（`<header>`、`<footer>`、`<table>`、KaTeX 公式）是现成的测试用例来源，测试从 HTML ground truth 里自动提取；渲染出的 HTML 页面图像和源码配对，同时充当 SFT 与 RL 的监督信号。再自动加旋转、噪点、页眉页脚注入，扩大覆盖面。
 
 ## 一次转换怎么流过系统
 
@@ -134,7 +159,7 @@ olmocr ./localworkspace --markdown --pdfs sample.pdf
 cat ./localworkspace/markdown/sample.md
 ```
 
-流程是：`poppler-utils` 逐页渲染位图并抽 anchor text → vLLM 加载 FP8 模型 → 逐页生成结构化 YAML → 把 `natural_text` 写成 Markdown 文件，同时按 Dolma 格式落到 workspace。没有 GPU 时用 `--server` 指向远程 vLLM 或外部供应商，装轻量版 `pip install olmocr` 即可。
+流程是：`poppler-utils` 逐页渲染位图并抽 anchor text → vLLM 加载 FP8 模型（权重默认从 Hugging Face 拉取）→ 逐页生成结构化 YAML → 把 `natural_text` 写成 Markdown 文件，同时按 Dolma 格式落到 workspace。没有 GPU 时用 `--server` 指向远程 vLLM 或外部供应商，装轻量版 `pip install olmocr` 即可（省掉约 2 GB 的 PyTorch 依赖）。
 
 ## olmOCR-Bench：它测的和它测不了的
 
@@ -155,11 +180,13 @@ README 公布的 v0.4.0 结果：
 
 两个值得注意的点：带 \* 的模型用了非公开训练数据或额外微调，olmOCR v0.4.0 是完全开源的一方；7B 级别模型整体打平甚至压过部分更大的商用模型，这是"小而专"的红利。
 
+分项数字比总分更有信息量。olmOCR v0.4.0 的强项集中在老扫描数学（82.3）、表格（84.9）、页眉页脚（96.1）和多栏（83.7）——正是 RL 训练和单元测试盯着的版面；弱项在老扫描（47.7）和密集小字（81.9）。低分辨率扫描是所有模型共同的洼地：Mistral 只有 29.3，Marker 33.5。换句话说，v0.4.0 相对 v0.3.0 的约 4 分提升不是均匀撒的，而是定向补在公式、表格、多列上。
+
 不能从这张表推出来的东西同样重要。总分是英文文档的整体分，推不出中文、手写、极低分辨率扫描的表现；它衡量的是"整页文本还原质量"，不等于"下游 LLM 训练收益"。具体到你的 PDF 分布，得拿你自己的样本跑一遍才知道。
 
 ## 部署：四种路径
 
-**本地 GPU**：上面本地转换的流程就是最常用的一种，适合单机批处理。
+**本地 GPU**：上面本地转换的流程就是最常用的一种，适合单机批处理。跑大批量时如果报 `too many open files`，先 `ulimit -n 65536`。
 
 **远程 vLLM / 外部供应商**：无本地 GPU 时用 `--server` 指向远程端点，README 已验证 Cirrascale（$0.07/$0.15 每百万输入/输出 token）、DeepInfra（$0.09/$0.19）、Parasail（$0.10/$0.20）。服务端模型名要和 `--model` 一致：
 
@@ -188,19 +215,31 @@ docker run --gpus all \
   -c "olmocr /workspace/output --markdown --pdfs /workspace/sample.pdf"
 ```
 
-Beaker 是 Ai2 内部集群方案，对外用户一般用 S3 多节点就够了。
+Beaker 是 Ai2 内部集群方案，对外用户一般用 S3 多节点就够了；需要按批调度 GPU 时，`--beaker` 标志可以在集群里拉起指定数量的 worker。
+
+## 常见问题与排查
+
+**显存不够**：模型是 FP8 量化，单卡最低 12 GB。再低就放弃本地，装轻量版 `pip install olmocr`，`--server` 指向远程供应商。
+
+**报 too many open files**：文件描述符不够，先 `ulimit -n 65536` 再跑。
+
+**输出全是空白**：v0.3.0 修过空白文档幻觉；如果页面本身是纯图表，会被解析为 `is_diagram: true` 跳过，属正常行为，不是故障。
+
+**服务端模型名对不上**：`--server` 模式下，服务端 vLLM 的模型名必须与 `--model` 一致（例如都是 `allenai/olmOCR-2-7B-1025-FP8`），否则请求会失败。
+
+**中文或特殊字体渲染异常**：系统依赖步骤里的 Caladea / Carlito 等字体是给页面渲染用的，缺字体会直接影响位图质量和识别效果。
 
 ## 适用边界与采用建议
 
 **适合**：面向 LLM 预训练/SFT 的数据团队，需要统一 PDF 线性化器保证语料一致性；学术研究组把 arXiv 旧文批量线性化喂给本地 RAG；需把内部合同、报告做成"语义检索"的出版社、法务、咨询。
 
-**谨慎**：手写体虽然列在支持范围内，但模型主要针对印刷文档优化，手写/草书这类退化样本的可靠性没有量化保证；极低分辨率扫描、跨页大表格、极小语种。olmOCR 2 的评测是英文文档基准，中文等语种的水准要单独验证。
+**谨慎**：手写体虽然列在支持范围内，但模型主要针对印刷文档优化，手写/草书这类退化样本的可靠性没有量化保证；极低分辨率扫描、跨页大表格、极小语种。olmOCR-Bench 是英文文档基准，中文等语种的水准要单独验证。
 
 **不建议**：单文件临时转换——用现成截图对话工具更省事；高 QPS 商用 OCR——它是研究工具，不是带 SLA 的服务。
 
 ## 结语
 
-olmOCR 不是又一个"OCR 工具"，它把"PDF 线性化"从工具问题升级成了模型问题：用 7B VLM 端到端还原阅读顺序，再配上训练代码、bench 和合成数据流水线。在你只需要快速转几个文件时它重了些，但如果你要系统性地把一批 PDF 变成 LLM 训练语料，权重、训练、推理全开源这一条，让它值得放进评估清单。
+olmOCR 不是又一个"OCR 工具"，它把"PDF 线性化"从工具问题升级成了模型问题：用 7B VLM 端到端还原阅读顺序，再用单元测试把"读得对不对"变成可验证、可训练的奖励信号。在你只需要快速转几个文件时它重了些，但如果你要系统性地把一批 PDF 变成 LLM 训练语料，权重、训练、推理全开源这一条，让它值得放进评估清单。
 
 ---
 
@@ -209,3 +248,4 @@ olmOCR 不是又一个"OCR 工具"，它把"PDF 线性化"从工具问题升级�
 **论文 v1**：[olmOCR: Unlocking Trillions of Tokens in PDFs with Vision Language Models](https://arxiv.org/abs/2502.18443)
 **论文 v2**：[olmOCR 2: Unit Test Rewards for Document OCR](https://arxiv.org/abs/2510.19817)
 **模型权重**：[allenai/olmOCR-2-7B-1025-FP8](https://huggingface.co/allenai/olmOCR-2-7B-1025-FP8)
+**训练数据**：[olmOCR-mix-1025](https://huggingface.co/datasets/allenai/olmOCR-mix-1025)、[olmOCR-synthmix-1025](https://huggingface.co/datasets/allenai/olmOCR-synthmix-1025)

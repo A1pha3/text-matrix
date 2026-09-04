@@ -20,9 +20,8 @@ tags: ["开源工具", "插件系统"]
 - [6. 进阶配置](#6-进阶配置)
 - [7. 自动更新](#7-自动更新)
 - [8. 常见问题](#8-常见问题)
-- [9. 卸载](#9-卸载)
-- [10. 适用场景与优势](#10-适用场景与优势)
-- [11. 总结](#11-总结)
+- [9. 适用场景与优势](#9-适用场景与优势)
+- [10. 总结](#10-总结)
 - [自测检查](#自测检查)
 - [进阶路径](#进阶路径)
 
@@ -46,7 +45,7 @@ tags: ["开源工具", "插件系统"]
 
 ## 1. 项目概览
 
-[Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh)（简称 OMZ）是 GitHub 上最受欢迎的 Zsh 配置管理框架之一，截至 2026 年已斩获 **186,623 stars**，社区贡献者超过 2,000 人。
+[Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh)（简称 OMZ）是 GitHub 上最受欢迎的 Zsh 配置管理框架之一，长期位列星标榜前列，star 数已超过 18 万（2026 年快照），社区贡献者超过 1,700 人。
 
 ### 它解决了什么问题？
 
@@ -153,8 +152,11 @@ Oh My Zsh 的目录结构非常清晰：
 ├── lib/          # 共享库（aliases、compfix、git 等基础功能）
 ├── plugins/      # 插件目录（内置 300+ 插件）
 ├── themes/       # 主题目录（内置 150+ 主题）
+├── custom/       # 用户自定义区：*.zsh 与 plugins/、themes/ 自动加载
 ├── templates/    # 配置模板
 ├── tools/        # 安装和升级脚本
+├── cache/        # 命令补全等缓存（compdump、哈希表）
+├── log/          # 更新与运行日志
 └── oh-my-zsh.sh  # 主入口脚本
 ```
 
@@ -282,6 +284,22 @@ function my-function() {
 plugins=(git my-plugin)
 ```
 
+### 4.5 用 `omz` 命令管理插件
+
+除了手改 `~/.zshrc`，也可以直接用 `omz` 子命令操作插件和主题：
+
+```sh
+omz plugin list           # 列出当前启用的插件
+omz plugin info git       # 查看某插件的说明与主要别名
+omz plugin enable docker  # 启用一个插件（自动改写 ~/.zshrc）
+omz plugin disable docker # 停用一个插件
+omz theme list            # 列出可用主题
+omz theme set agnoster    # 切换到指定主题
+omz reload                # 重新加载配置，等价于 source ~/.zshrc
+```
+
+> **`custom/` 目录的隐形约定**：每次启动时，Oh My Zsh 会自动加载 `~/.oh-my-zsh/custom/` 下的 `*.zsh` 文件，以及 `custom/plugins/*/`、`custom/themes/*/`，无需在 `plugins=` 里登记。多数社区主题（如 `powerlevel10k`）和个人私有插件就是通过这条路径接入的。把这类配置写进 `custom/`，比直接改动 `~/.zshrc` 更好迁移、更好升级。
+
 ---
 
 ## 5. 主题系统
@@ -290,15 +308,16 @@ plugins=(git my-plugin)
 
 Oh My Zsh 内置超过 150 个主题，完整列表和截图可查看 [官方 Wiki](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes)。
 
-**热门主题推荐**：
+**常用内置主题**：
 
 | 主题 | 特点 | 需要特殊字体？ |
 |------|------|----------------|
 | `robbyrussell` | 默认主题，简洁实用 | 否 |
-| `agnoster` | 显示 Git 分支和状态，美观 | 是（Powerline/Nerd Font） |
-| `powerlevel10k` | 高度可定制，速度快 | 是（推荐 Nerd Font） |
-| `af-magic` | 色彩丰富，信息密集 | 否 |
+| `agnoster` | 显示 Git 分支和状态，信息密集 | 是（Powerline/Nerd Font） |
+| `af-magic` | 色彩丰富，信息密度高 | 否 |
 | `ys` | 简洁，显示用户名和目录 | 否 |
+
+**第三方主题**（如 `powerlevel10k`）并不随 Oh My Zsh 打包，需要单独放进 `custom/themes/` 才能启用。它高度可定制、速度快，是社区最热门的提示符方案之一，但严格说不是"内置"主题，配置方式也与之不同。
 
 ### 5.2 更换主题
 
@@ -323,7 +342,7 @@ source ~/.zshrc
 
 ### 5.3 Powerline 字体问题
 
-很多主题（如 `agnoster`、`agnoster`、`powerlevel10k`）使用了特殊的 Unicode 字符（如 、 等）来渲染箭头和图标。如果没装对应的字体，终端会显示乱码（方框或问号）。
+很多主题（如 `agnoster`、`powerlevel10k`）使用了特殊的 Unicode 字符（如 、 等）来渲染箭头和图标。如果没装对应的字体，终端会显示乱码（方框或问号）。
 
 **解决方案：安装 Nerd Font 或 Powerline Font**
 
@@ -542,13 +561,7 @@ uninstall_oh_my_zsh
 
 ---
 
-## 9. 卸载
-
-（本节内容已合并到 [8.5 卸载](#85-卸载)，保留此处标题是为了目录完整性。）
-
----
-
-## 10. 适用场景与优势
+## 9. 适用场景与优势
 
 ### 适合的场景
 
@@ -558,12 +571,12 @@ uninstall_oh_my_zsh
 
 ### 不擅长的场景
 
-- **极致性能调优**：Oh My Zsh 加载相对较慢（尤其是启用了很多插件时），追求极致启动速度的用户可以选择 [Prezto](https://github.com/sorin-isoprezo) 或纯手写 `.zshrc`
+- **极致性能调优**：Oh My Zsh 加载相对较慢（尤其是启用了很多插件时），追求极致启动速度的用户可以选择 [Prezto](https://github.com/sorin-ionescu/prezto) 或纯手写 `.zshrc`
 - **极简配置需求**：如果你只需要 5 个别名和 1 个自定义函数，直接写在 `~/.zshrc` 里比装整个 OMZ 更轻量
 
 ---
 
-## 11. 总结
+## 10. 总结
 
 Oh My Zsh 本质上是一个**社区驱动的 Zsh 配置生态**：它把原本散落在 `~/.zshrc` 中的配置抽象为插件和主题，让用户可以按需组合、自由替换。300+ 插件和 150+ 主题的体量，加上活跃的社区维护，使它成为 Zsh 用户几乎必装的工具。
 

@@ -19,7 +19,7 @@ tags: ["AI Agent", "本地优先"]
 >
 > 项目地址：[ResearAI/DeepScientist](https://github.com/ResearAI/DeepScientist)
 >
-> 今日 Star：2.2k（+0）| Forks：241 | License：Apache-2.0
+> 当前 Star：3.3k | Forks：330 | License：Apache-2.0
 >
 > 定位：本地优先的 AI 科研工作室，15 分钟把 AI 科学家搬到你自己的机器上
 
@@ -71,7 +71,7 @@ tags: ["AI Agent", "本地优先"]
 
 ## 二、DeepScientist 是什么？
 
-DeepScientist 是一个长期运行的 AI 研究伙伴，跟一次性对话的摘要工具不一样：它把任务、文件、分支、工件、记忆全部持久化，每次运行结束后把成功和失败的路径都留着，供下一轮使用。项目入选 ICLR 2026 Top 10，由 WestlakeNLP 维护，负责人为 ACL Fellow 张岳教授。
+DeepScientist 是一个长期运行的 AI 研究伙伴，跟一次性对话的摘要工具不一样：它把任务、文件、分支、工件、记忆全部持久化，每次运行结束后把成功和失败的路径都留着，供下一轮使用。项目入选 ICLR 2026 Top 10，由 WestlakeNLP 维护，负责人为 ACL Fellow 张岳教授，主要开发者包括 Yixuan Weng、Minjun Zhu、Zhen Lin 等张岳组成员。当前最新版本为 v1.6.0（2026 年 5 月发布）；论文于 2026 年 2 月 1 日上线 OpenReview，v1.5 于 2026 年 3 月 24 日正式发布。
 
 ### 对比传统 AI 工具
 
@@ -133,23 +133,36 @@ DeepScientist 可以自己跑，你也可以随时介入、编辑、重定向、
 
 ### 安装
 
+DeepScientist 通过 npm 安装，内置 `codex`、`claude`、`kimi`、`opencode` 四个 runner，任选一个已在本地能正常工作的即可：
+
 ```bash
 npm install -g @researai/deepscientist
-codex --login ds --here
+codex login
+ds --here
 ```
 
-如果 `codex --login` 不可用，先运行：
+如果 `codex login` 提示需要登录，先运行一次 `codex` 走完交互式登录，再执行 `ds --here`。用哪个 runner 就登录哪个 CLI，登录属于 CLI 本身，DeepScientist 只是把它带起来。
 
-```bash
-codex
-```
+推荐先在本地机器、非 root 用户、隔离环境（Python 虚拟环境或 Docker）里跑通，避免污染主环境。
 
 ### 启动
 
-安装后，默认本地地址是：
+DeepScientist 完整支持 Linux 和 macOS，Windows 目前为实验性支持，建议使用 WSL2。启动后默认本地地址是：
 
 ```
 http://127.0.0.1:20999
+```
+
+本地浏览器认证默认关闭。若希望每次启动都要求一个本地访问密码，用：
+
+```bash
+ds --auth true
+```
+
+停止受管的后台 daemon 及所有运行中的 agent：
+
+```bash
+ds --stop
 ```
 
 ### 三步开始研究
@@ -239,6 +252,8 @@ DeepScientist 支持多种 LLM 提供商，内置四个 runner：
 | **Kimi Code** | Moonshot Kimi，适合中文场景 |
 | **OpenCode** | 开源 runner，可自定义 |
 
+每个 runner 最终都挂在对应的 CLI 上：DeepScientist 可以为 `codex`、`claude`、`opencode` 回退到 npm 附带的 helper 副本，`kimi` 则按外部 CLI 处理。接入前先用 `ds doctor --runner <name>` 验证对应 CLI 是否可用。
+
 ### 配置示例
 
 ```bash
@@ -252,13 +267,13 @@ ds --here --runner claude
 ds --here --runner kimi
 ```
 
-### 自定义模型
+### 其他模型
 
-参考官方文档配置你自己的模型：
+DeepScientist 本身不强绑某一家模型，接入方式取决于 runner：
 
-- 打开 `docs/en/15_CODEX_PROVIDER_SETUP.md`
-- 配置你自己的 API 密钥和端点
-- 支持 OpenAI、Anthropic、Google、Moonshot 等多种模型
+- **Gemini / Ollama 等本地模型**：走 OpenCode（`docs/en/25_OPENCODE_PROVIDER_SETUP.md`）或 Codex 的本地模型后端（`docs/en/21_LOCAL_MODEL_BACKENDS_GUIDE.md`）
+- **自定义 API 密钥和端点**：参考 `docs/en/15_CODEX_PROVIDER_SETUP.md` 配置
+- **后续切换**：启动后也可以在 Web 工作空间的设置里随时切换、配置 Claude Code / Kimi Code / OpenCode
 
 ---
 
@@ -273,6 +288,7 @@ DeepScientist 是 ResearAI 生态的一部分，完整生态包括：
 | **AutoFigure-Edit** | 生成可编辑的矢量论文图表 |
 | **DeepReviewer-v2** | 论文评审和建议修订 |
 | **Awesome-AI-Scientist** | AI 科学家全景图 |
+| **MeOS** | 把你的研究与习惯固化成 Skill，让 AI 更懂你 |
 
 ---
 
@@ -333,9 +349,9 @@ A：支持飞书、微信、QQ、Telegram、WhatsApp 等多种协作渠道的集
 排查步骤：
 
 1. 检查端口是否被占用：`lsof -i :20999`
-2. 检查 Node.js 版本：需要 Node.js 18+
-3. 检查 `codex --login` 是否成功：运行 `codex` 看能否正常启动
-4. 查看日志：`./deepscientist/logs/` 目录下的错误日志
+2. 检查 Node.js / npm 是否可用：`node -v`、`npm -v`，必要时升级到较新的 LTS 版本
+3. 检查 runner 登录是否成功：运行 `codex`（或其他 runner）看能否正常启动
+4. 查看日志：`~/deepscientist/logs/` 目录下的错误日志
 
 **问题 2：论文复现失败，baseline 代码跑不通**
 
