@@ -1,9 +1,9 @@
 ---
-title: "OpenSandbox：阿里巴巴开源的 10.0k Stars 通用 AI 应用沙箱平台"
+title: "OpenSandbox：阿里巴巴开源的通用 AI 应用沙箱平台"
 date: "2026-03-28T21:00:00+08:00"
 slug: "alibaba-opensandbox-ai-sandbox-platform"
 github_repo: "alibaba/OpenSandbox"
-description: "深度解读阿里巴巴开源的 OpenSandbox：10.0k Stars 的通用 AI 应用沙箱平台，支持多语言 SDK、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、AI 代码执行、强化学习训练等场景。"
+description: "深度解读阿里巴巴开源的 OpenSandbox：通用 AI 应用沙箱平台，支持多语言 SDK、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、AI 代码执行、强化学习训练等场景。"
 draft: false
 categories: ["技术笔记"]
 tags: ["沙箱", "Docker", "Kubernetes"]
@@ -12,7 +12,7 @@ tags: ["沙箱", "Docker", "Kubernetes"]
 > **目标读者**：构建 AI 应用（编程 Agent、GUI Agent、代码执行、RL 训练）的开发者
 > **核心问题**：如何为 AI 应用提供安全、可扩展的隔离执行环境？
 > **难度**：⭐⭐⭐⭐（专家设计）
-> **来源**：GitHub alibaba/OpenSandbox，访问于 2026-03-28
+> **来源**：GitHub alibaba/OpenSandbox，访问于 2026-09-05
 
 ---
 
@@ -20,15 +20,15 @@ tags: ["沙箱", "Docker", "Kubernetes"]
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 11,649+ |
-| Forks | 966+ |
+| GitHub Stars | 14,981+ |
+| Forks | 1,351+ |
 | License | Apache-2.0 |
 | 主要语言 | Python, Go |
-| 最新版本 | python/code-interpreter 0.1.2 |
+| 最新版本 | server 0.2.3 |
 | 官方文档 | https://open-sandbox.ai/ |
 | CNCF Landscape | 已收录 |
 
-> 数据截至 2026-06-25，以仓库实际状态为准。
+> 数据截至 2026-09-05，以仓库实际状态为准。
 
 ## 一句话判断
 
@@ -39,7 +39,7 @@ OpenSandbox 把"为 AI 应用提供隔离执行环境"这件事做成了平台�
 读完本文后你应当能够：
 
 1. 说清 OpenSandbox 五层架构中每层的职责与可替换点
-2. 区分 7 种 sandbox 适配器的隔离强度与适用场景
+2. 说出内置沙箱环境（Code Interpreter、Chrome、Playwright、Desktop、VS Code）各自面向的任务
 3. 描述一次代码执行如何从 SDK 层穿过五层到达容器运行时层
 4. 在 Docker 模式与 Kubernetes 模式之间做出与场景匹配的选型决策
 5. 列出 OpenSandbox 适用与不适用的三类场景的判断依据
@@ -57,9 +57,10 @@ OpenSandbox 把"为 AI 应用提供隔离执行环境"这件事做成了平台�
 - [九、Roadmap](#九roadmap)
 - [十、采用建议](#十采用建议)
 - [十一、常见问题排查](#十一常见问题排查)
-- [十二、自测题](#十二自测题)
-- [十三、进阶路径](#十三进阶路径)
-- [十四、总结](#十四总结)
+- [十二、练习](#十二练习)
+- [十三、自测题](#十三自测题)
+- [十四、进阶路径](#十四进阶路径)
+- [十五、总结](#十五总结)
 
 ## 总览地图
 
@@ -67,7 +68,7 @@ OpenSandbox 分五层，每层职责独立，可以单独替换：
 
 | 层 | 职责 | 关键组件 | 可替换点 |
 |---|---|---|---|
-| SDK 层 | 给开发者用的客户端 | Python / Java / Kotlin / JS / TS / C# | Go SDK 规划中 |
+| SDK 层 | 给开发者用的客户端 | Python / Java / Kotlin / JS / TS / C# / Go | 可扩展新语言 |
 | 协议层 | 定义沙箱能做什么 | 生命周期 API + 执行 API | OpenAPI 规范在 `specs/` |
 | 运行时层 | 管理沙箱进程 | `server`（FastAPI）+ `execd` + `ingress` + `egress` | 可自托管 |
 | 沙箱环境层 | 预置的执行镜像 | Code Interpreter / Chrome / Playwright / Desktop / VS Code | 可自定义镜像 |
@@ -81,19 +82,19 @@ OpenSandbox 分五层，每层职责独立，可以单独替换：
 
 [OpenSandbox](https://github.com/alibaba/OpenSandbox) 是阿里巴巴开源的通用 AI 应用沙箱平台，提供多语言 SDK、统一沙箱 API、Docker/Kubernetes 运行时，涵盖编程 Agent、GUI Agent、Agent 评估、AI 代码执行、强化学习训练等场景。
 
-**核心数据（截至 2026-06-25，数据来自 GitHub API）：**
+**核心数据（截至 2026-09-05，数据来自 GitHub API）：**
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 11,649+ |
-| Forks | 966+ |
+| GitHub Stars | 14,981+ |
+| Forks | 1,351+ |
 | License | Apache-2.0 |
-| 最新版本 | python/code-interpreter 0.1.2 |
+| 最新版本 | server 0.2.3 |
 | 官方文档 | https://open-sandbox.ai/ |
 
 > 时效说明：Stars 和 Forks 为访问时快照，可能已变化；版本号以仓库 release 页为准。
 
-**CNCF Landscape 已收录**（来源：[CNCF Landscape](https://landscape.cncf.io/)，访问于 2026-03-28）
+**CNCF Landscape 已收录**（来源：[CNCF Landscape](https://landscape.cncf.io/)，访问于 2026-09-05）
 
 ### 1.1 项目定位
 
@@ -169,9 +170,10 @@ OpenSandbox 分五层，每层职责独立，可以单独替换：
 
 | 组件 | 技术选型 | 说明 |
 |------|---------|------|
-| SDK 语言 | Python/Java/Kotlin/JS/TS/C# | 多语言支持 |
-| 后端 | Go 21.6%（来源：GitHub 语言统计，访问于 2026-03-28） | 核心组件 |
+| SDK 语言 | Python/Java/Kotlin/JS/TS/C#/Go | 多语言支持 |
+| 后端 | Go 30.8%（来源：GitHub 语言统计，访问于 2026-09-05） | 核心组件 |
 | 服务端 | Python FastAPI | 沙箱生命周期服务 |
+| 沙箱内守护进程 | Go（Gin） | `execd` 命令/文件执行 |
 | 容器 | Docker/Kubernetes | 运行时环境 |
 | 安全容器 | gVisor/Kata/Firecracker | 强隔离 |
 
@@ -221,12 +223,13 @@ OpenSandbox 提供**多语言 SDK**，覆盖主流开发语言：
 | Sandbox SDK | Java/Kotlin | 同上 |
 | Sandbox SDK | JavaScript/TypeScript | 同上 |
 | Sandbox SDK | C#/.NET | 同上 |
+| Sandbox SDK | Go | 同上 |
 | Code Interpreter SDK | Python | 代码解释器专用 |
 | Code Interpreter SDK | Java/Kotlin | 同上 |
 | Code Interpreter SDK | JavaScript/TypeScript | 同上 |
 | Code Interpreter SDK | C#/.NET | 同上 |
 
-**规划中：** Go SDK
+除 SDK 外，官方还提供 `osb` 命令行工具（`pip install opensandbox-cli`）和 MCP 服务器（`pip install opensandbox-mcp`），前者面向终端操作，后者让 Claude Code、Cursor 等 MCP 客户端直接调用沙箱能力。
 
 为什么需要多语言 SDK？只提供 REST API 不够吗？因为不同语言的类型系统、异步模型、错误处理差异很大，直接调 REST 会让每个语言的用户都重复处理序列化和重试逻辑。SDK 把这些封装掉，让 Python 用户用 `async with sandbox`，Java 用户用 try-with-resources，各自符合本语言习惯。
 
@@ -244,7 +247,7 @@ OpenSandbox 定义了两套核心 API，对应沙箱的两类操作：
 - 文件操作（读写）
 - 代码解释器调用
 
-为什么分成两套？因为生命周期操作是控制面，频率低但必须可靠；执行操作是数据面，频率高但允许失败重试。分开后可以独立演进，比如执行 API 可以加流式输出，生命周期 API 可以加预热池，互不影响。
+两套 API 的分离让控制面与数据面各自演进：生命周期操作频率低但必须可靠，执行操作频率高但允许失败重试。分开后，执行 API 可以单独加流式输出，生命周期 API 可以单独做预热池，互不牵连。
 
 ### 3.3 沙箱运行时
 
@@ -260,6 +263,8 @@ OpenSandbox 定义了两套核心 API，对应沙箱的两类操作：
 - 自动扩缩容：根据负载调整沙箱数量
 - 资源隔离：通过 Kubernetes 的 ResourceQuota 和 LimitRange 控制
 
+Kubernetes 模式通过工作负载提供者创建资源：默认由 OpenSandbox 自带的 BatchSandbox 控制器（一个自定义 CRD）负责高吞吐与池化交付，也可以切换为 `kubernetes-sigs/agent-sandbox` 提供者。
+
 为什么需要预热池？因为创建一个沙箱要拉镜像、起容器、初始化运行时，冷启动可能要几秒到几十秒。AI Agent 的代码执行通常是高频短任务，如果每次都冷启动，用户体验会非常差。预热池把这部分延迟摊到空闲期。
 
 ### 3.4 沙箱环境
@@ -274,7 +279,7 @@ OpenSandbox 内置多种沙箱环境，每种环境是一个预置镜像：
 | **Desktop** | 完整桌面环境 | VNC 远程桌面 |
 | **VS Code** | 云端 IDE | code-server Web IDE |
 
-为什么预置这些环境？因为 AI Agent 的需求高度集中：要么执行代码，要么操作浏览器，要么操作桌面。预置镜像省去用户自己装 Chrome、配 VNC、装 Python 依赖的工作，启动即可用。
+预置这些环境的原因很直接：AI Agent 的需求高度集中在执行代码、操作浏览器和桌面三类任务上。镜像预装 Chrome、VNC、Python 依赖，用户启动即可用，不用自己装配。
 
 ### 3.5 网络安全策略
 
@@ -298,7 +303,7 @@ OpenSandbox 内置多种沙箱环境，每种环境是一个预置镜像：
 | **Kata Containers** | 硬件虚拟化 | VM 级隔离 | 高安全，性能损失中等 |
 | **Firecracker** | AWS 开源微虚拟机 | 轻量级 VM | 高密度，启动快 |
 
-为什么提供三种安全容器运行时？因为隔离强度和性能是权衡关系。gVisor 性能损失最小但隔离弱；Kata 隔离最强但启动慢；Firecracker 介于两者之间，适合多租户高密度场景。用户根据自己威胁模型选择：内部可信环境用 gVisor，公网多租户用 Firecracker，强合规场景用 Kata。
+三种运行时对应隔离与性能的不同取舍：gVisor 性能损失最小但隔离弱，Kata 隔离最强但启动慢，Firecracker 介于两者之间，适合多租户高密度场景。选择取决于威胁模型——内部可信环境用 gVisor，公网多租户用 Firecracker，强合规场景用 Kata。
 
 ---
 
@@ -329,19 +334,18 @@ OpenSandbox 内置多种沙箱环境，每种环境是一个预置镜像：
 
 ### 5.2 安装步骤
 
-**1. 安装 Sandbox Server：**
+**1. 初始化配置：**
 
 ```bash
-uv pip install opensandbox-server
-opensandbox-server init-config ~/.sandbox.toml --example docker
+uvx opensandbox-server init-config ~/.sandbox.toml --example docker
 ```
 
 **2. 启动 Sandbox Server：**
 
 ```bash
-opensandbox-server
+uvx opensandbox-server
 # 显示帮助
-opensandbox-server -h
+uvx opensandbox-server -h
 ```
 
 **3. 安装 Code Interpreter SDK：**
@@ -407,6 +411,20 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+### 5.4 用 osb CLI 快速体验
+
+不想写代码时，可以用官方命令行工具 `osb`：
+
+```bash
+uv tool install opensandbox-cli
+osb config init
+osb config set connection.domain localhost:8080
+osb sandbox create --image python:3.12 --timeout 30m -o json
+osb command run <sandbox-id> -o raw -- python -c "print(1 + 1)"
+```
+
+`osb` 覆盖沙箱生命周期、命令执行、文件操作、egress 策略查看与修改，适合脚本化和运维场景。
+
 ---
 
 ## 六、集成示例
@@ -422,6 +440,13 @@ OpenSandbox 支持主流编程 Agent CLI：
 | OpenAI Codex CLI | OpenAI CLI |
 | Qwen Code | 阿里通义 CLI |
 | Kimi CLI | 月之暗面 CLI |
+
+除了命令行方式，官方还提供 MCP 服务器，把沙箱创建、命令执行、文本文件操作暴露给 Claude Code、Cursor 等 MCP 客户端：
+
+```bash
+pip install opensandbox-mcp
+opensandbox-mcp --domain localhost:8080 --protocol http
+```
 
 **示例：Claude Code 集成**
 
@@ -507,26 +532,32 @@ OpenSandbox 提供 LangGraph 状态机工作流集成：
 
 ## 九、Roadmap
 
-### 9.1 SDK
+> 状态整理自官方 [ROADMAP.md](https://github.com/alibaba/OpenSandbox/blob/main/ROADMAP.md)，更新于 2026-04-28，以仓库实际进度为准。
 
-| 功能 | 说明 |
-|------|------|
-| **客户端连接池** | 预配置沙箱，Xms 获取环境 |
-| **Go SDK** | Go 语言客户端 SDK |
+### 9.1 SDK 与开发体验
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| 客户端侧沙箱池 | 已实现，持续完善 | 对应 OSEP-0005，预配置沙箱减少冷启动 |
+| Go SDK | 已发布 | 与 Python、Kotlin、JS/TS、C# 保持规格对齐 |
+| CLI 可用性 | 规划中 | 改善常用沙箱生命周期工作流 |
 
 ### 9.2 沙箱运行时
 
-| 功能 | 说明 |
-|------|------|
-| **持久化存储** | 可挂载持久化卷 |
-| **轻量级沙箱** | PC 直接运行的 AI 工具沙箱 |
-| **安全容器** | AI Agent 容器内安全沙箱 |
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| 持久化卷 | 实现中 | OSEP-0003，Docker 命名卷与 Kubernetes PVC 已支持 |
+| 本地轻量级沙箱 | 规划中 | 直接跑在 PC 上的 AI 工具沙箱 |
+| 安全容器运行时 | 已实现，持续加固 | OSEP-0004，配套安全容器部署指南 |
+| 根文件系统快照暂停/恢复 | 实现中 | OSEP-0008，支持有状态沙箱工作流 |
 
-### 9.3 部署
+### 9.3 可观测性与运维
 
-| 功能 | 说明 |
-|------|------|
-| **部署指南** | 自托管 Kubernetes 集群部署指南 |
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| OpenTelemetry 指标与日志 | 实现中 | OSEP-0010，覆盖 execd、ingress、egress |
+| Agent 沙箱内审计轨迹 | 规划中 | 记录命令、文件、网络等操作，待 OSEP 定义 |
+| Kubernetes 部署 | 持续维护 | 自托管部署与 Helm charts |
 
 ---
 
@@ -615,18 +646,15 @@ print(sandbox.status)
 
 ---
 
----
-
-## 练习
+## 十二、练习
 
 ### 练习一：本地跑通 OpenSandbox Docker 模式
 
-1. 安装 `opensandbox-server`：`uv pip install opensandbox-server`
-2. 初始化配置：`opensandbox-server init-config ~/.sandbox.toml --example docker`
-3. 启动 server：`opensandbox-server`
-4. 安装 Code Interpreter SDK：`uv pip install opensandbox-code-interpreter`
-5. 运行本文"快速开始"的基本使用示例，确认沙箱能创建、代码能执行
-6. 记录：安装耗时、首次创建沙箱耗时、代码执行延迟
+1. 初始化配置：`uvx opensandbox-server init-config ~/.sandbox.toml --example docker`
+2. 启动 server：`uvx opensandbox-server`
+3. 安装 Code Interpreter SDK：`uv pip install opensandbox-code-interpreter`
+4. 运行本文"快速开始"的基本使用示例，确认沙箱能创建、代码能执行
+5. 记录：安装耗时、首次创建沙箱耗时、代码执行延迟
 
 ### 练习二：对比 Docker 模式与 Kubernetes 模式
 
@@ -636,17 +664,17 @@ print(sandbox.status)
 4. 配置预热池，对比冷启动时间差异
 5. 评估：你的场景适合哪种模式？
 
-### 练习三：为 OpenSandbox 加上 Tool Policy 和 State Store
+### 练习三：用 osb CLI 完成一次沙箱生命周期
 
-1. 定义一个使用 shell toolkit 的 Agent
-2. 配置 `RequireApprovalPolicy`，拦截危险操作
-3. 运行 Agent，观察审批流程
-4. 配置 `postgres` State Store，测试断点续跑
-5. 记录：审批流程的用户体验、State Store 的写入延迟
+1. 安装 CLI：`uv tool install opensandbox-cli`
+2. 初始化配置，指向本地启动的 server（`localhost:8080`）
+3. 用 `osb sandbox create` 创建沙箱，记录创建耗时
+4. 用 `osb command run` 执行命令并查看输出
+5. 删除沙箱，记录完整生命周期的操作耗时
 
 ---
 
-## 十二、自测题
+## 十三、自测题
 
 用以下 5 题检验理解程度。答案折叠在每题下方。
 
@@ -654,9 +682,9 @@ print(sandbox.status)
 
 > **答案**：协议层（Protocol Layer）。它用 OpenAPI 规范定义接口，让多语言 SDK 能保持一致行为。
 
-**Q2**：7 种 sandbox 适配器中，哪几种提供文件系统级隔离？
+**Q2**：内置沙箱环境中，Chrome、Playwright、Desktop 分别面向什么任务？
 
-> **答案**：`docker` 提供容器级文件系统隔离；`modal` / `daytona` / `e2b` 提供云端隔离，适合多租户生产场景。`local` / `ipython` 共享宿主命名空间，仅适合本地实验。
+> **答案**：Chrome 用于浏览器自动化与调试（VNC + DevTools）；Playwright 用于 Web 自动化测试与无头抓取；Desktop 提供带 VNC 的完整桌面环境，适合需要图形界面的操作。
 
 **Q3**：为什么需要预热池（Pre-warmed pools）？
 
@@ -673,11 +701,11 @@ print(sandbox.status)
 > C. 多租户代码执行平台
 > D. Agent 评估基准
 
-> **答案**：B。预热池也救不了冷启动，纯 API 调用型 Agent 不需要沙箱，简单关键词搜索直接用 grep 更快。
+> **答案**：B。创建沙箱需要拉镜像、起容器、初始化运行时，冷启动以秒计，预热池只能摊薄这部分延迟，无法把交互延迟压到实时阈值以下；纯 API 调用型 Agent 和不需要隔离的内部工具同样不适合。
 
 ---
 
-## 十三、进阶路径
+## 十四、进阶路径
 
 读完本文后，按以下顺序深入：
 
@@ -686,15 +714,16 @@ print(sandbox.status)
 3. **上 Kubernetes 模式**：在测试集群里部署 `kubernetes/` 目录下的资源，配置预热池，记录冷启动时间与资源消耗。
 4. **自定义镜像**：基于 `sandboxes/code-interpreter/` 自定义镜像，增加项目需要的依赖，保持 entrypoint 协议不变。
 5. **读源码**：从 `server/` 目录开始，理解 FastAPI 服务如何管理 sandbox 生命周期，再看 `components/execd/` 理解命令执行流程。
-6. **贡献社区**：OpenSandbox 是开源项目，可以贡献新的 sandbox 环境、改进文档或提交 bug fix。
+6. **读协议与 OSEP**：从 `specs/` 的 OpenAPI 契约入手，再看 `oseps/` 里的增强提案（如 OSEP-0005 客户端沙箱池、OSEP-0008 快照暂停/恢复），理解设计演进方向。
+7. **贡献社区**：OpenSandbox 是开源项目，可以贡献新的 sandbox 环境、改进文档或提交 bug fix。
 
 ---
 
-## 十四、总结
+## 十五、总结
 
-OpenSandbox 提供的信号是：在 AI Agent 需要执行任意代码、访问浏览器和桌面的今天，"如何提供安全隔离的执行环境" 比 "模型能力有多强" 还有更多工程空间。OpenSandbox 把这件事做成了平台级产品——五层架构、多语言 SDK、统一沙箱协议、Docker/Kubernetes 运行时、强隔离机制覆盖了从本地实验到生产部署的链路。
+OpenSandbox 把"为 AI Agent 提供隔离执行环境"做成了可交付的平台：多语言 SDK 屏蔽语言差异，统一沙箱协议让运行时可替换，Docker/Kubernetes 覆盖从本地实验到生产调度，gVisor、Kata、Firecracker 提供不同强度的隔离边界。对要构建安全 AI 应用平台的开发者来说，它把"环境隔离"这件基础设施的复杂度打包成了现成组件。
 
-对于想要构建安全 AI 应用平台的开发者，OpenSandbox 是 2026 年值得深入的开源项目之一。
+如果你已经有可用的沙箱方案，迁移到 OpenSandbox 前值得先确认两件事：你的负载是否需要预热池这类高吞吐能力，以及 egress 白名单能否覆盖你依赖的下载源。
 
 ---
 
@@ -703,11 +732,12 @@ OpenSandbox 提供的信号是：在 AI Agent 需要执行任意代码、访问�
 本文基于 OpenSandbox 官方仓库（[alibaba/OpenSandbox](https://github.com/alibaba/OpenSandbox)）公开文档整理，需要说明的边界：
 
 1. **性能数据来源**：文中提到的性能数据来自官方文档和社区反馈，未在标准化测试环境中验证，实际性能因硬件配置而异。
-2. **版本时效性**：OpenSandbox 处于活跃开发阶段，版本更新可能带来 API 变化，请以[官方 GitHub 仓库](https://github.com/alibaba/OpenSandbox)的最新代码为准。
+2. **版本时效性**：OpenSandbox 处于活跃开发阶段，版本更新可能带来 API 变化。本文数据与命令示例基于 2026-09-05 的仓库状态，请以[官方 GitHub 仓库](https://github.com/alibaba/OpenSandbox)的最新代码为准。
 3. **安全容器选择**：gVisor/Kata/Firecracker 的隔离强度和性能损失因版本和配置而异，本文未提供具体的性能对比数据，建议用户自行验证。
 4. **Kubernetes 部署**：文中提到的 Kubernetes 部署方案基于官方文档，实际部署时需要根据集群环境调整配置。
 5. **CNCF Landscape 收录**：文中提到 CNCF Landscape 已收录 OpenSandbox，具体状态请访问 [CNCF Landscape](https://landscape.cncf.io/) 确认。
 6. **判断边界**：本文对 OpenSandbox 适用场景的判断基于其设计目标和技术特征，具体采用决策请结合业务场景评估。
+7. **架构划分**：本文按官方 README 的 Features 归纳为 SDK、协议、运行时、沙箱环境、容器运行时五层；官方架构文档另有"客户端 / 协议 / 生命周期控制面 / 运行时后端 / 沙箱数据面 / 网络安全面"的六面划分，两者是对同一系统的不同粒度描述。
 
 ---
 
@@ -722,4 +752,4 @@ OpenSandbox 提供的信号是：在 AI Agent 需要执行任意代码、访问�
 
 ---
 
-*OpenSandbox 由阿里巴巴开源，采用 Apache-2.0 许可证，已被 CNCF Landscape 收录。数据截至 2026-03-28，以仓库实际状态为准。*
+*OpenSandbox 由阿里巴巴开源，采用 Apache-2.0 许可证，已被 CNCF Landscape 收录。数据截至 2026-09-05，以仓库实际状态为准。*

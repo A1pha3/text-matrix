@@ -15,7 +15,11 @@ description: "Protocol Buffers 是 Google 的语言中立、平台中立、可�
 
 Protocol Buffers（以下简称 protobuf）不是一个 JSON 替代品，也不是某种"通用对象序列化框架"——它是 Google 用二十年内部迭代沉淀下来的**结构化数据 IDL + 二进制 wire format + 跨语言代码生成**这套三件套。从这个角度看仓库里的一切才能看清边界：`protoc` 编译器是单一入口、`.proto` 文件是契约、`*.pb.cc` / `*.pb.go` / `*.pb.py` 等是契约在目标语言上的具象化产物，而 wire format 是这套契约真正落到字节流时的物理形式。理解了"三段式"（IDL → wire format → 语言运行时），后续所有特性——字段编号、向后兼容、JSON mapping、well-known types、proto2/proto3 差异——都是这套骨架上的可推导项。
 
+读者假定你会写代码、读得懂 JSON，但没系统性用过 protobuf。看完你能说清一份 `.proto` 从定义、编译到各语言字节流的全过程，也能判断自己的场景值不值得引入它。
+
 ## 项目坐标
+
+> 下表是 2026-07 撰文时的仓库快照。Stars、Forks、Open Issues、最近更新这些指标会随仓库持续变动，读到时应以当下仓库为准，别把它们当成长期契约。
 
 | 维度 | 数据 |
 |------|------|
@@ -69,20 +73,20 @@ proto3 与 proto2 关键差异（仓库 README 与 `protobuf.dev` 文档可见�
 
 不管用 proto2 还是 proto3，序列化在字节流上落到同一个 wire format。每对 (field_number, wire_type) 构成一个 tag：
 
-- Varint（`wire_type = 0`）：单字节/双字节紧凑整数，未签名当作正向 varint、有符号做 zigzag 编码。`int32`、`int64`、`uint32`、`uint64`、`bool`、`enum` 都走这个。
+- Varint（`wire_type = 0`）：长度 1–10 字节的可变长整数，值越小占字越少。`int32`、`int64`、`uint32`、`uint64`、`bool`、`enum` 都走这个；其中负数 `int32`/`int64` 会被符号扩展成固定 10 字节的 varint，所以高频小负数应改用 `sint32`/`sint64`（zigzag 编码，把负数映射成小正数）。
 - 64-bit（`wire_type = 1`）：固定 8 字节，`fixed64`、`sfixed64`、`double`。
 - Length-delimited（`wire_type = 2`）："varint 长度 + 字节段"形式，承载 `string`、`bytes`、嵌套 `message`、`packed repeated` 字段以及 proto 3 的 `Any` 字段。
 - 32-bit（`wire_type = 5`）：固定 4 字节，`fixed32`、`sfixed32`、`float`。
 - group（`wire_type = 3/4`，已废弃）：proto3 移除了 group 语法。
 
-tag 自身是 varint: `(field_number << 3) | wire_type`。`field_number` 在序列化时被分配，且**绝不能重用**——这是仓库文档反复强调的"向后兼容第一原则"的物理实现：保留字段编号 + 不再使用的字段加 `[deprecated = true]` 是工业协议演进的标准动作。
+tag 自身是 varint: `(field_number << 3) | wire_type`。`field_number` 在 `.proto` 定义时定死，序列化只是读它，且**绝不能重用**——这是仓库文档反复强调的"向后兼容第一原则"的物理实现：删掉的字段把编号加进 `reserved` 封存，还在但不想让人继续用的字段标 `[deprecated = true]`，两者都是协议演进的标准动作。
 
 ### 字段编号、向后兼容与"无情演进"
 
 向后兼容是仓库 README 与开发者指南公开承诺的核心能力。它由两条规则保障：
 
-1. **新增字段用新编号，旧字段不动**：反序列化器遇到不认识的字段编号直接跳过（不报错），保证新老二进制在协议层互通。
-2. **字段值域变更需要 marker**：把 `int32` 改成 `int64`、新增 `repeated` 标记、把字段从单值变成 `optional`——这些都属于**"二进制兼容但语义会变"**的操作，文档建议配合 `optional` 或 `oneof` 谨慎处理。
+1. **新增字段用新编号，旧字段不动**：反序列化器遇到不认识的字段编号会保留为未知字段（不报错），新老二进制在协议层互通；proto3 自 3.5 起默认保留并能原样重写这些未知字段，这正是滚动升级可以无协调上线的基础。
+2. **字段的类型、基数变更要谨慎**：varint 族内 `int32`→`int64` 在 wire 层兼容但有取值截断风险，`string`/`bytes` 仅在内容为合法 UTF-8 时可互换；而把单值改成 `repeated`、或把字段移进 `oneof`，会改变解码语义，通常按不兼容处理。proto3 里要区分"显式设为零值"和"根本没设置"，就给字段加 `optional` 打开显式存在性——这一项本身不破坏兼容。
 
 `[json_name]`、`reserved` 字段、消息嵌套、`map<K,V>`、`oneof`、`Any`、`Timestamp`、`Duration`、`FieldMask`、`Struct`、`Value`、`ListValue` 等 well-known types 在 protobuf.dev 上都有专项页面。仓库的 `google/protobuf/` 下 `.proto` 文件即是这些类型的来源。
 
@@ -163,6 +167,14 @@ README 表里那条"Go 在 `protocolbuffers/protobuf-go`、Dart 在 `dart-lang/p
 - **跨语言一致性**：跨 4 种语言（Java/Python/Go/C++）的同一段 wire 数据能正确反序列化，是 gRPC 跨语言互通的基石。运行时独立的代价是"每个语言都有自己的 LSB/MSB 处理 bug 历史"——见仓库 issue 里的 `b/25513941` 等历史 issue。
 
 > 真正的"选型"决策点：如果你需要"超小数据 + 超高吞吐 + 反射不可用场景"，考虑 FlatBuffers；如果只是 RPC + 后端服务互操作，protobuf 至今是最稳的选择；如果字段映射不固定，protobuf 的 `Any` 字段比 Thrift 的泛 `TContainer` 更易处理。
+
+## 快速排查：几个常见的坑
+
+- **负数用错类型会让消息变胖**：`int32` 里存 `-1` 会撑满 10 字节 varint，换 `sint32` 只需 1 字节。高频小负数、差值等字段一律声明为 `sint32`/`sint64`。
+- **proto3 分不清"没填"和"填了零"**：`0`、空串、`false` 在隐式存在性下不可区分。需要区分（比如 PATCH 语义）就给字段加 `optional` 拿到显式存在性。
+- **int64 在 JSON 里是字符串**：走 JSON 互操作时 64 位整数默认输出为字符串，前端按 number 解析会丢精度或卡在类型判断。
+- **改字段类型很容易悄悄破坏兼容**：把 `int32` 改成 `string` 会改 wire type，老二进制会被误读。这类改动交给 `buf breaking` 之类的工具在 CI 上卡住，不要靠肉眼 review。
+- **删掉的字段编号要 `reserved`**：直接复用已删除的编号是静默数据破坏，没有任何检测手段能兜底。删除字段时把编号和名字都 `reserved`。
 
 ## 采用建议：什么场景选它、怎么落
 

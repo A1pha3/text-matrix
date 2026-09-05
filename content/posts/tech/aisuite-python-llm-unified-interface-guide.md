@@ -11,7 +11,7 @@ tags: ["Python", "LLM", "MCP", "AI Agent", "OpenAI"]
 
 # andrewyng/aisuite 架构拆解：Python 端 LLM 统一接口的两层抽象（Chat Completions + Agents）和它背后的工程取舍
 
-> 核心判断：aisuite 在 Chat Completions 统一接口之上加了一层 Agents API（Toolkits / MCP / Tool Policies / State Stores），并把"如何用这些能力搭一个生产级 Agent harness"做成参考实现 OpenCoworker 一起发布。仓库的设计重心是让作者本人快速搭 Agent，切换不同 LLM 只是底层能力之一。
+> 核心判断：aisuite 在 Chat Completions 统一接口之上加了一层 Agents API（Toolkits / MCP / Tool Policies / State Stores），并把"如何用这些能力搭一个生产级 Agent harness"做成参考实现 OpenWorker 一起发布。仓库的设计重心是让作者本人快速搭 Agent，切换不同 LLM 只是底层能力之一。
 
 ## 目录
 
@@ -55,12 +55,12 @@ tags: ["Python", "LLM", "MCP", "AI Agent", "OpenAI"]
 |------|------|
 | 仓库 | [andrewyng/aisuite](https://github.com/andrewyng/aisuite) |
 | 主语言 | Python（包名 `aisuite`） |
-| Stars | 约 14k（截至 2026-06，数据来自 GitHub） |
+| Stars | 约 16k（2026-09 经 GitHub API 核实的快照，会随时间变化） |
 | License | MIT |
-| 配套产物 | OpenCoworker（macOS / Windows 桌面应用，源码在 `platform/`） |
-| Provider 支持 | OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、OpenRouter 等 |
+| 配套产物 | OpenWorker（macOS / Windows 桌面 AI 助手，开发已迁移到独立仓库 andrewyng/openworker） |
+| Provider 支持 | OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、OpenRouter、Groq、Cerebras、DeepSeek、LM Studio、Watsonx 等 |
 
-README 第一屏就是 OpenCoworker 的下载链接，这透露出仓库的发布形态：`pip install aisuite` 拿到库，下载 dmg/exe 拿到参考实现，二者共用一套核心抽象。Andrew Ng 把自己的名字放进仓库名，意味着这个项目是他本人搭 Agent 的工作台，顺便开源给社区用。
+README 第一屏就是 OpenWorker 的下载链接，这透露出仓库的发布形态：`pip install aisuite` 拿到库，去 OpenWorker 独立仓库下载 dmg/exe 拿到参考实现，二者共用一套核心抽象。Andrew Ng 把自己的名字放进仓库名，意味着这个项目是他本人搭 Agent 的工作台，顺便开源给社区用。
 
 ---
 
@@ -76,7 +76,7 @@ LiteLLM 的卖点是"一行切换 provider"。aisuite 表面上看起来一样�
 | MCP 支持 | 需自行集成 | 一等公民，CLI / 编程两种方式 |
 | State store | 无 | in-memory / file / Postgres 三选 |
 | Tool policies | 无 | RequireApprovalPolicy + allow/deny + 自定义 callable |
-| 参考应用 | 无 | OpenCoworker 桌面端（macOS / Windows 安装包） |
+| 参考应用 | OpenWorker 桌面端（独立仓库，macOS / Windows 安装包） |
 | 安装门槛 | 低 | 低（opt-in extras） |
 
 aisuite 在 LiteLLM 的"路由"之上多盖了一层 Agent harness——Toolkits、MCP、Policies、State Stores 四块拼图。这层是它和 LiteLLM 拉开差距的地方。
@@ -158,6 +158,17 @@ for model in models:
 
 API key 通过环境变量传入（`OPENAI_API_KEY`、`ANTHROPIC_API_KEY` 等），`ai.Client()` 在初始化时读取。这和 LiteLLM、OpenAI SDK 的惯例一致。
 
+### Streaming 流式输出
+
+需要 token 边生成边返回时，传 `stream=True`，同一个循环在所有支持流式的 provider（OpenAI、Anthropic、Ollama 及 OpenAI 兼容端点）上通用：
+
+```python
+for chunk in client.chat.completions.create(model=model, messages=messages, stream=True):
+    print(chunk.choices[0].delta.content or "", end="", flush=True)
+```
+
+异步变体是 `await client.chat.completions.acreate(..., stream=True)`，配合 `async for` 迭代。注意流式下的 tool calling 需要手动处理：chunk 里携带的是增量 `delta.tool_calls`，要自己拼装并执行；因此它**不能**和 `max_turns` 自动循环组合使用，两者是两种模式。
+
 ## 五、Tool calling：max_turns 自动循环
 
 Chat Completions API 内建了 tool calling 自动循环。传入 `tools` 和 `max_turns` 后，框架会自动处理"模型调用工具 → 执行工具 → 把结果喂回模型 → 模型继续"的循环：
@@ -208,6 +219,8 @@ print(result.final_output)
 为什么拆成两个？因为 Agent 的定义是可复用的（同一个 Agent 可以跑不同 task），而 Runner 的执行是一次性的（每次 `Runner.run` 产生一个独立的 run）。这种分离让 Agent 可以被序列化、共享、测试，而运行时的状态隔离在 Runner 里。
 
 `Runner.run` 是同步入口，`Runner.resume` 用于续跑（见 State Stores 一节）。
+
+Agents API 还内置了产出与过程的可观测能力：**Artifacts** 记录 Agent 本次产生了哪些内容（文件、报告等），**tracing** 记录它执行过的每一步和调用轨迹。生产环境要回答"这个 Agent 到底做了什么、产出了什么"时，这两块可以直接用，不必另写一套审计日志。
 
 ## 七、Toolkits：预制工具集
 
@@ -340,7 +353,7 @@ MCP 依赖较重（涉及 subprocess 管理和异步通信），单独拆出来�
 | MCP 支持 | 一等公民 | 需集成 | 一等公民 | 中等 |
 | Tool policy | 内建 | 无 | 内建 | 无 |
 | State store | 三选 | 无 | 内建 | 中等 |
-| 参考应用 | OpenCoworker | 无 | 无 | LangServe 示例 |
+| 参考应用 | OpenWorker | 无 | 无 | LangServe 示例 |
 | 安装门槛 | 低（opt-in extras） | 低 | 低 | 高 |
 
 aisuite 的差异化集中在工具相关抽象（Toolkits / MCP / Policies / State Stores）。如果 Agent 工作流主要是"调多个外部工具 + 长期 state 持久化 + 关键操作审批"，aisuite 比 LiteLLM 顺手；如果只想切 provider，LiteLLM 够用。
@@ -354,7 +367,7 @@ aisuite 的差异化集中在工具相关抽象（Toolkits / MCP / Policies / St
 - **多 provider 混用**（Anthropic / Ollama / 国内云模型），需要统一接口 + 统一工具调用抽象。
 - **需要 MCP server 即插即用**，不想自己写 adapter。
 - **生产 Agent 需要 tool policy + state store + 审计**——这三块 aisuite 开箱即用。
-- **想搭桌面端 AI 应用**，OpenCoworker 是现成的参考实现，源码在 `platform/` 下可直接读。
+- **想搭桌面端 AI 应用**，OpenWorker 是现成的参考实现，源码在独立仓库 `andrewyng/openworker`；aisuite 主仓库的 `openworker-archive/` 里也保留了历史快照，都可以直接读。
 
 不太适合：
 
@@ -394,7 +407,7 @@ LiteLLM 提供一层抽象（统一 provider 路由）；aisuite 在其上加了
 
 ### Q7：aisuite 支持哪些 provider？
 
-OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、OpenRouter 等，完整列表见官方文档。用不到的 provider SDK 按需安装，不必一次装齐。
+OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、OpenRouter，以及 Groq、Cerebras、DeepSeek、LM Studio、Watsonx 等，完整列表见官方文档。用不到的 provider SDK 按需安装，不必一次装齐。
 
 ### Q8：MCP 服务器启动失败怎么排查？
 
@@ -416,7 +429,7 @@ OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、O
 
 ### Agent 运行阶段
 
-- **`max_turns` 上限触发，Agent 未完成任务**：调大 `max_turns` 或改用手动单轮调用模式逐步调试。可以在 `Runner.run` 时打印 `result.messages` 查看中间步骤。
+- **`max_turns` 上限触发，Agent 未完成任务**：调大 `max_turns`，或改用手动单轮调用模式逐步调试。工具调用的中间交互历史在 `response.choices[0].intermediate_messages` 里（走 Chat Completions 路径时），可打印出来排查每一轮的输入输出。
 - **Tool Policy 拦截了不该拦截的工具**：检查 policy 函数逻辑。`RequireApprovalPolicy(tools=["shell.run"])` 只拦 `shell.run`，不影响其他工具。
 
 ---
@@ -503,7 +516,7 @@ OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、O
 
 ### 搭建生产级 Agent
 
-- **加 Web UI**：参考 OpenCoworker 的实现（`platform/` 目录），为你的 Agent 加一个 Web 前端
+- **套一层交互界面**：参考 OpenWorker 的实现（独立仓库 `andrewyng/openworker`），为你的 Agent 加桌面或 Web 交互层
 - **集成向量数据库**：为 Agent 加上 RAG 能力（用 Pinecone 或 Chroma 作为知识库）
 - **多 Agent 协作**：用 aisuite 搭一个多 Agent 系统（比如一个 Agent 负责代码生成，另一个负责代码审查）
 
@@ -517,15 +530,15 @@ OpenAI、Anthropic、Google、Mistral、Hugging Face、AWS、Cohere、Ollama、O
 
 ## 十九、资料口径说明
 
-本文基于 andrewyng/aisuite 仓库的公开代码和 README 整理。以下说明关键判断的取径方式：
+本文基于 andrewyng/aisuite 仓库的公开代码、README 与 pyproject 整理，关键 API 已于 2026-09 对照官方 README 复核。以下说明关键判断的取径方式：
 
 1. **两层抽象的设计意图**：来自 README 和 Andrew Ng 的公开演讲。仓库名包含作者名字，暗示这是他的工作台，这个判断有公开证据支持。
 
 2. **和 LiteLLM 的对比**：来自两个仓库的 README 和 API 文档。对比表是本文基于公开信息整理的，不是官方立场。
 
-3. **OpenCoworker 的定位**：README 第一屏就是下载链接，说明这是配套产物。但具体功能需要下载安装后才能确认。
+3. **OpenWorker 的定位**：README 第一屏就是下载链接，说明这是配套产物；且开发已迁移到独立仓库 `andrewyng/openworker`。具体功能需下载安装后才能确认。
 
-4. **Stars 数**：来自 GitHub 页面（截至 2026-06），实际数字可能已有变化。
+4. **Stars 数**：来自 GitHub API（2026-09 检查），实际数字可能已有变化。
 
 5. **代码示例**：来自仓库的 `examples/` 目录和 README。所有代码都经过人工阅读，但未经实际运行验证。
 

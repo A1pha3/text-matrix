@@ -189,7 +189,7 @@ README 的开发章节给出的前提是 Node.js >= 20，并且本地需要有 `
 只需要把它接成 MCP server，而不关心 viewer、REST API、cron 或完整运行时时，可以走更轻的独立 MCP 方式：
 
 ```bash
-npx -y @agentmemory/agentmemory mcp
+npx -y @agentmemory/agentmemory@latest mcp
 # 或者使用 shim 包
 npx -y @agentmemory/mcp
 ```
@@ -221,7 +221,7 @@ Claude Code 是 agentmemory 重点照顾的场景。README 给出的推荐路径
 2. 在 Claude Code 里执行 `/plugin marketplace add rohitg00/agentmemory`。
 3. 再执行 `/plugin install agentmemory`。
 
-按 README 的说法，这条路径会同时注册 12 个 hooks、4 个 skills，并通过 `.mcp.json` 自动接上 `@agentmemory/mcp`，因此它的“自动记忆”体验通常会比纯 MCP 接法更完整。
+按 README 的说法，这条路径会注册 12 个 hooks，并通过 `.mcp.json` 自动接上 `@agentmemory/mcp`，README 把它标记为 Claude Code 的 native plugin 形态。因此它的“自动记忆”体验通常会比纯 MCP 接法更完整。
 
 ### 4.3 其他 Agent 接入方式
 
@@ -243,39 +243,42 @@ curl -X POST http://localhost:3111/agentmemory/smart-search \
 
 ## 5. “51 个 MCP 工具”不是全部答案
 
-很多介绍文章都会突出“51 个 MCP tools”，但只停在这个数字，很容易把它误读成一份工具清单。README 更完整的表述是：**51 tools、6 resources、3 prompts、4 skills**。
+很多介绍文章都会突出“51 个 MCP tools”，但只停在这个数字，很容易把它误读成一份工具清单。README 的实际表述是 **51 个 MCP tools + 107 个 REST endpoints**，覆盖核心记忆、治理、多 Agent 协作与诊断四类能力。
 
 agentmemory 暴露给客户端的并不只是函数调用接口，还包括面向上下文注入、状态读取和工作流协作的附加能力。
 
 对大多数人来说，最先用到的通常是下面几类：
 
-| 能力类型 | 代表项 | 用途 |
+| 能力类型 | 代表能力 | 用途 |
 | --- | --- | --- |
-| 回忆与检索 | `memory_recall`、`memory_smart_search`、`memory_file_history` | 找回过去的观察、文件历史和相关上下文 |
-| 主动写入 | `memory_save` | 把决策、经验、偏好保存成长期记忆 |
-| 会话理解 | `memory_sessions`、`memory_timeline`、`memory_profile` | 看最近会话、时间线和项目画像 |
-| 导出与关系查询 | `memory_export`、`memory_relations`、`memory_graph_query` | 导出记忆、查看事实之间的关联 |
-| 治理与验证 | `memory_governance_delete`、`memory_verify` | 审计删除、追溯记忆来源 |
-| 多 Agent 协作 | `memory_lease`、`memory_signal_send`、`memory_team_share` | 并行协作、消息传递、团队共享 |
+| 回忆与检索 | `memory_recall`、`memory_smart_search` | 找回过去的观察、文件历史和相关上下文 |
+| 主动写入 | 把决策、经验、偏好保存成长期记忆 | 手动沉淀值得记住的信息 |
+| 会话理解 | 查看最近会话、时间线与项目画像 | 判断当前上下文是否完整 |
+| 导出与关系查询 | 导出记忆、查看事实之间的关联 | 迁移或审计记忆 |
+| 治理与验证 | 审计删除、追溯记忆来源 | 处理陈旧或敏感记忆 |
+| 多 Agent 协作 | 租约、信号、团队共享 | 并行协作时避免记忆冲突、共享上下文 |
+
+另一个值得了解的细节是记忆本身的模型。对于 `memory_recall` 这类原始观察，保存前会先经 SHA-256 去重（5 分钟窗口内去重）和隐私过滤（剥离 API key、密钥与显式 `<private>` 标注）；而长期记忆会带上类型标记（pattern、preference、architecture、bug、workflow、fact）、1–10 的强度评分、基于 Jaccard 相似度判定的版本替换链、关系图谱，以及 TTL 自动过期。也就是说，agentmemory 里存的不是一条条无差别的字符串，而是有强弱、有版本、有关联、会过期的结构化记忆。
 
 此外还有一组不是 tools 的接口：
 
-- resources，例如 `agentmemory://status`、`agentmemory://project/{name}/profile`
-- prompts，例如 `recall_context`、`session_handoff`
-- skills，例如 `/remember`、`/recall`、`/forget`
+- resources：把项目画像、运行状态等暴露成可订阅的只读接口
+- prompts：提供 `recall_context`、`session_handoff` 这类上下文模板
+- skills：`/remember`、`/recall`、`/forget` 这类可直接调用的技能，README 原生 skills 共 17 个
 
 只把这一节理解成“51 个 MCP 工具一览”会低估它的完整度。agentmemory 更像是在把长期记忆做成一套可调用的能力面，不仅是若干条 CRUD 命令。
 
 ## 6. 为什么 iii 在这里不是幕后依赖
 
-很多同类项目的实现思路是“一个 Node 或 Python 服务 + 一个向量数据库 + 一个 Viewer + 一层工具接口”。agentmemory 走的不是这条路。README 在架构部分反复强调，它本身就是一个运行中的 iii 实例，functions、triggers、KV state、streams、OTEL traces 都是 iii primitives。
+很多同类项目的实现思路是“一个 Node 或 Python 服务 + 一个向量数据库 + 一个 Viewer + 一层工具接口”。agentmemory 走的不是这条路。README 在架构部分反复强调，它本身就是一个运行中的 iii 实例，functions、triggers、KV state、streams、OTEL traces 都是 iii primitives；用 iii 的 HTTP Triggers、KV State 和内存向量索引，直接替代了你通常会在外面单搭的 Express + Postgres/Redis + 向量数据库那一套。
 
 这里的关键点在于，iii 对它来说是产品边界的一部分，不是内部依赖。你会直接用到这些 iii 能力：
 
-- `iii console --port 3114` 用来查看 traces、streams、state 和函数调用。
-- `iii worker add iii-cron` 为记忆巩固、衰减和定时任务提供调度。
-- `iii worker add iii-observability` 打开可观测性链路。
-- `iii worker add iii-queue` 处理 embedding 和压缩任务的重试。
+- `iii console` 用来查看 traces、streams、state 和函数调用（它是 agentmemory 的独立章节，与 viewer 分工明确）。
+- `iii worker add iii-cron` 为记忆巩固、衰减扫描和快照轮换提供调度。
+- `iii worker add iii-observability` 打开 OTEL 可观测性链路（默认开启）。
+- `iii worker add iii-queue` 处理 embedding 和压缩任务的持久化重试。
+- `iii worker add iii-pubsub` 支持多实例记忆：把写入广播给每个连接的实例。
 - `iii worker add iii-database` 在需要时切换到 SQL-backed state adapter。
 
 README 甚至把“viewer 看记住了什么，iii console 看它做了什么”明确区分开了：
@@ -337,7 +340,7 @@ agentmemory 的 README 自己就把 mem0 和 Letta 放在对比表里，结论�
 
 还有几个部署层面的现实边界也需要提前知道：
 
-- 完整服务依赖 `iii-engine v0.11.x` 或 Docker；Windows 额外有安装复杂度。
+- 完整服务依赖 `iii-engine v0.11.2` 或 Docker；macOS/Linux 首次会按版本自动安装 iii，而原生 Windows 需要手动下载 `iii.exe`。
 - 默认 LLM provider 是 no-op，很多 LLM 驱动能力默认关闭，这是为了控制成本和行为可预测性。
 - 如果只跑 standalone MCP，你可以绕开完整运行时，但也会失去 viewer、REST API、cron 等能力。
 

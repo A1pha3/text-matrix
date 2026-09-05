@@ -12,6 +12,8 @@ description: "Neovim 从 Vim 分叉而来，把 UI 和核心拆开，用 msgpack
 
 如果你已经习惯 Vim 的按键，Neovim 是同一个编辑器的现代化版本：操作方式不变，但底层换了一套更可扩展的架构。它把"界面"和"核心"拆成两层，中间用 msgpack-RPC 通信；插件和配置从 Vimscript 迁移到 Lua。这篇文档讲清楚它改动在哪里，以及怎么装、怎么配、怎么写插件。
 
+读完你应该能回答三个问题：Neovim 和 Vim 到底差在哪一层，Lua 配置比 Vimscript 好在哪，以及怎么把一个外部程序（语言服务器、Python 脚本、无头后端）接进编辑器。每一节都配了可运行的示例；装完照着第四节结尾验证，能跑通就说明环境就绪。
+
 ---
 
 ## 一、Neovim 改了什么
@@ -28,7 +30,7 @@ Neovim 在 2014 年由社区发起，从 Vim 分叉出来。它没有重做 Vim 
 | 指标 | 数值 |
 |------|------|
 | GitHub Stars | 102k（2026-08 观测） |
-| 最新版本 | v0.12.4（2026-07-05 发布） |
+| 最新版本 | v0.12.5（2026-08-23 发布） |
 | 默认分支 | master |
 | License | Apache 2.0（部分文件沿用 Vim 协议，用 vim-patch 标注） |
 | 核心语言 | C，配置与插件用 Lua |
@@ -61,7 +63,7 @@ Neovim 最重要的架构决定，是把"界面"和"核心"拆成两个进程，
 └─────────────┘
 ```
 
-这套结构带来的结果：
+这个拆分换来三件确定的事：
 
 - 任何语言都能通过 msgpack-RPC 调用核心功能
 - 开发者可以自己写一个完全不同的界面
@@ -232,27 +234,31 @@ git clone https://github.com/folke/lazy.nvim.git \
 
 ```lua
 require('lazy').setup({
-    { 'folke/tokyonight.nvim' },                 -- 主题
-    { 'nvim-tree/nvim-tree.lua' },               -- 文件树
-    { 'nvim-telescope/telescope.nvim' },         -- 模糊搜索
-    { 'neovim/nvim-lspconfig' },                 -- LSP 配置
-    { 'hrsh7th/nvim-cmp' },                      -- 自动补全
-    { 'nvim-treesitter/nvim-treesitter' },       -- 语法树高亮
+    { 'folke/tokyonight.nvim' },                     -- 主题
+    { 'nvim-neo-tree/neo-tree.nvim' },               -- 文件树
+    { 'nvim-telescope/telescope.nvim' },             -- 模糊搜索
+    { 'neovim/nvim-lspconfig' },                     -- LSP 配置
+    { 'hrsh7th/nvim-cmp' },                          -- 自动补全
+    { 'nvim-treesitter/nvim-treesitter' },           -- 语法树高亮
 })
 ```
 
-lazy.nvim 支持延迟加载：绑定快捷键或文件类型时才加载插件，能显著缩短启动时间（见 4 节之后的性能部分）。
+lazy.nvim 支持延迟加载：绑定快捷键或文件类型时才加载插件，能显著缩短启动时间（见第十节）。
+
+Neovim 0.12 起内置了实验性的 `vim.pack`，只装几个插件时够用；需要复杂的懒加载和依赖管理，`lazy.nvim` 仍然更顺手，下面按 `lazy.nvim` 讲。
 
 ### 5.2 常用插件
 
 | 插件 | 功能 |
 |------|------|
-| nvim-tree/nvim-tree.lua | 文件浏览器 |
+| neo-tree / oil.nvim | 文件浏览器 |
 | telescope.nvim | 模糊搜索 |
 | neovim/nvim-lspconfig | LSP 客户端配置 |
 | hrsh7th/nvim-cmp | 自动补全 |
 | nvim-treesitter | 基于语法树的高亮 |
 | tpope/vim-fugitive | Git 集成 |
+
+文件树这一项曾经的默认是 `nvim-tree/nvim-tree.lua`，该项目在 2024 年停止维护，新配置建议改用 `neo-tree.nvim` 或轻量的 `oil.nvim`。
 
 ### 5.3 写一个 Lua 插件
 
@@ -309,16 +315,34 @@ lspconfig.lua_ls.setup({
 })
 ```
 
-常用命令：
+这些 `setup` 只负责启动语言服务器，不配任何键位。跳转、重命名之类的手感，是 LazyVim 这类发行版在 `on_attach` 里帮你映射好的，Neovim 本身不提供默认按键。想用起来，得自己补一段：
 
-| 命令/按键 | 功能 |
+```lua
+local map = vim.keymap.set
+
+-- 在语言服务器就绪后给这个 buffer 绑定按键
+local on_attach = function(client, bufnr)
+    local opts = { buffer = bufnr, silent = true }
+    map('n', 'gd', vim.lsp.buf.definition, opts)          -- 跳转定义
+    map('n', 'gr', vim.lsp.buf.references, opts)          -- 查找引用
+    map('n', 'K', vim.lsp.buf.hover, opts)                -- 悬停文档
+    map('n', '<leader>rn', vim.lsp.buf.rename, opts)      -- 重命名符号
+end
+```
+
+把 `on_attach` 传给每个 `setup`，例如 `lspconfig.pyright.setup({ on_attach = on_attach })`。
+
+常用操作：
+
+| 操作 | 说明 |
 |-----------|------|
 | `:LspInfo` | 查看 LSP 连接状态 |
 | `:LspRestart` | 重启语言服务器 |
-| `gd` | 跳转定义 |
-| `gr` | 查找引用 |
-| `K` | 悬停文档 |
-| `<leader>rn` | 重命名符号 |
+| `:LspLog` | 查看语言服务器日志 |
+| `gd`（需映射） | 跳转定义 |
+| `gr`（需映射） | 查找引用 |
+| `K`（需映射） | 悬停文档 |
+| `<leader>rn`（需映射） | 重命名符号 |
 
 ---
 
@@ -381,7 +405,7 @@ class MyPlugin:
 `--headless` 模式让 Neovim 不启动界面，只当被调用的引擎：
 
 ```bash
-nvim --headless --listen 127.0.0.1:6666
+nvim --headless --listen /tmp/nvim.sock
 ```
 
 然后用 pynvim 连上去操作：
@@ -389,11 +413,11 @@ nvim --headless --listen 127.0.0.1:6666
 ```python
 import pynvim
 
-nvim = pynvim.attach('socket', path=('/tmp/nvim.sock',))
+nvim = pynvim.attach('socket', path='/tmp/nvim.sock')
 nvim.command('edit test.txt')
 ```
 
-（`--listen` 既支持 TCP 地址也支持 Unix socket 路径，实际部署按需选择。）
+监听地址要和客户端保持一致：上面用的是 Unix socket 路径，`--listen` 也可以换成 TCP 地址（例如 `127.0.0.1:6666`），那样客户端就改用 `pynvim.attach('tcp', address=('127.0.0.1', 6666))`。
 
 ---
 
