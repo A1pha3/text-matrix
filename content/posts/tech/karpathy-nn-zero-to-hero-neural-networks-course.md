@@ -3,15 +3,17 @@ title: "从零手写神经网络：Karpathy 的 nn-zero-to-hero 到底在教什�
 date: "2026-06-02T12:00:00+08:00"
 slug: karpathy-nn-zero-to-hero-neural-networks-course
 github_repo: "karpathy/nn-zero-to-hero"
-description: "Andrej Karpathy 的 nn-zero-to-hero 不是在教你怎么用 PyTorch，而是在逼你面对一个事实：如果你说不清 loss.backward() 里每一层梯度是怎么算出来的，那你其实并不理解自己训练的模型。22.5k stars，8 个 Lecture，从手动反向传播一路写到 GPT。"
+description: "Andrej Karpathy 的 nn-zero-to-hero 不是在教你怎么用 PyTorch，而是在逼你面对一个事实：如果你说不清 loss.backward() 里每一层梯度是怎么算出来的，那你其实并不理解自己训练的模型。8 个 Lecture，从手动反向传播一路写到 GPT。"
 tags: ["Karpathy", "PyTorch", "GPT", "Transformer"]
 categories: ["技术笔记"]
 author: 钳岳星君
 ---
 
-Andrej Karpathy 的 [Neural Networks: Zero to Hero](https://github.com/karpathy/nn-zero-to-hero)（22,500+ Stars，MIT 许可证）把 PyTorch 的高级 API 扔到一边，让你从 `numpy` 数组和 Python 原始运算开始，一行一行地把神经网络里真正在发生的事写出来。它不教你调参——它逼你搞清楚 `loss.backward()` 到底做了什么。
+Andrej Karpathy 的 [Neural Networks: Zero to Hero](https://github.com/karpathy/nn-zero-to-hero)（GitHub 约 2.2 万 star，MIT 许可证）把 PyTorch 的高级 API 扔到一边，让你从 `numpy` 数组和 Python 原始运算开始，一行一行地把神经网络里真正在发生的事写出来。它不教你调参——它逼你搞清楚 `loss.backward()` 到底做了什么。
 
-这门课的分水岭在第五讲。前四讲你用 PyTorch 的自动微分写模型，第五讲 Karpathy 把 autograd 关掉，让你手动把梯度从 Cross Entropy Loss 一路反推到 Embedding 表。做完这一讲，你之前对反向传播的「理解」会被重新定义——不是 autograd 替你懂了，是你自己算了一遍。
+这门课的教学主张可以浓缩成一句话，也是 Karpathy 在访谈里反复说的：**如果不能从零构建它，就不算理解它。** 整门课都是这句话的执行——先手动实现 autograd，再关掉 autograd 手动反传，最后在理解梯度的情况下从零写 GPT。
+
+课程的分水岭在第五讲。前四讲你用 PyTorch 的自动微分写模型，第五讲 Karpathy 把 autograd 关掉，让你手动把梯度从 Cross Entropy Loss 一路反推到 Embedding 表。做完这一讲，反向传播对你来说不再是「autograd 替我算的」，而是「我知道梯度经过哪些层、在哪被压缩、最终落在谁身上」。
 
 ## 学习目标
 
@@ -25,7 +27,20 @@ Andrej Karpathy 的 [Neural Networks: Zero to Hero](https://github.com/karpathy/
 
 ## 课程全景：8 个 Lecture 如何串成一条线
 
-这 8 个 Lecture 之间有一条从手工求导到生成文本的连续路径，每一步都在为下一步铺路。
+这 8 个 Lecture 之间有一条从手工求导到生成文本的连续路径，每一步都在为下一步铺路。先把全景图放在前面，再逐讲拆开。
+
+| 讲 | 视频时长 | 名字 | 你最终写出来的东西 |
+|----|---------|------|-------------------|
+| L1 | 2h25m | micrograd | 一个约 150 行的 autograd 引擎 |
+| L2 | 1h57m | makemore Part 1 | 一个 bigram 字符级语言模型 |
+| L3 | 1h15m | makemore Part 2 | 一个 MLP 语言模型 + 完整训练方法论 |
+| L4 | 1h55m | makemore Part 3 | 激活值/梯度统计诊断 + BatchNorm |
+| L5 | 1h55m | makemore Part 4 | 关掉 autograd 的徒手反向传播 |
+| L6 | 56m | makemore Part 5 | 一个 WaveNet 风格的层次化 CNN |
+| L7 | 1h56m | Let's build GPT | 从零实现一个 GPT 级别 Transformer |
+| L8 | 2h13m | GPT Tokenizer | 一个 GPT-2 兼容的 BPE 分词器 |
+
+时长取自课程官方 syllabus；加上自己动手重写代码的时间，完整走一遍的实际投入大约是视频时长的两倍。
 
 **两条主线，在 L5 交汇：**
 
@@ -33,17 +48,6 @@ Andrej Karpathy 的 [Neural Networks: Zero to Hero](https://github.com/karpathy/
 |------|-------------|----------|
 | 梯度流 | L1, L4, L5 | 梯度到底是怎么流回去的？ |
 | 生成流 | L2, L3, L6, L7, L8 | 字符怎么变成 token，token 怎么变成下一个 token？ |
-
-```text
-L1 micrograd        →  手工实现反向传播（纯 Python，无框架）
-L2 makemore P1      →  用 PyTorch 写第一个 bigram 语言模型
-L3 makemore P2      →  升级为 MLP，引入训练方法论
-L4 makemore P3      →  诊断网络内部：激活值分布、梯度流、BatchNorm
-L5 makemore P4      →  关掉 autograd，徒手反向传播穿过整个网络  ← 分水岭
-L6 makemore P5      →  引入 CNN 架构（WaveNet 风格）
-L7 Let's build GPT  →  从零实现 Transformer / GPT
-L8 GPT Tokenizer    →  从零实现 BPE 分词器
-```
 
 前半段（L1-L5）在回答「梯度流」问题：autograd 怎么工作、激活值和梯度在深层网络里怎么分布、手动反推时每一步的 `dL/dx` 长什么样。后半段（L6-L8）在回答「生成流」问题：从 bigram 到 MLP 到 CNN 到 Transformer，模型能看到的上下文越来越长，生成质量随之提升。
 
@@ -55,17 +59,17 @@ L8 GPT Tokenizer    →  从零实现 BPE 分词器
 
 Karpathy 从零实现了一个叫 `Value` 的 Python 类。每个 `Value` 记住自己是由哪些运算产生的，反向传播时沿着这张计算图逐节点回填梯度。
 
-听完这一讲，链式法则对你来说不再是一个公式——你会亲眼看到它在计算图里变成 `self.grad += local_gradient * upstream_gradient` 这一行代码。你会在 Jupyter 里亲眼看着一个简单表达式 `a * b + c` 的计算图被画出来，然后看到 `backward()` 逐个节点更新梯度值。
+听这一讲的时候，链式法则会从公式变成一行能跑的代码：`self.grad += local_gradient * upstream_gradient`。Jupyter 里画出来的 `a * b + c` 计算图，以及 `backward()` 逐节点更新梯度的过程，比任何教材里的示意图都直观。
 
-这节约 2 小时，核心产出是一个不到 150 行的 autograd 引擎。Karpathy 后来把它拆成了独立仓库 [micrograd](https://github.com/karpathy/micrograd)。
+这一讲视频约 2.5 小时，核心产出是一个不到 150 行的 autograd 引擎。它和 Karpathy 单独维护的 [micrograd](https://github.com/karpathy/micrograd) 仓库是同一套思想的不同实现——读懂这一讲的版本后，再去看独立仓库源码，会发现每一行都认识。
 
 ### L2 — makemore Part 1：语言模型的第一个训练循环
 
-用 PyTorch 的 `torch.Tensor` 实现一个 bigram 字符级语言模型。输入是一串名字（比如全世界的人名），模型要学的是：给定前一个字符，下一个字符最可能是什么。
+先用纯统计计数实现一版 bigram——数出每个字符后面跟着各字符的次数，直接归一化成概率；再用 PyTorch 的 `torch.Tensor` 把同一个模型写成神经网络版本。输入是美国社保局（ssa.gov）发布的 2018 年最常见名字清单，约 3.2 万个英文名字，模型要学的是：给定前一个字符，下一个字符最可能是什么。
 
 这节的关键不在模型本身（bigram 太简单了），而在**训练循环的骨架**：怎么把字符映射成整数索引、怎么算 negative log likelihood loss、怎么从训练好的分布里采样生成新名字。这套骨架会贯穿后续所有 Lecture。
 
-做完你会看到模型从乱码变成「看起来有点像人名的字符串」，loss 曲线在下降——然后卡住，因为 bigram 只能看一个字符的上下文。这个「卡住」的体验本身就是下一讲的动机。
+跟着做完，模型会从乱码变成「看起来有点像人名的字符串」，loss 曲线在下降——然后卡住，因为 bigram 只能看一个字符的上下文。这个「卡住」的体验本身就是下一讲的动机。
 
 ### L3 — makemore Part 2：MLP 与训练的工程直觉
 
@@ -76,7 +80,7 @@ Karpathy 从零实现了一个叫 `Value` 的 Python 类。每个 `Value` 记住
 - **过拟合与欠拟合**：Train loss 和 Dev loss 之间的 gap 是怎么拉开的
 - **超参数搜索**：不靠自动工具，而是用简单的网格搜索感受每个参数的影响
 
-这讲更重要的收获藏在训练循环的细节里：你会开始建立「看 loss 曲线判断问题」的直觉——Train loss 不动、Dev loss 和 Train loss 之间的 gap 拉开、loss 震荡——每种现象背后对应什么原因，Karpathy 都当场改参数给你演示了一遍。
+这讲更重要的收获在训练循环里：你会开始建立「看 loss 曲线判断问题」的直觉——Train loss 不动、Dev loss 和 Train loss 之间的 gap 拉开、loss 震荡——每种现象背后对应什么原因，Karpathy 都当场改参数演示了一遍。
 
 ### L4 — makemore Part 3：神经网络内部的健康诊断
 
@@ -84,7 +88,7 @@ Karpathy 从零实现了一个叫 `Value` 的 Python 类。每个 `Value` 记住
 
 然后引入一个真实问题：深层网络的激活值分布和梯度规模如果不加控制，训练会变得非常脆弱——梯度消失让你训不动，梯度爆炸让 loss 满天飞。
 
-Batch Normalization 就是在这里登场的。Karpathy 不仅讲了 BN 的公式，还让你在代码里看到 BN 前后激活值分布的变化。这种「先看到问题，再看到解法生效」的节奏，比直接背 BN 公式有效得多。
+Batch Normalization 就是在这里登场的。Karpathy 不仅讲了 BN 的公式，还让你在代码里看到 BN 前后激活值分布的变化。先看到问题，再看到解法生效——比直接背 BN 公式有效得多。
 
 ### L5 — makemore Part 4：反向传播的「压力测试」
 
@@ -118,26 +122,27 @@ Batch Normalization 就是在这里登场的。Karpathy 不仅讲了 BN 的公�
 
 ## 一个训练样本在课程里的完整旅程
 
-把整个课程串起来看，一个名字 `"Alice"` 在这个课程体系里会经历什么：
+把整个课程串起来看，一个名字 `"Alice"` 在课程的不同阶段会经历不同的处理：
 
-1. **L8 的分词器**把它切成 `["A", "l", "i", "c", "e"]`，映射成整数 ID `[37, 52, 45, 43, 49]`
-2. **L2-L3 的 MLP** 只拿前一个字符预测下一个：看到 37，猜下一个最可能是 52
-3. **L1 和 L5 的反向传播**保证猜错之后，梯度能准确到达每个 Embedding 向量、每个线性层的权重
-4. **L4 的 BatchNorm** 保证 10 层 MLP 训下去不会梯度消失
-5. **L6 的 CNN** 让模型能同时看到 `"Ali"` 三个字符的模式
-6. **L7 的 Transformer** 让 `"ice"` 能直接注意到 5 个位置之前的 `"Al"`，跨越中间所有字符
+1. **字符映射（L2 建立）**：名字被按字符拆开，每个字符对应一个整数索引。字符级模型用的是 27 个符号——26 个字母加上一个表示名字开头/结尾的边界符，`"Alice"` 因此变成 6 个索引（5 个字母 + 1 个结束符）
+2. **预测下一个字符（L2-L3）**：bigram 只看前一个字符，MLP 把窗口扩到前三个字符。模型在 `"A"` 之后猜下一个最可能是 `"l"` 还是别的
+3. **反向传播（L1、L5）**：猜错之后，梯度从 loss 一路回流，准确落到每个 Embedding 向量和线性层的权重上
+4. **BatchNorm（L4）**：让更深的网络在训练过程中激活值和梯度保持稳定，不会中途训不动
+5. **CNN（L6）**：层次化卷积把模型的有效视野从 3 个字符扩大到几十个字符，能捕捉更长距离的名字结构
+6. **Transformer（L7）**：注意力机制让 `"ice"` 可以直接关联到更早的 `"Al"`，跨过中间所有字符
+7. **BPE（L8）**：输入从字符换成子词 token——这才是 GPT 实际吃进去的东西
 
-同一个样本在课程的不同阶段被反复使用，每次加入新的机制后 loss 都在下降。Karpathy 刻意选了同一个数据集贯穿整门课——每一次架构升级的效果都直接体现在 loss 曲线上，而不是换一套数据让你重新适应。
+同一个名字在课程的不同阶段被反复处理，每次加入新机制后 loss 都在下降。Karpathy 刻意选了同一个数据集贯穿整门课——每一次架构升级的效果都直接体现在 loss 曲线上，而不是换一套数据让你重新适应。
 
 ## 怎么学：三条路径
 
 ### 完整路径（约 30 小时）
 
-按 L1 → L8 顺序走，每个 Notebook 都亲手敲一遍。适合想扎扎实实过一遍的人。
+按 L1 → L8 顺序走，每个 Notebook 都亲手敲一遍。八讲视频本身约 14.5 小时，再加上重写代码和消化，实际投入大约是这个数的两倍。适合想扎扎实实过一遍的人。
 
-### 核心路径（约 15 小时）
+### 核心路径（约 17 小时）
 
-**L1 + L5 + L7 + L8**。这四讲覆盖了这门课最有区分度的内容：
+**L1 + L5 + L7 + L8**。这四讲覆盖了这门课最有区分度的内容，视频合计约 8.5 小时，按完整路径同样的投入比例，实际大约 17 小时：
 
 - L1 给你 autograd 的底层直觉
 - L5 把这个直觉压到极限——手动反传穿过整个网络
@@ -222,7 +227,7 @@ L1 只需要 `numpy`，不需要 GPU。L2 开始用 PyTorch，但所有计算都
 
 **Q: 没有 GPU 能学完这门课吗？**
 
-能。Karpathy 刻意控制了数据规模（L2-L6 用的是一个几千行的人名数据集，L7 用的是莎士比亚文本），所有计算都可以在 CPU 上完成。L1 只需要 `numpy`。
+能。Karpathy 刻意控制了数据规模（L2-L6 以同一个约 3.2 万个名字的人名数据集为主，L7 用的是莎士比亚文本），所有计算都可以在 CPU 上完成。L1 只需要 `numpy`。
 
 **Q: 需要多少数学基础？**
 
@@ -244,11 +249,17 @@ L1 只需要 `numpy`，不需要 GPU。L2 开始用 PyTorch，但所有计算都
 
 做完这 8 讲再回到日常工作里去调 `model.fit()` 和 `trainer.train()`，你排查 loss 不下降、梯度爆炸、学习率不合适这些问题的路径会完全不一样——你不是在文档和报错信息之间来回搜，而是在脑子里回溯梯度流：哪一层可能把梯度截断了，哪个初始化让激活值漂了。
 
-下一步可以往两个方向走：
+用一句话决定现在该不该开始：
+
+- **现在就该开始**：你在写或调模型训练代码，但 loss 出问题时只能靠猜、靠试参数。这门课给你一套「先想梯度流，再动手改」的排查顺序。
+- **可以再等等**：你的工作以业务开发为主，短期不会碰训练细节。先继续用框架和现成工具，等真正需要 debug 训练时再回来补，课程不会过期。
+- **从哪开始**：时间紧就按核心路径（L1 + L5 + L7 + L8）走，时间充裕就完整过一遍。
+
+学完之后，下一步可以往两个方向走：
 
 - **纵向深入**：读 GPT-2 和 GPT-3 的论文原文，你已经有了手写 Transformer 的经验，论文里的公式不再抽象
 - **横向扩展**：看 Karpathy 的 [makemore](https://github.com/karpathy/makemore) 和 [nanoGPT](https://github.com/karpathy/nanoGPT)，把课程里的概念迁移到更完整的实现上
 
 ---
 
-下次你敲 `loss.backward()` 的时候，你会知道从那行代码出发，梯度正在穿过哪些层、经过哪些非线性变换、最终落在哪些参数上。这不是一个抽象的理解——是你在 L5 里亲手算过的那条路径。
+下次你敲 `loss.backward()` 的时候，你会知道从那行代码出发，梯度正在穿过哪些层、经过哪些非线性变换、最终落在哪些参数上。这不是一个抽象的理解——是你在 L5 里亲手算过的那条路径。说到底，这门课想留给你的就是 Karpathy 那句话：如果不能从零构建它，就不算理解它。

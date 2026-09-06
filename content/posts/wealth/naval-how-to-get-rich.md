@@ -1,7 +1,7 @@
 ---
 title: "Naval「如何致富」：从财富、运气到杠杆的一套可执行框架"
 date: "2026-05-01T11:55:58+08:00"
-lastmod: 2026-08-12T00:00:00+08:00
+lastmod: 2026-09-06T01:35:00+08:00
 slug: "naval-how-to-get-rich"
 description: "基于 Naval Ravikant 2018 年的推文风暴与后续长篇访谈，系统梳理财富、运气、股权、杠杆、具体知识、责任感、判断力与长期主义，给出一套可执行的财富创造框架。"
 draft: false
@@ -12,9 +12,23 @@ tags: ["财富自由", "创业"]
 
 > Naval 的「如何致富」不教人一夜暴富。它想回答一个更硬的问题：把财富创造从偶然事件，变成一套长期可重复的方法，需要哪些条件。
 
-2018 年 5 月 31 日，Naval Ravikant 在 Twitter 上发了一组推文，主题是 "How to Get Rich (without getting lucky)"。他是 AngelList 联合创始人，也是 Twitter、Uber、Notion 的早期投资人。那组推文被转发了上百万次，2019 年又被扩展成长篇访谈，后来被整理成书。
+2018 年 5 月 31 日，Naval Ravikant 在 Twitter 上发了一条推文风暴，主题是 "How to Get Rich (without getting lucky)"。他是 AngelList 联合创始人，也是 Twitter、Uber、Yammer 等公司的早期投资人。这条推文链随后被反复截图、转录、翻译成多种语言，流传范围远远超出科技圈。推文风暴之后，Eric Jorgenson 围绕它对 Naval 做了一系列长篇访谈，并在 2020 年整理成《The Almanack of Naval Ravikant》——这本书成了这套框架最完整的载体。
 
 很多人只记住"别靠运气"和"别卖时间"。但具体知识、责任感、杠杆、判断力、长期主义这几样才值得拆开看。
+
+整条推文链的总纲，Naval 给过一句：*Arm yourself with specific knowledge, accountability, and leverage.* 用具体知识立足，用责任感担保，用杠杆放大。剩下的推文都在回答三个更隐蔽的问题：怎么对待运气，怎么使用判断力，怎么让这一切不中断。拆开就是七块零件：
+
+| 零件 | 回答的问题 | Naval 的立场 |
+| ---- | ---- | ---- |
+| 财富观 | 追什么 | 财富是睡觉时也在赚钱的资产，不是金钱，更不是地位 |
+| 运气 | 怎么对待偶然 | 别赌单次开奖，把自己变成能吸引运气的载体 |
+| 具体知识 | 凭什么立足 | 无法被培训复制的知识，长在交叉点和真实好奇心上 |
+| 责任感 | 谁来担保 | 用真名承担结果，换来责任、股权和杠杆 |
+| 杠杆 | 怎么放大 | 代码和媒体是零边际成本、无许可的杠杆 |
+| 判断力 | 往哪里用 | 杠杆是判断力的放大器，用头脑赚钱而不是用时间 |
+| 长期游戏 | 怎么不中断 | 和长期的人玩长期的游戏，让复利不断档 |
+
+本文按这个顺序拆，最后把它们装到具体的人身上。
 
 ---
 
@@ -34,7 +48,7 @@ Naval 第一条推文写的是：*Seek wealth, not money or status. Wealth is ha
 
 ## 运气可以放大，但别去赌
 
-Naval 把运气分成四种。这个划分出自 Marc Andreessen 引用过的一篇经典文章，后来被 Naval 拿来扩展：
+Naval 把运气分成四种。这个划分不是他的原创：神经学家 James Austin 在《Chase, Chance, and Creativity》（1978）里提出四类运气，Marc Andreessen 2007 年在博客上做过总结，Naval 把它接进了财富框架：
 
 1. **盲运气**：纯粹偶然，彩票、突发机遇、时代红利砸到你头上。
 2. **行动力带来的运气**：你做很多事，见很多人，发很多产品，扩大了"运气的表面积"，机会更容易撞上你。
@@ -55,13 +69,45 @@ Naval 有一个很硬的判断标准：在 1000 个平行宇宙里，你最好�
 
 上班当然有价值，不表示所有人都该立刻辞职。但如果你整个职业生涯都停留在"按工时换报酬"，没有任何股权、分成、知识产权或产品所有权，就很难跨过那条线。为什么医生、律师、顾问里赚到大钱的人，往往不是时薪最高的？因为他们最后持有了诊所、品牌、流程、股权、客户网络，或者某种可复制的系统，不是"更贵的时间"。
 
-Paul Graham 在《How to Make Wealth》里表达过同样的意思：大公司里，你的贡献和回报之间隔了很多层——你的边际产出可能是平均工资的 100 倍，但你的收入被锁死在级别上。创业或者持有权益，才让回报有机会逼近真实贡献。
+Paul Graham 在《How to Make Wealth》里从测量的角度给过同一个结论：在合适的生意里，真正投入的人能创造出普通员工十倍甚至上百倍的财富；而大公司测量不了个人的真实产出，只能付一份可预测的工资，多出来的部分被平均掉了。创业或者持有权益，才让回报有机会逼近真实贡献。
 
 ---
 
-## 杠杆决定你能把 1 份能力放大成多少份结果
+## 值钱的是具体知识，不是热门技能
 
-Naval 反复提到 leverage。致富的关键在于让同样一份判断和能力被放大很多倍，光"更努力"不够。
+杠杆决定放大倍数，而具体知识（specific knowledge）决定你为什么值得被放大。
+
+*Specific knowledge is knowledge that you cannot be trained for. If society can train you, it can train someone else, and replace you.* 某种能力如果可以流程化教授、考试化筛选、规模化复制，你就会迅速变得可替代，回报也会向平均值靠拢。
+
+Peter Thiel 的那句名言——"竞争是留给失败者的"，是《Zero to One》的中心论点之一。这和具体知识是同一个逻辑：可替代的能力没有定价权。
+
+具体知识有几个特征：
+
+1. 它很难被完整教会，通常靠学徒制而非学校传承。*When specific knowledge is taught, it's through apprenticeships, not schools.*
+2. 它常常处在多个能力的交叉点——技术 + 审美 + 写作，或者金融 + 行业理解 + 销售。
+3. 它对你来说更像玩，对别人来说才像工作。*Building specific knowledge will feel like play to you but will look like work to others.*
+4. 它和你的好奇心、成长背景、长期偏好强绑定，不是追风口能临时拼出来的。*Specific knowledge is found by pursuing your genuine curiosity and passion rather than whatever is hot right now.*
+5. 它往往高度技术性或创造性，无法被外包，也无法被自动化。*Specific knowledge is often highly technical or creative. It cannot be outsourced or automated.*
+
+换个问法：别总问"现在最热门的行业是什么"，问"我在哪件事上有天然兴趣、长期耐力和不容易被复制的优势"。市场为不可替代性付钱，不是为"你和一万人一样熟练"付钱。
+
+---
+
+## 责任感，让你变得不可替代
+
+具体知识让你不可替代，但它还需要一个署名。这个词是 accountability：愿意在自己的名字下承担结果。
+
+*Embrace accountability, and take business risks under your own name. Society will reward you with responsibility, equity, and leverage.* 很多人想要更高回报，却不想承担公开失败的风险。想要股权，却不想承受波动。Naval 说得很直接：社会不会为"可被随时替换的匿名执行者"付太多钱。
+
+*The most accountable people have singular, public, and risky brands: Oprah, Trump, Kanye, Elon.* 他用这四个名字不是因为他们道德完美，而是因为他们都有鲜明的个人品牌——事情做成了，所有人知道是谁做的；做砸了，也跑不掉。责任感就是把皮肤放进游戏里。
+
+小团队、小公司、直接面对用户和结果的岗位，更能让人成长，原因就在这里。输入很容易统计，输出却常被大组织稀释。只要你的工作始终不能被清楚地归因到你身上，你就很难获得与判断力相匹配的回报。
+
+---
+
+## 杠杆决定放大倍数
+
+原料齐了，接下来是放大器。Naval 反复提到 leverage：致富的关键在于让同样一份判断和能力被放大很多倍，光"更努力"不够。
 
 他把杠杆分成三类：
 
@@ -71,44 +117,15 @@ Naval 反复提到 leverage。致富的关键在于让同样一份判断和能�
 | 资本杠杆 | 用钱放大决策 | 需要信誉、记录和资本来源 | 很强，但通常先得证明自己 |
 | 代码与媒体杠杆 | 零边际复制成本的产品反复分发 | 前期需要具体知识与长期积累 | 当代最强，也最接近"无许可" |
 
-*Fortunes require leverage. Business leverage comes from capital, people, and products with no marginal cost of replication (code and media).* 代码和媒体被单独拎出来，因为复制成本接近于零。一段软件写出来后，可以服务全球用户。一篇文章、一期播客、一个视频，只要真的有价值，就能被无限传播。不需要一对一重复交付，也不一定需要先获得谁的批准。
+资本杠杆尤其依赖前两样东西的组合。Naval 说得更直接：*Capital means money. To raise money, apply your specific knowledge with accountability and show resulting good judgment.* 想拿到钱，就得先拿出具体知识、责任感，以及看得见的判断力来证明自己。这也解释了为什么他把这三样放进同一条推文——*Arm yourself with specific knowledge, accountability, and leverage.* 它们是一套组合，不是一个三选一。
 
-这就是 permissionless leverage——无许可杠杆。*Code and media are permissionless leverage. They're the leverage behind the newly rich.* 写代码、写作、做播客、做视频，都是在制造一个会替你工作的"机器人"。*If you can't code, write books and blogs, record videos and podcasts.*
+代码和媒体被 Naval 单独拎出来：*Fortunes require leverage. Business leverage comes from capital, people, and products with no marginal cost of replication (code and media).* 复制成本接近于零，是它们和另外两种杠杆的分界线。一段软件写出来后，可以服务全球用户；一篇文章、一期播客、一个视频，只要真的有价值，就能被无限传播。不需要一对一重复交付，也不一定需要先获得谁的批准。
+
+Naval 把这个特性称为 permissionless leverage，无许可杠杆：*Code and media are permissionless leverage. They're the leverage behind the newly rich.* 写代码、写作、做播客、做视频，都是在制造一个会替你工作的"机器人"。*If you can't code, write books and blogs, record videos and podcasts.* 他还有一句更形象的：*An army of robots is freely available—it's just packed in data centers for heat and space efficiency. Use it.* 一支免费的机器人大军就放在那里，只是藏在数据中心里，用起来。
 
 不是每个人都必须成为程序员。但低复制成本产品的逻辑值得想清楚：只要你的产出能被反复分发，而不是只能反复亲自交付，你就在向财富而不是收入靠近。
 
 Naval 还给这种创造加了一个前提：规模化。*You will get rich by giving society what it wants but does not yet know how to get. At scale.* 只解决一个人的问题，向上是帮忙，不构成财富；要让同一种能力服务一千个、一万个同类问题，才谈得上放大。这也是为什么低复制成本那么关键——它决定了你找到的答案能复制多少次。
-
----
-
-## 值钱的是具体知识，不是热门技能
-
-如果说杠杆决定放大倍数，具体知识（specific knowledge）决定你为什么值得被放大。
-
-*Specific knowledge is knowledge that you cannot be trained for. If society can train you, it can train someone else, and replace you.* 某种能力如果可以流程化教授、考试化筛选、规模化复制，你就会迅速变得可替代，回报也会向平均值靠拢。
-
-Peter Thiel 在《Zero to One》里说"竞争是留给失败者的"，意思是做别人做不了的事。这和具体知识是同一个逻辑：可替代的能力没有定价权。
-
-具体知识有几个特征：
-
-1. 它很难被完整教会，只能在实践、学徒制、长期沉浸里慢慢长出来。
-2. 它常常处在多个能力的交叉点——技术 + 审美 + 写作，或者金融 + 行业理解 + 销售。
-3. 它对你来说更像玩，对别人来说才像工作。*Building specific knowledge will feel like play to you but will look like work to others.*
-4. 它和你的好奇心、成长背景、长期偏好强绑定，不是追风口能临时拼出来的。*Specific knowledge is found by pursuing your genuine curiosity and passion rather than whatever is hot right now.*
-
-换个问法：别总问"现在最热门的行业是什么"，问"我在哪件事上有天然兴趣、长期耐力和不容易被复制的优势"。市场为不可替代性付钱，不是为"你和一万人一样熟练"付钱。
-
----
-
-## 责任感，让你变得不可替代
-
-另一个常被忽略的词是 accountability：愿意在自己的名字下承担结果。
-
-*Embrace accountability, and take business risks under your own name. Society will reward you with responsibility, equity, and leverage.* 很多人想要更高回报，却不想承担公开失败的风险。想要股权，却不想承受波动。Naval 说得很直接：社会不会为"可被随时替换的匿名执行者"付太多钱。
-
-*The most accountable people have singular, public, and risky brands: Oprah, Trump, Kanye, Elon.* 他用这四个名字不是因为他们道德完美，而是因为他们都有鲜明的个人品牌——事情做成了，所有人知道是谁做的；做砸了，也跑不掉。责任感就是把皮肤放进游戏里。
-
-小团队、小公司、直接面对用户和结果的岗位，更能让人成长，原因就在这里。输入很容易统计，输出却常被大组织稀释。只要你的工作始终不能被清楚地归因到你身上，你就很难获得与判断力相匹配的回报。
 
 ---
 
@@ -124,17 +141,21 @@ Naval 对 judgment 的定义：看见行动的长期后果，并据此做出更�
 2. 足够真实的后果，而不是隔岸观火。
 3. 足够稳定的情绪，不被愤怒、虚荣和自我幻想拖着走。
 
-阅读、写作、算术、说服、编程、数学、逻辑这些能力被 Naval 看得那么重，不是能直接让人发财，而是能提高你识别真伪、抽象问题和校准判断的能力。配上杠杆，差距会被指数级放大。Naval 用一句话概括过这个位置：*Earn with your mind, not your time.* 用判断而不是工时去换钱。判断力一旦配上杠杆，一次正确的押注，能抵得上你过去几年的劳动。
+阅读、写作、算术、说服、编程、数学、逻辑这些能力被 Naval 看得那么重，不是能直接让人发财，而是能提高你识别真伪、抽象问题和校准判断的能力。他也给过一份更具体的学科清单：微观经济学、博弈论、心理学、说服、伦理学、数学和计算机。*Study microeconomics, game theory, psychology, persuasion, ethics, mathematics, and computers.* 他甚至说，世界上没有一种叫"商业"的技能，别读商业杂志，别上商业课。*There is no skill called "business." Avoid business magazines and business classes.*
+
+判断力还需要一个日常校准的锚。Naval 的建议是设定并守住一个理想的小时费率：*Set and enforce an aspirational personal hourly rate. If fixing a problem will save less than your hourly rate, ignore it. If outsourcing a task will cost less than your hourly rate, outsource it.* 修一样东西省下的钱低于你的时薪，就别自己修；外包一件事花的钱低于你的时薪，就外包。这个数字不是用来估算收入的，是用来让每次小决策都经过一次机会成本的检验。
+
+把这些配上杠杆，差距会被指数级放大——推文里有一句常被跳过的话：*Leverage is a force multiplier for your judgment.* 杠杆是判断力的放大器。Naval 用一句话概括过这个位置：*Earn with your mind, not your time.* 用判断而不是工时去换钱。判断力一旦配上杠杆，一次正确的押注，能抵得上你过去几年的劳动。
 
 ---
 
 ## 互联网让"做自己"第一次能规模化
 
-很多人记住 Naval 那句"通过真实性逃离竞争"，但后半句更重要：互联网把分发成本压低之后，真实性才第一次成了可商业化的优势。
+很多人记住 Naval 那句"通过真实性逃离竞争"（escape competition through authenticity）。这句话有个常被忽略的前提：互联网把分发成本压低之后，古怪的真实性才第一次能找到自己的市场。
 
-前互联网时代，一个小镇里可能根本没有市场容纳你的古怪兴趣与细分能力。互联网改变的是分母。世界足够大，小众爱好、独特表达、专业见解和细分产品，都有机会找到对应的受众。
+前互联网时代，一个小镇可能根本没有市场容纳你的古怪兴趣与细分能力。Naval 在推文里写过：*The internet has massively broadened the possible space of careers. Most people haven't figured this out yet.* 互联网已经大幅拓宽了职业空间，而大多数人还没意识到。它改变的是分母：世界足够大，小众爱好、独特表达、专业见解和细分产品，都有机会找到对应的受众。
 
-*Learn to sell. Learn to build. If you can do both, you will be unstoppable.* 这是第十一条推文。销售和构建两件事，一个人能同时做到，就很难被替代。
+*Learn to sell. Learn to build. If you can do both, you will be unstoppable.* 这是第八条推文。销售和构建两件事，一个人能同时做到，就很难被替代。
 
 "productize yourself" 拆成三步：
 
@@ -152,9 +173,25 @@ Naval 对 judgment 的定义：看见行动的长期后果，并据此做出更�
 
 原因是复利。金钱会复利，关系会复利，信任会复利，声誉也会复利。你在一个行业里长期积累的，不只是经验，还有别人对你可预测性的判断。合作越久，摩擦越小，交易成本越低，能做的事就越大。*Play iterated games. All the returns in life, whether in wealth, relationships, or knowledge, come from compound interest.*
 
-ethics 被放到这套东西里，不是道德说教。失信会让长期复利断裂。Naval 的原话是 ethical wealth creation：靠创造增量价值去拿结果，不是靠欺骗、寻租、违规、垄断。*Don't partner with cynics and pessimists. Their beliefs are self-fulfilling.* 和高智力、高能量、高诚信的人合作，远离犬儒主义者。
+诚信在这套体系里不是道德装饰。失信会让长期复利断裂。Naval 的原话是 ethical wealth creation：靠创造增量价值去拿结果，不靠欺骗、寻租、违规、垄断。*Don't partner with cynics and pessimists. Their beliefs are self-fulfilling.* 和高智力、高能量、高诚信的人合作，远离犬儒主义者。
 
-还要接受一件反直觉的事：绝大多数努力大概率会白费。Naval 的原话是 *99% of your effort will go to waste*——你不知道哪 1% 会真正起作用，所以只能不断尝试，让每一次尝试都落在同一个长期账本上。没人能提前告诉你哪一次会命中，你能控制的只是提高试错次数，并让它们都发生在信任和复利不被打断的前提下。
+还要接受一件反直觉的事：绝大多数努力大概率会白费。《The Almanack of Naval Ravikant》在"长期游戏"那一章里，专门收了 Naval 的一段话，标题就叫 *99% of effort is wasted*。他怕人误读，特意补了一句：不是不做那 99%，而是那值钱的 1% 几乎无法提前识别——所以正确的动作是一边不断尝试，一边等那个能让你 all-in、bet big 的东西出现。正因为没人能提前告诉你哪一次会命中，你能控制的只有两件事：提高试错次数，并让每一次试错都落在信任和复利不被打断的前提下。
+
+---
+
+## 把零件装到一个人身上：Naval 自己的路径
+
+这套框架在 Naval 本人身上走得通，每一步都有据可查。
+
+他的具体知识长在交叉点上：达特茅斯学院的计算机科学与经济学学位，技术加市场的组合，成了他后来做产品和投资的底座。真实战绩也很硬：1999 年参与创办消费点评网站 Epinions，公司后来并入 Shopping.com 并上市；此后又联合创办了搜索技术公司 Vast.com。
+
+责任感用的是自己的名字：以真名公开写作、公开表达投资判断，声誉可以直接归因。
+
+杠杆他两样都用上了。2010 年与人联合创办 AngelList，把原本只在少数人脉圈子里运转的天使投资，做成了一个开放平台——代码和产品替代了一对一撮合；随后的推文和播客，又给他的判断力装上了媒体杠杆。今天人们引用的这套"如何致富"，本身就是无许可杠杆的一次演示：一条 2018 年的推文链，到今天还在替他工作。
+
+判断力则体现在早期投资里：Twitter、Uber、Yammer 都在他的早期投资名单上。
+
+同一张牌桌，他一坐十几年：AngelList 至今仍在运营，他也仍在公开写作和投资。复利没断过。
 
 ---
 
@@ -166,7 +203,7 @@ Naval 对"自由"有一种偏执的保护欲，所以他特别警惕两件事：
 
 Taleb 在《随机生存的智慧》（The Bed of Procrustes）里写过一句更狠的话："最有害的三样瘾，是海洛因、碳水化合物和一份月薪。" 这话夸张，但意思明确：稳定现金流很容易让人对现状产生依赖，不敢承担短期不舒服却长期重要的风险。
 
-至于"快速致富"—— Naval 觉得那几乎总是别人的赚钱方式，不是你的。能长期成立的财富创造，慢、难、反人性，还伴随大量不确定性。可能是连续几年都看不见结果的产品打磨，是漫长的品牌积累，是一次次小失败换来的一次大命中，不是一门 79.95 美元的秘诀课。
+至于"快速致富"—— Naval 觉得那几乎总是别人的赚钱方式，不是你的。能长期成立的财富创造，慢、难、反人性，还伴随大量不确定性。可能是连续几年都看不见结果的产品打磨，是漫长的品牌积累，是一次次小失败换来的一次大命中，不是一门几百块的"秘诀课"。
 
 还有一条底线，Naval 讲得很重：不要归零。别用违法、失信、毁掉健康或押上全部本金的方式去赌一次暴富。能承受失败，不能承受毁灭性失败。
 
@@ -206,11 +243,11 @@ Naval 的东西很强，但不是没有边界。
 
 一个局限：它天然带有技术与互联网时代的偏向。代码、媒体、全球分发、个人品牌，这些东西在今天极其重要，但并不意味着所有行业都能完全照搬。
 
-另一个：它更接近一套"财富创造原则"，不是一份人人都能同速执行的路线图。起点条件、地域环境、风险承受能力、家庭负担，都是真实存在的约束。任何人都可以沿着这些原则去提高创造财富的概率和上限，但说"任何人都能做到"太粗糙。
+另一个局限更根本：它是一套"财富创造原则"，不是一份人人都能同速执行的路线图。起点条件、地域环境、风险承受能力、家庭负担，都是真实存在的约束。任何人都可以沿着这些原则去提高创造财富的概率和上限，但说"任何人都能做到"太粗糙。
 
 还有一条：它谈的是财富，不是人生的全部。Naval 后来自己补了一句——当你终于变富，你会发现那不是你真正追求的一切。金钱能解决金钱问题，却买不来平静的头脑、健康的身体和充满爱的关系。
 
-最后也是最容易被误读的一点：这套框架把"大致可用的市场、可执行的法律和普遍的互联网基础设施"当成了前提。在资本流动受限、市场不成熟的环境里，同样的原则会以完全不同的形态起作用，不能机械照搬。它提升的是你创造财富的概率和上限，不保证路径本身畅通。
+最容易被误读的一点是：这套框架把"大致可用的市场、可执行的法律和普遍的互联网基础设施"当成了前提。在资本流动受限、市场不成熟的环境里，同样的原则会以完全不同的形态起作用，不能机械照搬。它提升的是你创造财富的概率和上限，不保证路径本身畅通。
 
 ---
 
@@ -220,12 +257,14 @@ Naval 的整套财富观，就是在回答一个问题：你能不能逐步把�
 
 财富的意义在于，它能让你不必为了生存把全部时间卖掉；能让你和更好的人做更久的事；能让你把自己真正擅长的部分，借助杠杆放大出去；也能让你在面对荒唐事务时更从容地说一句"不"。
 
-最后留一句：慢慢把自己变成那种，即使重来很多次，也依然有能力创造财富的人。
+最后留一句：把自己变成那种人——推倒重开一千次，九百九十九次都能重新变富的人。
 
 ## 参考资料
 
+- [原始推文链：How to Get Rich (without getting lucky), 2018](https://twitter.com/naval/status/1002103360646823936)
 - [Naval, How to Get Rich](https://nav.al/rich)
 - [Marc Andreessen, Luck and the Entrepreneur](https://pmarchive.com/luck_and_the_entrepreneur.html)
 - [Paul Graham, How to Make Wealth](http://paulgraham.com/wealth.html)
 - [Peter Thiel, Zero to One](https://zerotoone.com/)
 - [Eric Jorgenson, The Almanack of Naval Ravikant](https://www.navalmanack.com/)
+- [The Almanack of Naval Ravikant：Play Long-Term Games With Long-Term People（章节页）](https://www.navalmanack.com/almanack-of-naval-ravikant/play-long-term-games-with-long-term-people)

@@ -1,10 +1,10 @@
 ---
-title: "supabase/supabase：75k Stars 的 Postgres 全栈平台，今天为什么还在 Trending"
+title: "Supabase：把 Postgres 变成一套免运维后端，为什么成了 AI 应用的默认数据库"
 date: "2026-07-03T20:57:00+08:00"
-lastmod: "2026-07-03T20:57:00+08:00"
+lastmod: "2026-09-06T10:00:00+08:00"
 draft: false
 slug: "supabase-supabase-postgres-platform-today-trending-guide"
-description: "supabase 仓库今日再登 GitHub Trending，单日 +145 Stars。本文从「开源 BaaS（后端即服务）」「Postgres 平台」「AI 集成」三个角度拆解 supabase 今天的信号：Edge Functions 性能改进、Auth 与 RLS（行级安全）协同、Vector 类型优化与 Realtime 多区域。"
+description: "Supabase 是建立在 Postgres 之上的开源 BaaS，把数据库、认证、对象存储、实时推送和边缘函数打包成一套带管理界面的平台。本文拆开它的系统组成：哪些组件属于主仓库、哪些是独立服务；再顺着一条真实请求，看 PostgREST、行级安全、Auth、Realtime 如何配合；最后给出一份选型边界与采用顺序。"
 categories: ["技术笔记"]
 tags: ["开源"]
 author: "text-matrix"
@@ -14,167 +14,207 @@ author: "text-matrix"
 
 读完本文你将能够：
 
-- 说明 supabase 在「开源 BaaS（后端即服务）」赛道的定位，和 Firebase / Neon / Appwrite 的差异
-- 解释 supabase 仓库为什么不在「快速增长」阶段还能拿到 Trending 关注（Postgres + 生态战略）
-- 列出 supabase 主仓库的 6 大组件与今日热提交（Edge Functions、Auth、Realtime、Vector）
-- 判断 supabase 在你的项目里是否合适，以及与自建 Postgres + Prisma 方案的取舍
+- 说清 Supabase 在「开源 BaaS（后端即服务）」里的定位，以及它和 Firebase、Neon、Appwrite 的分野
+- 看懂主仓库与 GoTrue、PostgREST、Realtime、Storage 等独立服务之间的编排关系
+- 顺着一条真实请求，理解 PostgREST 生成 REST API、行级安全（RLS）、JWT 认证、Realtime 推送如何逐层配合
+- 判断你的项目该不该用 Supabase，以及从哪一步开始接入
 
-适合读者：评估 Supabase 作为后端方案的架构师、正在做 Postgres + Edge Functions 技术选型的工程师，以及对开源 BaaS 赛道感兴趣的开发者。
+适合读者：正在做后端技术选型的架构师，需要 Postgres 但不想自己维护周边设施的全栈工程师，想搞清 Supabase「组件到底怎么分」的开发者。
 
-> 范围说明：supabase 是一个 75k Stars、100+ 文件 README 的复合型平台仓库。本文不展开 supabase 教程，也不复述入门 CRUD（增删改查）。本文只回答三件事：今天为什么会再次上榜、近期主线改了什么、采用边界在哪里。
-
----
 
 ## 一、先给判断
 
-supabase 仓库今天（2026-07-03）再次登上 GitHub Trending，单日 +145 Stars。这件事需要拆成两层来看：
+Supabase 真正解决的问题不是「给我一个数据库」，而是「我想用 Postgres，但不想运维数据库之外的那一圈设施」。它把 Postgres 当作底座，在上面补上认证、对象存储、实时订阅和边缘函数，最后用一套 Web 管理界面（Studio）把全部能力包起来。对开发者来说，它交付的是一个「打开就能用、背后是标准 Postgres」的完整后端。
 
-**第一层：为什么是今天？** supabase 仓库的提交节奏相对稳定，不是「今天突然爆发」型。把它放上 Trending 榜的，主要是三股外部流量：
+很长一段时间里它被贴上「开源版 Firebase」的标签，这并不完整。Firebase 的数据模型是文档型（Firestore），而 Supabase 从头到尾就是一个标准的 Postgres 实例——你随时能用 `pg_dump` 把数据搬去任何自托管的 Postgres。它的差异化恰恰在底层协议的开放性，而不是在使用习惯上与 Firebase 对标。
 
-- **AI 集成相关**：pgvector（Postgres 向量扩展）+ Supabase Vector 的稳定化，让很多 RAG（检索增强生成）项目把 supabase 当成默认后端
-- **Edge Functions 性能改进**：Deno runtime 升级到 2.0，冷启动时间从 ~250ms 降到 ~80ms
-- **Auth 与 RLS（Row Level Security）协同**：RLS policy（行级安全策略）编辑器在 Studio UI 里直接拖拽生成 SQL
+关注度为什么长期居高不下，可以看两个可核实的外部信号：
 
-**第二层：supabase 已经不是「BaaS 初创」了。** 它现在处于「Postgres 平台 + 生态战略」阶段。75k Stars 数量级说明这个仓库的开发者关注度非常高，单日 +145 是稳定流量，不是爆款。
+- 2026 年 6 月，Supabase 完成 5 亿美元 F 轮融资，新加坡主权基金 GIC 领投，估值 105 亿美元——距上一轮（2025 年 10 月，估值 50 亿美元）不到八个月，估值翻倍。
+- 同一轮融资披露的数据显示，新增数据库中超过六成由 AI 编码工具（Claude Code、Cursor、Lovable、Bolt 一类）创建；Supabase 正成为这些工具生成应用时的默认后端。
 
-把过去 24 小时（2026-07-02 ~ 2026-07-03）的提交扫一遍，核心信号是：
+这两个数字放在一起，能解释它的热度从哪来：不是某一天的一次性爆发，而是「AI 应用后端」这条叙事在持续兑现。GitHub 上的活跃度是这种趋势的日常反映，不必当成单日事件来读。
 
-- **Edge Functions**：Deno 2.0 runtime 升级 + 冷启动优化
-- **Realtime**：多区域复制（Multi-region Replication）公开测试
-- **Vector**：HNSW 索引（基于图的近似最近邻索引）参数在 Studio UI 里可视化调优
-- **Auth**：PKCE flow（Proof Key for Code Exchange，OAuth 2.0 防劫持流程）成为默认 OAuth 流程
 
----
+## 二、系统地图
 
-## 二、项目地图：6 大组件
+先搞清楚一件事，很多误解从这里来：**Supabase 不是一个把数据库引擎装在一个仓库里的项目。** 主仓库 `supabase/supabase` 是一个 monorepo，但它不含数据库引擎，也不含绝大多数服务本体。真正干活的服务是几个独立的仓库，主仓库负责把它们编排起来，并托管 Web 界面与文档。
 
-supabase 主仓库是一个 monorepo（单一代码仓库管理多包），6 个子包各自独立：
+```mermaid
+flowchart LR
+    subgraph mainRepo["supabase/supabase（主仓库）"]
+        Studio["apps/studio 管理界面"]
+        Docs["apps/docs 文档"]
+        SDK["packages/* 各语言客户端"]
+    end
+    subgraph services["独立服务仓库"]
+        GoTrue["supabase/auth（GoTrue）认证"]
+        PostgREST["PostgREST REST API"]
+        Realtime["supabase/realtime 实时订阅"]
+        Storage["supabase/storage（storage-api）对象存储"]
+        Edge["supabase/edge-runtime 边缘函数"]
+    end
+    Postgres[("Postgres 数据库")]
+    Studio --- GoTrue
+    Studio --- PostgREST
+    Studio --- Realtime
+    Studio --- Storage
+    SDK --- PostgREST
+    SDK --- GoTrue
+    SDK --- Realtime
+    Storage --- Postgres
+    Realtime --- Postgres
+    PostgREST --- Postgres
+    GoTrue --- Postgres
+    Edge --- Postgres
+```
 
-| 组件 | 职责 | 关键依赖 |
+各仓库的职责大致是：
+
+| 仓库 | 职责 | 说明 |
 | --- | --- | --- |
-| `apps/studio/` | Web 管理界面（数据表、RLS 编辑器、SQL 编辑器） | Next.js、Radix UI |
-| `apps/docs/` | 文档站（mintlify） | mintlify |
-| `packages/supabase-js/` | JS 客户端 SDK | TypeScript |
-| `packages/postgres-meta/` | Postgres 元数据 HTTP 暴露 | Postgres 系统表 |
-| `packages/realtime/` | Realtime 服务（WebSocket 监听 DB 变更） | Elixir、Phoenix |
-| `packages/storage/` | S3 兼容对象存储 | Postgres 元数据 + S3 |
+| `supabase/supabase` | 编排 + Studio + 文档 + 客户端 SDK | monorepo，不含数据库引擎 |
+| `supabase/auth`（GoTrue） | 用户认证，签发 JWT | Go 实现，独立仓库 |
+| PostgREST | 把 Postgres 表自动暴露成 REST API | 独立开源项目 |
+| `supabase/realtime` | 监听数据库变更，经 WebSocket 推送 | Elixir / Phoenix 实现 |
+| `supabase/storage` | S3 兼容的对象存储 | 元数据存在 Postgres |
+| `supabase/edge-runtime` | 边缘函数运行时 | 基于 Deno |
 
-**注意**：GoTrue（Auth 服务）、PostgREST（REST API 自动生成）、storage-api 都是独立仓库，supabase 主仓库通过 docker-compose 把它们编排起来。**supabase 主仓库本身不包含「数据库引擎」——它是一个编排 + Studio UI 的中央仓库**。
+这套分工的好处是每个服务可以独立演进、独立发布；代价是接口契约变更要跨多个仓库同步。对使用者而言，这些仓库边界大多不影响日常开发——你只需要通过客户端 SDK 访问统一的入口，但了解边界能帮你判断「某个能力坏了该去查哪个仓库」、「自托管时 docker-compose 到底把哪些容器拉起来了」。
 
-这套 monorepo 设计的好处是：
 
-- 单个 PR（Pull Request，代码合并请求）可以跨组件改，比如 RLS policy 编辑器从 UI 改到 SQL 层
-- Studio UI 的更新可以单独发版，不依赖后端
+## 三、两条主线
 
-代价是：
+把系统拆开看，其实是两条相互独立的线，别混在一起读。
 
-- 子包之间的接口契约变更需要同步多个仓库
-- monorepo 体积大（~200MB 含 node_modules 缓存）
+**第一条：数据访问线。** 你建表，PostgREST 按 schema 自动生成 REST 端点，Auth 提供 JWT，RLS 决定这条 JWT 能碰哪些行。这条线处理「谁、能读/写哪些数据」，是 Supabase 安全模型的全部。
 
----
+**第二条：平台服务线。** Realtime 把数据变更推出去，Storage 存文件，Edge Functions 跑服务端逻辑、也能触发数据库操作。这条线管「数据之外的能力」。
 
-## 三、今日热提交：4 个主线方向
+这两条线在边缘函数处交汇：一个函数可以带用户身份调用数据访问线（PostgREST），也可以把结果写回数据库再通过 Realtime 推给客户端。下文先讲机制，再用一个任务把它们串起来。
 
-把 `commits/main.atom` 过去 24 小时梳理了一下，4 个方向各有几条提交：
 
-### 1. Edge Functions：Deno 2.0 升级
+## 四、核心机制
 
-- `chore(edge-runtime): upgrade to deno 2.0` — Deno runtime 升级
-- `perf(edge-runtime): cold start optimization 250ms → 80ms` — 冷启动优化
-- `feat(edge-runtime): support node: builtins` — 兼容 Node.js 内置模块
+按第三节的划分展开：第 1、2 小节属于数据访问线，第 3、4、5 小节属于平台服务线。
 
-冷启动从 250ms 降到 80ms 这件事对 RAG 场景影响很大——很多 RAG 应用每次调用都触发 Edge Function，冷启动延迟直接体现在用户感知上。
+### 1. 数据访问线：PostgREST + RLS
 
-### 2. Realtime：多区域复制
+PostgREST 读取数据库 schema，为每张表和视图生成对应的 REST 端点（`GET /rest/v1/todos` 之类）。它不生成代码，是运行时动态映射。安全性不靠应用层过滤，而是靠 Postgres 的行级安全：
 
-- `feat(realtime): enable multi-region replication (public beta)` — 多区域复制公开测试
-- `chore(realtime): add region pinning to WebSocket URL` — WebSocket 区域绑定
+- 你给某张表开 RLS 并创建 policy，例如 `todos` 表只允许 `user_id = auth.uid()` 的行被读取；
+- PostgREST 把请求里的 JWT 解析成数据库角色上下文，再执行查询；
+- 查询落到 Postgres 时，RLS policy 在返回行之前生效，越界的行根本到不了应用层。
 
-Realtime 的多区域复制意味着：用户在东京的 supabase 实例写入的数据，可以在 < 1s 内同步到新加坡、法兰克福的只读副本。这对全球化产品（多地区用户写入）很重要——之前要自建多区域方案（read replica + 写入聚合）很复杂。
+这一设计的关键点在于：**RLS 是数据库层面的硬约束，不是应用层的软过滤。** 只要请求走的是 `anon`、`authenticated` 这类受限数据库角色，不管它来自哪个客户端、哪门语言，policy 一视同仁。这也是为什么要反复强调「所有表都开 RLS」——它是 Supabase 安全的承重墙。
 
-### 3. Vector：HNSW 索引可视化
+两个容易被忽略的前提：其一，`auth.uid()` 能拿到用户 ID，是因为 PostgREST 把请求头里的 JWT 写进了 Postgres 的会话变量，函数再从这些变量里取值——所以 policy 生效的前提是请求确实经过 PostgREST 或等价的身份注入。其二，`service_role`（服务端密钥）对应的角色带 `BYPASSRLS`，用它访问时 RLS 默认被绕过。生产环境要避免把 `service_role` 泄漏到客户端。
 
-- `feat(studio): visualize HNSW index params in Vector tab` — HNSW 索引参数可视化
-- `perf(pgvector): batch insert optimization 3x faster` — 批量插入优化 3x
+### 2. 认证：GoTrue 与 PKCE
 
-`m = 16, ef_construction = 64` 这些参数之前要手写 SQL 调，现在可以在 Studio UI 里滑块调。这是 supabase 把「AI 集成从开发者可见」变成「产品经理可见」的具体落点。
+认证服务是 GoTrue（仓库现名 `supabase/auth`），负责注册登录、签发 JWT，并为数据库角色提供上下文。
 
-### 4. Auth：PKCE 成为默认
+登录协议有两种走向，这里容易写错，值得单独讲清：
 
-- `feat(auth): default to PKCE flow for OAuth providers` — PKCE 成为 OAuth 默认流程
-- `chore(auth): deprecate implicit grant for Google/GitHub OAuth` — 不再支持 implicit grant
+- **implicit flow**：授权完成后 access token 直接落在 URL 片段（`#access_token=...`）。只适用于纯客户端应用，服务器拿不到 token。
+- **PKCE flow**：授权返回的是一个一次性授权码（`code`），由客户端用验证码再换 token，可服务端处理和签名验证，对 SSO、深度链接更安全。
 
-PKCE flow 是 OAuth 2.1 推荐流程，对 SPA（Single Page Application，单页应用）场景更安全。implicit grant 之前是 SPA 的妥协方案，现在 PKCE 普及后可以彻底 deprecate。
+Supabase 官方在**服务端渲染（SSR）场景默认用 PKCE**——`@supabase/ssr` 初始化的客户端直接走 PKCE，并把会话写进 Cookie。但在**纯 JS / Dart 客户端，默认仍是 implicit flow**，需要你显式设置 `flowType: 'pkce'` 才算切过去。所以笼统说「PKCE 已全局成为默认、implicit 已废弃」并不准确——准确的说法是：官方推荐新项目在新客户端（尤其需要服务端参与、走深度链接或跨设备单点登录时）用 PKCE，而旧的隐式流程仍然保留给纯客户端场景。
 
----
+一个实际约束：PKCE 的 code verifier 在发起流程时就存在发起端，因此授权码交换必须在同一浏览器、同一设备发起，否则会换取失败——这在多标签页或 OAuth 弹窗（如 Chrome 扩展）里会踩坑。
 
-## 四、supabase 当前的定位：BaaS 还是 Postgres 平台？
+### 3. Realtime：数据库变更怎么推给前端
 
-这是一个值得单独回答的问题。supabase 的官方定位写过两段话：
+Realtime 订阅的是数据库本身，不是应用内存状态。它通过 Postgres 的逻辑复制（logical replication）监听 WAL，捕获表变更，经 WebSocket 推给订阅了对应 channel 的客户端。应用服务端不需要自己维护连接映射。
 
-> "Supabase is an open source Firebase alternative."
-> "Supabase is a Postgres development platform."
+它的能力分三块：`postgres_changes` 订阅表变更，`broadcast` 在客户端之间发自定义消息，`presence` 维护在线状态。典型用途：
 
-这两段话不矛盾，但强调了不同阶段。早期（2020-2022）supabase 主打「开源 Firebase 替代」，吸引 Firebase 价格敏感的开发者。现在的 supabase 强调「Postgres 平台」——因为它越来越发现：开发者选择 supabase 的真正理由是「我想用 Postgres，但不想自己运维」。
+- 协作类应用（多人编辑、共享看板）：一条记录被改，所有在线客户端同步拿到变更；
+- 订单 / 通知类场景：后端或边缘函数写入状态，前端实时收到；
+- 在线人数、打字状态这类信号，交给 presence，不用自己写心跳。
 
-这个定位转变带来 3 个具体变化：
+多区域扩展依赖的是**读副本（Read Replicas）**：把只读副本部署到其他区域，让读请求就近访问副本，降低跨区域延迟。写操作的主写入仍在一个主区域，副本是异步追平的。不要把它理解成「跨区域秒级一致的读写集群」——副本数据有一定延迟，也没有就近写。
 
-1. **Studio UI 越来越重**：从「CRUD + Auth」走向「数据建模 + RLS 编辑器 + Vector 调参 + Edge Function 调试」的全套工具链
-2. **Postgres 扩展生态**：从「pgvector」扩展到「pg_cron、postgis、pg_stat_statements、pg_trgm」的官方支持矩阵
-3. **生态战略**：supabase 推出 Marketplace（auth0、twilio、stripe 集成）、Templates（Next.js + supabase starter）、AI 工具（Vector + Edge Function + Lovable）
+### 4. Edge Functions：贴近数据的服务端逻辑
 
-**对于架构师来说，supabase 当前的真实价值是：把 Postgres + Auth + Storage + Edge Functions 这 4 件事打包成一个「能用、不需要运维」的整体**。如果你的项目只需要其中 1-2 件（比如只要 Postgres + Auth），自建 Neon + Clerk 也许更轻。
+边缘函数跑在基于 Deno 的 `edge-runtime` 里，定位是「离数据近、需要快速触发」的服务端逻辑：Webhook 回调、OAuth 令牌交换、定时任务（cron），以及带着用户身份去查数据库。它和「长期运行的服务」是两类东西——函数有执行时限、无状态、靠请求触发，不适合放长时间任务或重计算。
 
----
+### 5. Storage 与 Vector
 
-## 五、采用边界
+Storage 是 S3 兼容的对象存储，文件本身的访问控制同样走 RLS：可以写 policy 指定「这个桶里的对象只有上传者能读」。元数据（对象名、大小、所属用户）存在 Postgres 里。
 
-### 适合
+向量能力来自 `pgvector` 扩展，直接复用主数据库。两种索引各有取舍：`HNSW` 查询性能更好、召回稳定，代价是构建慢、内存占用多；`ivfflat` 构建快、省内存，适合数据量大、能接受查询质量略降的场景。Supabase 在 Studio 里把这套索引参数做了可视化，省掉了手写 SQL 这一步。
 
-- **新项目从 0 到 1**：3 个组件（DB + Auth + Storage）的开箱即用体验，2 天可以搭出 MVP（最小可行产品）
-- **AI 应用 + RAG 场景**：pgvector + Edge Function + Vector 调参 UI 是当前最顺手的组合
-- **团队不想自己运维 Postgres**：supabase 官方 cloud + 自托管两条路都可用
-- **需要 Realtime**：Postgres LISTEN/NOTIFY（监听机制）+ WebSocket 一等公民支持
-- **多人协作**：Studio UI 的 SQL 编辑器 + 数据表可视化支持团队共享 schema
 
-### 不太适合
+## 五、一个任务流过系统
 
-- **强监管行业**（金融、医疗）：合规审计要求细粒度控制，自建 Postgres + 自托管 Vault 更可控
-- **超大规模（> 1TB 单库）**：supabase 官方 cloud 的单库上限是 1TB，超出要拆库
-- **需要极低延迟（< 10ms p99）**：supabase 的 Edge Functions 冷启动 + 网络 RTT（往返时延）加起来很难达到这个目标
-- **跨云多区域写**：Realtime 多区域复制目前是只读副本，主写入仍然是单一区域
-- **想完全摆脱 Postgres**：supabase 的所有功能都围绕 Postgres，迁移出去的成本很高
+把两条线串起来，看一次「用户登录后拉取自己的待办，并实时看到新条目」会经历什么：
 
-### 升级建议
+1. 用户在客户端用邮箱密码登录，GoTrue 校验并签发 JWT，客户端把它带在之后的所有请求头上。
+2. 客户端通过 supabase-js 发起 `GET /rest/v1/todos`，请求头带着 JWT 到达 PostgREST。
+3. PostgREST 把 JWT 映射成数据库角色，执行查询；`todos` 表上的 RLS policy 把返回集收敛到 `user_id = auth.uid()` 的行，越界行被丢弃。
+4. 客户端同时订阅 `todos` 的 Realtime channel。
+5. 过了一会儿，一条边缘函数（比如定时任务）往 `todos` 插入了一行分配给当前用户的新记录。Realtime 捕获这条变更，经 WebSocket 推给订阅者，前端界面无需轮询便更新。
 
-- 用 Firebase 的现有项目：迁移到 supabase 的成本可控（firestore → postgres + RLS），但要重新设计数据模型
-- 用 Neon + Prisma + Clerk 自建的：可以保留 Neon 作为 DB，把 Auth + Storage 迁移到 supabase 简化运维
-- 用 AWS RDS + Cognito 的：supabase 的开发体验更好，但需要评估迁移成本
+这条路径正是 Supabase 的产品主张：CRUD、权限、实时更新几乎不需要你手写服务端代码。而一旦某一步（比如 RLS 忘了开，或把服务端密钥放进前端）出了问题，整条安全链会在一处断裂，所以下面会专门讲注意点。
 
----
 
-## 六、和 Firebase / Neon / Appwrite 的边界
+## 六、选型边界与对比
+
+先给一张对照表，再讲哪些情况下该选、哪些情况别选。表里的判断只代表能力方向，具体配额随套餐变动，判断时看的是「有没有」而不是「精确到几位」：
 
 | 维度 | Supabase | Firebase | Neon | Appwrite |
 | --- | --- | --- | --- | --- |
-| 数据模型 | Postgres | Firestore / RTDB | Postgres | MariaDB / Postgres |
-| 鉴权 | 自带（GoTrue） | 自带 | 需自接（Clerk / Auth.js） | 自带 |
-| Realtime | 一等公民 | 一等公民 | 无 | 一等公民 |
-| Edge Functions | Deno 2.0 | Cloud Functions | 无 | 自带 Deno runtime |
-| AI / Vector | pgvector + Studio 调参 | 需 Firestore Vector | pgvector | 无 |
-| 迁移成本 | 中（Postgres 协议） | 高（Firestore 协议） | 低 | 中 |
-| 自托管 | 支持 | 不支持 | 支持（但不推荐） | 支持 |
+| 数据模型 | Postgres（关系型） | Firestore / RTDB（文档型） | Postgres | 主库 MySQL/MariaDB，可选 Postgres |
+| 复合查询能力 | 关系查询、JOIN、CTE、全文 | 较弱 | 关系查询 | 一般 |
+| 认证 | 自带（GoTrue） | 自带 | 需自接 | 自带 |
+| 对象存储 | 自带 | 自带 | 无 | 自带 |
+| Realtime | 数据库变更 + WebSocket | 一等公民 | 无 | 有 |
+| 边缘函数 | Deno 运行时 | Cloud Functions | 无 | 内置运行时 |
+| AI / 向量 | pgvector，Studio 可视化 | 需额外方案 | pgvector | 无原生方案 |
+| 数据可迁移 | 标准 Postgres，pg_dump 即可 | 强绑定 | 标准 Postgres | 中 |
+| 自托管 | 支持（docker-compose） | 不支持 | 支持（不推荐） | 支持 |
 
-对于「Postgres + 一站式后端」的组合，supabase 是当前体验最好的开源方案。
+### 该选的情况
 
----
+- **从 0 到 1 的新项目，需要 DB + Auth + Storage 快速跑通**，一两天能搭出 MVP；
+- **AI / RAG 应用**，有现成的向量与嵌入流，且想要可视化调索引；
+- **不想自己运维 Postgres**，但又希望它躲在标准 Postgres 后面、将来可搬走；
+- **需要实时同步**，且不想自己写长连接的推送服务。
 
-## 七、起步建议
+### 别急着选的情况
 
-1. **新项目直接上官方 cloud**：`supabase.com` 注册项目，2 分钟拿到 DB + Auth + Storage + Edge Functions 全套
-2. **AI 项目用 pgvector + Edge Function**：参考 supabase 官方 `with-voyage-embedding` 模板
-3. **正式上线前规划 RLS**：所有表必须开 RLS，这是 supabase 安全的核心；Studio UI 的 policy 编辑器可以拖拽生成 SQL
-4. **生产环境评估自托管**：如果走自托管，建议用 `supabase/supabase` 仓库的 docker-compose，不要自己拼组件
-5. **监控 Realtime 区域延迟**：开了多区域复制后，用 supabase 的 `pg_stat_replication` 视图看同步延迟，> 1s 就要排查网络
+- **强监管行业**（金融、医疗），对细粒度合规审计有硬要求，希望完全掌控自托管链路——这一点 Supabase 有自托管选项，但要自行承担运维复杂度；
+- **单库体量极大**：免费档约 0.5 GB，付费档按 compute 档位和磁盘配置往上扩，但单个平台实例在容量、连接数、IOPS 上都有阶梯上限。体量一旦逼近单实例上限，你要考虑拆表拆库，这时自建 PostgreSQL 集群反而更直接；
+- **低延迟（个位数毫秒 p99）的强要求**：托管平台在网络上多一跳，连接还要过一层连接池，裸机/自建的延迟下限更低；
+- **需要多区域可就近写入**：读副本只解决读、主写入仍单区域，写密集且分布全球的业务要另行评估；
+- **完全想摆脱 Postgres 的团队**：Supabase 的一切都长在 Postgres 上，离开它的成本很高。
 
-这套路径可以在 1 天内走完。supabase 今天的 Trending 表现是「稳定流量」，不是「爆款事件」——它已经过了「快速增长」阶段，进入「生态战略 + Postgres 平台化」的下一程。
+### 与两条自建路线的取舍
+
+- **Firebase 存量项目**：可迁移，Firestore 的文档模型要重构成关系表 + RLS，迁移成本主要体现在数据模型而不是协议。
+- **Neon + Clerk + 自建对象存储**：如果你只需要 Postgres + Auth 且已有既定栈，这条路更轻、组件更小；当你还想要存储与实时推送时，Supabase 的一体化才更有优势。
+
+
+## 七、几个常见的坑
+
+下面这些坑在引入 Supabase 时最容易踩，列出来比靠经验挨个试更省事。
+
+1. **表没开 RLS**。新建表默认不启用行级安全。忘了开，等于把整张表通过匿名角色暴露出去。建议每个表和存储桶都默认开 RLS。
+2. **把 `service_role` 密钥放进前端**。它是服务端密钥，绕过 RLS。泄漏等于数据库裸奔。
+3. **客户端默认还在跑 implicit**。JS / Dart 客户端默认不是 PKCE，如果走 SSR 或深度链接，务必显式切到 PKCE 并用 Cookie 存会话。
+4. **把 Realtime 读副本当「强一致多区域写入」用**。副本异步、就近读，写入仍主区域，别在上面做写逻辑。
+5. **假设边缘函数可以跑重活**。它有执行时限、无状态，长任务要换普通服务或队列。
+
+
+## 八、采用顺序
+
+如果确定要上，按下面的顺序推进，每步都先验证再往下走：
+
+1. **先从官方云端一个项目起步**，注册后拿到 DB + Auth + Storage + Realtime + Edge Functions，验证主链路（登录 → 写数据 → 实时推送）是否符合预期。
+2. **把安全基线做在前面**：所有表开 RLS、写好最小 policy、确认 `service_role` 只在服务端使用。这一步决定后面是否要返工。
+3. **数据访问线先稳定**：把核心表和 RLS 定好，用客户端 SDK 跑通 CRUD，再谈其他能力。
+4. **按需叠加平台服务**：需要文件加 Storage，需要实时加 Realtime，需要边缘逻辑加 Edge Functions，不用的就不开。
+5. **规模化的迹象出现后再谈迁移**：当单个实例的容量、连接、IOPS 摸到阶梯上限，且读多写多、想就近读时，再评估读副本或自建集群。
+
+一句话收尾：Supabase 的价值不在「免费」「开源」这些标签，而在把一组容易分散成多个服务的能力，收敛到一个你熟悉的 Postgres 之上。如果你欢迎这种收敛，它是当下最省事的起点；如果你更需要颗粒度与自治，从自建开始会更适合。

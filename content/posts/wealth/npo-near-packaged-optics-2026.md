@@ -13,7 +13,7 @@ hiddenFromHomePage: true
 
 # 光进铜退：224G 时代 NPO 为什么成了超节点的最优解
 
-2024 年 1 月，OIF 把 CEI-112G-XSR+ IA 写进规范：13dB 损耗预算，允许一个可分离插座。从那以后，NPO 在标准上拿到了"可以独立封装、独立测试、独立更换"的法律地位。两年过去，2026 年的产业问题已经不再是 NPO 能不能做，而是 NPO 凭什么在 CPO 性能更好、可插拔生态更成熟的情况下，拿下超节点的 2027-2028 窗口。
+2024 年 1 月，OIF 把 CEI-112G-XSR+ IA 写进规范：13dB 损耗预算，允许一个可分离互连（插座）。从那以后，NPO 在标准上拿到了"可以独立封装、独立测试、独立更换"的法律地位。两年过去，2026 年的产业问题已经不再是 NPO 能不能做，而是 NPO 凭什么在 CPO 性能更好、可插拔生态更成熟的情况下，拿下超节点的 2027-2028 窗口。
 
 ## 一句话判断
 
@@ -115,7 +115,7 @@ NPO 的定义很窄也很具体：把已完成独立封装的光引擎（OE，Op
 三个结构性特征定义了这个路线：
 
 1. **光引擎独立封装**：OE 与 ASIC 分别设计、制造、测试，良率解耦，故障可单独更换。
-2. **可分离电接口**：LGA/uLGA 压接插座是标志性实现，装配后光引擎仍可拆装，XSR+ 规范允许一个分离互连界面。
+2. **可分离电接口**：LGA / uLGA（Land Grid Array / micro Land Grid Array，栅格阵列 / 微型栅格阵列）压接插座是标志性实现，装配后光引擎仍可拆装，XSR+ 规范允许一个分离互连界面。
 3. **光源可外置**：ELSFP（External Laser Small Form Factor Pluggable，外置光源可插拔模块）外置激光模块独立散热、冗余备份、支持热插拔更换。
 
 与可插拔、CPO 的对照，集中在四个维度：
@@ -145,10 +145,10 @@ NPO 与 CPO 的电气性能差距（约 3dB）远小于两者在良率、维修�
 以一个 115.2T 交换系统为参照，一束 1.6T 信号从 ASIC 出来后经历六道节点：
 
 1. **ASIC → 高速载板**：≤150mm 铜通道，损耗 ≤13dB（XSR+）。
-2. **OE 内 PIC/EIC**：PIC 把电信号变成 CW 激光调制的多波长信号，EIC 提供驱动与跨阻放大。
-3. **OE → FAU**：单引擎 16-32 通道光纤耦合，对准精度 0.1-2µm。
+2. **OE 内 PIC/EIC**：PIC（Photonic Integrated Circuit，光子集成芯片）把电信号变成 CW（Continuous Wave，连续波）激光调制的多波长信号，EIC（Electronic Integrated Circuit，电子集成芯片）提供驱动与跨阻放大。
+3. **OE → FAU**：FAU（Fiber Array Unit，光纤阵列单元）完成单引擎 16-32 通道光纤耦合，对准精度 0.1-2µm。
 4. **FAU → Fiber Shuffle**：板内光纤通道重排，把引擎 1 的通道 N 接到机架外端口 N。
-5. **Shuffle → MPO/SN-MT**：高密度光纤连接器送出机柜。
+5. **Shuffle → MPO/SN-MT**：MPO（Multi-fiber Push On，多芯推入式连接器）/ SN-MT（高密度推入式 MT 连接器）将光纤送出机柜。
 6. **MPO → 外部光纤链路**：跨机架 50-100m 传输到对端 XPU。
 
 系统口径下：72 只 1.6T 光引擎 + 72 只 FAU + 约 144 个 MPO 级端口 + 18 只 ELSFP。每一道节点都独立封装、独立测试，这是 NPO 名字里那个"独立"的真正含义。
@@ -156,6 +156,8 @@ NPO 与 CPO 的电气性能差距（约 3dB）远小于两者在良率、维修�
 ---
 
 ## 技术深水区：光引擎、ELS、FAU 三块被低估的拼图
+
+ELS（External Laser Source，外置光源）与 ELSFP 的关系需要先厘清：ELSFP 是外置光源的可插拔封装形态，ELS 是泛指这一方案——把激光器从光引擎中拆出来，放在散热更有利的位置。
 
 ### 光引擎：硅光与 VCSEL 并行，Micro-LED 还在试探
 
@@ -244,7 +246,7 @@ ASIC↔OE 之间有三种电连接方式：
 |------|------------------|------|
 | 光引擎 OE | 34.6 | ≈57% |
 | ELS 外置光源 | 12.6 | ≈21% |
-| MPO（多芯光纤连接器）连接 | 7.2 | ≈12% |
+| MPO 连接 | 7.2 | ≈12% |
 | FAU | 3.6 | ≈6% |
 | Fiber Shuffle | 3 | ≈5% |
 
@@ -340,7 +342,7 @@ TrendForce 给出的 CPO 渗透率曲线（NPO 在数据中常与 CPO 合并或�
 ### 阵营二：光模块与光器件厂
 
 - **中际旭创**：TeraHop 为 Open CPX MSA 创始成员；OFC 2026 展示 6.4T 可插拔 NPO 引擎；2027 量产（官方）。
-- **新易盛**：OFC 2026 发布 6.4T NPO（32×200G 硅光）；12.8T XPO 同步推进。
+- **新易盛**：OFC 2026 发布 6.4T NPO（32×200G 硅光）；12.8T XPO（液冷可插拔形态，基于 64×200G 通道）同步推进。
 - **Coherent**：激光器 + 模块双线，400mW CW 旗舰。
 
 这条阵营的逻辑是：NPO 保住独立光引擎形态，模块厂能力可以直接迁移，CPO 的路线价值反而不在他们这边。
@@ -352,7 +354,7 @@ TrendForce 给出的 CPO 渗透率曲线（NPO 在数据中常与 CPO 合并或�
 - **Ayar Labs**：光 I/O 芯粒（OIO），比 NPO 更进一步。
 - **Celestial AI**：被 Marvell 收购。
 
-把这三个阵营叠在一起看：NPO 之争的表面是技术路线，实质是"价值留在模块厂还是流向晶圆代工 / ASIC 厂"的分配之战。NVIDIA 双轨下注、模块厂抱团 MSA、初创被收购——三方都在为 2027-2028 的放量窗口卡位。
+把这三个阵营叠在一起看：NPO 之争表面是技术路线，底下其实是价值分配——留在模块厂，还是流向晶圆代工 / ASIC 厂。NVIDIA 双轨下注、模块厂抱团 MSA、初创被收购，三方都在为 2027-2028 的放量窗口卡位。
 
 ---
 
@@ -493,10 +495,21 @@ NPO 整机 BOM 的新增成本集中在三块。以 102.4T 超节点、ELSFP + F
 
 把这五条串成一条链：物理（SerDes 翻倍、铜介质到顶、趋肤深度缩小）把可插拔逼出 Scale-up 场景；工程（联合良率、维修性、功耗）把 CPO 的兑现节奏拉长；NPO 恰好卡在 13dB 损耗、9-12W 单引擎和独立封装的三岔路口——这是它在 2026-2028 窗口里最稳的位置。
 
-值得追问的不是"谁会赢"，而是：
+值得追问的不是"谁会赢"，而是三个具体变量：
 
 - 当 448G SerDes 把铜通道再砍一半，NPO 能否守住 13dB 边界，还是被迫向 CPO 迁移？
 - 当 ELSFP 把激光器价值从模块内剥离，国产 CW-DFB / UHP / InP 衬底三个环节的突破节奏，能否支撑超节点国产化？
 - 当英伟达从双轨转向单轨，NPO 还能否保住模块厂的产业主导权？
 
 这些问题的答案，决定 NPO 是这十年的过渡形态，还是 Scale-up 光互联的长期主航道。
+
+## 来源与延伸阅读
+
+- OIF《CEI-112G-XSR+-PAM4 Extended Extra Short Reach Implementation Agreement》（2024-01-17，13dB 损耗预算与 NPO 应用范围）：https://www.oiforum.com/oif-unveils-cei-112g-xsr-pam4-extended-extra-short-reach-implementation-agreement-paving-the-way-for-advanced-interconnectivity/
+- OIF《3.2T Co-Packaged Module Implementation Agreement》（2023-04-05，首个共封装标准，32×CEI-112G-XSR 主机侧）：https://www.oiforum.com/oif-launches-the-industrys-first-co-packaging-standard-the-3-2t-co-packaged-module-implementation-agreement/
+- OIF《External Laser Small Form-Factor Pluggable（ELSFP）Implementation Agreement》（2023-08-08，外置激光源前面板可插拔形态）：https://www.oiforum.com/oif-announces-external-laser-small-form-factor-pluggable-elsfp-implementation-agreement-paving-the-way-for-advancements-in-co-packaged-optics-applications/
+- OIF Q2 2026 会议启动 12.8T/6.4T NPO Module IA 项目（2026-06-04）：https://www.oiforum.com/oif-q2-meeting-advances-management-for-path-startup-encryption-near-package-optics-and-high-density-connector-interfaces/
+- Marvell 以约 32.5 亿美元首付收购 Celestial AI（2025-12-02 公告）：https://www.fibre-systems.com/article/marvell-breaks-ai-limits-celestial-ai-photonic-fabric-technology-deal
+- Arista 发起 12.8T XPO 液冷可插拔 MSA（2026-03-12）：https://vva.marketminute.com/article/bizwire-2026-3-12-arista-announces-xpo-high-density-liquid-cooled-pluggable-optics
+- Open CPX MSA 于 Hot Interconnects 2026 公布的插拔光引擎架构（TeraHop 为创始成员之一）：https://convergedigest.com/open-cpx-msa-socketed-optics-ai-scale-up/
+- 华为牵头启动国内首个 NPO 光互连 MSA（2026-07，20 余家伙伴）：https://m.hexun.com/stock/2026-08-08/224790432.html

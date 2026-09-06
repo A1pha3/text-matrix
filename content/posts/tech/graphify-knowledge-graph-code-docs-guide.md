@@ -1,17 +1,17 @@
-+++
-github_repo = "facebookresearch/llama"
-date = '2026-04-30T11:30:00+08:00'
-draft = false
-title = 'Graphify：将任意文件夹转化为可查询的知识图谱'
-slug = 'graphify-knowledge-graph-code-docs-guide'
-description = 'Graphify 是一个 Python 本地运行的 AI 编码助手技能，能将代码、文档、PDF、图片甚至视频转化为可查询的知识图谱，无需 Neo4j、无需服务器。'
-categories = ['技术笔记']
-tags = ['知识图谱', 'Python', '开源']
-+++
+---
+title: "Graphify：将任意文件夹转化为可查询的知识图谱"
+date: 2026-04-30T11:30:00+08:00
+slug: "graphify-knowledge-graph-code-docs-guide"
+github_repo: "Graphify-Labs/graphify"
+description: "Graphify 是一个 Python 本地运行的 AI 编码助手技能，能将代码、文档、PDF、图片甚至视频转化为可查询的知识图谱，无需 Neo4j、无需服务器。"
+draft: false
+categories: ["技术笔记"]
+tags: ["知识图谱", "Python", "开源"]
+---
 
 # Graphify：将任意文件夹转化为可查询的知识图谱
 
-> Graphify 是一个由 Python 驱动、本地运行的 AI 编码助手技能，能将代码、文档、PDF、图片甚至视频转化为可查询的知识图谱。MIT 许可证、Python 3.10+ 即可运行，无需 Neo4j、无需服务器。在 Karpathy 的混合语料（52 个文件）测试中，每个查询的 token 消耗比直接读取原始文件降低 **71.5 倍**。
+> Graphify 是一个由 Python 驱动、本地运行的 AI 编码助手技能，能将代码、文档、PDF、图片甚至视频转化为可查询的知识图谱。Apache-2.0 许可证、Python 3.10+ 即可运行，无需 Neo4j、无需服务器。在 Karpathy 的混合语料（52 个文件）测试中，每个查询的 token 消耗比直接读取原始文件降低 **71.5 倍**。
 
 <!--more-->
 
@@ -49,15 +49,15 @@ Graphify 的灵感来自 Andrej Karpathy 的工作方式：他在一个 `/raw` �
 ### 1.3 项目概览
 
 ```
-仓库：      safishamsi/graphify
-Stars：    38,379（截至 2026-04-30）
+仓库：      Graphify-Labs/graphify
+Stars：    115,013（截至 2026-09-05）
 创建时间：  2026-04-03
-许可证：    MIT
+许可证：    Apache-2.0
 语言：      Python
-版本：      0.5.5
-PyPI：      graphifyy（graphify 名称正在认领中）
-主页：      https://graphifylabs.ai/
-默认分支：  v5
+版本：      0.9.54
+PyPI：      graphifyy（graphify 名称已被占用，CLI 命令仍为 graphify）
+主页：      https://www.graphify.com/
+默认分支：  v8
 ```
 
 支持的主流 AI 编码助手：
@@ -92,7 +92,7 @@ Graphify 构建的知识图谱以**节点（Node）** 和**边（Edge）** 为�
 
 ### 2.2 三种置信度标签
 
-理解 Graphify 的置信度体系是正确使用工具的关键：
+Graphify 的置信度体系决定了你如何看待它的输出：
 
 | 标签 | 含义 | 典型来源 |
 |------|------|---------|
@@ -143,7 +143,7 @@ detect()  →  extract()  →  build_graph()  →  cluster()  →  analyze()  �
 | 图片 | `.png .jpg .webp .gif` |
 | PDF | `.pdf`（需 `graphifyy[pdf]`） |
 
-实现要点：`detect.py` 中定义了 `CODE_EXTENSIONS`、`DOC_EXTENSIONS` 等常量，`collect_files()` 根据这些常量过滤文件，隐蔽地忽略 `node_modules`、`__pycache__`、`.git` 等无关目录。
+实现上，`detect.py` 中定义了 `CODE_EXTENSIONS`、`DOC_EXTENSIONS` 等常量，`collect_files()` 根据这些常量过滤文件，自动跳过 `node_modules`、`__pycache__`、`.git` 等无关目录。
 
 ### 3.2 阶段二：extract — 多模态内容提取
 
@@ -266,7 +266,7 @@ def analyze(G: nx.Graph) -> dict:
 
 ### 4.1 代码解析：tree-sitter AST + 调用图推断
 
-Graphify 的代码解析是业界最完整的方案之一，当前支持 **21 种编程语言**：
+Graphify 的代码解析基于 tree-sitter AST，全部在本机完成、无需 LLM 调用，已覆盖 **约 40 种编程语言**，以下是部分示例：
 
 ```
 Python、TypeScript/JavaScript、Go、Rust、Java、C、C++、
@@ -420,7 +420,7 @@ Graphify 采用**管线架构**（Pipeline Architecture），各阶段职责单�
 
 ### 5.3 增量更新机制
 
-Graphify 的增量更新通过 **SHA256 缓存**实现，这是其高效性的关键：
+Graphify 的增量更新通过 **SHA256 缓存**实现，核心是给文件内容做哈希，只重处理变化的文件：
 
 ```
 cache/
@@ -434,7 +434,7 @@ cache/
 
 ### 5.4 安全机制
 
-`security.py` 是 Graphify 的安全护城河，所有外部输入必须通过它：
+`security.py` 是所有外部输入的必经关口：
 
 | 验证函数 | 防护目标 |
 |---------|---------|
@@ -444,14 +444,14 @@ cache/
 | `validate_graph_path()` | 确保图文件路径在 `graphify-out/` 内 |
 | `sanitize_label()` | 去除控制字符、最大 256 字符、HTML 转义 |
 
-> v0.5.4 修复：SSRF DNS 重绑定漏洞——`safe_fetch` 在整个请求期间 patch `socket.getaddrinfo`，彻底封堵 DNS rebinding 攻击。
+> v0.5.4 修复：SSRF DNS 重绑定漏洞——`safe_fetch` 在整个请求期间 patch `socket.getaddrinfo`，封堵 DNS rebinding 攻击。
 
 ## 6. 安装与配置
 
 ### 6.1 系统要求
 
-- **Python**: 3.10+（支持 Python 3.14+，v0.5.5+ 已移除上限约束）
-- **AI 模型**: Claude Code（默认）、Kimi K2.6（可选，v0.5.5+）
+- **Python**: 3.10+
+- **AI 模型**: 代码解析完全本地（tree-sitter，无需 LLM）；语义提取可选后端：Claude、Gemini、Kimi、OpenAI、Ollama、DeepSeek 等
 - **操作系统**: macOS、Linux、Windows（PowerShell）
 
 ### 6.2 标准安装（推荐）
@@ -473,7 +473,7 @@ graphify --version
 mkdir -p ~/.claude/skills/graphify
 
 # 下载 Skill 文件
-curl -fsSL https://raw.githubusercontent.com/safishamsi/graphify/v1/skills/graphify/skill.md \
+curl -fsSL https://raw.githubusercontent.com/Graphify-Labs/graphify/v8/graphify/skill.md \
   > ~/.claude/skills/graphify/SKILL.md
 ```
 
@@ -644,6 +644,21 @@ graphify merge-graphs graphify-out-1/graph.json graphify-out-2/graph.json
 | 读原始文件 | ~1,200,000 tokens | 1x |
 | Graphify 图谱查询 | ~16,800 tokens | **71.5x** |
 
+这个基准测的是"同一批事实、两种查询方式的 token 开销差"，不是泛化的性能承诺。它能说明：图谱把一次性构建成本摊薄后，单次查询的 token 消耗与语料规模基本解耦。它不能推出的结论是"图谱查询一定更准"——回答质量仍取决于提取阶段 LLM 的语义理解，以及图谱是否覆盖了你关心的细节。
+
+### 7.11 任务流：52 个混合文件如何变成一张可查询的图
+
+把前几节串起来看一次完整流转。在 Karpathy 的混合语料（代码 + 论文 + 图片，52 个文件）上执行 `/graphify ./raw`：
+
+1. **detect** — 扫描 `./raw`，按扩展名过滤出 52 个文件，跳过 `node_modules`、`.git` 等无关目录。
+2. **extract** — 三类文件各走各的提取器：代码用 tree-sitter 在本机解析出函数、类与调用边（零 LLM）；论文交给语义提取，产出概念节点与 `cites` / `uses` 关系；图片走视觉理解。每条边都带 `EXTRACTED` 或 `INFERRED` 置信度。
+3. **build** — 提取结果合并进一张 NetworkX 图，同标签节点去重，跨文件调用在全局标签映射完成后统一解析。
+4. **cluster** — Leiden 社区检测把节点聚成"优化器""注意力机制""数据处理"等子社区，并标注每个节点的归属。
+5. **analyze** — 计算 God Nodes（如 `Attention`）、跨代码-论文的 Surprising Connections 和建议问题。
+6. **report + export** — 落盘 `graph.html`、`graph.json`、`GRAPH_REPORT.md`。
+
+此后每次提问（如 `graphify query "attention 和 optimizer 有什么联系"`）都不再重读源文件，只在图里走一次路径查询。构建成本一次性付出，查询成本与语料规模解耦——这正是上一节 71.5 倍压缩的机制来源。
+
 ## 8. 开发扩展与 API
 
 ### 8.1 作为 Python 库使用
@@ -692,16 +707,17 @@ MCP 服务器暴露的能力：
 - 节点解释
 - 图结构统计
 
-### 8.3 自定义 LLM 后端（Kimi K2.6）
+### 8.3 自定义 LLM 后端
 
-v0.5.5+ 支持 Kimi K2.6 作为语义提取后端：
+语义提取默认交给宿主 AI 助手完成；需要独立后端时，通过 `--backend` 指定。以 Kimi K2.6 为例：
 
 ```bash
 pip install 'graphifyy[kimi]'
 export MOONSHOT_API_KEY="your-kimi-api-key"
+graphify extract . --backend kimi
 ```
 
-Kimi K2.6 在关系提取丰富度上比 Claude 高 3-6 倍，成本约为 1/3。需要设置 `KIMI_BASE_URL` 和 `KIMI_MODEL` 环境变量来自定义端点。
+Kimi 后端默认指向 Moonshot 的 OpenAI 兼容端点（`KIMI_BASE_URL`，默认 `https://api.moonshot.ai/v1`），默认模型为 `kimi-k2.6`。K2.6 原生支持多模态（MoonViT），可直接理解图片。其余可选后端包括 Claude、Gemini、OpenAI、Ollama、DeepSeek 等，安装对应 extra 后以 `graphify extract . --backend <名称>` 切换。
 
 ### 8.4 插件 Skill 机制
 
@@ -776,7 +792,8 @@ dependencies = ["tree-sitter-zig"]
 - 对于 Go，检查包限定调用格式（`pkg.Func()`）
 
 **Q: 图片/文档提取结果为空**
-- 确认 API Key 配置正确（`ANTHROPIC_API_KEY` 或 `MOONSHOT_API_KEY`）
+- 确认语义提取链路可用：宿主 AI 助手直接执行，或设置所选后端的 API Key（如 `GEMINI_API_KEY`、`MOONSHOT_API_KEY`、`ANTHROPIC_API_KEY`）
+- 纯代码语料无需任何 API Key，可完全离线构建图谱
 - 检查网络连接
 
 ### 9.3 图谱质量问题
@@ -799,13 +816,13 @@ dependencies = ["tree-sitter-zig"]
 
 ### 10.1 技术亮点回顾
 
-Graphify 之所以在发布 27 天内获得 38,379 Stars，源于几个主要创新：
+Graphify 自 2026 年 4 月发布后迅速走红，数月内 GitHub Stars 突破 10 万，源于几个主要创新：
 
-1. **多模态统一抽象**：将代码（AST）、文档（LLM 语义）、图片（Vision）统一为节点-边图结构，消除了不同数据源之间的壁垒。
+1. **多模态统一抽象**：将代码（AST）、文档（LLM 语义）、图片（Vision）统一为节点-边图结构，不同数据源共用同一套表示。
 2. **两-pass 提取策略**：先提取显式关系（EXTRACTED），再推断隐含关系（INFERRED），置信度标注让用户始终掌握信息的确定性。
 3. **Leiden 社区检测**：在开放词汇（LLM 提取）图谱上使用严格的社区检测算法，发现知识的中枢和跨域连接。
 4. **本地优先 + 增量更新**：无需服务器，SHA256 缓存实现秒级增量更新，Git Hook 模式实现零摩擦的自动化。
-5. **多格式导出生态**：Obsidian、Wiki、GraphML、Neo4j、MCP——图谱输出可无缝嵌入现有工作流。
+5. **多格式导出生态**：Obsidian、Wiki、GraphML、Neo4j、MCP——图谱输出可直接接入现有工作流。
 
 ### 10.2 适用场景
 
@@ -832,7 +849,7 @@ Graphify 之所以在发布 27 天内获得 38,379 Stars，源于几个主要创
 Graphify 处于 **AI Coding Assistant Skill** 与 **GraphRAG** 的交叉点。类似的工具包括：
 
 - **Nickel**：本地知识库，但不支持代码 AST 解析
-- **D 介**：传统文档问答，不做知识图谱
+- **Dify**：LLM 应用开发平台，知识库基于文本分块检索，不构建知识图谱
 - **Obsidian + Dataview**：本地笔记图谱，但无代码理解能力
 - **Neo4j + LLM**：完整的图数据库方案，但需要自行搭建 pipeline
 
@@ -840,13 +857,23 @@ Graphify 的差异化在于：**开箱即用的 skill 形态 + tree-sitter 多�
 
 ### 10.5 社区资源
 
-- **官网**: https://graphifylabs.ai/
-- **GitHub**: https://github.com/safishamsi/graphify
-- **完整变更日志**: [GitHub Releases](https://github.com/safishamsi/graphify/releases)
-- **工作示例**: [ PROTECTED_185 ](https://github.com/safishamsi/graphify/tree/main/worked) 目录提供了 Karpathy repos + 论文 + 图片的完整测试语料及输出结果
+- **官网**: https://www.graphify.com/
+- **GitHub**: https://github.com/Graphify-Labs/graphify
+- **完整变更日志**: [GitHub Releases](https://github.com/Graphify-Labs/graphify/releases)
+- **工作示例**: [worked 目录](https://github.com/Graphify-Labs/graphify/tree/v8/worked) 提供了 Karpathy repos、论文与图片的混合测试语料及输出结果
 
-### 10.6 结语
+### 10.6 采用建议
 
-Graphify 在 27 天内获得 38,379 Stars，说明一个需求确实存在：当代码、文档、图片、论文统一抽象为"概念节点"和"关系边"后，AI 的查询能力才能真正释放。
+按投入产出比，三类人适合先动手：
+
+1. **长期维护的代码库负责人**：跑一次 `/graphify .`，把 `graphify-out/` 提交进仓库，全团队的 AI 助手直接查询同一张图——一次性成本，持续收益。
+2. **研究型知识工作者**：把论文、笔记、截图放进一个文件夹，构建图谱后跨文档提问，替代"逐篇重读"。
+3. **AI Agent 应用开发者**：用 MCP 服务器把图谱作为 Agent 的项目记忆层，减少每次会话的上下文重建。
+
+以下情况则不必急着用：一次性脚本或几十行的小项目，图谱构建成本大于收益；文档与图片的增量更新仍需手动触发，对"必须实时反映最新改动"的场景，直接读文件反而更省事。
+
+### 10.7 结语
+
+Graphify 上线数月即突破 10 万 Stars，说明一个需求确实存在：当代码、文档、图片、论文统一抽象为"概念节点"和"关系边"后，AI 才能绕过逐文件重读，直接在图里找答案。
 
 Graphify 对"提取"（EXTRACTED）和"推断"（INFERRED）做了诚实区分——这种不确定性标注让用户始终知道哪些关系是确定的、哪些需要复核。

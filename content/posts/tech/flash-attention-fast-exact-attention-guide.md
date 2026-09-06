@@ -3,7 +3,7 @@ title: "Flash Attention：把注意力从 HBM 带宽瓶颈里捞出来"
 date: "2026-04-12T02:31:39+08:00"
 slug: flash-attention-fast-exact-attention-guide
 github_repo: "Dao-AILab/flash-attention"
-description: "Flash Attention 是 Tri Dao 提出的 Transformer 注意力加速算法，通过 tiling 和 online softmax 将内存复杂度从 O(N²) 降到 O(N)，在 A100 上实现 2-4 倍加速，被 Llama、Mistral、CodeLlama 等模型内置采用。"
+description: "Flash Attention 是 Tri Dao 提出的 Transformer 注意力加速算法，通过 tiling 和 online softmax 将内存复杂度从 O(N²) 降到 O(N)，在 A100 上实现 2-4 倍加速，PyTorch SDPA、HuggingFace Transformers、vLLM 等主流框架都把它的内核作为 attention 后端。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Transformer", "深度学习", "GPU"]
@@ -37,9 +37,9 @@ tags: ["Transformer", "深度学习", "GPU"]
 
 Flash Attention 不是近似注意力算法。它重排标准 Attention 的计算，让 GPU 内存层级能高效处理：在片上 SRAM 里完成 softmax 与加权求和，避免把 N×N 的中间矩阵写回 HBM 再读回来。同一组数学运算，内存复杂度从 O(N²) 降到 O(N)，A100 上 2-4 倍墙钟时间加速，与标准 Attention 在数学上等价（FP16 下误差通常 < 1e-3）。
 
-瓶颈在 HBM 带宽，不在 FLOPs。FA1/FA2/FA3/FA4 四代的演进都围绕这一点展开：tiling 必须配 online softmax 才能在分块下保持全局归一化；FA2 把序列维也纳入并行网格、重划 warp 分工，把 GPU 占用率拉满；FA3 在 H100 上靠 warp-specialization 把 matmul 和 softmax 重叠起来，压住 Hopper 架构的 Tensor Core 空窗；FA4 转向 Blackwell 的非对称扩张——Tensor Core 吞吐翻倍，而共享内存带宽和指数单元（SFU）却没跟上，于是用软件模拟 exp、条件性 softmax rescale 和全异步 MMA 流水线，把非 matmul 的开销削弱。
+瓶颈在 HBM 带宽，不在 FLOPs。FA1/FA2/FA3/FA4 四代的演进都围绕这一点展开：tiling 必须配 online softmax 才能在分块下保持全局归一化；FA2 把序列维也纳入并行网格，warp 分工改成按 Q 切片，A100 前向利用率最高推到理论峰值的 73%；FA3 在 H100 上靠 warp-specialization 把 matmul 和 softmax 重叠起来，补上 Hopper 架构的 Tensor Core 空窗；FA4 转向 Blackwell 的非对称扩张——Tensor Core 吞吐翻倍，而共享内存带宽和指数单元（SFU，Special Function Unit）没跟上，于是用软件模拟 exp、条件性 softmax rescale、全异步 MMA 加张量内存，把非 matmul 的开销削掉。
 
-本文覆盖 FA1/FA2/FA3/FA4 四代的原理差异、安装与 API 调用、与主流框架的集成、benchmark 解读、训练与推理场景的注意点、常见报错排查。FA4 的论文与 `flash-attn-4` 包已于 2026 年 3 月发布，专门面向 Hopper 与 Blackwell（H100/B200），本文会把它放进来一起讨论。CUTLASS 内核细节、Triton 实现版本不在范围内。
+本文覆盖 FA1/FA2/FA3/FA4 四代的原理差异、安装与 API 调用、与主流框架的集成、benchmark 解读、训练与推理场景的注意点、常见报错排查。FA4 论文 2026 年 3 月发布（arXiv:2603.05451），单独装 `flash-attn-4`，面向 Hopper 与 Blackwell（H100/B200），一并纳入讨论。CUTLASS 内核细节、Triton 实现版本不在范围内。
 
 建议先读"标准 Attention 的瓶颈在哪里"和"Tiling + Online Softmax"两节建立直觉，再按需跳到安装、API、集成等实操章节。
 
@@ -73,9 +73,9 @@ def standard_attention(Q, K, V, scale=None):
     return outputs
 ```
 
-三行代码里，`scores` 和 `attn_weights` 都是 `(batch, seq_len, seq_len)` 的张量。对 LLaMA-7B 训练时常见的 `seq_len=4096`、`batch=8`、`heads=32`、`head_dim=128` 配置，单个 `attn_weights` 就是 8 × 32 × 4096 × 4096 × 2 bytes ≈ 8 GB 的 FP16 矩阵，要写一次、读一次，再写一次。
+三行代码里，`scores` 和 `attn_weights` 都是 `(batch, seq_len, seq_len)` 的张量。对 Llama-7B 训练时常见的 `seq_len=4096`、`batch=8`、`heads=32`、`head_dim=128` 配置，单个 `attn_weights` 就是 8 × 32 × 4096 × 4096 × 2 bytes ≈ 8 GB 的 FP16 矩阵，要写一次、读一次，再写一次。
 
-A100 的 HBM 带宽是 2.0 TB/s（SXM4 版本，PCIe 版为 1.9 TB/s），H100 SXM5 是 3.35 TB/s。除以一次 attention 里要搬运的 N² 数据量，墙钟时间就上去了。FLOPs 反而不是瓶颈——A100 SXM4 的 Tensor Core FP16 算力是 156 TFLOPS（稠密；2:4 结构化稀疏可翻倍到 312 TFLOPS，但 attention 的矩阵碰不上这种稀疏），算 QK^T 和 PV 的 FLOPs 用不了那么多时间。
+A100 的 HBM 带宽是 2.0 TB/s（SXM4 版本；80GB PCIe 版为 1.9 TB/s），H100 SXM5 是 3.35 TB/s。除以一次 attention 里要搬运的 N² 数据量，墙钟时间就上去了。FLOPs 反而不是瓶颈——A100 SXM4 的 Tensor Core FP16 算力是 156 TFLOPS（稠密；2:4 结构化稀疏可翻倍到 312 TFLOPS，但 attention 的矩阵碰不上这种稀疏），算 QK^T 和 PV 的 FLOPs 用不了那么多时间。
 
 ```mermaid
 flowchart LR
@@ -94,7 +94,7 @@ flowchart LR
     end
 
     subgraph SRAM ["SRAM (小但快: A100 192 KB/SM)"]
-        Empty["片上几乎没干活<br/>只做了一次 matmul 调用"]
+        Empty["标准实现把 SRAM 晾在一边<br/>每个 kernel 各自读写 HBM"]
     end
 
     HBM -.频繁读写.-> SRAM
@@ -135,7 +135,7 @@ $$
 
 ### 数据流伪代码
 
-以下伪代码展示 attention 计算在 SRAM/HBM 间的流转。真实实现还需处理 warp 分配、shared memory bank conflict、TMA 加载等细节，这里只展示数据流。
+以下伪代码展示 attention 计算在 SRAM/HBM 间的流转。真实实现还要处理 warp 分工、共享内存 bank conflict、异步搬运（Ampere 上的 `cp.async`、Hopper 上的 TMA）等细节，这里只看数据流。
 
 ```python
 def flash_attention_tiled(Q, K, V, block_size=64):
@@ -180,6 +180,8 @@ def flash_attention_tiled(Q, K, V, block_size=64):
 
     return outputs
 ```
+
+伪代码末尾把 `m`、`l` 写回 HBM 不是画蛇添足：真实内核会保存每行的 log-sum-exp（softmax 的归一化统计量，O(N) 大小）。反向传播重算出 S 之后，用它一步恢复 P，不再需要归一化扫描，也不用存 N×N 矩阵。
 
 ### 具体数据流追踪
 
@@ -241,7 +243,7 @@ tiling 把 N×N 矩阵的生命周期压缩到一个 block 内，降内存，不
 | 贡献者 | 199 |
 | 最新版本 | 主包 2.8.3.post1（`pip install flash-attn`）；FA3 为 beta（`hopper/` 目录）；FA4 论文 2026-03 发布，单独 `pip install flash-attn-4` |
 | 许可证 | BSD-3-Clause |
-| 语言占比 | CUDA 60.4% / Python 21.8% / C++ 17.4% |
+| 语言占比 | Python 71.2% / C++ 21.5% / CUDA 7.2%（FA4 的 CuTeDSL 实现按 .py 文件计入 Python） |
 | 作者 | Tri Dao（Stanford 博士，Together AI 首席科学家，2024 年 9 月起任 Princeton 计算机科学助理教授） |
 
 快照数字随时间变化，抓图的日期不同会有波动；这里标记 2026-09 是为了让读者知道采集口径。
@@ -259,9 +261,9 @@ Stars 反映生态接受度，和性能没有直接关系——性能要看后�
 | FA3 | H100 的 Tensor Core 利用率低（~35%） | warp-specialization 重叠 matmul 与 softmax，TMA 异步搬运，支持 FP8 | 1.5-2x vs FA2（FP16） |
 | FA4 | Blackwell 非对称扩张：Tensor Core 吞吐翻倍，SFU 与共享内存带宽没跟上 | warp-specialization + 全异步 MMA 流水线、软件模拟 exp、条件性 softmax rescale（CuTeDSL） | B200 BF16 前向 71% 利用率，≤1.3x vs cuDNN 9.13、2.7x vs Triton |
 
-FA1 解决 HBM 带宽后，FA2 面对的是 GPU 占用率——FA1 的并行只覆盖 batch × heads，序列维由单个 block 顺序扫描，长序列时 GPU 尾部大量闲置；FA2 把序列维（行块）也纳入并行网格，并重新划分 warp 分工（前向时 2 个 warp 算 QK^T、2 个算 PV），减少同步和资源空转。FA3 要处理 Hopper 下的 Tensor Core 利用率：FA2 在 H100 上只能跑到 ~35% 的理论 FP16 峰值，FA3 通过 warp-specialization（一部分 warp 做 matmul，另一部分做 softmax，两者重叠）和异步数据搬运（TMA 指令），把 H100 的 FP16 利用率推到 ~75%，FP8 更高。
+FA1 解决 HBM 带宽后，FA2 面对的是 GPU 占用率——FA1 的并行只覆盖 batch × heads，序列维由单个 block 顺序扫描，长序列时 GPU 尾部大量闲置。FA2 把序列维（行块）也纳入并行网格，warp 分工同时换掉：FA1 把 K、V 切到 4 个 warp（split-K），warp 之间要靠共享内存对齐 rescale 结果；FA2 改成把 Q 切到 4 个 warp、K/V 全员可见，每个 warp 算完自己的 QK^T 小块直接乘同一份 V，warp 间不再需要通信。这套改法把 A100 上的前向利用率推到理论峰值的最高 73%，反向最高 63%。FA3 要处理 Hopper 下的 Tensor Core 利用率：FA2 换到 H100 后只能跑到 ~35% 的理论 FP16 峰值，FA3 通过 warp-specialization（一部分 warp 做 matmul，另一部分做 softmax，两者重叠）和异步数据搬运（TMA 指令），把 FP16 利用率推到 ~75%（740 TFLOPS/s），FP8 接近 1.2 PFLOPS/s。
 
-FA4 面对的是 Blackwell（B200/GB200）的非对称扩容：Tensor Core 吞吐翻了一倍，但共享内存带宽、指数单元这类"配套部件"几乎原地踏步，纯粹的访存优化不再够用。它用三招削掉非 matmul 部分：一是把 softmax 的指数换成 FMA 单元的软件模拟 exp，不再把指数运算压给稀缺的 SFU；二是条件性 rescale——online softmax 的 running max 只有变化足够大时才重缩放输出，减少低效的逐块缩放；三是全异步 MMA 流水线，让一个 tile 的矩阵乘与相邻 tile 的 softmax 重叠。结果是 B200 上 BF16 前向冲到 1613 TFLOPS/s（71% 利用率），最多领先 cuDNN 9.13 约 1.3x、领先 Triton 约 2.7x。整个 FA4 用 CuTeDSL（Python 内嵌的 DSL）写成，编译时间比传统 C++ 模板实现快一到两个数量级。
+FA4 面对的是 Blackwell（B200/GB200）的非对称扩容：Tensor Core 吞吐翻了一倍，但共享内存带宽、指数单元这类"配套部件"几乎原地踏步，纯粹的访存优化不再够用。它的对策分三层：计算上，把 softmax 的指数换成 FMA 单元的软件模拟 exp，不再把指数运算压给稀缺的 SFU，再配条件性 rescale——running max 只有变化足够大时才重缩放输出，砍掉低效的逐块缩放；流水线上，全异步 MMA 让一个 tile 的矩阵乘与相邻 tile 的 softmax 重叠；存储上，把累加器搬进 Blackwell 新增的张量内存，并用 2-CTA MMA 让一对 CTA 协同算一个 tile，减少共享内存流量和反向传播里的原子加。结果是 B200 上 BF16 前向冲到 1613 TFLOPS/s（71% 利用率），最多领先 cuDNN 9.13 约 1.3x、领先 Triton 约 2.7x。整个 FA4 用 CuTeDSL（Python 内嵌的 DSL）写成，编译时间比传统 C++ 模板实现快 20-30 倍。
 
 FA3 仍然是精确算法。它的 FP8 模式因为低精度量化会引入数值误差，但与 Linformer、Performer 那类通过数学近似降低复杂度的算法属于不同类别。FA3 的 FP16/BF16 路径与标准 Attention 数学等价。FA4 同理：它的 BF16/FP16 路径仍是精确注意力，软件模拟 exp 只是换了指数实现方式，属于有限精度下的舍入差异，不改变算法的时间复杂度类别。
 
@@ -271,12 +273,12 @@ FA3 仍然是精确算法。它的 FP8 模式因为低精度量化会引入数�
 
 | 要求 | 说明 |
 |------|------|
-| GPU | NVIDIA GPU（Ampere 及以上：H100、A100、RTX 3090/4090 等；FA1 额外支持 V100） |
-| CUDA | 12.0+（FA3 beta 建议 12.3+，最佳性能用 12.8+） |
+| GPU | NVIDIA（Ampere 及以上：A100、RTX 3090/4090、H100 等；FA1 额外支持 V100）；AMD（MI200/MI250/MI300/MI355、RDNA 3/4） |
+| CUDA / ROCm | CUDA 12.0+（FA3 beta 建议 12.3+，最佳性能用 12.8+）；AMD 走 ROCm 6.0+ |
 | PyTorch | 2.2+ |
 | Python | 3.9+ |
 
-不支持 CPU。不支持 AMD GPU（社区有 ROCm 移植，但非官方维护）。V100（sm_70）只能跑 FA1（对应 v1.x 老包）；FA2 起要求 Ampere（sm_80）及以上；FA3 需要 Hopper（sm_90）。FA3 目前以 beta 形式发布在仓库的 `hopper/` 目录，需要单独编译（`cd hopper && python setup.py install`），从 `flash_attn_3` 包导入（`from flash_attn_3 import flash_attn_interface`），与主包 `flash_attn` 是不同入口。FA4 面向 Hopper 和 Blackwell，已单独发布为 `pip install flash-attn-4`，用法是 `from flash_attn.cute import flash_attn_func`。
+不支持 CPU。AMD GPU 走官方 ROCm 后端：默认 composable_kernel，可选 Triton，fp16/bf16 都覆盖，CK 后端 head_dim 最大支持 256。V100（sm_70）只能跑 FA1（对应 v1.x 老包）；FA2 起要求 Ampere（sm_80）及以上；FA3 需要 Hopper（sm_90）。FA3 目前以 beta 形式发布在仓库的 `hopper/` 目录，需要单独编译（`cd hopper && python setup.py install`），从 `flash_attn_3` 包导入（`from flash_attn_3 import flash_attn_interface`），与主包 `flash_attn` 是不同入口。FA4 面向 Hopper 和 Blackwell，已单独发布为 `pip install flash-attn-4`，用法是 `from flash_attn.cute import flash_attn_func`。
 
 ### 安装方式
 
@@ -293,21 +295,20 @@ pip install .
 不同 GPU 架构的安装差异主要在 wheel 来源：
 
 ```bash
-# RTX 3090 / A100 (sm_80 / sm_86) — 标准 pip 即可
+# RTX 3090 / A100 (sm_80 / sm_86) — 标准 pip 即可，自动匹配预编译 wheel
 pip install flash-attn --no-build-isolation
 
-# H100 (sm_90) — 用官方 wheel 仓库拉对应版本，URL 中的版本号要与目标 release 对齐
-pip install flash-attn --no-build-isolation --index-url https://wheels.flash-attention.com/2.8/
+# 找不到匹配 wheel 时，到 GitHub Releases 下载预编译包再本地安装。
+# 以 2.8.3 + CUDA 12 + PyTorch 2.8 + Python 3.12 为例，
+# cxx11abiTRUE/FALSE 要与 torch.compiled_with_cxx11_abi() 的返回值一致
+pip install ./flash_attn-2.8.3+cu12torch2.8cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
 
 # H100 / B200 — FA4 单独一个包；CUDA 13 环境建议加 cu13 extra 拿最佳性能
 pip install flash-attn-4
 # pip install "flash-attn-4[cu13]"
-
-# Docker（避免本地 CUDA 版本冲突）
-docker run --gpus all -it ghcr.io/dao-ailab/flash-attention:latest
 ```
 
-`--no-build-isolation` 让 pip 用当前环境里已装的 PyTorch 来编译扩展，而不是新建隔离环境去拉 PyTorch——后者经常因版本不匹配导致编译失败。`flash-attn-4` 与主包 `flash-attn` 是两套安装，可共存，使用 CuTeDSL 时从 `flash_attn.cute` 导入。
+`--no-build-isolation` 让 pip 用当前环境里已装的 PyTorch 来编译扩展，而不是新建隔离环境去拉 PyTorch——后者经常因版本不匹配导致编译失败。`flash-attn-4` 与主包 `flash-attn` 是两套安装，可共存，使用 CuTeDSL 时从 `flash_attn.cute` 导入。官方没有发布预构建 Docker 镜像；想隔离本地 CUDA 环境，用 NVIDIA NGC 的 PyTorch 容器（`nvcr.io/nvidia/pytorch`）或 ROCm 的 `rocm/pytorch` 容器，进去之后按上面方式安装。
 
 ### 验证安装
 
@@ -416,7 +417,7 @@ output = flash_attn_varlen_func(
 print(output.shape)  # torch.Size([8, 8, 64])
 ```
 
-`cu_seqlens` 的语义：`[0, 3, 8]` 表示第 0 个序列占索引 0-2（长度 3），第 1 个序列占索引 3-7（长度 5）。`max_seqlen_q` 是 batch 内最长序列长度，用于 kernel 内部 block 大小选择。
+`cu_seqlens` 的语义：`[0, 3, 8]` 表示第 0 个序列占索引 0-2（长度 3），第 1 个序列占索引 3-7（长度 5）。`max_seqlen_q` 是 batch 内最长序列长度，kernel 启动时用它确定 grid 划分。
 
 ## 与主流框架集成
 
@@ -459,18 +460,19 @@ V = V.transpose(1, 2)
 output = memory_efficient_attention(Q, K, V, attn_bias=None, p=0.0)
 ```
 
-xFormers 和 `flash-attn` 包不需要同时装。如果两个都装了，Transformers 默认走 `flash-attn`。
+xFormers 和 `flash-attn` 是两套独立内核，互不依赖，也不会自动互相切换。Transformers 侧走不走 FA 始终看 `attn_implementation`：不指定时默认 `sdpa`（模型支持且 PyTorch ≥ 2.1.1），其次 `eager`，永远不会因为装了某个包就自动换成 FA2。
 
 ### Megatron-LM
 
-Megatron-LM 在 `megatron.core.extensions` 里有 Flash Attention 的封装，通过 config 字段开启：
+新版 Megatron Core 通过 `TransformerConfig.attention_backend` 选择 attention 后端，默认留空（`None`），交给 Transformer Engine 自动决策；要钉死 FA 时才显式指定，另有 `flash_attention_version` 控制内核代数。老版本走的是 `use_flash_attn` 布尔开关。
 
 ```python
-# 在 Megatron config 里
-# attention_backend = "flash"  # 或 "unpad", "local"
+# Megatron Core 的 TransformerConfig
+# attention_backend = None   # 默认：留给 Transformer Engine 自动选后端
+# flash_attention_version = 2
 ```
 
-具体字段名随 Megatron 版本变化，以仓库 `megatron.core.transformer.attention.py` 的实现为准。Mistral、CodeLlama 这类模型在 HuggingFace 上的实现走的是 Transformers 路径，不是 Megatron。
+字段名和取值随版本变化，以所用版本的 `megatron/core/transformer/transformer_config.py` 为准。
 
 ## Benchmark 怎么读
 
@@ -481,7 +483,7 @@ FA 的加速比是相对值，随 GPU、序列长度、batch、head 数和软件
 | 对比 | 加速范围 | 说明 |
 |------|----------|------|
 | FA1 vs 标准 Attention（A100, FP16） | 2-4x | FA1 论文结论；序列越长越接近上限 |
-| FA2 vs FA1（A100/H100, FP16） | 约 2x | FA2 论文头版结论 |
+| FA2 vs FA1（A100） | 约 2x（实测 1.7-3.0x） | FA2 论文摘要结论 |
 | FA3 vs FA2（H100, FP16） | 1.5-2x | FA3 论文结论；依赖 Hopper 专属指令 |
 
 趋势上，序列越长、batch 越大，加速比越高——N×N 矩阵的 HBM 读写占 attention 总耗时的比例随 N 增大而增大。别把某个形状下的单点数字当成横跨所有配置的常数。
@@ -614,7 +616,7 @@ for batch in dataloader:
 - **Batch 推理**：多个请求拼 batch，`seq_len` 和 `batch` 都不小，FA 有收益。
 - **单条请求的 decode 阶段**：每步只算一个 token 对所有历史 token 的 attention，N 很小，FA 可能比标准 attention 还慢。这种场景用 PagedAttention 或其他 KV-cache 优化更合适。
 
-vLLM、SGLang 等推理框架内部会根据阶段切换 attention 实现，无需手动指定。
+vLLM、SGLang 等推理框架已内置针对 prefill/decode 分别调优的 attention 路径，选对框架即可，无需手动指定。
 
 ## 常见报错与排查
 
@@ -626,12 +628,7 @@ vLLM、SGLang 等推理框架内部会根据阶段切换 attention 实现，无�
 
 ### `RuntimeError: CUDA error: no kernel image is available for execution on the device`
 
-GPU 架构和编译目标不匹配。比如在 H100（sm_90）上跑了为 sm_80 编译的 wheel。解决：用对应架构的 wheel 源重装：
-
-```bash
-# H100 — 版本号要与目标 release 对齐
-pip install flash-attn --no-build-isolation --index-url https://wheels.flash-attention.com/2.8/
-```
+GPU 架构和编译目标不匹配。比如在 H100（sm_90）上跑了为 sm_80 编译的 wheel。解决：到 GitHub Releases 下载与 GPU 架构、CUDA 版本、PyTorch 版本、Python 版本都匹配的 wheel 重装。
 
 ### `RuntimeError: qkv must be half precision or bfloat16`
 
@@ -663,7 +660,7 @@ FA 把 attention 的内存从 O(N²) 降到 O(N)，但整个模型还有 FFN、K
 
 - **"FA 能加速所有 attention 计算"**：短序列（seq_len < 512）、batch=1 的推理场景下，kernel launch 开销可能比省下的 HBM 带宽还大。用 PyTorch 原生 `scaled_dot_product_attention` 更合适。
 - **"FA3 是近似算法"**：FA3 的 FP16/BF16 路径与标准 Attention 数学等价。FP8 模式有量化误差，但这是低精度计算的代价，不是算法近似。
-- **"装了 `flash-attn` 就一定走 FA"**：HuggingFace Transformers 默认走 `eager` 后端，需显式指定 `attn_implementation="flash_attention_2"`。PyTorch 2.0+ 的 `sdpa` 后端会根据硬件自动选择，不一定是 FA。
+- **"装了 `flash-attn` 就一定走 FA"**：Transformers 不指定 `attn_implementation` 时默认是 `sdpa`（模型支持且 PyTorch ≥ 2.1.1），否则 `eager`，都不会自动切到 FA；要用 FA2 必须显式指定。`sdpa` 后端会根据硬件在 flash、mem-efficient 等内核间自动选择，但不等于 `flash-attn` 包。
 - **"FA 输出和标准 Attention 完全一致"**：FP16 下误差通常 < 1e-3，来自累加顺序不同。对数值精度敏感的业务（如金融、科学计算），需评估是否可接受。
 - **"FA 能解决所有长上下文问题"**：FA 把 attention 内存从 O(N²) 降到 O(N)，但 KV cache 仍是 O(N)。序列长度超过 32k 后 KV cache 内存会成为新瓶颈，需配合 Ring Attention、PagedAttention 等方案。
 
@@ -674,9 +671,9 @@ FA 是精确算法，但有些场景下近似算法更合适。下表列出各�
 | 算法 | 精确度 | 时间/内存复杂度 | 适用场景 |
 |------|--------|----------------|----------|
 | **Flash Attention** | 精确 | O(N²) 时间、O(N) 内存 | 序列长度 < 32k，GPU 内存够装 KV |
-| **Reformer** | 近似（LSH） | O(N log N) / O(N) | 极长序列（>32k），可接受精度损失 |
+| **Reformer** | 近似（LSH） | O(N log N) / O(N) | 极长序列（>32k），可接受精度损失；可逆层还能省激活内存 |
 | **Linformer** | 近似（低秩投影） | O(N) / O(N) | 序列长度固定，离线训练 |
-| **Performer** | 近似（随机特征） | O(N) / O(N) | 需要可逆性，对精度要求低 |
+| **Performer** | 近似（随机特征） | O(N) / O(N) | 想要线性复杂度的无偏 softmax 近似，对精度损失不敏感 |
 | **Longformer / BigBird** | 近似（稀疏模式） | O(N) / O(N) | 文档级任务，有明确的局部+全局模式 |
 
 FA 出现后，近似算法在生产环境的使用明显减少。在大多数实际序列长度（< 32k）下，FA 又精确又快，近似算法省下的计算量往往被精度调优成本抵消。超过 32k 的超长序列，FA 在 H100 上仍能跑到 128k+，但 KV cache 内存会成为新瓶颈，这时候 Ring Attention、PagedAttention 这类方案更合适。
@@ -688,7 +685,7 @@ FA 出现后，近似算法在生产环境的使用明显减少。在大多数�
 1. **训练**：Ampere/Ada 直接用 FA2（`attn_implementation="flash_attention_2"`）。H100 上可试 FA3（beta，从仓库 `hopper/` 目录单独编译，导入入口 `flash_attn_3`，要求 CUDA 12.3+，建议 12.8+）；面向 H100/B200 的新训练，直接评估 FA4（`pip install flash-attn-4`，B200 上 BF16 利用率可到 71%）。
 2. **推理**：用 vLLM 或 SGLang，它们内部已根据 prefill/decode 阶段选了最优 attention 实现。
 3. **长上下文（>32k）**：先确认 KV cache 内存是否够，再考虑 Ring Attention 或序列并行。
-4. **非 NVIDIA GPU**：FA 官方不支持。AMD GPU 看 `flash-attn` 的 ROCm 移植，Intel GPU 看 IPEX 实现。
+4. **非 NVIDIA GPU**：AMD 用官方 ROCm 后端（composable_kernel 或 Triton，ROCm 6.0+）；其余厂商没有官方支持，走 PyTorch SDPA 等通用路径。
 
 已有项目迁移：
 
@@ -720,12 +717,12 @@ FA 出现后，近似算法在生产环境的使用明显减少。在大多数�
 9. 单条请求的 decode 阶段（batch=1，每步只算 1 个 token 对 N 个历史 token 的 attention），FA 通常比标准 attention 慢。原因是什么？这种场景该用什么？
 10. 序列长度 64k，KV cache 内存成为新瓶颈，FA 还能用吗？需要配合什么方案？
 11. 训练时 attention 部分用 FA 加速了 4x，端到端训练速度为什么通常只快 1.2-1.5x？剩下的时间花在哪了？
-12. AMD MI300X 上能用官方 `flash-attn` 包吗？如果不能，有什么替代方案？
+12. AMD MI300X 上能用官方 `flash-attn` 包吗？用什么后端，装之前要确认 ROCm 什么版本？
 13. FA4 的"条件性 rescale"相比标准 online softmax 减少了哪件事？为什么在 Blackwell 上这种做法是划算的？
 
 想深入内核方向，可以按这个顺序：
 
-1. 读 FA2 论文第 3 节的 work partitioning 部分，理解 4 个 warp 里为什么分 2 个做 QK^T、2 个做 PV。
+1. 读 FA2 论文第 3 节的 work partitioning 部分，对照 FA1 的 split-K 方案，理解为什么把 Q 切到 4 个 warp、K/V 全员共享之后，warp 间通信就消失了。
 2. 对照本文伪代码，在 `csrc/flash_attn/flash_api.cpp` 和 `flash_fwd_kernel.h` 里找到 online softmax rescale 的 CUDA 实现。
 3. 读 FA3 论文第 3 节，理解 `cp.async` 和 TMA 指令如何重叠数据搬运与计算。
 4. 想自己写 tiling kernel，从 Triton 的 `flash_attention` 教程入手，比直接读 CUTLASS 容易。

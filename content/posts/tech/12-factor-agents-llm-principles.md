@@ -3,7 +3,7 @@ title: "12-Factor Agents：把 LLM 应用从 Demo 拉进生产线的工程原则
 date: "2026-05-25T21:10:00+08:00"
 slug: "12-factor-agents-llm-production-principles"
 github_repo: "humanlayer/12-factor-agents"
-description: "humanlayer/12-factor-agents 是一套从 100+ 位 AI 工程师的实战访谈中提炼出的设计原则。本文逐一拆解 12 条正式原则加 1 条荣誉提及的工程动机、实现边界和常见翻车现场，并给出从哪条开始的采用路线图。"
+description: "humanlayer/12-factor-agents 是一套从 100+ 位 SaaS 构建者的实战访谈中提炼出的设计原则。本文逐一拆解 12 条正式原则加 1 条荣誉提及的工程动机、实现边界和常见翻车现场，并给出从哪条开始的采用路线图。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "LLM", "工程实践", "上下文工程", "Python"]
@@ -13,17 +13,15 @@ tags: ["AI Agent", "LLM", "工程实践", "上下文工程", "Python"]
 
 ## 核心判断
 
-humanlayer 创始人 Dex 访谈了 100 多位创始人、构建者和工程师后，发现一条规律：**真正交付到生产用户手里的 LLM 软件，绝大多数是软件加 LLM 步骤的混合体，不是纯 Agent。**
+HumanLayer 联合创始人 Dex Horthy 访谈了至少 100 位 SaaS 构建者（多数是技术背景的创始人），得出一条规律：**真正交付到生产的 LLM 软件，绝大多数是传统软件里嵌入 LLM 步骤的混合体，不是纯 Agent。**
 
-每一个原则背后都有具体的踩坑故事。比如有团队用 LangChain 搭了客服 Agent，demo 跑得不错，一上生产就炸——用户问"我的订单状态"，Agent 先调了知识库搜索、情感分析，最后才想起查订单表。模型不笨，问题是工具设计和上下文组织没做好。
-
-12-Factor Agents 针对的就是这类问题。它回答的是：
+12-Factor Agents 回答的是三个问题：
 
 - 为什么 Agent 框架跑出来的 demo 停在 70-80% 后再也上不去？
 - 从 demo 到生产级之间，缺的是模型能力还是工程结构？
 - 不用框架、自己搭的话，先做哪一块？
 
-仓库地址是 [github.com/humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)，配套有视频讲解、脚手架 `npx/uvx create-12-factor-agent`、Discord 社区和由 Dex 维护的开源参考实现 `got-agents/agents`。团队一般拿它做两件事：审视现有实现里哪些环节失控，以及指导新项目从第一行代码开始的结构。
+仓库地址是 [github.com/humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)，配套有视频讲解、Discord 社区、Dex 团队按这套方法维护的开源参考实现 `got-agents/agents`，以及一个仍在征集共建者的脚手架 `create-12-factor-agent`（截至本文发布尚未发布包）。团队一般拿它做两件事：审视现有实现里哪些环节失控，以及指导新项目从第一行代码开始的结构。
 
 ## 目录
 
@@ -87,16 +85,20 @@ class NextStep:
 class LLMClient:
     """基于 OpenAI SDK 的 tool calling 实现。"""
 
-    def __init__(self, model: str, tools: dict[str, Callable]) -> None:
+    def __init__(self, model: str, schemas: dict[str, dict], tools: dict[str, Callable]) -> None:
         self.client = AsyncOpenAI()
         self.model = model
-        self.tools = tools
+        self.schemas = schemas  # 每个工具的 JSON Schema
+        self.tools = tools      # 工具名 -> 实际执行函数
 
     async def determine_next_step(self, context: list[dict]) -> NextStep:
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=context,
-            tools=[{"type": "function", "function": {"name": name, "parameters": {"type": "object", "properties": {}}}} for name in self.tools],
+            tools=[
+                {"type": "function", "function": {"name": name, "parameters": schema}}
+                for name, schema in self.schemas.items()
+            ],
         )
         choice = response.choices[0].message
         if choice.tool_calls:
@@ -121,13 +123,13 @@ async def agent_loop(context: list[dict], llm: LLMClient, tools: dict[str, Calla
         context.append({"role": "tool", "name": next_step.tool, "result": result})
 ```
 
-这套循环的瓶颈在 **70-80% 质量区间**。"质量"指端到端任务成功率——demo 跑 10 次有 7-8 次能通，剩下 2-3 次要么走偏要么卡死。再往上提，只能靠对循环中每一步的工程控制，模型本身给不了更多。
+这套循环裸跑的质量通常停在 **70-80% 区间**。"质量"指端到端任务成功率——demo 跑 10 次有 7-8 次能通，剩下 2-3 次要么走偏要么卡死。再往上提，只能靠对循环中每一步的工程控制，模型本身给不了更多。
 
 ### 从 70% 到生产级的典型翻车路径
 
-Dex 访谈 100 多个团队后发现了一条反复出现的轨迹：用 LangChain 或 CrewAI 搭一个 Agent demo，跑出 70-80% 的成功率，觉得差不多了就推到真实客户场景，然后炸了——用户不接受"大多数时候对"。团队开始逆向工程框架内部注入的 prompt、flow、状态管理，发现框架替他们做的决策恰好是自己需要掌控的那部分，于是从零重写。
+Dex 在访谈中发现了一条反复出现的轨迹：用 LangChain 或 CrewAI 搭一个 Agent demo，跑出 70-80% 的成功率，觉得差不多了就推到真实客户场景，然后炸了——用户不接受"大多数时候对"。团队开始逆向工程框架内部注入的 prompt、flow、状态管理，发现框架替他们做的决策恰好是自己需要掌控的那部分，于是从零重写。
 
-12-Factor Agents 要解决的问题是：**让不得不重写的那一步，不用从零开始。** 每条原则背后都有具体的踩坑故事——比如有个团队发现 Agent 在生产环境里"卡住"了，查了半天是执行状态存在内存里，进程重启后全丢了。
+12-Factor Agents 做的事，是把重写时才会悟到的那些结构决策提前摆出来，让第一版实现就少走弯路。比如 Agent 在生产环境里莫名"卡住"，排查半天，最后发现执行状态存在进程内存里，重启后全丢了——这类坑每条 Factor 都对应一个。
 
 ---
 
@@ -275,7 +277,7 @@ if next_step.tool == 'create_payment_link':
 
 参数里的 `customer`、`product`、`price` 这些 ID 怎么来的？LLM 不会凭空生成。要么靠 Factor 13（预取）提前加载到上下文，要么靠 Factor 3（上下文工程）让 LLM 有足够信息做实体映射。Factor 1 的输出质量，取决于上游喂进去了什么。
 
-模型在参数选择上反复出错时，先去查上下文里有没有足够的候选数据，别急着调 temperature 或换模型。LLM 的"理解"能力，很大程度由上下文工程决定。
+模型在参数选择上反复出错时，先查上下文里有没有足够的候选数据，别急着调 temperature 或换模型。
 
 ---
 
@@ -326,19 +328,27 @@ if next_step.tool == 'create_payment_link':
 **自定义事件格式。** 12-Factor Agents 建议用 XML 风格的自定义格式，把每一步建模为事件：
 
 ```python
-class Thread:
-    events: List[Event]
+from dataclasses import dataclass
+from typing import Any
+import yaml
 
+@dataclass
 class Event:
-    type: Literal["list_git_tags", "deploy_backend", ...]
+    type: str   # 事件类型：工具名，或 "slack_message" 这类来源标记
     data: Any
 
+@dataclass
+class Thread:
+    events: list[Event]
+
 def event_to_prompt(event: Event) -> str:
-    data = event.data if isinstance(event.data, str) else stringify_to_yaml(event.data)
+    data = event.data if isinstance(event.data, str) else yaml.safe_dump(
+        event.data, sort_keys=True, allow_unicode=True
+    )
     return f"<{event.type}>\n{data}\n</{event.type}>"
 
 def thread_to_prompt(thread: Thread) -> str:
-    return '\n\n'.join(event_to_prompt(e) for e in thread.events)
+    return "\n\n".join(event_to_prompt(e) for e in thread.events)
 ```
 
 转换后的上下文窗口：
@@ -383,7 +393,7 @@ Function Calling、Structured Outputs（JSON Mode）、约束解码——这三�
 
 ---
 
-### Factor 5：执行状态与业务状态统一建模
+### Factor 5：执行状态与业务状态统一
 
 Agent 跑起来之后，会自然长出两套状态。一套是执行历史——哪些步骤完成了、当前在哪一步；另一套是业务状态——订单状态、用户资料、审批结果。大多数实现会在不知不觉中把它们分开维护：执行状态塞在 Agent 进程的内存里，业务状态存在数据库里。
 
@@ -391,15 +401,15 @@ Agent 跑起来之后，会自然长出两套状态。一套是执行历史—�
 
 正确的做法是把执行状态也当成业务状态的一部分。用单一数据源——PostgreSQL 一行、Redis 一个 key、一条事件溯源日志——同时描述"任务当前在哪里"和"业务当前是什么状态"。这是 Factor 6（暂停 / 恢复）的技术前提：一个序列化不完整的 Agent 根本没法恢复。
 
-一个电商团队的客服 Agent 踩过这个坑（参见 Dex 访谈记录）：执行状态存在内存里，业务状态存在订单表里。某次部署重启后，Agent 丢了执行状态，但订单表显示"已退款"——Agent 重复执行了退款操作。修复方案是把 `agent_tasks` 表和 `orders` 表放在同一个事务里，Agent 每完成一步就更新两张表的状态字段。
+设想一个典型事故：执行状态存在内存里，业务状态存在订单表里。进程重启后执行状态全丢，而订单表显示"退款已受理"——Agent 很可能把退款再执行一遍。把 `agent_tasks` 表和 `orders` 表放进同一个事务，Agent 每完成一步就同时更新两边的状态，这类不一致才堵得住。
 
 具体实现上，一种常见模式是在业务数据库里加一张 `agent_tasks` 表，字段包含 `id`、`status`、`current_step`、`events_json`（Factor 3 的 Thread）和 `business_entity_id`（关联业务实体）。Agent 重启时从这张表读取最后的状态就能继续。
 
 ---
 
-### Factor 6：启动 / 暂停 / 恢复（Launch/Pause/Resume with simple APIs）
+### Factor 6：启动 / 暂停 / 恢复
 
-Agent 暂停和恢复在生产环境里是基本要求——只要 Agent 需要等待人工审批、外部 webhook 回调、或长耗时异步操作，没有这套机制就只能让进程空转占着资源。"启动"同样重要：Agent 的入口要能从任意事件触发（见 Factor 11），而不是硬编码成"用户发了一条消息"。
+原仓库里这条叫 "Launch/Pause/Resume with simple APIs"。Agent 暂停和恢复在生产环境里是基本要求——只要 Agent 需要等待人工审批、外部 webhook 回调、或长耗时异步操作，没有这套机制就只能让进程空转占着资源。"启动"同样重要：Agent 的入口要能从任意事件触发（见 Factor 11），而不是硬编码成"用户发了一条消息"。
 
 典型场景：
 
@@ -458,9 +468,9 @@ Agent 通过同一套工具调用机制与人类交互，不需要为"人机协�
 
 ---
 
-### Factor 8：控制流归软件，不归 LLM
+### Factor 8：控制流归软件
 
-控制流——"什么时候做什么、什么条件下跳转、什么情况下终止"——写在代码里。LLM 只负责单步决策：选哪个工具、填什么参数。
+控制流——"什么时候做什么、什么条件下跳转、什么情况下终止"——写在代码里，不归 LLM。LLM 只负责单步决策：选哪个工具、填什么参数。
 
 LLM 应用的架构应该长这样：系统骨架由代码定义（DAG、状态机、if/else），模型在骨架约束下执行具体步骤——这段文字怎么写、这几个参数填什么。
 
@@ -579,7 +589,7 @@ class State:
         return State(context=self.context, done=True, final_answer=final_answer)
 
 class LLMClientProtocol(Protocol):
-    """LLM 客户端协议，determine_next_step 返回结构化决策（见 Factor 1）。"""
+    """LLM 客户端协议：入参是 Factor 3 的事件列表，实现内部负责转成 prompt，返回结构化决策。"""
 
     async def determine_next_step(self, context: list[Event]) -> Any: ...
 
@@ -589,21 +599,21 @@ async def agent_step(
     llm: LLMClientProtocol,
     tools: dict[str, Callable],
 ) -> State:
-    """单步 reducer：(state, event, deps) → new_state。"""
+    """单步 reducer：吸收一个外部事件，决策一次，返回新 State。"""
+    state = state.append(event)
     next_step = await llm.determine_next_step(state.context)
     if next_step.intent == "tool_call":
         handler = tools.get(next_step.tool or "")
         result = handler(**next_step.args) if handler else {"error": f"unknown tool: {next_step.tool}"}
-        return state.append(event=Event(type="tool_result", data=result))
-    elif next_step.intent == "done":
+        return state.append(Event(type="tool_result", data=result))
+    if next_step.intent == "done":
         return state.mark_done(final_answer=next_step.final_answer or "")
-    else:
-        return state
+    return state
 ```
 
 无状态 reducer 让四件事变成可能：
 
-- **可测试**：给定相同的 State 和 Event，输出总是相同——不依赖 Agent 内部是否有"记忆"。可以为关键路径写标准单元测试：构造一个 State（含特定上下文），输入一个 Event，断言输出的 State 是正确的。
+- **可测试**：给定相同的 State、Event 和 LLM 返回，输出总是相同——不依赖 Agent 内部是否有"记忆"。可以为关键路径写标准单元测试：构造一个 State（含特定上下文），输入一个 Event，断言输出的 State 是正确的。
 - **可回放**：存下所有事件后，在任何时间点重放，重现当时的决策过程。排查生产事故时逐帧回放每一步的输入输出，靠代码还原 Agent 当时做了什么，而不是靠猜。
 - **可 Fork**：同一个状态可以 fork 出多个并行执行路径。比如同时尝试两种不同的工具选择策略，比较结果后再决定走哪条路。在代码生成 Agent 尝试多种实现方案的场景里尤其有用。
 - **可调试**：整个执行轨迹是确定性的。每一步的输入输出都可以看，不存在"Agent 脑子里在想什么"的模糊空间。
@@ -687,7 +697,7 @@ Agent Loop 只解决"模型怎么调工具"这一层的问题。业务流程该�
 
 ### 翻车 2：工具挂太多
 
-一个 Agent 挂了 15 个工具，system prompt 写了 2 页。用户问"我的订单状态是什么"，Agent 先调了知识库搜索、又调了情感分析、最后才想起查订单。
+设想一个 Agent 挂了 15 个工具，system prompt 写了 2 页。用户问"我的订单状态是什么"，Agent 先调了知识库搜索、又调了情感分析、最后才想起查订单。
 
 工具多不等于能力强。每多一个工具都在稀释 LLM 的注意力预算。控制在 5 个以内，超出就拆 Agent。
 
@@ -727,7 +737,7 @@ Agent 的所有进度存在一个 Python 进程的局部变量里。进程重启
 
 ### Q4：Agent Loop 上限设多少合适？
 
-取决于任务复杂度和单步成本。Dex 在参考实现里用的是 25 步（参见 `got-agents/agents` 仓库 `deploybot-ts` 与 `linear-assistant-ts` 目录下的部署、客服示例），覆盖大多数典型场景。如果任务天然需要更多步骤（比如代码生成 Agent），考虑拆成多个小 Agent（Factor 10）串联，而不是把单 Loop 上限拉到 100。
+取决于任务复杂度和单步成本。一个值得参考的事实：`got-agents/agents` 里的两个参考实现（部署示例 `deploybot-ts`、客服示例 `linear-assistant-ts`）都没有设步数上限，主循环是无界的 while(true)，靠"意图"退出——`done_for_now`、`request_more_information`、需要人工审批的写操作，这些分支会让循环停下来等待外部输入。这套写法成立的前提，是每条路径都有明确的停机分支。如果你的 Agent 会自主连续执行、停机路径不明显，就在代码里加显式上限（本文 Factor 8 的示意取 25 步），超限后转入人工处理或保存状态暂停（Factor 6），而不是把上限拉到 100。
 
 ### Q5：无状态 reducer 怎么处理需要调用真实 LLM 的场景？
 
@@ -764,8 +774,8 @@ Agent 正准备上线时，逐条过一遍：
 - [ ] 进程重启后，Agent 能从上次中断的地方继续吗？（Factor 5 + Factor 6，答否→回读 [Factor 5](#factor-5执行状态与业务状态统一) 与 [Factor 6](#factor-6启动--暂停--恢复)）
 - [ ] 每个 Agent 的 system prompt 能控制在半页以内、工具不超过 5 个吗？（Factor 10，答否→回读 [Factor 10](#factor-10小而专注的-agent)）
 - [ ] 控制流逻辑（终止条件、重试次数、升级人类）是写在确定性代码里，不是写在 prompt 里？（Factor 8，答否→回读 [Factor 8](#factor-8控制流归软件)）
-- [ ] 给定相同的事件序列，Agent 能复现相同的决策路径吗？（Factor 12，答否→回读 [Factor 12](#factor-12agent-是无状态-reducer)）
-- [ ] 遇到可恢复错误时，Agent 是自己决策怎么处理，还是直接中断？（Factor 9，答否→回读 [Factor 9](#factor-9把错误压进上下文)）
+- [ ] 给定相同的事件序列，Agent 能复现相同的决策路径吗？（Factor 12，答否→回读 [Factor 12](#factor-12把-agent-做成无状态-reducer)）
+- [ ] 遇到可恢复错误时，Agent 是自己决策怎么处理，还是直接中断？（Factor 9，答否→回读 [Factor 9](#factor-9把错误压进上下文窗口)）
 - [ ] 需要人工介入时，是否通过统一的工具调用机制而不是硬编码的异常分支？（Factor 7，答否→回读 [Factor 7](#factor-7用工具调用联系人类)）
 
 以上有超过 2 个答案为"否"的话，回到对应的 Factor 先修，再推进其他功能。
@@ -803,19 +813,15 @@ Agent 正准备上线时，逐条过一遍：
 
 ## 项目资源
 
-脚手架和配套资料：
+配套资料：
 
-```bash
-npx create-12-factor-agent
-
-uvx create-12-factor-agent
-```
-
-- [AI Engineer World's Fair 演讲视频](https://www.youtube.com/watch?v=8kMaTybvDUw)（Dex 的首次公开讲解，链接有效性以发布时为准）
-- [Deep Dive 视频](https://www.youtube.com/watch?v=yxJDyQ8v6P0)（更深入的技术细节，链接有效性以发布时为准）
-- [Discord 社区](https://humanlayer.dev/discord)（链接有效性以发布时为准）
+- [AI Engineer World's Fair 演讲](https://www.youtube.com/watch?v=8kMaTybvDUw)：《12-Factor Agents: Patterns of reliable LLM applications》，Dex 的首次公开讲解
+- [Boundary 播客访谈](https://www.youtube.com/watch?v=yxJDyQ8v6P0)：《Building a 12 Factor Agent》（EP #4），比演讲更展开的技术讨论
+- [Discord 社区](https://humanlayer.dev/discord)
 - [The Outer Loop 博客](https://theouterloop.substack.com)（Dex 持续更新的工程笔记）
-- [got-agents/agents](https://github.com/got-agents/agents)：Dex 与多位贡献者维护的开源 Agent 参考实现，内含 `deploybot-ts`、`linear-assistant-ts` 等体现这套原则的示例（链接有效性以发布时为准）
+- [got-agents/agents](https://github.com/got-agents/agents)：Dex 团队维护的开源 Agent 参考实现，内含 `deploybot-ts`、`linear-assistant-ts` 等体现这套原则的示例
+
+README 还在号召社区共建 `npx/uvx create-12-factor-agent` 脚手架，截至本文发布，npm 和 PyPI 上都还没有这个包，暂时跑不了。
 
 > **项目地址**：[github.com/humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents)
 > **内容许可**：CC BY-SA 4.0 | **代码许可**：Apache 2.0

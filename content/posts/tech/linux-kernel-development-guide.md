@@ -1,10 +1,10 @@
 ---
 title: "Linux 内核开发指南：从源码结构到参与上游社区"
 date: "2026-05-02T15:03:42+08:00"
-lastmod: 2026-06-27T15:17:00+08:00
+lastmod: 2026-09-06T10:00:00+08:00
 slug: "linux-kernel-development-guide"
 github_repo: "torvalds/linux"
-description: "本文系统讲解 Linux 内核源码目录结构、主线开发流程、编译构建方法以及如何参与上游社区贡献，涵盖子系统划分、提交规范、测试框架与 Rust 融入现状等核心内容。"
+description: "本文系统讲解 Linux 内核源码目录结构、主线开发流程、编译构建方法以及如何参与上游社区贡献，涵盖子系统划分、提交规范、KUnit/kselftest 测试框架与 Rust 融入现状等核心内容。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Linux", "C语言", "开源"]
@@ -69,6 +69,7 @@ linux/
 ├── lib/           # 通用库函数
 ├── mm/            # 内存管理子系统
 ├── net/           # 网络协议栈
+├── rust/          # Rust 内核支持（6.1 起新增，6.12 起 Rust 驱动可用）
 ├── samples/       # 示例代码
 ├── scripts/       # 构建与工具脚本
 ├── security/      # 安全模块（SELinux、smack 等）
@@ -88,24 +89,26 @@ linux/
 - `arch/arm/` — ARM 32 位架构
 - `arch/arm64/` — ARM 64 位架构（也称 AArch64）
 - `arch/riscv/` — RISC-V 架构
-- `arch/loongarch/` — 龙芯 LoongArch 架构
+- `arch/loongarch/` — 龙芯 LoongArch 架构（5.19 起合并）
+- `arch/powerpc/` — PowerPC 架构
+- `arch/s390/` — IBM System z 大型机架构
 
 每种架构下通常包含：`boot/`（启动相关）、`kernel/`（架构级内核代码）、`mm/`（架构级内存管理）、`lib/`（架构级汇编优化）等。这种组织方式体现了 Linux 对硬件抽象的核心设计思想：**公共代码放在 `kernel/`、`mm/` 等通用目录，架构专用代码隔离在 `arch/` 下**。
 
 ### 2.3 语言构成
 
-根据 GitHub Language 统计，内核代码构成如下：
+内核源码的语言构成（按 OpenHub 对主线仓库的统计，2026 年 9 月）：
 
 | 语言 | 代码行数（大致） | 占比 |
 | ---- | ---------------- | ---- |
-| C | ~95% | 绝对主体 |
-| Assembly | ~3% | 架构级汇编 |
-| Shell | ~1% | 构建脚本 |
-| Rust | ~0.3% | 新引入的安全编程语言 |
-| Python | ~0.3% | 工具脚本 |
+| C | ~3710 万行 | ~96% |
+| Assembly | ~26 万行 | ~0.7% |
+| Shell | ~26 万行 | ~0.7% |
+| Rust | ~12 万行 | ~0.3% |
+| Python | ~12 万行 | ~0.3% |
 | Makefile | — | 构建系统 |
 
-Rust 的引入是近年来内核社区的重要变化。从 6.1 起内核正式支持 Rust，未来会有更多驱动用 Rust 编写。对于新进入内核开发的工程师，了解 C 是前提，但关注 Rust 的发展路径也很有价值。
+Rust 的引入是近年来内核社区最重要的变化。内核从 6.1（2022 年底）起正式支持 Rust，2023 年底的 6.7 合并了第一批 Rust 驱动，2024 年底的 6.12 又加入了 Nova GPU 驱动原型。到 2025 年 12 月的内核维护者峰会上，Rust 被正式认定为内核的核心语言，不再是实验特性。对想进入内核开发的工程师来说，C 仍然是前提，但 Rust 驱动的需求正在快速增长。
 
 ### 2.4 Documentation 目录
 
@@ -148,7 +151,7 @@ Linux 采用宏内核（monolithic kernel）架构，所有内核代码运行在
 从高到低，内核可以划分为：
 
 1. **系统调用接口**（SCI）— 规定用户空间与内核的契约，每个系统调用有明确的编号
-2. **进程管理** — 调度、创建、销毁进程，著名的 O(1) 和 CFS 调度器
+2. **进程管理** — 调度、创建、销毁进程。调度器从早期的 O(1)、CFS（完全公平调度器，2.6.23 起服役约 16 年）演进到 6.6 起默认的 EEVDF（最早合格虚拟截止时间优先调度器），后者的核心思路是给每个任务算一个虚拟截止时间，优先执行截止时间最早者
 3. **内存管理** — 虚拟内存管理、页面置换、kmalloc/slab 分配器
 4. **文件系统**（VFS）— 通用虚拟文件系统层，之下是 ext4、Btrfs、XFS 等具体实现
 5. **设备驱动** — 字符设备、块设备、网络设备驱动框架
@@ -214,10 +217,11 @@ cd linux
 git tag | grep -E '^v[0-9]+\.[0-9]+$' | sort -V | tail -20
 ```
 
-注意：`master` 分支是开发中的前沿代码，生产环境应使用稳定版本标签（如 `v6.8.10`）。切换到特定版本：
+注意：`master` 分支是开发中的前沿代码，生产环境应使用稳定版本标签或长期支持版（LTS）。截至 2026 年 9 月，最新稳定版是 7.2.x，仍受支持的 LTS 分支有 6.18.x、6.12.x（支持到 2028 年底）、6.6.x、6.1.x。对新手来说，6.12 LTS 是最稳妥的选择，Ubuntu、Debian 等发行版也围绕它构建。切换到特定版本：
 
 ```bash
-git checkout v6.8.10
+# 例如切到 6.12 LTS 分支的最新小版本
+git checkout v6.12.108
 ```
 
 ### 4.2 配置内核
@@ -287,11 +291,11 @@ sudo update-grub   # Debian/Ubuntu
 sudo grub2-mkconfig -o /boot/grub2/grub.cfg   # RHEL/Fedora
 ```
 
-如果使用非标准引导工具（如 EFISTUB），可以手动复制：
+注意：`make install` 只在部分架构（x86、arm 等）有实现，其他架构需要手动复制镜像文件。如果使用非标准引导工具（如 EFISTUB），也可以手动复制：
 
 ```bash
-cp arch/x86/boot/bzImage /boot/vmlinuz-6.8.10-custom
-cp System.map /boot/System.map-6.8.10-custom
+cp arch/x86/boot/bzImage /boot/vmlinuz-6.12-custom
+cp System.map /boot/System.map-6.12-custom
 ```
 
 ### 4.5 验证内核版本
@@ -506,10 +510,12 @@ sudo rmmod hello_char
 # cat /dev/hello_dev
 Hello from kernel!
 
-# echo 后
+# echo world > /dev/hello_dev 后，再 cat
 # cat /dev/hello_dev
-world from kernel!
+world
 ```
+
+注意 `echo` 写入时自带一个换行符，驱动把它连同内容一起存进缓冲区，因此 `cat` 读回的就是 `world` 加换行；写操作会把缓冲区里的旧内容一并覆盖。
 
 ### 5.5 内核日志
 
@@ -520,7 +526,13 @@ dmesg | grep hello_char
 dmesg -w   # 实时监控
 ```
 
-建议在 `/proc/sys/kernel/printk` 中调整日志级别，以便在控制台看到所有日志消息。
+如果希望消息同时出现在控制台（而不只是 `dmesg`），可以临时调低控制台日志级别。`/proc/sys/kernel/printk` 含四个值，第一个是控制台日志级别，默认通常为 4（只打印 KERN_WARNING 及以上）。`pr_info` 的级别是 6，需要临时放宽：
+
+```bash
+sudo sh -c 'echo 8 > /proc/sys/kernel/printk'   # 8 = 全部打印到控制台
+```
+
+调试完建议恢复默认值。注意这只是运行时开关，重启即失效。
 
 ---
 
@@ -573,7 +585,7 @@ DCO（Developer Certificate of Origin）是参与内核的准入门槛，签署 
 | ---- | ---- |
 | `scripts/checkpatch.pl` | 检查提交信息格式 |
 | `scripts/get_maintainer.pl` | 查询代码对应的维护者和邮件列表 |
-| `git git-send-email` | 通过 Git 发送补丁到邮件列表 |
+| `git send-email` | 通过 Git 发送补丁到邮件列表 |
 | `scripts/kernel-doc` | 从源码注释生成 API 文档 |
 | `make htmldocs` | 生成内核文档 HTML |
 
@@ -592,16 +604,28 @@ git send-email --to <maintainer@example.com> commit-file.patch
 
 ### 6.4 测试框架
 
-内核内置测试框架位于 `lib/tests/`、`kernel/tests/` 以及各子系统目录下。使用方法：
+内核测试分两层：KUnit 单元测试跑在内核内部，kselftest 自测以用户空间进程方式运行。
+
+**KUnit** 从 5.5 起内置，面向内核内部单元测试。测试文件以 `_kunit.c` 结尾、放在被测代码旁（如 `lib/list-test.c`），输出机器可解析的 TAP 格式。官方封装脚本会把内核构建成 User Mode Linux（UML，一种把内核编译成普通可执行文件的架构），在宿主机上直接启动并解析结果，无需真实硬件或虚拟机：
 
 ```bash
-# 运行 kunit 测试（单内核模块单元测试框架，6.1+ 内置）
-make UML          # 在 User Mode Linux 中运行，无需真实硬件
-# 或
-make ktap         # 内嵌测试框架
+./tools/testing/kunit/kunit.py run
+```
 
-# 运行各子系统的测试
-make TESTS=1 kselftest     # 内核自测（需要 target arch 支持）
+想手动走一遍 UML 流程也可以：
+
+```bash
+make ARCH=um defconfig
+make ARCH=um -j$(nproc)
+./linux        # UML 内核就是普通可执行文件，运行后输出测试结果
+```
+
+**kselftest** 覆盖系统调用、文件系统、网络、调度等子系统，测试编译成用户空间程序运行：
+
+```bash
+make -C tools/testing/selftests     # 构建全部自测
+make kselftest                      # 构建并运行（部分测试需要 root）
+make TARGETS="mm timers" kselftest  # 只构建并运行指定子系统
 ```
 
 ### 6.5 如何找到第一个贡献点
@@ -621,13 +645,13 @@ make TESTS=1 kselftest     # 内核自测（需要 target arch 支持）
 
 ### 7.1 Rust 融入内核
 
-Linux 6.1 正式引入 Rust 支持，这是内核社区近十年最重大的技术变化。Rust 的引入目标是：
+Linux 6.1（2022 年底）正式引入 Rust 支持，这是内核社区近十年最重大的技术变化。2025 年 12 月的维护者峰会上，Rust 被从实验特性转为内核核心语言，社区对其定位是：现有约 3700 万行 C 代码不重写，新写的驱动和子系统优先考虑 Rust。Rust 的引入目标是：
 
-- **内存安全**：在驱动层面减少 use-after-free、空指针等常见 bug
+- **内存安全**：在驱动层面减少 use-after-free、空指针解引用等常见 bug
 - **类型安全**：通过类型系统约束 API 使用错误
-- **concurrency 安全**：减少数据竞争
+- **并发安全**：编译期减少数据竞争
 
-Rust 驱动示例（`samples/rust/`）展示了如何用 Rust 编写平台驱动和字符设备。对于有 Rust 背景的工程师，这是一个值得切入的新赛道，内核社区正在积极招募 Rust 开发者。
+Rust 驱动示例（`samples/rust/`）展示了如何用 Rust 编写平台驱动和字符设备。目前 Rust 代码约 12 万行，占比不到 0.5%，但增长很快，Nova GPU 驱动、Apple AGX 驱动等新项目都选择了 Rust。对熟悉 Rust 的工程师，这是切入内核开发的一条新赛道，社区也在持续招募 Rust 驱动作者。
 
 ### 7.2 BPF（Berkeley Packet Filter）
 
@@ -691,8 +715,17 @@ make -j$(nproc) CC="ccache gcc"
 # 编译 x86_64 架构内核（需要在 x86_64 主机上）
 make -j$(nproc) bzImage
 
-# 用 QEMU 运行
+# 用 QEMU 运行（需要先准备一个 initramfs，见下方说明）
 qemu-system-x86_64 -kernel arch/x86/boot/bzImage \
+    -initrd /path/to/initramfs.img \
+    -nographic -append "console=ttyS0"
+```
+
+注意：内核启动后必须能找到根文件系统，否则会以 `VFS: Unable to mount root fs` panic 收场——这不是内核坏了，而是没有给它根。最简单的方式是准备一个最小 initramfs（例如用 `busybox` 制作，或用发行版的 `/boot/initrd.img-$(uname -r)` 临时顶替）。只想验证启动流程时，用发行版自带的 initramfs 就够：
+
+```bash
+qemu-system-x86_64 -kernel arch/x86/boot/bzImage \
+    -initrd /boot/initrd.img-$(uname -r) \
     -nographic -append "console=ttyS0"
 ```
 

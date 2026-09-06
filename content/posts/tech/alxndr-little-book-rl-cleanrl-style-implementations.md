@@ -5,19 +5,19 @@ lastmod: 2026-07-15T21:27:31+08:00
 draft: false
 slug: alxndr-little-book-rl-cleanrl-style-implementations
 github_repo: "alxndrTL/little-book-rl"
-description: "alxndrTL/little-book-rl 仓库深度拆解——一本配套 PyTorch 实现的小型强化学习书，覆盖 tabular MC / SARSA / Q-learning / n-step SARSA / SARSA(λ) / REINFORCE / VPG / SPG / PPO 全套算法。"
+description: "alxndrTL/little-book-rl 仓库深度拆解——一本配套 PyTorch 实现的小型强化学习书，覆盖 MC / SARSA / Q-learning / n-step SARSA / SARSA(λ) / DQN / REINFORCE / VPG / SPG / PPO 全套 10 个算法。"
 categories : ["技术笔记"]
-tags: ["PyTorch", "cn-doc-writer"]
+tags: ["PyTorch"]
 ---
 
 # The Little Book of RL：从零到 PPO 的 CleanRL 风格实现解析
 
 > 仓库：[alxndrTL/little-book-rl](https://github.com/alxndrTL/little-book-rl)
-> 配套书 PDF：[book.pdf](https://github.com/alxndrTL/little-book-rl/blob/main/book.pdf) — 21MB / V1 (June 2026)
-> 作者：[Thomas Lew](https://github.com/alxndrTL) / 471 stars / CC BY-SA 4.0 (non-commercial)
-> 配套实现：6 个文件，~80KB，覆盖 9 个 RL 算法
+> 配套书 PDF：[book.pdf](https://github.com/alxndrTL/little-book-rl/blob/main/book.pdf) — 约 20MB / V1 (June 2026)
+> 作者：[Alexandre TL](https://github.com/alxndrTL) / 约 1.6k stars / CC BY-SA 4.0 (non-commercial)
+> 配套实现：6 个文件，约 65KB，覆盖 10 个 RL 算法
 
-这是一本**短小但完整的强化学习入门书**，加上一份"教学优先"的 PyTorch 实现。**作者 Thomas Lew 在 README 里写明**：书的目的是"从基础到应用算法的 RL 入门"，**代码是把书里讲到的算法全部实现一遍**。
+这是一本**短小但完整的强化学习入门书**，加上一份"教学优先"的 PyTorch 实现。**作者在 README 里写明**：书的目的是"从基础到应用算法的 RL 入门"，**代码是把书里讲到的算法全部实现一遍**。
 
 下面把这本书的实现层拆给你看。
 
@@ -25,30 +25,32 @@ tags: ["PyTorch", "cn-doc-writer"]
 
 ## 一、整体结构
 
-仓库分四个部分：
+仓库内容分四块：
 
 | 路径 | 内容 | 用途 |
 |---|---|---|
-| `book.pdf` | 书的主文件 | 21MB 完整正文（V1 June 2026） |
+| `book.pdf` | 书的主文件 | 约 20MB 完整正文（V1 June 2026） |
 | `algos/value_based/` | 基于价值函数的方法 | tabular.py + dqn.py |
 | `algos/policy_based/` | 基于策略梯度的方法 | reinforce.py + spg.py + vpg.py + ppo.py |
 | `supplementary/` | 动态规划的严格证明 | 2021 年写的补充材料 |
 
+（另有 `assets/` 存放封面图等素材，无代码。）
+
 配套实现覆盖 **10 个算法**：
 
-```
+```text
 tabular  : MC, SARSA, Q-learning, n-step SARSA, SARSA(λ)   (5)
 value    : DQN                                            (1)
 policy   : REINFORCE, VPG, SPG, PPO                       (4)
 ```
 
-**没有写**的有：A2C / SAC / TD3 / DDPG / 模型方法（model-based）。这本书明确说是"入门到应用"，所以刻意停在 PPO。
+**代码没有写**的有：A2C / SAC / TD3 / DDPG / model-based 算法实现。代码实现刻意停在 PPO；书本身在 PPO 之后还讲了两个放大到规模的实例——第 5 章 RL×LLMs（PPO → GRPO）和第 6 章 AlphaGo Zero（model-based / MCTS）。
 
 ---
 
 ## 二、tabular.py：一个文件覆盖 5 个 tabular 算法
 
-这是仓库里最有教学价值的文件——**5 个 on-policy / off-policy / n-step / eligibility trace 算法全在一个 300 行的 Python 文件里**。
+这是仓库里最有教学价值的文件——**5 个 on-policy / off-policy / n-step / eligibility trace 算法全在一个 341 行的 Python 文件里**。
 
 ### 2.1 用 tyro 做 CLI（不是 argparse）
 
@@ -125,7 +127,7 @@ def linear_schedule(start_e: float, end_e: float, duration: float, t: int) -> fl
 
 ## 三、policy_based/：4 个策略梯度算法
 
-### 3.1 REINFORCE（最基础的策略梯度）
+### 3.1 REINFORCE（reward-to-go 策略梯度）
 
 ```python
 def reward_to_go(rewards, gamma):
@@ -142,8 +144,9 @@ def reward_to_go(rewards, gamma):
 
 ```python
 # REINFORCE loss:
-# ∇J(θ) ≈ (1/N) Σ_n Σ_t ∇log π_θ(a_{n,t}|s_{n,t}) G_{n,t}
-loss = -(log_probs * returns).mean()
+# g_hat = (1/N) * sum_i sum_t G_t^i * grad log pi(a_t^i | s_t^i)
+log_probs = agent.log_prob(batch_obs, batch_actions)
+loss = -(batch_G * log_probs).sum() / args.num_trajectories
 ```
 
 注意 **negative**——PyTorch 的 optimizer 只能 minimize，所以策略梯度 maximize 期望回报 ↔ minimize negative expected return。
@@ -167,11 +170,11 @@ class Agent(nn.Module):
         return Categorical(logits=logits).sample()
 ```
 
-**没有 critic**——纯 actor-only。这是 REINFORCE 的标志。`std=0.01` 的小初始化是为了**初始策略接近 uniform**（low entropy 反而会让 loss 跳得厉害）。
+**没有 critic**——纯 actor-only。这是 REINFORCE 的标志。`std=0.01` 的小初始化让初始 logits 接近 0，策略接近 uniform（高熵）；如果初始策略熵太低、过早确定，loss 的梯度会很不稳定。
 
-### 3.2 PPO（仓库里最复杂的文件）
+### 3.2 PPO（policy_based 里最复杂的文件）
 
-PPO 文件 333 行，是所有算法里最长的。它的注释把"书里没讲但实现里要做的事"全部列出来：
+PPO 文件 332 行，是 policy_based 目录里最长的（tabular.py 341 行是全仓库最长）。它的注释把"书里没讲但实现里要做的事"全部列出来：
 
 ```python
 """
@@ -230,7 +233,7 @@ class Agent(nn.Module):
 ```
 
 注意：
-- critic 输出 std=1.0（小 std 让 critic 初始值偏小），actor 输出 std=0.01（小 std 让 actor 初始 logits 偏小 → uniform policy）。
+- critic 输出层 std=1.0，actor 输出层 std=0.01，都小于默认的 √2：critic 初始 value 幅度小、更保守；actor 初始 logits 接近 0 → 初始策略接近 uniform。
 - `get_action_and_value` **一次 forward 拿四个东西**（action、log_prob、entropy、value），节省算力。
 
 #### B. 核心 PPO 损失（论文原版）
@@ -238,18 +241,18 @@ class Agent(nn.Module):
 ```python
 # PPO clipped surrogate:
 # L_clip(θ) = E[ min(r_t(θ) A_t, clip(r_t(θ), 1-ε, 1+ε) A_t) ]
-new_log_prob = probs.log_prob(batched_actions)
-log_ratio = new_log_prob - b_old_log_probs
-ratio = log_ratio.exp()
+_, newlogprob, _, _ = agent.get_action_and_value(b_obs[mb_inds], b_actions.long()[mb_inds])
+logratio = newlogprob - b_logprobs[mb_inds]
+ratio = logratio.exp()
 
-adv = b_advantages
+mb_advantages = b_advantages[mb_inds]
 if args.norm_adv:
-    adv = (adv - adv.mean()) / (adv.std() + 1e-8)
+    mb_advantages = (mb_advantages - mb_advantages.mean()) / (mb_advantages.std() + 1e-8)
 
 # unclipped
-pg_loss1 = -adv * ratio
+pg_loss1 = -mb_advantages * ratio
 # clipped
-pg_loss2 = -adv * torch.clamp(ratio, 1 - args.clip_coef, 1 + args.clip_coef)
+pg_loss2 = -mb_advantages * torch.clamp(ratio, 1 - args.clip_coef, 1 + args.clip_coef)
 pg_loss = torch.max(pg_loss1, pg_loss2).mean()
 ```
 
@@ -304,13 +307,26 @@ PPO 文件的开头写了：
 1. **CleanRL 是社区公认的"教学优先 + 工程正确"RL 实现范式**——单文件、易读、可执行、有 tensorboard / wandb 集成。
 2. **Little Book of RL 把 CleanRL 当作实现参考**说明 CleanRL 风格正在成为 RL 入门的**事实标准**——跟 PyTorch 官方 tutorial、Stable Baselines3 并列。
 
+### 3.5 一次 update 里数据怎么流（以 ppo.py 为例）
+
+把 PPO 的一次更新拆成数据视角，就是 6 步：
+
+1. **采样**：`num_envs=4` 个 CartPole 并行跑 `num_steps=128` 步，每个 (env, step) 存下 obs / action / logprob / reward / done / value，得到一个 `(128, 4)` 的 batch（512 条经验）。
+2. **GAE 回溯**：从最后一步倒着算 `delta = r + γ·V(s') − V(s)`，再累积 `lastgaelam = delta + γ·λ·lastgaelam`，得到每条经验的 advantage；returns = advantage + value。
+3. **展平 + 打乱**：把 `(128, 4)` 展平成 512 条，`num_minibatches=4` 切出 4 个 minibatch，每个 128 条。
+4. **K epoch 更新**：对每个 minibatch 跑 4 个 epoch（`update_epochs=4`），每次用当前策略重算 `logratio = logprob_new − logprob_old`，`ratio = exp(logratio)`。
+5. **三损失加权**：`loss = pg_loss − ent_coef·entropy + vf_coef·value_loss`，`backward()` 后 `clip_grad_norm_(0.5)` 再 `optimizer.step()`。
+6. **早停判定**：`approx_kl > target_kl` 就 break 当前 update，进入下一轮采样。
+
+这条链路里最容易看漏的一点：**同一个 rollout 会被复用 4 个 epoch**，但 advantage 只在采样后算一次，不再重算——这是 PPO 与 REINFORCE 在数据复用上的分界线。
+
 ---
 
 ## 四、10 个算法的演进关系
 
 把仓库里 10 个算法按"理论血缘"画一张图：
 
-```
+```text
 value-based          policy-based
 ─────────            ────────────
 MC ─┐                REINFORCE ──┐
@@ -324,7 +340,7 @@ DQN ────────┘
 观察：
 
 - **tabular 5 算法全部共享 update 模板**（TD error + 各种 target 形式）。
-- **policy-based 4 算法共享 actor-only → actor-critic 的演进**：REINFORCE（pure actor）→ VPG（add baseline）→ SPG（stochastic）→ PPO（clipped + GAE）。
+- **policy-based 4 算法按 actor-only → actor-critic 演进**：SPG（actor-only，一条 trajectory 共用一个折扣回报）→ REINFORCE（actor-only，reward-to-go 逐时间步回报）→ VPG（actor-critic，critic 做 baseline + GAE）→ PPO（actor-critic，clipped surrogate + GAE）。
 - **DQN 是 tabular Q-learning 的非线性推广**（同样的 update 公式 + 神经网络逼近 + experience replay）。
 - **PPO 是 REINFORCE 的"加约束"版本**（trust region + clipped surrogate）。
 
@@ -342,11 +358,11 @@ DQN ────────┘
 layer_init(nn.Linear(64, envs.single_action_space.n), std=0.01)
 ```
 
-actor 输出层 std=0.01（小），critic 输出层 std=1.0（默认）。**这是 CleanRL 的隐性约定**——小 std 让初始策略接近 uniform（高熵），避免 early-stage collapse；大 std 让 critic 输出范围大一些，方便训练。
+actor 输出层 std=0.01（远小于默认 √2），critic 输出层 std=1.0（小于默认 √2）。**这是 CleanRL 的隐性约定**——actor 输出 logits 接近 0，初始策略接近 uniform（高熵），避免 early-stage collapse；critic 初始 value 幅度小，避免训练初期 value 预测偏差过大。
 
 ### 5.2 vectorized env
 
-所有 policy-based 文件都用 `gym.vector.SyncVectorEnv`，**多个 env 并行采样**。这在论文里通常一句"parallel rollout"带过，**但在工程上是 PPO 跑 CartPole 的关键**——单 env 数据采样太慢，PPO 根本跑不动。
+所有 policy-based 文件都用 `gym.vector.SyncVectorEnv`，**多个 env 并行采样**。这在论文里通常一句"parallel rollout"带过，但在工程上是 PPO 的默认打法——单 env 逐条采样，rollout 阶段会成为瓶颈，数据量也喂不满 minibatch。
 
 ### 5.3 步数 vs trajectory 计数
 
@@ -382,38 +398,40 @@ if args.target_kl is not None:
 
 ## 六、这本书的局限（写给认真学 RL 的人）
 
-把仓库读完，下面这些**没教**的要知道：
+把仓库读完，下面这些**没教**的要知道。书自己在结尾 "What this book does not cover" 一节也列了这份清单，这里用实现层的视角再过一遍：
 
 ### 6.1 没有 continuous action space
 
-所有算法都假设 `gym.spaces.Discrete`（用 `Categorical` distribution）。**SAC / TD3 / DDPG 这类连续动作算法完全没提**。如果你的任务是 robotics / 自动控制，需要补这一块。
+所有算法都假设 `gym.spaces.Discrete`（用 `Categorical` distribution），`ppo.py` 甚至用 assert 锁死了离散动作空间。**SAC / TD3 / DDPG 这类连续动作算法没有展开**。书 3.8 提到 continuous state 可以离散化，但如果你的任务是 robotics / 自动控制，需要补这一块。
 
-### 6.2 没有 model-based 方法
+### 6.2 没有 model-based 算法实现
 
-MCTS / 世界模型 / Dreamer 这些都没提。**model-based 是 RL 的另一个半壁江山**，这本书完全没碰。
+MCTS / 世界模型 / Dreamer 这些**都没有配套代码**。书第 6 章用 AlphaGo Zero 把 model-based 讲了（明确写 "a form of policy iteration coupled with a model-based approach"，improvement 步是 "a modified version of an MCTS rollout"），但仓库 6 个代码文件里没有 model-based 实现——实现层仍然停在 value-based / policy-based 两大家。
 
 ### 6.3 没有 multi-agent / hierarchical
 
-multi-agent RL 和 hierarchical RL（Options / Feudal Networks）都没提。这是工业 RL（推荐系统、运筹优化）的常见范式。
+multi-agent RL 和 hierarchical RL（Options / Feudal Networks）在书里只出现在 "does not cover" 清单中。第 6 章 AlphaGo Zero 借 self-play 触及了双人博弈（zero-sum perfect-information），但**没有讲 multi-agent 的一般框架**。这是工业 RL（推荐系统、运筹优化）的常见范式。
 
 ### 6.4 没有 offline RL / imitation learning
 
-BC / IRL / CQL / IQL 这些都没提。如果你的数据是 fixed dataset（没有环境交互），需要补 offline RL。
+offline RL（CQL / IQL / behavior cloning）在书里出现在 "does not cover" 清单与第 6 章 AlphaGo Zero 的 evaluation 步（把搜索改进后的策略蒸馏回 base policy 用的就是 behavior cloning）。**没有讲 offline RL 的一般框架**。如果你的数据是 fixed dataset（没有环境交互），需要补 offline RL。
 
 ### 6.5 PPO 的复现性陷阱
 
-PPO 文件 333 行，**但跑出论文数字需要大量调参**。仓库只给了 CartPole-v1 这种 toy env 的复现。**Atari / MuJoCo 数字不在仓库范围内**——所以"用这份代码跑 HalfCheetah" 是不现实的。
+PPO 文件 332 行，**但跑出论文数字需要大量调参**。仓库只给了 CartPole-v1 这种 toy env 的复现。**Atari / MuJoCo 数字不在仓库范围内**——所以"用这份代码跑 HalfCheetah" 是不现实的。
 
 ---
 
 ## 七、读这本书的最佳顺序
 
+书分三部分 6 章：Part I Foundations（第 1-2 章，RL 是什么、怎么做）、Part II Diving deeper（第 3 章 value functions、第 4 章 policy optimization）、Part III RL at scale（第 5 章 RL×LLMs、第 6 章 AlphaGo Zero）。
+
 如果你是 RL 入门，按下面顺序读：
 
-1. **读 book.pdf 前 4 章**（tabular / DP / MC / TD）→ 对应 `tabular.py` 完整读完
-2. **读 book.pdf 第 5 章**（function approximation）→ 跳到 `dqn.py`
-3. **读 book.pdf 第 6 章**（policy gradient）→ 对应 `reinforce.py` + `vpg.py` + `spg.py`
-4. **读 book.pdf 第 7 章**（TRPO / PPO）→ 对应 `ppo.py`
+1. **第 1-2 章**（RL 的交互环、三类方法）→ 快速过，建立全局视角
+2. **第 3 章**（DP / MC / SARSA / Q-learning，3.8 进神经网络）→ 对应 `tabular.py` 完整读完，跳到 `dqn.py`
+3. **第 4 章**（4.2 SPG / REINFORCE / VPG / GAE，4.3 trust region + PPO）→ 对应 `spg.py` + `reinforce.py` + `vpg.py` + `ppo.py`
+4. **第 5-6 章**（GRPO、AlphaGo Zero）→ 概念级阅读，代码仓库没有对应实现
 5. **supplementary/** 是 DP 的严格数学证明，**选择性读**（理论派必读，工程派可跳）
 
 每章读完**直接跑代码**：
@@ -464,5 +482,3 @@ tensorboard 起来后**能看到 return 曲线**，对照书里讲"应该长什�
 - [Stable Baselines3](https://stable-baselines3.readthedocs.io/) — 工业级 RL 库
 - [Spinning Up](https://spinningup.openai.com/) — OpenAI RL 入门
 - [Sutton & Barto - Reinforcement Learning: An Introduction](http://incompleteideas.net/book/the-book.html) — RL 圣经
-
-> 本文由钳岳星君基于 alxndrTL/little-book-rl 仓库深度拆解，使用 cn-doc-writer 技能优化、去除 AI 味道。所有算法 update 公式均来自仓库代码与 Sutton & Barto 教科书；所有"工程坑"来自仓库注释（"Few implementation details not described in the book" 段落）。
