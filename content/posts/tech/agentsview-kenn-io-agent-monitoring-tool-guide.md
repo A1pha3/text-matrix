@@ -1,5 +1,5 @@
 ---
-title: "agentsview：把 20+ 编程 Agent 的会话、Token 和成本收进一个本地面板"
+title: "agentsview：把 50+ 编程 Agent 的会话、Token 和成本收进一个本地面板"
 date: "2026-06-12T15:11:59+08:00"
 slug: "agentsview-kenn-io-agent-monitoring-tool-guide"
 github_repo: "kenn-io/agentsview"
@@ -20,15 +20,15 @@ tags: ["AI Agent", "Go", "Svelte", "SQLite", "本地优先"]
 > | Forks | 650+ |
 > | 许可证 | MIT |
 > | 语言 | Go / Svelte |
-> | 核实 | 2026-09-05（数字随仓库增长而变化） |
+> | 核实 | 2026-09-08（数字随仓库增长而变化） |
 
 agentsview 解决的是一个被掩盖的小麻烦：**当你在 Claude Code、Codex、Copilot CLI、Gemini CLI、Cursor、Kiro 几个 Agent 之间来回切，本地磁盘上其实堆了一堆 `~/.claude/projects/`、`~/.codex/sessions/`、`~/.copilot/` 这种互不相通的会话目录。**
 
 你没法在一个地方搜索昨天问过 Claude 的某条指令，没法知道这个月在不同 Agent 上各花了多少钱，也没法比较不同模型在同一个仓库上的实际上下文消耗。
 
-kenn-io/agentsview 把这件事做成一个本地优先的 Go 单文件二进制：自动扫描这 20 多个 Agent 的会话目录，把它们索引到本地 SQLite（FTS5），再开一个 127.0.0.1 的 Web 面板。无需账号、无需上传，Telemetry 只有一个匿名的 `daemon_active` PostHog 上报，默认开启、可用环境变量关掉。`agentsview usage daily` 一行命令直接打印每日成本。相比 ccusage 这类每次都要重新解析原始会话 JSONL 的工具，agentsview 首次把会话索引进 SQLite 后后续查询走数据库、不重解析，重复统计自然更快；README 自带的 `make bench-backends` 比较的是 SQLite / DuckDB / PostgreSQL 三家的读取延迟，并不和 ccusage 对标。
+kenn-io/agentsview 把这件事做成一个本地优先的 Go 单文件二进制：自动扫描支持表里 50 多个会话目录，把它们索引到本地 SQLite（FTS5），再开一个 127.0.0.1 的 Web 面板。无需账号、无需上传，Telemetry 只有一个匿名的 `daemon_active` PostHog 上报，默认开启、可用环境变量关掉。`agentsview usage daily` 一行命令直接打印每日成本。相比 ccusage 这类每次都要重新解析原始会话 JSONL 的工具，agentsview 把会话先索引进 SQLite，之后的查询走数据库、不再重解析，重复统计自然更快；README 自带的 `make bench-backends` 比较的是 SQLite / DuckDB / PostgreSQL 三家的读取延迟，并不和 ccusage 对标。
 
-这不是一个玩具项目 —— 仓库 1175 次 commit、Go 1.27 / Svelte 5 / Tauri 的完整栈，`make bench-backends` 还自带 SQLite / DuckDB / PostgreSQL 三家读取对比（默认 fixture 1000 会话、64000 消息，需要 Docker）。它更适合看作 ccusage + Claude-history-tool + claude-code-transcripts 三个想法的合并与升级。
+这不是一个玩具项目 —— 仓库近 1200 次 commit、Go 1.27 / Svelte 5 / Tauri 的完整栈，`make bench-backends` 还自带 SQLite / DuckDB / PostgreSQL 三家读取对比（默认 fixture 1000 会话、64000 消息，需要 Docker）。README 致谢的两个前作 claude-history-tool 和 claude-code-transcripts 管的是「浏览会话、导出转写」，ccusage 管的是 Claude Code 的成本统计；agentsview 把这几件事合成了一份统一索引。
 
 ---
 
@@ -39,7 +39,7 @@ kenn-io/agentsview 把这件事做成一个本地优先的 Go 单文件二进制
 - 说出 agentsview 的核心价值：为什么需要在多个 AI Coding Agent 之间统一监控会话和成本
 - 解释 agentsview 的架构：SQLite 主存、PostgreSQL/DuckDB 镜像、只读服务模式
 - 通过 `agentsview serve` 和 `agentsview usage daily` 快速查看 Agent 使用成本和会话统计
-- 配置远程访问（`--public-url`）和团队共享（PostgreSQL 镜像）
+- 配置远程访问（`--public-url`）和团队共享（PostgreSQL 镜像、S3 / 文件系统会话同步）
 - 判断 agentsview 是否适合你的场景，并制定采用顺序
 
 ## 目录
@@ -67,11 +67,11 @@ kenn-io/agentsview 把这件事做成一个本地优先的 Go 单文件二进制
 | `pg` 子命令 | 推送到共享 PostgreSQL / 从 PG 只读服务 | 推 / 只读 |
 | `duckdb` 子命令 | 同步到 DuckDB 镜像 / Quack 协议服务 | 推 / 只读 |
 
-边界只有一条：**SQLite 是主存，所有写入都从它出去**。PostgreSQL 和 DuckDB 都是从 SQLite 推出去的「镜像」，服务模式全部 read-only。你可以先单机玩 SQLite，需要时再决定要不要把团队数据汇到 PG 做共享面板，或者把历史分析导到 DuckDB。
+边界只有一条：**SQLite 是主存，所有写入都从它出去**。PostgreSQL 和 DuckDB 都是从 SQLite 推出去的「镜像」，服务模式全部 read-only。你可以先单机玩 SQLite，需要时再决定要不要把团队数据汇到 PG 做共享面板，或者把历史分析导到 DuckDB。搜索有两条腿：FTS5 全文是默认，语义搜索是选配——接任意 OpenAI 兼容的 embeddings 端点，用 `session search --semantic` 或 `--hybrid` 按意思查，每条命中都标注它来自哪段对话。
 
-新版 README 把写入侧的常驻进程拆成了 `daemon` 子命令族（`daemon start` / `status` / `restart` / `stop`）：桌面 App 和需要新鲜数据的命令（`sync`、`usage`、`pg push`、`duckdb push`）在有必要时自动拉起它；`serve --background` 仍保留，适用于那些需要 serve 专属 flag（如 `--no-sync`、非回环 `--host`）的一次性后台任务。
+新版 README 把写入侧的常驻进程拆成了 `daemon` 子命令族（`daemon start` / `status` / `restart` / `stop`）：桌面 App 和需要新鲜数据的命令（`sync`、`usage`、`pg push`、`duckdb push`）在有必要时自动拉起它；`serve --background` 仍保留，适用于那些需要 serve 专属 flag（如 `--no-sync`、非回环 `--host`）的一次性后台任务。兼容的 daemon 已经在跑时再敲 `serve`，它只报告现有地址然后退出，不会起第二个进程；后台 daemon 空闲一段时间会自行退出。只想要一次性 `sync`、不留常驻进程的话，用 `AGENTSVIEW_NO_DAEMON=1 agentsview sync`。
 
-Agent 接入侧，README 的「Supported Agents」表列出了 50+ 个会话条目（同款工具的 CLI / IDE 变体会占多行），目录全部支持环境变量覆盖。其中 Antigravity CLI 是特例：新版本把轨迹存成 SQLite `.db`，旧版本是 AES-GCM 加密的 `.pb`，两种格式的完整转写都依赖一个 `<uuid>.trajectory.json` sidecar；没有 sidecar 时 agentsview 只能降级到 summary mode。要补完整转写，需要并行跑一个 `agy-reader`，它连上本地 Antigravity daemon 逐段解密，把 sidecar 写到源文件旁边，agentsview 的 file watcher 会自动切换到完整解析，不用重启。
+Agent 接入侧，README 的「Supported Agents」表列出了 50+ 个会话条目（同款工具的 CLI / IDE 变体会占多行），目录全部支持环境变量覆盖。两个例外要记住：Aider 没有中央会话目录（历史写在每个仓库的 `.aider.chat.history.md` 里），agentsview 默认不扫——作者给的理由是全盘扫描会在 macOS 上触发隐私弹窗，要用 `AIDER_DIR` 显式开启；Amp 已标记废弃，新版把线程存在服务端，本地只剩桩文件，agentsview 只能解析历史本地 JSON。其中 Antigravity CLI 是特例：新版本把轨迹存成 SQLite `.db`，旧版本是 AES-GCM 加密的 `.pb`，两种格式的完整转写都依赖一个 `<uuid>.trajectory.json` sidecar；没有 sidecar 时 agentsview 只能降级到 summary mode。要补完整转写，需要并行跑一个 `agy-reader`，它连上本地 Antigravity daemon 逐段解密，把 sidecar 写到源文件旁边，agentsview 的 file watcher 会自动切换到完整解析，不用重启。
 
 ---
 
@@ -92,11 +92,11 @@ powershell -ExecutionPolicy ByPass -c "irm https://agentsview.io/install.ps1 | i
 装完直接：
 
 ```bash
-agentsview serve           # 起服务 + 打开 Web UI
+agentsview serve           # 前台起服务，Web UI 挂在 8080
 agentsview usage daily     # 看最近 30 天每日成本
 ```
 
-首次 `serve` 会扫一遍本地已装的 Agent，把会话索引到 `~/.agentsview/` 下的 SQLite，自动打开 `http://127.0.0.1:8080`。CLI 是独立命令，**不需要先起服务**就能跑 `usage`、`stats`、`session usage`。
+首次 `serve` 会扫一遍本地已装的 Agent，把会话索引到 `~/.agentsview/` 下的 SQLite，然后在 `http://127.0.0.1:8080` 起 Web 面板。CLI 是独立命令，**不需要先起服务**就能跑 `usage`、`stats`、`session usage`。
 
 ### 2. Homebrew / 桌面 App（不熟终端的人）
 
@@ -108,7 +108,7 @@ brew install --cask agentsview
 
 ### 3. Docker（无 GUI 服务器 / 团队共享）
 
-README 的 compose 文件只把端口绑到 `127.0.0.1`，这是有意的 —— 默认拒绝外网访问，需要暴露给非本机浏览器时必须加 `--require-auth`。
+README 的 compose 文件只把端口绑到 `127.0.0.1`，这是有意的 —— 默认拒绝外网访问，需要暴露给非本机浏览器时必须加 `--require-auth`。容器默认入口是 `serve`；要起团队只读面板，把环境变量换成 `PG_SERVE=1` 并配上 `AGENTSVIEW_PG_URL`，启动命令就切到 `pg serve`。
 
 ```bash
 docker run --rm -p 127.0.0.1:8080:8080 \
@@ -126,7 +126,7 @@ docker run --rm -p 127.0.0.1:8080:8080 \
 
 ## 一次完整使用流
 
-光看功能列表你可能抓不到重点。我按「**让 agentsview 帮我看下这周花了多少**」的最小路径走一遍，所有命令都来自 README 原文，门槛很低。
+光看功能列表你可能抓不到重点。我按「**让 agentsview 帮我看下最近花了多少**」的最小路径走一遍，所有命令都来自 README 原文，门槛很低。
 
 ```bash
 # 1. 起服务（同时把数据塞进 SQLite + 开 Web 面板）
@@ -144,14 +144,15 @@ agentsview usage daily
 # 3. 想按模型看细项，加 --breakdown
 agentsview usage daily --breakdown --agent claude
 
-# 4. 给 status bar / 状态行用的极简格式
+# 4. 给 status bar / 状态行用的极简格式（只报当日）
 agentsview usage statusline
-# → "Today $4.23 / Month $87.12"
+# → "$4.23 today"；加 --agent claude 则输出 "$4.23 today (claude)"
 
 # 5. 想看「这个月我到底属于哪种 Agent 用户」
 agentsview stats --since 2026-06-01
 # → 输出 archetype：automation / quick / standard / deep / marathon
 # → 时长、消息数、峰值上下文、工具调用次数的分布
+# 依赖 git/GitHub 的结果指标默认关闭（慢且脆），要 --include-git-outcomes 显式打开
 
 # 6. 单会话精细账
 agentsview session usage <session-id>
@@ -159,7 +160,7 @@ agentsview session usage <session-id>
 #   金额以整数 microdollar 对象返回（如 {"cost":{"microdollars":2410000}}），CLI 渲染成美元
 ```
 
-如果脚本要用，每条都支持 `--json`；Shell 友好度上作者是认真想过的。
+如果脚本要用：`usage` 系列支持 `--json`，`session usage` 和 `stats` 用 `--format json`（stats 的输出带 `schema_version: 1` 的版本化 schema）。CI 里跑一次性 `claude -p` 或 `codex exec` 时，还可以用 `capture run` 包住命令——保留子进程输出和退出码，单独落一份用量结果，全程不启 daemon、web server 和 watcher。
 
 ---
 
@@ -185,17 +186,22 @@ agentsview serve --public-url https://your-workspace.exe.dev
 
 ### PostgreSQL / DuckDB 是镜像不是替代
 
-这一点很容易被忽略。`pg serve` 和 `duckdb serve` 都是 read-only 的 `pg push` / `duckdb push` 目标，主写还在本地 SQLite。`duckdb serve` 的搜索路径目前是 substring/regex 回退，**索引搜索仍然走 SQLite FTS5**。所以：
+这一点很容易被忽略。`pg serve` 和 `duckdb serve` 都是 read-only 的 `pg push` / `duckdb push` 目标，主写还在本地 SQLite。`duckdb serve` 的搜索路径目前是 substring/regex 回退，**索引搜索仍然走 SQLite FTS5**。
 
-- 想给团队做个只读共享面板 → `pg push` + `pg serve`
+PG 侧已经长出了完整的后台化路径：`pg push --watch` 盯着会话目录，新会话落盘后自动推，`pg service install` 能把它注册成 launchd（macOS）或 systemd --user（Linux）服务。多台目标库用命名配置块 `[pg.work]`、`[pg.archive]` 分开管，`default_pg` 指定长驻命令用哪个。跨机器聚合还有两条不走 PG 的路：Claude 和 Codex 的会话根可以直接配成 `s3://`，中央实例同步时只下载有变更的会话；或者用 rsync / Git 把原始会话文件搬过来，再用 `[[session_sources]]` 带上机器标签统一收录（只传会话文件，别碰 `sessions.db` 和它的 WAL）。Quack 协议还新，agentsview 的默认很保守：本地只绑 loopback、强制 token，非回环的明文 HTTP 要显式 `--allow-insecure`。
+
+所以：
+
+- 想给团队做个只读共享面板 → `pg push --watch` + `pg service install` + `pg serve`
 - 想在远端用 DuckDB 查历史 → 同步到 `sessions.duckdb`，再 `duckdb quack serve` 暴露 Quack 协议
+- 多台机器、又不想上 PG → S3 会话根，或 `[[session_sources]]` 文件系统同步
 - 日常搜索 / 实时写 → 始终 SQLite
 
 ### Antigravity CLI：靠 sidecar 补完整转写
 
 README 在「Supported Agents」表里把 Antigravity 和 Antigravity CLI 分成两个条目（后者目录在 `~/.gemini/antigravity-cli/`），还单独拉了一节「Antigravity CLI: high-resolution transcripts」解释它为什么特殊。
 
-Antigravity CLI 的会话轨迹有两种落盘格式：新版本存 SQLite `.db`，旧版本是 AES-GCM 加密的 `.pb`。无论哪种，**完整转写（结构化工具调用、结果、推理、diff）都来自一个 `<uuid>.trajectory.json` sidecar**；没有 sidecar 时，agentsview 只能降级到 summary mode——用 `history.jsonl` 的 prompt 加纯文本工件拼个大概。要补上完整转写，需要并行跑 `agy-reader`：
+Antigravity CLI 的会话轨迹有两种落盘格式：新版本存 SQLite `.db`，旧版本是 AES-GCM 加密的 `.pb`。无论哪种，**完整转写（结构化工具调用、结果、推理、diff）都来自一个 `<uuid>.trajectory.json` sidecar**；没有 sidecar 时降级到 summary mode，详情页头部会挂一个「Summary mode」徽标——`.db` 会话靠启发式解出原始步骤，只剩 prompt 和工具调用名；`.pb` 会话用 `history.jsonl` 的 prompt 加 `brain/` 下的纯文本工件（计划、走查、检查点）拼个大概。要补上完整转写，需要并行跑 `agy-reader`：
 
 ```bash
 go install github.com/mjacobs/agy-reader@latest   # 社区工具，独立仓库，不在 agentsview 里
@@ -227,7 +233,7 @@ agentsview 是一个「让 AI 使用过程更可观察」的工具。**先判断
 
 采用顺序（避免一次吃撑）：
 
-1. 跑 `agentsview serve` + Web UI，确认 20 多个 Agent 的目录都能被自动发现；如果有缺失就翻 [configuration docs](https://agentsview.io/configuration/) 加环境变量
+1. 跑 `agentsview serve` + Web UI，确认在用的 Agent 目录都能被自动发现；如果有缺失就翻 [configuration docs](https://agentsview.io/configuration/) 加环境变量
 2. CLI 跑通 `usage daily` 和 `stats`，看 28 天的 archetype 分布是不是符合你的实际使用习惯
 3. 想要远端访问再上 `--public-url` + `--require-auth`
 4. 团队场景才上 `pg push` / `pg serve`；分析需求再上 `duckdb push` + Quack
@@ -282,7 +288,7 @@ agentsview 是一个「让 AI 使用过程更可观察」的工具。**先判断
 <summary>参考答案</summary>
 
 - **两种格式**：Antigravity CLI 会话轨迹可能存为 SQLite `.db`（新版本）或 AES-GCM 加密的 `.pb`（旧版本），但完整转写（结构化工具调用、结果、推理、diff）都来自 `<uuid>.trajectory.json` sidecar
-- **没有 sidecar 时**：无论 `.db` 还是 `.pb`，agentsview 都只能降级到 summary mode——用 `history.jsonl` 的 prompt 加纯文本工件拼个大概
+- **没有 sidecar 时**：降级到 summary mode，界面上挂「Summary mode」徽标——`.db` 会话靠启发式解出 prompt 和工具调用名，`.pb` 会话用 `history.jsonl` 的 prompt 加 `brain/` 下的纯文本工件拼个大概
 - **agy-reader 方案**：独立社区仓库，连接本地 Antigravity daemon 逐段解密，为两类会话生成 `.trajectory.json` sidecar；`--sync` 批量、`--watch` 持续，agentsview 的 file watcher 自动切到完整解析，无需重启
 
 （对应章节：三个值得展开的细节）
@@ -376,6 +382,7 @@ agentsview 是一个「让 AI 使用过程更可观察」的工具。**先判断
   4. 配置自动化报告，定期发送成本统计和使用分析
 - **参考资源**：
   - [agentsview 团队共享（PostgreSQL）文档](https://agentsview.io/postgresql/)
+  - [agentsview 文件系统会话同步指南](https://agentsview.io/filesystem-sync/)
   - [agentsview 信任模型与安全说明（仓库 SECURITY.md）](https://github.com/kenn-io/agentsview/blob/main/SECURITY.md)
 
 ## 资料口径说明
@@ -384,7 +391,7 @@ agentsview 是一个「让 AI 使用过程更可观察」的工具。**先判断
 
 - agentsview 的架构、安装命令、CLI 命令、Web UI 功能、PostgreSQL/DuckDB 镜像、Antigravity CLI 支持，直接以其 GitHub README 和官方文档为准。
 - `make bench-backends` 是 README 自带的 SQLite / DuckDB / PostgreSQL 三家读取对比（fixture 1000 会话、64000 消息，需要 Docker），本文不把它的数字当作与 ccusage 的性能对标；重复成本统计"走库更快"仅依据索引后不再重解析这一事实推断。
-- Supported Agents 表的条目数、Go 版本、commit 数、Stars/Forks 以 2026-09-05 核实的 GitHub 数据为准，会随仓库增长变化。
+- Supported Agents 表的条目数、Go 版本、commit 数、Stars/Forks 以 2026-09-08 核实的 GitHub 数据为准，会随仓库增长变化；`usage statusline` 的输出格式等 CLI 细节以当日 main 分支源码为准。
 - 本文的适用场景和采用顺序，结合 README 的功能列表和实际使用场景进行交叉比对。
 
 完整文档在 [agentsview.io](https://agentsview.io)（README 反复强调的「Full docs」），仓库 license 是 MIT。安装脚本和 docker image 都在 `ghcr.io/kenn-io/agentsview`。

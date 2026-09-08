@@ -1,6 +1,7 @@
 ---
 title: "Agent Governance Toolkit：在工具调用前用代码拦住 Agent 的危险动作"
 date: 2026-05-23T13:09:23+08:00
+lastmod: 2026-09-07T00:00:00+08:00
 draft: false
 categories:
   - 技术笔记
@@ -20,11 +21,11 @@ Agent 一旦部署就是自主决策的。它调工具、查数据库、发消�
 
 Agent Governance Toolkit（AGT）换了一条路：在模型意图到达工具之前，用确定性代码拦截每一次工具调用、消息发送和委托。被内核拒绝的动作不是"不太可能发生"，而是结构上不可能发生。这是"请求 Agent 守规矩"和"让它没有能力违规"的根本区别。
 
-OWASP 在 [Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/) 的 Prompt Injection 条目里明确写了："目前不清楚提示词注入是否有万无一失的预防方法"。Andriushchenko 等人在 ICLR 2025 论文 [Jailbreaking Leading Safety-Aligned LLMs with Simple Adaptive Attacks](https://arxiv.org/abs/2404.02151) 中报告，对 GPT-4o、GPT-3.5、Claude 3、Llama-3 使用带 logprob 访问和前缀优化的自适应攻击，越狱成功率达 100%。这些数据指向同一个结论：在提示词这一层把注入挡干净做不到，能做的是保证注入成功后的危险动作在代码层被挡住。
+OWASP 在 [Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/) 的 Prompt Injection 条目里明确写了："目前不清楚提示词注入是否有万无一失的预防方法"。Andriushchenko 等人在 ICLR 2025 论文 [Jailbreaking Leading Safety-Aligned LLMs with Simple Adaptive Attacks](https://arxiv.org/abs/2404.02151) 中报告：利用 logprob 访问、对提示词后缀（suffix）做随机搜索的自适应攻击，在 GPT-4o、GPT-3.5、Llama-3-Instruct-8B 等模型上拿到 100% 攻击成功率（GPT-4 担任评审）；不暴露 logprob 的 Claude 全系，用迁移或 prefilling 攻击同样达到 100%。这些数据指向同一个结论：在提示词这一层把注入挡干净做不到，能做的是保证注入成功后的危险动作在代码层被挡住。
 
 **项目地址：** [github.com/microsoft/agent-governance-toolkit](https://github.com/microsoft/agent-governance-toolkit)
 
-**核心数据（GitHub API 2026-09-03 验证）：** Python 主语言、MIT 许可证、main 分支、Stars 约 6.2k、Forks 约 1.1k、创建于 2026-03-02、最近推送 2026-09-02、最新标签 v5.0.0（提交于 2026-07-27）。一个容易混淆的点：PyPI 上 core/cli/integrations/protocols 四个发行版已是 5.0.0，但 meta 包 `agent-governance-toolkit` 仍停在 4.1.0；整体处于 Public Preview。仓库定位"Policy enforcement, zero-trust identity, execution sandboxing, and reliability engineering for autonomous AI agents"。
+**核心数据（GitHub API 2026-09-07 验证）：** Python 主语言、MIT 许可证、main 分支、Stars 约 6.2k、Forks 约 1.1k、创建于 2026-03-02、最近推送 2026-09-04、最新标签 v5.0.0（提交于 2026-07-27）。一个容易混淆的点：PyPI 上 core/cli/integrations/protocols 四个发行版已是 5.0.0，但 meta 包 `agent-governance-toolkit` 仍停在 4.1.0；整体处于 Public Preview。仓库定位"Policy enforcement, zero-trust identity, execution sandboxing, and reliability engineering for autonomous AI agents"。
 
 ## 系统地图：四条独立主线，一层审计横切
 
@@ -53,7 +54,7 @@ Agent ──► 策略引擎 ──► 身份验证 ──► 审计日志
 
 ## 第一道关：策略执行引擎
 
-策略引擎是 AGT 的第一道关卡，每一次工具调用都被拦截并求值。默认拒绝（default deny）意味着策略不匹配时动作不放行，遗漏的规则不会导致越权。
+策略引擎是 AGT 的第一道关卡，每一次工具调用都被拦截并求值。`default_action` 配置项缺省是 `deny`——没命中任何规则的动作不放行，遗漏的规则不会导致越权；策略求值出错时也按命中处理（fail-closed），宁可错杀不放行。下一节的示例策略显式写了 `default_action: allow`，那是团队自己选择放开这个默认值，换来的便利要以"规则写漏即放行"为代价。
 
 AGT 支持三种策略后端：
 
@@ -61,7 +62,7 @@ AGT 支持三种策略后端：
 - **OPA**：用 Rego（OPA 策略语言）编写，适合已有 OPA 基础设施的团队。
 - **Cedar**：Amazon 出品的策略语言，适合需要细粒度权限模型的场景。
 
-为什么提示词约束和 OAuth 都不够，需要单独一层。提示词约束是对模型的概率性请求；OAuth 2.0（开放授权 2.0）的 scope 和 IAM 角色只控制 Agent 能访问哪些服务，对 Agent 连上服务后执行什么动作没有约束。持有 `query_database` 权限的 Agent 同样可以执行 `drop_table`，scope 在此处失效。策略引擎补的就是这一层：在工具调用真正发生之前，用代码判断动作是否允许。
+这一层补的是提示词约束和 OAuth 都管不到的位置。提示词约束是对模型的概率性请求；OAuth 2.0（开放授权 2.0）的 scope 和 IAM 角色只控制 Agent 能访问哪些服务，对 Agent 连上服务后执行什么动作没有约束。持有 `query_database` 权限的 Agent 同样可以执行 `drop_table`，scope 在此处失效。策略引擎补的就是这一层：在工具调用真正发生之前，用代码判断动作是否允许。
 
 ## 第二道关：零信任身份验证
 
@@ -89,17 +90,17 @@ Agent 在生产环境可能失控：无限循环、资源耗尽、级联失败�
 
 ## 审计：普通日志做不到的防篡改决策记录
 
-审计日志不是普通日志，而是防篡改的决策记录（Decision Record）。每一条记录包含：哪个 Agent（DID）、什么时间、请求了什么动作、命中了哪条策略、结果是允许还是拒绝。审计员和合规团队可以据此还原任意一次决策的完整上下文。这一层对应 SOC 2、ISO 27001 等合规框架对"可追溯性"的要求——合规审计需要的是"谁能证明某次决策发生过、结果是什么"。
+审计日志不是普通日志，而是防篡改的决策记录（Decision Record）。每一条记录包含：哪个 Agent（DID）、什么时间、请求了什么动作、命中了哪条策略、结果是允许还是拒绝。审计员和合规团队可以据此还原任意一次决策的完整上下文。这层能力对应的合规映射在仓库里可以直接查到：[SOC 2 控制映射](https://github.com/microsoft/agent-governance-toolkit/blob/main/docs/compliance/soc2-mapping.md)、EU AI Act 和 NIST AI RMF 对齐文档——合规审计需要的是"谁能证明某次决策发生过、结果是什么"。
 
 ## 快速上手
 
 ### 安装
 
 ```bash
-pip install agent-governance-toolkit[full]
+pip install "agent-governance-toolkit[full]"
 ```
 
-前置条件：Python 3.10+。如果只用 TypeScript SDK，需要 Node.js 18+ 和 npm 9+。`[full]` extra 会装进核心治理模块；基础 wheel 只装合规 CLI。旧版 `agent_os` 导入会触发 `DeprecationWarning`，改用 `agent-governance-toolkit-core` 或 `[full]` 即可。
+引号要带上：zsh 会把不带引号的 `[full]` 当作 glob 模式展开，直接报"no matches found"。前置条件是 Python 3.11+——PyPI 上 core/cli/integrations/protocols 四个 5.0.0 发行版的元数据都写明 `requires_python >= 3.11`，README 的 Quick Start 同口径（底部 Prerequisites 一节仍写 3.10+，两处以发布物元数据的 3.11+ 为准）。只用 TypeScript SDK 时需要 Node.js 18+ 和 npm 9+。`[full]` extra 会装进核心治理模块；基础 wheel 只装合规 CLI。旧版 `agent_os` 导入会触发 `DeprecationWarning`，改用 `agent-governance-toolkit-core` 或 `[full]` 即可。
 
 ### 用 govern() 包装工具
 
@@ -158,7 +159,7 @@ agt lint-policy policies/                          # 校验策略文件
 README 里除了 `govern()`，还有两类接入：
 
 - **AgentControl API**：无状态、确定性、fail-closed 的策略决策运行时（Rust 内核），用 `AgentControl.from_path("manifest.yaml")` 按清单求值，适合程序化控制。
-- **Claude Code 插件**：`/plugin marketplace add microsoft/agent-governance-toolkit` 加市场，再 `agent-governance-claude-code` 装插件。Copilot CLI、OpenCode 也是挂在 TypeScript SDK 上的一等公民接入面。
+- **Claude Code 插件**：`/plugin marketplace add microsoft/agent-governance-toolkit` 注册市场，再 `/plugin install agt-governance@agent-governance-toolkit` 装插件。README 的原话是"Copilot CLI and Claude Code are first-party developer surfaces built on the TypeScript SDK"；OpenCode 另有独立的 npm 包 `@microsoft/agent-governance-opencode`。
 
 ## 任务如何流过系统
 
@@ -192,7 +193,7 @@ README 里除了 `govern()`，还有两类接入：
 8. 工具执行 → 返回搜索结果给 Agent
 ```
 
-被 AGT 拒绝的动作，Agent 在代码层面无法绕过。提示词级安全依赖模型自律，AGT 让越权动作在代码层不可执行——这是两者最根本的差别。
+这条路径里没有"模型决定要不要守规矩"的环节：`drop_table` 调用被拦在工具执行之前，Agent 拿到的是 `GovernanceDenied` 异常和一条审计记录。换成提示词级方案，同样的请求能否被挡住，取决于模型当次的表现。
 
 ## 它到底覆盖了什么：对照 OWASP，别只看徽章
 
@@ -206,18 +207,18 @@ README 里除了 `govern()`，还有两类接入：
 | ASI06 | 记忆与上下文投毒 | ⚠️ 部分 | 审计用哈希链，但没有记忆沙箱 |
 | ASI09 | 人类-Agent 信任利用 | ⚠️ 部分 | 有审计轨迹，没有 UI 级护栏 |
 
-所以"覆盖 10 类"要读成"10 类都有对应机制，其中 3 类只做到部分"。买点的心智模型是：AGT 把 LLM06（过度授权）和 LLM10（无界消耗）这类应用层风险做扎实了，对注入这类模型层根因，它做的是"注入成功后的损害控制"，不是"注入预防"。
+所以"覆盖 10 类"要读成"10 类都有对应机制，其中 3 类只做到部分"。AGT 真正做扎实的是 LLM06（过度授权）和 LLM10（无界消耗）这类应用层风险；对注入这类模型层根因，它做的是注入成功后的损害控制，而不是预防注入本身。
 
 ## 模块从 45 个收成 5 个：理解包结构
 
-v4.1.0 起，Python 侧的 45 个包被合并成 5 个顶层发行版（含 1 个元包），v5.0.0 沿用这个结构。以 PyPI 实际发布的清单为准：
+45 个包收成 5 个顶层发行版发生在 v4.0.0（CHANGELOG 列为破坏性变更，当时的五个是 core/runtime/sre/cli 加元包）。此后结构又动过一轮：以 PyPI 当前实际发布的清单为准，runtime 已并入 core（官方描述"Core runtime, kernel, and trust layer"）、SRE 并进 cli（"CLI tools, SRE observability, and sandbox isolation"），另拆出 integrations 和 protocols——README 折叠块里那份 core/runtime/sre/cli 清单已经过时，装 `agent-governance-toolkit-runtime` 或 `-sre` 会直接失败：
 
 | 发行版 | 包含什么 |
 |-------|---------|
 | `agent-governance-toolkit[full]` | 元包，`[full]` extra 一键拉齐下述全部（当前停在 v4.1.0） |
-| `agent-governance-toolkit-core` | 策略引擎、agentmesh、agent-os 核心运行时、能力模型、审计、MCP 网关、零信任身份、信任评分 |
-| `agent-governance-toolkit-cli` | `agt`/`agent-sre` CLI、SRE（熔断、Kill switch、SLO、混沌）、特权环沙箱——合并自 agent-sre、agent-sandbox、mcp-trust-server |
-| `agent-governance-toolkit-integrations` | 框架适配层：LangChain、CrewAI、OpenAI Agents、pydantic-ai 等 |
+| `agent-governance-toolkit-core` | 策略引擎、核心运行时与内核、信任层；README 折叠块口径还含能力模型、审计、MCP 网关、零信任身份、信任评分、A2A/MCP/IATP 桥接 |
+| `agent-governance-toolkit-cli` | `agt` CLI、OWASP 验证、完整性检查、策略校验；SRE 可观测与沙箱隔离也在这个包里（熔断、Kill switch、SLO、混沌、特权环） |
+| `agent-governance-toolkit-integrations` | 框架适配层：LangChain、CrewAI、OpenAI Agents 等 |
 | `agent-governance-toolkit-protocols` | 协议实现：MCP governance、信任协议、A2A、MCP receipts |
 
 旧包名（`agent-os-kernel`、`agentmesh-*` 等）保留为 stub 包，装了会重定向到新发行版。五门语言 SDK（Python、TypeScript、.NET、Rust、Go）都实现核心治理（策略、身份、信任、审计），Python 是唯一有完整栈的。
@@ -247,13 +248,13 @@ safe_tool = govern(my_tool, policy="policy.yaml")
 try:
     result = safe_tool(action="drop", table="users")
 except GovernanceDenied as e:
-    # 记录被拒原因，通知安全团队
-    print(f"动作被拒：{e.rule_name} - {e.description}")
+    # 规则名和原因挂在 e.decision（PolicyDecision）上
+    print(f"动作被拒：{e.decision.matched_rule} - {e.decision.reason}")
     # 走人工审批流程
     request_human_approval(e)
 ```
 
-不要捕获 `Exception` 后忽略 `GovernanceDenied`——这等于把治理层重新打开一个口子。正确做法是捕获特定异常，记录上下文，走审批流程。
+两个易错点：异常对象上只有 `.decision` 一个属性，规则名是 `e.decision.matched_rule`、原因是 `e.decision.reason`——直接在异常上找 `rule_name` 会得到 `AttributeError`。另外不要捕获 `Exception` 后忽略 `GovernanceDenied`，这等于把治理层重新打开一个口子。正确做法是捕获特定异常，记录上下文，走审批流程。
 
 ### 版本相关注意点
 
@@ -271,6 +272,8 @@ except GovernanceDenied as e:
 - [AGT 官方文档](https://microsoft.github.io/agent-governance-toolkit/)
 - [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/)
 - [OWASP 合规对照文档（ASI01–ASI10 自评）](https://github.com/microsoft/agent-governance-toolkit/blob/main/docs/compliance/owasp-agentic-top10-architecture.md)
+- [SOC 2 控制映射](https://github.com/microsoft/agent-governance-toolkit/blob/main/docs/compliance/soc2-mapping.md)
+- [CHANGELOG（版本演进与破坏性变更）](https://github.com/microsoft/agent-governance-toolkit/blob/main/CHANGELOG.md)
 - [OPA Rego 文档](https://www.openpolicyagent.org/docs/latest/policy-language/)
 - [SPIFFE 工作负载身份规范](https://spiffe.io/)
 
@@ -278,9 +281,10 @@ except GovernanceDenied as e:
 
 ## 资料口径说明
 
-本文基于 GitHub API 与仓库 README、CHANGELOG、OWASP 合规文档（2026-09-03 验证）编写。核心数据（Stars、Forks、语言、许可证、版本、最近推送）来自 GitHub API，随仓库变化会过时，引用时以当时 API 为准。
+本文基于 GitHub API 与仓库 README、CHANGELOG、OWASP 合规文档、`policy.py`/`govern.py` 源码、PyPI 各发行版元数据（2026-09-07 验证）编写。核心数据（Stars、Forks、语言、许可证、版本、最近推送）来自 GitHub API，随仓库变化会过时，引用时以当时 API 为准。
 
-两点边界需要说明：
+三点边界需要说明：
 
 - 仓库徽章的"10/10 Covered"是微软的自我评估，不是第三方认证。本文采用仓库自带合规文档的诚实口径：7/10 完整、3/10 部分、0 缺口。
 - 文中 `govern()` 签名、YAML 策略格式、`agt` 命令、AgentControl 用法均与 README 一致，但 AGT 仍处 Public Preview，API 可能随版本调整，落地前以官方文档当前版本为准。
+- Python 版本要求以 PyPI 5.0.0 发行版元数据（`>=3.11`）与 README Quick Start 为准；README 底部 Prerequisites 的"3.10+"与上述两处不一致，属于文档内部口径分歧。

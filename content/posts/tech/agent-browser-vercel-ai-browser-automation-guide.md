@@ -1,11 +1,11 @@
 ---
 title: "Agent Browser：面向 AI Agent 的原生浏览器自动化 CLI 指南"
 date: "2026-04-12T11:40:00+08:00"
-lastmod: 2026-08-30T00:00:00+08:00
+lastmod: 2026-09-08T00:00:00+08:00
 slug: agent-browser-vercel-ai-browser-automation-guide
 github_repo: "vercel-labs/agent-browser"
-summary: "本文基于官方 README 与 CLI 帮助信息，讲清 Agent Browser 的安装方法、snapshot + ref 工作流、会话与认证管理、安全控制、调试观测与 Agent 集成边界。"
-description: "基于 vercel-labs/agent-browser README 与公开 CLI 帮助信息整理的中文指南，聚焦安装、snapshot+ref 工作流、会话与认证、安全控制、调试与 AI Agent 集成。"
+summary: "本文基于官方 README 与 CLI 帮助信息，讲清 Agent Browser 的安装方法、snapshot + ref 工作流、会话与认证管理、安全控制、调试观测、云浏览器接入与 Agent 集成路径。"
+description: "基于 vercel-labs/agent-browser README 与公开 CLI 帮助信息整理的中文指南，聚焦安装、snapshot+ref 工作流、会话与认证、安全控制、调试观测、云浏览器 provider 与 AI Agent 集成。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
@@ -43,16 +43,18 @@ tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
   - §5.2 认证状态复用
   - §5.3 连接已有 Chrome
   - §5.4 面向 Agent 的安全控制
+  - §5.5 云浏览器 provider
 - §6 调试与观测
   - §6.1 先看页面，再看命令
   - §6.2 网络与错误观察
-  - §6.3 Trace、Profiler 与 Dashboard
+  - §6.3 Trace、Profiler、录制与 Dashboard
+  - §6.4 无障碍审计：`a11y`
 - §7 两个实战示例
   - §7.1 场景一：登录后提取仪表盘标题
   - §7.2 场景二：批量执行固定浏览动作
 - §8 常见问题
 - §9 结论与进阶路径
-  - §9.1 一句话结论
+  - §9.1 结论
   - §9.2 选型建议
   - §9.3 进阶路径
 
@@ -64,7 +66,7 @@ tags: ["AI Agent", "浏览器自动化", "CLI", "Rust", "Vercel"]
 
 它采用客户端 + daemon 两段式架构：Rust CLI 负责解析命令，后台 daemon 直接走 CDP（Chrome DevTools Protocol，Chrome 开发者工具协议）驱动浏览器，不依赖 Node.js 运行时。浏览器实例由 daemon 在后台持续持有，多次命令之间复用同一进程，省去反复启动的开销。
 
-AI Agent 任务往往不需要先搭测试项目，也不必围绕 SDK 写胶水代码。Agent 拿到任务后，通常会走这几步：打开页面、获取结构化快照、依据快照里的元素引用执行动作、在页面变化后重新获取快照、最后产出截图或文本信息。除了这套"开浏览器"的路径，它还提供 `read` 命令直接抓取网页正文，以及 `mcp` 命令对外暴露 MCP（Model Context Protocol）服务，两条路都不需要先写代码。
+AI Agent 的浏览器任务有一套固定动作：打开页面、获取结构化快照、依据快照里的元素引用执行动作、页面变化后重新获取快照、最后产出截图或文本。`agent-browser` 的命令集就是沿着这条路径设计的——Agent 在终端里逐条发命令即可，不必先搭测试项目，也不必围绕 SDK 写胶水代码。如果连浏览器都不想开，它还提供 `read` 命令直接抓取网页正文，以及 `mcp` 命令对外暴露 MCP（Model Context Protocol）服务。
 
 ### 1.2 为什么它对 AI Agent 友好
 
@@ -77,7 +79,7 @@ AI Agent 任务往往不需要先搭测试项目，也不必围绕 SDK 写胶水
 | 后台 daemon 持续复用浏览器 | 多次命令之间不必每一步都重新拉起浏览器 |
 | `batch` 批量执行 | 多步流程合并成一次调用，降低进程往返开销 |
 | 会话、状态、安全开关较完整 | 能支撑真实任务，不只是 demo 级别 |
-| `chat`、dashboard、streaming 等能力 | 便于把 CLI 工作流延伸到可视化调试或 AI 辅助交互 |
+| `chat`、dashboard、record、a11y 等能力 | 便于把 CLI 工作流延伸到可视化调试、留证或 AI 辅助交互 |
 
 ### 1.3 什么时候适合选它
 
@@ -85,7 +87,7 @@ AI Agent 任务往往不需要先搭测试项目，也不必围绕 SDK 写胶水
 | ------ | ------ | ------ |
 | 让 AI Agent 在终端里访问网页并完成交互 | 很适合 | 命令模型直接，`snapshot + ref` 非常契合 LLM（大语言模型）决策 |
 | 快速做页面巡检、截图、抓文本、检查网络请求 | 很适合 | 不必先搭测试框架 |
-| 在 CI 或 Serverless 环境跑浏览器任务 | 适合 | 支持本地浏览器、CDP（Chrome DevTools Protocol，Chrome 开发者工具协议）连接和多种云浏览器 provider |
+| 在 CI 或 Serverless 环境跑浏览器任务 | 适合 | 支持本地浏览器、CDP 连接和多种云浏览器 provider（见 §5.5） |
 | 编写大型端到端测试套件 | 视情况而定 | 需要复杂断言、fixture、报告体系时，SDK 型方案通常更稳 |
 | 做重度 DOM（文档对象模型）断言和应用级测试组织 | 不太适合单独承担 | CLI 擅长操作与提取，完整测试框架仍需 SDK 承担 |
 
@@ -101,7 +103,7 @@ AI Agent 任务往往不需要先搭测试项目，也不必围绕 SDK 写胶水
 
 ### 2.1 推荐模式：`snapshot + ref`
 
-官方文档反复强调一条建议：面向 AI 的最优路径是先获取页面快照，再用快照里的引用操作元素。直接写复杂选择器容易踩坑——类名会变，DOM 层级会变，临时拼出来的选择器在页面重渲染后可能直接失效。
+官方给 AI 工作流的建议只有一条：先获取页面快照，再用快照里的引用操作元素。直接写复杂选择器容易踩坑——类名会变，DOM 层级会变，临时拼出来的选择器在页面重渲染后可能直接失效。
 
 ```mermaid
 graph TD
@@ -138,7 +140,7 @@ agent-browser screenshot ./example.png
 agent-browser close
 ```
 
-这五步覆盖了完整工作流。§3.2 是更简短的安装验证流程，两者侧重不同。
+这五步覆盖了完整动作序列。§3.2 的验证流程更短，只确认装好的环境能跑通。
 
 ### 2.3 `ref` 与传统选择器的取舍
 
@@ -297,7 +299,7 @@ agent-browser is enabled @e2
 agent-browser is checked @e6
 ```
 
-`find` 的完整族包括 `role`、`text`、`label`、`placeholder`、`alt`、`title`、`testid`，以及按选择器取 `first`、`last`、`nth`。动作统一为 `click`、`fill`、`check`、`hover`、`text`。按 role 过滤可访问名时用 `--name`；要精确匹配（默认是不区分大小写的子串）用 `--exact`。隐式角色也可用：`<h2>` 就是 `heading`，`<ul>` 就是 `list`，顶层 `<header>` 就是 `banner`。
+`find` 的完整族包括 `role`、`text`、`label`、`placeholder`、`alt`、`title`、`testid`，以及按选择器取 `first`、`last`、`nth`。动作统一为 `click`、`fill`、`check`、`hover`、`text`。按 role 过滤可访问名时用 `--name`；要区分大小写的精确匹配（默认是不区分大小写的子串）用 `--exact`。隐式角色也可用：`<h2>` 就是 `heading`，`<ul>` 就是 `list`，顶层 `<header>` 就是 `banner`。
 
 这些命令比直接写 CSS 更适合 Agent 的场景。业务页面不断迭代，类名和 DOM 层级会变，但按钮角色、可访问名称、标签文本往往稳定得多。语义定位让 Agent 接近"看懂页面再行动"，减少对脆弱选择器的依赖。
 
@@ -338,7 +340,7 @@ agent-browser read https://example.com/article --json
 agent-browser read                                                # 读当前活动标签页渲染后的 DOM
 ```
 
-`read` 走 HTTP 直接抓取，不启动 Chrome，更快也更省资源。它默认带 `Accept: text/markdown` 请求，优先要 Markdown；拿不到就沿路径向上找最近的 `llms.txt` 定位文档链接，最后退回从 HTML 提取可读正文。`--require-md` 可以强制要求服务端返回 Markdown，`--raw` 直接打印响应原文。它同样受 `--allowed-domains`、`--content-boundaries`、`--max-output` 这些全局安全开关约束。
+`read` 走 HTTP 直接抓取，不启动 Chrome，更快也更省资源。它默认带 `Accept: text/markdown` 请求，优先要 Markdown；第一次响应不是 Markdown 时，会尝试给同一 URL 加 `.md` 后缀再取一次；仍拿不到就沿路径向上找最近的 `llms.txt` 定位文档链接，最后退回从 HTML 提取可读正文。`--llms full` 可以直接读取 `llms-full.txt`（默认不读）。`--require-md` 可以强制要求服务端返回 Markdown，`--raw` 直接打印响应原文。它同样受 `--allowed-domains`、`--content-boundaries`、`--max-output` 这些全局安全开关约束。
 
 不带 URL 的 `read` 会读当前活动标签页的渲染结果，能拿到登录态和客户端渲染后的内容——这是无头 fetch 拿不到的东西。
 
@@ -353,6 +355,8 @@ agent-browser session list
 ```
 
 会话隔离让多个 Agent 或多个任务不会把 Cookie、导航历史和页面状态混到一起。并发自动化和多租户任务里，把它当作默认选项启用，避免状态串扰。
+
+daemon 的生命周期也值得知道：它随第一条命令自动启动，空闲 1 小时后自动保存 restore 状态、关闭浏览器并退出，不会无限期占用资源。空闲时长用 `--idle-timeout`（如 `30s`、`5m`、`1h`）或 `AGENT_BROWSER_IDLE_TIMEOUT_MS` 调整，设为 `0` 禁用自动退出。默认策略从不关闭有头浏览器和用户手动接入的浏览器——那可能正有人在用；云 provider 托管的浏览器仍会被清理。
 
 ### 5.2 认证状态复用
 
@@ -399,6 +403,38 @@ CLI 帮助信息里列出的安全开关，生产环境建议逐项确认（以 
 
 浏览器自动化里，命令失败通常留下报错堆栈，排查路径清晰；但命令成功但越界的情况更难防——Agent 误点删除按钮、误下载文件、误把页面内容当成系统指令执行。把 `agent-browser` 放进真实 Agent 系统前，上面这些开关需要逐项确认。
 
+### 5.5 云浏览器 provider
+
+本地起不了浏览器时（Serverless、CI、无显示器的容器），可以改用云浏览器。README 给出了四家 provider 的接入说明，都用 `-p` 标志或 `AGENT_BROWSER_PROVIDER` 环境变量启用，启用后所有命令行为不变，只是浏览器跑在云端：
+
+```bash
+# Browserless：老牌云浏览器基础设施
+export BROWSERLESS_API_KEY="your-api-token"
+agent-browser -p browserless open https://example.com
+
+# Browserbase：面向 agentic browsing 的远程浏览器
+export BROWSERBASE_API_KEY="your-api-key"
+agent-browser -p browserbase open https://example.com
+
+# Browser Use Cloud：面向 AI Agent 的云浏览器
+export BROWSER_USE_API_KEY="your-api-key"
+agent-browser -p browseruse open https://example.com
+
+# Kernel：带隐身模式和持久 profile 的云浏览器
+export KERNEL_API_KEY="your-api-key"
+agent-browser -p kernel open https://example.com
+```
+
+CI 脚本里更适合走环境变量：
+
+```bash
+export AGENT_BROWSER_PROVIDER=browserless
+export BROWSERLESS_API_KEY="your-api-token"
+agent-browser open https://example.com
+```
+
+各家还留了可选配置：Browserless 支持自定义区域端点（`BROWSERLESS_API_URL`）、浏览器类型和会话 TTL；Kernel 支持 `KERNEL_HEADLESS` 和 `KERNEL_STEALTH`。另外 AWS Bedrock AgentCore 也受支持，用 SigV4 认证（`agent-browser -p agentcore`）。选哪家取决于预算和区域，切换成本只有一行环境变量。
+
 ## §6 调试与观测
 
 ### 6.1 先看页面，再看命令
@@ -433,7 +469,7 @@ agent-browser errors
 - 控制台有没有脚本错误
 - 页面是不是因为权限、重定向或接口失败而停在错误状态
 
-### 6.3 Trace、Profiler 与 Dashboard
+### 6.3 Trace、Profiler、录制与 Dashboard
 
 ```bash
 agent-browser trace start
@@ -442,10 +478,27 @@ agent-browser trace stop ./trace.zip
 agent-browser profiler start
 agent-browser profiler stop ./profile.json
 
+agent-browser record start ./demo.webm   # 30 fps 视频录制
+agent-browser record stop
+
 agent-browser dashboard start
 ```
 
-Trace 文件可以发给同事复现问题；Profiler 数据用来定位哪一步耗时最长；Dashboard 适合实时观察 Agent 的操作。排查偶发问题、复盘错误路径、多人协作时都能用上。
+Trace 文件可以发给同事复现问题；Profiler 数据用来定位哪一步耗时最长；`record` 把整个操作过程录成 WebM 视频，适合回放 Agent 的失败路径或留证据；`network har start` 则在请求层面录制 HAR。Dashboard 适合实时观察 Agent 的操作。排查偶发问题、复盘错误路径、多人协作时都能用上。
+
+### 6.4 无障碍审计：`a11y`
+
+```bash
+agent-browser a11y                            # 审计当前页面
+agent-browser a11y https://example.com        # 先导航，再审计
+agent-browser a11y --tags wcag2a,wcag2aa      # 只跑指定 axe 规则集
+agent-browser a11y --selector "#main"         # 只审计某个子树
+agent-browser a11y example.com --json         # 结构化输出，交给程序处理
+```
+
+`a11y` 子命令把 axe-core 引擎直接编进了二进制：离线可用，严格 CSP 的页面也能跑；审计在页面的 frame 树上独立完成，不依赖页面消息通道，页面自己的 `window.axe` 不受影响，iframe 里的违规也会带上各自的 frame 选择器路径。默认输出逐条列出违规项，带影响等级、规则 ID、修复指引链接和失败节点的 CSS 选择器；axe 无法自动判定的规则归入 `incomplete`，需要人工复核。
+
+可访问性质量还直接影响 Agent 的定位效果：语义角色和可访问名称齐全的页面，`snapshot` 和 `find role` 给出的 ref 才稳定。审计结果里的 `image-alt`、`color-contrast` 这类违规，往往就是 Agent 语义定位失灵的前兆。注意它只在 CDP 浏览器路径（Chrome/Lightpanda）下可用，Safari/iOS WebDriver 会话不支持。
 
 ## §7 两个实战示例
 
@@ -473,7 +526,7 @@ agent-browser get title
 agent-browser screenshot ./dashboard.png
 ```
 
-这个例子里容易踩坑的是最后一行等待：登录按钮点下去之后立刻取标题，拿到的往往还是旧页面。`wait --url` 确保浏览器已经跳转到仪表盘，`get title` 才会返回新页面的标题。
+这个例子里容易踩坑的是 `wait --url` 这一步：登录按钮点下去之后立刻取标题，拿到的往往还是旧页面。等浏览器真正跳转到仪表盘，`get title` 才会返回新页面的标题。
 
 ### 7.2 场景二：批量执行固定浏览动作
 
@@ -527,9 +580,25 @@ agent-browser snapshot -i
 
 CLI 本身提供 `chat` 命令和 dashboard 内置聊天面板，但前提是先配置 Vercel AI Gateway 相关环境变量，例如 `AI_GATEWAY_API_KEY`。若只是"让上层 Agent 调命令"，不必启用 `chat`，直接用 `snapshot + ref` 更可控——`chat` 适合人工调试或让 LLM 自主探索，不适合需要确定性执行的流程。
 
+### 8.5 让上层 Agent 拿到不过期的用法说明
+
+Agent 依赖的文档一旦过期，命令就会用错。官方为此准备了三条路径。
+
+第一条：注册成 AI 编程助手的技能，README 把这条路标为推荐做法：
+
+```bash
+npx skills add vercel-labs/agent-browser
+```
+
+它适用于 Claude Code、Codex、Cursor、Gemini CLI、GitHub Copilot、Goose、OpenCode 和 Windsurf。以 Claude Code 为例，安装的只是 `.claude/skills/agent-browser/SKILL.md` 下的一个极薄的发现桩，运行时由它调用 `agent-browser skills get core` 拉取与已装 CLI 版本一致的完整说明——指令永远不过期。不要从 `node_modules` 里拷贝 `SKILL.md`，那份副本会随版本升级失效。
+
+第二条：在 `AGENTS.md`、`CLAUDE.md` 一类的项目指令文件里写核心工作流，四步就够：`open` 打开页面、`snapshot -i` 拿 ref、用 ref 交互、页面变化后重新 snapshot。
+
+第三条：走 MCP。`agent-browser mcp` 启动 stdio 协议的 MCP 服务器，MCP 客户端把它作为子进程拉起，通过 JSON-RPC 调用。默认 `core` 工具组保持上下文精简，`--tools all` 展开与 CLI 完全对齐的类型化接口，也可按需组合，如 `--tools core,network`。
+
 ## §9 结论与进阶路径
 
-### 9.1 一句话结论
+### 9.1 结论
 
 要让 AI Agent 直接在终端里稳定操控浏览器，`agent-browser` 值得优先考虑。它把 LLM 最容易出错的"猜选择器"环节换成"读快照引用"——Agent 先 `snapshot` 拿到 `@e1`、`@e2` 这类稳定引用，再据此执行动作，页面变化后重新快照刷新认知。误操作的发生点从"选择器漂移"前移到了"是否在正确的快照上下文里操作"，排查起来也更容易。
 
@@ -547,28 +616,31 @@ CLI 本身提供 `chat` 命令和 dashboard 内置聊天面板，但前提是先
 按下面的顺序深入：
 
 1. 先熟练 `open`、`snapshot -i`、`click`、`fill`、`wait`
-2. 再补 `session`、`profile`、`state`、`auth`
-3. 然后学习 `network`、`trace`、`console`、`errors`
-4. 最后再引入 `chat`、dashboard、streaming 和云浏览器 provider
+2. 再补 `session`、`profile`、`state`、`auth`，并用 `--allowed-domains` 等开关收紧安全边界
+3. 然后学习 `network`、`trace`、`record`、`console`、`errors`，用 `a11y` 和 `diff` 做页面级检查
+4. 最后接入云浏览器 provider、`mcp`、`chat` 和 dashboard
+
+随时可用的自查入口：`agent-browser --help` 看全量命令，`agent-browser doctor` 体检环境，`agent-browser skills get core` 取与已装版本一致的官方用法说明。
 
 ## 参考资料
 
 - GitHub 仓库：https://github.com/vercel-labs/agent-browser（截至写作时有效）
+- 官方主页：https://agent-browser.dev（截至写作时有效）
 - Chrome DevTools Protocol：https://chromedevtools.github.io/devtools-protocol/（截至写作时有效）
 
 ## 文档信息
 
 - 难度：⭐⭐⭐⭐
 - 类型：工具指南
-- 更新日期：2026-08-08
-- 预计阅读时间：16 分钟
+- 更新日期：2026-09-08
+- 预计阅读时间：18 分钟
 - 前置知识：命令行基础、浏览器自动化基本概念、HTML 可访问性常识
 
 ## 资料口径说明
 
 本文基于以下来源撰写，请读者注意时效性和局限性：
 
-1. **官方文档**：本文主要基于 `vercel-labs/agent-browser` 仓库的 README 和公开 CLI 帮助信息整理。CLI 命令、参数和行为以 `agent-browser --help` 和实际运行结果为准。
+1. **官方文档**：本文主要基于 `vercel-labs/agent-browser` 仓库的 README 和公开 CLI 帮助信息整理（关键事实对照 README 核实于 2026-09-08）。CLI 命令、参数和行为以 `agent-browser --help` 和实际运行结果为准。
 2. **版本时效性**：本文撰写时的 CLI 命令和参数可能已更新，请以官方仓库的最新 README 和 `agent-browser --help` 输出为准。
 3. **性能数据**：本文未提供具体的性能基准测试数据。实际性能因机器配置、网络状况、页面复杂度而异，请在真实环境中测试后获取基准数据。
 4. **安全建议**：本文提供的安全控制建议（如 `--allowed-domains`、`--content-boundaries`、`--action-policy`）基于官方文档和常见安全实践，但具体安全策略应根据实际场景调整。

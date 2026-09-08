@@ -82,7 +82,7 @@ print(get_type_hints(User))
 
 运行时验证直接走编译后的 schema，不再重复解析类型注解。V1 每次验证都在 Python 层走一遍字段循环和类型判断；V2 只查编译好的 Rust 派发表。代价是 V2 的类定义阶段比 V1 稍慢——编译 schema 有一次性的开销，但在类定义时付一次，后续每次验证都受益。
 
-类型注解被翻译成 Rust 侧规则后，几个常见问题就清楚了。它们都源于宽松模式默认做了很多隐式转换，转换规则和 Python 原生行为不完全一致：
+类型注解被翻译成 Rust 侧规则后，几个常见问题就清楚了。它们都源于宽松模式（lax mode）默认做了很多隐式转换，转换规则和 Python 原生行为不完全一致：
 
 - **为什么 `bool_field="yes"` 会被转成 `True`**：Pydantic 的 `bool` 规则默认接受 `"yes"/"on"/"true"/"1"` 等常见真值字符串，这是"宽松模式"下的转换约定，不是 Python `bool()` 的行为。Python 的 `bool("yes")` 永远是 `True`（非空字符串），但 Pydantic 会识别字面量。
 - **为什么 `id: int` 接受 `"123"`**：默认模式下 `int` 规则会尝试字符串到整数的转换，转换失败才报错。这是为了适配 HTTP 表单、URL 参数这些天然是字符串的输入源——如果默认严格，每个字符串字段都要先手动转成目标类型再传给 Pydantic。
@@ -97,16 +97,16 @@ V1 的验证循环是纯 Python：每个字段调用一次 `getattr`、一次类
 V2 把验证核心拆成 `pydantic-core` 这个独立 crate，用 Rust 实现。三个变化：
 
 - **类型派发**：编译后的 schema 是一张静态派发表，Rust 侧直接 `match` 类型 ID，跳过 Python 的 `isinstance` 链。V1 每次验证都要走 `isinstance(x, int)` → `isinstance(x, str)` → ... 的链式判断，V2 一次 `match` 就到位。
-- **字段循环**：嵌套模型在 Rust 里递归，不回到 Python 层，避免 GIL 上下文切换。V1 嵌套模型每层都要回到 Python 调一次 `__init__`，V2 整棵树在 Rust 里走完。
+- **字段循环**：嵌套模型在 Rust 里递归，不回到 Python 层，省掉每层一次 Python 函数调用的开销。V1 嵌套模型每层都要回到 Python 调一次 `__init__`，V2 整棵树在 Rust 里走完。
 - **错误收集**：验证失败时，所有错误在 Rust 侧累积成 `Vec<ValLineError>`，最后一次转成 Python 的 `ValidationError`，而不是每错一次都抛 Python 异常。这条变化让"一次返回所有错误"成为默认行为，V1 要自己实现错误收集逻辑。
 
 但 Rust 重写有代价，V2 的几个设计变化都跟这个底层切换有关：
 
 - **API 不兼容**：`@validator` → `@field_validator`、`.dict()` → `.model_dump()`、`.parse_obj()` → `.model_validate()`，因为新 API 要让自定义验证器能被 Rust 侧调用，签名必须改。迁移成本主要落在这里，`bump-pydantic` 工具能半自动处理，但动态调用和元编程场景仍需手动检查。
 - **自定义验证器的性能特征变了**：`@field_validator` 仍然是 Python 函数，调用时会从 Rust 侧回到 Python，所以一个模型里挂 10 个 `field_validator` 性能不会比 V1 好太多。真正的提速来自 `Field` 内置约束（`gt`/`min_length`/`pattern`），这些在 Rust 侧直接执行。
-- **严格模式（strict mode）成为一级公民**：V1 的转换行为隐式且不可关闭，V2 提供 `strict=True` 让字段拒绝隐式转换。Rust 核心让这个功能更容易实现——派发表里多一个分支就能支持严格模式，V1 要在 Python 层加判断就贵得多。
+- **严格模式（strict mode）成为一级公民**：V1 只能靠 `StrictInt` 这类 Strict 类型逐字段关掉转换，没有全局开关；V2 提供 `strict=True`，一处配置就能让整个模型拒绝隐式转换。Rust 核心让这个功能更容易实现——派发表里多一个分支就能支持严格模式，V1 要在 Python 层加判断就贵得多。
 
-"V2 比 V1 快 4-50x"（官方基准平均约 17x）这个数字要分场景看：纯 `Field` 约束的简单模型（比如只有 `int`/`str` 加几个 `gt`/`min_length`）提速最大，因为整条验证路径都在 Rust 里走完；挂满自定义 `field_validator` 的复杂模型提速较小，瓶颈回到了 Python 函数调用，每次验证器调用都要从 Rust 回到 Python 一次。官方 benchmark 测的是前者；真实业务里两者混合，提速位置由两类规则的占比决定：`Field` 约束越多越接近上限，自定义验证器越多越接近下限。判断自己模型能拿到多少，先数模型里 `Field` 和验证器各占几成即可。
+"V2 比 V1 快 5-50x"（官方发布时的宣传口径）这个数字要分场景看：纯 `Field` 约束的简单模型（比如只有 `int`/`str` 加几个 `gt`/`min_length`）提速最大，因为整条验证路径都在 Rust 里走完；挂满自定义 `field_validator` 的复杂模型提速较小，瓶颈回到了 Python 函数调用，每次验证器调用都要从 Rust 回到 Python 一次。官方 benchmark 测的是前者；真实业务里两者混合，提速位置由两类规则的占比决定：`Field` 约束越多越接近上限，自定义验证器越多越接近下限。判断自己模型能拿到多少，先数模型里 `Field` 和验证器各占几成即可。
 
 ## BaseModel 与字段定义
 
@@ -181,7 +181,7 @@ Field 约束分三类，覆盖数值、字符串、集合三种数据形态：
 | 字符串 | `min_length`, `max_length`, `pattern` | `str`, `bytes` |
 | 集合 | `min_length`, `max_length` | `list`, `set`, `tuple`, `dict` |
 
-这三类约束都在 Rust 侧执行，没有 Python 调用开销。如果约束需要跨字段（比如"结束时间必须晚于开始时间"），就要用 `model_validator`，代价是回到 Python 层。
+这三类约束都在 Rust 侧执行，没有 Python 调用开销。有一点要留意：约束只验证显式传入的值，`default_factory=list` 生成的空列表不会触发 `min_length=1`——想让默认值也过一遍约束，得加 `validate_default=True`。如果约束需要跨字段（比如"结束时间必须晚于开始时间"），就要用 `model_validator`，代价是回到 Python 层。
 
 `pattern` 接收的是正则字符串，V2 里它替代了 V1 的 `regex` 参数。如果用 `EmailStr`、`HttpUrl`、`PaymentCardNumber` 这些语义类型，Pydantic 会自动加上对应的格式校验（Luhn 算法、URL 规范化等），不需要再写 `pattern`——语义类型的好处是把领域规则封装进类型本身，调用方只要声明类型就拿到完整校验。
 
@@ -298,7 +298,7 @@ class User(BaseModel):
 
 装饰器顺序和异常类型是使用问题。返回值替换字段值这条容易踩——验证器"忘记 return"会导致字段值变成 `None`，且不会报错，测试覆盖不全时容易漏到生产：
 
-- **`@classmethod` 必须在 `@field_validator` 下面**：装饰器从下往上执行，先 `field_validator` 把函数标记为验证器，再 `classmethod` 把它变成类方法。顺序反了会拿到实例而不是类，且报错信息不直观。
+- **`@classmethod` 必须写在 `@field_validator` 下面**：Pydantic 靠装饰器留下的标记识别验证器，`@classmethod` 包在外层会把标记藏掉。顺序反了不报任何错，验证器根本不会被注册，校验静默失效——这是验证器几条注意事项里唯一没有报错提示的，值得专门记。
 - **`ValueError` 会被自动包装成 `ValidationError`**：不要自己抛 `ValidationError`，抛 `ValueError` 即可，Pydantic 会收集所有字段的错误一次性返回。这条规则也适用于 `AssertionError`——`assert x > 0` 抛出的异常同样会被收集。
 - **返回值会替换字段值**：验证器不是"只校验"，它返回什么，字段最终就是什么。`return v.lower()` 会让 `username` 存成小写。如果只想校验不想改值，记得 `return v`。
 
@@ -334,17 +334,16 @@ class Event(BaseModel):
         return self
 
 
-# 跨字段错误会被收集到一起
+# 跨字段错误：after 验证器的错误挂在模型级，不带字段 loc
 try:
     Event(start_date="2026-01-01 10:00", end_date="2026-01-01 08:00", location="online")
 except ValueError as e:
     print(e)
     # 1 validation error for Event
-    #   end_date
-    #     Value error, 结束时间必须晚于开始时间 [type=value_error, ...]
+    #   Value error, 结束时间必须晚于开始时间 [type=value_error, ...]
 ```
 
-`mode="after"` 的验证器可以写多个，Pydantic 会按定义顺序依次执行，所有错误收集完再抛出。用户一次提交能拿到所有字段错误，不用反复提交才能发现下一个错误。
+`mode="after"` 的验证器可以写多个，Pydantic 按定义顺序依次执行。错误收集只覆盖字段级验证：字段错误会攒齐后一次性抛出，但 `model_validator` 链里前一个抛错，后面的就不会再跑。想让用户一次看到所有跨字段问题，就把相关的检查合并进同一个验证器，或按依赖顺序排列，不要指望链条自动收集。
 
 ### 验证器里的副作用
 
@@ -420,7 +419,7 @@ class ApiModel(BaseModel):
 外部数据（HTTP 请求、第三方 API）用的是 snake_case 或与类字段不同的命名时，用 `Field(alias=...)` 映射：
 
 ```python
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ExternalUser(BaseModel):
@@ -521,14 +520,30 @@ user.model_dump(exclude={"address": {"postal_code": True}})
 序列化的反向操作是反序列化，V2 统一到 `model_validate`。三个入口对应三种数据源：
 
 ```python
+from pydantic import BaseModel, ConfigDict
+
+
+class User(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
 # 从字典
-User.model_validate({"id": 1, "name": "alice", ...})
+User.model_validate({"id": 1, "name": "alice"})
 
 # 从 JSON 字符串
-User.model_validate_json('{"id": 1, "name": "alice", ...}')
+User.model_validate_json('{"id": 1, "name": "alice"}')
 
-# 从 ORM 对象（需要 model_config = ConfigDict(from_attributes=True)）
-User.model_validate(orm_user)
+
+class ORMUser:  # 模拟一个 ORM 对象：属性而非字典
+    id = 2
+    name = "bob"
+
+
+# 从 ORM 对象
+User.model_validate(ORMUser())
 ```
 
 `from_attributes=True` 让 `model_validate` 用 `getattr` 而不是 `__getitem__` 取值，这样 SQLAlchemy 模型、dataclass 实例都能直接喂给 `model_validate`。V2 把 ORM 集成做进了核心，不再需要 V1 的 `orm_mode` 配置——"从对象属性取值"和"从字典取值"统一成同一个入口，迁移时把 `orm_mode=True` 改成 `from_attributes=True` 即可。
@@ -574,12 +589,10 @@ print(json.dumps(User.model_json_schema(), indent=2, ensure_ascii=False))
     },
     "age": {
       "anyOf": [
-        {"type": "integer"},
+        {"maximum": 150, "minimum": 0, "type": "integer"},
         {"type": "null"}
       ],
       "default": null,
-      "maximum": 150,
-      "minimum": 0,
       "title": "Age"
     }
   },
@@ -662,7 +675,7 @@ class Settings(BaseSettings):
 
 ```python
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class DatabaseSettings(BaseSettings):
@@ -815,47 +828,55 @@ def create_user(req: CreateUserRequest) -> CreateUserResponse:
 7. **FastAPI 拿到 `CreateUserRequest` 实例**：传给路由函数 `create_user(req)`，业务代码只处理已验证的数据。
 8. **业务逻辑执行**：`save_to_db`、`hash_password` 等纯业务操作，不掺杂验证逻辑。业务代码不用再写 `if not req.email` 这种判断，验证责任已经被 Pydantic 接走。
 9. **响应序列化**：`response_model=CreateUserResponse` 让 FastAPI 把返回值用 `CreateUserResponse.model_validate(...)` 再验证一次，确保不泄漏 `password_hash` 等字段。
-10. **OpenAPI 文档自动生成**：`CreateUserRequest.model_json_schema()` 和 `CreateUserResponse.model_json_schema()` 被嵌入 OpenAPI，Swagger UI 直接渲染请求/响应示例。文档生成发生在应用启动时，不是请求时。
+10. **OpenAPI 文档自动生成**：`CreateUserRequest.model_json_schema()` 和 `CreateUserResponse.model_json_schema()` 被嵌入 OpenAPI，Swagger UI 直接渲染请求/响应示例。schema 只在第一次访问 `/openapi.json` 或 `/docs` 时构建并缓存，之后的请求直接复用。
 
 Pydantic 在这条路径里出现了三次：请求验证、响应验证、文档生成。三处共用同一份类型注解——请求模型改字段时，OpenAPI 文档自动更新，前端 TypeScript 类型重新生成，运行时验证规则同步生效，不需要人工同步三处。
 
 ## 常见问题
 
-### 1. `Field(regex=...)` 在 V2 里不生效
+### 1. `Field(regex=...)` 在 V2 里直接报错
 
-V1 用 `regex`，V2 改成 `pattern`。`regex` 在 V2 里不会报错，但会被忽略，导致约束静默失效——代码看起来没问题，但测试也可能漏掉（只有特定输入才会触发约束）。
+V1 用 `regex`，V2 改成 `pattern`。V2 没有兼容旧写法：类定义时会直接抛 `PydanticUserError`，提示 `regex is removed. use pattern instead`。所以这个问题在开发阶段就会暴露，不会带上线——但它会让模块导入失败，一个残留写法就能挡住整个应用的启动。
 
 ```python
-# V1（已弃用）
+# V1（已移除）
 sku: str = Field(regex=r"^[A-Z]{3}-\d{5}$")
 
 # V2
 sku: str = Field(pattern=r"^[A-Z]{3}-\d{5}$")
 ```
 
-迁移时全局搜 `regex=` 替换成 `pattern=`，否则约束会静默消失。建议在 CI 里加一条 grep 检查，防止后续代码重新引入这个问题。
+迁移时全局搜 `regex=` 替换成 `pattern=`。报错挡得住启动，但挡不住"改一处漏一处"，CI 里加一条 grep 检查可以防止旧写法从没有合并的分支里再溜回来。
 
 ### 2. 可变默认值的拷贝开销
 
 ```python
+from pydantic import BaseModel
+
+
 class Config(BaseModel):
     # 看起来没问题，但每次实例化都会深拷贝这个大字典
-    rules: dict = {"complex": {"nested": {"data": [...] * 1000}}}
+    rules: dict = {"complex": {"nested": {"data": [0] * 1000}}}
 ```
 
-`BaseModel` 会深拷贝默认值，避免实例间共享可变状态。但大对象上这个拷贝开销不可忽略——一个 1000 元素的字典默认值，每次实例化都会深拷贝一次。改用 `Field(default_factory=...)` 可以把构造推迟到实例化时，代价是每次实例化都要执行一次工厂函数：
+`BaseModel` 会深拷贝默认值，避免实例间共享可变状态。但大对象上这个拷贝开销不可忽略——一个 1000 元素的字典默认值，每次实例化都会深拷贝一次。改用 `Field(default_factory=...)`，把构造放进工厂函数，实例化时才执行：
 
 ```python
-DEFAULT_RULES = {"complex": {"nested": {"data": range(1000)}}}
+from pydantic import BaseModel, Field
 
 
 class Config(BaseModel):
-    rules: dict = Field(default_factory=lambda: DEFAULT_RULES)
+    rules: dict = Field(default_factory=lambda: {"complex": {"nested": {"data": [0] * 1000}}})
 ```
+
+注意工厂要每次返回新对象。`default_factory=lambda: DEFAULT_RULES` 引用模块级字典是不行的——`default_factory` 的返回值不会再被深拷贝，所有实例会共享同一个字典，一个实例改了字段，其他实例跟着变。
 
 ### 3. `model_validator(mode="after")` 里修改字段不会触发重新验证
 
 ```python
+from pydantic import BaseModel, model_validator
+
+
 class Order(BaseModel):
     total: float
     discount: float
@@ -871,6 +892,10 @@ class Order(BaseModel):
 ### 4. `Optional[X]` 不等于"有默认值"
 
 ```python
+from typing import Optional
+from pydantic import BaseModel
+
+
 class User(BaseModel):
     name: Optional[str]      # 必填，但可以是 None
     email: Optional[str] = None  # 可选，默认 None
@@ -927,15 +952,21 @@ pip install "pydantic[email]"
 `ValidationError.errors()` 返回的每一项都带 `input` 字段，即触发错误的原始输入值。如果直接把 `errors()` 序列化成 HTTP 响应或写进日志，密码、Token、身份证号这类字段会原样暴露。生产环境里要么过滤 `input` 字段，要么在日志里对敏感字段做脱敏处理——具体做法见"错误处理与排查"一节。
 
 ```python
+from pydantic import ValidationError
+
+
 # 危险：input 字段可能含密码、Token
-return {"detail": exc.errors()}
+def detail_with_input(exc: ValidationError) -> dict:
+    return {"detail": exc.errors()}
+
 
 # 过滤掉 input 字段再返回
-safe_errors = [
-    {k: v for k, v in err.items() if k != "input"}
-    for err in exc.errors()
-]
-return {"detail": safe_errors}
+def detail_safe(exc: ValidationError) -> dict:
+    safe_errors = [
+        {k: v for k, v in err.items() if k != "input"}
+        for err in exc.errors()
+    ]
+    return {"detail": safe_errors}
 ```
 
 排查时如果需要 `input` 值，把它写到只允许运维访问的调试日志里，不要让它进面向用户的响应或通用访问日志。
@@ -1011,7 +1042,7 @@ except ValidationError as e:
 
 `errors()` 返回一个列表，每项包含五个核心字段（新版还会带 `url` 文档链接），分别覆盖错误类型、位置、信息、输入和上下文：
 
-- `type`：错误类型枚举（`string_too_short`、`less_than_equal`、`value_error` 等），可以用来做 i18n 或前端错误映射。前端按 `type` 显示对应的本地化文案，比按 `msg` 字符串匹配更稳定。
+- `type`：错误类型枚举（`string_too_short`、`less_than_equal`、`value_error` 等），可以用来做 i18n（国际化）或前端错误映射。前端按 `type` 显示对应的本地化文案，比按 `msg` 字符串匹配更稳定。
 - `loc`：错误位置元组，嵌套字段是 `("address", "city")`，列表元素是 `("tags", 0)`。`loc` 是元组不是字符串，因为列表索引是整数，用点分字符串会丢失类型信息。
 - `msg`：人类可读的错误信息。默认是英文，可通过 `errors()` 的 `include_url` 参数控制是否带文档链接。
 - `input`：触发错误的原始输入值。调试时很有用，可以看到"用户到底传了什么"。
@@ -1054,8 +1085,8 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
 
 | 症状 | 可能原因 | 排查方向 |
 |------|----------|----------|
-| 约束不生效 | `Field(regex=...)` 在 V2 被忽略 | 改成 `pattern=` |
-| 验证器没被调用 | `@classmethod` 顺序错了 | `@field_validator` 在上，`@classmethod` 在下 |
+| 类定义报 `regex` removed | `Field(regex=...)` 是 V1 写法 | 改成 `pattern=` |
+| 验证器没被调用 | `@classmethod` 顺序错了，验证器未注册 | `@field_validator` 在上，`@classmethod` 在下 |
 | `Optional[X]` 报"字段缺失" | 没给默认值 | 改成 `Optional[X] = None` |
 | 严格模式下 `bool` 报错 | 不接受 `0/1/"true"` | 用宽松模式或 `field_validator(mode="before")` 转换 |
 | `EmailStr` ImportError | 没装 `email-validator` | `pip install "pydantic[email]"` |
@@ -1072,7 +1103,7 @@ Pydantic 不直接做 ORM，但常与 SQLAlchemy 配合。常见模式是"ORM �
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import declarative_base
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 Base = declarative_base()
 
@@ -1168,7 +1199,7 @@ Webhook 集成有几个细节需要注意：
 
 - **签名验证用原始 body**：`payload: GitHubWebhook` 已经被 FastAPI 解析过，签名要用 `raw_body: bytes = Body(...)` 拿原始字节算 HMAC，否则换行符、字段顺序差异会导致签名不匹配。
 - **`Literal` 限定 action 枚举**：`action` 只接受声明的三个值，GitHub 新增 action 时会被验证拒绝，避免未处理的 case 静默通过。代价是需要定期跟进 GitHub 的 action 新增，否则合法事件会被拒。
-- **`HttpUrl` 规范化 URL**：自动去掉尾部斜杠、补全协议，避免下游处理时出意外。
+- **`HttpUrl` 规范化 URL**：校验协议，裸域名补上根路径——`https://example.com` 存为 `https://example.com/`，已有路径的尾斜杠原样保留，避免下游处理时出意外。
 
 ## 迁移与采用顺序
 
@@ -1184,7 +1215,7 @@ Webhook 集成有几个细节需要注意：
 
 1. **API 重命名**：`.dict()` → `.model_dump()`、`.parse_obj()` → `.model_validate()`、`@validator` → `@field_validator`、`Config` 内部类 → `model_config = ConfigDict(...)`。可以用 `bump-pydantic` 工具半自动迁移，但迁移后要逐个检查，工具会漏掉一些动态调用。
 2. **自定义验证器签名变化**：V1 的 `@validator` 接收 `(cls, v, values, config, field)`，V2 的 `@field_validator` 只接收 `(cls, v)` 或 `(cls, v, info)`。依赖 `values` 的逻辑要改成 `model_validator(mode="after")` 里访问 `self`。`values` 在 V1 里是已验证字段的字典，在 V2 里改用 `self` 后是字段属性，访问方式不同。
-3. **严格模式默认行为**：V1 的某些隐式转换在 V2 里改了，比如 `bool("false")` 在 V1 是 `True`（非空字符串），在 V2 是 `False`（识别 "false" 字面量）。迁移后要重跑测试覆盖这些边界，尤其是依赖隐式转换的测试用例。
+3. **隐式转换默认行为收紧**：V1 的某些隐式转换在 V2 里改了，最典型的是 `float` → `int`——V1 把 `3.7` 截断成 `3`，V2 在宽松模式下直接拒绝（`int_from_float` 错误）。迁移后要重跑测试覆盖这些边界，尤其是依赖隐式转换的测试用例。
 
 ### 采用顺序建议
 
@@ -1215,9 +1246,9 @@ Pydantic 放在边界最经济：内部代码处理已经验证过的 Python 对
 
 ## 版本与维护
 
-本文针对 Pydantic V2 编写。官方已发布 V3 路线图（将把 `pydantic-core` 并入主仓库、采用新 JSON 解析器等），V3 仍处于开发阶段，落地前 V2 是稳定主线，V1 只修安全问题和关键 bug 到 V3 发布。迁移风险集中在自定义验证器与序列化 API 上。维护时注意：
+本文针对 Pydantic V2 编写。官方已发布 V3 路线图，`pydantic-core` 正在并入 pydantic 主仓库（当前主仓库里已能看到 `pydantic-core/` 目录），V3 仍处于开发阶段，落地前 V2 是稳定主线。迁移风险集中在自定义验证器与序列化 API 上。维护时注意：
 
 - 升级时先看 `CHANGELOG` 里 `pydantic-core` 的版本匹配，核心与 Python 包必须同版本发布。
-- 项目里全局搜 `regex=`、`.dict()`、`.parse_obj()`、`@validator`，这些 V1 残留不会报错但会静默失效或告警。
+- 项目里全局搜 `regex=`、`.dict()`、`.parse_obj()`、`@validator`、`class Config`，这些 V1 残留分两类：`regex=` 直接报错，其余触发弃用告警（功能暂时还能用，V3 会移除）——两类都值得清零。
 - 自定义验证器签名以官方 `field_validator` / `model_validator` 文档为准，不要照抄网络上的 V1 写法。
 - Python 支持范围是硬约束：2.11 起移除 3.8（要求 3.9+），2.14 起将移除 3.9、要求 3.10+。升级 Pydantic 前先确认目标 Python 版本在此范围内，否则装不上新版 wheel。

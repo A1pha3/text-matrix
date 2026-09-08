@@ -17,7 +17,7 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 > - **Forks**: 11.8k+
 > - **License**: MIT
 > - **语言**: JavaScript/TypeScript
-> - **最后更新**: 2026-08-04
+> - **最后更新**: 2026-09-08
 
 ---
 
@@ -32,7 +32,7 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 - [七、错误处理](#七错误处理)：AxiosError 分层判断
 - [八、请求取消](#八请求取消)：AbortController 替代 CancelToken
 - [九、数据序列化](#九数据序列化)：URL 编码与 FormData
-- [十、配置优先级](#十配置默认值)：请求、实例、全局的覆盖顺序
+- [十、配置默认值](#十配置默认值)：请求、实例、全局的覆盖顺序
 - [十一、速率限制](#十一速率限制)：请求间隔控制
 - [十二、实践建议](#十二实践建议)：统一错误、重试、监控封装
 - [十三、常见问题](#十三常见问题)、[十四、自测与采用顺序](#十四自测与采用顺序)
@@ -45,9 +45,10 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 
 ### Axios 是什么
 
-**Axios** 是一个基于 Promise 的 HTTP 客户端，走一套同时跑在浏览器和 Node.js 的 API。它没有带来新的网络概念，更多是把你常写的那段"发请求、等响应、判错误、拆数据"样板代码收拢进库，再用拦截器、实例和超时这些约定把重复逻辑抽走。它的价值几乎都落在"省包装"上：用 `fetch` 得自己封装错误判断和拦截，而 Axios 把这些写进了库本身。后面各节会逐步展开这些能力。
+**Axios** 是一个基于 Promise 的 HTTP 客户端，走一套同时跑在浏览器和 Node.js 的 API。它没有带来新的网络概念，更多是把你常写的那段"发请求、等响应、判错误、拆数据"样板代码收拢进库，再用拦截器、实例和超时这些约定把重复逻辑抽走。它的价值几乎都落在"省包装"上：用 `fetch` 得自己封装错误判断和拦截，而 Axios 把这些写进了库本身。
 
 **官方网站**：[https://axios-http.com](https://axios-http.com)
+**官方文档**：[https://axios.rest](https://axios.rest)（2026 年起，axios-http.com/docs 已整体迁移并重定向到新文档站）
 **GitHub 仓库**：[https://github.com/axios/axios](https://github.com/axios/axios)
 
 ### 主要特性
@@ -66,11 +67,12 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 
 ### 仓库统计
 
-| 指标 | 数值（2026-08-04） |
+| 指标 | 数值（2026-09-08） |
 |------|------|
 | GitHub Stars | 109.2k |
 | Forks | 11.8k |
-| Open Issues | 62 |
+| Open Issues | 88（GitHub API 口径，含 PR） |
+| 最新版本 | 1.20.0（npm latest） |
 | 默认分支 | v1.x |
 | 许可证 | MIT |
 
@@ -98,7 +100,7 @@ tags: ["JavaScript", "HTTP", "Node.js"]
 
 **浏览器支持**：Chrome、Firefox、Safari、Opera、Edge（最新版）
 
-**Node.js 环境**：官方同时覆盖浏览器和 Node.js 运行场景，具体兼容范围以当前版本发布说明为准。
+**Node.js 环境**：跟随当前活跃的 Node.js 发布线，具体兼容范围以各版本发布说明为准。
 
 ### 安装方式
 
@@ -381,7 +383,7 @@ const resp = await axios.get('/page', {
 });
 ```
 
-`responseType` 若设为 `stream`，只在 Node.js 环境生效，浏览器端的响应式类型受 XMLHttpRequest 限制，只能取 `json`、`text`、`blob`、`arraybuffer`、`document`。
+`responseType` 若设为 `stream`，只在 Node.js 环境生效；浏览器端可选值受 XMLHttpRequest 限制，只有 `json`、`text`、`blob`、`arraybuffer`、`document`。
 
 XSRF 防护由 `xsrfCookieName` 和 `xsrfHeaderName` 两个配置项共同完成：Axios 会从 `xsrfCookieName` 指定的 cookie 中读取 token，再写入 `xsrfHeaderName` 指定的请求头里发给后端。两者默认值分别是 `XSRF-TOKEN` 和 `X-XSRF-TOKEN`，如果后端约定了不同的字段名，需要在创建实例时显式覆盖。要注意边界：cookie 只能被同源页面读取，跨域请求通常碰不到那个 token，所以 XSRF 这套只对同源请求有意义，不能拿来当作跨域安全机制。
 
@@ -422,7 +424,7 @@ instance.get('/users');
 instance.post('/users', { name: 'John' });
 
 // 获取完整 URL
-const uri = instance.getUri({ params: { ID: 123 } });
+const uri = instance.getUri({ url: '/users', params: { ID: 123 } });
 // -> https://api.example.com/users?ID=123
 ```
 
@@ -467,24 +469,57 @@ axios.interceptors.response.use(
 );
 ```
 
-### 移除拦截器
+### 移除与清空拦截器
+
+`use()` 的返回值是这条拦截器的编号，把它传给 `eject()` 就能移除；`clear()` 则一次清空同类拦截器：
 
 ```javascript
-const myInterceptor = axios.interceptors.request.use(function () {/*...*/});
+const logger = axios.interceptors.request.use(config => {
+  console.log('发送:', config.url);
+  return config; // 不返回 config，后续拿到的请求头会是 undefined
+});
 
-// 移除拦截器
-axios.interceptors.request.eject(myInterceptor);
+axios.interceptors.request.eject(logger);
 ```
-
-### 多个拦截器
-
-多个请求拦截器按添加顺序执行（先添加先执行）：
 
 ```javascript
-axios.interceptors.request.use(fn1, fn2); // 先执行 fn1
-axios.interceptors.request.use(fn3);     // 后执行 fn3
-// fn1 -> fn3 -> 请求发送
+const apiClient = axios.create();
+
+// 清空该实例上所有请求/响应拦截器
+apiClient.interceptors.request.clear();
+apiClient.interceptors.response.clear();
 ```
+
+`eject` 与 `clear` 对全局 `axios` 和 `axios.create` 的实例都有效。开发热更新场景下，先用 `clear()` 清场再注册，比让旧拦截器反复叠加要可靠。
+
+### 多个拦截器的执行顺序
+
+两类拦截器的方向相反，这是官方文档明确约定的行为：**请求拦截器后添加先执行（LIFO）**，**响应拦截器先添加先执行（FIFO）**：
+
+```javascript
+axios.interceptors.request.use(fn1);
+axios.interceptors.request.use(fn3);
+// 执行顺序：fn3 -> fn1 -> 请求发出（后添加的先执行）
+
+axios.interceptors.response.use(fn4);
+axios.interceptors.response.use(fn5);
+// 执行顺序：fn4 -> fn5 -> 业务代码（先添加的先执行）
+```
+
+LIFO 有个容易踩的实际影响：请求拦截器有依赖关系时（先取 token、再把 token 写进 header），被依赖的那个要**最后注册**——它会最先执行。注册顺序写反，写 header 的那一步拿到的就是空 token。
+
+### 一次请求的完整流转
+
+把本节的机制串起来，一次 `apiClient.get('/users')` 从发到收会经过这些站：
+
+1. 合并配置：请求级 config 优先于实例 defaults，实例 defaults 优先于全局 defaults；
+2. 请求拦截器按注册的逆序依次通过，后添加的先碰 config；
+3. 适配器发出请求：默认按 xhr → http → fetch 的顺序选环境支持的第一个，浏览器走 XMLHttpRequest，Node.js 走 http，Cloudflare Workers、Deno 这类环境走 fetch；需要时可用 `adapter` 配置显式指定；
+4. 响应返回，`validateStatus` 判定这个状态码算不算成功；
+5. 响应拦截器按注册顺序依次通过，先添加的先碰 response；
+6. `then` 里的业务代码拿到 `response` 对象。
+
+任何一环抛出的错误都会跳进同一条 rejection 链，最后在 `catch` 里以 `AxiosError` 的形式被接住——这正是下一节错误处理的地基。
 
 ---
 
@@ -549,7 +584,7 @@ Axios v1 抛出的错误是 `AxiosError` 实例，用 `error.response`、`error.
 
 ### AbortController（推荐方式）
 
-现代浏览器原生支持的方式：
+浏览器与 Node.js 15+ 都原生支持：
 
 ```javascript
 const controller = new AbortController();
@@ -713,18 +748,19 @@ class RateLimiter {
   }
 
   async execute(fn) {
-    const now = Date.now();
-    // 清理过期的请求记录
-    this.requests = this.requests.filter(t => now - t < this.intervalMs);
+    // 窗口满了就等到最早的请求滑出窗口，再重新检查，而不是只等一次
+    for (;;) {
+      const now = Date.now();
+      this.requests = this.requests.filter(t => now - t < this.intervalMs);
 
-    if (this.requests.length >= this.maxRequests) {
+      if (this.requests.length < this.maxRequests) {
+        this.requests.push(now);
+        return fn();
+      }
+
       const oldest = this.requests[0];
-      const waitTime = this.intervalMs - (now - oldest);
-      await new Promise(r => setTimeout(r, waitTime));
+      await new Promise(r => setTimeout(r, this.intervalMs - (now - oldest) + 1));
     }
-
-    this.requests.push(now);
-    return fn();
   }
 }
 
@@ -734,6 +770,8 @@ for (const id of userIds) {
   await limiter.execute(() => axios.get(`/user/${id}`));
 }
 ```
+
+这套实现只管单个进程内的请求。服务一旦横向扩成多个实例，各进程的计数器互不知情，真正的限流要挪到网关或 Redis 这类共享存储上做。
 
 ---
 
@@ -790,6 +828,11 @@ axios.interceptors.response.use(
   async error => {
     const config = error.config;
 
+    // 被取消的请求不算失败；配置阶段就出错的请求没有 config，都无法也不该重试
+    if (axios.isCancel(error) || !config) {
+      return Promise.reject(error);
+    }
+
     // 只重试网络错误（无响应）和 5xx，最多 3 次
     if (!config._retry) {
       config._retry = 0;
@@ -806,6 +849,8 @@ axios.interceptors.response.use(
   }
 );
 ```
+
+两个边界要守住：`axios.isCancel(error)` 挡在重试之前，否则调用方明明主动取消的动作还会被偷偷重发；重放用的 `axios(config)` 是全局实例，如果请求走的是 `axios.create` 创建的客户端，重放要改成同一个实例的调用，否则实例上的默认值和拦截器会被绕开。
 
 ### 请求日志
 
@@ -852,7 +897,7 @@ Axios 本身不处理 CORS，CORS 需要后端配置。如果遇到 CORS 问题�
 
 1. 确认后端设置了正确的 `Access-Control-Allow-Origin` 头
 2. 使用代理服务器转发请求
-3. 配置 `withCredentials: true` 发送跨域 cookies
+3. 需要携带跨域 cookies 时，客户端配置 `withCredentials: true`，服务端同时返回 `Access-Control-Allow-Credentials: true`，两端缺一不可
 
 ### Q：如何处理文件下载？
 
@@ -862,6 +907,7 @@ async function downloadFile(url, filename) {
   const response = await axios.get(url, {
     responseType: 'blob',
     onDownloadProgress: (progressEvent) => {
+      if (!progressEvent.total) return; // 没有 Content-Length 时 total 为 0，百分比无意义
       const percentCompleted = Math.round(
         (progressEvent.loaded * 100) / progressEvent.total
       );
@@ -877,7 +923,7 @@ async function downloadFile(url, filename) {
 }
 ```
 
-下载时要把 `responseType` 设为 `blob`，进度通过 `onDownloadProgress` 监听；对超大文件，`progressEvent.total` 可能缺失，进度计算前要做判空。
+下载时要把 `responseType` 设为 `blob`，进度通过 `onDownloadProgress` 监听；当响应没有 `Content-Length`（比如走 chunked 传输）时 `total` 为 0，此时只能拿到已传输字节数，算不出百分比。
 
 ### Q：如何处理大文件上传？
 
@@ -889,6 +935,7 @@ formData.append('file', largeFile);
 await axios.post('/upload', formData, {
   headers: { 'Content-Type': 'multipart/form-data' },
   onUploadProgress: (progressEvent) => {
+    if (!progressEvent.total) return;
     const percentCompleted = Math.round(
       (progressEvent.loaded * 100) / progressEvent.total
     );
@@ -927,9 +974,10 @@ await axios.get('/user', {
 
 1. 为什么 `axios.get()` 成功时得到的不是数据本身，而是 `response`？如何让调用方直接拿到数据？
 2. `axios.create()` 的实例、全局 `axios.defaults` 和单次请求的 config 三者，优先级谁最高？
-3. 响应拦截器里如何区分"拿到了 4xx 响应"和"根本没收到响应"？依据是哪两个字段？
-4. 用 `AbortController` 取消请求后，错误对象有哪些特征？`axios.isCancel()` 为什么比看 `error.code` 可靠？
-5. 上传和下载进度分别由哪两个回调监听？它们各自在什么阶段触发？
+3. 往同一个实例注册三个请求拦截器，执行顺序是什么？换成响应拦截器呢？一个拦截器要依赖另一个的产出时，注册顺序该怎么排？
+4. 响应拦截器里如何区分"拿到了 4xx 响应"和"根本没收到响应"？依据是哪两个字段？
+5. 用 `AbortController` 取消请求后，错误对象有哪些特征？`axios.isCancel()` 为什么比看 `error.code` 可靠？
+6. 上传和下载进度分别由哪两个回调监听？什么情况下拿不到百分比？
 
 ### 采用顺序建议
 
@@ -946,7 +994,7 @@ await axios.get('/user', {
 
 ### 生态现状
 
-Axios 是浏览器侧使用最广的 HTTP 客户端。根据 [npm trends](https://npmtrends.com/axios-vs-got-vs-node-fetch-vs-ky) 的公开数据，它的周下载量长期处在本类别的第一梯队；GitHub 上 109.2k Stars、11.8k Forks（[axios/axios](https://github.com/axios/axios)，2026-08-04）。
+Axios 是浏览器侧使用最广的 HTTP 客户端。根据 [npm trends](https://npmtrends.com/axios-vs-got-vs-node-fetch-vs-ky) 的公开数据，它的周下载量长期处在本类别的第一梯队；GitHub 上 109.2k Stars、11.8k Forks（[axios/axios](https://github.com/axios/axios)，2026-09-08）。
 
 它被广泛用于以下场景：
 
@@ -955,15 +1003,14 @@ Axios 是浏览器侧使用最广的 HTTP 客户端。根据 [npm trends](https:
 - Node.js 服务端调用第三方 API
 - Electron 桌面应用
 
-需要说明的是，在 Node.js 18+ 环境下，原生 `fetch` 已经稳定，部分纯服务端项目开始用 `fetch` 或 [ky](https://github.com/sindresorhus/ky)、[got](https://github.com/sindresorhus/got) 替代 Axios；但在浏览器侧，Axios 的拦截器、超时、取消三件套仍然是最省心的选择。
+在 Node.js 18+ 环境下，原生 `fetch` 已经稳定，部分纯服务端项目开始用 `fetch` 或 [ky](https://github.com/sindresorhus/ky)、[got](https://github.com/sindresorhus/got) 替代 Axios；但在浏览器侧，Axios 的拦截器、超时、取消三件套仍然是最省心的选择。
 
 ### 相关资源
 
 | 资源 | 链接 |
 |------|------|
-| 官方文档 | [https://axios-http.com/docs/intro](https://axios-http.com/docs/intro) |
+| 官方文档 | [https://axios.rest](https://axios.rest)（axios-http.com/docs 已重定向至此） |
 | GitHub | [https://github.com/axios/axios](https://github.com/axios/axios) |
 | npm | [https://www.npmjs.com/package/axios](https://www.npmjs.com/package/axios) |
-| 官方博客 | [https://axios-http.com/blog](https://axios-http.com/blog) |
 | npm trends | [https://npmtrends.com/axios](https://npmtrends.com/axios) |
 

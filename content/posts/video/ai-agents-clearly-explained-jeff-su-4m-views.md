@@ -1,6 +1,7 @@
 ---
 title: "AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解"
 date: "2026-04-29T17:03:32+08:00"
+lastmod: "2026-09-07T09:50:00+08:00"
 draft: false
 slug: "ai-agents-clearly-explained-jeff-su-4m-views"
 description: "基于 Jeff Su 的热门视频与配套文章，拆解 AI Agent 的三层进化路径：LLM、AI Workflow、True Agent，并补充 ReAct、RAG、记忆系统、工具调用与生产实践边界。"
@@ -10,7 +11,7 @@ tags: ["AI Agent", "LLM", "RAG", "工作流"]
 
 # AI Agents 是什么？Jeff Su 超 400 万播放视频深度拆解
 
-> 2025 年 4 月，Jeff Su 在 YouTube 发布了 [AI Agents Clearly Explained](https://www.youtube.com/watch?v=FwOTs4UxQS4)，播放量超 400 万。以下基于该视频及配套文章，拆解 AI Agent 的三层进化路径。
+> 2025 年 4 月，Jeff Su 在 YouTube 发布了 [AI Agents Clearly Explained](https://www.youtube.com/watch?v=FwOTs4UxQS4)，截至 2026 年 9 月播放量约 489 万。以下基于该视频及配套文章，拆解 AI Agent 的三层进化路径。
 
 ---
 
@@ -30,7 +31,7 @@ tags: ["AI Agent", "LLM", "RAG", "工作流"]
 
 最关键的一列是"谁决定下一步"。如果下一步永远由人预先写死，例如先查日历、再查天气、再生成邮件，它更接近工作流；如果模型能根据当前结果判断该查什么、该不该重试、该不该换工具、是不是已经完成目标，它才进入 Agent 的语境。
 
-在 Jeff Su 的讲法里，RAG 是一种工作流能力——"先查，再答"。放到更广义的工程实践里，RAG 当然可以成为 Agent 的子能力，但"会检索"不等于"会自主决策"。
+在 Jeff Su 的讲法里，RAG 属于工作流能力：先查资料，再作答。放到更广义的工程实践里，RAG 当然可以成为 Agent 的子能力，但"会检索"不等于"会自主决策"。
 
 ## Level 1：LLM 为什么还不算 Agent
 
@@ -43,7 +44,7 @@ LLM 的基本模式是"输入变输出"。你给它一个提示，它基于训�
 - 它不知道你的私有世界。你的日历、公司内部文档、CRM 数据、私有 API，不会自动出现在模型上下文里。
 - 它本身是被动的。没有新的输入，它不会主动去查资料、执行动作、验证结果。
 
-Jeff Su 反复强调的 "passive systems" 就在于此：模型只根据一个 prompt 生成文字，它仍然是一个更强的输入输出系统，算不上能围绕目标持续推进任务的执行体。
+Jeff Su 给这一层贴的标签是 "passive systems"。他在配套文章里写得很直白："LLMs are passive—they wait for your prompt and then respond."（大语言模型是被动的：等你给提示，然后作答。）只根据一个 prompt 生成文字的模型，仍然是一个更强的输入输出系统，算不上能围绕目标持续推进任务的执行体。
 
 一个常见误解是：很多产品里的聊天模型已经能调工具了，但那通常是外层产品为模型补上了工具层、权限层和执行层，不等于基础模型天然具备了行动能力。想清楚这层边界，后面看 workflow 和 agent 才不会混淆。
 
@@ -53,11 +54,11 @@ Jeff Su 反复强调的 "passive systems" 就在于此：模型只根据一个 p
 
 视频第二层讲的是 AI Workflow。Jeff Su 的判断：工作流能连上外部工具、能访问外部信息、也能完成多步任务，但路径仍然是人预先写好的。
 
-他在配套文章里举了一个内容生产的例子：先把新闻链接放进 Google Sheets，再用 Perplexity 做摘要，再让 Claude 改写成社交媒体文案，最后设成每天定时运行。这套自动化系统很有价值，但它仍然不是 Agent——执行顺序、分支条件和失败后的处理方式，都是人提前规定好的。
+他在配套文章里演示了一个自己照 Helena Liu 教程、用 make.com 搭的内容生产工作流：先在 Google Sheets 里汇总新闻，再用 Perplexity 摘要，再让 Claude 按他定制的提示词起草 LinkedIn 和 Instagram 帖子，每天早上 8 点定时运行。他还特意补了一句：如果最终帖子不满意——比如不够有趣——他必须手动去改给 Claude 的提示词，试错迭代发生在人身上，不在系统里。这套自动化很有价值，但它仍然不是 Agent：执行顺序、分支条件和失败后的处理方式，都是人提前规定好的。
 
 控制逻辑写在人手里，系统再复杂，也还是 workflow。
 
-RAG 也适合放在这里理解。Jeff Su 把 RAG 当作"先查资料再回答"的典型流程，这个定位对入门者很友好。但要看到，RAG 并不等于完整记忆系统，它更像一个检索能力：
+RAG 也适合放在这里理解。Jeff Su 把它描述为帮模型在回答前"把东西查一遍"的过程，并明确说 RAG 本质上是一种 AI workflow。这个定位对入门者很友好。但要看到，RAG 并不等于完整记忆系统，它更像一个检索能力：
 
 - 它擅长把外部知识在回答前拉回上下文。
 - 它不天然等于跨会话长期记忆。
@@ -85,9 +86,9 @@ Jeff Su 用 Andrew Ng 展示过的视觉代理示例来解释：用户只给出�
 
 ## 把视频里的关键词放回技术语境
 
-Jeff Su 的视频适合作为第一层认知框架，但真要往下做，几个关键词还得说得更细。
+Jeff Su 的视频适合作为第一层认知框架，但真要往下做，几个关键词还得说得更细。RAG 和 ReAct 视频里都点了名，tool use 是三层框架里 Agent 的动手部分；memory 和多智能体是往下走马上会遇到的词，视频没有展开。下面挨个说清。
 
-### ReAct 的重点：可中断的循环
+### ReAct 的重点：推理和行动交替成一条轨迹
 
 ReAct 论文（Yao et al., 2022）把"推理"和"行动"拆进同一条循环，每一步交替走三个环节：
 
@@ -97,7 +98,7 @@ ReAct 论文（Yao et al., 2022）把"推理"和"行动"拆进同一条循环，
 
 循环反复，直到模型判断目标已完成，或达到停止条件。它不只是"会调用工具"的别名——推理和动作放进同一条轨迹，才有了可追踪、可回放的过程记录。
 
-```python
+```text
 # 一个去掉细节的 ReAct 示意循环
 while True:
     thought = model.generate(thought + action + observation)   # 想
@@ -114,7 +115,7 @@ while True:
 
 ### Tool Use 的难点：让调用更可靠
 
-工具调用这一层经常被讲得过于轻松。真正的难点不在于"把 API 挂上去"，而在于如何减少误选工具、错误参数和幻觉式调用。Gorilla 这类研究之所以重要，就是因为它把问题讲得很具体：大模型在 API 调用场景下，常见失败点正是参数不准确、文档理解错误和错误调用不存在的接口。
+工具调用这一层经常被讲得过于轻松。真正的难点不在于"把 API 挂上去"，而在于如何减少误选工具、错误参数和幻觉式调用。Gorilla 这类研究之所以重要，就是因为它把问题讲得很具体：GPT-4 这个量级的模型在写 API 调用时，失败集中在两处——给不准输入参数，以及幻觉出错误的调用用法。Gorilla 给出的解法是微调加文档检索器：让模型能适应测试时更新的 API 文档，幻觉问题因此明显缓解。
 
 早一点的 Toolformer（Schick et al., 2023）换了个思路：让模型自己学会"在什么位置、调用什么工具能拿到有用信息"，用结果来验证该不该调用。它指向的事实是，工具调用不是把函数列表塞进 prompt 就完事，"什么时候该调、返回怎么用"本身就需要训练。这两条研究线合起来，说明工具层要解决的不只是接线，还有选择和校验。
 
@@ -129,7 +130,7 @@ while True:
 
 ### Memory 不只有向量数据库
 
-把 memory 等同于向量数据库，读者容易误以为只要上了 Vector DB 就解决了记忆问题。更合理的拆法至少有三层：
+memory 在视频和配套文章里都只是一笔带过，但任何 Agent 项目做到第二步就会撞上它。把 memory 等同于向量数据库，读者容易误以为只要上了 Vector DB 就解决了记忆问题。更合理的拆法至少有三层：
 
 | 记忆层 | 保存什么 | 常见实现 |
 | ------ | ------ | ------ |
@@ -182,7 +183,7 @@ Agent 一旦拿到决策权，系统风险也会同步上升。你不能只给�
 3. 只有当上下文明显不够、跨会话知识真的有价值时，再引入长期记忆。
 4. 只有当工具生态开始变复杂时，再考虑用标准协议统一接入。
 
-LangChain 和 MCP 可以在这里顺带理解。LangChain 当前把自己定位为"帮助你快速构建 Agent 和应用的架构层"，更复杂的编排可以下沉到 LangGraph。MCP 是另一条线，解决的是"AI 应用如何用统一方式连接外部系统"，本质在降低工具接入和迁移成本。两者不冲突，甚至经常同时出现：前者偏编排，后者偏连接。
+LangChain 和 MCP 可以在这里顺带理解。按官方文档当前的定位，LangChain 提供的是 create_agent——一个最小但高度可配置的 agent harness，模型、工具、提示词和中间件自由组合，更复杂的编排下沉到 LangGraph。MCP 是另一条线，解决的是"AI 应用如何用统一方式连接外部系统"，本质在降低工具接入和迁移成本。两者不冲突，甚至经常同时出现：前者偏编排，后者偏连接。
 
 从入门成本看，原则反而很简单：先 workflow，后 agent；先单 Agent，后多 Agent；评估补齐之前，别急着加工具。
 
@@ -192,7 +193,7 @@ Jeff Su 这支视频最实在的地方是把概念压缩得足够清楚：零基
 
 但它也有边界：它不是一份生产级 Agent 设计指南，没有展开权限、评估、观测、成本这些现实约束。它把 RAG、memory、tool use 都讲成了易于理解的版本，适合入门，但不适合直接拿来做架构决策。真正上手时，仍然要回到论文、官方文档和具体框架实践。
 
-它最大的价值不是手把手教你写代码，而是让你知道接下来该学什么、不该把什么混为一谈。
+看完它，你未必会写 Agent 代码，但至少能把"会调工具"和"会自主决策"分开，知道接下来该补哪一块。
 
 ## 读者判断：谁该看原视频
 
@@ -214,8 +215,9 @@ Jeff Su 这支视频最实在的地方是把概念压缩得足够清楚：零基
 ## 站内继续读
 
 - [easy-langent：Datawhale 出品 LangChain/LangGraph 大模型应用开发教程](/posts/tech/easy-langent-langchain-langgraph-tutorial/)
+- [AI Agent 的技术栈拆解：从 ReAct 循环到多智能体协作](/posts/video/ai-agents-clearly-explained-jeff-su/)
 - [Cognee：AI Agent 记忆引擎完全指南](/posts/tech/cognee-ai-agent-memory-knowledge-engine/)
 - [OpenViking：字节跳动开源的 AI Agent 上下文数据库](/posts/tech/ai-agent/openviking-context-database-ai-agents/)
 - [awesome-llm-apps：LLM 应用与 Agent 项目清单](/posts/tech/awesome-llm-apps-curated-llm-application-projects-guide/)
 
-从 LLM 到 workflow，再到真正的 agent，变化最大的是"下一步应该怎么做"的决策权从人手里逐渐转移到模型手里。看清这件事，再去看市面上的各种"AI Agent"产品，很多混淆会立刻消失。
+从 LLM 到 workflow，再到真正的 agent，变化最大的是"下一步应该怎么做"的决策权从人手里逐渐转移到模型手里。下次看到宣传里挂着"Agent"字样的产品，先问一句：它的下一步，由谁决定。
