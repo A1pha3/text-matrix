@@ -295,7 +295,7 @@ discovery 阶段只读 frontmatter，不解析 body，单 Skill 开销因此能�
 3. **执行指令**：Agent 按照指令执行任务
 4. **按需加载资源**：执行过程中需要时，再加载 `scripts/`、`references/` 等
 
-activation 阶段会把整个 `SKILL.md` body 读进上下文，body 长度直接决定单次激活的 token 开销。规范推荐 body 控制在 5000 token 以内，超过这个值时把详细参考拆到 `references/`，让 body 只保留执行路径。
+activation 阶段会把整个 `SKILL.md` body 读进上下文，body 长度直接决定单次激活的 token 开销。规范给出的是上限：body 控制在 5000 token 以内，超过这个值时把详细参考拆到 `references/`，让 body 只保留执行路径。上限不等于典型值——一个只含逐步指令的精简 Skill，实际激活通常只会吃掉 500-2000 token，体感开销低于 5000 的上限。
 
 ### 3.4 任务流案例：一次完整的 Skill 调用
 

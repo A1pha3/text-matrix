@@ -149,7 +149,7 @@ Heretic 对每个可消融组件（如 `attn.o_proj`、`mlp.down_proj`）引入�
 
 超过 `min_weight_distance` 的层直接跳过不消融。
 
-相比于传统方法对所有层使用同一个 \\(\lambda\\)，梯形核允许中间层重消融、边缘层轻或跳过。Maxime Labonne 在 [gemma-3-12b-it-abliterated-v2](https://huggingface.co/mlabonne/gemma-3-12b-it-abliterated-v2) 中率先尝试了非均匀权重，Heretic 将其参数化并通过 Optuna 自动搜索最优形状。
+相比于传统方法对所有层使用同一个 \\(\lambda\\)，梯形核允许中间层重消融、边缘层轻或跳过。非均匀权重的做法在 Maxime Labonne 的 [gemma-3-12b-it-abliterated-v2](https://huggingface.co/mlabonne/gemma-3-12b-it-abliterated-v2) 中已有体现；Heretic 的贡献是把这类逐层差异权重参数化，交给 Optuna 自动搜索最优形状。
 
 ### 3.4 LoRA 实现细节
 
@@ -161,7 +161,7 @@ LoRA abliteration: ΔW = -λ * v * (v^T W)
   lora_A = v^T W
 ```
 
-**具体流程**（`model.py` → `abliterate()`）：
+**具体实现**（数学分解与官方文档一致；实际代码由 PEFT 的 `get_peft_model` 注入 LoRA adapter，`reset_model()` 通过将 `lora_B` 权重清零来回到未消融状态）：
 
 ```python
 # 获取原始权重 W（4-bit 量化模型需先 dequantize）
@@ -212,18 +212,19 @@ Heretic 使用 Optuna 的 **多目标 TPE 采样器**，同时优化：
 1. **拒绝次数**（越少越好）
 2. **KL 散度**（衡量与原模型的偏离程度）
 
-目标是找到 Pareto 最优前沿上的参数组合。评分函数为：
+目标是在多目标空间里找到 Pareto 最优前沿上的参数组合。优化的目标并非写死在代码里，而是由配置文件 `config.default.toml` 的 `scorers` 列表声明——默认注册两个打分器，各自输出一个原始分数并指定最小化方向：
 
-```python
-refusals_score = refusals / base_refusals
-
-if kl_divergence >= kl_divergence_target:
-    kld_score = kl_divergence / kl_divergence_scale
-else:
-    kld_score = refusals_score * kl_divergence_target / kl_divergence_scale
-
-score = (kld_score, refusals_score)  # Optuna 多目标 minimize
+```toml
+scorers = [
+    { plugin = "heretic.scorers.keyword_rate.KeywordRate", optimization = "minimize" },
+    { plugin = "heretic.scorers.kl_divergence.KLDivergence", optimization = "minimize" },
+]
 ```
+
+- `KeywordRate` 统计响应中命中拒绝关键词的条数（默认用 `mlabonne/harmful_behaviors` 的 `test[:100]`）
+- `KLDivergence` 计算消融模型与原始模型在无害提示（`mlabonne/harmless_alpaca` 的 `test[:100]`）首 token 分布上的 KL 散度
+
+Optuna 对这两个分数做多目标最小化，权衡"拒绝被压下去多少"与"模型偏向原分布多少"，得到 Pareto 前沿。无需人工设定 KL 阈值或归一化目标——优化方向完全由配置声明。
 
 ### 3.8 一个 harmful prompt 如何流过系统
 
@@ -239,7 +240,7 @@ score = (kld_score, refusals_score)  # Optuna 多目标 minimize
 
 Optuna 采样一组参数——假设 `direction_index=18.3`、`max_weight=0.8`、`min_weight=0.1`、`min_weight_distance=10`。
 
-- 方向插值：\\(\mathbf{r}_{18.3} = 0.7 \cdot \mathbf{r}_{19} + 0.3 \cdot \mathbf{r}_{18}\\)（浮点索引自动插值）
+- 方向插值：\\(\mathbf{r}_{18.3} = 0.7 \cdot \mathbf{r}_{18} + 0.3 \cdot \mathbf{r}_{19}\\)（按 `lerp(0.3)` 的语义，靠近低层的那侧占 0.7）
 - 权重核计算：第 19 层（峰值层）的 attention o_proj 获得 0.8 的消融权重，第 9 层（峰值 -10）降为 0.1，第 8 层及以下跳过
 - MLP down_proj 的参数独立搜索，假设峰值设得更低（0.3），以保护模型能力
 
@@ -256,7 +257,7 @@ lora_A = r_{18.3}^T @ W_o_proj # shape: (1, in_features)
 
 **阶段 4：双目标评估**
 
-注入后，对 harmful prompts 集跑推理，统计拒绝次数。同时用相同输入跑原始模型，计算两个输出分布的 KL 散度。Optuna 根据 `(kld_score, refusals_score)` 更新 TPE 模型，指导下一轮采样。
+注入后，对 harmful prompts 集跑推理，统计拒绝次数。同时对无害提示集跑同一批输入，用原始模型做基线，计算两个输出分布的 KL 散度。Optuna 用这两个分数更新 TPE 模型，指导下一轮采样。
 
 **阶段 5：Pareto 前沿选择**
 
@@ -271,13 +272,17 @@ lora_A = r_{18.3}^T @ W_o_proj # shape: (1, in_features)
 ```
 src/heretic/
 ├── main.py          # CLI 入口、优化循环、用户交互（保存/上传/评测/聊天）
-├── model.py         # 模型加载、LoRA 初始化、abliterate() 实现
+├── model.py         # 模型加载、架构适配、LoRA 注入与重置（_apply_lora / reset_model）
 ├── analyzer.py      # 残差几何分析（PaCMAP 投影 + 轮廓系数）
-├── evaluator.py    # 拒绝计数 + KL 散度计算
+├── evaluator.py     # 拒绝计数 + KL 散度计算
 ├── config.py        # Pydantic Settings（所有超参数配置）
-├── utils.py        # 工具函数（数据集加载、Seed、复现信息生成）
-├── reproduce.py    # 从 Hugging Face 收集 reproduce.json
-└── system.py       # GPU/CPU 信息采集
+├── scorer.py        # 打分器抽象基类 Scorer，返回带优化方向的 Score
+├── plugin.py        # 插件动态加载（打分器等，builtin 判定影响复现报告）
+├── utils.py         # 工具函数（数据集加载、Seed、复现信息生成）
+├── reproduce.py     # 从 Hugging Face 收集 reproduce.json
+├── progress.py      # 进度条显示（Rich 包装 tqdm）
+├── system.py        # 系统/显存信息采集、缓存管理
+└── scorers/         # 打分器实现：keyword_rate、kl_divergence、benchmark_score
 ```
 
 ### 4.2 主流程（main.py → run()）
@@ -324,7 +329,11 @@ def get_model_class(model):
 
 ### 4.4 研究功能：残差几何分析
 
-`analyzer.py` 提供两种研究工具：
+`analyzer.py` 提供两种研究工具。它们需要单独安装 `research` extra 后才能启用：
+
+```bash
+pip install -U 'heretic-llm[research]'
+```
 
 #### PaCMAP 投影可视化
 
@@ -366,10 +375,9 @@ uv run heretic Qwen/Qwen3-4B-Instruct-2507
 # 优化参数
 n_trials = 200           # 试验次数
 n_startup_trials = 60     # 随机探索次数
-kl_divergence_target = 0.01  # KL 目标阈值
 
 # 消融参数
-orthogonalize_direction = true   # 是否正交化拒绝方向
+orthogonalize_direction = true   # 是否只减掉与 good 方向正交的分量
 row_normalization = "full"        # 行归一化模式
 full_normalization_lora_rank = 3  # full 模式的 LoRA rank
 
@@ -382,6 +390,8 @@ split = "train[:400]"
 dataset = "mlabonne/harmful_behaviors"
 split = "train[:400]"
 ```
+
+一个可参考的量级：官方口径是在 RTX 3090 上用默认配置解审查 `Qwen3-4B-Instruct-2507` 约需 20-30 分钟（含 200 个 trial）。受批大小、输入长度与显存影响，具体时间因机器而异；显存紧张时可把 `quantization` 设为 `bnb_4bit` 用 bitsandbytes 做 4-bit 量化加载。
 
 ---
 
@@ -404,10 +414,10 @@ split = "train[:400]"
 ### 6.3 建议的采用顺序
 
 1. **先跑默认配置**：`heretic <model-id>`，200 个 trial，观察 Pareto 前沿的形状
-2. **如果 KL 过高**：降低 `kl_divergence_target`，或限制 `max_weight` 上限，或只消融 attention 组件（跳过 MLP）
-3. **如果拒绝压不下去**：增大 `n_trials`，调整 `direction_scope` 范围，或换用更大的 harmful 数据集
-4. **验证能力保留**：用内置的 `--benchmark` 参数跑 lm-eval，重点看代码和推理类 benchmark（这些对权重扰动最敏感）
-5. **合并与部署**：确认 Pareto 点满意后，`--merge` 合并 LoRA 到完整权重再部署
+2. **如果 KL 过高**：限制 `max_weight` / `max_weight_position` 的取值空间，或只消融 attention 组件（跳过 MLP），或扩大 `[scorer.KLDivergence.prompts]` 的评估样本（默认 `test[:100]`）
+3. **如果拒绝压不下去**：增大 `n_trials`，尝试 `direction_scope = "per layer"`（逐层独立方向，而非全局单一插值方向），或换用更大的 harmful 数据集
+4. **验证能力保留**：跑 Heretic 内置的 lm-eval 评测入口（完成时会询问是否运行），重点看代码和推理类 benchmark——这两类对权重扰动最敏感。若要对已产出的模型复现官方数字，用 `--evaluate-model`：`heretic --model google/gemma-3-12b-it --evaluate-model p-e-w/gemma-3-12b-it-heretic`
+5. **合并与部署**：导出时选择 "Merge the abliteration LoRA and export the full model"（合并为完整权重），或先导出 LoRA adapter 备用；该选择对应配置里的 `export_strategy = "merge" | "adapter"`
 
 Heretic 把消融从手工试参变成了可复现的优化问题。这意味着你可以把同一套参数空间和数据集用于不同模型，横向比较谁的审查对齐更"浅"——这是手工调参做不到的。
 
@@ -431,5 +441,5 @@ Heretic 把消融从手工试参变成了可复现的优化问题。这意味着
 
 - **先补 abliteration 的底**：读 Arditi et al. 2024 的 [原始论文](https://arxiv.org/abs/2406.11717)，然后对比 Jim Lai 的 [Projected Abliteration](https://huggingface.co/blog/grimjim/projected-abliteration) 和 [Norm-Preserving Biprojected Abliteration](https://huggingface.co/blog/grimjim/norm-preserving-biprojected-abliteration)，搞清正交投影和行归一化各自在解决什么问题
 - **再学 Optuna 多目标优化**：跑 [Optuna 官方的多目标优化教程](https://optuna.readthedocs.io/en/stable/tutorial/20_recipes/002_multi_objective.html)，理解 TPE 采样器在 Pareto 前沿搜索中的行为
-- **然后读源码**：从 `src/heretic/model.py` 的 `abliterate()` 函数开始，跟踪一组参数如何变成 LoRA adapter 并注入模型
-- **最后改参数空间**：试着在 `config.py` 里增加一个新的消融组件（比如 `attn.q_proj`），然后在 `optimize()` 的 trial 循环里加上对应的梯级核参数，看 Pareto 前沿会不会改善
+- **然后读源码**：从 `src/heretic/model.py` 的 `_apply_lora()`（用 PEFT 的 `get_peft_model` 初始化 adapter）和官方 [LoRA abliteration 分解说明](https://www.mintlify.com/p-e-w/heretic/concepts/abliteration) 开始，看一组 `max_weight`/`direction_index` 参数如何变成注入进模型的两张 LoRA 矩阵
+- **最后改配置空间**：在 `config.default.toml` 里对照 `scorers` 与参数说明调整取值空间，看 Pareto 前沿会不会改善（不必改代码）

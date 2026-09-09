@@ -3,7 +3,7 @@ title: "chrome-devtools-mcp：把 Chrome DevTools 完整能力切给 Coding Agen
 date: "2026-07-09T02:55:00+08:00"
 slug: "chrome-devtools-mcp-ai-agent-browser-debug-mcp"
 github_repo: "ChromeDevTools/chrome-devtools-mcp"
-description: "chrome-devtools-mcp 是 Chrome DevTools 团队官方出的 MCP server 与 CLI，把 Performance、Network、Memory、Debug 等真实 DevTools 能力暴露给 Claude/Cursor/Copilot 等 Coding Agent。本文拆解 53 个工具分组、性能 trace 流程、与 Puppeteer 直连方案的取舍。"
+description: "chrome-devtools-mcp 是 Chrome DevTools 团队官方出的 MCP server 与 CLI，把 Performance、Network、Memory、PWA 等真实 DevTools 能力暴露给 Claude/Cursor/Copilot 等 Coding Agent。本文拆解 57 个工具（11 组）、性能 trace 流程、一个修性能 bug 的任务流案例，以及它与 Puppeteer 直连方案的取舍。"
 draft: false
 categories: ["技术笔记"]
 tags: ["MCP", "Chrome DevTools", "AI Agent"]
@@ -11,13 +11,13 @@ tags: ["MCP", "Chrome DevTools", "AI Agent"]
 
 # chrome-devtools-mcp：把 Chrome DevTools 完整能力切给 Coding Agent
 
-## 一句话核心判断
+## 它到底解决什么问题
 
-chrome-devtools-mcp（仓库 `ChromeDevTools/chrome-devtools-mcp`）做的事情可以一句话总结：让 Coding Agent 像一个熟练的前端工程师一样使用 Chrome DevTools。它把 DevTools 的能力拆成多个工具组，按 MCP 协议暴露给 Claude Code、Cursor、Copilot 等客户端，工具总数达到 53 个。和"用 Puppeteer 给 Agent 写一层薄薄 wrapper"最大的差别在于——性能 trace、堆快照分析、Lighthouse 审计这些 DevTools 的高级能力，MCP 协议一次绑定就能调用。
+chrome-devtools-mcp（仓库 `ChromeDevTools/chrome-devtools-mcp`）要接近一个目标：让 Coding Agent 像一个熟练的前端工程师一样使用 Chrome DevTools。它把 DevTools 的能力拆成多个工具组，按 MCP 协议暴露给 Claude Code、Cursor、Copilot 等客户端。截至本文写作时，官方工具参考列出 57 个工具，分属 11 组——除了点击、填表、导航这些基础动作，还覆盖性能 trace、堆快照 diff、Lighthouse 审计，以及较新加入的 Progressive Web Apps（PWA）安装与启动。这个数字不固定，会随版本演进；要用精确清单，以官方 tool-reference 为准。和"用 Puppeteer 给 Agent 写一层薄薄 wrapper"最大的差别在于——这些 DevTools 的高级能力，MCP 协议一次绑定就能调用。
 
 如果只是想"让 Agent 点按钮、填表单、抓截图"，可以选轻量方案；如果要"让 Agent 看 performance trace、对比 heap snapshot、抓 source-mapped 错误"，chrome-devtools-mcp 是当下最完整的官方路径。
 
-## 系统地图：三层 + 工具分组
+## 系统这么分：三层 + 工具分组
 
 整个项目按"协议层 / 服务端 / 客户端"三层落地，下面只画到 MCP server 这一层（客户端由各家 Agent 实现，不属于该项目本身）：
 
@@ -49,25 +49,27 @@ chrome-devtools-mcp（仓库 `ChromeDevTools/chrome-devtools-mcp`）做的事情
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-这里的 `--slim`、`--headless` 是 MCP server 的启动参数，不是 CLI 的形态区分。slim 模式裁剪掉大部分工具、只留基础浏览能力；headless 让 Chrome 无头运行。项目另外提供一个实验性的独立 CLI（`chrome-devtools` 命令），用于不依赖 MCP 客户端、直接在终端操作浏览器（详见下文"CLI 直连"一节）。
+上面的分组合计 53 个工具，图中尚未画出后来加入的 **Progressive Web Apps（4 个）**：`get_os_app_state`、`install_pwa`、`launch_pwa`、`uninstall_pwa`。加上这组，当前总数才是 57。
 
-## 核心判断：为什么不是又一个"浏览器自动化 wrapper"
+这里的 `--slim`、`--headless` 是 MCP server 的启动参数，不是 CLI 的形态区分。slim 模式裁剪掉大部分工具、只留基础浏览能力；headless 让 Chrome 无头运行。项目另外提供一个实验性的独立 CLI（`chrome-devtools` 命令），用于不依赖 MCP 客户端、直接在终端操作浏览器（用法见下文"接入方式"一节的末尾）。
+
+## 为什么不是又一个浏览器自动化 wrapper
 
 市面上能给 Agent 操作浏览器的方案不少，但多数只解决"自动化点击"。chrome-devtools-mcp 的差异化集中在三处：
 
 1. **官方背书的协议栈**：服务端通过 Chrome DevTools Protocol 跟 Chrome 通信，所有高级功能（Performance、Memory、Lighthouse、Extension）都暴露出来。
-2. **MCP 协议一次绑定全部工具**：`npx -y chrome-devtools-mcp@latest` 一行就能把上述 53 个工具同时注册到 MCP client。
+2. **MCP 协议一次绑定全部工具**：`npx -y chrome-devtools-mcp@latest` 一行就能把上述 57 个工具同时注册到 MCP client。
 3. **保持 DevTools 的可观测性**：性能 trace、堆快照、网络请求详情这些"看起来 Agent 用不上"的信息，对调试真实应用极其关键。
 
 它的关键限制在 README 里写得很清楚：**官方只支持 Google Chrome 与 Chrome for Testing，其他 Chromium 派生浏览器"may work"但不被保证**。这意味着项目是绑在 Chrome 上的，不要把它当成"通用浏览器协议"。
 
 ## 工具分组与典型调用
 
-把 README 里"工具自动生成段"按目的重新分类，便于按场景选工具：
+官方文档按工具用途分好了组，这里再按"什么场景该动哪一组"筛一遍，方便直接挑：
 
 ### 1. 输入自动化（10 tools）
 
-点、拖、填表单、悬停、按键、上传、点击指定坐标——这些是"动浏览器"的基本动作。`fill_form`、`click_at`、`upload_file` 比单纯的 `click` 更贴合现代 web 表单的复杂性。
+点、拖、填表单、悬停、按键、处理浏览器弹窗、上传、点击指定坐标——这些是"动浏览器"的基本动作。`fill_form`、`click_at`、`upload_file` 比单纯的 `click` 更贴合现代 web 表单的复杂性；其中 `click_at` 用坐标点击，需要先开启实验性的视觉开关（`--experimentalVision`）。
 
 ### 2. 导航与多页管理（6 tools）
 
@@ -95,6 +97,19 @@ performance_start_trace  → 跑业务场景
 
 这跟过去 Puppeteer + trace 手工分析的差异是：**Agent 能直接调用底层的 Insights API**，不再要维护一份手工 trace 解析脚本。
 
+#### 性能分析任务流示例：一个 LCP 问题从定位到修复
+
+举一个实际工作流，展示如何用这套工具链完成一次完整调试：
+
+1. **启动 trace**：`performance_start_trace` 启动录制，设置 `reload: true` 自动重新加载目标页面
+2. **等页面稳定**：`wait_for` 待页面渲染和网络空闲完成
+3. **停止并分析**：`performance_stop_trace` 停止录制，再调用 `performance_analyze_insight` 拿到 DevTools 自动汇总的瓶颈列表
+4. **读诊断结果**：Insights 会告诉你"LCP 延迟来自一个未优化的 2.1MB 图片"，还会给出具体的资源 URL 和耗时分布
+5. **Agent 动手改代码**：根据结果自动把图片改成 WebP 并加上 `loading="lazy"` 优化
+6. **重新验证**：重复上述流程，确认 LCP 指标降到 2.5s 以内
+
+整个过程中，开发者只需要说一句"帮我看看为什么 LCP 这么慢"，从录制到拿到结论全由 Agent 操作，不需要手动点 DevTools 面板、复制粘贴 trace、再对着结果读一遍。
+
 ### 5. 网络（2 tools）
 
 `list_network_requests`、`get_network_request` 提供每个请求的 method/url/status/latency。配合 Debug 工具组的 source-mapped console 错误，"接口 500 + 控制台具体报错"一抓一个准。
@@ -119,6 +134,10 @@ performance_start_trace  → 跑业务场景
 
 - 第三方工具（2 个）：`execute_3p_developer_tool` / `list_3p_developer_tools`
 - WebMCP（浏览器内 MCP，2 个）：`execute_webmcp_tool` / `list_webmcp_tools`——这条值得关注：当一个网页本身实现了 WebMCP，Agent 可以直接调用页面暴露的工具，不必走 DOM。
+
+### 9. 渐进式 Web 应用（4 tools）
+
+`install_pwa` / `launch_pwa` / `uninstall_pwa` / `get_os_app_state` 覆盖 PWA 的安装、启动、卸载与运行状态查询。它让 Agent 不再只盯着"页面"，还能验证一个 Web App 以系统应用形态（独立窗口、桌面图标、离线能力）跑起来是否符合预期——这类场景常见于验收"安装提示是否正确弹出""离线缓存是否真的生效"。
 
 ## 隐私与遥测：哪些数据被发走了
 
@@ -182,6 +201,15 @@ README 在 Disclaimers 和 Usage statistics 两节写下几个容易被忽略的
 - **隔离与持久化的取舍**：默认会以独立 profile 启动一个隔离的浏览器实例；需要接真实登录态或跑场景复用时，用 user-data-dir 参数（CLI 里写作 `--userDataDir`）指定一个用户数据目录，登录态能跨会话保留。headless（无头）模式在 CLI 里默认开启。
 - **Experimental CLI**：内置 CLI 通过 Unix socket（macOS/Linux）或命名管道（Windows）连一个后台 `chrome-devtools-mcp` daemon，同一个后台实例被多次命令复用，页面、cookie 这些状态得以保留；`start`、`stop`、`status` 手动控制生命周期。
 
+### 跟 Puppeteer/Playwright MCP 怎么选
+
+这是最常问到的边界问题，一句话就能说清：
+
+- **要自动化 UI 测试** → 选 Playwright，它就是干这个的，跨浏览器、元素定位、断言都做完整
+- **要 Agent 自己做前端调试** → 选 chrome-devtools-mcp，它能把 DevTools 里的性能、内存、网络诊断直接给 Agent
+
+Playwright 适合"你写脚本，机器跑断言"；chrome-devtools-mcp 适合"Coding Agent 自己动手读诊断、改代码，再验证"。路径目标不一样，不要混着用。
+
 ## 适用边界
 
 **适合**：
@@ -197,14 +225,14 @@ README 在 Disclaimers 和 Usage statistics 两节写下几个容易被忽略的
 - 跨浏览器兼容性测试——只支持 Chrome
 - 想完全脱离 Chrome 生态的项目——项目的所有能力都绑在 Chrome DevTools 上
 
-## 最后说几句
+## 值不值得接入
 
-chrome-devtools-mcp 的价值不在"多一个能点按钮的 Agent"，而在把 DevTools 里最吃人力的几类工作——性能 trace、内存泄漏排查、Lighthouse 审计——一并变成 agent 可调用的工具。它把前端调试这件事从"必须人来"推到"Agent 直接动手"。如果工程上确实要给 Coding Agent 装一套真实可用的浏览器调试能力，这是目前最稳的官方路径。
+chrome-devtools-mcp 的真正价值，是把 DevTools 里最吃人力的几类活——跑性能 trace、排查内存泄漏、做 Lighthouse 审计——打包成 agent 能直接调用的工具。前端调试的工作重心随之从"人盯着 DevTools 面板"移到"Agent 动手、人复核结果"。如果你的 Coding Agent 确实需要一套真实可用的浏览器调试能力，这是目前最稳的官方路径。
 
 ## 参考链接
 
 - 仓库：<https://github.com/ChromeDevTools/chrome-devtools-mcp>
-- 工具参考（完整 53 个工具说明）：<https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md>
+- 工具参考（完整工具清单，分组与数量随版本更新）：<https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md>
 - CLI 说明：<https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/cli.md>
 - npm 包：`chrome-devtools-mcp`
 - 协议：Model Context Protocol（MCP，默认 stdio）

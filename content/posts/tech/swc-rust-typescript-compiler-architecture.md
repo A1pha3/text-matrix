@@ -1,5 +1,5 @@
 ---
-title: "swc-project/swc 架构拆解：Rust 写的 TS/JS 编译器为何能在 33k+ star 仓库里保持单 crate 形态"
+title: "swc-project/swc 架构拆解：Rust 写的 TS/JS 编译器为何能在 34k+ star 仓库里保持单 crate 形态"
 date: "2026-06-13T21:03:20+08:00"
 slug: "swc-rust-typescript-compiler-architecture"
 github_repo: "swc-project/swc"
@@ -24,9 +24,9 @@ tags: ["Rust", "TypeScript", "编译器", "Node.js"]
 | License | Apache-2.0 |
 | MSRV | Rust 1.73 |
 | Node 版本要求 | v10+ 用 / v20+ 开发 |
-| 周边工具 | `@swc/cli`、`@swc/core`、`@swc/jest`、Next.js / Vite / Turbopack 集成 |
+| 周边工具 | `@swc/cli`、`@swc/core`、`@swc/jest`，Next.js / Deno / Parcel / Vite（插件）/ Turbopack 集成 |
 
-34,136+ stars 的体量，背后是"Next.js 默认编译器 + Deno 内置 + Vite SWC 插件"这套生态——几乎所有现代 JS 工具链都会直接 / 间接调用 SWC。
+34,136+ stars 的体量，背后是 Next.js（v12 起默认编译器）、Deno（内置编译）、Parcel 与 Vitest（transformer 选项）、Vercel 构建链路这套已经生产验证的调用方——几乎所有现代 JS 工具链都会直接或间接用到 SWC，npm 周下载量在 2026 年约 2000 万。注意：Vite 默认编译走 esbuild，并不默认使用 SWC，它是通过插件（如 `@vitejs/plugin-swc`）才接入的。
 
 ## 学习目标
 
@@ -67,7 +67,7 @@ tags: ["Rust", "TypeScript", "编译器", "Node.js"]
 | 插件系统 | JS in-process | Rust 编译时 + Node native binding |
 | TypeScript 类型擦除 | 需 `@babel/preset-typescript` | 原生 |
 | 体积（`@swc/core`） | — | 约 9 MB（含 native binding） |
-| 生态 | 成熟 | 已成熟（Next.js / Deno / Vite 默认） |
+| 生态 | 成熟 | 已成熟（Next.js / Deno / Parcel / Vitest） |
 
 性能差距的本质是**语言层**——Babel 跑在 V8 上，是解释执行 AST 转换；SWC 跑在 Rust 上，是编译后的 native 代码 + SIMD 优化。对 CI 这种"每次 push 都要重新编译"的工作流，20 倍速度差就是 30 秒 vs 10 分钟的差距。
 
@@ -142,7 +142,7 @@ SWC 的核心编译流程和所有编译器一样，三段式：
 1. **错误恢复**——手写 parser 能给出更人性化的错误信息（行列号 + 上下文），对 IDE 集成至关重要；
 2. **性能控制**——能精细地插入 SIMD 优化、热路径内联、零拷贝字符串处理。
 
-SWC 的 parser 对 ASCII 关键字走 SIMD 快速路径，整体解析速度比 esprima（最常见的 JS parser generator 产物）快 3–10 倍。
+SWC 的 parser 对 ASCII 关键字走 SIMD 快速路径，整体解析速度比 esprima（广泛使用的 JS 解析器）这类纯 JS 实现快一个数量级。
 
 ### 4.2 AST：带位置信息的 typed tree
 
@@ -194,7 +194,7 @@ console.log(result.code);
 ```
 Rust 编译器（swc_ecma_*）
        │
-       ▼ N-API / Neon
+       ▼ N-API（napi-rs）
 Node.js native addon（@swc/core.node）
        │
        ▼ Node.js require
@@ -216,11 +216,13 @@ SWC 比 Babel 快的 20–70 倍到底从哪来？拆开看：
 | 并行 codegen | 2–4×（多文件时） | codegen |
 | 编译时单态化 | 1.1–1.3× | generics |
 
+上表各项只是数量级上的拆解，不是官方给的单点 benchmark；SWC 官方自报的硬指标只有一句——单线程比 Babel 快 20 倍，四核快 70 倍。真正确认收益，要以你自己代码库上的对比为准。
+
 注意"并行 codegen"对单文件收益不大，但对**大型项目 / monorepo** 的 CI 构建收益显著——SWC 能把多个文件的 codegen 任务并行化。
 
 ## 七、Bundler：SWC 1.5+ 的新方向
 
-2023 年开始 SWC 团队投入了 bundler 实现，crates 在 `swc_bundler` / `swc_module_graph`：
+2023 年开始 SWC 团队投入了 bundler 实现，对外命名 **SWC Pack**（旧称 `spack`），目前仍是实验性功能，核心 crates 在 `swc_bundler` / `swc_module_graph`：
 
 ```rust
 use swc_bundler::{Bundler, Bundle};
@@ -291,7 +293,7 @@ esbuild 是另一个用 Go 写的 TS/JS 编译/打包工具，常被拿来和 SW
 
 **Q1：SWC 支持哪些工具链？**
 
-支持 Next.js（默认编译器）、Deno（内置）、Vite（SWC 插件）、Turbopack 等。几乎所有现代 JS 工具链都会直接/间接调用 SWC。
+Next.js 从 v12 起默认用 SWC 取代 Babel，Deno 内置 SWC 编译，Parcel 与 Vitest 把它作为 transformer 选项，Turbopack 内部也调用它。注意 Vite 默认编译走 esbuild，并不会默认使用 SWC，需要装 `@vitejs/plugin-swc` 之类的插件才会接入。几乎所有的现代 JS 工具链都会直接或间接用到它。
 
 **Q2：`@swc/core` 的体积是多少？**
 
@@ -411,4 +413,4 @@ CI 构建时间是大瓶颈；Next.js/Deno/Vite 用户；需要自定义 transfo
 - **MSRV**：Rust 1.73。如果你的项目锁了更低 Rust 版本，不能直接引入 `swc` 的子 crate。
 - **crate 依赖**：在 Rust 项目里直接 `use swc_ecma_parser` 等子 crate 比 `use swc` 更稳定——根 crate 是 umbrella，API 表面更大，breaking change 概率更高。
 
-SWC 是 Rust 编译器生态里"被广泛生产验证"的项目之一——Next.js 每天处理上亿次 SWC 编译调用，Deno 直接把它内置进 runtime。这种规模的工程验证，比任何 benchmark 都更说明它的稳定性。如果你正在被 Babel 的速度困扰，或者在规划一条"全 Rust 工具链"的路线，SWC 是几乎绕不开的环节——理解它的 workspace 架构、transform 模型、Node binding 边界，对整个现代 JS 工具链的设计取舍都会更清晰。
+SWC 是 Rust 编译器生态里"被广泛生产验证"的项目之一——Next.js、Vercel 每天处理海量 SWC 编译调用，Deno 直接把它内置进 runtime。这种规模的工程验证，比任何 benchmark 都更说明它的稳定性。如果你正在被 Babel 的速度困扰，或者在规划一条"全 Rust 工具链"的路线，SWC 是几乎绕不开的环节——理解它的 workspace 架构、transform 模型、Node binding 边界，对整个现代 JS 工具链的设计取舍都会更清晰。

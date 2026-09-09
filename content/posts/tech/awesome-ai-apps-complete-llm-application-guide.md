@@ -11,11 +11,15 @@ tags: ["LLM", "AI Agent", "RAG", "开源项目"]
 
 # Awesome AI Apps：80+ LLM 应用实战项目合集
 
+> **目标读者**：想对比主流 LLM 框架、或想看"生产级 Agent 长什么样"的开发者，以及刚从某个框架入门、想横向扩展视野的学习者。
+> **核心问题**：框架生态碎片化，同一个问题在 Agno、CrewAI、LangChain 里有不同写法。这份合集如何用它 80 多个可运行项目，帮你快速建立"哪种框架解决哪类问题"的地图。
+> **事实边界**：本文基于 `Arindam200/awesome-ai-apps` 仓库 README 与 GitHub API（截至 2026 年 8 月）整理；Stars、Forks、项目清单会随仓库演进变化，文中数字用于说明量级，不作为精确承诺。代码示例只展示主要调用结构，具体 API 以仓库内可运行代码为准。
+
 ## 这个合集值不值得读
 
-挑 LLM 应用框架，或者想看"生产级 Agent 长什么样"，Awesome AI Apps 值得花两小时翻一遍。80 多个可运行项目按难度从 Starter 排到 Advanced，覆盖 Agno、CrewAI、LangChain、PydanticAI、AWS Strands、DSPy 等主流框架，集中展示 RAG、Memory、MCP、Voice 四类横向能力的工程写法。合集的价值在对照：同一类问题在不同框架下怎么解。教写 Agent 的事交给框架官方文档，合集负责提供样本。
+挑 LLM 应用框架，或者想看"生产级 Agent 长什么样"，这个合集值得花两小时翻一遍。80 多个可运行项目按难度从 Starter 排到 Advanced，覆盖 Agno、CrewAI、LangChain、PydanticAI、AWS Strands、DSPy 等主流框架，集中展示 RAG、Memory、MCP、Voice 四类横向能力的工程写法。它真正的价值在对照：同一类问题在不同框架下怎么解。教怎么写 Agent 是框架官方文档的事，合集只负责提供样本。
 
-下面按系统地图、难度分层、研究流水线三段展开。代码示例展示主要调用结构，具体 API 以仓库内可运行代码为准。
+下面从系统地图入手，再按难度逐层拆解各类项目，最后落到一条可执行的学习路径上。
 
 ## 项目背景与核心数据
 

@@ -25,7 +25,7 @@ GitHub API 2026-08-05 验证的仓库基本数据：
 | 默认分支 | main（v2.0 alpha） |
 | 持续维护分支 | main（v2）、1.latest（v1，Python 实现） |
 
-main 分支已经从 Python 切到 Rust。v1 时代的 dbt-core 是 Python 包，要自己维护 Python 运行时和适配器依赖；v2.0 的 Fusion 引擎以单一自包含二进制分发，不依赖 Python 运行时，也不用管 dbt-snowflake 那一串包。这就是 README "Easier to install" 那条的实际落地。
+main 分支已经从 Python 切到 Rust。这改变了安装方式：v1 时代的 dbt-core 是 Python 包，要自己维护 Python 运行时和适配器依赖；v2.0 的 Fusion 引擎以单一自包含二进制分发，不依赖 Python 运行时，也不用管 dbt-snowflake 那一串包。README 的 "Easier to install" 落到实处的就是这一条。
 
 ## SQL + Jinja 怎么变成可追溯模型
 
@@ -49,7 +49,7 @@ from {{ source('raw', 'orders') }}
 
 ### 引用（ref）与源（source）
 
-`{{ ref('stg_customers') }}` 指同一个 dbt project 里的另一个模型，`{{ source('raw', 'orders') }}` 指外部的源数据。两种引用合起来构成 dbt project 的 DAG：
+`{{ ref('stg_customers') }}` 指同一个 dbt project 里的另一个模型，`{{ source('raw', 'orders') }}` 指外部源数据。两种引用合起来构成 dbt project 的 DAG：
 
 ```
 sources/raw/orders  ─┐
@@ -84,7 +84,7 @@ models:
 
 ### manifest.json：可追溯的产物
 
-dbt parse 产出 manifest.json，记录所有模型的依赖、配置、编译后 SQL、引用关系。它是 dbt-docs、dbt-cloud、IDE 插件、CI 系统的共同语言。谁依赖谁、上次 build 是什么时候、某列有没有被测试覆盖，都变成可查询的事实，而不是藏在分析师脑子里的隐式知识。
+dbt parse 产出 manifest.json（元数据清单），记录所有模型的依赖、配置、编译后 SQL、引用关系。它是 dbt-docs、dbt-cloud、IDE 插件、CI 系统的共同语言。谁依赖谁、上次 build 是什么时候、某列有没有被测试覆盖，都变成可查询的事实，而不是藏在分析师脑子里的隐式知识。
 
 ## v1 到 v2.0：从 Python 包到 Rust 自包含二进制
 
@@ -176,7 +176,7 @@ dbt-core 解决的是数据已经在仓库里、需要可追溯转换的场景�
 
 适合用 dbt-core：
 
-- 数据已经进入数据仓库，需要组织成可重跑、可测试、可版本化的模型层。
+- 数据已经进入数据仓库，需要一套能重跑、能测试、能纳入版本控制的模型组织方式。
 - 分析师团队要自助写 SQL，又希望这些 SQL 能被 review、CI、测试。
 - 工程团队把 source / ref 这类依赖关系当成治理对象。
 - 数据规模在 single warehouse 集群可承载的范围内（dbt-core 不做跨仓 join）。

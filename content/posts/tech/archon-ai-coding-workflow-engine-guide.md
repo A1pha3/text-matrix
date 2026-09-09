@@ -1,6 +1,6 @@
 ---
 title: "Archon：让AI编程变得可重复、可追溯的开源工作流引擎"
-date: "2026-04-09T20:20:00+08:00"
+date: "2026-08-06T09:00:00+08:00"
 slug: "archon-ai-coding-workflow-engine-guide"
 github_repo: "coleam00/Archon"
 description: "Archon 是面向 AI 编程的开源工作流引擎：开发流程写成 YAML 定义的 DAG，把规划、实现、验证、评审、批准与 PR 创建编排成可重复执行的工程流水线。本文讲清它的工作流模型、worktree 隔离、默认工作流、上手路径与自定义方式。"
@@ -11,7 +11,7 @@ tags: ["AI 编程", "Claude Code"]
 
 用 Claude Code、Codex 这类编码 Agent 一段时间后，会撞上同一个瓶颈：模型能力在涨，开发流程却仍靠临时提示词、人工盯执行、手动补审查维系。Archon 解决的就是这一层——把 Agent 的执行收束成可审计的工程流程。
 
-Archon 是一个面向 AI 编程的 workflow engine（工作流引擎），同时是一个 AI coding harness builder。开发流程写成 YAML，它负责把规划、实现、验证、评审、批准、PR 创建这些步骤编排成可重复执行的工程流水线。
+Archon 是一个面向 AI 编程的 workflow engine（工作流引擎），也是一个 AI coding harness builder（编码流程框架构建器）。开发流程写成 YAML，它负责把规划、实现、验证、评审、批准、PR 创建这些步骤编排成可重复执行的工程流水线。
 
 GitHub API 2026-08-05 验证的仓库基本数据：
 
@@ -36,7 +36,7 @@ Archon 的定位在编排层。它把开发过程拆成有顺序、有依赖、�
 | 同一个需求每次结果都不一样 | 流程取决于模型当时怎么理解指令 | 用 workflow 固定步骤、顺序和门禁 |
 | 多个任务并行容易互相污染 | 共用工作区，分支和文件状态容易冲突 | 每次运行默认进入独立 worktree |
 | 很难知道 AI 到底做了什么 | 只能看零散终端输出或最终结果 | DAG 执行、事件、工件、状态全程可追溯 |
-| 想在关键步骤插入人工审核 | 往往只能临时打断，流程不稳定 | approval / interactive 节点内建 human-in-the-loop |
+| 想在关键步骤插入人工审核 | 往往只能临时打断，流程不稳定 | approval / interactive 节点内建 human-in-the-loop（人机协同） |
 | 团队希望复用同一套开发流程 | 最终只剩提示词，难以长期维护 | YAML workflow 可提交到仓库，团队共享同一流程 |
 | 希望在 CLI、Web、聊天平台之间保持一致 | 不同入口各做一套 | 同一套 workflow 可跨 CLI、Web UI、Slack、Telegram、GitHub、Discord 复用 |
 
@@ -45,10 +45,10 @@ Archon 解决的是 AI 如何进入工程体系的问题，模型本身的能力
 理解 Archon 还需要先区分三层并行机制，它们各自独立，边界不清就会误判适用场景：
 
 - **DAG 内并行**：同一依赖层的节点并发执行，例如多个 review agent 同时审查。
-- **worktree 隔离**：多个 workflow run 之间互不污染，每个写任务独占一个 git worktree。
+- **worktree 隔离**：多个 workflow run 之间互不污染，每个写任务独占一个 git worktree（独立工作树）。
 - **多入口复用**：CLI、Web UI、聊天平台共享同一套 workflow，入口不同行为一致。
 
-这三层是 Archon 和普通脚本编排的差别所在，下面逐层展开。
+普通脚本编排不会自动得到这三层，下面逐层展开。
 
 ## 它适合谁，不适合谁
 
@@ -88,7 +88,7 @@ Archon 解决的是 AI 如何进入工程体系的问题，模型本身的能力
 把 Archon 只理解成"写 YAML 然后交给 AI 跑"还是太抽象。把一次 workflow run 拆开看，是下面这条执行链：
 
 1. 你在 CLI、Web UI 或聊天平台发出需求。
-2. Orchestrator 识别意图，解析 workflow 名称，必要时自动匹配最接近的 workflow。
+2. Orchestrator（编排器）识别意图，解析 workflow 名称，必要时自动匹配最接近的 workflow。
 3. 如果当前目录是一个 Git 仓库，Archon 会注册 codebase，并准备 workflow 运行上下文。
 4. 对于会写代码的任务，隔离层创建或复用独立 worktree，并生成对应分支。
 5. Workflow Executor 按 DAG 依赖关系启动节点；能并行的节点并行，必须等待的节点顺序执行。
@@ -170,7 +170,7 @@ Archon 在文档里明确区分了两种常见的人机协同模式。
 
 #### Interactive loop
 
-适合"看一版 → 给反馈 → 再迭代"的往返式过程，例如方案评审、PRD 打磨、PIV 循环。
+适合"看一版 → 给反馈 → 再迭代"的往返式过程，例如方案评审、PRD 打磨、PIV（Plan-Implement-Validate）循环。
 
 ```yaml
 - id: refine-plan
@@ -198,7 +198,7 @@ Archon 在文档里明确区分了两种常见的人机协同模式。
       max_attempts: 5
 ```
 
-两种模式差别在于：interactive loop 是多轮对话式协作，approval 是单次门禁式介入。一个松散、一个僵硬，选错模式流程就不对味。Archon 把人类介入从临时行为变成流程原语，这是它和普通脚本编排的一个差别。
+两种模式差别在于：interactive loop 是多轮对话式协作，approval 是单次门禁式介入。一个松散、一个僵硬，选错模式流程就不对味。Archon 把人类介入从临时行为变成流程原语，普通脚本编排不会自动提供这一点。
 
 ## 为什么 worktree 隔离是 Archon 的工程核心
 
@@ -224,11 +224,20 @@ worktree 隔离直接解决了四个工程痛点：
 - **结果天然可追踪**：每次运行对应一个分支 / worktree，方便回溯和清理。
 - **和 PR 生命周期天然对齐**：从 feature 分支到 review，再到 merge，路径一致。
 
-对团队来说，这是 Archon 和"普通脚本编排 + Agent"之间最关键的差别。没有 worktree 隔离，多个 AI 任务并发时会互相覆盖文件、抢占分支，最终只能串行执行，DAG 并行的价值也会被抵消。
+对团队来说，这是 Archon 区别于"脚本编排 + Agent"的最关键一点。没有 worktree 隔离，多个 AI 任务并发时会互相覆盖文件、抢占分支，最终只能串行执行，DAG 并行的价值也会被抵消。
 
 ## 架构拆解：从一句指令到一次工作流运行
 
 从系统视角看，Archon 可以拆成 5 层：
+
+```mermaid
+flowchart LR
+    Entry["入口层：CLI / Web UI / Slack / Telegram / GitHub / Discord"] --> Orchestrator["编排层：Orchestrator"]
+    Orchestrator --> Executor["执行层：Workflow Executor"]
+    Executor --> AI["AI 层：Claude / Codex 等 Assistant Clients"]
+    AI --> Executor
+    Executor <--> Data[("数据层：SQLite / PostgreSQL")]
+```
 
 | 层 | 组件 | 职责 |
 | ------ | ------ | ------ |
@@ -237,6 +246,8 @@ worktree 隔离直接解决了四个工程痛点：
 | 执行层 | Workflow Executor | 解析 YAML、执行 DAG、处理依赖、条件和循环 |
 | AI 层 | Claude / Codex 等 Assistant Clients | 在指定节点执行推理、生成代码、做审查 |
 | 数据层 | SQLite / PostgreSQL | 持久化 codebases、conversations、sessions、workflow runs、isolation environments、messages、workflow events |
+
+一次运行从入口进入编排层：Orchestrator 判定意图、选定 workflow 后交给执行层；Workflow Executor 按 DAG 逐个触发节点，AI 节点把推理结果交回，确定性节点直接执行；运行状态与产物持续写入数据层，供回放和排查。
 
 同一套 workflow 在 Web UI、命令行和聊天平台之间行为一致，本地 CLI 只是其中一个入口。数据层统一持久化，无论从哪个入口触发，运行历史都能在 Web UI 里回放。
 
@@ -549,6 +560,12 @@ Archon 不是 Claude Code 的替代品。它把 Claude Code、Codex 等编码能
 ### 我能不能只把 Archon 当作 workflow authoring system 来用？
 
 可以，而且这恰恰是很多团队最终最看重的价值：把 workflow 作为仓库内可维护的工程资产，避免实践建议停留在某个成员脑子里。即使不使用内置 workflow，只用自己的 YAML，Archon 的编排引擎、worktree 隔离、approval gate 依然有效。
+
+## 结尾判断
+
+Archon 解决的不是让 AI 写出更多代码，而是让 AI 的产出进入可审计、可回放、可复用的工程流程。流程写进仓库、跑进独立 worktree、卡在审批门前，AI 编程就从个人的使用习惯变成了团队的工程资产。它不负责让模型变聪明，但流程能不能被固定、被复查、被复用，往往是团队真正卡住的地方。
+
+要不要引入，判断标准只有一条：你的开发任务会不会被重复执行、需不需要回溯、错了能不能回滚。三个回答都是"是"，Archon 值得进入工具链；有任何一个是"否"，先用 `archon-assist` 这类轻量入口，别让编排的固定成本跑在收益前面。
 
 ## 官方资源
 

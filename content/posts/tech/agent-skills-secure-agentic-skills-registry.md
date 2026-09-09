@@ -332,10 +332,6 @@ audit.log 是 append-only 的取证日志，没有内置还原机制。如果文
 
 这是预期行为。过期后 finding 重新激活，扫描会报出这条问题并阻断 release。处理方式：评估这条 finding 是否仍然是误报。如果是，更新 `packages/skills-catalog/security-scan-allowlist.yaml` 里对应条目的 `expiresAt`，在 PR 里说明继续豁免的理由，由维护者 review。如果不是误报，修复技能代码让扫描通过。不要为了绕过失败而删除 `expiresAt` 字段——无过期时间的例外正是这套机制要避免的永久后门。
 
-**MCP server 和 CLI 安装该怎么选**
-
-两者解决不同问题。CLI 安装把技能文件写到本地 agent 的技能目录，agent 启动时直接读取，适合需要长期使用、离线可用的场景。MCP server 在运行时按需查询 catalog，agent 通过 `list_skills`、`search_skills`、`read_skill`、`fetch_skill_files` 四个工具渐进式加载，适合探索新技能、按任务临时加载参考文档的场景。两者不互斥——可以先装常用技能到本地，同时挂 MCP server 用于浏览和搜索 catalog。安全敏感场景优先用 CLI 安装，因为 lockfile 和审计日志只覆盖 CLI 路径。
-
 **锁文件 `.agents/.skill-lock.json` 损坏，CLI 报 schema 验证失败**
 
 这是 Zod schema 验证在起作用。锁文件被外部工具改写或磁盘错误导致字段缺失时，schema 验证会拒绝非法条目并尝试优雅迁移到干净状态。如果自动迁移失败，备份文件 `.skill-lock.json.bak` 里有上一次成功写入的完整内容——手动把 `.bak` 复制回 `.skill-lock.json` 即可恢复。恢复后运行 `npx @tech-leads-club/agent-skills` 列出已安装技能，确认状态一致。
@@ -350,7 +346,7 @@ audit.log 是 append-only 的取证日志，没有内置还原机制。如果文
 <summary>参考答案</summary>
 
 步骤：
-1. 运行 `npx @tech-leads-club/agent-skills install tl c-spec-driven --agent cursor`
+1. 运行 `npx @tech-leads-club/agent-skills install tlc-spec-driven --agent cursor`
 2. 检查 `.agents/.skill-lock.json`，找到 `tlc-spec-driven` 条目
 3. 用 `shasum -a 256` 对技能目录下所有文件计算哈希，与锁文件中记录比对
 4. 如果一致，说明技能文件未被篡改

@@ -68,6 +68,8 @@ Skill（技能）是这两年 AI 编程工具最火的概念之一。读网页�
 
 以 Cursor + mp-read skill 为例，完整走一遍 Skill 从发现到执行的 7 个步骤。其他 AI IDE 走的是同一套机制。
 
+第 0 步发生在第一次请求之前，是客户端启动时的准备动作，不构成对话轮次；第 1-7 步才是协议层的往返。
+
 ### 第 0 步：Skill 发现与描述摘要注入
 
 在你打开 Cursor、还没说话的时候，Cursor 就已经扫描了 `.cursor/skills/`、`.agents/skills/` 等目录，收集了所有 Skill 的 `name` + `description`（来自 SKILL.md 的 YAML frontmatter），然后把它们作为**静态上下文**塞进 system prompt。
@@ -397,6 +399,22 @@ sequenceDiagram
 
 ---
 
+## 术语表
+
+| 术语 | 释义 |
+|------|------|
+| Skill（技能） | 一个目录 + SKILL.md 的组合，属于应用层抽象，不占用协议字段 |
+| SKILL.md | Skill 的唯一入口文件：frontmatter 提供 `name` 与 `description`，正文提供指令步骤 |
+| Progressive Loading（渐进式加载） | 只把 name + description 注入 system prompt，LLM 需要时再 Read 全文的加载策略 |
+| System Prompt（系统提示词） | 注入在 `messages[0]` 的指令文本，包含 Skill 摘要与触发指令 |
+| Tool Calling / Function Calling（工具调用 / 函数调用） | 模型输出结构化 `tool_calls`，宿主执行并把结果以 `role: "tool"` 回传的机制 |
+| `tool_choice` | 请求参数，控制模型是否调用工具，以及是否限定为某个工具 |
+| `finish_reason` | 响应结束原因：`tool_calls` 表示进入工具调用轮，`stop` 表示最终回复 |
+| MCP（Model Context Protocol，模型上下文协议） | 标准化的工具接入协议，定义 Host、Client、Server 三方的通信规范 |
+| Token（词元） | 模型处理文本的最小单位，决定上下文窗口与计费 |
+
+---
+
 ## 核心洞察：Skill 是一种给 LLM 写使用手册的设计模式
 
 Skill 在协议层面没有新增字段，靠的是已有字段的组合用法。它是一种"给 LLM 写使用手册，让 LLM 通过已有工具自己照着做"的设计模式。
@@ -522,6 +540,20 @@ curl -s https://api.openai.com/v1/chat/completions \
 **读完后行为不对**：SKILL.md 的指令可能不够明确。抓包对比 LLM 返回的 `tool_calls` 参数和 SKILL.md 中的要求是否一致。
 
 **并行 tool calling 没生效**：并非所有模型都支持并行调用。确认模型能力，并在 `tool_choice` 中确保没有限制为单次调用。
+
+### 6. 最小验证清单
+
+跑一次抓包，逐项勾选：
+
+| # | 检查项 | 通过标准 |
+|----|--------|----------|
+| 1 | 摘要注入 | `messages[0]` 中出现 `<available_skills>`，且只含 name + description |
+| 2 | Skill 触发 | 第一轮响应包含 `Read(SKILL.md)` 的 tool call |
+| 3 | 全文进上下文 | 第二轮请求出现 `role: "tool"`，content 为完整 SKILL.md |
+| 4 | 指令被遵循 | 后续 tool_calls 的参数与 SKILL.md 步骤一致 |
+| 5 | 循环结束 | 最终响应 `finish_reason` 为 `stop` |
+
+**前置条件**：mitmproxy 已启动、IDE 已走代理，工作区存在 `.cursor/skills/<name>/SKILL.md`。任一检查不过，回到上文"常见问题定位"逐条排查。
 
 ---
 

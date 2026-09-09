@@ -1,5 +1,5 @@
 ---
-title: "Repomix：27.6K Stars·把代码库压缩成 AI 可读的单一文件"
+title: "Repomix：28K Stars·把代码库压缩成 AI 可读的单一文件"
 date: "2026-04-12T01:50:00+08:00"
 slug: repomix-ai-codebase-compression-guide
 github_repo: "yamadashy/repomix"
@@ -34,19 +34,15 @@ tags: ["Claude", "LLM", "Git"]
 
 **第二阶段：文件读取。** 对每个匹配文件读取完整内容，根据配置决定是否移除注释。支持移除注释的语言包括：HTML、CSS、JavaScript、TypeScript、Vue、Svelte、Python、PHP、Ruby、C、C#、Java、Go、Rust、Swift、Kotlin、Dart、Shell 和 YAML。
 
-**第三阶段：内容处理。** 每个文件被包装成统一格式，包含路径、内容、语言类型和 Token 数量：
+**第三阶段：内容处理。** 按配置逐文件处理：`removeComments` 剔除注释，`compress` 交给 Tree-sitter 抽取结构，`truncateBase64` 截断超长 Base64 数据。处理后的文件以「路径 + 内容」成对保存，例如 XML 输出里的文件块：
 
 ```xml
 <file path="src/index.ts">
-  <content>
-    <!-- 文件内容 -->
-  </content>
-  <language>typescript</language>
-  <tokens>1234</tokens>
+import { repomix } from 'repomix';
 </file>
 ```
 
-**第四阶段：输出生成。** 处理完成的文件打包成单一文件，支持 XML、Markdown、JSON 和纯文本四种格式。
+**第四阶段：输出生成。** 所有文件拼成单一文件。输出固定包含四部分：文件摘要（file_summary）、目录结构（directory_structure）、文件内容（files）和可选的 Git 日志（git_logs）。支持 XML、Markdown、JSON 和纯文本四种格式。
 
 ### 智能压缩原理
 
@@ -54,7 +50,7 @@ tags: ["Claude", "LLM", "Git"]
 
 ### Token 计数机制
 
-内置 TokenCounter 类，默认使用 `o200k_base`（GPT-4o 及更新模型使用的编码）。每个文件的 Token 数量在输出中单独显示，便于了解代码库规模是否接近 LLM 上下文限制。
+Token 估算基于 gpt-tokenizer，默认使用 `o200k_base`（GPT-4o 及更新模型使用的编码），可在配置中通过 `tokenCount.encoding` 切换（如 `cl100k_base` 对应 GPT-4/3.5）。CLI 会按文件统计 Token；`repomix --token-count-tree` 则按目录列出分布，一眼看清哪些目录在占上下文。
 
 ---
 
@@ -90,7 +86,7 @@ brew install repomix
 repomix
 ```
 
-会在当前目录生成 `repomix-output.xml` 文件，包含整个仓库的 AI 友好格式内容。
+会在当前目录生成 `repomix-output.xml`，整个仓库被打包成 AI 可直接读取的格式。
 
 ### 基础命令
 
@@ -197,67 +193,80 @@ Chrome 和 Firefox 扩展在任意 GitHub 仓库页面添加便捷的 Repomix �
 repomix --init
 ```
 
-生成的 `repomix.config.json` 文件结构如下：
+生成 `repomix.config.json`。文件支持 JSON5 语法——可以写注释、加尾随逗号，配合 `$schema` 字段还能在编辑器里获得自动补全和校验：
+
+```bash
+# 生成全局配置，作为本地配置缺失时的兜底
+repomix --init --global
+```
+
+全局配置在 macOS/Linux 上位于 `~/.config/repomix/`，Windows 上位于 `%LOCALAPPDATA%\Repomix\`。查找顺序：本地配置 > 全局配置 > CLI 默认值。
+
+### 完整配置示例
 
 ```json
 {
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
   "output": {
-    "format": "xml",
     "filePath": "repomix-output.xml",
-    "style": {
-      "tableStyle": "pretty",
-      "separateFiles": true,
-      "lineNumbers": false,
-      "title": true
-    }
+    "style": "xml",
+    "compress": false,
+    "fileSummary": true,
+    "directoryStructure": true,
+    "removeComments": false
   },
-  "include": [],
-  "ignore": [
-    "**/.git/**",
-    "**/node_modules/**",
-    "**/dist/**",
-    "**/.venv*/**",
-    "**/venv*/**"
-  ],
+  "include": ["**/*"],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": ["**/*.log", "tmp/"]
+  },
   "security": {
     "enableSecurityCheck": true
   },
-  "compression": {
-    "enabled": false
+  "tokenCount": {
+    "encoding": "o200k_base"
   }
 }
 ```
 
 ### 核心配置项
 
-**output.format**：指定输出文件的格式，可选 `xml`（适合 Claude 等模型处理）、`markdown`（便于阅读）、`json`（适合程序解析）、`plain`（纯文本，最小依赖）。
+| 配置项 | 作用 | 默认值 |
+|--------|------|--------|
+| `output.filePath` | 输出文件名，扩展名决定格式 | `repomix-output.xml` |
+| `output.style` | 输出格式：`xml`、`markdown`、`json`、`plain` | `xml` |
+| `output.compress` | 用 Tree-sitter 压缩代码省 Token | `false` |
+| `output.removeComments` | 剔除支持语言的注释 | `false` |
+| `output.fileSummary` | 输出开头是否带文件摘要 | `true` |
+| `output.directoryStructure` | 输出是否带目录树 | `true` |
+| `output.filePathStyle` | 文件路径显示方式：`target-relative` / `cwd-relative` | `target-relative` |
+| `output.parsableStyle` | 按格式转义输出，可解析性更好但更耗 Token | `false` |
+| `output.git.includeLogs` | 是否附带 Git 提交历史 | `false` |
+| `output.git.includeLogsCount` | 提交历史条数 | `50` |
+| `output.instructionFilePath` | 指定指令文件，内容追加到输出末尾 | `null` |
+| `ignore.useGitignore` | 采用项目的 `.gitignore` 规则 | `true` |
+| `ignore.useDefaultPatterns` | 采用内置默认忽略（node_modules、.git 等） | `true` |
+| `ignore.customPatterns` | 额外忽略模式 | `[]` |
+| `security.enableSecurityCheck` | 打包前运行 Secretlint 安全检查 | `true` |
+| `tokenCount.encoding` | Token 计数编码 | `o200k_base` |
 
-**output.style**：控制输出样式的详细配置：
-- `tableStyle`：文件列表的表格样式，可选 `pretty`（带边框）或 `plain`（纯文本）
-- `separateFiles`：是否在文件之间添加分隔符
-- `lineNumbers`：是否为每行添加行号
-- `title`：是否包含文件路径标题
-
-**include 和 ignore**：数组类型的配置项，支持 glob 模式：
+`include` 和 `ignore.customPatterns` 都支持 glob 模式：
 
 ```json
 {
-  "include": [
-    "src/**/*.ts",
-    "tests/**/*.ts",
-    "**/*.md"
-  ],
-  "ignore": [
-    "**/*.test.ts",
-    "**/tmp/**",
-    "**/coverage/**"
-  ]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "**/*.md"],
+  "ignore": {
+    "customPatterns": ["**/*.test.ts", "**/tmp/**", "**/coverage/**"]
+  }
 }
 ```
 
-**outputInstructionFile**：指定包含指令的文件路径。指令内容会被追加到输出文件的末尾——将指令放在提示顶部可以获得更好的效果。
+忽略规则的优先级从高到低：自定义模式 > 忽略文件（`.repomixignore`、`.ignore`、`.gitignore`、`.git/info/exclude`）> 内置默认模式。命令行 `-i, --ignore` 会覆盖配置文件中的自定义模式。
 
-**security.enableSecurityCheck**：布尔值，控制在打包前是否运行 Secretlint 安全检查。检测到敏感信息时会发出警告：
+**output.instructionFilePath**：指向一个指令文件，其内容会追加到输出末尾，CLI 对应 `--instruction-file-path`。把指令写进文件、和代码一起维护，比每次手敲 prompt 更可复用。
+
+**security.enableSecurityCheck**：默认开启，打包前用 Secretlint 扫描敏感信息。检测到可疑文件时会列出路径：
 
 ```
 🔍 Security Check:
@@ -269,7 +278,7 @@ repomix --init
 
 ### 配置继承与覆盖
 
-CLI 参数会覆盖配置文件中的对应设置。例如，配置文件设置了压缩但 CLI 使用 `--no-compress`，则实际运行时不进行压缩。
+配置文件按 TS > JS > JSON 的顺序查找：`repomix.config.ts`、`repomix.config.js`、`repomix.config.json5/jsonc/json`。CLI 参数优先级最高，覆盖配置文件里的对应设置。例如配置文件开启了压缩，但命令行传 `--no-compress`，实际不压缩。
 
 ---
 
@@ -351,10 +360,11 @@ jobs:
 | `include` | 逗号分隔的 glob 模式 | `""` |
 | `ignore` | 逗号分隔的忽略模式 | `""` |
 | `output` | 输出文件路径（扩展名决定格式） | `repomix-output.xml` |
-| `compress` | 启用智能压缩 | `true` |
-| `style` | 输出样式：`xml`、`markdown`、`json`、`plain` | `xml` |
-| `additional-args` | 额外的 CLI 参数 | `""` |
-| `repomix-version` | npm 包版本 | `latest` |
+| `compress` | 启用智能压缩，传 `false` 关闭 | `true` |
+| `style` | 输出样式：`xml`、`markdown`、`plain` | `xml` |
+| `additional-args` | 额外透传给 CLI 的原始参数 | `""` |
+| `repomix-version` | npm 包版本（或 tag） | `latest` |
+| `node-version` | Action 使用的 Node.js 版本 | `24` |
 
 ### 完整示例
 
@@ -450,6 +460,36 @@ async function analyzeFiles(directory) {
 
 ---
 
+## 作为 MCP 服务器使用
+
+Repomix 能以 MCP 服务器模式运行，让 Claude Code 等 AI 助手直接调用打包能力。这是实验性功能，官方会按反馈持续改进。
+
+```bash
+repomix --mcp
+```
+
+在 Claude Code 里注册：
+
+```bash
+claude mcp add repomix -- npx -y repomix --mcp
+```
+
+服务器暴露 `pack_codebase`、`pack_remote_repository` 等工具：agent 可以直接让它打包本地目录或远程仓库，再用 `grep_repomix_output` 按需检索输出内容，不必把整个文件塞进上下文。
+
+对不受信任的客户端，用 `--sandbox` 把服务器限制在单个工作区内，只开放只读工具：
+
+```bash
+# 限制在当前工作目录内
+repomix --mcp --sandbox
+
+# 限制在指定目录内
+repomix --mcp --sandbox path/to/project
+```
+
+`--sandbox` 是应用层的权限收窄，不是操作系统级沙箱；对外提供服务时，仍应在容器或独立用户下运行。
+
+---
+
 ## 安全检查详解
 
 Repomix 集成 [Secretlint](https://github.com/secretlint/secretlint) 进行敏感信息检测，能够识别以下类型的敏感数据：
@@ -486,68 +526,88 @@ repomix --no-security-check
 
 ## 输出格式对比
 
+四种格式装的内容一样，组织方式不同。以下示例省略文件正文，只保留结构。
+
 ### XML 格式（默认）
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<repomix>
-  <header>
-    <repository>yamadashy/repomix</repository>
-    <branch>main</branch>
-    <commit>935b695</commit>
-    <date>2026-04-12</date>
-    <fileCount>42</fileCount>
-    <totalTokens>52340</totalTokens>
-  </header>
-  <files>
-    <file path="src/index.ts">
-      <content>
+<file_summary>
+此文件是整个代码库的合并表示形式，供 AI 处理和上下文分析使用。
+文件数量: 42
+总 token 数: 52,340
+</file_summary>
+<directory_structure>
+src/
+  index.ts
+  utils/
+    helper.ts
+</directory_structure>
+<files>
+<file path="src/index.ts">
 import { repomix } from 'repomix';
-      </content>
-      <language>typescript</language>
-      <tokens>1247</tokens>
-    </file>
-  </files>
-</repomix>
+</file>
+</files>
+<git_logs>
+<git_log_commit>
+<date>2026-04-10 00:47:19 +0900</date>
+<message>feat(cli): Add --include-logs option</message>
+<files>
+  src/index.ts
+</files>
+</git_log_commit>
+</git_logs>
 ```
+
+Repomix 把 XML 定为默认格式，是因为 Anthropic、Google、OpenAI 都在官方提示词指南里推荐 XML 标签组织结构——Claude 等模型在训练中见过大量这类格式，解析更稳。
 
 ### Markdown 格式
 
-```markdown
-# Repository: yamadashy/repomix
+````markdown
+# File Summary
+（元数据与 AI 指令）
 
-## Files
+# Directory Structure
+```
+src/
+  index.ts
+  utils/
+    helper.ts
+```
 
-### src/index.ts
+# Files
+## File: src/index.ts
 ```typescript
 import { repomix } from 'repomix';
 ```
-- Language: typescript
-- Tokens: 1247
 
----
-```
+# Git Logs
+## 提交：2026-04-10 00:47:19 +0900
+**消息：** feat(cli): Add --include-logs option
+**文件：**
+- src/index.ts
+````
 
 ### JSON 格式
 
 ```json
 {
-  "header": {
-    "repository": "yamadashy/repomix",
-    "branch": "main",
-    "totalTokens": 52340,
-    "fileCount": 42
+  "fileSummary": {
+    "generationHeader": "此文件是使用 Repomix 将整个代码库合并到单个文档中的表示形式。",
+    "fileCount": 42,
+    "totalTokens": 52340
   },
-  "files": [
-    {
-      "path": "src/index.ts",
-      "content": "import { repomix } from 'repomix';",
-      "language": "typescript",
-      "tokens": 1247
-    }
-  ]
+  "directoryStructure": "src/\n  index.ts\n  utils/\n    helper.ts",
+  "files": {
+    "src/index.ts": "import { repomix } from 'repomix';"
+  }
 }
 ```
+
+JSON 使用 camelCase 键名，适合程序解析——比如用 `jq` 直接取出某个文件的内容，再做进一步处理。
+
+### 纯文本格式
+
+`plain` 去掉全部标记，只保留文件路径和内容，是四种格式里最省 Token 的一种。
 
 ---
 
@@ -565,6 +625,20 @@ I want to refactor the code, so please review it first.
 **仓库太大。** Token 数接近 LLM 上下文上限时：开 `--compress` 让 Tree-sitter 砍掉实现细节；用 `--include` 只打包关心的目录；用 `--ignore` 排除测试、文档等非核心内容；调 `--include-logs-count` 控制历史条数。
 
 **安全检查。** 保持 `enableSecurityCheck: true`（默认已开启）；输出发给 AI 之前扫一眼告警；测试文件里如果放了假凭证，确保内容无害再用 `--no-security-check`。
+
+---
+
+## 常见问题
+
+**打包后没有生成文件？** 确认没用 `--stdout`——该模式把内容写到标准输出，不落盘；`--quiet` 只是静默日志，文件照常生成。也可以先 `cd` 到一个有写权限的目录再跑。
+
+**某些文件没被打包进去？** 按三层忽略依次排查：`.gitignore`、`.repomixignore` / `.ignore`、内置默认模式（`node_modules/`、`.git/`、`coverage/`、`dist/`）。确认文件不在忽略列表里；被误伤时可用 `--no-gitignore` 或 `--no-default-patterns` 临时绕过。默认不包含二进制文件内容，但路径会出现在目录结构中。
+
+**打包结果太大，Token 接近上限？** 按顺序试三招：`--compress` 让 Tree-sitter 砍掉实现细节，官方称平均能省约 70% 的 Token；`--include` 只打包关心的目录；`--remove-comments` 剔除注释。提交历史太长就调小 `--include-logs-count`。
+
+**安全检查误报？** 安全检查只警告，不阻断打包。确认文件里的疑似密钥确实无害后，用 `--no-security-check` 关闭，或把该文件加进忽略列表。
+
+**远程仓库打包失败？** 先确认网络连通；私有仓库需要在环境中提前配置好 Git 认证；GitHub 简写 `user/repo` 仅对公开仓库有效，私有仓库请用完整 URL 并配合认证。
 
 ---
 

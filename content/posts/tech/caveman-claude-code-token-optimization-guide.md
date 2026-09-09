@@ -9,9 +9,9 @@ categories = ['技术笔记']
 tags = ['LLM', 'Token 优化', '开发工具']
 +++
 
-caveman 做的不是"让 AI 少说点话"这么模糊的事，而是把 LLM 输出里的结构化冗余拆出来：冠词、填充词、客套话、犹豫词，逐类可识别，逐类删掉，代码、命令、错误信息原样保留。真正值得记住的是它的数字边界——**65% 只发生在"讲述"场景**，一整轮 agentic 编码任务只有 8.5%。
+caveman 把 LLM 输出里的冗余拆成可识别的类：冠词、填充词、客套话、犹豫词，逐类删掉；代码、命令、错误信息原样保留。它的效果有精确边界——**65% 只发生在"讲述"场景**，一整轮 agentic 编码任务只有 8.5%。
 
-仓库信息（GitHub API 2026-08-06 验证）：Stars 95,243 / Forks 5,461 / MIT / JavaScript / 默认分支 main / 创建于 2026-04-04 / 最近推送 2026-07-26 / 首页 [caveman.so](https://caveman.so) / 支持 30+ 种 AI 编程工具。
+它在 GitHub 上热度不低：Stars 95,243 / Forks 5,461（GitHub API 2026-08-06 验证），MIT 协议，JavaScript 实现，默认分支 main，创建于 2026-04-04，最近推送 2026-07-26，官网 [caveman.so](https://caveman.so)，支持 30+ 种 AI 编程工具。
 
 ## 一、它到底省的是什么
 
@@ -26,10 +26,10 @@ caveman 复述官方的定位是「Same answers. Brain still big. Mouth small.�
 
 还有两个容易被忽略的账：
 
-- caveman **只压输出 Token**，输入和 reasoning Token 不动。而 agentic 账单大头恰恰是输入 Token，这是输出侧技能按构造碰不到的。
-- 技能本身每轮会加约 **1–1.5k 输入 Token**。对已经很短的工作负载，整场净节省可能转负。官方 README 自己写了这句：**"The real win is readability and speed. Cost savings are the bonus."**——省钱是赠品，不是主菜。
+- caveman **只压输出 Token**，输入和 reasoning Token 不动。而 agentic 账单大头恰恰是输入 Token，输出侧技能在设计上就碰不到这半边。
+- 技能本身每轮会加约 **1–1.5k 输入 Token**。对 Token 本来就花得很少的会话，整场净节省可能转负。官方 README 自己写了这句：**"The real win is readability and speed. Cost savings are the bonus."**——省钱是赠品，不是主菜。
 
-所以把它当成"省钱工具"是错的，把它当成"让 AI 输出更可读、更快"的工具才对。
+所以账要按负载算：输出以叙述为主的会话，它省得明显；输入为主、输出很短的会话，它可能不省钱甚至倒贴。它真正的收益是让输出更可读、更快，省钱只是顺带的。
 
 ## 二、压缩规则：哪些删，哪些绝不能碰
 
@@ -128,7 +128,7 @@ caveman 压输出，`caveman-compress` 压**输入**——像 `CLAUDE.md` 这种
 
 先看它在测什么：官方那组 65% 是 **10 个 chat 式 prompt 的输出 Token**，一比一对"默认啰嗦回复"算的，来自 `benchmarks/`，可复现。JetBrains 那个 8.5% 是 **86 个真实编码任务**，每条用任务自带测试自动判分，Claude Code + `claude-sonnet-5`，强制每轮开启。
 
-这两个数字都真，但反映的是不同负载：65% 反映叙述层能挤出的水分，8.5% 反映以工具调用为主的编码流里那层薄叙述。**不能从 65% 推出"我的会话也省 65%"**——尤其当你的主要 Token 都花在输入、而非屏幕上的输出时。官方自己也说：65% 和 8.5% 都对，但都不是你的数。你的数得在自己的流量上量出来——这正是它正在做的 "Caveman 2" 想变成可证明的东西。
+这两个数字都真，但反映的是不同负载：65% 反映叙述层能挤出的水分，8.5% 反映以工具调用为主的编码流里那层薄叙述。**不能从 65% 推出"我的会话也省 65%"**——尤其当你的主要 Token 都花在输入、而非屏幕上的输出时。官方自己也说：65% 和 8.5% 都对，但都不是你的数。你的数得在自己的流量上量出来——官方口中的 "Caveman 2" 正是想把这件事做成可证明的。
 
 顺带一提，那个经常被用来佐证方向的论文 [Brevity Constraints Reverse Performance Hierarchies in Language Models](https://arxiv.org/abs/2604.00025)（2026 年 3 月，测了 31 个模型）发现：约束大模型简短回答，在某些基准上准确率提升约 26 个百分点。方向一致，但它和 caveman 是两回事——一个改测试约束，一个改输出风格。
 

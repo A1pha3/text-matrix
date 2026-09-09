@@ -1,7 +1,7 @@
 ---
 title: "Prettier 深度拆解：一条打印流水线终结团队格式之争"
 date: "2026-04-12T02:31:39+08:00"
-lastmod: "2026-09-06T00:00:00+08:00"
+lastmod: "2026-09-08T00:00:00+08:00"
 slug: prettier-code-formatter-guide
 github_repo: "prettier/prettier"
 description: "Prettier 用「解析 → AST → Doc 中间表示 → 重新打印」的流水线把代码风格变成已决事项。本文拆解它的 Opinionated 设计与断行机制，给出 ESLint 10 flat config、husky v9 与 CI 的完整落地配置，并说明 Biome 时代它还该用在哪里。"
@@ -91,7 +91,7 @@ Prettier 里最有意思的是中间这层 Doc IR。printer 不直接输出字�
 
 同一个 AST，行宽不同输出就不同。`const user = { name: "a", age: 1 }` 在 80 列内保持一行；换成很窄的 `printWidth`，group 决策变成 break，每个键值对各占一行。断行决策全部由 printer 统一做出，每条规则只需要声明"这是可以断的位置"，不用自己关心行宽。
 
-一个对老用户重要的细节：早期版本拼接文档用的 `doc.builders.concat()` 已在 3.x 移除，builders 直接接受数组。"Print Only" 是另一条承诺——Prettier 不改语义，不做重命名、不提取变量，diff 里出现的只有空白与格式。
+一个对老用户重要的细节：早期版本拼接文档要显式调用 `doc.builders.concat()`，它从 2.3 起标记弃用、3.x 正式移除，现在 builders 直接接受数组。"Print Only" 是另一条承诺——Prettier 不改语义，不做重命名、不提取变量，diff 里出现的只有空白与格式。
 
 ## 多语言：一个 printer，一排 parser
 
@@ -166,8 +166,8 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
@@ -221,7 +221,7 @@ const formatted2 = await prettier.format(source, {
 
 **CI 与本地格式结果不一致？** 先确认两边 Prettier 版本完全相同（lockfile 锁定，不要用裸 `npx prettier` 去全局拉最新版），再确认配置文件都提交进了仓库。CLI 还提供 `--debug-check` 输出格式化前后语义差异，用来排查异常。
 
-**大仓库每次跑都很慢？** 3.0 起支持 `--cache`，按缓存键（版本、选项、Node 版本、文件内容或元数据）跳过未变化的文件，可配 `--cache-strategy`（`metadata` 或 `content`，默认 `content`）。
+**大仓库每次跑都很慢？** 自 2.7 起支持 `--cache`（配套 `--cache-strategy` 选 `metadata` 或 `content`，默认 `content`），按缓存键（版本、选项、Node 版本、文件内容或元数据）跳过未变化的文件。
 
 **ESLint 还在报格式问题？** 确认 `eslint-config-prettier` 在配置数组中位于其他共享配置之后；如果你希望 ESLint 直接代跑 Prettier，用 `eslint-plugin-prettier` 的 flat config 入口 `eslint-plugin-prettier/recommended`，官方文档建议的默认做法仍是两个工具分开跑，避免重复解析。
 

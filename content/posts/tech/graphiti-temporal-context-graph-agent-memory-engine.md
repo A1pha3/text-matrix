@@ -27,7 +27,7 @@ draft: false
 - [§3 总览图：Graphiti 的四个图元素](#总览图graphiti-的四个图元素)
 - [§4 机制一：Episode 是一切的起点](#机制一episode-是一切的起点)
 - [§5 机制二：事实是一条带过期时间的边](#机制二事实是一条带过期时间的边)
-- [§6 机制三：去重不是「合并字符串」](#机制机制三去重不是合并字符串)
+- [§6 机制三：去重不是「合并字符串」](#机制三去重不是合并字符串)
 - [§7 机制四：可插拔的四件套](#机制四可插拔的四件套)
 - [§8 机制五：混合检索是「3×5」的笛卡尔积](#机制五混合检索是35的笛卡尔积)
 - [§9 LLM 接入：结构化输出的两种模式](#llm-接入结构化输出的两种模式)
@@ -242,7 +242,7 @@ Graphiti 默认 `SEMAPHORE_LIMIT=10`，目的是**避免 LLM 端 429 错误**。
 
 用一个具体场景把上面所有机制串起来。
 
-**初始数据**（两个 episode，2025 年 12 月）：
+**初始数据**（一个 episode，2025 年 12 月）：
 
 ```python
 await graphiti.add_episode(
@@ -267,7 +267,7 @@ await graphiti.add_episode(
 **图里发生的事**（按 §4-§6 推断）：
 
 1. 第一条 episode 入图后，生成 `EpisodicNode`、抽取 `EntityNode{Kendra}`、`EntityNode{Adidas Ultraboost}`，创建 `EntityEdge(source=Kendra, target=Adidas, fact="Kendra bought Adidas Ultraboost", valid_at=2025-12-05, invalid_at=None)`。
-2. 第三条 episode 入图时，LLM 抽取到「Kendra 转向 Nike Pegasus」+ 「Kendra 不再穿 Adidas」。resolve 阶段识别到「不再穿 Adidas」与旧边 `(Kendra → Adidas, fact=bought)` 语义对立——把旧边 `invalid_at` 设为 2026-03-12，再写入新边 `(Kendra → Nike Pegasus, fact="switched to Nike Pegasus because of knee pain", valid_at=2026-03-12)`。
+2. 第二条 episode 入图时，LLM 抽取到「Kendra 转向 Nike Pegasus」+ 「Kendra 不再穿 Adidas」。resolve 阶段识别到「不再穿 Adidas」与旧边 `(Kendra → Adidas, fact=bought)` 语义对立——把旧边 `invalid_at` 设为 2026-03-12，再写入新边 `(Kendra → Nike Pegasus, fact="switched to Nike Pegasus because of knee pain", valid_at=2026-03-12)`。
 
 **用户问 agent**：「我为什么换的跑鞋？」
 

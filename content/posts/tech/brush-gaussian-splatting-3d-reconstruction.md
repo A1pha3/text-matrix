@@ -15,8 +15,8 @@ tags: ["Rust", "WebGPU", "开源"]
 
 | 项目 | 信息 |
 |------|------|
-| **Stars** | 4,760+ |
-| **Forks** | 273+ |
+| **Stars** | 5,039 |
+| **Forks** | 317 |
 | **许可证** | Apache-2.0 |
 | **语言** | Rust |
 | **仓库** | [ArthurBrussee/brush](https://github.com/ArthurBrussee/brush) |
@@ -37,6 +37,7 @@ tags: ["Rust", "WebGPU", "开源"]
 ## 目录
 
 - [项目定位与背景](#项目定位与背景)
+- [核心原理：Gaussian Splatting 如何重建场景](#核心原理gaussian-splatting-如何重建场景)
 - [核心特性](#核心特性)
 - [技术栈分析](#技术栈分析)
 - [构建方式速览](#构建方式速览)
@@ -52,11 +53,44 @@ tags: ["Rust", "WebGPU", "开源"]
 
 ## 项目定位与背景
 
-Brush 是一个基于 [Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) 技术的实时 3D 重建引擎。Gaussian Splatting 这项技术通过海量高斯分布来表达场景，可以在保持较高重建质量的同时实现实时渲染，近年来在 NeRF 家族中脱颖而出。
+Brush 是一个基于 [Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) 技术的实时 3D 重建引擎。Gaussian Splatting 通过海量高斯分布来表达场景，能在保持较高重建质量的同时实现实时渲染，如今已成为辐射场（Radiance Field）重建领域的主流方法之一。
 
 项目 fork 自 Google Research 的 [brush_splat](https://github.com/google-research/google-research/tree/master/brush_splat) 公开版本，核心开发语言是 **Rust**，ML 框架选用了 [Burn](https://github.com/tracel-ai/burn)——一个纯 Rust 实现、跨平台支持的深度学习框架。这个技术组合直接决定了 Brush 最重要的特性：**跨平台、零依赖部署**。
 
 > ⚠️ **免责声明**：本文所有技术细节均基于该仓库的公开 README 和源码，尚未在实际环境中运行验证。
+
+## 核心原理：Gaussian Splatting 如何重建场景
+
+动手之前，先弄懂驱动它的那颗引擎。[Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) 出自论文 *3D Gaussian Splatting for Real-Time Radiance Field Rendering*（Kerbl 等，SIGGRAPH 2023）。它用一套显式的 3D 高斯原语来刻画场景，和 NeRF 的隐式神经场走的是完全不同的路。
+
+### 场景表示：无数个"微小的椭圆云"
+
+场景被表达成一组高斯，数量级往往是数十万元。每个高斯由几个参数决定：
+
+- **中心位置** μ：它落在空间中的哪个点；
+- **尺度与旋转**：决定它的形状，旋转用四元数 R、缩放用向量 S 描述，协方差矩阵构造为 Σ = R·S·Sᵀ·Rᵀ，从而保证它是合法的半正定矩阵；
+- **不透明度** α：该点的深浅，决定遮挡强度；
+- **颜色**：用球谐系数（Spherical Harmonics，SH）编码，让颜色能随视角变化。否则金属、反光这类各向异性表面会显得一片死板。
+
+所谓训练，就是把这一堆参数调到能复现输入照片的样子。
+
+### 渲染：把高斯"印"到图像上
+
+NeRF 的做法是沿每根视线逐点采样隐式场再积分，慢就慢在这里。3DGS 相反——它把每个高斯投影到图像平面，得到一块带透明度渐变的椭圆光斑（splat），再把所有光斑按深度从近到远做 alpha 混合。整套流程是可微光栅化（differentiable rasterization），一次前向就得到整幅画面。
+
+显式光栅化替代逐像素积分，让渲染快了几个数量级，普通显卡就能跑出实时帧率。这正是项目敢把 "3D Reconstruction for all" 当口号的技术底气。
+
+### 优化：自适应密度控制
+
+初始位置来自 COLMAP 这类结构恢复工具解出的稀疏点云，但光有初始点不够——有的地方高斯太少，有的地方堆得太密。训练中靠**自适应密度控制**动态调节：
+
+- **克隆（clone）**：某个位置梯度很大、还没铺够时，复制出一个；
+- **分裂（split）**：某个高斯过于扁平肥大、"糊成一团"时，拆成几个小的；
+- 训练早期周期性重置不透明度，防止透明的"残影"堆积。
+
+损失由 L1 项和结构相似度（SSIM）项组合而成，通常迭代约 3 万轮后收敛。这也顺带解释了为什么 Brush 的训练入口首选 COLMAP 数据格式——初始化这一步本就建立在它的稀疏点云之上。
+
+> 以上讲的是 3DGS 的通用算法。Brush 的价值，是用 Rust 从头重写这套可微光栅化和训练循环，再借 Burn 与 WebGPU 把它搬到每个平台上。
 
 ## 核心特性
 
@@ -79,7 +113,7 @@ Brush 支持输入 [COLMAP](https://colmap.github.io/) 格式数据或 [Nerfstud
 - 支持带透明通道的图片作为 masking 手段
 - 也支持单独的 `masks` 文件夹来排除图像中的特定区域
 
-作为查看器使用时，Brush 能加载 `.ply` 和 `.compressed.ply` 文件，也支持从 URL 远程流式加载数据。此外还能加载包含 delta frames 的特殊 ply 文件——这是 [cat-4D](https://cat-4d.github.io/) 和 [Cap4D](https://felixt aubner.github.io/cap4d/) 项目使用的格式，用于展示动态场景。
+作为查看器使用时，Brush 能加载 `.ply` 和 `.compressed.ply` 文件，也支持从 URL 远程流式加载数据。此外还能加载包含 delta frames 的特殊 ply 文件——这是 [cat-4D](https://cat-4d.github.io/) 和 [Cap4D](https://felixtaubner.github.io/cap4d/) 项目使用的格式，用于展示动态场景。
 
 ### CLI 工具
 
@@ -309,6 +343,6 @@ WebGPU 版本通过 WASM 编译，性能比原生版本低。当前仅支持 Chr
 
 ## 总结
 
-Brush 是一个目标很明确的项目——用 Rust+Burn 这套技术栈，把 Gaussian Splatting 这项技术做成一个真正可以跨设备、零依赖运行的工具。当前 Stars 4,760+，说明社区对这类"一次构建，到处运行"的 3D 工具确实有需求。如果你有 3D 重建相关的需求，不妨先去它的 [Web Demo](https://arthurbrussee.github.io/brush-demo)（需要 Chrome）体验一下效果，再决定要不要深入折腾。
+Brush 是一个目标很明确的项目——用 Rust+Burn 这套技术栈，把 Gaussian Splatting 这项技术做成一个真正可以跨设备、零依赖运行的工具。当前 Stars 5,039，说明社区对这类"一次构建，到处运行"的 3D 工具确实有需求。如果你有 3D 重建相关的需求，不妨先去它的 [Web Demo](https://arthurbrussee.github.io/brush-demo)（需要 Chrome）体验一下效果，再决定要不要深入折腾。
 
 **仓库链接**：https://github.com/ArthurBrussee/brush

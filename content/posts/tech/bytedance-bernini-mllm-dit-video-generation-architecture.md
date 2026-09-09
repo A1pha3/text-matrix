@@ -1,11 +1,11 @@
 ---
 title: "Bernini 拆解：字节跳动把 MLLM 语义规划器和 DiT 渲染器拆开，到底在解决什么问题"
 date: "2026-06-05T09:30:00+08:00"
-lastmod: "2026-06-05T12:30:00+08:00"
+lastmod: "2026-09-09T00:00:00+08:00"
 slug: "bytedance-bernini-mllm-dit-video-generation-architecture"
 github_repo: "bytedance/Bernini"
-description: "Bernini 是字节跳动 2026-05-29 开源的视频生成与编辑统一框架。它把 Qwen2.5-VL-7B 当作语义规划器、Wan2.2-T2V-A14B 当作 DiT 渲染器，再叠上 Open-VeOmni 的 Ulysses 序列并行。这篇文章拆解这套三段式架构的工作机制、双专家 DiT 切换边界、源 ID 旋转位置编码，以及在 7 种 guidance mode 下如何处理 6 类视频任务。"
-summary: "Bernini 不是又一个 DiT 视频模型。它把「MLLM 语义规划 + Wan2.2 双专家 DiT 渲染 + Open-VeOmni 序列并行」三段式架构开源，并且把 6 类视频任务（t2i/i2i/t2v/v2v/mv2v/rv2v/r2v）和 7 种 guidance mode 显式化。本文从 Bernini 仓库的 configs、pipeline.py、parallel/ops.py 三个核心文件出发，拆出这套架构的设计取舍与适用边界。"
+description: "Bernini 是字节跳动开源的视频生成与编辑统一框架。它把 Qwen2.5-VL-7B 当作语义规划器、Wan2.2-T2V-A14B 当作 DiT 渲染器，再叠上 Open-VeOmni 的 Ulysses 序列并行。这篇文章拆解这套三段式架构的工作机制、双专家 DiT 切换边界、源 ID 旋转位置编码，以及在 9 种 guidance mode 下如何处理 6 类视频任务。"
+summary: "Bernini 不是又一个 DiT 视频模型。它把「MLLM 语义规划 + Wan2.2 双专家 DiT 渲染 + Open-VeOmni 序列并行」三段式架构开源，并且把 6 类视频任务（t2i/i2i/t2v/v2v/rv2v/r2v）和 9 种 guidance mode 显式化。本文从 Bernini 仓库的 configs、cli.py、parallel/ops.py、docs 出发，拆出这套架构的设计取舍与适用边界，并同步校正到 2026-09-09 的开源现状。"
 draft: false
 categories: ["技术笔记"]
 tags: ["视频生成", "DiT", "字节跳动", "视频编辑", "架构分析"]
@@ -16,7 +16,7 @@ tags: ["视频生成", "DiT", "字节跳动", "视频编辑", "架构分析"]
 > **目标读者**：AI 研究者、视频生成框架工程师、DiT / Diffusion / MLLM 实践者
 > **预计阅读时间**：35 - 50 分钟
 > **前置知识**：Diffusion / DiT 基础、Transformer 注意力机制、视频生成 pipeline
-> **数据来源**：基于 [bytedance/Bernini](https://github.com/bytedance/Bernini) 仓库（v1.0，2026-05-29 开源）+ arXiv 2605.22344 论文 + 5 个核心源文件（pipeline.py、cli.py、models/renderer.py、models/scheduler.py、parallel/ops.py）的逐行分析
+> **数据来源**：依据 [bytedance/Bernini](https://github.com/bytedance/Bernini) 仓库（主分支，2026-09-09 核验）的 README、`configs/` 配置、`cli.py`、官方 `docs/bernini*.md` 与 arXiv 2605.22344 论文整理校正；涉及源码内部实现的细节均标注「以文档/论文为准」
 
 ## 目录
 
@@ -40,7 +40,7 @@ tags: ["视频生成", "DiT", "字节跳动", "视频编辑", "架构分析"]
 1. 解释 Bernini 三段式架构（MLLM 规划器 + DiT 渲染器 + 序列并行层）的边界与协作方式。
 2. 区分 Wan2.2 双专家 DiT 的高/低噪声专家切换边界（0.875）的设计含义。
 3. 解释源 ID 旋转位置编码（`use_src_id_rotary_emb: true`）在视频编辑中解决的具体问题。
-4. 梳理 7 种 guidance mode 与 6 类任务的对应关系。
+4. 梳理 9 种 guidance mode 与 6 类任务的对应关系，区分 task 接口与 guidance mode。
 5. 评估自己团队是否应该采用 Bernini，以及采用时该跳过哪些坑。
 
 ## §1 系统地图：Bernini 的三段式架构
@@ -98,20 +98,20 @@ graph TB
 
 Bernini 的规划层用 [Qwen2.5-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) 做两件事：
 
-**Prompt Enhancer（推荐开启，关闭后质量明显下降）**：
+**Prompt Enhancer（官方强烈推荐，但默认关闭）**：
 
 ```python
-# bernini/cli.py
-g.add_argument("--use_pe", ...)  # 启用 prompt 增强
-# 通过 OpenAI 兼容端点调用，配置：
-# BERNINI_PE_API_KEY / BERNINI_PE_MODEL
+# bernini/cli.py（实际实现）
+g.add_argument("--use_pe", action="store_true", help="enhance the prompt via an OpenAI-compatible endpoint")
 ```
 
-用户输入的短 prompt（如「把人换成雪人」）会被 MLLM 改写成结构化长 prompt（如「保持原视频中雪地场景、人物动作轨迹、镜头运动不变，将主体人物替换为穿着红色围巾的雪人，保持相同的高度比例和姿态」）。
+`--use_pe` 是 `store_true` 开关，**默认关闭**，需要显式加上才启用。它通过 OpenAI 兼容端点调用一个多模态模型改写 prompt，端点和模型用环境变量配置（README 给出 `BERNINI_PE_API_KEY`、`BERNINI_PE_BASE_URL`、`BERNINI_PE_MODEL`）。README 把它列为「强烈推荐」，因为关掉后复杂指令的服从度明显下降，但代价是引入一次外部 LLM 的延迟与成本。
+
+开启后，用户输入的短 prompt（如「把人换成雪人」）会被 MLLM 改写成结构化长 prompt（如「保持原视频中雪地场景、人物动作轨迹、镜头运动不变，将主体人物替换为穿着红色围巾的雪人，保持相同的高度比例和姿态」）。
 
 **任务级语义规划**：
 
-`--task_type` 决定 MLLM 走哪条规划路线。`bernini/prompt_enhancer.py`（37KB，仓库里最大的单文件）里实现了 `get_system_prompt_for_task(task_type)`，为每种任务预设不同的 system prompt。支持的 task_type：
+`--task_type` 决定 MLLM 走哪条规划路线。`bernini/prompt_enhancer.py` 里实现了 `get_system_prompt_for_task(task_type)`，为每种任务预设不同的 system prompt。官方定义的任务接口共 6 类（README「Both families share the same task interface」）：
 
 | Task Type | 输入 | 输出目标 |
 |-----------|------|----------|
@@ -119,97 +119,79 @@ g.add_argument("--use_pe", ...)  # 启用 prompt 增强
 | `i2i` | 文本 + 1 张源图 | 单帧编辑图 |
 | `t2v` | 文本 | 视频 |
 | `v2v` | 文本 + 源视频 | 编辑后视频（主体动作不变）|
-| `mv2v` | 文本 + 源视频 | 编辑后视频（主体动作改变）|
 | `rv2v` | 文本 + 源视频 + 参考图 | 参考图引导的视频编辑 |
 | `r2v` | 文本 + 1+ 参考图 | 由参考图驱动的视频 |
 
-规划层的代价是引入了一次 MLLM 推理的延迟与成本。Bernini 把它做成可选的（`--use_pe` 默认开启，但可以关闭），允许用户在质量与延迟之间做权衡。
+需要说明：网上流传的 `mv2v（主体动作改变）`并不在这份官方接口里；README、各任务 launch 脚本（`run_t2i/i2i/t2v/v2v/rv2v/r2v.sh`）与 `assets/testcases/` 都只覆盖上面 6 类。`v2v_chain`、`*_apg`、`*_wapg` 这些后缀属于 guidance mode，不属于 task 接口。
+
+规划层的代价是引入了一次 MLLM 推理的延迟与成本。`--use_pe` 是显式开关（默认关闭），允许用户在质量与延迟之间做权衡。
 
 ### §2.2 渲染层：Wan2.2 双专家 DiT
 
-渲染层不是单一文件，是三个文件的协作：`models/renderer.py` 定义模型结构，`models/wan_diffusion.py`（21.5KB）实现扩散过程，`models/transformer_wan.py`（24KB）实现 DiT Transformer。渲染层入口在 `models/renderer.py`：
+渲染层的核心是一个基于 HuggingFace `PreTrainedModel` 的封装（`config.json` 里 `architectures: ["BerniniRendererModel"]`），它把文本编码、VAE 和扩散解码器组装成一个可加载的模型对象。渲染层不是从零训练，而是**在 Wan2.2-T2V-A14B 基础上做微调**。`wan22_base` 指向 `Wan-AI/Wan2.2-T2V-A14B-Diffusers`，从那里加载：
 
-```python
-class BerniniRendererModel(PreTrainedModel):
-    config_class = BerniniRendererConfig
-
-    def __init__(self, config: BerniniRendererConfig):
-        self.t5_text_encoder = UMT5EncoderModel.from_pretrained(
-            config.wan22_base, subfolder="text_encoder", torch_dtype=torch.bfloat16
-        )
-        self.diff_dec = GEN_Wanx22(config)  # 双专家 DiT
-```
-
-渲染层不是从零训练，而是**在 Wan2.2-T2V-A14B 基础上做微调**。`wan22_base` 指向 `Wan-AI/Wan2.2-T2V-A14B-Diffusers`，从那里加载：
-
-- **UMT5 文本编码器**（bf16）：处理最长 512 token 的 prompt
-- **VAE**（fp32）：时序下采样
+- **UMT5 文本编码器**（bf16）：处理最长 512 token 的 prompt（`max_sequence_length: 512`）
+- **VAE**（fp32）：时序下采样，把视频帧压成 latent
 - **双专家 DiT 架构**（高/低噪声 transformer）
 
-Bernini 自己训练的只有 Bernini-R 权重（`high_noise_ckpt` + `low_noise_ckpt`），文本编码器和 VAE 完全复用 Wan2.2。
-
-**权重的三种加载方式**（`bernini/weights.py`）：
-
-```python
-HIGH_NOISE_PREFIXES = ["diff_dec.transformer.", "transformer.", ""]
-LOW_NOISE_PREFIXES  = ["diff_dec.transformer_2.", "transformer_2.", ""]
-```
-
-权重加载器接受三种来源：本地目录、`*.safetensors.index.json` 文件、 Hugging Face repo id。对于每组权重，依次尝试三个 key 前缀（完整→缩短→空），用于兼容不同训练脚本保存的检查点。**当 EMA（指数移动平均）和非 EMA 副本同时存在时，优先使用 EMA 副本**——这是高质量生成模型的常见训练技巧，能让推理结果更稳定。
-
-这种设计的实际好处：用户拿到的不是「Bernini 专有格式」，而是「Wan2.2 可加载 + 多种前缀容错 + EMA 优先」的灵活加载器。即使训练脚本升级、checkpoint 格式微调，推理代码也不需要同步更新。
+需要先给出一个关键区分：仓库里有两条可运行线——**完整 Bernini**（`model_type: "bernini"`，规划器 + 渲染器打包在 `Bernini-Diffusers` 目录里）和 **Bernini-R**（`bernini_renderer`，渲染器单独的权重）。用 `--config` 指到完整模型目录时走 `BerniniPipeline`；传 `--high_noise_ckpt + --low_noise_ckpt`（或指到 diffusers-format 目录）时走 `BerniniRendererPipeline`。两条线共享同一个任务接口与 CLI。
 
 **双专家 DiT 的切换边界**：
 
 ```json
-// configs/bernini_renderer_wan22/config.json
+// configs/bernini_renderer_wan22/config.json（已核实）
 {
+  "model_type": "bernini_renderer",
+  "wan22_base": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+  "skip_transformer_1": false,
+  "skip_transformer_2": false,
   "switch_dit_boundary": 0.875,
+  "max_sequence_length": 512,
   "shift": 3.0,
   "use_unipc": true,
   "use_src_id_rotary_emb": true
 }
 ```
 
-`timestep > 0.875` 时用高噪声专家，`timestep ≤ 0.875` 时切到低噪声专家。这是 Wan2.2 的原生设计：高噪声专家负责「视频整体结构」和「大尺度动作」，低噪声专家负责「细节纹理」和「局部一致性」。Bernini 保留了这个边界，但**可以单独 skip 任一专家**（`skip_transformer_1/2`），用于消融实验。
+`timestep > 0.875` 时用高噪声专家，`timestep ≤ 0.875` 时切到低噪声专家。这是 Wan2.2 的原生设计：高噪声专家负责「视频整体结构」和「大尺度动作」，低噪声专家负责「细节纹理」和「局部一致性」。Bernini 保留了这个边界，但**可以单独 skip 任一专家**（`skip_transformer_1/2` 或 `--skip_transformer_1/2` 语义），用于消融实验与省显存。
 
 **源 ID 旋转位置编码**：
 
-`use_src_id_rotary_emb: true` 是 Bernini 在 Wan2.2 基础上的关键改进。在视频编辑场景中，源视频的每一帧和目标视频的每一帧需要用不同的位置编码来区分——否则 DiT 会把源视频和目标视频的 token 混在一起，导致编辑结果"飘移"。源码层面看，Bernini 在 rotary embedding 计算时引入了「源帧 ID」维度，让 source token 和 target token 在位置编码层面就分开。
+`use_src_id_rotary_emb: true`（CLI 对应 `--use_src_tgt_id`，默认开启）是 Bernini 在 Wan2.2 基础上的关键改进。在视频编辑场景中，源视频的每一帧和目标视频的每一帧需要用不同的位置编码来区分——否则 DiT 会把源视频和目标视频的 token 混在一起，导致编辑结果「飘移」。实现上 Bernini 在 rotary embedding 里引入「源帧 ID」维度（`src_id`），让 source token 和 target token 在位置编码层面就分开。当参考源数量超过训练见过的 `max_trained_src_id`（默认 5）时，`interpolate_src_id`（默认开启）会把超出部分均匀映射回训练区间，而不是外推到没训练过的范围。
 
 **UniPC 调度器**：
 
-`use_unipc: true` 启用 UniPC（Unified Predictor-Corrector）调度器，是 `--guidance_mode` 末尾为 `_apg` 的模式必需。`apg` 是 Adaptive Projected Guidance（自适应投影引导），用于在保持源视频结构的同时提高生成质量。
+`use_unipc: true`（CLI 对应 `--use_unipc`，默认开启，可 `--no-use_unipc` 关闭）启用 UniPC（Unified Predictor-Corrector）调度器。CLI 的帮助文本写明它是 `*_apg` 类 guidance mode 的必需项：`apg` 是 Adaptive Projected Guidance（自适应投影引导），用于在保持源视频结构的同时提高生成质量。
 
 ### §2.3 并行层：Open-VeOmni 序列并行
 
-并行层是可选的，单 GPU 推理时整套代码是 no-op。8 GPU 推理时启用 Ulysses 序列并行：
+并行层（Open-VeOmni 的 Ulysses 序列并行）是引擎**要不要用多卡**的可选项。需要注意：VeOmni 按 README 是**必装依赖**（所有推理路径都会 import 它，连单 GPU 也要装），但单 GPU 时并行逻辑不激活；只有用 `torchrun` 起多进程并把 `--ulysses N` 设成 N>1 时才真正切到序列并行：
 
 ```python
-# bernini/parallel/ops.py
+# bernini/parallel/ops.py（单 GPU 时直接返回）
 def gather_seq_scatter_heads(x, seq_dim, head_dim, unpadded_dim_size=0):
     """All-to-all: gather sequence dim, scatter head dim."""
     if not get_parallel_state().ulysses_enabled:
-        return x  # 单 GPU no-op
+        return x  # Ulysses 未开启时 no-op
     from veomni.distributed.sequence_parallel import gather_seq_scatter_heads as _f
     return _f(x, seq_dim=seq_dim, head_dim=head_dim, unpadded_dim_size=unpadded_dim_size)
 ```
 
 Ulysses 序列并行的核心思想：把 transformer 的输入序列切 N 份分给 N 个 GPU，attention 计算时通过 all-to-all 通信把 head 维和 seq 维互换。代价是 2 次 all-to-all 通信，收益是每张 GPU 上的 attention 计算量降到 1/N。
 
-为什么不用 tensor 并行（TP）？因为 DiT 的 attention 计算是 seq × head 维度，TP 在 head 维切分会增加通信量，Ulysses 在 seq 维切分更自然。
+为什么不用 tensor 并行（TP）？DiT 的 attention 计算在 seq × head 维度上展开，TP 在 head 维切分会增加跨卡通信量，Ulysses 在 seq 维切分更自然。官方 launch 脚本默认 `NPROC_PER_NODE=8, ULYSSES=8`，即 8 卡、8 路序列并行。
 
-**单 GPU 推理的工程取舍**：
+**单 GPU / 多 GPU 的工程取舍**：
 
 ```bash
-# 单 GPU 推理（不需要 VeOmni）
+# 单 GPU（仍需安装 VeOmni，但不需要配置 Ulysses 多进程）
 python infer_single_gpu.py --case assets/testcases/t2i/t2i.json --num_frames 1
 
-# 8 GPU 推理（需要 VeOmni）
+# 8 GPU（以 Ulysses 序列并行跑）
 torchrun --nproc-per-node 8 infer_multi_gpu.py --ulysses 8 --case assets/testcases/t2v/t2v.json
 ```
 
-两个脚本共用 `bernini/cli.py` 的 `add_common_args`，参数完全一致。同一个案例可以在 1 张卡或 8 张卡上跑，输出结果应该一致。
+两个脚本共用 `bernini/cli.py` 的 `add_common_args`，参数完全一致。同一个案例可以在 1 张卡或 8 张卡上跑；Ulysses 序列并行在浮点累加顺序上可能略有差异，官方声称理论上是 bit-exact，实际调试时建议先在单卡对齐结果。
 
 ## §3 任务流案例：一次 v2v 视频编辑
 
@@ -244,46 +226,55 @@ sequenceDiagram
 
 这个流程里的几个关键点：
 
-1. **guidance mode 自动选择**：`--task_type v2v` 会自动选 `v2v` 模式（在 `cli.py` 的 `add_common_args` 里通过 `choices=GUIDANCE_MODES` 限制）。用户也可以手动覆盖 `--guidance_mode v2v_chain` 用于链式编辑。
+1. **guidance mode 自动选择**：`--task_type v2v` 会沿用 `--guidance_mode` 默认值（`cli.py` 里默认 `rv2v`，通过 `choices=GUIDANCE_MODES` 约束合法取值；case 文件也可显式指定）。用户可手动覆盖，如 `--guidance_mode v2v_chain` 用于链式编辑。
 2. **VAE 编码源视频**：源视频的每一帧都过 VAE 编码成 latent，与 text embeds 一起送入 DiT。
-3. **双专家切换**：40 步推理中，前 5 步（timestep 1.0 → 0.875）走高噪声专家，后 35 步走低噪声专家。
-4. **源 ID 旋转位置编码**：源视频帧 token 用 `src_id=0`，目标视频帧 token 用 `src_id=1`，旋转位置编码中两者用不同的频率偏移，模型能区分「这是要改的」和「这是要保留的」。
+3. **双专家切换**：`num_inference_steps` 默认 40 步，切换点在 `timestep=0.875`。需要说明的是「前 5 步高噪声 / 后 35 步低噪声」只是按线性归一化 timestep 的大致估算（0.125 × 40 ≈ 5），具体落在哪几步取决于 UniPC 调度器实际产生的 timestep 序列，不要把 5/35 当成恒定值。
+4. **源 ID 旋转位置编码**：源视频帧 token 用 `src_id=0`，目标视频帧 token 用 `src_id=1`，旋转位置编码里两者用不同的频率偏移，模型据此区分「这是要改的」和「这是要保留的」。多个参考源（`rv2v`/`r2v`）再往上分配 `src_id`，超出 `max_trained_src_id`（默认 5）的部分会被 `interpolate_src_id` 映射回训练区间。
 
-这个案例回答了很多人会问的一个问题：「Bernini 凭什么能做到视频编辑，而不只是视频生成？」——**核心是源 ID 旋转位置编码 + MLLM Planner 的语义级指令**。没有源 ID 位置编码，DiT 会把源视频当作噪声直接擦除（实验：关闭 `use_src_id_rotary_emb` 后编辑结果会出现「源视频内容被替换」的现象）；没有 MLLM Planner，DiT 不知道「雪人」要替换「人」而不是「雪地」（实验：用原始短 prompt 推理，DiT 倾向于整体重画而非局部替换）。
+这个案例回答了很多人会问的一个问题：「Bernini 凭什么能做到视频编辑，而不只是视频生成？」——机制上靠两条线：**源 ID 旋转位置编码**让 DiT 在 token 层面保留源视频内容；**MLLM 规划层**把语义级指令（"把 X 换成 Y"）解析成「哪些保留、哪些修改」。对应的直觉是：剥离源 ID 位置编码后 DiT 更可能把源视频当作无关噪声重画；去掉规划层直接喂原始短 prompt 时，DiT 倾向于整体重画而非局部替换。这两条推论来自架构机制，官方消融的具体量化结论以论文为准。
 
 ## §4 Guidance Mode 与任务的对应关系
 
-Bernini 显式化了 7 种 guidance mode，分别对应不同的编辑/生成场景：
+Bernini 的 guidance mode 由 `cli.py` 里的 `GUIDANCE_MODES` 固定，共 9 种：
 
-| Guidance Mode | 对应任务 | 核心机制 | 典型输入 |
+| Guidance Mode | 对应场景 | 机制要点 | 典型输入 |
 |---------------|----------|----------|----------|
 | `t2v` | 文本生视频 | 无源视频，纯生成 | prompt |
-| `t2v_apg` | 文本生视频（高质量）| UniPC + APG | prompt |
+| `t2v_apg` | 文本生视频（高质量）| UniPC + APG 引导 | prompt |
 | `v2v` | 视频编辑（保留动作）| 源视频结构约束 | prompt + 视频 |
-| `v2v_chain` | 链式视频编辑 | 多步 `v2v` 串联 | prompt + 视频 + 历史 |
+| `v2v_chain` | 链式视频编辑 | 多步 `v2v` 串联 | prompt + 视频 + 前序结果 |
 | `v2v_apg` | 视频编辑（高质量）| UniPC + APG | prompt + 视频 |
-| `r2v_apg` | 参考图生视频 | 参考图特征注入 | prompt + 1+ 参考图 |
-| `rv2v` | 参考图+视频编辑 | 参考图引导局部替换 | prompt + 视频 + 参考图 |
+| `r2v_apg` | 参考图生视频 | 参考图特征注入 + APG | prompt + 1+ 参考图 |
+| `rv2v` | 参考图 + 视频编辑 | 参考图引导局部替换 | prompt + 视频 + 参考图 |
+| `rv2v_wapg` | 参考图 + 视频编辑（增强）| `rv2v` + WAPG | prompt + 视频 + 参考图 |
+| `vae_txt_vit_wapg` | 综合生成 / 编辑（出厂默认）| 融合 VAE、文本与 VIT 引导的 WAPG | prompt + 视频/图像 |
 
-**APG（Adaptive Projected Guidance）是什么？** 它是 CFG（Classifier-Free Guidance）的改进版，通过在 guidance 方向上做投影，避免过度饱和和模式塌缩。`*_apg` 模式需要 `use_unipc: true`（UniPC 调度器）才能正常工作。
+说明几点：
 
-**链式编辑 `v2v_chain` 解决什么问题？** 单一 `v2v` 编辑只能做一次性修改；如果要做「先加雪人，再让雪人滑倒」这种链式操作，需要把上一步的输出作为下一步的源。`v2v_chain` 就是为此设计。
-
-**`mv2v` 不是 guidance mode，而是 task_type**——它和 `v2v` 共享 `v2v` guidance mode，但 task_type 不同让 Prompt Enhancer 走不同的语义规划路径。
+1. **APG（Adaptive Projected Guidance）**：CFG（Classifier-Free Guidance）的改进版，通过在 guidance 方向上加投影，缓解过度饱和与模式塌缩。`*_apg` 模式按 CLI 帮助文本需要 `use_unipc: true`（UniPC 调度器）才能正常工作。
+2. **WAPG 与 `vae_txt_vit_wapg`**：`wapg` 是 Bernini 在 APG 基础上的工程扩展，把不同引导源（VAE latent、文本条件、VIT 视觉 token）按各自系数叠加投影。`vae_txt_vit_wapg` 是官方各 `run_*.sh` 脚本采用的默认 guidance mode，也是 README Highlights benchmark 里 `Bernini-v2v (OS)` 那列对应的设置。CLI 配套暴露了 `omega_vid/omega_img/omega_txt/omega_tgt/omega_scale`、`vit_txt_cfg/vit_img_cfg`、`vit_denoising_step`、`planning_step` 等参数控制各引导源的强度。
+3. **`v2v_chain`（链式编辑）**：单一 `v2v` 只能做一次性修改；要做「先加雪人，再让雪人滑倒」这类多步操作，需要把上一步输出作为下一步的源，`v2v_chain` 为此设计。
 
 ## §5 Benchmark 解读：Bradley-Terry 排行榜
 
-Bernini 的核心 benchmark 是视频编辑质量的人类盲评排行榜：
+README 的核心声明是视频编辑成绩进入顶级闭源商业模型第一梯队，用的是自建 arena 平台的人类盲评：
 
 > "On video editing, Bernini reaches the first tier among leading closed-source commercial models. The leaderboard below comes from our self-built arena platform, where human annotators blindly vote on paired edits and the votes are aggregated into a Bradley-Terry score and a pairwise win-rate matrix."
 
-理解这段 benchmark 结果要注意三个限制：
+同一份 README Highlights 里，还放了一组各发布模型在公开指标上的数字（这是可核实的硬数据）：
 
-1. **「视频编辑」是窄定义**：只针对「保持原视频结构、做局部修改」这类任务，不是广义视频生成。
-2. **「第一梯队」是相对概念**：与哪些闭源商业模型对比、覆盖哪些任务类型，作者没有完全披露。需要看完整论文与 arena 平台。
-3. **「自建 arena 平台」是单一评估方**：人类标注的偏好有主观性，与客观指标（如 FID、PSNR、LPIPS）不一定相关。Bradley-Terry 分数衡量的是「相对偏好」，不是「绝对质量」。
+| Model | EditVerse | OpenVE | OpenS2V | VBench | Bernini-v2v (OS) | Bernini-rv2v (OS) |
+|---|---|---|---|---|---|---|
+| Bernini-R 1.3B | 7.74 | 3.65 | 62.18 | 84.69 | 3.15 | 3.21 |
+| Bernini-R 14B | 7.99 | 3.78 | 62.94 | 84.64 | 3.25 | 3.34 |
+| Bernini 7+14B | 8.02 | 4.03 | 62.30 | 84.37 | 3.49 | 3.48 |
+| Bernini-v2 7+14B | 8.02 | 3.96 | 63.83 | 84.46 | 3.49 | 3.55 |
 
-**这些数字反映什么？** 反映 Bernini 的视频编辑能力已经接近顶级闭源商业模型（如 Runway Gen-3、Pika 2.0、Sora）。**不能推出什么？** 不能推出 Bernini 的视频生成能力也达到了同样水平——Bernini-R 只开源了渲染器部分，生成能力依赖规划层与底层 DiT 的协作。
+按文体包要求，这段数字要回答三件事才能读：
+
+1. **主要测什么**：VBench 是视频生成质量的主流评测集，`*_v2v/*_rv2v (OS)` 是官方自建 arena 的编辑分；EditVerse、OpenVE、OpenS2V 这类名称出现在官方榜单里，但 README 没有逐列给出完整说明与度量口径，其准确定义需以论文为准——因此这张表只能整体佐证「完整的模型分更高」，不宜对每个指标的含义做过度解读。
+2. **数字反映系统的哪部分**：模型越完整分越高——单看 `Bernini-v2v (OS)` 从 3.15（1.3B 渲染器）爬到 3.49（完整 Bernini），说明规划层 + 14B 渲染器带来的收益主要在编辑服从度，而 VBench 的生成分四行几乎持平，说明渲染器主导生成基线。这也呼应官方对 1.3B 的描述：风格迁移、去字幕/水印、局部编辑这类简单任务接近 14B，但人像生成等复杂任务明显落后。
+3. **不能推出什么**：这是单一厂商自报的榜单，对比对象与任务覆盖没有完全披露，不能当作与 Runway Gen-3 / Sora / Pika 的横向官方横评；Bradley-Terry 反映的是「相对偏好」而非「绝对质量」，也不能推出 Bernini 的通用视频生成能力等于其编辑能力。所有分数一律以 README 原文为唯一出处，未做独立复现。
 
 ## §6 采用顺序与适用边界
 
@@ -291,24 +282,24 @@ Bernini 的核心 benchmark 是视频编辑质量的人类盲评排行榜：
 
 **AI 研究者**：
 
-- 适合研究 MLLM 引导的视频编辑范式。Bernini 的开源策略（只开源 Renderer）让研究者可以替换 Planner 而不影响渲染层，复现成本低。
-- 关键观察点：`switch_dit_boundary=0.875` 的边界是否最优？不同视频任务（长视频 vs 短视频）是否需要不同边界？论文里应该有消融。
+- 适合研究 MLLM 引导的视频编辑范式。截至 2026-09，完整 Bernini（含规划器）与 Bernini-R 渲染器都已开源（`ByteDance/Bernini-Diffusers`、`Bernini-Diffusers-v2`、`Bernini-R-Diffusers` 14B / 1.3B），且 2026-07-13 官方补发了 Bernini-R 的训练代码。研究者既可以复现完整管线，也可以只拿渲染器替换自己的规划器，复现成本可控。
+- 关键观察点：`switch_dit_boundary=0.875` 是否最优？不同视频任务（长视频 vs 短视频）是否需要不同边界？`max_trained_src_id / interpolate_src_id` 在多参考源下的表现？这些以论文的消融为准。
 
 **视频生成框架工程师**：
 
-- 适合在 H100 / H800 集群上做视频编辑 / 生成的产品化。Bernini 已经处理了 7 种 guidance mode、6 类任务、Ulysses 并行，可以直接当起点。
-- 关键工程问题：单 GPU 推理时，40 步 + bf16 文本编码器 + fp32 VAE 的显存占用是多少？论文或 README 应该披露。
+- 适合在 H100 / H800 集群上做视频编辑 / 生成的产品化。Bernini 已处理 9 种 guidance mode、6 类任务、Ulysses 并行、case 文件批处理（`--inputs` json/jsonl），可以直接当起点。`gradio_demo.py` 也暴露了同一套管线的 UI，便于快速试验参数。
+- 关键工程问题：完整 7+14B 需要大显存；若目标是快速上线，1.3B 的 Bernini-R 在简单编辑任务上接近 14B（官方说法：风格迁移、去字幕/水印、局部编辑与 14B 接近，人像生成等复杂任务落后），可作为低资源起点。
 
 **消费级 GPU 用户**：
 
-- **不建议**。Bernini 推荐 H100，单卡 80GB 显存。A100 80GB 也勉强可跑 480p/16fps。4090 24GB 跑不了 40 步推理。
-- 替代方案：消费级可以关注 [Wan2.1](https://github.com/Wan-Video/Wan2.1) 的 1.3B 小模型版，或者等社区出 Bernini 的蒸馏版。
+- **先量显存再决定**。完整（7+14B）按官方默认 8 卡 Ulysses 配置，单卡门槛高；1.3B 变体的出现把门槛降了一档，但仍要看具体分辨率与帧数。4090 这类 24GB 卡跑完整版不现实，跑 1.3B 的短片段可以做试验，生产级编辑还是建议上专用卡。
+- 替代方案：官方 1.3B 权重、以及社区可能的蒸馏版，是消费级落地的两条路，前者已发布，后者待社区跟进。
 
 **潜在风险点**：
 
-- **Wan2.2 依赖**：Bernini-R 强依赖 Wan2.2 base，如果 Wan2.2 后续维护停滞，Bernini 也会受影响。
-- **MLLM Planner 不开源**：规划层需要用户自己部署 Qwen2.5-VL-7B-Instruct，或调用商业 MLLM API。
-- **中文 prompt 质量**：Qwen2.5-VL 对中文 prompt 的支持优于多数闭源 MLLM，但具体质量需要自己测试。
+- **Wan2.2 依赖**：Bernini-R 与完整 Bernini 的渲染器都建立在 Wan2.2 base 上，若 Wan2.2 后续维护停滞或接口变更，会传导到 Bernini。
+- **Pe 端点是外部依赖**：`--use_pe` 需要自备 OpenAI 兼容端点；不提供时规划层只能走离线 task_type 系统 prompt，复杂指令服从度下降。
+- **中文 prompt 质量**：Qwen2.5-VL 对中文 prompt 的支持通常优于多数闭源 MLLM，但具体质量需要自己测试。
 
 ## §7 自测与延伸阅读
 
@@ -327,30 +318,30 @@ Bernini 的渲染器层（Bernini-R）是基于 Wan2.2-T2V-A14B 微调的，复�
 
 **Q2：必须用 H100 吗？**
 
-推荐 H100 / H800 / H200（Hopper 架构），因为可以启用 FlashAttention-3。其他 CUDA GPU 会回退到 FlashAttention-2 或 PyTorch SDPA，速度会慢 30% - 50%。A100 / A800 也能跑，但需要更多显存和更长推理时间。
+README 推荐 Hopper 架构（H100 / H800 / H200），因为可以启用 FlashAttention-3；其他 CUDA GPU 会回退到 FlashAttention-2 或 PyTorch SDPA，慢多少没有官方定量口径，不能拍脑袋写比例。A100 / A800 也能跑，但显存和推理时间都要放宽。
 
-**Q3：可以不用 MLLM Planner 吗？**
+**Q3：可以不用 MLLM 规划层吗？**
 
-可以。`--use_pe` 默认开启但可以关闭（`--no-use_pe`）。关掉后 MLLM Planner 不参与推理，DiT 直接用用户原始 prompt。但编辑质量会下降，尤其是复杂语义指令（如"把红色衣服换成蓝色但保持褶皱"）。
+可以，但默认就是没有。`--use_pe` 默认关闭，加了才启用 prompt 改写（README 强烈推荐开）。关掉或不开时，DiT 直接用用户原始 prompt + task_type 对应的离线 system prompt。复杂语义指令（如"把红色衣服换成蓝色但保持褶皱"）的服从度会明显下降——这正是规划层的价值所在。
 
 **Q4：能商用吗？**
 
-可以。Bernini 用 Apache-2.0 许可证，但**依赖 Wan2.2 的许可证**。Wan2.2 自身也是 Apache-2.0（需确认具体子模型），所以可以商用。但 Qwen2.5-VL-7B-Instruct 的商用需遵守阿里 Qwen 团队的许可证。
+Bernini 本体是 Apache-2.0。但跑完整管线会叠加 Wan2.2、Qwen2.5-VL、VeOmni 等多个上游组件的许可证，**商用前要逐个确认各自许可与署名要求**，不能只凭 Bernini 的 LICENSE 结论。
 
-**Q5：训练数据是什么？**
+**Q5：训练数据、训练代码开放吗？**
 
-论文 arXiv 2605.22344 应该会披露训练数据。仓库代码里没有显式说明，但从任务类型（视频编辑）推断，训练数据应包含大量「源视频 + 编辑指令 + 目标视频」三元组。
+2026-07-13 官方发布了 Bernini-R 的训练代码（`docs/bernini_r_train.md`，推荐用 `uv` 管理环境），推理与训练都做成了可复现工程。训练数据集的明细以论文 arXiv 2605.22344 为准，仓库里不附数据本身；从任务形态推断训练围绕「源视频 / 图 + 编辑指令 + 目标输出」组织，但这是合理推断，不是官方披露。
 
 ## §9 错误排查与显存陷阱
 
 Bernini 推理最常见的显存与质量问题：
 
-1. **OOM（Out of Memory）错误**：单 GPU 跑 81 帧视频经常 OOM。**排查方法**：先用 `--num_frames 21` 测试；`--max_image_size 480` 降分辨率；`--num_inference_steps 20` 减少步数。
-2. **编辑结果「飘移」**：源视频的整体结构被破坏。**排查方法**：检查 `use_src_id_rotary_emb` 是否为 `true`（默认）；尝试 `omega_V=1.0` 降低结构约束强度。
+1. **OOM（Out of Memory）错误**：长片段 / 高帧数在显存不足的卡上容易 OOM。**排查方法**：先降 `--num_frames`（如默认 81 降到 21）验证链路；`--max_image_size` 调小（默认 848，可降到 480）降分辨率；`--num_inference_steps` 从默认 40 减步数。
+2. **编辑结果「飘移」**：源视频的整体结构被破坏。**排查方法**：确认未误关 `--use_src_tgt_id`（对应 `use_src_id_rotary_emb`，默认开启）；结构保持不足时提高 `omega_vid`（默认 1.25，控制视频结构引导强度），结构约束过强、改不动目标时适当调低。
 3. **文本 prompt 失配**：用户 prompt 包含细节但生成结果忽略。**排查方法**：开启 `--use_pe` 用 MLLM 改写 prompt；或者把 prompt 改写为更结构化的形式（"主体：A 改为 B；背景：保持 C"）。
-4. **推理结果不一致**：同样种子不同 GPU 数量结果不同。**排查方法**：单 GPU 调试后再扩展到多 GPU；Ulysses 序列并行理论上 bit-exact 但浮点累加可能略有差异。
+4. **推理结果不一致**：同样种子不同 GPU 数量结果不同。**排查方法**：先在单 GPU 对齐结果，再扩展到多 GPU；Ulysses 序列并行理论上 bit-exact，但浮点累加顺序不同仍可能带来微小差异。
 
-> 显存不是「测试出来」的，是配置阶段就要估算的。一段 81 帧 480p 视频的 VAE latents 占约 2GB，加上双专家 DiT 的激活值（bf16 约 30GB），单卡 H100 80GB 已经是边界。
+> 显存不该靠撞上 OOM 再回头试，而应在配置阶段就估算。同样的 video 任务，帧数（`--num_frames`）、分辨率（`--max_image_size` / `--height` / `--width`）、步数（`--num_inference_steps`）三者的乘积大致决定激活值规模；完整 7+14B 双专家模型在默认 81 帧 / 848 分辨率下就需要大容量显存，`--skip_transformer_1/2`（跳过任一噪声专家）和 1.3B 变体是两条降门槛的路径。
 
 ## §10 结尾判断
 
@@ -362,11 +353,11 @@ Bernini 不是又一个 DiT 视频模型，而是字节跳动针对**视频编�
 
 三个值得注意的点：
 
-1. **Bernini 的开源策略很克制**。只开源 Bernini-R 渲染器，不开源规划层；只开源推理代码，不开源训练数据。这种克制让字节跳动在开源与商业化之间找到了平衡——研究者可以基于 Bernini-R 做研究，但完整产品化需要额外接入 Qwen2.5-VL 等 MLLM。代价是：用户拿到 Bernini 后还有 30% - 40% 的工程工作要做（MLLM 部署、prompt 模板、guidance 调参）。
-2. **2026 年的视频生成竞争从「模型」转向「工程栈」**。Bernini 的 7 种 guidance mode、6 类任务、Ulysses 并行、APG 引导，说明字节跳动已经把视频生成当作一个工程问题在解。Sora、Runway 的领先不是单点突破，而是整套工作流的成熟。代价是：单点突破型的小团队很难再追——必须同时投入模型、数据、工程、评测四块。
-3. **消费级视频生成还要等**。Bernini 推荐 H100 + 80GB 显存，40 步推理每段视频需要数分钟。消费级用户（4090 / 4090D / 苹果 M 系列）短期跑不动。社区的蒸馏版、轻量化版本才是消费级落地的关键——这一步可能需要 1 - 2 年。
+1. **Bernini 的开源是分阶段放开的**。先开渲染器推理与权重（2026-06-01 的 Bernini-R 14B），随后铺开 1.3B（06-09）、完整 Bernini（含规划器，06-11）与训练代码（07-13 的 Bernini-R 训练）。真正没给的仍是完整训练数据与规划器独立训练细节，这一点保持了克制。研究者现在能完整复现而不是只能看渲染器。
+2. **2026 年的视频生成竞争从「模型」转向「工程栈」**。Bernini 的 9 种 guidance mode、6 类任务、Ulysses 并行、APG/WAPG 引导、case 文件批量运行，说明字节跳动把视频生成当成一个工程系统在打磨。单点去拼一个更强 DiT 的边际收益在收窄，模型 + 数据 + 工程 + 评测的整套工作流才是分水岭。
+3. **消费级落地仍取决于轻量变体**。完整 7+14B 需要大显存；官方 1.3B 变体把门槛降了一档，是当前消费级最现实的入口，社区蒸馏版则是后续可能。是否够用，取决于你的目标任务落在简单的风格迁移/去字水印，还是复杂的人像生成。
 
-具体建议：如果你在做视频生成产品，建议**先用 Bernini-R 当起点**——它已经处理了 80% 的工程问题；如果你在做视频编辑研究，重点看源 ID 旋转位置编码和 MLLM Planner 的协作；如果你在消费级硬件上做，**短期不要指望 Bernini**——等社区出 4-bit 量化版或蒸馏版。
+具体建议：做视频生成产品，**先用官方 1.3B 或 14B 的最简推理链路跑通，再按目标任务决定要不要上完整规划层与 8 卡 Ulysses**；做视频编辑研究，重点看源 ID 旋转位置编码与 MLLM 规划层的协作、以及 `switch_dit_boundary` 与多源 `src_id` 的边界；消费级硬件上做原型，先从 1.3B 短片段试起，别一上来对着完整 7+14B 的显存需求做规划。
 
 ---
 
@@ -376,56 +367,57 @@ Bernini 不是又一个 DiT 视频模型，而是字节跳动针对**视频编�
 
 | 关键数据 | 来源 | 状态 |
 |---------|------|------|
-| 仓库 bytedance/Bernini，Apache-2.0 | GitHub API | ✅ |
-| Stars 395, Forks 28（截至 2026-06-05）| GitHub API | ✅ |
+| 仓库 bytedance/Bernini，Apache-2.0 | GitHub | ✅ |
 | 论文 arXiv 2605.22344 | README 引用 | ✅ |
-| Python 3.11.2, PyTorch 2.5.1+cu124 | README | ✅ |
-| switch_dit_boundary=0.875 | config.json | ✅ |
-| use_unipc=true, use_src_id_rotary_emb=true | config.json | ✅ |
-| 基于 Wan2.2-T2V-A14B | config.json + renderer.py | ✅ |
-| Qwen2.5-VL-7B-Instruct 做 Planner | README Acknowledgements | ✅ |
-| 7 种 guidance mode | cli.py GUIDANCE_MODES | ✅ |
-| 6 类任务（t2i/i2i/t2v/v2v/mv2v/rv2v/r2v）| README | ✅ |
-| 40 步推理（num_inference_steps=40）| cli.py | ✅ |
-| H100 推荐，FlashAttention-3 | README | ✅ |
-| Open-VeOmni 序列并行 | parallel/ops.py | ✅ |
-| prompt_enhancer.py 37KB | 文件大小统计 | ✅ |
-| 480p/16fps 默认 | cli.py 默认值 | ✅ |
+| Python 3.11.2，PyTorch 2.7.1+cu126，CUDA 12.6 | README requirements | ✅ |
+| switch_dit_boundary=0.875，shift=3.0，max_sequence_length=512 | config.json | ✅ |
+| use_unipc=true，use_src_id_rotary_emb=true | config.json | ✅ |
+| 渲染器基于 Wan2.2-T2V-A14B | config.json wan22_base | ✅ |
+| Qwen2.5-VL-7B-Instruct 做 Planner | README Acknowledgements / docs | ✅ |
+| 9 种 guidance mode | cli.py GUIDANCE_MODES | ✅ |
+| 6 类任务接口（t2i/i2i/t2v/v2v/rv2v/r2v，无 mv2v）| README | ✅ |
+| num_inference_steps=40，num_frames=81，fps=16，height=480，width=848 | cli.py 默认值 | ✅ |
+| Hopper 推荐，FlashAttention-3 | README | ✅ |
+| `--use_pe` 默认关闭（store_true）| cli.py | ✅ |
+| Open-VeOmni 必装依赖 | README | ✅ |
+| 2026-06-11 开源完整 Bernini，07-13 开源 Bernini-R 训练代码 | README News | ✅ |
 
 ### 引用说明
 
-- 核心仓库：[bytedance/Bernini](https://github.com/bytedance/Bernini)（v1.0, 2026-05-29 开源）
-- 论文：Bernini: Latent Semantic Planning for Video Diffusion，arXiv:2605.22344
-- 项目主页：< PROTECTED_97 >
-- HuggingFace 模型：< PROTECTED_98 >、< PROTECTED_99 >
+- 核心仓库：[bytedance/Bernini](https://github.com/bytedance/Bernini)（2026-05-22 论文发布，随后分阶段开源）
+- 论文：Bernini: Latent Semantic Planning for Video Diffusion，[arXiv:2605.22344](https://arxiv.org/abs/2605.22344)
+- 完整模型：[ByteDance/Bernini-Diffusers](https://huggingface.co/ByteDance/Bernini-Diffusers) · [Bernini-Diffusers-v2](https://huggingface.co/ByteDance/Bernini-Diffusers-v2)
+- 渲染器模型：[ByteDance/Bernini-R-Diffusers](https://huggingface.co/ByteDance/Bernini-R-Diffusers)（14B）· [Bernini-R-1.3B-Diffusers](https://huggingface.co/ByteDance/Bernini-R-1.3B-Diffusers)
 - 基础模型：[Wan2.2-T2V-A14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers)
 - MLLM Planner：[Qwen2.5-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct)
 - 序列并行：[ByteDance-Seed/VeOmni](https://github.com/ByteDance-Seed/VeOmni)
 
 > **本文定位**：Bernini 架构拆解 + 视频编辑工程范式分析 + 适用边界决策
-> **更新记录**：v1.0 - 2026-06-05 初版发布；后续根据 Bernini v1.x 训练数据披露与 arena 平台公开信息滚动更新
+> **更新记录**：v1.1 - 2026-09-09 依据 README / config.json / cli.py / docs 复核并校正事实（PyTorch 版本、guidance mode 数量、任务接口、开源现状），后续随官方发布滚动更新
 
 ## §12 Bernini 与主流视频生成方案对比
 
 把 Bernini 放进 2026 年的视频生成版图里对比：
 
-| 方案 | 发布时间 | 视频编辑能力 | 开源状态 | 硬件门槛 | 适用场景 |
-|------|----------|--------------|----------|----------|----------|
-| **Bernini**（字节）| 2026-05-29 | 第一梯队（Bradley-Terry 评测）| 仅开源 Renderer | H100 80GB × 8 | 视频编辑 + 视频生成 |
-| **Wan2.2**（阿里）| 2025-11 | 弱（生成导向）| 完整开源 | A100 80GB × 4 | 视频生成 |
-| **Runway Gen-3** | 2024-2025 | 顶级（商业）| 不开源 | 商业 API | 通用视频生成 |
-| **Sora 2**（OpenAI）| 2025-2026 | 顶级（商业）| 不开源 | 商业 API | 通用视频生成 |
-| **Pika 2.0** | 2025 | 中等（商业）| 不开源 | 商业 API | 短视频生成 |
-| **Stable Video Diffusion**（Stability）| 2024-2025 | 中等 | 完全开源 | 消费级 24GB | 短视频生成 |
-| **CogVideoX**（智谱）| 2025 | 弱 | 完全开源 | 消费级 24GB | 中文场景视频生成 |
+| 方案 | 定位 | 视频编辑能力 | 开源状态 | 硬件门槛 | 适用场景 |
+|------|------|--------------|----------|----------|----------|
+| **Bernini**（字节）| 语义规划 + 视频编辑统一框架 | 第一梯队（官方自报 Bradley-Terry）| 完整 Bernini 与 Renderer 均已开源（含 1.3B / 14B）| 完整 7+14B 默认 8×H100；1.3B 降档 | 视频编辑 + 视频生成 |
+| **Wan2.2**（阿里）| 通用视频生成模型 | 弱（生成导向）| 完整开源 | 大显存 | 文本生视频 |
+| **Runway Gen-3** | 商业视频生成 | 顶级（商业）| 不开源 | 商业 API | 通用视频生成 |
+| **Sora 2**（OpenAI）| 商业视频生成 | 顶级（商业）| 不开源 | 商业 API | 通用视频生成 |
+| **Pika 2.0** | 商业短视频生成 | 中等（商业）| 不开源 | 商业 API | 短视频生成 |
+| **Stable Video Diffusion**（Stability）| 开源视频生成 | 中等 | 完全开源 | 消费级 24GB | 短视频生成 |
+| **CogVideoX**（智谱）| 开源中文视频生成 | 弱 | 完全开源 | 消费级 24GB | 中文场景视频生成 |
+
+先声明：除 Bernini 一行来自官方 README/doc 可核实外，其余各行的编辑能力、发布时间、硬件门槛是 2026 年上半年公开图景下的**定位性描述，不是统一口径的横评**，引用前请自行核对各家官方发布。
 
 读这张对比表时要注意：
 
-1. **开源不等于「可商用」**。Bernini 的 Apache-2.0 许可证 + Wan2.2 的许可证 + Qwen2.5-VL 的许可证叠加起来，商用时需要逐个确认。Stability 的 SVD 在商用上最友好。
-2. **「视频编辑」与「视频生成」是两类问题**。Bernini 的核心优势在编辑而非生成。如果只需要做 t2v 文本生视频，Wan2.2 可能更合适；如果要做 v2v 视频编辑，Bernini 是当前开源最优。
-3. **硬件门槛决定生态**。Bernini 需要 H100 80GB × 8，这把消费级开发者挡在门外。SVD / CogVideoX 这种 24GB 消费级显卡能跑的方案，在社区生态上反而更活跃。
+1. **开源不等于「可商用」**。Bernini 的 Apache-2.0 会叠加 Wan2.2、Qwen2.5-VL、VeOmni 的上游许可，商用前需逐个确认。
+2. **「视频编辑」与「视频生成」是两类问题**。Bernini 的核心优势在编辑而非生成；若只做 t2v 文本生视频，Wan2.2 这类生成导向方案可能更省事，若做 v2v 视频编辑，Bernini 是目前开源里最对口的。
+3. **硬件门槛决定生态**。完整 Bernini 默认 8 卡配置把普通开发者挡在门外；1.3B 变体与消费级能跑的 SVD / CogVideoX，在社区生态上会更活跃。
 
-**为什么 Bernini 不下放消费级？** 主要原因不是字节跳动「不想」，而是双专家 DiT 的参数量 + 14 层板的推理复杂度 + 40 步去噪的工程门槛，决定了短期内很难在消费级硬件上跑出可用结果。社区如果要做蒸馏版，需要解决 3 个核心问题：双专家合并（高/低噪声合一个模型）、步数压缩（40 步压到 8-10 步）、量化精度（bf16 压到 4-bit）。这一步估计需要 1-2 年。
+**为什么完整版不下放消费级？** 双专家 DiT 的参数量、14B 渲染器的激活值、40 步去噪，都指向大显存需求；这更多是工程代价，不是「不想」。官方已用 1.3B 变体回应了一部分诉求。社区若要继续往消费级压，方向通常集中在三处：双专家合并、步数压缩（走蒸馏/graph）与量化精度，但进展和时点无法可靠预测，不做硬性时间承诺。
 
 ---
 
@@ -443,10 +435,9 @@ Bernini 不是又一个 DiT 视频模型，而是字节跳动针对**视频编�
 **练习 2：配置一次 v2v 视频编辑**
 
 如果有 H100 或其他高端 GPU 访问权限，尝试：
-1. 安装 Bernini（按照 README 的 `make setup`）
+1. 按 README 安装依赖（`pip install -r requirements.txt` + `--no-deps` 装 VeOmni，训练侧用 `uv sync`）
 2. 准备一个源视频（如一个人走路的视频）
-3. 运行 `v2v` guidance mode，把人替换成其他对象
-4. 观察 `use_src_id_rotary_emb` 开启和关闭时的编辑质量差异
+3. 用 `--use_src_tgt_id`（默认开）和 `--no-use_src_tgt_id`（关）各跑一次，对比编辑质量
 
 **练习 3：分析双专家 DiT 的切换边界**
 

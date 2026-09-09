@@ -67,7 +67,7 @@ PyTorch 用户最常见的两种使用姿态是：
 
 ## 三、近期主线：2.9 版本的「为什么重要」
 
-PyTorch 2.9.0 于 2025-10-15 发布（v2.9.1 为 bug fix 后续），从 release notes 里挑出几个对实际使用者影响最大的变化：
+PyTorch 2.9.0 于 2025-10-15 发布，自 2.8 以来共合并 3216 个 commit、出自 452 位贡献者（随后 v2.9.1 以 bug fix 跟进）。从 release notes 里挑出几个对实际使用者影响最大的变化：
 
 | 主题 | 变化 | 影响 |
 | --- | --- | --- |
@@ -79,9 +79,9 @@ PyTorch 2.9.0 于 2025-10-15 发布（v2.9.1 为 bug fix 后续），从 release
 | Flash decoding | 在 X86 CPU 上跑 FlexAttention 优化 | CPU 推理有更短的 decode latency |
 | ARM 改进 | Linux aarch64 binary wheel 支持全 CUDA | ARM 服务器 + GPU 部署链路打通 |
 
-值得专门说一下 **Symmetric Memory**：这是 PyTorch 2.9 的旗舰特性，本质是给多 GPU kernel 提供一个「每张卡都能看到同一份内存」的编程抽象。以前写多卡 kernel 要手写 IB（InfiniBand）/RoCE（基于以太网的 RDMA）握手，Symmetric Memory 把这一步藏到了 backend，开发者只用写「在 8 张卡上各自算一段」这种高层意图。这件事对 NCCL（NVIDIA Collective Communications Library）重度依赖的下游项目影响很大——很多 `torch.distributed` 调用现在可以走 Symmetric Memory path，性能和可读性都更好。
+值得单独说清楚 **Symmetric Memory**：这是 2.9 的旗舰特性。它要解决的痛点是——多卡 kernel 里，通信和计算默认被 NCCL/RCCL 之类的集合通信库切成两个世界，GPU 无法在计算循环里直接读写远端显存。Symmetric Memory 引入一类「对称张量」：同一块缓冲区在所有 rank 上拥有相同布局，GPU kernel 内部就能直接对远端 rank 发起 put/get，从而把计算与数据迁移融合到最小粒度，并支持单边、低时延的远端访问（RDMA、IB-GDA 一类协议）。2.9 里对称内存由 `CUDA` 与 `NVSHMEM` 两个后端背书，配套提供 `torch.ops.symm_mem.one_shot_all_reduce`、`two_shot_all_reduce_`、服务于 MoE token 分发的 `all_to_all_vdev` 等加速 collective。需要提醒的是，这套 API 仍处于 alpha / API-Unstable 阶段，接口会继续演进，生产接入前要先评估稳定性。
 
-值得专门说一说的还有 **libtorch ABI**。第三方扩展（自定义 kernel、自定义算子）以前每升一次 PyTorch 都要重新编译。2.9 给稳定 ABI 加了一组新规约，编译一次扩展能跟 PyTorch 小版本解耦。这是 PyTorch 在「减少生态迁移成本」上少有的、面向 C++ 用户的明确承诺。
+值得单独说说的还有 **libtorch ABI**。第三方扩展（自定义 kernel、自定义算子）以前每升一次 PyTorch 都要重新编译。2.9 通过对 `torch::stable::Tensor` 增加一批 C++ 包装 API（如 `is_cpu`、`scalar_type`、`get_device_index`，以及 `amax`、`pad`、`narrow` 等 ATen 算子），把「编译一次、跨小版本复用」的稳定 ABI 铺到更多算子上。最直接的红利是 FlashAttention-3 已经能基于这套 ABI 发布 wheel，无需随版本重编。需要留意，这些高层 C++ API 目前仍是 preview，接口尚未完全冻结。
 
 ---
 
@@ -91,11 +91,11 @@ PyTorch 2.9.0 于 2025-10-15 发布（v2.9.1 为 bug fix 后续），从 release
 
 ### 1. `[ROCm] Add initial support for gfx1250 (#188597)`
 
-`gfx1250` 是 AMD ROCm 的下一代目标 GPU 架构。Initial support 意味着 PyTorch 官方 wheel 很快会出 ROCm gfx1250 构建——使用 AMD MI350 / MI375 系列新卡的团队可以开始测试。**这是 PyTorch 跨厂商硬件承诺的具体落地**。
+`gfx1250` 是 ROCm 侧正推进的下一代 GPU 架构目标（对外对应 AMD MI450 产品线；在 ROCm 的 capability 上报 `(12, 5)`，与上一代 gfx950 的 `(9, 5)` 不能按数值大小排序）。Initial support 意味着官方 wheel 开始为这一代预留构建与测试入口——持有新卡的团队可以提前评估，不必等 patch。**这是 PyTorch 跨厂商硬件承诺的具体落地**。
 
 ### 2. `[flex_attention] [inductor] Add TLX flex attention template for Blackwell`
 
-NVIDIA Blackwell（B200 等）的 FlexAttention 模板由 PyTorch Inductor 的 TLX（Tensor Library Extensions）后端提供。FlexAttention 是 PyTorch 2.5 之后引入的可组合 attention 原语，开发者写一个 `flex_attention` 函数，inductor 把它编译到 FlashAttention、CuDNN、TLX 多个后端。**Blackwell 模板到位意味着 B200 / GB200 用户第一次能用上 vendor-tuned 的 FlexAttention**。
+NVIDIA Blackwell（B200 等）的 FlexAttention 模板由 PyTorch Inductor 的 TLX（Triton Language Extensions，Triton 的低层扩展，面向 Blackwell 暴露 warp specialize、异步 Tensor Core 等硬件控制）后端提供。FlexAttention 是 PyTorch 2.5 引入的可组合 attention 原语：开发者写一个 `flex_attention` 函数，inductor 把它编译到 FlashAttention、CuDNN、TLX 多个后端。**Blackwell 模板到位意味着 B200 / GB200 用户第一次能用上 vendor-tuned 的 FlexAttention**。
 
 ### 3. `[xpu][feature] Enable SYCL Native Fast Math Support in NumericUtils.h`
 
@@ -132,7 +132,7 @@ Symmetric Memory 的稳定性 fix——2.9 旗舰特性的现实补丁。**说�
 
 - **生产环境**：跟随 stable 发布（v2.9.x），不要追 nightly
 - **使用 Symmetric Memory / 第三方 C++ 扩展**：升级前先看 release notes 的「Backwards Incompatible Changes」段（2.9 改了一组 custom op 关于「输出不能与输入共享存储」的边界，会影响部分自定义算子）
-- **使用 `torch.onnx.export`**：2.9 默认切到 dynamo=True 的新导出路径，如果遇到 graph capture 失败，先用 `dynamo=False` 退回旧路径，再去报 issue
+- 使用 `torch.onnx.export`：新版导出后端（TorchDynamo-based）正在成为主线，若遇到 graph capture 失败，可先用 `dynamo=False` 退回 legacy 路径跑通，再去报 issue
 
 ---
 
@@ -186,3 +186,10 @@ PyTorch 的护城河始终在「研究 ↔ 工业」的双向通道：研究侧�
 ---
 
 仓库地址：[github.com/pytorch/pytorch](https://github.com/pytorch/pytorch)（101,081 Stars，今日 +45）。最新 stable 版本：v2.9.1（2025-10 bug fix release）；主线 v2.9.0（2025-10-15）；trunk 健康看板：[hud.pytorch.org](https://hud.pytorch.org/ci/pytorch/pytorch/main)。
+
+---
+
+## 参考资料
+
+- [PyTorch 2.9 Release Blog](https://pytorch.org/blog/pytorch-2-9/)（release notes、Symmetric Memory / libtorch ABI / wheel 变体等官方说明）
+- [PyTorch Symmetric Memory API Documentation](https://docs.pytorch.org/docs/stable/symmetric_memory.html)（对称张量、`torch.ops.symm_mem` 与后端列表）
