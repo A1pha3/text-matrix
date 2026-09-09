@@ -2,7 +2,7 @@
 title: "The Book of Secret Knowledge：运维安全从业者的终极工具索引"
 date: "2026-05-23T03:05:00+08:00"
 slug: "the-book-of-secret-knowledge-sysadmin-toolkit"
-github_repo: "starship/starship"
+github_repo: "trimstray/the-book-of-secret-knowledge"
 description: "The Book of Secret Knowledge 是 trimstray 在 GitHub 上维护的一个巨型工具索引仓库，收录 CLI/GUI 工具、Web 服务、渗透测试、系统加固等领域的精选资源，面向系统管理员、DevOps 和安全研究员。本文从项目定位、章节结构、核心亮点三个维度进行全面解读，并给出阅读建议与适用边界分析。"
 draft: false
 categories: ["技术笔记"]
@@ -45,9 +45,29 @@ README 开篇有一句话道出了项目的初衷：
 
 ## 章节结构纵览
 
-以下是 README 中 14 个主要章节的分类逻辑与代表性工具。
+README 的目录列了 15 个主章节。它们不是平均分配篇幅：CLI Tools 一个章节的体量就超过后面好几个章节的总和。先给一张总览表，再挑其中最有代表性的章节展开。
 
-> 注：以下工具列表均直接来自 README 的原始收录，顺序与原文保持一致。标注 **\*** 的链接表示该 URL 暂时不可用。
+| 章节 | 收录什么 | 初始定位 |
+|------|----------|----------|
+| CLI Tools | Shell、编辑器、网络、DNS、SSL、安全审计、系统诊断等命令行工具 | 全文最厚，覆盖绝大多数日常工作 |
+| GUI Tools | 终端模拟器、密码管理、加密通讯等桌面软件 | 普及型，知道"有这个东西"即可 |
+| Web Tools | 在线检测、DNS 查询、漏洞情报、隐私检测 | 一次性需求的归类，省去反复搜索 |
+| Systems/Services | HTTP/DNS 服务、安全加固等自建服务 | 给自建环境选件 |
+| Networks | IPAM、PCAP 可视化等网络基础设施 | 偏 IDC 与网络管理 |
+| Containers/Orchestration | 反向代理、容器安全、K8s 学习资源 | 云原生选件与安全基线 |
+| Manuals/Howtos/Tutorials | 手册、教程、加固指南、CTF 参考资料 | "学什么"而非"用什么" |
+| Inspiring Lists | 各类精选清单合集 | 主题聚合 |
+| Blogs/Podcasts/Videos | 运维与安全领域的博客、播客、视频来源 | 长期信息源 |
+| Hacking/Penetration Testing | 渗透测试主题的启发式清单 | 聚合散落在前面的工具 |
+| Your daily knowledge and news | 每日阅读的资讯源 | 信息流 |
+| Other Cheat Sheets | 各技术栈速查表 | 查漏补缺 |
+| Shell One-liners | 单行命令与技巧 | 快速任务现用 |
+| Shell Tricks | Shell 技巧 | 小聪明集 |
+| Shell Functions | 可复用的 Shell 函数 | 直接拿来用 |
+
+并非每个章节都值得逐条精读。下面挑 CLI、GUI、Web、Systems、Networks、Containers、Manuals 这几个体量最大、最有判断价值的章节展开；其余章节的定位看表即可。
+
+> 注：以下列出的都是我从中挑选的代表性条目，均来自 README 的原始收录。完整清单远比这里长——CLI Tools 的网络子类就收录了 50+ 个工具。仓库在 URL 后加 **\*** 表示该链接当前临时不可用，本文转引时未调整顺序。
 
 ### CLI Tools — 命令行工具集
 
@@ -265,9 +285,13 @@ TBSK 收录了大量实战中沉淀下来的单行命令、Shell 技巧和函数
 
 作者对某些领域的覆盖极深（如网络工具下的 HTTP 压测子章节收录了 20+ 工具），但对另一些领域的覆盖较浅。这是筛选策略的代价，不是缺陷：作者在 CONTRIBUTING 里明确说了"只收录优质资源"，而不是"做最全列表"。每一类工具的深度取决于该领域的工具密度和作者的实际使用经验。
 
-### 维护活跃度尚可
+### 维护现状：内容保质期长，但更新节奏已经放缓
 
-仓库没有详细的更新日志，但从 RSS feed 可以追踪提交历史。最近的提交（2026 年初）显示维护者仍在处理 dead link 和新工具收录。
+仓库没有版本化的更新日志，提交历史可以从 GitHub 提供的 commits RSS 订阅追踪。README 写明了"All suggestions/PR are welcome"，社区仍会提交修复和新工具的 PR，但合并节奏不规律——master 分支最近一次提交停在 **2024 年 11 月**，仓库目前积压了上百个未合并的 PR。
+
+这里的判断要分开说：**内容不会因停更而过时**，工具性的冷知识（哪些工具解决哪类问题）是稳定的，2026 年仍能当索引用；**但要按活跃仓库那样期待新条目和链接修复就不现实**。发现无效链接时，能提 PR 尽到义务即可，不必指望作者及时合并。
+
+这是"工具索引"的常态，不是缺陷：一份高质量的静态清单，胜过一份三天两头改但质量不稳的动态列表。真正需要警惕的反而是反过来——用一批只有"看起来很全"的条目把章节填满。
 
 ---
 
@@ -323,4 +347,10 @@ The Book of Secret Knowledge 不是一个会让你"Wow"的新技术框架，而�
 
 对于刚入行的工程师，这本书是一个很好的"认知地图"——让你知道在这个行业里，每个领域的成熟方案大概是什么样的。对于资深工程师，它更像一本字典——不需要每次都翻，但知道它在那里，遇到了新场景就知道去哪里查。
 
-GitHub：https://github.com/trimstray/the-book-of-secret-knowledge
+## 来源与延伸阅读
+
+- 仓库主页 → https://github.com/trimstray/the-book-of-secret-knowledge
+- 提交 RSS 订阅（追踪更新/停更状态）→ https://github.com/trimstray/the-book-of-secret-knowledge/commits.atom
+- 贡献指南（作者对"只收优质资源"的说明）→ https://github.com/trimstray/the-book-of-secret-knowledge/blob/master/.github/CONTRIBUTING.md
+
+同类资源里，作者还维护了 [The Practical Linux Hardening Guide](https://github.com/trimstray/the-practical-linux-hardening-guide)，两本是互补关系：一本说"用哪个工具"，一本教"系统怎么加固"。

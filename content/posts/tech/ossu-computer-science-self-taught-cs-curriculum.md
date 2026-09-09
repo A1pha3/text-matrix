@@ -1,11 +1,11 @@
 ---
-title: "ossu/computer-science 拆解：一份 206k stars 的免费计算机科学自学路径，是怎么用课程而不是书把 CS 本科拼起来的"
+title: "ossu/computer-science 拆解：一份 208k stars 的免费计算机科学自学路径，是怎么用课程而不是书把 CS 本科拼起来的"
 date: 2026-07-17T02:58:33+08:00
 lastmod: 2026-07-17T02:58:33+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["CS自学", "课程", "教育资源", "计算机基础"]
-description: "OSSU Computer Science 是 Open Source Society University 的免费 CS 自学路径，按 CS 2013 标准选取 MIT/Princeton 公开课，4 段路径约 20 小时/周 × 2 年。"
+description: "OSSU Computer Science 是 Open Source Society University 的免费 CS 自学路径，按 CS 2013 标准选取 MIT/Stanford 等公开课，4 段路径约 20 小时/周 × 2 年。"
 slug: "ossu-computer-science-self-taught-cs-curriculum"
 github_repo: "ossu/computer-science"
 author: text-matrix
@@ -13,7 +13,7 @@ author: text-matrix
 
 ## 一句话判断
 
-**OSSU Computer Science（[ossu/computer-science](https://github.com/ossu/computer-science)）是 Open Source Society University 维护的"用在线课程代替本科 CS 学位"自学路径，截至 2026-07 在 GitHub 上约 206k stars / 25.6k forks，MIT 许可证。** 它不是又一份书单，而是一份**严格对齐 CS 2013 课程标准**（Curriculum Guidelines for Undergraduate Degree Programs in Computer Science）的本科级路径：候选课程必须满足"开放注册、定期开课、教学质量高、对齐 CS 2013"四条标准，否则就补充书。**它和"awesome-CS-resources"类资源列表的最大差别在于——它是按"学位要求"反向设计，而不是按"主题热度"正向堆料**。
+**OSSU Computer Science（[ossu/computer-science](https://github.com/ossu/computer-science)）是 Open Source Society University 维护的"用在线课程代替本科 CS 学位"自学路径，截至 2026-09 在 GitHub 上约 208k stars / 25.8k forks，MIT 许可证。** 它不是又一份书单，而是一份**严格对齐 CS 2013 课程标准**（Curriculum Guidelines for Undergraduate Degree Programs in Computer Science）的本科级路径：候选课程必须满足"开放注册、定期开课、教学质量高、对齐 CS 2013"四条标准，否则就补充书。**它和"awesome-CS-resources"类资源列表的最大差别在于——它是按"学位要求"反向设计，而不是按"主题热度"正向堆料**。
 
 如果你在自学 CS 但一直被"该学什么、按什么顺序、用什么教材"三个问题困住，或者已经在工作中但想系统补 CS 基础，这篇文章值得完整读完。
 
@@ -110,10 +110,10 @@ Core CS 是 OSSU 的核心，覆盖以下 8 个领域，全部必修：
 | Core programming | 函数式编程 / 设计模式 / 静态与动态类型 / ML/Racket | Systematic Program Design / Programming Languages / OOD |
 | Core math | 离散数学 / 数学证明 / 概率 / 大 O | Calculus 1A/1B/1C (MIT) / Mathematics for CS (MIT) |
 | CS Tools | Shell / Vim / 命令行环境 / 版本控制 | The Missing Semester of Your CS Education (MIT) |
-| Core systems | 过程式编程 / 手动内存管理 / 布尔代数 / 门电路 / 内存 / 计算机体系结构 / 汇编 | Nand2Tetris 系列 / Computer Architecture / OS / 网络 |
-| Core theory | 算法 / 计算理论 / 计算复杂度 / 形式语言与自动机 | Algorithms (Princeton) / Theory of Computation |
-| Core security | 密码学 / 系统安全 / 网络安全 | Cryptography (Stanford) / Security / Web Security |
-| Core applications | 函数式编程应用 / 数据库 / 并发 / 分布式 | Parallel/Concurrent/Functional Programming / DB / Cloud Computing |
+| Core systems | 过程式编程 / 手动内存管理 / 布尔代数 / 门电路 / 内存 / 计算机体系结构 / 汇编 | Nand2Tetris 系列 / Operating Systems (OSTEP) / Computer Networking |
+| Core theory | 算法 / 排序与搜索 / 动态规划 / NP 完全性 | Algorithms: Design and Analysis (Stanford) |
+| Core security | 机密性/完整性/可用性 / 安全设计 / 防御式编程 / 威胁与攻击 / 网络安全 / 密码学 | Cybersecurity Fundamentals (RIT) / Principles of Secure Coding / Security Vulnerabilities |
+| Core applications | Agile / REST / 关系数据库 / 机器学习 / 计算机图形学 | Databases (Stanford) / Machine Learning / Computer Graphics |
 | Core ethics | 科技伦理 / 法律 / 隐私 | 伦理相关课程与读物 |
 
 8 个领域全部为必修——OSSU 把"广度"作为第一目标的落地。
@@ -178,10 +178,10 @@ README 明示"几个第三方过期/废弃材料"——Firebase app、未维护�
         │
         ▼
 第 51-100 周: Core CS - Core systems + theory + security + applications + ethics
-  - Nand2Tetris (从与非门到完整计算机) → Architecture → OS → Networks
-  - Algorithms (Princeton) → Theory of Computation
-  - Cryptography (Stanford) → Security 系列
-  - DB / Cloud Computing / 分布式
+  - Nand2Tetris (从与非门到完整计算机) → OS → Computer Networking
+  - Algorithms: Design and Analysis (Stanford)
+  - Cybersecurity Fundamentals (RIT) → 安全编码与漏洞识别系列
+  - Databases (Stanford) → Machine Learning → Computer Graphics
   - 输出: 系统 + 算法 + 安全 + 应用的本科级广度
         │
         ▼
@@ -215,7 +215,7 @@ README 明示"几个第三方过期/废弃材料"——Firebase app、未维护�
 1. **先在 Discord 看 1-2 周**——判断社区氛围与你的预期是否吻合；OSSU 强调自学、自律、社区支持，没有"教练盯着你"
 2. **先做 Intro CS**——这是 14 周的"试婚期"，避免"all in 后才发现 CS 不适合你"
 3. **完成 Core CS 的编程与数学**——底座，没有这两块后面的领域全是空中楼阁
-4. **坚持在 GitHub Issues 上报课完成情况**——把进度沉淀下来，便于社区给你反馈
+4. **Fork 仓库当"打勾看板"**——README 官方做法是 fork 主仓库，完成一门就在对应课程前打 ✅，当看板用；GitHub Issues 则用来反馈课程问题/提课程变更，两者分工明确
 5. **Advanced CS 选一个方向深扎**——不要贪多
 6. **Final Project 公开化**——放到 GitHub / 个人作品集 / Discord 拉评审
 

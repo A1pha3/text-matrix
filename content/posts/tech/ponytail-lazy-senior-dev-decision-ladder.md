@@ -7,7 +7,7 @@ categories: ["技术笔记"]
 tags: ["ai-agent", "claude-code", "prompt-engineering", "yagni"]
 github_repo: "DietrichGebert/ponytail"
 source_key: "gh:DietrichGebert/ponytail"
-slug : ponytail-lazy-senior-dev-decision-ladder
+slug: ponytail-lazy-senior-dev-decision-ladder
 ---
 
 ## 核心判断
@@ -20,7 +20,18 @@ AI 编程代理最常见的浪费不是写错，而是**写多**：要一个日�
 
 ## 规则本体：七级阶梯
 
-ponytail 的全部魔力浓缩在写代码前依次落座的七级判断上：
+ponytail 的全部魔力浓缩在写代码前依次落座的七级判断上。把整条管道拉平看，它其实只有三个环节：先理解，再逐级下探，最后守住底线。
+
+```mermaid
+flowchart TD
+    A[任务输入] --> B[先读改动涉及的代码 · 追真实调用流]
+    B --> C["对方案懒 · 对读代码从不懒"]
+    C --> D["七级阶梯逐级下探<br/>1 不需要 → 跳过（YAGNI）<br/>2 库里已有 → 复用<br/>3 标准库 → 用标准库<br/>4 平台原生 → 用原生特性<br/>5 已装依赖 → 用它<br/>6 一行 → 一行写完<br/>7 都不行 → 最小实现"]
+    D --> E[输出：任务需要的代码]
+    E --> F[验证 · 错误处理 · 安全 · 可访问性 保留]
+```
+
+最后一步不是可选项：基准里安全项保持 100% 保留，正是因为有这条底线兜着。
 
 ```
 1. 这东西需要存在吗？        → 不需要：跳过（YAGNI）
@@ -31,6 +42,8 @@ ponytail 的全部魔力浓缩在写代码前依次落座的七级判断上：
 6. 一行能写完？              → 一行
 7. 以上都不行：写「能工作的最小实现」
 ```
+
+第 1 级立的是 YAGNI（You Aren't Gonna Need It，你不会需要它），后六级是它按「为什么不用现成的」拆开的答案。这条阶梯聪明在把一句口号变成了可逐级落座的检查顺序。
 
 最出名的例子是日期选择器：
 
@@ -49,6 +62,15 @@ ponytail 值得一读的部分是它如何被度量，尤其是它公开修正�
 
 **现行版本（agentic 基准）**：headless Claude Code 会话编辑真实仓库 fastapi/full-stack-fastapi-template，按留下的 `git diff` 计分；12 个 feature 工单，带/不带 skill 对比，n=4，Haiku 4.5，中位数报告。设了两个对照组：caveman（简短文风控制）和裸 "YAGNI + one-liners" prompt。结果 ponytail 是唯一在 LOC/tokens/cost/time 四项全面下降且安全性保持 100% 的组；裸 prompt 虽然也砍代码（-33%），但安全项掉到 95%。
 
+| 组别 | 代码量（LOC） | 安全检查 | 定位 |
+|------|--------------|----------|------|
+| 无 skill 基线 | —（参照） | 100% | 不写代码量对照无从谈起 |
+| ponytail（七级阶梯） | **-54%** | 100% | LOC/tokens/cost/time 四项全降 |
+| 裸 "YAGNI + one-liners" | -33% | **95%** | 砍代码，却丢了安全检查 |
+| caveman（简短文风） | 未给均值 | — | 对照组 · 用来隔离文风变量 |
+
+对着这张表读，关键在于第三、四行：砍代码不难，难的是砍完还守住安全线——这正是阶梯里「验证、错误处理、安全不上砍刀」那步在基准里的体现。
+
 **被废弃的旧版本（单次生成基准）**：早期报告「80-94% 少写」，issue #126 指出裸模型基线会用水文和选项凑篇幅，差距部分是对话基线假象。作者没有删数据，而是把旧版折进折叠块、标注为「不可辩护的旧数字」，并把 94% 重新定位为逐任务上限而非均值。
 
 两点值得所有做 prompt/skill 基准的人抄走：**对照组要隔离文风与规则两种变量**（caveman 的存在就是为了证明「简短」本身不够）；**承认基线缺陷并公开修正是可信度的来源**。同时注意边界：削减幅度在「本来就该最小化」的任务上趋近于零；在爱思考的推理模型上（README 点名 GPT-5.5）反而可能因为思维链里反复权衡阶梯而更贵——它优化的是「遵守阶梯的模型」。
@@ -62,7 +84,7 @@ Claude Code（两条命令分两次发送）：
 /plugin install ponytail@ponytail
 ```
 
-Codex / Copilot CLI 同构：`codex plugin marketplace add DietrichGebert/ponytail` 或交互内 `/plugin` 两条。此外覆盖 OpenCode（opencode.json 加 `"plugin": ["@dietrichgebert/ponytail"]`）、Gemini CLI（`gemini extensions install`）、Pi（`pi install git:github.com/DietrichGebert/ponytail`）、Qoder（零配置读 AGENTS.md）等约 20 种 harness。
+Codex / Copilot CLI 同构：`codex plugin marketplace add DietrichGebert/ponytail` 或交互内 `/plugin` 两条。此外覆盖 OpenCode（opencode.json 加 `"plugin": ["@dietrichgebert/ponytail"]`）、Gemini CLI（`gemini extensions install`）、Pi（`pi install git:github.com/DietrichGebert/ponytail`）、Qoder（零配置读 AGENTS.md）等约 20 种代理宿主（harness）。
 
 前提条件只有一条：Claude Code / Codex 的生命周期钩子需要 `node` 在非交互 shell 的 PATH 上（Nix/nvm 用户注意）；缺了也不报错，只是退化为非 always-on 激活。
 

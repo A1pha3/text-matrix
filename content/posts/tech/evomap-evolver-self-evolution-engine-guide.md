@@ -25,7 +25,9 @@ extraMetadata:
 
 ## §1 Evolver 解决的核心问题
 
-Evolver 把 AI Agent 的临时 Prompt 调整改造成可审计、可复用的进化资产。它定位为 Prompt 生成器，基于 GEP（Genome Evolution Protocol）协议运行：扫描 `memory/` 目录的运行时日志，从 `assets/gep/` 选择匹配的 Gene 或 Capsule，输出协议化的 Prompt，并把每次变更记录为 EvolutionEvent。Agent 的改进方式因此从"凭经验手动调"变成"按协议自动迭代"，同时严格不触碰代码编辑和 Shell 执行——这条边界是它安全模型的基础。
+Evolver 把 AI Agent 临时的 Prompt 调整，改造成可审计、可复用的进化资产。它定位为 Prompt 生成器，基于 GEP（Genome Evolution Protocol）协议运行：扫描 `memory/` 目录的运行时日志，从 `assets/gep/` 选择匹配的 Gene 或 Capsule，输出协议化的 Prompt，并把每次变更记录为 EvolutionEvent。
+
+由此，Agent 的改进方式从"凭经验手动调"，变成"按协议自动迭代"。Evolver 全程不触碰代码编辑和 Shell 执行——这条边界正是它安全模型的基础。
 
 本文覆盖以下内容：
 
@@ -112,18 +114,7 @@ GEP 的三个基础概念：
 
 ### 4.3 自进化的工作流程
 
-```
-┌─────────────┐     分析      ┌──────────────┐     选择      ┌─────────────┐
-│ memory/目录  │ ──────────> │ Log分析器     │ ──────────> │ Gene/Capsule│
-│ (运行时日志) │              │ (扫描错误模式) │              │ 选择器       │
-└─────────────┘              └──────────────┘              └─────────────┘
-                                                                │
-                                                                v
-┌─────────────┐     记录      ┌──────────────┐     输出      ┌─────────────┐
-│ Evolution   │ <────────── │ Evolution    │ <───────── │ GEP Prompt  │
-│ Event日志   │             │ 事件记录器    │             │ (协议约束)   │
-└─────────────┘             └──────────────┘             └─────────────┘
-```
+数据流向见 §3：`memory/` 日志经 Analysis 分析、Selection 选择，由 Evolution 生成 GEP Prompt，最终写回 EvolutionEvent 日志。每一轮进化周期循环以下四步：
 
 **每轮进化周期**：
 
@@ -213,11 +204,7 @@ Evolver 的设计原则是"Prompt 生成器，不触碰代码"——它只输出
 
 ### 5.4 与 OpenClaw 的集成
 
-当 Evolver 运行在 OpenClaw 等 Agent 运行时中时，其 `stdout` 输出可以被宿主解释执行：
-
-```
-sessions_spawn(...)
-```
+当 Evolver 运行在 OpenClaw 等 Agent 运行时中时，它的 `stdout` 输出会被宿主读取并解释为动作：Evolver 生成的 Prompt 成为 OpenClaw 的会话指令，宿主通过 `sessions_spawn(...)` 这类调用把它转化为实际的代码修改。
 
 宿主负责把 Evolver 生成的 Prompt 转化为实际动作，Evolver 本身不执行任何命令。这种分工让进化逻辑和执行逻辑解耦——Evolver 专注于"该进化什么"，宿主专注于"怎么执行"。
 
@@ -502,7 +489,7 @@ Git 用于：
 
 ### 9.1 创建自定义 Gene
 
-Gene 是 Gene Expression Programming 中的基本单元，代表一种可复用的进化模式。
+Gene 是 GEP 协议中的基本进化单元，代表一种可复用的改进模式。它和 §4.2 中定义的 Capsule、EvolutionEvent 一起构成协议的三要素：Gene 描述"改什么"，Capsule 规定"何时用"，EvolutionEvent 记录"改了谁、为什么、结果如何"。
 
 ```
 assets/gep/genes/
@@ -850,5 +837,3 @@ EVOLVE_STRATEGY=repair-only node index.js   # 修复模式
 - **许可**：MIT
 - **Stars**：3,862
 - **Forks**：392
-
-🦞 每日 08:00 自动更新
