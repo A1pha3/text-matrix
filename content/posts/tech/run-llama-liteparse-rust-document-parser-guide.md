@@ -3,7 +3,7 @@ title: "LiteParse 深度拆解：LlamaIndex 团队开源的 Rust 文档解析器
 date: "2026-06-24T18:10:00+08:00"
 slug: "run-llama-liteparse-rust-document-parser-guide"
 github_repo: "run-llama/liteparse"
-description: "run-llama/liteparse 是 LlamaIndex 团队 2026 年开源的轻量级 PDF 文档解析器，基于 PDFium + Tesseract 核心,提供 napi-rs / PyO3 / wasm 多语言绑定,主打本地化与零云依赖。本文拆解其 5 层系统地图、OCR 可插拔体系、Markdown 启发式重建路径,以及与 LlamaParse 的产品矩阵关系。"
+description: "run-llama/liteparse 是 LlamaIndex 团队 2026 年开源的轻量级 PDF 文档解析器，基于 PDFium + Tesseract 核心，提供 napi-rs / PyO3 / wasm 多语言绑定，主打本地化与零云依赖。本文拆解其 5 层系统地图、OCR 可插拔体系、Markdown 启发式重建路径，以及与 LlamaParse 的产品矩阵关系。"
 draft: false
 categories: ["技术笔记"]
 tags: ["OCR", "Rust"]
@@ -35,7 +35,7 @@ tags: ["OCR", "Rust"]
 
 ## 二、系统地图：一份 5 层架构
 
-LiteParse 的代码组织很清晰，一个 Rust workspace + 三个语言绑定包就涵盖了所有职责。读 README 的 mermaid 图和 `crates/` 目录，能看到 5 层结构：
+LiteParse 的代码组织很清晰，一个 Rust workspace + 三个语言绑定包就涵盖了所有职责。读 README 的 mermaid 图和 `crates/` 目录，能看到一条 5 层核心流水线，外加输出层与绑定层两个外围接口：
 
 | 层级 | 职责 | Rust 模块 | 替代方案 |
 |------|------|-----------|----------|
@@ -47,7 +47,7 @@ LiteParse 的代码组织很清晰，一个 Rust workspace + 三个语言绑定�
 | **输出层** | JSON / 文本 / Markdown / 截图 | `JSON` / `TEXT` / `SCREEN` 节点 | 用户自定义 |
 | **绑定层** | Node.js / Python / 浏览器 | `napi-rs` / `PyO3` / `wasm-bindgen` | FFI、HTTP service |
 
-每一层都可以独立替换或跳过，这是 LiteParse 最值得借鉴的设计——它没有把整个 pipeline 锁死在单一实现里。比如：你可以用 PaddleOCR HTTP server 替代 Tesseract、可以关掉 OCR 拿纯净文本、可以只取截图而不要文本。
+其中第 1、3、5 层构成"取文本 → 重建布局"的必经主线，第 2 层（Office/Image 转 PDF）与第 4 层（OCR）按输入类型按需启用，输出层与绑定层则是外围接口。无论核心还是外围，每一层都可以独立替换或跳过——这是 LiteParse 最值得借鉴的设计，它没有把整个 pipeline 锁死在单一实现里。比如：你可以用 PaddleOCR HTTP server 替代 Tesseract、可以关掉 OCR 拿纯净文本、可以只取截图而不要文本。
 
 > 关键判断：这套 5 层 + 输出的结构，并不是文档解析器的"标准答案"，而是**"我能让你替换哪一层"**这个问题的显式回答。如果你不需要替换任何一层，选一个更上层的封装（如 LlamaParse）会更省事。
 
@@ -59,12 +59,12 @@ LiteParse 的代码组织很清晰，一个 Rust workspace + 三个语言绑定�
 
 ```
 LlamaIndex 文档处理产品矩阵
-├── LlamaParse (云端, 闭源, 复杂版面优化)
+├── LlamaParse (云端，闭源，复杂版面优化)
 │   ├── 处理稠密表格、多栏排版、图表、手写体
 │   ├── 收费 / API 调用
 │   └── 适合生产环境、追求召回质量
 │
-└── LiteParse (本地, 开源, 轻量优先)  ← 本文的重点
+└── LiteParse (本地，开源，轻量优先)  ← 本文的重点
     ├── 处理普通 PDF、Office 转 PDF、基础 OCR
     ├── Apache 2.0 / CLI + 三语言绑定
     └── 适合本地部署、隐私敏感、批量离线处理

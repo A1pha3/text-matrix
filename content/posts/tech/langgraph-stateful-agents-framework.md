@@ -1,5 +1,5 @@
 ---
-title: "LangGraph：构建有状态智能体的图形框架——40K+ Stars 的 AI Agent 编排框架从入门到精通"
+title: "LangGraph：构建有状态智能体的图形框架——41K+ Stars 的 AI Agent 编排框架从入门到精通"
 date: "2026-04-15T00:15:00+08:00"
 slug: "langgraph-stateful-agents-framework"
 github_repo: "langchain-ai/langgraph"
@@ -12,7 +12,7 @@ tags: ["AI Agent", "LangChain", "LLM", "Python"]
 
 # LangGraph：构建有状态智能体的图形框架
 
-LangGraph 解决的问题和 LangChain 不同。LangChain 回答「如何调用 LLM」，LangGraph 回答的是另一个问题：把多步 Agent 执行改造成可观测、可恢复、可干预的状态机。从 demo 走到生产，这一步往往比换一个更强的模型更关键——GitHub 上 40K+ Stars 的关注（截至 2026 年 9 月）也主要来自这里。
+LangGraph 解决的问题和 LangChain 不同。LangChain 回答「如何调用 LLM」，LangGraph 回答的是另一个问题：把多步 Agent 执行改造成可观测、可恢复、可干预的状态机。从 demo 走到生产，这一步往往比换一个更强的模型更关键——GitHub 上 41K+ Stars 的关注（截至 2026 年 9 月）也主要来自这里。
 
 一个典型的 Agent 失败场景：用户问「帮我订下周去上海的机票并通知同事」，Agent 调了 5 个工具，第 6 步调用邮件 API 时网络抖动。在传统链式实现里，进程一重启，前 5 步的中间结果全部丢失，用户只能从头再来。生产环境里这种体验直接等于流失。LangGraph 把链式执行拆成节点和边，每个节点执行完都把状态写进 Checkpoint（状态快照），下一次恢复时从最近的成功节点继续——Agent 从「一次性脚本」变成了「可断点续传的状态机」。
 
@@ -20,7 +20,7 @@ LangGraph 解决的问题和 LangChain 不同。LangChain 回答「如何调用 
 
 读完后你应该能够：
 
-- 说清 LangGraph 与 LangChain `AgentExecutor` 在控制流、状态、HITL 三个维度上的本质差异
+- 说清 LangGraph 与 LangChain `AgentExecutor` 在控制流、状态、Human-in-the-Loop（HITL）三个维度上的本质差异
 - 独立画出 StateGraph、Node、Edge、State、Reducer 五个抽象的依赖关系，并解释 Reducer 在多写者场景下的作用
 - 用 `PostgresSaver` + `thread_id` 实现一条断点续传流程，并说明节点幂等性为何是隐含契约
 - 用 `interrupt()` 和 `Command(resume)` 实现「批准继续 / 修改后继续 / 拒绝终止」三条人工决策路径，并说清恢复时节点从头重跑的后果
@@ -81,7 +81,7 @@ graph TB
 | **State** | 贯穿全图的共享数据结构，由 TypedDict 定义 | 函数参数 + 返回值 |
 | **Reducer** | 多个节点写同一字段时的合并策略 | reduce 函数 |
 
-三项关键能力都建立在 Checkpoint 之上。这里先分清两个名字：**Checkpoint 是每次写入的那份状态快照**，**Checkpointer 是负责读写快照的存储组件**（MemorySaver、PostgresSaver 都是 Checkpointer 的实现）。
+三项关键能力都建立在 Checkpoint 之上。这里先分清两个名字：**Checkpoint 是每次写入的那份状态快照**，**Checkpointer 是负责读写快照的存储组件**（InMemorySaver、PostgresSaver 都是 Checkpointer 的实现）。
 
 - **Durable Execution**：每个节点执行后自动持久化状态，故障后从检查点恢复
 - **Human-in-the-Loop**：通过 `interrupt()` 在节点内暂停执行，等人工输入后恢复
@@ -95,7 +95,7 @@ LangChain 的 `AgentExecutor` 是一条链：模型决定下一步 → 执行工
 
 第二堵墙在状态层。链式执行的状态留在内存里，进程崩了就没了。LangGraph 的每个节点返回一个 State delta，框架合并进全量 State 后写入 Checkpointer。PostgresSaver 把状态写进数据库，进程重启后用同一个 `thread_id` 调用 `invoke(None, config)` 就能从断点继续。
 
-第三堵墙在人工介入。链式执行一旦启动就跑到底，中间想暂停等人工确认，得自己造一套暂停-恢复机制。LangGraph 的 `interrupt()` 是框架级原语：节点在需要人工决策的位置调用它，框架把当前状态写进 Checkpoint，审核完成后调 `Command(resume)` 注入人工决定，再从挂起点继续——图的其它节点感知不到暂停发生过。
+第三堵墙在人工介入。链式执行一旦启动就跑到底，中间想暂停等人工确认，得自己造一套暂停-恢复机制。LangGraph 的 `interrupt()` 是框架级原语：节点在需要人工决策的位置调用它，框架把当前状态写进 Checkpoint，审核完成后调 `Command(resume)` 注入人工决定，`interrupt()` 带着这份决定恢复返回，节点继续往下走——图的其它节点感知不到暂停发生过。
 
 三堵墙的根子相同：链式模型把执行、状态、控制流耦合在一起，图模型把它们拆开。Node 管计算，Edge 管路由，State 管数据，Checkpoint 管持久化——每层出问题都能独立定位，不用在对话历史里猜执行路径。
 
@@ -108,6 +108,7 @@ LangChain 的 `AgentExecutor` 是一条链：模型决定下一步 → 执行工
 ```python
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
+from langgraph.checkpoint.memory import InMemorySaver
 from typing import TypedDict, Annotated
 
 class AgentState(TypedDict):
@@ -115,12 +116,26 @@ class AgentState(TypedDict):
     current_step: str
     context: dict
 
+def chat_node(state: AgentState) -> dict:
+    # 对话节点，这里示意为直接记录状态，实际会调用模型
+    return {"current_step": "chat_done"}
+
+def search_node(state: AgentState) -> dict:
+    # 检索节点，示意为写入检索结果，实际会调用工具
+    return {"current_step": "search_done", "context": {"hits": []}}
+
+def router_fn(state: AgentState) -> str:
+    # 条件边路由：最后一条消息若带工具调用则去 search，否则结束
+    last = state["messages"][-1]
+    return "search" if getattr(last, "tool_calls", None) else "end"
+
 graph = StateGraph(AgentState)
 graph.add_node("chat", chat_node)
 graph.add_node("search", search_node)
 graph.add_edge(START, "chat")
-graph.add_conditional_edges("chat", router_fn, {"continue": "search", "end": END})
-app = graph.compile(checkpointer=checkpointer)  # checkpointer 见下文 Checkpoint 小节
+graph.add_conditional_edges("chat", router_fn, {"search": "search", "end": END})
+# 开发环境先挂内存版 Checkpointer，生产环境换 Postgres（见下文 Checkpoint 小节）
+app = graph.compile(checkpointer=InMemorySaver())
 ```
 
 `Annotated[list, add_messages]` 这一行容易被忽略，但它是 State 设计的关键。默认情况下，节点返回的字段会覆盖原 State；指定 Reducer 后，多个节点写同一字段时按策略合并。`add_messages` 会按 message id 去重追加，避免每次节点返回都把整个消息列表重写一遍。
@@ -166,12 +181,12 @@ graph.add_conditional_edges(
 每次节点执行后，框架把当前完整 State 写进 Checkpointer，附带执行到哪个节点、走了哪条边。恢复时按 `thread_id` 找到最近的 Checkpoint，从下一个节点继续。
 
 ```python
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.postgres import PostgresSaver
 from langchain_core.messages import HumanMessage
 
 # 开发环境用内存，重启即丢
-checkpointer = MemorySaver()
+checkpointer = InMemorySaver()
 
 # 生产环境用 Postgres，跨进程跨重启
 # from_conn_string 返回 context manager，退出时释放连接
@@ -186,7 +201,9 @@ with PostgresSaver.from_conn_string("postgresql://user:pass@host/db") as saver:
 
 `thread_id` 是会话维度的标识。同一个用户的多次请求用同一个 `thread_id`，Agent 自动延续上下文；不同用户用不同 `thread_id`，状态互相隔离。这种设计让多租户场景天然支持，不需要自己在业务层做状态分桶。
 
-Checkpointer 的选型：官方维护 Memory、SQLite、Postgres、Redis 四种实现，社区还有 MongoDB、DynamoDB、Cassandra。单机开发用 Memory，单机持久化用 SQLite，多实例生产用 Postgres——后两者支持跨进程恢复，Memory 只在进程内有效。另一个容易忽略的细节：同步 Checkpointer 的写入是阻塞的，每个节点都要等 IO 完成才能进入下一步。对延迟敏感的场景，要么把多个轻量节点合并成一个，要么用吞吐更高的后端（Redis 比 Postgres 快，但持久性保证弱一些）。
+Checkpointer 的选型：官方维护 InMemory、SQLite、Postgres、Redis 四种实现，社区还有 MongoDB、DynamoDB、Cassandra。单机开发用 InMemory，单机持久化用 SQLite，多实例生产用 Postgres——后两者支持跨进程恢复，InMemory 只在进程内有效。
+
+另一个容易忽略的细节是 Checkpoint 的写入时机。调用图时可以用 `durability` 参数控制落盘强度：`sync`（默认）在下一步开始前把状态写满，持久性最好但每个节点都要等 IO 完成；`async` 边执行边异步落盘，性能更好，但进程在写盘前崩溃可能丢掉最近一次 Checkpoint；`exit` 只在整次执行退出时落盘，性能最好，中途崩溃则无法断点续传。对延迟敏感的场景，先评估把 `durability` 调成 `async` 或 `exit`，比换更快的后端来得直接；如果还不行，再把多个轻量节点合并成一个，或改用吞吐更高的后端（Redis 比 Postgres 快，但持久性保证弱一些）。
 
 ## Durable Execution：从一次性脚本到可断点续传
 
@@ -293,7 +310,7 @@ def send_email_node(state: FinanceState) -> dict:
             "amount": state["amount"],
             "draft": draft,
         })
-        # 恢复后从这一行继续，decision 就是审核员传入的 resume 值
+        # 恢复后 decision 就是审核员传入的 resume 值（注意节点是从头重跑的，见下方红线）
         if not decision["approved"]:
             return {"status": "rejected_by_reviewer"}
         draft = decision["email_content"]  # 审核员可能改过内容
@@ -315,6 +332,8 @@ if interrupts:
         payload=interrupts[0].value,
     )
 ```
+
+上面用的是 `invoke()` 同步接口。如果调用方要做逐 token 流式展示，改用事件流式接口 `stream_events(..., version="v3")`：中断负载在 `stream.interrupts` 里，`stream.interrupted` 表示这次执行是否因人工介入暂停，跑完的最终状态在 `stream.output`。对不需要流式投影的场景，`invoke()` 的 `__interrupt__` 字段够用，两种方式恢复动作完全一样。
 
 审核员在后台系统看到这条待办，决定批准、修改还是拒绝。恢复一律通过 `Command(resume=...)`：
 
@@ -340,7 +359,7 @@ app.invoke(
 )
 ```
 
-三条路径复用同一份 Checkpoint：业务代码要做的只是把审核负载放进 `interrupt()`，把人工决定放进 `Command(resume)`，暂停期间的状态保存和恢复位置计算都由框架完成。审核拖几个小时甚至几天都没关系——Checkpoint 会一直停在原地。如果只是想人工修正历史状态（比如回填一笔数据）而不是恢复中断，`update_state` 仍然可用，它的定位是修正和调试，不是恢复中断的标准入口。
+三条路径复用同一份 Checkpoint：业务代码要做的只是把审核负载放进 `interrupt()`，把人工决定放进 `Command(resume)`，暂停期间的状态保存由框架完成，恢复时节点从头重跑，具体语义见下文红线。审核拖几个小时甚至几天都没关系——Checkpoint 会一直停在原地。如果只是想人工修正历史状态（比如回填一笔数据）而不是恢复中断，`update_state` 仍然可用，它的定位是修正和调试，不是恢复中断的标准入口。
 
 ### 三条使用红线
 
@@ -356,7 +375,7 @@ app.invoke(
 
 LangGraph 的 Memory 模型容易混淆，因为「记忆」这个词在 LLM 语境下被用得太泛。LangGraph 把 Memory 明确分成两层，两层有不同的生命周期和存储后端。
 
-**Working Memory** 是单次会话内的状态，由 Checkpoint 自动管理。一个 `thread_id` 对应一份 Working Memory，会话结束（用户离开）后是否保留取决于 Checkpointer 配置——MemorySaver 进程退出就丢，PostgresSaver 永久保留。Working Memory 里放的是当前对话的消息历史、中间工具调用结果、当前执行到哪一步。
+**Working Memory** 是单次会话内的状态，由 Checkpoint 自动管理。一个 `thread_id` 对应一份 Working Memory，会话结束（用户离开）后是否保留取决于 Checkpointer 配置——InMemorySaver 进程退出就丢，PostgresSaver 永久保留。Working Memory 里放的是当前对话的消息历史、中间工具调用结果、当前执行到哪一步。
 
 **Persistent Memory** 是跨会话的长期记忆，由 LangGraph 的 Store 抽象承载。Store 是一个按 namespace 组织的键值存储：namespace 用元组分层（比如 `("users", user_id, "preferences")`），同一 namespace 下按 key 读写。编译时把 store 传给 `compile()`，节点声明 store 参数就能访问。需要语义检索时，给 Store 配置 embedding 索引，`search()` 就按相似度返回——向量检索依赖外部的 embedding 模型和向量后端（生产环境 PostgresStore 底下通常是 pgvector），LangGraph 提供的是统一的读写接口。
 
@@ -407,7 +426,7 @@ hits = store.search(("users", "u_123"), query="这位用户偏好的沟通风格
 
 Agent 框架不止 LangGraph 一个，选型时需要清楚每个框架的定位差异。这里给出的是生产环境真实使用中的取舍，不是 feature 对比表。
 
-**LangChain Agent**（`AgentExecutor`）是高层抽象，开箱即用。适合 demo、原型、简单场景：单步工具调用、不需要持久化、不需要 HITL。它的局限是控制流不透明、状态不可恢复、人工介入难插入。注意 `AgentExecutor` 已被官方标记废弃，LangChain 现在推荐的 Agent 构建 API（LangChain 1.0 的 `create_agent`，前身是 `create_react_agent`）就直接构建在 LangGraph 之上——当你需要开箱即用的便利但撞上了那些局限时，官方给的迁移方向就是 LangGraph。
+**LangChain Agent**（`AgentExecutor`）是高层抽象，开箱即用。适合 demo、原型、简单场景：单步工具调用、不需要持久化、不需要 HITL。它的局限是控制流不透明、状态不可恢复、人工介入难插入。注意 `AgentExecutor` 已被官方标记废弃，LangChain 现在推荐的 Agent 构建 API（LangChain 1.0 的 `create_agent`，前身是 `create_react_agent`）就直接构建在 LangGraph 之上——撞上上面那几条局限时，官方指出的迁移方向就是 LangGraph。
 
 **CrewAI** 强调多 Agent 角色协作，每个 Agent 有 role、goal、backstory，通过任务分配和角色对话完成复杂工作。适合内容生成、创意协作这类「多个角色一起讨论」的场景。它的局限是状态管理和故障恢复不如 LangGraph 细粒度——CrewAI 的抽象层次更高，调试时不容易看到具体哪一步出了问题。核心需求是「精细控制单 Agent 的执行流程」时，LangGraph 更合适；核心需求是「多个角色协作产出内容」时，CrewAI 更顺手。
 
@@ -595,11 +614,11 @@ Node 必须设计成幂等。写数据库用 upsert，调外部 API 传幂等键
 
 ### Q4：支持哪些 Checkpointer？
 
-官方维护 Memory、SQLite、Postgres、Redis 四种，社区还有 MongoDB、DynamoDB、Cassandra。选型：单机开发用 Memory，单机持久化用 SQLite，多实例生产用 Postgres。
+官方维护 InMemory、SQLite、Postgres、Redis 四种，社区还有 MongoDB、DynamoDB、Cassandra。选型：单机开发用 InMemory，单机持久化用 SQLite，多实例生产用 Postgres。
 
 ### Q5：能用于生产环境吗？
 
-可以。据 LangGraph 官方文档，Klarna（电商客服）、Replit（代码生成）、Elastic（搜索增强）等公司在生产环境使用。LangGraph Platform 提供企业级部署支持。
+可以。据 LangGraph 官方公布的案例，Klarna（电商客服）、Uber（代码迁移与单测生成）、LinkedIn（AI 招聘）、Elastic（威胁检测）等公司在生产环境使用。LangGraph Platform 提供企业级部署支持。
 
 ### Q6：有 JavaScript 版本吗？
 
@@ -667,7 +686,7 @@ LangGraph 默认对同一个 `thread_id` 加锁，保证状态写入的顺序一
 
 **第一步：把现有链式 Agent 改造成 StateGraph**。不改业务逻辑，只是把 `chain.invoke()` 拆成节点和边。改完之后配合 LangSmith 能看到完整执行路径，后续的性能调优和 bug 定位才有抓手。
 
-**第二步：接入 Checkpointer**。先用 MemorySaver 在开发环境验证，再切到 PostgresSaver。接入后进程重启不丢上下文，状态持久化这一关才算过——否则任何一次部署或重启都会让用户会话中断。
+**第二步：接入 Checkpointer**。先用 InMemorySaver 在开发环境验证，再切到 PostgresSaver。接入后进程重启不丢上下文，状态持久化这一关才算过——否则任何一次部署或重启都会让用户会话中断。
 
 **第三步：在关键节点加 HITL**。识别出有合规风险或不可逆操作的节点，在决策点调用 `interrupt()`。这一步解决的是合规和安全性——在很多行业，没有 HITL 就没有上线资格。
 
@@ -676,6 +695,27 @@ LangGraph 默认对同一个 `thread_id` 加锁，保证状态写入的顺序一
 **第五步：考虑多 Agent 协作**。单 Agent 稳定运行后，再拆分出子 Agent 用 Supervisor 模式协作。不要一开始就上多 Agent——单 Agent 都没跑稳，多 Agent 的调试复杂度会指数级上升。
 
 选框架阶段先把第一步和第二步走通。这两步的价值在生产环境第一次遇到故障时才会显出来——进程能从断点恢复，用户不用从头再来一次。
+
+## 术语速查
+
+| 术语 | 含义 |
+|------|------|
+| StateGraph | 装配节点和边的有向图容器，编译后成为不可变的可执行图 |
+| State | 贯穿全图的共享数据结构，用 TypedDict 声明 |
+| Node | 图的处理步骤，契约是 `f(state) -> state_delta` |
+| Edge | 节点间的流转，分固定边和条件边 |
+| Reducer | 多个节点写同一字段时的合并策略，如 `add_messages` |
+| Checkpoint | 每次写入的那份状态快照 |
+| Checkpointer | 负责读写快照的存储组件，如 InMemorySaver、PostgresSaver |
+| thread_id | 会话维度的状态标识，决定从哪份 Checkpoint 恢复 |
+| durability | Checkpoint 落盘强度：`sync`、`async`、`exit` 三档 |
+| Durable Execution | 节点执行后自动持久化、故障后可断点续传的能力 |
+| Human-in-the-Loop (HITL) | 通过 `interrupt()` 暂停执行、等人工输入后恢复的机制 |
+| interrupt() | 在节点内挂起执行的原语，恢复后返回人工决策值 |
+| Command(resume) | 恢复中断的输入，resume 值成为 `interrupt()` 的返回值 |
+| Working Memory | 单次会话内的状态，由 Checkpoint 管理 |
+| Persistent Memory | 跨会话的长期记忆，由 Store 存储 |
+| Store | 按 namespace 组织的键值存储，承载长期记忆和语义检索 |
 
 ## 相关资源
 

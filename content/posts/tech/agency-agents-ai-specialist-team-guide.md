@@ -1,5 +1,5 @@
 ---
-title: "The Agency：147个专业AI Agent组成的虚拟团队"
+title: "The Agency：230+ 专业 AI Agent 组成的虚拟团队"
 date: "2026-05-05T11:25:00+08:00"
 slug: "agency-agents-ai-specialist-team-guide"
 github_repo: "msitarzewski/agency-agents"
@@ -7,20 +7,20 @@ aliases:
   - "/posts/tech/agency-agents-complete-ai-agency-toolkit/"
   - "/posts/tech/the-agency-open-source-ai-agents-personas/"
   - "/posts/tech/ai-agent/agency-agents-multi-agent-framework-guide/"
-description: "The Agency是一个包含147个专业AI Agent的开源项目，覆盖工程、设计、销售、营销等12个领域。每个Agent拥有独特人格、专业流程和可衡量产出，可接入Claude Code、Cursor、Windsurf等主流AI编程工具。本文详解其架构设计、Agent分类、集成方式与实际应用场景。"
+description: "The Agency 是一个包含 230+ 个专业 AI Agent 的开源项目，按 18 个部门组织，覆盖工程、设计、销售、营销、专业服务等领域。每个 Agent 拥有独特人格、专业流程和可衡量产出，可接入 Claude Code、Cursor、Codex 等主流 AI 编程工具。本文详解其架构设计、Agent 分类、集成方式与实际应用场景。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 ---
 
-# The Agency：147个专业 AI Agent 组成的虚拟团队
+# The Agency：230+ 专业 AI Agent 组成的虚拟团队
 
 ## 学习目标
 
 读完本文后，你应该能：
 
 1. 说清 The Agency 与通用提示词模板在结构上的差异，并指出差异落在哪 5 个字段上。
-2. 列出 12 个部门的边界，判断自己团队职能对应哪几个 Agent。
+2. 列出 18 个部门的边界，判断自己团队职能对应哪几个 Agent。
 3. 在 Claude Code、Cursor、OpenClaw 三类工具中选一种完成首次安装，并解释为什么选这一种。
 4. 复述一次"工程部 Agent 审查 PR"的任务流转路径，说明每个环节的输入和输出。
 5. 根据团队规模和现有工具栈，给出一个分阶段的采用顺序。
@@ -29,7 +29,7 @@ tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 
 - [项目判断](#项目判断)
 - [核心设计理念](#核心设计理念)
-- [12 个专业部门一览](#12-个专业部门一览)
+- [18 个专业部门一览](#18-个专业部门一览)
 - [快速开始](#快速开始)
 - [工程部 Agent 详解](#工程部-agent-详解)
 - [多工具集成架构](#多工具集成架构)
@@ -47,16 +47,16 @@ tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 
 ## 项目判断
 
-[The Agency](https://github.com/msitarzewski/agency-agents) 做了一件事：把 AI Agent 从"一个通用助手"拆成 147 个岗位，每个岗位是一份 Markdown 文件，定义人格、使命、工作流、交付物和记忆策略。它不解决模型能力问题。同一个 Claude Opus，挂了 Frontend Developer 的 Agent 文件和挂了 Backend Architect 的 Agent 文件，输出会走两条完全不同的路——但底层模型没变。
+[The Agency](https://github.com/msitarzewski/agency-agents) 做了一件事：把 AI Agent 从"一个通用助手"拆成 230+ 个岗位，每个岗位是一份 Markdown 文件，定义人格、使命、工作流、交付物和记忆策略。它不解决模型能力问题。同一个 Claude Opus，挂了 Frontend Developer 的 Agent 文件和挂了 Backend Architect 的 Agent 文件，输出会走两条完全不同的路——但底层模型没变。
 
-这套仓库的实际用法是按团队职能挑几个岗位单独跑或按 pipeline 串联，再通过配置文件替换模型、输出目录和外部凭据。一次装 147 个 Agent 反而是少数场景。把它理解成一组可组合的岗位库比理解成"超大号提示词包"更接近真实用法——后者会让人忽略它里面的工程约束（工作流步骤、交付物格式、退出条件）。
+这套仓库的实际用法是按团队职能挑几个岗位单独跑或按 pipeline 串联，再通过配置文件替换模型、输出目录和外部凭据。一次装全部 Agent 反而是少数场景。把它理解成一组可组合的岗位库比理解成"超大号提示词包"更接近真实用法——后者会让人忽略它里面的工程约束（工作流步骤、交付物格式、退出条件）。
 
-**项目数据**（以下数据来自仓库 [README](https://github.com/msitarzewski/agency-agents#readme)，获取时间 2026-06-24）：
+**项目数据**（以下数据来自仓库 [README](https://github.com/msitarzewski/agency-agents#readme)，获取时间 2026-09-11）：
 
-- GitHub Stars：21,000+（截至 2026 年 6 月，持续增长中）
-- Agent 总数：200+ 个（按细分场景计数）
-- 覆盖领域：16 个专业领域
-- 支持工具：Claude Code、GitHub Copilot、Cursor、OpenClaw、Windsurf 等主流 AI 编程工具
+- GitHub Stars：151,000+（截至 2026 年 9 月）
+- Agent 总数：230+ 个（官方口径，按 Roster 各分部统计）
+- 部门数量：18 个专业部门（Engineering、Design、Sales、Marketing、Specialized 等）
+- 支持工具：14+ 种主流 AI 编程工具（Claude Code、GitHub Copilot、Cursor、Codex、OpenClaw、Gemini CLI 等）
 - 开源协议：MIT
 
 ---
@@ -79,34 +79,50 @@ tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 
 ---
 
-## 12 个专业部门一览
+## 18 个专业部门一览
 
-The Agency 的组织架构模拟了真实公司结构，按职能拆成 12 个部门。这样组织的好处是团队容易找到对应职能的 Agent，也方便按部门批量管理（例如只装工程部到 Claude Code、只装市场部到 Cursor）：
+The Agency 的组织架构模拟了真实公司结构，按职能拆成 18 个部门。这样组织的好处是团队容易找到对应职能的 Agent，也方便按部门批量管理（例如只装工程部到 Claude Code、只装市场部到 Cursor）：
 
-| 部门 | Agent 数量 | 代表角色 |
-|------|-----------|---------|
-| 💻 工程部 | 25+ | 前端开发者、后端架构师、AI 工程师、安全工程师 |
-| 🎨 设计部 | 8 | UI 设计师、UX 研究员、品牌守护者 |
-| 💼 销售部 | 10 | 外展策略师、交易策略师、销售工程师 |
-| 📢 市场部 | 30+ | 增长黑客、内容创作者、Twitter 运营、知乎专家 |
-| 📊 产品部 | 5 | Sprint 优先排序器、趋势研究员、行为推动引擎 |
-| 🎬 项目管理 | 7 | 制片人、项目牧羊人、实验追踪员 |
-| 🧪 测试部 | 9 | 证据收集员、性能基准测试员、API 测试员 |
-| 🛟 支持部 | 7 | 支持响应员、分析报告员、财务追踪员 |
-| 🥽 空间计算 | 6 | XR 界面架构师、visionOS 工程师 |
-| 🎯 专业部 | 40+ | MCP 构建器、智能合同审计员、Salesforce 架构师、法务顾问、医疗合规专员 |
-| 💵 财务部 | 5 | 簿记员、财务分析师、税务策略师 |
+| 部门 | Agent 数 | 代表角色 |
+|------|---------|---------|
+| 💻 工程部 | 60+ | Frontend Developer、Backend Architect、Codebase Onboarding Engineer |
+| 🎨 设计部 | 10 | UI Designer、UX Researcher、Brand Guardian |
+| 💰 付费投放部 | 7 | PPC Campaign Strategist、Paid Media Auditor、Ad Creative Strategist |
+| 💼 销售部 | 10 | Outbound Strategist、Deal Strategist、Sales Engineer |
+| 📢 市场部 | 30+ | Growth Hacker、Content Creator、Twitter Engager、知乎 Strategist |
+| 📊 产品部 | 5 | Sprint Prioritizer、Trend Researcher、Behavioral Nudge Engine |
+| 🎬 项目管理 | 7 | Studio Producer、Project Shepherd、Experiment Tracker |
+| 🧪 测试部 | 9 | Evidence Collector、Reality Checker、API Tester |
+| 🔒 安全部 | 12 | Penetration Tester、Security Architect、Incident Responder |
+| 🛟 支持部 | 6 | Support Responder、Analytics Reporter、Finance Tracker |
+| 🥽 空间计算 | 6 | XR Interface Architect、visionOS Spatial Engineer |
+| 🎯 专业部 | 50+ | MCP Builder、Blockchain Security Auditor、Salesforce Architect |
+| 💵 财务部 | 5 | Bookkeeper & Controller、Financial Analyst、Tax Strategist |
 | 🎮 游戏开发 | 20+ | Unity/Unreal/Godot 专项工程师 |
+| 📚 学术部 | 6 | Anthropologist、Historian、Narratologist |
+| 🌍 GIS 地理信息 | 13 | GIS Analyst、Spatial Data Engineer、Web GIS Developer |
+| 🏥 医疗部 | 3 | Clinical Evidence Agent、Sovereign Health Systems Agent |
+| 🔍 研究部 | 1 | Research Synthesist |
 
-> 表中数字为各部门 README 列出的岗位数（截至 2026 年 5 月主分支），加总约 172。部分 Agent 同时挂靠多个部门，按部门计数会重复——例如 Security Engineer 同时出现在工程部和专业部，Codebase Onboarding Engineer 既属于工程部也被测试部引用，Analytics Reporter 在市场部和支持部都有 entry。这 25 个差值主要来自这类跨部门挂靠。法务、医疗类 Agent 归在专业部下。
+> 上表为各部门 README Roster 列出的实际数量（截至 2026 年 9 月主分支），各列加总约 275。官方口径为"230+ Specialized Agents"。差值的来源是跨部门挂靠：Readme 里同一个 Agent 可能被多个部门引用，按部门计数会重复。例如 Security Architect 与 Ethical Hacker 归在安全部下，而 Blockchain Security Auditor 挂在安全部也在相关场景被引用。法务、医疗类 Agent 分散在专业部和医疗部。
 
-12 个部门加起来覆盖了从代码到法务的常见岗位。其中工程部、市场部和专业部是数量最多的三个部门，分别对应"写代码""做增长""处理垂直领域专家任务"三类高频需求。专业部里的 MCP（Model Context Protocol，模型上下文协议）构建器和智能合同审计员是这套仓库里比较少见的岗位，前者负责把外部工具封装成 MCP 服务，后者负责审计 EVM（Ethereum Virtual Machine，以太坊虚拟机）合约的 gas（链上燃料费）消耗和安全漏洞。
+18 个部门加起来覆盖了从代码到法务的常见岗位。其中工程部、市场部和专业部是数量最多的三个部门，分别对应"写代码""做增长""处理垂直领域专家任务"三类高频需求。专业部里的 MCP（Model Context Protocol，模型上下文协议）构建器和智能合同审计员是这套仓库里比较少见的岗位，前者负责把外部工具封装成 MCP 服务，后者负责审计 EVM（Ethereum Virtual Machine，以太坊虚拟机）合约的 gas（链上燃料费）消耗和安全漏洞。
 
 ---
 
 ## 快速开始
 
-### 方式一：接入 Claude Code（推荐）
+### 方式〇：官方桌面 App（当前官方推荐）
+
+README 现在把桌面 App 列为第一推荐安装方式。它不需要克隆仓库，直接在图形界面浏览全部 Agent 分组、一键装进 Claude Code、Cursor、Codex 等，并自带更新。macOS 可用 Homebrew 安装：
+
+```bash
+brew install --cask msitarzewski/agency-agents/agency-agents
+```
+
+Windows 和 Linux 从仓库 [Releases](https://github.com/msitarzewski/agency-agents-app/releases/latest) 页面下载对应安装包。
+
+### 方式一：接入 Claude Code
 
 ```bash
 # 克隆仓库
@@ -120,7 +136,7 @@ cd agency-agents
 # "Hey Claude, activate Frontend Developer mode and help me build a React component"
 ```
 
-推荐 Claude Code 的原因是它的 Agent 文件直接落在 `~/.claude/agents/` 下，不需要额外转换层，调试时改 Markdown 就能生效。
+推荐 Claude Code 的原因是它的 Agent 文件直接落在 `~/.claude/agents/` 下，不需要额外转换层，调试时改 Markdown 就能生效。也可以只复制某个部门目录过去，例如 `cp engineering/*.md ~/.claude/agents/`。
 
 ### 方式二：接 OpenClaw
 
@@ -151,7 +167,7 @@ Agent 转化为 `.mdc` 规则文件存于 `.cursor/rules/` 目录。Cursor 用 `
 
 ## 工程部 Agent 详解
 
-工程部是仓库里岗位最多、覆盖最广的部门，包含 25+ 个专业工程师角色。
+工程部是仓库里岗位最多、覆盖最广的部门，包含 60+ 个专业工程师角色。
 
 ### 核心技术 Agent
 
@@ -160,7 +176,7 @@ Agent 转化为 `.mdc` 规则文件存于 `.cursor/rules/` 目录。Cursor 用 `
 | Frontend Developer | React/Vue/Angular、UI 实现、Web Vitals 优化 | 现代 Web 应用开发、像素级精确 UI 实现、Core Web Vitals 优化 |
 | Backend Architect | API 设计、数据库架构、可扩展性规划 | 服务端系统设计、微服务架构、云基础设施规划 |
 | AI Engineer | ML 模型部署、流水线构建、AI 集成 | 机器学习功能开发、数据管道、LLM 应用集成 |
-| Security Engineer | 威胁建模、安全代码审计、安全架构 | 应用安全评估、漏洞分析、安全 CI/CD 设计 |
+| Code Reviewer | 建设性代码审查、安全、可维护性 | PR 审查、代码质量门槛、通过评审提出改进 |
 | Autonomous Optimization Architect | LLM 路由、成本优化、影子测试 | 需要智能 API 选择和成本护栏的自主系统 |
 
 ### 特殊领域 Agent
@@ -179,7 +195,7 @@ Agent 转化为 `.mdc` 规则文件存于 `.cursor/rules/` 目录。Cursor 用 `
 
 ## 多工具集成架构
 
-The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种工具的接入：
+The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 14+ 种工具的接入：
 
 ```bash
 # 第一步：生成各工具对应的格式文件
@@ -190,18 +206,18 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种�
 ./scripts/install.sh
 ```
 
-安装脚本扫描系统，自动检测已安装的工具，以复选框 UI 呈现。`convert.sh` 把统一的 Agent 定义转换成各工具需要的格式（Claude Code 用 `.md`，Cursor 用 `.mdc`，OpenClaw 用 `SOUL.md` + `AGENTS.md`），`install.sh` 把转换后的文件落到对应工具的配置目录。两层分离的好处是新增工具支持只要写一个新的 converter，不用动安装逻辑。
+安装脚本扫描系统，自动检测已安装的工具，以复选框 UI 呈现。`convert.sh` 把统一的 Agent 定义转换成各工具需要的格式（Claude Code 用 `.md`，Cursor 用 `.mdc`，OpenClaw 用 `SOUL.md` + `AGENTS.md`，Codex 用 TOML），`install.sh` 把转换后的文件落到对应工具的配置目录。两层分离的好处是新增工具支持只要写一个新的 converter，不用动安装逻辑。目前官方列出的支持工具有 Claude Code、GitHub Copilot、Cursor、Antigravity、Gemini CLI、OpenCode、Aider、Windsurf、OpenClaw、Qwen Code、Kimi Code、Codex、Osaurus、Hermes。
 
 ## Codex 集成（高级选项）
 
-除了 Claude Code、Cursor 和 OpenClaw，The Agency 也支持 OpenAI Codex CLI。Codex 的 Agent 格式不同于前三者，需要额外的权限声明文件：
+除了 Claude Code、Cursor 和 OpenClaw，The Agency 也支持 OpenAI Codex CLI。Codex 的 Agent 文件格式是 TOML：
 
 ```bash
 ./scripts/convert.sh --tool codex
 ./scripts/install.sh --tool codex
 ```
 
-生成的文件在 `.codex/agents/` 下。Codex 模式下，Agent 的"人格"字段被映射到 Codex 的 `AGENTS.md` 角色描述，"工作流"被映射到 `CODEBUDDY.md` 的步骤约束（Codex 的 Agent 文件格式以 OpenAI Codex CLI 官方文档为准，本节描述需在安装时核实）。如果你在用 Codex 做长会话开发任务，这套映射让你不用在 Codex 和 Claude Code 之间维护两套 Agent 描述。
+生成的文件落在 `~/.codex/agents/` 下。Codex 模式下，Agent 的"人格""工作流"等字段被映射为 Codex 的 TOML agent 描述（TOML 的具体 schema 以 OpenAI Codex CLI 官方文档为准）。如果你在用 Codex 做长会话开发任务，这套映射让你不用在 Codex 和 Claude Code 之间维护两套 Agent 描述。
 
 ---
 
@@ -222,7 +238,7 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种�
   输出：API 设计评审（路由命名、错误码、幂等性）
   动作：指出 /api/checkout 缺少 idempotency key
 
-步骤 3：Security Engineer
+步骤 3：Security Architect（安全部）
   输入：步骤 2 的评审 + PR diff
   输出：威胁建模报告（关注支付金额篡改、重放攻击）
   动作：标记 amount 字段未做服务端校验
@@ -242,7 +258,7 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种�
 
 - **只用两三个 Agent**：你不需要把整条链路跑完。如果只是想审查 API 设计，只跑 Backend Architect 就够了。
 - **跑整条链路**：从 Codebase Onboarding 到 Reality Checker，每一步的输出都可以单独存档——六个月后审计这个 PR 为什么通过了某处改动，你能追溯到当时哪个 Agent 给出了什么判断。
-- **中间任何一步断了**：如果 Security Engineer 的输入里缺了 Backend Architect 的评审结论，它仍然能工作——但会重复做一些 Backend Architect 已经做过的判断。这是 pipeline 模式的通病：上下文传递靠文件，上游更新了下游文件不会自动刷新。解决方式是在 pipeline 脚本里加一条规则：下游 Agent 启动前检查上游产出文件的修改时间，如果比自己的输入文件旧，先重新读取。
+- **中间任何一步断了**：如果 Security Architect 的输入里缺了 Backend Architect 的评审结论，它仍然能工作——但会重复做一些 Backend Architect 已经做过的判断。这是 pipeline 模式的通病：上下文传递靠文件，上游更新了下游文件不会自动刷新。解决方式是在 pipeline 脚本里加一条规则：下游 Agent 启动前检查上游产出文件的修改时间，如果比自己的输入文件旧，先重新读取。
 
 ---
 
@@ -281,8 +297,8 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种�
 
 ### 不适合的场景
 
-- 你对单个通用提示词的输出已经满意——不需要拆 147 个岗位。
-- 你的任务只用一个角色连续工作——比如纯写前端页面，一个 Frontend Developer 就够了。装 147 个 Agent 只会让 token 消耗无意义膨胀。
+- 你对单个通用提示词的输出已经满意——不需要拆 230+ 个岗位。
+- 你的任务只用一个角色连续工作——比如纯写前端页面，一个 Frontend Developer 就够了。装全部 Agent 只会让 token 消耗无意义膨胀。
 - 你需要 Agent 自己写代码执行——The Agency 的 Agent 是 Markdown 定义的人格和工作流，不包含可执行代码。Agent 输出的"代码建议"仍然需要人来落地。
 
 ### 边界与局限
@@ -290,7 +306,7 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种�
 - Agent 文件里写的是"怎么想""怎么做"，不包含实际的代码执行能力——它不能替你部署、不能替你跑测试。
 - 输出质量绑定底层模型——Agent 文件约束的是行为规范，不是模型能力。Claude Haiku 跑的 Backend Architect 和 Claude Opus 跑的 Backend Architect，产出质量会有差距。
 - 部分细分 Agent（法律、医疗）只是参考性质的岗位描述，不能替代专业咨询。
-- 147 个 Agent 全部安装会带来 token 消耗——每个 Agent 的定义文件都会被加载到上下文，全部安装是额外的 token 开销。建议按需装，不要一键全装。
+- 全部 Agent 安装会带来 token 消耗——每个 Agent 的定义文件都会被加载到上下文，全部安装是额外的 token 开销。建议按需装（官方也提供按部门、按单个 Agent 的安装参数），不要一键全装。
 
 ---
 
@@ -316,7 +332,7 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种�
 
 控制方法：
 
-- 按需安装，不要一次装满 147 个
+- 按需安装，不要一次装满全部 Agent（用 `--division` 或 `--agent` 参数只装需要的部分）
 - 用 Autonomous Optimization Architect 做路由，把简单检查交给小模型
 - 在 Agent 定义里限制输出长度，避免长篇大论
 
@@ -330,9 +346,9 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 11 种�
 
 下面三个练习从浅到深，建议按顺序做。第一个验证基本使用，第二个验证协调链路，第三个让你上手定义合规约束。
 
-### 练习一：装三个工程部 Agent 跑一次代码审查
+### 练习一：装三个 Agent 跑一次跨部门代码审查
 
-1. 用 `./scripts/install.sh --tool claude-code` 装三个 Agent：Backend Architect、Security Engineer、Reality Checker
+1. 用 `./scripts/install.sh --tool claude-code` 装三个 Agent：Backend Architect（工程部）、Security Architect（安全部）、Reality Checker（测试部）
 2. 找一段你最近写的 API 代码（没有的话用下面这段模拟）：
 
 ```python
@@ -345,15 +361,15 @@ def create_checkout(user_id, items, total):
     return {"order_id": order.id, "status": "created"}
 ```
 
-3. 依次让 Backend Architect 审查 API 设计 → Security Engineer 审查安全漏洞 → Reality Checker 做最后的阻断判断
+3. 依次让 Backend Architect 审查 API 设计 → Security Architect 审查安全漏洞 → Reality Checker 做最后的阻断判断
 4. 记录每个 Agent 产出的交付物格式和时间。回答：
    - Backend Architect 有没有指出缺少幂等性保护？
-   - Security Engineer 有没有标记 `user_id` 未校验？
+   - Security Architect 有没有标记 `user_id` 未校验？
    - Reality Checker 列出的阻断项中有几条是你没注意到的？
 
 ### 练习二：用 pipeline 串联三个 Agent 做一次 PR 审查
 
-按本文"任务如何流过系统——一次 PR 审查的完整路径"一节跑一遍：Codebase Onboarding Engineer → Backend Architect → Security Engineer。要求：
+按本文"任务如何流过系统——一次 PR 审查的完整路径"一节跑一遍：Codebase Onboarding Engineer → Backend Architect → Security Architect。要求：
 
 1. 每一步的产出写入 Markdown 文件（例如 `01-onboarding.md`、`02-architecture.md`、`03-security.md`）
 2. 下游 Agent 读取上游产出文件作为输入——不能在 prompt 里手动复述上游结论
@@ -396,31 +412,37 @@ The Agency 按岗位拆分，每个 Agent 专精某个细分领域，定义里�
 
 </details>
 
-2. 列出 12 个部门的边界，判断自己团队职能对应哪几个 Agent。
+2. 列出 18 个部门的边界，判断自己团队职能对应哪几个 Agent。
 
 <details>
 <summary>参考答案</summary>
 
-12 个部门：
-1. 🔧 工程部（25+ Agent）
-2. 🎨 设计部（8 Agent）
-3. 💼 销售部（10 Agent）
-4. 📢 市场部（30+ Agent）
-5. 📊 产品部（5 Agent）
-6. 🎬 项目管理（7 Agent）
-7. 🧪 测试部（9 Agent）
-8. 🛟 支持部（7 Agent）
-9. 🥽 空间计算（6 Agent）
-10. 🎯 专业部（40+ Agent）
-11. 💵 财务部（5 Agent）
-12. 🎮 游戏开发（20+ Agent）
+18 个部门：
+1. 💻 工程部（60+ Agent）
+2. 🎨 设计部（10 Agent）
+3. 💰 付费投放部（7 Agent）
+4. 💼 销售部（10 Agent）
+5. 📢 市场部（30+ Agent）
+6. 📊 产品部（5 Agent）
+7. 🎬 项目管理（7 Agent）
+8. 🧪 测试部（9 Agent）
+9. 🔒 安全部（12 Agent）
+10. 🛟 支持部（6 Agent）
+11. 🥽 空间计算（6 Agent）
+12. 🎯 专业部（50+ Agent）
+13. 💵 财务部（5 Agent）
+14. 🎮 游戏开发（20+ Agent）
+15. 📚 学术部（6 Agent）
+16. 🌍 GIS 地理信息（13 Agent）
+17. 🏥 医疗部（3 Agent）
+18. 🔍 研究部（1 Agent）
 
 团队职能对应示例：
 - 纯前端团队 → 工程部 Frontend Developer
 - 全栈创业团队 → 工程部 + 市场部 Growth Hacker + 项目管理 Producer
-- 区块链项目 → 工程部 Solidity Smart Contract Engineer + 专业部 Smart Contract Auditor
+- 区块链项目 → 工程部 Solidity Smart Contract Engineer + 安全部 Blockchain Security Auditor
 
-（对应章节：12 个专业部门一览）
+（对应章节：18 个专业部门一览）
 
 </details>
 
@@ -462,7 +484,7 @@ cd agency-agents
    - 输入：步骤 1 的路径报告 + PR diff
    - 输出：API 设计评审（路由命名、错误码、幂等性）
 
-3. **Security Engineer**
+3. **Security Architect（安全部）**
    - 输入：步骤 2 的评审 + PR diff
    - 输出：威胁建模报告（关注支付金额篡改、重放攻击）
 
@@ -568,15 +590,15 @@ cd agency-agents
 
 本文基于 The Agency 项目官方仓库（github.com/msitarzewski/agency-agents）和实际使用经验撰写。需要说明的边界：
 
-1. **项目活跃度与版本变化**：The Agency 项目处于活跃开发阶段（截至 2026 年 6 月），Agent 数量、部门划分、支持工具列表可能随版本变化。本文提及的"147个Agent"、"12个部门"为撰写时的快照，请以[官方 GitHub 仓库](https://github.com/msitarzewski/agency-agents)的最新 README 为准。
+1. **项目活跃度与版本变化**：The Agency 项目处于活跃开发阶段（数据截至 2026 年 9 月），Agent 数量、部门划分、支持工具列表可能随版本变化。本文提及的"230+ 个 Agent"、"18 个部门"为撰写时的快照，请以[官方 GitHub 仓库](https://github.com/msitarzewski/agency-agents)的最新 README 为准。
 
 2. **Agent 文件性质**：每个 Agent 是一个 Markdown 文件，定义人格、使命、工作流、交付物和记忆策略。这些文件需要配合特定 AI 工具（如 Claude Code、Cursor、OpenClaw）使用，不能独立运行。
 
-3. **实际用法建议**：项目设计为按团队职能挑几个岗位单独跑或按 pipeline 串联，再通过配置文件替换模型、输出目录和外部凭据。一次装 147 个 Agent 反而是少数场景。把它理解成一组可组合的岗位库比理解成"超大号提示词包"更接近真实用法。
+3. **实际用法建议**：项目设计为按团队职能挑几个岗位单独跑或按 pipeline 串联，再通过配置文件替换模型、输出目录和外部凭据。一次装全部 Agent 反而是少数场景。把它理解成一组可组合的岗位库比理解成"超大号提示词包"更接近真实用法。
 
-4. **工具集成范围**：本文提到支持 Claude Code、GitHub Copilot、Cursor、OpenClaw、Windsurf 等主流 AI 编程工具，但具体集成方式和配置文件格式可能因工具版本而变化，请以各工具官方文档为准。
+4. **工具集成范围**：本文提到支持 Claude Code、GitHub Copilot、Cursor、OpenClaw、Codex、Gemini CLI 等主流 AI 编程工具，但具体集成方式和配置文件格式可能因工具版本而变化，请以各工具官方文档为准。
 
 5. **性能与效果声明**：本文未声称使用 The Agency 后能提升具体百分比的工作效率。Agent 的效果取决于具体任务、模型能力、提示词质量等多重因素，建议在真实项目上先验证再扩大使用范围。
 
-6. **更新记录**：本文在 2026 年 6 月按照 cn-doc-writer 最新标准补充了"资料口径说明"章节，确保读者清楚了解文章的判断来源和局限性。
+6. **更新记录**：本文在 2026 年 9 月同步了官方仓库的最新 Agent 数量、部门划分与支持工具列表，并按 cn-doc-writer 标准校验了事实与口径。
 

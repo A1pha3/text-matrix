@@ -10,7 +10,7 @@ draft: false
 
 > **作者**：钳岳星君
 > **来源**：Field Effect 2026-04-23 事件披露 blog（fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session，2026-06-20 抓取）
-> **版本**：v3 — 全文重构，合并 §7 到 §1/§5，去 AI 味，补来源标注与采用顺序
+> **版本**：v4 — 校正 ATT&CK TTP 计数，补沙箱逃逸、密码校验与采集目标细节
 
 ---
 
@@ -21,7 +21,7 @@ draft: false
 - 复盘 AMOS Stealer 通过 Cursor agent 投递的完整攻击链（10 个步骤，< 2 分钟）
 - 解释为什么 AI Coding Agent 是新的攻击面（结构性问题，与传统 EDR 检测假设冲突）
 - 理解 charcode 混淆技术如何让恶意代码"看起来像 agent 的正常脚本"
-- 映射本次攻击到 MITRE ATT&CK 框架的 13 个 TTP
+- 映射本次攻击到 MITRE ATT&CK 框架的 19 个 TTP
 - 为你的团队制定 AI Coding Agent 安全配置和审计策略
 
 ## 目录
@@ -29,7 +29,7 @@ draft: false
 - [§1 完整攻击链：从 SEO 诱导到 2 分钟数据外泄](#§1-完整攻击链从-seo-诱导到-2-分钟数据外泄)
 - [§2 为什么 AI Coding Agent 是新的攻击面](#§2-为什么-ai-coding-agent-是新的攻击面)
 - [§3 charcode 混淆：恶意代码如何"看起来像 agent 的正常脚本"](#§3-charcode-混淆恶意代码如何看起来像-agent-的正常脚本)
-- [§4 MITRE ATT&CK 完整映射：13 个 TTP 的攻击工程化](#§4-mitre-attck-完整映射 13-个-ttp-的攻击工程化)
+- [§4 MITRE ATT&CK 完整映射：19 个 TTP 的攻击工程化](#§4-mitre-attck-完整映射19-个-ttp-的攻击工程化)
 - [§5 Field Effect 的检测策略：行为监测能抓到什么](#§5-field-effect-的检测策略行为监测能抓到什么)
 - [§6 给中国 AI Coding Agent 用户的 3 条可执行启示](#§6-给中国-ai-coding-agent-用户的-3-条可执行启示)
 - [练习](#练习)
@@ -61,16 +61,17 @@ chmod +x /tmp/helper    # 加执行权限
 
 `xattr -c` 这一步是 macOS 攻击的经典操作——Apple Silicon 上从浏览器下载的文件会被自动打上 `com.apple.quarantine` 标记，Gatekeeper 会拦截执行。Cursor agent 主动清掉这个标记，等于绕过了 macOS 的核心防线之一。
 
-**Step 5 — 投递 AppleScript**：`/tmp/helper` 紧接着投递了两个串行的 AppleScript 脚本。第一个做沙箱逃逸（检查是否在分析环境里），第二个是完整的 AMOS payload。
+**Step 5 — 投递 AppleScript**：`/tmp/helper` 紧接着投递了两个串行的 AppleScript 脚本。第一个做沙箱逃逸——调用 `system_profiler SPMemoryDataType` 和 `system_profiler SPHardwareDataType`，把结果跟已知 hypervisor 和虚拟机字符串（`QEMU`、`VMware`、`KVM`，以及一批 Apple 硬件 ID 和 `Virtual Machine` 等）比对，命中就 `exit 100` 直接中断，不继续跑 payload。第二个才是完整的 AMOS payload。
 
-**Step 6 — 诱骗用户授权**：payload 弹出对话框要求用户输入**本地账户密码**——这是 macOS 上获得"管理员权限"的关键诱骗。一旦用户输入，攻击者就能 sudo 提权。
+**Step 6 — 诱骗用户授权**：payload 弹出对话框要求用户输入**本地账户密码**。输入后用 `dscl . authonly <username> <password>` 本地校验（macOS 目录服务的认证命令，返回空串即密码正确）——用户输对一次，攻击者就拿到了可用于 `sudo` 提权的明文凭据。这是 macOS 上获得"管理员权限"的关键诱骗。
 
-**Step 7 — 收集数据**：AMOS 在受害机器上读取：
+**Step 7 — 收集数据**：AMOS 在受害机器上读取（源文公开的部分采集命令）：
 
-- macOS Keychain 里的所有凭据
-- 浏览器保存的密码、cookie、信用卡
-- `/Users/*/.ssh/` 下的 SSH 私钥
-- 加密钱包文件（MetaMask、Phantom 等）
+- macOS Keychain（`~/Library/Keychains/login.keychain-db`）
+- 浏览器保存的密码、cookie、历史与表单记录（Chrome / Firefox 的 `Login Data`、`Cookies`、`logins.json` 等）
+- `/Users/*/.ssh/` 下的 SSH 私钥、`known_hosts` 与 `config`
+- 加密钱包浏览器扩展与应用（MetaMask、Phantom、TonKeeper、Binance 等，扩展通过一组硬编码 ID 匹配）
+- 云与工具凭据：`~/.aws/`、`~/.config/gcloud/`、`~/.docker/config.json`、FileZilla 站点、Telegram Desktop 的 `key_datas`
 - 系统级 credential store
 
 **Step 8 — 打包 + 分片外传**：数据被压缩到 `/tmp/out.zip`，然后用 `curl` 拆成 25MB 一片上传到 `lakhov[.]com`：
@@ -180,9 +181,9 @@ on cqfjdxlx(jsordsqub, eqhvrkhfxwif, tirvglkgcf)
 
 ---
 
-## §4 MITRE ATT&CK 完整映射：13 个 TTP 的攻击工程化
+## §4 MITRE ATT&CK 完整映射：19 个 TTP 的攻击工程化
 
-Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。它给的不只是 IOC（indicators of compromise），而是按 ATT&CK 战术（tactic）组织的检测策略。下面把 13 个 TTP 按战术分组整理：
+Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。它给的不只是 IOC（indicators of compromise），而是按 ATT&CK 战术（tactic）组织的检测策略。下面把 19 个 TTP 按战术分组整理：
 
 ### Initial Access + Execution（初始访问 + 执行）
 
@@ -563,6 +564,6 @@ Field Effect 检测框架的核心是**"behavioral monitoring"（行为监测）
 3. **MITRE ATT&CK 映射的局限性**：本文的 ATT&CK 映射基于 Field Effect 的公开分析，非 MITRE 官方评估。实际检测规则需要结合具体 EDR/XDR 产品能力调整。
 4. **防御建议的适用边界**：本文给的 3 条可执行启示（sandbox 配置、审计日志、Keychain 迁移）基于工程经验，但具体配置路径会因 AI Coding Agent 版本、操作系统版本、MDM 策略而变化。企业环境请结合自身 IT 策略调整。
 5. **平台覆盖范围**：本文聚焦 macOS 平台（AppleScript、Keychain、Gatekeeper），Linux 和 Windows 上的 AI Coding Agent 攻击面未覆盖。Linux 上的等价攻击可能通过 `.bashrc` 注入、cron job 持久化、葡萄酒运行 macOS 恶意代码等方式，不在本文讨论范围。
-6. **更新记录**：本文 v1（2026-06-20）为初稿；v2（2026-06-28）添加学习目标、目录、自测题、练习、进阶路径、FAQ；v3（2026-07-01）添加资料口径说明，更新优化说明为 100/100。
+6. **更新记录**：本文 v1（2026-06-20）为初稿；v2（2026-06-28）添加学习目标、目录、自测题、练习、进阶路径、FAQ；v3（2026-07-01）添加资料口径说明；v4 校正 ATT&CK TTP 计数为 19，补充沙箱逃逸、密码校验与采集目标等源文细节。
 
 ---

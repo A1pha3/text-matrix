@@ -3,162 +3,185 @@ title: "HuggingFace Speech-to-Speech：用开源模型构建本地语音助手�
 date: 2026-08-05T03:23:05+08:00
 slug: "huggingface-speech-to-speech-voice-agent-pipeline"
 github_repo: "huggingface/speech-to-speech"
-description: "HuggingFace 开源的语音对话管道，将 VAD、STT、LLM、TTS 四个阶段解耦为可互换模块，并通过 OpenAI Realtime 兼容协议对外暴露。本文拆解其架构设计、运行模式、组件选型与工程取舍。"
+description: "HuggingFace 开源的语音对话管道，将 VAD、STT、LLM、TTS 四个阶段解耦为可互换模块，并通过 OpenAI Realtime 兼容协议对外暴露。本文拆解其架构设计、运行命令、组件选型与工程取舍。"
 draft: false
 categories: ["技术笔记"]
 tags: ["语音交互", "Hugging Face", "开源", "语音代理", "实时通信"]
 ---
 
-## 语音对话系统正在从闭源走向模块化
+## 一条更务实的语音对话路线
 
-语音助手过去是封闭系统：Amazon Alexa、Google Assistant、Apple Siri 各有一套垂直整合的管道，用户无法替换其中任何一个环节。即便到了 2026 年，大多数开源语音方案仍然在"端到端"和"模块化"之间摇摆——端到端模型延迟低但难以调试，模块化管道可定制但组件耦合紧。
+语音助手过去是封闭系统：Amazon Alexa、Google Assistant、Apple Siri 各自垂直整合整条管道，用户没法替换其中任何一个环节。开源方案虽然越来越多，但在"端到端"和"模块化"之间长期摇摆——端到端模型延迟低却难调试，模块化管道可定制却组件耦合紧。
 
-HuggingFace 开源的 [speech-to-speech](https://github.com/huggingface/speech-to-speech) 走的是一条更务实的路：**VAD → STT → LLM → TTS 四阶段流水线，每个阶段可独立替换，对外暴露 OpenAI Realtime 兼容协议**。这意味着任何 OpenAI Realtime 客户端——包括已有的 WebRTC、WebSocket 应用——都可以把后端从 OpenAI 切换到自建服务器，而客户端代码几乎不需要改动。
+HuggingFace 开源的 [speech-to-speech](https://github.com/huggingface/speech-to-speech) 走的是一条更务实的路：**VAD → STT → LLM → TTS 四阶段流水线，每阶段独立可换，对外用 OpenAI Realtime 协议暴露**。任何现成的 OpenAI Realtime 客户端——包括已有的 WebSocket、WebRTC 应用——只要改一下服务器地址，就能把后端从 OpenAI 换成自建服务，客户端代码几乎不动。这套管道已成为数千台 [Reachy Mini 机器人](https://huggingface.co/blog/reachy-mini)的生产对话后端，不是概念验证。
 
-这个项目已经用在数千台 Reachy Mini 机器人上作为对话后端，并非概念验证。按 GitHub API 2026-08-05 的数据：10,604 Stars，1,318 Forks，语言 Python，Apache 2.0 许可，最新 Release v0.2.12（2026-08-05）。
+## 架构总览：级联的四阶段
 
-## 架构总览：四阶段流水线 + 可插拔后端
-
-系统是一条由队列连接的流水线，四个阶段各自跑在独立线程里，前一个的输出喂给后一个：
+系统是一条由队列连接的级联管道，四个阶段各跑一个独立线程，前一个阶段把结果丢进队列喂给下一个：
 
 ```mermaid
 flowchart LR
     A["用户音频<br/>16kHz PCM"] --> B["VAD<br/>Silero VAD v5"]
     B --> C["STT<br/>Parakeet TDT 0.6B"]
-    C --> D["LLM<br/>默认 OpenAI API"]
+    C --> D["LLM<br/>OpenAI 兼容 API"]
     D --> E["TTS<br/>Qwen3-TTS 1.7B"]
     E --> F["合成音频<br/>流式返回客户端"]
 ```
 
-每个阶段都有多个可互换的实现，通过 CLI 参数选择。
+- **VAD（语音活动检测）**：Silero VAD v5，判断说话边界与轮次切换。
+- **STT（语音转文字）**：默认 Parakeet TDT，转写用户语音，可输出实时局部转写。
+- **LLM（语言模型）**：生成回复，流式输出文本与工具调用。
+- **TTS（文字转语音）**：合成语音并流式回传客户端。
 
-| 阶段 | 默认实现 | 可选实现 | 选型逻辑 |
-|------|----------|----------|----------|
-| VAD（语音活动检测） | Silero VAD v5 | 无替代（内置） | 低延迟、跨平台、社区成熟 |
-| STT（语音转文字） | Parakeet TDT 0.6B v3 | Whisper / Faster Whisper / Paraformer / MLX Audio | 根据硬件和语言需求选择 |
-| LLM（语言模型） | OpenAI Responses API | Transformers / mlx-lm / Chat Completions API | 本地 vs 远程，延迟预算 |
-| TTS（文字转语音） | Qwen3-TTS 1.7B | Kokoro-82M / Pocket TTS / ChatTTS / MMS TTS | 音质 vs 速度 vs 语言覆盖 |
+每一阶段都有多个可互换实现，用 `--stt`、`--llm_backend`、`--tts` 三个参数选择。默认安装里 Parakeet TDT 做 STT，OpenAI 兼容 API 做 LLM，Qwen3-TTS 做语音输出（非 macOS 平台走 GGML 后端，Apple Silicon 走 `mlx-audio`）。选组合的自由度在于每一对都成立：你可以在本地跑 Parakeet TDT 转写，用远程 OpenAI API 做回答，再用 Qwen3-TTS 本地合成，互不影响。
 
-这套设计的好处是**每个阶段的替换不会影响其他阶段**——你可以在本地跑 Parakeet TDT 做 STT，用远程 OpenAI API 做 LLM，再用 Qwen3-TTS 做本地合成。每一对组合都成立。
+## 三种运行命令，对应三种用法
 
-## 先拆清楚三个容易混淆的边界
+项目围绕一个服务器和两个客户端命令组织，没有"四种模式"的二分法：
 
-### 1. VAD 不是 STT，STT 不是 VAD
+| 命令 | 行为 | 何时用 |
+|------|------|--------|
+| `serve` | 把管道作为 OpenAI Realtime 服务器跑起来（WebSocket / WebRTC） | 你正在做应用或设备，要对准 API 开发 |
+| `talk --url <完整 realtime 地址>` | 跑打包好的麦克风/扬声器客户端 | 你想直接对着已有的 Realtime 服务器说话 |
+| `local` | 在进程内把 `serve` 和 `talk` 组合起来（loopback） | 一个命令本地起服务并直接对话 |
 
-VAD 只判断"有没有人在说话"，不关心说了什么。Silero VAD v5 输出的是 0-1 之间的置信度，系统通过 `--thresh` 阈值决定何时切分语音段。VAD 参数 `--min_speech_ms` 和 `--min_silence_ms` 控制的是"多短的语音算一段"和"多长的静默算结束"，而不是"转写什么语言"。
+`serve` 默认只绑定 `127.0.0.1`，要对外暴露需显式加 `--host 0.0.0.0`；`local` 始终走回环地址，自动在 `ws://127.0.0.1:<端口>/v1/realtime` 接上打包客户端。开发浏览器界面时也是先 `serve` 起后端，再连 [browser demo](https://github.com/huggingface/speech-to-speech/blob/main/demo/README.md) 的前端。官方 OpenAI Agents SDK 在两种传输协议上都测过，复用现有客户端生态即可。
 
-### 2. 四种运行模式对应四种传输协议
+### 三种起步配置
 
-| 模式 | 传输方式 | 适用场景 |
-|------|----------|----------|
-| `realtime`（默认） | OpenAI Realtime 协议（WebSocket / WebRTC） | 构建标准语音 API 应用 |
-| `local` | 本地麦克风 + 扬声器 | 直接对话，无需客户端 |
-| `raw-websocket` | 原始 PCM 流（WebSocket） | 最小化自定义客户端 |
-| `socket` | 原始 PCM 流（TCP） | 远程服务器 + 轻量客户端 |
+项目官方给出三种起步方式，区别只在 LLM 跑在哪里，STT 和 TTS 默认都本地化：
 
-`realtime` 和 `local` 的区别不只是传输方式：`realtime` 模式下，服务器与客户端通过 OpenAI Realtime 事件通信（包括 `input_audio_buffer.append`、`session.update`、`response.create` 等），而 `local` 模式下，系统直接读写本机音频设备，适合单机测试。
+| 配置 | 硬件预算 | 有哪些数据发给第三方 |
+|------|----------|----------------------|
+| Apple Silicon 全本地 | Mac，建议 16 GB 起 | 无 |
+| NVIDIA GPU 全本地 | Linux + CUDA GPU，约 24 GB 显存 | 无 |
+| 本地语音 + 托管 LLM | 约 8 GB 可用显存/统一内存 | 转写文本、指令与对话历史；麦克风音频留在本机 |
 
-### 3. LLM 后端分两类：本地推理 vs 远程 API
+以下内存数字是一次对话的规划估计，不是实测最低值，实际随上下文长度、音频时长与后端版本变化。首次运行都需要联网下载模型。
 
-本地推理用 `transformers`（CUDA / CPU）或 `mlx-lm`（Apple Silicon），远程用 `responses-api`（OpenAI Responses API 协议）或 `chat-completions`（OpenAI Chat Completions 协议）。
+**Apple Silicon 全本地**（无需 API Key）：
 
-两个远程后端共享同一组 `--responses_api_*` 连接参数，但协议不同。`responses-api` 默认走 `/v1/responses`，`chat-completions` 走 `/v1/chat/completions`。选择 `chat-completions` 的理由通常是：某些模型（如 vLLM 的某些版本）在 Responses 协议下的流式工具调用不稳定，而 Chat Completions 路径稳定。
+```bash
+speech-to-speech local \
+    --mac-optimal-settings \
+    --model_name mlx-community/Qwen3-4B-Instruct-2507-4bit
+```
 
-## 四阶段如何协同工作
+`--mac-optimal-settings` 预设会用 MLX 跑 Parakeet TDT，MLX LM 跑 4-bit Qwen3-4B，MLX Audio 跑 6-bit Qwen3-TTS CustomVoice，三份核心权重共约 **7.5 GB**。
 
-### VAD 阶段：语音边界的精确检测
+**NVIDIA GPU 全本地**（无需单独 LLM 服务器与 API Key，LLM 由 Transformers 在进程内加载）：
 
-VAD 是整条管道的入口。Silero VAD v5 以 512 采样点（32ms@16kHz）为一个窗口滑动检测，输出语音概率。关键参数：
+```bash
+speech-to-speech local \
+    --device cuda \
+    --stt parakeet-tdt \
+    --llm_backend transformers \
+    --model_name Qwen/Qwen3-4B-Instruct-2507 \
+    --llm_torch_dtype float16 \
+    --tts qwen3 \
+    --qwen3_tts_backend ggml
+```
 
-- `--thresh`：VAD 触发阈值（默认 0.6）
-- `--min_speech_ms`：被认定为语音的最小持续时长（默认 384ms）
-- `--min_speech_continuation_ms`：软结束但未提交的对话段可重新打开的时间窗口（默认 192ms）
-- `--min_silence_ms`：切分语音段的最小静默时长（默认 64ms）
-- `--unanswered_reopen_ms`：未收到助手回复的软结束段可重新打开的时长上限
+单 LLM 权重就有约 **8 GB**，语音模型、缓存与依赖另计。
 
-这些参数组合起来定义了"一次对话轮次"的边界。`--min_speech_ms 384 --min_speech_continuation_ms 192` 是推荐的默认搭配：384ms 确保短促的噪声不会被误判为语音，192ms 的延续窗口允许用户在 LLM 开始回复前快速打断并补充。
+**本地语音 + 托管 LLM**（语音识别与合成本地跑，回复交给远端模型）：
 
-### STT 阶段：语音转文字
+```bash
+export OPENAI_API_KEY=...
+speech-to-speech local \
+    --stt parakeet-tdt \
+    --llm_backend responses-api \
+    --tts qwen3
+```
 
-默认的 Parakeet TDT 0.6B v3 是 NVIDIA 的流式转写模型，支持 25 种欧洲语言。通过 `--stt` 可以切换到 Whisper（Transformers 实现）、Faster Whisper（CTranslate2 加速）、Paraformer（FunASR 实现，中文优化）或 MLX Audio Whisper（Apple Silicon 优化）。
+这个方案只本地下载语音模型（Apple Silicon 上核心权重约 **5.2 GB**），转写文本、指令与对话历史会发给 OpenAI，麦克风音频与语音合成留在本机。参考这个例子，把 LLM 指向别的提供方或自建服务器即可。
 
-每个 STT 实现有自己的参数前缀：`--stt_model_name`、`--stt_device`、`--stt_gen_max_new_tokens` 等。
+## 四个容易误解的概念
 
-### LLM 阶段：最吃计算的一环
+### VAD 不是 STT
 
-LLM 是整条管道延迟最高的组件。一次大规模模型的前向传播就能主导端到端响应时间，所以选后端是在延迟预算和模型能力之间做权衡。
+VAD 只回答"有没有人开始说话、说到哪里算一段"，不关心说了什么。Silero VAD v5 以 512 采样点（32ms@16kHz）滑动窗口输出 0-1 的语音概率，系统靠 `--thresh` 阈值决定何时切分语音段。`--min_speech_ms` 与 `--min_silence_ms` 控制的是"多短算一段语音""多长静默算结束"，而不是识别语言或转写内容。
 
-| 后端 | 硬件要求 | 典型延迟 | 模型能力 |
-|------|----------|----------|----------|
-| OpenAI API | 无（远程） | 低 | 最强 |
-| HF Inference Providers | 无（远程） | 中 | 强 |
-| llama.cpp + Gemma 4 | 本地 GPU/CPU | 中高 | 中 |
-| mlx-lm | Apple Silicon | 中 | 中 |
-| Transformers | CUDA | 高 | 中 |
+### STT、LLM、TTS 的选型参数名不通用
 
-LLM 阶段还能换一种接法：**跳过 STT**。用 `--stt none --llm_backend chat-completions`，VAD 切分后的音频段会直接发给支持音频输入的模型，适合需要保留语音中情感、语调的场景。
+各实现都有自己专属的参数前缀，不能混用。STT 用 `--stt_model_name`、`--stt_device`、`--stt_gen_max_new_tokens` 这类；TTS 侧 Qwen3-TTS 有独立的 `--qwen3_tts_backend`。CLI 只为已选后端构建配置，未激活后端的已知参数仍被接受但忽略并警告。用 `speech-to-speech serve -h` 看默认值，或在 `-h` 前加选择器看某个组合的特有参数。
 
-### TTS 阶段：文字转语音
+### LLM 后端分本地推理与远程 API 两类
 
-默认的 Qwen3-TTS 1.7B 使用 GGML 后端（Linux CUDA）或 `mlx-audio`（Apple Silicon），支持 6bit 量化以降低显存占用。通过 `--tts` 可以切换到 Kokoro-82M、Pocket TTS（支持声音克隆）、ChatTTS（中英双语）、MMS TTS（多语言覆盖）等。
+本地推理用 `transformers`（CUDA / CPU）或 `mlx-lm`（Apple Silicon），远程用 OpenAI 兼容协议——`responses-api` 走 `/v1/responses`，`chat-completions` 走 `/v1/chat/completions`。两个远程后端共享同一组连接参数，但协议不同。选 `chat-completions` 常见的原因是：部分模型（如某些 vLLM 版本）在 Responses 协议下流式工具调用不稳定，而 Chat Completions 路径更稳。
+
+### 语言覆盖取决于组件，不取决于管道本身
+
+speech-to-speech 不内置"中文支持"或"多语言"开关，能说什么语言取决于你选的 STT 和 TTS。`--language` 只适用于 Whisper 系 STT，可固定 `zh` 或 `auto`；默认 Parakeet TDT 用的是 `--parakeet_tdt_language`。中文场景的推荐组合是 `--stt whisper-mlx --stt_model_name large-v3 --language zh --tts qwen3`。
 
 ## 一次对话如何流过系统
 
-以默认配置为例，一次完整的对话轮次：
+以默认配置走一遍一个完整的对话轮次：
 
-1. 用户对着麦克风说"今天天气怎么样"，音频以 16kHz、int16、单声道 PCM 格式进入系统。
-2. **VAD 阶段**：Silero VAD 以 32ms 窗口检测。当连续 384ms 检测到语音后，VAD 标记"开始说话"；当用户停顿超过 64ms（`--min_silence_ms`）且总静默时长超过阈值，VAD 标记"结束说话"，将音频段推入 STT 队列。
-3. **STT 阶段**：Parakeet TDT 将音频转写为文本"今天天气怎么样"，流式输出到 LLM 队列。如果启用了 `--enable_live_transcription`，客户端会收到实时的逐字转写事件。
-4. **LLM 阶段**：LLM 收到文本后生成回复，假设为"今天北京晴，气温 25-32 摄氏度"。通过 `--responses_api_stream` 启用流式输出，文本逐段推入 TTS 队列。
-5. **TTS 阶段**：Qwen3-TTS 将文本逐段合成为音频，以 16kHz PCM 流式推回给客户端。客户端同时播放音频，用户听到"今天北京晴，气温 25-32 摄氏度"。
-6. 如果用户在此过程中打断（开始说话），VAD 检测到新语音，触发 `response.cancel` 事件，LLM 停止生成，TTS 停止播放，新的一轮对话开始。
+1. 用户对着麦克风说话，音频以 16kHz、int16、单声道 PCM 进入管道。
+2. **VAD 阶段**：Silero VAD 以 32ms 窗口检测。连续 384ms 检测到语音后，标记"开始说话"；停顿达到 `--min_silence_ms` 阈值后，标记"结束说话"，把音频段送入 STT 队列。
+3. **STT 阶段**：Parakeet TDT 把音频转成文本，流式喂给 LLM。开启 `--enable_live_transcription` 时，客户端会收到实时局部转写事件。
+4. **LLM 阶段**：模型生成回复文本，通过 `--responses_api_stream` 流式逐段送入 TTS 队列。
+5. **TTS 阶段**：Qwen3-TTS 把文本逐段合成为 16kHz PCM，流式推回客户端，用户边收边播。
+6. 若用户中途打断，VAD 检测到新语音，触发 `response.cancel` 事件，LLM 停止生成、TTS 停止播放，开启新一轮对话。
 
-## 多语言支持：语言覆盖取决于组件选择
+## 每个阶段可以选什么
 
-speech-to-speech 本身不处理语言——语言覆盖取决于你选择的 STT 和 TTS 组件组合。
+表格来自官方 [Supported components](https://github.com/huggingface/speech-to-speech#supported-components)。斜体是额外安装项；其余内置。
 
-| 组件 | 语言覆盖 |
+| 阶段 | 可选实现 |
 |------|----------|
-| Parakeet TDT（默认 STT） | 25 种欧洲语言 |
-| Whisper / Faster Whisper | 多语言，取决于 checkpoint |
-| Paraformer | 默认中文优化 |
-| Qwen3-TTS（默认 TTS） | 多语言（自动检测） |
-| Kokoro | 多语言 |
-| ChatTTS | 英语和中文 |
+| VAD | Silero VAD v5 |
+| STT | Parakeet TDT（默认）、Whisper（Transformers）、*Faster Whisper*、*Lightning Whisper MLX*（macOS）、MLX Audio Whisper（macOS 内置）、Paraformer（FunASR）、Qwen3-ASR、OpenAI-compatible `/v1/audio/transcriptions` 端点、OpenAI Realtime 转写、vLLM Realtime 转写（实验性） |
+| LLM | OpenAI-compatible API（`responses-api` / `chat-completions`）、Transformers、`mlx-lm`（macOS） |
+| TTS | Qwen3-TTS（默认）、Kokoro-82M、*Pocket TTS*、*ChatTTS*、*OmniVoice*、MMS TTS、OpenAI-compatible `/v1/audio/speech` 端点 |
 
-`--language` 参数属于 Whisper 系 STT（`--stt whisper` / `whisper-mlx` 等），可选 `zh` 固定中文或 `auto` 自动检测。默认的 Parakeet TDT 用的是另一个参数 `--parakeet_tdt_language`，且只覆盖 25 种欧洲语言，不含中文。
+可选组件用 pip extras 安装：`speech-to-speech[kokoro]`、`[pocket]`、`[chattts]`、`[omnivoice]`、`[faster-whisper]`、`[whisper-mlx]`、`[paraformer]`、`[mlx-lm]`。注意 DeepFilterNet（VAD 的可选音频增强）要求 `numpy<2`，与要求 `numpy>=2` 的 Pocket TTS 冲突，只能在不用 Pocket TTS 时手动装。
 
-中文场景推荐组合：`--stt whisper-mlx --stt_model_name large-v3 --language zh --tts qwen3`。
+## 三类环境下的落盘写实
 
-## LLM 代理：并发旁路任务
+Linux 上 Qwen3-TTS 的 GGML 后端来自 `faster-qwen3-tts[ggml]`，其默认 `qwentts-cpp-python` wheel 针对 CUDA 12.8 与 `manylinux_2_39`（如 Ubuntu 24.04）。CUDA 或 glibc 较旧时需要先从 Hugging Face wheelhouse 装匹配的 wheel 再装本包：
 
-`--enable_llm_proxy` 给 realtime 服务器加一个旁路端点。启用后，服务器在 `/v1/chat/completions` 或 `/v1/responses` 路径上暴露额外的 HTTP 接口，直接透传 LLM 请求。客户端可以在语音对话的同时，通过 HTTP 请求 LLM 做摘要、标题生成、后台分析，且这些任务不会被新的语音输入打断。
+```bash
+# CUDA 13.x
+pip install "qwentts-cpp-python==0.3.1+cu130" \
+  -f https://huggingface.co/datasets/andito/qwentts-cpp-python-wheels/tree/main/whl/cu130
 
-代理模式下，服务端不进行身份验证和限流，因此只应在可信网络中使用，或部署在拥有访问控制网关的后端。
+# CUDA 12.4
+pip install "qwentts-cpp-python==0.3.1+cu124" \
+  -f https://huggingface.co/datasets/andito/qwentts-cpp-python-wheels/tree/main/whl/cu124
 
-## 工程取舍与设计哲学
+# CPU-only 兜底
+pip install "qwentts-cpp-python==0.3.1+cpu" \
+  -f https://huggingface.co/datasets/andito/qwentts-cpp-python-wheels/tree/main/whl/cpu
 
-### 取舍 1：线程 + 队列 vs 事件驱动
+pip install speech-to-speech
+```
 
-每条管道是四个独立线程通过队列连接。这种设计比异步事件驱动更简单直观，但资源消耗更高（每个管道一个线程池）。通过 `--num_pipelines` 控制并发管道数，默认值取决于模式。
+要想回到旧的 CUDA-graphs 实现而非 GGML，用 `--qwen3_tts_backend torch`。若扬声器回授、合成语音时被打断，加 `--local_audio_block_mic_during_playback` 让麦克风在播放期间暂停采集（代价是无法打断助手）。
 
-### 取舍 2：组件可替换 vs 组件可优化
+配套的打包客户端播放自带 196ms 音频缓冲（仅 OpenAI 兼容 TTS 后端），用于吸收 HTTP 语音推理的小间隙；换其他后端默认立即开播。`--playback-buffer-ms` 可覆盖该默认——值越大越抗抖动但延迟响应开头，越小越早开声但更敏感。
 
-设计把"任意 STT + 任意 LLM + 任意 TTS 都能组合"放在第一位，某一组件的性能是否最优不是首要目标。所以默认配置不一定是最低延迟的——你可以换后端来优化特定环节。
+每次部署的 LLM 也遵循"完全本地 / 托管并存 / 免配置"三条路径：本地无 Key（Apple Silicon MLX 或 NVIDIA Transformers），托管用 OpenAI 兼容端点，需 API Key。
 
-### 取舍 3：OpenAI Realtime 兼容 vs 自定义协议
+## 工程上值得借鉴的取舍
 
-选择兼容 OpenAI Realtime 协议意味着可以复用 OpenAI 现有的客户端 SDK 和生态工具，但协议本身有额外的开销（事件序列化、VAD 事件管理）。`raw-websocket` 模式提供了更轻量的替代方案。
+### 线程加队列，而不是事件驱动
 
-## 采用建议
+每条管道是四个独立线程连接而成。相比异步事件驱动，这种写法更直白、好读、好改，代价是资源占用更高——每个管道都要一个线程池，用 `--num_pipelines` 控制并发管道数，默认值随命令而异。
 
-- **想快速体验**：`pip install speech-to-speech && export OPENAI_API_KEY=... && speech-to-speech`，然后连接任何 OpenAI Realtime 客户端。
-- **想完全本地**：在第二终端启动 llama.cpp 或 vLLM 服务器，`speech-to-speech --llm_backend responses-api --responses_api_base_url http://localhost:8080/v1`。
-- **Apple Silicon 用户**：`speech-to-speech --local_mac_optimal_settings` 自动配置 MPS 加速、MLX LM、Qwen3-TTS 的 6bit 量化。
-- **生产部署**：使用 Docker Compose（内置 llama.cpp + Gemma 4 + TCP socket 服务），并自行配置网关做访问控制和限流。
+### 组件可替换优先于组件最优
 
-什么时候不必用它：如果你的场景只需要语音转文字（STT）或文字转语音（TTS），而不是完整的对话管道，有更轻量的专用工具。如果项目要求端到端模型（如 GPT-5.4 的语音模式）的低延迟，模块化管道的串行架构可能不是最优解。
+设计把"任意 STT + 任意 LLM + 任意 TTS 都能自由组合"放在第一位，单个环节是否压到最低延迟反而不是首要目标。所以出厂默认不一定是最低延迟组合，你完全可以用 `--stt`、`--llm_backend`、`--tts` 按需替换来优化某一环。
 
-## 回到架构层面
+### OpenAI Realtime 兼容换生态，raw 模式换重量
 
-speech-to-speech 真正值得看的，是把语音对话系统从垂直集成拆成了可独立演进的模块。VAD、STT、LLM、TTS 四个阶段可以各自升级、替换、组合，客户端始终通过同一套协议与系统通信。对需要在自有硬件上跑语音助手的团队，它比端到端方案更灵活，也比自建管道省力。
+走兼容协议能直接复用 OpenAI 客户端 SDK 与工具链，代价是协议自带开销——事件序列化、VAD 事件管理。如果客户端是自己写、只要最轻的通道，不必拘泥于这套事件模型。想要完全本地的做法是把 LLM 指到自建 vLLM / llama.cpp 服务器（参考 README 的 [Combining with llama.cpp](https://github.com/huggingface/speech-to-speech#combining-with-llamacpp)）。
+
+## 什么时候不需要它
+
+如果只需要语音转文字（STT）或文字转语音（TTS）之一，而不是完整的对话管道，有更轻的专用工具。如果项目要求端到端低延迟（如 GPT-5.4 语音模式），级联的串行架构不是最优解——每一跳的等待会累加到总延迟上。
+
+## 一句总结
+
+speech-to-speech 真正值得看的地方，是把语音对话从垂直整合拆成了可独立演进的四个模块：VAD、STT、LLM、TTS 各自升级替换组合互不影响，客户端始终通过同一套协议访问。对要在自有硬件上跑语音助手的团队，它比端到端方案灵活、比自建管道省力，代价是延迟与并发资源上要让一步。

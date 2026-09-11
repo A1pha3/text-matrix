@@ -15,11 +15,11 @@ SkyPilot 把分散在多朵云、多个集群里的 GPU 抽象成一台统一的
 
 读完你会掌握：SkyPilot 的三种核心抽象怎么选；用 YAML 定义一个任务并在云上跑起来；用 SkyServe 把一个开源 LLM 服务上线并自动扩缩容；用托管任务在 Spot 实例上安全地跑长任务。
 
-## 一，项目概述
+## 一、项目概述
 
 ### 1.1 SkyPilot 是什么
 
-SkyPilot 是一个面向 AI 负载的编排控制面。它由加州大学伯克利分校的 Sky Computing Lab 开发，2021 年 8 月建立仓库，2022 年开源，论文发表在 USENIX NSDI 2023。2026 年 7 月项目成立公司（SkyPilot 公司），完成 2000 万美元种子轮，由 Lux Capital 领投。
+SkyPilot 是一个面向 AI 负载的编排控制面（control plane）。它由加州大学伯克利分校的 Sky Computing Lab 开发，2021 年建立仓库并于次年开源，论文发表在 USENIX NSDI 2023。2026 年 7 月 21 日，项目正式公司化——SkyPilot 公司结束隐身，宣布完成 2000 万美元种子轮，由 Lux Capital 领投，Coatue、Amplify Partners、Foundation Capital 等参投，个人投资者包括 Databricks CEO Ali Ghodsi、Hugging Face CEO Clem Delangue 等，创始团队（Zongheng Yang、Zhanghao Wu、Romil Bhardwaj）均出自 Sky Computing Lab，导师是 Databricks/Anyscale 联合创始人 Ion Stoica。
 
 它的定位是把你已经拥有、但分散在各处的算力统一起来：AWS、GCP、Azure，以及 Lambda、CoreWeave、Nebius、RunPod 等 GPU 云，还有你自己的 Kubernetes 集群和 Slurm 集群。官方目前的口径是支持 25+ 朵云加 Kubernetes、Slurm。
 
@@ -37,9 +37,9 @@ SkyPilot 是一个面向 AI 负载的编排控制面。它由加州大学伯克�
 |------|------|
 | Stars | 约 10.5k |
 | Forks | 约 1.2k |
-| 贡献者 | 265 |
-| 提交数 | 5,689（master） |
-| 最新版本 | v0.13.1rc1（2026-07） |
+| 贡献者 | 280+ |
+| 提交数 | 5,717（master） |
+| 最新版本 | v0.13.0 正式版（2026-07）；v0.13.1rc1 候选版 |
 | 许可证 | Apache-2.0 |
 | 语言 | Python |
 
@@ -49,14 +49,17 @@ SkyPilot 是一个面向 AI 负载的编排控制面。它由加州大学伯克�
 支持基础设施: 25+ 云 + Kubernetes + Slurm
 Spot 实例: 自动恢复，可节省约 70% GPU 成本
 SkyServe: 多区域/多云副本，成本降低约 50%
-下载量: 1400 万+（第三方统计）
-生产用户: Meta FAIR、Shopify、Nubank、H Company
+下载量: 1400 万+（官方口径，截至 2026-07）
+生产用户: Meta、Shopify、Nubank、H Company
 SkyServe 生产案例: LMSys ChatBot Arena
+商用版本: SkyPilot Platform（2026-07 推出，企业多租户）
 ```
 
 需要说明的是，网络上流传的"1000+ 任务/天""$10M+ 成本节省"等说法我无法在官方来源里核实，本文不采用。
 
-## 二，核心原理
+开源版仍是主战场，但 2026 年 7 月公司化之后多了一条商业路线：SkyPilot Platform 面向需要多租户、权限隔离、资源配额的企业，把同一套控制面部署成中央服务。小型团队直接用开源版即可，两者的调度与故障恢复逻辑同源。
+
+## 二、核心原理
 
 ### 2.1 架构概览
 
@@ -107,19 +110,31 @@ SkyPilot 只提供三种抽象，理解它们的适用场景就掌握了这个�
 
 这也是"Spot 实例 + 自动恢复"能省钱的原因：Spot 便宜，但会被云厂商随时回收；SkyPilot 把回收后的恢复动作自动化，可靠性交给框架，省钱收益留给你。
 
-## 三，安装与配置
+## 三、安装与配置
 
 ### 3.1 安装
 
-要求 Python 3.9 以上。推荐用带 `[all]` 或按需选择云平台的安装方式：
+要求 Python 3.7–3.13。官方建议先建一个独立的虚拟环境（如 conda），避免与现有项目依赖冲突：
 
 ```bash
-# 支持所有云（含 Kubernetes、Slurm）
+conda create -y -n sky python=3.10
+conda activate sky
+```
+
+安装时按需选择云平台的 extras，不要图省事一口全装：
+
+```bash
+# 覆盖所有云（含 Kubernetes、Slurm）+ 本地
 pip install "skypilot[all]"
 
-# 或只装你实际用到的云
+# 只装你用到的云，安装更快、依赖更少
 pip install "skypilot[aws,gcp]"
+
+# 常用组合：Kubernetes + 主流公有云
+pip install "skypilot[kubernetes,aws,gcp,azure]"
 ```
+
+多数新式 GPU 云（Lambda、Nebius、RunPod 等）也有独立 extras，例如 `skypilot[runpod]`。对不常用的云，装了却用不上只是白白增加安装体积。
 
 ### 3.2 云凭证配置
 
@@ -148,12 +163,12 @@ az login
 sky check
 
 # 查看当前可用的 GPU 型号（跨所有已启用基础设施）
-sky gpus list
+sky show-gpus
 ```
 
 `sky check` 会列出每朵云的 enabled/disabled 状态，任何云不可用都会有提示，按提示补齐凭证即可。
 
-## 四，快速开始
+## 四、快速开始
 
 ### 4.1 第一个任务
 
@@ -214,7 +229,7 @@ sky jobs cancel 1
 
 托管任务跑在一个临时集群上，结束后自动清理，不占用你的常驻资源。
 
-## 五，LLM 服务
+## 五、LLM 服务
 
 模型服务是 SkyPilot 最常用的场景，下面用一个开源模型（Llama 3.1 8B + vLLM）走完整流程。
 
@@ -313,9 +328,11 @@ sky serve down llama-svc
 
 `replica_policy` 是 SkyServe 的扩缩容核心：`min_replicas` 和 `max_replicas` 限定副本数量范围，`target_qps_per_replica` 是每个副本的目标 QPS。当请求量上升、单副本实际 QPS 超过目标时，SkyServe 自动加副本；空闲时缩回 `min_replicas`。副本会尽量铺到不同区域/云上，既提高可用性，也避免单一区域容量不足。
 
+扩缩容不是瞬时弹：为避免抖动，SkyServe 只有在 QPS 背离目标持续一段时间后才动作，升级默认延迟 300 秒、降级默认 1200 秒。想更快响应流量就把 `upscale_delay_seconds` 调小；`min_replicas: 0` 则开启 scale-to-zero，没流量时回收全部副本，客户端需要自己做好重试等待实例拉起。把 `use_spot: true` 和 `replica_policy` 一起用，还能让部分副本落在 Spot 上，并用 `base_ondemand_fallback_replicas` 保底一部分按需实例，Spot 被回收仍能稳住下限。
+
 要注意 SkyServe 目前仍是 beta 状态。官方明确说它适合内部服务和 R&D、批量推理，暂不建议直接对外承担生产流量。下一代 SkyServe 正在做生产化改造，方向包括 prefill/decode 分离、缓存感知路由、TP/DP/PP/Wide-EP 支持、自定义指标扩缩容、scale-to-zero、TLS 与 API Key 鉴权等。
 
-## 六，托管任务与 Spot 实例
+## 六、托管任务与 Spot 实例
 
 ### 6.1 Managed Jobs 的作用
 
@@ -368,7 +385,7 @@ file_mounts:
 
 配合恢复策略，任务重新拉起后从 `/checkpoints` 里的最新检查点继续训练，而不是从头再来。应用错误的重试次数可以在 `job_recovery` 里配置（例如 `max_restarts_on_errors`）。
 
-## 七，Python SDK
+## 七、Python SDK
 
 除 YAML 外，SkyPilot 也提供 Python SDK。注意 SDK 调用是异步的：大多数调用返回一个 request ID，用 `sky.get(request_id)` 等待结果。
 
@@ -389,7 +406,7 @@ sky.status()
 
 常用的 SDK 函数和 CLI 是一一对应的：`sky.launch`、`sky.exec`、`sky.status`、`sky.stop`、`sky.down`、`sky.autostop`。对多数场景，CLI + YAML 已经足够，SDK 主要用在需要把 SkyPilot 嵌进自己的脚本或平台里的时候。
 
-## 八，YAML 配置参考
+## 八、YAML 配置参考
 
 ### 8.1 基础字段
 
@@ -443,7 +460,7 @@ service:
 
 `service` 段可以加在任意任务 YAML 末尾，把普通任务变成 SkyServe 服务。需要鉴权时，vLLM 这类引擎自带 `--api-key`，配合 `secrets` 字段传入。
 
-## 九，与其他框架对比
+## 九、与其他框架对比
 
 先明确一点：SkyPilot 和下面这些工具大多不是竞品，而是不同层。
 
@@ -457,7 +474,7 @@ service:
 
 最常用的组合是 **SkyServe + vLLM**：vLLM 负责把模型跑快，SkyServe 负责把 vLLM 铺到多个云/区域并做好负载均衡和扩缩容。
 
-## 十，常见问题
+## 十、常见问题
 
 ### 10.1 集群相关
 
@@ -485,7 +502,7 @@ sky autostop my-cluster -i 30 --down
 
 配额是云厂商的硬限制，SkyPilot 只是提示。处理方法：
 
-- 用 `sky gpus list` 看哪些区域、云有货，换一个配额充足的区域。
+- 用 `sky show-gpus` 看哪些区域、云有货，换一个配额充足的区域。
 - 提交时加 `--retry-until-up`，让 SkyPilot 在容量不足时自动重试或切换。
 - 到云厂商控制台申请提高配额（AWS 的 EC2 配额、GCP 的 GPU 配额）。
 
@@ -500,7 +517,7 @@ sky launch -c demo serve.yaml --env HF_TOKEN=hf_xxx
 
 Gated 模型（如 Llama 3.1）需要先在 HuggingFace 页面申请访问权，再在命令行传入对应账号的 Token。
 
-## 十一，总结
+## 十一、总结
 
 SkyPilot 解决的是 AI 算力的"碎片化"问题：把多朵云、Kubernetes、Slurm 上的 GPU 统一成一个可编程的资源池，自动完成选型、开机、容灾和清理。三种核心抽象各有定位——集群做开发，托管任务跑长活，SkyServe 对外服务。
 

@@ -18,7 +18,7 @@ tags: ["Claude", "提示词", "Anthropic"]
 
 **AI 通识**（AI Fluency）指与 AI 系统进行有效、高效、伦理、安全协作的能力。它面向所有人，不要求工程背景。
 
-本文基于 Anthropic 官方免费课程 [AI Fluency: Framework & Foundations](https://anthropic.skilljar.com/ai-fluency-framework-foundations) 整理。课程由 Anthropic 与两位教授合作开发：Rick Dakan（Ringling College of Art and Design）与 Joseph Feller（University College Cork），他们在 2023-2024 年基于自己的研究提出了这套框架。课程包含 14 节讲座、约 1.1 小时视频，附一次测验，完成后可获结业证书。
+本文基于 Anthropic 官方免费课程 [AI Fluency: Framework & Foundations](https://academy.claude.com/courses/ai-fluency-framework-foundations) 整理。课程由 Anthropic 与两位教授合作开发：Rick Dakan（Ringling College of Art and Design）与 Joseph Feller（University College Cork），他们在 2023-2024 年基于自己的研究提出了这套框架。课程包含 14 节讲座、约 4 小时视频，附一次测验，完成后可获得完成徽章。
 
 课程把与 AI 协作所需的全部能力浓缩成四个 D 开头的关键词：**Delegation（委托）、Description（描述）、Discernment（判断）、Diligence（审慎）**，合称 4D 框架。
 
@@ -28,7 +28,7 @@ tags: ["Claude", "提示词", "Anthropic"]
 
 人们对 AI 有两种极端态度：要么觉得 AI 说的都对，不敢质疑；要么觉得 AI 就是聊天机器人，没啥用。两种态度都浪费了 AI 的价值。
 
-Anthropic 做过一次用户访谈研究（[What 81,000 people want from AI](https://www.anthropic.com/81k-interviews)），收集了 80,508 名 Claude 用户的回答，覆盖 159 个国家、70 种语言，是目前规模最大、语言最多的定性研究之一。数据显示，**81%** 的人表示 AI 已经在某方面帮助他们接近目标，**32%** 体验到"生产力爆发"，**17.2%** 把 AI 视为"思维伙伴"。
+Anthropic 做过一次大规模用户访谈研究（[What 81,000 people want from AI](https://www.anthropic.com/81k-interviews)）：2025 年 12 月，80,508 名 Claude 用户在 AI 访谈官引导下，聊了自己希望 AI 带来什么、担心什么，覆盖 159 个国家、70 种语言，是迄今规模最大、语言最多的定性研究。数据很直观：**81%** 的人说 AI 已经帮他们向目标迈进，**32%** 体验过"生产力爆发"，**17.2%** 把 AI 当作"思维伙伴"。把期望归类后，占比最高的是职业精进（18.8%），其次是个人成长（13.7%）、生活管理（13.5%）与时间自由（11.1%）——AI 的吸引力早已超出"省事"本身。同样值得注意的是，**18.9%** 的人明确表示 AI 还没兑现他们的期待。
 
 同样，访谈里也能听到明显的担忧：很多人担心 AI 输出不可靠、担心就业受影响、担心自己逐渐失去自主判断。AI 带来的既有帮助也有疑虑，这恰恰说明使用 AI 的难点不在操作层面，而在判断层面——这也是这门课想解决的问题。
 
@@ -45,11 +45,19 @@ Anthropic 做过一次用户访谈研究（[What 81,000 people want from AI](htt
 
 其中描述和判断会反复循环，构成框架的引擎。下面逐个展开。
 
+在展开之前，先分清人与 AI 的三种协作模式，官方框架称之为 Automation、Augmentation、Agency：
+
+- **自动化**（Automation）：AI 按你的指令执行具体任务，人负责验收
+- **增强**（Augmentation）：人与 AI 互为思考伙伴，一起把问题想透
+- **代理**（Agency）：你配置好 AI，让它代表你独立完成未来的任务
+
+三种模式逐级加深：自动化时 AI 是执行者，增强时是伙伴，代理时是代理人，人对 AI 的信任与责任也随之上升。模式没有高下之分，关键是与任务匹配；而无论哪种模式，4D 都是贯穿其中的底层能力。
+
 ---
 
 ### D1：委托（Delegation）
 
-委托的核心问题是：**我应该把什么任务交给 AI？**
+委托的核心问题是：**我应该把什么任务交给 AI？** 用框架的原话，委托就是"设定目标，并决定是否、何时、如何与 AI 协作"。
 
 委托不只是"让 AI 帮我做事"，而是要识别哪些任务适合 AI、哪些不适合。适合委托的任务通常有明确目标、需要处理大量信息、需要创意发散，或者需要快速生成初稿。不适合交给 AI 的，包括需要人类承担责任的重大决策、AI 容易产生幻觉的深度专业领域，以及涉及隐私或敏感信息的任务。
 
@@ -63,7 +71,7 @@ Anthropic 做过一次用户访谈研究（[What 81,000 people want from AI](htt
 
 描述的核心问题是：**我如何清晰地向 AI 表达我想要什么？**
 
-描述是与 AI 协作中最依赖人类技巧的环节。一个有效的描述通常包含五个要素：角色（AI 扮演什么身份）、背景（你的处境）、任务目标（你想要的成果）、约束条件（边界在哪里）、格式要求（输出形式）。
+描述是与 AI 协作中最依赖人类技巧的环节。一个有效的描述通常包含五个要素：角色（AI 扮演什么身份）、背景（你的处境）、任务目标（你想要的成果）、约束条件（边界在哪里）、格式要求（输出形式）。官方课程则把描述归纳为三个视角：结果描述（Product，要说清楚要产出什么）、过程描述（Process，要说清楚怎么做）、表现描述（Performance，要说清楚做到什么程度）。两种拆法角度不同，本质都在强调一件事：把"你想要什么"讲完整。
 
 三个常用的描述技巧：
 
@@ -100,7 +108,7 @@ AI 会犯错，而且犯错的方式有时很隐蔽。常见的错误类型包�
 
 审慎的核心问题是：**我是否负责任地使用 AI？**
 
-审慎关注五个维度：伦理（这个用途是否道德）、隐私（是否泄露敏感信息）、准确（是否核实了 AI 的输出）、透明（他人是否知道这是 AI 协助的）、安全（是否存在安全隐患）。
+审慎关注五个维度：伦理（这个用途是否道德）、隐私（是否泄露敏感信息）、准确（是否核实了 AI 的输出）、透明（他人是否知道这是 AI 协助的）、安全（是否存在安全隐患）。官方课程把审慎进一步落到三个实践环节：创造审慎（Creation，生成内容时是否尽责）、透明审慎（Transparency，是否如实披露 AI 参与）、部署审慎（Deployment，把 AI 成果投入使用前是否把关）。
 
 一个实用的检查顺序：在使用 AI 输出之前，问自己——这个输出是否可能被用于伤害他人？我是否泄露了不应公开的信息？我是否核实了关键事实和数字？我是否理解了这个输出的局限？如果他人知道这是 AI 协助的，我是否心安理得？
 
@@ -182,6 +190,6 @@ AI 通识不是一门"学完就结束"的课程，而是一种需要持续练习
 
 **参考来源**
 
-- [AI Fluency: Framework & Foundations](https://anthropic.skilljar.com/ai-fluency-framework-foundations)（Anthropic 官方免费课程）
-- [Anthropic Academic Partners](/files/posts/tech/anthropic-ai-fluency-framework-foundations/anthropic-academic-partners.pdf)（课程合作教授介绍）
+- [AI Fluency: Framework & Foundations](https://academy.claude.com/courses/ai-fluency-framework-foundations)（Anthropic 官方免费课程，含课程介绍与讲师信息 PDF）
+- [The AI Fluency Framework](https://www-cdn.anthropic.com/334975cdec18f744b4fa511dc8518bd8d119d29d.pdf)（官方框架摘要文档，CC BY-NC-SA 4.0 许可）
 - [What 81,000 people want from AI](https://www.anthropic.com/81k-interviews)（Anthropic 用户访谈研究）

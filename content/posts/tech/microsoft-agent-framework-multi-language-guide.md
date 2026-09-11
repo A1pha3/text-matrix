@@ -25,11 +25,11 @@ tags: ["Microsoft", "AI Agent", "Python", ".NET", "工作流"]
 
 ## 一套框架，两个来源，三种机制
 
-先给判断：**Microsoft Agent Framework（简称 MAF）真正解决的，不是把一次「呼叫模型」封装成对象，而是把多步、多 Agent、可能跨小时执行的工作流变成可观测、可检查点、可人工干预的系统。**
+**Microsoft Agent Framework（简称 MAF）解决的不是把一次「呼叫模型」封装成对象，而是把多步、多 Agent（智能体）、可能跨小时执行的工作流，变成可观测、可检查点、可人工干预的系统。**
 
-它不是一个从零写的新框架。2025 年 10 月微软把两条产品线并到同一个开源 SDK 里：**Semantic Kernel 的企业基座**——类型化、中间件、内置遥测，与 **AutoGen 的编排能力**——轻量多 Agent 抽象。到 2026 年初 .NET 与 Python 双双发布 1.0 稳定版，Go 仍处于公开预览。
+它不是一个从零写的新框架。2025 年 10 月微软把两条产品线并到同一个开源 SDK（软件开发包）里：**Semantic Kernel 的企业基座**——类型化、中间件、内置遥测，与 **AutoGen 的编排能力**——轻量多 Agent 抽象。2026 年 4 月 Python 与 .NET 双双发布 1.0 稳定版，Go 仍处于公开预览。
 
-这套框架里最容易被混淆的是三套东西：单个 **Agent**、多 Agent 编排的 **Workflow**、以及内置了长任务能力的 **Harness Agent**。它们解决的问题不同，接口也不同。下面先把各自的边界划开，再逐个展开。
+这套框架里最容易被混淆的是三套东西：单个 **Agent（智能体）**、多 Agent 编排的 **Workflow（工作流）**、以及内置了长任务能力的 **Harness Agent（长任务智能体）**。它们解决的问题不同，接口也不同。下面先把各自的边界划开，再逐个展开。
 
 ## 项目概览
 
@@ -38,14 +38,14 @@ tags: ["Microsoft", "AI Agent", "Python", ".NET", "工作流"]
 | 仓库 | github.com/microsoft/agent-framework |
 | 许可证 | MIT |
 | 语言 | Python、.NET / C#（1.0 稳定）；Go（公开预览） |
-| 版本 | 1.0（2026-04-03 发布公告）；API 承诺向后兼容 |
+| 版本 | 1.0（2026-04-03 发布公告）；API（应用程序接口）承诺向后兼容 |
 | 官方文档 | learn.microsoft.com/agent-framework |
 
 框架对外分四个层面：
 
 | 层面 | 解决什么 | 要不要代码 |
 |------|---------|-----------|
-| **Agents** | 单个智能体：读 LLM、调工具、接 MCP 服务器 | 核心 |
+| **Agents** | 单个智能体：读 LLM（大语言模型）、调工具、接 MCP（模型上下文协议）服务器 | 核心 |
 | **Harness Agent** | 开箱即用的「多步骤长任务」智能体：规划、记忆、文件访问、权限确认 | 声明式为主 |
 | **Workflows** | 把多个 Agent 和确定性函数编排成执行路径 | 核心 |
 | **Integrations** | 模型提供商、Agent 服务、工具、中间件、评估、UI 的接入 | 按需 |
@@ -171,7 +171,7 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-这里能看出工作流相比裸调用的两个好处：顺序由**编排器显式声明**，每个 Agent 的产出都变成可枚举的 `Message` 事件，天然可观测；同时 `stream=True` 让长流程边跑边回流，而不是等到最后才吐一整段。
+相比裸调用，工作流有两个直接可见的好处：顺序由**编排器显式声明**，每个 Agent 的产出都变成可枚举的 `Message` 事件，天然可观测；`stream=True` 则让长流程边跑边回流，而不是攒到结束才整体输出。
 
 ## 功能工作流与图工作流：两条不同的 API
 
@@ -201,7 +201,7 @@ workflow = (
 
 ## 可观测性：OpenTelemetry
 
-框架内置 OpenTelemetry 支持，按 GenAI 语义约定输出 traces / metrics / logs，每个 Agent 执行、每个工作流节点都变成一个 span。开发期最省事的接法是设好导出地址后直接初始化：
+框架内置 OpenTelemetry（开放遥测标准）支持，按 GenAI 语义约定输出 traces（追踪）/ metrics（指标）/ logs（日志），每个 Agent 执行、每个工作流节点都变成一个 span。开发期最省事的接法是设好导出地址后直接初始化：
 
 ```python
 # 设置环境变量 OTEL_EXPORTER_OTLP_ENDPOINT 后
@@ -210,7 +210,7 @@ from agent_framework.observability import configure_otel_providers
 configure_otel_providers()   # 此后所有 agent / workflow 执行自动打 trace
 ```
 
-.NET 侧通过 builder 链挂载 OpenTelemetry：
+.NET 侧通过 builder（建造者模式）链挂载 OpenTelemetry：
 
 ```csharp
 // 示例基于 AIProjectClient
@@ -229,7 +229,7 @@ var instrumentedChatClient = new AIProjectClient(new Uri(endpoint), new DefaultA
 - **敏感数据开关**：`EnableSensitiveData` 会连同提示词、响应、函数参数一起入库，只应在开发/测试环境打开，否则生产日志可能泄露用户输入。
 - **避免重复埋点**：如果同时给聊天客户端和 Agent 都开了遥测，同一段 prompt 会被记录两次，属正常现象；按需只在其中一侧开启。
 
-本地可视化推荐 .NET 生态的 **Aspire Dashboard**，或者搭配 DevUI。
+本地可视化推荐 .NET 生态的 **Aspire Dashboard（仪表盘）**，或者搭配 DevUI。
 
 ## 三件辅助件：中间件、DevUI、AF Labs
 
@@ -241,7 +241,7 @@ var instrumentedChatClient = new AIProjectClient(new Uri(endpoint), new DefaultA
 
 框架通过**服务连接器（Service Connector）**抽象模型接入，1.0 自带 Microsoft Foundry、Azure OpenAI、OpenAI、Anthropic Claude、Amazon Bedrock、Google Gemini、Ollama、GitHub Copilot SDK 等首方连接器。替换模型通常只换一个客户端类，Agent 与工作流逻辑不因此改动。
 
-跨运行时方面，**A2A（Agent-to-Agent）协议**让不同生态、不同语言的 Agent 之间可以通信，**MCP** 则负责工具互操作。想评估只出不进的新配置时，用哪个 Provider 取决于你已有资源：在 Azure 生态就直接用 Foundry / Azure OpenAI，私有推理或本地实验则走 Ollama 或 OpenAI 兼容端点。
+跨运行时方面，**A2A（Agent-to-Agent）协议**让不同生态、不同语言的 Agent 之间可以通信，**MCP** 则负责工具互操作。选哪个 Provider 取决于你已有的资源：在 Azure 生态就直接用 Foundry / Azure OpenAI，私有推理或本地实验则走 Ollama 或 OpenAI 兼容端点。
 
 ## 从 Semantic Kernel / AutoGen 迁移
 
@@ -295,7 +295,7 @@ Microsoft Agent Framework 1.0 的差异化在三点：**多语言官方实现（
 
 ### 参考答案
 
-1. 指 Python 与 .NET / C#（1.0 稳定）以及 Go（公开预览）。Go 仍处预览期，声明式 Agent、RAG、CodeAct、功能工作流等在 Go 侧还未落地。
+1. 指 Python 与 .NET / C#（1.0 稳定）以及 Go（公开预览）。Go 仍处预览期，声明式 Agent、RAG（检索增强生成）、CodeAct、功能工作流等在 Go 侧还未落地。
 2. 单个 Agent 解决「一次模型调用 + 工具」；多 Agent 工作流解决「多个步骤/多个角色的确定性编排」；Harness Agent 是开箱即用的长任务载体，内置规划、记忆、文件访问和权限确认。
 3. 步骤固定、接近线性流水线时用功能工作流；分支、循环、路由复杂时用图工作流。需要人工确认的节点用 `HumanInTheLoopExecutor` 插进图里，属于图工作流的典型场景。
 4. `run(..., stream=True)` 边生成边返回事件（`event.type == "output"`），不用等整段生成完；`run(...)` 一次性返回完整响应。长流程跨多个节点、耗时长，流式能在产出前让终端有反馈，也便于对外部系统逐步输出。
@@ -313,7 +313,7 @@ Microsoft Agent Framework 1.0 的差异化在三点：**多语言官方实现（
 ## 进阶路径
 
 - **深读编排**：读仓库 `python/packages/orchestrations` 下 `SequentialBuilder` 与 `WorkflowBuilder` 的调度实现，理解事件流、检查点与 `HumanInTheLoopExecutor` 的阻塞等待如何落地。
-- **可观测性落地**：把 trace 接到你们现有 APM，做「一次对话 → 各 span → Token / 延迟」的下钻看板，而不是只在本机 DevUI 看一眼。
+- **可观测性落地**：把 trace 接到你们现有的 APM（应用性能管理），做「一次对话 → 各 span → Token（词元）/ 延迟」的下钻看板，而不是只在本机 DevUI 看一眼。
 - **托管与生产化**：从本地 DevUI 走向 A2A、Durable 托管，重点处理凭据、横向扩展与状态持久化。
 - **迁移评估**：如果你有 Semantic Kernel 或 AutoGen 存量，跑一个最小迁移用例，用框架自带的评估能力对比迁移前后行为差异。
 

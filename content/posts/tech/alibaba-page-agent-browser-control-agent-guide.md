@@ -11,9 +11,9 @@ tags: ["Page Agent", "阿里巴巴", "MCP", "浏览器自动化"]
 
 # Page Agent v1.10.0：阿里巴巴开源的浏览器控制 Agent 全栈拆解
 
-## 学习目标
+## 读完你能判断什么
 
-阅读本文后，你将能够：
+读这篇文章，你应该能：
 
 1. 复述 Page Agent 单仓多包（monorepo）拆分中 8 个 npm package 的职责边界与依赖方向。
 2. 解释 `PageAgentCore` 与 `PageController` 的异步解耦方式，以及 FlatDomTree → 文本化 → LLM → 索引化操作这条 DOM 流水线。
@@ -56,7 +56,10 @@ tags: ["Page Agent", "阿里巴巴", "MCP", "浏览器自动化"]
   - [9.3 已知限制](#93-已知限制)
 - [10. 采用顺序与决策建议](#10-采用顺序与决策建议)
 - [11. 常见问题与排查](#11-常见问题与排查)
-- [12. 延伸阅读](#12-延伸阅读)
+- [12. 练习与自测](#12-练习与自测)
+- [13. 进阶路径](#13-进阶路径)
+- [14. 资料口径说明](#14-资料口径说明)
+- [15. 延伸阅读](#15-延伸阅读)
 
 ## 1. 项目定位与最新状态
 
@@ -91,7 +94,7 @@ Page Agent 跟以下两类项目经常被一起提及，但目标截然不同：
 - **Playwright MCP（工具型 MCP Server）**：把浏览器控制能力以 MCP Tool 的形式暴露给 LLM，让 LLM 用 Playwright 风格 API（点击 selector、截图、填表单）操作网页。定位是"通用工具集"，不绑死任何网站。
 - **Page Agent（客户端增强）**：JavaScript 直接注入目标网页，文本化 DOM、调用 LLM、让用户在自己正在浏览的网页里用自然语言完成任务。定位是"给站点加 AI Copilot"，目标站点是合作方，运营方对自己的 UI 有完全控制权。
 
-把这个分界说清楚是后续选型的基础——下文 7.1 会展开三者的能力矩阵。
+这个分界决定了下文 7.1 的对比维度。
 
 ## 2. 单仓多包架构总览
 
@@ -272,7 +275,7 @@ v1.10.0 之前的 Page Agent 已经能用浏览器扩展做"多页面 Agent"。v
 3. launcher 页面触发扩展打开 Hub Tab（`hub.html?ws=PORT`）。
 4. Hub 连上 WS，MCP 工具现在可以把任务代理给 Hub。
 
-Hub Tab 用的是 `hub-ws.ts` 定义的通用 WebSocket 协议，**对 MCP 一无所知**——这是有意为之的解耦：换掉 MCP 客户端不影响浏览器侧。
+Hub Tab 只认 `hub-ws.ts` 定义的 WebSocket 协议，不关心调用方是不是 MCP。换掉 MCP 客户端，浏览器侧不需要跟着改。
 
 ### 5.2 三个 MCP Tool 的语义
 
@@ -315,7 +318,7 @@ Cursor / Copilot 用同样的 MCP 设置格式即可。这样 Claude 在桌面�
 - 客户端 → Hub：`useAgent(taskPayload)`，把任务转给 MultiPage Agent 调度。
 - Hub → 客户端：步骤事件流（`step_start`、`step_done`、`task_finished`、`task_failed`）。
 
-Hub Tab 不知道 MCP 存在，只跟 WS 协议对话；MCP Server 也不知道扩展存在，只跟 Hub Tab 对话。这种"协议-传输-语义"三层解耦，让任意一方替换都不影响其他层。
+Hub Tab 只跟 WS 协议对话，不感知 MCP 的存在；MCP Server 只跟 Hub Tab 对话，不感知扩展的存在。协议、传输、语义各管一层，任何一侧被替换，另一侧都无需改动。
 
 ### 6.2 跨页面上下文共享
 
@@ -325,7 +328,7 @@ MultiPage Agent 的核心数据流：
 2. 切到 Tab B，用步骤 1 的结果继续。
 3. 跨 Tab 之间通过 Hub Tab 的内存对象共享，不依赖 localStorage 或 Service Worker 持久化。
 
-这条路径目前文档仍在完善，但 v1.10.0 已经把扩展上架 Chrome Web Store（ID 见 `packages/mcp/README.md` 引用的 `akldabonmimlicnjlflnapfeklbfemhj`）。
+这条路径的文档还在完善中；扩展本身已上架 Chrome Web Store（扩展 ID `akldabonmimlicnjlflnapfeklbfemhj`，出处见 `packages/mcp/README.md`）。
 
 ## 7. 与 browser-use、Playwright MCP 的设计取舍
 
@@ -343,7 +346,7 @@ MultiPage Agent 的核心数据流：
 | 上游依赖 | 复用 browser-use 的 DOM 处理组件 | — | Playwright 内核 |
 | 站点配合度 | 必须愿意嵌入 JS | 任意 | 任意 |
 
-Page Agent 的 DOM 处理组件与提示词源自 browser-use（README 明确致谢 Gregor Zunic），但定位从"服务端自动化"切到了"客户端增强"——这正是它的差异化点。
+Page Agent 的 DOM 处理组件与提示词源自 browser-use（README 明确致谢 Gregor Zunic），定位却从"服务端自动化"切到了"客户端增强"。
 
 ### 7.2 选型决策表
 
@@ -467,57 +470,47 @@ await agent.execute('Click the login button')
 | execute 报 reasoning_effort 错误 | 用了 `*-chat-latest` 模型 | 升级到 v1.10.0 或手动去除 `reasoning_effort` 字段 |
 | 国内访问 jsDelivr 慢 | 网络问题 | 切换 npmmirror 镜像 |
 
-## 12. 延伸阅读
+## 12. 练习与自测
 
----
+读完架构，动手跑一遍比继续读更有效。三条练习覆盖三种使用方式，五道自测题用来检查判断依据是否站得住。
 
-## 练习
+### 练习一：在本页跑通一行 script 标签
 
-### 练习一：本地跑通 Page Agent 一行 script 标签
+用 §8.1 的 CDN 方式，在自己的一个 HTML 页面里引入 Page Agent 的 demo 脚本，让页面自动弹出 Panel。输入一条任务（例如"点击页面右上角的登录按钮"），观察 Agent 的决策过程。跑通后记录三点：初始化耗时、首次任务响应延迟、任务完成准确率。Panel 没弹出时，按 §11 的排查表检查 `crossorigin` 和 CDN 缓存。
 
-1. 创建一个 HTML 文件，引入 Page Agent script 标签：`<script src="https://unpkg.com/page-agent"></script>`
-2. 初始化 Page Agent：`const agent = new PageAgent({ apiKey: 'your-api-key' });`
-3. 在页面上添加一个按钮，点击后触发 Agent 操作
-4. 测试：点击按钮，观察 Agent 是否能正确操作页面
-5. 记录：初始化耗时、首次响应延迟、操作准确率
+### 练习二：同一任务对比 browser-use
 
-### 练习二：对比 Page Agent 与 browser-use 的适用场景
+用 [browser-use](https://github.com/browser-use/browser-use) 实现"自动填写表单"，再与 Page Agent 的做法对比。重点比较三处：开发成本（要写多少代码）、运行环境（本地 Python 进程 vs 浏览器内注入）、适用站点（任意站点 vs 愿意嵌入脚本的站点）。做完这组对比，§7.2 选型表的边界是否成立就有数了。
 
-1. 用 Page Agent 实现一个"自动填写表单"功能
-2. 用 browser-use 实现同样的"自动填写表单"功能
-3. 对比两者的开发效率、运行性能、适用场景
-4. 评估：你的场景更适合哪个工具？
+### 练习三：把 MCP Server 接进 Claude Desktop
 
-### 练习三：集成 Page Agent MCP Server 到 Claude Desktop
+按 §5.3 的配置把 `@page-agent/mcp` 接进 Claude Desktop，用自然语言让它打开一个常用站点并完成一次真实操作（例如登录后台导出报表）。开始前确认 Chrome 扩展已安装、Hub Tab 能独立启动；连不上时用 `curl http://localhost:38401` 检查端口。记录配置耗时、执行延迟和准确率。
 
-1. 安装 `@page-agent/mcp`：`npm install -g @page-agent/mcp`
-2. 配置 Claude Desktop：`claude_desktop_config.json`
-3. 启动 Claude Desktop，测试 MCP Tool 是否可用
-4. 用自然语言操控浏览器，观察 Agent 的执行过程
-5. 记录：配置耗时、执行延迟、准确率
+### 自测题
 
----
-
-## 13. 自测题
-
-以下问题检验你对 Page Agent 架构和适用边界的理解：
-
-1. Page Agent 的 `FlatDomTree` 跟 `browser-use` 的截图方案，核心差异是什么？什么场景下必须选截图？
+1. Page Agent 的 `FlatDomTree` 与 browser-use 的截图方案，核心差异是什么？什么场景下必须选截图？
 2. `@page-agent/core` 为什么不依赖 UI？什么场景下你会直接调用 `PageAgentCore` 而不是 `page-agent` 入口类？
-3. MCP Server 的 Hub Tab 用了 WebSocket 而不是 HTTP 轮询，这带来什么好处？有什么代价？
-4. 如果你要在生产环境用 Page Agent，模型选型会优先考虑哪三个指标？为什么？
-5. Page Agent 目前没有完整 step replay，这会影响哪类场景的采用决策？
+3. Hub Tab 用 WebSocket 而不是 HTTP 轮询，换来什么，付出什么代价？
+4. 生产环境用 Page Agent，模型选型优先看哪三个指标？
+5. Page Agent 没有完整 step replay，会影响哪类场景的采用决策？
 
 <details>
 <summary>参考答案</summary>
 
-1. `FlatDomTree` 是文本化 DOM，成本远低于截图，且不需要多模态模型；但遇到"看图选图"或复杂视觉布局时，文本化会丢失信息。需要视觉判断的场景必须选截图。
-2. `core` 不依赖 UI，可以被 Node.js 脚本或服务端调用，适合"后端定时任务操控页面"或"测试脚本"场景；前端页面里的 AI Copilot 才用 `page-agent` 入口类。
-3. WebSocket 的好处是低延迟双向通信，LLM 执行步骤可以实时推给 Hub Tab；代价是连接管理更复杂，需要扩展常驻后台。
-4. 优先考虑：延迟（决定用户感知的响应速度）、成本（反射循环会调两次模型）、上下文窗口（简化 HTML 的体积）。
-5. 会影响金融、医疗等需要完整操作审计和回放的场景——没有 step replay，无法向合规方证明"模型每一步做了什么"。
+1. `FlatDomTree` 是文本化 DOM，成本远低于截图，且不需要多模态模型；但"看图选图"或复杂视觉布局会丢失信息，需要视觉判断的场景必须选截图。
+2. `core` 不依赖 UI，可以被 Node.js 脚本或服务端调用，适合后端定时任务操控页面或测试脚本；前端页面里的 AI Copilot 才用 `page-agent` 入口类。
+3. WebSocket 换来低延迟双向通信，LLM 执行步骤可以实时推给 Hub Tab；代价是连接管理更复杂，扩展需要常驻后台。
+4. 延迟（决定用户感知的响应速度）、成本（反射循环会调用两次模型）、上下文窗口（简化 HTML 的体积）。
+5. 金融、医疗等需要完整操作审计和回放的场景——没有 step replay，无法向合规方证明模型每一步做了什么。
 
 </details>
+
+## 13. 进阶路径
+
+- **源码层面**：从 `packages/core/src/PageAgentCore.ts` 入手，理解 Agent 主循环
+- **协议层面**：读 `packages/mcp/src/hub-ws.ts`，理解 Hub Tab WebSocket 协议
+- **DOM 层面**：从 `packages/page-controller/src/dom/dom_tree/index.js` 入手，理解 FlatDomTree 提取逻辑
+- **模型层面**：从 `packages/llms/` 入手，理解 reflection-before-action 的实现
 
 ## 14. 资料口径说明
 
@@ -528,16 +521,7 @@ await agent.execute('Click the login button')
 5. **术语使用说明**：本文保留 MCP（Model Context Protocol）、npm、ESM、WS（WebSocket）、CDN、SaaS、CRM、ERP、LLM、OpenAI 兼容协议等专有名词不翻译。
 6. **更新记录**：本文初稿基于 v1.10.0（2026-06-15），若 Page Agent 后续版本有架构变化，将同步更新对应章节。
 
-## 15. 进阶路径
-
-- **源码层面**：从 `packages/core/src/PageAgentCore.ts` 入手，理解 Agent 主循环
-- **协议层面**：读 `packages/mcp/src/hub-ws.ts`，理解 Hub Tab WebSocket 协议
-- **DOM 层面**：从 `packages/page-controller/src/dom/dom_tree/index.js` 入手，理解 FlatDomTree 提取逻辑
-- **模型层面**：从 `packages/llms/` 入手，理解 reflection-before-action 的实现
-
----
-
-## 12. 延伸阅读
+## 15. 延伸阅读
 
 - 仓库主页：<https://github.com/alibaba/page-agent>
 - Demo：<https://alibaba.github.io/page-agent/>
