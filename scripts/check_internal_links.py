@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 import re
 import sys
 import urllib.parse
@@ -81,6 +82,10 @@ class LinkChecker:
     def normalize(self, u: str) -> str | None:
         """返回站内绝对路径；外部链接返回 None。"""
         u = u.strip()
+        # ⚠️ 9-12 bugfix: Hugo 渲染时会对内部 href 做 XML entity encoding
+        # (e.g. /tags/c++/ → /tags/c&#43;&#43;/)，不还原会把字面 `&#43;` 拼到路径
+        # 上做 is_file()，导致 tag slug 含 + 的页面被误报 404。
+        u = html.unescape(u)
         if u.startswith(self.base + "/"):
             return u[len(self.base):]
         if u.startswith("http://") or u.startswith("https://") or u.startswith("//"):
@@ -136,6 +141,10 @@ class LinkChecker:
         if not sm.is_file():
             return
         for u in re.findall(r"<loc>([^<]+)</loc>", sm.read_text(encoding="utf-8", errors="replace")):
+            # ⚠️ 9-12 bugfix: Hugo sitemap.xml 对 URL 中的 `+` 等字符做 XML entity 转义
+            # (e.g. /tags/c++/ → /tags/c&#43;&#43;/)，不还原会把字面 `&#43;` 拼到路径
+            # 上做 is_file()，导致 tag slug 含 + 的页面被误报 404。
+            u = html.unescape(u)
             if u.startswith(self.base + "/"):
                 self.record(u[len(self.base):], "/sitemap.xml")
 
@@ -153,6 +162,8 @@ class LinkChecker:
             urls += re.findall(r'href="(https?://[^"\s]+)"', text)
             urls += re.findall(r'"url"\s*:\s*"(https?://[^"\s]+)"', text)
             for u in urls:
+                # ⚠️ 9-12 bugfix: RSS/Atom/JSON feed 与 sitemap 同源问题，同做 entity decode
+                u = html.unescape(u)
                 if u.startswith(self.base + "/"):
                     self.record(u[len(self.base):], source)
 
