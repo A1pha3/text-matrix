@@ -1,31 +1,31 @@
 ---
-title: "yarb 深度解构:5 年 821 stars 的中文安全资讯聚合机器人到底在做什么"
+title: "yarb 深度解构:5 年 800+ stars 的中文安全资讯聚合机器人到底在做什么"
 date: 2026-08-03T16:42:00+08:00
 draft: false
 slug: "yarb-rss-security-bot-deep-dive-2026"
 github_repo: "Vu1nT0tal/yarb"
 tags: ["rss", "security", "bot", "python", "open-source", "architecture"]
 categories: ["技术笔记"]
-description: "yarb (Yet Another Rss Bot) 用 242 + 327 行 Python 单体,撑起 7 个 RSS 源 + 6 个推送通道 + 5 年每日自动化的中文安全资讯聚合。本文逐层拆开。"
+description: "yarb (Yet Another Rss Bot) 用 242 + 327 行 Python 单体,撑起 5 个启用 RSS 源 + 6 个推送通道 + 5 年每日自动化的中文安全资讯聚合。本文逐层拆开。"
 ---
 
-# yarb 深度解构:5 年 821 stars 的中文安全资讯聚合机器人到底在做什么
+# yarb 深度解构:5 年 800+ stars 的中文安全资讯聚合机器人到底在做什么
 
 仓库:[github.com/Vu1nT0tal/yarb](https://github.com/Vu1nT0tal/yarb)(README 内 clone URL 指向 `VulnTotal-Team/yarb`)
 代码量:`yarb.py` 242 行 + `bot.py` 327 行 + `utils.py` ≈ 600 行 Python 单体
 维护方:VulnTotal安全 / Vu1nT0tal
 最新协议:GPL-3.0
-本文完成时:821 stars · 5 年持续运行(2022-04-07 创建,archive 目录横跨 2022-2026)
+本文完成时:800+ stars(当前 824)· 5 年持续运行(2022-04-07 创建,archive 目录横跨 2022-2026)
 
 ## 1. 一句话定位:RSS 聚合 + 多通道推送的中文安全资讯日报
 
-`yarb` 是 Yet Another Rss Bot 的递归缩写。它做一件事:**每日定时抓 7 个 RSS 源、用关键词过滤后,把昨日发布的文章按 feed 分组推送到 6 个通道**。
+`yarb` 是 Yet Another Rss Bot 的递归缩写。它做一件事:**每日定时抓 5 个启用的 RSS 源、用关键词过滤后,把昨日发布的文章按 feed 分组推送到 6 个通道**。
 
 读 README 第一段就知道它不是又一个"通用 RSS 阅读器":
 
 > 一个方便获取每日安全资讯的爬虫和推送程序。支持导入 opml 文件,因此也可以订阅其他任何 RSS 源。
 
-两个核心动作:**抓** + **推**。中间夹一层**过滤**(22 个关键词黑名单,如"招聘""开班""新冠""年薪")。
+两个核心动作:**抓** + **推**。中间夹一层**过滤**(28 个关键词黑名单,如"招聘""开班""新冠""年薪")。
 
 跟同类项目比,yarb 的差别是:
 
@@ -42,21 +42,21 @@ description: "yarb (Yet Another Rss Bot) 用 242 + 327 行 Python 单体,撑起 
 
 ## 2. 仓库结构:一个 Python 单体的克制
 
-1558 个文件,**只有 ~600 行 Python 真代码**,其余是 `archive/` 5 年历史资讯 + `rss/` 订阅源 opml + `today.md` 当日归档:
+1607 个文件,**只有 ~600 行 Python 真代码**,其余是 `archive/` 5 年历史资讯 + `rss/` 订阅源 opml + `today.md` 当日归档:
 
 ```
 yarb/
 ├── yarb.py              ← 主入口 CLI(242 行)
 ├── bot.py               ← 6 通道推送机器人(327 行)
 ├── utils.py             ← 工具函数(rich + Pattern)
-├── config.json          ← 配置(代理 + 7 RSS + 6 通道 + 22 关键词)
-├── requirements.txt     ← 10 个 Python 依赖
+├── config.json          ← 配置(代理 + 7 RSS + 6 通道 + 28 关键词)
+├── requirements.txt     ← 10 个 PyPI 依赖 + 1 个 git 源(listparser)
 ├── install.sh           ← pip install + go-cqhttp 下载
 │
 ├── .github/workflows/
 │   └── action.yml       ← GitHub Actions(cron + del_runs)
 │
-├── rss/                 ← 7 个 OPML 订阅源(652 KB)
+├── rss/                 ← 7 个 OPML 订阅源(约 640 KB)
 │   ├── CustomRSS.opml
 │   ├── CyberSecurityRSS.opml
 │   ├── CyberSecurityRSS-tiny.opml
@@ -106,7 +106,7 @@ if pubday == yesterday and filter(entry.title):
     item = {entry.title: entry.link}
 ```
 
-**关键词黑名单(22 项):**
+**关键词黑名单(28 项):**
 ```python
 "exclude": [
     "招聘", "招生", "开班", "报名", "双非", "倒计时", "圆满", "抽奖",
@@ -123,7 +123,7 @@ if pubday == yesterday and filter(entry.title):
 
 `pubday == yesterday` 这一行决定了 yarb 是"日报"而不是"实时流"。背后有三层考虑:
 
-**第一层:时区对齐**。`datetime.date.today()` 是本地日期(UTC+8),而 `entry.published_parsed` 是 RFC 2822 时间戳(GMT)。如果按「当日」过滤,凌晨 UTC 发布的文章(北京时间 8 点)会被漏掉;按「昨日」过滤,UTC 16:00-23:59(北京时间 0:00-7:59)发布的文章也算「昨日」——这正是 RSS 早报用户最关心的窗口。
+**第一层:时区对齐**。`yesterday = datetime.date.today() + timedelta(-1)` 取的是服务器本地日期,而 `entry.published_parsed` 是 RFC 2822 的 GMT 时间戳,`pubday` 由它换算成 UTC 日期。在 UTC+8 的服务器上按「当日」过滤,会把北京时间 0:00-7:59 发布、但 UTC 日期还是昨天的文章漏掉;按「昨日」过滤则把它们兜进来——这正是早上 10 点看早报的用户最关心的窗口。
 
 **第二层:去重逻辑**。RSS 聚合的痛点是同一篇文章被多个源转发(比如 CVE 公告同时出现在 SecurityWeek 和 Packet Storm)。yarb 不靠去重,**靠时间窗**——任何源在「昨日」发布的新文章都收,内容重复由用户肉眼识别。这跟 Twitter timeline、微博热搜的"时间窗 = 内容"思路一致。
 
@@ -143,13 +143,13 @@ class feishuBot:
     async def send(self, text_list: list)          # 推送(含限流)
 ```
 
-读 `bot.py` 第 19-65 行,会发现飞书 webhook 用 `msg_type: text` 而企业微信 / 钉钉 / Telegram 用 `markdown`。各家 webhook 协议不完全一样,飞书自定义机器人 webhook 文档明确建议富文本走 card payload,yarb 用 text 是最简版本。
+读 `bot.py` 里 `feishuBot` 与 `wecomBot` 的实现,会发现飞书 webhook 用 `msg_type: text` 而企业微信 / 钉钉用 `markdown` 的 `msgtype`,Telegram 走 `parse_mode='HTML'`。各家 webhook 协议不完全一样,飞书自定义机器人 webhook 文档明确建议富文本走 card payload,yarb 用 text 是最简版本。
 
-**统一的频率限制器**:`pyrate_limiter` 的 `Rate(20, Duration.MINUTE)` + `InMemoryBucket` + `Limiter`,每条推送前 `limiter.try_acquire('identity')`。飞书不限制,但 4 家都要限,代码作者做了一个"宁滥勿缺"的兜底。
+**统一的频率限制器**:`pyrate_limiter` 的 `Rate(20, Duration.MINUTE)` + `InMemoryBucket` + `Limiter`,每条推送前 `limiter.try_acquire('identity')`。飞书和邮件不设限,其余 4 家(企业微信 / 钉钉 / QQ / Telegram)都套了这层 20 条/分钟的兜底——即便各平台并不强制,作者也做了"宁滥勿缺"的防御。
 
-### 3.4 真实的推送样本(today.md 头 30 行)
+### 3.4 真实的推送样本(today.md 当日归档)
 
-`today.md` 是 GitHub Actions 自动 commit 回来的当日归档,82 行涵盖 11 个 feed:
+`today.md` 是 GitHub Actions 自动 commit 回来的当日归档,撰写时点的样本是 82 行、涵盖 11 个 feed:
 
 - Recent Commits to cve:main(CVE 实时更新)
 - CXSECURITY Database RSS Feed(MODX TLS cookie / Linux Kernel Use-After-Free)
@@ -188,19 +188,19 @@ jobs:
 
 零代码、零服务器、零运维成本,只要 GitHub 不挂就稳定每日推送。Action 末尾还有 `del_runs` 清理 7 天前 workflow run,防止 Actions 配额被历史日志吃光。
 
-## 5. 7 个 RSS 源的安全纵深
+## 5. 7 个 OPML 订阅源的安全纵深
 
-`rss/` 目录下 7 个 OPML 文件,652 KB。读每个文件头能看出定位:
+`rss/` 目录下 7 个 OPML 文件,合计约 640 KB。config.json 里按 `enabled` 字段决定抓哪些,默认启用 5 个、停用 2 个。读每个文件头能看出定位:
 
-| OPML | 来源 | 定位 |
-|---|---|---|
-| CustomRSS.opml | 自维护 | 奇安信攻防社区 |
-| CyberSecurityRSS.opml | zer0yu/CyberSecurityRSS | 国际 CVE + Exploit + 漏洞 PoC |
-| CyberSecurityRSS-tiny.opml | 同上精简版 | 默认 enabled=false |
-| Chinese-Security-RSS.opml | zhengjim/Chinese-Security-RSS | 国内安全媒体/公众号 |
-| awesome-security-feed.opml | mrtouch93/awesome-security-feed | 国际安全博客精选 |
-| wechatRSS.opml | ttttmr/Wechat2RSS | 微信公众号 RSS 化 |
-| chinese-independent-blogs.opml | timqian/chinese-independent-blogs | 中文独立博客 |
+| OPML | 来源 | 定位 | 默认 |
+|---|---|---|---|
+| CustomRSS.opml | 自维护 | 奇安信攻防社区 | 启用 |
+| CyberSecurityRSS.opml | zer0yu/CyberSecurityRSS | 国际 CVE + Exploit + 漏洞 PoC | 启用 |
+| CyberSecurityRSS-tiny.opml | 同上精简版 | 去重后的精简源 | 停用 |
+| Chinese-Security-RSS.opml | zhengjim/Chinese-Security-RSS | 国内安全媒体/公众号 | 启用 |
+| awesome-security-feed.opml | mrtouch93/awesome-security-feed | 国际安全博客精选 | 启用 |
+| wechatRSS.opml | ttttmr/Wechat2RSS | 微信公众号 RSS 化 | 启用 |
+| chinese-independent-blogs.opml | timqian/chinese-independent-blogs | 中文独立博客 | 停用 |
 
 覆盖面从 CVE/漏洞 PoC 到中文安全媒体、微信公众号、独立博客,纵深 5 大类。对一个单体 Python 脚本来说足够全面。
 
@@ -253,7 +253,7 @@ if not check:
 
 ## 6. 同构设计哲学:6 个 channel 共享同一份心智模型
 
-读 `bot.py` 完整 327 行会发现,**所有 6 个 channel 的代码差异只在 webhook URL + payload 结构**,其余全是复制粘贴:
+读 `bot.py` 完整 327 行会发现,**所有 6 个 channel 的代码差异只在接入端点 + payload 结构**,其余全是复制粘贴:
 
 ```
 init   →   parse_results (text/markdown)   →   send (限流 + POST)
@@ -323,7 +323,7 @@ cd yarb
 ```
 
 ```bash
-# 3. 先用 --test 跑一遍(不抓真文章,只推 20 条假数据)
+# 3. 先用 --test 跑一遍(不抓真文章,只推 19 条假数据)
 python3 yarb.py --test
 # 你应该能在飞书群里收到 [ test1 / test2 / ... test19 ] 共 19 条假消息
 
@@ -407,8 +407,8 @@ elif name == 'slack':
 ## 10. 给工程师的 takeaway
 
 1. **单体 Python + GitHub Actions = 极致部署简单**——5 年无需服务器,只要 GitHub 不挂就稳定每日推送
-2. **同构复制是合理的取舍**——6 个 webhook channel 的代码差异只在 URL + payload,新加 channel 复制 class 即可
-3. **关键词黑名单是运营护城河**——22 个词精准屏蔽中文互联网水文("圆满""喜报""月薪"),这是懂中文互联网的人才能写出的列表
+2. **同构复制是合理的取舍**——6 个推送 channel 的代码差异只在端点 + payload,新加 channel 复制 class 即可
+3. **关键词黑名单是运营护城河**——28 个词精准屏蔽中文互联网水文("圆满""喜报""月薪"),这是懂中文互联网的人才能写出的列表
 4. **昨日时间窗是 RSS 推送的灵魂**——`pubday == yesterday` 顶起"日报 vs 实时流"的本质区别
 5. **GPL-3.0 是给"开源信仰者"的强约束**——copyleft 强传染,衍生作品必须开源,跟 MIT 友好的"随便用"形成鲜明对比
 
@@ -419,15 +419,3 @@ elif name == 'slack':
 - `today.md` 自动 commit + push,5 年下来累计几千次 commit,会触发 GitHub Actions 的 push 触发吗?(看 action.yml 没有 `on: push`,应该不会)
 - QQ 机器人用 go-cqhttp 1.0.0-rc2 是 2022 年的版本,5 年没升级,会不会因 QQ 协议变更而失效?
 - `del_runs` 7 天清理能省多少 Actions 配额?这个数字在 free tier 下值得关心吗?
-
----
-
-**反写元数据**
-- 源:`github.com/Vu1nT0tal/yarb`(main 分支,HEAD at 2026-08-03 16:43 GMT+8)
-- 反写时点:2026-08-03 16:42 GMT+8
-- 素材:`README.md` + `yarb.py` (242 行) + `bot.py` (327 行) + `utils.py` + `config.json` + `requirements.txt` + `today.md` (82 行) + `archive/2022-2026` 5 年样本 + `.github/workflows/action.yml` + `rss/` 7 个 OPML
-- 反写版本:v3 终版(三轮迭代:82 → 94 → 100)
-- 自评(三维):
-  - 正确性 30/30(hard-sourced:821 stars / 600 行 Python / 7 OPML / 6 通道 / 22 关键词 / 5 年 archive / 三段代码引用 + SlackBot 实战节)
-  - 清晰度 40/40(11 节渐进设计 / 概念唯一定义 / 去 AI 味 4 处 / 时间窗工程哲学深度段 / 双实战节 plugin 风格)
-  - 实用性 30/30(5 分钟跑起来 + 加 SlackBot + 加 RSS 源 3 实战节 / runtime 概念 → 代码完整闭环 / 5 个探索方向)

@@ -13,47 +13,41 @@ tags: ["量化交易", "机器学习", "Python"]
 
 Stefan Jansen 的《Machine Learning for Algorithmic Trading》第 2 版是少数同时给出完整代码与系统框架的工程化手册——150+ Jupyter Notebooks 覆盖 23 章、800+ 页，从数据源、特征工程、监督/无监督模型，一路走到 NLP（自然语言处理）、深度学习和强化学习的回测落地。
 
-这本书覆盖的不只是模型训练——还包含怎么把模型输出变成策略信号、怎么在历史数据上验证、怎么判断一个因子是真实 alpha 还是噪音。
+这本书额外把模型训练之外的三处关键环节讲透：预测如何变成多空头寸、历史数据上的验证如何落地、以及一个因子究竟是真实 alpha 还是噪音。
+
+> **版本边界**：仓库的 `main` 分支已在 2026 年按新版《Machine Learning for Trading》第 3 版整体重建——章节从 23 章扩到 27 章，新增 RAG、知识图谱与 autonomous agents，环境也从 conda 换成 Docker 或 `uv`。本文的章节矩阵与工作流对应第二版（2020）书，下表与末尾安装命令以当前 `main` 分支为准。第二版时代的 conda + Zipline 环境已不在 `main`（`installation/environment.yml` 已不存在），需要它需回旧 git 历史。
 
 ## 项目概览
 
 | 指标 | 数值 |
 |------|------|
 | 仓库 | [stefan-jansen/machine-learning-for-trading](https://github.com/stefan-jansen/machine-learning-for-trading) |
-| Stars | 17,747 |
-| Forks | 5,179 |
-| 主要语言 | Jupyter Notebook（核心交付物） + Python |
-| 协议 | 未指定开源协议（默认仅供读者使用） |
+| Stars | 20,867（截至 2026-09） |
+| Forks | 5,604（截至 2026-09） |
+| 主要语言 | Jupyter Notebook（核心交付物）+ Python |
+| 协议 | MIT License |
 | 配套书籍 | 《Machine Learning for Algorithmic Trading》2nd Edition（Packt，2020） |
 | 章节 | 23 章 + 1 附录（Alpha Factor Library，100+ 因子） |
 | Notebooks | 150+（多数为已运行可读状态） |
 | 主页 | [ml4trading.io](https://ml4trading.io) |
-| 社区 | [exchange.ml4trading.io](https://exchange.ml4trading.io) |
-| 最近活跃 | 2026-06-01 仍接受 Issue（项目维护中） |
+| 最近活跃 | 仍在维护（最近推送 2026-09） |
 
 ## 核心方法论：ML4T 工作流
 
 Jansen 把量化 ML 抽象成 7 步循环，散落在各章的操作被统一到了一个可迭代的模型里：
 
-```text
-┌─────────────────────────────────────────────────────┐
-│  1. Idea     定义投资范围（如美股大盘、加密资产）      │
-│     ↓                                                │
-│  2. Data     采集相关数据（价格、财报、新闻、卫星）    │
-│     ↓                                                │
-│  3. Feature  提取 alpha 因子（动量、波动、情绪等）    │
-│     ↓                                                │
-│  4. Model    设计/调优 ML 模型（监督/无监督/RL）       │
-│     ↓                                                │
-│  5. Strategy 把模型预测转化为多空头寸                  │
-│     ↓                                                │
-│  6. Backtest 在历史数据上模拟并评估                    │
-│     ↓                                                │
-│  7. Deploy   上线后持续迭代（添加新数据/新信号）       │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A[1. Idea 定义投资范围] --> B[2. Data 采集数据]
+    B --> C[3. Feature 提取 alpha 因子]
+    C --> D[4. Model 设计与调优模型]
+    D --> E[5. Strategy 转化为多空头寸]
+    E --> F[6. Backtest 历史数据回测]
+    F --> G[7. Deploy 上线后持续迭代]
+    G -. 补充新数据或新信号 .-> A
 ```
 
-整套工作流的设计前提：ML 模型是策略 pipeline 的一环，不是策略本身。数据源和特征工程的质量决定了模型的天花板，这也是第 2-5 章占据了全书近四分之一篇幅的原因——它们处理的是 ML 模型之外、但决定模型能不能用的基础设施。
+整套工作流的设计前提：ML 模型是策略 pipeline 的一环，不是策略本身。数据源和特征工程的质量决定了模型的天花板，这也是第 2-5 章独占全书 23 章里 4 章的原因——它们处理的是 ML 模型之外、却决定模型能不能用的基础设施。
 
 ## 全书 23 章结构矩阵
 
@@ -207,31 +201,27 @@ def rebalance(context, data):
 
 ## 安装与运行
 
-Jansen 在 README 里明确建议按章节装环境（避免一次装全导致版本冲突）：
+安装现在有两条路径，任选其一，都要从仓库根目录执行：
 
 ```bash
-# 1. 克隆仓库
 git clone https://github.com/stefan-jansen/machine-learning-for-trading.git
 cd machine-learning-for-trading
+cp .env.example .env   # 默认值即可用，无需改动
 
-# 2. 创建环境（推荐 conda）
-conda env create -f installation/environment.yml
-conda activate ml4t
+# 路径 A：Docker，自带全部依赖，无需编译器
+docker compose pull ml4t
 
-# 3. 安装 zipline-reloaded（推荐 conda-forge 通道）
-conda install -c conda-forge zipline-reloaded
-
-# 4. 下载 algoseek 分钟 bar 数据（可选）
-# 详见 ch02 notebook
+# 路径 B：本地 uv 环境
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
+uv sync
 ```
 
-**2022 年更新要点**：
-
-- `zipline-reloaded`、`pyfolio-reloaded`、`alphalens-reloaded`、`empyrical-reloaded` 都迁移到了 `conda-forge` 通道
-- 原 `ml4t` 通道已弃用
-- 移除了 Docker 依赖，改为 OS-specific environment 文件
+路径 B 的 `uv sync` 需要从源码编译 `scikit-learn`、`shap` 等未提供预编译轮子的包，因此先要装好 C/C++ 编译器（macOS 上执行 `xcode-select --install`），否则会以 `error: command 'c++' failed` 中止。第二版时代曾用的 `zipline-reloaded` 等项目的 conda-forge 说明，也已随这次重构过时。
 
 ## 与同类资源的横向对比
+
+表格里的星级是我们对定位线的主观标记，不是可量化的 benchmark，别当作分值比较。三条线的口径：覆盖面看策略类型与数据源的宽度，深度看数学推导与实现细节的完整度，工程化看能否直接跑出可复用的 pipeline。
 
 | 资源 | 定位 | 覆盖广度 | 深度 | 工程化 |
 |------|------|---------|------|--------|
@@ -262,9 +252,8 @@ López de Prado 的书在数学深度上更强，但代码是片段式的。Chan
 - 仓库主页：https://github.com/stefan-jansen/machine-learning-for-trading
 - 配套书籍购买：https://www.amazon.com/Machine-Learning-Algorithmic-Trading-alternative/dp/1839217715
 - 项目主页：https://ml4trading.io
-- 社区平台：https://exchange.ml4trading.io
 - 作者博客：https://ML4Trading.io/
 
 ---
 
-*本文基于 Stefan Jansen《Machine Learning for Algorithmic Trading》2nd Edition (2020) 与对应 GitHub 仓库（commit 截至 2026-06-01）。所有 notebook 路径以仓库 `main` 分支为准。读者应自行评估文中提及的所有策略在真实市场的可交易性。*
+*本文基于 Stefan Jansen《Machine Learning for Algorithmic Trading》2nd Edition (2020) 与对应 GitHub 仓库（开源数据复核于 2026-09）。所有 notebook 路径以仓库 `main` 分支为准。读者应自行评估文中提及的所有策略在真实市场的可交易性。*

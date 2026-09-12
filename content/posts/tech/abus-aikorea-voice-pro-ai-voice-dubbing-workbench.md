@@ -4,7 +4,7 @@ date: "2026-08-02T02:59:48+08:00"
 slug: "abus-aikorea-voice-pro-ai-voice-dubbing-workbench"
 github_repo: "abus-aikorea/voice-pro"
 source_key: "gh:abus-aikorea/voice-pro"
-description: "Voice-Pro（abus-aikorea/voice-pro）把 yt-dlp 下载、Demucs 人声分离、Whisper 识别、Deep-Translator 翻译、F5-TTS/CosyVoice 声音克隆串成一条本地 Gradio 流水线。项目已完全开源（LGPL）、完全免费，但作者已暂停更新。本文拆它的工序、机制、排查方法和该不该用。"
+description: "Voice-Pro（abus-aikorea/voice-pro）把 yt-dlp 下载、Demucs 人声分离、Whisper 识别、Deep-Translator 翻译、F5-TTS/CosyVoice 声音克隆串成一条本地 Gradio 流水线。项目已完全开源（GPL-3.0）、完全免费，但作者已暂停更新。本文拆它的工序、机制、排查方法和该不该用。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI 语音", "Whisper", "F5-TTS", "CosyVoice", "Edge-TTS", "ElevenLabs 替代"]
@@ -17,7 +17,7 @@ Voice-Pro（`abus-aikorea/voice-pro`）不发明任何模型。它把 yt-dlp、D
 动手之前，有两个事实比功能列表更影响决策：
 
 - **项目已暂停更新。** README 的 Notice 写明，因为团队转做另一个产品 WeConnect，Voice-Pro 暂时不会再有更新。最后一个版本是 2026 年 7 月的 v4.0。
-- **代码已完全开源、完全免费。** v3.2 起全部代码开源（LGPL），早年的 60 秒试用限制和 Shopify 订阅制已经取消，任何人可以自由使用、分发和修改。
+- **代码已完全开源、完全免费。** v3.2 起全部代码开源（GPL-3.0），早年的 60 秒试用限制和 Shopify 订阅制已经取消，任何人可以自由使用、分发和修改。
 
 换句话说，这是一个不会再长大、但已经够用且免费的工具。适合把它当作一条稳定的本地流水线来用，不适合期待它持续演进。
 
@@ -55,6 +55,7 @@ v4.0（2026 年 7 月，当前版本）是一次面向"没人维护之后"的工
 
 - 安装器从 Miniconda/pip 整体迁移到 [uv](https://docs.astral.sh/uv/)，依赖锁进 `uv.lock`，`uv sync` 拿到的就是作者锁定的同一组包。
 - 运行时升级到 Python 3.12、Torch 2.8.0+cu128（RTX 50 系支持）、Gradio 6.20。
+- 识别栈锁定 faster-whisper 1.2.1（默认 large-v3-turbo，另有 distil-large-v3.5）和 whisper-timestamped 1.15.9；TTS 栈锁定 F5-TTS 1.1.21、kokoro 0.9.4、edge-tts 7.x，CosyVoice 重新 vendor 到上游 main。
 - whisperX 因依赖锁与 Gradio 6 不兼容被移除，旧配置自动回退到 faster-whisper。
 - 新增可选模型 Fun-CosyVoice3-0.5B，覆盖包括韩语在内的 9 种语言，首次启用时从 HuggingFace 官方仓库下载。
 - CUDA Toolkit 和 Visual Studio Build Tools 不再是前置要求——全部依赖带预编译 wheel，PyTorch 自带 CUDA runtime。
@@ -76,7 +77,9 @@ uv 迁移的实际意义在故障恢复：删掉 `installer_files/` 再跑 `star
 
 安装就两步。`configure.bat` 是可选的（装 git 和 ffmpeg，需要管理员权限，只跑一次；没权限就跳过，`start.bat` 会自动下载便携版 ffmpeg）。`start.bat` 是主入口：首次运行依次下载 uv、Python 3.12、锁文件里的全部依赖，再下载约 10GB 的 AI 模型——这是整个安装里最慢的部分。GPU/CPU 自动检测，也可以用 `GPU_CHOICE` 环境变量覆盖（`G` 指定 NVIDIA，`C` 指定 CPU）。跑起来后 WebUI 地址是 `http://127.0.0.1:7870`。
 
-后续维护同样两条脚本：`update.bat` 把 Python 环境重新同步到锁文件；`uninstall.bat` 不需要管理员权限，只删 `installer_files/`，`model/` 和 `workspace/` 都保留。
+v4.0 把"不需要管理员权限"做成了正式特性：ffmpeg 缺了自动拉便携版，Whisper 模型下载中断或损坏会自动补全，翻译被免费端点限流时带退避重试、失败行保留原文并计数。整套设计是冲着受限网络和企业电脑去的。
+
+后续维护两条脚本：`update.bat` 把 Python 环境重新同步到锁文件；`uninstall.bat` 不需要管理员权限，只删 `installer_files/`，`model/` 和 `workspace/` 都保留，加 `silent` 参数可无人值守卸载。注意版本跳变：v2.x 的安装目录不能原地升级到 v3.x，官方建议删掉 `installer_files/` 重装；同属 v3.x 的版本之间才用 `update.bat` 同步，v4.0 沿用了这个脚本。
 
 默认配置下所有在线服务都走免费通道：翻译用 Deep-Translator（Google 免费网页端点），TTS 用 Edge-TTS。有 Azure 订阅的话值得切换：企业内网的安全设备经常对 `translate.google.com` 限流，长字幕翻译会变慢甚至失败——Voice-Pro 会带退避地重试，失败的行保留原文并在界面上报失败数量，但配了 Azure Translator 可以绕开这个问题，TTS 音色也更稳定。配置方法是复制 `.env.example` 为 `.env`，填入 `AZURE_SPEECH_KEY` 和 `AZURE_TRANSLATOR_KEY`，重启后启动时自动检测生效。`.env` 里有私钥，别提交进版本库。
 
@@ -120,10 +123,10 @@ Edge-TTS 和 kokoro 是另一条路线：不克隆，靠预置音色合成。音
 | TTS 模型 | 自家 Multilingual v2 / Turbo 等 | F5-TTS / E2-TTS / CosyVoice / Edge-TTS / kokoro 多选 |
 | 声音克隆 | 自家合规流程 | 取决于所选模型，授权责任在调用方 |
 | 翻译 | 与自家 voice 协同 | Deep-Translator（免费默认）+ Azure（自带 Key） |
-| 费用 | 订阅制 | 免费开源（LGPL），只花电费 |
+| 费用 | 订阅制 | 免费开源（GPL-3.0），只花电费 |
 | 维护 | 商业公司持续迭代 | 作者已停更，代码可自行 fork |
 
-成本差距可以用 README 自带的一张 SaaS 对比表量化：处理一条 60 分钟的视频（字幕 + 翻译 + 配音），Maestra 约 $23.70、Kapwing 约 $30-40、HappyScribe 约 $36-48（2025 年 4 月的价格口径）。Voice-Pro 做同样的事，订阅费是零，代价是自己的显存、磁盘和等待时间。
+成本差距可以量化：官方 README 早期版本附过一张 SaaS 对比表，处理一条 60 分钟的视频（字幕 + 翻译 + 配音），Maestra 约 $23.70、Kapwing 约 $30-40、HappyScribe 约 $36-48（2025 年 4 月的价格口径）。v4.0 改版后这张表已从主仓库 README 移除，价格也只代表当时。Voice-Pro 做同样的事，订阅费是零，代价是自己的显存、磁盘和等待时间。
 
 反过来的代价也要说清楚：ElevenLabs 的音质、克隆合规和服务稳定性是商业产品级别的，Voice-Pro 的合成质量取决于你选的开源模型，遇到 bug 没有客服，只有 Issues 页面和一份停更的代码。
 
