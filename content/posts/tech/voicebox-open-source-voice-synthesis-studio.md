@@ -3,6 +3,7 @@ title: "Voicebox：把语音克隆、生成与听写都留在本地的开源语�
 date: "2026-04-16T01:10:00+08:00"
 slug: "voicebox-open-source-voice-synthesis-studio"
 github_repo: "jamiepine/voicebox"
+source_key: "gh:jamiepine/voicebox"
 description: "Voicebox 是本地优先的开源 AI 语音工作室，用几秒音频零样本克隆音色，支持 7 个 TTS 引擎、23 种语言，内置全局听写、Stories 多轨编辑、REST 与 MCP API，作为 ElevenLabs 与 WisprFlow 的本地一体化替代方案运行在你自己的机器上。"
 draft: false
 categories: ["技术笔记"]

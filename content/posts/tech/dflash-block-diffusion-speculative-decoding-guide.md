@@ -3,6 +3,7 @@ title: "DFlash：块扩散加速的 LLM 推测解码技术"
 date: "2026-05-08T03:11:04+08:00"
 slug: "dflash-block-diffusion-speculative-decoding-guide"
 github_repo: "z-lab/dflash"
+source_key: "gh:z-lab/dflash"
 description: "DFlash 用块扩散模型替代推测解码里的自回归草案模型，一次前向生成整块候选 Token，再由目标模型并行验收。论文（ICML 2026）报告无损加速超 6 倍，比 SOTA 的 EAGLE-3 快最多 2.5 倍。本文拆开它的草案生成、上下文条件化与并行验证机制，给出模型家族、六种接入后端与采用边界，并介绍 2026 年 8 月发布的 DFlash 2。"
 draft: false
 categories: ["技术笔记"]

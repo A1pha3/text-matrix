@@ -3,6 +3,7 @@ title: "Craft Agents：7K+ Stars 的 AI Agent 原生桌面应用——用自然�
 date: "2026-04-18T15:45:00+08:00"
 slug: "craft-agents-ai-agent-native-desktop"
 github_repo: "lukilabs/craft-agents-oss"
+source_key: "gh:lukilabs/craft-agents-oss"
 description: "Craft Agents 是 craft-ai-agents 出品的 AI Agent 开源桌面应用，基于 Agent Native 软件原则。用自然语言连接 Linear/Gmail/Slack 等外部服务（MCP / REST API / 本地文件），支持多 LLM 提供商，自带多会话收件箱、Skills 与自动化工作流，可自托管远程服务器与 CLI。"
 draft: false
 categories: ["技术笔记"]

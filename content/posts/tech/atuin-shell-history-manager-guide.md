@@ -4,6 +4,7 @@ date: "2026-04-12T01:56:00+08:00"
 lastmod: "2026-09-08T00:00:00+08:00"
 slug: atuin-shell-history-manager-guide
 github_repo: "atuinsh/atuin"
+source_key: "gh:atuinsh/atuin"
 description: "Atuin 用 SQLite 替换纯文本 Shell 历史，记录退出码、目录、主机等上下文，支持端到端加密同步，并能记录 AI Agent 执行的命令。"
 draft: false
 categories: ["技术笔记"]

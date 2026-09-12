@@ -3,6 +3,7 @@ title: "NeMo Skills：NVIDIA 开源 LLM 技能提升流水线"
 date: "2026-04-12T11:00:00+08:00"
 slug: nemo-skills-llm-skill-pipeline-guide
 github_repo: "NVIDIA-NeMo/Skills"
+source_key: "gh:NVIDIA-NeMo/Skills"
 aliases:
   - /posts/tech/nemo-skills-llm-skill-pipeline-guide/
 categories: ["技术笔记"]

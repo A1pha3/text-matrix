@@ -1,5 +1,6 @@
 +++
 github_repo = "freestylefly/CodexGuide"
+source_key = "gh:freestylefly/CodexGuide"
 date = '2026-06-01T18:56:19+08:00'
 draft = false
 title = 'CodexGuide：Codex 实践知识库'

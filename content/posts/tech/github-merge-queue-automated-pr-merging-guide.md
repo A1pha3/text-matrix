@@ -1,5 +1,6 @@
 ---
 github_repo: "apps/github-merge-queue"
+source_key: "gh:apps/github-merge-queue"
 title: "GitHub 原生 Merge Queue 自动化合入完全指南"
 date: 2026-05-17
 draft: false

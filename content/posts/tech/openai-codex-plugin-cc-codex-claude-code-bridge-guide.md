@@ -9,6 +9,7 @@ description: "OpenAI 官方插件 codex-plugin-cc：在 Claude Code 中嵌入 Co
 author: text-matrix
 slug: openai-codex-plugin-cc-codex-claude-code-bridge-guide
 github_repo: "openai/codex-plugin-cc"
+source_key: "gh:openai/codex-plugin-cc"
 
 ---
 

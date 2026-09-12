@@ -3,6 +3,7 @@ title: "Jellyfin：不把媒体库交给云端的自建方案"
 date: "2026-05-05T11:40:00+08:00"
 slug: "jellyfin-open-source-media-server-complete-guide"
 github_repo: "jellyfin/jellyfin"
+source_key: "gh:jellyfin/jellyfin"
 description: "Jellyfin 把媒体库的存储、索引、转码与权限控制全部留在本地进程里，不向任何外部云服务发请求。这篇文章从不转码的直接播放讲到要转码的完整链路，从部署到底层机制，讲清楚为什么硬件转码免费、什么场景该选它、什么时候该选别的方案。"
 draft: false
 categories: ["技术笔记"]

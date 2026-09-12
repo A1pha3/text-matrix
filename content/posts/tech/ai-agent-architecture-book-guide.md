@@ -3,6 +3,7 @@ title: "《AI Agent 架构》：不绑定框架的 Agent 系统设计书"
 date: "2026-04-24T21:20:00+08:00"
 slug: "ai-agent-architecture-book-guide"
 github_repo: "Kocoro-lab/ai-agent-book"
+source_key: "gh:Kocoro-lab/ai-agent-book"
 description: "《AI Agent 架构：从单体到企业级多智能体》是 Wayland Zhang 的开源书籍，9 部 33 章按四条主线展开：单 Agent（ReAct/MCP/记忆）、多 Agent（DAG/Swarm/Handoff）、生产架构（三层结构/Temporal/可观测性）、企业治理（Token 预算/OPA/WASI），配套 Go/Rust/Python 三层参考实现 Shannon。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "Claude-Mem：用 5 个钩子，把 Claude Code 的上下文留在会话之间"
 slug: claude-mem-persistent-memory-65k-stars
 github_repo: "thedotmack/claude-mem"
+source_key: "gh:thedotmack/claude-mem"
 aliases:
   - "/posts/tech/claude-mem-persistent-memory-system-guide/"
 date: "2026-04-22T07:25:00+08:00"

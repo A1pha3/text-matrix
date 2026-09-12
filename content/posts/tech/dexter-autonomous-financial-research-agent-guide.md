@@ -3,6 +3,7 @@ title: "Dexter：把 Claude Code 的自主执行搬进金融研究"
 date: "2026-05-05T20:17:30+08:00"
 slug: "dexter-autonomous-financial-research-agent-guide"
 github_repo: "virattt/dexter"
+source_key: "gh:virattt/dexter"
 description: "Dexter 是 virattt 开源的自主金融研究智能体，把 Claude Code 的任务规划、工具执行、自我验证那套范式搬到了金融分析场景。本文拆解它的机制、一次研究的流转路径和使用边界。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "Trivy 实战指南：Aqua Security 开源的「全能」安全扫描器"
 date: "2026-06-04T15:00:00+08:00"
 slug: trivy-aquasecurity-security-scanner-guide
 github_repo: "aquasecurity/trivy"
+source_key: "gh:aquasecurity/trivy"
 description: "Trivy 是 Aqua Security 维护的 37K+ Stars 综合安全扫描器，覆盖容器镜像、文件系统、Git 仓库、K8s 集群、VM 镜像，集成 CVE 漏洞、SBOM、IaC 错误配置、密钥与 License 扫描。"
 categories: ["技术笔记"]
 tags: ["DevSecOps", "Kubernetes"]

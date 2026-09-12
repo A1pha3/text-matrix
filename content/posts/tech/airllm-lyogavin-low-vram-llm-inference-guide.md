@@ -3,6 +3,7 @@ title: "AirLLM：单卡 4GB 跑 70B，把显存从「装下模型」改成「装
 date: "2026-06-04T15:00:00+08:00"
 slug: airllm-lyogavin-low-vram-llm-inference-guide
 github_repo: "lyogavin/airllm"
+source_key: "gh:lyogavin/airllm"
 description: "AirLLM 把模型权重逐层流过显存：70B 用 4GB、405B 用 8GB、DeepSeek-V3 671B 约 12GB、Kimi K3 2.8T 用 3.72GB，v4.0 还能在 6GB 内 LoRA 微调 125B 模型；本文讲清机制边界、社区实测速度与采用决策。"
 draft: false
 categories: ["技术笔记"]

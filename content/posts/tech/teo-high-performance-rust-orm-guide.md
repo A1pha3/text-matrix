@@ -3,6 +3,7 @@ title: "TEO 0.4：从多语言框架收缩成纯 Rust ORM，四库统一但仍�
 date: "2026-05-11T12:55:00+08:00"
 slug: "teo-high-performance-rust-orm"
 github_repo: "teodevgroup/teo"
+source_key: "gh:teodevgroup/teo"
 description: "TEO 0.4 是 teodevgroup/teo 的方向性重写：把多语言 schema 驱动 Web 框架收敛为纯 Rust ORM。MySQL、PostgreSQL、SQLite、MongoDB 共用一套 API。项目标注 WIP，最新发布 0.4.0-alpha.0，本文基于官方仓库核实并给出诚实的使用建议。"
 draft: false
 categories: ["技术笔记"]

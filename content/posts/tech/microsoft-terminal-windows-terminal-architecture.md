@@ -7,6 +7,7 @@ tags: ["C++", "Windows", "ConPTY"]
 description: "microsoft/terminal 不止是一个终端模拟器，它同时重写了 Windows 的两种命令行体验：新终端应用 Windows Terminal 与系统原生 console host。核心是 ConPTY 伪控制台把「shell 渲染」和「UI 渲染」彻底解耦，让所有历史控制台应用都能无缝迁入 GPU 加速的多 tab 终端。本文按架构分层拆解其设计。"
 slug: microsoft-terminal-windows-terminal-architecture
 github_repo: "microsoft/terminal"
+source_key: "gh:microsoft/terminal"
 ---
 
 # microsoft/terminal：从 conhost 到 ConPTY，Windows Terminal 到底重构了什么

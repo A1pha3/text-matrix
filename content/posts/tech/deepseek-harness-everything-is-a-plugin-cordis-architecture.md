@@ -9,6 +9,7 @@ toc: true
 band: review
 gates: ["事实性", "去AI味", "观点依据"]
 github_repo: "deepseek-ai/deepseek-harness"
+source_key: "gh:deepseek-ai/deepseek-harness"
 ---
 
 ## 这篇文章在回答什么

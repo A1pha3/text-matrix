@@ -4,6 +4,7 @@ date: 2026-08-02T09:55:00+08:00
 draft: false
 slug: khazix-leader-task-book-2026
 github_repo: "KKKKhazix/khazix-skills"
+source_key: "gh:KKKKhazix/khazix-skills"
 tags: ["agent-skills", "task-engineering", "harness", "ai-agents", "goal-oriented", "codex", "claude-code"]
 categories: ["技术笔记"]
 description: "数字生命卡兹克开源的 leader skill 是怎么把『模糊想法』炼成 ≤4000 字符、可直接粘进 /goal 的目标任务书的——目标七问、Harness 哲学、五大死法、暗卷验收、执行型 vs 探索型分流，从一个 commit 7e95e259 看完整工程细节。"

@@ -3,6 +3,7 @@ title: "Hysteria 2：QUIC 协议加持的抗审查代理工具完全指南"
 date: "2026-05-14T10:45:00+08:00"
 slug: "hysteria2-quic-proxy-guide"
 github_repo: "apernet/hysteria"
+source_key: "gh:apernet/hysteria"
 aliases:
   - "/posts/tech/hysteria-quic-proxy-censorship-resistance/"
 description: "Hysteria 2 是一款基于 QUIC 的开源抗审查代理工具：默认将流量伪装成真实的 HTTP/3 网站访问，配合自研的 Brutal 拥塞控制在高丢包链路上保持吞吐，并提供 obfs 混淆、端口跳跃等分层对抗手段。本文基于 v2.12 官方文档，覆盖服务端部署、客户端配置、TUN 模式与常见问题排查。"

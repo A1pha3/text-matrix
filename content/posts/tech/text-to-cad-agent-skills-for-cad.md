@@ -3,6 +3,7 @@ title: "Text to CAD：让AI代理直接生成CAD模型的技能库"
 date: 2026-08-04T03:20:00+08:00
 slug: "text-to-cad-agent-skills-for-cad"
 github_repo: "earthtojake/text-to-cad"
+source_key: "gh:earthtojake/text-to-cad"
 description: "Text to CAD 是一个面向AI代理的CAD/CAE/CAM技能库，支持自然语言生成3D模型、机器人描述文件、G-code等工程输出，让AI成为硬件设计师的得力助手。"
 draft: false
 categories: ["技术笔记"]

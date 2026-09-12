@@ -3,6 +3,7 @@ title: "BitNet：把 LLM 权重压进三个值，让推理在 CPU 上无损跑�
 date: "2026-04-06T21:21:00+08:00"
 slug: "bitnet-microsoft-1bit-llm-inference-guide"
 github_repo: "microsoft/BitNet"
+source_key: "gh:microsoft/BitNet"
 description: "微软官方 bitnet.cpp 是 1-bit LLM 推理框架：三元权重让矩阵乘法退化为整数加法，在 CPU 上无损运行。介绍 1.58 bit 原理、I2_S/TL1/TL2 内核、性能边界与部署路径。"
 draft: false
 categories: ["技术笔记"]

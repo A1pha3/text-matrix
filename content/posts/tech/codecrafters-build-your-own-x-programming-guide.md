@@ -4,6 +4,7 @@ date: "2026-04-25T11:20:00+08:00"
 lastmod: 2026-09-02T00:00:00+08:00
 slug: codecrafters-build-your-own-x-programming-guide
 github_repo: "codecrafters-io/build-your-own-x"
+source_key: "gh:codecrafters-io/build-your-own-x"
 aliases:
  - /posts/tech/build-your-own-x-programming-by-rebuilding/
 description: "build-your-own-x：一份按 30 个技术方向整理的外部教程清单，约 53 万 star，GitHub 上最受关注的仓库。它不教你背 API，而是让你从零写出 Git、Docker、BitTorrent。"

@@ -3,6 +3,7 @@ title: "Quarkdown：给 Markdown 装上计算能力，一份源文件编译出�
 date: "2026-04-29T16:41:29+08:00"
 slug: quarkdown-markdown-superpowers-complete-guide
 github_repo: "iamgio/quarkdown"
+source_key: "gh:iamgio/quarkdown"
 description: "Quarkdown 是构建在 CommonMark 与 GFM 之上的 Markdown 超集，通过图灵完备的函数系统为文档引入计算能力，可把单一源文件编译成 HTML、PDF、Markdown 与纯文本。"
 draft: false
 categories: ["技术笔记"]

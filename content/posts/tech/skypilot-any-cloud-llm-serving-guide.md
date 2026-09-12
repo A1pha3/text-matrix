@@ -3,6 +3,7 @@ title: "SkyPilot：10.5K Stars·任意云 LLM 服务框架·自动故障转移"
 date: "2026-04-12T02:31:39+08:00"
 slug: skypilot-any-cloud-llm-serving-guide
 github_repo: "skypilot-org/skypilot"
+source_key: "gh:skypilot-org/skypilot"
 description: "SkyPilot 是伯克利 Sky Computing Lab 开源的 AI 编排框架，统一管理 25+ 云、Kubernetes 与 Slurm，支持 Spot 实例自动恢复与 SkyServe 模型服务，可节省约 70% 的 GPU 成本。"
 draft: false
 categories: ["技术笔记"]

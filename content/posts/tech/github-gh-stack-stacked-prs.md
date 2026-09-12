@@ -3,6 +3,7 @@ title: "gh-stack：GitHub 官方推出的 Stacked PRs CLI 扩展"
 date: 2026-08-02T02:59:48+08:00
 slug: "github-gh-stack-stacked-prs"
 github_repo: "github/gh-stack"
+source_key: "gh:github/gh-stack"
 description: "github/gh-stack 是 GitHub 官方推出的 Stacked PRs CLI 扩展：一条 gh 子命令接管建栈、级联 rebase、批量 push、创建 PR 与层间导航，并配套 gh-stack 技能让 AI 代理学会按层拆分改动。"
 draft: false
 categories: ["技术笔记"]

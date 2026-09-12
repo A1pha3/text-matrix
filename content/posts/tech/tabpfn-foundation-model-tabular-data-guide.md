@@ -3,6 +3,7 @@ title: "TabPFN：为表格数据设计的基础模型，从秒级推理到百万
 date: "2026-05-08T03:11:04+08:00"
 slug: "tabpfn-foundation-model-tabular-data-guide"
 github_repo: "PriorLabs/TabPFN"
+source_key: "gh:PriorLabs/TabPFN"
 description: "TabPFN 是专为表格数据设计的预训练基础模型：面对新数据集不做梯度训练，直接用一次前向传播给出预测。本文基于当前默认的 TabPFN-3 梳理版本演进、预训练机制、基准数字、许可证边界与上手代码。"
 draft: false
 categories: ["技术笔记"]

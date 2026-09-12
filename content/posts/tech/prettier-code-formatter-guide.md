@@ -4,6 +4,7 @@ date: "2026-04-12T02:31:39+08:00"
 lastmod: "2026-09-08T00:00:00+08:00"
 slug: prettier-code-formatter-guide
 github_repo: "prettier/prettier"
+source_key: "gh:prettier/prettier"
 description: "Prettier 用「解析 → AST → Doc 中间表示 → 重新打印」的流水线把代码风格变成已决事项。本文拆解它的 Opinionated 设计与断行机制，给出 ESLint 10 flat config、husky v9 与 CI 的完整落地配置，并说明 Biome 时代它还该用在哪里。"
 draft: false
 categories: ["技术笔记"]

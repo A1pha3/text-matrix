@@ -3,6 +3,7 @@ title: "100 年前 Ramanujan 写下素数的秘密，今天一台机器在 Lean 
 date: "2026-06-18T00:30:00+08:00"
 lastmod: "2026-09-07T12:00:00+08:00"
 slug: "axiom-ai-mathematician-formal-verification-lean"
+source_key: "bv:BV1tV7Q6TEUV"
 description: "【视频精读】从 1916 年 Ramanujan 在剑桥定义 tau 函数，到 2026 年 AxiomProver 在 Lean 里完成形式化证明。本文基于 SAIR 演讲切片第七期（BV1tV7Q6TEUV），逐项核实 Carina Hong 演讲的核心事实：7 篇论文、3 项期刊接收、50 到 500 个推理节点，以及 tau 函数、部分正则素数、k-微分奇偶三个能对回 arXiv 的故事。"
 tags: ["视频精读", "B站反写"]
 categories: ["视频精读"]

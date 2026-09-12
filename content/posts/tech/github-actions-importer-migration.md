@@ -1,5 +1,6 @@
 +++
 github_repo = "github/gh-actions-importer"
+source_key = "gh:github/gh-actions-importer"
 date = '2026-05-15T10:25:00+08:00'
 draft = false
 title = 'GitHub Actions Importer：自动化迁移 CI/CD 到 GitHub Actions'

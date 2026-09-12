@@ -3,6 +3,7 @@ title: "GitHub Dependabot：自动化依赖更新"
 date: "2026-05-15T10:25:00+08:00"
 slug: "github-dependabot-automated-updates"
 github_repo: "github/dependabot-action"
+source_key: "gh:github/dependabot-action"
 description: "Dependabot 把依赖更新的责任从人的记忆力转移到系统上，支持 Alerts、Version Updates 和 Security Updates 三条独立机制，覆盖 npm、pip、Go、Cargo 等主流生态。"
 draft: false
 categories: ["技术笔记"]

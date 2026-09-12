@@ -2,6 +2,7 @@
 title: "田渊栋重返牌桌：RSI、潜在推理与 AI 研究的下一次换挡"
 date: "2026-06-10T17:35:00+08:00"
 slug: "tianyuandong-rsi-recursive-superintelligence-2026"
+source_key: "bv:BV1DY7C6nEWM"
 description: "对照硅谷 101 田渊栋访谈、36 氪授权文字稿及 RSI、GV、Anthropic、TechCrunch 等资料，拆解 RSI 的递归自我改进、自动化科研产品化、潜在推理、顿悟泛化、大模型组织竞争，以及员工蒸馏和个人职业意义重建。"
 
 aliases: ["/posts/tech/tianyuandong-rsi-recursive-superintelligence-2026/"]

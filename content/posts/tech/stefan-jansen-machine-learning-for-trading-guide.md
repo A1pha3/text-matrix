@@ -3,6 +3,7 @@ title: "Stefan Jansen《Machine Learning for Trading》2nd：量化金融 ML 工
 date: "2026-06-02T03:05:00+08:00"
 slug: "stefan-jansen-machine-learning-for-trading-guide"
 github_repo: "stefan-jansen/machine-learning-for-trading"
+source_key: "gh:stefan-jansen/machine-learning-for-trading"
 description: "Stefan Jansen《Machine Learning for Algorithmic Trading》第 2 版配套代码库，150+ Jupyter Notebooks 覆盖 23 章，四大主题：数据源与特征工程、监督/无监督交易策略、文本 NLP 信号、深度与强化学习。覆盖端到端 ML4T 工作流与 Zipline-reloaded 回测引擎集成。"
 draft: false
 categories: ["技术笔记"]

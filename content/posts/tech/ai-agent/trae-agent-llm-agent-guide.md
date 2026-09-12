@@ -2,6 +2,7 @@
 title: "Trae Agent：字节跳动 LLM 智能体完全指南"
 slug: "trae-agent-llm-agent-guide"
 github_repo: "bytedance/trae-agent"
+source_key: "gh:bytedance/trae-agent"
 aliases:
   - /posts/tech/trae-agent-llm-agent-guide/
 date: "2026-09-01T01:16:00+08:00"

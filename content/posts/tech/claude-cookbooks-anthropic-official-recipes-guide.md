@@ -7,6 +7,7 @@ tags: ["Claude", "Anthropic", "教程"]
 categories: ["技术笔记"]
 slug: "claude-cookbooks-anthropic-official-recipes-guide"
 github_repo: "anthropics/claude-cookbooks"
+source_key: "gh:anthropics/claude-cookbooks"
 description: "Claude Cookbooks 是 Anthropic 官方维护的 Claude 应用食谱库，50.9k 星、612 次提交，覆盖分类、RAG、摘要、工具调用、多模态、子代理等领域的实战代码，帮助开发者快速掌握 Claude API 集成。"
 ---
 

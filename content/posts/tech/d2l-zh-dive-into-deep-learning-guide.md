@@ -3,6 +3,7 @@ title: "D2L-ZH 动手学深度学习：李沐团队开源教材解读"
 date: "2026-04-12T02:31:39+08:00"
 slug: d2l-zh-dive-into-deep-learning-guide
 github_repo: "d2l-ai/d2l-zh"
+source_key: "gh:d2l-ai/d2l-zh"
 description: "D2L-ZH（动手学深度学习）是李沐团队编写的开源深度学习教材，中英文版被 70 多个国家的 500 多所大学采用，提供 PyTorch、TensorFlow、MXNet、PaddlePaddle 四种框架实现。本文从定位、章节、配套资源、框架选择、环境配置到学习路径做完整解读。"
 draft: false
 categories: ["技术笔记"]

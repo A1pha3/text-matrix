@@ -3,6 +3,7 @@ title: "BuilderIO/agent-native 拆解：一个让 Agent 和 UI 共享状态的�
 date: "2026-06-19T21:04:05+08:00"
 slug: "builderio-agent-native-framework-architecture"
 github_repo: "BuilderIO/agent-native"
+source_key: "gh:BuilderIO/agent-native"
 description: "BuilderIO 发布的 agent-native 框架把 GUI 与 Agent 视为同等公民，用一条 defineAction 把 UI、HTTP、MCP、A2A、CLI、Scheduled Jobs、Agent Tool Call 七类调用入口打通。本文从核心抽象、三种产品形态、协议栈、决策边界四个角度做原理拆解。"
 draft: false
 categories: ["技术笔记"]

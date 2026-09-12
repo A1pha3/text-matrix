@@ -4,6 +4,7 @@ date: 2026-08-17T01:30:00+08:00
 draft: false
 slug: "learn-ai-dev-from-deepseek"
 github_repo: "CY-Christin/learn-ai-dev-from-deepseek"
+source_key: "gh:CY-Christin/learn-ai-dev-from-deepseek"
 description: "拆解 CY-Christin 对 deepseek-harness（dsh）仓库的方法论反写：64 天、12,293 commits、几乎全由 AI 写成的代码库，背后是一套「管两端，放中间」的工程哲学——事实做成工具、验收交给机器、思考还给 AI。"
 categories: ["技术笔记"]
 tags: ["AI Agent", "DeepSeek", "开发方法论", "工程哲学", "Code Review"]

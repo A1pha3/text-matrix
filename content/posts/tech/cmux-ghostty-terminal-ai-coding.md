@@ -1,5 +1,6 @@
 +++
 github_repo = "manaflow-ai/cmux"
+source_key = "gh:manaflow-ai/cmux"
 date = '2026-05-24T23:07:00+08:00'
 draft = false
 title = 'cmux：一台可编程的 macOS 终端，让并行的 AI Agent 各归其位'

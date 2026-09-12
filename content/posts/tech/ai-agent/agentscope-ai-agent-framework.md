@@ -3,6 +3,7 @@ title: "AgentScope：生产级 AI Agent 框架完全指南"
 date: "2026-09-01T00:04:44+08:00"
 slug: "agentscope-ai-agent-framework"
 github_repo: "agentscope-ai/agentscope"
+source_key: "gh:agentscope-ai/agentscope"
 aliases:
   - /posts/tech/agentscope-ai-agent-framework/
 description: "基于 AgentScope v1.0，系统解读 ReAct Agent、MCP、A2A、Agent Skill、Middleware、记忆、Realtime、TTS、Tuner 与多 Agent 架构，涵盖核心抽象层、能力层、编排层的设计解析。"

@@ -3,6 +3,7 @@ title: "chrome-devtools-mcp：把 Chrome DevTools 完整能力切给 Coding Agen
 date: "2026-07-09T02:55:00+08:00"
 slug: "chrome-devtools-mcp-ai-agent-browser-debug-mcp"
 github_repo: "ChromeDevTools/chrome-devtools-mcp"
+source_key: "gh:ChromeDevTools/chrome-devtools-mcp"
 description: "chrome-devtools-mcp 是 Chrome DevTools 团队官方出的 MCP server 与 CLI，把 Performance、Network、Memory、PWA 等真实 DevTools 能力暴露给 Claude/Cursor/Copilot 等 Coding Agent。本文拆解 57 个工具（11 组）、性能 trace 流程、一个修性能 bug 的任务流案例，以及它与 Puppeteer 直连方案的取舍。"
 draft: false
 categories: ["技术笔记"]

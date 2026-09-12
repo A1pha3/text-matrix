@@ -3,6 +3,7 @@ title: "CuPy 架构拆解：把 NumPy/SciPy 移植到 GPU 的分层与边界"
 date: "2026-06-28T21:08:46+08:00"
 slug: "cupy-cupy-numpy-cuda-gpu-acceleration-guide"
 github_repo: "cupy/cupy"
+source_key: "gh:cupy/cupy"
 description: "CuPy 解决的真正问题不是让 NumPy 跑得快，而是靠多后端抽象、NVRTC 即时编译与厂商库绑定，把 NumPy/SciPy 生态尽量原样搬到 GPU 上。本文拆它的分层、任务流与采用边界。"
 draft: false
 categories: ["技术笔记"]

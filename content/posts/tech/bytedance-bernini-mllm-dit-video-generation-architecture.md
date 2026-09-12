@@ -4,6 +4,7 @@ date: "2026-06-05T09:30:00+08:00"
 lastmod: "2026-09-09T00:00:00+08:00"
 slug: "bytedance-bernini-mllm-dit-video-generation-architecture"
 github_repo: "bytedance/Bernini"
+source_key: "gh:bytedance/Bernini"
 description: "Bernini 是字节跳动开源的视频生成与编辑统一框架。它把 Qwen2.5-VL-7B 当作语义规划器、Wan2.2-T2V-A14B 当作 DiT 渲染器，再叠上 Open-VeOmni 的 Ulysses 序列并行。这篇文章拆解这套三段式架构的工作机制、双专家 DiT 切换边界、源 ID 旋转位置编码，以及在 9 种 guidance mode 下如何处理 6 类视频任务。"
 summary: "Bernini 不是又一个 DiT 视频模型。它把「MLLM 语义规划 + Wan2.2 双专家 DiT 渲染 + Open-VeOmni 序列并行」三段式架构开源，并且把 6 类视频任务（t2i/i2i/t2v/v2v/rv2v/r2v）和 9 种 guidance mode 显式化。本文从 Bernini 仓库的 configs、cli.py、parallel/ops.py、docs 出发，拆出这套架构的设计取舍与适用边界，并同步校正到 2026-09-09 的开源现状。"
 draft: false

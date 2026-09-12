@@ -3,6 +3,7 @@ title: "Dexter 全面解读：从零到一的 AI 研究代理平台（含架构�
 date: "2026-03-26T16:15:00+08:00"
 slug: "dexter-comprehensive-guide"
 github_repo: "A1pha3/dexter"
+source_key: "gh:A1pha3/dexter"
 aliases:
   - /posts/tech/dexter-comprehensive-guide/
   - /posts/tech/dexter-ai-research-agent-platform/

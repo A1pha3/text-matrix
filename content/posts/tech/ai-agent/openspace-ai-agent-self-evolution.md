@@ -3,6 +3,7 @@ title: "OpenSpace：为什么 AI Agent 需要记忆，以及它如何实现自�
 date: "2026-03-26T14:30:00+08:00"
 slug: "openspace-ai-agent-self-evolution"
 github_repo: "HKUDS/OpenSpace"
+source_key: "gh:HKUDS/OpenSpace"
 aliases:
   - /posts/tech/openspace-ai-agent-self-evolution/
   - /posts/tech/openspace-first-principles-analysis/

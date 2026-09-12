@@ -9,6 +9,7 @@ slug: "paseo-voice-first-privacy-first-agent-orchestrator"
 band: "review"
 gates: ["事实性", "去AI味", "观点依据"]
 github_repo: "getpaseo/paseo"
+source_key: "gh:getpaseo/paseo"
 ---
 
 ## 这篇文章在回答什么

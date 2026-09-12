@@ -4,6 +4,7 @@ date: 2026-05-18
 lastmod: 2026-09-07
 slug: 12-factor-agents-production-llm-guide
 github_repo: "humanlayer/12-factor-agents"
+source_key: "gh:humanlayer/12-factor-agents"
 categories: ["技术笔记"]
 description: "12-Factor Agents 是一组从生产环境里长出来的工程约束。本文按输入层、执行层、控制层、架构层四层拆解全部 12 条原则，逐条对照官方文档核实，覆盖上下文控制、工具设计、人工介入与可恢复运行的落地做法。"
 tags: ["AI Agent", "工程实践"]

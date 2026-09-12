@@ -7,6 +7,7 @@ tags: ["机器学习", "深度学习", "概率模型", "徐亦达", "roboticcam"
 categories: ["技术笔记"]
 authors: ["钳岳"]
 github_repo: "roboticcam/machine-learning-notes"
+source_key: "gh:roboticcam/machine-learning-notes"
 description: "徐亦达 8 年 ML 讲义拆解:从 Learning Theory(Rademacher/NTK/PAC-Bayes)到 BNP(Dirichlet Process/IBP/DPP/HDP-HMM),70+ 份 PDF,2000+ 页,GitHub 10.3k stars,深度教学仓库"
 slug: roboticcam-machine-learning-notes-deep-walkthrough-2026
 ---

@@ -3,6 +3,7 @@ title: "Supermemory：AI 记忆不是 RAG，是一条独立的上下文通路"
 date: "2026-03-31T01:20:00+08:00"
 slug: supermemory-ai-memory-context-engine
 github_repo: "supermemoryai/supermemory"
+source_key: "gh:supermemoryai/supermemory"
 aliases:
   - /posts/tech/supermemory-ai-memory-context-engine/
 categories: ["技术笔记"]

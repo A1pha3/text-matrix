@@ -1,5 +1,6 @@
 +++
 github_repo = "santifer/career-ops"
+source_key = "gh:santifer/career-ops"
 date = '2026-04-30T11:30:00+08:00'
 draft = false
 title = 'Career-Ops：用 AI 打造智能化求职流水线'

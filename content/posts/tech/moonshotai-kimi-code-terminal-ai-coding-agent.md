@@ -9,6 +9,7 @@ tags: ["AI Coding Agent", "CLI", "Kimi", "MCP", "ACP"]
 description: "Kimi Code CLI 是月之暗面终端 AI Agent 产品线的新阶段：在 Kimi CLI 的 ACP 与 MCP 路线之上，补上单二进制、子代理、插件和 hooks。本文把 Kimi CLI 与 Kimi Code 一次讲清。"
 slug: moonshotai-kimi-code-terminal-ai-coding-agent
 github_repo: "MoonshotAI/kimi-code"
+source_key: "gh:MoonshotAI/kimi-code"
 
 ---
 

@@ -3,6 +3,7 @@ title: "DeepSeek-V3 的工程取舍：671B 参数的算力账本"
 date: "2026-04-27T20:00:00+08:00"
 slug: deepseek-v3-technical-analysis
 github_repo: "deepseek-ai/DeepSeek-V3"
+source_key: "gh:deepseek-ai/DeepSeek-V3"
 description: "671B 参数只激活 37B——MoE 压激活参数、MLA 压 KV 缓存、无辅助损失路由省掉调参，三项设计叠加让预训练只花 2.788M H800 GPU 小时、约 557.6 万美元。"
 draft: false
 categories: ["技术笔记"]

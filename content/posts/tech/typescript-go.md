@@ -3,6 +3,7 @@ title: "TypeScript 用 Go 重写编译器：这次换的是底层，不是语法
 date: "2026-08-14T01:00:00+08:00"
 slug: typescript-go-native-port
 github_repo: "microsoft/typescript-go"
+source_key: "gh:microsoft/typescript-go"
 description: "微软把 TypeScript 编译器从 JavaScript 移植到 Go，2026 年 7 月随 TypeScript 7.0 正式发布。解析这次移植的动机、架构取舍、性能数据与生态影响。"
 draft: false
 categories: ["技术笔记"]

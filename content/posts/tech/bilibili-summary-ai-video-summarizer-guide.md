@@ -2,6 +2,7 @@
 title: "BiliSummary：把 B 站视频变成可检索的 Markdown 笔记"
 slug: "bilibili-summary-ai-video-summarizer-guide"
 github_repo: "jackwener/bilibili-summary"
+source_key: "gh:jackwener/bilibili-summary"
 date: "2026-04-08T13:10:00+08:00"
 lastmod: 2026-09-02T08:00:00+08:00
 categories: ["技术笔记"]

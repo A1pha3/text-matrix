@@ -2,6 +2,7 @@
 title: "spdlog 深度拆解:29K stars 的 C++ header-only 日志库"
 slug: gabime-spdlog-fast-cpp-logging-library-guide
 github_repo: "gabime/spdlog"
+source_key: "gh:gabime/spdlog"
 date: 2026-07-12T02:58:14+08:00
 lastmod: 2026-07-12T02:58:14+08:00
 draft: false

@@ -6,6 +6,7 @@ tags: ["Rust", "Jellyfin", "CEF", "mpv", "桌面客户端"]
 description: "jellium-desktop 是非官方 Jellyfin 桌面客户端，用 CEF 承载 jellyfin-web、mpv 做播放内核，跨平台分发 Linux AppImage / Flatpak / AUR、macOS 与 Windows 构建。它不是官方 Qt 客户端的克隆，而是走了一条更薄的 native 壳路线：mpv 是播放状态唯一权威源，UI 以 overlay 纹理叠在视频层之上。"
 slug: andrewrabert-jellium-desktop-jellyfin-client
 github_repo: "andrewrabert/jellium-desktop"
+source_key: "gh:andrewrabert/jellium-desktop"
 aliases:
  - "/posts/tech/andrewrabert-jellium-desktop-jellyfin-client/"
 ---

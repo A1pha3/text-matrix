@@ -1,5 +1,6 @@
 ---
 github_repo: "shiyu-coder/Kronos"
+source_key: "gh:shiyu-coder/Kronos"
 title: "Kronos：金融市场的语言基础模型"
 date: "2026-05-14T20:17:49+08:00"
 categories:

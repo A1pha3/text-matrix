@@ -3,6 +3,7 @@ title: "prisma/prisma：下一代 Node.js ORM 的工程取舍与现状"
 date: 2026-07-10T02:58:08+08:00
 slug: "prisma-next-generation-typescript-orm-architecture"
 github_repo: "prisma/prisma"
+source_key: "gh:prisma/prisma"
 tags: ["TypeScript", "PostgreSQL", "ORM", "Node.js", "数据库"]
 categories: ["技术笔记"]
 description: "梳理 Prisma 这款 TypeScript 生态最流行的 ORM——从 schema DSL、生成式客户端、声明式迁移，到 v7 之后纯 JS/WASM 查询编译器与边缘运行时支持的架构演进与适用边界。"

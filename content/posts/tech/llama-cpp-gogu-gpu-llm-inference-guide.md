@@ -3,6 +3,7 @@ title: "llama.cpp：12.6 万 Star 的纯 C/C++ LLM 推理引擎完全指南"
 date: "2026-04-06T22:45:00+08:00"
 slug: "llama-cpp-gogu-gpu-llm-inference-guide"
 github_repo: "ggml-org/llama.cpp"
+source_key: "gh:ggml-org/llama.cpp"
 aliases:
   - "/posts/tech/llama.cpp-cpp-llm-inference-guide/"
 description: "llama.cpp（ggml-org/llama.cpp）是纯 C/C++ 实现、无任何框架依赖的大语言模型推理引擎，126k+ Stars。本文基于官方 README 与 CLI 文档核实的事实，详解 GGUF 格式、量化原理（Q4_K/Q5_K/Q6_K/IQ 系列）、16 种硬件后端、统一 llama 命令行（cli/serve）、OpenAI 兼容 API 与性能优化。"

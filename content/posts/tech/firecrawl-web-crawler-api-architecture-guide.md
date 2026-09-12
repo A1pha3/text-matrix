@@ -3,6 +3,7 @@ title: "Firecrawl：把 Web 转成 LLM 能直接读的 Markdown"
 date: "2026-07-07T02:59:57+08:00"
 slug: "firecrawl-web-crawler-api-architecture-guide"
 github_repo: "firecrawl/firecrawl"
+source_key: "gh:firecrawl/firecrawl"
 description: "Firecrawl 把网页爬取、JS 渲染、Markdown 转换、结构化抽取打包成 REST API，专供 LLM 和 Agent 当上下文用：search / scrape / map / crawl / batch scrape / extract。拆接口形态、异步编排、自托管边界，以及什么时候用它、什么时候自己写。"
 draft: false
 categories: ["技术笔记"]

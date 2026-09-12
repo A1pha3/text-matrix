@@ -3,6 +3,7 @@ title: "PPT Master：AI 从 PDF/DOCX/URL/Markdown 生成真正可编辑的 PPTX�
 date: "2026-04-27T01:04:00+08:00"
 slug: ppt-master-ai-editable-pptx
 github_repo: "hugohe3/ppt-master"
+source_key: "gh:hugohe3/ppt-master"
 description: "PPT Master 是一个开源工作流，运行在 Claude Code/Cursor 等 AI IDE 里，把 PDF、DOCX、URL 或 Markdown 转成真正的 PPTX——每个元素都是 DrawingML 原生形状，不是图片，可逐个点击编辑。工具免费，唯一成本是你的 AI 模型用量。"
 draft: false
 categories: ["技术笔记"]

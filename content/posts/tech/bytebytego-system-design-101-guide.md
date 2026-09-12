@@ -3,6 +3,7 @@ title: "ByteByteGo system-design-101 资源地图：15 个主题、400 篇系统
 date: "2026-06-28T21:13:29+08:00"
 slug: "bytebytego-system-design-101-guide"
 github_repo: "ByteByteGoHq/system-design-101"
+source_key: "gh:ByteByteGoHq/system-design-101"
 description: "ByteByteGo 系统设计图解的开源合集：15 个主题、400 篇图文 guide，正文文字在仓库内、配图托管在 CDN，README 由脚本生成目录。本文拆解仓库的数据驱动生成机制，给出按主题组织学习路径的方法，并标注这份资源的适用边界。"
 draft: false
 categories: ["技术笔记"]

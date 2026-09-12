@@ -3,6 +3,7 @@ title: "Claude API 基础专题（一）：认证、请求与会话管理"
 date: "2026-03-25T09:30:00+08:00"
 slug: "claude-api-authentication-requests-session"
 github_repo: "anthropics/anthropic-sdk-python"
+source_key: "gh:anthropics/anthropic-sdk-python"
 aliases:
   - /posts/tech/claude-api-authentication-requests-session/
 description: "Claude Messages API 的工程上手：API 密钥管理与 SDK 初始化、消息请求构建、响应结构解析、多轮会话管理、系统提示词与结构化输出。"

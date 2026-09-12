@@ -3,6 +3,7 @@ title: "Agent Skills：addyosmani 的生产级 AI 编程工程技能框架"
 date: "2026-04-12T18:02:00+08:00"
 slug: agent-skills-addyosmani-production-engineering-guide
 github_repo: "addyosmani/agent-skills"
+source_key: "gh:addyosmani/agent-skills"
 description: "80.8k Stars 的生产级工程技能框架——24 个结构化技能和 8 条 slash 命令，强制 AI 按 Define→Plan→Build→Verify→Review→Ship 的完整生命周期工作。"
 draft: false
 categories: ["技术笔记"]

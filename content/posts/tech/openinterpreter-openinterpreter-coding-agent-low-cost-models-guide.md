@@ -9,6 +9,7 @@ description: "Open Interpreter 是 OpenAI Codex CLI 的 Rust fork，65k+ stars�
 author: text-matrix
 slug: openinterpreter-openinterpreter-coding-agent-low-cost-models-guide
 github_repo: "openinterpreter/openinterpreter"
+source_key: "gh:openinterpreter/openinterpreter"
 
 ---
 

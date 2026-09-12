@@ -5,6 +5,7 @@ lastmod: 2026-09-01T02:20:00+08:00
 draft: false
 slug: "mads-lorentzen-ai-job-search-engineering-philosophy"
 github_repo: "MadsLorentzen/ai-job-search"
+source_key: "gh:MadsLorentzen/ai-job-search"
 author: "钳岳"
 canonical: "https://txtmix.com/posts/tech/mads-lorentzen-ai-job-search-engineering-philosophy/"
 categories: ["技术笔记"]

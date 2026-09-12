@@ -3,6 +3,7 @@ title: "Hermes Agent：自改进 AI Agent 框架从入门到精通"
 date: "2026-03-28T16:00:00+08:00"
 slug: "hermes-agent-self-improving-ai-framework"
 github_repo: "NousResearch/hermes-agent"
+source_key: "gh:NousResearch/hermes-agent"
 aliases:
   - /posts/tech/hermes-agent-self-improving-ai-framework/
     - /posts/tech/hermes-agent-curator/

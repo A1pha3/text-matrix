@@ -1,5 +1,6 @@
 +++
 github_repo = "trimstray/the-book-of-secret-knowledge"
+source_key = "gh:trimstray/the-book-of-secret-knowledge"
 date = '2026-05-22T15:54:25+08:00'
 draft = false
 title = 'The-Book-of-Secret-Knowledge：程序员技术手册合集'

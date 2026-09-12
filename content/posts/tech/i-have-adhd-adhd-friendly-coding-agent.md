@@ -3,6 +3,7 @@ title: "i-have-adhd：让AI编程助手输出更简洁、更聚焦"
 date: 2026-08-04T03:20:00+08:00
 slug: "i-have-adhd-adhd-friendly-coding-agent"
 github_repo: "ayghri/i-have-adhd"
+source_key: "gh:ayghri/i-have-adhd"
 description: "i-have-adhd 是一个让AI编程助手输出更简洁、更聚焦的技能。通过10条规则，让AI直接给出行动步骤而非长篇大论，适合追求效率的开发者。"
 draft: false
 categories: ["技术笔记"]

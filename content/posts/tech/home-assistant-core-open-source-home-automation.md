@@ -3,6 +3,7 @@ title: "Home Assistant Core：开源智能家居控制中心的架构与理念"
 date: "2026-04-27T15:00:00+08:00"
 slug: "home-assistant-core-open-source-home-automation"
 github_repo: "home-assistant/core"
+source_key: "gh:home-assistant/core"
 description: "Home Assistant Core 是开源智能家居领域最活跃的项目之一，以本地优先、私有化为核心理念。本文解析其实体/状态模型、集成架构、自动化引擎与数据流设计，支持 2000+ 设备集成的架构原理。"
 draft: false
 categories: ["技术笔记"]

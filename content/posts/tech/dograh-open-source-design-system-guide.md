@@ -3,6 +3,7 @@ title: "Dograh：开源语音 Agent 平台，让每个人都能搭建电话 AI �
 date: "2026-05-17T20:10:00+08:00"
 slug: "dograh-open-source-voice-agent-platform"
 github_repo: "dograh-hq/dograh"
+source_key: "gh:dograh-hq/dograh"
 description: "深度解析开源语音 Agent 平台 Dograh 的核心架构与工作原理，涵盖 Workflow 图引擎、实时通话流水线、节点类型与边界触发器，并提供一键本地部署与自定义扩展的完整指南。"
 draft: false
 categories: ["技术笔记"]

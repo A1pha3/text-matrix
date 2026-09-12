@@ -3,6 +3,7 @@ title: "GenericAgent：仅3K行代码的自我进化Agent框架——6倍Token�
 date: "2026-04-16T01:50:00+08:00"
 slug: "genericagent-self-evolving-agent-framework"
 github_repo: "lsdefine/GenericAgent"
+source_key: "gh:lsdefine/GenericAgent"
 description: "GenericAgent是1.7K Stars的极简自我进化Agent框架，核心仅3K行代码。通过9个原子工具+分层记忆系统实现浏览器/终端/文件系统/键鼠/视觉/ADB全控制。设计哲学：不预设技能，靠进化获得能力。"
 draft: false
 categories: ["技术笔记"]

@@ -4,6 +4,7 @@ date: "2026-04-19T21:00:00+08:00"
 lastmod: "2026-09-08T12:00:00+08:00"
 slug: "deepgemm-high-performance-fp8-gemm-kernels"
 github_repo: "deepseek-ai/DeepGEMM"
+source_key: "gh:deepseek-ai/DeepGEMM"
 description: "DeepGEMM 是 DeepSeek 开源的 CUDA 内核库，把 LLM 计算常用的 GEMM（FP8/FP4/BF16）、融合 Mega MoE、MQA 评分、HyperConnection 收进一个运行时 JIT 编译的代码库，安装时无需编译内核。官方数据：H800 上最高 1550 TFLOPS。"
 draft: false
 categories: ["技术笔记"]

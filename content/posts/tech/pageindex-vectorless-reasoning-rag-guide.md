@@ -3,6 +3,7 @@ title: "PageIndex：无向量数据库的推理型 RAG"
 date: "2026-05-08T03:11:04+08:00"
 slug: "pageindex-vectorless-reasoning-rag-guide"
 github_repo: "VectifyAI/PageIndex"
+source_key: "gh:VectifyAI/PageIndex"
 description: "PageIndex 是一种无向量、基于推理的 RAG 引擎，不建向量索引、不做文档分块，而是先把长文档组织成层级树索引，再让 LLM 通过树搜索推理找到最相关的段落。本文解析其核心原理、SDK 用法、MCP 接入与适用边界。"
 draft: false
 categories: ["技术笔记"]

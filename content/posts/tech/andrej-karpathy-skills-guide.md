@@ -1,5 +1,6 @@
 +++
 github_repo = "multica-ai/andrej-karpathy-skills"
+source_key = "gh:multica-ai/andrej-karpathy-skills"
 date = '2026-05-19T23:58:56+08:00'
 draft = false
 title = 'Andrej Karpathy Skills：AI 编程行为指南'

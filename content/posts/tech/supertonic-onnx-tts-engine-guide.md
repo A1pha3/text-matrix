@@ -3,6 +3,7 @@ title: "Supertonic 3: 99M参数本地多语言TTS引擎，完全基于ONNX实现
 date: "2026-05-18T20:00:00+08:00"
 slug: "supertonic-onnx-tts-engine-guide"
 github_repo: "supertone-inc/supertonic"
+source_key: "gh:supertone-inc/supertonic"
 aliases:
   - "/posts/tech/supertonic-3-onnx-tts-engine/"
   - "/posts/tech/supertonic-on-device-multilingual-tts/"

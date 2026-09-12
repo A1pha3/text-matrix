@@ -3,6 +3,7 @@ title: "Svelte 5 Runes：稳定版两年后，前端响应式范式走到哪了"
 date: "2026-06-07T12:50:00+08:00"
 slug: "svelte-5-runes-stable-frontend-reactivity"
 github_repo: "sveltejs/svelte"
+source_key: "gh:sveltejs/svelte"
 aliases:
   - "/posts/tech/svelte-5-runes-stable-frontend-reactivity/"
 description: "Svelte 5 自 2024 年发布稳定版以来已是主流选择之一。runes 让响应式从隐式魔法变为显式语言能力。本文回顾 runes 的核心机制与完整 rune 族谱、5.56 系列新增的声明标签与 TypeScript 6 支持，以及与 React/Vue/Solid 的对照。"

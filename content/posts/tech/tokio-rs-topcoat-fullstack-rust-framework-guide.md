@@ -1,5 +1,6 @@
 +++
 github_repo = "tokio-rs/topcoat"
+source_key = "gh:tokio-rs/topcoat"
 title = 'Tokio-rs Topcoat:服务端渲染即客户端响应性——Rust 全栈框架的范式突破'
 date = '2026-07-21T02:57:15+08:00'
 categories = ['技术笔记']

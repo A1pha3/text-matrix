@@ -8,6 +8,7 @@ categories: ["技术笔记"]
 description: "一个 6 个月大、3141 stars 的全栈流量分析仪表盘：从 Docker 体验到 ClickHouse 双写架构、从 Real-timeStore 的内存 delta 到跨 LAN Agent 协议的工程哲学。"
 keywords: ["neko-master", "traffic dashboard", "Clash", "Mihomo", "Surge", "OpenClash", "Next.js", "Fastify", "WebSocket", "SQLite", "ClickHouse"]
 github_repo: "foru17/neko-master"
+source_key: "gh:foru17/neko-master"
 ---
 
 # Neko Master：当一只猫安静地盯住你的网关

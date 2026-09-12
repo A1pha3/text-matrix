@@ -2,6 +2,7 @@
 title: "Cline：把 AI 编程助手从补全推进到自主编程的边界"
 slug: "cline-ai-coding-agent-guide"
 github_repo: "cline/cline"
+source_key: "gh:cline/cline"
 description: "Cline 是一个开源的 AI 编程智能体（Agent），能创建和编辑文件、执行终端命令、操作浏览器、调用 MCP 工具，每一步变更都需人工审核。它不绑定特定模型，支持 Anthropic、OpenAI、Google Gemini、OpenRouter、AWS Bedrock 等主流 API 提供商。"
 date: "2026-04-24T11:40:00+08:00"
 categories: ["技术笔记"]

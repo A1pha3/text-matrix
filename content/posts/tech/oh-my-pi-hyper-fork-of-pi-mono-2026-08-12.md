@@ -9,6 +9,7 @@ slug: "oh-my-pi-hyper-fork-of-pi-mono"
 band: "review"
 gates: ["事实性", "去AI味", "观点依据"]
 github_repo: "can1357/oh-my-pi"
+source_key: "gh:can1357/oh-my-pi"
 ---
 
 ## 这篇文章在回答什么

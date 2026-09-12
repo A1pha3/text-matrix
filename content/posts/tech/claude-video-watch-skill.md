@@ -3,6 +3,7 @@ title: "Claude Video：给 Claude 补上「看视频」这条输入通道"
 date: 2026-08-04T03:20:00+08:00
 slug: "claude-video-watch-skill"
 github_repo: "bradautomates/claude-video"
+source_key: "gh:bradautomates/claude-video"
 description: "一个开源技能，把「看视频」拆成下载、抽帧、转录三步，让 Claude 基于画面和字幕回答问题。"
 draft: false
 categories: ["技术笔记"]

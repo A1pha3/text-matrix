@@ -3,6 +3,7 @@ title: "Sherlock：跨 400+ 社交网络用户名侦查工具完整指南"
 date: "2026-03-31T00:50:00+08:00"
 slug: sherlock-social-media-osint-tool
 github_repo: "sherlock-project/sherlock"
+source_key: "gh:sherlock-project/sherlock"
 aliases:
   - /posts/tech/sherlock-social-media-osint-tool/
 categories: ["技术笔记"]

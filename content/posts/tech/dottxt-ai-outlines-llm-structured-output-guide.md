@@ -6,6 +6,7 @@ categories: ["技术笔记"]
 tags: ["LLM", "结构化输出", "Pydantic"]
 description: "Outlines 是一个 LLM 结构化生成库，在 token 生成阶段直接约束输出，保证 JSON、类型或语法永远合法。它开创的 FSM 掩码算法是 vLLM、XGrammar、llguidance 等结构化引擎共同沿用的一代。"
 github_repo: "dottxt-ai/outlines"
+source_key: "gh:dottxt-ai/outlines"
 slug: dottxt-ai-outlines-llm-structured-output-guide
 ---
 

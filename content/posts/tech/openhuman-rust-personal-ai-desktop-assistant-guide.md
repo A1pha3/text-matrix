@@ -3,6 +3,7 @@ title: "OpenHuman：Rust 构建的本地优先个人 AI 超级助理"
 date: "2026-05-13T20:22:00+08:00"
 slug: "openhuman-rust-personal-ai-desktop-assistant-guide"
 github_repo: "tinyhumansai/openhuman"
+source_key: "gh:tinyhumansai/openhuman"
 aliases:
   - "/posts/tech/openhuman-personal-ai-superintelligence/"
   - "/posts/tech/openhuman-open-source-personal-ai-agent/"

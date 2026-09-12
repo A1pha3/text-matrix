@@ -4,6 +4,7 @@ date: "2026-04-14T22:00:00+08:00"
 lastmod: "2026-08-28T00:00:00+08:00"
 slug: "cloudscraper-cloudflare-bypass"
 github_repo: "VeNoMouS/cloudscraper"
+source_key: "gh:VeNoMouS/cloudscraper"
 description: "cloudscraper 是 Python 生态里专门处理 Cloudflare JS 挑战页的工具，通过 JavaScript 解释器执行挑战脚本、取回 cookie，再重放请求。本文基于官方文档梳理原理、解释器选择、版本差异、生产配置与适用边界。"
 draft: false
 categories: ["技术笔记"]

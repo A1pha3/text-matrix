@@ -4,6 +4,7 @@ date: "2026-04-11T00:25:00+08:00"
 lastmod: "2026-09-07T00:00:00+08:00"
 slug: "jq-command-line-json-processor-guide"
 github_repo: "jqlang/jq"
+source_key: "gh:jqlang/jq"
 description: "jq 用一门小型过滤器语言让 JSON 像 sed/awk 手下的文本一样在管道里流动。本文拆解它的流模型、过滤器语法、1.7/1.8 版本边界与模块系统，并给出从 curl 到 CSV 的完整任务链、真实报错排查清单与采用建议。"
 categories: ["技术笔记"]
 tags: ["JSON", "命令行工具", "Shell", "C语言"]

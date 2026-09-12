@@ -2,6 +2,7 @@
 title: "VeraCrypt：从 TrueCrypt 走来的成熟开源全盘加密"
 slug: "veracrypt-veracrypt-disk-encryption-platform-2026"
 github_repo: "veracrypt/VeraCrypt"
+source_key: "gh:veracrypt/VeraCrypt"
 date: 2026-06-29T21:02:57+08:00
 lastmod: 2026-06-29T21:02:57+08:00
 draft: false

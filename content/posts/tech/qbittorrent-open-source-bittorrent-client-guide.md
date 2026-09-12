@@ -4,6 +4,7 @@ date: "2026-05-05T14:58:00+08:00"
 lastmod: "2026-09-04T10:00:00+08:00"
 slug: "qbittorrent-open-source-bittorrent-client-guide"
 github_repo: "qbittorrent/qBittorrent"
+source_key: "gh:qbittorrent/qBittorrent"
 description: "qBittorrent 是一款基于 C++/Qt 和 libtorrent 的开源 BitTorrent 客户端，约 39.6K Stars，跨平台、无广告，提供搜索、RSS 自动下载、分类标签、限速调度、IP 过滤、加密代理等完整功能。本文覆盖安装（官方包 / Docker / 源码编译）、Web UI 首次登录、核心功能、qbittorrent-nox 无界面服务器、高级配置与安全加固。"
 draft: false
 categories: ["技术笔记"]

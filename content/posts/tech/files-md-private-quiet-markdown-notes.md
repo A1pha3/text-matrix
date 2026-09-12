@@ -1,5 +1,6 @@
 +++
 github_repo = "zakirullin/files.md"
+source_key = "gh:zakirullin/files.md"
 date = '2026-05-20T00:00:00+08:00'
 draft = false
 title = 'files.md：安静私密的 Markdown 思考空间'

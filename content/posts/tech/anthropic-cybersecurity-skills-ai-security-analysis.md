@@ -1,5 +1,6 @@
 +++
 github_repo = "mukul975/Anthropic-Cybersecurity-Skills"
+source_key = "gh:mukul975/Anthropic-Cybersecurity-Skills"
 date = '2026-05-24T00:00:00+08:00'
 draft = false
 title = 'Anthropic Cybersecurity Skills：Claude AI 安全分析工具包'

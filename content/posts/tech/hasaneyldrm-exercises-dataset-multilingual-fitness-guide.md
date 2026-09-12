@@ -2,6 +2,7 @@
 title: "exercises-dataset 深度拆解：1,324 个健身动作 + 6 语言指令 + 开发者脚手架"
 slug: hasaneyldrm-exercises-dataset-multilingual-fitness-guide
 github_repo: "hasaneyldrm/exercises-dataset"
+source_key: "gh:hasaneyldrm/exercises-dataset"
 date: 2026-07-01T15:03:41+08:00
 lastmod: 2026-07-01T15:03:41+08:00
 categories: ["技术笔记"]

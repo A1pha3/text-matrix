@@ -2,6 +2,7 @@
 title: "AstrBot：把同一套 Agent 能力送到十几个 IM 平台"
 slug: "astrbot-open-source-ai-chatbot-platform-guide"
 github_repo: "AstrBotDevs/AstrBot"
+source_key: "gh:AstrBotDevs/AstrBot"
 aliases:
   - /posts/tech/astrbot-open-source-ai-chatbot-platform-guide/
 date: "2026-03-31T16:00:00+08:00"

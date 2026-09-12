@@ -2,6 +2,7 @@
 title: "阳萌谈安克创新：消费电子的三层护城河、AI 时代的组织革命与 7/3 价值分配"
 date: "2026-06-10T17:30:00+08:00"
 slug: "yangmeng-anker-consumer-electronics-ai-2026"
+source_key: "bv:BV1dyE86bENz"
 description: "张小珺 x 安克创新阳萌 4 小时访谈的深度整理：1982 年生、北大计算机、Google 最高奖、2011 创业、600 亿市值的安克创始人，在 2026 这个 AI 拐点谈消费电子的三层护城河、AI 的组织革命、以及创造者拿 70%/股东拿 30% 的价值分配铁律。"
 aliases: ["/posts/wealth/yangmeng-anker-consumer-electronics-ai-2026/"]
 tags: ["创业"]

@@ -3,6 +3,7 @@ title: "Astro：内容优先的现代化 Web 框架"
 date: "2026-04-28T11:08:44+08:00"
 slug: "astro-framework-deep-dive"
 github_repo: "withastro/astro"
+source_key: "gh:withastro/astro"
 description: "Astro 是面向内容驱动网站开发的 Web 框架，采用 Islands 架构——默认输出纯 HTML，只有标记交互的组件才加载 JS。58,820 GitHub Stars，支持 React/Vue/Svelte 等多框架，支持 Node/Vercel/Cloudflare 等部署平台。"
 draft: false
 categories: ["技术笔记"]

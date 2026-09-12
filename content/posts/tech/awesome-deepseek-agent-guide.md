@@ -3,6 +3,7 @@ title: "Awesome DeepSeek Agent：16 款主流 AI 编程助手接入 DeepSeek 模
 date: "2026-04-30T18:32:10+08:00"
 slug: "awesome-deepseek-agent-integration-guide"
 github_repo: "deepseek-ai/awesome-deepseek-agent"
+source_key: "gh:deepseek-ai/awesome-deepseek-agent"
 description: "基于 DeepSeek 官方仓库 awesome-deepseek-agent，梳理 16 款 AI 编程助手接入 DeepSeek-V4 的三种模式（Anthropic 兼容、OpenAI 兼容、直连），给出配置方法、选型建议与常见问题。"
 draft: false
 categories: ["技术笔记"]

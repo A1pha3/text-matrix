@@ -3,6 +3,7 @@ title: "Unsloth：61k Stars 的 LLM 微调与推理加速库"
 date: "2026-04-12T02:31:39+08:00"
 slug: unsloth-ai-training-inference-platform-guide
 github_repo: "unslothai/unsloth"
+source_key: "gh:unslothai/unsloth"
 description: "Unsloth 是一个本地 AI 训练与推理平台，通过 Triton 内核和 4-bit QLoRA 量化实现 2 倍训练速度和 70% 显存节省，支持 500+ 开源模型。本文拆解其技术原理、Studio/Core 两条主线、训练流程和硬件选型。"
 draft: false
 categories: ["技术笔记"]

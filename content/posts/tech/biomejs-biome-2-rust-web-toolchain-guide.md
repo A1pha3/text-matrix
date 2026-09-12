@@ -3,6 +3,7 @@ title: "Biome 2.x 全栈 Web 工具链：单二进制替代 Prettier + ESLint �
 date: "2026-06-18T21:03:00+08:00"
 slug: "biomejs-biome-2-rust-web-toolchain-guide"
 github_repo: "biomejs/biome"
+source_key: "gh:biomejs/biome"
 description: "biomejs/biome 是用 Rust 写的一体化 Web 工具链，格式化兼容 Prettier 97%、Linter 收录 500+ 条规则、原生支持 JS/TS/JSX/JSON/CSS/GraphQL，下面拆解其架构、安装与相对 Prettier+ESLint 的取舍。"
 draft: false
 categories: ["技术笔记"]

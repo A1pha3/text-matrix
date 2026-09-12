@@ -3,6 +3,7 @@ title: "awesome-systematic-trading：量化交易资源地图与学习路径"
 date: "2026-04-12T02:29:31+08:00"
 slug: awesome-systematic-trading-algorithmic-trading-resource-guide
 github_repo: "paperswithbacktest/awesome-systematic-trading"
+source_key: "gh:paperswithbacktest/awesome-systematic-trading"
 description: "awesome-systematic-trading 按策略分类整理了量化交易的研究论文、代码库和数据集。本文按动量、均值回归、统计套利、机器学习、加密货币五大方向，梳理核心论文、代码示例和工具链。"
 draft: false
 categories: ["技术笔记"]

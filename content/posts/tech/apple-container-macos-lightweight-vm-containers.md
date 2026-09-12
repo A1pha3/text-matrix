@@ -3,6 +3,7 @@ title: "apple/container：把每个 Linux 容器塞进独立轻量 VM 的 macOS 
 date: "2026-06-10T21:03:59+08:00"
 slug: "apple-container-macos-lightweight-vm-containers"
 github_repo: "apple/container"
+source_key: "gh:apple/container"
 description: "Apple 官方开源的 macOS 容器工具，每个 Linux 容器运行在独立轻量 VM 中。本文拆解其架构、组件协作、1.0 到 1.3 的版本演进与适用边界。"
 draft: false
 categories: ["技术笔记"]

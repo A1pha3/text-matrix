@@ -4,6 +4,7 @@ date: "2026-07-01T21:03:00+08:00"
 lastmod: "2026-07-01T21:03:00+08:00"
 slug: "allenai-olmocr-pdf-ocr-vlm-pipeline-guide"
 github_repo: "allenai/olmocr"
+source_key: "gh:allenai/olmocr"
 description: "Ai2 的 olmOCR 是一个把 PDF、扫描件、图片转成自然阅读顺序 Markdown/纯文本的 7B VLM 工具链：v1 用大模型离线标注数据微调小模型，v0.4.0 引入 RLVR（6 类单元测试当奖励 + 合成数据），在 olmOCR-Bench 上拿到 82.4 总体分（7B 模型，百万页 200 美元以内），模型、训练代码与推理代码全部开源。本文拆它的 prompt 结构、结构化解码、训练配方、多节点 S3 队列、bench 设计，以及在 LLM 训练数据准备里的位置。"
 categories: ["技术笔记"]
 tags: ["OCR", "VLM", "PDF", "vLLM"]

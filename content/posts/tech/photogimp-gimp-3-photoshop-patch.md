@@ -3,6 +3,7 @@ title: "PhotoGIMP：让 GIMP 变成 Photoshop 布局的开源补丁"
 date: "2026-05-19T20:25:00+08:00"
 slug: "photogimp-gimp-3-photoshop-patch"
 github_repo: "Diolinux/PhotoGIMP"
+source_key: "gh:Diolinux/PhotoGIMP"
 description: "PhotoGIMP 是一个社区维护的开源配置补丁，把 GIMP 3.0+ 的工具布局、快捷键与启动画面调成接近 Adobe Photoshop，帮助从 Photoshop 迁移到 GIMP 的用户降低学习成本。"
 draft: false
 categories: ["技术笔记"]

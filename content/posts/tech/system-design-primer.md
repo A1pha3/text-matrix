@@ -5,6 +5,7 @@ lastmod: "2026-09-11T00:00:00+08:00"
 description: "System Design Primer 是 GitHub 27.5 万星、CC BY 4.0 协议的系统设计学习仓库：一份概念索引、8 道系统设计题（6 道附 Python 代码）、6 道面向对象设计题、3 套 Anki 闪卡。本文拆解它的真实结构，并按官方备考时间线给出练习路径。"
 slug: system-design-primer
 github_repo: "donnemartin/system-design-primer"
+source_key: "gh:donnemartin/system-design-primer"
 categories: ["技术笔记"]
 tags: ["系统设计", "面试", "分布式系统"]
 ---

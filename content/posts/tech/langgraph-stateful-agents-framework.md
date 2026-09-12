@@ -3,6 +3,7 @@ title: "LangGraph：构建有状态智能体的图形框架——41K+ Stars 的 
 date: "2026-04-15T00:15:00+08:00"
 slug: "langgraph-stateful-agents-framework"
 github_repo: "langchain-ai/langgraph"
+source_key: "gh:langchain-ai/langgraph"
 description: "LangGraph 真正解决的不是如何调用 LLM，而是把多步 Agent 执行改造成可观测、可恢复、可干预的状态机。受 Pregel/Apache Beam/NetworkX 启发，提供 StateGraph、State、Node、Edge、Reducer 五个核心抽象，支撑 Durable Execution、Human-in-the-Loop、Comprehensive Memory 三项生产级能力。"
 draft: false
 categories: ["技术笔记"]

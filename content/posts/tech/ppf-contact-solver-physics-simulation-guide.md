@@ -1,5 +1,6 @@
 +++
 github_repo = "st-tech/ppf-contact-solver"
+source_key = "gh:st-tech/ppf-contact-solver"
 date = '2026-05-26T23:00:00+08:00'
 draft = false
 title = 'PPF Contact Solver：物理碰撞求解器'

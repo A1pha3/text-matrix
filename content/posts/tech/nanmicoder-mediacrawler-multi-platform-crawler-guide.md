@@ -3,6 +3,7 @@ title: "MediaCrawler：不做 JS 逆向，靠浏览器登录态取签名的多�
 date: "2026-06-26T18:02:04+08:00"
 slug: "nanmicoder-mediacrawler-multi-platform-crawler-guide"
 github_repo: "NanmiCoder/MediaCrawler"
+source_key: "gh:NanmiCoder/MediaCrawler"
 description: "梳理 GitHub 上 5.9 万 Star 的 MediaCrawler：用 Playwright 接管已登录浏览器、以 JS 表达式现取签名的思路，覆盖小红书/抖音/B 站/微博等 7 个平台，并说明 CDP 模式的适用范围与边界。"
 draft: false
 categories: ["技术笔记"]

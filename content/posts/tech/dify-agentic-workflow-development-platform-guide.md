@@ -3,6 +3,7 @@ title: "Dify：开源 Agentic Workflow 开发平台从入门到精通指南"
 date: "2026-05-02T10:12:21+08:00"
 slug: "dify-agentic-workflow-development-platform-guide"
 github_repo: "langgenius/dify"
+source_key: "gh:langgenius/dify"
 description: "Dify 把 AI 工作流、RAG 管道、Agent 和模型管理整合到一个可视化平台，从原型到生产不需切换工具。目前 151K+ Stars。"
 draft: false
 categories: ["技术笔记"]

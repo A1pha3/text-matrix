@@ -5,6 +5,7 @@ tags: ["Claude Code", "Benchmark", "Fable5"]
 categories: ["技术笔记"]
 slug: fable-5-gpt-5-6-sol-goal
 github_repo: "charles-azam/CLIArena"
+source_key: "gh:charles-azam/CLIArena"
 description: "持续机制在 NP-Hard 优化任务上是赌博：胜率 4/6、均值两次都变差。Claude Code 的 /goal 走独立评估器，Codex 走持久化工具。"
 ---
 

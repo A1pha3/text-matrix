@@ -3,6 +3,7 @@ title: "PostHog：开源 all-in-one 产品工程平台，全栈方法论与工�
 date: "2026-04-27T01:01:00+08:00"
 slug: posthog-all-in-one-product-platform
 github_repo: "PostHog/posthog"
+source_key: "gh:PostHog/posthog"
 description: "PostHog 是一个开源 all-in-one 产品工程平台，提供产品分析、会话回放、Feature Flags、实验、错误追踪、AI 可观测性等能力。本文从产品矩阵、Monorepo 架构、开源策略三个角度拆解其方法论。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "Langfuse：把 LLM 调用变成可查询、可评分、可回放的对�
 date: "2026-04-23T14:00:00+08:00"
 slug: "langfuse-llm-engineering-platform-architecture"
 github_repo: "langfuse/langfuse"
+source_key: "gh:langfuse/langfuse"
 description: "Langfuse 是 MIT 许可的开源 LLM 工程平台。本文解析其双容器架构（Web + Worker）、存储层（PostgreSQL + ClickHouse + Redis + S3）、追踪数据模型、摄取流水线及与主流框架的对接，梳理 v3 到 v4 的架构演进，并给出按规模选型的建议。"
 draft: false
 categories: ["技术笔记"]

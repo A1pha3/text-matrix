@@ -3,6 +3,7 @@ title: "AI Scientist-v2：智能体树搜索驱动的自动化科研论文生成
 date: "2026-03-29T15:47:00+08:00"
 slug: "ai-scientist-v2-agentic-tree-search"
 github_repo: "SakanaAI/AI-Scientist-v2"
+source_key: "gh:SakanaAI/AI-Scientist-v2"
 aliases:
   - /posts/tech/ai-scientist-v2-agentic-tree-search/
 description: "AI Scientist-v2 是 SakanaAI 开源的自动化科研系统，用智能体树搜索替换 v1 的人类模板，让模型自主提出假设、设计并运行实验、撰写论文。它生成的一篇论文曾以均分 6.33 通过 ICLR 2025 workshop 评审，后按实验协议撤稿。"

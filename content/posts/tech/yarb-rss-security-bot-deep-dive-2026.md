@@ -4,6 +4,7 @@ date: 2026-08-03T16:42:00+08:00
 draft: false
 slug: "yarb-rss-security-bot-deep-dive-2026"
 github_repo: "Vu1nT0tal/yarb"
+source_key: "gh:Vu1nT0tal/yarb"
 tags: ["rss", "security", "bot", "python", "open-source", "architecture"]
 categories: ["技术笔记"]
 description: "yarb (Yet Another Rss Bot) 用 242 + 327 行 Python 单体,撑起 5 个启用 RSS 源 + 6 个推送通道 + 5 年每日自动化的中文安全资讯聚合。本文逐层拆开。"

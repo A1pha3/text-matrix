@@ -4,6 +4,7 @@ date: "2026-03-31T14:20:00+08:00"
 lastmod: "2026-08-08"
 slug: "faster-qwen3-tts-realtime-tts-acceleration-guide"
 github_repo: "andimarafioti/faster-qwen3-tts"
+source_key: "gh:andimarafioti/faster-qwen3-tts"
 description: "Faster Qwen3-TTS 用 torch.cuda.CUDAGraph 捕获解码步骤，不依赖 Flash Attention、vLLM、Triton，在 RTX 4090 上把 0.6B 模型推到 RTF 4.78、首音频 156ms。本文拆解它的 CUDA Graph 与静态 KV Cache 机制，给出全硬件基准与流式 chunk_size 的取舍。"
 draft: false
 categories: ["技术笔记"]

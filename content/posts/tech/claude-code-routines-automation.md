@@ -3,6 +3,7 @@ title: "Claude Code Routines：用三种触发器把 Claude Code 变成云端无
 date: "2026-04-15T02:15:00+08:00"
 slug: "claude-code-routines-automation"
 github_repo: "anthropics/claude-code"
+source_key: "gh:anthropics/claude-code"
 description: "Claude Code Routines 是官方推出的云端自动化框架，用定时调度、API 回调、GitHub 事件三种触发器，让 Claude Code 在电脑关机后继续运行。文章讲清三种触发器的边界、一条完整的执行链路，以及从低风险定时任务到实时响应的采用顺序。"
 draft: false
 categories: ["技术笔记"]

@@ -1,5 +1,6 @@
 +++
 github_repo = "twentyhq/twenty"
+source_key = "gh:twentyhq/twenty"
 date = '2026-05-26T23:00:00+08:00'
 draft = false
 title = 'Twenty：Salesforce 的开源替代'

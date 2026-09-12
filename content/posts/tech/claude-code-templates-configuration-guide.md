@@ -2,6 +2,7 @@
 title: "Claude Code Templates：给 Claude Code 装组件，再看着它跑"
 slug: "claude-code-templates-configuration-guide"
 github_repo: "davila7/claude-code-templates"
+source_key: "gh:davila7/claude-code-templates"
 description: "面向 Claude Code 的即用型配置集合：把 agents、commands、hooks、MCPs、settings 和 skills 打包成可一键安装的模块，配一套 Web UI 目录和实时监控工具。"
 date: "2026-04-28T11:40:00+08:00"
 categories: ["技术笔记"]

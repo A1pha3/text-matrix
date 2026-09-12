@@ -4,6 +4,7 @@ date: "2026-08-01T02:54:21+08:00"
 slug: pingdotgg-t3code-agent-harness-guide
 aliases: ["/posts/tech/t3-code-minimal-ai-coding-gui/"]
 github_repo: "pingdotgg/t3code"
+source_key: "gh:pingdotgg/t3code"
 description: "T3 Code 是 Theo（pingdotgg）开源的多端 agent 控制面，用 Effect RPC 把 Claude Code、Codex、Cursor、Grok Build、OpenCode 统一接到手机、浏览器和桌面，支持局域网、Tailscale、中继隧道与 SSH 四种远程方式。"
 categories: ["技术笔记"]
 tags: ["T3 Code", "Agent", "Claude Code", "Codex", "Cursor", "远程开发"]

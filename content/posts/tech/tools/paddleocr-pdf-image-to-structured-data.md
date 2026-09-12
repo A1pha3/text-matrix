@@ -5,6 +5,7 @@ categories: ["技术笔记"]
 tags: ["OCR"]
 slug: paddleocr-pdf-image-to-structured-data
 github_repo: "PaddlePaddle/PaddleOCR"
+source_key: "gh:PaddlePaddle/PaddleOCR"
 aliases:
   - /posts/tech/paddleocr-pdf-image-to-structured-data/
 description: "PaddleOCR是百度飞桨开源的OCR工具箱，支持100+语言，可将PDF和图片文档转换为结构化数据，填补大模型输入短板。"

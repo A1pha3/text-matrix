@@ -1,5 +1,6 @@
 +++
 github_repo = "microsoft/pg_durable"
+source_key = "gh:microsoft/pg_durable"
 date = '2026-06-07T23:03:00+08:00'
 lastmod = '2026-09-06T12:00:00+08:00'
 draft = false

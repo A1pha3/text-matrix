@@ -2,6 +2,7 @@
 title: "FDE 浪潮：OpenAI 部署公司、PE 资本与 AI 落地的组织深处"
 date: "2026-06-23T00:45:00+08:00"
 slug: "openai-deployco-fde-palantir-2026"
+source_key: "bv:BV1jxLd6oEGR"
 description: "2026 年 5 月，三大 AI 巨头同步押注同一件事：把 AI 从 demo 推进企业组织深处。拆解 FDE（前线部署工程师）的 Palantir 军方渊源、四项工作方法、AI 原生组织的五层嵌入，以及为什么这次是模型公司+PE，不是模型公司+咨询。"
 
 draft: false

@@ -3,6 +3,7 @@ title: "TON 智能合约开发工具链完全指南：从 FunC 编写到链上�
 date: "2026-05-14T10:55:00+08:00"
 slug: "acton-ton-smart-contract-toolchain-guide"
 github_repo: "ton-blockchain/acton"
+source_key: "gh:ton-blockchain/acton"
 description: "TON 生态的工具链正从 Blueprint、FunC/Tolk 编译器、@ton/sandbox 本地沙盒、@ton/test-utils 测试断言库组成的拼装链路，向官方推荐的 Acton 一体化工具链演进。本文以一个 Jetton 代币合约为例，串联编写、编译、测试、调试、部署、验证七个阶段，给出工具选型、采用顺序和常见错误排查。"
 draft: false
 categories: ["技术笔记"]

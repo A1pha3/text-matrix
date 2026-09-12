@@ -3,6 +3,7 @@ title: "awesome-llm-apps：130k Stars LLM 应用精选合集"
 date: "2026-04-06T22:40:00+08:00"
 slug: "awesome-llm-apps-curated-llm-application-projects-guide"
 github_repo: "Shubhamsaboo/awesome-llm-apps"
+source_key: "gh:Shubhamsaboo/awesome-llm-apps"
 description: "awesome-llm-apps 是一个 130k Stars 的 LLM 应用精选合集，收录 100+ 个示例项目，覆盖 AI Agent、RAG、MCP、Voice Agents、多 Agent 协作等能力轴，附带 Google ADK、OpenAI Agents SDK 等框架速成课程。"
 draft: false
 categories: ["技术笔记"]

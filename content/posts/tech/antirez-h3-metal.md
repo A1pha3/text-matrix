@@ -3,6 +3,7 @@ title: "Redis 之父下场手写推理引擎：antirez 用约 24000 行原生代
 date: 2026-08-16T22:00:00+08:00
 slug: "antirez-h3-metal"
 github_repo: "antirez/h3.c"
+source_key: "gh:antirez/h3.c"
 description: "antirez 的新项目 h3-metal：不依赖 PyTorch、不套 MLX，约 24000 行 C、Objective-C 与 Metal shader 在 Apple Silicon 上跑通 MiniMax-H3 视频/音频生成。本文拆解它的 vertical slice 工作流、speed/quality 参数空间和 SSD streaming 的工程折衷，所有数字对照仓库 README 与源码逐条核实。"
 categories: ["技术笔记"]
 tags: ["AI 推理", "Apple Silicon", "Metal", "C 语言", "MiniMax-H3"]

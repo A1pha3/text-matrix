@@ -2,6 +2,7 @@
 title: "郝景芳的「AI 折叠」：从《北京折叠》到 OPC 一人公司，AI 如何压缩组织与职业阶梯"
 date: "2026-06-18T14:00:00+08:00"
 slug: "haojingfang-from-beijing-folding-to-ai-folding-cn"
+source_key: "bv:BV1Tj5y63Edj"
 description: "郝景芳谈 AI Agent、童行拆成 9 个小公司，和《北京折叠》在现实里的回声。这篇精读拆三件事：AI 如何压缩组织翻译链，为什么 OPC 更像边界重写，为什么判断力比技能更难迁移。"
 draft: false
 categories: ["视频精读"]

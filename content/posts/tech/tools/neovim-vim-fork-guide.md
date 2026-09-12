@@ -3,6 +3,7 @@ title: "Neovim：Vim 分支如何变成可编程的编辑器"
 date: "2026-04-01T12:45:00+08:00"
 slug: "neovim-vim-fork-guide"
 github_repo: "neovim/neovim"
+source_key: "gh:neovim/neovim"
 aliases:
   - /posts/tech/neovim-vim-fork-guide/
 categories: ["技术笔记"]

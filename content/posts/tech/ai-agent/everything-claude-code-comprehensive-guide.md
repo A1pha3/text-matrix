@@ -4,6 +4,7 @@ date: "2026-04-02T07:35:00+08:00"
 lastmod: 2026-09-01T12:00:00+08:00
 slug: everything-claude-code-comprehensive-guide
 github_repo: "affaan-m/ECC"
+source_key: "gh:affaan-m/ECC"
 aliases:
   - /posts/tech/everything-claude-code-comprehensive-guide/
   - /posts/tech/everything-claude-code-agent-harness-performance/

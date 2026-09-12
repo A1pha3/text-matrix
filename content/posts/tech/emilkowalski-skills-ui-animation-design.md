@@ -3,6 +3,7 @@ title: "Emil Kowalski Skills：让AI代理拥有UI/UX品味的技能库"
 date: 2026-08-04T03:20:00+08:00
 slug: "emilkowalski-skills-ui-animation-design"
 github_repo: "emilkowalski/skills"
+source_key: "gh:emilkowalski/skills"
 description: "Emil Kowalski 的 Skills 库为AI代理注入了UI/UX设计品味，包含动画审查、设计原则、组件选择等技能，让AI生成的界面不再千篇一律。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "wonderwhy-er/DesktopCommanderMCP：把 Claude 接到本地终端与文�
 date: 2026-07-10T02:58:08+08:00
 slug: "wonderwhy-er-desktop-commander-mcp"
 github_repo: "wonderwhy-er/DesktopCommanderMCP"
+source_key: "gh:wonderwhy-er/DesktopCommanderMCP"
 tags: ["MCP", "Claude", "AI Agent", "TypeScript", "Terminal"]
 categories: ["技术笔记"]
 description: "拆解 wonderwhy-er/DesktopCommanderMCP——让 Claude / GPT / Gemini 通过 MCP 接管本地终端、文件搜索、diff 编辑、进程会话与 Excel / PDF / DOCX 操作的 MCP 服务器，含安装配置、对比、安全边界与采用建议。"

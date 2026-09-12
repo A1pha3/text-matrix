@@ -1,5 +1,6 @@
 +++
 github_repo = "francescopace/espectre"
+source_key = "gh:francescopace/espectre"
 date = '2026-06-09T21:07:02+08:00'
 draft = false
 title = 'espectre 深度拆解：10 欧元的 ESP32 + Wi-Fi CSI + ESPHome，做穿墙隐私动检的 Home Assistant 完整方案'

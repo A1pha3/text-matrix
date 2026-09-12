@@ -2,6 +2,7 @@
 title: "zilliztech/claude-context：MCP 语义代码搜索插件，让 Claude 理解整个代码库"
 slug: zilliztech-claude-context-mcp-plugin
 github_repo: "zilliztech/claude-context"
+source_key: "gh:zilliztech/claude-context"
 date: "2026-04-22T16:35:00+08:00"
 description: "zilliztech/claude-context 是一个 MCP 插件，为 Claude Code 等 AI 编码助手提供混合检索（BM25 + 稠密向量）代码搜索，代码库入库 Zilliz Cloud 向量数据库，按需加载相关代码，官方评估约可节省 40% token。"
 categories: ["技术笔记"]

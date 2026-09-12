@@ -3,6 +3,7 @@ title: "MLX-VLM：在 Apple Silicon 上运行与微调视觉语言模型"
 date: "2026-04-06T17:30:00+08:00"
 slug: "mlx-vlm-apple-silicon-vlm-inference-guide"
 github_repo: "Blaizzy/mlx-vlm"
+source_key: "gh:Blaizzy/mlx-vlm"
 description: "MLX-VLM 是 Blaizzy 维护的 MLX 套件，用于在 Apple Silicon 上推理与微调视觉语言模型和全能模型。本文覆盖架构、支持模型、视觉特征缓存、KV Cache 量化、LoRA 微调与 FastAPI 服务器部署。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "Codewhale：Rust 终端里的多模型编程 Agent，从 DeepSeek 一路
 date: "2026-05-05T20:19:00+08:00"
 slug: "deepseek-tui-rust-terminal-coding-agent-guide"
 github_repo: "Hmbown/CodeWhale"
+source_key: "gh:Hmbown/CodeWhale"
 description: "Codewhale 是一个用 Rust 写的终端编程 Agent，从 DeepSeek 原生体验起步，后来长成一个社区驱动的 agent harness。文章拆开它的模型路由、授权与安全、Fleet 编排三条主线，用一个修 bug 的例子把机制串起来，最后给出适用边界。"
 draft: false
 categories: ["技术笔记"]

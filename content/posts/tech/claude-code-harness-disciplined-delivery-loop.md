@@ -3,6 +3,7 @@ title: "Claude Code Harness：给 AI 编程助手加一套有约束的交付流�
 date: 2026-05-28T09:15:00+08:00
 slug: "claude-code-harness-disciplined-delivery-loop"
 github_repo: "Chachamaru127/claude-code-harness"
+source_key: "gh:Chachamaru127/claude-code-harness"
 aliases:
   - "/posts/tech/chachamaru127-claude-code-harness-delivery-loop/"
 description: "Claude Code Harness 把「让 AI 写代码」收束为「让 AI 按合同交付」：写 Spec→实施→验证→独立 Review→打包证据，用 Go 守护引擎在每次工具调用前拦截越权操作，支持 Claude Code、Codex CLI、Cursor、Grok。"

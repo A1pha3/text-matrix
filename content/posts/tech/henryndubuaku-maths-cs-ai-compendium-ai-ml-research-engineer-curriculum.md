@@ -9,6 +9,7 @@ description: "maths-cs-ai-compendium 是 Henry Ndubuaku 维护的 intuition-firs
 
 slug: "henryndubuaku-maths-cs-ai-compendium-ai-ml-research-engineer-curriculum"
 github_repo: "HenryNdubuaku/maths-cs-ai-compendium"
+source_key: "gh:HenryNdubuaku/maths-cs-ai-compendium"
 author: text-matrix
 toc: true
 ---

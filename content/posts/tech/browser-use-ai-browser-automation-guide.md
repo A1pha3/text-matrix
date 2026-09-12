@@ -3,6 +3,7 @@ title: "Browser-Use：让 AI Agent 控制浏览器完成任何任务"
 date: "2026-04-06T20:12:00+08:00"
 slug: "browser-use-ai-browser-automation-guide"
 github_repo: "browser-use/browser-use"
+source_key: "gh:browser-use/browser-use"
 description: "Browser-Use 把 LLM 的任务理解、Playwright 的页面控制和可扩展工具集成进一个开源库。本文讲安装配置、Claude Code 集成、自定义工具扩展、生产部署和故障排查。"
 draft: false
 categories: ["技术笔记"]

@@ -1,5 +1,6 @@
 +++
 github_repo = "kageroumado/phosphene"
+source_key = "gh:kageroumado/phosphene"
 date = '2026-05-21T11:50:00+08:00'
 draft = false
 title = 'Phosphene：macOS 视频壁纸引擎'

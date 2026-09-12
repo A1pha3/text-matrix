@@ -3,6 +3,7 @@ title: "Kronos 完整指南：从金融时间序列入门到论文复现、微�
 date: "2026-04-11T00:25:00+08:00"
 slug: "kronos-financial-ai-from-zero-to-expert"
 github_repo: "shiyu-coder/Kronos"
+source_key: "gh:shiyu-coder/Kronos"
 description: "Kronos 是面向金融 K 线的时间序列基础模型。本文基于 arXiv:2508.02739、官方 README 与公开代码，系统讲解其 45 个交易所、120 亿 K 线预训练背景、层次化离散 Token、自回归 Transformer、预测与微调流程，以及从入门到研究改进的完整路径。"
 categories: ["技术笔记"]
 tags: ["金融AI", "时间序列", "量化交易", "基础模型"]

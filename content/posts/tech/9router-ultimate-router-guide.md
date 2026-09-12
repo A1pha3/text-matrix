@@ -3,6 +3,7 @@ title: "9Router：给 AI 编程工具套一层免费用量的路由"
 date: "2026-04-12T02:31:39+08:00"
 slug: 9router-ultimate-router-guide
 github_repo: "decolua/9router"
+source_key: "gh:decolua/9router"
 description: "9Router 是运行在本地的 AI 路由层，把 Claude Code、Cursor、Codex 等 CLI 工具接到订阅、廉价、免费三层后端，并用 RTK 压缩工具输出省 Token。本文拆它的机制、边界和该不该用。"
 draft: false
 categories: ["技术笔记"]

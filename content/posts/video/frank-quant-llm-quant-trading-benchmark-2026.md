@@ -3,6 +3,7 @@ title: "四家顶级大模型量化交易横评：alpha 选股与 beta 敞口，
 date: "2026-08-08T10:44:00+08:00"
 lastmod: "2026-08-08T10:44:00+08:00"
 slug: frank-quant-llm-quant-trading-benchmark-2026
+source_key: "bv:BV15HMS6DETZ"
 categories: ["视频精读"]
 tags: ["量化交易", "LLM横评", "Freqtrade", "AI评测", "回测"]
 description: "frank-quant 横评 Kimi K3 / Opus 5 / Fable 5 / DeepSeek V4 Flash 四家顶级大模型在量化交易任务上的真实表现：模型 + CLI 组合、严苛样本外测试、alpha 与 beta 拆解、参数选择与成本结构。"

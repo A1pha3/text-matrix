@@ -3,6 +3,7 @@ title: "Coding Interview University：软件工程师求职学习指南"
 date: "2026-04-01T12:50:00+08:00"
 slug: "coding-interview-university-guide"
 github_repo: "jwasham/coding-interview-university"
+source_key: "gh:jwasham/coding-interview-university"
 description: "Coding Interview University 是 jwasham 维护的软件工程师面试自学清单，271K Stars。它把数据结构、算法、系统设计、求职准备整理成一份可勾选的学习计划，供非科班出身的人按顺序补齐面试所需知识。"
 draft: false
 categories: ["技术笔记"]

@@ -7,6 +7,7 @@ tags: ["LiveKit", "Agents", "WebRTC", "Realtime AI", "语音 Agent", "MCP", "Tel
 categories: ["技术笔记"]
 authors: ["钳岳"]
 github_repo: "livekit/agents"
+source_key: "gh:livekit/agents"
 description: "13k Stars 的实时多模态 Agent 框架:Agent/AgentSession/AgentActivity 三层模型、Turn Detector 神经 turn detection、Toolset/ToolContext 函数工具体系,以及为什么语音 Agent 必须跑在 WebRTC 媒体服务器上。"
 slug: livekit-agents-realtime-multimodal-agent-framework-2026
 

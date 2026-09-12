@@ -3,6 +3,7 @@ title: "Meetily：隐私优先的AI会议助手，本地实时转录与总结"
 date: 2026-08-04T03:20:00+08:00
 slug: "meetily-privacy-first-meeting-assistant"
 github_repo: "Zackriya-Solutions/meetily"
+source_key: "gh:Zackriya-Solutions/meetily"
 description: "Meetily 是一款开源的隐私优先AI会议助手，基于 Rust 构建，支持实时转录、说话人识别和AI总结，所有数据本地处理无需云服务。"
 draft: false
 categories: ["技术笔记"]

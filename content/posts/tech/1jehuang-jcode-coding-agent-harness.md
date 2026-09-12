@@ -7,6 +7,7 @@ tags: ["Coding Agent", "Rust", "TUI", "MCP"]
 description: "jcode 是一个用 Rust 写的 coding agent harness，单 session 空载 PSS 低至 27.8 MB，约为 Claude Code 的 1/14，启动到首帧 14 ms。本文拆解它的内存取舍、记忆系统、多 session server 架构与 MCP 支持边界。"
 slug: 1jehuang-jcode-coding-agent-harness
 github_repo: "1jehuang/jcode"
+source_key: "gh:1jehuang/jcode"
 ---
 
 # jcode：把内存压到 27.8 MB 的 Coding Agent Harness 怎么做到

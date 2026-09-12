@@ -1,5 +1,6 @@
 +++
 github_repo = "JuliusBrussee/caveman"
+source_key = "gh:JuliusBrussee/caveman"
 date = '2026-04-30T11:30:00+08:00'
 draft = false
 title = 'Caveman：只压 AI 的嘴，不压它的脑子'

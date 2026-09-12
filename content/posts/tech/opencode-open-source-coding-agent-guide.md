@@ -3,6 +3,7 @@ title: "OpenCode：开源 AI 编程助手，本地运行、模型自由"
 date: "2026-05-02T10:13:00+08:00"
 slug: "opencode-open-source-coding-agent-guide"
 github_repo: "anomalyco/opencode"
+source_key: "gh:anomalyco/opencode"
 description: "OpenCode 是目前星标数最高的开源 AI 编程助手，用 TypeScript 构建，模型提供商可换，内置 LSP 诊断、TUI 终端界面和客户端/服务器架构。本文从核心设计、架构、安装配置、实战演示到二次开发逐层拆解。"
 draft: false
 categories: ["技术笔记"]

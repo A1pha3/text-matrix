@@ -3,6 +3,7 @@ title: "restic 拆解：35.9K Stars 的 Go 备份工具，如何把加密、内�
 date: "2026-06-12T15:11:35+08:00"
 slug: "restic-go-backup-tool-architecture-guide"
 github_repo: "restic/restic"
+source_key: "gh:restic/restic"
 description: "restic 是 Go 编写的开源备份工具，35.9K Stars、v0.19.1。拆解四层架构、CDC 去重、Pack 加密、快照树与多后端，给出 backup→restore 任务流与维护边界。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "站在 AI 风暴中心：70 分钟拆开 Anthropic CEO 的 8 个工程�
 date: "2026-06-25T14:45:48+08:00"
 lastmod: 2026-09-06T23:40:00+08:00
 slug: "anthropic-dario-amodei-the-circuit-engineering-choices-2026"
+source_key: "bv:BV1CMjq6nEu1"
 aliases:
   - /posts/video/anthropic-dario-amodei-the-circuit-engineering-choices-2026/
 description: "Dario Amodei 在 Bloomberg《The Circuit》70 分钟访谈中交代了八个工程取舍：离开 OpenAI 源于信任破裂，Mythos 因能自主走完网络杀伤链被锁定，入门白领岗位 1-5 年内受冲击过半，五角大楼取消军事红线的要求被拒。本文逐项核对数字与出处后逐一拆解。"

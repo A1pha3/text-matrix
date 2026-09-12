@@ -3,6 +3,7 @@ title: "Microsoft Agent Framework：把多步 Agent 执行改造成可观测系�
 date: "2026-04-12T02:31:39+08:00"
 slug: microsoft-agent-framework-multi-language-guide
 github_repo: "microsoft/agent-framework"
+source_key: "gh:microsoft/agent-framework"
 description: "微软官方 Agent 框架（Python / .NET / Go）深度解读：统一 Semantic Kernel 的企业基座与 AutoGen 的多 Agent 编排，核心是让长流程工作流可观测、可检查点、可人工干预。"
 draft: false
 categories: ["技术笔记"]

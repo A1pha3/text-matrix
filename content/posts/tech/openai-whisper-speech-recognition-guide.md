@@ -3,6 +3,7 @@ title: "Whisper：一个模型把多语言语音识别管线收进一张 token �
 date: "2026-04-06T22:50:00+08:00"
 slug: "openai-whisper-speech-recognition-guide"
 github_repo: "openai/whisper"
+source_key: "gh:openai/whisper"
 description: "实测约 8 万 Stars 的 OpenAI Whisper，讲清它如何用一个 seq2seq 模型同时做语音识别、语音翻译和语言识别，以及 5 档基础模型加 turbo、faster-whisper 等落地选择。"
 draft: false
 categories: ["技术笔记"]

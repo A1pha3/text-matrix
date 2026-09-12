@@ -3,6 +3,7 @@ title: "姚顺宇 4 小时访谈精读：AI 为什么从天才竞赛变成系统
 date: "2026-05-11T23:50:00+08:00"
 lastmod: "2026-08-03T23:55:00+08:00"
 slug: "yao-shunyu-4-hour-interview-anthropic-gemini"
+source_key: "bv:BV1YR5E6EE9o"
 aliases:
   - /posts/video/yao-shunyu-4-hour-interview-anthropic-gemini-model-training-deep-dive/
 description: "基于近 4 小时访谈与视频字幕，文章梳理姚顺宇对大模型竞争的几条关键判断：Pre-train 还没到头，蒸馏正在分叉，coding 仍是最现实的 agent 训练场，而真正决定上限的仍是问题定义、评估框架、组织能力和系统工程。"

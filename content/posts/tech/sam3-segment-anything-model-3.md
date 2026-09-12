@@ -3,6 +3,7 @@ title: "SAM 3：从分割单个物体到分割一个概念"
 date: "2026-05-23T13:09:23+08:00"
 slug: "sam3-segment-anything-model-3"
 github_repo: "facebookresearch/sam3"
+source_key: "gh:facebookresearch/sam3"
 description: "SAM 3 把分割从“圈出一个物体”推进到“分割一个开放词汇概念的全部实例”：一句文本或几张示例图，就能穷尽分割出所有匹配实例，并逐帧跟踪。"
 draft: false
 categories: ["技术笔记"]

@@ -4,6 +4,7 @@ date: 2026-08-16T10:55:00+08:00
 draft: false
 slug: "shanraisshan-claude-code-best-practice"
 github_repo: "shanraisshan/claude-code-best-practice"
+source_key: "gh:shanraisshan/claude-code-best-practice"
 description: "GitHub Trending 榜首、日均 220 star 的 Claude Code 最佳实践仓库。真正的价值不在 83 条 tips，在它用一个天气系统把 Command、Agent、Skill 三层编排的规矩立住了。"
 categories: ["技术笔记"]
 tags: ["AI Agent", "Claude Code", "Skills", "Command", "Subagent"]

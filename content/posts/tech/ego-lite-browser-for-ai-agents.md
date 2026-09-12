@@ -3,6 +3,7 @@ title: "ego lite：为AI代理打造的专用浏览器，人与Agent并行工作
 date: 2026-08-04T03:20:00+08:00
 slug: "ego-lite-browser-for-ai-agents"
 github_repo: "citrolabs/ego-lite"
+source_key: "gh:citrolabs/ego-lite"
 description: "ego lite 是专为AI代理设计的浏览器，通过Space机制让人类和多个AI代理在同一个浏览器中并行工作，支持Chrome数据继承和JavaScript技能调用。"
 draft: false
 categories: ["技术笔记"]

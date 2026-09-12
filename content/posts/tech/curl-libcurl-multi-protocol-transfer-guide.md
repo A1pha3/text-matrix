@@ -3,6 +3,7 @@ title: "curl 与 libcurl：互联网数据传输基石的架构解析"
 date: "2026-04-27T15:00:00+08:00"
 slug: "curl-libcurl-multi-protocol-transfer-guide"
 github_repo: "curl/curl"
+source_key: "gh:curl/curl"
 description: "curl 是互联网数据传输领域最不可或缺的基础设施之一。本文从架构视角解析 curl 命令行工具与 libcurl 库的设计关系，介绍 easy / multi / share 三种编程接口的区别与应用场景、curl_url 的独立设计，并用一次完整请求串起整个调用链，最后附自测与进阶路径。"
 categories: ["技术笔记"]
 tags: ["HTTP", "C语言", "开源"]

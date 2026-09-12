@@ -2,6 +2,7 @@
 title: "陈省身的一个问题，被神经网络和岩石力学同时回答了"
 date: "2026-06-25T14:36:00+08:00"
 slug: "shigenhua-wayland-chern-question-two-worlds-2026"
+source_key: "bv:BV1U2j863EsL"
 description: "陈省身 1991 年留下的问题，被两个世界各自回答了：石根华的 NMM 双覆盖机制，以及 Deep Manifold 对神经网络的新解读。"
 draft: false
 categories: ["视频精读"]

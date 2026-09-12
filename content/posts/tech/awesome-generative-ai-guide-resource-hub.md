@@ -3,6 +3,7 @@ title: "awesome-generative-ai-guide 导读：一份可以当课表的 GenAI 资�
 date: "2026-08-30T10:00:00+08:00"
 slug: "awesome-generative-ai-guide-resource-hub"
 github_repo: "aishwaryanr/awesome-generative-ai-guide"
+source_key: "gh:aishwaryanr/awesome-generative-ai-guide"
 description: "aishwaryanr/awesome-generative-ai-guide 在 2026 年 7 月重构为旅程导航：Use AI / Build AI / Understand AI 三条路径配 101/201/301 三档，另有角色化面试中心、90+ 免费课清单与月度论文榜。本文拆解它的新结构、适合人群与使用边界。"
 draft: false
 categories: ["技术笔记"]

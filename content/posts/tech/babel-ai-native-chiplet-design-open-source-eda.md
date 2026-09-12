@@ -3,6 +3,7 @@ title: "Babel：开源EDA工具链驱动的AI原生Chiplet设计流程"
 date: 2026-05-22T20:20:00+08:00
 slug: "babel-ai-native-chiplet-design-open-source-eda"
 github_repo: "amoslee2026/Babel"
+source_key: "gh:amoslee2026/Babel"
 description: "Babel 是基于开源 EDA 工具链（Yosys/OpenSTA/Magic/Netgen）和 5-agent 流水线的 AI 原生 Chiplet 设计流程，通过 Claude Code 和 labeled issue 从 PRD 驱动到 GDSII，并用三层 Spec-Code 追溯体系让需求、代码、断言、约束保持一致。"
 draft: false
 categories: ["技术笔记"]

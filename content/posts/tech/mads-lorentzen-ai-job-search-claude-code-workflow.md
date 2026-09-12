@@ -3,6 +3,7 @@ title: "AI Job Search：把 Claude Code 变成求职指挥中心的 30K Star 开
 date: 2026-08-06T03:24:26+08:00
 slug: "ai-job-search-claude-code-workflow"
 github_repo: "MadsLorentzen/ai-job-search"
+source_key: "gh:MadsLorentzen/ai-job-search"
 description: "AI Job Search 是一套基于 Claude Code 的开源求职框架，30K Stars，覆盖从简历设置、岗位搜索、匹配评估到自动投递的全流程。本文拆解其核心工作流、drafter-reviewer 双代理设计以及 PDF 验证循环。"
 draft: false
 categories: ["技术笔记"]

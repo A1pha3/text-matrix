@@ -5,6 +5,7 @@ draft: false
 categories: ["视频精读"]
 tags: ["本体论", "Ontology", "智能体", "Agent", "神经符号AI", "Neurosymbolic AI", "知识图谱", "OWL", "RDFS", "Claude", "UC Berkeley", "Frank Coyle"]
 slug: when-agents-meet-ontologies-frank-coyle-berkeley
+source_key: "bv:BV1JwgU6aEHN"
 description: "LLM 的幻觉是特性还是 bug？伯克利学者 Frank Coyle 用 21 分钟讲透了一个道理：概率性创造需要形式化护栏，而本体论——从亚里士多德到 OWL——正是智能体时代缺失的那块拼图。"
 hiddenFromHomePage: false
 ---

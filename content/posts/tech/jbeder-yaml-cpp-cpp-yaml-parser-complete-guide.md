@@ -2,6 +2,7 @@
 title: "yaml-cpp 完整指南：C++ 生态最稳的 YAML 解析器"
 slug: jbeder-yaml-cpp-cpp-yaml-parser-complete-guide
 github_repo: "jbeder/yaml-cpp"
+source_key: "gh:jbeder/yaml-cpp"
 date: 2026-07-11T02:50:00+08:00
 lastmod: 2026-09-12T00:00:00+08:00
 draft: false

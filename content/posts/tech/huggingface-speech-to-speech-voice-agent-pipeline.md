@@ -3,6 +3,7 @@ title: "HuggingFace Speech-to-Speech：用开源模型构建本地语音助手�
 date: 2026-08-05T03:23:05+08:00
 slug: "huggingface-speech-to-speech-voice-agent-pipeline"
 github_repo: "huggingface/speech-to-speech"
+source_key: "gh:huggingface/speech-to-speech"
 description: "HuggingFace 开源的语音对话管道，将 VAD、STT、LLM、TTS 四个阶段解耦为可互换模块，并通过 OpenAI Realtime 兼容协议对外暴露。本文拆解其架构设计、运行命令、组件选型与工程取舍。"
 draft: false
 categories: ["技术笔记"]

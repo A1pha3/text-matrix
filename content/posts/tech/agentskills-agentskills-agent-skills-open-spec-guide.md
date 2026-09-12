@@ -9,6 +9,7 @@ description: "拆解 Agent Skills 开放规范的核心设计：SKILL.md frontma
 author: text-matrix
 slug: agentskills-agentskills-agent-skills-open-spec-guide
 github_repo: "agentskills/agentskills"
+source_key: "gh:agentskills/agentskills"
 
 ---
 

@@ -9,6 +9,7 @@ slug: "moshi-full-duplex-speech-foundation-model"
 band: "review"
 gates: ["事实性", "去AI味", "观点依据"]
 github_repo: "kyutai-labs/moshi"
+source_key: "gh:kyutai-labs/moshi"
 ---
 
 ## 这篇文章在回答什么

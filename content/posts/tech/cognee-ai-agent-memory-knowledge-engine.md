@@ -3,6 +3,7 @@ title: "Cognee：让 Agent 拥有会自我修正的长期记忆"
 date: "2026-04-17T16:32:00+08:00"
 slug: "cognee-ai-agent-memory-knowledge-engine"
 github_repo: "topoteretes/cognee"
+source_key: "gh:topoteretes/cognee"
 description: "3 万＋ Star（截至 2026-08）的开源 AI 记忆平台。围绕 remember/recall/improve/forget 四个动词构建 Agent 长期记忆：会话缓存与知识图谱双存储，反馈驱动的自改进闭环，支持多格式数据、多种图/向量后端，可自托管或部署到云平台。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "Zvec 深度拆解：阿里开源的进程内向量数据库，10K Stars 
 date: "2026-06-16T21:03:41+08:00"
 slug: alibaba-zvec-embedded-vector-database
 github_repo: "alibaba/zvec"
+source_key: "gh:alibaba/zvec"
 description: "alibaba/zvec 是阿里开源的进程内向量数据库，5 种语言 SDK + 混合检索 + DiskANN，本文拆解其架构与适用边界。"
 tags: ["向量数据库", "RAG"]
 categories: ["技术笔记"]

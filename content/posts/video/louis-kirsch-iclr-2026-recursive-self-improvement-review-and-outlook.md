@@ -2,6 +2,7 @@
 title: "逃逸速度：Louis Kirsch 谈递归自我改进的拐点"
 date: 2026-07-13T21:30:00+08:00
 slug: louis-kirsch-iclr-2026-recursive-self-improvement-review-and-outlook
+source_key: "bv:BV1YRVy6nEzT"
 description: "ICLR 2026 RSI Workshop 首场受邀报告精读。据 43 页幻灯片原件重建：Kirsch 真正讲的是三件事——怎么把人类移出 AI 研究的外层循环、用哪几类机制保证自我改进不是自欺、以及拐点之前还剩哪些硬骨头。"
 draft: false
 

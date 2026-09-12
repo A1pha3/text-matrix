@@ -4,6 +4,7 @@ date: "2026-04-12T11:40:00+08:00"
 lastmod: 2026-09-08T00:00:00+08:00
 slug: agent-browser-vercel-ai-browser-automation-guide
 github_repo: "vercel-labs/agent-browser"
+source_key: "gh:vercel-labs/agent-browser"
 summary: "本文基于官方 README 与 CLI 帮助信息，讲清 Agent Browser 的安装方法、snapshot + ref 工作流、会话与认证管理、安全控制、调试观测、云浏览器接入与 Agent 集成路径。"
 description: "基于 vercel-labs/agent-browser README 与公开 CLI 帮助信息整理的中文指南，聚焦安装、snapshot+ref 工作流、会话与认证、安全控制、调试观测、云浏览器 provider 与 AI Agent 集成。"
 draft: false

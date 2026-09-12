@@ -3,6 +3,7 @@ title: "潮流周刊 Weekly：用六年 278 期写出来的个人品牌"
 date: "2026-08-21T00:00:00+08:00"
 slug: weekly-trendy-weekly-personal-blog
 github_repo: "tw93/Weekly"
+source_key: "gh:tw93/Weekly"
 description: "解析 tw93/Weekly：从 2020 年 11 月连载至今的潮流周刊，Astro 静态站、中英双语、Pagefind 搜索、PhotoSwipe 灯箱，内容以封面照片和随笔为主，每周一更新。"
 categories: ["技术笔记"]
 tags: ["Astro", "Tailwind CSS", "周刊", "个人博客"]

@@ -3,6 +3,7 @@ title: "Agentic Video Editor：用多智能体架构重新定义视频剪辑"
 date: "2026-04-17T16:10:00+08:00"
 slug: "agentic-video-editor-ai-multi-agent-video-production"
 github_repo: "poseljacob/agentic-video-editor"
+source_key: "gh:poseljacob/agentic-video-editor"
 description: "一个开源的 CLI 视频剪辑工具：把素材库和创意简报交给四个 AI 智能体——Director 选镜头、TrimRefiner 校准切点、Editor 渲染、Reviewer 打分返工——一条命令出成片。本文基于仓库源码拆解它的流水线编排、A-Roll/B-Roll 叙事机制与质量评审回路。"
 draft: false
 categories: ["技术笔记"]

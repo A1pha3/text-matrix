@@ -1,5 +1,6 @@
 +++
 github_repo = "opencv/opencv"
+source_key = "gh:opencv/opencv"
 date = '2026-06-08T10:00:00+08:00'
 draft = false
 title = 'OpenCV 5.0 解析：88K+ Stars 经典库 5.0 正式发布，8 年来首个大版本怎么变？'

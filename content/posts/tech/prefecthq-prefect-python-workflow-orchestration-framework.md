@@ -1,5 +1,6 @@
 ---
 github_repo: "PrefectHQ/prefect"
+source_key: "gh:PrefectHQ/prefect"
 title: "Prefect 实战：把 Python 脚本升级为可观测的工作流"
 date: 2026-07-13T03:01:47+08:00
 categories: ["技术笔记"]

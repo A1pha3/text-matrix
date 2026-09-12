@@ -3,6 +3,7 @@ title: "Apollo-11：阿波罗11号制导计算机源码探秘——人类登月�
 date: "2026-04-16T01:20:00+08:00"
 slug: "apollo-11-ags-source-code"
 github_repo: "chrislgarry/Apollo-11"
+source_key: "gh:chrislgarry/Apollo-11"
 description: "Apollo-11 是保存 1969 年登月制导计算机（AGC）源码的 GitHub 仓库，55K+ Stars。详解 Comanche055（指令舱）与 Luminary099（月球舱）两套汇编程序，以及 Margaret Hamilton 等人的在 4KB RAM 约束下的软件工程取舍。"
 draft: false
 categories: ["技术笔记"]

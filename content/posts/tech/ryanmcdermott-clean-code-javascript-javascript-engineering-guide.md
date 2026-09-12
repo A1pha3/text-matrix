@@ -9,6 +9,7 @@ description: "Ryan McDermott 把《Clean Code》原则落到 JavaScript 的开�
 author: text-matrix
 slug: ryanmcdermott-clean-code-javascript-javascript-engineering-guide
 github_repo: "ryanmcdermott/clean-code-javascript"
+source_key: "gh:ryanmcdermott/clean-code-javascript"
 
 ---
 

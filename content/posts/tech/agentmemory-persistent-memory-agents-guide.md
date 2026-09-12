@@ -4,6 +4,7 @@ date: 2026-05-10T16:55:00+08:00
 lastmod: 2026-09-08T00:00:00+08:00
 slug: agentmemory-persistent-memory-agents-guide
 github_repo: "rohitg00/agentmemory"
+source_key: "gh:rohitg00/agentmemory"
 aliases:
     - "/posts/tech/agentmemory-persistent-memory-ai-coding-agent/"
     - "/posts/tech/agentmemory-persistent-memory-ai-coding-agents/"

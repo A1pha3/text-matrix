@@ -3,6 +3,7 @@ title: "Nginx 1.31 安全修复与现代部署：22 年反向代理的常青之�
 date: "2026-06-07T12:56:00+08:00"
 slug: "nginx-1-31-security-and-modern-deployment"
 github_repo: "nginx/nginx"
+source_key: "gh:nginx/nginx"
 aliases:
   - "/posts/tech/nginx-1-31-security-and-modern-deployment/"
 description: "Nginx 1.31.1 mainline 修复了 ngx_http_rewrite 模块的 buffer overflow 漏洞（CVE-2026-9256）。本文解读这个 2004 年问世项目的现代部署方式、与 Caddy/Traefik 的对比，以及它在 AI Agent 网关场景的用法。"

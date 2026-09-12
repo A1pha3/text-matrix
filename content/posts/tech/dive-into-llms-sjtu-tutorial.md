@@ -4,6 +4,7 @@ date: "2026-04-16T01:30:00+08:00"
 lastmod: 2026-08-15T12:00:00+08:00
 slug: "dive-into-llms-sjtu-tutorial"
 github_repo: "Lordog/dive-into-llms"
+source_key: "gh:Lordog/dive-into-llms"
 description: "dive-into-llms 是上海交通大学出品的 3 万+ Star 大模型教程，用 Jupyter Notebook 覆盖微调部署、提示学习、思维链、知识编辑、数学推理、文本水印、越狱攻击、隐写术、多模态、GUI Agent、RLHF 对齐等 11 个主题，并与华为昇腾联合推出国产化教程。"
 draft: false
 categories: ["技术笔记"]

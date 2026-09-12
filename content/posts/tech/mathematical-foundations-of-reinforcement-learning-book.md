@@ -3,6 +3,7 @@ title: "Mathematical Foundations of Reinforcement Learning：强化学习的数�
 date: "2026-04-17T16:05:00+08:00"
 slug: "mathematical-foundations-of-reinforcement-learning-book"
 github_repo: "MathFoundationRL/Book-Mathematical-Foundation-of-Reinforcement-Learning"
+source_key: "gh:MathFoundationRL/Book-Mathematical-Foundation-of-Reinforcement-Learning"
 description: "15K Stars强化学习数学专著完整解读：由施若石编写、Springer出版的《Mathematical Foundations of Reinforcement Learning》，涵盖10章核心内容、54节配套视频、网格世界贯穿始终，210万播放量验证的教学品质。"
 draft: false
 categories: ["技术笔记"]

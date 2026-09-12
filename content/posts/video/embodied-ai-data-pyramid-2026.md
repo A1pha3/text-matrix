@@ -2,6 +2,7 @@
 title: "机器人数据金字塔：从遥操到仿真，四层架构填平具身智能的数据荒漠"
 date: "2026-06-12T15:30:00+08:00"
 slug: "embodied-ai-data-pyramid-2026"
+source_key: "bv:BV1uQ5Y6mExN"
 description: "硅谷 101 实地探访 200 台机器人数采工厂，拆解四层数据金字塔（遥操/仿真/动捕/视频）的成本与取舍，以及 AgiBot World、觅蜂无本体、Sharpa 触觉 AI 如何拼出 2026 年的数据生态。"
 
 draft: false

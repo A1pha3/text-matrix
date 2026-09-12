@@ -3,6 +3,7 @@ title: "new-api：把多个 LLM API 收进一个网关，顺便把计费也做�
 date: "2026-04-14T20:30:00+08:00"
 slug: "new-api-llm-gateway"
 github_repo: "QuantumNous/new-api"
+source_key: "gh:QuantumNous/new-api"
 description: "new-api 是一个统一 OpenAI 兼容入口背后的 LLM 网关，做了三件事：把各厂模型互转成 OpenAI/Claude/Gemini 兼容格式、按渠道和模型做加权分发与重试降级、用额度系统做用户计费。本文拆开这三条线，跟一个真实请求走完整流程，最后给出该用和不该用的判断。"
 draft: false
 categories: ["技术笔记"]

@@ -2,6 +2,7 @@
 title: "AgentFlow：把几十个 AI 编程 agent 编排成一张可并行、可迭代的图"
 slug: "agentflow-agent-dependency-graph-guide"
 github_repo: "agentenv/agentflow"
+source_key: "gh:agentenv/agentflow"
 aliases:
   - /posts/tech/agentflow-agent-dependency-graph-guide/
 date: "2026-04-01T01:09:00+08:00"

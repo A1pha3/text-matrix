@@ -3,6 +3,7 @@ title: "Catch2 v3 深度拆解：C++ 单元测试框架的自然选择"
 date: "2026-07-11T02:50:00+08:00"
 slug: catchorg-catch2-cpp-unit-test-framework-guide
 github_repo: "catchorg/Catch2"
+source_key: "gh:catchorg/Catch2"
 description: "Catch2 v3 是 C++ 原生测试框架的重要选择。本文拆解其 TEST_CASE / SECTION 嵌套重跑模型、Matchers、BDD 宏、Approx 与微基准能力，并对比 GoogleTest / doctest 的工程取舍。"
 categories: ["技术笔记"]
 tags: ["C++", "测试框架", "TDD"]

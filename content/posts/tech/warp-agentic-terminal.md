@@ -3,6 +3,7 @@ title: "Warp：从终端模拟器长出来的 Agentic Development Environment"
 date: "2026-04-30T10:09:13+08:00"
 slug: "warp-agentic-terminal"
 github_repo: "warpdotdev/warp"
+source_key: "gh:warpdotdev/warp"
 description: "Warp 是一个基于 Rust 的 agentic development environment，从终端模拟器演进而来。它用自研的 WarpUI 框架撑起 GUI 与 TUI 两个前端，内置 GPT 驱动的 Oz coding agent，并通过 build.warp.dev 把开源库的 issue/PR 治理全程透明化。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "Deep-Live-Cam：一张照片、三步、实时换脸，重写后它到�
 date: "2026-03-28T22:00:00+08:00"
 slug: "deep-live-cam-realtime-faceswap"
 github_repo: "hacksider/Deep-Live-Cam"
+source_key: "gh:hacksider/Deep-Live-Cam"
 description: "Deep-Live-Cam 用一张照片做实时换脸与视频深度伪造。2026-08 的 2.7 Ultimate 重写版移除了 PyTorch、TensorFlow、InsightFace 等重依赖，改用 TensorRT 与 ONNX。本文拆它的零训练原理、重写取舍、运行路径与适用边界。"
 draft: false
 categories: ["技术笔记"]

@@ -3,6 +3,7 @@ title: "VoxCPM2：放弃离散音频分词，用连续扩散合成 30 种语言�
 date: "2026-04-12T11:50:00+08:00"
 slug: voxcpm2-tokenizer-free-tts-guide
 github_repo: "OpenBMB/VoxCPM"
+source_key: "gh:OpenBMB/VoxCPM"
 description: "OpenBMB 开源的 2B 参数 Tokenizer-Free TTS 模型，基于 MiniCPM-4 骨干，在超 200 万小时多语种数据上训练。支持 30 种语言、音色设计、可控声音克隆，原生输出 48kHz 音频。"
 draft: false
 categories: ["技术笔记"]

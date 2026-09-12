@@ -3,6 +3,7 @@ title: "pytest：Python 测试框架的事实标准，从 assert 反射到 fixtu
 date: "2026-06-14T21:13:12+08:00"
 slug: "pytest-python-testing-framework-advanced-usage-guide"
 github_repo: "pytest-dev/pytest"
+source_key: "gh:pytest-dev/pytest"
 description: "pytest 是 14.4k stars 的 Python 测试框架事实标准。从 assert 反射讲起，系统拆解 fixture、parametrize、conftest、插件生态等机制与反模式。"
 draft: false
 categories: ["技术笔记"]

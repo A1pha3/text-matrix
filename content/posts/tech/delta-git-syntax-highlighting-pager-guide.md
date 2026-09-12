@@ -3,6 +3,7 @@ title: "Delta：让 git diff 在终端里也好看"
 date: "2026-04-12T02:31:39+08:00"
 slug: delta-git-syntax-highlighting-pager-guide
 github_repo: "dandavison/delta"
+source_key: "gh:dandavison/delta"
 description: "Delta 是一个用 Rust 编写的 Git 语法高亮分页器。本文从安装配置讲起，覆盖主题、行号、Side-by-side 对比、合并冲突与 grep、blame 集成，把 git、diff、grep 的输出统一成清晰可读的样式。"
 draft: false
 categories: ["技术笔记"]

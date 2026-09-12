@@ -4,6 +4,7 @@ date: "2026-05-20T20:25:00+08:00"
 lastmod: "2026-09-07T10:00:00+08:00"
 slug: "ai-engineering-from-scratch-guide"
 github_repo: "rohitg00/ai-engineering-from-scratch"
+source_key: "gh:rohitg00/ai-engineering-from-scratch"
 aliases:
  - "/posts/tech/ai-engineering-from-scratch-complete-guide/"
  - "/posts/tech/ai-engineering-from-scratch-complete-curriculum/"

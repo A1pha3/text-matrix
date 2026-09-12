@@ -1,5 +1,6 @@
 ---
 github_repo: "knadh/listmonk"
+source_key: "gh:knadh/listmonk"
 title: "listmonk：自托管邮件通讯平台部署与运营指南"
 date: 2026-05-17
 draft: false

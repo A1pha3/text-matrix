@@ -3,6 +3,7 @@ title: "SymPy：纯 Python 符号计算系统"
 date: "2026-04-12T02:31:39+08:00"
 slug: sympy-python-computer-algebra-guide
 github_repo: "sympy/sympy"
+source_key: "gh:sympy/sympy"
 description: "SymPy 是纯 Python 的符号计算系统，是科学 Python 生态的核心组成，用于数学、物理与工程中的符号推导。本文覆盖安装、表达式操作、微积分、方程求解、矩阵、数论、物理模块与代码生成，并标注与数值计算的边界。"
 draft: false
 categories: ["技术笔记"]

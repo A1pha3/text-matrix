@@ -4,6 +4,7 @@ date: "2026-04-27T01:04:00+08:00"
 lastmod: "2026-09-10T08:00:00+08:00"
 slug: free-claude-code
 github_repo: "Alishahryar1/free-claude-code"
+source_key: "gh:Alishahryar1/free-claude-code"
 aliases:
   - "/posts/tech/free-claude-code-anthropic-proxy/"
   - "/posts/tech/free-claude-code-proxy-guide/"

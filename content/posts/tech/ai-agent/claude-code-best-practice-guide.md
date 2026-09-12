@@ -4,6 +4,7 @@ date: "2026-03-28T20:00:00+08:00"
 lastmod: 2026-04-03T23:33:16+08:00
 slug: "claude-code-best-practice-guide"
 github_repo: "shanraisshan/claude-code-best-practice"
+source_key: "gh:shanraisshan/claude-code-best-practice"
 aliases:
   - /posts/tech/claude-code-best-practice-guide/
 description: "梳理 shanraisshan/claude-code-best-practice 仓库：Claude Code 的核心概念、配置结构、工作流组织方式、扩展边界与团队落地建议。"

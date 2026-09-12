@@ -2,6 +2,7 @@
 title: "Hallmark 深读：Custom 分支协议、DNA 提取与跨 AI 工具的设计传递"
 slug: nutlope-hallmark-invisible-watermark-2026
 github_repo: "Nutlope/hallmark"
+source_key: "gh:Nutlope/hallmark"
 date: 2026-08-05T22:35:00+08:00
 lastmod: 2026-08-05T22:35:00+08:00
 draft: false

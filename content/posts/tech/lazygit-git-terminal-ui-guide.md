@@ -3,6 +3,7 @@ title: "LazyGit：Git 终端可视化的日常操作指南"
 date: "2026-04-12T02:29:31+08:00"
 slug: lazygit-git-terminal-ui-guide
 github_repo: "jesseduffield/lazygit"
+source_key: "gh:jesseduffield/lazygit"
 description: "LazyGit 是 Go 编写的 Git 终端 UI，用面板把暂存、提交、分支、变基、冲突解决等操作可视化。本文从安装配置讲起，按面板介绍常用快捷键，一步步走通提交、变基和冲突解决的完整流程。"
 draft: false
 categories: ["技术笔记"]

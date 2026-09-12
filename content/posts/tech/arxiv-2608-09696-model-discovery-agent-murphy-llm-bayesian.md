@@ -9,6 +9,7 @@ toc: true
 band: review
 gates: ["事实性", "去AI味", "观点依据"]
 github_repo: "murphyk/neuronbench"
+source_key: "gh:murphyk/neuronbench"
 ---
 
 ## 这篇文章在回答什么

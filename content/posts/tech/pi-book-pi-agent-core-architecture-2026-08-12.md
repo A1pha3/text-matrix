@@ -9,6 +9,7 @@ slug: "pi-book-pi-agent-core-architecture"
 band: "review"
 gates: ["事实性", "去AI味", "观点依据"]
 github_repo: "antinomie-lab/pi-book"
+source_key: "gh:antinomie-lab/pi-book"
 ---
 
 ## 这篇文章在回答什么

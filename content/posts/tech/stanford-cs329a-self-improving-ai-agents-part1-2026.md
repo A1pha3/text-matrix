@@ -7,6 +7,7 @@ tags: ["Stanford", "CS329A", "Self-Improving AI Agents", "Test-Time Compute", "C
 categories: ["视频精读"]
 authors: ["钳岳"]
 github_repo: "stanford-cs329a/self-improving-ai-agents"
+source_key: "gh:stanford-cs329a/self-improving-ai-agents"
 description: "Stanford 2026 秋季新开 CS329A 自改进 AI Agent Part 1 拆解:Test-Time Compute Scaling + Robust Verification 双主线,从 CoT→Reflexion→Constitutional AI→o1/R1→Self-Play 5 年技术线"
 slug : stanford-cs329a-self-improving-ai-agents-part1-2026
 

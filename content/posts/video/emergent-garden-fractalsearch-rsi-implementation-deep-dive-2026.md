@@ -2,6 +2,7 @@
 title: "fractalsearch 8 小时实跑：从 0.0041 MSE 到 0.000226，看 AI 怎么一步步改坏又改好自己"
 date: 2026-07-10T00:19:29+08:00
 slug: emergent-garden-fractalsearch-rsi-implementation-deep-dive-2026
+source_key: "bv:BV1w8jL6dE1f"
 description: "以 MaxRobinsonTheGreat/fractalsearch 仓库的 104 条 runs.jsonl + 4 个 solution + AGENT.md 为骨架，还原 AI 自主科研 8 小时全流程：从 autoresearch 框架搭建、Triton fused encoder 突破、GT-free 采样，到空间误差场演化，最终 MSE 0.000226、PSNR 36.45 dB。"
 draft: false
 categories: ["视频精读"]
