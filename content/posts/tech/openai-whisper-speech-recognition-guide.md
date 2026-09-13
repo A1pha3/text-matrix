@@ -4,7 +4,7 @@ date: "2026-04-06T22:50:00+08:00"
 slug: "openai-whisper-speech-recognition-guide"
 github_repo: "openai/whisper"
 source_key: "gh:openai/whisper"
-description: "实测约 8 万 Stars 的 OpenAI Whisper，讲清它如何用一个 seq2seq 模型同时做语音识别、语音翻译和语言识别，以及 5 档基础模型加 turbo、faster-whisper 等落地选择。"
+description: "实测约 10.9 万 Stars 的 OpenAI Whisper，讲清它如何用一个 seq2seq 模型同时做语音识别、语音翻译和语言识别，以及 6 档模型、faster-whisper 等落地选择。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Whisper", "语音识别", "OpenAI", "ASR", "多语言", "Transformer", "Python"]
@@ -16,19 +16,19 @@ Whisper 真正改变的不是"把语音转成文字"这件事本身——语音�
 
 ## 项目坐标
 
-数据来自 GitHub API（2026-08-29 验证）：
+数据来自 GitHub API（2026-09-13 验证）：
 
 | 指标 | 值 |
 |------|------|
-| GitHub Stars | 80,317（约 8 万） |
-| GitHub Forks | 9,643 |
+| GitHub Stars | 108,953（约 10.9 万） |
+| GitHub Forks | 13,205 |
 | 许可证 | MIT |
 | 语言 | Python |
 | 默认分支 | main |
 | 创建时间 | 2022-09-16 |
-| 最近推送 | 2025-01-04 |
+| 最近推送 | 2026-08-31 |
 
-官方仓库仍在发版（最新 v20250625），但功能增量有限；生态上的活跃更多发生在第三方实现（faster-whisper、whisper.cpp 等）一侧。
+官方仓库仍在维护（2026 年 8 月还有推送），但最后一个正式版本停在 v20250625，功能增量有限；生态上的活跃更多发生在第三方实现（faster-whisper、whisper.cpp 等）一侧。
 
 ## 系统总览
 
@@ -69,27 +69,28 @@ Whisper 不用不同的模型头去分任务，而是把任务本身编码进 to
 
 ### 2. 30 秒滑动窗口 + 自回归解码
 
-`transcribe()` 内部把整段音频按 30 秒窗口滑动处理，每个窗口独立做一次自回归 seq2seq 解码。窗口之间靠 `condition_on_previous_text` 决定是否沿用前一个窗口的文本作为上下文，让长音频的转写更连贯；代价是——如果前文有一处错，可能顺着带偏后面，所以官方把它做成可开关的选项。
+`transcribe()` 内部把整段音频按 30 秒窗口滑动处理，每个窗口独立做一次自回归 seq2seq 解码。窗口之间靠 `condition_on_previous_text` 决定是否沿用前一个窗口的文本作为上下文，让长音频的转写更连贯；代价是：如果前文有一处错，可能顺着带偏后面，所以官方把它做成可开关的选项。
 
-### 3. 五档基础模型 + turbo
+### 3. 六档模型
 
-README 的模型表是 5 档，另有 `.en` 英文专用版：
+README 的模型表共 6 档，其中 4 档带 `.en` 英文专用版：
 
 | 规模 | 参数量 | 英文专用版 | 多语言版 | 所需显存 | 相对速度 |
 |------|--------|-----------|----------|----------|----------|
-| tiny | 39 M | tiny.en | tiny | ~1 GB | ~32x |
-| base | 74 M | base.en | base | ~1 GB | ~16x |
-| small | 244 M | small.en | small | ~2 GB | ~6x |
+| tiny | 39 M | tiny.en | tiny | ~1 GB | ~10x |
+| base | 74 M | base.en | base | ~1 GB | ~7x |
+| small | 244 M | small.en | small | ~2 GB | ~4x |
 | medium | 769 M | medium.en | medium | ~5 GB | ~2x |
 | large | 1550 M | 无 | large | ~10 GB | 1x |
+| turbo | 809 M | 无 | turbo | ~6 GB | ~8x |
 
-相对速度以 large 为基准，来自 README 的估算，实际受硬件影响很大。`.en` 系列只做英文，在 tiny.en、base.en 上比多语言版效果更好，到 small.en、medium.en 差距就明显缩小。
+相对速度以 large 为基准，是 README 在 A100 上转录英文语音的实测口径，实际受语言、语速和硬件影响很大。`.en` 系列只做英文，在 tiny.en、base.en 上比多语言版效果更好，到 small.en、medium.en 差距就明显缩小。
 
-### 4. turbo：官方第六档，也是 CLI 默认模型
+### 4. turbo：剪出来的第六档，也是 CLI 默认模型
 
-2024 年 9 月发布的 `large-v3-turbo`（简称 turbo）是官方模型的第 9 个，model card 已经收录。它的做法是把 large-v3 的解码器从 32 层剪到 4 层，编码器保持不变，参数从 1550 M 降到约 809 M，再配合 `F.scaled_dot_product_attention`，在 A100 上转录速度大约快 8 倍，显存需求降到约 6 GB。代价有两条：训练时排除了翻译数据，翻译质量没有保证；泰语、粤语等少数语言上的错误率比 large 明显上升。
+2024 年 9 月发布的 `large-v3-turbo`（简称 turbo）不是重新训练的模型，而是把 large-v3 的解码器从 32 层剪到 4 层、编码器不动，再用同一批转录数据微调出来的版本，参数从 1550 M 降到约 809 M。配合 `F.scaled_dot_product_attention`，在 A100 上转录速度约为 large 的 8 倍，显存需求降到约 6 GB。代价写在明处：微调时排除了翻译数据，官方发布帖明确不期待它做好翻译——CLI 里即便指定 `--task translate`，它也倾向返回原语言，README 让翻译场景改用 medium 或 large；同一帖还承认它在泰语、粤语等少数语言上的错误率比 large 明显上升。
 
-turbo 从 20240930 版本起就进了 `openai-whisper` 的 `load_model` 支持列表，`whisper.load_model("turbo")` 可以直接加载，不必绕道 faster-whisper 或 transformers。CLI 的默认模型也从这一版开始从 small 换成 turbo——不带 `--model` 直接跑 `whisper audio.wav`，用的就是它。README 的主表没收录 turbo，是文档没跟上发布节奏，不代表这个包不支持。
+turbo 从 20240930 版本起进了 `openai-whisper` 的 `load_model` 支持列表，`whisper.load_model("turbo")` 可以直接加载，不必绕道 faster-whisper 或 transformers。CLI 的默认模型也从这一版开始从 small 换成 turbo——不带 `--model` 直接跑 `whisper audio.wav`，用的就是它。
 
 ## 一次转写流过系统
 
@@ -125,7 +126,7 @@ pip install -U openai-whisper   # 或 pip install git+https://github.com/openai/
 whisper audio.wav --model medium                # 转写
 whisper japanese.wav --language Japanese        # 指定非英语语言
 whisper japanese.wav --language Japanese --task translate  # 翻成英语
-whisper audio.wav --model medium --format srt   # 出字幕
+whisper audio.wav --model medium --output_format srt  # 出字幕
 ```
 
 Python 里先加载模型再转写：
@@ -164,17 +165,17 @@ Whisper 的模型权重被多个实现复用，选哪个取决于落地约束：
 
 | 实现 | 定位 | 适合 |
 |------|------|------|
-| openai-whisper | 官方参考实现 | 基准测试、原型、需要 word_timestamps 的官方接口 |
-| faster-whisper | CTranslate2 重实现，推理快 | 生产转写、GPU/多核 CPU 高吞吐 |
+| openai-whisper | 官方参考实现 | 基准测试、原型、依赖官方接口的场景 |
+| faster-whisper | 用 CTranslate2 推理引擎重写，支持量化，速度和显存占用都占优 | 生产转写、GPU/多核 CPU 高吞吐 |
 | whisper.cpp | C/C++，CPU 友好 | 离线、嵌入式、无 Python 环境 |
-| transformers | Hugging Face 生态 | 需要微调、和 Transformers pipeline 混用 |
-| WhisperX | 加 wav2vec2 强制对齐 | 需要词的精确时间戳 |
+| transformers | Hugging Face 生态 | 需要微调，或要接入 Hugging Face 工具链 |
+| WhisperX | 在 Whisper 输出上叠加 wav2vec2 强制对齐，把词钉到精确时间 | 需要词级精确时间戳 |
 
 微调一般走 transformers：加载 `openai/whisper-small`，配一个标好语言和文本的音频数据集（重采样到 16kHz），用 `--language zh --num_train_epochs 3` 这类参数训练。数据量没有硬性门槛，但目标语言或领域的样本越多、越干净，效果越好。
 
 ## 什么时候值得用
 
-- **先上**：需要多语言识别或离线转写，先用默认的 turbo——速度接近 small，精度接近 large，显存只要约 6 GB，多数场景的最省心起点。跨语言翻译要用 large-v3 或 medium；对单语言精度要求极致再上 large。
+- **先上**：需要多语言识别或离线转写，先用默认的 turbo——速度约为 large 的 8 倍，精度只轻微下降，显存只要约 6 GB，多数场景的最省心起点。跨语言翻译要用 large-v3 或 medium；对单语言精度要求极致再上 large。
 - **可以等**：对词的精细时间戳强要求时，先评估 WhisperX；纯英文、CPU 受限、要极致吞吐时，直接看 faster-whisper 或 whisper.cpp，别从官方实现起步。
 - **别指望**：拿某个基准的 WER 直接当生产预期，也别忘了官方实现推理偏重，长音频和实时场景要单独做性能测试。
 
@@ -184,13 +185,13 @@ Whisper 的模型权重被多个实现复用，选哪个取决于落地约束：
 大概率是装的 `openai-whisper` 早于 20240930，那时 turbo 还没进支持列表。升级到最新版即可；`whisper.available_models()` 能列出当前包支持的全部模型名。
 
 **转写出现重复内容，或静音段也出了文字？**
-seq2seq 模型对低置信度片段容易复读或产生幻觉。官方对策是温度调度：首轮用温度 0 的 beam search，失败后按 0.2、0.4……逐级升温重试，并用 `no_speech_threshold` 判定"这段没人说话"。`hallucination_silence_threshold` 可进一步滤掉静音段附近的幻觉输出。
+seq2seq 模型对低置信度片段容易复读或产生幻觉。官方对策是温度回退：首轮用温度 0 的贪心解码，失败后按 0.2、0.4……逐级升温重试，并用 `no_speech_threshold` 判定"这段没人说话"。`hallucination_silence_threshold` 可进一步滤掉静音段附近的幻觉输出。
 
 **长音频中途某段明显跑偏？**
 检查 `condition_on_previous_text` 是否开着。它沿用前一个窗口的文本作上下文，能提升连贯性，但一处错可能顺着带偏后面；CLI 用 `--condition_on_previous_text False` 可以关掉。
 
 **转写慢、显存紧？**
-`.en` 系列只处理英文，`tiny.en`/`base.en` 比多语言版更省资源；纯英文且 CPU 受限，直接换 faster-whisper 或 whisper.cpp。
+纯英文场景优先选 `tiny.en`/`base.en`，同规格下英文错误率更低；还嫌慢，直接换 faster-whisper 或 whisper.cpp，别在官方实现上死磕参数。
 
 ## 结尾
 
@@ -201,4 +202,5 @@ Whisper 的开源价值，是证明了一条更省时的路径：模型不依赖
 - GitHub：https://github.com/openai/whisper
 - 论文：https://arxiv.org/abs/2212.04356
 - Model Card：https://github.com/openai/whisper/blob/main/model-card.md
+- turbo 发布讨论帖：https://github.com/openai/whisper/discussions/2363
 - Colab 示例：https://colab.research.google.com/github/openai/whisper/blob/master/notebooks/LibriSpeech.ipynb

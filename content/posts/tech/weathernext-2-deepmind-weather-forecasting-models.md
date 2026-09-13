@@ -4,7 +4,7 @@ date: "2026-08-16T03:32:00+08:00"
 slug: "weathernext-2-deepmind-weather-forecasting-models"
 github_repo: "google-deepmind/weathernext"
 source_key: "gh:google-deepmind/weathernext"
-description: "WeatherNext 是 Google DeepMind 的全球中期大气与气旋预报模型家族，仓库收纳 WN2、GraphCast、GenCast 三代模型与预训练权重。本文梳理模型谱系、获取数据的四条官方通道与本地运行门槛。"
+description: "WeatherNext 是 Google DeepMind 的全球中期大气与气旋预报模型家族，仓库收纳 WN2、GraphCast、GenCast 三代模型与预训练权重。本文梳理模型谱系、FGN 机制、四条数据通道、benchmark 含义与本地运行门槛。"
 draft: false
 categories: ["技术笔记"]
 tags: ["DeepMind", "气象预报", "机器学习", "JAX"]
@@ -12,27 +12,33 @@ tags: ["DeepMind", "气象预报", "机器学习", "JAX"]
 
 # WeatherNext 2：Google DeepMind 开源气象预报模型家族解析
 
-先给判断：这个仓库的价值不在「又一个 AI 模型」，而在于它是 DeepMind 气象预报三代技术路线（图神经网络、扩散模型、FGN）的合集发布口——模型代码、预训练权重、论文、免费数据通道一次性给齐。对多数读者来说，正确的打开方式甚至不是跑模型，而是直接消费它每日更新的预报数据。
+先给判断：这个仓库的价值不在"又一个 AI 模型"，而在于它是 DeepMind 气象预报三代技术路线（图神经网络、扩散模型、FGN）的合集发布口——模型代码、预训练权重、论文、免费数据通道一次性给齐。对多数读者来说，正确的打开方式甚至不是跑模型，而是直接消费它每日更新的预报数据。
 
-`google-deepmind/weathernext` 约 7,500 stars，主语言 Python（JAX 生态），Apache 2.0（代码）+ CC BY 4.0（其余材料）双许可，2023 年 7 月创建，最近提交 2026-08-11。仓库明确定位为研究代码：不保证 API 稳定，建议锁定具体 release 安装。
+`google-deepmind/weathernext` 是 DeepMind 官方维护的 Python（JAX）仓库，Apache 2.0（代码）+ CC BY 4.0（其余材料）双许可。仓库明确定位为研究代码：不保证 API 稳定，建议锁定具体 release 安装。
 
 ## 模型谱系：三代路线一个仓库
 
-WeatherNext 2（WN2）是当前主力——Google DeepMind 与 Google Research 联合开发的全球中期大气与气旋预报模型。仓库同时收容两代前辈：
+WeatherNext 2（WN2）是当前主力——DeepMind 与 Google Research 联合开发的全球中期大气与气旋预报模型。仓库同时收容两代前辈：
 
 | 模型 | 技术路线 | 发布名 |
 | --- | --- | --- |
-| WeatherNext Graph | 图神经网络（GNN），确定性中期预报 | GraphCast |
-| WeatherNext Gen | 扩散模型（diffusion），集合预报 | GenCast |
-| WeatherNext 2（FGN） | 从边缘概率构造联合概率预报 | WN2 |
+| WeatherNext Graph | 图神经网络（Graph Neural Network，GNN），确定性中期预报 | GraphCast |
+| WeatherNext Gen | 扩散模型（diffusion），集合概率预报 | GenCast |
+| WeatherNext 2（FGN） | 从边际分布构造联合概率预报 | WN2 |
 
-三者的分野是理解这个家族的钥匙：GraphCast 回答「最可能发生什么」，GenCast 回答「不确定性如何分布」，WN2 的技术报告标题（Skillful joint probabilistic weather forecasting from marginals）则点明它在边际分布之上直接构造联合概率——这也是它能同时输出大气场与气旋路径的概率预报的原因。 WN2 与气旋专用版共享同一套算法，仅因独立训练而权重不同。
+三者的分野是理解这个家族的钥匙。GraphCast 回答"最可能发生什么"，给出一条确定性路径；GenCast 引入扩散模型回答"不确定性如何分布"，能产出集合但每个样本生成代价高；WN2 的技术报告标题（Skillful joint probabilistic weather forecasting from marginals，从边际分布到可靠的联合概率预报）点明了它的路子——在已经算好的边际分布之上，一次性采样出成体系的联合概率场景。这也是它既能给大气场、又能给气旋路径和强度的概率预报的原因。WN2 与气旋专用版（WeatherNext Cyclones）共享同一套算法，仅因独立训练而权重不同。
+
+## FGN 为什么是"不多的钱里换更多概率"的关键
+
+理解 WN2 要先理解它换评估范式的动机。传统集合预报（如 ECMWF 的 IFS ENS）用"跑几十上百次独立模拟"来量度不确定性，代价是超级计算机上数小时的算力。Diffusion 路线的 GenCast 在生成质量上达标了，但每次采样仍偏贵。FGN（Functional Generative Network，功能生成网络）的做法是把不确定性从"多次独立模拟"改成"从单一初始状态一次性推断潜在空间"——在同一台设备上，一分钟内就能推演数百条可能的天气路径。
+
+对业务的实际含义是：以往要在"精度"和"概率覆盖"之间取舍，现在同一份算力能同时拿到快推理和足够大的集合，代价只是比前代更擅长捕捉低概率的极端事件。这不是锦上添花——低概率、高破坏的极端天气，恰恰是预警价值最集中的地方。
 
 ## 预训练模型矩阵：按年份分档，不是按版本号
 
-仓库提供的权重按「训练数据截止年」分档，这个设计初看容易困惑，实际逻辑很清晰：
+仓库提供的权重按"训练数据截止年"分档，这个设计初看容易困惑，实际逻辑很清晰：
 
-- **WeatherNext2_<2025**：0.25° 分辨率（约 30km），在 ECMWF HRES 上微调、由业务 HRES 初始条件直接初始化，2024 年数据训练——这是业务运行版本，权重为 `WeatherNext2_<2025_model{1,2,3,4}.npz`。
+- **WeatherNext2_<2025**：0.25° 分辨率（约 30 km），在 ECMWF HRES 上微调、由业务 HRES 初始条件直接初始化，2024 年数据训练——这是业务运行版本，权重为 `WeatherNext2_<2025_model{1,2,3,4}.npz`。
 - **WeatherNextCyclones_<2025**：2025 年大西洋飓风季实际值班过的版本（对外称 FNV3），复现论文结果用。
 - **WeatherNextCyclones_<2024 / <2023**：分别复现论文在 2024、2023 年的结果。
 - **Cyclones Mini（1° 分辨率）**：轻量版，面向低显存场景（单 TPU/GPU、本地测试），官方明言性能不及大版本。
@@ -52,17 +58,32 @@ WeatherNext 2（WN2）是当前主力——Google DeepMind 与 Google Research �
 
 第三条通道对应用开发者尤其友好——一个 HTTP 请求就能拿到模型输出，不必碰任何 ML 基础设施。
 
+## 一次气旋预报如何流经这套系统
+
+把抽象机制串起来，看一次业务化气旋预报的完整路径：
+
+1. 业务中心拿到初始大气状态（HRES 初始场），喂给 `WeatherNextCyclones` 模型。
+2. FGN 从这一单一状态出发，在单个 TPU 上一分钟内并行采样出数百个成员，每个成员都是一条可能的未来路径。
+3. 后处理把成员聚合成概率分布，直接气旋追踪器（cyclone tracker）在预报场里检出每一帧的风暴中心，输出路径、强度和风场结构。
+4. 最终产物是一组带概率的气旋轨迹，汇入官方预警流程——它给的是"什么地方以什么概率受影响"，而非单一一条线。
+
+在本地复现这条链路的最小版就是官方 Colab 笔记本（`docs/weathernext2/wn2_demo.ipynb`）：加载云端权重 → 读 HRES 初始场 → 初始化 WN2（FGN）架构 → 自回归（autoregressive，把上一步输出回填为下一步输入）滚动预报 → 可视化温度、风速、位势高度 → 跑气旋追踪器输出路径 → 计算损失并做一次梯度下降。它把上述"推理"与"训练一步"都演示了。
+
+## benchmark 该怎么读
+
+官方给出的数字要分两层看。第一层是速度：WN2 比前代快约 8 倍，单 TPU 一分钟内生成数百条路径，时间分辨率 6 小时、每天 00/06/12/18 UTC 各出一次预报。第二层是气旋技能：公开报道中，WN2 在 99.9% 的气象变量与 0–15 天时效上优于前代最佳；对近年大西洋飓风季的回填评估里，5 天路径误差约 230 km，低于 ECMWF 集合系统（约 370 km）与 GenCast（约 335 km），相当于把预警提前量大约提升了一天。
+
+读这些数字时先问"测的是什么"：路径误差衡量的是风暴中心位置，强度误差衡量的是风速等级，二者由不同的物理尺度主导。所以能推出的结论是——这套系统把原本分属两套模型的"轨迹 + 强度"统一进了一个自回归模型，端到端优化；不能直接推出的结论至少有三条：一是速度优势来自 FGN 采样范式，不自动等于气旋场景对通用天气也全面领先；二是高分辨率的物理模式在短时效的某些变量上仍可能有微弱优势；三是官方明确说明模型未经任何气象机构校验背书，预报不能替代官方预警。换言之，AI 的用途是压缩预警窗口、补集合规模，不是替换决策源。
+
 ## 真要本地跑：门槛与路径
 
-硬件边界（README 明示）：推荐 TPU；GPU 路线必须切换 attention 实现，非 Mini 模型需要 H100 级显存，Mini 版 P100 即可推理。最快路径是官方 Colab 笔记本（`docs/weathernext2/wn2_demo.ipynb`），默认跑 Cyclones Mini，Colab 免费 `v5e-1` 运行时就能开。
+硬件边界（README 明示）：推荐 TPU；GPU 路线必须切换 attention 实现，非 Mini 模型需要 H100 级显存，Mini 版（Cyclones Mini）P100 即可推理，Colab 免费 `v5e-1` 运行时就能开。
 
 本地安装锁定版本：
 
 ```bash
 pip install git+https://github.com/google-deepmind/weathernext.git@v0.3.0
 ```
-
-笔记本内完成的是一套完整闭环：加载云端权重 → 读 HRES 初始场 → 初始化 WN2（FGN）架构 → 自回归（autoregressive）滚动预报 → 可视化温度/风速/位势高度 → 跑直接气旋追踪器输出路径 → 计算损失并做一次梯度下降。也就是说，它把「推理」与「训练一步」都演示了。
 
 想完整训练则要另备数据：ERA5（经 WeatherBench2 以 Zarr 提供）做基础训练，WeatherBench2 的 HRES 数据做业务微调。注意这些数据集有独立条款，使用前需自查合规。
 
@@ -74,4 +95,4 @@ pip install git+https://github.com/google-deepmind/weathernext.git@v0.3.0
 
 ## 采用建议
 
-按需求分三档：做应用（天气类产品、可视化、研究分析）→ 直接走 Open-Meteo API 或 WeatherLab，零基础设施成本；做研究（模型改进、极端天气分析）→ Colab + Mini 权重起步，必要时上 TPU 复现完整版；做工程（业务化部署）→ 评估 GCS 数据通道订阅，比自运维模型便宜得多。真正需要 clone 仓库跑训练的，只剩「要在自有数据上微调」这一类需求。
+按需求分三档：做应用（天气类产品、可视化、研究分析）→ 直接走 Open-Meteo API 或 WeatherLab，零基础设施成本；做研究（模型改进、极端天气分析）→ Colab + Mini 权重起步，必要时上 TPU 复现完整版；做工程（业务化部署）→ 评估 GCS 数据通道订阅，比自运维模型便宜得多。真正需要 clone 仓库跑训练的，只剩"要在自有数据上微调"这一类需求。

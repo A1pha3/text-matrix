@@ -1,7 +1,7 @@
 ---
 title: "olmOCR：用 7B VLM 把 PDF 线性化成 LLM 训练语料"
 date: "2026-07-01T21:03:00+08:00"
-lastmod: "2026-07-01T21:03:00+08:00"
+lastmod: "2026-09-13T00:00:00+08:00"
 slug: "allenai-olmocr-pdf-ocr-vlm-pipeline-guide"
 github_repo: "allenai/olmocr"
 source_key: "gh:allenai/olmocr"
@@ -21,7 +21,7 @@ Ai2（Allen Institute for AI）的答案是换一条路：直接用 7B 视觉语
 
 | 维度 | 内容 |
 |---|---|
-| 仓库 | allenai/olmocr，19.3k stars / 1.6k forks（GitHub API 2026-08-07 验证） |
+| 仓库 | allenai/olmocr，19.5k stars / 1.6k forks（GitHub API 2026-09-13 验证） |
 | 定位 | 把 PDF / 扫描件 / 图片线性化为干净 Markdown 的 7B VLM 工具链 |
 | 模型 | allenai/olmOCR-2-7B-1025-FP8，7B 参数，默认 FP8 |
 | 许可证 | Apache-2.0 |
@@ -40,7 +40,7 @@ olmOCR 的仓库按研究项目工程化的方式分层。下面这张图把一�
 ```mermaid
 flowchart TD
     A["PDF / PNG / JPEG"] --> B["poppler-utils 渲染位图"]
-    B --> C["Prompt：整页图像 + anchor text"]
+    B --> C["Prompt：整页图像（v2 起无 anchor）"]
     C --> D["7B VLM（vLLM，默认 FP8）"]
     D --> E["结构化输出（guided YAML）"]
     E --> F["Dolma 文档 / Markdown"]
@@ -51,7 +51,7 @@ flowchart TD
 
 | 层 | 关键内容 | 职责 |
 |---|---|---|
-| 数据层 | poppler-utils | PDF → 高分辨率位图 + 文字层 anchor |
+| 数据层 | poppler-utils | PDF → 高分辨率位图渲染 |
 | 推理层 | vLLM + guided decoding | 加载 FP8 模型，生成结构化输出 |
 | 训练层 | SFT + RLVR + 合成数据 | 训练与微调流水线 |
 | 部署层 | CLI / S3 多节点 / Beaker / Docker | 单机到百万级批处理 |
@@ -60,11 +60,13 @@ flowchart TD
 
 核心是把"读 PDF"建模成"图→文"任务，而不是逐字符识别。
 
-### 页面渲染与 anchor text
+### 页面渲染与 anchor text 的兴衰
 
-olmOCR 依赖 `poppler-utils` 把 PDF 渲染成位图，同时抽出文字层。渲染分辨率由 `--target_longest_image_dim` 控制最长边。抽出的文字层会拼进 prompt 作为 anchor text——它只是"待校对的原稿"，不要求完整可靠。
+olmOCR 依赖 `poppler-utils` 把 PDF 渲染成位图，分辨率由 `--target_longest_image_dim` 控制最长边。喂给模型什么，v1 和 v2 走了两条路。
 
-这一步在 v1 论文里叫 document anchoring，是整个方案里最反直觉的一点：born-digital PDF 内部本来就带着文字坐标，直接放弃它、让模型从位图里凭空读，是浪费。把文字层塞进 prompt 后，任务从"从图像里抠字符"降级成"理解版面 + 对着 hint 校对文字"，准确率明显提升。纯扫描件没有文字层时，prompt 里这段留空，模型退回纯视觉阅读。
+v1 的答案是 document anchoring，也是整个方案里最反直觉的一点：born-digital PDF 内部本来就带着文字坐标，直接放弃它、让模型从位图里凭空读，是浪费。v1 用 pypdf 抽出文字块和坐标，拼进 prompt 当 anchor text——它只是"待校对的原稿"，不要求完整可靠。有了这份 hint，任务从"从图像里抠字符"降级成"理解版面 + 对着原稿校对"；v1 论文的消融显示它在推理端的直接增益有限（anchored 与否只差约 1 分），主要价值在提升标注数据的准确率。纯扫描件没有文字层时，prompt 里这段留空，模型退回纯视觉阅读。
+
+v0.4.0 的 olmOCR 2 把这份 hint 撤了：推理 prompt 只含整页图像，`--target_anchor_text_len` 参数的帮助文本明确写着"新模型不使用"。anchor 当初要解的版面还原问题，v2 改用训练来解决。
 
 系统依赖：
 
@@ -76,15 +78,11 @@ sudo apt-get install poppler-utils ttf-mscorefonts-installer msttcorefonts \
 
 ### Prompt 结构
 
-prompt 不是"OCR 这张图"这种开放指令，而是一份规定输出格式的工程 prompt。它把版面规则写死，避免模型自由发挥：
+prompt 不是"OCR 这张图"这种开放指令，而是一份规定输出格式的工程 prompt。v1 版本把版面规则也写死在里面：页眉页脚只在首次出现时输出一次、空页输出空、多列布局按自然阅读顺序、公式用 LaTeX 记法、表格输出 Markdown。
 
-- 页眉/页脚只在首次出现时输出一次
-- 空页输出空
-- 多列布局按"先横后纵"的自然阅读顺序
-- 数学公式用 LaTeX 记法，表格输出 Markdown 表格
-- 不输出 "Here is the transcription:" 之类的前缀
+到了 olmOCR 2，这些规则从 prompt 里撤出，搬进了训练数据——训练集 mix-1025 统一了公式记法，表格改用 HTML 格式。现在的 prompt 只剩输出契约：公式转 LaTeX，表格转 HTML，图表用 `![描述](起始x,起始y,宽,高)` 标注位置，输出以一段 YAML front matter 开头。
 
-这些规则写进 prompt 而不是交给模型临场发挥，因为下游是批量脚本：输出格式一不稳定，后处理代码就要跟着改。
+把格式写进 prompt 而不是交给模型临场发挥，原因一直没变：下游是批量脚本，输出格式一不稳定，后处理代码就要跟着改。
 
 ### 结构化输出（guided decoding）
 
@@ -120,7 +118,7 @@ v1 的做法是 teacher-student。训练集 olmOCR-mix-0225 有 26 万页，来�
 
 v0.4.0 引入 RLVR（可验证奖励的强化学习）。OCR 这任务难做强化学习，因为"输出对不对"没有稳定的奖励信号——编辑距离这类传统度量会惩罚合法但不同的写法：浮动图注放图前还是图后都算对，公式换个等价写法也算对，编辑距离却照样扣分。
 
-olmOCR 2 的做法是把判对错拆成一组成/败的二进制单元测试，模型用 GRPO 训练，同一输入采样多个候选，按测试通过情况更新：
+olmOCR 2 的做法是把判对错拆成一组成/败的二进制单元测试，用 GRPO 训练：同一页采样 28 个候选输出，奖励就是通过的测试比例，按组内相对优势更新策略。
 
 | 测试类型 | 检查什么 |
 |---|---|
@@ -131,11 +129,13 @@ olmOCR 2 的做法是把判对错拆成一组成/败的二进制单元测试，�
 | 数学公式准确性 | 用 KaTeX 渲染模型输出与参考公式，比较视觉结构 |
 | 基线鲁棒性 | 无长重复 n-gram、无非目标语言字符 |
 
-论文给的配方很朴素：先在 olmOCR-mix-1025 上做一 epoch SFT（基座换成 Qwen2.5-VL-7B），再在合成数据集 olmOCR2-synthmix-1025 上做一 epoch RL，然后重复 RL 并做 checkpoint 平均（souping）。效果上，olmOCR 2 在 olmOCR-Bench 拿到 82.4，比半年前的初版高 14.2 分，提升最集中的正是单元测试盯得最紧的公式、表格和多列版面。
+论文给的配方很朴素：先在 olmOCR-mix-1025 上做一 epoch SFT（基座换成 Qwen2.5-VL-7B），再在合成数据集 olmOCR-synthmix-1025（论文正文写作 olmOCR2-synthmix-1025）上做一 epoch RL，然后用 6 个不同随机种子重复 RL——3 个用 token 级、3 个用序列级重要性采样——最后对 6 个 checkpoint 做权重平均（souping）。效果上，olmOCR 2 在 olmOCR-Bench 拿到 82.4，比半年前的初版（68.2）高 14.2 分，提升最集中的正是单元测试盯得最紧的公式、表格和多列版面。
 
 ### 合成数据怎么规模化
 
-单元测试需要 ground truth 才能判对错，手写一页文档的测试要花数小时，撑不起 RL 训练。团队的做法是把"造测试"流水线化：从真实 PDF 里挑难例（arXiv 数学论文、旧扫描、多列版式），让通用 VLM 把页面重写成 HTML——HTML 的语义标签（`<header>`、`<footer>`、`<table>`、KaTeX 公式）是现成的测试用例来源，测试从 HTML ground truth 里自动提取；渲染出的 HTML 页面图像和源码配对，同时充当 SFT 与 RL 的监督信号。再自动加旋转、噪点、页眉页脚注入，扩大覆盖面。
+单元测试需要 ground truth 才能判对错。olmOCR-Bench 的原始测试用例全部靠人工创建和校验，论文说这花了数小时的工作量，撑不起 RL 训练的规模。团队的做法是把"造测试"流水线化：先从真实 PDF 里采样难例页面（arXiv 数学论文、旧扫描、多列版式），然后让通用 VLM（`claude-sonnet-4-20250514`，约 0.12 美元一页）迭代三轮——分析版面、把页面渲染成语义化 HTML、对照原图精修。测试用例直接从 HTML 语义标签里自动提取：`<header>`、`<footer>` 变成"不该混进正文"的检查，KaTeX 公式变成公式测试，随机抽单元格变成表格测试。
+
+最终数据集 olmOCR-synthmix-1025 只有 2,186 页，却产出 30,381 条测试用例；渲染出的页面图像配上 HTML 源码，同时充当 SFT 与 RL 的监督信号。这个设计让转换模型的幻觉伤不到测试本身——测试只依据 HTML 输出生成，就算 VLM 认错了字，测试仍然成立。
 
 ## 一次转换怎么流过系统
 
@@ -160,7 +160,7 @@ olmocr ./localworkspace --markdown --pdfs sample.pdf
 cat ./localworkspace/markdown/sample.md
 ```
 
-流程是：`poppler-utils` 逐页渲染位图并抽 anchor text → vLLM 加载 FP8 模型（权重默认从 Hugging Face 拉取）→ 逐页生成结构化 YAML → 把 `natural_text` 写成 Markdown 文件，同时按 Dolma 格式落到 workspace。没有 GPU 时用 `--server` 指向远程 vLLM 或外部供应商，装轻量版 `pip install olmocr` 即可（省掉约 2 GB 的 PyTorch 依赖）。
+流程是：`poppler-utils` 逐页渲染位图 → vLLM 加载 FP8 模型（权重默认从 Hugging Face 拉取）→ 逐页生成结构化 YAML → 把 `natural_text` 写成 Markdown 文件，同时按 Dolma 格式落到 workspace。没有 GPU 时用 `--server` 指向远程 vLLM 或外部供应商，装轻量版 `pip install olmocr` 即可（省掉约 2 GB 的 PyTorch 依赖）。
 
 ## olmOCR-Bench：它测的和它测不了的
 

@@ -1,10 +1,10 @@
 ---
-title: "uBlock Origin 架构解析：一套把性能压到极致的多层过滤系统"
+title: "uBlock Origin 架构解析：十余万条规则下，每次请求判定如何保持廉价"
 date: "2026-04-30T10:07:00+08:00"
 slug: "ublock-origin-architecture-filtering-mechanisms"
 github_repo: "gorhill/uBlock"
 source_key: "gh:gorhill/uBlock"
-description: "深入拆解 uBlock Origin 的静态过滤、动态过滤和脚本注入三大引擎，以及 BitTrie、Bloom Filter、MRU 缓存如何联手把单次 URL 匹配从 O(n) 压到 O(k)。附带完整请求流转案例和源码阅读路径。"
+description: "对照源码拆解 uBlock Origin 的过滤体系：动态规则、静态引擎与页面层过滤的优先级链，token 索引、BidiTrie 与 WASM 如何让单次 URL 判定与规则库总量基本无关，并给出平台现状与规则编写建议。"
 draft: false
 categories: ["技术笔记"]
 tags: ["开源", "性能优化"]
@@ -12,286 +12,239 @@ tags: ["开源", "性能优化"]
 
 ## 这篇文章在讲什么
 
-uBlock Origin 真正解决的问题不是「拦截广告」—— AdBlock Plus 十年前就在做这个了。它做的是另一件事：**在拦截规则膨胀到数万条之后，让每次页面加载触发的数千次 URL 检查仍然跑在微秒级别，且内存开销不超过几十 MB。** 读完这篇文章，你会对 uBO 的三层过滤分工、每次网络请求从拦截规则到放行的完整路径，以及它把 O(n) 碾成 O(k) 的数据结构组合有一个能用的理解。
+拦截广告这件事，AdBlock Plus 十多年前就做熟了。uBlock Origin 真正下功夫的地方在别处：**当规则库膨胀到十余万条、一次页面加载要触发成百上千次网络请求判定时，让每一次判定依然便宜，内存占用依然克制。** 这不是靠堆机器得来的，而是过滤引擎的数据组织和判定顺序共同作用的结果。
+
+这篇文章对照 uBO 的实际源码（2026 年 9 月的 master 分支，最新发布版 1.74.0），讲清三件事：
+
+- 一次网络请求从发起到放行或拦截，在 uBO 内部真实经过的判定顺序；
+- 静态过滤引擎怎么做到单次判定成本与规则库总量基本无关——这是它性能口碑的来源，也是这个项目里最值得借鉴的工程设计；
+- 在默认规则不够用时，怎么用动态过滤和 scriptlet 写出精确的规则。
+
+文中引用的文件路径都可以在 [gorhill/uBlock](https://github.com/gorhill/uBlock) 仓库中找到，机制描述以源码为准。
 
 ### 学习目标
 
-按你自己的情况选一条路径：
+按你的情况选一条路径：
 
-- **如果你想快速知道全貌**：读「三层过滤的分工」和「一个请求的完整流转」。
-- **如果你想看懂源码**：按「源码结构一览」的表格定位文件，配合「三大过滤引擎」逐层读。
-- **如果你想借鉴性能优化思路**：重点读「从 O(n) 到 O(k)」这一节和 Bloom Filter 的预判逻辑。
-- **如果你想自己写过滤规则**：直接跳到「进阶：写一条高质量过滤规则」。
+- **想知道全貌**：读「系统总览」和「一个请求的完整流转」。
+- **想读懂源码**：按「源码结构一览」的表格定位文件，配合「静态引擎的性能设计」逐层读。
+- **想借鉴性能设计**：重点读「token 索引」和「hostname 匹配」两节，uBO 的核心取舍都在那里。
+- **想自己写规则**：直接跳到「安装与平台现状」和「进阶：写一条高质量的过滤规则」。
 
 ### 目录
 
-1. [三层过滤的分工](#三层过滤的分工)
-2. [一个请求的完整流转（案例）](#一个请求的完整流转案例)
+1. [系统总览：两个判定域，四种引擎](#系统总览两个判定域四种引擎)
+2. [一个请求的完整流转](#一个请求的完整流转)
 3. [源码结构一览](#源码结构一览)
-4. [三大过滤引擎详解](#三大过滤引擎详解)
-   - [静态过滤](#静态过滤)
-   - [动态过滤](#动态过滤)
-   - [脚本注入过滤](#脚本注入过滤)
-5. [从 O(n) 到 O(k)：数据结构组合](#从-on-到-ok数据结构组合)
-   - [BitTrie：用位操作加速前缀匹配](#bittrie用位操作加速前缀匹配)
-   - [Bloom Filter：在查规则之前先筛一遍](#bloom-filter在查规则之前先筛一遍)
-   - [MRU 缓存：靠时间局部性省掉重复计算](#mru-缓存靠时间局部性省掉重复计算)
-6. [资源重定向：那些不能直接拦截的请求](#资源重定向那些不能直接拦截的请求)
-7. [安装与日常使用](#安装与日常使用)
-8. [进阶：写一条高质量过滤规则](#进阶写一条高质量过滤规则)
-9. [常见问题](#常见问题)
-10. [自测：你能不能解释这些？](#自测你能不能解释这些)
-11. [谁该用、谁可以等等](#谁该用谁可以等等)
-12. [参考资源](#参考资源)
+4. [静态引擎的性能设计](#静态引擎的性能设计)
+   - [token 索引：把逐条比对变成按词取候选](#token-索引把逐条比对变成按词取候选)
+   - [hostname 匹配：BidiTrie 与 WASM](#hostname-匹配biditrie-与-wasm)
+   - [结果缓存：网络层与页面层各一条](#结果缓存网络层与页面层各一条)
+5. [动态过滤：用户自己的规则层](#动态过滤用户自己的规则层)
+6. [页面层过滤：元素隐藏与 scriptlet 注入](#页面层过滤元素隐藏与-scriptlet-注入)
+7. [资源重定向：不能直接拦的请求](#资源重定向不能直接拦的请求)
+8. [安装与平台现状](#安装与平台现状)
+9. [进阶：写一条高质量的过滤规则](#进阶写一条高质量的过滤规则)
+10. [常见问题](#常见问题)
+11. [自测](#自测)
+12. [采用建议](#采用建议)
+13. [资料口径说明](#资料口径说明)
+14. [参考资源](#参考资源)
 
-## 三层过滤的分工
+## 系统总览：两个判定域，四种引擎
 
-uBO 不像传统拦截器那样只维护一张黑名单，它把过滤拆成了三层。每一层管一类问题，互不越界。理解这个分工比理解任何一行代码都重要。
+uBO 的过滤体系按介入时机分成两个判定域：**网络域**在请求发出前做判定，**页面域**在文档解析和脚本执行阶段介入。每个域里有各自独立的引擎：
 
-| 层 | 负责什么 | 触发时机 | 查什么 |
-|----|---------|---------|--------|
-| 静态过滤 | 已知广告 / 追踪域名和 URL 模式 | 浏览器发起网络请求时 | EasyList 等社区规则，约 8 万条 |
-| 动态过滤 | 按站点粒度的细粒度权限 | 同一网络请求阶段，优先于静态规则 | 用户针对当前域设置的 allow / block / noop |
-| 脚本注入过滤 | 页面内 JS 层面的劫持和注入 | DOM 构建完成后，页面脚本执行前 | Extended Syntax 规则，如 `##+js()` |
+| 判定域 | 引擎 | 规则来源 | 介入时机 | 源码入口 |
+|--------|------|----------|----------|----------|
+| 网络 | 动态 URL 规则 | 用户手工添加 | 请求发出前，优先级最高 | `url-net-filtering.js` |
+| 网络 | 动态主机防火墙 | 用户在弹出面板点选 | 请求发出前，次于 URL 规则 | `dynamic-net-filtering.js` |
+| 网络 | 静态过滤引擎 | EasyList、EasyPrivacy 等社区列表 | 请求发出前，优先级最低 | `static-net-filtering.js` |
+| 页面 | 元素隐藏（cosmetic） | `##` 选择器规则 | DOM 解析与变更时 | `cosmetic-filtering.js` |
+| 页面 | scriptlet 注入 | `##+js()` 规则 | 页面脚本执行前 | `scriptlet-filtering.js` |
 
-三层是串联的，不是三选一。一个网络请求要全部通过静态和动态两层才能发出；一个页面脚本要躲过脚本注入过滤才算安全。
+这几种引擎是叠加关系，不是三选一。同一个请求会依次穿过网络域的三层判定，任何一层给出明确结论就停止；页面域的规则则挂在所有通过了网络判定的请求背后。很多资料把 uBO 概括成「一张黑名单」，这个说法漏掉了动态层和页面层，也就解释不了它最实用的两个功能：单站点放行，和对反拦截脚本的精确反制。
 
-## 一个请求的完整流转（案例）
+## 一个请求的完整流转
 
-下面是一个真实场景：用户在浏览器地址栏输入 `news.example.com`，这个网站嵌了来自 `ad.doubleclick.net` 的广告脚本。
+用一个具体场景串起来：你在地址栏打开 `news.example.com`，这个页面要加载 `ad.doubleclick.net/ads.js`。
 
-### 第一步：动态过滤先判定
+### 网络域：三层判定，从具体到通用
 
-请求 `ad.doubleclick.net/ads.js` 准备发出。uBO 先查动态过滤规则——当前站点 `news.example.com` 下，用户是否对 `ad.doubleclick.net` 设置了 allow / block / noop？
+`webRequest` 的 `onBeforeRequest` 事件触发后，主进程里的 `filterRequest`（`src/js/pagestore.js`）开始工作。判定顺序写死在代码里，从最具体的规则层走向最通用的规则层：
 
-- 如果查到 **block**：请求直接拦截，不再走静态过滤。结束。
-- 如果查到 **allow**：请求放行，跳过后续所有检查。结束。
-- 如果查到 **noop** 或没查到：进入静态过滤。
+**第一层，动态 URL 规则。** 用户在「我的规则」里写过的精确 URL 规则最先被查。命中且结果为拦截，请求到此结束。
 
-这一步很快，因为动态规则是 per-site 的哈希表，key 是 `(源站点, 目标域名, 请求类型)`。
+**第二层，动态主机防火墙。** 这是弹出面板里那格矩阵背后对应的引擎——不过它只在设置里勾选「我是高级用户」后才参与判定，普通用户模式会跳过这一层。判定对象是三元组「来源站点、目标域名、请求类型」，命中 block 就拦，命中 allow 就放行，命中 noop 则不做结论，降级给下一层。
 
-### 第二步：Bloom Filter 预判
+**第三层，静态过滤引擎。** 代码注释里写得很直白：`Static filtering has lowest precedence`。前面两层都没有给出结论（或结论是 noop），才会轮到 EasyList 这些社区规则。这一层的内部机制复杂得多，单独放到下一节细讲。
 
-进入静态过滤后，uBO 不直接去查那 8 万条规则。它先把 `ad.doubleclick.net` 丢进 Bloom Filter。
+三层中任何一层给出 block，请求被拦截——或者被重定向替换（见「资源重定向」）；给出 allow，请求直接放行。整个网络判定在 `onBeforeRequest` 里同步完成，浏览器等结果出来才决定发不发这个请求，所以这一层的耗时直接叠加在页面加载上。
 
-- Bloom Filter 返回「**一定不存在**」：直接放行。结束。
-- Bloom Filter 返回「**可能存在**」：进入 BitTrie 精确匹配。
+### 静态引擎内部：分词、取候选、精确匹配
 
-这一步的关键价值：大多数正常请求在这一步就被放走了，不会触及后面的 BitTrie 查找。Bloom Filter 只用几百 KB 内存就把无效查询拦在了最外层。
+假设请求走到了第三层。以规则 `||ad.doubleclick.net^` 为例，看引擎怎么判定：
 
-### 第三步：BitTrie 精确匹配
+**第一步，URL 分词。** 引擎把请求 URL 转成小写，按 `[0-9a-z%]` 字符集切成一个个 token（`urlTokenizer`，实现在 `static-net-filtering.js` 内部）。`https://ad.doubleclick.net/ads.js` 会切出 `https`、`ad`、`doubleclick`、`net`、`ads`、`js` 等词，每个词用 djb2 变体哈希压成一个整数——参与哈希的字符最多 7 个（源码里的 `MAX_TOKEN_LENGTH`），结果只保留低 28 位。
 
-Bloom Filter 说「可能存在」，就要真查了。uBO 用 BitTrie（位图前缀树）来匹配域名前缀规则。
+**第二步，按 token 取候选。** 关键的预处理发生在规则列表编译阶段：每条规则会从自己的匹配模式里挑出一个「信息量最大」的 token 作为索引键，挂到这个 token 的哈希桶下。匹配请求时，引擎拿 URL 的每个 token 去查桶，把可能匹配这条 URL 的少量规则捞出来。一个具体 token 的桶里通常只有几条规则；URL 里所有 token 都查不到桶的请求，一条候选规则都没有，直接放行。另外有一小部分规则模式太泛、提不出有效 token，它们被归入一个「无 token」集合，每次都要检查——这类规则在列表里是少数。
 
-以 `||ad.doubleclick.net^` 为例：uBO 把域名拆成 `["ad", "doubleclick", "net"]`，在 BitTrie 中逐段查找。每段都是一次位操作，三段三次查完。整个过程是 O(k)，k 是域名段数（通常 3-5），跟规则库总大小无关。
+**第三步，逐条精确匹配。** 候选规则逐条做真正的匹配验证：模式在 URL 里定位，锚点语义逐个核验。对 `||ad.doubleclick.net^`，引擎先在 URL 里找到 hostname 区间的起点（`://` 之后），确认匹配位置落在 hostname 里、且前一个字符是 `.` 或恰好是起点——这样 `notad.doubleclick.net` 就不会被误判。多数候选在这一步被排除。正则规则同样先吃 token 红利——编译时尝试从正则模式里提取一个边界安全的 token 参与索引，URL 不含这个词就轮不到正则求值；带 `domain=` 这类限定的慢规则，域名检查还会排在正则求值之前，先筛掉明显不匹配的请求。
 
-命中规则 `||ad.doubleclick.net^`：拦截。结束。
+判定结果出来后走两个出口之一：拦截，或放行并允许请求发出。如果规则带了 `redirect=` 选项，拦截的形态不是断开，而是替换（见后文）。
 
-BitTrie 查完没命中：放行。结束。
+### 页面域：拦截之后还有一轮
 
-### 第四步：脚本注入过滤补刀
+网络判定管不到页面内部的动作。页面开始解析时，uBO 的内容脚本已经注入（时机是 `document_start`，早于页面自己的脚本执行），它按当前 hostname 取出适用的 `##` 元素隐藏规则和 `##+js()` scriptlet 规则。假设这个站点还用一个内联脚本检测广告拦截器——那个脚本不产生网络请求，网络域对它无能为力，能制住它的是 scriptlet 注入。
 
-页面 HTML 已加载完成，浏览器准备执行页面里的脚本。uBO 的内容脚本扫描 DOM，检查是否有匹配 `##+js()` 规则的 script 节点。
-
-假设页面里有这样一行：
-
-```html
-<script>
-  // Google ad syndication 注入的脚本
-  googlesyndication.push({ ... });
-</script>
-```
-
-uBO 的脚本注入过滤匹配到规则 `##+js(googlesyndication.com, push, 1)`，把 `push` 调用替换成空操作。脚本还在 DOM 里，但执行到 `push` 时什么都不发生。
-
-### 这个案例说明了什么
-
-- 三层不是互相替代，而是**拦截深度递增**：网络层拦不住的，页面层补。
-- Bloom Filter 不是可有可无的优化——8 万条规则下，没有预判，每个请求都要走 BitTrie，CPU 开销会翻几个数量级。
-- 动态过滤的优先级决定了用户可以在单个站点上推翻全局规则，不需要改社区规则列表。
+一次页面加载走完，弹出面板上的拦截计数就是这些判定结果的累计。
 
 ## 源码结构一览
 
-uBlock Origin 最早发布于 2015 年，使用 GPLv3 开源协议，代码全部由 JavaScript 编写。截至本文写作时，GitHub 仓库 [gorhill/uBlock](https://github.com/gorhill/uBlock) 拥有约 64,000 颗 Stars，最新稳定版本为 v1.70.0。
+uBO 最初发布于 2015 年，GPLv3 协议，主体由 JavaScript 写成；少数计算密集的模块有 WebAssembly 版本（由 C 编译，见 `src/js/wasm/`），运行时优先加载。截至 2026 年 9 月，仓库 [gorhill/uBlock](https://github.com/gorhill/uBlock) 约有 6.8 万颗 Stars，最新发布版为 1.74.0（2026 年 8 月 25 日），主分支仍在活跃提交。
 
-克隆仓库后，核心代码在 `src/` 目录下：
+克隆仓库后，核心代码在 `src/` 下：
 
 | 路径 | 做了什么 | 建议先读 |
 |------|---------|---------|
-| `src/js/background.js` | 扩展主进程，管所有模块的启动和生命周期 | ⭐ 入口 |
-| `src/js/contentscript.js` | 注入到每个页面的内容脚本 | ⭐ |
-| `src/js/static-filtering-parser.js` | 把 EasyList 文本规则解析成内部数据结构 | ⭐ |
-| `src/js/static-filtering-io.js` | 规则的 I/O、合并、从磁盘加载 | |
-| `src/js/dynamic-net-filtering.js` | per-site 动态防火墙 | ⭐ |
-| `src/js/cosmetic-filtering.js` | CSS cosmetic 过滤，隐藏页面元素 | |
-| `src/js/scriptlet-filtering.js` | `##+js()` 脚本注入过滤 | ⭐ |
-| `src/js/redirect-engine.js` | 把被拦截的请求重定向到安全资源 | |
-| `src/js/biditrie.js` | BitTrie：位图前缀树 | ⭐⭐ |
-| `src/js/hntrie.js` | HN-Trie：层级名称前缀树 | |
-| `src/js/bloom-filter.js` | Bloom Filter 实现 | ⭐⭐ |
-| `src/js/mrucache.js` | MRU 缓存 | |
-| `src/js/lz4.js` | LZ4 压缩，用于缓存序列化 | |
+| `src/js/background.js` | 扩展主进程，模块启动与生命周期 | ⭐ 入口 |
+| `src/js/pagestore.js` | 每个标签页的判定入口，`filterRequest` 在这里 | ⭐ |
+| `src/js/static-net-filtering.js` | 静态引擎主体，含 `urlTokenizer` 与全部 Filter 类 | ⭐⭐ |
+| `src/js/static-filtering-parser.js` | 把 EasyList 文本规则解析成可编译结构 | ⭐ |
+| `src/js/static-filtering-io.js` | 编译产物的序列化与磁盘加载 | |
+| `src/js/url-net-filtering.js` | 动态 URL 规则 | |
+| `src/js/dynamic-net-filtering.js` | 动态主机防火墙（弹出面板矩阵） | ⭐ |
+| `src/js/cosmetic-filtering.js` | `##` 元素隐藏 | |
+| `src/js/scriptlet-filtering.js` | `##+js()` scriptlet 注入 | ⭐ |
+| `src/js/redirect-engine.js` | 被拦请求的重定向替换 | |
+| `src/js/biditrie.js` | 双向 trie，hostname 与 pattern 的联合匹配 | ⭐⭐ |
+| `src/js/hntrie.js` | hostname 集合 trie，服务 `domain=` 选项判断 | |
+| `src/js/mrucache.js` | 页面层的 hostname 结果缓存 | |
+| `src/js/lz4.js` | LZ4 压缩，用于缓存数据落盘 | |
+| `src/js/resources/` | 内置 scriptlet 库（`set-constant.js` 等约 30 个） | |
+| `src/web_accessible_resources/` | 重定向替身资源（`noop.js` 等） | |
+| `src/js/wasm/` | WASM 模块（`hntrie.wasm`、`biditrie.wasm`） | |
 
-⭐⭐ 标注的是这篇文章重点拆解的模块。如果你想从源码级理解 uBO 的性能秘诀，从 `biditrie.js` 和 `bloom-filter.js` 入手是最高效的路径。
+想从源码理解性能设计，从 `static-net-filtering.js` 的 `urlTokenizer` 入手是效率最高的路径——整个静态引擎的取舍都围绕它展开。
 
-## 三大过滤引擎详解
+## 静态引擎的性能设计
 
-### 静态过滤
+静态引擎要解决的问题规模是固定的：十余万条规则（EasyList、EasyPrivacy、Peter Lowe's Blocklist、Online Malicious URL Blocklist、uBO filters 这几套默认列表合计的量级，随列表更新浮动），每个页面加载几百上千次判定，全部同步执行。任何「对每条规则跑一遍正则」的方案在这里都直接出局。uBO 的答案分三部分。
 
-静态过滤处理的是「已知的坏域名」。规则来源是 EasyList、EasyPrivacy、Peter Lowe's Blocklist 等社区维护的列表，总计约 8 万条，以 `.txt` 格式存储，一行一条。
+### token 索引：把逐条比对变成按词取候选
 
-`src/js/static-filtering-parser.js` 负责把这些文本规则翻译成内部查询结构。EasyList 的语法并不复杂，但覆盖了相当多的匹配维度：
+静态引擎快，首先不是因为某个精巧的树结构，而是因为它**根本不给绝大多数规则参与判定的机会**。
+
+规则编译阶段，每条规则从自己的匹配模式里提取 token 并注册到「token → 规则列表」的倒排索引里。提取逻辑偏向信息量：模式里越具体、越少见于其他规则的词，越适合做这条规则的索引键。这样做的效果是，匹配一个请求时，用 URL 里十来个 token 去查索引，捞出来的候选规则通常只有个位数。
+
+对比一下两种朴素方案就明白这个设计的分量：
+
+- 全量正则：十余万条规则 × 每次请求几百次调用，每次匹配都是全量扫描，成本与规则库总量成正比。
+- 哈希表存完整 URL：精确但只对「逐字符写死」的规则有效，而广告规则的主要形态是「域名前缀 + 模式」，同一域名下有无数路径变体，穷举不完。
+
+token 索引击中的正是规则库的真实形态：绝大多数规则的模式里都包含具体词。一次判定的成本约等于「URL 的 token 数 × 平均每桶候选数 + 少量精确匹配」，与规则库总量基本无关——规则从 10 万涨到 20 万，只要 token 桶不塌缩，单次判定耗时几乎不动。这是 uBO 相对早期拦截器最实质的架构优势。
+
+### hostname 匹配：BidiTrie 与 WASM
+
+token 索引解决「哪些规则值得看」，hostname 匹配解决「这条规则到底命中没有」里最费劲的一类判断。广告规则大量使用 `||域名` 形式，要求「模式锚定在 hostname 的左边界」，比如 `||ad.doubleclick.net^` 不该匹配 `evil-ad.doubleclick.net.evil.com` 里恰好出现的子串。
+
+uBO 对这类判断有两件工具：
+
+**`FilterAnchorHnLeft` / `FilterAnchorHn`**（`static-net-filtering.js`）：对单纯的 hostname 锚定，引擎在请求 URL 里定位 hostname 区间的起止（`://` 之后到第一个 `/` 之前），然后检查 pattern 的匹配位置是否落在区间内、且左邻字符是 `.` 或恰为区间起点。判断本身是几次字符比较，配合 token 索引筛过的候选，成本很低。
+
+**BidiTrie**（`biditrie.js`）：对付更麻烦的 `||域名/路径` 形式——hostname 要从右往左对，路径要从左往右对，两头都要锚住。BidiTrie 的做法是把这两段放进同一块类型化数组缓冲区，hostname 按字符反向存储、pattern 正向存储，匹配时从两头的锚点向中间推进，任意一侧失配即失败。字符级比对被压缩成整数单元上的查表与比较，这是它比朴素字符串匹配快的原因。
+
+这个模块还有一处工程取舍：同一算法有 JavaScript 和 WebAssembly 两个实现（`biditrie.js` 与 `src/js/wasm/biditrie.wasm`，后者由 C 编译），运行时优先加载 WASM 版本。hostname 匹配是整个引擎里单位时间执行次数最高的路径之一，值得为它维护一套 WASM 构建链——这也是「uBO 纯 JavaScript 项目」这个常见说法不准确的地方。
+
+`hntrie.js` 则是另一个容器：把一组 hostname 按字符反向插入 trie，回答「某 hostname 是否属于这个集合」。它服务于规则的 `domain=` 选项这类集合归属判断，和 BidiTrie 分工不同。
+
+### 结果缓存：网络层与页面层各一条
+
+第三层节省来自「同样的判定不做第二遍」。
+
+网络层，`pagestore.js` 对子框架（sub frame）这类请求缓存判定结果——同一页面里 iframe 的判定往往反复出现，缓存让重复判定变成一次哈希查找。范围是刻意收窄的：脚本、图片这些类型的判定本身已经很快，缓存收益抵不过管理成本。
+
+页面层的缓存更重。一个页面在加载过程中会因 DOM 变更反复查询「当前 hostname 适用的选择器/scriptlet 集合」，而编译规则集合的开销不小。`mrucache.js` 提供的缓存让同一 hostname 的编译结果只算一次。顺带一个考据：这个文件名叫 MRU Cache，但实现上是「命中即把条目提到队首、队满从队尾淘汰」，行为上是标准 LRU——读源码时别被名字带偏。
+
+## 动态过滤：用户自己的规则层
+
+静态规则再精确，也是别人替你做的决定：列表不知道你是在看新闻还是登录网银，只能按域名一刀切。动态过滤把决定权交给用户，而且不需要写任何语法。
+
+弹出面板的防火墙矩阵（需开启「我是高级用户」）按「来源站点 × 目标域名 × 请求类型」三要素组织。行是域名（当前站点、具体目标域、通配），列是请求类型（全部、内联脚本、第三方请求、第三方脚本、第三方框架）。每个格子有三种基本取值：
+
+- **block**：拦掉这个方向的对应请求；
+- **allow**：放行，且不再受更宽规则的拦截——包括静态规则，后续判定整段跳过；
+- **noop**：本格不做结论，降级给更宽的规则或静态引擎处理。
+
+格子的语义随具体程度递进：对 `example.com` 整站设的 block，会被对 `bank.example.com` 设的 allow 在那个子域上覆盖。这套机制的实际价值在于**可逆的例外**：某站坏了，面板里点一下放行它的脚本，不用碰规则文件，不用等列表更新，随时点回去。
+
+实现上它非常轻：规则就是嵌套的键值映射，一次判定是一次哈希查找，规则总量通常不过几十条。这也是它敢排在静态引擎之前判定的底气——更具体的层判定成本反而更低，先走它不吃亏。
+
+## 页面层过滤：元素隐藏与 scriptlet 注入
+
+网络域管不到页面内部的两个场景：广告是 HTML 内联的（没有独立请求可拦），或者广告代码藏在页面自己的脚本行为里。页面域的两个引擎分别对应这两类问题。
+
+**元素隐藏（cosmetic filtering，`cosmetic-filtering.js`）** 处理最常见的形态：广告内容已经在页面里了，把它隐藏掉。规则形如：
 
 ```text
-# 拦截来自 example.com 的任何请求
-||example.com^
-
-# 只拦截来自 example.com 的脚本，且必须是第三方请求
-||ads.example.com^$script,third-party
-
-# 把 example.com 从拦截规则中排除
-@@||example.com^
-
-# 正则匹配——性能最差，尽量少用
-/analytics\.js$/
+! 在 example.com 上隐藏 class 为 ad-banner 的元素
+example.com##.ad-banner
 ```
 
-**为什么不用纯正则处理所有规则？** 8 万条规则如果都用正则匹配，每个请求要做 8 万次正则求值，页面加载会直接卡死。静态过滤的真正工作量不在正则，而在前缀匹配——而前缀匹配正好是 Trie 结构的甜区。
+内容脚本按当前 hostname 取出适用的选择器，在 DOM 上应用 `display: none`。选择器按 hostname 建了索引，编译结果有 MRU 缓存，DOM 每次变更后的复查不用重新编译。这是 uBO 规则里使用频率最高的一类语法，也是多数用户感知「广告不见了」的直接原因。
 
-静态过滤是在浏览器网络请求阶段介入的，它是阻塞性的：匹配耗时直接反映为用户感知到的页面延迟。uBO 对这一层的优化投入最大，后面的数据结构选择基本都围绕它展开。
-
-### 动态过滤
-
-动态过滤是 uBO 区别于传统拦截器的关键——它让用户可以对单个域名设置独立规则，而且不需要手写规则语法。
-
-它的权限模型很简单，四层：
-
-1. **block**：拦截该域名的特定类型请求。
-2. **allow**：对该域名不做任何拦截。
-3. **noop**：不做处理，交给全局规则决定。
-4. **覆盖**：noop 可以从全局 block 规则中把该域名捞出来。
-
-在弹出面板（popup）里，用户对着当前站点，从 8 种请求类型——`images`、`scripts`、`frames`、`xhr` 等——中逐项点选权限。这不是图形化 API，它就是 API 本身：点击即规则。
-
-**为什么动态过滤比只靠社区规则更安全？** 社区规则是全省略式的一刀切。`easyList.txt` 不知道你是在看新闻还是在用网银，它只能按域名全局拦截。动态过滤给了用户一个退出机制：全局规则把 `example.com` 拦了，但你可以对 `bank.example.com` 设 allow，不需要改规则文件，不需要等列表更新。
-
-实现上，动态规则存在 per-site 哈希表里，查找 O(1)。因为规则量小（单个站点通常不超过 10 条），它在我们讨论过的三层中开销最低，优先级却最高。
-
-### 脚本注入过滤
-
-现代广告早就不再简单地 `<script src="ad.com/banner.js">` 了。更常见的做法是页面内的 JS 动态创建 iframe、调用 `eval`、劫持 `XMLHttpRequest`、或在 `window` 上挂监听器。这些行为不产生独立的网络请求，静态过滤和动态过滤都看不见。
-
-uBO 的应对是脚本注入过滤，对应 `src/js/scriptlet-filtering.js`。核心机制：在页面脚本执行之前，把目标函数替换成空操作（no-op）。
+**scriptlet 注入（`scriptlet-filtering.js`）** 处理更隐蔽的形态：页面脚本在运行时做的事，比如劫持函数、改写对象属性、检测拦截器。scriptlet 规则在页面脚本执行前（`document_start`）把预定义的脚本片段注入页面，替掉目标行为：
 
 ```text
-# 把 googlesyndication.com 相关上下文中的 alert 替换为 no-op
-##+js(googlesyndication.com, alert, 1)
+! 在 example.com 上把 window.adBlockDetected 固定为 false，
+  让反拦截检测读到「没装拦截器」
+example.com##+js(set-constant, adBlockDetected, false)
 ```
 
-替换发生在内容脚本注入阶段，早于页面自己的 JS 执行。广告代码照常存在于 DOM 中，但 `alert` 已经变成了一个什么都不做的函数。
+`set-constant` 是内置 scriptlet 之一，全部内置实现放在 `src/js/resources/`，共约 30 个，各有固定名字和参数表。这里有一个容易写错的语法点：`##+js()` 的第一个参数是 **scriptlet 名字**，不是域名——`##+js(example.com, alert, 1)` 这种写法不合法，域名应该写在规则左侧的站点限定里。
 
-**为什么不让用户直接写 JS 来拦截？** 安全。脚本注入使用 uBO 自研的 Extended Syntax，不支持任意 JS，用户写不出 `eval(location.hash)` 这种东西。替代方案是预先定义好的 scriptlet 模板，存放在 `src/assets/resources/` 下。
+不让用户直接写任意 JS 是安全设计：任意脚本能力意味着 `eval` 注入面，而 scriptlet 模板是经过审核的固定集合，参数再怎么组合也逃不出预设的行为。
 
-这里需要说明一个不能推的边界：脚本注入过滤对「内联脚本」效果最好，对 `src` 加载的外部脚本只能靠网络层拦截。如果外部脚本已经通过静态或动态过滤被放行了，脚本注入过滤无法再介入——它改不了远程文件的执行上下文。
+页面域的能力边界也要说清：scriptlet 注入改不了**外部脚本文件**的执行上下文。如果广告代码是一个外部 JS 文件，网络域没拦住它，scriptlet 也无法介入它的内部逻辑——那种场景的对策是下一节的重定向。
 
-## 从 O(n) 到 O(k)：数据结构组合
+## 资源重定向：不能直接拦的请求
 
-uBO 的性能口碑不是凭空来的。如果你只从这一个项目里学一样东西，就学它如何用三个数据结构组合把匹配从线性降到常数。
-
-### BitTrie：用位操作加速前缀匹配
-
-Trie（前缀树）按字符拆分 key，路径即内容。BitTrie 在此基础上多做了一步：用位操作（bit-level AND、移位、掩码）替代字符串比较。
-
-在 uBO 中，BitTrie 存的是域名前缀，如 `ad.doubleclick`。查找时：
-
-1. 域名按 `.` 拆成段，如 `["ad", "doubleclick", "com"]`。
-2. 每段做一次位掩码匹配，判断当前节点是否有该前缀。
-3. 逐段向下，三段查完即出结果。
-
-复杂度是 O(k)，k 为域名段数。8 万条规则和 800 万条规则，只要 k 不涨（域名段数不会超过 10），查找时间就不涨。
-
-对比一下：如果用哈希表存所有规则的完整 URL，每次查找的 key 组合爆炸（同一域名可能有几百条路径变体）；如果用线性扫描，查找时间直接跟规则数量成正比。BitTrie 踩中了广告拦截的唯一甜区——按域名前缀匹配是最频繁的操作。
-
-### Bloom Filter：在查规则之前先筛一遍
-
-Bloom Filter 的输入是一个域名字符串，输出是两种结果之一：
-
-- **一定不存在**（概率 100%）：这个域名不在任何规则里，直接放行。
-- **可能存在**（有一定假阳性）：需要进一步精确匹配。
-
-假阳性意味着 Bloom Filter 偶尔会说「可能有」，但去 BitTrie 查了一圈发现其实没有。这个误差 uBO 可以接受，因为代价只是一次多余的 BitTrie 查找。假阴性是不存在的——Bloom Filter 永远不会漏掉一个真实匹配。
-
-在 uBO 中，Bloom Filter 的位数组大小是规则总数乘以一个可调系数（默认约 10 bit/key），假阳性率控制在 1% 左右。内存开销：8 万条规则 × 10 bit ≈ 100 KB。
-
-**为什么不用哈希集合？** 哈希集合精确但占内存。8 万条完整 URL，平均 80 字节一条，需要约 6.4 MB。Bloom Filter 用 100 KB 完成了 99% 的初筛——那些命中的 1% 再去走 BitTrie 精确匹配，总成本比每条都查哈希集合低得多。
-
-### MRU 缓存：靠时间局部性省掉重复计算
-
-浏览器的网络请求有很强的局部性：同一域名下的资源（CSS、JS、图片）在短时间内被连续请求。MRU（Most Recently Used）缓存把最近查过的域名和匹配结果存下来。
-
-缓存满时，最久未使用的条目被淘汰——实现源码在 `src/js/mrucache.js`，简单直接。一个页面加载过程中，同一域名的资源请求可以多达数十次，MRU 缓存让除第一次之外的所有同类请求都变成 O(1) 缓存命中。
-
-**为什么用 MRU 而不是 LRU？** 对于广告拦截场景，最近访问的条目最可能被再次访问。LRU 在淘汰策略上更「公平」，但 MRU 对这个访问模式更吻合——而且实现简单，不需要维护双向链表。
-
-## 资源重定向：那些不能直接拦截的请求
-
-`src/js/redirect-engine.js` 处理一类特殊情况：某些脚本不能直接拦截，因为拦了页面会报错，甚至触发反广告拦截检测。
-
-uBO 的策略是把请求目标替换成一个「无害版本」。典型场景：
-
-1. 网站加载了 `ads.example.com/detect-adblock.js` 来检测拦截器。
-2. 直接拦截这个脚本 → 网站检测到脚本加载失败 → 弹出提示要求关闭拦截器。
-3. uBO 的重定向方案：不拦截这个请求，但把它的响应替换为 `web_accessible_resources/` 下的一个空 JS 文件。脚本「加载成功」了，但什么都不做。
-
-重定向规则同样用 Extended Syntax 描述：
+有一类请求，拦截本身就是失败：站点加载 `detect-adblock.js` 来探测拦截器，直接拦截会让脚本加载失败，站点立刻弹窗要求你关闭拦截器。uBO 的对策在 `redirect-engine.js`：**不拦截，替换**。把响应换成内置的无害资源，脚本「加载成功」，内容是空操作。
 
 ```text
 ||ads.example.com/detect-adblock.js$script,redirect=noop.js
 ```
 
-`noop.js` 就是一个空脚本。uBO 内置了几十个这样的「替身资源」，覆盖常见的广告 SDK 和检测脚本。
+`noop.js` 就是一个空脚本。内置替身资源放在 `src/web_accessible_resources/`，除 `noop.js` 外还有 `1x1.gif`、`noop.css`、`noop.html` 等，覆盖常见的广告 SDK 探测和统计打点场景。
 
-有一点要说清楚：重定向不是万能的反检测方案。如果网站的检测逻辑写在页面自身的 JS 里（例如检查 `window.adBlockDetected` 变量），重定向引擎插手不了——它只能作用于网络请求层面。
+重定向的能力边界同样明确：它只作用于网络请求层面。检测逻辑如果写在页面自身的内联 JS 里（比如检查某个全局变量的值），重定向引擎碰不到它——那要靠 scriptlet 注入去改写那个变量。实际规则里常见的手法是把两者组合：`redirect=` 应付网络层的探测脚本，`set-constant` 应付页面层的检测结果。
 
-## 安装与日常使用
+## 安装与平台现状
 
-### 安装
+这一节的内容有较强的时效性（写作时点：2026 年 9 月）。
 
-- **Firefox**：[AMO 扩展商店](https://addons.mozilla.org/en-US/firefox/addon/ublock-origin/)
-- **Chromium / Chrome**：[Chrome Web Store](https://chrome.google.com/webstore/detail/ublock-origin/cjpalhdlnbpafiamejdnhcphjbkeiagm)
-- **Edge**：[Microsoft Store](https://microsoftedge.microsoft.com/addons/detail/odfafepnkmbhccpbejgmiehpchacaeak)
-- **Opera**：Opera 扩展商店
+- **Firefox**：目前体验最完整的平台，[AMO 扩展商店](https://addons.mozilla.org/firefox/addon/ublock-origin/)可装。uBO 官方 README 明确写着「works best on Firefox」——Firefox 保留了 `webRequest` 的阻塞式拦截能力，上面讲的引擎机制在 Firefox 上完整可用。
+- **Chromium 系（Chrome / Edge 等）**：Chrome 自 2025 年起全面停用 Manifest V2 扩展，原版 uBO 依赖的阻塞式 `webRequest` API 在 MV3 中被移除，**原版 uBO 在 Chrome 上已被禁用**。官方的 MV3 替代品是 [uBlock Origin Lite](https://github.com/uBlockOrigin/uBOL-home)，用声明式规则（`declarativeNetRequest`）实现过滤；代价是本文讲的动态防火墙和完整规则语法都不可用，过滤能力明显收窄。Edge 等其他 Chromium 浏览器也在跟进同样的 MV2 淘汰节奏。
+- **Opera**：同样基于 Chromium，受 MV2 停用影响，情况与 Chrome 相同。
 
-安装后工具栏会出现 uBO 图标。点击图标看弹出面板，上面的数字是当前页面已拦截的请求数。
+安装后，工具栏图标的弹出面板显示当前页面的拦截计数。日常使用三步：电源按钮控制开关；点面板底部的域名区可以把当前站点加入白名单；默认启用的几套列表（EasyList、EasyPrivacy 等）对多数人已经够用。
 
-### 基础用法三步
+勾选「我是高级用户」后解锁本文提到的进阶能力：弹出面板的防火墙矩阵、实时日志查看器（Logger，能看到每个请求命中了哪条规则、被哪层判定处理）、以及「我的规则」手动编辑。
 
-1. **开关**：点击电源按钮，蓝色为开启。
-2. **单站白名单**：点击大电源按钮旁边的域名区域，当前站点加入白名单。
-3. **快速调优**：弹出面板底部有「打开设置」入口，默认启用 EasyList + EasyPrivacy + uBO Filters 就够大多数人用。
+## 进阶：写一条高质量的过滤规则
 
-### 进阶模式
+会写规则之后，你面对「这个怎么还在」的时刻就不必等列表更新了。三个从简到繁的例子：
 
-在设置里勾选「我是高级用户」，解锁：
-
-- **动态过滤面板**：上面提到的 per-site 权限配置。点击弹出面板中每个请求类型对应的格子即可设置。
-- **日志查看器（Logger）**：实时显示每个请求的匹配路径——进了哪个规则、被哪层过滤拦的、耗时多少。查规则冲突时比盲猜有效得多。
-- **我的规则**：手动编辑用户规则文件，支持静态语法和动态语法。
-
-## 进阶：写一条高质量过滤规则
-
-学会写规则，你就不再是 uBO 的「默认配置用户」了。以下是从简单到完整的三个例子。
-
-### 例 1：拦截特定域名下的脚本
+### 例 1：限定条件拦一个域名
 
 ```text
 ||annoying-widget.com^$script,domain=example.com
 ```
 
-- `||` 匹配域名及其子域名
-- `^` 匹配分隔符（`/`、`?`、行尾等）
-- `$script` 限定只拦截脚本请求
-- `domain=example.com` 限定只在 `example.com` 上生效
+- `||` 锚定域名及其子域名的左边界；
+- `^` 匹配分隔符（`/`、`?`、URL 结尾等）；
+- `$script` 只对脚本请求生效；
+- `domain=example.com` 只在 `example.com` 上生效。
 
 ### 例 2：白名单例外
 
@@ -299,217 +252,103 @@ uBO 的策略是把请求目标替换成一个「无害版本」。典型场景�
 @@||cdn.example.com^$script,domain=example.com
 ```
 
-`@@` 开头表示这是白名单规则。即使全局规则拦了 `cdn.example.com`，这条规则会把它放行。
+`@@` 开头表示例外规则：即使其他规则拦了 `cdn.example.com` 的脚本，这条会放行它。误杀修复基本都靠这个语法。
 
-### 例 3：用脚本注入补刀
+### 例 3：用 scriptlet 制住页面内行为
 
 ```text
-example.com##+js(no-setTimeout-if, /ads\./)
+example.com##+js(set-constant, adBlockDetected, false)
 ```
 
-这条规则在 `example.com` 页面里，把参数中匹配 `/ads\./` 的 `setTimeout` 调用全部替换为空操作。适用于那些不产生网络请求、只在页面内部定时弹窗的广告。
+在 `example.com` 的页面里，把 `window.adBlockDetected` 固定为 `false`。适合对付不产生网络请求、纯靠页面内变量传递结果的检测逻辑。选 scriptlet 前先到 `src/js/resources/` 看有哪些现成实现，多数需求不用自己造。
 
-### 规则书写原则
+### 三条书写原则
 
-1. **越具体越好**：能加 `$script` 就不裸写域名，能加 `domain=` 就不全局生效。
-2. **尽量不用正则**：`/regex/` 的匹配成本比前缀匹配高一个数量级。能用 `||` 和 `^` 搞定的不要上正则。
-3. **测试规则**：开 Logger，访问目标页面，看规则是否命中。没命中就改，比猜完就放着靠谱。
+1. **限定条件给足**：能加 `$script` 就不裸写域名，能加 `domain=` 就不全局生效。限定越具体，误杀概率越低，也越容易被 token 索引高效处理。
+2. **少用正则**：正则求值本身比字符串定位贵得多；能安全提取 token 的正则虽然也走索引，但落进候选后每条都要真跑一遍正则引擎。`||` 和 `^` 能表达清楚的不要上 `/regex/`。
+3. **用 Logger 验证**：规则写完打开 Logger 访问目标页面，看它是否命中、命中在哪一层。肉眼猜规则行为几乎必然出错。
 
 ## 常见问题
 
 **Q：uBO 和 AdBlock Plus 有什么本质区别？**
 
-ABP 用的是一个更重的匹配模型——每条规则可能触发多次正则求值。uBO 把匹配拆成了三层，前缀匹配走 BitTrie，动态规则走哈希表，只把极小部分交给正则。这导致同一组 EasyList 规则，uBO 的 CPU 和内存开销大约是 ABP 的 1/3 到 1/5。另一个区别是 ABP 有「可接受广告」计划，uBO 没有——Raymond Hill 明确表示不接广告资助。
+两个层面。产品层面，ABP 参与「可接受广告」计划——给广告费就能进白名单；uBO 不参与任何广告资助，README 原话是「Free. Open-source. For users by users. No donations sought.」。工程层面，uBO 的判定顺序和 token 索引是为「规则库很大」这个前提专门设计的，同样的社区列表在 uBO 上的 CPU 与内存开销更低——这是官方 README「CPU and memory-efficient」的自述方向，也是社区反复对比过的定性结论；至于具体低多少，没有可靠的统一数字，取决于规则集和页面，别轻信任何精确的倍数。
 
 **Q：开了 uBO，为什么有些广告还是拦不掉？**
 
-三种可能：
+三种常见原因。广告是页面内联的，不产生网络请求——开 Logger 看不到对应记录，对策是 `##` 元素隐藏规则。广告域名不在你启用的列表里——检查设置里的列表勾选。站点用了动态生成的广告域名——写更宽的通配规则，或者用 scriptlet 从页面行为层面处理。
 
-1. 广告是页面 HTML 内联的，不产生网络请求。开 Logger 看不到拦截记录。这种情况需要自己写 `##` 规则或用元素选择器模式手动隐藏。
-2. 广告域名不在你启用的规则列表里。在设置里检查启用了哪些列表，EasyList + uBO Filters 是最低配置。
-3. 网站用了动态域名（每次加载换一个子域名）。需要写通配规则或升级到脚本注入过滤。
+**Q：uBO 会不会拖慢浏览器？**
 
-**Q：uBO 会影响浏览器性能吗？**
+任何内容拦截器都要为每个请求做判定，增量是必然存在的，问题只是大小。uBO 的设计目标就是把这个增量压到不可感知——上面讲的 token 索引、trie、缓存都是为此服务的。多数页面上，它拦掉的追踪脚本原本要消耗的 CPU 远高于它自身的判定开销，净效果是页面变快。
 
-所有内容拦截器都会增加额外的网络请求检查。但 uBO 的设计目标是把增量压到不可感知的程度。在一般页面上，uBO 的 CPU 开销远低于它拦截的那些追踪脚本原本会消耗的 CPU。实际效果是页面变快了。
+**Q：为什么弹出面板的计数不动？**
 
-**Q：为什么我的 uBO 图标数字不更新？**
+先确认没有对该站点或全局设置暂停。然后注意计数只统计真实发生的请求：命中的是浏览器缓存或 Service Worker 的资源不触发新的判定，计数自然不变。
 
-检查是否开启了「暂停在此站点上」或全局暂停。如果都没开，尝试刷新页面——uBO 只在请求发生时计数，缓存和 Service Worker 不会触发新的计数。
+**Q：怎么排查一条规则为什么没生效？**
 
-**Q：如何排查某条规则为什么没生效？**
+开启高级用户模式，打开 Logger（弹出面板的日志图标），访问目标页面。Logger 会列出每个请求经过的判定链路：被哪层、哪条规则处理，还是一路放行。如果目标请求根本没出现在列表里，说明它在更早的阶段被处理，或者压根没有发出。
 
-开 Logger（设置 → 我是高级用户 → 弹出面板的日志图标），访问目标页面。Logger 会显示每个网络请求的匹配链路：被哪条规则拦的、通过了哪层过滤。如果看不到相关请求，说明请求在更早的阶段被拦截或根本没有发出。
+## 自测
 
-## 自测：你能不能解释这些？
+不看原文回答下面的题目，答不出的回到对应小节重读。
 
-不看原文，试试回答：
-
-1. uBO 的三层过滤分别在哪三个阶段介入？它们中间谁先谁后？
-2. Bloom Filter 在这个系统里解决的具体问题是什么？如果没有它，性能会怎么变？
-3. 为什么 BitTrie 的查找复杂度是 O(k)，而规则总数不影响它？
-4. 动态过滤的 allow / block / noop 分别对后续的静态过滤产生什么影响？
-5. 脚本注入过滤和静态过滤各有什么覆盖不到的盲区？
-6. MRU 缓存和 Bloom Filter 都用来减少「不必要的工作」，它们各自的适用条件有什么不同？
-
-能回答 4 个以上，这篇文章没有白读。
-
-如果卡在哪题上，回头找对应的小节重读。读第二遍通常比第一遍收获大得多。
-
-## 谁该用、谁可以等等
-
-### 直接用 uBO，不做任何配置
-
-覆盖 95% 的用户。安装后默认的三套列表（EasyList + EasyPrivacy + uBO Filters）已经能拦截绝大多数广告和追踪器。
-
-### 开高级模式，学写规则
-
-覆盖 4% 的用户，典型特征是：
-
-- 你访问的某些网站（如视频站、网盘）反拦截做得狠，默认规则不够。
-- 你对某些网站的追踪行为特别在意，想把权限粒度压到单个脚本级别。
-- 你想看懂 Logger 里的匹配日志，自己能排查「这条为什么没拦」。
-
-### 暂时不用也没关系
-
-**如果你的浏览器在受管环境中运行**（企业策略锁定了扩展安装），那装不了的东西不用纠结。**如果你主要用移动端浏览器**，Firefox Android 版支持扩展，但 Chrome Android 版不支持——换浏览器比折腾规则更实际。
-
-### 从源码入手
-
-如果你关心的不是怎么用 uBO，而是一个高性能浏览器扩展写好之后能踩到什么程度的性能底线，从 `biditrie.js` → `bloom-filter.js` → `static-filtering-parser.js` → `dynamic-net-filtering.js` 的顺序通读，会比按文件名字母顺序翻源码效率高一个数量级。
-
----
-
-## 自测题
-
-读完本文后，请自测以下问题：
-
-1. **uBlock Origin 的三层过滤是什么？每层分别负责什么？**
+1. **uBO 对一个网络请求的判定顺序是什么？为什么静态引擎排在最后？**
    <details>
-   <summary>点击查看参考答案</summary>
-
-   - **静态过滤**：基于规则列表的 URL 匹配，由 BitTrie、Bloom Filter、MRU 缓存加速
-   - **动态过滤**：基于用户交互的动态规则（临时允许/阻止）
-   - **脚本注入过滤**：拦截或注入脚本（防跟踪、防恶意脚本）
+   <summary>参考答案</summary>
+   动态 URL 规则 → 动态主机防火墙（仅高级用户模式）→ 静态过滤引擎。静态规则最通用也最「他不认识你」，而动态规则更具体、量更小、判定更便宜，先判具体层既尊重用户意图又几乎不增加成本；静态引擎垫底保证社区规则不会覆盖用户明确表达的意图。
    </details>
 
-2. **uBO 如何把单次 URL 匹配的 O(n) 压到 O(k)？**
+2. **静态引擎怎么做到单次判定成本与规则库总量基本无关？**
    <details>
-   <summary>点击查看参考答案</summary>
-
-   - **BitTrie**：用位操作加速前缀匹配，只检查相关规则
-   - **Bloom Filter**：在查规则之前先筛一遍，快速排除不可能匹配的规则
-   - **MRU 缓存**：靠时间局部性省掉重复计算，最近匹配过的 URL 直接返回缓存结果
+   <summary>参考答案</summary>
+   规则编译期从模式提取 token 建倒排索引；匹配时用请求 URL 的 token 查索引，只有命中桶的少数候选规则进入精确匹配。判定成本取决于 URL 的 token 数和桶的平均大小，规则库总量翻倍并不直接增加任何一次判定的开销。
    </details>
 
-3. **BitTrie、Bloom Filter、MRU 缓存三者如何协作？**
+3. **`||ad.doubleclick.net^` 为什么不会误匹配 `notad.doubleclick.net.evil.com`？锚定判断是怎么做的？**
    <details>
-   <summary>点击查看参考答案</summary>
-
-   - 请求到来 → Bloom Filter 快速预判（可能匹配？）→ 如果预判可能匹配 → BitTrie 精确匹配 → 如果匹配成功 → MRU 缓存记录结果
-   - 如果 Bloom Filter 预判不可能匹配 → 直接跳过，不查 BitTrie
+   <summary>参考答案</summary>
+   引擎在请求 URL 里定位 hostname 区间（`://` 之后），要求模式匹配位置落在区间内、且左邻字符是 `.` 或恰为区间起点——`notad...` 的匹配位置左邻是 `t`，不满足；`.evil.com` 结尾则意味着匹配位置虽在 hostname 里但整体前缀不成立。复杂形态的「hostname + 路径」联合锚定由 BidiTrie 完成：两段字符存进同一缓冲区，hostname 反向、pattern 正向，从两个锚点向中间推进匹配。
    </details>
 
-4. **如何为 uBO 写一条高质量过滤规则？**
+4. **动态过滤的 block / allow / noop 各是什么语义？noop 存在的意义是什么？**
    <details>
-   <summary>点击查看参考答案</summary>
-
-   - 使用 Extended Syntax（高级语法）
-   - 指定明确的触发条件（域名、URL 模式、资源类型）
-   - 避免过于宽泛的规则（会影响性能）
-   - 测试规则是否在不同网站上正常工作
+   <summary>参考答案</summary>
+   block 拦截对应方向的请求；allow 放行并免受动态层更宽规则影响；noop 表示本格不做结论，判定降级给更宽的动态规则或静态引擎。noop 的意义是「在这个具体维度上我不表态」——让管理员设的全局规则继续管，而不用为了放开某格删掉整条规则。
    </details>
 
-5. **谁该用 uBO 的高级模式？谁可以先用默认配置？**
+5. **`##+js(example.com, alert, 1)` 这条规则错在哪里？scriptlet 对外部脚本文件有效吗？**
    <details>
-   <summary>点击查看参考答案</summary>
-
-   - **直接用 uBO**：普通用户，不想折腾配置
-   - **开高级模式，学写规则**：开发者、隐私爱好者、想深入理解过滤机制的人
-   - **暂时不用也没关系**：企业受管环境（IT 策略锁定扩展安装）、主要用移动端浏览器（Firefox Android 支持扩展，Chrome Android 不支持）
+   <summary>参考答案</summary>
+   `##+js()` 的第一个参数必须是内置 scriptlet 的名字（如 `set-constant`），域名应写在规则左侧的站点限定位置，这条规则把域名当 scriptlet 名，不合法。scriptlet 注入改不了外部脚本文件的执行上下文——外部脚本要在加载环节用网络层规则拦截或重定向替换。
    </details>
 
----
+6. **元素隐藏和资源重定向各解决什么问题？两者的盲区分别在哪？**
+   <details>
+   <summary>参考答案</summary>
+   元素隐藏处理「内容已在页面里」的广告，靠选择器隐藏节点，盲区是内容以脚本行为存在（不渲染成固定节点）的情况；重定向处理「拦截会触发反拦截检测」的请求，靠替换响应体瞒过检测，盲区是写在页面内联脚本里的检测逻辑——那要靠 scriptlet 改写变量。三者组合才是完整对策。
+   </details>
 
-## 练习
+## 采用建议
 
-### 练习 1：安装 uBO 并开启高级模式
-
-**目标**：从零开始安装 uBO，并开启高级模式学写过滤规则。
-
-**步骤**：
-1. 在 Firefox/Chrome 扩展商店搜索"uBlock Origin"并安装
-2. 点击 uBO 图标 → 打开控制面板
-3. 进入"设置"标签页 → 开启"高级用户界面"
-4. 进入"我的规则"标签页 → 尝试添加一条动态过滤规则（例如：阻止某个域名的脚本）
-5. 访问 [uBlock Origin Wiki — Extended Syntax](https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#extended-syntax) 学写静态过滤规则
-
-**验证**：你能成功添加一条动态过滤规则和一条静态过滤规则吗？规则是否按预期生效？
-
----
-
-### 练习 2：阅读 uBO 源码，理解 BitTrie 的实现
-
-**目标**：深入理解 uBO 如何用 BitTrie 加速前缀匹配。
-
-**步骤**：
-1. 克隆 uBO 仓库：`git clone https://github.com/gorhill/uBlock`
-2. 打开 `src/js/biditrie.js`（或类似文件名，取决于版本）
-3. 理解 BitTrie 的数据结构（如何用位操作存储和查询前缀）
-4. 写一个简化版 BitTrie 实现（只用纯 JavaScript，不依赖 uBO 的代码）
-5. 用 `performance.now()` 测试你的实现和线性搜索的性能差异
-
-**验证**：你的简化版 BitTrie 实现比线性搜索快多少？在什么条件下 Bloom Filter 的预判会失效（误判）？
-
----
-
-### 练习 3：为你的团队或项目写一套过滤规则
-
-**目标**：根据你们团队或项目的实际需求，写一套自定义过滤规则。
-
-**步骤**：
-1. 明确你们的需求：要拦截什么？（广告、跟踪器、恶意域名、特定 CDN？）
-2. 从 EasyList 或其他规则库找基础规则
-3. 根据你们的需求写自定义规则（使用 Extended Syntax）
-4. 在 uBO 中导入你们的自定义规则列表
-5. 测试规则是否按预期生效，是否有误杀（把正常内容拦截了）
-
-**验证**：你们的自定义规则列表有效吗？误杀率高吗？如何持续优化？
-
----
-
-## 进阶路径
-
-如果你想更深入地理解或扩展 uBO，可以按这个顺序：
-
-1. **系统阅读 uBO Wiki**：从 [uBlock Origin Wiki](https://github.com/gorhill/uBlock/wiki) 开始，理解所有过滤语法和配置选项
-2. **深入源码**：按 `biditrie.js` → `bloom-filter.js` → `static-filtering-parser.js` → `dynamic-net-filtering.js` 的顺序通读，理解三层过滤的实现细节
-3. **写一个 uBO 扩展或用户脚本**：基于 uBO 的 API 或过滤机制，写一个自定义扩展（例如：自动更新规则、可视化过滤统计）
-4. **贡献规则或代码**：给 EasyList 或 uBO 仓库提交 PR，修复 Bug、添加新规则、改进文档
-5. **研究浏览器扩展的性能优化**：理解 uBO 如何把性能压到极致，学习如何写高性能的浏览器扩展
-6. **对比其他拦截器**：研究 AdBlock Plus、Brave Shields、Firefox 内置拦截器的实现，理解它们的差异和取舍
-7. **写一篇深度文章**：把你对 uBO 架构的理解写成文章，分享给社区（就像本文一样）
-
----
+- **Firefox 用户**：直接装 uBO，默认配置即可。想进阶，先开高级用户模式玩几天防火墙矩阵，再学写规则。
+- **Chrome 用户**：原版 uBO 已无法使用。想要过滤能力就装 uBlock Origin Lite，接受它的能力收窄；如果 MV2 级别的过滤和动态规则对你很重要，换 Firefox 是比折腾替代品更省力的路线。
+- **受管环境**：企业策略锁了扩展安装就别纠结，这不是软件能解决的问题。
+- **想读源码的工程师**：uBO 值得精读的不是广告拦截本身，而是「规模固定的冷数据 + 海量重复查询」这类问题的通用解法——倒排索引、紧凑 trie、判定顺序、缓存收窄。建议顺序：`pagestore.js` 的 `filterRequest` 看清判定链 → `static-net-filtering.js` 的 `urlTokenizer` 与 Filter 类看懂主路径 → `biditrie.js` 与 `src/js/wasm/` 看 WASM 落点 → `cosmetic-filtering.js`、`scriptlet-filtering.js` 看页面层的同类取舍。
 
 ## 资料口径说明
 
-为保障文章的判断和可操作性，在此说明本文章的资料来源和边界：
-
-1. **信息来源与时效性**：本文基于 uBlock Origin 的官方仓库（[gorhill/uBlock](https://github.com/gorhill/uBlock)）、官方 Wiki 和源码。uBO 仍在维护中，部分实现细节（过滤引擎、性能优化、API 接口）可能在你读到时已经更新。
-2. **功能验证**：文中提到的三层过滤（静态、动态、脚本注入）、BitTrie、Bloom Filter、MRU 缓存等机制已在 uBO 源码中验证，但我未逐一实测性能数据。实际使用时请参考最新官方文档和源码。
-3. **规则语法的判断边界**：本文提到了 Extended Syntax（高级语法），但未提供完整语法参考。写过滤规则时请参考 [uBlock Origin Wiki — Extended Syntax](https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#extended-syntax) 的最新版本。
-4. **性能数据的估算边界**：文中提到的"O(n) 压到 O(k)"是理论复杂度。实际性能取决于规则数量、URL 长度、Bloom Filter 误判率、MRU 缓存命中率等因素。我未做系统性能测试，数据仅供参考。
-5. **浏览器兼容性的局限性**：uBO 支持 Firefox、Chrome、Edge 等主流浏览器，但部分高级功能（动态过滤、脚本注入）在不同浏览器中的实现可能有差异。实际使用时请测试你的目标浏览器。
-6. **更新记录**：本文撰写于 2026-06-30，基于 uBO 的当时版本。如果 uBO 在之后有重大版本更新（新增过滤引擎、修改性能优化策略、变更 API），本文可能需要补充。
-
----
+1. **事实来源**：本文机制描述对照 gorhill/uBlock 主分支源码（2026-09-12 提交），版本号与 Stars 数取自 GitHub（release 1.74.0，2026-08-25；Stars 约 6.8 万，2026-09-13 查询）。初稿发布于 2026-04-30，2026-09-13 按源码全面核实修订。
+2. **未实测的部分**：本文未做系统性能测试，判定顺序、数据结构、缓存范围均以源码为准；涉及性能的说法只到定性层面，未给出量化数字。
+3. **时效边界**：Chrome 对 MV2 的停用状态、uBO Lite 的功能范围都在演进中，阅读时请以官方仓库与 Chrome 开发者文档的最新说明为准。
+4. **规则语法**：本文只覆盖常用子集，完整语法以 [官方 Wiki 的过滤语法页](https://github.com/gorhill/uBlock/wiki/Static-filter-syntax) 为准。
 
 ## 参考资源
 
 - [gorhill/uBlock 官方仓库](https://github.com/gorhill/uBlock)
-- [uBlock Origin Wiki — Extended Syntax](https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#extended-syntax)
-- [uBlock Origin Wiki — Dynamic Filtering Quick Guide](https://github.com/gorhill/uBlock/wiki/Dynamic-filtering:-quick-guide)
-- [EasyList 官方规则库](https://easylist.to/)
+- [uBlock Origin Wiki — Static Filter Syntax](https://github.com/gorhill/uBlock/wiki/Static-filter-syntax)
+- [uBlock Origin Wiki — Dynamic Filtering: Quick Guide](https://github.com/gorhill/uBlock/wiki/Dynamic-filtering:-quick-guide)
+- [uBlock Origin Lite（MV3 版）仓库](https://github.com/uBlockOrigin/uBOL-home)
+- [EasyList 规则列表](https://easylist.to/)
 - [Peter Lowe's Blocklist](https://pgl.yoyo.org/adservers/)
-- [gorhill/uBlock 源码阅读指南（非官方）](https://github.com/gorhill/uBlock/wiki/Code-review)

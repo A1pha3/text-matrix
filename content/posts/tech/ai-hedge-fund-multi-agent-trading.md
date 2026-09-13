@@ -1,366 +1,271 @@
 ---
-title: "AI Hedge Fund：多 Agent 对冲基金团队实战"
+title: "AI Hedge Fund：LLM 只出观点，代码决定交易"
 date: "2026-04-09T11:30:00+08:00"
-lastmod: 2026-08-13T00:00:00+08:00
+lastmod: 2026-09-13T00:00:00+08:00
 slug: "ai-hedge-fund-multi-agent-trading"
 github_repo: "virattt/ai-hedge-fund"
 source_key: "gh:virattt/ai-hedge-fund"
-description: "基于源码，解析 virattt/ai-hedge-fund 的多 Agent 架构、风控链路、CLI 与 Web 入口，以及可迁移的量化系统设计模式。"
+description: "基于 2026 年 9 月的 main 分支源码，解析 virattt/ai-hedge-fund 重写后的引擎：AlphaModel 统一接口、观点与交易隔离、回测即实盘的流水线，以及可迁移的工程模式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["多 Agent", "LangGraph", "Python", "量化交易"]
+tags: ["多 Agent", "LLM", "Python", "量化交易"]
 ---
 
-很多多 Agent 项目停留在"角色很多、提示词很多、截图很好看"的层面，`ai-hedge-fund` 做了一件更实在的事：把分析层、风控层、决策层分开。本文基于源码解析它的架构设计、协作模式和可迁移的设计模式。
+virattt/ai-hedge-fund 在 2026 年年中把仓库重写了一遍。网上流传的大量解读——包括本文旧版——描述的还是旧版 LangGraph 工作流：13 位投资大师 agent 加风险管理员、组合经理排队走图。这套东西已经从主干上消失了。新版只保留一个 `hedge_fund/` 包，并把一条原则写进了"不可妥协"清单：**The LLM never touches the trade**——语言模型只产出观点，仓位、订单、风控全部由确定性代码完成。
+
+本文基于 2026 年 9 月 13 日的 main 分支（v2.2.0）解析新架构。所有文件路径和命令都对照当前源码核实过。
 
 ---
 
 ## §0 三分钟速览
 
-先记住下面 4 点，其余内容按需跳过：
+先记住 4 点，其余按需跳读：
 
-1. **`ai-hedge-fund` 是教育和研究用的多 Agent 投资决策工作流，不接真实券商，不下真实订单。**
-2. **看点在"分析层、风控层、决策层如何分离"，不在复刻了多少位投资大师。**
-3. **项目不只有 CLI，还包含 Web 应用，能观察它从 Demo 走向产品雏形。**
-4. **最值得带走的设计是"先用代码收缩动作空间，再让 LLM 做选择"。**
+1. **这是教育研究项目，不交易。** README 原话是 "the system does not actually make any trades"；paper 和 live 两类 broker 在路线图上还是 ⬜。
+2. **旧版多 Agent 工作流已成历史。** LangGraph 依赖已移除，13 位投资人 agent 只移植了 5 位，包已发布到 PyPI（`aihf`），入口是一个终端应用（TUI）。
+3. **核心抽象只有一个接口：** `AlphaModel.predict(ticker, date, data_client) -> Signal`。LLM 投资人和量化模型实现同一接口，因此可回测、可组合、可替换。
+4. **一条流水线贯穿所有模式：** `run_cycle`（数据 → 分析师 → 组合构建 → 风控 → 执行 → 账本）。回测就是这条流水线在历史上循环。
 
 ---
 
-## §1 5 个关键词速览
+## §1 5 个关键词
 
 | 关键词 | 这篇文章里的意思 |
 | ------ | ---------------- |
-| `Agent` | 负责某一类分析或决策任务的独立节点 |
-| `LangGraph` | 用来编排多个节点执行顺序的工作流框架 |
-| `LLM` | 生成分析结论或最终选择的模型 |
-| `ticker` | 股票代码，例如 `AAPL`、`MSFT` |
-| `portfolio` | 当前组合的现金、持仓与风险约束 |
+| `mandate` | 基金章程，一份 YAML：策略、人员、风控、资本、调仓节奏——不含任何股票代码 |
+| `strategy`（pod） | 一组分析师加一个混合政策，分走一份资本切片 |
+| `alpha model` | 产出观点的组件，LLM 投资人和量化模型都算 |
+| `Signal` | 观点的数据形态：`[-1, +1]` 的信念值，加一段书面理由 |
+| `run_cycle` | 基金的一个 tick，所有模式共用的唯一代码路径 |
 
-主线：多个 `Agent` 围绕 `ticker` 生成观点，`LangGraph` 编排流程，`LLM` 参与分析和选择，最终结果受 `portfolio` 约束。
-
----
-
-## §2 先给结论：这个项目到底是什么
-
-`virattt/ai-hedge-fund` 是一个**教育和研究用途**的多 Agent 投资决策项目。目标是把"多名分析师 + 风控 + 投资组合经理"的决策流程落成一套可运行的 Python 系统，而不是接入真实券商做自动下单。
-
-三条事实边界：
-
-- **它会生成交易决策，但默认不实际下单**
-- **它确实使用多 Agent 协作，但重心是"信号汇总与约束决策"**
-- **它已经不只是命令行 Demo，还包含一个 `app/` 目录下的 Web 应用**
-
-第一次看这个仓库，可以把它理解成一套"面向股票分析场景的多 Agent 工作流样板"，而不是一套可直接实盘的量化交易平台。
+主线：一份 `mandate` 定义基金怎么组织，若干 `strategy` 各自雇佣 `alpha model`，模型对每只股票产出 `Signal`，`run_cycle` 把观点混合成目标持仓、过风控、下单、存档。
 
 ---
 
-## §3 为什么值得研究
+## §2 v1 已成历史
 
-值得研究的地方，落在三处具体设计上。
+对照一下前后差异，读者能省掉大量过时资料的干扰。
 
-### 3.1 角色分工落成了可执行节点
+**旧版（约 2025 年至 2026 年上半年）**：`src/main.py` 用 LangGraph 的 `StateGraph` 编排 13 位投资人 agent（Buffett、Munger、Graham、Cathie Wood 等）加 6 个功能分析师（估值、基本面、技术面、情绪等），后面接 `risk_management_agent` 和 `portfolio_manager` 两个节点；另有 FastAPI + React 的 `app/` 目录和独立的 `src/backtester.py`。
 
-在 `src/main.py` 中，项目通过 `LangGraph` 把工作流拆成四个阶段：
+**新版（当前 main）**：根目录只剩 `hedge_fund/`，约 90 个文件，每个核心模块都带 pytest 测试。`pyproject.toml` 的依赖里已经没有 `langgraph`，LLM 调用直接走 langchain 的各家 provider 客户端。2026 年 8 月，v2 成为默认版本并打包发布到 PyPI，安装命令是 `pipx install aihf`。项目 MIT 协议，要求 Python 3.11+，目前 6.3 万 stars（2026 年 9 月）。
 
-1. `start_node`
-2. 若干个分析 Agent 节点
-3. `risk_management_agent`
-4. `portfolio_manager`
+重写不是推翻判断，而是把判断升级成了原则。旧版里"分析归 agent、约束归代码"体现在两个节点的分工；新版把它写进 `hedge_fund/README.md` 的 Principles 一节，措辞是硬性的："Agents form views and narrate; deterministic code sizes and places orders; risk limits are hard gates."（agent 形成观点并叙述，确定性代码定量和下单，风控限额是硬门。）
 
-多个独立节点先产出分析信号，再统一进入风控和最终决策，而不是用一个大 Prompt 扮演所有角色。
+也有确实丢掉的东西：v1 的 6 个功能分析师在 v2 路线图里没有对应条目；13 位投资人只回来了 5 位（Buffett、Munger、Graham、Lynch、Druckenmiller），其余 8 位在路线图上等移植；Ollama 本地模型支持也在路上。想复刻旧版功能的人，现在得自己动手。
 
-### 3.2 "看法"与"约束"分离
+---
 
-很多 Agent 系统的问题在于，分析意见和执行约束混在一起，最后谁都能越权。这个项目的做法更清晰：
+## §3 系统地图：三层嵌套，一条流水线
 
-- 分析 Agent 负责产出 `bullish`、`bearish`、`neutral` 等信号
-- 风险管理 Agent 负责根据波动率、相关性、仓位现状计算可承受的头寸上限
-- 投资组合管理 Agent 只在"允许动作集合"里做最终选择
+v2 把基金组织成三层，每层都可以替换（`VISION.md` 的原话是 "Everything is pluggable"）：
 
-主观判断留给 Agent，硬约束留给确定性代码。
+```text
+FUND     = 在若干 STRATEGY 上切资本，对合并后的账本上 master risk
+STRATEGY = 一个 pod：一组模型 + 一个混合政策 + 一份资本切片
+MODEL    = 一个 alpha model → 产出 Signal（信念值 + 理由）
+```
 
-### 3.3 从实验到产品雏形的演进路径
-
-仓库里同时存在：
-
-- `src/`：命令行与分析逻辑
-- `src/backtester.py`：回测脚本
-- `app/backend/`：FastAPI 后端
-- `app/frontend/`：React + Vite 前端
-- `v2/`：更偏实验性质的下一代目录
-
-对学习者来说，看到的是逐步产品化的演进路线，而不是单点脚本。
-
-> 版本提示：本文基于 2026 年 4 月的 `main` 分支。此后项目开始向 v2 重构——当前 main 已引入 `--ticker` 参数并逐步把 CLI 收拢到 `v2.run`，README 里的安装、回测命令也可能随之微调。对照源码时以仓库当前状态为准。
-
-下面这张图是系统的整体分工，先建立地图再进细节：
+一次运行的数据流是单向的：
 
 ```mermaid
 flowchart LR
-    A[start_node] --> B1[风格型 Agent]
-    A --> B2[功能型 Agent]
-    B1 --> C[risk_management_agent]
-    B2 --> C
-    C --> D[portfolio_manager]
-    D --> E[最后决策 / 订单]
+    D[data 点内时间数据] --> S[signals alpha models 出观点]
+    S --> P[portfolio 观点混合成目标权重]
+    P --> R[risk 硬性限额钳制]
+    R --> X[brokers 模拟成交]
+    X --> L[pipeline CycleRecord 收据存档]
 ```
+
+各模块与仓库目录的对应：`data/` 是带磁盘缓存的 Financial Datasets 客户端，`signals/` 放 alpha model，`portfolio/` 做观点混合，`risk/` 是限额，`brokers/` 是券商协议和模拟券商，`pipeline/run_cycle.py` 把它们串成一个 tick，`backtesting/` 负责在历史上循环，`tui/` 是交互界面。`fund/spec.py` 定义 `mandate` 的数据结构。
+
+流水线里有个刻意安排：`run_cycle.py` 的模块注释明确说自己是全链路**唯一有副作用**的环节——只有它跟数据源和券商打交道，其余每个阶段（混合、限额、生成订单）都是纯函数。"给定相同输入必然得到相同输出"因此成为可测试的性质，而不是愿望。
 
 ---
 
-## §4 项目里的 Agent 是两类角色协作，而不是"职位表演"
+## §4 AlphaModel：一种接口，两种分析师
 
-原始 README 列出了很多 Agent，如果只把它们翻译成"研究员、交易员、合规官"之类的传统岗位，反而会误读项目。更准确的分类是下面两类。
+### 4.1 接口契约
 
-### 4.1 投资风格型 Agent
+`signals/base.py` 定义了整个系统的合约：
 
-这类 Agent 借用知名投资人的思路来形成观点，例如：
+```python
+class AlphaModel(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str: ...
 
-- `aswath_damodaran`
-- `ben_graham`
-- `bill_ackman`
-- `cathie_wood`
-- `charlie_munger`
-- `michael_burry`
-- `mohnish_pabrai`
-- `nassim_taleb`
-- `peter_lynch`
-- `phil_fisher`
-- `rakesh_jhunjhunwala`
-- `stanley_druckenmiller`
-- `warren_buffett`
+    @abstractmethod
+    def predict(self, ticker: str, date: str, data_client: DataClient) -> Signal:
+        """Form a point-in-time view on *ticker* as of *date*."""
+```
 
-它们的共同点是把不同投资框架编码为不同分析视角，而不是"名字很响"。系统因此天然保留多种判断口径，而不是只有一个声音。
+产出的 `Signal`（`models.py`）是个 Pydantic 模型：`value` 是 `[-1.0, +1.0]` 的信念值，`reasoning` 是人类可读的理由，另带量化的 `components` 和自由的 `metadata`。`0.0` 表示"没有观点"（弃权）。
 
-### 4.2 功能分析型 Agent
+这个接口刻意只管"形成观点"，不管仓位机制——入场时点、持仓期、规模都归下游。`signals/base.py` 的注释说这个分离是 deliberate（有意的）。量化模型继承 `QuantModel`（纯数学，附带了 RSI、sigmoid 等公共工具），LLM 投资人继承 `LLMAgent`。两条路，一个出口。
 
-这类 Agent 直接围绕某种分析方法工作：
+### 4.2 LLM 投资人：persona 只是 system prompt
 
-| Agent                    | 作用           |
-| ------------------------ | -------------- |
-| `valuation_analyst`      | 做估值分析     |
-| `fundamentals_analyst`   | 做基本面分析   |
-| `technical_analyst`      | 做技术面分析   |
-| `sentiment_analyst`      | 做市场情绪分析 |
-| `news_sentiment_analyst` | 做新闻情绪分析 |
-| `growth_analyst`         | 做成长性分析   |
+`signals/buffett.py` 全文只有 54 行，机制部分一行没有——`LLMAgent` 基类包办了取数据、拼 prompt、调模型、解析、缓存，子类只需要提供名字和一段 system prompt。Buffett 的 prompt 是一份检查清单：能力圈、护城河、管理层资本配置、财务强度、估值、十年持有意愿，最后要求只输出 JSON：`{"signal": "bullish"|"bearish"|"neutral", "confidence": <0-100>, "reasoning": "..."}`。
 
-和风格型 Agent 相比，这一类更接近"专业职能模块"。
+prompt 里有两条硬规矩值得注意：只准用给定的数据，并把数据里最近的财报日期当作"今天"——这是把 point-in-time 约束压进模型上下文；数据不足以判断时必须明说并弃权。`VISION.md` 同时声明这些 persona 是公开投资哲学的风格化近似，不是本人，也不构成背书。
 
-### 4.3 两个决定结果的关键节点
+失败处理也写成了契约（`llm_agent.py` 的 docstring）：
 
-无论前面选择多少分析 Agent，最后都要经过两个关键节点：
+- **数据层错误直接抛出。** 一个坏掉的财务快照绝不允许悄悄变成"中性观点"。
+- **LLM 调用或解析失败则弃权**，产出 `Signal(value=0.0, metadata={"abstained": True})`。
+- **每次 LLM 调用的完整 prompt 和响应都落盘缓存**（`PromptCache`）。同一个 snapshot 不付第二次 API 钱；一位 persona 被两个策略同时雇佣时，第二次调用是缓存命中。
 
-| 节点                    | 作用                               |
-| ----------------------- | ---------------------------------- |
-| `risk_management_agent` | 计算风险限制、可用仓位与相关性约束 |
-| `portfolio_manager`     | 在可执行动作集合中选择最终买卖决策 |
+第三条解释了为什么这个架构敢让 LLM 参与回测：缓存保证了回放是逐字节确定的，成本也可控。
 
-系统的约束就落在这里：**意见可以发散，落单必须收敛**。
+### 4.3 PEAD：量化侧的样本
+
+`signals/pead.py` 实现了财报后漂移（Post-Earnings Announcement Drift）：业绩超预期（BEAT）后做多，不及预期（MISS）后做空，赌市场对财报消息反应不足、股价继续朝意外方向漂。
+
+实现要点：只看 `date` 之前已经提交的财报文件（8-K 优先于 10-Q/10-K，因为 8-K 披露最早）；事件距今超过默认 4 天窗口就不再发力；信念值固定 ±1.0，v0 不按超预期幅度缩放。整个模型是纯 Python 数学，零 LLM 调用——和 Buffett agent 一样，产出的都是同一个 `Signal`。
+
+一个 LLM agent 和一个漂移模型能在同一份回测、同一个组合里平起平坐，靠的就是 §4.1 那个接口。这是 v2 相对 v1 最大的架构收益。
 
 ---
 
-## §5 架构要点：项目如何在代码里组织协作
+## §5 一个 cycle 的完整流转
 
-### 5.1 工作流由 `LangGraph` 负责编排
+用仓库自带的 `fund/example.yaml` 走一遍。章程是：`deep-value` 策略占 0.6 资本（Graham 权重 2.0，Buffett、Munger 各 1.0），`earnings-drift` 策略占 0.4（PEAD）；单票上限 25%，总敞口上限 1.0，资金 10 万美元，每周调仓，基准 SPY。
 
-下面这段是项目主流程的关键结构：
+假设某天对 AAPL、MSFT 各跑一轮（以下数字为演示）：
 
-```python
-def create_workflow(selected_analysts=None):
-    workflow = StateGraph(AgentState)
-    workflow.add_node("start_node", start)
+1. **取数。** `run_cycle` 先给所有标的取 as-of 之前的最近收盘价。AAPL、MSFT 有价；假设 PEAD 查 AAPL 财报，发现 3 天前有一份 8-K 超预期。
+2. **出观点。** deep-value 策略问 Graham（0.8）、Buffett（0.6）、Munger（0.7）——都是演示数字；earnings-drift 策略问 PEAD，AAPL 得 +1.0。MSFT 没有近期财报，PEAD 给 0.0。
+3. **策略内混合。** deep-value 对 AAPL 的加权信念 = (2.0×0.8 + 1.0×0.6 + 1.0×0.7) / 4.0 = 0.725；对 MSFT 的三人意见弱一些，混出 0.2。策略内按截面归一到 `gross_target`（1.0）：AAPL 拿到 0.784，MSFT 拿到 0.216。
+4. **策略间净额。** 每个 pod 的权重乘自己的资本切片再相加：AAPL = 0.6×0.784 + 0.4×1.0 = 0.870，MSFT = 0.6×0.216 = 0.130。
+5. **风控钳制。** AAPL 的 0.870 超过单票上限 0.25，被钳到 0.25；MSFT 的 0.130 合规保留。总敞口 0.38，没碰到 1.0 上限。**被钳掉的 62% 敞口留在现金里**——风控不把额度分给别人。
+6. **执行与存档。** 执行层把目标权重和当前持仓的差值变成订单，`SimBroker` 成交，整张 `CycleRecord`——每个 Signal 及其理由、每次钳制事件、订单、成交、持仓、NAV——作为收据返回。
 
-    analyst_nodes = get_analyst_nodes()
+关键在最后一步的观感：LLM（Graham、Buffett、Munger）的发言停在信念值，真正决定" AAPL 只买 25%"的是一条 `if abs(w) > cap` 的分支。模型提要求，代码做处置——源码里的说法是 "conviction requests, risk disposes"。
 
-    if selected_analysts is None:
-        selected_analysts = list(analyst_nodes.keys())
+---
 
-    for analyst_key in selected_analysts:
-        node_name, node_func = analyst_nodes[analyst_key]
-        workflow.add_node(node_name, node_func)
-        workflow.add_edge("start_node", node_name)
+## §6 两道确定性闸门
 
-    workflow.add_node("risk_management_agent", risk_management_agent)
-    workflow.add_node("portfolio_manager", portfolio_management_agent)
+### 6.1 组合构建：弃权不冒充中性
 
-    for analyst_key in selected_analysts:
-        node_name = analyst_nodes[analyst_key][0]
-        workflow.add_edge(node_name, "risk_management_agent")
+`portfolio/construction.py` 的 `blend_signals` 把一个策略内所有观点压成权重。单个标的的混合信念是投票加权均值：
 
-    workflow.add_edge("risk_management_agent", "portfolio_manager")
-    workflow.add_edge("portfolio_manager", END)
+```text
+conviction_t = Σ(w_m × value_m,t) / Σ(w_m)
 ```
 
-节点之间的状态通过 `AgentState` 传递：
+细节在弃权语义上。`metadata.abstained` 为真的 Signal 被同时剔除出分子和分母——"没有观点"不能冒充"观点：中性"。而非弃权的 0.0（比如 PEAD 窗口外）是真实的 neutral 票，会稀释组合。三种状态（看好/看空/真实中性）之外再加第四种（弃权），是很多投票系统没想清楚的地方。
 
-```python
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
-    data: Annotated[dict[str, any], merge_dicts]
-    metadata: Annotated[dict[str, any], merge_dicts]
+可选的 `market_neutral` 开关先对信念做截面去均值再缩放：做多相对最喜欢的、做空相对最不喜欢的，整个 sleeve 的美元敞口为零。所有信念相同或全零时，输出空仓而不是除零崩溃。
+
+源码也诚实地记了自己的已知瑕疵：截面归一化忽略绝对信念，唯一的弱观点也会拿满 `gross_target`，然后被风控钳回去。作者的选择是先接受，等评估能力跟上再加减仓门槛——这个取舍本身写在注释里，比藏着好。
+
+### 6.2 风控：顺序保证幂等，钳掉的不再分配
+
+`risk/limits.py` 只有两条规则：`max_position_pct`（单票权重上限）和 `max_gross_exposure`（总敞口上限，1.0 即不加杠杆）。执行顺序固定：先逐票钳（保留多空方向），再对仍超限的总敞口等比缩小。只缩不涨，所以第二步不会重新违反第一步——这对性质保证了函数幂等。
+
+两条注释级别的设计决定值得抄走。其一，被钳掉的敞口**留在现金里**，不重新分配给其他标的——重新分配会让风控阶段变成加仓阶段，职责颠倒。其二，每次钳制生成一条 `ClampEvent`（哪条限额、钳前钳后各多少），随 `CycleRecord` 落账，任何一笔持仓偏离都能追溯到具体哪条规则在哪个值上开的火。
+
+---
+
+## §7 回测：同一引擎的历史回放
+
+### 7.1 回测就是 run_cycle 循环
+
+`backtesting/` 的 `backtest_fund` 把 `run_cycle` 沿历史按章程的调仓节奏（daily/weekly/monthly）循环，配 `SimBroker` 成交，产出对基准（`mandate` 里的 `benchmark`，同时充当交易日历网格）的净值曲线。`VISION.md` 的目标形态是三种模式只换时钟和券商：BACKTEST 用历史时钟加模拟券商，PAPER 用实时时钟加模拟券商，LIVE 用实时时钟加真券商。
+
+现状要说清楚：三种模式里只有回测和单日运行是通的。paper broker 和 live broker 都在路线图上标 ⬜；账本也只写了"写的一半"——每次运行从章程里的现金起步，NAV 没有跨运行的记忆。当前开发焦点（ROADMAP 第一段）就是把读的一半补上：从最近一张收据恢复券商状态，让 NAV 变成可累积的 track record。
+
+### 7.2 单模型研究工具
+
+全基金回测之外还有两件研究工具。`BacktestEngine` 针对**单个** alpha model：等额下单、信念过阈值才动、默认持有 5 个交易日，输出收益、Sharpe、回撤。`event_study/` 算市场模型异常收益（CARs），用来回答"财报事件后到底漂了多少"。
+
+### 7.3 还缺什么
+
+用它做严肃研究前，先看这份缺口清单（全部来自 ROADMAP 的 ⬜/🚧 项）：过拟合验证门（CPCV、PBO 概率）未实现，`validation/` 目前只有空壳；组合构建是 v0 政策（作者自己标注了 wart）；动态资本分配器、调度器、观察性都还没有。教育用途和策略原型验证够用，可信的绩效归因要等验证门落地。
+
+---
+
+## §8 上手
+
+安装即用，不用预配 key：
+
+```bash
+pipx install aihf
+aihf
 ```
 
-### 5.2 一个 ticker 如何穿过整条链路
+不带参数的 `aihf` 启动交互式终端应用（Textual 实现的 TUI）：选股票、选策略、定调仓节奏，回测时净值曲线对着基准现场画。建好的基金存成 `~/.hedge-fund/mandates/` 下的 YAML。首次运行会提示要两把 key——Financial Datasets（行情、基本面、财报）和任一家 LLM（Anthropic、OpenAI、DeepSeek、Google、xAI、Kimi）——存进 `~/.hedge-fund/.env`，shell 里显式导出的变量优先。API 响应全部缓存到 `~/.hedge-fund/cache/`，重跑免费且离线可用。
 
-以分析 `AAPL` 为例，一条完整的流转是：
+非交互运行，输出是全 JSON 的 `CycleRecord`（stdout），人读摘要走 stderr：
 
-1. `start_node` 拉取 `AAPL` 的行情与基本面数据，写入 `AgentState.data`。
-2. 被选中的分析 Agent 各自读取 `data`，产出 `bullish` / `bearish` / `neutral` 信号，写回共享状态。
-3. `risk_management_agent` 读取全部信号与当前组合，算出 `AAPL` 的仓位上限和相关性约束。
-4. `portfolio_manager` 只在"允许动作集合"内选出最终动作（买入、卖出或持有）及数量。
+```bash
+aihf ~/.hedge-fund/mandates/example.yaml --tickers AAPL,MSFT
+```
 
-关键在最后一步：模型不是被问"该怎么办"，而是被塞进一个已经排除越权选项的集合里做选择。
+回测加 `--backtest`，起止日期用 `--start` 和 `--date` 控制：
 
-### 5.3 快速运行
+```bash
+aihf ~/.hedge-fund/mandates/example.yaml --tickers AAPL,MSFT --backtest
+```
 
-克隆并配置环境：
+注意 `--tickers` 是运行时输入，不是章程字段——基金是"台子"，指向什么股票是每次运行的决定，这个决定也会被记录进收据。
+
+开发路径：
 
 ```bash
 git clone https://github.com/virattt/ai-hedge-fund.git
 cd ai-hedge-fund
-cp .env.example .env
 poetry install
+poetry run aihf
+poetry run pytest hedge_fund
 ```
-
-基础运行：
-
-```bash
-poetry run python src/main.py --ticker AAPL,MSFT,NVDA
-```
-
-> 说明：`--ticker` 是当前 main 的参数写法；2026 年 4 月版本曾用 `--tickers`。两者都表示目标股票代码列表。
-
-使用本地模型（通过 Ollama）：
-
-```bash
-poetry run python src/main.py --ticker AAPL,MSFT,NVDA --ollama
-```
-
-指定时间范围和参数：
-
-```bash
-poetry run python src/main.py \
-  --ticker AAPL,MSFT,NVDA \
-  --analysts warren_buffett,valuation_analyst \
-  --model gpt-4o \
-  --start-date 2024-01-01 \
-  --end-date 2024-03-01 \
-  --initial-cash 100000 \
-  --margin-requirement 0.5
-```
-
-回测：
-
-```bash
-poetry run python src/backtester.py --ticker AAPL,MSFT,NVDA
-```
-
-回测模块复用 `run_hedge_fund()` 作为决策引擎——研究态运行与回测态运行共享决策逻辑，修改 Agent 行为后能更直接观察策略变化。
 
 ---
 
-## §6 回测系统：同一决策引擎的双重身份
+## §9 可迁移的 5 个设计模式
 
-回测模块值得单独看，不是因为逻辑复杂，而是做了一个关键设计：**回测与实盘模拟共享同一套决策引擎**。
+这五条都不限于金融。
 
-### 6.1 共享决策引擎
+**1. 观点生产收敛到一条窄接口。** `predict(ticker, date, data_client) -> Signal` 小到没有扩展点，因此 LLM 和纯数学模型可回测、可混合、可互相替换。接口越窄，能进生态的组件越多。
 
-`src/backtester.py` 的核心逻辑是逐日调用 `run_hedge_fund()`，传入当日可见的数据，收集决策信号，模拟执行。于是：
+**2. LLM 的输出止步于结构化观点。** 信念值加理由，后面全是纯函数。让模型碰执行面（下单、定量）的架构，等于把不可解释性注入了不可逆操作。硬限额必须是 agent 无法协商的门。
 
-- 修改 Agent 的分析逻辑后，回测结果直接反映新逻辑的表现
-- 不需要在回测和实盘之间维护两套代码
-- 新加入的分析 Agent 自动参与回测
+**3. 弃权、中性、失败是三种状态。** LLM 挂了走弃权（混合时分子分母都剔除），模型说中性是真实的一票，数据不足是显式声明的第四态。多模型投票系统里，把这几种混成一个 0 分，统计就全歪了。
 
-### 6.2 回测 vs 实盘模拟的差异
+**4. 章程即数据。** TUI 点选出来的和 CLI 读进引擎的是同一份 YAML——"人点、机器写、引擎只读一个东西"（`run.py` 的原话）。界面只是 spec 的编辑器，不是第二条执行路径。
 
-| 维度 | 实盘模拟 | 回测 |
-|------|---------|------|
-| 数据源 | 实时市场数据 | 历史 K 线 |
-| 时序 | 实时推进 | 批量回放 |
-| 滑点 | 可模拟，但精度有限 | 需配置滑点模型 |
-| 适用场景 | 策略观察 | 策略评估与调参 |
+**5. 回测即实盘，一条代码路径。** 研究态和评估态分叉最早的系统，最后都回答不了"回测成绩算不算数"。这里只有一个 `run_cycle`，换时钟和券商就能换模式；配合 prompt 缓存，回放逐字节确定。
 
-### 6.3 回测的局限性
-
-这个项目的回测并不是生产级的。它缺少：
-
-- 逐笔成交数据（用日线模拟，精度有限）
-- 完整的滑点模型
-- 多标的组合层面的风险归因
-- 因子暴露分析
-
-用于教育和策略快速验证，这些省略是合理的。用于严肃的量化研究，这些短板需要补上。
+贯穿性原则还有两条：point-in-time 诚实（任何模拟日期只许用当时已公开的数据，数据层按财报提交日期过滤而非报告期）和 fail loud（基础设施故障必须抛出，只有真正的"无数据"才返回空——一个静默的空值会把回测毒化成假信号）。
 
 ---
 
-## §7 Web 应用：从 CLI 到产品雏形
+## §10 阅读路径与采用建议
 
-不少读者第一次看到这个项目时，会误以为只有命令行。实际上仓库已经包含完整的 Web 应用目录：
+按目的选入口：
 
-- `app/backend/`：FastAPI 后端
-- `app/frontend/`：React + Vite 前端
+- **想懂引擎**：`hedge_fund/pipeline/run_cycle.py` → `risk/limits.py` → `portfolio/construction.py`。三个文件加起来三百多行，§5 的每一步都能对上源码。
+- **想写自己的分析师**：读 `signals/base.py` 的接口，照 `signals/buffett.py`（写个 system prompt 就是一个 agent）或 `signals/pead.py`（量化模板）实现，注册后引擎零改动接入。ROADMAP 把这列为最欢迎的贡献。
+- **想加策略但不想写代码**：往 `strategies/` 丢一份 YAML，捆绑现有模型加混合政策即可，现有四个样例（fundamental-ls、deep-value、inflections、earnings-drift）就是格式。
 
-`app/README.md` 的定位很清晰：
+采用判断分三种情况：
 
-- 后端提供运行对冲基金与回测的 REST API
-- 前端提供可视化界面来操作与观察流程
-
-这个部分的意义不只在多了一个 UI，而是引出一点：
-
-> 当多 Agent 系统进入多人使用、可视化调试、配置管理阶段时，命令行往往不够用了。
-
-自己做 Agent 平台时，这一层通常比"再多加两个分析角色"更值得优先建设。
-
----
-
-## §8 可迁移的 5 个设计模式
-
-### 8.1 观点生产与风险约束解耦
-
-分析 Agent 负责表达观点，风险管理 Agent 负责定义边界，投资组合管理 Agent 负责最终落单。这个模式适用于金融以外的很多任务，例如审批、内容审核、告警处置。
-
-### 8.2 先缩小动作空间，再调用 LLM
-
-`portfolio_manager` 先算出允许动作和数量上限，再让模型选择，而不是直接问模型"该怎么做"。这样能降低幻觉式决策的危害。
-
-### 8.3 Agent 注册中心
-
-统一维护 `ANALYST_CONFIG`，新增 Agent 大多不用改编排逻辑，从 Demo 演进到平台时省去不少改动。
-
-### 8.4 数据访问层集中封装
-
-`src/tools/api.py` 统一处理外部金融数据请求。未来无论换数据源、补缓存还是加重试，影响范围都更可控。
-
-### 8.5 同一决策引擎复用于实盘模拟与回测
-
-只要"在线运行逻辑"和"离线评估逻辑"分叉太早，就很难知道回测成绩是否真实映射线上行为。这个仓库把两套运行统一在同一份决策逻辑里。
-
----
-
-## §9 该怎么用这套东西
-
-按阅读目的选路径：
-
-- **想理解架构**：`README.md` → `src/main.py` → `src/agents/risk_manager.py` → `src/agents/portfolio_manager.py`
-- **想研究策略**：`src/agents/valuation.py`、`src/agents/fundamentals.py` 和 `src/backtester.py`
-- **想了解产品化**：`app/` 目录下的后端和前端实现
-
-落地建议分三种情况：
-
-- **想学多 Agent 编排**：直接读 `src/main.py` 的 `create_workflow`，它把"发散-收敛"讲得很清楚，适合第一个上手。
-- **想评估它能否用于真实策略**：先看 §6.3 的局限清单，再决定是否补数据与滑点模型。
-- **不急着用**：如果只是好奇多 Agent 系统长什么样，先看 §0 和 §4 就够，不必钻进回测细节。
+- **学多 Agent 系统的工程化**：现在就是好样本。它对"LLM 能碰什么、不能碰什么"的划线方式，直接适用于审批、告警处置、内容审核等任何"模型出意见、系统做决定"的场景。
+- **做量化研究**：可以用它的数据层和事件研究工具，但策略结论要等验证门（CPCV/PBO）和账本读一半落地再信，或者自己补。
+- **想实盘**：没有这条路。paper 和 live 都未实现，且项目的免责声明写得很清楚：仅供学习，不构成投资建议。
 
 ---
 
 ## 总结
 
-`AI Hedge Fund` 对多 Agent 系统里三个容易失控的环节做了约束：分析负责发散，风控负责约束，最终决策只在安全动作空间内发生。
+`ai-hedge-fund` 经历了一次自我否定：把让它出名的 LangGraph 多 Agent 工作流整个拆掉，换成一个以 `AlphaModel` 接口为核心、以"LLM 不碰交易"为铁律的流水线。判断没变——观点归模型，约束归代码，决策收敛在安全空间内——但从设计取向升级成了可测试的工程性质：纯函数混合、幂等风控、可审计的钳制事件、逐字节可回放的回测。
 
-仓库适合作为多 Agent 开源项目的研究样本，代码结构也能直接对照。它的公开边界是：**面向教育和研究的 AI 投资决策系统，不是可直接实盘的自动交易平台。**
+对一个仍在快速重构期的项目，这份源码最有价值的读法不是照抄某个模块，而是看作者如何在每个分叉点上选择"少一个自由度"：接口收窄、状态三分、敞口不重分配、章程不含股票。这些决定单个看都不起眼，叠起来就是玩具和系统的分界。
 
 **项目链接**：[https://github.com/virattt/ai-hedge-fund](https://github.com/virattt/ai-hedge-fund)
 
 ---
 
-*本文基于 `virattt/ai-hedge-fund` 仓库源码分析（2026 年 4 月版本），项目仍在持续更新，部分实现可能会调整。*
+*本文基于 `virattt/ai-hedge-fund` main 分支源码分析（v2.2.0，2026 年 9 月 13 日核实）。项目处于活跃重构期，安装方式、命令与文件结构可能继续调整，以仓库当前状态为准。*

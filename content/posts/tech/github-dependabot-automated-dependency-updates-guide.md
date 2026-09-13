@@ -5,7 +5,7 @@ date = '2026-05-17T00:00:00+08:00'
 draft = false
 title = 'GitHub Dependabot：自动化依赖更新'
 slug = 'github-dependabot-automated-dependency-updates-guide'
-description = '全面解析 GitHub Dependabot：工作原理、dependabot.yml 完整配置、安全更新、版本更新、实践建议与常见问题。'
+description = 'Dependabot 实操指南：两条更新链路的分工、dependabot.yml 配置、安全更新定制、auto-merge 与 CI 集成，以及 PR 过多时的收敛办法。'
 categories = ['技术笔记']
 tags = ['GitHub', 'DevOps', '教程', '依赖管理']
 +++
@@ -14,19 +14,17 @@ tags = ['GitHub', 'DevOps', '教程', '依赖管理']
 
 第三方依赖是漏洞的主要入口，手动追踪更新既耗时又容易遗漏——Log4Shell 爆发时，不少项目就栽在一个长期没人更新的 log4j 老版本上。
 
-GitHub Dependabot（[github.com/apps/dependabot](https://github.com/apps/dependabot)）是 GitHub 原生集成的依赖更新工具，以 Pull Request 形式自动提交更新建议，把安全补丁和版本迭代变成可审查的 PR 流程。
-
-下文覆盖工作原理、`dependabot.yml` 配置、安全更新、版本更新、实践建议与常见问题。
+Dependabot（[github.com/apps/dependabot](https://github.com/apps/dependabot)）是 GitHub 内置的依赖更新工具，2019 年被 GitHub 收购后成为平台原生功能。它以 Pull Request（PR）的形式自动提交更新：安全补丁和版本迭代都走可审查的 PR 流程，而不是让你盯着 CVE 公告手动改版本号。
 
 ## 学习目标
 
-读完本文后，你应该能够：
+读完后你应当能独立完成这几件事：
 
-1. 解释 Dependabot 的 Version Updates 和 Security Updates 两条链路的工作机制
-2. 写出一个适合团队规模的 `dependabot.yml` 配置，包括分组策略和忽略规则
-3. 判断什么时候用 Dependabot、什么时候切到 Renovate
-4. 为 Dependabot PR 配置 CI 验证流程，确保更新不会引入回归
-5. 排查 Dependabot 不工作、PR 过多等常见问题
+1. 分清 Version Updates 和 Security Updates 两条链路的触发机制，知道各自的开关在哪里
+2. 写出适合团队规模的 `dependabot.yml`，包括分组策略和忽略规则
+3. 判断什么时候用 Dependabot、什么时候换 Renovate
+4. 为 Dependabot PR 配好 CI 验证和 auto-merge，且不踩 `GITHUB_TOKEN` 权限的坑
+5. 排查 Dependabot 不工作、PR 过多这类常见问题
 
 ## 目录
 
@@ -48,40 +46,41 @@ GitHub Dependabot（[github.com/apps/dependabot](https://github.com/apps/dependa
 
 ## 1. Dependabot 是什么
 
-Dependabot 是 GitHub 官方维护的自动化依赖更新应用（GitHub App），于 2019 年被 GitHub 收购并深度集成到 GitHub 平台。它能够：
+Dependabot 由 GitHub 官方维护，随平台一起运行，不需要安装第三方应用。它做四件事：
 
-- **监控** 项目依赖清单文件（如 `package.json`、`Gemfile`、`requirements.txt`、`go.mod` 等）
+- **监控** 仓库里的依赖清单和 lock 文件（如 `package.json`、`Gemfile`、`requirements.txt`、`go.mod`）
 - **检测** 可用的新版本和已知安全漏洞
-- **自动创建** Pull Request，包含更新说明和 changelog 摘要
+- **自动创建** PR，附上版本变化和上游的 release notes / changelog 链接
 - **可选地** 自动合并（auto-merge）经过验证的更新
 
-Dependabot 分为两大更新类型：
+Dependabot 分为两大更新类型，触发机制完全不同：
 
 | 类型 | 说明 | 触发方式 |
 |------|------|----------|
-| **Version Updates** | 检测依赖新版本（功能迭代） | 按计划（每日/每周）或手动触发 |
-| **Security Updates** | 针对存在已知漏洞的依赖更新 | 自动触发（GitHub Advisory Database 收录后创建 PR） |
+| **Version Updates** | 检测依赖新版本（功能迭代） | 按 `dependabot.yml` 的 schedule 执行，也可手动触发 |
+| **Security Updates** | 修复存在已知漏洞的依赖 | 仓库设置里的开关；GitHub Advisory Database 收录漏洞后自动建 PR |
 
 ### 支持的生态
 
-Dependabot 支持主流包管理器的依赖清单文件：
+`dependabot.yml` 中的 `package-ecosystem` 使用生态标识，而不是包管理器名字。两个容易写错的点：npm 和 Yarn 共用 `npm` 这一个生态（Yarn 没有独立标识）；Cargo 的清单文件是 `Cargo.toml`，不是 `Cargo.lock`。
 
-| 包管理器 | 清单文件 | 更新类型 |
-|----------|----------|----------|
-| npm | `package.json` | 版本 + 安全 |
-| Yarn | `yarn.lock` | 版本 + 安全 |
-| Composer | `composer.json` | 版本 + 安全 |
-| Go | `go.mod` | 版本 + 安全 |
-| Maven | `pom.xml` | 版本 + 安全 |
-| Gradle | `build.gradle` | 版本 + 安全 |
-| pip/requirements.txt | `requirements.txt` | 版本 + 安全 |
-| Bundler | `Gemfile` | 版本 + 安全 |
-| nuget | `*.csproj` | 版本 + 安全 |
-| cargo | `Cargo.lock` | 版本 + 安全 |
-| hex | `mix.exs` | 版本 + 安全 |
-| pub | `pubspec.yaml` | 版本 |
+| 生态标识 | 包管理器 / 清单文件 |
+|----------|---------------------|
+| `bundler` | Ruby Bundler（`Gemfile`） |
+| `cargo` | Rust Cargo（`Cargo.toml`、`Cargo.lock`） |
+| `composer` | PHP Composer（`composer.json`） |
+| `docker` | Dockerfile、Compose 文件中的基础镜像 |
+| `github-actions` | 工作流中 `uses:` 引用的 Action |
+| `gomod` | Go modules（`go.mod`） |
+| `gradle` | Java Gradle（`build.gradle`） |
+| `maven` | Java Maven（`pom.xml`） |
+| `mix` | Elixir Hex（`mix.exs`） |
+| `npm` | npm、Yarn、pnpm（`package.json` 与各类 lock 文件） |
+| `nuget` | .NET NuGet（`.csproj` 等工程文件） |
+| `pip` | Python pip、pipenv、poetry、uv（`requirements.txt`、`pyproject.toml` 等） |
+| `pub` | Dart/Flutter pub（`pubspec.yaml`） |
 
-> ⚠️ 注意：GitHub Advisory Database 中收录的漏洞才触发 Security Updates。部分小众生态可能仅支持 Version Updates。
+> ⚠️ 注意：安全更新只针对清单或 lock 文件里声明的依赖触发。Yarn 项目统一写 `package-ecosystem: "npm"`，照着"Yarn"另写一个生态会导致配置无效。
 
 ---
 
@@ -89,60 +88,60 @@ Dependabot 支持主流包管理器的依赖清单文件：
 
 ### 2.1 Version Updates 流程
 
-```
-┌─────────────────────────────────────────────┐
-│  Dependabot 引擎（GitHub 云端）             │
-│                                             │
-│  1. 读取仓库的 dependabot.yml 配置           │
-│  2. 按 schedule 扫描依赖清单文件             │
-│  3. 查询生态 registry（npm/pypi/etc.）      │
-│  4. 检测可用更新版本                         │
-│  5. 生成 CHANGELOG 摘要                     │
-│  6. 创建 PR（target: 分支，base: main）     │
-│  7. 等待 review / auto-merge                │
-└─────────────────────────────────────────────┘
+```text
+┌──────────────────────────────────────────────────┐
+│  Dependabot 引擎（GitHub 云端）                   │
+│                                                  │
+│  1. 读取仓库默认分支上的 .github/dependabot.yml   │
+│  2. 按 schedule 扫描各生态的清单文件              │
+│  3. 查询对应 registry（npm、PyPI 等）             │
+│  4. 解析出可用的更新版本                          │
+│  5. 生成含 changelog / release notes 的 PR       │
+│  6. 等待 review，或按配置自动合并                 │
+└──────────────────────────────────────────────────┘
 ```
 
-**关键行为细节：**
+几个影响日常使用的行为细节：
 
-- **版本解析**：遵循语义版本（SemVer）。默认遵循 `">= 1.0.0"` 一类的版本约束，但也允许配置 `ignore` 规则
-- **分组策略**：可配置 `groups` 将同一生态的多个依赖合并到一个 PR 中，减少 PR 数量
-- **版本上限**：可设置 `open-pull-requests-limit` 控制同时打开的 PR 数量
-- **更新范围**：支持指定更新的 `directory` 和 `package-ecosystem`，便于 monorepo 项目精细控制
+- **PR 数量上限**：`open-pull-requests-limit` 控制同时打开的版本更新 PR 数，默认 5。补足了配额就不建新 PR，直到有 PR 被合并或关闭
+- **分组策略**：`groups` 可把同一生态的多个依赖合并进一个 PR，这是控制 PR 洪水的第一手段（见 §5.1）
+- **更新范围**：`directory`（或支持 glob 的 `directories`）配合 `package-ecosystem`，monorepo 里可以按子目录分别控制
+- **版本约束**：解析遵循各生态的版本规则，`ignore` 规则可以把某些依赖或某类更新挡在外面
 
 ### 2.2 Security Updates 流程
 
-```
-GitHub Advisory Database 发布新漏洞
+```text
+GitHub Advisory Database 收录新漏洞
             │
             ▼
-    GitHub 检测哪些仓库受影响
+    GitHub 检测依赖图，标记受影响的仓库并生成 Dependabot alert
             │
             ▼
-    Dependabot 自动创建 Security PR
-    （PR 标题包含 🔐 标识）
+    Dependabot 尝试升级到包含补丁的最低版本，创建 PR
+    （标题以 🔐 开头，默认带 dependencies、security 标签）
             │
             ▼
-    通知仓库维护者（可通过配置改变通知行为）
+    PR 合并后对应的 alert 自动关闭
 ```
 
-Security Updates 在 Dependabot 面板中单独显示为 "Dependabot security updates"，且标签为 `dependencies`、`security` 的 PR 会获得特殊处理逻辑。
+安全更新和版本更新是两条独立链路：前者由仓库设置控制，不依赖 `dependabot.yml`；后者必须写配置文件才会运行。Dependabot 给安全 PR 选的是**包含补丁的最低版本**，而不是最新版——它只求消除漏洞，不顺便升级。
+
+还有一点区别值得知道：npm 生态里，为了修复一个间接依赖，Dependabot 可以连父依赖一起更新甚至删除多余的子依赖；其他生态做不到这一点，间接依赖需要父依赖同时更新时，Dependabot 会放弃并在 alert 上报错。
 
 ### 2.3 Pull Request 内容
 
-每个 Dependabot PR 包含：
+每个 Dependabot PR 通常包含：
 
-1. **更新的版本信息**（旧版本 → 新版本）
-2. **CHANGELOG 片段**（从 upstream registry 获取）
-3. **依赖的发布说明链接**（如有）
-4. **`dependabot-bot` 作为贡献者**的信息
-5. **CI 状态**（自动运行工作流，可配置）
+1. 版本变化（旧版本 → 新版本）
+2. 上游项目的 release notes 或 changelog 摘要（上游在 GitHub 上发布 release 时）
+3. PR 作者为 `dependabot[bot]`，commit 由 Dependabot 签名，显示为 Verified
+4. CI 状态——Dependabot PR 会正常触发仓库的 workflow（权限限制见 §6）
 
 ---
 
 ## 3. 完整配置：dependabot.yml
 
-将配置文件放在仓库的 `.github/dependabot.yml` 中（路径固定，不可更改）。
+配置文件放在仓库的 `.github/dependabot.yml`。路径固定，放别处不生效。
 
 ### 3.1 最小配置
 
@@ -156,7 +155,7 @@ updates:
       interval: "weekly"
 ```
 
-这会每周一次检查项目根目录的 `package.json` 并创建更新 PR。
+这会每周检查一次项目根目录的 `package.json` 和 lock 文件，有更新就建 PR。
 
 ### 3.2 完整生产级配置
 
@@ -165,7 +164,7 @@ updates:
 version: 2
 
 updates:
-  # ── npm: 前端依赖 ──────────────────────────────
+  # ── npm：前端依赖 ──────────────────────────────
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
@@ -195,7 +194,7 @@ updates:
       - "dependencies"
       - "npm"
 
-  # ── GitHub Actions ──────────────────────────
+  # ── GitHub Actions ──────────────────────────────
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -206,7 +205,7 @@ updates:
     labels:
       - "ci"
 
-  # ── Go modules ─────────────────────────────
+  # ── Go modules ──────────────────────────────────
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -220,7 +219,7 @@ updates:
       - "dependencies"
       - "go"
 
-  # ── Python pip ─────────────────────────────
+  # ── Python pip ──────────────────────────────────
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -232,7 +231,7 @@ updates:
       - "dependencies"
       - "python"
 
-  # ── Docker 容器镜像 ─────────────────────
+  # ── Docker 基础镜像 ─────────────────────────────
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -246,51 +245,50 @@ updates:
 
 | 字段 | 类型 | 说明 | 示例 |
 |------|------|------|------|
-| `package-ecosystem` | string | 包管理器类型 | `"npm"`, `"pip"`, `"gomod"` |
-| `directory` | string | 清单文件所在路径 | `"/frontend"`, `"/api"` |
-| `schedule.interval` | string | 检查频率 | `"daily"`, `"weekly"`, `"monthly"` |
-| `schedule.time` | string | 触发时间（24h 制） | `"09:00"` |
-| `schedule.timezone` | string | 时区（IANA 格式） | `"Asia/Shanghai"` |
-| `open-pull-requests-limit` | int | 同时打开的 PR 上限 | `5` |
-| `groups` | object | 依赖分组策略 | 见上方示例 |
-| `ignore` | list | 忽略特定依赖 | 支持 `versions` 和 `update-types` |
+| `package-ecosystem` | string | 生态标识，必填 | `"npm"`, `"pip"`, `"gomod"` |
+| `directory` / `directories` | string / list | 清单文件所在路径；`directories` 支持 glob（如 `**/*`），适合 monorepo | `"/frontend"` |
+| `schedule.interval` | string | 检查频率，必填。GitHub.com 支持 `daily`、`weekly`、`monthly`、`cron`；`quarterly` 等更长周期仅 GitHub Enterprise Server 3.19+ 可用 | `"weekly"` |
+| `schedule.time` | string | 触发时间（24 小时制），仅 daily/weekly 有效；不设则随机分配 | `"09:00"` |
+| `schedule.timezone` | string | 时区（IANA 格式），不设按 UTC | `"Asia/Shanghai"` |
+| `schedule.day` | string | weekly 时指定星期几 | `"monday"` |
+| `open-pull-requests-limit` | int | 同时打开的版本更新 PR 上限，默认 5，`0` 表示关闭版本更新 | `5` |
+| `groups` | object | 依赖分组，可指定作用于版本更新还是安全更新 | 见上方与 §5.1 |
+| `ignore` | list | 忽略特定依赖、版本或更新类型 | 见 §5.2 |
+| `allow` | list | 只更新白名单内的依赖 | 见 §5.4 |
 | `commit-message.prefix` | string | commit message 前缀 | `"deps"` |
-| `commit-message.include` | string | scope 策略 | `"scope"`, `"scope,signoff"` |
-| `labels` | list | 自动添加的 PR 标签 | `["dependencies"]` |
-| `reviewers` | list | PR 审核人 | `["team:frontend"]` |
-| `registries` | object | 私有仓库认证 | 见上方示例 |
-| `allow` | list | 允许更新的依赖白名单 | 常与 `ignore` 搭配使用 |
+| `commit-message.include` | string | `"scope"` 在前缀后以括号附加范围 | `"scope"` |
+| `labels` | list | 自动添加的 PR 标签（仓库需已存在） | `["dependencies"]` |
+| `reviewers` | list | 版本更新 PR 的审核人；安全更新 PR 建议改用 CODEOWNERS（见 §4） | `["team:frontend"]` |
+| `registries` | list | 引用顶层 `registries` 定义的私有源，`"*"` 表示全部 | 见 §4.3 |
 
 ### 3.4 commit-message 选项
 
 ```yaml
 commit-message:
-  prefix: "deps"           # 所有 commit 以 "deps:" 开头
-  prefix-development: "dev-deps"  # 开发依赖用不同前缀
-  include: "scope"        # 包含更新范围，如 "deps: update lodash to 4.17.21"
-  # 其他选项：signoff, "scope,signoff"
+  prefix: "deps"                  # 每条 commit 以 "deps:" 开头，如 "deps: Bump lodash from 4.17.15 to 4.17.21"
+  prefix-development: "dev-deps"  # 开发依赖用另一个前缀
+  include: "scope"                # 前缀后以括号附加范围信息
 ```
+
+PR 标题沿用首条 commit message，所以这里的设置同样决定 PR 标题长什么样。对提交规范有要求的团队（如 Conventional Commits），`prefix` 是最低成本的接入方式。
 
 ---
 
 ## 4. Security Updates 进阶配置
 
-安全更新（Security Updates）和版本更新（Version Updates）是两条独立链路。安全更新针对有已知漏洞的依赖自动创建 PR，开关在仓库设置里，不依赖 `dependabot.yml`；版本更新则必须由 `dependabot.yml` 定义生态和目录才能运行。
+安全更新和版本更新是两条独立链路，先把两件事分清：
 
-两者可在同一生态并存：给某个 `package-ecosystem` 写了配置后，该生态既按计划跑版本更新，也响应安全更新。安全更新不按 schedule 排队，漏洞在 GitHub Advisory Database 收录后即创建 PR。
+- **开关在仓库设置里，不依赖 `dependabot.yml`。** 在 Settings → Code security and analysis 中开启 `Dependabot alerts` 和 `Dependabot security updates` 后，漏洞收录即自动建 PR，没有 schedule 可言。
+- **`dependabot.yml` 的大多数选项同时作用于安全 PR**：`labels`、`assignees`、`commit-message`、`groups`、`ignore`、`allow` 都会改变安全 PR 的形态，`target-branch` 除外。但有两个例外要记住：安全 PR **不计入** `open-pull-requests-limit`（这个数字只管版本更新）；安全 PR 的审核人官方推荐用 **CODEOWNERS** 文件（`.github/CODEOWNERS` 声明路径与负责团队的映射）管理，而不是配置里的 `reviewers`。
+- **能不能建 PR 取决于能否解析出修复版本。** 依赖必须处于受影响范围、且存在不破坏依赖图的升级路径；解析不出来时只有 alert，没有 PR。
 
-`dependabot.yml` 里的大部分选项（`labels`、`reviewers`、`assignees`、`commit-message`、`allow`、`ignore`、`groups`）对安全更新同样生效，只是应用到下一次安全 PR 创建时。
+### 4.1 只收安全更新，不跑例行版本更新
 
-有两点要分清楚：不能用 `dependabot.yml` 配置 alerts 本身；安全更新只在能解析到"处于版本范围之内、且已修复"的版本时才会建 PR，否则只会告警、不会动作。
+目标：漏洞来了能收到修复 PR，但不想要每周的例行升级 PR。按是否需要定制 PR，有两种做法。
 
-### 4.1 只开安全更新，不跑常规版本更新
+不需要定制，就完全不用写 `dependabot.yml`：仓库设置里开启 alerts 和 security updates 即可。
 
-想让"只在有漏洞时收到更新 PR、不做每周例行升级"，直接的做法是**不配置常规版本更新的生态条目**：
-
-1. 在仓库 Settings → Code security and analysis 开启 `Dependabot alerts` 和 `Dependabot security updates`。
-2. 不为常规依赖写 `dependabot.yml` 的 version updates 条目（或只给少数确需跟进的生态配置）。
-
-开关在仓库设置里完成，不需要 YAML。只有想给安全 PR 打标签、分审核人，或约束哪些依赖参与更新，才需要 `dependabot.yml`：
+需要给安全 PR 打标签、分组或使用私有注册表，就写生态条目，并用 `open-pull-requests-limit: 0` 关闭版本更新：
 
 ```yaml
 # .github/dependabot.yml
@@ -300,16 +298,32 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    # 以下选项同时作用于安全更新 PR
-    labels: ["dependencies", "security"]
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0   # 版本更新一个 PR 也不开，只剩安全更新
+    labels: ["npm dependencies"]
+    assignees: ["alice"]
 ```
 
-> 不要把"只收安全更新"写成 `allow` 的 `update-types: ["security"]`——`update-types` 只接受 `version-update:semver-patch`、`version-update:semver-minor`、`version-update:semver-major` 三种值，`security` 不是合法取值。限制安全更新，靠的是仓库设置里单独的安全更新开关。
+`0` 只限制版本更新，安全 PR 不受此限额影响，会照常出现——这正是"条目仍在、只留安全更新"的官方推荐写法。注意生态条目里写了 `schedule: interval: "daily"` 并不会让安全更新天天跑，schedule 只对版本更新生效；它的作用是保留条目，让 labels 等定制有落点。
 
-### 4.2 私有注册表支持
+> 不要试图用 `allow` 的 `update-types: ["security"]` 来"只收安全更新"——`update-types` 只接受 `version-update:semver-patch`、`version-update:semver-minor`、`version-update:semver-major` 三种值，`security` 不是合法取值。
 
-依赖来自私有 npm registry、Python index 或 Docker Registry 时，先在顶层配置 `registries` 认证，再在对应 `updates` 条目里引用：
+### 4.2 分组作用于安全更新
+
+`groups` 可以显式声明只服务哪一类更新。安全漏洞常常一次涉及同一框架的多个包，分组能把它们合成一个 PR：
+
+```yaml
+groups:
+  golang-security:
+    applies-to: security-updates
+    patterns:
+      - "golang.org*"
+```
+
+`applies-to` 取 `security-updates` 或 `version-updates`，不声明则两种都生效。
+
+### 4.3 私有注册表支持
+
+依赖来自私有 npm registry、Python index 或 Docker registry 时，先在顶层定义 `registries` 认证，再在对应 `updates` 条目里引用：
 
 ```yaml
 version: 2
@@ -317,15 +331,15 @@ registries:
   private-npm:
     type: "npm-registry"
     url: "https://registry.mycompany.com"
-    username: "${{ secrets.REGISTRY_USERNAME }}"
-    password: "${{ secrets.REGISTRY_PASSWORD }}"
-    replaces-base: true   # 替换默认 registry 的 base URL
+    username: ${{ secrets.REGISTRY_USERNAME }}
+    password: ${{ secrets.REGISTRY_PASSWORD }}
+    replaces-base: true   # 用该地址替代生态默认的 registry
 
   private-pypi:
     type: "python-index"
     url: "https://pypi.mycompany.com/simple"
-    username: "${{ secrets.PYPI_USERNAME }}"
-    password: "${{ secrets.PYPI_PASSWORD }}"
+    username: ${{ secrets.PYPI_USERNAME }}
+    password: ${{ secrets.PYPI_PASSWORD }}
 
 updates:
   - package-ecosystem: "npm"
@@ -336,7 +350,7 @@ updates:
       interval: "weekly"
 ```
 
-凭证通过 GitHub 的 secrets 引用，不要把明文写进仓库。
+一个容易踩的坑：`${{ secrets.NAME }}` 里的 NAME 必须定义在 **Dependabot secrets**（Settings → Secrets and variables → Dependabot）里，而不是 Actions secrets——Dependabot 不读后者的存储。同名的两套 secrets 互相独立，配错了表现就是 Dependabot 一直拿不到认证。
 
 ---
 
@@ -344,16 +358,16 @@ updates:
 
 ### 5.1 分组策略
 
-不给依赖分组时，每一个依赖的更新都会产生一个独立 PR，极端情况下一个中型前端项目可能同时冒出上百个 PR。合理分组是关键：
+不分组时，每个依赖的更新各占一个 PR，一个中型前端项目在第一次运行后可能同时冒出几十上百个 PR。按风险分组是第一道收敛手段：
 
 ```yaml
 groups:
-  # 生产依赖的大版本更新单独处理（风险更高）
+  # 生产依赖的大版本更新单独处理（风险更高，值得单独 review）
   major-production:
     dependency-type: "production"
     update-types:
       - "version-update:semver-major"
-  # 次要版本和 patch 版本打包处理
+  # minor 和 patch 打包处理
   minor-patch-production:
     dependency-type: "production"
     update-types:
@@ -364,6 +378,8 @@ groups:
     dependency-type: "development"
 ```
 
+也可以按依赖名分组（`patterns`，支持通配符），比如把一个框架的全部官方包合成一个 PR。
+
 ### 5.2 忽略策略
 
 ```yaml
@@ -373,59 +389,74 @@ ignore:
   # 忽略特定版本
   - dependency-name: "axios"
     versions: ["0.21.0"]
-  # 忽略某类更新类型
+  # 忽略某类更新（大版本由人手动跟进）
   - dependency-name: "react"
-    update-types: ["version-update:semver-major"]  # 手动处理 React 大版本
+    update-types: ["version-update:semver-major"]
 ```
+
+忽略 major 更新的合理场景：大版本通常伴随 breaking change，需要配合代码改造，不适合自动 PR。设一条 ignore，等团队准备好时再手动升级并删掉规则。
 
 ### 5.3 自动合并（Auto-Merge）
 
-结合 GitHub branch protection rules 和 Required status checks，实现零干预合并：
+目标：patch 和 minor 更新在 CI 全绿后自动合入，人只看 major。
 
-**步骤 1：开启 Auto-Merge**
+**第一步：允许 auto-merge**
 
-在 GitHub 仓库设置中：
+仓库设置 Settings → General → Pull Requests 中勾选 `Allow auto-merge`。
+
+**第二步：设置合并门槛**
+
+在 branch protection rule（或 ruleset）中为默认分支配置 required status checks，保证"CI 通过"是硬条件，而不是碰运气：
+
 ```
-Settings → General → Allow auto-merge
-```
-
-**步骤 2：配置 branch protection rule**
-
-```
-Settings → Branches → Add rule
-  - Branch name pattern: main
-  - Require pull request reviews before merging: ✓
-  - Require status checks to pass before merging: ✓
-  - Choose required checks: e.g. "test", "lint"
-  - Require branches to be up to date before merging: ✓ (可选，建议关闭以避免 CI 队列问题)
+Settings → Branches → Add branch rule（pattern: main）
+  - Require a pull request before merging：决定是否必须有人批准
+  - Require status checks to pass before merging：必开，选择 test、lint 等关键检查
 ```
 
-**步骤 3：配置 dependabot 允许 auto-merge（可选，通过 GitHub API 设置）**
+"要求分支与主分支保持最新"这个选项要权衡：开启后每次主分支有新合入，等待中的 PR 都会重新触发 CI，队列容易堵；关闭则可能合入基于过期基线的更新。小团队建议先关。
+
+**第三步：对 Dependabot PR 开启 auto-merge**
+
+三种方式任选：
+
+1. 在 PR 页面点一次 `Enable auto-merge`（有写权限的人都可以点，无需管理员）；
+2. 用 workflow 批量处理，官方推荐的做法是配合 `dependabot/fetch-metadata` 判断更新类型后执行 `gh pr merge --auto`：
 
 ```yaml
-# .github/dependabot.yml 中可设置 auto-label-body
+# .github/workflows/dependabot-auto-merge.yml
+name: Dependabot auto-merge
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    steps:
+      - name: Fetch metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+      - name: Enable auto-merge for patch and minor
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-实际开启 auto-merge 需要仓库管理员在 PR 界面手动点一次 "Enable auto-merge"，或者通过 GitHub API 设置：
+3. 通过 GraphQL API 的 `enablePullRequestAutoMerge` mutation，效果等同于界面上点按钮。
 
-```bash
-# 通过 GitHub CLI 开启单个 PR 的 auto-merge
-gh pr merge --admin --merge
-gh api graphql -f query='
-mutation {
-  enablePullRequestAutoMerge(input: {
-    pullRequestId: "xxx"
-  }) {
-    pullRequest { title }
-  }
-}'
-```
+两个边界：如果仓库启用了 merge queue，`GITHUB_TOKEN` 无权把 PR 加入队列，需要换成有合并权限的 PAT 或 GitHub App token；如果 branch protection 要求人工批准，auto-merge 会在批准后自动完成合并——想真正零干预，就要给 Dependabot PR 配自动批准（`gh pr review --approve`）或放开这条规则。
 
-> ⚠️ **注意**：Auto-merge 前务必确保 CI 流程覆盖了足够的测试。盲目开启会在更新破坏性依赖时造成生产事故。
+> ⚠️ **注意**：auto-merge 的安全性完全由 CI 决定。测试覆盖不足时开启它，等于让破坏性更新直接进主干。宁可先只对 patch 放行。
 
 ### 5.4 使用 `allow` 精细控制
 
-`allow` 只能写一次，用多个条目并列（不要重复 `allow:` 键）。它和 `ignore` 常常配合使用：
+`allow` 在每个生态条目里只能写一次（并列多个条目，不要重复写 `allow:` 键），它和 `ignore` 分别从两端收窄范围：
 
 ```yaml
 updates:
@@ -433,20 +464,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    # 只跟进白名单里的依赖（未列出的一律不更新）
+    # 只跟进白名单里的依赖，未列出的一律不更新
     allow:
       - dependency-name: "lodash"
       - dependency-name: "axios"
 ```
 
-按更新级别收窄，用 `ignore` 更直接（`update-types` 只接受 `version-update:semver-*`，没有 `security` 值）：
+按更新级别收窄则用 `ignore` 更直接（`update-types` 只接受 `version-update:semver-*` 三种值）：
 
 ```yaml
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]  # 大版本手动处理
@@ -456,9 +482,9 @@ updates:
 
 ## 6. 与 CI/CD 流水线的集成
 
-### 6.1 触发条件运行测试
+### 6.1 在 Dependabot PR 上运行测试
 
-Dependabot PR 触发 CI 后，可针对性运行测试：
+Dependabot PR 会正常触发 `pull_request` 事件的 workflow。把测试任务的触发条件限定为机器人 PR，避免干扰普通 PR 的流水线：
 
 ```yaml
 # .github/workflows/dependabot-tests.yml
@@ -467,13 +493,10 @@ name: Dependabot Tests
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  # 仅 Dependabot PR 触发
-  schedule:
-    - cron: "0 3 * * *"  # 备用：定期测试
 
 jobs:
   test:
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -481,9 +504,11 @@ jobs:
         run: npm test
 ```
 
-### 6.2 标签和审核人自动化
+判断是否为 Dependabot PR，用 `github.event.pull_request.user.login == 'dependabot[bot]'`。官方推荐这个写法而不是 `github.actor`——后者在 re-run 等场景下可能是手动触发者，判断会失效。
 
-通过 Action 自动分配 reviewer 和标签：
+### 6.2 自动打标签和指派审核人
+
+`GITHUB_TOKEN` 在 workflow 里默认是只读的，想改 PR 必须显式声明 `permissions`，否则 `gh pr edit` 会报 403：
 
 ```yaml
 # .github/workflows/dependabot-label.yml
@@ -491,23 +516,30 @@ name: Dependabot PR Setup
 
 on:
   pull_request:
-    types: [opened, ready_for_review]
-    branches:
-      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
 
 jobs:
-  label:
-    if: ${{ github.actor == 'dependabot[bot]' }}
+  setup:
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - name: Label PR
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} \
+          gh pr edit "$PR_URL" \
             --add-label "dependencies" \
             --add-label "automated-pr"
-          gh pr edit ${{ github.event.pull_request.number }} \
-            --add-reviewer "team:frontend"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+给安全 PR 分派审核人，优先用 CODEOWNERS 而不是 workflow：把 `package-lock.json`、`go.mod` 等清单文件交给对应团队 OWN，Dependabot 的 PR 就会自动请求他们审核，安全更新同样适用。
+
+还有一条 secrets 的边界：Dependabot PR 触发的 workflow run 读不到 Actions secrets，能读到的是 Dependabot secrets。workflow 里需要凭据（比如跑集成测试连私有源）时，secret 要配在 Settings → Secrets and variables → Dependabot 下。
 
 ---
 
@@ -515,37 +547,28 @@ jobs:
 
 ### Q1: Dependabot 没有工作，如何排查？
 
-**排查步骤：**
-
-1. 确认 `.github/dependabot.yml` 文件存在且路径正确（GitHub 只读取这一条固定路径）
-2. 检查 GitHub App "Dependabot" 是否已安装到仓库：仓库 Settings → Integrations → Dependabot
-3. 查看 Dependabot 面板：`Insights → Dependency graph → Dependabot`
-4. 检查 "Alerts" 是否被安全设置阻止
-5. 确认 `package-ecosystem` 和 `directory` 与实际清单文件路径匹配
+1. 确认 `.github/dependabot.yml` 存在于默认分支、YAML 语法有效、`package-ecosystem` 和 `directory` 与实际清单文件对得上（Yarn 写 `npm`，Cargo 清单写 `Cargo.toml`）
+2. 确认仓库 Settings → Code security and analysis 中相关功能已开启——Dependabot 是平台内置功能，没有独立的"安装应用"步骤，找不到 Settings → Integrations → Dependabot 这样的菜单
+3. 打开 Insights → Dependency graph → Dependabot 面板，每次检查的结果和错误信息都在 last checked 一栏
+4. 生态条目里用到的 `labels` 必须已存在于仓库，标签不存在时 PR 会创建失败
 
 ```bash
-# 验证 YAML 语法（本地测试）
+# 验证 YAML 语法（本地）
 python3 -c "import yaml; yaml.safe_load(open('.github/dependabot.yml'))"
 ```
 
 ### Q2: Dependabot PR 太多，如何减少？
 
-**方案：**
+按见效程度排序：
 
-1. 启用分组策略（`groups`）合并同一类依赖
-2. 将更新频率从 `daily` 调整为 `weekly`
-3. 设置 `open-pull-requests-limit` 限制并发 PR 数量
-4. 对稳定依赖添加 `ignore` 规则
-5. 用 `ignore` 忽略 major 大版本更新，只留 patch/minor 自动跟进
+1. 启用 `groups` 分组，把同生态的依赖合并成少量 PR（见 §5.1）
+2. 用 `ignore` 排除 major 更新和确认不跟的依赖
+3. 把更新频率从 `daily` 降到 `weekly`
+4. `open-pull-requests-limit` 控制并发上限（超过配额时新更新会排队而不是丢弃）
 
-### Q3: 如何只接收安全更新，不做常规版本更新？
+### Q3: 如何只接收安全更新？
 
-安全更新和版本更新是两套独立开关。只收安全更新，就不要为常规依赖配置版本更新条目：
-
-1. 在仓库设置的 Code security and analysis 里开启 `Dependabot alerts` 和 `Dependabot security updates`。
-2. 不为常规依赖写 `dependabot.yml` 的 version updates 条目（或不给对应生态写配置）。
-
-这样只有漏洞触发时才会出现安全更新 PR，不会收到每周例行升级。注意不要用 `allow` 的 `update-types: ["security"]` 来做——这是个无效写法。如果确实想给某个生态配置 labels、审核人等，可以在 `dependabot.yml` 里保留条目，但安全更新的开关始终在仓库设置里。
+见 §4.1：不写 `dependabot.yml` 时安全更新照常工作；要保留标签等定制，就用 `open-pull-requests-limit: 0` 关闭版本更新。`update-types: ["security"]` 不是合法配置，写上无效。
 
 ### Q4: 如何更新 GitHub Actions 自身？
 
@@ -557,37 +580,22 @@ python3 -c "import yaml; yaml.safe_load(open('.github/dependabot.yml'))"
   open-pull-requests-limit: 3
 ```
 
-Actions 更新会出现在 Dependabot 面板中，可单独查看。
+配置后，工作流里 `uses:` 引用的 Action 有新版本时会收到 PR。这是低成本高收益的配置，建议所有仓库都加。
 
 ### Q5: 企业私有包注册表如何配置？
 
-```yaml
-registries:
-  my-company-registry:
-    type: "npm-registry"        # 或 python-index, docker-registry 等
-    url: "https://npm.internal.corp"
-    username: "${{ secrets.NPM_INTERNAL_USERNAME }}"
-    password: "${{ secrets.NPM_INTERNAL_PASSWORD }}"
-
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    registries:
-      - my-company-registry
-    schedule:
-      interval: "weekly"
-```
-
-> 建议将敏感凭证放在 GitHub Secrets 中，切勿硬编码。
+完整配置和 secrets 的存放位置见 §4.3。要点重复一遍：`${{ secrets.* }}` 引用的是 Dependabot secrets，不是 Actions secrets。
 
 ### Q6: Dependabot PR 的 CI 失败了怎么办？
 
-1. 检查 CI 日志中失败的原因——可能是更新破坏了 API 兼容性
-2. 如确认是 Dependabot 误报，在 PR 中留言 `@dependabot ignore` 或通过配置 ignore
-3. 如更新确实需要代码适配，手动处理该 PR 后关闭 Dependabot 生成的 PR
-4. 对于无法合并的 PR，`@dependabot close` 可关闭之
+1. 先看 CI 日志确认失败原因——最常见的是更新破坏了 API 兼容性
+2. 确认是误报或需要锁定版本时，在 PR 里评论 `@dependabot ignore this dependency`，Dependabot 会把它写进 `ignore` 规则
+3. 需要代码适配的更新，把 PR 对应的分支拉到本地改完推送（或者放弃自动更新，手动升级后用 `@dependabot close` 关闭）
+4. PR 分支落后于主分支时，`@dependabot rebase` 可以让它变基
 
 ### Q7: monorepo 项目如何配置？
+
+每个子目录一个生态条目，各自独立排期：
 
 ```yaml
 version: 2
@@ -610,11 +618,19 @@ updates:
       interval: "weekly"
 ```
 
-每个子包独立配置，隔离更新 schedule 和 PR。
+子目录数量多时，用支持 glob 的 `directories` 一条搞定全部子包：
+
+```yaml
+  - package-ecosystem: "npm"
+    directories:
+      - "/packages/**/*"
+    schedule:
+      interval: "daily"
+```
 
 ### Q8: 如何查看 Dependabot 更新历史？
 
-1. **GitHub 面板**：`Insights → Dependency graph → Dependabot`
+1. **面板**：Insights → Dependency graph → Dependabot，能看到每个生态的最近检查时间和错误
 2. **GraphQL API**：
 
 ```bash
@@ -624,7 +640,6 @@ gh api graphql -f query='
     vulnerabilityAlerts(first: 10) {
       nodes {
         vulnerableManifestFilename
-        fixedIn
         securityVulnerability {
           severity
           package { name }
@@ -639,103 +654,103 @@ gh api graphql -f query='
 
 ## 8. 替代方案对比
 
-| 工具 | 类型 | 定价 | 特点 | 与 Dependabot 对比 |
-|------|------|------|------|---------------------|
-| **Renovate** | SaaS + Self-hosted | 免费 + 商业版 | 功能最丰富，支持 monorepo、Dockerfile 更新、Auto-merge 配置更细 | 开源，自托管更灵活，配置复杂度高 |
-| **Dependabot** | GitHub 原生 SaaS | 免费（所有 GitHub 套餐，含私有仓库） | 原生集成，开箱即用，Security Updates 深度集成 | 配置简单，但定制化空间相对小 |
-| **Snyk** | SaaS + CLI | 免费 + 商业版 | 专注安全，修复建议更智能，许可证合规 | 安全能力更强，但主要是安全视角 |
-| **WhiteSource Renovate** | 企业级 | 商业版 | 大规模企业支持，策略控制强 | 与 Renovate 同源，附加企业治理能力 |
-| **npm outdated / yarn upgrade** | CLI | 免费 | 零配置，手动执行 | 适合小项目，不适合自动化 |
+| 工具 | 类型 | 费用 | 特点 |
+|------|------|------|------|
+| **Dependabot** | GitHub 内置 | 免费（所有套餐，含私有仓库） | 原生集成、零安装，Security Updates 与告警打通 |
+| **Renovate** | 开源 + Mend 托管 SaaS | 自托管免费；托管版有免费额度与付费档 | 配置粒度最细，支持更多生态和调度策略，monorepo 表现成熟 |
+| **Snyk** | SaaS + CLI | 免费档 + 商业版 | 安全视角最强，含许可证合规，修复 PR 之外还有持续监测 |
+| **npm outdated / yarn upgrade** | CLI | 免费 | 零配置手动执行，适合一次性检查或很小的项目 |
 
 ### Renovate vs Dependabot 功能对比
 
 | 功能 | Renovate | Dependabot |
 |------|----------|------------|
-| PR 分组 | ✅ | ✅ |
-| Auto-merge | ✅ | ✅ |
-| Dockerfile 更新 | ✅ | ❌ |
-| 自动处理 major 版本迁移 | ✅ | 有限 |
-| 配置即代码（Renovate.json）| ✅ | ✅ |
-| 私有注册表 | ✅ | ✅ |
+| PR 分组 | ✅ 规则更细 | ✅ |
+| Docker 基础镜像更新 | ✅ | ✅（`docker` 生态） |
 | GitHub Actions 更新 | ✅ | ✅ |
-| 自托管支持 | ✅ | ❌ |
-| 多语言支持 | 极多 | 主流 |
-| 开源 | ✅ | ❌（GitHub 闭源运营） |
+| 自动合并 | ✅ 配置内声明 | ✅ 依赖 branch protection + workflow 配合 |
+| 私有注册表 | ✅ | ✅ |
+| 自托管 | ✅ | ❌ 仅 GitHub 托管服务 |
+| 配置文件 | `renovate.json` | `dependabot.yml` |
+| 开源 | ✅（MPL-2.0） | ❌ 闭源运营 |
 
-**选择建议：**
+**选型判断：**
 
-- **快速起步**：直接用 Dependabot，功能足够
-- **需要更多定制**：Renovate 开源版更灵活
-- **企业安全合规**：Snyk 或 Renovate 企业版
-- **Monorepo + 自托管**：Renovate 是更成熟的选择
+- 在 GitHub 上刚起步或仓库数量多、维护精力有限：Dependabot，配置几分钟搞定，安全更新开箱即用
+- 需要精细调度（按依赖设不同节奏、锁定窗口期、复杂 monorepo 拓扑）：Renovate 的配置表达力明显更强
+- 安全合规有硬要求（许可证审计、SBOM、策略报告）：Snyk 或 Renovate 企业版， Dependabot 只解决"更新"这一件事
 
 ---
 
 ## 9. 自检清单
 
-完成配置后，建议逐一确认以下检查点：
+完成配置后，逐项确认：
 
-- [ ] `.github/dependabot.yml` 存在且为有效 YAML
-- [ ] `package-ecosystem` 与清单文件类型匹配
-- [ ] `directory` 指向实际清单文件所在路径
+- [ ] `.github/dependabot.yml` 存在于默认分支且是有效 YAML
+- [ ] `package-ecosystem` 与清单文件类型匹配（Yarn → `npm`，Cargo → `Cargo.toml`）
+- [ ] `directory` 指向清单文件实际所在路径
 - [ ] `schedule.interval` 设置合理（建议 daily 或 weekly）
-- [ ] 私有依赖配置了 `registries` 和对应的 GitHub Secrets
-- [ ] Security Updates 在仓库设置中已启用（默认启用，但需确认）
-- [ ] CI 工作流在 Dependabot PR 上运行并有明确的 pass/fail 信号
-- [ ] `open-pull-requests-limit` 限制了并发 PR 数量
-- [ ] `ignore` 规则覆盖了需要手动处理的依赖
-- [ ] `groups` 策略将依赖合理分组（如适用）
-- [ ] branch protection 规则正确配置了 required status checks
-- [ ] 如果开启 auto-merge，确认 CI 覆盖了足够的测试用例
-
----
-
-## 自测题
-
-1. Dependabot 的 Version Updates 和 Security Updates 有什么区别？触发机制分别是什么？
-2. 如果你的团队维护一个 npm monorepo（`/packages/core`、`/packages/web`、`/packages/mobile`），`dependabot.yml` 该怎么写？写出关键配置片段。
-3. 为什么 PR 分组（`groups`）在 Dependabot 配置里很重要？不给依赖分组会有什么后果？
-4. 你有一个内部 npm registry 需要认证，Dependabot 怎么访问它？写出 `registries` 的配置思路。
-5. 什么时候应该从 Dependabot 切换到 Renovate？列出至少两个信号。
-
-## 练习
-
-**练习 1：给现有项目配 Dependabot（20 分钟）**
-
-找一个你正在维护的 GitHub 仓库，在 `.github/dependabot.yml` 里写出配置。要求：覆盖所有包管理器、设定合理的检查频率、给生产依赖和开发依赖分不同的组、为至少一个你自己想手动跟的依赖加上 `ignore` 规则。提交 PR 后，观察 Dependabot 是否在下一个 schedule 窗口打开了第一个更新 PR。
-
-**练习 2：模拟安全漏洞响应（15 分钟）**
-
-假设你的项目依赖 `axios@0.21.0`，GitHub Advisory Database 刚刚收录了一个 Critical 级别 RCE 漏洞。走一遍完整流程：Security Update PR 出现后，你该看什么、该跑什么测试、该什么时候合？写出你团队的 SLO（从漏洞公告到合入 PR 的时间上限）。
-
-**练习 3：对比 Renovate 配置（30 分钟）**
-
-把练习 1 的 Dependabot 配置翻译成一份等价的 Renovate `renovate.json`。做完后对比两者的表达能力：哪些配置 Dependabot 更简洁，哪些 Renovate 更强？写一段 100 字以内的选型建议。
-
-## 进阶路径
-
-**阶段一：基础自动化（1 小时）**
-
-在你自己的项目里打开 Dependabot，配好 `dependabot.yml`，跑通第一次 Version Update PR 和 Security Update PR。确认你可以在 GitHub Insights 面板里看到 Dependabot 的状态。
-
-**阶段二：CI 集成与分组策略（2 小时）**
-
-写一个 Dependabot 专用的 GitHub Actions workflow，在所有 `dependabot[bot]` 的 PR 上自动跑测试和 lint。同时调优分组策略，把同时打开的 PR 数量控制在 5 个以内。
-
-**阶段三：auto-merge 与零干预流程（半天）**
-
-在保证测试覆盖率足够的前提下，配置 branch protection rules + auto-merge，让 patch 和 minor 更新自动合入。记录下你设置的"安全边界"——哪些类型的更新绝不自动合。
-
-**阶段四：规模化与策略文档（1 天）**
-
-如果你的团队有 10+ 个仓库，写一份依赖更新策略文档，统一 `dependabot.yml` 模板、分组策略和 auto-merge 规则。文档要回答的问题是：一个新加入的工程师应该能在 10 分钟内配好仓库的依赖自动化。
+- [ ] `ignore` 覆盖了需要人工处理的依赖和 major 更新
+- [ ] `groups` 已配置，PR 数量在团队可消化的范围内
+- [ ] 私有依赖配置了 `registries`，凭据存在 Dependabot secrets 里
+- [ ] 安全更新开关已在仓库设置中确认开启
+- [ ] CI 在 Dependabot PR 上运行且结论明确（pass/fail）
+- [ ] branch protection 配置了 required status checks
+- [ ] 若开启 auto-merge：确认放行的更新类型有足够的测试覆盖
+- [ ] 团队知道 `@dependabot` 常用命令（rebase / close / ignore this dependency）
 
 ---
 
 ## 10. 参考链接
 
 - [Dependabot 官方文档](https://docs.github.com/en/code-security/dependabot)
-- [dependabot.yml 配置参考](https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file)
+- [dependabot.yml 配置选项参考](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference)
+- [About Dependabot security updates](https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/about-dependabot-security-updates)
+- [Automating Dependabot with GitHub Actions](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions)
+- [私有注册表配置](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/configuring-access-to-private-registries-for-dependabot)
 - [GitHub Advisory Database](https://github.com/advisories)
 - [Renovate 官方文档](https://docs.renovatebot.com/)
 - [Snyk 官方文档](https://docs.snyk.io/)
+
+---
+
+## 自测题
+
+1. Version Updates 和 Security Updates 的触发机制有什么区别？各自的"开关"分别在哪里？
+2. 团队维护一个 npm monorepo（`/packages/core`、`/packages/web`、`/packages/mobile`），`dependabot.yml` 怎么写？如果想一条配置覆盖全部子包，用什么选项？
+3. 为什么 `groups` 分组重要？不分组会发生什么？`open-pull-requests-limit` 设为 0 会限制安全更新 PR 吗？
+4. 内部 npm registry 需要认证，Dependabot 怎么访问？凭据应该存在哪套 secrets 里？
+5. 你的 Dependabot PR 上 `gh pr edit` 报 403，最可能的原因是什么？
+6. 什么时候应该从 Dependabot 切到 Renovate？列出至少两个信号。
+
+## 练习
+
+**练习 1：给现有项目配 Dependabot（20 分钟）**
+
+挑一个你维护的 GitHub 仓库，写出 `.github/dependabot.yml`：覆盖项目用到的所有包管理器、设定合理的检查频率、生产依赖和开发依赖分组、给一个想手动跟进的依赖加 `ignore`。推送后在 Insights → Dependency graph → Dependabot 面板确认第一次检查的结果。
+
+**练习 2：模拟安全漏洞响应（15 分钟）**
+
+假设项目依赖 `axios@0.21.0`，GitHub Advisory Database 刚收录一个 Critical 级 RCE 漏洞。走一遍流程：安全 PR 出现后看什么（修复版本、diff 范围）、跑什么（CI 之外要不要补回归）、什么时候合？把"从告警到合入"的时间上限写成团队的 SLA。
+
+**练习 3：对比 Renovate 配置（30 分钟）**
+
+把练习 1 的配置翻译成等价的 `renovate.json`。对比两者的表达能力：哪些地方 Dependabot 更简洁，哪些 Renovate 更强？写一段 100 字以内的选型结论。
+
+## 进阶路径
+
+**阶段一：基础自动化（1 小时）**
+
+在自己的仓库里跑通第一条 Version Update PR 和 Security Update PR，确认面板上能看到检查记录。
+
+**阶段二：CI 集成与分组（2 小时）**
+
+按 §6 的模板写一个 Dependabot 专用 workflow（测试 + 打标签），同时调优分组，把并发 PR 控制在 5 个以内。
+
+**阶段三：auto-merge 与零干预（半天）**
+
+在测试覆盖达标的前提下，配置 branch protection + auto-merge，让 patch 和 minor 自动合入。把"哪些类型绝不自动合"写成明文规则并告知团队。
+
+**阶段四：规模化与策略文档（1 天）**
+
+团队有 10+ 个仓库时，写一份依赖更新策略：统一的 `dependabot.yml` 模板、分组与 auto-merge 规则、告警响应 SLA。验收标准：新同事照文档 10 分钟内配好一个仓库。

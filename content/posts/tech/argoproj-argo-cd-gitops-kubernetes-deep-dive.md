@@ -14,15 +14,15 @@ tags: ["Kubernetes"]
 
 ## 核心判断
 
-很多人把 Argo CD 当成"会 watch Git 的 kubectl"。它的核心价值不是把 `kubectl apply` 自动化，而是把"集群的实时状态"和"Git 上声明的目标状态"做成两份独立可对比的事实（live state vs target state），并以 Kubernetes 控制器的形式持续把前者收敛到后者。
+很多人把 Argo CD 当成"会 watch Git 的 kubectl"。这个理解漏掉了要害：Argo CD 把"集群当前的实时状态"（live state）和"Git 上声明的目标状态"（target state）做成两份可以随时对比的事实，再以 Kubernetes 控制器的形式持续把前者收敛到后者。`kubectl apply` 只执行一次，Argo CD 管的是执行之后的一生。
 
-仓库地址是 [github.com/argoproj/argo-cd](https://github.com/argoproj/argo-cd)，Apache-2.0 协议，累计 Star 数 2.37w、Forks 约 7.6k（README 与 GitHub API 实时数据）。CNCF 毕业项目，OpenSSF Scorecard 和 CII Best Practices 都打了卡；最新的 v3.5.x 发布版里，容器镜像全部用 cosign 签名，并生成满足 SLSA Level 3 的 provenance。从工程量级看，它就是安装到集群里的"GitOps 控制器 + 一组 CRD + 一个 UI + 一组 CLI"。
+仓库地址是 [github.com/argoproj/argo-cd](https://github.com/argoproj/argo-cd)，Apache-2.0 协议，Star 约 2.4 万、Fork 约 7.8 千（2026 年 9 月 GitHub API 数据）。Argo 项目 2022 年 12 月从 CNCF 毕业，并通过了 CII Best Practices 检查；当前稳定版 v3.5.x（v3.5.2 发布于 2026 年 8 月）的容器镜像用 cosign 签名，附带满足 SLSA Level 3 的 provenance，可按官方文档用 `cosign verify` 和 `slsa-verifier` 验证。工程量级上，它就是装进集群的一套"GitOps 控制器 + 一组 CRD + 一个 UI + 一个 CLI"。
 
-归纳出三条核心判断：
+先给三条判断，全文围绕它们展开：
 
-- **判断 1：Argo CD 是 Kubernetes 的控制器，不是 CI 流水线**。它跑在集群里，以工作负载（Deployment/StatefulSet）的形式受 Kubernetes 调度与生命周期管理；它和外部世界唯一的协议是 Git（pull 模型），而不是 webhook（push 模型）。这条直接决定了它的部署模型、灾备模型和权限模型。
-- **判断 2：Application 不是一组 manifest，而是一个 CRD**。Application 是 Argo CD 自己定义的 Kubernetes Custom Resource，里面写的是"我想要的最终态"。Argo CD 只关心这份期望的最终态，并把它和集群里真实的对象逐个对比。manifest 只是 Application 的一部分字段。
-- **判断 3：sync 是一次幂等操作，Reconcile 才是核心循环**。Sync 是用户或控制器主动触发的一次"对齐"动作；Reconcile 是控制器对每个 Application 周期性跑的那段 reconcile loop（对照 live vs target、修正 sync status、清理孤儿资源）。理解这两件事的区别，drift detection、self-heal、prune 这些功能才好分清顺序。
+- **判断 1：Argo CD 是 Kubernetes 控制器，不是 CI 流水线**。它自己以 Deployment 或 StatefulSet 的形式跑在集群里，受 Kubernetes 调度。数据面只有一条路：从 Git 拉取（pull 模型）。Git webhook 只是"有新提交"的信号铃，不传任何清单数据。这决定了它的部署形态、灾备思路和权限设计。
+- **判断 2：Application 不是一组 manifest，而是一个 CRD**。Application 是 Argo CD 自定义的 Kubernetes 资源，`spec` 里写的是"我要的最终态"：从哪个仓库哪个目录读、写到哪个集群哪个命名空间、按什么策略同步。manifest 清单只是渲染中间产物，控制器真正盯的是这份 spec 与集群实际状态之间的差。
+- **判断 3：sync 是一次幂等操作，Reconcile 才是核心循环**。Sync 是被触发的一次"对齐"；Reconcile 是控制器对每个 Application 周期性执行的循环——对比 live 与 target、刷新 sync status、按策略清理。分清这两个词，self-heal、prune、drift detection 才不会搅在一起。
 
 ---
 
@@ -32,76 +32,74 @@ Argo CD 在集群内部署成 3 个核心组件 + 1 组 CRD + N 个集群凭证�
 
 ### 三组件：API Server / Repository Server / Application Controller
 
-| 组件 | 角色 | 关键职责 | 通信协议 |
+| 组件 | 角色 | 关键职责 | 通信方式 |
 |------|------|----------|----------|
-| **API Server** (`argocd-server`) | 控制平面入口 | 暴露 gRPC/REST API；终端用户、CI 系统、UI 都通过它操作 Application；认证鉴权；Git Webhook 事件的转发器 | gRPC / REST，对外暴露 |
-| **Repository Server** (`argocd-repo-server`) | manifest 渲染器 | 拉取 Git 仓库、缓存、调用 Helm/Kustomize/Jsonnet/Plain 等工具把 Application 引用的 source 渲染成最终 Kubernetes 对象 | 内部 gRPC，对 controller 提供 |
-| **Application Controller** (`argocd-application-controller`) | reconcile 引擎 | 周期性地把"期望态"（来自 repo-server）和"实时态"（来自 kube-apiserver）做 diff，标 Sync/Health 状态，并按策略触发 sync | kube-informer + 内部 gRPC |
+| **API Server** (`argocd-server`) | 控制平面入口 | 暴露 gRPC/REST API，终端用户、CI、UI 都经它操作 Application；负责认证鉴权；接收 Git webhook 并转发为刷新信号 | gRPC / REST，对外暴露 |
+| **Repository Server** (`argocd-repo-server`) | manifest 渲染器 | 拉取并缓存 Git 仓库，调用 Helm/Kustomize/Jsonnet/目录解析等工具，把 Application 引用的 source 渲染成 Kubernetes 对象清单 | 集群内部 gRPC |
+| **Application Controller** (`argocd-application-controller`) | reconcile 引擎 | 周期性对比"期望态"（来自 repo-server）与"实时态"（来自 kube-apiserver），计算 diff，刷新 Sync/Health 状态，按策略触发 sync | informer watch + 内部 gRPC |
 
-三组件都跑在 Argo CD 自己的 namespace 里（默认 `argocd`），由 Deployment/ReplicaSet 拉起，各自有 ConfigMap 和 Secret。Application Controller 是 reconcile 的核心，但它自己并不直接 git clone，所有 manifest 渲染都委托给 Repository Server，自己保留"对比 → 标记 → 触发 sync"这条主线。
+三个组件默认装在 `argocd` 命名空间，共享 `argocd-cm`、`argocd-secret` 等配置对象。分工上有一条硬边界：Application Controller 从不直接 `git clone`，所有渲染都委托给 Repository Server，自己只保留"对比 → 标记 → 触发 sync"这条主线。
 
 ### 三类对象：Application / AppProject / ApplicationSet
 
-Argo CD 在集群注册一组 CRD，核心是 3 个：
+Argo CD 注册的核心 CRD 有三个：
 
-- **Application**：最小的"想交付到哪个集群"的单位。spec 里写明 source（Git repo URL + revision + path）、destination（目标集群名 + 命名空间）、sync policy、ignore differences 规则等。Argo CD 周期性地比对 spec 与目标集群状态，把结果分两轨写进 status：sync 状态（Synced / OutOfSync）和健康状态（Healthy / Degraded / Suspended）。
-- **AppProject**：项目级别的"业务隔离面"。一个 AppProject 内有 source 仓库白名单、destination 集群白名单 + 命名空间白名单、cluster resource 白名单、可签发的 SyncWindow、可调的 RBAC policy 列表。Application 必须挂在 AppProject 下，越界就拒收。
-- **ApplicationSet**：Application 的 generator（生成器）。用来从 Git 目录、Cluster list、PR/MR、ScmProvider 等输入"扇出"出大量 Application。同一份 helm chart 在 12 个环境部署，靠 ApplicationSet + 模板而不是写 12 个 YAML。
+- **Application**：最小交付单位。`spec` 写明 source（仓库 URL + revision + path）、destination（目标集群 + 命名空间）、同步策略、忽略差异规则等。控制器周期比对 spec 与目标集群，结果分两轨写进 `status`：sync 状态（Synced / OutOfSync，在 `status.sync.status`）和健康状态（Healthy / Degraded / Suspended 等，在 `status.health.status`）。
+- **AppProject**：项目级隔离面。限定可引用的源仓库白名单、可部署的目标集群与命名空间白名单、cluster-scoped 资源白名单，可配 SyncWindow 和 RBAC policy。Application 必须挂在某个 AppProject 下，越界请求会被拒收并记录 condition。
+- **ApplicationSet**：扇出器。从 Git 目录、Cluster 列表、Pull Request/Merge Request、SCM Provider 等生成器（generator）取输入，按模板批量生成 Application。同一份 chart 要铺 12 个环境，写一个 ApplicationSet 而不是 12 份 YAML。
 
-ApplicationSet 不直接部署东西，它是把 Git/Cluster/Scm 数据源拆成 N 份模板参数，每份产出一个 Application CR，让 Argo CD 控制器接手。Argo CD 控制器再走标准同步流程。
+ApplicationSet 自己不部署任何东西：它把数据源拆成 N 份模板参数，产出 N 个 Application CR，然后交给标准同步流程。
 
 ### 多集群：单 controller 联邦，凭证用 Secret
 
-Argo CD 部署在"中心集群"，管理一组"外部集群"（包括自身 in-cluster）。每个外部集群只是一个 Secret，存 kubeconfig 或 bearer token + API server URL。Application 的 destination 字段引用这些集群名称。
+Argo CD 装在"中心集群"，管理一组"外部集群"（含自身的 in-cluster）。每个外部集群在中心集群里只是一个 Secret，存 bearer token + API server 地址或 kubeconfig。Application 的 destination 字段按名字引用这些集群。
 
-所有 reconcile 在中心集群发生；外部集群只暴露标准 kube-apiserver。中心集群宕机时 drift detection 跟着停——这是 controller model 的固有弱点，运维时必须考虑。
+所有 reconcile 都发生在中心集群，外部集群只需要暴露标准 kube-apiserver。代价是：中心集群宕机，drift detection 一起停。这是 pull 模型的固有属性，做灾备方案时必须考虑。
 
-### 异步流水线：API Server → Controller → Repo Server → kube-apiserver
+### 异步流水线：一次 reconcile 的关键链路
 
-一次 reconcile 的关键链路：
+1. API Server 接收 Application 的创建/更新，或收到 Git webhook 事件；
+2. Application Controller 通过 informer 感知 Application CR 变化，进入工作队列；
+3. Controller 按 source 字段向 Repository Server 请求最终 Kubernetes 对象清单；
+4. Controller 清单中的每个对象，经 informer 从目标集群 kube-apiserver 取真实对象，做 diff；
+5. 结合 diff 与同步策略决定是否触发 sync，把结果写回 `Application.status`；
+6. sync 时通过 Kubernetes API 写目标集群（走 client-go 的 patch 语义，不是调用 kubectl）。
 
-1. API Server 接收用户的 Application 创建/更新、或者收到 Git webhook 事件；
-2. Application Controller 看见 Application CR 变更后，把它丢进工作队列；
-3. Controller 用 Application 的 source 字段请求 Repository Server，请求给出最终的 K8s object 列表（即 manifest）；
-4. Controller 用 manifest 里的 namespace + name 列表，从目的地 kube-apiserver 拉真实对象，做 diff；
-5. Controller 根据 diff + sync policy，决定是否触发 sync，把状态写回 Application.status；
-6. Sync 时 Controller 通过 Kubernetes API 写目标集群（不是 kubectl apply，而是走 client-go 的 patch 逻辑）。
+全链路用 watch/list 而不是轮询（controller 端走 informer，repo-server 端用 `git ls-remote` + 内部缓存），所以不会产生"高频 cron 拉 Git"的开销。
 
-每一步都用了 Kubernetes 的 watch/list 而不是轮询（Controller 端走 informer，repo-server 端走 git ls-remote + 内部缓存），所以 Argo CD 不会出现"高频 cron 拉 Git"的成本。
+## 边界拆分：source 与 destination、渲染工具、隔离面
 
-## 边界拆分：三种 Git 引用、三种渲染工具、三种隔离面
-
-### 边界 1：Git 引用 vs 集群路径
+### 边界 1：读哪里 vs 写哪里
 
 | 概念 | 字段 | 含义 |
 |------|------|------|
-| Source | `spec.source.repoURL` + `spec.source.targetRevision` + `spec.source.path` | 在哪个 Git 仓库的哪个 commit/branch 的哪个目录 |
-| Destination | `spec.destination.server` + `spec.destination.namespace` | 渲染后的对象要送到哪个集群的哪个 namespace |
-| Sync status | `status.conditions[]` | sync / 健康 / suspended 状态码，不参与 manifest 决策 |
+| Source | `spec.source.repoURL` + `spec.source.targetRevision` + `spec.source.path` | 从哪个仓库的哪个分支/commit 的哪个目录读 |
+| Destination | `spec.destination.server` + `spec.destination.namespace` | 渲染结果写到哪个集群的哪个命名空间 |
+| 观测结果 | `status.sync.status` / `status.health.status` | 只读的状态轨，不参与 manifest 决策 |
 
-`source` 是"读哪里"，`destination` 是"写哪里"。仓库只是 source 之一，OCI（Helm OCI）和 Plugin 也算 source；destination 也支持本地集群、外接集群等多种形态。
+`source` 是"读哪里"，`destination` 是"写哪里"。仓库不是唯一的 source 形态：Helm chart（含 OCI 引用）和插件输出同样作为 source；destination 支持本地集群与已注册的外部集群。
 
-### 边界 2：三种 manifest 渲染工具
+### 边界 2：manifest 渲染工具
 
-| 工具 | 何时启用 | 如何被 Argo CD 调起 |
+| 工具 | 何时启用 | 如何被调起 |
 |------|----------|--------------------|
-| **Plain (Directory)** | repo 根目录直接就是 K8s YAML | repo-server 直接遍历，校验 K8s schema |
-| **Helm** | source.path 指向含 `Chart.yaml` 的目录 | 通过 Helm v3 CLI / Helm libs 渲染，可填 `helm.values` |
-| **Kustomize** | source.path 指向含 `kustomization.yaml` 的目录 | 通过 kubectl 内嵌或独立 kustomize binary 调用 |
-| **Jsonnet** | source.path 是 .jsonnet 文件 | 通过 jsonnet 命令行渲染 |
-| **Plugin** | sidecar / config management plugin | repo-server 启动时通过 ConfigMap 声明 `<name>.yaml` |
+| **目录（plain YAML）** | 目录下是普通 K8s YAML | repo-server 直接解析并拆分文档 |
+| **Helm** | 目录含 `Chart.yaml` | 用内置 Helm v3 渲染，values 可写在 `spec.source.helm` |
+| **Kustomize** | 目录含 `kustomization.yaml` | 用内置 kustomize 二进制渲染（可用 sidecar 挂多版本） |
+| **Jsonnet** | 目录含 `.jsonnet` | 用 jsonnet 渲染 |
+| **插件（CMP）** | 配置了 config management plugin | 由 repo-server 的 sidecar 插件容器经 Unix socket 处理 |
 
-Argo CD 的 Application 不强制渲染工具，渲染由 repo-server 根据目录内容自动嗅探（详见 user-guide 里的 directory tool detection）。这种"按 source.path 自动发现"的策略让一个 Git 仓库可以混用多种工具，但对 retention 很复杂的 monorepo 来说要小心嵌套副作用。
+检测逻辑在 repo-server：`spec.source` 里显式写了 `helm:` / `kustomize:` / `plugin:` 等配置节时直接按显式类型走；没写则按目录标记文件自动发现。注意一个细节：同一目录里 `Chart.yaml` 和 `kustomization.yaml` 并存时，自动检测的结果偏向 Kustomize——想让行为可预期，就显式声明类型。一个 Git 仓库混用多种工具没问题，但结构复杂的 monorepo 要留意嵌套目录被误检的副作用。
 
 ### 边界 3：三种隔离面
 
-| 隔离面 | 对象 | 控制字段 |
+| 隔离面 | 靠什么 | 控制字段 |
 |--------|------|----------|
-| **Kubernetes 集群隔离** | destination | `spec.destination.server` 选哪个集群的 Secret |
-| **命名空间隔离** | destination + AppProject | `spec.destination.namespace` + AppProject 的 `clusterResourceWhitelist` / `namespaceResourceWhitelist` |
-| **逻辑项目隔离** | AppProject + RBAC | AppProject 内嵌 `roles` / `policies`；用户绑定到一个 role 后只能在自己 AppProject 内的 Application 上 sync/render |
+| 集群隔离 | destination | `spec.destination.server` 引用哪个集群 Secret |
+| 命名空间隔离 | destination + AppProject | `spec.destination.namespace` + AppProject 的 `destination` 白名单 |
+| 用户操作隔离 | AppProject RBAC | AppProject 内嵌 `roles`/`policies`，用户绑定 role 后只能操作本项目内的 Application |
 
-Argo CD 的多租户能力来自四层隔离：datasource 隔离靠 Git 仓库 + repo URL；集群隔离靠 destination；命名空间隔离靠 AppProject 白名单；用户隔离靠 AppProject 内 RBAC + Policy。
+四类约束叠起来才是完整的多租户：源仓库靠 `sourceRepos` 白名单，目标环境靠 destination 白名单，资源种类靠 cluster/namespace 资源白名单，人的操作靠 RBAC policy。后面"多租户边界"一节逐个展开。
 
 ## 关键机制：同步、漂移修复、孤儿资源清理
 
@@ -109,196 +107,203 @@ Argo CD 的多租户能力来自四层隔离：datasource 隔离靠 Git 仓库 +
 
 ### sync：一次幂等操作
 
-sync 是单次操作：把"target state"应用一次到目标集群。核心代码在 Application Controller 的 `appcontroller` 包里，它的底层并不是"直接 apply 整个 yaml"，而是先算出 desired object list，再逐对象写入 kube-apiserver。写入走哪条语义，取决于有没有开 Server-Side Apply：
+sync 把 target state 应用一次到目标集群。实现在 Application Controller 的 `appcontroller` 包，底层不是"把整个 YAML apply 上去"，而是先算出期望对象清单，再逐对象写入 kube-apiserver。写入语义取决于是否开启 Server-Side Apply：
 
-- 默认（未开 SSA）：走 kubectl 式 3-way merge——也就是给每个对象维护 `kubectl.kubernetes.io/last-applied-configuration` 注解，算出 diff 后做 strategic merge patch（CRD 这类无 scheme 的类型退化为 JSON merge patch）。这和 `kubectl apply` 是同一套语义，能正确删除"从上次 apply 里消失的字段"。
-- 开启 SSA（`syncOptions: [ServerSideApply=true]`）：改用 Kubernetes 原生的 Server-Side Apply，由 API server 管理字段所有权（field manager）和冲突检测，客户端不再需要 last-applied 注解。
+- 默认（未开 SSA）：走 kubectl 式 three-way merge。Argo CD 给每个对象维护 `kubectl.kubernetes.io/last-applied-configuration` 注解，据此算 diff 后做 strategic merge patch；CRD 这类没有 scheme 的类型退化为 JSON merge patch。语义与 `kubectl apply` 一致，能正确删除"上一次 apply 之后从声明里消失的字段"。
+- 开启 SSA（`syncOptions: [ServerSideApply=true]`）：改用 Kubernetes 原生 Server-Side Apply，字段所有权（field manager）和冲突检测交给 API server，客户端不再依赖 last-applied 注解。
 
-这条区别值得记住：默认模式下 Argo CD 依赖客户端维护 last-applied，跨工具变更（比如同时被别的 CD 或 kubectl 碰过）容易踩"last-applied 不完整"的坑；SSA 把合并逻辑搬进了 API server，冲突时能给出明确报错。
+这条区别在混用工具时最要命：默认模式下，如果对象被 kubectl 或其他 CD 以不完整注解改过，last-applied 会失真；SSA 把合并逻辑移进 API server，冲突时给出明确报错，是多租户共享集群下更稳的选择。
 
-sync 的几个关键开关，都写在 Application CR 里：
+sync 的开关都写在 Application CR 里：
 
-- `syncPolicy.automated` 开了之后，drift 被发现就会自动 sync。这是 self-heal 的来源。
-- `syncPolicy.automated.prune` 决定要不要清理"目标态里没有、集群里却有"的对象（即孤儿资源）。
-- `syncPolicy.automated.allowEmpty` 决定清空目录是否合法。
-- `syncOptions[].PrunePropagationPolicy` 决定依赖对象的删除顺序（foreground / background / orphan）。
+- `syncPolicy.automated`：开启后 drift 一经发现即自动 sync，这是 self-heal 的来源；
+- `syncPolicy.automated.prune`：是否删除"目标态里没有、集群里却有"的对象（孤儿资源）；
+- `syncPolicy.automated.selfHeal`：是否追回集群侧的本地改动；
+- `syncPolicy.automated.allowEmpty`：源目录被清空时是否允许同步成空；
+- `syncOptions` 里的 `PrunePropagationPolicy`：决定删除的传播方式（foreground / background / orphan）。
 
-sync 是幂等的——同一份源推到集群两次，最终结果一样；这意味着可以从 Argo CD 之外的工具（kubectl / Helm / terraform）做变更，Argo CD 检测到 drift 再 sync 一次就能拉回来。
+sync 是幂等的：同一份源同步两次，结果一样。所以外部工具（kubectl、Helm、Terraform）改了集群也不要紧——Argo CD 检测到 drift，再 sync 一次就拉回 Git 声明的状态。
 
 ### Reconcile 与 drift detection
 
-Application Controller 在每个 application 上跑一个 reconcile loop：
+Application Controller 对每个 Application 跑一个 reconcile loop：
 
-1. 用 source hash 查 cache 命中，否则触发 repo-server 重新渲染；
-2. 拿渲染结果对象，和目标集群的对应对象做 server-side diff；
-3. 把 diff 写到 status 里；如果 `automated` 开启且 `selfHeal` 为真，则触发 sync。
+1. 按 source hash 查缓存，未命中则让 repo-server 重新渲染；
+2. 拿渲染结果与目标集群的实际对象做 diff；
+3. 把结果写进 status；若 `automated` 与 `selfHeal` 都开着且发现 drift，就触发 sync。
 
-`selfHeal` 是 drift 修复的核心开关。打开它之后，任何外部方式（人手 kubectl / 别套 CD 工具 / 节点漂移）造成的偏差，都会在下一个 reconcile 周期被 Argo CD 追回。关掉它的话，Argo CD 只标记 OutOfSync 等用户主动 sync。
+`selfHeal` 是漂移修复的开关。打开后，任何集群侧改动（手工 kubectl、别的工具、节点上的意外变更）都会在下一个 reconcile 周期被追回——Git 永远赢。关掉则只标 OutOfSync，等人工处理。
 
-controller 默认按 `--app-resync`（120 秒加最多 60 秒抖动）周期性兜底轮询，即使没有 webhook 也不会永久停在旧状态；`--self-heal-timeout-seconds`（默认 5 秒）单独控制自愈检查间隔。配合 Git Webhook，commit 后可以立即触发 reconcile，不必等完整一轮轮询。
+轮询节奏由两个参数控制：`--app-resync` 默认 120 秒、`--app-resync-jitter` 默认再加最多 60 秒抖动（可用 `argocd-cm` 的 `timeout.reconciliation` 覆盖）。也就是说，没有 webhook 的最坏情况下，一个变更最多约 3 分钟被发现。`--self-heal-timeout-seconds` 默认 0，不额外设阈值；自愈失败后按指数退避重试（初始 2 秒、上限 300 秒、冷却 330 秒后重置），避免和应用故障互相踩踏。配好 Git webhook 后，commit 一落地就能触发刷新，不必等整轮轮询。
 
-### Prune：孤儿资源
+### Prune：孤儿资源清理
 
-Prune 是 sync 阶段同步处理"集群里多余的对象"。三种典型场景：
+Prune 在 sync 阶段顺带删除"Git 里已经没有、集群里还留着"的对象。三种典型场景：
 
-- 应用换 chart：旧 chart 里有个 ConfigMap，新 chart 里删了；开 prune 之后这条 ConfigMap 会被自动清掉。
-- 团队手工改了 cluster 里某个 deployment（手 kubectl edit）；下次 reconcile 时 OutOfSync + sync 会把它追回 Git（selfHeal）。
-- 跨 application 共享对象：例如两个 Application 都创建 ConfigMap `foo`，开 prune + 多 Application 容易互相踩，建议把共享对象放到独立 Application 或者关 prune。
+- 应用换 chart：旧 chart 有个 ConfigMap，新 chart 删掉了它；开 prune 后这个 ConfigMap 被自动清掉；
+- 手工改动被追回：有人 `kubectl edit` 改了 Deployment，下一次 reconcile 标 OutOfSync，selfHeal 把它拉回 Git 声明的样子；
+- 跨 Application 共享对象：两个 Application 都要创建同名 ConfigMap 时，开 prune 很容易互相误删——共享对象应放进独立 Application，或对该对象关 prune。
 
-`--auto-prune` 等开关在原 kubernetes 工具里没有，Argo CD 把这一层语义补上。代价是开 prune 容易误删——比如 CronJob `successfulJobsHistoryLimit` 管理的对象，如果另一个工具也在碰，prune 会删掉它。
+"删除目标态之外的对象"这个语义是 Argo CD 补上的，Kubernetes 原生 apply 没有。它换来的代价是误删面变大：任何不在 Git 声明里、但确实被别的系统管理的对象（比如某个 controller 自动生成的资源）都可能被 prune 掉。所以官方建议的顺序永远是：先关 prune 跑稳 drift detection，再分环境放开。
 
-### Sync Window：变更节奏护栏
+### SyncWindow：变更节奏护栏
 
-SyncWindow 不是控制同步频率，而是限制哪些时间窗口内允许 sync。常见用法：只在 22:00 到 06:00 允许生产环境自动 sync，其余时间 drift 留在 OutOfSync 状态等人工看。
+SyncWindow 限制"什么时间段允许 sync"，不是调频率。常见用法：生产环境只允许 22:00–06:00 自动 sync，其余时间的变更留在 OutOfSync 状态，等窗口打开或人工放行。窗口可以按 AppProject 或 Application 匹配，也能配 deny 窗口硬停。
 
 ## 一次真实任务穿过系统
 
-### 应用场景
+### 场景设定
 
-一家 SaaS 团队有两个 Application：
+一个 SaaS 团队有两个对象：
 
-- Application `web`：repo 是 `git@github.com/acme/web.git`，path = `deploy/prod`，工具 = Helm，destination 是 production 集群、`web` namespace；
-- AppProject `web-team`：只允许 `web` 这个 Application 引用 `github.com/acme/*` 仓库，只允许部署到 production 集群的 `web` 和 `staging-web` namespace。
+- Application `web`：repo `git@github.com/acme/web.git`，path `deploy/prod`，Helm 渲染，部署到 production 集群的 `web` 命名空间；
+- AppProject `web-team`：限定项目内 Application 只能引用 `github.com/acme/*`，只能部署到 production 集群的 `web` 和 `staging-web` 命名空间。
 
-### 步骤 1：开发者 push PR → main 合并
+### 步骤 1：开发者合并 PR
 
-开发者改了 `deploy/prod/values.yaml`，PR 合入 main。GitHub 通过 webhook 通知 Argo CD API Server（默认监听 `/api/webhook`），Argo CD 把这次 commit 信息写入 Application 的 `spec.source.targetRevision` 候选，并在 Application Controller 里记一个 hint。
+开发者改了 `deploy/prod/values.yaml`，PR 合入 main。GitHub 通过 webhook 通知 Argo CD API Server（payload URL 配的是 `/api/webhook` 端点）。API Server 核对事件与哪些 Application 相关，给它们打上 `argocd.argoproj.io/refresh` 注解——这是一次刷新请求，不携带任何清单数据。
 
 ### 步骤 2：Application Controller 触发 Reconcile
 
-Controller 看到 hint 后立刻 reconcile（不等 3 分钟 reconcile 周期）。它拿着 Application 的 source hash 去问 Repository Server："请帮我渲染 `git@github.com/acme/web.git@main` 在 `deploy/prod` 路径下的最终对象列表。"
+Controller 感知到 refresh 注解后立刻处理这个 Application，不等 120 秒的周期。它拿着 source 定义去问 Repository Server："渲染 `git@github.com/acme/web.git@main` 在 `deploy/prod` 下的最终对象清单。"
 
 ### 步骤 3：Repository Server 渲染 manifest
 
 repo-server 内部：
 
-1. 用 Application 的 Git 凭证（Secret 里的 ssh key / https token）先解析目标 revision：`git ls-remote` 把 branch/tag 解析成具体 commit；
-2. 拉取并检出该 commit 的文件到缓存目录，交工具检测：`deploy/prod/Chart.yaml` 存在 → 调 Helm v3，把 Helm Values + 模板渲染成 K8s object list；
-3. 渲染结果按 commit hash 缓存，下次相同 commit 命中直接复用。
+1. 用 Application 配置的 Git 凭证（Secret 里的 SSH key 或 HTTPS token）执行 `git ls-remote`，把 `main` 解析成具体 commit；
+2. 检出该 commit 到缓存目录，识别渲染工具：`deploy/prod/Chart.yaml` 存在 → 调 Helm v3，把 values 和模板渲染成 Kubernetes 对象清单；
+3. 渲染结果按 revision 等要素缓存，同一 commit 下次直接复用。
 
-如果 path 下同时存在 `kustomization.yaml`，用户可在 `spec.source.kustomize` 里强制走 kustomize；要混用工具，就在 Chart.yaml 内部再嵌入 Kustomize 钩子。
+如果目录里同时有 `kustomization.yaml`，自动检测会偏向 Kustomize；想精确控制，在 `spec.source` 里显式写 `kustomize:` 或 `helm:` 配置节，跳过自动检测。
 
 ### 步骤 4：Application Controller 做 diff
 
-拿到 desired object list（可能是 6 个 Deployment + 6 个 Service + 1 个 ConfigMap + 1 个 Ingress）后，Controller 走 informer 向 production 集群的 kube-apiserver 拉对应的 live object。然后按 name 做 server-side diff，计算出 OutOfSync 集合：比如只有 Deployment `web-7c8f9b` 的 image 从 `v1.4.2` 变成 `v1.5.0`，其余对象对齐。
+拿到期望对象清单（假设是 6 个 Deployment + 6 个 Service + 1 个 ConfigMap + 1 个 Ingress）后，Controller 经 informer 从 production 集群取实际对象，逐个 diff。结论例如：只有 Deployment `web` 的 image 从 `v1.4.2` 变成 `v1.5.0`，其余全部对齐——Application 被标 OutOfSync。
 
 ### 步骤 5：sync 写入集群
 
-`automated=true` + `selfHeal=true` 时，Controller 直接发起 sync：
+`automated=true` 且 `selfHeal=true` 时，Controller 直接发起 sync：
 
-- 按上文"默认 3-way merge / 开启后 SSA"的方式把新 Deployment patch 进 production 集群；selector 标签变化时由 Kubernetes 创建新 ReplicaSet、逐 pod 滚动；
-- Spec 里有 sync hook（pre-sync/sync/post-sync）的对象按顺序执行（例如 Job）；
-- Prune 阶段跳过，因为没变更清单删除项。
+- 按前述默认 three-way merge 或 SSA 语义，把新 Deployment patch 进 production 集群；pod 模板变了，Kubernetes 新建 ReplicaSet 并逐批替换 Pod；
+- 声明里带 sync hook 的对象按序执行——`argocd.argoproj.io/hook: PreSync` 的 Job 会先跑（数据库迁移常这么挂），然后是 `Sync`，最后 `PostSync`；
+- 本例 prune 清单为空，跳过删除。
 
-`status.sync.status` 在 controller 写完 Deployments 之后被改成 `Synced`，`status.health.status` 在 Pod ready 之后被改成 `Healthy`。健康状态靠资源跟踪判断：Controller 按 Application 的跟踪规则找出所有派生对象，再据此推断是否 ready，而不是逐个读 Pod 细节。
+sync 完成后 `status.sync.status` 变成 `Synced`；等 Pod 真正 ready，`status.health.status` 才变成 `Healthy`。健康判定由内置的 health check（Lua 脚本，按 kind 注册，可自定义扩展）完成：对 Deployment 检查副本的就绪情况，不逐个读 Pod。
 
-**这里有一层默认隐藏的机制**：Argo CD 凭什么知道"这个 Deployment 属于哪个 Application"？靠的是给托管对象打的跟踪标记。默认的 `trackingMethod` 是 `annotation.label`——既打 `app.kubernetes.io/instance: <appName>` 标签、又写 `argocd.argoproj.io/tracking-id` 注解；另外还有纯 `annotation`、`annotation+managedfields` 等可选方案。它决定了三件事：健康推断时收集哪些对象、diff 时怎么对齐、prune 时哪些算"本应用该管的"。所以让两个 Application 控制同一批对象（共用 instance 标签）会出现健康状态互相干扰——这也是前面"跨 Application 共享对象容易互相踩"的底层原因。
+**这里有一层默认看不见的机制**：Argo CD 凭什么知道"这个 Deployment 属于哪个 Application"？靠给托管对象打跟踪标记。资源跟踪方法由 `application.resourceTrackingMethod` 配置，默认 `annotation`——在对象上写 `argocd.argoproj.io/tracking-id` 注解（内容形如 `web:apps/Deployment:default/web`，即应用名:组/类型:命名空间/名字）；可选值还有 `label`（只用 `app.kubernetes.io/instance` 标签）和 `annotation+label`（注解跟踪、标签仅供其他工具识别）。跟踪标记决定三件事：健康推断时收集哪些对象、diff 时怎么对齐、prune 时哪些算"本应用该管的"。所以两个 Application 声明同一批对象时，归属判定会打架，健康状态和 prune 都会互相污染——这是前文"共享对象要单独放"的根本原因。
 
 ### 步骤 6：失败回滚
 
-如果 sync 后 controller 探测到 health Degraded 且未自愈，sync 后追加的 wave/phase 顺序不会自动回退。Argo CD 的"回滚"实际上是 sync 到上一个 Known Good Revision，这在 controller 的 `--revision-history-limit` 上限之内都能做。CLI 的 `argocd app rollback` 就是一个特殊形态的 sync。
+sync 之后健康掉到 Degraded，wave/hook 的顺序不会自动倒带。Argo CD 的"回滚"是把应用 sync 到历史里的上一个可用 revision：`argocd app rollback` 本质就是一次指向历史版本的特殊 sync。历史长度由 Application 的 `spec.revisionHistoryLimit` 控制，默认 10。另外有个前提：开启 auto-sync 的应用不允许 rollback，得先关掉自动同步。
 
-## 多租户边界：AppProject + RBAC + 命名空间白名单
+## 多租户边界：AppProject + RBAC + 资源白名单
 
-### 1. AppProject 的源仓库白名单
+### 1. 源仓库白名单
 
-`AppProject.spec.sourceRepos` 只能写 git URL 字面匹配或前缀匹配（如 `https://github.com/acme/*`），Application 的 `spec.source.repoURL` 不在白名单里就会被 controller 拒收，写进 status 但不部署。这避免某个工程师随手配置仓库从任意地址拉代码。
+`AppProject.spec.sourceRepos` 支持 URL 字面量和 glob（如 `https://github.com/acme/*`）。项目内 Application 的 `spec.source.repoURL` 不在白名单里就被拒收，请求记入 condition，不会部署。这条堵住了"工程师随手把生产应用指向任意仓库"的口子。
 
-### 2. AppProject 的集群 + 命名空间白名单
+### 2. 集群 + 命名空间白名单
 
-`spec.destinations` 可以列"哪些集群 + 哪些命名空间"。这是把"开发环境"和"生产环境"从同一 Argo CD 中分离的关键开关。每个 AppProject 也可单独禁用 cluster-scoped 资源（ClusterRole、CustomResourceDefinition 等），进一步缩小爆破半径。
+`spec.destinations` 列出项目允许的"集群 + 命名空间"组合，是把开发环境和生产环境分开的关键约束。cluster-scoped 资源（CRD、ClusterRole 等）另有 `clusterResourceWhitelist`：自定义 AppProject 默认白名单为空，即默认禁止创建任何 cluster-scoped 资源；需要放行时逐条加白。内置的 `default` project 恰好相反，默认全放开——多租户场景第一条守则就是别用 default project 装业务应用。
 
-### 3. AppProject 内嵌的 RBAC Policy
+### 3. AppProject 内嵌 RBAC Policy
 
-每个 AppProject 可以定义 `policies`，policy 是 RBAC 风格的 `<action, resource, object>` 元组，例如：
+每个 AppProject 可定义 `policies`，格式是 RBAC 风格的六元组 `p, 主体, 动作, 资源, 对象, 效果`，对象字段用 `项目名/应用名`：
 
 ```yaml
 policies:
-  - p, proj:web-team:dev, applications, get, web/*, allow
-  - p, proj:web-team:dev, applications, sync, web/*, deny
+  - p, proj:web-team:dev, applications, get, web-team/*, allow
+  - p, proj:web-team:dev, applications, sync, web-team/guestbook-dev, deny
 ```
 
-policy 在 argocd-server 鉴权时被读取。它可以做到"张三只能在 staging 环境的 web 应用上 sync，不能看别的应用"。这条对中型平台团队很关键——直接省掉自建审批系统。
+policy 在 argocd-server 鉴权时读取，能做到"张三只能看本项目的应用、不能对某个指定应用执行 sync"。对中型平台团队，这层直接省掉一个自建审批系统。
 
-### 4. 集群级角色 Config
+### 4. 全局 RBAC 与 SSO
 
-除了 AppProject 内嵌 policy，argocd-server 还支持全局角色（role/cluster role）。本地的 `argocd-rbac-cm` ConfigMap 写角色到用户的映射，外接 OIDC / SAML / LDAP / SSO 时由 dex 接驳（`argocd-dex-server` 组件）。这两层都按官方 README 和操作手册配。
+项目级 policy 之外，`argocd-rbac-cm` ConfigMap 定义全局的角色到用户/组的映射；身份源接 OIDC / SAML / LDAP 时可走内置 dex（`argocd-dex-server`），已有的 OIDC provider 也可以直连、不经 dex。两层配置都记录在官方 RBAC 文档里。
 
 ### 这层边界不卡什么
 
-AppProject 不是 namespace。多个 Application 即使分属不同 AppProject，依然跑在同一个 controller 进程里、共享同一个 repo-server 缓存、共享同一个 informer quota。一个 AppProject 内的 Application 配置错误（比如 tight loop 装 Helm chart 每秒 reconcile）会拉低整组性能。
-
-另外，AppProject 不能阻止 Application 在 dest cluster 上 create 任意 cluster-scoped 资源，除非你显式把 `clusterResourceWhitelist` 关掉。一旦开了 cluster-scoped 准入，Argo CD 在多租户场景下需要慎重评估。
+AppProject 不是 namespace。分属不同 AppProject 的 Application 仍跑在同一个 controller 进程里，共享同一份 repo-server 缓存——某个项目里的应用反复触发渲染，拖慢的是所有人的 repo-server。cluster-scoped 资源默认是禁的，但只要某个项目加了白名单，它创建的 CRD、ClusterRole 影响的就是整个集群。多租户评估时，这两条要一起看。
 
 ## 采用建议
 
 ### 推荐采用顺序
 
-1. **从 standalone 单集群开始**：先在 dev/staging 集群起一个 Argo CD，托管 1-2 个不含状态的 microservice。
-2. **引入 Application 而不是 Bash**：把 helm install 改成 Application CR，第一周保留手动 sync。
-3. **加 AppProject 隔离**：每个业务团队一个 AppProject，先开 source repo 白名单，再开 cluster/namespace 白名单。
-4. **再加 selfHeal**：开 automated + selfHeal，但关 prune。先让 drift detection 稳定一周。
-5. **开 prune**：先在 staging 验证无误删，再带到生产。
-6. **接 ApplicationSet**：模板相同的多环境从一份 ApplicationSet 扇出。
-7. **接 SyncWindow 与 Resource Hook**：生产 sync 限制到夜间；用 pre-sync Job 做 migration。
-8. **观测与告警**：开 Notification（Slack / Alertmanager），drift 或 sync 失败实时通知。
+1. **从 standalone 单集群开始**：在 dev/staging 起一个 Argo CD，托管一两个无状态服务；
+2. **用 Application 替代脚本**：把 `helm install` 改写成 Application CR，第一周保留手动 sync；
+3. **加 AppProject 隔离**：每个团队一个项目，先配 source 白名单，再配 destination 白名单；业务应用搬出 default project；
+4. **再开 selfHeal**：开 `automated` + `selfHeal`，但 prune 保持关闭，让 drift detection 先稳定跑一周；
+5. **开 prune**：先在 staging 验证无误删，再带到生产；
+6. **接 ApplicationSet**：模板相同的多环境从一份 ApplicationSet 扇出；
+7. **接 SyncWindow 与 Resource Hook**：生产 sync 限制到夜间；用 PreSync Job 做数据库迁移；
+8. **观测与告警**：接 Notifications（Slack / Alertmanager），drift 或 sync 失败实时通知。
 
 ### 不适合 Argo CD 的场景
 
-- **纯静态文件发布到 S3/OSS**：没有 K8s 集群就上不了 Argo CD。
-- **超大规模（>10k Application 单 controller）**：单个 controller 的 informer 有上限，要走 HA + sharding。
-- **不希望任何远端拉代码**：Argo CD 默认 pull 模型，必须能从集群内拉 Git。
-- **一次性 Job 流水线**：Argo Workflows 覆盖这个场景，Argo CD 适合持续运行的 deployable object。
+- **没有 Kubernetes 集群**：纯静态文件发 S3/OSS 之类，Argo CD 帮不上；
+- **超大单实例规模**：单个 controller 实例的吞吐有上限，集群规模上去要走 sharding 多副本；Dynamic Cluster Distribution（v2.9 起，Alpha、默认关闭）支持副本增减时自动重分布，但生产启用前要评估成熟度；
+- **集群无法出网拉代码**：pull 模型要求能从集群内访问 Git；
+- **一次性批处理**：那是 Argo Workflows 的地盘，Argo CD 管的是持续运行的部署对象。
 
 ## 常见翻车现场
 
-### 翻车 1：sync 永远 OutOfSync，diff 不收敛
+### 翻车 1：永远 OutOfSync，diff 看不出差别
 
-- **症状**：status 显示 OutOfSync，但点开 diff 看不出差别。
-- **原因**：对象有 status 字段（CRD 常见）、时间戳、annotation 自带 hash 等"非 spec 差异"被算入 diff。
-- **修法**：写 `ignoreDifferences` 规则指明哪些 json path 差异忽略，注意更新 reference doc 中说明的 schema。
+- **症状**：status 显示 OutOfSync，点开 diff 却找不到有意义的差别。
+- **原因**：对象带 status 子字段（CRD 常见）、自动生成的时间戳或注入的 hash 注解，这些"非 spec 差异"被算进了对比。
+- **修法**：用 `ignoreDifferences` 精确排除。比如忽略 Deployment 的 `spec.replicas`（配合 HPA 是标准做法）：
 
-### 翻车 2：开 prune 后日志大量 Object was not deleted
+```yaml
+ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers:
+      - /spec/replicas
+```
 
-- **症状**：prune 操作出现 `Error from server (Forbidden): User cannot delete resource`，但手动删没问题。
-- **原因**：Argo CD 的 service account 在目的地集群缺 delete 权限。
-- **修法**：检查目的地集群的 ClusterRole，确保 SA 包含 `delete` / `list` / `patch` 等；或在 Application 上加 `syncOptions` 跳过 prune。
+### 翻车 2：prune 失败，报 Forbidden
 
-### 翻车 3：Helm chart 渲染后 secret 字段值丢
+- **症状**：sync 日志里出现 `Error from server (Forbidden): ... cannot delete resource`，但管理员手动删没问题。
+- **原因**：Argo CD 在目标集群用的 ServiceAccount 缺 delete 权限——配置目标集群凭证时给的 role 太窄。
+- **修法**：检查目标集群的 ClusterRole，确认包含 `delete` / `list` / `patch` 等动词；临时规避可在 Application 上调整 syncOptions 跳过 prune。
 
-- **症状**：Helm template 里有 `{{ .Values.db.password }}`，sync 后 secret 字段是空。
-- **原因**：Argo CD 的 Helm 调用对外层 secret 注入靠 `spec.source.helm.valueFiles` + 显式 `spec.source.helm.parameters`；外面 secret 走 External Secrets Operator 注入，不能用 `--set` 方式传。
-- **修法**：把 secret 拆出去管理，或者用 Helm 的 `--set-string` 在 Argo CD 端注入前先 dry-run 验证。
+### 翻车 3：Helm values 里的 secret 渲染成空
+
+- **症状**：模板里引用 `{{ .Values.db.password }}`，sync 后 Pod 起不来，环境变量是空的。
+- **原因**：这个值在集群里才存在（或由外部系统管理），Git 里的 values 根本没有它——Argo CD 只做声明式渲染，不会帮你从别处取 secret。把真实密码写进 values 又会让它进 Git，两头都不对。
+- **修法**：把 secret 从 Helm values 里拆出去，交给专门机制管理：External Secrets Operator、Sealed Secrets，或 argocd-vault-plugin 这类插件，在部署阶段把值注入集群，Git 里只留引用。
 
 ### 翻车 4：ApplicationSet 重渲染风暴
 
-- **症状**：template 改动后，几百个派生 Application 全部同时进入 OutOfSync → Reconcile 风暴，controller CPU 飙满。
-- **原因**：reconcile 是控制器频率触发，没有内建节流。
-- **修法**：ApplicationSet 用 progressive sync 或 `applicationsync` 内的 spread 配置，或者通过 promotion generator 控制节奏。
+- **症状**：模板一改，几百个派生 Application 同时 OutOfSync、同时 reconcile，controller CPU 打满。
+- **原因**：ApplicationSet 一次生成所有 Application，同步没有内建节流。
+- **修法**：用 Progressive Syncs 分批推进（v3.3 起 Beta，需通过 flag 或 ConfigMap 显式开启，通过 `strategy` 配置 RollingSync，前一批恢复 Healthy 才放下一批）；或者按环境拆成多个 ApplicationSet，缩小一次性扇出的爆炸范围。
 
-### 翻车 5：selfHeal 反过来追回人工 debug 改动
+### 翻车 5：selfHeal 追回人工 debug 改动
 
-- **症状**：debug 时改了 cluster 的 Deployment 跑通测试，第二天被 Argo CD 自动 sync 回去。
-- **原因**：selfHeal 开启后等于"Git 永远赢"。
-- **修法**：debug 时把应用 syncPolicy 改成 manual；或者用 `ignoreDifferences` 临时挂一条；或者改用一个独立 namespace 不进 AppProject。
+- **症状**：排障时 `kubectl edit` 改了 Deployment 的参数，第二天被 Argo CD 自动改回去。
+- **原因**：selfHeal 开启后，Git 永远赢，任何集群侧改动都是"漂移"。
+- **修法**：排障期间把该应用的 `syncPolicy.automated` 暂时关掉，或临时加一条 `ignoreDifferences`；更干净的做法是在不纳入 Argo CD 管理的独立 namespace 里复现问题。
 
 ## 常见问题
 
 **Argo CD 自己宕机会怎么样？**
 
-sync 流水线停。已部署的 workload 不受影响。从单集群多 controller HA（Dynamic Cluster Distribution，v2.4+）到跨集群灾备都要提前规划。
+sync 流水线停，已部署的 workload 不受影响——这正是 pull 模型的隔离性。恢复要提前规划：HA manifests 起多副本并把 Redis 切 HA 模式，controller 分片多副本分担集群，再配灾备。
 
 **Argo CD 跟 Flux 怎么选？**
 
-Argo CD 是 pull + 多组件，UI 友好，多团队多租户优势明显；Flux 是 controller + 单进程，Kustomize 生态深。两者都毕业自 CNCF，按团队对 UI、CRD-first 还是 controller-first 的偏好选择。
+两者都是 CNCF 毕业项目。Argo CD 是多组件 + UI + Application CRD 驱动，多团队多租户友好；Flux 是 controller + 单进程形态，与 Kustomize 生态贴合更深。按团队对 UI、CRD-first 还是 controller-first 的偏好选，两条路线都有大规模生产背书。
 
 **跟 Argo Rollouts / Argo Workflows 是什么关系？**
 
-同属 argoproj 家族。Argo CD 管 sync 与 reconcile，Argo Rollouts 做渐进式交付（canary / blue-green），Argo Workflows 做 DAG / 批处理。Argo CD Application 的 sync hook 可以调 Rollouts / Workflows。
+同属 argoproj。Argo CD 管 sync 与 reconcile，Argo Rollouts 做渐进式交付（canary / blue-green），Argo Workflows 做 DAG / 批处理。Application 的 sync hook 可以衔接 Rollouts 和 Workflows。
 
 **Argo CD 与 Helm 的边界在哪里？**
 
-Helm 是 templating + package 工具；Argo CD 是 controller + 多 source 渲染器 + Application CRD。Argo CD 可以渲染 Helm chart，但所有合规/GitOps 行为由 Argo CD 这一侧负责。
+Helm 是模板与打包工具，Argo CD 是控制器 + 渲染调度器。Argo CD 可以把 Helm chart 作为 source 渲染，但 GitOps 的合规要求——审计、漂移修复、权限——由 Argo CD 这一层负责。Helm release 的状态记录在集群 Secret 里，而 Argo CD 的真相在 Git，两者不要混用同一批对象。
 
 ## 项目资源
 
@@ -307,5 +312,6 @@ Helm 是 templating + package 工具；Argo CD 是 controller + 多 source 渲�
 - Live Demo：[https://cd.apps.argoproj.io/](https://cd.apps.argoproj.io/)
 - 架构总览：[Architectural Overview](https://argo-cd.readthedocs.io/en/stable/operator-manual/architecture/)
 - 核心概念：[Core Concepts](https://argo-cd.readthedocs.io/en/stable/core_concepts/)
+- 签名验证：[Verification of Argo CD Artifacts](https://argo-cd.readthedocs.io/en/stable/operator-manual/signed-release-assets/)
 - 项目主页：[https://argoproj.github.io/](https://argoproj.github.io/)
 - Slack：[join argoproj workspace](https://argoproj.github.io/community/join-slack)

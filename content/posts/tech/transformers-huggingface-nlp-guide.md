@@ -1,10 +1,11 @@
 ---
 title: "Hugging Face Transformers 深度指南：从 Pipeline 到生产部署"
 date: "2026-04-06T22:19:00+08:00"
+lastmod: "2026-09-13T00:00:00+08:00"
 slug: "transformers-huggingface-nlp-guide"
-github_repo: "huggingface/text-generation-inference"
-source_key: "gh:huggingface/text-generation-inference"
-description: "不止于 API 调用。本文深入 Transformers 的设计决策、Pipeline/AutoClass/Trainer 三条主线的工作机制、一个完整的微调任务流案例，以及模型量化、Flash Attention 等生产部署策略。最后给出不同场景的采用路线图。"
+github_repo: "huggingface/transformers"
+source_key: "gh:huggingface/transformers"
+description: "不止于 API 调用。本文深入 Transformers 的设计决策、Pipeline/AutoClass/Trainer 三条主线的工作机制、一个完整的微调任务流案例（含 LoRA 参数高效微调），以及模型量化、Flash Attention 等生产部署策略。最后给出不同场景的采用路线图。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Hugging Face", "NLP", "PyTorch", "LLM"]
@@ -55,7 +56,7 @@ python -c "import transformers; print(transformers.__version__)"
 ### 1.2 GPU 确认
 
 ```bash
-python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, GPU: {torch.cuda.get_device_name(0)}')"
+python -c "import torch; print('CUDA:', torch.cuda.is_available(), 'GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A')"
 ```
 
 如果你的环境没有 GPU，Transformers 也能在 CPU 上跑——只是大模型会很慢。对于 7B 级别的模型，CPU 推理基本不可用，需要量化（见第 8 节）。
@@ -118,25 +119,32 @@ classifier = pipeline("image-classification", model="google/vit-base-patch16-224
 classifier("cat.jpg")
 ```
 
-### 2.3 一个容易踩的坑：Pipeline 不是线程安全的
+### 2.3 一个容易踩的坑：并发时显存翻倍
 
-如果你用 `ThreadPoolExecutor` 并行跑 pipeline，每个线程需要独立的 pipeline 实例：
+用 `ThreadPoolExecutor` 并行跑 pipeline 时，最容易犯的错误是"每个线程创建自己的 pipeline 实例"：
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
 
 def classify_batch(texts):
-    # 每个线程创建自己的 pipeline
+    # 错误：每个线程加载一份完整模型，显存成倍增长
     classifier = pipeline("text-classification")
-    results = []
-    for text in texts:
-        results.append(classifier(text))
+    results = [classifier(text) for text in texts]
     return results
 ```
 
-原因是 pipeline 内部缓存的模型不在线程间共享。更好的做法是用 `device_map="auto"` 把模型加载到 GPU，然后一次处理一个 batch，而不是每个线程一个实例。
+每个 `pipeline()` 调用都会重新加载一份完整模型。线程池开 N 个线程，显存就要 N 份模型——小模型还能撑，7B 级别直接 OOM。
 
-### 📝 练习 1：Pipeline 选型
+GPU 推理的瓶颈在模型前向计算本身，单张卡上开多个 Python 线程只是排队同一个 GPU，不会更快。真需要并发吞吐时，考虑用 [vLLM](https://github.com/vllm-project/vllm) 或 [TGI](https://github.com/huggingface/text-generation-inference) 这类服务化推理框架，而不是在应用里手动开线程。
+
+正确的做法是复用同一个 pipeline 实例，用 `batch_size` 参数做批处理：
+
+```python
+classifier = pipeline("text-classification", batch_size=32)
+results = classifier(texts)  # 模型只加载一份，一次处理一批
+```
+
+### 练习 1：Pipeline 选型
 
 你的任务是做一个中文新闻分类器。打开 Python 终端，用 `pipeline("text-classification")` 试一条中文新闻标题，观察默认模型的表现。然后去 [huggingface.co/models](https://huggingface.co/models) 搜一个中文文本分类模型，用 `model=` 参数指定它，对比两次结果。
 
@@ -181,12 +189,12 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 ### 3.3 一个常见错误
 
 ```python
-# ❌ 错误：用 AutoModel 做分类，输出是 hidden states 不是 logits
+# 错误：用 AutoModel 做分类，输出是 hidden states 不是 logits
 model = AutoModel.from_pretrained("bert-base-uncased")
 outputs = model(**inputs)
 # outputs.last_hidden_state 是 (batch, seq_len, 768)，不是分类结果
 
-# ✅ 正确：用 AutoModelForSequenceClassification
+# 正确：用 AutoModelForSequenceClassification
 model = AutoModelForSequenceClassification.from_pretrained(
     "bert-base-uncased", num_labels=2
 )
@@ -194,7 +202,7 @@ outputs = model(**inputs)
 # outputs.logits 才是 (batch, 2)，可以对它做 softmax
 ```
 
-### 📝 练习 2：AutoModel 输出探索
+### 练习 2：AutoModel 输出探索
 
 加载 `bert-base-uncased` 的 `AutoModel`，输入 "Hello, world!"，打印 `last_hidden_state.shape` 和 `pooler_output.shape`。然后用同样的模型名加载 `AutoModelForSequenceClassification`（设置 `num_labels=3`），观察这次输出的 logits 维度是多少。思考：分类头加在了哪里？
 
@@ -209,15 +217,15 @@ outputs = model(**inputs)
 ```python
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 encoded = tokenizer("Hello, world!")
-# {'input_ids': [101, 7592, 1010, 2088, 102],
-#  'token_type_ids': [0, 0, 0, 0, 0],
-#  'attention_mask': [1, 1, 1, 1, 1]}
+# {'input_ids': [101, 7592, 1010, 2088, 999, 102],
+#  'token_type_ids': [0, 0, 0, 0, 0, 0],
+#  'attention_mask': [1, 1, 1, 1, 1, 1]}
 ```
 
 每一步：
 
 1. **分词**：把 "Hello, world!" 拆成 `["Hello", ",", "world", "!"]`。不同模型用不同算法——BERT 用 WordPiece，GPT-2 用 BPE，T5 用 SentencePiece。
-2. **映射到 ID**：每个 token 查词汇表变成整数。`7592` 就是 "hello" 在 BERT 词汇表里的编号。
+2. **映射到 ID**：每个 token 查词汇表变成整数。`7592` 是 "hello"、`999` 是 "!" 在 BERT 词汇表里的编号。
 3. **加特殊 token**：BERT 需要 `[CLS]`（101）开头、`[SEP]`（102）结尾。GPT-2 不需要。这取决于模型。
 4. **生成 attention mask**：标记哪些位置是真实 token（1）、哪些是 padding（0）。
 
@@ -248,7 +256,7 @@ tokenizer(
 - `padding="max_length"` 会把所有句子 padding 到 `max_length`，而不是 batch 内最长。GPU 推理时这能避免动态形状重编译。
 - `return_offsets_mapping=True` 能让你把 token 映射回原文字符位置。做 NER 标注对齐时必须用它。
 
-### 📝 练习 3：对比分词器
+### 练习 3：对比分词器
 
 用 `bert-base-uncased`（WordPiece）和 `gpt2`（BPE）两个分词器，分别对 "Transformers is awesome!" 进行编码。比较两个分词器产出的 `input_ids` 长度和具体 token。你发现了什么差异？为什么？
 
@@ -284,14 +292,21 @@ from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
 def tokenize_fn(examples):
-    return tokenizer(
+    outputs = tokenizer(
         examples["sentence"],
         truncation=True,
         padding="max_length",
-        max_length=128
+        max_length=128,
     )
+    # SST-2 的标签字段叫 "label"，模型期望 "labels"，在这里对齐
+    outputs["labels"] = examples["label"]
+    return outputs
 
-tokenized = dataset.map(tokenize_fn, batched=True)
+tokenized = dataset.map(
+    tokenize_fn,
+    batched=True,
+    remove_columns=dataset["train"].column_names,  # 只保留模型需要的列
+)
 ```
 
 为什么用 `distilbert` 而不是 `bert`？DistilBERT 是 BERT 的知识蒸馏版，参数量少 40%，推理快 60%，在这个简单任务上精度几乎一样。如果你在 Colab 免费 GPU 上跑，这个选择能省一半时间。
@@ -304,19 +319,26 @@ from transformers import (
     Trainer,
     TrainingArguments
 )
+import numpy as np
 
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased", num_labels=2
 )
+
+def compute_metrics(eval_pred):
+    """把模型输出转成 accuracy，供 metric_for_best_model 使用。"""
+    logits, labels = eval_pred
+    predictions = np.argmax(logits, axis=-1)
+    return {"accuracy": (predictions == labels).mean()}
 
 training_args = TrainingArguments(
     output_dir="./results",
     num_train_epochs=3,
     per_device_train_batch_size=16,
     per_device_eval_batch_size=64,
-    evaluation_strategy="epoch",      # 每个 epoch 评估一次
-    save_strategy="epoch",            # 每个 epoch 保存一次
-    load_best_model_at_end=True,      # 训练完加载最佳 checkpoint
+    eval_strategy="epoch",          # 每个 epoch 评估一次（旧名 evaluation_strategy 已弃用）
+    save_strategy="epoch",          # 每个 epoch 保存一次
+    load_best_model_at_end=True,    # 训练完加载最佳 checkpoint
     metric_for_best_model="accuracy", # 用 accuracy 判断最佳
     logging_dir="./logs",
     logging_steps=100,
@@ -327,13 +349,14 @@ trainer = Trainer(
     args=training_args,
     train_dataset=tokenized["train"],
     eval_dataset=tokenized["validation"],
+    compute_metrics=compute_metrics,
 )
 
 trainer.train()
 ```
 
 几个参数值得展开说：
-- `evaluation_strategy="epoch"`：每个 epoch 结束时在验证集上跑评估。如果你是大型数据集（比如训练要几天），改成 `"steps"` 配合 `eval_steps=500` 可以减少开销。
+- `eval_strategy="epoch"`：每个 epoch 结束时在验证集上跑评估。如果你是大型数据集（比如训练要几天），改成 `"steps"` 配合 `eval_steps=500` 可以减少开销。注意旧版本里这个参数叫 `evaluation_strategy`，在 Transformers 4.46 起改名为 `eval_strategy`，旧名已弃用。
 - `load_best_model_at_end=True`：训练过程中可能出现过拟合——第 3 个 epoch 的验证 loss 反而比第 2 个高。这个参数保证最终加载的是验证集上表现最好的 checkpoint，而不是最后一个。
 
 ### 5.5 什么时候不用 Trainer
@@ -354,7 +377,13 @@ from transformers import get_linear_schedule_with_warmup
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased", num_labels=2
 )
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
+
+# 训练集已经过 5.3 的分词，DataLoader 会按 key 自动合并成 batch
+train_loader = DataLoader(tokenized["train"], batch_size=16, shuffle=True)
 
 # 学习率预热：前 10% 步线性增长，之后线性衰减
 total_steps = len(train_loader) * 3
@@ -367,8 +396,8 @@ scheduler = get_linear_schedule_with_warmup(
 for epoch in range(3):
     model.train()
     for batch in train_loader:
-        # 只传模型需要的 key
-        inputs = {k: v for k, v in batch.items()
+        # 标签已在 5.3 分词时改名为 "labels"，这里只取模型需要的字段并搬到设备上
+        inputs = {k: v.to(device) for k, v in batch.items()
                   if k in ["input_ids", "attention_mask", "labels"]}
         outputs = model(**inputs)
         loss = outputs.loss
@@ -419,7 +448,7 @@ def predict(text: str):
     }
 ```
 
-### 📝 练习 4：调参实验
+### 练习 4：调参实验
 
 在 Colab 上复制这个微调流程，做三组实验：
 1. `num_train_epochs=1` → 记录验证集 accuracy
@@ -427,6 +456,43 @@ def predict(text: str):
 3. `num_train_epochs=5` → 记录验证集 accuracy
 
 画出 epoch-accuracy 曲线。哪个 epoch 后 accuracy 不再明显提升？这告诉你「过拟合出现在什么时候」。
+
+### 5.7 显存不够：LoRA 参数高效微调
+
+全量微调要更新模型全部参数，7B 模型光权重优化器状态就远超一张卡。LoRA 的思路是冻结原模型，只在 attention 层旁边插入小的低秩矩阵，训练时只更新这些插入参数——通常只占原模型参数的 1% 以内。
+
+```python
+from peft import LoraConfig, get_peft_model
+
+# 先按 5.4 加载模型，再套上 LoRA
+model = AutoModelForSequenceClassification.from_pretrained(
+    "distilbert-base-uncased", num_labels=2
+)
+
+lora_config = LoraConfig(
+    r=8,                              # 低秩维度：越大表达能力越强，参数量也越多
+    lora_alpha=16,                    # 缩放系数，一般取 r 的 2 倍
+    target_modules=["q_lin", "v_lin"],# DistilBERT 的 attention 投影层
+    lora_dropout=0.1,
+)
+
+model = get_peft_model(model, lora_config)
+# 打印可训练参数量：对比 model.num_parameters() 的差异
+model.print_trainable_parameters()
+```
+
+后面照常接 `Trainer`，训练参数不变。微调完保存的 checkpoint 里同时包含原模型和 LoRA 适配器，推理加载方式也和普通模型一致：
+
+```python
+from peft import PeftModel
+
+base = AutoModelForSequenceClassification.from_pretrained(
+    "distilbert-base-uncased", num_labels=2
+)
+model = PeftModel.from_pretrained(base, "./results/checkpoint-1000")
+```
+
+LoRA 适合单卡微调 7B 以下模型；更大的模型（70B 级）则用 QLoRA——在 LoRA 之上叠加 4-bit 量化（第 7.1 节的 `BitsAndBytesConfig`），把基座模型压到更小再插适配器。参数名 `target_modules` 按模型架构不同而变：DistilBERT 是 `q_lin`/`v_lin`，BERT 是 `query`/`value`，LLaMA 是 `q_proj`/`v_proj`。拿不准时查模型 `config.json` 里的层结构。
 
 ---
 
@@ -477,6 +543,8 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 ```
 
+注意 `meta-llama/Llama-2-7b-hf` 是受限模型：需要先 `huggingface-cli login`，并在 [Meta 的许可页面](https://huggingface.co/meta-llama/Llama-2-7b-hf) 点击同意后才能下载。没有权限时，换成开放的 `microsoft/phi-2` 或 `HuggingFaceTB/SmolLM2-1.7B-Instruct` 练手，流程完全一样。`load_in_4bit` 还需要额外安装 `bitsandbytes` 包（CPU 环境用 `pip install bitsandbytes`，CUDA 版本要匹配你的 PyTorch）。
+
 **量化前先想清楚**：4-bit 量化会让模型在数学推理、代码生成等精度敏感任务上有可感知的退化。如果任务是情感分类或摘要，影响通常很小；如果是数学题或 SQL 生成，建议用 8-bit 或直接上更大的 GPU。
 
 ### 7.2 Flash Attention：用算法换速度
@@ -492,7 +560,7 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 ```
 
-前提：需要 `flash-attn` 包，且 GPU 架构 ≥ Ampere（A100、A6000、RTX 3090/4090 系列）。V100 和 T4 不支持。
+前提：需要 `flash-attn` 包，且 GPU 架构 ≥ Ampere（A100、A6000、RTX 3090/4090 系列）。V100 和 T4 不支持。同样，如果没通过 Meta 的许可审核，把模型名换成上面提到的开放模型。
 
 ### 7.3 ONNX：跨平台和低延迟
 
@@ -526,9 +594,9 @@ model.save_pretrained("./optimized_model")
 
 简单说：这张表告诉你**方向**（量化省显存，Flash Attention 加速长序列），但数字本身不能直接用于容量规划。在你自己的硬件上用你自己的模型跑一轮，拿真实数字。用 `torch.cuda.max_memory_allocated()` 和 `time.perf_counter()` 就够了，不需要复杂的 benchmark 工具。
 
-### 📝 练习 5：量化对比
+### 练习 5：量化对比
 
-如果你有 GPU 环境，加载 `meta-llama/Llama-2-7b-hf`（或一个更小的替代如 `microsoft/phi-2`），分别用 float16 和 4-bit 加载，用 `torch.cuda.memory_allocated()` 记录显存占用差异。然后用同一个 prompt 跑推理，比较输出质量。
+如果你有 GPU 环境，加载 `microsoft/phi-2`（不需要受限许可，比 Llama-2 更容易跑通），分别用 float16 和 4-bit 加载，用 `torch.cuda.memory_allocated()` 记录显存占用差异。然后用同一个 prompt 跑推理，比较输出质量。
 
 ---
 
@@ -541,7 +609,7 @@ Transformers 本身只是 Hugging Face 生态的核心，周围还有一圈配�
 | **Datasets** | 数据加载、预处理、缓存 | 微调开始时就引入 |
 | **Tokenizers** | 比 Transformers 自带的分词器更快的分词 | 大规模预处理（百万级样本） |
 | **PEFT** | LoRA/QLoRA 等参数高效微调 | 全量微调显存不够时 |
-| **Accelerate** | 多 GPU / TPU 训练 abstract | 单卡变多卡时 |
+| **Accelerate** | 多 GPU / TPU 训练的抽象层 | 单卡变多卡时 |
 | **Optimum** | ONNX、Intel、Habana 等硬件优化 | 部署到非 NVIDIA 硬件时 |
 | **Evaluate** | 统一的评估指标（BLEU/ROUGE 等） | 需要评估生成质量时 |
 | **Diffusers** | 图像/视频生成 | 做 AIGC 时 |
@@ -565,8 +633,11 @@ Transformers 本身只是 Hugging Face 生态的核心，周围还有一圈配�
 原因通常是 batch size 太大或模型超出了显存：
 
 ```python
-# 方案 1：减小 batch size
-training_args = TrainingArguments(per_device_train_batch_size=4)
+# 方案 1：减小 batch size（output_dir 是必填项）
+training_args = TrainingArguments(
+    output_dir="./results",
+    per_device_train_batch_size=4,
+)
 
 # 方案 2：梯度检查点（用时间换显存）
 model.gradient_checkpointing_enable()
@@ -584,8 +655,9 @@ NER 任务中，分词后的 token 需要映射回原文的字符位置：
 
 ```python
 encoded = tokenizer("Hello world!", return_offsets_mapping=True)
-# offset_mapping: [(0, 0), (0, 5), (5, 6), (6, 11), (11, 12), (0, 0)]
-#                   [CLS]    Hello      ,      world      !      [SEP]
+# offset_mapping: [(0, 0), (0, 5), (6, 11), (11, 12), (0, 0)]
+#                   [CLS]    Hello     world      !     [SEP]
+#                            0-5 是 "Hello"，6-11 是 "world"，11-12 是 "!"
 
 start, end = encoded["offset_mapping"][1]  # position 1 = "Hello"
 print(f"Token 'Hello' spans characters {start} to {end}")
@@ -615,27 +687,27 @@ snapshot_download("bert-base-uncased")
 
 不同起点的人应该走不同的路，这里给出三条：
 
-### 🚀 如果你想快速上手（1 小时内）
+### 如果你只想快速上手（1 小时内）
 
 1. 读第 1-2 节，装上环境，跑通 `pipeline()` 的 3 个任务
 2. 把情感分析的例子换成你的数据，看能不能用
 3. 不要碰微调，不要碰量化
 
-### 🔧 如果你想应用到自己的任务（1 天）
+### 如果你想应用到自己的任务（1 天）
 
 1. 完整读第 3-5 节，理解 AutoClass 和微调流程
 2. 在 Colab 上跑通 SST-2 微调（练习 4）
 3. 替换成你自己的数据集，调整 `num_labels` 和训练参数
 4. 把模型保存下来，写一个最简单的 API 服务
 
-### 🏭 如果你要部署到生产（1 周）
+### 如果你要部署到生产（1 周）
 
 1. 读第 7 节，理解量化、Flash Attention、ONNX 的适用边界
 2. 在你的实际硬件上跑 benchmark——不要用别人的数字做容量规划
 3. 做 A/B 测试：量化后的模型输出质量能否接受
 4. 考虑用 TGI（Text Generation Inference）或 vLLM 做 LLM 推理服务
 
-### ⛔ 哪些场景不该用 Transformers
+### 哪些场景不该用 Transformers
 
 - **纯规则匹配的文本分类**：正则表达式或 scikit-learn 的 TF-IDF + 逻辑回归更快、更省钱。
 - **实时性要求极高（<10ms）的场景**：即使是 DistilBERT，单次推理也需要 10-50ms。考虑 ONNX 导出或用更轻量的模型。
@@ -651,11 +723,20 @@ snapshot_download("bert-base-uncased")
 - [ ] `AutoModel` 和 `AutoModelForSequenceClassification` 的区别是什么？
 - [ ] 什么时候用 Trainer，什么时候该自己写训练循环？
 - [ ] BERT 的 WordPiece 和 GPT-2 的 BPE 分词算法，核心区别在哪？
+- [ ] LoRA 为什么能显著降低显存需求？它更新的是哪部分参数？
 - [ ] 4-bit 量化省了显存，但以什么为代价？
 - [ ] Flash Attention 能在 V100 上跑吗？为什么？
+- [ ] 并发推理时，每线程创建独立 pipeline 实例会带来什么问题？
 - [ ] 你的场景适合本文三条采用路线中的哪一条？
 
 ---
+
+## 版本与维护
+
+Transformers 迭代很快，本文示例基于 Transformers 4.x（2026 年）。做项目时注意两件事：
+
+1. **API 变更**：新旧版本间参数会改名。最典型的是 `evaluation_strategy` 从 4.46 起改名 `eval_strategy`；这类变更会写在官方 [迁移指南](https://huggingface.co/docs/transformers/migration) 里，升级大版本前先翻一遍。
+2. **代码要随模型验证**：同一段代码，换模型、换后端（PyTorch / TensorFlow / JAX）、换 GPU 架构，行为都可能不同。修改者拿到本文示例后，先在最小数据集上跑通，再应用到自己的模型——不要直接照搬到生产。
 
 ## 进一步阅读
 

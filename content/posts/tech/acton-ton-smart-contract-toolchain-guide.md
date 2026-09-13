@@ -4,7 +4,7 @@ date: "2026-05-14T10:55:00+08:00"
 slug: "acton-ton-smart-contract-toolchain-guide"
 github_repo: "ton-blockchain/acton"
 source_key: "gh:ton-blockchain/acton"
-description: "TON 生态的工具链正从 Blueprint、FunC/Tolk 编译器、@ton/sandbox 本地沙盒、@ton/test-utils 测试断言库组成的拼装链路，向官方推荐的 Acton 一体化工具链演进。本文以一个 Jetton 代币合约为例，串联编写、编译、测试、调试、部署、验证七个阶段，给出工具选型、采用顺序和常见错误排查。"
+description: "TON 生态的工具链正从 Blueprint、FunC/Tolk 编译器、@ton/sandbox 本地沙盒、@ton/test-utils 测试断言库组成的拼装链路，向官方的 Acton 一体化工具链演进。本文以一个 Jetton 代币合约为例，串联脚手架、编写、编译、测试、调试、部署、验证七个阶段，给出工具选型、采用顺序和常见错误排查。"
 draft: false
 categories: ["技术笔记"]
 tags: ["智能合约", "TypeScript"]
@@ -12,15 +12,15 @@ tags: ["智能合约", "TypeScript"]
 
 # TON 智能合约开发工具链完全指南：从 FunC 编写到链上验证
 
-TON（The Open Network）生态正经历工具链换代：官方在 2026 年 5 月推出 Acton（[github.com/ton-blockchain/acton](https://github.com/ton-blockchain/acton)），一个围绕 Tolk 语言构建的一体化开发平台，官方文档把 Acton 列为新建项目的第一推荐工具；而社区里大量存量教程和项目仍在使用 Blueprint 脚手架、FunC 语言、`@ton/sandbox`、`@ton/test-utils` 这套较老的 TypeScript 生态。两条链路各管一段，靠目录约定和 Node.js API 串起来，互相不冲突。本文用一个 Jetton（TON 上的代币标准，类似 ERC-20）代币合约作为线索，先走一遍 Blueprint + FunC 的老链路（编写、编译、测试、调试、部署、验证），再说明什么时候适合切到 Acton + Tolk。
+TON（The Open Network）生态的工具链正在换代：官方在 2026 年 5 月 11 日发布了 Acton v1.0（[github.com/ton-blockchain/acton](https://github.com/ton-blockchain/acton)），一个围绕 Tolk 语言构建的一体化开发平台，官方文档已把 Blueprint 归入 legacy 章节；而社区里大量存量教程和项目仍在使用 Blueprint 脚手架、FunC 语言、`@ton/sandbox`、`@ton/test-utils` 这套较老的 TypeScript 生态。两条链路各管一段，靠目录约定和 Node.js API 串起来，互相不冲突。本文用一个 Jetton（TON 上的代币标准，类似 ERC-20）代币合约作为线索，先走一遍 Blueprint + FunC 的老链路（脚手架、编写、编译、测试、调试、部署、验证），再说明什么时候适合切到 Acton + Tolk。
 
 ## 学习目标
 
 1. Blueprint、FunC/Tolk 编译器、@ton/sandbox、@ton/test-utils 四类工具各自管什么，边界在哪
 2. 用 `npm create ton@latest` 创建项目后，`contracts/`、`wrappers/`、`tests/` 三个目录分别承担什么
 3. 用 `@ton-community/func-js` 把 FunC 源码编译为 TVM Cell 的最小脚本怎么写
-4. 用 `@ton/sandbox` 的 `Blockchain` 类怎么写本地单元测试，怎么断言 getter 返回值和消息处理结果
-5. 合约部署到 Testnet（测试网）后，怎么用 tonverifier.app 完成源码验证
+4. 用 `@ton/sandbox` 的 `Blockchain` 类怎么写本地单元测试，怎么断言 getter 返回值、消息处理结果和错误退出码
+5. 合约部署到 Testnet（测试网）后，怎么用 verifier.ton.org 完成源码验证
 
 ## 目录
 
@@ -29,17 +29,17 @@ TON（The Open Network）生态正经历工具链换代：官方在 2026 年 5 �
 - [任务流案例：Jetton 代币合约全生命周期](#任务流案例jetton-代币合约全生命周期)
   - [1. 项目脚手架：Blueprint](#1-项目脚手架blueprint)
   - [2. 编写合约：FunC 与 Tolk](#2-编写合约func-与-tolk)
-  - [3. 编译：func-js 与 tolk 编译器](#3-编译func-js-与-tolk-编译器)
+  - [3. 编译：func-js 与 Tolk 编译器](#3-编译func-js-与-tolk-编译器)
   - [4. 本地测试：@ton/sandbox 与 @ton/test-utils](#4-本地测试tonsandbox-与-tontest-utils)
   - [5. 调试与 Trace 分析](#5-调试与-trace-分析)
   - [6. 部署到 Testnet](#6-部署到-testnet)
   - [7. 链上验证](#7-链上验证)
 - [工具选型与采用顺序](#工具选型与采用顺序)
 - [常见问题与错误排查](#常见问题与错误排查)
-- [自测检查清单](#自测检查清单)
+- [自测题](#自测题)
 - [动手练习](#动手练习)
 - [进阶路径](#进阶路径)
-- [附录：自测参考答案](#附录自测参考答案)
+- [资料口径说明](#资料口径说明)
 
 ## TON 工具链总览
 
@@ -47,23 +47,25 @@ TON 合约开发涉及两条并行链路：**编译链路**把源码变成 TVM �
 
 | 阶段 | 主力工具 | 备选或旧工具 | 说明 |
 |------|----------|--------------|------|
-| 项目脚手架 | Acton（新项目）、Blueprint（存量） | 手动 `package.json` | Acton 是官方推荐的新工具；Blueprint 依然维护，用于存量项目 |
-| 合约编写 | Tolk、FunC | — | Tolk 是官方主推、语法接近 TypeScript 的现代合约语言；FunC 是早期函式语言，存量合约大量使用 |
-| 编译 | `tolk` CLI、`@ton-community/func-js` | `func` 二进制 | 输出 TVM Cell（TON 虚拟机的字节码容器） |
+| 项目脚手架 | Acton（新项目）、Blueprint（存量） | 手动 `package.json` | Acton 是官方新工具链；Blueprint 仍可用，官方文档已将其归入 legacy 章节 |
+| 合约编写 | Tolk、FunC | — | Tolk 是官方主推、语法接近 TypeScript 的现代合约语言；FunC 是早期函数式语言，存量合约大量使用 |
+| 编译 | `acton build`、`@ton-community/func-js` | `func` 二进制 | 输出 TVM Cell（TON 虚拟机的字节码容器） |
 | 本地测试 | `@ton/sandbox`、`@ton/test-utils` | `ton-contract-executor`（已废弃） | sandbox 提供 `Blockchain` 类模拟 TVM；test-utils 提供 Jest 断言 |
 | 链上交互 | `@ton/ton`、`@ton/crypto` | `ton` CLI | `TonClient4` 连接 Testnet 或 mainnet（主网） |
 | 部署 | Blueprint `run` 脚本 | `ton-cli` | 用 TypeScript 脚本发送部署消息 |
-| 验证 | tonverifier.app | tonscan.org | 比对链上合约代码与本地源码 |
+| 验证 | verifier.ton.org | tonscan.org、Actonscan | 比对链上合约代码与本地源码 |
 
-`ton-contract-executor` 在 2023 年后已被 `@ton/sandbox` 取代，新项目不应再用。`func` 二进制和 `tolk` CLI 是底层编译器；Blueprint 通过 `@ton-community/func-js` 在 Node.js 进程内调用，通常不需要手动安装二进制。
+`ton-contract-executor` 在 2023 年后已被 `@ton/sandbox` 取代，新项目不应再用。`func` 二进制和 Tolk 编译器是底层编译器；Blueprint 通过 `@ton-community/func-js` 在 Node.js 进程内调用 FunC 编译器，通常不需要手动安装二进制。Tolk 编译器已并入 Acton，`acton build` 直接出编译产物。
 
 ## 任务流案例：Jetton 代币合约全生命周期
 
 用一个最小可运行的 Jetton 代币合约把上表中的工具串起来。Jetton 是 TON 的代币标准（TEP-74），对应以太坊的 ERC-20。完整流程：编写合约源码 → 编译为 Cell → 本地测试 → 调试 Trace → 部署到 Testnet → 链上验证。
 
+需要说明的是：标准 Jetton 由 minter（铸造管理）和每用户一个的 wallet（余额账本）两个合约组成，wallet 侧的消息协议（`internal_transfer` 等）才由 TEP-74 标准化。本文为了聚焦工具链本身，示例合约只维护 `total_supply` 单账本，不部署 wallet 合约；生产实现请参考进阶路径给出的官方仓库。
+
 ### 1. 项目脚手架：Blueprint
 
-Blueprint 是 TON 官方维护的项目脚手架，封装了目录约定、编译脚本、测试运行器和部署脚本。用 `npm create ton@latest` 创建项目：
+Blueprint 是 TON 社区通用的项目脚手架，封装了目录约定、编译脚本、测试运行器和部署脚本。用 `npm create ton@latest` 创建项目：
 
 ```bash
 npm create ton@latest my-jetton
@@ -91,45 +93,75 @@ my-jetton/
 
 FunC（TON 函数式合约语言）是 TON 早期合约语言，语法接近 ML 家族；Tolk（TON 现代合约语言）是 2024 年起官方主推的替代语言，语法更接近 TypeScript。两者都编译到 TVM（TON 虚拟机）字节码。
 
-以 FunC 为例，Jetton minter 的核心逻辑（精简版，省略 Jetton wallet 部分）：
+以 FunC 为例，下面是一个完整可编译的单账本 minter——完整可运行是本文示例的前提，所以没有留下任何"此处省略"的部分：
 
 ```func
 ;; jetton_minter.fc
-;; 注意：此精简版未做 msg_value 校验，仅用于演示编译/测试流程，生产合约需补权限检查
+;; 单账本演示版 minter：只维护 total_supply，省略标准 Jetton 的 wallet 合约分发。
+;; 生产实现参考 ton-blockchain/jetton-contract（wallet 分发、bounced 处理、元数据）。
+#pragma version >=0.4.6;
+#include "imports/stdlib.fc";
+
 global int total_supply;
 global slice admin_address;
-global cell jetton_wallet_code;
 
-() init() impure {
-  ;; 存储布局：total_supply | admin_address | jetton_wallet_code
-  ;; 此处省略 set_data 写入，完整实现见进阶路径的 Jetton 标准实现链接
+() load_data() impure {
+  var ds = get_data().begin_parse();
+  total_supply = ds~load_coins();
+  admin_address = ds~load_msg_addr();
 }
 
-int get_total_supply() method_id {
-  return total_supply;
+() save_data() impure {
+  set_data(begin_cell()
+            .store_coins(total_supply)
+            .store_slice(admin_address)
+            .end_cell());
 }
 
-() recv_internal(int my_balance, int msg_value, slice in_msg_full, slice in_msg_body) impure {
+() recv_internal(int msg_value, cell in_msg_full, slice in_msg_body) impure {
+  load_data();
+  var cs = in_msg_full.begin_parse();
+  cs~load_uint(8);                   ;; 消息 flags（含 bounced 标记）
+  slice sender = cs~load_msg_addr();
+
   if (in_msg_body.slice_empty?()) {
     return ();
   }
   int op = in_msg_body~load_uint(32);
-  if (op == 0x178d4519) {  ;; Mint 操作码
+  int query_id = in_msg_body~load_uint(64);  ;; 读出以保持字段对齐，本合约不使用
+
+  if (op == 0x642b7d07) {            ;; mint 操作码，与官方参考实现一致
+    throw_unless(73, equal_slices_bits(sender, admin_address));
     int amount = in_msg_body~load_coins();
     total_supply += amount;
+    save_data();
     return ();
   }
-  return ();
+  if (op == 0) {                     ;; 部署确认或普通转账消息，直接接受
+    return ();
+  }
+  throw(0xffff);                     ;; 未识别的操作码
+}
+
+int get_total_supply() method_id {
+  var ds = get_data().begin_parse();
+  return ds~load_coins();
 }
 ```
 
-`recv_internal` 是合约接收内部消息的入口。`load_uint(32)` 读取 32 位操作码，`load_coins()` 读取变长整数（TON 的代币金额编码）。`0x178d4519` 是 Jetton 标准定义的 Mint 操作码。
+几个值得说透的细节：
 
-Tolk 的等价写法语法更现代、类型更完整，Tolk v1.0 已在 2025 年发布，且是 Acton 的默认语言。对新项目，官方推荐直接用 Tolk（经由 Acton）；但对存量 FunC 项目，FunC 仍被官方支持，没有废弃时间表，可以按团队节奏逐步迁移。下面的示例沿用 FunC，是为了展示 Blueprint 这条仍被大量教程使用的老链路。
+- `recv_internal` 是合约接收内部消息的入口，参数由 TVM 按固定布局压栈：余额、消息价值、完整消息（`cell` 类型）、消息体（`slice` 类型）。
+- `0x642b7d07` 是 mint 操作码。TEP-74 只标准化 wallet 侧消息（`transfer` 是 `0xf8a7ea5`、`internal_transfer` 是 `0x178d4519`、`burn` 是 `0x595f07bc`），mint 操作码由 minter 实现自行定义——官方参考实现 [ton-blockchain/jetton-contract](https://github.com/ton-blockchain/jetton-contract) 取 `0x642b7d07`。网上不少教程把 `0x178d4519` 当 mint 码写，那是 `internal_transfer`，照抄会导致合约无法识别铸造消息。
+- `throw_unless(73, ...)` 做权限校验，73 对应官方实现的 `error::not_owner`。没有这一行，任何人都能 mint。
+- `load_coins()` 读写 TON 的变长金额编码，与 `store_coins()` 成对出现；状态持久化靠 `get_data()`/`set_data()`，`global` 变量只是让读写少传几个参数。
+- 部署时 `stateInit` 的 data 部分按 `coins(0) + admin 地址` 布局写入，与 `load_data()` 的解析顺序一致。
 
-### 3. 编译：func-js 与 tolk 编译器
+Tolk 的等价写法语法更现代、类型更完整，Tolk v1.0 已于 2025 年 7 月发布，且是 Acton 的默认语言。对新项目，官方推荐直接用 Tolk（经由 Acton）；对存量 FunC 项目，FunC 仍被官方支持，没有废弃时间表，可以按团队节奏逐步迁移。下面的示例沿用 FunC，是为了展示 Blueprint 这条仍被大量教程使用的老链路。
 
-Blueprint 在 `wrappers/JettonMinter.ts` 中调用 `@ton-community/func-js` 编译 FunC。最小编译脚本：
+### 3. 编译：func-js 与 Tolk 编译器
+
+Blueprint 在 `wrappers/` 里调用 `@ton-community/func-js` 编译 FunC。把编译函数放到 `wrappers/compile.ts`：
 
 ```typescript
 import { compileFunc, compilerVersion } from '@ton-community/func-js';
@@ -159,17 +191,49 @@ export async function compileJettonMinter(): Promise<Cell> {
 
 `compileFunc` 接收源码字符串（不是文件路径），返回 `codeBoc`（base64 编码的 TVM Cell）。`Cell.fromBoc` 把它解析成 `@ton/core` 的 `Cell` 对象，后续测试和部署都用这个对象。
 
-Tolk 编译用 `tolk` CLI：
-
-```bash
-tolk compile jetton_minter.tolk --output jetton_minter.cell
-```
-
-或在 Node.js 中用 `tolk-js`（API 与 `func-js` 类似）。编译产物是 `.cell` 文件，即 TVM 二进制格式（Bag of Cells，BoC）。一个合约对应一个 Cell。
+Tolk 编译走 Acton：在 Acton 项目里执行 `acton build`，编译产物和缓存由工具链管理。想在 Node.js 进程内编译 Tolk，可以用 `@ton/tolk-js`（WASM 封装，仓库 ton-blockchain/tolk-js），API 风格与 `func-js` 类似。编译产物是 Cell 的二进制序列化（Bag of Cells，BoC），一个合约对应一个 Cell。
 
 ### 4. 本地测试：@ton/sandbox 与 @ton/test-utils
 
-`@ton/sandbox` 提供 `Blockchain` 类，在本地进程内模拟 TVM 执行，不需要连接 Testnet。`@ton/test-utils` 给 Jest 加 TON 专用断言（如 `toEqual` 支持 `bigint`）。
+`@ton/sandbox` 提供 `Blockchain` 类，在本地进程内模拟 TVM 执行，不需要连接 Testnet。`@ton/test-utils` 给 Jest 加 TON 专用断言（如 `toEqual` 支持 `bigint`、`toHaveTransaction` 过滤交易）。
+
+先补上包装器 `wrappers/JettonMinter.ts`，它把编译产物、`stateInit` 数据布局和 getter 调用封装成一个类：
+
+```typescript
+import { Address, Cell, Contract, ContractProvider, Sender,
+         beginCell, contractAddress } from '@ton/core';
+import { compileJettonMinter } from './compile';
+
+export class JettonMinter implements Contract {
+  constructor(
+    readonly address: Address,
+    readonly init: { code: Cell; data: Cell } | null,
+  ) {}
+
+  static async fromInit(admin: Address): Promise<JettonMinter> {
+    const code = await compileJettonMinter();
+    const data = beginCell().storeCoins(0).storeAddress(admin).endCell();
+    return new JettonMinter(
+      contractAddress(0, { code, data }),
+      { code, data },
+    );
+  }
+
+  async send(sender: Sender, args: { value: bigint }, body: Cell) {
+    await sender.send({
+      to: this.address,
+      value: args.value,
+      init: this.init,
+      body,
+    });
+  }
+
+  async getTotalSupply(provider: ContractProvider): Promise<bigint> {
+    const stack = await provider.get('total_supply', []);
+    return stack.readBigNumber();
+  }
+}
+```
 
 `tests/JettonMinter.spec.ts`：
 
@@ -192,25 +256,25 @@ describe('JettonMinter', () => {
     );
   });
 
-  it('should deploy with zero total supply', async () => {
+  it('should accept deploy confirmation message', async () => {
     const deployMsg = beginCell()
-      .storeUint(0, 32)   // Deploy opcode
+      .storeUint(0, 32)   // 空 op，合约直接接受
       .storeUint(0n, 64)  // queryId
       .endCell();
 
-    await minter.send(
+    const result = await minter.send(
       deployer.getSender(),
       { value: toNano('0.05') },
       deployMsg,
     );
 
-    const supply = await minter.getTotalSupply();
-    expect(supply).toEqual(0n);
+    expect(result.transactions).toHaveTransaction({ exitCode: 0 });
+    expect(await minter.getTotalSupply()).toEqual(0n);
   });
 
-  it('should mint tokens to admin', async () => {
+  it('should mint tokens when called by admin', async () => {
     const mintMsg = beginCell()
-      .storeUint(0x178d4519, 32)  // Mint opcode
+      .storeUint(0x642b7d07, 32)  // Mint opcode
       .storeUint(1n, 64)          // queryId
       .storeCoins(toNano('100'))  // amount
       .endCell();
@@ -221,13 +285,34 @@ describe('JettonMinter', () => {
       mintMsg,
     );
 
-    const supply = await minter.getTotalSupply();
-    expect(supply).toEqual(toNano('100'));
+    expect(await minter.getTotalSupply()).toEqual(toNano('100'));
+  });
+
+  it('should reject mint from non-admin with exit code 73', async () => {
+    const attacker = await blockchain.treasury('attacker');
+    const mintMsg = beginCell()
+      .storeUint(0x642b7d07, 32)
+      .storeUint(2n, 64)
+      .storeCoins(toNano('100'))
+      .endCell();
+
+    const result = await minter.send(
+      attacker.getSender(),
+      { value: toNano('0.05') },
+      mintMsg,
+    );
+
+    expect(result.transactions).toHaveTransaction({
+      from: attacker.address,
+      to: minter.address,
+      exitCode: 73,   // error::not_owner
+    });
+    expect(await minter.getTotalSupply()).toEqual(0n);
   });
 });
 ```
 
-`blockchain.treasury('deployer')` 创建一个有初始余额的虚拟钱包，作为部署者和消息发送者。`blockchain.openContract` 把合约包装成可调用对象，`send` 发送内部消息，`getTotalSupply` 调用 getter（只读方法）。
+`blockchain.treasury('deployer')` 创建一个有初始余额的虚拟钱包，作为部署者和消息发送者。`blockchain.openContract` 把合约包装成可调用对象，`send` 发送内部消息，`getTotalSupply` 调用 getter（只读方法）。第三个用例值得专门写：权限校验只有在"非管理员调用被拒"的测试里才算验证过，只测管理员路径的合约不叫测过权限。
 
 运行测试：
 
@@ -239,7 +324,7 @@ npx jest tests/JettonMinter.spec.ts
 
 ### 5. 调试与 Trace 分析
 
-TON 没有 FunC 源码级断点调试器。TVM 是栈式虚拟机，FunC 编译器会把多个表达式合并成一条 TVM 指令，也会把一个表达式拆成多条指令，源码行号到指令位置的映射不稳定，断点调试在工程上难以实现。调试主要靠 `@ton/sandbox` 的 Trace 输出和退出码分析。
+TON 没有 FunC 源码级断点调试器。TVM 是栈式虚拟机，编译器在源码和指令之间做多对多的映射，源码行号到指令位置的对应关系不稳定，传统断点调试在工程上难以落地。调试主要靠 `@ton/sandbox` 的 Trace 输出和退出码分析。
 
 `@ton/sandbox` 在 `send` 后返回交易结果，包含退出码、Gas（链上执行燃料费）消耗和发出的事件：
 
@@ -261,18 +346,20 @@ if (result.transactions.length > 0) {
 }
 ```
 
-常见退出码：
+排查合约异常前，先把退出码表放在手边（完整表见 [docs.ton.org 的 Exit codes](https://docs.ton.org/v3/documentation/tvm/tvm-exit-codes)）：
 
-- `0`：成功
-- `-14`：Cell underflow（消息体字段读取顺序与合约 `load_*` 不匹配）
-- `4`：Stack underflow（FunC 调用约定错误，通常是参数数量不对）
-- `132`：自定义错误码（合约逻辑主动抛出）
+- `0`：执行成功
+- `2`：Stack underflow（栈上操作数不够，通常是 FunC 函数调用约定错误，比如参数数量不对）
+- `4`：Integer overflow（整数超出表示范围或除零）
+- `9`：Cell underflow（从消息体读取的位数超出实际内容——`load_*` 的顺序或字段宽度与 `beginCell()` 里 `store_*` 的写入不一致，最常见的错误）
+- `-14`：Out of gas（Gas 耗尽，由 TVM 在 Gas 用尽时抛出）
+- 其他正整数：合约用 `throw`/`throw_unless` 主动抛出的自定义错误码，比如本文演示合约的 73 表示非管理员调用 mint
 
 合约行为异常时，先打印 `exitCode` 和 `events`，再对照 FunC 源码定位。复杂场景可以用 `@ton/sandbox` 的 `debug` 模式输出每条 TVM 指令，但输出量很大，适合在定位特定指令时开启。
 
 ### 6. 部署到 Testnet
 
-Testnet 是 TON 的公开测试环境，代币无价值，用于上线前验证。mainnet 是生产环境。Testnet 水龙头 Telegram 机器人：@testgiver_ton_bot。
+Testnet 是 TON 的公开测试环境，代币无价值，用于上线前验证。mainnet 是生产环境。测试网资金有两个官方渠道：Acton 内置的 `acton wallet airdrop`，或浏览器 [Actonscan 的 faucet](https://testnet.actonscan.com/faucet)。
 
 部署脚本 `scripts/deployJettonMinter.ts`：
 
@@ -291,7 +378,7 @@ async function deploy() {
     throw new Error('DEPLOYER_MNEMONIC not set in .env');
   }
 
-  // 1. 连接 Testnet v4 节点
+  // 1. 连接 Testnet v4 节点（端点取自 @ton/ton 的 createTestClient4）
   const client = new TonClient4({
     endpoint: 'https://testnet-v4.tonhubapi.com',
   });
@@ -306,7 +393,7 @@ async function deploy() {
   );
   const sender = wallet.sender(keyPair.secretKey);
 
-  // 3. 构造合约实例（fromInit 内部调用 compileJettonMinter 并计算地址）
+  // 3. 构造合约实例（fromInit 内部调用编译函数并计算地址）
   const minter = client.open(
     await JettonMinter.fromInit(sender.address),
   );
@@ -340,23 +427,23 @@ npx blueprint run deployJettonMinter --network testnet
 
 部署后，链上只有编译后的 Cell，外部无法直接看到源码。源码验证把本地源码和链上 Cell 比对，证明两者一致。
 
-用 [tonverifier.app](https://tonverifier.app)（原 DTON Verifier）：
+用官方验证器 [verifier.ton.org](https://verifier.ton.org)（TON Contract Verifier）：
 
-1. 打开 tonverifier.app，连接钱包
+1. 打开 verifier.ton.org，连接钱包
 2. 输入合约地址（Testnet 或 mainnet 均可）
 3. 上传合约源码文件（`jetton_minter.fc` 及所有 `#include` 的文件）
 4. 选择编译器版本（与 `compilerVersion()` 输出一致）
 5. 提交验证
 
-验证通过后，tonscan.org 上该合约页面会显示"Verified"标记并展示源码。dApp 前端团队通常把"源码已验证"作为集成前提：未验证的合约只暴露编译后的 Cell，集成方无法核对源码与链上行为是否一致，出问题时无法追溯责任。
+验证通过后，浏览器（tonscan.org 或 Actonscan）上该合约页面会显示 Verified 标记并展示源码。dApp 前端团队通常把"源码已验证"作为集成前提：未验证的合约只暴露编译后的 Cell，集成方无法核对源码与链上行为是否一致，出问题时无法追溯责任。
 
 ## 工具选型与采用顺序
 
 新团队接入 TON 合约开发，可以按下面这个顺序推进：
 
-1. **新项目直接上 Acton + Tolk**：这是官方当前推荐的组合，脚手架、编译、测试、部署、验证收进一个 CLI，学习成本更低，文档和示例也围绕它更新。用 `acton new` 起步，模板自带 Jetton、NFT、Counter 等参考实现。
+1. **新项目直接上 Acton + Tolk**：这是官方当前主推的组合，脚手架、编译、测试、部署、验证收进一个 CLI，学习成本更低，文档和示例也围绕它更新。用 `acton new` 起步，模板自带 Jetton、NFT、Counter 等参考实现。
 2. **存量 FunC 项目继续用 Blueprint**：如果团队已有在跑的合约和测试，不必立刻迁移。Blueprint + FunC 依然稳定，社区教程多、排错资料全。
-3. **评估迁移时机**：FunC 没有废弃时间表，官方也保留支持。等到新特性、团队人手或安全审计要求确实需要 Tolk 的更强类型系统时，再用官方的 `func2tolk` 迁移工具分批转换。
+3. **评估迁移时机**：FunC 没有废弃时间表，官方也保留支持。等到新特性、团队人手或安全审计要求确实需要 Tolk 的更强类型系统时，再用 Acton 内置的 `acton func2tolk` 命令分批转换。
 
 哪些团队不必急着上 Tolk：
 
@@ -375,9 +462,11 @@ npx blueprint run deployJettonMinter --network testnet
 
 原因：`#include` 路径错误或源码未传入 `sources`。`compileFunc` 的 `sources` 是一个 `{ [filename]: content }` 字典，所有依赖文件都要手动加入，不会自动从磁盘读取。
 
-### @ton/sandbox 测试报 `exit code -14`
+### @ton/sandbox 测试报 `exit code 9`
 
-原因：消息体 Cell 序列化顺序与合约 `load_*` 调用顺序不匹配。用 `beginCell()` 构造消息时，`storeUint`、`storeCoins`、`storeAddress` 的调用顺序必须与 FunC 中 `load_uint`、`load_coins`、`load_msg_addr` 的顺序完全一致。
+原因：消息体 Cell 序列化顺序与合约 `load_*` 调用顺序不匹配。用 `beginCell()` 构造消息时，`storeUint`、`storeCoins`、`storeAddress` 的调用顺序和字段宽度必须与 FunC 中 `load_uint`、`load_coins`、`load_msg_addr` 的顺序完全一致。改完序列化代码后，先在测试里打印完整的 `in_msg_body` 解析结果再定位差异。
+
+如果测试报 `exit code -14`，问题不在消息布局，而是 Gas 用尽：检查测试发送的 `value` 是否过低，或合约消息处理里是否有意外的大循环。
 
 ### Testnet 部署后合约无响应
 
@@ -385,10 +474,10 @@ npx blueprint run deployJettonMinter --network testnet
 
 1. 用 tonscan.org（Testnet）查合约地址是否已上链
 2. 检查部署消息的 `value` 是否足够覆盖 Gas（建议 `toNano('0.05')` 以上）
-3. 检查钱包余额是否足够（Testnet 水龙头：@testgiver_ton_bot）
+3. 检查钱包余额是否足够（用 `acton wallet airdrop` 或 Actonscan faucet 领测试币）
 4. 用 `TonClient4` 的 `getAccount` 查合约状态，确认 `state` 是否为 `active`
 
-### tonverifier 验证失败
+### verifier 验证失败
 
 原因：编译器版本不匹配或源码有改动。在 `wrappers/` 中打印 `compilerVersion()`，用相同版本重新验证。如果合约用了 `#include`，确认所有 include 文件都已上传。
 
@@ -443,7 +532,18 @@ TON 的 Gas 按 TVM 指令计费。用 `@ton/sandbox` 的 `result.transactions[0
 
    </details>
 
-5. tonverifier.app 验证合约时，需要提交哪些文件？验证的是什么？
+5. TVM 退出码 `-14` 和 `9` 分别代表什么？排查方向有什么不同？
+
+   <details>
+   <summary>查看答案</summary>
+
+   - `-14` 是 Out of gas：Gas 耗尽，排查方向是发送的 `value` 是否够、消息处理里是否有大循环
+   - `9` 是 Cell underflow：消息体读取越界，排查方向是 `store_*` 写入与 `load_*` 读取的顺序和字段宽度是否一致
+   - 一个是资源问题，一个是序列化问题，两者的修复位置完全不同
+
+   </details>
+
+6. tonverifier 验证合约时，需要提交哪些文件？验证的是什么？
 
    <details>
    <summary>查看答案</summary>
@@ -460,13 +560,13 @@ TON 的 Gas 按 TVM 指令计费。用 `@ton/sandbox` 的 `result.transactions[0
 
 1. `npm create ton@latest` 创建项目后，`contracts/`、`wrappers/`、`tests/` 三个目录里各有什么文件？
 2. `compileFunc` 编译时如果报 `undefined function`，你排查的顺序是什么？
-3. 用 `@ton/sandbox` 的 `result.transactions[0].description.computePhase` 查看部署交易的 Gas 消耗和退出码。退出码是 0 吗？如果不是，对照常见退出码表定位原因。
+3. 用 `@ton/sandbox` 的 `result.transactions[0].description.computePhase` 查看部署交易的 Gas 消耗和退出码。退出码是 0 吗？如果不是，对照退出码表定位原因。
 
 ### 练习二：补测试并对比 @ton/sandbox 和 Testnet 的行为差异
 
 在练习一的项目里补两个测试用例：
 
-1. **非 owner 发 mint 消息**：在 `tests/JettonMinter.spec.ts` 里新增一个测试——用另一个 treasury 钱包（非 deployer）发 mint 消息，断言返回的退出码非 0（如果是 0，说明合约没有做权限校验）。
+1. **错误操作码**：发一个 `op = 0xdeadbeef` 的消息，断言返回的退出码是 `0xffff`（本文演示合约对未识别操作码的行为）。
 2. **连续 mint 后查总量**：连续发 3 次 mint 消息（每次 mint 100），断言 `getTotalSupply()` 返回 300。
 
 跑通后，把同一个合约部署到 Testnet，用 `TonClient4` 调用同样的方法。@ton/sandbox 的本地测试和 Testnet 远端调用的 Gas 消耗是否一致？如果不一致，差了多少？搞清楚差异来源——是 sandbox 的 Gas 计费模型简化了某些 TVM 指令，还是 Testnet 上合约存储状态和本地新部署的初始状态不同。
@@ -481,29 +581,15 @@ TON 的 Gas 按 TVM 指令计费。用 `@ton/sandbox` 的 `result.transactions[0
 
 ## 进阶路径
 
-- **FunC 进阶**：读 [TON 官方文档](https://docs.ton.org/v3/guidelines/smart-contracts/) 的 Jetton 标准实现，理解 masterchain 与 workchain 的消息流——Jetton 的 mint 操作实际上涉及 minter 合约 → wallet 合约 → 用户余额三层的消息传递。
+- **Jetton 标准实现**：读官方参考实现 [ton-blockchain/jetton-contract](https://github.com/ton-blockchain/jetton-contract)，理解 minter → wallet → 用户余额三层的消息传递——本文演示版省略的 wallet 分发、bounced 消息回滚都在这里。标准文档入口见 [docs.ton.org 的合约标准总览](https://docs.ton.org/contracts/standard/overview)。该仓库的 `sandbox_tests` 目录有成套的正负向测试，是写权限和异常测试的现成参照。
 - **TVM 底层**：读 [TVM 概览](https://docs.ton.org/v3/documentation/tvm/tvm-overview)，理解栈式虚拟机、Continuation 和 Gas 计费模型。关键概念：TVM 一条指令的 Gas 由指令类型和操作数大小共同决定——`load_uint(256)` 比 `load_uint(32)` 贵，主因是读取的 cell 数据更多，指令本身的复杂度差异不大。
-- **安全审计**：用 FunC 静态扫描工具（如 [ton-blockchain/ton-sec-tools](https://github.com/ton-blockchain/ton-sec-tools)，该仓库链接需核实，截至写作时未确认存在）做静态扫描，重点关注重入、整数溢出、权限校验缺失。jetton-minter.fc 的 `recv_internal` 没有检查 `msg_value`——如果你收到的 TON 数量为 0，合约仍然会执行 mint 逻辑（消耗的是合约自身的余额），这是一个常见的 gas 耗尽攻击面。
-- **Tolk 迁移**：Tolk v1.0 已在 2025 年发布，是 Acton 的默认语言。官方提供 `func2tolk` 自动转换工具（见 [ton-blockchain/tolk](https://github.com/ton-blockchain/tolk) 仓库），迁移存量合约时可先用它做机械转换，再人工核对确保语义一致。迁移时要特别注意：Tolk 的 `receive` 函数签名和 FunC 的 `recv_internal` 在 `msg_value` 的处理上有细微差异——Tolk 里 `msg_value` 是显式参数，FunC 里它被隐式传入。
+- **安全审计**：演示合约只做了最简单的权限校验（`throw_unless(73, ...)`）。标准 Jetton 至少还要处理：bounced 消息（mint 后 wallet 侧失败时回滚 total_supply）、消息体的严格字段解析、admin 变更路径。把 jetton-contract 仓库里 `error::not_owner`、`error::wrong_op` 这些错误码的用法读一遍，比自己发明错误码可靠。
+- **Tolk 迁移**：Acton 内置 `acton func2tolk` 命令，底层调用官方 `@ton/convert-func-to-tolk` 包，迁移流程见 [Acton 的 func2tolk 迁移指南](https://ton-blockchain.github.io/acton/docs/agent-skills/func2tolk)。机械转换完成后仍需人工核对消息处理语义是否一致，再分批替换。早期独立的 ton-blockchain/tolk 仓库已不存在，遇到引用它的旧教程，链接会 404。
 
 ## 资料口径说明
 
-本文基于以下来源撰写，请读者注意时效性和局限性：
-
-1. **工具版本**：本文涉及的 npm 包版本（如 `@ton-community/func-js`、`@ton/sandbox`、`@ton/test-utils`、`@ton/blueprint`）以 2026 年 5 月 npm 注册中心（registry.npmjs.org）的 latest 标签为准。TON 生态工具链迭代较快，实际版本可能已更新，请以 `npm view <package> version` 命令查询结果为准。
-2. **Tolk 稳定性**：文中称"Tolk v1.0 已在 2025 年发布"，基于 [ton-blockchain/tolk](https://github.com/ton-blockchain/tolk) 仓库的 Releases 页面和 TON 官方文档（docs.ton.org）的 Tolk/Acton 章节。Tolk 仍在持续迭代（截至 2026 年中已到 1.x 多个小版本），使用前请以具体版本为准。
-3. **编译器版本**：FunC 编译器的版本号由 `compileFunc` 的 `compilerVersion()` 函数返回，文中未给出具体版本号。实际使用时请在 `wrappers/` 目录下打印该函数返回值，并用相同版本在 tonverifier.app 进行源码验证。
-4. **链上验证工具**：文中使用 tonverifier.app 作为验证工具，该工具链接有效性以发布时为准。如遇失效，请使用 TON 官方推荐的验证工具（以 [docs.ton.org](https://docs.ton.org) 的"Smart Contract Verification"章节为准）。
-5. **Gas 消耗数据**：文中未给出具体的 Gas 消耗数值，仅说明查看方法。实际 Gas 消耗因合约逻辑、数据量、网络状态而异，请在 `@ton/sandbox` 中实际测试后获取基准数据。
-6. **安全工具链接**：文中提到 `ton-blockchain/ton-sec-tools` 仓库，该链接需核实，截至写作时未确认存在。如需 FunC 静态扫描工具，请查阅 TON 官方文档的安全工具推荐列表。
-
-本文仅供参考和学习用途，不构成任何投资或技术实施建议。在将合约部署到 mainnet（主网）前，请务必进行完整测试和安全审计。
-
-## 附录：自测参考答案
-
-1. **职责边界**：Blueprint 管项目脚手架、目录约定、编译/部署脚本编排；FunC 编译器把 FunC 源码编译为 TVM Cell；@ton/sandbox 在本地进程内模拟 TVM 执行，提供 `Blockchain` 类做单元测试。三者不互相替代——Blueprint 调用编译器，编译器输出 Cell 给 sandbox 加载。
-2. **codeBoc 格式与转换**：`codeBoc` 是 base64 编码的 TVM Cell（Bag of Cells，BoC 二进制格式）。用 `Cell.fromBoc(Buffer.from(result.codeBoc, 'base64'))[0]` 转成 `@ton/core` 的 `Cell` 对象。
-3. **treasury 与 openContract**：`blockchain.treasury('deployer')` 创建一个有初始余额的虚拟钱包合约，作为部署者和消息发送者；`blockchain.openContract` 把合约包装成可调用对象，提供 `send`（发消息）和 getter 调用方法。
-4. **Testnet 查询 getter**：用 `TonClient4` 连接 TestNet 节点，`client.open(contract)` 打开合约实例后调用 getter 方法；或用 `client.runMethod` 直接调用合约的 `method_id` 方法。
-5. **tonverifier 验证**：提交合约源码文件（`jetton_minter.fc` 及所有 `#include` 的文件），选择与 `compilerVersion()` 一致的编译器版本。验证的是本地源码编译后的 Cell 与链上合约的 Cell 是否一致。
-
+1. **Acton**：官方工具链，仓库 [ton-blockchain/acton](https://github.com/ton-blockchain/acton)，v1.0.0 发布于 2026 年 5 月 11 日（GitHub Releases）。Acton 迭代很快，安装方式和命令用法以仓库 README 为准。
+2. **Tolk**：Tolk v1.0 于 2025 年 7 月发布（npm 包 `@ton/tolk-js` 1.0.0，2025-07-07）。Tolk 编译器已并入 Acton，`@ton/tolk-js` 提供 WASM 版本。
+3. **mint 操作码**：TEP-74 标准化的是 wallet 侧消息（`transfer` `0xf8a7ea5`、`internal_transfer` `0x178d4519`、`burn` `0x595f07bc`）；mint 操作码由 minter 实现自行定义，官方参考实现 jetton-contract 取 `0x642b7d07`，旧版 token-contract 取十进制 21。本文示例与新版参考实现一致。
+4. **npm 包版本**：`@ton/ton`、`@ton/core`、`@ton/sandbox`、`@ton/test-utils`、`@ton-community/func-js` 以 npm 查询为准；Testnet 端点 `testnet-v4.tonhubapi.com` 取自 `@ton/ton` 源码的 `createTestClient4`。FunC 编译器的具体版本号请以 `compilerVersion()` 的输出为准，验证源码时用同一版本。
+5. 本文仅供学习参考，不构成投资或技术实施建议。合约部署到 mainnet（主网）前，请完成完整测试和安全审计。
