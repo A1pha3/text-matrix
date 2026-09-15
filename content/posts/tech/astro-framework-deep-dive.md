@@ -4,7 +4,7 @@ date: "2026-04-28T11:08:44+08:00"
 slug: "astro-framework-deep-dive"
 github_repo: "withastro/astro"
 source_key: "gh:withastro/astro"
-description: "Astro 是面向内容驱动网站开发的 Web 框架，采用 Islands 架构——默认输出纯 HTML，只有标记交互的组件才加载 JS。58,820 GitHub Stars，支持 React/Vue/Svelte 等多框架，支持 Node/Vercel/Cloudflare 等部署平台。"
+description: "Astro 是面向内容驱动网站开发的 Web 框架，采用 Islands 架构——默认输出纯 HTML，只有标记交互的组件才加载 JS。62,500+ GitHub Stars，支持 React/Vue/Svelte 等多框架，支持 Node/Vercel/Cloudflare 等部署平台。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Astro"]
@@ -16,7 +16,7 @@ tags: ["Astro"]
 
 博客、文档站、营销页、电商详情页，90% 以上的内容是静态的。但过去十年，SSR 框架的默认做法是：服务端渲染 HTML，浏览器收到后，再加载整个框架运行时，把组件树在客户端重建一遍（水合，hydration）。即使页面里只有一个点赞按钮需要交互，用户也要等几十 KB 甚至上百 KB 的 JS 下载、解析、执行完，才能看到首屏。
 
-Astro 把这个默认值反过来：**默认只给 HTML，不给 JS。需要交互的组件，单独声明激活策略。** 截至 2026 年 4 月，[Astro](https://github.com/withastro/astro) 在 GitHub 上累计 58,820 Stars、3,387 Forks，由 [Astro](https://astro.build/) 团队维护。本文以 2026 年初的 Astro v5 为基准，涉及版本差异的写法会在对应小节标注适用版本。
+Astro 把这个默认值反过来：**默认只给 HTML，不给 JS。需要交互的组件，单独声明激活策略。** 截至 2026 年 9 月，[Astro](https://github.com/withastro/astro) 在 GitHub 上累计 62,500+ Stars、3,800+ Forks，由 [Astro](https://astro.build/) 团队维护。本文以 2026 年 9 月的 Astro v7（7.3）为基准；v5/v6 时代的行为差异，会在对应小节标注。
 
 ## 总览：Astro 负责什么，不负责什么
 
@@ -31,11 +31,11 @@ Astro 是一个**构建编排层**，不负责 UI 框架和数据库的具体实
 | 内容管理 | Content Collections（Schema 校验 + 类型推断） | CMS 后端 |
 | 部署 | 通过适配器对接 Vercel/Cloudflare/Netlify/Node | 服务器运维 |
 | 样式方案 | 原生支持 Scoped CSS、Tailwind、CSS Modules | 设计系统 |
-| 数据获取 | `fetch()` + `Astro.glob()` + 文件系统 | ORM、数据库直连 |
+| 数据获取 | `fetch()` + `import.meta.glob()` + 文件系统 | ORM、数据库直连 |
 
 下面先解释它是怎么从一个"默认零 JS"的框架默认值出发解决首屏问题的，再拆请求路径、内容管理和部署选型。
 
-读完这篇，你应该能替两个问题拿判断：一个内容站要不要上 Astro；真要上，哪些页面走静态、哪些开混合或 Server Islands。这两个判断不需要背概念，把「哪种渲染方式对应哪种开销」这条线拎清楚就有了。
+读完这篇，你应该能替两个问题拿判断：一个内容站要不要上 Astro；真要上，哪些页面走静态、哪些按页翻转或上 Server Islands。这两个判断不需要背概念，把「哪种渲染方式对应哪种开销」这条线拎清楚就有了。
 
 ---
 
@@ -124,8 +124,8 @@ Astro 选 Islands 而非 RSC，因为目标场景不同。RSC 面向整站是 Re
 
 **构建阶段：**
 
-1. Astro 扫描 `src/content/blog/`，用 Content Collections 的 Zod schema 校验每篇文章的 frontmatter（title、pubDate、tags、draft）。`draft: true` 的文章在构建时直接跳过。
-2. `getCollection('blog')` 返回校验过的文章列表，`getEntry('blog', slug)` 取到当前文章。
+1. Astro 扫描 `src/content/blog/`，用 Content Collections 的 Zod schema 校验每篇文章的 frontmatter（title、pubDate、tags、draft）。草稿靠查询时过滤（`getCollection('blog', ({ data }) => !data.draft)`），`draft: true` 的文章不会进入构建。
+2. `getCollection('blog')` 返回校验过的文章列表，`getStaticPaths` 把每篇文章映射成一条路由，`render(post)` 拿到正文组件。
 3. `.astro` 模板开始编译：静态 header、文章正文（`<Content />`）编译为纯 HTML，输出到 `dist/blog/my-post/index.html`。
 4. 阅读计数器标记了 `client:visible` → Astro 编译器为这个 React 组件单独打包一份 JS bundle，注入视口检测逻辑。
 5. 「最新发布」徽章标记了 `client:idle` → 单独打包，注入 `requestIdleCallback` 监听。
@@ -138,7 +138,7 @@ Astro 选 Islands 而非 RSC，因为目标场景不同。RSC 面向整站是 Re
 3. 页面渲染完成——用户能看到文章全文、标题、导航，此时还没有 JS 执行。
 4. `client:idle` 的 Vue 徽章在浏览器空闲时下载 JS、执行、挂载 DOM。
 5. 用户向下滚动，`client:visible` 的 React 计数器进入视口，触发 JS 下载和水合，显示阅读量。
-6. `client:only` 的评论表单在用户点击「写评论」时才会触发完整的 React 运行时加载——评论区的 JS 体积最大，但它只在用户真正需要时才进入页面。
+6. `client:only` 的评论表单不做服务端渲染，首屏 HTML 里只有占位符；页面加载后浏览器下载它的 JS，在客户端完成首次渲染。它的 JS 体积最大（完整 React 运行时 + 组件代码），但不会阻塞正文显示——正文早已在纯 HTML 里了。
 
 Astro 在这条路径里的选择围绕一个判断：**这个组件需要浏览器端的 JS 吗？如果需要，什么时候加载最不打扰用户？** 框架自身不会给页面注入不需要的 JS。
 
@@ -146,16 +146,17 @@ Astro 在这条路径里的选择围绕一个判断：**这个组件需要浏览
 
 ## Content Collections：内容管理范式
 
-Astro v2 引入了 **Content Collections**（内容集合），为 Markdown/MDX 文件提供类型安全的组织方式；v5 用 Content Layer API 重构了内容加载层，引入 loader 概念替代旧的 `type` 字段。迁移到 v5 时，配置会从 `src/content/config.ts` 移到 `src/content.config.ts`，用 `glob()` 声明内容来源；下面的示例沿用 v5 之前的 `type` 语法，仅用于说明 schema 校验这套心智。
+Astro v2 引入了 **Content Collections**（内容集合），为 Markdown/MDX 文件提供类型安全的组织方式。v5 用 Content Layer API 重构了内容加载层：配置文件从 `src/content/config.ts` 移到 `src/content.config.ts`，内容来源改用 loader（`glob()`、`file()`）声明；v6 彻底移除了旧 API，`type: 'content'` 这类写法不再可用。下面是 v7 的现行写法：
 
 ```typescript
-// src/content/config.ts
-import { defineCollection, z } from 'astro:content';
+// src/content.config.ts
+import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
 
 const blog = defineCollection({
-  // 沿用的旧语法（v4 及更早）；Astro v5 引入 Content Layer API，
-  // 已移除 type 字段，改用 glob() loader 声明内容来源
-  type: 'content',
+  // 声明内容来源：src/content/blog/ 下的所有 Markdown/MDX 文件
+  loader: glob({ base: './src/content/blog', pattern: '**/*.{md,mdx}' }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -170,18 +171,21 @@ export const collections = { blog };
 
 ```astro
 ---
-// src/pages/blog/[slug].astro
-import { getCollection } from 'astro:content';
-import { getEntry } from 'astro:content';
+// src/pages/blog/[...slug].astro
+import { getCollection, render } from 'astro:content';
 
-const { slug } = Astro.params;
-const post = await getEntry('blog', slug as string);
-
-if (!post) {
-  return Astro.redirect('/404');
+export async function getStaticPaths() {
+  // Content Layer 不再自动跳过 draft: true 的文章，查询时自己过滤
+  // （v4 及更早的旧版集合是自动跳过的）
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: post,
+  }));
 }
 
-const { Content } = await post.render();
+const post = Astro.props;
+const { Content } = await render(post);
 ---
 
 <article>
@@ -192,6 +196,8 @@ const { Content } = await post.render();
   <Content />
 </article>
 ```
+
+从旧版迁移过来的人会撞到三处 API 变化：entry 不再有 `.render()` 方法，v5 起改为从 `astro:content` 导入 `render()` 函数；`entry.slug` 改名为 `entry.id`，由 loader 生成（`glob()` loader 默认取文件相对路径去掉扩展名）；Zod 从 `astro/zod` 导入，v6 起从 `astro:content` 导入 `z` 已弃用。
 
 Content Collections 做的事：
 
@@ -204,9 +210,9 @@ Content Collections 做的事：
 
 ---
 
-## 渲染模式：静态、SSR 与混合
+## 渲染模式：静态、SSR 与按页翻转
 
-Astro 支持三种输出模式，可按页面粒度切换：
+Astro 只有两种输出模式，再配一个逐页翻转的开关。「静态和动态混合」不是第三种模式，而是默认行为：
 
 ### 静态站点生成（SSG，默认）
 
@@ -235,13 +241,14 @@ export default defineConfig({
 });
 ```
 
-### 混合模式
+### 按页翻转预渲染
 
-大部分页面静态预渲染，特定页面开启 SSR。
+两种模式都支持逐页翻转：`static` 模式下给某个页面加 `export const prerender = false`，这个页面就改走请求时渲染（需要装适配器）；`server` 模式下反过来，加 `prerender = true` 的页面在构建时生成。
 
 ```typescript
 // src/pages/api/comments.ts
-export const prerender = false; // 这个页面开启 SSR
+// static 模式下，这一个端点在请求时渲染，其余页面照常预渲染
+export const prerender = false;
 
 export async function POST({ request }) {
   const form = await request.formData();
@@ -249,19 +256,11 @@ export async function POST({ request }) {
 }
 ```
 
-```astro
----
-// src/pages/blog/[slug].astro
-// 默认 prerender = true，构建时生成
-const { slug } = Astro.params;
----
-```
-
-混合模式从 Astro v3 起提供，通过 `output: 'hybrid'` 显式开启，不是框架默认：内容页保持静态预渲染，需要实时数据的页面单独开 SSR。默认的 `output: 'static'` 依然是内容站的主流选择，不要为少数动态页面提前把整站拖进 SSR 运行时。
+这个行为有段历史：Astro v3-v4 里「静态为主、少数页面动态」需要显式配置 `output: 'hybrid'`，v5 把这个值并入了 `static`——从那以后混合就是默认行为，不用再开启。内容站仍然建议留在默认的 `static`：不要为少数动态页面提前把整站拖进 SSR 运行时，等真正出现实时数据的需求，装上适配器、给那几个页面加 `prerender = false` 就够了。
 
 ### Server Islands：把动态渲染收进页面里的小块
 
-混合模式切的是「整页」：要么整页静态，要么整页 SSR。Astro 5 的 **Server Islands** 把粒度再缩小到组件：一个静态页面里可以嵌几个在请求时渲染的动态块，其余部分保持纯静态。用法是在组件上加 `server:defer`，配 `<Fragment slot="fallback">` 提供加载态：
+按页翻转切的是「整页」：要么整页静态，要么整页 SSR。Astro 5 的 **Server Islands** 把粒度再缩小到组件：一个静态页面里可以嵌几个在请求时渲染的动态块，其余部分保持纯静态。用法是在组件上加 `server:defer`，配 `<Fragment slot="fallback">` 提供加载态：
 
 ```astro
 ---
@@ -279,7 +278,7 @@ import ProductStock from '../../components/ProductStock.astro';
 </main>
 ```
 
-这条思路让「静态外壳 + 局部动态数据」成为一等公民：页面主体仍由 CDN 直接吐出，只有库存这类实时数据在请求时补齐。需要注意：Server Islands 在请求时渲染，需要一次服务端运行，因此要配合 SSR 适配器（如 `@astrojs/node`、`@astrojs/vercel`），并为它接一个可降级的 `fallback`。它和混合模式解决的不是同一个问题——混合模式是整页 SSR 与整页静态并存，Server Islands 是在同一个静态页面里嵌动态块；大多数页面仍要静态缓存、只有少量数据要实时时，优先考虑后者。
+这条思路把「静态外壳 + 局部动态数据」变成了常规做法：页面主体仍由 CDN 直接吐出，只有库存这类实时数据在请求时补齐。需要注意：Server Islands 在请求时渲染，需要一次服务端运行，因此要配合 SSR 适配器（如 `@astrojs/node`、`@astrojs/vercel`），并为它接一个可降级的 `fallback`。它和按页翻转解决的不是同一个问题——按页翻转是整页 SSR 与整页静态并存，Server Islands 是在同一个静态页面里嵌动态块；大多数页面仍要静态缓存、只有少量数据要实时时，优先考虑后者。
 
 ---
 
@@ -291,10 +290,10 @@ Astro 的集成（integrations）支持主流 UI 框架和部署平台。
 
 | 集成 | 用途 |
 |------|------|
-| `@astrojs/react` | React 18+ 组件支持 |
+| `@astrojs/react` | React 18 / 19 组件支持 |
 | `@astrojs/preact` | Preact（约 3KB 的 React 替代品） |
 | `@astrojs/solid-js` | SolidJS 响应式组件 |
-| `@astrojs/svelte` | Svelte 5 组件（Svelte 3/4 需用旧版 `@astrojs/svelte@5`） |
+| `@astrojs/svelte` | Svelte 5 组件 |
 | `@astrojs/vue` | Vue 3 组件 |
 | `@astrojs/alpinejs` | Alpine.js 轻量交互 |
 
@@ -317,7 +316,7 @@ Astro 的集成（integrations）支持主流 UI 框架和部署平台。
 | `@astrojs/rss` | RSS/Atom Feed 生成 |
 | `@astrojs/check` | TypeScript 类型检查 |
 
-关于 `@astrojs/db`：这个边缘数据库包已经停止维护。Astro DB 底层跑的本来就是 libSQL（SQLite 的开源分支），官方现在的建议是在项目里直接用 Drizzle / Kysely 这类客户端连接 SQLite 或 libSQL，而不是依赖 `@astrojs/db` 这层封装；新项目不必再把它当作默认选择。
+关于 `@astrojs/db`：Astro DB 曾经是官方推出的数据库方案（底层是 libSQL，SQLite 的开源分支），v6.4 起弃用，v7.0 已从框架中移除。官方迁移指南的建议是直接换用第三方库：Node 内置的 `node:sqlite`、Drizzle ORM，或 Turso、PlanetScale、Neon 这类托管数据库。新项目不要把这个包当作选择。
 
 ---
 
@@ -327,34 +326,28 @@ Astro 仓库采用 monorepo 结构，核心包在 `packages/` 下：
 
 ```
 packages/
-├── astro/                      # 核心框架
-│   ├── CHANGELOG.md
-│   └── src/
-│       ├── runtime/           # 客户端/服务端运行时
-│       ├── compiler/         # Astro 编译器（自定义）
-│       └── integrations/     # 内置集成
-├── create-astro/              # npm create astro@latest
-├── integrations/             # 官方集成包
-│   ├── react/
-│   ├── vue/
-│   ├── svelte/
-│   ├── vercel/
-│   ├── cloudflare/
-│   └── ...
-├── language-tools/            # LSP、TS 插件
-│   ├── astro-check
-│   ├── language-server
-│   └── ts-plugin
-└── db/                       # Astro DB（边缘数据库）
+├── astro/                      # 核心框架（路由、渲染管线、构建编排）
+├── create-astro/               # npm create astro@latest
+├── integrations/               # 官方集成包
+│   ├── react/  preact/  solid-js/  svelte/  vue/  alpinejs/
+│   ├── node/  vercel/  cloudflare/  netlify/      # 部署适配器
+│   └── mdx/  partytown/  sitemap/
+├── astro-rss/                  # @astrojs/rss
+└── language-tools/             # 编辑器支持
+    ├── astro-check/            # @astrojs/check，类型检查
+    ├── language-server/        # LSP 与 VS Code 扩展
+    └── ts-plugin/
 ```
 
-Astro **有自己的编译器**（[withastro/compiler](https://github.com/withastro/compiler)），将 `.astro` 文件（HTML 模板 + frontmatter TypeScript）编译为 JavaScript 模块。这个编译器让 Astro 完全掌控构建流水线，能精确区分"这段代码在服务端跑还是浏览器跑"，并把 `client:*` 指令直接编译成独立的 JS bundle 入口，不依赖 Babel 或 SWC 的转换链。
+编译器不在核心包里，是独立实现。Astro **有自己的编译器**，将 `.astro` 文件（HTML 模板 + frontmatter TypeScript）编译为 JavaScript 模块——早期版本是 Go 编写、以 WASM 分发的 `@astrojs/compiler`，v7 起换成了新的 Rust 编译器。自己写编译器让 Astro 完全掌控构建流水线，能精确区分"这段代码在服务端跑还是浏览器跑"，并把 `client:*` 指令直接编译成独立的 JS bundle 入口，不依赖 Babel 或 SWC 的转换链。
 
 ---
 
 ## 安装与最小示例
 
 ### 创建项目
+
+Astro v6 起要求 Node 22.12.0 或更高版本，动手前先确认本地和部署环境的 Node 版本。
 
 ```bash
 # 推荐方式
@@ -421,18 +414,18 @@ import Counter from './Counter.jsx'; // React 组件
 
 ---
 
-## View Transitions 与现代 Web
+## Client Router 与现代 Web
 
-Astro v3 开始支持 **View Transitions API**（视图过渡），在页面导航时实现类似 SPA 的平滑过渡动画，不需要加载完整 SPA 框架。
+Astro v3 开始支持 **View Transitions API**（视图过渡），在页面导航时实现类似 SPA 的平滑过渡动画，不需要加载完整 SPA 框架。v5 把对应的组件从 `<ViewTransitions />` 改名为 `<ClientRouter />`——功能没变，名字更贴近它实际做的事（客户端路由）；v6 移除了旧名，现在只能用新写法：
 
 ```astro
 ---
 // src/layouts/BaseLayout.astro
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
 ---
 
 <head>
-  <ViewTransitions />
+  <ClientRouter />
 </head>
 
 <nav>
@@ -457,7 +450,7 @@ import { ViewTransitions } from 'astro:transitions';
 | **Next.js** | 应用框架 | RSC、PPR（部分预渲染） | 仅 React | 中（Vercel 优先） |
 | **Nuxt** | Vue 应用框架 | Nuxt Island（实验性） | 仅 Vue | 中（节点适配器） |
 | **SvelteKit** | Svelte 应用框架 | 无原生 Islands | 仅 Svelte | 高 |
-| **Remix** | SSR 应用框架 | 无 Islands | 仅 React | 高 |
+| **React Router (v7)** | SSR 应用框架（Remix 已并入） | 无 Islands | 仅 React | 高 |
 
 在**内容网站**这个细分里，Astro 的 Islands 实现最完整，也是唯一原生支持多框架混用的框架。Next.js 的 RSC 和 Partial Prerendering 方向类似，但绑定 React 生态。Nuxt 的 Nuxt Island 仍在实验阶段。
 
@@ -480,7 +473,7 @@ import { ViewTransitions } from 'astro:transitions';
 
 ### 上手顺序
 
-先跑通 `npm create astro@latest` 的博客模板，把 Content Collections 的 schema 建起来；再引入一个交互组件（计数器、评论区），观察它如何影响产物的 JS 体积。大多数内容站用默认静态输出就够了，等真正出现需要实时数据的页面时，再按需加 `@astrojs/node` 或平台适配器开混合模式——不必为「将来可能用到」提前上 SSR。
+先跑通 `npm create astro@latest` 的博客模板，把 Content Collections 的 schema 建起来；再引入一个交互组件（计数器、评论区），观察它如何影响产物的 JS 体积。大多数内容站用默认静态输出就够了，等真正出现需要实时数据的页面时，再装上适配器、给那几个页面加 `prerender = false`——不必为「将来可能用到」提前上 SSR。
 
 ---
 
@@ -498,7 +491,7 @@ export default defineConfig({
 
 **Content Collections schema 校验失败**
 
-构建时报错 `collectionName does not match the schema`，通常是 frontmatter 字段类型或必填项不匹配。检查 `src/content/config.ts` 里的 Zod schema 与 Markdown 文件的实际 frontmatter 是否一致——`pubDate` 需要是合法日期字符串，`tags` 需要是字符串数组。
+构建时报错 `collectionName does not match the schema`，通常是 frontmatter 字段类型或必填项不匹配。检查 `src/content.config.ts` 里的 Zod schema 与 Markdown 文件的实际 frontmatter 是否一致——`pubDate` 需要是合法日期字符串，`tags` 需要是字符串数组。
 
 **`client:only` 组件首屏闪烁**
 
@@ -506,7 +499,7 @@ export default defineConfig({
 
 **部署到 Vercel 后 SSR 页面 404**
 
-通常是适配器缺失或配置不对。SSR 和混合模式必须安装对应平台的适配器（如 `@astrojs/vercel`），并在 `astro.config.mjs` 里声明。仅用 `@astrojs/node` 部署到 Vercel 会缺少 Edge Functions 支持。
+通常是适配器缺失或配置不对。请求时渲染的页面必须安装对应平台的适配器（如 `@astrojs/vercel`），并在 `astro.config.mjs` 里声明。还要注意适配器要选对平台：`@astrojs/node` 面向自己管的 Node 服务器，部署到 Vercel 应该用 `@astrojs/vercel`。
 
 
 

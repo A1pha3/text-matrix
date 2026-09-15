@@ -4,7 +4,7 @@ date: "2026-06-18T21:03:00+08:00"
 slug: "biomejs-biome-2-rust-web-toolchain-guide"
 github_repo: "biomejs/biome"
 source_key: "gh:biomejs/biome"
-description: "biomejs/biome 是用 Rust 写的一体化 Web 工具链，格式化兼容 Prettier 97%、Linter 收录 500+ 条规则、原生支持 JS/TS/JSX/JSON/CSS/GraphQL，下面拆解其架构、安装与相对 Prettier+ESLint 的取舍。"
+description: "biomejs/biome 是用 Rust 写的一体化 Web 工具链，格式化兼容 Prettier 97%、Linter 收录 500+ 条规则，覆盖 JS/TS/JSX/JSON/CSS/GraphQL/HTML，下面拆解其架构、安装与相对 Prettier+ESLint 的取舍。"
 draft: false
 categories: ["技术笔记"]
 tags: ["代码格式化"]
@@ -12,11 +12,11 @@ tags: ["代码格式化"]
 
 > **快速信息卡**
 > - **GitHub**: [biomejs/biome](https://github.com/biomejs/biome)
-> - **Stars**: 25,460+（GitHub API 2026-08-05 验证）
-> - **Forks**: 1,166+
+> - **Stars**: 25,773+（GitHub API 2026-09-14 验证）
+> - **Forks**: 1,230+
 > - **License**: Apache-2.0
 > - **语言**: Rust
-> - **最后更新**: 2026-08-01
+> - **最新版本**: v2.5.13（2026-09-10）
 
 ## 一句话判断
 
@@ -29,7 +29,7 @@ Biome 给前端工具链提供了一个"单二进制替代"的选项。新项目
 ```text
 ┌─────────────────────────────────────────────────────────┐
 │  Biome 的三层能力                                        │
-│  ├─ Formatter  ── 97% Prettier 兼容（JS/TS/JSX/JSON/CSS）│
+│  ├─ Formatter  ── 97% Prettier 兼容（JS/TS/JSX/JSON 等）│
 │  ├─ Linter     ── 500+ 条规则（来自 ESLint 生态）        │
 │  └─ Editor     ── VS Code / Open VSX 即时反馈            │
 ├─────────────────────────────────────────────────────────┤
@@ -55,7 +55,7 @@ Biome 的前身是 Rome——由 Babel 和 Yarn 的作者 Sebastian McKenzie 发
 这段历史解释了 Biome 的两个设计倾向：
 
 - **单二进制**：Rome 想用一套解析与编译基础设施覆盖整个工具链，Biome 继承了这一点，只是把范围收敛到格式化与 Lint
-- **少即是多**：Rome 因摊子铺得太大而难产，Biome 刻意保持精简，先把 formatter 和 linter 做扎实
+- **先做窄再做宽**：Rome 因摊子铺得太大而难产，Biome 把打包、测试这些目标暂时放下，先把 formatter 和 linter 做扎实
 
 到 2025 年 6 月，Biome 2.0（代号 Biotype）发布，把"类型感知 Lint"带进了不依赖 TypeScript 编译器的世界（详见第五节）。
 
@@ -77,7 +77,7 @@ Stylelint ── CSS 专属
 - 规则冲突（Prettier 格式化 vs ESLint 风格规则要互相让位）
 - 依赖膨胀（数百个传递依赖）
 
-Biome 给的方案是**单二进制 + 单配置文件 + 一致行为**。
+Biome 给的方案是：一个二进制、一份 `biome.json`，格式化和 Lint 从同一套解析器里出来，不再互相让步。
 
 ## 三、定位：三个核心能力
 
@@ -85,27 +85,25 @@ README 把 Biome 定位成三层能力：
 
 ### 1. 快速格式化
 
-> **Biome is a fast formatter** for JavaScript, TypeScript, JSX, JSON, CSS and GraphQL that scores 97% compatibility with Prettier.
+> **Biome is a fast formatter** for JavaScript, TypeScript, JSX, TSX, JSON, HTML, CSS and GraphQL that scores 97% compatibility with Prettier.
 
-这是 Biome 最早的能力。97% 不是 100%——剩下 3% 落在 Prettier 历史设计里的一些边角，Biome 团队选择不强行兼容，以免拖累维护节奏。
+这是 Biome 最早的能力。97% 不是 100%——剩下 3% 落在 Prettier 历史设计里的一些边角，Biome 团队选择不强行兼容，以免拖累维护节奏。逐项差异在官网 `formatter/differences-with-prettier` 页面有清单。
 
 ### 2. 高性能 Linter
 
-> **Biome is a performant linter** for JS / TS / JSX / JSON / CSS / GraphQL that features more than 500 rules from ESLint, typescript-eslint, and other sources. It outputs detailed and contextualized diagnostics.
+> **Biome is a performant linter** for JavaScript, TypeScript, JSX, CSS and GraphQL that features 547 rules from ESLint, TypeScript ESLint, and other sources.
 
-规则从 ESLint、typescript-eslint 等生态移植加重写而来，官方 README 的口径是"超过 500 条"。规则名和大多数配置选项与原生态对齐，从 ESLint 迁过来时改动面可控。具体数量随版本涨落，不用记死一个整数。
+规则从 ESLint、typescript-eslint 等生态移植加重写而来。规则名和大多数配置选项与原生态对齐，从 ESLint 迁过来时改动面可控。截至 v2.5 官网口径是 547 条，数量随版本涨落，不用记死一个整数。
 
 ### 3. 实时编辑器集成
 
-> **Biome is designed from the start to be used interactively within an editor.** It can format and lint malformed code as you are writing it.
-
-第一方支持 VS Code 和 Open VSX 上的扩展，编辑器内即时反馈。
+编辑器内可以边写边查，Biome 官方称之为"designed from the start to be used interactively within an editor"——排版再乱的代码也能即时格式化和 Lint。第一方支持 VS Code 和 Open VSX 上的扩展。
 
 ## 四、性能：为什么用 Rust
 
 Biome 全栈用 Rust 写，收益集中在冷启动和大仓库的 lint 速度上。
 
-官方给出的是格式化方向的基准：在 2,104 个文件、171,127 行代码上，Biome 比 Prettier 快约 35 倍（来源：biomejs.dev）。lint 方向没有统一口径，加速幅度随文件规模、规则集大小差别很大，官网 benchmark 目录里有逐项数据可以核对；同为 Rust 写的 oxlint 还能再拉开一截。与其记住某个倍数，不如看它实际省在哪：
+官方给出的是格式化方向的基准：在 2,104 个文件、171,127 行代码上，Biome 比 Prettier 快约 35 倍（Intel Core i7 1270P，数据挂在 biomejs.dev 首页，随版本刷新）。lint 方向没有统一口径，加速幅度随文件规模、规则集大小差别很大，官网 benchmark 目录里有逐项数据可以核对；同为 Rust 写的 oxlint 还能再拉开一截。与其记住某个倍数，不如看它实际省在哪：
 
 - 对开发机：保存即反馈，编辑器里 lint 基本无感知
 - 对 CI：整仓 check 从"分钟级"压到"秒级"，PR 反馈更快
@@ -113,24 +111,31 @@ Biome 全栈用 Rust 写，收益集中在冷启动和大仓库的 lint 速度�
 
 代价是安装包变成二进制，需要操作系统匹配（GitHub Releases 提供全平台构建）。但单二进制比 npm 几百个传递依赖反而更好管理。
 
-> 上面的 35x 测的是那个格式化场景，反映的是 Rust 解析 + 并行调度相对 Node.js 单线程的差距。它不能推出"你的 CI 一定快这么多"——真实收益取决于文件数量、规则集大小和 CI 机器规格。更细的基准口径见 biomejs/biome 仓库的 benchmark 目录。
+> 上面的 35x 测的是那个格式化场景，反映的是 Rust 解析 + 并行调度相对 Node.js 单线程的差距。它不能推出"你的 CI 一定快这么多"——真实收益取决于文件数量、规则集大小和 CI 机器规格。更细的基准口径见 biomejs/benchmark 仓库。
 
 ## 五、Biome 2.x：Biotype 与类型感知
 
-Biome 2.0（2025 年 6 月）代号 Biotype，核心是**类型感知 Lint 不再依赖 TypeScript 编译器**。typescript-eslint 要拉着 tsc 全程参与分析，慢；Biome 用自研的 Rust 类型推断引擎，先对项目做一次全量索引（类似 LSP），规则再按类型信息判断。官方口径：基于类型推断的 `noFloatingPromises` 能检出 typescript-eslint 约 75% 的问题，性能开销低一个量级。
+Biome 2.0（2025 年 6 月）代号 Biotype，核心是**类型感知 Lint 不再依赖 TypeScript 编译器**。typescript-eslint 要拉着 tsc 全程参与分析，慢；Biome 用自研的 Rust 类型推断引擎，先对项目做一次索引（类似 LSP 的 file scanner），规则再按类型信息判断。这个 scanner 是按需开启的：只有启用了项目级规则，才会触发全量扫描。官方口径：基于类型推断的 `noFloatingPromises` 能检出 typescript-eslint 同名规则约 75% 的问题，而性能开销只是零头——官方同时强调这是早期数字，基于有限用例。
+
+这项工作由 Vercel 赞助，核心贡献者 @arendjr 主导。
 
 v2 带来的几个实际能力：
 
 | 能力 | 说明 |
 |---|---|
-| 多文件分析 | 内置 file scanner 索引全项目，规则可跨文件，如 `noImportCycles` |
-| GritQL 插件 | 用 GritQL 模式语言写自定义 lint 规则（2025 年底 GritQL 归入 Biome 组织维护） |
-| Domains | 规则按技术栈分组（next / react / solid / test），自动读 `package.json` 依赖决定启用哪组 |
+| 多文件分析 | file scanner 索引全项目（启用项目级规则时触发），规则可跨文件，如 `noImportCycles` |
+| GritQL 插件 | 用 GritQL（Grit 项目的 AST 查询语言）模式写自定义 lint 规则；2025 年 12 月 GritQL 仓库正式转入 Biome 组织 |
+| Domains | 规则按技术栈分组（next / react / solid / test 等），自动读 `package.json` 依赖决定启用哪组；v2.4 起另有 `types` 组收录依赖类型推断的规则 |
 | Assist | 不产生诊断的辅助动作，比如对象键排序、import 整理 |
 | 抑制改进 | `// biome-ignore-all` 整文件忽略；`// biome-ignore-start` / `// biome-ignore-end` 忽略区间 |
-| HTML 格式化 | 实验性，需在配置里显式开启 `html.formatter.enabled` |
+| HTML 格式化 | 需在配置里显式开启 `html.formatter.enabled`，完整支持还需 `html.experimentalFullSupportEnabled` |
 
-版本还在快速演进：v2.4（2026 年 2 月）补上了嵌入式 CSS / GraphQL 片段格式化（styled-components、`gql` 标签），并推出一批 HTML 可访问性规则；v2.5（2026 年 6 月）规则数突破 500，GritQL 插件支持代码修复，跨文件 Lint 转正。从 v1 升级时，跑一遍 `biome migrate --write` 会自动处理配置里的破坏性变更（比如 `include` / `ignore` 改写成新的 `includes` 字段）。
+版本还在快速演进：
+
+- **v2.4（2026 年 2 月）**：嵌入式 CSS / GraphQL 片段格式化——识别 styled-components、Emotion 等 CSS-in-JS 和 `gql` 标签，需开 `experimentalEmbeddedSnippetsEnabled`，暂不支持带插值的片段；另推出 15 条 HTML 可访问性规则（`noAutofocus`、`useAltText` 等），Vue / Svelte / Astro 文件同样生效
+- **v2.5（2026 年 6 月）**：规则数突破 500；GritQL 插件支持代码修复；新增 `noUnusedClasses` / `noUndeclaredClasses` 跨语言规则，借助模块图检查 CSS 类在 JSX / HTML 里的实际使用；引入 `--watch` 监听模式
+
+配置上要注意：v2.5 用 `linter.rules.preset` 取代了布尔写法的 `recommended`，旧写法仍兼容，`biome migrate --write` 会自动改写；从 v1 升级的破坏性变更（比如 `include` / `ignore` 改写成新的 `includes` 字段）也是同一条命令处理。
 
 ## 六、安装与最小上手
 
@@ -159,6 +164,8 @@ npm install --save-dev --save-exact @biomejs/biome
   }
 }
 ```
+
+`"recommended": true` 在 v2.5 起标记为弃用，新写法是字符串形式的 `"preset": "recommended"`；布尔写法仍然兼容，`biome migrate --write` 会帮忙改成新格式。
 
 ### CLI 常用命令
 
@@ -233,7 +240,7 @@ npx @biomejs/biome check --write .
 cat index.js
 ```
 
-`biome check --write` 会同时跑格式化和 Lint 修复。`index.js` 里的多余空格会被抹平、分号补齐；如果 `noVar` 规则在 recommended 集里开启，`var` 还会被自动改成 `let`。如果没看到任何变化，先检查 `biome.json` 是否在项目根目录、`npx` 是否走的是本地安装。
+`biome check --write` 会同时跑格式化和 Lint 修复。`index.js` 里的多余空格会被抹平、缺的分号补齐，`console.log( x,y )` 会变成 `console.log(x, y);`。注意 `var` 不会被自动改成 `let`——`noVar` 规则不在 recommended 集里，想启用它需要在 `rules` 里显式打开，并以 `--write --unsafe` 应用修复。如果没看到任何变化，先检查 `biome.json` 是否在项目根目录、`npx` 是否走的是本地安装。
 
 ## 七、迁移路径：从 Prettier + ESLint 迁过来
 
@@ -259,9 +266,9 @@ Biome 团队提供了官方迁移工具 `biome migrate eslint` / `biome migrate 
 | `no-debugger` | `lint/suspicious/noDebugger` |
 | `eqeqeq` | `lint/suspicious/noDoubleEquals` |
 | `prefer-const` | `lint/style/useConst` |
-| `no-var` | `lint/style/noVar` |
+| `no-var` | `lint/suspicious/noVar`（不在 recommended 集，默认 warning，修复为 unsafe） |
 
-完整的可迁移规则清单见 `https://biomejs.dev/linter/rules/`。迁移后跑一遍 `biome lint .`，对照输出逐条确认严重级别和修复行为，别只看规则名对上就觉得完事。
+完整的可迁移规则清单见 `https://biomejs.dev/linter/javascript/rules/`。迁移后跑一遍 `biome lint .`，对照输出逐条确认严重级别和修复行为，别只看规则名对上就觉得完事。
 
 ## 八、Biome 不适合的场景
 
@@ -328,15 +335,15 @@ Biome 默认只处理它认识的语言。检查 `formatter.includes` 和 `files
 
 ### Q4：二进制下载失败 / 平台不匹配
 
-`@biomejs/biome` 的 npm 包会按 `os` / `cpu` 拉对应平台二进制。CI 镜像如果是 Alpine（musl），需要确认 `@biomejs/biome-linux-x64-musl` 是否被装上；npm v7+ 的 `optionalDependencies` 偶尔会被 `--no-optional` 关掉。
+`@biomejs/biome` 的 npm 包会按 `os` / `cpu` 拉对应平台二进制。CI 镜像如果是 Alpine（musl），需要确认 `@biomejs/biome-linux-x64-musl` 是否被装上；如果 CI 脚本里带了 `--no-optional`（或 `--omit=optional`），平台二进制包会被整体跳过。
 
 ### Q5：VS Code 扩展不生效
 
-确认扩展用的是项目本地的 Biome 而不是全局版本。在 `.vscode/settings.json` 里指定：
+扩展默认会自动探测项目本地的 Biome，探测不到时可能退回全局版本。在 `.vscode/settings.json` 里显式指定项目本地的二进制：
 
 ```json
 {
-  "biome.lsp.bin.path": "node_modules/@biomejs/biome/bin/biome"
+  "biome.lsp.bin": "node_modules/@biomejs/biome/bin/biome"
 }
 ```
 
@@ -348,7 +355,7 @@ Biome 默认只处理它认识的语言。检查 `formatter.includes` 和 `files
 2. **跑一遍规则索引**：`https://biomejs.dev/linter/javascript/rules/` 把 500+ 条规则按类别分了组。挑出和团队风格冲突的，在 `rules` 里关掉或调 `severity`。
 3. **接 monorepo**：Biome 原生支持，根目录放一份 `biome.json`，子包可以 `extends`，配合 `files.includes` 限定每个子包的检查范围。
 4. **接 Git Hook**：用 `husky` + `lint-staged` 把 `biome check --write` 挂到 `pre-commit`，只检查暂存区文件，避免全量扫描。
-5. **看一次源码 issue**：`https://github.com/biomejs/biome/issues` 上有大量真实迁移问题，挑 `migrate` 标签看一遍能提前避开大部分坑。
+5. **看一次源码 issue**：`https://github.com/biomejs/biome/issues` 上有大量真实迁移问题，按 `migrate` 关键词搜一遍能提前避开大部分坑。
 
 ## 十三、参考与延伸
 

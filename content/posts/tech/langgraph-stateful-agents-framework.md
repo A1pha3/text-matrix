@@ -1,5 +1,5 @@
 ---
-title: "LangGraph：构建有状态智能体的图形框架——41K+ Stars 的 AI Agent 编排框架从入门到精通"
+title: "LangGraph 深度解析：把多步 Agent 执行改造成可恢复、可干预的状态机"
 date: "2026-04-15T00:15:00+08:00"
 slug: "langgraph-stateful-agents-framework"
 github_repo: "langchain-ai/langgraph"
@@ -11,7 +11,7 @@ topics: ["ai-agent"]
 tags: ["AI Agent", "LangChain", "LLM", "Python"]
 ---
 
-# LangGraph：构建有状态智能体的图形框架
+# LangGraph：把多步 Agent 执行改造成可恢复、可干预的状态机
 
 LangGraph 解决的问题和 LangChain 不同。LangChain 回答「如何调用 LLM」，LangGraph 回答的是另一个问题：把多步 Agent 执行改造成可观测、可恢复、可干预的状态机。从 demo 走到生产，这一步往往比换一个更强的模型更关键——GitHub 上 41K+ Stars 的关注（截至 2026 年 9 月）也主要来自这里。
 
@@ -141,7 +141,7 @@ app = graph.compile(checkpointer=InMemorySaver())
 
 `Annotated[list, add_messages]` 这一行容易被忽略，但它是 State 设计的关键。默认情况下，节点返回的字段会覆盖原 State；指定 Reducer 后，多个节点写同一字段时按策略合并。`add_messages` 会按 message id 去重追加，避免每次节点返回都把整个消息列表重写一遍。
 
-Reducer 在多 Agent 场景下尤其重要。假设 Supervisor 同时调度 researcher 和 coder 两个子 Agent，两者都往 `messages` 字段写结果，没有 Reducer 时后写的会覆盖先写的；指定 `add_messages` 后，两条结果都会保留，调用方能看到完整的协作轨迹。
+Reducer 在多 Agent 场景下尤其重要。假设一个任务同时派给 researcher 和 coder 两个子 Agent 并行执行，两者都往 `messages` 字段写结果：字段没有 Reducer 时，同一个步骤里的并行写入会让框架直接抛 `INVALID_CONCURRENT_GRAPH_UPDATE`——状态该怎么合并没有答案，框架宁可报错也不猜；指定 `add_messages` 后，两条结果按消息追加合并，调用方能看到完整的协作轨迹。如果两个节点是先后执行而不是并行，没有 Reducer 不报错，但后写的会覆盖先写的。并行场景报错、顺序场景静默覆盖，两种情况都要靠 Reducer 兜住。
 
 ### Node：纯函数，不是方法
 
@@ -175,7 +175,7 @@ graph.add_conditional_edges(
 )
 ```
 
-条件边的 `mapping` 参数可以省略，省略时 `fn` 返回的字符串直接当节点名。但显式写出 mapping 是更稳妥的做法——它把所有可能的路由路径在编译时暴露出来，配合 `compile()` 的图校验能提前发现「漏了一个分支」这类错误。线上出过这样的 bug：模型偶尔返回一个未在 mapping 里的字符串，框架抛 `KeyError`，整个会话中断。显式 mapping 让这种错误在编译期就被拦住。
+条件边的 `mapping` 参数可以省略，省略时 `fn` 返回的字符串直接当节点名。显式写出 mapping 有两个好处：所有可能的路由路径在图定义处一目了然，review 代码时一眼能看出「这个节点执行完会去哪」；mapping 里写错的目标节点名（比如拼错节点名）在编译时就会被图校验拦住。但有一条边界要清楚：`fn` 返回了 mapping 之外的字符串，这类错误编译期查不出来——框架是在运行时抛 `KeyError`。它的实际形态通常是：模型偶尔吐出一个没预料到的路由值，整个会话中断。防御要在 `fn` 里做兜底分支（路由到重试节点或 END），而不是指望编译期检查。
 
 ### Checkpoint：持久化的最小单位
 
@@ -202,9 +202,11 @@ with PostgresSaver.from_conn_string("postgresql://user:pass@host/db") as saver:
 
 `thread_id` 是会话维度的标识。同一个用户的多次请求用同一个 `thread_id`，Agent 自动延续上下文；不同用户用不同 `thread_id`，状态互相隔离。这种设计让多租户场景天然支持，不需要自己在业务层做状态分桶。
 
-Checkpointer 的选型：官方维护 InMemory、SQLite、Postgres、Redis 四种实现，社区还有 MongoDB、DynamoDB、Cassandra。单机开发用 InMemory，单机持久化用 SQLite，多实例生产用 Postgres——后两者支持跨进程恢复，InMemory 只在进程内有效。
+Checkpointer 的选型：langgraph 官方仓库维护 InMemory、SQLite、Postgres 三种实现；Redis 版由 Redis 官方开发者组织维护（`langgraph-checkpoint-redis`），社区还有 MongoDB、DynamoDB、Cassandra。单机开发用 InMemory，单机持久化用 SQLite，多实例生产用 Postgres——后两者支持跨进程恢复，InMemory 只在进程内有效。
 
-另一个容易忽略的细节是 Checkpoint 的写入时机。调用图时可以用 `durability` 参数控制落盘强度：`sync`（默认）在下一步开始前把状态写满，持久性最好但每个节点都要等 IO 完成；`async` 边执行边异步落盘，性能更好，但进程在写盘前崩溃可能丢掉最近一次 Checkpoint；`exit` 只在整次执行退出时落盘，性能最好，中途崩溃则无法断点续传。对延迟敏感的场景，先评估把 `durability` 调成 `async` 或 `exit`，比换更快的后端来得直接；如果还不行，再把多个轻量节点合并成一个，或改用吞吐更高的后端（Redis 比 Postgres 快，但持久性保证弱一些）。
+另一个容易忽略的细节是 Checkpoint 的写入时机。调用图时可以用 `durability` 参数控制落盘强度，共三档：默认的 `async` 在下一步执行的同时异步落盘，吞吐和持久性取折中，代价是进程若在写盘完成前崩溃，最近一次 Checkpoint 可能丢失；`sync` 在下一步开始前同步写完，每个节点都要等一次 IO，持久性最强；`exit` 只在整次执行退出时落盘，性能最好，中途崩溃则无法断点续传。
+
+默认值是 `async` 而不是 `sync`，这一点值得记住：没显式配置过的部署，故障恢复时本来就可能回退一个节点，节点的幂等性因此更显重要。调档的基本思路：对延迟敏感的场景调到 `exit`；业务要求每一步都可靠落盘（比如涉及资金）就显式设成 `sync`。调整落盘强度比换更快的后端来得直接；如果还不行，再把多个轻量节点合并成一个，或改用吞吐更高的后端。
 
 ## Durable Execution：从一次性脚本到可断点续传
 
@@ -334,7 +336,7 @@ if interrupts:
     )
 ```
 
-上面用的是 `invoke()` 同步接口。如果调用方要做逐 token 流式展示，改用事件流式接口 `stream_events(..., version="v3")`：中断负载在 `stream.interrupts` 里，`stream.interrupted` 表示这次执行是否因人工介入暂停，跑完的最终状态在 `stream.output`。对不需要流式投影的场景，`invoke()` 的 `__interrupt__` 字段够用，两种方式恢复动作完全一样。
+上面用的是 `invoke()` 同步接口。如果调用方要做逐 token 流式展示，改用事件流式接口 `stream_events(..., version="v3")`：中断负载在 `stream.interrupts` 里，`stream.interrupted` 表示这次执行是否因人工介入暂停，跑完的最终状态在 `stream.output`。注意 v3 目前是官方标注的实验性 API，签名可能随版本调整。对不需要流式投影的场景，`invoke()` 的 `__interrupt__` 字段够用，两种方式恢复动作完全一样。
 
 审核员在后台系统看到这条待办，决定批准、修改还是拒绝。恢复一律通过 `Command(resume=...)`：
 
@@ -530,7 +532,10 @@ graph.add_edge("tools", "agent")  # 工具执行完回到 agent，形成循环
 多个 Agent 协作时，常见模式是 Supervisor：一个调度 Agent 决定把任务分给哪个子 Agent，子 Agent 完成后把结果交回 Supervisor。
 
 ```python
-from typing import Literal
+from typing import Annotated, TypedDict
+
+from langchain_core.messages import SystemMessage
+from langgraph.graph.message import add_messages
 
 class TeamState(TypedDict):
     messages: Annotated[list, add_messages]
@@ -615,7 +620,7 @@ Node 必须设计成幂等。写数据库用 upsert，调外部 API 传幂等键
 
 ### Q4：支持哪些 Checkpointer？
 
-官方维护 InMemory、SQLite、Postgres、Redis 四种，社区还有 MongoDB、DynamoDB、Cassandra。选型：单机开发用 InMemory，单机持久化用 SQLite，多实例生产用 Postgres。
+langgraph 官方仓库维护 InMemory、SQLite、Postgres 三种；Redis 版由 Redis 官方开发者组织维护（`langgraph-checkpoint-redis`），社区还有 MongoDB、DynamoDB、Cassandra。选型：单机开发用 InMemory，单机持久化用 SQLite，多实例生产用 Postgres。
 
 ### Q5：能用于生产环境吗？
 
@@ -639,7 +644,7 @@ Checkpointer 抛出的异常会向上传播给调用方。生产环境需要监�
 
 ### Q10：同一个 `thread_id` 并发调用 `invoke` 会怎样？
 
-LangGraph 默认对同一个 `thread_id` 加锁，保证状态写入的顺序一致性。并发调用会被串行化，后到的请求等待前一个完成。如果业务层需要并行处理同一用户的多个请求，要么用不同的 `thread_id`，要么在业务层做请求合并。
+框架不会替你排队。两个 run 对同一个 `thread_id` 并发执行时，Checkpoint 会交错写入，轻则状态互相覆盖，重则中途读到不一致的状态——LangGraph 没有内置的按线程互斥。同一用户的多个请求需要业务层自己串行化：按 `thread_id` 加锁或做请求队列；或者用不同的 `thread_id`，让每个请求独立成线程。另一个容易混淆的报错是 `INVALID_CONCURRENT_GRAPH_UPDATE`，它针对的是图内并行节点写同一个无 Reducer 的字段（见「五个抽象的工程用法」一节），不是并发 invoke。
 
 ### Q11：`interrupt()` 挂起后怎么恢复？和 `invoke(None)` 有什么不同？
 
@@ -652,7 +657,7 @@ LangGraph 默认对同一个 `thread_id` 加锁，保证状态写入的顺序一
 **概念题**
 
 1. LangGraph 把链式执行拆成 Node、Edge、State、Checkpoint 四个独立维度。请说明「链式模型把哪三件事耦合在一起」，以及这种耦合在生产环境会撞上哪三堵墙。
-2. `Annotated[list, add_messages]` 中的 `add_messages` 起什么作用？如果不指定 Reducer，Supervisor 同时调度 researcher 和 coder 写 `messages` 字段会发生什么？
+2. `Annotated[list, add_messages]` 中的 `add_messages` 起什么作用？如果不指定 Reducer，两个节点在同一个步骤里并行写 `messages` 字段会发生什么？换成先后执行呢？
 3. `invoke(None)` 中的 `None` 表示什么？为什么不能用空字典 `{}` 代替？
 4. `interrupt()` 挂起后，`Command(resume)` 传入的值去了哪里？恢复时节点从哪里开始重新执行？
 
@@ -709,7 +714,7 @@ LangGraph 默认对同一个 `thread_id` 加锁，保证状态写入的顺序一
 | Checkpoint | 每次写入的那份状态快照 |
 | Checkpointer | 负责读写快照的存储组件，如 InMemorySaver、PostgresSaver |
 | thread_id | 会话维度的状态标识，决定从哪份 Checkpoint 恢复 |
-| durability | Checkpoint 落盘强度：`sync`、`async`、`exit` 三档 |
+| durability | Checkpoint 落盘强度：`async`（默认）、`sync`、`exit` 三档 |
 | Durable Execution | 节点执行后自动持久化、故障后可断点续传的能力 |
 | Human-in-the-Loop (HITL) | 通过 `interrupt()` 暂停执行、等人工输入后恢复的机制 |
 | interrupt() | 在节点内挂起执行的原语，恢复后返回人工决策值 |

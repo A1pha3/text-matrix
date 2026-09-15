@@ -27,9 +27,9 @@ tags: ["AI Agent", "Claude Code", "Codex"]
 ## 目录
 
 1. [先给判断](#一先给判断这套-skill-不是把-18-个-prompt-串起来而是把单模型自信地猜换成多模型被强制对抗)
-2. [系统地图：18 personas × 3 panel × 7 步协议 × 6 个 provider](#二系统地图18-persons--3-panel--7-步协议--6-个-provider)
-3. [18 personas 的本质：不是百科词条，而是极性配对](#三18-persons-的本质不是百科词条而是极性配对)
-4. [3 套预置 panel 的取舍：人数越多-越好](#四3-套预置-panel-的取舍人数越多-越好)
+2. [系统地图：18 personas × 3 panel × 7 步协议 × 6 个 provider](#二系统地图18-personas--3-panel--7-步协议--6-个-provider)
+3. [18 personas 的本质：不是百科词条，而是极性配对](#三18-personas-的本质不是百科词条而是极性配对)
+4. [3 套预置 panel 的取舍：人数越多 ≠ 越好](#四3-套预置-panel-的取舍人数越多--越好)
 5. [自动路由：6 个 provider 怎么把人贴上去](#五自动路由6-个-provider-怎么把人贴上去)
 6. [7 步协议：把"讨论"压缩成"决策"](#六7-步协议把讨论压缩成决策)
 7. [一个具体案例](#七一个具体案例council-should-we-open-source-our-agent-framework)
@@ -46,12 +46,12 @@ tags: ["AI Agent", "Claude Code", "Codex"]
 
 ## 一、先给判断：这套 skill 不是把 18 个 prompt 串起来，而是把"单模型自信地猜"换成"多模型被强制对抗"
 
-把同一个问题丢给 Claude，绝大多数时候会得到一段结构工整、措辞自信、细节可疑的回答。真正的风险不是模型说错，而是模型用同一个家族的归纳偏差，把同一个错也答得很自信。 Council of High Intelligence（[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)，MIT 协议，今日 trending daily 第一、star 2,124）做的事不是 prompt 模板，而是把"决策"重构成一次**带协议约束的多智能体协商**：
+把同一个问题丢给 Claude，绝大多数时候会得到一段结构工整、措辞自信、细节可疑的回答。模型说错并不可怕，可怕的是它用同一个家族的归纳偏差，把同一个错也答得很自信。 Council of High Intelligence（[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)，2026 年 6 月底时为 CC0 公有领域贡献，9 月起已改 MIT；6 月 30 日 github trending daily 第一、star 2,124）做的事不是 prompt 模板，而是把"决策"重构成一次**带协议约束的多智能体协商**：
 
-- 角色不是装饰品，而是**带极性配对的对手**——Socrates 负责拆假设、Feynman 负责从第一性原理重建，两人在同一议题上必须形成张力。
-- 决策不是平均分，而是**结构化立场 + 强制多数决**——每位成员最后一轮必须输出一行 `STANCE:`，由领域内成员加权投票，达到 2/3 加权多数才算共识，否则直接呈报分歧。
-- 模型不是单一来源，而是**跨 provider 强制分流**——极性配对的两个人必须落在不同模型家族（Claude / OpenAI / Gemini / Ollama / NVIDIA NIM / Cursor），避免一个模型的家族偏差同时传染给两个互相对抗的角色。
-- 协议不是无限循环，而是**有界轮次预算**——full 模式 3 轮、quick 模式 2 轮、duo 模式 3 轮；任何一对成员互相应答超过 2 条消息就强制切断（"hemlock rule"）。
+- 角色是**带极性配对的对手**——Socrates 负责拆假设、Feynman 负责从第一性原理重建，两人在同一议题上必须形成张力。
+- 决策走**结构化立场 + 强制多数决**——每位成员最后一轮必须输出一行 `STANCE:`，由贴题席位加权计票，达到 2/3 加权多数才算共识，否则直接呈报分歧。
+- 模型来源**跨 provider 强制分流**——极性配对的两个人必须落在不同模型家族（Claude / OpenAI / Gemini / Ollama / NVIDIA NIM / Cursor），避免一个模型的家族偏差同时传染给两个互相对抗的角色。
+- 协议有**有界轮次预算**——full 模式 3 轮、quick 模式 2 轮、duo 模式 3 轮；任何一对成员互相应答超过 2 条消息就强制切断（"hemlock rule"）。
 
 下面按机制拆开讲：18 个角色的极性如何成对、3 套预置 panel 如何分工、7 步协议如何把对话变成投票、自动路由如何把 6 个 CLI 编排成一张"决策板凳"。
 
@@ -112,7 +112,7 @@ flowchart TB
 | Taleb ↔ Karpathy | Taleb 关注隐藏灾难尾部 | Karpathy 看平滑经验曲线 |
 | Rams ↔ Ada | Rams 看用户要什么 | Ada 看计算能做什么 |
 
-上表只保留"每个角色至少出现一次"的 13 组；SKILL.md 的完整极性对表还有两组：Sutskever ↔ Machiavelli（安全理想 vs 行业激励）、Socrates ↔ Watts（拆假设 vs 换框架）。
+上表对应 SKILL.md "Polarity Pairs" 主表的全部 13 组；SKILL.md 面向 `--duo` 模式的配对表还补了两组：Sutskever ↔ Machiavelli（安全理想 vs 行业激励）、Socrates ↔ Watts（拆假设 vs 换框架）。
 
 > 设计上，每个角色没有"客观正确答案"，都站在另一极的对立面；一份诚实的评估该让对立双方同时陈述，而不是任一方独占。
 
@@ -122,7 +122,7 @@ flowchart TB
 
 ## 四、3 套预置 panel 的取舍：人数越多 ≠ 越好
 
-README 给出的 3 个 panel 不是"豪华套餐"，而是**用人数换视角、用速度换覆盖**的明确取舍：
+README 给出的 3 个 panel 是**用人数换视角、用速度换覆盖**的明确取舍：
 
 | Panel | 人数 | 默认场景 | 速度/深度权衡 |
 |-------|------|---------|--------------|
@@ -164,10 +164,10 @@ README 给出的 3 个 panel 不是"豪华套餐"，而是**用人数换视角�
 
 两个值得特别说明的细节：
 
-- **NVIDIA NIM 不需要 CLI**，只要 `export NVIDIA_API_KEY=nvapi-...` 就被自动识别。130+ 开放权重模型（DeepSeek、Kimi、GLM、Qwen、Nemotron）通过 OpenAI-compatible endpoint 暴露，免费额度 1,000 credits、40 RPM。
-- **Cursor 是聚合器**，单一 `cursor-agent` 二进制同时提供 GPT-5.x、Claude、Gemini、Grok。**因此配 Cursor 时要明确选"跨家族"模型**（如 `gpt-5.4-high`、`gemini-2.5-pro`、`grok-4`），否则本来想分流，结果却把同一个家族偏差复制两遍。
+README 单独给了这两类 provider 示例配置（`configs/provider-model-slots.{nim,cursor}.example.yaml`），用来覆盖下面的边界场景：
 
-README 给的两个反向示例（`configs/provider-model-slots.{nim,cursor}.example.yaml`）就是用来覆盖这两个边界场景的。
+- **NVIDIA NIM 不需要 CLI**，只要 `export NVIDIA_API_KEY=nvapi-...` 就被自动识别。130+ 开放权重模型（DeepSeek、Kimi、MiniMax、GLM、Qwen、Nemotron）通过 OpenAI-compatible endpoint 暴露，免费额度 1,000 credits、40 RPM。
+- **Cursor 是聚合器**，单一 `cursor-agent` 二进制同时提供 GPT-5.x、Claude、Gemini、Grok。**因此配 Cursor 时要明确选"跨家族"模型**（如 `gpt-5.4-high`、`gemini-2.5-pro`、`grok-4`），否则本来想分流，结果却把同一个家族偏差复制两遍。
 
 ---
 
@@ -191,7 +191,7 @@ full 模式的 7 步是最值得展开的一段，因为它直接决定了 Counc
 
 - **dissent quota + novelty gate**：如果 >70% 过早达成共识，系统强制挑两位成员去钢人对方观点；novelty gate 阻止"换句话说"式的复读。
 - **anti-recursion（hemlock rule）**：任何一对成员互相应答超过 2 条消息就强制切断，避免 Socrates 把整个会议拖成无限提问。
-- **加权多数决**：每位成员最后一轮必须输出一行 `STANCE: ...`（支持 / 反对 / 有条件）。共识的判定不是"看起来多数"，而是**领域内成员 ×1.5 加权、领域外成员 ×1** 的结构化计票；权重由"领域"triad 在协议开始前指定（领域定义要在观点形成之前，避免事后加权）。
+- **加权多数决**：每位成员最后一轮必须输出一行 `STANCE: ...`（支持 / 反对 / 有条件）。共识的判定不是"看起来多数"，而是**结构化计票**：协调者在协议开始前指定一个"领域权重席位"——问题最贴题的那位成员在平票裁决时计 1.5×，其余成员计 1×。席位必须在任何立场形成之前锁定，否则协调者可以靠事后挑权重操纵结果；若两位成员同样贴题，则不设权重席位，平票按等权处理。
 
 如果最终未达成 2/3 加权多数，系统**不会合成一个虚假共识**，而是直接把分歧 + 完整计票回吐给用户，由用户决定怎么继续。**"未达成共识也是结果"是 README 反复强调的判断——比"看起来同意"更有价值。**
 
@@ -201,7 +201,7 @@ quick 模式（2 轮、无 cross-examination）和 duo 模式（2 人 3 步：�
 
 ## 七、一个具体案例：`/council Should we open-source our agent framework?`
 
-README 的 quickstart 例子是这套 skill 最完整的端到端展示。把 README 的命令按 7 步协议展开，能直接看到协议如何运作：
+README 的 quickstart 只给了一条命令；下面的流转按 SKILL.md 的协议约束逐步推演。各成员的发言为示意内容，用于展示每步约束如何生效，并非仓库自带的输出记录：
 
 ```
 /council Should we open-source our agent framework?
@@ -228,13 +228,13 @@ README 的 quickstart 例子是这套 skill 最完整的端到端展示。把 RE
    - Taleb: `STANCE: 反对 / 开源暴露被监管盯上的尾部`
 7. **Verdict Synthesis**：加权 2/3 多数未达成 → 输出 unresolved questions + 全票计票 + next steps，不合成假共识。
 
-真实用户看到的不是"18 个人各自发言"，而是一份带分歧地图的决策稿——这才是这套 skill 真正的产出形态。
+按这套协议走完，用户拿到的不是"18 个人各自发言"，而是一份带分歧地图的决策稿——这也是这套 skill 真正的产出形态。
 
 ---
 
 ## 八、20 个 Triad：把"领域知识"预编译到成员组合里
 
-README 把 20 个常用 triad 直接列在表里。这个设计的关键不是"建议"，而是**预先把"哪些角色对哪些问题有用"压成可枚举的入口**：
+README 把 20 个常用 triad 直接列在表里。这个设计**预先把"哪些角色对哪些问题有用"压成了可枚举的入口**：
 
 | 领域 | 三人 | 为什么是这三人 |
 |------|------|--------------|
@@ -281,7 +281,7 @@ Council 不是一个有 benchmark 的系统（没有测试集、没有分数榜�
 
 **第二类：consensus 指标。**
 
-- **加权 2/3 多数**：领域成员 ×1.5、领域外 ×1，权重在协议开始前指定。
+- **加权 2/3 多数**：贴题席位 1.5×、其余成员 1×，席位在协议开始前锁定。
 - **未能达成**直接以全票计票形式回吐给用户。
 - **未尝试合成假共识**——这是 README 反复强调的设计原则。
 
@@ -293,14 +293,14 @@ Council 不是一个有 benchmark 的系统（没有测试集、没有分数榜�
 **第三类：provider 路由指标。**
 
 - 极性对必须跨 provider（硬约束）；
-- 成员均匀分布（软约束）；
+- 成员均匀分布（SKILL.md 将其与极性对分离并列为硬约束）；
 - 任意 provider 失败 → 自动回退 Claude。
 
 > **从路由指标不能推出什么：**
 > - 不能推出"路由到 6 个 provider = 决策质量提升 6 倍"——provider 数量只是保证模型家族多样性，不是性能指标。
 > - 不能推出"用 NVIDIA NIM 的开放权重模型 = 开源本地决策"——NIM 仍然是远程推理，只是模型权重开放。
 
-> 因此，本节与其说是在评估 benchmark，不如说是在**给读者一把尺子**：当你看到别人报告 Council 的"决策质量"时，先问一句"他用的是哪个 mode？三脚架配置是什么？权重怎么定的？"
+> 因此，本节真正给读者的**是一把尺子**：当你看到别人报告 Council 的"决策质量"时，先问一句——他用的是哪个 mode？panel 里有哪些成员？领域权重席位给了谁？
 
 ---
 
@@ -356,7 +356,7 @@ Council 的价值不在 18 个 persona 的"模拟"，而在三件事：
 2. **7 步协议 + enforcement scan**——把"对话"重构成"决策"，未达成的分歧也是有效输出。
 3. **20 个 triad 预编译**——把"该问谁"从开放问题降级为枚举选项。
 
-因此它的真正定位是**给 Claude Code / Codex 用户的一份"决策协议附件"**——不是替代 Claude，而是给 Claude 加一个结构化的对手席。
+因此它的真正定位是**给 Claude Code / Codex 用户的一份"决策协议附件"**：Claude 依然是干活的那个，Council 只是在它旁边加了一排结构化的对手席。
 
 如果你已经在 Claude Code / Codex 上工作，面临"再问一次还是一样答案"的瓶颈，Council 提供的不是更多答案，而是让现有答案先互相撕一遍。
 
@@ -467,9 +467,10 @@ Council 不会合成虚假共识，而是直接输出：完整计票结果 + 各
 
 ## 资料口径说明
 
-- 仓库：[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)，MIT 协议。
-- 本文中 18 personas 表、3 panel、20 triad、7 步协议、6 provider 表均来自 README 截至 2026-06-30 的版本；"极性对完整表"与"20 个 triad 全表"补齐自仓库 SKILL.md 的同名表格。
-- 仓库现已同时支持 Gemini CLI 与 OpenCode（`./install.sh --gemini-only`、`./install.sh --opencode-only`），也可通过 `/plugin marketplace add 0xNyk/council-of-high-intelligence` 装成 Claude Code 插件；本文主体仍以 2026-06-30 的 Claude Code / Codex 口径为准。
+- 仓库：[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)。写作时点为 CC0 公有领域贡献，2026 年 9 月复核时已改为 MIT。
+- 本文中 18 personas 表、3 panel、20 triad、7 步协议、6 provider 表均来自 README 截至 2026-06-30 的版本（commit 68cd247，2026-06-27）；"极性对 13 组全表"与"20 个 triad 全表"补齐自同一版本 SKILL.md 的同名表格，`--duo` 配对表另含 Sutskever↔Machiavelli、Socrates↔Watts 两组。
+- 2026-09-14 复核：仓库 star 约 4.2k；License 已由 CC0 改为 MIT；最新 README 把协议简化为 5 阶段描述（restate → blind analysis → cross-examine → final stance → synthesis），Chairman 合成角色在 6 月底版本已由 SKILL.md 的 STEP 1.7 定义；本文机制细节以 2026-06-27 口径为准。
+- Gemini CLI 支持于 2026-06-27 加入（#35），OpenCode 支持于 2026-07-02 加入，均可通过 `./install.sh --gemini-only`、`./install.sh --opencode-only` 单独安装；也可通过 `/plugin marketplace add 0xNyk/council-of-high-intelligence` 装成 Claude Code 插件；本文主体仍以 2026-06-30 的 Claude Code / Codex 口径为准。
 - "极性配对"、"execution-lean"、"weighted 2/3 majority"、"hemlock rule" 等术语均沿用 README 原文。
 - Trending 数据来源：github.com/trending daily 2026-06-30 15:00 (Asia/Shanghai)。
 - 文章不依赖任何特定 provider 的可用性；具体 provider 配置请参考 `configs/provider-model-slots.example.yaml`。

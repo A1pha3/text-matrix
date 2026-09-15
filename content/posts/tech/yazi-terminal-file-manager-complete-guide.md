@@ -26,17 +26,18 @@ tags: ["Rust", "终端", "TUI", "Lua"]
 
 1. [项目位置](#项目位置)
 2. [异步 I/O 为什么对文件管理器关键](#异步-io-为什么对文件管理器关键)
-3. [内置图片预览的工程难点](#内置图片预览的工程难点)
-4. [插件系统为什么选 Lua](#插件系统为什么选-lua)
-5. [任务流案例](#任务流案例)
-6. [自测题](#自测题)
-7. [练习](#练习)
-8. [进阶路径](#进阶路径)
-9. [资料口径说明](#资料口径说明)
+3. [内置图片预览难在哪里](#内置图片预览难在哪里)
+4. [为什么插件系统选 Lua](#为什么插件系统选-lua)
+5. [虚拟文件系统与多实例协作](#虚拟文件系统与多实例协作)
+6. [一次完整的任务流：浏览、预览与复制](#一次完整的任务流浏览预览与复制)
+7. [自测题](#自测题)
+8. [练习](#练习)
+9. [进阶路径](#进阶路径)
+10. [资料口径说明](#资料口径说明)
 
 终端文件管理器赛道并不缺选手，ranger、lf、nnn 各有拥趸。Yazi 用 Rust 重写一遍，如果只比启动速度和帧率，很难构成切换理由——lf 的 goroutine 模型已经够快，nnn 在低资源环境下更轻。
 
-Yazi 值得拆开看的地方在于它把三件通常各走各路的工程目标压进了同一个二进制：全异步 I/O、内置图片预览、Lua 插件系统。这三件事在工程上本来互相争资源——异步 I/O 要的是线程不被挂起，图片预览要抢 CPU 和解码管线，插件系统则要求一个稳定的 API 边界和沙箱。ranger 想预览图片要靠 w3m、Überzug 这类外部进程，lf 也得借助 chafa 或 Überzug++；Yazi 直接在 Rust 里解码 PNG/JPEG/GIF/WebP，再通过 kitty、Sixel、iTerm2 等 10 余种终端协议把像素写回终端。终端支持就开箱预览，不必再装一堆辅助工具。
+Yazi 值得拆开看的地方在于它把三件通常各走各路的工程目标压进了同一个二进制：全异步 I/O、内置图片预览、Lua 插件系统。这三件事在工程上本来互相争资源——异步 I/O 要的是线程不被挂起，图片预览要抢 CPU 和解码管线，插件系统则要求一个稳定的 API 边界和沙箱。ranger 想预览图片要靠 w3m、Überzug 这类外部进程，lf 也得借助 chafa 或 Überzug++；Yazi 直接在 Rust 里解码图片，再适配 kitty、iTerm2、Sixel 等 10 余种终端，把像素写回终端。终端支持就开箱预览，不必再装一堆辅助工具。
 
 本文按四条主线展开：异步 I/O 为什么对文件管理器是硬需求、内置图片预览的工程难点在哪、插件系统为什么选 Lua 而不是 WASM 或 Python，最后用一个完整的浏览-预览-复制任务流把这几条主线串起来，并给出采用顺序。
 
@@ -44,50 +45,26 @@ Yazi 值得拆开看的地方在于它把三件通常各走各路的工程目标
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 41.9k |
-| Forks | 1000 |
-| 语言 | Rust 94.5%, Lua 4.6% |
+| Stars | 42.2k |
+| Forks | 1017 |
+| 语言 | Rust 94.0%, Lua 5.0% |
 | 最新版本 | v26.9.1 (2026-09-01) |
 | 许可证 | MIT |
 | 仓库 | sxyazi/yazi |
 
-Yazi 目前处于 Public Beta，可以作为日常主力工具使用。Rust 占 94.5%，Lua 占 4.6%——这个比例对应 Yazi 的设计选择：核心引擎用 Rust 写死，扩展面留给 Lua。下面先看为什么这个分工不是随手定的。
+Yazi 目前处于 Public Beta，可以作为日常主力工具使用。Rust 占 94.0%，Lua 占 5.0%——这个比例对应 Yazi 的设计选择：核心引擎用 Rust 写死，扩展面留给 Lua。下面先看为什么这个分工不是随手定的。
 
 ## 异步 I/O 为什么对文件管理器关键
 
 文件管理器的工作负载有两个特征：I/O 密集（读目录、读文件、复制、移动），且 I/O 之间天然可并行（同时浏览两个目录、后台复制的同时继续浏览）。同步 I/O 在这里会直接变成 UI 卡顿——打开一个有几千个文件的目录，主线程要等 readdir 返回，期间按键无响应。
 
-Yazi 基于 Tokio 运行时把所有 I/O 操作做成异步，CPU 任务分散到多个线程：
-
-```rust
-// 示意代码：Yazi 的 I/O 全部走 tokio::fs，不直接调用阻塞的 std::fs
-pub struct IoWorker {
-    pool: ThreadPool,
-    rx: Receiver<IoRequest>,
-}
-
-impl IoWorker {
-    pub async fn read_file(&self, path: PathBuf) -> Result<Vec<u8>> {
-        tokio::fs::read(&path).await
-    }
-
-    pub async fn list_dir(&self, path: PathBuf) -> Result<Vec<DirEntry>> {
-        tokio::fs::read_dir(&path)
-            .await?
-            .entries()
-            .collect()
-            .await
-    }
-}
-```
-
-`IoWorker` 把文件读取和目录列表都走 `tokio::fs`，而不是 `std::fs`——后者会阻塞 Tokio 运行时，等于把整个 UI 卡住。走 `tokio::fs` 的副作用是所有 I/O 调用都要写成 `.await`，代码可读性略降；好处是 UI 线程永远不会因为某个文件操作被挂起。
+Yazi 基于 Tokio 运行时，文件系统操作统一走异步引擎（底层是 `tokio::fs`），不直接调用会阻塞运行时的同步 `std::fs`。走异步的代价是所有 I/O 调用都要写成 `.await`，代码可读性略降；好处是 UI 线程永远不会因为某个文件操作被挂起。
 
 异步带来的实际差别体现在三个场景：
 
 - 大目录浏览：进入一个有上万个文件的目录，UI 不会冻结，可以先看到部分条目，剩余条目在后台流入。
 - 后台复制：复制几个 GB 的文件时，仍然能用 `h/j/k/l` 继续浏览其他目录，复制进度在状态栏实时更新。
-- 并发预览：滚动到下一个文件时，前一个文件的预览任务可以被取消或降级，新文件的预览优先处理。
+- 并发预览：滚动到下一个文件时，预览立即转向新文件，未完成的旧取图作废，不阻塞界面。
 
 ranger 的同步模型在第一个场景就会暴露问题——Python 的 GIL 加上同步 I/O，大目录加载期间界面完全无响应。lf 用 Go 写，并发能力比 ranger 强，但图片预览仍然依赖外部进程。
 
@@ -111,33 +88,22 @@ Yazi 采用 monorepo 结构，核心模块按职责切分：
 | yazi-proxy | 代理/Pub-Sub |
 | yazi-shared | 共享类型和工具 |
 
-`yazi-adapter` 单独拎出来值得注意——它把"终端图片协议适配"做成独立模块。这是 Yazi 能同时支持 10 余种协议又不让协议细节渗透进核心逻辑的关键。新增一个终端协议时，改动只落在 `yazi-adapter` 里，`yazi-core` 不用动。
+`yazi-adapter` 单独拎出来值得注意——它把"终端图片适配"做成独立模块。这是 Yazi 能同时适配 10 余种终端又不让协议细节渗透进核心逻辑的关键。新增一种终端时，改动只落在 `yazi-adapter` 里，`yazi-core` 不用动。
 
 ### 任务调度
 
-异步 I/O 只解决了"操作不阻塞运行时"这一层。文件管理器还要回答另一个问题：当多个 I/O 任务同时排队时，先做哪个。Yazi 的任务调度器维护一个优先级队列：
+异步 I/O 只解决了"操作不阻塞运行时"这一层。文件管理器还要回答另一个问题：当多个 I/O 任务同时排队时，先做哪个。Yazi 的调度器（`yazi-scheduler`）没有把所有任务塞进一条全局队列，而是按类型拆成五条通道，每条通道各自维护一个优先级队列和独立的 worker 池：
 
 ```rust
-// 示意代码：调度器按优先级排队任务，支持取消
-pub struct Scheduler {
-    tasks: PriorityQueue<Task>,
-    worker_pool: Vec<Worker>,
-}
-
-impl Scheduler {
-    // 高优先级任务（如 UI 更新）优先处理
-    pub fn schedule(&mut self, task: Task) {
-        self.tasks.push(task.priority, task);
-    }
-
-    // 任务取消支持
-    pub fn cancel(&mut self, task_id: u64) {
-        self.tasks.remove_if(|t| t.id == task_id);
-    }
-}
+// yazi-scheduler/src/worker.rs：五类任务各自一条优先级通道
+let (file_tx, file_rx) = async_priority_channel::unbounded();
+let (plugin_tx, plugin_rx) = async_priority_channel::unbounded();
+let (fetch_tx, fetch_rx) = async_priority_channel::unbounded();
+let (preload_tx, preload_rx) = async_priority_channel::unbounded();
+let (size_tx, size_rx) = async_priority_channel::unbounded();
 ```
 
-调度优先级大致是：UI 任务 > 文件操作 > 后台任务。这个顺序的逻辑是——UI 卡顿用户立刻能感知，文件操作慢一点用户可以等状态栏更新，后台任务（如预加载缩略图）最不紧急。任务取消是另一条容易被忽略的链路：快速滚动文件列表时，前一个文件的预览任务如果不取消，会堆积成大量无用的 I/O，反而拖慢当前可见文件的预览。
+文件操作（复制、移动、删除）、插件调用、元数据获取、预加载、目录体积计算各走各的通道，互不挤占——预加载缩略图再多，也不会占掉复制文件的 worker。每个通道的并发数可以在 `yazi.toml` 的 `[tasks]` 段调整（`file_workers`、`preload_workers` 等），优先级则由入队时指定，同类任务里高优先级先出队。任务可以在任务管理器（`w` 打开）里手动取消：快速滚动文件列表时，作废的预加载任务留在队列里只会浪费 I/O，及时取消才不会拖慢当前可见文件的预览。
 
 ## 内置图片预览难在哪里
 
@@ -145,7 +111,7 @@ impl Scheduler {
 
 这种碎片化有历史原因。早期终端只处理文本，图片显示能力是各家终端模拟器后来各自扩展的——kitty 用 unicode placeholders，iTerm2 用 inline images，foot 和 Windows Terminal 用 Sixel，X11 终端要靠 Überzug++ 在窗口上叠图层。没有一个协议成为事实标准，终端文件管理器如果想"开箱即用"，就得把这些协议都适配一遍。
 
-Yazi 内置支持 10 余种协议：
+Yazi 内置适配以下终端：
 
 | 终端 | 协议 | 支持状态 |
 |------|------|----------|
@@ -160,38 +126,19 @@ Yazi 内置支持 10 余种协议：
 | Warp（仅 macOS/Linux） | Inline images | 内置 |
 | Tabby | Inline images | 内置 |
 | VSCode | Inline images | 内置 |
-| Rio (≥0.3.9) | Kitty unicode placeholders | 内置 |
+| Rio | Kitty unicode placeholders | ❌ 已知缺陷：图片渲染尺寸不正确 |
 | Black Box | Sixel | 内置 |
 | Bobcat | Inline images | 内置 |
-| X11 / Wayland | 窗口系统协议 | 需 Überzug++ |
-| 不支持任何协议 | ASCII art (Chafa) | 需安装 |
+| X11 / Wayland | 窗口系统协议 | 需 Überzug++（Wayland 仅 Hyprland、Sway、Niri、Wayfire） |
+| 不支持任何协议 | ASCII art（Unicode block） | 需 Chafa ≥ 1.16.0 |
 
-适配只是第一步。图片在终端里显示还要解决解码和缩放——一张 4000×3000 的 JPEG 不能原样塞进 80×24 的终端窗口，得先解码、缩放到终端字符尺寸、再按协议编码发出去。Yazi 直接在 Rust 里做这件事：
+Yazi 启动时依据 `$TERM`、`$TERM_PROGRAM`、`$XDG_SESSION_TYPE` 自动匹配适配方式，按上表从上到下取第一个可用的；运行 `ya env` 可以查看当前实际命中的适配器（`Kgp`、`KgpOld`、`Iip`、`Sixel`、`X11`、`Wayland`、`Chafa`）。
 
-```rust
-// 示意代码：按格式分发解码，配合 LRU 缓存
-pub struct ImageDecoder {
-    cache: LruCache<PathBuf, CachedImage>,
-}
+适配只是第一步。图片在终端里显示还要解决解码和缩放——一张 4000×3000 的 JPEG 不能原样塞进 80×24 的终端窗口，得先解码、缩放到终端字符尺寸、再按协议编码发出去。
 
-impl ImageDecoder {
-    pub fn decode(&mut self, path: &Path) -> Result<CachedImage> {
-        let data = self.read_file(path)?;
-        let format = self.detect_format(&data)?;
+Yazi 把这条流水线做成了内置预览插件：图片文件的预览由预设的 `image.lua` 驱动，它调用 `ya.image_show()` / `ya.image_precache()` 两个 API，真正的解码和缩放在 Rust 侧完成（基于 image 库），然后按当前终端的适配方式输出。解码不依赖外部工具，内置支持的格式覆盖 PNG、JPEG、GIF、WebP、BMP、TIFF、ICO 等常见位图；其余格式走外部工具——SVG 用 `resvg`，HEIC、JPEG XL 和字体用 ImageMagick（`magick`），视频缩略图用 `ffmpeg`，PDF 用 `poppler`（`pdftoppm`），压缩包用 7-Zip。这些工具不装只是对应格式预览不可用，不影响文件管理本身。Yazi 还内置代码高亮，配合预加载机制，滚动到下一个文件时提前把缩略图备好。图片缓存默认落在系统缓存目录（重启自动清理），滚动回同一个文件时直接命中，不必重复解码；`[preview]` 段提供 `max_width`、`max_height`、`image_filter`、`image_quality` 等选项控制预览尺寸与缩放质量。
 
-        match format {
-            Format::Png => self.decode_png(&data),
-            Format::Jpeg => self.decode_jpeg(&data),
-            Format::Gif => self.decode_gif(&data)?,
-            // 其他格式走通用解码路径
-        }
-    }
-}
-```
-
-解码不依赖外部工具，但格式覆盖有边界：PNG、JPEG、GIF、WebP 等常见位图格式由 Yazi 内置解码；其余格式走外部工具——SVG 用 `resvg`，HEIC、JPEG XL 和字体用 ImageMagick（`magick`），视频缩略图用 `ffmpeg`，PDF 用 `poppler`（`pdftoppm`），压缩包用 7-Zip。这些工具不装只是对应格式预览不可用，不影响文件管理本身。Yazi 还内置代码高亮，配合预加载机制，滚动到下一个文件时提前把缩略图备好。图片缓存默认落在系统缓存目录，滚动回同一个文件时直接命中，不必重复解码；`[preview]` 段提供 `max_width`、`max_height`、`image_filter`、`image_quality` 等选项控制预览尺寸与缩放质量。
-
-把图片预览做进核心，意味着 Yazi 必须自己维护一整套解码和协议适配代码，二进制体积和代码复杂度都比"调外部工具"高出一截。换回来的是用户侧的配置成本接近零——不必再为图片预览装一堆辅助工具。原本散落在用户侧的协议适配工作被收进了工具本身。这是 Yazi 和 ranger、lf 在工程取向上的一个明确分野：后两者把协议适配留给用户和外部工具，Yazi 把它收进 Rust 核心。
+把图片预览做进核心，意味着 Yazi 必须自己维护一整套解码和协议适配代码，二进制体积和代码复杂度都比"调外部工具"高出一截。换回来的是协议适配从用户的终端环境收进了工具本身。这是 Yazi 和 ranger、lf 在工程取向上的一个明确分野：后两者把协议适配留给用户和外部工具，Yazi 把它收进 Rust 核心。
 
 ## 为什么插件系统选 Lua
 
@@ -282,33 +229,18 @@ Lua 的代价是性能不如原生 Rust，且沙箱能力比 WASM 弱——插�
 
 ## 虚拟文件系统与多实例协作
 
-本地文件的并发问题靠异步 I/O 解决了，远程文件也要纳入同一个界面。Yazi 的虚拟文件系统（VFS）做的是这件事——不同来源的文件在内部都用统一的 URL 表示，再按 scheme 分发到对应的实现：
-
-| URL scheme | 来源 | 说明 |
-|------------|------|------|
-| `local://` | 本地文件系统 | 默认来源 |
-| `sftp://` | 远程服务器 | 内置 SFTP 支持，服务器需在 `vfs.toml` 里注册 |
-| `trash://` | 回收站 | 已删除文件的浏览与恢复 |
+本地文件的并发问题靠异步 I/O 解决了，远程文件也要纳入同一个界面。Yazi 的虚拟文件系统（VFS）做的是这件事——不同来源的文件在内部都用统一的 URL 表示，再按 scheme 分发到对应的引擎。scheme 在源码里就是一个三值枚举：
 
 ```rust
-// 示意代码：VFS 按 URL scheme 分发到对应实现
-pub enum UrlScheme {
-    Local,
+// yazi-shared/src/auth/scheme.rs
+pub enum Scheme {
+    Regular,
     Sftp,
-    Trash,
-}
-
-impl UrlScheme {
-    pub fn parse(url: &Url) -> UrlScheme {
-        match url.scheme() {
-            "local" => UrlScheme::Local,
-            "sftp"  => UrlScheme::Sftp,
-            "trash" => UrlScheme::Trash,
-            _       => UrlScheme::Local,
-        }
-    }
+    Custom(KebabCasedKey),
 }
 ```
+
+`Regular` 是本地文件系统，`Sftp` 是内置的 SFTP 引擎，`Custom` 则开放给 Lua 写的 VFS 引擎——任何符合 kebab-case 命名的 scheme 都可以在 `vfs.toml` 里注册，由插件提供目录读取、元数据等操作（官方插件仓库的 `vfs-demo.yazi` 是最小示例），内置的回收站视图 `trash:///` 就是用这套机制实现的。
 
 这套抽象的价值：处理 `sftp://` 远程文件时，目录浏览、选中、复制这些操作与本地完全一致，界面不用区分来源。SFTP 服务器在 `vfs.toml` 里注册：
 
@@ -320,7 +252,7 @@ user = "root"
 port = 22
 ```
 
-注册后 `yazi sftp://my-server` 就能直接以远程目录为工作目录启动，认证走 SSH agent 或 `key_file`/`password` 选项。回收站由内置的 trash 插件实现——`d` 删除的文件进入 `trash://`，`g t` 跳到回收站查看，在回收站里按 `O` 选择 trash 开启器即可恢复选中的文件，也可以直接清空回收站。Yazi 还支持自定义搜索引擎，把搜索结果当作可浏览的虚拟来源。
+注册后 `yazi sftp://my-server` 就能直接以远程目录为工作目录启动。认证默认走 SSH agent（`$SSH_AUTH_SOCK` 指定的套接字），也可以在 `vfs.toml` 里改用 `key_file`（配 `key_passphrase`）或 `password`，或用 `identity_agent` 指定其他 agent 套接字。回收站由内置的 trash 插件实现——`d` 删除的文件进入 `trash://`，`g t` 跳到回收站查看，在回收站里按 `O` 选择 trash 开启器即可恢复选中的文件，也可以直接清空回收站。
 
 多实例协作走另一条路——DDS（Data Distribution Service）。它采用客户端-服务器架构但不需要额外进程，实例之间通过 Lua 的发布-订阅模型通信，同时支持状态持久化：以 `@` 开头的消息会持久化存储，新实例启动时自动恢复，向同一 kind 发送 `nil` 则取消持久化。
 
@@ -357,16 +289,16 @@ ya emit-to <receiver> cd /tmp
 
 典型用途是跨实例同步：外部脚本把文件列表推给正在运行的 Yazi，或者让两个实例共享同一份状态。
 
-## 一次完整的任务流：浏览 + 预览 + 复制
+## 一次完整的任务流：浏览、预览与复制
 
 把前面几条主线串起来。假设场景：在一个有 5000 张图片的目录里，浏览、预览、把选中的几张复制到另一个目录。
 
 1. 用户按下 `j` 移动到下一个文件。Yazi 把"光标下移"作为 UI 任务立即执行，状态栏同步更新。
-2. 光标停在 `photo_1234.jpg` 上。Yazi 触发预览任务：先查 LRU 缓存，未命中则交给 `ImageDecoder` 解码。解码是 CPU 任务，丢到线程池；解码完成后缩放到终端尺寸，按当前终端协议（如 kitty）编码发送。
-3. 用户继续按 `j` 快速下移。前一个文件的预览任务如果还在队列里，调度器取消它；新文件的预览任务以高优先级插入。这避免了快速滚动时堆积无用 I/O。
+2. 光标停在 `photo_1234.jpg` 上。Yazi 触发预览：先查图片缓存，命中就直接显示；未命中则由 preload 任务在 Rust 侧解码、缩放并写入缓存，再按当前终端的适配方式（如 kitty）把像素发到终端。
+3. 用户继续按 `j` 快速下移。预览由 peek 逻辑驱动，每次光标移动都以新文件为目标重新取缓存、重新渲染，旧一次未完成的取图自然作废；已入队的预加载任务也可以在任务管理器里取消。这避免了快速滚动时堆积无用 I/O。
 4. 用户按 `Space` 选中当前文件，继续浏览选中另外两张。选中状态在 UI 层维护，不触发 I/O。
 5. 用户按 `y` 把选中的文件标记为已 yank（复制），再切到目标目录。yank 状态保存在进程内，同样不触发 I/O。
-6. 在目标目录按 `p` 发起粘贴。调度器把粘贴任务以"文件操作"优先级插入队列，三个文件的复制并发执行，进度在状态栏实时更新。
+6. 在目标目录按 `p` 发起粘贴。调度器把粘贴任务插入 file 通道，三个文件的复制并发执行，进度在状态栏实时更新。
 7. 复制期间用户继续浏览，UI 不卡顿——复制走异步 I/O，UI 走主线程，互不阻塞。
 8. 复制完成，状态栏提示。
 
@@ -488,34 +420,37 @@ Yazi 默认 Vim 风格，下表摘取最常用的映射（完整列表见官方 
 | `z` / `Z` | 通过 fzf 跳转 / 通过 zoxide 跳转 |
 | `tt` | 新建标签页 |
 | `[` / `]` | 切换上一个 / 下一个标签页 |
-| `Tab` | 显示悬停文件的详细信息 |
+| `Tab` | 打开悬停文件的 spot 信息面板 |
 | `w` | 打开任务管理器 |
 | `q` / `Ctrl+c` | 退出 / 关闭当前标签页 |
 | `~` 或 `F1` | 打开帮助 |
 
-注意 `Ctrl+c` 在 Yazi 里是关闭当前标签页，不是中断、也不是复制——复制是 `y`。这和 shell 习惯冲突，初次使用容易误触，可以把关闭标签页的按键在 `keymap.toml` 里重映射。
+注意 `Ctrl+c` 在 Yazi 里是关闭当前标签页（最后一个标签页时退出整个程序），不是中断、也不是复制——复制是 `y`。这和 shell 习惯冲突，初次使用容易误触，可以把关闭标签页的按键在 `keymap.toml` 里重映射。
 
 ### 高级用法
 
 ```bash
-# 在当前目录启动，退出时切换到浏览的目录
-yazi --cwd .
+# 以指定目录为启动位置（位置参数，可同时给多个条目）
+yazi /tmp
 
-# 通过 shell 函数实现"退出后跟随目录"
-function yy() {
-    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-    yazi "$@" --cwd-file "$tmp"
-    if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-        builtin cd -- "$cwd"
-    fi
-    rm -f -- "$tmp"
-}
-
-# 查看版本和构建信息
+# 查看版本
 yazi --version
 ```
 
-`--cwd-file` 是 Yazi 推荐的"退出后跟随目录"机制：把退出时的目录写入指定文件，shell 函数读取后 `cd` 过去。这是终端文件管理器的常见痛点——直接运行 `yazi` 退出后，shell 不会跟着切换目录。
+Yazi 自己改不了 shell 的工作目录——终端文件管理器的常见痛点就是直接运行 `yazi` 退出后，shell 不会跟着切换。官方的解法是 `--cwd-file` 参数：退出时把最后浏览的目录写入指定文件，再由一个 shell 包装函数读取并 `cd` 过去。官方文档给出的 Bash/Zsh 版本：
+
+```bash
+# 官方推荐的包装函数：用 y 代替 yazi 启动，退出后 shell 跟随目录
+function y() {
+    local tmp cwd; tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+    command yazi "$@" --cwd-file="$tmp"
+    IFS= read -r -d '' cwd < "$tmp"
+    [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd" || builtin true
+    command rm -f -- "$tmp"
+}
+```
+
+配合这个函数，按 `q` 退出会把目录写入 cwd-file（默认行为），shell 随即切换过去；不想让 shell 跟随时用 `Q` 退出，它会跳过 cwd-file 输出。
 
 ## 插件分发
 
@@ -542,9 +477,9 @@ ya pkg install
 
 社区资源：
 
-- 官方插件仓库：yazi-rs/plugins（20 余个）
-- 主题（flavor）仓库：yazi-rs/flavors
-- 插件列表：https://yazi-rs.github.io/docs/plugins
+- 官方插件仓库：https://github.com/yazi-rs/plugins（20 余个）
+- 主题（flavor）仓库：https://github.com/yazi-rs/flavors
+- 插件开发文档：https://yazi-rs.github.io/docs/plugins/overview
 
 ## 性能调优与排查
 
@@ -587,12 +522,12 @@ tail -f ~/.local/state/yazi/yazi.log
 
 | 问题 | 解决方案 |
 |------|----------|
-| 图片不显示 | 确认终端在协议支持列表里；用 `YAZI_LOG=debug` 启动，查日志里的协议握手失败记录 |
-| 预览加载慢 | 安装对应格式的外部工具（ffmpeg/poppler/7-Zip/ImageMagick 等），调大 `[preview]` 缓存 |
+| 图片不显示 | 确认终端在协议支持列表里；用 `ya env` 查看实际命中的适配器，再用 `YAZI_LOG=debug` 启动查握手失败记录 |
+| 预览加载慢 | 确认已安装对应格式的外部工具（ffmpeg/poppler/7-Zip/ImageMagick 等）；缩小 `max_width`/`max_height` 或调低 `image_quality` 减少解码开销 |
 | 快捷键冲突 | 检查 `keymap.toml` 中的映射 |
 | 插件报错 | 看 `~/.local/state/yazi/yazi.log` 中的插件错误输出 |
 
-图片不显示是最常见的问题。排查顺序：先确认终端是否在支持列表里（见前面的协议表），再确认该格式是否需要外部工具（如 SVG 要 resvg），最后用 `YAZI_LOG=debug` 启动看协议握手失败日志。
+图片不显示是最常见的问题。排查顺序：先用 `ya env` 确认适配器命中情况（输出里的 `Drivers.matches` 字段直接给出当前协议），再确认该格式是否需要外部工具（如 SVG 要 resvg），最后用 `YAZI_LOG=debug` 启动看协议握手失败日志。
 
 ## 适用边界与采用顺序
 
@@ -626,7 +561,7 @@ A: Yazi 用 Rust 编写，原生支持异步 I/O，内置图片预览（无需�
 
 **Q: 支持 Windows 吗？**
 
-A: 支持。Windows Terminal (≥v1.22.10352) 可使用 Sixel 协议图片预览。Warp 终端在 macOS/Linux 体验最佳。
+A: 支持。Windows 上可以用 WinGet（`winget install sxyazi.yazi`）或 Scoop 安装，Windows Terminal (≥v1.22.10352) 下可使用 Sixel 协议图片预览。
 
 **Q: 如何自定义快捷键？**
 
@@ -655,8 +590,8 @@ A: https://github.com/sxyazi/yazi/issues
 | 资源 | 链接 |
 |------|------|
 | GitHub | https://github.com/sxyazi/yazi |
-| 文档 | https://yazi-rs.github.io/docs/ |
-| 插件列表 | https://yazi-rs.github.io/plugins |
+| 文档 | https://yazi-rs.github.io/docs/quick-start |
+| 插件仓库 | https://github.com/yazi-rs/plugins |
 | 主题（flavor）列表 | https://github.com/yazi-rs/flavors |
 | Discord (英文) | https://discord.gg/qfADduSdJu |
 | Telegram (中文) | https://t.me/yazi_rs |
@@ -704,7 +639,7 @@ git checkout -b feat/your-feature
 3. **Yazi 如何预览图片？**
    <details>
    <summary>查看答案</summary>
-   Yazi 直接在 Rust 里解码 PNG/JPEG/GIF/WebP，再通过 kitty、Sixel、iTerm2 等终端协议把像素写回终端。
+   预览由内置的 image.lua 插件驱动，解码和缩放在 Rust 侧完成（基于 image 库），再按当前终端的适配方式（kitty、Sixel、iTerm2 等）把像素写回终端。
    </details>
 
 4. **为什么 Yazi 的插件系统选择 Lua 而不是 WASM 或 Python？**
@@ -734,16 +669,16 @@ git checkout -b feat/your-feature
 ### 练习 2：配置 Lua 插件
 
 编写一个简单的 Lua 插件，定制 Yazi 的行为。尝试：
-- 创建 `~/.config/yazi/plugins/` 目录
-- 编写一个简单的 Lua 插件
-- 在 `yazi.toml` 中加载插件
+- 创建 `~/.config/yazi/plugins/my-plugin.yazi/main.lua`，返回一个带 `entry` 的表
+- 在 `keymap.toml` 里用 `plugin my-plugin` 绑定按键
+- 如果做的是预览器，改在 `yazi.toml` 的 `[plugin]` 段按 MIME 类型注册
 
-### 练习 3：研究异步 I/O 实现
+### 练习 3：研究任务调度实现
 
-阅读 Yazi 源代码中 `yazi-core/src/io.rs` 的部分，理解其异步 I/O 实现。尝试：
-- 找到 `IoWorker` 结构体
-- 理解 `tokio::fs` 的使用
-- 解释为什么不使用 `std::fs`
+阅读 Yazi 源码中 `yazi-scheduler/src/worker.rs`，理解其任务调度实现。尝试：
+- 找到 file、plugin、fetch、preload、size 五条任务通道
+- 理解每类任务为什么用独立的优先级通道和 worker 池
+- 对照 `yazi.toml` 的 `[tasks]` 段，解释 `file_workers`、`preload_workers` 分别控制哪条通道的并发数
 
 ---
 
@@ -759,12 +694,12 @@ git checkout -b feat/your-feature
 
 ## 资料口径说明
 
-1. **信息来源与时效性**：本文基于 sxyazi/yazi 仓库的 README、官方文档（配置、插件、CLI、DDS、安装）和 GitHub 仓库数据（采集时间 2026-09-02）。项目处于 Public Beta，具体细节可能已更新。
-2. **技术细节验证**：异步 I/O 实现、图片预览机制等技术细节来自官方文档和源代码，但未在实际环境中完整验证。
+1. **信息来源与时效性**：本文基于 sxyazi/yazi 仓库的 README、官方文档（安装、图片预览、配置、插件、VFS、DDS、CLI、快速上手）和 GitHub 仓库数据（采集时间 2026-09-15，stars 42.2k、最新版本 v26.9.1）。项目处于 Public Beta，具体细节可能已更新。
+2. **技术细节验证**：任务调度通道（`yazi-scheduler/src/worker.rs`）、scheme 枚举（`yazi-shared/src/auth/scheme.rs`）、图片预览插件（`yazi-plugin/preset/plugins/image.lua`）、回收站恢复（`trash.lua` 与默认 opener 配置）等行为均对照 v26.9.1 源码核实；未在实际环境中完整运行验证。
 3. **判断与建议的边界**：本文对 Yazi 适用场景与局限性的判断基于公开信息，实际体验可能因个人需求而异。
 4. **未覆盖的内容**：本文未深入讨论 Yazi 的完整配置选项、性能基准测试、与其他文件管理器的详细对比等。
 5. **术语使用说明**：本文保留 Yazi、Tokio、Lua、Rust 等专有名词，首次出现时附上中文释义。
-6. **更新记录**：本文撰写于 2026-04-11，2026-09-02 依据官方文档修正了配置段名（`[mgr]`/`[preview]`）、插件命令（`ya pkg`）、调试方式（`YAZI_LOG`）、VFS scheme（`sftp://`）与回收站恢复方式等过时信息。
+6. **更新记录**：本文撰写于 2026-04-11；2026-09-02 依据官方文档修正了配置段名（`[mgr]`/`[preview]`）、插件命令（`ya pkg`）、调试方式（`YAZI_LOG`）、VFS scheme（`sftp://`）与回收站恢复方式等过时信息；2026-09-15 对照 v26.9.1 文档与源码修正了 Rio 终端支持状态（官方标注图片渲染尺寸缺陷）、`yazi --cwd` 不存在的 CLI 参数、调度器与图片解码的真实实现，并更新仓库数据。
 
 ---
 

@@ -13,9 +13,9 @@ source_key: "gh:alibaba/open-code-review"
 
 ## 核心判断
 
-OpenCodeReview（OCR）是阿里巴巴从内部工具孵化出的开源 AI 代码审查 CLI。它把一件事说得很清楚：**通用 AI agent 做代码审查时不够可靠，需要用确定性工程逻辑给 agent 加上硬约束，才能保证覆盖率和定位精度。**
+OpenCodeReview（OCR）是阿里巴巴从内部工具孵化出的开源 AI 代码审查 CLI。按官方 README 的说法，它在阿里内部作为官方 AI 代码审查助手跑了两年，服务数万开发者，累计识别数百万个代码缺陷，验证充分后开源。它把一件事说得很清楚：**通用 AI agent 做代码审查时不够可靠，需要用确定性工程逻辑给 agent 加上硬约束，才能保证覆盖率和定位精度。**
 
-这个判断不是空谈。它来自一个 50 个开源仓库、200 个真实 PR、10 种编程语言构成的 benchmark，由 80+ 高级工程师交叉标注出 1,505 个 ground-truth 缺陷。在相同底层模型下，OCR 与 Claude Code 通用 agent 对比的结果是：
+这个判断有数据支撑。它来自一个 50 个开源仓库、200 个真实 PR、10 种编程语言构成的 benchmark，由 80+ 高级工程师交叉标注出 1,505 个 ground-truth 缺陷。在相同底层模型下，OCR 与 Claude Code 通用 agent 对比的结果是：
 
 | 指标 | 含义 | OCR 的位置 |
 |------|------|-----------|
@@ -27,7 +27,7 @@ OpenCodeReview（OCR）是阿里巴巴从内部工具孵化出的开源 AI 代�
 
 这是明确的工程取舍：**宁可少报，也不要误报**。在 CI 流水线里，高误报率会让开发者对审查结果逐渐脱敏，到最后没人再看告警。OCR 用高精确率 + 低 token 消耗，换来的是审查结果值得被认真对待。
 
-截至 2026-08-05（GitHub API 验证）：Stars 约 1.9 万、Forks 约 1,300、主语言 Go、Apache-2.0、默认分支 main、仓库创建于 2026-05-18。
+截至 2026-09-14（GitHub API 验证）：Stars 约 2.5 万、Forks 约 1,800、主语言 Go、Apache-2.0、默认分支 main、仓库创建于 2026-05-18。仓库曾登 Trendshift 趋势榜，并拿到 OpenSSF Best Practices 金牌认证。
 
 ## 系统地图：两条主线如何分工
 
@@ -92,7 +92,7 @@ Agent 只在动态判断和动态取上下文的地方发力：
 
 ### 前置要求
 
-Git >= 2.41。OCR 依赖 Git 生成 diff、做代码搜索和仓库操作。
+Git >= 2.41。OCR 依赖 Git 生成 diff、做代码搜索和仓库操作。支持 Windows、macOS、Linux 三个平台。
 
 ### 安装
 
@@ -100,7 +100,7 @@ Git >= 2.41。OCR 依赖 Git 生成 diff、做代码搜索和仓库操作。
 npm install -g @alibaba-group/open-code-review
 ```
 
-装完后全局可用 `ocr` 命令。
+装完后全局可用 `ocr` 命令。不想走 npm 的话，官方还提供安装脚本、GitHub Release 二进制下载和源码编译三种方式，见官方文档的安装页。
 
 ### 配置模型
 
@@ -125,12 +125,19 @@ ocr review --from main --to feature-branch
 # 单个 commit
 ocr review --commit abc123
 
+# 中断后恢复：先列出 session，再续跑
+ocr session list
+ocr review --from main --to feature-branch --resume <session-id>
+
 # 整文件扫描：审整个仓库，或指定目录/文件
 ocr scan
 ocr scan --path internal/agent
+
+# 输出 JSON 到文件（官方推荐给宿主 agent 消费）
+ocr review --format json --output result.json
 ```
 
-`ocr scan` 不依赖 git 历史，直接审完整文件，适合接手陌生代码库、审计没有 meaningful diff 的目录。
+`ocr scan` 不依赖 git 历史，直接审完整文件，适合接手陌生代码库、审计没有 meaningful diff 的目录。范围审查和扫描都支持中断恢复：session 记录会留存，用 `--resume` 接着跑，不用从头重来。
 
 ### Delegation 模式
 
@@ -143,9 +150,18 @@ ocr delegate rule src/main.go src/handler.go
 
 ### 与编码工具集成
 
-OCR 提供 Claude Code、Codex、Cursor、OpenCode 的集成插件，以及一份可移植的 agent skill，可以装进主流 AI 编码工具里当 code review 用。集成后有两种执行模式：默认由 OCR 用它配置的 LLM 跑审查，或走 Delegation 模式由编码工具自己的 LLM 跑。
+OCR 提供 Claude Code、Codex、Cursor、OpenCode 的集成插件，以及一份可移植的 agent skill，可以装进主流 AI 编码工具里当 code review 用。集成后有两种执行模式：默认由 OCR 用它配置的 LLM 跑审查，或走 Delegation 模式由编码工具自己的 LLM 跑。此外还有一条 QCA Forward 路径，用 QCA 宿主模型跑委托模式，并自带可直接发布的评论模板。
 
 内置多语言规则集覆盖了 NPE、线程安全、XSS、SQL 注入等常见问题，也可通过路径过滤和定向规则自定义。
+
+### 工程化配套
+
+把它放进团队流程还需要几块拼图，官方都提供了：
+
+- **CI/CD 集成**：GitHub Actions、GitLab CI、Gerrit 等有官方集成方案。文章开头说的"CI 流水线里自动审查 PR"，落地入口在这里。
+- **Session Viewer**：在浏览器里浏览和回放审查会话，可以把评论标记为已修复或忽略，处理 findings 时自动隐藏。
+- **MCP Server**：把外部工具接进审查 agent，扩展它在审查时能调用的能力。
+- **OpenTelemetry**：审查过程可观测，接入现有遥测体系。
 
 ## benchmark 该怎么读
 
@@ -154,6 +170,8 @@ OCR 提供 Claude Code、Codex、Cursor、OpenCode 的集成插件，以及一�
 1. **在测什么**：测的是"用同一底层模型，OCR 的确定性骨架 vs 通用 agent"谁更准、更省。它不测模型本身谁更强。
 2. **数字反映系统的哪部分**：Precision/F1 上去了，靠的是确定性骨架压住误报和定位漂移；token 降到 1/9，靠的是场景化 prompt 和工具集砍掉无谓的调用。
 3. **不能推出什么**：Recall 更低是刻意取舍，不是被遗忘。所以"OCR 能保证找出所有缺陷"这种结论不能从这些数字里推出来——它优先保证报出来的都是真的，而不是报全。
+
+这份 benchmark 以 AACR-Bench 之名公开在 Hugging Face 上，标注明细可以自己复查，不必只信官方给的结论。
 
 ## 什么时候用、什么时候不用
 
@@ -173,4 +191,7 @@ OCR 提供 Claude Code、Codex、Cursor、OpenCode 的集成插件，以及一�
 
 - [GitHub 仓库](https://github.com/alibaba/open-code-review) — 源码和文档
 - [open-codereview.ai](https://open-codereview.ai) — 官方网站
+- [AACR-Bench 数据集](https://huggingface.co/datasets/Alibaba-Aone/aacr-bench) — benchmark 标注明细
 - [DeepWiki](https://deepwiki.com/alibaba/open-code-review) — 自动生成的项目百科
+
+回到开头那个判断：OCR 的价值不在模型，而在把"审查这件事里哪些步骤不容出错"想清楚了，然后用代码而不是 prompt 把它们锁死。这个思路不依赖某个具体模型，模型升级只会让它更快更准——确定性骨架才是这份资产里耐久的部分。对被 AI 审查误报折腾过的团队，它值得排在试用清单前列；本地装一下、拿手头项目跑一次 `ocr review`，半小时就能验证它适配你的代码库。

@@ -53,13 +53,13 @@ LMCache 解决的是 **"把 KV Cache 从单个推理进程内的临时状态，�
 | 入口与硬件抽象 | `lmcache/__init__.py` 中 `_detect_device()` | 一次性探测 CUDA / XPU / HPU / CPU，导出 `torch_dev` 与 `torch_device_type` 作为统一设备入口 |
 | 核心引擎 | `lmcache/v1/cache_engine.py`、`cache_interface.py`、`ec_engine.py` | 对外暴露 `store` / `retrieve` / `lookup` 接口，并分离 KV 引擎与 Encoder Cache 引擎 |
 | 存储后端 | `lmcache/v1/storage_backend/` 下多个 backend | 把 KV 块按需落到 L1（CPU DRAM）、L2（Local Disk / Redis / NIXL / S3 等） |
-| 内存管理 | `memory_management.py`、`lazy_memory_allocator.py`、`kv_layer_groups.py` | 用 Paged（分页）/Pinned（页锁定）/Mixed/Lazy/HMA（Hybrid Memory Allocator，混合内存分配器） 等多种分配器对接不同硬件 |
+| 内存管理 | `memory_management.py`、`kv_layer_groups.py`、`memory_allocators/` | 用 Paged（分页）/Pinned（页锁定）/Mixed/Lazy/HMA（Hybrid Memory Allocator，混合内存分配器） 等多种分配器对接不同硬件 |
 | GPU 连接器 | `lmcache/v1/gpu_connector/` | 真正的"搬运工"：负责把 CPU 端 KV 张量按层或按块灌进 vLLM 的 Paged KV Cache |
 | 多进程服务 | `lmcache/v1/multiprocess/` | 把 LMCache 跑成独立进程，对外提供 ZMQ（ZeroMQ，高性能消息队列库）数据面 + FastAPI HTTP 控制面 |
-| 协调器 | `lmcache/v1/mp_coordinator/` | v0.4.7 新增的 FastAPI 进程，负责多实例注册、quota、blend-lookup 路由 |
-| 控制器 | `lmcache/v1/cache_controller/` | 历史遗留的 worker-side 控制器，包含 `controllers/`、`executor.py` 等 |
+| 协调器 | `lmcache/v1/mp_coordinator/` | v0.4.7 新增的 FastAPI 进程，负责多实例注册、L2 quota、blend-lookup 路由 |
+| 控制器 | `lmcache/v1/cache_controller/` | worker 侧的控制器模块，包含 `controllers/`、`executor.py` 等 |
 | 集成适配 | `lmcache/integration/{vllm,tensorrt_llm,sglang}/` | 对接不同推理引擎的 connector 入口 |
-| 观测 | `observability.py`、`mp_observability/` | Prometheus 指标（一种标准化的监控数据采集格式）、事件总线、健康检查 |
+| 观测 | `lmcache/observability.py`、`v1/mp_observability/` | Prometheus 指标（一种标准化的监控数据采集格式）、事件总线、健康检查 |
 
 **运行时拓扑（MP 模式 + vLLM）**：
 
@@ -87,7 +87,7 @@ LMCache 文档和源码里反复出现四种容易混淆的"缓存"，先把它�
 
 ### 1. vLLM 自身的前缀缓存（`prefix caching`）
 
-存在 GPU HBM 里，命中条件是 token 前缀完全相同、单进程、单模型实例。它的好处是延迟极低（GPU 片上访存），局限是显存有限，跨进程或长上下文场景下会快速被 LRU（Least Recently Used，最近最少使用）淘汰。
+存在 GPU HBM 里，命中条件是 token 前缀完全相同、单进程、单模型实例。它的好处是延迟极低（GPU 片上访存），局限是显存有限，跨进程或长上下文场景下会很快被 LRU（Least Recently Used，最近最少使用）策略驱逐。
 
 ### 2. LMCache 的 prefix KV cache
 
@@ -95,11 +95,11 @@ LMCache 文档和源码里反复出现四种容易混淆的"缓存"，先把它�
 
 ### 3. LMCache 的非 prefix 复用（CacheBlend）
 
-2025 年 EuroSys 上发表的 CacheBlend 论文（Yao et al., 2025，获最佳论文奖）提出：把 KV 块按任意位置复用，再对缺失 attention 的位置做"局部重算 + 融合"。LMCache 在 v0.4.7 里把这种非 prefix 复用提升为 **token 级匹配**（`Token-level matching for non-block-aligned KV reuse`），意味着即便不是按 16/64 token 对齐的块，也能命中并选择性重算。
+2025 年 EuroSys 上发表的 CacheBlend 论文（Yao et al., EuroSys 2025）提出：把 KV 块按任意位置复用，再对缺失 attention 的位置做"局部重算 + 融合"。LMCache 在 v0.4.7 里把这种非 prefix 复用提升为 **token 级匹配**（`Token-level matching for non-block-aligned KV reuse`），意味着即便不是按 16/64 token 对齐的块，也能命中并选择性重算。
 
 ### 4. Encoder Cache（EC）
 
-一个常被忽视的子模块，存在于 `lmcache/v1/ec_engine.py` 和 `lmcache/integration/vllm/vllm_ec_adapter.py`。它不是 KV 缓存，而是 vLLM 多模态 encoder 的输出缓存——一张图片如果两次被同一个 hash 引用，第二次就跳过视觉塔（vision encoder）。EC 与 KV 缓存构造**独立的 StorageManager**（这一点在仓库的 `docs/design/v1/encoder-cache.md` 设计文档中明确：不同访问模式，混合在一起会让热 KV 驱逐冷 EC，资源核算也会失真），按 `mm_hash` 作为 key，世界尺寸（world_size）和 worker_id 全部折叠为 sentinel（哨兵）值（TP=N 即张量并行度为 N 的部署下，多个 GPU 算出来的 encoder 输出一致，只存一份）。
+一个常被忽视的子模块，存在于 `lmcache/v1/ec_engine.py` 和 `lmcache/integration/vllm/vllm_ec_adapter.py`。它不是 KV 缓存，而是 vLLM 多模态 encoder 的输出缓存——一张图片如果两次被同一个 hash 引用，第二次就跳过视觉塔（vision encoder）。EC 与 KV 缓存构造**独立的 StorageManager**（这一点在仓库的 `docs/design/v1/encoder-cache.md` 设计文档中明确：不同访问模式，混合在一起会让热 KV 驱逐冷 EC，资源核算也会失真），按 `mm_hash` 作为 key，`world_size` 和 `worker_id` 全部折叠为 sentinel（哨兵）值（TP=N 即张量并行度为 N 的部署下，多个 GPU 算出来的 encoder 输出一致，只存一份）。
 
 把这四条切清楚后，再去看 LMCache 的设计就能避免一个常见误读——把它当成 "vLLM prefix cache 的替代品"。它实际上是 vLLM prefix cache 之上的**二级系统**，两者可以共存（同一份工作负载可以同时获得 HBM L0 + LMCache L1/L2 的多层命中）。
 
@@ -127,7 +127,7 @@ v0.4.7 Release Notes 里有几项针对 MP 的增量改动值得拆开看：
 - **`multi_layer_block_kv_transfer`**：统一的多层块传输原语，取代之前 per-layer 单独发送的链路，显著降低 ZMQ 小消息数量。
 - **SHM-based data transfer**：当 sender 和 receiver 在同一节点、且都是 GPU 进程时，改用 POSIX 共享内存（POSIX SHM，进程间通过映射同一块内存区域来传递数据）传输，避免走网络栈。这对 PD 分离（Prefill-Decode 分离，把"处理输入"和"生成输出"两个阶段放在不同机器上执行）场景下的延迟敏感传输尤其重要。
 - **MP coordinator backbone**：新增 FastAPI 协调器进程（详见下一节）。
-- **L1 / L2 quota** 配额、usage、eviction 驱逐策略由 coordinator 统一管。
+- **L2 quota**：配额、usage、eviction 驱逐策略上收到 coordinator 统一管；L1 配额仍留在各 mp server 本地。
 
 ## 核心机制二：MP Coordinator —— 把"实例"从内存中抽出来管理
 
@@ -145,7 +145,7 @@ Coordinator 暴露的 REST 接口是薄薄一层：
 | `GET /instances` | 运维 / 工具 | 列出 fleet |
 | `GET /healthz` | k8s 探针 | 存活 |
 
-数据流是单向的：coordinator 不主动推送状态给 mp server，它只负责"知道谁还活着"。如果要调用某个 mp server 的具体能力（比如 `/pin` 或 `/quota`），coordinator 从 registry 里取出该实例的 `ip` + `http_port`，用 `httpx.AsyncClient` 发起普通 HTTP 请求。coordinator 没有自己的 RPC 协议，复用 mp server 已有的 HTTP API 即可。
+数据流整体是单向上报的：mp server 在自己的 FastAPI lifespan 里创建一个通用 `httpx.AsyncClient`，负责向 coordinator 注册和心跳；coordinator 不维护任何到实例的长连接状态，它只负责"知道谁还活着"。需要触达某个具体实例时，coordinator 从 registry 里取出该实例的 `ip` + `http_port` 发起普通 HTTP 调用——它没有自己的 RPC 协议，复用 mp server 已有的 HTTP API。
 
 ### 注册时序
 
@@ -162,7 +162,7 @@ sequenceDiagram
 
 ### 横向扩展点
 
-按设计文档的描述，coordinator 现在只做"成员管理 + 健康检查"，其余能力挂在同一个 FastAPI 应用的不同 router 上：quota reconcile、blend-lookup 路由、KV 操作 fan-out 都按"加一个 `http_apis/<feature>_api.py` 文件"的方式扩展。这种约定让 v0.4.7 的"未来工作"路径非常清晰：等真的需要跨节点 token 路由时，不需要再动 coordinator 的 backbone，只补一个 router。
+按设计文档的描述，coordinator 在 v0.4.7 已覆盖四块能力：成员管理、健康检查、L2 的 quota/usage/eviction，以及挂在 MP coordinator 上的全局 CacheBlend fingerprint 目录（跨实例的 blend-lookup 靠它路由）。真正留给未来的只有 model-aware indexing——感知模型结构的跨节点 token 级路由。扩展方式也有约定：每个能力是 `http_apis/<domain>_api.py` 里一个 module-level 的 FastAPI `APIRouter`，`create_app` 自动发现。等 model-aware indexing 真的要做时，不需要动 coordinator 的 backbone，补一个 router 就行。
 
 ## 核心机制三：存储后端与内存分配——分页、Pinned、Lazy、HMA
 
@@ -185,7 +185,7 @@ v0.4.7 的 release notes 明确把"per-group `tokens_per_chunk` / `slots_per_chu
 
 `lmcache/v1/storage_backend/storage_manager.py` 起到"调度员"的作用：写入时按"热度策略"自动选 L1 还是 L2；查询时按 L1 → L2 顺序逐层 `lookup` 命中。具体的热点判定由 `cache_policy/` 下的策略模块决定，主流是 LRU，但仓库也提供 LFU（Least Frequently Used，最不经常使用）与 ARC（Adaptive Replacement Cache，自适应替换缓存，能在 LRU 和 LFU 之间动态切换）等可选策略。
 
-值得专门说的是 NIXL。NIXL 是 NVIDIA 在 Dynamo 生态里推的统一 KV 传输与存储抽象，v0.4.7 起 LMCache 在 NIXL 之上又做了两件事：
+NIXL 值得单独一提。NIXL 是 NVIDIA 在 Dynamo 生态里推的统一 KV 传输与存储抽象，v0.4.7 起 LMCache 在 NIXL 之上又做了两件事：
 
 1. **多路径 KV 缓存 offloading**（multipath KV-cache offloading）：同一条数据可以经由 NIXL 的不同 backend（如 POSIX、HF3FS、GDS）并发传输，链路利用率提升。
 2. **DOCA_MEMOS** 接入：DOCA（NVIDIA 数据中心加速器 SDK）里的 CMX 通信栈被纳入 NIXL 后端，跨节点带宽与延迟进一步降低。
@@ -194,7 +194,7 @@ v0.4.7 的 release notes 明确把"per-group `tokens_per_chunk` / `slots_per_chu
 
 ### 后端选择的几个非显然约束
 
-- **P2P 后端**（`p2p_backend.py`）是节点间点对点共享。从仓库 `docs/blog/2026-01` 的描述看，这条路径 2026-01 才从实验性转为生产，因此 v0.4.7 在 P2P 上仍偏保守——多节点环境下优先 L2 远程后端，跨节点直连只在网络条件受控的内部集群里打开。
+- **P2P 后端**（`p2p_backend.py`）是节点间点对点共享。按 README 的更新时间线，多节点 P2P CPU 内存共享 2026-01 才从实验特性转入生产，因此 v0.4.7 在 P2P 上仍偏保守——多节点环境下优先 L2 远程后端，跨节点直连只在网络条件受控的内部集群里打开。
 - **PD Backend**（含 `pd_backend_async.py`）是为 PD 分离场景特别设计的：异步的预取、写入与确认路径更短，配套前面提到的 reservation 协议。
 - **Remote Backend** 是"远程后端协议抽象"，不是单一存储实现。所有满足"通过 HTTP/gRPC/RDMA 可达的 KV 池"——包括自建的 Redis 集群、对象存储、甚至另一台 LMCache server——都能挂进来。
 
@@ -228,7 +228,7 @@ B 准入 → reserved=8, 继续
 
 ### 旧 sender 兼容
 
-Release Notes 明确写了"legacy senders that do not set total_chunks are no longer supported"。这是一个**硬性破坏性变更**，所有下游 PD 发送端必须升级。LMCache 团队选择让 receiver 端直接 `RuntimeError`，是为了避免"伪装兼容"导致更隐蔽的死锁——这种取舍比"保留兼容 + 限速"更符合系统级中间件的工程风格。
+设计文档把这条边界写得毫不含糊："Legacy senders that do not set `total_chunks` (i.e., `total_chunks == 0`) are no longer supported." 这是一个**硬性破坏性变更**，所有下游 PD 发送端必须升级。LMCache 团队选择让 receiver 端直接 `RuntimeError`，是为了避免"伪装兼容"导致更隐蔽的死锁——这种取舍比"保留兼容 + 限速"更符合系统级中间件的工程风格。
 
 ## 核心机制五：Encoder Cache（EC）—— 把多模态 encoder 输出也纳入复用
 
@@ -279,7 +279,7 @@ LMCache 把"可观测性"提到和存储后端并列的位置，是因为它认�
 
 ## 任务流案例：一次多轮对话的请求如何穿过 LMCache
 
-把上面三个机制串成一个真实任务流。假设用户在和 vLLM 部署下的 Qwen3-235B-A22B 模型做多轮 RAG 对话，每轮都带 80k token 的 system prompt + 检索上下文。
+把上面的机制串成一个真实任务流。假设用户在和 vLLM 部署下的 Qwen3-235B-A22B 模型做多轮 RAG 对话，每轮都带 80k token 的 system prompt + 检索上下文。
 
 **第一次请求**（冷启动）：
 
@@ -309,7 +309,7 @@ LMCache 把"可观测性"提到和存储后端并列的位置，是因为它认�
 - LMCache MP server 挂了：vLLM 拿不到缓存，降级为走自己的 HBM prefix cache（如果还有），再降级为全量 prefill。不会因为缓存层宕机而连累推理。
 - 协调器挂了：mp server 之间仍然能工作，只是 quota reconcile / blend-lookup 这类跨实例能力暂时关闭。
 
-这个案例能直接对应到 LMCache 团队 2026-04 公布的 benchmark：在 8×H100 上跑 Qwen3-235B-A22B 的多轮对话，**TTFT 均值 0.29s vs 3.98s（in-process offload），p99 1.30s vs 13.55s，解码吞吐 37.47 tok/s vs 9.81 tok/s**。13× 的 TTFT 改善与 4× 的吞吐改善之间存在强一致性：缓存命中率高 → prefill 量少 → GPU 算力释放给 decode → 整体吞吐上升。
+这个案例能直接对应到 LMCache 团队 2026-04 公布的 benchmark：在 8×H100 上跑 Qwen3-235B-A22B 的多轮对话，**TTFT 均值 0.29s vs 3.98s（in-process offload），p99 1.30s vs 13.55s，解码吞吐 37.47 tok/s vs 9.81 tok/s**。13× 的 TTFT 改善与 4× 的吞吐改善互为印证：缓存命中率高，prefill 就少，GPU 算力释放给 decode，整体吞吐随之上升。
 
 ## 基准测试与数字边界
 
@@ -408,7 +408,7 @@ LMCache 官方建议 + 仓库 benchmark 给出的"什么场景用、什么场景
 1. **先打 in-process offload 基线**：单 pod 内启用 vLLM 的 `--kv-offloading-size`，跑多轮 benchmark，拿到"无 LMCache"的基线数字。
 2. **再上 LMCache in-process（v1 connect）**：vLLM 加 `--kv-transfer-config` 走 `LMCacheConnectorV1`，看 prefix 命中率与 TTFT 改善。
 3. **然后才考虑 MP mode**：只有当 DP 部署、跨 pod 复用真的发生时，把 L1 抬到独立进程才有价值。
-4. **最后加 coordinator**：单集群单 coordinator 不必急着上，先把 L1/L2 配额和驱逐策略在 mp server 本地跑稳，再考虑 fleet 视图。
+4. **最后加 coordinator**：单集群单 coordinator 不必急着上，先把 L1 配额与本地驱逐策略在 mp server 上跑稳，再上 coordinator 换取 fleet 级的 L2 配额视图和全局 CacheBlend 目录。
 
 ## 与几个常见替代方案的对比
 
@@ -421,7 +421,7 @@ LMCache 官方建议 + 仓库 benchmark 给出的"什么场景用、什么场景
 | Moonshot Mooncake Store | 跨节点 KV 中心 | ✅ | ✅ | KV-centric 对象存储 |
 | **LMCache** | **跨进程 + 跨节点 + 引擎无关** | ✅ | ✅（P2P 实验→生产） | **KV Cache 中间件标准层** |
 
-LMCache 2025-10 加入 PyTorch Foundation、2025-09 接入 NVIDIA Dynamo、2025-11 与 CoreWeave 联合优化 Cohere 推理——这三个节点合起来看，定位是**事实上的 KV Cache 中间件标准层**，而不是某家推理引擎的"插件"。理解这一点比理解它的 API 重要。
+LMCache 2025-10 加入 PyTorch Foundation、2025-09 接入 NVIDIA Dynamo、2025-11 与 CoreWeave 联合优化 Cohere 推理——这三个节点合起来看，它的定位是**事实上的 KV Cache 中间件标准层**。对使用者而言，先看清这个定位，再回头查 API，顺序不该反过来。
 
 ## 安装、配置与可调旋钮
 
@@ -432,11 +432,11 @@ LMCache 的可调旋钮多到可以单独写一篇配置手册，这里只挑几
 仓库 `docs/source/getting_started/installation.rst` 给出的官方路径有四种：
 
 - **Stable wheel（PyPI，CUDA 13.0）**：`uv venv --python 3.12 && source .venv/bin/activate && uv pip install lmcache`。这是最省事的路径，但**默认走 CUDA 13**。
-- **Stable wheel（CUDA 12.9，GitHub Release）**：PyPI 之外，CUDA 12.9 wheel 发布在 GitHub Release 资产里，需要显式指定 `--extra-index-url https://download.pytorch.org/whl/cu129` 与 `--find-links .../v0.4.7-cu129`。这条路径在 2025 下半年的存量 vLLM 集群上仍是主流。
+- **Stable wheel（CUDA 12.9，GitHub Release）**：PyPI 之外，CUDA 12.9 wheel 发布在 GitHub Release 资产里。安装命令是一个模板：`VERSION` 换成目标版本，`--find-links` 指向该版本 `expanded_assets/v${VERSION}-cu129` 的资产页，再配 `--extra-index-url https://download.pytorch.org/whl/cu129`——后者保证 pip 解析到 cu129 变体的 PyTorch，否则可能装到 CUDA 不匹配的 torch。以 v0.4.7 为例，`--find-links .../v0.4.7-cu129`。
 - **Nightly wheel**：每天 07:30 UTC 由 dev 分支构建，`--pre` 直接拉最新。
 - **源码构建**：含 `--no-build-isolation`（避免 c_ops 链接到错误的 torch），以及 ROCm（`BUILD_WITH_HIP=1` + `PYTORCH_ROCM_ARCH="gfx942,gfx950"`）、Intel XPU（`BUILD_WITH_SYCL=1`）的开关。
 
-> 一个常见踩坑：PyPI 上的 `lmcache` wheel 是 CUDA 链接的，在 AMD MI300X 上直接装会报 `libcudart.so.12: cannot open shared object file`。必须源码构建，并 `BUILD_WITH_HIP=1`。
+> 一个常见踩坑：PyPI 上的 `lmcache` wheel 是 CUDA-only 的，在 AMD MI300X 上直接装会因 CUDA 运行库缺失而加载失败。必须源码构建，并 `BUILD_WITH_HIP=1`——AMD 团队的博客把这条列为他们验证过的首个可工作路径。
 
 ### 运行时配置
 
@@ -462,7 +462,8 @@ vLLM 侧的 connector 配置由 `--kv-transfer-config '{"kv_connector":"LMCacheM
 
 ```bash
 # 1. 启动 LMCache MP server（8 卡 H100 节点）
-lmcache server --l1-size-gb 400 --eviction-policy LRU --l2-disk-path /mnt/nvme/lmcache
+lmcache server --l1-size-gb 400 --eviction-policy LRU \
+  --l2-adapter '{"type": "fs", "base_path": "/mnt/nvme/lmcache"}'
 
 # 2. 启动 vLLM（注意 kv_connector 名称）
 vllm serve Qwen/Qwen3-235B-A22B-Instruct-2507-FP8 \
@@ -477,7 +478,7 @@ vllm serve Qwen/Qwen3-235B-A22B-Instruct-2507-FP8 \
 lmcache coordinator --host 0.0.0.0 --port 9100 --instance-timeout 30
 ```
 
-> 注意：MoE 模型在 vLLM 上跑 LMCache MP 时，需要 `--disable-hybrid-kv-cache-manager`（在 vLLM 0.18.x 路径上）。这条与 `LMCACHE_CUDA_MAJOR=12` 等环境变量属于"半官方、半经验"配置，LMCache 官方文档并未主动写进 installation 文档，遇到具体问题先看对应 release 的 blog（如 2026-04 团队发的 MoE 10× 那篇）。
+> 注意：团队博客给出的原始条件更窄——跑 HMA 模型、且使用 vLLM 原生 OffloadingConnector 时，必须加 `--disable-hybrid-kv-cache-manager`。MP 模式下遇到混合 KV 管理相关的报错时，这一开关同样值得先试。这类"半经验"配置官方文档未必收录，遇到具体问题先看对应 release 的 blog（如 2026-04 团队发的 MoE 10× 那篇）。
 
 ## 客户端 CLI：`lmcache-cli` 与子命令
 
@@ -489,7 +490,7 @@ LMCache 单独发布了一个轻量级的 `lmcache-cli` 包（仅 CLI，无 CUDA
 - `lmcache bench engine`：基准测试客户端，配合 `multi_round_qa.py` 之类的真实工作负载。
 - `lmcache coordinator`：启动 v0.4.7 引入的 FastAPI 协调器。
 
-CLI-only 包的设计动机在 `ARCHITECTURE_MULTI_HARDWARE.md` 里写得很清楚：没有 GPU 的运维机器不应该被强制拉一整套 torch 才能跑 `lmcache ping`。这条边界在 LMCache 早期版本里被反复违反，v0.4.7 把 `lmcache-cli` 独立出来是一个明确的工程改进。
+CLI-only 包的动机可以直接从 PyPI 元数据验证：`lmcache-cli` 的依赖清单里没有任何 torch / CUDA 项，只有 matplotlib、openai、prometheus_client、sortedcontainers。没有 GPU 的运维机器不应该被强制拉一整套深度学习栈才能跑 `lmcache ping`。这条边界在早期版本里被反复违反，把 CLI 独立发包是一个明确的工程改进。
 
 CLI 在 CI / 自动化测试里的价值在于：它和服务器之间走的是和 LMCache 多进程模式同一套 HTTP / ZMQ 协议，所以"用 CLI 调通一个 5 节点的 MP 集群"几乎是"在生产中调通"的前置子集。
 
@@ -497,8 +498,8 @@ CLI 在 CI / 自动化测试里的价值在于：它和服务器之间走的是�
 
 1. **LMCache 与 vLLM prefix cache 是叠加关系，不是替代关系**。同一份工作负载可以同时享受 HBM L0 + L1/L2 的多层命中，二者协同而不是竞争。
 2. **MP 模式真正的价值在 DP 部署**。单 pod 单进程场景下，in-process offload 几乎等价；只有当存在多个 vLLM 进程希望共享同一份缓存时，独立守护进程才有意义。
-3. **Coordinator 在 v0.4.7 仍是 backbone 而非完整功能**。quota reconcile、blend-lookup 路由、KV 操作 fan-out 都列在"未来工作"里，现在用它主要是为了"占位 + 健康检查"。
-4. **PD 异步预留是 v0.4.7 的一次硬破坏性变更**。Legacy sender（不设 `total_chunks`）会被 receiver 直接 `RuntimeError`。下游所有 PD 发送端必须升级。
+3. **Coordinator 的能力边界要分清**。成员管理、健康检查、L2 配额/用量/驱逐、全局 CacheBlend fingerprint 目录已在 v0.4.7 落地；感知模型结构的跨节点 token 路由（model-aware indexing）仍是未来工作。
+4. **PD 异步预留对老 sender 是一次硬性断裂**。按设计文档的约束，不设 `total_chunks` 的 legacy sender 会被 receiver 直接 `RuntimeError`。下游所有 PD 发送端必须升级。
 5. **v0.4.7 的多硬件后端扩张很激进**。NIXL DOCA_MEMOS、Cloud Bigtable、Moore Threads MUSA、multipath KV-cache offloading 在同一 release 一起合入，意味着 LMCache 正在尝试从"vLLM 优先"扩到"全硬件 + 全存储"的中立层。
 6. **LMCache 的稳定版本号仍偏小**（v0.4.7）。Cache key 协议、传输协议、配置字段名在最近几个版本里仍有 breaking change。生产环境锁定一个版本后，跟随 dev 升级需要做完整的回归测试。
 
@@ -516,7 +517,7 @@ CLI 在 CI / 自动化测试里的价值在于：它和服务器之间走的是�
 
 ## v0.4.7 几个被忽视的细粒度变化
 
-Release notes 里的高亮条目之外，v0.4.7 还有几条值得专门指出的细粒度变化，因为它们会影响既有部署的兼容性。
+Release notes 里的高亮条目之外，v0.4.7 还有几条细粒度变化容易被忽略，但它们会直接影响既有部署的兼容性。
 
 1. **`EngineGroupInfo` 替代 `LMCacheGroupView`**。这是一个命名层面的破坏性变更，任何显式依赖旧名称的监控仪表盘、告警规则、CI 脚本都会在升级后失效。
 2. **`create_cache_context` 工厂**。v0.4.7 引入了统一的 cache context 工厂，把原本散落在多处的 context 构造逻辑集中到 `create_cache_context()` 入口。这不是性能变更，是为后续可观测性扩展铺路的重构。
@@ -526,25 +527,19 @@ Release notes 里的高亮条目之外，v0.4.7 还有几条值得专门指出�
 
 ## 几个常见的认知偏差与纠正
 
-根据 LMCache 仓库的代码与文档，集中纠正几条社区里常见的认知偏差。这些偏差大多是把 LMCache 想象成"vLLM 的缓存插件"而忽略它作为独立中间件的工程定位。
+社区讨论里常把 LMCache 想象成"vLLM 的缓存插件"，由此衍生出几条流传颇广的误读。逐条对照仓库的代码与文档：
 
-**偏差一："LMCache 是 vLLM 的子项目。"**
-不。LMCache 2025-10 加入 PyTorch Foundation，是独立项目。vLLM 侧的集成是社区驱动的，仓库 `lmcache/integration/vllm/` 下的 connector 是 LMCache 自己维护的，不是 vLLM 仓库里的代码。
+**LMCache 不是 vLLM 的子项目。** LMCache 2025-10 加入 PyTorch Foundation，是独立项目。vLLM 侧的集成是社区驱动的，仓库 `lmcache/integration/vllm/` 下的 connector 是 LMCache 自己维护的，不是 vLLM 仓库里的代码。
 
-**偏差二："用 LMCache 必须放弃 vLLM prefix cache。"**
-不。两者是叠加关系。LMCache v1 connector 的标准做法是 `--enable-prefix-caching`（保留 HBM L0）+ `--kv-transfer-config ...LMCacheConnectorV1`（叠 L1/L2）。LMCache MP 模式同理。
+**用 LMCache 不必放弃 vLLM prefix cache。** 两者是叠加关系。LMCache v1 connector 的标准做法是 `--enable-prefix-caching`（保留 HBM L0）+ `--kv-transfer-config ...LMCacheConnectorV1`（叠 L1/L2）。LMCache MP 模式同理。
 
-**偏差三："MP 模式 = 多台机器。"**
-不。MP 模式的"多进程"指**同一节点内多个 vLLM pod 共享一个 LMCache 守护进程**。跨节点共享 P2P 仍属实验/生产转化中，不是 MP 模式的核心场景。理解这一点对评估集群拓扑很重要：单节点 8 卡 + DP=8 是 MP 模式收益最大的部署形态。
+**MP 模式不等于多台机器。** MP 模式的"多进程"指**同一节点内多个 vLLM pod 共享一个 LMCache 守护进程**。跨节点共享 P2P 仍属实验/生产转化中，不是 MP 模式的核心场景。评估集群拓扑时记住这一点：单节点 8 卡 + DP=8 是 MP 模式收益最大的部署形态。
 
-**偏差四："LMCache 解决了所有 LLM 推理的缓存问题。"**
-不。LMCache 只解决 KV cache 与 encoder output 复用。hidden state 缓存、logits 缓存、tool 调用的中间状态缓存都不在范围内。把它当成"万能推理缓存"是过度宣传。
+**它不解决所有 LLM 推理的缓存问题。** LMCache 只管 KV cache 与 encoder output 复用。hidden state 缓存、logits 缓存、tool 调用的中间状态缓存都不在范围内。把它当成"万能推理缓存"是过度宣传。
 
-**偏差五："CacheBlend 加速比可直接套用到生产。"**
-不。CacheBlend 论文里的加速比来自固定 dataset 的实验，v0.4.7 release notes 并没有承诺生产负载下复现该加速比。生产引用时必须自己做 A/B。
+**CacheBlend 的加速比不能直接套用到生产。** 论文里的加速比来自固定 dataset 的实验，v0.4.7 release notes 并没有承诺生产负载下复现该加速比。生产引用时必须自己做 A/B。
 
-**偏差六："LMCache 是 0.x 版本，不要上生产。"**
-未必。LMCache 已被 NVIDIA Dynamo、CoreWeave + Cohere、阿里 PAI 等多个生产环境采用（参考 2025-09、2025-11、2025-06 团队博客），且 2025-10 加入 PyTorch Foundation。版本号偏低是因为 KV cache 领域本身较新，迭代节奏快，0.x 不等于实验性。
+**0.x 版本号不等于不能上生产。** LMCache 已被 NVIDIA Dynamo、CoreWeave + Cohere 等多个生产环境采用（分别见 2025-09、2025-11 的 README 更新），2025-07 Redis 官方博客发布了集成案例，2025-10 加入 PyTorch Foundation。版本号偏低是因为 KV cache 领域本身较新，迭代节奏快。
 
 ## 一份可被验证的事实清单
 
@@ -559,15 +554,16 @@ Release notes 里的高亮条目之外，v0.4.7 还有几条值得专门指出�
 - 主要赞助方：Tensormesh（按仓库 README 描述，社区运营与持续开发由其支持）。
 - 2026-04 团队博客公布的 MoE 8×H100 benchmark：TTFT 均值 0.29s vs 3.98s（约 13× 加速），p99 TTFT 1.30s vs 13.55s（约 10× 加速），解码吞吐 37.47 vs 9.81 tok/s（约 4× 加速）。
 - 2026-05 AMD 团队公布的 MI300X agentic benchmark（739 条 Claude Code 真实轨迹、32 用户、100k 上下文）：LMCache vs HBM-only，TTFT 均值 3.0×、p95 2.1×、max 2.6×、请求数 2.3×。
-- v0.4.7 release notes 提到的硬破坏性变更：PD receiver 对 `total_chunks == 0` 的 legacy sender 抛 `RuntimeError`；`LMCacheGroupView` → `EngineGroupInfo` 改名；`goblin` 标记 deprecated；`python_ops_fallback` 必须配套 completion recorder ops。
+- v0.4.7 release notes 列出的破坏性变更：`LMCacheGroupView` → `EngineGroupInfo` 改名；`report_status` 改为 per-kernel-group；per-group `tokens_per_chunk` / `slots_per_chunk` 取代从 `cache_config.block_size` 推断；`goblin` 标记 deprecated；`python_ops_fallback` 必须配套 completion recorder ops；Blend v2 CI 移除，CacheBlend 改用 Blend v3。
+- PD 链路对 legacy sender 的硬约束（出自 `docs/design/v1/pd_async_reservation_design.md`，v0.4.7 已包含 `pd_backend_async.py`）：不设 `total_chunks`（即 `total_chunks == 0`）的 sender 不再被支持，receiver 直接抛 `RuntimeError`。
 - v0.4.7 release notes 提到的新增后端：NIXL DOCA_MEMOS（NVIDIA CMX）、Cloud Bigtable remote storage、Moore Threads MUSA、multipath KV-cache offloading。
 - v0.4.7 release notes 提到的新增传输路径：SHM-based data transfer（POSIX SHM 跨进程 IPC）。
 - v0.4.7 release notes 提到的新增模型层支持：HMA（Hybrid Memory Allocator）、Mamba/GDN 混合模型（Qwen3.5）、vLLM CPU 2-fused KV layout。
 
-数字之外的内容：以上所有架构判断（多进程守护进程、MP coordinator、PD 异步预留、CacheBlend、EC、内存分配器分层）均来自仓库 `docs/design/`、`docs/source/`、`docs/blog/` 三个目录下的设计文档与官方博客，可在仓库 `dev` 分支直接核对。
+数字之外的内容：以上所有架构判断（多进程守护进程、MP coordinator、PD 异步预留、CacheBlend、EC、内存分配器分层）均来自仓库 `docs/design/`、`docs/source/` 两个目录下的设计文档与官方文档，以及团队博客（blog.lmcache.ai），可在仓库 `dev` 分支与博客站直接核对。
 
 ## 写在最后
 
-LMCache 这套系统的有趣之处不在于"它把 KV 缓存搬到了 CPU 上"——这件事 Redis、文件系统、对象存储都能做。它的有趣之处在于它把 KV cache 当作"长期、跨进程、跨节点、可观测"的一等公民来设计，并把这种设计变成 vLLM、TensorRT-LLM、SGLang、Dynamo 共同依赖的中间层。理解了它从"vLLM 插件"演化为"PyTorch Foundation 旗下 KV Cache 标准层"的轨迹，再去看 v0.4.7 的 release notes——`EngineGroupInfo`、`mp_coordinator`、HMA、MUSA、NIXL DOCA_MEMOS——就能看出每一条变更背后都是同一条主线的延伸：**让 KV Cache 不再是推理引擎的私产**。
+LMCache 这套系统真正值得琢磨的地方，不是"它把 KV 缓存搬到了 CPU 上"——这件事 Redis、文件系统、对象存储都能做。值得琢磨的是它把 KV cache 当作"长期、跨进程、跨节点、可观测"的一等公民来设计，并把这种设计变成 vLLM、TensorRT-LLM、SGLang、Dynamo 共同依赖的中间层。理解了它从"vLLM 插件"演化为"PyTorch Foundation 旗下 KV Cache 标准层"的轨迹，再去看 v0.4.7 的 release notes——`EngineGroupInfo`、`mp_coordinator`、HMA、MUSA、NIXL DOCA_MEMOS——就能看出每一条变更背后都是同一条主线的延伸：**让 KV Cache 不再是推理引擎的私产**。
 
 如果你正在为 vLLM / TensorRT-LLM / SGLang 的多轮 / RAG / agentic 场景优化 TTFT，LMCache 应该是评估清单里排在 vLLM HBM prefix cache、SGLang HiCache、Moonshot Mooncake 之后的一项——补足"跨进程、跨节点"这一层，而不是替代它们。

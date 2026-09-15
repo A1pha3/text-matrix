@@ -11,10 +11,10 @@ hiddenFromHomePage: false
 ---
 
 > 视频来源：[Bilibili BV1JwgU6aEHN](https://www.bilibili.com/video/BV1JwgU6aEHN)（UP: Mindofuture）/ [YouTube: Sir59K8ZDPU](https://www.youtube.com/watch?v=Sir59K8ZDPU)
-> 演讲者：Frank Coyle，UC Berkeley 教育者，计算机科学教龄三十余年
+> 演讲者：Frank Coyle，视频简介称其为伯克利学者，计算机科学教龄三十余年
 > 时长：约 21 分钟
 
-一句话总览：这场演讲要回答的不是"怎么调好一个 Agent"，而是"当 Agent 在工具循环里越跑越快时，用什么给它兜底"。Frank Coyle 的答案是形式化的领域知识——本体论。他用一条"幻觉是特性不是 bug"的判断，把读者从"如何消除幻觉"的焦虑里拉出来，转向"如何给概率创造力装护栏"的工程问题。全文可以拆成一条主线：智能体负责行动，本体论负责裁决，两者在 21 分钟里交汇成一个可落地的三层防御方案。
+一句话总览：这场演讲回答的不是"怎么调好一个 Agent"，而是"当 Agent 在工具循环里越跑越快时，拿什么给它兜底"。Frank Coyle 的答案是形式化的领域知识——本体论。他用一条"幻觉是特性不是 bug"的判断，把问题从"如何消除幻觉"换成了"如何给概率创造力装护栏"。全文一条主线：智能体负责行动，本体论负责裁决，两者在 21 分钟里交汇成一个三层防御方案。
 
 ## 没有输赢，只有创造
 
@@ -24,7 +24,7 @@ Frank Coyle 用 Sister Corita Kent 的一句话开场——这句话因作曲家
 >
 > 没有什么错误。没有赢，没有输，只有创造。
 
-一位在伯克利教了三十多年计算机科学的教育者，拿这句话为一场关于本体论（Ontology）的演讲起头，有点意外。但整场听下来，这句话不是装饰，是暗线。
+一位教了三十多年计算机科学的教育者，拿这句话为一场关于本体论（Ontology）的演讲起头，有点意外。但整场听下来，这句话不是装饰，是暗线。
 
 Frank 的学习观很朴素：AI 时代最重要的事是**动手做东西**，通过创作来学习，而不是停留在阅读。他甚至推荐纸笔而非键盘——手写时整个感官系统都参与进来，学习更快。他早期职业生涯在神经科学领域，如今 Agent AI 把认知科学重新带回舞台中央，他算是"回家"了。
 
@@ -43,7 +43,7 @@ Frank 把智能体拆成了两条各自流淌了几十年的血脉。弄清它�
 
 **第一条是智能体。** 它源自 AI 的创世纪：John McCarthy、Oliver Selfridge、Marvin Minsky——后者在《Society of Mind》里设想的"心智社会"，就是今天多智能体系统的思想原型。1956 年"人工智能"这个概念诞生，智能体最终演化为那个熟悉的循环：感知、决策、行动。
 
-**第二条是本体论。** 它古老得多。亚里士多德最早提出"存在的哲学"（philosophy of being），并尝试对存在分类。20 世纪，哲学家 W.V.O. Quine 将其形式化。1993 年，Tom Gruber 给出了计算机科学领域的经典定义：
+**第二条是本体论。** 它古老得多。亚里士多德最早提出"存在的哲学"（philosophy of being），并尝试对存在分类。20 世纪，哲学家 W.V.O. Quine 将其形式化。1993 年，Tom Gruber 为它写下了计算机科学界流传最广的定义：
 
 > A formal specification of a shared conceptualization.
 >
@@ -100,12 +100,12 @@ Frank 补了一个类比：神经网络六十年代就提出了，当时同样�
 
 构建本体论不需要从零开始。十五到二十年的积累留下了可以直接复用的资产：
 
-- **schema.org**：主流搜索引擎共同维护的词汇表和关系定义，覆盖商业、人物、作品等常见领域；
-- **FOAF（Friend of a Friend）**：专门用于社交网络建模的本体论；
-- **Dublin Core**：描述论文、书籍等文献资源的元数据术语集；
-- **DBpedia**：Wikipedia 背后基于本体论的图数据库。你在 Wikipedia 搜索时，背后查询的其实就是这个图数据库。
+- **[schema.org](https://schema.org)**：主流搜索引擎共同维护的词汇表和关系定义，覆盖商业、人物、作品等常见领域；
+- **[FOAF（Friend of a Friend）](http://xmlns.com/foaf/spec/)**：专门用于社交网络建模的本体论；
+- **[Dublin Core](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/)**：描述论文、书籍等文献资源的元数据术语集；
+- **[DBpedia](https://www.dbpedia.org)**：从 Wikipedia 词条中抽取实体和关系、按本体论组织起来的知识图谱，Wikipedia 里的人名、地名、作品在这张图上都有对应的节点。
 
-这些资产让"给 Agent 装上领域知识"从一项哲学工程变成一项集成工程。
+这些资产意味着：多数常见领域已经有现成的词汇表，先查再造，不必从零建模。
 
 ## RDFS 与 OWL：让机器自己推理
 
@@ -120,7 +120,7 @@ Frank 补了一个类比：神经网络六十年代就提出了，当时同样�
 - **传递属性（Transitive property）**：Sue 是 Mary 的祖先，Mary 是 Ann 的祖先，那么 Sue 是 Ann 的祖先——链条可以无限延伸；
 - **函数属性（Functional property）**："has_father"只能有一个值。如果数据里同时写着"Bob 是 Jim 的父亲"和"BB 是 Jim 的父亲"，推理器会得出结论：Bob 和 BB 是同一个人。
 
-架构上的安排：这些推导规则并不住在图数据库里面，而是坐在旁边，作为**推理器（reasoner）**在需要时才被应用。数据保持干净，逻辑按需降临。
+架构上的安排：这些推导规则并不住在图数据库里面，而是坐在旁边，作为**推理器（reasoner）**在需要时才被应用。数据和规则分开存放，推理时才合到一起。
 
 ## 循环：图灵完备的最后一块拼图，也是事故的温床
 
@@ -136,7 +136,7 @@ Frank 用一个技术史钩子把话题拉回智能体。
 - **会话漂移（drift off the rails）**：多个 Agent 互相通话时，对话可能逐渐偏离正轨；
 - **Token 成本累积**：每转一圈都在烧钱，失控的循环就是失控的账单。
 
-Frank 的评语很直接：我们正在重访符号 AI 与专家系统的世界。八十年代的幽灵换了一身行头，回来了。
+Frank 的评语很直接：我们正在重访符号 AI 与专家系统的世界。八十年代甩不掉的那些问题，换了个名字又回来了。
 
 ## Claude 工具循环：本体论验证器该站在哪里
 
@@ -147,7 +147,7 @@ Frank 的评语很直接：我们正在重访符号 AI 与专家系统的世界�
 3. 检查响应的 `stop_reason`——如果是 `tool_use`，代码负责真正执行工具；
 4. 把工具结果送回 LLM，进入下一轮循环。
 
-关键的洞察藏在第三步和第四步之间：**工具执行之后、结果返回之前——这正是本体论验证器（ontology validator）应该介入的位置。** 在结果进入上下文、影响后续所有推理之前，先用本体论检查它是否合法。
+关键的位置在第三步和第四步之间：**工具执行之后、结果返回之前——这正是本体论验证器（ontology validator）应该介入的位置。** 在结果进入上下文、影响后续所有推理之前，先用本体论检查它是否合法。
 
 围绕这个位置，Frank 给出了三条工程建议：
 
@@ -173,7 +173,7 @@ Frank 用三个具体例子展示了 OWL 约束在实战中能捕获什么：
 
 > Nothing is a mistake, there's no win, no fail, only make.
 
-现在再听这句话，味道不同了。幻觉不是错误，是创造的毛坯；失败的本体论迭代不是错误，是领域知识显形的必经之路。Frank 给 Agent 开发者的终极建议，和他给学生的建议是同一条：去做。构建你的本体论，给你的 Agent 装上护栏，在"make"的路上让错误变成资产。
+现在再听这句话，味道不同了。幻觉不是错误，是创造的副产品；本体论建错了也不是错误，改一轮，领域知识就更清楚一层。Frank 给 Agent 开发者的终极建议，和他给学生的建议是同一条：去做。构建你的本体论，给你的 Agent 装上护栏，在"make"的路上把错误变成资产。
 
 ## 谁该去看原视频
 
@@ -183,15 +183,15 @@ Frank 用三个具体例子展示了 OWL 约束在实战中能捕获什么：
 
 演讲里点到、但没有展开的几个概念，值得顺着官方材料往下读：
 
-- **RDFS 与 OWL**：语义网的两层标准，均由 W3C《RDF Schema 1.1》和《Web Ontology Language》规范定义。想看懂推理规则从哪来，直接从这两份规范入手，比看二手教程更省时间。
-- **Gruber 的定义**："形式化共享概念化规范"这句经典表述出自 Tom Gruber 1993 年的论文《A Translation Approach to Portable Ontology Specifications》，是理解"本体论为什么是工程而不是哲学"的起点。
-- **Bohm 与 Jacopini**：1966 年证明结构化程序定理的原始论文，回答了"为什么三个控制结构就够图灵完备"，也是演讲里"Agent 补上循环才完整"这个判断的出处。
-- **Pydantic**：演讲建议在工具入口做类型检查，与之配套的官方文档（数据校验与类型强制）能在几分钟内把"形状检查"落地成代码。
+- **[RDFS 与 OWL](https://www.w3.org/TR/rdf-schema/)**：语义网的两层标准，分别由 W3C《RDF Schema 1.1》和 [《OWL 2 Web Ontology Language》](https://www.w3.org/TR/owl2-overview/)规范定义。想看懂推理规则从哪来，直接从这两份规范入手，比看二手教程更省时间。
+- **[Gruber 的定义](https://tomgruber.org/writing/ontolingua-kaj-1993/)**："本体论是对概念化的明确规范"（an explicit specification of a conceptualization）出自 Tom Gruber 1993 年的论文《A Translation Approach to Portable Ontology Specifications》。演讲引用的"形式化共享概念化规范"（a formal specification of a shared conceptualization）是这个定义的后期版本——"formal"与"shared"两个修饰词由 Studer、Benjamins 和 Fensel 在 1998 年的综述里补上。两个版本都值得读，前者是源头，后者是今天教材里的通行版。
+- **[Bohm 与 Jacopini](https://dl.acm.org/doi/10.1145/355592.365646)**：1966 年在 Communications of the ACM 上发表《Flow Diagrams, Turing Machines and Languages with Only Two Formation Rules》，证明了结构化程序定理，回答了"为什么三个控制结构就够图灵完备"，也是演讲里"Agent 补上循环才完整"这个判断的出处。
+- **[Pydantic](https://docs.pydantic.dev/)**：演讲建议在工具入口做类型检查，与之配套的官方文档（数据校验与类型强制）能在几分钟内把"形状检查"落地成代码。
 
 这些材料只补充演讲未展开的细节，不改变演讲本身的结论。
 
 ---
 
-**关于演讲者**：Frank Coyle，UC Berkeley 教育者，三十余年计算机科学经验，早期从事神经科学研究。联系邮箱 coyle@berkeley.edu，个人网站 codesupreme.ai（名字灵感来自 John Coltrane 的《A Love Supreme》）。
+**关于演讲者**：Frank Coyle，视频简介称其为伯克利学者，三十余年计算机科学教学经验，早期从事神经科学研究。个人网站 codesupreme.ai（网站结构借用 John Coltrane《A Love Supreme》的四乐章框架），公开联系邮箱 drc@codesupreme.ai。
 
 **名词索引**：本体论（Ontology）| 神经符号 AI（Neuro-symbolic AI）| RDFS（RDF Schema）| OWL（Web Ontology Language）| 推理器（Reasoner）| 工具使用循环（Tool Use Loop）| 专家系统（Expert System）

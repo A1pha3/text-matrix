@@ -14,21 +14,22 @@ tags: ["Python"]
 
 ## 为什么需要符号计算
 
-写 `x + 1 == 2`，得到的应该是 `x == 1`，而不是一个浮点数。这个"带着未知量推导"的需求，就是符号计算（Symbolic Computation）存在的理由：它把表达式当作对象来化简、求导、积分、解方程，结果仍是精确的符号表达式，而不是近似数值。
+解 `x + 1 = 2`，要的答案是 `x == 1` 这个精确解，而不是一个近似数。这种"带着未知量推导"的需求，就是符号计算（Symbolic Computation）存在的理由：它把表达式当作对象来化简、求导、积分、解方程，结果仍是精确的符号表达式。
 
-NumPy 计算 `sqrt(2)` 得到 `1.414...`，SymPy 保留 `sqrt(2)` 本身；对它求导得到 `1/(2*sqrt(2))`，再代入某个值才会变成数字。符号与数值的分工大致是：**推导用 SymPy，算数用 NumPy/SciPy**。前者保证正确性与通用性，后者提供性能。
+NumPy 计算 `sqrt(2)` 得到 `1.414...`，SymPy 保留 `sqrt(2)` 本身；对它求导得到 `1/(2*sqrt(2))`，再代入某个值才会变成数字。分工一句话：**推导用 SymPy，算数用 NumPy/SciPy**——前者要精确与通用，后者要性能。
 
 ## 项目坐标
 
 | 指标 | 数值 |
 |------|------|
 | Stars | 14.9k（2026-09 实测） |
-| 贡献者 | 1,503（官方 AUTHORS 清单） |
+| 贡献者 | 1,371（1.14 AUTHORS 清单） |
 | 最新版本 | 1.14.0（2025-04-27） |
 | 许可证 | New BSD |
-| 依赖 | 纯 Python，无外部必需依赖 |
+| 依赖 | 纯 Python；运行时依赖 mpmath（任意精度浮点） |
+| Python | ≥ 3.9 |
 
-SymPy 始于 2005 年，2007 年通过 Google Summer of Code 引入第一批学生贡献者，此后由社区持续维护至今。它被 SciPy、Jupyter、SageMath 等生态广泛依赖。
+SymPy 由 Ondřej Čertík 创立于 2005 年，2007 年通过 Google Summer of Code 引入第一批学生贡献者，此后由社区持续维护至今。SageMath 也把它收作符号引擎之一。表中数据随时间变化，更新时以 GitHub 仓库、PyPI 和 AUTHORS 文件为准。
 
 ## 学习目标
 
@@ -43,8 +44,8 @@ SymPy 始于 2005 年，2007 年通过 Google Summer of Code 引入第一批学�
 
 ```bash
 pip install sympy
-# 或 conda
-conda install -c anaconda sympy
+# 或 conda（官方当前推荐写法）
+conda install sympy
 ```
 
 验证安装：
@@ -152,20 +153,20 @@ Matrix([
 
 ## 核心模块速查
 
-| 模块 | 函数 | 说明 |
+| 函数 | 用法 | 说明 |
 |------|------|------|
-| `sympy.diff` | `diff(expr, x)` | 求导 |
-| `sympy.integrate` | `integrate(expr, x)` | 积分 |
-| `sympy.limit` | `limit(expr, x, x0)` | 极限 |
-| `sympy.series` | `series(expr, x, x0, n)` | 泰勒展开 |
-| `sympy.solve` | `solve(eq, x)` | 方程求解 |
-| `sympy.factor` | `factor(expr)` | 因式分解 |
-| `sympy.expand` | `expand(expr)` | 展开 |
-| `sympy.simplify` | `simplify(expr)` | 化简 |
-| `sympy.trigsimp` | `trigsimp(expr)` | 三角化简 |
-| `sympy.cancel` | `cancel(expr)` | 有理式通分化简 |
-| `sympy.subs` | `expr.subs(x, 2)` | 代入求值 |
-| `sympy.lambdify` | `lambdify(x, expr)` | 转数值函数 |
+| `diff` | `diff(expr, x)` | 求导 |
+| `integrate` | `integrate(expr, x)` | 积分 |
+| `limit` | `limit(expr, x, x0)` | 极限 |
+| `series` | `series(expr, x, x0, n)` | 泰勒展开 |
+| `solve` | `solve(eq, x)` | 方程求解 |
+| `factor` | `factor(expr)` | 因式分解 |
+| `expand` | `expand(expr)` | 展开 |
+| `simplify` | `simplify(expr)` | 化简 |
+| `trigsimp` | `trigsimp(expr)` | 三角化简 |
+| `cancel` | `cancel(expr)` | 有理式通分化简 |
+| `subs` | `expr.subs(x, 2)` | 代入求值 |
+| `lambdify` | `lambdify(x, expr)` | 转数值函数 |
 
 ## 高级功能
 
@@ -178,6 +179,8 @@ Matrix([
 x^{2} + \cos{\left(x \right)}
 >>> latex(Integral(x**2, x))
 \int x^{2}\, dx
+>>> latex(Integral(x**2, (x, 0, 1)))
+\int\limits_{0}^{1} x^{2}\, dx
 ```
 
 生成的 LaTeX 可直接嵌入 Markdown 的 `$$` 公式块，或用于 Jupyter Notebook 的数学渲染。
@@ -242,7 +245,7 @@ True
 40
 ```
 
-`isprime` 对较小的数走确定性判别，对大数使用概率性 Miller-Rabin 测试；`prime` 内部使用素数筛缓存，频繁取第 n 个素数时效率可接受。
+`isprime` 对 2^64 以内的数给出确定性结果，更大的数走强 BPSW 素性测试——理论上属于概率性判别，但目前没有已知反例；`prime` 背后是素数筛缓存，频繁取第 n 个素数时效率可接受。
 
 ## 物理模块
 
@@ -281,12 +284,18 @@ Derivative(q1(t), t)
 ## 绘图
 
 ```python
->>> from sympy import symbols, plot, sin, cos, exp
+>>> from sympy import symbols, plot, sin, cos, exp, pi
 
 >>> x = symbols('x')
 >>> p1 = plot(sin(x), (x, -pi, pi))
 >>> p2 = plot(sin(x), cos(x), exp(-x), (x, -2*pi, 2*pi))
 >>> p2.save('plot.png')
+
+# 需要定制轴标签时，关闭自动显示再接 Matplotlib
+>>> p3 = plot(sin(x), (x, 0, 2*pi), show=False)
+>>> p3.xlabel = 'x'
+>>> p3.ylabel = 'sin(x)'
+>>> p3.show()
 ```
 
 3D 绘图用 `plot3d`，曲面、等高线、参数曲线分别有独立入口。绘图默认返回 `Plot` 对象，`save` 支持常见图片格式；在 Jupyter 中直接显示对象即可内联渲染。
@@ -299,30 +308,6 @@ SymPy 是纯 Python 实现，大型符号计算（如高阶多项式、复杂定
 2. **数值阶段**：用 `lambdify` 转成 NumPy/SciPy，或在 `numpy` 后端上批量向量化。
 
 对超大规模数值计算，直接使用 NumPy/SciPy，符号层只负责离线推导公式。
-
-## 与其他工具集成
-
-```python
-# NumPy：向量化求值
->>> import numpy as np
->>> from sympy import lambdify, Symbol, sin, cos
->>> x = Symbol('x')
->>> f = lambdify(x, sin(x) + cos(x), 'numpy')
->>> f(np.array([0, np.pi/2, np.pi]))
-[ 1.  1. -1.]
-
-# Matplotlib：绘制符号函数
->>> import matplotlib.pyplot as plt
->>> p = plot(sin(x), (x, 0, 2*pi), show=False)
->>> p.xlabel = 'x'
->>> p.ylabel = 'sin(x)'
->>> p.show()
-
-# LaTeX：输出公式
->>> from sympy import latex, Integral
->>> print(latex(Integral(x**2, (x, 0, 1))))
-\int\limits_{0}^{1} x^{2}\, dx
-```
 
 ## 常见问题
 

@@ -1,11 +1,11 @@
 ---
 title: "Temporal 架构深读：从事件溯源到 ASM 框架，durable execution 平台为什么这样设计"
 date: "2026-09-05T15:55:00+08:00"
-lastmod: "2026-09-05T15:55:00+08:00"
+lastmod: "2026-09-15T10:30:00+08:00"
 draft: false
 categories: ["技术笔记"]
 tags: ["temporal", "durable-execution", "workflow", "cadence", "go", "分布式系统", "事件溯源", "项目解读"]
-description: "Uber Cadence fork 的 Temporal 22.8k stars Go 项目。它不只是 'workflow orchestration'，是 durable execution 的工业级实现。本文拆 5 个架构决策：Event Sourcing 双轨、History Shard 固定分片、CHASM 把 Workflow 抽象成通用 ASM 框架、Speculative Workflow Task 让 Update 拒绝不写 history、Outbound Queue 按目的地隔离 circuit breaker。每个决策都对应 GitHub 代码入口或架构文档的具体路径。"
+description: "Uber Cadence fork 的 Temporal，23k stars 的 Go 项目。它不只是 'workflow orchestration'，是 durable execution 的工业级实现。本文拆 5 个架构决策：Event Sourcing 双轨、History Shard 固定分片、CHASM 把 Workflow 抽象成通用 ASM 框架、Speculative Workflow Task 让 Update 拒绝不写 history、Outbound Queue 按目的地隔离 circuit breaker。每个决策都对应 GitHub 代码入口或架构文档的具体路径。"
 slug: "temporalio-temporal-durable-execution-architecture"
 band: "review"
 gates: ["事实性", "去AI味", "观点依据"]
@@ -14,9 +14,9 @@ github_repo: "temporalio/temporal"
 source_key: "gh:temporalio/temporal"
 ---
 
-> **关于这篇文章。** Temporal 是一个 22.8k stars 的 Go 项目，最早从 Uber Cadence fork 出来（2019-10），现在由 Temporal Technologies 维护。它的代码库里藏着不少有教学价值的分布式系统设计——本文挑 5 个具体的架构决策深读，每个都指到 GitHub 仓库的具体文件或文档路径。不是教程（怎么用 Temporal），也不是 API 文档；是项目解读：它为什么这样设计。
+> **关于这篇文章。** Temporal 是一个 23k stars 的 Go 项目，最早从 Uber Cadence fork 出来（2019-10），现在由 Temporal Technologies 维护。它的代码库里藏着不少有教学价值的分布式系统设计——本文挑 5 个具体的架构决策深读，每个都指到 GitHub 仓库的具体文件或文档路径。不是教程（怎么用 Temporal），也不是 API 文档；是项目解读：它为什么这样设计。
 >
-> 仓库：[github.com/temporalio/temporal](https://github.com/temporalio/temporal) · 22.8k stars · 1.87k forks · Go 1.26.4 · MIT · 架构文档：[docs/architecture/](https://github.com/temporalio/temporal/tree/main/docs/architecture)
+> 仓库：[github.com/temporalio/temporal](https://github.com/temporalio/temporal) · 23k stars · 1.9k forks · go.mod 声明 go 1.27.0 · MIT · 架构文档：[docs/architecture/](https://github.com/temporalio/temporal/tree/main/docs/architecture)
 
 ## 为什么挑这 5 个决策
 
@@ -28,19 +28,19 @@ Temporal 在 GitHub 上一搜出来就是"durable execution platform"——能�
 4. **Speculative Workflow Task**——为什么 Update 拒绝时一行 history 都不能写
 5. **Outbound Queue + Circuit Breaker Pool**——为什么按 `(TaskGroup, NamespaceID, Destination)` 隔离故障域
 
-这 5 个决策决定了这个系统能不能在生产环境里"经年累月不出问题"。下面逐个拆。
+下面逐个拆。
 
 ---
 
 ## 决策一：Mutable State + Event History 双轨，Event Sourcing 的工程取舍
 
-Temporal 文档里反复强调它"uses event sourcing"——每个 Workflow Execution 有一条 append-only 的 Event History，所有 state 都能从 history 重放出来。但真去看代码会发现，**光有 Event History 不够，每个** 还有一个常驻内存的 **Mutable State** 对象。
+Temporal 文档里反复强调它"uses event sourcing"——每个 Workflow Execution 有一条 append-only 的 Event History，所有 state 都能从 history 重放出来。但真去看代码和文档会发现，**光有 Event History 不够——每个 execution 还有一个单独持久化的 Mutable State**。
 
 [history-service.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/history-service.md) 写得很直接：
 
 > For every workflow execution, we maintain a collection of data structures summarizing various aspects of its current state, for example, the identities of in-progress activities, timers, and child workflows. Although most of this data could in principle be recomputed from Workflow History Events when handling an incoming request, this would be slow, and hence the summaries themselves are persisted.
 
-翻译过来：**理论上 Mutable State 能从 Event History 重算出来，但每次 RPC 都重算一遍太慢，所以单独持久化一份"摘要"**。
+也就是说：理论上 Mutable State 能从 Event History 重算出来，但每次 RPC 都重算一遍太慢，所以单独持久化一份"摘要"。
 
 为什么这么设计？三个具体原因：
 
@@ -48,11 +48,11 @@ Temporal 文档里反复强调它"uses event sourcing"——每个 Workflow Exec
 - **查询/读路径不用重放**：[history-service.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/history-service.md) 里 Mutable State 章节点出"recently accessed workflow executions are cached in memory"——读路径直接命中缓存，绕过 history 重放。
 - **跨 shard 操作保持一致性**：Timer Task 触发 / Transfer Task 把任务塞进 Matching Service 时，需要知道 workflow 还活着、当前进度到哪——这种"内部调度"如果每次都重算整个 history，开销不可接受。
 
-具体代码里，Mutable State 的运行时实现是 [`MutableStateImpl`](https://github.com/temporalio/temporal/blob/main/service/history/workflow/mutable_state_impl.go)，它实现了 [`MutableState`](https://github.com/temporalio/temporal/blob/main/service/history/workflow/mutable_state.go) 接口。每次"state transition"——也就是 RPC 来了或 timer 触发了——都通过统一的 [`GetAndUpdateWorkflowWithNew`](https://github.com/temporalio/temporal/blob/main/service/history/api/update_workflow_util.go#L37) 工具函数同时做两件事：追加 Event History + 更新 Mutable State。
+具体代码里，Mutable State 的运行时实现是 [`MutableStateImpl`](https://github.com/temporalio/temporal/blob/main/service/history/workflow/mutable_state_impl.go)，它实现了 [`MutableState`](https://github.com/temporalio/temporal/blob/main/service/history/workflow/mutable_state.go) 接口。每次"state transition"——也就是 RPC 来了或 timer 触发了——都通过统一的 [`GetAndUpdateWorkflowWithNew`](https://github.com/temporalio/temporal/blob/main/service/history/api/update_workflow_util.go#L14) 工具函数同时做两件事：追加 Event History + 更新 Mutable State。
 
-这是 Event Sourcing 在工业实践里非常典型的取舍：**纯 Event Sourcing 在分布式系统里很难直接落地**，因为每一步都要重放，开销不可控**。Temporal 的解法是把"重放"留给 Worker（SDK 在 Replay 模式下用 history 重建 workflow code 的内存状态），而把"服务端的 authoritative state"做成 Event History + Mutable State 双轨**。Server 永远不重放自己的 history——它信任 Mutable State 缓存。
+这是 Event Sourcing 在工业实践里非常典型的取舍：**纯 Event Sourcing 在服务端读路径上很难直接落地，因为每一步都要重放，开销不可控。Temporal 的解法是把"重放"留给 Worker（SDK 在 Replay 模式下用 history 重建 workflow code 的内存状态），而把"服务端的 authoritative state"做成 Event History + Mutable State 双轨**。Server 永远不重放自己的 history——它信任 Mutable State 缓存。
 
-这个权衡带来的代价也很清晰：**Mutable State 必须在每次 state transition 时和 Event History 一起原子提交**。代码里通过 Cassandra/MySQL/Postgres 的事务保证，写 event 和写 mutable state 是一条 single-row 的 update。这意味着 Mutable State 不是"独立的服务端状态"——它只是 Event History 的一个 materialized view，一旦需要 rebuild 就从 history 重新生成（`MutableState` 接口的 LoadFromHistory 方法）。
+这个权衡带来的代价也很清晰：**Mutable State 必须在每次 state transition 时和 Event History 一起原子提交**。这一点靠存储层事务保证。另外，Mutable State 本身因为 Cassandra 的行大小限制而以单行存储（文档原话是 "persisted in a single row, similar to its layout in the in-memory cache"）。这意味着 Mutable State 不是"独立的服务端状态"——它只是 Event History 的一个物化视图，理论上随时可以从 history 重建。
 
 ---
 
@@ -62,31 +62,33 @@ Temporal 文档里反复强调它"uses event sourcing"——每个 Workflow Exec
 
 > The total number of History Shards is fixed at cluster creation and cannot be changed later.
 
-为什么不能改？答案藏在分片本身的 ownership 协议里——用 [Ringpop](https://github.com/uber/ringpop-go) 做 shard membership 协调。Ringpop 是 Uber 的 gossip 协议库，每个 History Service 实例持有 shard id 的一段 hash range；shard 的 ownership 在 gossip 协议里就是"我持有哪些 shard id"，改分片数等于改 hash range 划分，等于让所有 ownership 失效。
+文档只陈述了这条规则，没有解释原因。顺着实现往下读，能看出一些门道：shard 归属由 [Ringpop](https://github.com/uber/ringpop-go) 协调——每个 History Service 实例通过 gossip 维护成员关系，用一致性哈希环决定"我持有哪些 shard id"。shard id 到存储记录的映射、到 in-memory 状态的映射都以 shard id 为键；shard 数固定，这个映射才稳定。扩容的正确姿势是**加 host、让环重新划分 shard 的 ownership**，而不是加 shard。
 
-但更深一层是**为什么用 fixed shards 而非 consistent hashing**：因为 shard ownership 改变要付出昂贵的代价——重新加载 shard 上的 mutable state、缓存、ack levels、历史任务队列。所以 Temporal 选择"宁可一次分配到位，永不扩容"。
+我的读法是：ownership 转移本身就不便宜——新 host 要重新加载 shard 上的 mutable state 缓存、任务队列的推进状态。如果 shard 数还能变，等于每次变更都要同时处理两层重新映射。Temporal 选择"宁可一次分配到位"。
 
-**实际代价是什么？** 假设集群创建时设了 1024 个 shard，业务跑两年后 workflow execution 数量翻 5 倍——这时候你不能再加 shard。唯一的选择是**把单个 workflow 的 Event History 分到多个 shard 上**——这正是 Workflow Execution History 章节里提到的：
+**实际代价是什么？** 假设集群创建时设了 1024 个 shard，业务跑两年后 workflow execution 数量翻 5 倍——这时候你不能再加 shard。负载增长只能靠更多 host 分担这 1024 个 shard 的 ownership，单个 shard 管的 execution 数量则会一直涨。按文档定义，"owning" 一个 shard 意味着负责该 shard 里**每个 execution 的完整生命周期**——同步处理它的请求、异步推进它的定时器和任务分发。这个责任粒度定死了，后面的所有伸缩都只能在它之上做。
+
+顺带澄清一个容易误读的地方。同一份文档里还有一句：
 
 > Workflow Execution History is a linear sequence of History Events (unless the workflow has been `Reset` or subject to conflict resolution, in which case it has a branching topology).
 
-也就是说 History 默认是线性的，但 Reset 和 conflict resolution 时会进入"branching topology"——这恰恰是因为单 shard 装不下、必须把后续 history 写到另一个 shard 时做的妥协。
+History 默认线性，Reset 和 conflict resolution 时出现"branching topology"——这是版本管理语义（Reset 产生新分支、failover 冲突产生分叉），**与 shard 无关**。一条 history 不会因为太长就被拆到别的 shard；shard 按 execution 的 key 哈希分配，一个 execution 的 history 始终归一个 shard 管。
 
-代码里 shard 的入口在 [`service/history/history_engine.go`](https://github.com/temporalio/temporal/blob/main/service/history/history_engine.go) 的 `Start()` 方法——当 History service 启动在某个 host 上时，它为持有的每个 shard 启动一个 `QueueProcessor`。Ringpop 协调 host 之间的 shard ownership 转移，转移发生时新 host 会全量加载 shard 的状态。
+代码里 shard 的入口在 [`service/history/history_engine.go`](https://github.com/temporalio/temporal/blob/main/service/history/history_engine.go)：每个 shard 对应一个 `historyEngineImpl`，其 `Start()` 拉起该 shard 内部的多个 queue processor（transfer、timer 等每种内部队列各一个）和 replication processor。注释里还写明了一点：ShardController 会顺序调用本 host 所有 shard 的 start，所以 start 必须立即返回、组件全部懒加载。ownership 转移发生时，新 host 全量加载 shard 的状态。
 
-这个决策的工程含义：**Temporal cluster 创建时必须估算好未来 3-5 年的 workflow execution 数量上限**。生产经验通常是"高峰时段单 shard 承载 ~1000 active workflow executions"——这数字直接决定初始 shard 数。
+这个决策的工程含义：**Temporal cluster 创建时必须把规模预算一次做对**。shard 数一旦定死，后续扩容只能加 host 分担 ownership；对增长快的业务，初始 shard 数要按未来的峰值规模估，而不是按当下。
 
 ---
 
 ## 决策三：CHASM 框架，把 Workflow 抽象成可水平复制的 ASM
 
-Temporal 仓库里有一篇 12K 字的架构文档专门讲 [CHASM](https://github.com/temporalio/temporal/blob/main/docs/architecture/chasm.md)，全称 **Coordinated Heterogeneous Application State Machines**。这篇文章读起来不像 Temporal 项目的一部分，倒像是一个独立的"分布式状态机框架"的 RFC。
+Temporal 仓库里有一篇 1600 多词的架构文档专门讲 [CHASM](https://github.com/temporalio/temporal/blob/main/docs/architecture/chasm.md)，全称 **Coordinated Heterogeneous Application State Machines**。这篇文章读起来不像 Temporal 项目的一部分，倒像是一个独立的"分布式状态机框架"的 RFC。
 
-CHASM 的核心判断很刺激：
+CHASM 起点的判断相当坦率：
 
 > Temporal Workflows are powerful, but they have real limits: too slow or heavyweight for some problems, unable to scale in every dimension (e.g. millions of signals, large payloads), and overly complex when a purpose-built solution would be simpler.
 
-翻译：**Workflow 太重、太慢、太复杂**。它能承载上百万种业务逻辑，但不是所有东西都应该跑在 Workflow 上。
+也就是承认：**Workflow 太重、太慢、太复杂**。它能承载海量业务逻辑，但不是所有东西都应该跑在 Workflow 上。
 
 CHASM 的解法是把 Workflow 抽象成一种 **Application State Machine (ASM)**——一种**用 Temporal 的 sharding/routing/atomic storage/failure recovery，但避开 full workflow cost** 的轻量级状态机。
 
@@ -94,28 +96,29 @@ CHASM 把"做一个 ASM"的成本压到很低：
 
 | 概念 | 含义 |
 | --- | --- |
-| **Library** | 一组 Component types + Tasks 的命名空间，比如内置的 `workflow`、`scheduler`、`nexusoperation` |
+| **Library** | 把 components、tasks、service handlers 归组到一个命名空间下，比如内置的 `workflow`、`scheduler` |
 | **Component type** | 一种注册的状态机类型，由 Fields（持久化数据）+ behavior（方法）组成 |
-| **Node** | Component 在 runtime 的实例，存在 Execution 树里 |
-| **Execution** | 一棵 Component tree 的根，由 `NamespaceID + BusinessID + RunID` 唯一定位 |
-| **Transition** | 原子状态变更单元——一个事件进来，整个 Execution 树上相关 Node 一起更新 |
-| **Task** | 异步工作单元，分 Pure（事务内）和 Side Effect（事务后）两类 |
+| **Node** | Execution 的状态载体——存储归 Node 管，行为归 Component 管，根节点及其后代构成 CHASM Tree |
+| **Execution** | 一个 ASM 的运行时实例，由 `NamespaceID + BusinessID + RunID` 组成的 ExecutionKey 唯一定位 |
+| **Transition** | 原子状态变更单元——一次 transition 作用于整个 Execution，所有写入要么全部提交要么全部回滚 |
+| **Task** | 异步工作单元，分 Pure（事务内执行）和 Side Effect（事务提交后异步执行）两类 |
 
-CHASM 不只是"Workflow 的简化版"。它的野心是把 Temporal 的核心能力——sharding、routing、atomic storage、failure recovery——**剥离成一个可水平复制的框架**，然后用这个框架去构建各种业务实体。当前仓库里 [chasm/lib/](https://github.com/temporalio/temporal/tree/main/chasm/lib) 已经包含三个内置 Library：
+CHASM 不只是"Workflow 的简化版"。它的野心是把 Temporal 的核心能力——sharding、routing、atomic storage、failure recovery——**剥离成一个可水平复制的框架**，然后用这个框架去构建各种业务实体。当前仓库里 [chasm/lib/](https://github.com/temporalio/temporal/tree/main/chasm/lib) 已经有五个内置 Library：
 
 - [`workflow`](https://github.com/temporalio/temporal/tree/main/chasm/lib/workflow)——传统 Workflow Execution，被改造成 CHASM 的 root component
-- [`scheduler`](https://github.com/temporalio/temporal/tree/main/chasm/lib/scheduler)——Schedules 特性（定时触发 Workflow 的新实现），整个 Scheduler 树就是 CHASM tree
+- [`scheduler`](https://github.com/temporalio/temporal/tree/main/chasm/lib/scheduler)——Schedules 特性的新实现，整个 Scheduler 树就是 CHASM tree
 - [`nexusoperation`](https://github.com/temporalio/temporal/tree/main/chasm/lib/nexusoperation)——Nexus Operation 的生命周期管理
+- [`activity`](https://github.com/temporalio/temporal/tree/main/chasm/lib/activity)、[`callback`](https://github.com/temporalio/temporal/tree/main/chasm/lib/callback)——后加入的两个实体
 
-为什么这是关键决策？因为它意味着 Temporal 不再是"Workflow orchestration"——它变成一个**通用状态机平台**。新的业务实体（比如 Schedules）不需要重新实现一套 sharding/timer/circuit breaker 体系，直接在 CHASM 框架上注册一个新 ASM Library 就行。
+为什么这是关键决策？因为它意味着 Temporal 不再是"Workflow orchestration"——它变成一个**通用状态机平台**。新的业务实体不需要重新实现一套 sharding/timer 体系，直接在 CHASM 框架上注册一个新 ASM Library 就行。从三个 library 到五个，这个清单还在变长。
 
 这种架构变化的工程信号：[schedules.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/schedules.md) 顶部就有：
 
 > ⚠️ All documentation pertains to the CHASM-based Scheduler implementation, which is not yet generally available.
 
-也就是说旧 Scheduler 实现还在，新 Scheduler 实现已经 CHASM 化。这是一种架构迁移——把现有 Workflow 抽象成 ASM tree，未来可能有更多组件加入这个 tree（比如 Schedule、Callback、NexusOperation）。
+也就是说旧 Scheduler 实现还在，CHASM 化的新 Scheduler 尚未 GA——迁移在推进，但还没走完。
 
-**CHASM 的核心创新**：用 `VersionedTransition` 作为全局逻辑时钟——每个 transition 有 `(FailoverVersion, TransitionCount)` 两个分量，前跨跨 DC failover、后者跨 Execution 内 transition。这让 CHASM 能在多数据中心环境下提供**严格的总序**，这是 Event Sourcing 系统里很难做到的。
+**CHASM 的核心创新**：用 `VersionedTransition` 作为全局逻辑时钟——每个 transition 有 `(FailoverVersion, TransitionCount)` 两个分量，前者跨 DC failover 递增，后者在 Execution 内随每次状态更新递增。CHASM 用它给出所有状态变更的全序，跨数据中心也一样成立——这是 Event Sourcing 系统里很难自然拥有的性质。
 
 ---
 
@@ -129,7 +132,7 @@ Signal 是 fire-and-forget，Query 是 read-only。但实际业务经常需要"�
 
 "拒绝不留痕"在 Event Sourcing 里是反直觉的——history 是 immutable 的，按说只能 append。Temporal 的解法是发明了一种**新的消息协议**：[message-protocol.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/message-protocol.md)——用 messages 而不是 events 来承载 Update 请求。
 
-但这还不够。Update 被拒绝时不仅不写 event，还**不能写 mutable state、不能创建 transfer task**——因为 transfer task 本身就要写一行 event。所以 Workflow Update 需要一个**完全不写 DB 的路径**来派发 Workflow Task。
+但这还不够。Update 要做到文档所说的 zero writes——不仅不写 event，连 transfer task 都不能创建，因为创建 transfer task 本身就要写一次 DB。所以 Workflow Update 需要一条**完全不落库的路径**来派发 Workflow Task。
 
 这就是 [speculative-workflow-task.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/speculative-workflow-task.md) 的来历。Speculative Workflow Task 的定义：
 
@@ -139,9 +142,13 @@ Signal 是 fire-and-forget，Query 是 read-only。但实际业务经常需要"�
 
 这个设计的代价是：要确保 speculative task 在中途挂掉时（worker crash、network error）能**安全地丢弃**——`StartedTime` 加到 workflow task token 里就是为了让 worker 在新 task 创建后无法用旧 token 完成；`ResetHistoryEventId` 字段让 SDK 在 server 决定 discard 时能 rollback history checkpoint。
 
-**为什么要这么麻烦？** 因为 Update 的核心 SLA 是"如果 Workflow 拒绝，必须完全不写 history"。这是产品级的承诺——业务代码调用 `workflow.ExecuteUpdate(ctx, "reject", req)` 时，期望"什么都没发生"——必须真有"什么都没发生"的工程语义。任何"Update Admitted"或"Update Rejected"事件都会让 SDK 报错。
+**为什么要这么麻烦？** 因为 Update 的核心承诺是"拒绝不留痕"。workflow-update.md 里有一句很直白的描述：
 
-Speculative task 的应用不止 Update——文档里明确指出"future refactoring could replace query task processing under speculative workflow tasks under the hood"。这是一个**通用工程模式**：当业务需要"先尝试、失败时不留痕"的语义时，Event Sourcing 系统的常规做法是引入 speculative execution，CPU 体系结构的概念被原样搬到了分布式系统。
+> There is no 'Update Rejected' event: when an Update is rejected, it just disappears.
+
+被拒绝的 Update 无处存储、无法去重，同一个请求甚至可能被重复投递给 worker；之后再去 poll 这个 Update 的结果，得到的也只是一次 NotFound。这是产品级的语义承诺——调用方期望"什么都没发生"，系统就必须真的做到"什么都没发生"，哪怕代价是给 task 派发专门修一条不落库的通路。
+
+Speculative task 的应用不止 Update——workflow task 处理代码里留有一条 TODO 注记，说 Query 的处理未来也可能改用 speculative Workflow Task 实现。这是一个**通用工程模式**：当业务需要"先尝试、失败时不留痕"的语义时，Event Sourcing 系统的常规做法是引入 speculative execution——CPU 体系结构的概念被原样搬到了分布式系统。
 
 ---
 
@@ -149,13 +156,11 @@ Speculative task 的应用不止 Update——文档里明确指出"future refact
 
 [Nexus](https://github.com/temporalio/temporal/blob/main/docs/architecture/nexus.md) 是 Temporal 用于跨 namespace / 跨 cluster 边界的服务调用框架。它要解决的核心问题是：**Temporal server 自己作为 client 调外部服务**（不像普通 worker 那样——worker 调外部是 user 的代码）。具体场景：调用另一个 namespace 的 Nexus service / 调用外部 HTTP endpoint / 投递 workflow completion callback。
 
-[Temporal server 自己作为 client] 这件事带来一个全新的故障模式——destination 可能慢、可能挂、可能反复 503。如果 Temporal 把这些 outbound 调用塞进普通的 transfer queue，每一个 retry 都会加载 workflow 的 mutable state（cache 或 DB 命中），占住 scheduler goroutine，然后阻塞在一个注定要超时的 HTTP 请求上。
+**Temporal server 自己作为 client** 这件事带来一个全新的故障模式——destination 可能慢、可能挂、可能反复 503。如果 Temporal 把这些 outbound 调用塞进普通的 transfer queue，每一个 retry 都会加载 workflow 的 mutable state（cache 或 DB 命中），占住 goroutine，然后阻塞在一个注定要超时的 HTTP 请求上。
 
-[circuit-breaker.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/circuit-breaker.md) 把这个失败模式叫"destination down"——一个 destination 死了，会让 outbound queue 整体饿死。
+[circuit-breaker.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/circuit-breaker.md) 开篇就点破这个失败模式：一个不健康的 destination 会把队列容量吃光，健康 destination 需要的配额被它抢走——对死掉的 destination 反复重试代价极高，因为它每次都要走完上面那整条路径。
 
-**解法是给每个 destination 单独配一个 circuit breaker**——而不是一个全局的。
-
-但单个全局 breaker 太粗——一个 destination 挂了，所有 outbound task 都被短路。所以 Temporal 用一个 [`CircuitBreakerPool[K]`](https://github.com/temporalio/temporal/blob/main/service/history/circuitbreakerpool/circuit_breaker_factory.go)，key 是 `(TaskGroup, NamespaceID, Destination)` 三元组。
+最粗的解法是给整个 outbound queue 配一个全局 circuit breaker，但那样一个 destination 挂了，所有 outbound task 都被短路。Temporal 的解法是按 destination 隔离：用一个 [`CircuitBreakerPool[K]`](https://github.com/temporalio/temporal/blob/main/service/history/circuitbreakerpool/circuit_breaker_factory.go)，key 是 `(TaskGroup, NamespaceID, Destination)` 三元组。注意 Destination 不是 URL，而是 Nexus endpoint 的名字——同一个 endpoint 背后怎么换地址，熔断状态都跟着名字走。
 
 为什么用这个三元组？文档里写：
 
@@ -165,13 +170,13 @@ Speculative task 的应用不止 Update——文档里明确指出"future refact
 
 breaker 的 trip 策略用 gobreaker 默认：连续失败超过 5 次就 trip。trip 后状态走 Open → Half-open → Closed 的标准三态机。
 
-这种 key粒度设计背后的工程判断：**故障隔离的代价是配置面复杂度**，但收益是 "一个不健康的 destination 不会拖垮整个 cluster"。Temporal 选择接受配置复杂度，因为——Nexus 服务调用场景下，一个挂的 destination 可能影响成百上千个上游 workflow，让它拖垮整个 outbound queue 远比配置面复杂更糟糕。
+这种 key 粒度设计背后的工程判断：**故障隔离的代价是配置面复杂度**，但收益是"一个不健康的 destination 不会拖垮整个 cluster"。Temporal 选择接受配置复杂度，因为 Nexus 服务调用场景下，一个挂掉的 destination 可能牵连大量上游 workflow，让它拖垮整个 outbound queue，远比配置面复杂更糟。
 
-具体的处理栈：[Nexus 文档](https://github.com/temporalio/temporal/blob/main/docs/architecture/nexus.md#outbound-task-queue) 把 Outbound Queue 处理 pipeline 拆成五步：`Reader → Buffer → Concurrency Limiter → Rate Limiter → Circuit Breaker → Executor`。每一层都是独立的 buffer / limit / 隔离，**只有全部环节通过才能让 task 落到 Executor**。
+具体的处理栈：[Nexus 文档](https://github.com/temporalio/temporal/blob/main/docs/architecture/nexus.md#outbound-task-queue) 里，Outbound Queue 的 reader 先从队列读出 task，再按**源 namespace + 目的地**分组送进各自的 scheduler，每个组内部依次经过 `Buffer → Concurrency Limiter → Rate Limiter → Circuit Breaker`，最后落到 Executor。每一层都是独立的限流和隔离，**只有全部环节通过才能让 task 被真正执行**。
 
-Multi-Cursor 是另一层隔离——一个 shard 上的 outbound queue 默认起 4 个 reader，slow destination 的 task 被移动到慢 reader（4 个 reader 分别有自己的 cursor），让健康 destination 不被拖累。
+Multi-Cursor 是另一层隔离——一个 shard 上的 outbound queue 默认起 4 个 reader（各自有自己的 cursor，可用动态配置 `history.outboundQueueMaxReaderCount` 调整），slow destination 的 task 被移交给较慢的 reader 消费，让健康 destination 不被拖累。
 
-整个 outbound queue 设计的工程哲学：**把"对外部世界的信任"降到零**——每个 outbound call 都被多层 limit 包着，每个 destination 都有自己的 breaker，每个 shard 都有自己的 cursor。这和 Temporal 内部的 in-memory state machine 设计风格完全相反（内部状态机信任内存、信任历史、重放是合法的）——因为外部世界不能被信任。
+把这套 outbound queue 的设计和 Temporal 内部状态机的风格放在一起看很有意思：内部信任内存、信任 history，重放是合法操作；对外则把信任降到零——每个 outbound call 被多层 limit 包着，每个 destination 有自己的 breaker，每个 shard 有自己的 cursor。区别只有一个：外部世界不能被信任。
 
 ---
 
@@ -179,13 +184,11 @@ Multi-Cursor 是另一层隔离——一个 shard 上的 outbound queue 默认�
 
 读完整套架构文档还能看到几个值得讲的工程决策：
 
-**Workflow Task 三态**——[speculative-workflow-task.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/speculative-workflow-task.md) 把 Workflow Task 拆成 Normal / Transient / Speculative 三种。Normal 是写 DB 的常规 task；Transient 是"中途失败不写 history"的 retry-only task；Speculative 是上面决策四讲的"完全不写 DB"的 task。三态分得很清楚——用 `Type` 字段 + `IsTransientWorkflowTask()` 这种 boundary check 把语义差异写进代码。
-
-**VersionedTransition**——CHASM 的全局逻辑时钟（`(FailoverVersion, TransitionCount)`）。前者跨 DC failover、后者跨 Execution 内 transition。提供跨数据中心的**严格总序**——这是 Event Sourcing 系统里几乎不会自然存在的特性。
+**Workflow Task 三态**——[speculative-workflow-task.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/speculative-workflow-task.md) 把 Workflow Task 拆成 Normal / Transient / Speculative 三种。Normal 失败时写 failure event 并加 attempt count；重试改用 Transient，它的 scheduled/started events 不写 history，直到某次真正完成才一并补写；Speculative 是上面决策四讲的"完全不写 DB"的 task。有个耐人寻味的细节：数据结构里其实有 `Type` 字段，但 `WORKFLOW_TASK_TYPE_TRANSIENT` 值目前没被使用——代码实际用 `ms.IsTransientWorkflowTask()` 检查 attempt count 是否大于 1 来判断，文档里以 TODO 的形式承认了这一点。
 
 **Message Protocol**——上面决策四提到的 message protocol 用 `protocol_instance_id`（当前 == update_id，未来可能扩展到 signal/query）+ `body: Any` + `sequencing_id`（event_id 或 command_index）。`body: Any` 用 protobuf Any 而不是 oneof，是为了让 server 不需要知道所有消息类型——可插拔设计。
 
-**Transfer Queue + Timer Queue 拆分**——把"立即推进"（Transfer）和"等时长"（Timer）拆成两个内部队列。每个都是 sharded queue processor 模式运行。文档里强调："elsewhere in Temporal documentation, 'task queue' refers to the Task Queues of the Matching Service, which are a concept exposed to Temporal users; the task queues we are discussing here are an internal implementation detail of the History Service."——外部可见的 Task Queue 和内部 task queue 是两套东西，名字相同但语义不同。
+**Transfer Queue + Timer Queue 拆分**——把"立即推进"（Transfer）和"等时长"（Timer）拆成两个内部队列，分别用 immediate queue 和 scheduled queue 两种变体处理。文档里特意提醒："It's important to understand that elsewhere in Temporal documentation, 'task queue' refers to the Task Queues of the Matching Service, which are a concept exposed to Temporal users; the task queues we are discussing here are an internal implementation detail of the History Service."——外部可见的 Task Queue 和内部 task queue 是两套东西，名字相同但语义不同。
 
 ---
 
@@ -193,13 +196,13 @@ Multi-Cursor 是另一层隔离——一个 shard 上的 outbound queue 默认�
 
 读完这 5 个决策，几个能立刻用得上的判断：
 
-**判断 1：Workflow Task Failure 是设计内的，不是 bug**。Worker 报 `RespondWorkflowTaskFailed` 或 `RecordWorkflowTaskStarted` 失败时，server 会写一行 `WorkflowTaskFailed` event 并加 attempt count。如果失败反复发生，最终是 transient workflow task——task scheduled/started events 不写 history，但 Workflow 仍然在推进。这是为了"worker 失败 ≠ workflow 失败"的隔离，工程上必须这么设计。
+**判断 1：Workflow Task Failure 是设计内的，不是 bug**。Worker 报 `RespondWorkflowTaskFailed` 时，server 会写一条 failure event 并把 mutable state 里的 attempt count 加一；下一次重试改用 Transient task，它的 scheduled/started events 不进 history——反复失败也不会堆出一串失败事件，直到某次真正完成才补写。这套机制的目的就是"worker 失败 ≠ workflow 失败"，读 history 时看到的事件序列比实际的重试次数干净得多。
 
-**判断 2：Update 拒绝不留痕是产品级承诺**。如果你在设计业务 SDK，要让 workflow code 真的能"reject" Update——并且不能依赖任何"Update Rejected"事件。`UpdateStore` 的存在意味着 server 自己会处理 in-flight Update 的恢复，但 rejected Update 不会持久化。如果你需要"reject with reason"的语义，目前的实现下 SDK 拿不到 reason——这是有意取舍。
+**判断 2：Update 拒绝不留痕是产品级承诺**。集成 SDK 或设计上层系统时要记住：没有 "Update Rejected" 事件，被拒绝的 Update 无处存储、无法去重，可能被重复投递给 worker；事后 poll 它只会得到 NotFound。服务端会通过 `UpdateStore` 恢复 in-flight 的 Update（文档称之为 Update Resurrection），但"拒绝"这条路从设计上就不留下任何可查询的痕迹。如果你的业务依赖"拒绝原因可追溯"，当前语义下得自己在客户端记录。
 
-**判断 3：Cluster shard 数上线估算很关键**。fixed shard 决策意味着你创建集群时要估算未来 3-5 年的 peak workflow execution 数量——这数字决定初始 shard 数。生产经验通常按"单 shard 承载 ~1000 active workflow executions"估算，然后用 `rps × avg_duration / 1000` 算初始 shard 数。
+**判断 3：Cluster shard 数的初始估算很关键**。fixed shard 决策意味着你创建集群时要按未来的峰值规模做预算——shard 数之后不能增减，扩容只能加 host 分担 ownership。这笔账没有公开的通用公式，但方向是明确的：shard 数定小了，单 shard 的责任范围随业务增长越滚越大，最后只能重建集群。
 
-**判断 4：CHASM 框架会越来越重要**。现在 Workflow / Scheduler / NexusOperation 都已经是 CHASM tree 的 root，未来 Signal / Query 也可能 CHASM 化（文档里有 TODO）。新业务实体如果想"复用 Temporal 的 sharding + atomic storage + failure recovery 但不要 workflow 的全成本"，CHASM 是入口。
+**判断 4：CHASM 框架会越来越重要**。chasm/lib 下已经有 workflow、scheduler、nexusoperation、activity、callback 五个 library，清单还在变长。新业务实体如果想"复用 Temporal 的 sharding + atomic storage + failure recovery 但不要 workflow 的全成本"，CHASM 是入口。
 
 **判断 5：Nexus endpoint registry 不是多 cluster safe**。[nexus.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/nexus.md) 顶部明确警告"Nexus shouldn't be used in multi cluster setups because replication for the registry is not implemented"。这是个还没解决的架构债，未来会修——但今天不要在多 cluster 部署里依赖 Nexus endpoint registry。
 
@@ -209,15 +212,15 @@ Multi-Cursor 是另一层隔离——一个 shard 上的 outbound queue 默认�
 
 把 5 个决策摆在一起看，Temporal 不只是"Workflow orchestration"——它是**对"Event Sourcing 工业落地"这个分布式系统老问题的工程回答**：
 
-- Event Sourcing 太慢？→ Mutable State 缓存做 materialized view。
-- 单 shard 装不下历史？→ fixed shard + 后续 history 跨 shard（branding topology）。
+- Event Sourcing 太慢？→ Mutable State 缓存做物化视图。
+- shard 责任粒度怎么定？→ 创建时一次定死，扩容靠加 host 分担 ownership。
 - Workflow 太重？→ CHASM 把 Workflow 抽象成 ASM tree，让其他实体复用基础设施。
 - Event 不可变所以 Update 不能拒绝？→ Speculative Workflow Task + Message Protocol。
 - 外部 destination 可能挂？→ Outbound Queue + Circuit Breaker Pool + 多层 limit。
 
 每一层都是对前一层缺陷的修正——而每一层修复又引入了新的工程复杂度（Mutable State 一致性、fixed shard 不可扩容、CHASM 框架心智负担、Speculative task 路径特殊、Circuit breaker 配置面）。
 
-Temporal 22.8k stars 不是一个"Workflow DSL 设计得好"的项目——它的价值在**这些工程细节**：五年生产环境的反馈沉淀、Uber Cadence fork 出来的工业基础、对分布式系统每个老问题都给出具体答案。
+Temporal 的 23k stars 不是一个"Workflow DSL 设计得好"就能解释的——它的价值在**这些工程细节**：多年生产环境的反馈沉淀、Uber Cadence fork 出来的工业基础、对分布式系统每个老问题都给出具体答案。
 
 读它的代码不是学 Go，是学**Event Sourcing 在分布式系统里要怎么落地**。
 

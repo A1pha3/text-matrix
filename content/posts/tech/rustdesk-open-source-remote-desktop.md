@@ -4,7 +4,7 @@ date: "2026-04-19T11:30:00+08:00"
 slug: "rustdesk-open-source-remote-desktop"
 github_repo: "rustdesk/rustdesk"
 source_key: "gh:rustdesk/rustdesk"
-description: "全面解析 RustDesk：Rust 语言编写的开源远程桌面解决方案，GitHub 11 万+ Stars 的爆款项目。详解架构设计决策背后的原因、P2P 连接与端到端加密原理、中继服务器部署、自托管方案与开发扩展。"
+description: "全面解析 RustDesk：Rust 语言编写的开源远程桌面解决方案，GitHub 12 万+ Stars 的热门项目。详解架构设计决策背后的原因、P2P 连接与端到端加密原理、中继服务器部署、自托管方案与开发扩展。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Rust", "P2P", "开源", "自托管"]
@@ -12,7 +12,7 @@ tags: ["Rust", "P2P", "开源", "自托管"]
 
 > **目标读者**：需要远程桌面解决方案的个人开发者、中小企业 IT 管理员、重视数据隐私的用户，以及对 Rust 语言在真实场景中应用感兴趣的开发者。
 > **核心问题**：RustDesk 如何用 Rust 实现一个开箱即用的远程桌面应用？它的 P2P 直连和中继架构是怎么工作的？为什么先走 P2P 再降级到中继？如何自建服务器保证数据完全自主？
-> **事实边界**：本文基于 `rustdesk/rustdesk` 与 `rustdesk/rustdesk-server` 公开仓库信息整理，涵盖 README 功能列表、官方文档及 GitHub Issues 讨论，事实核实于 2026-09-11；涉及安全模型的描述以官方文档为准。
+> **事实边界**：本文基于 `rustdesk/rustdesk` 与 `rustdesk/rustdesk-server` 公开仓库信息整理，涵盖 README、官方文档（rustdesk.com/docs）、GitHub API 与客户端源码，事实核实于 2026-09-15；涉及安全模型的描述以官方文档为准。
 
 ---
 
@@ -23,7 +23,7 @@ tags: ["Rust", "P2P", "开源", "自托管"]
 - 解释 RustDesk 的 P2P 优先、中继兜底的架构设计背后的原因
 - 描述一次完整远程会话的数据路径，包括 NAT 打洞失败时的降级行为
 - 在 Linux 服务器上用 Docker Compose 部署完整的中继服务（hbbs + hbbr）
-- 判断在什么网络环境下 RustDesk 的 P2P 成功率会明显下降
+- 判断在什么网络环境下 P2P 直连会失败、连接会落到中继
 - 针对企业内网、跨公网、高安全需求三种场景，给出合适的部署方案
 
 ---
@@ -64,10 +64,10 @@ RustDesk 选择 Rust 并非为了「技术时髦」，而是有几个实际原�
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 超过 110,000（截至 2026 年年中，仍在增长） |
+| GitHub Stars | 123,000+（2026-09 经 GitHub API 核实） |
 | 主语言 | Rust（核心）+ Dart（Flutter UI） |
 | 协议 | AGPL-3.0（客户端与服务端均为） |
-| 持续维护 | 是，官方 nightly 构建持续发布 |
+| 最新版本 | 1.4.9（2026-07 发布，官方持续发版） |
 
 ---
 
@@ -123,7 +123,7 @@ A 输入 B 的 ID 和密码，向 Rendezvous Server 请求与 B 建立连接。
 
 Server 把 A 和 B 的公网地址分别发给对方。A 和 B 同时向对方地址发送 UDP 打洞包，试探 NAT 是否允许直连。
 
-这里解释一下**为什么 UDP 打洞能工作**：大多数 NAT 的行为是「允许已向外部发过包的地址发回数据」。A 向 B 的公网地址发一个 UDP 包后，A 的 NAT 会记录「A 正在和 B 通信」，此后 B 发来的包就会被放行。
+UDP 打洞能工作的前提，是多数 NAT 的行为规则：允许已向外部发过包的地址发回数据。A 向 B 的公网地址发一个 UDP 包后，A 的 NAT 就记下了「A 正在与 B 通信」，B 发来的包随后会被放行。
 
 **阶段 4：路径分叉**
 
@@ -138,16 +138,16 @@ Server 把 A 和 B 的公网地址分别发给对方。A 和 B 同时向对方�
 
 ### 2.3 P2P 直连的边界条件
 
-不是所有网络环境都能 P2P 直连。下表是社区实测算出的典型成功率，具体数值会随运营商 NAT 策略波动，仅作参考：
+不是所有网络环境都能 P2P 直连，决定性因素是 NAT 类型——两端各自允不允许外部 UDP 包进来：
 
-| 网络环境 | NAT 类型 | P2P 成功率 | 说明 |
-|---------|----------|------------|------|
-| 家庭宽带（动态公网 IP） | 完全锥型（Full Cone） | ~95% | 最理想情况 |
-| 家庭宽带（运营商级 NAT） | 限制锥型（Restricted Cone） | ~80% | 国内常见 |
-| 企业网络 | 对称 NAT（Symmetric） | ~30% | 需要中继 |
-| 企业网络（禁止 UDP 出站） | - | 0% | 必须中继，且需要 TCP 中继 |
+| NAT 类型 | 典型场景 | 打洞可行性 |
+|---------|----------|------------|
+| 完全锥型（Full Cone） | 部分家庭宽带 | 任意来源的回包都放行，最容易打通 |
+| 限制锥型（Restricted Cone） | 多数家庭宽带、运营商级 NAT | 可以打洞，需要两端配合发包 |
+| 对称型（Symmetric） | 部分企业网络 | 对每个目的地映射不同端口，对端无法预知，基本打不通 |
+| 禁止 UDP 出站 | 严格的企业防火墙 | UDP 打洞完全不可行，只能走 TCP 中继 |
 
-如果你在对称 NAT 后面（比如某些企业网络），P2P 直连大概率会失败，此时中继不是「降级」而是「唯一路径」。
+对称 NAT 后面的设备（常见于某些企业网络）P2P 直连基本无望，此时中继不是「降级」而是「唯一路径」。想确认出口网络的 NAT 类型，可以用 `stunclient` 之类的 STUN 客户端独立测试。
 
 ### 2.4 技术栈选型的原因
 
@@ -188,7 +188,7 @@ flowchart TB
 2. 后续的屏幕画面、键鼠、剪贴板、文件数据全部用这颗会话密钥加密。
 3. 无论走 P2P 直连还是中继转发，中继服务器（hbbr）都只转发密文，不落盘、不解密，看不到会话内容。
 
-**这里要澄清一个常见误解**：中继模式并不会让数据变成明文。hbbr 是中继节点，不是 TLS 终止点；会话密钥只存在于两台客户端之间。即便某台中继服务器被攻破，攻击者拿到的也只是密文流。
+**一个常见误解是中继模式会让数据变回明文。**实际上 hbbr 是中继节点，不是 TLS 终止点；会话密钥只存在于两台客户端之间，即便某台中继服务器被攻破，攻击者拿到的也只是密文流。
 
 **真正值得谨慎的边界：**
 
@@ -267,10 +267,10 @@ flowchart TD
 访问 [RustDesk Releases](https://github.com/rustdesk/rustdesk/releases) 下载对应平台安装包，或：
 
 ```bash
-# Linux (AppImage)
-wget https://github.com/rustdesk/rustdesk/releases/latest/download/rustdesk_x.x.x_amd64.AppImage
-chmod +x rustdesk_x.x.x_amd64.AppImage
-./rustdesk_x.x.x_amd64.AppImage
+# Linux (AppImage)，版本号以 Releases 页实际资产名为准（撰写时最新为 1.4.9）
+wget https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-x86_64.AppImage
+chmod +x rustdesk-1.4.9-x86_64.AppImage
+./rustdesk-1.4.9-x86_64.AppImage
 
 # macOS (Homebrew)
 brew install --cask rustdesk
@@ -300,7 +300,7 @@ scoop install rustdesk
 
 ### 4.3 自建服务器：完整步骤
 
-自建只需要一台有公网 IP 的服务器（最低配置：1 核 1GB，但推荐 2 核 2GB 以上）。
+自建只需要一台有公网 IP 的服务器。hbbs/hbbr 本身非常轻量，1 核 1GB 就能跑，生产环境建议 2 核 2GB 起，把余量留给系统和带宽。
 
 **为什么需要两台服务？**
 
@@ -323,14 +323,16 @@ docker-compose up -d
 
 **客户端配置**
 
-配置方式有两种：日常最省事的是在客户端「设置 → 网络」里直接填 ID Server、Key（可选 Relay Server）；批量部署或需要脚本化时，再把同样的内容写进配置文件：
+配置方式有两种：日常最省事的是在客户端「设置 → 网络」里填 ID Server、Key（可选 Relay Server）；批量部署或需要脚本化时，再把同样的内容写进 `RustDesk2.toml` 的 `[options]` 段：
 
-```yaml
-# ~/.config/rustdesk/rustdesk.yml（Linux/macOS）
-# C:\Users\你的用户名\AppData\Roaming\RustDesk\config\rustdesk.yml（Windows）
-rendezvous_server: your-server-ip:21116
-relay_server: your-server-ip:21117
-key: "你的公钥内容"
+```toml
+# Linux：~/.config/rustdesk/RustDesk2.toml
+# Windows：C:\Users\<用户名>\AppData\Roaming\RustDesk\config\RustDesk2.toml
+# 其他平台优先用界面配置；改文件前先退出客户端（含托盘进程），否则内存中的旧配置可能被回写覆盖
+[options]
+custom-rendezvous-server = 'your-server-ip:21116'
+relay-server = 'your-server-ip:21117'
+key = '你的公钥内容'
 ```
 
 **验证部署**
@@ -384,13 +386,13 @@ flowchart TD
 nc -zv your-server-ip 21116
 nc -zv your-server-ip 21117
 
-# 测试 UDP 端口（P2P 打洞需要）
-nmap -sU -p 21115-21119 your-server-ip
+# 测试 UDP 端口（打洞与心跳只用 21116）
+nmap -sU -p 21116 your-server-ip
 
-# 检查防火墙规则 (Ubuntu)
+# 检查防火墙规则 (Ubuntu)：TCP 开 21115-21119，UDP 只需 21116
 sudo ufw status
-sudo ufw allow 21115:21119/udp
 sudo ufw allow 21115:21119/tcp
+sudo ufw allow 21116/udp
 ```
 
 ---
@@ -399,14 +401,15 @@ sudo ufw allow 21115:21119/tcp
 
 ### 5.1 部署架构
 
-| 服务 | 端口 | 协议 | 作用 | 带宽需求 |
+| 服务 | 端口 | 协议 | 作用 | 流量特征 |
 |------|------|------|------|------------|
-| hbbs (Rendezvous) | 21116 (TCP+UDP) | 自定义 | 设备注册、NAT 类型检测、打洞协调 | 极低（~1KB/s/设备） |
-| hbbr (Relay) | 21117 (TCP) | 自定义 | 中继转发加密流量，不解密 | 按并发会话数（~1-5 Mbps/会话） |
+| hbbs (Rendezvous) | 21116 (TCP+UDP) | 自定义 | 设备注册、NAT 类型检测、打洞协调 | 心跳与注册，KB 量级 |
+| hbbr (Relay) | 21117 (TCP) | 自定义 | 中继转发加密流量，不解密 | 随会话编码码率走，典型 1-5 Mbps/会话（取决于分辨率与帧率） |
 
 额外端口：
 - 21115 (TCP)：NAT 类型测试
-- 21118/21119 (TCP)：WebSocket 连接（Web 客户端用）
+- 21118/21119 (TCP)：Web 客户端 WebSocket（不用 Web 客户端可以不开放）
+- 21114 (TCP)：Pro 版 Web 控制台专用，OSS 部署用不到
 
 ### 5.2 生产环境部署建议
 
@@ -418,13 +421,14 @@ sudo ufw allow 21115:21119/tcp
 **安全层面：**
 
 - 服务器首次启动时会生成密钥对（`id_ed25519` 与 `id_ed25519.pub`）。要让客户端只接受你的服务器，必须把公钥内容填入每个客户端的 Key 配置；缺失这一步，客户端就无法校验服务器身份。
+- 若对外暴露 21118/21119（Web 客户端 WebSocket），官方文档提醒：启用 WebSocket 时服务端会信任 `X-Real-IP` / `X-Forwarded-For` 头，该头可被伪造；建议只经反向代理暴露这两个端口，用不到就直接关闭。
 - 定期更新 rustdesk-server 镜像（`docker pull rustdesk/rustdesk-server:latest` 后重启），并跟踪 GitHub 发布说明。
 
 **监控：**
 
 ```bash
-# 查看中继服务器的活跃会话数
-docker exec hbbr cat /var/log/rustdesk-relay.log | grep "active_sessions"
+# OSS 版服务端没有内置指标面板，活动情况直接看容器日志
+docker logs -f hbbr
 
 # 监控带宽使用
 iftop -i eth0  # Linux
@@ -475,13 +479,21 @@ cargo build --release
 如果你想扩展 RustDesk，需要了解核心模块的职责：
 
 ```
-src/
-├── core/          # 核心逻辑：输入输出、编解码、网络
-├── platform/      # 平台特定代码（Windows/macOS/Linux/Android/iOS）
-├── ui/            # Flutter UI 代码（在单独的 flutter/ 目录）
-├── server/        # 中继服务器相关（在 rustdesk-server 仓库）
-└── video/         # 视频编解码封装
+rustdesk/
+├── src/                        # 核心 Rust 逻辑
+│   ├── client.rs               # 控制端会话实现
+│   ├── server.rs               # 被控端服务（屏幕捕获、输入注入、文件服务）
+│   ├── rendezvous_mediator.rs  # 与 hbbs 的注册、心跳与打洞协商
+│   ├── platform/               # 平台相关代码（Windows/macOS/Linux 等）
+│   └── ipc/                    # 进程间通信
+├── flutter/                    # Flutter UI（Dart）
+└── libs/
+    ├── hbb_common/             # 公共库：protobuf 消息、NaCl 加密封装、网络（git 子模块）
+    ├── scrap/                  # 屏幕采集
+    └── enigo/                  # 键鼠输入模拟
 ```
+
+服务端是独立的 `rustdesk-server` 仓库，不在客户端代码树里。
 
 ### 6.3 常见问题与解决
 
@@ -498,24 +510,21 @@ src/
 
 ### 7.1 性能对比的边界
 
-下表数据来自各项目官方文档及社区实测，但需要注意：**远程桌面的延迟和带宽高度依赖网络环境**。同一个工具在不同网络条件下表现差异可能很大。以下数字反映的是典型局域网或良好公网环境下的表现，不应直接用于跨网络场景的结论。
+远程桌面没有权威的跨方案公开基准：各家官方文档都不发布延迟与带宽数字，社区测试大多不控制变量——分辨率、帧率、编码器、直连还是中继、网络路径，任何一个不同都会让数字失去可比性。所以本节只做定性对比；要为自己的链路做选型，最可靠的办法是按下面的方法实测一轮。
 
-| 方案 | P2P 延迟 | 中继延迟 | 带宽占用 | 内存占用 | 端到端加密 | 自托管 |
-|------|-----------|-----------|----------|---------|------------|--------|
-| **RustDesk** | 20-50ms | +50-200ms | 1-5 Mbps | 80-150MB | 是 | 是 |
-| TeamViewer | 30-80ms | +100-300ms | 2-8 Mbps | 100-200MB | 是 | 否 |
-| AnyDesk | 40-100ms | +50-150ms | 1-5 Mbps | 50-100MB | 是 | 否 |
-| VNC | 100-300ms | N/A | 0.5-2 Mbps | 30-80MB | 否（需自己配） | 是 |
-| Parsec | 15-30ms | +20-50ms | 5-15 Mbps | 150-300MB | 是 | 否 |
+| 方案 | 设计重心 | 编码方案 | 自托管 | 端到端加密 | 授权模式 |
+|------|---------|----------|--------|------------|----------|
+| **RustDesk** | 远程办公与运维，自托管优先 | VP8/VP9/AV1 软编 + H264/H265 硬编 | ✅ | ✅ | 开源（AGPL-3.0） |
+| TeamViewer | 企业远程支持，功能全面 | 自研，未公开细节 | ❌ | ✅ | 商业订阅 |
+| AnyDesk | 低带宽场景的流畅性 | 自研 DeskRT，未公开细节 | ❌ | ✅ | 商业订阅 |
+| VNC 系列 | 协议简单、实现广泛 | 依实现而定（Raw、Tight 等） | ✅ | ⚠️ 依实现，通常需额外配置 | 开源（各实现不同） |
+| Parsec | 游戏与低延迟串流 | 硬件编码优先（H264/H265） | ❌ | ✅ | 免费 + 商业混合 |
 
-**这些数字主要测的是什么？**
+**如果要自己测，怎么测、怎么解读：**
 
-- 屏幕编码延迟（从捕获屏幕到编码完成）+ 传输延迟（从发送到接收）
-- 能反映各自编码器效率（RustDesk 用 VP8/VP9/AV1 软件编码 + H264/H265 硬件，Parsec 用自研编码器）和协议栈开销
-- **不能推出的结论**包括：
-  - 不能直接推出「RustDesk 比 TeamViewer 快」——跨运营商网络下，中继服务器的位置和带宽才是瓶颈
-  - 内存占用低不意味着所有场景都省资源——屏幕分辨率、帧率、编码器选择都会显著改变实际占用
-  - VNC 的延迟数字在低带宽场景下反而可能优于其他方案，因为它的编码策略刻意降低了带宽需求
+- 先固定变量再比较：同一对设备、同一分辨率与帧率、同一编码器，直连和中继分开测。混在一起的数字没有意义。
+- 把编码延迟和传输延迟分开看：前者取决于编码器与两端机器性能，后者取决于链路（是否中继、中继服务器位置）。RustDesk 这两段的实现都是公开可见的，TeamViewer/AnyDesk 是黑盒。
+- 不能推出的结论：Parsec 为低延迟而生，不代表它是办公场景的综合最优——为压延迟它付出了更高的带宽开销；VNC 在低带宽链路上可能反而流畅，因为它主动降低了画质与帧率，代价是清晰度。
 
 ### 7.2 功能对比
 
@@ -550,7 +559,7 @@ RustDesk 在不同场景下的适用度差异很大，下面是按使用场景�
 
 ### 9.1 个人用户 / 自由职业者
 
-**建议**：直接下载公共服务器版本即可。如果对隐私有要求，花 30 分钟在一台轻量云服务器（腾讯云/阿里云的学生机约 10 元/月）上跑 Docker Compose 自建。
+**建议**：直接下载公共服务器版本即可。如果对隐私有要求，花 30 分钟在一台低配轻量云服务器上跑 Docker Compose 自建，成本就是这台服务器的月租。
 
 自建后延迟和公共服务器基本一致（如果服务器在国内），但数据不再经过 RustDesk 官方基础设施。对于大多数个人用户来说，这个代价是值得的。
 
@@ -561,7 +570,7 @@ RustDesk 在不同场景下的适用度差异很大，下面是按使用场景�
 原因：
 - 企业内网环境下，P2P 直连成功率远高于跨公网场景（因为企业内网设备通常在同一个 NAT 后面），实际体验可以接近局域网 VNC 的延迟水平。
 - 合规要求：某些行业的 IT 审计会要求远程访问日志和访问控制，自建服务器可以记录这些信息。
-- 成本：一台 2 核 4GB 的云服务器可以支持 ~20 个并发远程会话（取决于分辨率和帧率）。
+- 成本：hbbs/hbbr 本身对 CPU 和内存的要求很低，瓶颈在中继带宽；一台低配云服务器足以支撑一个小团队的并发会话，扩容优先加带宽而不是加配置。
 
 **注意**：RustDesk 的会话在直连和中继两种模式下都是端到端加密的，中继不接触明文。真正需要评估的是「连接关系」这类元数据是否允许外泄。若某台设备的合规要求连控制端与被控端之间的映射关系都不能让第三方知道，就应自建 hbbs/hbbr，并让所有客户端只连你自己的服务器。
 
@@ -584,7 +593,7 @@ Parsec 在编码效率和延迟上仍然有明显优势，RustDesk 不适合作�
 
 - 已有 TeamViewer/AnyDesk 企业授权且无自托管需求的团队，迁移成本高于收益（主要是用户习惯和配置迁移）。
 - 纯内网环境且不需要跨平台的场景，VNC 更轻量（但没有移动端支持）。
-- 需要细粒度权限控制（如只允许查看不允许操作、按用户分组授权）的合规场景，RustDesk 目前缺少这类功能。GitHub Issues 里有相关讨论，但尚未有稳定实现。
+- 需要按用户/用户组授权的细粒度权限体系（谁能连哪台机器、只读还是可控）的合规场景：开源版只有设备级的权限开关（键盘、鼠标、剪贴板、文件传输），面向组织的访问控制与审计在商业版 Pro 的 Web 控制台里。选型时把这条算进成本。
 
 ---
 
@@ -651,9 +660,9 @@ RustDesk 没有用标准的 WebRTC 做 P2P 和中继，而是自己实现了一�
 
 ### 维护指引
 
-- 版本追溯：文中 Stars、版本、协议等随时间变化的数值，均以官方仓库当时状态为准；本文事实核实于 2026-09-11，涉及安全模型的描述以官方文档与源码为准。
+- 版本追溯：文中 Stars、版本、协议等随时间变化的数值，均以官方仓库当时状态为准；本文事实核实于 2026-09-15，涉及安全模型的描述以官方文档与源码为准。
 - 术语管理：全文统一使用上表译名；遇到新术语，先查表，表中没有则保留原文并补一句中文释义。
-- 修改提示：改端口、加密参数、编解码相关内容时，先核对 `references` 之外的官方自托管文档，避免与客户端默认配置冲突。
+- 修改提示：改端口、加密参数、编解码相关内容时，先对照官方自托管文档（rustdesk.com/docs）与客户端源码，避免与客户端默认配置冲突。
 
 ---
 
@@ -662,6 +671,7 @@ RustDesk 没有用标准的 WebRTC 做 P2P 和中继，而是自己实现了一�
 - 官方仓库：https://github.com/rustdesk/rustdesk
 - 服务器仓库：https://github.com/rustdesk/rustdesk-server
 - 官方文档 - 自托管：https://rustdesk.com/docs/zh-cn/self-host/
+- 官方文档 - 客户端配置：https://rustdesk.com/docs/en/self-host/client-configuration/
 - 官方文档：https://rustdesk.com/docs/
 - NAT 穿透技术详解：https://tailscale.com/blog/how-nat-traversal-works
 

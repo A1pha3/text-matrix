@@ -1,6 +1,7 @@
 ---
-title: "Zvec 深度拆解：阿里开源的进程内向量数据库，10K Stars 的 SQLite-for-Vectors 怎么把 FAISS / Qdrant 拉开身位"
+title: "Zvec 深度拆解：阿里开源的进程内向量数据库，SQLite-for-Vectors 怎么把 FAISS / Qdrant 拉开身位"
 date: "2026-06-16T21:03:41+08:00"
+lastmod: "2026-09-14T00:00:00+08:00"
 slug: alibaba-zvec-embedded-vector-database
 github_repo: "alibaba/zvec"
 source_key: "gh:alibaba/zvec"
@@ -14,8 +15,8 @@ author: 钳岳星君
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 15,600+ |
-| Forks | 980+ |
+| Stars | 15,910（2026-09-14 快照） |
+| Forks | 998 |
 | 许可证 | Apache-2.0 |
 | 语言 | C++（核心）+ Python / Node.js / Go / Rust / Dart（SDK） |
 | 官网 | https://zvec.org |
@@ -32,9 +33,9 @@ author: 钳岳星君
 4. **使用混合检索**：多个 Query + ReRanker 如何一次融合 Dense + Sparse + FTS + Filter
 5. **评估适用性**：判断 Zvec 是否适合你的场景，以及迁移路径是什么
 
-# Zvec 深度拆解：阿里开源的进程内向量数据库，10K Stars 的 SQLite-for-Vectors 怎么把 FAISS / Qdrant 拉开身位
+# Zvec 深度拆解：阿里开源的进程内向量数据库，SQLite-for-Vectors 怎么把 FAISS / Qdrant 拉开身位
 
-**判断**：Zvec 把自己定位成 "SQLite for Vectors"——`pip install zvec` 一行能用，多语言 SDK、Dense+Sparse 向量、DiskANN on-disk 索引、多 Query 混合检索全有。它卡在一个具体空白上：主流向量库要么是 C/S 架构（Qdrant / Milvus / Weaviate），部署摩擦压不到本地场景；要么是单进程嵌入（FAISS），但要自己写 WAL、查询规划、SDK 维护；嵌入式数据库（SQLite / DuckDB）又没有"原生向量检索 + 全文 + 标量过滤"的混合检索。**8 个月（2025-12-05 创建）斩获 15,600+ stars、980+ forks**，README 直接写 "battle-tested within Alibaba Group"，阿里内部生产环境验证过。这个增长曲线背后是 RAG 应用本地化部署需求上升，而嵌入式向量库赛道此前没有强产品填补。
+**判断**：Zvec 把自己定位成 "SQLite for Vectors"——`pip install zvec` 一行能用，多语言 SDK、Dense+Sparse 向量、DiskANN on-disk 索引、多 Query 混合检索全有。它卡在一个具体空白上：主流向量库要么是 C/S 架构（Qdrant / Milvus / Weaviate），部署摩擦压不到本地场景；要么是单进程嵌入（FAISS），但要自己写 WAL、查询规划、SDK 维护；嵌入式数据库（SQLite / DuckDB）又没有"原生向量检索 + 全文 + 标量过滤"的混合检索。**8 个月（2025-12-05 创建）斩获 15,900+ stars、998 forks**，README 直接写 "battle-tested within Alibaba Group"，阿里内部生产环境验证过。这个增长曲线背后是 RAG 应用本地化部署需求上升，而嵌入式向量库赛道此前没有强产品填补。
 
 如果你属于下面任何一种，这篇值得读：
 
@@ -62,8 +63,8 @@ author: 钳岳星君
 
 | 维度 | 实际情况 |
 |------|----------|
-| Stars | 15,600+（2026-09） |
-| Forks | 980+ |
+| Stars | 15,910（2026-09-14 快照） |
+| Forks | 998 |
 | 主语言 | C++ 核心 + Python / Node.js / Go / Rust / Dart 多语言 SDK |
 | 协议 | Apache-2.0 |
 | 仓库 | <https://github.com/alibaba/zvec> |
@@ -77,7 +78,7 @@ author: 钳岳星君
 | 持久化 | WAL（Write-Ahead Logging） |
 | 并发模型 | 多进程可读、单进程写独占 |
 | Python 版本 | 3.10 – 3.14 |
-| 生态 | zvec-grep（CLI 搜索）、Zvec Studio、ReMe 集成 |
+| 生态 | zvec-grep（CLI 搜索）、Zvec Studio、MCP Server、ReMe 集成 |
 
 一句话：**阿里开源的 "SQLite for Vectors"，用嵌入式架构 + 多语言 SDK + 全栈混合检索，把 RAG 本地化的部署摩擦压到 `pip install` 级别**。
 
@@ -113,9 +114,9 @@ Zvec 的独特定位落在 **"嵌入式 + 全栈混合检索 + 多语言 SDK + �
 
 1. **C/S 向量库的部署摩擦**：Qdrant / Milvus 要起服务、配端口、做 health check、监控长连接；本地 Notebook / CLI / 桌面应用根本不想起服务。Zvec `pip install` 直接用，零部署。
 2. **FAISS 缺太多生产特性**：FAISS 只做"向量算最近邻"，没有 Collection 管理、没有 WAL、没有 SQL-like filter、没有 FTS、没有多语言 SDK。生产环境要在 FAISS 之上叠一层 ORM + WAL + Query Planner，重复造轮子。
-3. **Chroma / LanceDB 混合检索弱**：Chroma 只能做简单 filter，LanceDB 有 SQL 但 FTS 是 beta。Zvec 的一次查询能同时融合 Dense 向量 + Sparse 向量 + FTS + 标量过滤。
+3. **Chroma / LanceDB 混合检索弱**：Chroma 只能做简单 filter；LanceDB 有 SQL，但两者的重点都放在向量检索上，把 Dense + Sparse + FTS + 标量过滤放进一次查询并统一融合，不是它们的主线能力。Zvec 的一次查询能同时融合这四路。
 4. **多语言生态割裂**：Qdrant 有 gRPC REST，pgvector 要走 SQL，FAISS 主要 Python。如果产品是 Flutter（移动端）+ Node.js（BFF）+ Python（算法），不同端要维护不同的客户端栈。Zvec 5 种语言 SDK 对齐 API。
-5. **嵌入式方案的平台与性能缺位**：很多纯 Python 向量库在 Apple Silicon 上只能跑标量路径。Zvec 核心是 C++，macOS ARM64 / x86_64 都有原生二进制，DiskANN 在 v0.7.0 还补上了 macOS ARM64 和 io_uring 异步 I/O。
+5. **嵌入式方案的平台与性能缺位**：嵌入式赛道此前缺少以原生 C++ 为核心、对各家硬件指令集做深度优化的选项。Zvec 核心是 C++，macOS ARM64 / x86_64 都有原生二进制，DiskANN 在 v0.7.0 还补上了 macOS ARM64 和 io_uring 异步 I/O。
 
 ---
 
@@ -165,7 +166,7 @@ Zvec 把一个 Collection 切成多个 Segment：
 - **活跃 Segment**：当前可写，WAL 直接追加
 - **只读 Segment**：超过阈值后冻结，转为只读，后台压缩 / 索引
 
-读写分离带来两个直接收益：多进程可同时读同一 Collection，写是单进程独占；读端不需要加锁，吞吐随 Segment 数线性扩展。这是 SQLite 的同款模型，RAG 场景里 read-heavy、write-occasional（ingest 偶尔），匹配度较高。冻结阈值由内部 size / time 策略决定，未在公开 API 暴露调参。
+读写分离的直接收益是：多进程可以同时读同一个 Collection，写保持单进程独占——这是 README 明确给出的并发语义。RAG 场景里 read-heavy、write-occasional（ingest 偶尔），匹配度较高。冻结阈值由内部 size / time 策略决定，未在公开 API 暴露调参。
 
 ### Index：按字段类型选
 
@@ -200,6 +201,7 @@ schema = zvec.CollectionSchema(
             name="embedding",
             data_type=DataType.VECTOR_FP32,
             dimension=1536,
+            # m=16 / ef_construction=200 是显式自定义值；省略则用默认 m=50, ef_construction=500
             index_param=zvec.HnswIndexParam(m=16, ef_construction=200),
         ),
     ],
@@ -217,7 +219,7 @@ results = collection.query(
 )
 ```
 
-HNSW（Hierarchical Navigable Small World）是主流图索引，recall 高、查询快，代价是内存占用大（向量本体 + 图边）。构建参数：`m` 控制每个节点的图边数，越大 recall 越高、内存越大；`ef_construction` 是建图时候选邻居队列宽度，越大建图越慢但图质量越好。查询参数只有 `ef` 一个主旋钮——候选池越大 recall 越高、延迟越高。三者都是 recall 与成本的同向杠杆。官方建议大多数生产环境默认选 HNSW，先用 `ef` 找 recall/延迟平衡点，不够再动 `m` 和 `ef_construction`。
+HNSW（Hierarchical Navigable Small World）是主流图索引，recall 高、查询快，代价是内存占用大（向量本体 + 图边）。构建参数：`m` 控制每个节点的图边数，越大 recall 越高、内存越大，默认 50；`ef_construction` 是建图时候选邻居队列宽度，越大建图越慢但图质量越好，默认 500。查询参数的主旋钮是 `ef`（默认 300）——候选池越大 recall 越高、延迟越高。三者都是 recall 与成本的同向杠杆。官方调参建议是从默认值起步，先调 `ef` 找 recall/延迟平衡点，确实不够再提高 `ef_construction` 或 `m`，代价是更慢的建图和更高的内存。
 
 ### HNSW-RaBitQ：量化换内存
 
@@ -229,7 +231,7 @@ index_param=zvec.HnswRabitqIndexParam(
 
 RaBitQ 是一种高压缩量化方案，用约 7 bit 表示一个维度，压缩比高、精度损失小。HNSW-RaBitQ 保留图结构的低延迟，同时把向量本体压到接近内存放不下的规模也能检索。v0.7.0 起 RaBitQ 的 AVX2 / AVX512 在运行时按 CPU 自动分发，同一套二进制在不同 CPU 上自动选最优路径，不用为指令集单独编译。
 
-顺带一提，v0.6.0 给均匀 INT8 / INT4 量化也加了可选的随机旋转（`QuantizerParam(enable_rotate=True)`）——把方差均匀摊到各维度，能明显压低量化误差。官方在 cohere-1m 上的数据：HNSW INT8 的 recall 从 0.9285 提到 0.9397，INT4 更是从 0.2114 提到 0.7117。
+顺带一提，v0.6.0 给均匀 INT8 / INT4 量化也加了可选的随机旋转（`QuantizerParam(enable_rotate=True)`）——把方差均匀摊到各维度，能明显压低量化误差。官方在 cohere-1m 上的数据：HNSW INT8 的 recall 从 0.9285 提到 0.9397，Flat INT8 从 0.9695 提到 0.9881，INT4 更是从 0.2114 提到 0.7117。
 
 ### IVF：聚类换空间
 
@@ -241,7 +243,7 @@ index_param=zvec.IVFIndexParam(
 param=zvec.IVFQueryParam(nprobe=128)
 ```
 
-IVF（Inverted File）先把向量聚成 `n_list` 簇，查询时只搜最近的 `nprobe` 个簇。构建参数是 `n_list`（聚类数）和 `n_iters`（k-means 迭代次数），查询参数是 `nprobe`（考察几个桶）。官方建议初始 `n_list ≈ √N`（N 为向量数）。`n_list` 越大簇越细、单簇召回越低；`nprobe` 越大召回越高、延迟越高。**训练阶段是 k-means**，corpus 持续增长时簇分布会偏移，召回率缓慢下降，需要定期 rebuild——这是 IVF 的硬伤。`use_soar` 是 v0.6.0 引入的 SOAR 优化，进一步降低海量数据下的查询延迟。
+IVF（Inverted File）先把向量聚成 `n_list` 簇，查询时只搜最近的 `nprobe` 个簇。构建参数是 `n_list`（聚类数，默认 10）和 `n_iters`（k-means 迭代次数，默认 10），查询参数是 `nprobe`（考察几个桶）。官方建议初始 `n_list ≈ √N`（N 为向量数）。`n_list` 越大簇越细、单簇召回越低；`nprobe` 越大召回越高、延迟越高。**训练阶段是 k-means**，corpus 持续增长时簇分布会偏移，召回率缓慢下降，需要定期 rebuild——这是 IVF 的硬伤。`use_soar` 参数从首个公开版本就有，对应 SOAR 优化；v0.6.0 又对 IVF 内部做了一轮性能优化（Release Notes 的 IVF Index Optimization 条目）。
 
 ### DiskANN：把向量压到磁盘，先过 PQ 训练这一关
 
@@ -255,20 +257,20 @@ index_param=zvec.DiskAnnIndexParam(
 param=zvec.DiskAnnQueryParam(list_size=300)
 ```
 
-`max_degree` 控制 Vamana 图节点度数，`list_size` 是构建时候选列表大小，`pq_chunk_num` 控制 PQ 子空间数量（0 表示按维度自动选）。查询参数也叫 `list_size`（束搜索候选宽度）。
+`max_degree` 控制 Vamana 图节点度数（默认 100，钳位 [1, 100]），`list_size` 是构建时候选列表大小（默认 50，钳位 [10, 100]），`pq_chunk_num` 控制 PQ 子空间数量（0 表示按维度自动选）。查询参数也叫 `list_size`（束搜索候选宽度，默认 300）。官方调参建议同样是从默认值起步：先调查询侧 `list_size` 做 recall/延迟取舍，确需更高 recall 再加 `max_degree`（磁盘占用和建图时间随之上升），想进一步省内存就减 `pq_chunk_num`（接受 recall 损失）。
 
 **DiskANN 的两个关键事实，容易记反**：
 
 1. **它需要训练**：索引构建前要先做基于 KMeans 的 PQ 码本训练。文档明确把"构建时 PQ 训练开销"列为权衡项。所谓"DiskANN 免训练"是以讹传讹——它免的是 k-means 聚类那一步的"显式聚类训练"，但 PQ 码本训练跑不掉，只是训练成本比 IVF 的整库聚类低。corpus 增长后同样需要定期重建。
 2. **内存里的是 PQ 编码，不是图**：全精度向量和 Vamana 图都在磁盘上，内存只放 PQ 压缩编码。举例：10M × 1536 dim FP32 的全精度向量约 61 GB 在磁盘，内存里 PQ 编码按 `pq_chunk_num=64` 算只有 10M × 64 B ≈ 0.64 GB。
 
-v0.7.0 把 DiskANN 从 Linux x86_64 扩到了 Linux ARM64 和 macOS ARM64（Apple Silicon），I/O 后端在 io_uring / libaio / pread 之间自动选择，macOS 用 `F_NOCACHE` 关掉读缓存；查询还做了异步 I/O 重叠与动态束宽，磁盘绑定负载的延迟明显下降。代价是每次搜索要碰磁盘，QPS 比纯内存的 HNSW 低一个量级——它服务的是"亿级向量 + 低内存 + 能容忍延迟"的场景，不适合实时在线路径。
+v0.7.0 把 DiskANN 从 Linux x86_64 扩到了 Linux ARM64 和 macOS ARM64（Apple Silicon），I/O 后端在 io_uring / libaio / pread 之间自动选择，macOS 用 `F_NOCACHE` 跳过系统读缓存并关闭预读；查询还做了异步 I/O 重叠与动态束宽，磁盘绑定负载的延迟明显下降。代价是每次搜索要碰磁盘，官方文档明确把它列为"不适合实时负载"——它服务的是"亿级向量 + 低内存 + 能容忍延迟"的场景，不适合实时在线路径。
 
 ---
 
 ## 混合检索：多 Query + ReRanker
 
-Zvec 早期版本的 "MultiQuery" 对象在 v0.6.0 之后被重构掉了。现在混合检索的姿势是：**一次 `collection.query()` 传多个 `Query`，再挂一个 `ReRanker` 融合结果**。单次查询里可以同时包含：
+现在混合检索的统一姿势是：**一次 `collection.query()` 传多个 `Query`（`queries=[...]`），再挂一个 `ReRanker` 融合结果**；旧的多查询入口 `vectors=` 参数已标记弃用，传入会触发 `DeprecationWarning`。单次查询里可以同时包含：
 
 - Dense 向量（语义，走图索引）
 - Sparse 向量（如 SPLADE 稀疏编码，走倒排）
@@ -292,7 +294,8 @@ results = collection.query(
             fts=zvec.Fts(match_string="向量数据库"),  # FTS
         ),
     ],
-    filter="score > 100 AND tags CONTAINS 'rag'",   # 标量预筛
+    # 标量预筛：数组字段用 CONTAIN_ANY('rag') / CONTAIN_ALL('rag', 'db')，不支持 CONTAINS 写法
+    filter="score > 100 AND tags CONTAIN_ANY('rag')",
     topk=10,
     reranker=zvec.RrfReRanker(rank_constant=60),     # 融合
 )
@@ -304,7 +307,7 @@ results = collection.query(
 
 融合函数决定怎么把多个异构 score（cosine / BM25 / bool）合到单一排序。Zvec 内置两个：
 
-**RrfReRanker（倒数排名融合）**——官方推荐，因为不需要 score 归一化：
+**RrfReRanker（倒数排名融合）**——跨体系融合最省事的默认选择，官方描述是"不依赖相关性分数"（without requiring relevance scores）：
 
 ```text
 RRF_score(d) = Σ 1 / (k + r(d) + 1)
@@ -312,17 +315,17 @@ RRF_score(d) = Σ 1 / (k + r(d) + 1)
 
 `r(d)` 是文档在某个 sub-query 结果里的 0 起始排名，`k` 默认 60。cosine 在 [-1, 1]、BM25 在 [0, ∞)、bool 在 {0, 1}，直接拼 score 会失真；RRF 只看排名不看 score，跨体系天然兼容。代价是权重调优靠经验——某个 sub-query 总被压制时，要手动给它的候选集放大或者换权重。
 
-**WeightedReRanker（加权融合）**——各结果列表都有可比 score 时用，按权重线性加权并做归一化，适合 Dense + Sparse 这种同度量空间的结果。
+**WeightedReRanker（加权融合）**——构造时传入每一路 sub-query 的权重列表（如 `WeightedReRanker([0.7, 0.3])`），各路 score 先按度量类型归一化、再按权重线性加权，要求把字段 schema 通过 `fields=` 传进去以完成归一化。适合各路结果有可比 score 的组合。
 
 ### 执行顺序：filter-then-search
 
-混合查询的规划器把多个 sub-query 编译进一个执行计划：
+官方把 filter 定义为预筛（pre-filter）语义——`query()` 的文档原话是 "Boolean expression to pre-filter candidates"。落到一次混合查询上，顺序是：
 
-1. 先用 filter 拉候选集（廉价，把 200 万压到几万）
-2. 在候选集上并行跑 vector / sparse / FTS（贵）
+1. filter 先按标量条件缩小候选范围（廉价，把 200 万压到几万）
+2. 在候选集上跑 vector / sparse / FTS（贵）
 3. ReRanker 融合排序，取 top-k
 
-顺序是 filter-then-search，挡住了"先拉 10× 向量再过滤"的 over-fetch，避免大部分无效向量计算。这是混合检索的工程标准做法。
+这个顺序挡住了"先拉全量向量再过滤"的 over-fetch。文档同时提醒：常用于过滤的字段应该建倒排索引，未建索引的字段也能过滤，但性能差得多。
 
 ### 任务流案例：一次 RAG 查询怎么走完 Zvec
 
@@ -331,12 +334,12 @@ RRF_score(d) = Σ 1 / (k + r(d) + 1)
 查询进入 Zvec 后的执行路径：
 
 1. **解析阶段**：三个 `Query` 被拆开——`embedding` 走 HNSW 图，`sparse` 走倒排，`title` 走 FTS 倒排链；`filter` 走 `score` + `tags` 的标量索引。
-2. **过滤优先**：filter 先执行，把 200 万文档压到 `score > 100 AND tags CONTAINS 'rag'` 的子集（假设剩 8 万）。
-3. **并行检索**：在 8 万候选集上，HNSW 走图遍历拿 top 100，sparse 倒排拿 top 100，FTS 倒排链拿 top 100。三条路径共享同一份候选集，避免重复 IO。
+2. **过滤优先**：filter 先执行，把 200 万文档压到 `score > 100 AND tags CONTAIN_ANY('rag')` 的子集（假设剩 8 万）。
+3. **检索**：在 8 万候选集上，HNSW 走图遍历拿 top 100，sparse 倒排拿 top 100，FTS 倒排链拿 top 100。
 4. **RRF 融合**：每个 sub-query 给每个 doc 一个排名，`RrfReRanker` 用 `1/(60 + r + 1)` 加权求和，输出单一 score。
 5. **返回 top 10**：融合后按 score 排序，取前 10。
 
-整个流程对调用方是一次 `collection.query()`，内部走完过滤 → 检索 → 融合。如果用 FAISS 自己拼，要写候选集交集、score 归一化、filter 前置逻辑，至少 200 行胶水代码。
+整个流程对调用方是一次 `collection.query()`，内部走完过滤 → 检索 → 融合。如果用 FAISS 自己拼，候选集交集、score 归一化、filter 前置这些逻辑都要在应用层手写。
 
 ---
 
@@ -353,17 +356,17 @@ insert(doc_42) →
   3. 后台刷盘（compact + index rebuild）
 ```
 
-进程崩溃 / 断电 → 重启时 replay WAL 恢复到崩溃前状态。这与传统 RDBMS 一致，Zvec 是嵌入式实现，WAL 文件就在 collection path 下。v0.6.0 之后 WAL 做了崩溃恢复的健壮性加固（孤儿 segment 清理、mmap store 大块 IPC 处理、delete-only 写 segment 持久化），这条链路的稳定性是阿里内部生产环境的硬指标。
+进程崩溃 / 断电 → 重启时 replay WAL 恢复到崩溃前状态。这与传统 RDBMS 一致，Zvec 是嵌入式实现，WAL 文件就在 collection path 下。崩溃恢复链路在 v0.7.0 做了一轮加固：孤儿 segment 目录清理、mmap store 对大块末尾 IPC 数据的处理、delete-only 写 segment 记录的持久化（见 v0.7.0 Release Notes 的 Bug Fixes）。
 
 ### 并发：多读单写
 
 | 操作 | 进程数 | 说明 |
 |------|--------|------|
-| Read | N（任意） | 共享只读 Segment，加读锁 |
-| Write | 1（独占） | 写活跃 Segment + WAL，加写锁 |
+| Read | N（任意） | 多进程共享读同一 Collection |
+| Write | 1（独占） | 写活跃 Segment + WAL |
 | Schema 修改 | 1（独占） | 不允许并发 |
 
-这个模型与 SQLite 接近：读端高并发，写端串行。RAG 场景里 read-heavy、write-occasional（ingest 偶尔），契合度较高。写吞吐受单进程限制，高频写入流场景需要评估是否扛得住。v0.6.0 还加了 group-by 检索（按字段去重、每组取 top-k）和 `DocIterator` 全量流式遍历（快照语义，写删不可见），覆盖了 RAG 里常见的"分组聚合"和"全库巡检"两类操作。
+这个模型与 SQLite 接近：读端高并发，写端串行。写吞吐受单进程限制，高频写入流场景需要评估是否扛得住。维护操作上，v0.7.0 起读写在 `optimize()` 执行期间可以继续进行，不必停服。v0.6.0 加了 group-by 检索（按字段去重、每组取 top-k），v0.7.0 加了 `DocIterator` 全量流式遍历（快照语义，遍历开始后的写删不可见，Python 侧是 `with collection.iter_docs()`），覆盖了 RAG 里常见的"分组聚合"和"全库巡检"两类操作。
 
 ---
 
@@ -432,7 +435,7 @@ print(results)
 - **高频写入流**：WAL + 单进程写独占模型，写吞吐受限
 - **需要 SQL 兼容**：Zvec 的查询是 SDK API，pgvector 才是 SQL 路线
 - **需要严格分布式 ACID**：嵌入式 SQLite 级语义，没有 Raft / Paxos
-- **DiskANN 在线实时路径**：磁盘 I/O 让 QPS 比 HNSW 低一个量级，实时在线检索别指望它
+- **DiskANN 在线实时路径**：每次检索都要碰磁盘，官方文档明确列为不适合实时负载，实时在线检索别指望它
 
 ### 评估建议
 
@@ -482,7 +485,7 @@ print(results)
 ### Q5：从 FAISS 迁移到 Zvec 难吗？
 
 **A**：分两步：
-1. **建 schema**：把 FAISS 的 `index.d` 和 `metadata` 映射成 Zvec 的 `CollectionSchema`（向量字段挂 `VectorSchema`，标量字段挂 `FieldSchema`）
+1. **建 schema**：把 FAISS 的索引向量和随库存储的元数据映射成 Zvec 的 `CollectionSchema`（向量字段挂 `VectorSchema`，标量字段挂 `FieldSchema`）
 2. **导数据**：把 FAISS 的向量 dump 成 `collection.insert()` 批次
 
 没有自动化迁移工具，要手写脚本。但逻辑不复杂，几百行代码能搞定。
@@ -517,7 +520,7 @@ print(results)
 
 ## 自测题
 
-### 问题 1：Zvec 的四大并行机制是什么？
+### 问题 1：Zvec 的四条并行机制是什么？
 
 <details>
 <summary>查看答案</summary>
@@ -533,7 +536,7 @@ print(results)
 <details>
 <summary>查看答案</summary>
 <b>答案要点</b>：
-RAG 场景是 read-heavy、write-occasional（偶尔 ingest 新文档）。Zvec 的 Segment 模型允许多进程同时读同一 Collection，写是单进程独占。读端不需要加锁，吞吐随 Segment 数线性扩展。这和 SQLite 的模型一致，适合 read-heavy 场景。
+RAG 场景是 read-heavy、write-occasional（偶尔 ingest 新文档）。Zvec 的 Segment 模型允许多进程同时读同一 Collection，写是单进程独占。这种"读并发、写串行"的语义与 SQLite 同款，匹配 read-heavy 的访问模式。
 </details>
 
 ### 问题 3：HNSW 和 DiskANN 的核心区别是什么？
@@ -601,7 +604,7 @@ RRF 只看排名不看 score。cosine 在 [-1, 1]、BM25 在 [0, ∞)、bool 在
 - [Zvec GitHub 仓库](https://github.com/alibaba/zvec)
 - [Zvec Roadmap](https://github.com/alibaba/zvec/issues/309)
 - [zvec-grep：本地优先的搜索 CLI](https://github.com/zvec-ai/zvec-grep)
-- [DiskANN 论文](https://papers.microsoft.com/archive/2019/DiskANN-Fast-accurate-billion-scale-nearest-neighbor-search-on-a-single-node.pdf)
+- [DiskANN 论文（NeurIPS 2019）](https://papers.nips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html)
 - [HNSW 论文](https://arxiv.org/abs/1603.09320)
 
 ---
@@ -618,7 +621,7 @@ Zvec 是阿里巴巴开源的。README 里直接写 **"battle-tested within Alib
 - **C++ API 敢做破坏性变更**：v0.7.0 把 C++ 公共 API 从 PascalCase 换成 snake_case（Python / C 不受影响），说明项目在 1.x 之前敢于清债，而不是背着旧 API 往前拖
 - **Roadmap 在 GitHub Issue 里公开**：<https://github.com/alibaba/zvec/issues/309>
 - **多语言 SDK 不止 Python**：Go / Rust / Dart 都有官方仓库，不是社区包
-- **生态在长**：zvec-grep CLI、Zvec Studio、以及被 ReMe（Agent 记忆管理套件）选为文件存储后端
+- **生态在长**：zvec-grep CLI、Zvec Studio、官方 MCP Server（[zvec-ai/zvec-mcp-server](https://github.com/zvec-ai/zvec-mcp-server)，`uvx zvec-mcp-server` 启动，向 Claude Code / Claude Desktop 等 AI 助手暴露 17 个工具），以及被 ReMe（Agent 记忆管理套件）选为文件存储后端
 
 阿里系开源常见路径是"先内部验证，再开放"——FastJSON / Dubbo / Nacos / OpenSumi 都走过这条线。Zvec 的可信度主要来自这种"已经在生产扛过流量"的背书，但 README 没给出具体业务场景或规模数据，评估时仍需在自己的 corpus 上做召回和压力测试。
 
@@ -628,10 +631,10 @@ Zvec 是阿里巴巴开源的。README 里直接写 **"battle-tested within Alib
 
 本文基于 Zvec 官方仓库（[alibaba/zvec](https://github.com/alibaba/zvec)）公开文档整理，需要说明的边界：
 
-1. **性能数据来源**：文中提到的性能数据（召回率、延迟、内存占用、量化收益）来自官方文档、Release Notes 和社区反馈，未在标准化测试环境中验证，实际性能因硬件配置和数据分布而异。
+1. **性能数据来源**：官方基准用 [VectorDBBench](https://github.com/zilliztech/VectorDBBench) 框架、Cohere 1M / 10M（768 维）数据集，在 16 vCPU / 64 GiB 内存的阿里云 ECS（g9i.4xlarge、Ubuntu 24.04）上测得，完整口径见官方 Benchmarks 文档。文中引用的量化 recall 数据（cohere-1m）来自 v0.6.0 Release Notes；其余性能描述来自官方文档与社区反馈，未在标准化测试环境中独立复验，实际性能因硬件配置和数据分布而异。
 2. **版本时效性**：Zvec 处于活跃开发阶段（v0.1.0 → v0.7.0，约 8 个月 11 个版本），API 仍在演进（C++ API 在 v0.7.0 做了 snake_case 破坏性变更），请以[官方 GitHub 仓库](https://github.com/alibaba/zvec)的最新代码为准。
-3. **代码示例**：本文 Python 代码基于 v0.7.0 的 SDK 签名（`Query` / `VectorSchema(index_param=...)` / `RrfReRanker`），如遇 API 变动，以官方快速上手文档为准。
-4. **索引选择**：六种索引的适用场景因数据规模、查询模式、硬件配置而异，本文决策表仅供参考，建议用户在实际数据集上做压测。
+3. **代码示例**：本文 Python 代码基于 v0.7.0 的 SDK 签名（`Query` / `VectorSchema(index_param=...)` / `RrfReRanker`），filter 语法遵循官方 SQL-like 方言（数组字段用 `CONTAIN_ANY(...)` / `CONTAIN_ALL(...)`），如遇 API 变动，以官方快速上手文档为准。
+4. **索引选择**：六种索引的适用场景因数据规模、查询模式、硬件配置而异，本文决策表综合官方文档与作者判断整理，仅供参考，建议在实际数据集上做压测。
 5. **多语言 SDK**：文中提到 5 种语言 SDK，实际可用性因语言而异，建议查看对应 SDK 仓库的 README。
 6. **阿里内部验证**：README 提到"battle-tested within Alibaba Group"，但未提供具体业务场景或规模数据，评估时需在自己的数据集上做召回和压力测试。
 7. **判断边界**：本文对 Zvec 适用场景的判断基于其设计目标和技术特征，具体采用决策请结合业务场景评估。
@@ -651,5 +654,6 @@ Zvec 是阿里巴巴开源的。README 里直接写 **"battle-tested within Alib
 - Rust SDK：<https://crates.io/crates/zvec-rust>
 - zvec-grep：<https://github.com/zvec-ai/zvec-grep>
 - Zvec Studio：<https://github.com/zvec-ai/zvec-studio>
+- Zvec MCP Server：<https://github.com/zvec-ai/zvec-mcp-server>
 - DeepWiki：<https://deepwiki.com/alibaba/zvec>
-- DiskANN 论文：<https://papers.microsoft.com/archive/2019/DiskANN-Fast-accurate-billion-scale-nearest-neighbor-search-on-a-single-node.pdf>
+- DiskANN 论文（NeurIPS 2019）：<https://papers.nips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html>

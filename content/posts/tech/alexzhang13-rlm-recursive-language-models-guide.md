@@ -1,26 +1,26 @@
 ---
-title: "RLM 推理范式拆解：用 CodeAct REPL 让 LLM 自己递归处理无限长上下文"
+title: "RLM 推理范式拆解：让 LLM 在 REPL 里递归处理超长上下文"
 date: "2026-06-18T15:06:00+08:00"
 slug: "alexzhang13-rlm-recursive-language-models-guide"
-description: "alexzhang13/rlm 是 MIT OASYS 实验室开源的 Recursive Language Models 推理引擎，用 CodeAct REPL 让 LLM 在代码环境里递归调用自己处理近无限长上下文。本文拆解其 RLM 范式与多 sandbox 适配器。"
+description: "alexzhang13/rlm 是 MIT OASYS 实验室开源的 Recursive Language Models 推理引擎，把长上下文变成 REPL 环境里的变量，让 LLM 写代码检查、拆解并递归调用自己。本文拆解其调用范式、7 种沙箱环境与论文实验数据。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Python"]
 ---
 
-# RLM 推理范式拆解：用 CodeAct REPL 让 LLM 自己递归处理无限长上下文
+# RLM 推理范式拆解：让 LLM 在 REPL 里递归处理超长上下文
 
-`alexzhang13/rlm` 改造的对象是"如何调用 LLM"这件事本身。传统接口 `llm.completion(prompt, model)` 把整段 prompt 塞进上下文窗口；RLM 提出的 `rlm.completion(prompt, model)` 把 prompt 当成代码环境里的变量，让 LLM 在 REPL 里**编程式**地审视、拆解、递归调用自己。截至 2026 年 6 月，这个由 MIT OASYS 实验室开源的项目（5,108+ Stars、842+ Forks、MIT 许可证、配套论文 arXiv:2512.24601）已经发展出 7 种 sandbox 适配器（local / ipython / docker / modal / prime / daytona / e2b），并附带基于 Prime Intellect prime-rl 的训练环境。
+`alexzhang13/rlm` 改造的对象是"如何调用 LLM"这件事本身。传统接口 `llm.completion(prompt, model)` 把整段 prompt 塞进上下文窗口；RLM（Recursive Language Models，递归语言模型）提供的 `rlm.completion(prompt, model)` 把长文本当成代码环境里的变量，让 LLM 在 REPL（Read-Eval-Print Loop，交互式代码执行环境）里写代码来检查、拆解输入，并在代码中递归调用自己。截至 2026 年 9 月，这个由 MIT OASYS 实验室开源的项目（约 5.6k Stars、900 Forks、MIT 许可证，论文作者 Alex L. Zhang、Tim Kraska、Omar Khattab，编号 arXiv:2512.24601）已经支持 7 种 REPL 环境（local / ipython / docker / modal / prime / daytona / e2b），并附带基于 Prime Intellect `verifiers` 与 `prime-rl` 的训练环境。
 
 ## 学习目标
 
 读完本文后你应当能够：
 
-1. 说清 RLM 与 RAG / 长上下文窗口在抽象层上的差异
+1. 说清 RLM 与长上下文窗口、compaction 压缩在抽象层上的差异
 2. 画出 RLM 客户端 + REPL + 后端 LM 的三层结构，并解释每层职责
 3. 区分主 LM 与子 LM 的输入边界、token 消耗来源
-4. 在 7 种 sandbox 之间做出与场景匹配的选型决策
-5. 用 `rlm.completion` 写出一段可跑通的递归调用示例
+4. 在 7 种 REPL 环境之间做出与场景匹配的选型决策
+5. 用 `rlm.completion` 写出一段调用形态正确的示例
 6. 列出 RLM 适用 / 谨慎 / 不适用三类场景的判断依据
 
 ## 目录
@@ -28,33 +28,33 @@ tags: ["Python"]
 - [一、核心判断：RLM 重写的是调用范式，而非上下文窗口](#一核心判断rlm-重写的是调用范式而非上下文窗口)
 - [二、系统地图：RLM 客户端 + REPL + 后端 LM 的三层结构](#二系统地图rlm-客户端--repl--后端-lm-的三层结构)
 - [三、L1 调用层：主 LM + 子 LM 的递归结构](#三l1-调用层主-lm--子-lm-的递归结构)
-- [四、L2 REPL 环境层：7 种 sandbox 适配器](#四l2-repl-环境层7-种-sandbox-适配器)
+- [四、L2 REPL 环境层：7 种沙箱环境](#四l2-repl-环境层7-种沙箱环境)
 - [五、L3 用户接口层：drop-in 替换 `llm.completion`](#五l3-用户接口层drop-in-替换-llmcompletion)
-- [六、任务流案例：从 "1000 万行日志里找异常 IP" 到递归调用](#六任务流案例从-1000-万行日志里找异常-ip-到递归调用)
-- [七、训练环境：从推理到 RL 微调](#七训练环境从推理到-rl-微调)
+- [六、任务流案例：从 800 MB 日志里找异常 IP 到递归调用](#六任务流案例从-800-mb-日志里找异常-ip-到递归调用)
+- [七、论文结果与训练环境](#七论文结果与训练环境)
 - [八、采用顺序与适用边界](#八采用顺序与适用边界)
 - [九、常见问题排查](#九常见问题排查)
 - [十、自测题](#十自测题)
 - [十一、进阶路径](#十一进阶路径)
 - [十二、总结](#十二总结)
 
-本文是一篇原理拆解。文章会先讲 RLM 与传统 completion 调用范式的边界，再拆 CodeAct REPL、递归子调用、多 sandbox 适配三层机制，最后用一个具体任务跑通"超长 prompt → 编程式拆解 → 递归子 LM"的完整链路。
+本文先划定 RLM 与传统 completion 调用的边界，再按 L1/L2/L3 三层拆开机制，然后用一个日志分析任务把整条链路跑一遍，最后给出论文数据与采用建议。
 
 ## 一、核心判断：RLM 重写的是调用范式，而非上下文窗口
 
-RLM 论文的开篇给出了与 RAG / 长上下文窗口完全不同的思路：
+RLM 论文的开篇给出了与长上下文路线不同的思路：
 
 > Recursive Language Models (RLMs) are a task-agnostic inference paradigm for language models (LMs) to handle near-infinite length contexts by enabling the LM to programmatically examine, decompose, and recursively call itself over its input.
 
-三个关键词值得拆解：
+三个关键词值得拆开：
 
-- **task-agnostic**：不绑定"摘要"、"问答"或"RAG"这类具体任务，RLM 提供的是调用范式本身
-- **programmatically**：LLM 不再用自然语言读 prompt，而是在代码环境里写代码来访问 prompt
+- **task-agnostic**：不绑定摘要、问答或检索这类具体任务，RLM 提供的是调用范式本身
+- **programmatically**：LLM 不再用自然语言通读 prompt，而是写代码访问 prompt
 - **recursively**：LLM 可以在自己的代码里调用自己（子 LM），构成递归结构
 
-RLM 和 200k token 的 Gemini 1.5 处于不同抽象层：后者扩大窗口容量，前者改变调用方式。论文作者把这个范式叫做 "language model"，因为从外部看，整个递归系统仍然是一个"从文本到文本的概率映射"，只是内部多了"代码执行 + 子调用"的能力。
+论文用三组基线检验这条路线：把长输入压缩后再塞进窗口的 compaction；给模型代码执行能力但没有递归结构的 CodeAct with sub-calls（CodeAct，以可执行代码作为模型动作格式的 agent 范式）；以及通用 agent 脚手架 Claude Code。RLM 和它们的差异在抽象层：compaction 决定"丢什么留什么"，CodeAct 解决"模型会不会动手"，RLM 决定"输入如何被访问"——三件事可以叠加，但互不替代。论文作者把这个范式仍叫做 language model，因为从外部看，整个递归系统依然是一个"从文本到文本的映射"，只是内部多了代码执行和子调用。
 
-**为什么这层区分重要**：把 RLM 当成"另一种长上下文方案"会误导选型——长上下文窗口优化的是"单次能看多少"，RLM 优化的是"如何分批看、如何汇总"。两者可以叠加（子 LM 本身可以用长上下文模型），但不能互相替代。
+这条区分直接影响选型：上下文窗口决定单次能装多少，RLM 决定如何分批看、如何汇总。子 LM 本身可以是长上下文模型，两者叠加使用。
 
 ## 二、系统地图：RLM 客户端 + REPL + 后端 LM 的三层结构
 
@@ -63,74 +63,67 @@ RLM 和 200k token 的 Gemini 1.5 处于不同抽象层：后者扩大窗口容�
 ```text
 ┌────────────────────────────────────────────────────────────────┐
 │  L3 用户接口层                                                 │
-│    rlm.completion(prompt, model) → response                    │
+│    rlm.completion(prompt, root_prompt) → response              │
 │    与传统 llm.completion 调用形态保持一致（drop-in 替换）       │
 ├────────────────────────────────────────────────────────────────┤
-│  L2 REPL 环境层（可插拔 7 种 sandbox）                         │
-│    LocalREPL / IPythonREPL / DockerREPL / ModalREPL /          │
-│    PrimeREPL / DaytonaREPL / E2BREPL                           │
-│    LLM 在这里写 Python 代码来访问 prompt 变量                 │
+│  L2 REPL 环境层（可插拔 7 种环境）                             │
+│    local / ipython / docker / modal / prime / daytona / e2b    │
+│    长文本注入为 context 变量，LLM 在这里写 Python 访问它       │
 ├────────────────────────────────────────────────────────────────┤
 │  L1 LM 调用层                                                  │
-│    主 LM（"根"）：负责写代码 / 做决策                          │
-│    子 LM（"递归"）：被主 LM 在代码里调用，处理局部上下文     │
-│    backend: openai / anthropic / vllm / ...                    │
+│    主 LM（根调用）：负责写代码、做决策、提交最终答案           │
+│    子 LM：被主 LM 在代码里调用，只处理局部上下文              │
+│    backend: openai / anthropic / openrouter / portkey / vllm   │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-下面逐层看每一层的关键机制。
+下面逐层看关键机制。
 
 ## 三、L1 调用层：主 LM + 子 LM 的递归结构
 
-RLM 的核心是把 `llm.completion` 包装成两层调用：
+RLM 的核心是把 `llm.completion` 包装成两层调用。
 
-### 3.1 主 LM（root LM）
+### 3.1 主 LM（根调用）
 
-主 LM 拿到的不再是"原始 prompt + 上下文"，而是"一个 REPL 环境 + prompt 作为变量"。它的任务是**写代码**：
+主 LM 拿到的不再是原始 prompt 文本，而是一个 REPL 环境——长上下文以 `context` 变量的形式注入其中。它的任务是写代码：
 
-- 读取 prompt 的某一段
+- 检查 `context` 的某一段
 - 调用子 LM 处理该段
 - 汇总子 LM 的输出
-- 返回最终答案
 
-主 LM 输出的不再是答案，而是 Python 代码——这段代码在 REPL 里执行后才得到最终答案。
+主 LM 会经历多轮"写代码 → 看执行结果 → 再写代码"的循环，直到把最终答案存入某个变量并用 `FINAL_VAR("变量名")` 提交。REPL 轮次由 `max_iterations` 参数封顶（默认 30），达到上限后强制产出最终答案。
 
-### 3.2 子 LM（sub-LM）
+### 3.2 子 LM
 
-子 LM 是被主 LM 在代码里 `print(rlm.completion(chunk, sub_model))` 调用的实例。它每次只看到 prompt 的局部（一个 chunk），不接触完整 prompt，也不接触 REPL。子 LM 的输出是普通文本，会被主 LM 继续处理。
+子 LM 是主 LM 在代码里调用的 LM 实例，每次只看到传给它的局部片段，不接触完整上下文，也不接触 REPL。在 `local` 环境中，注入 REPL 的子调用函数是 `llm_query`（发起单次子 LM 调用）与 `llm_query_batched`（批量并发调用）；`docker` 环境额外提供 `rlm_query` / `rlm_query_batched`——递归地生成带完整 REPL 的子 RLM，并发数受 `max_concurrent_subcalls` 限制。
 
 ### 3.3 递归
 
-主 LM 可以在自己的代码里**再次**调用 `rlm.completion`——这就构成了递归。论文里把这种结构叫做 "Recursive LM"，因为从外部看"系统 → 文本"的映射本身就是一个 LM，只是内部递归。
+"递归"指的是主 LM 在代码里再次发起 LM 调用，子调用的输出回到 REPL 继续参与计算。需要说明现状：RLM 客户端的 `max_depth` 参数当前默认且仅支持 1——也就是"根调用 + 一层子调用"。论文意义上的任意深度递归是范式能力，库层面的深度保护已经先行落地。
 
-这种范式带来的主要收益是 token 经济性：主 LM 只在"做决策"时消耗 token，子 LM 各自只看局部——总 token 数远低于"把所有内容塞进上下文窗口"。
+这种结构带来的收益是 token 经济性：主 LM 只在写代码和决策时消耗 token，上下文里出现的只有代码和子 LM 返回的文本；子 LM 各看一段、互不可见，token 不叠加。传统方案里输入越长，每次调用的费用与时延都越高——注意力计算随序列长度平方增长（FlashAttention 优化后仍随长度线性），RLM 把"读 800 MB 日志"变成"主 LM 写几十行 Python + 若干子 LM 各读一小段"，总成本随任务结构而非输入总长增长。
 
-**为什么 token 能省下来**：传统长上下文方案里，每多 1 token 输入，注意力计算的代价是 O(n²)（即便有 FlashAttention 也是 O(n)），且每次生成都要重新编码全部上下文。RLM 把"读 800 MB 日志"拆成"主 LM 写 50 行 Python + 100 个子 LM 各读 8 MB"，主 LM 的上下文里只有代码和子 LM 返回的摘要，子 LM 之间互不可见，token 不叠加。
+## 四、L2 REPL 环境层：7 种沙箱环境
 
-## 四、L2 REPL 环境层：7 种 sandbox 适配器
+RLM 的可移植性来自 7 种可插拔 REPL 环境。按执行位置可以分成两组：本地执行（local / ipython / docker）与云端沙箱（modal / prime / daytona / e2b），隔离强度依次递增。
 
-RLM 的安全性与可移植性来自 7 种可插拔 REPL 环境。论文和 README 把它们分成两组：本地非隔离 + 云端隔离。
+### 4.1 本地执行（3 种）
 
-### 4.1 本地非隔离（3 种）
+- **`local`（默认）**：与 RLM 主进程同进程运行，用 Python `exec` 在受限命名空间里执行代码——屏蔽了 `eval`、`exec`、`compile`、`input`、`globals`、`locals` 等危险内置函数，但与宿主共享进程内存、没有网络隔离。官方文档明确建议不要用于生产环境，它适合本地验证与低风险任务。
+- **`ipython`**：在真实 IPython 会话里运行代码单元，默认进程内执行，也可以切到独立的 `ipykernel` 子进程模式——后者提供硬性的 `cell_timeout` 超时控制和与宿主完全的命名空间隔离。通过 `pip install 'rlms[ipython]'` 安装。
+- **`docker`**：在容器内执行 REPL，默认镜像 `python:3.11-slim`，可自定义。容器与宿主之间通过宿主侧的轻量代理桥接 LM 调用。功能最全：单次与批量子调用（`llm_query` / `rlm_query` 系列）、自定义工具（`custom_tools` / `custom_sub_tools`）、`persistent=True` 多轮会话（带版本化的 `context_N` / `history_N` 变量）、`compaction=True` 自动摘要历史。注意 `LocalREPL` 的内置函数白名单较窄，如果模型需要的标准库被拦截，换 `docker` 环境即可获得容器内完整的 Python。
 
-- **`local`（默认）**：主进程内 `exec` 执行。同一虚拟环境、共享全局命名空间。适合本地 benchmark 与低风险任务。
-- **`ipython`**：真实 IPython 会话，可选 `ipykernel` 子进程模式（提供 `cell_timeout` 与命名空间隔离）。通过 `pip install 'rlms[ipython]'` 安装。
-- **`docker`**：在 `python:3.11-slim`（可自定义）容器内执行 REPL。提供文件系统级隔离。
+### 4.2 云端沙箱（4 种）
 
-`LocalREPL` 的实现细节值得注意：它会构造一份"受限的 globals/locals 命名空间"——仍然在主进程里跑，但模型能看到的名字是受控的，恶意 prompt 不能直接 `import os` 删本地文件。这种"软隔离"比纯 `exec` 安全，但不如容器级隔离彻底。
+- **`modal`**：调用 Modal Sandboxes。先 `uv add modal` 安装，再 `modal setup` 完成账号认证。递归子调用从宿主进程发起，主 LM 与沙箱解耦。
+- **`prime`**：调用 Prime Intellect Sandboxes（beta）。安装 `uv pip install -e ".[prime]"` 并设置 `PRIME_API_KEY`。README 明确标注：目前运行时较慢，是一个 open issue。
+- **`daytona` / `e2b`**：一并列入环境清单，README 未附对比数据。定位都是云端代码执行环境，适合多租户生产场景，选型前以各自文档为准。
 
-### 4.2 云端隔离（4 种）
-
-- **`modal`**：调用 Modal Sandboxes。子 LM 调用从宿主进程发起，确保主 LM 与 sandbox 解耦。需要 `modal setup` 认证。
-- **`prime`**：调用 Prime Intellect Sandboxes（beta）。README 标注"目前运行时较慢，是一个 open issue"。
-- **`daytona`**：Daytona 沙箱，提供云端代码执行环境，适合多租户 / 生产场景下完全隔离不可信的 LM 输出。
-- **`e2b`**：e2b 沙箱，定位与 `daytona` 接近，按用量计费，启动延迟低于自建容器。
-
-这种"7 种 sandbox 可换"的设计让 RLM 既能在本地做 benchmark，也能在生产环境安全部署。论文在 7 种环境之间做了对照测试，结论是"功能等价但性能差异显著"。
+这 7 种环境共享同一套 REPL 接口——`context` 变量和 `llm_query` 等注入函数在不同环境里行为一致，差异在隔离强度与运维成本。本地做实验、生产上容器或云端沙箱，代码不用重写。
 
 ## 五、L3 用户接口层：drop-in 替换 `llm.completion`
 
-L3 故意做得非常薄，README 给出的最小例子：
+L3 刻意做得很薄。README 给出的最小例子：
 
 ```python
 from rlm import RLM
@@ -144,87 +137,102 @@ rlm = RLM(
 print(rlm.completion("Print me the first 100 powers of two, each on a newline.").response)
 ```
 
-调用形态与 `openai.OpenAI().chat.completions.create(...)` 接近一致——这就是 README 强调的 "drop-in replacement"。项目作者把 RLM 定位成"调用现有 LLM 的另一种方式"，而非"另一种 LLM 库"，目的是让存量代码改一行 import 就能切换范式。
+调用形态与 `openai.OpenAI().chat.completions.create(...)` 接近一致——这就是 README 强调的 "drop-in replacement"。项目把 RLM 定位成"调用现有 LLM 的另一种方式"，而非"另一个 LLM 库"，存量代码改一行 import 就能切换范式。
 
-`backend` 支持多种：`openai` / `anthropic` / `vllm`（本地 vLLM 服务）等。`backend_kwargs` 是透传给底层客户端的参数。
+`rlm.completion` 的完整签名更能说明设计意图：
 
-## 六、任务流案例：从 "1000 万行日志里找异常 IP" 到递归调用
+```python
+result = rlm.completion(
+    prompt,        # 长上下文：str | dict | list，注入 REPL 后成为 context 变量
+    root_prompt,   # 可选：只有根调用能看到的任务指令
+)
+```
 
-下面用一个真实场景跑一遍完整流程。任务：从一段 800 MB 的日志文件里找出出现次数最多的 IP。
+长上下文与任务指令在这里分开——`prompt` 位置放数据，`root_prompt` 放指令，指令不会污染上下文变量。返回对象上有几个实用属性：`response`（最终答案）、`execution_time`（耗时秒数）、`usage_summary`（根调用与所有子调用的 token 汇总）、`root_model`（根调用模型名）。
+
+`RLM` 构造函数里值得认识的参数：`environment`（选择 REPL 环境，默认 `local`）、`max_depth`（递归深度，当前仅支持 1）、`max_iterations`（REPL 轮次上限）、`other_backends`（给 REPL 内子调用配备额外后端）、`custom_system_prompt`（覆盖默认的 CodeAct 系统提示词）、`logger`（传入 `RLMLogger` 把轨迹落盘为 JSONL）。`backend` 支持 `openai` / `anthropic` / `openrouter` / `portkey`，本地模型推荐 `vllm`（走 OpenAI 兼容接口），更多客户端见仓库 `rlm/clients/` 目录。
+
+## 六、任务流案例：从 800 MB 日志里找异常 IP 到递归调用
+
+用一个真实场景跑一遍完整流程。任务：从 800 MB 的日志文件里找出出现次数最多的 IP。这个体量远超任何单一上下文窗口，传统调用接口在第一步就失效。
 
 **Step 1：用户调用**
 
 ```python
-rlm = RLM(backend="openai", backend_kwargs={"model_name": "gpt-5-nano"})
-with open("huge.log") as f:
-    log_text = f.read()  # 800 MB，远超任何 LLM 上下文窗口
-print(rlm.completion(
-    f"找出这段日志里出现次数最多的 IP 地址。日志如下：{log_text}"
-).response)
+from rlm import RLM
+
+rlm = RLM(
+    backend="openai",
+    backend_kwargs={"model_name": "gpt-5-mini"},
+    environment="local",
+)
+
+with open("huge.log", errors="replace") as f:
+    log_text = f.read()  # 800 MB，不能塞进任何上下文窗口
+
+result = rlm.completion(
+    log_text,
+    root_prompt="找出这段日志里出现次数最多的 IP 地址。",
+)
+print(result.response)
+print(result.usage_summary)  # 根调用与所有子调用的 token 汇总
 ```
+
+日志文本走 `prompt` 参数进入 REPL 的 `context` 变量，任务指令走 `root_prompt` 只给根调用。
 
 **Step 2：主 LM 写出拆解代码**
 
-主 LM 收到 REPL 环境，看到 `prompt` 变量里是 800 MB 日志。它不会试图"读完"日志，而是写一段 Python：
+主 LM 不会试图通读日志，它在 REPL 里写下这样的代码：
 
 ```python
-# 主 LM 在 REPL 里写的代码
-lines = prompt.split("\n")
-# 按 10000 行切块
-chunks = [lines[i:i+10000] for i in range(0, len(lines), 10000)]
-# 并发调用子 LM 找每个 chunk 的 top IP
-from concurrent.futures import ThreadPoolExecutor
-def top_ip(chunk):
-    from collections import Counter
-    import re
-    ips = re.findall(r"\d+\.\d+\.\d+\.\d+", "\n".join(chunk))
-    return Counter(ips).most_common(5)
+# 主 LM 在 REPL 里写的代码（示意）
+import re
+from collections import Counter
 
-with ThreadPoolExecutor(max_workers=10) as ex:
-    partials = list(ex.map(top_ip, chunks))
-# 汇总
+chunks = [context[i:i + 10000] for i in range(0, len(context), 10000)]
+
 total = Counter()
-for p in partials:
-    for ip, cnt in p:
-        total[ip] += cnt
+for chunk in chunks:
+    ips = re.findall(r"\d+\.\d+\.\d+\.\d+", chunk)
+    total.update(Counter(ips).most_common(5))
+
 FINAL = total.most_common(1)[0]
-print(FINAL)
+FINAL_VAR("FINAL")
 ```
+
+`FINAL_VAR("FINAL")` 把变量提交为整个调用的返回值，随后 `result.response` 就是它。
 
 **Step 3：REPL 执行**
 
-`LocalREPL`（或 `DockerREPL` / `ModalREPL`）执行这段代码，并发 10 个子任务（每个仍是同一 REPL 内部的 `top_ip` 函数，不会递归触发主 LM）。
+`LocalREPL` 执行这段代码。注意这段代码全程没有 LM 参与计数——正则加 `Counter` 就够了。RLM 的价值恰恰在于给了模型"先用便宜手段试"的空间：模型看到执行结果后自己判断要不要升级手段。
 
 **Step 4：递归子调用（可选）**
 
-如果主 LM 决定"用正则太粗糙，需要 LLM 来识别 IP"，它可以这样写：
+如果正则覆盖不了（比如日志里 IP 被混淆），主 LM 可以对局部片段发起子 LM 调用：
 
 ```python
-# 递归调用：在代码里再次调用 rlm.completion
-sub_results = []
-for chunk in chunks[:5]:  # 只看前 5 个 chunk 做 demo
-    sub = rlm.completion(f"从以下文本里识别 IP 并返回 JSON 列表：{chunk[:5000]}")
-    sub_results.append(sub.response)
+# 主 LM 在 REPL 里继续写：对前 5 个 chunk 用子 LM 做语义识别
+sample = "\n".join(chunks[:5])
+identified = llm_query(
+    f"从下面文本中找出所有 IP 地址，以 JSON 数组返回：\n{sample[:5000]}"
+)
 ```
 
-这里 `rlm.completion` 是递归调用——子 LM 只看 5000 token 的局部 chunk，返回 IP 列表，主 LM 在 REPL 里汇总。
+`llm_query` 是单次子 LM 调用：子 LM 只看到这 5000 字符，看不到 800 MB 全文。在 `docker` 环境里还可以改用 `rlm_query`——子调用本身带着完整 REPL，能对片段再做一轮"写代码检查"，并发受 `max_concurrent_subcalls` 约束。
 
-**Step 5：主 LM 输出最终答案**
+**Step 5：主 LM 提交最终答案**
 
-REPL 的 `print(FINAL)` 输出后，主 LM 看到 stdout，返回 "出现最多的 IP 是 1.2.3.4，共出现 4,521 次"。
+REPL 的执行结果回到主 LM 的上下文，它确认 `FINAL` 变量已经就绪并提交。`result.response` 返回"出现最多的 IP 是 x.x.x.x，共出现 N 次"。
 
-整个过程中（以 Step 4 的 5 个子调用 demo 为例）：
-- 主 LM 的 token 消耗：~3,000（写代码 + 决策）
-- 每个子 LM 的 token 消耗：~1,500（只看局部）
-- 总 token 数：约 10,500（3,000 + 5 × 1,500），远低于"800 MB 直接塞上下文"的不可行方案
+整个过程的真实 token 开销不必估算——`result.usage_summary` 会列出根调用与每个子调用的消耗。可以确定的是：根 LM 的上下文里只有代码和子调用返回的文本，成本随任务结构而非输入总长增长。需要控制开销时，用 `max_iterations` 限制 REPL 轮次，在 `root_prompt` 里写明子调用预算。
 
-实际生产中子调用数量随 chunk 数线性增长，建议在 prompt 里设置 `max_subcalls` 上限或在 reward 里加入子调用次数惩罚。
+## 七、论文结果与训练环境
 
-## 七、训练环境：从推理到 RL 微调
+论文（arXiv:2512.24601，v3 更新于 2026 年 5 月）报告了 GPT-5 作为根模型、四个长上下文任务上的结果。先说清这组数字测的是什么：输入长度远超模型上下文窗口时，不同调用策略的答案准确率——不是短上下文任务的通用能力对比。
 
-仓库 `training/` 目录里附带基于 Prime Intellect `verifiers` 的训练环境，可以"训练你自己的 RLM"。这是 RLM 与其他推理引擎的关键差异——它不仅给出推理代码，还允许把"递归 LM 调用"本身作为 RL 训练的策略。
+跨基准中位数下，RLM 相比 compaction 提升 26%，相比 CodeAct with sub-calls 提升 130%，相比 Claude Code 提升 13%，成本与基线相当。数字分布本身有信息量：对 compaction 的优势来自"不丢信息"——压缩后再读必然损失细节，编程式访问保留了按需回查的能力；对 CodeAct with sub-calls 的 130% 是三组里最大的差距，说明收益不只来自"会写代码"，更来自递归结构本身——子调用能带着环境再拆解，而不是一次性返回文本。反过来说，这组数字不能直接推出"RLM 在所有任务上都更好"：输入可自然拆分的任务收益最大，短输入任务上 REPL 调度开销反而是负担；实验以 GPT-5 为根模型，其他模型的表现要看各自的代码生成能力。
 
-论文作者把这视为 RLM 进一步释放潜力的路径：传统 RL 微调只能优化"单次 completion 的质量"，RLM 风格的训练可以优化"递归拆解的策略质量"。`verifiers` + `prime-rl` 的组合让研究者可以构建自定义 reward（子调用次数、token 总数、答案正确率）来训练"更会拆解"的主 LM。
+训练侧，仓库 `training/` 目录把 `rlm.RLM` 暴露为 `verifiers` 的 Environment，可直接接入 Prime Intellect 的 `prime-rl`，自带 OOLONG 长文本问答示例（`training/environments/oolong/`），训练时使用 subprocess 隔离的本地 REPL，不依赖云端沙箱。论文据此做了小规模后训练：用 Qwen3-8B 训出 RLM-Qwen3-8B，平均比原始 Qwen3-8B 提升 28.3%，在三个长上下文任务上接近原始 GPT-5 的水平。这说明"递归拆解策略"本身可以被训练——reward 里可以纳入子调用次数、token 总量与答案正确率，优化的对象从"如何回答"扩展到了"如何拆解"。
 
 ## 八、采用顺序与适用边界
 
@@ -232,20 +240,19 @@ REPL 的 `print(FINAL)` 输出后，主 LM 看到 stdout，返回 "出现最多�
 
 - 需要处理**远超上下文窗口**的输入（GB 级日志、长代码仓库、整本书）
 - 任务可自然拆解为"局部处理 + 汇总"（计数 / 分类 / 摘要 / 提取）
-- 想在多个 sandbox 之间灵活切换（本地开发 / 云端隔离）
+- 想在多个沙箱环境之间灵活切换（本地开发 / 容器与云端隔离）
 - 研究方向：训练"会递归拆解"的 LM 策略
 
 **谨慎采用的场景**：
 
-- 任务天然就是"短输入 + 单次回答"——RLM 增加 REPL 调度开销反而是负收益
-- 需要严格 token 数预算（RLM 的递归调用难以预测总 token）
-- 不支持 CodeAct 的 LM（论文认为所有 LM 都应该有"代码环境"接入，但现状并非如此）
+- 任务天然就是"短输入 + 单次回答"——REPL 调度开销是负收益
+- 需要严格 token 预算——递归调用的总量难以事前预测，只能靠 `max_iterations`、子调用预算和 `usage_summary` 事后观察
+- 根模型代码生成能力弱——先用 README 的 powers-of-two 例子验证，写不出可执行拆解代码的模型撑不起整个范式
 
 **不适用的场景**：
 
-- 强实时性约束（递归 + REPL 执行带来不可忽略延迟）
+- 强实时性约束（多轮代码执行与子调用带来不可忽略的延迟）
 - 简单关键词搜索（直接用 ripgrep / grep 更快）
-- 模型本身没有 code generation 能力（REPL 形同虚设）
 
 ### 选型决策清单
 
@@ -253,50 +260,48 @@ REPL 的 `print(FINAL)` 输出后，主 LM 看到 stdout，返回 "出现最多�
 
 1. 输入规模是否超过目标 LM 上下文窗口的 2 倍以上？
 2. 任务能否被描述为"对每一段做 X，再对所有结果做 Y"？
-3. 主 LM 是否具备稳定的 Python 代码生成能力（建议先跑 README 的 100 powers of two 例子验证）？
+3. 根 LM 是否具备稳定的 Python 代码生成能力（先跑 README 的 powers-of-two 例子验证）？
 4. 是否能接受单次调用延迟从秒级上升到分钟级？
-5. 是否有 sandbox 隔离需求（本地实验选 `local`/`ipython`，生产选 `docker`/`modal`/`e2b`）？
+5. 沙箱隔离需求是否明确（本地实验选 `local` / `ipython`，生产选 `docker` / `modal` / `e2b`）？
 
-任意一项答"否"，建议先用传统 `llm.completion` + 手写 chunking 跑通，再评估是否引入 RLM。
+任意一项答"否"，先用传统 `llm.completion` 加手写 chunking 跑通，再评估是否引入 RLM。
 
 ## 九、常见问题排查
 
-实际跑 RLM 时容易踩的坑与排查路径：
-
 **1. `ImportError: No module named 'rlm'`**
 
-确认安装来源：`pip install rlms`（注意包名是 `rlms` 复数，import 时才是 `rlm`）。用 `pip show rlms` 查看版本，README 标注的最低支持版本以 PyPI 页面为准。
+PyPI 包名是 `rlms`（复数），import 名才是 `rlm`：`pip install rlms`。环境要求 Python 3.11 及以上，用 `pip show rlms` 确认安装。
 
-**2. 主 LM 写出的代码在 REPL 里报 `NameError: name 'prompt' is not defined`**
+**2. REPL 代码报 `NameError: name 'context' is not defined`**
 
-`prompt` 变量由 RLM 客户端注入到 REPL 的 globals 命名空间。`LocalREPL` 默认注入，`DockerREPL` / `ModalREPL` 需要确认 sandbox 镜像里装了项目依赖。排查时在 REPL 里先执行 `print(dir())` 看可见名字。
+`context` 变量由 RLM 客户端注入 REPL。确认长上下文是走 `completion()` 的 `prompt` 参数传入的，而不是拼进了任务指令字符串。排查时先在代码里 `print(len(context))` 确认变量已注入、内容完整。
 
 **3. 子 LM 调用次数失控，token 账单暴涨**
 
-主 LM 写的循环没有上限保护。在 prompt 里显式约束："最多发起 N 次子调用，超出后返回当前汇总结果"。也可以在 `RLM(...)` 构造时设置 `max_subcalls`（若版本支持）或在 reward 里加入子调用次数惩罚。
+主 LM 写的循环没有上限保护。三道闸门：在 `root_prompt` 里显式写明"最多发起 N 次子调用"；构造时设 `max_iterations`（默认 30）限制 REPL 轮次；`docker` 环境用 `max_concurrent_subcalls` 管住并发。跑完用 `result.usage_summary` 复盘实际消耗。
 
-**4. `prime` sandbox 启动慢**
+**4. `prime` 环境启动慢**
 
-README 明确标注 `prime` 目前运行时较慢，是一个 open issue。生产场景先用 `modal` 或 `e2b`，`prime` 留给需要 Prime Intellect 训练栈的研究场景。
+README 明确标注这是已知 open issue。生产场景先用 `modal` 或 `e2b`，`prime` 留给需要 Prime Intellect 训练栈的研究场景。
 
-**5. 主 LM 拒绝写代码，直接用自然语言回答**
+**5. 主 LM 不写代码，直接用自然语言回答**
 
-部分模型在 system prompt 不够明确时会退化为 chat 模式。检查 `RLM` 构造参数里是否覆盖了默认的 CodeAct system prompt；也可以在用户 prompt 开头加一句 "You must respond with Python code that prints the final answer."
+模型退化为 chat 模式时，检查 `custom_system_prompt` 是否覆盖了默认的 CodeAct 系统提示词；先用 README 的 powers-of-two 例子验证模型的基础代码能力。
 
-**6. 递归调用栈溢出 / 超时**
+**6. 执行挂死或无限循环**
 
-主 LM 在子调用里再次触发主 LM，形成无限递归。在 prompt 里限定递归深度："最多 2 层递归，第 3 层必须直接返回结果。" 同时为 `ipython` sandbox 配置 `cell_timeout` 防止单次执行挂死。
+递归深度不用担心——`max_depth` 当前仅支持 1，库层面已杜绝无限递归。真正会挂的是单个代码块：`ipython` 的子进程模式提供硬性 `cell_timeout`；`max_iterations` 则在 REPL 轮次失控时强制收敛出最终答案。
 
 ## 十、自测题
 
 用以下 6 题检验理解程度。答案折叠在每题下方。
 
-**Q1**：RLM 与 Gemini 1.5 的 200k 上下文窗口解决的是同一个问题吗？为什么？
+**Q1**：RLM 与 1M 级长上下文窗口模型解决的是同一个问题吗？为什么？
 
 <details>
 <summary>点击查看参考答案</summary>
 
-**答案**：不是。Gemini 1.5 扩大单次可见窗口容量，RLM 改变的是"如何分批访问 + 汇总"。两者可叠加（子 LM 用长上下文模型），但属于不同抽象层。
+**答案**：不是。长上下文窗口扩大单次可见容量，RLM 改变的是"输入如何被访问"——分批检查加汇总。两者可叠加（子 LM 用长上下文模型），但属于不同抽象层，不能互相替代。
 
 </details>
 
@@ -305,7 +310,7 @@ README 明确标注 `prime` 目前运行时较慢，是一个 open issue。生�
 <details>
 <summary>点击查看参考答案</summary>
 
-**答案**：主 LM 拿到 REPL 环境 + 完整 prompt 作为变量；子 LM 只拿到主 LM 在代码里传给 `rlm.completion(chunk, ...)` 的局部 chunk，看不到完整 prompt，也接触不到 REPL。
+**答案**：主 LM 拿到 REPL 环境，完整上下文以 `context` 变量注入，任务指令走 `root_prompt`；子 LM 只拿到主 LM 在代码里传给 `llm_query`（或 `rlm_query`）的局部片段，看不到完整上下文，也接触不到 REPL。
 
 </details>
 
@@ -314,83 +319,73 @@ README 明确标注 `prime` 目前运行时较慢，是一个 open issue。生�
 <details>
 <summary>点击查看参考答案</summary>
 
-**答案**：主 LM 只在写代码和决策时消耗 token，子 LM 各自只看局部 chunk 且互不可见，token 不叠加。传统方案里每次生成都要重新编码全部上下文，成本随输入线性甚至平方增长。
+**答案**：主 LM 只在写代码和决策时消耗 token，上下文里只有代码与子调用返回的文本；子 LM 各看局部且互不可见，token 不叠加。传统方案的调用成本随输入长度增长（注意力计算平方级、FlashAttention 后线性级），RLM 的成本随任务结构增长。
 
 </details>
 
-**Q4**：7 种 sandbox 中哪几种提供文件系统级隔离？哪几种适合生产多租户？
+**Q4**：7 种环境中哪几种提供进程或容器级隔离？哪几种仅适合本地实验？
 
 <details>
 <summary>点击查看参考答案</summary>
 
-**答案**：`docker` 提供容器级文件系统隔离；`modal` / `daytona` / `e2b` 提供云端隔离，适合多租户生产场景。`local` / `ipython` 共享宿主命名空间，仅适合本地实验。
+**答案**：`docker` 提供容器级隔离；`modal` / `prime` / `daytona` / `e2b` 是云端完全隔离，适合多租户生产。`local` 与宿主共享进程内存、无网络隔离，`ipython` 进程内模式同理——仅子进程模式才有命名空间隔离，两者都只适合本地实验。
 
 </details>
 
-**Q5**：下面这段主 LM 写的代码有什么风险？如何修复？
+**Q5**：下面这段主 LM 写的代码有什么问题？如何修复？
 
 ```python
 for chunk in chunks:
-    print(rlm.completion(f"总结：{chunk}").response)
+    print(llm_query(f"总结：{chunk}"))
 ```
 
 <details>
 <summary>点击查看参考答案</summary>
 
-**答案**：风险有两点：(1) 没有并发，N 个 chunk 串行调用子 LM，延迟 N 倍；(2) 没有上限，chunks 很大时 token 失控。修复：用 `ThreadPoolExecutor` 并发，并加 `chunks[:max_subcalls]` 截断。
+**答案**：三个问题：(1) 串行调用，N 个 chunk 延迟线性放大；(2) 没有上限，chunk 多时 token 失控；(3) 结果只 `print` 没存变量，也没有用 `FINAL_VAR` 提交，根模型拿不到可返回的最终答案。修复：把结果收集进列表，改用 `llm_query_batched` 并发（`docker` 下受 `max_concurrent_subcalls` 限流），汇总后 `FINAL_VAR` 提交，并用 `max_iterations` 兜底。
 
 </details>
 
-**Q6**：RLM 风格的 RL 训练相比传统 RLHF，优化目标有什么不同？
+**Q6**：RLM-Qwen3-8B 的后训练相比传统 RLHF，优化对象有什么不同？
 
 <details>
 <summary>点击查看参考答案</summary>
 
-**答案**：传统 RLHF 优化单次 completion 质量；RLM 风格训练把"递归拆解策略"作为策略空间，reward 可以包含子调用次数、token 总数、答案正确率，优化的是"如何拆"而非"如何答"。
+**答案**：传统 RLHF 优化单次回答的质量；RLM 风格的后训练把"在 REPL 里拆解上下文、调度子调用"作为策略空间，reward 可以纳入子调用次数、token 总量与答案正确率。论文报告平均提升 28.3%，三个长上下文任务上接近原始 GPT-5。
 
 </details>
 
 ## 资料口径说明
 
-本文的判断基于以下来源，明确口径有助于你判断本文的适用边界：
+本文的判断基于以下来源：
 
 1. **一手来源**（优先级最高）：
-   - RLM 论文：arXiv:2512.24601
-   - RLM 仓库：alexzhang13/rlm（GitHub）
-   - RLM 仓库的 README.md、SKILL.md、references/ 目录
-   - RLM 配套的最小示例仓库
+   - RLM 论文：arXiv:2512.24601（v3，2026 年 5 月）
+   - RLM 仓库：alexzhang13/rlm（GitHub），含 README 与官方文档站
+   - 官方文档：alexzhang13.github.io/rlm（客户端 API 与各 REPL 环境页）
+2. **二手来源**（供交叉验证）：关于 CodeAct、长上下文压缩与云端沙箱的技术文档。
 
-2. **二手来源**（供交叉验证）：
-   - MIT OASYS 实验室的相关论文和项目
-   - 关于 RAG、长上下文窗口、CodeAct、REPL 的技术博客和论文
-   - 关于 sandbox（local、docker、modal、e2b 等）的技术文档
+3. **口径边界**：
+   - Stars / Forks 数据截至 2026 年 9 月，会随时间变化。
+   - `max_depth` 仅支持 1、`max_iterations` 默认 30 等 API 细节以当前版本文档为准，升级后请复查。
+   - 本文未实际运行 RLM，第六节的 REPL 代码是调用形态示意，实际生成代码由模型决定。
 
-3. **本文的判断**：
-   - RLM 是递归语言模型的一种实现，这一点基于其论文和代码。
-   - RLM 与 RAG、长上下文窗口属于不同抽象层，这一点基于论文中的对比分析。
-   - RLM 的 token 经济性优于"把全部输入塞进上下文"，这一点基于论文中的分析和示例。
-   - 7 种 sandbox 适配器的选型建议，基于论文中的对照实验数据和实际使用经验。
-
-4. **本文的局限性**：
-   - 本文没有实际运行 RLM，因此无法提供实际使用体验和性能数据。
-   - 本文没有与 RLM 的作者核实，因此无法保证所有细节都准确。
-   - 本文的判断基于公开资料，如果你有更准确的信息，欢迎指正。
+如果你发现与最新版本不符的细节，欢迎指正。
 
 ## 十一、进阶路径
 
 读完本文后，按以下顺序深入：
 
-1. **跑通 minimal 仓库**：`alexzhang13/rlm` 配套有 minimal 示例仓库，先用 `local` sandbox 跑通 README 的 100 powers of two 例子，确认环境正常。
-2. **替换 backend**：把 `openai` 换成 `anthropic` 或本地 `vllm`，观察主 LM 写出的代码风格差异（不同模型的 code generation 偏好不同）。
-3. **切换 sandbox**：同一任务分别用 `local` / `docker` / `modal` 跑一遍，记录启动延迟、执行延迟、token 消耗三项指标，建立自己的选型基线。
-4. **写一个自定义任务**：选一个真实场景（如"对 10 万条评论做情感分类 + 主题聚类"），手写主 LM 的拆解 prompt，对比 RLM 自动拆解与人工 chunking 的效果差异。
-5. **读论文**：arXiv:2512.24601 里给出了 7 种 sandbox 的对照实验数据、token 经济性分析、递归深度对正确率的影响曲线，是设计自定义 reward 的依据。
-6. **进入训练栈**：clone `training/` 目录，跑通 `verifiers` + `prime-rl` 的最小训练流程，理解 reward 设计如何影响主 LM 的拆解策略。
-7. **关注 open issue**：`prime` sandbox 性能、递归深度上限的自动保护、不支持 CodeAct 的 LM 接入方案，是项目当前活跃的改进方向。
+1. **跑通最小例子**：`pip install rlms` 后用 `local` 环境跑 README 的 powers-of-two 例子，确认环境正常。
+2. **替换 backend**：把 `openai` 换成 `anthropic` 或本地 `vllm`，观察主 LM 写出的代码风格差异——不同模型的代码生成偏好不同。
+3. **切换环境**：同一任务分别用 `local` / `docker` / `modal` 跑一遍，记录启动延迟、执行延迟、token 消耗三项指标，建立自己的选型基线。
+4. **写一个自定义任务**：选一个真实场景（如"对 10 万条评论做情感分类 + 主题聚类"），对比 RLM 自动拆解与手写 chunking 脚本的效果和成本。
+5. **读论文**：arXiv:2512.24601 给出了四个长上下文任务的完整对比、与 compaction / CodeAct / Claude Code 三组基线的中位数数据，以及 RLM-Qwen3-8B 的训练细节，是设计自定义 reward 前的必读材料。
+6. **进入训练栈**：clone `training/` 目录，跑通 `verifiers` + `prime-rl` 的 OOLONG 示例，理解 reward 设计如何影响主 LM 的拆解策略。
+7. **跟踪 open issue**：`prime` 环境的运行时性能是当前已知的主要问题；仓库生态里已有 DSPy.RLM 等项目把 RLM 接入其他框架，值得关注。
 
 ## 十二、总结
 
-RLM 提供的信号是：在 LLM 上下文窗口被推到 1M+ token 的今天，"如何调用 LM" 比 "LM 容量有多大" 还有更多优化空间。`rlm.completion(prompt, model)` 这个接口替换把"输入如何被访问"从"塞进上下文窗口"改为"在代码环境里编程访问"。
+在上下文窗口被推到 1M token 的今天，"如何调用 LM"仍然有独立于"窗口有多大"的优化空间。`rlm.completion` 这个接口替换把输入的访问方式从"塞进上下文窗口"改成"在代码环境里按需访问"，token 成本从随输入长度增长变成随任务结构增长。
 
-`alexzhang13/rlm` 的价值在于它是论文的官方实现，且工程完成度足以支撑真实使用——7 种 sandbox、PyPI 安装、训练环境、drop-in 调用接口、配套 minimal 仓库覆盖了从本地实验到生产部署的链路。对于想要探索"长上下文推理"或"递归 LM 训练"的研究者与工程师，这是 2026 年值得读的源码之一。
-
+`alexzhang13/rlm` 的工程完成度足以支撑真实使用：7 种环境、PyPI 安装、训练环境、drop-in 接口覆盖了从本地实验到生产部署的链路。输入超大且可拆解的团队可以直接从 `docker` 环境开始试点；输入不大或任务不可拆的，等一等再回来也不迟。

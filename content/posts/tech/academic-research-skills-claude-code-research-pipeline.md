@@ -1,6 +1,7 @@
 ---
 title: "academic-research-skills：一套把「AI 辅助学术写作」做成可审计流水线的开源框架"
 date: "2026-05-18T19:56:00+08:00"
+lastmod: "2026-09-14T12:00:00+08:00"
 slug: "academic-research-skills-claude-code-research-pipeline"
 github_repo: "Imbad0202/academic-research-skills"
 source_key: "gh:Imbad0202/academic-research-skills"
@@ -17,17 +18,17 @@ tags: ["Claude Code", "Python"]
 
 读完本文后，你应当能够：
 
-1. 说清 academic-research-skills 的核心设计：10阶段流水线、Integrity Gate 门控机制、三层引用审计架构
+1. 说清 academic-research-skills 的核心设计：10 阶段流水线、Integrity Gate 门控机制、三层引用审计架构
 2. 解释为什么需要"把 AI 辅助学术写作做成可审计流水线"：已知失败模式有哪些，如何做成硬性阻断
 3. 描述一条完整流水线的运转过程：从文献检索到最终输出的每个阶段在做什么
-4. 评估这套工具是否适合你的研究场景：成本（450K-750K tokens）、适用边界、替代方案
-5. 完成一次完整的论文写作流程，并理解每个阶段的中间输出和质量控制点
+4. 评估这套工具是否适合你的研究场景：成本（一篇 15K 词论文约 $4–6 的 API 费用）、适用边界、替代方案
+5. 跟完一次完整流水线的运转实例，识别每个阶段的中间产物和质量控制点
 
 **自测问题：**
 
 1. Integrity Gate 的 7 类 AI 研究失败模式是什么？如果关闭 Integrity Gate，会有什么风险？
 2. 三层引用定位与 Claim Audit 各自在检查什么？如果只做一层，会漏掉什么类型的错误？
-3. 成本分析：450K-750K tokens 换一篇 15K 词论文，这个值不值？在什么情况下不值？
+3. 成本分析：4–6 美元换一篇 15K 词论文，这个值不值？在什么情况下不值？
 
 ---
 
@@ -39,7 +40,7 @@ tags: ["Claude Code", "Python"]
 - [防线二：三层引用定位与 Claim Audit](#防线二三层引用定位与-claim-audit)
 - [防线三：写作质量检测与风格校准](#防线三写作质量检测与风格校准)
 - [一条完整流水线的运转实例](#一条完整流水线的运转实例)
-- [成本：450K–750K tokens 换一篇 15K 词论文，值不值？](#成本450k750k-tokens-换一篇-15k-词论文值不值)
+- [成本：4–6 美元换一篇 15K 词论文，值不值？](#成本46-美元换一篇-15k-词论文值不值)
 - [配套工具：Experiment Agent](#配套工具experiment-agent)
 - [Data Access Level 元数据：实证隔离的基础设施](#data-access-level-元数据实证隔离的基础设施)
 - [谁该用，谁不必急着用](#谁该用谁不必急着用)
@@ -51,16 +52,16 @@ tags: ["Claude Code", "Python"]
 
 ## 把已知失败模式做成硬性阻断
 
-[academic-research-skills](https://github.com/Imbad0202/academic-research-skills)（以下简称 ARS）是 Calvin I-En Wu 维护的一套 Claude Code 插件，当前版本 v3.9.4.2（查询日期 2026-06-23），CC BY-NC 4.0 协议。在 Claude Code CLI / VS Code / JetBrains（v3.7.0+）里执行下面两条命令即可安装，约 30 秒跑通首条流水线：
+[academic-research-skills](https://github.com/Imbad0202/academic-research-skills)（以下简称 ARS）是 Edward Cheng-I Wu 维护的一套 Claude Code 插件，当前版本 v3.21.2（2026-09-06 发布，查询日期 2026-09-14），CC BY-NC 4.0 协议——再发布时需按 LICENSE 要求署名 "Based on Academic Research Skills by Cheng-I Wu"。在 Claude Code CLI / VS Code / JetBrains（v3.7.0+）里执行下面两条命令即可安装，README 的原话是 "Install in 30 seconds"：
 
 ```text
 /plugin marketplace add Imbad0202/academic-research-skills
 /plugin install academic-research-skills
 ```
 
-安装方式与前置依赖的完整说明见仓库 [docs/SETUP.md](https://github.com/Imbad0202/academic-research-skills/blob/main/docs/SETUP.md)，本文不再展开。
+前置依赖只有两样：装好 Claude Code（SETUP.md 推荐原生安装脚本，npm 方式已弃用）并设置 `ANTHROPIC_API_KEY`。想直接产出 .docx 就装 Pandoc，想要 PDF / APA 7.0 中文排版再装 tectonic 和对应字体。完整说明见 [docs/SETUP.md](https://github.com/Imbad0202/academic-research-skills/blob/main/docs/SETUP.md)。
 
-ARS 的看点不是 32 个智能体，而是它把 Lu et al. (2026, *Nature*) 在 Limitations 章节逐条列出的 7 类 AI 研究失败模式，做成了流水线上三道绕不开的检查点。引用幻觉？Stage 2.5 抽样核验。实验结果凭空出现？Stage 4.5 全量复检。机器试图用编造的数据补缺口？插 `[MATERIAL GAP]` 标记，倒逼人类填。
+ARS 的看点不是 32 个智能体，而是它把 Lu et al. (2026, *Nature*) 在 Limitations 章节逐条列出的 7 类 AI 研究失败模式，做成了流水线上三道绕不开的检查点。引用幻觉？Stage 2.5 抽样核验。实验结果凭空出现？Stage 4.5 终检复验。机器试图用编造的数据补缺口？插 `[MATERIAL GAP]` 标记，倒逼人类填。
 
 这些检查点配套了一套引用审计机制：每条引用带三层定位符，开一个开关就能逐条拉取原始文献做 claim 级别的核验。流水线本身写死了最多两轮修订，每轮都等人拍板才放行。
 
@@ -101,13 +102,13 @@ flowchart TD
 
 三个阶段出现硬性阻断：**Stage 2.5**（写完初稿后）、**Stage 4→5 Claim Audit**（可选开关 `ARS_CLAIM_AUDIT=1`，逐条拉取引用原文核验）、**Stage 4.5**（最终出版前）。其中 Stage 2.5 和 Stage 4.5 是 Integrity Gate（完整性门控）——机器先跑完 7 类失败模式检查，出报告，然后**必须等人确认**才能继续；Stage 4→5 Claim Audit 是独立的引用审计机制，下文防线二专题讲。
 
-流水线里标注了 🧑 的人类决策点有 10 个：研究方法确认、大纲审批、编辑决定、修订策略选择、格式选择——机器在每个关键节点都只出方案，最终拍板权在设计上就不交出去。
+README 把「每个阶段都需要用户确认 checkpoint」写进流水线保证（pipeline guarantees）：研究方法确认、大纲审批、编辑决定、修订策略选择、格式选择——机器在每个关键节点都只出方案，最终拍板权在设计上就不交出去。任何绕过门控的 override 都必须附上用户理由，记录进 Stage 6 的过程报告，不允许无痕跳过。
 
 [↑ 回到目录](#目录)
 
 ## 防线一：Integrity Gate 与 7 类 AI 研究失败模式
 
-ARS 设计逻辑的起点是 Lu et al. (2026, *Nature*，卷期页码以 Nature 官方记录为准) 的一项工作。该团队构建了 The AI Scientist——第一个通过顶级 ML 会议（ICLR 2025 workshop，盲审得分 6.33/10，workshop 均分 4.87）盲审的完全自主 AI 研究系统。但论文的 Limitations 章节直接把系统暴露的失败模式逐一列出，构成了 ARS 的检查清单。
+ARS 设计逻辑的起点是 Lu et al. (2026, *Nature* 651:914–919，卷期页码转引自 ARS 仓库) 的一项工作。该团队构建了 The AI Scientist——第一个通过顶级 ML 会议（ICLR 2025 workshop，盲审得分 6.33/10，workshop 均分 4.87）盲审的完全自主 AI 研究系统。但论文的 Limitations 章节直接把系统暴露的失败模式逐一列出，构成了 ARS 的检查清单。
 
 Stage 2.5 和 Stage 4.5 的 Integrity Gate 跑的就是这 7 个模式：
 
@@ -115,19 +116,21 @@ Stage 2.5 和 Stage 4.5 的 Integrity Gate 跑的就是这 7 个模式：
 |------|------|---------------------|
 | **M1** 实现 bug 通过自审 | AI 写的代码有 bug，但 AI 自审时没发现 | 实验代码必须经人类复查后再进入写作阶段 |
 | **M2** 引用幻觉 | 引用了一篇不存在的论文，或把结论错误归因给某篇真实论文 | 这是 L3 风险等级的核心；v3.8 引入逐条审计 |
-| **M3** 实验结果幻觉 | 声称跑了某个实验、得到了某个数字，但实际没有 | Stage 2.5 会对 30% 的 claim（主张）做抽样核验 |
+| **M3** 实验结果幻觉 | 声称跑了某个实验、得到了某个数字，但实际没有 | 归入 Stage 2.5 的 claim 抽样核验范围 |
 | **M4** 捷径依赖 | AI 选择了一条更简单但不正确的方法路径来完成任务 | Devil's Advocate（魔鬼代言人）专门攻击这一点 |
 | **M5** Bug 即洞见 | 把实现错误重新解释为「新发现」 | Integrity Gate 检查写作中的 self-justification 信号 |
 | **M6** 方法论伪造 | 声称使用了某种方法但实际没有正确实施 | Stage 4.5 深模式检查 |
 | **M7** 帧锁定 | 早期阶段做出的错误假设锁死了后续所有决策 | observer agent（观察者智能体）在各阶段追踪一致性 |
 
-Stage 2.5 做**抽样检查**——对 30% 的 claim（主张，最少 10 条）逐条核验。Stage 4.5 做**全量检查**——100% claim 覆盖，零容忍。任何模式在 2.5 被标记为 SUSPECTED，到 4.5 必须是 CLEAR 或用户手动 Override，否则流水线卡住。Stage 2.5 走抽样是为了在初稿阶段控制成本——全量核验留到 Stage 4.5，那时论文结构已稳定，核验结果更有意义。
+Stage 2.5 做**风险分层抽样**——被标为 HIGH-IMPACT（高影响）的引用逐条 100% 核验，其余 claim 随机抽 10% 哨兵样本（sentinel，小样本探路式抽检；样本数取 10 与 claim 总数中的较小值，规则见 `claim_verification_protocol.md`）。Stage 4.5 做**终检**——对注册在案（E1）的 claim 100% 复检，零容忍；文档同时明说语义抽取的完备性是未知数，这句话读作「注册了的 claim 一条不漏，没被抽到的语义层不承诺」。任何模式在 2.5 被标记为 SUSPECTED，到 4.5 必须是 CLEAR 或用户手动 Override，否则流水线卡住。2.5 保留抽样是初稿阶段的成本取舍——论文结构还没稳下来，逐条核验的结论会跟着修订作废。
 
 到 Stage 2.5 时，checkpoint 还没算完。还有一个 observer agent（`collaboration_depth_agent`）在每次 checkpoint 结束后默默运行，不问问题、不阻断流水线，只把观测结果写进报告。它在 2.5 和 4.5 这两个 Integrity Gate 阶段是被**显式跳过**的——设计者担心 observer 的报告会稀释门控检查的严肃性。observer 的报告偏向过程观察而非硬性判定，若与 Integrity Gate 的 FAIL/SUSPECTED 标记混在一起，可能让用户误以为某些问题只是观察意见而非阻断信号。
 
-另外一篇直接影响 ARS 设计的论文来自 [Zhao et al. (2026-05)](https://arxiv.org/abs/2605.07723)。根据 ARS 仓库 README 的转述，他们扫描了 arXiv、bioRxiv、SSRN 和 PMC 上 250 万篇论文的 1.11 亿条引用，保守估计 2025 年一年就有 146,932 条幻觉引用，并在 2024 年中观察到一个引用幻觉率的拐点（具体数字以 Zhao et al. 原文为准）。
+另外一篇直接影响 ARS 设计的论文来自 [Zhao et al. (2026-05)](https://arxiv.org/abs/2605.07723)。根据 ARS 仓库 README 的转述，他们扫描了 arXiv、bioRxiv、SSRN 和 PMC 上 250 万篇论文的 1.11 亿条引用，保守估计 2025 年一年就有 146,932 条幻觉引用，并在 2024 年中观察到一个引用幻觉率的拐点；对 bioRxiv 与 PMC 的配对样本，预印本到发表版的持续率为 85.3%（数字均以 Zhao et al. 原文为准）。
 
 更麻烦的是，这项研究还发现了「真实引用但错误归因」：引用本身指向真实存在的论文，但论文里写的主张和引用源实际说的不是一回事。Zhao et al. 把这个问题描述为 open challenge（开放挑战）。v3.7.3 开始在每条引用上附加**三层定位符**（locator anchor，定位锚点），v3.8 补上了 opt-in 的逐条审计——下面防线二专题讲这个。
+
+ARS 还引了第三条证据线，这次来自期刊侧：*Organization Science* 编辑部 2026 年的报告（Gartenberg et al.，37(3):795–812）。该刊 AI 工作组用商业 AI 写作分类器给 2021 年 1 月到 2026 年 2 月收到的全部 6,957 篇初投稿和 10,389 份文本评审打了分，AI 痕迹重的稿件在可读性指标上表现更差、被 desk reject 的比例更高；编者的判断是，现行工具在「不发表就出局」的激励下，正把系统推向「更多而非更好」的均衡。ARS 把它引为 Collaboration Depth Observer 与 claim 强度分级的设计依据，同时如实标注这条证据的局限——观察性、单期刊、依赖专有分类器。
 
 [↑ 回到目录](#目录)
 
@@ -149,7 +152,7 @@ v3.7.3 做的是第一层和第二层的基础设施：每生成一条引用，�
 - `anchorless`：引用缺少定位符，无法审计
 - `constraint-violation-uncited`：未被引用的内容违反了约束
 
-这 5 类在格式化输出阶段会触发硬性阻断：直接让终端输出挂掉，不会降级为提醒。审计模块附带了一套 20 元组的金标准校准集，接收阈值为假阴性率 < 0.15、假阳性率 < 0.10（数据来源：ARS 仓库 README 对 v3.8 spec §5 的转述）。校准通过后才正式上线——这个 ramp-on 计划目前还标注为「等校准证据后再推进」。
+这 5 类在格式化输出阶段会触发硬性阻断——README 用「formatter REFUSE rules」描述这件事：直接让终端输出挂掉，不会降级为提醒。校准 runner 随功能一同发布，20 元组金集对应三道阈值：全局误差（假阴性率 < 0.15、假阳性率 < 0.10）、分类别误差、结果结构完整性。
 
 下面这段配置片段把前面提到的几个开关集中到一处，方便对照。ARS 的实际配置以环境变量（如 `ARS_CLAIM_AUDIT`、`ARS_CROSS_MODEL`）和 `docs/SETUP.md` 中描述的安装方式为准，仓库中并未发布独立的 `.ars/config.yaml` 文件；下面的 YAML 仅用于说明字段关系，真实配置文件路径与字段以仓库 README 和 SETUP.md 为准：
 
@@ -157,7 +160,7 @@ v3.7.3 做的是第一层和第二层的基础设施：每生成一条引用，�
 # 示意配置，非仓库原始文件——字段关系说明用
 claim_audit:
   enabled: true              # 对应环境变量 ARS_CLAIM_AUDIT=1
-  sample_ratio: 1.0          # Stage 4→5 全量审计；Stage 2.5 走 0.3 抽样
+  sample_ratio: 1.0          # Stage 4→5 对注册 claim 全量；Stage 2.5 风险分层抽样（HIGH-IMPACT 100% + 10% 哨兵）
   high_warn_levels:          # 触发硬阻断的 5 类结果
     - claim-not-supported
     - negative-constraint-violation
@@ -208,7 +211,7 @@ ARS 在写作阶段做的事情包括：
 
 13 个智能体协同工作。首先是 `research_question_agent` 把问题拆成可操作的子问题，`research_architect_agent` 设计方法蓝图。调研文献时，`bibliography_agent` 先检查 Material Passport（材料护照，跨阶段共享的元数据载体）中是否已有文献语料库（corpus-first 策略），不足的部分再走搜索补充——不是无脑扫库。
 
-这个阶段的产出是：RQ Brief（研究问题简报）+ Methodology Blueprint（方法蓝图）+ Annotated Bibliography（注释书目）。人类在这个 checkpoint 要确认研究问题和方法的合理性。
+这个阶段的产出是：RQ Brief（研究问题简报）+ Methodology Blueprint（方法蓝图）+ Annotated Bibliography（注释书目，每条经 Semantic Scholar 二次核验）。人类在这个 checkpoint 要确认研究问题和方法的合理性。
 
 调研阶段还内置了一个**苏格拉底导师模式**：如果你说「引导我做研究」，系统不会直接给答案，而是通过追问帮你逐步收窄问题。这比直接丢一版文献综述过来更能训练研究者的问题意识。
 
@@ -220,7 +223,7 @@ ARS 在写作阶段做的事情包括：
 
 ### Stage 2.5: INTEGRITY GATE（完整性门控）
 
-这是第一道硬阻断。`integrity_verification_agent` 跑 M1-M7 检查，对 30% 的 claim（主张）做抽样核验。产出 Integrity Report，列出 PASS / FAIL / SUSPECTED 三类标记。
+这是第一道硬阻断。`integrity_verification_agent` 跑 M1-M7 检查，按风险分层抽样核验 claim（HIGH-IMPACT 引用全量，其余抽 10% 哨兵）。产出 Integrity Report，列出 PASS / FAIL / SUSPECTED 三类标记。
 
 报告出来后，流水线暂停。人类必须读完报告、确认无误后，流水线才继续。如果 FAIL，回 Stage 2 修改，最多 3 轮。
 
@@ -228,17 +231,17 @@ ARS 在写作阶段做的事情包括：
 
 ### Stage 3: REVIEW（多视角评审）
 
-7 个智能体组成评审团：EIC（Editor-in-Chief，主编）+ R1 方法论评审 + R2 领域评审 + R3 跨学科评审 + 魔鬼代言人。每个评审员按 0-100 质量量表打分。评审过程受 Sprint Contract（冲刺合约，约束评审流程的协议）约束——先做盲审打分（Phase 1），再做可见全文评审（Phase 2），两个阶段之间通过 `<phase1_output>` 数据分隔符严格隔离，防止全文信息污染打分偏差。
+7 个智能体组成评审团：领域分析员（自动探测学科，据此配置 3 个领域自适应评审员）、EIC（Editor-in-Chief，主编）、R1 方法论评审、R2 领域评审、R3 跨学科评审、魔鬼代言人、编辑综合器，产出 5 份评审报告（含 Journal-Fit 评审）加一份编辑决定和修订路线图。评审过程受 Sprint Contract（冲刺合约，Schema 13.2，full 模式的必备件）约束——先做盲审打分（Phase 1），再做可见全文评审（Phase 2），两个阶段之间通过 `<phase1_output>` 数据分隔符严格隔离，防止全文信息污染打分偏差，`check_phase_conformance.py` 在 CI 里校验这条边界。
 
-魔鬼代言人的反驳评分是 1-5 分，只有 ≥ 4 分的反驳才会触发让步。这个阈值是写死的，目的在于避免模型无原则地向批评低头。
+魔鬼代言人的反驳评分是 1-5 分，只有 ≥ 4 分的反驳才会触发让步；低于 4 分时不让步，同时触发帧锁定检测器。这个阈值是写死的，目的在于避免模型无原则地向批评低头。
 
-评审结果映射到编辑决定：≥ 80 分 Accept，65-79 分 Minor Revision，50-64 分 Major Revision，< 50 分 Reject。
+编辑决定不是分数加总出来的。full 模式必须挂 Sprint Contract，由编辑综合器按合约里预先提交的 block / warn / pass 触发器机械推出 Accept / Minor Revision / Major Revision / Reject 四值决定——官方标准文档（`editorial_decision_standards.md`）原话是「编辑决定没有数值总分阈值」。没有合约的回退路径才走定性标准，比如 Accept 要求至少 3/4 名评审员推荐 Accept 或 Minor Revision。
 
 ### Stage 3 → 4 → 3' → 4': 修订循环
 
 如果结果是 Minor 或 Major，进入修订教练阶段——最多 8 轮 Socratic 对话（用户可以说「直接把修改建议给我」跳过）。Stage 4 产出逐点回应（Point-by-Point Response）+ 修订稿 + Delta Report（改动了什么、为什么改）。
 
-Stage 3'（Re-Review）只出动 3 个精简评审员做验证。ARS 写死了**最多 2 轮修订循环**的限制——超过后，剩余问题会被标记为「已确认的限制」写入论文，而不是无声无息地消失。
+Stage 3'（Re-Review）走三次顺序契约调用做验证——Phase 1/2A 复用首轮冻结的评审卡，Phase 2B 做一次整合调用——并产出 R&R Traceability Matrix（Schema 11）：作者声称改过的每一条，都逐项核对是否真的改了。ARS 写死了修订上限：3' 之后最多再走 1 轮 RE-REVISE，Stage 4 与 4' 合计**最多 2 轮修订循环**——超限后不放回修订，强制推进到 Stage 4.5，由零容忍终检兜底。
 
 ### Stage 4→5 Claim Audit（可选）
 
@@ -246,25 +249,23 @@ Stage 3'（Re-Review）只出动 3 个精简评审员做验证。ARS 写死了**
 
 ### Stage 4.5: FINAL INTEGRITY（最终完整性门控）
 
-7 模式全量复检，零容忍。和 Stage 2.5 的核心区别在于：这个阶段不放行任何 SUSPECTED 标记。你在 2.5 放过的，到 4.5 必须清理干净或者手动 Override。同时更新 Material Passport（材料护照），记录所有产物的数据轨迹。
+7 模式更深层复检，对注册 claim 100% 覆盖，零容忍。和 Stage 2.5 的核心区别在于：这个阶段不放行任何 SUSPECTED 标记。你在 2.5 放过的，到 4.5 必须清理干净或者手动 Override。同时把 Material Passport（材料护照）更新为 `verification_status: VERIFIED`，并声明 repro_lock——v3.3.5 起的规范要求你显式填入随机性声明、或者显式留 null（文档管这叫 honest opt-out），由独立脚本 `check_repro_lock.py` 校验格式；它是事后文档，不是运行时阻断，也不等价于可复现性证书。
 
 ### Stage 5 & 6: FINALIZE + PROCESS SUMMARY
 
-格式化输出（MD / DOCX / LaTeX / PDF），生成 AI 使用声明（可按 NeurIPS、APA 等会议/期刊的披露格式定制）。最后是 Process Summary——一条完整的论文制作过程记录，附带 6 维度协作质量评分。
+格式化输出（MD / DOCX / LaTeX / PDF），生成 AI 使用声明（可按 NeurIPS、APA 等会议/期刊的披露格式定制）。最后是 Process Summary——一条完整的论文制作过程记录，附带 6 维度协作质量评分、Collaboration Depth Chapter（各 checkpoint 观察者报告的汇总）和 AI Self-Reflection Report（让步率、谄媚风险、健康告警、失败模式审计日志）。
 
 [↑ 回到目录](#目录)
 
-## 成本：450K–750K tokens 换一篇 15K 词论文，值不值？
+## 成本：4–6 美元换一篇 15K 词论文，值不值？
 
-ARS 给出的估算是一条完整流水线跑下来约 450K–750K tokens，按 Anthropic API 费率折算在 **$4–6 美元**左右。这个数字需要放在具体语境里理解。
+官方估算在 docs/PERFORMANCE.md：一次完整 10 阶段流水线约消耗 200K 输入 + 100K 输出 tokens，按 2026 年 4 月的 Opus 4.x 费率折算约 **$4–6**，基准场景是 15,000 词、约 60 条引用的论文。同一页还给了一笔重算：换成 2026 年 9 月的 Fable 5.1 牌价（每百万 tokens 输入 $10、输出 $50），同样的 token 量约 $7——文档注明这是算术换算，不是重新实测。
 
-**它测的是什么**：单次完整流水线的 token 消耗——从 RESEARCH 到 PROCESS SUMMARY。不包括 `ARS_CLAIM_AUDIT=1` 开关打开后的额外拉取成本，因为每条引用都需要一次独立的检索 + 判定。
+**它测的是什么**：从 RESEARCH 到 PROCESS SUMMARY 的一次端到端运行。引用存在性检查（v3.11 起）调用 Semantic Scholar / OpenAlex / Crossref / arXiv 的外部 API，不消耗 Claude tokens，结果存进 90 天 TTL 的本地 SQLite 缓存（`~/.cache/ars/verification.db`），重跑同一份书目不产生重复开销。
 
-**数字反映了 12K–15K 词论文场景**：更短的论文（短通讯、letter）会显著低于此数；更长的论文（学位论文章节级）会超出。
+**不能推出的结论**：这不等于「花 $5 就能产出一篇可投稿论文」。$4–6 只是 API 费用，人类研究员审读、修改、补实验的时间没有被计入；FAIL 重试、修订循环多走一轮，消耗都会上浮；跨模型验证加约 $0.60–1.10，compliance agent 加约 $0.30。换模型就按新牌价重算，这些数字只当数量级锚点用。
 
-**不能推出的结论**：这不等于「花 $5 就能产出一篇可投稿论文」。\$4–6 只是 API 费用；人类研究员审读、修改、补充实验的时间成本没有被计入。此外，如果 7 类失败模式中任何一个触发了 FAIL 重试循环，实际消耗会上浮。
-
-附带依赖：强烈建议使用 Skip Permissions 模式运行，避免流水线在每个 checkpoint 因权限弹窗中断。Agent Team 模式是可选的——开启后多智能体并行度更高，但 token 消耗会增加。
+运行形态上，README 现在推荐 auto permission mode（早期版本曾建议 Skip Permissions）——理由没变：checkpoint 多，每个都弹权限确认会把流水线切得很碎。Agent Team 模式可选，并行度更高，token 消耗相应增加。
 
 [↑ 回到目录](#目录)
 
@@ -293,7 +294,7 @@ v3.3.2 引入了一套容易被忽略但结构上很关键的元数据规范：�
 - `data_access_level` 取值为 `raw` / `redacted` / `verified_only`。这个标注控制技能能看到什么层级的数据。Integrity Gate 运行在 `verified_only` 级别——它只接触已经经过验证的信息。
 - `task_type` 取值为 `open-ended` 或 `outcome-gradable`。ARS 现有所有技能都标记为 `open-ended`。
 
-`scripts/check_data_access_level.py` 在 CI/CD 中强制执行这套标注，设计灵感来自 Anthropic 的 automated-w2s-researcher（2026）。这套机制的作用很直接：确保 Integrity Gate 做检查时面对的是「已经被人确认过的数据」，而不是原始草稿——少了这道隔离层，完整性检查就失去了基准面。
+这套标注在流水线里真实生效：Stage 1 调研以 `raw` 运行，Stage 2 写作以 `redacted` 运行，两道 Integrity Gate 和整个评审阶段以 `verified_only` 运行——数据访问级别沿流水线逐段收紧。`scripts/check_data_access_level.py` 在 CI/CD 中强制执行这套标注，设计改编自 Anthropic 的 automated-w2s-researcher（2026）。它的作用很直接：确保 Integrity Gate 做检查时面对的是「已经被人确认过的数据」，而不是原始草稿——少了这道隔离层，完整性检查就失去了基准面。
 
 [↑ 回到目录](#目录)
 
@@ -310,22 +311,22 @@ v3.3.2 引入了一套容易被忽略但结构上很关键的元数据规范：�
 
 - **已有一套成熟写作流程的研究者**：ARS 是一条完整流水线，不是模块化工具。如果你现有的流程已经稳定（不管用不用 AI），装上去反而需要花时间把习惯适配到它的 checkpoint 结构上。
 - **只写短通讯或微型论文的**：10 阶段 + 32 智能体的开销摊到一篇 letter 上，性价比不高。一篇 3000 字的 letter 用通用 LLM 辅助可能更省事。
-- **对 LLM 输出有强确定性要求的研究**：ARS 文档反复强调 LLM 输出不是 byte-reproducible 的。Material Passport 记录了配置但不等同于可重放保证——同一套输入跑两次，模型可能给出不同的表述。
+- **对 LLM 输出有强确定性要求的研究**：ARS 文档反复强调 LLM 输出不是 byte-reproducible 的。v3.3.5 起的 repro_lock 也只是要求你如实声明随机性——可复现性靠声明和留痕，不靠机器保证。同一套输入跑两次，模型可能给出不同的表述。
 
 ### 清晰的编码落地顺序
 
 如果决定上手，按这个顺序推进：
 
-1. 先装好插件，在 Claude Code 里跑 `/ars-plan`（这是 ARS 注册的 Claude Code slash command，用来通过苏格拉底式对话梳理论文结构）熟悉引导模式——不花钱，不产生正式产出，纯熟悉交互范式。
+1. 先装好插件，在 Claude Code 里跑 `/ars-plan`（这是 ARS 注册的 Claude Code slash command，用来通过苏格拉底式对话梳理论文结构）熟悉引导模式——开销很小（PERFORMANCE.md 估算 plan 模式约 $0.80），不产生正式产出，纯熟悉交互范式。
 2. 跑一次 `/ars-lit-review "你的主题"` 做文献综述——验证搜索质量是否符合你的领域期待。这一步的质量直接决定后续写作阶段的引用基础。
 3. 开 `ARS_CLAIM_AUDIT=1` 跑一次完整流水线——确认引用审计在你的领域里能不能识别出问题。如果你的领域文献主要来自非英文期刊或预印本，审计模块的检索覆盖可能有限。
-4. 根据实际体验决定是否关掉 Claim Audit（默认 OFF——需要主动开是有意为之的设计选择。全量审计每条引用都会拉取原文，token 和时间成本比标准流水线高 50-100%）。
+4. 根据实际体验决定是否关掉 Claim Audit（默认 OFF——需要主动开是有意为之的设计选择：每条引用多一次原文拉取加一次 LLM 判定，开销随引用规模线性增长，而审计模块自身有假阳性，处理误报也是成本）。
 
 [↑ 回到目录](#目录)
 
 ## 常见问题解答
 
-在使用 ARS 的过程中，下面这些问题被问到的次数最多。
+这几个问题决定了你会怎么用它、以及出问题时怎么排查。
 
 ### ARS 会自动生成论文内容吗？
 
@@ -333,14 +334,14 @@ v3.3.2 引入了一套容易被忽略但结构上很关键的元数据规范：�
 
 ### Claim Audit 全量审计的成本如何？
 
-开 `ARS_CLAIM_AUDIT=1` 后，系统会对每条引用定位符指向的原始文献做一次拉取，然后用 LLM-as-judge 判断 claim 是否确实被源文献支持。这条额外的检索 + 判定会让 token 消耗比标准流水线高 50-100%。一条 15K 词的论文，标准流水线约消耗 450K-750K tokens（约 \$4-6 美元），开全量审计后可能达到 1M-1.5M tokens（约 \$8-12 美元）。
+开 `ARS_CLAIM_AUDIT=1` 后，系统对每条引用定位符指向的原始文献做一次拉取，再用 LLM-as-judge 判断 claim 是否被源文献支持。开销随引用数量线性增长——PERFORMANCE.md 的基准表没有单列这个模式，实际增量取决于论文的引用规模。要区分两类成本：引用「存在性」检查走外部书目 API 且有本地缓存，基本不花 token；「claim 与源文献对不对得上」的对齐判定是 LLM 判定，每条都要花钱。标准流水线约 $4–6（200K 输入 + 100K 输出 tokens），这是算增量时的基准。
 
 ### Integrity Gate 的 FAIL 报警如何处理？
 
 Stage 2.5 或 Stage 4.5 的 Integrity Report 标记为 FAIL 后，流水线会暂停，等你处理。你有三种选择：
 
 1. **回到上一阶段修改**：回到 Stage 2 或 Stage 4 修正问题，然后重新跑 Integrity Gate（最多 3 轮重试）。
-2. **手动 Override**：如果你判断报警是误报（比如 Claim Audit 的假阳性），可以手动 override 继续流水线。但 ARS 会把 override 记录写进 Material Passport，不会悄悄抹掉。
+2. **手动 Override**：如果你判断报警是误报（比如 Claim Audit 的假阳性），可以手动 override 继续流水线。但 override 必须附上理由，记录进 Stage 6 的过程报告，不会悄悄抹掉。
 3. **接受报警并插入 `[MATERIAL GAP]`**：如果确实缺少数据或引用，插入 `[MATERIAL GAP]` 标记，倒逼自己补上真实数据。
 
 ### Material Passport 具体包含什么信息？
@@ -375,7 +376,7 @@ ARS 对学科的要求主要在两方面：
 跑一条完整流水线（从 RESEARCH 到至少过完 Stage 2.5）。不用关心最终产出质量——这个练习的目标是读完 Integrity Report。拿到报告后回答：
 
 1. M1—M7 中哪些模式被标记了 PASS、哪些被标记了 FAIL 或 SUSPECTED？
-2. 抽样检查覆盖了百分之多少的 claim？如果不到 30%，为什么？（提示：看文档里 Stage 2.5 的抽样规则——最少 10 条，并不是固定 30%）
+2. 抽样核验实际覆盖了哪些 claim？HIGH-IMPACT 之外的部分只有 10% 的哨兵样本，你观察到的覆盖率和「逐条核验」的想象差多远？
 3. 如果 Stage 2.5 没有触发任何 FAIL，这是说明论文没问题，还是说明检查没覆盖到某些类型的失败模式？
 
 第三问没有标准答案——它指向 Integrity Gate 的能力边界。Lu et al. 论文里提到的那 7 类失败模式，有些（M7 帧锁定）在单次流水线里几乎不可能被机器检测到。
@@ -390,19 +391,15 @@ ARS 对学科的要求主要在两方面：
 
 这个练习用来建立对 Claim Audit 的校准直觉——审计模块有假阳性（把合理的推论标成 unsupported），也有假阴性（漏掉真正的引用不匹配）。了解它的错误模式，你才能决定在投稿时要不要把 Claim Audit 报告作为补充材料。
 
-### 练习三：改 Sprint Contract 的盲审参数并对比评审结果
+### 练习三：读 Sprint Contract 模板，理解编辑决定是怎么推出来的
 
-找到 ARS 配置里 Sprint Contract 的参数段（通常在 `config/` 目录下），修改三个参数：
+打开仓库里的 `shared/contracts/reviewer/full.json`（panel 5、六维度的评审合约模板）和 `methodology_focus.json`（panel 2），对照 `academic-paper-reviewer/references/editorial_decision_standards.md`，回答：
 
-1. 把魔鬼代言人的反驳触发阈值从 4 分改成 3 分
-2. 把 Reviewer 数量从 5 个减到 3 个
-3. 把 Accept 阈值从 80 分调到 70 分
+1. full 模式的编辑决定为什么由机械综合器按 block / warn / pass 触发器推出，而不是把 5 个评审员的意见加权平均？「没有数值总分阈值」防的是哪种失败？
+2. 魔鬼代言人的 CRITICAL 发现为什么能阻断 Accept？Journal-Fit 评审否决它时，必须留下什么记录？
+3. 如果你的场景只需要方法学审查，methodology-focus 把 panel 从 5 缩到 2——省下的是什么，冒的险是什么？
 
-用同样的研究问题和同样的 Stage 1 产物，分别跑默认配置和你改过的配置。对比两次的编辑决定（Accept/Minor/Major/Reject）和魔鬼代言人提出的反驳数量。回答：
-
-- 降低魔鬼代言人阈值后，反驳数量增加了多少？这些新增的反驳里有多少是真正值得让步的，多少是吹毛求疵？
-- 减少 Reviewer 数量后，评审结论是否出现了更大波动？
-- 这些参数在你的领域里，你觉得默认值合适还是需要调？
+这个练习不动配置就能做，目标是建立对「决定从哪来」的直觉：评审系统的可信度不在评分数量的多少，而在每条决定都能指回预先提交的触发器。
 
 [↑ 回到目录](#目录)
 
@@ -413,7 +410,7 @@ ARS 对学科的要求主要在两方面：
 <details>
 <summary>1. 能说出 ARS 流水线的阶段顺序和三个硬性阻断点的位置</summary>
 
-主线上是 1. RESEARCH（调研）→ 2. WRITE（写作）→ 3. REVIEW（评审）→ 4. REVISE（修订）→ 5. FINALIZE（格式化）→ 6. PROCESS SUMMARY（过程总结），中间嵌套两个门控点 —— 2.5 INTEGRITY GATE 与 4.5 FINAL INTEGRITY —— 和一段「3→4→3'→4'」的修订循环。三个硬性阻断点：Stage 2.5（M1–M7 失败模式抽样检测）、Stage 4→5 Claim Audit（可选开关 `ARS_CLAIM_AUDIT=1`，逐条核验）、Stage 4.5（全量零容忍复检）。
+主线上是 1. RESEARCH（调研）→ 2. WRITE（写作）→ 3. REVIEW（评审）→ 4. REVISE（修订）→ 5. FINALIZE（格式化）→ 6. PROCESS SUMMARY（过程总结），中间嵌套两个门控点 —— 2.5 INTEGRITY GATE 与 4.5 FINAL INTEGRITY —— 和一段「3→4→3'→4'」的修订循环。三个硬性阻断点：Stage 2.5（M1–M7 失败模式风险分层抽检）、Stage 4→5 Claim Audit（可选开关 `ARS_CLAIM_AUDIT=1`，逐条核验）、Stage 4.5（对注册 claim 全量、零容忍复检）。
 </details>
 
 <details>
@@ -431,19 +428,19 @@ M1 实现 bug 通过自审；M2 引用幻觉（引用不存在的论文或错误
 <details>
 <summary>4. 能解释为什么 Claim Audit 默认 OFF——这个默认值的取舍逻辑</summary>
 
-默认关闭是成本与风险的主动取舍：全量审计会对每条引用额外拉取原文、做一次 LLM-as-judge 判定，token 消耗比标准流水线高 50–100%（一篇 15K 词论文从约 450K–750K 升到约 1M–1.5M tokens）；同时审计模块本身不是零误差，存在假阳性与假阴性，要等金标准校准集（假阴性 < 0.15、假阳性 < 0.10）验证后才算合格。所以默认不开，把「是否承担这笔成本、能否承受误报」的决定权留给用户，而不是让所有用户一起买单。
+默认关闭是成本与风险的主动取舍：全量审计对每条引用额外拉取原文、做一次 LLM-as-judge 判定，开销随引用数量线性增长；审计模块本身不是零误差，存在假阳性与假阴性，校准 runner 随功能发布（20 元组金集，全局阈值假阴性 < 0.15、假阳性 < 0.10），但误报的处理成本始终由用户承担。所以默认不开，把「是否付这笔钱、能否承受误报」的决定权留给用户，而不是让所有用户一起买单。
 </details>
 
 <details>
 <summary>5. 能描述一次完整流水线中，人类在哪些节点需要做决策</summary>
 
-ARS 在流水线里标注了 10 个人类决策点，都落在「机器只出方案、人拍板」的位置：Stage 1 后的研究方法确认、Stage 2 写作前的大纲审批、Stage 2.5 Integrity Report 出来后决定是否放行或回改、Stage 3 评审后的编辑决定与修订策略选择、Stage 5 前的格式选择。核心原则是：机器负责"发现"，人类负责"判断"——任何 FAIL 或 SUSPECTED 标记，流水线都停下来等人处理，只有用人确认后才继续。
+README 把「每个阶段都需要用户确认 checkpoint」写进流水线保证，决策点都落在「机器只出方案、人拍板」的位置：Stage 1 后的研究方法确认、Stage 2 写作前的大纲审批、Stage 2.5 Integrity Report 出来后决定是否放行或回改、Stage 3 评审后的编辑决定与修订策略选择、Stage 5 前的格式选择。核心原则是：机器负责"发现"，人类负责"判断"——任何 FAIL 或 SUSPECTED 标记，流水线都停下来等人处理，override 也要留下书面理由。
 </details>
 
 <details>
 <summary>6. 能估算一笔 15K 词论文跑 ARS 的 API 费用，并说出这个数字包含了什么、不包含什么</summary>
 
-标准流水线约 $4–6（450K–750K tokens，按 Anthropic API 费率折算）。包含：一次从 RESEARCH 到 PROCESS SUMMARY 的完整流水线消耗。不包含：人类研读、修改、补实验的时间成本；开启 `ARS_CLAIM_AUDIT=1` 后逐条拉取原文的额外消耗；触发 FAIL 重试循环带来的增量。开启全量审计后才上浮到约 $8–12（约 1M–1.5M tokens）。最重要的是——这不等价于「花 $5 就能产出一篇可投稿的论文」。
+标准流水线约 $4–6（约 200K 输入 + 100K 输出 tokens，按 2026 年 4 月 Opus 4.x 费率，15K 词、约 60 条引用场景）。包含：一次从 RESEARCH 到 PROCESS SUMMARY 的完整流水线消耗。不包含：人类研读、修改、补实验的时间成本；开启 `ARS_CLAIM_AUDIT=1` 后逐条检索加判定的增量（随引用规模线性增长）；FAIL 重试与多轮修订的消耗；跨模型验证（约 +$0.60–1.10）。最重要的是——这不等价于「花 $5 就能产出一篇可投稿的论文」。
 </details>
 
 <details>
@@ -467,29 +464,31 @@ ARS 在流水线里标注了 10 个人类决策点，都落在「机器只出方
 
 academic-research-skills 做的事情可以一句话概括：把 AI 辅助学术写作的已知失败模式写成流水线上的检查点，每一处可能出错的位置都留下可复查的记录。这些检查点对人可见、可配置，触发时会直接阻断流水线。
 
-Integrity Gate 抓到过 15 条伪造引用和 3 处统计错误。同一条流水线的 Post-Publication Audit 又发现了 21 个漏网的问题。这说明 Integrity Gate 确实在抓问题，也说明它抓不全。ARS 没有承诺「用了这个工具论文就不会出问题」，而是在每个可能出问题的环节留下可复查的记录。
+Integrity Gate 抓到过 15 条伪造引用和 3 处统计错误。同一条流水线后来的独立全量参考文献审计（Post-Publication Audit）又发现 68 个问题里有 21 个被三轮完整性检查漏掉。这说明 Integrity Gate 确实在抓问题，也说明它抓不全。
 
-这正对应 Lu et al. (2026) 揭示的 7 类失败模式：全自动系统无法察觉自己在 M1-M7 上的失效，ARS 通过在每个节点插入人类确认，把这 7 个盲区变成了可见的检查清单。代价是时间、注意力和 \$4–6 的 API 费用，但每条引用都能追到原文，每处统计错误都有被机器抓到的机会。
+README 把这条边界写得毫不遮掩：ARS 检查的是稿件和被报告的过程，不能确立「实验真的被执行了、原始数据真实、结果可复现」——一段被一致报告的伪造，可以通过所有这些检查。这句话没有被藏进文档角落，而是和 21/68 的漏检数字一起，构成这个项目对自身能力边界的定义。
+
+这正对应 Lu et al. (2026) 揭示的 7 类失败模式：全自动系统无法察觉自己在 M1-M7 上的失效，ARS 通过在每个节点插入人类确认，把这 7 个盲区变成了可见的检查清单。代价是时间、注意力和 $4–6 的 API 费用，但每条引用都能追到原文，每处统计错误都有被机器抓到的机会。
 
 [↑ 回到目录](#目录)
 
 ---
 
-*本文分析基于 academic-research-skills v3.9.4.2，相关信息可能随版本更新而变化。文中提及的 GitHub Star 数据、版本号和社区活跃度请以项目仓库的实际页面为准。*
+*本文分析基于 academic-research-skills v3.21.2（2026-09-06 发布，2026-09-14 查询），相关信息可能随版本更新而变化。版本号、文档路径与成本估算请以项目仓库的实际页面为准。*
 
 ## 资料口径说明
 
 本文的判断和结论来自以下来源，存在明确的局限性：
 
-1. **主要来源**：academic-research-skills 仓库（GitHub: Imbad0202/academic-research-skills）的公开文档和源码（当前版本 v3.9.4.2）。这些材料代表了作者 Calvin I-En Wu 的个人实践经验，不代表通用学术写作标准。
+1. **主要来源**：academic-research-skills 仓库（GitHub: Imbad0202/academic-research-skills）的公开文档和源码（当前版本 v3.21.2）。这些材料代表了作者 Edward Cheng-I Wu 的个人实践经验，不代表通用学术写作标准。
 
 2. **技术准确性边界**：本文提到的 10 阶段流水线、Integrity Gate 门控机制、三层引用审计架构基于作者在特定研究领域（计算机科学、AI）的经验。不同学科（如人文、社会科学）的研究规范可能不同，需要根据学科惯例调整流水线参数。
 
-3. **适用性边界**：academic-research-skills 面向的是"需要用 AI 辅助学术写作的研究者"，对于纯人文研究、艺术创作、非结构化写作等场景，这套流水线可能过度约束。文中的成本分析（450K-750K tokens）基于特定模型和研究复杂度，实际成本会因模型选择和研究规模而异。
+3. **适用性边界**：academic-research-skills 面向的是"需要用 AI 辅助学术写作的研究者"，对于纯人文研究、艺术创作、非结构化写作等场景，这套流水线可能过度约束。文中的成本分析（约 $4–6，200K 输入 + 100K 输出 tokens）基于特定模型和研究复杂度，实际成本会因模型选择和研究规模而异。
 
 4. **未覆盖话题**：本文不讨论学术伦理的完整框架、特定学科的引用规范（如 APA、Chicago、IEEE 等）、以及 AI 辅助研究的 legal 边界（不同国家/机构有不同的政策）。
 
-5. **版本与时效性**：本文基于 2026 年 5 月的仓库版本撰写。academic-research-skills 仍在持续迭代，后续新增功能或调整以仓库最新版本为准。Lu et al. (2026, Nature) 和 Zhao et al. (2026) 两篇论文的在线发表版本可能因出版流程而调整。
+5. **版本与时效性**：本文初稿基于 2026 年 6 月查询的 v3.9.4.2 撰写，2026-09-14 对照 v3.21.2 的 README、ARCHITECTURE、PERFORMANCE、SETUP 与评审标准文档逐条复核更新，文中的机制描述与成本数字以 v3.21.2 口径为准。academic-research-skills 仍在持续迭代，后续变更以仓库最新版本为准。Lu et al. (2026, Nature) 和 Zhao et al. (2026) 的在线发表版本可能因出版流程而调整。
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: "Repomix：28K Stars·把代码库压缩成 AI 可读的单一文件"
+title: "Repomix：28.3K Stars·把代码库压缩成 AI 可读的单一文件"
 date: "2026-04-12T01:50:00+08:00"
 slug: repomix-ai-codebase-compression-guide
 github_repo: "yamadashy/repomix"
@@ -21,7 +21,7 @@ tags: ["Claude", "LLM", "Git"]
 | 一个 Git 仓库目录（或 GitHub URL） | 一份 `repomix-output.xml`（或其他可选格式） |
 | `.gitignore` / `.repomixignore` 规则 | 自动跳过不该打包的文件 |
 | 可选的 `--compress` 开关 | Tree-sitter 抽取函数签名、类定义，砍掉实现细节 |
-| 可选的 `--include-logs` | 附带最近 N 条提交记录和 diff |
+| 可选的 `--include-logs` | 附带最近 N 条提交记录，`--include-diffs` 再加未提交 diff |
 
 打包分四步：glob 搜索 → 逐文件读取 → AST 压缩（可选）→ 拼接输出。
 
@@ -33,9 +33,9 @@ tags: ["Claude", "LLM", "Git"]
 
 **第一阶段：文件搜索。** 通过 glob 模式匹配文件，结合 Git ignore 规则筛选出待处理文件列表，`include` 和 `ignore` 选项支持精确控制。
 
-**第二阶段：文件读取。** 对每个匹配文件读取完整内容，根据配置决定是否移除注释。支持移除注释的语言包括：HTML、CSS、JavaScript、TypeScript、Vue、Svelte、Python、PHP、Ruby、C、C#、Java、Go、Rust、Swift、Kotlin、Dart、Shell 和 YAML。
+**第二阶段：文件读取。** 对每个匹配文件读取完整内容。
 
-**第三阶段：内容处理。** 按配置逐文件处理：`removeComments` 剔除注释，`compress` 交给 Tree-sitter 抽取结构，`truncateBase64` 截断超长 Base64 数据。处理后的文件以「路径 + 内容」成对保存，例如 XML 输出里的文件块：
+**第三阶段：内容处理。** 按配置逐文件处理：`removeComments` 剔除注释（支持 HTML、CSS、JavaScript、TypeScript、Vue、Svelte、Python、PHP、Ruby、C、C#、Java、Go、Rust、Swift、Kotlin、Dart、Shell、YAML 共 19 种语言），`compress` 交给 Tree-sitter 抽取结构，`truncateBase64` 截断超长 Base64 数据。处理后的文件以「路径 + 内容」成对保存，例如 XML 输出里的文件块：
 
 ```xml
 <file path="src/index.ts">
@@ -43,15 +43,15 @@ import { repomix } from 'repomix';
 </file>
 ```
 
-**第四阶段：输出生成。** 所有文件拼成单一文件。输出固定包含四部分：文件摘要（file_summary）、目录结构（directory_structure）、文件内容（files）和可选的 Git 日志（git_logs）。支持 XML、Markdown、JSON 和纯文本四种格式。
+**第四阶段：输出生成。** 所有文件拼成单一文件。基础构成是文件摘要（file_summary）、目录结构（directory_structure）和文件内容（files）三部分；开启对应选项后会追加 Git 提交历史（git_logs）、未提交 diff（git_diffs）或自定义指令（instruction）。支持 XML、Markdown、JSON 和纯文本四种格式。
 
 ### 智能压缩原理
 
-`--compress` 选项使用 Tree-sitter 构建 AST，保留函数签名、类定义、接口和类型声明等核心结构，去除实现细节。TypeScript/JavaScript 和 Python 文件均支持相应语言结构的精确提取。
+`--compress` 选项使用 Tree-sitter 构建 AST，保留函数签名、类定义、接口和类型声明等核心结构，去除实现细节，压缩后的代码块以 `⋮----` 分隔符相接。TypeScript/JavaScript 和 Python 文件均支持相应语言结构的精确提取。
 
 ### Token 计数机制
 
-Token 估算基于 gpt-tokenizer，默认使用 `o200k_base`（GPT-4o 及更新模型使用的编码），可在配置中通过 `tokenCount.encoding` 切换（如 `cl100k_base` 对应 GPT-4/3.5）。CLI 会按文件统计 Token；`repomix --token-count-tree` 则按目录列出分布，一眼看清哪些目录在占上下文。
+Token 估算基于 gpt-tokenizer，默认使用 `o200k_base`（GPT-4o 及更新模型使用的编码），可在配置中通过 `tokenCount.encoding` 切换（如 `cl100k_base` 对应 GPT-4/3.5）。CLI 会按文件统计 Token；`repomix --token-count-tree` 则按目录列出分布，一眼看清哪些目录在占上下文，后面跟数字可以只显示超过阈值的条目，比如 `repomix --token-count-tree 1000` 只列 Token 数不低于 1000 的文件和目录。
 
 ---
 
@@ -265,7 +265,7 @@ repomix --init --global
 
 忽略规则的优先级从高到低：自定义模式 > 忽略文件（`.repomixignore`、`.ignore`、`.gitignore`、`.git/info/exclude`）> 内置默认模式。命令行 `-i, --ignore` 会覆盖配置文件中的自定义模式。
 
-**output.instructionFilePath**：指向一个指令文件，其内容会追加到输出末尾，CLI 对应 `--instruction-file-path`。把指令写进文件、和代码一起维护，比每次手敲 prompt 更可复用。
+**output.instructionFilePath**：指向一个指令文件，其内容会追加到输出末尾——XML 里是独立的 `<instruction>` 块，JSON 里是 `instruction` 键。CLI 对应 `--instruction-file-path`。把指令写进文件、和代码一起维护，比每次手敲 prompt 更可复用。
 
 **security.enableSecurityCheck**：默认开启，打包前用 Secretlint 扫描敏感信息。检测到可疑文件时会列出路径：
 
@@ -275,6 +275,8 @@ repomix --init --global
 2 suspicious file(s) detected:
 1. src/utils/test.txt
 2. tests/utils/secretLintUtils.test.ts
+
+Please review these files for potentially sensitive information.
 ```
 
 ### 配置继承与覆盖
@@ -293,7 +295,7 @@ repomix --init --global
 repomix --compress --include-logs --include-logs-count 20
 ```
 
-三条事一起做了：Tree-sitter 压缩代码省 Token；附带最近 20 条提交记录让 Claude 了解改动上下文；同时跑 Secretlint 安全检查。
+三件事一起做了：Tree-sitter 压缩代码省 Token；附带最近 20 条提交记录让 Claude 了解改动上下文；同时跑 Secretlint 安全检查。
 
 **第二步：安全检查告警**
 
@@ -302,6 +304,8 @@ repomix --compress --include-logs --include-logs-count 20
 ──────────────────
 1 suspicious file(s) detected:
 1. src/auth/config.ts
+
+Please review these files for potentially sensitive information.
 ```
 
 打开 `config.ts`，发现测试时硬编码了一个 JWT secret。修掉它，再跑一次 `repomix`，检查通过。
@@ -475,9 +479,9 @@ repomix --mcp
 claude mcp add repomix -- npx -y repomix --mcp
 ```
 
-服务器暴露 `pack_codebase`、`pack_remote_repository` 等工具：agent 可以直接让它打包本地目录或远程仓库，再用 `grep_repomix_output` 按需检索输出内容，不必把整个文件塞进上下文。
+服务器暴露 5 个常规工具：`pack_codebase` 打包本地目录，`pack_remote_repository` 打包远程仓库，`read_repomix_output` 读取输出，`grep_repomix_output` 按模式检索输出，`attach_packed_output` 挂载已有的打包产物。agent 可以先打包、再用读取和检索工具按需取用，不必把整个文件塞进上下文。
 
-对不受信任的客户端，用 `--sandbox` 把服务器限制在单个工作区内，只开放只读工具：
+对不受信任的客户端，用 `--sandbox` 把服务器限制在单个工作区内：
 
 ```bash
 # 限制在当前工作目录内
@@ -487,23 +491,22 @@ repomix --mcp --sandbox
 repomix --mcp --sandbox path/to/project
 ```
 
+沙箱开启后，所有路径都相对工作区根解析——绝对路径、`~`、`..`、Windows 盘符和 UNC 路径都会被拒绝，穿透根目录的符号链接也不放行。此时只注册只读工具：打包、读取、检索，外加 `file_system_read_file` 和 `file_system_read_directory` 两个仅在沙箱模式可用的文件工具；远程打包、skill 生成和挂载外部产物则一律禁用。
+
 `--sandbox` 是应用层的权限收窄，不是操作系统级沙箱；对外提供服务时，仍应在容器或独立用户下运行。
 
 ---
 
 ## 安全检查详解
 
-Repomix 集成 [Secretlint](https://github.com/secretlint/secretlint) 进行敏感信息检测，能够识别以下类型的敏感数据：
+Repomix 集成 [Secretlint](https://github.com/secretlint/secretlint)，实际加载的是其官方推荐规则集 `secretlint-rule-preset-recommend`，覆盖 27 条检测规则：
 
-- AWS 访问密钥、AWS Secret Access Key
-- GitHub Personal Access Token、GitHub OAuth Access Token
-- Google API Key、Google OAuth Token
-- JWT Token、Mailchimp API Key
-- NPI Number、OpenAI API Key
-- Password in URL
-- Private Key（RSA, EC, DSA, ED25519, PGP）
-- Slack Token、Square OAuth Secret
-- Stripe Access Token、Twilio API Key
+- **云与代码托管**：AWS、GCP、GitHub、GitLab、Vercel、Cloudflare
+- **SaaS 服务**：Slack、SendGrid、Shopify、Stripe、Figma、Linear、Notion、1Password、HashiCorp Vault、Grafana、Tailscale
+- **AI 服务**：OpenAI、Anthropic、Groq、Hugging Face、Databricks
+- **通用凭证类型**：私钥（RSA、EC、DSA、ED25519、PGP 等）、Basic Auth、数据库连接字符串、npm token、Docker 配置中的凭证
+
+规则集随 Secretlint 版本演进，具体清单以所用版本的 preset 文档为准。
 
 安全检查默认启用。可以通过以下方式禁用：
 
@@ -533,9 +536,23 @@ repomix --no-security-check
 
 ```xml
 <file_summary>
-此文件是整个代码库的合并表示形式，供 AI 处理和上下文分析使用。
-文件数量: 42
-总 token 数: 52,340
+This file is a merged representation of the entire codebase, combined into
+a single document by Repomix.
+<purpose>
+This file contains a packed representation of the entire repository's contents...
+</purpose>
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Directory structure
+3. Repository files
+</file_format>
+<usage_guidelines>
+- This file should be treated as read-only...
+</usage_guidelines>
+<notes>
+- Some files may have been excluded based on .gitignore rules...
+</notes>
 </file_summary>
 <directory_structure>
 src/
@@ -593,18 +610,32 @@ import { repomix } from 'repomix';
 ```json
 {
   "fileSummary": {
-    "generationHeader": "此文件是使用 Repomix 将整个代码库合并到单个文档中的表示形式。",
-    "fileCount": 42,
-    "totalTokens": 52340
+    "generationHeader": "This file is a merged representation of the entire codebase, combined into a single document by Repomix.",
+    "purpose": "This file contains a packed representation of the entire repository's contents...",
+    "fileFormat": "The content is organized as follows: 1. This summary section...",
+    "usageGuidelines": "- This file should be treated as read-only...",
+    "notes": "- Some files may have been excluded based on .gitignore rules..."
   },
   "directoryStructure": "src/\n  index.ts\n  utils/\n    helper.ts",
   "files": {
     "src/index.ts": "import { repomix } from 'repomix';"
-  }
+  },
+  "gitLogs": [
+    {
+      "date": "2026-04-10 00:47:19 +0900",
+      "message": "feat(cli): Add --include-logs option",
+      "files": ["src/index.ts"]
+    }
+  ],
+  "instruction": "自定义指令内容（配置 instructionFilePath 时出现）"
 }
 ```
 
-JSON 使用 camelCase 键名，适合程序解析——比如用 `jq` 直接取出某个文件的内容，再做进一步处理。
+JSON 使用 camelCase 键名，适合程序解析。比如用 `jq` 直接取出某个文件的内容，再做进一步处理：
+
+```bash
+jq -r '.files["src/index.ts"]' repomix-output.json
+```
 
 ### 纯文本格式
 
@@ -639,7 +670,7 @@ I want to refactor the code, so please review it first.
 
 **安全检查误报？** 安全检查只警告，不阻断打包。确认文件里的疑似密钥确实无害后，用 `--no-security-check` 关闭，或把该文件加进忽略列表。
 
-**远程仓库打包失败？** 先确认网络连通；私有仓库需要在环境中提前配置好 Git 认证；GitHub 简写 `user/repo` 仅对公开仓库有效，私有仓库请用完整 URL 并配合认证。
+**远程仓库打包失败？** 先确认网络连通；私有仓库需要在环境中提前配置好 Git 认证；GitHub 简写 `user/repo` 仅对公开仓库有效，私有仓库请用完整 URL 并配合认证。另外，远程仓库自带的 repomix 配置文件默认不会被加载，要让它生效需加 `--remote-trust-config` 显式信任（交互式终端会先弹出确认提示）——这是防止恶意仓库借配置文件执行任意 glob/指令的防线。
 
 ---
 
@@ -648,7 +679,7 @@ I want to refactor the code, so please review it first.
 Repomix 催生了多个社区项目：
 
 - [Repomix Runner](https://github.com/massdo/repomix-runner)：VSCode 扩展
-- [Repomix Desktop](https://github.com/KevanMacGee/Repomix-Desktop)：Python+Tkinter 桌面应用
+- [Repomix Desktop](https://github.com/KevanMacGee/Repomix-Desktop)：Python + CustomTkinter 桌面应用
 - [Python Repomix](https://github.com/AndersonBY/python-repomix)：Python 实现，基于 AST 压缩
 - [Rulefy](https://github.com/niklub/rulefy)：将 GitHub 仓库转换为 Cursor AI 规则
 - [Codebase MCP](https://github.com/DeDeveloper23/codebase-mcp)：MCP 服务器，提供 AI 代码库分析

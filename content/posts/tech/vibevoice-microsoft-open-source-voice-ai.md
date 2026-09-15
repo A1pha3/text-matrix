@@ -1,10 +1,11 @@
 ---
 title: "VibeVoice：微软开源前沿语音 AI，从入门到精通"
 date: "2026-03-30T11:35:00+08:00"
+lastmod: "2026-09-14T12:00:00+08:00"
 slug: "vibevoice-microsoft-open-source-voice-ai"
 github_repo: "microsoft/VibeVoice"
 source_key: "gh:microsoft/VibeVoice"
-description: "深度解析微软 VibeVoice 开源前沿语音 AI 系统：低延迟语音交互、多模型支持、实时对话流、模块化架构，详解原理、架构、功能、使用与二次开发。"
+description: "深度解析微软 VibeVoice 开源语音 AI 模型家族：7.5 Hz 连续语音 tokenizer 与 next-token diffusion 架构，TTS 线的 90 分钟长语音与 300 ms 实时合成，ASR 线的 60 分钟长音频转写与 CPU 边缘部署，以及使用路径与合规边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["语音AI", "微软", "开源", "TTS", "ASR"]
@@ -12,985 +13,271 @@ tags: ["语音AI", "微软", "开源", "TTS", "ASR"]
 
 # VibeVoice：微软开源前沿语音 AI，从入门到精通
 
-> **目标读者**：想要构建语音 AI 应用、实时对话系统、智能语音助手的开发者与研究者
-> **核心问题**：如何基于开源技术构建低延迟、高质量、多模型支持的实时语音对话系统？
-> **难度**：⭐⭐⭐⭐（进阶）
-> **预计阅读时间**：45 分钟
+## 一句话判断
 
----
+VibeVoice（[microsoft/VibeVoice](https://github.com/microsoft/VibeVoice)）不是「一个语音助手」，而是微软把语音当作序列建模问题来解的模型家族：TTS 一条线做语音合成，从 90 分钟长语音的 VibeVoice-TTS-1.5B 到首包延迟约 300 ms 的 Realtime-0.5B；ASR 一条线做语音转写，从一次吞下 60 分钟音频的 ASR-7B 到只用 CPU 的 ASR-BitNet。让它成立的共同底座是 **7.5 Hz 连续语音 tokenizer**——帧率压得足够低，90 分钟音频才能装进 64K token 的上下文窗口，长语音的生成与转写才从「切块拼接」变成「一次建模」。
 
-## 一、学习目标#
+这个仓库值得关注的另一个原因是它坦诚：TTS 代码在 2025 年 9 月因滥用被官方主动移除，README 明确声明模型仅供研发用途。研究一个语音开源项目绕不开「能用来做什么、不该用来做什么」，本文把这条线也讲清楚。
 
-通过本文，您将掌握以下核心技能：
+截至 2026 年 9 月 14 日，仓库约 54.2k stars、6.1k forks，MIT 许可证。
 
-1. **理解 VibeVoice 的整体架构** — 掌握语音输入→LLM 推理→语音输出的完整数据流
-2. **部署自己的 VibeVoice 实例** — 从环境配置到本地运行的完整流程
-3. **集成多种 ASR/TTS 模型** — 灵活替换语音识别和语音合成引擎
-4. **对接自定义 LLM** — 将 VibeVoice 连接到 OpenAI、Claude、本地模型等
-5. **开发自定义语音技能** — 基于 VibeVoice 框架构建专属语音应用
-6. **性能优化与生产部署** — 生产环境部署的实践建议
+## 学习目标
 
----
+读完这篇，你将能：
 
-## 二、目录#
+- 说清 VibeVoice 的两条产品线（TTS / ASR）和五个模型各自的定位与状态
+- 理解 7.5 Hz 双 tokenizer 和 next-token diffusion 为什么让 90 分钟语音合成成为可能
+- 用 Hugging Face transformers 的几行代码跑通 ASR 与实时 TTS 的推理
+- 知道 TTS 代码为什么被官方移除、Realtime-0.5B 内置了哪些防滥用设计
+- 按自己的场景（长内容生产、实时交互、会议转写、边缘设备）选对模型
 
-- [一、学习目标](#一学习目标)
-- [二、目录](#二目录)
-- [三、原理分析：什么是 VibeVoice](#三原理分析什么是-vibevoice)
-- [四、架构分析：VibeVoice 是如何设计的](#四架构分析vibevoice-是如何设计的)
-- [五、功能详解：VibeVoice 的核心功能](#五功能详解vibevoice-的核心功能)
-- [六、使用说明：从安装到运行](#六使用说明从安装到运行)
-- [七、开发扩展：二次开发指南](#七开发扩展二次开发指南)
-- [八、实践建议：生产环境部署](#八实践建议生产环境部署)
-- [九、FAQ：常见问题解答](#九faq常见问题解答)
-- [十、自测题](#十自测题)
-- [十一、练习](#十一练习)
-- [十二、进阶路径](#十二进阶路径)
-- [十三、资料口径说明](#十三资料口径说明)
-- [十四、附录：快速命令参考](#十四附录快速命令参考)
+## 目录
 
----
+- [一句话判断](#一句话判断)
+- [把语音当序列问题：VibeVoice 在解决什么](#把语音当序列问题vibevoice-在解决什么)
+- [全景地图：一个仓库，两条产品线](#全景地图一个仓库两条产品线)
+- [架构：7.5 Hz tokenizer 与 next-token diffusion](#架构75-hz-tokenizer-与-next-token-diffusion)
+- [TTS 线：从 90 分钟长语音到 300 ms 实时合成](#tts-线从-90-分钟长语音到-300-ms-实时合成)
+- [ASR 线：60 分钟长音频与「谁在何时说了什么」](#asr-线60-分钟长音频与谁在何时说了什么)
+- [怎么跑起来：三条真实可用的路径](#怎么跑起来三条真实可用的路径)
+- [benchmark 怎么读](#benchmark-怎么读)
+- [合规边界：绕不开的下架史](#合规边界绕不开的下架史)
+- [怎么选：按场景给建议](#怎么选按场景给建议)
+- [FAQ](#faq)
+- [自测题](#自测题)
+- [练习](#练习)
+- [进阶路径](#进阶路径)
+- [资料口径说明](#资料口径说明)
+- [附录：资源与引用](#附录资源与引用)
 
-## 三、原理分析：什么是 VibeVoice#
+## 把语音当序列问题：VibeVoice 在解决什么
 
-### 3.1 VibeVoice 的定位#
+语音 AI 的两个基本任务——合成（TTS）和转写（ASR）——长期卡在同一个约束上：**上下文太短**。
 
-**VibeVoice**（[microsoft/VibeVoice](https://github.com/microsoft/VibeVoice)）是微软开源的**前沿语音 AI 系统**，旨在为开发者和研究者提供一个生产级别的实时语音对话框架。截至 2026 年 3 月，该项目已获得 **27,651 Stars** 和 **3,050 Forks**，成为语音 AI 领域最受关注的开源项目之一。
+TTS 模型传统上一次只能合成十几秒到几十秒的音频。想做一期 30 分钟的播客，就得把文本切成小段分别合成，再拼起来；代价是段与段之间的音色漂移、语速断层，多说话人场景下更明显。ASR 遇到的是镜像问题：转写一小时会议录音，主流方案要先做 VAD 切块，逐段转写，说话人归属（谁说的这句）和全局时间戳很容易在切块处丢失或错乱。
 
-其核心理念：
+VibeVoice 的思路是：把音频压缩到语言模型能「一眼看全」的长度。它自研的连续语音 tokenizer 把语音帧率压到 **7.5 Hz**（也就是每秒语音只占 7.5 个 token，官方称压缩效率比流行的 Encodec 高约 80 倍），配合 LLM 的 64K token 上下文，90 分钟音频、60 分钟音频就都在一次推理的射程之内。TTS 和 ASR 共享这个底座，只是方向相反：TTS 从文本生成语音 token，ASR 从语音 token 读出文本。
 
-> **"Open-Source Frontier Voice AI"** — 让前沿语音 AI 技术民主化，每个人都能构建自己的语音助手。
+## 全景地图：一个仓库，两条产品线
 
-### 3.2 现有语音 AI 的痛点#
+| 模型 | 线 | 开源时间 | 定位 | 关键数字 | 当前状态 |
+|------|-----|---------|------|---------|---------|
+| VibeVoice-TTS-1.5B | TTS | 2025-08-25 | 长语音多说话人合成 | 90 分钟、4 说话人、中英等 | 代码已移除，权重仍在 HF |
+| VibeVoice-Realtime-0.5B | TTS | 2025-12-03 | 实时流式合成 | 首包约 300 ms、约 10 分钟 | 可用，仅英语 |
+| VibeVoice-ASR-7B | ASR | 2026-01-21 | 长音频统一转写 | 60 分钟、50+ 语言、热词 | 可用，已进 transformers |
+| VibeVoice-ASR-Streaming | ASR | 2026-09-03 | 边说边转的流式转写 | 10 语言、说话人归属 | 最新发布 |
+| VibeVoice-ASR-BitNet | ASR | 2026-07-23 | CPU 边缘部署 | 4.62 GB→1.58 GB、RTF<1 | 可用，配 VibeASR.cpp |
 
-当前主流语音 AI 方案存在以下问题：
+先记住这张表的读法：TTS 线解决「说」，从能说到说得久（1.5B），再到说得即时（Realtime）；ASR 线解决「听」，从听得全（7B），到听得实时（Streaming），再到听得便宜（BitNet）。下面逐个拆。
 
-| 问题 | 描述 | 影响 |
-|------|------|------|
-| **延迟过高** | 端到端延迟往往超过 2-3 秒 | 对话体验差，像在对讲机交流 |
-| **模型锁定** | ASR/TTS/LLM 各环节强耦合 | 无法灵活替换最优组件 |
-| **私有化困难** | 依赖云服务厂商 | 数据隐私风险，成本不可控 |
-| **扩展性差** | 难以接入新模型和新技能 | 功能迭代缓慢 |
-| **实时性弱** | 缺乏流式处理架构 | 无法实现真正的实时对话 |
+## 架构：7.5 Hz tokenizer 与 next-token diffusion
 
-### 3.3 VibeVoice 的解决方案#
+### 双 tokenizer：语音的两种「字」
 
-VibeVoice 针对上述痛点，提出了完整的技术方案：
+VibeVoice 用两种连续语音 tokenizer 把音频编码成 LLM 可处理的向量：
 
-**1. 端到端低延迟架构**
-- 全链路流式处理，语音输入后即开始处理
-- 预测性解码（Predictive Decoding）：在完整句子说完之前就开始生成响应
-- 目标：实现 < 500ms 的端到端延迟
+- **语义 tokenizer**：保留语言内容相关的信息，回答「说了什么」；
+- **声学 tokenizer**：保留音色、韵律、情感等细节，回答「听起来怎么样」。
 
-**2. 模块化解耦设计**
-- ASR（自动语音识别）层：支持 Whisper、Azure Speech、DeepSpeech 等
-- LLM 层：支持 OpenAI GPT-4o、Claude 3.5、Gemini、本地模型等
-- TTS（语音合成）层：支持 Edge TTS、SAPI、Coqui、XTTS 等
-- 各层通过标准接口通信，可独立替换
+两种 tokenizer 都工作在 7.5 Hz 的超低帧率上。帧率低直接改变了长度的量纲：1 小时音频 ≈ 27,000 个语音 token，塞进 64K 的上下文绰绰有余；如果用传统 codec 的帧率（几百 Hz），同样的音频早就爆掉了。这是「长语音一次建模」在算术上成立的前提。
 
-**3. 私有化部署支持**
-- 100% 开源代码，无云服务依赖
-- 支持 Docker 一键部署
-- 支持本地 LLM 推理（Ollama、vLLM 等）
+### next-token diffusion：扩散头当 token 用
 
-**4. Agent 技能系统**
-- 内置 Skill 框架，可扩展语音技能
-- 支持多轮对话上下文管理
-- 内置工具调用（Function Calling）支持
+光有 tokenizer 还不够，语音 token 是连续值，不是离散的文字，标准 LLM 的 softmax 输出没法直接生成它们。VibeVoice 的做法是 **next-token diffusion**：LLM（TTS 模型的骨干是 Qwen2.5 1.5B）照常自回归地逐帧生成隐藏状态，但每一帧交给一个扩散头去「展开」成连续的声学向量。扩散头负责高保真的声学细节，LLM 负责文本语义与对话流的理解，两者各干各的。
 
-### 3.4 核心技术指标#
+这套设计直接决定了它最出名的两个能力：90 分钟长语音不断音色（每帧都在全局上下文里生成），以及多说话人对话的「氛围感」（LLM 看得到整个对话脚本，知道轮到谁、该用什么语气接话）。
 
-| 指标 | 数值 | 说明 |
-|------|------|------|
-| GitHub Stars | 27,651 | 语音 AI 领域顶级开源项目 |
-| Fork 数 | 3,050 | 社区活跃度高 |
-| 支持 ASR 引擎 | 5+ | Whisper、Azure、DeepSpeech 等 |
-| 支持 TTS 引擎 | 4+ | Edge、Coqui、XTTS 等 |
-| 支持 LLM | 10+ | OpenAI、Claude、Gemini、本地模型等 |
-| 目标延迟 | < 500ms | 端到端语音响应 |
+### 一次 90 分钟播客的完整流转
 
----
+把机制串起来看。假设你要合成一段 4 人对谈、90 分钟的播客音频：
 
-## 四、架构分析：VibeVoice 是如何设计的#
+1. 准备脚本：每句话标注说话人（`<speaker_1>` 到 `<speaker_4>`）与文本；
+2. 文本被送入 LLM，模型在 7.5 Hz 帧率下逐帧自回归推进，每一帧它都「看得见」之前的全部脚本与已生成的语音帧——这保证第 89 分钟的音色和第 1 分钟一致；
+3. 每一帧的隐藏状态交给扩散头，采样出连续声学向量；
+4. 声学 tokenizer 的解码端把向量流还原成波形，边生成边可写出音频。
 
-### 4.1 整体系统架构#
+ASR 方向相反：60 分钟录音经 tokenizer 压成约 27K 帧的连续表示，LLM 一次读完全部帧，直接输出带说话人标签和时间戳的转写文本——切块、对齐、合并这些传统工序都不需要了。
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           VibeVoice 系统架构                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │                        User Interface Layer（用户界面层）               │  │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────────┐  │  │
-│  │  │ Web UI   │  │ CLI      │  │ API      │  │ 第三方应用集成          │  │  │
-│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └──────────┬───────────┘  │  │
-│  └───────┼─────────────┼─────────────┼────────────────────┼──────────────┘  │
-│          │             │             │                    │                │
-│          └─────────────┴─────────────┴────────────────────┘                │
-│                                       │                                      │
-│                                        ▼                                      │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │                     Voice Pipeline（语音管道层）                         │  │
-│  │                                                                      │  │
-│  │   ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐           │  │
-│  │   │   VAD   │───▶│   ASR   │───▶│   LLM   │───▶│   TTS   │           │  │
-│  │   │(语音活动 │    │(语音   │    │(大模型  │    │(语音    │           │  │
-│  │   │ 检测)   │    │ 识别)   │    │ 推理)   │    │ 合成)   │           │  │
-│  │   └─────────┘    └─────────┘    └────┬────┘    └─────────┘           │  │
-│  │                                      │                                 │  │
-│  │                              ┌───────┴───────┐                        │  │
-│  │                              │  Skill System │                        │  │
-│  │                              │  (技能系统)   │                        │  │
-│  │                              └───────────────┘                        │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-│                                       │                                      │
-│                                        ▼                                      │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │                     Model Providers（模型提供商层）                      │  │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐   │  │
-│  │  │ OpenAI  │  │ Claude  │  │ Gemini  │  │ Ollama  │  │ Azure   │   │  │
-│  │  │(GPT-4o)│  │(3.5/Haiku)│  │(Flash) │  │(本地)   │  │(Speech) │   │  │
-│  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘   │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+## TTS 线：从 90 分钟长语音到 300 ms 实时合成
 
-### 4.2 核心模块详解#
+### VibeVoice-TTS-1.5B：长语音合成，以及它的下架
 
-#### 4.2.1 VAD（Voice Activity Detection）语音活动检测#
+VibeVoice-TTS-1.5B 是 2025 年 8 月 25 日开源的第一个模型（对应技术报告 [arXiv:2508.19205](https://arxiv.org/abs/2508.19205)，被 ICLR 2026 接收为 Oral），单次合成最长 90 分钟、支持最多 4 个不同说话人，主打英语和中文，也支持跨语言合成。发布后社区热度极高，是仓库 stars 的主要来源。
 
-VAD 是语音管道的第一环，负责判断用户是否在说话。
+但它也是这个项目争议的中心：2025 年 9 月 5 日，微软以「发现了与既定用途不一致的使用案例」为由，**把 TTS 代码从仓库移除**。目前权重仍可在 Hugging Face（`microsoft/VibeVoice-1.5B`）获取，README 中该模型的 Quick Try 入口标注为 Disabled，官方未给出恢复时间表。社区里维护着若干第三方 fork，但那已不在官方支持范围内——使用前要自己评估代码与权重的版本对应关系。
 
-**核心功能**：
-- 检测语音开始（Speech Start）
-- 检测语音结束（Speech End）
-- 噪音过滤（Noise Filtering）
-- 回声消除（Echo Cancellation）
+这件事对使用者的含义很直接：**长语音多说话人合成是 VibeVoice 的招牌能力，但官方当前不提供它的可用代码路径**。
 
-**技术选型**：
-```python
-# VibeVoice 支持多种 VAD 引擎
-class VADProviders:
-    - Silero_VAD      # 轻量高效，CPU 友好
-    - WebRTC_VAD      # 实时性好，业界广泛使用#
-    - Maus_VAD         # 高精度，适合研究场景
-```
+### VibeVoice-Realtime-0.5B：把帧率优势换成延迟
 
-#### 4.2.2 ASR（Automatic Speech Recognition）自动语音识别#
+2025 年 12 月 3 日开源的 Realtime-0.5B 走的是另一个方向：流式文本输入，增量编码文本块的同时并行做扩散生成，硬件合适时首包音频延迟约 300 ms，8K token 上下文下单次可生成约 10 分钟语音。架构上它只保留了声学 tokenizer（7.5 Hz），扩散头轻量到 4 层、约 40M 参数（DDPM + CFG + DPM-Solver 采样）。
 
-ASR 将语音转换为文本，是语音 AI 的核心组件之一。
+能力边界要认清：
 
-**支持的引擎**：
+- **仅支持英语**。2025 年 12 月 16 日加入的德、法、意、日、韩、荷、波兰、葡萄牙、西 9 种语言声音属实验性质，官方明确说非英语输出不受支持，可能无法理解或不恰当；另有 11 种英语风格声音。
+- **单说话人**。多人对话要回到 1.5B 那条线。
+- **只生成语音**，不生成音乐或音效；不建模重叠说话；朗读代码、数学公式、特殊符号前需要自己预处理文本。
 
-| 引擎 | 优点 | 缺点 | 适用场景 |
-|------|------|------|----------|
-| **Whisper** | 开源、精度高、多语言 | 延迟较高 | 通用场景 |
-| **Azure Speech** | 微软官方、低延迟 | 需云服务 | 生产环境 |
-| **DeepSpeech** | 完全开源 | 精度一般 | 私有化部署 |
-| **SenseVoice** | 中文优化 | 社区较小 | 中文场景 |
+防滥用上它做了三件事：生成的音频自动嵌入可听的 AI 声明和隐性水印，且发布时移除了声学 tokenizer——也就是说你拿官方权重能生成语音，但没有配套的 tokenizer 就难以随意克隆他人音色。这是「开源权重」与「防滥用」之间的一种工程折衷。
 
-**配置示例**：
-```yaml
-# config/asr.yaml
-asr:
-  provider: "whisper"
-  model: "large-v3"
-  language: "auto"  # 自动检测语言
-  vad: "silero"
-  
-  # 或使用 Azure
-  provider: "azure"
-  speech_key: "${AZURE_SPEECH_KEY}"
-  speech_region: "eastus"
-```
+## ASR 线：60 分钟长音频与「谁在何时说了什么」
 
-#### 4.2.3 LLM（大语言模型推理）#
+### VibeVoice-ASR-7B：把转写、说话人、时间戳装进一次推理
 
-LLM 是 VibeVoice 的「大脑」，负责理解用户意图并生成响应。
+2026 年 1 月 21 日开源的 ASR 模型（技术报告 [arXiv:2601.18184](https://arxiv.org/abs/2601.18184)）把 ASR、说话人分离（diarization）、时间戳合成一个任务：模型直接输出结构化的「谁（Speaker）、何时（Timestamps）、说了什么（Content）」。单次处理最长 60 分钟音频（64K token 内），支持 50 种以上语言，原生处理句内和跨句的语言混杂（code-switching），还支持自定义热词来保住人名、术语这类专业词的识别率。
 
-**支持的模型**：
+工程侧的配套在半年内快速铺开：2026 年 3 月 6 日进入 Hugging Face Transformers 正式发布（`pip install` 最新版 transformers 即可调用），3 月 12 日集成到 Azure AI Foundry Labs；官方还提供微调代码和 vLLM 推理支持。它是这个家族里「拿来做产品」阻力最小的模型。
 
-| 提供商 | 模型 | 特点 |
-|--------|------|------|
-| OpenAI | GPT-4o、GPT-4o-mini | 低延迟、语音优化 |
-| Anthropic | Claude 3.5 Sonnet、Haiku | 高质量、安全 |
-| Google | Gemini 2.0 Flash | 高性价比 |
-| 本地模型 | Ollama、vLLM | 私有化、数据安全 |
+### Streaming 与 BitNet：听得实时，听得便宜
 
-**流式输出**：
-VibeVoice 支持 LLM 的流式输出，配合 TTS 实现边生成边播报的体验。
+- **VibeVoice-ASR-Streaming**（2026-09-03，[arXiv:2609.02812](https://arxiv.org/abs/2609.02812)）：音频到达即转写，持续输出带说话人归属的内容，支持热词，覆盖 10 种语言。会议实时字幕、直播转写这类场景的答案。
+- **VibeVoice-ASR-BitNet**（2026-07-23，[arXiv:2607.21075](https://arxiv.org/abs/2607.21075)）：用异构量化（I8_S + I2_S 混合精度）把模型从 4.62 GB 压到 1.58 GB，配套的 C++ 推理引擎 [VibeASR.cpp](https://github.com/microsoft/VibeASR.cpp) 在 3 条以上 CPU 线程上即可实时推理（RTF < 1），不需要 GPU。这让树莓派级别的设备和离线场景有了选项。
+
+## 怎么跑起来：三条真实可用的路径
+
+**路径一：Hugging Face Playground（零代码）。** ASR 有官方在线演示 [aka.ms/vibevoice-asr](https://aka.ms/vibevoice-asr)，上传或粘贴音频就能体验长音频转写，适合动手前先看看效果。
+
+**路径二：transformers 调用（生产推荐）。** ASR 与 Realtime TTS 都已进入 transformers 正式发布，以下代码来自官方模型卡：
 
 ```python
-# LLM 配置示例
-llm:
-  provider: "openai"
-  model: "gpt-4o-audio-preview"  # 支持音频的 GPT-4o
-  temperature: 0.7
-  streaming: true
-  
-  # 或使用 Claude
-  provider: "anthropic"
-  model: "claude-sonnet-4-20260219"
-  audio_output: true  # Claude 的音频输出模式
+# ASR：pipeline 高层封装
+from transformers import pipeline
+
+pipe = pipeline("automatic-speech-recognition", model="microsoft/VibeVoice-ASR")
 ```
-
-#### 4.2.4 TTS（Text-to-Speech）语音合成#
-
-TTS 将文本响应转换为语音，是用户体验的关键。
-
-**支持的引擎**：
-
-| 引擎 | 优点 | 缺点 | 适用场景 |
-|------|------|------|----------|
-| **Edge TTS** | 免费、低延迟、多音色 | 微软云服务 | 快速原型 |
-| **Coqui TTS** | 完全开源、自定义音色 | 部署复杂 | 私有化 |
-| **XTTS** | 高质量、情感合成 | 商业授权 | 高质量场景 |
-| **VALL-E** | 零样本语音克隆 | 计算资源高 | 个性化场景 |
-
-**实时 TTS 优化**：
-```python
-# 流式 TTS 配置
-tts:
-  provider: "edge"
-  voice: "zh-CN-XiaoxiaoNeural"  # 中文音色
-  rate: "+0%"      # 语速调整
-  pitch: "+0Hz"    # 音调调整
-  
-  # 流式播放配置
-  stream_chunk_ms: 100  # 每 100ms 发送一个音频块
-```
-
-### 4.3 数据流详解#
-
-```
-用户说话 ──▶ VAD 检测 ──▶ ASR 识别 ──▶ LLM 推理 ──▶ TTS 合成 ──▶ 语音输出
-   │           │            │            │            │
-   ▼           ▼            ▼            ▼            ▼
- [音频]    [开始/结束]    [文本]     [响应文本]    [音频流]
- 
-关键指标：
-- VAD 延迟：~50ms
-- ASR 延迟：~200ms（Whisper large）
-- LLM 延迟：~300ms（GPT-4o，流式）
-- TTS 延迟：~100ms（首音频块）
-- 端到端延迟：< 500ms（理论最优）
-```
-
-### 4.4 Skill 系统#
-
-VibeVoice 内置 Skill 框架，支持扩展语音技能。
 
 ```python
-# skill_example.py
-from vibevoice.skills import Skill, register
+# 实时 TTS：直接加载模型
+from transformers import VibeVoiceStreamingForConditionalGenerationInference
 
-@register("weather")
-class WeatherSkill(Skill):
-    name = "天气查询"
-    description = "查询指定城市的天气情况"
-    
-    async def execute(self, context: dict) -> str:
-        city = context.get("params", {}).get("city", "北京")
-        # 调用天气 API
-        weather = await self.call_api(f"/weather?city={city}")
-        return f"{city}今天天气：{weather['desc']}，气温{weather['temp']}度"
-    
-    def get_schema(self) -> dict:
-        return {
-            "name": "weather",
-            "description": "查询城市天气",
-            "parameters": {
-                "city": {"type": "string", "description": "城市名称"}
-            }
-        }
-```
-
----
-
-## 五、功能详解：VibeVoice 的核心功能#
-
-### 5.1 实时语音对话#
-
-**多轮对话上下文**：
-```python
-# 支持多轮对话，自动维护上下文
-conversation = await vibevoice.create_session(
-    user_id="user123",
-    system_prompt="你是小微，一个友好的语音助手。"
-)
-
-# 语音输入 → 自动识别 → LLM 推理 → 语音输出
-result = await conversation.voice_chat(audio_stream=microphone_stream)
-print(result.text)  # 文本记录
-```
-
-**打断机制**：
-- 用户可随时打断 AI 说话
-- VAD 实时监测新语音输入
-- 快速取消当前 TTS 输出
-
-### 5.2 多语言支持#
-
-```yaml
-# 多语言配置
-language:
-  detection: "auto"  # 自动检测
-  supported:
-    - zh-CN    # 简体中文
-    - en-US    # 英语
-    - ja-JP    # 日语
-    - ko-KR    # 韩语
-  default: "zh-CN"
-```
-
-### 5.3 Agent 工具调用#
-
-```python
-# 注册工具函数
-@vibevoice.tool("calculate")
-def calculator(expression: str) -> float:
-    """计算数学表达式"""
-    return eval(expression)
-
-# AI 自动调用工具
-user: "帮我计算 123 加 456 乘以 2"
-# AI 自动调用 calculator 工具
-# 返回：1035
-```
-
-### 5.4 知识库集成#
-
-```python
-# RAG 知识库问答
-await conversation.enable_rag(
-    vector_store="your-vector-db",
-    top_k=5,
-    similarity_threshold=0.7
+model = VibeVoiceStreamingForConditionalGenerationInference.from_pretrained(
+    "microsoft/VibeVoice-Realtime-0.5B", device_map="auto"
 )
 ```
 
-### 5.5 情绪识别与响应#
-
-```python
-# 情绪识别配置
-emotion:
-  enabled: true
-  model: "emotion-classifier-v1"
-  
-# AI 根据情绪调整回复风格
-user_tone = "焦急"
-# AI 回复风格自动调整为：语速加快、语气安抚、简洁直接
-```
-
----
-
-## 六、使用说明：从安装到运行#
-
-### 6.1 环境要求#
-
-| 要求 | 最低配置 | 推荐配置 |
-|------|----------|----------|
-| Python | 3.9+ | 3.11+ |
-| 内存 | 4GB | 16GB+ |
-| GPU | 可选 | NVIDIA GPU（CUDA 12+） |
-| 麦克风 | 3.5mm 或 USB | USB 降噪麦克风 |
-
-### 6.2 安装步骤#
-
-**方式一：pip 安装（推荐）**
-```bash
-pip install vibevoice
-vibevoice --version
-```
-
-**方式二：从源码安装**
-```bash
-git clone https://github.com/microsoft/VibeVoice.git
-cd VibeVoice
-pip install -e .
-```
-
-**方式三：Docker 部署**
-```bash
-# 拉取镜像
-docker pull vibevoice/vibevoice:latest
-
-# 运行容器
-docker run -d \
-  --name vibevoice \
-  -p 8080:8080 \
-  -v ~/.vibevoice:/root/.vibevoice \
-  --device /dev/snd:/dev/snd \
-  vibevoice/vibevoice:latest
-```
-
-### 6.3 快速开始#
-
-**第一步：配置 API 密钥**
-```bash
-# 创建配置文件
-mkdir -p ~/.vibevoice
-cat > ~/.vibevoice/config.yaml << EOF
-llm:
-  provider: "openai"
-  api_key: "${OPENAI_API_KEY}"
-  
-asr:
-  provider: "whisper"
-  model: "large-v3"
-
-tts:
-  provider: "edge"
-  voice: "zh-CN-XiaoxiaoNeural"
-EOF
-```
-
-**第二步：启动 Web UI**
-```bash
-vibevoice web --port 8080
-# 打开浏览器访问 http://localhost:8080
-```
-
-**第三步：CLI 语音对话**
-```bash
-# 直接语音对话
-vibevoice chat --voice
-
-# 或文本对话
-vibevoice chat --text
-```
-
-### 6.4 Python API 使用#
-
-```python
-import asyncio
-from vibevoice import VibeVoice
-
-async def main():
-    # 初始化
-    vv = VibeVoice(config_path="~/.vibevoice/config.yaml")
-    
-    # 创建对话会话
-    session = await vv.create_session(
-        user_id="user_001",
-        system_prompt="你是一个专业的健身教练。"
-    )
-    
-    # 语音对话
-    print("开始对话（按 Ctrl+C 退出）...")
-    async for result in session.voice_loop():
-        print(f"用户：{result.user_text}")
-        print(f"AI：{result.response_text}")
-        print(f"置信度：{result.confidence:.2%}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### 6.5 常见配置问题#
-
-**Q1：Whisper 模型选择**
-```yaml
-# 精度优先（需要 GPU）
-asr:
-  model: "large-v3"  # ~3GB 显存
-  
-# 速度优先（CPU 可用）
-asr:
-  model: "base"  # ~140MB
-```
-
-**Q2：TTS 延迟优化**
-```yaml
-# 使用本地 TTS 减少延迟
-tts:
-  provider: "coqui"
-  model: "xtts_v2"  # 本地运行
-  # 无需网络请求，延迟降低 50%+
-```
-
-**Q3：GPU 加速配置**
-```bash
-# 使用 GPU 加速 Whisper
-export CUDA_VISIBLE_DEVICES=0
-vibevoice chat --device cuda
-```
-
----
-
-## 七、开发扩展：二次开发指南#
-
-### 7.1 自定义 ASR 引擎#
-
-```python
-from vibevoice.asr.base import BaseASR
-
-class MyASR(BaseASR):
-    name = "my_asr"
-    
-    async def recognize(self, audio_chunk: bytes) -> str:
-        # 实现自己的 ASR 逻辑
-        result = await self.my_asr_api(audio_chunk)
-        return result.text
-    
-    async def detect_speech_end(self, audio_chunk: bytes) -> bool:
-        # 实现 VAD 逻辑
-        return await self.my_vad_model(audio_chunk)
-
-# 注册引擎
-vv.register_asr("my_asr", MyASR())
-```
-
-### 7.2 自定义 TTS 引擎#
-
-```python
-from vibevoice.tts.base import BaseTTS
-
-class MyTTS(BaseTTS):
-    name = "my_tts"
-    
-    async def synthesize(self, text: str) -> bytes:
-        # 返回 WAV/MP3 格式音频
-        audio = await self.my_tts_api(text)
-        return audio
-    
-    def stream_audio(self, text: str):
-        # 流式音频生成
-        for chunk in self.my_streaming_tts(text):
-            yield chunk
-
-vv.register_tts("my_tts", MyTTS())
-```
-
-### 7.3 自定义 LLM Provider#
-
-```python
-from vibevoice.llm.base import BaseLLM
-
-class MyLLM(BaseLLM):
-    name = "my_llm"
-    
-    async def generate(self, messages: list, **kwargs):
-        response = await self.my_llm_api(messages)
-        return response.text
-    
-    async def stream_generate(self, messages: list):
-        async for chunk in self.my_streaming_api(messages):
-            yield chunk
-
-vv.register_llm("my_llm", MyLLM())
-```
-
-### 7.4 WebSocket API 扩展#
-
-```python
-# 开发自定义 WebSocket 接口
-from vibevoice.api.websocket import WebSocketHandler
-
-class CustomWSHandler(WebSocketHandler):
-    async def on_voice_frame(self, frame: bytes):
-        # 处理自定义音频帧
-        pass
-    
-    async def on_llm_token(self, token: str):
-        # 处理 LLM 流式输出
-        await self.send_json({"token": token})
-
-# 注册到 API 服务器
-vv.api_server.register("/custom", CustomWSHandler)
-```
-
----
-
-## 八、实践建议：生产环境部署#
-
-### 8.1 性能优化#
-
-**音频缓冲区优化**：
-```python
-# 减少音频延迟
-audio_config = {
-    "chunk_size_ms": 100,      # 减小到 100ms
-    "sample_rate": 16000, "channels": 1,              # 单声道
-    "codec": "pcm_s16le"       # 无压缩 PCM
-}
-```
-
-**并发处理**：
-```python
-# 多用户并发支持
-vv = VibeVoice(
-    max_concurrent_sessions=100,
-    session_timeout=300  # 5分钟超时
-)
-```
-
-### 8.2 安全配置#
-
-```yaml
-# 生产环境安全配置
-security:
-  api_key_required: true
-  rate_limit:
-    requests_per_minute: 60
-    sessions_per_user: 5
-    
-  audio:
-    max_duration_seconds: 300  # 最大语音时长
-    allowed_formats: ["pcm", "wav"]
-    
-  logging:
-    log_audio: false  # 生产环境关闭音频日志
-```
-
-### 8.3 监控与告警#
-
-```python
-# 接入监控系统
-vv.monitor = {
-    "prometheus_port": 9090,
-    "metrics": [
-        "latency.asr",
-        "latency.llm",
-        "latency.tts",
-        "latency.end_to_end",
-        "sessions.active",
-        "sessions.total"
-    ]
-}
-```
-
-### 8.4 Docker Compose 部署#
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  vibevoice:
-    image: vibevoice/vibevoice:latest
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config:/root/.vibevoice
-      - ./data:/root/.vibevoice/data
-    devices:
-      - /dev/snd:/dev/snd
-    environment:
-      - CUDA_VISIBLE_DEVICES=0
-    restart: unless-stopped
-    
-  # 可选：本地 LLM
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-```
-
----
-
-## 九、FAQ：常见问题解答#
-
-### Q1：VibeVoice 和 GPT-4o voice、RTC 有什么区别？#
-
-| 对比项 | VibeVoice | GPT-4o Voice | RTC |
-|--------|-----------|---------------|-----|
-| 开源性 | 100% 开源 | 闭源 API | 闭源 |
-| 部署方式 | 私有化/云端 | 仅云端 | 仅云端 |
-| 模型灵活性 | 任意 LLM | 仅 GPT-4o | 任意 |
-| 延迟 | < 500ms | < 500ms | < 300ms |
-| 定制化 | 完全可定制 | 受限 | 受限 |
-| 成本 | 自主控制 | 按 token 计费 | 按分钟计费 |
-
-### Q2：如何选择 ASR 引擎？#
-
-**推荐选择**：
-- **生产环境**：Azure Speech（低延迟、高精度）
-- **开源私有化**：Whisper large-v3（精度最高）
-- **中文场景**：SenseVoice（中文优化）或 Whisper
-- **低资源**：Whisper base/tiny（CPU 可用）
-
-### Q3：如何降低端到端延迟？#
-
-1. **使用 GPU 加速 ASR**：Whisper 在 GPU 上快 10 倍+
-2. **使用流式 LLM**：GPT-4o、Claude 3.5 均支持流式输出
-3. **使用本地 TTS**：Edge TTS 延迟 ~100ms，Coqui 可更低
-4. **优化音频 chunk**：从 500ms 降到 100ms
-5. **使用预测性 TTS**：在 LLM 输出的同时开始 TTS
-
-### Q4：支持中文语音吗？#
-
-**完全支持**。VibeVoice 对中文有良好支持：
-- ASR：Whisper、SenseVoice 均支持中文，识别准确率 95%+
-- TTS：Edge TTS 提供多个中文音色（晓晓、云扬等）
-- LLM：GPT-4o、Claude 3.5、GLM-4 等均支持中文
-
-### Q5：如何接入微信/飞书/钉钉？#
-
-VibeVoice 提供标准 WebSocket API，可轻松对接：
-
-```python
-# 微信公众平台对接示例
-from vibevoice.integrations import WeChatAdapter
-
-adapter = WeChatAdapter(
-    app_id="your_app_id",
-    app_secret="your_secret"
-)
-
-@adapter.on_voice_message()
-async def handle_voice(msg):
-    audio = await msg.download_voice()
-    response = await vibevoice.process(audio)
-    await msg.reply_voice(response.audio)
-```
-
-### Q6：遇到问题如何获取帮助？#
-
-1. **GitHub Issues**：[microsoft/VibeVoice/issues](https://github.com/microsoft/VibeVoice/issues)
-2. **Discord 社区**：加入 VibeVoice 开发者社区
-3. **文档**：访问 [vibevoice.docs.microsoft.com](https://vibevoice.docs.microsoft.com)
-4. **示例代码**：参考 `examples/` 目录
-
----
-
-## 十、自测题#
-
-### 10.1 VibeVoice 的核心理念是什么？#
+注意两点：ASR 模型没有托管在 Hugging Face 的 Inference Provider 上，推理要跑在自己的算力上；模型卡未给出显存数字，ASR 是 7B 级模型（BF16 权重），实际部署前请按自己的硬件实测。
+
+**路径三：仓库 Colab 笔记本（免费 GPU）。** 仓库 `demo/` 目录提供 Colab 笔记本（`VibeVoice_colab.ipynb` 与 `vibevoice_realtime_colab.ipynb`），浏览器里免费跑通合成，不想配环境就从这里开始。
+
+顺带排除一个常见误会：**没有 `pip install vibevoice` 这个包**，README 里也没有 Docker 镜像或 `vibevoice` 命令行工具——网上流传的那类安装命令多是对旧 TTS 版本第三方 fork 的转述，与官方仓库现状不符。
+
+## benchmark 怎么读
+
+README 为 ASR 线提供了三组指标图：**DER**（Diarization Error Rate，说话人归属错误率）、**cpWER**（说话人分离条件下的词错误率）、**tcpWER**（面向流式转写的词错误率）。读这组数字时建议带上三个问题：
+
+1. **测的是什么**：DER 管的是「谁在说话」分得对不对，cpWER/tcpWER 管的是「内容转得对不对」——前者差不代表后者差，反之亦然。
+2. **数字反映系统的哪部分**：说话人归属主要取决于模型对全局上下文（谁在何时发言）的建模，内容错误更多取决于声学与语言学建模；两者对应架构里不同的组件。
+3. **不能推出什么**：这些基准主要覆盖英文与常见语种，中文专业领域、强口音、多人大混叠场景的表现需要你在自己的数据上实测；README 未提供完整数字表格，比较时建议直接查看仓库原图并留意测试集。
+
+TTS 线的「效果」目前没有公开的单一分数，主观听感（音色相似度、韵律自然度）仍是主要评价方式，官方展示以样例音频为主。
+
+## 合规边界：绕不开的下架史
+
+VibeVoice 的 README 花了整节讲风险，这不是套话，而是有真实事件背书的：TTS 代码下架就发生在开源后的第 11 天。使用这个家族的任何模型，以下边界都是官方明文：
+
+- **仅供研究与开发用途**。官方不建议未经充分测试就把模型用于商业或实际应用。
+- **深度伪造风险由使用者承担**。语音克隆与伪造的技术门槛因开源而大幅降低，官方明确提示不要用于未经同意模仿他人声音、虚假信息、实时换声等场景，并为滥用行为设置了反馈渠道（VibeVoice@microsoft.com）。
+- **模型继承基座的偏差**。官方指出模型继承了 Qwen2.5 基座模型的偏见与错误。
+- **Realtime-0.5B 内置了防护**（可听 AI 声明、隐性水印、移除声学 tokenizer），这些不是 bug，不要尝试绕过。
+
+如果你在做语音产品选型，这一节应该和架构那一节同等权重地读完。
+
+## 怎么选：按场景给建议
+
+- **会议/播客转写（有 GPU）**：VibeVoice-ASR-7B，60 分钟一次转完，说话人和时间戳齐全；已进 transformers，接入成本最低。
+- **实时字幕、直播转写**：VibeVoice-ASR-Streaming。
+- **离线设备、边缘部署、隐私敏感**：VibeVoice-ASR-BitNet + VibeASR.cpp，CPU 即可实时。
+- **英语实时语音交互（做 demo 或研究）**：VibeVoice-Realtime-0.5B，注意仅英语、单说话人、研究用途。
+- **中文长篇多说话人内容生产（有声书、播客）**：这是 TTS-1.5B 的能力区间，但官方代码已移除——评估社区 fork 时把维护活跃度和版本对应关系算进风险，或者先等官方恢复。
+- **不建议**：把任何 VibeVoice 模型直接当作未经合规评审的生产语音组件。
+
+## FAQ
+
+**Q1：VibeVoice 和 GPT-4o 语音模式是一回事吗？**
+
+不是。GPT-4o 的语音模式是闭源的端到端对话服务；VibeVoice 是开源模型家族，只提供 TTS 和 ASR 两类基础模型，不含对话管理、也不绑定任何 LLM。你可以把它生成的语音接到任何对话系统里。
+
+**Q2：TTS 代码被移除后，还能用 VibeVoice 做语音合成吗？**
+
+权重仍在 Hugging Face（`microsoft/VibeVoice-1.5B`），Realtime-0.5B 的代码和 transformers 支持是完整的。但 1.5B 的长语音合成当前没有官方代码路径，社区 fork 需自行评估。
+
+**Q3：中文支持怎么样？**
+
+分模型看：TTS-1.5B 主打英语和中文；ASR 线官方口径为支持 50+ 语言，无需显式设置语言，原生处理句内和跨句的 code-switching，但 README 与论文都未公布完整语言清单，中文识别效果建议先在 [aka.ms/vibevoice-asr](https://aka.ms/vibevoice-asr) 上用你自己的素材实测；Realtime-0.5B 仅支持英语。
+
+**Q4：跑这些模型需要什么硬件？**
+
+官方未发布统一的显存要求表。可确认的数字：ASR-BitNet 量化后 1.58 GB、3+ CPU 线程可实时；Realtime-0.5B 官方称 0.5B 骨干「deployment-friendly」，300 ms 首包延迟取决于硬件；ASR-7B 为 BF16 权重，推理建议 GPU。部署前在自己的硬件上实测是最可靠的做法。
+
+**Q5：遇到问题去哪反馈？**
+
+GitHub Issues（[microsoft/VibeVoice/issues](https://github.com/microsoft/VibeVoice/issues)）；涉及滥用报告或安全问题可邮件 VibeVoice@microsoft.com。ASR 的在线体验在 [aka.ms/vibevoice-asr](https://aka.ms/vibevoice-asr)。
+
+## 自测题
+
+1. VibeVoice 家族包含哪五个模型？TTS 线和 ASR 线各自的演进方向是什么？
+2. 7.5 Hz 帧率为什么是 90 分钟长语音合成在算术上成立的前提？算一算：一小时音频在 7.5 Hz 下大约占多少 token？
+3. next-token diffusion 里 LLM 和扩散头各自负责什么？为什么不直接让 LLM 输出音频样本？
+4. TTS-1.5B 的代码为什么被移除？Realtime-0.5B 用哪三重设计防滥用？
+5. DER、cpWER、tcpWER 分别衡量什么？为什么 DER 低不能推出转写质量高？
 
 <details>
-<summary>点击查看答案</summary>
+<summary>参考答案</summary>
 
-VibeVoice 的核心理念是 **"Open-Source Frontier Voice AI"** — 让前沿语音 AI 技术民主化，每个人都能构建自己的语音助手。
-
-它通过模块化架构、低延迟设计、私有化部署支持和 Agent 技能系统，解决了现有语音 AI 方案的痛点（延迟过高、模型锁定、私有化困难、扩展性差、实时性弱）。
+1. TTS-1.5B（长语音多说话人合成）、Realtime-0.5B（实时流式合成）、ASR-7B（60 分钟长音频转写）、ASR-Streaming（流式转写）、ASR-BitNet（CPU 边缘推理）。TTS 线从「说得久」走向「说得即时」，ASR 线从「听得全」走向「听得实时、听得便宜」。
+2. 约 27,000 token（3600 秒 × 7.5）。传统 codec 数百 Hz 的帧率下同样音频远超 64K 上下文，只能切块处理。
+3. LLM 负责理解文本语义与对话流、逐帧生成隐藏状态；扩散头把隐藏状态展开为连续声学向量，保住高保真细节。音频是连续值，超出 LLM 离散 softmax 输出的表达范围。
+4. 2025-09-05 因「与既定用途不一致的使用案例」被官方移除。三重设计：自动嵌入可听 AI 声明、植入隐性水印、发布时移除声学 tokenizer。
+5. DER 衡量说话人归属错误率，cpWER 衡量说话人分离后的词错误率，tcpWER 是面向流式转写的词错误率。归属正确与内容正确由不同组件决定，一个低不蕴含另一个低。
 
 </details>
 
-### 10.2 VibeVoice 的整体架构分为哪几层？#
+## 练习
 
-<details>
-<summary>点击查看答案</summary>
+**练习 1：零成本跑通实时 TTS。** 打开仓库 `demo/vibevoice_realtime_colab.ipynb`，在 Colab 的免费 GPU 上生成一段英语语音。记录：首包延迟实际是多少？换一段更长的文本后，延迟有没有变化？
 
-VibeVoice 的整体架构分为三层：
+**练习 2：用 transformers 做 60 分钟转写。** 找一段带多人对话的录音（播客、访谈均可），用 `pipeline("automatic-speech-recognition", model="microsoft/VibeVoice-ASR")` 转写，对照官方 Playground（aka.ms/vibevoice-asr）的输出，检查说话人标签和时间戳是否一致。加入 3 个专业领域热词，观察识别率变化。
 
-1. **User Interface Layer（用户界面层）**：Web UI、CLI、API、第三方应用集成
-2. **Voice Pipeline（语音管道层）**：VAD → ASR → LLM → TTS，以及 Skill System
-3. **Model Providers（模型提供商层）**：OpenAI、Claude、Gemini、Ollama、Azure 等
+**练习 3：CPU 边缘部署体验。** 按 [VibeASR.cpp](https://github.com/microsoft/VibeASR.cpp) 仓库说明在自己电脑的 CPU 上跑 ASR-BitNet 模型，测量实际的 RTF。验证「3+ 线程 RTF < 1」在你的机器上是否成立。
 
-</details>
+**练习 4（开放）：写一页合规评估。** 假设你要在产品中引入语音克隆，列出 VibeVoice 的使用边界中哪些条款会构成障碍，以及你需要在工程与法务侧补充哪些控制措施。
 
-### 10.3 VibeVoice 如何实现端到端低延迟？#
+## 进阶路径
 
-<details>
-<summary>点击查看答案</summary>
+1. **读透 TTS 技术报告**：[arXiv:2508.19205](https://arxiv.org/abs/2508.19205)，重点看 tokenizer 设计与 next-token diffusion 的训练方式，对照 next-token 扩散的原始论文（arXiv:2412.08635）理解脉络。
+2. **读 ASR 三部曲**：长音频转写（[arXiv:2601.18184](https://arxiv.org/abs/2601.18184)）→ 流式转写（[arXiv:2609.02812](https://arxiv.org/abs/2609.02812)）→ CPU 量化（[arXiv:2607.21075](https://arxiv.org/abs/2607.21075)），观察同一底座如何被改造成三种部署形态。
+3. **上手微调**：仓库提供 ASR 微调代码，用自己的领域数据（会议、医疗、法律录音）微调热词效果，评估领域适配收益。
+4. **对比研究**：把 VibeVoice 与其他开源语音方案（如 Whisper 系的 ASR、其他开源 TTS）在你的数据上做一轮实测对比，重点看长音频与多说话人场景。
+5. **关注官方动态**：TTS 代码是否恢复、Realtime 是否扩展语言支持，都会改变上面的选型建议——以仓库 README 的 News 区为最新事实来源。
 
-VibeVoice 通过以下方式实现端到端低延迟（目标 < 500ms）：
+## 资料口径说明
 
-1. **全链路流式处理**：语音输入后即开始处理
-2. **预测性解码**：在完整句子说完之前就开始生成响应
-3. **模块化解耦设计**：ASR、LLM、TTS 独立替换，可选最优组件
-4. **流式输出**：LLM 流式输出，TTS 边生成边播报
+1. **核实时间**：本文事实核查截至 2026-09-14，来源为 microsoft/VibeVoice 仓库 README、Hugging Face 模型卡（`microsoft/VibeVoice-ASR`、`microsoft/VibeVoice-Realtime-0.5B`）及 arXiv 论文页。stars 数（54.2k）为核实时点数据，会持续变化。
+2. **本文修订说明**：早期版本将 VibeVoice 描述为「实时语音对话框架」（含 VAD/ASR/LLM/TTS 管道、Skill 系统、pip 包等），与该项目实际形态不符，本次已按官方来源全文重写。VibeVoice 是 TTS + ASR 模型家族，不包含对话编排框架。
+3. **数字的边界**：显存要求、各语种实测精度等官方未给出的数字，本文不提供；README 的 benchmark 图未附完整数字表格，具体数值请查看原图。
+4. **时效提示**：TTS 代码移除后官方未公布恢复计划；Streaming ASR 为 2026-09-03 最新发布，使用前请以仓库 README 为准核对模型清单与状态。
 
-</details>
+## 附录：资源与引用
 
-### 10.4 VibeVoice 支持哪些 ASR 引擎？各自有什么优缺点？#
+**仓库与模型**
 
-<details>
-<summary>点击查看答案</summary>
+- 代码仓库：[microsoft/VibeVoice](https://github.com/microsoft/VibeVoice)（MIT）
+- CPU 推理引擎：[microsoft/VibeASR.cpp](https://github.com/microsoft/VibeASR.cpp)
+- Hugging Face 模型：[VibeVoice-ASR](https://huggingface.co/microsoft/VibeVoice-ASR) ｜ [VibeVoice-Realtime-0.5B](https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B) ｜ [VibeVoice-1.5B](https://huggingface.co/microsoft/VibeVoice-1.5B)（TTS 权重，代码已移除）
 
-VibeVoice 支持以下 ASR 引擎：
+**论文**
 
-1. **Whisper**：开源、精度高、多语言；缺点是延迟较高
-2. **Azure Speech**：微软官方、低延迟；缺点是需要云服务
-3. **DeepSpeech**：完全开源；缺点是精度一般
-4. **SenseVoice**：中文优化；缺点是社区较小
+- VibeVoice Technical Report（TTS）：[arXiv:2508.19205](https://arxiv.org/abs/2508.19205)，ICLR 2026 Oral，[OpenReview](https://openreview.net/forum?id=FihSkzyxdv)
+- VibeVoice-ASR：[arXiv:2601.18184](https://arxiv.org/abs/2601.18184)
+- ASR-Streaming：[arXiv:2609.02812](https://arxiv.org/abs/2609.02812)
+- ASR-BitNet：[arXiv:2607.21075](https://arxiv.org/abs/2607.21075)
 
-</details>
+**在线体验**
 
-### 10.5 如何自定义 VibeVoice 的 ASR 引擎？#
+- ASR Playground：[aka.ms/vibevoice-asr](https://aka.ms/vibevoice-asr)
+- Colab 笔记本：仓库 `demo/` 目录（`VibeVoice_colab.ipynb`、`vibevoice_realtime_colab.ipynb`）
 
-<details>
-<summary>点击查看答案</summary>
-
-自定义 ASR 引擎步骤：
-
-1. 继承 `BaseASR` 基类
-2. 实现 `recognize()` 方法（语音识别逻辑）
-3. 实现 `detect_speech_end()` 方法（VAD 逻辑）
-4. 使用 `vv.register_asr()` 注册引擎
-
-示例参见本文档「七、开发扩展」章节的 7.1 节。
-
-</details>
-
----
-
-## 十一、练习#
-
-### 练习 1：部署 VibeVoice 并验证基本功能#
-
-**任务**：在你的系统上部署 VibeVoice，并验证它能够正常进行语音对话。
-
-**步骤**：
-1. 使用 pip 安装 VibeVoice：`pip install vibevoice`
-2. 配置 OpenAI API Key（或 Claude、本地 Ollama）
-3. 启动 Web UI：`vibevoice web --port 8080`
-4. 打开浏览器访问 http://localhost:8080
-5. 测试语音对话和文本对话
-
-**参考答案**：部署成功后，你应该能够访问 VibeVoice 的 Web UI，配置 API Key，并进行语音对话。语音对话的延迟应该低于 500ms。
-
-### 练习 2：自定义一个语音技能（Skill）#
-
-**任务**：基于 VibeVoice 的 Skill 框架，开发一个自定义语音技能（例如「计算器」或「时钟」）。
-
-**步骤**：
-1. 创建一个 Python 文件（例如 `my_skill.py`）
-2. 继承 `Skill` 基类，使用 `@register()` 装饰器注册
-3. 实现 `execute()` 方法（技能逻辑）
-4. 实现 `get_schema()` 方法（技能参数 schema）
-5. 注册到 VibeVoice：`vv.register_skill("my_skill", MySkill())`
-6. 测试技能调用
-
-**参考答案**：自定义 Skill 需要继承 `Skill` 基类，实现 `execute()` 和 `get_schema()` 方法，然后使用 `vv.register_skill()` 注册。AI 会根据用户意图自动调用你的技能。
-
-### 练习 3：配置多模型并对比性能#
-
-**任务**：在 VibeVoice 中配置多个 LLM 提供商（OpenAI、Claude、Ollama），并对比它们的响应延迟和 quality。
-
-**步骤**：
-1. 修改配置文件 `config.yaml`，配置多个 LLM 提供商
-2. 使用 Web UI 或 CLI 切换不同的 LLM
-3. 记录每个 LLM 的响应延迟（VAD → ASR → LLM → TTS）
-4. 对比不同 LLM 的响应 quality
-
-**参考答案**：VibeVoice 支持多个 LLM 提供商。你可以在配置文件中配置多个提供商，然后在 Web UI 或 CLI 中切换。不同 LLM 的延迟和 quality 不同，你需要根据自己的需求选择。
-
----
-
-## 十二、进阶路径#
-
-如果你想深入研究 VibeVoice 和语音 AI 技术，可以按照以下 7 个步骤进行：
-
-### 12.1 步骤 1：理解语音 AI 的基础理论#
-
-**目标**：掌握语音 AI 的核心概念和架构。
-
-**行动**：
-- 阅读 VibeVoice 官方文档（https://vibevoice.docs.microsoft.com）
-- 研究语音 AI 的Pipeline：VAD → ASR → LLM → TTS
-- 理解端到端延迟的优化方法
-
-### 12.2 步骤 2：掌握 VibeVoice 的模块化架构#
-
-**目标**：深入理解 VibeVoice 的各层设计。
-
-**行动**：
-- 研究 User Interface Layer 的 Web UI、CLI、API 设计
-- 理解 Voice Pipeline 的 VAD、ASR、LLM、TTS 模块
-- 学习如何替换任意一个模块（例如从 Whisper 切换到 Azure Speech）
-
-### 12.3 步骤 3：开发自定义 Skill 和工具调用#
-
-**目标**：基于 VibeVoice 的 Skill 框架构建自己的语音应用。
-
-**行动**：
-- 学习如何创建自定义 Skill（继承 `Skill` 基类）
-- 理解工具调用（Function Calling）的工作原理
-- 开发一个完整的语音应用（例如「家庭助手」或「车载助手」）
-
-### 12.4 步骤 4：集成本地 LLM（Ollama/vLLM）#
-
-**目标**：使用本地 LLM 实现私有化部署。
-
-**行动**：
-- 安装和配置 Ollama 或 vLLM
-- 修改 VibeVoice 配置，对接本地 LLM
-- 测试本地 LLM 的响应延迟和 quality
-
-### 12.5 步骤 5：优化生产环境性能#
-
-**目标**：将 VibeVoice 部署到生产环境，并优化性能。
-
-**行动**：
-- 配置 GPU 加速（ASR 和 LLM）
-- 优化音频缓冲区（减小 chunk_size_ms）
-- 配置并发处理和 rate limit
-- 接入监控系统（Prometheus）
-
-### 12.6 步骤 6：贡献到 VibeVoice 开源社区#
-
-**目标**：为 VibeVoice 项目做出贡献，推动语音 AI 技术发展。
-
-**行动**：
-- 在 GitHub 上提交 Issues 和 Pull Requests
-- 参与 Discord 社区讨论
-- 分享你的使用案例和最佳实践
-
-### 12.7 步骤 7：构建生产级语音 AI 系统#
-
-**目标**：将 VibeVoice 技术应用到生产环境，构建完整的语音 AI 系统。
-
-**行动**：
-- 设计多用户并发架构
-- 实现安全配置（API Key、Rate Limit、音频日志）
-- 部署和监控生产级语音 AI 系统
-
----
-
-## 十三、资料口径说明#
-
-本文档基于以下来源和假设：
-
-1. **信息来源**：本文档基于 VibeVoice 官方 GitHub 仓库（https://github.com/microsoft/VibeVoice）、官方文档和公开技术描述。所有技术描述都尽量引用官方来源。
-
-2. **版本时效性**：本文档基于 2026-03-30 的 VibeVoice 版本。由于项目活跃开发中，具体 API、命令、功能可能随版本变化。建议读者在使用时核对官方文档的最新版本。
-
-3. **技术细节验证**：本文档中提到的技术细节（如 VAD 延迟、ASR 延迟、LLM 延迟、TTS 延迟、端到端延迟等）基于官方文档描述。由于无法在实际环境中完全验证所有细节，建议在关键决策前自行验证。
-
-4. **性能数据未验证**：本文档未包含独立的性能测试数据。VibeVoice 的实际延迟、精度、并发能力等都可能需要读者在自己的环境中验证。
-
-5. **安全建议边界**：本文档提到的安全配置（API Key 保护、Rate Limit、音频日志关闭等）是通用建议。实际的安全需求取决于具体应用场景。对于高风险场景，建议咨询专业安全团队。
-
-6. **更新记录**：本文档在 2026-06-30 进行了优化，添加了学习目标、目录、自测题、练习、进阶路径、资料口径说明等学习元素，以达到满分 100 分标准。
-
----
-
-## 十四、附录：快速命令参考#
-
-```bash
-# 安装
-pip install vibevoice
-
-# 配置
-vibevoice config init
-vibevoice config set llm.provider openai
-vibevoice config set llm.api_key YOUR_KEY
-
-# 运行
-vibevoice web --port 8080      # Web UI
-vibevoice chat --voice         # 语音对话
-vibevoice chat --text          # 文本对话
-
-# 开发
-vibevoice dev server           # 开发服务器
-vibevoice dev test            # 运行测试
-
-# 管理
-vibevoice sessions list        # 查看会话
-vibevoice sessions kill SESSION_ID  # 关闭会话
-```
+**反馈渠道**：[GitHub Issues](https://github.com/microsoft/VibeVoice/issues) ｜ VibeVoice@microsoft.com
 
 ---
 

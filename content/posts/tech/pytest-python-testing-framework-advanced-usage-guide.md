@@ -4,7 +4,7 @@ date: "2026-06-14T21:13:12+08:00"
 slug: "pytest-python-testing-framework-advanced-usage-guide"
 github_repo: "pytest-dev/pytest"
 source_key: "gh:pytest-dev/pytest"
-description: "pytest 是 14.4k stars 的 Python 测试框架事实标准。从 assert 反射讲起，系统拆解 fixture、parametrize、conftest、插件生态等机制与反模式。"
+description: "pytest 是 14.5k stars 的 Python 测试框架事实标准。从 assert 反射讲起，系统拆解 fixture、parametrize、conftest、插件生态等机制与反模式。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Python", "测试框架"]
@@ -12,7 +12,7 @@ tags: ["Python", "测试框架"]
 
 # pytest：Python 测试框架的事实标准，从 assert 反射到 fixture 体系
 
-> pytest 的入门门槛很低，一个 `assert` 就能写测试。但真正让它难以替代的是 fixture 体系、parametrize、conftest.py 加上 1300 多个插件——从一行 demo 到十万级用例的测试工程都能撑住。新手常把它当 unittest 替代品，老手把它当测试编排框架，两种用法并不冲突。
+> pytest 的入门门槛很低，一个 `assert` 就能写测试。但真正让它难以替代的是 fixture 体系、parametrize、conftest.py 加上 2100 多个插件——从一行 demo 到上万条用例的测试工程都能撑住。新手常把它当 unittest 替代品，老手把它当测试编排框架，两种用法并不冲突。
 
 **这篇文档按"先会跑、再拆机制、后避坑"的顺序展开。** 读完你会得到三样东西：一是能独立装好 pytest 并把第一个用例跑通（含常见 CLI 参数的用途）；二是能说清 fixture、parametrize、conftest.py、marker 四套机制各自解决什么问题、彼此怎么配合，而不是只背 API；三是能看懂一个完整项目的测试是怎么被组织起来的，并知道测试变慢、用例互相污染时该往哪儿查。前四章适合初次上手的人从头读，第五章开始进入机制，已有基础的人可以直接跳到对应章节。
 
@@ -22,13 +22,13 @@ tags: ["Python", "测试框架"]
 |------|------|
 | 仓库 | [pytest-dev/pytest](https://github.com/pytest-dev/pytest) |
 | 主语言 | Python（支持 Python 3.10+ 或 PyPy3） |
-| Stars | 14.4k |
-| Forks | 3.3k |
+| Stars | 14.5k |
+| Forks | 3.4k |
 | License | MIT |
-| 创始人 | Holger Krekel（2004 年至今） |
-| 插件数 | 1300+ 外部插件（官方收录列表见 [plugin_list](https://docs.pytest.org/en/latest/reference/plugin_list.html)） |
+| 发起人 | Holger Krekel（2004 年发起 py.test） |
+| 插件数 | 2100+ 外部插件（官方收录列表 [plugin_list](https://docs.pytest.org/en/latest/reference/plugin_list.html) 当前收录 2114 个） |
 
-> 数据核验于 2026-08（GitHub API 与 PyPI）；当前最新版为 9.1.x（9.1.1 发布于 2026-06-19）。
+> 数据核验于 2026-09（GitHub API 与 PyPI）；当前最新版为 9.1.x（9.1.1 发布于 2026-06-19）。
 
 pytest 的 README 开篇就是定位：**"makes it easy to write small tests, yet scales to support complex functional testing for applications and libraries"**。"easy → scales" 这条承诺贯穿后续所有设计。
 
@@ -61,7 +61,7 @@ E        +  where 4 = inc(3)
 
 **2. 自动发现。** 不需要写 suite、不需要继承 TestCase、不需要注册。pytest 默认扫描当前目录及子目录下文件名匹配 `test_*.py` 或 `*_test.py` 的文件，把其中以 `test_` 开头的函数和 `Test` 开头的类里的 `test_` 方法自动收集为测试用例。这套约定让"加一个测试 = 加一个函数"成为可能。
 
-**3. 插件架构。** pytest 把几乎所有非核心能力都做成插件——`pytest-cov`（覆盖率）、`pytest-mock`（mock 包装）、`pytest-django`（Django 集成）、`pytest-asyncio`（异步测试）、`pytest-xdist`（并行执行）——这 1300+ 插件构成了扩展生态，单元测试到端到端测试都有对应的工具。
+**3. 插件架构。** pytest 把几乎所有非核心能力都做成插件——`pytest-cov`（覆盖率）、`pytest-mock`（mock 包装）、`pytest-django`（Django 集成）、`pytest-asyncio`（异步测试）、`pytest-xdist`（并行执行）——这 2100+ 插件构成了扩展生态，单元测试到端到端测试都有对应的工具。
 
 合起来看，unittest 在新项目里基本退到"兼容性选项"的位置。
 
@@ -92,7 +92,7 @@ def inc(x):
     return x + 1
 
 def test_answer():
-    assert inc(3) == 4   # 故意写对，演示通过
+    assert inc(3) == 4   # inc(3) 返回 4，断言通过
 ```
 
 ```bash
@@ -305,7 +305,7 @@ project/
 
 ## 八、内置常用 fixture
 
-pytest 自带了一批"开箱即用"的 fixture，覆盖测试 90% 的副作用处理需求：
+pytest 自带了一批"开箱即用"的 fixture，临时文件、环境变量、输出捕获这些副作用处理基本不用自己动手：
 
 | fixture | 作用 |
 |---------|------|
@@ -368,7 +368,7 @@ pytest -m slow          # 只跑慢测试
 pytest -m "not slow"    # 跑所有非慢测试
 ```
 
-自定义 marker 必须在 `pytest.ini` / `pyproject.toml` 里注册，否则 pytest 8+ 会发出 `PytestUnknownMarkWarning`：
+自定义 marker 必须在 `pytest.ini` / `pyproject.toml` 里注册，否则 pytest 会发出 `PytestUnknownMarkWarning`（该警告自 4.5 版引入）：
 
 ```toml
 [tool.pytest.ini_options]
@@ -392,7 +392,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual("foo".upper(), "FOO")
 ```
 
-`pytest` 直接执行。`unittest` 的 `setUp/tearDown`、`@unittest.skip` 装饰器全部生效，断言失败时同样享受 pytest 的反射式输出。
+`pytest` 直接执行。`unittest` 的 `setUp/tearDown`、`@unittest.skip` 装饰器全部生效；`self.assertEqual` 这类断言失败时由 unittest 自己给出具体差异，TestCase 里直接写 `assert` 的话，拿到的就是 pytest 的反射式输出。
 
 这条兼容性的实际意义：**老项目可以渐进式迁移**——不用一次性把 `unittest.TestCase` 全改成 `def test_xxx()`，新写的测试用 pytest 风格，老测试保持原样，逐步替换。
 
@@ -508,16 +508,17 @@ def test_complex_calc(calc):
    │   ├── test_add[mixed]
    │   └── test_add[zero]
 
-4. fixture setup（按拓扑序）
+4. marker 筛选（收集阶段完成，只在指定 -m 时发生）
+   └── pytest -m slow → 此时就只保留 test_complex_calc，
+       被过滤掉的用例不会进入下一步，不付出 fixture setup 的成本
+
+5. fixture setup（按拓扑序，只针对选中的用例；默认不加 -m 时全部执行）
    ├── db_url (scope=session): 只运行一次，返回 "sqlite:///:memory:"
    ├── calc (scope=function): 每个测试函数运行一次
    │   ├── test_add[positive]: setup calc → 测试 → teardown calc
    │   ├── test_add[mixed]:    setup calc → 测试 → teardown calc
    │   ├── test_add[zero]:     setup calc → 测试 → teardown calc
    │   └── test_complex_calc:  setup calc → 测试 → teardown calc
-
-5. marker 筛选（如果指定了 -m）
-   └── pytest -m slow → 只跑 test_complex_calc
 
 6. 报告输出
    ├── test_add[positive] .     [25%]
@@ -551,13 +552,13 @@ def pytest_runtest_makereport(item, call):
 
 | 反模式 | 后果 | 修正 |
 |--------|------|------|
-| 在 fixture 里做 `import` 大对象、scope=function | 每个测试都重导入，测试变慢 | 改成 `scope="module"` 或 `session` |
+| 把重型资源放进 scope=function 的 fixture | 每个测试都重建一遍，整体变慢 | 提升到 `scope="module"` 或 `session` |
 | 用 `pytest.fail()` 抛异常代替 `assert` | 失去 assert 反射信息 | 改用 `assert` 或 pytest 内置断言 |
 | 测试里 `time.sleep(N)` 等异步事件 | 慢且不稳定 | 改用 `monkeypatch` / 事件注入 |
 | 在 conftest.py 里写测试函数 | pytest 不会收集 | 测试放到 `test_*.py` 文件 |
 | 测试间共享可变全局状态 | 后运行的测试受前面副作用影响 | 用 fixture scope 隔离 |
 | 写超长参数列表的 parametrize | 失败信息像天书 | 用 `pytest.param(..., id="...")` 起可读名字 |
-| `assert` 后不写消息 | 失败时只看到"AssertionError" | `assert x == y, "期望 y 因为 xxx"` |
+| 关键断言只写裸表达式 | 反射能给出值，但看不出这条断言在保证什么 | `assert x == y, "此处校验 xxx"` |
 
 ## 十四、常见问题与排查
 
@@ -565,7 +566,7 @@ def pytest_runtest_makereport(item, call):
 
 **报错 `fixture 'xxx' not found`。** 多数是三种情况：参数名拼错；fixture 定义在别处（见第七节 conftest 可见性）；或者想在同一个函数里引用参数化数据，却把 fixture 名也写进了 parametrize 的参数列表。前两种对照依赖关系排查，第三种看第五节和第六节的配合方式。
 
-**提示 `PytestUnknownMarkWarning`。** 自定义 marker（如 `@pytest.mark.slow`）没有在配置里注册。第九节给了注册位置；警告本身不阻断执行，但意味着拼写错误的 marker 会静默失效——`@pytest.mark.sloww` 不会报错，只会被当成一个未知标签忽略，这是最常见的一种"测试没按预期跑"的原因。
+**提示 `PytestUnknownMarkWarning`。** 自定义 marker（如 `@pytest.mark.slow`）没有在配置里注册。第九节给了注册位置；警告本身不阻断执行，危险在于拼错不会显式报错——`@pytest.mark.sloww` 同样只触发一次未知 marker 警告，而 `pytest -m slow` 过滤时不会包含它，对应用例就静默漏跑了，这是"测试没按预期跑"的常见原因。
 
 **测试之间互相影响。** 症状是单个测试单独跑通过、整体跑挂掉。先怀疑可变全局状态：查哪些测试共享了同一个对象、模块变量或环境变量。修复方向按第五节 scope 的语义来——把共享资源收敛到合适 scope，或在 autouse fixture 里重置。session 级 fixture 只读 + 内部复制是稳妥做法。
 
@@ -586,7 +587,7 @@ pytest 不是银弹，少数场景下别的工具更合适：
 | 行为驱动（BDD，Given-When-Then） | `pytest-bdd`（保留 pytest 生态）或 `behave` |
 | 大规模端到端（E2E）| Playwright / Cypress（pytest 只做编排） |
 | 性能基准 | pytest-benchmark / locust（不要和功能测试混在一个 suite） |
-| 强类型契约测试 | hypothesis（基于属性的测试，pytest 风格但独立库） |
+| 基于属性的测试（property-based） | hypothesis（独立库，写法与 pytest 融合） |
 
 ## 十六、采用顺序建议
 
@@ -595,16 +596,16 @@ pytest 不是银弹，少数场景下别的工具更合适：
 1. **第一周**：装上 `pytest`，给现有 `unittest` 测试加上 pytest 跑通，CI 改成 `pytest`。这一阶段不重写任何东西，只是切换工具链。
 2. **第二周**：开始用 `assert` 替代 `self.assertEqual`，把简单的 `setUp` 改成 `@pytest.fixture`。完成 30% 的迁移就够，剩下 70% 看团队节奏。
 3. **第一月**：把跨文件共享的 setup 拆进 `conftest.py`，引入 `pytest-cov` 看覆盖率。
-4. **第二月**：按业务需要引入 `pytest-mock`（替换 unittest.mock 的复杂语法）、`pytest-xdist`（并行执行，CI 时间减半）、业务框架对应的桥接插件（`pytest-django` / `pytest-asyncio` 等）。
+4. **第二月**：按业务需要引入 `pytest-mock`（替换 unittest.mock 的复杂语法）、`pytest-xdist`（并行执行，缩短 CI 时间，收益取决于用例可并行度）、业务框架对应的桥接插件（`pytest-django` / `pytest-asyncio` 等）。
 5. **持续**：自定义团队 marker（`smoke` / `regression` / `slow`），写一份 `conftest.py` 编码规范，新人入职照着改。
 
 ## 十七、小结
 
-- pytest 的入门成本是"一个 `assert` + 一行 `pytest`"，不要被 1300+ 插件的生态规模吓到。
+- pytest 的入门成本是"一个 `assert` + 一行 `pytest`"，不要被 2100+ 插件的生态规模吓到。
 - 真正决定 pytest 能不能用好的是 fixture 体系：`yield` 分 setup/teardown、scope 控制生命周期、factory 模式做参数化资源、conftest.py 做跨文件命名空间。
 - parametrize 是数据驱动测试的标配；marker 是测试分组的标配；`monkeypatch` / `tmp_path` / `capsys` 是副作用处理的三件套。
 - pytest 兼容 unittest，老项目可以渐进式迁移，不需要一次性重写。
-- 1300+ 插件是"按需引入"，不是"全装上"——内置 fixture 才是 80% 场景的主力。
+- 2100+ 插件是"按需引入"，不是"全装上"——内置 fixture 才是多数场景的主力。
 
 当你开始给 fixture 配 scope、往 conftest 分层、给用例打 marker，pytest 就不只是"跑测试的命令"了——它变成一套在测试会话层面做编排的工具。这几件事是在同一个层面发生的：scope 决定资源何时建、conftest 决定资源对谁可见、marker 决定用例按什么维度分组。把它们一起想，比单记某个 API 参数更容易用对。
 

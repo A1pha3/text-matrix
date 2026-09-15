@@ -1,31 +1,44 @@
 ---
-title: "spdlog 深度拆解:29K stars 的 C++ header-only 日志库"
+title: "spdlog 深度拆解:29.6K stars 的 C++ header-only 日志库"
 slug: gabime-spdlog-fast-cpp-logging-library-guide
 github_repo: "gabime/spdlog"
 source_key: "gh:gabime/spdlog"
 date: 2026-07-12T02:58:14+08:00
-lastmod: 2026-07-12T02:58:14+08:00
+lastmod: 2026-09-14T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["C++", "日志库", "性能优化", "Header-only"]
-description: "spdlog 是 C++ 生态最流行的 header-only 日志库,29K+ stars。本文拆解它的 fmt 集成、异步模式、sinks 架构与适用场景,并给出可运行的示例代码。"
+description: "spdlog 是 C++ 生态最流行的 header-only 日志库,29.6K stars。本文拆解它的 fmt 集成、异步模式、sinks 架构与适用场景,并给出可运行的示例代码。"
 ---
 
-# spdlog 深度拆解:29K stars 的 C++ header-only 日志库
+# spdlog 深度拆解:29.6K stars 的 C++ header-only 日志库
 
 ## 它解决什么问题
 
 C++ 程序迟早要打日志,直接 `std::cout` 有几个绕不开的坑:多线程输出会乱序、没有级别区分、文件轮转要自己写、磁盘 I/O 会阻塞业务线程。spdlog 把这些事打包成一个 header-only 库,让日志从「麻烦事」变成「两行代码的事」。
 
-spdlog 是 GitHub 上最流行的 C++ 日志库,约 29K stars。它的核心设计是 **logger 与 sink 分离**:logger 负责接收日志、决定格式和级别,一个或多个 sink 负责把日志写到具体目标(控制台、文件、syslog、网络)。想加一个输出目标,就为 logger 挂一个 sink,业务代码不用动。
+spdlog 是 GitHub 上最流行的 C++ 日志库,约 29.6K stars(2026 年 9 月数据)。它的核心设计是 **logger 与 sink 分离**:logger 负责接收日志、决定格式和级别,一个或多个 sink 负责把日志写到具体目标(控制台、文件、syslog、网络)。想加一个输出目标,就为 logger 挂一个 sink,业务代码不用动。
 
 ## 项目速览
 
 - 仓库: [gabime/spdlog](https://github.com/gabime/spdlog)
 - 定位: Fast C++ logging library
 - 语言: C++(C++11 起),header-only 与编译两种用法
-- 当前版本: v1.17.0(2026-01 发布,捆绑 fmt 12.1.0)
+- 当前版本: v1.17.0(2026-01 发布,捆绑 fmt 12.1.0,主要变更集中在 `%z` 时区偏移格式化的修复)
 - License: MIT
+
+## 四个角色,一张地图
+
+看 spdlog 的任何机制,先把四个角色分清楚:
+
+| 角色 | 职责 | 典型对象 |
+|------|------|----------|
+| logger | 接收调用、检查级别、持有名称 | `spdlog::info` 背后的默认 logger |
+| sink | 把一条日志写到具体目标,各自有独立的级别和格式 | stdout、rotating file、syslog |
+| pattern formatter | 定义一条日志长什么样 | `[%H:%M:%S] [%l] %v` |
+| 线程池(异步模式) | 后台取出消息并写盘 | 全局共享,默认 8192 格队列 + 1 线程 |
+
+下面按这条主线展开。
 
 ## 三个最值得注意的设计
 
@@ -45,9 +58,11 @@ spdlog::error("Something went wrong: {}", error_msg);
 spdlog::warn("Positional args: {0} {1} {0}", "foo", "bar");
 ```
 
+项目统一用 C++20 时,可以定义 `SPDLOG_USE_STD_FORMAT` 把格式化后端从 fmt 切到标准库 `std::format`,日志 API 不变。
+
 ### 3. 异步模式:把日志挪出业务路径
 
-同步模式下,业务线程直接调 sink 写文件/控制台,I/O 时间算进业务线程。异步模式把它拆成两段:业务线程只把日志消息丢进一个有界队列,后台线程池负责取出并写入。业务线程的日志调用从「磁盘 I/O」变成「一次入队」,耗时降低几个数量级。
+同步模式下,业务线程直接调 sink 写文件/控制台,I/O 时间算进业务线程。异步模式把它拆成两段:业务线程只把日志消息丢进一个有界队列,后台线程池负责取出并写入。业务线程的日志调用从「磁盘 I/O」变成「一次入队」。要注意参数本身的格式化(`{}` 占位符展开)仍发生在业务线程,异步省掉的是 pattern 拼装和磁盘 I/O,不省参数展开。
 
 官方推荐两种创建异步 logger 的方式:
 
@@ -90,14 +105,16 @@ spdlog::flush_every(std::chrono::seconds(3));
 一条日志的生命周期:
 
 ```
-业务线程 -> logger.log(level, msg)
-            -> 检查 level 是否达到阈值(不够直接返回)
-            -> 按 pattern 格式化为字符串
-            -> 逐个交给挂载的 sink
-                -> stdout_color_sink: 控制台输出
-                -> rotating_file_sink: 按大小轮转写文件
-                -> syslog_sink / tcp_sink: 系统日志 / 网络发送
+业务线程 -> logger.log(level, fmt, args...)
+            -> logger 检查级别阈值(不够直接返回)
+            -> 把消息递给挂载的每个 sink(每个 sink 还有一道自己的级别检查)
+                -> 每个 sink 用自己的 formatter 按 pattern 拼出最终文本
+                    -> stdout_color_sink: 控制台输出
+                    -> rotating_file_sink: 按大小轮转写文件
+                    -> syslog_sink / tcp_sink: 系统日志 / 网络发送
 ```
+
+格式化发生在 sink 内部,而不是 logger。`spdlog::set_pattern` 设的是 logger 级格式,内部会克隆给每个 sink;每个 sink 也可以单独 `set_pattern`——同一个 logger,控制台 sink 带颜色、文件 sink 用朴素格式,互不影响。
 
 一个 logger 可以挂多个 sink,各自独立工作。典型做法是控制台 + 文件双输出:开发时看控制台,线上留文件:
 
@@ -121,8 +138,11 @@ spdlog::register_logger(logger);
 - `basic_file_sink`:追加写单个文件
 - `rotating_file_sink`:按大小轮转
 - `daily_file_sink` / `hourly_file_sink`:按时间轮转
-- `syslog_sink`:写系统 syslog
-- `tcp_sink` / `udp_sink`:网络发送,用于集中式日志收集
+- `syslog_sink` / `systemd_sink`:写系统 syslog / systemd journal
+- `kafka_sink` / `mongo_sink`:直写 Kafka / MongoDB,用于集中式日志收集
+- `tcp_sink` / `udp_sink`:网络发送
+- `qt_sink` / `msvc_sink`:输出到 Qt 界面 / Visual Studio 输出窗口
+- `ringbuffer_sink`:环形缓冲,保留最近 N 条,崩溃时提取现场
 - `callback_sink`:每条日志回调你的函数,方便接自己的日志系统
 
 ## 日志格式:Pattern Formatter
@@ -145,16 +165,18 @@ spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] %v");
 
 输出形如:`[2026-07-12 03:00:00.123] [info] [140234] Server started on port 8080`
 
-## 编译期裁剪与 Backtrace
+## 日志级别与编译期裁剪
 
-`SPDLOG_*` 宏在编译期按 `SPDLOG_ACTIVE_LEVEL` 决定是否保留调用,默认是 `info`,所以 trace/debug 调用在 release 构建里被整体删除,连参数求值都不会发生:
+spdlog 有六个运行时级别:trace、debug、info、warn、err、critical,外加 off 表示关闭输出。运行时用 `set_level` 调阈值,影响所有级别检查。
+
+`SPDLOG_*` 系列宏则由 `SPDLOG_ACTIVE_LEVEL` 在编译期决定去留,默认是 `info`,所以 `SPDLOG_TRACE`、`SPDLOG_DEBUG` 调用在 release 构建里被整体删除,连参数求值都不会发生:
 
 ```cpp
-SPDLOG_TRACE("This won't even be compiled in");     // 默认不编译
-SPDLOG_DEBUG_IF(debug_mode, "Verbose: {}", x);      // 条件为真才编译
+SPDLOG_TRACE("entering process()");   // 默认(ACTIVE_LEVEL=info)展开为空,不编译
+SPDLOG_DEBUG("x = {}", x);            // 同上,不加编译选项这行等于没写
 ```
 
-这比 `if (debug) log(...)` 干净:没有运行时分支,也没有样板代码。要在 debug 构建里保留这些日志,编译时加 `-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG` 即可。
+这比 `if (debug) log(...)` 干净:没有运行时分支,也没有样板代码。代价是没有运行时开关——想在 debug 构建里保留这些日志,只能重新编译,加 `-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG` 即可。
 
 另一个实用的特性是 **backtrace**:把最近 N 条消息缓存在环形缓冲里,出错时一次性打印「现场」,常用于 dump 错误发生前的上下文:
 
@@ -165,12 +187,11 @@ spdlog::dump_backtrace();       // 打印缓存内容
 
 ## 性能:快,但别信没有出处的数字
 
-官方仓库的 `bench/` 目录提供可复现的基准,README 里贴有 i7-4770 上的结果,量级约为**每秒数百万条**。两个点必须说清楚,否则容易被误导:
+官方仓库的 `bench/` 目录提供可复现的基准,README 贴的是 Ubuntu 64 位、Intel i7-4770 @ 3.40GHz 上的结果:同步模式下 `basic_st` 单线程写文件约 5.8M 条/秒,`empty_logger`(丢弃输出、只剩级别检查与格式化)约 14.1M 条/秒。两个数的差距就是「测量对象」的差别:前者包含真实文件 I/O,后者把 I/O 摘掉了。看任何 spdlog 性能数字,先问三件事:什么 CPU?输出到哪——文件、终端还是空 sink?什么溢出策略?这三项不同,结论没有可比性。
 
-- **数字高度依赖硬件与配置**。同一个 benchmark,有人在自己机器上跑出每秒几十万条,有人跑出每秒几百万条,差异可达一个数量级。任何声称「spdlog 稳定每秒 X 千万条」的说法,都要追问:什么 CPU?什么输出目标?什么策略?
-- **异步模式不是「写得更快」,而是「返回得更快」**。它把 I/O 挪到后台线程,业务线程只付出入队成本;在 `overrun_oldest` 策略下,消费端吞吐通常比同步写盘高一截,但代价是可能丢弃日志。
+还有一个常被误读的点:**异步模式不是「写得更快」,而是「返回得更快」**。它把 I/O 挪到后台线程,业务线程只付出入队成本;在 `overrun_oldest` 策略下,消费端吞吐通常比同步写盘高一截,但代价是可能丢弃日志。
 
-需要自己对比时,直接跑 `spdlog/bench` 的源码,或参考仓库 issue #3217 里不同 CPU 的实测差异。
+需要自己对比时,直接跑 `bench/bench.cpp`,用同一份源码得出的数字才有讨论价值。
 
 ## 上手示例
 
@@ -235,7 +256,7 @@ int main() {
 
 ## 总结
 
-spdlog 的价值不在某个炫目的数字,而在四个同时满足的特性:header-only 好集成、fmt 类型安全格式化、多 sink 灵活输出、异步模式把日志挪出业务路径。它不追求在所有场景都最快,而是把「打日志」这件小事做得足够顺手——这也是它成为 C++ 生态默认选择的原因。
+spdlog 的价值不在某个炫目的数字,而在四个同时满足的特性:header-only 好集成、fmt 类型安全格式化、多 sink 灵活输出、异步模式把日志挪出业务路径。落地顺序可以很简单:先用同步的默认 logger 跑起来,行为稳定后再把 I/O 最重的路径换成异步 logger,最后按需调整 pattern 和轮转策略;已经在 Qt、ROS 体系里的项目,用自带日志就够了。29.6K 个 star 反映的正是这种低门槛——不需要先读完整个库,两行代码就能开始打日志。
 
 ## 参考
 
