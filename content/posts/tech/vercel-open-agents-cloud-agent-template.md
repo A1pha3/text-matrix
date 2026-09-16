@@ -1,260 +1,174 @@
 ---
-title: "Vercel Open Agents：2.4K Stars的云端Agent部署模板——Web/Workflow/Sandbox三层架构、GitHub集成、Session共享"
+title: "Vercel Open Agents：在 Vercel 上自托管云端编码 Agent——三层架构、GitHub 集成与部署实践"
 date: "2026-04-16T02:00:00+08:00"
 slug: "vercel-open-agents-cloud-agent-template"
 github_repo: "vercel-labs/open-agents"
 source_key: "gh:vercel-labs/open-agents"
-description: "Vercel Open Agents是2.4K Stars的开源模板，用于在Vercel上构建和运行云端Agent。三层架构（Web/Agent Workflow/Sandbox），支持GitHub集成、自动commit/PR、Session共享。"
+description: "Open Agents 是 Vercel Labs 开源的参考模板，用来在 Vercel 上构建和运行后台编码 Agent。它用三层架构（Web / Agent Workflow / Sandbox）把界面、Agent 逻辑和执行环境拆开，Agent 运行在沙箱之外，通过工具文件读写、搜索、Shell 与沙箱交互。本文讲清设计要点、部署流程、GitHub 集成与定制方向。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Vercel", "AI Agent", "TypeScript"]
+tags: ["Vercel", "AI Agent", "TypeScript", "Workflow"]
 ---
 
-# Vercel Open Agents：2.4K Stars 的云端 Agent 部署模板——Web/Workflow/Sandbox 三层架构、GitHub 集成、Session 共享
+# Vercel Open Agents：在 Vercel 上自托管云端编码 Agent
 
-                
-## 一、学习目标
+Open Agents 是 Vercel Labs 发布的一个开源参考应用，用来在 Vercel 上构建并运行**后台编码 Agent**。它把「从一个自然语言需求到一份代码改动」的完整链路打包好：Web 界面、Agent 运行时、沙箱编排、GitHub 集成，全部到位。部署之后，你给 Agent 下达任务，它就能在云端克隆仓库、改文件、跑命令、提交并推送，整个过程不需要你的电脑保持在线。
 
-读完本文，你应该能够：
+官方对它的定位很明确：**这是一个拿来 Fork 再改造的模板，不是一个开箱即用的黑盒**。这也是它和 Devin、Bolt 这类托管平台最本质的区别。
 
-1. **理解三层架构**：解释 Web / Agent Workflow / Sandbox VM 的职责划分
-2. **掌握关键设计决策**：说明为什么 Agent 不在 Sandbox 内运行
-3. **完成部署流程**：从 Fork 到运行，完整走通
-4. **配置 GitHub 集成**：实现自动 commit 和 PR
-5. **实现 Session 共享**：创建和分享只读链接
+> 以下内容依据仓库 README（写作时的主分支）整理。项目迭代很快，具体参数请以官方文档和 `apps/web/.env.example` 为准。
 
 ---
 
-## 二、目录
+## 一、先想清楚：Agent 为什么要跑在沙箱外面
 
-1. [项目概览](#项目概览)
-2. [核心设计决策](#核心设计决策)
-3. [部署流程](#部署流程)
-4. [GitHub 集成](#github-集成)
-5. [Session 共享](#session-共享)
+在讲三层结构之前，值得先理解项目最重要的一个设计取舍。
 
----
+Open Agents 的沙箱是一个隔离的 VM，里面有文件系统、Shell、Git、开发服务器和预览端口；Agent 却**不在这台 VM 里运行**。它跑在沙箱之外，通过一组工具（读文件、改文件、搜索、执行 Shell 命令）去操作沙箱。
 
+> Agent does not run inside the VM. It runs outside the sandbox and interacts with it through tools.
 
+这个「Agent 与沙箱分离」是整个项目的核心主张，换来四个实际收益：
 
-> **目标读者**：后端开发者、AI 应用架构师、对云端 Agent 部署感兴趣的工程师
-> **预计阅读时间**：40-55 分钟
-> **前置知识**：TypeScript/Next.js 基础、了解 Agent 基本概念
-> **难度定位**：⭐⭐⭐⭐ 专家设计
+- **执行生命周期解耦**。Agent 是一个可持久化的工作流，不依赖某一次 HTTP 请求的存活时间，一个任务可以跨多个持久化步骤连续执行。
+- **沙箱独立休眠与恢复**。沙箱闲置可以休眠，需要时再基于快照恢复，Agent 不用跟着沙箱一起进退。
+- **两边可以独立演进**。模型/供应商的选择、沙箱的实现方式，互不绑架，可以各自替换升级。
+- **VM 保持纯粹**。沙箱只做一个干净的执行环境，不会因为塞进了控制逻辑而膨胀成「控制平面」。
 
----
-
-## §1 这篇文章覆盖什么
-
-1. Open Agents 的三层架构：Web / Agent Workflow / Sandbox VM
-2. 关键设计决策：为什么 Agent 不运行在 Sandbox 内
-3. 从 Fork 到完整运行的部署流程
-4. GitHub 集成：repo 访问、commit 和 PR
-5. Session 共享和声音输入
-6. Fork 后的定制方向
+对比一下传统做法：如果 Agent 跑在 VM 内部，它的命运就和 VM 绑定，请求一断 Agent 就退，VM 也无法独立休眠，耦合太深。Open Agents 把这条耦合线剪断了。
 
 ---
 
-## §2 项目概览
-
-### 2.1 基本信息
-
-| 属性 | 值 |
-|------|------|
-| **Stars** | 2,433 ⭐ |
-| **组织** | Vercel Labs |
-| **语言** | TypeScript |
-| **许可证** | MIT |
-| **官网** | https://open-agents.dev |
-| **创建时间** | 2025-12-26 |
-
-### 2.2 核心特性
-
-| 特性 | 说明 |
-|------|------|
-| **三层架构** | Web → Agent Workflow → Sandbox VM |
-| **持久化执行** | Workflow SDK 支持的持久化运行 |
-| **沙箱隔离** | Vercel Sandboxes 基于快照恢复 |
-| **GitHub 集成** | repo 访问、branch 管理、commit、PR |
-| **Session 共享** | 只读链接分享对话 |
-| **语音输入** | ElevenLabs 转录（可选） |
-
-### 2.3 架构概览
+## 二、三层架构一览
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                      Web Layer                      │
-│            (Next.js App: Auth, Sessions, Chat UI)   │
-└─────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────┐
-│                 Agent Workflow Layer                 │
-│        (Durable Workflow: Agent Runtime + Tools)     │
-└─────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────┐
-│                    Sandbox Layer                     │
-│   (Vercel Sandbox VM: Filesystem, Shell, Git, Dev)  │
-└─────────────────────────────────────────────────────┘
+Web ──────────────► Agent Workflow ──────────────► Sandbox VM
+   (界面 / 登录       (后台持久化工作流              (执行环境：
+     / 会话 / 流式UI   + 工具集)                     文件系统 / Shell / Git)
 ```
+
+| 层 | 载体 | 职责 |
+|------|------|------|
+| **Web** | `apps/web`（Next.js） | 登录、会话、聊天界面、流式输出 |
+| **Agent Workflow** | Vercel 上的 durable workflow | Agent 逻辑、多步执行、取消、工具调度 |
+| **Sandbox** | Vercel Sandbox VM | 文件系统、Shell、Git、开发服务器、预览端口 |
+
+消息进来时，Chat 请求会启动一个 workflow 运行，而不是在请求内联执行 Agent。这件事的意义在于：Agent 的每一步决策都会作为持久化的 workflow 步骤被保存下来，中途失败可以断点续跑；活跃的运行还能通过重连到已有 workflow 的流来恢复进度。
 
 ---
 
-## §3 核心设计决策：Agent 不在 Sandbox 内
+## 三、当前具备的能力
 
-### 3.1 Agent 不在 Sandbox 内——这是最关键的设计决策
+- **对话式编码 Agent**：提供 file、search、shell、task、skill、web 六类工具，从读改文件到执行命令再到联网取信息，一条链走通。
+- **持久化多步执行**：基于 Vercel Workflow SDK，支持流式输出和取消。
+- **隔离沙箱**：每次会话有独立 VM，基于快照恢复；暴露 `3000 / 5173 / 4321 / 8000` 四个端口，可跑开发服务器查看效果，闲置自动休眠，也可以指定一个基础快照作为全新沙箱起点。
+- **仓库克隆与分支操作**：Agent 在沙箱内克隆仓库、切分支、干活。
+- **可选的自动 commit / push / PR**：一次成功后自动提交、推送、建 PR。注意这是按偏好的功能，不是默认全开。
+- **会话只读分享**：生成只读链接，对方能看完整对话和改动，但不能继续操作。
+- **语音输入（可选）**：接入 ElevenLabs 转录，懒得打字可以说话。
 
-Open Agents 的架构原则：
+---
 
-> **Agent does not run inside the VM. It runs outside the sandbox and interacts with it through tools.**
+## 四、动手部署：从 Fork 到跑起来
 
+官方推荐在 Vercel 上一键部署，流程如下。用部署按钮时，Neon Postgres 会被自动开通。
+
+1. **Fork 仓库**：`https://github.com/vercel-labs/open-agents`。
+2. **导入 Vercel**：把 Fork 的仓库导入 Vercel 项目。
+3. **生成会话签名密钥**：
+
+   ```bash
+   openssl rand -base64 32   # 用作 BETTER_AUTH_SECRET
+   ```
+
+4. **设置最小环境变量**，先让应用能启动：
+
+   ```env
+   POSTGRES_URL=
+   BETTER_AUTH_SECRET=
+   ```
+
+5. **先部署一次**，拿到一个稳定的生产域名，后面配置 OAuth 的回调地址要用它。
+6. **创建 Vercel OAuth App**，回调地址填：
+
+   ```
+   https://YOUR_DOMAIN/api/auth/callback/vercel
+   ```
+
+   然后补上并重新部署：
+
+   ```env
+   NEXT_PUBLIC_VERCEL_APP_CLIENT_ID=
+   VERCEL_APP_CLIENT_SECRET=
+   ```
+
+7. **配置 GitHub（想要完整的编码 Agent 流程时再做）**。创建一个 GitHub App，配置：
+
+   - Homepage URL：`https://YOUR_DOMAIN`
+   - Callback URL：`https://YOUR_DOMAIN/api/auth/callback/github`
+   - Setup URL：`https://YOUR_DOMAIN/api/github/app/callback`
+
+   再把相关变量补上并重新部署（`GITHUB_APP_PRIVATE_KEY` 可以是带转义换行的 PEM 原文，也可以是 base64 编码的 PEM）。
+
+8. **可选增强**：加 Redis/KV、设 `OPEN_AGENTS_RESOURCE_PROFILE=hobby` 使用 Hobby 兼容的资源默认值、填生产域名，或指定自己的沙箱基础快照。
+
+### 授权方式的一点说明
+
+登录认证由 **Better Auth** 负责，Vercel 和 GitHub 作为社交登录提供方，所有认证路由都由 `/api/auth/[...all]` 通配处理。GitHub 方面你**不需要另外再建一个 GitHub OAuth App**：Open Agents 直接复用 GitHub App 的 OAuth 凭据作为 Better Auth 的社交登录，同时用它颁发安装令牌来做仓库级访问。如果你的 GitHub App 是公开的，组织级安装也能顺畅工作。
+
+---
+
+## 五、本地开发
+
+本地直接用 pnpm（与官方命令保持一致）：
+
+```bash
+# 1. 启用 corepack 并安装依赖
+corepack enable
+pnpm install
+
+# 2. 生成本地环境文件
+cp apps/web/.env.example apps/web/.env
+
+# 3. 填好 apps/web/.env 里的必填项
+# 4. 启动
+pnpm web
 ```
-Agent (outside) ←── tools ───→ Sandbox VM (inside)
-```
 
-### 3.2 为什么这样设计
+如果你已经关联了 Vercel 项目，也可以用 `vc env pull` 直接把远程环境变量拉到本地。
 
-| 优势 | 说明 |
-|------|------|
-| **生命周期解耦** | Agent 执行不绑定单个请求周期 |
-| **沙箱独立休眠** | Sandbox 可以休眠和恢复，不影响 Agent |
-| **技术选型灵活** | Model/Provider 和 Sandbox 实现可以独立演进 |
-| **保持 VM 纯净** | VM 保持为纯执行环境，不成为控制平面 |
+**常用开发命令**：
 
-### 3.3 传统方案的问题
-
-```
-传统方案：Agent 在 VM 内部
-┌─────────────────────────────────────┐
-│ VM: Agent + Runtime + Filesystem    │
-│   ↑                                  │
-│   └── 请求生命周期绑定               │
-│   └── VM 不可独立休眠               │
-│   └── Agent 和 VM 耦合               │
-└─────────────────────────────────────┘
-```
-
-### 3.4 Open Agents 的方案
-
-```
-Open Agents 方案：Agent 在 VM 外部
-┌─────────────────────────────────────┐
-│ Agent Runtime (outside Sandbox)     │
-│   ├── 文件读写工具                   │
-│   ├── Shell 执行工具                 │
-│   ├── Git 操作工具                   │
-│   └── 搜索工具                       │
-└─────────────────────────────────────┘
-            ↓ tools
-┌─────────────────────────────────────┐
-│ Sandbox VM (pure execution)          │
-│   ├── Filesystem                     │
-│   ├── Shell                          │
-│   └── Ports: 3000, 5173, 4321, 8000  │
-└─────────────────────────────────────┘
+```bash
+pnpm web                    # 启动开发服务器
+pnpm check                  # lint + 格式检查
+pnpm fix                    # lint + 格式修复
+pnpm typecheck              # 全包类型检查
+pnpm run ci                 # 完整 CI：check + typecheck + 测试 + 迁移检查
+pnpm sandbox:snapshot-base  # 刷新沙箱基础快照
 ```
 
 ---
 
-## §4 三层架构详解
+## 六、环境变量速查
 
-### 4.1 Web Layer
+完整的清单在 `apps/web/.env.example`，README 给出的分类如下。核心原则是：**先能启动，再看登录，再看 GitHub**，三个层次递进，不要在第一步就堆满所有配置。
 
-基于 Next.js，负责：
+### 最小运行时（应用能启动）
 
-| 功能 | 说明 |
-|------|------|
-| **Auth** | Vercel OAuth 登录 |
-| **Sessions** | 聊天会话管理 |
-| **Chat UI** | 流式响应界面 |
-| **Streaming** | Agent 响应的流式传输 |
-
-### 4.2 Agent Workflow Layer
-
-基于 Vercel Durable Objects，实现：
-
-| 功能 | 说明 |
-|------|------|
-| **持久化执行** | Agent 可以跨多个请求持续运行 |
-| **工具调用** | file/search/shell/task/skill/web 工具 |
-| **流式处理** | 支持流式输出到 Web |
-| **取消功能** | 可以取消正在运行的 Agent |
-
-### 4.3 Sandbox Layer
-
-Vercel Sandbox 是执行环境：
-
-| 属性 | 说明 |
-|------|------|
-| **隔离** | 快照隔离的 VM |
-| **文件系统** | 完整的文件系统访问 |
-| **Shell** | bash/zsh 命令执行 |
-| **Git** | git 操作支持 |
-| **Dev Servers** | 暴露端口 3000/5173/4321/8000 |
-| **休眠** | 空闲后自动休眠 |
-
----
-
-## §5 当前功能详解
-
-### 5.1 Chat-Driven Coding Agent
-
-核心 Agent 能力：
-
-| 工具 | 功能 |
-|------|------|
-| **file** | 读写和编辑文件 |
-| **search** | 代码搜索 |
-| **shell** | 执行 Shell 命令 |
-| **task** | 任务拆解和执行 |
-| **skill** | 调用预定义技能 |
-| **web** | 网页访问和信息获取 |
-
-### 5.2 Durable Multi-Step Execution
-
-```typescript
-// Agent 运行在 Durable Workflow 中
-import { WorkflowClient } from '@vercel/workflow';
-
-const client = new WorkflowClient();
-
-async function runAgent(userMessage: string) {
-  // 启动持久化 Workflow
-  const run = client.run('agent-workflow', {
-    args: [userMessage],
-    signal: new AbortController().signal  // 支持取消
-  });
-
-  // 流式获取响应
-  for await (const event of run.stream()) {
-    if (event.type === 'text') {
-      // 流式显示
-      display(event.text);
-    }
-  }
-
-  return run.output;
-}
+```env
+POSTGRES_URL=
+BETTER_AUTH_SECRET=
 ```
 
-**特性**：
-- Agent 可以跨多个持久化步骤继续执行
-- 活跃的运行可以通过重新连接流恢复
-- Workflow SDK 提供可靠的持久化保证
+### 支持登录（Vercel OAuth）
 
-### 5.3 GitHub 集成
+```env
+NEXT_PUBLIC_VERCEL_APP_CLIENT_ID=
+VERCEL_APP_CLIENT_SECRET=
+```
 
-支持完整的 GitHub 工作流：
-
-| 功能 | 说明 |
-|------|------|
-| **Repo 访问** | 连接 GitHub，访问 public/private repos |
-| **Branch 管理** | 创建和切换分支 |
-| **Auto-commit** | 成功后自动提交（可选） |
-| **Auto-push** | 自动推送到远程（可选） |
-| **PR 创建** | 自动创建 Pull Request（可选） |
-
-**配置需要**：
+### 支持 GitHub 仓库访问 / 推送 / PR
 
 ```env
 NEXT_PUBLIC_GITHUB_CLIENT_ID=
@@ -265,447 +179,78 @@ NEXT_PUBLIC_GITHUB_APP_SLUG=
 GITHUB_WEBHOOK_SECRET=
 ```
 
-### 5.4 Session 共享
-
-通过只读链接分享对话：
-
-```
-用户 A 完成任务后生成分享链接
-    ↓
-分享给用户 B（只读权限）
-    ↓
-用户 B 可以查看完整对话记录
-    ↓
-但不能继续对话
-```
-
-### 5.5 语音输入（可选）
-
-使用 ElevenLabs 转录：
+### 可选
 
 ```env
-ELEVENLABS_API_KEY=xxx
-```
-
-启用后，用户可以通过语音输入代替打字。
-
----
-
-## §6 环境变量详解
-
-### 6.1 最小运行时
-
-仅需两个变量即可启动应用：
-
-```env
-POSTGRES_URL=       # PostgreSQL 数据库连接
-JWE_SECRET=         # JWT Web Encryption secret
-```
-
-### 6.2 登录所需
-
-需要完整的 OAuth 登录：
-
-```env
-ENCRYPTION_KEY=                        # 密钥
-NEXT_PUBLIC_VERCEL_APP_CLIENT_ID=     # Vercel OAuth App ID
-VERCEL_APP_CLIENT_SECRET=             # Vercel OAuth App Secret
-```
-
-### 6.3 GitHub 集成所需
-
-完整 GitHub 功能：
-
-```env
-NEXT_PUBLIC_GITHUB_CLIENT_ID=         # GitHub App Client ID
-GITHUB_CLIENT_SECRET=                 # GitHub App Client Secret
-GITHUB_APP_ID=                        # GitHub App ID
-GITHUB_APP_PRIVATE_KEY=               # GitHub App 私钥
-NEXT_PUBLIC_GITHUB_APP_SLUG=         # GitHub App slug
-GITHUB_WEBHOOK_SECRET=                # Webhook 密钥
-```
-
-### 6.4 可选变量
-
-```env
-REDIS_URL=              # Skills 元数据缓存
-KV_URL=                 # Upstash KV
-VERCEL_PROJECT_PRODUCTION_URL=         # 生产环境 URL
+REDIS_URL=                                # Skills 元数据缓存，不配则退回内存
+KV_URL=                                   # 同上，Upstash
+OPEN_AGENTS_RESOURCE_PROFILE=             # 设为 hobby 用 Hobby 兼容资源默认值
+VERCEL_PROJECT_PRODUCTION_URL=             # 生产域名（元数据与回调）
 NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL=
-VERCEL_SANDBOX_BASE_SNAPSHOT_ID=        # 沙箱基础快照
-ELEVENLABS_API_KEY=     # 语音转录
+VERCEL_SANDBOX_BASE_SNAPSHOT_ID=          # 全新沙箱的基础快照
+ELEVENLABS_API_KEY=                       # 语音转录
 ```
+
+> 提示：部分转发国外教程里出现过的 `JWE_SECRET` / `ENCRYPTION_KEY` 是更早期版本的变量名，当前项目已改用 Better Auth（`BETTER_AUTH_SECRET`）。以仓库现版本的 `.env.example` 为准。
 
 ---
 
-## §7 部署指南
+## 七、仓库结构解析
 
-### 7.1 推荐部署路径
-
-**在 Vercel 上一键部署**：
-
-1. Fork 本仓库
-2. 创建 PostgreSQL 数据库（推荐 Neon）
-3. 生成必要的密钥
-4. 导入到 Vercel
-5. 配置环境变量
-6. 部署
-
-### 7.2 部署步骤详解
-
-**Step 1: Fork 仓库**
-
-```bash
-# 在 GitHub 上 fork
-# https://github.com/vercel-labs/open-agents
+```text
+apps/web         Next.js 应用：Web 界面、workflow、认证、聊天 UI
+packages/agent   Agent 实现：工具、子代理、技能
+packages/sandbox 沙箱抽象：Vercel Sandbox 集成
+packages/shared  共享工具库
 ```
 
-**Step 2: 创建数据库**
-
-推荐使用 Neon：
-
-```bash
-# 在 https://neon.tech 创建数据库
-# 复制 POSTGRES_URL
-```
-
-**Step 3: 生成密钥**
-
-```bash
-# 生成 JWE_SECRET
-openssl rand -base64 32 | tr '+/' '-_' | tr -d '=\n'
-# 输出类似: ZkqM8dL2Xw7Yr5K3Hs6Nm4Bv9T1Qj7P
-
-# 生成 ENCRYPTION_KEY
-openssl rand -hex 32
-# 输出类似: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
-```
-
-**Step 4: 导入到 Vercel**
-
-```bash
-# 在 https://vercel.com 导入
-```
-
-**Step 5: 配置环境变量**
-
-在 Vercel 项目设置中添加：
-
-```env
-POSTGRES_URL=postgresql://user:pass@host/db
-JWE_SECRET=your_jwe_secret
-ENCRYPTION_KEY=your_encryption_key
-NEXT_PUBLIC_VERCEL_APP_CLIENT_ID=your_client_id
-VERCEL_APP_CLIENT_SECRET=your_secret
-```
-
-**Step 6: 创建 Vercel OAuth App**
-
-回调 URL：
-```
-https://YOUR_DOMAIN/api/auth/vercel/callback
-```
-
-本地开发：
-```
-http://localhost:3000/api/auth/vercel/callback
-```
-
-**Step 7: 配置 GitHub App（可选）**
-
-GitHub App 设置：
-
-- Homepage URL: `https://YOUR_DOMAIN`
-- Callback URL: `https://YOUR_DOMAIN/api/github/app/callback`
-- Setup URL: `https://YOUR_DOMAIN/api/github/app/callback`
-
-需要启用：**"Request user authorization (OAuth) during installation"**
-
-### 7.3 本地开发
-
-```bash
-# 1. 安装依赖
-bun install
-
-# 2. 创建环境文件
-cp apps/web/.env.example apps/web/.env
-
-# 3. 填写必要值
-# POSTGRES_URL, JWE_SECRET, ENCRYPTION_KEY 等
-
-# 4. 启动
-bun run web
-```
+其中 `packages/agent` 是你定制 Agent 的核心区域，`tools/`、`subagents/`、`skills/` 三个目录分别对应工具、子代理和可复用技能。`packages/sandbox` 关心的是「沙箱如何抽象、如何对接 Vercel Sandbox」这类问题。
 
 ---
 
-## §8 仓库结构解析
+## 八、几种常见方案对比
 
-### 8.1 目录结构
+Open Agents 的价值在于「自托管 + 可改造」。把它和两款典型方案放在一起看会更容易把握它的位置：
 
-```
-open-agents/
-├── apps/
-│   └── web/                    # Next.js 应用
-│       ├── src/
-│       │   ├── app/           # Next.js App Router
-│       │   ├── components/    # React 组件
-│       │   ├── lib/          # 工具函数
-│       │   └── styles/       # 样式
-│       ├── .env.example      # 环境变量模板
-│       └── package.json
-├── packages/
-│   ├── agent/                # Agent 实现
-│   │   ├── src/
-│   │   │   ├── tools/        # 工具定义
-│   │   │   ├── subagents/    # 子代理
-│   │   │   └── skills/       # 技能
-│   │   └── package.json
-│   ├── sandbox/              # Sandbox 抽象
-│   │   └── src/
-│   │       └── vercel.ts     # Vercel Sandbox 集成
-│   └── shared/               # 共享工具
-│       └── src/
-├── README.md
-└── package.json
-```
+| 维度 | Open Agents | 托管式 Agent 平台（如 Devin） | 本地 CLI Agent（如 Claude Code） |
+|------|-------------|-------------------------------|----------------------------------|
+| 运行位置 | 云端（Vercel） | 云端，厂商托管 | 本地机器 |
+| 是否可改 | 开源可 Fork 改源码 | 封闭平台 | 脚本可按需编排 |
+| 需要电脑在线 | 否 | 否 | 是，电脑需开机 |
+| 上手成本 | 需自己部署与配置 | 无需部署 | 低，装一个 CLI |
+| 适用场景 | 团队要掌控整个流水线 | 快速用现成服务 | 个人单机任务 |
 
-### 8.2 Agent 包详解
-
-`packages/agent` 包含：
-
-| 模块 | 说明 |
-|------|------|
-| `tools/` | file/search/shell/task/skill/web 工具 |
-| `subagents/` | 子代理实现 |
-| `skills/` | 可复用的技能定义 |
-
-### 8.3 Sandbox 包详解
-
-`packages/sandbox` 包含：
-
-| 模块 | 说明 |
-|------|------|
-| `vercel.ts` | Vercel Sandbox 集成 |
-| `snapshot.ts` | 快照管理 |
-| `ports.ts` | 端口暴露管理 |
+三者的关系不是互斥，而是「自找麻烦的程度 / 掌控程度」不同。Open Agents 站在掌控那一端。
 
 ---
 
-## §9 工具详解
+## 九、定制方向
 
-### 9.1 File Tools
+既然是参考模板，定制就是它的本职。几个典型改法：
 
-```typescript
-// 文件读取
-const content = await tools.file.read({
-  path: 'src/app.js',
-  encoding: 'utf-8'
-});
-
-// 文件写入
-await tools.file.write({
-  path: 'src/new-file.js',
-  content: 'console.log("hello");'
-});
-
-// 文件编辑
-await tools.file.edit({
-  path: 'src/app.js',
-  find: 'old code',
-  replace: 'new code'
-});
-```
-
-### 9.2 Shell Tools
-
-```typescript
-// 执行 Shell 命令
-const result = await tools.shell.execute({
-  command: 'npm install',
-  cwd: '/app',
-  timeout: 30000
-});
-```
-
-### 9.3 Search Tools
-
-```typescript
-// 代码搜索
-const results = await tools.search.code({
-  query: 'function authenticate',
-  path: 'src/',
-  filePattern: '*.ts'
-});
-```
-
-### 9.4 Web Tools
-
-```typescript
-// 网页访问
-const content = await tools.web.fetch({
-  url: 'https://github.com/vercel/vercel',
-  selectors: '.repo-title'
-});
-```
+- **改 Agent 行为**：动 `packages/agent/src/` 下的 `tools/`、`subagents/`、`skills/`，增删工具、调整子代理或技能集。
+- **换模型/供应商**：Open Agents 兼容 OpenAI 风格接口，可接 GPT 系列、Anthropic 的 Claude，也能通过兼容接口连本地模型。具体以当前实现为准。
+- **改 Web UI**：动 `apps/web/src/` 下的组件与认证逻辑。
+- **改沙箱行为**：动 `packages/sandbox/src/`，调整端口暴露、快照策略。
 
 ---
 
-## §10 与其他方案对比
+## 十、结束语
 
-### 10.1 vs Claude Code (Host)
+Open Agents 本质上是 Vercel 给你的一份「云端编码 Agent 的参考答卷」，把登录、持久化工作流、隔离沙箱、GitHub 集成这些容易踩坑的环节先做对了，把源码交到你手里。它适合的用法是走通一层，再看一层，按自己的业务去 Fork 改造，而不是当黑盒直接上线。
 
-| 维度 | Open Agents | Claude Code Host |
-|------|-------------|------------------|
-| 架构 | 云端原生 + 多 VM 分层 | Anthropic 官方托管的云端 CLI |
-| 模型 | 灵活选择（支持多种 LLM） | 绑定 Claude |
-| 部署 | Vercel 一键部署 | 无需部署，直接使用 CLI |
-| 费用 | 按 Vercel 计费 | Anthropic 官方按 Token 计费 |
-| 定制性 | 可 fork 修改源码 | 依赖官方更新 |
-
-**注**：Claude Code Host 是 Anthropic 官方托管的云端服务，用户无需自建服务器，直接通过 `claude code` CLI 连接使用，按 Token 计费。
-
-### 10.2 vs GenericAgent
-
-| 维度 | Open Agents | GenericAgent |
-|------|-------------|---------------|
-| 架构 | 云端 + 分层 | 本地 + 分层 |
-| 复杂度 | 高（完整系统） | 低（~3K 行） |
-| 定制性 | 需要 fork 修改 | 直接修改源码 |
-| 适用场景 | 团队协作 | 个人助手 |
+对想要掌控 Agent 基础设施、又不想从零硬造的团队来说，这是一种务实的选择。
 
 ---
 
-## §11 定制指南
-
-### 11.1 修改 Agent 行为
-
-在 `packages/agent/src/` 中修改：
-
-```typescript
-// 修改工具
-packages/agent/src/tools/
-
-// 修改子代理
-packages/agent/src/subagents/
-
-// 修改技能
-packages/agent/src/skills/
-```
-
-### 11.2 修改 Web UI
-
-在 `apps/web/src/` 中修改：
-
-```typescript
-// 修改聊天界面
-apps/web/src/components/ChatUI/
-
-// 修改认证逻辑
-apps/web/src/lib/auth/
-```
-
-### 11.3 修改 Sandbox 配置
-
-在 `packages/sandbox/src/` 中修改：
-
-```typescript
-// 修改端口配置
-packages/sandbox/src/ports.ts
-
-// 修改快照策略
-packages/sandbox/src/snapshot.ts
-```
-
----
-
-## §12 常见问题 FAQ
-
-**Q1: 需要多少费用？**
-
-A：主要是 Vercel 费用：
-- Postgres（Neon）：免费层足够起步
-- Vercel Sandbox：按使用计费
-- 可选 Redis（Upstash）：免费层足够
-
-**Q2: 支持哪些模型？**
-
-A：支持 OpenAI-compatible API，可以配置：
-- GPT-4 / GPT-3.5
-- Claude（通过 Anthropic API）
-- 本地模型（通过兼容接口）
-
-**Q3: 如何添加新工具？**
-
-A：在 `packages/agent/src/tools/` 添加新工具定义：
-
-```typescript
-// packages/agent/src/tools/my-tool.ts
-export const myTool = {
-  name: 'my_tool',
-  description: 'My custom tool',
-  execute: async (args) => { /* ... */ }
-};
-```
-
-**Q4: Sandbox 休眠后如何恢复？**
-
-A：Sandbox 在空闲后自动休眠，重新请求时会自动恢复，Agent 从上一个检查点继续。
-
-**Q5: 如何实现高可用？**
-
-A：Vercel 的 Durable Objects 提供高可用保证。多个实例可以同时运行，流量自动负载均衡。
-
----
-
-## §13 相关资源
+## 参考资源
 
 | 资源 | 链接 |
 |------|------|
-| GitHub | https://github.com/vercel-labs/open-agents |
-| 官网 | https://open-agents.dev |
-| Vercel 部署 | https://vercel.com/new/clone?project-name=open-agents |
+| GitHub 仓库 | https://github.com/vercel-labs/open-agents |
+| 在线演示 | https://open-agents.dev |
+| Vercel 模板页 | https://vercel.com/templates/next.js/open-agents |
 
 ---
 
-**🦞 作者：钳岳星君 | 来源：GitHub vercel-labs/open-agents**
-
----
-
-## 十二、自测题
-
-1. **Open Agents 的三层架构分别是什么？**
-   <details><summary>查看答案</summary>Web Layer、Agent Workflow Layer、Sandbox Layer。Agent 不在 Sandbox 内运行。</details>
-
-2. **为什么 Agent 不在 Sandbox 内运行？**
-   <details><summary>查看答案</summary>生命周期解耦、沙箱独立休眠、技术选型灵活、保持 VM 纯净。</details>
-
----
-
-## 十三、练习
-
-### 练习 1：部署到本地
-**任务**：Fork 仓库并在本地运行。
-
-### 练习 2：配置 GitHub 集成
-**任务**：创建 GitHub App 并配置自动 commit。
-
----
-
-## 十四、进阶路径
-
-1. 深入理解 Workflow SDK 的持久化机制
-2. 扩展 Sandbox 功能
-3. 集成其他 LLM Provider
-4. 实现多 Agent 协作
-
----
-
-## 十五、资料口径说明
-
-1. 本文基于 Vercel Open Agents 官方文档（2026-04 版本）
-2. Agent 框架迭代极快，请以官方最新文档为准
-3. 未覆盖的内容：Workflow SDK 细节、生产环境部署、安全加固
-
----
-
+> 用途说明：本文是技术笔记，面向对云端 Agent 部署感兴趣的开发者和架构师。写作时点信息来自仓库主分支 README，随着项目快速迭代，请以官方最新文档为准。

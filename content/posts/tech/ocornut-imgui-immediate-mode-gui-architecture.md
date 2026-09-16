@@ -1,5 +1,5 @@
 ---
-title: "Dear ImGui 架构拆解：为什么 74k 星的 C++ GUI 库选择了即时模式"
+title: "Dear ImGui 架构拆解：为什么 7.6 万星的 C++ GUI 库选择了即时模式"
 slug: ocornut-imgui-immediate-mode-gui-architecture
 github_repo: "ocornut/imgui"
 source_key: "gh:ocornut/imgui"
@@ -11,7 +11,7 @@ tags: ["C++", "GUI"]
 description: "Dear ImGui 是 Omar Cornut 维护的 C++ 即时模式 GUI 库，零依赖。本文拆解 IMGUI 范式本质、库状态边界、与 retained-mode 取舍及调试工具适用场景。"
 ---
 
-# Dear ImGui 架构拆解：为什么 74k 星的 C++ GUI 库选择了即时模式
+# Dear ImGui 架构拆解：为什么 7.6 万星的 C++ GUI 库选择了即时模式
 
 ## 核心判断
 
@@ -22,14 +22,15 @@ Dear ImGui 解决的不是"画一个 GUI 控件"的问题，而是"程序员在�
 | 维度 | 数据 |
 |------|------|
 | 仓库 | ocornut/imgui |
-| Stars | 约 74.5k（截至 2026-07） |
+| Stars | 约 7.6 万（截至 2026-09） |
+| 当前版本 | v1.92.9b（已发布 2026-07） |
 | 主语言 | C++ |
 | License | MIT |
 | 核心文件 | `imgui.cpp` + `imgui.h` + `imgui_demo.cpp` + `imgui_draw.cpp` 等约 10 个文件 |
 | 后端 | 20+ 官方维护（DirectX 9 至 12、OpenGL、Metal、Vulkan、WebGPU、SDL2 / SDL3、GLFW、Win32、Android、OSX 等）|
 | 起源 | Omar Cornut 在 Q-Games 受 Atman Binstock 启发，2014 年起在 Media Molecule 重写并开源 |
 
-> 仓库主分支的 `docs/README.md`（注：仓库根目录无 `README.md`，主入口在 `docs/`）开篇引用了 ryg 的一句调侃——"给某人状态，他今天就会有 bug；教他把状态写在两处再同步，他会持续有 bug一辈子"。这句话基本是 imgui 整个设计哲学的导语。
+> 仓库 README 开篇引用了 ryg 的一句调侃——"给某人状态，他今天就会有 bug；教他把状态写在两处再同步，他会持续有 bug 一辈子"。这句话基本是 imgui 整个设计哲学的导语。
 
 ## IMGUI 范式的本质
 
@@ -136,7 +137,7 @@ imgui 默认一个进程一个 `ImGuiContext`。这对工具程序 99% 够用。
 
 ### 2. 字体：内置 stb_truetype，附带 Proggy 字体
 
-`imgui_draw.cpp` 里嵌入了一份 `stb_truetype.h`，意味着你不需要额外装 FreeType。默认字体是 ProggyClean（`docs/CHANGELOG.md` 提到 ProggyForever 是更新版）。这套"自带光栅化"的代价是：超大字体（>5MB ttf）、复杂脚本（阿拉伯文从右到左、印度文连写、emoji 字距）会比较吃力，但 99% 的英文 UI、调试信息、ASCII 日志完全够用。
+`imgui_draw.cpp` 里嵌入了一份 `stb_truetype.h`，意味着你不需要额外装 FreeType。默认字体是 ProggyClean，后续版本也提供了 ProggyForever 作为新字形（见 `CHANGELOG.md`）。这套"自带光栅化"的代价是：超大字体（>5 MB ttf）、复杂脚本（阿拉伯文从右到左、印度文连写、emoji 字距）会比较吃力，但 99% 的英文 UI、调试信息、ASCII 日志完全够用。
 
 ### 3. 输入：不参与主循环，自己轮询
 
@@ -167,7 +168,7 @@ ImDrawData draw_data = ImGui::GetDrawData();
 
 ### 6. 国际化与无障碍：明确不支持
 
-README 直说："righ-to-left text, bidirectional text, text shaping, accessibility features are not supported"。这不是疏忽，是边界声明——imgui 把自己定位为"程序员内嵌调试器"，不是"终端用户 UI 框架"。如果你要做一个面向最终用户的应用，应该用 Qt / Flutter / React Native 之类的东西，再在调试版本里嵌 imgui。
+README 直说："right-to-left text, bidirectional text, text shaping, accessibility features are not supported"。这不是疏忽，是边界声明——imgui 把自己定位为"程序员内嵌调试器"，不是"终端用户 UI 框架"。如果你要做一个面向最终用户的应用，应该用 Qt / Flutter / React Native 之类的东西，再在调试版本里嵌 imgui。
 
 ## 与其他 GUI 框架的边界
 
@@ -215,7 +216,7 @@ while (!glfwWindowShouldClose(window)) {
 }
 ```
 
-C++20 模块用户可以用 `stripe2933/imgui-module`（README 提到的第三方）。第三方语言绑定由 `cimgui` 和 `dear_bindings` 仓库自动生成元数据并产出对应语言的绑定文件（C#、Go、Rust、Lua、Python、Swift、Zig、Ruby 等），覆盖面非常广。
+C++20 模块用户可以用社区提供的 `imgui-module` 包装（README 提到过第三方实现）。第三方语言绑定由 `cimgui` 和 `dear_bindings` 仓库自动生成元数据并产出对应语言的绑定文件（C#、Go、Rust、Lua、Python、Swift、Zig、Ruby 等），覆盖面非常广。
 
 ## 何时用 / 何时不用
 
@@ -236,20 +237,21 @@ C++20 模块用户可以用 `stripe2933/imgui-module`（README 提到的第三�
 - 多媒体文档编辑器（图片、视频、设计稿）—— ImGui 的文本编辑能力薄弱。
 - 大规模团队多人协作维护的 UI 库—— imgui 没有"声明式 UI diff"的明确边界。
 
-## Benchmark 与性能
+## 性能边界
 
-imgui 的性能特点要分清测的是哪部分：
+imgui 没有自带官方 benchmark 套件，谈它"快"要说明快在哪部分。把话说清楚，能避免把"帧率友好"误记成"任意规模都零成本"。
 
-| 测的是什么 | 量级 | 含义 |
-|----------|------|------|
-| 一帧顶点生成（C++ 调用到 draw list 提交） | 1 万个 widget ~1-3 ms | UI 描述阶段的 CPU 开销，主要花在文本测量 + 布局计算 |
-| Draw call 提交（OpenGL/Vulkan） | 取决于 draw cmd 数量 | 由 `ImDrawData.CmdLists` 数量决定，imgui 把同种材质合并 |
-| 单 widget 内存占用 | ~100 字节（`ImGuiInputData` 等内部对象） | 极低，没有 widget 对象持久 |
-| 100 万 widget 启动时间 | < 1 秒 | 启动仅分配 context，widget 按需分配 |
-| 滚动长列表（10 万行） | 平滑 | `ImGuiListClipper` 只读可见行 |
-| 字体图集大小（默认 ProggyClean） | ~180 KB | 含 ProggyForever 不到 800 KB |
+- **开销量级正比于"本帧实际生成的 widget"，而非历史总量**。这是 immediate mode 最被低估的一点：库不保留上一帧的 UI 树，就没有"整棵树 diff + 增量更新"的固定成本。代价换在另一边——**同一时刻屏幕上 widget 越多，这一帧 CPU 就花得越多**。做个开关藏在 `ImGui::Begin` 里、列表里塞 10 万个 `Selectable` 又不裁剪，照样会卡。
 
-> imgui 自己没有正式的 benchmark suite，*Dear ImGui Test Engine* 是单独仓库（`ocornut/imgui_test_engine`），更适合做回归测试和性能追踪。
+- **窗口级剔除发生在提交阶段**。`ImGui::Begin` 的返回 `bool` 表示该窗口当前是否"可绘制"（对应窗口是否被折叠或被完全裁剪到屏幕外）；对 `false` 的窗口，后续内容通常应当跳过或简化。真正"被看见"的窗口才会生成 `ImDrawData` 顶点，被裁剪到屏幕外的部分不会产生绘制命令。这决定了"每帧重写 UI"在上层如何被自然约束成"每帧只付看得见的那部分钱"。
+
+- **CPU 大头通常在文本测量**。每个 `Text`、`Button` 的标签都要走字宽测量与排版。所以长列表的解法不是"少写循环"，而是用 `ImGuiListClipper` 声明可见区间——你只需在它的每次 `Step()` 里补画"当前落在视口内的那几行"，从而避免对不可见行做全量布局。
+
+- **绘制命令按状态合并，不按 widget 合并**。`imgui_draw.cpp` 会把相邻、共享同一纹理与绘制状态的图元合并进同一个 `ImDrawCmd`，每条命令再带一个 `ClipRect`（绘图裁剪，用 scissor 而非 stencil 实现）。因此 draw call 数量约等于"纹理/状态切换次数"，而不是 widget 个数。这也是"immediate mode GUI ≠ immediate mode rendering"这句话在工程上的落点。
+
+- **没有持久 widget 对象，也就没有逐帧的状态同步、事件注册、反注册。** 内存模型简单：核心是一棵按需分配的 `ImGuiContext` 内部对象，widget 用完即栈上撤销。
+
+一句话：imgui 的性能模型适合"每一帧重建、一次批量提交"的工具型负载，不适合"几万同时可见、大字体复杂排版"的消费级界面。追求精确量级时，用 profiler 各自测；需要自动化性能追踪时，用 *Dear ImGui Test Engine*（`ocornut/imgui_test_engine`）跑的回归基准更可靠。
 
 ## 与"扩展"的边界
 
@@ -276,5 +278,6 @@ README 列出三类推荐的扩展：
 - FAQ：`https://github.com/ocornut/imgui/blob/master/docs/FAQ.md`
 - 后端使用指南：`https://github.com/ocornut/imgui/blob/master/docs/BACKENDS.md`
 - IMGUI 范式 Wiki：`https://github.com/ocornut/imgui/wiki#about-the-imgui-paradigm`
-- Web 版 demo 浏览器：`https://pthom.github.io/imgui_explorer`（`imgui_explorer`）
+- Web 版交互手册（浏览器在线体验，属 pthom/imgui_bundle 生态）：`https://pthom.github.io/imgui_manual_online/manual/imgui_manual.html`
+- Python/C++ 集成库与在线 Playground：`https://pthom.github.io/imgui_bundle/` 与 `https://github.com/pthom/imgui_bundle`
 - 语言绑定元数据生成：`https://github.com/cimgui/cimgui` 与 `https://github.com/dearimgui/dear_bindings`

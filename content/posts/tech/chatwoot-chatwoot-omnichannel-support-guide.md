@@ -117,7 +117,7 @@ curl -I localhost:3000/api
 
 这个项目的许可证有个容易误读的地方：GitHub 的 license 检测显示 "Other"，但 LICENSE 文件的主体是标准 MIT Expat 文本，自定义的部分只有一条——`enterprise/` 目录被排除在外，按单独的商业许可授权，第三方依赖则保留各自的原许可。
 
-也就是说：核心代码是真 MIT，可以自由商用、修改、再分发；只有当你需要 enterprise 目录里的企业版功能时，才进入商业授权范围。判断依据不是 GitHub 的标签，而是 LICENSE 原文。
+也就是说：核心代码是真 MIT，可以自由商用、修改、再分发；只有在你需要 enterprise 目录里的企业版功能时，才进入商业授权范围。判断——别信 GitHub 那个 "Other" 标签——直接看 `LICENSE` 文件正文。
 
 ## 适用边界
 

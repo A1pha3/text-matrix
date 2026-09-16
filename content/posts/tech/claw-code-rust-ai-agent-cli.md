@@ -1,10 +1,10 @@
 ---
-title: "Claw Code: 由 AI Agent 维护的 Rust CLI Harness（真实评测与局限）"
+title: "Claw Code：一个由 AI 打理门面的 Rust CLI Harness"
 date: "2026-04-30T20:00:00+08:00"
 slug: "claw-code-rust-ai-agent-cli"
-github_repo: "code-yeongyu/lazycodex"
-source_key: "gh:code-yeongyu/lazycodex"
-description: "Claw Code 是 ultraworkers 团队开源的 Rust 实现的 CLI agent harness，但项目明确自述为「博物馆展品」而非生产级工具。本文解析其架构、能力边界、与 Claude Code 的区别，以及自主维护模式带来的局限。"
+github_repo: "ultraworkers/claw-code"
+source_key: "gh:ultraworkers/claw-code"
+description: "Claw Code（ultraworkers/claw-code）是 claw CLI agent harness 的公开 Rust 实现。项目自述是「博物馆展品」：代码由 AI Agent 打理，定位偏研究而非日常工具。本文讲清它的真实架构、能跑的 CLI、多模型接入方式，以及为什么生产环境应转向 LazyCodex 或 Gajae-Code。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Rust", "CLI工具"]
@@ -14,481 +14,281 @@ tags: ["AI Agent", "Rust", "CLI工具"]
 
 | 属性 | 值 |
 |------|-----|
-| **GitHub Stars** | 194,265+ |
-| **GitHub Forks** | 109,894+ |
-| **主要语言** | Rust |
-| **开源协议** | MIT |
-| **维护方式** | 完全由 AI Agent 自主维护 |
-| **项目定位** | 研究性 artifacts / 博物馆展品 |
+| GitHub Stars | 约 19 万（持续变化） |
+| 主要语言 | Rust（`rust/` 规范工作区，约 2 万行，9 个 crate） |
+| 开源协议 | MIT |
+| 维护方式 | 由 AI Agent 自动打理（agent-managed） |
+| 项目定位 | 博物馆展品 / 研究性 artifacts |
+| 默认模型 | `claude-opus-4-7` |
+| 默认权限 | `workspace-write` |
 
-> ⚠️ **重要提示**：本项目明确自述为"博物馆展品"，代码完全由 AI Agent 生成维护，无人工校验。不建议作为生产工具使用。
-
----
-
-## 学习目标
-
-读完本文后，你应该能够：
-
-- 理解 Claw Code 的真实定位：它是研究性 artifacts，不是生产级 CLI
-- 成功从源码构建 `claw` CLI，并理解为什么 `cargo install claw-code` 会失败
-- 区分 Claw Code 与 Anthropic Claude Code（两者无关联）
-- 针对你的场景判断 Claw Code 是否合适，或应该转向 LazyCodex / Gajae-Code
-- 理解"完全由 Agent 维护"意味着什么（文档漂移、功能不稳定、无人工校验）
-
----
-
-## 先说结论
-
-Claw Code 是一个**真实但非生产级**的开源项目。核心事实：
-
-1. **它是 Rust 实现的 `claw` CLI agent harness 的公开版本**，规范实现在 `rust/` 目录。
-2. **项目自述是"博物馆展品"**：代码完全由 AI Agent 自主开发维护，无人工干预。这意味着文档可能过时、功能可能不稳定。
-3. **不是 Anthropic Claude Code**：项目明确声明不主张对 Claude Code 源码的任何所有权，两者是独立项目。
-4. **如果你想要生产级工具**：作者建议优先选 [LazyCodex](https://github.com/code-yeongyu/lazycodex) 或 [Gajae-Code](https://github.com/Yeachan-Heo/gajae-code)。
-5. **支持多模型**：Anthropic API、OpenAI 兼容接口、本地 Ollama（2026-06 新增原生支持）。
+> ⚠️ **先说清楚**：这不是拿来当日常开发工具的项目。README 第一屏就写着「museum exhibit / 博物馆展品」，并明确建议要干活就去找 LazyCodex 或 Gajae-Code。想用稳定的 AI 编码 CLI，请从那两个仓库开始。
 
 ---
 
 ## 目录
 
-- [学习目标](#学习目标)
-- [先说结论](#先说结论)
-- [项目背景：为什么叫"博物馆展品"](#项目背景为什么叫博物馆展品)
-- [为什么会有这个项目](#为什么会有这个项目)
+- [它到底是什么](#它到底是什么)
+- [为什么不建议当生产工具](#为什么不建议当生产工具)
 - [快速开始：从源码构建](#快速开始从源码构建)
-- [核心架构](#核心架构)
+- [真实架构：9 个 crate 的 Rust 工作区](#真实架构9-个-crate-的-rust-工作区)
+- [模型接入：不止 Claude](#模型接入不止-claude)
+- [CLI 与交互层](#cli-与交互层)
+- [权限系统](#权限系统)
 - [与 Anthropic Claude Code 的区别](#与-anthropic-claude-code-的区别)
-- [能力边界：什么能做，什么不能](#能力边界什么能做什么不能)
+- [能力边界](#能力边界)
 - [常见问题](#常见问题)
 - [自测题](#自测题)
-- [练习](#练习)
-- [进阶阅读路径](#进阶阅读路径)
 
 ---
 
-## 项目背景：为什么叫"博物馆展品"
+## 它到底是什么
 
-Claw Code 的 GitHub README 描述这个项目的方式跟常见的开源项目不太一样：
+Claw Code 是 **`claw` 这个 CLI agent harness 的公开 Rust 实现**，规范代码在仓库的 `rust/` 目录，仓库本身（`ultraworkers/claw-code`）是当前的事实标准源。
 
-> 本仓库展示的是一个由智能体管理的博物馆展品。无人工干预，完全由智能体自主开发、维护。
+它做的事和 Claude Code 一样：你在终端里给它指令，它自己读写文件、跑命令、调 LLM，把多轮工具调用串起来完成一个任务。区别在于——
 
-这句话直接说明了几件事：
+- **它不是 Anthropic 的东西**。仓库明确声明不主张对原始 Claude Code 源码的所有权，也与 Anthropic 无任何关联。
+- **它是「干净室重写」的产物**。社区报道的背景是：2026 年初 Claude Code 的 TypeScript 源码被意外公开，引发了大量基于公开文档和行为独立重写的开源项目，Claw Code 是其中 Star 增长最快的一个（一度被称"史上最快破十万 Star"）。
 
-- **代码是 Agent 写的**：功能、文档、测试都可能由 AI 生成，不是人类手写之后交出去的。
-- **没有人工校验**：你看到的文档可能跟实际代码对不上。
-- **定位是研究性 artifacts**：它展示的是"claw CLI agent harness"的 Rust 实现，不是一个稳定的开发者工具。
-
-如果你想要一个能日常用的 AI Agent CLI，这个项目可能不满足你的预期。作者自己在 README 里列了替代方案。
+对多数人来说，只要记住一点就够：**这个仓库是被人当"展品"打理的研究项目，不是给你日常搬砖用的工具。**
 
 ---
 
-## 为什么会有这个项目
+## 为什么不建议当生产工具
 
-Claw Code 解决的是一个具体问题：怎么用 Rust 写一个 CLI harness，让 LLM 能调用工具、维持多轮会话、接入不同的模型 API。
+README 的原话大致是：这个仓库离产品更像一件展品，代码由 agent 自动清扫、贴标签、归档，背后有一批 gajae（桃树下的螃蟹）在维持运作。
 
-一个能用的 AI Agent CLI 至少要处理这些事：
+翻译成风险清单：
 
-1. **多轮会话管理**：上下文怎么维护，历史存在哪、怎么恢复
-2. **工具调用编排**：`ls`、`grep`、编译器输出怎么接进 LLM 的 function calling
-3. **跨模型适配**：Anthropic / OpenAI / 本地 Ollama 的 API 差异怎么抹平
-4. **部署形态**：纯 CLI、带 Daemon、还是容器化
+1. **没有人工兜底**。功能、文档、测试都可能是 AI 生成的，出问题不及时修。
+2. **文档会漂移**。你可能看到文档写的和实际行为对不上，遇到矛盾以代码和 `--help` 输出为准。
+3. **界面在快速变动**。CLI 命令和 slash 命令一直在加，教程跟不上也正常。
 
-Claw Code 的做法是：**Rust 写 CLI harness，`#[tool]` 宏注册工具，SQLite 持久化会话，多 Provider trait 抹平后端差异**。
+作者本人的态度很直接：要真跑活，去 [LazyCodex](https://github.com/code-yeongyu/lazycodex) 或 [Gajae-Code](https://github.com/Yeachan-Heo/gajae-code)。想观察 Claw Code 这个"历史瞬间"，可以继续往下读。
 
-设计本身没问题，但维护方式有问题：代码完全由 Agent 生成，没有人工校验，文档和代码可能不一致。
+---
 
-## 快速开始：从源码构建（弃用 `cargo install claw-code`）
+## 快速开始：从源码构建
 
-> ⚠️ **不要执行 `cargo install claw-code`！** crates.io 上的 `claw-code` 是一个早已废弃的空壳包，只会打印 `"claw-code has been renamed to agent-code"`，不会安装真正的 claw 工具。
+> ⚠️ **不要 `cargo install claw-code`**。crates.io 上的 `claw-code` 是个废弃的占位包，装出来是 `claw-code-deprecated.exe`，运行只打印一句 `"claw-code has been renamed to agent-code"`，根本不是 `claw`。要么从源码构建，要么 `cargo install agent-code`（注意：装出来的是 `agent` / `agent.exe`，不是 `agent-code`）。
 
-正确做法是从源码构建：
-
-### 环境要求
-
-- **Rust**（建议通过 [rustup.rs](https://rustup.rs/) 安装，需要 1.75+）
-- **API Key**：支持 `ANTHROPIC_API_KEY`、`OPENAI_API_KEY`，或本地 Ollama（设置 `OLLAMA_HOST` 即可，无需 API Key）
-
-### 构建步骤
+Claw Code 只支持从源码构建：
 
 ```bash
-# 1. 克隆仓库
+# 1. 克隆并构建（debug 模式即可）
 git clone https://github.com/ultraworkers/claw-code
 cd claw-code/rust
-
-# 2. 构建整个 Rust workspace（Debug 模式，首次约 3-5 分钟）
 cargo build --workspace
 
-# 3. 设置 API Key（以 Anthropic 为例）
+# 2. 设置 API Key（用 Anthropic API Key，不是 Claude 网页版登录）
 export ANTHROPIC_API_KEY="sk-ant-..."
 
-# 4. 运行健康检查（首次使用必做，检查 API Key 和依赖）
-../target/debug/claw doctor
+# 3. 先做健康检查：校验 API Key、模型权限和工具配置
+./target/debug/claw doctor
 
-# 5. 运行第一个 Prompt
-../target/debug/claw prompt "say hello"
+# 4. 跑一次 prompt
+./target/debug/claw prompt "say hello"
+
+# 5. 或进入交互式 REPL
+./target/debug/claw
 ```
 
-### Windows（PowerShell）注意事项
+二进制位置：
+
+- **Debug（默认）**：`rust/target/debug/claw`（Windows 是 `rust\target\debug\claw.exe`）
+- **Release**：`cargo build --workspace --release` 后是 `rust/target/release/claw`；编译会慢不少（5–10 分钟）
+
+Windows（PowerShell）里命令名是 `claw.exe`，路径分隔符是 `\`：
 
 ```powershell
-# 设置 API Key
 $env:ANTHROPIC_API_KEY = "sk-ant-..."
-
-# 构建
-cargo build --workspace
-
-# 运行
-..\target\debug\claw.exe doctor
-..\target\debug\claw.exe prompt "say hello"
+.\target\debug\claw.exe prompt "say hello"
 ```
 
-Windows 下如果报"不是内部或外部命令"，先确认 Rust 已正确安装：
-
-```powershell
-cargo --version
-```
-
-如果报错，需要安装 [Rust](https://rustup.rs/) 并重启 PowerShell。
+`claw doctor` 是安装后的第一道检查：它会验证 API Key、模型可访问性和工具配置，比起自己慢慢试错省事得多。
 
 ---
 
-## 核心架构
+## 真实架构：9 个 crate 的 Rust 工作区
 
-Claw Code 的代码组织如下（以 `rust/` 目录为规范实现）：
-
-```
-claw-code/
-├── rust/                          # 规范 Rust workspace
-│   ├── Cargo.toml                 # workspace 根
-│   ├── claw/                      # 主二进制：`claw` CLI
-│   ├── claw-core/                 # 核心库：会话、工具注册、LLM 调用
-│   ├── claw-mcp/                  # MCP 协议支持（部分实现）
-│   └── ...
-├── src/ + tests/                  # 配套 Python 参考工作区（非主运行时）
-├── USAGE.md                       # 任务导向的使用指南（推荐优先阅读）
-├── PARITY.md                      # Rust 移植进度与迁移说明
-├── ROADMAP.md                     # 路线图与待办事项
-└── docs/container.md              # 容器优先工作流文档
-```
-
-**请求流转路径**（理解这个对读源码很重要）：
+`rust/` 是一个约 2 万行、9 个 crate 的 Cargo 工作区。核心分工如下：
 
 ```
-用户输入 Prompt
-    ↓
-CLI 入口 (claw/src/main.rs)
-    ↓
-会话管理 (claw-core/src/session.rs) → SQLite 持久化
-    ↓
-工具注册表 (claw-core/src/tools.rs) → #[tool] 宏生成 JSON Schema
-    ↓
-Provider trait (claw-core/src/provider.rs) → 统一 Anthropic/OpenAI/Ollama API
-    ↓
-LLM API → 流式响应 (SSE) → 返回给用户
+rust/
+├── Cargo.toml
+└── crates/
+    ├── api/               # Provider 客户端、SSE 流式、认证、请求预检
+    ├── commands/          # slash 命令注册表 + help 渲染
+    ├── compat-harness/    # 与上游对照的兼容性/一致性工具
+    ├── mock-anthropic-service/ # 本地确定性的 /v1/messages 假服务（测试用）
+    ├── plugins/           # 插件元数据、安装/启用/禁用
+    ├── runtime/           # 会话、配置、权限、MCP、系统提示词、运行循环
+    ├── rusty-claude-cli/  # 主二进制 `claw`
+    ├── telemetry/         # 会话追踪与用量统计
+    └── tools/             # 内置工具：Bash/Read/Write/Edit/Grep/Glob/WebSearch 等
 ```
 
-### 关键设计
+理解它并不需要逐 crate 读。一条主路径：`rusty-claude-cli` 收命令 → `runtime` 管会话与权限 → `api` 调模型（SSE 流式返回 token）→ `tools` 执行工具调用并回填到对话。
 
-| 设计点 | 实现方式 | 说明 |
-|--------|----------|------|
-| 会话持久化 | SQLite | 对话历史存 `~/.config/claw/sessions/`，随时恢复 |
-| 工具注册 | `#[tool]` 宏 | 自动生成 JSON Schema，注册到 LLM |
-| 多模型适配 | 统一 Provider trait | Anthropic / OpenAI / Ollama 统一接口 |
-| 流式响应 | SSE（Server-Sent Events） | token 逐字返回，支持中断 |
-| MCP 支持 | 部分实现 | 完整 MCP 支持在路线图中，当前版本可能不稳定 |
+一个很实用的设计是 **mock-anthropic-service**：一个本地假接口，不联网也能跑一遍端到端 parity 测试，用来验证"给模型的请求长什么样、工具回包怎么拼"。想自己搭本地 harness 的人可以直接抄这套。
+
+仓库根目录另外有配套的 Python `src/` + `tests/` 参考工作区，但那是辅助审计用的，**主运行时在 Rust 这一侧**。
 
 ---
 
-## 与 Anthropic Claude Code 的区别（重要）
+## 模型接入：不止 Claude
 
-**Claw Code ≠ Anthropic Claude Code**。两者完全独立：
+仓库里有一句常被人漏掉的话：**Claw 不是一个 Claude 专属产品**。它原生支持 Anthropic，也可以通过 OpenAI 兼容协议接不少模型。
+
+认证方式有几种：
+
+- `ANTHROPIC_API_KEY`——Anthropic API Key
+- `ANTHROPIC_AUTH_TOKEN`——OAuth / 代理的 bearer token
+- `ANTHROPIC_BASE_URL`——指向代理或本地服务
+- `OPENAI_API_KEY` / `OPENAI_BASE_URL`——OpenAI 兼容端点
+
+想接本地 OpenAI 兼容服务（Ollama、llama.cpp、vLLM、Apple Silicon 上的 mlx-lm），最省事的做法是设置 `OLLAMA_HOST`，Claw 会自动把所有请求路由到本地端点，且不需要 API Key：
+
+```bash
+ollama pull qwen3:latest
+ollama serve
+
+# 另开一个终端
+export OLLAMA_HOST="http://127.0.0.1:11434"
+./target/debug/claw --model "qwen3:latest" prompt "Reply exactly HELLO_WORLD_123"
+```
+
+通用做法是显式指定 `OPENAI_BASE_URL` 指向某个 `/v1` 端点：
+
+```bash
+export OPENAI_BASE_URL="http://127.0.0.1:8080/v1"
+export OPENAI_API_KEY="local-dev-token"
+./target/debug/claw --model "qwen2.5-coder" prompt "解释一下这个函数"
+```
+
+几点要注意：
+
+- `--model` 必须填服务端实际暴露的模型名（比如 `qwen3:latest`），填错会先报 `model not found`。
+- 含斜杠的模型 ID 建议加 `local/` 前缀路由，例如 `--model "local/Qwen/Qwen2.5-Coder-7B-Instruct"`。
+- 走 OpenAI 兼容网关时可用 `openai/` 前缀，如 `--model "openai/gpt-4.1-mini"`。
+- 工具调用比纯对话更容易触发兼容性问题。一句 prompt 能通不代表 slash / 工具流程能通——得看服务端是否支持 OpenAI 兼容的 tool-call 格式。
+
+一句话：**它不是"多 Provider trait 统一抹平"，而是靠环境变量做路由**，官方把 OpenAI 兼容这条路明确当作可扩展的接入方式。
+
+---
+
+## CLI 与交互层
+
+`claw` 提供一次性 prompt、交互式 REPL（基于 rustyline）、以及一批直接可用的子命令。
+
+常用命令：
+
+```bash
+./target/debug/claw prompt "总结这个仓库"          # 一次性 prompt
+./target/debug/claw --model sonnet prompt "..."   # 指定模型
+./target/debug/claw --output-format json status   # 机器可读输出
+./target/debug/claw doctor                        # 健康检查
+./target/debug/claw init                          # 初始化 .claw/ 配置 + CLAUDE.md
+```
+
+模型别名：
+
+| 别名 | 解析到 |
+|------|--------|
+| `opus` | `claude-opus-4-7` |
+| `sonnet` | `claude-sonnet-4-6` |
+| `haiku` | `claude-haiku-4-5-20251213` |
+
+交互式 REPL 里则是一堆 slash 命令：`/status`、`/cost`、`/compact`（压缩历史）、`/resume`、`/memory`、`/diff`、`/mcp`、`/agents`、`/skills`、`/doctor`、`/plugin`、`/subagent` 等等，tab 可以补全命令、模型别名、权限模式和最近的 session ID。
+
+---
+
+## 权限系统
+
+权限是 `--permission-mode` 一把控制的，运行工具前会拦截为你批准：
+
+- **read-only**：只读，适合审查
+- **workspace-write**（默认）：允许改工作区文件
+- **danger-full-access**：完全放行，适合受信任的自动化流程
+
+你可以用 `--allowedTools` 收紧允许的工具集（如 `read,glob`），或用 `--dangerously-skip-permissions` 跳过全部拦截（慎用）。看当前工作区的隔离快照，跑 `claw sandbox`。
+
+这套东西对一个"跑你的 shell"的工具是刚需——尤其你连的都是敏感数据时。
+
+---
+
+## 与 Anthropic Claude Code 的区别
+
+**Claw Code ≠ Anthropic Claude Code。** 两者完全独立：
 
 | 维度 | Claw Code | Anthropic Claude Code |
 |------|-----------|----------------------|
-| 开发者 | ultraworkers 团队 | Anthropic |
-| 语言 | Rust | 未知（Anthropic 官方闭源） |
-| 开源情况 | 开源（MIT） | 官方 CLI 工具（部分开源） |
-| 定位 | 研究性 artifacts / 博物馆展品 | 生产级 AI 编程助手 |
-| 维护方式 | 完全由 Agent 自主维护 | Anthropic 官方团队维护 |
-| 获取方式 | `git clone` + `cargo build` | `npm install -g @anthropic-ai/claude-code` |
+| 维护方 | UltraWorkers 社区，agent 自动打理 | Anthropic 官方团队 |
+| 主语言 | Rust | TypeScript（官方闭源） |
+| 开源 | MIT | 部分开源 |
+| 定位 | 博物馆展品 / 研究项目 | 生产级 AI 编码助手 |
+| 获取 | `git clone` + `cargo build` | `npm i -g @anthropic-ai/claude-code` |
 
-如果你想要的是 Anthropic 官方的 Claude Code，去 [Anthropic 官网](https://www.anthropic.com/) 或 [Claude Code 文档](https://docs.anthropic.com/en/docs/claude-code) 找，不是这个项目。
-
----
-
-## 能力边界：什么能做，什么不能
-
-### 能做
-
-- 作为 **AI Agent 原型开发的参考实现**：Rust 实现、会话管理、工具注册这些代码有参考价值
-- 作为 **CLI harness 的学习样本**：想了解怎么用 Rust 写一个 Agent CLI，可以读它的源码
-- 作为 **多模型适配的测试床**：支持 Anthropic / OpenAI / Ollama，可以测不同模型在同一个 harness 上的表现
-
-### 不能做（或不建议）
-
-- **作为日常开发工具**：项目自述是"博物馆展品"，文档可能过时，功能可能不稳定
-- **用于生产环境**：完全由 Agent 维护意味着没有人工负责，出问题没人修
-- **期望稳定的 MCP 支持**：MCP 支持在路线图中，当前版本可能不完整
+按仓库自己的口径，Claw Code 更像是给 Claude Code 这套交互范式做了一个公开的、可读源码的参考实现；要日常用，还是回到官方或 LazyCodex / Gajae-Code。
 
 ---
 
-## 实践案例
+## 能力边界
 
-### 案例1：用 Claw Code 对接 OpenAI 模型
+**值得学的部分**
 
-假设你已经有 OpenAI API Key，想用 Claw Code 作为 CLI harness：
+- Rust 写 CLI harness 的完整范式：`api` 做流式、`runtime` 做会话与权限、`tools` 做工具注册，层次干净，约 2 万行也容易读。
+- mock 服务做端到端测试的思路（`mock-anthropic-service`）。
+- 一套不绑定单模型的接入方式（Anthropic + OpenAI 兼容），适合当"搭你自己的 coding agent"的起点。
 
-```bash
-# 1. 设置 OpenAI API Key
-export OPENAI_API_KEY="sk-..."
+**不推荐的部分**
 
-# 2. 运行健康检查
-../target/debug/claw doctor
-
-# 3. 用 OpenAI 模型运行 Prompt
-../target/debug/claw prompt "用 Python 写一个快速排序" --provider openai --model gpt-4o
-
-# 4. 查看会话历史
-../target/debug/claw sessions list
-```
-
-**关键点**：Claw Code 的多 Provider trait 让你可以无缝切换 between Anthropic 和 OpenAI，不需要改代码。
-
-### 案例2：本地 Ollama 运行（无需 API Key）
-
-如果你想在离线环境使用：
-
-```bash
-# 1. 启动 Ollama（确保已安装 Ollama）
-ollama serve
-
-# 2. 在新终端中拉取模型
-ollama pull llama3
-
-# 3. 配置 Claw Code 使用 Ollama
-export OLLAMA_HOST="http://localhost:11434"
-
-# 4. 运行 Prompt
-../target/debug/claw prompt "解释 Rust 的所有权机制" --provider ollama --model llama3
-```
-
-**关键点**：Ollama 不需要 API Key，适合隐私敏感场景或离线开发。
-
-### 案例3：会话管理与恢复
-
-Claw Code 的 SQLite 持久化让你可以恢复之前的对话：
-
-```bash
-# 1. 创建一个带名称的会话
-../target/debug/claw prompt "帮我设计一个 Rust CLI 工具" --session-name "rust-cli-design"
-
-# 2. 查看所有会话
-../target/debug/claw sessions list
-
-# 3. 恢复会话，继续之前的对话
-../target/debug/claw prompt "继续刚才的设计，加上错误处理" --session-name "rust-cli-design"
-```
-
-**关键点**：会话持久化让你可以跨多次运行维护上下文，不需要把所有历史都放在一个 Prompt 里。
+- 当日常开发工具。文档会漂移，界面在变，没人负责。
+- 期望稳定的 MCP/ACP 支持。MCP 有生命周期与 `/mcp` 检查，但完整协议仍列在路线图里；ACP/Zed 目前只有一个 `claw acp` 探路命令，真协议支持还在路上。
+- 依赖某个"精确版本"的 CLI 行为。命令面变化很快，教程里的写法和实际 `--help` 可能不一致。
 
 ---
 
 ## 常见问题
 
-### Q: `claw doctor` 报告 API Key 无效怎么办？
+**Q: `claw doctor` 报 API Key 无效？**
 
-确认你用的是正确的 Key：
+检查三点：环境变量是否真的 export 了（`echo $ANTHROPIC_API_KEY`）；是不是把 Claude 网页版登录会话当成了 API Key；如果走代理，`ANTHROPIC_BASE_URL` 是否对。用手边可用的模型名做一次最小的 `claw doctor`，比拿 curl 手搓快。
 
-- **Anthropic API Key**（`ANTHROPIC_API_KEY`）：在 [Anthropic Console](https://console.anthropic.com/) 申请，不是 Claude 网页版的登录 Session
-- **OpenAI API Key**（`OPENAI_API_KEY`）：在 [OpenAI Platform](https://platform.openai.com/) 申请
-- **Ollama**（无需 Key）：设置 `OLLAMA_HOST=http://localhost:11434`，本地运行 Ollama 即可
+**Q: 想用本地模型，最省事怎么配？**
 
-调试步骤：
+装 Ollama，`export OLLAMA_HOST="http://127.0.0.1:11434"`，然后 `claw --model "<服务端暴露的名字>" prompt ...`。不需要 API Key。
 
-```bash
-# 1. 确认环境变量已设置
-echo $ANTHROPIC_API_KEY
+**Q: 会话存在哪？怎么恢复？**
 
-# 2. 测试 Anthropic API Key 是否有效
-curl https://api.anthropic.com/v1/messages \
-  -H "x-api-key: $ANTHROPIC_API_KEY" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "content-type: application/json" \
-  -d '{
-    "model": "claude-3-5-sonnet-20241022",
-    "max_tokens": 10,
-    "messages": [{"role": "user", "content": "Hello"}]
-  }'
-```
+会话默认写在项目内的 `.claw/sessions/`（用户级在 `~/.claw/` 相关目录）。用 `--resume` 或 REPL 里的 `/resume`、`/session` 恢复最近的对话。想在自动化里 readonly 看一眼状态，`claw status --output-format json`。
 
-如果返回 401 错误，说明 API Key 无效或已过期。
+**Q: Windows 上能不能跑？**
 
-### Q: 构建速度太慢怎么办？
-
-```bash
-# Release 模式（运行时性能更好，编译更慢）
-cargo build --workspace --release
-
-# 仅构建 claw 包
-cargo build -p claw --release
-
-# 使用 sccache 缓存编译产物
-cargo install sccache
-export RUSTC_WRAPPER=sccache
-cargo build --workspace
-```
-
-### Q: `claw` 命令找不到？
-
-二进制不在 PATH 中，需要手动配置：
-
-```bash
-# 方式1：软链接（Linux/macOS）
-sudo ln -s $(pwd)/rust/target/debug/claw /usr/local/bin/claw
-
-# 方式2：cargo install --path
-cd claw-code/rust
-cargo install --path . --force
-# 安装到 ~/.cargo/bin/，确保这个路径在 PATH 中
-
-# 方式3：添加到 shell 配置文件
-echo 'export PATH="$PATH:'$(pwd)'/rust/target/debug"' >> ~/.zshrc
-source ~/.zshrc
-```
-
-### Q: 支持 Windows 吗？
-
-支持，但需要注意：
-
-- 推荐使用 PowerShell，Git Bash 和 WSL 也可行
-- 路径分隔符是 `\`，二进制文件名是 `claw.exe`
-- Windows 有 260 字符路径限制，可以启用长路径支持（需要管理员权限）：
-
-```powershell
-Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1
-```
-
-### Q: 会话数据存储在哪？
-
-默认存储在 `~/.config/claw/sessions/` 目录下，每个会话一个 SQLite 文件。可以通过 `--session-path` 指定其他位置：
-
-```bash
-../target/debug/claw prompt "hello" --session-path /path/to/session.db
-```
+能。装好 Rust，用 PowerShell 构建，命令名是 `claw.exe`；Git Bash / WSL 走 bash 风格路径也可以。
 
 ---
 
 ## 自测题
 
-检验你对 Claw Code 的理解，回答下面 4 个问题：
-
-1. Claw Code 和 Anthropic Claude Code 的区别是什么？如果误装了 `cargo install claw-code`，会发生什么？
-2. 为什么项目自述是"博物馆展品"？这给使用者带来了什么风险？
-3. `claw doctor` 的作用是什么？如果报告 API Key 无效，你应该检查哪几个地方？
-4. 如果你想用 Claw Code 做日常开发工具，作者给出的建议是什么？有什么替代方案？
-
-3 题以上答不准的话，建议重看"项目背景"和"能力边界"两节。
-
-<details>
-<summary>参考答案</summary>
-
-**题 1**：Claw Code 是 ultraworkers 团队开源的 Rust CLI harness，Anthropic Claude Code 是 Anthropic 官方的 AI 编程助手，两者完全独立。`cargo install claw-code` 会安装一个早已废弃的空壳包，只会打印 `"claw-code has been renamed to agent-code"`，不会安装真正的 claw 工具。正确做法是从源码构建。
-
-**题 2**："博物馆展品"意味着代码完全由 AI Agent 自主开发维护，无人工干预。这带来的风险是：文档可能过时、功能可能不稳定、代码和文档可能不一致，而且没有人类负责维护。
-
-**题 3**：`claw doctor` 检查环境配置，包括 API Key 是否有效、依赖是否完整、工具是否能正常调用。如果报告 API Key 无效，应检查：(1) 环境变量是否设置正确（echo $ANTHROPIC_API_KEY）；(2) API Key 是否过期（用 curl 测试）；(3) 是否混淆了 Claude 网页版登录 Session 和 API Key。
-
-**题 4**：作者不建议把 Claw Code 作为日常开发工具，因为它是"博物馆展品"而非生产级工具。替代方案：优先选 [LazyCodex](https://github.com/code-yeongyu/lazycodex) 或 [Gajae-Code](https://github.com/Yeachan-Heo/gajae-code)。
-
-</details>
-
----
-
-## 练习
-
-### 练习一：从源码构建并运行第一个 Prompt
-
-**目标**：完成环境配置，成功运行 `claw doctor` 和 `claw prompt "say hello"`。
-
-**步骤**：
-
-1. 安装 Rust（如果还没有）：`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-2. 克隆仓库：`git clone https://github.com/ultraworkers/claw-code`
-3. 进入 Rust 目录：`cd claw-code/rust`
-4. 构建：`cargo build --workspace`（首次约 3-5 分钟）
-5. 设置 API Key：`export ANTHROPIC_API_KEY="sk-ant-..."`
-6. 运行健康检查：`../target/debug/claw doctor`
-7. 运行第一个 Prompt：`../target/debug/claw prompt "say hello"`
-
-**通过标准**：`claw doctor` 显示所有检查通过，`claw prompt "say hello"` 返回有效回复。
-
-### 练习二：阅读 `rust/README.md`，画出架构层次
-
-**目标**：理解 Claw Code 的代码组织，建立阅读源码的路线图。
-
-**步骤**：
-
-1. 打开 [rust/README.md](https://github.com/ultraworkers/claw-code/blob/main/rust/README.md)
-2. 识别 `claw`、`claw-core`、`claw-mcp` 三个 crate 的职责
-3. 画出一个简化的架构图：CLI 入口 → 核心库 → Provider → LLM API
-4. 对照 PARITY.md，找出 Rust 移植的已知差异
-
-**通过标准**：你的架构图能解释"用户输入 Prompt 后，请求如何流过系统并最终调用 LLM API"。
-
----
-
-## 进阶阅读路径
-
-下面给出阅读顺序与每篇为什么放在这个位置的理由：
-
-1. **[Claw Code GitHub 仓库](https://github.com/ultraworkers/claw-code)**（先读）。这是理解项目的起点，重点关注 README 中的"博物馆展品"自述、USAGE.md 和 ROADMAP.md。先读这个，建立对项目定位的完整认知，再决定是否深入。
-
-2. **[USAGE.md](https://github.com/ultraworkers/claw-code/blob/main/USAGE.md)**（第二读）。当你想知道"claw CLI 支持哪些命令"、"怎么配置会话"时，这个文档是最直接的参考。注意：因为项目由 Agent 维护，文档可能和代码有出入，遇到矛盾时以代码为准。
-
-3. **[LazyCodex](https://github.com/code-yeongyu/lazycodex) 或 [Gajae-Code](https://github.com/Yeachan-Heo/gajae-code)**（第三读，如果你想要生产级工具）。这是 Claw Code 作者推荐的替代方案，功能更完整、维护更稳定。对比两者的设计取舍，帮你判断哪个更适合你的场景。
-
-4. **[Anthropic Claude Code 文档](https://docs.anthropic.com/en/docs/claude-code)**（第四读，如果你混淆了这两个项目）。当你想了解"Anthropic 官方的 AI 编程助手是什么"时，读这个。注意：Claw Code ≠ Claude Code。
-
-5. **[PARITY.md](https://github.com/ultraworkers/claw-code/blob/main/PARITY.md)**（最后读，可选）。当你想深入 Rust 移植的进度和已知差异时读这个。如果你打算基于 Claw Code 做二次开发，这个文档能帮你避开已踩过的坑。
-
----
-
-## 总结
-
-Claw Code 是一个有意思的研究项目：它展示了用 Rust 写 AI Agent CLI 的一种实现方式，代码完全由 AI Agent 生成。这在技术上有参考价值，但作为日常工具，它的"博物馆展品"定位意味着文档可能过时、功能可能不稳定。
-
-如果你想要一个能日常用的 AI Agent CLI，作者的建议是选 LazyCodex 或 Gajae-Code。如果你是想学习 Rust CLI harness 的实现，或者需要多模型适配的测试床，Claw Code 的源码值得读。
-
-关键要点：
-
-1. 不要用 `cargo install claw-code`，从源码构建
-2. Claw Code ≠ Anthropic Claude Code，两者完全独立
-3. 文档可能和代码不一致，遇到矛盾时以代码为准
+1. `cargo install claw-code` 和从源码构建，有什么区别？
+2. "museum exhibit / 博物馆展品"这个自述，落到使用者身上意味着哪三类风险？
+3. Claw 支持接 Claude 以外模型吗？要接本地 Ollama，最少要设置哪个环境变量？
+4. 默认权限模式是什么？想临时只读、或完全放行，各用什么旗标？
+5. 你要一个能日常用的 AI 编码 CLI，作者推荐的替代品是哪两个？
 
 ---
 
 ## 参考链接
 
-- Claw Code GitHub：https://github.com/ultraworkers/claw-code
+- 仓库：https://github.com/ultraworkers/claw-code
 - USAGE.md：https://github.com/ultraworkers/claw-code/blob/main/USAGE.md
-- ROADMAP.md：https://github.com/ultraworkers/claw-code/blob/main/ROADMAP.md
-- PARITY.md：https://github.com/ultraworkers/claw-code/blob/main/PARITY.md
-- LazyCodex（推荐替代）：https://github.com/code-yeongyu/lazycodex
-- Gajae-Code（推荐替代）：https://github.com/Yeachan-Heo/gajae-code
+- rust/README.md（crate 地图与 CLI 面）：https://github.com/ultraworkers/claw-code/blob/main/rust/README.md
+- 本地 OpenAI 兼容模型设置：https://github.com/ultraworkers/claw-code/blob/main/docs/local-openai-compatible-providers.md
+- LazyCodex（推荐的日常工具）：https://github.com/code-yeongyu/lazycodex
+- Gajae-Code（推荐的日常工具）：https://github.com/Yeachan-Heo/gajae-code
 
 ---
 
-## 资料口径说明
-
-1. **本文基于 Claw Code 公开仓库信息**：项目地址为 https://github.com/ultraworkers/claw-code，请以官方最新文档为准。
-2. **项目定位特殊性**：本项目明确自述为"博物馆展品"，代码完全由 AI Agent 生成维护，无人工校验。本文的描述基于 2026-06-24 核实的仓库信息，文档可能过时或与代码不一致。
-3. **与 Anthropic Claude Code 的区分**：Claw Code 与 Anthropic 官方的 Claude Code 是完全独立的两个项目，本文已多次强调此区别，请读者注意区分。
-4. **构建方式**：`cargo install claw-code` 会安装废弃的空壳包，正确方式是从源码构建。本文的构建步骤基于 `rust/` 目录的规范实现。
-5. **多模型支持**：2026-06 新增原生 Ollama 支持，本文已包含本地运行示例。
-6. **许可证信息**：Claw Code 使用 MIT 许可证，但"博物馆展品"定位意味着无维护承诺。
-
----
-
----
-
-*本文基于 ultraworkers/claw-code 公开仓库信息撰写（2026-06-24 核实）。项目定位为研究性 artifacts，功能描述以源码为准，文档可能过时。*
+*本文依据 ultraworkers/claw-code 仓库的 README、USAGE 与 rust/README 实读整理（2026-09-15 核实）。命令面变动较快，实际操作以 `claw --help` 与仓库最新文档为准。*

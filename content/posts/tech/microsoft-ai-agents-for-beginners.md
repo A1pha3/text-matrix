@@ -85,7 +85,7 @@ ResponsesHostServer(graph).run(port=8088)
 
 跑起来后，Foundry 管 runtime、session、scaling、identity、protocol endpoints；你的 LangGraph 逻辑不动。这条线索告诉你：MAF 不是 Microsoft 的霸权，它给 LangChain 也开了门。这条缝很重要，因为它影响你的"该不该迁到 MAF"的判断。
 
-**这三件事合起来看，CHANGELOG 2026-07-14 不是一次常规升级，而是 Microsoft 把 Agent 工程栈从"半成品 demo"塑造成"工业产品"的关键节点。**
+三件事合起来看，2026-07-14 的 CHANGELOG 是一次把技术栈整体收口的版本：模型换代、依赖钉死、托管开放，课程随之从"能跑的 demo"变成"可以直接照做的工业样板"。
 
 ---
 
@@ -113,7 +113,7 @@ STUDY_GUIDE 的"Models and Providers"段说得更直接："GitHub Models is depr
 
 第四条最容易被产品经理抄走时丢掉。"make us better versions of ourselves"不是"make our life more efficient"，而是"让我们变成更好的人"。这不是文案口吻——第 9 课 [Metacognition](https://github.com/microsoft/ai-agents-for-beginners/blob/main/09-metacognition/README.md) 直接把"self-reflection / adaptability / error correction / resource management"当成 Agent 的元能力来教，理由是：Agent 帮我们"reading the room"。
 
-我读到这里感觉：**这是 Microsoft 给整个 Agent 工业写的一条软约束**——Agent 不是替代你写代码的人，而是让你变成更好的工程师；Agent 不是替你决策的人，而是让你变成更好的决策者。这条原则在 14 课、15 课、16 课反复出现：handoff 让人类保留最终决策、human-in-the-loop 让高风险动作必须人确认、evaluation gate 让 Agent 不能自己上线。
+这一条给整个 Agent 工业划了一道软约束，也是全课程反复出现的主线：handoff 让人类保留最终决策，human-in-the-loop 让高风险动作必须人确认，evaluation gate 让 Agent 不能自己上线。落到个人，就是"make us better versions of ourselves"的直译——Agent 让你变成更好的工程师、更好的决策者，而不是替你写代码、替你拍板。
 
 如果你正在设计的产品恰恰相反——"让 Agent 完全替代客服"、"让 Agent 自动执行金融交易无需人工"——那这份课程会通过它的"trustworthy / metacognition / human-loop"三章反向告诉你：这条路没经过 Microsoft 的工程验证。
 
@@ -176,7 +176,7 @@ MAF 把"多步执行 + 多代理 + 人类介入"抽象成 workflow graph：
 
 MAF 的设计哲学是把 Agent 当成"工作流里的一个节点"。这与 LangGraph 的"图就是程序"哲学一脉相承，但 MAF 把"hosting、observability、middleware、checkpointing"都包进了 SDK。
 
-**三个骨架组合起来，就是"MAF 能做什么"的最小答案**：handoff 解决"代理之间怎么协作"，human-loop 解决"人类怎么介入"，workflow graph 解决"复杂流程怎么编排"。这三件事加上 OpenTelemetry 接线和 middleware 钩子，构成了 MAF 与 LangChain / AutoGen 的差异化护城河。
+三个骨架合起来，就是 MAF 能做什么的最小答案：handoff 解决代理之间怎么协作，human-loop 解决人类怎么介入，workflow graph 解决复杂流程怎么编排。再加上 OpenTelemetry 接线和 middleware 钩子，这些就是 MAF 相对 LangChain / AutoGen 多出来的那部分。
 
 ---
 
@@ -190,7 +190,7 @@ MAF 的设计哲学是把 Agent 当成"工作流里的一个节点"。这与 Lan
 | **外部协同** | Knowledge（05）— RAG 把文档/数据接入 Agent 的回答 | Multi-Agent（08）— group chat / hand-off / collaborative filtering 三种模式 | Context Engineering（12）— write/select/compress/isolate 四种策略管理下一轮 LLM 输入 |
 | **元能力** | Planning（07）— 用 `pydantic.BaseModel` 定义 `TravelPlan` 让 LLM 吐结构化 JSON | Protocols（11）— MCP/A2A/NLWeb 三个标准协议解决代理-工具 / 代理-代理 / 代理-网页 | Trustworthy（06）— guardrails、oversight、safer behavior，6/10/16/18 课反复强调 |
 
-九宫格不是课程本身给的，是我读完之后倒推出来的。它的价值在于：你能用这九个格子去定位任何一个 Agent 框架——它覆盖了哪些、避开了哪些、强项弱项在哪里。
+这张矩阵是课程本身没有的，我读完全部 18 课后倒推了一张。用来定位任何一个 Agent 框架都够用：覆盖了哪些格子、避开了哪些、强项弱项在哪，一对照就清楚。
 
 ---
 
@@ -246,7 +246,7 @@ Planner 把任务分发给对应代理。这里用的是"centralized 调度 + �
 - 本地化：Lesson 17 的 `17-local-agent-foundry-local.ipynb` 演示 Foundry Local + Qwen 全离线——本地工具、本地 RAG（Chroma）、本地 MCP。
 - 端到端 smoke test：仓库的 `tests/lesson-XX-smoke-tests.json` 是 Lesson 01/04/05/16 四个 hosted agent 的"冒烟测试集"，通过 [AI Smoke Test](https://github.com/marketplace/actions/ai-smoke-test) GitHub Action 跑——这是 GitHub Marketplace 上一个轻量级 post-deploy gate。
 
-十步走完，整个课程的核心机制都穿了一遍。
+十步走完，课程里工具、记忆、规划、多代理、协议、可信、部署这几条主线，都在同一个任务里过了一遍。
 
 ---
 
@@ -296,11 +296,11 @@ Planner 把任务分发给对应代理。这里用的是"centralized 调度 + �
 
 ## 十、给读者的三句话
 
-第一句：这份课程不是"Agent 教程"，是 Microsoft 给工业级 Agent 工程画的一张工程地图。它的价值不在教你怎么用某个框架，而在于让你看清 Microsoft 把 Agent 工业栈收口到 Foundry 生态的战略意图。
+这份课程不是"Agent 教程"，是 Microsoft 给工业级 Agent 工程画的一张工程地图。它的价值不在教你怎么用某个框架，而在于让你看清 Microsoft 把 Agent 工业栈收口到 Foundry 生态的战略意图。
 
-第二句：判断要不要读完全部 18 课，看你的工作是不是"开放性 + 多步 + 可进化"。如果是，按读者 A 或 B 的路径读；如果不是，先去看 LangChain / 直接写函数，Agent 是工具，不是负担。
+判断要不要读完全部 18 课，看你的工作是不是"开放性 + 多步 + 可进化"。如果是，按读者 A 或 B 的路径读；如果不是，先去看 LangChain / 直接写函数，Agent 是工具，不是负担。
 
-第三句：CHANGELOG 2026-07-14 的版本号（`agent-framework-core==1.10.0`、gpt-5-mini、Azure Responses API）不是巧合，而是 Microsoft 把 Agent 工业栈从 demo 变成 product 的里程碑。下次有人问你"Agent 框架哪家强"，你可以把这套版本号甩过去——它是一份关于"工业级 Agent 应该长什么样"的工程回答。
+CHANGELOG 2026-07-14 的版本号（`agent-framework-core==1.10.0`、gpt-5-mini、Azure Responses API）不是巧合，而是 Microsoft 把 Agent 工业栈从 demo 变成 product 的里程碑。下次有人问你"Agent 框架哪家强"，你可以把这套版本号甩过去——它是一份关于"工业级 Agent 应该长什么样"的工程回答。
 
 ---
 

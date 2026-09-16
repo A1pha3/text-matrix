@@ -12,9 +12,9 @@ tags: ["项目管理", "自托管", "看板", "开源", "Hono", "React", "MCP"]
 
 # Kaneo 拆解：功能做减法、接口做加法的自托管项目管理
 
-自托管项目管理工具长年困在两个极端：要么像 Plane、OpenProject 那样把功能做全，代价是多容器架构和可观的运维负担；要么像 Focalboard 那样轻巧，官方仓库如今却挂着"不再维护"的警告。`usekaneo/kaneo`（下称 Kaneo）走的是中间路线：功能只保留任务协作的最小集，交付形态压成单个 Docker 容器，然后把 MCP（Model Context Protocol，模型上下文协议）、webhook、OAuth/OIDC（OpenID Connect）这些对外接口做齐。
+自托管项目管理工具长年困在两个极端：要么像 Plane、OpenProject 那样把功能做全，代价是多容器架构和可观的运维负担；要么像 Focalboard 那样轻巧，官方仓库如今却挂着“不再维护”的警告。`usekaneo/kaneo`（下称 Kaneo）走的是中间路线：功能只保留任务协作的最小集，交付形态压成单个 Docker 容器，然后把 MCP（Model Context Protocol，模型上下文协议）、webhook、OAuth/OIDC（OpenID Connect）这些对外接口做齐。
 
-截至 2026 年 9 月 12 日（GitHub API），Kaneo 有 9,056 Stars、775 Forks，主语言 TypeScript，MIT 许可。仓库创建于 2024 年 12 月 31 日，数据基准日前一天仍有推送——不到两年积累近万 Star，迭代没有放缓的迹象。
+截至 2026 年 9 月 12 日（GitHub API），Kaneo 有 9,056 Stars、775 Forks，主语言 TypeScript，MIT 许可。仓库创建于 2024 年 12 月 31 日，数据基准日前一天仍有推送，不到两年积累近万 Star。
 
 ## 一、它赌的是什么
 
@@ -22,9 +22,9 @@ README 的自述开门见山：
 
 > The problem with most tools isn't that they lack features, it's that they have **too many**.
 
-转述过来：每一条多余的通知、按钮和工作流，都在把团队从"做产品"上拉开；最好的工具是隐形的。这个哲学落到工程上是两句话——功能层做减法，工作流、字段、通知都往回收；接口层做加法，MCP、出站 webhook、SSO、S3 附件一个不缺。这是 Kaneo 与"又一个 Trello 替代品"的分野。
+转述过来：每一条多余的通知、按钮和工作流，都在把团队从“做产品”上拉开；最好的工具是隐形的。这个哲学落到工程上是两句话——功能层做减法，工作流、字段、通知都往回收；接口层做加法，MCP、出站 webhook、SSO、S3 附件一个不缺。这是 Kaneo 与“又一个 Trello 替代品”的分野。
 
-先看系统全景，每一层的选择都能在前两节找到对应：
+系统全景如下，后面各节的展开都对应表里的某一层：
 
 | 层 | 选择 | 说明 |
 |------|------|------|
@@ -50,7 +50,7 @@ README 的自述开门见山：
 
 ## 三、一个任务穿过系统的完整路径
 
-以"把『修复登录超时』从进行中拖到待验收"为例：
+以“把『修复登录超时』从进行中拖到待验收”为例：
 
 1. 成员 A 在看板拖动卡片，dnd-kit 负责拖拽手势与位置计算，卡片随手势到位；
 2. 变更经 TanStack Query 的 mutation（变更提交）发往 API：Hono 用 Zod 校验请求体，Drizzle 写入 PostgreSQL，同时记一条 activity（活动记录）；
@@ -131,6 +131,8 @@ volumes:
 
 **托管平台**：Coolify 用仓库内置的 `compose.coolify.yml`，Railway 有官方模板，Kubernetes 走仓库内的 Helm chart（`charts/kaneo`）。
 
+升级与备份不需要专门工具。compose.yml 引的就是 `:latest` 标签，拉新镜像重启即完成升级，容器自带 `/api/health` 健康检查，`docker compose ps` 回到 healthy 就算切换完成；有状态数据全部落在 PostgreSQL，备份与迁移等价于数据库的 dump 与 restore。
+
 关于邮件还有一个行为要知道：配置了 SMTP 之后，登录默认走邮箱验证码；想改回邮箱加密码的登录方式，需要显式设置 `DISABLE_EMAIL_OTP_SIGN_IN=true`。
 
 ## 五、减法减掉了什么
@@ -153,7 +155,7 @@ volumes:
 - 权限模型到组织、团队、角色为止，没有字段级权限矩阵；
 - 没有原生移动端，Web 是唯一界面。
 
-咨询公司常要的"时间追踪加计费"，前一半 Kaneo 现在有（时间条目），后一半没有。
+咨询公司常要的“时间追踪加计费”，前一半 Kaneo 现在有（时间条目），后一半没有。
 
 ## 六、放在同类里看
 
@@ -164,7 +166,7 @@ volumes:
 | OpenProject | 企业级 PM：甘特图、成员与成本 | Ruby on Rails，社区版加商业版 | 老牌项目 |
 | Focalboard | 看板 | 桌面应用 / Mattermost 插件 | 官方仓库声明不再维护 |
 
-选型含义：要功能面，Plane 是自托管同类里最全的，代价是多容器运维；要企业流程，甘特图和成本核算本来就是 OpenProject 的主场；要一个"装完就忘、数据在自己服务器上"的任务看板，Kaneo 是当前最省心的形态之一；Focalboard 不该再进新的选型清单。
+选型含义：要功能面，Plane 是自托管同类里最全的，代价是多容器运维；要企业流程，甘特图和成本核算本来就是 OpenProject 的主场；要一个“装完就忘、数据在自己服务器上”的任务看板，Kaneo 是当前最省心的形态之一；Focalboard 不该再进新的选型清单。
 
 ## 七、采用建议
 
@@ -182,7 +184,7 @@ volumes:
 
 起步路径：个人或小团队从 drim 开始，几分钟出结果；对部署形态有要求的用 Compose 或 Helm 自己管；已有 PLANKA 的先跑 `@kaneo/planka-import`。
 
-结尾回到那个赌注：Kaneo 的价值不在"又一个开源 Trello"，而在它把自托管 PM 的门槛项——部署、认证、集成、AI 接口——全部做成了默认项，功能面则刻意停在任务协作的最小集。这个赌注能否兑现，要看团队涨到 30 人以上时，"够用的最小集"是否依然够用。就目前的迭代速度和接口完成度看，它至少是 2026 年自托管 PM 选型里绕不开的一项。
+回到开头的赌注：Kaneo 的价值不在“又一个开源 Trello”，而在把自托管 PM 的门槛项——部署、认证、集成、AI 接口——做成默认项，功能面则刻意停在任务协作的最小集。赌注能否兑现，要看团队涨到 30 人以上时，“够用的最小集”是否依然够用；就目前的迭代速度和接口完成度看，2026 年的自托管 PM 选型，值得先把它放进对比清单再下结论。
 
 ## 数据来源
 
