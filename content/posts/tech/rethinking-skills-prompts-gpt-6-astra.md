@@ -5,7 +5,6 @@ slug: "rethinking-skills-prompts-gpt-6-astra"
 categories: ["技术笔记"]
 tags: ["OpenAI", "GPT-6 Astra", "Coding Agent", "Skills", "AGENTS.md", "Prompt Engineering"]
 description: "OpenAI 官方《Rethinking skills and prompts for GPT-6 Astra》深度翻译与反写：当模型能力跃迁，旧 prompt 该留什么、扔什么、换什么。Astra 是对齐度最高的模型，旧 prompt 的强约束正在反过来伤害你的 agent。"
-github_repo: ""
 draft: false
 ---
 

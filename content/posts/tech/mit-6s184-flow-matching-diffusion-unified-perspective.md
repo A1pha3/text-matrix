@@ -33,7 +33,7 @@ tags: ["DiT"]
 ## 目录
 
 - [核心判断](#核心判断)
-- [系统地图:8 章结构的依赖关系](#系统地图-8-章结构的依赖关系)
+- [系统地图:课程结构与依赖](#系统地图-课程结构与依赖)
 - [三种生成模型的边界](#三种生成模型的边界)
 - [Flow Matching:把训练目标拆干净](#flow-matching把训练目标拆干净)
 - [Score Matching:flow matching 的对偶视角](#score-matchingflow-matching-的对偶视角)
@@ -52,11 +52,11 @@ tags: ["DiT"]
 
 ## 核心判断
 
-MIT 2026 年新开了一门 6.S184 课程,名字叫《Generative AI With Stochastic Differential Equations》,由 Peter Holderrieth 和 Ezra Erives 主讲。课程 84 页讲义的核心论点只有一句话:
+MIT 在 2026 年 1 月的独立活动期(IAP)开了一门 6.S184 短课,名字叫《Generative AI With Stochastic Differential Equations》,主讲人是 Peter Holderrieth,讲义由他与 Ezra Erives 合著。这份讲义的核心论点只有一句话:
 
 > **Flow matching 和 denoising diffusion 不是两种算法,而是同一个 ODE/SDE 家族的两种表达。**
 
-讲义在第 1 章就抛出了这个判断([PDF p.3][1]):
+讲义在模块一就抛出了这个判断([PDF p.3][1]):
 
 > "All of these generative models generate objects by iteratively converting noise into data. This evolution from noise to data is facilitated by the simulation of ordinary or stochastic differential equations (ODEs/SDEs). Flow matching and denoising diffusion models are a family of techniques that allow us to construct, train, and simulate, such ODEs/SDEs at large scale with deep neural networks."
 
@@ -70,19 +70,31 @@ MIT 这门课换了一种组织方式:先把 flow matching 和 score matching �
 
 ---
 
-## 系统地图:8 章结构的依赖关系
+## 系统地图:课程结构与依赖
 
-讲义分为 7 个主体章节 + 5 个附录。章节之间不是平行结构,而是层层依赖。下面这张图给出依赖关系,箭头表示"先读"指向"后读"。
+课程本身是 5 讲集中授课(附 3 个动手实验),讲义沿讲课顺序连续推进,并没有切成硬性的"独立章节"。为了讲清依赖关系,这篇精读把内容按 7 个概念模块组织。下面先给一张"模块 ↔ 课程讲次"的对应表,读的时候有它在手,就不会被"第几讲"绕晕:
+
+| 精读模块 | 对应课程 | 覆盖内容 |
+|---------|---------|---------|
+| 模块一 | Lecture 1 | 生成建模即采样;ODE/SDE 基础 |
+| 模块二 | Lecture 1–2 | flow/diffusion 的 ODE/SDE 数学 |
+| 模块三 | Lecture 2 | flow matching:条件 / 边际向量场与训练目标 |
+| 模块四 | Lecture 3-A | score function 与 score matching |
+| 模块五 | Lecture 3-B | guidance:classifier 与 classifier-free |
+| 模块六 | Lecture 4 | 潜空间 + DiT/U-Net + VAE;SD3 / Movie Gen 案例 |
+| 模块七 | Lecture 5 | 离散扩散:CTMC 与语言模型 |
+
+模块之间不是平行结构,而是层层依赖。下面这张图给出依赖关系,箭头表示"先读"指向"后读"。
 
 ```mermaid
 graph TD
-  A["第 1 章<br/>生成建模即采样<br/>Objects as Vectors"]
-  B["第 2 章<br/>Flow + Diffusion Models<br/>ODE/SDE 数学"]
-  C["第 3 章<br/>Flow Matching<br/>条件 / 边际向量场"]
-  D["第 4 章<br/>Score Functions<br/>Score Matching"]
-  E["第 5 章<br/>Guidance<br/>Vanilla + Classifier-Free"]
-  F["第 6 章<br/>工业实现<br/>DiT + U-Net + VAE<br/>SD3 + Movie Gen"]
-  G["第 7 章<br/>Discrete Diffusion<br/>CTMC + 语言模型"]
+  A["模块一<br/>生成建模即采样<br/>Objects as Vectors"]
+  B["模块二<br/>Flow + Diffusion Models<br/>ODE/SDE 数学"]
+  C["模块三<br/>Flow Matching<br/>条件 / 边际向量场"]
+  D["模块四<br/>Score Functions<br/>Score Matching"]
+  E["模块五<br/>Guidance<br/>Vanilla + Classifier-Free"]
+  F["模块六<br/>工业实现<br/>DiT + U-Net + VAE<br/>SD3 + Movie Gen"]
+  G["模块七<br/>Discrete Diffusion<br/>CTMC + 语言模型"]
   A --> B
   B --> C
   B --> D
@@ -96,21 +108,21 @@ graph TD
 
 这张图里有三条主线,初读者最容易把它们混成一条故事线:
 
-| 主线 | 解决什么问题 | 关键章节 |
+| 主线 | 解决什么问题 | 关键模块 |
 |------|-------------|---------|
-| **采样数学** | 如何把噪声变成数据(ODE/SDE 演化) | 2 → 3 → 4 |
-| **学习目标** | 如何训练神经网络预测"下一步往哪走" | 3(向量场)+ 4(得分) |
-| **条件控制** | 如何让生成结果符合 prompt | 5(guidance) |
+| **采样数学** | 如何把噪声变成数据(ODE/SDE 演化) | 模块二 → 三 → 四 |
+| **学习目标** | 如何训练神经网络预测"下一步往哪走" | 模块三(向量场)+ 四(得分) |
+| **条件控制** | 如何让生成结果符合 prompt | 模块五(guidance) |
 
-主线 1 和主线 2 在第 2 章会合流,第 3、4 章分别从不同角度切入会合点。这两条主线在数学上等价,只是参数化方式不同(一个用向量场 u,一个用得分 ∇log p)。第 5 章是工程问题--你不想随机采样,你想让结果符合 prompt。第 6 章把这三章内容包装成工业级模型。第 7 章是连续扩散在离散空间的扩展。
+主线 1 和主线 2 在模块二会合流,模块三、四分别从不同角度切入会合点。这两条主线在数学上等价,只是参数化方式不同(一个用向量场 u,一个用得分 ∇log p)。模块五是工程问题--你不想随机采样,你想让结果符合 prompt。模块六把前三者包装成工业级模型,模块七是连续扩散在离散空间的扩展。
 
-附录 A 是概率论速成,B-E 分别是 Fokker-Planck 证明、CTMC 存在唯一性、VAE 额外视角、文献指南。如果第 2 章的数学让你卡壳,先翻附录 A 而不是跳到第 3 章。
+讲义开头有一节概率论速成。如果模块二的数学让你卡壳,先回去补这一节,而不是硬啃公式。
 
 ---
 
 ## 三种生成模型的边界
 
-讲义第 1 章反复强调一个区分--很多文章把 flow model、diffusion model、score-based model 当成三类算法。这是错的。它们是同一类对象的三种参数化。
+讲义模块一反复强调一个区分--很多文章把 flow model、diffusion model、score-based model 当成三类算法。这是错的。它们是同一类对象的三种参数化。
 
 | 参数化方式 | 训练目标 | 采样方式 | 代表模型 |
 |-----------|---------|---------|---------|
@@ -120,7 +132,7 @@ graph TD
 
 这张表容易让人误以为 flow model 和 diffusion model 是"用同样的采样方式但不同训练目标"。事实是反过来的:**它们的训练目标数学等价,区别在于采样时的数值积分方式**。Flow model 在 ODE 上积分(确定性、可逆、易控制步长),diffusion model 在 SDE 上积分(随机性、收敛性更稳、但需要额外校正项)。
 
-讲义在第 4 章明确写了这两个视角的等价关系:
+讲义在模块四明确写了这两个视角的等价关系:
 
 > "There exists a fundamental equivalence between score-based models and flow models. The vector field of a flow model can be obtained from the score function and vice versa."
 
@@ -130,7 +142,7 @@ graph TD
 
 ## Flow Matching:把训练目标拆干净
 
-讲义第 3 章是 flow matching 的核心。它的训练目标可以写成一行:
+讲义模块三是 flow matching 的核心。它的训练目标可以写成一行:
 
 ```python
 loss = ||u_theta(x_t, t) - u_target(x_t, t)||^2
@@ -157,18 +169,24 @@ p_t(x | x_1) = N(x; alpha_t * x_1, sigma_t^2 * I)
 对应的条件向量场是:
 
 ```
-u_t(x | x_1) = d/dt alpha_t * x_1 - d/dt sigma_t / sigma_t * (x - alpha_t * x_1)
+u_t(x | x_1) = alpha'_t * x_1 + (sigma'_t / sigma_t) * (x - alpha_t * x_1)
 ```
 
-神经网络的训练目标就是拟合这个向量的期望。讲义把这个推导做了完整证明(包括第 2 章的 Fokker-Planck 方程和第 3 章的边际向量场等价性),但**核心思想其实就两行**:条件概率路径定义 → 条件向量场定义 → 取期望得到边际向量场 → 神经网络去拟合这个边际向量场。
+其中撇号表示对 t 求导。上式是 flow matching 的标准形式(Lipman et al. 2023),记号上务必注意:当 `sigma_t` 随时间减小,`sigma'_t` 为负,这也让式中第二项负责把噪声"收拢"回数据方向。代回 `alpha_t = t`、`sigma_t = 1 - t` 的特殊路径,可化简为
 
-这就是 flow matching 的全部数学。剩下的工程问题(如何选 alpha_t、如何加 classifier-free guidance、如何把 x 当成高维图像)都在第 5、6 章。
+```
+u_t(x | x_1) = (x_1 - x) / (1 - t)
+```
+
+也就是"从当前点直直指向数据点"的速度场--这正是 rectified flow / SD3、FLUX 所用的插值路径。神经网络的训练目标就是拟合这个向量的期望。讲义把这个推导做了完整证明(模块二的 Fokker-Planck 方程 + 模块三的边际向量场等价性),但**核心思想其实就两行**:条件概率路径定义 → 条件向量场定义 → 取期望得到边际向量场 → 神经网络去拟合这个边际向量场。
+
+这就是 flow matching 的全部数学。剩下的工程问题(如何选 alpha_t、如何加 classifier-free guidance、如何把 x 当成高维图像)都在模块五、六。
 
 ---
 
 ## Score Matching:flow matching 的对偶视角
 
-讲义第 4 章给了另一个视角--不学向量场,学得分函数 ∇_x log p_t(x)。直觉上:得分函数指向密度增长最快的方向。如果你站在数据分布的山坡上,得分函数告诉你哪个方向更"像数据"。
+讲义模块四给了另一个视角--不学向量场,学得分函数 ∇_x log p_t(x)。直觉上:得分函数指向密度增长最快的方向。如果你站在数据分布的山坡上,得分函数告诉你哪个方向更"像数据"。
 
 score matching 的训练目标是 Fisher 散度:
 
@@ -202,7 +220,7 @@ u_theta(x, t) = f_t(x) - g_t^2 / 2 * s_theta(x, t)
 
 ## Guidance:让结果符合 prompt
 
-第 5 章是工程问题。你训好了一个无条件生成模型 p(x),但你想生成符合 prompt y 的样本 p(x|y)。
+模块五是工程问题。你训好了一个无条件生成模型 p(x),但你想生成符合 prompt y 的样本 p(x|y)。
 
 讲义给出了 classifier guidance 的标准公式:
 
@@ -231,7 +249,7 @@ predicted_score = (1 + w) * score(x|y) - w * score(x)
 
 ## 任务流案例:一次 text-to-image 完整路径
 
-用一次"输入 prompt 'a corgi wearing a beret',输出一张 1024×1024 图片"的任务,把第 1-6 章的所有机制串起来。
+用一次"输入 prompt 'a corgi wearing a beret',输出一张 1024×1024 图片"的任务,把模块一到模块六的所有机制串起来。
 
 **第 1 步:Prompt 嵌入**
 
@@ -259,7 +277,7 @@ output = (1 + w) * conditional_output - w * unconditional_output
 
 **为什么在潜空间做去噪,而不是直接在像素空间?**
 
-因为像素空间太贵。一张 1024×1024 RGB 图像是 3M 维向量,DiT 在这个维度上自注意力的复杂度是 O(N2) ≈ 1013,硬件跑不动。VAE 把图像压缩到 4×128×128 = 65K 维(压缩比 ~46×),DiT 的注意力成本降低 ~2000×。这就是 Stable Diffusion(注意不是 Stable Diffusion 1 之前的 DDPM)的核心工程贡献。
+因为像素空间太贵。一张 1024×1024 RGB 图像是约 3M 维向量,DiT 在这个维度上自注意力的复杂度是 O(N²) ≈ 10¹³,硬件跑不动。VAE 把图像压缩到 4×128×128 = 65K 维(压缩比 ~48×),DiT 的注意力成本对应降低约 2000×(² 量级)。这就是潜空间 diffusion 的核心工程贡献。
 
 **第 5 步:输出**
 
@@ -269,7 +287,7 @@ output = (1 + w) * conditional_output - w * unconditional_output
 
 ## 工业实现:DiT、U-Net、VAE 的选择
 
-第 6 章用三个子章节讲工业级架构。下面这张对照表是讲义没明确写、但隐含的:
+模块六用三个子章节讲工业级架构。下面这张对照表是讲义没明确写、但隐含的:
 
 | 架构 | 输入维度 | 注意力机制 | 代表模型 | 优势 | 劣势 |
 |------|---------|-----------|---------|------|------|
@@ -285,13 +303,13 @@ Stable Diffusion 3 同时使用了 DiT 和 VAE:DiT 在潜空间做去噪,VAE 负
 - **Movie Gen 选 3D DiT 而非 2D + 时间卷积**:因为 3D 注意力建模时空联合分布更稳定。
 - **两个都用 VAE**:因为潜空间是 SD 家族的核心设计哲学。
 
-如果你正在做工业级 diffusion 模型部署,第 6 章的 case study 比 SD3、Movie Gen 原始论文更值得读--讲义把每个架构选择的 tradeoff 都列了出来。
+如果你正在做工业级 diffusion 模型部署,模块六的 case study 比 SD3、Movie Gen 原始论文更值得读--讲义把每个架构选择的 tradeoff 都列了出来。
 
 ---
 
 ## 离散 Diffusion:CTMC 与语言模型
 
-第 7 章是讲义最有前瞻性的一章:连续 diffusion 用 ODE/SDE,离散 diffusion 用什么?
+模块七是讲义最有前瞻性的一章:连续 diffusion 用 ODE/SDE,离散 diffusion 用什么?
 
 答案是 **CTMC(Continuous-Time Markov Chain,连续时间马尔可夫链)**。
 
@@ -314,7 +332,7 @@ loss = E[Q_t(y|x) - Q_theta(y|x) | x, y]^2
 
 直觉上:神经网络的速率矩阵要尽量接近真实的速率矩阵。推理时,从随机 token 出发,按速率矩阵跳到下一个 token,直到收敛。
 
-这个方法在 2024-2025 年开始出现工业级突破--LLaDA、Diffusion Language Model、SEDD 等模型在语言建模任务上接近或超过同等规模的自回归 LLM。讲义把这条线放进第 7 章,说明 MIT 认为这是未来 5 年生成式 AI 的重要方向之一。
+这个方法在 2024-2025 年开始出现工业级突破--LLaDA、Diffusion Language Model、SEDD 等模型在语言建模任务上接近或超过同等规模的自回归 LLM。讲义把这条线放进模块七,说明 MIT 认为这是未来 5 年生成式 AI 的重要方向之一。
 
 把连续 diffusion 和离散 diffusion 并列看:它们不是两条独立的线,而是同一族数学对象在不同状态空间上的实例化。理解 flow matching 的边际向量场后,CTMC 的速率矩阵几乎可以"读懂"--它就是离散版的边际向量场。
 
@@ -322,7 +340,7 @@ loss = E[Q_t(y|x) - Q_theta(y|x) | x, y]^2
 
 ## Benchmark:MIT 新课隐含的对比基准
 
-讲义没有专门的 benchmark 章节,但第 6、7 章的 case study 隐含了一些对比。这里按 benchmark 解读的三问(测什么 / 反映什么 / 不能推出什么)拆开来谈。
+讲义没有专门的 benchmark 章节,但模块六、七的 case study 隐含了一些对比。这里按 benchmark 解读的三问(测什么 / 反映什么 / 不能推出什么)拆开来谈。
 
 **测的是什么**
 
@@ -342,7 +360,7 @@ loss = E[Q_t(y|x) - Q_theta(y|x) | x, y]^2
 - 视频模型的高 FVD 不能说明它能生成"长时一致"的视频--它可能只能生成几秒。
 - 离散 diffusion 在小 benchmark 上的胜利不能推出它能替代 GPT-4 级别的 LLM。
 
-讲义没有回避这些 caveat--它在第 6 章末提到 "the exact choice of model and architecture heavily depends on the data modality and the scale at which you operate"([PDF p.52][1])。
+讲义没有回避这些 caveat--它在模块六末提到 "the exact choice of model and architecture heavily depends on the data modality and the scale at which you operate"([PDF p.52][1])。
 
 ---
 
@@ -352,27 +370,27 @@ loss = E[Q_t(y|x) - Q_theta(y|x) | x, y]^2
 
 **第一类:你已经会 Stable Diffusion 的推理,想理解训练原理**
 
-按顺序读:第 1 章(基础)→ 第 3 章(flow matching)→ 第 4 章(score matching)→ 第 5 章(guidance)。跳过第 2 章的 ODE/SDE 数学,除非你想读原始论文。
+按顺序读:模块一(基础)→ 模块三(flow matching)→ 模块四(score matching)→ 模块五(guidance)。跳过模块二的 ODE/SDE 数学,除非你想读原始论文。
 
 **第二类:你正在训练 diffusion 模型,但 loss 曲线一直不收敛**
 
-重点读:第 3 章(条件/边际向量场的关系)→ 第 4 章(denoising score matching)→ 第 6 章(DiT 配置)。90% 的训练问题出在这三章。
+重点读:模块三(条件/边际向量场的关系)→ 模块四(denoising score matching)→ 模块六(DiT 配置)。90% 的训练问题出在这三章。
 
 **第三类:你想做视频/3D/蛋白质结构生成**
 
-按顺序读:第 1 章 → 第 6 章(架构)→ 第 6.3 节(SD3 + Movie Gen 案例)→ 第 7 章(如果你的数据是离散的)。
+按顺序读:模块一 → 模块六(架构,含 SD3 + Movie Gen 案例)→ 模块七(如果你的数据是离散的)。
 
 **第四类:你对离散 diffusion 作为 LLM 替代品感兴趣**
 
-按顺序读:第 1 章 → 第 2 章(SDE 数学)→ 第 4 章(score matching 思想)→ 第 7 章(CTMC)。
+按顺序读:模块一 → 模块二(SDE 数学)→ 模块四(score matching 思想)→ 模块七(CTMC)。
 
 **第五类:你只是好奇,不用真的学**
 
-只看第 1 章的"Generative Modeling as Sampling"和这个总结就行。MIT 把课程视频也放到 [diffusion.csail.mit.edu][2],可以先看视频再决定要不要读讲义。
+只看模块一的"Generative Modeling as Sampling"和这个总结就行。MIT 把课程视频也放到 [diffusion.csail.mit.edu][2],可以先看视频再决定要不要读讲义。
 
 [2]: https://diffusion.csail.mit.edu/
 
-**不要做的事**:不要从第 2 章开始读。讲义的数学密度从第 2 章开始陡升,如果你没有 ODE 基础(特别是对 Fokker-Planck 方程不熟),前 30 页就会劝退。先读第 1 章建立直觉,再用第 2 章补数学。
+**不要做的事**:不要从模块二开始读。讲义的数学密度从模块二开始陡升,如果你没有 ODE 基础(特别是对 Fokker-Planck 方程不熟),前 30 页就会劝退。先读模块一建立直觉,再用模块二补数学。
 
 ---
 
@@ -396,7 +414,7 @@ MIT 6.S184 这门课讲的是 state-of-the-art 工业路径，但“统一框架
 
 **1. 离散序列生成仍以自回归 LLM 为主**
 
-离散 diffusion（第 7 章的 CTMC）在 perplexity 上接近自回归 LLM，但在 few-shot 推理、长上下文、多轮对话上仍落后。原因不是数学上做不到，而是推理时的状态跳转路径难以优化。2026 年的 GPT/Claude 系列仍然使用自回归 + RLHF，离散 diffusion 目前主要用于非交互式生成。
+离散 diffusion（模块七的 CTMC）在 perplexity 上接近自回归 LLM，但在 few-shot 推理、长上下文、多轮对话上仍落后。原因不是数学上做不到，而是推理时的状态跳转路径难以优化。2026 年的 GPT/Claude 系列仍然使用自回归 + RLHF，离散 diffusion 目前主要用于非交互式生成。
 
 **2. 实时生成仍是难题**
 
@@ -408,7 +426,7 @@ classifier-free guidance 在全局语义上效果好（“猫”还是“狗”�
 
 **4. 训练数据质量要求极高**
 
-flow matching 的边际向量场期望是“数据集中所有样本”的期望——数据偏差会直接进入模型。SD3 使用 LAION 的 5B 图文对，Movie Gen 使用 100M+ 视频。在数据集小或偏的场景下（如医学影像），需要额外设计条件路径。
+flow matching 的边际向量场期望是“数据集中所有样本”的期望——数据偏差会直接进入模型。早期 Stable Diffusion（1/2 代）基于 LAION-5B 的过滤子集训练，SD3 的训练数据并未公开，而 Meta 官方披露 Movie Gen 使用了约 1 亿条视频。在数据集小或偏的场景下（如医学影像），需要额外设计条件路径。
 
 **5. 小模型 + 小数据集 = 不推荐**
 
@@ -432,7 +450,7 @@ flow matching 的边际向量场期望是“数据集中所有样本”的期望
 
 如果你读完想继续深入:
 
-- **数学层**:把第 2 章和附录 B 的 Fokker-Planck 证明手推一遍,配 [Lipman et al. 2023][3] 的 flow matching 原论文。
+- **数学层**:把模块二的 Fokker-Planck 证明手推一遍,配 [Lipman et al. 2023][3] 的 flow matching 原论文。
 - **工程层**:跟讲义配套的 [labs][2],从零实现一个 MNIST diffusion 模型,然后做 CIFAR-10、ImageNet。
 - **前沿层**:读 [LLaDA][4](离散 diffusion 语言模型)和 [AlphaFold 3][5] 论文,看统一框架在生物领域的实例化。
 - **替代课程**:Stanford CS236(生成模型,更理论)、UC Berkeley CS294(深度生成模型,更工程)。
@@ -457,7 +475,7 @@ flow matching 的边际向量场期望是“数据集中所有样本”的期望
 
 **Q: 我只有 PyTorch 基础,能读这门课吗?**
 
-可以。第 1 章不需要数学,第 3 章只需要懂高斯分布,第 6 章需要懂 Transformer。数学最重的第 2、4 章可以先跳过。
+可以。模块一不需要数学,模块三只需要懂高斯分布,模块六需要懂 Transformer。数学最重的模块二、四可以先跳过。
 
 **Q: flow matching 和 DDPM 哪个更好?**
 
@@ -469,7 +487,7 @@ flow matching 的边际向量场期望是“数据集中所有样本”的期望
 
 **Q: 我应该先看视频还是先读讲义?**
 
-如果你只有 2 小时:看视频。讲义的信息密度更高,但视频讲解能把数学直觉建立起来。如果你能投入 10+ 小时:先读讲义第 1 章建立框架,再看视频补充数学直觉。
+如果你只有 2 小时:看视频。讲义的信息密度更高,但视频讲解能把数学直觉建立起来。如果你能投入 10+ 小时:先读讲义模块一建立框架,再看视频补充数学直觉。
 
 ## 文档元信息
 

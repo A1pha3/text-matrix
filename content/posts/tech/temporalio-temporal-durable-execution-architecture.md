@@ -28,6 +28,16 @@ Temporal 在 GitHub 上一搜出来就是"durable execution platform"——能�
 4. **Speculative Workflow Task**——为什么 Update 拒绝时一行 history 都不能写
 5. **Outbound Queue + Circuit Breaker Pool**——为什么按 `(TaskGroup, NamespaceID, Destination)` 隔离故障域
 
+下表把这 5 个决策、它们各自要回答的问题、以及对应的架构文档先摆在一起，往下读时可直接对照：
+
+| 决策 | 要回答的问题 | 对应文档 |
+| --- | --- | --- |
+| Event Sourcing 双轨 | 服务端读路径为什么不能靠重放 | `history-service.md` |
+| History Shard 固定分片 | 为什么分片数一选定终身 | `history-service.md` |
+| CHASM 框架 | Workflow 太重时，其他业务实体怎么办 | `chasm.md` |
+| Speculative Workflow Task | 被拒绝的 Update 如何在 history 上不留痕 | `speculative-workflow-task.md`、`workflow-update.md` |
+| Outbound Queue 隔离 | 一个不健康的 destination 如何不拖垮全局 | `nexus.md`、`circuit-breaker.md` |
+
 下面逐个拆。
 
 ---
@@ -110,7 +120,7 @@ CHASM 不只是"Workflow 的简化版"。它的野心是把 Temporal 的核心�
 - [`nexusoperation`](https://github.com/temporalio/temporal/tree/main/chasm/lib/nexusoperation)——Nexus Operation 的生命周期管理
 - [`activity`](https://github.com/temporalio/temporal/tree/main/chasm/lib/activity)、[`callback`](https://github.com/temporalio/temporal/tree/main/chasm/lib/callback)——后加入的两个实体
 
-为什么这是关键决策？因为它意味着 Temporal 不再是"Workflow orchestration"——它变成一个**通用状态机平台**。新的业务实体不需要重新实现一套 sharding/timer 体系，直接在 CHASM 框架上注册一个新 ASM Library 就行。从三个 library 到五个，这个清单还在变长。
+这层变化的份量在于 Temporal 的定位从"Workflow orchestration"移到了**通用状态机平台**。新的业务实体不需要重新实现一套 sharding/timer 体系，直接在 CHASM 框架上注册一个新 ASM Library 就行。从三个 library 到五个，这个清单还在变长。
 
 这种架构变化的工程信号：[schedules.md](https://github.com/temporalio/temporal/blob/main/docs/architecture/schedules.md) 顶部就有：
 
@@ -177,6 +187,19 @@ breaker 的 trip 策略用 gobreaker 默认：连续失败超过 5 次就 trip�
 Multi-Cursor 是另一层隔离——一个 shard 上的 outbound queue 默认起 4 个 reader（各自有自己的 cursor，可用动态配置 `history.outboundQueueMaxReaderCount` 调整），slow destination 的 task 被移交给较慢的 reader 消费，让健康 destination 不被拖累。
 
 把这套 outbound queue 的设计和 Temporal 内部状态机的风格放在一起看很有意思：内部信任内存、信任 history，重放是合法操作；对外则把信任降到零——每个 outbound call 被多层 limit 包着，每个 destination 有自己的 breaker，每个 shard 有自己的 cursor。区别只有一个：外部世界不能被信任。
+
+---
+
+## 一个 outbound 调用怎么穿过这套系统
+
+把上面几张抽象叠成一次真实调用看：某个 workflow 要调另一个 namespace 的 Nexus service，而那个 destination 恰好开始 503。
+
+1. History Service 需要推进这次 outbound 调用，把任务写进当前 shard 的 Outbound Queue。
+2. Multi-Cursor 的 reader（默认 4 个，可调 `history.outboundQueueMaxReaderCount`）取出任务，按 `(TaskGroup, NamespaceID, Destination)` 分到对应分组。
+3. 任务在分组里依次过 `Buffer → Concurrency Limiter → Rate Limiter → Circuit Breaker`。destination 已经连续失败超过 5 次，breaker trip 进入 Open，任务在到达 Executor 之前就被挡下，不会真的发起一次注定超时的 HTTP 请求。
+4. Open 期间，后续发往这个 destination 的任务都会在 Executor 前被拦截；被拖慢的 reader 单独消费这批任务，健康 destination 的任务照常走其他组、其他 reader。
+
+直观的效果是：失败被挡在边界上，而不是滚进每个 retry 去重走"追加 event + 更新 mutable state"的完整路径。这就是决策五那份工程判断落到真实路径上的样子。
 
 ---
 

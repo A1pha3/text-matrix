@@ -1,10 +1,10 @@
 ---
-title: "public-apis: 免费API聚合器 —— 427K星背后的宝藏资源库"
+title: "public-apis: 免费 API 聚合器 —— 48 万星背后的开源资源清单"
 date: "2026-04-28T20:00:00+08:00"
 slug: "public-apis-free-api-aggregator"
 github_repo: "public-apis/public-apis"
 source_key: "gh:public-apis/public-apis"
-description: "public-apis 是一个聚合了超过1800+免费API的资源列表，涵盖动物、动漫、反恶意软件、艺术设计、区块链、货币兑换、机器学习、音乐、新闻、天气等数十个分类。本文深入解析其内容结构、使用方法及常见API推荐。"
+description: "public-apis 是一个聚合了 1800+ 条免费 API 的资源清单，涵盖动物、动漫、反恶意软件、艺术与设计、区块链、货币兑换、机器学习、音乐、新闻、天气等 50+ 个分类。本文解析其内容结构、使用方法及常见 API 推荐。"
 categories: ["技术笔记"]
 tags: ["API", "开发者资源", "开源"]
 author: "钳岳星君"
@@ -50,12 +50,12 @@ author: "钳岳星君"
 
 ## 项目概览
 
-**public-apis**（https://github.com/public-apis/public-apis）是GitHub上最受欢迎的免费API聚合仓库之一，**星标数超过42.7万**，Fork数达4.6万，被广泛应用于教学、原型开发、创新项目等场景。
+**public-apis**（https://github.com/public-apis/public-apis）是 GitHub 上最受欢迎的免费 API 聚合仓库之一，星标数超过 48 万、Fork 数超过 5.3 万（2026-09-19 数据），被广泛应用于教学、原型开发、创新项目等场景。
 
 | 项目信息 | |
 |----------|---|
-| **星标** | 427,495 ⭐ |
-| **Fork** | 46,707 |
+| **星标** | 481,405 ⭐ |
+| **Fork** | 53,153 |
 | **语言** | Python |
 | **创建时间** | 2016-03-20 |
 | **维护者** | public-apis 组织 + 社区贡献者 |
@@ -66,17 +66,17 @@ author: "钳岳星君"
 ## 核心特点
 
 ### 1. 分类齐全
-项目将 API 按功能分为**40+个分类**，覆盖：
+项目将 API 按功能分为**50+ 个分类**，覆盖：
 
 - **动物**（猫咪图片、狗狗 API、物种保护）
-- **动漫**（AnimeDB、Jikan、MyAnimeList）
+- **动漫**（Jikan、MyAnimeList、AniList）
 - **反恶意软件**（VirusTotal、AbuseIPDB、URLhaus）
-- **艺术与设计**（IconFinder、Dribbble、ColourLovers）
+- **艺术与设计**（Iconfinder、Dribbble、ColourLovers）
 - **区块链**（CoinGecko、Etherscan）
 - **货币兑换**（Fixer、Exchangerate Host）
-- **机器学习**（OpenAI、Hugging Face）
-- **音乐**（Spotify、Apple Music）
-- **新闻**（NewsAPI、Bing News）
+- **机器学习**（Google Gemini、Hugging Face）
+- **音乐**（Spotify、iTunes Search）
+- **新闻**（News、GNews）
 - **天气**（OpenWeatherMap、Weatherstack）
 - **更多**：日历、云存储、加密货币、环境、金融、食品、游戏、地理编码、政府、健康、职位、摄影、社交、体育、追踪、交通、视频...
 
@@ -101,13 +101,32 @@ author: "钳岳星君"
 
 ### 使用示例
 
-以获取随机猫咪图片为例：
+以获取随机猫咪图片为例，README 中的条目是这样一行：
 
 ```markdown
 | [Cats](https://docs.thecatapi.com/) | Pictures of cats from Tumblr | `apiKey` | Yes | No |
 ```
 
-访问 `https://docs.thecatapi.com/` 了解如何使用该 API。
+实际调用不需要带 Key，直接用 curl 请求即可：
+
+```bash
+curl https://api.thecatapi.com/v1/images/search
+```
+
+返回一个 JSON 数组，`url` 字段就是随机猫图地址（图片与 `id` 每次请求都会变化）：
+
+```json
+[
+  {
+    "id": "MTYzMDM2OQ",
+    "url": "https://s3.us-west-2.amazonaws.com/cdn2.thecatapi.com/images/MTYzMDM2OQ.jpg",
+    "width": 1936,
+    "height": 2592
+  }
+]
+```
+
+README 里 `Auth` 标成 `apiKey` 只表示该 API 支持这种认证方式，是否强制要看各 API 自己的文档——TheCatAPI 不传 Key 也能调用，只是免费额度更低。
 
 ## 精选 API 推荐
 
@@ -115,17 +134,17 @@ author: "钳岳星君"
 
 | API | 描述 | Auth | HTTPS |
 |-----|------|------|-------|
-| OpenAI | GPT 模型 API | `apiKey` | Yes |
-| Hugging Face | 预训练模型 | `apiKey` | Yes |
-| Coqui | 语音识别/TTS | No | Yes |
+| Google Gemini | 多模态生成式 AI | `apiKey` | Yes |
+| Hugging Face | 模型库与推理 API | `apiKey` | Yes |
+| Groq | 快速 LLM 推理，免费层可用 | `apiKey` | Yes |
 
 ### 天气类
 
 | API | 描述 | Auth | HTTPS |
 |-----|------|------|-------|
 | OpenWeatherMap | 全球天气预报 | `apiKey` | Yes |
-| Weatherstack | 天气数据 | `apiKey` | Yes |
-| Aviationstack | 航班天气 | `apiKey` | Yes |
+| Weatherstack | 实时与历史天气 | `apiKey` | Yes |
+| Open-Meteo | 全球预报，无需 Key，非商业免费 | No | Yes |
 
 ### 动漫类
 
@@ -193,7 +212,7 @@ author: "钳岳星君"
 1. **public-apis 项目的主要价值是什么？**
    <details>
    <summary>查看答案</summary>
-   聚合了 1800+ 免费 API，覆盖 40+ 分类，帮助开发者快速找到可用的 Web API 资源。
+   聚合了 1800+ 条免费 API，覆盖 50+ 分类，帮助开发者快速找到可用的 Web API 资源。
    </details>
 
 2. **CORS 限制会影响哪种调用方式？**
@@ -338,7 +357,7 @@ if __name__ == '__main__':
 
 本文档基于以下来源编写，请注意其局限性：
 
-1. **信息来源**：主要基于 public-apis GitHub 仓库的 README（2026-04-28 访问）。该仓库由社区维护，信息可能有延迟或错误。
+1. **信息来源**：主要基于 public-apis GitHub 仓库的 README 与 GitHub API（2026-09-19 访问）。该仓库由社区维护，信息可能有延迟或错误。
 2. **API 状态时效性**：API 的可用性、认证要求、CORS 支持可能随时间变化。使用前请务必访问 API 官网确认。
 3. **未实际测试**：本文档未逐一测试列出的 API。实际使用时可能会遇到文档中未说明的问题。
 4. **分类主观性**：API 的分类由 public-apis 维护者决定，可能与你的理解不完全一致。
@@ -347,14 +366,13 @@ if __name__ == '__main__':
 
 ## 总结
 
-public-apis 是开发者必备的资源库之一，聚合了 1800+免费 API，分类清晰、结构统一。无论是寻找某个特定领域的 API，还是探索新的开发可能性，都是极佳的起点。
+public-apis 聚合了 1800+ 条免费 API，按 50+ 个分类组织，每条条目的 Auth、HTTPS、CORS 标注一致。适合在需要某个领域的现成接口时定向查询，而不是通读。
 
-建议收藏并在需要时定向查询，而非一次性浏览全部内容。
+星标数会随时间变化，判断项目活跃度请以 GitHub 页面实时数据为准。
 
 ---
 
 **项目地址**：https://github.com/public-apis/public-apis
 
 **相关项目**：
-- [public-api](https://github.com/davemachado/public-api) - public-apis 的官方 API 接口
-- [public-apis-cli](https://github.com/public-apis/public-apis-cli) - 命令行工具
+- [public-api](https://github.com/davemachado/public-api) - public-apis 的 REST API 包装（按分类检索、搜索条目）

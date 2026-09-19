@@ -2,477 +2,568 @@
 title: "music-assistant/server：自托管音乐中枢的架构与边界"
 date: "2026-06-13T15:12:33+08:00"
 slug: "music-assistant-server-unified-music-hub-guide"
-description: "music-assistant/server 是 Python 自托管音乐中枢，统一多源订阅与本地曲库并跨 Sonos / AirPlay 多房间同步。拆解三方架构与 Provider 抽象的边界。"
+github_repo: "music-assistant/server"
+source_key: "gh:music-assistant/server"
+lastmod: "2026-09-19T00:00:00+08:00"
+description: "Music Assistant 把多来源曲库、多协议音箱和跨源播放队列收进一个 Python 服务端。本文按源码拆解五类 Provider、13 个核心控制器、SQLite 存储与流式管线的真实边界，并给出该不该上的判断依据。"
 draft: false
 categories: ["技术笔记"]
-tags: ["自托管", "Python"]
+tags: ["自托管", "Python", "Home Assistant", "开源项目解读"]
 ---
 
 # music-assistant/server：自托管音乐中枢的架构与边界
 
-## 学习目标
+## 先给判断
 
-学完本文，你应该能够：
+Music Assistant（下称 MA）要解决的不是"怎么把一首歌从手机推到音箱"。AirPlay、Spotify Connect、Sonos 自己的 App 都做得到，而且不需要你再养一台常在线的机器。它要处理的是更麻烦的一层：同一首曲目在 Spotify、Tidal、Apple Music、本地 NAS 和电台流里各有一套标识；同一台物理音箱可能被 AirPlay、Chromecast、DLNA 各自发现一遍，看起来像三台设备。把这两堆异构性对上，再让任意播放端能播任意来源，才是它的工作。
 
-1. **解释 Music Assistant 的三方架构**：说清 Music Provider、Player Provider、Metadata Provider 和 Plugin Provider 各自承担什么责任，以及它们如何通过 CoreController 协同工作。
-2. **识别 Track 标准化机制**：描述 `provider_mappings` 表、`external_ids` 表和 `match_provider_instances` 如何协作，把不同来源的同一首歌识别为同一个内部对象。
-3. **理解播放队列的服务端模型**：解释为什么 `PlayerQueue` 是服务端对象而不是播放端对象，以及这个设计如何支持多房间同步和跨来源接续。
-4. **分析流式管线的设计取舍**：说明为什么 StreamsController 使用独立 HTTP 端口（无 SSL、无认证），以及 AudioBuffer 的 SEEKABLE 和 ROLLING 两种模式分别适用于什么场景。
-5. **评估 Music Assistant 的适用边界**：根据给定的曲库来源、播放端协议、多房间同步需求和自托管意愿，判断 MA 是否是最合适的方案，并知道何时应该选择 Plex/Jellyfin/Navidrome/Symfonium 等替代方案。
+读源码时把它拆成三层最省事：**曲库层**把外部目录映射成一套内部媒体模型，**队列层**把播放队列存在服务端而不挂在某台音箱上，**协议适配层**负责把音频交给 Sonos、HomePod、Chromecast 这些具体设备。三层各自能替换，跨源接续、跨端切换这些卖点全部来自这个切分。
+
+代价也来自这个切分：MA 是一个必须长跑的服务端，不是一个装在笔记本上的工具。它不能从 PyPI 安装，官方只支持 Docker 镜像和 Home Assistant 两种形态。如果你的场景是"一台音箱、一份订阅"，这篇文章里的架构对你就是过度工程。
+
+## 读这篇要带走的目标
+
+- 能说出五类 Provider 的边界责任，以及为什么元数据和音频分析要单独成类；
+- 能解释 `Track` 在不同来源之间被认成同一首的真实判定顺序，包括哪一步会误判；
+- 能判断"几个房间一起响"和"几个房间同步响"在 MA 里分别由哪个 Provider 负责；
+- 能根据自家曲库构成、音箱协议和是否接受常在线设备，决定上不上、按什么顺序上。
 
 ---
 
 ## 目录
 
-- [一句话判断](#一句话判断)
-- [系统地图：三方架构](#系统地图三方架构)
-- [为什么是三方架构而不是两端](#为什么是三方架构而不是两端)
-- [Provider 抽象：把异构世界压成同一组方法](#provider-抽象把异构世界压成同一组方法)
-- [Track 标准化：跨源同一首歌的去重](#track-标准化跨源同一首歌的去重)
-- [播放队列：服务端对象不是播放端对象](#播放队列服务端对象不是播放端对象)
-- [流式管线：HTTP-only 独立端口](#流式管线http-only-独立端口)
-- [Player 抽象：Player vs PlayerState](#player-抽象player-vs-playerstate)
-- [任务流案例：一首歌从 Spotify 走到两个房间](#任务流案例一首歌从-spotify-走到两个房间)
-- [Universal Group Player：多协议虚拟播放器](#universal-group-player多协议虚拟播放器)
-- [事件系统与状态推送](#事件系统与状态推送)
-- [AudioBuffer 的两种模式与 Smart Fades 实现细节](#audiobuffer-的两种模式与-smart-fades-实现细节)
-- [数据库 schema 的几个细节](#数据库-schema-的几个细节)
-- [Discovery Controller：自动发现音箱](#discovery-controller自动发现音箱)
-- [关联仓库与生态边界](#关联仓库与生态边界)
+- [先给判断](#先给判断)
+- [读这篇要带走的目标](#读这篇要带走的目标)
+- [系统地图](#系统地图)
+- [Provider 的真实分类：五类而不是四类](#provider-的真实分类五类而不是四类)
+- [MusicProvider 基类：接口宽度与并发槽位](#musicprovider-基类接口宽度与并发槽位)
+- [Track 标准化：入库时的判定顺序](#track-标准化入库时的判定顺序)
+- [播放队列：服务端记录与对外快照](#播放队列服务端记录与对外快照)
+- [流式管线：8097 端口上的无认证 HTTP](#流式管线8097-端口上的无认证-http)
+- [AudioBuffer 的两种模式与三档容量](#audiobuffer-的两种模式与三档容量)
+- [音频分析：Smart Fades 用的不是 librosa](#音频分析smart-fades-用的不是-librosa)
+- [Player 抽象：内部对象与对外快照](#player-抽象内部对象与对外快照)
+- [多协议归并：一台音箱不该出现三次](#多协议归并一台音箱不该出现三次)
+- [三条"多个房间响起来"的路线](#三条多个房间响起来的路线)
+- [事件总线](#事件总线)
+- [存储层：表结构与内存自适应 PRAGMA](#存储层表结构与内存自适应-pragma)
+- [任务流示例：一首歌从 Spotify 走到两个房间](#任务流示例一首歌从-spotify-走到两个房间)
+- [关联仓库与生态位置](#关联仓库与生态位置)
 - [与 Plex / Jellyfin / Navidrome / Symfonium 的边界](#与-plex--jellyfin--navidrome--symfonium-的边界)
 - [部署形态与运行约束](#部署形态与运行约束)
-- [采用顺序与适用边界](#采用顺序与适用边界)
-- [结尾回到判断](#结尾回到判断)
-- [学习目标](#学习目标)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶路径](#进阶路径)
-- [资料口径说明](#资料口径说明)
+- [常见误区与排查](#常见误区与排查)
+- [采用顺序与不适用情况](#采用顺序与不适用情况)
+- [结尾判断](#结尾判断)
+- [五个自测问题](#五个自测问题)
+- [上手前的四项验证](#上手前的四项验证)
+- [下一步读哪份代码](#下一步读哪份代码)
+- [资料口径与维护提示](#资料口径与维护提示)
 - [参考链接](#参考链接)
 
 ---
 
-## 一句话判断
+## 系统地图
 
-Music Assistant 真正解决的问题不是"如何把一首歌从 A 推到 B 音箱"，而是**把分散在不同订阅服务、本地 NAS、互联网电台之间的曲库，翻译成一套统一的内部媒体模型，并由一个长期在线的服务端把它编排到任意可控播放端**。它在家用音响这个垂直场景里承担的并不是某个"音乐 App"的替代品，而是**曲库层 + 队列层 + 播放协议适配层**的中枢。
+服务端进程的核心是 `music_assistant/mass.py` 里的 `MusicAssistant` 类。它在 `__init__` 和 `setup` 里装配 13 个核心控制器（Core Controller），`music_assistant/controllers/` 下正好有 13 个子包与之一一对应：
 
-如果你只想"在手机上点首歌让 Sonos 响"，你不需要 Music Assistant；Spotify Connect、AirPlay 2、Son 自家的 App 都能做到。但当你订阅了三家流媒体、本地存了十几万首 FLAC、想把客厅的 Sonos、厨房的 HomePod、书房的桌面音箱同步成一组、并且让 Spotify 的 Discover Weekly 在你下班回家后自动接续本地 NAS 里上周听了一半的那张唱片时，你想要的是这套中枢。
+| 控制器 | 负责什么 |
+| ------ | -------- |
+| `ConfigController` | 服务端与 Provider 配置、Provider 实例的持久化状态，最先装配 |
+| `DiscoveryController` | mDNS / SSDP / UPnP 网络发现，第二装配 |
+| `CacheController` | 独立的 SQLite 缓存库，主要放 artwork 与远端目录的临时结果 |
+| `TasksController` | 长任务（库同步、扫描）的调度与状态跟踪 |
+| `StreamsController` | 音频流管线，自己监听一个 HTTP 端口 |
+| `MusicController` | 曲库读写、Provider 实例生命周期、跨源匹配 |
+| `MetaDataController` | 元数据补全调度，按优先级在多个 Metadata Provider 之间重试 |
+| `PlayerController` | 播放器注册表、状态更新、协议归并、分组 |
+| `PlayerQueuesController` | 播放队列，与 `PlayerController` 松耦合 |
+| `WebserverController` | 对外的 API（应用程序接口）与前端静态资源 |
+| `TranslationController` | 多语言文案 |
+| `DiagnosticsController` | 诊断信息导出 |
+| `DashboardController` | 面向大屏/面板的展示会话 |
 
-## 系统地图：三方架构
+装配次序本身透露了依赖关系：配置与发现两个控制器先单独建好，接着缓存、任务、流、曲库、元数据、播放器、队列这七个用任务组并发 `setup`，然后起 Webserver，最后才让发现开始工作——因为发现到的设备需要已经存在的 Player Provider 实例来接收。
 
-服务端核心是 `music_assistant/mass.py` 里那个 `MusicAssistant` 单例，它持有十个 CoreController（Core Controller，核心控制器）。除了核心控制器之外，整个服务靠 **Provider（提供商适配器）** 把外部世界接入进来。Provider 一共分四类，对应四种不同的边界责任：
+外部世界通过 Provider（提供商适配器）接入，服务端整体形状是这样：
 
-| 类型 | 职责 | 示例 |
-| ---- | ---- | ---- |
-| Music Provider（音乐提供商） | 把外部曲库映射成统一的 `Track` / `Album` / `Artist` 等媒体对象 | `spotify`、`apple_music`、`qobuz`、`tidal`、`ytmusic`、`plex`、`jellyfin`、`filesystem_local`、`filesystem_nfs`、`filesystem_smb`、`opensubsonic`、各类电台 |
-| Player Provider（播放器提供商） | 发现并控制一台真实或虚拟的播放器 | `sonos`、`sonos_s1`、`airplay`、`chromecast`、`heos`、`squeezelite`、`snapcast`、`mpd`、`hass_players`、`bluesound`、`wiim`、`roku_media_assistant` |
-| Metadata Provider（元数据提供商） | 补全 artwork、lyrics、MBID、loudness 等附加信息 | `musicbrainz`、`fanarttv`、`coverartarchive`、`theaudiodb`、`itunes_artwork`、`genius_lyrics`、`lrclib` |
-| Plugin Provider（插件提供商） | 跨 Provider 的能力外挂，不属于上面三类 | `smart_fades`、`smart_playlist`、`radiobrowser`、`podcastfeed`、`loudness_analysis`、`sonic_analysis`、`sonic_similarity`、`lastfm_recommendations` |
-
-把这四类 Provider 和十个 CoreController 摆到一起，整张系统地图是这张样子：
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            Frontend (Web UI / HA / Companion App)          │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      │ WebSocket / REST API (port 8095/8094)
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          MusicAssistant (mass.py)                           │
-│                                                                             │
-│   Core Controllers:                                                         │
-│     - Webserver    - Cache    - Tasks    - Discovery    - Config             │
-│     - Music        - Players  - PlayerQueues  - Metadata    - Streams       │
-│                                                                             │
-│   ┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────┐ │
-│   │  Music Providers     │    │  Player Providers    │    │  Metadata    │ │
-│   │  spotify / tidal /   │    │  sonos / airplay /   │    │  Providers   │ │
-│   │  qobuz / ytmusic /   │    │  chromecast /        │    │  musicbrainz │ │
-│   │  apple_music /       │    │  snapcast / mpd /    │    │  fanarttv /  │ │
-│   │  filesystem_* /      │    │  hass_players / ...  │    │  coverart /  │ │
-│   │  plex / jellyfin /   │    │                      │    │  lyrics / ...│ │
-│   │  radiobrowser / ...  │    │                      │    │              │ │
-│   └──────────┬───────────┘    └──────────┬───────────┘    └──────┬───────┘ │
-│              │                           │                       │         │
-│              ▼                           ▼                       ▼         │
-│   ┌──────────────────────────────────────────────────────────────────┐     │
-│   │                       SQLite (aiosqlite)                          │     │
-│   │  tracks / albums / artists / playlists / radios / podcasts /     │     │
-│   │  audiobooks / provider_mappings / playlog / loudness / analysis  │     │
-│   └──────────────────────────────────────────────────────────────────┘     │
-│                                                                             │
-│   ┌──────────────────────────────────────────────────────────────────┐     │
-│   │      Streams Controller (HTTP-only, port 8097, no TLS, no auth)  │     │
-│   │      AudioBuffer (PCM) → FFmpeg → 流地址 (session ID) → Player    │     │
-│   └──────────────────────────────────────────────────────────────────┘     │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-这张图最关键的一点是：**Player 不直接连 Music Provider**。所有播放请求都先打到服务端，由 `MusicController` 把"任何来源的 `Track`"翻译成统一的播放任务，再由 `StreamsController` 起一个 PCM buffer，经 FFmpeg 转码，最后以 HTTP 流地址推给真正能响的播放端。
-
-## 为什么是三方架构而不是两端
-
-如果把服务端简化成"前端 ↔ 播放器"，那么 Spotify 上的歌只能给 Spotify Connect 协议的设备响；本地 FLAC 只能给 DLNA 播放器响；不同设备之间做不了同步。三方架构把"曲库来源"和"播放出口"两条耦合线拆开，使得：
-
-- 同一首 `Track` 在 Spotify 是 `spotify://track/xxx`，在本地 NAS 是 `filesystem_local://track/yyy`，在 YouTube Music 是 `ytmusic://track/zzz`。所有这些 ID 都通过 `provider_mappings` 表挂到同一个内部 `library_item_id` 上。
-- 同一个播放器在 Sonos 上是 S2 协议，在 AirPlay 上是 RAOP，在 Chromecast 上是 Cast，在 Snapcast 上是 TCP 流。`PlayerProvider` 把这些协议差异藏起来，对外只暴露统一的 `play / pause / volume_set / power` 命令。
-- 队列是服务端对象（`PlayerQueue`），不是播放端对象。`player_queues` Controller 让队列脱离播放器存在，所以"把 Sonos 上的队列搬到 HomePod 继续放"这件事，是改一行 `queue_id` 而不是做协议迁移。
-
-拆三方之后，跨源合流、跨端同步、设备代际切换这三件对家庭音响用户最核心的事，才变成"系统设计支持"而不是"靠某个 App 凑合"。
-
-## Provider 抽象：把异构世界压成同一组方法
-
-`music_assistant/models/music_provider.py` 里 `MusicProvider` 这个基类列出来的方法数量很能说明问题：`search`、`get_artist`、`get_artist_albums`、`get_artist_toptracks`、`get_album`、`get_track`、`get_playlist`、`get_audiobook`、`get_podcast`、`get_podcast_episode`、`get_item_genre_names`、`get_stream_details`，加上一组 `get_library_*` 异步生成器。
-
-这套接口在 Spotify、Tidal、Qobuz、Apple Music、YouTube Music、Plex、Jellyfin、`filesystem_local`、电台源上的实现完全不一样，但服务端用 `tracks.get`、`music.tracks.get` 这些 API 命令去取数据时，看不到任何源特定的字段差异。每家提供商能提供什么、不能提供什么，靠 `ProviderFeature` 枚举来标记。比如 Spotify provider 的 `__init__.py` 里 `SUPPORTED_FEATURES` 显式声明了 `LIBRARY_ARTISTS`、`SEARCH`、`SIMILAR_TRACKS`、`LIBRARY_PODCASTS` 这些能力边界，其它提供商只挑自己有的部分声明。
-
-这种"基类 + feature flag"的设计带来两个副作用：
-
-- **每加一个提供商，都要写一份完整实现**。仓库 `providers/` 目录现在有 80 多个子目录，每个目录是一份"音乐源适配器"。这种重写在早期看起来挺蠢，但好处是 Provider 之间的状态相互独立，Spotify 登录失效不会拖垮 Tidal 同步；Plex 服务器宕机不会污染本地 FLAC 扫描。
-- **同源不同账号的处理**。`MusicProvider.is_streaming_provider` 这个布尔属性是个隐藏开关：流媒体类型（Spotify、Tidal）勾上 True，意味着搜索和查全局目录只走其中一个实例；本地类型（`filesystem_local`、`plex`）勾上 False，意味着跨实例数据是隔离的，搜索时所有实例都查一遍。这条属性决定了"我接了两个 Plex 服务器时搜索行为是否合并"。
-
-## Track 标准化：跨源同一首歌的去重
-
-跨源曲库合并最难的不是取数据，是同一首歌在 Spotify、Tidal、本地 NAS 里 ID 全不一样但其实是同一首时，怎么识别为同一个对象。`media_items/tracks.py` 里的 `TracksController` 是这么做的：
-
-1. **入库前先匹配**。`add_item_to_library` 进来一首 `Track`，先查 `provider_mappings` 表，再查 `external_ids` 表（MBID / ISRC / MusicBrainz 等），再退回到名字+艺人模糊匹配。命中已有 library item 就更新，不命中才新插一行。
-2. **Provider Mappings 用 JSON 在 SQLite 里平铺**。`TracksController.base_query` 里直接 `JSON_GROUP_ARRAY` 把所有映射压成一个 JSON 字段塞在行尾。这个选择对很多人来说反直觉——JSON 字段不应该是规范化的反例吗？答案是：在 SQLite 里，规范化要靠外键 + 多表 join，而 Provider Mappings 的生命周期完全跟着 Track 走，几乎没有独立的写入路径，平铺 JSON 让单行查询可以一次拿完，少掉一半 join 的代价。
-3. **`match_provider_instances` 把入库时的临时映射缝起来**。每条入库的 `Track` 都会在所有 Music Provider 实例上做一次"按 external_id 反查"，把潜在的同源记录补到 `provider_mappings` 里。这一步是异步的，在 library sync 后台任务里执行，不阻塞首屏。
-
-所以同一个 "Radiohead - Karma Police" 在 Spotify 上是 `spotify:track:3G5YJ7X1PzG3CfQZ7V9iyg`，在本地 NAS 里是 `filesystem_local://track/abc.flac`，在 Tidal 上是 `tidal:track:600613`，在 YouTube Music 上是 `ytmusic:track:dQw4w9WgXcQ`，**内部全靠 library_item_id = 42 这个单一 ID 索引**，外加四个 `provider_mappings` 条目。
-
-## 播放队列：服务端对象，不是播放端对象
-
-`controllers/player_queues.py` 顶部的注释把这件事说得很清楚：
-
-> A Music Assistant Player always has a PlayerQueue associated with it which holds the queue items and state. The PlayerQueue is in that case the active source of the player, but it can also be something else, hence the loose coupling.
-
-`PlayerQueue` 是服务端对象，它至少包含：当前播放项、下一项、循环模式、随机模式、crossfade 配置、当前播放进度、上次播放时间戳。**当队列切换播放器时，队列不重建**——`queue_id` 不变，只是 `current_player_id` 改了。
-
-这条设计在两件事上后果很大：
-
-- **多房间同步**。`universal_group` Provider 和 `snapcast` Provider 都基于这条假设。`UniversalGroupPlayer` 把一组子播放器逻辑上合成一个虚拟播放器，它给服务端一个统一的 `queue_id`，但底下同时给所有成员各起一份音轨。Snapcast 走的是另一种：先把 PCM 流推到 Snapserver，再由 Snapserver 把同一份流同步分发到所有 Snapclient。
-- **跨来源接续**。用户可以在一份队列里同时塞 Spotify 的 Discover Weekly、本地 NAS 的一首 FLAC、和一台电台——它们都只是不同 `provider_mappings` 下的 `queue_item_id`。当队列自动切换到下一项时，`StreamsController` 重起 PCM buffer、重新走 FFmpeg，不需要换播放器，不需要换播放器协议。
-
-## 流式管线：HTTP-only 独立端口
-
-`controllers/streams/README.md` 把流式管线的几个关键设计点写得很明白：
-
-1. **独立 HTTP 服务，不带 SSL，不带认证**。默认端口 8097。和主 Webserver / API（端口 8095、HA Ingress 8094）完全分开。理由很朴素：很多嵌入式音箱 SSL 握手资源紧张；流式端只跑在内网，加密没意义；播放器不能要求用户敲 OAuth 拿 token 才能听歌。
-2. **Session ID 替代认证**。每条流地址带一个服务端签发的 session_id，服务端校验 session 是否还有效。旧 session 一旦失效，对应地址立刻 401。这是个比 basic auth / API key 更轻的方案。
-3. **AudioBuffer 是"始终打开"的 PCM 缓冲**。所有队列流都先进 `AudioBuffer`（不是 MP3 也不是 FLAC，是解码后的 PCM 原始数据）。这个 buffer 有两种模式：`SEEKABLE` 用于单曲，支持快进快退；`ROLLING` 用于电台和不可 seek 的源，~15 秒 FIFO 滚动。
-4. **过滤器在出口应用**。音量归一化（loudness normalization）、播放速度、DSP 等都不在入 buffer 时算，而是在 `get_stream()` 出 buffer 时按 player 需求叠加。这条决策让 buffer 可以被多个 player 同时复用，不需要每个 player 各算一份。
-5. **Smart Fades 是 beat-aware 的 crossfade**。`smart_fades/` 是个独立子模块，先用 `librosa` 做节拍分析，再生成 fade 曲线，再 mixer 混合。`PluginProvider` 把它挂到流式管线上，所以两首 track 切换时不再是无脑线性 fade，而是按节拍对位。
-
-这套管线把"统一播放 + 个性化 DSP"两个需求解耦得很干净：buffer 是事实层，filter 是表达层。
-
-## Player 抽象：Player vs PlayerState
-
-`controllers/players/README.md` 把 Player 的内外部模型分得很清楚：
-
-- `Player` 是 Provider 给的内部对象，包含 `_attr_volume_level` 这种私有字段、`play()` 这种控制方法、以及协议特定的实现细节。Provider 内部用它做状态判断和命令下发。
-- `PlayerState` 是 API 模型，对外暴露。它在 `update_state()` 时被生成，包含用户自定义名称、隐藏状态、fake power/volume 等 UI 层修饰。`PlayerState` 只含可序列化数据，适合通过 WebSocket 推到前端。
-
-中间还有个 `ProtocolLinkingMixin`：当一台 Sonos 同时能被 S2 协议、AirPlay、Chromecast 三种方式发现时，服务端会把这三个 Player 合并成一个"Universal Player"，让用户不用关心协议层。这是"多协议智能家居音箱"场景里非常实用的能力——同一台物理音箱，Control4 系统、HA、Sonos app 都可能各看到一份，但 MA 把它统一成一个对象。
-
-## 任务流案例：一首歌从 Spotify 走到两个房间
-
-把上面的抽象串成一个具体的请求路径。假设用户在客厅 Sonos 和厨房 HomePod 上点了 Spotify 上一首《Karma Police》，然后切到本地 NAS 里上周听了一半的《OK Computer》继续：
-
-```
-[1] 前端调用 API: music/tracks/get(spotify:track:3G5YJ...)
-    → TracksController 按 provider_mappings 反查到 library_item_id=42
-    → 返回完整 Track 对象（含所有 provider_mappings）
-
-[2] 前端调用: player_queues/play(queue_id=客厅, items=[...])
-    → PlayerQueuesController 把 Spotify 上的 Track 加入 queue
-    → 异步触发: StreamsController 准备 stream_url
-
-[3] StreamsController.AudioBuffer.fill()
-    → 请求 Spotify Provider.get_stream_details(item)
-    → Spotify Provider 用 web API 拿到 track URI
-    → 起 FFmpeg 子进程，解码 → PCM chunks → AudioBuffer (SEEKABLE)
-
-[4] 流地址生成: http://mass.local:8097/stream/{session_id}
-    → 推到 Sonos (S2 协议) 和 HomePod (AirPlay 协议)
-    → 两台音箱独立从流地址拉 PCM
-
-[5] Sonos 上点 "下一首" 跳到本地 FLAC
-    → PlayerQueuesController.next()
-    → current item 改成 library_item_id=43 (OK Computer)
-    → 上一个 AudioBuffer 失效，新 buffer 用 filesystem_local Provider 拉 PCM
-    → 流地址 session_id 刷新，两台音箱断流重连
-    → 整个过程不需要操作 Sonos / AirPlay 协议任何细节
+```text
+┌──────────────────────────────────────────────────────────────────┐
+│            Frontend (Web UI / Home Assistant / client)            │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │ WebSocket + REST（8095，带 TLS）
+                             │ HA Ingress 走 8094
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                  MusicAssistant (music_assistant/mass.py)         │
+│                                                                  │
+│  13 Core Controllers                                             │
+│                                                                  │
+│   ┌────────────────┐  ┌────────────────┐  ┌──────────────────┐   │
+│   │ Music Provider │  │ Player Provider│  │ Metadata Provider│   │
+│   │  61 个         │  │   28 个        │  │    10 个         │   │
+│   └───────┬────────┘  └───────┬────────┘  └────────┬─────────┘   │
+│           │                   │                    │             │
+│   ┌────────────────┐  ┌──────────────────────────────────────┐  │
+│   │ Plugin Provider│  │ Audio Analysis Provider（5 个）      │  │
+│   │   26 个        │  │ 在流过的 PCM 上算响度/节拍/指纹      │  │
+│   └───────┬────────┘  └──────────────────────────────────────┘  │
+│           │                                                     │
+│           ▼                                                     │
+│   ┌──────────────────────────────────────────────────────────┐  │
+│   │           SQLite (aiosqlite) + 独立 cache 库              │  │
+│   │ tracks / albums / artists / playlists / radios / ...      │  │
+│   │ provider_mappings / external_id_lookup / playlog          │  │
+│   │ loudness_measurements / audio_analysis / settings          │  │
+│   └──────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│   ┌──────────────────────────────────────────────────────────┐  │
+│   │ StreamsController：独立 HTTP 服务，默认 8097              │  │
+│   │ AudioBuffer(PCM) → FFmpeg → 带 session_id 的流地址 → 音箱 │  │
+│   └──────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-如果用户切到 Snapcast 同步组（书房+主卧+洗手间），路径会拐一下：`UniversalGroupPlayer` 把三台成员合成一个虚拟 player，buffer 只起一份，但同时给三台音箱发流；如果走的是 Snapcast，buffer 把 PCM 推给 Snapserver，再由 Snapserver 同步给所有 Snapclient。无论走哪条路，**`PlayerQueue` 这个对象在切换时都不重建**，用户的播放进度、随机模式、循环模式都保留。
+图里最值得注意的一条边：**播放端从不直接连曲库来源**。所有播放请求先落到服务端，由 `MusicController` 把任意来源的 `Track` 变成一次播放任务，`StreamsController` 起一个 PCM 缓冲，FFmpeg 转成播放端接受的格式，最后交出一个 HTTP 流地址。音箱看到的永远是一个可以 GET 的 URL，不需要认识 Spotify 是什么。
 
-## Universal Group Player：多协议虚拟播放器
+## Provider 的真实分类：五类而不是四类
 
-`providers/universal_group/` 是 MA 自己定义的"虚拟播放器"机制——当一组子播放器被用户手动或自动聚合成一个组时，服务端不依赖任何外部协议同步机制（不靠 AirPlay 2 的 multi-room，也不靠 Sonos 自家的 grouping），而是自己承担同步调度。
+`music_assistant_models.enums.ProviderType` 声明了 7 个成员，其中 `CORE` 和 `UNKNOWN` 保留给内部与兜底。实际出现在 Provider 清单里的有五类：
 
-它的关键设计在 `universal_group/player.py` 里：
+| 类型 | 数量 | 职责 | 代表 |
+| ---- | ---- | ---- | ---- |
+| `music` | 61 | 把外部曲库映射成统一的 `Track` / `Album` / `Artist` 等媒体对象 | `spotify`、`tidal`、`qobuz`、`apple_music`、`ytmusic`、`plex`、`jellyfin`、`filesystem_local`、`filesystem_nfs`、`filesystem_smb`、`opensubsonic`、`radiobrowser`、`podcastfeed` |
+| `player` | 28 | 发现并控制一台真实或虚拟播放器 | `sonos`、`sonos_s1`、`airplay`、`chromecast`、`dlna`、`heos`、`squeezelite`、`snapcast`、`mpd`、`hass_players`、`bluesound`、`wiim`、`roku_media_assistant`、`sync_group`、`universal_group`、`universal_player` |
+| `metadata` | 10 | 补全 artwork、歌词、MBID、推荐等附加信息 | `musicbrainz`、`fanarttv`、`coverartarchive`、`theaudiodb`、`itunes_artwork`、`genius_lyrics`、`lrclib`、`lastfm_recommendations`、`playlist_metadata`、`wikipedia` |
+| `plugin` | 26 | 不落在前三类里的能力外挂 | `smart_playlist`、`sonic_similarity`、`lastfm_scrobble`、`listenbrainz_scrobble`、`recommendations`、`ai_radio`、`party`、`profiler` |
+| `audio_analysis` | 5 | 在流过的 PCM 上算分析结果并落库 | `loudness_analysis`、`smart_fades`、`sonic_analysis`、`acoustid_lookup`、`_demo_audio_analysis_provider` |
 
-- **成员是异构的**。组里可以同时塞 Sonos、AirPlay、Chromecast，因为同步发生在服务端，不依赖任一播放端协议的 multi-room 能力。
-- **生命周期是 idle-driven**。组不常驻，当第一首播放开始时"form"（组建），当 idle 超过 `IDLE_GRACE_SECONDS` 时"dissolve"（解散）。这样不常听的组合不会一直占着同步资源。
-- **Power 控制是动态注入的**。基类 `BASE_FEATURES` 故意不含 `PlayerFeature.POWER`，只有在用户显式给这个组配置"fake power control"时才加上。这条边界避免了"用户没开电源控制却看到电源按钮"这类 UI 误导。
-- **输出格式可选**。`CONF_UGP_OUTPUT_FORMAT` 决定 PCM buffer 经 FFmpeg 转成什么格式推给成员。默认是 MP3，但 Chromecast 一类不支持 MP3 的设备会改成 OGG 或其他格式。
+统计口径：`music_assistant/providers/` 下 130 个目录带 `manifest.json`，其中 5 个 `_demo_` 前缀和 1 个 `test` 是开发用样例，去掉之后是 124 个可安装 Provider。类型计数按各目录 `manifest.json` 的 `type` 字段汇总，五类相加正好是 130。
 
-对比 Snapcast 路线：Snapcast 是把 PCM 推给一个外部 Snapserver，由 Snapserver 通过局域网 TCP 流同步给所有 Snapclient。它的同步精度更高（毫秒级），但需要单独维护一个 Snapserver 实例。Universal Group 是 MA 自带的轻量方案，部署更简单，但同步精度低一些，依赖服务端和各播放器之间的网络抖动容忍。
+把元数据和音频分析各自单列，是因为它们的失败模式和曲库、播放完全不同。Spotify 掉线只影响一个来源；`musicbrainz` 挂了则所有来源的艺人图都可能空缺，所以 `MetaDataController` 要在多个 Metadata Provider 之间按优先级重试。音频分析更特殊——它不在任何请求路径上，而是消费已经流过的 PCM，所以 MA 给它一套独立的基类和生命周期。
 
-## 事件系统与状态推送
+Provider 的成熟度差异比类型分布更影响使用。`manifest.json` 里的 `stage` 字段把 130 个 Provider 分成：
 
-整套架构还有一条隐性主线——事件总线。`MusicAssistant._subscribers` 是一组 `(callback, event_types, object_ids_filter)` 三元组，任何 Provider / Controller 在状态变化时调用 `mass.signal_event(EventType, object_id, data)` 推一条事件，前端通过 WebSocket 订阅后做实时更新。
+| stage | 数量 | 里面有什么值得警惕的 |
+| ----- | ---- | -------------------- |
+| `stable` | 76 | 主流流媒体（Spotify、Tidal、Qobuz、Apple Music）、本地文件三件套、Sonos / AirPlay / Chromecast / DLNA |
+| `beta` | 24 | `plex` 和 `ytmusic` 都还在 beta |
+| `alpha` | 10 | `airplay_receiver`、`bose_soundtouch`、`openai_tts` |
+| `experimental` | 7 | `universal_group`、`alexa`、`fastmcp_server` |
+| `unmaintained` | 2 | `jellyfin`、`snapcast` |
+| `deprecated` | 1 | `local_audio` |
+| 未声明 | 10 | 含 5 个 `_demo_`，以及 `smart_fades`、`loudness_analysis`、`sonic_analysis` |
 
-事件类型覆盖了几乎所有用户能看到的状态变化：`MEDIA_ITEM_ADDED`、`MEDIA_ITEM_UPDATED`、`MEDIA_ITEM_DELETED`、`PLAYER_ADDED`、`PLAYER_REMOVED`、`PLAYER_STATE_CHANGED`、`QUEUE_ITEMS_ADDED`、`QUEUE_ITEMS_UPDATED`、`PLAYBACK_STATE_CHANGED`、`PROVIDER_LOADED`、`SYNC_TASKS_UPDATED` 等几十种。
+选 Provider 时先看这个字段，比看功能列表有用：它把"这个适配器有没有人在维护"写进了清单。`snapcast` 标记 `unmaintained` 尤其值得注意，因为它常被当成 MA 多房间同步的推荐方案（见下文）。
 
-这套事件系统解释了为什么 MA 的 Web UI 看起来响应很快：所有状态变化都是 push 而不是 pull。Player 的音量被改、Track 被收藏、Spotify 上朋友分享了一首歌——服务端通过事件直接推到前端，前端不需要轮询任何 endpoint。这种"事件驱动 + 单例状态"的模式对长跑服务端非常合适，状态收敛靠事件回调，不需要定时刷新。
+## MusicProvider 基类：接口宽度与并发槽位
 
-## AudioBuffer 的两种模式与 Smart Fades 实现细节
+`music_assistant/models/music_provider.py` 的 `MusicProvider` 基类列出的方法数量，直接说明了这个抽象有多宽：`search`、`get_artist`、`get_artist_albums`、`get_artist_tracks`、`get_artist_toptracks`、`get_artist_topalbums`、`get_album`、`get_track`、`get_playlist`、`get_radio`、`get_audiobook`、`get_podcast`、`get_podcast_episode`、`get_sound_effect`、`get_item_genre_names`、`get_stream_details`，八组 `get_library_*` 异步生成器，加上 `library_add` / `library_remove` / `set_favorite` / `create_playlist` / `get_similar_tracks` / `get_resume_position` 这一批写侧和续听侧的方法，以及 `get_track_by_external_id` 这类反查接口。
 
-回到流式管线，把 `AudioBuffer` 两种模式的取舍展开看：
+各家实现的能力差别极大，所以基类不要求全部实现：Provider 在自己的 `__init__.py` 里声明 `SUPPORTED_FEATURES` 集合，用 `ProviderFeature` 枚举标记边界。Spotify 声明了 `LIBRARY_ARTISTS`、`LIBRARY_ALBUMS`、`LIBRARY_TRACKS`、`LIBRARY_PLAYLISTS` 及对应的 `_EDIT`、`PLAYLIST_CREATE`、`SEARCH`、`SIMILAR_TRACKS`、`LIBRARY_PODCASTS`、`TRACK_BY_EXTERNAL_ID`、`ALBUM_BY_EXTERNAL_ID` 等二十项；一个只读电台源可能只声明 `SEARCH`。服务端把这份声明当作可调目录：不支持的功能不展示入口，而不是让请求打进去报错。
 
-**SEEKABLE 模式（单曲）**：内部用 `collections.deque` 维护一组 1 秒 PCM chunk。当用户点快进时，先检查目标位置是否在 buffer 范围内（20 秒内的 forward seek 直接等 producer 把数据写进来），超出范围才触发重 fetch。这条策略让"在歌曲里随便跳"这件事的代价极低——大多数跳转其实都在 20 秒窗口内。
+`supported_media_types` 的默认实现也来自这份声明——基类从 `LIBRARY_FEATURE_BY_MEDIA_TYPE` 反推该 Provider 能提供哪些媒体类型，只有需要"能播但不能作为曲库列出"的 Provider 才覆写它，比如让电台源参与跨源匹配搜索。
 
-**ROLLING 模式（电台、不可 seek 源）**：FIFO 短缓冲（~15 秒），只给消费者按顺序取。这种模式下用户不能跳到"30 秒前"，但代价是 buffer 占用很小，资源开销低。
+三个属性值得单独看，因为它们决定了实际行为：
 
-Smart Fades 是 plugin provider 形态挂上来的，核心三步：
+**`is_streaming_provider`** 是跨实例行为的开关。基类的文档字符串（docstring）写得很直白：流媒体类型的目录（catalog）和库内容（library）不是一回事，本地类型两者相同；设为 `True` 时搜索和查找只走其中一个实例，设为 `False` 时所有实例都查一遍。接了两台 Plex 服务器时搜索是否合并，就是这一条决定的。
 
-1. `analyzer.py` 用 `librosa` 对每首入库的 track 做 beat detection，把 BPM、beat 位置缓存到 `DB_TABLE_AUDIO_ANALYSIS`。这一步发生在入库时或后台任务里，不在播放路径上。
-2. `fades.py` 在 crossfade 触发时，根据当前 track 末尾的 beat 位置和下一首 track 开头的 beat 位置生成 fade 曲线。两条 fade 不是同时开始，而是对齐到下一首的某个 downbeat。
-3. `mixer.py` 把 PCM buffer 的尾部和头部按 fade 曲线混合输出。
+**`max_concurrent_streams`** 与 **`acquire_stream_slot`** 处理配额型来源。Spotify 这类服务对同时活跃的播放会话有硬性限制，基类因此提供带等待超时的槽位获取，把并发请求排队而不是直接失败。这解释了一个部署现象：多个房间同时点歌时，第三路请求可能先等一下而不是立刻报错。
 
-这套实现让"换歌衔接"听起来不像两个独立 track 硬切，而像一张连续混音带。对偏好"听完整张 album 不被打断"的用户来说，这条差异是质变。但代价是每首入库的 track 都要跑一次 librosa（CPU 重），这就是为什么 `pyproject.toml` 把 `librosa` 和 `torch` 都列在主依赖里——MA 不是轻量服务，是愿意为听感付 CPU 的服务。
+**`unskippable_sync_errors`** 是库同步的安全网。Provider 用它声明"这类异常绝不能当单条失败跳过"，例如访问令牌（token）过期——跳过只会让同步把整库标成缺失，而重新抛出会触发重认证再重试。
 
-## 数据库 schema 的几个细节
+同源不同账号的多实例问题不由基类硬编码，而是留给 `match_provider_instances`（见下一节）。
 
-`music_assistant/constants.py` 里 `DB_TABLE_*` 列出的是核心表名。最值得注意的几张：
+## Track 标准化：入库时的判定顺序
 
-- `tracks` / `albums` / `artists` / `playlists` / `radios` / `podcasts` / `audiobooks`：每种媒体类型一张表，对应 `controllers/media/` 下各自的 controller（`TracksController`、`AlbumsController` 等）。所有 controller 继承 `MediaControllerBase[ItemCls]`，靠泛型参数把表名和媒体类型绑死。
-- `provider_mappings`：每条媒体项的每条 provider 映射一行。这是 MA 实现"跨源同一首歌"的核心 join 表。
-- `playlog`：每次成功播放记录一条（library_item_id、player_id、timestamp、duration）。用于"最近播放"、"继续收听"、"智能推荐"等多个上层特性。
-- `loudness_measurements`：每首入库 track 的 EBU R128 loudness 测量值。用于"自动音量归一化"——让用户从 Spotify 切到本地 FLAC 时不会突然音量跳变。
-- `audio_analysis`：librosa 出来的 beat / BPM / 结构信息。
-- `settings`：服务端全局配置 KV。
+跨源合并最难的不是取数据，是判定"这是同一首歌"。`TracksController` 位于 `music_assistant/controllers/music/media/tracks.py`，而入库判定逻辑在它的基类 `media/base.py` 里，函数名 `_get_library_item_by_match`。真实顺序是这样：
 
-数据库本身是 `aiosqlite`（async SQLite），单文件，`PRAGMA journal_mode=WAL`、`PRAGMA mmap_size = 30000000000`、`PRAGMA cache_size = -64000`、`PRAGMA synchronous=normal`。这套 PRAGMA 集合明显是为"长跑服务端 + 大量小读"调过的。`SQLITE_TMPDIR` 还会被强制重定向到数据卷，因为 HAOS 的 `/tmp` 是 RAM-backed tmpfs，sort scratch 会 OOM。
+1. 如果条目已经来自 `library`，直接返回它的 ID；
+2. 传入的是 `ItemMapping`（轻量引用）时，按 `provider + item_id` 精确查一次；
+3. 有 `provider_mappings` 时，按映射集合查一次——这一步命中即认定同一项，不需要额外确认；
+4. 逐个按外部标识符查：先把 `external_ids` 按优先级排序，对每个标识符取出候选，**每个候选都要过 `_confirm_library_candidate` 复核**才接受；
+5. 全部标识符都试过仍未命中时，用规范化名称做一次精确名匹配（比对 `search_name` 与 `search_sort_name`），候选同样要复核；
+6. 都不中，返回 `None`，走新增。
 
-## Discovery Controller：自动发现音箱
+两个细节决定了这套顺序的可靠性。第一，第 4 步的优先级不是按类型名字母序，而是按"标识符有多可信"：`_EXTERNAL_ID_PRIORITY` 里 MusicBrainz 的 recording / track / album / artist 是 0–3，Discogs、TADB、AcoustID 紧随其后，而 ASIN、条形码、ISRC 被压到 20–22。原因是 `ExternalID.is_unique`——前三组本身唯一，后几组**会被复用**，同一串 ISRC 出现在再版、合辑、不同音质的多个发行上是常态。第二，正因为会复用，靠标识符找到的候选必须复核，代码注释里就写了这条理由。这不是"匹配不到就算了"的模糊兜底，而是先缩小候选再用第二份证据确认。
 
-`controllers/discovery/` 是另一个常被忽略的核心控制器。它做的事情是：监听 mDNS / SSDP / UPnP 等广播协议，把发现的设备按 player provider 的协议分类，匹配到合适的 PlayerProvider。
+第 5 步值得纠一个常见误解：MA 不做名字模糊匹配。规范化只做大小写、标点、空白这类清洗，比对是精确的；真正的容错在第 4 步的标识符链和 Metadata Provider 补全上。指望"文件名差不多也能合并"会失望。
 
-例如当一台 Sonos Era 100 上电后广播自己的 S2 协议时，DiscoveryController 抓到这个广播，丢给 `sonos` provider，`sonos` provider 内部用 `aiosonos` 建立 websocket 连接、注册 player。如果同一台 Era 100 同时被 AirPlay 协议发现，DiscoveryController 还会把它丢给 `airplay` provider，最终在 `players` controller 里被 `ProtocolLinkingMixin` 合并成一个 Universal Player。
+**`provider_mappings` 是一张真实的表，不是 JSON 大字段。** 每条映射一行，记录媒体类型、`media_type`、`item_id`、`provider_domain` 与 `provider_instance`。JSON 出现在**读取**这一侧：`tracks.py` 的 `base_query` 用 `JSON_GROUP_ARRAY` 把该曲目的所有映射聚成一个字段，跟 `tracks.*` 一起返回，于是单条曲目的读取不需要 `JOIN` 回来。同一段查询里 `external_ids` 也是这样拼出来的计算列，它背后的表叫 `external_id_lookup`。
 
-这条路让用户"插电就能用"——大部分家庭音箱不需要手动配 IP 和端口，全部靠自动发现。但它也意味着如果用户的网络隔离了 mDNS（比如某些企业级路由器或 mesh 系统），MA 的很多功能会静默失效。
+这个组合的代价与收益都能看清：写入要维护独立表并在删除时显式清理（见存储层一节），读侧则把 fan-out 消掉了。`tracks.py` 的注释对为什么把 `track_album` 写成自包含相关子查询说得很清楚——直接 `JOIN album_tracks` 会让出现在多张专辑里的曲目炸出多行，进而被迫加 `GROUP BY`。
 
-## 关联仓库与生态边界
+`match_provider_instances` 容易被误读，它**不做跨来源的同曲识别**。这个 `MusicController` 上的同步方法只做一件事：给同一 `domain` 的其它实例复制映射。它跳过 `is_unique` 的映射、跳过非 `MusicProvider`、跳过 `is_streaming_provider` 为假的 Provider，只在同域实例数大于 1 时动手，新映射带 `in_library=None`。也就是说，两个 Spotify 账号看到的是同一份全球目录，一首歌入库一次就能两边可用；两个 Plex 服务器各自是独立目录，跨实例复制对它们没有意义。
 
-服务器本身只是中枢。围绕它还有几个紧密耦合的仓库：
+它被调用的时机也在 `add_item_to_library` 里，而且是同步调用，不是后台任务。同一函数还包了一层并发保护：判定未命中后先拿 `_db_add_lock`，**再做一次相同判定**，因为等待锁期间可能已有另一个任务插入了同一条目。整个新增过程放在 `deferred_commit()` 上下文里，把一次入库触发的多次写合并成一次提交。
 
-- `music-assistant/client`：Python SDK，用来直接调服务端 API（stars: 13）。自动化脚本、CLI 工具、第三方集成主要靠它。
-- `music-assistant/home-assistant-addon`：Home Assistant 插件仓库，把 MA 装成 HA Add-on 后，HA 能直接看到所有 player、album、playlist 实体，自动化规则可以用 MA 作为 trigger。
-- `music-assistant/support`：用户提问和功能请求的 issue/discussion 入口。
-- 前端 `music-assistant/frontend` 是 npm 包，由 server 的 `pyproject.toml` 里 `music-assistant-frontend==2.17.187` 直接 pin 版本安装；服务端每次启动会把前端静态文件 serve 出去，所以前端和 server 是强耦合的——更新前端不需要更新 server，但反过来不行。
+所以那首 "Radiohead - Karma Police"：Spotify、Tidal、本地 FLAC、YouTube Music 各有各的 ID，服务端用同一个 `library` 内部条目把它们串起来，`provider_mappings` 里四条记录，`external_id_lookup` 里按 MBID / ISRC 建索引。
 
-这套仓库布局说明一件事：MA 是 **HA 生态的音乐子系统核心组件**，不是独立产品。它的"HA 友好"是有意为之：服务端可以被 HA 装成 add-on，玩家可以被 HA 当作媒体播放器实体，曲库可以被 HA 当作 media source。
+## 播放队列：服务端记录与对外快照
+
+`controllers/player_queues/__init__.py` 的模块 docstring 把耦合关系写得很克制：队列控制器与音乐控制器、播放器控制器是松耦合的；每个播放器关联一个队列，服务端在 `PlayerQueueData` 里持有全部队列状态，而面向 API 的 `PlayerQueue` 快照通常就是该播放器的活动源，但也可以是别的东西。
+
+这句"通常是，但不一定是"是整套设计的承重处。`PlayerQueueData`（`player_queues/state.py`）里的字段分成两组：
+
+- 会持久化的：`queue` 本体、`items` 队列条目、`source_items`（动态源的完整媒体项）、`enqueued_media_items`（用户直接排进队列的专辑、歌单，供自动播放的"相似"模式取种子）、`credited_albums`、`userid`、`autoplay_override`、`crossfade_override`；
+- 运行时字段，重启回默认值：`session_id`、`transitioning`、`flow_buffer_completed`、`flow_mode_stream_log`、`next_item_id_enqueued`、`last_served_item_id`、`prev_state`。
+
+注意 `PlayerQueue` 这个对外快照只带条目**数量**，条目列表留在服务端。队列变更时还有一个防抖写盘器，只在 `items_cache_dirty` 置位时才写较重的条目负载，并把易失的播放进度字段剥离出去。
+
+后果有两条：
+
+**换播放端不重建队列。** 队列 ID 不变，改变的只是它挂在哪个播放器上。跨房间继续听不是协议迁移。
+
+**一份队列可以混来源。** Spotify 的每周推荐、本地一首 FLAC、一台电台，进去之后都只是 `queue_item_id`。自动切到下一项时 `StreamsController` 重新取流地址、重新走 FFmpeg，播放端只是换一个 URL 拉，协议层没有变化。
+
+自动播放（`autoplay.py`）、智能随机（`smart_shuffle.py`）、流式投喂（`stream_feeder.py`）、媒体解析（`media_resolver.py`）都在这个控制器目录下，队列不是一个小数据结构。
+
+## 流式管线：8097 端口上的无认证 HTTP
+
+`controllers/streams/README.md` 是这条管线的权威说明，几个决策都写了理由：
+
+1. **独立 HTTP 服务，默认端口 8097，不带 TLS、不带认证**，与主 Webserver / API（8095）和 Home Assistant 的入口通道（Ingress，8094，常量 `INGRESS_SERVER_PORT`）完全分开。理由很实际：嵌入式音箱做 TLS 握手资源紧张；流服务只在局域网内跑；播放端不可能为了听歌先去完成一次 OAuth。
+2. **用 session ID 代替认证。** 流地址里带服务端签发的不可猜测 session ID，每次请求校验是否仍然有效，失效即拒绝。比 basic auth 或 API key 都轻。
+3. **独立端口便于隔离配置**，音频流和 API 各调各的。
+4. **可达性探测**：`GET /info` 返回服务器 ID 并带上跨域资源共享（CORS）头（含 preflight 预检），局域网里的浏览器可以据此确认发布的地址确实指向这台服务端；`streams/info` API 命令返回该地址。
+5. **过滤器在出口应用。** 缓冲里存的是没经过任何处理的解码后 PCM；响度归一化、播放速度、DSP 在 `get_stream()` 读取时按具体播放器的需要叠加。于是一份缓冲能被多个播放器复用，不必各算一份。
+6. **预初始化**：缓冲在播放端来取之前就开始填，所以点下去不用等首帧。
+7. **缓冲复用**：seek 和重连尽量复用已有有效缓冲。
+
+有一条路径是反方向的，很能说明两个 HTTP 服务为什么都要存在。实时播报（`live_announcements.py`）里音频是**进入**流服务的：客户端在用户说话时推进原始 PCM。入站那半挂在主 Webserver 的 WebSocket 上——推进音频是特权操作，需要流服务故意不提供的那套认证与 TLS，而且浏览器只有安全上下文里才允许访问麦克风；出站那半是流服务上一个普通路由，把录好的语音当 WAV 供出去。播报要等整段音频录完才下发，因为 AirPlay 会把它渲染成文件并按精确时长给全组安排同一瞬间，Sonos 需要时长才知道播多久；给一条还在变长的音频，就会让某种播放端抢到开头、另一种把结尾截掉。
+
+## AudioBuffer 的两种模式与三档容量
+
+缓冲模式只有两种，选择依据是"这个源能不能跳"：
+
+**`SEEKABLE`（曲目）**：用 `deque` 维护 1 秒粒度的 PCM 块，支持带 seek 的读取；缓冲达到上限后旧块丢弃。向前跳转如果在已缓冲数据起算 20 秒以内，直接等生产者写进来；超出才按目标位置重新取源。绝大多数"在歌里跳一下"落在 20 秒窗口内，代价因此极低。
+
+**`ROLLING`（电台与不可跳源）**：约 15 秒的短 FIFO，消费者顺序弹出。不能跳到 30 秒前，换来极小的占用。`ogg_handler.py` 负责把电台的分段 OGG 流拼起来。
+
+容量则有三档预设，按主机内存选：`MINIMAL` 60 秒、`BALANCED` 300 秒、`MAXIMUM` 1200 秒，分档门槛是 4 GB 与 8 GB（`meets_memory_target()` 会吸收标称内存与实际可用之间的差值，所以标 4 GB、实际报 3.8 GB 的机器仍算达标）。同一套门槛还决定哪些档位可选：`MINIMAL` 永远可选，低于 4 GB 的机器根本看不到另外两档。内存判不出来时（例如 Windows）两者会出现分歧——可选列表全部开放，默认值却取最保守的 `MINIMAL`，宁可少占也不赌。对 DSD 这类保留高采样率 F32 PCM 的源，还额外限制缓冲字节上限，因为当前曲目与下一曲的缓冲可能同时在内存里。
+
+生命周期里有一条容易被忽略的优化：源流结束前 60 秒就开始预填下一首的缓冲，另有清理陈旧队列缓冲的任务负责回收。跨源接续之所以顺，一半在这里。
+
+## 音频分析：Smart Fades 用的不是 librosa
+
+MA 的淡入淡出不是线性对切，而是按节拍对位，这件事由两块代码分别完成，分层很干净。
+
+**分析侧**是 `providers/smart_fades/`，`manifest.json` 里 `type` 为 `audio_analysis`。它的 `requirements` 是 `beat-this==1.1.0`、`kaldi-native-fbank==1.22.3`、`nnAudio==0.3.4`：核心是 Beat This!（CPJKU，ISMIR 2024）这个基于 Transformer 架构的节拍跟踪模型，跑在 50 fps 的 log-mel 谱上；调性用 S-KEY，人声活动用 FireRedVAD。原模型设计为整段离线处理，Provider 把它改造成流式：PCM 以 1 秒块到达，累积成 10 秒块，经 soxr 重采样到 22050 Hz 单声道，提特征后送推理，最后由纯 numpy 的 Viterbi 做 DBN 后处理。同时并行算 RMS 能量与谱质心。
+
+**播放侧**是 `controllers/streams/smart_fades/`，负责 `fades.py` 生成曲线、`mixer.py` 做混合，还有 `planner/`、`structure.py`、`vocal.py`、`renderer.py` 等模块参与规划与渲染。需要说明的是，`controllers/streams/README.md` 里列的文件清单（`analyzer.py`、`fades.py`、`mixer.py`）已经与实际目录不符——仓库自带的文档也会滞后，读的时候要以目录为准。
+
+`models/audio_analysis_provider.py` 的基类是这层抽象值得学的地方：
+
+- `start_analysis` / `process_pcm_chunk` / `finalize` 三个钩子既服务实时播放也服务后台扫描，Provider 不需要知道自己在哪个上下文里；
+- `analysis_version` 由 Provider 在算法明显变化时递增，基类拿它和库里的存值比较来决定要不要重算——避免旧缓存被当成新结果；
+- `max_analysis_duration` 让需要整轨状态的 Provider 声明长度上限，超长曲目在 `start_analysis` 就跳过；
+- `has_unloadable_models` 配合 `ensure_models_loaded()` 与 `unload_idle_models()`：重模型空闲时释放内存，下次分析再加载。加载在锁内做，并且检查 `unloading` 标志，防止并发会话把正在退出的 Provider 的模型永久留在内存里；
+- 结果写进 `audio_analysis` 表，另有 `audio_analysis_failures` 记录失败，`abort()` 可以带 `retry_at` 推迟重试。
+
+`librosa==0.11.0`、`torch==2.13.0`、`torchaudio==2.11.0` 都在 `pyproject.toml` 主依赖里，这是 MA 内存占用不低的直接原因之一。判断依据不是"它列了 torch"，而是上面这套机制：重模型常驻、按主机内存分档的缓冲、还要预留 SQLite 页缓存。
+
+## Player 抽象：内部对象与对外快照
+
+`controllers/players/README.md` 把内外模型分开：
+
+- `Player` 是 Provider 交付的内部对象，携带真实状态（`_attr_volume_level`、`_attr_playback_state`）、控制方法（`play()`、`pause()`、`volume_set()`）与协议相关的实现细节，供 Provider 和控制器做状态判断与命令下发；
+- `PlayerState` 是对外模型，在 `player.update_state()` 时生成，叠加用户自定义名称、隐藏标记、假的电源与音量控制这类界面修饰，只含可序列化数据，通过 WebSocket 推给前端。
+
+控制器自己的职责清单也写得很直白：统一控制接口、多协议归并（把同一台设备的 AirPlay / Chromecast / DLNA 身份合成一个）、无原生支持的设备的 Universal Player 包装、同步组管理、状态与事件广播、用户访问控制。
+
+## 多协议归并：一台音箱不该出现三次
+
+`controllers/players/protocol_linking.py` 里的 `ProtocolLinkingMixin` 被 `PlayerController` 继承，负责处理协议播放器与原生播放器之间的关系。逻辑有两条分支：设备有厂商原生 Provider 时，把 AirPlay / Chromecast / DLNA 这些协议身份挂到原生播放器上（`CONF_LINKED_PROTOCOL_IDS` 记挂接关系，`PROTOCOL_PRIORITY` 决定顺序，当前是 `airplay: 10`、`squeezelite: 20`、`chromecast: 30`、`sendspin: 40`、`dlna: 50`）；设备没有原生 Provider 时，创建一个 `UniversalPlayer` 包装起来，按 `universal_player` 的 manifest 说法是"为没有厂商 Provider、但支持一种或多种通用流协议的设备自动创建"。
+
+同物理设备的判定靠标识符比对，这套辅助函数值得看：`normalize_mac_for_matching`、`is_valid_mac_address`、`is_locally_administered_mac`。局域网管理地址（本地管理的 MAC）意味着设备自己生成的地址，不能当厂商身份用——这是一台设备被识别成三台的老原因。归并时还有一组配置键属于包装层自身的记账（`UNIVERSAL_PLAYER_INTERNAL_CONF_KEYS`），换原生播放器接管或一个 Universal Player 吸收另一个时明确不许沿用。
+
+对用户的直接意义是：Control4、Home Assistant、Sonos App 各自看见的那几台"设备"，在 MA 里是一个对象、一组 DSP 设置、一个队列挂载点。
+
+## 三条"多个房间响起来"的路线
+
+这里是 MA 最容易误解的地方，也是三个 Provider 名称相近造成的混乱。
+
+**`universal_group`（实验阶段）**：manifest 的描述直接写了"把不同协议/生态的音箱分到一起播放相同音频，**但不保证同步**"。它的实现是：`BASE_FEATURES` 只含 `PlayerFeature.PLAY_MEDIA` 和 `PlayerFeature.MULTI_DEVICE_DSP`，`PlayerFeature.POWER` 是刻意排除的——只有在用户显式把电源控制配成 `PLAYER_CONTROL_FAKE` 时才注入，注释解释得很清楚：这个组的活动性由会话生命周期（开播即组建、停止即解散、空闲有防抖拆组）决定，组本身对电源没有意见。成员可以是异构的，因为不需要任何一家的 multi-room 机制。它给成员的路由注册成 `/ugp/{player_id}.flac` 与 `.mp3` 两个后缀，真正吐哪种编码由这个组自己的配置决定，不由 URL 决定；`IDLE_GRACE_SECONDS` 是 10.0。
+
+**`sync_group`（稳定、内置、不可禁用）**：描述是"创建（永久）同步组，让协议兼容的音箱同步播放"。它的 README 说得更细：组成员协议必须兼容（同一个同步协议）才能成组，同步 leader 自动选择，队列归这个组而不是成员，组是常驻播放器实体、跨重启存在，可选支持播放中增减成员。它与手动同步的区别写在同一张表里：手动同步是临时的、停止即散、队列归 leader、leader 由人明确指定；同步组是常驻实体、队列归组、leader 自动。
+
+**外部 Snapcast 路线**：`providers/snapcast/` 声明的能力是 `ProviderFeature.SYNC_PLAYERS` 和 `REMOVE_PLAYER`。实现方式是 MA 跑一条 FFmpeg 管道，把音频推向 Snapcast 的 TCP source URI，由 Snapserver 作为一路流拉走并分发给所有 Snapclient（精度是 Snapcast 自己的毫秒级对齐）。这个 Provider 还自带 `snapserver/snapserver.conf` 和 `snapweb/` 前端资源，用于内置的 Snapcast server 集成。要提醒的是它的 `stage` 是 `unmaintained`。
+
+三条路线的取舍因此很清楚：要异构协议、只要求一起响，`universal_group` 够用且它是实验性质；要真正对齐、成员协议又兼容，用 `sync_group` 或音箱厂商自己的 grouping；要毫秒级且接受多维护一个 Snapserver，走 Snapcast，但得接受它的维护状态。
+
+## 事件总线
+
+`MusicAssistant` 上的订阅表 `mass.py:_subscribers` 是一个 `set`，元素是四元组 `(cb_func, event_filter, id_filter, is_coro)`。`signal_event(event, object_id, data)` 遍历订阅者，按事件类型集合和对象 ID 集合过滤，回调若是协程就用 `create_task` 派发。它先检查 `self.closing`，关停期间的信号直接丢弃。
+
+`music_assistant_models.enums.EventType` 目前有 32 个成员，覆盖面比"播放器与队列"宽：播放器侧 `PLAYER_ADDED` / `PLAYER_UPDATED` / `PLAYER_REMOVED` / `PLAYER_CONFIG_UPDATED` / `PLAYER_DSP_CONFIG_UPDATED` / `PLAYER_OPTIONS_UPDATED` / `PLAYER_SLEEP_TIMER_UPDATED`；DSP 侧 `DSP_PRESETS_UPDATED` / `DSP_IRS_UPDATED`；队列侧 `QUEUE_ADDED` / `QUEUE_UPDATED` / `QUEUE_ITEMS_UPDATED` / `QUEUE_TIME_UPDATED`；曲库侧 `MEDIA_ITEM_ADDED` / `MEDIA_ITEM_UPDATED` / `MEDIA_ITEM_DELETED` / `MEDIA_ITEM_PLAYED` / `PLAYLOG_UPDATED`；Provider 与任务侧 `PROVIDERS_UPDATED` / `PROVIDER_EVENT` / `SETUP_FLOW_UPDATED` / `SYNC_TASKS_UPDATED` / `TASKS_UPDATED` / `MUSIC_SYNC_COMPLETED`；仪表盘与核心侧 `DASHBOARD_SHOW` / `DASHBOARDS_UPDATED` / `DASHBOARD_SESSIONS_UPDATED` / `CORE_STATE_UPDATED` / `AUTH_SESSION` / `SHUTDOWN`。
+
+媒体条目事件的 `object_id` 用条目的 `uri`，前端因此可以只订阅自己正在展示的条目。`mass.py` 里有一条日志策略值得一提：`QUEUE_TIME_UPDATED` 只在 verbose 级别下记录，理由是"太吵"——这条能看出事件总线的真实压力分布：播放进度是最高频的事件。
+
+这套设计解释了 MA 的 Web UI 为什么不需要轮询：状态变化由服务端推送，而不是前端拉取（pull）。长跑服务端的收敛靠事件回调完成。
+
+## 存储层：表结构与内存自适应 PRAGMA
+
+`music_assistant/constants.py` 里的 `DB_TABLE_*` 常量是表清单的权威来源。除了每种媒体类型一张表（`tracks`、`albums`、`artists`、`playlists`、`radios`、`podcasts`、`audiobooks`），还有几张承担关系与历史：
+
+| 表 | 作用 |
+| -- | ---- |
+| `provider_mappings` | 每条媒体项的每条 Provider 映射一行，跨源识别的落点 |
+| `external_id_lookup` | 外部标识符到媒体项的反查索引，删除条目时要显式清理 |
+| `album_tracks` / `track_artists` / `album_artists` / `audiobook_artists` | 多对多关系表，带碟号与曲号 |
+| `genres` / `genre_media_item_mapping` / `genre_media_item_exclusion` | 流派独立成表，并且有"排除"表用来人工修正归类 |
+| `playlog` | 每次成功播放一条记录，支撑最近播放、继续收听与自动播放 |
+| `loudness_measurements` | 每首曲目的响度测量，供归一化使用 |
+| `audio_analysis` / `audio_analysis_failures` | 分析结果与失败记录（含重试时间） |
+| `settings` / `cache` / `thumbnails` | 配置 KV、缓存、缩略图 |
+
+媒体类型控制器全部继承 `MediaControllerBase[ItemCls]`，用泛型参数把表名和媒体类型绑在一起，所以新增一种媒体类型不需要重写查询骨架。
+
+删一条媒体项时能看到没有外键级联的代价：`remove_item_from_library` 依次删本体行、`provider_mappings`、`external_id_lookup`、`playlog`（既删 `library` 侧记录也按每个 Provider 映射删对应记录）、以及按 provider domain 和 instance 两个键删 `audio_analysis`。关系完整性由代码负责，这换来了读侧查询的自由，也换来了"改数据库模式（schema）要同步改删除路径"的维护负担——`controllers/music/migrations.py` 里那些 `PRAGMA table_info` 与 `PRAGMA index_list` 检查就是为此存在的。
+
+数据库走 `aiosqlite`，单文件。连接初始化时设一组 PRAGMA：`analysis_limit=10000`、`locking_mode=exclusive`、`journal_mode=WAL`、`journal_size_limit=6144000`、`synchronous=normal`、`temp_store=memory`，再按机器内存算 `cache_size` 与 `mmap_size`。
+
+内存这一处是它最值得读的地方。`get_sqlite_memory_settings()` 按总内存分档：16 GB 以上给 1000 MiB 页缓存、12 GB 以上 500 MiB、8 GB 以上 128 MiB、4 GB 以上或内存未知 64 MiB、2 GB 以上 32 MiB，再往下 16 MiB 并把 mmap 压到 256 MiB。mmap 上限一律不超过 2 GiB——注释解释了两个原因：SQLite 编译期的 `SQLITE_MAX_MMAP_SIZE` 本来就把请求截到约 2 GiB，所以早期那个 30 GB 的写法实际只生效了约 2 GiB；而超出这个窗口的部分只能靠页缓存热着，所以大内存机器反而要把缓存调大。内存判不出来时（例如 Windows）选择"fail open"给满配。
+
+`VACUUM` 还有一段独立处理：它会在临时存储里重建整个库，而 `temp_store=memory` 意味着这份拷贝全在内存里，大库上小内存设备直接被 OOM 掉。所以执行 `VACUUM` 前把 `temp_store` 切成 `FILE`，结束再切回。配套的是 `mass.py` 在 `__init__` 里 `os.environ.setdefault("SQLITE_TMPDIR", storage_path)`，源码注释写明理由——SQLite 默认把排序临时文件和 VACUUM 重建拷贝放 `/tmp`，而 Home Assistant OS 的 `/tmp` 是内存盘，必须改到数据卷；用户已经设了 `SQLITE_TMPDIR` 就不覆盖。
+
+## 任务流示例：一首歌从 Spotify 走到两个房间
+
+把前面的抽象串成一条真实路径。假设客厅 Sonos 和厨房 HomePod 已经归并成一个组，用户在 Spotify 里点了一首《Karma Police》，随后切到本地 NAS 上《OK Computer》里听过一半的那首：
+
+```text
+[1] 前端取曲目：music/tracks/get
+    MusicController → TracksController
+    按 provider_mappings 定位到 library 内部条目，返回带全部映射的 Track
+    （映射与 external_ids 都是 base_query 里 JSON_GROUP_ARRAY 聚出来的列）
+
+[2] 前端排队列：player_queues/play(queue_id=客厅组, items=[...])
+    PlayerQueuesController 写入 PlayerQueueData.items
+    队列事件 QUEUE_ITEMS_UPDATED 推给所有订阅者
+
+[3] StreamsController 取流
+    Spotify Provider 先 acquire_stream_slot（并发配额）
+    get_stream_details() 给出源地址与编码
+    FFmpeg 子进程解码为 PCM → AudioBuffer.fill()（模式 SEEKABLE）
+    loudness_analysis / smart_fades 作为旁路读者读同一路缓冲，不改变数据
+
+[4] 生成流地址：http://<host>:8097/...?session_id=...
+    交给组内每台播放端，各自 GET，不经过 TLS
+
+[5] 组内同步由路线决定
+    sync_group：选 leader，成员跟随，音频仍是各自拉
+    universal_group：给成员同一份 UGP 流，允许不严格对齐
+
+[6] 用户切到本地 FLAC
+    PlayerQueuesController.next() → 换 current item，queue_id 不变
+    源流结束前 60 秒已预填下一首缓冲（filesystem_local Provider）
+    session_id 换新，播放端重新拉流
+    AirPlay / Sonos 协议细节没有被动过
+```
+
+注意第 3 步里那次"旁路读"：分析结果来自正在播放的同一路 PCM，`read_chunk_for_analysis()` 明确不消费数据，读者落后时抛异常而不是回退，这样缓冲不会因为分析慢而阻塞播放。Smart Fades 的节拍信息因此是边播边算出来的，不是入库前必须跑完的前置条件。
+
+## 关联仓库与生态位置
+
+`music-assistant` 组织下与中枢直接相关的仓库有四个职责清晰的成员：`server` 是本文对象；`frontend` 是 Vue 3 写的前端源码，**以 PyPI 包 `music-assistant-frontend` 的形式**被 `server` 的 `pyproject.toml` 钉版本安装（当前 `2.17.312`），服务端启动时把这批静态资源吐出去；`client` 是调用服务端 API 的 Python 客户端库，自动化脚本和第三方集成走它；`models` 存放 `music_assistant_models` 包，服务端与客户端共用的数据模型和枚举——前文 `ProviderType`、`EventType`、`ExternalID` 都定义在那里，这也解释了为什么它的版本号会独立于服务端演进。`home-assistant-addon` 是 Home Assistant 的加载仓库，`support` 是集中收 issue 与功能请求的地方。
+
+前端与后端的耦合是硬钉的：升级前端不需要动服务端，但服务端里那个版本号决定了你实际看到哪一版界面。读 issue 时如果发现界面行为和文档不一致，先确认这两者的版本差。
+
+MA 是 Open Home Foundation 名下项目，产品定位明确偏向 Home Assistant 生态。README 的原话是它可以完全独立运行，但实际是为与 HA 并肩使用、以自动化为目的设计的，因此推荐的运行形态就是把它跑成 HA 的 app。仓库这一侧的接口也朝着这个方向：`hass` 作为 plugin Provider 读取 HA 里设备的 `media_player` 实体、按实体能力决定能下发哪些控制，并靠 MAC 地址把 HA 侧的设备与实体对应起来；`hass_players` 则把 HA 已接管的播放器纳进 MA 自己的编排。至于 MA 在 HA 那一侧被暴露成什么实体，属于 HA core 的集成实现，不在本文取证范围内。
 
 ## 与 Plex / Jellyfin / Navidrome / Symfonium 的边界
 
 | 维度 | Music Assistant | Plex / Jellyfin / Navidrome | Symfonium / Substreamer |
-| ---- | ---------------- | ---------------------------- | ------------------------ |
-| 核心目标 | 跨源曲库合并 + 跨端播放编排 | 单源（本地文件）媒体库管理 + 流式服务 | 远程控制现有音乐系统 |
-| 主要库来源 | Spotify / Tidal / Qobuz / YT Music / 本地 / 电台 | 本地 NAS / Plex 服务商目录 | 取决于被控对象 |
-| 玩家协议 | Sonos / AirPlay / Chromecast / HA / Snapcast / Chromecast 全覆盖 | 主要靠 DLNA / 自有客户端 / Plexamp | 通常只对接一家 |
-| 同步多房间 | 强（universal_group + snapcast） | Plexamp / Jellyfin 有但偏弱 | 依赖被控 |
-| 自托管要求 | 必须有一台常在线设备（Pi / NAS / NUC），无云依赖 | 必须有服务端 | 通常无（云客户端） |
-| 主要客户端 | 自家 Web UI + HA + Companion App | Plexamp / Infuse / Jellyfin Mobile | 自家 Android / iOS App |
-| 元数据来源 | 多 provider 并行补全 | Plex / MusicBrainz | 取决于被控对象 |
-| 学习成本 | 高（要理解 provider / player / queue 三层） | 中（库结构 + 转码） | 低 |
+| ---- | --------------- | --------------------------- | ----------------------- |
+| 核心目标 | 多源曲库合并 + 跨端播放编排 | 单源（本地文件）媒体库管理与流送 | 远程控制已有音乐系统 |
+| 曲库来源 | 流媒体订阅 + 本地文件 + 电台 | 本地 NAS / 自有库 | 取决于被控对象 |
+| 播放端协议 | Sonos / AirPlay / Chromecast / DLNA / Snapcast / MPD / HA 实体 | 主要靠各家客户端与 DLNA | 通常只对接一家 |
+| 多房间 | 三种路线（见上文），能力各异 | Plexamp / Jellyfin 有各自实现 | 依赖被控对象 |
+| 部署前提 | 常在线设备（Pi / NAS / NUC），无云依赖 | 需要服务端 | 通常不需要自建 |
+| 安装形态 | 仅 Docker 与 HA app | 有轻量包与容器多种选择 | 应用商店 |
+| 元数据 | 多个 Metadata Provider 并行补全 | 各自内置一套 | 依赖被控对象 |
+| 心智负担 | Provider / Player / Queue 三层 | 库结构 + 转码 | 低 |
 
-这张表能得出的边界判断很直接：
+从这张表能得出的判断比较直接：
 
-- **如果你的曲库 90% 在本地 NAS，你需要的可能是 Plex / Jellyfin / Navidrome + Plexamp，而不是 MA**。MA 在单源场景里增加了一层 Provider 抽象，没有收益。
-- **如果你订阅了多家流媒体，又想统一管理本地 + 云端，那 MA 是当前唯一同时干这两件事的方案**。这条边界是 Plex 系产品结构性做不到的——它们没有 Spotify 适配器。
-- **如果你想要的是"手机 App 远程控制家里 Sonos"，Symfonium 是更轻的选项**。MA 是服务端 + 编排，Symfonium 是 controller，互相不替代。
-- **如果你已经在用 Home Assistant 做自动化**（例如"日落时切到厨房音箱""出门自动暂停"），MA 是 HA 生态里唯一一个能直接当 media_player 实体被调度的曲库层。这条集成度是其它方案给不了的。
+曲库九成在本地 NAS、音箱也只认一家生态，那 Plex / Jellyfin / Navidrome 加它自己的客户端更省事。MA 在这类场景里多出来的 Provider 抽象不提供收益，只有维护成本。
+
+订阅多家流媒体、同时有一整库本地 FLAC、还想统一管理——在本文对比的这几个方案里，只有 MA 同时做这两件事。这不是功能差距，是结构差距：Plex 系产品没有 Spotify 适配器，也没有把"来源"和"播放端"当成两条正交轴来建模。没对比过的方案不等于不存在，但要多一家可用，它得先有同一套 Provider 分层。
+
+只需要"手机上远程控制家里的 Sonos"，Symfonium 更轻。MA 是服务端加编排，Symfonium 是控制器，两者不互相替代。
+
+已经在用 Home Assistant 做自动化（日落切厨房、出门暂停），MA 与 HA 之间有现成的双向通路：`hass_players` 把 HA 管理的播放器纳进 MA 的编排，`hass` 反过来读 HA 的设备与 `media_player` 实体、按 MAC 地址把两边对上，控制能力按实体实际支持的项来定。加上推荐运行形态本身就是 HA app，这份集成的完成度是选它最实际的理由。
 
 ## 部署形态与运行约束
 
-README 把这点写得很直接：**MA 不能作为 PyPI 包安装**。它的运行依赖 ffmpeg、几个 OS 级二进制以及 torchaudio、aiortc 等需要本地编译的包，所以**唯一官方的两种部署形态是 Docker 容器和 Home Assistant Add-on**。这不是设计偷懒，是 Provider 生态里有几条线（AirPlay RAOP、Chromecast、MPT、Sonos S2 协议栈）必须跑在常在线设备上，PyPI 形态的"按需启动"无法满足。
+README 的说法没有任何含糊：官方支持的运行方式只有两种，**Home Assistant app（推荐）**与 **Docker 容器**（镜像 `ghcr.io/music-assistant/server`）。原因是服务端依赖操作系统层面的东西——要求 6.1 以上的 ffmpeg 加上一组特定编解码、原生库（jemalloc、CIFS/NFS 客户端库）和若干随镜像打包的二进制，pip 装不齐这些，因此**服务端不发布到 PyPI**。
 
-服务端自己跑两个 HTTP 服务：API 服务（端口 8095，带 SSL）和流服务（端口 8097，内网无 SSL）。PI 4 / Intel NUC / NAS 都行，但 README 强调"always-on device"——**这不是一个装在笔记本上的工具**，是装在角落里的家庭基础设施。
+从源码跑是开发路径，README 列了明确前提：Python 3.14 与 ffmpeg 6.1 以上由你自己提供，然后 `scripts/setup.sh` 建虚拟环境，`python -m music_assistant --log-level debug` 起服务，监听 8095。`pyproject.toml` 里也定义了 `mass` 这个命令行入口，但它面向的是开发与调试，不是发行渠道。
 
-## 采用顺序与适用边界
+端口有三个，职责不同：8095 是主 Webserver / API，带 TLS；8094 是 HA Ingress（`INGRESS_SERVER_PORT`）；8097 是流服务，只在局域网内、无 TLS 无认证。反向代理时只暴露 8095，把 8097 留在内网是设计假设而不是疏漏——一旦把流服务暴露到公网，那是一条无认证的音频出口。
 
-按这套边界判断，落地顺序建议是这样的：
+README 对硬件的表述是"需要跑在常在线设备上，比如 Raspberry Pi、NAS、Intel NUC 之类"。结合上文几处内存相关的机制（重模型常驻、按 RAM 分档的缓冲与页缓存、VACUUM 的临时文件重定向），可以给出更具体的判断：内存是 MA 的第一约束，不是 CPU 也不是磁盘。2 GB 内存的机器上，缓冲、页缓存和分析模型会互相挤。
 
-1. **先确认你的播放端协议谱**。如果你家全是 HA 接入的智能音箱 + 一两个 Sonos，MA 一上来就能打满。如果是 Chromecast-only + DLNA，需要先确认 Chromecast provider 能识别你的设备型号（部分老 Cast 设备走 Universal Player 兜底）。
-2. **先把本地 NAS 接进来**。`filesystem_local` / `filesystem_smb` / `filesystem_nfs` 是最低成本的接入点。库扫描一晚跑完，第二天就能用。
-3. **再接你最常用的流媒体**。Spotify 的 PKCE 授权流（`pkce_auth_flow`）做得最完善，先用它走通授权链路。Qobuz / Tidal / Apple Music 按你的订阅加。
-4. **再做跨房间同步**。先单房间用一段时间，再开 `universal_group` 或挂 Snapcast。同步组对网速要求高，老 Wi-Fi 路由撑不住三路同步。
-5. **最后再考虑 HA 自动化**。这一步是"锦上添花"而不是入口。如果你不用 HA，MA 仍然完全可用（自带 Web UI + Companion App）。
+## 常见误区与排查
 
-不推荐的情况：
+下面每一条都是装 MA 时容易踩的，左边是常见假设，右边是源码或清单里的实际情况。
 
-- 你只有一台音箱、一份订阅、一份本地库——MA 是过度工程。Spotify Connect + Plexamp 已经够。
-- 你想要一个轻量级"远程控制"方案——MA 是 server，你不需要 server，只需要 controller，考虑 Symfonium。
-- 你不想有任何"常在线设备"——MA 的设计前提就是长跑服务端，没法妥协。
-- 你接受不了服务端绑定 Docker / HA Add-on（不接受裸 Python 跑）——MA 不适合你，社区里有 Plex / Navidrome 这类纯 Python / Go 的轻量替代。
+| 常见假设 | 实际情况 | 依据 |
+| -------- | -------- | ---- |
+| `pip install` 就能跑起来 | 服务端不发布到 PyPI，装不到不是故障 | README 列出的缺失项是 ffmpeg 6.1 以上、jemalloc 与 CIFS/NFS 客户端库、若干随镜像打包的二进制 |
+| 文件名差不多就能自动合并 | 不做模糊匹配，只有规范化后的精确名比对 | `_get_library_item_by_match` 第 5 步用 `search_name` / `search_sort_name` 精确查 |
+| 曲目没合并是 bug | 更可能是标签缺标识符 | 第 4 步靠 MBID / ISRC / AcoustID 等外部标识符缩小候选，缺了就只能走名称精确匹配 |
+| 把 AirPlay 和 Sonos 塞进 `sync_group` 就会同步 | 成员协议与当前 leader 不兼容时直接不注册 | `sync_group/player.py` 的兼容性分支与 `allowed_members` 配置项 |
+| `universal_group` 是多房间同步方案 | 它的清单写明"播放相同音频，但不保证同步"，且处于 `experimental` | `universal_group/manifest.json` |
+| Snapcast 精度最高所以选它 | 该 Provider 的 `stage` 是 `unmaintained` | `snapcast/manifest.json` |
+| YouTube Music、Plex 和 Spotify 一样稳 | 前两者的 `stage` 是 `beta` | 各自 `manifest.json` |
+| 接了两台 Plex 后搜索结果"重复" | 本地型 Provider 的 `is_streaming_provider` 为假，搜索会查所有实例 | `music_provider.py` 该属性的 docstring |
+| 多房间同时点歌第三路卡住是死锁 | 是槽位在排队，带等待超时 | `MusicProvider.acquire_stream_slot` 与 `max_concurrent_streams` |
+| 设备插电就该出现 | 依赖 mDNS / SSDP 广播，网络隔离时静默失败 | 发现控制器由 Provider 在清单里声明 `mdns_discovery` / `upnp_discovery` 订阅 |
+| 库整理后 `VACUUM` 失败是数据库损坏 | 小内存机器上更可能是临时空间问题 | `database.py` 在 `VACUUM` 前切 `temp_store=FILE`，`mass.py` 把 `SQLITE_TMPDIR` 设到数据卷 |
+| 把 8097 一起反代出去更省事 | 那是一条无 TLS、无认证的音频出口 | `controllers/streams/README.md` 的设计前提就是只在局域网可达 |
+| 照 `controllers/streams/README.md` 找 `analyzer.py` | 该文件已不在目录里，仓库自带文档会滞后 | 以 `controllers/streams/smart_fades/` 的实际内容为准 |
 
-## 结尾回到判断
+三条排查动作值得单独说。
 
-MA 不是"又一款音乐 App"。它是**一个把外部异构音乐世界翻译成统一内部模型、并把这个模型推送到任意可控播放端的服务端**。这套设计的承重点在四方：三方架构、Provider 抽象、播放队列模型、流式管线——四点合起来决定了 MA 在家庭音响场景里的护城河：跨源合并、跨端同步、跨代切换。任何把这四点抽走只看 feature list 的评测，都会低估它。
+**分组不生效时先看 leader。** 同步组的行为取决于 leader 选了哪种协议，成员是否被接受是按它判断的。手工同步（在 UI 里把播放器勾在一起）与同步组不是一回事：前者临时、停止即散、队列归 leader；后者是常驻实体、队列归组。
 
-反过来，如果你的场景不需要这四点，MA 也是一个过重的选择。判断它该不该用的最快标准是：**你愿不愿意为"换一台音箱不需要重建队列、换一家订阅不需要重新整理曲库"这件事长期维护一个服务端？**愿意就上，不愿意就用更轻的方案。
+**曲目该合并没合并时查标识符，不要改名字。** 用 MusicBrainz Picard 这类工具把 MBID 与 ISRC 写进标签，比改文件名有效——名称匹配要求规范化后完全一致，而标识符匹配还有 `_confirm_library_candidate` 复核这一层。反过来说，如果两条记录本就不是同一个录音（同一 ISRC 出现在再版与合辑里是常态），复核会拒掉，这是正确行为。
 
----
+**元数据缺失时注意是哪个 Metadata Provider 挂了。** 十家 Metadata Provider 是并行补全、按优先级重试的，单个来源失效的表现往往是"某些字段一直空"而不是报错。
 
-## 自测题
+## 采用顺序与不适用情况
 
-1. **Music Assistant 的三方架构中，四类 Provider 各自承担什么责任？**
-<details>
-<summary>查看答案</summary>
+按前面的边界，落地顺序建议这样排：
 
-- **Music Provider**：把外部曲库映射成统一的 `Track` / `Album` / `Artist` 等媒体对象。
-- **Player Provider**：发现并控制一台真实或虚拟的播放器。
-- **Metadata Provider**：补全 artwork、lyrics、MBID、loudness 等附加信息。
-- **Plugin Provider**：跨 Provider 的能力外挂，不属于上面三类。
+1. **先确认播放端协议谱。** 家里全是 Home Assistant 已接管的音箱加一两台 Sonos，MA 一上来就能打满。只有老 Chromecast 或纯 DLNA 设备时，先确认它们能否被发现、是否需要落到 `universal_player` 包装上（这是设计给"没有厂商 Provider"的设备的兜底路径）。
+2. **把本地 NAS 接进来。** `filesystem_local` / `filesystem_smb` / `filesystem_nfs` 都是 `stable`，是成本最低的接入点。整库扫描是一晚的事，第二天就有一个能用的库。
+3. **再接一家流媒体。** Spotify 与 Tidal、Qobuz、Apple Music 都是 `stable` 且 `multi_instance`，Spotify 的 PKCE 授权流实现得完整（`setup_flow.py` 里 `_pkce_authenticate` 与 `pkce.generate_pkce_pair()`，并且处理了旧 refresh token 的一次性迁移）。`ytmusic` 和 `plex` 目前是 `beta`，接线前先想清楚能不能接受。
+4. **再决定多房间路线。** 先单房间用一段时间，确认队列、DSP、响度归一化都符合预期，再动分组。选哪条路线按"三条路线"那一章的取舍来：兼容协议要真同步走 `sync_group`，异构设备能一起响就行用 `universal_group`（记住它是 `experimental`），要毫秒级再考虑 Snapcast（记住它是 `unmaintained`）。
+5. **最后接 Home Assistant 自动化。** 这一步是收益放大，不是入口。不用 HA 也完全可跑，自带前端。
 
-</details>
+不建议上的情况：
 
-2. **为什么 PlayerQueue 是服务端对象而不是播放端对象？这带来了哪两个重要后果？**
-<details>
-<summary>查看答案</summary>
+- 一台音箱、一份订阅、一份本地库——MA 是过度工程，Spotify Connect 或厂商自己的 App 已经够。
+- 想要轻量远程控制方案——你要的是控制器，不是服务端。
+- 不接受任何常在线设备——"长跑服务端"是 MA 的设计前提，没有妥协空间。
+- 不接受 Docker 或 HA app 这两种形态——服务端不发 PyPI 包，裸 Python 跑是开发路径，得自己补 ffmpeg 与原生库。
+- 内存只有 2 GB 出头——不是不能跑，是要主动把缓冲调到 `MINIMAL`、把音频分析类 Provider 关掉，收益会明显缩水。
 
-PlayerQueue 是服务端对象，它至少包含：当前播放项、下一项、循环模式、随机模式、crossfade 配置、当前播放进度、上次播放时间戳。**当队列切换播放器时，队列不重建**——`queue_id` 不变，只是 `current_player_id` 改了。
+## 结尾判断
 
-两个重要后果：
-1. **多房间同步**：`universal_group` Provider 和 `snapcast` Provider 都基于这条假设。
-2. **跨来源接续**：用户可以在一份队列里同时塞 Spotify 的 Discover Weekly、本地 NAS 的一首 FLAC、和一台电台——它们都只是不同 `provider_mappings` 下的 `queue_item_id`。
+MA 承担的是三层活：把异构曲库翻译成一套内部模型、把播放队列从音箱上摘下来交给服务端、把音频以任意播放端能接的形式交出去。跨源接续、跨端切换、跨协议归并这三件事能不能做，取决于这三层是否同时成立——任何一层抽掉，剩下的就只是一个功能列表，评测里那种"MA 也就是能连很多音箱"的判断正是只看了最外面一层。
 
-</details>
+它贵在哪也很具体：一个必须长跑的服务端、按机器内存分档的缓冲、常驻的重模型、没有外键级联因而需要人工维护的关系表、130 个成熟度参差不齐的适配器。
 
-3. **StreamsController 为什么使用独立 HTTP 端口（默认 8097），且不带 SSL、不带认证？**
-<details>
-<summary>查看答案</summary>
-
-理由很朴素：
-1. 很多嵌入式音箱 SSL 握手资源紧张；
-2. 流式端只跑在内网，加密没意义；
-3. 播放器不能要求用户敲 OAuth 拿 token 才能听歌。
-
-Session ID 替代认证：每条流地址带一个服务端签发的 session_id，服务端校验 session 是否还有效。旧 session 一旦失效，对应地址立刻 401。
-
-</details>
-
-4. **Track 标准化过程中，如何把同一首歌在不同来源（Spotify、Tidal、本地 NAS）中的不同 ID 识别为同一个内部对象？**
-<details>
-<summary>查看答案</summary>
-
-`TracksController` 是这么做的：
-1. **入库前先匹配**：`add_item_to_library` 进来一首 `Track`，先查 `provider_mappings` 表，再查 `external_ids` 表（MBID / ISRC / MusicBrainz 等），再退回到名字+艺人模糊匹配。命中已有 library item 就更新，不命中才新插一行。
-2. **Provider Mappings 用 JSON 在 SQLite 里平铺**：`TracksController.base_query` 里直接 `JSON_GROUP_ARRAY` 把所有映射压成一个 JSON 字段塞在行尾。这个选择对很多人来说反直觉——JSON 字段不应该是规范化的反例吗？答案是：在 SQLite 里，规范化要靠外键 + 多表 join，而 Provider Mappings 的生命周期完全跟着 Track 走，几乎没有独立的写入路径，平铺 JSON 让单行查询可以一次拿完，少掉一半 join 的代价。
-3. **`match_provider_instances` 把入库时的临时映射缝起来**：每条入库的 `Track` 都会在所有 Music Provider 实例上做一次"按 external_id 反查"，把潜在的同源记录补到 `provider_mappings` 里。这一步是异步的，在 library sync 后台任务里执行，不阻塞首屏。
-
-</details>
-
-5. **AudioBuffer 的 SEEKABLE 和 ROLLING 两种模式分别适用于什么场景？**
-<details>
-<summary>查看答案</summary>
-
-- **SEEKABLE 模式（单曲）**：内部用 `collections.deque` 维护一组 1 秒 PCM chunk。当用户点快进时，先检查目标位置是否在 buffer 范围内（20 秒内的 forward seek 直接等 producer 把数据写进来），超出范围才触发重 fetch。这条策略让"在歌曲里随便跳"这件事的代价极低——大多数跳转其实都在 20 秒窗口内。
-- **ROLLING 模式（电台、不可 seek 源）**：FIFO 短缓冲（~15 秒），只给消费者按顺序取。这种模式下用户不能跳到"30 秒前"，但代价是 buffer 占用很小，资源开销低。
-
-</details>
+判断该不该用，最快的一条是：**你愿不愿意长期维护一台常在线机器，来换"换音箱不用重建队列、换订阅不用重整理曲库"。** 愿意，这套架构就值；不愿意，更轻的方案在等着，而且它们更合适。
 
 ---
 
-## 练习
+## 五个自测问题
 
-### 练习 1：设计一个多房间同步方案
+1. **`ProviderType` 实际有几类，`audio_analysis` 为什么要单独成一类而不是挂在 `plugin` 下？**
+<details>
+<summary>参考答案</summary>
 
-**场景**：你有一个客厅 Sonos（S2 协议）、一个厨房 HomePod（AirPlay 协议）、一个书房 Snapcast 客户端。你想让这三台音箱同时播放同一首歌，且可以统一控制音量、播放/暂停。
+`ProviderType` 枚举有 7 个成员，其中 `CORE` 与 `UNKNOWN` 供内部与兜底；清单里实际使用五类：`music`（61）、`player`（28）、`plugin`（26）、`metadata`（10）、`audio_analysis`（5）。
 
-**任务**：
-1. 画出 Music Assistant 中这个场景的系统架构图（标注 Provider、Controller、流式管线）。
-2. 解释为什么 `PlayerQueue` 的设计让这个场景成为可能。
-3. 比较 `universal_group` Provider 和 `snapcast` Provider 的同步精度和部署复杂度。
+音频分析单列的原因在于它的输入不是外部服务而是**流经管线的 PCM**：它由 `AudioAnalysisProvider` 基类驱动，用 `start_analysis` / `process_pcm_chunk` / `finalize` 消费实时音频或后台扫描的同一套钩子，还带着 `analysis_version`、`has_unloadable_models` 这类与模型生命周期绑定的机制。这些语义与"往流里叠效果"的 `plugin` 不是一回事。
+
+</details>
+
+2. **一首歌在 Spotify 与本地 FLAC 中被认成同一个条目的判定顺序是什么？哪一步最容易被误判，代码用什么挡住？**
 
 <details>
 <summary>参考答案</summary>
 
-1. 架构图：
-   - Music Provider：Spotify / `filesystem_local`
-   - Player Providers：
-     - `sonos` Provider → Sonos S2 协议
-     - `airplay` Provider → AirPlay 协议
-     - `snapcast` Provider → Snapcast 协议
-   - PlayerQueue：服务端对象，`queue_id` 不变
-   - StreamsController：独立 HTTP 服务（端口 8097），AudioBuffer（PCM）→ FFmpeg → 流地址（session ID）
-   - UniversalGroupPlayer：把三个 Player 合并成一个虚拟播放器
+`_get_library_item_by_match` 依次尝试：`library` 直返 → `ItemMapping` 按 provider + item_id 精查 → 按 `provider_mappings` 集合查 → 按外部标识符逐个查（候选需复核）→ 按规范化名称精确匹配（候选需复核）→ 返回 `None` 走新增。
 
-2. `PlayerQueue` 是服务端对象，队列不重建——`queue_id` 不变，只是 `current_player_id` 改了。这让"把 Sonos 上的队列搬到 HomePod 继续放"这件事，是改一行 `queue_id` 而不是做协议迁移。
-
-3. 比较：
-   - `universal_group`：MA 自带的轻量方案，部署更简单，但同步精度低一些，依赖服务端和各播放器之间的网络抖动容忍。
-   - `snapcast`：把 PCM 推给一个外部 Snapserver，由 Snapserver 通过局域网 TCP 流同步给所有 Snapclient。同步精度更高（毫秒级），但需要单独维护一个 Snapserver 实例。
+最易误判的一步是外部标识符：ASIN、条形码、ISRC 会被复用（`ExternalID.is_unique` 为假），`_EXTERNAL_ID_PRIORITY` 把它们排到 20–22，MusicBrainz 系列排 0–3；每个候选都要过 `_confirm_library_candidate` 二次确认才接受。另外 MA **不做**名字模糊匹配，第 5 步是规范化后的精确比对。
 
 </details>
 
-### 练习 2：分析 Track 标准化的边界情况
-
-**场景**：你有一首本地 NAS 上的 FLAC 文件（`filesystem_local://track/abc.flac`），对应的 Spotify 上的同一首歌（`spotify:track:3G5YJ7X1PzG3CfQZ7V9iyg`）。你已经把这首 Spotify 上的歌添加到 MA 的曲库，但本地 NAS 上的文件还没有入库。
-
-**任务**：
-1. 描述当你把本地 NAS 上的文件添加到 MA 曲库时，`TracksController.add_item_to_library` 会如何匹配这首曲子。
-2. 如果匹配成功，`provider_mappings` 表会如何变化？
-3. 如果匹配失败（例如，本地文件的元数据不完整，无法匹配到 MBID / ISRC），你会如何手动修正？
+3. **队列为什么能换播放端而不重建？服务端记录和对外快照的差别在哪？**
 
 <details>
 <summary>参考答案</summary>
 
-1. `add_item_to_library` 会先查 `provider_mappings` 表（看是否已经有这首曲子的映射），再查 `external_ids` 表（MBID / ISRC / MusicBrainz 等），再退回到名字+艺人模糊匹配。如果这首曲子在 Spotify 上已经入库，那么 `provider_mappings` 表里应该已经有 `spotify:track:3G5YJ7X1PzG3CfQZ7V9iyg` 这个映射。`add_item_to_library` 会命中这个已有 library item，然后更新它的 `provider_mappings`，把 `filesystem_local://track/abc.flac` 也加进去。
+队列与播放器是松耦合的：每个播放器关联一个队列，但队列状态由服务端在 `PlayerQueueData` 里持有，切换时队列 ID 不变，只是挂载点变了。
 
-2. `provider_mappings` 表会新增一行，把这个本地文件的 ID 也映射到同一个 `library_item_id` 上。这样，内部就全靠 `library_item_id` 这个单一 ID 索引，外加两个 `provider_mappings` 条目。
+差别在数据量与可见性：`PlayerQueueData` 含条目列表、动态源条目、用户排入的种子媒体项、计入播放的专辑、用户 ID、autoplay / crossfade 覆盖，以及一批重启即失效的运行时字段（`session_id`、`flow_*`、`next_item_id_enqueued`、`last_served_item_id`）。对外的 `PlayerQueue` 快照只带条目数量，并且有防抖写盘、只在条目变更时写较重的条目负载。
 
-3. 如果匹配失败，你可以：
-   - 手动编辑本地文件的元数据（例如，用 MusicBrainz Picard 自动匹配 MBID）。
-   - 在 MA 的 Web UI 里手动合并这两首曲子（如果 MA 支持这个功能）。
-   - 手动修改 `provider_mappings` 表（不推荐，除非你非常熟悉 MA 的数据库 schema）。
+</details>
+
+4. **流服务为什么独立占一个端口，还不做 TLS 和认证？那条"无认证"的边界在哪里？**
+
+<details>
+<summary>参考答案</summary>
+
+三个理由写在 `controllers/streams/README.md`：嵌入式音箱 TLS 握手资源紧张；流服务只在内网跑，加密没有意义；播放端不可能为了取流先去完成一次 OAuth。
+
+替代认证的是地址里的 session ID：服务端签发、每次请求校验、失效即拒。边界是"它只在局域网内可达"——反向代理时只暴露 8095，把 8097 推到公网等于开一条无认证音频出口。
+
+</details>
+
+5. **"几个房间一起响"和"同步响"在 MA 里分别由谁负责？选错了会怎样？**
+
+<details>
+<summary>参考答案</summary>
+
+一起响：`universal_group`，manifest 明写"play the same audio (but not in sync)"，且 `stage` 是 `experimental`；它给成员同一份 UGP 流，靠会话生命周期管理成员，不承诺对齐。
+
+同步响：`sync_group`（稳定、内置、不可禁用），要求成员协议兼容、自动选 leader、队列归组；或各厂商原生 grouping；或 Snapcast（毫秒级，但 `stage` 是 `unmaintained`）。
+
+选错的典型症状：把异构协议设备放进 `sync_group` 会因兼容性检查失败；指望 `universal_group` 做严格对齐会听到回声感，因为它是同一份音频各自拉。
 
 </details>
 
 ---
 
-## 进阶路径
+## 上手前的四项验证
 
-如果你已经读懂了本文，可以进一步关注这些方向：
+决策之前值得亲手确认的四件事，都不需要接完整套设备：
 
-1. **深入 Provider 实现**：选一个 Music Provider（例如 Spotify），阅读它的 `__init__.py` 和 `get_track` / `search` 等方法，理解它如何把 Spotify Web API 的数据转换成 MA 的内部 `Track` 对象。
-2. **调试 Player Provider 的发现流程**：打开 DiscoveryController 的日志，观察一台 Sonos 音箱是如何被 mDNS 发现、然后被 `sonos` Provider 注册为 Player 的。
-3. **修改 AudioBuffer 的参数**：尝试修改 `SEEKABLE` 模式的 buffer 大小（默认 20 秒），观察对"快进"操作延迟的影响。
-4. **添加一个新的 Player Provider**：尝试写一个最简的 Player Provider（例如，控制一个 GPIO 连接的蜂鸣器），实现 `play()` / `pause()` / `volume_set()` 等方法。
-5. **分析数据库性能**：用 `sqlite3` 命令行工具分析 `tracks` 表和 `provider_mappings` 表的查询计划，理解为什么 MA 选择用 JSON 字段平铺 Provider Mappings。
-6. **集成到 Home Assistant**：把 MA 装成 HA Add-on，然后写一个 HA 自动化规则，让"日落时切到厨房音箱"这件事自动发生。
+1. **确认多房间路线。** 在两台同协议音箱上建 `sync_group`，再建一个跨协议 `universal_group`，各听 30 秒：能不能接受后者可能不对齐，是"MA 值不值得上"最敏感的一条判断。
+2. **确认内存余量。** 在目标机器上跑起来后打开音频分析相关的 Provider，观察空闲内存。缓冲档位不是自由选项：`get_available_buffer_sizes()` 会按机器内存过滤可选值，小内存机器上 `BALANCED` 与 `MAXIMUM` 根本不出现在选项里，只剩下 60 秒的 `MINIMAL`。若这档都不够，就把分析类 Provider 关掉再对比。
+3. **确认发现链路。** 拔电重插一台音箱，看它是否自动出现。若路由器隔离了 mDNS，这里就会静默失败——先在小范围验证，别等到整套装完才发现。
+4. **确认曲目合并效果。** 把同一张专辑的 Spotify 版与本地 FLAC 版都入库，检查 `provider_mappings` 是否指向同一内部条目。这一步最能暴露元数据质量问题：ID3 标签缺 MBID 与 ISRC 的文件，合并成功率会明显低于标签完整的文件。
+
+另外四种不建议上手的情况，写在"采用顺序与不适用情况"一节里，判断依据是同一份。
 
 ---
 
-## 资料口径说明
+## 下一步读哪份代码
 
-1. **本文基于 Music Assistant server 仓库的 README、CONTRIBUTING 和核心模块源码（music_assistant/mass.py、controllers/、providers/ 等）**。具体实现可能随版本演进而变化，建议以最新 main 分支为准。
-2. **系统架构图和任务流案例是作者对源码的解读**，不是官方文档。如果你发现解读有误，欢迎在 GitHub 上提 issue 或 PR。
-3. **性能数据和硬件要求在本文中是示意性的**，实际部署时需要根据你的曲库大小、播放器数量、同步组规模等因素进行调整。
-4. **第三方服务的认证流程（例如 Spotify 的 PKCE 授权流）以各服务商的官方文档为准**，本文只做概览性介绍。
-5. **与 Plex / Jellyfin / Navidrome / Symfonium 的对比基于公开信息**，可能随这些项目的版本更新而变化。如果你发现对比信息过时，欢迎指正。
+如果上面的判断成立，值得按这个顺序继续深入：
+
+1. **`music_assistant/controllers/music/media/base.py`**：`add_item_to_library` 与 `_get_library_item_by_match` 连着读，能一次看懂曲库层的并发保护、防抖提交与事件抑制（`SUPPRESS_MEDIA_ITEM_UPDATES`）。
+2. **`music_assistant/controllers/streams/README.md` 加 `audio_buffer.py`**：文档与代码一起看，注意 README 的文件清单已经滞后。
+3. **`music_assistant/helpers/database.py` 的 `get_sqlite_memory_settings()`**：一份"按主机内存调 SQLite"的实操样本，注释里连 `SQLITE_MAX_MMAP_SIZE` 截断这件事都写清了。
+4. **`music_assistant/controllers/players/protocol_linking.py`**：设备身份归并与 MAC 地址可靠性判断，任何做过智能家居集成的人都能从中取到东西。
+5. **`music_assistant/providers/universal_group/` 与 `sync_group/`**：两个 Provider 的 `BASE_FEATURES` 与能力声明差异，是理解 MA 播放器抽象最好的对照组。
+6. **`music_assistant/models/music_provider.py` 的 `acquire_stream_slot`**：给配额型来源做并排队列，这个模式可以搬到任何受速率限制的服务上。
+
+## 资料口径与维护提示
+
+本文断言的取证方式按可信度分层：
+
+- **源码事实**：表名、控制器清单、Provider 类型与 `stage`、端口常量、匹配顺序、缓冲模式与容量分档、PRAGMA 取值，全部来自 `music-assistant/server` 仓库 main 分支在 2026-09-18 的提交（`a5c2c55`）逐条核对；`ProviderType`、`EventType`、`ExternalID` 来自 `music_assistant_models` 1.1.212。
+- **仓库自带文档**：`controllers/streams/README.md`、`controllers/players/README.md`、`controllers/player_queues/__init__.py` 的模块注释、`providers/sync_group/README.md`、各 `manifest.json` 的 `description` 与 `requirements`、根 README 的安装说明。这些是作者意图的一手表述，但会滞后于代码——本文已遇到一处（`smart_fades` 的文件清单），已按目录实际内容改写。
+- **未纳入的内容**：性能数字、硬件推荐档位、内存实测值一律没写，因为它们依赖曲库规模与设备数量，本文没有可靠测量。硬件只引用 README 自己的表述。
+- **对比表的证据强度不对等**：那张表里只有 Music Assistant 一列的每个格子都能指回本文前述章节；Plex / Jellyfin / Navidrome 与 Symfonium / Substreamer 两列的概括来自这些产品的公开定位与常见用法，没有逐一读它们的源码。把这张表当"该不该换方案"的直觉参考可以，当作竞品事实用不行。
+
+维护提示：MA 的模块路径与文档变动频繁，复看本文时优先核这三处是否仍然成立——`controllers/music/media/` 的目录结构、`providers/<domain>/manifest.json` 里的 `type` 与 `stage`、`pyproject.toml` 中 `music-assistant-frontend` 的钉版本。三者任一变化都会让相应段落失效，其余结构性论述不受影响。
 
 ---
 
 ## 参考链接
 
-- 仓库主页：< PROTECTED_206 >
-- 官方文档：< PROTECTED_207 >
-- Beta 文档：< PROTECTED_208 >
-- Home Assistant Add-on：< PROTECTED_209 >
-- Python SDK：< PROTECTED_210 >
-- Issue tracker：< PROTECTED_211 >
-- Open Home Foundation 项目页：< PROTECTED_212 >
+- 服务端仓库：<https://github.com/music-assistant/server>
+- 官方文档：<https://music-assistant.io/>
+- 音频分析与 Smart Fades 文档：<https://music-assistant.io/audio-analysis/smart-fades/>
+- 分组与多房间说明：<https://music-assistant.io/faq/groups/>
+- Home Assistant 加载仓库：<https://github.com/music-assistant/home-assistant-addon>
+- Python 客户端：<https://github.com/music-assistant/client>
+- 数据模型包：<https://github.com/music-assistant/models>
+- 问题跟踪：<https://github.com/music-assistant/support>
+- Docker 镜像：<https://ghcr.io/music-assistant/server>
+- Open Home Foundation：<https://www.openhomefoundation.org/>

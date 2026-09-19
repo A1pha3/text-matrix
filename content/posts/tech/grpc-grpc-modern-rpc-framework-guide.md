@@ -4,7 +4,7 @@ slug: grpc-grpc-modern-rpc-framework-guide
 github_repo: "grpc/grpc"
 source_key: "gh:grpc/grpc"
 date: 2026-07-11T02:50:00+08:00
-lastmod: 2026-09-04T00:00:00+08:00
+lastmod: 2026-09-18T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["gRPC", "微服务", "Protocol Buffers", "HTTP/2"]
@@ -64,7 +64,7 @@ RPC 本身不是新东西——DCOM、CORBA、RMI、Thrift 都做过。gRPC 站�
 | 主语言 | C/C++（核心库），各语言有官方 SDK |
 | License | Apache 2.0 |
 | 创建时间 | 2014 年 12 月 |
-| 当前版本 | 核心库 1.8x（v1.81.x，2026-06 发布）；各语言 SDK 版本独立推进，grpc-go 已到 1.83.x |
+| 当前版本 | 核心库 v1.84.0（2026-09 发布）；各语言 SDK 版本独立推进，grpc-go 已到 1.83.x |
 | 协议 | HTTP/2 + Protocol Buffers v3 |
 
 版本号只反映各库自己的发布节奏，不代表功能边界。核心库与 grpc-go 的版本号各自独立，排查问题时以你实际用的那个 SDK 的 release note 为准。
@@ -86,7 +86,7 @@ HTTP/2 换了一套机制：
 
 gRPC 把每个方法调用映射到一个 HTTP/2 stream。一条连接上可以同时跑上千个并发调用，这是它扛高 QPS 的传输层基础。
 
-补充一个现实约束：HTTP/2 需要 TLS 协商（h2）或明文升级（h2c）。负载均衡器、反向代理如果只支持 HTTP/1.1，会直接压掉 gRPC 的流式能力，这一点在"常见问题与排查"里再提。
+补充一个现实约束：浏览器通过 ALPN 协商出 h2；服务间明文连接走 h2c，不经升级，直接以 HTTP/2 连接前奏开连。链路上的负载均衡器、反向代理如果只支持 HTTP/1.1，会直接压掉 gRPC 的流式能力，这一点在"常见问题与排查"里再提。
 
 ## Protocol Buffers 作为 IDL
 
@@ -132,7 +132,9 @@ Protobuf 为什么用字段编号而不是字段名？三个原因：
 2. **演进安全**。加字段用新编号、删字段保留编号但不复用——旧客户端读到未知字段跳过，新客户端读到缺失字段用默认值，向前向后兼容。
 3. **语言无关**。同一个编号在各语言里映射成各自类型，代码生成保证两端对齐。
 
-二进制相比 JSON 平均小 3-11 倍（字段越数字密集差距越大，字符串密集时差距收窄），序列化也更快。但这是基准结论，真实项目里 payload 占比多大、CPU 是不是瓶颈，都要在自己环境里测。
+同一份数据，protobuf 编出来的字节通常比 JSON 少、解析也更快；数字密集的字段差距最大，字符串密集时收窄。具体差多少没有普适数字，拿自己的真实 payload 把两种编码各跑一遍基准，比引用任何现成结论都可靠——顺带还能确认 payload 大小在整体延迟里占多大比重。
+
+gRPC 并不强制 protobuf，序列化层可以换成自定义 codec；但工具链、reflection、grpcurl 调试这些生态设施都默认 protobuf，一般没有理由偏离。
 
 ## 一条 gRPC 消息在线上长什么样
 
@@ -147,7 +149,7 @@ Protobuf 为什么用字段编号而不是字段名？三个原因：
 
 帧头示意：
 
-```
+```text
 +------------+----------------+
 | 压缩标志 1B | 消息长度 4B    |   <-- 每条消息前的 5 字节帧头
 +------------+----------------+
@@ -155,7 +157,7 @@ Protobuf 为什么用字段编号而不是字段名？三个原因：
 +-----------------------------+
 ```
 
-服务端对请求路径有严格要求：`/Service/Method` 必须以斜杠开头。grpc-go 曾在路由校验上出过安全漏洞（缺少前导斜杠的路径可绕过基于路径的授权拦截器），1.79.3 已修复。这提醒两点：路径校验别自己写，SDK 该升级就升级。
+服务端对请求路径有严格要求：`/Service/Method` 必须以斜杠开头。这个校验曾是 grpc-go 的一处 Critical 级漏洞（GHSA-p77j-4mvh-x3m3，2026 年 3 月披露）：旧版本接受不带前导斜杠的路径并照常路由，但授权拦截器按规范路径做匹配，`deny` 规则因此全部落空；v1.79.3 起对这种路径直接返回 `UNIMPLEMENTED`。两点提醒：路径校验别自己写；SDK 该升级就升级。
 
 ## 四种通信模式
 
@@ -226,7 +228,7 @@ func (s *server) Chat(stream pb.Chat_BidirectionalServer) error {
 
 ### 错误码体系
 
-gRPC 定义了 16 个状态码（code），语义比 HTTP 状态码更细。下面是高频用到的几个：
+gRPC 定义了 17 个状态码（编号 0-16），语义比 HTTP 状态码更细。高频的是这几个：
 
 | Code | 含义 | 常见触发点 |
 |------|------|-----------|
@@ -292,7 +294,7 @@ gRPC 客户端内置几种 LB 策略：
 
 - **pick_first**：逐个尝试连接，直到成功（默认）
 - **round_robin**：轮询多个地址
-- **grpclb**：从外部 control plane 拉取 LB 决策
+- **grpclb**：从外部 control plane 拉取 LB 决策（已废弃，官方推荐迁移到 xDS）
 - **xDS**：与 Envoy / Istio 等数据面集成的动态配置
 
 选型参考：
@@ -302,9 +304,9 @@ gRPC 客户端内置几种 LB 策略：
 
 注意一个 gRPC 的特有坑：HTTP/2 是长连接，连接一旦建立会持续复用。只靠 K8s Service 的四层转发，后端实例变化时旧连接不会自动重建。要优雅地滚动重启，得配合健康检查（见下）和连接 draining。
 
-### mTLS（双向 TLS）
+### TLS 与 mTLS
 
-服务间通信要加密加认证：
+服务间通信至少要上一层 TLS：服务端加载证书，传输加密，客户端同时验证服务端身份。
 
 ```go
 creds, err := credentials.NewServerTLSFromFile("server-cert.pem", "server-key.pem")
@@ -314,7 +316,7 @@ if err != nil {
 s := grpc.NewServer(grpc.Creds(creds))
 ```
 
-证书轮换和发放可以考虑 SPIFFE / SPIRE 这类自动身份管理，避免手工维护证书文件。
+到这里只有服务器单向认证。要升级为 mTLS（双向 TLS），服务端的 `tls.Config` 需要把 `ClientAuth` 设为 `tls.RequireAndVerifyClientCert` 并加载信任的客户端 CA 池，客户端再用 `credentials.NewTLS` 携带自己的证书。证书轮换和发放可以考虑 SPIFFE / SPIRE 这类自动身份管理，避免手工维护证书文件。
 
 ### 重试策略
 
@@ -339,13 +341,24 @@ gRPC 支持在 service config 里声明式配置重试，客户端按方法匹�
 
 ### 健康检查（Health Checking）
 
-gRPC 有标准的健康检查协议 `grpc.health.v1.Health/Check`，K8s 的探针、负载均衡、服务网格都认这个协议：
+gRPC 有标准的健康检查协议 `grpc.health.v1.Health/Check`，K8s 自 1.24 起原生支持 gRPC 探针，Envoy 这类负载均衡器和服务网格也都认这个协议：
 
 ```bash
 grpcurl -plaintext -d '{}' localhost:50051 grpc.health.v1.Health/Check
 ```
 
-返回的 serving status 是 `SERVING`、`NOT_SERVING` 或 `SERVICE_UNKNOWN`。服务端需要自己实现并注册 Health 服务，启动时上报 `SERVING`，退出前先切到 `NOT_SERVING`——这样负载均衡会在连接断开前先把流量摘走。
+返回的 serving status 是 `SERVING`、`NOT_SERVING` 或 `SERVICE_UNKNOWN`。grpc-go 自带现成实现，注册后把状态置为 `SERVING` 即可；退出前先切到 `NOT_SERVING`，负载均衡会在连接断开前先把流量摘走。
+
+```go
+import (
+    "google.golang.org/grpc/health"
+    healthpb "google.golang.org/grpc/health/grpc_health_v1"
+)
+
+healthServer := health.NewServer()
+healthpb.RegisterHealthServer(s, healthServer)
+healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+```
 
 ### 服务反射（Server Reflection）
 
@@ -373,7 +386,7 @@ grpcurl -plaintext -d '{"name":"world"}' localhost:50051 helloworld.v1.Greeter/S
 
 ### 消息大小上限
 
-grpc-go 默认收发上限都是 4 MB（MaxRecvMsgSize / MaxSendMsgSize）。传大文件或大结果集时容易踩 `RESOURCE_EXHAUSTED`，按需调大：
+grpc-go 默认接收上限是 4 MB（`MaxRecvMsgSize`），发送上限是 `math.MaxInt32`，实际不受限——所以超限报错几乎都发生在接收大消息这一侧。传大文件或大结果集时容易踩 `RESOURCE_EXHAUSTED`，按需调大：
 
 ```go
 conn, err := grpc.NewClient("localhost:50051",
@@ -381,6 +394,8 @@ conn, err := grpc.NewClient("localhost:50051",
     grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(32*1024*1024)),
 )
 ```
+
+上面的 `MaxCallRecvMsgSize` 作用于客户端单次调用的接收侧；服务端要收大请求，对应的服务选项是 `grpc.MaxRecvMsgSize(...)`。
 
 比无脑调大更合理的是改协议：大对象该拆成流式传输或先落对象存储再传引用。
 
@@ -392,10 +407,12 @@ conn, err := grpc.NewClient("localhost:50051",
 | 浏览器直连 | ❌（需 gRPC-Web） | ✅ | ✅ | ❌ |
 | 流式 | ✅ 四种模式 | ❌ | subscription（单连接） | 有限 |
 | Schema 演进 | protobuf 严格 | OpenAPI（弱） | SDL（强） | Thrift IDL（强） |
-| 多语言 | ✅ 11+ 语言 | 任何 HTTP 客户端 | 任何 HTTP 客户端 | ✅ |
+| 多语言 | ✅ 13 种官方 SDK | 任何 HTTP 客户端 | 任何 HTTP 客户端 | ✅ |
 | 调试工具 | grpcurl、grpcui | curl、Postman | graphql-playground | Thrift 工具链 |
 | 学习曲线 | 中 | 低 | 中 | 中 |
 | 服务间调用 | ★★★★★ | ★★ | ★ | ★★★★ |
+
+表里的星级是定性排序，依据是各方案在传输层与序列化上的固有开销，不是某次 benchmark 的读数；性能敏感的选型请用自己的负载实测。
 
 选型建议：
 
@@ -409,7 +426,7 @@ conn, err := grpc.NewClient("localhost:50051",
 
 浏览器不能用原生 gRPC，原因是浏览器 API 读不到 HTTP/2 trailers，而 gRPC 把状态码放在 trailers 里。gRPC-Web 是官方子项目，用不同的 content-type（`application/grpc-web+proto`）和帧格式绕开这个限制：
 
-```
+```text
 Browser (gRPC-Web client)
     ↓ HTTP/1.1 + gRPC-Web framing
 Envoy proxy (gRPC-Web → gRPC translation)
@@ -425,7 +442,7 @@ gRPC server
 
 ### Q1：grpc-go 里 `grpc.WithInsecure()` 提示已废弃
 
-1.63 起 `grpc.WithInsecure()` 被废弃，改用：
+`WithInsecure()` 自 1.43 起就标记了废弃，替代品是 `insecure.NewCredentials()`：
 
 ```go
 conn, err := grpc.NewClient("localhost:50051",
@@ -434,19 +451,19 @@ conn, err := grpc.NewClient("localhost:50051",
 
 ### Q2：`grpc.Dial` 也提示废弃了？
 
-`grpc.Dial` 同样自 1.63 起废弃，推荐 `grpc.NewClient`。区别在于 `NewClient` 默认走 DNS 解析 + 负载均衡，行为更贴近生产；`Dial` 的即时连接语义容易在连接失败时直接报错。升级后留意 `WaitForReady` 这类选项的默认值变化。
+`grpc.Dial` 自 1.63 起废弃，推荐 `grpc.NewClient`。两者有两处行为差异：解析器默认值不同，`Dial` 默认 passthrough（不做 DNS 解析，把目标字符串直接当作连接地址），`NewClient` 默认走 DNS 解析；建连时机也不同，`Dial` 调用时就开始尝试连接，`NewClient` 先停在 idle，第一个 RPC 发出时才真正建连。升级后留意 `WaitForReady` 这类选项的默认值变化。
 
 ### Q3：频繁 `DEADLINE_EXCEEDED`，但服务端看起来没事
 
-先确认 deadline 设在了哪一层。常见原因：最外层没设 deadline，内层某个调用的超时被层层累加；或者服务端用了阻塞操作（比如同步等锁、串行消费队列）拖过了 deadline。用拦截器打印每次调用的 duration，能快速定位是哪一跳最慢。
+先确认 deadline 设在了哪一层。常见原因：调用链上没人设置 deadline，各层各自用 `WithTimeout` 兜底，等待时间层层叠加；或者服务端有阻塞操作（同步等锁、串行消费队列）拖过了截止时间。用拦截器打印每次调用的 duration，能快速定位是哪一跳最慢。
 
 ### Q4：报错 `RESOURCE_EXHAUSTED: received message larger than max`
 
-默认收发上限 4 MB。小概率是配置问题，大概率是协议设计问题——大 payload 该走流式或对象存储。先按上文调大上限临时止血，再把协议改对。
+默认接收上限 4 MB。小概率是配置问题，大概率是协议设计问题——大 payload 该走流式或对象存储。先按上文调大上限临时止血，再把协议改对。
 
 ### Q5：代理 / 负载均衡不支持 HTTP/2
 
-Nginx 需要 `grpc_pass`（独立于 `proxy_pass`），Envoy 需要 `http2_protocol_options`。如果代理只支持 HTTP/1.1，gRPC 的流式能力会退化成不可用。排查时先确认链路上每一跳是否真的协商成了 h2。
+Nginx 需要 `grpc_pass`（独立于 `proxy_pass`），Envoy 需要在 upstream 集群上启用 HTTP/2。如果代理只支持 HTTP/1.1，gRPC 的流式能力会退化成不可用。排查时先确认链路上每一跳是否真的协商成了 h2。
 
 ### Q6：浏览器里调 gRPC 一直失败
 
@@ -520,15 +537,16 @@ Nginx 需要 `grpc_pass`（独立于 `proxy_pass`），Envoy 需要 `http2_proto
 
 ## 继续深入
 
-- 读 gRPC 官方文档的 protocol 一节，把 HTTP/2 帧与 gRPC 帧的关系彻底理清
+- 读 gRPC 的线上协议规范（grpc/grpc 仓库的 PROTOCOL-HTTP2.md），把 HTTP/2 帧与 gRPC 帧的关系彻底理清
 - 读 buf 的 breaking change 检测规则，理解 proto 演进里哪些改动是安全的、哪些会破坏兼容
 - 对比 xDS 与服务网格方案，搞清 gRPC 在 K8s 下的连接管理与故障转移机制
-- 读 gRPC 的性能基准（grpc 官方 benchmark 脚本），理解不同负载下序列化和吞吐的真实分布
+- 跑一遍 grpc 仓库的 benchmark 套件，理解不同负载下序列化和吞吐的真实分布
 
 ## 参考资源
 
 - 官方文档：https://grpc.io/docs/
 - 语言教程：https://grpc.io/docs/languages/
+- grpc-go API 参考：https://pkg.go.dev/google.golang.org/grpc
 - Protocol Buffers 指南：https://protobuf.dev/
 - gRPC-Web：https://github.com/grpc/grpc-web
 - ConnectRPC（原生 gRPC-Web 实现）：https://connectrpc.com/

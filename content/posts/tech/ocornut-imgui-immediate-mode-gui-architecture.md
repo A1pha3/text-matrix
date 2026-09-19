@@ -4,7 +4,7 @@ slug: ocornut-imgui-immediate-mode-gui-architecture
 github_repo: "ocornut/imgui"
 source_key: "gh:ocornut/imgui"
 date: 2026-07-13T03:03:14+08:00
-lastmod: 2026-07-13T03:03:14+08:00
+lastmod: 2026-09-17T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["C++", "GUI"]
@@ -17,18 +17,32 @@ description: "Dear ImGui 是 Omar Cornut 维护的 C++ 即时模式 GUI 库，�
 
 Dear ImGui 解决的不是"画一个 GUI 控件"的问题，而是"程序员在调试工具、可视化脚本、引擎编辑器这种场景里，如何避免维护一个 UI 状态与业务状态的双重数据源"的问题。它的做法是把整套渲染状态压缩成一组每帧调用的命令，**不存 UI 状态对象，只存绘图原语**，让源代码本身成为 UI 的 source of truth。从这个角度看它的架构选择，能立刻明白它和 Qt、Electron、Flutter 之间的边界。
 
+## 目录
+
+- [IMGUI 范式的本质](#imgui-范式的本质)
+- [系统地图：核心模块边界](#系统地图核心模块边界)
+- [任务流案例：一次点击如何被处理](#任务流案例一次点击如何被处理)
+- [关键设计取舍](#关键设计取舍)
+- [与其他 GUI 框架的边界](#与其他-gui-框架的边界)
+- [集成与构建](#集成与构建)
+- [何时用 / 何时不用](#何时用--何时不用)
+- [性能边界](#性能边界)
+- [与"扩展"的边界](#与扩展的边界)
+- [阅读路径建议](#阅读路径建议)
+- [参考资源](#参考资源)
+
 ## 项目坐标
 
 | 维度 | 数据 |
 |------|------|
 | 仓库 | ocornut/imgui |
-| Stars | 约 7.6 万（截至 2026-09） |
-| 当前版本 | v1.92.9b（已发布 2026-07） |
+| Stars | 约 7.6 万（2026-09-17 核实为 76,229） |
+| 当前版本 | v1.92.9b（2026-07-31 发布） |
 | 主语言 | C++ |
 | License | MIT |
-| 核心文件 | `imgui.cpp` + `imgui.h` + `imgui_demo.cpp` + `imgui_draw.cpp` 等约 10 个文件 |
+| 核心文件 | `imgui.cpp`、`imgui_draw.cpp`、`imgui_tables.cpp`、`imgui_widgets.cpp` 四个 `.cpp` 加 `imgui.h` 等头文件，连同 `imstb_*.h` 三个内嵌库头文件全部放在仓库根目录 |
 | 后端 | 20+ 官方维护（DirectX 9 至 12、OpenGL、Metal、Vulkan、WebGPU、SDL2 / SDL3、GLFW、Win32、Android、OSX 等）|
-| 起源 | Omar Cornut 在 Q-Games 受 Atman Binstock 启发，2014 年起在 Media Molecule 重写并开源 |
+| 起源 | Omar Cornut 在 Q-Games 接触到 Atman Binstock 留在代码库里的 IMGUI 实现，之后在 Media Molecule 重写；早期版本得到 Media Molecule 支持，首次用于 PS Vita 游戏《Tearaway》 |
 
 > 仓库 README 开篇引用了 ryg 的一句调侃——"给某人状态，他今天就会有 bug；教他把状态写在两处再同步，他会持续有 bug 一辈子"。这句话基本是 imgui 整个设计哲学的导语。
 
@@ -57,26 +71,26 @@ ImGui::End();
 
 ### 状态该有还是要有的：库内部维护"输入态"，但不维护"UI 对象"
 
-完全无状态的 IMGUI 是没用的——点击事件本帧在哪个 widget 上落点？悬停态怎么追踪？这些"输入态" imgui 必须在库内部维护。这块是 `imgui.cpp` 里 `ImGuiIO` 结构体 + 内部 `ImGuiWindow` / `ImGuiInputData` 子系统的职责。
+完全无状态的 IMGUI 是没用的——点击事件本帧在哪个 widget 上落点？悬停态怎么追踪？这些"输入态" imgui 必须在库内部维护。承担者有两处：调用方直接接触的 `ImGuiIO`（事件入口），以及 `ImGuiContext` 内部的悬停/激活状态（`HoveredId` / `ActiveId`）——后者在 `imgui_internal.h` 和 `imgui.cpp` 里，不进公开 API。
 
 **关键区分**：
 
 - **库不维护的**：UI 树本身、widget 句柄、回调注册、属性数据。
 - **库维护的**：当前帧的热点（hot item）、当前激活（active item）、鼠标位置、上一次点击时间、窗口的折叠/展开状态、滚轮速度。
 
-这套边界既是 IMGUI 的力量，也是它的局限：库不需要复杂的 scene graph 调度，但调用方需要承担"UI 描述与业务状态同步"的责任。这部分责任通过一个简单约定收回——**业务代码自己持有业务数据，UI 代码只是它的视图函数**。
+这套边界划出了一个明确的责任位置：库不需要复杂的 scene graph 调度，但调用方要承担"UI 描述与业务状态同步"的责任。这部分责任通过一个简单约定收回——**业务代码自己持有业务数据，UI 代码只是它的视图函数**。
 
 ## 系统地图：核心模块边界
 
 | 模块 | 职责 | 关键文件 |
 |------|------|----------|
 | 核心数据结构 | `ImGuiContext`、`ImGuiIO`、`ImGuiStyle`、输入状态、窗口表 | `imgui.cpp` `imgui.h` |
-| Widget API 层 | `Begin`/`End`、`Button`、`SliderFloat`、`Text`、`TreeNode`、`PlotLines` 等 ~200 个公开函数 | `imgui.cpp` |
+| Widget API 层 | `Begin`/`End`、`Button`、`SliderFloat`、`Text`、`TreeNode`、`PlotLines` 等，`imgui.h` 里带 `IMGUI_API` 的声明有 600 余个（2026-09 对 v1.92.9b 计数） | `imgui.cpp` |
 | 布局与窗口管理 | 拆行、dock、tab、视口、滚动、自动布局 | `imgui.cpp` `imgui_tables.cpp`（部分表格逻辑） |
-| 文本与字体 | 字体加载、字形栅格化、行高、宽度测量 | `imgui.cpp` `imgui_draw.cpp`（包含 `stb_truetype.h` 嵌入） |
+| 文本与字体 | 字体加载、字形栅格化、行高、宽度测量 | `imgui.cpp` `imgui_draw.cpp`（内嵌 `imstb_truetype.h`） |
 | 渲染原语生成 | 把 widget 调用解析成顶点 + 索引 + 命令列表 | `imgui_draw.cpp` |
 | Demo 与文档 | 所有 widget 的可执行示例 | `imgui_demo.cpp` |
-| 后端绑定 | 输入采集 + 渲染提交（不归 imgui 仓库主线，是独立文件） | `backends/*.cpp` |
+| 后端绑定 | 输入采集 + 渲染提交，与核心解耦：核心只产 `ImDrawData`，不碰图形 API | `backends/*.cpp` |
 | 第三方语言绑定 | C# / Go / Rust / Lua / Python 等 | 第三方仓库（`cimgui`、`dear_bindings` 等） |
 
 > imgui 的"核心文件可以整体塞进你工程里编译"这条设计直接体现在这张表里——除了 demo，所有需要编译的源文件都在根目录的 `imgui*.cpp` / `imgui*.h` 里，新增功能不需要改 CMake，不需要配 dll 版本号。后端则是另一棵树。
@@ -87,7 +101,7 @@ ImGui::End();
 
 ```
 ┌─────────────────────┐          ┌─────────────────────┐
-│  后端（SDL2/GLFW）  │          │   业务侧代码         │
+│  后端（SDL2/GLFW）  │          │     业务侧代码       │
 └─────────────────────┘          └─────────────────────┘
          │                               │
    鼠标点击事件                         每帧调用
@@ -95,24 +109,23 @@ ImGui::End();
    │                                   │
          ▼                               │
    ImGui_ImplSDL2_ProcessEvent          │
-   ├─ ImGui::GetIO()                    │
    ├─ io.AddMouseButtonEvent(0, true)   │
+   │    （事件入队，尚未生效）           │
    │                                    ▼
-   │                              ImGui 接收鼠标状态
-   │                              ├─ 更新 ImGuiInputData
-   │                              ├─ 计算本帧 hot item
-   │                              └─ 保存历史点击位置
-   ▼
-   ImGui::NewFrame()  ←─ 后端调用，触发输入数据 reset
-   ImGui::Button("Save")
-   ├─ 算当前 item bbox
-   ├─ 命中测试：mouse 是否在 bbox 内？
-   │  → 是：item 设为 hot
-   ├─ 检查 io.MouseClickedThisFrame[0]
-   │  → 是：item 设为 active
-   ├─ 检查 active item 当前帧是否被 release
-   │  → 是：返回 true，触发回调
-   ▼
+   │                              ImGui::NewFrame()
+   │                              ├─ 处理事件队列
+   │                              ├─ 更新 io.MouseClicked[0]
+   │                              └─ 更新鼠标位置等输入状态
+   ▼                                    │
+   ImGui::Button("Save") 内部           │
+   ├─ 算当前 item bbox                  │
+   ├─ 命中测试：鼠标在 bbox 内？         │
+   │  → 是：设为 hovered（HoveredId）    │
+   ├─ 检查 io.MouseClicked[0]           │
+   │  → 是：设为 active（ActiveId）      │
+   ├─ active 且本帧检测到释放？          │
+   │  → 是：返回 true                    │
+   ▼                                    ▼
    if (ImGui::Button("Save"))
        MySaveFunction();   ←─ 业务回调
    ▼
@@ -121,13 +134,13 @@ ImGui::End();
    ├─ 生成 ImDrawData
    ▼
    ImGui_ImplOpenGL3_RenderDrawData(...)
-   ├─ 拿到 ImDrawData.vertex/cmd lists
+   ├─ 拿到 ImDrawData 的顶点/索引与命令列表
    ├─ 生成 OpenGL draw call
    ▼
    屏幕显示一帧
 ```
 
-整个流程没有任何 widget 对象持久存在。`Button` 调用结束的瞬间，相关数据结构就出栈了。`active item` 是库内部输入态的一部分，它在下一帧 `NewFrame()` 时清零——这意味着**跨帧"按住"必须靠业务侧手动调用 `Button(..., ImGuiButtonFlags_Repeat)` 或自己拿 `IsItemActive()` 持续判断**。
+整个流程没有任何 widget 对象持久存在。`Button` 调用结束的瞬间，相关数据结构就出栈了。按住鼠标不松时，active 状态在 `ActiveId` 里跨帧保持，但"按住连发"不是默认行为——一次点击只返回一次 true。要连发得用 `ImGui::PushButtonRepeat(true)` 包住按钮调用（内部对应 `ImGuiItemFlags_ButtonRepeat`），或者业务侧自己拿 `IsItemActive()` 逐帧判断。
 
 ## 关键设计取舍
 
@@ -135,20 +148,22 @@ ImGui::End();
 
 imgui 默认一个进程一个 `ImGuiContext`。这对工具程序 99% 够用。多上下文也支持（每个上下文独立 IO + style），代价是必须手动 `SetCurrentContext(ctx)` 切换。**不默认多上下文**是有意的——它逼调用方想清楚"这个程序到底有几套独立的 UI 状态"。游戏引擎内嵌"调试 GUI"通常一个上下文；并行测试运行的 harness 各自一个上下文。
 
-### 2. 字体：内置 stb_truetype，附带 Proggy 字体
+### 2. 字体：内嵌栅格化，两份默认字体
 
-`imgui_draw.cpp` 里嵌入了一份 `stb_truetype.h`，意味着你不需要额外装 FreeType。默认字体是 ProggyClean，后续版本也提供了 ProggyForever 作为新字形（见 `CHANGELOG.md`）。这套"自带光栅化"的代价是：超大字体（>5 MB ttf）、复杂脚本（阿拉伯文从右到左、印度文连写、emoji 字距）会比较吃力，但 99% 的英文 UI、调试信息、ASCII 日志完全够用。
+`imgui_draw.cpp` 内嵌了 `imstb_truetype.h`（Sean Barrett 的 stb_truetype 栅格化库），开箱即用，不需要额外装 FreeType。仓库同时内嵌两份默认字体：Tristan Grimmer 的 ProggyClean（13 像素位图字体，放大发虚）和 ProggyForever（1.92.6 起内嵌的等宽矢量字体，可缩放）。`AddFontDefaultBitmap()` 加载前者，`AddFontDefaultVector()` 加载后者，`AddFontDefault()` 按目标字号自动挑选。想要更好的小字可读性或彩色 emoji，可以换用 `misc/freetype/` 下的 imgui_freetype 后端（需定义 `IMGUI_ENABLE_FREETYPE`，彩色 emoji 要求 FreeType 2.10+）。
 
-### 3. 输入：不参与主循环，自己轮询
+这套"自带光栅化"的代价依然在：从右到左文本、双向文本、text shaping 一律不支持（README 原文声明），阿拉伯文连写、印度文排版这类需求只能另想办法；但英文 UI、调试信息、ASCII 日志几乎不受影响。
 
-imgui 不订阅窗口系统的事件回调，而是要求调用方把"这帧发生了什么"塞进 `ImGuiIO`：
+### 3. 输入：核心不碰系统事件，调用方负责喂
+
+imgui 核心不直接接触窗口系统。调用方要把"这帧发生了什么"翻译后塞进 `ImGuiIO`：
 
 ```cpp
 ImGuiIO& io = ImGui::GetIO();
 io.AddMousePosEvent(x, y);
-io.AddMouseButtonEvent(0, true);  // left mouse down
+io.AddMouseButtonEvent(0, true);   // left mouse down
 io.AddKeyEvent(ImGuiKey_A, true);
-io.AddTextUTF16(buf, len);        // 字符输入（unicode）
+io.AddInputCharacterUTF16(0x00E9); // 字符输入：单个 UTF-16 码元（代理对拆两次调用）
 ```
 
 这是 imgui "无外部依赖" 的代价——**你必须自己做事件翻译**。`backends/imgui_impl_sdl2.cpp` / `imgui_impl_glfw.cpp` 之类的文件就是把 SDL2/GLFW 的事件格式手动转成这种"IO 事件"格式。这也是为什么后端代码那么多，但 `backends/` 之外没有"主线事件循环"。
@@ -156,26 +171,26 @@ io.AddTextUTF16(buf, len);        // 字符输入（unicode）
 ### 4. 绘图输出：`ImDrawData` 是数据结构，不是渲染后端调用
 
 ```cpp
-ImDrawData draw_data = ImGui::GetDrawData();
+ImDrawData* draw_data = ImGui::GetDrawData();
 // draw_data 包含：cmd lists, idx/vert buffers, texture id, clip rect
 ```
 
-`ImDrawData` 是纯 POD 描述（顶点缓冲 + 索引缓冲 + 纹理 + 裁剪矩形列表），后端把它转成自己的渲染 API 调用。这意味着：理论上你可以写一个 imgui + 自定义 Vulkan rendering pipeline 的工程而不碰任何 OpenGL 代码，imgui 不替你做 viewport 管理、不做 viewport/scissor pipeline state 自管理（裁剪靠 scissor 而非 stencil）。
+`ImDrawData` 是纯数据描述（顶点缓冲 + 索引缓冲 + 纹理 + 裁剪矩形列表），后端把它转成自己图形 API 的调用。这意味着：理论上你可以给 imgui 配一条自定义 Vulkan 渲染管线，而不碰任何 OpenGL 代码。master 分支的 imgui 不管理多 OS 窗口（multi-viewport 在 docking 分支），裁剪靠 scissor 实现，后端渲染时逐命令设置 `ClipRect`。
 
 ### 5. Docking 与 Multi-Viewport：放在 docking 分支
 
-`master` 分支是稳定主干，`docking` 分支额外提供 docking（多窗口可停靠）+ multi-viewport（一个进程渲染到多个 OS 窗口）。docking 分支定期 rebase 到 master，README 建议"高级用户可以用 docking 分支，但 master 也够用"。这种分支隔离让稳定主线不背兼容性包袱。
+`master` 分支是稳定主线，`docking` 分支额外提供 docking（多窗口可停靠）+ multi-viewport（一个进程渲染到多个 OS 窗口）。README 的口径是：官方偶尔打 release tag，但一般建议直接同步 `master` 或 `docking` 的最新提交；进阶用户可以用 docking 分支，它定期与 master 保持同步（master 合入 docking）。这种分支隔离让稳定主线不背兼容性包袱。
 
 ### 6. 国际化与无障碍：明确不支持
 
-README 直说："right-to-left text, bidirectional text, text shaping, accessibility features are not supported"。这不是疏忽，是边界声明——imgui 把自己定位为"程序员内嵌调试器"，不是"终端用户 UI 框架"。如果你要做一个面向最终用户的应用，应该用 Qt / Flutter / React Native 之类的东西，再在调试版本里嵌 imgui。
+README 的边界声明写得很硬：完整国际化（right-to-left text、bidirectional text、text shaping 等）与 accessibility features 均不支持。这不是疏忽，是边界声明——imgui 把自己定位为"程序员内嵌调试器"，不是"终端用户 UI 框架"。如果你要做一个面向最终用户的应用，应该用 Qt / Flutter / React Native 之类的东西，再在调试版本里嵌 imgui。
 
 ## 与其他 GUI 框架的边界
 
 | 维度 | Dear ImGui | Qt | Flutter | React Native |
 |------|-----------|-----|---------|--------------|
 | 范式 | Immediate | Retained | Retained | Retained |
-| 集成成本 | 抄 8 个文件进工程就完事 | pkg install 或 SDK | 装 Flutter SDK | 装 RN CLI |
+| 集成成本 | 4 个 `.cpp` 加头文件抄进工程，另加所选后端的一对文件 | pkg install 或 SDK | 装 Flutter SDK | 装 RN CLI |
 | 状态存储 | 调用方持有 | 库 + 你 | 库 + 你 | 库 + 你 |
 | 跨平台 | 看你后端写到哪 | 自带 | 自带 | 自带 |
 | 多语言 RTL | ❌ | ✅ | ✅ | ✅ |
@@ -216,7 +231,7 @@ while (!glfwWindowShouldClose(window)) {
 }
 ```
 
-C++20 模块用户可以用社区提供的 `imgui-module` 包装（README 提到过第三方实现）。第三方语言绑定由 `cimgui` 和 `dear_bindings` 仓库自动生成元数据并产出对应语言的绑定文件（C#、Go、Rust、Lua、Python、Swift、Zig、Ruby 等），覆盖面非常广。
+C++20 模块用户可以用社区提供的 [stripe2933/imgui-module](https://github.com/stripe2933/imgui-module) 包装（README 直接推荐的就是它）。第三方语言绑定由 `cimgui` 和 `dear_bindings` 仓库自动生成元数据并产出对应语言的绑定文件（C#、Go、Rust、Lua、Python、Swift、Zig、Ruby 等），覆盖面非常广。
 
 ## 何时用 / 何时不用
 
@@ -235,13 +250,13 @@ C++20 模块用户可以用社区提供的 `imgui-module` 包装（README 提到
 - 需要完整国际化（包括 RTL、双向文本）的产品。
 - 需要辅助功能（屏幕阅读器、键盘导航、对比度）的产品。
 - 多媒体文档编辑器（图片、视频、设计稿）—— ImGui 的文本编辑能力薄弱。
-- 大规模团队多人协作维护的 UI 库—— imgui 没有"声明式 UI diff"的明确边界。
+- 多人长期协作维护的产品 UI——imgui 没有声明式组件边界，状态散落在调用方代码里，全靠约定管住。
 
 ## 性能边界
 
 imgui 没有自带官方 benchmark 套件，谈它"快"要说明快在哪部分。把话说清楚，能避免把"帧率友好"误记成"任意规模都零成本"。
 
-- **开销量级正比于"本帧实际生成的 widget"，而非历史总量**。这是 immediate mode 最被低估的一点：库不保留上一帧的 UI 树，就没有"整棵树 diff + 增量更新"的固定成本。代价换在另一边——**同一时刻屏幕上 widget 越多，这一帧 CPU 就花得越多**。做个开关藏在 `ImGui::Begin` 里、列表里塞 10 万个 `Selectable` 又不裁剪，照样会卡。
+- **开销量级正比于"本帧实际生成的 widget"，而非历史总量**。这是 immediate mode 最被低估的一点：库不保留上一帧的 UI 树，就没有"整棵树 diff + 增量更新"的固定成本。代价换在另一边——**同一时刻屏幕上 widget 越多，这一帧 CPU 就花得越多**。随手在 `Begin`/`End` 之间塞 10 万个 `Selectable` 又不做裁剪，照样会卡。
 
 - **窗口级剔除发生在提交阶段**。`ImGui::Begin` 的返回 `bool` 表示该窗口当前是否"可绘制"（对应窗口是否被折叠或被完全裁剪到屏幕外）；对 `false` 的窗口，后续内容通常应当跳过或简化。真正"被看见"的窗口才会生成 `ImDrawData` 顶点，被裁剪到屏幕外的部分不会产生绘制命令。这决定了"每帧重写 UI"在上层如何被自然约束成"每帧只付看得见的那部分钱"。
 
@@ -265,17 +280,21 @@ README 列出三类推荐的扩展：
 
 ## 阅读路径建议
 
-1. **先跑 `examples/example_glfw_opengl3/`**——5 分钟编译，看到 demo 窗口，触发一下 `ShowDemoWindow()` 的所有示例。
+1. **先跑 `examples/example_glfw_opengl3/`**——5 分钟内能编译出窗口，调一次 `ImGui::ShowDemoWindow()`，把 demo 里的示例过一遍。
 2. **翻 `imgui_demo.cpp` 找最贴近你场景的 widget**——里面的代码就是可以直接复制粘贴的样板，且附带注释。
 3. **只看 `imgui.h` 的 struct 注释，不读 `.cpp`**——`imgui.h` 头文件里每个公开 struct 字段都有注释，比阅读 .cpp 实现快得多。
 4. **学习后端文件的"事件翻译"**——你的事件格式只要学会翻译到 imgui 的 IO API 就能用。
-5. **只在 debug 版本启用**——release 不带 save/load 按钮的 UI，避免 UI 体积膨胀。
+5. **发布版裁掉 demo 与调试工具**——不编译 `imgui_demo.cpp`，或在 `imconfig.h` 里定义 `IMGUI_DISABLE_DEMO_WINDOWS` 和 `IMGUI_DISABLE_DEBUG_TOOLS`，`ShowDemoWindow()` 等入口会变成空函数，二进制里不留调试 UI。
 
 ## 参考资源
 
-- 主仓库：`https://github.com/ocornut/imgui`
+本文所有仓库数据（Stars、版本号、API 签名、README 引文）于 2026-09-17 对照 ocornut/imgui master 分支核实，对应版本 v1.92.9b。
+
+- 主仓库：`https://github.com/ocornut/imgui`（README 位于 `docs/README.md`）
 - 测试引擎：`https://github.com/ocornut/imgui_test_engine`
 - FAQ：`https://github.com/ocornut/imgui/blob/master/docs/FAQ.md`
+- 字体系统：`https://github.com/ocornut/imgui/blob/master/docs/FONTS.md`
+- 更新日志：`https://github.com/ocornut/imgui/blob/master/docs/CHANGELOG.txt`
 - 后端使用指南：`https://github.com/ocornut/imgui/blob/master/docs/BACKENDS.md`
 - IMGUI 范式 Wiki：`https://github.com/ocornut/imgui/wiki#about-the-imgui-paradigm`
 - Web 版交互手册（浏览器在线体验，属 pthom/imgui_bundle 生态）：`https://pthom.github.io/imgui_manual_online/manual/imgui_manual.html`

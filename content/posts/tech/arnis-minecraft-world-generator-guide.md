@@ -1,526 +1,311 @@
 ---
-title: "Arnis：14.8K Stars·Minecraft真实世界地图生成器·OpenStreetMap地理数据"
+title: "Arnis：18K Stars·Minecraft真实世界地图生成器·OpenStreetMap地理数据"
 date: "2026-04-12T02:31:39+08:00"
 slug: arnis-minecraft-world-generator-guide
 github_repo: "louis-e/arnis"
 source_key: "gh:louis-e/arnis"
-description: "Arnis 是一个使用 OpenStreetMap 地理数据生成 Minecraft 真实世界地图的工具，使用 Rust 语言编写，支持高性能渲染。"
+description: "Arnis 用 OpenStreetMap 矢量数据、卫星高程和 ESA WorldCover 地表分类生成 Minecraft 世界，支持 Java、Bedrock 和 Luanti 三个目标，还能用 NASA 高程生成月球和火星。本文按 v3.2.0 拆解它的数据流水线、参数体系和部署方式。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust"]
+tags: ["Rust", "OpenStreetMap", "Minecraft", "GIS"]
 ---
 
 # Arnis：用 OpenStreetMap 把真实城市搬进 Minecraft
 
-Arnis 把 OpenStreetMap（OSM）的矢量地理数据转换成 Minecraft 方块世界，覆盖 Java 1.17+ 和 Bedrock Edition。它把 OSM 的 `building`、`highway`、`waterway` 标签稳定地映射成可进入、可踩、可挖的方块，并叠加 SRTM/DEM 高程数据让地形起伏可信。仓库用 Rust 写成，主分支编译产物同时提供 Tauri GUI 和无 GUI 的 CLI 两种入口，桌面探索和服务器批量生成都能覆盖。
+Arnis 把 OpenStreetMap（OSM）的矢量地理数据转换成 Minecraft 方块世界。它读入 `building`、`highway`、`waterway` 等标签，叠上卫星高程和 ESA WorldCover 地表分类，生成可进入、可踩、可挖的世界，输出同时覆盖 Java 版（1.17+）、Bedrock 版和 Luanti（Minetest）。仓库用 Rust 写成，提供 Tauri 图形界面和无 GUI 的命令行两条入口，桌面探索和服务器批量生成都能覆盖。
+
+项目由 Louis Erbkamm（louis-e）于 2022 年发起，2024 年 12 月出圈后持续高频迭代。截至 2026-09-18，已有约 18,000 Stars、1,500 Forks、63 位贡献者，最新版本是 2026-09-09 发布的 v3.2.0「Horizon Update」。迭代速度意味着参数会变——本文所有命令和参数都对照 v3.2.0 的 `src/args.rs` 核实过，版本更迭后请以仓库 README 和 `--help` 输出为准。
 
 ## 学习目标
 
-读完本文，可以：
-
-1. 理解 Arnis 的核心能力和技术边界
-2. 说清它的数据流（从 OSM 标签到 Minecraft 方块）
-3. 完成首次安装和基本配置
-4. 生成自定义区域的世界
-5. 理解配置参数和调优方法
-6. 判断 Arnis 是否适合你的场景
+读完本文，你能够：说清 Arnis 的数据从哪来、经过哪些处理、写到哪去；在 GUI 或命令行跑通第一次生成；按场景选对生成模式和参数；判断自己的需求适不适合交给它。
 
 ## 目录
 
 - [项目速览](#项目速览)
 - [快速上手](#快速上手)
-- [数据流](#数据流)
+- [数据流水线](#数据流水线)
 - [架构与模块](#架构与模块)
-- [配置与调优](#配置与调优)
+- [参数与调优](#参数与调优)
 - [横向对比与采用建议](#横向对比与采用建议)
+- [资源与延伸](#资源与延伸)
 - [常见问题](#常见问题)
 - [自测题](#自测题)
-- [进阶路径](#进阶路径）
+- [进阶路径](#进阶路径)
 
 ## 项目速览
 
-> "Arnis creates complex and accurate Minecraft Java Edition (1.17+) and Bedrock Edition worlds that reflect real-world geography, topography, and architecture."
+> "Arnis creates complex and accurate Minecraft Java Edition (1.17+), Bedrock Edition, and Luanti (Minetest) worlds that reflect real-world geography, topography, and architecture."
 > —— Arnis README
 
-## 项目速览
+| 指标 | 数值（2026-09-18 快照） |
+|------|------|
+| Stars / Forks | 17,963 / 1,509 |
+| 贡献者 | 63+ |
+| 最新版本 | v3.2.0「Horizon Update」（2026-09-09） |
+| 许可证 | Apache-2.0（Luanti 映射表文件另行遵循 LGPL-2.1+） |
+| 主语言 | Rust（GUI 通过 Tauri 桥接） |
+| 官网 | [arnismc.com](https://arnismc.com) |
 
-| 指标 | 数值 | 备注 |
-|------|------|------|
-| Stars | 14.8k ⭐ | 截至 2026-04-07 仓库公开数据 |
-| Forks | 1.2k | 同上 |
-| 贡献者 | 49 | 同上 |
-| 最新版本 | v2.6.0 (2026-04-07) | 发布页见文末资源链接 |
-| 许可证 | Apache-2.0 | 商业友好 |
-| 主语言 | Rust 99.8% | GUI 通过 Tauri 桥接 |
-
-**能力边界一览**：
+能力边界：
 
 | 维度 | 支持情况 |
 |------|----------|
-| Minecraft 版本 | Java 1.17 / 1.18 / 1.19 / 1.20 / 1.21+，Bedrock 最新版 |
-| 地理数据 | OpenStreetMap（建筑、道路、水体、土地利用） |
-| 高程数据 | SRTM / DEM（山脉、峡谷） |
-| 建筑还原 | 按 OSM `building:levels` 标签分层拉伸 |
+| 输出目标 | Java 1.17+、Bedrock、Luanti（Minetest） |
+| 生成模式 | `geo-terrain`（默认，真实地形 + OSM 对象）、`geo-only`（平地 + OSM 对象）、`terrain-only`（只生成真实地形） |
+| 天体 | 地球之外，`--body moon` / `--body mars` 用 NASA PDS 高程生成月球和火星表面 |
+| 数据源 | OpenStreetMap 矢量、卫星高程（默认 Mapterhorn + 区域高分辨率源）、ESA WorldCover 地表分类、可选 Overture Maps 补充建筑 |
+| 入口 | GUI（Tauri）+ CLI + Nix flake + 浏览器版 MapSmith |
 | 平台 | Windows / macOS / Linux |
-| 入口 | GUI（Tauri）+ CLI + Nix flake |
-
-下面按安装、数据流、架构、调优、对比的顺序展开。
 
 ## 快速上手
 
 ### 三种安装方式
 
-**方式一：下载预编译版本**
-
-1. 访问 [GitHub Releases](https://github.com/louis-e/arnis/releases/latest)
-2. 选择对应平台的二进制文件
-3. 解压并运行
+**方式一：下载预编译版本**。到 [GitHub Releases](https://github.com/louis-e/arnis/releases/latest) 拿对应平台的包。v3.2.0 提供 Windows exe、macOS universal、Linux tar.gz 和 AppImage 四种产物，解压即用。
 
 **方式二：源码编译**
 
 ```bash
-# 克隆仓库
 git clone https://github.com/louis-e/arnis.git
 cd arnis
 
-# 编译（无 GUI）
-cargo build --release --no-default-features
+# GUI 版
+cargo run --release
 
-# 或编译（有 GUI）
-cargo build --release
+# 无 GUI 的命令行版
+cargo run --release --no-default-features -- \
+  --output-dir="YOUR_PATH/.minecraft/saves/worldname" \
+  --bbox="min_lat,min_lng,max_lat,max_lng"
 ```
 
-**方式三：Nix 一键运行**
+无 GUI 版本不依赖 Tauri 的 WebKit，编译产物更小，适合服务器和无显示器的 Linux 主机。
+
+**方式三：Nix 直接运行**
 
 ```bash
-nix run github:louis-e/arnis -- --terrain --path="YOUR_PATH/.minecraft/saves/worldname" --bbox="min_lat,min_lng,max_lat,max_lng"
+nix run github:louis-e/arnis -- \
+  --output-dir=YOUR_PATH/.minecraft/saves/worldname \
+  --bbox="min_lat,min_lng,max_lat,max_lng"
 ```
 
-源码编译需要 Rust 1.70+ 和 Cargo 最新稳定版。无 GUI 版本适合服务器和无显示器的 Linux 主机，编译产物更小、依赖更少，可以避开 Tauri 的 WebKit 依赖。
+### GUI：框选即生成
 
-### GUI 流程：选区即生成
+启动图形界面后三步：在地图上用矩形工具框选目标区域，选择一个 Minecraft 世界，点 **Start Generation**。界面里还可以调世界比例、出生点、建筑室内生成等选项。
 
-```bash
-# 启动图形界面
-cargo run
-```
+GUI 适合首次探索和小范围验证。需要批量生成或脚本化时，切到 CLI。
 
-GUI 操作三步：
-
-1. 在地图上用矩形工具框选目标区域
-2. 选择一个已存在的 Minecraft 存档目录
-3. 点击 "Start Generation" 开始生成
-
-GUI 适合首次探索和小范围验证。一旦需要批量生成或脚本化，切到 CLI 更合适。
-
-### CLI 流程：参数化生成
+### CLI：可脚本化的参数化生成
 
 ```bash
-cargo run --no-default-features -- \
-  --terrain \
-  --path="C:/YOUR_PATH/.minecraft/saves/worldname" \
+cargo run --release --no-default-features -- \
+  --output-dir="~/.minecraft/saves/MyWorld" \
   --bbox="40.7128,-74.0060,40.7580,-73.9855"
 ```
 
-核心参数：
+最小命令只需要两个参数：`--output-dir` 指定世界输出目录，`--bbox` 指定经纬度边界框。四个值按 `min_lat,min_lng,max_lat,max_lng` 排列，对应矩形区域的西南角和东北角。坐标可以从 OpenStreetMap 网站导出，也可以用 [bboxfinder](http://bboxfinder.com/) 交互式框选后复制。
 
-| 参数 | 说明 | 示例 |
-|------|------|------|
-| `--terrain` | 启用地形高程生成 | 必填 |
-| `--path` | Minecraft 存档路径 | `~/.minecraft/saves/` |
-| `--bbox` | 边界框坐标 `min_lat,min_lng,max_lat,max_lng` | `40.7128,-74.0060,40.7580,-73.9855` |
+注意两个历史包袱：老版本教程里的 `--terrain` 现在是被接受但不生效的占位参数（地形默认开启，想要平地用 `--mode geo-only`）；`--path` 是 `--output-dir` 的废弃别名，新脚本用后者。
 
-`--bbox` 的四个值按 `min_lat,min_lng,max_lat,max_lng` 排列，对应矩形区域的左下和右上两个角。坐标可以从 OpenStreetMap 网站右键复制，也可以用 [bboxfinder](http://bboxfinder.com/) 交互式框选。
+## 数据流水线
 
-## 数据流：从 OSM 标签到 Minecraft 方块
-
-Arnis 的核心是一条数据流水线：OSM 矢量 + DEM 高程 → 坐标投影 → 方块映射 → 世界写入。下面以生成纽约曼哈顿一小块区域为例，把这条流水线串起来。
-
-### 任务流案例：生成曼哈顿片段
+### 从查询到落盘
 
 ```
-用户框选 bbox (40.7128,-74.0060,40.7580,-73.9855)
+bbox (min_lat,min_lng,max_lat,max_lng)
         │
         ▼
-┌─────────────────────────────────────────────────────────┐
-│ 1. Overpass API 查询                                    │
-│    按 bbox 拉取 OSM 节点/路径/关系                       │
-│    产出：building、highway、waterway 等要素              │
-└─────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────────────────────────────────────────┐
-│ 2. 高程数据查询                                         │
-│    按 bbox 拉取 SRTM/DEM 栅格                            │
-│    产出：每个经纬度对应的海拔高度                        │
-└─────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────────────────────────────────────────┐
-│ 3. 坐标投影与缩放                                       │
-│    经纬度 → Minecraft XZ 平面                            │
-│    海拔    → Minecraft Y 轴                              │
-│    按 --scale 调整比例                                   │
-└─────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────────────────────────────────────────┐
-│ 4. 方块映射                                             │
-│    building  → 石砖/木材按层数拉伸                       │
-│    highway   → 按等级铺路                                │
-│    waterway  → 水方块填充                                │
-│    landuse=forest → 树木生成                             │
-└─────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────────────────────────────────────────┐
-│ 5. 世界写入                                             │
-│    生成 region 文件、level.dat                           │
-│    写入 --path 指定的存档目录                            │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ 1. Overpass API 查询                                 │
+│    按 bbox 拉取 OSM 节点/路径/关系                    │
+│    （terrain-only 模式跳过此步）                      │
+├─────────────────────────────────────────────────────┤
+│ 2. 可选：Overture Maps 补充建筑（--overture）         │
+│    补上 OSM 缺失的卫星识别建筑足迹                    │
+├─────────────────────────────────────────────────────┤
+│ 3. 高程拉取                                          │
+│    默认 Mapterhorn + 区域高分辨率源（如 USGS 3DEP）   │
+│    --aws-only-elevation 回退 AWS Terrain Tiles(~30m) │
+│    月球/火星走 NASA PDS                               │
+├─────────────────────────────────────────────────────┤
+│ 4. ESA WorldCover 地表分类（10m 分辨率）              │
+│    决定地表材质：林地/草地/耕地/建成区/水体等          │
+├─────────────────────────────────────────────────────┤
+│ 5. 坐标投影与方块映射                                 │
+│    经纬度 → Minecraft XZ，海拔 → Y 轴                 │
+│    OSM 标签按类型分派给近 30 个处理子模块             │
+├─────────────────────────────────────────────────────┤
+│ 6. 世界写入                                          │
+│    Java: region 文件 + level.dat                      │
+│    Bedrock: .mcworld    Luanti: map.sqlite            │
+└─────────────────────────────────────────────────────┘
 ```
 
-这条流水线里有三个并行机制，瓶颈各不相同：
+各阶段耗时构成不同：Overpass 查询受服务端限流和区域大小约束，bbox 越大等待越久，超时会被截断；高程和地表分类是网络拉取，受带宽和缓存影响；方块写入是 CPU 和磁盘 I/O，Rust 端用 rayon 自动并行，不需要手动指定线程数。三个环节里网络拉取占大头，所以小 bbox 总是更稳。
 
-- **OSM 矢量数据拉取**：受 Overpass API 限流和区域大小约束，bbox 越大等待越久，超限会被服务端拒绝。
-- **高程栅格拉取**：独立于 OSM，走 DEM 服务，瓶颈在网络带宽和栅格分辨率。
-- **方块写入**：CPU 密集，受 `--jobs` 控制的线程数影响，瓶颈在磁盘 I/O 和 Minecraft region 文件格式。
+### OSM 元素到方块的映射
 
-前两者是网络等待，后者是计算和 I/O，三者耗时不在同一个维度上。所以大区域生成时，分块拉取 + 分块写入比一次性拉取更稳。
+Arnis 把 OSM 标签翻译成方块的工作分派给 `src/element_processing/` 下的近 30 个子模块——`buildings.rs` 管建筑、`highways.rs` 管道路、`waterways.rs` 管水系、`railways.rs` 管铁路，`landuse.rs`、`leisure.rs`、`tourisms.rs`、`historic.rs` 各管一摊，甚至还有 `advertising.rs` 处理广告牌、`power.rs` 处理电力设施。标签越全，还原越细。
 
-### OSM 元素到方块的映射规则
+建筑是做得最深的一块。高度优先认 OSM 的 `height` 标签，没有就按 `building:levels` 层数换算：住宅类每层约 3 格，商业和公共建筑每层 4 格，屋顶类型（山墙或平顶）按建筑类型和足迹自动选。代码里还有一条摩天楼判据——高度超过 120 格（随 scale 缩放）且满足「高度 ≥ 40 格并且不小于 footprint 最长边的两倍」的比例条件，才套用专门的摩天楼造型（全高竖向鳍片立面）。这些规则意味着：标签完整的城市中心能生成出层次分明的天际线，标签稀疏的小城镇则只能得到低矮的普通楼体。Arnis 按标签生成，无法凭空补全——数据缺了，去 OSM 补。
 
-Arnis 把 OSM 标签翻译成 Minecraft 方块，规则集中在 `block_mapper` 模块：
+道路默认铺灰色混凝土粉末和青色陶瓦的混合路面，认 OSM 的 `surface=*` 标签选材质。宽度按道路等级换算成横向格数，主干道比小巷宽得多。
 
-| OSM 元素 | Minecraft 对应 |
-|----------|----------------|
-| `building=yes` | 石砖/木材建筑，按 `building:levels` 拉伸 |
-| `highway` | 道路，按等级选方块 |
-| `waterway` | 河流/运河，水方块 |
-| `landuse=forest` | 森林，树木生成 |
-| `landuse=farm` | 农田，耕地方块 |
-| `leisure=park` | 公园，草地 |
-| `natural=water` | 湖泊/海洋，水方块 |
+### 地表与水体：卫星分类打底，OSM 标签覆盖
 
-建筑高度按 OSM 的 `building:levels` 标签分层拉伸，映射逻辑大致如下：
+这是理解 Arnis 生成效果的关键一环，也是它和「只查 OSM」的工具最大的差别。
 
-```rust
-// 建筑高度映射
-fn map_building_height(levels: u32) -> u32 {
-    match levels {
-        1 => 4, // 1 层 → 4 格高
-        2 => 7, // 2 层 → 7 格高
-        3 => 10, // 3 层 → 10 格高
-        4..=10 => 13, // 4-10 层 → 13 格高
-        _ => 20, // 超高层 → 20 格高
-    }
-}
-```
+地表材质的第一层来自 ESA WorldCover 2021 卫星数据：10 米分辨率、11 个地表类别（林地、灌木、草地、耕地、建成区、水体、红树林等），托管在 AWS S3 上切成 3×3 度的 Cloud-Optimized GeoTIFF 瓦片。Arnis 用 HTTP Range 请求只读需要的那一小块，避免整块下载约 500 MB 的瓦片。有了这一层，一块区域是森林还是农田，不依赖当地 OSM 贡献者画没画过 `landuse`——卫星看过就算数。
 
-道路方块按 `highway` 等级区分：
+第二层是 OSM 标签覆盖：同一块地上，如果 OSM 有明确的 `landuse`、`natural` 标签，以标签为准；水体的岸线也用 OSM 数据修正卫星分类的锯齿（源码里的 `osm_land_override.rs` 和 `osm_water_override.rs` 干的就是这件事）。湖海这些大面积水域来自 WorldCover 的水体类别，河流运河这类线状水系来自 OSM 的 `waterway`。
 
-| OSM highway 类型 | Minecraft 方块 |
-|-----------------|----------------|
-| motorway | 石头台阶 |
-| primary | 圆石台阶 |
-| secondary | 砂砾 |
-| residential | 泥土 |
-| footway | 砂土 |
+### 建筑立面、树木与 3D 道具
 
-OSM 标签质量直接决定生成效果。大城市的建筑层数标签完整，生成出来层次分明；小城镇标签稀疏，建筑会塌成一两层。这是 OSM 数据本身的局限，Arnis 只能按标签拉伸，无法凭空补全。
+v3.x 还加了三层细节，默认开启、都能关掉：
+
+- **建筑立面**：`--building-facades` 用 Mapillary 街景影像给建筑生成贴图立面（需自备 Mapillary API 令牌），配合 `--facade-detail`、`--facade-px` 控制精细度。
+- **树木**：默认放内置的 schematic 树包（按真实树种建模的预制结构），`--max-tree-size` 限制最大树型（small≤6 格、medium≤12、big≤20、tall≤28、giant）；`--legacy-trees` 退回旧的程序化生成树。`--canopy-height` 则改用 Meta/WRI 全球树冠高度图决定树的位置和大小，比「看到林地就撒树」准确得多。
+- **3D 道具**：默认加载外部 3D 模型（3DMR 与 Wikimedia 来源）和内置道具（汽车、船、起重机等），`--use-3d` 一个开关全部关闭。
 
 ## 架构与模块
-
-### 分层结构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Arnis 系统架构                                              │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ 用户界面层                                           │   │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐              │   │
-│  │  │ GUI     │  │ CLI     │  │ Nix     │              │   │
-│  │  │ (Tauri) │  │ (args)  │  │ flakes  │              │   │
-│  │  └────┬────┘  └────┬────┘  └────┬────┘              │   │
-│  └───────┼────────────┼────────────┼────────────────────┘   │
-│          │            │            │                         │
-│  ┌───────▼────────────▼────────────▼────────────────────┐   │
-│  │ 核心引擎层                                           │   │
-│  │  ┌─────────────────────────────────────────────┐     │   │
-│  │  │ World Generator                              │     │   │
-│  │  │  • Terrain Generation                        │     │   │
-│  │  │  • Building Transpilation                    │     │   │
-│  │  │  • Infrastructure (roads, water)             │     │   │
-│  │  └─────────────────────────────────────────────┘     │   │
-│  │  ┌─────────────────────────────────────────────┐     │   │
-│  │  │ Data Processor                              │     │   │
-│  │  │  • OSM Parser                                │     │   │
-│  │  │  • Elevation Handler                         │     │   │
-│  │  │  • Block Mapper                              │     │   │
-│  │  └─────────────────────────────────────────────┘     │   │
-│  └───────────────────────────┬─────────────────────────┘   │
-│                              │                              │
-│  ┌───────────────────────────▼─────────────────────────┐   │
-│  │ 数据源层                                             │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │   │
-│  │  │ Overpass    │  │ DEM         │  │ OSM         │   │   │
-│  │  │ API         │  │ (高程)      │  │ (地图)      │   │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘   │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-三层各管一件事：
-
-- **用户界面层**：Tauri GUI、CLI args、Nix flake 三种入口共享同一套核心引擎，差异只在参数收集方式。
-- **核心引擎层**：World Generator 负责把数据变成方块，Data Processor 负责把外部数据解析成内部结构。两者通过内部数据结构解耦，不直接调用网络。
-- **数据源层**：Overpass API 拉 OSM 矢量，DEM 服务拉高程栅格，OSM 文件作为离线兜底。三者可独立替换。
-
-### 关键模块与项目结构
-
-| 模块 | 职责 |
-|------|------|
-| `world_gen` | Minecraft 世界生成主流程 |
-| `osm_parser` | OpenStreetMap 数据解析 |
-| `elevation` | 高程数据处理 |
-| `block_mapper` | OSM 标签 → Minecraft 方块映射 |
-| `gui` | Tauri 图形界面 |
 
 ```
 arnis/
 ├── src/
-│   ├── main.rs              # 入口
-│   ├── world_gen/           # 世界生成
-│   │   ├── terrain.rs       # 地形生成
-│   │   ├── buildings.rs     # 建筑转换
-│   │   └── infrastructure.rs # 基础设施
-│   ├── data/
-│   │   ├── osm.rs           # OSM 解析
-│   │   └── elevation.rs     # 高程处理
-│   └── gui/                 # GUI 界面
-├── capabilities/            # Tauri 能力
+│   ├── main.rs               # 入口与编排
+│   ├── args.rs               # CLI 参数定义（约 1500 行，参数的唯一事实来源）
+│   ├── retrieve_data.rs      # Overpass/curl/wget 下载与截断检测
+│   ├── osm_parser.rs         # OSM 数据解析
+│   ├── elevation/            # 高程：provider 选择、缓存、后处理
+│   ├── land_cover/           # ESA WorldCover 拉取、岸线修正、OSM 覆盖
+│   ├── element_processing/   # 近 30 个 OSM 标签处理子模块
+│   ├── coordinate_system/    # 坐标系与 bbox
+│   ├── projection/           # 经纬度 → 方块坐标投影
+│   ├── block_definitions.rs  # 方块定义
+│   ├── world_editor/         # 世界写入
+│   ├── trees/                # 树包与树生成
+│   ├── building_facades/     # 建筑立面（Mapillary 影像）
+│   └── gui/                  # Tauri 图形界面
+├── capabilities/             # Tauri 能力声明
 ├── Cargo.toml
 └── tauri.conf.json
 ```
 
-`world_gen` 是热点路径，地形、建筑、基础设施三个子模块按顺序执行：先铺地形，再立建筑，最后接道路和水体。这个顺序保证了建筑不会浮空、道路不会被建筑覆盖。
+结构上的分界线很清楚：数据获取（Overpass、高程、WorldCover）、数据处理（解析、投影、标签分派）、世界写入（Java/Bedrock/Luanti 各自的方块映射）三层互相独立。要加一种新的地物，改 `element_processing/` 里对应的子模块；要接一个新的高程源，在 `elevation/providers/` 里加一个 provider（现成五个：Mapterhorn、AWS Terrain Tiles、USGS 3DEP、NASA Planetary、区域源）。
 
-## 配置与调优
+## 参数与调优
 
-### 完整参数示例
+### 常用参数
 
-```bash
-# 完整参数示例
-cargo run --no-default-features -- \
-  --terrain \
-  --path="~/.minecraft/saves/MyWorld" \
-  --bbox="40.7128,-74.0060,40.7580,-73.9855" \
-  --scale=1.0 \                  # 世界缩放比例
-  --spawn-point="40.73,-73.99" \ # 出生点
-  --interior=true \              # 生成室内
-  --water-level=62               # 水位高度
-```
+| 参数 | 默认 | 说明 |
+|------|------|------|
+| `--output-dir` | 必填 | 世界输出目录（`--path` 为废弃别名） |
+| `--bbox` | 必填 | 边界框 `min_lat,min_lng,max_lat,max_lng` |
+| `--mode` | `geo-terrain` | `geo-only` 平地加对象；`terrain-only` 只生成真实地形 |
+| `--scale` | 1.0 | 方块数/米，1.0 为真实尺寸，允许 0.05–4.0 |
+| `--ground-level` | — | 世界地面高度 |
+| `--spawn-lat` / `--spawn-lng` | bbox 中心 | 出生点经纬度，需落在 bbox 内 |
+| `--rotation` | 0 | 顺时针旋转角度，范围 -90 到 90 |
+| `--interior` | 关 | 生成建筑室内 |
+| `--fillground` | 关 | 填充地下并生成矿脉（生存模式可玩性的基础） |
+| `--bedrock` / `--luanti` | 关 | 输出 Bedrock `.mcworld` 或 Luanti `map.sqlite` |
+| `--file` / `--save-json-file` | — | 读入/保存本地 OSM JSON，便于复用同区域数据 |
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `--scale` | 1.0 | 地形缩放比例，调大让地形更平缓 |
-| `--spawn-point` | 中心点 | 出生点坐标 |
-| `--interior` | false | 是否生成建筑室内 |
-| `--water-level` | 62 | 水位高度，影响海岸线和湖泊 |
-| `--tree-density` | 0.5 | 树木密度 |
-| `--biome` | auto | 生物群系 |
+完整参数以 `src/args.rs` 和 `--help` 输出为准。v3.x 的完整清单还包括 `--overture`、`--canopy-height`、`--building-facades`、`--disable-height-limit`（实验性，Java 1.21.4+ 可把建筑高度上限扩展到 Y=-2032..2031）等，上文相关小节已各自说明。
 
-参数默认值以仓库 README 和 `--help` 输出为准，不同版本可能有差异。
+### scale：最容易误读的参数
 
-`--scale` 是最容易被忽略的参数。真实世界的经纬度差对应到 Minecraft 方块时，1:1 会让城市显得空旷（一栋楼在 Minecraft 里只有几格宽），调大到 2.0-3.0 更接近游戏内可探索的尺度。
+`--scale` 的语义是每米对应几个方块，1.0 就是真实尺寸：一栋 30 米宽的楼生成 30 格宽。它不是「缩放倍数越大世界越大越粗糙」，两个方向都有代价——调大（如 2.0）放大细节，城市可探索性更好，但 Overpass 拉取范围不变、方块数量翻倍，生成时间和存档体积都上去；调小到 0.3 以下，代码会自动跳过建筑道路等对象（塞不下），只剩地形。想生成大范围又保留对象，正确做法是缩 bbox，而不是压 scale。
 
-### 常见区域 bbox
+### 大区域与 Overpass 限流
 
-```bash
-# 指定纽约曼哈顿
---bbox="40.7000,-74.0200,40.7800,-73.9500"
+Overpass 是公共免费服务，bbox 拉太大轻则慢、重则查询被截断。三个办法按顺序试：
 
-# 指定伦敦市中心
---bbox="51.5000,-0.1500,51.5200,-0.1000"
+1. **缩小 bbox**，分多次生成各自独立的世界，要拼大地图就用 MCEdit 类工具后期合并；
+2. **`--save-json-file` 存下 OSM 数据，`--file` 复用**，调试参数时反复生成不必反复查询；
+3. 只要地形不要建筑时用 `--mode terrain-only`，直接跳过 Overpass 查询。
 
-# 指定东京涩谷
---bbox="35.6500,139.7000,35.6700,139.7200"
-```
-
-### 大区域分块生成
-
-bbox 过大会触发 Overpass API 限流，分块生成更稳：
+### 服务器部署
 
 ```bash
-# 区块 1
-cargo run -- --terrain --path="~/minecraft/saves/World_Part1" \
-  --bbox="40.7000,-74.0200,40.7400,-73.9800"
-
-# 区块 2
-cargo run -- --terrain --path="~/minecraft/saves/World_Part2" \
-  --bbox="40.7400,-74.0200,40.7800,-73.9800"
-```
-
-分块时让相邻区块的 bbox 有少量重叠（约 0.001 度），避免边界建筑被切断。
-
-### 多线程与服务器部署
-
-```bash
-# 启用多线程
-cargo run --release -- \
-  --terrain \
-  --jobs=8 \                  # 8 线程
-  --bbox="40.71,-74.01,40.76,-73.96"
-```
-
-```bash
-# 编译为无 GUI 版本
+# 无 GUI 编译，避开 Tauri 的 WebKit 依赖
 cargo build --release --no-default-features
 
-# 部署到服务器
+# 产物拷到服务器直接跑
 scp target/release/arnis user@server:/path/to/minecraft/
 ```
 
-服务器部署用 `--no-default-features` 编译，可以避开 Tauri 的 WebKit 依赖，在无桌面环境的 Linux 上也能跑。`--jobs` 参数的具体取值范围和默认值以仓库 README 和 `--help` 输出为准。
+线程数由 rayon 按 CPU 核数自动分配，没有 `--jobs` 这类手动并行参数。服务器上跑批生成时，真正的限制是 Overpass 限流和磁盘写入，不是 CPU。
 
 ## 横向对比与采用建议
 
-### 与其他方案对比
+| 工具 | 数据来源 | 定位 |
+|------|----------|------|
+| **Arnis** | OSM + 卫星高程 + WorldCover | 从真实地理数据自动生成，Java/Bedrock/Luanti 三目标 |
+| **MapSmith**（官方） | 同 Arnis | 浏览器版，无需安装，适合移动端和更大地图 |
+| **WorldPainter** | 手工绘制 | 交互式手绘地形，创作自由度高，但不自动还原真实城市 |
 
-| 工具 | 数据源 | Minecraft 版本 | 许可证 | 适用场景 |
-|------|--------|---------------|--------|----------|
-| **Arnis** | OSM | Java + Bedrock | Apache-2.0 | 真实城市还原 |
-| **EarthMC** | 专有 | Java | 专有 | 在线社区地图 |
-| **MineOS** | 自定义 | Java | 开源 | 教学实验 |
+同类「真实数据驱动」的工具里，Arnis 是数据源最全、迭代最活跃的一个。按场景给建议：
 
-Arnis 的优势是数据源开放（OSM 任何人可查可改）和双版本支持（Java + Bedrock）。EarthMC 偏社区玩法，MineOS 偏教学，定位不同。对比信息以各项目仓库当前 README 为准。
+1. **想看自己家在 Minecraft 里长什么样**：GUI 或 MapSmith，框选小区块，几分钟出结果。
+2. **城市级还原或教学项目**：CLI，先小区域验证参数，再扩大范围；教学场景留意 `--fillground`，默认世界没有地下矿脉。
+3. **服务器批量生成**：`--no-default-features` 编译，用 `--file`/`--save-json-file` 复用 OSM 数据，尊重 Overpass 限流。
+4. **二次开发**：改标签映射去 `element_processing/`，加数据源去 `elevation/providers/` 或 `land_cover/`，参数定义集中在 `args.rs`。
 
-### 采用建议
+不适合的场景：实时多人联机（生成是离线批处理）、超大范围一次生成（Overpass 和内存都顶不住）。
 
-按场景给采用顺序：
-
-1. **想快速看一眼自己家在 Minecraft 里长什么样**：用 GUI，框选小区块，5 分钟出结果。
-2. **要做城市级还原或教学项目**：用 CLI，分块生成，提前规划 bbox 和 `--scale`。
-3. **要部署到服务器批量生成**：用 `--no-default-features` 编译，配合 `--jobs` 调线程数，注意 Overpass API 限流。
-4. **要二次开发或定制映射规则**：fork 仓库，改 `block_mapper` 模块，OSM 标签到方块的映射规则集中在这里。
-
-不适合的场景：实时多人联机（生成是离线批处理，不做实时同步）、超大面积国家版图（Overpass API 和内存都会顶不住）。
-
-## 媒体与学术引用
-
-Arnis 被多家技术媒体报道，并出现在洪水教育的学术论文中：
-
-| 来源 | 标题 |
-|------|------|
-| AWS Blog | Building Realistic Minecraft Worlds with Open Data |
-| Hackaday | Bringing OpenStreetMap Data into Minecraft |
-| Tom's Hardware | Minecraft Tool Lets You Create Scale Replicas of Real-World Locations |
-| XDA Developers | Hometown Minecraft Map: Arnis |
-| Floodcraft 论文 | Game-based Interactive Learning Environment using Minecraft for Flood Mitigation |
-
-媒体报道和论文标题来自 Arnis 仓库 README，原始链接请到仓库查看。
-
-## 资源链接
-
-### 官方资源
+## 资源与延伸
 
 | 资源 | 链接 |
 |------|------|
-| 官网 | https://arnismc.com |
+| 官网（唯一官方下载源之一） | https://arnismc.com |
 | GitHub 仓库 | https://github.com/louis-e/arnis |
-| 文档 | https://github.com/louis-e/arnis/wiki |
-| Discord | https://discord.gg/mA2g69Fhxq |
-| 问题反馈 | https://github.com/louis-e/arnis/issues |
+| 文档 Wiki | https://github.com/louis-e/arnis/wiki |
 | 发布页 | https://github.com/louis-e/arnis/releases |
+| 问题反馈 | https://github.com/louis-e/arnis/issues |
+| Discord | https://discord.gg/mA2g69Fhxq |
 | MapSmith（浏览器版） | https://arnismc.com/mapsmith/ |
+| ESA WorldCover 数据 | https://esa-worldcover.org/ |
 
-### 相关项目
+项目出圈后被多家媒体报道并进入学术论文：AWS 公共部门博客 [Building Realistic Minecraft Worlds with Open Data](https://aws.amazon.com/de/blogs/publicsector/building-realistic-minecraft-worlds-with-open-data-on-aws-how-arnis-uses-elevation-datasets-at-scale/)（讲它如何大规模使用高程数据集）、Hackaday、Tom's Hardware、XDA Developers 的报道，以及 K-12 洪水教育的 Floodcraft 论文。原始链接都在仓库 README 里。
 
-| 项目 | 说明 |
-|------|------|
-| MapSmith | 浏览器版在线生成 |
-| Floodcraft | 洪水教育游戏，基于 Minecraft |
-
-### 下载地址
-
-⚠️ **安全提示**：请仅从以下地址下载：
-
-- https://arnismc.com
-- https://github.com/louis-e/arnis/releases
+⚠️ **安全提示**：README 明确声明 arnismc.com 和 github.com/louis-e/arnis 是仅有的官方渠道，其他声称与项目有关的下载站都可能带恶意软件。
 
 ## 常见问题
 
-### Arnis 生成的世界能直接在生存模式玩吗？
+**生成的世界能直接玩生存模式吗？**
+基础生成只覆盖地形、建筑和环境。加 `--fillground` 会填充地下并生成矿脉，这是生存模式的基本条件；怪物、村庄这类游戏性内容不在生成范围内，进游戏后按需补。
 
-能，但需要额外配置。默认生成的世界只有地形、建筑和环境，没有矿石、怪物、NPC。如果要生存模式可玩，需要加 `--fillground` 参数（地下挖空 + 矿石生成），并在生成后在游戏里添加怪物生成规则。
+**建筑看起来千篇一律？**
+大概率是当地 OSM 标签稀疏。去 OpenStreetMap 补充建筑类型和层数标签，下次生成立刻变好——这也是给项目做贡献最直接的方式。想改映射规则本身，fork 后改 `element_processing/` 对应模块。
 
-### bbox 太大导致 Overpass API 限流怎么办？
-
-分块生成。把大区域拆成多个小 bbox，逐个生成，让相邻 bbox 有少量重叠（约 0.001 度），避免边界建筑被切断。也可以用 `--no-land-cover` 参数关闭土地覆盖分类，速度提升约 20%。
-
-### 建筑在 Minecraft 里看起来都一样怎么办？
-
-这是 OSM 数据本身的局限。大城市的建筑层数标签完整，生成出来层次分明；小城镇标签稀疏，建筑会塌成一两层。Arnis 只能按标签拉伸，无法凭空补全。可以 fork 仓库，改 `block_mapper` 模块，添加更多基于建筑类型的材质规则。
-
-### 生成速度太慢怎么优化？
-
-用 `--jobs` 参数调多线程数，用 `--no-land-cover` 关闭土地覆盖分类，用 `--scale` 调小缩放比例。服务器部署用 `--no-default-features` 编译，可以避开 Tauri 的 WebKit 依赖。
+**Overpass 查询很慢或失败？**
+缩小 bbox，或用 `--file` 复用已保存的 OSM 数据。只要地形时切 `--mode terrain-only`，完全不碰 Overpass。
 
 ## 自测题
 
-读完后，尝试回答这些问题：
-
-1. Arnis 的数据流有哪几个并行机制？它们的瓶颈各是什么？
-2. OSM 的 `building:levels` 标签怎么映射成 Minecraft 方块高度？
-3. 为什么 Arnis 的海洋走 ESA WorldCover 而不是 OSM？
-4. `--scale` 参数的作用是什么？调大调小各有什么影响？
-5. 如果要在生产环境部署 Arnis，你会怎么配置编译参数和运行参数？
+1. Arnis 的三个生成模式分别适合什么场景？`--terrain` 参数现在是什么行为？
+2. 建筑高度优先认哪个 OSM 标签？每层换算成多少格？
+3. 地表材质为什么以 ESA WorldCover 卫星分类打底，OSM 标签在什么情况下覆盖它？
+4. `--scale` 设成 0.2 会发生什么？想生成大范围又保留建筑，正确做法是什么？
+5. 在服务器上批量生成时，瓶颈通常在哪两个环节？为什么没有 `--jobs` 参数？
 
 ## 进阶路径
 
-如果你准备在生产环境使用 Arnis，建议按下面顺序推进：
+建议按这个顺序深入：
 
-1. **先用 GUI 快速验证** - 下载预编译版本，用 GUI 框选小区块，5 分钟出结果，建立直觉。
+1. **GUI 快速验证**——预编译版框选自家小区，建立对生成质量的直觉。
+2. **CLI 参数实验**——试 `--scale`、`--interior`、`--fillground`、`--mode` 的组合，观察存档差异。
+3. **读 `args.rs`**——所有参数的注释都在这一个文件里，是理解能力边界的最快路径。
+4. **改一个映射规则**——从 `element_processing/` 挑一个子模块，让某种标签生成你想要的方块，给上游提 PR（README 承诺合并后会定期发版）。
+5. **反哺 OSM**——发现家乡数据不完整就去补标签，这是所有下游工具受益的改进。
 
-2. **再用 CLI 做参数实验** - 尝试不同的 `--scale`、`--interior`、`--water-level` 组合，观察效果差异。
-
-3. **最后分块生成大区域** - 做城市级还原或教学项目时，提前规划 bbox 和 `--scale`，避免 Overpass API 限流。
-
-4. **二次开发或定制映射规则** - fork 仓库，改 `block_mapper` 模块，OSM 标签到方块的映射规则集中在这里。
-
-5. **贡献给 OSM** - 如果发现自己家乡的建筑数据不完整，可以去 OpenStreetMap 网站补充，下次生成就会更准确。
-
-进阶资源：
-
-- [Arnis GitHub 仓库](https://github.com/louis-e/arnis)
-- [Arnis 官网](https://arnismc.com)
-- [OpenStreetMap Wiki](https://wiki.openstreetmap.org/)
-- [ESA WorldCover 数据说明](https://esa-worldcover.org/)
-- [AWS Terrain Tiles 文档](https://registry.opendata.aws/terrain-tiles/)
+延伸阅读：[OpenStreetMap Wiki](https://wiki.openstreetmap.org/)（标签体系）、[ESA WorldCover](https://esa-worldcover.org/)（地表分类数据）、仓库 Wiki 的技术解释与路线图。
 
 ---
 
 ## 资料口径说明
 
-本文的判断基于以下来源和取径：
+本文的事实核查基线：GitHub 仓库元数据与 README、`src/args.rs` 参数定义、`src/land_cover/mod.rs`、`src/element_processing/buildings.rs`、`highways.rs`、`src/elevation/` 与 `src/land_cover/` 模块源码，均为 2026-09-18 的 main 分支快照（对应 v3.2.0 发布后）。Stars、Forks、贡献者数取自 GitHub API 当日返回值。
 
-1. **项目文档分析**：分析了 `louis-e/arnis` 仓库的 GitHub README、官方文档（arnismc.com）、Wiki（截至 v2.6.0）
-2. **数据源验证**：基于 OpenStreetMap（OSM）标签系统、SRTM/DEM 高程数据、ESA WorldCover 土地覆盖数据
-3. **技术细节验证**：部分 Rust 代码示例和参数说明来自仓库源码和 `--help` 输出，实际使用时需要参考最新版本
-4. **映射逻辑说明**：OSM 标签到 Minecraft 方块的映射规则基于仓库 `block_mapper` 模块，可能存在版本差异
-5. **事实边界**：Arnis 生成的世界取决于 OSM 数据质量，小城镇和农村地区的数据可能不完整
-
-**局限性**：
-
-- Arnis 仍在持续更新（v2.6.0），部分功能（如 `--interior`、`--fillground`）可能在新版本中有所变化
-- OSM 数据质量因地区而异，生成效果取决于当地地图贡献者的投入
-- 本文未实际运行所有参数组合，部分性能描述基于文档推断
-- Minecraft 版本兼容性（Java 1.17+ vs Bedrock）需要以仓库最新 README 为准
-
----
-
----
-
-_🦞 本文由钳岳星君撰写，基于 Arnis (14.8k Stars)，第57轮优化于 2026-07-01_
+已知边界：Arnis 迭代很快，参数名和默认值可能随版本变化，v2.x 时代的教程（含本文旧版）中的 `--path`、`--terrain`、`--water-level` 等用法已失效或语义变化；生成效果取决于当地 OSM 数据质量；本文未实际运行全部参数组合，涉及行为的描述均以源码注释和 README 为据。

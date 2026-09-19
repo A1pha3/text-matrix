@@ -1,6 +1,7 @@
 ---
 title: "curl 与 libcurl：互联网数据传输基石的架构解析"
 date: "2026-04-27T15:00:00+08:00"
+lastmod: "2026-09-18T10:00:00+08:00"
 slug: "curl-libcurl-multi-protocol-transfer-guide"
 github_repo: "curl/curl"
 source_key: "gh:curl/curl"
@@ -29,7 +30,8 @@ draft: false
 - [进阶路径](#进阶路径)
 
 > **项目地址**：[curl/curl](https://github.com/curl/curl)
-> **维护者**：Daniel Stenberg
+> **主导者**：Daniel Stenberg（1998 年至今持续维护，2025 年 10 月获瑞典皇家工程科学院金奖章）
+> **最新版本**：8.22.0（2026-09-02 发布；文中数据截至 2026-09-18）
 > **许可证**：curl License / MIT License（双许可）
 > **支持协议**：27 种（DICT, FILE, FTP, FTPS, GOPHER, GOPHERS, HTTP, HTTPS, IMAP, IMAPS, LDAP, LDAPS, MQTT, MQTTS, POP3, POP3S, RTSP, SCP, SFTP, SMB, SMBS, SMTP, SMTPS, TELNET, TFTP, WS, WSS）
 
@@ -51,17 +53,18 @@ curl 有两个名字。命令行工具叫 `curl`，承载传输逻辑的 C 库�
 
 curl 的价值不在命令行本身，而在它把二十多种协议的传输逻辑收敛进一套可复用的 C 库里。命令行工具只是这套库的最薄一层前端，真正被 Git、PHP 的 cURL 扩展、各类下载器依赖的是底层的 libcurl。理解这套分层，对网络编程、协议调试、嵌入式开发都有直接帮助。
 
-curl 由瑞典开发者 Daniel Stenberg 于 1998 年发起，最初只是给 IRC 频道上传文件的工具。二十多年过去，它出现在几乎每一台服务器和每一条自动化脚本里，Daniel 至今保持持续提交，项目没有常见的“完成后失修”问题。
+curl 的起点是 1996 年底：瑞典开发者 Daniel Stenberg 在 EFnet 的一个 Amiga 频道运营 IRC bot，想给频道成员提供货币汇率查询。汇率数据发布在网页上，他需要一个能自动抓取的命令行工具，于是接手了 Rafael Sagula 的 HttpGet 项目往上加功能。1997 年支持 Gopher 和 FTP 后改名 urlget；1998 年 3 月 20 日加上上传能力，urlget 这个名字也名不副实了，项目就此定名 curl。二十多年过去，它出现在几乎每一台服务器和每一条自动化脚本里，Daniel 至今保持持续提交，项目没有常见的"完成后失修"问题。
 
-| 指标 | 数值 |
+| 指标 | 数值（2026-09-18 快照） |
 |------|------|
+| 最新版本 | 8.22.0（2026-09-02 发布，约每 8 周一版） |
+| GitHub Stars | 42,873 |
 | 主要语言 | C |
-| 维护者 | Daniel Stenberg 主导 |
-| 支持协议 | 27 种（见标题下方项目信息） |
+| 许可证 | curl License / MIT（双许可） |
 
 ### 架构分层
 
-curl 项目分两层：上层是命令行工具 `curl`，下层是 C 库 `libcurl`。libcurl 内部又拆成三个正交子系统——传输接口（easy / multi / share）、协议 handler 表、URL 解析引擎（curl_url）。命令行工具不直接处理协议，它把参数翻译成 libcurl API 调用，所有传输逻辑都走 handler 表分发。
+curl 项目分两层：上层是命令行工具 `curl`，下层是 C 库 `libcurl`。libcurl 内部又拆成三个子系统——传输接口（easy / multi / share）、协议 scheme 注册表、URL 解析引擎（curl_url）。命令行工具不直接处理协议，它把参数翻译成 libcurl API 调用，所有传输逻辑都走 scheme 表分发。
 
 ```text
 ┌─────────────────────────────────────────────────┐
@@ -77,7 +80,7 @@ curl 项目分两层：上层是命令行工具 `curl`，下层是 C 库 `libcur
 │  │  easy（同步）/ multi（并发）/ share（共享）│  │
 │  └──────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────┐  │
-│  │  协议 handler 注册表                        │  │
+│  │  协议 scheme 注册表                        │  │
 │  │  HTTP / HTTPS / FTP / SFTP / ...        │  │
 │  └──────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────┐  │
@@ -223,7 +226,7 @@ curl_easy_cleanup(curl2);
 curl_multi_cleanup(multi);
 ```
 
-`curl_multi_poll()` 底层用 `poll()`（或 `select()`、`epoll()`，取决于平台和编译选项），能在单个线程里高效处理大量并发连接。这是 libcurl 比“每个连接一个线程”更省资源的原因。
+`curl_multi_poll()` 底层走 libcurl 自己的 `Curl_poll`（`lib/select.c`）：有 `poll()` 的平台用 `poll()`，少数老平台回退到 `select()`。它把所有连接的 socket 一次性交给内核等待，单个线程就能照看大量并发连接——这是 libcurl 比“每个连接一个线程”更省资源的原因。
 
 ### Share Interface（共享接口）
 
@@ -323,32 +326,45 @@ curl 支持 27 种协议，靠的是协议插件式架构：每个协议实现�
 
 ### 协议注册机制
 
-libcurl 内部维护一张协议 handler 表。每个协议实现以下函数指针（简化版）：
+libcurl 内部维护一张按 scheme 名索引的注册表。2026 年的 8.19/8.20 版本前后，这套结构经历了一次重构——此前它是一个把 scheme 名和回调合在一起的 `struct Curl_handler`，旧书旧博客里查到的多半是那个名字；现在的代码把 scheme 元数据和协议实现拆成了两张表（`lib/protocol.h`）：
 
 ```c
-struct Curl_handler {
-  const char *scheme;              // 协议名，如 "http", "ftp"
-  CURLcode (*setup)(struct Curl_easy *data);
+/* 每个 URL scheme 一份：名字、默认端口、行为标志，
+   以及指向协议实现的指针（各协议的实例登记在 lib/protocol.c） */
+struct Curl_scheme {
+  const char *name;                  /* 小写的 scheme 名，如 "http" */
+  const struct Curl_protocol *run;   /* 协议实现；构建时禁用则为 NULL */
+  curl_prot_t protocol;              /* CURLPROTO_* 协议位 */
+  curl_prot_t family;                /* 协议族位 */
+  uint32_t flags;                    /* PROTOPT_* 行为标志 */
+  uint16_t defport;                  /* 默认端口，如 80 */
+};
+
+/* 协议本体：一组回调（HTTP 的实现在 lib/http.c，实例叫 Curl_protocol_http） */
+struct Curl_protocol {
+  CURLcode (*setup_connection)(struct Curl_easy *data, struct connectdata *conn);
+  CURLcode (*do_it)(struct Curl_easy *data, bool *done);   /* 发起请求 */
+  CURLcode (*done)(struct Curl_easy *, CURLcode, bool);    /* 传输收尾 */
   CURLcode (*connect_it)(struct Curl_easy *data, bool *done);
-  CURLcode (*do_it)(struct Curl_easy *data, bool *done);
-  CURLcode (*done)(struct Curl_easy *data, CURLcode, bool);
-  Curl_send *send;                 // 发送数据
-  Curl_recv *recv;                 // 接收数据
-  /* ... 更多函数指针 ... */
+  CURLcode (*disconnect)(struct Curl_easy *, struct connectdata *,
+                         bool dead_connection);
+  CURLcode (*write_resp)(struct Curl_easy *data, const char *buf,
+                         size_t blen, bool is_eos);
+  /* ... 另有 connecting、doing 与四个阶段各自的 pollset 回调 ... */
 };
 ```
 
-真实源码里的字段比这多，`Curl_handler` 还包含 `readwrite`、`connection_check`、`disconnect` 等回调，用于传输中读写、连接状态检查和清理。这里保留发送 / 接收两个核心入口，便于理解分发逻辑。
+传输时主循环拿解析出的 scheme 查 `Curl_scheme` 表，经 `run` 指针进入对应协议的回调。`flags` 里的 `PROTOPT_SSL`（是否走 TLS）、`PROTOPT_DUAL`（FTP 这类双连接协议）等标志，让主循环能用同一套逻辑伺候所有协议的差异。
 
 接入一个新协议只需要：
 
-1. 实现 `struct Curl_handler` 里的一组函数，放在 `lib/` 下对应协议的文件（如 `http.c`、`ftp.c`）里
-2. 在 libcurl 的协议注册表中登记该 handler，按 scheme 关联
+1. 实现 `struct Curl_protocol` 里的一组回调，放在 `lib/` 下对应协议的文件（如 `http.c`、`ftp.c`）里
+2. 在 `lib/protocol.c` 的 scheme 表里登记对应的 `Curl_scheme`，按名字关联
 3. 在构建系统里启用对应的编译开关
 
 不需要改动传输主循环。新协议的接入点明确，维护边界清晰。这是 curl 能持续增加协议而代码不失控的原因——每个协议自己负责自己的实现，主循环只管查表分发。
 
-需要说明的是，27 种协议是 curl 源码支持的完整清单，某个具体构建未必全部启用——SMB/SMBS、GOPHERS 这类协议在部分平台或发行版的默认配置里可能没有编译进去。实际能力以 `curl -V` 输出为准。
+需要说明的是，27 种协议是 curl 源码支持的完整清单，某个具体构建未必全部启用。最典型的是 SMB/SMBS：从 8.20.0 起默认不编译，要显式打开构建开关；SCP/SFTP 依赖可选的 libssh2 或 libssh，LDAP/LDAPS 依赖系统 LDAP 库。实际能力以 `curl -V` 输出的 Protocols 一行为准。
 
 ### 代理与 HTTP 版本选择
 
@@ -358,8 +374,11 @@ curl 通过代理和 HTTP 版本开关控制请求路径。调试链路或锁定
 # 使用 HTTP 代理
 curl -x http://proxy:8080 https://example.com
 
-# 使用 SOCKS5 代理
-curl --socks5 socks5://proxy:1080 https://example.com
+# 使用 SOCKS5 代理（--socks5 后直接给 host:port，不带 scheme）
+curl --socks5 proxy.example:1080 https://example.com
+
+# 等价写法：用 -x 配 socks5:// 前缀；socks5h:// 则把域名解析也交给代理
+curl -x socks5://proxy.example:1080 https://example.com
 
 # 仅允许 HTTP/1.1，不使用 HTTP/2
 curl --http1.1 https://example.com
@@ -368,7 +387,7 @@ curl --http1.1 https://example.com
 curl --http2 https://example.com
 ```
 
-`--http2` / `--http3` 要求 curl 在编译时启用对应支持（HTTP/2 通常依赖 nghttp2，HTTP/3 依赖 quiche 或 ngtcp2），否则会直接报错。先 `curl -V` 确认当前构建支持哪些。
+`--http2` / `--http3` 要求 curl 在编译时启用对应支持。HTTP/2 依赖 nghttp2；HTTP/3 目前只有 ngtcp2 后端算稳定路径（需要 ngtcp2 + nghttp3 加一个支持 QUIC 的 TLS 库），Cloudflare 的 quiche 后端仍标实验性。不支持的构建会直接报错，先 `curl -V` 确认当前构建启用了哪些特性。
 
 ---
 
@@ -403,8 +422,8 @@ int main(void) {
 
 `curl_easy_perform()` 内部大致分五步：
 
-1. **解析 URL**。`curl_easy_setopt(curl, CURLOPT_URL, ...)` 并不立刻联网，它把 URL 字符串交给 curl_url 引擎解析，拆出 scheme、host、port、path。解析失败（比如 `htp://` 拼错）会直接返回错误，不会发起连接。
-2. **按 scheme 查表**。libcurl 用解析出的 scheme 在协议 handler 表里查找对应的 `Curl_handler`，拿到 http 对应的 `do_it`、`send`、`recv` 等函数指针。
+1. **解析 URL**。`curl_easy_setopt(curl, CURLOPT_URL, ...)` 并不立刻联网，它把 URL 字符串交给 curl_url 引擎解析，拆出 scheme、host、port、path。解析失败（比如 `htp://` 拼错 scheme）会返回 `CURLE_URL_MALFORMAT`，不会发起连接。
+2. **按 scheme 查表**。libcurl 用解析出的 scheme 在 `Curl_scheme` 表里找到对应表项，经由 `run` 指针拿到 http 协议的 `Curl_protocol` 回调组。
 3. **建立连接**。DNS 解析 → TCP 握手 → TLS 协商（HTTPS 时）。如果启用了 share 接口，DNS 结果和 SSL session 会先查共享缓存。
 4. **执行传输**。调用 handler 里的发送 / 接收回调，把响应数据交给 `CURLOPT_WRITEFUNCTION`（上面示例里是写进文件）。重定向、断点续传这类逻辑也在这个阶段处理。
 5. **收尾**。`done` 回调清理传输状态，连接放回连接池（保持 keep-alive），`curl_easy_perform()` 返回 `CURLcode`。
@@ -415,7 +434,9 @@ int main(void) {
 
 ## SSL/TLS 支持
 
-curl 支持多种 SSL 后端：OpenSSL、GnuTLS、mbedTLS、WolfSSL、BearSSL、rustls，以及 macOS 上的 Secure Transport、Windows 上的 Schannel。编译时选择后端（autotools 用 `--with-ssl` 等选项，CMake 构建用对应开关），同一个二进制通常静态链接一个后端，也可以通过动态库同时支持多个。当前启用的是哪一个，看 `curl -V` 中 TLS 一行的输出。
+curl 把 TLS 实现抽象成可替换的后端。8.22 时代的选择是：OpenSSL 及其分支（BoringSSL、LibreSSL、AWS-LC，共用同一份 `openssl.c`）、GnuTLS、mbedTLS、wolfSSL、rustls，以及 Windows 上的 Schannel；macOS 上还能用 `--with-apple-sectrust` 把证书信任评估交给系统 SecTrust 服务，叠加在上面任意引擎之上。曾经存在的 Secure Transport 和 BearSSL 后端已在 8.15.0 移除，旧资料里若还推荐它们，直接忽略。
+
+一次构建可以同时集成多个后端，运行时用 `CURLOPT_SSL_BACKEND` 切换生效的那个；但 OpenSSL 分支之间、或与 wolfSSL 之间不能共存——符号名冲突。当前用的是哪个后端，看 `curl -V` 首行：`libcurl/<版本> (<TLS 后端>) <第三方库列表>`，括号里就是生效的后端，例如系统 curl 常见的 `(SecureTransport)`、`(OpenSSL)`，后面依次列出 zlib、nghttp2 等链接进来的库。
 
 ### 关键配置项
 
@@ -430,7 +451,7 @@ curl -k https://invalid-cert.example.com
 curl --cert client.pem --key client.key https://secure.example.com
 
 # 查看服务器证书详情
-curl -v https://example.com 2>&1 | grep -A 20 "SSL certificate"
+curl -v https://example.com 2>&1 | grep -i certificate
 ```
 
 ```c
@@ -458,7 +479,7 @@ curl_easy_setopt(curl, CURLOPT_CAINFO, "/path/to/ca-bundle.crt");
 
 1. **不是浏览器**：不支持 JavaScript、CSS 渲染、DOM 操作，无法处理需要 JS 渲染的单页应用
 2. **非交互式**：无法填表、点击按钮，模拟表单提交得自己构造 POST 请求
-3. **没有内置重试**：大文件传输失败需要自己实现重试（用脚本循环或 `curl --retry`）
+3. **库层面没有自动重试**：命令行的 `--retry` 只针对瞬态错误——超时、FTP 4xx，以及 HTTP 408、429、500、502、503、504、522、524，按 1 秒起步逐次翻倍（10 分钟封顶）的节奏退避，7.66.0 起还遵守服务器的 `Retry-After` 响应头。libcurl 库本身不替你重试，嵌入应用时要自己实现重试策略
 4. **单连接原始性能**：单连接吞吐不如专攻 HTTP 的专用客户端，但并发靠 multi 接口多路复用弥补
 
 ### 与替代工具对比
@@ -467,7 +488,7 @@ curl_easy_setopt(curl, CURLOPT_CAINFO, "/path/to/ca-bundle.crt");
 |------|----------|---------------|
 | wget / wget2 | 递归下载、网站镜像 | wget 更适合整站下载；curl 更适合 API 调试和嵌入式场景 |
 | httpie / xh | 交互式 HTTP 客户端 | 命令行体验更好，输出自动格式化；但不适合脚本，也不提供库 |
-| fetch / fetchurl | BSD 原生工具 | 仅支持 HTTP/HTTPS，功能少，跨平台性差 |
+| fetch（FreeBSD） | BSD 系统内置下载器 | 支持 HTTP/HTTPS/FTP，够用但功能面窄；不能跨平台使用 |
 | Postman / Insomnia | API 测试（带 GUI） | 适合手工测试；curl 适合脚本化和自动化 |
 
 ---
@@ -515,7 +536,7 @@ curl 的命令行工具只是 libcurl 的前端。libcurl 作为底层库，让�
    <details><summary>查看答案</summary>从 curl 7.62.0 开始引入，是独立的 URL 解析 API。解决不同协议 URL 规则不同、系统库跨平台行为不一致、以及安全审计需要统一入口的问题。</details>
 
 4. 新协议接入 libcurl，要不要改传输主循环？
-   <details><summary>查看答案</summary>不用。每个协议实现 `Curl_handler` 的一组函数指针并注册到 handler 表，主循环按 scheme 查表分发即可。</details>
+   <details><summary>查看答案</summary>不用。每个协议实现 `Curl_protocol` 的回调组，`Curl_scheme` 表按 scheme 名登记并指向它，主循环查表分发即可（8.19/8.20 重构前这套结构叫 `Curl_handler`）。</details>
 
 5. `curl -k` 关闭了什么校验？生产环境为什么禁止？
    <details><summary>查看答案</summary>关闭对端证书验证（`CURLOPT_SSL_VERIFYPEER`）。关闭后 HTTPS 会接受任意证书，包括中间人攻击的证书，加密保护形同虚设，生产环境永远不应关闭。</details>
@@ -525,11 +546,11 @@ curl 的命令行工具只是 libcurl 的前端。libcurl 作为底层库，让�
 1. 跑一次 `curl -v https://example.com`，把输出按“URL 解析 → DNS → TCP → TLS → HTTP 请求/响应”五段标注出来，对照本文的调用链。
 2. 写一个 C 程序，用 easy 接口下载两个文件；再改成 multi 接口并发下载，对比两者的完成时间。
 3. 用 `curl_url` API 解析 `https://user:pass@example.com:8080/path?query=1#frag`，分别取出 host、port、path，再把 scheme 改成 `http` 看结果变化。
-4. 在脚本里用 `curl --retry 3 --retry-delay 2` 下载一个会间歇失败的 URL，观察重试日志，理解“没有内置重试”这条边界如何被弥补。
+4. 在脚本里用 `curl --retry 3 --retry-delay 2` 下载一个会间歇失败的 URL，观察重试日志；再把 URL 换成一个固定返回 404 的地址跑一遍，验证 `--retry` 对普通 HTTP 错误并不重试——它只管瞬态错误。
 
 ## 进阶路径
 
-- **从命令行到源码**：读完 Everything curl 的 “How curl works”，再对照 libcurl 源码里 `http.c`、`urlapi.c` 的实现，看 handler 表和 curl_url 的实际代码。
+- **从命令行到源码**：读完 Everything curl 的 “How curl works”，再对照 libcurl 源码里 `protocol.c`（scheme 表）、`http.c`（HTTP 协议回调）和 `urlapi.c`（URL 解析）的实现，看查表分发和 curl_url 的实际代码。
 - **从 easy 到 multi**：把单线程下载器改造成事件驱动并发下载器，理解 `curl_multi_poll` 如何用单个线程管理大量连接。
 - **从客户端到协议**：用 `curl -v` 对比 HTTP/1.1 与 HTTP/2 的帧交互，再进一步看 QUIC/HTTP/3 的传输差异。
 - **从使用到安全**：研究 curl 历年的 CVE 公告，看 URL 解析、TLS 校验相关的漏洞是如何被发现和修复的，理解安全披露流程。

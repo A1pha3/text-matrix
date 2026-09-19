@@ -10,7 +10,9 @@ tags: ["Python"]
 
 # RLM 推理范式拆解：让 LLM 在 REPL 里递归处理超长上下文
 
-`alexzhang13/rlm` 改造的对象是"如何调用 LLM"这件事本身。传统接口 `llm.completion(prompt, model)` 把整段 prompt 塞进上下文窗口；RLM（Recursive Language Models，递归语言模型）提供的 `rlm.completion(prompt, model)` 把长文本当成代码环境里的变量，让 LLM 在 REPL（Read-Eval-Print Loop，交互式代码执行环境）里写代码来检查、拆解输入，并在代码中递归调用自己。截至 2026 年 9 月，这个由 MIT OASYS 实验室开源的项目（约 5.6k Stars、900 Forks、MIT 许可证，论文作者 Alex L. Zhang、Tim Kraska、Omar Khattab，编号 arXiv:2512.24601）已经支持 7 种 REPL 环境（local / ipython / docker / modal / prime / daytona / e2b），并附带基于 Prime Intellect `verifiers` 与 `prime-rl` 的训练环境。
+`alexzhang13/rlm` 改造的对象是"如何调用 LLM"这件事本身。传统接口 `llm.completion(prompt, model)` 把整段 prompt 塞进上下文窗口；RLM（Recursive Language Models，递归语言模型）提供的 `rlm.completion(prompt, model)` 把长文本当成代码环境里的变量，让 LLM 在 REPL（Read-Eval-Print Loop，交互式代码执行环境）里写代码来检查、拆解输入，并在代码中递归调用自己。
+
+截至 2026 年 9 月，这个由 MIT OASYS 实验室开源的项目（约 5.6k Stars、900 Forks、MIT 许可证，论文作者 Alex L. Zhang、Tim Kraska、Omar Khattab，编号 arXiv:2512.24601）已经支持 7 种 REPL 环境（local / ipython / docker / modal / prime / daytona / e2b），并附带基于 Prime Intellect `verifiers` 与 `prime-rl` 的训练环境。
 
 ## 学习目标
 
@@ -45,6 +47,8 @@ tags: ["Python"]
 RLM 论文的开篇给出了与长上下文路线不同的思路：
 
 > Recursive Language Models (RLMs) are a task-agnostic inference paradigm for language models (LMs) to handle near-infinite length contexts by enabling the LM to programmatically examine, decompose, and recursively call itself over its input.
+
+先补一句"为什么"。RLM 回应的问题不是窗口不够大，而是"上下文腐烂"——即便把上下文撑到百万 token，模型从长上下文中准确回取远端信息的能力仍会随长度下降。长上下文领域里，"理论装得下"和"实际用得好"是两回事。RLM 的思路是把超长输入请出窗口、放进代码环境，让模型按需去取，而不是一遍读全。
 
 三个关键词值得拆开：
 
@@ -101,7 +105,7 @@ RLM 的核心是把 `llm.completion` 包装成两层调用。
 
 "递归"指的是主 LM 在代码里再次发起 LM 调用，子调用的输出回到 REPL 继续参与计算。需要说明现状：RLM 客户端的 `max_depth` 参数当前默认且仅支持 1——也就是"根调用 + 一层子调用"。论文意义上的任意深度递归是范式能力，库层面的深度保护已经先行落地。
 
-这种结构带来的收益是 token 经济性：主 LM 只在写代码和决策时消耗 token，上下文里出现的只有代码和子 LM 返回的文本；子 LM 各看一段、互不可见，token 不叠加。传统方案里输入越长，每次调用的费用与时延都越高——注意力计算随序列长度平方增长（FlashAttention 优化后仍随长度线性），RLM 把"读 800 MB 日志"变成"主 LM 写几十行 Python + 若干子 LM 各读一小段"，总成本随任务结构而非输入总长增长。
+这种结构带来的收益是 token 经济性：主 LM 只在写代码和决策时消耗 token，上下文里出现的只有代码和子 LM 返回的文本；子 LM 各看一段、互不可见，token 不叠加。传统方案里输入越长，每次调用的费用与时延都越高——注意力计算随序列长度平方增长，FlashAttention 这类优化只省显存与访存、不改变这一复杂度；RLM 把"读 800 MB 日志"变成"主 LM 写几十行 Python + 若干子 LM 各读一小段"，总成本随任务结构而非输入总长增长。
 
 ## 四、L2 REPL 环境层：7 种沙箱环境
 
@@ -232,6 +236,8 @@ REPL 的执行结果回到主 LM 的上下文，它确认 `FINAL` 变量已经�
 
 跨基准中位数下，RLM 相比 compaction 提升 26%，相比 CodeAct with sub-calls 提升 130%，相比 Claude Code 提升 13%，成本与基线相当。数字分布本身有信息量：对 compaction 的优势来自"不丢信息"——压缩后再读必然损失细节，编程式访问保留了按需回查的能力；对 CodeAct with sub-calls 的 130% 是三组里最大的差距，说明收益不只来自"会写代码"，更来自递归结构本身——子调用能带着环境再拆解，而不是一次性返回文本。反过来说，这组数字不能直接推出"RLM 在所有任务上都更好"：输入可自然拆分的任务收益最大，短输入任务上 REPL 调度开销反而是负担；实验以 GPT-5 为根模型，其他模型的表现要看各自的代码生成能力。
 
+两个细节值得单独记住。其一，论文把 RLM 的有效处理规模推到模型上下文窗口两个数量级之外，评估到 10M+ token 量级时性能仍不随长度衰减——收益不是只在"塞不下"时才出现，而是在很长的区间内都成立。其二，在 OOLONG 这类最难的长上下文基准切片上，RLM(GPT-5-mini) 得到的正确回答数量比 GPT-5 直接回答多出一倍以上，且平均单次成本更低——便宜来自子 LM 只处理局部，主 LM 上下文里只有代码与返回文本。
+
 训练侧，仓库 `training/` 目录把 `rlm.RLM` 暴露为 `verifiers` 的 Environment，可直接接入 Prime Intellect 的 `prime-rl`，自带 OOLONG 长文本问答示例（`training/environments/oolong/`），训练时使用 subprocess 隔离的本地 REPL，不依赖云端沙箱。论文据此做了小规模后训练：用 Qwen3-8B 训出 RLM-Qwen3-8B，平均比原始 Qwen3-8B 提升 28.3%，在三个长上下文任务上接近原始 GPT-5 的水平。这说明"递归拆解策略"本身可以被训练——reward 里可以纳入子调用次数、token 总量与答案正确率，优化的对象从"如何回答"扩展到了"如何拆解"。
 
 ## 八、采用顺序与适用边界
@@ -361,6 +367,7 @@ for chunk in chunks:
 
 1. **一手来源**（优先级最高）：
    - RLM 论文：arXiv:2512.24601（v3，2026 年 5 月）
+   - 作者博客：alexzhang13.github.io/blog/2025/rlm（上下文腐烂动机、10M+ token 与 OOLONG 上的对比结果）
    - RLM 仓库：alexzhang13/rlm（GitHub），含 README 与官方文档站
    - 官方文档：alexzhang13.github.io/rlm（客户端 API 与各 REPL 环境页）
 2. **二手来源**（供交叉验证）：关于 CodeAct、长上下文压缩与云端沙箱的技术文档。

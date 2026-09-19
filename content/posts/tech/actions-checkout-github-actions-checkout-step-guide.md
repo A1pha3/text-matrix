@@ -1,151 +1,216 @@
 ---
-title: "actions/checkout 实战指南：从零开始掌握 GitHub Actions 的第一步"
+title: "actions/checkout 拆解：一个只负责取代码的步骤，从哪里开始替你判断代码可不可信"
 date: "2026-07-02T21:02:26+08:00"
-lastmod: "2026-09-07T00:00:00+08:00"
+lastmod: "2026-09-19T00:00:00+08:00"
 draft: false
 categories: ["技术笔记"]
 tags: ["GitHub Actions", "CI/CD", "DevOps", "TypeScript"]
-description: "拆解 actions/checkout 的 v7 安全默认（含 2026-07-20 对 v2–v6 的回移植）、v6 凭据持久化机制与常见场景：sparse-checkout、fetch-depth、多仓库与子模块。"
+description: "按 v7.0.1 源码拆解 actions/checkout：fork PR 守护到底在比较什么、2026-07-20 回移植到 v2–v6 的时间线、v6 凭据落进 $RUNNER_TEMP 的 includeIf 机制、fetch 与 checkout 的真实命令形状，以及一份对得上日志的排查表。"
 author: text-matrix
 slug: actions-checkout-github-actions-checkout-step-guide
 github_repo: "actions/checkout"
 source_key: "gh:actions/checkout"
-
 ---
 
-# actions/checkout 实战指南：从零开始掌握 GitHub Actions 的第一步
+`actions/checkout` 的全部职责是把一个 Git 工作区放到 `$GITHUB_WORKSPACE` 下，供后面的 `npm install`、`cargo build`、`pytest` 去读。它不构建、不缓存、不发布。2026 年夏天之后，这个步骤多了一层新工作：它会先判断"这次要拉下来的代码，是不是来自一个不可信的来源"，判断不过就直接抛错退出。
 
-几乎所有 GitHub Actions workflow 都从一行 `uses: actions/checkout@vX` 写起。它看起来像一个无脑工具：把仓库代码拉到 runner 上，让后续步骤能跑。但当 workflow 出问题（拉不到私有依赖、构建挂在新提交、PR 触发器把 fork 代码当成 base 执行）时，几乎所有根因都和这一步的输入参数有关。本文按 v7/v6/v4 的关键差异、凭据模型与典型场景，拆解这个最常用的 Action。文中事实对照官方 README、release 记录与 GitHub Changelog，核对截至 2026-09-07。
+这层新工作带来一个不太直观的后果。v7 在 2026-06-18 把"拒绝检出来自 fork（派生仓库）的 PR 代码"设成默认。不到一个月，2026-07-20，同一条判断被回移植到 v2 到 v6 的所有受支持版本。于是一行多年没被改过的 `uses: actions/checkout@v4`，可以在你不提交任何改动的前提下换掉行为。
 
-## 目录
+下面按 v7.0.1 的源码拆开三件事：守护实际在比较什么、凭据被搬去了哪里、fetch 与 checkout 每一步真正执行了哪些 git 命令。文中断言逐条对照 `action.yml`、`src/`、`CHANGELOG.md`、release 记录与 GitHub Changelog，核对日期 2026-09-19。
 
-- [学习目标](#学习目标)
-- [解决的问题](#解决的问题)
-- [v7 默认行为变化：拒绝 fork PR 代码](#v7-默认行为变化拒绝-fork-pr-代码)
-- [v6 凭据持久化：从 .git/config 移到 $RUNNER_TEMP](#v6-凭据持久化从-gitconfig-移到-runner_temp)
-- [输入参数速查](#输入参数速查)
-- [常见场景与最小配置](#常见场景与最小配置)
-- [认证方式的选择](#认证方式的选择)
-- [推荐权限](#推荐权限)
-- [浅克隆与历史相关的边界情况](#浅克隆与历史相关的边界情况)
-- [clean 与 set-safe-directory 的角色](#clean-与-set-safe-directory-的角色)
-- [升级路径与回退](#升级路径与回退)
-- [适用边界](#适用边界)
-- [小结](#小结)
-- [常见问题 FAQ](#常见问题-faq)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶路径](#进阶路径)
-- [参考资料](#参考资料)
+## 一次 checkout 走过的六个阶段
 
-## 学习目标
+`src/git-source-provider.ts` 的 `getSource()` 是主干，读它比读参数表更能建立整体判断。六个阶段各自的职责和失败出口：
 
-读完本文后，你应该能够：
+| 阶段 | 实现位置 | 做什么 | 失败时日志里出现的句子 |
+| --- | --- | --- | --- |
+| 解析输入 | `src/input-helper.ts` | 把 21 个输入归一成 settings；把形如 40 或 64 位十六进制的 `ref` 改归类为一次提交；跑 fork PR 守护 | `Invalid repository '…'. Expected format {owner}/{repo}.` |
+| 准备目录 | `src/git-directory-helper.ts` | 工作区已存在时删本地分支、删 `.git/index.lock` 与 `.git/shallow.lock`，按 `clean` 决定是否清扫 | `Unable to clean or reset the repository. The repository will be recreated instead.` |
+| 探测 git 与对象格式 | `src/git-command-manager.ts`、`src/github-api-helper.ts` | PATH 里没有 git 就整体回退到 REST（表述性状态转移）接口下载归档；SHA-256 仓库走 `git init --object-format=sha256` | `Minimum required git version is 2.18. …` |
+| 配置认证 | `src/git-auth-helper.ts` | 写 `http.<origin>/.extraheader` 或 SSH 私钥与 `GIT_SSH_COMMAND` | 后续 git 命令的 403 / host key 报错 |
+| fetch 与 checkout | `src/ref-helper.ts`、`src/git-command-manager.ts` | 组 refspec、`git fetch`（失败最多重试到 3 次）、`git checkout --force` | `The ref '…' does not point to the expected commit '…'.` |
+| 收尾 | `src/git-source-provider.ts`、`src/main.ts` | 子模块、输出 `ref` 与 `commit`、比对 PR 合并提交的 message | `A branch or tag with the name '…' could not be found` |
 
-1. 解释 `actions/checkout` 在 GitHub Actions workflow 中的角色——它只负责准备代码，不做构建、测试、发布
-2. 对比 v4/v6/v7 的关键差异——尤其是 v7 的 fork PR 安全默认和 v6 的凭据持久化位置变化
-3. 写出常见场景的 checkout 配置（sparse-checkout、多仓库、子模块、PR head checkout）
-4. 根据自己的场景选择合适的认证方式（GITHUB_TOKEN vs PAT vs SSH）
-5. 规划从 v4/v5 升级到 v7 的测试路径
+看这张表有两个用处。参数名对应的是"输入"，而 CI 出问题几乎总发生在后面五个阶段之一；先定位阶段，再去找参数，比反过来快。另外，输出只有两个（`ref` 和 `commit`），这个 Action 不向你暴露"我做了哪些 git 调用"，排查时得靠它打进日志的分组标题（`Fetching the repository`、`Setting up auth`、`Checking out the ref` 等）来对齐阶段。
 
----
+## v7 的守护在比较什么
 
-## 解决的问题
+实现集中在 `src/unsafe-pr-checkout-helper.ts`，整个文件 88 行，`assertSafePrCheckout()` 约占其中 70 行。它一次都不问 GitHub，只读 workflow 的事件负载（event payload，也就是 `github.context.payload`）和自己的输入参数。整个判断按顺序往下走，任何一步不满足就 `return`，也就是放行：
 
-runner 是 GitHub 提供的临时虚拟机，初始状态是干净的 Ubuntu/Windows/macOS 镜像，里面没有你的代码。`actions/checkout` 的职责就是：在 `GITHUB_WORKSPACE` 下准备一个 Git 工作区，让后续 `npm install`、`cargo build`、`pytest` 之类的步骤能直接读文件、读 commit history、读 git 元数据。
+1. `allow-unsafe-pr-checkout` 为 true → 直接返回。
+2. 事件名不是 `pull_request_target` 也不是 `workflow_run` → 返回。`pull_request`、`push`、`workflow_dispatch` 都不在拦截范围内。
+3. 事件是 `workflow_run` 时，再看 `workflow_run.event` 是否以 `pull_request` 开头；不是则返回。所以只有由 PR 类事件引起的 `workflow_run` 受约束，定时或 `push` 引起的不受影响。
+4. fork 判定按仓库 ID 而不是名字：取 `repository.id` 作为 base，取 `pull_request.head.repo.id`（`workflow_run` 下是 `workflow_run.head_repository.id`）作为 PR 头端仓库；两个 ID 相同，或者任何一个不是数字，都返回。
+5. 确认是 fork PR 之后，还要本次 checkout 的目标确实指向那份 PR 代码，命中以下任一条才拦：
+   - `repository` 输入与 PR 头端仓库的 `full_name` 相等（忽略大小写）；
+   - `ref` 匹配 `/^refs\/pull\/[0-9]+\/(?:head|merge)$/`；
+   - 解析出的 commit 落在事件负载记录的 SHA 集合里。
+6. 抛出错误。
 
-它的核心行为有三条（对照 README 各节）：
+第 5 条里的 SHA 集合在不同事件下取法不一样，这个差异值得记：`pull_request_target` 收 `pull_request.head.sha` 和 `pull_request.merge_commit_sha`；`workflow_run` 收 `workflow_run.head_commit.id`，另外只有在 `workflow_run.event` 不是 `pull_request_target` 时才收 `workflow_run.head_sha`——因为后者场景下 `head_sha` 指的是 base 默认分支，收进来会把可信目标误判成可疑目标。
 
-- 默认只 fetch 一个 commit（即触发 workflow 的 `$GITHUB_SHA`），节省时间和磁盘。
-- 认证凭据（`GITHUB_TOKEN` 或 SSH key）默认持久化，让后续 `git fetch`/`git push` 等命令在同一个 workflow 里能继续认证；存储位置在 v6 有变化（v4 直接写仓库的 `.git/config`，v6 起改存 `$RUNNER_TEMP` 下的独立文件，见下文）。post-job 阶段会清除凭据。
-- 当 runner 上没有 Git 2.18 或更高版本时，回退到 GitHub REST API 下载文件。
+同一仓库内部的 PR 走不到第 5 条，第 4 条就返回了。这条保护针对的只有"把某个 fork 的 PR 代码拉进高权限上下文执行"这一个模式。
 
-## v7 默认行为变化：拒绝 fork PR 代码
+### 它没覆盖什么
 
-v7 于 2026-06-18 发布。README "What's new" 共三条，主干是第一条："checkout now refuses to check out fork pull request code by default when the workflow is triggered by `pull_request_target` or `workflow_run`." 另外两条是迁移到 ESM（以支持新版 `@actions/*` 包）和常规依赖安全更新，对 workflow 写法没有影响。
+守护只被调用一次，位置在 `src/input-helper.ts` 里。它不检查 `run:` 块里手写的 `git fetch`，不认识 `gh pr checkout`，也管不到其他 Action 的拉取行为。事件不是那两个触发器时它根本不运行——`issue_comment` 下执行 fork 代码仍然属于同类攻击面。
 
-背景是：`pull_request_target` 与 `workflow_run` 触发器运行在 base 仓库上下文里，使用 base 的 `GITHUB_TOKEN`、secrets 和 runner 资源。如果此时直接把 fork 仓库的 PR 代码 checkout 下来并执行，等于把不可信代码放进了高权限环境——攻击者可以用 fork 里的恶意脚本窃取 secret、污染构建产物。这就是常说的 "pwn request"，也是 2025 年 tj-actions/changed-files（CVE-2025-30066）和 2026 年 7 月 AsyncAPI 等真实供应链事件的根因套路。
+还有一条例外要单独看，它决定了"裸 checkout 会不会被拦"（`src/input-helper.ts:192`）：
 
-两条边界需要先看清。其一，`workflow_run` 的限定比 `pull_request_target` 更窄——只有在 `workflow_run` 的触发事件本身是某个 `pull_request*` 事件时（即 `workflow_run.event` 是 `pull_request` / `pull_request_target` 等）才拦截，其他类型的 `workflow_run` 不受影响。其二，同一仓库内部的 PR 不在此列，`pull_request` 触发器的行为也完全不变——这份保护针对的只有"来自 fork 的 PR 代码在高权限上下文里执行"这一个模式。
-
-v7 的默认拒绝并不是一刀切，只在以下条件同时成立时才会拦：
-
-- PR 来自 fork（而非同一仓库）；
-- 在 `pull_request_target` 或 `workflow_run` 上下文里，本次 checkout 的目标命中二者之一：`repository` 输入解析到 fork 仓库，或 `ref` 匹配 `refs/pull/<N>/head`、`refs/pull/<N>/merge`（含改写后落到 fork PR 的 head / merge commit SHA）。
-
-要继续 checkout fork 代码，必须显式设置：
-
-```yaml
-- uses: actions/checkout@v7
-  with:
-    allow-unsafe-pr-checkout: true
+```ts
+// The default self-checkout (this repository with no explicit ref) always
+// resolves to the trusted ref/commit GitHub set for the triggering event, so
+// the fork-checkout guard only needs to run when the caller customized the
+// repository or ref.
+const isDefaultCheckout = isWorkflowRepository && !core.getInput('ref')
+if (!isDefaultCheckout) {
+  unsafePrCheckoutHelper.assertSafePrCheckout({
+    qualifiedRepository,
+    ref: result.ref,
+    commit: result.commit,
+    allowUnsafePrCheckout: result.allowUnsafePrCheckout
+  })
+}
 ```
 
-`allow-unsafe-pr-checkout` 的注释写明 "Set to `true` only after reviewing the risks at <https://gh.io/securely-using-pull_request_target>"。这不是一个无害的兼容性开关，是要自己判断风险后的一次显式 opt-in。
+`repository` 没改、`ref` 没填的默认自检不进入守护。理由写在注释里：这种情况下解析出的目标就是 GitHub 为本次事件设好的可信 ref 与 SHA，`pull_request_target` 下它是 base 分支。v7 因此没有改变"默认 checkout 拿到 base 代码"这个既有语义，它拦的是你自己把目标改到 fork 那边去。
 
-误判高发的是回移植这条时间线。官方在 2026-07-15 的编辑注中把执行日期从 7 月 16 日推迟到 7 月 20 日，并明确 v1 不接收此变更；7 月 20 日当天 v2.8.0、v3.7.0、v4.4.0、v5.1.0、v6.1.0、v7.0.1 一并发布，fork PR 保护落地到除 v1 外所有受支持的 major 版本。这意味着只要 workflow 用的是 `@v4` 这类浮动 major tag（floating major tag，即 `@v主版本号` 形式、由维护者随 release 移动的标签），就会自动继承新行为；pin 到具体 SHA 或 minor/patch 的版本不会自动获得，需要按正常升级流程升上来。所以哪怕多年没动过 checkout 这一行，行为也可能已经变了。
+判断第 4 条时如果 `repository.id` 取不到数字，函数也会返回。守护的覆盖面因此依赖事件负载里带没带这些字段，不能把它当成一道独立于负载的攻击屏障。
 
-另一点值得提醒：大多数 `pull_request_target` 用例（打 label、发评论、跑只读检查）本来就不需要 checkout fork 代码。遇到拦截时先问自己"我是不是真的要在高权限上下文里执行某人的 fork 代码"，而不是急着打开开关。
+### v7.0.1 顺手补掉的一个旁路
 
-还要说明一层：这份保护只拦 checkout 这一步。它不识别 `run:` 块里手写的 `git fetch`、`gh pr checkout`、其他第三方拉取行为，也不会拦 `issue_comment` 等事件的 fork 代码执行——这些仍属于 pwn request 攻击面，需要靠工作流设计本身（低权限 job 处理不可信代码、高权限 job 只信任元数据）来兜底。
+v7.0.1 的 `CHANGELOG.md` 有两条与守护直接相关：`Skip running unsafe pr check if input is default`（#2518，上面那段短路逻辑）和 `Trim only ascii whitespace for branch`（#2521）。第二条是一次真正的旁路修复，源码注释把风险讲得很直白：
 
-## v6 凭据持久化：从 `.git/config` 移到 `$RUNNER_TEMP`
+```ts
+// core.getInput()'s default trim strips a range of Unicode characters such as a
+// leading BOM (U+FEFF) or NBSP (U+00A0). Those are valid in a git ref name, so
+// a fork branch named "<BOM>" + 40 hex chars would trim down to a bare SHA and
+// be silently reclassified as a commit, bypassing the unsafe fork PR checkout
+// guard.
+```
 
-v6 的关键改动是 `persist-credentials` 的存储位置：凭据不再写进仓库的 `.git/config`，而是写进 `$RUNNER_TEMP` 下的独立文件。workflow 写法不用改，`git fetch`、`git push` 等命令继续可用。
+`@actions/core` 的 `getInput()` 默认会裁掉一段 Unicode 空白，BOM（U+FEFF，也叫零宽不换行空格）和不换行空格（U+00A0）都在其中，而这两种字符在 git 分支名里合法。攻击者可以把 fork 的分支名做成 `<BOM>` 加 40 位十六进制：裁剪后它变成一个裸 SHA，于是 `input-helper.ts` 走"SHA 分支"那条路径，把 `ref` 清空、只留 commit，绕过 `PR_REF_PATTERN` 的形状匹配。修复方式是把对 `ref` 的裁剪限制在 ASCII 空白（`\t\n\v\f\r` 和空格），这些字符在 git ref 名里本来就是非法的，裁掉不改变语义。
 
-变化之前的风险点在泄密面：仓库的 `.git/config` 会被 `git config` 系列命令看到。如果某个 step 不小心执行了 `git config --list` 把 config dump 到日志，或者把 `.git/config` 拷贝到 artifact，就可能泄露 `GITHUB_TOKEN`。移到 runner 的临时目录之后，仓库 config 不再持有明文凭据。
+这个坑值得记住的不是细节而是形状：一个"输入归一化"步骤悄悄改变了安全判断的分类结果。同类问题在任何靠正则识别意图的守护里都会重现。
 
-如果 workflow 后续步骤根本不需要执行 `git push`，可以直接设 `persist-credentials: false`，凭据连落盘这一步都省掉。
+## 2026-07-20：为什么 `@v4` 上的行为也变了
 
-注意 v6 文档里有一条硬约束："Running authenticated git commands from a Docker container action requires Actions Runner v2.329.0 or later"。如果你的 step 在 `container:` 字段里跑认证 git 命令，runner 版本必须够新。
+误判高发在这里。GitHub 在 2026-06-18 的 Changelog 里公告 v7 的新默认，又在 2026-07-15 加了一条编辑注，把回移植的执行日期从 7 月 16 日推迟到 7 月 20 日星期一。同一条注里写明 `V1 of actions/checkout will not receive this change. The security update will be backported to all other supported versions.`
+
+7 月 20 日当天六个 release 依次发出：
+
+| 版本 | 发布时间（UTC） | runtime | 对应浮动 major tag 的当前指向 |
+| --- | --- | --- | --- |
+| v7.0.1 | 07-20 15:10 | node24 | `v7` → v7.0.1（`3d3c42e5`） |
+| v6.1.0 | 07-20 15:23 | node24 | `v6` → v6.1.0（`d23441a4`） |
+| v5.1.0 | 07-20 15:27 | node24 | `v5` → v5.1.0（`fbc6f399`） |
+| v4.4.0 | 07-20 15:36 | node20 | `v4` → v4.4.0（`11d5960a`） |
+| v3.7.0 | 07-20 15:40 | node16 | `v3` → v3.7.0（`a37ce912`） |
+| v2.8.0 | 07-20 15:43 | node12 | `v2` → v2.8.0（`0717577d`） |
+
+六个 `action.yml` 里都能查到 `allow-unsafe-pr-checkout`，而 runtime 各自保持原样：v2.8.0 仍是 `node12`，v4.4.0 仍是 `node20`。回移植只搬安全行为，没有顺带把老 major 推上新 runtime，也就没有把"runner 版本不够"的风险塞进这次变更里。
+
+浮动 major tag（floating major tag，指 `@v主版本号` 这种由维护者随 release 移动的标签）的当前指向可以直接验证：`git ls-remote` 下 `refs/tags/v4` 与 `refs/tags/v4.4.0` 是同一个提交 `11d5960a326750d5838078e36cf38b85af677262`。所以只要 workflow 写的是 `@v4`、`@v5`、`@v6`，2026-07-20 之后它就带着这条保护，不需要你做任何事。pin 到具体 SHA 或 minor/patch 的不会自动获得，得按正常升级流程升上来。
+
+还要提醒一层：多数 `pull_request_target` 用例（打 label、发评论、跑只读检查）本来就不需要 fork 的代码。遇到拦截时先问"我是不是真的要在高权限上下文里执行某人的 fork 代码"，比急着加 `allow-unsafe-pr-checkout` 有效。
+
+## v6 的凭据模型：一个 UUID 文件、一组 `includeIf`
+
+v4 及更早版本把令牌直接写进仓库的 `.git/config`。风险不在"存了凭据"，而在存的位置太容易被顺手读到：任何 step 跑 `git config --list`、任何 artifact 拷了 `.git`，`GITHUB_TOKEN` 就出现在明面上。
+
+v6（#2286）改的是位置。`configureToken()` 做的事按顺序是：
+
+1. 生成文件名 `git-credentials-<randomUUID>.config`，放在 `$RUNNER_TEMP` 下（`src/git-auth-helper.ts:425`）。
+2. 先执行一次 `git config --file <那个路径> http.github.com/.extraheader "AUTHORIZATION: basic ***"`，把占位符写进去。
+3. 读回文件，把占位符替换成真实值，再整体写回。
+4. 在仓库的 `.git/config` 里写指向上面那个文件的 `includeIf`。
+
+第 2 步的原因写在源码注释里：避免凭据出现在进程创建审计事件里。Windows 的命令行进程审计会把 argv 记进安全日志，用 `git config http…extraheader "AUTHORIZATION: basic <真值>"` 一行写完就等于把令牌抄进了审计流。走占位符再改文件，argv 里始终只有 `***`。真实值本身是 `AUTHORIZATION: basic <base64("x-access-token:<token>")>`，同时会调 `core.setSecret()` 把这段 base64 注册为 secret，让 runner 在日志里把它打码。
+
+第 4 步的接线是这套设计里更实用的部分。仓库 `.git/config` 里留下的是：
+
+```ini
+[includeIf "gitdir:/github/workspace/my-repo/.git/"]
+    path = /github/runner_temp/git-credentials-<uuid>.config
+```
+
+宿主与容器两套路径各写一条，`<gitdir>/worktrees/*.path` 也补一条（v6.0.1 的 #2327 就是为 worktree 支持），子模块则往各自的 `.git/modules/<name>/config` 里写同样的一对。这也是"后续 `git fetch`、`git push` 不需要改 workflow 写法"能成立的原因。git 读配置时按当前仓库目录匹配 `includeIf`，条件不满足的那份凭据完全不参与，仓库自身的 config 里也就没有明文。
+
+README 里那句"在 Docker container action 里跑认证 git 命令需要 Actions Runner v2.329.0 或更高"和这套机制是连着的。代码给容器写的凭据路径是 `/github/runner_temp/…`，而 v2.329.0 的发布说明里对应的一条正是 `Map RUNNER_TEMP for container action`。没有这个挂载，容器内的 `includeIf` 就指向一个不存在的位置。
+
+清理发生在两个时点。`persist-credentials` 为 true 时，post-job 的 `cleanup()` 移除 `includeIf` 条目、删除 `http.…/.extraheader`，并删掉凭据文件——只删位于 `$RUNNER_TEMP` 之下的路径，别处的同名文件只记一条 debug 就跳过。设成 false 时不用等 post-job，`getSource()` 的 `finally` 里立刻 `removeAuth()`。
+
+还有一条与认证相关的改写行为：没提供 `ssh-key` 时，`insteadOf` 会把 `git@github.com:` 开头的 URL 改写成 HTTPS。有 `workflowOrganizationId` 时还会多写一条 `org-<id>@github.com:` 的改写规则，覆盖企业内部以组织 ID 形式书写的 SSH URL。
+
+## 一次真实流转：CI 在 fork PR 上突然红了
+
+一个常见的预览部署 job，`pull_request_target` 触发，要拿 PR 头端代码构建预览：
+
+```yaml
+on:
+  pull_request_target:
+    branches: [main]
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - run: npm ci && npx vite build
+```
+
+`ref` 指到的是 fork PR 的 head SHA，守护在解析输入阶段就把 job 判死，还没走到 fetch。日志里是原文这一段：
+
+> Refusing to check out fork pull request code from a 'pull_request_target' workflow. This workflow runs with the base repository's GITHUB_TOKEN, secrets, default-branch cache scope, and runner access. Fetching and executing a fork's code in that trusted context commonly leads to "pwn request" vulnerabilities. To opt in, review the risks at https://gh.io/securely-using-pull_request_target and set 'allow-unsafe-pr-checkout: true' on the actions/checkout step.
+
+按三条修法排一下优先级。真的只需要 base 代码（跑 lint、生成文档索引）就把 `ref` 删掉，让默认自检接管，守护根本不参与。需要 PR 的元数据而不需要它的代码时用事件负载（`github.event.pull_request.number`、标题、diff 统计），仍然不用 checkout。
+
+确实必须构建 fork 代码，就把 job 拆成两半：低权限那一半用 `pull_request` 触发、跑不可信代码、只产出一个构建物；高权限那一半用 `workflow_run` 触发、只消费构建物、不 checkout fork 代码。`allow-unsafe-pr-checkout: true` 留给前两种都不适用的场景，加之前先确认这个 job 能读到哪些 secrets、`GITHUB_TOKEN` 有哪些权限、产物会不会被下游复用。
+
+2026-07-14 的 AsyncAPI npm 包投毒事件就是这条链路的实际成本。Datadog Security Labs 的分析里，攻击者通过一个 fork PR 触发了项目 CI 里的 `pull_request_target` 文档预览 job（Netlify 部署），拿到发布机器人账号的凭据，再往 npm 上发包。checkout 的这道守护拦的是"拉取并执行 fork 代码"这一步，它不修复触发器选择本身。拆 job 那条设计约束，仍然得自己守。
 
 ## 输入参数速查
 
-下面是完整的输入参数表（以 v7 的 action.yml 为准；v4/v5/v6 的差异在前两节）：
+下表以 v7.0.1 的 `action.yml` 为准，21 个输入全部列出：
 
 | 参数 | 默认值 | 作用 |
 | --- | --- | --- |
-| `repository` | `${{ github.repository }}` | 要拉取的 owner/repo，默认就是当前触发 workflow 的仓库 |
-| `ref` | 触发事件对应的 ref/SHA | 要切到哪个分支、tag 或 SHA；checkout 其他仓库时用其默认分支 |
-| `token` | `${{ github.token }}` | 拉取仓库用的 PAT |
+| `repository` | `${{ github.repository }}` | owner/repo 形式的目标仓库 |
+| `ref` | 触发事件对应的 ref 或 SHA | 要切到哪个分支、tag 或 SHA；跨仓库检出时用该仓库默认分支 |
+| `token` | `${{ github.token }}` | 拉取用的 PAT（个人访问令牌） |
 | `ssh-key` | 空 | 走 SSH 协议时的私钥 |
-| `ssh-known-hosts` | 空 | 追加到 known_hosts 的主机公钥（可用 `ssh-keyscan` 生成）；github.com 的公钥始终隐式加入 |
-| `ssh-user` | git | SSH 连接使用的用户名 |
-| `ssh-strict` | true | SSH 严格主机密钥检查（`StrictHostKeyChecking=yes`） |
-| `path` | `${{ github.workspace }}` | 工作区下的相对路径 |
-| `fetch-depth` | 1 | fetch 的 commit 数，`0` 表示全历史 |
-| `fetch-tags` | false | 即使 `fetch-depth > 0` 也拉 tags |
-| `show-progress` | true | fetch 时是否显示进度输出 |
-| `clean` | true | fetch 前执行 `git clean -ffdx && git reset --hard HEAD` |
-| `submodules` | false | 是否拉子模块；`true` 浅拉，`recursive` 递归拉 |
-| `lfs` | false | 是否下载 Git LFS 文件 |
-| `sparse-checkout` | 空 | sparse 模式拉取指定模式 |
-| `sparse-checkout-cone-mode` | true | cone 模式（祖先目录包含） |
-| `filter` | 空 | 部分克隆 `git clone --filter`；设置后覆盖 `sparse-checkout` |
-| `set-safe-directory` | true | 把仓库路径加入 git `safe.directory` 全局配置 |
-| `github-server-url` | 自动 | 用于 GHES 私有部署 |
-| `persist-credentials` | true | 是否把 token/SSH key 写到 git config |
-| `allow-unsafe-pr-checkout` | false | v7 新增，见上节 |
+| `ssh-known-hosts` | 空 | 追加进 known_hosts 的主机公钥（可用 `ssh-keyscan` 生成）；github.com 的公钥始终隐式加入 |
+| `ssh-user` | `git` | SSH 连接用户名 |
+| `ssh-strict` | `true` | 严格主机密钥检查，加 `StrictHostKeyChecking=yes` 与 `CheckHostIP=no` |
+| `persist-credentials` | `true` | 是否让后续 step 继续能用这份凭据；v6 起写入 `$RUNNER_TEMP` 下的独立文件 |
+| `path` | 空（等价 `.`） | 相对 `$GITHUB_WORKSPACE` 的落盘路径，解析后仍须在工作区内 |
+| `clean` | `true` | 复用工作区时先 `git clean -ffdx && git reset --hard HEAD` |
+| `filter` | 空 | 部分克隆的 `--filter` 值，设置后覆盖 `sparse-checkout` 的效果 |
+| `sparse-checkout` | 空 | 稀疏检出模式，逐行给 |
+| `sparse-checkout-cone-mode` | `true` | cone 模式，把模式解释为目录 |
+| `fetch-depth` | `1` | 拉多少层历史，`0` 为全历史 |
+| `fetch-tags` | `false` | 即使 `fetch-depth > 0` 也拉 tag |
+| `show-progress` | `true` | fetch 是否输出进度 |
+| `lfs` | `false` | 是否下载 Git LFS 文件 |
+| `submodules` | `false` | `true` 检出子模块，`recursive` 递归检出；深浅由 `fetch-depth` 决定 |
+| `set-safe-directory` | `true` | 把仓库路径加进 `safe.directory` |
+| `github-server-url` | 空 | 覆盖实例地址，默认取 `GITHUB_SERVER_URL` |
+| `allow-unsafe-pr-checkout` | `false` | v7 新增，见前文 |
 
-`runs` 字段从 v5 起切换到 node24，对应 runner 需要 v2.327.1+。如果团队还在用比较老的 self-hosted runner，升 v5 之前要核对 runner 版本。
+输出两个：`ref`（解析后实际使用的 ref）与 `commit`（`git log -1 --format=%H` 的结果）。`runs.using` 从 v5 起是 `node24`，对应 runner 最低 v2.327.1。
 
-## 常见场景与最小配置
+## 场景配置与各自的坑
 
-README 的 "Scenarios" 节给出了十几种典型写法。下面挑出最常用的几条，并补一些实践上的坑点。
+下面每条示例都取自 README 的 Scenarios 节，坑点是按源码补的。
 
-### 只拉根目录文件
-
-适合文档型项目，只读 README、CI 配置、`.github/` 而不需要源码：
+### 只拉根目录，或者只拉一个文件
 
 ```yaml
 - uses: actions/checkout@v7
   with:
     sparse-checkout: .
 ```
-
-### 只拉单个文件
-
-拉一个特定文件，省得下载整个仓库：
 
 ```yaml
 - uses: actions/checkout@v7
@@ -155,13 +220,9 @@ README 的 "Scenarios" 节给出了十几种典型写法。下面挑出最常用
     sparse-checkout-cone-mode: false
 ```
 
-注意第二个输入：cone 模式（默认 true）会把模式解析为"包含祖先目录"，对单个文件的精准匹配必须关掉。
+cone 模式（默认开）把每条模式解释成目录，所以要精准匹配单个文件必须关掉。两个额外事实：设置了 `sparse-checkout` 且没设 `filter` 时，fetch 会自动带上 `--filter=blob:none`，省的不只是检出而是对象下载；稀疏检出要求 runner 上的 git ≥ 2.28，低于它直接报 `Minimum Git version required for sparse checkout is 2.28.`。把稀疏结果交给 `docker build` 前，先确认 Dockerfile 里的 `COPY` 路径仍在，被排除的目录不会进构建上下文。
 
-如果 sparse 拉到的代码要交给 `docker build` 用，先确认 Dockerfile 里的 `COPY` 路径仍然存在——被 sparse 排除掉的目录不会出现在构建上下文里，构建会直接失败。
-
-### 拉全历史
-
-构建 changelog、跑 blame、`git log --all` 之类的工具需要全历史：
+### 拉全历史，以及 tag
 
 ```yaml
 - uses: actions/checkout@v7
@@ -169,9 +230,11 @@ README 的 "Scenarios" 节给出了十几种典型写法。下面挑出最常用
     fetch-depth: 0
 ```
 
-`fetch-tags` 默认为 false，在浅克隆场景下不会拉 tag；如果你的 release 流程依赖 tag，把 `fetch-tags: true` 加上。
+`fetch-depth: 0` 用的是 `+refs/heads/*:refs/remotes/origin/*` 加 tag refSpec 的组合。工作区是复用的、上一次留下 `.git/shallow` 时，这一次会补 `--unshallow` 把历史补全，而不是重新 clone。
 
-### checkout 父提交
+反过来，浅克隆场景下 tag 拿不到不是配置错了：`fetch` 命令恒定带 `--no-tags`，tag 只在 `fetch-tags: true` 或 refspec 明确命中时才进来。`npm version`、`lerna version` 这类要读 tag 的命令，以及 `git tag --list`、`git describe`，都需要显式加 `fetch-tags: true` 或者 `fetch-depth: 0`。
+
+### 看父提交，以及 diff
 
 ```yaml
 - uses: actions/checkout@v7
@@ -180,11 +243,9 @@ README 的 "Scenarios" 节给出了十几种典型写法。下面挑出最常用
 - run: git checkout HEAD^
 ```
 
-注意这里的写法：`fetch-depth: 1`（默认）只能拿到触发 commit 本身，没法 `HEAD^`。要做 diff 类对比时，必须把 fetch-depth 拉到 2 或更大。
+默认的 1 层只包含触发 commit 本身，`HEAD^` 和 `git diff HEAD~1` 都会失败。要跨 base 分支比较，`fetch-depth: 0` 通常比猜层数省事。
 
-### checkout PR HEAD
-
-PR 触发器下默认 checkout 的是 merge commit，不是 PR 自己的 head commit。要拿到 PR 的源分支：
+### PR 的 head，与 PR 关闭事件
 
 ```yaml
 - uses: actions/checkout@v7
@@ -192,11 +253,11 @@ PR 触发器下默认 checkout 的是 merge commit，不是 PR 自己的 head co
     ref: ${{ github.event.pull_request.head.sha }}
 ```
 
-或者用 `${{ github.head_ref }}` 拿到源分支名。
+`pull_request` 触发器下默认检出的是 merge commit，不是 PR 自己的 head。也可以写 `ref: ${{ github.head_ref }}` 拿源分支名——注意这个值不带 `refs/heads/`，`getCheckoutInfo()` 会先找 `origin/<name>`，再找同名 tag，都找不到才报 `A branch or tag with the name '…' could not be found`。
 
-### 多个仓库
+PR 被合并时触发的 `closed` 事件上，`github.context.ref` 是不带前缀的分支名，源码里有一段专门把它补回 `refs/heads/<name>`。自己写 `workflow_run` 或 `pull_request_target` 逻辑时同样会碰到这种形状差异，别假定 `context.ref` 总是 `refs/...` 形式。README 另外给了一节把 `closed` 加进 `types` 的 workflow 写法。
 
-平铺在 workspace 下：
+### 多仓库：并列、嵌套、私有
 
 ```yaml
 - name: Checkout main
@@ -211,19 +272,9 @@ PR 触发器下默认 checkout 的是 merge commit，不是 PR 自己的 head co
     path: my-tools
 ```
 
-如果是私有仓库，副仓库拉不到时记得提供 token：
+并列写法给主仓库也显式设 `path`；嵌套写法让第二个仓库落在第一个里面。私有或内部仓库要自带 PAT：README 明确写着 `${{ github.token }}` 的作用域限于当前仓库。`path` 会被解析成绝对路径再校验是否仍在工作区内，越界直接抛 `Repository path '…' is not under '…'`，所以 `../` 走不通。
 
-```yaml
-- uses: actions/checkout@v7
-  with:
-    repository: my-org/my-private-tools
-    token: ${{ secrets.GH_PAT }}
-    path: my-tools
-```
-
-README 明确写了 `${{ github.token }}` 只对当前仓库生效，跨私有仓库需要自带 PAT。
-
-### 拉子模块
+### 子模块
 
 ```yaml
 - uses: actions/checkout@v7
@@ -231,9 +282,9 @@ README 明确写了 `${{ github.token }}` 只对当前仓库生效，跨私有�
     submodules: recursive
 ```
 
-如果子模块用了 SSH URL 而没有提供 `ssh-key`，checkout 会把 `git@github.com:` 开头的 URL 转换成 HTTPS。
+实际执行的是 `git submodule sync`、`git submodule update --init --force`（`fetch-depth > 0` 时带 `--depth`）、以及一次 `submodule foreach 'git config --local gc.auto 0'`。`true` 与 `recursive` 的差别只在要不要递归，浅不浅由 `fetch-depth` 决定。凭据方面，`persist-credentials` 为 true 时每个子模块的 `.git/modules/<name>/config` 都会被写入指向共享凭据文件的 `includeIf`。
 
-### 用内置 token 推送 commit
+### 往回推 commit
 
 ```yaml
 - uses: actions/checkout@v7
@@ -246,195 +297,161 @@ README 明确写了 `${{ github.token }}` 只对当前仓库生效，跨私有�
     git push
 ```
 
-注意 `github-actions[bot]` 的邮箱是 `{user.id}+{user.login}@users.noreply.github.com`，README 注释里特别提示这套账号信息在 GHES 上不会生效。
+`contents: write` 是前提。`github-actions[bot]` 的邮箱格式是 `{user.id}+{user.login}@users.noreply.github.com`，README 注明这套账号信息在 GHES（GitHub Enterprise Server）上不适用。
 
-## 认证方式的选择
+要在 PR 触发器下把 commit 推回 PR 源分支，得加 `ref: ${{ github.head_ref }}`。原因在 `getCheckoutInfo()`：`refs/heads/*` 会走到 `git checkout --force -B <branch> refs/remotes/origin/<branch>`，真正建出本地分支；而 PR 默认的 `refs/pull/<N>/merge`、tag 和裸 SHA 都是分离头指针（detached HEAD），此时 `git push` 没有上游分支可推。
 
-`token` 与 `ssh-key` 是 `actions/checkout` 提供的两条认证路径，分别对应 HTTPS 和 SSH 协议。它们的取舍主要看下游 step 的需求：
+## clean 与 set-safe-directory 的实际作用范围
 
-- **只用 `GITHUB_TOKEN`**：默认 `token: ${{ github.token }}` 已经够用。Post-job 会自动清掉凭据，适合 CI 流水线本身不做 push 的场景。
-- **必须 push 回同一仓库**（例如 release 流程里修改 tag、生成 changelog commit）：仍然用 `GITHUB_TOKEN`，但 workflow 顶层需要把 permissions 调到 `contents: write`。
-- **跨私有仓库 checkout**：默认 token 只对当前仓库有效，必须自带 PAT（`token: ${{ secrets.GH_PAT }}`）。README 明确建议 PAT 用服务账号、并按最小权限 scope 生成。
-- **必须 SSH**：用 `ssh-key` 私钥 + `ssh-known-hosts` 注入 known_hosts，必要时关闭严格检查 `ssh-strict: 'false'`。SSH 模式下要注意：未提供 `ssh-key` 时，`git@github.com:` 开头的子模块 URL 会被自动转成 HTTPS；如果不想转，单独提供 ssh-key。
+`clean` 只在工作区已存在时起作用，且它的范围比参数名暗示的窄。`prepareExistingDirectory()` 无论 `clean` 是什么都会做三件事：把 HEAD 切成分离状态、删掉全部本地 `refs/heads/*`、删掉与目标分支前缀冲突的 `refs/remotes/origin/*`，另外清掉上次崩溃留下的 `.git/index.lock` 与 `.git/shallow.lock`。`clean` 决定的是最后那步 `git clean -ffdx && git reset --hard HEAD`。
 
-另有一条触发器层面的边界，和认证直接相关：fork 的 PR 在 `pull_request` 触发器下，`GITHUB_TOKEN` 是只读的、secrets 不可访问；`pull_request_target` 才会切换到 base 仓库的 token 与 secrets——这正是 v7 要用 `allow-unsafe-pr-checkout` 把守的场景。
+因此 `clean: false` 保留的是未被跟踪的文件和上一次运行留下的构建产物，本地分支和最终的 `git checkout --force` 仍然会被改写。想在 step 之间留文件本来就不需要它——同一个 job 里 checkout 只跑一次。反过来在 self-hosted runner 上，`clean: false` 加上工作区复用会让上一次残留继续参与构建，这是"本地能过、CI 挂"的常见来源之一。`git clean` 本身失败时（源码列的三类原因：路径过长、权限、文件被占用，Windows 上尤其常见）会看到 `Unable to clean or reset the repository. The repository will be recreated instead.`，整个目录内容被清空重建。子模块状态检查没过时也会走同一条重建路径，日志里多一句 `Bad Submodules found, removing existing files`。
 
-GitHub Enterprise Server 上还要设 `github-server-url`，否则 checkout 会试图连公共 `github.com`。
+`set-safe-directory` 的作用范围更值得说清。它确实执行 `git config --global --add safe.directory <path>`，但"global"落到了一个临时位置上：`configureTempGlobalConfig()` 在 `$RUNNER_TEMP/<uuid>/` 下建目录，把真实 `~/.gitconfig` 复制进去，再把 git 子进程的 `HOME` 指过去。收尾时 `removeGlobalConfig()` 撤销这个 `HOME` 覆盖并删除整个临时目录。
 
-## 推荐权限
+两个推论。一是它不污染 runner 镜像的全局配置，关不关它都不影响 `~/.gitconfig`；源码注释给的理由是容器 job 里换了一个用户执行 git 时的所有权不匹配。二是这个 `safe.directory` 只在 Action 自己的 git 调用里有效，你自己的 `run:` 步骤读不到它。在容器 job 里遇到 `dubious ownership` 时，仍需在那个 step 内自己加一条，这是把这个参数调 `false` 之后也不会消失的一层。
 
-不管是用默认 `GITHUB_TOKEN` 还是自带 PAT，README 的 "Recommended permissions" 都建议把 workflow 的权限收窄到最小：
+这条保护来自 git 自身：当仓库目录的所有者与当前用户不一致时，git 会拒绝在该目录上操作，除非它出现在 `safe.directory` 列表里。`actions/checkout` 能做的只是让自己的调用先通过这道检查，它没有义务、也没有办法替你后面的 step 安排这件事。
+
+## 认证与权限
+
+`token` 与 `ssh-key` 是两条路径，选哪条取决于下游要做什么。
+
+只用默认 `GITHUB_TOKEN` 覆盖大多数情况：CI 本身不 push 时，凭据在 post-job 清掉，不需要额外管理。要 push 回同一仓库时仍然用它，但 job 的 `permissions` 得升到 `contents: write`，并且把需要写的 job 单独拆出来。跨私有仓库要自带 PAT（`token: ${{ secrets.GH_PAT }}`），README 建议用服务账号并按最小 scope 生成。必须走 SSH 时给 `ssh-key`，用 `ssh-known-hosts` 注入主机公钥；确实要跳过严格检查再关 `ssh-strict`，这通常只在 known_hosts 无法预置的 self-hosted runner 上才需要考虑。
+
+`github-server-url` 不是 GHES 必填项。`getServerUrl()` 的取值顺序是：显式输入 → `GITHUB_SERVER_URL` → `https://github.com`。GHES 的 runner 本来就会导出指向自己实例的 `GITHUB_SERVER_URL`，需要显式设置的场景是从 A 实例的 workflow 里去拉 B 实例的仓库。
+
+触发器层面的边界和认证直接相关：fork 的 PR 在 `pull_request` 下 `GITHUB_TOKEN` 只读、secrets 不可用；`pull_request_target` 才切换到 base 仓库的令牌与 secrets，v7 的守护就是把"在这种上下文里拉 fork 代码"这一步收进一次显式确认。
+
+不管是哪种认证，README 建议的权限都是最小一条：
 
 ```yaml
 permissions:
   contents: read
 ```
 
-如果某个 job 必须 push，把它单独放到一个 job，并把该 job 的 permissions 显式写成 `contents: write`。这与 GitHub 的 least-privilege 原则一致，token 意外泄露时能限制影响范围。
+## 排查：把日志里的句子对上原因
 
-## 浅克隆与历史相关的边界情况
+| 日志里的句子 | 直接原因 | 改法 |
+| --- | --- | --- |
+| `Refusing to check out fork pull request code from a '…' workflow.` | 事件是那两个触发器之一，且 `repository`/`ref`/commit 命中了 fork PR 的目标 | 按前文三种修法选一种；实在需要才 `allow-unsafe-pr-checkout: true` |
+| `The ref '…' does not point to the expected commit '…'. The ref may have been updated after the workflow was triggered.` | 触发之后分支被推新或 tag 被移动，fetch 完校验没过 | 需要"当时那一刻"就 pin SHA；需要最新就接受重跑；tag 场景检查是否被移动过 |
+| `A branch or tag with the name '…' could not be found` | 不带前缀的 `ref` 既没找到 `origin/<name>` 也没找到同名 tag | 写成 `refs/heads/<name>`，或补 `fetch-depth: 0` 让宽 refSpec 能命中 |
+| `Minimum Git version required for sparse checkout is 2.28.` | runner 镜像里的 git 太旧 | 升级镜像，或去掉 `sparse-checkout` |
+| `Input 'submodules' not supported when falling back to download using the GitHub REST API.` | PATH 里没有 git 2.18+，走了归档下载，而归档里没有 `.git` | 把 git 装进 PATH；注意同样情况下 `ssh-key` 也会直接报错 |
+| `Unable to clean or reset the repository. The repository will be recreated instead.` | `git clean -ffdx` 或 `git reset --hard` 失败 | 查路径长度、权限、被占用文件；self-hosted 上考虑换隔离的工作区 |
+| `Unable to turn off git automatic garbage collection. …` | `git config gc.auto 0` 没写进去 | 只是提示 fetch 可能被 GC 拖慢，不影响正确性 |
+| 私有子仓库拉不下来 | 默认 `${{ github.token }}` 作用域限于当前仓库 | 给那一步单独 `token: ${{ secrets.GH_PAT }}` |
 
-`fetch-depth: 1` 是大多数 workflow 的最佳选择：足够算 commit 元数据（短 SHA、作者、tree hash）、够 checkout 文件、不浪费带宽。但以下场景需要拉更多：
+日志级别也值得一记：`RUNNER_DEBUG=1`（或仓库 secrets 里的 `ACTIONS_RUNNER_DEBUG`）会把 `core.debug` 的内容放出来，包括解析出的 `ref`/`commit`、凭据文件路径、以及 `Unable to delete '<lock>'. …` 这类默认不显示的行。
 
-- `actions/setup-node` 之类的依赖缓存按 `package-lock.json` 哈希计算命中。浅克隆本身不影响 lock 文件，但如果你在 workflow 里跑 `npm version` 或 `lerna version`，这些命令会读 git tag，这时要 `fetch-depth: 0` 或者 `fetch-tags: true`。
-- 跑 `git diff --stat HEAD~1` 做增量检查，需要 `fetch-depth: 2`。
-- `git tag --list` 在浅克隆下默认只返回 fetch 到的 tag，`fetch-tags: true` 才能看到全部。
-- 子模块如果是显式 gitlink hash 提交，浅克隆也能正常 update；但要把子模块历史用于 blame 时需要 `submodules: recursive` + `fetch-depth: 0`。
+## 采用顺序与适用边界
 
-## `clean` 与 `set-safe-directory` 的角色
+按改动收益从大到小排，前三条对绝大多数仓库就够了。
 
-这两个参数容易被忽略，但都会影响 workflow 的稳定性。
+1. 先确认版本形态：pin 到 major tag 还是 SHA，各自在 2026-07-20 之后拿到什么。列出所有 `pull_request_target` 与 `workflow_run` 的 workflow，逐个看它们 checkout 的目标是不是 fork 代码。
+2. 把 `permissions: contents: read` 补到每个 workflow 顶层，需要写的 job 单独提出来。
+3. 需要历史或 tag 时才动 `fetch-depth` 与 `fetch-tags`，其余情况留在默认的 1。
+4. 把 checkout 升到 v5 及以上之前核对 self-hosted runner 版本（`node24` 运行时要求 runner ≥ v2.327.1），容器 job 里要跑认证 git 命令则核对 ≥ v2.329.0。
+5. 已经在 v6 以上的仓库，可以顺手检查有没有 step 依赖 `.git/config` 里的凭据明文——那部分在 v6 之后不再存在。
 
-`clean` 默认为 true，会在 fetch 前执行 `git clean -ffdx && git reset --hard HEAD`。这意味着前一次 workflow 运行遗留的任何未跟踪文件、修改过的 tracked 文件都会被冲掉。在 self-hosted runner 复用缓存目录、或者用 matrix 跑多语言构建时，这个默认通常是正确的——但如果你的 workflow 在 checkout 之后写了一些临时文件并希望保留到下一步，就要把 `clean: false`。
+适合它的：任何 GitHub Actions workflow 的第一步；跨仓库拉取；PR head 检出；文档类项目的稀疏检出。
 
-`set-safe-directory` 默认为 true，会执行 `git config --global --add safe.directory <path>`。这是为了应对 Git 2.35.2 之后引入的"目录所有权保护"：当 Git 检测到当前用户对仓库目录的所有权与系统记录不一致时，会拒绝执行 `git status` 等操作。在 runner 镜像里，因为挂载点和文件权限的缘故几乎一定会触发这条保护，所以默认开启是合理的。用 rootless 容器跑 runner 且没有权限问题的团队，可以关闭它，减少全局 config 污染。
+不适合它的：装依赖与缓存（`actions/setup-*`、`actions/cache`）；下载 release 产物（`gh release download`、`actions/download-artifact`）；调用 REST API 做写操作；以及在不拆分 job 的前提下执行 fork 代码。
 
-## 升级路径与回退
+维护上还有一点背景：这个仓库的 README 里明确写着当前不接受贡献，只保留安全更新与重大破坏性修复。想提 PR 或等社区修复不如去 Community Discussions 报问题，也正因为如此，源码级的排查比等 issue 关闭更实际。
 
-升级 major 版本前建议这样测：
+## 常见问题
 
-1. 在测试 workflow 的 pin 上改成 `@v7`，把 `pull_request_target` 与 `workflow_run` 触发场景单测一遍，确认 `allow-unsafe-pr-checkout` 没被遗漏。
-2. 内部 docker 镜像如果在 `run:` 步骤里用 git 凭据，确认 runner ≥ v2.329.0（v6 引入 `$RUNNER_TEMP` 凭据存储后的最低版本）。
-3. self-hosted runner 跑 node24（v5+）之前要确认 ≥ v2.327.1。
-4. 在私有 fork 流程里，刻意构造一个 fork PR，验证新默认是否真的拒绝了 fork 代码——避免"以为安全实则绕开"。
-5. 即便没升级，也要复核所有沿用浮动 major tag（`@v4`/`@v5`/`@v6`）的 `pull_request_target` workflow：它们可能已在 2026-07-20 自动继承了新保护。如果 CI 开始在 fork PR 上报错，先想到这一层，而不是去查仓库最近改了什么。
+**Q1：我只把版本写在 `@v4`，为什么突然收到 fork PR 被拦的错误？**
 
-pin 的粒度上，`@v7` 这类 major tag 由维护者随 release 移动，指向最新的正式版本；`@main` 指向默认分支，可能包含未发布的变更。生产 workflow 用 major tag 或具体 SHA，不用 `@main`。
+不是升级。2026-07-20 起这条保护被回移植到除 v1 外的所有受支持 major，`refs/tags/v4` 已经移到 v4.4.0。浮动 major tag 会自动指向它。pin 到具体 SHA 或 minor/patch 的不会自动获得。
 
-如果需要紧急回退到上一个 major，把 pin 改回 `@v6` 或 `@v5` 即可；运行时差异在 README 的 "What's new" 里都列了。但要注意：回退只能换回凭据存储与 runtime 行为，2026-07-20 之后受支持 major 上的 fork PR 保护是默认继承的，靠换 tag 并不能绕开安全默认。
+**Q2：`persist-credentials: false` 之后还要 push 怎么办？**
 
-## 适用边界
+在 push 前自己把凭据配回去，两条写法：按 Action 的做法写 `http.<origin>/.extraheader`，值是 `AUTHORIZATION: basic ` 加上 `x-access-token:<token>` 的 base64；或者改 remote URL 带上令牌。后者会把令牌放进 argv，Action 自己避开了这条路，你在带进程审计的环境里也最好避开。
 
-`actions/checkout` 只负责把仓库代码准备好，是一个"获取代码"原语，不是一个完整的 CI 工具。理解这一点，就不会在它身上找不该有的功能。
+**Q3：`pull_request` 和 `pull_request_target` 到底差在哪？**
 
-适合：
+前者用 fork 的 commit 与只读令牌，secrets 不可用；后者用 base 仓库的 ref、令牌与 secrets。要在高权限上下文里跑不可信代码就有 pwn request（把恶意 PR 代码喂给可信 job 的攻击套路）风险，v7 的守护针对的正是这一步。
 
-- 任何 GitHub Actions workflow 的第一步。
-- 拉取当前仓库、跨仓库拉取、PR head 拉取。
-- 文档项目用 sparse-checkout 做轻量克隆。
+**Q4：tj-actions/changed-files 那次（CVE-2025-30066）是同一个套路吗？**
 
-不适合：
+不是，别把它当 v7 这条默认变更的动机。那次是 Action 自身的发布物被投毒。攻击者改动了 `v1.0.0`、`v35.7.7-sec`、`v44.5.1` 这些 tag，让它们指向同一个恶意提交；下游 workflow 拉到被改写的版本后执行了一段内存扫描脚本，把 runner 进程里的 secrets 打进日志。窗口是 2025-03-14 到 03-15，v46.0.1 修复。它支持的是另一条结论：tag 可被移动，pin 到 commit SHA 比 pin 到标签更可靠。
 
-- 安装依赖（用 `actions/setup-node`、`actions/setup-python` 等）、缓存（用 `actions/cache`）、构建测试发布（后面的 step）。
-- 不是 Git 仓库的产物下载（比如拉 release artifact，用 `gh release download` 或 `actions/download-artifact`）。
-- GitHub API 写操作（用 `gh` CLI 或专门的 octokit Action，checkout 只管代码）。
-- 对 fork PR 做代码执行（在 v7 之后这正是它的默认拒绝行为）。
+**Q5：为什么我关了 `clean` 还是丢了本地分支？**
 
-## 小结
+`clean` 不管这一层。复用工作区时 `prepareExistingDirectory()` 总会切到 detached HEAD、删掉所有本地 `refs/heads/*`、再清掉 lock 文件。想保住本地分支不要依赖工作区复用。
 
-`actions/checkout` 是 GitHub Actions 的入口原语。v7 把"fork PR 在高权限上下文中执行"这条已知风险修成了默认拒绝；v6 把凭据持久化从 `.git/config` 搬到了 runner 临时目录；其余输入（`fetch-depth`、`sparse-checkout`、`submodules`、`path`、`ref`）只是把"按什么形态取代码"这件事讲得更细。日常把版本钉到 major tag 或具体 SHA、按需设 `permissions: contents: read`，CI 里与凭据和拉取相关的问题就解决了大半。
+**Q6：v4 到 v7 能直接跳吗？**
 
-## 常见问题 FAQ
+每个 major 的 `action.yml` 都带着自己的 `runs.using`（v2 是 node12，v3 node16，v4 node20，v5 起 node24），跨 major 前先在测试 workflow 上跑一遍。README 的 What's new 节按版本列了差异，`CHANGELOG.md` 能查到每个改动对应的 PR。
 
-**Q1: v4/v5/v6/v7 之间能直接升级吗？**
+## 六个自测题
 
-不能。每个 major 版本有运行时差异（node 版本、凭据存储位置、安全默认），升级前应先在测试 workflow 上验证。README 的 "What's new" 节列出了完整变更。
-
-**Q1b: 我才 pin 在 `@v4`，怎么突然就收到了 fork PR 被拦的错误？**
-
-这不是升级。2026-07-20 起，v7 的 fork PR 保护被回移植到除 v1 外所有受支持的 major 版本（官方 2026-07-15 的编辑注把执行日期从 7 月 16 日推迟到 7 月 20 日），只要你的 workflow 用的是浮动 major tag（如 `@v4`、`@v5`），会自动继承新默认。只有 pin 到具体 SHA 或 minor/patch 的不会自动获得，需要显式升级。
-
-**Q2: `persist-credentials: false` 后怎么 push？**
-
-不设 `persist-credentials` 或设为 true 时，凭据自动可用，`git push` 直接执行。如果设为 false，需要在 push 前手动设置 remote URL 携带 token：`git remote set-url origin https://x-access-token:$GITHUB_TOKEN@github.com/owner/repo.git`。
-
-**Q3: fork 来的 PR 在 pull_request 和 pull_request_target 下有什么区别？**
-
-`pull_request` 触发时 token 是只读的、secret 不可访问。`pull_request_target` 切换到 base 仓库的 token 与 secret，但 v7 起默认拒绝 checkout fork 代码，需要显式设置 `allow-unsafe-pr-checkout: true` 并确认风险。
-
-**Q4: sparse-checkout cone mode 什么时候该关？**
-
-cone 模式会把模式解析为"包含祖先目录"。如果只想拉单个文件或一组不共享祖先目录的文件，必须关掉 cone mode（`sparse-checkout-cone-mode: false`）。
-
-**Q5: 自建 runner 升级前要检查什么？**
-
-v5+ 需要 runner ≥ v2.327.1（node24）；v6 的 Docker container 认证 git 命令需要 runner ≥ v2.329.0；runner 上 Git 版本低于 2.18 时会回退到 REST API 下载文件，这条路径下子模块、LFS 等依赖 git 协议的功能可能不可用。
-
-## 自测题
-
-**问题 1：`actions/checkout` 的 fetch-depth 默认值是多少？如果要做 `git diff HEAD~1`，需要设多少？**
+**1. `pull_request_target` 下写一句裸的 `- uses: actions/checkout@v7`（不带任何输入），会被 v7 拦住吗？为什么？**
 
 <details>
 <summary>答案</summary>
-默认 1（只 fetch 触发 commit）。`git diff HEAD~1` 需要 fetch-depth: 2。
+不会。`repository` 未改且 `ref` 未填时 `isDefaultCheckout` 成立，守护不运行；解析出的目标就是 GitHub 设定的可信 base ref，拉到的正是 base 分支。
 </details>
 
-**问题 2：v7 最重要的安全变更是哪条？**
+**2. 守护判定"这是 fork PR"用的是仓库名字还是仓库 ID？为什么这个区别重要？**
 
 <details>
 <summary>答案</summary>
-默认拒绝 checkout fork PR 代码（pull_request_target 触发时；workflow_run 仅在由 pull_request* 事件引起时同样拦截）。需要显式设置 `allow-unsafe-pr-checkout: true` 才能继续。
+用 ID：`repository.id` 对比 `pull_request.head.repo.id`（`workflow_run` 下是 `workflow_run.head_repository.id`）。名字可以相同、可以改名、大小写也可能被拿来做文章，ID 是唯一且稳定的。同一仓库内部的 PR 因此天然不在此列。
 </details>
 
-**问题 3：v6 的凭据持久化位置从哪搬到了哪？为什么？**
+**3. 为什么 `fetch-depth: 1` 下 `git describe --tags` 会失败？该改哪个参数，而不是简单调大 `fetch-depth`？**
 
 <details>
 <summary>答案</summary>
-从仓库的 `.git/config` 搬到了 `$RUNNER_TEMP` 下的独立文件。防止 `git config --list` 或其他操作意外泄露 GITHUB_TOKEN。
+因为 fetch 恒定带 `--no-tags`，tag 对象根本没进本地。补 `fetch-tags: true` 就够，不必把历史层数拉高，代价更小。
 </details>
 
-**问题 4：跨私有仓库 checkout 时需要额外提供什么？为什么默认 `${{ github.token }}` 不够？**
+**4. v6 之后凭据文件的命名和位置是什么？`.git/config` 里还剩什么？**
 
 <details>
 <summary>答案</summary>
-需要额外提供 PAT（`token: ${{ secrets.GH_PAT }}`）。默认 GITHUB_TOKEN 只对当前触发 workflow 的仓库有效，跨仓库需要携带自己的 PAT。
+`$RUNNER_TEMP/git-credentials-<randomUUID>.config`。`.git/config` 里只剩指向它的 `includeIf.gitdir:…/path` 条目（宿主、worktree、容器、子模块各若干），没有明文凭据。
 </details>
 
-**问题 5：sparse-checkout cone mode true 和 false 有什么区别？**
+**5. 在容器 job 里遇到 `dubious ownership`，把 `set-safe-directory` 设成 `true` 能解决吗？**
 
 <details>
 <summary>答案</summary>
-true（默认）把模式解析为"包含祖先目录"，适合拉整个子目录。false 做精准匹配，适合拉单个文件。
+不能。Action 写的 `safe.directory` 落在 `$RUNNER_TEMP/<uuid>/.gitconfig`，只对 Action 自己的 git 调用有效，收尾时连目录一起删。用户 step 里要自己执行一次 `git config --global --add safe.directory`。
 </details>
 
-**问题 6：pull_request 触发器下默认 checkout 的是什么？怎么拿到 PR 源分支的代码？**
+**6. 要往 PR 源分支推 commit，为什么必须给 `ref`？**
 
 <details>
 <summary>答案</summary>
-默认 checkout merge commit。用 `ref: ${{ github.event.pull_request.head.sha }}` 拿到 PR 的 head commit。
+默认检出的 `refs/pull/<N>/merge` 走的是分离头指针路径，没有可推的上游分支。`ref: ${{ github.head_ref }}` 让 `getCheckoutInfo()` 命中 `origin/<name>`，实际执行 `git checkout --force -B <branch> refs/remotes/origin/<branch>`，建出可推的本地分支。
 </details>
 
-## 练习
+## 下一步读什么
 
-**练习 1：最小权限配置**
+想继续往下钻，按问题类型挑入口，都比读参数表划算：
 
-写一个 workflow，只给了 `contents: read` 权限，但其中一个 job 需要 push 一个 generated commit。实现这个 job 级别的权限提升。
-
-**练习 2：多仓库 checkout**
-
-一个项目依赖两个私有仓库。写一个 workflow step，把主仓库 + 两个私有依赖都 checkout 到工作区，并确保私有仓库能正常拉取。
-
-**练习 3：sparse-checkout 优化**
-
-一个 monorepo 有 10 个 package，你的 CI 只需要其中一个 package 的代码。写一个优化后的 checkout 配置，减少 clone 时间。
-
-## 进阶路径
-
-**阶段 1：基础掌握（1 天）**
-
-- 理解 fetch-depth、path、ref、token 四个核心参数的作用
-- 在个人项目里尝试 `fetch-depth: 0` 和 `fetch-depth: 1` 的时间差
-- 熟悉适用边界——知道什么不该用 actions/checkout 做
-
-**阶段 2：安全配置（2-3 天）**
-
-- 理解 v7 的 `allow-unsafe-pr-checkout` 安全模型
-- 在自己的 workflow 里收紧 permissions 到最小范围
-- 测试 pull_request vs pull_request_target 的 token 差异
-
-**阶段 3：复杂场景（1 周）**
-
-- 在生产项目中配置多仓库 checkout
-- 处理子模块和 Git LFS 场景
-- 从 v4/v5 升级到 v7，跑完整测试
+- 想知道守护的准确边界：`src/unsafe-pr-checkout-helper.ts`，88 行一次读完，配套的 `src/input-helper.ts:176-200` 是调用点和短路条件。
+- 想知道凭据到底写了什么：`src/git-auth-helper.ts`，看 `configureToken()`、`getCredentialsConfigPath()`、`removeToken()` 三处。
+- 想搞清楚为什么检出成了 detached：`src/ref-helper.ts` 的 `getCheckoutInfo()` 与 `getRefSpec()`，两者一起读能顺便解释 tag 为什么默认拿不到。
+- 想查某个行为从哪个版本开始：仓库根目录的 `CHANGELOG.md` 按版本列改动并附 PR 链接，比 README 的 What's new 更细。
+- 想看 GitHub 侧对整个 pwn request 模式的说明：文档《Securely using `pull_request_target`》（https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target ），`allow-unsafe-pr-checkout` 的提示文本里那个 `gh.io` 短链就指向它。
 
 ## 参考资料
 
-以下链接与事实核对截至 2026-09-07。
+以下链接均在 2026-09-19 逐条访问确认可达（HTTP 200）。
 
-- actions/checkout 仓库与 README（含 v4–v7 的 "What's new" 与全部输入参数）：<https://github.com/actions/checkout>
-- actions/checkout release 记录（v7.0.0 于 2026-06-18 发布；2026-07-20 各 major 回移植版本同日发布）：<https://github.com/actions/checkout/releases>
-- GitHub Changelog：Safer `pull_request_target` defaults for GitHub Actions checkout（含 2026-07-15 编辑注、执行日期推迟与 v1 例外说明）：<https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/>
-- 官方安全指引："Securely using pull_request_target"（GitHub 文档）：<https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target>
-- CVE-2025-30066（tj-actions/changed-files 供应链事件）：<https://github.com/advisories/GHSA-mrrh-fwg8-r2c3>
-- AsyncAPI npm 供应链事件分析（2026-07-14，Datadog Security Labs）：<https://securitylabs.datadoghq.com/articles/compromised-asyncapi-npm-packages/>
+- actions/checkout 仓库、README 与全部输入参数：<https://github.com/actions/checkout>
+- 源码：`src/unsafe-pr-checkout-helper.ts`、`src/input-helper.ts`、`src/git-auth-helper.ts`、`src/git-directory-helper.ts`、`src/ref-helper.ts`（v7.0.1 标签，非 main）
+- `CHANGELOG.md` 与 release 记录（v7.0.0 于 2026-06-18 发布；v7.0.1、v6.1.0、v5.1.0、v4.4.0、v3.7.0、v2.8.0 于 2026-07-20 依次发布）：<https://github.com/actions/checkout/releases>
+- GitHub Changelog：Safer `pull_request_target` defaults for GitHub Actions checkout（含 2026-07-15 编辑注与 v1 例外）：<https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/>
+- 官方安全指引《Securely using pull_request_target》：<https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target>
+- Actions Runner v2.327.1（node24）与 v2.329.0（`Map RUNNER_TEMP for container action`）：<https://github.com/actions/runner/releases/tag/v2.329.0>
+- GHSA-mrrh-fwg8-r2c3 / CVE-2025-30066，tj-actions/changed-files 被投毒事件：<https://github.com/advisories/GHSA-mrrh-fwg8-r2c3>
+- Datadog Security Labs 对 2026-07-14 AsyncAPI npm 包投毒事件的分析：<https://securitylabs.datadoghq.com/articles/compromised-asyncapi-npm-packages/>
+
+核对方式记一句：版本形态用 `git ls-remote --tags` 看浮动 tag 的实际指向，跨版本差异解包对应 tag 的 `action.yml` 比对，行为断言以 `src/` 下的具体函数为准——仓库文档给结论，代码给事实。

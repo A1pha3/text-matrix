@@ -39,7 +39,7 @@ Chatwoot 把分散在十几种渠道里的客户对话统一收进一个可自�
 
 ## 项目位置
 
-[chatwoot/chatwoot](https://github.com/chatwoot/chatwoot) 是 GitHub 上规模最大的开源客服平台之一：33.5k+ Stars、7.9k+ Forks、6,279 次 commit。官方把它定位为 Intercom、Zendesk、Salesforce Service Cloud 的开源替代，覆盖三类典型用户：
+[chatwoot/chatwoot](https://github.com/chatwoot/chatwoot) 是 GitHub 上规模最大的开源客服平台之一：截至 2026 年 9 月约 3.7 万 Stars、9 千 Forks，长期保持活跃。官方把它定位为 Intercom、Zendesk、Salesforce Service Cloud 的开源替代，覆盖三类典型用户：
 
 - 想从 Intercom/Zendesk 迁出、按坐席付费压不住成本的中小 SaaS 团队；
 - 数据合规要求客户对话必须留在自己服务器上的金融、医疗、政企客户；
@@ -49,7 +49,7 @@ Chatwoot 把分散在十几种渠道里的客户对话统一收进一个可自�
 
 ## 系统地图
 
-仓库 `develop` 分支（约 6,279 次 commit）已经把整套系统拆得比较清楚。结合 README、`Gemfile`、`Procfile` 和官方 `docker-compose.production.yaml`，可画出一张总览图：
+仓库 `develop` 分支（长期活跃、commit 以千计）已经把整套系统拆得比较清楚。结合 README、`Gemfile`、`Procfile` 和官方 `docker-compose.production.yaml`，可画出一张总览图：
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -97,7 +97,7 @@ Chatwoot 把分散在十几种渠道里的客户对话统一收进一个可自�
 2. 客户发出第一条消息。前端把消息 POST 到 REST API，后端在负责会话创建的服务对象里建出 `Conversation` 与第一条 `Message`。
 3. **路由与自动分配**。`Assignment` 逻辑按 inbox 策略（轮询、负载最低、标签匹配）选一个坐席；`reporting_event` 写入一张事件表，供后续报表聚合。
 4. **坐席收到通知**。Rails 广播到该会话的实时通道，所有订阅该会话的浏览器/移动端会立刻收到事件，UI 上无需刷新就把消息卡片 push 出来。
-5. **坐席回复**。回复时如果启用了 Captain（AI Agent），Capilot 服务会先在文本框里给出草稿；坐席可以接受、改写、或直接关闭。专门负责自动回复的 worker 任务则把草稿直接自动发出去（适用于"咨询营业时间""退订邮件"这类高频问答）。
+5. **坐席回复**。回复时如果启用了 Captain，其 Copilot 组件会先在文本框里给出草稿；坐席可以接受、改写或直接关闭。专门负责自动回复的 Assistant 工作流则按配置直接答完高频问题（如"营业时间""退订邮件"），答不了才转人工。
 6. **多渠道合并**。如果同一客户随后从 WhatsApp 又发来消息，WhatsApp 渠道的 incoming-message 服务会按 `contact_id` 把消息合进已有的 `Conversation` 上，而不是新开一张工单。这就是"客户看到的是一次完整对话"与"系统看到的是一条会话记录"的对应。
 7. **报表与导出**。报表模块异步聚合当天的 `reporting_event`，供 Agent Reports、Inbox Reports、CSAT Reports 拉取。
 
@@ -105,16 +105,16 @@ Chatwoot 把分散在十几种渠道里的客户对话统一收进一个可自�
 
 ## Captain：值得单独看的 AI Agent
 
-Captain 是 Chatwoot 自家的 AI Agent，和"在回答框上方加个 Copilot 按钮"不同。README 把它的能力列为四块：
+Captain 是 Chatwoot 官方正式上线的 AI Agent，和"给坐席加个草稿按钮"不同，它拆成两个角色分工：
 
-- **自动回复**：基于知识库（Help Center 文章 + 上传文档）做检索增强生成，把常见问题直接答完。
-- **建议回复**：在坐席输入时给出三条候选草稿，并标注依据文章 ID，方便坐席快速改写。
-- **意图分类**：给新进来的会话打标签、转给对应 Team，充当分流器。
-- **工作总结**：对话结束自动生成摘要，发到 Slack 或写回 `Conversation#summary` 字段。
+- **Assistant（客户侧）**：直接面对客户。可以创建多个、各自命名、单独绑定到指定 inbox（每个 inbox 同一时间只能连一个 Assistant）。它从 Help Center 文章和过往对话里学习，负责接住开场、答完常见问题，答不了再转人工。
+- **Copilot（坐席侧）**：藏在对话侧栏，帮坐席起草回复、总结长会话、翻译消息、按品牌语气调整措辞。它基于 canned replies 与知识库生成建议，只有坐席看得见，客户看不到。
 
-工程上 Captain 是"挂件式"接入：默认的 Copilot 行为不需要外部 LLM，关键路径是一组 service object，外部 LLM 通过 `llm` 配置项接入。这套设计的代价是——如果你想换模型、改 embedding 或加自托管的 vLLM/TGI，需要改的就是这层 service，而不是 UI。这一点对企业客户比较友好。
+除此之外 Captain 还带两个自动能力：**FAQs** 会识别"客户常问但知识库还没有"的问题，提醒你补文档；**Memories** 会记录会话里反复提到的关键细节写进联系人备注，让后续坐席接手时有上下文。
 
-但要注意一点：README 公开列出的功能并不等于企业级能力。Captain 的稳定性、计费、长上下文表现受所选 LLM 影响；自部署时如果不上 enterprise 版，部分高级功能（如 SSO、审计日志、SLA 管理）会受限。
+工程上 Captain 是"挂件式"接入：它需要外部 LLM 来生成 embedding 与回复，官方文档明确要在系统层配置 OpenAI key（由安装管理员维护）。这套设计的代价是——如果你想换模型、调 embedding 或接自托管端点，需要动的是 LLM 接入配置层，而不是 UI，对企业客户比较友好。
+
+要泼的冷水是：Captain 是 enterprise 级能力，社区版（MIT）拿不到完整版。它的成本、稳定性与长上下文表现受所选 LLM 影响，落地前先用一个低风险的 inbox（FAQ 类，别拿账单或技术 bug 试）做小范围 PoC 再扩张。
 
 ## 部署与落地
 
@@ -194,7 +194,7 @@ Sidekiq 主要承担：消息归一化后的入库、报表 `reporting_event` �
 <details>
 <summary>参考答案</summary>
 
-意味着换模型不需要动 UI 或前端，改动集中在 Captain 的 service object 层和 `llm` 配置项。具体说，要改的是负责构造 prompt、调用 LLM API、解析返回的那组 service 对象——把对 OpenAI/Anthropic 的 HTTP 调用换成对 vLLM 自托管端点的调用，并调整 embedding 模型以匹配 pgvector 里已有的向量维度。如果原 embedding 维度和新模型不一致，还需要重算全量文档的 embedding 并重建索引，这是落地时最容易低估的工作量。
+意味着换模型不需要动 UI 或前端，改动集中在 Captain 的 LLM 接入配置层。把 OpenAI 的调用端点换成 vLLM 自托管即可，同时要调整 embedding 模型以匹配 pgvector 里已有的向量维度。如果原 embedding 维度和新模型不一致，还需要重算全量文档的 embedding 并重建索引——这是落地时最容易低估的工作量。
 </details>
 
 ## 进阶路径
@@ -213,7 +213,7 @@ Sidekiq 主要承担：消息归一化后的入库、报表 `reporting_event` �
 如果团队打算用 Captain 替代部分一线坐席，建议先做一次小范围 PoC，而不是直接全量上线：
 
 1. 选一个高频 FAQ 主题（如"营业时间""退订邮件""物流查询"），把对应 Help Center 文章写齐。
-2. 在一个低峰 inbox 上打开 Captain 自动回复，其它 inbox 保持人工。
+2. 把一个 Assistant 绑到低峰 inbox，其它 inbox 保持全人工。
 3. 跑两周后看三个指标：自动回复解决率、坐席改写率、CSAT 评分变化。
 4. 如果 CSAT 没掉、解决率 > 30%，再扩到第二个主题；如果 CSAT 掉了 5 分以上，先回到知识库质量而不是调模型。
 
@@ -233,7 +233,7 @@ Chatwoot 的 `develop` 分支活跃，minor 版本之间会有 schema 迁移。�
 
 ### Q1：自部署后，Captain 的 LLM 调用是走 Chatwoot 的云服务还是我自己配的 endpoint？
 
-A：默认走 Chatwoot 官方的 LLM 服务（需要 enterprise 版授权），但企业版可以配置成走自托管的 vLLM/TGI 或第三方 API。具体配置项在 `InstallationConfig` 表的 `llm` 相关 key 里。如果你用的是社区版（非 enterprise），Captain 的高级功能会受限，建议先确认 license 再决定 PoC 范围。
+A：Captain 需要外部 LLM 才能工作。官方文档要求系统层配置 OpenAI key（由安装管理员维护），且该能力按 enterprise 计划开放。社区版（MIT）拿不到完整的 Captain 能力，PoC 前先确认 license。若要改接自托管或第三方端点，改动集中在 Captain 的 LLM 接入配置层，而不是 UI。
 
 ### Q2：WhatsApp Business API 接入一直报 401，怎么排查？
 
@@ -287,16 +287,18 @@ A：取决于数据规模和召回精度要求。Chatwoot 默认不强制选哪�
 - 邮件渠道能正常收发言会话。
 - Sidekiq 队列无持续堆积。
 
-### 练习二：配置 Captain AI Agent 并完成一个 FAQ 主题的 PoC
+### 练习二：配置 Captain AI Assistant 并完成一个 FAQ 主题的 PoC
 
-**目标**：理解 Captain 的配置流程，并完成一个小范围的效果验证。
+**目标**：理清 Captain 的配置流程，并用一个低风险 inbox 验证效果。
+
+**前置**：确认 license 已包含 Captain，且系统级 OpenAI key 已配置好。
 
 **步骤**：
 
-1. 在 Help Center 里创建至少 5 篇 FAQ 文章（如"如何重置密码""如何取消订阅"）。
-2. 在 Settings → AI Agent 里开启 Captain，选择"建议回复"模式。
-3. 用一个测试账号模拟客户提问，观察 Captain 给出的建议回复是否准确。
-4. 调整知识库文章（增加关键信息、优化排版），再看建议回复的质量变化。
+1. 在 Help Center 里创建至少 5 篇 FAQ 文章（如"如何重置密码""如何取消订阅"），并把它们加进 Captain 的 Documents 作为知识库。
+2. 在左侧导航的 Captain 菜单里创建一个 Assistant，绑定到一个低风险 inbox（如 FAQ 类，别拿账单或技术 bug 试）。
+3. 用一个测试账号模拟客户提问，观察 Assistant 是直接答对、答错，还是转人工。
+4. 调整知识库文章（补充关键信息、优化排版），再看回答质量如何变化。
 5. 记录 20 个测试问题的回答准确率。
 
 **通过标准**：

@@ -40,7 +40,7 @@ tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 - [适用场景与边界](#适用场景与边界)
 - [常见问题与错误排查](#常见问题与错误排查)
 - [动手练习](#动手练习)
-- [自测清单](#自测清单)
+- [自测题](#自测题)
 - [进阶路径](#进阶路径)
 - [采用顺序与决策建议](#采用顺序与决策建议)
 
@@ -52,9 +52,9 @@ tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 
 这套仓库的实际用法是按团队职能挑几个岗位单独跑或按 pipeline 串联，再通过配置文件替换模型、输出目录和外部凭据。一次装全部 Agent 反而是少数场景。把它理解成一组可组合的岗位库比理解成"超大号提示词包"更接近真实用法——后者会让人忽略它里面的工程约束（工作流步骤、交付物格式、退出条件）。
 
-**项目数据**（以下数据来自仓库 [README](https://github.com/msitarzewski/agency-agents#readme)，获取时间 2026-09-11）：
+**项目数据**（以下数据来自仓库 [README](https://github.com/msitarzewski/agency-agents#readme)，2026-09-18 核实）：
 
-- GitHub Stars：151,000+（截至 2026 年 9 月）
+- GitHub Stars：153,000+
 - Agent 总数：230+ 个（官方口径，按 Roster 各分部统计）
 - 部门数量：18 个专业部门（Engineering、Design、Sales、Marketing、Specialized 等）
 - 支持工具：14+ 种主流 AI 编程工具（Claude Code、GitHub Copilot、Cursor、Codex、OpenClaw、Gemini CLI 等）
@@ -64,7 +64,7 @@ tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 
 ## 核心设计理念
 
-### 从通用提示词到专业 Agent 的范式转变
+### 从一份通用提示词到五字段的岗位定义
 
 传统 AI Agent 方案通常用一个提示词模板应对各种场景。The Agency 按岗位拆分，每个 Agent 专精某个细分领域，定义里包含 5 个固定字段：
 
@@ -76,7 +76,7 @@ tags: ["AI Agent", "Claude Code", "Cursor", "OpenClaw"]
 | 交付物（Deliverables） | 可量化的具体产出 | 把"给个建议"变成"给一份带字段的结构化文档" |
 | 学习记忆（Memory） | 持续改进的能力积累 | 跨会话保留项目上下文 |
 
-这 5 个字段是 The Agency 与通用提示词模板的核心差异点。通用模板通常只有"角色 + 任务"两层，The Agency 多了工作流、交付物和记忆三层约束。
+对比下来，通用提示词模板通常只有"角色 + 任务"两层，The Agency 在其上加了工作流、交付物和记忆三层约束——Agent 被限定在"按什么步骤做、交付什么格式"的框架里，而不是靠模型自由发挥。
 
 ---
 
@@ -94,10 +94,10 @@ The Agency 的组织架构模拟了真实公司结构，按职能拆成 18 个�
 | 📊 产品部 | 5 | Sprint Prioritizer、Trend Researcher、Behavioral Nudge Engine |
 | 🎬 项目管理 | 7 | Studio Producer、Project Shepherd、Experiment Tracker |
 | 🧪 测试部 | 9 | Evidence Collector、Reality Checker、API Tester |
-| 🔒 安全部 | 12 | Penetration Tester、Security Architect、Incident Responder |
+| 🔒 安全部 | 12 | Penetration Tester、Security Architect、Blockchain Security Auditor |
 | 🛟 支持部 | 6 | Support Responder、Analytics Reporter、Finance Tracker |
 | 🥽 空间计算 | 6 | XR Interface Architect、visionOS Spatial Engineer |
-| 🎯 专业部 | 50+ | MCP Builder、Blockchain Security Auditor、Salesforce Architect |
+| 🎯 专业部 | 50+ | MCP Builder、Salesforce Architect、Legal Document Review |
 | 💵 财务部 | 5 | Bookkeeper & Controller、Financial Analyst、Tax Strategist |
 | 🎮 游戏开发 | 20+ | Unity/Unreal/Godot 专项工程师 |
 | 📚 学术部 | 6 | Anthropologist、Historian、Narratologist |
@@ -105,7 +105,7 @@ The Agency 的组织架构模拟了真实公司结构，按职能拆成 18 个�
 | 🏥 医疗部 | 3 | Clinical Evidence Agent、Sovereign Health Systems Agent |
 | 🔍 研究部 | 1 | Research Synthesist |
 
-> 上表为各部门 README Roster 列出的实际数量（截至 2026 年 9 月主分支），各列加总约 275。官方口径为"230+ Specialized Agents"。差值的来源是跨部门挂靠：Readme 里同一个 Agent 可能被多个部门引用，按部门计数会重复。例如 Security Architect 与 Ethical Hacker 归在安全部下，而 Blockchain Security Auditor 挂在安全部也在相关场景被引用。法务、医疗类 Agent 分散在专业部和医疗部。
+> 上表数量按各部门 README Roster 的条目数记录（主分支，2026-09-18）；若按部门目录下的 Agent 文件计数，18 个部门合计 279 个。两套口径的差异来自跨部门挂靠：例如销售部花名册列 10 个角色，其中 Sales Outreach 的文件实际存放在专业部目录下，按目录计数归入专业部。官方口径"230+ Specialized Agents"是保守下限。法务、医疗类 Agent 分散在专业部和医疗部。
 
 18 个部门加起来覆盖了从代码到法务的常见岗位。其中工程部、市场部和专业部是数量最多的三个部门，分别对应"写代码""做增长""处理垂直领域专家任务"三类高频需求。专业部里的 MCP（Model Context Protocol，模型上下文协议）构建器和智能合同审计员是这套仓库里比较少见的岗位，前者负责把外部工具封装成 MCP 服务，后者负责审计 EVM（Ethereum Virtual Machine，以太坊虚拟机）合约的 gas（链上燃料费）消耗和安全漏洞。
 
@@ -196,7 +196,7 @@ Agent 转化为 `.mdc` 规则文件存于 `.cursor/rules/` 目录。Cursor 用 `
 
 ## 多工具集成架构
 
-The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 14+ 种工具的接入：
+The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 14 种工具的接入：
 
 ```bash
 # 第一步：生成各工具对应的格式文件
@@ -207,7 +207,9 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 14+ 种
 ./scripts/install.sh
 ```
 
-安装脚本扫描系统，自动检测已安装的工具，以复选框 UI 呈现。`convert.sh` 把统一的 Agent 定义转换成各工具需要的格式（Claude Code 用 `.md`，Cursor 用 `.mdc`，OpenClaw 用 `SOUL.md` + `AGENTS.md`，Codex 用 TOML），`install.sh` 把转换后的文件落到对应工具的配置目录。两层分离的好处是新增工具支持只要写一个新的 converter，不用动安装逻辑。目前官方列出的支持工具有 Claude Code、GitHub Copilot、Cursor、Antigravity、Gemini CLI、OpenCode、Aider、Windsurf、OpenClaw、Qwen Code、Kimi Code、Codex、Osaurus、Hermes。
+安装脚本扫描系统，自动检测已安装的工具，以复选框 UI 呈现。`convert.sh` 把统一的 Agent 定义转换成各工具需要的格式（Claude Code 和 GitHub Copilot 直接用原生 `.md`，无需转换；Cursor 转 `.mdc`；OpenClaw 转 `SOUL.md` + `AGENTS.md` + `IDENTITY.md`；Codex 转 TOML），`install.sh` 把转换后的文件落到对应工具的配置目录。两层分离的好处是新增工具支持只要写一个新的 converter，不用动安装逻辑。目前官方列出的支持工具有 Claude Code、GitHub Copilot、Cursor、Antigravity、Gemini CLI、OpenCode、Aider、Windsurf、OpenClaw、Qwen Code、Kimi Code、Codex、Osaurus、Hermes。
+
+一个已知的坑：OpenCode 的运行时目前只能注册约 119 个 Agent，多出的会被静默丢弃（上游 bug）。官方建议这类工具用 `--division` 控制安装数量，安装器也会在选择超限时给出警告。
 
 ## Codex 集成（高级选项）
 
@@ -345,11 +347,15 @@ The Agency 通过 `convert.sh` 和 `install.sh` 两个脚本统一管理 14+ 种
 
 ## 动手练习
 
-下面三个练习从浅到深，建议按顺序做。第一个验证基本使用，第二个验证协调链路，第三个让你上手定义合规约束。
+下面三个练习从浅到深，建议按顺序做。第一个验证基本使用，第二个验证协调链路，第三个让你上手把团队规范写进 Agent 定义。
 
 ### 练习一：装三个 Agent 跑一次跨部门代码审查
 
-1. 用 `./scripts/install.sh --tool claude-code` 装三个 Agent：Backend Architect（工程部）、Security Architect（安全部）、Reality Checker（测试部）
+1. 用 `--agent` 参数装三个 Agent：Backend Architect（工程部）、Security Architect（安全部）、Reality Checker（测试部）：
+
+```bash
+./scripts/install.sh --tool claude-code --agent backend-architect,security-architect,reality-checker
+```
 2. 找一段你最近写的 API 代码（没有的话用下面这段模拟）：
 
 ```python
@@ -539,7 +545,7 @@ cd agency-agents
 1. **挑一个部门深读**：打开仓库里该部门的每个 Agent 文件，不要只读概括表。重点关注工作流（Workflow）字段——它直接决定 Agent 的产出稳定性。你会发现同一个部门下不同 Agent 的工作流颗粒度差别很大：有的写死了 5 步检查，有的只写了"分析问题并给出建议"。前者更稳但更僵，后者更灵活但更随模型能力波动。
 2. **读 `convert.sh` 和 `install.sh` 源码**：理解 Agent Markdown → 工具配置文件的转换逻辑。这对你之后批量管理 Agent（比如"只装市场部 Agent 到 Cursor、只装工程部到 Claude Code"）是必要的。
 3. **设计一个"Agent 间协议"**：当你需要 3 个以上 Agent 协同工作时，靠口头约定传递上下文迟早出问题。定义一个最小协议——例如"每个 Agent 的交付物必须包含 `输入源`、`关键假设`、`结论`、`不确定项` 四个字段"——然后修改 Agent 的交付物字段来执行这个协议。
-4. **跟踪 The Agency 仓库的 releases 页面**：作者 Msitarzewski 在持续增加新 Agent 和优化工作流。关注 `CHANGELOG.md` 里工作流变更的条目——这些变更往往反映了"某个 Agent 的旧工作流在生产中暴露了什么缺陷"。
+4. **跟踪仓库的提交记录**：仓库没有单独的 CHANGELOG，改动都体现在 [commits](https://github.com/msitarzewski/agency-agents/commits/main) 里。作者在持续增加新 Agent、调整既有工作流——每一次工作流变更，往往意味着旧版在生产中暴露了某类缺陷。
 
 ---
 
@@ -591,15 +597,13 @@ cd agency-agents
 
 本文基于 The Agency 项目官方仓库（github.com/msitarzewski/agency-agents）和实际使用经验撰写。需要说明的边界：
 
-1. **项目活跃度与版本变化**：The Agency 项目处于活跃开发阶段（数据截至 2026 年 9 月），Agent 数量、部门划分、支持工具列表可能随版本变化。本文提及的"230+ 个 Agent"、"18 个部门"为撰写时的快照，请以[官方 GitHub 仓库](https://github.com/msitarzewski/agency-agents)的最新 README 为准。
+1. **项目活跃度与版本变化**：The Agency 项目处于活跃开发阶段（数据 2026-09-18 核实），Agent 数量、部门划分、支持工具列表可能随版本变化。本文提及的"230+ 个 Agent"、"18 个部门"为撰写时的快照，请以[官方 GitHub 仓库](https://github.com/msitarzewski/agency-agents)的最新 README 为准。
 
 2. **Agent 文件性质**：每个 Agent 是一个 Markdown 文件，定义人格、使命、工作流、交付物和记忆策略。这些文件需要配合特定 AI 工具（如 Claude Code、Cursor、OpenClaw）使用，不能独立运行。
 
-3. **实际用法建议**：项目设计为按团队职能挑几个岗位单独跑或按 pipeline 串联，再通过配置文件替换模型、输出目录和外部凭据。一次装全部 Agent 反而是少数场景。把它理解成一组可组合的岗位库比理解成"超大号提示词包"更接近真实用法。
+3. **实际用法建议**：按团队职能挑几个岗位单独跑或按 pipeline 串联是主流用法，配置文件负责替换模型、输出目录和外部凭据；一次装满全部 Agent 属于少数场景（判断依据见"项目判断"一节）。
 
 4. **工具集成范围**：本文提到支持 Claude Code、GitHub Copilot、Cursor、OpenClaw、Codex、Gemini CLI 等主流 AI 编程工具，但具体集成方式和配置文件格式可能因工具版本而变化，请以各工具官方文档为准。
 
 5. **性能与效果声明**：本文未声称使用 The Agency 后能提升具体百分比的工作效率。Agent 的效果取决于具体任务、模型能力、提示词质量等多重因素，建议在真实项目上先验证再扩大使用范围。
-
-6. **更新记录**：本文在 2026 年 9 月同步了官方仓库的最新 Agent 数量、部门划分与支持工具列表，并按 cn-doc-writer 标准校验了事实与口径。
 

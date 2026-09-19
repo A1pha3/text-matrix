@@ -4,7 +4,7 @@ slug: pydantic-ai-typed-agent-framework-deep-dive
 github_repo: "pydantic/pydantic-ai"
 source_key: "gh:pydantic/pydantic-ai"
 date: 2026-09-03T10:45:00+08:00
-lastmod: 2026-09-04T18:30:00+08:00
+lastmod: 2026-09-18T23:43:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["Pydantic AI", "AI Agent", "类型安全", "LLM 框架", "Python"]
@@ -15,7 +15,7 @@ description: "Pydantic AI 是 Pydantic 团队推出的类型安全 Agent 框架�
 
 ## 核心判断
 
-在 Agent 框架多如牛毛的 2026 年，Pydantic AI（GitHub 近两万 star，v2.39.0，MIT 协议）押注的不是"功能最多"，而是一个看似朴素的命题：**LLM 应用从原型到生产的距离，本质上是"无类型"到"有类型"的距离。**
+在 Agent 框架多如牛毛的 2026 年，Pydantic AI（GitHub 两万余 star，v2.45.0，MIT 协议）押注的不是"功能最多"，而是一个看似朴素的命题：**LLM 应用从原型到生产的距离，本质上是"无类型"到"有类型"的距离。**
 
 这个判断有资格由 Pydantic 团队来做。他们的验证库是 OpenAI SDK、Anthropic SDK、Google ADK、LangChain 和大半个 AI 生态的验证层，也是 FastAPI 得以成立的地基。这些框架在 Python 世界推广类型注解这件事上做的事，比任何语言委员会都多。现在他们把同一套哲学搬进了 Agent 领域：**你的 IDE、类型检查器和编码 agent，都应该知道你的 agent 返回什么。**
 
@@ -28,7 +28,7 @@ description: "Pydantic AI 是 Pydantic 团队推出的类型安全 Agent 框架�
 | 模型层 | `Model` / `Provider` / `ModelProfile` | 把供应商差异压成一个字符串，按能力表自动降级 |
 | 扩展层 | `Capability` / `Toolset` | 把工具、指令、钩子、模型设置捆成可组合、可排序的单元 |
 | 执行层 | `pydantic_graph` | 把 Agent 循环建模为类型化图，节点级可观测 |
-| 运行层 | CLI / Web / 实时语音 / Temporal 等 | 同一个 Agent 定义，五种跑法、四种部署形态 |
+| 运行层 | CLI / Web / 实时语音 / Temporal 等 | 同一个 Agent 定义，六种跑法，部署形态覆盖终端到持久化队列 |
 
 ## 一个最小样本，先看气质
 
@@ -51,7 +51,10 @@ roulette_agent = Agent(
     deps_type=Deps,
     retries=3,
     output_type=bool,
-    system_prompt='Use the `roulette_wheel` function to determine if the customer has won.',
+    system_prompt=(
+        'Use the `roulette_wheel` function to determine if the customer has won '
+        'based on the number they bet on.'
+    ),
 )
 
 
@@ -77,37 +80,74 @@ print(result.output)  # True，在 IDE 里被推断为 bool，不是 str
 
 ## 三大抽象：这个框架真正的产品
 
-读源码比读 README 更能看清一个框架的野心。Pydantic AI 的 monorepo 里有三个包：核心的 `pydantic_ai_slim`、评测用的 `pydantic_evals`、和图执行库 `pydantic_graph`。支撑整个体系的是三组抽象。
+读源码比读 README 更能看清一个框架的野心。Pydantic AI 的 monorepo 里有四个包：核心的 `pydantic_ai_slim`、图执行库 `pydantic_graph`、评测用的 `pydantic_evals`，以及带内置 Web UI 的命令行工具 `clai`。支撑整个体系的是三组抽象。
 
 ### 一、Model 与 Provider：把"换模型"压缩成一个字符串
 
-`models/` 目录下躺着 Anthropic、OpenAI、Google、Bedrock、Groq、Mistral、xAI、Ollama 等二十多个模型实现；`providers/` 目录下是三十多个供应商接入。对使用者的承诺是：`Agent('openai:gpt-5.2')` 换成 `Agent('anthropic:claude-fable-5')`，其余代码一行不改。
+`models/` 目录下躺着 Anthropic、OpenAI、Google、Bedrock、Groq、Mistral、xAI、Ollama 等二十多个模型实现；`providers/` 目录下是三十多个供应商接入。对使用者的承诺是：`Agent('openai:gpt-5.6-sol')` 换成 `Agent('anthropic:claude-fable-5')`，其余代码一行不改。
 
 有意思的是夹在中间的 **ModelProfile**。每家模型的能力差异——默认走哪档结构化输出、能否支持严格工具定义、思考内容用什么格式传——被建模成一个声明式的数据描述。框架据此自动降级：档案里 `default_structured_output_mode` 落在 `'tool'` 的走工具调用，落在 `'native'` 的走原生 JSON Schema，连工具都不支持的模型则落到提示词路径。**适配层差异的工程，从"每个使用者的 if-else"收拢为"框架内部的一张能力表"。** 这是把浏览器兼容性问题做成 caniuse 的思路。
 
 ### 二、Capability 与 Toolset：一个原语统治所有扩展
 
-这是当前版本扩展系统的中心：工具、指令、钩子、原生工具、模型设置，都被收进同一个原语——**Capability**，可复用地捆绑在一起的单元。`capabilities/` 目录下的 hooks、native_tool、web_search、web_fetch、image_generation、thinking 等二十多个子类，把形形色色的扩展都做成同一种形态。
+这是当前版本扩展系统的中心：工具、指令、钩子、原生工具、模型设置，全被收进同一个原语 **Capability**——一种可复用的捆绑单元。`capabilities/` 目录下的 hooks、native_tool、web_search、web_fetch、image_generation、thinking 等二十多个能力模块，把形形色色的扩展都做成同一种形态。
 
 README 里那个银行客服示例最能说明问题：
 
 ```python
+from dataclasses import dataclass
+
+from bank_database import DatabaseConn
+from pydantic import BaseModel, Field
+from pydantic_ai import Agent, Capability, RunContext
+
+
+@dataclass
+class SupportDependencies:
+    customer_id: int
+    db: DatabaseConn
+
+
+class SupportOutput(BaseModel):
+    support_advice: str = Field(description='Advice returned to the customer')
+    block_card: bool = Field(description="Whether to block the customer's card")
+    risk: int = Field(description='Risk level of query', ge=0, le=10)
+
+
 customer_context = Capability[SupportDependencies](
     id='customer-context',
     description="Who the customer is and what's on their account.",
 )
 
+
 @customer_context.instructions
-async def add_customer_name(ctx: RunContext[SupportDependencies]) -> str: ...
+async def add_customer_name(ctx: RunContext[SupportDependencies]) -> str:
+    customer_name = await ctx.deps.db.customer_name(id=ctx.deps.customer_id)
+    return f"The customer's name is {customer_name!r}"
+
 
 @customer_context.tool
-async def customer_balance(ctx: RunContext[SupportDependencies], include_pending: bool) -> float: ...
+async def customer_balance(
+    ctx: RunContext[SupportDependencies], include_pending: bool
+) -> float:
+    """Returns the customer's current account balance."""
+    return await ctx.deps.db.customer_balance(
+        id=ctx.deps.customer_id, include_pending=include_pending
+    )
+
 
 refunds = Capability[SupportDependencies](
-    id='refunds', description='...', defer_loading=True,
+    id='refunds',
+    description='Refund eligibility and refund status.',
+    defer_loading=True,
 )
 
-support_agent = Agent('openai:gpt-5.6-sol', capabilities=[customer_context, refunds])
+support_agent = Agent(
+    'openai:gpt-5.6-sol',
+    deps_type=SupportDependencies,
+    output_type=SupportOutput,
+    capabilities=[customer_context, refunds],
+)
 ```
 
 两处设计值得停下来看。
@@ -116,27 +156,29 @@ support_agent = Agent('openai:gpt-5.6-sol', capabilities=[customer_context, refu
 
 **中间件语义与拓扑排序**：Capability 链遵循中间件模型，每个能力可以包裹模型请求、工具执行、输出校验的完整生命周期。多个能力的先后顺序不再靠数组顺序碰运气——每个能力可以声明 `outermost`/`innermost` 位置约束和相互依赖，`CombinedCapability` 用标准库 `graphlib.TopologicalSorter` 做拓扑排序，声明冲突（缺依赖、成环）在构造期就抛 `UserError`。**"组合的行为可预测"从口头承诺变成构造期校验。**
 
-工具层面同样有体系：`FunctionToolset` 把 Python 函数变成工具，`CombinedToolset`/`FilteredToolset`/`RenamedToolset`/`ApprovalRequiredToolset` 等包装器完成组合、过滤、改名、人工审批。MCP 服务器同样是 Capability：`MCP()` 传 URL 接远程服务器（Streamable HTTP/SSE），`local=` 传脚本走 stdio，再给 `native=True` 就能让支持原生 MCP 的模型直接拿到同一批工具。
+工具层面同样有体系：`FunctionToolset` 把 Python 函数变成工具，`CombinedToolset`/`FilteredToolset`/`RenamedToolset`/`ApprovalRequiredToolset` 等十来种包装器完成组合、过滤、改名、人工审批。MCP 服务器同样是 Capability：`MCP()` 传 URL 接远程服务器（Streamable HTTP/SSE），`local=` 传脚本或本地客户端走本地进程，再给 `native=True` 就能让支持原生 MCP 的模型直接拿到同一批工具。
 
 ### 三、Graph：Agent 循环的底座是一个独立的类型化图库
 
-很多人不知道，Agent 的运行循环本身建立在一个独立发布的库 `pydantic_graph` 之上（约 4500 行，含 `Step`/`Decision`/`Fork`/`Join` 原语和 Fork-Join 并行归约）。Agent 循环被建模为三个节点的图：`UserPromptNode → ModelRequestNode → CallToolsNode`，工具结果回流到模型请求节点，直到产出合法输出抵达 `End`。
+Agent 的运行循环本身，建立在一个独立发布的库 `pydantic_graph` 之上（约 4500 行，含 `Step`/`Decision`/`Fork`/`Join` 原语和 Fork-Join 并行归约）。Agent 循环被建模为三个节点的图：`UserPromptNode → ModelRequestNode → CallToolsNode`，工具结果回流到模型请求节点，直到产出合法输出抵达 `End`。
 
 这个设计带来一个别人给不了的 API：`agent.iter()` 让你逐节点迭代整个运行过程，拿到每一次模型响应、每一次工具调用的完整事件流——调试 Agent 时"看看它到底干了什么"从考古变成了直播。而当简单循环不够用，你可以直接用 `pydantic_graph` 编排带类型检查的多阶段工作流，Agent 只是其中一个可以复用的节点。
 
-同一个 Agent 定义，还以五种方式运行（`run`/`run_sync`/`run_stream`/`run_stream_events`/`iter`），部署形态覆盖终端 CLI（一行 `agent.to_cli_sync()`）、内置 Web 聊天、实时语音（OpenAI Realtime、Gemini Live、Azure、xAI Grok Voice）、以及持久化执行——挂上 `TemporalDurability`，同一段 Agent 代码进入 Temporal 工作流，每次模型调用和工具执行成为可恢复的 activity，进程崩溃、重启、跑上几天都不丢状态。DBOS 和 Prefect 以同样的方式第一方接入。
+同一个 Agent 定义，还以六种方式运行（`run`/`run_sync`/`run_stream`/`run_stream_sync`/`run_stream_events`/`iter`）。部署形态覆盖终端 CLI（一行 `agent.to_cli_sync()`）、内置 Web 聊天、实时语音（OpenAI Realtime、Gemini Live、Azure、xAI Grok Voice）；再往外，AG-UI 和 Vercel AI 的事件流把它接进自有前端，ACP 协议让它挂进编辑器，GitHub Agentic Workflows 让它在 issue 和 PR 上无人值守运行。还有持久化执行——挂上 `TemporalDurability`，同一段 Agent 代码进入 Temporal 工作流，每次模型调用和工具执行成为可恢复的 activity，进程崩溃、重启、跑上几天都不丢状态；Temporal、DBOS、Prefect、Restate 四家引擎由第一方共同维护，Kitaru 和 Airflow 走外部集成。
 
 ## 一次运行，穿过整个系统
 
 抽象讲完了，看一次真实调用怎么流过这四层。以银行客服 Agent 处理"我丢卡了"为例：
 
-`run('I just lost my card!', deps=...)` 进入后，框架先把用户输入包成 `UserPromptNode`，随后 `ModelRequestNode` 向供应商发起请求——请求发出前，Capability 链已按拓扑序包好：customer_context 能力的指令函数先查库拼出"客户是 John"，输出类型 `SupportOutput` 被注册成一次工具调用；ModelProfile 查表确认当前模型支持工具。模型返回"建议临时冻结卡片、风险等级 8"的调用请求，`CallToolsNode` 在执行你的函数前先用 Schema 校验参数，产出通过 `SupportOutput` 验证后抵达 `End`。全程每一步都是图上的一个节点，`agent.iter()` 能逐节点直播；如果挂了 `TemporalDurability`，这些节点同时是可恢复的 activity，进程崩了从断点续跑。
+`run('I just lost my card!', deps=deps)` 进入后，框架先把用户输入包成 `UserPromptNode`，随后 `ModelRequestNode` 向供应商发起请求。请求发出前，Capability 链已按拓扑序包好：customer_context 能力的指令函数先查库拼出"客户是 John"，输出类型 `SupportOutput` 被注册成一次工具调用，ModelProfile 查表确认当前模型支持工具。
+
+模型返回"建议临时冻结卡片、风险等级 8"的调用请求，`CallToolsNode` 在执行你的函数前先用 Schema 校验参数，产出通过 `SupportOutput` 验证后抵达 `End`。全程每一步都是图上的一个节点，`agent.iter()` 能逐节点直播；如果挂了 `TemporalDurability`，这些节点同时是可恢复的 activity，进程崩了从断点续跑。
 
 一个丢卡请求，穿过四层抽象，每一步都有类型、有验证、有痕迹。这就是这门框架对"生产级"的具体定义。
 
 ## 观测与评测：生产化不是可选附件
 
-Pydantic AI 的母公司卖可观测性产品（Logfire），所以框架的埋点做得极其认真：OpenTelemetry 原生，一行开启，span 覆盖每次模型请求与工具调用，成本追踪基于他们维护的 genai-prices 数据集。配套的 `pydantic_evals` 提供数据集、评测器、报告三件套——把"agent 行为的回归测试"做成了 pytest 之于代码的对应物。
+框架的维护者 Pydantic 同时经营可观测性产品 Logfire，所以埋点做得极其认真：OpenTelemetry 原生，一行开启，span 覆盖每次模型请求与工具调用，成本追踪基于他们维护的 genai-prices 数据集。配套的 `pydantic_evals` 提供数据集、评测器、报告三件套——把"agent 行为的回归测试"做成了 pytest 之于代码的对应物。
 
 配合 `AgentSpec`（用 YAML/JSON 声明式定义 Agent）和测试专用的 `TestModel`（不需要 API key 就能跑通完整 Agent 循环），从开发、调试、评测到监控有一条完整的路径。
 
@@ -146,7 +188,7 @@ Pydantic AI 的母公司卖可观测性产品（Logfire），所以框架的埋�
 
 **抽象面积不小。** Agent 构造函数的参数列表很长，Capability 的绑定分两个阶段，工具集的包装器有十来种。对"只想调一次 API"的用户，这里有学习曲线。仓库根目录的 AGENTS.md 里写着团队的价值排序——"我们偏好强原语、强抽象、通用方案与扩展点，胜过为特定用例做的窄方案"——这本身就意味着不为最小场景做特化。
 
-**版本迭代以天计。** v2.37.0（9 月 1 日）、v2.38.0（9 月 3 日）、v2.39.0（9 月 4 日），三天三个版本，README 里的 API 面貌换得很快。好在仓库的 AGENTS.md 把兼容性写进了贡献守则——任何改动"不得改变未触及该问题的用户行为"，重构不得以破坏既有代码为代价。
+**版本迭代以天计。** v2.40.0（9 月 4 日）到 v2.45.0（9 月 17 日），两周六个小版本，README 里的 API 面貌换得很快。好在仓库的 AGENTS.md 把兼容性写进了贡献守则——任何改动"不得改变未触及该问题的用户行为"，重构不得以破坏既有代码为代价。
 
 **生态位上，Harness 是分开的仓库。** 记忆管理、子代理、上下文压缩、完整编码 Agent 这些"重装备"在 `pydantic-ai-harness` 里，核心库刻意保持轻。喜欢一站式全家桶的人要多装一个包；喜欢核心干净的人会感激这条边界。
 
@@ -156,6 +198,8 @@ Pydantic AI 的母公司卖可观测性产品（Logfire），所以框架的埋�
 
 不必强求的场景：纯探索性原型、习惯动态类型的开发者会觉得约束烦，以及只需要一次性脚本调 API 的轻量需求。
 
+起步路径倒是不必一步到位：`uv add pydantic-ai`，先用内置的 `test` 模型跑通循环（不需要 API key），需要外部数据再加工具，工具要复用再拆成 Capability，任务要跑几天再挂 `TemporalDurability`。每一步都不用推翻前一步。
+
 ## 结语
 
 框架的竞争迟早会从"谁的功能清单更长"转向"谁的错误更早暴露"。Pydantic AI 把类型系统从"锦上添花的工程素养"变成"Agent 框架的第一性设计"——让一整类运行时错误在写下代码的那一刻就被 IDE 划红线，让模型输出在离开框架之前必须通过验证，让能力的组合在构造期就完成一致性检查。
@@ -164,4 +208,4 @@ Pydantic AI 的母公司卖可观测性产品（Logfire），所以框架的埋�
 
 ---
 
-**项目信息**：pydantic/pydantic-ai · MIT · Python 3.10+ · 近两万 star · 文档 [pydantic.dev/docs/ai](https://pydantic.dev/docs/ai)
+**项目信息**：pydantic/pydantic-ai · MIT · Python 3.10+ · 两万余 star · 文档 [pydantic.dev/docs/ai](https://pydantic.dev/docs/ai) · 文中版本与数字核对自 2026-09-18 的仓库、PyPI 与官方文档（v2.45.0）

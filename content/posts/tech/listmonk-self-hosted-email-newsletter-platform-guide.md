@@ -6,787 +6,415 @@ date: 2026-05-17
 draft: false
 tags: ["自托管", "Go"]
 categories: ["技术笔记"]
-description: "全面介绍 listmonk——一款用 Go 编写的开源自托管邮件 Newsletter 和邮件列表管理平台，涵盖安装配置、SMTP 对接、运营管理和 API 开发。"
+description: "listmonk 是 Go 编写的开源自托管 Newsletter 与邮件列表平台。拆解单二进制 + PostgreSQL + SMTP 中继的分工、Campaign 状态机与模板、bounce 处理、REST API，并给出部署流程与选型成本对照。"
 slug: listmonk-self-hosted-email-newsletter-platform-guide
 ---
 
 # listmonk：自托管邮件通讯平台部署与运营指南
 
-listmonk 的取舍很直接：把 Newsletter 编辑、订阅者管理、投递追踪整合到一个 Go 单二进制里，数据全留在自己的 PostgreSQL，邮件投递交给外部 SMTP 中继。这个取舍决定了它的定位——独立博主、开源项目、中小型 SaaS 的 Newsletter 场景，listmonk 单机可撑数万订阅者；每天百万级发送量或需要原生移动端管理的场景，仍然得用 Amazon SES + 自建投递系统或商业平台。
+> **判断**：listmonk 把「Newsletter 这件事的每一环都发生在自己的服务器上」做成了唯一目标——订阅者、列表、模板、Campaign 全部存进自己的 PostgreSQL，邮件交给外部 SMTP 中继投递，自身只是一个 Go 单二进制加一套 Web 后台。这个取舍划出了清晰的能力边界：内容管理和发送编排是它的强项；投递质量取决于你选的 SMTP 服务商；商业平台里的 A/B 测试、营销自动化、出站 Webhook 它一概不做——不是没做好，而是没做。
+>
+> **目标读者**：想自托管 Newsletter 的独立开发者与博主、需要邮件列表和事务邮件的中小团队、在 Mailchimp 类 SaaS 和自建之间做权衡的技术决策者
+> **预计阅读时间**：25 - 40 分钟
+> **前置知识**：Docker Compose 基础、SMTP 与 SPF / DKIM / DMARC 的概念、REST API 调用
+> **数据来源**：[knadh/listmonk](https://github.com/knadh/listmonk) 仓库与 [listmonk.app](https://listmonk.app) 官方文档（当前版本 v6.2.0，2026-06-26 发布；23.4K Stars，AGPL-3.0，2026-09-18 查询）+ 仓库内 docker-compose.yml 与 CLI 源码（`cmd/init.go`）+ SendGrid / AWS SES 官方定价页（2026-09 查询）
 
-## 学习目标
+## 目录
 
-读完本文后，你应能：
+- [§1 系统地图：三个部件的边界](#1-系统地图三个部件的边界)
+- [§2 数据模型：两套状态系统](#2-数据模型两套状态系统)
+- [§3 发送链路：Campaign 状态机、模板与追踪](#3-发送链路campaign-状态机模板与追踪)
+- [§4 任务流案例：一期周报从创建到统计](#4-任务流案例一期周报从创建到统计)
+- [§5 部署：官方 Docker Compose 流程](#5-部署官方-docker-compose-流程)
+- [§6 SMTP 配置与送达率](#6-smtp-配置与送达率)
+- [§7 REST API 与自动化](#7-rest-api-与自动化)
+- [§8 运维与故障排查](#8-运维与故障排查)
+- [§9 采用顺序与选型边界](#9-采用顺序与选型边界)
+- [§10 结尾判断](#10-结尾判断)
+- [§11 事实核验与引用](#11-事实核验与引用)
 
-- 说清 listmonk "单二进制 + PostgreSQL 存一切 + SMTP 中继投递" 这个架构的三个工程后果，以及它为什么把投递质量的责任交给外部 SMTP 而不是自己做。
-- 跟着一次 Campaign 发送走完编辑、节流、SMTP 中继、追踪像素回传、退回处理的完整链路，定位每一步失败时该看哪层日志。
-- 用 Docker Compose 在 10 分钟内起一套可用的 listmonk，包括 PostgreSQL、配置初始化、SMTP 对接和管理后台。
-- 在 SendGrid / AWS SES / 自建 Postfix 三种 SMTP 方案里做选择，说出各自对应的成本结构和送达率风险。
+## 读完能做什么
 
-## 什么是 listmonk？
+1. 说清「单二进制 + PostgreSQL 存一切 + SMTP 中继投递」的分工，判断哪些事 listmonk 管、哪些事归 SMTP 服务商。
+2. 用官方 docker-compose.yml 从零起一套实例，完成管理员初始化和第一路 SMTP 配置。
+3. 写出正确的邮件模板：`{{ template "content" . }}` 正文插入点、`{{ UnsubscribeURL }}` 退订链接、`{{ TrackView }}` 追踪像素各放在哪里。
+4. 走通一次 Campaign 从草稿、定时、发送到统计的状态流转，并用 API 完成订阅者创建、CSV 导入和事务邮件发送。
+5. 配置 bounce 处理（POP3 信箱或 SES / SendGrid webhook 回传），让硬退回自动进黑名单。
+6. 在 listmonk 和商业平台之间做选型，算得出各自的真实成本。
 
-[listmonk](https://github.com/knadh/listmonk)（[listmonk.org](https://listmonk.org)）是由印度开发者 [knadh](https://github.com/knadh) 用 Go 语言编写的**自托管邮件 Newsletter 和邮件列表管理平台**。它将 Newsletter 编辑、订阅者管理、投递追踪和数据分析整合在一个 Web 管理后台中，无需依赖第三方邮件服务即可独立运行。
+## §1 系统地图：三个部件的边界
 
-作为 Mailchimp、ConvertKit 等商业平台的开放替代方案，listmonk 的原则是：数据自托管、服务器自控。
+listmonk 对自己的定义是「one-way mailing list and newsletter manager」——单向邮件列表与 Newsletter 管理器。整套系统只有三个活动部件，先分清谁管什么，后面所有问题定位都依赖这张图：
 
-> **项目地址：** https://github.com/knadh/listmonk  
-> ** LICENSE：** AGPLv3  
-> **技术栈：** Go + PostgreSQL + Vue.js（管理后台）
+| 部件 | 承担的事 | 不承担的事 |
+|------|---------|-----------|
+| listmonk（Go 单二进制 + Vue/Buefy 管理后台） | 订阅者与列表管理、模板渲染、Campaign（邮件活动）排程与限速、打开/点击统计、bounce（退回）记录、REST API、公开订阅页与归档 | 不直接投递邮件；不管理发件域信誉 |
+| PostgreSQL | 唯一状态存储：订阅者、列表、订阅关系、模板、Campaign、统计、bounce | — |
+| SMTP 中继（AWS SES / SendGrid / 自建 Postfix） | 实际把邮件送进收件方服务器，决定送达率 | 不理解 Campaign 语义，只管投递 |
 
----
-
-## 核心功能一览
-
-### Newsletter 管理
-- **多列表管理**：按主题、受众群体创建多个独立邮件列表
-- **订阅者管理**：支持手动添加、CSV 批量导入、API 动态注册
-- **双向订阅确认（Double Opt-in）**：有效防止垃圾邮件投诉
-- **取消订阅（Unsubscribe）**：内置一键退订链接，完全符合 CAN-SPAM 和 GDPR
-- **订阅偏好中心**：让用户自行管理偏好的邮件类别
-
-### Campaign（邮件活动）运营
-- **富文本编辑器**：基于 HTML 模板的可视化编辑
-- **草稿和定时发送**：支持草稿保存、按计划时间自动投递
-- **A/B 主题行测试**：对比不同标题的打开率
-- **批量发送与节流（Throttling）**：控制发送速率以适配 SMTP 服务商限制
-- **TX（事务邮件）模式**：支持发送密码重置、订单确认等触发式邮件
-
-### 数据分析与追踪
-- **打开率（Open Rate）** 和 **点击率（Click Rate）** 追踪
-- **退回率（Bounce Rate）** 监控（硬退回/软退回区分）
-- **退订率**统计
-- **按订阅者维度查看**投递详情
-- **导出 CSV 报表**
-
-### REST API 与二次开发
-- 完整的 REST API，支持与第三方 CMS、CRM、自动化工具深度集成
-- Webhook 钩子，支持投递事件回调通知
-- 支持与 Matomo、PostHog 等分析平台联动
-
----
-
-## 架构设计解析
-
-```
-┌─────────────────────────────────────────────────┐
-│                   用户 / 管理员                   │
-│                     浏览器                        │
-└──────────────────────┬──────────────────────────┘
-                       │ HTTP
-┌──────────────────────┴──────────────────────────┐
-│              listmonk Web Server                  │
-│               (:9000 管理后台)                     │
-│                                                   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────┐    │
-│  │  Vue.js  │  │  Go API  │  │  SMTP Relay  │    │
-│  │  Frontend│  │  Core    │  │  (发送邮件)   │    │
-│  └──────────┘  └──────────┘  └──────────────┘    │
-└──────────────────────┬──────────────────────────┘
-                       │
-         ┌─────────────┴─────────────┐
-         │      PostgreSQL 数据库     │
-         │  (订阅者 / 模板 / Campaign) │
-         └───────────────────────────┘
+```mermaid
+graph LR
+    A["管理员<br/>Web 后台 :9000"] --> L["listmonk<br/>Go 单二进制"]
+    S["订阅者<br/>公开订阅页 / 归档 RSS"] --> L
+    L <--> P[("PostgreSQL<br/>全部状态")]
+    L -->|"SMTP 提交"| M["SMTP 中继<br/>SES / SendGrid / Postfix"]
+    M -->|"投递"| R["收件箱"]
+    M -.->|"bounce webhook / POP3"| L
+    R -.->|"打开像素 / 点击重定向"| L
 ```
 
-**关键设计哲学：**
-- **单二进制部署**：编译好的 Go 程序无外部依赖，直接运行
-- **数据库存储一切**：PostgreSQL 承载所有状态，包括邮件内容和投递日志
-- **SMTP 中继负责投递**：程序本身不直接连接 MTA，而是将邮件提交给外部 SMTP 服务商
-- **追踪像素（Tracking Pixel）**：邮件中嵌入 1×1 透明图片，通过图片请求计数统计打开率
+架构上最值得点名的取舍是：投递质量——IP 信誉、域名预热、退回循环处理——整体外包给了 SMTP 层。listmonk 只负责「把正确的内容发给正确的人，并记录结果」。这让它保持单二进制的简单，也意味着部署里影响最大的决定是选哪家 SMTP 服务商，超过任何 listmonk 参数 tuning。
 
----
+## §2 数据模型：两套状态系统
 
-## 安装部署（Docker Compose）
+理解 listmonk 的关键，是分清「订阅者状态」和「订阅状态」是两回事：
 
-### 前置要求
+- **订阅者（subscriber）状态**：`enabled` / `disabled` / `blocklisted`。blocklisted 是全局黑名单，不再接收任何邮件。
+- **订阅关系（subscription）状态**：`unconfirmed` / `confirmed` / `unsubscribed`，挂在「订阅者 × 列表」上。double opt-in 流程改变的是这个状态——订阅者点确认邮件里的链接，unconfirmed 才变 confirmed。
 
-| 依赖 | 最低版本 | 建议 |
-|------|---------|------|
-| Docker | 20.10+ | 最新稳定版 |
-| Docker Compose | 2.0+ | v2.x |
-| PostgreSQL | 13+ | 16 |
-| 内存 | 512 MB | 2 GB+ |
-| SMTP 服务 | 任意 | SendGrid / AWS SES / Mailgun / 自建 Postfix |
+列表（list）本身有两个正交属性：`private` / `public`（public 列表会出现在公开订阅页上），`single` / `double` opt-in。订阅者身上可以挂任意 JSON 属性（attribs，比如城市、套餐），既用于查询分段，也能当模板变量用。
 
-### Step 1：创建目录结构
+这个模型带来两个实际后果。其一，退订是按列表的订阅关系退，不是全局删人——读者退订你的周刊后仍可能留在你的产品通知列表里（拉黑除外）。其二，所有状态都在自己的 Postgres 里，清洗、迁移、分析可以直接写 SQL；官方文档甚至把直接读写 `subscribers`、`lists`、`subscriber_lists` 三张表列为对外集成的正式方式之一。
 
-```bash
-mkdir -p ~/listmonk/{data,conf}
-cd ~/listmonk
+## §3 发送链路：Campaign 状态机、模板与追踪
+
+### Campaign 类型与状态机
+
+Campaign 分 `regular`（普通群发）和 `optin`（双确认邀请）两类；内容类型支持 visual（可视化编辑器）、richtext、HTML、Markdown、plain。状态机如下，转移是受限的：
+
+```text
+draft ──→ scheduled ──→ running ──→ paused ──→ running …
+  ↑            │            │          │
+  └────────────┘            ├──→ cancelled
+  只有 scheduled 能回 draft  └──→ finished（发完）
+只有 draft/paused 能进 running；只有 running 能转 paused/cancelled
 ```
 
-### Step 2：编写 docker-compose.yml
+定时发送靠创建或更新时的 `send_at` 字段（格式 `YYYY-MM-DDTHH:MM:SSZ`，UTC），然后把状态转成 `scheduled`。没有独立的「发送」端点——启动发送就是改状态。
 
-```yaml
-version: "3.8"
+### 模板系统
 
-services:
-  listmonk:
-    image: listmonk/listmonk:latest
-    container_name: listmonk
-    restart: always
-    ports:
-      - "9000:9000"          # 管理后台
-    volumes:
-      - ./data:/listmonk/data
-      - ./conf:/listmonk/conf
-    environment:
-      - LISTMONK_DATABASE_HOST=postgres
-      - LISTMONK_DATABASE_PORT=5432
-      - LISTMONK_DATABASE_USER=listmonk
-      - LISTMONK_DATABASE_PASSWORD=change_me_strong_password
-      - LISTMONK_DATABASE_NAME=listmonk
-      - LISTMONK_DATABASE_SSL_MODE=disable
-    depends_on:
-      postgres:
-        condition: service_healthy
+模板用 Go `html/template` 语法，主题行同样支持模板表达式（2020 年加入）。有一条硬规则：每个模板必须包含 `{{ template "content" . }}` 恰好一次——Campaign 正文从这里注入，没有 `{{ .HTMLBody }}` 这种东西。
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: listmonk-postgres
-    restart: always
-    environment:
-      - POSTGRES_USER=listmonk
-      - POSTGRES_PASSWORD=change_me_strong_password
-      - POSTGRES_DB=listmonk
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U listmonk"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-```
+常用变量与函数（注意函数式写法没有点前缀，`{{ UnsubscribeURL }}` 是函数调用，不是字段）：
 
-### Step 3：初始化配置
-
-```bash
-# 生成默认配置文件
-docker run --rm \
-  -v $(pwd)/conf:/listmonk/conf \
-  listmonk/listmonk:latest \
-  ./listmonk --init --config /listmonk/conf/config.toml
-
-# 查看配置文件
-cat conf/config.toml
-```
-
-生成的 `config.toml` 关键配置项：
-
-```toml
-[app]
-# 管理员账号
-admin_username = "listmonk"
-admin_password = "listmonk"        # ⚠️ 首次登录后务必修改
-# 服务地址
-host = "0.0.0.0"
-port = 9000
-upload_dir = "/listmonk/data/uploads"
-encryption_key = ""                # 留空则自动生成，启动后自动持久化
-
-[database]
-host = "postgres"
-port = 5432
-user = "listmonk"
-password = "change_me_strong_password"
-database = "listmonk"
-ssl_mode = "disable"
-max_conns = 5
-max_idle_conns = 2
-
-[smtp]
-# SMTP 中继地址
-host = "localhost"
-port = 587
-user = ""
-password = ""
-skip_tls_verify = false
-# 发送速率限制（每小时）
-throttle_per_hour = 0             # 0 = 无限制
-# TLS 模式
-tls = "opportunistic"             # opportunistic | mandatory | none
-```
-
-### Step 4：启动服务
-
-```bash
-docker compose up -d
-
-# 查看日志确认启动成功
-docker compose logs -f listmonk
-```
-
-### Step 5：访问管理后台
-
-打开浏览器访问 **http://your-server-ip:9000**，使用默认账号登录后：
-
-1. 进入 **Settings → Profile**，修改管理员密码
-2. 进入 **Settings → SMTP**，配置邮件发送服务商
-3. 进入 **Lists**，创建第一个订阅者列表
-
----
-
-## SMTP 配置详解
-
-SMTP 是 listmonk 的"生命线"——所有发出的邮件都经过它中转。以下是几种主流配置方案。
-
-### 方案一：使用 SendGrid（推荐，免费额度充足）
-
-```toml
-[smtp]
-host = "smtp.sendgrid.net"
-port = 587
-user = "apikey"                    # SendGrid 要求 user 为 "apikey"
-password = "SG.xxxxxxxxxxxxxxxx"   # 你的 SendGrid API Key
-tls = "opportunistic"
-```
-
-> **SendGrid 免费额度：** 每月 100 封事务邮件 + 2,500 封营销邮件，对于中小型 Newsletter 完全够用。
-
-### 方案二：使用 AWS SES（性价比最高）
-
-```toml
-[smtp]
-host = "email-smtp.us-east-1.amazonaws.com"  # 替换为你的区域端点
-port = 587
-user = "AKIAXXXXXXXXXXXXXXXX"     # AWS SES SMTP 用户名
-password = "xxxxxxxxxxxxxxxxxxxx" # SMTP 密码（在 AWS SES 控制台生成）
-tls = "opportunistic"
-```
-
-> **AWS SES 优势：** 发送成本极低（$0.10/1000 封），需要提前在 SES 控制台申请生产访问权限。
-
-### 方案三：自建 Postfix SMTP 服务器
-
-```toml
-[smtp]
-host = "mail.yourdomain.com"
-port = 587
-user = "your-smtp-username"
-password = "your-smtp-password"
-tls = "opportunistic"
-```
-
-**Postfix 配置要点（确保通过反垃圾检查）：**
-
-```bash
-# /etc/postfix/main.cf 关键配置
-myhostname = mail.yourdomain.com
-mydomain = yourdomain.com
-smtp_tls_security_level = may
-smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
-```
-
-### SMTP 配置自检清单
-
-| 检查项 | 说明 |
-|--------|------|
-| ✅ SPF 记录 | 添加 SMTP 服务器 IP 到你的 DNS TXT 记录 |
-| ✅ DKIM 签名 | 在 SMTP 服务商处配置 DKIM 公钥并添加到 DNS |
-| ✅ DMARC 策略 | 添加 `_dmarc.yourdomain.com` TXT 记录 |
-| ✅ 专用发件域 | 使用 `newsletter@yourdomain.com` 而非 Gmail/QQ 等公共邮箱 |
-| ✅ 预热（Warm-up） | 新 SMTP 账号初期降低发送量，逐步增加以建立发件信誉 |
-
----
-
-## 订阅者管理与列表运营
-
-### 创建列表
-
-进入 **Lists → New List**，配置：
-
-- **Name**：列表名称（如 "AI 周刊订阅者"）
-- **Description**：列表描述
-- **Double Opt-in**：是否需要订阅确认邮件
-- **GDPR compliant**：是否符合 GDPR 要求（显示隐私政策链接）
-
-### 订阅者数据字段
-
-listmonk 支持为订阅者添加**自定义字段（Custom Attributes）**：
-
-| 内置字段 | 类型 | 说明 |
-|---------|------|------|
-| email | string | 邮箱（必填） |
-| name | string | 姓名 |
-| status | enum | subscribed / unsubscribed / blocked / bounced |
-| created_at | timestamp | 订阅时间 |
-| optout_token | string | 退订凭证 |
-
-### 批量导入订阅者（CSV）
-
-```csv
-email,name,company,subscribed_at
-alice@example.com,Alice Wang,ByteDance,2025-01-15
-bob@example.com,Bob Chen,AI Labs,2025-02-20
-```
-
-在管理后台 **Lists → Import** 上传 CSV 文件并映射字段即可。
-
-### API 注册订阅者
-
-```bash
-# 注册新订阅者到指定列表
-curl -X POST http://localhost:9000/api/subscribers \
-  -H "Content-Type: application/json" \
-  -u "listmonk:listmonk" \
-  -d '{
-    "email": "new_user@example.com",
-    "name": "New User",
-    "list_ids": [1],
-    "status": "enabled"
-  }'
-```
-
----
-
-## 模板系统与邮件编辑
-
-listmonk 使用 **HTML 模板引擎** 来渲染邮件内容，支持在模板中嵌入动态变量。
-
-### 模板语法
-
-```html
-<!-- 基础变量 -->
-{{ .Subscriber.Name }}          <!-- 订阅者姓名 -->
-{{ .Subscriber.Email }}         <!-- 订阅者邮箱 -->
-{{ .Campaign.Subject }}         <!-- 邮件主题 -->
-{{ .CampaignURL }}              <!-- Web 阅读版本的链接 -->
-
-<!-- 退订链接（必须包含，符合 CAN-SPAM / GDPR） -->
-<a href="{{ .UnsubscribeURL }}">退订此邮件</a>
-
-<!-- 阅读网页版链接 -->
-<a href="{{ .ViewInBrowserURL }}">在浏览器中查看</a>
-
-<!-- 条件渲染 -->
-{{ if gt (len .Subscriber.Name) 0 }}
-  您好，{{ .Subscriber.Name }}！
-{{ else }}
-  您好，读者！
-{{ end }}
-```
-
-### 内置模板变量速查
-
-| 变量 | 说明 |
+| 写法 | 含义 |
 |------|------|
-| `{{ .Subscriber.UUID }}` | 订阅者唯一标识 |
-| `{{ .Campaign.UUID }}` | Campaign 唯一标识 |
-| `{{ .CampaignURL }}` | 当前 Campaign 的 Web 版本地址 |
-| `{{ .UnsubscribeURL }}` | 退订链接 |
-| `{{ .ViewInBrowserURL }}` | 浏览器阅读链接 |
-| `{{ .SubscriberAttributes.field_name }}` | 自定义字段 |
-| `{{ .Date.Format "2006-01-02" }}` | 日期格式化 |
+| `{{ .Subscriber.Name }}` / `{{ .Subscriber.Email }}` | 订阅者字段（另有 `.FirstName` / `.LastName` / `.UUID` / `.Status`） |
+| `{{ .Subscriber.Attribs.city }}` | 自定义属性 |
+| `{{ .Campaign.Subject }}` / `{{ .Campaign.FromEmail }}` | Campaign 字段 |
+| `{{ UnsubscribeURL }}` | 退订与偏好管理入口，`?manage=true` 直接进偏好页 |
+| `{{ MessageURL }}` | 本封邮件的网页版链接 |
+| `{{ OptinURL }}` | 双确认链接 |
+| `{{ TrackView }}` | 插入 1×1 追踪像素 |
+| `{{ TrackLink "https://…" }}` 或在 URL 后加 `@TrackLink` | 点击追踪重定向 |
+| `{{ Date "2006-01-02" }}` | 日期格式化 |
+| Sprig 函数库 | 100+ 字符串 / 列表 / 哈希函数可直接用 |
 
-### 完整 HTML 邮件模板示例
+自定义模板的最小骨架：
 
 ```html
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ .Campaign.Subject }}</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-    .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px; text-align: center; }
-    .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 600; }
-    .content { padding: 32px; color: #333333; line-height: 1.8; font-size: 15px; }
-    .content h2 { color: #222222; font-size: 20px; margin-top: 0; }
-    .content p { margin: 16px 0; }
-    .btn { display: inline-block; padding: 12px 24px; background: #667eea; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 600; }
-    .footer { padding: 24px 32px; background: #f8f9fa; font-size: 12px; color: #888888; text-align: center; border-top: 1px solid #eeeeee; }
-  </style>
+  <meta charset="utf-8">
+  <style>/* 邮件客户端兼容的内联样式 */</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>{{ .Campaign.Subject }}</h1>
-    </div>
-    <div class="content">
-      {{ if gt (len .Subscriber.Name) 0 }}
-      <p>你好，<strong>{{ .Subscriber.Name }}</strong>！</p>
-      {{ else }}
-      <p>你好，读者！</p>
-      {{ end }}
+  <p>你好 {{ .Subscriber.Name }}，</p>
 
-      <!-- 邮件正文占位符 -->
-      {{ .HTMLBody }}
+  <!-- Campaign 正文注入点，必须恰好出现一次 -->
+  {{ template "content" . }}
 
-      <div style="margin-top: 32px; text-align: center;">
-        <a href="{{ .CampaignURL }}" class="btn">在浏览器中阅读完整内容 →</a>
-      </div>
-    </div>
-    <div class="footer">
-      <p>你收到这封邮件是因为订阅了我们的Newsletter。<br>
-      <a href="{{ .UnsubscribeURL }}" style="color: #888888;">点击此处退订</a></p>
-      <p>&copy; {{ .Date.Format "2006" }} Your Company. All rights reserved.</p>
-    </div>
-  </div>
-  <!-- 追踪像素（勿删） -->
-  <img src="{{ .TrackOpenURL }}" width="1" height="1" alt="" style="display:none;" />
+  <p><a href="{{ MessageURL }}">在浏览器中查看</a></p>
+  <p><a href="{{ UnsubscribeURL }}">退订</a></p>
+
+  <!-- 打开追踪：不想要打开率统计就不放 -->
+  {{ TrackView }}
 </body>
 </html>
 ```
 
----
+### 打开与点击追踪
 
-## Campaign（邮件活动）的完整生命周期
+listmonk 的追踪是「模板显式启用」，不是创建 Campaign 时勾选开关：像素要放 `{{ TrackView }}`，链接要用 `TrackLink` 或 `@TrackLink` 标记。全局策略在 Settings → Privacy：可以整体关闭追踪（`privacy.disable_tracking`）、匿名化追踪（`privacy.individual_tracking`，不留个体记录），以及打开 List-Unsubscribe 退订头（`privacy.unsubscribe_header`）。
 
-### Step 1：创建 Campaign
+两条现实约束要写进判断里。第一，退订链接不是可选项：CAN-SPAM 和 GDPR 都要求商业邮件提供退订途径，Gmail、Yahoo 对批量发件人更是强制检查一键退订头，`{{ UnsubscribeURL }}` 和退订头开关应视为必配。第二，打开率只是下限估计——相当比例的客户端默认不加载远程图片，Gmail 会把图片代理到自家服务器再展示，各家的像素策略差异很大。
 
-1. 进入 **Campaigns → New Campaign**
-2. 选择目标**列表（List）**
-3. 填写邮件主题（Subject）和邮件预览标题（From Name）
-4. 选择发送**频率**：立即 / 定时 / 草稿
+### bounce（退回）处理
 
-### Step 2：编辑邮件内容
+退回事件有三个入口，最终都落进 Settings → Bounces 配置的规则里：
 
-在富文本编辑器中编写正文，或直接粘贴 HTML。可以使用模板变量做个性化处理。
+1. **POP3 信箱**：把 Campaign 的 From 收件箱或专用 Return-Path 信箱配置进来，listmonk 定期去拉退回邮件。
+2. **自建脚本**：`POST /webhooks/bounce` 手动上报退回。
+3. **服务商 webhook**：SES、SendGrid/Twilio、Postmark、Azure ACS、Forward Email、Lettermint 各有专用端点（如 `/webhooks/service/ses`），服务商收到退回直接打回来。
 
-### Step 3：配置发送选项
+分类靠状态码启发式：4.x.x 记为软退回，5.x.x 记为硬退回，认不出的按软退回处理。处理规则按退回类型配置「次数 + 动作」，动作只有两种：什么都不做，或 blocklist。官方文档以 SES 为例给的推荐配置是：软退回 2 次不动作，硬退回 1 次拉黑，投诉 1 次拉黑。注意没有「默认 3 次软退回自动拉黑」这种出厂规则——不配就是零动作，退回只会静静躺在记录里。
 
-| 选项 | 说明 |
+### 事务邮件（TX）
+
+密码重置、订单通知这类触发邮件走 `POST /api/tx`，不经过 Campaign 队列。它要求使用独立的事务模板（`template_id` 必填），业务数据通过 `data` 字段传入，模板里以 `{{ .Tx.Data.* }}` 取用。收件人有三种模式：`default`（必须已是数据库里的订阅者）、`fallback`（查不到也照发）、`external`（完全不查库）。附件走 multipart 表单。
+
+### 公开侧与集成边界
+
+public 列表聚合出公开订阅页；Campaign 可以发布到公开归档页，归档带 RSS feed（Settings 里控制是否输出全文）。对外集成官方只列了两条路：REST API 和直接读写 §2 提到的三张表。**没有出站 webhook**——想在投递事件上挂自动化，只能轮询 API 或查库，这是它和商业平台差异最大的地方之一。
+
+## §4 任务流案例：一期周报从创建到统计
+
+用一个具体场景把上面的机制串起来：独立开发者的 AI 周刊，1.2 万订阅者，AWS SES 投递，列表开了 double opt-in。
+
+1. **周三，写内容**。管理后台新建 Campaign（或 API 创建草稿），选 regular 类型、HTML 内容，套用上周调好的模板。此刻状态是 draft。
+2. **周四，排期**。把 `send_at` 设为周六 09:00 UTC，状态转 scheduled。到点前一切可改。
+3. **周六 09:00，启动**。调度器把 Campaign 转 running：listmonk 从 Postgres 按批次拉订阅者（Settings → Performance 里的 batch size 控制批大小），逐个渲染模板——每个收件人拿到的是独立的退订链接、独立参数化的像素和追踪链接，不是群发的同一份 HTML——然后推入发送队列。
+4. **发送限速**。队列按 concurrency 和 message rate 控制提交节奏；如果开了滑动窗口限速（比如每小时最多 3,000 封），超速部分排队等待。邮件经 STARTTLS 提交给 SES 的 SMTP 端点。
+5. **退回回流**。SES 检测到硬退回，把事件打到 `/webhooks/service/ses`；listmonk 记 bounce，命中「硬退回 1 次」规则，订阅者自动 blocklist。
+6. **读者交互**。打开邮件时像素请求回到 listmonk，打开计数 +1；点链接先经 listmonk 重定向记一笔点击，再跳目标网站。
+7. **统计收敛**。Campaign 详情页的 views / clicks / bounces 数字随之更新；垃圾投诉比打开率更值得盯，因为它直接作用在发件域信誉上。
+
+失败定位看哪里：
+
+| 症状 | 第一步检查 |
+|------|-----------|
+| 到点没发 | Campaign 是不是卡在 draft / scheduled；`docker compose logs -f listmonk` |
+| 全部没发出去 | SMTP 配置本身：Settings → SMTP 的测试发送；日志里的握手/认证错误 |
+| 部分人没收到 | SMTP 服务商控制台的退回明细；Settings → Bounces 的规则与记录 |
+| 打开率是 0 | 模板里有没有 `{{ TrackView }}`；Settings → Privacy 是否关了追踪 |
+| 邮件里链接指错域名 | Settings → General 的 Root URL——退订、网页版、追踪链接都由它拼出来 |
+
+## §5 部署：官方 Docker Compose 流程
+
+官方部署只有三步。配置全部走环境变量，连 config.toml 文件都不需要：
+
+```bash
+curl -LO https://github.com/knadh/listmonk/raw/master/docker-compose.yml
+docker compose up -d
+# 打开 http://localhost:9000，首次访问会引导创建超级管理员
+```
+
+官方 docker-compose.yml 的关键内容（可以直接读原文件，这里按要点摘录）：
+
+```yaml
+services:
+  app:
+    image: listmonk/listmonk:latest
+    container_name: listmonk_app
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db
+    # 启动命令链：装库（幂等）→ 跑迁移 → 启动服务，重启安全
+    command: [sh, -c, "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''"]
+    environment:
+      LISTMONK_app__address: 0.0.0.0:9000
+      LISTMONK_db__host: db
+      LISTMONK_db__port: 5432
+      LISTMONK_db__user: listmonk
+      LISTMONK_db__password: listmonk     # 改掉
+      LISTMONK_db__database: listmonk
+      LISTMONK_ADMIN_USER: ${LISTMONK_ADMIN_USER:-}      # 可选：设置后首次启动自动建管理员
+      LISTMONK_ADMIN_PASSWORD: ${LISTMONK_ADMIN_PASSWORD:-}
+    volumes:
+      - ./uploads:/listmonk/uploads:rw
+  db:
+    image: postgres:17-alpine
+    container_name: listmonk_db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"             # 数据库只绑本机回环
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U listmonk"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    volumes:
+      - listmonk-data:/var/lib/postgresql/data
+```
+
+几处设计值得说破：
+
+- **环境变量即配置**。变量名规则是 `LISTMONK_` 前缀加双下划线代替层级：`LISTMONK_db__host` 对应 config.toml 里的 `[db] host`。同类变量还支持 `LISTMONK_*_FILE` 形式从文件读值，配合 Docker secrets 管理密码。
+- **启动命令是幂等的**。`--install --idempotent` 只在空库时装 schema，`--upgrade --yes` 每次启动自动跑数据库迁移。所以升级整个系统就是 `docker compose pull && docker compose up -d`，迁移自动完成。
+- **管理员账号不在配置文件里**。要么首次访问 Web 后台时创建，要么在首次启动前设置 `LISTMONK_ADMIN_USER` / `LISTMONK_ADMIN_PASSWORD` 环境变量自动创建。
+- **媒体文件**。容器内路径是 `/listmonk/uploads`，compose 已挂载到宿主机 `./uploads`；要在 Settings → Media 里把上传路径改成 `/listmonk/uploads` 才会真正用上。媒体也支持 S3 兼容存储（Settings → Media 配置 endpoint 和桶）。
+
+如果不走 Docker，裸二进制的流程是：`./listmonk --new-config` 生成 config.toml（只有 `[app] address` 和 `[db]` 两个配置节，数据库连接池参数 `max_open` / `max_idle` / `max_lifetime` 也在这里），手工改好后 `./listmonk --install` 装库，再直接运行 `./listmonk`。完整 CLI 参数只有这些：
+
+| 参数 | 作用 |
 |------|------|
-| **Send immediately** | 立即发送 |
-| **Schedule for later** | 定时发送（指定 UTC 时间） |
-| **Save as draft** | 保存为草稿 |
-| **Throttling** | 设置每小时最大发送量（如 500/小时） |
-| **Track opens** | 追踪打开率（嵌入追踪像素） |
-| **Track clicks** | 追踪点击率（将链接转换为重定向追踪链接） |
+| `--new-config` | 生成示例配置文件 |
+| `--install` | 初始化数据库 schema |
+| `--idempotent` | 让 `--install` 只在未安装的库上生效 |
+| `--upgrade` | 升级数据库到当前版本 |
+| `--yes` | 跳过交互确认 |
+| `--config` | 指定配置文件，传空字符串 `''` 表示纯环境变量模式 |
+| `--version` / `--passive` | 查看版本 / 被动模式（只跑 Web，不处理发送队列） |
 
-### Step 4：发送与监控
+不存在 `--init`、`--migrate` 或 `--reset-admin-password` 这类参数——网上教程如果出现这些，是旧版本或以讹传讹。
 
-Campaign 发送后，在 **Campaigns → 查看详情** 中可实时看到：
+生产环境最后一步：listmonk 自己不带 TLS，把 9000 端口放在 Nginx / Caddy 反代后面配 HTTPS，应用服务器和数据库端口不直接暴露公网。
 
-- 📤 **已发送**：成功投递数量
-- ✅ **已送达**：无退回的邮件
-- 📬 **已打开**：追踪像素被加载的数量
-- 🖱️ **已点击**：链接被点击的数量
-- ❌ **已退回**：硬退回/软退回详情
-- 🚫 **已退订**：主动退订数量
+## §6 SMTP 配置与送达率
 
----
+SMTP 在 **Settings → SMTP** 里配置，不在 config.toml。支持添加多个命名的 SMTP 块，每个块有独立字段：host、port、认证协议、用户名密码、`max_conns`（连接数）、`idle_timeout` / `wait_timeout`、`max_msg_retries`（发送重试）、`tls_type`（`STARTTLS` / `TLS` / `NONE`）、`tls_skip_verify`。创建 Campaign 时可以指定走哪一路。
 
-## REST API 深度使用
+三条路线的真实成本（2026-09 官方定价页）：
 
-listmonk 提供完整的 REST API，默认认证方式为 HTTP Basic Auth（使用管理员账号）。
+**AWS SES——大多数自托管场景的默认答案。** 出站邮件按量计费，à la carte 档 $0.10/1,000 封，另收附件流量 $0.12/GB；套餐制（Essentials）10M 封/月以内 $0.16/1,000。新 AWS 账号另有最高 $200 的免费额度 credit 可抵扣。SMTP 端点 `email-smtp.<region>.amazonaws.com:587`，凭据在 SES 控制台生成。注意新账号默认在沙箱里，只能发给已验证的邮箱，正式使用前要申请生产权限（production access）。
 
-### 基础调用格式
-
-```bash
-BASE_URL="http://localhost:9000/api"
-AUTH="listmonk:listmonk"   # 修改为你的管理员密码
+```text
+Settings → SMTP 配置 SES：
+host = email-smtp.us-east-1.amazonaws.com   # 换成你的区域端点
+port = 587
+username / password = SES 控制台生成的 SMTP 凭据
+tls_type = STARTTLS
 ```
 
-### 订阅者管理 API
+**SendGrid——适合已在 Twilio 生态的团队。** 免费档只是 60 天试用（每天 100 封），Essentials 套餐 $19.95/月起（5 万封/月），Pro $89.95/月起。SMTP 端点 `smtp.sendgrid.net:587`，用户名固定填 `apikey`，密码填 API Key。
+
+**自建 Postfix——零按量成本，全部责任自担。** listmonk 通过 submission 端口（587，STARTTLS）把邮件交给自己的 Postfix，但 SPF、DKIM 签名（opendkim 或 rspamd）、DMARC、IP 信誉、IP 预热这些送达率基础全都自己维护。只适合发自己域名的低频事务邮件；拿来发 Newsletter，大概率把发件域信誉烧掉。
+
+无论哪条路线，这几件事共同决定能不能进收件箱：
+
+1. **发件域三件套**：SPF 放行 SMTP 服务商、DKIM 签名公钥进 DNS、DMARC 策略记录。用 `newsletter@yourdomain.com` 这类专用子域/发件地址，不要用个人邮箱。
+2. **接通 bounce 回流**：用 SES / SendGrid 就配好 webhook，这一步不做，退回数据不回流，坏地址会一直收。
+3. **退订头开起来**：Settings → Privacy 的 List-Unsubscribe 项，收件方对批量发件人的硬性检查项。
+4. **新账号预热**：IP 和域名的发件信誉只能靠时间养。行业通行做法是从每天几十封起步、按周翻倍，没有官方标准数字，但「注册当天就发一万封」几乎必然进垃圾箱。
+
+## §7 REST API 与自动化
+
+API 覆盖订阅者、列表、Campaign、模板、媒体、bounce、事务邮件全部资源。认证两种：HTTP BasicAuth，或 `Authorization: token <user>:<token>` 请求头；API 用户和 token 在 **Admin → Users** 里创建——日常集成不要用超级管理员。响应统一为 `{"status": "success", "data": …}` 信封。
+
+| 资源 | 端点 | 要点 |
+|------|------|------|
+| 订阅者 | `GET/POST /api/subscribers`，`GET/PUT/PATCH/DELETE /api/subscribers/{id}` | 查询用数字 ID，不是 UUID；创建必填 `email` / `name` / `status`（`enabled` 或 `blocklisted`），`lists` 传列表 ID 数组，`attribs` 传 JSON 属性 |
+| 列表 | `GET/POST /api/lists`，`PUT/DELETE /api/lists/{id}` | 创建必填 `name` / `type`（`private` / `public`）/ `optin`（`single` / `double`）；GET 默认带 `subscriber_count`，`minimal=true` 关闭 |
+| 导入 | `POST /api/import/subscribers` | multipart：`params` 字段传 JSON（`mode`、`delim`、`lists`、`overwrite`），`file` 传 CSV 或 ZIP；另有 GET 查进度、DELETE 终止 |
+| Campaign | `POST /api/campaigns`，`PUT /api/campaigns/{id}/status` | 创建必填 `name` / `subject` / `lists` / `type`（`regular` / `optin`）/ `content_type` / `body`；发送与暂停都是改状态；测试发送走 `POST /api/campaigns/{id}/test` |
+| 事务邮件 | `POST /api/tx` | `template_id` 必填，收件人 `subscriber_email`（或 `subscriber_id` / 复数形式），业务数据放 `data` |
+| bounce | `POST /webhooks/bounce`，`GET /api/bounces` | 上报与查询退回 |
+
+把最常用的三个场景写成可直接运行的调用：
 
 ```bash
-# 获取所有订阅者（第1页，每页50条）
-curl -s "${BASE_URL}/subscribers?page=1&per_page=50" -u "${AUTH}"
-
-# 按列表筛选订阅者
-curl -s "${BASE_URL}/subscribers?list_id=1&status=subscribed" -u "${AUTH}"
-
-# 获取单个订阅者详情
-curl -s "${BASE_URL}/subscribers/<uuid>" -u "${AUTH}"
-
-# 注册新订阅者
-curl -X POST "${BASE_URL}/subscribers" \
+# 1. 注册订阅者（比如接入自己的注册表单）
+curl -X POST http://localhost:9000/api/subscribers \
+  -u "api_user:token" \
   -H "Content-Type: application/json" \
-  -u "${AUTH}" \
   -d '{
-    "email": "user@example.com",
-    "name": "张三",
-    "list_ids": [1],
+    "email": "reader@example.com",
+    "name": "Reader",
     "status": "enabled",
-    "attributes": {
-      "company": "某科技公司",
-      "plan": "pro"
-    }
+    "lists": [1],
+    "attribs": {"plan": "free"}
   }'
 
-# 批量导入订阅者
-curl -X POST "${BASE_URL}/subscribers/import" \
-  -u "${AUTH}" \
-  -F "format=csv" \
-  -F "overwrite=true" \
-  -F "file=@/path/to/subscribers.csv"
+# 2. CSV 批量导入
+curl -X POST http://localhost:9000/api/import/subscribers \
+  -u "api_user:token" \
+  -F 'params={"mode": "subscribe", "delim": ",", "lists": [1], "overwrite": false}' \
+  -F 'file=@subscribers.csv'
 
-# 手动触发订阅者状态变更
-curl -X PUT "${BASE_URL}/subscribers/<uuid>/status" \
+# 3. 创建并启动一期 Campaign（发送就是改状态）
+curl -X POST http://localhost:9000/api/campaigns \
+  -u "api_user:token" \
   -H "Content-Type: application/json" \
-  -u "${AUTH}" \
-  -d '{"status": "unsubscribed"}'
-```
-
-### 列表（List）API
-
-```bash
-# 创建列表
-curl -X POST "${BASE_URL}/lists" \
-  -H "Content-Type: application/json" \
-  -u "${AUTH}" \
-  -d '{
-    "name": "AI 爱好者",
-    "description": "关注 AI 和机器学习动态的读者群",
-    "optin": "double",          # double = 双重确认
-    "GDPR": true
-  }'
-
-# 获取列表及统计信息
-curl -s "${BASE_URL}/lists?with_stats=true" -u "${AUTH}"
-
-# 更新列表
-curl -X PUT "${BASE_URL}/lists/<list_id>" \
-  -H "Content-Type: application/json" \
-  -u "${AUTH}" \
-  -d '{"name": "AI 与 ML 爱好者", "description": "更新后的描述"}'
-
-# 删除列表（需先清空订阅者）
-curl -X DELETE "${BASE_URL}/lists/<list_id>" -u "${AUTH}"
-```
-
-### Campaign API
-
-```bash
-# 获取所有 Campaign
-curl -s "${BASE_URL}/campaigns?page=1&per_page=20" -u "${AUTH}"
-
-# 创建 Campaign（草稿）
-curl -X POST "${BASE_URL}/campaigns" \
-  -H "Content-Type: application/json" \
-  -u "${AUTH}" \
   -d '{
     "name": "第 12 期周报",
-    "subject": "【AI 周报】第 12 期：大模型最新进展",
-    "list_ids": [1],
+    "subject": "AI 周刊 #12",
+    "lists": [1],
+    "type": "regular",
     "content_type": "html",
-    "body": "<h1>第 12 期 AI 周报</h1><p>本期内容：...</p>",
-    "send_at": null,
-    "status": "draft"
+    "body": "<p>本期内容……</p>"
   }'
 
-# 发布 Campaign（立即发送）
-curl -X POST "${BASE_URL}/campaigns/<campaign_id>/send" \
-  -u "${AUTH}"
-
-# 定时发送 Campaign
-curl -X POST "${BASE_URL}/campaigns/<campaign_id>/send" \
+curl -X PUT http://localhost:9000/api/campaigns/12/status \
+  -u "api_user:token" \
   -H "Content-Type: application/json" \
-  -u "${AUTH}" \
-  -d '{"schedule_at": "2026-06-01T09:00:00Z"}'
-
-# 获取 Campaign 统计
-curl -s "${BASE_URL}/campaigns/<campaign_id>/stats" -u "${AUTH}"
+  -d '{"status": "running"}'
 ```
 
-### 模板 API
+定时自动化不需要额外的轮子。每周日 09:00 UTC 发一期，用系统 cron 调两个 API 就够——先创建草稿（带 `send_at`），再转 scheduled：
 
 ```bash
-# 获取所有模板
-curl -s "${BASE_URL}/templates" -u "${AUTH}"
-
-# 创建模板
-curl -X POST "${BASE_URL}/templates" \
-  -H "Content-Type: application/json" \
-  -u "${AUTH}" \
-  -d '{
-    "name": "简洁周报模板",
-    "body": "<!DOCTYPE html>...</html>",
-    "data": {}
-  }'
+# crontab：每周日 09:00 UTC 排期
+0 9 * * 0 /usr/local/bin/weekly-newsletter.sh
 ```
-
-### 发送事务邮件（TX Mode）
-
-listmonk 支持发送**非营销性质**的事务邮件（如密码重置、订单通知），不走常规 Campaign 流程。
 
 ```bash
-# 发送单封事务邮件
-curl -X POST "${BASE_URL}/tx" \
-  -H "Content-Type: application/json" \
-  -u "${AUTH}" \
-  -d '{
-    "to": ["user@example.com"],
-    "subject": "您的密码重置链接",
-    "body": "<p>请点击以下链接重置密码：<a href=\"https://example.com/reset?token=xxx\">重置链接</a></p>",
-    "content_type": "html"
-  }'
+#!/bin/sh
+# weekly-newsletter.sh — 内容可由上游脚本生成后拼进 body
+TOKEN="api_user:token"
+BASE="http://localhost:9000/api"
+
+CID=$(curl -s -X POST "$BASE/campaigns" \
+  -u "$TOKEN" -H "Content-Type: application/json" \
+  -d "{\"name\":\"weekly-$(date +%F)\",\"subject\":\"AI 周刊\",\"lists\":[1],\"type\":\"regular\",\"content_type\":\"html\",\"body\":\"<p>本期内容</p>\"}" \
+  | jq -r '.data.id')
+
+curl -s -X PUT "$BASE/campaigns/$CID/status" \
+  -u "$TOKEN" -H "Content-Type: application/json" \
+  -d '{"status": "running"}'
 ```
 
-### API 认证与安全建议
+更重的集成（CRM 同步、事件触发）同样走 API；官方明确不建议绕开它另起炉灶，但对「只读分析」场景，直接查 `subscribers` / `subscriber_lists` 表是文档认可的路径。
 
-**默认配置下使用 HTTP Basic Auth**，生产环境中建议通过反向代理添加 HTTPS + API Key 认证层：
+## §8 运维与故障排查
 
-```nginx
-# Nginx 反向代理配置（添加 API Key 认证）
-server {
-    listen 443 ssl;
-    server_name listmonk.yourdomain.com;
-
-    ssl_certificate /etc/ssl/certs/yourdomain.crt;
-    ssl_certificate_key /etc/ssl/private/yourdomain.key;
-
-    location /api/ {
-        # 要求携带指定的 API Key 头
-        if ($http_x_api_key != "your-secret-api-key") {
-            return 403;
-        }
-        proxy_pass http://127.0.0.1:9000;
-    }
-}
-```
-
----
-
-## 高级运营策略
-
-### 提升邮件送达率（Delivery Rate）
-
-1. **预热 SMTP 账号**：新账号前 2 周发送量控制在 50~200 封/天，逐周递增
-2. **维护订阅者质量**：定期清理软退回（连续 3 次软退回自动移入黑名单）
-3. **内容质量控制**：避免触发垃圾邮件关键词，HTML 邮件文本比例保持合理
-4. **listmonk 配置节流**：
-
-```toml
-[smtp]
-throttle_per_hour = 500   # 每小时最多发送 500 封
-```
-
-### A/B 测试实现
-
-listmonk 原生支持 A/B 测试。在创建 Campaign 时：
-
-1. 设置**多个主题行变体**（如 3 个不同标题）
-2. 系统自动按比例拆分受众，发送不同版本
-3. 根据打开率/点击率自动选择最优版本发送给剩余订阅者
-
-### 自动化触发邮件
-
-结合 API 和外部触发源（网站、CRM、自动化工具），可以实现：
-
-- **欢迎邮件**：新订阅者注册后自动发送欢迎邮件
-- **遗忘提醒**：订阅后 X 天未打开邮件，自动发送提醒
-- **周期性 Newsletter**：配合 cron job 或 n8n 自动化工作流定时创建 Campaign
+**备份**——一切都在 Postgres 里，备份就是 pg_dump：
 
 ```bash
-# 配合 n8n 自动化：每周末自动发送周报
-# n8n workflow 伪代码：
-# 1. 触发器：每个周日 10:00
-# 2. 生成周报内容（调用 AI API）
-# 3. 调用 listmonk API 创建 Campaign（草稿）
-# 4. 调用 listmonk API 发送 Campaign
+# 手动备份
+docker compose exec db pg_dump -U listmonk listmonk > listmonk_$(date +%F).sql
+
+# crontab 每天凌晨 3 点
+0 3 * * * docker compose -f /path/to/docker-compose.yml exec -T db pg_dump -U listmonk listmonk > /backups/listmonk_$(date +\%F).sql
 ```
 
-### 与外部分析平台集成
+**升级**——`docker compose pull && docker compose up -d`。启动命令链里的 `--upgrade --yes` 会自动跑 schema 迁移，迁移是幂等的，失败可安全重试。
 
-通过 Webhook 将投递事件发送到 Matomo、PostHog 或自建分析平台：
+**性能**——发送节奏的旋钮都在 Settings → Performance：`app.concurrency`（并行 worker）、`app.message_rate`（每秒推送速率）、`app.batch_size`（批次大小）、滑动窗口限速（`app.message_sliding_window` + 速率 + 时长，用于满足服务商的小时配额）。大型列表还能打开慢查询缓存（默认每天 03:00 刷新），官方另外建议大库每周跑一次 `VACUUM ANALYZE`——注意它是阻塞操作，挑低峰执行。Postgres 连接池（`max_open` / `max_idle`）在 `[db]` 配置节。
 
-```toml
-[webhooks]
-# 投递事件回调
-urls = [
-  "https://your-analytics.com/webhook?event={{ .Event }}&email={{ .Subscriber.Email }}"
-]
-```
+**常见问题**：
 
----
+- **首次部署登录不了**。管理员账号是首次访问 Web 后台时创建的；如果想在部署时自动建，用 `LISTMONK_ADMIN_USER` / `LISTMONK_ADMIN_PASSWORD` 环境变量（仅对空库首次启动生效）。密码丢失：配置好 SMTP 后走 Web 端的忘记密码（forgot password）流程，重置链接通过邮件发送；或由其他超级管理员在 Admin → Users 里重置。
+- **502 / 起不来**。十有八九是 Postgres 未就绪。官方 compose 自带 `pg_isready` 健康检查；自写的 compose 文件要记得加 `depends_on` + healthcheck。看日志：`docker compose logs -f db listmonk`。
+- **邮件全部发不出**。Settings → SMTP 里用测试发送功能定位：认证失败、端口被云厂商封禁（25 端口常被封，用 587）、`tls_type` 选错。
+- **部分收件人没收到**。查服务商控制台的退回明细和 Settings → Bounces 的记录；bounce 回流没接通时，listmonk 对投递失败完全无感。
+- **打开率 0**。按可能性排序：模板里没放 `{{ TrackView }}` → Privacy 里关了追踪 → 收件客户端不加载图片。
+- **升级后 500**。确认启动命令包含 `--upgrade`，容器重启时会自动补齐迁移；迁移是逐条按版本号执行的，卡住时看 listmonk 日志里最后一条迁移。升级前先备份数据库，官方升级文档的第一条建议就是这个。
 
-## 运维与监控
+## §9 采用顺序与选型边界
 
-### 数据备份
+按风险从小到大，推荐四步走：
 
-```bash
-# 备份 PostgreSQL 数据
-docker compose exec postgres pg_dump -U listmonk listmonk > backup_$(date +%Y%m%d).sql
+1. **先跑起来**：官方 compose 三条命令起服务，SES 沙箱内验证（沙箱只能发已验证邮箱，正好当测试环境）。走通「建列表 → double opt-in → 发测试 Campaign」全链路，判断功能集是否覆盖需求。这一步零成本。
+2. **正式发刊**：申请 SES 生产权限，配 SPF / DKIM / DMARC，接 SES bounce webhook，设硬退回自动拉黑，打开 List-Unsubscribe 头。
+3. **接入业务**：建专用 API 用户，把订阅者注册接进自己的表单或产品，事务邮件（密码重置、通知）走 `POST /api/tx`。
+4. **自动化运营**：cron + API 定时排刊，或者上 n8n / 自建调度，做每周自动生成与发送。
 
-# 定时备份脚本（crontab）
-# 每天凌晨 3 点备份
-0 3 * * * docker compose -f /path/to/listmonk/docker-compose.yml exec -T postgres pg_dump -U listmonk listmonk > /backups/listmonk_$(date +\%Y\%m\%d).sql
-```
+什么时候不用 listmonk：需要原生 A/B 测试、营销自动化旅程、与 Shopify / WordPress 这类平台的深度集成——这些商业平台功能它没有，官方态度也明确（A/B 测试的 feature request 在 2020 年被关闭，作者认为超出项目范围，只顺手给主题行加上了模板支持）；每天百万级的发送量——该上专用投递基础设施而不是「单二进制 + 单 Postgres」；想要双向讨论组（成员互相回复、大家都能看到的 mailing list）——listmonk 是 one-way，单向的。
 
-### 更新 listmonk
+成本上算一笔账：1 万订阅者的周刊，每月 4 期是 4 万封。SES à la carte 档约 $4/月（不含附件流量）；SendGrid Essentials $19.95/月起；Mailchimp 级别的营销 SaaS 按订阅者人数计费，同规模通常每月数十到数百美元。订阅费为零、数据完全自持，是 listmonk 相对商业平台真正的价格优势——代价是把送达率和自动化这两块拼图自己补齐。
 
-```bash
-# 拉取最新镜像
-docker compose pull
+## §10 结尾判断
 
-# 重启服务
-docker compose up -d
+listmonk 的价值不在功能多，而在边界清楚：它把「内容、订阅者、排程、统计」这些必须自持的东西做成了单二进制，把「投递」这个重运营的活交给你选的 SMTP 服务商，把「增长玩法」留给商业平台。如果你的核心诉求是数据自持和零订阅费，且能接受自己管 SPF/DKIM 和 bounce 策略，它是目前自托管 Newsletter 里最成熟的默认选项；如果你的诉求是开箱即用的增长工具箱，那省下的订阅费会以另一种方式还回去。
 
-# 查看更新日志
-docker run --rm listmonk/listmonk:latest --version
-```
+## §11 事实核验与引用
 
-### 性能调优
-
-```toml
-[database]
-max_conns = 10          # 提高并发连接数
-max_idle_conns = 5       # 保持 5 个空闲连接
-
-[app]
-# 并行发送 worker 数量
-max_workers = 10
-# 每个 worker 批次大小
-batch_size = 100
-```
-
-### 日志查看
-
-```bash
-# 实时查看 listmonk 日志
-docker compose logs -f listmonk
-
-# 查看错误日志
-docker compose logs -f --tail=100 listmonk | grep -i error
-
-# PostgreSQL 连接状态
-docker compose exec postgres psql -U listmonk -c "SELECT count(*), state FROM pg_stat_activity WHERE datname='listmonk' GROUP BY state;"
-```
-
----
-
-## 常见问题排查（FAQ）
-
-### Q1：邮件发送后大量退回
-- **原因：** SMTP 服务商信誉不足，或订阅者邮箱已失效
-- **解决：** 使用专用发件域名、预热 SMTP、清理长期不活跃订阅者
-
-### Q2：追踪像素不工作（打开率为 0）
-- **原因：** 邮件客户端默认阻止图片加载，或 SMTP 服务商过滤了 1×1 追踪图
-- **解决：** 检查 SMTP 服务商政策，部分 ESP（如 Gmail）不允许追踪像素
-
-### Q3：管理员账号无法登录
-```bash
-# 重置管理员密码
-docker compose exec listmonk ./listmonk --reset-admin-password --password "NewStrongPass123" --config /listmonk/conf/config.toml
-```
-
-### Q4：Docker 启动后 502 Bad Gateway
-- **原因：** PostgreSQL 未就绪（`depends_on` 仅检查容器启动，不检查数据库就绪）
-- **解决：** 确保 `docker-compose.yml` 中 PostgreSQL 配置了 `condition: service_healthy`
-
-### Q5：Campaign 发送卡住不动
-```bash
-# 检查是否有未完成的 Campaign
-docker compose exec listmonk ./listmonk --config /listmonk/conf/config.toml --migrate 2>&1 | head -50
-
-# 重启队列
-docker compose restart listmonk
-```
-
----
-
-## 采用顺序与选型决策
-
-listmonk 的采用顺序建议从单机 Docker 部署起步，再考虑 SMTP 服务商选型，最后才接入 API 自动化：
-
-- **只想跑起来验证流程**：用本文的 Docker Compose 配置起一套单机版，SMTP 先用 SendGrid 免费额度（每月 100 封事务邮件 + 2,500 封营销邮件），跑通订阅、编辑、发送、追踪的完整链路。这一步零成本，能快速判断 listmonk 的功能集是否覆盖你的需求。
-- **订阅者规模超过免费额度**：把 SMTP 切到 AWS SES（$0.10/1000 封），提前在 SES 控制台申请生产访问权限。同时配置 SPF / DKIM / DMARC 三件套，用专用发件域名而非公共邮箱。
-- **需要与 CMS / CRM / 自动化工具集成**：基于 REST API 做二次开发，配合 n8n 或 cron job 实现定时 Newsletter、欢迎邮件、遗忘提醒等触发式流程。这一步开始接触 Webhook 和事务邮件（TX Mode），注意 API 认证要加 HTTPS + API Key 层。
-
-回到 listmonk 和商业平台的选型：如果你的需求是"自托管、零订阅者费用、数据在自己的 PostgreSQL"，listmonk 的功能集已经够用，且 Go 单二进制的运维成本远低于商业平台；如果你需要原生移动端管理 App、平台级 A/B 测试（listmonk 仅支持主题行）、与 Shopify / WordPress 深度集成，listmonk 目前给不了，仍然得用商业平台或 API 桥接。
+| 事实 | 来源 |
+|------|------|
+| 版本 v6.2.0（2026-06-26）、23.4K Stars、AGPL-3.0、Go + Vue/Buefy、「one-way」定位 | GitHub 仓库与 API（2026-09-18 查询）、README |
+| CLI 参数全集（`--new-config` / `--install` / `--idempotent` / `--upgrade` / `--yes` / `--passive` 等；无 `--init` / `--reset-admin-password`） | 仓库 `cmd/init.go` 的 `initFlags()` |
+| config.toml 仅 `[app] address` 与 `[db]` 两节；`max_open` / `max_idle` / `max_lifetime` | 仓库 `config.toml.sample` |
+| 官方 docker-compose：环境变量配置、`--config ''`、`--install --idempotent`、`--upgrade --yes`、postgres:17-alpine、`LISTMONK_ADMIN_USER/PASSWORD`、`LISTMONK_*_FILE` secrets | 仓库 `docker-compose.yml`、官方安装与配置文档 |
+| 订阅者状态 `enabled/disabled/blocklisted`；订阅状态 `unconfirmed/confirmed/unsubscribed`；列表 `private/public` + `single/double` opt-in | 官方文档 Concepts、Subscribers API、Lists API |
+| 模板变量 `{{ template "content" . }}`、`{{ UnsubscribeURL }}`、`{{ MessageURL }}`、`{{ TrackView }}`、`{{ TrackLink }}`、`{{ Date }}`、Sprig；主题行模板支持 | 官方文档 Templating |
+| Campaign 类型与 `content_type` 枚举、`send_at`、状态转移规则、无 `/send` 端点、测试端点 | 官方文档 Campaigns API |
+| 导入端点 `/api/import/subscribers` 与 `params` 参数、TX API（`template_id` 必填、`subscriber_mode`）、API 认证（BasicAuth / token，Admin → Users） | 官方文档 Import / Transactional / APIs |
+| bounce 三来源（POP3、webhook API、SES/SendGrid/Postmark 等服务商端点）、次数+动作配置、无默认阈值 | 官方文档 Bounces |
+| 无出站 webhook；官方集成方式为 API 与直读 `subscribers`/`lists`/`subscriber_lists` 表 | 官方文档 External integration |
+| 无原生 A/B 测试；issue #132 于 2020-07 关闭，作者仅为主题行加模板支持 | GitHub issue #132 及作者评论 |
+| 发送与性能旋钮（`app.concurrency` / `app.message_rate` / `app.batch_size` / 滑动窗口 / 慢查询缓存）、`VACUUM ANALYZE` 建议 | 仓库 `models/settings.go`、官方文档 Performance |
+| SES 定价（à la carte $0.10/1,000 + 附件 $0.12/GB；Essentials $0.16/1,000；$200 新用户免费额度 credit）、SendGrid 定价（60 天试用 100 封/天；Essentials $19.95/月起） | AWS SES 与 Twilio SendGrid 官方定价页（2026-09 查询） |

@@ -4,7 +4,7 @@ date: "2026-04-12T01:52:00+08:00"
 slug: lightweight-charts-tradingview-financial-charts-guide
 github_repo: "tradingview/awesome-tradingview"
 source_key: "gh:tradingview/awesome-tradingview"
-description: "Lightweight Charts 是 TradingView 开源的轻量级金融图表库，16.3K+ Stars，支持 K线、折线、柱状图等金融图表类型，性能卓越。"
+description: "Lightweight Charts 是 TradingView 开源的轻量级金融图表库，17.3K+ Stars，支持 K线、折线、柱状图等金融图表类型，性能卓越。"
 draft: false
 categories: ["技术笔记"]
 tags: ["JavaScript", "TypeScript", "金融"]
@@ -14,17 +14,19 @@ tags: ["JavaScript", "TypeScript", "金融"]
 
 ## 项目概述
 
-Lightweight Charts™ 是 TradingView 开源的金融图表库，压缩后约 40KB（gzip），专为网页端金融数据可视化设计。基于 Canvas 渲染，在大数据量场景下性能优于 SVG，可流畅处理 10 万根 K 线。
+Lightweight Charts™ 是 TradingView 开源的金融图表库，构建产物 minified 约 190KB、gzip 后约 60KB（v5.2.1 实测），专为网页端金融数据可视化设计。基于 Canvas 渲染，不维护逐元素的 SVG 节点，数据量大时绘制开销更低；v5.1 起内置数据合并（conflation），数万级以上数据点在缩放到很小时仍能保持流畅。
 
-项目由 TradingView 官方维护，Apache-2.0 开源协议，当前最新稳定版为 v5.2.1（2026 年 8 月发布）。适用场景：页面 JS 已较重，再引入图表库会拖慢加载；或数据量大，ECharts/Highcharts 已出现卡顿。
+项目由 TradingView 官方维护，Apache-2.0 开源协议，当前最新稳定版为 v5.2.1（2026 年 8 月发布），GitHub Stars 约 17.3K（2026 年 9 月）。适用场景：页面 JS 已较重，再引入图表库会拖慢加载；或数据量大，ECharts/Highcharts 已出现卡顿。
 
-需要注意，Lightweight Charts 是纯客户端库，不用于 Node.js 等服务端场景；运行要求浏览器支持 ES2020 语法。
+本文以 v5.2 API 为准。读者需要 HTML/JavaScript 基础和使用 npm 的经验；从 v3/v4 升级的读者请先看「常见问题与版本迁移」一节，两个高频破坏性变更都在那里。
+
+需要注意，Lightweight Charts 是纯客户端库，依赖浏览器 DOM 与 Canvas，不用于 Node.js 等服务端场景；构建目标为 ES2020，老旧浏览器需项目自行转译。
 
 ## 核心架构
 
 ### 设计理念
 
-核心卖点：小（压缩后约 40KB，比 ECharts 小一个数量级）和快（Canvas 渲染，大数据量下帧率更高）。
+卖点就两条：小（gzip 后约 60KB，远小于 ECharts 这类全功能图表库）和快（Canvas 渲染，大数据量下帧率更高）。
 
 架构分两层：
 
@@ -40,7 +42,7 @@ Lightweight Charts™ 是 TradingView 开源的金融图表库，压缩后约 40
 - `website/`：官方文档网站源码
 - `indicator-examples/`：技术指标示例
 - `plugin-examples/`：插件开发示例
-- `packages/create-lwc-plugin/`：插件脚手架
+- `packages/`：官方插件与工具（含插件脚手架 `create-lwc-plugin`，以及竖直线、图片水印等插件包）
 
 打包用 Rollup，输出多种构建变体（standalone/non-standalone，production/development），变体选择取决于项目环境。
 
@@ -69,10 +71,12 @@ npm install https://pkg.pr.new/lightweight-charts@master
 **3. CDN（快速原型或无构建工具的项目）**
 
 ```html
-<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://unpkg.com/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js"></script>
 ```
 
-`standalone` 版本内置了所有依赖，开箱即用。非 `standalone` 版本需项目自身有 d3、moment 等依赖，一般用不到。
+建议在 URL 中锁定版本号，否则 unpkg 会重定向到最新版，新版本的不兼容变更可能直接影响线上页面。
+
+`standalone` 版本把所有依赖打进了单文件，开箱即用。非 `standalone` 构建是 ESM 模块，外部依赖只有 Canvas 渲染辅助库 fancy-canvas，npm 安装时会自动带上，一般无需关心。
 
 ### 最小可运行示例
 
@@ -106,6 +110,8 @@ line.setData([
     ]);
 </script>
 ```
+
+验证方式：页面上出现一条折线，鼠标悬停能看到十字线和数值。如果图表区域空白，先检查容器是否有明确的宽高——这是最常见的起步问题。
 
 容器必须有明确宽度和高度，不能靠内容撑开。时间格式为 ISO 8601 字符串或时间戳，不能传 Date 对象。
 
@@ -143,7 +149,7 @@ const chart = createChart(document.body, {
 
 ## 图表类型详解
 
-v5 共提供 6 种系列类型：Area、Bar、Baseline、Candlestick、Histogram、Line。下方详解 4 种最常用的，Bar（柱状 K 线）与 Baseline（基线图）用法类似，可在官方文档查阅。
+v5 内置 6 种系列类型：Area、Bar、Baseline、Candlestick、Histogram、Line，全部通过 `chart.addSeries(类型, 配置)` 创建，以下逐一给出示例。
 
 ### 柱状 K 线图（BarSeries）
 
@@ -225,6 +231,8 @@ histogram.setData([
 ]);
 ```
 
+`priceScaleId` 设为独立的 `'volume'` 并把 `scaleMargins.top` 压到 0.8，成交量会贴着底部显示，不和主图抢空间。
+
 ### 面积图（AreaSeries）
 
 折线图的变体，在折线和横轴之间填充颜色。适合展示净值曲线、资金流向等。
@@ -263,7 +271,7 @@ area.setData([
 注意事项：
 
 1. **时间戳必须是秒级**。`Date.now()` 返回毫秒级，需除以 1000：`Math.floor(Date.now() / 1000)`。
-2. **数据必须按时间顺序排列**。传入前先排序：`data.sort((a, b) => a.time - b.time)`（时间戳）或 `data.sort((a, b) => a.time.localeCompare(b.time))`（字符串）。
+2. **数据必须按时间升序排列**。`setData` 不排序，乱序数据会渲染异常。传入前先排序：`data.sort((a, b) => a.time - b.time)`（时间戳）或 `data.sort((a, b) => a.time.localeCompare(b.time))`（字符串）。
 3. **不能传 `Date` 对象**。
 
 ### 实时更新
@@ -281,11 +289,11 @@ line.update({ time: '2023-01-03', value: 110 });
 - `setData`：替换整个数据集，触发全量重绘。用于初始化和历史数据加载。
 - `update`：更新最后一根 K 线或追加新 K 线，触发增量重绘。用于实时行情。
 
-`update` 的时间若与最后一根 K 线相同，则更新该 K 线；否则追加新 K 线。
+`update` 的时间若与最后一根 K 线相同，则更新该 K 线；早于最后一根会报错，因为默认只允许改最新一根。确实需要修订历史数据时，v5 提供第二个参数：`line.update(bar, true)`（historicalUpdate），可以更新更早的数据点，速度慢于普通更新。需要撤回末尾数据时用 `line.pop(n)`，移除最后 n 根并返回被移除的数据。
 
 ### 数据切片
 
-数据量大时，用 `setVisibleRange` 只渲染可见范围：
+数据量大时，不要一次性把全部历史塞给图表，按可视范围加载：
 
 ```javascript
 chart.timeScale().setVisibleRange({
@@ -294,11 +302,11 @@ chart.timeScale().setVisibleRange({
 });
 
 chart.timeScale().subscribeVisibleTimeRangeChange(range => {
-    // 动态加载可见范围数据
+    // 按可见范围向服务端请求该区间数据
 });
 ```
 
-Lightweight Charts 没有内置数据分页，需自行实现：监听 `subscribeVisibleTimeRangeChange`，按可视范围向服务端请求数据。
+Lightweight Charts 没有内置数据分页，需自行实现。更常用的方案是监听 `subscribeVisibleLogicalRangeChange`，配合 `series.barsInLogicalRange(range)` 判断左侧剩余数据量，不足时向服务端补拉更早的数据并 `setData` 合并——官方文档把这作为「滚动加载历史数据」的推荐模式。
 
 ## 交互功能
 
@@ -314,15 +322,17 @@ chart.applyOptions({
 });
 ```
 
-CrosshairMode 枚举：`Normal`（自由移动）、`Magnet`（吸附到最近数据点）、`Hidden`（隐藏十字线）、`MagnetOHLC`（吸附至开盘/最高/最低/收盘价）。关闭十字线用 `Hidden`，而非设置 `mode: -1`。关闭线条用 `vertLine.visible`/`horzLine.visible` 设为 `false`。
+CrosshairMode 枚举：`Normal`（自由移动）、`Magnet`（水平线吸附到单值系列的价格或 K 线系列的收盘价，默认值）、`Hidden`（隐藏十字线）、`MagnetOHLC`（吸附到开/高/低/收四个价）。关闭十字线用 `Hidden`，而非设置 `mode: -1`；只关线条不关标签时，把 `vertLine.visible`/`horzLine.visible` 设为 `false`。
 
-### 价格线与时间标记
+### 价格线与数据点标记
 
-支持在图表上绘制价格线（横线）和标记重要时间点，用于标注支撑位、压力位、关键事件。
+在图表上标注支撑位、压力位、关键事件，用两类工具：价格线（贯穿图表的水平线）和数据点标记（带形状与文字的 marker，附着在具体 K 线上）。
 
-价格线（横线）通过系列创建（`.createPriceLine`）；时间标记（阿拉伯数字小圆标）通过系列的 `setMarkers` 设置。核心库没有 `chart.createTimeLine` 方法：
+价格线通过系列创建（`.createPriceLine`）；标记在 v5 中由独立的 `createSeriesMarkers` 函数管理，系列对象上**没有** `setMarkers` 方法：
 
 ```javascript
+import { createSeriesMarkers } from 'lightweight-charts';
+
 // 价格线（横线），由系列创建
 const supportLine = line.createPriceLine({
     price: 100, color: '#b71c1c', lineWidth: 1, lineStyle: 2,
@@ -331,13 +341,17 @@ const supportLine = line.createPriceLine({
 // 不再需要时移除
 line.removePriceLine(supportLine);
 
-// 时间标记（竖线），附着于系列，time 用该系列的时间格式
-line.setMarkers([
+// 数据点标记，通过 createSeriesMarkers 创建并附着于系列
+const markersApi = createSeriesMarkers(line, [
     { time: '2023-01-01', position: 'aboveBar', color: '#2196F3', shape: 'circle', text: '财报发布' },
 ]);
+// 后续增删改用返回的 API
+markersApi.setMarkers([...]);   // 整体替换
+markersApi.markers();           // 读取当前标记
+markersApi.detach();            // 解除与系列的绑定
 ```
 
-`position` 可选 `aboveBar`（一侧靠上）或 `belowBar`（另一侧靠下）；`shape` 可选 `circle`、`square`、`arrowUp`、`arrowDown`。
+`position` 可选 `aboveBar`（K 线上方）、`belowBar`（下方）或 `inBar`（内部）；`shape` 可选 `circle`、`square`、`arrowUp`、`arrowDown`。
 
 ### 响应式调整
 
@@ -349,9 +363,11 @@ line.setMarkers([
 const chart = createChart(container, { autoSize: true });
 ```
 
-需浏览器支持 `ResizeObserver`（Chrome 64+, Firefox 69+, Safari 13.1+）。
+需浏览器支持 `ResizeObserver`（Chrome 64+, Firefox 69+, Safari 13.1+）。首选这种，一行搞定。
 
 **方法二：`ResizeObserver`**
+
+需要在 `autoSize` 之外做额外控制（如联动多个图表）时手动写：
 
 ```javascript
 const chart = createChart(container, {
@@ -399,15 +415,60 @@ applyMovingAverageIndicator(candlestick, { period: 14 });
 
 若只是想叠加一条自定义指标曲线，也可直接计算好数据后用 `addSeries(LineSeries, {...})` 绘制，不必引入示例代码。
 
-### 自定义插件
+### 自定义系列
 
-使用官方脚手架创建：
+v5 的自定义绘制通过 Custom Series 机制实现：实现 `ICustomSeriesPaneView` 接口，再用 `chart.addCustomSeries(view)` 挂到图表上。核心方法：
+
+- `update(data, options)`：接收待渲染数据并缓存。`data.bars` 中每个元素含横向坐标 `x` 和原始数据 `originalData`。
+- `renderer()`：返回一个含 `draw()` 的对象，库在每帧调用它完成实际绘制。
+- `priceValueBuilder(plotRow)`：告诉库如何从数据点提取价格，用于坐标轴与十字线定位。
+- `isWhitespace(data)`、`defaultOptions()`：处理空白点与默认配置。
+
+一个可运行的点状系列实现：
+
+```javascript
+const dotSeriesView = {
+    _data: null,
+    update(data) { this._data = data; },
+    renderer() {
+        return {
+            draw: (target, priceConverter) => {
+                target.useMediaCoordinateSpace(scope => {
+                    const ctx = scope.context;
+                    ctx.fillStyle = '#2962FF';
+                    for (const bar of this._data.bars) {
+                        const y = priceConverter(bar.originalData.value);
+                        if (y === null) continue;
+                        ctx.beginPath();
+                        ctx.arc(bar.x, y, 3, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                });
+            },
+        };
+    },
+    priceValueBuilder(plotRow) { return [plotRow.value]; },
+    isWhitespace(data) { return data.value === undefined; },
+    defaultOptions() { return {}; },
+};
+
+const series = chart.addCustomSeries(dotSeriesView);
+series.setData([
+    { time: '2023-01-01', value: 100 },
+    { time: '2023-01-02', value: 105 },
+    { time: '2023-01-03', value: 102 },
+]);
+```
+
+完整可运行的实现参考 `plugin-examples` 目录和官方文档的 Plugins 章节，`packages/` 下也有官方维护的现成插件（竖直线 `lwc-plugin-vertical-line`、图片水印 `lwc-plugin-image-watermark`、无障碍 `lwc-plugin-accessibility` 等），需要类似功能时可以先看它们。
+
+使用官方脚手架起步：
 
 ```bash
 npx create-lwc-plugin my-custom-indicator
 ```
 
-核心是实现 `requestData`、`requestMoreData`、`calcBase` 等钩子函数。官方文档对插件开发介绍较简略，细节需参考 `plugin-examples` 目录。如果只是添加自定义指标，可直接用 `addSeries` 绘制计算好的数据，不必写插件。
+如果只是添加自定义指标，可直接用 `addSeries` 绘制计算好的数据，不必写插件。
 
 ## 样式定制
 
@@ -460,7 +521,7 @@ series.applyOptions({ upColor: '#00C853', downColor: '#FF1744' });
 | 有 | 生产 | `lightweight-charts.standalone.production.mjs` | `standalone.production.js` |
 | 有 | 开发 | `lightweight-charts.standalone.development.mjs` | `standalone.development.js` |
 
-选择原则：npm 项目直接 `import`，打包工具自动匹配；CDN 项目用 `standalone` 版本（内置依赖）；开发用 `development`（报错信息更全），生产用 `production`（体积更小）。
+「有依赖」指 standalone 变体内置了 fancy-canvas。选择原则：npm 项目直接 `import`，打包工具自动匹配；CDN 项目用 `standalone` 版本；开发用 `development`（报错信息更全），生产用 `production`（体积更小）。
 
 ## 性能优化
 
@@ -470,16 +531,17 @@ series.applyOptions({ upColor: '#00C853', downColor: '#FF1744' });
 
 - **降低时间精度**：秒级数据改为日级或小时级，数据量从 10 万降至几百根。
 - **数据采样**：对历史数据降采样，如 1 分钟 K 线合并为 5 分钟。
-- **只加载可见范围**：用 `setVisibleRange` 配合 `subscribeVisibleTimeRangeChange` 动态加载。
+- **只加载可见范围**：用 `setVisibleRange` 配合 `subscribeVisibleLogicalRangeChange` 动态加载。
 
 ### 渲染优化
 
-- **利用数据合并（Conflation）**：v5.1+ 提供 `enableConflation` 选项，图表缩小时自动合并相邻数据点，让数万根 K 线的渲染在大缩放级别下依然流畅（默认关闭，需显式开启）：
+- **利用数据合并（Conflation）**：v5.1+ 提供 `enableConflation` 选项，缩放到很小时自动合并相邻数据点，官方针对数万级以上数据点场景设计（默认关闭，需显式开启）：
   ```javascript
   const chart = createChart(container, {
       timeScale: { enableConflation: true, conflationThresholdFactor: 2.0 },
   });
   ```
+  数据集固定且很大时，可再开 `precomputeConflationOnInit`，用初始化时间和内存换取缩放时的流畅度。
 - **关掉不需要的功能**：`crosshair: { mode: CrosshairMode.Hidden }` 隐藏十字线减少计算。
 - **批量更新**：用 `requestAnimationFrame` 合并频繁更新：
 
@@ -500,6 +562,33 @@ websocket.onmessage = event => {
 - `chart.remove()` 及时销毁不需要的图表。
 - 指标计算（MACD、RSI）可放到 Web Worker 中，避免阻塞主线程。
 
+## 常见问题与版本迁移
+
+**从 v4 或更早版本升级，代码报错：`addLineSeries is not a function` / `setMarkers is not a function`**
+
+v5 改了两处高频 API：
+
+1. `chart.addLineSeries()`、`chart.addCandlestickSeries()` 等方法全部移除，改为 `chart.addSeries(LineSeries)`、`chart.addSeries(CandlestickSeries)`，类型作为第一个参数传入。
+2. `series.setMarkers()` 从系列方法中移除，改用 `createSeriesMarkers(series, markers)`（见「价格线与数据点标记」）。
+
+网上大量教程基于 v3/v4 API，照抄前先确认文章对应的版本。
+
+**图表区域空白，无报错**
+
+先检查容器：宽高为 0（容器靠内容撑开、或挂在未显示的标签页里）时图表画不出来。给容器设置明确的像素宽高，或直接用 `autoSize: true`。
+
+**时间轴显示异常、K 线错位**
+
+十有八九是毫秒时间戳直接传给了 `time`。库只认秒级时间戳，`Math.floor(Date.now() / 1000)` 转换；同时确认数据按时间升序排列。
+
+**调用 `update` 抛异常**
+
+传入的时间早于最后一根 K 线。普通 `update` 只允许更新或追加最新一根；修历史数据用 `update(bar, true)`。
+
+**K 线数量很大，缩小时卡顿**
+
+打开 v5.1 的数据合并：`timeScale: { enableConflation: true }`（见「性能优化」）。
+
 ## 许可与归属
 
 Apache-2.0 协议。使用要求：
@@ -508,7 +597,7 @@ Apache-2.0 协议。使用要求：
 2. 在网页显著位置添加 [TradingView](https://www.tradingview.com/) 链接。
 3. 若分发构建产物，附上官方 `NOTICE` 文件，说明使用了 Lightweight Charts。
 
-官方要求以可读方式标注 TradingView 为产品创作者，但库没有内置的 attribution 开关配置，需在页面中自行放置链接与版权声明。
+链接要求有内置支持：`layout.attributionLogo` 选项默认开启，图表上会显示 TradingView 标识，官方文档明确「使用该标识即满足链接要求」；若已在页面其他位置署名，可将其设为 `false`。
 
 ## 参考资源
 
@@ -520,4 +609,4 @@ Apache-2.0 协议。使用要求：
 
 ---
 
-*本文基于 [tradingview/lightweight-charts](https://github.com/tradingview/lightweight-charts)（Apache-2.0 License）编写。*
+*本文基于 [tradingview/lightweight-charts](https://github.com/tradingview/lightweight-charts)（Apache-2.0 License）编写，API 与数据核对至 v5.2.1（2026-09）。*

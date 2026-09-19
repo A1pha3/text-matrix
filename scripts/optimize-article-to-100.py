@@ -61,8 +61,32 @@ def score_article(content):
     if re.search(r'[\u4e00-\u9fa5] [a-zA-Z]', content) or re.search(r'[a-zA-Z] [\u4e00-\u9fa5]', content):
         score["可读性"] += 5
     # 段落长度
-    # 纯列表/表格等结构化块不受 10 行限制（目录超 9 项属常态），只约束长文本段落
-    paragraphs = content.split('\n\n')
+    # 纯列表/表格等结构化块不受 10 行限制（目录超 9 项属常态），只约束长文本段落。
+    # quality.md 的段落密度口径是「每段 3-8 行正文（不含代码块）」，P3 又规定
+    # YAML frontmatter 不参与检查，因此两者先剔除再分段。
+    def prose_only(text):
+        lines = text.split("\n")
+        start = 0
+        if lines and lines[0].strip() == "---":
+            for i in range(1, len(lines)):
+                if lines[i].strip() == "---":
+                    start = i + 1
+                    break
+        out = []
+        fence = None
+        for line in lines[start:]:
+            stripped = line.strip()
+            if fence is None and (stripped.startswith("```") or stripped.startswith("~~~")):
+                fence = stripped[:3]
+                out.append("")
+            elif fence is not None and stripped.startswith(fence):
+                fence = None
+                out.append("")
+            else:
+                out.append("" if fence is not None else line)
+        return "\n".join(out)
+
+    paragraphs = prose_only(content).split('\n\n')
 
     def is_structured_block(p):
         lines = [l for l in p.split('\n') if l.strip()]

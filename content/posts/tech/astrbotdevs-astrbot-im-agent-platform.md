@@ -1,7 +1,7 @@
 ---
 title: "AstrBot：让 AI Agent 真正住进 QQ/飞书/钉钉的桥接层"
 date: 2026-07-20T03:02:36+08:00
-lastmod: 2026-09-14T00:00:00+08:00
+lastmod: 2026-09-17T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Python", "IM 机器人", "MCP", "开源"]
@@ -19,14 +19,16 @@ source_key: "gh:AstrBotDevs/AstrBot"
 
 ## 项目现状
 
-以下数据核验于 2026-09-14，来自 GitHub 仓库与官方文档：
+以下数据核验于 2026-09-17，来自 GitHub 仓库与官方文档：
 
 - **仓库**：`AstrBotDevs/AstrBot`，Python 编写，AGPL-3.0 许可证，Python 3.12+，创建于 2022-12-08
-- **热度**：40.5k Stars、2.9k Forks，最新版本 v4.28.0（2026-09-07 发布）
+- **热度**：40.4k Stars、2.9k Forks，最新版本 v4.28.0（2026-09-08 发布）
 - **官方文档**：[astrbot.app](https://astrbot.app/)（文档站 docs.astrbot.app），Docker 镜像 `soulter/astrbot`
 - **生态**：README 宣称 1000+ 插件可一键安装，另有 WebUI、Web ChatUI（内置沙箱与联网搜索）
 
 README 的自我定位是 "open-source all-in-one Agent chatbot platform that integrates with mainstream instant messaging apps"。这个 all-in-one 在国产项目里少见——多数同类项目只覆盖微信或飞书其中一家，AstrBot 官方维护的适配器覆盖了十余个平台。
+
+这些数字说明的是覆盖面与社区热度：适配器数量决定你还要不要自己写协议层，Stars 和插件量决定生态里现成的东西多不多。它们回答不了"跑得稳不稳"——沙箱至今标着技术预览，群聊安全靠的是流水线里的确定性检查，这两点比任何热度数字都更影响实际采用，后面两节会分别展开。
 
 ## 系统地图
 
@@ -38,6 +40,25 @@ README 的自我定位是 "open-source all-in-one Agent chatbot platform that in
 | 流水线层 | 每条消息按固定顺序穿过九个阶段，从唤醒检查到回复发送 | `astrbot/core/pipeline/` 下的 WakingCheck → ProcessStage → RespondStage |
 | 模型与 Agent 层 | LLM 接入、工具调用、MCP、Skills、知识库、上下文压缩、代码沙箱 | provider 抽象、Agent 执行器（内置/Dify/Coze/百炼）、Shipyard 沙箱 |
 | 插件与界面层 | 第三方扩展与可视化管理 | Star 插件体系、插件市场、Vue 3 WebUI |
+
+一条消息在这个系统里的完整路径：
+
+```mermaid
+flowchart TB
+    IM["QQ / 飞书 / 钉钉 / Telegram 等 IM"]
+    ADAPTER["平台适配层<br/>翻译成统一的 AstrBotMessage"]
+    PIPE["流水线层<br/>唤醒 → 限流 → 安全检查 → ProcessStage → 装饰 → 回复"]
+    AGENT["模型与 Agent 层<br/>Provider · MCP · Skills · 知识库 · 沙箱"]
+    STAR["Star 插件体系<br/>插件市场 · WebUI"]
+
+    IM -->|入站消息| ADAPTER
+    ADAPTER -->|EventBus 分发| PIPE
+    PIPE -->|命中插件指令| STAR
+    PIPE -->|LLM 调用| AGENT
+    STAR -->|回复| ADAPTER
+    AGENT -->|回复| ADAPTER
+    ADAPTER -->|出站回复| IM
+```
 
 前两层解决"消息进得来、回得出"，第三层解决"Agent 有什么能力"，第四层解决"生态怎么长"。后面各节按这个顺序拆。
 
@@ -66,9 +87,9 @@ README 的自我定位是 "open-source all-in-one Agent chatbot platform that in
 
 - **模型接入**：OpenAI 兼容接口、Anthropic、Gemini、DeepSeek、智谱、Moonshot、Ollama、LM Studio 等都有 provider；还集成了 Dify、Coze、阿里云百炼、DeerFlow 这类 LLMOps 平台，把平台上编排好的应用当作执行器接入。语音侧覆盖主流 STT/TTS 服务。
 - **Agent 能力**：README 列出的核心功能包括工具调用（Tools）、Skills（Anthropic 的 SKILL.md 协议）、MCP 外部工具、知识库、人设（Persona）、自动上下文压缩、SubAgent 编排、网页搜索。MCP 和 Skills 两条工具接入路径并存，用户按已有工具链选型即可。
-- **Agent 沙箱**：v4.12.0 引入（目前标注为技术预览），替代了此前的代码执行器。Agent 生成的 Python/Shell 代码在隔离环境里执行，支持会话级资源复用。驱动器有三档：Shipyard Neo（当前默认，Bay 控制面 + Ship 执行 + Gull 浏览器自动化三组件）、旧版 Shipyard、CUA（可以拉起 Linux/macOS/Windows/Android 沙箱，适合桌面操作场景）。每个沙箱实例限制 1 CPU、512 MB 内存，官方建议宿主机至少 2 核 4 GB 并开启 Swap。
+- **Agent 沙箱**（官方文档称"沙盒环境"）：v4.12.0 引入（目前标注为技术预览），替代了此前的代码执行器。Agent 生成的 Python/Shell 代码在隔离环境里执行，支持会话级资源复用。驱动器有三档：Shipyard Neo（当前默认，Bay 控制面 + Ship 执行 + Gull 浏览器自动化三组件）、旧版 Shipyard、CUA（可以拉起 Linux/macOS/Windows/Android 沙箱，适合桌面操作场景）。每个沙箱实例限制 1 CPU、512 MB 内存，官方建议宿主机至少 2 核 4 GB 并开启 Swap。
 
-沙箱对 IM 场景不是锦上添花：一个 QQ 群里被恶意 prompt 触发的 Agent，不该有机会把宿主机 shell 跑挂。把它做成与模型接入同级的核心模块，而不是后置补丁，是这个项目对"Agent 落地公网 IM"这件事的基本判断。
+沙箱对 IM 场景不是锦上添花：一个 QQ 群里被恶意 prompt 触发的 Agent，不该有机会把宿主机 shell 跑挂。把它和模型接入放在同一级，而不是后置补丁，这是这个项目对"Agent 落地公网 IM"的基本判断。
 
 ### 插件体系：生态是怎么长起来的
 
@@ -151,6 +172,7 @@ class MyPlugin(Star):
 
 ## 参考
 
-- [AstrBotDevs/AstrBot 仓库](https://github.com/AstrBotDevs/AstrBot)：本文数据（Stars、版本、流水线阶段、沙箱资源限额）的核对来源，核验于 2026-09-14，版本 v4.28.0。
-- [AstrBot 官方文档](https://docs.astrbot.app/)：Docker 部署命令、Agent 沙箱环境、插件开发与发布流程的原文出处。
+- [AstrBotDevs/AstrBot 仓库](https://github.com/AstrBotDevs/AstrBot)：本文数据（Stars、版本、流水线阶段、沙箱资源限额）的核对来源，核验于 2026-09-17，版本 v4.28.0。
+- [AstrBot 官方文档](https://docs.astrbot.app/)：Docker 部署命令、Agent 沙盒环境、插件开发与发布流程的原文出处。
 - [插件开发指南](https://docs.astrbot.app/dev/star/guides/simple.html)与[平台适配矩阵](https://docs.astrbot.app/dev/star/plugin.html)：消息类型支持矩阵与最小插件实例的出处。
+- [Agent 沙盒环境文档](https://docs.astrbot.app/use/astrbot-agent-sandbox.html)：Shipyard Neo（Bay/Ship/Gull）、CUA 驱动器、单实例资源限额与宿主机性能要求的官方出处。
