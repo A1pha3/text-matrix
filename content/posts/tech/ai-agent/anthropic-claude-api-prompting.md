@@ -1,10 +1,11 @@
 ---
 title: "Claude API 基础专题（二）：提示词工程"
 date: "2026-03-25T10:30:00+08:00"
+lastmod: "2026-09-24T10:00:00+08:00"
 slug: "claude-api-prompting-engineering"
 aliases:
   - /posts/tech/claude-api-prompting-engineering/
-description: "系统讲解 Claude API 的提示词工程技巧：提示词的基本原则、系统提示词、Few-shot 学习、链式思考与扩展思考、温度与采样参数、提示词评估与迭代、常见反模式与排查。"
+description: "系统讲解 Claude API 的提示词工程技巧：提示词的基本原则、系统提示词、Few-shot 学习、链式思考与扩展思考、温度与采样参数（含新模型的参数弃用边界）、提示词评估与迭代、常见反模式与排查。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "提示词", "Python"]
@@ -18,7 +19,7 @@ tags: ["Claude", "提示词", "Python"]
 
 提示词的质量直接决定 API 输出的下限。同一个模型，一句话和一段设计过的提示词，产出的可能一个是空泛套话，一个是能直接进代码评审的答案。这一篇不讲玄学，只讲 Claude 上能验证、可操作的写法。
 
-读完本文你会得到一条完整的主线：**先想清楚任务要什么（要素），再用结构把任务讲清楚（清晰、上下文、结构化），最后按任务类型挑对辅助手段（系统提示词、示例、思考模式、采样参数）**。
+读完本文你会得到一条主线：**先想清楚任务要什么（要素），再用结构把任务讲清楚（清晰、上下文、结构化），最后按任务类型挑对辅助手段（系统提示词、示例、思考模式、采样参数）**。
 
 章节导航：
 
@@ -448,7 +449,7 @@ prompt = """某物流规则规定：重量超过 20 公斤的包裹需要额外�
 
 ### 扩展思考（Extended Thinking）
 
-扩展思考是 API 层的能力，让 Claude 在给出答案前，用一段显式的内部推理来探索和检验思路。对 Claude 4 系列模型，它比"提示词里求它想"更可靠，因为推理由模型原生完成，且不会占用给你看的输出格式。
+扩展思考是 API 层的能力，让 Claude 在给出答案前，用一段显式的内部推理来探索和检验思路。在支持它的模型上，它比"提示词里求它想"更可靠，因为推理由模型原生完成，且不会占用给你看的输出格式。
 
 开启方式是在请求里加 `thinking` 参数：
 
@@ -476,10 +477,27 @@ for block in response.content:
 
 几个必须知道的约束：
 
-- `budget_tokens` 是 Claude 可用于内部思考的 token 上限，**最小 1024**，且必须**小于 `max_tokens`**。
-- 预算给得大，复杂问题往往答得更细，但延迟和成本都上升；预算超过约 32k 后，模型通常用不满，收益递减。
-- 响应中的 `thinking` 块带 `signature`，多轮对话时原样传回即可，不需要自己保存推理内容。
-- 型号差异：`claude-sonnet-4-20250514` 支持手动 `thinking` 配置；较新的 Opus 4.6 / Sonnet 4.6 推荐用 `thinking: {"type": "adaptive"}`（自适应思考），让模型自己决定想多深，需要控制深度时配合 `effort` 参数。
+- `budget_tokens` 是 Claude 可用于内部思考的 token 上限，**最小 1024**，且必须**小于 `max_tokens`**（思考 token 计入 `max_tokens`）。
+- 官方把预算定义为"目标而非硬上限"：实际用量随任务变化，Claude 可能在远没用完预算时就停止思考。预算给得大，延迟和成本都上升；超过 32k 的预算官方建议改用批处理，因为长时间运行的请求容易撞上系统超时和连接数上限。
+- 响应中的 `thinking` 块带 `signature` 字段，用于验证该块确实由 Claude 生成。多轮对话时把整块原样传回即可，不需要自己保存推理内容。手动模式下还有一条结构要求：启用思考的请求，其最后一轮 `assistant` 消息必须以 thinking 块开头（自适应模式没有这条要求）。
+- 型号差异（决定你能不能用本节的写法）：
+  - **Sonnet 4.5 / Opus 4.5 / Haiku 4.5 及更早的 Claude 4**：只支持手动 `thinking: {"type": "enabled", "budget_tokens": N}`，传 `type: "adaptive"` 会报 400。
+  - **Opus 4.6 / Sonnet 4.6**：手动模式已弃用（请求仍成功），推荐改用 `thinking: {"type": "adaptive"}`，让模型自己决定想多深。
+  - **4.7 及之后的模型**：不再支持手动模式，直接返回 400；`type: "enabled"` 不可用是判断"这个模型只走自适应"的信号。
+- 自适应模式下控制思考深度，不用 token 预算，改用 `output_config: {"effort": ...}`，取值 `low` / `medium` / `high` / `max`，默认 `high`（省略 `effort` 与显式写 `"high"` 行为完全一致）。
+
+自适应模式的请求形态，和手动预算对照着看：
+
+```python
+# Opus 4.6 / Sonnet 4.6 及之后的模型：自适应思考
+response = client.messages.create(
+    model="claude-sonnet-4-6",
+    output_config={"effort": "medium"},  # 控制思考深度，默认 high
+    thinking={"type": "adaptive"},
+    max_tokens=8192,
+    messages=[{"role": "user", "content": "……"}]
+)
+```
 
 ### 扩展思考与 CoT 提示怎么选
 
@@ -494,7 +512,9 @@ for block in response.content:
 
 ### Temperature 的作用
 
-`temperature` 控制生成时概率分布的平滑程度，值越高输出越多样，值越低越稳定。Claude API 的取值范围是 **0.0 到 1.0**，传大于 1.0 的值会被拒绝并报 400 错误。
+`temperature` 控制生成时概率分布的平滑程度，值越高输出越多样，值越低越稳定。取值范围是 **0.0 到 1.0**（默认 1.0），超出范围的值会被拒绝并报 400 错误。
+
+一个必须知道的适用边界：**对 Opus 4.6 之后发布的模型，`temperature` 已弃用**——传 1.0 向后兼容，传其他任何值都会报 400。`top_p`（只接受 ≥ 0.99）和 `top_k`（任何值都拒）同样如此。采样参数调优只适用于 Opus 4.6 及更早的模型；新模型的输出多样性改在提示词层控制——给示例、明确格式和篇幅。拿不准手上的模型能不能调参，跑一次带 `temperature` 的请求，看是否返回 400，一试便知。
 
 | Temperature | 效果 | 适用场景 |
 |-------------|------|----------|
@@ -559,7 +579,7 @@ response = client.messages.create(
 | 创意写作 | 0.7-0.9 | 0.95 | 需要多样性 |
 | 头脑风暴 | 0.8-1.0 | 0.99 | 最大创意 |
 
-这些数字是起点不是终点。生产环境里，最终值应该来自你对自己任务的实际测试，而不是照抄表格。
+这张表只适用于支持采样参数的模型（Opus 4.6 及更早）。这些数字是起点不是终点，生产环境里，最终值应该来自你对自己任务的实际测试，而不是照抄表格。
 
 ### 实际应用
 
@@ -588,7 +608,7 @@ response = get_response("code", "写一个快排函数")
 response = get_response("writing", "写一首关于月亮的诗")
 ```
 
-把参数集中在配置里，而不是散落在每个调用处，后续调参只需要改一个地方。
+把参数集中在配置里，而不是散落在每个调用处，后续调参只需要改一个地方。注意这段配置分发只对支持采样参数的模型生效——如果业务同时要跑新旧两代模型，在配置里加一层模型判断：新模型走提示词层控多样性，旧模型才下发 `temperature`。
 
 ---
 
@@ -807,7 +827,11 @@ Claude 的 Messages API 没有 `system` 消息角色。系统提示词必须放�
 
 **`temperature` 传 1.5 为什么报 400？**
 
-Claude API 的 `temperature` 只接受 0.0-1.0。需要更多随机性时，用 1.0 并配合调高 `top_p`，或者考虑任务本身是否需要这么高的多样性。
+两种可能。一是值超出范围：`temperature` 只接受 0.0-1.0。二是模型太新：Opus 4.6 之后的模型只接受默认值 1.0，传 0 都会报 400。前者换合法值，后者说明多样性要在提示词层控制。
+
+**请求报错 `"thinking.type.enabled" is not supported`，怎么办？**
+
+说明这个模型只支持自适应思考（4.7 及之后的模型）。删掉 `budget_tokens`，改用 `thinking: {"type": "adaptive"}`，思考深度改用 `output_config: {"effort": ...}` 控制。反过来，在 Sonnet 4.5 这类只支持手动模式的模型上传 `type: "adaptive"` 同样会报 400，把配置换回 `{"type": "enabled", "budget_tokens": N}` 即可。
 
 **相同输入，输出总是不一样，怎么固定？**
 
@@ -825,12 +849,22 @@ Claude API 的 `temperature` 只接受 0.0-1.0。需要更多随机性时，用 
 
 ## 参数速查
 
-| 场景 | Temperature | top_p |
-|------|-------------|-------|
-| 代码生成 | 0.0-0.2 | 默认 |
-| 数学计算 | 0.0 | 默认 |
-| 事实问答 | 0.1-0.3 | 默认 |
-| 创意写作 | 0.7-0.9 | 0.95 |
+**采样参数**（仅适用于 Opus 4.6 及更早的模型；Opus 4.6 之后发布的模型只接受默认值）：
+
+| 场景 | Temperature | top_p | 新模型上的替代做法 |
+|------|-------------|-------|--------------------|
+| 代码生成 | 0.0-0.2 | 默认 | 给格式示例，明确输出结构 |
+| 数学计算 | 0.0 | 默认 | 开思考模式，要求写验证步骤 |
+| 事实问答 | 0.1-0.3 | 默认 | 要求先给结论再解释 |
+| 创意写作 | 0.7-0.9 | 0.95 | 提示词里指定风格与篇幅 |
+
+**思考模式**（按模型代际选配置）：
+
+| 模型代际 | 可用模式 | 配置 |
+|----------|----------|------|
+| Sonnet 4.5 / Opus 4.5 / Haiku 4.5 及更早 | 仅手动 | `thinking={"type": "enabled", "budget_tokens": N}` |
+| Opus 4.6 / Sonnet 4.6 | 推荐 adaptive，手动已弃用但仍可用 | `thinking={"type": "adaptive"}` |
+| 4.7 及之后 | 仅 adaptive | 深度用 `output_config={"effort": ...}` 控制 |
 
 ---
 
@@ -842,14 +876,15 @@ Claude API 的 `temperature` 只接受 0.0-1.0。需要更多随机性时，用 
 
 对同一个任务同时开/关扩展思考（`thinking` 参数）跑一轮，记录延迟、token 消耗和输出质量。这能帮你建立"什么复杂度值得开思考"的直觉。
 
-本系列其余专题分别覆盖 API 基础、工具调用、RAG、MCP 与 Agent；协议细节以 [Anthropic 官方文档](https://docs.anthropic.com/) 为准。
+本系列其余专题分别覆盖 API 基础、工具调用、RAG、MCP 与 Agent；协议细节以 [Anthropic 官方文档](https://platform.claude.com/docs/) 为准。
 
 相关参考：
 
-- [Anthropic 提示词工程文档](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)
-- [扩展思考（Extended Thinking）](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)
-- [Messages API 参考](https://docs.anthropic.com/en/api/messages)
+- [Anthropic 提示词工程文档](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview)
+- [扩展思考（Extended Thinking）](https://platform.claude.com/docs/en/build-with-claude/extended-thinking)
+- [Effort 参数](https://platform.claude.com/docs/en/build-with-claude/effort)
+- [Messages API 参考](https://platform.claude.com/docs/en/api/messages)
 
 ---
 
-*字数：约 5600 字 | 更新日期：2026-03-25*
+*字数：约 6000 字 | 更新日期：2026-09-24*

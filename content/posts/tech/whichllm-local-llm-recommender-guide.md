@@ -1,166 +1,298 @@
 ---
-title: "whichllm 架构拆解：本地 LLM 选型不该只看显存"
+title: "whichllm 架构拆解：本地大模型选型的难点不在显存"
 date: "2026-06-09T17:59:00+08:00"
-lastmod: "2026-06-14T12:00:00+08:00"
+lastmod: "2026-09-21T07:40:00+08:00"
 slug: "whichllm-local-llm-recommender"
 github_repo: "Andyyyy64/whichllm"
 source_key: "gh:Andyyyy64/whichllm"
 aliases:
   - "/posts/tech/whichllm-local-llm-recommender/"
-description: "whichllm 把 HuggingFace 候选模型、benchmark 证据、量化惩罚和硬件约束合成排序，帮助开发者为本地机器缩小开源大模型候选集。"
+description: "读 whichllm 0.5.19 源码并在本机实跑：显存四项怎么算、速度为什么按带宽反推、benchmark 证据分六档打三次折、多卡预算为什么不是把显存相加。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Hugging Face", "Ollama", "Python"]
+tags: ["Hugging Face", "Ollama", "Python", "本地大模型", "选型工具"]
 ---
 
-# whichllm 架构拆解：本地 LLM 选型不该只看显存
+「这张卡能塞下哪个模型」是一个有确定答案的问题，所以它也是最不值得单独问的问题。塞得下的候选通常有几十个，量化格式有三十多种，公开分数来自两三个已经停更的榜单。HuggingFace 上还混着官方仓库、社区转换、微调分支，以及只换了打包方式的重传版本。
 
-本地跑大模型时，最容易问错的问题是：这张卡能不能塞下某个模型？更麻烦的是下一步：塞得下的模型通常不止一个，量化格式不止一种，benchmark 新旧不一，HuggingFace 上还混着官方仓库、社区量化、微调分支和缺 metadata 的重打包版本。
+whichllm 做的事是把选型拆成四本可以各自复查的账。分数来自哪一档证据，显存按哪几项加起来，每秒词元数从哪条带宽推出来，上传者是谁——这四本账在 0.5.19 里都能落到具体的函数和常量上，这也是它值得读的原因。判断依据是暴露的，不是藏在提示词里的。
 
-whichllm 站在推理后端前面做选型：先读你的硬件，再从 HuggingFace 拉候选模型，把 benchmark 证据、显存估算、速度估算、量化惩罚和来源可信度放进同一套排序里。它把“当前这台机器上，哪个候选最值得先试”变成一张可复查的排序表。
+它同时也有很明确的边界。whichllm 站在推理后端的前面，不启动模型、不测真机吞吐、不模拟张量并行。把它当成排序器和证据展示台用是对的，当成容量规划系统是错的。
 
-> 资料依据：[Andyyyy64/whichllm](https://github.com/Andyyyy64/whichllm) README、官方文档与 PyPI 信息；核验时间为 2026-06-14。GitHub 页面显示约 4.7k stars；PyPI 最新版本为 0.5.10，发布时间为 2026-06-11。
+> 本文核验时间与方式：以 0.5.19 为准（GitHub 提交 `4f4fc268`，PyPI 发布于 2026-09-19）。本机克隆仓库、装依赖、跑完自带的 516 个测试，并把文中每一条行为断言用 `whichllm` 命令或 `python -c` 直接执行定案。机器是 Apple M4 / 16 GB，模拟显卡用 `--gpu`。README 与 `docs/` 的措辞和代码不一致时以代码为准，并在下文点明。
 
-## 先给结论
+## 目录
 
-想快速看一眼当前机器能跑什么，`uvx whichllm@latest` 就能给出推荐表。把它放进生产决策前，先记住三条边界：
+- [先给判断](#先给判断)
+- [三条主线加一本证据账](#三条主线加一本证据账)
+- [版本坐标与安装路径](#版本坐标与安装路径)
+- [显存估算拆成四项相加](#显存估算拆成四项相加)
+- [长上下文才是二十四 GB 卡的边界](#长上下文才是二十四-gb-卡的边界)
+- [速度是一条带宽反推公式](#速度是一条带宽反推公式)
+- [多卡预算不是把显存相加](#多卡预算不是把显存相加)
+- [当前层与冻结层两套分数](#当前层与冻结层两套分数)
+- [六档证据等级与三次折扣](#六档证据等级与三次折扣)
+- [综合评分怎么落到一个数](#综合评分怎么落到一个数)
+- [为什么二十七 B 会压过三十二 B](#为什么二十七-b-会压过三十二-b)
+- [一次完整选型流程](#一次完整选型流程)
+- [把推荐接进本机的两个子命令](#把推荐接进本机的两个子命令)
+- [常见故障与排查](#常见故障与排查)
+- [五道自测题](#五道自测题)
+- [谁该先用它，谁可以再等等](#谁该先用它谁可以再等等)
+- [下一步读哪份代码](#下一步读哪份代码)
+- [维护与复核指引](#维护与复核指引)
+- [参考](#参考)
 
-1. **whichllm 排的是候选优先级，不是本机实测吞吐。** README 和 JSON 里的 `estimated_tok_per_sec` 是规划估计值，真实速度还会受驱动、后端、上下文长度、batch、温度和散热影响。
-2. **评分不是单一 leaderboard。** 它会合并 LiveBench、Artificial Analysis、Aider、Vision、多模态索引以及冻结的 Chatbot Arena / Open LLM Leaderboard，并按证据等级折扣。
-3. **显存只是准入条件。** 排名还会看量化质量、KV cache、部分卸载、MoE 活跃参数、模型时新性和来源可信度。于是会出现一个很合理但反直觉的结果：24 GB 显卡上，一个较新的 27B 模型可能压过一个能塞下的 32B 模型。
+## 先给判断
 
-更稳的使用方式是：先用 whichllm 缩小候选范围，再用自己的任务集做小规模实测；不要把它的分数当成“这个模型在我的业务里一定最好”的结论。
+三条会直接影响使用方式的结论：
 
-## 项目坐标
+1. **排序不等于实测。** `estimated_tok_per_sec` 由显存带宽除以每个词元需要读取的权重字节数推出来，再乘量化效率与后端系数（`engine/performance.py:218`）。它没有跑过一个词元。JSON 同时给出 `speed_confidence` 与 `speed_range_tok_per_sec`，就是在提醒这条区间可能宽到 0.35×–2.00×。
+2. **分数不是单一排行榜。** 它把两批来源合到一张 0–100 的表上。一批按代际算「当前」，其中 Artificial Analysis 与 Aider 真的会去在线抓，LiveBench 与视觉指数只是较新的内置快照；另一批已经彻底停更，并被人为压了上限——大语言模型排行榜 Open LLM Leaderboard v2 封顶 78，Chatbot Arena 封顶 82。合完还要按六档证据等级再折一次。
+3. **显存只是准入条件。** 量化惩罚、KV 缓存、部分卸载、混合专家模型（MoE）的活跃参数、模型代际、上传者身份都会改变最终排名。于是会出现合理但反直觉的结果：24 GB 显卡上排第一的不是能塞下的最大模型。
 
-| 字段 | 信息 |
-|------|------|
-| 仓库 | [Andyyyy64/whichllm](https://github.com/Andyyyy64/whichllm) |
-| 最新版本 | 0.5.10（PyPI，2026-06-11） |
-| 语言 / 运行要求 | Python 3.11+ |
-| License | MIT |
-| 分发方式 | `uvx`、`uv tool`、Homebrew、pip |
-| 数据来源 | HuggingFace API、公开 benchmark 源、模型卡 metadata、本地硬件探测 |
-| 典型输出 | Rich 表格或 `--json` 结构化结果 |
-| 主要场景 | 单机 / 单节点本地 LLM 选型、购卡模拟、脚本化推荐、快速拉起模型聊天 |
+这三条划出了正确用法：用 whichllm 把候选集从几十个缩到三个，再用自己的任务样本实测。
 
-安装和一次性运行都不重：
+## 三条主线加一本证据账
 
-```bash
-# 一次性运行，不把工具长期装进环境
-uvx whichllm@latest
+`src/whichllm/` 有 73 个 Python 文件、10,466 行（连 `tests/` 与 `scripts/` 一起算是 106 个）。四个目录的职责划分见下表。
 
-# 经常使用时安装为全局工具
-uv tool install whichllm
-uv tool upgrade whichllm
-
-# 其他安装路径
-brew install andyyyy64/whichllm/whichllm
-pip install whichllm
-```
-
-## 系统地图：一次推荐如何流过 whichllm
-
-whichllm 的主流程可以拆成 7 步：检测硬件、取模型、取 benchmark、合并家族、生成候选量化、估算能否运行、打分排序。
+| 主线 | 位置 | 回答的问题 |
+|------|------|------------|
+| 硬件侧 | `hardware/` | 这台机器有多少显存、多大的内存池、多快的带宽，能不能模拟成别的卡 |
+| 模型侧 | `models/` | HuggingFace 上有哪些候选、它们属于哪个家族、带哪些量化文件、benchmark 分数从哪来 |
+| 判决侧 | `engine/` | 某个候选在某个量化下需要多少内存、能跑多快、值多少分 |
+| 呈现侧 | `output/` | 排好的结果怎么变成 Rich 表格、Markdown、JSON，以及标记符号 |
 
 ```mermaid
 flowchart TD
-    CLI["CLI 参数<br/>profile / gpu / quant / top / json"]
-    HW["硬件探测<br/>NVIDIA / AMD / Apple / CPU / RAM / Disk"]
-    HF["模型抓取<br/>HuggingFace API + GGUF 查询 + frontier 列表"]
-    BM["benchmark 地图<br/>LiveBench / Artificial Analysis / Aider / Vision<br/>Chatbot Arena / Open LLM Leaderboard"]
-    GROUP["模型家族合并<br/>base_model + 规范化 repo 名称"]
-    VAR["候选变体生成<br/>GGUF / AWQ / GPTQ / FP16 / BF16"]
-    FIT["运行可行性<br/>weights + KV cache + activation + overhead"]
-    SPEED["速度估算<br/>带宽 / 量化 / 后端 / fit type / MoE active params"]
-    RANK["综合评分<br/>benchmark + size + quant + evidence + fit + speed"]
-    OUT["输出<br/>Rich table / JSON / plan / upgrade / snippet / run"]
+    CLI["CLI 参数解析与校验"]
+    HW["硬件探测或模拟<br/>hardware/detector.py"]
+    HF["候选抓取<br/>models/hf.py + 缓存"]
+    BM["分数图构建<br/>models/benchmark_fetch.py"]
+    GR["家族合并<br/>models/grouper.py"]
+    VA["变体展开<br/>engine/ranking_variants.py"]
+    CO["可行性判定<br/>engine/compatibility.py"]
+    PF["速度估算<br/>engine/performance.py"]
+    RK["打分与择一<br/>engine/ranking_score.py"]
+    OU["输出<br/>output/ranking.py"]
 
-    CLI --> HW --> FIT
-    CLI --> HF --> GROUP --> VAR --> FIT
-    CLI --> BM --> RANK
-    VAR --> SPEED --> RANK
-    FIT --> SPEED
-    FIT --> RANK
-    RANK --> OUT
+    CLI --> HW --> CO
+    CLI --> HF --> GR --> VA --> CO
+    CLI --> BM --> RK
+    VA --> PF
+    CO --> PF --> RK
+    CO --> RK --> OU
 ```
 
-这张图里最该先看的，是中间两条线。第一条线处理“模型世界”：HuggingFace 上的 repo、GGUF 文件、量化版本、模型家族和 benchmark 证据。第二条线处理“硬件世界”：GPU / RAM / 统一内存 / 磁盘 / 带宽 / 部分卸载。whichllm 的排名发生在两条线交汇之后，而不是在 HuggingFace 搜索结果里直接挑下载量最高的模型。
+`docs/how-it-works.md` 把默认命令归纳成 9 步：校验参数、探测硬件、载入或抓取模型、载入或抓取分数、合并家族、摊平回候选、逐变体排序、回填发布日期、打印。本图按同一顺序画，只多标一件事：速度排在可行性之后。还不知道是整卡放下还是溢出到内存，就算不出速度——`estimate_tok_per_sec` 的入参里就带着 `compat.fit_type`。分数图则直接进判决，不参与可行性判定。
 
-## 硬件建模：不是 `params × bytes` 就完了
+## 版本坐标与安装路径
 
-很多本地模型选择工具只做一件事：拿参数量乘以每个权重的字节数，再和显存比大小。这个计算能排除明显跑不动的模型，但会漏掉真实推理里最容易踩的几块开销。
+| 字段 | 信息（2026-09-21 核验） |
+|------|------|
+| 仓库 | [Andyyyy64/whichllm](https://github.com/Andyyyy64/whichllm)，首提交于 2026-03-04 |
+| 最新版本 | 0.5.19；PyPI 上传时间 2026-09-19，CHANGELOG 记作 2026-09-20 |
+| 自 0.5.10 以来 | 0.5.11 到 0.5.19 共 9 个版本 |
+| 规模 | 6,664 stars、369 forks、14 个开放议题 |
+| License | MIT |
+| 运行要求 | Python 3.11+ |
+| 直接依赖 | `typer`、`rich`、`httpx`、`psutil`、`dbgpu[fuzz]`、`nvidia-ml-py` |
+| 测试 | `tests/` 31 个文件、516 项，本机 1.71 秒全通过 |
+| 缓存 | `~/.cache/whichllm/models.json`（6 小时）、`benchmark.json`（24 小时） |
 
-whichllm 把内存需求拆成四项：
+安装命令本身没有可讨论的余地，要注意的是它依赖 `uv` 与 `dbgpu`：前者被 `run` 用来拉起隔离环境，后者是显卡规格库。
+
+```bash
+uvx whichllm@latest            # 一次性运行，不装进环境
+uv tool install whichllm       # 常用时安装为全局工具
+uv tool upgrade whichllm
+brew install andyyyy64/whichllm/whichllm
+pip install whichllm
+python -m whichllm             # 0.5.11 起可用
+```
+
+## 显存估算拆成四项相加
+
+只做「参数量 × 每权重字节数」的工具能排除明显跑不动的模型，但会漏掉真实推理里最容易踩的开销。whichllm 的口径写在 `engine/vram.py:90`：
 
 ```text
-required_memory = weights + KV cache + activation + framework overhead
+estimate_vram = weights + kv_cache + activation + FRAMEWORK_OVERHEAD_BYTES
 ```
 
-这四项影响不同：
+| 项目 | 实现里的口径 | 为什么单独算 |
+|------|--------------|--------------|
+| 权重 | 由参数量乘该量化格式的每权重字节数，或直接用 GGUF 文件实际大小 | 受量化格式影响最大，是唯一能被 `--quant` 直接改变的项 |
+| KV 缓存 | `3.5 MiB × 参数量(B) × 上下文长度(K)`，MoE 改用「活跃参数 × 4」 | 上下文越长越贵，是唯一会随对话长度线性膨胀的项 |
+| 激活 | `400 MB + 0.08 字节/参数 + 150 MB/4K 上下文` | 长上下文下与 KV 同向增长 |
+| 运行时余量 | 常量 `500_000_000`（约 477 MiB） | 后端、图计算缓冲与运行时占位 |
 
-| 项目 | 为什么重要 |
-|------|------------|
-| weights | 模型权重本身，受参数量和量化格式影响最大。 |
-| KV cache | 上下文越长越贵；长上下文场景下，它可能比想象中更快吃掉可用显存。 |
-| activation | 推理中间状态，通常不如权重醒目，但会影响“刚好塞下”的模型。 |
-| framework overhead | 后端、运行时和缓冲区需要额外空间；文档里按约 500 MB 级别估算。 |
+系数 3.5 MiB 是从三份公开报告反推后略微上调的。同文件第 9 到 13 行的注释列出了三个标定点：Qwen2.5-7B 在 8K 上下文下 0.45 GB、Qwen3-32B 在 32K 下 3.1 GB、Llama-3.1-70B 在 32K 下 5.4 GB。顺带一个坑：`estimate_kv_cache` 的文档字符串写的是「约 3 MB」，实际常数是 3.5 MiB。照注释里的数字算会低估约 14%。
 
-硬件探测也不是只读显卡名字。whichllm 会尽量获取 GPU 列表、VRAM、CPU、物理核心、AVX2 / AVX-512、系统 RAM、磁盘剩余空间和操作系统信息。不同平台有不同路径：
+0.5.14 加的一项更要紧：滑窗注意力（SWA）模型的 KV 不再按全长上下文算。`engine/vram.py:22` 的有效上下文是 `global_ratio × ctx + (1 - global_ratio) × min(ctx, window)`，且只在抓取阶段确认该架构的主流运行时真的执行滑窗时才启用。这个设计刻意只允许结果变小，不允许变大，所以没声明窗口的模型保持保守值。
 
-| 平台 | 探测方式 |
-|------|----------|
-| NVIDIA | 优先 `nvidia-ml-py`，失败后退到 `nvidia-smi`。 |
-| AMD | Linux 下优先 `rocm-smi`，再退到 `lspci` 与 `/sys/class/drm`；Windows 下使用 WMI / 注册表字段兜底。 |
-| Apple Silicon | 通过 `system_profiler` 读取芯片与统一内存信息。 |
-| CPU / RAM | 通过 `psutil`、`/proc/cpuinfo`、`sysctl`、`wmic` 等平台接口探测。 |
+硬件探测也不是读一次显卡名字。各平台路径如下（`hardware/detector.py:20` 决定调用顺序）：
 
-Apple Silicon 和部分 AMD APU 这类统一内存设备会被单独处理。离散显卡上的“部分卸载”往往意味着 PCIe 往返和明显速度损失；统一内存下权重仍在同一内存池里，惩罚就不能按同一套离散 GPU 逻辑套进去。
+| 平台 | 首选 | 退路 |
+|------|------|------|
+| NVIDIA | `pynvml`（NVML 绑定） | `nvidia-smi --query-gpu=…`，并顺带取最大显存时钟以区分 GTX 1650 的 GDDR5/GDDR6 |
+| AMD（仅 Linux 调用） | `rocm-smi` 三次查询：产品名、显存、驱动版本 | `lspci -mm` 与 `/sys/class/drm` |
+| Intel（仅 Linux 调用） | `lspci -mm` | sysfs |
+| Windows 非 NVIDIA 卡 | `powershell Get-CimInstance Win32_VideoController` | 注册表 `HardwareInformation.qwMemorySize` |
+| Apple Silicon | `system_profiler SPHardwareDataType -json` | `sysctl -n iogpu.wired_limit_mb` 决定可用显存上限 |
+| CPU 与内存 | `psutil` | Linux 走 `/proc/cpuinfo` 与 `lscpu`，macOS 走 `sysctl`，Windows 先 `wmic` 再 PowerShell |
 
-多 GPU 场景也要谨慎理解。whichllm 会在 fit check 里汇总可用 GPU 内存，但速度估算通常用最大那张卡作为代表设备；它不等价于完整模拟 tensor parallel 或 pipeline parallel 推理后端。对于多卡服务端部署，它更像初筛工具，不是容量规划系统。
+`--gpu` 模拟走的是 `dbgpu`——一份 2000 多条记录、数据源为 TechPowerUp 的显卡库。Apple 芯片不在库里（它收的是独显），所以被单独短路处理；`hardware/gpu_simulator.py:48` 的注释说明了原因：不做这层短路，`"M1"` 会模糊匹配到 1997 年的 ATI Rage Mobility-M1。
 
-## benchmark 证据链：分数先问“从哪来”
+## 长上下文才是二十四 GB 卡的边界
 
-whichllm 的评分比“看 leaderboard 第几名”复杂，核心原因是本地模型生态里同名、变体、量化、微调太多。一个 repo 可能是官方模型，也可能只是别人转的 GGUF；一个模型可能没有直接 benchmark，但它的 base model 或同家族版本有公开分数。
+显存四项里只有 KV 缓存与激活随上下文变化，这恰好是本地部署最容易低估的一项。同一张模拟 4090，把 `--context-length` 改三档，排序结果直接改写（2026-09-21 实测）。表里沿用工具自己的 GB 标注，`output/formatting.py:13` 实际是按 1024³ 折算的，所以标出来的「GB」都是 GiB：
 
-官方文档把 benchmark 证据分成 5 类：
+| 上下文 | 第一名 | 第二名 | `Qwen/Qwen3.6-27B` 的位置 |
+|--------|--------|--------|---------------------------|
+| 4096（默认） | Qwen3.6-27B · Q5_K_M · 需 21.2 GB · 91.0 | Qwen3.8-27B · 90.0 | 第 1，Full GPU |
+| 32k | Qwen3.6-27B · **Q4_K_M** · 需 21.6 GB · 90.3 | Qwen3.8-27B · 89.4 | 第 1，但量化被自动降档 |
+| 128k | gemma-4-26B-A4B-it · Q3_K_M · 需 22.8 GB · 79.8 | gpt-oss-20b · 77.4 | 第 6，退成 Partial、需要 34.1 GB、71.5 |
 
-| 证据等级 | 含义 | 使用方式 |
-|----------|------|----------|
-| `direct` | 独立 benchmark 精确命中当前模型 ID | 可信度最高。 |
-| `variant` | 去掉 `-Instruct`、量化后缀等后命中同一变体 | 折扣使用。 |
-| `base_model` | 通过 HuggingFace `cardData.base_model` 找到基座模型 | 折扣使用。 |
-| `line_interp` | 在同一模型家族内按尺寸插值 | 再折扣，避免过度继承。 |
-| `self_reported` | 模型上传者在 HuggingFace model card 里自报 eval | 明显降权。 |
+这张表里有三个信息。32k 时 whichllm 为了把 27B 留在卡上，主动换了更狠的量化。128k 时换不动了，27B 这条稠密模型整线被挤成部分卸载，让位给活跃参数只有 3.8B 的 MoE。所以用默认参数得到的「这张卡跑 27B 很舒服」，在长上下文任务上并不成立。
 
-没有证据时，表格会出现 `?`；继承或插值得到的分数通常会用 `~` 标记；只有 uploader 自报时会出现 `!sr`。这些符号不只是装饰，它们决定这个候选该进入第一轮实测，还是只适合放在观察列表里。
+同一份数据也给出换档的连带代价。27B 从 Q5_K_M 退到 Q4_K_M，质量惩罚从 0.03 涨到 0.05，分数却只掉了 0.7（91.0 → 90.3）。这是因为降档同时把每词元读取量变小了，估计速度从 27.5 涨到 35.5 tok/s，速度项又补回一截。**代价没有消失，只是被另一项抵掉了大半**；而生成质量本身掉了多少，这套分数并不评估。
 
-benchmark 来源也分层。LiveBench、Artificial Analysis、Aider、Vision / multimodal 这类当前来源会优先反映新模型；Chatbot Arena ELO 和 Open LLM Leaderboard v2 属于冻结或偏旧覆盖层。whichllm 对冻结来源做 lineage-aware recency demotion，避免旧模型长期靠历史榜单分数压过后续同系列新模型。
+## 速度是一条带宽反推公式
 
-这个设计处理的是一个真实偏差：2024 年的模型可能有一堆老榜分数，2026 年的新模型可能刚发布还没进某些冻结榜。如果直接拼分，旧模型会被历史数据“保护”；加上 lineage 降权后，推荐结果才更接近当前本地模型生态。
+`engine/performance.py:218` 的核心只有两行：
 
-也要反过来看：这些 benchmark 主要回答“公开任务上的相对能力”和“有没有独立证据”。它们不能直接推出模型在你的私有代码库、客服对话、金融文本或长上下文 RAG 里一定表现更好。whichllm 把证据等级摊开，目的不是替你做最终裁决，而是告诉你哪些候选值得先测。
+```text
+theoretical_tok_per_sec = memory_bandwidth / bytes_read_per_token
+tok_per_sec = theoretical × quant_efficiency × backend_factor
+```
 
-## 综合评分：质量、可跑、能用三件事揉在一起
+`bytes_read_per_token` 对稠密模型就是权重大小；对 MoE 是权重乘一个「活跃比例与带宽相关下限取大」的比例（`performance.py:102`）。下限按 256 GB/s 时 5% 线性外推，封顶 25%。
 
-whichllm 的最终分数 capped 到 0-100。这个数字衡量的是“在这台机器上作为本地候选的可用优先级”，不要把它读成抽象的“模型智商分”。
+| 后端 | 系数 | 常见量化的效率系数 |
+|------|------|--------------------|
+| NVIDIA | 1.00 | Q4_K_M 0.55、NVFP4 0.56、Q5_K_M 0.52、Q6_K 0.50、Q8_0 0.45 |
+| Apple | 0.82 | F16/BF16 0.40、IQ2_XXS 0.38、Q1_0 与 TQ1_0 0.32 |
+| AMD | 0.78 | 未列出的量化取默认 0.45 |
+| Intel | 0.65 | 量化效率三行共用同一张表 |
 
-| 因子 | 作用 |
-|------|------|
-| benchmark quality | 合并多个 benchmark 源，是质量判断的主要依据。 |
-| model size | 作为世界知识和能力的粗略代理；dense 用总参数，MoE 用总参数判断质量。 |
-| quantization penalty | 低 bit 量化会乘上质量惩罚；`Q4_K_M`、`Q5_K_M` 这类常见量化惩罚较小，极低 bit 会明显降权。 |
-| evidence confidence | `direct` 不打折，继承、插值、自报和无证据都会降权。 |
-| runtime fit | full GPU、partial offload、CPU-only 不是同一类体验；部分卸载越重，惩罚越大。 |
-| speed adjustment | 速度是 usability gate，不是主要质量信号；低于 fit type 对应阈值会扣分。 |
-| source trust | 官方组织和可信转换者有小幅加分，已知 repackager 有小幅惩罚。 |
-| popularity | 下载量与 likes 更多用于弱证据场景下的 tie-breaker。 |
+部分卸载按内存架构分岔（`performance.py:278`）：独显上乘 0.45，Apple Silicon 与共享内存 APU 上乘 0.85。差别来自有没有 PCIe 这道墙。统一内存里权重仍在同一个内存池，超出的只是建议工作集，不是换了介质。这个分支是修出来的。同文件的注释记录了原先一律乘 0.45，结果 M2/M3 Ultra 上的 DeepSeek-R1 级模型报出约 1.7 tok/s，而实际是 4–15。
 
-这里最容易误读的是速度。whichllm 会输出 `estimated_tok_per_sec`、`speed_confidence`、`speed_range_tok_per_sec` 和 `speed_notes`，但这些字段是估算，不是你机器上跑出来的 benchmark。full GPU 的常规估算通常比 CPU-only、部分卸载、未知带宽或 Apple Silicon MoE 更可靠；看到低置信度速度时，应把它当作“需要实测”的提醒。
+纯 CPU 路径不读带宽，改用规模的倒数：`18.0 / max(params_b, 0.5)`，再按量化效率相对默认值缩放，下限 0.3 tok/s（`performance.py:234`）。
 
-## 为什么 27B 会赢过 32B：README 里的 4090 案例
+估计的不确定度单独成表，并直接乘成区间返回：
 
-README 里的 4090 示例能直接说明这个取舍：
+| `speed_confidence` | 区间系数 | 触发情形（代码可查） |
+|--------------------|----------|----------------------|
+| high | 0.85–1.20 | 预留给将来的实测数据，当前没有路径会赋值 |
+| medium | 0.60–1.60 | 常规显卡估计、合成 GGUF 估计、AMD 共享内存 APU 的 MoE |
+| low | 0.35–2.00 | 无带宽数据、部分卸载、纯 CPU、Apple Silicon 上的 MoE、多卡 |
+
+实测能直接对上：模拟 4090 跑 `Qwen/Qwen3.6-27B` 得 `estimated_tok_per_sec = 27.498`、`speed_confidence = "medium"`、`speed_range_tok_per_sec = [16.5, 44.0]`，两端正好是 0.60 倍与 1.60 倍。
+
+速度在评分里是准入门槛，不是质量信号。阈值按形态分档：Full GPU 要 8 tok/s，部分卸载 4，纯 CPU 1.5。低于阈值最多扣 8 分，高于则按对数最多加 8 分。这里有一处 `docs/scoring.md` 没写全：当速度估计根本拿不出来时，扣分不看 tok/s 缺口，而按形态与卸载比例定档，部分卸载最重可到 −24 分（`engine/ranking_score.py:170`）。排序完成后还有一道收尾过滤——只要榜上有不低于 5 tok/s 的候选，就删掉所有低于 1.5 tok/s 的行。
+
+表格里速度颜色按绝对值上色：<4 红、4–10 黄、10–30 绿、≥30 亮绿；`~` 表示 medium 区间，`?` 表示 low。同一行里分数列的 `~` 谈证据、速度列的 `~` 谈置信度，两者不是一回事。
+
+## 多卡预算不是把显存相加
+
+「多卡就是把显存加起来」是最常见的第一版直觉。`engine/compatibility.py:80` 的实现要保守得多，而且分三种情形：
+
+```text
+raw_total  = sum(每张卡可用显存)
+overhead   = min(raw_total, 卡数 × 0.3 GiB)
+effective  = (raw_total - overhead) × utilization
+utilization = 0.95（同型号）| 0.90（混插）
+```
+
+含共享内存或 Apple 的多卡组合**不合并**，直接取最大的那个内存池，并给出提示。另外，机器上只要有独显，`shared_memory` 且 `vram_bytes` 小于 2 GiB 的核显就不进合并池（`compatibility.py:34`）。否则等于造出一个「独显显存 + 整机内存」的假目标。`docs/hardware.md` 把这条叫做「低孔径核显」，判据本身是那个 2 GiB 阈值。
+
+实测 `--gpu "2x RTX 4090"`：原始 45.6 GB，有效 42.8 GB，与 `(45.6 − 0.6) × 0.95 = 42.75` 对上。表格同时打出一行警告「Multi-GPU fit uses a conservative layer-split budget」。速度侧照旧取显存最大的那张卡当代表设备，整体再乘 0.70，置信度强制降为 low。表里前三名会挂着 `?`，并多出一行「Speed caution」。
+
+结论是：它能回答「两张 4090 大概能把哪个更大的模型塞进显存」，答不了「两张卡张量并行后吞吐是多少」。后者取决于后端的切分模式、互联带宽与批大小，whichllm 不建模这些。
+
+## 当前层与冻结层两套分数
+
+`models/benchmark_fetch.py` 不是一张排行榜，而是两个桶：同一个模型在桶内取各来源里的最大值，跨桶时由当前层覆盖冻结层。
+
+| 桶 | 来源 | 取数方式 | 处理 |
+|----|------|----------|------|
+| 冻结 | Open LLM Leaderboard v2 | 抓 HuggingFace datasets，2025-06 归档 | 归一化封顶 78 |
+| 冻结 | Chatbot Arena ELO | 抓 datasets 行接口，2025-07-17 冻结 | 归一化封顶 82 |
+| 当前 | LiveBench | **内置快照**，来自 `table_2026_01_08.csv` | 两点锚定线性拉伸（72→95、35→30） |
+| 当前 | Artificial Analysis 指数 | 在线抓取，失败退回内置快照 | 重标定后的新刻度 |
+| 当前 | Aider polyglot | 在线抓 `polyglot.yaml` | 结果乘 0.85 后计入 |
+| 当前 | 视觉与多模态能力指数 | 无稳定在线源，内置 2026-05 快照 | 只在需要视觉候选时参与 |
+
+封顶就是代际保护的第一层。OLLB 榜首的 47.6 原始分若按线性拉伸会到 91.5，压到 78 之后，当前来源只要有任何一条覆盖就能赢过它。Arena 那边的注释把这层意图说得很直白。
+
+第二层是按家族降权，`models/benchmark_lineage.py`：
+
+```text
+factor = max(0.55, 1 - 0.12 × 落后代数)
+```
+
+这条降权只作用在一类条目上：**有冻结分，但没有任何当前分覆盖**。有当前来源的条目原样通过，不在表里的家族也不降权。表里跟踪 17 个家族。qwen、llama、deepseek、gemma、phi、glm、kimi 这几条主线之外，还有 granite、olmo、t5、yi、mimo、gpt_oss、mixtral 和 mistral 的三个分支。执行结果：
+
+| 模型 ID | 系数 | 冻结分 78 降为 |
+|---------|------|----------------|
+| `qwen/qwen2-7b`、`qwen/qwen2.5-7b`、`meta-llama/llama-2-7b` | 0.55 | 42.9 |
+| `qwen/qwen3-8b`、`microsoft/phi-3-mini` | 0.64 | 49.9 |
+| `meta-llama/llama-3.1-8b` | 0.76 | 59.3 |
+| `qwen/qwen3.6-27b`、`microsoft/phi-4`、`meta-llama/llama-4-scout` | 0.88 | 68.6 |
+| `qwen/qwen3.8-x` | 1.00 | 78.0 |
+
+命令行工具（CLI）的页脚写着「live AA / LiveBench / Aider merged when reachable」，把 LiveBench 归进了在线抓取那一队。可代码里 `get_livebench_data()` 返回的是内置字典，一次请求都不发。页脚那句是措辞错误，不是行为描述。
+
+所有在线来源并发抓取、30 秒超时，单个失败只记日志、不影响其余（`benchmark_fetch.py:32`）。所以离线或被限流时结果照样出得来，只是退回内置快照那个月份。排名下方那行快照月份就是为这件事准备的。
+
+## 六档证据等级与三次折扣
+
+`BenchmarkEvidence.source` 有六个取值，前五档是有证据、最后一档是没有：
+
+| 档位 | 原始分权重 | 该档置信度 | 命中方式 |
+|------|------------|------------|----------|
+| `direct` | 0.62 | 1.00 | 独立榜单精确命中当前 ID |
+| `base_model` | 0.55 | 0.60 | 顺着 HuggingFace 的 `cardData.base_model` 指针 |
+| `variant` | 0.50 | 0.55 | 去掉 `-Instruct`、量化后缀后命中 |
+| `line_interp` | 0.40 | 0.22–0.26 | 同家族内按尺寸插值 |
+| `self_reported` | 0.30 | 0.40 | 只有上传者写在模型卡里的自报评测 |
+| `none` | 0.00 | 0.00 | 无可用证据 |
+
+一个继承来的分数要被折三次，文档说「双重折扣」时漏掉了一层。先按该档位的置信度折，式子是 `score × (0.75 + 0.25 × confidence)`；再乘档位权重；最后落到「继承证据」这一类时还要乘 0.78。把三层乘起来，一条置信度 0.26 的 `line_interp` 总系数是 0.254，而 `direct` 是 0.62。同一条 80 原始分，直接命中贡献 49.6 分，插值只贡献 20.3 分。
+
+还有一道防线：继承必须参数规模说得过去。`engine/ranking.py:125` 检查候选与家族主成员的参数量比，落在 0.5 倍以下或 2 倍以上就把证据作废成 `none`。这条针对的正是「小分支借大得多的基座分数往上爬」，顺手也挡掉了 MTP 头、draft 模型这类同名异物。
+
+表格里分数后面的标记对应关系：不带标记是 `direct`，`~` 是继承或插值，`!sr` 是自报，`?` 是无证据（`output/ranking.py:203`）。想只看强证据，用 `--evidence strict`（等价于 `--direct`）；`--evidence base` 允许 `direct`/`variant`/`base_model` 三档，仍然排除插值和自报。
+
+## 综合评分怎么落到一个数
+
+`engine/ranking_score.py:98` 是全项目唯一决定名次的函数，形状是「先乘后加」：
+
+```text
+core   = (bench_raw × 档位权重 + size_score) × (1 - quant_penalty)
+core   = core × 证据折扣(0.55 无证据|0.55 自报|0.78 继承|1.0 直接)
+core   = core × 形态折扣(Full GPU 1.0 | 部分卸载 0.42–0.88 | 纯 CPU 0.50)
+score  = core + speed ± 8 + popularity + source_trust + generation ± + derivative
+score  = clamp(score, 0, 100)
+```
+
+逐项的实现在这里都能落到数字上：
+
+- **规模分**：`4.2 × log2(参数量B) + 9`，封顶 35。约 73B 触顶，70B 已经到 34.74，于是 70B 与 400B 在规模分上几乎无差别。它刻意不奖励「更大」。MoE 用**总**参数量算规模，因为知识存在全部专家里；活跃参数只在速度那一步出场。
+- **量化惩罚**：32 档各有其值，从 `Q8_0` 0.01、`Q5_K_M` 0.03、`Q4_K_M` 0.05、`Q3_K_M` 0.08 一路走到 `Q2_K` 0.25、`IQ2_XXS` 0.40、`Q1_0` 与 `IQ1_S` 0.55。低于 2 bit 的档位曾经统一按 5% 处理，等于奖励极端量化，现在改成 30%–60%。
+- **部分卸载折扣**：按溢出比例取 0.42 / 0.52 / 0.62 / 0.76 / 0.86 五档。MoE 若活跃参数那部分确实能留在卡上，折扣放宽到最高 0.88；放宽不了就取 `min(0.76, 原值 + 0.08)`。
+- **人气**：下载量与点赞各贡献最多 1.0，再乘一个权重。`direct` 时这个权重是 **0**，有但非直接证据 0.2，自报 0.4，无证据 0.6。也就是说，强证据之下人气完全不起作用。
+- **来源可信度**：官方组织 +5，被点名的重传者 −5，受信任的格式转换者继承基座组织的信任、也是 +5。三份名单写死在 `engine/ranking_sources.py`。官方组织 20 个，是 Qwen、meta-llama、google、microsoft、openai、zai-org 这一类直接发布开放权重的实验室。转换者 6 个（bartowski、unsloth、QuantFactory、lmstudio-community、ggml-org、Mungert），重传者 5 个（`TheBloke`、MaziyarPanahi、mradermacher、solidrust、SanctumAI）。原始值最后还要乘 0.2 到 0.6 的权重，所以实际影响远小于 README 表格里那句「−5 到 +5」。
+- **代际**：17 个家族各有一张有序表，最老映射到 −6、最新映射到 +10；无证据或自报时乘 1.5，`direct` 时乘 0.6。
+- **衍生品惩罚**：名字里命中 29 种模式之一就直接 −10，例如 `uncensored`、`abliterat`、`heretic`、`nsfw`、`roleplay`。理由是这类分支通常只是蹭基座分数走插值。
+- **整批排除**：9 个组织的仓库根本不进排名，例如 `openai-community`、`facebook`、`EleutherAI`、`trl-internal-testing`，多是研究脚手架和测试用的假模型。另有 11 种命名模式命中即排除，`tiny-`、`debug-`、`playground`、`ci-` 都在里面。
+
+同家族内部最后择一时另有一个复合键（`ranking_score.py:33`）：上下文塞不下扣 20 分，纯 CPU 候选扣 6 分，要求强证据时 `direct` 加 5 分。`docs/scoring.md` 里那句「最终家族择一键不额外给 Full GPU 加分」说的就是这个键里没有形态项——形态折扣已经在 core 那一步乘过了。
+
+## 为什么二十七 B 会压过三十二 B
+
+README 里那组示例是这样的（原文照录，它是 2026-05 的快照，不是当前输出）：
 
 ```text
 $ whichllm --gpu "RTX 4090"
@@ -170,175 +302,181 @@ $ whichllm --gpu "RTX 4090"
 #3  Qwen/Qwen3-30B-A3B   30.0B  Q5_K_M   score 82.7   102 t/s
 ```
 
-如果只按参数量选，32B 看起来更大；如果只按速度选，MoE 那行 102 t/s 很诱人。但 whichllm 把三笔账分开：
+我在 2026-09-21 用同一参数实跑，名次已经变了，但故事一模一样：
 
-- **质量账**：27B 的 current benchmark 与时新性更强，足以压过更大的 32B 候选。
-- **量化账**：32B 在 24 GB 显存里通常需要更激进的量化，质量惩罚会被算进去。
-- **MoE 账**：`Qwen3-30B-A3B` 的速度按活跃参数估算，质量按总参数和 benchmark 证据判断；速度高不等于综合质量最高。
+| 名次 | 模型 | 量化 | 需要显存 | 估计速度 | 分数 |
+|------|------|------|----------|----------|------|
+| 1 | Qwen/Qwen3.6-27B | Q5_K_M | 21.2 GB | 27.5 tok/s | 91.0 |
+| 2 | Qwen/Qwen3.8-27B | Q5_K_M | 21.2 GB | 27.5 tok/s | 90.0 |
+| 3 | google/gemma-4-31B-it | Q4_K_M | 20.1 GB | 31.6 tok/s | 88.6 |
+| 4 | google/gemma-4-26B-A4B-it | Q6_K | 21.0 GB | 122.1 tok/s | 84.0 |
+| 8 | Qwen/QwQ-32B | Q4_K_M | 21.0 GB | 30.1 tok/s | 77.6 |
 
-这个例子也说明 whichllm 的定位：它不迷信“大”，也不迷信“快”，而是在“能跑、够强、速度可接受”之间做折中排序。
+把这几处分开算就看得懂：
 
-## 一次真实任务流：给 24 GB 显卡找 coding 模型
+- **质量**：规模那一项给不了 32B 多少优势。`4.2 × log2 + 9` 在 27.8B 与 32B 处分别是 29.15 与 30.00，「大 4B」只换来 0.85 分。真正拉开差距的是基准分与代际。
+- **量化**：同一张 4090 上，32B 只能取到 Q4_K_M（需要 21.0 GB），27B 却还留着 Q5_K_M（21.2 GB）。惩罚从 0.03 涨到 0.05，而且是乘在整个 core 上。
+- **MoE**：第 4 名那 122.1 tok/s 是活跃参数 3.8B 换来的，规模分却仍按总参数 25.8B 算。跑得快，不等于拿第一。
 
-假设你有一张 RTX 4090，想给本地 coding agent 找一个先试的模型。流程可以分成两段：先看候选状态，再把结果接到自己的运行时。
+表里前两名的 JSON 分数是 90.99 与 90.02，实际差 0.97，打印时被 `.1f` 抹成了「+1.0」。首选置信度的阈值是 gap ≥ 2.5 记 High、≥ 1.0 记 Medium，所以 0.97 落到 Low（`output/ranking.py:75`），表下方因此写着「Top candidates are very close」。还有一条容易漏看：第一名只要不是整卡、或速度置信度是 low，就再降一级。
 
-第一步，先看 coding profile 下的候选，并打开状态字段：
+## 一次完整选型流程
+
+目标是给一张 4090 找本地编码智能体（agent）的候选。默认表格已经把内存、估计速度、形态、发布日期摊开了（0.5.12 起成为默认，`--status` 因此退化成兼容别名；要看下载量用 `--details`）。
 
 ```bash
-whichllm --profile coding --gpu "RTX 4090" --top 5 --status
+whichllm --profile coding --gpu "RTX 4090" --top 5
+whichllm --profile coding --gpu "RTX 4090" --top 5 --markdown   # 贴进 issue 或群里
 ```
 
-这里要重点看三列：fit type、memory required、speed marker。full GPU 且速度估算置信度正常的候选，通常比“分数略高但 heavy partial offload”的候选更适合日常 coding agent。
+第二步做证据对照，这是最能改变判断的一步：
 
-第二步，用 JSON 把候选拉进自己的脚本：
+```bash
+whichllm --profile coding --gpu "RTX 4090" --top 10 --json \
+  | jq -r '.models[] | [.rank, .model_id, .quant_type, .benchmark_source,
+                         .benchmark_confidence, .quality_score] | @tsv'
+
+whichllm --profile coding --gpu "RTX 4090" --direct --top 10 --json \
+  | jq -r '.models[] | [.rank, .model_id, .benchmark_source] | @tsv'
+```
+
+实跑给出十条，`benchmark_source` 依次是 `direct`×3、`line_interp`、`base_model`、`variant`、`line_interp`×2、`self_reported`、`line_interp`。十个名次里只有三个有独立榜单撑着，第 4 到第 6 名的置信度分别是 0.26、0.60、0.55。加上 `--direct` 之后只剩那三条 `direct`，其余全部消失。默认榜与强证据榜差多少，就说明有多少名次是靠继承来的证据撑着的。这一步的结果会随 HuggingFace 在线候选池变动，但「十条缩成三条」这个比例在本机几次重跑里都稳定。
+
+第三步把候选交给自己的脚本。JSON 的字段名以实跑为准：表示量化档位的是 `quant_type`，表示分数的是 `quality_score`。写成 `quantization` 和 `score` 取到的是 `null`，这两个键名并不存在。
 
 ```bash
 whichllm --profile coding --gpu "RTX 4090" --top 5 --json \
-  | jq '.models[] | {
-      model_id,
-      quantization,
-      score,
-      estimated_tok_per_sec,
-      speed_confidence,
-      speed_range_tok_per_sec
-    }'
+  | jq '.models[] | {model_id, quant_type, quality_score, fit_type,
+                     vram_required_bytes, estimated_tok_per_sec,
+                     speed_confidence, speed_range_tok_per_sec}'
 ```
 
-第三步，把 HuggingFace 模型 ID 映射到你的运行时。Ollama 模型名不总是等于 HuggingFace repo ID，所以这里通常需要一层映射：
+HuggingFace 仓库 ID 与 Ollama 的模型标签不是一套命名，中间必须有一层映射：
 
 ```bash
-# 只拿 top 1 的 HuggingFace ID
 whichllm --profile coding --top 1 --json | jq -r '.models[0].model_id'
-
-# 再映射到本机已有或准备拉取的 Ollama tag
-ollama run qwen3.6:27b
+ollama run qwen3.6:27b     # 名称要按本机实际标签写
 ```
 
-如果你用 LM Studio、llama.cpp 或 text-generation-webui，也是同样思路：whichllm 负责排序和候选解释，运行时负责下载、加载、量化兼容和真实吞吐。
+采购判断用 `plan` 与 `upgrade`。`plan "Qwen2.5-72B" --quant Q8_0` 实测需要 79.6 GB。它逐卡给出「✗ Too small / ~ Partial / ✓ Full GPU」三档，并点明最低够用的卡是 A100 80GB，在那张卡上估 11.8 tok/s；H100 是 19.4，H200 是 27.9。
 
-## `run` 与 `snippet`：从推荐走到可执行
+`upgrade` 会把每套配置与本机对比，给出 ΔQ、Δ速度和一个结论。结论的阈值直接写在 `output/upgrade.py:54`：
 
-whichllm 不只输出推荐表，也能直接帮你启动一个临时聊天环境：
+| 结论 | 条件 |
+|------|------|
+| worth it | ΔQ ≥ 12 **且** Δ速度 ≥ 10 tok/s |
+| meaningful | ΔQ ≥ 8 **或** Δ速度 ≥ 20 tok/s |
+| marginal | ΔQ ≥ 3 或 Δ速度 ≥ 5 tok/s |
+| downgrade | ΔQ ≤ −3 或 Δ速度 ≤ −5 tok/s |
+| flat | 以上都不满足 |
+
+拿本机那台 16 GB 的 M4 做基准，模拟 4090 得 ΔQ +10.5、Δ速度 +2，判 meaningful；换 5090 得 ΔQ +12.4、Δ速度 +14，判 worth it。两组阈值里一个用「且」、一个用「或」，读结论时值得回头确认这两个字。
+
+两个旋钮会显著改变结果：
+
+- `--vram-headroom` 默认 `auto`，按 `max(512 MB, min(5% × 显存, 2 GiB))` 预留，模拟 4090 上实测算得 1.2 GB。嫌 LM Studio 说「差一点点」就写 `1.5GB`。
+- `--speed usable|fast` 是**绝对**门槛（10 与 30 tok/s），与形态无关。`--cpu-only --speed usable` 实测只剩 4 条，最快的是 18 tok/s 的 8B-A1B MoE，27B 那档根本进不来。
+
+## 把推荐接进本机的两个子命令
+
+`run` 不往你的环境里装任何东西。它拼一条 `uv run --no-project --with …` 就地执行（`cli.py:1455`），依赖按格式挑：
+
+| 权重格式 | 注入的依赖 |
+|----------|------------|
+| GGUF | `llama-cpp-python`、`huggingface-hub` |
+| AWQ | `transformers`、`torch`、`accelerate`、`autoawq` |
+| GPTQ | 同上，换 `auto-gptq` |
+| FP16 / BF16 | `transformers`、`torch`、`accelerate` |
+
+机器上没有 `uv` 会直接停下并给出安装地址，不会退化成用系统 pip。
 
 ```bash
-# 指定模型，自动选择合适 GGUF 变体
 whichllm run "qwen 2.5 1.5b gguf"
-
-# 不指定模型，让 whichllm 先为当前硬件挑一个
-whichllm run
-
-# CPU-only 场景
+whichllm run                       # 先为当前硬件挑一个
 whichllm run "phi 3 mini gguf" --cpu-only
-```
-
-`run` 会通过 `uv` 拉起隔离环境、安装依赖、下载模型并进入交互式聊天。它适合快速验证“能不能跑起来”和“体感是否可接受”，不适合替代你的长期推理服务。公司机器或安全敏感环境里，先用 `snippet` 看清依赖和模型文件，再把安装、下载和缓存路径纳入自己的供应链策略，会比直接运行更稳。
-
-如果你要把模型嵌进自己的 Python 工具，`snippet` 更直接：
-
-```bash
-whichllm snippet "qwen 7b"
 whichllm snippet "llama 3 8b gguf" --quant Q5_K_M
 ```
 
-它会打印可复制的 Python 代码，通常基于 `llama-cpp-python` 或 transformers 系列依赖。这个功能的好处是少查一次模型文件名，尤其适合 GGUF repo 里有十几个量化文件时使用。
+`snippet` 只打印代码片段、不执行，适合公司机器上先审后跑。0.5.16 修过一个值得知道的问题。生成的脚本原先会把仓库 ID、文件名、量化名直接拼进代码，现在统一以 Python 字面量嵌入（`cli.py:1215`）。也就是说，**模型卡里被恶意构造的元数据不能再改写生成代码的结构了**。实跑 `snippet "llama 3 8b gguf" --quant Q5_K_M` 能看到 `repo_id='MaziyarPanahi/…'` 这种带引号的字面量。
 
-## 什么时候该信，什么时候要自己测
+那次实跑顺带暴露了一个不对称：它挑中的是 `MaziyarPanahi`，而这个名字就在重传者扣分名单上。原因是 `run` 与 `snippet` 的检索按名字、规模和量化可用性匹配，不查来源可信度，扣分只发生在排序那条线上。**把 `run` 当成「工具已经替你把过来源」来信任，是这份代码不支持的假设。**
 
-以下场景适合把 whichllm 放在第一轮筛选：
+## 常见故障与排查
 
-- 你刚买机器，不知道当前硬件该先跑哪一档模型；
-- 你准备升级显卡，想比较 RTX 4090、RTX 5090、H100 或 Apple M 系列之间的候选差异；
-- 你要给脚本或 CI 找一个结构化推荐入口；
-- 你不想在 HuggingFace 上手动比较几十个 GGUF、AWQ、GPTQ 变体；
-- 你关心“候选是否有 benchmark 证据”，而不是只看下载量。
+`docs/troubleshooting.md` 列了 21 个条目。下表按现象合并成十行，覆盖日常最容易撞上的那几类：
 
-下面这些场景要把 whichllm 当作参考，而不是最终答案：
+| 现象 | 先查哪里 | 机制 |
+|------|----------|------|
+| 一个候选都没有 | `whichllm hardware` 看探测到的显存；再试 `--vram 8` | 显存与可用内存都不够时模型直接不参与排序 |
+| 只有一两个能跑，怀疑漏判 | `--fit any`、`--vram-headroom none` | 默认的余量与形态过滤会主动排除贴边候选 |
+| 结果像是旧的 | 表下方那行快照月份；`--refresh` 绕开缓存 | 模型缓存 6 小时、分数缓存 24 小时 |
+| 第一名带 `?` 或 `!sr` | `--evidence strict` 对照 | 插值与自报证据的三层折扣（见前文） |
+| 速度估计和实机差得远 | 看 `speed_confidence` 与 `speed_notes` | 中位估计本身就是 0.6–1.6 倍的区间 |
+| `run` 说 `uv is required` | 装 `uv`，或改用 `snippet` 自己跑 | 该子命令把执行完全委托给 uv |
+| 内网或镜像环境抓不到模型 | 设 `HF_ENDPOINT` | 0.5.13 起所有 HuggingFace 元数据请求都走它 |
+| 磁盘明明够却判不可运行 | 检查家目录剩余空间 | 磁盘余量按家目录测，不是模型缓存所在分区 |
+| `--profile math` 和 `general` 结果一样 | 这不是 bug | 0.5.17 起该档只排除带 coding/vision 名字的仓库，不设数学专属权重。实测两档前三名一模一样 |
+| `--profile vision` 只剩孤零零一条 | 换 `--profile any` 再看 | 视觉仓库只在 `vision` 与 `any` 两档参与抓取。模拟 4090 实测该档只有 1 条，且 `benchmark_source` 是 `none` |
 
-| 场景 | 原因 |
-|------|------|
-| 服务端多卡推理 | 它不完整模拟 tensor parallel、pipeline parallel、batch 调度和显存碎片。 |
-| 长上下文生产任务 | KV cache 与 RoPE / YaRN / 后端优化会显著改变真实表现。 |
-| 小众微调模型 | 可能没有 direct benchmark，只能继承、插值或依赖自报。 |
-| 业务专用质量 | 公开 benchmark 不能代表你的代码库、客服语料、法律文本或金融策略任务。 |
-| 严格延迟 SLA | `estimated_tok_per_sec` 是规划数，不能替代本机压测。 |
-| 安全敏感环境 | `run` 会安装依赖并下载模型；企业环境应先审依赖、锁版本、走内网镜像。 |
+## 五道自测题
 
-一个实用的验收办法是：让 whichllm 给出 top 3，再用你自己的 20-50 条任务样本做小测。评估不要只看回答质量，还要记录首 token 延迟、平均 tok/s、内存峰值、失败率和长上下文稳定性。whichllm 负责缩小搜索空间，你自己的测试负责最后决策。
+1. 同一张卡，为什么 `--context-length 128k` 会让默认榜的第一名消失？把四项里随上下文变化的那两项各自估一个量级，再说明为什么换量化也救不回来。
+2. 一个 7B 的微调分支拿到了它 70B 基座的公开分数。要让它不能靠这个分数往上爬，代码里是哪条判断在起作用？
+3. `speed_confidence` 是 `low`、`speed_range_tok_per_sec` 是 `[9.6, 54.0]`，这个候选值不值得进第一轮实测？区间宽度说明什么？
+4. `--profile coding` 会筛掉什么，`--profile math` 又会筛掉什么？为什么后者几乎筛不掉头部模型？
+5. 表上写「#1 91.0 · #2 90.0」，页脚却把首选置信度标成 Low。哪个数字被格式化过？这时照第一名装，错在哪一步？
 
-## 常见误区
+## 谁该先用它，谁可以再等等
 
-**误区一：分数最高就一定最好。**
+适合放在第一轮的场景：刚拿到机器不确定该跑哪一档；换卡前想比较 4090 / 5090 / H100 / M 系列的候选差异；要给脚本或 CI 一个结构化推荐入口；不想手工对比几十个 GGUF、AWQ、GPTQ 变体；关心「有没有独立证据」胜过关心下载量。
 
-分数高说明它在 whichllm 当前证据链和硬件估算里更值得优先尝试。对于代码补全、RAG、长文档问答、视觉任务或 agent 工具调用，最终还要看你的任务集。
+再等一等的，以及各自的理由：
 
-**误区二：`?` 分数就不能用。**
+| 场景 | 为什么不够 |
+|------|------------|
+| 多卡服务端 | 不建模张量并行与流水并行，权重和 KV 也不会按卡分配，只给一个合并后的保守预算 |
+| 严格延迟要求 | 速度是规划数，最宽的区间能到 0.35–2.00 倍 |
+| 长上下文生产 | 只有声明了窗口且运行时确实执行的模型才享滑窗折扣，其余按全长算 |
+| 业务专用质量 | 公开分数回答不了你的代码库、客服语料或金融文本上的表现 |
+| 小众微调与刚发布的模型 | 常落到 `line_interp` 或 `none`，一条 80 原始分只能贡献约 20 分 |
+| 安全敏感环境 | `run` 会装依赖并下载权重，且检索不查来源可信度 |
 
-`?` 代表缺少可用 benchmark，不代表模型差。新发布或小众微调模型很容易出现这个状态。只是你不能把它的分数当成强证据。
+采用顺序按风险从低到高排：
 
-**误区三：MoE 的高 tok/s 等于更强。**
+1. `uvx whichllm@latest --top 5`，先看默认榜和表下方那行快照月份。月份太旧就别往下走。
+2. 同参数各加 `--details` 与 `--evidence strict` 再跑一遍，看名次里有多少依赖继承。
+3. 按任务收一次口子，例如 `--profile coding`。`math` 那一档的实际含义见排查一节。
+4. 再收一次运行口子：`--vram-headroom 1.5GB --speed usable --gpu-only`，得到一组确定塞得下且不太慢的候选。
+5. 把前三名拿回自己的 20–50 条任务样本实测，记下首字延迟、平均速度、内存峰值与失败率。前四步只是缩小搜索空间，最后这一步才产生可用的结论。
 
-MoE 推理速度常按活跃参数估算，但模型质量仍和总参数、训练质量、路由、benchmark 证据有关。速度高是可用性优势，不自动转化为任务质量。
+## 下一步读哪份代码
 
-**误区四：HuggingFace ID 可以直接丢给 Ollama。**
+只读四个文件就能掌握全部判决逻辑，顺序也是有意的：
 
-Ollama tag、LM Studio 模型文件和 HuggingFace repo ID 不是同一个命名体系。whichllm 的 JSON 输出适合做中间层，真正运行时通常还要映射。
+1. `engine/ranking_score.py`（259 行）——名次唯一的决定点，`_compute_quality_score` 一个函数读完就懂。
+2. `engine/vram.py`（100 行）——四项内存与滑窗折扣，全项目最短的一段。
+3. `engine/performance.py`（284 行）——带宽反推、MoE 读取下限、统一内存那对 0.45/0.85。
+4. `models/benchmark_fetch.py`（119 行）——两个桶的合并顺序与降级策略。
 
-**误区五：`--gpu` 模拟等于真实机器。**
+想看修 bug 的现场就读 CHANGELOG 的 0.5.11 到 0.5.19 段。多卡模拟、`--vram-headroom`、滑窗折扣、生成脚本的注入修复、`--profile math` 的语义变更、家族合并过度造成的检查点串档，都落在这九个版本里。
 
-`--gpu` 很适合购卡前比较方向，但它无法模拟驱动版本、散热、PCIe 拓扑、后端编译选项和系统负载。买硬件前可参考，部署前还要实测。
+## 维护与复核指引
 
-## 推荐采用顺序
+这份文章里的数字有明确保质期，三类内容会先过期：
 
-把 whichllm 加进本地 LLM 工作流，可以按这个顺序来：
+- **会随数据漂移的**：所有排行榜分数、名次、`published_at`、下载量。它们来自 HuggingFace 与内置快照的合并，快照月份是 2026-05。复核只需 `uvx whichllm@latest --gpu "RTX 4090" --top 8`，对比表下方那行快照月份。
+- **会随版本漂移的**：默认列构成、`--status` 的语义、`--profile math` 的行为、量化档位与惩罚表、17 个家族名单、三份来源可信度名单。复核入口是 `src/whichllm/data/quantization.py`、`data/lineage.py`、`engine/ranking_sources.py`，加上 `CHANGELOG.md`。
+- **短期稳定的**：四项内存公式、3.5 MiB 的 KV 系数、六档权重、规模分那条曲线、多卡的 0.95 与 0.90、速度区间的三档。这些属于设计决定，要改就得连着测试一起改。`tests/` 那 516 项就是它们的锚点。
 
-1. **先跑当前机器。**
+术语与符号约定，供后续修订时保持一致。分数列的 `~` / `!sr` / `?` 只谈证据，速度列的 `~` / `?` 只谈估计置信度，两组符号含义不同，不可互换。「冻结层」指 OLLB 与 Arena；「当前层」指 LiveBench、Artificial Analysis、Aider 和视觉指数。指这两个桶时用「层」或「桶」，别写成「缓存」——`~/.cache/whichllm/` 那个缓存是另一回事。
 
-   ```bash
-   uvx whichllm@latest --top 5 --status
-   ```
+## 参考
 
-   先确认推荐是否 full GPU、速度估算是否可信、有没有 `~` / `?` / `!sr` 标记。
-
-2. **再按任务 profile 过滤。**
-
-   ```bash
-   whichllm --profile coding --top 5
-   whichllm --profile math --top 5
-   whichllm --profile vision --top 5
-   ```
-
-   不同任务对 benchmark 源的依赖不同，通用推荐不一定适合 coding agent 或视觉输入。
-
-3. **用 `--direct` 做强证据对照。**
-
-   ```bash
-   whichllm --profile coding --direct --top 5
-   ```
-
-   如果 direct 结果和默认结果差很远，说明默认推荐里可能有继承或插值证据，需要多看一眼。
-
-4. **用 `plan` 和 `upgrade` 做购卡判断。**
-
-   ```bash
-   whichllm plan "Qwen2.5-72B" --quant Q8_0
-   whichllm upgrade "RTX 4090" "RTX 5090" "Apple M4 Max"
-   ```
-
-   这一步适合回答“为了跑某个模型，硬件差多少”。
-
-5. **回到自己的评测集。**
-
-   下载 top 2-3 个候选，在同一推理后端、同一 prompt 模板、同一上下文长度下跑小样本。whichllm 的推荐可以帮你少试十几个模型，但不能替你定义业务质量。
-
-## 参考资料
-
-1. [Andyyyy64/whichllm GitHub 仓库](https://github.com/Andyyyy64/whichllm)
-2. [whichllm PyPI 页面](https://pypi.org/project/whichllm/)
-3. [whichllm Scoring 文档](https://github.com/Andyyyy64/whichllm/blob/main/docs/scoring.md)
-4. [whichllm How it works 文档](https://github.com/Andyyyy64/whichllm/blob/main/docs/how-it-works.md)
-5. [whichllm Hardware detection and simulation 文档](https://github.com/Andyyyy64/whichllm/blob/main/docs/hardware.md)
-6. [Qwen/Qwen3.6-27B HuggingFace 模型页](https://huggingface.co/Qwen/Qwen3.6-27B)
-
-## 最后的判断
-
-whichllm 把本地 LLM 选型拆成了可检查的证据链：模型从哪来，分数从哪来，能不能放进内存，速度估算有多不确定，量化和卸载付出了什么代价。把这些问题摊开之后，本地模型选择才从“下载几个试试看”变成一件能复盘的工程决策。
+1. [Andyyyy64/whichllm 仓库](https://github.com/Andyyyy64/whichllm)（提交 `4f4fc268`，0.5.19）
+2. [whichllm PyPI 项目页](https://pypi.org/project/whichllm/)
+3. [Scoring 文档](https://github.com/Andyyyy64/whichllm/blob/main/docs/scoring.md)
+4. [How it works 文档](https://github.com/Andyyyy64/whichllm/blob/main/docs/how-it-works.md)
+5. [Hardware detection and simulation 文档](https://github.com/Andyyyy64/whichllm/blob/main/docs/hardware.md)
+6. [Troubleshooting 文档](https://github.com/Andyyyy64/whichllm/blob/main/docs/troubleshooting.md)
+7. [CHANGELOG](https://github.com/Andyyyy64/whichllm/blob/main/CHANGELOG.md)
+8. [Qwen/Qwen3.6-27B 模型页](https://huggingface.co/Qwen/Qwen3.6-27B)（本次实跑的 HuggingFace 接口返回该仓库，故引用）

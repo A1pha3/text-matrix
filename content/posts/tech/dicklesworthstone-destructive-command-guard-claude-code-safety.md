@@ -1,300 +1,398 @@
 ---
-github_repo: "Dicklesworthstone/destructive_command_guard"
-source_key: "gh:Dicklesworthstone/destructive_command_guard"
-title: "DCG 实战：把 AI 编码代理挡在破坏性命令之外"
+title: "dcg 拆解：103 个安全包里默认只开 3 个，剩下的全是策略问题"
 date: 2026-07-13T03:01:47+08:00
+lastmod: 2026-09-21T12:40:00+08:00
+draft: false
 categories: ["技术笔记"]
 tags: ["Rust", "AI Agent", "Claude Code", "安全", "CLI工具"]
-description: "DCG 是为 Claude Code、Codex CLI 等 AI 编码代理设计的高性能钩子。50+ 安全包拦截破坏命令,Rust+SIMD 压时延,heredoc 三层管线捕获嵌入式脚本危险语句。"
+description: "把 Dicklesworthstone/destructive_command_guard v0.14.4 的官方二进制装上实跑一遍，再读 main 分支：默认只有 3 个包在评估，1,114 条破坏性模式按四档严重度决定是拦还是只警告，explain 输出里的 decision 不是最终处置，超时与不可判定也不再一律放行。文末给出一张可复算的实测表，以及 README 的说法与二进制行为对不上的四处。"
 slug: dicklesworthstone-destructive-command-guard-claude-code-safety
+github_repo: "Dicklesworthstone/destructive_command_guard"
+source_key: "gh:Dicklesworthstone/destructive_command_guard"
 ---
-# DCG 实战：把 AI 编码代理挡在破坏性命令之外
 
-> 仓库：`Dicklesworthstone/destructive_command_guard`（[GitHub](https://github.com/Dicklesworthstone/destructive_command_guard)），截至 2026-07-13 公开数据 2672 stars、101 forks，主语言 Rust。
+判断 `dcg`（Destructive Command Guard，破坏性命令守卫）值不值得接进自己的工作流，靠的不是它列出了多少条危险命令，而是三件更容易被忽略的事。**默认状态下它只评估 3 个包**，其余 100 个要自己启用。**同一条规则命中之后可以拦、可以只警告、也可以静默记录**：处置方式与规则本身是两套东西。**"解析不了就放行"这条概括已经不准**：超时与不可判定走的是显式的 `ask` 或者阻断。
 
-## 一、为什么会有这个项目
+这三点合起来决定了它是个什么东西：不是命令黑名单，而是一个带策略引擎的钩子（hook），规则库只是它最大的一块资产。
 
-AI 编码代理（Claude Code、Codex CLI、Gemini CLI、Copilot CLI、Cursor 等）让代码编写速度上了一个台阶，但它们偶尔会跑出让人心跳骤停的命令：`git reset --hard HEAD~5`、`rm -rf ./src`、`DROP TABLE users`、`chmod 777 -R /`。一条命令几秒就能毁掉几小时甚至几天的未提交工作。
+下面的结论只有两类来源。一是 main 分支（提交 `add38e4`，2026-09-20）里的文件与行号；二是官方发布物 `dcg v0.14.4` 的实跑输出，aarch64-apple-darwin 那份 tar 包的 SHA256 与发布页一致。本机跑不到的部分——原生 Windows、真实代理客户端的端到端链路——一律标为未验证，不混进结论。
 
-`destructive_command_guard`（下文简称 `dcg`）正是为这类场景设计的防护层。它是一个 PreToolUse（工具调用前）钩子，在命令真正交给 shell 执行之前做一次语义过滤，命中规则就拒绝执行，并把"为什么被拦、应该改用什么"以人可读的格式返回给代理。
+## 项目坐标
 
-它的核心判断是：危险操作必须可恢复。`core.git` 和 `core.filesystem` 是不可关闭的硬底线，`core.filesystem` 覆盖危险 `rm -rf` 模式，`core.git` 拦截破坏性 git 操作，包括未提交修改丢失、历史重写、stash 销毁等场景。其他 50+ 安全包则按需启用，覆盖数据库、Kubernetes、Docker、AWS、Terraform、Stripe 等常见生产环境。
+| 项 | 值 | 出处 |
+|------|------|------|
+| 定位 | AI 编码代理的 `PreToolUse` 钩子，在命令交给 shell 之前做一次评估 | `Cargo.toml` 的 `description`、README 首段 |
+| 当前版本 | v0.14.4，发布于 2026-09-16；`git describe` 报 `v0.14.4-181-gadd38e40`，即 main 比这个标签多 181 次提交 | Releases 页、`git describe --tags` |
+| 语言与工具链 | Rust，edition 2024，`rust-version = 1.95`；发布构建锁 `nightly-2026-08-31` | `Cargo.toml`、`rust-toolchain.toml` |
+| 规则规模 | 103 个包、28 个命名空间；1,114 条破坏性模式与 865 条安全模式 | `dcg packs --format json` 与 `--verbose --expand`（本文实测） |
+| 严重度分布 | critical 305、high 665、medium 138、low 6 | 同上，按 `--verbose --expand` 输出的标签计数 |
+| 默认启用 | 3 个包：`core.filesystem`、`core.git`、`system.disk` | `dcg config`（本文实测） |
+| 星标 / 复刻 / 未关闭条目 | 6025 / 246 / 12 | GitHub 仓库接口，2026-09-21 取 |
+| 仓库节奏 | 首次提交 2026-01-07，累计 2,484 次提交、71 个 Release | `git log`、Releases 列表 |
+| 贡献者 | GitHub 计 2 名：作者本人 2,466 次、dependabot 14 次 | contributors 接口 |
+| 许可证 | MIT 加一条附加条款（rider），把 OpenAI 与 Anthropic 及其代理方列为"不授予任何权利"的对象 | `LICENSE` 第 1 行与 rider 段 |
+| 发布平台 | Linux（glibc / musl）、macOS（arm64 / x86_64）、Windows（arm64 / x86_64）共 6 个目标 | Release 资产名 |
 
-## 二、设计目标与整体形态
+README 里有两处自我概括要按这张表校正。特性表写着 "50+ Security Packs"（`README.md:49`），那是包系统刚成型时留下的口径，今天 `dcg packs` 报的是 103。下一行写着 "Sub-Millisecond Latency"（`README.md:50`），指的是快路径的设计预算而不是端到端延迟，本文"这些数字测的是什么"一节把它拆开算。
 
-`dcg` 的目标受众是使用 AI 编码代理的开发者与团队。它的整体形态可以归纳为四点：
+## 目录
 
-1. **零配置防护**：开箱即用，三个默认启用的"核心包"（`core.filesystem`、`core.git` 在所有平台启用，`system.disk` 在 Linux/macOS 启用，Windows 上额外启用 `windows.filesystem` 与 `windows.system`）覆盖最常见的不可逆操作。
-2. **亚毫秒拦截**：基于 Rust + SIMD 加速的正则匹配 + 懒编译模式，热路径在 100 微秒以下，常见命令在 1 毫秒以内完成判断，代理不会因为防护层感知到明显延迟。
-3. **上下文感知**：能在文本匹配和"这是一条要被执行的命令"之间做区分。它不会拦截 `grep "rm -rf"` 这样的字符串检索，但会拦截 `rm -rf /` 这种真实执行意图。
-4. **优雅降级**：解析失败、超时、扫描器异常时默认允许通过（fail-open），避免把代理的正常工作流锁死。可以通过 `DCG_FAIL_CLOSED=1` 切换到 fail-closed。
+- [项目坐标](#项目坐标)
+- [一条命令在 dcg 里走完全程](#一条命令在-dcg-里走完全程)
+- [三件事别混成一件](#三件事别混成一件)
+- [默认防线拦什么，不拦什么](#默认防线拦什么不拦什么)
+- [关得掉与松得动](#关得掉与松得动)
+- [内联脚本与 heredoc 的三层管线](#内联脚本与-heredoc-的三层管线)
+- [不可判定不等于放行](#不可判定不等于放行)
+- [一次真实拦截：从拒绝输出到短码放行](#一次真实拦截从拒绝输出到短码放行)
+- [代理差异化与配置优先级](#代理差异化与配置优先级)
+- [装起来与验收](#装起来与验收)
+- [这些数字测的是什么](#这些数字测的是什么)
+- [常见误区](#常见误区)
+- [该不该装，谁来先装](#该不该装谁来先装)
+- [五道自测题](#五道自测题)
+- [出错时先看哪几处](#出错时先看哪几处)
+- [下一步读哪份代码](#下一步读哪份代码)
+- [维护指引与事实边界](#维护指引与事实边界)
+- [参考资料](#参考资料)
 
-支持的代理非常广，README 明确列出的包括：Claude Code、Codex CLI 0.125.0+、Gemini CLI、GitHub Copilot CLI、VS Code Copilot Chat（通过 Claude-hook 兼容层）、Cursor IDE、Hermes Agent、Grok（xAI）（同时支持 `~/.grok/hooks/` 原生接口与 Claude 兼容层）、Antigravity CLI（`agy`）、OpenCode（社区插件）、Pi（扩展配方）、Aider（仅 git hook 范围）、Continue（仅检测范围）。Windows 原生通过 PowerShell 安装器支持。
+## 一条命令在 dcg 里走完全程
 
-## 三、安全包系统：50+ 规则的模块化组织
+先把系统地图画出来。代理每次触发 shell 工具，会把一段 JSON 从标准输入喂给 `dcg`；`dcg` 决定放行、请求人工确认还是拒绝，再按调用方的协议把结论写回标准输出。整段判断通常在几百微秒到几毫秒之内完成：
 
-`dcg` 的核心抽象是"安全包（pack）"。一个 pack 是一组针对特定工具或生态的破坏性命令模式。官方 README 列出了完整的包目录，这里按类别梳理一遍：
+```text
+stdin: {"tool_name":"Bash","tool_input":{"command":"git reset --hard"}}
+   │
+   ├─ 解析钩子报文        失败 → 默认放行并留审计警告（可切 fail-closed）
+   ├─ 关键词预筛          Aho-Corasick 自动机，一次扫描过全部已启用包的关键词
+   ├─ 归一化              引号、转义、链接符
+   ├─ 安全模式匹配        命中即放行（865 条）
+   ├─ 破坏性模式匹配      命中进入处置（1,114 条）
+   ├─ heredoc / 内联脚本  三层管线，只在触发词命中时才付这笔钱
+   └─ 处置                严重度 → deny / ask / warn / log，可被策略逐条改写
+```
 
-**存储类**（`storage.*`）：覆盖 S3、GCS、MinIO、Azure Blob Storage 的桶删除、对象删除、递归删除等。
+关键词预筛是这里最容易被误读的一环。README 用"SIMD 加速"来描述这一步，实际的第一道闸是 `aho_corasick::AhoCorasick`：一张按已启用包关键词表构建的多模式匹配自动机（`src/packs/mod.rs:578`、`:1192`，快捷入口 `pack_aware_quick_reject()` 在 `src/packs/mod.rs:3497`）。正则排在它后面，是 `RegexSet` 与懒编译模式。用哪个库不影响判断，但影响到"关掉几个包能不能加速"这类实际提问：能，因为关键词表变小了，预筛的通过率也变了。
 
-**远程操作类**（`remote.*`）：覆盖 rsync 的 `--delete`、scp 覆盖系统路径、ssh 远程命令与密钥管理。
+延迟预算写在 `src/perf.rs:20-26` 的注释表里，分档给出目标值、警告线与熔断线：
 
-**数据库类**（`database.*`）：postgresql 的 DROP DATABASE / TRUNCATE / dropdb；MySQL；MongoDB 的 dropDatabase / dropCollection / 无条件 remove；Redis 的 FLUSHALL / FLUSHDB / 批量删除键；SQLite 的 DROP TABLE / 无 WHERE 的 DELETE；Supabase CLI 的数据库重置、迁移回滚、函数/密钥/存储删除、项目移除等。
+| 档 | 路径 | 目标 | 警告超 | 熔断超 |
+|----|------|------|--------|--------|
+| 0 | 关键词快速拒绝 | < 1 μs | > 5 μs | > 50 μs |
+| 1 | 快路径 | < 75 μs | > 150 μs | > 500 μs |
+| 2 | 模式匹配 | < 100 μs | > 250 μs | > 1 ms |
+| 3 | heredoc 触发 | < 5 μs | > 10 μs | > 100 μs |
+| 4 | heredoc 提取 | < 200 μs | > 500 μs | > 2 ms |
+| 5 | 语言识别 | < 20 μs | > 50 μs | > 200 μs |
+| 6 | 完整 heredoc 管线 | < 5 ms | > 15 ms | > 20 ms |
 
-**容器类**（`containers.*`）：Docker 的 `system prune` / `volume prune` / `force removal`；Compose 的 `down -v`（连同卷一起删）；Podman 同样操作。
+超过 1000 ms 的评估不是"算完了"，而是转成显式的不可判定结论（`src/perf.rs:28-32`）——这一条与后面"不可判定不等于放行"一节直接相关。
 
-**Kubernetes 类**（`kubernetes.*`）：kubectl 的 `delete namespace` / `drain` / 批量删除；Helm 的 `uninstall` / 无 dry-run 的 rollback；Kustomize 与 kubectl delete 组合的危险用法。
+## 三件事别混成一件
 
-**云服务类**（`cloud.*`）：AWS 的 `terminate-instances` / `delete-db-instance` / `s3 rm --recursive`；Azure 的 `vm delete` / 存储账户删除 / 资源组删除；GCP 的 `instances delete` / `sql instances delete` / `gsutil rm -r`。
+大多数对 `dcg` 的错误预期，来自把下面三件事当成一件事：**哪些规则在评估**、**规则覆盖面有多大**、**命中之后怎么处理**。
 
-**API 网关类**（`apigateway.*`）：Apigee、AWS API Gateway（REST + HTTP）、Kong。
+第一件是硬底线。`core.filesystem` 与 `core.git` 永远参与评估，写 `disabled = ["core.filesystem"]` 会被忽略；`system.disk` 默认开但可以关。实测把 `DCG_DISABLE=core.git` 塞进环境，`git reset --hard` 依然被拒；换成 `DCG_DISABLE=system.disk`，`mkfs` 就真的没了防护。所以"不可关闭"只适用于两个 `core.*` 包。
 
-**基础设施类**（`infrastructure.*`）：Ansible、Atmos、Pulumi、Terraform（`destroy` / `taint` / 带 `-auto-approve` 的 `apply`）。
+第二件是覆盖面，而且它要自己点名。103 个包分成 28 个命名空间，默认在跑的只有 3 个；数据库、容器、云资源、密钥、备份各成一类，得逐个写进 `[packs] enabled`。这一步没做，清容器状态、往数据库发删表语句、删集群里的命名空间都会安静地通过（下一节的实测表逐条列出了哪些通过）。README 在这一点上说得明白：`dcg init` 生成的示例配置里替读者开了 PostgreSQL 与 Docker 两支包，那是模板，不是无配置默认值（`README.md:244-249`）。
 
-**系统类**（`system.*`）：磁盘操作（`dd` 写设备、`mkfs`、`fdisk` / `parted`、`mdadm`、btrfs、dmsetup、nbd-client、LVM 命令）；权限操作（`chmod 777`、递归 `chmod` / `chown` 打到系统目录）；服务操作（停关键服务、改 init 配置）。
+第三件是处置。规则命中不等于命令被拦：每条规则带一个严重度，严重度映射到 `deny` / `ask` / `warn` / `log` 四档之一。`critical` 与 `high` 默认 `deny`，`medium` 默认 `warn`（放过去，但在标准错误上留一段说明），`low` 默认 `log`（静默记录）。这就是为什么有些"看起来很危险"的命令跑通了——它被命中了，只是处置是警告。
 
-**CI/CD 类**（`cicd.*`）：CircleCI、GitHub Actions（删除 secrets/variables、对 `/actions` 端点 DELETE）、GitLab CI、Jenkins。
+## 默认防线拦什么，不拦什么
 
-**密钥管理类**（`secrets.*`）：AWS Secrets Manager / SSM Parameter Store；Doppler；1Password CLI；Vault CLI（删除密钥、禁用引擎、撤销租约/令牌、删除策略）。
+下面这份输出是 `dcg v0.14.4` 在无配置文件状态下的实测结果，逐条取自 `dcg explain --format json`。`dec` 是报文里的判定字段，`mode` 与 `outc` 才是最终处置；行末没有括号标注的，就是默认那 3 个包覆盖到的。
 
-**平台类**（`platform.*`）：GitHub CLI（删仓库、gists、releases、SSH keys）；GitLab；Kamal 2.x（`kamal remove` / `kamal accessory remove`）；Modal；Railway。
+```text
+command                                dec   mode  outc  rule_id                          severity
+git reset --hard HEAD~5                deny  deny  deny  core.git:reset-hard              critical
+git push --force origin main           deny  deny  deny  core.git:push-force-long         critical
+git clean -fdx                         deny  deny  deny  core.git:clean-force             critical
+git stash clear                        deny  deny  deny  core.git:stash-clear             critical
+git checkout -- src/main.rs            deny  deny  deny  core.git:checkout-discard        high
+git stash drop                         deny  warn  warn  core.git:stash-drop              medium
+rm -rf ./src                           deny  deny  deny  core.filesystem:rm-rf-general    high
+dd if=/dev/zero of=./tmpfile bs=1M count=1  deny deny deny core.filesystem:dd-overwrite-general  high
+mkfs.ext4 /dev/sdb1                    deny  deny  deny  system.disk:mkfs                 high
+wipefs -a /dev/sda                     deny  deny  deny  system.disk:wipefs               high
+rm -rf /tmp/build                      allow --    --    --                                            临时子目录豁免
+git push --force-with-lease origin main allow --   --    --                                            需 strict_git
+git rebase -i HEAD~3                   allow --    --    --                                            需 strict_git
+chmod -R 777 /                         allow --    --    --                                            需 system.permissions
+docker system prune -af                allow --    --    --                                            需 containers.docker
+psql -c "DROP TABLE users"             allow --    --    --                                            需 database.postgresql
+redis-cli FLUSHALL                     allow --    --    --                                            需 database.redis
+kubectl delete namespace prod          allow --    --    --                                            需 kubernetes.kubectl
+terraform destroy -auto-approve        allow --    --    --                                            需 infrastructure.terraform
+```
 
-**DNS 类**（`dns.*`）：Cloudflare（记录删除、zone 删除）、Route53、nsupdate 类的通用 DNS 工具。
+三点值得单独说。带远端比对的那一种强推默认放行是刻意的：它本来就安全，覆盖它等于把一种正确用法一并禁掉；要连它一起禁得启用 `strict_git`，实测启用后强制推送这一族规则整体生效。交互式变基与丢弃单个 stash 在默认档位下不构成硬拦，前者同样归 `strict_git` 管，后者只落一个警告——`medium` 严重度的默认处置就是放行加一段说明。最后，`dd` 写普通文件也算命中，`core.filesystem` 管的不只是块设备。
 
-**邮件类**（`email.*`）：Mailgun、Postmark、SendGrid、AWS SES。
+启用包之后覆盖面差别很大，随手验证几条：
 
-**特性开关类**（`featureflags.*`）：Flipt、LaunchDarkly、Split、Unleash。
+```text
+DCG_PACKS=database.postgresql  psql -c "DROP TABLE users"   → database.postgresql:drop-table
+DCG_PACKS=database.redis       redis-cli FLUSHALL           → database.redis:flushall
+DCG_PACKS=kubernetes.kubectl   kubectl delete namespace prod → kubernetes.kubectl:delete-namespace
+DCG_PACKS=system.permissions   chmod -R 777 /               → system.permissions:chmod-777
+```
 
-**负载均衡类**（`loadbalancer.*`）：AWS ELB/ALB/NLB；HAProxy；nginx；Traefik。
+只写命名空间也能整类启用：`enabled = ["database"]` 会展开成数据库这一类下全部 9 个子包。它是子包最多的一类，除常见的五支外还有 Snowflake、BigQuery、Databricks 与 Supabase。反过来 `disabled = ["database.redis"]` 可以只摘掉一支。
 
-**消息类**（`messaging.*`）：Kafka（删除 topic、删除 consumer group、重置 offset、删除 records）；NATS/JetStream；RabbitMQ；AWS SQS/SNS。
+## 关得掉与松得动
 
-**监控类**（`monitoring.*`）：Datadog；New Relic；PagerDuty；Prometheus/Grafana；Splunk。
+"核心包不可关闭"很容易被读成"核心命令一律硬拦"，这两件事在 `dcg` 里是分开配置的，而踩坑的人不少。
 
-**支付类**（`payment.*`）：Braintree/PayPal、Stripe、Square。
-
-**搜索引擎类**（`search.*`）：Algolia、Elasticsearch、Meilisearch、OpenSearch。
-
-**备份类**（`backup.*`）：Borg、rclone、Restic、Velero。
-
-**Windows 类**（`windows.*`）：默认在 Windows 启用 `windows.filesystem`（cmd `del /s`、PowerShell `Remove-Item -Recurse -Force`、`Clear-RecycleBin`）和 `windows.system`（`vssadmin delete shadows` / `wmic shadowcopy delete`、`diskpart`、`Format-Volume`、`Clear-Disk`、`Remove-Partition`、`cipher /w`、`bcdedit /delete`）；`windows.misc`（`reg delete`、`net user /delete`、`sc delete`、`wsl --unregister`、robocopy `/MIR`）与 `windows.powershell`（注册表/provider 删除、`Remove-LocalUser`、`Disable-ComputerRestore`、强制 `Stop-Computer` / `Restart-Computer`、Hyper-V 与 Appx 删除）在所有平台都是 opt-in。
-
-**其他**：`package_managers`（危险包发布与系统包移除）、`strict_git`（更严格的 git 防护，阻止所有 force push、rebase、历史重写）。
-
-启用方式是在 `~/.config/dcg/config.toml` 中显式列出包 ID：
+规则包决定**是否评估**，策略决定**评估到了做什么**。后者可以整体放宽：
 
 ```toml
-[packs]
-enabled = [
-    "database.postgresql",
-    "database.redis",
-    "database.supabase",
-    "containers.docker",
-    "kubernetes",
-    "cloud.aws",
-    "cloud.gcp",
-    "secrets.aws_secrets",
-    "secrets.vault",
-    "cicd.jenkins",
-    "cicd.gitlab_ci",
-    "messaging.kafka",
-    "messaging.sqs_sns",
-    "search.elasticsearch",
-    "backup.restic",
-    "platform.github",
-    "platform.railway",
-    "monitoring.splunk",
-]
+[policy.packs]
+"core.git" = "warn"
+
+[policy.rules]
+"core.git:reset-hard" = "warn"
 ```
 
-支持"包组"语法，写 `"kubernetes"` 等价于同时启用该命名空间下的全部子包。
+两条的实测结果不一样。写上面那一条时，`git reset --hard` 依旧 `deny`；只写下面那一条时，`dcg explain` 报 `mode = warn`、`outcome = warn`，钩子路径上标准输出为空（不拦），标准错误打印一段"可以用 `git fsck` 找回"的警告。
 
-### 自定义包
+原因是：`critical` 严重度的规则不接受整体放宽——包级或全局的 `warn` / `log` 会被静默抬回 `deny`，而且不报告它忽略了你的设置。`core.git` 与 `core.filesystem` 里绝大多数规则恰好就是这个严重度（全局 1,114 条里 critical 占 305）。要让某条 critical 规则变成警告，只有 `[policy.rules]` 的逐条形制真正生效。这条约束写在 `README.md:204-231`，配合它给的验证方式一起用才可靠：读 `dcg explain --format json` 的 `mode`，别读 `decision`。
 
-`dcg` 也允许团队定义自己的安全包。YAML 文件即可，可以放在 `~/.config/dcg/packs/*.yaml`（用户级）或 `.dcg/packs/*.yaml`（项目级）。`dcg pack validate mypack.yaml` 会在部署前做语法与模式校验。详细格式参考 `docs/custom-packs.md`。
+## 内联脚本与 heredoc 的三层管线
 
-## 四、安装与上手
+代理写出的危险语句经常不在最外层：`bash -c "git reset --hard"`、`python3 - <<PY ... PY`、`eval "$(curl -s https://x.sh)"`。`dcg` 用三层来处理，设计文档是 `docs/adr-001-heredoc-scanning.md`。
 
-README 给出的一键安装命令会自动检测平台、下载二进制、配置已检测到的代理 hook：
+第一层触发检测是一个 `RegexSet`，模式原文列在 `README.md:627-638`：
+
+```text
+<<-?\s*(?:['"][^'"]*['"]|[\w.-]+)      heredoc 标记
+<<<                                     here-string
+\bpython[0-9.]*\b.*\s+-[A-Za-z]*[ce]   python -c / -e
+\bruby[0-9.]*\b.*\s+-[A-Za-z]*e        ruby -e
+\bnode(js)?[0-9.]*\b.*\s+-[A-Za-z]*[ep]  node -e / -p
+\b(sh|bash|zsh)\b.*\s+-[A-Za-z]*c      bash -c
+```
+
+不含这些触发词的命令在这一步就结束，预算 <100 μs。第二层提取正文，上限是可配的：body 1 MiB、10,000 行、每条命令 10 段、提取预算 50 ms。第三层做 AST（抽象语法树）匹配。依赖是嵌入式的 `ast-grep-core` 0.45（`Cargo.toml:66-74`），语法覆盖 bash、python、javascript、typescript、ruby、go、php 七种。ADR 里明确否掉了"调用外部 ast-grep 命令行"这条路，理由就是那 10–50 ms 的进程启动开销。
+
+实测下来，覆盖面并不均匀：
+
+```text
+bash -c "git reset --hard"                        → deny  core.git:reset-hard
+python3 - <<PY  os.remove("notes.txt")             → deny  heredoc.python:os_remove
+python3 -c "import shutil; shutil.rmtree('/')"     → allow  未命中
+python3 -c "import os; os.system('rm -rf /')"      → deny  core.filesystem:rm-rf-root-home
+eval "$(curl -s https://x.sh)"                     → deny  heredoc.posix:eval-dynamic (high)
+eval "$(ssh-agent -s)"                             → allow  惯用法降级
+source <(kubectl completion bash)                  → allow
+```
+
+差异的来源是判定的位置不同：`-c` 后面那段字符串走的是通用包的模式，取决于危险动作的形状是否恰好落在某条正则上；heredoc 体内的 Python 有 `heredoc.python:*` 这一支专属规则，覆盖面明显更宽——`os.remove("notes.txt")` 这种单文件删除都会命中。`shutil.rmtree('/')` 从 `-c` 溜过去，写进 heredoc 却立即命中 `heredoc.python:shutil_rmtree`（critical）——同一条语句换个入口就换了一套判定面。README 特性表那句 "Catches `python -c \"os.remove(...)\"`" 按字面读，会得出过强的预期。
+
+`eval "$(...)"` 这一族走的是另一个方向。静态还原不出被喂进 shell 的是什么，所以它不猜，直接**拒**（`heredoc.posix:eval-dynamic`，high），并留一批稳定的规则 ID 供事后逐条放行。另一侧是 shell 初始化惯用法：下面这几条按**字面 argv 形状**精确匹配，命中后降级为记录性警告，任何近似形状保持硬拒：
+
+```text
+eval "$(ssh-agent -s)"          eval "$(brew shellenv)"
+eval "$(direnv hook bash)"      eval "$(pyenv init -)"
+source <(kubectl completion bash)
+```
+
+README 也写清了这个口子的残留风险：放行依赖生产端二进制的"身份"，而 PATH 顺序、shell 函数与别名都在 `dcg` 的静态视野之外（`README.md:2720`）。
+
+同一份坦白还在别处。`dcg` 不会为了得知输出而去执行任意生产者（issue #191）。未知生产端、非规则文件、非 UTF-8 载荷、超过 256 KiB 的输入，一律落成 `<pack>:stdin-unverified` 这一条高严重度拒绝。而代理把脚本写进磁盘再执行，脚本里面 `dcg` 看不见。
+
+## 不可判定不等于放行
+
+"解析失败、超时、异常时默认放行"是 `dcg` 被引用最多的一条设计说明，放在今天的版本上已经不完整。当前口径在 `README.md:893-998` 的 Bounded Failure Policy 一节，五类场景各有各的去处：
+
+| 场景 | 默认行为 | 收紧后的行为 |
+|------|----------|--------------|
+| 钩子原始报文畸形或超限 | 放行并留审计警告 | `general.fail_closed = true` 或 `DCG_FAIL_CLOSED=1` 改为拒绝 |
+| 读取标准输入的临时 I/O 错误 | 放行（载荷非攻击者可控） | 始终 fail-open |
+| 提取出的命令超过 `max_command_bytes` | 显式不可判定 | 支持人工确认的客户端收 `ask`，其余客户端阻断；`unverified_decision = "deny"` 直接拒 |
+| 绝对评估期限耗尽 | 显式不可判定 | 同上 |
+| heredoc 提取 / 解析 / AST 失败 | 跑一次有界回退扫描，扫不到高危信号才放行 | `fallback_on_parse_error = false` / `fallback_on_timeout = false` 改为阻断 |
+
+实测这两条边界。默认状态喂一段非 JSON 进 stdin：
+
+```text
+[dcg] Warning: could not parse hook input (expected ident at line 1 column 2);
+allowing command (fail-open). Set DCG_FAIL_CLOSED=1 to block instead.
+```
+
+加上 `DCG_FAIL_CLOSED=1` 重跑，同一段输入换成一个阻断面板。注意它只改报文解析这一格：临时读取错误在这档下仍然放行，因为那不算攻击者可控的畸形载荷。
+
+期限的默认值也值得记一笔。`dcg config` 实测报 `Hook timeout (ms): 1000 (default)`，`dcg init` 生成的模板注释里写的是 200——那是个举例用的数字，不是默认值；`careful_company_running_windows` 这套预置例外，启用后期限自动提到 3000 ms。低于 10 ms 的值会被夹到 10 ms。无人值守的会话（没有人在终端边上回答 `ask`）应该显式设 `DCG_UNVERIFIED_DECISION=deny`，否则"无法核验"会一直走成"请人来判"。
+
+## 一次真实拦截：从拒绝输出到短码放行
+
+把一次完整流转串起来，这里用的是被拦下来的那条命令的实际输出。代理发出 `git reset --hard`，`dcg` 在钩子路径上的处置是：退出码 0、标准错误给人看的面板、标准输出给机器看的 JSON。
+
+Claude 这一族拿到的是兼容层形状：顶层只有 `hookSpecificOutput` 一个键，它下面带 9 个字段。Claude Code 本体、复用同一层的 Copilot Chat 与 Gemini 命令行都属此类：
+
+```json
+{"hookSpecificOutput":{
+  "hookEventName":"PreToolUse",
+  "permissionDecision":"deny",
+  "permissionDecisionReason":"BLOCKED by dcg ... Rule: core.git:reset-hard ...",
+  "allowOnceCode":"190520",
+  "allowOnceFullHash":"629166102efb04e3...13fa99f8",
+  "ruleId":"core.git:reset-hard",
+  "packId":"core.git",
+  "severity":"critical",
+  "remediation":{"safeAlternative":"Consider using 'git stash' first to save your changes.",
+                 "explanation":"...","allowOnceCommand":"dcg allow-once 190520"}}}
+```
+
+`ruleId` / `packId` / `severity` 这三个字段决定了后续动作的粒度：你能精确地只放行这一条规则，而不是整个 `core.git`。`remediation.explanation` 是给代理读的第二机会——实测它把"哪些东西会丢"和"先 `git status && git diff` 看看会丢什么"都写进去了。
+
+同一条命令换成 Codex 形状的信封（带非空 `turn_id`），stdout 上的 JSON 只剩 `hookEventName`、`permissionDecision`、`permissionDecisionReason` 三个键。这不是省流，而是 Codex 的解析器拒绝未知字段：多带一个 `allowOnceCode` 就会让这条命令在 Codex 侧被报成"钩子失败"而不是"命令被拦"。识别与裁剪的行为写在 `README.md:1089`，实测两侧字段集合的差如上。命令通过时，两条路径都是退出码 0、stdout 与 stderr 全空——`dcg` 从不主动表态"允许"，静默就是允许。
+
+短码那条路有个容易撞上的门槛。在非终端环境里执行 `dcg allow-once 759325`，它拒绝写入并原样回显：
+
+```text
+Error: Allow-once needs an interactive confirmation, but stdin is not a terminal,
+so the answer can never arrive. NOTHING was written and '759325' is still pending.
+Re-run from a terminal, or confirm non-interactively with: dcg allow-once 759325 --yes
+```
+
+这个行为来自 `[interactive]` 一节：终端提示默认关闭（`enabled = false`）、`verification = "code"`、`disable_in_ci = true`。要批量放行，稳定的通道是 allowlist 而不是短码：`dcg allowlist add 'core.git:reset-hard' -r "变基前的例行清理" --user`，还支持 `--expires` 与 `--condition KEY=VAL` 两种收窄写法。
+
+## 代理差异化与配置优先级
+
+配置来源是五层，高优先级覆盖低优先级（`README.md:797-806`）：环境变量 `DCG_*` > `DCG_CONFIG` 指定的显式文件 > 用户配置 > 系统配置 `/etc/dcg/config.toml` > 编译期默认。macOS 上用户配置有两个落点会被扫到，`~/.config/dcg/config.toml` 与 `~/Library/Application Support/dcg/config.toml`；`dcg config --format json` 会把每一层的加载状态和 `hook_timeout_source` 一起打出来，排查"我改的到底生不生效"时先看它。
+
+仓库里的 `.dcg.toml` 是个特例，也是这个项目最有意思的一个决定：被自动发现的仓库配置**只能加严**。它可以启用内置包、加 `deny` 条目、打开 `fail_closed`、开启 heredoc 扫描或关掉 heredoc 的回退；所有"给信任、减覆盖"的键则在自动发现时被直接忽略：allow 覆写、禁用包、自定义包路径、自定义正则、资源上限、语言过滤、代理 profile、嵌套项目覆写、逐条路径豁免。要显式信任整份仓库配置，得自己点名：`DCG_CONFIG=.dcg.toml dcg ...`。原生 Windows 连自动发现都不做，直到有等价的 reparse-point 与文件身份校验（`README.md:819-824`）。这条设计的判断很清楚：仓库在刚被克隆下来的时候是不可信输入方，不能因为它自带一份配置就让被保护对象给自己发通行证。
+
+代理 profile 的四个行为字段是真的生效的，前提是代理**被识别出来**。识别顺序是先看命令行上的显式 `--agent`，再看环境变量（`src/agent.rs:398-404`）。实测在干净 shell 里写 `[agents.claude-code] additional_allowlist = ["git reset --hard"]`，钩子路径照拦不误——因为此时识别结果是 `unknown`；换成 `dcg test --agent claude-code "git reset --hard"`，才变成 ALLOWED。同一条命令在 `[agents.unknown] extra_packs = ["kubernetes"]` 下会去评估整个 Kubernetes 类，于是删集群里命名空间的那条 `kubectl` 命令被拦。`trust_level` 自始至终只是标签，进 JSON 和日志，不参与判定（`README.md:94-97`）。
+
+支持的代理比"几个主流工具"多得多，README 第 16 行逐名列了 16 个，覆盖深度并不相同：
+
+```text
+Claude Code          Codex CLI 0.125.0+      Gemini CLI         GitHub Copilot CLI
+VS Code Copilot Chat Cursor IDE              Hermes Agent       Posit Assistant
+Grok (xAI)           Antigravity CLI (agy)   OpenCode           Oh My Pi (omp)
+Crush                Pi (扩展配方)            Aider (仅 git hook) Continue (仅检测)
+```
+
+各家协议靠 `dcg install` 的 `--omp` / `--crush` / `--agy` / `--opencode` / `--grok` 分别配。此外还有一个可以完全不走钩子的入口：`dcg mcp-server` 以 stdio 提供 MCP（Model Context Protocol，模型上下文协议）服务，暴露 `check_command`、`scan_file`、`explain_pattern` 三个工具。
+
+## 装起来与验收
+
+三条安装路径的差别不在下载，而在配完钩子之后。
 
 ```bash
+# 一键：选平台、验校验和、装二进制、配检测到的代理钩子
 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh?$(date +%s)" | bash -s -- --easy-mode
-```
 
-Windows 原生版本使用 PowerShell：
+# Homebrew：只装 dcg 二进制，钩子要自己再跑一次 dcg install
+brew install dicklesworthstone/tap/dcg
 
-```powershell
+# 原生 Windows：SHA256 必验，装了 minisign 就验长期签名，装了 cosign 再验 provenance
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.ps1"))) -EasyMode -Verify
 ```
 
-`install.ps1` 会下载 `dcg.exe`、校验 SHA256（如本机装了 `cosign` 还会验证 Sigstore 签名）、把 `dcg` 加入用户 PATH、跑一次自检、并配置已检测到的代理 hook（Claude Code、Codex CLI、Gemini CLI、Copilot CLI、Cursor IDE、Hermes Agent 等）。Copilot 在 Windows 上配在 `%COPILOT_HOME%\hooks`（或 `%USERPROFILE%\.copilot\hooks`），这样所有 workspace 都被覆盖。版本可以用 `-Version vX.Y.Z` 锁定。
+`install.sh` 的开关密度能说明它踩过的坑：`--version`、`--dest`、`--system`、`--from-source`、`--require-minisign`、`--no-verify`、`--offline`、`--no-configure`、`--force`。手工配钩子时有一条不是建议而是要求：命令里写 `command -v dcg` 的绝对路径。钩子跑在非交互 shell 里，`PATH` 未必含 `~/.local/bin`，写成裸 `dcg` 的后果是钩子根本起不来，而"起不来"在这套语义里等于放行。
 
-安装完成后做几个快速验证：
+装完之后有三件事需要验收。Codex 侧要在它的 `/hooks` 界面里信任一次这个钩子（`README.md:1089`）。Claude Code 重写 `~/.claude/settings.json` 时会顺手抹掉别人的钩子条目，`dcg` 的对策是 `self_heal_hook` 默认为真：每次调用自检并修回注册。再配一次 `dcg setup`，它会往 `~/.bashrc` / `~/.zshrc` 里加一段启动检查，钩子真被摘掉时至少有个提示。然后就是本机跑一遍：
 
 ```bash
-# 查看当前生效的安全包
-dcg packs --verbose
-
-# 解释一条命令为什么被拦（或为什么不拦）
-dcg explain "git reset --hard HEAD~5"
-
-# CI 集成：扫描整个仓库，输出 SARIF
-dcg scan --format sarif > dcg.sarif
+dcg doctor                    # 二进制是否在 PATH、各家钩子注册、构建溯源、配置加载来源
+dcg explain "git reset --hard"   # 看命中哪条规则、处置是什么
+dcg test "rm -rf ./src"        # 退出码 0 表示允许、1 表示拒绝
+dcg packs                      # 列出 103 个包与当前启用的 3 个
 ```
 
-## 五、配置体系
+要灰度不要惊吓，用 `dcg simulate`。给它一份命令日志——一行一条，纯命令、钩子 JSON 或决策日志都行，格式自动识别——它按当前策略重放一遍。"新启用数据库这一类会不会天天打断我"这种问题，用它回答比直接开到生产上稳妥。要接进代码评审，用 `dcg scan --format sarif`——实测它吐的是 SARIF 2.1.0，`runs[0].tool.driver.rules` 里带命中的规则，可以直接推到 GitHub Code Scanning。`--format` 这个参数本身是命令相关的：除 `dcg scan` 之外所有命令上的 `sarif` 都只是 JSON 别名， unrecognized 值一律退出码 2（实测 `dcg explain --format bogus` 即 2）。
 
-`dcg` 的配置分为三层优先级：环境变量最高，其次是配置文件，最低是内置默认值。
+## 这些数字测的是什么
 
-### 5.1 代理差异化配置
+本文出现的延迟数字有两类，别混着用。
 
-`dcg` 能在调用时识别是哪个 AI 代理在执行命令，并应用不同的策略。在 `~/.config/dcg/config.toml` 中：
+一类是 `dcg` 自己计的内部耗时：`explain --format json` 的 `total_duration_us` 字段。在这台 Apple Silicon 机器上，8 条未命中命令各取 12 个样本，最小 1.3 ms、中位 1.4 ms、95 分位 5.9 ms；4 条命中命令中位 2.6 ms。另一类是端到端墙钟：连进程启动、报文解析和输出格式化，同一条命令 50 次平均 9.4 ms。
 
-```toml
-[agents.claude-code]
-trust_level = "high"
-additional_allowlist = ["npm run build", "cargo test"]
-disabled_packs = ["kubernetes"]
+这两类数字能说明的是：预算表里"<100 μs 快路径"确实是被单独度量的那一段，而不是整次调用；一次钩子调用的成本里，`dcg` 的匹配逻辑不是大头，进程起来再退下去才是。它每次 shell 工具调用都要付出一次，所以"能不能感觉到"的正确答案是感觉不到——9 ms 相对一次大语言模型的往返请求是噪声量级。
 
-[agents.unknown]
-trust_level = "low"
-extra_packs = ["paranoid"]
-disabled_allowlist = true
-```
+不能说明的也别硬套。这里没有任何"拦截率"或"漏拦率"：`dcg` 的模式匹配是正则与 AST 的静态判断，命中率取决于代理实际写出什么命令，任何跨工作流的百分比都是编的。中位数低也不表示在饱和的 CI 机器上一样低。`README.md:992-996` 专门解释过期限为什么用单调墙钟而不是 CPU 时间：进程被调度出去、或者卡在某个有界操作上时，CPU 时间预算根本不前进。真要压这台机器上的表现，工具是给好的：`dcg test --enforce-budget`。
 
-`trust_level` 是写进 JSON 输出与日志的**标签**，并不直接改变规则评估。真正影响行为的是其他字段：`disabled_packs` 从评估中移除规则包，`extra_packs` 额外启用规则包，`additional_allowlist` 增加绕过规则，`disabled_allowlist = true` 时完全忽略 allowlist。
+## 常见误区
 
-这种设计把"信任信号"和"行为策略"解耦开来，方便日后引入多源信任评估而无需改规则引擎。
+按现象列，每条都在本文里验证过。
 
-### 5.2 Heredoc 与内联脚本扫描
+| 现象 | 原因 | 怎么确认 |
+|------|------|----------|
+| 删集群命名空间的 `kubectl` 命令照样跑 | 对应的包默认没启用，默认只有 3 个包 | `dcg packs` 看 `✓` 的数量 |
+| 写了 `disabled = ["core.git"]` 但没生效 | `core.*` 不参与"可关闭"这件事 | 只有 `system.disk` 与 `windows.*` 能被关 |
+| 整体设了 `warn`，critical 命令仍被硬拦 | 包级 / 全局 `warn` 对 critical 被静默抬回 `deny` | `dcg explain --format json` 读 `mode` |
+| `explain` 显示 `deny`，命令却还是执行了 | `decision` 不是最终处置，`mode` / `outcome` 才是 | 同上，看 `warn` 档位 |
+| `python3 -c "shutil.rmtree('/')"` 没拦 | `-c` 走通用模式，heredoc 才有专属规则族 | 写成 heredoc 立即命中 `heredoc.python:shutil_rmtree` |
+| `[agents.claude-code]` 的配置像没读 | 当前会话没被识别成 claude-code | `dcg test --agent claude-code` 复现 |
+| `dcg allow-once` 在 CI 里报错退出 | 短码要终端确认 | 加 `--yes`，或改用 `dcg allowlist add` |
+| 钩子装了几天后失效 | Claude Code 重写 `settings.json` 抹掉了条目 | 看 `self_heal_hook` 与 `dcg setup` 的启动检查 |
 
-AI 代理经常写出形如 `python -c "import os; os.remove('...')"` 或 `bash -c "git reset --hard"` 的命令。这类命令表面无害，深层却包含破坏性语句。`dcg` 通过三层管线处理这类输入。
+## 该不该装，谁来先装
 
-先看配置：
+按角色分比按语言分更管用。
 
-```toml
-[heredoc]
-enabled = true
-timeout_ms = 50
-max_body_bytes = 1048576
-max_body_lines = 10000
-max_heredocs = 10
-languages = ["python", "bash", "javascript", "typescript", "ruby", "perl", "go"]
-fallback_on_parse_error = true
-fallback_on_timeout = true
-```
+**每天和代理一起写代码的个人开发者**：直接装，默认那 3 个包已经覆盖掉最常见的两类不可逆损失（未提交修改与历史重写），这一步的收益不需要任何配置技巧。装完先做一件事：拿自己这周真跑过的命令走一遍 `dcg simulate`，看看有没有被 `medium` 档警告刷屏，再决定要不要逐条 `warn`。
 
-CLI 上可以用 `--heredoc-scan` / `--no-heredoc-scan` 覆盖，可以用 `--heredoc-timeout <ms>` 调时间预算，可以用 `--heredoc-languages` 限定语言。
+**后端 / 基础设施团队**：价值主要在按需包里。把 `database.*`、`kubernetes.*`、`cloud.*`、`infrastructure.*` 打开，并且**先以 `warn` 跑一两个迭代**——这一步就是 `dcg simulate` 加 `[policy.packs]` 的组合。等误报摸清了再按包切 `deny`，critical 那 305 条本来也不需要你操心，松不动。
 
-#### 三层管线
+**代理种类多、甚至包含不可控来源代理的团队**：这里 `dcg` 提供了别处没有的一层。仓库 `.dcg.toml` 的"只能加严"模型，加上按识别结果分派的 profile，让你能给 `unknown` 加包、把 allowlist 收紧，而不用给所有代理统一降标准。前提是先接受一条约束：profile 只在识别成功时生效。
 
-**Tier 1 — 触发检测**（<100 μs）
+**不急着上的情形**也具体。纯人工、不跑代理的环境里，它的价值缩到 `dcg scan` 这一个 CI 用法。把 `rm` 之类彻底禁掉的需求它满足不了——`DCG_BYPASS=1` 是给运维留的逃生门，实测它确实把整次调用的防护全部拿掉（这也是它的已知反噬：`careful_company_running_windows.guardrails` 这个包会把 `DCG_BYPASS=1`、`dcg uninstall`、`dcg allowlist add` 本身当高危命令拦下来）。需要强隔离的场合应该往上走一层：容器、虚拟机、只读挂载，或者干脆不给代理可写的生产凭据。`dcg` 自己的威胁模型写得很坦白——假设代理善意但会犯错（`README.md:2722-2724`），它不是一道边界执行点。
 
-用 `RegexSet` 同时跑全部触发模式，命中即进入下一层；不命中直接放行。这一层是热路径，对绝大多数命令零开销。
+还有两条采用前的现实检查。许可证是 MIT 加一条针对 OpenAI 与 Anthropic 的排除条款，法务如果对上游许可敏感，这条 rider 是必读项。仓库在 GitHub 上只算 2 名贡献者、2,484 次提交、8 个多月发了 71 个 Release：节奏极快，也意味着版本边界要盯住。把 `dcg update` 关掉（`general.update_pin = true`），按 Release notes 决定什么时候升，比让一个钩子工具自己滚更新稳妥。
 
-**Tier 2 — 内容提取**（<1 ms）
+## 五道自测题
 
-从 heredoc / here-string / `python -c` / `bash -c` 中提取真实代码。提取有边界：默认 body 不超过 1 MB、10 000 行、每条命令最多 10 个 heredoc、总耗时 50 ms。超过任一边界就 fallback 放行并打日志。
+1. 无配置文件时 `dcg` 在评估哪三个包？其中哪个能用 `disabled` 关掉？
+2. 一条 `critical` 规则命中后想让它在终端上只出警告、在代理里不阻断，能写 `[policy.packs]` 吗？正确的写法是什么？
+3. `dcg explain --format json` 输出 `decision = "deny"`，命令会不会被拦？该看哪个字段？
+4. 代理写出 `eval "$(some-tool)"`，`dcg` 为什么选择拒而不是放？这个口子对 shell 初始化惯用法开了什么例外，例外依赖什么假设？
+5. 钩子配置里为什么必须写绝对路径而不是裸 `dcg`？写错的后果是拦得更严还是更松？
 
-**Tier 3 — AST 模式匹配**（<5 ms）
+## 出错时先看哪几处
 
-用 tree-sitter/ast-grep 解析语言 AST，再匹配结构化模式。例如检测 `subprocess.run(..., shell=True)` 是否包含 `rm -rf`，或者把"内部仍是 bash 脚本"的内容递归拆开再交给整个流水线处理。
+按"命令没被拦"这个最常见现象排：
 
-三层流水线的成本与收益：绝大多数命令在 Tier 1 直接放行；少数含 heredoc/内联脚本的命令进入 Tier 2 提取；只有真正命中破坏性模式的命令才在 Tier 3 被拦截并返回结构化结果。递归 shell 分析意味着即使把 `git reset --hard` 藏在 `bash -c "..."` 里，也会被捕获。
+1. `dcg doctor`——二进制、各家钩子注册、构建溯源、当前配置来源，一次给全。
+2. `dcg packs`——确认对应包真的带 `✓`；`database`、`kubernetes` 这类需要自己点名。
+3. `dcg explain "<命令>"`——先确认命中与处置，再区分"没命中"和"命中了但只是 warn"。
+4. `dcg config --format json`——看 `hook_timeout_ms` 与它的来源，超时预算耗尽会走成不可判定而不是静默放行。
+5. 代理侧：钩子有没有被重写掉（`dcg setup` 的启动检查）、Codex 有没有在 `/hooks` 里信任、matcher 是否覆盖了 `Bash|PowerShell`（Windows 上只写 `Bash` 等于没装）。
 
-### 5.3 行为模式
+反过来，"被拦得太多"的排查顺序也固定：先按现象分级，分清是 `deny` 还是 `medium` 自带的 `warn`。能整体降档的写 `[policy.packs]`，critical 只能逐条 `[policy.rules]`。重复出现的合法命令进 allowlist 并写清理由，一次性的用短码，不要把 bypass 常开。
 
-`dcg` 默认是 fail-open（解析失败或超时时放行）。这背后的判断是：防护层的目标是拦截明显破坏性操作，而不是替代理做决策。误拦截会让代理反复重试或绕过防护层，整体更危险；误放行的成本由下游备份、版本控制、CI 兜底。
+## 下一步读哪份代码
 
-如确需 fail-closed，可以设 `DCG_FAIL_CLOSED=1`，钩子在输入解析失败时改为拒绝。
+五个问题答不顺，按这个顺序读仓库最快：
 
-### 5.4 输出格式
+1. `README.md:195-249`（Enabled by default）与 `docs/graduated-response.md`——把"关不掉"和"松得动"这两件事的定义读准，省掉后面所有绕路。
+2. `src/perf.rs:16-32`——预算表和 1000 ms 绝对上限的原文，也是理解"不可判定不等于放行"那节的钥匙。
+3. `docs/adr-001-heredoc-scanning.md`——三层管线的选型现场，包括为什么否掉外部 ast-grep 命令行。
+4. `src/heredoc.rs`（单文件，411,836 字节）与 `src/ast_matcher.rs`——触发词、提取上限与 AST 规则都在这一对文件里；规则 ID 的 `heredoc.<语言>:` 前缀在这里定义。
+5. `src/config.rs` 与 `src/agent.rs`——五层合并、`enforcement-only` 的仓库配置、`--agent` 与环境检测的先后。
 
-`--format` 与 `DCG_FORMAT` 是命令相关的：每个子命令只接受自己的一套值，未识别的值会被识别为用法错误（退出码 2）。
+只想用它的话，顺序短得多：跑一键安装，`dcg doctor` 确认接线，`dcg explain` 试几条自己真会写的命令，用 `dcg simulate` 挑包，最后把重复放行的命令落进 allowlist。
 
-| 命令 | 接受的 `--format` 值 |
-|------|----------------------|
-| `dcg scan` | `pretty`、`json`、`markdown`、`sarif`（这是唯一输出真正 SARIF 2.1.0 的命令） |
-| `dcg test` | `pretty`（`text` 别名）、`json`（`sarif`、`structured` 别名）、`toon` |
-| `dcg config` | `pretty`（`text` 别名）、`json`（`sarif` 别名） |
-| `dcg packs` | `pretty`（`text` 别名）、`json`（`sarif` 别名） |
-| `dcg explain` | `pretty`、`json`（`sarif` 别名） |
-| `dcg doctor` | `pretty`、`json`（`sarif` 别名） |
-| `dcg simulate` | `pretty`、`json`（`sarif` 别名） |
-| `dcg corpus` | `json`、`pretty`（`sarif` 别名） |
-| `dcg suggest-allowlist` | `text`、`json`（`sarif` 别名） |
+## 维护指引与事实边界
 
-设计上，`sarif` 在除 `dcg scan` 之外的所有命令上是 JSON 的别名——这是为了让 `DCG_FORMAT=sarif` 全局设置时优雅降级：`scan` 产生真 SARIF，其他命令退回到结构化 JSON 而不是报错。需要机器可读输出时优先用 `--format json`；需要 SARIF 时用 `dcg scan --format sarif`。`--robot` 强制 JSON，忽略 `--format`。
+这份文里所有命令与数字都指向可复算的对象，维护时按下面几条对齐。
 
-## 六、Codex CLI 的特殊处理
+| 事实 | 复算方式 | 会漂移的点 |
+|------|----------|------------|
+| 包数 103、模式 1,114 / 865、严重度分布 | `dcg packs --format json`；`dcg packs --verbose --expand` 数标签 | 每个版本都可能加包 |
+| 默认 3 个包 | `dcg config` | 默认集可能扩，`system.disk` 这类可关项要单独核 |
+| 各命令的处置与规则 ID | `dcg explain --format json <命令>` | 规则 ID 相对稳定，处置档位会变 |
+| 延迟 1.4 / 2.6 / 9.4 ms | 按"这些数字测的是什么"一节的口径重跑，Apple Silicon 单机 | 换机器换负载要重测，不要沿用 |
+| 星标 / 版本 / 发布节奏 | GitHub 仓库接口与 Releases 页，2026-09-21 取 | 一周就会变 |
 
-Codex CLI 0.125.0+ 在 README 中被作为"一等 hook 目标"对待，而不只是 Claude-shaped 兼容路径。安装器会自动检测 `PATH` 上的 `codex` 或已有的 `~/.codex/` 目录，并配置 hook。
+三块内容没有在本机跑过，照实留在这里：原生 Windows 的 PowerShell 与 cmd 语义、各家代理客户端的端到端钩子行为（本文只构造报文测到 `dcg` 这一侧）、以及 `install.ps1` 的签名校验分支。覆盖面之外还有两条 README 自己列的固有边界：代理把脚本写进磁盘再执行时脚本内容不受检，以及"能绕过的攻击者永远能绕过"——它的定位是防错，不是防恶意。
 
-具体协议差异：
+## 参考资料
 
-- **Hook 配置**：合并一个 `PreToolUse` Bash hook 到 `~/.codex/hooks.json`。
-- **拒绝路径**：以退出码 0 + 最小 `hookSpecificOutput` 拒绝体写到 stdout；人类警告留在 stderr。
-- **允许路径**：退出码 0，stdout 和 stderr 都为空。
-- **已有 hook**：保留并存的 hook，把 dcg 放在 Bash 上的第一位；遇到损坏 JSON 时拒绝覆盖。
-- **验证**：subprocess 协议测试覆盖，加一个可选的真实 Codex E2E harness。
-
-Codex 的 hook 输入和 Claude Code 接近，但 Codex 拒绝 hook 输出中的未知字段。`dcg` 通过非空的 `turn_id` 字段识别 Codex 输入，仅发出 Codex 文档化的拒绝字段，使被拦的命令被报告为"blocked"而不是"hook failed"。详细协议说明、probe 命令、故障排查见 `docs/codex-integration.md`。
-
-## 七、绕过机制
-
-`dcg` 不做硬锁，因为生产环境确实存在"明知风险但需要执行"的场景。文档里给出了四个层次的绕过通道：
-
-| 方法 | 作用域 | 方式 |
-|------|--------|------|
-| **环境变量** | 单条命令 | `DCG_BYPASS=1 <command>` |
-| **Allow-once 短码** | 单条命令 | 从拦截消息中复制短码，运行 `dcg allow-once <code>` |
-| **永久 allowlist** | 规则或命令 | `dcg allowlist add core.git:reset-hard -r "reason"` |
-| **移除 hook** | 全部命令 | 在 `~/.claude/settings.json`（或对应代理的等价位置）注释/删除 dcg 条目 |
-
-`DCG_BYPASS=1` 会禁用本次调用的全部防护，应慎用；周期性的需求应改用 allowlist 而不是每次都开 bypass。
-
-## 八、典型使用场景与边界
-
-`dcg` 适合以下场景：
-
-- **个人 AI 编码工作流**：Claude Code、Codex CLI、Gemini CLI 等每天跑数百条命令的开发场景。即使配置不变，三个默认核心包也能覆盖大多数破坏性误操作。
-- **小团队共享 .dcg 配置**：通过 `.dcg/packs/*.yaml` 把团队特定的内部工具、部署脚本的危险模式集中管理，并随仓库提交。
-- **CI 扫描**：用 `dcg scan --format sarif` 把扫描结果直接推到 GitHub Code Scanning 或类似平台，PR 阶段就能拦截。
-- **多代理差异化**：用 `[agents.*]` 配置给不同代理不同的 trust_level 与 allowlist，比如让 Claude Code 跑构建流水线，让 unknown 代理走 paranoid 模式。
-
-不适合：
-
-- **完全无 AI 代理的环境**：此时它的价值主要在 `dcg scan` 的 CI 扫描上。
-- **需要 fail-closed 的金融/医疗关键路径**：默认 fail-open 是为代理场景设计的，关键场景需要先评估 `DCG_FAIL_CLOSED=1` 的实际表现。
-- **多租户 SaaS**：拦截是单租户视角的，多租户隔离需要应用层额外设计。
-
-## 九、与同类方案的对比
-
-`dcg` 占据的位置相对独特：
-
-- **相对 shell 层的传统防护（如 sudo 策略、限制 rm 之类）**：`dcg` 是针对 AI 代理这一新场景设计的，能识别代理上下文、应用差异化 trust_level，并且不强制 fail-closed。
-- **相对代理内置的权限系统**：内置系统通常只能拦截"是否允许执行某工具"，无法对命令做语义识别。`dcg` 是在工具已经被允许的前提下再做命令级过滤，是更细的一层。
-- **相对 Open Policy Agent / Cedar 之类通用策略引擎**：`dcg` 内置了 50+ 覆盖常见 SaaS 的现成 pack，开箱即用；通用策略引擎需要团队自己写大量规则。
-
-## 十、上手建议与读懂源码的路径
-
-如果想了解 `dcg` 的实现细节，建议按这个顺序看：
-
-1. 先读 `README.md` 的 TLDR 与"Enabled by default"两段，建立安全包 ID 与作用域的直觉。
-2. 读 `docs/adr-001-heredoc-scanning.md`，理解三层管线为什么这么设计。
-3. 翻 `src/packs/` 目录，看几个核心 pack（`core.git`、`core.filesystem`、`database.postgresql`）的实际模式定义。
-4. 读 `src/heredoc/` 下 Tier 1 的 `RegexSet` 与 Tier 2 的提取器，再读 Tier 3 的 AST 匹配代码。
-5. 跑一遍 `dcg doctor` 与 `dcg packs --verbose`，对照自己机器上启用的包与实际拦截日志。
-
-对于只想用它的人，按这个顺序：
-
-1. 跑一键安装，安装后立即用 `dcg explain` 测几条常见破坏性命令。
-2. 在 `~/.config/dcg/config.toml` 中按自己工作流加上团队实际用到的 pack（比如 backend 团队加 `database.*` 与 `kubernetes.*`，前端团队加 `cloud.*` 与 `platform.*`）。
-3. 把 CI 接入 `dcg scan --format sarif`，对提交做静态扫描。
-4. 对个别反复需要执行的"明知风险"命令，用 `dcg allowlist add` 持久放行；对一次性绕过用 `DCG_BYPASS=1`。
-
-## 十一、小结
-
-`destructive_command_guard` 不是又一个 `rm -rf` 黑名单。它的设计假设是：AI 代理是高吞吐但偶尔失误的执行者，防护层应当默认可信，误拦截的代价比误放行大，因此坚持 fail-open 与显式 opt-in 安全包；又通过 SIMD 加速、懒编译、三层 heredoc 管线把延迟压到亚毫秒，让代理不会把它当作噪声；最后通过 50+ pack 与自定义 YAML 体系，让团队既能用现成规则覆盖常见 SaaS，也能把内部工具的危险模式沉淀为共享规则。
-
-对于每天和 Claude Code / Codex CLI 一起工作的开发者，它值得装一次；对于运维多代理协作的团队，它值得把 `.dcg/` 配置纳入仓库基线。
+- 仓库与源码：[Dicklesworthstone/destructive_command_guard](https://github.com/Dicklesworthstone/destructive_command_guard)，本文读取的 main 提交为 `add38e4`（2026-09-20）
+- `README.md`：默认包与"关不掉不等于松不动"（`195-231`）、包展开语义（`184-190`）、环境变量表（`702-744`）、输出格式（`771-795`）、配置层级（`797-828`）、Bounded Failure Policy（`893-998`）、各家代理协议差异（`1089-1100`）
+- `docs/adr-001-heredoc-scanning.md`：三层管线的选型与预算；`docs/graduated-response.md`：严重度阶梯；`docs/custom-packs.md` 与 `docs/packs/README.md`：自定义包与包 ID 索引；`docs/codex-integration.md`：Codex 协议细节与其已知限制
+- `src/perf.rs`、`src/packs/mod.rs`、`src/heredoc.rs`、`src/ast_matcher.rs`、`src/config.rs`、`src/agent.rs`：本文引用的实现位置
+- `LICENSE`：MIT 与针对 OpenAI / Anthropic 的 rider 条款全文
+- 实测环境：macOS（Apple Silicon）、官方 `dcg v0.14.4` aarch64-apple-darwin 发布物，tar 包 SHA256 与 Release 页一致；无配置文件状态下的默认策略，除个别小节显式给出临时配置

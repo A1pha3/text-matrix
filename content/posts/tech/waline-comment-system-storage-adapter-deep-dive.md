@@ -2,7 +2,7 @@
 title: "Waline：静态博客的评论区，为什么值得像换数据库一样挑后端"
 date: "2026-08-26T15:30:00+08:00"
 slug: "waline-comment-system-storage-adapter-deep-dive"
-description: "walinejs/waline 深度解析：一个把评论系统拆成「客户端—服务端—存储适配器」三层的开源项目。从 storage/base.js 的五个抽象方法讲到七种存储实现（SQLite/MySQL/PostgreSQL/MongoDB/TiDB/LeanCloud/GitHub），从一条评论落库前要过的五道反垃圾闸讲到通知矩阵，最后给出按场景选后端的决策建议。"
+description: "walinejs/waline 深度解析：一个把评论系统拆成「客户端—服务端—存储适配器」三层的开源项目。从 storage/base.js 的五个抽象方法讲到八种存储实现（SQLite/MySQL/PostgreSQL/MongoDB/TiDB/LeanCloud/CloudBase/GitHub），从一条评论落库前要过的五道反垃圾闸讲到通知矩阵，最后给出按场景选后端的决策建议。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Waline", "评论系统", "静态博客", "ThinkJS", "存储适配器", "Serverless", "开源项目", "Valine", "XSS", "反垃圾"]
@@ -61,7 +61,7 @@ Valine 的经典问题是：它本身只是个前端组件，数据依赖 LeanCl
 
 `controller/comment.js` 通过继承 `BaseRest`（`controller/rest.js`）拿到 REST 语义，然后按 HTTP 方法分发：
 
-- `getAction` → 三种列表：普通评论列表、`type=count` 的计数、`type=recent` 的最近评论、管理员列表
+- `getAction` → 按 `type` 分发：`recent` 最近评论、`count` 计数、`list` 管理员列表，缺省走普通评论列表
 - `postAction` → 评论落库前跑完整条防垃圾流水线
 - `putAction` → 更新（点赞、审核状态流转）
 - `deleteAction` → 删除评论及其所有子回复
@@ -80,7 +80,7 @@ async update(data, where)         // 更新
 async delete(where)               // 删除
 ```
 
-只要实现这五个方法，你的存储后端就能被 Waline 接进去。当前实现有七个：`leancloud`、`mongodb`、`postgresql`、`sqlite`、`mysql`、`tidb`、`github`，再加上 CloudBase 特化——每个都是这套接口的一个具体落点。
+只要实现这五个方法，你的存储后端就能被 Waline 接进去。当前 `storage/` 目录下有八个实现：`leancloud`、`mongodb`、`mysql`、`postgresql`、`sqlite`、`tidb`、`github`、`cloudbase`——每个都是这套接口的一个具体落点。
 
 存储的选择不是靠配置文件手动指定的，而是靠 `config/config.js` 里一段按优先级走的自动检测链：
 
@@ -111,7 +111,7 @@ async get(filename) { ... }
 async getLargeFile(filename) { ... }  // 超过 1MB 走 git/trees + blob API
 ```
 
-也就是说，GitHub Contents API 的 1MB 单文件上限是代码里明确处理的：小文件走 Contents API，大文件回退到 blob 接口。查询也不是数据库引擎干的，而是 `parseWhere` 把 where 条件翻译成一串内存过滤函数——`IN`、`NOT IN`、`LIKE`（含 `%` 前缀/后缀/两侧匹配）、`!=`、`>`，甚至 `_complex` 的 and/or 组合逻辑都是手写的数组 filter。
+也就是说，GitHub Contents API 的 1MB 单文件上限是代码里明确处理的：小文件走 Contents API，大文件回退到 blob 接口。查询也不是数据库引擎干的，而是 `parseWhere` 把 where 条件翻译成一串内存过滤函数——`IN`、`NOT IN`、`LIKE`（含 `%` 前缀/后缀/两侧匹配）、`!=`、`>`（实现上写的是 `>=`），甚至 `_complex` 的 and/or 组合逻辑都是手写的数组 filter。
 
 这套实现的取舍很清楚：**它是给"零成本、低并发、数据量小"的场景设计的**。GitHub API 的请求频率限制和单文件体积限制天然决定了它不是生产级高并发的选项，但它把一个评论系统的全部数据放进一个 Git 仓库里，等于顺带拿到了版本历史、免费托管、和"随时能看见数据"的透明性——对个人博客来说，这三样恰恰是刚需。
 
@@ -120,7 +120,7 @@ async getLargeFile(filename) { ... }  // 超过 1MB 走 git/trees + blob API
 `postAction` 的防垃圾流水线是理解 Waline 安全观的最佳切片。访客发一条评论，按顺序撞上五道检查，每一道都能让评论直接打回或标记为 spam：
 
 1. **IP 黑名单**（`disallowIPList`）——命中直接 `ctx.throw(403)`。
-2. **重复内容检查**——同一个人（按 mail+nick+link+comment）发过相同内容，拒绝。
+2. **重复内容检查**——同一个人（按 url+mail+nick+link+comment）发过相同内容，拒绝。
 3. **IP 频率限制**——环境变量 `IPQPS`（默认 60），60 秒内同 IP 再发，拒绝。这是源码里的默认值，可调。
 4. **Akismet**——已批准的评论会送进 Akismet 判垃圾，命中则状态设为 `spam`。这里特意用了 `.catch()` 吞掉 Akismet 服务异常——第三方挂了不影响评论主流程。
 5. **关键词过滤**（`forbiddenWords`）——配置里的禁用词表拼成正则，命中即 `spam`。
@@ -131,20 +131,22 @@ async getLargeFile(filename) { ... }  // 超过 1MB 走 git/trees + blob API
 
 落库前后还各有一次 hook 调用（`preSave` / `postSave`，以及 `putAction` 里的 `preUpdate` / `postUpdate` / `preDelete` / `postDelete`）——plugin 系统就是挂在这几个 hook 上的（2023-05 的 CHANGELOG 里写着"add plugin system support"）。
 
-## 通知矩阵：一条评论能跑到七个渠道
+## 通知矩阵：一条评论能跑到八个渠道
 
-评论通过审核后，`notify.js` 会把"有新评论 / 有人回复你"这件事推送出去。它支持的渠道和对应的环境变量，从 `config.js` 和 `notify.js` 里能完整对上：
+评论通过审核后，`notify.js` 会把"有新评论 / 有人回复你"这件事推送出去。每个渠道对应一个独立的 service 方法，开关就是各自的环境变量——从 `notify.js` 里能完整对上：
 
 | 渠道 | 关键环境变量 | 实现要点 |
 |---|---|---|
 | **邮件** | `SMTP_*`、`SENDER_*` | nodemailer，支持 host/port/secure 或 service 两种配置 |
-| **微信（Server酱）** | `SC_KEY` | 走 `sctapi.ftqq.com`，表单提交 text+desp |
-| **QQ** | `QQ_TEMPLATE` | 模板渲染后走对应通道 |
-| **Telegram** | `TG_TEMPLATE` | 同上 |
-| **Discord / 飞书（Lark）** | `DISCORD_TEMPLATE` / `LARK_TEMPLATE` | 同上 |
-| **Bark** | — | iOS 推送 |
+| **微信（Server酱）** | `SC_KEY` | 走 `sctapi.ftqq.com` 推送 |
+| **企业微信应用消息** | `QYWX_AM` | 支持 `QYWX_PROXY` / `QYWX_PROXY_PORT` 代理 |
+| **QQ（QMsg）** | `QMSG_KEY`、`QQ_ID` | 走 QMsg 推送服务，`QMSG_HOST` 可换宿主地址 |
+| **Telegram** | `TG_BOT_TOKEN`、`TG_CHAT_ID` | Bot API |
+| **PushPlus** | `PUSH_PLUS_KEY` | 走 pushplus.plus |
+| **Discord** | `DISCORD_WEBHOOK` | webhook 直推 |
+| **飞书（Lark）** | `LARK_WEBHOOK`、`LARK_SECRET` | webhook + 签名校验 |
 
-通知内容用 **nunjucks 模板**渲染，模板里注入 `self`（当前评论）、`parent`（父评论）、`site`（站点名/URL/评论锚点）三个上下文对象——所有渠道共用同一套数据模型，只是模板不同。`config.js` 里 `MAIL_SUBJECT` / `MAIL_TEMPLATE` / `WX_TEMPLATE` / `TG_TEMPLATE` 这些环境变量允许站长覆盖默认模板，等于把"通知文案"也做成了可配置项。
+配一个变量，开一个渠道；一个都不配，通知层就静默跳过。通知内容用 **nunjucks 模板**渲染，模板里注入 `self`（当前评论）、`parent`（父评论）、`site`（站点名/URL/评论锚点）三个上下文对象——所有渠道共用同一套数据模型，只是模板不同。`config.js` 里 `MAIL_SUBJECT` / `MAIL_TEMPLATE` / `QQ_TEMPLATE` / `TG_TEMPLATE` / `WX_TEMPLATE` / `SC_TEMPLATE` / `DISCORD_TEMPLATE` / `LARK_TEMPLATE` 这些环境变量允许站长覆盖默认模板，等于把"通知文案"也做成了可配置项。
 
 ## 安全底线：markdown 渲染前的 XSS 加固
 

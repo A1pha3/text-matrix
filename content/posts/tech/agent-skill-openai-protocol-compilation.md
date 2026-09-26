@@ -2,10 +2,13 @@
 title: "Agent Skill 的 HTTP 底层：Skill 如何被编译成 OpenAI 协议原语"
 date: "2026-05-30T22:33:00+08:00"
 slug: "agent-skill-openai-protocol-compilation"
+github_repo: "humanlayer/12-factor-agents"
+source_key: "gh:humanlayer/12-factor-agents"
 description: "Skill 是一个纯粹的应用层抽象，而非协议层概念。本文通过 7 步协议交互拆解 Skill 的完整生命周期，揭示 Skill 如何被 Cursor 等 IDE 编译成 system prompt 片段、tool schema 和多轮 tool calling 循环的组合。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Agent Skills", "LLM", "HTTP", "Cursor"]
+lastmod: "2026-09-20T11:00:00+08:00"
 ---
 
 # Agent Skill 的 HTTP 底层：Skill 如何被编译成 OpenAI 协议原语
@@ -98,7 +101,7 @@ description: >-
 </available_skills>
 ```
 
-注意此时 SKILL.md 的**正文还没有被读取**。这就是 Cursor 文档里说的 "Progressive Loading（渐进式加载）"——只先放名字和描述，不浪费 token（词元）。
+注意此时 SKILL.md 的**正文还没有被读取**。原文作者把这个机制称为 Cursor 文档里的 "Progressive Loading"；在 Agent Skills 开放规范（agentskills.io）里，它的正式名字是 Progressive disclosure（渐进式披露）：启动时只加载所有 Skill 的元数据（name + description，规范估算每个约 100 token），Skill 被激活时才加载 SKILL.md 全文（规范建议正文控制在 5000 token 以内），`scripts/`、`references/` 下的资源只在需要时读取。
 
 ### 第 1 步：用户发问，触发 Skill
 
@@ -393,7 +396,7 @@ sequenceDiagram
 | Skill 摘要（name + description） | 注入到 `messages[0].role = "system"` 的文本中 |
 | Skill 加载（读取 SKILL.md） | LLM 发起 `tool_calls: [Read(SKILL.md)]`，结果通过 `role: "tool"` 回传 |
 | Skill 指令执行 | LLM 按读到的 SKILL.md 内容，自主发起后续 `tool_calls` |
-| Progressive Loading（渐进式加载） | 先在 system prompt 放摘要（省 token），LLM 需要时再 Read 全文 |
+| Progressive disclosure（渐进式披露） | 先在 system prompt 放元数据摘要（省 token），LLM 需要时再 Read 全文 |
 | `scripts/` 目录 | LLM 通过 `Shell` tool call 执行脚本 |
 | `references/` 目录 | LLM 通过 `Read` tool call 按需读取参考文档 |
 
@@ -405,7 +408,7 @@ sequenceDiagram
 |------|------|
 | Skill（技能） | 一个目录 + SKILL.md 的组合，属于应用层抽象，不占用协议字段 |
 | SKILL.md | Skill 的唯一入口文件：frontmatter 提供 `name` 与 `description`，正文提供指令步骤 |
-| Progressive Loading（渐进式加载） | 只把 name + description 注入 system prompt，LLM 需要时再 Read 全文的加载策略 |
+| Progressive disclosure（渐进式披露） | Agent Skills 规范的正式术语：元数据启动时加载、SKILL.md 正文激活时加载、scripts/references 资源按需读取的三层加载策略 |
 | System Prompt（系统提示词） | 注入在 `messages[0]` 的指令文本，包含 Skill 摘要与触发指令 |
 | Tool Calling / Function Calling（工具调用 / 函数调用） | 模型输出结构化 `tool_calls`，宿主执行并把结果以 `role: "tool"` 回传的机制 |
 | `tool_choice` | 请求参数，控制模型是否调用工具，以及是否限定为某个工具 |
@@ -500,7 +503,7 @@ export HTTPS_PROXY=http://127.0.0.1:8080
 
 | 观察点 | 含义 | 正常表现 |
 |--------|------|----------|
-| `messages[0].role="system"` 中包含 `<available_skills>` | Progressive Loading 生效 | 只有 name + description，没有正文 |
+| `messages[0].role="system"` 中包含 `<available_skills>` | 渐进式披露生效 | 只有 name + description，没有正文 |
 | LLM 返回的第一个 `tool_calls` 是否包含 `Read(SKILL.md)` | Skill 触发成功 | `name: "Read"`, `arguments` 指向 SKILL.md |
 | 第二轮请求的 `role: "tool"` 消息 | SKILL.md 全文已进入上下文 | content 包含完整的 SKILL.md 文本 |
 | 后续 `tool_calls` 是否按 SKILL.md 步骤执行 | Skill 指令被正确理解 | 命令参数与 SKILL.md 一致 |
@@ -539,7 +542,7 @@ curl -s https://api.openai.com/v1/chat/completions \
 
 **读完后行为不对**：SKILL.md 的指令可能不够明确。抓包对比 LLM 返回的 `tool_calls` 参数和 SKILL.md 中的要求是否一致。
 
-**并行 tool calling 没生效**：并非所有模型都支持并行调用。确认模型能力，并在 `tool_choice` 中确保没有限制为单次调用。
+**并行 tool calling 没生效**：并非所有模型都支持并行调用。确认模型能力，并检查请求里是否设置了 `parallel_tool_calls: false`，或把 `tool_choice` 限定到了单个工具。
 
 ### 6. 最小验证清单
 
@@ -576,7 +579,7 @@ curl -s https://api.openai.com/v1/chat/completions \
 
 - **任务有固定流程且步骤可文档化**：比如"读公众号文章"、"从特定 API 拉数据并清洗"、"按团队规范生成 commit message"。这类任务步骤清晰，写成 SKILL.md 后 LLM 能照着执行。
 - **任务依赖的工具已经由 IDE 注册**：Skill 本身不声明工具，只编排已有工具。如果任务需要的工具 IDE 没注册（比如需要调用一个内部 RPC），Skill 单独解决不了，得先让 IDE 支持这个工具。
-- **任务需要按需加载以节省 token**：当 Skill 数量多、每个 SKILL.md 都很长时，Progressive Loading 的 token 收益明显。5 个 Skill 各 3000 token，全量注入要 15000 token；用摘要注入只要 250 token，省下来的空间可以留给用户对话。
+- **任务需要按需加载以节省 token**：当 Skill 数量多、每个 SKILL.md 都很长时，渐进式披露的 token 收益明显。按 Agent Skills 规范的估算，每个 Skill 常驻 system prompt 的元数据只有约 100 token；若 5 个 Skill 的正文各写满规范建议的 5000 token 上限，全量注入要 25000 token，而元数据注入只要约 500 token，省下来的空间可以留给用户对话。
 
 ### 什么时候不该用 Skill
 
@@ -602,13 +605,13 @@ Function Calling（函数调用）是 Skill 的**基础设施**。Skill 本身�
 
 因为没必要。Skill 需要的所有能力——文本注入、工具定义、多轮对话——OpenAI 协议早在 2023 年就全部支持了。在协议层新增 `skill` 字段反而会增加复杂度，且需要所有模型提供商同步跟进，得不偿失。这恰恰是工程设计中的好决策：用组合替代扩展。
 
-### Q3：多个 Skill 共存时，LLM 如何选择触哪个？
+### Q3：多个 Skill 共存时，LLM 如何选择触发哪个？
 
 完全靠匹配。system prompt 中列出了所有可用 Skill 的 `name` 和 `description`，LLM 根据用户输入与各 Skill 描述的语义相似度来判断。所以 `description` 字段至关重要——它必须覆盖足够多的触发场景（关键词、用户意图、URL 模式等），否则 Skill 永远不会被触发。
 
-### Q4：Progressive Loading 具体省了多少 token？
+### Q4：Progressive disclosure 具体省了多少 token？
 
-以 mp-read 为例，其 SKILL.md 正文约 3000 token，而摘要（name + description）仅约 50 token。在每次对话的 system prompt 中只注入摘要，只有当 LLM 判定需要该 Skill 时才会 Read 全文。如果用户一次对话中从未提起公众号相关话题，那 2950 token 就省下了。这个数字随 Skill 数量线性累积——5 个 Skill 就是约 15000 token 的区别。
+Agent Skills 规范给的是三层预算：元数据（name + description）在启动时对所有 Skill 全量加载，规范估算每个约 100 token；SKILL.md 正文只在该 Skill 被激活时加载，规范建议控制在 5000 token 以内；`scripts/`、`references/` 下的资源只在需要时读取。也就是说，如果用户一次对话从未提起公众号相关话题，mp-read 的正文 token 就一次都没花。这个收益随 Skill 数量线性放大——5 个各写满 5000 token 正文的 Skill，全量注入约 25000 token，按渐进式披露只注入约 500 token 元数据。
 
 ### Q5：Skill 和 MCP（Model Context Protocol，模型上下文协议）有什么区别？
 
@@ -711,11 +714,11 @@ Skill 本身不对应协议中的独立字段。
 </details>
 
 <details>
-<summary>3. Progressive Loading 节省 token 的原理是什么？举例说明。</summary>
+<summary>3. Progressive disclosure 节省 token 的原理是什么？举例说明。</summary>
 
-原理：不在每次对话的 system prompt 中全量注入 SKILL.md 正文，只注入 `name` + `description` 摘要（约 50 token）。只有当 LLM 判定需要该 Skill 时才通过 `Read` 工具读取完整正文（约 3000 token）。
+原理：不在每次对话的 system prompt 中全量注入 SKILL.md 正文，只注入元数据（name + description，Agent Skills 规范估算每个约 100 token）。只有当 LLM 判定需要该 Skill 时，才通过 `Read` 工具读取完整正文（规范建议控制在 5000 token 以内）。
 
-以 mp-read 为例：5 个 Skill 各 3000 token，全量注入要 15000 token；用 Progressive Loading 只要 250 token（摘要），省下 14750 token 留给用户对话。
+举例：5 个各写满 5000 token 正文的 Skill，全量注入要 25000 token；按渐进式披露只注入约 500 token 元数据，省下的约 24500 token 留给用户对话。
 
 </details>
 
@@ -786,7 +789,7 @@ Skill 本身不对应协议中的独立字段。
 当团队 Skill 数量超过 5 个时，需要关注：
 
 1. **触发覆盖度矩阵**：列出每个 Skill 的触发关键词、用户意图模式、URL 模式，定期检查是否有遗漏或重叠
-2. **Skill 边界划分原则**：一个 Skill 只做一件事（参考 Factor 10：小而专注的 Agent）
+2. **Skill 边界划分原则**：一个 Skill 只做一件事（参考 12-Factor Agents 的 [Factor 10：Small, Focused Agents](https://github.com/humanlayer/12-factor-agents/blob/main/content/factor-10-small-focused-agents.md)）
 3. **`references/` 目录的按需加载策略**：把大型参考文档（如 API 文档）放到 `references/`，在 SKILL.md 中说明「需要时读取 `references/api.md`」
 
 交付物：一份团队 Skill 编写规范（可以直接存在团队 Wiki 里）。
@@ -795,9 +798,10 @@ Skill 本身不对应协议中的独立字段。
 
 如果你想知道 Skill 之外的协议层细节：
 1. 读 OpenAI 的 [Function Calling 文档](https://platform.openai.com/docs/guides/function-calling)
-2. 读 Anthropic 的 [Tool Use 文档](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
-3. 对比两者在 `tool_calls` 格式、`finish_reason` 处理、并行调用支持上的差异
-4. 用 curl 分别调用两个接口，观察返回格式的差异
+2. 读 Anthropic 的 [Tool Use 文档](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
+3. 读 Agent Skills 开放规范（[agentskills.io/specification](https://agentskills.io/specification)），对照本文第 0 步的渐进式披露三层结构
+4. 对比 OpenAI 与 Anthropic 两者在 `tool_calls` 格式、`finish_reason` 处理、并行调用支持上的差异
+5. 用 curl 分别调用两个接口，观察返回格式的差异
 
 ---
 
@@ -817,14 +821,15 @@ Skill 解决的是一个实际问题：LLM 面对复杂任务时，怎么知道�
 
 ---
 
-*本文由腾讯云开发者张敏原创，首发于腾讯云开发者公众号。原文链接：[大模型的 Agent Skill 功能，在 LLM HTTP 底层交互流中是怎么承载的？](https://mp.weixin.qq.com/s?__biz=MzI2NDU4OTExOQ==&mid=2247695701&idx=1&sn=a8b5dfd8cee58567104bcccc39af6947)*
+*本文由腾讯云开发者张敏原创，2026-05-27 首发于腾讯云开发者公众号。原文链接：[大模型的 Agent Skill 功能，在 LLM HTTP 底层交互流中是怎么承载的？](https://mp.weixin.qq.com/s?__biz=MzI2NDU4OTExOQ==&mid=2247695701&idx=1&sn=a8b5dfd8cee58567104bcccc39af6947)（微信客户端内打开）· [腾讯云开发者社区同步版](https://cloud.tencent.com/developer/article/2676157)*
 
 ## 资料口径说明
 
-1. **协议版本**：本文基于 OpenAI 兼容协议的 Function Calling 机制（2023 年支持），以及 Cursor 等 IDE 的 Skill 实现（2024-2026 年）。具体实现随 IDE 版本可能变化。
+1. **协议版本**：本文基于 OpenAI 兼容协议的 Function Calling 机制（2023 年 6 月起支持），以及 Cursor 等 IDE 对 Agent Skills 规范的实现（2025 年起）。具体实现随 IDE 版本可能变化。
 2. **工具示例**：文中提到的 `mp-read` skill 和 `mitmproxy` 抓包方法是示例，实际使用时可替换为其他 skill 或抓包工具。
 3. **协议细节**：OpenAI 和 Anthropic 的 tool calling 格式有差异，文中以 OpenAI 兼容协议为主。实际开发时请参考对应平台的官方文档。
-4. **性能数据**：文中提到的 token 数量（如 3000 token、50 token）为示例值，实际取决于 SKILL.md 的长度和 description 的措辞。
-5. **适用范围**：本文的 Skill 设计模式主要适用于 Cursor、Claude Code 等支持 SKILL.md 的 AI IDE。其他 AI 工具可能有不同的 Skill 实现方式。
-6. **原文来源**：本文首发于腾讯云开发者公众号，由张敏原创。如需引用，请注明原文链接。
+4. **token 数据**：token 数量的权威口径来自 Agent Skills 开放规范（[agentskills.io/specification](https://agentskills.io/specification)）的 Progressive disclosure 一节——元数据约 100 token/Skill、SKILL.md 正文建议 5000 token 以内；涉及具体 Skill 的估算为示意，实际取决于 SKILL.md 的长度和 description 的措辞。
+5. **术语口径**：原作把按需加载机制称为 Cursor 文档里的 "Progressive Loading"，本文保留转述；该机制在 Agent Skills 规范中的正式术语是 Progressive disclosure（渐进式披露），Cursor 文档的表述是 "Progressive Skills load resources on demand"。
+6. **适用范围**：本文的 Skill 设计模式主要适用于 Cursor、Claude Code 等支持 SKILL.md 的 AI IDE。其他 AI 工具可能有不同的 Skill 实现方式。
+7. **原文来源**：本文转述自腾讯云开发者公众号 2026-05-27 发布的原创文章（作者张敏），腾讯云开发者社区 2026-05-29 有同步版本。如需引用，请注明原文出处。
 

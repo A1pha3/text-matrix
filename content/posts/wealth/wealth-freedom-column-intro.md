@@ -1,11 +1,11 @@
 ---
 title: "财富自由专栏说明：覆盖范围、写作边界与阅读方式"
 date: "2026-03-20T08:00:00+08:00"
-lastmod: 2026-08-22T00:00:00+08:00
+lastmod: "2026-09-20T12:00:00+08:00"
 slug: "wealth-freedom-column-intro"
 description: "本专栏覆盖 AI 基础设施、半导体材料、被动元件、光通信等硬科技赛道的技术分析与投资机会梳理，以及个人财务与副业方法。每篇文章遵守三条写作原则：先假设后判断、先风险后收益、先边界后方法。"
 
-aliases: ["/posts/thoughts/wealth-freedom-column-intro/"]
+aliases: ["/posts/investing/investment-analysis-column-intro/"]
 categories: ["财富自由"]
 tags: ["财富自由"]
 hiddenFromHomePage: true
@@ -19,24 +19,27 @@ hiddenFromHomePage: true
 
 **目录**
 
-- 这个专栏在写什么（含一个完整的分析例子）
+- 这个专栏在写什么（三条线 + 一个拆到技术层的实例）
 - 哪些内容不写（四条边界）
 - 写作原则（三条，可用来检验任何一篇）
-- 怎么读这个专栏（按身份挑读 + 读前自测）
+- 怎么读这个专栏（按身份挑读 + 读前自测 + 进阶方向）
 - 免责声明与常见误读
-- 文章索引与进阶方向
+- 文章索引
 
 ## 这个专栏在写什么
 
 三条线：行业技术分析、投资机会梳理、个人财务与副业方法。每条线有自己的边界，边界的用处是让读者知道什么能信、什么不能信。
 
-- **行业分析**拆到技术层，不留在概念和情绪层面。讲 MLCC（多层陶瓷电容器），就讲介质厚度、堆叠层数、容值与可靠性怎么互相牵扯，讲国产厂商从哪个规格切入，而不是一句"AI 带动需求爆发"带过。
-- **投资梳理**给具体标的和关注指标，不替你做决策。给出供需数据、稼动率、交期和价格信号，买卖由你自己判断。
+- **行业分析**拆到技术层，不留在概念和情绪层面。讲 MLCC（多层陶瓷电容器），就讲介质厚度、堆叠层数、容值与可靠性怎么互相牵扯，讲国产厂商从哪个规格切入，而不是一句"AI 带动需求爆发"带过。拆到什么程度，看一段实例（摘自 [MLCC 行业深度技术分析](/posts/wealth/mlcc-industry-deep-analysis-2026/)）：
+
+  > 同样做高容 MLCC，村田在 0.5-0.6μm 单层介质上做到 1600 层堆叠，国产普遍还在 1-2μm 介质、几百层到 1000 层之间。介质厚度必须跟着粉体粒径走，这 30-50nm 的差距，决定了高端客户是否接受国产粉料。
+
+- **投资梳理**给产业逻辑、关注指标和可复用的方法，不替你做决策。行业文给出供需数据、稼动率、交期和价格信号，方法文把量化思路拆到数学与工程层，买卖由你自己判断。
 - **副业方法**讲执行路径和验证步骤，不卖"轻松月入 X 万"。讲清楚时间投入、试错成本和退出条件。
 
-覆盖行业集中在 AI 基础设施、半导体材料与工艺、被动元件、光通信几个方向。为什么选这些行业？选择逻辑来自几个可验证的特征：技术壁垒可量化（专利族数量、良率爬坡曲线、单线投资额），供需格局正被 AI 需求重塑，国产替代有明确的工程化路径。不是因为它们当下最热，而是因为数据相对透明、技术逻辑可以验证、结论可以跟踪。
+覆盖行业集中在 AI 基础设施、半导体材料与工艺、PCB 产业链、被动元件、光通信几个方向。为什么选这些行业？选择逻辑来自几个可验证的特征：技术壁垒可量化（专利族数量、良率爬坡曲线、单线投资额），供需格局正被 AI 需求重塑，国产替代有明确的工程化路径。不是因为它们当下最热，而是因为数据相对透明、技术逻辑可以验证、结论可以跟踪。
 
-分析方法只用公开数据：公司财报、产业调研报告、专利数据库、海关进出口数据。不依赖内幕消息和"业内人士透露"。每篇分析标注数据来源和截止日期，读者可以自行核对。
+分析方法只用公开数据：公司财报、产业调研报告、专利数据库、海关进出口数据。不依赖内幕消息和"业内人士透露"。每篇文末标注参考来源与数据口径，读者可以自行核对。
 
 ## 哪些内容不写
 
@@ -65,14 +68,7 @@ hiddenFromHomePage: true
 - **投资人**：看供需数据、稼动率、交期和价格信号，技术细节按需查阅。重点盯每篇末尾的数据截止日期和适用边界。
 - **找副业方向的个人读者**：看验证方法和执行步骤，行业分析当背景了解即可。优先读涉及时间投入和退出条件的段落。
 
-每篇文章末尾标注数据截止日期和适用边界，格式如下：
-
-```text
-数据截止日期：YYYY-MM-DD
-适用边界：资金量级、持仓周期、风险承受能力
-```
-
-超过标注时间的数据，需要自己重新验证。专栏不设固定更新频率，内容质量比更新速度重要。
+每篇文末都附参考来源和口径说明：数据来自哪些公开渠道、哪些数字是转述口径、哪些是推算、数据截止到什么时点。超过截止时点的供需、价格、稼动率数据，需要自己重新验证。专栏不设固定更新频率，内容质量比更新速度重要。
 
 **读前自测**：三个问题判断这个专栏适不适合你。
 
@@ -82,7 +78,7 @@ hiddenFromHomePage: true
 
 三问中任一答案是否定的，这个专栏帮不到你，省下时间更划算。
 
-**进阶方向**：读完行业线，想看投资方法如何落地到具体决策，从 [Seth Klarman 访谈精读](/posts/wealth/seth-klarman-rare-interview-baupost-palantir-ai-three-principles/) 进入价值投资的下一步；想从副业线起步，先读 [AI 副业赚钱指南](/posts/wealth/ai-side-hustle-money-making-guide-2026/)，把验证方法跑通再谈扩大。
+**进阶方向**：读完行业线，想看投资方法如何落地到具体决策，从 [Seth Klarman 访谈精读](/posts/wealth/seth-klarman-rare-interview-baupost-palantir-ai-three-principles/) 进入价值投资的下一步；想深入方法线，沿 [弱信号聚合与信号工厂](/posts/wealth/quant-weak-signal-aggregation-and-signal-factory/) 进入量化交易的数学与工程；想从副业线起步，先读 [AI 副业赚钱指南](/posts/wealth/ai-side-hustle-money-making-guide-2026/)，把验证方法跑通再谈扩大。
 
 ## 免责声明
 
@@ -95,7 +91,7 @@ hiddenFromHomePage: true
 专栏运行中常见的三类误读，对号入座排查一下自己的读法：
 
 1. **把分析当推荐。** 看到供需缺口测算就想下单。排查方法：回去看该篇开头的假设清单，测算依赖的产能假设和稼动率预期如果不成立，结论就不成立。
-2. **拿旧数据做新决策。** 每篇末尾都标了数据截止日期，超过期限的供需、价格、稼动率数据需要自己重新验证，常见错误是直接引用半年前的交期数字。
+2. **拿旧数据做新决策。** 行业分析文末都标了数据口径和截止时点，超过期限的供需、价格、稼动率数据需要自己重新验证，常见错误是直接引用半年前的交期数字。
 3. **把边界外的方法当通用公式。** 副业路径和投资标的都写明了适用的时间投入、资金量级与退出条件，超出这些条件照搬，出错概率显著上升。
 
 ## 文章索引
@@ -105,9 +101,11 @@ hiddenFromHomePage: true
 | [MLCC 行业深度技术分析](/posts/wealth/mlcc-industry-deep-analysis-2026/) | 被动元件 | MLCC、国产替代、AI 算力、人形机器人 |
 | [ABF 膜与 ABF 载板产业深度解析](/posts/wealth/abf-film-substrate-industry-deep-analysis/) | 半导体材料 | ABF 膜、味之素、国产替代、AI 芯片 |
 | [mSAP 工艺产业全景](/posts/wealth/msap-process-16t-optical-module-pcb-capacity-war/) | PCB 工艺 | mSAP、1.6T 光模块、PCB 产能、铜箔 |
-| [电子布行业深度技术分析](/posts/wealth/electronic-cloth-industry-deep-analysis-2026/) | 被动元件材料 | 电子布、玻纤布、国产替代、高频高速 |
+| [电子布行业深度技术分析](/posts/wealth/electronic-cloth-industry-deep-analysis-2026/) | 覆铜板材料 | 电子布、玻纤布、国产替代、高频高速 |
 | [Micro LED 光互连赛道方案分析](/posts/wealth/micro-led-optical-interconnect-ai-compute/) | 光通信 | Micro LED、光互连、AI 算力、MOSAIC |
-| [弱信号聚合与信号工厂](/posts/wealth/quant-weak-signal-aggregation-and-signal-factory/) | 量化交易 | 弱信号聚合、信号工厂（工厂模式）、量化因子、数学建模 |
+| [光进铜退：224G 时代 NPO 为什么成了超节点的最优解](/posts/wealth/npo-near-packaged-optics-2026/) | 光通信 | NPO、近封装光学、CPO、SerDes、国产替代 |
+| [弱信号聚合与信号工厂](/posts/wealth/quant-weak-signal-aggregation-and-signal-factory/) | 量化交易 | 弱信号聚合、信号工厂、正交化、因子剥离 |
+| [弱信号聚合的几何学](/posts/wealth/geometry-of-alpha-signal-factory-deep-dive/) | 量化交易 | √N 定律、信息比率、尾部相关性、正交化工厂 |
 | [「安全边际之父」Seth Klarman 罕见对话全文精读](/posts/wealth/seth-klarman-rare-interview-baupost-palantir-ai-three-principles/) | 投资方法 | 价值投资、Baupost、安全边际、跨资产 |
 | [Naval「如何致富」框架解读](/posts/wealth/naval-how-to-get-rich/) | 财富方法论 | 杠杆、具体知识、判断力、长期主义 |
 | [Dan Koe「一天修好你整个人生」拆解](/posts/wealth/fix-your-entire-life-in-one-day-dan-koe-reverse/) | 自我管理 | 反向规划、执行框架、精力管理 |

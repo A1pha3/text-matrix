@@ -1,6 +1,7 @@
 ---
 title: "Council of High Intelligence：把「咨询董事会」装进 Claude Code / Codex 的 18-persona 议会协议"
 date: "2026-06-30T14:58:34+08:00"
+lastmod: "2026-09-25T14:00:00+08:00"
 draft: false
 slug: "0xnyk-council-of-high-intelligence-multi-persona-deliberation-framework"
 github_repo: "0xNyk/council-of-high-intelligence"
@@ -49,9 +50,9 @@ tags: ["AI Agent", "Claude Code", "Codex"]
 把同一个问题丢给 Claude，绝大多数时候会得到一段结构工整、措辞自信、细节可疑的回答。模型说错并不可怕，可怕的是它用同一个家族的归纳偏差，把同一个错也答得很自信。 Council of High Intelligence（[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)，2026 年 6 月底时为 CC0 公有领域贡献，9 月起已改 MIT；6 月 30 日 github trending daily 第一、star 2,124）做的事不是 prompt 模板，而是把"决策"重构成一次**带协议约束的多智能体协商**：
 
 - 角色是**带极性配对的对手**——Socrates 负责拆假设、Feynman 负责从第一性原理重建，两人在同一议题上必须形成张力。
-- 决策走**结构化立场 + 强制多数决**——每位成员最后一轮必须输出一行 `STANCE:`，由贴题席位加权计票，达到 2/3 加权多数才算共识，否则直接呈报分歧。
+- 决策走**匿名质询 + 结构化立场 + 强制多数决**——交叉质询全程用匿名标签防声望偏见，每位成员最后一轮必须输出一行 `STANCE: <选项> | CONFIDENCE: … | DEALBREAKER: …`，由贴题席位加权计票，达到 2/3 加权多数才算共识，否则直接呈报分歧。
 - 模型来源**跨 provider 强制分流**——极性配对的两个人必须落在不同模型家族（Claude / OpenAI / Gemini / Ollama / NVIDIA NIM / Cursor），避免一个模型的家族偏差同时传染给两个互相对抗的角色。
-- 协议有**有界轮次预算**——full 模式 3 轮、quick 模式 2 轮、duo 模式 3 轮；任何一对成员互相应答超过 2 条消息就强制切断（"hemlock rule"）。
+- 协议有**有界轮次预算**——full 模式 3 轮、quick 模式 2 轮、duo 模式 3 轮；Socrates 重问已答的问题会被强制给 50 词立场（"hemlock rule"），任何一对成员互相应答超过 2 条消息也会被切断。
 
 下面按机制拆开讲：18 个角色的极性如何成对、3 套预置 panel 如何分工、7 步协议如何把对话变成投票、自动路由如何把 6 个 CLI 编排成一张"决策板凳"。
 
@@ -74,10 +75,10 @@ flowchart TB
     D --> D1[Step1 Provider Routing<br/>极性配对跨 provider]
     D1 --> D2[Step2 Problem Restate Gate<br/>每人先重述问题]
     D2 --> D3[Step3 Round1 Independent<br/>盲先独立分析 400 词]
-    D3 --> D4[Step4 Round2 Cross-Examination<br/>必须回应 2+ 其他成员]
+    D3 --> D4[Step4 Round2 Cross-Examination<br/>匿名标签下回应 2+ 成员]
     D4 --> D5[Step5 Enforcement Scan<br/>dissent quota + novelty gate]
     D5 --> D6[Step6 Round3 Final<br/>100 词立场陈述]
-    D6 --> D7[Step7 Verdict<br/>结构化 STANCE: + 加权 2/3 投票]
+    D6 --> D7[Step7 Verdict<br/>Chairman 合成 + 加权 2/3 计票]
     D7 --> E[输出：Unresolved Questions + Recommended Next Steps]
 ```
 
@@ -112,7 +113,7 @@ flowchart TB
 | Taleb ↔ Karpathy | Taleb 关注隐藏灾难尾部 | Karpathy 看平滑经验曲线 |
 | Rams ↔ Ada | Rams 看用户要什么 | Ada 看计算能做什么 |
 
-上表对应 SKILL.md "Polarity Pairs" 主表的全部 13 组；SKILL.md 面向 `--duo` 模式的配对表还补了两组：Sutskever ↔ Machiavelli（安全理想 vs 行业激励）、Socrates ↔ Watts（拆假设 vs 换框架）。
+上表对应 SKILL.md "Polarity Pairs" 主表；2026-06-27 版本的主表是上列 13 组，`--duo` 模式的配对表另含 Sutskever ↔ Machiavelli（安全理想 vs 行业激励）、Socrates ↔ Watts（拆假设 vs 换框架）两组。这两组原先只活在 duo 表里，协调者读的主表缺了它们——仓库后来把这个漂移当 bug 修掉（#50、#51），现在主表已并入为 15 组。
 
 > 设计上，每个角色没有"客观正确答案"，都站在另一极的对立面；一份诚实的评估该让对立双方同时陈述，而不是任一方独占。
 
@@ -180,22 +181,26 @@ full 模式的 7 步是最值得展开的一段，因为它直接决定了 Counc
 | 1 | Provider Detection & Routing | 极性对必须跨 provider |
 | 2 | Problem Restate Gate | 每位成员**先重述问题** + 给一个备选 framing |
 | 3 | Round 1 Independent (盲先) | 全部并行；400 词上限 |
-| 4 | Round 2 Cross-Examination | 必须回应 2+ 其他成员；300 词 |
+| 4 | Round 2 Cross-Examination | 匿名标签下质询；必须回应 2+ 其他成员；300 词 |
 | 5 | Enforcement Scan | dissent quota + novelty gate + agreement check + anti-recursion |
-| 6 | Round 3 Final | 100 词立场陈述 |
-| 7 | Verdict Synthesis | 结构化 `STANCE:` 行 + 加权 2/3 多数决 |
+| 6 | Round 3 Final | 100 词立场陈述 + 结构化 `STANCE:` 行 |
+| 7 | Verdict Synthesis | Chairman 合成 + 加权 2/3 计票 |
 
 > 强制结构（enforcement）是 Council 真正的护城河。没有这几条，整个系统就退化成"18 个 prompt 各自发言"——读起来热闹，但没有"决策机制"。
 
-具体 enforcement 三条线：
+具体 enforcement 五条线：
 
+- **匿名质询（anonymized cross-examination）**：Round 2 开始前，协调者把所有 Round 1 输出脱去署名，换成 `Member A / Member B / …` 的稳定标签，成员只看到标签。这一步防的是声望偏见——成员倾向于附和 Karpathy 而质疑匿名者，即使两段话内容相同。协议依据标注了 Choi et al.（arXiv:2510.07517）与 Karpathy 的 `llm-council` 实验。5 人及以上 panel 并行质询，4 人及以下改为顺序进行；质询结束后协调者在工作状态里恢复标签到真名的映射，质询记录同时保留匿名与实名两个版本，后者供 STEP 7 审计。
 - **dissent quota + novelty gate**：如果 >70% 过早达成共识，系统强制挑两位成员去钢人对方观点；novelty gate 阻止"换句话说"式的复读。
-- **anti-recursion（hemlock rule）**：任何一对成员互相应答超过 2 条消息就强制切断，避免 Socrates 把整个会议拖成无限提问。
-- **加权多数决**：每位成员最后一轮必须输出一行 `STANCE: ...`（支持 / 反对 / 有条件）。共识的判定不是"看起来多数"，而是**结构化计票**：协调者在协议开始前指定一个"领域权重席位"——问题最贴题的那位成员在平票裁决时计 1.5×，其余成员计 1×。席位必须在任何立场形成之前锁定，否则协调者可以靠事后挑权重操纵结果；若两位成员同样贴题，则不设权重席位，平票按等权处理。
+- **anti-recursion（含 hemlock rule）**：Socrates 重问一个已被回答的问题，会触发 hemlock rule——强制他在 50 词内给出立场，停止提问；另外任何一对成员互相应答超过 2 条消息也会被切断。两条护栏各管一种拖会方式：前者管"无限追问"，后者管"无限对线"。
+- **结构化立场行**：每位成员最后一轮必须输出一行机器可解析的三字段立场：`STANCE: <选项标签> | CONFIDENCE: high|med|low | DEALBREAKER: yes|no`。`STANCE` 是简短的选项标签（如 `monorepo`、`ship now`），并与他人统一措辞——同义标签（`monorepo` / `single repo`）由协调者归并成一个选项后计票；确实不支持任何选项则写 `STANCE: abstain`。`DEALBREAKER: yes` 表示认为对立选项有实际危害而不只是次优，这类立场即使被多数票压过，也会进入裁决的 Minority Report 单独呈现。
+- **加权多数决**：共识的判定不是"看起来多数"，而是**结构化计票**。协调者在 STEP 0 选 panel 时就锁定一个"领域权重席位"——问题最贴题的那位成员计 1.5×，其余成员计 1×。席位在任何立场形成之前指定，否则协调者可以靠事后挑权重操纵结果；若两位成员同样贴题，则不设权重席位，平票按等权处理。弃权不减总权重——`abstain` 仍以满权重计入 `W_total`，等于抬高其余人达成共识的门槛，弃权不是免费退场。达到 2/3 加权多数才算共识。
 
 如果最终未达成 2/3 加权多数，系统**不会合成一个虚假共识**，而是直接把分歧 + 完整计票回吐给用户，由用户决定怎么继续。**"未达成共识也是结果"是 README 反复强调的判断——比"看起来同意"更有价值。**
 
-quick 模式（2 轮、无 cross-examination）和 duo 模式（2 人 3 步：开场→回应→终态）则是把同一个 protocol 压缩给"简单决策"和"二元争论"用。
+还有一个角色分工容易误读：计票由协调者执行，但最终裁决文本由 **Chairman** 合成——这是 STEP 1.7 选出的命名角色，从 panel 成员之外指定，不参与 Round 1–3，只负责在 STEP 7 写出最终 verdict。把它独立出来，一是让合成 prompt 显式可审计，二是允许选用与所有成员不同家族的模型来写总结，避免 synthesis 阶段再造一次家族偏差。duo 模式下 Chairman 还有一条硬约束：不得是两位辩手中的任何一个。
+
+quick 模式（2 轮、无 cross-examination，但 Round 2 同样匿名化——轮次越少越容易从众）和 duo 模式（2 人 3 步：开场→回应→终态）则是把同一个 protocol 压缩给"简单决策"和"二元争论"用。
 
 ---
 
@@ -209,7 +214,7 @@ README 的 quickstart 只给了一条命令；下面的流转按 SKILL.md 的协
 
 这一条命令会触发以下流程（按 step 序）：
 
-1. **Provider Detection & Routing**：探测到 Claude（默认）+ Codex（装了 `codex` CLI）两个 provider。Socrates 路由到 Claude，Feynman 路由到 Codex；其他 16 人按 provider_affinity 平均铺。
+1. **Provider Detection & Routing**：探测到 Claude（默认）+ Codex（装了 `codex` CLI）两个 provider。Socrates 路由到 Claude，Feynman 路由到 Codex；其他 16 人按 provider_affinity 平均铺。随后（协议的 STEP 1.7）选定 Chairman——例如让 Gemini 3 Pro 担任，与全部成员不同家族。
 2. **Problem Restate Gate**：18 人各自先重述问题，例如：
    - Socrates: "你真正想问的是'开源能否帮我们获得开发者心智'还是'开源能否帮我们获得收入'？"
    - Aristotle: "开源是一个动作，把'什么开源'拆出来：核心代码？训练数据？评测集？"
@@ -218,15 +223,15 @@ README 的 quickstart 只给了一条命令；下面的流转按 SKILL.md 的协
    - Sun Tzu 看外部博弈：竞品是否已开源？开源后的攻防。
    - Machiavelli 看真实激励：用户为什么来？是因为开源还是因为产品本身？
    - Taleb 看尾部风险：开源后被监管盯上的概率。
-4. **Round 2 Cross-Examination**：每位成员必须引用并挑战至少 2 位其他成员。
-   - Karpathy 反驳 Sutskever："你说安全优先，但你给的安全预算对应到我们这种小团队根本不可行。"
-   - Sutskever 反驳 Karpathy："你用'不可行'当借口，但 safety cost 是内生的，不是外加的。"
+4. **Round 2 Cross-Examination（匿名标签下）**：所有 Round 1 输出被换成 `Member A / Member B / …`，每人必须挑战其中至少 2 位——包括可能属于自己的那段。
+   - Karpathy（读到的是"Member F"）反驳安全优先论："你说的安全预算对应到我们这种小团队根本不可行。"
+   - Sutskever 反驳："你用'不可行'当借口，但 safety cost 是内生的，不是外加的。"
 5. **Enforcement Scan**：发现 Sun Tzu / Machiavelli / Aurelius（战略组）已经过早形成共识 → 强制 Karpathy / Sutskever 去钢人反对意见。
-6. **Round 3 终态立场（100 词）**：每人输出 `STANCE: 支持 / 反对 / 有条件`，并说明加权立场：
-   - Sun Tzu: `STANCE: 有条件 / 仅在 X 数据集保留后`
-   - Machiavelli: `STANCE: 支持 / 视为心智营销手段`
-   - Taleb: `STANCE: 反对 / 开源暴露被监管盯上的尾部`
-7. **Verdict Synthesis**：加权 2/3 多数未达成 → 输出 unresolved questions + 全票计票 + next steps，不合成假共识。
+6. **Round 3 终态立场（100 词 + STANCE 行）**：每人输出结构化立场行，例如：
+   - Sun Tzu: `STANCE: open-source-core | CONFIDENCE: med | DEALBREAKER: no`（有条件——评测集保留后开源核心）
+   - Machiavelli: `STANCE: open-source-all | CONFIDENCE: high | DEALBREAKER: no`（视为心智营销手段）
+   - Taleb: `STANCE: do-not-open-source | CONFIDENCE: high | DEALBREAKER: yes`（开源暴露被监管盯上的尾部）
+7. **Verdict Synthesis**：协调者归并同义标签后加权计票，2/3 多数未达成 → Chairman 把 unresolved questions + 完整计票 + Minority Report（Taleb 的 dealbreaker 在此单独呈现）+ next steps 写成最终裁决，不合成假共识。
 
 按这套协议走完，用户拿到的不是"18 个人各自发言"，而是一份带分歧地图的决策稿——这也是这套 skill 真正的产出形态。
 
@@ -281,7 +286,7 @@ Council 不是一个有 benchmark 的系统（没有测试集、没有分数榜�
 
 **第二类：consensus 指标。**
 
-- **加权 2/3 多数**：贴题席位 1.5×、其余成员 1×，席位在协议开始前锁定。
+- **加权 2/3 多数**：贴题席位 1.5×、其余成员 1×，席位在协议开始前锁定；v1.2.0 起每票再乘上成员自报的置信度因子（high 1.0 / med 0.75 / low 0.5）。
 - **未能达成**直接以全票计票形式回吐给用户。
 - **未尝试合成假共识**——这是 README 反复强调的设计原则。
 
@@ -323,13 +328,22 @@ Council 不是一个有 benchmark 的系统（没有测试集、没有分数榜�
 
 **快速开始（5 分钟验证）：**
 
+Claude Code 用户走插件市场最短，两行装完：
+
+```text
+/plugin marketplace add 0xNyk/council-of-high-intelligence
+/plugin install council@council-of-high-intelligence
+```
+
+Codex / Gemini CLI / OpenCode 用户走安装脚本：
+
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/0xNyk/council-of-high-intelligence.git
 cd council-of-high-intelligence
 
-# 2. 安装 skill（Claude Code 环境）
-./install.sh
+# 2. 安装 skill（Claude Code 直接 ./install.sh；其他端用对应 flag）
+./install.sh          # 或 --codex-only / --gemini-only / --opencode-only
 
 # 3. 检查路由配置，不实际运行
 /council --dry-route
@@ -337,6 +351,8 @@ cd council-of-high-intelligence
 # 4. 用 duo 模式跑一个轻量测试（2 人 3 步）
 /council --duo "我应该选哪个数据库？"
 ```
+
+安装后重启对应的客户端，`/council` 命令在所有受支持的 host 上同名。
 
 **采用顺序：**
 
@@ -374,10 +390,13 @@ Council 的价值不在 18 个 persona 的"模拟"，而在三件事：
 不会。Council 是按需触发的——只有输入 `/council` 命令时才启动协议。平时正常使用 Claude Code 不受影响。
 
 **Q: weighted 2/3 多数决的"领域权重"怎么指定？**
-领域权重座位（domain-weight seat）在协议开始前就锁定：协调者按问题匹配最相关的成员，给 ta 1.5× 的平票权重，并在 `[CHECKPOINT]` 里明示；锁定时点必须在任何立场形成之前，避免事后加权。若两个成员同样贴题，则不设权重座位，平票时按等权处理。
+领域权重席位（domain-weight seat）在协议开始前就锁定：协调者按问题匹配最相关的成员，给 ta 1.5× 的平票权重，并在 `[CHECKPOINT]` 里明示；锁定时点必须在任何立场形成之前，避免事后加权。若两个成员同样贴题，则不设权重席位，平票时按等权处理。
+
+**Q: 成员之间质询时看得到彼此真名吗？**
+看不到。Round 2 全程使用 `Member A / Member B / …` 匿名标签，连"哪段是自己写的"都不披露，防止声望偏见和从众效应。质询结束后协调者才恢复实名映射，实名版记录仅用于最终审计。
 
 **Q: 如果未达成 2/3 共识，输出是什么？**
-Council 不会合成虚假共识，而是直接输出：完整计票结果 + 各成员 `STANCE:` 行 + unresolved questions + recommended next steps。由用户决定如何继续。
+Council 不会合成虚假共识，而是直接输出：完整计票结果 + 各成员 `STANCE:` 行 + unresolved questions + recommended next steps。投了 `DEALBREAKER: yes` 的少数派立场会进 Minority Report 单独呈现。由用户决定如何继续。
 
 **Q: Council 的输出太长，怎么快速抓住重点？**
 直接看 Step 7 Verdict Synthesis 部分的 `STANCE:` 汇总和 unresolved questions。如果想深入，再回看 Step 4 的 cross-examination 部分，了解分歧的具体原因。
@@ -400,7 +419,7 @@ Socrates 负责拆假设，Feynman 负责从第一性原理重建。两者必须
 <details>
 <summary>查看答案</summary>
 
-Step 4 Round 2 Cross-Examination（交叉质询）。这一步强制每位成员回应至少 2 位其他成员的观点，形成结构化对抗。
+Step 4 Round 2 Cross-Examination（交叉质询）。这一步在匿名标签下强制每位成员回应至少 2 位其他成员的观点，形成结构化对抗。
 
 </details>
 
@@ -408,7 +427,7 @@ Step 4 Round 2 Cross-Examination（交叉质询）。这一步强制每位成员
 <details>
 <summary>查看答案</summary>
 
-因为技术决策需要快速执行，人数少可以减少共识噪声，强制约束（hemlock rule）防止过度讨论。README 的隐含假设是：人一多，共识噪声跟着涨；人少但约束强，真正的分歧才浮得出来。
+因为技术决策需要快速执行，人数少可以减少共识噪声，强制约束（hemlock rule 与互答上限）防止过度讨论。README 的隐含假设是：人一多，共识噪声跟着涨；人少但约束强，真正的分歧才浮得出来。
 
 </details>
 
@@ -469,9 +488,10 @@ Council 不会合成虚假共识，而是直接输出：完整计票结果 + 各
 
 - 仓库：[0xNyk/council-of-high-intelligence](https://github.com/0xNyk/council-of-high-intelligence)。写作时点为 CC0 公有领域贡献，2026 年 9 月复核时已改为 MIT。
 - 本文中 18 personas 表、3 panel、20 triad、7 步协议、6 provider 表均来自 README 截至 2026-06-30 的版本（commit 68cd247，2026-06-27）；"极性对 13 组全表"与"20 个 triad 全表"补齐自同一版本 SKILL.md 的同名表格，`--duo` 配对表另含 Sutskever↔Machiavelli、Socrates↔Watts 两组。
-- 2026-09-14 复核：仓库 star 约 4.2k；License 已由 CC0 改为 MIT；最新 README 把协议简化为 5 阶段描述（restate → blind analysis → cross-examine → final stance → synthesis），Chairman 合成角色在 6 月底版本已由 SKILL.md 的 STEP 1.7 定义；本文机制细节以 2026-06-27 口径为准。
-- Gemini CLI 支持于 2026-06-27 加入（#35），OpenCode 支持于 2026-07-02 加入，均可通过 `./install.sh --gemini-only`、`./install.sh --opencode-only` 单独安装；也可通过 `/plugin marketplace add 0xNyk/council-of-high-intelligence` 装成 Claude Code 插件；本文主体仍以 2026-06-30 的 Claude Code / Codex 口径为准。
-- "极性配对"、"execution-lean"、"weighted 2/3 majority"、"hemlock rule" 等术语均沿用 README 原文。
+- 2026-09-25 复核（commit dd09e28，2026-09-21）：仓库 star 4,502、fork 426；License 已由 CC0 改为 MIT。协议主线未变，但有三处演进值得知道：① v1.2.0（2026-07-04，#44）起计票改为置信度加权——成员投票权重 = 基础权重（1.0 或 1.5× 领域席位）× 置信度因子（`high 1.0 / med 0.75 / low 0.5`），摇摆的议会自己抬高共识门槛、把分歧升级给用户（依据 Roundtable Policy arXiv:2509.16839、ConfMAD arXiv:2509.14034）；② Claude Code 插件市场安装（#45）：`/plugin marketplace add 0xNyk/council-of-high-intelligence` + `/plugin install council@council-of-high-intelligence`，并支持项目级 `./.council.yaml` 固定 profile/triad/members/chairman；③ 极性对主表已由 13 组并入为 15 组（#50、#51 修复漂移），并新增 `scripts/validate-roster.py` 在 CI 里跑 166 项结构检查防 roster 漂移。本文机制细节以 2026-06-27 口径为准，上述差异已在正文相应位置标注。
+- 匿名质询、`STANCE: <option> | CONFIDENCE: … | DEALBREAKER: …` 三字段立场行、Chairman 合成角色（SKILL.md STEP 1.7）在 2026-06-27 版本均已存在，属本文口径范围内。
+- Gemini CLI 支持于 2026-06-27 加入（#35），OpenCode 支持于 2026-07-03 提交、PR #41 于 2026-07-04 合入，均可通过 `./install.sh --gemini-only`、`./install.sh --opencode-only` 单独安装；本文主体仍以 2026-06-30 的 Claude Code / Codex 口径为准。
+- "极性配对"、"execution-lean"、"weighted 2/3 majority"、"hemlock rule" 等术语均沿用 README/SKILL.md 原文。
 - Trending 数据来源：github.com/trending daily 2026-06-30 15:00 (Asia/Shanghai)。
 - 文章不依赖任何特定 provider 的可用性；具体 provider 配置请参考 `configs/provider-model-slots.example.yaml`。
 

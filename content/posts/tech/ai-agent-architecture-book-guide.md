@@ -18,14 +18,12 @@ tags: ["AI Agent", "多智能体", "MCP", "OpenClaw", "Shannon"]
 
 这本书不是某一个框架的使用手册，书里的代码示例展示的是设计模式，不是框架 API。你读完一章，能用 LangGraph、CrewAI 或自己的框架实现同样的模式，这一章才算没白读。
 
-下面先给一张总览地图，再按四条主线拆解核心机制，最后给一个任务流案例和不同读者的采用建议。
-
-## 核心数据（GitHub API 2026-09-01 验证）
+## 核心数据（GitHub API 2026-09-23 验证）
 
 | 指标 | 数值 | 备注 |
 |------|------|------|
-| Stars | 363 | 2026-09-01 采集，仍在增长 |
-| Forks | 62 | 同上 |
+| Stars | 388 | 2026-09-23 采集 |
+| Forks | 70 | 同上 |
 | 作者 | Wayland Zhang | Kocoro-lab 核心贡献者 |
 | 章节 | 9 部 33 章 + 3 附录 | 附录含术语表 / 模式选择指南 / FAQ |
 | 语言 | 中文 / English / 日本語 | 三语全部完成 |
@@ -216,7 +214,7 @@ Part 9（第 27-33 章）覆盖新兴场景的落地形态。这部分时效性�
 | 第 32 章 | OpenClaw | 本地 Agent Harness，计算机控制（AX Tree + 坐标）、Hooks、权限引擎、循环检测 |
 | 第 33 章 | Building on the Harness | 在 Harness 上扩展 Named Agents、Skills、Memory 持久化、Daemon、多源路由、定时任务、MCP 集成、Cloud Delegation |
 
-其中第 32 章讲的 OpenClaw（仓库 openclaw/openclaw，TypeScript）是本地运行的 Agent Harness：本地执行无网络延迟、通过 AX Tree + 坐标精确操作 UI、用 Hooks + 权限引擎 + 循环检测做安全控制。第 33 章讲的 ShanClaw 是 macOS 原生的 Agent Harness，在 OpenClaw 基础上扩展了 Named Agents、Skills、Memory 持久化、Daemon、多源路由、定时任务、MCP 集成、Cloud Delegation 等能力——注意这个参考实现仓库后来改名为 [Kocoro](https://github.com/Kocoro-lab/Kocoro)（Mac 兼容的 AI 伙伴，MCP-native，基于 Shannon 构建）。
+其中第 32 章讲的 OpenClaw（仓库 openclaw/openclaw，TypeScript，2026-09-23 时点 39 万+ Stars）是本地运行的 Agent Harness：本地执行无网络延迟、通过 AX Tree + 坐标精确操作 UI、用 Hooks + 权限引擎 + 循环检测做安全控制。第 33 章讲的 ShanClaw 是 macOS 原生的 Agent Harness，在 OpenClaw 基础上扩展了 Named Agents、Skills、Memory 持久化、Daemon、多源路由、定时任务、MCP 集成、Cloud Delegation 等能力——注意这个参考实现仓库后来改名为 [Kocoro](https://github.com/Kocoro-lab/Kocoro)（Mac 原生的本地 AI Agent，带记忆、本地计算机控制、浏览器操作和 IM 通道，MCP-native，基于 Shannon 构建）。
 
 ## 任务流案例：一个研究请求如何流过系统
 
@@ -235,7 +233,7 @@ Part 9（第 27-33 章）覆盖新兴场景的落地形态。这部分时效性�
 
 ## 参考实现：Shannon
 
-[Shannon](https://github.com/Kocoro-lab/Shannon) 是配套的开源参考实现。仓库描述"A production-oriented multi-agent orchestration framework."，定位生产向的多 Agent 编排框架，主语言 Go，许可证 MIT，2026-09-01 时点约 2.2k Stars。
+[Shannon](https://github.com/Kocoro-lab/Shannon) 是配套的开源参考实现。仓库描述"A production-oriented multi-agent orchestration framework."，定位生产向的多 Agent 编排框架，主语言 Go，许可证 MIT，2026-09-23 时点约 2.2k Stars。
 
 它的代码实现比书里讲的三层更细——书里的"三层"是概念层，Shannon 跑起来是一条链：
 
@@ -249,7 +247,7 @@ Client → Gateway (Go) → Orchestrator (Go) → Agent Core (Rust) → LLM Serv
 - **LLM Service**（Python）：模型提供商抽象、MCP 工具、Agent 主循环、上下文管理。
 - **Playwright**（Python，默认不启动）：浏览器自动化。
 
-这套实现覆盖了书里的关键模式：Temporal 持久化执行 + 时间旅行调试、硬性 Token 预算与模型自动降级、实时事件流 + Prometheus 指标 + OpenTelemetry 追踪、WASI 沙箱 + OPA 策略 + 多租户隔离。模型提供商不止 OpenAI / Anthropic——README 列了 10+ 家：Google（Gemini）、DeepSeek、xAI（Grok）、MiniMax、Groq、Qwen、GLM、Kimi，以及本地 Ollama / LM Studio / vLLM 任意 OpenAI 兼容端点，还带自动故障转移。
+这套实现覆盖了书里的关键模式：Temporal 持久化执行 + 时间旅行调试、硬性 Token 预算与模型自动降级、实时事件流 + Prometheus 指标 + OpenTelemetry 追踪、WASI 沙箱 + OPA 策略 + 多租户隔离。模型提供商不止 OpenAI / Anthropic——README 列了 10+ 家：Google（Gemini）、xAI（Grok）、DeepSeek、MiniMax、Groq、Qwen、Meta（Llama 4）、智谱（GLM）、Kimi，以及本地 Ollama / LM Studio / vLLM 任意 OpenAI 兼容端点，还带自动故障转移。
 
 Shannon 不是唯一选择——LangGraph、CrewAI、AutoGen 都能做类似的事。它的价值在于把书里的设计模式完整落地了，可以对照代码验证概念。学模式时看 Shannon，落地时按自己团队的技术栈选框架。
 
@@ -259,7 +257,7 @@ Shannon 不是唯一选择——LangGraph、CrewAI、AutoGen 都能做类似的�
 
 **快速入门（2-3 天）**：Part 1 全部 → 第 3 章 → 第 13 章 → 第 20 章，建立 Agent 基础概念，理解工具调用、多 Agent 编排和生产架构的最小可用系统。
 
-**系统学习（2-3 周）**：Part 1-8 顺序阅读，配合 Shannon 代码实践，完整掌握从单 Agent 到企业级多 Agent 的内容，能动手实现一个生产级系统。
+**系统学习（2-4 周）**：全书 9 部顺序阅读（官方建议 3-4 周），配合 Shannon 代码实践，完整掌握从单 Agent 到企业级多 Agent 的内容，能动手实现一个生产级系统。
 
 **前沿热点（1-2 天）**：第 4 章（MCP）→ 第 15 章 15.8 节（HITL）→ 第 27 章（Deep Research）→ 第 28 章（Computer Use）→ 第 29 章（Agentic Coding），适合已有 Agent 基础的读者。
 
@@ -287,9 +285,9 @@ Shannon 不是唯一选择——LangGraph、CrewAI、AutoGen 都能做类似的�
 - **MCP 生态早期**：第 4 章讲的 MCP 协议 2024 年 11 月才推出，工具数量、稳定性、兼容性都在快速变化。
 - **代码是示意**：文中涉及的代码片段（ReAct 循环、DAG 编排、三层架构）都用于说明设计模式，实际实现参考 Shannon 源码或自己动手，不能直接拿去跑。
 
-## 一句话收束
+## 这本书回答什么问题
 
-这本书真正回答的不是"怎么用某个框架"，而是"Agent 系统从单机跑通到可上线、可治理，中间有哪些躲不开的架构决策"。它把决策按主线拆开，又用 Shannon 给了可验证的落地。骨架这类取舍不会因为框架换代而失效——读它之前不用先想好要用哪个框架。
+这本书真正回答的不是"怎么用某个框架"，而是"Agent 系统从单机跑通到可上线、可治理，中间有哪些躲不开的架构决策"。这些决策按四条主线拆开，每条都有 Shannon 里可对照的代码。架构取舍不随框架换代失效——读它之前不必先选好框架。
 
 ## 资源链接
 
@@ -300,5 +298,6 @@ Shannon 不是唯一选择——LangGraph、CrewAI、AutoGen 都能做类似的�
 | English | https://github.com/Kocoro-lab/ai-agent-book/tree/main/en |
 | 日本語 | https://github.com/Kocoro-lab/ai-agent-book/tree/main/jp |
 | Shannon OSS | https://github.com/Kocoro-lab/Shannon |
+| Shannon 在线演示 | https://shannon.run |
 | Kocoro（原 ShanClaw） | https://github.com/Kocoro-lab/Kocoro |
 | 完整目录 | https://github.com/Kocoro-lab/ai-agent-book/blob/main/zh/TABLE_OF_CONTENTS.md |

@@ -1,14 +1,15 @@
 ---
 title: "Nick Saraev 的 AI Agent 无代码大师班：三大平台、核心循环与提示词架构"
 date: "2026-04-29T15:01:00+08:00"
+lastmod: "2026-09-20T10:30:00+08:00"
 slug: "ai-agents-full-course-2026-nick-saraev-200k-views"
-description: "Nick Saraev《AI Agents Full Course 2026》（YouTube EsTrWCV0Ph4，494K 观看）据字幕重建：这是一门明确的无代码课——不写 Python，而是教你用 Codex / Claude Code / Antigravity 三大 agent 平台。核心是 Observe→Think→Act 的智能体循环与'完成的定义'、会自改的 agents.md、多智能体 MCP 编排与子智能体互审。开场用 5 个各带 Chrome 浏览器的 agent 跑真实获客 demo。"
+description: "Nick Saraev《AI Agents Full Course 2026》（YouTube EsTrWCV0Ph4，2026 年 9 月已有 78.8 万观看）据字幕重建：这是一门明确的无代码课——不写 Python，而是教你用 Codex / Claude Code / Antigravity 三大 agent 平台。核心是 Observe→Think→Act 的智能体循环与'完成的定义'、会自改的 agents.md、多智能体 MCP 编排与子智能体互审。开场用一群各带 Chrome 浏览器的 agent 跑真实获客 demo。"
 draft: false
 categories: ["视频精读"]
 tags: ["AI Agent", "Claude Code", "Codex", "Antigravity", "MCP", "Agent Skills", "无代码"]
 ---
 
-Nick Saraev 教了 2000 多人怎么用 AI agent 干活，自己用 agent 跑着一门年入 400 万美元的生意。他的《AI Agents Full Course 2026》在 YouTube 上有 494K 观看，时长约 2 小时 13 分——但这不是你想象的那种课。
+Nick Saraev 是家 AI 增长机构的创始人，客户名单里有 MrBeast、Anthropic、OpenAI，名下及参与的业务一年合计营收超过 1000 万美元。他的《AI Agents Full Course 2026》2026 年 3 月 7 日上线 YouTube，到 9 月已有 78.8 万观看，时长两小时十一分半——但这不是你想象的那种课。
 
 开场他就划了三条边界：你不需要编程经验，他自己也没有 CS 学位；三个 agent 平台（Codex、Claude Code、Antigravity）随便从哪个入手，终点一样；而且他自称"到目前为止我没在 YouTube 上看到有人讲我这门课里的大部分东西"。
 
@@ -18,11 +19,11 @@ Nick Saraev 教了 2000 多人怎么用 AI agent 干活，自己用 agent 跑着
 
 ---
 
-## 一、开场 demo：5 个各带浏览器的 agent 同时干活
+## 一、开场 demo：一群各带浏览器的 agent 同时干活
 
 课程一上来就是一个"几个月前还会被当成天方夜谭"的 demo。
 
-场景是获客。他手上有一批会议来的 leads——有网站、LinkedIn、名字，唯独缺邮箱。搁一年前这批线索基本作废。现在，他让 Claude Code 同时开出一堆 Chrome 浏览器，每个浏览器里一个子 agent，各自去一个网站，动态找到联系表单、填名字和邮箱、再写一段随对象微调的外联话术。这些 agent 之间还通过一个共享聊天室互通消息、分工。原本一个 agent 要干好几小时的活，一群 agent 并行——几分钟铺完。
+场景是获客。他手上有一批会议来的 leads——有网站、LinkedIn、名字，唯独缺邮箱。搁一年前这批线索基本作废。现在，他让 Claude Code 同时开出一批 Chrome 浏览器，每个浏览器里一个子 agent，各自去一个网站，动态找到联系表单、填名字和邮箱、再写一段随对象微调的外联话术。这些 agent 之间还通过一个共享聊天室互通消息、分工。原本一个 agent 要干好几小时的活，一群 agent 并行——几分钟铺完。
 
 这个 demo 就是全片的目标态：**把工作拆散到多个浏览器实例，每个子 agent 一块独立工作区**。后面讲的所有技巧，都是为了搭出这种编排。
 
@@ -38,7 +39,7 @@ Nick 也顺手画了条红线：这种并行填表的自动化，本质是在绕
 2. **思考（Think / Reason）**：基于全部上下文和你的高层目标，想下一步做什么、怎么规划。现在主流平台都有一个可点开的推理步骤——这点被很多人低估，因为它带来可解释性、可问责性和可操控性（你能中途看它在想什么、叫停、或者塞新资源进去）。
 3. **行动（Act）**：调用工具、编辑文件、或者跑一条命令行。
 
-行动拿到结果后，把结果喂回观察步，循环再来一遍——每转一圈，上下文就更大一点。转个三四圈，模型会撞到一个大多数人漏掉、所以老是失望的东西——**完成的定义（definition of done）**：一组约束和技术规格，告诉模型"到此可以不用再循环了"。一旦满足，它就切到"任务完成"路线，吐一段格式化的最终回答。
+行动拿到结果后，把结果喂回观察步，循环再来一遍——每转一圈，上下文就更大一点。转个三四圈，模型迟早要面对一个大多数人没想过、所以老是失望的东西——**完成的定义（definition of done）**：一组约束和技术规格，告诉模型"到此可以不用再循环了"。一旦满足，它就切到"任务完成"路线，吐一段格式化的最终回答。
 
 这三步每一步都能单独优化——观察、思考、行动各有各的改法，全片接下来就逐个展开。
 
@@ -54,7 +55,7 @@ Nick 也顺手画了条红线：这种并行填表的自动化，本质是在绕
 - **推理循环**：就是上一节那个 observe → think → act。
 - **记忆**：agents.md / claude.md / gemini.md、对话历史、自动记忆文件、以及 skills。
 
-所以"chatbot vs agent"的区别很干脆：chatbot 大致就是那个 LLM；agent 是 LLM 再加上工具、推理循环和记忆。Nick 现场用 Codex 演示了一遍——让它研究"男性肌酸补充"，并给了个明确的完成定义："凑够 10+ 篇实证来源就返回一份结构化报告"。模型于是观察 →（"用户要研究，我有联网工具"）思考 → 行动（搜索、汇编）→ 再观察，循环两三圈，58 秒后交出结构化证据报告。
+所以"chatbot vs agent"的区别很干脆：chatbot 大致就是那个 LLM；agent 是 LLM 再加上工具、推理循环和记忆。Nick 现场用 Codex 演示了一遍——让它研究"男性肌酸补充"，并给了个明确的完成定义："凑够 10+ 篇实证来源就返回一份结构化报告"。模型于是观察 →（"用户要研究，我有联网工具"）思考 → 行动（搜索、汇编）→ 再观察，循环两三圈，约一分钟后交出结构化证据报告。
 
 ---
 
@@ -68,7 +69,7 @@ Nick 也顺手画了条红线：这种并行填表的自动化，本质是在绕
 | **Claude Code** | Anthropic | 推理最可解释、最适合编排与 agentic 工作流（能实时看/叫停/操控）、质量稳定 | 慢（除非 fast 模式，很烧额度）；前端/设计偏弱 |
 | **Antigravity**（Gemini 3.1 Pro） | Google | 前端/设计最强、多模态最强（能理解视频）、出字快 | 最不可解释、质量不稳定（有些天直接拉胯） |
 
-Nick 的用法：要干净前端找 Gemini，要可控编排找 Claude，要后端/数学/TDD 找 Codex。收费上他点了一句：Claude Code 要付费（约 $17–20/月），但他自己在 agent 平台上拿到过 100–200 倍回报，建议真想学就先付了、第一个月想办法把钱赚回来。
+Nick 的用法：要干净前端找 Gemini，要可控编排找 Claude，要后端/数学/TDD 找 Codex。收费上他点了一句：Claude Code 包含在付费订阅里，Claude Pro 月付 $20、年付折合每月 $17；他自称在 agent 平台上的投入拿到过上百倍的回报，建议真想学就先付了、第一个月想办法把钱赚回来。
 
 他也承认在自己的 design-taste 加持下，Gemini 出的站最"性感"、GPT 出的偏"笨重"。但他一再强调别把这些 2%–5% 的差异太当真——"它们就是在整个互联网上训练的星系级大脑，差异更多来自训练时间的新旧"。
 
@@ -89,7 +90,7 @@ Nick 的用法：要干净前端找 Gemini，要可控编排找 Claude，要后�
 1. 【前端】绝不默认深色模式，因为用户不喜欢。
 ```
 
-现场的例子：他让 Antigravity 建个主页，结果给了个漂亮但深色模式的站；他说"别再搞深色模式了"，agent 没有只改这次，而是把"绝不做深色模式（用户偏好）"写进了 `gemini.md`。下次再建站，这条规则已经在提示词最顶上，它再也不会犯。规则越攒越多，agent 犯的不合你偏好的错就越来越少——第五次可能几乎归零。
+现场的例子：他让 Antigravity 建个主页，结果给了个漂亮但深色模式的站；他说"别再搞深色模式了"，agent 没有只改这次，而是把"绝不做深色模式（用户偏好）"写进了 `gemini.md`。下次再建站，这条规则已经在提示词最顶上，它再也不会犯。规则越攒越多，agent 犯的不合你偏好的错就越来越少，到第五次几乎归零。
 
 层级也讲清了：最顶上是全局 agents/claude/gemini.md（对所有项目生效，Claude 存在 `~/.claude/`），然后拼本地项目的 .md，再往下是 skills，最后才是你这次的行内提示词。好处是把一大堆上下文和功能压进很少的 token——账单按 token 算，上下文越长模型质量越容易掉。
 
@@ -97,9 +98,9 @@ Nick 的用法：要干净前端找 Gemini，要可控编排找 Claude，要后�
 
 ## 六、Agent Skills：把工作流标准化成一段规程
 
-Skill 是把大模型的"灵活/发散"收成"确定性直线"的办法——同一个任务每次都照同一套标准操作规程来做。三家都支持（Codex skills、Gemini skills、Claude Code skills），规格几乎一样：一个带 `---` frontmatter 的文件，里头写 name、description，可选 tools / license / metadata。Nick 说他自己通常只写 name + description + 偶尔几个可用工具。
+Skill 是把大模型的"灵活/发散"收成"确定性直线"的办法——同一个任务每次都照同一套标准操作规程来做。三家都支持（Codex skills、Gemini skills、Claude Code skills），规格几乎一样：一个带 `---` frontmatter 的文件，必填 name 和 description，可选 `allowed-tools`、license、metadata 等字段。Nick 说他自己通常只写 name + description + 偶尔几个可用工具。
 
-他拿 Anthropic 官方的 "algorithmic art" skill 现场演示：把整个 skill.md 喂进模型、存成 skill 再 run，模型就照着规程生成了一批粒子算法艺术，还能实时调粒子数、噪声、湍流。要点是——skill 让同一件事每次都做得一样，并把一大段上下文折进很少的 token。
+他拿 Anthropic 官方 skills 仓库里的 "algorithmic-art" skill 现场演示：把整个 skill.md 喂进模型、存成 skill 再 run，模型就照着规程生成了一批粒子算法艺术，还能实时调粒子数、噪声、湍流。要点是——skill 让同一件事每次都做得一样，并把一大段上下文折进很少的 token。
 
 ---
 
@@ -112,11 +113,11 @@ Skill 是把大模型的"灵活/发散"收成"确定性直线"的办法——同
 - **随机化多智能体共识**：同一句话用略有差异的提示词开出多个 agent 并行跑，再统计它们输出的分布——取众数、取中位，把"多数一致的"当可靠结论、"少数派的"当可留意的发散想法。理由很直白：单个 agent 只采样了答案空间的一小块，多开几个等于把搜索范围铺得更开。
 - **智能体聊天室**：给一群 agent 一个共享上下文（比如一个 `chat.json`），让它们各带一个人设——系统思考者、务实派、专挑边角案例的、用户代言人、唱反调的——轮流发言、互相质疑，最后再综合一轮。答案经得起一轮群架，盲区就少了。
 - **子智能体互审回路**：写东西的 agent 出初稿，另一个不带它思路的 agent 拿全新上下文来审——看正确性、边界、可简化处、安全问题，有毛病再交第三个去修，修完复查，没毛病才放行。Nick 用一段限流器代码演示了"实现 → 审 → 修 → 复核"的完整一圈。
-- **提示词契约（prompt contract）**：把含糊需求拆成目标、约束、输出格式、失败条件四段写清楚再开工；配套的"反向提示"（reverse prompting）是反过来让模型先问你 5 个澄清问题，把没说的偏好挖出来，再生成契约。
-- **上下文冰山（iceberg technique）**：别把整个代码库或整份大文档一次性塞进上下文。提示词里只放"水面之上"的全局/项目规则和当前任务，其余留给工具按需去读——要用哪个文件才 read 哪个。原因很实在：上下文越长，模型质量越容易掉，token 账单也越高。
+- **提示词契约（prompt contract）**：把含糊需求拆成目标、约束、输出格式、失败条件四段写清楚再开工；配套的"反向提示"（reverse prompting）是反过来让模型先问你几个澄清问题，把没说的偏好挖出来，再生成契约。
+- **上下文冰山**：别把整个代码库或整份大文档一次性塞进上下文。提示词里只放"水面之上"的全局/项目规则和当前任务，其余留给工具按需去读——要用哪个文件才 read 哪个。原因很实在：上下文越长，模型质量越容易掉，token 账单也越高。
 - **模型路由（model routing）**：同一种活按难度分给不同档位的模型——简单的分类丢给便宜的小模型、调研给中档、最关键的架构与综合判断才用最贵的。Nick 拿获客链路举例：便宜模型去批量抓线索、中档补全资料、强模型写外联话术，最后可选再让更强的模型审一遍。
 
-这些合起来就是开场那个"5 个浏览器 agent 并行获客"demo 背后的东西：**单个 agent 没那么强，但把一群 agent 用提示词架构编排起来（分工、辩论、互审、共识），整体质量就上一个台阶**。
+这些合起来就是开场那批浏览器 agent 并行获客 demo 背后的东西：**单个 agent 没那么强，但把一群 agent 用提示词架构编排起来（分工、辩论、互审、共识），整体质量就上一个台阶**。
 
 ---
 
@@ -150,8 +151,9 @@ Skill 是把大模型的"灵活/发散"收成"确定性直线"的办法——同
 - 视频原片：[Nick Saraev《AI Agents Full Course 2026》(YouTube EsTrWCV0Ph4)](https://www.youtube.com/watch?v=EsTrWCV0Ph4)
 - 作者与社区：[Nick Saraev 个人站](https://nicksaraev.com/)（无代码 AI 自动化）／ [Maker School](https://www.skool.com/makerschool)
 - 三大平台官方入口：OpenAI Codex、[Anthropic Claude Code](https://www.anthropic.com/)、Google Antigravity
+- 课程同款官方 Skills 仓库：[anthropics/skills](https://github.com/anthropics/skills)（文中的 algorithmic-art 技能出自这里）
 - **进阶阅读**（站内相关）：[AI Agent 概念讲清楚（Jeff Su）]({{< relref "ai-agents-clearly-explained-jeff-su-4m-views.md" >}}) ／ [25 分钟从零到 Agent]({{< relref "zero-to-ai-agent-25-minutes-futurepedia-3m-views.md" >}})
 
 ---
 
-> **本文信息来源**：基于 YouTube 原片英文自动字幕逐段核对写成（yt-dlp 取字幕后清洗，约 1477 句）。自动字幕在个别专有名词和数字上可能有听写误差（如 GPT 版本号、Claude Code 价格按字幕如实转录）。
+> **本文信息来源**：基于 YouTube 原片英文自动字幕逐段核对写成（yt-dlp 取字幕后清洗），章节顺序与视频官方章节表一致。2026 年 9 月复核：观看数、时长、发布日期取自视频页当前读数；模型版本（Codex 配 GPT-5.4、Antigravity 配 Gemini 3.1 Pro）、Claude 订阅价格（$20/月，年付折合 $17）、skills 规范字段与 algorithmic-art 官方出处均对照官方来源核实。自动字幕在个别专有名词上可能有听写误差。

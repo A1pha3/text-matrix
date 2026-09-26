@@ -1,310 +1,380 @@
 ---
-title: "Karpathy LLM Wiki：把知识库交给 AI 维护"
+title: "Karpathy LLM Wiki 拆解：把「有据可查」做成可复算的不变量"
 slug: "karpathy-llm-wiki-agent-skill-guide"
 github_repo: "Astro-Han/karpathy-llm-wiki"
 source_key: "gh:Astro-Han/karpathy-llm-wiki"
 date: "2026-04-08T11:10:00+08:00"
-lastmod: 2026-04-08T11:10:00+08:00
+lastmod: "2026-09-26T07:00:00+08:00"
 categories: ["技术笔记"]
 tags: ["知识管理", "Agent Skills", "LLM"]
-description: "Karpathy 提出的 LLM Wiki 理念：人只管阅读和提问，LLM 负责撰写、编目和修复。本文拆解其社区实现，覆盖 Ingest/Query/Lint 三条主线的运转方式与落地坑点。"
+description: "Astro-Han/karpathy-llm-wiki 把 Karpathy 的 LLM Wiki 想法做成可安装的技能：raw 不可变、wiki 由模型维护，再用 431 行的 check_evidence.py 逐字回查每条数字与引文。本文以整仓读尽加实跑的方式，拆解它的五条流程、三档权限、候选集边界与 11 项刻意不做。"
 draft: false
 ---
 
-# Karpathy LLM Wiki：把知识库交给 AI 维护
+## 先说这篇要回答什么
 
-2026 年 4 月，Andrej Karpathy 扔出一个简短但方向明确的主张：
+README 对这套技能的概括只有一句话：代理把材料摄入 `raw/`、编译成 `wiki/` 页面、回答时带引用、并对 wiki 做一致性检查。这个概括没错，但它跳过了真正值得看的东西。
 
-> **"The LLM writes and maintains the wiki; the human reads and asks questions."**
+值得看的是第二层问题：大语言模型（LLM）写出来的知识页面，凭什么信。
 
-这句话戳中的不是技术难度，而是知识管理里的一个死循环：人负责记录 → 人负责整理 → 人负责检索 → 然后没时间了。LLM Wiki 的思路是把「维护」剥离出去，只剩两件事——往里扔材料，和向它提问。
+`Astro-Han/karpathy-llm-wiki` 给出的答案是一条不变量加一台机器。不变量写在 `SKILL.md` 里：wiki 页面上每一个承重事实——数字、日期、直接引语——必须逐字存在于该页 Raw 字段链接的原始材料中。机器是 `scripts/check_evidence.py`，431 行 Python，把这条不变量当成可复算的条件去验，配 765 行、52 个用例的测试。
 
-下面拆解的并非 Karpathy 本人发布的成品，而是社区基于他的理念实现的 Agent Skill：[Astro-Han/karpathy-llm-wiki](https://github.com/Astro-Han/karpathy-llm-wiki)。它遵循 [Agent Skills](https://agentskills.io) 开放标准，可以在 Claude Code、Cursor、Codex CLI 等工具中直接安装。
+这个答案的形状很工程化：不做向量检索，不做置信度打分，不做每页到期日。检查器只用 Python 标准库的四个模块，取原文则完全交给宿主工具。它把「可信」缩小成「字面可回查」，然后在这个尺度上做到机械可验。
 
-## 一张图看清这套系统
+仓库不大：16 个跟踪文件，Markdown 与 Python 合计 1,948 行。本文的结论来自整仓读完、跑完它的测试套件、再往它的示例页里注入 17 类改动看哪些被抓；凡是实测出来的数字，后面都跟着跑出它的那条命令。
 
-先不急着看目录结构。从「一次知识摄入」的视角看，整个系统只有三条主线：
+## 目录
 
-| 主线 | 谁触发 | 做什么 | 产物 |
-|------|--------|--------|------|
-| **Ingest** | 你说「摄入这篇文章」 | 抓取原文 → 存入 raw/ → 编译为 wiki 页面 → 更新索引 | wiki 新页面 + 更新后的 index.md |
-| **Query** | 你问「我对 X 了解多少」 | 搜索 wiki/ → 综合多页面 → 附引用回答 | 带引用的答案（可存档） |
-| **Lint** | 你说「检查我的 wiki」 | 扫描断链、索引缺口、孤立页面、矛盾内容 | 修复报告，自动修复可修项 |
+- [先说这篇要回答什么](#先说这篇要回答什么)
+- [一页地图：三层结构、两条数据区、三条主线](#一页地图三层结构两条数据区三条主线)
+- [出处核对：口号与原文差了一层](#出处核对口号与原文差了一层)
+- [Ingest 的真实形状：五个阶段与四种处置](#ingest-的真实形状五个阶段与四种处置)
+- [Grounding Invariant：把有据可查写成可复算的条件](#grounding-invariant把有据可查写成可复算的条件)
+- [check_evidence.py：三档扫描与一个闭合的候选集](#check_evidencepy三档扫描与一个闭合的候选集)
+- [实测注入：17 类改动它抓得住几类](#实测注入17-类改动它抓得住几类)
+- [查询与检查：值得看的是权限分档](#查询与检查值得看的是权限分档)
+- [一次完整流转：150 行原文、80 行页面、0 条嫌疑](#一次完整流转150-行原文80-行页面0-条嫌疑)
+- [装与跑：入口改名、落点因工具而异、Python 有下限](#装与跑入口改名落点因工具而异python-有下限)
+- [它故意不做的 11 件事](#它故意不做的-11-件事)
+- [口径为什么容易失效：骨架在 7 月 23 日换过一次](#口径为什么容易失效骨架在-7-月-23-日换过一次)
+- [该不该用：适用边界与采用顺序](#该不该用适用边界与采用顺序)
+- [会立刻撞上的几个问题](#会立刻撞上的几个问题)
+- [读完自测与下一步](#读完自测与下一步)
+- [参考](#参考)
 
-这三条线共享 `raw/`（不可变源材料区）和 `wiki/`（LLM 维护的知识区），但触发场景和产出完全不同。后面看目录结构和操作细节时，可以对照这张表。
+## 一页地图：三层结构、两条数据区、三条主线
 
-## 1. 目录结构与设计约束
+`SKILL.md` 自述为三层。前两层是你的数据，第三层是模型的行为规范：
 
-整个项目只有两个核心目录，其余的 `.agents/skills/` 放的是技能定义文件本身：
+| 层 | 位置 | 谁能写 | 内容 |
+|----|------|--------|------|
+| 源材料 | `raw/<topic>/` | 只追加，写入后不再改 | 抓回来的原文，带来源、采集日、发布日三行元数据 |
+| 知识页 | `wiki/<topic>/<article>.md` | 模型全权维护 | 编译后的页面，一层主题目录，不允许更深 |
+| 规范 | `SKILL.md` 与 `references/` | 你安装、模型读取 | 流程、模板、约定 |
 
-```
-your-project/
-├── raw/              ← 不可变源材料（只增不改）
-│   └── topic/
-│       └── 2026-04-03-source-article.md
-├── wiki/              ← 编译后的知识（LLM 维护）
-│   ├── topic/
-│   │   └── concept-name.md
-│   ├── index.md       ← 知识索引（一页目录）
-│   └── log.md         ← 操作日志（只增）
-└── .agents/
-    └── skills/
-        └── karpathy-llm-wiki/
-            ├── SKILL.md
-            └── references/
-```
+`wiki/` 下另有两个特殊文件：`wiki/index.md` 是全库一页索引，每篇一行；`wiki/log.md` 是只追加的操作日志。
 
-三条硬约束撑起这个结构：
+三条主线的分工如下，注意它们的写入权限完全不同：
 
-1. **raw/ 只增不改**——源材料一旦写入就不再修改。任何 wiki 页面的结论都能追溯到原始材料，而不是 LLM 的二次加工。
-2. **wiki/ 完全由 LLM 维护**——人不直接编辑 wiki 下的任何文件；所有变更通过 Ingest 或 Lint 触发，LLM 执行。避免手动改 wiki 后与索引脱节。
-3. **log.md 只追加**——每次操作写一行日志，不覆写历史。出问题时，回看 log 比猜 LLM 做了什么更靠谱。
+| 主线 | 触发 | 做什么 | 会不会写文件 |
+|------|------|--------|--------------|
+| Ingest | 「摄入这篇」 | 取原文进 `raw/`，判处置，编译进 `wiki/`，级联更新，登记索引与日志 | 会，最多 |
+| Query（查询） | 「我知道 X 吗」 | 先读索引再全文检索，合成带引用的答案 | 不写，除非你要求存档 |
+| Lint | 「检查我的 wiki」 | 三档质量扫描 | 只改安全档，其余报告 |
 
-## 2. 三条主线拆开看
+一条容易被忽略的规则：Query 或 Lint 如果找不到这套目录，不会替你建，只会回一句「先跑一次摄入来初始化」。初始化只发生在第一次 Ingest。这条规则把「创建结构」这个动作收在唯一一条写路径上，避免半套目录被当成完整库来检查。
 
-### 2.1 Ingest（摄入）：从原始材料到可检索的知识
+## 出处核对：口号与原文差了一层
 
-Ingest 是使用频率最高的命令。你给 LLM 一个 URL 或一段文本，它完成五步：
+仓库开篇引用的那句「The LLM writes and maintains the wiki; the human reads and asks questions.」，在 Karpathy 的原始文件里搜不到。
 
-1. **Fetch**：获取 URL 内容或接收你直接粘贴的文本
-2. **Store**：原始内容写入 `raw/topic/YYYY-MM-DD-source-name.md`
-3. **Compile**：LLM 分析源材料，提取核心概念，生成 wiki 页面
-4. **Link**：扫描现有 wiki，建立交叉引用（用 `[[WikiLink]]` 语法）
-5. **Index**：更新 `wiki/index.md`，把新页面挂到索引树上
+它来自 2026 年 4 月 4 日 Karpathy 发布的 gist `llm-wiki.md`（11,985 字节，75 行）。原文的写法是：
 
-触发示例：
+> You never (or rarely) write the wiki yourself — the LLM writes and maintains all of it. You're in charge of sourcing, exploration, and asking the right questions.
 
-```
-"Ingest this article: https://example.com/attention-is-all-you-need"
-"Ingest the paper at ./papers/transformer.pdf"
-"Ingest my notes about RLHF from today's research session"
-```
+技能里那句是把它压成了两行。压缩本身没问题，但要清楚它是转述，不是引文。同一份 gist 里还有一句更硬的定位，决定了后面这些约定的性质：
 
-编译 wiki 页面时 LLM 遵循几条内部规则：一个概念对应一个页面；每个页面以一段摘要开头；每条结论都附源材料引用；页面之间通过双向链接互相引用。这些规则的目的不是形式规范，而是让后续 Query 能准确命中，让 Lint 有据可查。
+> This document is intentionally abstract. It describes the idea, not a specific implementation.
 
-### 2.2 Query（查询）：问你的知识库，而不是搜文件名
+Karpathy 交出来的是一份「想法文件」，目录结构、约定、页面格式都留白，让各家代理自己实例化。`karpathy-llm-wiki` 是其中一种实例化，它的价值就落在这些留白被填成了什么：一层主题目录、两级相对路径、四种处置、一条可机检的不变量。
 
-Query 不是 grep，也不是全文搜索。它用语义搜索匹配 wiki 内容，然后综合多个页面生成答案。
+顺带一提，仓库自己也在 2026-04-05 建库当天修正过一次出处——第 4 个提交把 README 里指向 Karpathy gist 的链接换成了正确的那条。这类细节值得留意：一个还在长骨架的仓库，链接和口径都会漂。
 
-一次 Query 的执行路径：
+## Ingest 的真实形状：五个阶段与四种处置
 
-- `"What do I know about attention mechanisms?"`
-  → 语义搜索 wiki/ 中所有相关页面
-  → 综合多个页面的内容生成答案
-  → 每条结论附上来源页面的引用链接
-  → 如果加了 `"archive the findings"`，答案会被写成一个新的 wiki 页面
+README 用一行概括 Ingest。规范里它分成五个阶段，最要紧的差别在第二步，而那一步在很多介绍里根本不存在。
 
-支持的模式：
+1. **Fetch**：用你环境里任何能取网页或读文件的工具拿到原文，存成 `raw/<topic>/YYYY-MM-DD-<slug>.md`。slug 取标题转连字符式，上限 60 字符；发布日拿不到就把文件名的日期前缀整个省掉，元数据里的 Published 字段照写 `Unknown`；同名文件追加 `-2` 这样的数字后缀。
+2. **Triage**：先把原文存下来，然后在动 `wiki/` 之前，用来源的关键实体和同义词搜一遍全库，公开宣布处置结论。
+3. **Compile**：按处置写页面。核心论点相同就并入已有页；是新概念就在最贴题的目录新建，文件名跟着概念走而不是跟着原始文件走；跨主题就挑一个最贴的目录放，再在别处加交叉引用。
+4. **Cascade Updates**：不能只看索引。用来源的关键实体、别名以及它触及的结论去全库搜，把所有被实质影响的非存档页都更新一遍，并刷新它们的 Updated 日期。
+5. **Post-Ingest**：更新 `wiki/index.md`，往 `wiki/log.md` 追加一条带处置结论和原文路径的日志。
 
-```
-"What do I know about attention mechanisms?"
-"Research diffusion models and archive the findings"
-"How does the attention mechanism relate to my notes on neural networks?"
-```
+四种处置是这套流程里最实在的设计：
 
-最后那条跨领域查询才是这套系统真正的价值点——传统笔记工具很难回答「A 和 B 之间有什么关联」这种问题，但 LLM 在综合多个 wiki 页面时可以做到。
+| 处置 | 含义 | 后果 |
+|------|------|------|
+| New | 建一到多篇新页 | 写页面、进索引、记日志 |
+| Update | 并入已有页 | 追加而非覆盖，保留原有引用来源 |
+| Disputed | 与库内既有内容冲突 | 冲突双方各自标 Status: Disputed 并互链 |
+| No material | 这篇没带来超出库内已有的知识 | 原文留着、日志记一笔，然后停手 |
 
-### 2.3 Lint（检查）：自动化 wiki 健康检查
+最后一条要单独看。`SKILL.md` 的措辞是「不要从一篇单薄的材料里硬挤出一篇文章」。多数所谓 AI 笔记工具的失败模式正是这个：来一篇必产一篇，库越长噪声越多。把「不产出」做成一个合法且可记录的出口，是这套技能里少见的克制。
 
-Lint 是维护命令，触发方式就是一句话：
+`No material` 的日志标题同时是机器可读的清单键，格式固定为：
 
-```
-"Lint my wiki"
+```text
+## [YYYY-MM-DD] ingest | no material: <project-root-relative raw file path>
+- Disposition: No material
 ```
 
-它扫描五类问题：
+这个形状不是给排版强迫症准备的，`check_evidence.py` 会按它做减法，后文会看到效果。
 
-| 检查项 | 实际问题 | 自动修复 |
-|--------|---------|---------|
-| 断链 | wiki 页面引用了不存在的页面 | ✅ 移除或替换为有效链接 |
-| 索引缺口 | index.md 遗漏了某些 wiki 页面 | ✅ 补入索引 |
-| 孤立页面 | 没有被任何页面引用的 wiki 页面 | ⚠️ 报告并建议关联 |
-| 矛盾内容 | 不同页面中对同一概念描述冲突 | ⚠️ 报告，需人类确认 |
-| 陈旧内容 | 源材料更新后 wiki 页面未同步 | ⚠️ 报告，需重新 Ingest |
+编译阶段还有一条源保真规则，是整份规范里最具体的一段：每个数字、日期和直接引语在写下去之前必须先在原文里定位到（搜或者读）；照原样写，原文写 42K 就写 42K，不要写成 42,000；自己算出来的派生值要把分量摆出来，让每个分量都能在原文里找到；定位不到的值，就不要以精确形式写出来。
 
-前两项 LLM 可以直接修；后三项需要你判断。建议每周跑一次 Lint——不需要记在日历里，把它挂到你的 AI 编码工具的自动化规则里就行。
+## Grounding Invariant：把有据可查写成可复算的条件
 
-## 3. 一个完整任务怎么流过系统
+`SKILL.md` 用一节专门定义这条不变量：wiki 页面上每个承重事实都逐字存在于该页 Raw 字段链接的 `raw/` 文件里。编译负责建立它（先定位再写），检查负责验证它。
 
-假设你在研究 Transformer 架构，走了下面这轮操作：
+它同时划清了两者各自管多大一块：脚本只 grep 高信号字面量——带后缀或较大的数字、小数、ISO 日期、较长的引语；剩下的由「先定位再写」这条编译期规则覆盖。
 
-**第一步：摄入论文**
+这个分工解释了为什么脚本可以这么薄。它还带来一个很实用的推论：`raw/` 不可变，所以一篇验证通过的页面会一直保持验证通过，不必维护任何增量状态——脚本重跑一遍全库只要零点几秒，后文有实测。
 
+反过来看，这条不变量的边界也很清楚：它保证的是「这句话在原文里出现过」，不保证「这句话是原文的意思」。原文里写「作者反对 X」，页面写「作者支持 X」，字面全在，意思反了。这类语义失真落在 Lint 的判断档里，由模型读原文比对，机器不参与。把可机检的部分做到机械可靠，把不可机检的部分明确交回给人和判断——这台机器的定位就是这一句。
+
+## check_evidence.py：三档扫描与一个闭合的候选集
+
+脚本自带一段很长的模块说明，把行为写死在文字里。三档扫描：
+
+- **保真度**：从每篇 wiki 页面抽候选字面量，逐个回查该页 Raw 链接指向的原文正文，没找到的列为嫌疑。
+- **证据错误**：压根没法验的页面——非存档页缺 Raw 字段、Raw 链接解析不到、Raw 链接指向 `raw/` 外面。
+- **清单**：`raw/` 里没有任何页面引用的文件，排除掉日志里记为 `no material` 的那些。
+
+候选集被明确声明为「闭合、冻结」，只认三样东西。一是 15 字符以上的引语，包括双引号内的片段和正文里的引用块；二是 ISO 日期，`YYYY-MM-DD` 和 `YYYY-MM` 都算；三是特定形状的数，千分位、带小数点、带 K/M/B/% 后缀，或者 4 位以上的整数。小的纯整数（`42`、`500`）和带符号、货币、拼写形式的日期一律不查，理由写在说明里：它们归编译期规则和判断档管。还有一句是给改代码的人看的——要扩就扩这段说明，别去动正则。
+
+几条实现上的取舍，比功能列表更能说明作者在想什么：
+
+- 原文文件的元数据头（Source、Collected、Published）在比对前被剥掉。这些是记账信息，留着会让一堆日期白送通过。
+- 页面上 Sources、Raw、Updated 这类元数据行本身不产候选。脚本验的是正文里的断言，不是记账字段。
+- Status 块的内容整体跳过。存档页没有 Raw 字段是合法的，不报。
+- 文档解析是围栏感知的：先认第一个不在代码围栏里的 `# ` 作为标题，紧跟其后的连续引用块才算元数据头。围栏本身算正文边界，不能被剥掉后把后面某个引用块提上去当头部。
+- 报告就是接口，退出码不携带信息。除了一种情况：找不到 `wiki/` 目录时直接退出 1。
+
+退出码这一条最容易被误解。「有问题就非零」的退出码在这里是有害的：脚本自己说了，嫌疑是候选而不是结论，派生值和商品名会以嫌疑身份出现，判定要靠人读原文。既然结论要人下，把退出码做成失败信号只会诱使有人拿它去卡流水线，卡出一堆假阳性。
+
+## 实测注入：17 类改动它抓得住几类
+
+光读代码不够，我把仓库随带的示例页拿来改，逐类注入，跑脚本看输出。示例页是一篇 80 行的 Claude Code 状态栏工具生态综述，链接一份 150 行的原始调研笔记。基线干净：0 嫌疑、0 证据错误、0 未引用原文。
+
+| 注入的改动 | 脚本反应 |
+|------------|----------|
+| 星标数 11,693 改成 12,940 | 抓到，列为嫌疑 |
+| 把 4,804 重写成 4804（值对、写法不对） | 抓到 |
+| 把 11,693 重写成 11693 | 抓到 |
+| 编造一句 15 字以上的引语 | 抓到 |
+| 编造 87.5% 这样的小数百分比 | 抓到 |
+| 写一个原文里没有的月份 2026-11 | 抓到 |
+| 写 2026-03，而原文里的 2026-03 全以完整日期出现（18、19、24 三天） | 抓到，月份不能冒充日期前缀 |
+| 把 11,693 与 7,038 相加写成 18,731 | 抓到，派生值要人判 |
+| 正文写「42 个工具、500 份材料」 | 不查，纯小整数在候选集外 |
+| 引语短于 15 字符 | 不查 |
+| 把假数字放进行内代码 | 不查，行内代码先被剥掉 |
+| 把假数字放进带语言标注的围栏代码块 | 不查，围栏整体剥除 |
+| 假数字写进 Status 块 | 不查，Status 块跳过 |
+| 假日期写进页面自己的 Updated 行 | 不查，元数据字段不是断言 |
+| 假日期写进 Sources 行 | 不查，同上 |
+| 把 Raw 链接指向 `wiki/` 而非 `raw/` | 报证据错误：链接逃出 `raw/` |
+| 删掉整行 Raw 字段 | 报证据错误：页面没有 Raw，同时那份原文转为未引用 |
+
+17 类里 8 类进嫌疑、2 类进证据错误、7 类按候选集边界放过。放过的 7 类不是漏网，而是候选集之外的东西：小整数、代码里的数字、页面自己的记账字段。
+
+这张表对使用者意味着一件很实际的事：这台机器验的是「这个字面写法在原文里有没有出现过」。所以换写法算抓到——四舍五入、把 42K 写成 42,000、把千分位去掉，全都会被报出来；而把一个原文里真实存在的数字挪个位置、说成别的含义，它不管，因为那个数字确实在原文里。
+
+未引用原文那条也实测了。往 `raw/` 里丢一个没人引用的文件，脚本立刻报出来；在 `wiki/log.md` 里补一行 `no material` 日志，同一条就不再报。日志里的路径是精确匹配的，所以 `raw/misc/notes.md` 被豁免，不会顺带豁免 `raw/other/notes.md`——这条也有对应测试。
+
+## 查询与检查：值得看的是权限分档
+
+Query 不是语义检索。`SKILL.md` 给的路径很土：先读 `wiki/index.md` 找候选页面，再用关键术语及其同义词全文搜 `wiki/`。它甚至给了一条禁止性规则：索引和全文搜索两头都空之前，不许宣称库里没有相关内容，而且要说自己搜过了。
+
+这条规则针对的是代理的一种典型失败：换词没换够，就下结论说没有。README 里还有一张对照表把定位说清楚——检索增强生成（RAG）的知识住在分块和向量里，综合发生在查询时；LLM Wiki 的知识住在整理过的 Markdown 页面里，综合发生在摄入和维护时。
+
+答案默认只输出到对话里，不落盘。你明确要求存档时，它写成一个新的 wiki 页面，规则是一串「不合并」：永远新建，不并入已有文章，没有 Raw 字段（内容不来自原文而来自库内页面）。索引里那条摘要以 `[Archived]` 开头，日志记一条 `query | Archived: <标题>`。存档页是时点快照，后续级联更新明确不碰它。
+
+Lint 分三档，权限差别是这一节的核心：
+
+| 档 | 项目 | 能做什么 |
+|----|------|----------|
+| 安全修复 | 索引一致性、正文内链、Raw 引用、See Also 引用 | 直接改。同名目标唯一存在才改路径；零个或多个匹配通常只报告，唯一例外是 See Also 的零匹配会直接删掉这条死引用 |
+| 机械报告 | 源保真度、证据错误、未引用原文 | 跑脚本，只报不改 |
+| 判断报告 | 跨页事实冲突、被更新来源取代却没标 Status、缺冲突标注、缺交叉引用、Status 块格式不合、孤立页面、缺跨主题引用、反复出现却没有专页的概念、存档页引用的源文章已大幅更新 | 只报，靠人决定 |
+
+索引一致性这一档有个细节：索引里指向不存在文件的那条不删，标 `[MISSING]` 留着让人决定。缺摘要的补 `(no summary)` 占位。Updated 日期以页面自己的元数据为准，不一致就把索引改成跟页面一致——真相源是文章，不是目录。
+
+安全档的判定口径统一得很干净：能唯一确定目标才动手，有歧义就交回给人。唯一被允许删除的是已经指向不存在页面的交叉引用——规范给的理由是，一条死引用本来就不承重。
+
+## 一次完整流转：150 行原文、80 行页面、0 条嫌疑
+
+仓库把一对真实文件放了进来，正好能当流转案例看。原文是 2026-03-19 采集的状态栏工具市场调研，150 行；编译后的页面 80 行，Updated 2026-03-24。
+
+对照读能看出编译到底做了什么：
+
+- 原文那张 12 行的竞品表被压成 6 行，只留下与结论承重相关的条目；被砍掉的六行连同它们的星标数（726、397、159 等）一起从页面上消失，于是也不需要有出处。
+- 原文分散在「User Pain Points」「Official Stance」「Contradictions & Uncertainties」三处的材料，被重排成 Overview 之外的五节：Competitive Landscape、User Pain Points、User Feedback Analysis、Technical Trends、Impact。
+- 页面里 12 个数字、4 个日期、8 条引语，全部能在原文里逐字找到——这 24 个候选是把示例页喂给脚本的 `extract_candidates()` 数出来的，跑检查器则报 0 嫌疑。
+- 原文还记了一条时间线矛盾：claude-hud 的星标从 3 月 19 日的 7,038 涨到 3 月 24 日的 11,842。页面只保留了「5 天涨 4,804 星，与 Trending 效应一致」这一句结论，11,842 这个新值没有进页面——进了也不会被报，因为它在原文里；会被报的从来不是新值，是原文里查不到的值。
+- 页面顶部三行元数据齐备：Sources 一行带两个日期，Raw 一条链接（`../../raw/ai-coding-tools/...`，两级向上），Updated 一个日期。
+
+跑一遍只要下面这六行，末行需要 Python 3.10 以上的解释器，原因稍后：
+
+```bash
+git clone https://github.com/Astro-Han/karpathy-llm-wiki.git /tmp/klw
+mkdir -p /tmp/kb/raw/ai-coding-tools /tmp/kb/wiki/ai-coding-tools
+cp /tmp/klw/examples/2026-03-19-claude-code-statusline-landscape.md /tmp/kb/raw/ai-coding-tools/
+cp /tmp/klw/examples/claude-code-statusline-landscape.md /tmp/kb/wiki/ai-coding-tools/
+: > /tmp/kb/wiki/index.md; : > /tmp/kb/wiki/log.md
+python3 /tmp/klw/scripts/check_evidence.py /tmp/kb
 ```
-"Ingest this paper: https://arxiv.org/abs/1706.03762"
-```
 
-系统做的事：抓取论文 → 存入 `raw/transformer/2026-04-03-attention-is-all-you-need.md` → 提取 Self-Attention、Multi-Head Attention、Positional Encoding 等概念，为每个概念创建 `wiki/transformer/self-attention.md` 等页面 → 在页面间建立 `[[Multi-Head Attention]]` 这类交叉引用 → 更新 `wiki/index.md`。
+输出末尾是 `0 fidelity suspect(s), 0 evidence error(s), 0 unreferenced raw file(s)`。仓库自己把这个形状固化成了一个测试用例，叫 `test_examples_have_zero_suspects`——示例必须过自己的检查器，否则测试红。
 
-**第二步：摄入一篇解读文章**
+规模感也顺手测一下。用同一份原文结构造一个 94 篇页面、99 份材料的库，wiki 正文 215,143 字节（按每 4 个字符折一词元粗算约 5.4 万），全库检查实测 0.16 秒。README 给这条边界配了原话：「at 50K–100K tokens of curated wiki, grep and read are more reliable」。也就是整理过的正文到 5 万至 10 万词元这一档，grep 和读更可靠。
 
-```
-"Ingest this article: https://example.com/transformer-explained"
-```
+## 装与跑：入口改名、落点因工具而异、Python 有下限
 
-系统做的事：存入 raw/ → 发现这篇文章讨论了 Self-Attention 的计算复杂度，于是**更新**（而非覆盖）`wiki/transformer/self-attention.md`，追加复杂度分析段落，保留之前的引用来源。
-
-**第三步：查询**
-
-```
-"How does self-attention compare to RNNs?"
-```
-
-系统做的事：搜索 wiki/ 中 Self-Attention 和 RNN（循环神经网络）相关页面 → 综合信息生成对比答案，每条结论附引用链接。
-
-**第四步：存档查询结果**
-
-```
-"Archive that comparison to my wiki"
-```
-
-系统做的事：把刚才生成的对比答案写成 `wiki/transformer/self-attention-vs-rnn.md`，更新 index.md。
-
-**第五步：健康检查**
-
-```
-"Lint my wiki"
-```
-
-系统做的事：检查有没有断链（比如引用了尚不存在的 `[[Cross-Attention]]`）、确认所有页面都在索引中、报告孤立页面。
-
-这五步走完，你的 wiki 里多了一个概念簇（Self-Attention、Multi-Head Attention、对比页面），每个页面都可追溯到原始论文或解读文章，索引自洽，引用完整。
-
-## 4. 安装与环境
-
-**环境要求**：Node.js >= 18（用于 npx），以及一个支持 Agent Skills 的 AI 编码工具。
-
-**Claude Code**：
+README 教的安装命令是：
 
 ```bash
 npx add-skill Astro-Han/karpathy-llm-wiki
 ```
 
-**Cursor**：
+这条命令今天仍然能用，但要清楚它已经是个转发壳。npm 上的 `add-skill` 包已被标记废弃，最后一次发布是 2026-01-26 的 2.0.0，废弃说明写着「已改名为 skills，请用 npx skills add」。实测跑这条命令，先吐一段废弃提示和 `Forwarding to 'npx skills add'...`，然后才走真正的安装流程。当前 `skills` 包版本 1.7.0，它同时提供 `skills` 和 `add-skill` 两个可执行入口。
 
-```bash
-npx add-skill Astro-Han/karpathy-llm-wiki
-# Cursor 会自动转换 SKILL.md 格式
+落点随工具不同，实测结果：
+
+| 参数 | 落点 |
+|------|------|
+| `-a claude-code` | `.claude/skills/karpathy-llm-wiki/` |
+| `-a codex`、`-a cursor` | `.agents/skills/karpathy-llm-wiki/` |
+| `-a qoder-cn` | `.qoder/skills/karpathy-llm-wiki/` |
+
+三个都是项目级目录，都在仓库根下，不是家目录。传 `-a claude` 会被拒：`Invalid agents: claude`，同时把可用取值整表打出来。安装方式是复制而非软链，日志里标 `(copied)`，另外在根目录写一个 `skills-lock.json`，记下来源仓库、来源类型、入口文件和一份内容指纹。
+
+复制下来的不止 `SKILL.md` 和 `references/`，而是整仓 16 个文件，包括 `scripts/check_evidence.py` 和测试。这决定了 Lint 的机械档能不能跑——按 `SKILL.md` 的口径，命令是：
+
+```text
+python3 <skill-dir>/scripts/check_evidence.py <project-root>
 ```
 
-**Codex CLI**：手动复制到技能目录：
+可选地在后面跟上项目根相对路径的页面名来缩小范围，不传就是全库。
 
-```bash
-mkdir -p ~/.agents/skills/karpathy-llm-wiki
-git clone https://github.com/Astro-Han/karpathy-llm-wiki.git /tmp/karpathy-llm-wiki
-cp /tmp/karpathy-llm-wiki/SKILL.md ~/.agents/skills/karpathy-llm-wiki/
-cp -r /tmp/karpathy-llm-wiki/references ~/.agents/skills/karpathy-llm-wiki/
+这里有一个 README 和 `SKILL.md` 都没写的硬约束：Python 版本。脚本在数据类字段里用了 `str | None` 这种运行时求值的写法，而本机的 `/usr/bin/python3` 恰好就是 3.9.6，所以照文档敲第一条命令会直接崩在导入阶段：
+
+```text
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
 ```
 
-**其他工具**：把 `SKILL.md` 和 `references/` 复制到该工具的技能目录即可。
+换成 3.10.21 或 3.12.11 都正常。测试套件同理，3.9 下连用例收集都过不去；3.12 下跑 `python3 -m pytest tests/ -q`，52 个用例 1.32 秒全绿。
 
-安装后在项目根目录初始化：
+初始化不需要你手工建目录。第一次摄入时它自己补：缺 `raw/` 就建 `raw/` 并放 `.gitkeep`，缺 `wiki/` 同理，`wiki/index.md` 建出来带标题 `# Knowledge Base Index`，`wiki/log.md` 带 `# Wiki Log`，已存在的文件一律不覆盖。
 
-```bash
-mkdir -p raw wiki
+## 它故意不做的 11 件事
+
+README 末尾有一节 Design Boundaries，列了「经过三个月生产日志和一轮生态调研之后，刻意不做」的清单。这一节比功能列表更值钱，因为每条都给了理由：
+
+| 不做的事 | 给出的理由 |
+|----------|------------|
+| 原文哈希做新鲜度跟踪 | `raw/` 不可变，哈希在防一件不可能发生的事 |
+| 行号级引用锚点 | 见过的保真错误全是「值不在原文里」，整文件 grep 就能抓 |
+| 数值型置信度或质量分 | 没有校准的假精确 |
+| 每页复审日期 | 编译期没人能预测一个领域跑多快 |
+| 按访问频率衰减 | 常被问不等于真 |
+| 撤回与坏来源机制 | 还没发生，发生了再手工处理 |
+| 自动钩子与定时跑 | 那是代理外壳的事，不属于跨工具技能 |
+| 向量或图检索 | 5 万到 10 万词元量级上 grep 更可靠 |
+| 带类型的关系本体 | 链接语义活在链接周围的散文里 |
+| 对齐 OKF 规范 | 规范还是 v0.1 草稿，工具生态很小，继续跟踪 |
+| MCP 服务、界面、输出子系统 | 超出一个跨工具技能的边界 |
+
+这份清单的读法是：它把每一类「听起来更高级」的做法单独拿出来，问它在这个规模上买到了什么，然后大部分回答是没买到。第一条尤其能说明思路——哈希跟踪要防的是原文被偷改，而 `raw/` 的不可变性已经把这条路堵上了，于是这套机制保护的是一个不会发生的事件。
+
+「自动钩子与定时跑」那条也顺手否掉了另一类文章里常见的建议：把 Lint 挂到定时器上。技能的立场是不管这件事。
+
+## 口径为什么容易失效：骨架在 7 月 23 日换过一次
+
+这条对读二手介绍也有用。仓库 28 个提交里，14 个集中在 2026-07-23 与 07-24 两天，而那两天换掉的就是骨架（下面按提交顺序整列，标题取自 `git log`）：
+
+```text
+feat: add ingest disposition triage with no-material stop path
+feat: add grounding invariant with mechanical evidence checker
+feat: add status blocks and full-wiki cascade search
+feat: guard against false absence and add research discipline
+docs: add design boundaries section to README
+fix: make the evidence checker actually check
+fix: align skill contract with the checker
+docs: bring examples and install instructions up to current protocol
+fix: close verification escapes and false-suspect sources
+fix: close contract gaps between skill, templates, and examples
+fix: close the candidate set and hold examples to it
+fix: centralize fence-aware document structure
+fix: close typed evidence candidate matching
+fix: align log inventory and examples
 ```
 
-或者直接让 LLM 做：
+注意第 6 条的标题：`fix: make the evidence checker actually check`。检查器第一版是不检查的。从不变量那条提交往后数，还剩 12 个提交，其中 8 个的标题以 `fix:` 开头。这八次依次是：让检查器真的开始检查，对齐技能契约与脚本，堵掉验证逃逸口并压掉假阳性嫌疑，收技能、模板与示例之间的契约缺口，收候选集闭合，把文档解析改成围栏感知，把候选匹配改成按类型分派，把日志清单与示例对齐。另外两个 `docs:` 提交（补上设计边界一节、把示例和安装说明拉到当前协议）夹在中间。
 
-```
-"Initialize my wiki structure"
-```
+也就是说，这条不变量写进规范的当天，检查器还没真的在检查——第一次让它开始检查的修复就在四个提交之后；此后一直到第二天，八次修正里有四次落在 07-23、四次落在 07-24。
 
-## 5. 扩展方向
+这组提交解释了为什么这类文章容易写错。取 4 月最后一个提交看文件树，14 个文件里确实已经有示例和四个模板，但没有 `scripts/` 这个目录。再翻规范，Triage、Grounding Invariant、`check_evidence` 这三个词一个都搜不到。也就是说，今天这篇的全部看点在 4 月还不存在；任何早于 2026-07-23 的介绍，描述的都不是同一个仓库。
 
-### 5.1 自定义编译规则
+还有一处更硬的口径问题。仓库第一个提交的信息写着它加了 `docs/SPEC.md` 和一份 Karpathy 想法文件的参考文档，README 到今天也说「仓库含示例、模板和一份设计规格」。但把 28 个提交的文件树全展开找一遍，`docs/` 目录和那份规格文件一次都没出现过，首个提交里只有 `.gitignore`。提交信息和 README 记的是意图，`git ls-tree` 记的是事实。
 
-在 `references/` 下添加模板和规则文件，可以控制 LLM 生成 wiki 页面的格式：
+同一件事在示例文件上也成立：`examples/` 下这批页面在 2026-04-13 被整体从中文翻成英文；还有一个 `PROMOTION.md`，2026-04-12 提交进去、当天就被移出版本控制，此后只作为本地文件存在。看这类小仓库时，`git log --diff-filter=D --name-only` 加一遍全树扫描，比只读 HEAD 的 README 靠谱。
 
-```
-references/
-├── templates/
-│   ├── concept.md      # 概念页模板
-│   ├── tutorial.md     # 教程页模板
-│   └── reference.md    # 参考页模板
-└── rules.md           # 编译规则
-```
+## 该不该用：适用边界与采用顺序
 
-### 5.2 多语言
+先说它不适合什么，这部分从设计选择里直接推得出来。
 
-修改 `references/lang.md` 可以定义术语表和目标语言风格。如果你的源材料混用中英文，这一步很值得做——LLM 会在编译时统一术语。
+需要「问一句就得到跨几百份文档的综合答案」的人，RAG 更合适。这套技能的检索是索引加全文搜，README 自己把上限写在 5 万到 10 万词元的整理过的正文上。
 
-### 5.3 与其他技能联动
+需要严格审计、要求每条结论带可点到的行号锚点的人，也不合适。它给的是「值在原文里逐字存在」，不是「值在原文第几行」，而且 README 把行号锚点明确列进了不做的清单。
 
-这套技能可以和几个常用技能形成工作流：
+只想记几笔个人备忘的人犯不上装。它的成本不在安装，在于一次认真的摄入要走完 Triage、编译、级联和登记四步，省掉哪一步就等于把那块的价值省掉。
 
-| 配套技能 | 接入方式 |
-|---------|---------|
-| obsidian-skills | 在 Obsidian 中直接以 wiki 目录为 vault |
-| deep-research | 研究结果直接 Ingest 到 wiki |
-| memory-skills | wiki 作为长期记忆的外部存储 |
+反过来，适合的人有三个特征：持续在一个领域里读材料，能接受每次摄入一两篇，并且愿意把「这条数字有没有出处」当成一个可以交给机器复查的问题。
 
-一个组合命令的例子：
+采用顺序按风险从低到高排：
 
-```
-"Research the topic, ingest findings to wiki, then summarize for my memory"
-```
+1. 先只读 `SKILL.md` 那 233 行，判断四种处置和两级路径这套约定你能不能坚持。
+2. 装好之后，把仓库 `examples/` 那一对文件照上文的三条命令摆成一个小库，跑一次 `check_evidence.py`，看输出格式合不合你的口味。
+3. 拿 3 篇你最熟的材料摄入，故意在编译结果里改一个数字，再跑一次，确认它抓得住——这一步是在验你的模型有没有真的按规范写页面。
+4. 跑一次 `Lint my wiki`，看安全档改了哪些、报告档列了哪些，判断报告的可读性。
+5. 以上都满意，再动存量笔记。
 
-## 6. 使用节奏与常见坑
+第 3 步不要跳。这套技能的约束全在文字规范里，模型是否照做，只能靠一台外置的检查器去验；把检查器跑通一次，才知道约束是不是可执行的。
 
-**什么时候摄入：** 每学到一个新概念就立刻 Ingest，不要攒。攒到 50 篇再一起摄入，LLM 面临的交叉引用复杂度是指数级的，反而容易出错。小量高频是最稳的策略。
+## 会立刻撞上的几个问题
 
-尽量摄入原始文档而不是别人的摘要。LLM 从原文提取概念和从二手摘要里提取概念，准确度差别很大——这个差异会随着 wiki 增长被逐步放大。
+**脚本一跑就报 TypeError。** Python 版本低于 3.10。换 3.10 以上，或者用虚拟环境里的解释器执行那条命令。
 
-**Lint 频率：** 每周一次 `Lint my wiki`。写进 Claude Code 的 CLAUDE.md 规则里，让它在合适的时机自动触发。
+**报了一堆嫌疑，不知道从哪看起。** 嫌疑是候选不是结论。先按这三类分：派生值（你自己算出来的和、差、比率）、产品名与版本号、改写过的写法（42,000 对 42K）。前两类通常留着，第三类要按源保真规则改回原文写法。
 
-**三个容易踩的坑：**
+**页面明明有 Raw 字段，仍报证据错误。** 两种情况：链接解析不到目标文件，或者链接指向了 `raw/` 之外。路径要从页面所在目录出发两级向上，`wiki/<topic>/<article>.md` 里写 `../../raw/<topic>/<file>.md`。少写中间那个 `raw/` 段是最容易犯的一种，它会让链接落到项目根下并不存在的目录里，实测一个 94 篇页面的库会整批报成 `Raw link escapes raw/`，一条不剩。
 
-**坑 1：手动改 wiki 页面。** wiki 目录下的文件由 LLM 维护，有它自己的内部引用逻辑。手动编辑某个页面后，下次 Lint 或 Ingest 可能因为格式不一致而产生误报。必须手动改的话，先在 `log.md` 里记一笔，回头出问题至少有线索。
+**未引用原文一长串，但材料确实是故意留着的。** 给它们在 `wiki/log.md` 里补 `no material` 摄入记录，脚本按这个键做减法。没记就是真欠账，这份报告的设计目的就是催你处理积压。
 
-**坑 2：raw/ 里堆积了没用的材料。** raw/ 设计上是只增不改的，但这不代表什么都要往里扔。Ingest 了一篇后来发现质量很差的文章，正确的处理方式不是删 raw/ 里的文件——那会让引用它的 wiki 页面出现断链——而是跑一次 `Lint my wiki`，让 LLM 检测到陈旧或低质量引用后重新处理。
+**索引和页面的日期对不上。** 以页面元数据为准，索引跟着改。Updated 记的是知识内容最后变化的时间，不是文件系统的修改时间，也不是错别字修正的时间。
 
-**坑 3：概念页面重复建立。** 摄入前先 Query 一下。如果已经有一页关于 Attention 的 wiki 页面，再摄入一篇注意力机制的文章时，LLM 会尝试更新已有页面而不是新建——前提是你摄入了**原文**而非高度重叠的摘要。如果摄入的是别人写的 Attention 总结，LLM 可能判断为「另一个视角的新材料」而创建新页面，导致概念分裂。
+**想问的问题库里没有。** 先确认它有没有说「索引和全文都搜过了」。没有这句话，答案里「你库里没有相关内容」这个结论不成立。
 
-## 7. FAQ
+**担心模型把二手摘要当原文写进 `raw/`。** 这个担心是对的，而且脚本帮不上忙——它只能验页面里的值在不在 `raw/` 里，验不了 `raw/` 本身是不是原文。`raw/` 的来源保真只能靠你自己在摄入时确认抓取路径。
 
-**raw/ 里的文件可以删除吗？** 技术上可以，但 wiki 中所有引用该源材料的页面会变成断链。如果要清理，先跑 `Lint my wiki`，让 LLM 处理后事。
+## 读完自测与下一步
 
-**wiki 页面可以手动编辑吗？** 能，但不建议。LLM 维护的 wiki 页面有内部引用一致性约束。一定要手动改的话，参考 `references/templates/` 里的格式规范，并在 `log.md` 里记录。
+五个问题，答案都在前文，判断标准是你能不能不翻回去就说清：
 
-**怎么迁移到另一个工具？** 复制 `raw/`、`wiki/`、`.agents/skills/` 三个目录即可。所有数据和配置都在里面，不依赖工具外部存储。
+1. 一条不变量被拆成了「建立」和「验证」两半，分别由谁负责？为什么验证那一半可以只查字面量？
+2. 为什么脚本的退出码刻意不携带信息？如果改成有问题就非零，会诱发什么误用？
+3. `No material` 这个处置和它在日志里那行标题，各自解决了什么问题？
+4. 把 11,693 写成 11693 会被报，把「作者反对 X」写成「作者支持 X」不会被报。这两种不对称说明了这台机器的什么定位？
+5. 一份早于 2026-07-23 的介绍，最可能在哪些地方失效？
 
-**支持离线吗？** 支持。这个技能完全本地运行，不依赖任何云服务。抓取 URL 内容时需要网络。
+下一步读什么，按目的分：
 
-**源材料支持哪些格式？** Markdown、纯文本、URL（自动抓取网页内容）。PDF 需要额外的提取步骤。
+想看清规范怎么写，读 `SKILL.md` 的 The Grounding Invariant 一节和 Compile 里的 Source fidelity 段，各一段话，是这套设计最密的地方。
 
-## 8. 检查清单
+想看清检查器怎么实现，读 `scripts/check_evidence.py` 的 `parse_document` 与 `contains` 两个函数，前者是围栏感知的文档状态机，后者是带边界的值匹配——月份冒充日期前缀那条规则就在里面。
 
-不看你装没装好，看这几件事：
+想看清约束是怎么被固化的，读 `tests/test_check_evidence.py` 里的 `TokenizerClosedFormTest`、`FenceVariantsTest` 和 `RawInventoryTest` 三组，它们分别守着候选集闭合、围栏变体处理和清单豁免的精确语义。
 
-1. 用 `"What do I know about X?"` 问一个你确实摄入过的概念，回答有没有附带引用来源？
-2. 跑 `"Lint my wiki"`，有没有报断链或孤立页面？有的话修掉。
-3. 打开 `wiki/index.md`，索引的层级能让你在 10 秒内找到你想找的概念吗？
-4. 连续摄入 3 篇主题相近的文章后，LLM 是更新了已有页面还是新建了重复页面？
+想回到源头，读 Karpathy 那份 75 行的 gist，注意它把自己定义成一份故意抽象的想法文件；那份抽象既是这套技能的起点，也是它必须被填平的原因。
 
-第 4 条如果答案是「新建了重复页面」，说明你摄入的材料粒度太粗——试试直接用原文而非二手摘要。
+## 参考
 
-## 9. 适合谁，从哪开始
-
-LLM Wiki 不是所有人的默认答案。它最适合的场景是：
-
-- 你在持续研究一个领域（ML、系统设计、安全），需要频繁摄入新论文和文章
-- 你发现自己的笔记已经多到「只有写了才安心、但从不回看」的程度
-- 你已经在用 Claude Code 或 Cursor 作为主力编码工具
-
-不那么适合的场景：
-
-- 你只需要一个个人备忘录，偶尔记几笔——Notion 或 Apple Notes 足够
-- 你的知识管理以项目文档为主，而非跨项目概念关联——普通 Markdown + 目录树更直接
-- 你对 LLM 生成的内容有严格的审计要求——raw/ 虽然保留原文，但 wiki 页面本身是 LLM 编译的
-
-如果决定用，建议的启动顺序：
-
-1. 先装好技能，跑 `"Initialize my wiki structure"`
-2. 先摄入 3 篇你最熟悉的文章，跑 Query 看结果质量
-3. 确认满意后，再逐步把存量笔记摄入进去
-4. 第一周每天跑一次 Lint，熟悉常见的健康问题类型
-5. 稳定后每周一次 Lint 即可
-
-把 LLM Wiki 当成一个持续生长的知识图谱而非一次性交付的文档库，它的价值会随使用时间递增。
-
+- Astro-Han/karpathy-llm-wiki 仓库：<https://github.com/Astro-Han/karpathy-llm-wiki>（本文数据取于 2026-09-26，2,361 星、284 复刻、28 个提交、MIT）
+- `SKILL.md` 规范全文：<https://github.com/Astro-Han/karpathy-llm-wiki/blob/main/SKILL.md>
+- 检查器源码：<https://github.com/Astro-Han/karpathy-llm-wiki/blob/main/scripts/check_evidence.py>
+- 测试套件：<https://github.com/Astro-Han/karpathy-llm-wiki/blob/main/tests/test_check_evidence.py>
+- README 的 Design Boundaries 一节：<https://github.com/Astro-Han/karpathy-llm-wiki#design-boundaries>
+- Karpathy 的想法文件 `llm-wiki.md`（2026-04-04）：<https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f>
+- 智能体技能（Agent Skills）标准站：<https://agentskills.io>
+- skills 命令行工具（npm）：<https://www.npmjs.com/package/skills>

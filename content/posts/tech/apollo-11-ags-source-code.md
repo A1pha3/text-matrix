@@ -4,7 +4,7 @@ date: "2026-04-16T01:20:00+08:00"
 slug: "apollo-11-ags-source-code"
 github_repo: "chrislgarry/Apollo-11"
 source_key: "gh:chrislgarry/Apollo-11"
-description: "Apollo-11 是保存 1969 年登月制导计算机（AGC）源码的 GitHub 仓库，55K+ Stars。详解 Comanche055（指令舱）与 Luminary099（月球舱）两套汇编程序，以及 Margaret Hamilton 等人的在 4KB RAM 约束下的软件工程取舍。"
+description: "Apollo-11 是保存 1969 年登月制导计算机（AGC）源码的 GitHub 仓库，72K+ Stars。详解 Comanche055（指令舱）与 Luminary099（月球舱）两套汇编程序，以及 Margaret Hamilton 等人的在 4KB RAM 约束下的软件工程取舍。"
 draft: false
 categories: ["技术笔记"]
 tags: ["汇编", "嵌入式系统", "航空航天", "历史"]
@@ -12,13 +12,13 @@ tags: ["汇编", "嵌入式系统", "航空航天", "历史"]
 
 # Apollo-11：阿波罗 11 号制导计算机源码探秘——人类登月的编程遗产
 
-GitHub 仓库 [chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11) 保存了 1969 年人类登月时阿波罗制导计算机（AGC）的源码，截至 2026 年 8 月累计约 70,600 Stars、7,900 Forks，语言标记为 Assembly。仓库由 Chris Garry 于 2014 年把 MIT 博物馆的扫描件转录整理而成，最近一次提交停在 2023 年——它是一份历史档案，不是活跃维护的项目。
+GitHub 仓库 [chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11) 保存了 1969 年人类登月时阿波罗制导计算机（AGC）的源码，截至 2026 年 9 月累计约 72,400 Stars、8,000 Forks，语言标记为 Assembly。它其实是 Virtual AGC 项目的成果：Paul Fjeld 把 MIT 博物馆收藏的打印稿逐页数字化，Ron Burkey 等人在 2009 年前后转录成文本——源码文件头的致谢写明了这一点。Chris Garry 在 2014 年 4 月把这些文件传上 GitHub，此后仓库只剩 README 翻译一类的零星维护（最近一次提交在 2026 年 7 月），飞行代码本身早已封版。
 
-这份代码以 AGC 汇编写成，包含 Comanche055（指令舱）和 Luminary099（月球舱）两套程序，共约 110,000 行。它的价值不在怀旧，而在把"优先级调度、故障恢复、实时中断"三件事放进同一台飞行计算机，并且真的飞到了月球。在 4KB RAM、85K IPS 的约束下，工程师必须决定哪些任务要毫秒级响应、哪些可以丢弃、哪些重启后必须接着跑。这套取舍至今仍是嵌入式与航天软件的底色。
+这份代码以 AGC 汇编写成，包含 Comanche055（指令舱）和 Luminary099（月球舱）两套程序，各约 6.5 万行、合计约 13 万行（含注释与空行）。它的价值不在怀旧，而在把"优先级调度、故障恢复、实时中断"三件事放进同一台飞行计算机，并且真的飞到了月球。在 4KB RAM、85K IPS 的约束下，工程师必须决定哪些任务要毫秒级响应、哪些可以丢弃、哪些重启后必须接着跑。这套取舍至今仍是嵌入式与航天软件的底色。
 
 理解 AGC 源码，先分清三组关系：硬件约束如何塑造指令集和内存模型；Comanche 与 Luminary 两套程序如何分工；以及 1202 报警那几分钟里软件做了什么，让登月没有中止。
 
-读完这篇文章，你能回答几个此前未必说得清的问题：为什么 AGC 的指令要分基础集和解释性指令集两套；为什么 4KB 内存能跑下一套实时操作系统；1201 和 1202 到底各自代表调度器的哪种过载。下文先从一张总览表铺开两套程序的边界，再逐层拆开硬件、汇编器、核心模块，用一个具体的登月下降案例把它们串起来，最后落到你能直接上手阅读仓库、用模拟器复现的路径。
+为什么 AGC 的指令要分基础集和解释性指令集两套？为什么 4KB 内存能跑下一套实时操作系统？1201 和 1202 各自代表调度器的哪种过载？这三个问题贯穿下文：先从一张总览表铺开两套程序的边界，再逐层拆开硬件、汇编器、核心模块，用一个具体的登月下降案例把它们串起来，最后落到直接上手阅读仓库、用模拟器复现的路径。
 
 ## 总览地图：两套程序，一台计算机
 
@@ -29,7 +29,7 @@ GitHub 仓库 [chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11) 
 | 核心任务 | 跨月飞行导航、再入大气层、返回地球 | 登月下降、月面停留、从月面起飞交汇 |
 | 关键阶段 | 发射、地月转移、月轨、再入 | 下降、着陆、上升、交汇对接 |
 | 版本号含义 | 指令舱程序第 55 次修订 | 月球舱程序第 99 次修订 |
-| 代码量 | 约 50,000 行 AGC 汇编 | 约 60,000 行 AGC 汇编 |
+| 代码量 | 约 65,000 行 AGC 汇编（含注释与空行） | 约 65,000 行 AGC 汇编（含注释与空行） |
 
 两套程序跑在同一型号 AGC 硬件上，任务阶段不同、关键算法不同。Comanche 的难点在再入大气层——再入走廊很窄，角度偏高会被弹回太空，偏低则会在稠密大气中烧毁；Luminary 的难点在登月下降——从月轨到月面要在约 12 分钟内把速度从约 1.7 km/s 降到 0，同时避开障碍。
 
@@ -60,7 +60,7 @@ GitHub 仓库 [chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11) 
 | 可靠性要求 | 任何故障都可能使任务失败、宇航员丧生 | 自检、报警、故障恢复、冗余设计 |
 | 体积重量 | 飞船载荷有限 | 31.75 kg，55 W 功耗 |
 
-1960 年代的地基计算机一台就要占一个房间。飞船上的计算机必须同时满足三个条件：小到能装进飞船、低到能用电池、可靠到重启不起就得接着用。MIT 仪器实验室（Instrument Laboratory，后改名 Draper Laboratory）从 1961 年开始为 AGC 做设计，最终交付的 Block II 是第一台使用集成电路的量产计算机。
+1960 年代的地基计算机一台就要占一个房间。飞船上的计算机必须同时满足三个条件：小到能装进飞船、低到能用电池、可靠到重启不起就得接着用。MIT 仪器实验室（Instrumentation Laboratory，后改名 Draper Laboratory）从 1961 年开始为 AGC 做设计，最终交付的 Block II 是最早采用集成电路的计算机之一。
 
 AGC 不是通用计算机。它只做一件事：把飞船从 A 点送到 B 点，并在出问题时让宇航员有机会接管。这个定位决定了它的指令集、内存模型和软件架构——所有设计都围绕"实时、可靠、可恢复"展开。
 
@@ -77,7 +77,7 @@ AGC 把内存分成两类，这个区分直接影响了汇编编程风格。
 | Erasable（RAM） | 磁芯存储 | 变量、临时数据、寄存器 | 可读写 |
 | Fixed（ROM） | 穿线绳芯存储 | 程序代码、常量表 | 只读 |
 
-```
+```text
 Erasable: 4 KB = 2,048 个 "字"（word），每个字 16 位（1 位奇偶 + 15 位数据）
 Fixed:    36 KB = 36,864 个字，存储程序代码和常量表
 ```
@@ -96,11 +96,11 @@ Erasable 内存的前若干字被分配给寄存器和系统状态。
 | Z | 程序计数器（Zero） |
 | EBANK | Erasable Bank 选择寄存器，决定当前访问哪个 erasable bank |
 | FBANK | Fixed Bank 选择寄存器，决定当前访问哪个 fixed bank |
-| Sandbank | Super-Bank 位存储，扩展 fixed 寻址 |
+| SBANK | Superbank 寄存器，切换固定内存高位 bank 组，扩展 fixed 寻址 |
 
 ### Banking 系统：用 12 位地址访问 36 KB
 
-AGC 的指令地址只有 12 位，最多直接寻址 4K 字，但 Fixed 内存有 36K 字。解法是 banking：把内存切成多个 1K 或 2K 字的 bank，通过 EBANK/FBANK 寄存器选择当前 bank。
+AGC 的指令地址只有 12 位，最多直接寻址 4K 字，但 Fixed 内存有 36K 字。解法是 banking：固定内存按 1K 字切 bank，可擦写内存按 256 字切 bank，通过 EBANK/FBANK 寄存器选择当前 bank。
 
 这意味着同一条 `CA 02000` 指令在不同 bank 设置下会读到完全不同的内存位置。汇编程序员必须时刻知道"我现在在哪个 bank"，否则会读到错误的指令或数据。yaYUL 汇编器的一大职责就是帮程序员管理 bank 切换，但最终代码里仍会出现大量 `BANK`、`EBANK=`、`SETLOC` 指令。
 
@@ -111,20 +111,20 @@ AGC 通过 I/O 通道（channel）与飞船各系统通信，外设寄存器映�
 | 通道 | 功能 | 方向 |
 |------|------|------|
 | 3-4 | 时间计数器（HISCALAR/LOSCALAR），任务计时 | 输入 |
-| 5-6 | RCS 姿态喷口控制（俯仰/滚转） | 输出 |
+| 5-6 | RCS 姿态喷口控制（俯仰/滚转，PYJETS/ROLLJETS） | 输出 |
 | 10-11 | DSKY 显示、报警与状态灯（OUT0/DSALMOUT） | 输出 |
-| 12-14 | IMU 控制、雷达、发动机万向节 | 输出 |
+| 12-14 | 导航与飞船硬件驱动，含 IMU/CDU 计数器控制 | 输出 |
 | 15 | DSKY 键盘输入（MNKEYIN） | 输入 |
 | 16 | 光学标记与导航面板输入（NAVKEYIN） | 输入 |
-| 30-33 | 雷达状态、推进器状态、温度等硬件监测 | 输入 |
+| 30-33 | IMU/惯导状态、手控开关与硬件状态等离散位 | 输入 |
 
-I/O 通道是 AGC 实时性的关键。IMU 与雷达数据通过输入通道送入，AGC 用硬件中断响应；姿态与推进指令从输出通道下发。同一套接口在不同任务阶段被复用，程序通过通道编号与位定义区分用途。
+I/O 通道是 AGC 实时性的关键。离散的状态与开关信号通过输入通道送入，AGC 用硬件中断响应；姿态与推进指令从输出通道下发。雷达的速度、高度等连续量不走这些位通道，而是由硬件计数器单元（counter cells）直接在内存中增量。同一套接口在不同任务阶段被复用，程序通过通道编号与位定义区分用途。
 
 ---
 
 ## yaYUL 汇编器
 
-AGC 的指令集与任何现代 CPU 都不同，地址空间被 banking 切碎，还有大量特殊指令（如 `EXTEND` 前缀、`INDEX` 间接寻址），通用汇编器处理不了。yaYUL 是 Virtual AGC 项目为现代开发者提供的汇编器，能把 `.agc` 源文件编译成可加载的 rope 镜像。"YUL" 在希伯来语中意为"宇宙"。
+AGC 的指令集与任何现代 CPU 都不同，地址空间被 banking 切碎，还有大量特殊指令（如 `EXTEND` 前缀、`INDEX` 间接寻址），通用汇编器处理不了。yaYUL 是 Virtual AGC 项目为现代开发者提供的汇编器，能把 `.agc` 源文件编译成可加载的 rope 镜像。它的名字来自作者 Ron Burkey 在源码里的自述：MIT 原始汇编器叫 YUL，"this is yet another YUL"。
 
 ### 基本语法
 
@@ -142,7 +142,7 @@ TS	ALMCADR	# TS = Transfer to Storage，把 A 存到 ALMCADR
 INDEX	Q		# INDEX，用 Q 的内容作为下一条指令的地址修改
 ```
 
-> 原仓库注释把 `CA` 写作 "Copy A" 是常见误传。AGC 手册中 `CA` 全称是 "Clear and Add"：先清空累加器 A，再加上内存地址的内容。这与"复制"语义不同——`CA` 会触发溢出检测，而单纯的复制不会。
+> 社区流传的解读常把 `CA` 说成 "Copy A"。AGC 手册中 `CA` 的全称是 "Clear and Add"：先清空累加器 A，再加上内存地址的内容。这与"复制"语义不同——`CA` 会触发溢出检测，而单纯的复制不会。
 
 ### 核心指令集
 
@@ -212,8 +212,9 @@ INDEX	Q		# INDEX，用 Q 的内容作为下一条指令的地址修改
 # PRIORITY JOB WITH NO CORE SET, AS PART OF THE BACK-UP IDLE LOOP. THE SECOND
 # IS SHOW-BANKSUM WHICH RUNS AS A REGULAR EXECUTIVE JOB WITH ITS OWN STARTING
 # VERB.
-#     THE PURPOSE OF SELF-CHECK IS TO CHECK OUT VARIOUS PARTS OF THE COMPUTER...
-#     IN ALL THERE ARE 7 POSSIBLE OPTIONS IN THIS BLOCK.
+#     THE PURPOSE OF SELF-CHECK IS TO CHECK OUT VARIOUS PARTS OF THE COMPUTER
+# ...
+#     IN ALL THERE ARE 7 POSSIBLE OPTIONS IN THIS BLOCK II VERSION OF SELF-CHECK.
 ```
 
 SELF-CHECK 以零优先级任务的身份挂在后备空闲循环里，不占用 core set；SHOW-BANKSUM 则作为普通 Executive 任务运行，可由动词启动。它按选项逐一检查内存与计算机各部件，故障时点亮对应指示。这个"空闲时间做自检、不干扰关键任务"的思路，今天在航天器和汽车 ECU 里依然常见。
@@ -286,7 +287,7 @@ CM/POSE		TC	INTPRET
 		EXIT			# MANEUVER LESS THAN 0.25 DEG
 ```
 
-注意这里没有 `MP`/`ADD` 这类基础指令——数学全在解释性指令层完成。AGC 有两套指令：基础指令集（34 条，含 `CA`、`TS` 及 `EXTEND` 扩展）负责控制流与数据搬运；解释性指令集（`INTPRET` 进入，含 `VLOAD`、`DLOAD`、`ARCCOS`、`SQRT` 等）负责向量与三角运算，数据在伪堆栈（PD list）里流转。AGC 没有硬件浮点单元，所有三角与开方都靠解释性例程里的定点算法完成，注释里的 `SCALED BY 2`、`HALF SCALE` 就是程序员手工维护的定点比例尺。
+注意这里没有 `MP`/`ADD` 这类基础指令——数学全在解释性指令层完成。AGC 有两套指令：基础指令集（含 `CA`、`TS` 及 `EXTEND` 扩展）负责控制流与数据搬运；解释性指令集（`INTPRET` 进入，含 `VLOAD`、`DLOAD`、`ARCCOS`、`SQRT` 等）负责向量与三角运算，数据在伪堆栈（PD list）里流转。AGC 没有硬件浮点单元，所有三角与开方都靠解释性例程里的定点算法完成，注释里的 `SCALED BY 2`、`HALF SCALE` 就是程序员手工维护的定点比例尺。
 
 这段代码求出姿态机动（attitude maneuver）的角度与转轴，是再入、对接前的姿态调整的基础。
 
@@ -298,36 +299,36 @@ CM/POSE		TC	INTPRET
 
 ### 下降阶段的 12 分钟
 
-登月下降从月球轨道开始，到月面着陆结束，约 12 分钟。这 12 分钟里，AGC 完成以下工作：
+登月下降从月球轨道开始，到月面着陆结束，约 12 分钟。这 12 分钟里，AGC 反复执行以下几类工作：
 
-1. **雷达数据采集**（每 2 秒）：从着陆雷达读取高度和速度数据，通过 I/O 通道 30-33 送入 erasable 内存。
-2. **导航状态更新**（每 2 秒）：用雷达数据修正 IMU 推算的位置和速度，这一步在 `SERVICER` 模块里完成。
-3. **制导指令计算**（每 2 秒）：根据当前状态与目标轨迹的偏差，计算需要的推力大小和方向。
-4. **姿态控制**（每 100 毫秒）：读 IMU 姿态角，计算 RCS（反应控制系统）点火指令，通过 I/O 通道 16 输出。
-5. **DSKY 显示更新**（每 2 秒）：把关键参数（高度、速度、燃料）写到 DSKY 显示寄存器。
+1. **雷达数据采集**：着陆雷达测得的高度与速度增量，由硬件计数器单元直接写入可擦写内存。
+2. **导航状态更新**：`SERVICER` 模块周期性融合雷达测量，修正 IMU 惯性推算的位置与速度（测量融合逻辑见 `MEASUREMENT_INCORPORATION.agc`）。
+3. **制导指令计算**：`THE_LUNAR_LANDING.agc` 与 `LUNAR_LANDING_GUIDANCE_EQUATIONS.agc` 按固定周期解算当前状态与目标轨迹的偏差，给出推力大小和方向。
+4. **姿态控制**：数字自动驾驶仪（`P-AXIS_RCS_AUTOPILOT.agc`、`Q_R-AXIS_RCS_AUTOPILOT.agc`）计算 RCS（反应控制系统）点火指令，经通道 5/6 驱动俯仰与滚转喷口。
+5. **DSKY 显示更新**：把高度、速度、燃料等关键参数刷新到 DSKY（`PINBALL_GAME_BUTTONS_AND_LIGHTS.agc`）。
 6. **宇航员输入处理**（事件驱动）：响应 DSKY 键盘输入，切换程序阶段。
 
 ### 数据如何流过系统
 
-```
-着陆雷达 → I/O 通道 30-33 → erasable 内存 (RADARBUF)
+```text
+着陆雷达 → 硬件计数器单元（写入可擦写内存）
                               ↓
-                    SERVICER 模块（导航修正）
+        SERVICER / MEASUREMENT_INCORPORATION（导航修正）
                               ↓
-                    GUIDANCE 模块（计算推力指令）
+        THE_LUNAR_LANDING / LUNAR_LANDING_GUIDANCE_EQUATIONS（推力指令）
                               ↓
-                    THROTTLE 模块（引擎节流阀指令）→ I/O 通道 16
+        THROTTLE_CONTROL_ROUTINES（节流阀指令）→ 下降发动机
                               ↓
-                    RCS 控制模块（姿态喷口指令）→ I/O 通道 16
+        P/Q-R 轴 RCS 自动驾驶仪（姿态喷口指令）→ I/O 通道 5/6
                               ↓
-                    DSKY 显示模块 → I/O 通道 10-13
+        PINBALL_GAME_BUTTONS_AND_LIGHTS（DSKY 显示）→ I/O 通道 10-13
 ```
 
 ### 1202 报警就发生在这条链路里
 
-下降阶段开始后不久，AGC 连续触发了 5 次报警（4 次 1202、1 次 1201）。问题出在调度器，与导航或制导算法本身无关：交会雷达（rendezvous radar）作为中止预案一直保持通电，但它的角度转换电路与 AGC 的 800 Hz 参考信号相位不一致，产生了一连串虚假的计数请求，通过"周期窃取"（cycle stealing）消耗掉约 13% 的 CPU 时间。下降程序本来就把处理器跑得很满，这个额外负载把 Executive 推过了极限——没有空闲 core set 时报 1202，没有空闲 VAC（向量累加器区）时报 1201。
+按照 NASA 官方任务报告（MSC-00171）的记载，五次程序报警出现在动力下降开始后的第 5 到第 10 分钟之间，首次报警在点火后 5 分 16 秒。问题出在调度器，与导航或制导算法本身无关：交会雷达（rendezvous radar）在下降期间保持上电以备中止后使用，它的角度数据持续涌入，计数增量靠"周期窃取"（cycle stealing）蚕食了大量计算时间。下降程序本来就把处理器跑得很满，这个额外负载把 Executive 推过了极限——没有空闲 core set 时报 1202，需要 VAC（向量累加器）区而没有空闲时报 1201。任务报告没有给出负载的具体百分比，只确认了因果关系：上升前的 checklist 修改专门加入"交会雷达保持断电"，以防复发。
 
-调度器在过载时丢弃低优先级任务、保留高优先级任务，避免崩溃。下降阶段的导航和制导是最高优先级，所以即使报警反复触发，关键计算仍在继续。机组成员在 DSKY 上看到报警代码，飞船响应正常，地面的 "GO" 也随之传来。
+调度器在过载时丢弃低优先级任务、保留高优先级任务，避免崩溃。下降阶段的导航和制导是最高优先级，所以即使报警反复触发，关键计算仍在继续。任务报告还记录了两个地面判断依据：报警没有持续出现、计算机导航功能正常；而"这类 bailout 型报警不阻止继续飞行"的规则早在飞行前就定好了。机组成员在 DSKY 上看到报警代码，飞船响应正常，地面的 "GO" 也随之传来。
 
 AGC 的可靠性体现在出错后仍能完成关键功能。这是今天谈"韧性工程"（resilience engineering）时仍在引用的经典设计。
 
@@ -337,16 +338,16 @@ AGC 的可靠性体现在出错后仍能完成关键功能。这是今天谈"韧
 
 ### 人物背景
 
-**Margaret Hamilton** 是阿波罗计划中最重要的程序员之一。她 1936 年出生，在麻省理工学院仪器实验室担任软件工程部负责人，登月时是制导软件首席工程师。据 NASA Johnson Space Center Oral History Project 与 MIT Museum 档案，MIT 仪器实验室软件团队总规模约 350 人，Hamilton 直接领导的核心团队约数十人。不同来源对"团队规模"的定义（含不支持人员与否）有差异，此处采用广义口径。
+**Margaret Hamilton** 是阿波罗计划中最重要的程序员之一。她 1936 年出生，在麻省理工学院仪器实验室领导软件工程部门；源码签名文件上的头衔是 Colossus 编程负责人（Colossus Programming Leader）。据 NASA Johnson Space Center Oral History Project 与 MIT Museum 档案，MIT 仪器实验室软件团队总规模约 350 人，Hamilton 直接领导的核心团队约数十人。不同来源对"团队规模"的定义（含不支持人员与否）有差异，此处采用广义口径。
 
 ### 她的贡献
 
-Margaret Hamilton 领导团队编写了阿波罗制导计算机的所有飞行软件：
+阿波罗制导计算机的全部飞行软件出自 Hamilton 领导的团队，她本人的重心在系统层：
 
 - 最早在 NASA 项目中系统使用 "software engineering" 一词，并推动软件作为独立工程学科被认可
-- 编写 AGC 的核心操作系统和任务调度（Executive）
-- 编写登月下降和着陆算法
-- 编写应急逃脱系统软件
+- 主持设计 AGC 的异步执行软件（asynchronous executive）——任务调度、优先级与错误恢复机制
+- 提出并推动"过载时降级、保留关键任务"的容错设计，1202 报警下的自动恢复正是其产物
+- 领导指令舱与月球舱两套程序的集成与交付流程（规格、评审、签名）
 
 > 术语归属："software engineering" 一词的最早使用有多个候选（1965 年 NATO 会议记录、Hamilton 在 1966 年的项目备忘录等）。Hamilton 是最早在航空航天项目里把这个词落到工程实践的人之一，"发明"一词的归属在学术界有争议。
 
@@ -354,14 +355,14 @@ Margaret Hamilton 领导团队编写了阿波罗制导计算机的所有飞行�
 
 1969 年 7 月 20 日，登月前仅剩几分钟时，AGC 触发了 **1202 报警**：
 
-```
+```text
 1202 = "Executive overflow - no core sets"
 意味着调度器没有可用的核心集来排队新任务
 ```
 
-> 原文与部分科普文章把 1202 解释为 "no jobs"，这是不准确的。AGC 错误代码表（来自 Virtual AGC 项目文档）明确写作 "Executive overflow - no core sets"。core set 是 AGC 调度器存放待执行任务上下文的结构，数量固定；当所有 core set 都被占用时，新任务无法入队，触发 1202。
+> 原文与部分科普文章把 1202 解释为 "no jobs"，这是不准确的。Luminary099 的 `EXECUTIVE.agc` 在触发报警处写着注释 "NO CORE SETS AVAILABLE"（`OCT 1202`）。core set 是 AGC 调度器存放待执行任务上下文的结构，数量固定；当所有 core set 都被占用时，新任务无法入队，触发 1202。
 
-处理过程：地面飞控在十几秒内做出判断——制导数据仍然连续、计算机在两次报警之间能自行恢复，于是由 Capcom Charlie Duke 向机组传达 "GO"；软件自动重启、排除非关键任务；最终成功登月。
+处理过程：地面飞控依据两条现场判断——报警没有持续出现、计算机导航功能正常——继续下降；"这类报警不阻止飞行"的规则事前已经定好，由 Capcom Charlie Duke 向机组传达 "GO"；软件重启后丢弃非关键任务、保留关键计算；最终成功登月。
 
 **Margaret Hamilton 的回忆**：
 
@@ -371,13 +372,13 @@ Margaret Hamilton 领导团队编写了阿波罗制导计算机的所有飞行�
 
 在源码的 `CONTRACT_AND_APPROVALS.agc` 中，可以看到 Margaret Hamilton 的签名：
 
-```
+```text
 Submitted by         | Role | Date
 :------------------- | :--- | :---
 Margaret H. Hamilton | Colossus Programming Leader<br>Apollo Guidance and Navigation | 28 Mar 69
 ```
 
-"Colossus" 是 Comanche055（指令舱程序）的内部代号。这份签名文件是当时软件交付流程的一部分——每一版飞行软件都要经过正式签署才能上天。
+同一页上还有六位审批人——Daniel J. Lickly、Fred H. Martin、Norman E. Sears、Richard H. Battin、David G. Hoag、Ralph R. Ragan——全部签署于 1969 年 3 月 28 日。"Colossus" 是 Comanche055（指令舱程序）的内部代号。这份签名文件是当时软件交付流程的一部分：每一版飞行软件都要经过提交与逐级批准才能上天。
 
 ---
 
@@ -385,14 +386,14 @@ Margaret H. Hamilton | Colossus Programming Leader<br>Apollo Guidance and Naviga
 
 ### 目录结构
 
-```
+```text
 Apollo-11/
-├── Comanche055/          # 指令舱源码（Colossus 2A）
+├── Comanche055/          # 指令舱源码（Colossus 2A），85 个 .agc 文件
 │   ├── AGC_BLOCK_TWO_SELF-CHECK.agc   # 自检
 │   ├── ANGLFIND.agc                   # 姿态机动角计算
 │   ├── CM_BODY_ATTITUDE.agc           # 再入姿态计算
-│   └── ...                            # 约一百多个 .agc 文件
-├── Luminary099/          # 月球舱源码（Luminary 1A）
+│   └── ...
+├── Luminary099/          # 月球舱源码（Luminary 1A），90 个 .agc 文件
 │   ├── ALARM_AND_ABORT.agc            # 报警与中止
 │   ├── INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc  # I/O 通道位定义
 │   ├── PINBALL_GAME_BUTTONS_AND_LIGHTS.agc        # DSKY 交互
@@ -404,16 +405,16 @@ Apollo-11/
 
 从 `ASSEMBLY_AND_OPERATION_INFORMATION.agc` 开始。这个文件包含 AGC 编程的完整手册：指令集详解、内存布局、I/O 通道定义、编程约定。
 
-**主要模块分类**：
+**主要模块分类**（以 Luminary099 为例）：
 
 | 类别 | 示例文件 | 说明 |
 |------|----------|------|
-| 系统 | `AGC_BLOCK_TWO_SELF-CHECK.agc` | 自检启动 |
-| 异常处理 | `ALARM_AND_ABORT.agc` | 报警系统 |
-| 导航 | `ANGLFIND.agc`, `ORIENTATION.agc` | 导航算法 |
-| 引擎 | `ENGINFL1.agc`, `THROTTLE.agc` | 引擎控制 |
-| 雷达 | `RADAR_LEADIN.agc`, `R12.agc` | 雷达接口 |
-| 显示 | `DISPLAY_INTERFACE.agc` | DSKY 交互 |
+| 系统 | `EXECUTIVE.agc`, `WAITLIST.agc` | 任务调度与定时等待 |
+| 异常处理 | `ALARM_AND_ABORT.agc`, `RESTARTS_ROUTINE.agc` | 报警与重启 |
+| 导航 | `KALMAN_FILTER.agc`, `MEASUREMENT_INCORPORATION.agc` | 滤波与测量融合 |
+| 引擎 | `THROTTLE_CONTROL_ROUTINES.agc`, `BURN_BABY_BURN--MASTER_IGNITION_ROUTINE.agc` | 节流控制与主发动机点火 |
+| 雷达 | `RADAR_LEADIN_ROUTINES.agc`, `R60_62.agc` | 雷达接口与交会雷达 |
+| 显示 | `PINBALL_GAME_BUTTONS_AND_LIGHTS.agc`, `DISPLAY_INTERFACE_ROUTINES.agc` | DSKY 与显示接口 |
 
 阅读顺序：先读 `ASSEMBLY_AND_OPERATION_INFORMATION.agc` 建立指令集概念，再读 `AGC_BLOCK_TWO_SELF-CHECK.agc` 看启动流程，然后读 `ALARM_AND_ABORT.agc` 理解异常模型，最后按任务阶段（下降、上升、再入）选读对应模块。
 
@@ -421,10 +422,9 @@ Apollo-11/
 
 | 资源 | 链接 |
 |------|------|
-| Virtual AGC | http://www.ibiblio.org/apollo/ |
-| MIT Museum | http://web.mit.edu/museum/ |
-| AGC 文档 | http://www.ibiblio.org/apollo/Schults/ |
-| yaYUL 模拟器 | https://github.com/rburkey2005/virtualagc |
+| Virtual AGC 项目主页 | http://www.ibiblio.org/apollo/ |
+| Virtual AGC 仓库（模拟器与 yaYUL） | https://github.com/virtualagc/virtualagc |
+| MIT Museum | https://mitmuseum.mit.edu/ |
 
 ---
 
@@ -433,7 +433,7 @@ Apollo-11/
 ### Virtual AGC 模拟器
 
 ```bash
-git clone https://github.com/rburkey2005/virtualagc.git
+git clone https://github.com/virtualagc/virtualagc.git
 cd virtualagc
 ```
 
@@ -441,7 +441,7 @@ Virtual AGC 项目维护着 AGC 模拟器、yaYUL 汇编器、DSKY 模拟器以�
 
 ### yaYUL 在线编译
 
-Virtual AGC 项目提供在线运行环境：访问 http://www.ibiblio.org/apollo/，选择 AGC 或 Luminary 模拟器，即可加载 Comanche055 或 Luminary099，在浏览器里看到 DSKY 面板。
+Virtual AGC 项目提供在线运行环境：访问 http://www.ibiblio.org/apollo/，进入模拟器页面，即可加载 Comanche055 或 Luminary099，在浏览器里看到 DSKY 面板。
 
 ### 用 yaYUL 重新编译
 
@@ -458,7 +458,7 @@ Margaret Hamilton 和她的团队不仅编写了代码，更让 "software engine
 - **优先级调度**：区分关键任务和次要任务，过载时丢弃低优先级
 - **错误恢复**：在故障后自动恢复到安全状态，避免直接停机
 - **实时响应**：毫秒级中断处理，控制循环周期稳定
-- **测试驱动**：每个模块都有完整的测试用例，飞行前在模拟器上跑过完整任务剖面
+- **模拟验证**：飞行前在地面模拟器上跑过完整任务剖面
 
 这些今天看是常识，但在 1960 年代，"软件"还不被当作工程对象。Hamilton 团队把软件当作和硬件一样需要规格、评审、测试和签名的工程产物。
 
@@ -473,13 +473,7 @@ Margaret Hamilton 和她的团队不仅编写了代码，更让 "software engine
 
 ### 可靠性设计
 
-AGC 的可靠性设计是登月成功的关键。三条规则对应三个机制：传感器冗余切换、调度器过载降级、自检模块。1202 报警就是第二条规则的实际触发。
-
-```assembly
-如果某个传感器失败，切换到备用传感器
-如果 CPU 过载，丢弃非关键任务
-如果内存校验失败，停止并报警
-```
+AGC 的可靠性设计可以浓缩成三条规则：关键部件（IMU、CDU）故障立即置状态位上报；CPU 过载时丢弃非关键任务、保住制导；空闲时间自检计算机各部件、发现异常即报警重启。三条规则分别落在 I/O 通道 30 的 IMU/CDU 故障位、`EXECUTIVE.agc` 的 bailout 降级和 `AGC_BLOCK_TWO_SELF-CHECK.agc` 的空闲自检里。1202 报警就是第二条规则的实际触发。
 
 ---
 
@@ -496,7 +490,7 @@ AGC 的可靠性设计是登月成功的关键。三条规则对应三个机制�
 
 1. **第一遍（1-2 小时）**：只读 `ASSEMBLY_AND_OPERATION_INFORMATION.agc` 和 `AGC_BLOCK_TWO_SELF-CHECK.agc`，建立指令集和启动流程的概念。
 2. **第二遍（3-5 小时）**：读 `ALARM_AND_ABORT.agc` 和 `PINBALL_GAME_BUTTONS_AND_LIGHTS.agc`（DSKY 交互），理解异常模型和人机界面。
-3. **第三遍（10+ 小时）**：按任务阶段选读。对登月感兴趣就读 Luminary099 的 `P63-P67` 程序，对再入感兴趣就读 Comanche055 的 `ENTRY` 程序。
+3. **第三遍（10+ 小时）**：按任务阶段选读。对登月感兴趣就读 Luminary099 的 `THE_LUNAR_LANDING.agc`（P63-P67 下降与着陆），对再入感兴趣就读 Comanche055 的 `P61-P67.agc` 与 `REENTRY_CONTROL.agc`。
 
 ### 什么时候不必深读
 
@@ -508,9 +502,9 @@ AGC 的可靠性设计是登月成功的关键。三条规则对应三个机制�
 | 资源 | 用途 |
 |------|------|
 | Virtual AGC 项目源码 | 理解 AGC 硬件模拟实现 |
-| NASA CR-1055 报告 | AGC 软件原始规格说明 |
-| Hamilton 1986 论文 "Inside the Apollo Computer" | 第一手设计回顾 |
-| Draper Laboratory 历史档案 | 团队组织与工程流程 |
+| GSOP 系列报告（如指令舱 Colossus 程序规格 R-577，NASA NTRS 可查） | AGC 飞行软件的原始操作规格，源码签名文件自引此报告 |
+| Frank O'Brien, *The Apollo Guidance Computer: Architecture and Operation* | AGC 硬件与软件的技术史专著 |
+| NASA Johnson Space Center 口述历史项目：Margaret Hamilton 访谈 | 团队组织与工程流程的第一手材料 |
 
 ---
 
@@ -522,11 +516,11 @@ A：这些代码是 1966-1969 年间由 Margaret Hamilton 团队编写的飞行�
 
 **Q2: 我能在我的电脑上运行这些代码吗？**
 
-A：可以。使用 Virtual AGC 模拟器（https://github.com/rburkey2005/virtualagc），可以在现代计算机上运行 Comanche055 或 Luminary099，包括完整的 DSKY 交互界面。
+A：可以。使用 Virtual AGC 模拟器（https://github.com/virtualagc/virtualagc），可以在现代计算机上运行 Comanche055 或 Luminary099，包括完整的 DSKY 交互界面。
 
 **Q3: AGC 和今天的航天器计算机比如何？**
 
-A：差距巨大。国际空间站的命令计算机使用 Intel 80386SX（约 1 MIPS），比 AGC（约 0.085 MIPS）快约 12 倍；现代深空探测器（如 Orion、Perseverance）使用 RAD750 等抗辐射处理器，性能是 AGC 的数千倍。但 AGC 的设计哲学——优先级调度、故障降级、可预测响应——仍然值得学习。
+A：差距巨大。国际空间站的部分控制计算机长期使用 Intel 80386SX（约 1 MIPS），比 AGC（约 0.085 MIPS）快约 12 倍；现代深空探测器（如 Orion、Perseverance）使用 RAD750 等抗辐射处理器，性能是 AGC 的数千倍。但 AGC 的设计哲学——优先级调度、故障降级、可预测响应——仍然值得学习。
 
 > 性能对比数据为量级估算，精确倍数取决于比较口径（IPS、MIPS、主频、内存带宽等）。
 
@@ -549,9 +543,10 @@ A：Luminary（月球舱软件）需要支持垂直下降、月面操作和独�
 本文基于 Apollo-11 仓库（[chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11)）公开源码整理，以下边界需要说明：
 
 1. **源码时效性**：这份源码是 1969 年的原始代码，已经过去 50 多年，仅供历史研究和学习使用。
-2. **技术准确性**：AGC 的硬件架构和编程模型已经过时，不适用于现代嵌入式系统开发。
-3. **历史背景**：本文对 AGC 的历史意义和软件工程遗产的解读基于公开资料，可能存在不同观点。
-4. **学习价值**：AGC 源码的主要价值在于理解在极度受限环境下的软件设计思想，而不是直接复制其技术。
+2. **许可证状态**：源码文件头标注 Public domain；仓库的 License 字段为 Other（未给出标准许可证标识）。
+3. **技术准确性**：AGC 的硬件架构和编程模型已经过时，不适用于现代嵌入式系统开发。
+4. **历史背景**：本文对 AGC 的历史意义和软件工程遗产的解读基于公开资料，可能存在不同观点。
+5. **学习价值**：AGC 源码的主要价值在于理解在极度受限环境下的软件设计思想，而不是直接复制其技术。
 
 ---
 
@@ -561,9 +556,9 @@ A：Luminary（月球舱软件）需要支持垂直下降、月面操作和独�
 |------|------|
 | GitHub | https://github.com/chrislgarry/Apollo-11 |
 | Virtual AGC | http://www.ibiblio.org/apollo/ |
-| yaYUL 模拟器 | https://github.com/rburkey2005/virtualagc |
-| MIT Museum | http://web.mit.edu/museum/ |
-| Margaret Hamilton 采访 | YouTube: Margaret Hamilton - First Woman Software Engineer |
+| 模拟器与 yaYUL | https://github.com/virtualagc/virtualagc |
+| MIT Museum | https://mitmuseum.mit.edu/ |
+| Apollo 11 任务报告（MSC-00171） | NASA NTRS 编号 19700008096 |
 
 ---
 

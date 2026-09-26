@@ -1,11 +1,11 @@
 ---
 title: "Claude 101 第一课：Claude 桌面应用——Chat、Cowork、Code 三类工作方式"
 date: "2026-03-25T14:00:00+08:00"
-lastmod: 2026-04-04T00:07:25+08:00
+lastmod: "2026-09-21T10:00:00+08:00"
 slug: "claude-101-desktop-app-modes"
 aliases:
   - /posts/tech/claude-101-desktop-app-modes/
-description: "基于公开官方资料梳理 Claude 桌面应用中的 Chat、Cowork 和 Code 三类工作方式，帮助你理解各自定位、能力边界与适用场景。"
+description: "基于公开官方资料梳理 Claude 桌面应用中的 Chat、Cowork 和 Code 三类工作方式，帮助你理解各自定位、能力边界与适用场景。Cowork 与 Code 的能力口径以 2026 年 9 月官方文档为准。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude", "桌面应用", "开发工具", "AI 工具"]
@@ -13,7 +13,7 @@ tags: ["Claude", "桌面应用", "开发工具", "AI 工具"]
 
 # Claude 101 第一课：Claude 桌面应用——Chat、Cowork、Code 三类工作方式
 
-> 预计阅读时间：15 分钟 | 难度：⭐
+> 预计阅读时间：20 分钟 | 难度：⭐
 
 ---
 
@@ -93,13 +93,13 @@ Chat 仍然是大多数人的起点。它最适合这些低摩擦任务：
 
 ## Cowork：把 Claude 用在知识工作自动化上
 
-根据 Anthropic 公开说明，**Cowork 是一项 research preview（研究预览）能力**，把 Claude Code 的 agentic 能力带到 Claude Desktop，但场景从编程扩展到了知识工作。
+根据 Anthropic 官方说明，**Cowork 是 Claude 桌面应用里面向知识工作的代理工作区**：它复用 Claude Code 的 agentic 架构，但场景从编程扩展到了研究、分析、文档创建这类非编码的多步骤任务。本文发布时它还在研究预览阶段，现在已是付费计划（Pro、Max、Team、Enterprise）的正式功能。
 
 它更适合这类任务：
 
 - 整理和重命名文件
 - 从一堆资料中提炼研究结果
-- 生成报告、文档、表格或演示材料
+- 生成报告、文档、表格或演示材料（含带公式的 Excel 表格和 PPT）
 - 处理会持续一段时间的多步骤任务
 - 设定按固定频率重复执行的任务
 
@@ -113,16 +113,20 @@ Cowork 的重点在于你可以描述一个结果目标，让 Claude 在你授�
 
 官方资料明确提到，Cowork 支持：
 
-- **projects**：把相关任务放进持续工作区
-- **scheduled tasks**：让 Claude 按计划重复执行任务
-- **global instructions / folder instructions**：给它长期偏好和目录级背景
+- **projects**：把相关任务放进持续工作区，每个项目可以挂载本地文件夹、固定指令、参考链接和一个独立的记忆库，下次会话自动带着这些背景开始
+- **scheduled tasks**：让 Claude 按计划重复执行任务，现在默认在云端运行，设备不在线也能照跑
+- **built-in browser**：任务涉及网页时，Claude 可以在桌面应用内置的浏览器里打开网站、点击、填写表单
 
 这说明 Cowork 更像“面向知识工作的代理工作区”，而不是一次性会话。
 
 #### 3. 它会接触真实文件，因此风险更高
 
-官方帮助中心明确说明，Cowork 运行在你电脑上的虚拟机环境里，Claude 可以在你共享的文件范围内做真实更改。  
+Cowork 的会话现在默认运行在 Anthropic 服务器的云端隔离环境（beta）里：关掉电脑任务照跑，换台设备也能接着看。当任务需要你电脑上的东西——本地文件、浏览器——Claude 通过桌面应用去接入；桌面端的本地会话则运行在本机虚拟机里。无论哪种形态，共同点是 Claude 会在你授权的范围内做真实更改。
 这也是为什么它比普通 Chat 更需要你认真管理权限和敏感数据。
+
+#### 4. Dispatch：把整个任务交给后台代理
+
+对于更长的任务，Cowork 提供了 Dispatch：你用一段话描述结果目标，它自己拆解成多个子任务，每个子任务作为一个独立的会话在后台执行，完成后把结果放进侧边栏。全程不用盯着每一步，也可以直接从手机上派发任务——Claude 在云端继续干，你随时回来查看或调整方向。
 
 ### 什么场景适合优先选 Cowork
 
@@ -162,12 +166,13 @@ Anthropic 的官方文档把 **Code tab** 描述为：在 Claude Desktop 中通�
 根据 Claude Code Desktop 文档，目前公开写明的能力包括：
 
 - **visual diff review**：用图形方式查看和评论改动
-- **live app preview**：启动 dev server 并在预览面板里验证修改
-- **computer use**：在桌面上操作应用和屏幕（默认关闭）
-- **parallel sessions**：并行会话
+- **live app preview**：启动 dev server 并在预览面板里验证修改，还可以并排打开外部网站
+- **computer use**：在桌面上操作应用和屏幕（默认关闭；目前仍是研究预览，仅限 Pro 和 Max 计划）
+- **parallel sessions**：并行跑多个会话，各用独立的 Git worktree 隔离，互不干扰
+- **side chats**：不打断主会话，就当前上下文问一个旁路问题
 - **scheduled tasks**：按计划运行任务
 - **connectors**：连接 GitHub、Slack、Linear 等外部工具
-- **local / SSH / cloud environments**：选择不同运行环境
+- **local / SSH / cloud environments**：选择不同运行环境，云端会话关掉应用也能继续跑
 - **permission modes**：控制 Claude 自动化权限范围
 
 ### 使用 Code 前，先理解 4 个配置项
@@ -213,7 +218,7 @@ Anthropic 的官方文档把 **Code tab** 描述为：在 Claude Desktop 中通�
 
 ### 错误二：把研究预览能力当成稳定承诺
 
-Cowork 目前公开定位就是 research preview。对于这类能力，文档里最应该强调的是边界、权限和适用场景，而不是把每个细节都写成“稳定功能”。
+Cowork 已经转正，但它的一些子能力仍处在研究预览阶段——比如 Computer use，官方文档明确标注它目前仅限 Pro 和 Max 计划，且要求桌面应用保持运行。对这类能力，先看清边界、计划要求和适用场景，再决定要不要放进正式工作流。
 
 ### 错误三：还没想清权限就直接给太多访问范围
 
@@ -262,7 +267,7 @@ Cowork 目前公开定位就是 research preview。对于这类能力，文档�
 
 1. **先用 Chat 做一个真实小任务**，感受 Claude 的基本协作方式。
 2. **挑一个低风险、非敏感的文件类任务试 Cowork**，体验“描述结果目标”而不是“逐句聊天”。
-3. **如果你是开发者，用 Code 做一次小改动或代码解释**，重点观察 environment、project folder 和 permission mode 这三个概念。
+3. **如果你是开发者，用 Code 做一次小改动或代码解释**，重点观察 environment、project folder、model 和 permission mode 这四个概念。
 
 ---
 
@@ -278,4 +283,4 @@ Claude 桌面应用提供了从简单对话到深度自动化的多个层级。
 ---
 
 **文档元信息**
-难度：⭐⭐⭐ | 类型：产品能力导览 | 更新日期：2026-04-04 | 预计阅读时间：16 分钟
+难度：⭐ | 类型：产品能力导览 | 更新日期：2026-09-21 | 预计阅读时间：20 分钟

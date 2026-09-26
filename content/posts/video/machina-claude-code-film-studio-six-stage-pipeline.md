@@ -1,6 +1,7 @@
 ---
 title: "把 Claude Code 变成电影工作室：Machina 的六阶段 AI 短片生产线"
 date: "2026-07-30T22:30:00+08:00"
+lastmod: "2026-09-23T00:00:00+08:00"
 slug: "machina-claude-code-film-studio-six-stage-pipeline"
 description: "翻译 Machina (@EXM7777) 2026-07-28 X 长文：用 Higgsfield Supercomputer + Claude Code + Seedance 2.0 把 Claude Code 改造成可全天候运转的 AI 短片工作室。拆解六阶段管线——从电影里萃取风格契约、批量出帧、Agent 写分镜、运动语法、并行子代理舰队、文本化剪辑——并讨论 loop engineering（循环工程）作为 Agent 时代内容生产的核心范式。"
 draft: false
@@ -35,6 +36,8 @@ flowchart LR
     D --> E[子代理并行]
     E --> F[文本剪辑成片]
 ```
+
+> 模型名说明：下表沿用原帖 2026-07-28 的口径。截至 2026-09，[Higgsfield Skills 仓库 README](https://github.com/higgsfield-ai/skills) 列出的对应模型已迭代为 Nano Banana 2、Soul V2、GPT Image 2.5，视频默认模型为 Seedance 2.5，图生视频仍推荐 `seedance_2_0` 配 `--start-image`。安装最新版 skill 包后，以仓库 README 为准。
 
 这张图最关键的地方不在“六步很多”，而在每一步都留下了可复用工件：风格契约、角色参考表、镜头模板、生成日志、剪辑清单。Machina 真正公开的，不是某条神奇 prompt，而是这些工件之间怎样接力。
 
@@ -96,7 +99,7 @@ Higgsfield 把几乎所有模型放在同一个表面、一套登录、一个积
 | **Supercomputer（简单的门）** | 不在终端生活的人 | 平台内置 Agent，自己规划制作、自己挑模型、自己剪片；你说想要什么，剩下路由它管；skill 机制和 Claude Code 一样 |
 | **CLI（控制的那扇门）** | 已经在跑 Claude Code 或其他 harness 的人 | 让所有模型都能从你已有的 Agent 调；什么先生成、何时生成、用哪个模型、什么顺序，全归你的 Agent 管 |
 
-对新人不熟 AI 视频、不知道一个好镜头要试多少轮的人，Supercomputer 跑测试不花钱——规划、测试、重做都 0 积分，只在最终渲染视频时扣积分，免费档够覆盖整个探索期。
+不熟 AI 视频的新人不知道一个好镜头要试多少轮，Supercomputer 对这类探索是友好的：规划、测试、重做都 0 积分，只在最终渲染视频时扣积分，免费档够覆盖整个探索期。
 
 CLI 三条命令搭起来：
 
@@ -106,7 +109,7 @@ higgsfield auth login
 npx skills add higgsfield-ai/skills
 ```
 
-按 Higgsfield Skills 仓库的 README，官方也提供 `npx skills add higgsfield-ai/skills`、`gh skill install` 和 setup 脚本等安装路径，安装过程中会顺带处理 CLI 与认证。Machina 保留拆开的三步，更适合已经决定走 CLI-first 的人——你能清楚地区分哪一步在装命令行、哪一步在做登录、哪一步在把技能接进自己的 Agent harness。
+按 Higgsfield Skills 仓库的 README，官方也提供 `npx skills add higgsfield-ai/skills`、`gh skill install`（要求 GitHub CLI v2.90 以上）和 setup 脚本等安装路径，每种方式都会顺带完成 CLI 安装与认证。Machina 保留拆开的三步，更适合已经决定走 CLI-first 的人——你能清楚地区分哪一步在装命令行、哪一步在做登录、哪一步在把技能接进自己的 Agent harness。
 
 skill 包教 Claude Code 什么时候该调哪个模型、怎么保持角色一致性、怎么提交和轮询任务。装完之后，终端就是你的工作室。
 
@@ -144,7 +147,7 @@ skill 包教 Claude Code 什么时候该调哪个模型、怎么保持角色一�
 帧那一关的标准动作：
 
 - 用同一个分镜简报，绑同一份风格契约，并行跑几个扩散模型；在同一个表面做这件事很轻：同一段提示词，五个模型，并排比
-- 每个节拍多出几帧：不同构图、不同场景瞬间、不同天气
+- 每个节拍——故事往前走的一小步——多出几帧：不同构图、不同场景瞬间、不同天气
 - 赢家精修：Nano Banana 干外科手术式修改与一致性打磨，Soul Cinema 干摄影质感的人物形象，GPT-Images-2 干高密度美术指导
 - 锁必须保持一致的东西：每个角色一张参考表（正面、四分之三、侧面、分开放，因为网格会让视频模型把不同格读成不同的人）；每套衣服或状态切换单独一张表；每个地点多角度一张表
 
@@ -261,7 +264,7 @@ Agent 把每次生成都记下来：提示词、模型、结果、留下还是�
 
 最后被保留下来的，不是“这个模型今天表现不错”，而是 `17-scylla-deck` 这条片段留几秒、保不保现场声、和下一镜怎么接。到这一步，视频工作流已经从生成问题变成了编辑问题。
 
-这个示例想说明的事情很简单：六阶段看起来长，但每一阶段都在替下一阶段降本。真正贵的是直接跳到视频生成，然后在最贵的一层里找构图、找风格、找故事。
+六阶段看着长，其实每一阶段都在替下一阶段降本；真正贵的做法是直接跳到视频生成，在最贵的一层里找构图、找风格、找故事。
 
 ## 六、这系统真正能产什么
 
@@ -284,7 +287,7 @@ Agent 把每次生成都记下来：提示词、模型、结果、留下还是�
 
 这套系统的第一部片子花了一个通宵。你的第一部，从你装好 CLI 的那个晚上开始。
 
-或者直接试 Higgsfield Supercomputer 的免费版（Higgsfield AI 是本文赞助方，但这个东西真的强）——它能从规划镜头、写提示词、选模型一路自主跑到成片。
+或者直接试 Higgsfield Supercomputer 的免费版（原帖披露 Higgsfield AI 是赞助方，但这个工具本身确实强）——它能从规划镜头、写提示词、选模型一路自主跑到成片。
 
 所有人都能租到同一批模型，片子最后好不好，取决于你有没有把品味、参考、重试和取舍写成一套可复用流程——模型名字反而不是关键。
 
@@ -306,15 +309,7 @@ Agent 把每次生成都记下来：提示词、模型、结果、留下还是�
 
 ### 谁该直接去读原文
 
-如果你要的是 Machina 原帖里逐条的 prompt、seed、参数和实际样片，直接去 X 看原文（链接见文首）——本文把六阶段整理成了能照做的规则，但贴不出他原帖的每一帧。如果你只想拿一套能落地的流水线思路，读到这里就够了。
-
-### 把这套范式带回自己的工作流
-
-真正可迁移的，不是某个模型名，而是下面三条设计原则：
-
-- 先把任务切成人负责判断、Agent 负责吞吐的两半
-- 先为循环写退出条件、并发上限和日志格式，再谈自动化规模
-- 约束尽量用正面语言表达，让模型和人都知道“要什么”，而不是只知道“别做什么”
+要 Machina 原帖里逐条的 prompt、seed、参数和实际样片，直接去 X 看原文（链接见文首）——本文把六阶段整理成了能照做的规则，但贴不出他原帖的每一帧。只想拿一套能落地的流水线思路的话，读到这里就够了。
 
 ### 进阶阅读
 
@@ -322,8 +317,7 @@ Agent 把每次生成都记下来：提示词、模型、结果、留下还是�
 - [Seedance 2.0 视频制作实战指南：从提示词到分镜的全流程教程](/posts/video/seedance-2-video-production-guide/) 更适合补镜头与提示词这一侧的基本功
 - Higgsfield CLI 与 skill 仓库：[higgsfield-ai/skills](https://github.com/higgsfield-ai/skills)
 - 镜头与静帧资料源：frameset.app、shotdeck.com、fancaps.net、savee.com、cosmos.so、eyecannndy.com
-- Seedance 2.0 官方文档与定价（Higgsfield 内置）
-- ffmpeg 官方手册（剪辑与升频管线）
+- [ffmpeg 官方手册](https://www.ffmpeg.org/ffmpeg.html)（剪辑清单与升频管线）
 - 本文翻译基于 Machina @EXM7777 2026-07-28 X 长文，链接见文首
 
 ## 收束
@@ -340,4 +334,4 @@ Agent 把每次生成都记下来：提示词、模型、结果、留下还是�
 
 ---
 
-> 说明：本文翻译基于 Machina @EXM7777 2026-07-28 X 长文（[原帖链接](https://x.com/EXM7777/status/2082107255449919582)），文章提及的 Higgsfield AI 是本文赞助方，但工具本身确实强。
+> 说明：本文翻译基于 Machina @EXM7777 2026-07-28 X 长文（[原帖链接](https://x.com/EXM7777/status/2082107255449919582)）。原帖作者披露 Higgsfield AI 是该帖赞助方；文中 CLI 命令、安装路径与 Seedance 图生视频默认参数已对照 [higgsfield-ai/skills](https://github.com/higgsfield-ai/skills) 仓库核实（2026-09）。

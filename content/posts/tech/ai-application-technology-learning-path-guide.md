@@ -2,8 +2,8 @@
 title: "近年 AI 应用技术学习路线：从 LLM、RAG 到 Agent 工程"
 date: "2026-04-14T10:30:00+08:00"
 slug: "ai-application-technology-learning-path-guide"
-github_repo: "anthropics/anthropic-cookbook"
-source_key: "gh:anthropics/anthropic-cookbook"
+github_repo: "anthropics/claude-cookbooks"
+source_key: "gh:anthropics/claude-cookbooks"
 summary: "一篇面向工程师的 AI 应用技术路线图：先把 LLM、Prompt、RAG、Function Calling 与 MCP 打稳，再进入 Agent、Workflow、Context、Skill 与评估工程。"
 description: "系统梳理 LLM、Prompt Engineering、Fine-tuning、RAG、MCP、Agent、Multi-Agent、Workflow Engineering、Context Engineering、Agent Skill、OpenClaw、Harness Engineering 等核心主题，给出从入门到进阶的学习顺序、工程边界、练习题与实战示例。"
 draft: false
@@ -24,7 +24,7 @@ tags: ["LLM", "AI Agent", "Prompt Engineering", "MCP", "RAG"]
 - 画出 AI 应用技术栈的三层核心组成（模型层、应用层、基础设施层）并解释分层的必要性
 - 对比 RAG 与 Fine-tuning 的适用边界，能为具体场景选择合适方案
 - 解释 MCP 协议解决的本质问题，并说明为什么它需要成为开放标准
-- 设计一个包含工具调用和记忆管理的简单 Agent 系统
+- 设计一个包含工具调用的简单 Agent 系统
 - 制定一条从课程学习到生产部署的完整迁移路径
 
 ---
@@ -33,26 +33,27 @@ tags: ["LLM", "AI Agent", "Prompt Engineering", "MCP", "RAG"]
 
 - [前言](#前言)
 - [学习路线总览](#学习路线总览)
-- [§1 LLM：大语言模型基础](#1-llm 大语言模型基础-)
-- [§2 Prompt Engineering：提示词工程](#2-prompt-engineering 提示词工程-)
-- [§3 Fine-tuning：微调技术](#3-fine-tuning 微调技术-)
-- [§4 RAG：检索增强生成](#4-rag 检索增强生成-)
-- [§5 Function Calling 与 MCP](#5-function-calling-与-mcp-)
-- [§6 Agent：智能体架构](#6-agent 智能体架构-)
-- [§7 Multi-Agent：多智能体系统](#7-multi-agent 多智能体系统-)
-- [§8 Workflow Engineering：工作流编排](#8-workflow-engineering 工作流编排-)
-- [§9 Context Engineering：上下文工程](#9-context-engineering 上下文工程-)
-- [§10 Agent Skill：智能体技能](#10-agent-skill 智能体技能-)
-- [§11 OpenClaw：开源智能体框架](#11-openclaw 开源智能体框架-)
-- [§12 Harness Engineering：评估工程](#12-harness-engineering 评估工程-)
+- [§1 LLM：大语言模型基础](#1-llm大语言模型基础)
+- [§2 Prompt Engineering：提示词工程](#2-prompt-engineering提示词工程)
+- [§3 Fine-tuning：微调技术](#3-fine-tuning微调技术)
+- [§4 RAG：检索增强生成](#4-rag检索增强生成)
+- [§5 Function Calling 与 MCP](#5-function-calling-与-mcp)
+- [§6 Agent：智能体架构](#6-agent智能体架构)
+- [§7 Multi-Agent：多智能体系统](#7-multi-agent多智能体系统)
+- [§8 Workflow Engineering：工作流编排](#8-workflow-engineering工作流编排)
+- [§9 Context Engineering：上下文工程](#9-context-engineering上下文工程)
+- [§10 Agent Skill：智能体技能](#10-agent-skill智能体技能)
+- [§11 OpenClaw：开源 AI 助手框架](#11-openclaw开源-ai-助手框架)
+- [§12 Harness Engineering：评估工程](#12-harness-engineering评估工程)
 - [端到端实战：构建企业知识库问答智能体](#端到端实战构建企业知识库问答智能体)
 - [学习路线总结](#学习路线总结)
-- [练习](#练习)
-- [自测题](#自测题)
 - [常见问题 FAQ](#常见问题-faq)
 - [推荐学习资源](#推荐学习资源)
+- [练习](#练习)
+- [自测题](#自测题)
 - [进阶路径指引](#进阶路径指引)
 - [核心术语表](#核心术语表)
+- [资料口径说明](#资料口径说明)
 
 ---
 
@@ -62,13 +63,7 @@ tags: ["LLM", "AI Agent", "Prompt Engineering", "MCP", "RAG"]
 
 这篇文章把近年最常见的 AI 应用技术主题串成一条学习路线。它适合两类读者：一类是想从零建立系统认知的开发者，另一类是已经做过 Prompt、RAG 或 Agent 项目，但希望补齐工程全貌的人。
 
-读完后，至少应该能做到下面几件事：
-
-- 建立 AI 应用技术的系统认知框架
-- 理解每个技术的核心原理与适用边界
-- 掌握从理论到实践的完整学习顺序
-- 可直接复用的代码示例与配置方案
-- 每个主题的练习题与自测检查清单
+读完这篇文章，你能建立 AI 应用技术的系统认知框架，理解每个技术的核心原理与适用边界，拿到一条从理论到实践的学习顺序。正文给足了可直接复用的代码示例，每个主题末尾还配了练习题与自测检查清单。
 
 **本文定位**：这是一篇技术路线图，不是单点深度教程。每个主题都会交代核心概念、为什么需要它、适用边界和最小实践；真正进入生产系统时，还需要结合具体模型、数据、权限、安全和成本约束继续细化。
 
@@ -86,25 +81,31 @@ tags: ["LLM", "AI Agent", "Prompt Engineering", "MCP", "RAG"]
 
 **建议的学习顺序**：LLM 基础 → Prompt Engineering → RAG → Function Calling / MCP → Agent → Workflow / Context → Multi-Agent → Skill / Evaluation
 
+整条路线盖在一套三层技术栈上。后面每个章节都能对应到其中一层：
+
+- **模型层**：LLM 本身，提供通用推理能力。能力通用但不受你控制，更新换代快。
+- **应用层**：提示词、RAG、工具调用、Agent、工作流——把模型能力适配到具体任务的全部工程，是本文的主角。
+- **基础设施层**：GPU、向量数据库、部署与监控平台，负责把应用规模化跑起来。
+
+分层的好处是各层可以独立演进：换模型不动应用代码，换部署平台不动模型选型。
+
 **依赖关系图**：
 
-```text
-LLM 基础 ──────→ Prompt Engineering ──────→ Fine-tuning
-│                    │                      │
-│                    ▼                      ▼
-│              Function Calling          RAG
-│                    │                      │
-│                    ▼                      │
-│                   MCP ────────────────────┤
-│                    │                      │
-▼                    ▼                      ▼
-智能体 ←──────────── Context Engineering
-│
-▼
-Multi-Agent ──→ Workflow Engineering ──→ Agent Skill
-│
-▼
-OpenClaw ──→ Harness Engineering
+```mermaid
+graph LR
+A[LLM 基础] --> B[Prompt Engineering]
+B --> C[Function Calling]
+C --> D[MCP]
+B --> E[Fine-tuning]
+B --> F[RAG]
+D --> G[Agent]
+F --> G
+G --> H[Multi-Agent]
+G --> I[Workflow Engineering]
+H --> J[Agent Skill]
+G --> K[Context Engineering]
+I --> L[Harness Engineering]
+K --> L
 ```
 
 ---
@@ -119,7 +120,7 @@ LLM 是整条路线的地基。理解它，重点不在背参数，而在知道�
 graph TD
 A[Transformer 原始架构] --> B[Encoder-Only<br/>如 BERT]
 A --> C[Encoder-Decoder<br/>如 T5]
-A --> D[Decoder-Only<br/>当前主流: GPT、Llama]
+A --> D[Decoder-Only<br/>当前主流：GPT、Llama]
 style D stroke:#f66,stroke-width:2px
 ```
 
@@ -260,7 +261,8 @@ task_type="CAUSAL_LM"
 
 model = get_peft_model(model, lora_config)
 model.print_trainable_parameters()
-# 输出示例：trainable params: 6,815,744 || all params: 8,075,097,856 || trainable%: 0.084%
+# 输出示例：trainable params: 8,388,608 || all params: 8,075,097,856 || trainable%: 0.1039
+# 32 层 × (q_proj + v_proj) × 2×(16×4096) = 约 839 万可训练参数，占比约 0.1%
 ```
 
 **RAG vs 微调怎么选**：模型"不知道某个知识"（内部文档、最新新闻）→ 用 RAG；模型"行为方式不对"（输出格式、语气）→ 用微调。两者常组合使用。
@@ -387,15 +389,13 @@ print(tool_call.function.name)    # → "get_weather"
 print(tool_call.function.arguments)  # → '{"location": "北京"}'
 ```
 
-**MCP（Model Context Protocol）** 在 Function Calling 之上解决一个更系统的问题：**工具如何被标准化地发现、连接和复用**。在 MCP 之前，每个框架有自己的一套工具格式，工具无法跨框架复用。MCP 把"模型 ↔ 工具/数据源"的连接抽成开放协议，让工具生态产生网络效应——一次开发，到处使用。
-
-**为什么需要开放标准**：工具生态需要网络效应。越多框架和工具支持 MCP，开发者越能避免为每个框架重写一遍工具适配层。
+**MCP（Model Context Protocol）** 在 Function Calling 之上解决一个更系统的问题：**工具如何被标准化地发现、连接和复用**。MCP 出现之前，每个框架有自己的一套工具格式，同一个工具要在 LangChain、CrewAI 里各写一遍适配层。MCP 由 Anthropic 在 2024 年 11 月发布，把"模型 ↔ 工具/数据源"的连接抽成开放协议：工具按协议实现一次，任何支持 MCP 的客户端都能直接接入。支持 MCP 的框架和工具越多，这个生态就越有价值——这也是它必须做成开放标准、而不能是某个框架私有协议的原因。
 
 ---
 
 ## §6 Agent：智能体架构
 
-Agent 把前面所有的能力拼成一个闭环：**LLM 提供大脑，工具提供手脚，记忆提供上下文，规划提供行动路线**。
+Agent 把前面几章的能力装在一起：**LLM 提供大脑，工具提供手脚，记忆提供上下文，规划提供行动路线**。
 
 ```text
 Agent = LLM（大脑）+ Planning（规划）+ Memory（记忆）+ Tools（工具）
@@ -494,7 +494,7 @@ crew = Crew(agents=[researcher, writer], tasks=[research_task, write_task])
 result = crew.kickoff()
 ```
 
-**工程边界**：多 Agent 不等于更可靠。协调开销、上下文传递、错误传播都会放大。能用单 Agent 解决就先用单 Agent，拆智能体是"为了拆而拆"的反模式。
+**工程边界**：多 Agent 不等于更可靠。智能体一多，协调开销、上下文传递、错误传播都会被放大。能用单个 Agent 解决的问题就别拆；拆分要跟着真实分工走，而不是"为了拆而拆"。
 
 ---
 
@@ -502,11 +502,49 @@ result = crew.kickoff()
 
 Agent 擅长"自主决策"，但很多任务其实是**确定性流程**——固定步骤、固定依赖，不需要模型每一次都重新规划。工作流工程就是把这类流程写成代码：定义步骤、状态、转换和异常处理。
 
+用 LangGraph 的 `StateGraph` 写一个"检索 → 生成 → 校验"的固定流程：
+
 ```python
-# 一个确定性工作流的抽象示意：
-# 输入 → 校验 → 检索 → 生成 → 校验输出 → 完成
-# 每一步失败都走明确的降级或重试路径
+from typing import TypedDict
+from langgraph.graph import StateGraph, END
+
+class State(TypedDict):
+    question: str
+    docs: list
+    answer: str
+
+def retrieve(state: State) -> dict:
+    docs = vectorstore.similarity_search(state["question"], k=3)
+    return {"docs": [doc.page_content for doc in docs]}
+
+def generate(state: State) -> dict:
+    context = "\n\n".join(state["docs"])
+    prompt = (
+        "仅根据以下资料回答问题，资料不足就回答未找到。\n\n"
+        f"资料：\n{context}\n\n问题：{state['question']}"
+    )
+    return {"answer": llm.invoke(prompt)}
+
+def validate(state: State) -> str:
+    # 答案为空说明检索没命中，回到检索步骤重试一次
+    return "done" if state["answer"] else "retry"
+
+graph = StateGraph(State)
+graph.add_node("retrieve", retrieve)
+graph.add_node("generate", generate)
+graph.set_entry_point("retrieve")
+graph.add_edge("retrieve", "generate")
+graph.add_conditional_edges(
+    "generate", validate,
+    {"done": END, "retry": "retrieve"}
+)
+app = graph.compile()
+
+result = app.invoke({"question": "如何配置 LoRA？", "docs": [], "answer": ""})
+print(result["answer"])
 ```
+
+每个节点是一个函数，边定义了执行顺序，条件边处理降级与重试——整条路径完全确定，没有给模型留下"自由发挥"的空间。
 
 **Agent vs Workflow 怎么选**：路径固定、可预期 → 用 Workflow，稳定可控、成本低；路径开放、需要临场决策 → 用 Agent。两者可以组合——把 Agent 作为工作流中的一个"节点"。
 
@@ -544,53 +582,49 @@ Agent 擅长"自主决策"，但很多任务其实是**确定性流程**——�
 
 ## §10 Agent Skill：智能体技能
 
-Skill 是把"特定功能封装成可复用单元"的标准格式。它让智能体具备"可被调用、可发现、可组合"的能力，核心是一份 `SKILL.md` 定义文件 + 配套的工具与知识目录。
+Skill 是把"特定功能封装成可复用单元"的标准格式（Agent Skills 规范）：一个技能就是一个目录，核心是一份 `SKILL.md` 定义文件，配上可选的脚本与资料目录。
 
 ```text
-my_skill/
-├── SKILL.md        # 技能定义文件（必需）
-├── tools/          # 工具脚本目录
-│   ├── script1.py
-│   └── script2.sh
-├── knowledge/      # 知识文件目录
-│   └── guide.md
-└── config.yaml      # 配置文件
+code-reviewer/
+├── SKILL.md       # 技能定义文件（必需）
+├── scripts/       # 可执行脚本（可选）
+│   └── lint.py
+├── references/    # 补充文档（可选，按需加载）
+│   └── REFERENCE.md
+└── assets/        # 模板、静态资源（可选）
 ```
 
-`SKILL.md` 用 frontmatter 声明技能元信息（名称、版本、描述、触发器），正文描述功能、使用方式和依赖：
+`SKILL.md` 用 frontmatter 声明元信息，正文写操作指引：
 
 ```markdown
 ---
 name: code-reviewer
-version: 1.0.0
-description: 自动代码审查技能
-triggers:
-- "审查代码"
-- "code review"
+description: 审查代码的安全性和性能问题。当用户要求 code review、
+  检查代码质量或排查安全漏洞时使用。
 ---
 
-# Code Reviewer Skill
+# Code Reviewer
 
-## 功能
-审查代码的安全性和性能问题。
+## 步骤
+1. 读取待审查的代码文件
+2. 运行 scripts/lint.py 做静态检查
+3. 按安全 → 性能 → 风格的顺序输出审查报告
 
-## 使用方式
-1. 提供待审查的代码文件
-2. 智能体自动调用审查工具
-3. 输出审查报告
-
-## 依赖
-- Python 3.10+
-- ruff, bandit
+## 边界
+只审查给出的文件，不主动修改代码。
 ```
 
-Skill 的价值在于**沉淀**：一次调试好的能力封装成 Skill 后，可以被多次、跨任务复用，避免反复从零写提示词和工具。
+规范只强制两个字段：`name`（小写字母、数字和连字符，不超过 64 个字符，且必须与目录名一致）和 `description`（不超过 1024 个字符，要写清"做什么、什么时候用"）。版本号、作者等信息放进可选的 `metadata` 字段。
+
+理解 Skill 的关键是**渐进式加载**：智能体启动时只读每个技能的 `name` 和 `description`（约 100 个 token），判断当前任务命中某个技能后，才加载完整 `SKILL.md` 正文和对应的脚本、文档。技能装得再多，也不会撑爆上下文窗口。
+
+Skill 的价值在于沉淀：一次调试好的能力封装成技能目录后，可以跨任务、跨会话反复使用，也能直接分享给别人，不必每次从零写提示词和胶水代码。
 
 ---
 
-## §11 OpenClaw：开源智能体框架
+## §11 OpenClaw：开源 AI 助手框架
 
-从 §6 到 §10，我们都在讨论"怎么设计一个智能体"。OpenClaw 则回答"怎么把智能体跑起来接到真实消息流里"——它是一个从**消息接入到智能体运行**的端到端框架。
+从 §6 到 §10，我们都在讨论"怎么设计一个智能体"。OpenClaw 回答的是"怎么把它跑起来、接进真实的消息流"——这是一个开源 AI 助手框架，跑在你自己的设备上，把智能体接进 Telegram、Discord、WhatsApp、Slack、iMessage 等 20 多个消息渠道。
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -601,39 +635,46 @@ Skill 的价值在于**沉淀**：一次调试好的能力封装成 Skill 后，
 │   消息平台   │     │   消息平台   │     │   消息平台   │
 │ (Telegram)  │     │  (Discord)  │     │  (WhatsApp) │
 └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
-│                   │                   │
-└───────────────────┼───────────────────┘
-│
-┌────────▼────────┐
-│    Gateway     │  ← 控制平面（WebSocket）
-│  (控制中枢)     │
-└────────┬────────┘
-│
-┌───────────────────┼───────────────────┐
-│                   │                   │
+       │                   │                   │
+       └───────────────────┼───────────────────┘
+                           │
+                 ┌─────────▼─────────┐
+                 │      Gateway      │
+                 │    本地控制平面     │
+                 └─────────┬─────────┘
+                           │
+       ┌───────────────────┼───────────────────┐
+       │                   │                   │
 ┌──────▼──────┐     ┌──────▼──────┐     ┌──────▼──────┐
-│   智能体   │     │   Tools     │     │   Memory    │
+│   智能体    │     │    Tools    │     │   Memory    │
 │   (大脑)    │     │  (工具集)   │     │  (记忆)     │
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
-核心是 **Gateway（控制中枢）**：它通过 WebSocket 连接各消息平台，把消息路由给智能体，智能体再调用工具、读写记忆。安装与启动很简单：
+核心是 **Gateway**：一个跑在本地的控制平面，负责会话、工具、事件和渠道连接。消息渠道接入 Gateway，Gateway 把消息交给智能体处理，智能体再调用工具、读写记忆；本地的控制台（Control UI）、CLI 都连到它上面。模型本身是可插拔的——Claude、Codex、本地模型都以插件形式接入，换模型不动其他配置。
+
+安装与启动：
 
 ```bash
-# 安装（官方推荐 Node.js 24，兼容 Node.js 22.14+）
-npm install -g openclaw@latest
+# 方式一：官方安装脚本（支持 macOS / Linux / Windows，需要时自动装 Node.js）
+curl -fsSL https://openclaw.ai/install.sh | bash
 
-# 初始化配置
+# 方式二：npm 安装（需要 Node.js 24.16+ 或 26.1+，推荐 Node 26）
+# npm 12 及以上要带 --allow-scripts；npm 11.15 及更早去掉这个参数
+npm install -g openclaw@latest --allow-scripts=openclaw
+
+# 初始化配置并安装守护进程
 openclaw onboard --install-daemon
 
-# 启动 Gateway
-openclaw gateway --port 18789 --verbose
+# 启动 Gateway（默认端口 18789）
+openclaw gateway run --port 18789 --verbose
 
-# 打开本地控制台
+# 查看状态、打开本地控制台
+openclaw gateway status
 openclaw dashboard
 ```
 
-**LangChain vs OpenClaw**：LangChain 是开发库，给你构建智能体的抽象；OpenClaw 是完整框架，给你从消息接入到运行的端到端方案。快速落地接 Telegram/Discord 用 OpenClaw，深度定制逻辑用 LangChain。
+**LangChain vs OpenClaw**：LangChain 是开发库，给你构建智能体的抽象；OpenClaw 是完整框架，给你从消息接入到日常运行的整套方案。快速落地一个接入 Telegram/Discord 的助手用 OpenClaw，深度定制智能体逻辑用 LangChain。
 
 ---
 
@@ -861,9 +902,6 @@ return "达到最大迭代次数，请尝试更具体的问题。"
 
 ---
 
----
----
-
 ## 常见问题 FAQ
 
 ### Q1：我应该从哪个技术开始学？
@@ -880,7 +918,7 @@ return "达到最大迭代次数，请尝试更具体的问题。"
 
 ### Q4：OpenClaw 和 LangChain 有什么区别？
 
-LangChain 是一个**开发库**，提供构建智能体的工具和抽象；OpenClaw 是一个**完整框架**，提供从消息接入到智能体运行的端到端解决方案。如果你要快速搭建一个能接入 Telegram/Discord 的智能体，OpenClaw 更方便；如果你要深度定制智能体逻辑，LangChain 更灵活。
+LangChain 是一个**开发库**，提供构建智能体的工具和抽象；OpenClaw 是一个**开源 AI 助手框架**，把智能体跑在你自己的设备上，并接进 Telegram、Discord、WhatsApp 等消息渠道。快速搭一个能收发消息的助手，OpenClaw 更方便；深度定制智能体逻辑，LangChain 更灵活。
 
 ### Q5：如何评估我的 AI 应用是否足够好？
 
@@ -900,7 +938,7 @@ LangChain 是一个**开发库**，提供构建智能体的工具和抽象；Ope
 | ---- | ---- | ---- |
 | Attention Is All You Need | 论文 | [arXiv](https://arxiv.org/abs/1706.03762) |
 | OpenClaw 文档 | 框架文档 | [docs.openclaw.ai](https://docs.openclaw.ai/) |
-| Anthropic Cookbook | 示例代码 | [GitHub](https://github.com/anthropics/anthropic-cookbook) |
+| Anthropic Cookbook | 示例代码 | [GitHub](https://github.com/anthropics/claude-cookbooks) |
 | PEFT 库文档 | 微调工具 | [GitHub](https://github.com/huggingface/peft) |
 | LangChain 文档 | 框架文档 | [python.langchain.com](https://python.langchain.com/) |
 | MCP 规范 | 协议文档 | [modelcontextprotocol.io](https://modelcontextprotocol.io/specification/) |
@@ -1058,6 +1096,7 @@ MCP 解决的本质问题是：**LLM 如何以标准化方式发现、连接和�
 | 多智能体 | Multi-Agent | 多个专业智能体协作完成复杂任务的系统 |
 | 上下文工程 | Context Engineering | 系统性管理 LLM 上下文信息的工程实践 |
 | 智能体技能 | Agent Skill | 将特定功能封装为可复用单元的标准格式 |
+| 开源 AI 助手框架 | OpenClaw | 跑在本地设备、接入消息渠道的开源智能体框架 |
 | 评估工程 | Harness Engineering | 通过系统化评估驱动 AI 系统开发的工程实践 |
 | 思维链 | Chain-of-Thought (CoT) | 引导模型展示推理过程的提示词技巧 |
 | 少样本学习 | Few-Shot Learning | 通过少量示例引导模型学习特定输出模式 |
@@ -1076,14 +1115,12 @@ MCP 解决的本质问题是：**LLM 如何以标准化方式发现、连接和�
 
 本文基于多个 AI 应用技术课程和开源项目撰写。需要说明的边界：
 
-1. **课程和资源版本时效性**：本文提到的课程（微软 AI Agents for Beginners、LangChain for Beginners、DeepLearning.AI 等）和开源项目（LlamaIndex、LangGraph、Dify、CrewAI）都在快速迭代，章节结构、代码示例、API 接口可能随版本变化，请以各项目 GitHub 仓库的最新 commit 为准。
+1. **课程和资源版本时效性**：本文提到的开源项目（LlamaIndex、LangGraph、Dify、CrewAI、OpenClaw 等）和课程资源都在快速迭代，章节结构、代码示例、API 接口可能随版本变化，请以各项目 GitHub 仓库的最新 commit 为准。
 2. **代码示例的语言和框架依赖**：本文提到的代码示例主要基于 Python 生态（LlamaIndex、LangGraph、CrewAI 均为 Python 框架），如果团队用其它语言（TypeScript/Java/C#），需要自己翻译示例。
-3. **MCP 协议生态成熟度**：文中讲到的 MCP 协议在 2024 年 11 月才推出，生态仍在早期。工具数量、稳定性、兼容性都在快速变化，本文提到的 MCP 工具示例以 2026 年 4 月的状态为准。
+3. **MCP 协议生态成熟度**：文中讲到的 MCP 协议在 2024 年 11 月才推出，生态仍在早期。工具数量、稳定性、兼容性都在快速变化，文中 MCP 与 OpenClaw 的版本信息以 2026 年 9 月的状态为准。
 4. **基准数据和性能对比**：文中可能提到的性能数据（例如 Token 消耗、延迟、并发能力）来自特定测试环境，实际表现会因任务特征、模型选择、硬件条件而变化。
 5. **生产部署能力缺口**：学习路径覆盖了从概念到生产的关键知识点，但生产部署还需要自己补日志、监控、容错、成本控制等工程能力。
 6. **多语言支持**：部分资源（例如 DeepLearning.AI 课程、Hugging Face 课程）以英文为主，中文翻译可能不完整或滞后。请以各项目官方文档的语言版本为准。
-
----
 
 ---
 
@@ -1091,5 +1128,5 @@ MCP 解决的本质问题是：**LLM 如何以标准化方式发现、连接和�
 
 - 难度等级：⭐⭐⭐
 - 类型：技术笔记
-- 更新日期：2026-04-26
+- 更新日期：2026-09-23
 - 预计阅读时间：90 分钟

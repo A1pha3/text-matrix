@@ -19,7 +19,7 @@ slug : openai4s-9yuan-claude-science-clone-2026
 
 OpenAI4S 从头到尾都在回答一个问题:**科学 Agent 凭什么要花 Claude Science 的订阅费?**
 
-答案很直白:**不凭什么**。OpenAI4S 跑在火山方舟的豆包 Small 套餐上,¥9.9/月——折合不到一杯精品咖啡。它完整复刻了 Claude Science 的核心架构:Code-as-Action 引擎、持久 Python/R 内核、host RPC、34 个预装科学 Skill、双层沙箱、Action Ledger。一行命令,不联网,不烧 token,照样能跑 AlphaFold2 预测、DiffDock 分子对接、单细胞分析。
+答案很直白:**不凭什么**。OpenAI4S 跑在火山方舟的豆包 Small 套餐上,¥9.9/月——折合不到一杯精品咖啡。它完整复刻了 Claude Science 的核心架构:Code-as-Action 引擎、持久 Python/R 内核、host RPC、33 个预装科学 Skill、双层沙箱、Action Ledger。一行命令,不联网,不烧 token,照样能跑 AlphaFold2 预测、DiffDock 分子对接、单细胞分析。
 
 它不是「灵感致敬」,README 里写得很直接:
 

@@ -20,7 +20,7 @@ Agent（智能体）要执行大模型现写的代码，这件事本身没有安
 
 ## 先分清三条主线
 
-仓库根目录有 26 个一级目录，去掉 `docs/`、`deploy/`、`examples/`、`sdk/`、`tests/` 这类支撑目录，剩下十四个组件本体。第一次读容易把它们当成一条从 API（应用程序接口）到 VM 的直线，其实是三组：
+仓库根目录有 26 个业务一级目录（另加 `.github`、`.claude` 两个工程元数据目录），去掉 `docs/`、`deploy/`、`examples/`、`sdk/`、`tests/`，再刨掉 `configs/`、`docker/`、`scripts/`、`pkgs/`、`web/`、`dev-env/`、`guest-init/` 这些构建与支撑目录，剩下 14 个组件本体。比下表多出的三个不在三条主线上：`agent/` 是 guest 内以 PID 1 运行的 in-VM agent，`cube-lifecycle-manager/` 是自动暂停/恢复的协调服务（v0.7.1 起支持主备），`CubeS3lvol/` 是把卷数据放进对象存储、本地盘只留 WAL 和元数据日志的 S3 块存储（默认关闭）。表里的组件名和目录名也不完全一致：CubeVS 的代码在 `CubeNet/` 下，CubeHypervisor 在 `hypervisor/`，CubeCoW 在 `cubecow/`。第一次读容易把它们当成一条从 API（应用程序接口）到 VM 的直线，其实是三组：
 
 | 主线 | 组件 | 语言 / 载体 | 职责 |
 | --- | --- | --- | --- |
@@ -103,9 +103,9 @@ cubemastercli tpl watch --job-id <job_id>
 
 共享内核的方案之所以在"跑别人写的代码"这件事上一直不踏实，是因为容器和宿主机之间只有一层命名空间与 cgroup 的软边界。Dirty COW、Dirty Pipe 这类内核本地提权，或者 runc 的权限问题，一旦命中，同一台机器上的所有容器就都在影响范围内。CubeSandbox 的解法直接：每个沙箱一颗独立的 Linux 内核，跑在自己的 KVM MicroVM 里。架构文档里那句"不存在共享内核的逃逸面"就是这个意思。
 
-README 那张对比表把三方的差异摆得很清楚：Docker 是低隔离（共享内核 Namespaces）、200 ms 启动、内存低；传统 VM 是高隔离但秒级启动、内存高；CubeSandbox 走独立内核加 eBPF 网络隔离，启动一栏写"毫秒级（< 60ms）"，内存一栏写"极限裁剪（< 5MB）"。后一句的口径要等到读实测报告才看得清，这里先记住它是"自身额外开销"。
+README 那张对比表把三方的差异摆得很清楚：Docker 是低隔离（共享内核 Namespaces）、200 ms 启动、内存低；传统 VM 是高隔离但秒级启动、内存高；CubeSandbox 走独立内核加 eBPF 网络隔离，启动一栏写"亚毫秒级（< 60ms）"——这一格 README 自己就打架，Sub-millisecond 和 < 60ms 差着量级，footnote 给的实测口径是单并发 60 ms；内存一栏写"极限裁剪（< 5MB）"。后一句的口径要等到读实测报告才看得清，这里先记住它是"自身额外开销"。
 
-但"独立内核"不等于没有攻击面，只是把它换了位置：guest 到 host 的路径现在要经过 virtio 设备、vsock 和 VMM 本身。CubeHypervisor 因此做了 seccomp 加固，把可用的系统调用收窄成白名单。架构文档把安全设计列成六层，各自拦的是不同的事：
+但"独立内核"不等于没有攻击面，只是把它换了位置：guest 到 host 的路径现在要经过 virtio 设备、vsock 和 VMM 本身。CubeHypervisor 因此做了 seccomp 加固，把可用的系统调用收窄成白名单。v0.7.1 又补了一道 virtiofsd 加固：目录白名单配置之后，拒绝针对根目录的变更操作，也拒绝伪造的 readdirplus 请求（PR #1612）。架构文档把安全设计列成六层，各自拦的是不同的事：
 
 | 层 | 拦什么 | 由谁做 |
 | --- | --- | --- |
@@ -269,7 +269,7 @@ CubeVS 只看 IP 和端口，看不到 URL。要看内容的部分交给 CubeEgr
 
 ## 部署：五条路径和四个硬前置
 
-部署入口在五个月里拓宽了不少。v0.1.0（2026-04-20）的快速开始只认一种机器：已启用 KVM 的 x86_64 裸金属；PVM 和 dev-env 都是 v0.2.0 才出现的入口，Terraform 与 ARM64 在 v0.5.0，K8s 在 v0.6.0（标 preview），跨节点暂停恢复在 v0.7.0（也是 preview）。现在按手里有什么机器选：
+部署入口在五个月里拓宽了不少。v0.1.0（2026-04-20）的快速开始只认一种机器：已启用 KVM 的 x86_64 裸金属；PVM 和 dev-env 都是 v0.2.0 才出现的入口，Terraform 与 ARM64 在 v0.5.0，K8s 在 v0.6.0（标 preview），跨节点暂停恢复在 v0.7.0（也是 preview，且要求配 S3 后端）。现在按手里有什么机器选：
 
 | 手上的机器 | 走哪条 | 要点 |
 | --- | --- | --- |
@@ -306,7 +306,7 @@ CUBE_SANDBOX_NODE_IP=<当前节点IP>
 ONE_CLICK_CONTROL_PLANE_IP=<控制节点IP>
 ```
 
-计算节点向控制面的 CubeOps 注册（`3010`），用内置 MinIO 时还要通 `9000`。计算节点要求物理机或裸金属，不接受嵌套虚拟化。
+计算节点向控制面的 CubeOps 注册（`3010`），用内置 MinIO 时还要通 `9000`。计算节点要求物理机或裸金属，不接受嵌套虚拟化。v0.7.1 给控制面的生命周期服务补了主备部署（CLM 支持 active/standby 灾备），模板中心拆成独立服务之后 CubeMaster 才能多副本——这两件事是同一版里的两个入口；光主备一项在 v0.7.1 的 changelog 里就分了两处写，major feature 和 enhancements 各提一条。
 
 从源码构建不需要 `--recursive`：仓库里的 `.gitmodules` 是个 0 字节空文件，没有子模块。构建入口也不是 `make build`——Makefile 里没有这个 target，只有 `all`、`builder-image`、`cubemaster`、`cubelet` 这些。正确的一条是：
 
@@ -354,6 +354,8 @@ sandbox.rollback(snap.id)            # 原地回到快照状态，沙箱 ID 不�
 
 沙箱状态是五个：`running`、`pausing`、`paused`、`resuming`、`terminated`。`terminated` 不可恢复。
 
+快照删除的口径在 v0.7.1 收紧过一次：删一个还在被引用的快照会立刻生效，底层存储在最后一个引用释放后才回收；同 bucket 内的跨节点快照恢复改走对象存储的服务端复制，比按文件拉取快（release notes 的对应条目是 #1620 和 #1663）。
+
 ## 三个对得上日志的故障
 
 各组件日志在 `/data/log/<Module>/`，按天或按 `-req.log` 命名，**不进 `journalctl`**；Cubelet 默认级别是 `warn`，复现问题时常要临时开 debug。沙箱内 init 进程的输出被 CubeShim 写进 Cubelet 的私有挂载命名空间，得用 `cubecli logs` 读；guest kernel 通过 `console=hvc0` 打印的启动信息也走同一条 `cube-shim-req.log`，不用额外工具。
@@ -394,7 +396,7 @@ NAT、会话、策略这三件事在 eBPF 里做，不产生 iptables 规则。�
 `169.254.68.6` 是 guest 内的链路本地地址，每块 TAP 是点对点链路，不存在跨沙箱冲突。宿主机侧用来区分沙箱的是 TAP ifindex 和 `192.168.0.0/18` 那套地址。
 
 **Q：暂停的沙箱还占资源吗？**
-不占 CPU 和内存，VM 内存已经落成快照；但快照要存进存储层，配了 S3/MinIO 后端时可能落到对象存储。跨节点暂停恢复在 v0.7.0 里是 preview。
+不占 CPU 和内存，VM 内存已经落成快照；但快照要存进存储层，配了 S3/MinIO 后端时可能落到对象存储。跨节点暂停恢复在 v0.7.0 里是 preview，而且以 S3 后端为前提——默认的 xfs 后端下，暂停包只落在创建它的那个节点上，恢复必须回到原节点。
 
 **Q：同一台机器上两个沙箱能互相看到吗？**
 不能。各自的 TAP、各自的策略表、各自的会话，没有共享网桥或交换机；再加上 `169.254.0.0/16` 这类段永远在拒绝列表里。

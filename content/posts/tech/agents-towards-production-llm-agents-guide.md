@@ -1,19 +1,20 @@
 ---
 title: "开源热点：Agents Towards Production——LLM Agent 开发工程化实践"
 date: 2026-05-17T20:15:00+08:00
+lastmod: "2026-09-21T14:30:00+08:00"
 categories: ["技术笔记"]
 slug: agents-towards-production-llm-agents-guide
 github_repo: "NirDiamant/agents-towards-production"
 source_key: "gh:NirDiamant/agents-towards-production"
 tags: ["LangGraph", "RAG", "Multi-Agent"]
-description: "Nir Diamant 的 agents-towards-production 提供 28 个配套 Notebook，按工程依赖关系排成从基础到部署的完整 LLM Agent 生产化路径。"
+description: "Nir Diamant 的 agents-towards-production 提供 24 个可直接运行的配套教程，覆盖从状态编排、记忆、工具集成到部署、安全观测的完整 LLM Agent 生产化路径。"
 ---
 
 # 开源热点：Agents Towards Production——LLM Agent 开发工程化实践
 
-把 LLM Agent 从原型推到生产，难点在工程链：状态、记忆、工具、安全、观测、部署。任何一环缺失都可能在生产环境暴露问题。Nir Diamant 的 agents-towards-production 做的就是这件事——28 个配套 Notebook，按工程依赖关系排成五层，下层不依赖上层，上层直接复用下层的产物。第一层写好的 Agent 代码，到第四层就是部署目标。
+把 LLM Agent 从原型推到生产，难点在工程链：状态、记忆、工具、安全、观测、部署。任何一环缺失都可能在生产环境暴露问题。Nir Diamant 的 agents-towards-production 做的就是这件事——24 个配套教程（截至 2026 年 9 月，数量还在增加），每个解决一个具体工程问题。仓库自己的目录是按主题分的，本文按工程依赖关系把它们重组为五层：下层不依赖上层，上层直接复用下层的产物。第一层写好的 Agent 代码，到第四层就是部署目标。
 
-文章先拆仓库的五层架构和一条任务流（带长期记忆的搜索 Agent 从请求到部署的完整链路），再说技术选型逻辑和同类项目差异。读完之后能直接动手的两件事：判断每一层是否适合自己的场景，按依赖关系组合教程。
+文章先拆这条五层路径和一条任务流（带长期记忆的搜索 Agent 从请求到部署的完整链路），再说技术选型逻辑和同类项目差异。读完之后能直接动手的两件事：判断每一层是否适合自己的场景，按依赖关系组合教程。
 
 ---
 
@@ -39,7 +40,7 @@ description: "Nir Diamant 的 agents-towards-production 提供 28 个配套 Note
 
 读完这篇后，你应该能：
 
-- 说出仓库五层架构的依赖方向，解释为什么第五层要从第一层就嵌入而不是部署后才接
+- 说出本文五层路径的依赖方向，解释为什么第五层要从第一层就嵌入而不是部署后才接
 - 根据延迟、成本和记忆结构需求，在 Redis、Mem0、cognee、Contextual AI 四种记忆方案里做出选型
 - 把"用户提问 → 联网搜索 → 检索历史 → 生成回答"这条任务流映射到五层教程的具体 Notebook
 - 区分 LlamaFirewall、Apex、LangSmith、IntellAgent 四个安全/观测/评估工具的作用位置和触发时机
@@ -49,7 +50,7 @@ description: "Nir Diamant 的 agents-towards-production 提供 28 个配套 Note
 
 ## 总览：五层架构与依赖关系
 
-仓库把 Agent 生产化拆成五个工程层加一个专题层。下层提供原子能力，上层组合下层产物。你不需要从第一层开始读，但跳层时要清楚自己跳过了哪些前置依赖。
+仓库的 README 按主题给教程分类（工具集成、数据处理、RAG、记忆、部署、GPU 部署、安全、追踪、评估等十几类），查起来方便，但看不出"先学什么、后学什么"。本文把 24 个教程按工程依赖关系重组为五个工程层加一个专题层：下层提供原子能力，上层组合下层产物。你不需要从第一层开始读，但跳层时要清楚自己跳过了哪些前置依赖。
 
 ```mermaid
 flowchart TB
@@ -69,6 +70,8 @@ flowchart TB
         L3a[Tavily 搜索]
         L3b[BrightData 采集]
         L3c[Arcade 安全工具]
+        L3e[hushvert 文件转换]
+        L3f[Inngest 摄取管道]
     end
     subgraph L2["第二层 记忆·知识系统"]
         L2a[Redis 向量]
@@ -93,9 +96,9 @@ flowchart TB
 
 ## 核心特色
 
-28 个教程全部是 Jupyter Notebook 或配套 `.py` 脚本，拿到就是一个可以直接 `Run All` 的工作环境，不需要在文档和代码之间来回跳。
+24 个教程全部配有可直接运行的代码——多数是 Jupyter Notebook，kotlin-agent-with-koog 是一个 Kotlin 工程，拿到就是一个可以直接 `Run All` 的工作环境，不需要在文档和代码之间来回跳。
 
-技术栈瞄准真实部署——LangGraph、FastAPI、Redis、Ollama、Docker、RunPod 都是已经在生产里跑的工具，不是教学环境里的简化替代品。LangChain、Redis、Contextual AI、Tavily、Arcade、Mem0、RunPod 等厂商参与了对应教程的编写（贡献者名单与协作记录见[仓库 README](https://github.com/NirDiamant/agents-towards-production) 的 Contributors 部分及各教程目录的 commit 历史），教程里的 API 调用方式、参数选择和架构假设与这些工具的实际版本对齐，可在 commit 历史中逐条追溯。
+技术栈瞄准真实部署——LangGraph、FastAPI、Redis、Ollama、Docker、RunPod 都是已经在生产里跑的工具，不是教学环境里的简化替代品。LangChain、Redis、Contextual AI、Tavily、Arcade、Mem0、RunPod 等厂商参与了对应教程的编写（赞助商与教程的对应关系见[仓库 README](https://github.com/NirDiamant/agents-towards-production) 的 Tutorial Sponsors 章节），教程里的 API 调用方式、参数选择和架构假设与这些工具的实际版本对齐，可在各教程目录的 commit 历史中逐条追溯。
 
 设计 → 记忆 → 工具 → 安全 → 观测 → 评估 → 容器化 → GPU 部署，每条链路在仓库里都至少有一个对应的教程。下面进入架构设计，逐层拆解每个教程解决的具体工程问题。
 
@@ -107,7 +110,7 @@ flowchart TB
 
 | 教程 | 说明 |
 |---|---|
-| **LangGraph-agent** | 基于 LangGraph 的有状态 Agent 工作流设计，有向图架构支撑多步骤文本分析流水线（分类→实体抽取→摘要）|
+| **LangGraph-agent** | 基于 LangGraph 的有状态 Agent 工作流设计，有向图架构支撑多步骤文本分析流水线（分类→实体抽取→情感分析→摘要）|
 | **agent-with-mcp** | MCP（Model Context Protocol）标准化协议接入外部工具与 API |
 | **fastapi-agent** | 将 Agent 部署为 FastAPI API，支持同步与流式响应 |
 
@@ -131,10 +134,14 @@ flowchart TB
 | 教程 | 说明 |
 |---|---|
 | **agent-with-tavily-web-access** | Tavily 实时网络搜索 API |
-| **agent-with-brightdata** | Bright Data 网络数据采集平台 |
+| **agent-with-brightdata** | Bright Data 企业级数据采集，代理网络与反爬处理 |
 | **arcade-secure-tool-calling** | Arcade MCP Runtime，安全 OAuth2 认证 + 人工介入控制 |
+| **agent-file-conversion-with-hushvert** *（2026 年 5 月后新增）* | 本地私有文件转换：WASM 引擎在用户设备上处理图片/音频/压缩包，MCP 工具处理 Office 文档与 PDF 转 Markdown |
+| **durable-rag-ingestion-inngest** *（2026 年 5 月后新增）* | Inngest 持久化执行的 RAG 摄取管道：断点续传、幂等写入、按文档粒度扇出 |
 
 Tavily 和 Bright Data 处理"Agent 需要外部信息"的问题，前者偏实时检索，后者偏批量采集。Arcade 解决的是另一个问题——工具调用的权限边界。OAuth2 让 Agent 拿到的 token 受限于用户授权范围，人工介入控制让高风险操作（比如发邮件、转账）在执行前需要人确认。这一层单独成层，是因为工具调用的权限和审计需求在生产环境里和原型阶段完全不同。
+
+后两个教程是仓库近期补上的两块生产拼图。hushvert 给 Agent 加文件转换能力，主打数据不出设备——开源 WASM 引擎在本地转图片、音频和压缩包，只有 Office 文档和 PDF 走 MCP 工具调用，教程还附了一组对主流提取器的保真度对比。inngest 针对的是 RAG 摄取管道的失效恢复：几千份文档的摄取任务跑到三分之二挂掉，天真重试会把已付费的解析和嵌入全部重做，教程用 Inngest 的事件-步骤模型把每个阶段包成持久化步骤，从失败的文档继续而不是从头再来，配文档 ID 加内容哈希的幂等 upsert 和租户级并发控制。这两条链路在原型阶段同样看不出来，数据量上去才会疼。
 
 ### 第四层：部署与扩展
 
@@ -147,7 +154,7 @@ Tavily 和 Bright Data 处理"Agent 需要外部信息"的问题，前者偏实�
 
 部署方案按环境约束分流：内网隔离选 Ollama + Docker，弹性 GPU 推理选 RunPod，不想自己运维选 AWS AgentCore。Docker 是公共前置——前三层产出的 Agent 代码先打成镜像，再决定跑在哪里。
 
-几个容易忽略的细节：Ollama 多数模型默认拉 Q4 量化版，体积小，但对答案敏感的场景推理质量吃亏，可手动指定 `ollama pull <model>:q8_0`；RunPod 的 GPU 实例冷启动在几十秒到一两分钟的量级，做弹性扩缩容时按上限把这个延迟算进 SLA；Docker 镜像如果不用多阶段构建，带 CUDA 基础镜像会膨胀到数 GB，推送和拉取都会拖慢部署节奏。
+几个容易忽略的细节：Ollama 多数模型默认拉 Q4 量化版，体积小，但对答案敏感的场景推理质量吃亏，可手动指定 `ollama pull <model>:q8_0`；RunPod 的 GPU 实例冷启动在几十秒到一两分钟的量级（经验值，随镜像大小和排队情况波动），做弹性扩缩容时按上限把这个延迟算进 SLA；Docker 镜像如果不用多阶段构建，带 CUDA 基础镜像会膨胀到数 GB，推送和拉取都会拖慢部署节奏。
 
 ### 第五层：安全、观测与评估
 
@@ -158,9 +165,11 @@ Tavily 和 Bright Data 处理"Agent 需要外部信息"的问题，前者偏实�
 | **tracing-with-langsmith** | LangSmith 可观测性，完整链路追踪与决策分析 |
 | **agent-evaluation-intellagent** | IntellAgent 自动化行为评估与性能指标 |
 
-这一层贯穿整个生命周期。LlamaFirewall 在输入、输出、工具调用三个位置做内容校验，挡掉提示词注入和敏感信息泄露。Apex 用红队视角主动找漏洞——它会自动生成攻击提示词，测你的 Agent 在恶意输入下会不会越权。LangSmith 记录每次工具调用的延迟、Token 消耗和中间状态，调试时能回放整条决策链。IntellAgent 做回归评估，确保改了 Prompt 或换模型后行为不退化。
+这一层贯穿整个生命周期。LlamaFirewall 在输入、输出、工具调用三个位置做内容校验，挡掉提示词注入和敏感信息泄露。Apex 换红队视角主动找漏洞：教程带 8 大类共 91 个真实提示词注入样例，外加 12 种编码混淆绕过，配自动化测试工具，先让你亲眼看到 Agent 被攻破，再补防御。LangSmith 记录每次工具调用的延迟、Token 消耗和中间状态，调试时能回放整条决策链。IntellAgent 做自动化行为评估。
 
-评估有一层边界要说清楚：回归测试证明的是"行为没变差"，测不出"真实用户是否更满意"。IntellAgent 这类评估依赖一份稳定的答案集，集子要长期维护，指标漂移往往反映的是评估集失效而不是模型退化。所以第四层部署完不是终点，评估集也得当成要持续投入的资产去养。
+IntellAgent 的做法值得单独说。它不是拿一份固定答案集逐题打分——教程明确说静态数据集捕捉不到真实用户交互的动态性——而是三段式：先自动生成覆盖边界用例的测试场景，再模拟真实用户和 Agent 多轮对话（对话策略随 Agent 的回应调整），最后做细粒度行为分析，标出违反策略的位置和性能缺口。测试场景是生成出来的，不用人工逐条造用例。
+
+评估有一层边界仍然要说清楚：自动化评估证明的是"在这批场景里行为达标"，测不出"真实用户是否更满意"——模拟用户的问法和真实用户的刁钻程度总有差距。所以第四层部署完不是终点，场景集要跟着线上反馈持续补充，把它当成要持续投入的资产去养。
 
 ### 专题层
 
@@ -271,13 +280,13 @@ LangSmith 会自动记录每个节点的输入输出、耗时、Token 数。上�
 ## 影响力数据
 
 ```text
-Stars:     19,732
-Forks:     2,634
-Tutorials: 28 个（持续增加）
-语言:      Jupyter Notebook（代码即文档）
+Stars:     21,483
+Forks:     2,849
+Tutorials: 24 个（持续增加）
+语言:      Jupyter Notebook 为主（Koog 教程为 Kotlin 工程）
 ```
 
-项目于 2025 年 6 月创建，截至 2026 年 5 月累计近 2 万 Stars。按约 350 天计算，平均每天约 56 Stars。
+项目于 2025 年 6 月创建（GitHub 仓库 created_at 2025-06-16），截至 2026 年 9 月 21 日累计约 2.15 万 Stars，平均每天约 46 个。
 
 Stars 数反映的是社区关注度——有多少人觉得这个仓库值得收藏。它不能直接推出代码质量、生产可用性或维护活跃度。判断这个仓库是否适合你的团队，看教程覆盖的场景和你的需求是否匹配，比看 Stars 排名有用。
 
@@ -287,11 +296,11 @@ Stars 数反映的是社区关注度——有多少人觉得这个仓库值得�
 
 | 项目 | Stars | 风格 | 特点 |
 |---|---|---|---|
-| **agents-towards-production** | 19.7k | 代码优先 + Notebook | 覆盖从设计到部署的完整工程链 |
-| **langchain-ai/langchain** | 100k+ | 框架 | 全套 LangChain 生态，偏重文档 |
-| **microsoft/AI-scientist** | ~5k | 论文复现 | 科研导向，非工程导向 |
+| **agents-towards-production** | 21.5k | 代码优先 + Notebook | 覆盖从设计到部署的完整工程链 |
+| **langchain-ai/langchain** | 约 147k | 框架 | 全套 LangChain 生态，偏重文档 |
+| **SakanaAI/AI-Scientist** | 约 14.6k | 科研自动化 | 端到端自动做研究、写论文，科研导向，非工程导向 |
 
-LangChain 仓库偏框架文档，要自己拼出一条生产链路；AI-scientist 偏论文复现，不解决部署问题。如果你的目标是把 Agent 跑在生产环境里，agents-towards-production 给的是已验证的组合方式，每个环节都有可运行代码。
+LangChain 仓库偏框架文档，要自己拼出一条生产链路；AI-Scientist 偏科研自动化，目标是让模型自己完成研究闭环，不解决 Agent 服务的部署问题。如果你的目标是把 Agent 跑在生产环境里，agents-towards-production 给的是已验证的组合方式，每个环节都有可运行代码。
 
 ---
 
@@ -342,7 +351,7 @@ LangChain 仓库偏框架文档，要自己拼出一条生产链路；AI-scienti
 
 **Q：教程里的 API Key 怎么获取？**
 
-每个 Notebook 开头会列出依赖的环境变量（如 `OPENAI_API_KEY`、`TAVILY_API_KEY`、`LANGCHAIN_API_KEY`）。免费额度通常够跑通教程，生产使用需要付费。
+每个 Notebook 开头会列出依赖的环境变量（如 `OPENAI_API_KEY`、`TAVILY_API_KEY`、`LANGCHAIN_API_KEY`）。Tavily、LangSmith 这类服务有免费层，跑通教程的用量足够；OpenAI API 需要付费账号，教程全程跑下来花费不大，但按量计费的钱是真实要出的。
 
 **Q：可以用其他模型替换教程里的 OpenAI 吗？**
 
@@ -350,11 +359,11 @@ LangChain 仓库偏框架文档，要自己拼出一条生产链路；AI-scienti
 
 **Q：第五层的安全护栏会不会拖慢响应？**
 
-LlamaFirewall 的输入输出校验是同步的，会增加几十毫秒延迟。如果对延迟敏感，可以只在校验高风险节点（如工具调用前）开启，输入输出校验用异步队列。
+会。护栏校验在请求路径上，必然带来额外延迟，具体幅度取决于模型和部署方式，建议按自己的流量实测。对延迟敏感的系统，可以只在高风险节点（如工具调用前）开护栏。
 
 **Q：教程之间有依赖吗？**
 
-有。比如 `fastapi-agent` 假设你已经看过 `LangGraph-agent`，`runpod-gpu-deploy` 假设你已经看过 `docker-intro`。仓库的 README 标注了每个教程的前置依赖。
+教程各自独立成篇，都能单独跑通，README 没有标注前置依赖。但工程概念上有先后：`fastapi-agent` 里直接用到了 LangGraph 的状态图，`runpod-gpu-deploy` 假设你已经会打 Docker 镜像。本文的五层排序就是按这条依赖链整理的，跳层前对照[跳层风险提示](#跳层风险提示)确认一下。
 
 ---
 
@@ -382,8 +391,8 @@ LlamaFirewall 的输入输出校验是同步的，会增加几十毫秒延迟。
 ## 相关资源
 
 - **官方仓库**: https://github.com/NirDiamant/agents-towards-production
-- **配套书籍**: [RAG Made Simple](https://www.amazon.com/dp/B0D76734SZ)——Amazon 生成式 AI 分类畅销书（截至 2026-05），作者同样来自 Nir Diamant
-- **社区**: Discord 与 LinkedIn 均有活跃讨论，入口链接见[仓库 README](https://github.com/NirDiamant/agents-towards-production) 顶部的徽章区
+- **配套书籍**: [RAG Made Simple](https://www.amazon.com/dp/B0D76734SZ)（全名 *RAG Made Simple: The Complete Visual Guide to Retrieval-Augmented Generation*）——同作者的可视图解 RAG 教程书，Super AI Engineering 系列之一
+- **社区**: Discord 与 LinkedIn 入口见[仓库 README](https://github.com/NirDiamant/agents-towards-production) 顶部的徽章区，作者还在 Reddit 维护 r/EducationalAI 社区
 - **依赖版本**: 各教程的精确版本要求参见对应目录下的 `requirements.txt`；最小可运行环境见下方「最小可运行环境」一节
 
 ---
@@ -408,8 +417,8 @@ langsmith>=0.1.0
 
 关键说明：
 
-- LangGraph 0.2 之后 `StateGraph` API 有调整，老版本教程可能需要适配
-- Redis 5.x 的向量检索依赖 Redis Stack（含 RediSearch 模块），社区版 Redis 不带向量索引
+- 教程 Notebook 假设环境里已装好依赖；本文引用的 `StateGraph`、`add_node`、`add_conditional_edges` 等 API 与当前 LangGraph 1.x 兼容
+- 记忆教程用 RedisVL 客户端做向量检索，服务端需要带 RediSearch 模块的 Redis（Redis 8+ 已内置向量能力，老版本可用 Redis Stack）
 - Tavily SDK 包名是 `tavily-python`，不是 `tavily`
 - 涉及第四层 GPU 部署时，还需要 Docker、NVIDIA Container Toolkit 和 RunPod CLI
 
@@ -418,8 +427,8 @@ langsmith>=0.1.0
 本文基于 Agents Towards Production 项目的 GitHub 仓库（[NirDiamant/agents-towards-production](https://github.com/NirDiamant/agents-towards-production)）中的以下来源进行判断和撰写：
 
 1. **官方 README.md**：项目的整体介绍、教程列表、赞助商信息、架构设计
-2. **各教程目录**：28 个教程的独立说明文档、代码示例、requirements.txt
-3. **赞助商官方文档**：LangChain、Redis、Contextual AI、Bright Data、Tavily、Arcade、JetBrains Kolo、Mem0、RunPod 等赞助商提供的官方集成方案和文档
+2. **各教程目录**：24 个教程的 Notebook、代码示例、requirements.txt
+3. **赞助商官方文档**：LangChain、Redis、Contextual AI、Bright Data、Tavily、Arcade、JetBrains Koog、Mem0、RunPod 等赞助商提供的官方集成方案和文档
 4. **相关技术文档**：LangGraph 官方文档、LangSmith 文档、LlamaFirewall 文档、Apex 文档、IntellAgent 文档
 
 **局限性说明**：
@@ -429,3 +438,5 @@ langsmith>=0.1.0
 - 教程的依赖版本可能因时间而变化，建议在使用前查看各教程目录下的 requirements.txt 和 README
 - 本文中的代码示例为简化版，实际实现可能更复杂
 - 性能数据（如 Stars 数、Forks 数）来自项目 GitHub 页面，实际数据可能随时间变化
+- 教程数量以仓库 tutorials 目录为准（24 个，2026-09-21 核对，对应仓库 2026-09-20 的最新推送；`agent-file-conversion-with-hushvert` 与 `durable-rag-ingestion-inngest` 为本文发布后新增），Stars/Forks 为同日 GitHub API 读数
+- 五层架构是本文按工程依赖关系对教程的重组口径，仓库 README 本身按主题分类

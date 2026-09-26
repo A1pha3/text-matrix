@@ -1,6 +1,7 @@
 ---
 title: "Claude API基础专题（四）：RAG检索增强生成系统"
 date: "2026-03-25T13:00:00+08:00"
+lastmod: "2026-09-26T10:00:00+08:00"
 slug: "claude-api-rag-retrieval-augmented-generation"
 aliases:
   - /posts/tech/claude-api-rag-retrieval-augmented-generation/
@@ -14,6 +15,7 @@ tags: ["Claude", "RAG", "向量数据库", "Python"]
 
 > **目标读者**：希望让 Claude 基于私有知识库回答问题的开发者
 > **前置知识**：已完成第一篇《API基础》、第二篇《提示词工程》、第三篇《工具调用》
+> **口径说明**：本文以 2026 年 9 月的官方文档为口径，示例模型用 `claude-sonnet-5`。原稿写作时的 `claude-sonnet-4-20250514` 已于 2026 年 6 月 15 日退役，官方指定的继任模型是 `claude-sonnet-4-6`。
 
 ---
 
@@ -46,7 +48,6 @@ RAG（Retrieval-Augmented Generation）将信息检索与语言模型生成结�
 | 更新知识 | 快（更新文档） | 慢（重新训练） | 即时（放入提示词） |
 | 成本 | 低（仅向量数据库） | 高（GPU 训练） | 高（Token 消耗大） |
 | 适用场景 | 知识库问答 | 风格/领域适应 | 单次特定任务 |
-| 实时性 | ✅ 实时 | ❌ 需重新训练 | ✅ 实时 |
 
 ---
 
@@ -56,6 +57,8 @@ RAG（Retrieval-Augmented Generation）将信息检索与语言模型生成结�
 
 ```python
 class RAGSystem:
+    """架构总览：各组件的实现将在 4.3-4.5 节逐一给出"""
+
     def __init__(self):
         self.document_processor = DocumentProcessor()
         self.chunker = ChunkingStrategy()
@@ -85,7 +88,7 @@ class RAGSystem:
 from abc import ABC, abstractmethod
 import re
 
-class DocumentProcessor:
+class DocumentProcessor(ABC):
     def process(self, content: str, source: str | None = None) -> dict:
         return {
             "content": self.clean_text(content),
@@ -236,16 +239,16 @@ class SemanticChunker(ChunkingStrategy):
 
 ### 嵌入模型选择
 
-> **注意**：Anthropic 官方当前并不提供 embedding API，其 RAG 文档推荐使用第三方嵌入服务或本地开源模型完成向量化。因此下面的选型以 OpenAI 与开源模型为主，Claude 仅负责最后的生成环节。
+> **注意**：Anthropic 官方并不提供自己的嵌入模型，官方文档明确推荐 Voyage AI 作为嵌入服务提供商——现行 voyage-4 系列为 32K token 上下文、默认 1024 维（可选 256/512/2048 维），轻量的 voyage-4-nano 以 Apache 2.0 协议开源。下面的代码示例用 OpenAI 与开源 BGE 模型演示两种典型接入方式，换成 Voyage 只需改用 `voyageai` 包（`pip install voyageai`）；Claude 仅负责最后的生成环节。
 
 ```python
 class EmbeddingModel:
-    # cost_per_1k 为公开定价（单位：美元 / 1K tokens），bge 为首创本地模型，记为 0
+    # cost_per_1k 为公开定价（单位：美元 / 1K tokens）；bge 开源本地部署，不计 API 费用，记为 0
     MODELS = {
         "text-embedding-3-small":  {"provider": "OpenAI", "dimensions": 1536, "max_tokens": 8191, "cost_per_1k": 0.00002},
         "text-embedding-3-large":  {"provider": "OpenAI", "dimensions": 3072, "max_tokens": 8191, "cost_per_1k": 0.00013},
         "text-embedding-ada-002":  {"provider": "OpenAI", "dimensions": 1536, "max_tokens": 8191, "cost_per_1k": 0.0001},
-        "bge-large-zh":            {"provider": "BAAI",   "dimensions": 1024, "max_tokens": 512,  "cost_per_1k": 0},
+        "bge-large-zh-v1.5":       {"provider": "BAAI",   "dimensions": 1024, "max_tokens": 512,  "cost_per_1k": 0},
     }
 
     def __init__(self, model_name: str = "text-embedding-3-small"):
@@ -309,7 +312,11 @@ class ChromaDB(VectorDatabase):
     def __init__(self, persist_directory: str = "./chroma_db"):
         import chromadb
         self.client = chromadb.PersistentClient(path=persist_directory)
-        self.collection = self.client.get_or_create_collection("documents")
+        # 默认距离度量是 l2（平方 L2 距离），必须显式指定 cosine，
+        # 否则下面用 "1 - distance" 算出的不是 0 到 1 之间的相似度
+        self.collection = self.client.get_or_create_collection(
+            "documents", configuration={"hnsw": {"space": "cosine"}}
+        )
 
     def add(self, embeddings: List[List[float]], documents: List[dict]):
         self.collection.add(
@@ -333,7 +340,7 @@ class ChromaDB(VectorDatabase):
 
 class PineconeDB(VectorDatabase):
     """Pinecone 云向量数据库"""
-    def __init__(self, api_key: str, environment: str, index_name: str):
+    def __init__(self, api_key: str, index_name: str):
         from pinecone import Pinecone
         self.pc = Pinecone(api_key=api_key)
         self.index = self.pc.Index(index_name)
@@ -367,10 +374,12 @@ class RetrievalEngine:
         return [r for r in results if r["score"] >= min_score]
 
 class HybridRetrieval(RetrievalEngine):
-    """向量检索 + BM25 关键词检索混合。
+    """向量检索 + 关键词检索混合。
 
-    BM25 需要对全量文档做词频扫描，因此仅支持在内存中持有全部原文的
-    SimpleVectorDB；连续库（Chroma/Pinecone）请自行实现基于元数据的关键词召回。
+    关键词一路用的是简化的词重叠计分，并非严格 BM25（没有 IDF 加权与
+    词频饱和），生产环境建议换 rank_bm25 之类的现成实现。词频扫描要求
+    在内存中持有全部原文，因此仅支持 SimpleVectorDB；连续库
+    （Chroma/Pinecone）请自行实现基于元数据的关键词召回。
     """
     def __init__(self, vector_db: VectorDatabase, embedder: EmbeddingModel, bm25_weight: float = 0.3):
         if not hasattr(vector_db, "documents"):
@@ -380,17 +389,18 @@ class HybridRetrieval(RetrievalEngine):
 
     def retrieve(self, query: str, top_k: int = 5) -> List[dict]:
         vector_results = super().retrieve(query, top_k * 2)
-        keyword_results = self._bm25_search(query, top_k * 2)
+        keyword_results = self._keyword_search(query, top_k * 2)
         return self._merge_results(vector_results, keyword_results, top_k)
 
-    def _bm25_search(self, query: str, top_k: int) -> List[dict]:
+    def _keyword_search(self, query: str, top_k: int) -> List[dict]:
+        """词重叠计分：命中查询词的比例除以文档长度做归一"""
         query_terms = set(query.lower().split())
-        scores = [
-            len(query_terms & set(doc["content"].lower().split())) / (len(doc["content"].split()) + 1)
-            for doc in self.vector_db.documents
-        ]
-        indexed = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
-        return [self.vector_db.documents[i] for i, _ in indexed[:top_k]]
+        scored = []
+        for doc in self.vector_db.documents:
+            overlap = len(query_terms & set(doc["content"].lower().split()))
+            scored.append((doc, overlap / (len(doc["content"].split()) + 1)))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [dict(doc, score=score) for doc, score in scored[:top_k]]
 
     def _merge_results(self, vector_results: List[dict], keyword_results: List[dict], top_k: int) -> List[dict]:
         seen, merged = set(), []
@@ -465,11 +475,11 @@ class ClaudeRAG:
         self.retriever = RetrievalEngine(vector_db, embedder)
 
     def query(self, question: str, top_k: int = 5,
-              model: str = "claude-sonnet-4-20250514") -> dict:
+              model: str = "claude-sonnet-5") -> dict:
         retrieved_docs = self.retriever.retrieve(question, top_k)
 
         if not retrieved_docs:
-            return {"answer": "我没有找到与您问题相关的文档信息。", "sources": [], "has_answer": False}
+            return {"answer": "我没有找到与您问题相关的文档信息。", "sources": [], "has_answer": False, "retrieved_docs": []}
 
         prompt = build_rag_prompt(question, retrieved_docs)
         response = self.client.messages.create(
@@ -480,11 +490,12 @@ class ClaudeRAG:
         answer = response.content[0].text
         sources = list(set(doc.get("metadata", {}).get("source", "Unknown") for doc in retrieved_docs))
 
-        return {"answer": answer, "sources": sources, "has_answer": True, "num_docs_retrieved": len(retrieved_docs)}
+        return {"answer": answer, "sources": sources, "has_answer": True,
+                "retrieved_docs": [doc["id"] for doc in retrieved_docs]}
 
 # 使用示例
 def main():
-    embedder = EmbeddingModel("text-embedding-ada-002")
+    embedder = EmbeddingModel("text-embedding-3-small")
     vector_db = ChromaDB(persist_directory="./my_vector_db")
     rag = ClaudeRAG(vector_db, embedder)
 
@@ -504,7 +515,11 @@ class AdvancedRAG:
         self.vector_db, self.embedder = vector_db, embedder
         self.client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
-    def query_with_reranking(self, question: str, top_k: int = 10, rerank_top_k: int = 5) -> dict:
+    def _vector_search(self, query: str, top_k: int) -> List[dict]:
+        query_embedding = self.embedder.embed([query])[0]
+        return self.vector_db.search(query_embedding, top_k)
+
+    def query_with_reranking(self, question: str, top_k: int = 10, rerank_top_k: int = 5) -> List[dict]:
         """先检索更多文档，再用 LLM 重排序精选"""
         initial_results = self._vector_search(question, top_k * 2)
         return self._claude_rerank(question, initial_results, rerank_top_k)
@@ -520,7 +535,7 @@ class AdvancedRAG:
 请按相关性从高到低输出文档编号，用逗号分隔，例如：3,1,2
 """
         response = self.client.messages.create(
-            model="claude-sonnet-4-20250514", max_tokens=100,
+            model="claude-sonnet-5", max_tokens=100,
             messages=[{"role": "user", "content": prompt}]
         )
 
@@ -559,12 +574,14 @@ class AdvancedRAG:
 每行一个查询：
 """
         response = self.client.messages.create(
-            model="claude-sonnet-4-20250514", max_tokens=200,
+            model="claude-sonnet-5", max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
         queries = [q.strip() for q in response.content[0].text.strip().split('\n') if q.strip()]
         return queries + [question]
 ```
+
+用 LLM 做重排序的好处是不用训练任何模型，代价是每轮多几次 API 调用。如果重排量大、预算敏感，可以换专门的重排模型——Anthropic 官方文档推荐的 Voyage AI 就提供 `rerank-2.5` 系列重排接口：输入查询和候选文档列表，直接返回按相关性排序的结果，一次调用完成整轮排序。
 
 ---
 
@@ -576,15 +593,15 @@ class AdvancedRAG:
 class RAGEvaluator:
     def evaluate(self, rag_system, eval_dataset: List[dict]) -> dict:
         """
-        eval_dataset 格式：
-        {"question": "...", "ground_truth": "...", "context": ["相关文档1", "相关文档2"]}
+        eval_dataset 格式（relevant_ids 为人工标注的相关文档块 id）：
+        {"question": "...", "ground_truth": "...", "relevant_ids": ["chunk_3", "chunk_7"]}
         """
         results = {"retrieval_precision": [], "retrieval_recall": [], "answer_accuracy": []}
 
         for item in eval_dataset:
             rag_result = rag_system.query(item["question"])
             precision, recall = self._calc_retrieval_metrics(
-                rag_result.get("retrieved_docs", []), item["context"]
+                rag_result.get("retrieved_docs", []), item["relevant_ids"]
             )
             results["retrieval_precision"].append(precision)
             results["retrieval_recall"].append(recall)
@@ -608,6 +625,7 @@ class RAGEvaluator:
 
     @staticmethod
     def _text_similarity(text1: str, text2: str) -> float:
+        # 词面重叠（Jaccard），仅作粗略示意；语义级评估应换嵌入相似度或 LLM 评分
         words1, words2 = set(text1.lower().split()), set(text2.lower().split())
         if not words1 or not words2:
             return 0
@@ -631,10 +649,10 @@ retrieval_configs = {
 
 | 场景 | 推荐方案 | 说明 |
 |------|----------|------|
-| 小规模（<1 万文档） | ChromaDB + ADA-002 | 简单、免费 |
-| 中等规模（10 万-100 万） | Pinecone + text-embedding-3 | 可扩展、成本适中 |
-| 大规模（>100 万） | Weaviate/Qdrant + bge-large | 高性能、开源 |
-| 高隐私需求 | Milvus + 开源嵌入模型 | 数据不出境 |
+| 小规模（<1 万文档） | ChromaDB + text-embedding-3-small | 部署简单，嵌入成本约 $0.02/百万 token |
+| 中等规模（1 万-100 万） | Pinecone + text-embedding-3 | 托管服务，免运维、可扩展 |
+| 大规模（>100 万） | Weaviate/Qdrant + bge-large | 高性能，开源自托管 |
+| 高隐私需求 | Milvus + 开源嵌入模型 | 数据不出本地 |
 
 ---
 
@@ -643,13 +661,12 @@ retrieval_configs = {
 **Q1：检索不到相关文档怎么办？**
 
 ```python
-# 降低相似度阈值
+# ① 降低相似度阈值、扩大候选量（RetrievalEngine，见 4.4 节）
 results = retriever.retrieve(question, top_k=10, min_score=0.3)
-# 查询扩展
-expanded_queries = generate_related_queries(question)
-all_results = parallel_retrieve(expanded_queries)
-# 混合关键词检索
-hybrid_results = hybrid_retriever.retrieve(question)
+# ② 查询扩展（AdvancedRAG，见 4.5 节）
+results = advanced_rag.query_with_query_expansion(question)
+# ③ 补一路关键词检索（HybridRetrieval，见 4.4 节）
+results = hybrid_retrieval.retrieve(question)
 ```
 
 **Q2：回答中出现幻觉怎么办？**
@@ -659,31 +676,40 @@ hybrid_results = hybrid_retriever.retrieve(question)
 **Q3：检索结果重复怎么办？**
 
 ```python
-def deduplicate_results(results: List[dict], threshold: float = 0.95) -> List[dict]:
-    unique = []
+def deduplicate_results(results: List[dict], embedder: EmbeddingModel,
+                        threshold: float = 0.95) -> List[dict]:
+    """内容高度相似的块只留一条，相似度用嵌入向量的余弦值"""
+    unique, seen_vecs = [], []
     for doc in results:
-        if not any(compute_similarity(doc["content"], u["content"]) > threshold for u in unique):
+        vec = embedder.embed([doc["content"]])[0]
+        if not any(SimpleVectorDB._cosine_similarity(vec, v) > threshold for v in seen_vecs):
             unique.append(doc)
+            seen_vecs.append(vec)
     return unique
 ```
 
 **Q4：文档更新后向量数据库如何同步？**
 
 ```python
-class VectorDBSync:
-    def __init__(self, vector_db, embedder):
-        self.vector_db, self.embedder = vector_db, embedder
+class ChromaDBSync:
+    """以 Chroma 为例：改了哪块就替换哪块，大改版再整体重建索引"""
 
-    def update_document(self, doc_id: str, new_content: str):
-        self.vector_db.delete(doc_id)
-        new_embedding = self.embedder.embed([new_content])[0]
-        self.vector_db.add([new_embedding], [{"id": doc_id, "content": new_content}])
+    def __init__(self, db: ChromaDB, embedder: EmbeddingModel, chunker: ChunkingStrategy):
+        self.db, self.embedder, self.chunker = db, embedder, chunker
+
+    def update_document(self, chunk_id: str, new_content: str):
+        self.db.collection.delete(ids=[chunk_id])
+        new_embedding = self.embedder.embed([new_content])
+        self.db.add(new_embedding, [{"id": chunk_id, "content": new_content, "metadata": {}}])
 
     def full_reindex(self, documents: List[dict]):
-        self.vector_db.clear()
+        self.db.client.delete_collection("documents")
+        self.db.collection = self.db.client.get_or_create_collection(
+            "documents", configuration={"hnsw": {"space": "cosine"}}
+        )
         chunks = self.chunker.chunk(documents)
         embeddings = self.embedder.embed([c["content"] for c in chunks])
-        self.vector_db.add(embeddings, chunks)
+        self.db.add(embeddings, chunks)
 ```
 
 **Q5：如何处理中文文档的分词？**
@@ -726,4 +752,10 @@ class ChineseTextProcessor:
 
 - 继续阅读：MCP 协议专题（五）
 - 实践项目：用向量数据库搭建本地知识库
-- 参考资料：[Anthropic RAG 推荐做法](https://docs.anthropic.com/)
+
+**参考资源：**
+
+- [Embeddings（Anthropic 官方嵌入指南，含 Voyage AI 推荐与接入方式）](https://platform.claude.com/docs/en/build-with-claude/embeddings)
+- [Citations（让回答标注引用出处）](https://platform.claude.com/docs/en/build-with-claude/citations)
+- [Model deprecations（模型生命周期与退役日期）](https://platform.claude.com/docs/en/about-claude/model-deprecations)
+- [Voyage AI 文档](https://docs.voyageai.com/)

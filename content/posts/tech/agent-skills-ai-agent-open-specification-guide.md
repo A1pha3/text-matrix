@@ -4,7 +4,8 @@ date: "2026-04-02T17:49:04+08:00"
 slug: "agent-skills-ai-agent-open-specification-guide"
 github_repo: "agentskills/agentskills"
 source_key: "gh:agentskills/agentskills"
-description: "Agent Skills 是 Anthropic 主导的 AI Agent 能力扩展开放规范。内容覆盖 Skill 格式、工作原理、渐进式披露机制，以及创建、评估和部署生产级 Skill 的完整流程。"
+description: "Agent Skills 是 Anthropic 发起的 AI Agent 能力扩展开放规范。内容覆盖 Skill 格式、工作原理、渐进式披露机制，以及创建、评估和部署生产级 Skill 的完整流程。"
+lastmod: "2026-09-20T16:00:00+08:00"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Anthropic"]
@@ -12,7 +13,7 @@ tags: ["AI Agent", "Anthropic"]
 
 # Agent Skills：AI Agent 能力扩展开放规范完全指南
 
-Agent Skills 解决的是工具数量增长后上下文被挤占、同一能力跨平台重写两个问题。它把"启动时全量加载工具描述"改成"按需发现并激活"，Agent 启动时只承担元数据开销，未命名的 Skill 始终只占约 100 token。
+Agent Skills 解决的是工具数量增长后上下文被挤占、同一能力跨平台重写两个问题。它把"启动时全量加载工具描述"改成"按需发现并激活"，Agent 启动时只承担元数据开销，未激活的 Skill 始终只占约 50-100 token。这个格式由 Anthropic 于 2025 年 10 月在 Claude 产品线落地，同年 12 月 18 日作为开放标准发布，现在由 agentskills.io 承载规范与文档。
 
 ## 目录
 
@@ -52,7 +53,7 @@ Agent Skills 解决的是工具数量增长后上下文被挤占、同一能力�
 
 传统架构要求 Agent 在启动时把所有可用工具的描述加载进上下文。工具数量少时开销可控，但增长到几十个时会出现三个问题：
 
-- **能力膨胀**：Agent 启动时加载的工具描述随工具数量线性增长，每个工具描述通常占用 200-500 token（令牌）
+- **能力膨胀**：Agent 启动时加载的工具描述随工具数量线性增长，这些描述在启动那一刻就全部写死进上下文，无法按任务裁剪
 - **上下文污染**：与当前任务无关的工具描述占据上下文窗口，挤压了实际任务可用的空间
 - **跨平台困难**：不同 Agent 实现（Claude Code、Copilot Chat、Codex 等）各自定义工具格式，同一个能力要为每个平台重写一遍
 
@@ -62,8 +63,8 @@ Agent Skills 把"能力"从启动时加载的工具描述，拆成三个阶段�
 
 | 阶段 | 加载内容 | 触发时机 | 典型 token 开销 |
 |------|----------|----------|----------------|
-| 元数据 | `name` + `description` | Agent 启动时 | 每个 Skill 约 100 token |
-| 指令 | `SKILL.md` body | 用户请求匹配 description 时 | 500-2000 token |
+| 元数据 | `name` + `description` | Agent 启动时 | 每个 Skill 约 50-100 token |
+| 指令 | `SKILL.md` body | 用户请求匹配 description 时 | 推荐 < 5000 token |
 | 资源 | `scripts/`、`references/`、`assets/` | 执行指令过程中需要时 | 按实际使用量 |
 
 启动时只承担元数据开销，未激活的 Skill 不会把指令和资源塞进上下文。工具数量增长时，启动开销只与 Skill 总数的元数据线性相关，激活开销只与命中 Skill 数量相关，两者就此解耦。
@@ -80,38 +81,40 @@ Agent Skills 把"能力"从启动时加载的工具描述，拆成三个阶段�
 │  ┌─────────────────┐    ┌─────────────────────────┐    │
 │  │  Specification  │    │   Official Repository    │    │
 │  │  (规范定义)     │    │   agentskills/agentskills│    │
-│  │  agentskills.io │    │   (16.3k Stars)         │    │
+│  │  agentskills.io │    │   (25.5k Stars)         │    │
 │  └────────┬────────┘    └────────────┬────────────┘    │
 │           │                              │                │
 │           ▼                              ▼                │
 │  ┌─────────────────┐    ┌─────────────────────────┐    │
 │  │   skills-ref    │    │   Example Skills       │    │
-│  │  (Python SDK)   │    │   anthropics/skills    │    │
-│  │  验证/读取/转换 │    │   (108.9k Stars)       │    │
+│  │  (Python 参考库)│    │   anthropics/skills    │    │
+│  │  验证/读取/生成 │    │   (177k Stars)         │    │
 │  └────────┬────────┘    └────────────┬────────────┘    │
 │           │                              │                │
 │           ▼                              ▼                │
 │  ┌─────────────────────────────────────────────┐         │
 │  │           兼容的 Agent 实现                  │         │
-│  │  Claude Code │ Claude.ai │ OpenAI Codex │   │         │
-│  │  VS Code Copilot │ 其他兼容实现              │         │
+│  │  Claude Code │ Claude │ ChatGPT/Codex │     │         │
+│  │  VS Code │ GitHub Copilot │ Cursor │ …      │         │
 │  └─────────────────────────────────────────────┘         │
 └─────────────────────────────────────────────────────────┘
 ```
 
+兼容实现远不止图中几家：官方 Client Showcase 已收录 46 个产品，从编码工具（Cursor、Gemini CLI、OpenCode、Roo Code）到终端 Agent（Goose、OpenClaw）再到数据平台（Databricks、Snowflake）都有。
+
 ### 1.4 技术规格
 
-下表数据采集于 2026-03-28，下文 Stars 数均以此为准：
+下表数据采集于 2026-09-20（GitHub API），下文 Stars 数均以此为准：
 
 | 指标 | 数值 |
 |------|------|
-| 规范版本 | v1.0 |
-| 主仓库 Stars | 16,306 |
-| 示例库 Stars | 108,862 |
-| Forks | 959（主仓库）/ 12,170（示例库） |
-| 贡献者 | 35 人（主仓库） |
-| 最新提交 | 2026-03-28 |
-| 许可证 | Apache-2.0 |
+| 规范版本 | 官方文档未标注版本号 |
+| 主仓库 Stars | 25,531 |
+| 示例库 Stars | 177,251 |
+| Forks | 1,920（主仓库）/ 20,996（示例库） |
+| 贡献者 | 41 人（主仓库） |
+| 最新提交 | 2026-08-09（Client Showcase 列表更新） |
+| 许可证 | 代码 Apache-2.0，文档 CC-BY-4.0 |
 | 主要语言 | Python 99.1%, Shell 0.9% |
 
 ---
@@ -138,7 +141,7 @@ skill-name/
 - 不能以连字符开头或结尾
 - 不能包含连续两个连字符（`--`）
 
-命名约束有两层考虑：目录名要直接作为文件系统路径，全小写加连字符可以避免 macOS/Windows 大小写敏感差异；`name` 字段会被 Agent 用作唯一标识，禁止连续连字符可以防止与 `--flag` 形式的命令行参数混淆。
+命名约束有一条硬规则：目录名必须与 `name` 字段完全一致，因为 `name` 是 Skill 在索引里的唯一标识，而目录名就是它在文件系统中的路径。全小写加连字符也是跨平台的稳妥选择——各操作系统文件系统对大小写的处理不同（macOS 默认不敏感，Linux 敏感），统一小写可以避免同一个 Skill 在不同平台上出现两种名字。
 
 ### 2.2 SKILL.md 格式
 
@@ -172,7 +175,7 @@ allowed-tools: Bash(python:*) Read
 | `metadata` | 否 | 任意键值对，用于额外元数据 |
 | `allowed-tools` | 否 | 空格分隔的预批准工具列表（实验性） |
 
-`name` 限 64 字符，是为了在 discovery 阶段做索引时控制单条记录大小；`description` 限 1024 字符，因为它会在启动时全量加载进上下文，过长反而吃掉渐进式披露省下来的空间；`compatibility` 限 500 字符，它只在激活后才会被读取，但仍要避免被当作指令注入。
+`name` 限 64 字符、`description` 限 1024 字符，都是规范层面定死的上限：description 会在启动时全量加载进上下文，写太长反而吃掉渐进式披露省下来的空间，官方的建议是"几句话到一小段"；`compatibility` 限 500 字符，它主要在激活时被模型读取，用来说明执行环境要求，官方同时提醒大多数 Skill 其实不需要这个字段。
 
 #### name 字段规则
 
@@ -268,35 +271,43 @@ Agent Skills 用 progressive disclosure（渐进式披露）控制上下文开�
 
 当 Agent 启动时，会执行 discovery（发现）阶段：
 
-1. **扫描 Skill 目录**：默认扫描 `.agents/skills/`
+1. **扫描 Skill 目录**：按项目级、用户级两个作用域扫描（见下文）
 2. **读取元数据**：仅读取 `name` 和 `description` 字段
 3. **构建索引**：将所有 Skill 的元数据加入可用 Skill 列表
 4. **等待激活**：仅保存索引，不加载完整内容
 
+先说目录在哪。规范本身不规定 Skill 目录的位置，只定义了目录内部的结构——放哪里是各实现的约定。事实上的跨客户端共享约定是 `.agents/skills/`，分项目级（`<项目>/.agents/skills/`）和用户级（`~/.agents/skills/`）两层，VS Code 默认扫描它；不少实现还同时扫描自己的原生目录（如 Claude 系工具会扫 `.claude/skills/`），以兼容存量 Skill。
+
 ```text
-# 默认 Skill 目录结构
-project/
-├── .agents/
-│   └── skills/           # 默认扫描此目录
-│       ├── roll-dice/
-│       │   └── SKILL.md
-│       ├── pdf-processing/
-│       │   └── SKILL.md
-│       └── ...
+# 用户级目录示例
+~/.agents/skills/
+├── roll-dice/
+│   └── SKILL.md
+├── pdf-processing/
+│   └── SKILL.md
+└── README.md        # 不是 Skill 目录，忽略
 ```
 
-discovery 阶段只读 frontmatter，不解析 body，单 Skill 开销因此能压到约 100 token。如果 discovery 阶段失败（比如 `SKILL.md` 缺失或 frontmatter 解析错误），该 Skill 不会进入索引，后续 activation 阶段也不会命中它。
+官方实现指南归纳了几条通用扫描规则：项目级、用户级都要扫；跳过 `.git/`、`node_modules/` 这类目录；限制扫描深度（4-6 层、约 2000 个目录）防止大仓库拖慢启动。两个作用域出现同名 Skill 时，通行约定是**项目级覆盖用户级**，并记录警告。
+
+还有一个容易忽略的点：项目级 Skill 来自正在开发的仓库，可能是刚克隆的陌生项目，而 Skill 的指令最终会进入 Agent 上下文——不可信仓库等于一条注入指令的通道。官方工程博客的原话是"只从可信来源安装 Skill"，实现指南则建议给项目级 Skill 加信任门控（例如仅在用户标记该目录为受信任后才加载）。
+
+discovery 阶段只读 frontmatter，不解析 body，单 Skill 开销因此能压到约 100 token。解析策略上官方建议宽松处理：`name` 与目录名不一致、`name` 超长这类问题给警告但照常加载；`description` 缺失或 frontmatter 完全无法解析的 Skill 跳过，不进索引，后续 activation 阶段也不会命中。
 
 ### 3.3 Activation 机制
 
 当用户请求触发某个 Skill 时，进入 activation（激活）阶段：
 
-1. **匹配判断**：Agent 将用户请求与所有 Skill 的 `description` 匹配
-2. **加载指令**：将匹配的 Skill 的完整 `SKILL.md` 加载到上下文
+1. **激活判断**：模型对照索引里的 Skill 描述，自行判断当前任务是否命中。官方实现指南特别指出：大多数实现依赖模型自己的判断，而不是在代码层面做关键词匹配
+2. **加载指令**：将命中 Skill 的完整 `SKILL.md` 加载到上下文——既可以用模型自带的文件读取工具直接读，也可以通过专用的激活工具返回内容，后者多数会把 frontmatter 剥掉、只喂正文
 3. **执行指令**：Agent 按照指令执行任务
 4. **按需加载资源**：执行过程中需要时，再加载 `scripts/`、`references/` 等
 
-activation 阶段会把整个 `SKILL.md` body 读进上下文，body 长度直接决定单次激活的 token 开销。规范给出的是上限：body 控制在 5000 token 以内，超过这个值时把详细参考拆到 `references/`，让 body 只保留执行路径。上限不等于典型值——一个只含逐步指令的精简 Skill，实际激活通常只会吃掉 500-2000 token，体感开销低于 5000 的上限。
+除了模型自主激活，用户也可以显式触发：主流实现支持斜杠命令（`/skill-name`）或提及语法（`$skill-name`），由客户端直接查找并注入 Skill 内容，跳过模型判断这一步。
+
+activation 阶段会把整个 `SKILL.md` body 读进上下文，body 长度直接决定单次激活的 token 开销。规范给出的是推荐上限：body 控制在 5000 token 以内，超过这个值时把详细参考拆到 `references/`，让 body 只保留执行路径——需要时按"如果 API 返回非 200 就读 references/api-errors.md"这样的条件指令加载，而不是一股脑全读。
+
+两个实现层面的细节值得知道：Skill 内容进入上下文后应当**豁免于上下文压缩**——压缩掉 Skill 指令不会报错，但 Agent 会无声地失去这项能力；如果 Agent 有文件权限系统，应把 Skill 目录加入允许列表，否则每次读捆绑脚本都弹确认框，体验会很割裂。
 
 ### 3.4 任务流案例：一次完整的 Skill 调用
 
@@ -314,18 +325,18 @@ Agent 启动时扫描 `.agents/skills/`，读取 10 个 Skill 的 `name` + `desc
 
 `roll-dice` 的指令是执行 `echo $((RANDOM % 20 + 1))`，不需要加载 `scripts/` 或 `references/`。如果换成 `pdf-processing`，Agent 会在执行到"调用 `pdfplumber.extract_text()`"时才加载 `scripts/extract_text.py`——指令中明确引用了某个文件，Agent 才会把该文件内容读入上下文。
 
-**token 消耗对比**
+**token 消耗对比**（估算假设：每个工具描述约 500 token，每个 Skill 元数据约 100 token，只为对比量级）
 
 | 加载方式 | 启动时 | 用户请求时 | 资源加载时 | 总计 |
 |----------|--------|------------|------------|------|
 | 传统工具调用（10 个工具） | 约 5000 token | 0 | 0 | 约 5000 token |
 | Agent Skills（10 个 Skill，激活 1 个） | 约 1000 token | 约 500 token | 按需 | 约 1500 token 起 |
 
-传统工具调用在启动时就把 10 个工具的完整描述塞进上下文；Agent Skills 只在用户请求匹配到具体 Skill 时才加载它的指令，未命中的 9 个 Skill 始终只占用元数据开销。Skill 数量增长到 50 个时，传统方式启动时就要消耗约 25000 token，Agent Skills 仍只消耗约 5000 token 的元数据开销。
+传统工具调用在启动时就把 10 个工具的完整描述塞进上下文；Agent Skills 只在用户请求匹配到具体 Skill 时才加载它的指令，未命中的 9 个 Skill 始终只占用元数据开销。按同样的假设外推到 50 个：传统方式启动时就要消耗约 25000 token，Agent Skills 仍只消耗约 5000 token 的元数据开销。官方实现指南的表述是：装了 20 个 Skill 的 Agent 也不必预付 20 份完整指令的 token，只有当次对话真正用到的才计入。
 
 ```bash
 # 1. 用户在 Copilot Chat 中输入
-/Roll a d20
+Roll a d20
 
 # 2. Copilot 发现 roll-dice skill 的 description 匹配
 "Roll dice using a random number generator..."
@@ -348,19 +359,24 @@ Agent 启动时扫描 `.agents/skills/`，读取 10 个 Skill 的 `name` + `desc
 - VS Code
 - GitHub Copilot 扩展（或其他兼容 Agent）
 
-**安装命令**：
+**安装 skills-ref（可选，用于格式校验）**：
 
 ```bash
-# 克隆 skills-ref 库
+# 克隆官方仓库
 git clone https://github.com/agentskills/agentskills.git
 cd agentskills/skills-ref
 
-# 使用 uv 安装（推荐）
-uv pip install skills-ref
+# 官方推荐方式：虚拟环境 + 源码安装
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
 
-# 或使用 pip
-pip install skills-ref
+# 或者用 uv 一键完成（自动建虚拟环境并装依赖）
+uv sync
+source .venv/bin/activate
 ```
+
+PyPI 上也有 `skills-ref` 包，但官方 README 把这个库定位为"仅供演示，不用于生产"，推荐从源码安装以便跟进仓库的变化。
 
 ### 4.2 创建第一个 Skill
 
@@ -413,6 +429,8 @@ Get-Random -Minimum 1 -Maximum (<sides> + 1)
 **结果**：返回 1-20 之间的随机整数
 ````
 
+官方 quickstart 的原版更精简——参数说明和示例全省了，全篇不到 20 行。Skill 的入门门槛就是一个文件。
+
 ### 4.3 验证 Skill
 
 ```bash
@@ -420,7 +438,7 @@ Get-Random -Minimum 1 -Maximum (<sides> + 1)
 skills-ref validate .agents/skills/roll-dice
 ```
 
-如果验证失败，常见原因包括：`name` 字段包含大写字母或下划线、`description` 超过 1024 字符、`SKILL.md` 缺少必需字段。根据错误提示修正后重新验证。
+这一步是可选的——官方 quickstart 不依赖 skills-ref，写完直接在 Agent 里测也能跑。验证失败时的常见原因：`name` 字段包含大写字母或下划线、`description` 超过 1024 字符、`SKILL.md` 缺少必需字段。根据错误提示修正后重新验证。
 
 ### 4.4 在 Agent 中使用
 
@@ -428,7 +446,9 @@ skills-ref validate .agents/skills/roll-dice
 2. 选择 **Agent** 模式
 3. 输入 `/skills` 确认 Skill 已注册
 4. 输入 "Roll a d20"
-5. Agent 自动激活 `roll-dice` Skill 并执行
+5. Agent 自动激活 `roll-dice` Skill 并执行（可能请求运行终端命令的权限，允许即可）
+
+官方提醒：不同模型对工具调用的可靠性不一样，有的会稳定按 Skill 指令执行命令，有的可能自己直接作答。如果 Agent 没跑终端命令而是自行回复，换一个模型再试。
 
 ---
 
@@ -440,7 +460,7 @@ skills-ref validate .agents/skills/roll-dice
 
 - **Skill 验证**：检查 SKILL.md 格式是否符合规范
 - **属性读取**：提取 Skill 的 frontmatter 字段
-- **Prompt 生成**：将 Skill 转换为适合 LLM 的 prompt（提示词）格式
+- **Prompt 生成**：生成 `<available_skills>` XML 块，用于拼进 Agent 的系统提示词
 
 GitHub：[https://github.com/agentskills/agentskills/tree/main/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref)
 
@@ -450,26 +470,50 @@ GitHub：[https://github.com/agentskills/agentskills/tree/main/skills-ref](https
 # 验证 Skill 格式
 skills-ref validate ./my-skill
 
-# 读取 Skill 属性
+# 读取 Skill 属性（输出 JSON）
 skills-ref read-properties ./my-skill
 
-# 生成 prompt
-skills-ref to-prompt ./my-skill
+# 生成 <available_skills> XML，可一次传多个 Skill
+skills-ref to-prompt ./my-skill-a ./my-skill-b
 ```
 
-### 5.3 API 设计模式说明
+### 5.3 Python API
 
-`skills-ref` 的 CLI 命令对应三类内部操作：验证、属性读取和 prompt 生成。如果需要在 Python 代码中调用这些能力，建议直接查阅 [skills-ref 官方文档](https://github.com/agentskills/agentskills/tree/main/skills-ref) 确认当前的 API 签名，包的导入路径和函数签名可能随版本变化。
+三个 CLI 命令对应三个同名函数，导入路径是 `skills_ref`（下划线），输入输出都是 `pathlib.Path`：
 
-从 CLI 命令推断，Python API 大致遵循以下设计模式：
+```python
+from pathlib import Path
+from skills_ref import validate, read_properties, to_prompt
 
-| CLI 命令 | 对应的内部职责 | 输入 | 输出 |
-|----------|----------------|------|------|
-| `validate` | 检查 SKILL.md 格式 | Skill 目录路径 | 验证结果（是否通过 + 错误列表） |
-| `read-properties` | 解析 frontmatter | Skill 目录路径 | 包含 name、description 等字段的对象 |
-| `to-prompt` | 拼装 LLM 可用的 prompt | Skill 目录路径 | 格式化的 prompt 字符串 |
+# 验证 Skill 目录，返回问题列表（空列表表示通过）
+problems = validate(Path("my-skill"))
 
-实际函数名、参数和返回类型以官方文档为准。在生产环境使用时，建议先用 `skills-ref validate` 等 CLI 命令做集成，等 API 稳定后再迁移到 Python 调用。
+# 读取 Skill 属性，返回带 name、description 属性的对象
+props = read_properties(Path("my-skill"))
+
+# 生成 <available_skills> XML 字符串
+prompt = to_prompt([Path("skill-a"), Path("skill-b")])
+```
+
+`to-prompt` 生成的 XML 是官方建议的系统提示词编目格式，`location` 元素告诉模型去哪里读完整指令：
+
+```xml
+<available_skills>
+<skill>
+<name>
+my-skill
+</name>
+<description>
+What this skill does and when to use it
+</description>
+<location>
+/path/to/my-skill/SKILL.md
+</location>
+</skill>
+</available_skills>
+```
+
+官方 README 说明这个格式是给 Anthropic 模型的建议格式，其他客户端可以按所用模型调整编目样式。要注意 `skills-ref` 的定位：README 明说"仅供演示，不用于生产"——给自研 Agent 集成 Skill 支持时，把它的解析和校验逻辑当参考实现来读，比直接依赖它更稳妥。
 
 ---
 
@@ -584,7 +628,7 @@ compatibility: 需要 Docker daemon 运行、docker 和 docker-compose 命令可
 
 ### 6.5 Skill 描述优化
 
-description 是 Agent 决定是否激活 Skill 的唯一依据，写不好就会出现"该激活时不激活"或"不该激活时误激活"。三条经验：
+description 是 Agent 判断是否激活 Skill 的主要依据，写不好就会出现"该激活时不激活"或"不该激活时误激活"。三条经验：
 
 **把触发关键词写进去**
 
@@ -621,6 +665,8 @@ description: 验证 API 响应是否符合 OpenAPI 规范。当需要测试 API�
 description: 这个 Skill 可以被用来进行 API 相关的验证工作，
              它将会检查输入的 JSON 数据是否...
 ```
+
+官方的 description 优化指南把这几条经验归纳成四个原则：用祈使句写（"当……时使用"而不是"这个 Skill 可以……"——Agent 是在决定要不要行动，直接告诉它何时行动）；描述用户意图而不是内部实现；宁可把适用场景列得啰嗦一点，用户没直接说出关键词时也要能命中；保持简洁。另有一个容易被忽略的细节：Agent 通常只在任务超出自身基本能力时才去翻 Skill——"读一下这个 PDF"这种一步能完成的请求，即使 description 完美匹配也可能不触发；越是生僻 API、领域流程、不常见格式，description 的价值越大。触发效果可以按 6.7 节的方法量化测试。
 
 ### 6.6 指令编写规范
 
@@ -667,26 +713,15 @@ description: 这个 Skill 可以被用来进行 API 相关的验证工作，
 
 ### 6.7 评估与迭代
 
-**评估维度**：
+官方把 Skill 评估拆成两个问题：该触发时有没有触发，触发之后产出质量如何。
 
-| 维度 | 指标 | 评估方法 |
-|------|------|----------|
-| 激活准确率 | 相关请求中 Skill 被正确激活的比例 | 日志分析 |
-| 完成率 | 激活后任务成功完成的比例 | 用户反馈 |
-| 上下文效率 | 平均使用的 token 数量 | 埋点统计 |
-| 错误率 | 执行过程中的错误频率 | 监控告警 |
+**触发评估**（针对 description）：准备约 20 条真实用户提问，一半应该触发、一半不应该。不该触发的重点挑"近失"用例——共享关键词但实际需要别的能力（对 CSV 分析 Skill 来说，"写个 Python 脚本读 CSV 传进数据库"就是高质量的负例）。每条查询跑 3 次算触发率：应触发的要求高于 0.5，不应触发的压在 0.5 以下。再把查询集按 60/40 拆成训练集和验证集——用训练集的失败指导改写 description，用验证集检查改动是否泛化。改写时别把失败查询里的关键词直接抄进 description，那是过拟合；找准这些查询代表的一般类别来回应。通常 5 轮迭代就够，不再提升时问题多半出在查询本身。
 
-**迭代流程**：
+**输出质量评估**（针对 SKILL.md 指令）：每个测试用例跑两遍——带 Skill 和不带 Skill（改进已有 Skill 时用旧版本做基线），记录通过率、耗时和 token，用两者的差值（delta）衡量 Skill 的真实贡献：一个通过率提升 50 个百分点但多花 13 秒的 Skill 通常值得，token 翻倍却只换来 2 个百分点提升就未必。测试用例放在 Skill 目录的 `evals/evals.json`（prompt、期望输出、输入文件），断言要可验证（"输出文件是合法 JSON"、"图表有坐标轴标签"）且每项判定附证据。两类断言要专门清理：两种配置下都通过的说明模型本来就会，都在失败的说明断言或用例有问题——它们都不能反映 Skill 的价值。断言覆盖不到的主观质量交给人工复核。
 
-```text
-┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  编写   │───▶│  测试   │───▶│  评估   │───▶│  发布   │
-└─────────┘    └─────────┘    └─────────┘    └─────────┘
-     │             │             │             │
-     ▼             ▼             ▼             ▼
-  初步实现    单元测试       A/B 测试      版本发布
-            集成测试       用户反馈      监控迭代
-```
+这两套循环重复劳动很多，官方在 anthropics/skills 里提供了 [skill-creator](https://github.com/anthropics/skills/tree/main/skills/skill-creator) 来自动化：拆分评估集、并行测触发率、调用 Claude 提出改进建议、生成 HTML 报告。
+
+**迭代原则**（来自官方最佳实践）：读 Agent 的执行轨迹而不只看最终输出——指令太含糊（Agent 反复试错）、指令不适用于当前任务（Agent 照做不误）、选项太多没有默认值，是浪费步骤的三个常见原因；每次纠正过 Agent 的错误，就把纠正沉淀进指令；给默认值而不是罗列菜单；指令解释"为什么"比生硬的"永远/绝不"更可靠。
 
 ---
 
@@ -778,6 +813,15 @@ def load_skill_resources(skill_path: Path, resource_path: str) -> str:
     return ""
 ```
 
+以上是最小骨架。官方的[实现指南](https://agentskills.io/client-implementation/adding-skills-support)把完整生命周期拆成五步，几个关键点值得补进生产实现：
+
+- **扫描边界**：同时扫项目级和用户级两个作用域，同名时项目级覆盖用户级并记录警告；跳过 `.git/`、`node_modules/`，限制扫描深度
+- **宽松校验**：`name` 不匹配或超长给警告但照常加载；只有 `description` 缺失、YAML 完全不可解析才跳过。为其他客户端写的 Skill 常有轻微不合规范的 YAML（典型是未加引号的值里含冒号），可以做引号包装的兜底重试
+- **信任门控**：项目级 Skill 可能来自刚克隆的陌生仓库，官方建议仅在用户信任该目录后才加载
+- **目录编目**：把 `name`、`description`、`location` 以 `<available_skills>` XML 或列表放进系统提示词，附一段简短指令告诉模型怎么加载；没有任何可用 Skill 时，编目和指令都不要输出
+- **上下文管理**：给 Skill 内容套上可识别的结构化标签（如 `<skill_content name="...">`），上下文压缩时豁免；同一会话重复激活同一 Skill 时去重
+- **权限**：把 Skill 目录加入文件读取允许列表，避免每次读捆绑资源都弹确认框
+
 ### 7.2 工具预批准机制
 
 `allowed-tools` 字段允许 Skill 定义可使用的预批准工具：
@@ -798,14 +842,13 @@ allowed-tools: Bash(git:*) Bash(gh:*) Read
 3. 执行 `git add . && git commit -m "feat: add new feature"`
 ```
 
-### 7.3 Skill 市场集成
+### 7.3 发布与分发
 
-发布 Skill 到市场的标准流程：
+Skill 的分发没有中心化市场，官方仓库在 CONTRIBUTING.md 里明确表示**目前不接受社区 Skill 提交**——官方不维护社区 Skill 目录。实际可行的路径：
 
-1. **创建独立仓库**：`my-skill/` 格式
-2. **添加 LICENSE**：明确许可证
-3. **编写 README**：说明用途和使用方法
-4. **提交到市场**：通过 GitHub PR 或社区提名
+1. **自建仓库分发**：把 Skill 放进独立 Git 仓库或组织内部仓库，团队克隆后装进各自的 `.agents/skills/`，靠版本控制管理更新
+2. **贡献官方示例库**：通用性强的 Skill 可以向 [anthropics/skills](https://github.com/anthropics/skills) 提 PR
+3. **加入 Client Showcase**：如果你做的是 Agent 产品且已实现 Skill 支持，按 CONTRIBUTING.md 的要求提交 PR——产品必须公开可用、能实际发现和执行 Skill，仅宣布支持或还在私测的产品不收；通过审核后列入 agentskills.io 的展示页
 
 ---
 
@@ -924,42 +967,33 @@ allowed-tools: Bash(git:*) Bash(docker:*) Read
 
 ### Q2：一个 Agent 可以同时激活多个 Skill 吗？
 
-可以，但建议控制并发激活的 Skill 数量以优化上下文使用。通常：
-
-- **简单任务**：1 个 Skill
-- **复杂任务**：2-3 个相关 Skill
-- **避免**：5 个以上 Skill 同时激活（上下文膨胀）
+可以，Skill 在设计上就是可组合的，同一个任务加载多个 Skill 是正常用法。真正的约束是上下文预算：每多激活一个 Skill，就多一份 body 的上下文占用。控制的关键在粒度——一个 Skill 封装一个内聚的工作单元（官方的最佳实践类比是"像决定一个函数该做什么"）：粒度太细会逼着单个任务加载一堆 Skill，增加指令相互冲突的风险；太粗又难以精准触发。
 
 ### Q3：Skill 的 token 开销是多少？
 
 各阶段开销：
 
-| 阶段 | 平均 token | 触发时机 |
-|------|-----------|----------|
-| 元数据 | 约 100 | 每次启动 |
-| 指令 | 500-2000 | 每次激活 |
+| 阶段 | token | 触发时机 |
+|------|-------|----------|
+| 元数据 | 约 50-100 | 每次启动 |
+| 指令 | < 5000（推荐上限） | 每次激活 |
 | 资源 | 按需 | 执行中 |
 
 ### Q4：如何处理 Skill 之间的冲突？
 
-如果两个 Skill 的 description 都能匹配同一个请求，可以通过以下方式处理：
+规范层面没有冲突仲裁机制，description 是模型判断的主要入口：
 
-1. **细化 description**：在 description 中明确各自的使用范围，减少重叠
-2. **互斥标识**：在 metadata 中添加 `conflicts-with` 字段
-3. **Agent 决策**：让 Agent 根据上下文选择更合适的 Skill
+1. **细化 description**：在 description 中明确各自的使用范围和边界，减少重叠
+2. **让模型决策**：两个都命中时，模型会根据当前任务上下文选择更合适的
+3. **自定义元数据**：`metadata` 是任意键值对，官方建议把键名取得足够独特以避免意外冲突，可以用它放自己的标记——但这只是扩展点，没有通用的"冲突解决"语义
 
 ### Q5：可以使用哪些脚本语言？
 
-取决于 Agent 实现。常见支持：
-
-- **Bash/PowerShell**：系统命令
-- **Python**：通用脚本
-- **JavaScript/Node**：Web 相关任务
-- **Go**：高性能工具
+取决于 Agent 实现。规范列出的常见选项是 Python、Bash 和 JavaScript。除了打包进 `scripts/` 的脚本，官方也推荐在指令里直接用一次性命令：Python 生态的 uvx、pipx，Node 生态的 npx、bunx，以及 `deno run`、`go run`，用 `@版本` 固定版本保证可复现。
 
 ### Q6：Skill 可以访问网络吗？
 
-取决于具体实现和 `compatibility` 设置。
+取决于 Agent 实现的权限和沙箱机制。`compatibility` 字段只负责声明需求，不是授权开关：
 
 ```yaml
 # 声明网络需求
@@ -1052,7 +1086,7 @@ license: MIT
 <details>
 <summary>1. Skill 的 `name` 字段和目录名必须完全一致，这条规则解决了哪两个问题？</summary>
 
-第一，目录名作为文件系统路径，全小写加连字符可以避免 macOS/Windows 大小写敏感差异导致的跨平台问题；第二，`name` 会被 Agent 用作唯一标识，禁止连续连字符（`--`）可以防止与命令行参数（如 `--flag`）混淆。
+第一，`name` 必须与父目录名一致，而目录名就是文件系统路径——各操作系统对大小写的处理不同（macOS 默认不敏感，Linux 敏感），全小写加连字符能保证同一个 Skill 在任何平台上都是同一个名字；第二，`name` 是 Agent 索引 Skill 的唯一标识，规范因此把字符集收得很紧：只允许小写字母、数字和连字符，不能以连字符开头或结尾，也不能出现连续连字符。
 </details>
 
 <details>
@@ -1106,8 +1140,8 @@ compatibility: 需要 Python 3.10+
 
 | 阶段 | 加载内容 | 典型 token |
 |------|----------|-------------|
-| 元数据 | `name` + `description` | ~100 / Skill |
-| 指令 | `SKILL.md` body | 500-2000 |
+| 元数据 | `name` + `description` | ~50-100 / Skill |
+| 指令 | `SKILL.md` body | < 5000（推荐上限） |
 | 资源 | `scripts/` / `references/` | 按需 |
 
 ### `description` 写作三问
@@ -1132,7 +1166,7 @@ compatibility: 需要 Python 3.10+
 2. **封装一个团队高频操作**：识别团队内部重复执行 3 次/周以上的流程，按本文的 Skill 格式规范做成 Skill
 3. **接入 Skill 发现机制**：如果团队现有 Agent 系统是全量加载工具描述，评估迁移到 Skill 渐进式披露的 ROI
 4. **读 `skills-ref` 源码**：理解 `validate`、`read-properties`、`to-prompt` 三个命令的内部实现，为团队定制 Skill 校验规则做准备
-5. **关注 Agent Skills 社区**：[Discord 社区](https://discord.gg/MKPE9g8aUy) 的 `#show-and-tell` 频道有团队实践案例，规范版本更新会先在 Discord 公告
+5. **关注 Agent Skills 社区**：Bug 走 [GitHub Issues](https://github.com/agentskills/agentskills/issues)，规范提案和开放讨论走 [GitHub Discussions](https://github.com/agentskills/agentskills/discussions)，官方 Discord（[邀请链接](https://discord.gg/MKPE9g8aUy)）用于交流正在构建的东西
 
 ---
 
@@ -1159,29 +1193,27 @@ Skill 适合承载按需加载、有明确触发词、需要附带脚本或参�
 
 ### 生态现状
 
-- **官方库**：agentskills/agentskills（16.3k Stars，数据采集于 2026-03-28，后续可能变化）
-- **示例库**：anthropics/skills（108.9k Stars，数据采集于 2026-03-28）
+- **官方库**：agentskills/agentskills（25.5k Stars，数据截至 2026-09-20，后续可能变化）
+- **示例库**：anthropics/skills（177k Stars，含 Excel、PowerPoint、Word、可填写 PDF 等官方技能和 skill-creator）
+- **兼容实现**：Client Showcase 收录 46 家——Claude Code、Claude、ChatGPT/Codex、VS Code、GitHub Copilot、Cursor、Gemini CLI、Goose、OpenClaw 等
 - **社区**：Discord 服务器 + GitHub Discussions
-- **文档**：agentskills.io（Mintlify 托管）
+- **文档**：agentskills.io（Mintlify 托管，文档以 CC-BY-4.0 发布）
 
 ### 参与贡献
+
+贡献方式见仓库的 CONTRIBUTING.md，不同事项走不同通道：
 
 ```bash
 # 克隆官方仓库
 git clone https://github.com/agentskills/agentskills.git
+cd agentskills
 
-# 创建新 Skill
-cd skills-ref/skills/
-mkdir my-new-skill
-cd my-new-skill
-touch SKILL.md
-
-# 提交 PR
-git checkout -b feature/my-new-skill
-git add .
-git commit -m "feat: add my-new-skill"
-git push origin feature/my-new-skill
+# 文档改进：docs/ 目录，直接提 PR
+# Bug 报告：GitHub Issues
+# 规范提案与讨论：GitHub Discussions
 ```
+
+两点官方立场值得知道：其一，规范新增功能门槛很高，CONTRIBUTING.md 的原话是"往规范里加东西比移除容易得多……拿不准就别加"，提案要附上真实遇到的实现难题而不是理论担忧；其二，skills-ref 参考库暂时不接受代码贡献（方向还在确定），Bug 和反馈走 Issue 和 Discussion。
 
 ---
 
@@ -1198,14 +1230,14 @@ git push origin feature/my-new-skill
 
 ---
 
-*文档版本：2026-04-02 | 规范版本：v1.0 | 来源：[agentskills/agentskills](https://github.com/agentskills/agentskills)*
+*文档更新：2026-09-20 | 来源：[agentskills/agentskills](https://github.com/agentskills/agentskills)*
 
 ## 资料口径说明
 
-1. **规范版本**：本文基于 Agent Skills 开放规范 v1.0（2026-04-02）。规范可能随版本更新变化，实际开发时请参考最新版规范文档。
-2. **工具兼容性**：文中提到的 Claude Code、Cursor、OpenClaw 等工具对 Skill 的支持方式可能随版本变化。实际使用时请参考各工具的官方文档。
-3. **目录结构**：文中提到的 `.agents/skills/` 目录为默认扫描路径，不同工具的默认路径可能不同。
-4. **代码示例**：文中的 Python 代码示例为示意代码，实际实现可能需要根据具体需求调整。
-5. **适用范围**：本文的 Skill 设计规范主要适用于支持 SKILL.md 的 AI IDE。其他 AI 工具可能需要不同的配置方式。
-6. **原文来源**：本文基于 [agentskills/agentskills](https://github.com/agentskills/agentskills) 开源项目。如需引用，请注明项目链接。
+1. **数据时效**：文中 Stars、贡献者等数据采集于 2026-09-20（GitHub API），仅为当日快照；Agent Skills 生态迭代很快，使用时请以最新数据为准。
+2. **规范版本**：官方规范文档未标注版本号，本文以 2026-09-20 的 [agentskills.io/specification](https://agentskills.io/specification) 为口径。
+3. **目录约定**：`.agents/skills/` 是跨客户端共享的行业约定而非规范强制（规范不规定目录位置）；各 Agent 另有自己的原生目录（如 `.claude/skills/`），以各工具官方文档为准。
+4. **工具兼容性**：文中提到的 Claude Code、Claude、ChatGPT/Codex、VS Code、GitHub Copilot、Cursor 等对 Skill 的支持方式可能随版本变化，实际使用时请参考各工具的官方文档。
+5. **skills-ref 定位**：参考库按官方 README 说明"仅供演示，不用于生产"；文中 Python API 与 CLI 输出以 skills-ref README（2026-09-20 版）为口径，可能随版本变化。
+6. **原文来源**：本文基于 [agentskills/agentskills](https://github.com/agentskills/agentskills) 开源项目与 agentskills.io 官方文档。如需引用，请注明项目链接。
 

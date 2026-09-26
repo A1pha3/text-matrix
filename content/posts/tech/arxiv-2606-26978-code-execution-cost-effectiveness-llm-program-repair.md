@@ -1,482 +1,341 @@
 ---
-title: "To Run or Not to Run——ISSTA 2026 论文深度解读，LLM 程序修复的代码执行成本收益分析"
+title: "To Run or Not to Run——ISSTA 2026 论文解读：LLM 程序修复中代码执行的成本收益分析"
 date: 2026-06-30T20:56:00+08:00
-lastmod: 2026-06-30T20:56:00+08:00
+lastmod: 2026-09-21T10:30:00+08:00
 draft: false
 slug: "arxiv-2606-26978-code-execution-cost-effectiveness-llm-program-repair"
 github_repo: "opencode-io/opencode"
 source_key: "gh:opencode-io/opencode"
 categories: ["技术笔记"]
 tags: ["SWE-bench", "Claude Code", "Codex", "OpenCode"]
-description: 完整译读 ISSTA 2026 论文 To Run or Not to Run——Analyzing the Cost-Effectiveness of Code Execution in LLM-Based Program Repair——一篇 7745 traces + 3000 修复尝试 + 3 agents + 4 execution paradigms 实证研究，证明 execution 不该是 agent 默认能力，而是有显式成本-收益权衡的资源。
+description: "解读 ISSTA 2026 论文 To Run or Not to Run：7745 条 agent 轨迹加 3000 次受控修复实验，对比 Prohibited、Quota-Limited、Budget-Guided、Unrestricted 四类执行范式，发现执行权限对修复成功率影响不足 1.25 个百分点，成本却相差一半以上——执行应该按资源管理，而不是默认开启。"
 ---
 
-## 译序：为什么这篇 ISSTA 2026 论文值得完整读
+## 译序：这篇论文动了所有 AI 编程 Agent 的一条默认设置
 
-论文标题就一句话：**To Run or Not to Run**——LLM 编程 Agent 是否应该默认执行代码？
+论文标题就是一个问句：**To Run or Not to Run**——LLM 编程 Agent 到底该不该执行代码？
 
-这是 2026 年所有 AI 编程助手（Claude Code / Codex / OpenCode / Cursor / OpenHands / SWE-agent）都默认开启的能力。你问任何 AI 工程师，TA 都会说"执行测试反馈是 agent 修复 bug 的关键"。
+2026 年的主流编程 Agent（Claude Code、Codex CLI、OpenCode、Cursor、OpenHands、SWE-agent）都默认开启代码执行。问任何一个 AI 工程师，答案都差不多：执行测试反馈是 Agent 修 bug 的关键信号。
 
-但**这篇论文证明了一个反直觉的事实**：在 SOTA 模型上，**完全禁止代码执行** vs **不限制执行**——修复成功率差距只有 **1.25 个百分点**，且**统计上不显著（p>0.05）**。**节省的成本却高达 56-62% 的 token 和 48-54% 的 wall-clock**。
+这篇被 ISSTA 2026 录用的论文给了一个量化得多的答案。作者固定 Agent 脚手架、只改变执行权限，在 200 个 SWE-bench 实例上跑了 3000 次端到端修复：商业 Agent 上，完全禁止执行与不限制执行的修复成功率差距平均只有 1.25 个百分点，且统计上不显著；代价一边，Claude Code 上禁止执行省下 56–62% 的 token 和 48–54% 的墙钟时间。而在 65K 上下文的开源模型上，表现最好的不是随便跑，而是恰好跑一次。
 
-这不是要反对执行反馈——而是要**量化它的边际价值**。当 54-66% 的 case 其实"一个 edit 就修好"时，**让 agent 调用 8.8 次测试就是浪费**。
+论文的立场不是反对执行，而是把执行从"默认能力"重新定位为"有显式成本收益权衡的资源"。对按 token 付费、按小时排期的团队，这句话可以直接换算成账单。
 
-适合读者：正在构建 / 评估 AI 编程 Agent 的工程师；想知道"我的 agent 该不该默认执行"的产品决策者；关注 program repair 成本-收益的研究者。
+适合读者：正在构建或评估 AI 编程 Agent 的工程师，需要决定"我的 Agent 该不该默认执行"的产品决策者，关注程序修复成本收益的研究者。
 
 ## 学习目标
 
 读完本文后，你应该能够：
 
-1. 解释论文的核心发现：为什么代码执行对修复成功率的边际贡献很小，但成本很高
-2. 区分 4 个 execution paradigms（Prohibited、Reproduction、Quota-1、Unrestricted）的设计逻辑
-3. 理解实验设计：3 个 agents × 4 个 paradigms × 2 个 SWE-bench 子集 = 3000 次修复尝试
-4. 根据论文结论，判断你的 AI 编程 agent 是否应该默认开启代码执行
-5. 批判性地评估论文的局限性和适用边界
+1. 复述论文的核心发现：执行对修复成功率的边际贡献很小，成本却很高，收益集中在少数实例上
+2. 区分四类执行范式（Prohibited、Quota-Limited、Budget-Guided、Unrestricted）及其五种配置的设计逻辑
+3. 理解实验设计：3 个 Agent × 5 种配置 × 200 个 SWE-bench 实例 = 3000 次受控修复尝试
+4. 根据自己团队的模型与成本结构，判断是否要修改"默认执行"这一设置
+5. 指出论文的适用边界：结论限定在 SWE-bench 风格的仓库级 bug 修复，不能直接外推到性能调优或安全分析
 
 ## 目录
 
-- [一、核心问题：execution 真的是必须的吗？](#一核心问题execution-真的是必须的吗)
-- [二、作者与会议](#二作者与会议)
-- [三、实验设计：4 个 execution paradigms](#三实验设计4-个-execution-paradigms)
-- [四、研究对象：3 个 Agent × 2 个 SWE-bench 子集](#四研究对象3-个-agent--2-个-swe-bench-子集)
-- [五、RQ1：当前 agents 怎么用 code execution？](#五rq1当前-agents-怎么用-code-execution)
-- [六、RQ2：execution 的效果与成本](#六rq2execution-的效果与成本)
+- [一、核心问题：execution 真的是必需品吗](#一核心问题execution-真的是必需品吗)
+- [二、论文信息与作者](#二论文信息与作者)
+- [三、实验设计：四类范式，五种配置](#三实验设计四类范式五种配置)
+- [四、RQ1：当前 Agent 怎么用代码执行](#四rq1当前-agent-怎么用代码执行)
+- [五、RQ2：限制执行几乎不掉成功率](#五rq2限制执行几乎不掉成功率)
+- [六、RQ3：为什么执行帮不上忙](#六rq3为什么执行帮不上忙)
 - [七、实践启示](#七实践启示)
-- [八、适用与不适用场景](#八适用与不适用场景)
-- [九、论文局限性与未来工作](#九论文局限性与未来工作)
-- [十、常见问题 FAQ](#十常见问题-faq)
-- [十一、自测题](#十一自测题)
-- [十二、进阶路径](#十二进阶路径)
-- [十三、资料口径说明](#十三资料口径说明)
+- [八、常见问题](#八常见问题)
+- [九、自测题](#九自测题)
+- [十、术语对照表](#十术语对照表)
+- [十一、进阶路径](#十一进阶路径)
+- [十二、资料口径说明](#十二资料口径说明)
 
----
-
-## 如何阅读本文
-
-- **只想看结论**：直接看第七章"实践启示"+ 第九章"适用 / 不适用场景"
-- **想理解研究方法**：第三章"实验设计" + 第四章"4 个 execution paradigms"
-- **关心具体数字**：第五章"RQ1: 当前 agents 怎么用 execution" + 第六章"RQ2: 效果 + 成本"
-- **想自己复现**：第九章"数据可用性" + 第十章"参考链接"
-
----
-
-## 一、核心问题：execution 真的是必须的吗？
+## 一、核心问题：execution 真的是必需品吗
 
 ### 1.1 默认假设
 
-当前所有 SOTA AI 编程 Agent（Claude Code / Codex / OpenHands / SWE-agent 等）都默认开启代码执行能力。理由很直接：
-
-> 执行测试结果是 agent 定位 bug、验证修复的核心反馈信号
-
-这是**"generate-run-revise"** paradigm 的核心循环：
+当前主流编程 Agent 都构建在"generate-run-revise"循环上：
 
 ```text
 generate  →  生成代码修改 patch
-run       →  执行测试/脚本看输出
-revise    →  根据执行反馈改 patch
-loop
+run       →  执行测试或脚本，观察输出
+revise    →  根据执行反馈修改 patch
+loop      →  循环直到测试通过或预算耗尽
 ```
 
-### 1.2 默认假设被挑战
+这个循环的成立依赖一个假设：执行测试是 Agent 定位 bug、验证修复的核心反馈信号，砍掉它成功率会崩。
 
-但代码执行**贵**——论文列了 3 个层面：
+### 1.2 被忽略的成本
 
-1. **Token 成本**：agent 要生成执行命令、解析输出、对反馈做推理——**verbose 的报错日志**会塞满上下文
-2. **Wall-clock 成本**：执行完整测试套件可能要**几分钟到几小时**——agent 只能干等
-3. **环境成本**：每个 repo 都要维护测试环境——**一个能跑通的 Docker image**就是工程负担
+代码执行不是免费的。论文列出三个层面：
 
-**对于大规模部署**，这些成本**指数级**累积。
+1. **token 成本**：Agent 要生成执行命令、解析输出、对反馈做推理，冗长的报错日志会挤占上下文窗口；
+2. **墙钟时间**：跑完整测试套件可能要几分钟到几小时，Agent 只能等；
+3. **环境成本**：每个仓库都要维护一套能跑通的测试环境，论文特别指出，禁止执行还顺带免掉了工业部署里 per-repo 测试环境的搭建和维护。
 
-### 1.3 研究目标
+这些成本按任务数线性累积，在大规模部署下不是小数目。
 
-论文要做的是**首次**系统量化"代码执行**对修复成功的边际贡献**"。方法：
+### 1.3 研究思路
 
-- **fix agent scaffold**（控制变量：固定用 Claude Code / Codex / OpenCode 这些成熟 agent）
-- **only vary execution access**（变化量：4 种 execution paradigm，从"完全禁止"到"无限制"）
-- **测量**修复成功率的差异
+论文要做的是第一次系统量化"执行对修复成功的边际贡献"。方法是控制变量：固定 Agent 脚手架（Claude Code、Codex CLI、开源的 OpenCode），只改变执行权限（四类范式、五种配置），测量修复成功率的差异。这是它与此前 agentless 研究的关键区别——不争论"要不要 Agent"，只在 Agent 内部隔离"执行"这一个变量。
 
----
-
-## 二、作者与会议
+## 二、论文信息与作者
 
 | 维度 | 信息 |
 |------|------|
-| **会议** | ACM SIGSOFT International Symposium on Software Testing and Analysis (ISSTA 2026) |
-| **arXiv ID** | 2606.26978 |
-| **v1 提交日** | 2026-06-25 |
-| **作者数** | 8 人 |
-| **作者单位** | 香港 + 新加坡 + 加拿大 多校联合 |
-| **论文长度** | 23 页 |
-| **PDF 大小** | 123 KB |
-| **DOI** | 10.48550/arXiv.2606.26978 |
+| 标题 | To Run or Not to Run: Analyzing the Cost-Effectiveness of Code Execution in LLM-Based Program Repair |
+| 会议 | ISSTA 2026（ACM SIGSOFT 国际软件测试与分析研讨会） |
+| arXiv ID | 2606.26978，v1 提交于 2026-06-25 |
+| DOI | 10.48550/arXiv.2606.26978 |
+| 篇幅 | 23 页，8 位作者 |
+| 作者 | Zhihao Lin、Junhua Zhu、Mingyi Zhou、Xin Wang、Zhensu Sun、Renyu Yang、David Lo、Li Li（通讯作者） |
+| 单位 | 北京航空航天大学 5 人，武汉大学 1 人，新加坡管理大学 2 人 |
 
-**作者列表**：Zhihao Lin, Junhua Zhu, Mingyi Zhou, Xin Wang, Zhensu Sun, Renyu Yang, David Lo, Li Li
+## 三、实验设计：四类范式，五种配置
 
----
+### 3.1 执行范式
 
-## 三、实验设计：4 个 execution paradigms
+论文定义了四类执行范式，其中 Quota-Limited 以 K=1 和 K=3 两种配额实例化，共五种配置：
 
-论文的核心创新是设计 4 个 execution paradigm（**最严**到**最宽**）：
+| 配置 | 含义 | 给 Agent 的反馈 |
+|------|------|----------------|
+| Prohibited | 完全禁止执行测试和脚本 | 无 |
+| Quota-1 | 全程最多 1 次测试执行 | 至多 1 次 |
+| Quota-3 | 全程最多 3 次测试执行 | 至多 3 次 |
+| Budget-Guided | 不强制限制，但告知 Agent 执行有价：pytest / unittest / Django test 每次 1.0 点，临时脚本每次 0.3 点，预算 K 次 | 开放，靠成本提示引导 |
+| Unrestricted | 不做任何限制 | 完全开放 |
 
-| Paradigm | 含义 | 是否给 agent 反馈 |
-|----------|------|------------------|
-| **Prohibited** | 完全禁止执行 | ❌ 无 |
-| **Reproduction** | 只允许"复现 bug"用 | ✅ 有，但限制场景 |
-| **Quota-1** | 只允许 1 次执行 | ✅ 有 1 次 |
-| **Unrestricted** | 不限制 | ✅ 完全开放 |
+四个对照各有用途：Prohibited 对 Unrestricted 是边际价值的总量测量；两个 Quota 配置检验"少而准"能否替代"多而杂"；Budget-Guided 则测试仅靠成本意识（prompt 层面告知"unused budget is wasted opportunity"）能否自发减少浪费。
 
-**4 个 paradigm 的设计逻辑**：
+### 3.2 实验规模与执行口径
 
-- **Prohibited** vs **Unrestricted** = **RQ2 核心对比**（边际价值总量）
-- **Reproduction** = 模拟"先复现 bug 再修"的现实流程
-- **Quota-1** = 测试"1 次精准执行 vs 多次冗余执行"
+受控实验的规模是 200 个 SWE-bench 实例（Lite 与 Verified 各取前 100，仓库涵盖 Django、Flask、Requests、Sympy 等）× 3 个 Agent × 5 种配置 = **3000 次端到端修复尝试**。每次尝试都走完整流程：checkout 仓库、读 issue、生成并应用补丁、跑官方 SWE-bench 评估。
 
----
+一个值得注意的口径：预算限制主要是 prompt 级的软约束。Agent 偶尔会尝试违规执行（7–9% 的 Prohibited 尝试出现这类环境错误），论文按 intention-to-treat 原则把这些也计为"已执行"。为了排除软约束干扰，作者在 Claude Code + Verified 上做了一次工具级沙箱的硬约束重跑（见 5.3 节），结论不变。
 
-## 四、研究对象：3 个 Agent × 2 个 SWE-bench 子集
+测试执行的定义是 pytest、unittest、tox、nosetests 或 `python xxx.py` 这类命令的调用。
 
-### 4.1 Agent 选型
+### 3.3 Agent 选型
 
 | Agent | 模型 | 类型 |
 |-------|------|------|
-| **Claude Code** | Claude Sonnet 4.5 | 商业闭源 |
-| **Codex CLI** | GPT-5.2-xhigh | 商业闭源 |
-| **OpenCode** | Qwen2.5-Coder-32B-Instruct | 开源 |
+| Claude Code | Claude Sonnet 4.5 | 商业闭源 |
+| Codex CLI | GPT-5.2-xhigh | 商业闭源 |
+| OpenCode | Qwen2.5-Coder-32B-Instruct（vLLM 部署） | 开源 |
 
-**选 3 个的目的**：
-- **商业闭源 × 2**——验证 SOTA 商业模型的结论
-- **开源 × 1**——避免数据泄漏（前 SOTA 模型都可能在 SWE-bench 训练集上预训练过）
+选型的考虑是数据泄漏：闭源模型可能在 SWE-bench 训练集上预训练过，而 Qwen2.5-Coder-32B 的训练截止早于 SWE-bench Verified。如果开源 Agent 上结论依然成立，等价性就不是记忆污染的伪影。
 
-### 4.2 Benchmark 子集
+### 3.4 RQ1 的额外数据源
 
-由于 budget 限制，只跑两个**代表性 100 实例子集**：
-- **SWE-bench Lite** 前 100 实例
-- **SWE-bench Verified** 前 100 实例
+除了受控实验，RQ1 单独分析了 7745 条来自 SWE-bench 排行榜公开提交的 agent 轨迹，覆盖 4 个 Agent（SWE-agent、OpenHands、LiveSWEAgent、Mini-SWE-agent）、12 个模型（GPT-4、GPT-4o、GPT-5、GPT-5.2、Claude-3-Opus、Claude-3.5-Sonnet、Claude-4-Sonnet、Claude-Opus-4.5、Kimi-K2、Qwen3-480B、Gemini-3-Pro、DeepSeek-V3.2）。受控实验回答"执行权限改变会怎样"，这批轨迹回答"现实中的 Agent 实际怎么用执行"。
 
-每个 agent × 每个 paradigm × 每个子集 = 一次实验。**3 agents × 4 paradigms × 2 subsets = 24 次 run**——加上 trace analysis，总共**3000 end-to-end repair attempts**。
+## 四、RQ1：当前 Agent 怎么用代码执行
 
-### 4.3 RQ1 的额外数据源
+### 4.1 频率：平均 8.8 次，跨度近 10 倍
 
-为了"在更大规模上特征化 execution 行为"，**RQ1 单独**用了 7745 public traces：
-
-- 来源：SWE-bench leaderboard 上的公开提交
-- 涵盖 **4 agents**（SWE-agent, OpenHands, LiveSWEAgent, Mini-SWE-agent）
-- 涵盖 **12 LLMs**（GPT-4, GPT-4o, GPT-5, GPT-5.2, Claude-3-Opus, Claude-3.5-Sonnet, Claude-4-Sonnet, Claude-Opus-4.5, Kimi-K2, Qwen3-480B, Gemini-3-Pro, DeepSeek-V3.2）
-- 涵盖 **2 benchmarks**（SWE-bench Lite + SWE-bench Verified）
-
-这是论文**最有诚意**的部分——7745 traces 给出了"execution 现状"的**全景画面**。
-
----
-
-## 五、RQ1：当前 agents 怎么用 code execution？
-
-### 5.1 执行频率
-
-| 指标 | 数字 |
+| 指标 | 数值 |
 |------|------|
-| **平均** | 8.8 次执行 / task |
-| **范围** | 2 - 19 次 / task |
-| **新模型更多** | 2026 年的模型用 execution 更多 |
+| 平均执行次数 | 8.8 次 / 任务 |
+| 频率范围 | 2 – 19 次 / 任务 |
+| 最激进 | OpenHands + Claude-4-Sonnet，18.7 次 / 任务 |
+| 最保守 | Mini-SWE-agent + GPT-5.2，2.0 次 / 任务 |
 
-**两个极端**：
-- **OpenHands + Claude-4-Sonnet**：18.7 次/task（最激进）
-- **Mini-SWE-agent + GPT-5.2**：2.0 次/task（最保守）
+同一个模型（如 GPT-5.2）在不同脚手架里执行频率差近 10 倍，说明执行频率主要是脚手架的设计哲学决定的，不是模型能力决定的。
 
-这两个数字差了**近 10 倍**——agent 设计哲学**显著影响** execution 频率。
+### 4.2 时序：越晚执行，通过率越高
 
-### 5.2 时序分布
+论文把每次执行在对话中的位置归一化，分成早（0–33%）、中（33–66%）、晚（66–100%）三段。所有配置下，晚期执行的成功率都稳定高于早期。最直观的例子是 OpenHands + Claude-3.5-Sonnet：执行成功率从早期的 42% 升到晚期的 72%。晚执行的测试更有的放矢——Agent 此时已锁定可疑区域。
 
-> Late-stage executions (66–100% of conversation) consistently achieve higher success rates than early-stage ones (57.9% average)
+老模型呈现相反的分布：SWE-agent + GPT-4 有 42.4% 的执行发生在早段，晚期只有 29.6%，更像"边跑边看"的试探风格。
 
-**含义**：
+这里要澄清一个容易被误读的数字：所有执行的整体平均通过率是 57.9%，单配置范围从 30.4%（SWE-agent + GPT-4o）到 79.3%（LiveSWEAgent + Claude-Opus-4.5）。57.9% 是全部执行的平均结果，不是早期执行的通过率。
 
-| 执行阶段 | 成功率 |
-|----------|--------|
-| **早 (0-33%)** | 较低（agent 还在摸索）|
-| **中 (33-66%)** | 中等 |
-| **晚 (66-100%)** | 较高（agent 已锁定 bug 区域）|
+## 五、RQ2：限制执行几乎不掉成功率
 
-**OpenHands + Claude-3.5-Sonnet** 的具体例子：成功率从**早 42% → 晚 72%**——**30 个百分点**的提升！
+### 5.1 总表：六组对照，无一显著
 
-**这支持了"execution 是有效反馈"的一面**——但**只在 late-stage 有用**。
+| Agent | 子集 | 禁止 | Quota-1 | Quota-3 | 预算引导 | 不限制 |
+|-------|------|------|---------|---------|----------|--------|
+| Claude Code | Lite | 63.0† | 61.0 | 62.0 | 63.0 | 64.0 |
+| Claude Code | Verified | 64.0† | 64.0 | 65.0 | 67.0 | 67.0 |
+| Codex | Lite | 74.0† | 68.0 | 69.0 | 71.0 | 73.0 |
+| Codex | Verified | 73.0† | 72.0 | 73.0 | 71.0 | 75.0 |
+| OpenCode | Lite | 7.0 | 14.0 | 7.0 | 9.0 | 6.0 |
+| OpenCode | Verified | 13.0 | 17.0 | 11.0 | 13.0 | 14.0 |
 
-### 5.3 什么问题让人用 execution？
+† 表示 Prohibited 与 Unrestricted 的差距在 3 个百分点以内。所有六组 McNemar 检验均不显著（p > 0.05）。
 
-论文把 execution 行为按"目的"分类：
+这张表信息量很大，逐行看：
 
-1. **复现 execution**（reproduction）：跑测试看 bug 是否真存在
-2. **本地化 execution**（localization）：跑测试定位 bug 所在区域
-3. **验证 execution**（validation）：跑测试确认 patch 修好了
+- **Claude Code**：Lite 上禁止执行 63%，不限制 64%，差 1 个百分点，同时省 56% token、48% 墙钟时间（禁止模式下单任务 531–573 秒，不限制 1028–1234 秒）。
+- **Codex**：最反直觉的一行。Lite 上禁止执行 74% 是该行五种配置里的最高分，比不限制还高 1 个百分点。更狠的是 Quota-1（68%）和 Quota-3（69%）比完全禁止还差——部分执行权限提供的反馈不足以支撑有效迭代，反而可能误导。摘要中"1.25 个百分点"是商业 Agent 四组对照的平均值，Codex 单项在 Lite 上甚至是负差距。
+- **OpenCode**：Lite 与 Verified 合并看，禁止与不限制都是 10%，同时 token 少用约三分之二。但它的最优配置是 Quota-1——Lite 上 14% 对不限制的 6%，Verified 上 17% 对 14%。
 
-每种 execution 的"投入-产出比"差异**巨大**——后面 RQ3 会展开。
+### 5.2 成本差距比效果差距大得多
 
----
+三种 Agent 的成本结构差异悬殊。从禁止到不限制，token 消耗的增幅：Claude Code 129–163%，OpenCode 36–208%，Codex 只有 0.8–15.5%。基线不同是主因——禁止模式下 Claude Code 每任务约 65K token，Codex 约 470K，OpenCode 约 150K。Codex 本来就把大量 token 花在读代码上，执行占比小，所以省不出多少。
 
-## 六、RQ2：execution 对修复成功有多关键？
+时间上的结论类似：Claude Code 禁止执行省 48–54% 墙钟时间；Codex 最优的 Quota-1 只省 3–6%，其他配置几乎没有差异。
 
-这是论文的**最核心问题**。结果如下：
+由此得出各 Agent 的最优省钱配置并不相同：Claude Code 用 Prohibited（省 56–62% token，成功率差 1–3pp），Codex 用 Quota-1（省 21–25% token，成功率相当），OpenCode 也是 Quota-1，但原因不同（见 5.4）。
 
-### 6.1 商业闭源 agent：Claude Code
+### 5.3 三重稳健性验证
 
-| Paradigm | Resolve Rate | Token 用量 | Wall-clock |
-|----------|--------------|-----------|-----------|
-| **Prohibited** | **63%** | 44% (基线 100%) | 52% |
-| **Unrestricted** | **64%** | 100% | 100% |
+"限制执行不掉点"这个结论经受了三道检验：
 
-**差距**：**1 个百分点**（不显著，p>0.05）
+1. **统计口径**：McNemar 配对检验全部不显著之外，论文还做了 TOST 等价性检验（等价带 ±5pp）——不是"没测出差异"，而是"主动确认了差异不超过等价带"。85% 的实例在所有五种配置下结果完全相同。
+2. **零执行子集**：只看 Prohibited 模式下确实一次都没执行的实例（N=84），最差的一格（Claude Code Verified，−4.8pp）仍在等价带内。
+3. **工具级硬约束**：在 Claude Code + Verified 上用沙箱强制禁执行重跑，结果 63/100 对 67/100（−4.0pp），在等价带内，省 62% token、54% 墙钟时间。这排除了"软约束没拦住、结论失真"的可能。
 
-**结论**：在 Claude Code + Claude Sonnet 4.5 上，**完全禁止执行** vs **无限制执行**——**修复效果几乎一样**，但**节省 56% token + 48% wall-clock**。
+另一个排除项是数据泄漏：Qwen2.5-Coder-32B 训练截止早于 Verified，在这个低污染组上等价性依然成立（Lite 7.0% 对 6.0%，Verified 13.0% 对 14.0%）。
 
-### 6.2 商业闭源 agent：Codex CLI (GPT-5.2-xhigh)
+### 5.4 短上下文模型的边界效应
 
-趋势一致——1.25pp gap（按 abstract 报告），节省 62% token + 54% wall-clock。
+OpenCode 的 Quota-1 优势来自一个边界机制。Qwen2.5-Coder-32B 只有 65K 上下文，无限制模式下测试输出挤占上下文，非空补丁率从 Quota-1 的 74/100（Lite）和 76/100（Verified）跌到 50/100 和 56/100——大量任务连补丁都产不出来。论文称之为小模型的边界效应：对短上下文模型，一次精准执行好过多次冗余执行，因为上下文是比 token 更硬的约束。
 
-### 6.3 开源 agent：OpenCode + Qwen2.5-Coder-32B
+## 六、RQ3：为什么执行帮不上忙
 
-| Paradigm | Resolve Rate |
-|----------|--------------|
-| **Prohibited** | 10% |
-| **Unrestricted** | 10% |
+RQ2 说执行贵而低效，RQ3 解释原因。在 600 个（Agent, 基准, 实例）格子里，作者把 Prohibited 与 Unrestricted 结果翻转的案例逐一人工检查——两者近乎对称：禁止成功 / 不限制失败 24 例，反向 29 例——然后给出两个原因，并用复杂度分层做了压力测试。
 
-**差距 ≈ 0pp**——**禁止 execution** vs **不限制 execution**——**完全没区别**。
+### 6.1 原因一：复现执行对定位几乎没有增益
 
-**这个结果尤其重要**——Qwen2.5-Coder-32B 是**开源 + 训练数据裁剪截止到 SWE-bench 之前**——**完全没有数据泄漏嫌疑**。但 execution 不帮它。
+论文把"首次源码编辑之前（不含测试文件编辑）的测试执行"定义为复现执行，用来检验它能否帮 Agent 找对要改的文件。定位准确性用 Hit（至少编辑了一个正确文件）和 Recall（正确文件中被编辑的比例）衡量。
 
-### 6.4 统计显著性
+结果是三组数字：55.2% 的 Claude Code 成功案例用过复现执行（64/116）；但无论禁不禁执行，定位准确率都高于 95%；Claude Code 的 164 次复现执行里，只有 80 次（48.8%）产生可行动的反馈，其余 84 次（51.2%）没有产出定位信息。
 
-| 比较 | Resolve Rate Gap | 统计显著性 |
-|------|------------------|-----------|
-| Claude Code Prohibited vs Unrestricted | 1.0 pp | p > 0.05 (不显著) |
-| Codex Prohibited vs Unrestricted | 1.25 pp | p > 0.05 (不显著) |
-| OpenCode + Qwen2.5-Coder-32B | ≈ 0 pp | 等价 (p > 0.05) |
+也就是说，在论文研究的那类 bug 上，Agent 不跑测试也基本知道改哪里——复现执行花了钱，没有买到定位增益。
 
-**全部不显著**——这就是论文标题 "To Run or Not to Run" 的核心立意：**运行 vs 不运行基本没差**。
+### 6.2 原因二：执行反馈常常纠正不了错误
 
-### 6.5 反向 case：Quota-1 在某些场景**最好**
+三个数字构成第二层解释：
 
-论文还发现了一个**反直觉**的现象：
+- 54–66% 的商业 Agent 成功案例在单次编辑后就完成修复，执行反馈没有参与迭代；
+- 81–100% 的失败案例通过了 Agent 自己的验证，却没通过官方 SWE-bench 评估——Agent 自写的测试比官方测试宽松，"我验过了"和"真修好了"是两个标准；
+- OpenCode 是另一种失败形态：它重试更频繁，但失败案例中只有 11% 能通过自验——Qwen2.5-Coder-32B 通常在"自验通过"发生之前就已经失败。整体看，15–34% 的验证反馈是环境错误而非真实测试结果，信号质量本身就打折。
 
-> The open-source agent (Qwen2.5-Coder-32B, 65K-token context) does best with a single well-chosen execution (Quota-1) rather than Unrestricted.
+推论是：给 Agent 更多执行机会，并不等价于给它更多纠错机会。反馈要能转化为修复，前提是 Agent 有能力消化它。
 
-**含义**：对于**短上下文**的模型，**1 次精准执行**比**多次冗余执行**更好——因为**多次执行**会塞满上下文。
+### 6.3 复杂度分层："越复杂越要执行"的假设被否定
 
-这是一个**模型规模 vs execution 频率**的 tradeoff：模型越弱，越要**精准投资**而不是"广撒网"。
+一个自然的补救假设是：执行对简单 bug 没用，但对多文件、多 hunk 的复杂 bug 应该有用。论文按 gold patch 的 hunk 数把 Verified 上的实例分桶重算（Prohibited / Unrestricted / 差距，单位 pp）：
 
----
+| 分桶（实例数） | Claude Code | Codex | OpenCode |
+|----------------|-------------|-------|----------|
+| 1 hunk（62） | 72.6 / 79.0 / −6.5 | 80.6 / 83.9 / −3.2 | 18.2 / 18.2 / ±0 |
+| 2–3 hunks（25） | 52.0 / 60.0 / −8.0 | 60.0 / 60.0 / ±0 | 13.0 / 13.0 / ±0 |
+| ≥4 hunks（13） | 46.2 / 23.1 / +23.1 | 61.5 / 61.5 / ±0 | 20.0 / 10.0 / +10.0 |
 
-## 七、RQ3：什么时候 execution 有效，什么时候失效？
+差距不随复杂度单调增长，反而在最大的桶上翻转：Claude Code 的 ≥4 hunks 桶里，禁止执行的解决率几乎是不限制的两倍。按文件数、增删行数分桶得到同样的非单调模式。论文给出的解读是：多 hunk 的 bug 需要整体性推理，试错式执行反而用测试输出挤占上下文、打断推理；"当前执行反馈随 bug 复杂度增值"这一假设被数据否定。小桶（N=13）样本少，方向性结论需谨慎，但至少"复杂 bug 更受益于执行"没有获得支持。
 
-论文给出 2 个**根本原因**解释 RQ2 的反直觉结果。
+## 七、实践启示
 
-### 7.1 原因 1：复现 execution 提供 localization 但效果有限
+论文讨论部分的建议，按可直接执行的程度排列：
 
-**统计**：
-- 55% Claude Code 成功 case 用了 reproduction execution
-- 但 localization accuracy 在两种模式下都 > 95%
-- 只有 **48.8% 的 reproduction execution 产生 actionable feedback**（剩余 51.2% 是**没用的反馈**）
+**成本敏感时，默认限制执行。** 对 SWE-bench 风格的 bug 修复，限制执行以远低的成本拿到相当的解决率，还免掉 per-repo 测试环境的搭建维护。具体默认值因 Agent 而异：Claude Code 用 Prohibited，Codex 和短上下文开源模型用 Quota-1，Quota-Limited 的中间档反而要小心——部分权限可能比禁止更差。
 
-**含义**：
-- Reproduction execution 不是"无用"——它**确实帮一部分 case 定位 bug**
-- 但**另一些 case 不需要**（已经有 ground-truth 提示、bug 很浅显）
-- **强制每个 case 都跑一次 = 浪费 51.2% 的 token**
+**有明确证据时，才选择性放开执行。** 论文的原话是"当有清晰证据表明项目级反馈对该任务或该 Agent 有价值时"。判断依据可以是：定位准确率是否真的依赖运行时反馈、测试套件是否有足够信号质量。
 
-### 7.2 原因 2：Execution 反馈常常无法纠正错误
+**改进方向在反馈质量，不在执行次数。** 81–100% 的自验假阳性说明，让 Agent 的测试更接近官方评估的标准，比让它多跑几次测试更有价值。论文提出的研究方向是 adaptive execution allocation：Agent 学习在预期信息增益超过被误导风险时才请求执行。
 
-**统计**：
-- **54-66%** 商业 agent case 在**单次 edit 就修好**——execution 反馈**根本没派上用场**
-- **81-100%** 失败的 case **通过了** agent 自己的验证，但**没通过** 官方 SWE-bench 评估
-- OpenCode + Qwen2.5-Coder-32B: **只有 11% 失败的 case 通过 self-validation**
+**一条超出程序修复的原则。** 论文的结论段写道：Agent 从更深的推理中获益，胜过从更频繁的环境交互中获益。执行反馈是双刃剑——验证正确假设时有用，触发无效搜索循环或把 Agent 带偏时有害。
 
-**含义**：
+适用边界同样来自论文：结论限定于仓库级 bug 修复；性能优化（需要 profiling）和安全漏洞分析（需要动态分析）这类任务可能仍需要执行。禁止执行也不等于断网——Agent 仍可自由读代码、用大上下文。另外，通过测试不等于补丁质量合格，官方评估之外还应引入人工评审或静态分析。
 
-**核心问题**：agent 的"我验证通过了"和 SWE-bench 官方的"通过"判定是**两个标准**。agent 写的测试函数常常不如官方测试严格，所以**agent 自验成功 ≠ 真修复**。
+## 八、常见问题
 
-这意味着：
-- 即使 agent 跑了 N 次测试，**agent 视角的成功 ≠ 真实成功**
-- 给 agent 越多执行机会，**agent 越可能"自欺欺人"**——以为修好了但实际没修好
+**Q1：这篇论文是不是说"代码执行没用"？**
 
-### 7.3 按 gold-patch 复杂度分层
+不是。它说的是执行的边际贡献小且分布不均：对六成上下的情况（54–66% 单次编辑即可修好），执行是纯成本；对另一部分案例（晚期执行成功率显著更高、复杂度分层里的 1 hunk 桶禁止执行反而更差），执行仍有价值。正确的读法是"收益集中，不该无差别供给"。
 
-论文还**按修复复杂度**做了分层分析：
+**Q2：我应该立刻关掉 Agent 的代码执行吗？**
 
-| Gold-Patch 复杂度 | Execution 收益 |
-|--------------------|----------------|
-| **简单**（单行修改）| 几乎无用 |
-| **中等**（多行修改）| 中等有用 |
-| **困难**（多文件）| 有用（但仍不显著）|
+分三步：先看你的 Agent 属于哪一类——Claude Code 类（执行占 token 大头）优先试 Prohibited；Codex 类（读代码已花大量 token）省不了多少，动不动它也行；短上下文开源模型用 Quota-1。再用自己的任务样本跑 A/B，确认解决率在可接受范围。
 
-**含义**：**复杂 bug 才值得 execution 投资**——简单 bug 不需要。
+**Q3：3000 次实验、每格 100 实例，样本够吗？**
 
----
+每格 100 实例的置信区间确实宽（Wilson 95% CI 约 ±9pp），单个格子读数要谨慎，这正是论文用配对检验加等价性检验而不是裸比数字的原因。7745 条轨迹的观察性分析与 600 格的分层检查提供了交叉验证，但在程序修复领域，这仍属于中等规模，跨基准外推需要更多研究。
 
-## 八、实践启示：execution 不该是默认，应是资源
+**Q4：结论对开源模型成立吗？**
 
-论文的核心结论（摘要原话）：
+成立，且开源模型是最干净的一组：Qwen2.5-Coder-32B 训练截止早于 SWE-bench Verified，无记忆污染，禁止与不限制仍等价。但注意它的最优配置是 Quota-1 而不是 Prohibited——上下文压力使它在无限制模式下连补丁都产不全。
 
-> **Execution, therefore, should be treated as a resource with an explicit cost-benefit tradeoff, not a default capability.**
+**Q5：怎么把"按需执行"落地？**
 
-### 8.1 给 AI 编程 Agent 工程师
+论文给的路线是训练一个执行价值预测器（基于任务特征预测该不该执行、值几次），轻量做法是先在 prompt 里引入 Budget-Guided 的成本意识，观察执行次数下降是否伴随解决率稳定。论文没有实现预测器，这是它留下的开放问题。
 
-| 建议 | 操作 |
-|------|------|
-| **不要无脑开启 execution** | 默认设为"按需"或"Quota-1" |
-| **动态判断 execution 价值** | 用 cheap heuristic 判断当前 case 是否需要执行 |
-| **保留多 paradigm 配置** | 商业 / 开源 / 不同模型用不同默认值 |
-| **环境成本要算** | 每个 repo 一个 Docker image 是长期税 |
+## 九、自测题
 
-### 8.2 给 AI 编程 Agent 用户
-
-| 场景 | 推荐 paradigm |
-|------|---------------|
-| **简单 bug** | Prohibited（省钱） |
-| **中等 bug** | Reproduction 或 Quota-1 |
-| **复杂 bug** | Unrestricted |
-| **预算敏感** | Prohibited（可接受 1pp 损失） |
-
-### 8.3 给 program repair 研究者
-
-**新的研究问题**（论文留的开放问题）：
-- **How should an agent decide _when_ to invest in execution?**
-- 这是**agent 决策**问题，不是"execution 收益"问题
-- 答案可能是：训练一个**execution-or-not predictor**（基于 prompt 特征）
-
----
-
-## 九、4 个 execution paradigms 详解
-
-为方便实操复现，把 4 paradigms 的具体实现逻辑展开：
-
-### 9.1 Prohibited
-
-- **含义**：agent **完全不能**调用任何执行工具（bash/python/test runner）
-- **实现**：在 agent 的工具白名单中**移除**所有执行类工具
-- **限制场景**：不依赖执行反馈的 agent 设计（如 Agentless 风格的 localization-repair-validation 流水线）
-
-### 9.2 Reproduction
-
-- **含义**：agent **只能**调用 execution 来**复现 bug**——即只允许"先跑用户给的重现步骤，验证 bug 存在"
-- **实现**：在 agent prompt 中加限制 "你只能跑用户给的命令，不可调用 pytest/python"
-- **限制场景**：用户提供了明确的重现命令（如 GitHub issue 里的 `pytest test_xxx.py`）
-
-### 9.3 Quota-1
-
-- **含义**：agent **总共只能**调用 1 次 execution
-- **实现**：限制 LLM 最多生成 1 个 tool_call，且工具类型必须是 execution
-- **限制场景**：短上下文模型（避免塞满）+ 用户希望严格控制成本
-
-### 9.4 Unrestricted
-
-- **含义**：agent **无限制**调用 execution
-- **实现**：默认 paradigm
-- **限制场景**：当前 SOTA Agent 的默认行为
-
----
-
-## 十、不适用场景与红线
-
-- ❌ **Agentless 风格的流水线**（完全不靠 agent loop）：execution 收益研究不适用——流水线已经固化了
-- ❌ **测试覆盖率很低的项目**：execution 反馈质量依赖测试本身的完整性——测试本身不完善的项目 execution 收益更低
-- ❌ **超长上下文任务（>100K tokens）**：execution 反馈会塞满上下文——Quota-1 更合适
-- ✅ **SWE-bench 类 benchmark 评估**：本研究直接适用——可用 Prohibited 节省 56% token
-- ✅ **企业级 code agent 部署**：本研究结果可参考——重新评估是否需要默认开启 execution
-- ✅ **开源 + 短上下文模型**：Qwen2.5-Coder-32B 案例——**Quota-1 可能是更好的默认**
-
----
-
-## 十一、自测题
-
-1. **核心问题**："generate-run-revise" paradigm 的 3 步循环是什么？每一步的作用是？
-2. **4 paradigms** 的顺序是什么？从最严到最宽排列，并说明每个的适用场景。
-3. **Claude Code 在 Prohibited 下 63% vs Unrestricted 下 64%**——1pp 的 gap 在统计上显著吗？为什么论文作者仍然认为这是个重要发现？
-4. **OpenCode + Qwen2.5-Coder-32B 为什么选它**做实验？论文想排除哪种 confound？
-5. **为什么 Quota-1 在某些场景下比 Unrestricted 更好**？这与"上下文窗口"有什么关系？
-6. **本地化 reproduction execution** 的 actionable feedback 比例是多少？这个数字意味着什么工程含义？
-7. **81-100% 失败 case 通过 self-validation 但没通过官方评估**——这暴露了 agent 设计的什么本质问题？
-8. **按 gold-patch 复杂度分层**时，execution 在哪类 bug 上收益最大？这与默认 paradigm 选择有什么关系？
+1. "generate-run-revise"循环的三步各是什么？论文挑战的是这个循环里的哪个默认假设？
+2. 论文的四类执行范式是什么？五种配置如何从四类实例化？Budget-Guided 与 Quota 系列的机制差异在哪？
+3. 摘要里的"1.25 个百分点"统计口径是什么？为什么 Claude Code 单项（1pp）和 Codex Lite（−1pp）都支持同一结论？
+4. Codex 的 Quota-1 / Quota-3 比完全禁止还差，OpenCode 却在 Quota-1 上拿到最高解决率——同样是配额限制，为什么两个 Agent 的反应相反？这对"给 Agent 部分放开执行"的工程实践意味着什么？
+5. 57.9% 这个数字指的是什么？它和"晚期执行成功率更高"分别说明什么？
+6. 复现执行的三组数字（55.2%、95%、48.8%）分别是什么？合起来说明什么？
+7. "81–100% 自验假阳性"和 OpenCode 的"11%"是两种不同的失败形态，差在哪？
+8. 复杂度分层的结果为什么否定了"复杂 bug 更需要执行"？这个分析的证据强度有什么限制？
 
 <details>
 <summary>参考答案</summary>
 
-1. generate 生成代码 patch → run 执行测试看输出 → revise 根据反馈改 patch；循环直到通过。
+1. generate 生成补丁，run 执行测试观察输出，revise 按反馈修改。被挑战的假设：执行反馈是修复成功的关键信号，砍掉执行成功率会大幅下降。
 
-2. Prohibited → Reproduction → Quota-1 → Unrestricted。Prohibited 适合预算敏感 + 简单 bug；Reproduction 适合用户给了明确重现命令；Quota-1 适合短上下文模型；Unrestricted 是当前默认。
+2. 四类：Prohibited、Quota-Limited、Budget-Guided、Unrestricted；Quota-Limited 以 K=1、K=3 实例化，共五种配置。Budget-Guided 不强制限制，靠"每次执行扣点"的成本提示引导；Quota 系列是硬性的次数上限（prompt 级软约束，按 intention-to-treat 计数）。
 
-3. **1pp 不显著（p>0.05）**。论文作者认为重要的原因：它证明了"execution 的边际价值 ≈ 0"——意味着工程上"无脑开启 execution"是**系统性浪费**。即使 1pp 是真实差距，56% token 节省 + 48% wall-clock 节省在生产环境也是**压倒性优势**。
+3. 指商业 Agent（Claude Code、Codex）上 Prohibited 与 Unrestricted 解决率差距的平均值，McNemar 检验均不显著。Claude Code 差 1pp、Codex Lite 上禁止反而高 1pp，两个方向都不支持"执行带来大幅增益"，且都在 ±5pp 等价带内。
 
-4. 选 Qwen2.5-Coder-32B 是因为它是**开源 + 训练数据裁剪截止到 SWE-bench 之前**——**完全排除数据泄漏嫌疑**（闭源模型可能在 SWE-bench 上预训练过）。这让 OpenCode 实验成为 execution 效果的"纯净测试"。
+4. 两个机制不同。Codex 的下降来自反馈不足：部分执行权限给出的反馈不足以支撑有效迭代，反而可能把 Agent 引向错误方向，所以中间档比两端都差。OpenCode 的上升来自上下文压力：65K 上下文在无限制模式下被测试输出挤占，非空补丁率从 74/100、76/100 跌到 50/100、56/100，Quota-1 用一次精准执行换回上下文空间。工程含义：中间档不是安全的折中——反馈充足的模型上它可能比禁止更差，上下文紧张的模型上它又可能是最优解，配额默认值必须按 Agent 和模型的实际瓶颈定。
 
-5. **多次 execution 反馈会塞满短上下文**——对于 65K-token 的 Qwen2.5-Coder-32B，10 次执行日志可能占用 50K+ tokens，挤占 patch 空间。**1 次精准执行**留更多上下文给"实际修复"工作。
+5. 57.9% 是全部 7745 条轨迹中所有执行的平均通过率（单配置 30.4%–79.3%）；"晚期更高"是同一批执行按对话位置分段后的规律（如 OpenHands + Claude-3.5-Sonnet 从早段 42% 升到晚段 72%）。前者是总体水位，后者是时序规律。
 
-6. **48.8%**。这意味着复现 execution **一半以上** 是"无用功"——只消耗 token 不产生 actionable feedback。工程含义：默认让 agent 都跑 reproduction 是一次**系统性浪费**。
+6. 55.2% 是 Claude Code 成功案例中使用过复现执行的比例（64/116）；95% 是禁止与不限制两种模式下都高于该值的定位准确率；48.8% 是复现执行产生可行动反馈的比例（164 次中 80 次）。三者合起来：复现执行被广泛使用，但没带来定位增益，一半以上没有产出。
 
-7. 暴露的本质问题：**agent 自己写的测试** vs **官方 ground-truth 测试**是两个标准。Agent 倾向于写宽松测试（让自己"通过"），但官方测试更严格——这是 evaluation gaming 的一个例子。
+7. 商业 Agent 的失败形态是"自验通过但官方不过"——自写测试比官方宽松，验证信号失真；OpenCode 的失败形态是能力不足——重试频繁但失败案例中只有 11% 能构造出通过的自验，多数在验证环节之前就失败了，另有 15–34% 的验证反馈是环境错误。
 
-8. **复杂 bug**（多文件修改）execution 收益最大；**简单 bug** execution 几乎无用。工程含义：默认 paradigm 可以基于**bug 复杂度动态切换**——简单 case 用 Prohibited，复杂 case 用 Unrestricted。
+8. 解决率差距随 hunk 数非单调：1 hunk 桶禁止更差（−6.5pp），≥4 hunks 桶禁止反而好近两倍（+23.1pp）。多 hunk bug 需要整体推理，试错执行挤占上下文反而破坏推理。证据限制：≥4 hunks 桶只有 13 例，且仅覆盖 Verified，方向性结论需更大样本确认。
+
 </details>
 
----
+## 十、术语对照表
 
-## 十二、术语对照表
+| 英文术语 | 中文 | 说明 |
+|----------|------|------|
+| Program Repair | 程序修复 | 自动定位并修复 bug 的任务 |
+| Generate-Run-Revise | 生成-运行-修改循环 | 主流编程 Agent 的基础循环 |
+| Execution Paradigm | 执行范式 | 论文对执行权限的四种设置 |
+| Prohibited | 禁止执行 | 最严范式 |
+| Quota-Limited (K=1/K=3) | 配额限制 | 最多 K 次执行 |
+| Budget-Guided | 预算引导 | 不强制限制，靠成本提示引导 |
+| Unrestricted | 不限制执行 | 当前主流 Agent 的默认 |
+| Intention-to-Treat | 意向性处理原则 | 违规执行尝试也计为"已执行" |
+| McNemar's Test | McNemar 检验 | 配对二分类显著性检验 |
+| TOST | 等价性检验 | 主动确认差异不超过 ±5pp 等价带 |
+| Resolve Rate | 解决率 | 补丁通过官方测试的比例 |
+| Reproduction Execution | 复现执行 | 首次源码编辑前的测试执行 |
+| Actionable Feedback | 可行动反馈 | 能提供定位信息的执行输出 |
+| Gold-Patch | 参考补丁 | 官方标准修复，用于复杂度分层 |
+| Self-Validation | 自验 | Agent 用自写测试验证修复 |
+| Non-Empty Patch Rate | 非空补丁率 | 至少产出补丁的任务比例 |
+| SWE-bench Lite / Verified | SWE-bench 两个子集 | 真实 GitHub issue 修复基准 |
+| Trace | 轨迹 | Agent 决策与工具调用的完整记录 |
 
-| 英文术语 | 中文 | 首次出现 |
-|----------|------|----------|
-| Program Repair | 程序修复 | 一 |
-| Code Execution | 代码执行 | 一 |
-| Generate-Run-Revise Paradigm | 生成-运行-修改范式 | 一 |
-| Code Agent | 编程 Agent | 一 |
-| SWE-bench | GitHub 真实 issue 修复 benchmark | 一 |
-| Prohibited | 完全禁止 execution | 三 / 9.1 |
-| Reproduction | 复现 bug 用 execution | 三 / 9.2 |
-| Quota-1 | 限制 1 次 execution | 三 / 9.3 |
-| Unrestricted | 不限制 execution | 三 / 9.4 |
-| McNemar's Test | McNemar 检验（配对二分类显著性检验） | 六 6.4 |
-| Cost-Benefit Tradeoff | 成本-收益权衡 | 七 |
-| Localization Accuracy | 定位准确率 | 七 7.1 |
-| Gold-Patch | 黄金补丁（参考标准）| 七 7.3 |
-| Self-Validation | Agent 自己的验证 | 七 7.2 |
-| Tool Calling | 工具调用 | 四 |
-| Claude Sonnet 4.5 | Claude 4 代旗舰模型 | 四 4.1 |
-| GPT-5.2-xhigh | OpenAI GPT-5.2 顶级推理模型 | 四 4.1 |
-| Qwen2.5-Coder-32B | 阿里开源代码模型 32B 参数 | 四 4.1 |
-| Agentless | 不依赖 agent loop 的流水线 | 一 / 六 6 |
-| Trace | 轨迹（agent 决策 + 工具调用记录）| 四 4.3 |
+## 十一、进阶路径
 
----
+1. 先读[论文原文](https://arxiv.org/abs/2606.26978)，重点看 Table 2、Table 3 和 4.3 节的分析链条；
+2. 再读 SWE-bench 论文与[官方网站](https://www.swebench.com/)，理解基准设计与记忆污染争议；
+3. 对照 Agentless 与 SWE-agent 两系工作，理解"要不要 agent loop"与"agent 内要不要执行"是两个独立问题；
+4. 动手方向：为自己的 Agent 实现执行预算或执行价值预测器，用小样本 A/B 验证。
 
-## 十三、参考链接
+## 十二、资料口径说明
 
-- 论文 arXiv 页面：<https://arxiv.org/abs/2606.26978>
-- 论文 PDF：<https://arxiv.org/pdf/2606.26978>
-- 论文 HTML 版（experimental）：<https://arxiv.org/html/2606.26978v1>
-- DOI：<https://doi.org/10.48550/arXiv.2606.26978>
-- ISSTA 2026 会议：<https://issta2026.org/>（占位—实际网址待 ISSTA 2026 公布）
-- Claude Code：<https://www.anthropic.com/claude-code>
-- Codex CLI：<https://openai.com/index/codex/>
-- OpenCode（开源）：<https://github.com/opencode-io/opencode>
-- SWE-bench leaderboard：<https://www.swebench.com/>
+本文所有事实性陈述基于以下来源，采集于 2026-09-21：
 
----
+1. [arXiv:2606.26978 摘要页](https://arxiv.org/abs/2606.26978)：标题、作者、单位、提交日期、录用信息、摘要数字（7745 条轨迹、3000 次修复、平均 8.8 次、1.25pp、2–19 次范围、57.9%、54–66%、81–100%、11%、65K 上下文、Quota-1 边界效应、"资源而非默认能力"表述）；
+2. [论文 HTML 全文](https://arxiv.org/html/2606.26978v1)：Table 2 全部 30 个解决率读数、Table 3 的 Wilson CI 与 McNemar p 值、成本分析（token 增幅 129–163% / 0.8–15.5% / 36–208%，基线 65K / 470K / 150K，墙钟 531–573 秒对 1028–1234 秒）、硬约束重跑（63/100 对 67/100，省 62% token、54% 时间）、TOST 等价带 ±5pp、零执行子集 N=84、85% 全模式一致、复现执行明细（64/116、164 次、48.8%）、复杂度分层表（Table 13）、RQ1 时序与结果统计、讨论与有效性威胁两节。
 
-## 十四、译者总结
+事实边界与不确定性：
 
-这篇 ISSTA 2026 论文是 2026 年最值得读的 AI 工程实证之一。它**直接挑战了所有 AI 编程 Agent 的默认假设**——"execution 是修复 bug 的关键"。
-
-**核心数字**：
-- **7745 traces 分析**——execution 频率从 2 到 19 次 / task
-- **3000 controlled repair attempts**——execution 边际价值仅 1.25pp
-- **56-62% token 节省** + **48-54% wall-clock 节省**
-- **81-100% 失败 case 通过 self-validation 但没通过官方**——agent 自验机制有 bug
-
-**最终建议**：
-
-| 角色 | 行动 |
-|------|------|
-| **AI Agent 工程师** | 默认 paradigm 改为"按需"或 Quota-1；不要无脑开启 execution |
-| **AI Agent 用户** | 简单 bug 用 Prohibited；复杂 bug 用 Unrestricted |
-| **研究者** | 训练 execution-or-not predictor（基于 prompt 特征）|
-| **评估者** | 评估时用 Prohibited 节省预算 |
-
-执行能力**不是默认能力**——而是**该被严肃管理的资源**。
+- 论文为 2026-06-25 提交的 v1，已经 ISSTA 2026 录用，本文未独立复现实验，所有数字转引自论文报告；
+- ≥4 hunks 分桶仅 13 例，论文自身标注小桶读数噪声大；
+- Budget-Guided 的成本点数与提示语为论文原设计，引用了原文 prompt 的关键句，未逐字翻译；
+- 结论的外推范围以论文 5.2 节"有效性威胁"为准，本文第七、八节未超出该范围给出工程建议。
 
 ---
 
@@ -484,107 +343,5 @@ loop
 **论文标题**：To Run or Not to Run: Analyzing the Cost-Effectiveness of Code Execution in LLM-Based Program Repair
 **会议**：ISSTA 2026
 **作者**：Zhihao Lin, Junhua Zhu, Mingyi Zhou, Xin Wang, Zhensu Sun, Renyu Yang, David Lo, Li Li
-**arXiv 提交日**：2026-06-25
-**译文日期**：2026-06-30
-**译文长度**：约 9500 中文字（24KB / 14 节）
 
-—— 钳岳星君（AI 译者）2026-06-30
----
-
-## 十、常见问题 FAQ
-
-### Q1：论文的结论是不是"代码执行没用"？
-
-不是。论文的结论是"代码执行的**边际贡献**很小"——在 SOTA 模型上，禁止执行 vs 不限制执行，修复成功率差距只有 1.25 个百分点。但这意味着对于简单 bug（54-66% 的 case），执行可能是浪费；对于复杂 bug，执行可能仍有价值。
-
-### Q2：我应该立刻关掉 AI 编程 agent 的代码执行功能吗？
-
-取决于你的场景。如果你用的是 SOTA 模型（Claude Sonnet 4.5、GPT-5.2、Qwen2.5-Coder-32B），可以考虑默认禁止执行，只在复杂 bug 时开启。如果你用的是较弱的模型，执行反馈可能更有价值。
-
-### Q3：论文的实验只跑了 3000 次修复尝试，够吗？
-
-论文的作者们做了 7745 traces 的纵向分析 + 3000 次端到端修复尝试，这在 program repair 领域已经是比较大的规模。但相比 SWE-bench 全集（约 2300 个实例），样本量还是有限。结论的通用性需要更多研究验证。
-
-### Q4：开源模型（Qwen2.5-Coder-32B）的结果和商业模型差不多吗？
-
-论文的结论是 3 个 agents（Claude Code、Codex CLI、OpenCode）的结论**一致**：执行对修复成功率的边际贡献很小。这意味着结论可能跨模型通用。但开源模型的绝对修复成功率可能低于商业模型。
-
-### Q5：如果我的 agent 已经用了 execution，怎么改成"按需执行"？
-
-论文建议训练一个"execution-or-not predictor"，根据 bug 特征（代码复杂度、测试复杂度、错误消息可操作性）预测是否需要执行。简单实现可以用 prompt 工程让 agent 自己判断"需不需要执行测试"。
-
----
-
-## 十一、自测题
-
-完成以下自测题，评估你对本文核心概念的理解：
-
-**问题 1**: 论文的核心发现是什么？为什么它反直觉？
-<details>
-<summary>查看答案</summary>
-答：在 SOTA 模型上，完全禁止代码执行 vs 不限制执行，修复成功率差距只有 1.25 个百分点（统计上不显著），但节省的成本高达 56-62% 的 token 和 48-54% 的 wall-clock。这反直觉是因为当前所有 AI 编程助手都默认开启代码执行，假设它是必须的。
-</details>
-
-**问题 2**: 4 个 execution paradigms 的设计逻辑是什么？
-<details>
-<summary>查看答案</summary>
-答：Prohibited（完全禁止）vs Unrestricted（不限制）= 测量边际价值总量；Reproduction（只允许复现 bug）= 模拟现实流程；Quota-1（只允许 1 次执行）= 测试精准执行 vs 冗余执行。
-</details>
-
-**问题 3**: 为什么论文选了 3 个 agents（Claude Code、Codex CLI、OpenCode）？
-<details>
-<summary>查看答案</summary>
-答：选 2 个商业闭源模型（Claude Code、Codex CLI）验证 SOTA 商业模型的结论；选 1 个开源模型（OpenCode）避免数据泄漏（前 SOTA 模型可能预训练过 SWE-bench 训练集）。
-</details>
-
-**问题 4**: 根据论文结论，你会怎么配置你的 AI 编程 agent？
-<details>
-<summary>查看答案</summary>
-答：默认禁止执行（Prohibited），让 agent 先做"能否一个 edit 修好"的判断；如果需要执行，用 Quota-1（只允许 1 次）或 Reproduction（只允许复现 bug）；只有在复杂 bug 且 agent 判断需要时才用 Unrestricted。
-</details>
-
-**问题 5**: 论文的局限性是什么？
-<details>
-<summary>查看答案</summary>
-答：只测了 3 个 agents 和 2 个 SWE-bench 子集（各 100 实例）；只用 SWE-bench 评估（可能不代表所有 program repair 场景）；没研究"execution-or-not predictor"的实际实现效果。
-</details>
-
----
-
-## 十二、进阶路径
-
-如果你准备深入这个方向，建议按这个顺序：
-
-1. **先读论文原文**：arxiv.org/abs/2606.26978，看完整实验数据和统计检验
-2. **再读 SWE-bench 论文**：理解 benchmark 的设计和局限
-3. **然后读"generate-run-revise"相关论文**：理解 agent 循环的设计演变
-4. **最后设计并实现"execution-or-not predictor"**：把论文结论落地成实际功能
-
-进阶资源：
-
-- [论文原文](https://arxiv.org/abs/2606.26978)
-- [SWE-bench 官网](https://www.swebench.com/)
-- [ISSTA 2026 会议](https://conf.researchr.org/home/issta-2026)
-
----
-
-## 十三、资料口径说明
-
-本文的判断基于以下来源和取径：
-
-1. **论文原文分析**：基于 arXiv:2606.26978（ISSTA 2026 论文），23 页
-2. **实验数据解读**：基于论文中的 7745 traces + 3000 修复尝试 + 4 execution paradigms 的实证结果
-3. **SWE-bench benchmark 说明**：基于 SWE-bench 官方文档
-4. **事实边界**：论文实验只覆盖了 3 个 agents 和 SWE-bench 子集，结论的通用性需要更多研究验证
-
-**局限性**：
-
-- 论文是 2026-06-25 提交到 arXiv 的新论文，尚未经过会议正式评审
-- 实验结果基于特定 agent 版本和 SWE-bench 版本，不同版本可能有差异
-- 本文未独立复现实验结果，结论基于论文作者的报告
-
----
-
----
-
-—— 钳岳星君（AI 译者）2026-06-30 | 第57轮优化于 2026-07-01
+—— 钳岳星君（AI 译者）

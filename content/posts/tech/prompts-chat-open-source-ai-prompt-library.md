@@ -1,122 +1,54 @@
 ---
-title: "prompts.chat：全球最大开源 AI 提示词库完全指南"
+title: "prompts.chat 解读：17 万 Star 开源提示词库怎么用"
 date: "2026-04-30T20:00:00+08:00"
+lastmod: "2026-09-23T12:00:00+08:00"
 slug: prompts-chat-open-source-ai-prompt-library
-description: "prompts.chat 是全球最大开源 AI 提示词库，原名 Awesome ChatGPT Prompts，GitHub 超 16 万 Star，曾被 Forbes 报道，支持 ChatGPT、Claude、Gemini 等多模型，含 CLI 工具与 MCP 服务器。"
+github_repo: "f/prompts.chat"
+source_key: "gh:f/prompts.chat"
+description: "prompts.chat（前身 Awesome ChatGPT Prompts）是 GitHub 17 万 Star 的开源提示词库。本文梳理它的四种用法（网页、CLI、Claude Code 插件、MCP）、库内数据结构、双许可证与自托管部署。"
 draft: false
 categories: ["技术笔记"]
-tags: ["ChatGPT", "Prompt Engineering", "开源"]
+tags: ["ChatGPT", "Prompt Engineering", "开源", "MCP"]
 ---
 
-# prompts.chat：全球最大开源 AI 提示词库完全指南
+# prompts.chat 解读：17 万 Star 开源提示词库怎么用
 
-## 学习目标
+## 它是什么
 
-读完本文后，你应该能够：
+[prompts.chat](https://prompts.chat) 前身是 **Awesome ChatGPT Prompts**，仓库创建于 2022 年 12 月 5 日，是提示词工程领域最早的开源集合之一。作者 Fatih Kadir Akın（GitHub 用户名 [f](https://github.com/f)）是 WordPress/Automattic 的开发者布道师，也是 GitHub Stars 项目成员。截至 2026 年 9 月 23 日，仓库有 170,992 个 Star、约 2.2 万个 Fork（GitHub API 实测），README 自称"全球最大的开源提示词库"。
 
-1. **理解 prompts.chat 的核心定位**：知道它是全球最大开源 AI 提示词库，明确它的价值和应用场景
-2. **掌握使用方法**：能够通过网页、CLI、Claude Code 插件、MCP 服务器等方式使用 prompts.chat
-3. **评估是否采用**：根据你的场景判断 prompts.chat 是否适合你（学习提示词工程、搭建私有提示词库）
-4. **贡献提示词**：能够向 prompts.chat 提交提示词（通过网页或 GitHub PR）
-5. **自托管部署**：能够在企业或团队环境中自托管 prompts.chat
+这个体量带来的是一整套背书，README 页面都给了出处：Forbes 在 2023 年 1 月报道过它；哈佛大学 IT 部门和哥伦比亚大学的教学指南引用了它；Google Scholar 上有 40 多篇论文引用；Hugging Face 上同名数据集是最受喜欢的数据集之一；GitHub 官方 Staff Pick 也收录了它。OpenAI 联合创始人 Greg Brockman 和 Wojciech Zaremba、Hugging Face CEO Clement Delangue、前 GitHub CEO Thomas Dohmke 都在 X 上公开提过这个项目。
 
-## 目录
+比背书更值得注意的是另一件事：今天提示词写作里最常见的"I want you to act as a ..."（扮演某个角色）开头，正是从这个仓库推广开的。它把"给 AI 分配角色 + 约束输出格式 + 给出第一句话"固定成了可复制的模板，后来的提示词库大多沿用了这个写法。
 
-1. [项目概述](#一项目概述)
-   - 1.1 [什么是 prompts.chat](#11-什么是-promptschat)
-   - 1.2 [核心定位](#12-核心定位)
-   - 1.3 [数据格式与分发](#13-数据格式与分发)
-2. [快速上手：如何使用提示词](#二快速上手如何使用提示词)
-   - 2.1 [直接在网页端浏览使用](#21-直接在网页端浏览使用)
-   - 2.2 [CLI 命令行工具](#22-cli-命令行工具)
-   - 2.3 [Claude Code 插件](#23-claude-code-插件)
-   - 2.4 [MCP 服务器](#24-mcp-服务器)
-3. [提示词分类体系](#三提示词分类体系)
-   - 3.1 [开发者与技术类](#31-开发者与技术类development--technical)
-   - 3.2 [创意与写作类](#32-创意与写作类creative--writing)
-   - 3.3 [分析与研究类](#33-分析与研究类analysis--research)
-   - 3.4 [教育与学习类](#34-教育与学习类education--learning)
-   - 3.5 [儿童与趣味类](#35-儿童与趣味类kids--fun)
-4. [交互式提示词工程教程](#四交互式提示词工程教程)
-5. [自托管部署](#五自托管部署)
-   - 5.1 [快速开始](#51-快速开始)
-   - 5.2 [手动安装](#52-手动安装)
-6. [贡献与社区](#六贡献与社区)
-7. [Kids 专区](#七kids-专区)
-8. [自测题](#自测题)
-9. [练习](#练习)
-10. [进阶路径](#进阶路径)
-11. [资料口径说明](#资料口径说明)
-12. [延伸阅读与参考链接](#八延伸阅读与参考链接)
-13. [总结](#总结)
+## 四种使用方式
 
----
+### 网页直接用
 
-### 1.1 什么是 prompts.chat
+最省事的入口是 [prompts.chat/prompts](https://prompts.chat/prompts)，按分类浏览，选中后复制到任意对话模型里。提示词原文对模型没有偏好，ChatGPT、Claude、Gemini、Llama、Mistral 都能用——README 首页也按这个口径列了支持模型。
 
-[prompts.chat](https://prompts.chat)（前身为 **Awesome ChatGPT Prompts**）是全球规模最大的开源 AI 提示词（Prompt）集合库，由 GitHub 用户 [f](https://github.com/f) 创建维护。该项目最初于 2022 年 12 月上线，是 AI 提示词工程（Prompt Engineering）领域最早的开源项目之一。
-
-截至本文撰写时，prompts.chat 在 GitHub 已累计获得 **161,212 个 Star**，被 GitHub 官方评选为 **Staff Pick** 精选项目，并获得以下权威背书：
-
-- 📰 **Forbes** 专题报道
-- 🎓 被 **哈佛大学**、**哥伦比亚大学** 等高校课程引用
-- 📄 获得 **40+ 次学术论文引用**（Google Scholar 数据）
-- 🤗 **Hugging Face** 上 Most liked dataset
-
-项目同时获得了 AI 行业关键人物的公开认可，包括 OpenAI 联合创始人 Greg Brockman、Wojciech Zaremba，Hugging Face CEO Clement Delangue，以及前 GitHub CEO Thomas Dohmke 等。
-
-### 1.2 核心定位
-
-prompts.chat 的本质是一个**结构化的提示词开源数据库**。它将大量高质量的 AI 对话提示词集中整理，按类别组织，并提供多种便捷的使用接口，让用户可以快速将他人验证过的优质提示词应用于自己的 AI 对话工作流中。
-
-项目名中的 "Act as a..." 模式（即"扮演某个角色"）已经成为 AI 提示词工程领域的经典范式，被广泛模仿和衍生。
-
-### 1.3 数据格式与分发
-
-prompts.chat 以多种格式提供数据：
-
-| 分发方式 | 链接 |
-|----------|------|
-| 网页浏览 | [prompts.chat/prompts](https://prompts.chat/prompts) |
-| Markdown 全文 | [PROMPTS.md](https://raw.githubusercontent.com/f/prompts.chat/main/PROMPTS.md) |
-| CSV 格式 | [prompts.csv](https://github.com/f/prompts.chat/blob/HEAD/prompts.csv) |
-| Hugging Face Dataset | [huggingface.co/datasets/fka/prompts.chat](https://huggingface.co/datasets/fka/prompts.chat) |
-
-## 🔧 二、快速上手：如何使用提示词
-
-### 2.1 直接在网页端浏览使用
-
-最简单的方式是访问 [prompts.chat/prompts](https://prompts.chat/prompts)，按类别浏览提示词列表，找到需要的提示词后直接复制到 ChatGPT、Claude 或其他 AI 对话工具中使用。
-
-每个提示词都以 `Act as...`（扮演……）的格式编写，通过定义角色身份和任务目标，引导 AI 产生特定风格的输出。
-
-### 2.2 CLI 命令行工具
-
-项目提供了命令行工具，无需打开浏览器即可搜索和使用提示词：
+### CLI 命令行工具
 
 ```bash
-# 安装并运行
 npx prompts.chat
 ```
 
-该命令会启动交互式界面，用户可以在终端中浏览和搜索提示词，适合开发者日常工作流。
+启动一个终端交互界面，可以搜索、浏览提示词，适合不想离开终端的开发者。
 
-### 2.3 Claude Code 插件
+### Claude Code 插件
 
-对于使用 Claude Code 的开发者，项目提供了官方插件，可直接在 Claude Code 中调用提示词库内容：
+项目提供官方 Claude Code 插件，安装分两步（在 Claude Code 会话里执行）：
 
-```
+```text
 /plugin marketplace add f/prompts.chat
 /plugin install prompts.chat@prompts.chat
 ```
 
-详细文档见 [CLAUDE-PLUGIN.md](https://github.com/f/prompts.chat/blob/HEAD/CLAUDE-PLUGIN.md)。
+装上之后不只有搜索：`/prompts.chat:prompts <关键词>` 直接搜提示词，`/prompts.chat:skills <关键词>` 搜技能，两者都支持 `--type IMAGE`、`--category coding`、`--tag productivity` 这类过滤参数；另有 Prompt Manager 和 Skill Manager 两个 Agent 处理多步骤任务。细节见仓库的 [CLAUDE-PLUGIN.md](https://github.com/f/prompts.chat/blob/HEAD/CLAUDE-PLUGIN.md)。
 
-### 2.4 MCP 服务器
+### MCP 服务器
 
-prompts.chat 还可作为 **MCP（Model Context Protocol）服务器** 使用，融入 AI 工具生态：
-
-**远程模式（推荐）：**
+prompts.chat 也可以作为 [MCP](https://prompts.chat/docs/api)（Model Context Protocol）服务器接入任意支持该协议的工具。远程模式只要一个 URL：
 
 ```json
 {
@@ -128,7 +60,7 @@ prompts.chat 还可作为 **MCP（Model Context Protocol）服务器** 使用，
 }
 ```
 
-**本地模式：**
+本地模式走 npx：
 
 ```json
 {
@@ -141,77 +73,38 @@ prompts.chat 还可作为 **MCP（Model Context Protocol）服务器** 使用，
 }
 ```
 
-## 📂 三、提示词分类体系
+## 库里有什么
 
-prompts.chat 的提示词库覆盖多个领域，下面介绍主要分类及代表性场景：
+### 数据规模与格式
 
-### 3.1 开发者与技术类（Development & Technical）
+仓库主文件 [prompts.csv](https://github.com/f/prompts.chat/blob/HEAD/prompts.csv) 收录 2,169 条提示词（2026 年 9 月 23 日导出统计），`type` 字段分三类：纯文本提示词 1,836 条、结构化提示词 312 条、图像提示词 21 条。数据同时发布在 [Hugging Face](https://huggingface.co/datasets/fka/prompts.chat) 和全量 Markdown 文件 [PROMPTS.md](https://raw.githubusercontent.com/f/prompts.chat/main/PROMPTS.md) 里，方便直接喂给程序。
 
-涵盖代码审查、架构设计、技术写作、API 设计等场景。例如：
+提示词里的占位符有自己的约定：`${变量名}` 或 `${变量名:默认值}`，例如面试官提示词里的 `${Position:Software Developer}`。网站还能识别 `[[name]]`、`{{name}}`、`[NAME]`、`%name%` 这些常见写法并自动转换成统一格式（源码 `src/lib/variable-detection.ts`），所以从别处抄来的提示词不用手工改占位符。
 
-- **Act as a Code Reviewer**（代码审查员）：审查代码并提供改进建议
-- **Act as a Linux Terminal**：模拟 Linux 终端环境
-- **Act as a SQL Terminal**：模拟 SQL 执行环境
-- **Act as a Regex Generator**：生成正则表达式
+### 分类
 
-### 3.2 创意与写作类（Creative & Writing）
+线上分类页（[prompts.chat/categories](https://prompts.chat/categories)）有 44 个主题分类，粒度比早期版本细得多。2026 年 9 月下旬各分类的量级大致是：图像生成（Image Generation）410 条最多，其后是 Vibe Coding 103 条、Web 开发 93 条、Agent Skill 88 条、营销 38 条、设计 36 条、视频生成 35 条、数据科学 29 条。写作、教育、商业、效率、健康等场景也各有独立分类。
 
-面向内容创作场景：
+### 一条提示词长什么样
 
-- **Act as a storyteller**：讲故事，写小说或短篇
-- **Act as a Poet**：写诗
-- **Act as a Screenwriter**：写剧本或电影脚本
-- **Act as a Marketing Copywriter**：撰写营销文案
+以库里最早的 Linux Terminal 提示词为例，写法是三段式：先指定角色（"I want you to act as a linux terminal"），再约束输出（只回复终端输出、放在代码块里、不解释），最后用一句 `my first command is pwd` 启动对话。这套结构简单，但把"AI 应该怎么响应"交代得足够具体，是库里大多数提示词的共同骨架。
 
-### 3.3 分析与研究类（Analysis & Research）
+## 配套的免费教程
 
-用于数据分析、逻辑推理和研究辅助：
+项目配套了一本免费的交互式提示词教程 [The Interactive Book of Prompting](https://fka.gumroad.com/l/art-of-chatgpt-prompting)，25 个以上章节，从基础写法讲到 Chain-of-Thought（思维链）、Few-Shot Learning（少样本学习）和 AI Agent。教程源码就在仓库的 `src/content/book` 目录，MIT 许可证适用。
 
-- **Act as a Financial Analyst**：金融分析与建模
-- **Act as a Philosopher**：哲学思辨与论证
-- **Act as a Math Teacher**：数学教学与解释
+## 自托管部署
 
-### 3.4 教育与学习类（Education & Learning）
+自托管是企业内部提示词库的主要用法：数据不出内网，品牌和分类可以定制。
 
-辅助学习和知识传授：
-
-- **Act as a Debate Coach**：辩论教练
-- **Act as a History Teacher**：历史教师
-- **Act as a Motivational Coach**：激励教练
-
-### 3.5 儿童与趣味类（Kids & Fun）
-
-包括专为儿童设计的交互内容，以及各类趣味角色扮演：
-
-- **Act as a Jungle Story Teller**：丛林故事讲述者（儿童向）
-- **智玩谜题和互动冒险**：通过游戏化方式引导儿童与 AI 对话
-
-## 📖 四、交互式提示词工程教程
-
-除了提示词库本身，项目还配套提供了一本**免费的交互式提示词工程指南**：
-
-> [📖 The Art of ChatGPT Prompting](https://fka.gumroad.com/l/art-of-chatgpt-prompting)
-
-该教程包含 **25+ 章节**，覆盖从基础概念到高级技巧的完整学习路径，包括：
-
-- Chain-of-Thought（链式思维）推理
-- Few-Shot Learning（少样本学习）
-- AI Agents（AI 智能体）
-
-教程源码可在 GitHub 仓库的 `src/content/book` 目录中找到。
-
-## 🚀 五、自托管部署
-
-prompts.chat 支持完全自托管，适合企业或团队搭建私有提示词库。
-
-### 5.1 快速开始
+### 快速开始
 
 ```bash
 npx prompts.chat new my-prompt-library
 cd my-prompt-library
 ```
 
-### 5.2 手动安装
+### 手动安装
 
 ```bash
 git clone https://github.com/f/prompts.chat.git
@@ -219,133 +112,111 @@ cd prompts.chat
 npm install && npm run setup
 ```
 
-设置向导会引导配置品牌定制、主题、身份验证（支持 GitHub / Google / Azure AD）以及功能开关。
+设置向导会配置品牌、主题、登录方式（GitHub / Google / Azure AD）和功能开关。
 
-更多细节请参考：
-- 📖 [SELF-HOSTING.md](https://github.com/f/prompts.chat/blob/HEAD/SELF-HOSTING.md)
-- 🐳 [DOCKER.md](https://github.com/f/prompts.chat/blob/HEAD/DOCKER.md)
+### 部署后可以调什么
 
-## 💖 六、贡献与社区
+- **数据库**：PostgreSQL，README 推荐 Neon 的托管实例。
+- **运行时定制**：Docker 部署可以通过 `PCHAT_` 前缀的环境变量覆盖配置（站点名称、主题色、登录方式、功能开关等），改配置不需要重新构建镜像。
+- **功能开关**：私有提示词、变更请求、分类、标签、评论默认开启，AI 搜索和 AI 生成默认关闭，都可以按需切换。
+- **文档**：完整指南见 [SELF-HOSTING.md](https://github.com/f/prompts.chat/blob/HEAD/SELF-HOSTING.md) 和 [DOCKER.md](https://github.com/f/prompts.chat/blob/HEAD/DOCKER.md)。
 
-### 6.1 如何贡献提示词
+## 贡献与许可
 
-直接在 [prompts.chat/prompts/new](https://prompts.chat/prompts/new) 提交，内容会自动同步到 GitHub 仓库。也可以通过 GitHub PR 方式贡献。
+提交提示词有两个入口：网页 [prompts.chat/prompts/new](https://prompts.chat/prompts/new) 填表后自动同步到 GitHub 仓库；或者走常规的 GitHub PR。
 
-### 6.2 许可协议
+许可证分两块，用途不同时要看清楚：
 
-项目采用**双许可证**模式：
+| 内容 | 许可证 | 意味着 |
+|------|--------|--------|
+| 源代码和站点自有内容（含教程） | MIT | 可自由使用、修改、商用，保留版权声明即可 |
+| 提示词数据（prompts.csv、PROMPTS.md、用户提交） | CC0 1.0 | 公有领域，无需署名，可商用 |
 
-- **源代码**：MIT License
-- **提示词内容**（prompts.csv、PROMPTS.md、用户提交的提示词）：CC0 1.0 Universal（公有领域贡献）
+提示词内容按 CC0 发布，做商业产品不用操心版权链路，这是它对比很多提示词站点的实际优势。
 
-这意味着提示词内容可以自由使用、修改和商业化，无需署名。
+## Kids 专区
 
-## 🎮 七、Kids 专区
+[prompts.chat/kids](https://prompts.chat/kids) 是给 8 到 14 岁孩子的游戏化 AI 入门：用谜题和互动故事练习"怎么把话说清楚"，角色叫 Promi。做成了闯关形式，成人陪同使用更稳妥。
 
-项目还提供了面向 **8-14 岁儿童** 的交互式 AI 引导体验：
+## 采用建议
 
-> [prompts.chat/kids](https://prompts.chat/kids)
-
-通过游戏化谜题和互动故事，教会儿童如何与 AI 有效沟通，是低门槛 AI 教育的有益尝试。
-
-## 🔗 八、延伸阅读与参考链接
-
-| 资源 | 链接 |
-|------|------|
-| GitHub 仓库 | [github.com/f/prompts.chat](https://github.com/f/prompts.chat) |
-| 在线浏览 | [prompts.chat](https://prompts.chat) |
-| Hugging Face 数据集 | [huggingface.co/datasets/fka/prompts.chat](https://huggingface.co/datasets/fka/prompts.chat) |
-| DeepWiki 问答 | [deepwiki.com/f/prompts.chat](https://deepwiki.com/f/prompts.chat) |
-| 提示词工程教程 | [fka.gumroad.com/l/art-of-chatgpt-prompting](https://fka.gumroad.com/l/art-of-chatgpt-prompting) |
-| 儿童专区 | [prompts.chat/kids](https://prompts.chat/kids) |
+- **找提示词直接用**：网页搜索就够了，分类粒度细，复制即走。
+- **团队内部建提示词库**：自托管是正经卖点，双许可证扫清了合规障碍，`PCHAT_` 环境变量降低了运维成本。
+- **给 Agent 工具接数据源**：MCP 服务器和 Claude Code 插件让提示词检索嵌进工作流，不用切窗口。
+- **想学提示词工程**：先读配套教程，再用库里的提示词对照着改——库由社区贡献，质量有高有低，照单全收不如挑着看。
+- **介意数字时效的读者**：Star 数、分类数量这类数字随时间变化，以 GitHub API 和官网实时数据为准。
 
 ## 自测题
 
 1. **prompts.chat 的前身是什么？**
    <details>
    <summary>点击查看答案</summary>
-   前身是 **Awesome ChatGPT Prompts**。
+   Awesome ChatGPT Prompts，仓库创建于 2022 年 12 月。
    </details>
 
-2. **prompts.chat 在 GitHub 获得多少 Star？**
+2. **提示词里的变量怎么写？**
    <details>
    <summary>点击查看答案</summary>
-   截至本文撰写时，累计获得 **161,212 个 Star**。
+   `${变量名}` 或 `${变量名:默认值}`；`{{name}}`、`[[name]]` 等常见写法会被网站自动转换。
    </details>
 
-3. **"Act as..." 模式是什么？**
+3. **两种许可证各管什么？**
    <details>
    <summary>点击查看答案</summary>
-   "Act as..."（扮演某个角色）模式是 AI 提示词工程领域的经典范式，通过定义角色身份和任务目标，引导 AI 产生特定风格的输出。这个模式由 prompts.chat 推广并被广泛模仿。
+   源代码和站点自有内容（含教程）用 MIT；提示词数据（prompts.csv、PROMPTS.md、用户提交）用 CC0 1.0，进入公有领域，无需署名。
    </details>
 
-4. **prompts.chat 支持哪些使用方式？**
+4. **MCP 远程模式的接入点是什么？**
    <details>
    <summary>点击查看答案</summary>
-   支持：网页浏览、CLI 命令行工具、Claude Code 插件、MCP 服务器。
+   `https://prompts.chat/api/mcp`，配置在工具的 `mcpServers` 里；本地模式用 `npx -y prompts.chat mcp`。
    </details>
 
-5. **prompts.chat 的提示词内容采用什么许可证？**
+5. **自托管用什么数据库？**
    <details>
    <summary>点击查看答案</summary>
-   提示词内容（prompts.csv、PROMPTS.md、用户提交的提示词）采用 CC0 1.0 Universal（公有领域贡献），可以自由使用、修改和商业化，无需署名。
+   PostgreSQL，README 推荐 Neon 托管实例；Docker 部署可用 `PCHAT_` 环境变量做运行时定制。
    </details>
-
----
 
 ## 练习
 
-### 练习 1：使用 CLI 工具
+### 练习 1：用 CLI 搜一条提示词
 
-1. 安装并运行：`npx prompts.chat`
-2. 在交互式界面中浏览和搜索提示词
-3. 选择一个提示词，复制到 ChatGPT 或 Claude 中使用
+1. 运行 `npx prompts.chat`，在交互界面里搜索 "code review"
+2. 挑一条提示词，注意它的 `${变量}` 占位符，换成你自己的场景
+3. 粘贴到任意对话模型里，观察输出是否符合提示词的约束
 
-### 练习 2：配置 MCP 服务器
+### 练习 2：接入 MCP 服务器
 
-1. 在 Claude Desktop 的 MCP 配置中添加 prompts.chat：
-   ```json
-   {
-     "mcpServers": {
-       "prompts.chat": {
-         "url": "https://prompts.chat/api/mcp"
-       }
-     }
-   }
-   ```
-2. 在 Claude Desktop 中调用 prompts.chat 的提示词
+1. 在 Claude Desktop 的 MCP 配置里加上远程模式（URL 见自测题第 4 题）
+2. 重启后用自然语言让它"搜一条关于写作的提示词"，确认数据来自 prompts.chat
 
-### 练习 3：自托管部署
+### 练习 3：跑一个自托管实例
 
-1. 克隆仓库：`git clone https://github.com/f/prompts.chat.git`
-2. 安装依赖：`npm install && npm run setup`
-3. 启动开发服务器，观察自托管版本的界面
-
----
+1. `git clone https://github.com/f/prompts.chat.git && cd prompts.chat`
+2. `npm install && npm run setup`，跟着向导完成配置
+3. 启动后试着改一个 `PCHAT_` 环境变量，观察配置如何生效
 
 ## 进阶路径
 
-1. **深入学习提示词工程**：阅读 [The Art of ChatGPT Prompting](https://fka.gumroad.com/l/art-of-chatgpt-prompting) 教程，掌握 Chain-of-Thought、Few-Shot Learning 等技巧
-2. **研究提示词分类**：理解不同类别提示词的设计模式，学习如何编写高质量提示词
-3. **贡献提示词**：向 prompts.chat 提交你的提示词，参与开源社区
-4. **搭建私有提示词库**：基于 prompts.chat 的自托管功能，搭建团队内部的提示词库
-5. **研究 MCP 协议**：理解 Model Context Protocol，学习如何开发 MCP 服务器
+1. **读教程**：[The Interactive Book of Prompting](https://fka.gumroad.com/l/art-of-chatgpt-prompting)，重点看 Chain-of-Thought 和 Few-Shot 两章
+2. **拆结构**：挑 10 条同一分类的高赞提示词，对比它们的角色定义和输出约束写法
+3. **读源码**：`src/lib/variable-detection.ts` 展示了变量识别的工程实现，`src/lib/similarity.ts` 是相似提示词的去重逻辑
+4. **搭私库**：按 SELF-HOSTING.md 部署，再对照 `src/lib/config/index.ts` 把功能开关调成团队需要的形态
+5. **学协议**：如果要在自有产品里接 MCP，参考仓库的 MCP 实现和 [API 文档](https://prompts.chat/docs/api)
 
----
+## 相关资源
 
-## 资料口径说明
+| 资源 | 链接 |
+|------|------|
+| GitHub 仓库 | [github.com/f/prompts.chat](https://github.com/f/prompts.chat) |
+| 在线浏览 | [prompts.chat](https://prompts.chat) |
+| 分类页 | [prompts.chat/categories](https://prompts.chat/categories) |
+| Hugging Face 数据集 | [huggingface.co/datasets/fka/prompts.chat](https://huggingface.co/datasets/fka/prompts.chat) |
+| DeepWiki 问答 | [deepwiki.com/f/prompts.chat](https://deepwiki.com/f/prompts.chat) |
+| 提示词教程 | [fka.gumroad.com/l/art-of-chatgpt-prompting](https://fka.gumroad.com/l/art-of-chatgpt-prompting) |
+| Kids 专区 | [prompts.chat/kids](https://prompts.chat/kids) |
 
-1. **项目数据**：本文提到的 Star 数、下载量等数据来自 GitHub 仓库，可能随时间变化
-2. **许可证**：项目采用双许可证模式（MIT for 源代码，CC0 for 提示词内容），具体以仓库 LICENSE 文件为准
-3. **MCP 服务器**：MCP（Model Context Protocol）是 Anthropic 推出的协议，本文撰写时可能仍在演进
-4. **提示词质量**：prompts.chat 的提示词由社区贡献，质量可能参差不齐，使用时请自行判断
-5. **权威背书**：本文提到 Forbes 报道、高校课程引用、学术论文引用，具体以原始来源为准
-6. **儿童专区**：Kids 专区的内容适合 8-14 岁儿童，但需要成人监督
+## 结语
 
----
-
-## 📝 总结
-
-prompts.chat 是 AI 提示词工程领域的标杆开源项目，以"扮演角色"（Act as...）这一简洁范式，撬动了全球开发者和 AI 使用者的广泛参与。其 16 万+ Star 的体量、权威媒体的报道背书、以及持续活跃的社区维护，都证明了它在 AI 应用生态中的重要地位。
-
-无论是想快速找到某个场景下的高质量提示词、研究提示词工程的实践建议，还是搭建自己的私有提示词库，prompts.chat 都是一个值得深入了解的一站式资源。
+prompts.chat 的价值分两层。历史层面，它把"Act as ..."写成模板并推广开，是 2022 年底那波提示词热潮里留存下来的少数项目。实用层面，它今天仍然在维护：数据每周在更新，CLI、插件、MCP 三条接入路径覆盖了从个人到团队再到 Agent 工作流的场景，CC0 许可证让数据可以放心拿去用。要挑毛病，社区贡献的提示词质量参差，老提示词对新模型未必还是最优写法——把它当素材库和参考实现，而不是标准答案，是更合适的用法。

@@ -12,7 +12,7 @@ tags: ["Linux", "发行版", "DHH", "Hyprland", "Quickshell", "开源"]
 
 Linux 桌面世界有个老问题：可定制性无限，但默认体验粗糙。装完 Arch，面对的是黑屏和 Wiki；装完 Ubuntu，面对的是想删掉一半的预装软件。Omarchy 走的是第三条路——由 Ruby on Rails 作者 DHH 主导、37signals 孵化，基于 Arch Linux，把他本人的桌面直接打包成发行版。仓库 2025 年 6 月创建，截至 2026 年 9 月中旬约 40,500 stars、4,500 forks——一年出头跑到这个量级，在 Linux 桌面类项目里属于头部。
 
-先给判断：Omarchy 的价值不在技术创新——Arch 加 Hyprland 谁都能装——而在两件更难的事上：把数千个选择压缩成一套自洽的默认值，再给这套默认值配上产品级的维护体系（自建包仓库、迁移脚本、快照回滚、更新通道）。后一半是它和 GitHub 上随处可见的「一键安装脚本」的分界线。2026 年 8 月发布的 v4.0（代号 Quattro）之后，它又多了一层新身份：官方标语从仓库里的「Beautiful, Modern & Opinionated Linux」升级为官网上的「Beautiful, fun & agentic Linux」——AI 编码代理成了一等公民。
+先给判断：Omarchy 的价值不在技术创新——Arch 加 Hyprland 谁都能装——而在两件更难的事上：把数千个选择压缩成一套自洽的默认值，再给这套默认值配上产品级的维护体系（自建包仓库、迁移脚本、快照回滚、更新通道）。后一半是它和 GitHub 上随处可见的「一键安装脚本」的分界线。2026 年 8 月发布的 v4.0（代号 Quattro）之后，它又多了一层新身份：官方标语从仓库里的「Beautiful, Modern & Opinionated Linux」升级为官网上的「Beautiful, fun & agentic Linux」——AI 编码代理成了一等公民；同月项目又成立 Omacom 基金会，首发 800 万美元来自八位创始赞助人（含 Michael Dell、Jack Dorsey、Cloudflare 的 Matthew Prince），几天后随追加出资突破 1000 万，商标、基础设施与上游依赖由此转入机构托管。
 
 ## Omakase：厨师发办式的设计哲学
 
@@ -37,28 +37,28 @@ Omarchy 的欢迎文档有一句值得引用的话：「a beautiful system is a 
 
 ## v4 Quattro：从配置合集到可维护的产品
 
-2026 年 8 月 14 日发布的 v4.0.0 是官方自称「项目开始以来最大的一次发布」，之后小版本快速迭代，本文撰写时 ISO 已到 4.0.3。三个变化最值得注意。
+2026 年 8 月 14 日发布的 v4.0.0 是官方自称「项目开始以来最大的一次发布」，之后小版本快速迭代，官网当前下载为 4.0.4。三个变化最值得注意。
 
 **桌面 Shell 整体重写。** 顶栏、启动器、菜单、通知、OSD、控制面板、锁屏、polkit 代理全部收敛进 Quickshell 单进程，改为插件架构；原先拼装的 Waybar、Walker、Mako、SwayOSD、hyprlock、hypridle 等组件全部移除。Shell 从轮询改为事件驱动，空闲时不再占用 CPU。
 
 **交付方式改为系统包。** 内部文件从 git 仓库迁到 pacman 包，ISO 瘦身超过 1 GB（降到 6 GB 以下），官方称安装提速三成。这一步不显眼，却是维护体系能成立的前提：只有包化，才能有干净的迁移与回滚。
 
-**生态开口。** 新增插件系统（`omarchy plugin add <git-url>`，社区索引站 omarchyplugins.com）；双系统安装、出厂重置、为他人预装、无人值守安装这些「分发」能力也都在 v4 落地。
+**生态开口。** 新增插件系统（`omarchy plugin add <git-url>`，社区索引站 plugins.omarchy.org）；双系统安装、出厂重置、为他人预装、无人值守安装这些「分发」能力也都在 v4 落地。
 
 ## AI 代理是一等公民
 
 v4 之后官网的副标题是「The malleable OS for the age of agents」，这不只是口号，手册里有一整章 AI 集成：
 
-- **预接线的编码代理**：Claude Code、Codex、Copilot CLI、Grok、OpenCode、Cursor CLI 等十余个代理 CLI 以 mise 管理的 stub 形式放进 `~/.local/bin/`，首次运行才真正下载——装系统时不背这些工具的体积。选一个默认代理（`omarchy default agent <名称>`）之后，`Super + Shift + Ctrl + A` 一键唤起，还能 `omarchy agent prompt "Review this project"` 直接派活——代理以无人值守模式运行，会真的动手改东西。
+- **预接线的编码代理**：Claude Code、Codex、OpenCode、Gemini CLI、Copilot CLI 等近十个代理 CLI 以 mise 管理的 stub 形式放进 `~/.local/bin/`，首次运行才真正下载——装系统时不背这些工具的体积。选一个默认代理（`omarchy default agent <名称>`）之后，`Super + Shift + Ctrl + A` 一键唤起，还能 `omarchy agent prompt "Review this project"` 直接派活——代理以无人值守模式运行，会真的动手改东西。
 - **用量面板**：顶栏出现 agents 图标（检测到 AI 使用后才出现），聚合各订阅的用量——5 小时窗口与周限额的百分比、按天按模型的 token 消耗。对同时付多份订阅的人，这省掉了挨个查后台的功夫。
 - **崩溃诊断**：系统监听 systemd-coredump，进程段错误时弹出通知，点击即把 core dump 连同 diagnose-crash 技能交给默认代理，让它先判断这个崩溃值不值得报上游。
 - **Omarchy Skill**：随系统附带一个教代理修改系统本身的技能（调 Hyprland、改顶栏、做主题），symlink 进 Claude Code、Codex 等各家技能目录。官方标注 experimental，建议先在 plan 模式看它想改什么再放行——代理把配置改砸了，`omarchy reinstall configs` 能兜底。
 
-对把编码代理当日常工具的人，这一层是 Omarchy 和其他发行版差距最大的地方：主题切换能同步给代理（Claude Code、Pi、OpenCode、Hermes 跟随），用量有面板，崩溃有诊断——代理被当成系统公民，而不是装完就忘的 CLI。
+对把编码代理当日常工具的人，这一层是 Omarchy 和其他发行版差距最大的地方：主题切换能同步给代理（Claude Code、Pi、OpenCode 等跟随），用量有面板，崩溃有诊断——代理被当成系统公民，而不是装完就忘的 CLI。
 
 ## 装一台 Omarchy：流程与硬件
 
-安装走 ISO：从 omarchy.org 下载（撰写时为 4.0.3，附 SHA-256 与签名文件），用 balenaEtcher（Mac/Windows）或 caligula（Linux）写入 U 盘，启动后回答五个配置问题、选一块盘，然后等它装完——官方口径是快机器一分钟以内，老机器也不超过 5 分钟。全盘加密默认开启；既可全盘安装，也可只占用磁盘未分配空间，与 Windows 双系统共存（后者需先在 Windows 里关闭 BitLocker）。
+安装走 ISO：从 omarchy.org 下载（当前为 4.0.4，附 SHA-256 与签名文件），用 balenaEtcher（Mac/Windows）或 caligula（Linux）写入 U 盘，启动后回答五个配置问题、选一块盘，然后等它装完——官方口径是快机器一分钟以内，老机器也不超过 5 分钟。全盘加密默认开启；既可全盘安装，也可只占用磁盘未分配空间，与 Windows 双系统共存（后者需先在 Windows 里关闭 BitLocker）。
 
 三个容易踩的坑：
 
@@ -66,7 +66,7 @@ v4 之后官网的副标题是「The malleable OS for the age of agents」，这
 - **加密密码不能用蓝牙键盘输**。全盘加密的密码在启动早期输入，那时蓝牙驱动还没加载，需要有线或 2.4G 接收器键盘。
 - **NVIDIA 看硬件支持面**。官网的说法是「包括 NVIDIA 在内的图形驱动与配置都在安装时自动处理」——前提是受支持的硬件。NVIDIA 老卡用户建议装前翻一下手册的故障排查章。
 
-硬件门槛低得出奇：官网举的例子是 2011 年的 ThinkPad X220 加 2 GB 内存就能流畅运行。x86 PC 和 Intel Mac 是正式支持对象；Apple Silicon 目前的路径是虚拟机，原生支持的 Omarchy M 按官网预告在 2026 年 9 月发布。替别人装机的场景也考虑到了：装机给家人或新员工时，在安装器第一屏按 `Ctrl + C`，键盘布局、用户名、密码这些个人设置会推迟到新主人首次开机时填写；把配置文件放在第二块盘上，ISO 还能完全无人值守安装——把它当 VM 或批量机器的基础镜像用。
+硬件门槛低得出奇：官网举的例子是 2011 年的 ThinkPad X220 加 2 GB 内存就能流畅运行。x86 PC 和 Intel Mac 是正式支持对象；Apple Silicon 也不再只能靠虚拟机——9 月 11 日官方宣布 Omarchy M 团队，首个发行版本目标完美兼容 M1/M2（含 Pro/Max），配套的免 U 盘原生安装器已能把 Omarchy 分区进既有 macOS 旁；上手前更可以先用 Try Omarchy——一个在 macOS 上以原生应用运行、带硬件加速、接驳摄像头/音频/剪贴板的体验版，不用分任何盘。替别人装机的场景也考虑到了：装机给家人或新员工时，在安装器第一屏按 `Ctrl + C`，键盘布局、用户名、密码这些个人设置会推迟到新主人首次开机时填写；把配置文件放在第二块盘上，ISO 还能完全无人值守安装——把它当 VM 或批量机器的基础镜像用。
 
 ## 更新与回滚：滚动发行版的保险丝
 
@@ -113,7 +113,7 @@ Omarchy 把用户手册直接放在仓库的 `manual/` 目录（当前 51 篇，
 
 Omarchy 是近年 Linux 桌面少见的「有明确作者意图」的作品，v4 之后它多了一层更少见的品质：可维护性。自建包仓库、迁移脚本、快照回滚、四条更新通道，让「一个重度用户的桌面偏好」能像软件产品一样持续交付出去——这是它和 GitHub 上无数 dotfiles 仓库的本质区别。
 
-要上手，按成本从低到高：手头有旧机器或 Intel Mac，ISO 直装试水，代价几乎为零；Apple Silicon 先用虚拟机看一眼，或等预告本月发布的 Omarchy M；考虑上主力机之前，先读一遍手册的 Navigation 和 Hotkeys 两章，确认自己能接受键盘优先的工作流——Omarchy 的美，建立在它不接受妥协的前提上。
+要上手，按成本从低到高：手头有旧机器或 Intel Mac，ISO 直装试水，代价几乎为零；Apple Silicon 先用 Try Omarchy 看真机效果，正式下手走已发布的 Omarchy M 原生安装器；考虑上主力机之前，先读一遍手册的 Navigation 和 Hotkeys 两章，确认自己能接受键盘优先的工作流——Omarchy 的美，建立在它不接受妥协的前提上。
 
 - 仓库：https://github.com/basecamp/omarchy
 - 官网：https://omarchy.org

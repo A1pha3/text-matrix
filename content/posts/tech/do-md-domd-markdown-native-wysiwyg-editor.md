@@ -1,163 +1,271 @@
 ---
-title: "DOMD:把 Markdown 当成编辑模型,而不是输出格式"
+title: "DOMD 把 Markdown 当编辑源真理：逐项核对这条口号"
 slug: do-md-domd-markdown-native-wysiwyg-editor
 date: 2026-08-21 21:24:00
+lastmod: "2026-09-26T01:05:00+08:00"
 draft: false
 tags: ["markdown", "wysiwyg", "editor", "react", "ai-streaming", "crdt", "local-first", "open-source", "DOMD", "@do-md/core-react"]
 categories: ["技术笔记"]
 github_repo: "do-md/domd"
 source_key: "gh:do-md/domd"
-description: "DOMD 是一个 30 KB 的 Markdown-native WYSIWYG 编辑器内核。它最反直觉的设计是拒绝中间模型——Markdown 文本本身是编辑源真理。本文拆解它的解析器、操作流、CRDT 接缝、双层 GPL+商业许可,以及它为什么是 LLM 流式输出最干净的渲染层。"
-keywords: ["DOMD", "@do-md/core-react", "Markdown WYSIWYG", "AI 流式 Markdown", "CRDT 编辑器", "ProseMirror 替代"]
+author: text-matrix
+description: "DOMD 的内核 @do-md/core-react 把 Markdown 文本当作编辑源真理，不做中间模型。本文在 v0.10.0 源码与 npm 0.13.1 产物上逐条核对：源真理条款在往返里兑现到哪一步、30 KB 的实际口径、官方 Yjs 适配器在哪、流式写入的真实入口，以及双层许可的版本分界。"
+keywords: ["DOMD", "@do-md/core-react", "Markdown WYSIWYG", "AI 流式 Markdown", "CRDT 编辑器", "Yjs 协同", "GPL 双许可"]
 ---
 
-# DOMD:把 Markdown 当成编辑模型,而不是输出格式
+DOMD 是一个用 Tauri 打包的 macOS Markdown 编辑器，网页版和它共用同一个内核。内核发布在 npm 上，叫 [`@do-md/core-react`](https://www.npmjs.com/package/@do-md/core-react)。它对外最主要的一句话是：
 
-> 一句话:**DOMD 不把 Markdown 文本转成 AST 再转回 Markdown。Markdown 文本本身就是它的模型。**
+> WYSIWYG editing happens directly on Markdown. The Markdown document itself is the editing source of truth.
 
-[do-md/domd](https://github.com/do-md/domd) 是一个 30+ KB Brotli 后体积的 React Markdown 编辑器内核。它从零实现了 Markdown 解析、渲染、编辑、撤销重做、流式注入和分块加载——**没有用 ProseMirror、Slate、Lexical 这些通用富文本框架**。它的输出是 macOS 原生应用 + Web 编辑器 + Agent CLI 三件套,GitHub 530+ stars,作者 Jayden Wang,npm 包 [`@do-md/core-react`](https://www.npmjs.com/package/@do-md/core-react) 38 个版本,内核双层许可(GPL-3.0 + 商业许可 + 小实体豁免)。
+所见即所得直接作用在 Markdown 上，文档本身就是编辑的源真理，没有另一份需要随时对齐的内部模型。这句话在很多项目里是宣传语，在这里却是一条能逐条验证的工程约束：它同时写进了解析器、撤销栈、协同接缝和批量替换接口的设计里。剩下的那些边角，只有跑起来才看得见。
 
-但体积数字不是这篇文章的重点。重点是它做了一件 WYSIWYG Markdown 编辑器领域 **没有人认真做过** 的事:**拒绝中间模型**。
+本文的对齐基准是 2026-09-26 拉到的 `main`（提交 `1780d7f`，已打标签 `v0.10.0`），以及从 npm 装到的 `@do-md/core-react` 0.13.1。文中凡写"实测"的，都是我在本机（Apple M4、Node.js v26.3.0）跑出来的输出，对应命令一并给出，可以复算。
 
----
+## 目录
 
-## 一、WYSIWYG Markdown 编辑器的老问题:中间模型的两难
+1. [系统地图：四层各自是谁](#系统地图四层各自是谁)
+2. [源真理条款能兑现到哪一步](#源真理条款能兑现到哪一步)
+3. [一次按键穿过哪些层](#一次按键穿过哪些层)
+4. [体积数字的三种口径](#体积数字的三种口径)
+5. [撤销栈在一层通用状态库里](#撤销栈在一层通用状态库里)
+6. [流式写入的真实入口换了](#流式写入的真实入口换了)
+7. [大文档分块与它的两次事故](#大文档分块与它的两次事故)
+8. [无头运行与命令行接口](#无头运行与命令行接口)
+9. [协同：官方 Yjs 适配器在应用层](#协同官方-yjs-适配器在应用层)
+10. [内联语法扩展点与它的告警盲区](#内联语法扩展点与它的告警盲区)
+11. [双层许可与 0.11.0 这条线](#双层许可与-0110-这条线)
+12. [一千多条断言里有两条是红的](#一千多条断言里有两条是红的)
+13. [该怎么用这个项目](#该怎么用这个项目)
+14. [下一步读哪几段代码](#下一步读哪几段代码)
+15. [五个自测题](#五个自测题)
+16. [参考](#参考)
 
-过去二十年,几乎所有"所见即所得"的 Markdown 编辑器都在做同样的事:
+## 系统地图：四层各自是谁
+
+先划清边界，后面所有争论都发生在这几条缝上。
+
+| 层 | 位置 | 许可证 | 职责 |
+|---|---|---|---|
+| 应用 | `app/` `features/` `common/` `src-tauri/` | MIT | Next.js 16 网页版、Tauri macOS 壳、菜单与持久化 |
+| 应用插件 | `plugins/`（含 `collaboration/`） | MIT | 协同、工具栏、自定义渲染，消费内核的公开接缝 |
+| 内核 | `.packages/@do-md/core/` | GPL-3.0-only + §7 附加权限 | 解析、渲染、编辑、撤销、流式注入、协同接缝 |
+| 状态底座 | `.packages/@do-md/zenith/` | MIT（独立发布于 `@do-md/zenith`） | Immer 之上的通用 store、历史中间件、订阅选择器 |
+| 内核插件包 | `.packages/@do-md/plugins/` | MIT | 命令、目录、搜索、虚拟滚动 |
+
+两处容易看错的地方。第一，`plugins/collaboration/` 是应用层代码，Yjs 依赖挂在这里，内核里搜 `yjs` 只会命中 `renderDataOps.ts` 的一句注释——内核确实不认 CRDT 库。第二，版本号有三套各走各的：仓库根 `package.json` 是 0.10.0，内核 `package.json` 是 0.13.0，npm 上 latest 是 0.13.1。讨论任何行为都得先说清用的是哪一套。
+
+## 源真理条款能兑现到哪一步
+
+"文本是模型"最直接的检验方式不是读代码，而是喂一批形状奇怪的 Markdown，看序列化回来的字符串还差多少。我在 0.13.1 上跑了 15 例：
 
 ```text
-用户键入 → 转成富文本 AST → 编辑富文本 AST → 序列化回 Markdown
+SAME  行尾空格        "para with trailing   \n\nnext\n"
+SAME  自动链接        "see <https://example.com> ok\n"
+SAME  裸 HTML          "<div class=\"x\">hi</div>\n\nbody\n"
+SAME  HTML 注释        "<!-- note -->\n\nbody\n"
+SAME  引用式链接      "text [ref][1] here\n\n[1]: https://e.com \"t\"\n"
+SAME  Setext 一级标题 "Title\n=====\n\nbody\n"
+SAME  嵌套列表        "- a\n  - b\n    - c\n"
+SAME  波浪号围栏      "~~~js\nlet a=1\n~~~\n"
+SAME  引用块续行      "> a\nb\n"
+SAME  脚注            "note[^1]\n\n[^1]: foot\n"
+SAME  裸与号和尖括号  "a & b < c > d\n"
+SAME  词内下划线      "snake_case_name here\n"
+SAME  转义的 ==       "\\=\\=hi\\=\\=\n"
+DIFF  未对齐的表格    "| a|b |\n|-|-\n|1|2\n|"  → 重新补白对齐
+DIFF  松列表          "- a\n\n- b\n"          → "- a\n- b\n"
 ```
 
-这就是所谓的"中间模型"。它的代价非常具体:
+多数刁钻形状原样回来，两处会变。表格列被重新补白，这一条内核自己写在文档里；松列表被收紧，也就是 CommonMark 判定为 loose 的列表，重新序列化时丢掉条目之间的空行，渲染语义随之改变。
 
-1. **拖慢**。每次按键都要在两个模型之间往返同步,大型文档卡顿。
-2. **丢失**。中间模型和 Markdown 文本之间的转换不是无损的——尾随空格、原始链接、HTML 内嵌、注释、属性会悄悄被吞掉。
-3. **割裂**。WYSIWYG 视图里看到的、和导出的 Markdown 源码、和你用 Git diff 看到的不一定是同一个东西。
+所以这句口号的准确读法是：**文本决定内容，不保证字节**。它是源真理，不是逐字还原承诺。任何"编辑器改完再存回去必须和 git 里那份一模一样"的需求，都要先按自己那批文档测一遍。
 
-DOMD 的反直觉方案是:**取消中间模型。Markdown 文本是源真理,编辑器直接在它上面操作。**
+## 一次按键穿过哪些层
 
-> "The Markdown document itself is the editing source of truth."
-> ——DOMD README,标题段落原话
-
-听起来很美。但要在 React 里实现"在 Markdown 文本上直接做所见即所得编辑",意味着你**不能依赖 contenteditable 的默认行为**(它本质上是 HTML 树编辑),必须自己接管每一个 DOM mutation event。这就是 DOMD 选择从零写解析器的原因——**它不是在 ProseMirror 之上加一个 Markdown 适配层,而是在 DOM 层之上重新定义 Markdown 解析。**
-
----
-
-## 二、30 KB 怎么装下整个编辑器
-
-先看官方给的体积数字,然后我们拆开看里面装的是什么。
-
-| 指标 | 数字 |
-|---|---|
-| 内核 Brotli 后体积 | **30+ KB** |
-| 运行时依赖 | 仅 `react` 和 `immer` |
-| 已测文档规模 | 平滑编辑 20,000 行 Markdown |
-| 流式场景 | chunk-by-chunk 渲染,中途半成品不闪烁 |
-
-30 KB 装得下 WYSIWYG 编辑器的全部逻辑,是因为它的架构做了一个非常硬的约束:**所有解析、渲染、编辑、撤销重做、流式注入、分块加载,全部建模成内核内部的确定性状态变化。**
-
-这意味着:
-
-- **没有"渲染 Markdown"的独立模块**——渲染是状态变化的一个可观察副产物。
-- **没有"撤销重做"的独立模块**——撤销就是回到上一个状态。
-- **没有"流式注入"的独立模块**——流式就是持续的状态变化。
-
-把可独立模块全部"折叠"进状态机,体积自然就下来了。代价是:**所有的逻辑都长在同一个状态机里,代码复用靠状态机内部组合,而不是靠 import。**
-
-我们看一下内核的目录结构来验证这个判断:
-
-```
-.packages/@do-md/core/
-├── src/
-│   ├── data-parse/           # 解析器(Pure data,无 DOM 依赖)
-│   │   ├── parse/
-│   │   │   ├── parseBlock.ts         # 13 KB 块级
-│   │   │   ├── parseInline.ts         # 50 KB 内联级(最大)
-│   │   │   ├── parseTable.ts
-│   │   │   ├── parseCode.ts          # 12 KB
-│   │   │   └── ... (12 个块级解析器)
-│   │   ├── inline-rules.ts   # 18 KB 内联语法引擎
-│   │   ├── inline-rule-params.ts
-│   │   └── parseMarkdown.ts  # 入口
-│   ├── editor/
-│   │   ├── controller/
-│   │   │   └── EditorController.ts   # 103 KB(单文件)
-│   │   ├── model/            # 数据层(序列化/替换/合并/光标/选区/同步)
-│   │   ├── render/           # React 渲染层
-│   │   ├── store/
-│   │   │   ├── chain/                # Immer chain producers
-│   │   │   └── index.ts              # 90 KB 单一 store 文件
-│   │   └── type/
-│   ├── index.ts              # 4 KB 公共导出
-│   └── style.css             # 297 B
-```
-
-四个观察:
-
-1. **最大单文件不是解析器,而是 `EditorController.ts`(103 KB)。** 这意味着 DOMD 的核心复杂度不在"Markdown 怎么解析",而在"键入时光标怎么走、删除时符号怎么折叠、回车时文档树怎么重组"。
-2. **解析器是 pure data 层**(`data-parse/`),**不依赖 DOM**。这是它能做"分块加载 20,000 行文档"和"流式注入半成品 Markdown"的前提。
-3. **`store/` 下全是 Immer chain producers**——所有状态变更走 Immer,Undo/Redo 是 Immer 的 patch 自动反演,不需要单独维护历史栈。
-4. **`render/` 是唯一接触 DOM 的层**。它把 pure data 树映射到 React 元素,所有 mutation 由 EditorController 拦截。
-
-这套架构有一个隐含的代价:**DOMD 内核不是 WYSIWYG 编辑器领域的"框架"——它是一个完整的、不可拆分的产品形态。** 想用它的 inline syntax 引擎自己搞一套 UI?你必须把整个 EditorController + Store + Renderer 都带上。后面我们会看到,作者没有回避这个问题,反而把它做成了产品边界。
-
----
-
-## 三、Markdown-native 真正解决了什么:流式 AI 输出
-
-如果你只用过"中间模型"那一派编辑器,你大概会以为 WYSIWYG Markdown 编辑器的痛点是光标跳、撤销栈断、图片粘贴错位。**这些 DOMD 都解决了,但它真正的杀手锏是 LLM 流式输出。**
-
-LLM 输出 Markdown 是一段一段来的。常见的 chunk 边界长这样:
+把一次输入拆开看，能看清这几层的分工。以在段落末尾敲 `#`、空格、`x` 为例：
 
 ```text
-"Here is a list:\n\n- item 1"
-"Here is a list:\n\n- item 1\n- item 2"
-"Here is a list:\n\n- item 1\n- item 2\n\n```pyt"
-"Here is a list:\n\n- item 1\n- item 2\n\n```python\ndef"
-"Here is a list:\n\n- item 1\n- item 2\n\n```python\ndef f():\n    return 1\n```"
+浏览器 beforeinput / input
+  → EditorController：按 inputType 决定接管还是放行
+  → EditorStore：pendingInput_ 暂存，命中触发条件就立即重解析
+  → store/chain：一次 produce 算完块内替换、光标、补白符号
+  → mergeInlineBlock / mergeStructural：把新解析出的块并进旧树
+  → immer：产出 patches 与 inversePatches
+  → diffRenderData：对照引用算出最小 op 流，发给宿主与协同端
 ```
 
-中间状态里:`- item 1` 是一个未完成的列表项,`\`\`\`pyt` 是一个未闭合的代码块开始 fence,`def f():\n    return 1` 是一个未完成的代码块。这些状态在中间模型编辑器里会触发 re-render 抖动——因为中间模型的"已完成"判定会反复在"未完成"和"完成"之间来回切换。
+接管判断写在 `editor/controller/lib/checkDomNeedRender.ts` 里，是一串或运算：列表与引用前缀、围栏开头、复选框形状、标题正则 `/^\s*(#{1,6})\s+.?\s*$/u`、内置内联语法正则、行首 URL，最后才是内联规则的触发正则。其中那条标题正则刻意只放行 0 到 1 个后继字符，注释给了原因。这段判断每次按键都要跑，若把尾部写成 `(.*)`，光标落在已成形的标题里时可见文本仍以 `# ` 开头——这一块就会在每次按键时重解析一遍。
 
-DOMD 的处理方式写在 `parseInline.ts` 的注释里:
+内联规则的触发正则由编译期生成，注释就写在 `data-parse/inline-rules.ts` 的字段声明上：
 
-> "The kernel ingests those streams chunk by chunk and renders them live. Open fences, half-built tables, and partial lists render correctly mid-stream, then absorb their real terminators without flicker when they arrive."
+```text
+/**
+ * Render-trigger regex for EditorController.checkRender_: a rough "this block may
+ * contain a rule construct" test that decides immediate reparse vs the
+ * debounced pending path. Loose on purpose — a false positive just costs
+ * one reparse (the parser itself is the source of truth).
+ */
+triggerReg_: RegExp | null;
+```
 
-具体怎么实现的?两层机制:
+生成的形状是把每条规则拼成 `open` 加可选 `{…}` 捕获加内容加 `close`，规则之间用或分支连起来；与内置语法撞车的分隔符（`*`、`![`、单字符 `[` 和 `<`、`~~`）会把捕获段变成必选，因为不带 `{` 时规则本来就不可能生效。误报只多花一次重解析，代价由解析器兜底。
 
-**第一层:解析器层**。`parseMarkdown` 接受任意半成品 Markdown 文本,产出 stable 的 `RootRenderData` 树。每个节点带 `uuid_`,每次 reparse 之后,un-touched 的子树是 reference-equal 的(因为它走 Immer)。这意味着 React 的 React.memo 会自动跳过未变化的子树,reparse 成本只与变化量成正比。
+没命中这些条件时走防抖路径：`debounceApplyPendingText_` 是一个 400 毫秒的 RAF 防抖，把这段时间内的连续输入合并成一次模型写入。这就是"编辑即状态变化"落到实处的地方，也是内联规则必须自带触发正则的原因。注释里还记了一次真实事故：规则语法要等防抖兜底才成形，此前一直是字面文本，成形那一刻光标跳回错误位置。代码注释管它叫 "jjj jumped into the span" 事件。
 
-**第二层:渲染触发层**。`EditorController` 内部维护一个 `triggerReg_` 触发正则——只有当新输入 chunk 命中已注册的 inline rule 结构时,才走 immediate reparse;否则走 debounced 路径。**这条正则不是完整解析器,是"这块文本里可能有内联规则构造"的粗糙检测器。**
+## 体积数字的三种口径
 
-为什么这样设计?因为:
+README 顶部的徽章写的是 `core Brotli 30+ KB`。0.13.1 的实测数据：
 
-- **走 immediate reparse 的代价**:整棵子树 reparse + React reconcile,虽然只触碰变化节点,但仍然是 O(变化量)。
-- **走 debounced 的代价**:等待下一次 reparse 之前的窗口里,UI 可能短暂显示"未格式化"状态。
+```text
+入口产物            原始        Brotli（质量 11）   Gzip（9 级）
+ESM 入口         161,736 B        38,613 B        44,428 B
+CommonJS 入口    160,821 B        38,427 B        44,304 B
+样式             9,801 B          2,014 B          2,333 B
+```
 
-DOMD 的策略是:**只在格式可能正在形成时付出 immediate reparse 的代价,其他时候用 debounce 兜底**。这种"什么时候值得付出 X 代价"的判断,在通用富文本框架里是写不出来的——ProseMirror 给你的抽象层级太高,你根本看不到下面的 token stream。
+"30+ KB"说的是 ESM 产物的 Brotli 体积，当前落在 38 KB 这一头。构建脚本自带一个 `reportBrotliSize` 插件，用最高质量的 Brotli 在构建日志里打印每个产物的尺寸。注释把理由写得很明白：Vercel、Cloudflare、nginx 实际发给浏览器的是 Brotli，只报 gzip 是错的口径。这段自测每次构建都会跑，不是我一次性取样。
 
-[DOMD Streaming Playground](https://www.domd.app/playground) 可以现场看到流式渲染——把任意 Markdown 文本粘贴进去,它会按字符级别"流"出来,你可以直接观察未闭合代码块、未完成列表、未闭合链接的中间状态。
+另一个常见误读是"依赖只有 React 和 Immer"。发布包没有 `dependencies` 字段，三个运行时要求全在 `peerDependencies`：`immer ^10.2.0 || ^11`、`react >=18`、`react-dom >=18`，其中 `immer` 被显式标成非可选。文档还提醒一句：store 会共用宿主应用的 Immer 实例，两边版本对不上是要当回事的。
 
----
+## 撤销栈在一层通用状态库里
 
-## 四、CRDT 适配层:为什么 Yjs 必须在外面
-
-DOMD 是 local-first 编辑器。要做多人协同,你得有 CRDT。CRDT 库最强的是 [Yjs](https://github.com/yjs/yjs),Yjs 的模型是基于嵌套 `Y.Array`/`Y.Map`/`Y.Text` 的树。
-
-**但 DOMD 不用 Yjs 当主模型。** README 里写得很明确:
-
-> "The editor kernel itself is CRDT-agnostic. It emits a structured operation stream for ordinary edits; an optional CRDT plugin observes that stream, translates each change into transactions on nested Yjs shared types, and maintains a mergeable `Y.Doc` replica."
-
-也就是说:
-
-- **DOMD 的主模型是它自己的 `RootRenderData` 树。**
-- **CRDT 是可选的外挂适配器。**
-
-它提供了一个 `renderDataOps` 接缝,精确地把 DOMD 的状态变化翻译成可序列化的 op stream:
+内核没有自己写历史栈，它复用 `@do-md/zenith`——同一位作者维护的 React 状态库，独立发布于 npm，最新 2.0.3。它的自我定位是"Engineering-grade React state management powered by Immer"。`EditorStore` 继承其中的 `ZenithStore`，撤销能力来自一处装配：
 
 ```typescript
-// editor/model/sync/renderDataOps.ts (节选)
+const { undo, redo } = withHistory(this, {
+    maxLength: 30, // max history length
+    debounceTime: 300, // debounce window (ms)
+});
+```
+
+中间件保存的是 immer 的 `patches` 与 `inversePatches` 数组，按 `maxLength` 裁剪、按 `debounceTime` 合并。这两个数字是行为，不是调优口味。实测：40 个字符逐个插入、每次间隔 520 毫秒，然后一路撤销。撤到 32 次时只有 31 次真的让文本变短，最后停在 9 个字符——最早那批编辑已经不在栈里。反过来，把 5 个字符连着快速打完，一次撤销就全没了：它们落在同一个防抖窗口里，被并成一步。
+
+但协同 op 流消费的并不是这些 patch。`renderDataOps.ts` 的头注释给了原因：
+
+```text
+Note: this does not consume immer patches — for a splice in the middle of
+an array immer emits a noisy "replace every following index" patch set,
+whereas a reference diff is immune (reference == identity).
+```
+
+数组中部一次删除会让 immer 报出"其后每个下标都被替换"的噪声 patch，而引用相等就是身份相等，按引用做树差分的 `diffRenderData` 不受影响。撤销走 patch 反演，发给协同端走引用差分，两套机制各用各的。
+
+公开的入口模块里还留着一处历史痕迹：`EditorStoreApi` 是 `EditorStore` 的类型别名，注释说明这个名字来自闭源时代手写的声明文件，为了让宿主代码不必改名而保留下来。
+
+## 流式写入的真实入口换了
+
+大模型逐块吐 Markdown，切点经常落在语法中间。内核文档给的流式写法是：用 `useEditor()` 拿到控制器，然后对每个分片调一次 `aiInsertInCursor`。0.13.1 的 README 里，示例和接口一览两处都还这么写。
+
+但这个方法在当前产物里不存在。我解包比对了几个版本：
+
+```text
+0.9.3   tarball 的 index.js 与 index.cjs 各有 1 处 aiInsertInCursor
+0.10.0  同上，仍在
+0.11.0  两份产物 0 命中，只剩 index.d.ts 的两处注释
+0.11.2  同上
+0.13.1  同上
+```
+
+0.11.0 正是内核源码进公开仓库后发布的头一版，方法就是在这一步从产物里消失的，两处文档却没跟着改。当前源码里也搜不到它的定义，只剩几段注释还在提这个名字。
+
+实际可用的入口是 store 上的 `insertText`。网页版的聊天窗、playground 的流式演示、macOS 编辑器都在用它：
+
+```tsx
+// features/chat/components/assistant-message.tsx（节选）
+const put = (chunk: string) => {
+    if (!seeded) {
+        store.resetMD(chunk);
+        seeded = true;
+    } else {
+        store.insertText(chunk);
+    }
+};
+```
+
+第一段用 `resetMD` 建立基线，其后每块走 `insertText`，出错时也走同一条路径把提示写进文档。playground 的驱动脚本额外做了两件事：块大小随机，以及极速模式下每 32 块 `await sleep(0)` 让浏览器有机会绘制。
+
+中间态到底长什么样，可以直接打印模型形状。我把一段含列表和 Python 代码块的文本按 9 块喂进去：
+
+```text
+chunk 4 尾部 "``"        → … | P(Plain) | EmptyP(Br)
+chunk 5 收到 "`python…"  → … | Pre(MdHideSymbol,HideSecondLine,PreCode,
+                            HideSecondLine,MdHideSymbol) | EmptyP(Br)
+最终                      toMarkdown() 与输入逐字节相等
+```
+
+未闭合的围栏在补全前是一段普通文本，闭合符号一到就变成真正的代码块，而不是先闪出一个空代码块再改内容。这与 README 的说法一致，而且是同一次运行的收尾结果：九块喂完，`toMarkdown()` 拿回的正是原串。
+
+## 大文档分块与它的两次事故
+
+`EditorStore` 构造时如果 `initMd` 超过 500 行，就只同步灌入前 500 行，剩下的异步追加。这个 500 是源码里的 `INITIAL_CHUNK_LINES`。实测：1200 行构造完，同步可见 500 行、`isLoadingChunks` 为真，16 毫秒后 1200 行齐备，`toMarkdown()` 与输入逐字节相等。
+
+要同步拿全文，做法是构造时传空串再调用 `resetMD(fullText)`。
+
+这个分块设计背后有过一次数据丢失。`scripts/verify-load-gate/run.mts` 的注释把事故写得很清楚：加载期间 `toMarkdown()` 返回的是文件前缀，自动保存和脏内容上报会把这个前缀落盘，把文件截断；更狠的是异步语法高亮到位后触发 `resetMD(toMarkdown())`，会取消尚未跑完的追加分块，截断从此固定下来。
+
+另一条事故出在协同上：Yjs 的 `Y.Array.insert` 在附加进文档前会把内容按元素展开成函数实参，10 MB 文档约 19 万个顶层块，直接抛 `RangeError: Maximum call stack size exceeded`，文档根本进不了协同状态。修法是分批插入，`scripts/verify-collab-scale/run.mts` 用旧阈值两侧的块数各压一遍，确认 Y 树与序列化树完全对应。
+
+这两条都不是为了覆盖率补的测试，而是把事故机理写进了脚本头。判断一个项目靠不靠谱，这类注释比徽章有用。
+
+## 无头运行与命令行接口
+
+内核可以在裸 Node.js 里跑，不需要 DOM、React 或 JSDOM。文档把这条路径的用途说得很具体：宿主在服务端起一份自己的 store 改文档，产出的 op 流再应用到浏览器里那份 store 上。改动归属、撤销和光标都会保留。下面是我实跑通的最小例子：
+
+```ts
+import { EditorStore } from "@do-md/core-react";
+
+const s = new EditorStore({ editable: true, initMd: "# Hi\n\n- one\n- two\n" });
+const ops = [];
+const off = s.subscribeRenderDataOps((batch) => ops.push(...batch));
+s.replaceText({ search: "one", replace: "ONE" });
+off();
+// "# Hi\n\n- ONE\n- two\n"，ops 长度 2：一条 delete、一条 insert
+```
+
+受支持的无头面包括构造与全部注入点、文档原语（`toMarkdown`、`resetMD`、`insertText`、`replaceText`、`replaceRanges`、`getTitle`）、同步接缝（`subscribeRenderDataOps`、`getRenderDataSnapshot`、`applyExternalRenderData`、`applyExternalRenderDataOps`、`flushPendingInput`、`getCursorSnapshot`、`subscribeCursorChange`）和三个序列化辅助函数。
+
+`replaceRanges` 是这里最值得单独讲的接口。它同时服务两种场景：大模型习惯的精确文本搜索替换，以及外部差异回填。语义上有三条我实测确认过：
+
+- 偏移一律相对调用前的 `toMarkdown()` 全文。前面的替换改变了长度，后面那条仍然按原偏移落点，不会被推着走；
+- 失败按条计，越界、互相重叠、搜不到或有歧义只让那一条带原因失败，其余照常生效；
+- 整批算一个撤销步——撤销一次就回到两条替换都没发生的状态。
+
+一条值得先知道的边界：编辑列表项时，被改的那个 Ul 节点会换 uuid，而同一文档里没被碰到的标题、分隔与尾块 uuid 全部不动。`subscribeRenderDataOps` 为此只报出一条 delete 加一条 insert。这与合并模块自己声明的适用范围一致——段内合并只覆盖"同类型单块"的普通打字路径，"块类型变了、块被拆开、列表项"这几种都退回整块替换。
+
+另一条入口是命令行工具 `domd-cli`，一个 368 行的 Rust 程序（`src-tauri/src/bin/domd_cli.rs`），通过 Unix 域套接字驱动桌面应用。子命令一共 9 个：`new`、`open`、`list`、`selection`、`content`、`insert`、`save`、`close`、`focus`。帮助文本里有两句约定值得抄走：
+
+```text
+Streaming is just repeated `insert` calls — there's no separate stream mode.
+
+Output convention: single-value commands print plain text;
+structured commands print JSON. Errors → exit nonzero + JSON on stderr.
+```
+
+## 协同：官方 Yjs 适配器在应用层
+
+先把一件事说清楚：官方 Yjs 适配器是有的，只是没发到 npm。`plugins/collaboration/` 下两套实现都基于 Yjs：
+
+```text
+crdt-sync/       151 + 106 + 326 = 583 行
+  index.ts       把 op 流镜像进一个 Y.Doc；离线合并与可合并持久化
+  y-mapping.ts   SerializedRenderData ↔ Y 结构的共用映射层
+realtime-sync/   2,230 行（含 WebRTC 传输与远端光标）
+```
+
+`y-mapping.ts` 把映射写在一行注释里：
+
+```text
+node     = Y.Map{type,uuid,text?,mdSymbols,props,tagName?,isAutoFill?,children?}
+children = Y.Array<Y.Map>
+props、mdSymbols 按整值 LWW
+顶层键名 = "domdRenderData"
+```
+
+这套映射被离线合并与实时协同共用。
+
+内核侧交给宿主的接缝是一份稳定的 JSON 契约，四种 op：
+
+```typescript
 export type RenderDataOp =
     | { op: "insert"; parent: string; index: number; node: SerializedRenderData }
     | { op: "delete"; parent: string; index: number }
@@ -165,310 +273,179 @@ export type RenderDataOp =
     | { op: "replaceRoot"; node: SerializedRenderData };
 ```
 
-每个 op 都按 `(parent uuid, index)` 或 `(node uuid)` 寻址。宿主应用(Yjs 插件、automerge 插件、自家持久化引擎)把这个 op stream 翻译成 CRDT 事务:
+`insert` 与 `delete` 按父节点 uuid 加子节点序号寻址，映射到 `Y.Array` 的切片；`set` 用 uuid 寻址，宿主自己维护 uuid 到节点的注册表；一批 op 是一个状态变化的事务，按序原子应用。反向入口是 `applyRenderDataOpsToDraft(rootHolder, ops)`，直接作用在 Immer draft 上。
+
+之所以能只靠 `insert`/`delete` 表达，靠的是 span 不可变这条不变式，`mergeInlineBlock.ts` 的注释写得很直接：
 
 ```text
-insert/delete → Y.Array.splice(index, count, content)
-set           → Y.Map.set(uuid, value)  // 宿主维护 uuid → node 索引
-replaceRoot   → 全树替换(罕见,只在 resetMD / load document 时触发)
+A span is an immutable atom: only ever created and deleted, never modified
+— and that invariant is what keeps the CRDT side from ever needing a deep merge.
 ```
 
-反向亦然:外部 op 通过 `applyRenderDataOpsToDraft` 应用到 Immer draft 上,走 immer 的结构共享——只有从根到被触碰节点这条路径上的对象会重新分配,其他子树 reference-equal,React.memo 全面命中,渲染成本 O(变化量)。
+span 只被创建和删除，从不被就地修改，协同端因此永远不需要深度合并。合并算法分三步：先把两个容器各展平成带"格式签名"的字符流，签名是祖先 `htmlType_` 链加 href/src；再扫出公共前后缀；最后把变化区向外扩张到旧容器的顶层子节点边界。开销按容器文本长度线性。类型变化、块拆分等不匹配的情形由调用方整块替换兜底。
 
-**为什么不直接把 Yjs 当主模型?**
+我拿仓库里的适配器做了一次双副本离线合并实验：两份 `EditorStore` 由同一份种子建立，A 改段落开头，B 改段落结尾，之后互推状态。
 
-这是这个项目最让我拍案叫绝的工程决策。理由有三层:
+- 两次改动落在**不同 span**：合并后干净交织，`start **bold mid** end` 变成 `HEAD **BOLD CENTER** end`，两份副本输出完全一致。
+- 两次改动落在**同一 span**：两边的删除与插入都存活，结果是并排的两份文本，不丢内容但也不自动交织。
 
-**理由一:WYSIWYG 编辑器的 caret/selection/IME 状态机不是 CRDT 的强项。**
+第二种情形与 `crdt-sync` 入口文件自己声明的边界一致：并发写同一个 span 时"重复但不丢文本"，比静默 LWW 更安全。同一段注释里还有一条更危险的告诫——**必须共享同一来源**。两份独立建档的文档即使内容和 uuid 都一样，Yjs 的条目标识仍是各自生成的；合并时顶层 `Y.Map` 上的并发赋值退化成整值 LWW，输的那棵树会被静默丢掉。接入时务必从持久化里恢复既有文档，不要新建空文档再灌内容。
 
-CRDT 擅长的是"两台设备同时改了同一文档,合并后谁都不丢"。它不擅长描述"光标在第 3 段第 5 个字符之后、第 2 个字符之前"。这些是本地交互状态,跟协作关系不大。让 Yjs 来管本地 IME 状态会引入大量不必要的协调开销。
+## 内联语法扩展点与它的告警盲区
 
-**理由二:DOMD 的 merge 算法是 span-level 的,不是 paragraph-level 的。**
+0.6 起内联语法成了一等扩展点，内置的 `==高亮==` 本身就是第一条规则（`defaultInlineRules` 编译到 `tagName: "mark"`）。规则声明是 `open` + `close` 加渲染方式，`{…}` 参数块沿用 Pandoc/Djot 的内联属性家族。
 
-README 里特别强调:
+编译期的校验我逐条实跑过，报错文案和处置方式都是确定的：
 
-> "Conflict-free merging **within a paragraph** instead of treating each paragraph as a single last-write-wins value."
-
-Yjs 的 `Y.Text` 是字符级别的 CRDT,两个用户在同一段的不同位置打字可以正确合并(因为它是基于字符位置的 CRDT)。但 Yjs 在段落级是 LWW(last-write-wins)——两个用户同时改同一段的两端,Yjs 的合并结果取决于字符级 lamport timestamp,大多数 WYSIWYG 编辑器暴露给用户的是段落级 LWW,体验差。
-
-DOMD 的 `mergeInlineBlock.ts`(11.8 KB)+ `mergeStructural.ts`(14.4 KB)两个文件实现了**段内字符级合并**——两台设备离线改同一段的两端,合并后两端修改都保留,而不是段落级 LWW。
-
-**理由三:产品哲学——local-first 不是协作-first。**
-
-DOMD 的产品定位是"本地优先"(local-first),核心卖点是"5 KB 的笔记和 1 MB 的文档打开速度一样",以及"macOS 原生体验 + Quick Look 预览"。协作是锦上添花,不是核心。把 Yjs 钉死在主模型里,会让 local-first 的所有性能优化都得绕着 CRDT 的协调开销走。**把 CRDT 做成可选适配器,既给了协作能力,又不污染主模型的纯净。**
-
-[Yjs CRDT Playground](https://www.domd.app/playground/crdt) 可以现场看到两台浏览器实例同时编辑同一文档时的段内合并行为。
-
-**最小 Yjs 挂载示例**(README + `renderDataOps.ts` 接口推断,实际仓库未提供官方 adapter——这部分需要你自己写,大概 200~400 行):
-
-```typescript
-import * as Y from "yjs";
-import { DOMD, DOMDProvider } from "@do-md/core-react";
-import {
-    serializeRenderData,
-    deserializeRenderData,
-    diffRenderData,
-    applyRenderDataOpsToDraft,
-    type RenderDataOp,
-} from "@do-md/core-react";
-
-// 1. 创建 Yjs 文档,宿主应用维护 root → Y.Map 的映射
-const ydoc = new Y.Doc();
-const yRoot = ydoc.getMap("domd-root"); // Y.Map<uuid, SerializedRenderData>
-
-// 2. 把 DOMD 的渲染树装载到 Yjs(可选,新会话时跳过)
-const initialOps: RenderDataOp[] = [];
-// ... 从持久化层 / 远端拉取初始 ops 列表
-applyRenderDataOpsToDraft(
-    { renderData_: editorStore.renderData_ },
-    initialOps,
-);
-
-// 3. 订阅本地编辑,把 diff ops 应用到 Yjs
-const unsubscribe = editorStore.subscribe((newState, prevState) => {
-    const ops = diffRenderData(prevState.renderData_, newState.renderData_);
-    ydoc.transact(() => {
-        for (const op of ops) {
-            if (op.op === "set") {
-                yRoot.set(op.uuid, serializeRenderData(/* 找到节点 */));
-            }
-            // insert / delete / replaceRoot 类似处理
-        }
-    });
-});
-
-// 4. 订阅 Yjs 远端更新,把外部 ops 应用到 DOMD 草稿
-ydoc.on("update", (update: Uint8Array) => {
-    // 从 update 解析出 RenderDataOp[],应用
-    applyRenderDataOpsToDraft(
-        { renderData_: editorStore.renderData_ },
-        remoteOps,
-    );
-});
-```
-
-实际生产 adapter 还要处理光标 snapshot(`CursorSnapshot`)、presence、awareness、文本字段(`set "text"` 要走 `Y.Text` 而不是 `Y.Map`)。这是一个**接口契约清晰但实现需要打磨**的扩展点——大约 200~400 行代码,取决于你要多深的 presence/awareness 支持。
-
----
-
-## 五、Inline Syntax 引擎:可扩展的 Markdown 内联语法
-
-Markdown 工具最大的一个痛点是:**内联语法是写死的。**
-
-要做高亮、@mention、#hashtag、wikilink、评论,传统方案是:
-
-1. 预处理文本(在解析之前替换成占位符)。
-2. fork 解析器(自己实现一个支持扩展语法的 parser)。
-3. 退回原始 HTML(让用户写 `<span class="mention">@Alice</span>`)。
-
-DOMD 在 0.6 版本做了一个激进的设计:**inline syntax 本身就是内核的一等扩展点。**
-
-```text
-==highlight==                              plain highlight
-=={red}highlight==                         tinted — a positional parameter
-=={.comment author="Alice"}highlight==     a semantic type with attributes
-```
-
-参数语法直接借鉴 Pandoc/Djot 的 inline-attribute 家族(Pandoc、Quarto、kramdown、markdown-it 都遵循这个约定)。
-
-**关键设计:语法和语义是分离的。**
-
-```text
-=={.mention id=1}Alice==   ≡   <{.mention id=1}Alice>
-```
-
-`==` 这种 delimiter 本身不带任何含义。`.mention` 这种 `.word` 选择一个 **variant**——variant 是作为纯数据注册的语义类型。同一个 variant 可以挂在任何 delimiter 上,适配你产品的语气:
-
-- 你的产品是高亮系统?用 `==`。
-- 你的产品是 mention 系统?用 `@` 或 `<`。
-- 你的产品是评论系统?用 `<` 或 `>>`。
-- 你想自己 fork delimiter?`open` 和 `close` 接受任意标点符号。
-
-**Variant 还可以绑定一个 React 组件:**
-
-```typescript
-{
-    open: "@",
-    close: "",
-    tagName: "span",
-    parseInner: true,
-    variants: {
-        mention: {
-            component: MentionBadge,   // ← 一个 React 组件
-            className: "mention",
-            attrs: {
-                "data-id": "{id}",     // 模板替换:{id} 来自参数
-                href: "/users/{id}",
-            },
-        },
-    },
-}
-```
-
-`MentionBadge` 组件会拿到解析后的参数和 children,在文档里就地渲染。这样一个内联规则就**不只是样式钩子,而是产品功能的嵌入面**——可以做 issue 卡片、天气小组件、工作流控件。
-
-`inline-rules.ts` 的编译期做了几件硬约束的安全检查:
-
-| 检查项 | 行为 |
+| 输入 | 处置 |
 |---|---|
-| delimiter 含字母/空白 | 警告并丢弃(必须纯标点) |
-| delimiter 含 `` ` ``、`\`、`{`、`}` | 警告并丢弃(代码域/转义/参数语法主权) |
-| tagName 不在白名单(`b/i/s/em/strong/del/u/mark/sub/sup/kbd/ins/small/abbr/cite/q/var/span`) | 警告并降级为 `span` |
-| attrs 含 `on*` 事件处理器 | 编译期不可达(白名单拦截) |
-| `href` 是 `javascript:` URL | 渲染时丢弃 |
+| `close: ""` | 丢弃整条规则：`open/close must be non-empty strings` |
+| 分隔符含字母或数字 | 丢弃：`delimiters must not contain alphanumeric or whitespace chars` |
+| 分隔符含 `` ` `` `\` `{` `}` | 丢弃：`code-span/escape/capture sovereignty` |
+| `tagName: "script"` | 保留规则，标签降级为 `span` 并告警 |
+| `attrs` 里写 `onclick` | 该属性丢弃，其余属性保留 |
+| 变体名含空格 | 该变体丢弃，规则保留 |
 
-也就是说,**用户传入的 inline rules 永远不能执行任意 JS、不能注入未授权 HTML 标签、不能绕过代码域主权。** 这对一个"内核暴露给宿主任意扩展点"的系统来说是底线安全。
+标签白名单共 18 个：`b i s em strong del u mark sub sup kbd ins small abbr cite q var span`。属性只允许落到 `class style href title id` 以及 `data-*`、`aria-*` 前缀上，事件处理器根本不可达；`javascript:` 开头的链接在渲染时被丢掉。整条链路的姿态是"永不抛异常，只降级并告警"，宿主写错一条规则不会把编辑器弄挂。
 
----
+问题出在后半句。构建的 terser 配置里 `drop_console: true`，同时把 `console.log`、`console.time`、`console.timeEnd` 声明为纯函数。我在 0.13.1 的产物里搜 `do-md] inlineRules`，0 命中。也就是说上面那张表里的告警只存在于源码和开发模式，生产构建里规则被静默丢弃。
 
-## 六、双层许可:GPL-3.0 + 商业许可 + 小实体豁免
-
-DOMD 的许可策略值得单独拆开说,因为它精确反映了一个事实:**Markdown 编辑器内核是高价值、低天花板的产品。**
-
-```text
-┌────────────────────────────────────────────┐
-│ 应用层 (Application Layer)                  │
-│ macOS app · Web app · helper libraries    │
-│ 许可证: MIT                                │
-├────────────────────────────────────────────┤
-│ 内核层 (Editor Kernel)                     │
-│ @do-md/core-react                          │
-│ 许可证: GPL-3.0-only + 额外授权           │
-│  · 小实体豁免:营收<100万美金 或 融资<200万美金│
-│  · FOSS 例外:与 MIT/Apache/BSD/MPL 等组合 │
-│  · 商业许可:联系 effyouapp@gmail.com      │
-└────────────────────────────────────────────┘
-```
-
-**三层规则:**
-
-**第一层:小实体豁免(Small entity exception)**。个体、非营利、或营收 < 100 万美金且融资 < 200 万美金的营利实体,可以**把内核链接进非 GPL 软件并按自己的条款发布**,只要:
-
-- a. 对内核本身遵守 GPL(公开源代码)。
-- b. 保留所有版权声明、license、归属,一起发布 LICENSE 和 LICENSE-EXCEPTIONS。
-- c. 不在未经书面许可的情况下用程序名或作者名做背书。
-
-而且这条豁免**不可撤销**:一旦某个版本带这个文件发布,该版本永远在这些条款下可用。你也不需要追踪——只要你符合条件,你的"接收方"能否继续在非 GPL 条款下转售,取决于**他们自己**的资格,不取决于你。
-
-如果你**不再**符合条件(比如突然融资超过 200 万美金),你有 90 天宽限期去补 GPL 合规或谈商业许可。**已经发出去的版本永远在原条款下可用。**
-
-**第二层:FOSS 例外(FOSS license exception)**。你可以把内核和以下许可证之一的"独立作品"组合,把整个作品按那个独立作品的许可证发布:
-
-- Apache 2.0、BSD-2-Clause、BSD-3-Clause、EPL-2.0、ISC、MIT、MPL-2.0、zlib
-
-大多数这些许可证本来就和 GPL 兼容——可以组合在 GPL 下发。这个例外增加的是:**可以按独立作品自己的许可证发,不是 GPL**。但是 GPL 仍适用于内核本身。
-
-**第三层:商业许可(Commercial licensing)**。如果你既不符合小实体豁免、又不想按 GPL 发,买商业许可即可。
-
-**最重要的"不要误解"指南**(LICENSE-EXCEPTIONS.md 末尾有原文):
-
-> "Trying it, building with it, running it internally — no obligations at all. The GPL attaches only when you convey. **Shipping a web app that loads this kernel — that *is* conveying**: your build reaches your users' browsers."
-
-这一句点破了最常被误解的点:**你写了个 SaaS,前端用 React 加载 DOMD 内核的 npm 包,这就已经是 convey 了**——你的前端进入了用户的浏览器。如果你不满足小实体豁免也不满足 FOSS 例外,你整个前端都得 GPL。
-
-作者还在 README 里直接补了一句:
-
-> "Shipping a web app that loads it in the browser counts."
-
-这是非常清醒的产品边界:**GPL 不是为了刁难用户,而是为了强制大型玩家(融资过 200 万或营收过 100 万美金的公司)要么开源要么付费,让中小开发者免费用上能用的内核。** 内核本身在 npm 上公开可下载可试用,本地开发、内部测试、build pipeline 跑通都不触发 GPL。
-
-CLA(Contributor License Agreement)的存在让这一切可执行:**贡献者保留自己代码的版权,但授予项目方在商业许可中使用的权利。** 没有 CLA,贡献过的代码将来无法纳入商业许可版本,只能留在 GPL 版本里——这对一个依赖商业许可养活的项目是致命的。
-
-这种"双层 + 豁免 + CLA"的组合,在 WYSIWYG 编辑器领域非常少见。CKEditor 用一种,Ghost 用另一种,TipTap 用一种,DOMD 用的是**最接近"项目方与开源社区利益一致"的版本**:你小,我免费;你大,你付钱;你开源,我们组合得更灵活。
-
----
-
-## 七、和 LLM 流式输出的真实契合
-
-如果你在 2026 年做一个 LLM 驱动的产品——AI 写作、AI 笔记、AI 客服、AI 教育——你大概率需要一个"AI 流式输出 + 用户在线编辑"的混合场景。
-
-这个场景的典型需求:
-
-1. AI 输出 Markdown 流,用户能实时看到中间状态。
-2. 用户中途停下来在 AI 没写完的地方改一个错别字。
-3. AI 继续输出,得无缝接上用户的修改。
-4. 多人协作(产品经理、设计师、运营)在同一份文档上跟 AI 协同。
-5. 文档得能存进 Git(因为产品技术文档需要 diff/review),所以存的就是 Markdown 源码,不是某个私有 AST。
-
-DOMD 是我目前见过的**唯一一个**同时满足这五条需求的开源内核:
-
-| 需求 | DOMD 的实现 |
-|---|---|
-| 1. 流式渲染中间状态 | parseMarkdown 接受任意半成品,`triggerReg_` 控制 reparse 触发 |
-| 2. 用户中途修改 | 编辑即 Markdown 文本 mutation,模型就是文本 |
-| 3. AI 继续接上 | AI 看到的还是 Markdown,接上是文本拼接,无需额外转换 |
-| 4. 多人协作 | 可选 Yjs 适配器,段内字符级合并 |
-| 5. 存进 Git | Markdown 文本就是源真理,`toMarkdown` 序列化无丢失 |
-
-如果你今天要从零做一个 AI-native 的协作笔记产品,你**至少**绕不开这套需求栈。传统方案是 ProseMirror + Yjs + 自定义 Markdown 适配层——这套方案能做,但你得维护 ProseMirror schema、Markdown ↔ AST 双向转换器、Yjs 协作层、AI 流式适配层。**DOMD 把前三层合并成一个内核,只让你写 AI 流式适配层。**
-
----
-
-## 八、版本节奏与产品状态
-
-我整理了 npm 上的 38 个版本(截至 2026-08-21):
+排查手法因此要换个路子：`compileInlineRules` 产出的 `triggerReg_` 会暴露哪些规则活了下来。
 
 ```text
-0.2.5  2026-06-16  首次公开
-0.2.6  2026-06-16  +1 天,bugfix 节奏
-0.2.9  2026-06-24  +8 天
-0.2.12 2026-07-22
-0.4.0  2026-08-01  +10 天,版本号跨越
-0.5.0  2026-08-05
-0.8.3  2026-08-07  inline rules v2 重写
-0.9.0  2026-08-10  一周一迭代
-0.10.0 2026-08-18  GPL 切换
-0.11.0 2026-08-20  小实体豁免登场
-0.11.2 2026-08-21  最新
+一条合法的 $$…$$ 规则        → /(?:\$\$(?:\{[^\n]*?\})?.+?\$\$)/
+分隔符含字母，或 close 为空   → triggerReg_ 为 null（整条被丢）
+与内置冲突的单个 < 号         → /(?:<\{[^\n]*?\}.+?>)/  捕获段变成必选
 ```
 
-38 个版本在 ~2 个月内发完,基本是 daily/weekly 的迭代节奏。8-07 那个 0.8.3 是 `inline rules v2` 重写——前面 18 KB 的 inline-rules.ts 是这次重写的产物。8-18 0.10.0 是 GPL 切换——之前的版本是 PolyForm Noncommercial 1.0.0,8-18 之后切到 GPL-3.0 + 额外授权。这个节奏说明项目**仍在快速演进**,AI 流式协作这个方向的产品形态尚未稳定。
+所以宿主侧的自检要换个抓手：注册之后拿编译结果断言 `triggerReg_` 非空、且串里含预期的转义分隔符，比等控制台输出可靠得多。
 
-仓库本身也有几个值得注意的数字:
+## 双层许可与 0.11.0 这条线
 
-- **530+ stars** · **32 forks** · **0 open issues**(是的,0!)
-- **1497 KB** 仓库大小(主要是 macOS app 的 Tauri binary resources)
-- **TypeScript** 主语言
-- 创建日期 **2026-05-25**
+先纠正一条常被写错的时间线：GPL 切换不在 0.10.0。逐版拉 npm 的 `license` 字段，结果是：
 
-0 open issues 在一个高频迭代的 TypeScript 项目里是极其罕见的——要么说明 issue tracker 流转非常高效,要么说明大部分用户是直接用 npm 包提 issue 而不是 GitHub Issues。考虑到 GitHub Issues 已经被打开但项目方的 issue 跟踪可能在 Discord/邮件,这个数字本身就是一个产品成熟度信号。
+```text
+0.2.5        无 license 字段
+0.2.6 – 0.10.0   PolyForm-Noncommercial-1.0.0
+0.11.0 – 0.13.1  GPL-3.0-only
+```
 
----
+README 里有同样的说法：0.10.0 及之前是 PolyForm Noncommercial 1.0.0，0.11.0 起才是 GPL-3.0 加附加权限。2026-08-20 那次提交也对得上：内核源码从私有仓库整体搬进公开仓库，在此之前它只是依赖里一个内部属性被改名的 npm 包。
 
-## 九、它不适合谁
+同一次提交里还有一条容易被忽略的工程决定：属性改名（`mangle.properties /_$/`）被彻底移除。terser 配置旁的注释给了原因：改名唯一的理由是闭源期的代码保护，改用 GPL 之后它只剩代价。运行时属性名每次构建都在变，就从源码生成不出可信的类型声明，只能退回手写窄声明文件。而正是手写声明这条路，让对外接口与实现漂移过一次。
 
-为了不让你读了半天兴冲冲去集成然后踩坑,明确说边界:
+`.packages/@do-md/core/LICENSE-EXCEPTIONS.md` 是按 GPL §7 授予的两条附加权限，读的时候有三处细节最容易被忽略：
 
-**不适合一:你需要 Slate/ProseMirror 的开箱即用插件生态。** Slate 有 100+ 社区插件(表格、数学公式、Markdown 快捷键、协同光标),DOMD 是封闭内核,你要么接受它的扩展点,要么 fork 整个内核。这不是 bug,这是产品边界。
+**小实体豁免的两个条件是且关系。** 非营利组织与教育机构直接合格；个人和营利实体要同时满足 `Your Revenue` 低于 100 万美元**且** `Your Funding` 低于 200 万美元。两个口径都合并关联方（控制定义为持股超 50%），金额按 2026 年美元计并以 BLS 的 CPI 做通胀调整。豁免本身不可撤销：带该文件发布的版本永久在这些条款下可用；不再合格时有 90 天窗口去补齐合规或谈商业许可，此前已发出的副本对下游所有人永久有效。资格逐方判定，接收方能不能再分发，取决于它自己的规模。
 
-**不适合二:你需要 WYSIWYG 编辑非 Markdown 内容。** DOMD 的核心卖点是 Markdown 是源真理。如果你的产品需要编辑 JSON、YAML、reStructuredText、AsciiDoc,DOMD 不是给你做的。
+**FOSS 例外多一个条件。** 能走这条的只有清单里那 8 个许可证：Apache-2.0、BSD-2-Clause、BSD-3-Clause、EPL-2.0、ISC、MIT、MPL-2.0、zlib。另有两个附加要求：组合作品里除内核外不能含其他 GPL 作品；必须连同 `LICENSE-EXCEPTIONS.md` 一起分发。
 
-**不适合三:你不能接受 GPL 的传染性。** 内核是 GPL。如果你的产品整体要按 MIT/Apache/BSD 等更宽松的许可证发,且你公司营收 ≥ 100 万美金 或 融资 ≥ 200 万美金,你需要买商业许可。**这是设计,不是 bug**——DOMD 的整个商业模式就建立在这条边界上。
+**在浏览器里加载就是 conveying。** 这是最容易误判的一条，文档里写得毫不含糊：
 
-**不适合四:你期望"Markdown 适配层是免费的、独立的"。** Markdown ↔ 富文本 适配层是 DOMD 内核的一部分,不能单独提取。整个内核(~30 KB)作为一个不可拆分的单元分发。这是产品形态决定的事实,不是技术债务。
+> **Shipping a web app that loads this kernel** — that *is* conveying: your build reaches your users' browsers. This is the point most people get wrong.
 
----
+对应地，只在自家机器上跑的开发、测试和内部评估不构成 conveying。应用层的 MIT 源码单独看仍是 MIT，但打包了 GPL 内核之后，任何二进制或网页分发整体按 GPL 走——这句是 README 明写的，不是推论。
 
-## 十、对 AI 时代的编辑器选型的启示
+CLA 用的是 contributor-assistant 那条动作，v2.6.1 固定在提交哈希上。注释给了理由：这个 workflow 跑在 `pull_request_target` 上且带写权限，不能让上游 tag 换掉代码。签名以评论形式落在 `cla-signatures` 分支的一个 JSON 里。协议文本是 v1 版，开头就声明尚未经律师审阅。仓库目前只有这一个 workflow 文件。
 
-WYSIWYG 编辑器领域过去 20 年沉淀的"中间模型"范式,是基于一个隐含假设:**人类编辑为主、机器输出为辅。** 在这个假设下,中间模型是合理的——人类编辑体验优先,机器输出退化为"导出为 Markdown"按钮。
+## 一千多条断言里有两条是红的
 
-LLM 流式输出把这个假设翻转了:**机器输出为主、人类编辑为辅。** 整个 UX 设计、AI agent 设计、AI 协作工具设计都开始围绕"机器输出 → 用户中途修改 → 机器继续输出"这个循环。
+这个项目最有意思的地方是它的测试形态。没有 vitest，也没有 Playwright，只有一批能独立跑的头脚本：用 esbuild 把源码打包出来再执行，断言连事故编号一起写在文件头。内核目录下有 13 个这样的套件目录，其中 11 个带 `run.sh`；仓库根的 `scripts/` 下另有 12 个 `verify-*`。我在 HEAD 上跑了内核侧 9 个套件和应用侧 2 个：
 
-DOMD 是**第一个把"机器输出为主"作为一等公民的内核**——它没有中间模型,所以没有"机器输出需要先转换成中间模型再让用户编辑"的延迟;它是 Markdown-native,所以"机器输出的就是用户看到的,用户改完就是机器下一轮的输入";它的 CRDT 适配器在外面,所以你不需要为协同付出额外的内核改造代价。
+```text
+verify-merge                  101 通过
+verify-replace                157 通过，0 失败
+verify-selection              295 通过，0 失败
+verify-resolve-ranges         122 通过，0 失败
+verify-table-ops              117 通过，0 失败
+verify-img-group               58 通过，0 失败
+verify-softbreak               32 通过，0 失败
+verify-empty-blocks            40 通过，2 失败
+verify-table-after-paragraph   20 通过，0 失败
+应用侧 verify-load-gate        30 通过，0 失败
+应用侧 verify-collab-scale     28 通过，0 失败
+```
+```bash
+# 内核侧（需先在仓库根装 immer 与 nanoid）
+cd .packages/@do-md/core && sh scripts/verify-merge/run.sh
 
-如果你正在评估 2026 年的编辑器选型——尤其是在 AI 协作、AI 笔记、AI agent 产品方向——**DOMD 是少数值得从内核层评估的项目,而不是把它当成另一个"npm 包"装上试试。**
+# 应用侧（需先有内核产物 dist/index.js）
+node --experimental-strip-types --import ./scripts/lib/register-ts-resolve.mjs \
+     scripts/verify-load-gate/run.mts
+```
 
----
 
-## 参考链接
+内核侧 9 个套件合计 944 条，应用侧两个合计 58 条。两条失败都落在 `verify-empty-blocks` 上，重复执行结果一致：
 
-- 仓库:[github.com/do-md/domd](https://github.com/do-md/domd)
-- npm 包:[@do-md/core-react](https://www.npmjs.com/package/@do-md/core-react)
-- Web 在线版:[domd.app/editor](https://www.domd.app/editor)
-- Streaming Playground:[domd.app/playground](https://www.domd.app/playground)
-- CRDT Playground:[domd.app/playground/crdt](https://www.domd.app/playground/crdt)
-- Real-time Sync Playground:[domd.app/playground/live](https://www.domd.app/playground/live)
-- Input Playground:[domd.app/chat](https://www.domd.app/chat)
-- LICENSE-EXCEPTIONS:[.packages/@do-md/core/LICENSE-EXCEPTIONS.md](https://github.com/do-md/domd/blob/main/.packages/%40do-md/core/LICENSE-EXCEPTIONS.md)
-- CONTRIBUTING / CLA:[CONTRIBUTING.md](https://github.com/do-md/domd/blob/main/CONTRIBUTING.md)
+```text
+✗ structure: "- [ ] "
+  got  Ul(CheckBoxLi(CheckBoxLabel(CheckboxesInput,Plain),EmptyP(Br)))|EmptyP(Br)
+  want Ul(CheckBoxLi(CheckBoxLabel(CheckboxesInput,Plain),EmptyP(Br)))
+✗ structure: "> "
+  got  Blockquote(EmptyP(Br))|EmptyP(Br)
+  want Blockquote(EmptyP(Br))
+```
+
+两条的形状差异完全一致：实际输出在块之后多了一个尾部补空白段落。同文件里锁定 `parse(serialize(x)) === parse(x)` 的那批断言照常通过，说明丢的不是内容，只是根的构造变了。时间线也对得上：这个套件最后一次改动是 2026-08-21（提交 `501c6f4`），而给结构末尾文档补下方光标的那次修复是 2026-08-27（提交 `7b1a534`）。红的大概率是期望串，不是内核。真正的问题在于没人提醒——`.github/workflows/` 里只有一个 CLA 检查，这批断言不会在提交时被跑一遍。
+
+这不影响使用，但影响你怎么读它的测试。断言密度确实高，1,002 条覆盖光标、选区、表格操作、软换行、批量替换与序列化往返；同时它们全靠人手动跑，主干上就会漂着没人注意的红灯。
+
+性能方面仓库给了 `bench-merge`，但它测的对象很窄，值得先看说明再看数字。每次按键都会重解析整个块，`mergeParsedBlock` 紧随其后走一遍，所以真正的问题不是"表格操作快不快"，而是这次合并相对那次重解析占多大比重。我的机器（Apple M4、Node.js v26.3.0）跑出来的结果：
+
+```text
+行列      单元格   重解析(ms)  合并(ms)  合并/重解析
+3×3          9      0.027      0.030      1.11x
+10×5        50      0.127      0.102      0.80x
+25×8       200      0.656      0.370      0.56x
+50×10      500      1.032      0.720      0.70x
+100×12    1200      2.356      1.909      0.81x
+200×20    4000     10.920      9.040      0.83x
+```
+
+读法：3×3 这一档合并比重解析还贵，表格极小时引用保持的开销并没有被省下；从 10×5 起比值落到 1 以下，在 25×8 处最低 0.56x。这不构成"编辑 4000 个单元格的表格不卡"的依据。两个绝对值都是每键毫秒，200×20 那一行两项加起来约 20 毫秒，已经接近一帧的预算；而且这里没有渲染、没有 React 协调、没有 DOM。想要端到端手感，还得自己在浏览器里测。README 里"20,000 行文档平滑编辑"是厂商数字，这个套件没有给出可比的口径。
+
+## 该怎么用这个项目
+
+按决策来排，不按功能来排。
+
+**先确认许可路径。** 会把这个内核发给用户吗？网页加载、App Store、任何发送到用户设备的行为都算 conveying。会的话三条路选一条：符合小实体豁免（营收与融资两条线都要在限内）、按 8 个 FOSS 许可证之一整体发布（且组合里没有别的 GPL 作品）、买商业许可。只是内部试用、自己机器上开发构建，不触发义务。规模跨过 100 万美元营收或 200 万美元融资的公司，这条要在写代码之前谈。
+
+**别把它当富文本框架。** `renderComponent` 能替换的官方目标目前声明为 `MarkdownType` 里的 `Img`、`ImgGroup`、`Link`、`Table`、`Pre`；`.packages/@do-md/plugins/` 那四个包（命令、目录、搜索、虚拟滚动）在仓库里，其中只有 `@do-md/commands` 上了 npm。ProseMirror 和 Slate 那种插件生态这里没有。
+
+**接协同前先读那段同源告诫。** 直接用 `plugins/collaboration/crdt-sync/`，别自己从 op 流重造映射；文档副本必须从持久化恢复，不接受两份独立建档。上线前自己跑一遍同 span 并发编辑，看清楚"重复但不丢"这个既定语义是不是你能接受的取舍。
+
+**AI 场景是它现在最扎实的用途，但要按 0.11+ 的接口写。** 服务端用裸 Node.js 起 `EditorStore`，模型输出走 `insertText`，成批修订走 `replaceRanges`，把 `subscribeRenderDataOps` 的 op 流推到浏览器那份 store 即可；`replaceRanges` 一条撤销回滚整批这个性质，对"让模型改完还能一键还原"的界面很友好。文档示例里那个 `aiInsertInCursor` 已经不在产物里，别照抄。
+
+**不适合的几类：** 需要编辑 JSON、YAML 之类非 Markdown 内容的；要求存回磁盘必须与原文件逐字节相同（松列表会被收紧）；Windows 原生构建（README 明说暂不支持）；以及把 CI 当作质量底线、不接受主干上有手动跑的红灯的团队。
+
+## 下一步读哪几段代码
+
+想接着往下判断这套东西靠不靠得住，按这个顺序读最省时间，每处都能顺手跑一遍复算：
+
+1. `.packages/@do-md/core/src/editor/model/merge/mergeInlineBlock.ts` 的头注释——span 不可变这条不变式，以及它为什么让协同端不需要深度合并；
+2. `.packages/@do-md/core/src/editor/model/sync/renderDataOps.ts` 的头注释——op 流为什么不走 immer 的 patch；
+3. `.packages/@do-md/core/src/editor/controller/lib/checkDomNeedRender.ts`——每次按键的放行条件，包括那条防止标题反复重解析的正则；
+4. `.packages/@do-md/core/scripts/verify-selection/entry.ts` 与 `verify-empty-blocks/entry.ts`——前者 295 条断言，是全项目最密的一处；后者是主干上那两条红灯所在；
+5. `.packages/@do-md/core/vite.config.ts` 里 terser 配置旁的注释——属性改名为何被移除，以及它和类型声明漂移的因果关系。
+
+第 4、5 两处合起来，基本就能看出这个项目当前把精力花在哪、又在哪一处还没来得及收尾。
+
+## 五个自测题
+
+1. 同一文档，A 改段落开头的 span，B 改同段落另一个 span，离线后合并，结果是什么？如果 A 和 B 改的是同一个 span 呢？
+2. `replaceRanges` 传入五条编辑，其中一条越界，其余四条会怎样？用户按一次撤销会退回到哪一步？
+3. 内核产物里 `aiInsertInCursor` 有几个命中？由此能推出 README 的哪一句已经过期？
+4. 一家融资 300 万美元、营收 40 万美元的公司，把内核装进自家网页产品的前端发给用户，能否主张小实体豁免？换成一家公司写一个纯内部工具呢？
+5. 宿主注册了一条 `open` 含字母的内联规则，生产环境没有任何控制台输出，用什么办法确认它到底有没有生效？
+
+答案都能在前面几节的命令里跑出来。真要验证第 5 题，去检查 `compileInlineRules` 的 `triggerReg_`。
+
+## 参考
+
+- 仓库：<https://github.com/do-md/domd>（本次核对基准提交 `1780d7f`，标签 `v0.10.0`）
+- 内核包：<https://www.npmjs.com/package/@do-md/core-react>（0.13.1）
+- 内核文档与接口一览：tarball 内的 `README.md`
+- 附加权限全文：`.packages/@do-md/core/LICENSE-EXCEPTIONS.md`
+- 贡献与 CLA：<https://github.com/do-md/domd/blob/main/CONTRIBUTING.md>、<https://github.com/do-md/domd/blob/main/CLA.md>
+- 网页版与演示：<https://www.domd.app/editor>、<https://www.domd.app/playground>、<https://www.domd.app/playground/crdt>、<https://www.domd.app/playground/live>、<https://www.domd.app/chat>
+- 状态底座：<https://www.npmjs.com/package/@do-md/zenith>

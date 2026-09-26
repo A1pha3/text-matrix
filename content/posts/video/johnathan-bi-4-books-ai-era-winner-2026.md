@@ -1,6 +1,7 @@
 ---
 title: "毕英杰的四本书单：AI 时代的精神诊断器"
 date: "2026-06-23T18:10:19+08:00"
+lastmod: "2026-09-24T00:00:00+08:00"
 slug: "johnathan-bi-4-books-ai-era-winner-2026"
 source_key: "bv:BV1s37P6AE5d"
 description: "B 站 UP 毕英杰 Johnathan 在视频里给了四本反常识的书：Weber、Aristotle、Girard、Kripal。没有一本讲 AI，没有一本是 self-help。但它们拼成一台诊断器，能回答 AI 时代真正的问题——不是学什么技能，而是怎么重新理解工作、欲望、好生活和意识。"
@@ -12,40 +13,50 @@ hiddenFromHomePage: false
 
 你最后一次做重大决策——换工作、选城市、结束一段关系——依据的是什么？是"自己真正想要的"，还是"身边五个人都在做的事"？
 
-毕英杰 Johnathan 在 B 站发了一支视频，四本书，跨越两千四百年，没有一本讲 AI。他把这四本拼成一台诊断器，用来回答一个所有 AI 焦虑都绕不开的问题：**你拼命追求的东西，有多少是你真正想要的，多少是别人传染给你的，多少只是一套几百年前偶然形成的宗教系统在驱动你？**
+毕英杰 Johnathan 在 B 站发了一支 20 分钟的视频，四本书，写作时间跨越两千多年，没有一本讲 AI。他把这四本拼成一台诊断器，用来回答一个所有 AI 焦虑都绕不开的问题：**你拼命追求的东西，有多少是你真正想要的，多少是别人传染给你的，多少只是一套几百年前偶然形成的宗教系统在驱动你？**
 
 这四本书各自回答什么、为什么偏要放在 AI 时代读、怎么拼成一张可重复使用的诊断地图，下面一条条讲。
 
-> 视频来源：毕英杰 Johnathan，《只读这 4 本书，就能成为 AI 时代的赢家》，[BV1s37P6AE5d](https://www.bilibili.com/video/BV1s37P6AE5d)，2026-06-21。毕英杰，莱斯大学毕业，B 站"人文与科技"频道 UP 主，截至视频发布时粉丝 33 万、Substack 订阅者 3.2 万+。他的工作方式不是"读了书讲给你听"——他选 4–6 本经典压缩成演讲，再找该领域最深的学者做访谈，补回删掉的论证骨架。
+> 视频来源：毕英杰 Johnathan，《只读这 4 本书，就能成为 AI 时代的赢家》，[BV1s37P6AE5d](https://www.bilibili.com/video/BV1s37P6AE5d)，2026-06-22 发布，时长 20:15。同一内容前一天已发在 Substack（[The 4 Best Books to Prepare for AI](https://www.johnathanbi.com/p/the-4-best-books-to-prepare-for-ai-f8a)，2026-06-21），开场文稿免费可读，完整双语文稿付费。
+>
+> 毕英杰在北京和温哥华之间长大，数学竞赛出身，在哥伦比亚大学读哲学与计算机，曾联合创办 Opto Investments，约三年半后离开，专心讲"伟大的书"：把 4–6 本经典压缩成一场演讲，再去找该领域最深的学者做访谈，补回删掉的论证骨架。截至 2026 年 9 月，B 站粉丝约 39 万，Newsletter 订阅超过 3.4 万。
 
 ## 视频的核心判断
 
-视频开场第一句话就重新定义了问题：
+开场文稿的第一段就把问题的量级改写了：
 
-> "People today are worried about AI and they're worried about AI taking their jobs. But this first book is going to show you that the problem is actually a lot greater. The right comparison to our current time isn't dot com bubble, it's not 2008. It's Darwin, which shook the faith of an entire civilization. It's the industrial revolution which required two world wars to properly sort out."
+> "People today are mostly worried about AI taking their job or the bubble bursting, but Weber's Protestant Ethic is going to show you the problem is much greater. The right comparison isn't the dotcom bubble or 2008. It's Darwin which shook the faith of an entire civilization or the industrial revolution which required two world wars to sort out."
+>
+> （今天的人主要担心 AI 抢走工作，或者泡沫破裂，但 Weber 的《新教伦理》会告诉你，问题要大得多。该拿来类比的不是互联网泡沫，也不是 2008，而是动摇了整个文明信仰的达尔文，是要靠两次世界大战才重新排位的工业革命。）
 
-三层意思。第一，AI 不是经济问题，是文明问题——互联网泡沫和 2008 靠政策能收拾，达尔文和工业革命动摇了"人是宇宙中心""劳作是道德义务"这类文明层级的信念。前者要几代人消化，后者引发两次世界大战才完成重新排序。第二，prompt engineering 和追 X 趋势属于表面动作。第三，这套书单不提供操作手册——四本书里没有《The Coming Wave》式的策略书，没有《Co-Intelligence》式的协作指南，一本甚至来自公元前 4 世纪。
+三层意思。第一，AI 不是经济问题，是文明问题——互联网泡沫和 2008 是经济周期，靠政策能收拾；达尔文和工业革命动摇的是"人是宇宙中心""劳作是道德义务"这类文明层级的信念，前者要几代人消化，后者引发两次世界大战才完成重新排序。第二，他原话说得更直接：如果还卡在学 prompt engineering、追 X 上的最新风潮，就是**把即将到来的地震低估了好几个量级**。第三，这套书单不提供操作手册——四本书里没有《The Coming Wave》式的策略书，没有《Co-Intelligence》式的协作指南，一本甚至写于公元前 4 世纪。
 
-市面上常见的"AI 时代生存指南"默认读者需要的是：哪些行业会被替代、哪些能力还有用、哪些新职业会出现。这些清单回答的是"地震后怎么活"。毕英杰问的是另一件事：**地震前支撑你的那块地，为什么不震了。**
+为什么要回两千年前找答案？文稿里也给了理由：我们需要从第一性原理把一切重新想一遍。市面上常见的"AI 时代生存指南"默认读者要的是清单——哪些行业会被替代、哪些能力还有用、哪些新职业会出现。这些清单回答的是"地震后怎么活"。毕英杰问的是另一件事：**地震前支撑你的那块地，为什么不震了。**
 
 ## 四本书，四层诊断器
 
-| 作者 | 时代 | 学科 | 回答的问题 |
-|---|---|---|---|
-| **Max Weber** | 1864–1920 | 社会学/宗教经济学 | 资本主义为什么是一种"宗教" |
-| **Aristotle** | 前 384–322 | 伦理学/政治学 | 好的生活到底是什么 |
-| **René Girard** | 1923–2015 | 人类学/欲望哲学 | 人的欲望是怎么被模仿点燃的 |
-| **Jeff Kripal** | 1962– | 宗教研究/意识研究 | 意识为什么是严肃的学术议题 |
+| 作者 | 书 | 回答的问题 |
+|---|---|---|
+| **Max Weber**（1864–1920） | 《新教伦理与资本主义精神》（1905） | 资本主义为什么是一种"宗教" |
+| **Aristotle**（前 384–322） | 《尼各马可伦理学》 | 好的生活到底是什么 |
+| **René Girard**（1923–2015） | 《浪漫的谎言与小说的真实》（1961） | 人的欲望是怎么被模仿点燃的 |
+| **Jeff Kripal**（1962– ） | 《Secret Body》（2017） | 意识和神秘体验为什么是严肃的学术议题 |
+
+视频本体四章全免费，章节表是他自己公开的：
+
+- 0:00 导言
+- 1:42 Weber，《新教伦理与资本主义精神》
+- 5:41 Aristotle，《尼各马可伦理学》
+- 9:48 Girard，《浪漫的谎言与小说的真实》
+- 14:25 Kripal，《Secret Body》
 
 四本书不是四个并列知识点，是从地基到屋顶的四个楼层。拆开来各讲各的，叠在一起才是完整的诊断器。
 
 ### 第一层：Weber——你"努力奋斗"的背后是一套宗教系统
 
-视频里他这样引入这本书：
+视频把 Weber 放在第一章，任务是给 AI 重新定性：它不只是又一轮经济挑战，而是冲着当代主流宗教去的——这套宗教的名字叫资本主义、工作、成功、成就。
 
-> "This first book by Max Weber will correct that error. Because it correctly frames AI not just as an economic challenge, but a religious threat to the dominant religion of our day, which is capitalism, work, success, achievement."
-
-**"AI 抢工作"如果是经济问题，回答是"再培训、再分配、UBI"。但 Weber 告诉你：工作不只是饭碗，是信仰。** 丢饭碗是丢掉一份收入；丢信仰是丢掉"我为什么还值得被需要"的依据。前者有再培训，后者没有。
+**"AI 抢工作"如果是经济问题，回答是"再培训、再分配、UBI（全民基本收入）"。但 Weber 告诉你：工作不只是饭碗，是信仰。** 丢饭碗是丢掉一份收入；丢信仰是丢掉"我为什么还值得被需要"的依据。前者有再培训，后者没有。
 
 Weber 在《新教伦理与资本主义精神》（1905）里讲了一条因果链。加尔文宗"预定论"说，上帝在出生前就定好了谁得救，而且人不能直接知道结果。这制造了存在性焦虑。焦虑的出口是：通过世俗的成功——财富、事业、勤勉——来反向确认自己是被拣选的。"我成功"＝"我大概是上帝的人"。**赚钱不是目的，是证据。**
 
@@ -64,11 +75,11 @@ Weber 在《新教伦理与资本主义精神》（1905）里讲了一条因果�
 
 ### 第二层：Aristotle——AI 时代还能"活得好"吗
 
-> 视频的公开免费部分只到 Weber 段，Aristotle 及之后在付费墙后。以下分析基于毕英杰的公开内容（[刘擎×毕英杰谈西方哲学](https://www.bilibili.com/video/BV1DFL56YEGz)）和 Aristotle 原文。
+Aristotle 段在视频 5:41–9:48，免费可看；完整双语文稿需要付费（Substack 订阅或 B 站充电）。本节以视频要点为骨架，用《尼各马可伦理学》原文补足论证。
 
 Aristotle 的《尼各马可伦理学》核心概念是 *eudaimonia*，常被译成"幸福"，但译坏了。现代汉语的"幸福"指向主观快感——心情好、物质满足。Aristotle 讲的 *eudaimonia* 不是心情，是**"活得好"**——一个可以客观判断、有完整结构的人生状态。
 
-核心定义（*NE* 1098a）：
+核心定义，*NE* 1098a 的标准概括：
 
 > *Eudaimonia* is an activity of the soul in accordance with virtue over a complete life.
 
@@ -78,11 +89,11 @@ AI 时代的主流"幸福观"正在侵蚀这三个要素：Prompt 一键完成�
 
 但 Aristotle 框架也给出了另一个判断：**只要还存在"我可以按德性做事"的活动领域，AI 时代就还有 eudaimonia。** 问题不是"AI 能不能做"，是"你还做不做"。
 
-结合毕英杰本人的人生轨迹（从常春藤职场转行做独立讲书人），他的 Aristotle 建议大概是：工作不应当作 eudaimonia 的唯一载体；培养若干结构上需要德性长期养成的活动——研究、教学、创作、深度对话、长程身体训练；以"完整一生"为尺度重排时间，而不是按产品周期。
+结合毕英杰本人的人生轨迹（读哲学与计算机、创业三年半后离开、转行做独立讲书人），他的 Aristotle 建议大概是：工作不应当作 eudaimonia 的唯一载体；培养若干结构上需要德性长期养成的活动——研究、教学、创作、深度对话、长程身体训练；以"完整一生"为尺度重排时间，而不是按产品周期。
 
 ### 第三层：Girard——你的焦虑是从哪里传染来的
 
-René Girard 用了一辈子论证一件事：**人的欲望不是原生的，是被模仿点燃的**——这就是 mimetic desire（模仿欲望）。
+René Girard 在《浪漫的谎言与小说的真实》（1961）里论证了一件事：**人的欲望不是原生的，是被模仿点燃的**——这就是 mimetic desire（模仿欲望）。
 
 小孩子本来对玩具没兴趣，看到另一个孩子想要，他突然也想要。职场人本来对工作挺满意，听到同事晒了 offer，开始想跳槽。你本来对 GPT-5 没感觉，看到 X 上所有人都在聊，你突然焦虑"我是不是落伍了"。
 
@@ -94,23 +105,21 @@ AI 时代是 Girard 理论的极端压力测试：
 |---|---|
 | OpenAI / Anthropic / Google 同步发 Agent | 底层是 mimetic rivalry，不是巧合 |
 | 所有人焦虑"AI 会不会替代我" | 焦虑的传导路径不是"我评估了我的技能"，是"我看到所有人都在焦虑" |
-| 工具从 Cursor 换到 Claude Code 换到 Devin | 模仿客体自身更新速度极快——3–6 个月一轮 |
+| 工具从 Cursor 换到 Claude Code 换到 Devin | 模仿客体自身更新速度极快 |
 
-AI 时代的特殊之处在于模仿客体自身的更新速度。互联网时代模仿客体是"学历/房子/车"，更新周期 5–10 年；AI 时代模仿客体是"今天最火的工具/技能/职位"，更新周期 3–6 个月。
+AI 时代的特殊之处在于模仿客体自身的更新速度。互联网时代模仿客体是学历、房子、车，几年才换一轮；AI 时代模仿客体是最火的工具、技能、职位，几个月就换一轮。
 
-Girard 的解药是 **learn to desire differently**——学会识别哪些欲望是"我的"，哪些是"我看到别人要所以我要的"。
+Girard 的解药，用后来把他理论带进商业世界的 Luke Burgis 的话说，是 learn to desire differently——学会识别哪些欲望是"我的"，哪些是"我看到别人要所以我要的"。
 
 把 Weber 和 Girard 放在一起看，更有意思：Weber 说资本主义是宗教，你的工作是仪式；Girard 说你的欲望是被模仿点燃的。合起来——你以为你在追求"成功"，其实你是资本主义宗教加 mimetic desire 双重作用下的被迫表演。**当表演的观众发现 AI 比演员便宜 10 倍，整个剧场就空了。**
 
 ### 第四层：Kripal——AI 时代人还剩下什么
 
-Jeff Kripal 是莱斯大学宗教研究系讲席教授，专攻比较宗教、神秘体验和意识的非物质研究。毕英杰近两年密集访谈他（B 站 3 期 + Substack 2 期），最可能的主文本是 *The Flip* 和 *Supernatural*。
+Jeff Kripal 是莱斯大学 J. Newton Rayzor 哲学与宗教思想讲席教授，专攻比较宗教和神秘体验研究，毕英杰访谈过他（B 站《为什么尼采希望你"不快乐"？｜莱斯大学教授》，[BV11XRaBBEvn](https://www.bilibili.com/video/BV11XRaBBEvn)）。视频里这本《Secret Body》（2017，芝加哥大学出版社，直译"秘密的身体"）是他的方法论自白：把宗教史里被学术传统压抑的两样东西——情色经验和神秘经验——重新当作严肃材料，并且主张研究者自己的异常体验也算证据，观察者并不站在实验之外。
 
-*The Flip* 的核心命题：
+他讲"意识翻转"最系统的其实是另一本 *The Flip*（2019）：主流的默认公理说，意识由大脑产生；翻转后的假设是，意识可能与物质同样基本，大脑更像接收器，而不是发电厂。
 
-> "The next major revolution in human knowledge will not be technological. It will be the recognition that consciousness is not produced by the brain, but is rather received by the brain—like a television receives a broadcast."
-
-这段话在做三件事：拒绝把物质主义当默认公理，重新合法化神秘体验作为研究对象，给"人何以为人"提供非生物学答案。
+> 注：Kripal 段的完整论证锁在付费文稿里，免费材料只有章节标题；本节用他自己已出版的著作补足，是本文的整理，不代表视频原话。
 
 把 Kripal 放到 AI 时代，逻辑链是这样的：主流 AI 科学的强假设是功能主义——意识是信息处理模式，只要模式对了，基质不重要。这套假设在 LLM 越来越像"会思考"的过程中被反复强化。Kripal 的回答是：边界画不出来，是因为我们把"意识"等价于"信息处理"了。意识如果是接收的而不是产生的，AI 永远只是在产生模式，不是在接收。
 
@@ -120,7 +129,7 @@ Jeff Kripal 是莱斯大学宗教研究系讲席教授，专攻比较宗教、�
 
 四本书拼起来是这样：
 
-```
+```text
 Kripal   → 意识/接收/顿悟          ← 最深一层
   ↑
 Girard   → 欲望/模仿/看清          ← 中间一层
@@ -155,20 +164,20 @@ Weber    → 宗教/工作/系统           ← 框架一层
 
 **退休/降速是不是合理？** Weber 描述的资本主义宗教让"停不下来"变成美德。AI 时代让"停不下来"变成物理事实。能主动停、能降速、能切到 eudaimonia 模式的人，反而是 AI 时代最稀缺的。
 
-**灵性/神秘体验是不是玄学？** Kripal 的全部学术工作就是反驳这件事。在他的研究框架里，灵性经验是可以被比较、被严肃对待的实证现象。AI 时代谈"意识接收"不是开倒车——是在 AI 越来越擅长信息处理时，把"接收能力"重新标价为人区别于机器的核心特性。
+**灵性/神秘体验是不是玄学？** Kripal 的学术生涯几乎都在论证相反的事：在他的研究框架里，灵性经验是可以被比较、被严肃对待的实证材料。AI 时代谈"意识接收"不是开倒车——是在 AI 越来越擅长信息处理时，把"接收能力"重新标价为人区别于机器的核心特性。
 
 ## 怎么读这四本书
 
-视频暗示的顺序是 Weber → Aristotle → Girard → Kripal，按问题递进。如果按"读完立刻能用"排序：
+视频的顺序是 Weber → Aristotle → Girard → Kripal，按问题递进。如果按"读完立刻能用"排序：
 
-1. **先读 Girard**。最短入门是 *I See Satan Fall Like Lightning*，对"我现在的欲望是真是假"立刻有判断力。
-2. **再读 Weber**。*The Protestant Ethic* 不长但密度大，建议先看 Davide Cantoni 的简评理清脉络。
-3. **再读 Aristotle**。*Nicomachean Ethics* 配合注疏本，4–6 周通读。
-4. **最后读 Kripal**。先看 *The Flip*，再看 *Supernatural*。
+1. **先读 Girard**。视频选的是奠基文本《浪漫的谎言与小说的真实》（1961）；嫌它绕，可以先看更短的入门《I See Satan Fall Like Lightning》，对"我现在的欲望是真是假"立刻有判断力。
+2. **再读 Weber**。《新教伦理与资本主义精神》不长但密度大。想先了解它挨过的学术检验，可以配 Davide Cantoni 对德意志地区的实证研究——他发现新教城市的长期增长平均而言并不比天主教城市快，Weber 命题的平均效应远比想象的弱。先知道争论在哪，再读正文更清醒。
+3. **再读 Aristotle**。《尼各马可伦理学》配合注疏本，4–6 周通读。
+4. **最后读 Kripal**。先看《Secret Body》，再看《The Flip》。
 
 毕英杰的判断是"AI 时代"不可逆。四本书不是给反 AI 派准备的弹药。用诊断器测出来"这件事不该做"，答案不是"回归过去"，而是在 AI 时代重建另一套能产生 eudaimonia 的活动、欲望和系统叙事。
 
-读这四本书最大的代价不是时间（四本加起来 1500–2000 页），是每读一次都在被改写一次。毕英杰自己说"已经做了重大人生决策"——意思是这四本书是那种会改变职业选择、婚姻决定、居住城市的书。
+读这四本书最大的代价不是时间（加起来上千页），是每读一次都在被改写一次。毕英杰在文稿里写的原话："I've already made major life decisions based on their insights to AI-proof my life and career."（我已经根据这几本书的洞见做了重大人生决定，给自己的生活与职业上了一份 AI 保险。）这四本书是那种会改变职业选择、婚姻决定、居住城市的书。
 
 ## 读完自测
 
@@ -177,7 +186,7 @@ Weber    → 宗教/工作/系统           ← 框架一层
 1. 用一句话解释 Weber 为什么说资本主义是宗教（不超过 30 字）。
 2. Aristotle 的 eudaimonia 和现代人说的"幸福"有什么区别？举一个你生活中"以为是 eudaimonia 其实不是"的例子。
 3. Girard 的三角欲望里，"榜样"和"客体"分别是什么？你最近一次被 mimetic desire 驱动是什么时候？
-4. Kripal 说意识是"接收的"不是"产生的"——这和 AI 的"意识"争论有什么关系？
+4. Kripal 的"翻转"说意识未必由大脑产生——这和 AI 的"意识"争论有什么关系？
 
 **应用层：**
 
@@ -191,7 +200,7 @@ Weber    → 宗教/工作/系统           ← 框架一层
 
 这篇已经覆盖四本书的框架、主要判断和诊断器的用法。如果你要的只是一个判断框架，或者想决定要不要花时间读这四本书，读到这一段就可以停。
 
-值得回看原视频的人有三类：想把付费墙后 Aristotle 段的完整论证也听一遍的人；被某个判断击中、想看他怎么在一段演讲里压缩论证的人；想复现他那套「选书 → 压缩成演讲 → 访谈该领域最深的学者」工作流的人。原视频里更细的停顿、玩笑和现场反应，是文字拆解带不走的。
+值得回看原视频的人有三类：想把某一段论证完整听一遍而不是读文稿的人；被某个判断击中、想看他怎么在一段演讲里压缩论证的人；想复现他那套「选书 → 压缩成演讲 → 访谈该领域最深的学者」工作流的人。原视频里更细的停顿、玩笑和现场反应，是文字拆解带不走的。需要逐句文稿的人，Substack 付费订阅和 B 站充电双语文稿是同一个内容的两个入口。
 
 ## 进阶路径
 
@@ -206,6 +215,7 @@ Weber    → 宗教/工作/系统           ← 框架一层
 
 **参考来源：**
 
-- B 站视频：毕英杰 Johnathan，《只读这 4 本书，就能成为 AI 时代的赢家》（[BV1s37P6AE5d](https://www.bilibili.com/video/BV1s37P6AE5d)）
-- Substack 同主题文章：*The 4 Best Books to Prepare for AI (of the Hundreds I've Read)*（johnathanbi.substack.com）
-- 关联视频：[BV12wL2zaEmQ](https://www.bilibili.com/video/BV12wL2zaEmQ)（模仿理论一讲）、[BV1DFL56YEGz](https://www.bilibili.com/video/BV1DFL56YEGz)（刘擎×毕英杰谈西方哲学）、[BV1AeTXzxEhp](https://www.bilibili.com/video/BV1AeTXzxEhp)（毕英杰×帝国理工谈 AI 与佛学）
+- B 站视频：毕英杰 Johnathan，《只读这 4 本书，就能成为 AI 时代的赢家》（[BV1s37P6AE5d](https://www.bilibili.com/video/BV1s37P6AE5d)），2026-06-22，时长 20:15
+- Substack 同主题文章：*The 4 Best Books to Prepare for AI (of the Hundreds I've Read)*（2026-06-21，[免费开场文稿与章节时间轴](https://www.johnathanbi.com/p/the-4-best-books-to-prepare-for-ai-f8a)；完整文稿付费）
+- 作者主页与简历：[johnathanbi.com](https://www.johnathanbi.com/about)
+- 关联视频：[BV12wL2zaEmQ](https://www.bilibili.com/video/BV12wL2zaEmQ)（模仿理论一讲）、[BV1DFL56YEGz](https://www.bilibili.com/video/BV1DFL56YEGz)（刘擎×毕英杰谈西方哲学）、[BV11XRaBBEvn](https://www.bilibili.com/video/BV11XRaBBEvn)（Kripal×毕英杰谈尼采与神秘主义）、[BV1AeTXzxEhp](https://www.bilibili.com/video/BV1AeTXzxEhp)（毕英杰×帝国理工谈 AI 与佛学）

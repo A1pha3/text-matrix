@@ -1,6 +1,7 @@
 ---
 title: "Supermemory：AI 记忆不是 RAG，是一条独立的上下文通路"
 date: "2026-03-31T01:20:00+08:00"
+lastmod: "2026-09-24T00:00:00+08:00"
 slug: supermemory-ai-memory-context-engine
 github_repo: "supermemoryai/supermemory"
 source_key: "gh:supermemoryai/supermemory"
@@ -8,7 +9,7 @@ aliases:
   - /posts/tech/supermemory-ai-memory-context-engine/
 categories: ["技术笔记"]
 tags: ["AI记忆", "RAG", "智能体", "向量数据库"]
-description: "Supermemory 在 LongMemEval / LoCoMo / ConvoMem 三大 AI 记忆基准上都排第一。它把记忆和 RAG 拆成两条通路：RAG 检索文档块，记忆追踪用户事实，再合并成一次查询。本文拆它的 Memory Engine、User Profiles、Hybrid Search 和自托管方案。"
+description: "Supermemory 称在 LongMemEval / LoCoMo / ConvoMem 三大 AI 记忆基准上均排第一。它把记忆和 RAG 拆成两条通路：RAG 检索文档块，记忆追踪用户事实，再合并成一次查询。本文拆它的 Memory Engine、User Profiles、Hybrid Search 和自托管方案。"
 ---
 
 # Supermemory：AI 记忆不是 RAG，是一条独立的上下文通路
@@ -19,22 +20,22 @@ AI 对话的失忆不是"存不下"，而是存下来的东西和"该给模型�
 
 ## 一、项目坐标
 
-| 项目 | 现状（GitHub API 2026-08-07 核验） |
+| 项目 | 现状（GitHub API 2026-09-24 核验） |
 |---|---|
 | 仓库 | [supermemoryai/supermemory](https://github.com/supermemoryai/supermemory) |
-| Stars | 28,694 |
-| Forks | 2,497 |
+| Stars | 30,858 |
+| Forks | 2,702 |
 | 主语言 | TypeScript |
 | 开源协议 | MIT |
 | 默认分支 | main |
 | 定位 | 记忆与上下文引擎 + App，可本地完整运行 |
 | 文档 | supermemory.ai/docs |
 
-技术栈里值得注意的一点：它部署在 Cloudflare Workers / Pages / KV 上，用 Postgres + Drizzle，前端是 Remix + Vite + Tailwind。也就是说，这套"记忆引擎"不是又一家向量数据库，而是一个跑在边缘计算上的应用服务。
+技术栈值得注意（CONTRIBUTING.md 与仓库 package.json，2026-09-24 核验）：整仓是 Bun + Turbo 管理的 TypeScript monorepo，服务端用 Hono + Postgres（Drizzle 做 ORM），前端是 Next.js + React 19 + Tailwind，通过 OpenNext 部署在 Cloudflare 上。也就是说，你面对的始终是一个完整的边缘应用服务——哪怕自托管，跑起来的也是整套应用，而不是一个嵌进进程里的库。
 
 ## 二、系统地图
 
-README 把产品能力写成了五块，其实都汇进同一套记忆结构：
+README 把产品能力写成了五块，都汇进同一套记忆结构：
 
 ```mermaid
 graph TB
@@ -43,8 +44,8 @@ graph TB
     SM --> Memory["Memory Engine<br/>事实提取 · 时序更新 · 矛盾消解 · 自动遗忘"]
     SM --> Profile["User Profiles<br/>静态事实 + 动态上下文"]
     SM --> Search["Hybrid Search<br/>RAG + Memory 一次查询"]
-    SM --> Conn["Connectors<br/>Drive · Gmail · Notion · OneDrive · GitHub"]
-    SM --> Extract["多模态抽取<br/>PDF · 图片OCR · 视频转写 · 代码AST"]
+    SM --> Conn["Connectors<br/>Drive · Gmail · Notion · OneDrive · GitHub · Web Crawler"]
+    SM --> Extract["多模态抽取<br/>PDF · 图片 OCR · 视频转写 · 代码 AST"]
 
     Memory --> Ontology["单一记忆结构与本体"]
     Profile --> Ontology
@@ -60,16 +61,14 @@ graph TB
 | Memory Engine | 从对话里抽事实，跟踪变化，消解矛盾，自动遗忘过期信息 |
 | User Profiles | 维护静态事实 + 近期活动，一次调用约 50ms |
 | Hybrid Search | RAG + Memory 合并成单次查询 |
-| Connectors | 实时同步外部数据源，走 webhook |
+| Connectors | 实时同步外部数据源和网页抓取，走 webhook |
 | 多模态抽取 | PDF、图片（OCR）、视频（转写）、代码（AST 感知分块） |
 
 ## 三、核心区分：Memory 和 RAG 不是一回事
 
-README 用一句话说清楚了官方立场：**Memory 不是 RAG**。
+这个区分不是本文的引申，README 里有一句原话：**Memory is not RAG**（官方还专门写了一篇 [Memory vs RAG](https://supermemory.ai/docs/concepts/memory-vs-rag) 来讲两者的边界）。RAG 检索文档块，结果无状态；Memory 提取并追踪关于用户的**事实**，处理的是会变、会矛盾的信息。
 
-RAG 检索的是文档块，结果无状态，对所有人一样。Memory 提取并追踪的是关于用户的**事实**，它要理解"我刚搬到旧金山"压过了"我住纽约"。Supermemory 默认把两者跑在一起，所以每次查询既有知识库召回，又有个性化上下文。
-
-这解释了为什么它把自己定位成"上下文引擎"而不是"向量数据库"。它交付的不是一个检索接口，而是一套持续维护的用户状态。
+关键在后半句：Supermemory 默认把两者跑在一起，每次查询既有知识库召回，又有个性化上下文。这解释了它为什么把自己定位成"上下文引擎"——它交付的是一套持续维护的用户状态，调用方拿到的每次结果都带着"这个人是谁"。
 
 ## 四、三个核心机制
 
@@ -96,6 +95,16 @@ const { profile } = await client.profile({ containerTag: "user_123" });
 
 静态事实是长期不变的，动态上下文是最近在忙的事。把这份结果拼进系统提示词，模型就大概知道自己在跟谁说话。
 
+`profile()` 还接受一个可选的 `q` 参数，把画像和相关记忆合并进同一次调用：
+
+```typescript
+const { profile, searchResults } = await client.profile({
+  containerTag: "user_123",
+  q: "What programming style does the user prefer?",
+});
+// searchResults → 按相似度排序的相关记忆
+```
+
 ### 4.3 Hybrid Search：把两条通路接成一次查询
 
 ```typescript
@@ -116,6 +125,20 @@ const results = await client.search({
 
 `containerTag` 是作用域，用来把工作记忆和个人记忆分开，也可以按客户、按仓库组织。
 
+三个机制之外，SDK 还暴露了完整的文档管理面。官方的 API 总览：
+
+| 方法 | 用途 |
+|---|---|
+| `client.add()` | 存内容——文本、对话、URL、HTML |
+| `client.profile()` | 用户画像，可选附带一次搜索 |
+| `client.search()` | 跨记忆和文档的混合搜索（`searchMode`） |
+| `client.search.documents()` | 纯文档搜索，带元数据过滤（legacy v3 返回结构） |
+| `client.documents.uploadFile()` | 上传 PDF、图片、视频、代码 |
+| `client.documents.list()` | 列出和过滤文档 |
+| `client.settings.update()` | 配置记忆抽取与分块策略 |
+
+完整 API 参考在 [supermemory.ai/docs](https://supermemory.ai/docs)。
+
 ## 五、一次对话怎么流过系统
 
 把上面的机制串起来看一次真实交互：
@@ -131,7 +154,7 @@ const results = await client.search({
   → 拼进系统提示词，模型直接基于 Go 上下文回答
 ```
 
-模型不需要 read 历史全文，靠画像就能接上上下文。这也是官方给的两个最核心的调用：`add` 写入，`profile` 读取。
+模型不依赖完整历史记录，靠画像就能接上上下文。这也是官方给的两个最核心的调用：`add` 写入，`profile` 读取。
 
 ## 六、与框架的接法
 
@@ -151,6 +174,8 @@ const agent = new Agent(withSupermemory(config, "user-123", { mode: "full" }));
 ```
 
 支持的框架清单：Vercel AI SDK、LangChain、LangGraph、OpenAI Agents SDK、Mastra、Agno、Claude Memory Tool、n8n。
+
+除了这些 drop-in 包装器，官方还按工具维护了一套开源插件（Claude Code、Muse Code、Cursor、Codex、OpenCode、OpenClaw、Hermes 各自独立仓库，如 [supermemoryai/claude-supermemory](https://github.com/supermemoryai/claude-supermemory)），本质都是 Supermemory API 的封装，想改行为可以直接 fork。
 
 对终端用户，Supermemory 还提供了一套 MCP Server，AI 助手装上后能直接获得记忆能力。支持的客户端包括 Claude Desktop、Cursor、Windsurf、VS Code、Claude Code、OpenCode、OpenClaw、Hermes。MCP 工具主要三个：`memory`（存/忘信息）、`recall`（按查询搜记忆并附带画像摘要）、`context`（在对话开头注入完整画像，Cursor 和 Claude Code 里直接敲 `/context`）。
 
@@ -210,7 +235,7 @@ const client = new Supermemory({
 bun run src/index.ts run -p supermemory -b longmemeval -j gpt-4o -r my-run
 ```
 
-里面对比的提供方包括 Mem0、Zep 等。选型时别只看印象分，用 MemoryBench 在你的数据集上把几家跑一遍更靠谱。
+里面对比的提供方包括 Mem0、Zep 等。选型时别只看印象分，用 MemoryBench 在你的数据集上把几家跑一遍更靠谱（仓库还提供了 `npx skills add supermemoryai/memorybench`，把跑分流程装进 Agent 技能里）。
 
 ## 九、采用建议
 
@@ -225,12 +250,12 @@ bun run src/index.ts run -p supermemory -b longmemeval -j gpt-4o -r my-run
 
 ## 十、结尾
 
-Supermemory 做的事，是在 RAG 之外单独维护了一条关于用户的记忆通路，再把两条通路合并成一次查询。它既是给 AI 应用用的记忆 API，也是一个能本地跑起来的上下文引擎。对想给 AI 接记忆的团队，值得先分清"你要的是文档召回，还是用户事实"，再决定要不要用它。
+Supermemory 做的事，是在 RAG 之外单独维护了一条关于用户的记忆通路，再把两条通路合并成一次查询。托管平台上它是一个记忆 API，落到本地就是一条安装命令加一个 `baseURL` 的改动。判断要不要用它，只需回到那个起点问题：你要解决的是文档召回，还是用户事实——前者你现有的 RAG 管道可能已经够用，后者才是它真正的增量。
 
 **文档信息**
 
 - 难度：⭐⭐⭐⭐
-- 更新日期：2026-03-31
+- 更新日期：2026-09-24
 - GitHub：https://github.com/supermemoryai/supermemory
 - 官网：https://supermemory.ai
 - 文档：https://supermemory.ai/docs

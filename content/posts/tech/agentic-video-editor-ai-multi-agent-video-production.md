@@ -4,6 +4,7 @@ date: "2026-04-17T16:10:00+08:00"
 slug: "agentic-video-editor-ai-multi-agent-video-production"
 github_repo: "poseljacob/agentic-video-editor"
 source_key: "gh:poseljacob/agentic-video-editor"
+lastmod: "2026-09-20T12:00:00+08:00"
 description: "一个开源的 CLI 视频剪辑工具：把素材库和创意简报交给四个 AI 智能体——Director 选镜头、TrimRefiner 校准切点、Editor 渲染、Reviewer 打分返工——一条命令出成片。本文基于仓库源码拆解它的流水线编排、A-Roll/B-Roll 叙事机制与质量评审回路。"
 draft: false
 categories: ["技术笔记"]
@@ -98,7 +99,7 @@ tags: ["多智能体", "Gemini", "FFmpeg", "Python", "LLM"]
 - 每个智能体只做一件事，决策边界清晰，问题能指认到具体环节
 - 用 YAML 文件定义工作流程，流水线可见、可改、可调试
 - Reviewer 打分并给出具体意见，形成反馈循环，而不是简单"重试"
-- 每次尝试都存为独立版本（`_v1`、`_v2`），方便逐个对比选优
+- 每次尝试都存为独立版本（`_v0`、`_v1`…），方便逐个对比选优
 
 ## §3 核心架构：四大 Agent 体系
 
@@ -152,7 +153,7 @@ Director 先读懂创意简报——卖什么产品、给谁看、什么风格�
 
 | 工具 | 做什么 | 成本 |
 |------|--------|------|
-| `search_moments` | 本地词法排序：把查询词与镜头的描述、转写文本、文件名分词后计算重合度，按 `min_relevance` 过滤、`max_results` 截断 | 低、确定、不联网 |
+| `search_moments` | 本地词法排序：把查询词与镜头的描述、转写文本、roll_type、文件名分词后计算重合度，按 `min_relevance` 过滤、`max_results` 截断 | 低、确定、不联网 |
 | `analyze_footage` | 把单个视频片段发给 Gemini 原生视频输入做逐场景深度分析，返回每个场景的 `energy_level`、`visual_quality`、`relevance_to_brief`、`key_quote` | 高，只对 2-4 个最强候选调用 |
 
 源码中的真实构建方式（摘取真实签名）：
@@ -171,7 +172,7 @@ def build_director(brief: CreativeBrief) -> Agent:
         name="director",
         model=_MODEL_ID,
         instruction=build_runtime_instruction(brief),
-        tools=[search_moments, analyze_footage],
+        tools=[analyze_footage, search_moments],
         output_schema=EditPlan,   # 强制输出符合 Pydantic 契约
     )
 ```
@@ -251,7 +252,7 @@ def refine_plan(edit_plan: EditPlan, footage_index_path: str) -> EditPlan:
 有两个容易被忽略的细节：
 
 - **字幕来自真实语音**：字幕不是模型编的，而是预处理阶段转写出的逐词时间戳（`words` 字段），所以口型、节奏天然对齐。这就是为什么 Director 指令要求 `text_overlay` 字段只用于标题卡——对话字幕交给 Editor 后置生成。
-- **出错不猜**：如果某个镜头在计划里不存在、裁剪窗口越界、或任一工具调用失败，Editor 会把错误原样报出，而不是猜测或静默产出残缺文件。
+- **出错不猜**：`run_editor` 在 Agent 启动之前就把计划预校验一遍——逐条解析 `shot_id`、检查裁剪窗口是否落在源镜头内、校验 `position` 是否为连续的 0..N-1、确认每个源文件都在磁盘上，任何一项不过都在渲染开始前直接抛错；Agent 运行中如果某个工具调用失败，错误也会被原样上报，而不是猜测或静默产出残缺文件。
 
 Editor 返回的是纯文本路径（最终 MP4 的位置），不挂 `output_schema`——它不需要结构化输出。
 
@@ -292,11 +293,13 @@ description: "用户生成内容广告流水线"
 
 steps:
   - agent: director          # 第一步：导演选择镜头
+    gate: human_approval     # 计划确认门：等人在终端按 y 放行
   - agent: trim_refiner      # 第二步：收紧裁剪点
   - agent: editor            # 第三步：FFmpeg 渲染
   - agent: reviewer          # 第四步：质量评审
     retry_if:
       metric: overall        # 基于综合评分重试
+      operator: "<"          # 仅支持 < 与 <=
       threshold: 0.65        # 低于 0.65 触发重试
       max_retries: 2         # 最多重试 2 次（共 3 次尝试）
       feedback_target: director  # 评审意见退回给导演
@@ -313,6 +316,8 @@ steps:
 | `feedback_target` | `director` | 反馈退回给谁，目前只支持 `director` |
 
 ### §4.2 重试循环机制
+
+下面用一组示意分数走一遍完整流程：
 
 ```
 ┌──────────────────────────────────────┐
@@ -337,11 +342,11 @@ steps:
 
 重试不是简单重跑。反馈是如何生效的：`run_director` 本身没有接收评审反馈的参数，所以 runner 里的 `_run_director_with_feedback` 会重新构建一个 Director Agent，把**历次评审反馈历史**追加到它的用户消息里，让导演在下一版里有针对性地改。所有反馈按时间顺序保存在 `PipelineResult.feedback_history` 里，方便排查"越改越差"的回归。
 
-**版本命名**：每次重试迭代都存为独立版本，方便对比——
+**版本命名**：每次尝试都存为独立版本副本（与最终成片并列放在 `output/final/` 下），方便逐个对比——
 
-- 初次输出：`{name}_v1.mp4`
-- 第一次重试：`{name}_v2.mp4`
-- 第二次重试：`{name}_v3.mp4`
+- 初次尝试：`{name}_v0.mp4`
+- 第一次重试：`{name}_v1.mp4`
+- 第二次重试：`{name}_v2.mp4`
 
 **失败语义**（这部分决定了流水线是"可容忍的工程"而非"一把梭"）：
 
@@ -376,7 +381,7 @@ steps:
 | `editor` | FFmpeg 渲染 | 是 |
 | `reviewer` | 质量评分 | 否（但建议保留） |
 
-另外，任意 step 都可以加 `gate: human_approval` 挂一个人工审批点——导演给出剪辑计划后先由人确认再往下走，适合对成品有强把控需求的场景。
+另外，任意 step 都可以加 `gate: human_approval` 挂一个人工审批点——上面这条默认流水线就挂在导演步骤上：导演给出剪辑计划后先由人确认再往下走，适合对成品有强把控需求的场景。不需要人工把关的自动化运行（比如脚本或 CI 里）则可以完全去掉这行，或在 CLI 加 `--no-approval` 自动放行。
 
 ## §5 Style Template：结构化的创意控制
 
@@ -517,7 +522,7 @@ footage_index.json
 
 ### §6.3 缓存机制
 
-README 明确写了索引"会在运行间缓存"（Cached between runs）。实际表现是：预处理结果落到磁盘上的 `footage_index.json`，CLI 每次运行都会复用已存在的索引，避免重复转写——这也是为什么素材变化后需要重新运行预处理来重建索引。
+README 明确写了索引"会在运行间缓存"（Cached between runs）：预处理结果落到磁盘上的 `footage_index.json`，这个文件是持久的，不会自己消失。但要留意 CLI 的实际行为——**默认每次运行都会重新跑一遍预处理、重建索引**；想直接复用已有的索引文件，需要显式加 `--skip-preprocess` 标志（如果索引文件缺失，CLI 不会报错，而是自动回落到重新预处理）。素材变化后同样直接重跑即可，新索引会覆盖旧的。
 
 ## §7 部署与使用
 
@@ -570,17 +575,23 @@ ave edit \
 
 - `--brief` 除了内联 JSON，也可以传一个 JSON 文件路径
 - `--pipeline` 默认是 `pipelines/ugc-ad.yaml`，不传则走默认流水线
-- 输出默认落在 `output/` 目录（可用 `--output` 覆盖）
+- **默认会停下来等人工确认**：默认流水线在 Director 步骤挂了 `gate: human_approval`，命令跑到这里会在终端等待，你审阅剪辑计划后按 `y` 放行、按 `n` 中止。脚本或无人值守环境加 `--no-approval` 即可自动通过
+- 素材没变、想跳过重新预处理时，加 `--skip-preprocess` 直接复用上次生成的 `footage_index.json`
+- 输出默认落在 `output/` 目录。注意 `--output-dir` 参数只决定 `footage_index.json` 缓存文件的位置——渲染产物目前固定写进 `output/`，这个覆盖还没有贯穿到渲染路径（源码 help 原话：threading this override through run_pipeline is deferred to a follow-up story）
 
-**输出**：
+**输出**（`brief_slug` 由简报的 `product` 字段转 slug 生成，如 "My Product" → `my-product`）：
 
 ```
 output/
-├── dtc-ad_v1.mp4      # 第一次尝试
-├── dtc-ad_v2.mp4      # 第二次尝试（如果需要）
-├── dtc-ad_v3.mp4      # 第三次尝试（如果需要）
-└── review_report.json  # 评分报告
+├── working/my-product/           # 中间文件：切片、字幕、拼接半成品
+│   ├── clip_00.mp4
+│   ├── clip_00_captions.ass      # 有语音的切片才有
+│   └── sequenced.mp4
+├── final/my-product.mp4          # 最终成片（最后一轮尝试）
+└── final/my-product_v0.mp4       # 各轮尝试的版本化副本（_v0、_v1、_v2…）
 ```
+
+评分报告没有单独的文件——Reviewer 的五个维度分数、重试次数和警告都打印在命令结束时的终端摘要里。
 
 ### §7.3 Web UI（AVE Studio）
 
@@ -683,9 +694,9 @@ agentic-video-editor/
 def search_moments(
     footage_index_path: str,
     query: str,
-    min_relevance: float = 0.2,
-    max_results: int = 5,
-) -> list[dict]:
+    min_relevance: float,
+    max_results: int,
+) -> list[Shot]:
     """在 FootageIndex 上做本地词法排序检索。
 
     对镜头的描述、转写文本、roll_type 与文件名分词，与查询词计算
@@ -694,7 +705,9 @@ def search_moments(
     """
 ```
 
-给 Agent 挂工具也很直接——在 `Agent(..., tools=[search_moments, analyze_footage])` 里列出即可，不需要额外包装。
+注意两个参数都没有默认值，调用时必须显式传入；Director 指令里建议的"min_relevance 取 0.2 左右、每拍要 3-5 个候选"是提示词里的用法约定，不是函数签名的一部分。返回的是索引里的原始 `Shot` 对象列表，不是字典。
+
+给 Agent 挂工具也很直接——在 `Agent(..., tools=[analyze_footage, search_moments])` 里列出即可，不需要额外包装。
 
 ### §9.3 与其他系统集成
 
@@ -723,7 +736,7 @@ A：可以，但预处理阶段要对每个文件做场景检测和逐词转写�
 
 **Q4：Reviewer 的重试次数可以无限吗？**
 
-A：`max_retries` 默认 2，README 建议 2-3 次封顶。重试会显著增加成本（每轮多一次 Director + TrimRefiner + Reviewer 的 Gemini 调用），且收益递减。即使重试预算耗尽、评分仍不达标，流水线也会返回最佳努力的产物而不是报错。
+A：`max_retries` 默认 2，官方自带的默认流水线就用的这个值，自定义示例里最大出现过 3。重试会显著增加成本——每一轮重跑 Director、TrimRefiner、Reviewer 各一次 Gemini 调用（Editor 只走本地 FFmpeg，不耗模型），且收益递减。即使重试预算耗尽、评分仍不达标，流水线也会返回最佳努力的产物而不是报错。
 
 **Q5：Web UI 什么时候能用？**
 
@@ -875,7 +888,7 @@ AVE 的 Preprocessor 目前处理本地文件系统。生产环境可以接入�
 
 **局限性说明**：
 
-- 项目仍处于早期阶段（2026-04-14 首次开源，截至 2026-09-05 GitHub Stars 481），部分功能可能不稳定或未完成。撰写时仓库共 6 个提交。
+- 项目仍处于早期阶段（2026-04-14 首次开源，截至 2026-09-20 GitHub Stars 487、Forks 63，MIT 许可），部分功能可能不稳定或未完成。仓库共 6 个提交，最后更新停在 2026-04-14，本文口径与仓库当前 HEAD（`47248b5`）一致。
 - 文中所有 Agent 均使用 `gemini-3.1-pro-preview`，模型参数与行为可能随 Google 侧更新而变化。
 - Web UI（AVE Studio）处于 pre-alpha 阶段，功能和界面可能变化。
 - Reviewer 的评分质量取决于 Gemini 的多模态理解能力，实际评分可能与人工评审有差距。
@@ -893,6 +906,6 @@ AVE 的 Preprocessor 目前处理本地文件系统。生产环境可以接入�
 
 - 难度：⭐⭐⭐
 - 类型：开源项目解读
-- 更新日期：2026-04-17
+- 更新日期：2026-09-20
 - 预计阅读时间：25 分钟
 - 前置知识：Python 基础、FFmpeg 基本概念、LLM 多模态理解

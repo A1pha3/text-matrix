@@ -1,64 +1,128 @@
 ---
 title: "Text to CAD：让AI代理直接生成CAD模型的技能库"
 date: 2026-08-04T03:20:00+08:00
+lastmod: "2026-09-26T10:00:00+08:00"
 slug: "text-to-cad-agent-skills-for-cad"
 github_repo: "earthtojake/text-to-cad"
 source_key: "gh:earthtojake/text-to-cad"
-description: "Text to CAD 是一个面向AI代理的CAD/CAE/CAM技能库，支持自然语言生成3D模型、机器人描述文件、G-code等工程输出，让AI成为硬件设计师的得力助手。"
+description: "Text to CAD 是一个面向 AI 代理的 CAD/CAE/CAM 技能库，13 个技能覆盖建模、2D 图纸、工程图、机器人描述文件、可制造性审查与 G-code 切片，让 AI 代理直接生成并验证工程文件。"
 draft: false
 categories: ["技术笔记"]
-tags: ["CAD", "3D建模", "AI代理", "开源", "机器人"]
+tags: ["CAD", "3D建模", "AI代理", "Agent Skills", "开源", "机器人", "DFM", "工程图"]
 ---
 
-## 项目概览
+## 先给结论
 
-[Text to CAD](https://github.com/earthtojake/text-to-cad)（当前版本 0.3.13）是一个面向 AI 代理的开源技能库，覆盖 CAD、CAE、CAM 三大工程领域。它的核心理念很简单：让 Claude Code、Codex 等 AI 编码代理具备读写工程文件的能力——从 3D 模型到机器人描述文件，从 2D 工程图到 G-code 切片验证，一站式在本地完成。
+Text to CAD（v0.6.6）是一个面向 AI 代理的技能库，覆盖 CAD、CAE、CAM 三个工程领域。它解决的问题很具体：Claude Code、Codex 这类代理会写代码，但一直读不懂工程文件。装了这个技能库，代理能自己生成 STEP 模型、写 URDF 机器人描述、审可制造性、切片出 G-code——全程不用人打开一次专业软件。
 
-截至目前，该项目在 GitHub 上获得了超过 12,600 个 Star、1,300 余个 Fork，采用 MIT 许可证，主语言为 JavaScript（技能定义层）与 Python（CAD 内核）。
+这个判断不是基于理念，而是有可验证的材料：项目 2026 年 4 月 22 日建仓，到 9 月 22 日 GitHub 上 16,277 个 Star、1,690 个 Fork（数据来自 GitHub API），MIT 许可证，仓库主语言为 Python。半年冲到 1.6 万星，社区用脚投票的速度说明这个缺口是真实存在的。
 
-**一句话定位**：如果你的 AI 代理能写代码，现在它也能画零件图了。
+本文先给系统地图，再讲它为什么值得关注、技能怎么工作、能验证到什么程度，最后落到采用建议。
 
-## 为什么需要 AI CAD 工具
+## 系统地图：13 个技能一张表
 
-传统 CAD 工作流有一个痛点：从「想法」到「可制造文件」之间的工具链太长。设计一个简单的 L 型支架，你需要打开 Fusion 360 或 SolidWorks，手动建草图、拉伸、打孔、倒角，然后导出 STEP/STL 文件。如果还需要 3D 打印，再导入切片软件生成 G-code。整个过程涉及三四个软件、十几次鼠标操作。
+技能是这套系统的最小交付单元。下表按"设计 → 检查 → 制造"的链路排列：
 
-Text to CAD 把这条链路压成了一句话：
+| 技能 | 功能 | 输出 |
+|------|------|------|
+| **CAD** | 从自然语言或图片创建、编辑 3D 模型 | STEP（主格式），可选 STL / 3MF / GLB |
+| **CAD Viewer** | 本地浏览器预览 CAD 与机器人文件 | 浏览器渲染 |
+| **step.parts** | 查找标准件：螺丝、轴承、电机、连接器 | STEP 文件 |
+| **Engineering Drawing** | 从零件生成带尺寸标注的 2D 工程图：视图、隐藏线、尺寸、孔标注、标题栏 | PDF |
+| **DXF** | 创建 2D 图纸：轮廓、模板、垫片、切割排版 | DXF 文件 |
+| **URDF** | 编写机器人结构文件：links、joints、limits、inertials、meshes | URDF XML |
+| **SRDF** | 为 URDF 添加 MoveIt 规划组、末端执行器、位姿、碰撞规则 | SRDF XML |
+| **SDF** | 创建仿真模型与世界：frame、物理、传感器、光源 | SDF 文件 |
+| **SendCutSend** | 上传前检查 DXF / STEP 文件 | 校验报告 |
+| **DfAM Check** | 测量网格可打印性：壁厚、悬垂、支撑体积、构建方向 | 测量报告 |
+| **DFM** | 钣金 / CNC / 注塑制造审查，每条发现附测量证据与规则出处；测量拔模角、底切、投影面积 | 审查报告 |
+| **G-code** | 用真实切片器 CLI 将网格文件切片为经过验证、带打印机配置的 FDM G-code | G-code 文件 |
+| **Bambu Labs** | 试运行、上传并谨慎启动本地 Bambu Lab 打印任务 | 打印任务 |
 
-> 「创建一个 100×60×20 mm 的矩形校准块，带四个 8 mm 通孔，顶部外围倒 2 mm 角。」
+13 个技能不是 13 个孤立工具。CAD 生成模型，CAD Viewer 预览，DfAM Check 查可打印性，G-code 切片，Bambu Labs 送打印——它们串起来就是一条从想法到实物的流水线。
 
-AI 代理接收到这条自然语言指令后，调用 CAD 技能，生成符合工程标准的 STEP 文件，并可在本地浏览器中实时预览。不需要打开任何专业软件。
+## 为什么需要：AI 代理与工程文件之间的断层
 
-更重要的是，这些技能不只是一个 API 封装。它们为 AI 代理提供了完整的工作流定义：如何理解几何请求、如何调用底层引擎、如何验证输出、如何处理错误——这才是「技能库」而非「工具函数」的区别。
+传统 CAD 工作流的问题不在建模本身，而在工具链太长。做一个简单的 L 型支架：打开 Fusion 360 或 SolidWorks，建草图、拉伸、打孔、倒角，导出 STEP，再用切片软件生成 G-code。三四个软件、十几次鼠标操作，中间任何一步都可能是人的时间黑洞。
 
-## 技能库全景
+AI 代理补得上这个缺口吗？补不上——不是模型能力不够，而是它根本没有操作工程文件的接口。代理会写代码、会读 Markdown，但一个 STEP 文件对它来说是一堆无法理解的二进制，URDF 的关节约束、G-code 的打印参数更无从下手。
 
-Text to CAD 包含 11 个技能，覆盖从设计到制造的完整链路：
+Text to CAD 的思路是给代理补齐这层接口，而不是做一个人工智能版本的 SolidWorks。它把"如何理解几何请求、如何调用底层内核、如何验证输出、如何处理错误"写进每个技能的工作流定义里，让代理按流程执行，而不是靠模型自己猜。
 
-| 技能 | 功能 | 输入 | 输出 | 适用场景 |
-|------|------|------|------|----------|
-| **CAD** | 创建和编辑 3D 模型 | 自然语言或图片 | STEP / STL / 3MF / GLB | 参数化建模、零件设计 |
-| **CAD Viewer** | 本地浏览器预览 | CAD / G-code / 机器人文件 | 浏览器渲染 | 本地审查、可视化 |
-| **step.parts** | 查找标准件 | 关键词描述 | STEP 文件 | 螺丝、轴承、电机选型 |
-| **DXF** | 创建 2D 工程图 | Python 源或 CAD 几何 | DXF 文件 | 轮廓、垫片、切割排版 |
-| **URDF** | 编写机器人结构文件 | 关节/连杆参数 | URDF XML | 机器人模型定义 |
-| **SRDF** | 添加 MoveIt 规划组 | URDF + 规划参数 | SRDF XML | 运动规划、碰撞规则 |
-| **SDF** | 创建仿真模型 | 物理/传感器参数 | SDF 文件 | Gazebo/Ignition 仿真 |
-| **SendCutSend** | 检查制造文件 | DXF / STEP 文件 | 校验报告 | 在线钣金加工预检 |
-| **G-code** | 切片验证 | 网格文件 + 打印配置 | G-code 文件 | FDM 3D 打印准备 |
-| **Bambu Labs** | 3D 打印任务 | G-code 文件 | 打印任务 | 拓竹打印机远程控制 |
-| **Implicit CAD** | GLSL 隐式建模 | GLSL 着色器代码 | 浏览器渲染 | 实验性隐式曲面建模 |
+这层接口的价值可以从一个细节看出来：每个技能的 `requirements.txt` 都固定了配套 `cadgen` 内核的版本。技能与内核版本绑定，代理拿到什么版本就按什么版本的行为工作，结果可复现。
 
-这些技能可以串联使用。典型的工作流是：CAD 生成模型 → CAD Viewer 预览 → step.parts 配齐标准件 → DXF 导出 2D 图纸 → G-code 切片 → Bambu Labs 发送到打印机。
+## 技能如何工作：工作流定义 + 本地内核
 
-## 安装
+### 每个技能是一份 SKILL.md
+
+技能不是一段提示词，而是一个完整的目录：入口 `SKILL.md` 定义触发条件和执行步骤，配套 reference 文件描述项目布局、运动学建模等约定。代理安装技能后，按这份定义执行，而不是自由发挥。
+
+以 CAD 技能为例，它定义了一套工程化约定：
+
+- 几何参数是模型函数的签名，改参数即改模型；
+- 装配关系用 typed mates 表达，作为 `@step` 装饰器下 `kinematics=` 的纯数据；
+- 动画编排是嵌入 Python 的 JavaScript，传给 `animation=`。
+
+三件事分开写，几何、装配、动画各自独立，代理生成的代码结构是稳定的。
+
+### 本地内核：cadgen
+
+技能背后的 CAD 内核是 `cadgen`，一个随仓库发布、也在 PyPI 上线的 Python 包。它建立在 build123d 之上，底层是 OCP——OpenCascade 的 Python 绑定，另外集成 ezdxf 处理 2D 图纸、shapely 处理几何运算。所有建模和转换都在本地跑，不依赖任何云服务。
+
+内核自带诊断命令 `cadgen doctor`。环境出问题时（比如下面要说的 Windows 原生模块被拦截），它直接点名问题所在，代理可以据此向用户报告而不是卡死。
+
+### 验证是流程的一部分
+
+每个技能在产出文件之后还留了一手验证，不是"生成完就交差"：
+
+- G-code 技能调用真实切片器 CLI 切片，输出经过验证且带打印机配置，不是模拟生成的文本；
+- SendCutSend 技能在文件上传前先做检查，避免把坏文件发给加工厂；
+- DFM 技能的每条发现都附测量证据和规则出处，拔模角、底切、投影面积从网格实测得来。
+
+这层验证正是"技能库"和"工具函数"的分界：工具函数只负责把输入变成输出，技能库负责让输出值得信任。
+
+## 一个完整流转案例：从想法到实物
+
+把 13 个技能串起来看一条完整链路，比单个技能的描述更有说服力。假设要做一个带四个安装孔的外壳：
+
+1. **CAD**：用自然语言描述外壳尺寸、壁厚、孔位，生成 STEP 文件；
+2. **CAD Viewer**：本地浏览器里预览，确认形状符合预期；
+3. **step.parts**：为安装孔找四颗标准螺丝的 STEP 模型；
+4. **Engineering Drawing**：从零件生成带尺寸标注的 2D 工程图，给加工厂或装配文档用；
+5. **DfAM Check**：测量壁厚和悬垂，判断这个模型适不适合 3D 打印；
+6. **G-code**：切片出针对本机打印机的 G-code；
+7. **Bambu Labs**：试运行校验后发送到打印机。
+
+人在这个流程里的角色从"操作者"变成了"验收者"：每个环节代理做完，人只看结果。整条链路每步的输入都是上一步的输出，中间不需要人手动转换格式。
+
+## 能力纵深：从校准块到猎鹰重型
+
+想知道这套技能的能力边界，仓库的 `models/` 目录是最好的证据——它是一套用 Git LFS 管理的演示语料，全部由 CAD 技能生成，从简单的独立零件到复杂的整机装配：
+
+- **examples/**：独立零件，一个脚本一个模型；
+- **assemblies/**：装配体，包括带 typed mates 和动画的行星齿轮装配、火星车概念；
+- **drawings/**：2D DXF 图纸；
+- **thang010146/**：来自同名 YouTube 频道的机械机构，逐个导入并加了运动学注释；
+- **f1/**：开轮 F1 赛车，DRS 四连杆和转向机构都是闭环求解；
+- **f14d/**：格鲁曼 F-14D 雄猫，放样机身蒙皮外加十个系统分组；
+- **w16/**：8.0 升四涡轮 W16 引擎，13 个系统模型，博物馆剖切视角；
+- **tendon_hand/**：腱驱动研究用手，24 个关节自由度、48 根拮抗肌腱，仅提供源码；
+- **falcon_heavy/**：猎鹰重型运载火箭，三芯级、27 台 Merlin 1D 实例、约 2,150 个命名零件；
+- **juno/**、**lyra/**：人形机器人（27 自由度）和灵巧手（16 自由度），各自带着配套 URDF / SRDF。
+
+这套语料怎么读：它能证明技能在参数化建模、装配约束、运动学、机器人描述上的能力是真实跑出来的，不是宣传文案。但要注意另一面——猎鹰重型的 README 明确标注"基于公开资料的教育性重建，不适用于制造、推进、测试或工程运营"。演示语料证明的是"代理能生成什么"，不是"生成的东西可以直接生产"。
+
+`models/` 默认不在常规克隆的下载范围内（仓库用 LFS 配置把 `models/**` 排除在默认拉取之外），需要本地字节时执行 `git lfs pull --include="models/**" --exclude=""`。
+
+## 安装与接入
 
 ### 通过 Skills CLI 安装（推荐）
 
 ```bash
-npx skills install earthtojake/text-to-cad
+npx skills add earthtojake/text-to-cad
 ```
 
-这是官方推荐的安装方式，会自动为受支持的 AI 代理安装所有技能。
+`add` 是官方命令，直接把各技能安装到受支持的代理。升级也用同一条命令——`add` 会重新拉取并覆盖已装内容；而 `npx skills update` 只刷新 lockfile 里已有的技能，会静默漏掉新版本新增的技能（本项目每个版本都在加技能，这条差异值得记住）。`npx skills install` 仍然可用，但它是 `add` 的未文档化别名。
 
 ### 通过 Codex 插件安装
 
@@ -68,7 +132,7 @@ codex plugin marketplace add earthtojake/text-to-cad
 codex plugin add cad@text-to-cad
 ```
 
-> ⚠️ Codex 0.142.0 之前的版本会静默跳过插件安装，不会报错也不会出现在 `codex plugin list` 中。如遇问题，先升级：`npm install -g @openai/codex@latest`
+Codex 从 0.142.0 起才解析仓库根插件。更早的版本会静默跳过插件安装，不出现在 `codex plugin list` 里也不报错。遇到这种情况先升级：`npm install -g @openai/codex@latest`。
 
 ### 通过 Claude Code 插件安装
 
@@ -77,69 +141,57 @@ claude plugin marketplace add earthtojake/text-to-cad
 claude plugin install cad@text-to-cad
 ```
 
-安装后如果技能未生效，重启代理即可。本地开发请基于 `develop` 分支，PR 也提交到 `develop`。
+### 通过 Grok Build 安装
 
-## 使用示例
+```bash
+grok plugin install earthtojake/text-to-cad --trust
+grok plugin enable cad
+```
 
-安装完成后，在你的 AI 代理中直接用自然语言描述需求即可。以下是几个典型场景：
+Grok Build 复用仓库里现成的 `.claude-plugin/marketplace.json`，没有单独的插件清单。
 
-### 场景一：创建 3D 零件
+安装后技能没生效，重启代理即可。本地开发从 `main` 分支开始，PR 也提交到 `main`。
 
-> 创建一个直径 80 mm、厚 10 mm 的圆形法兰，中心有一个 30 mm 的通孔。在 60 mm 节圆直径上添加六个 6 mm 通孔，外圆边缘倒圆角。
+## 常见问题与排查
 
-CAD 技能会解析这段描述，生成参数化模型，输出 STEP 文件（主格式），同时可选导出 STL、3MF 和 GLB 格式。
+**Windows 11 上 `import build123d` 报 `ImportError: DLL load failed`。** 原因是 CAD 内核依赖的 OCP（OpenCascade 的 Python 绑定）wheel 自带未签名的原生模块，Windows 11 的 Smart App Control（新装机器默认开启）会拦截未签名原生代码，事件查看器里记录为 CodeIntegrity 下的 Event ID 3077。`cadgen doctor` 能检测到这个问题。Smart App Control 没有按应用放行的例外，要么关掉它（关闭后只能重装系统才能重新开启），要么把 CAD 技能放到 WSL 里跑。wheel 由 cadquery-ocp 项目构建，签名不是本仓库能做的事。
 
-### 场景二：查找标准件
+**技能安装了但在代理里不出现。** 先重启代理，仍不生效再检查插件版本（Codex 的场景见上文）。
 
-> 我需要 4 颗 M3×10 mm 的不锈钢内六角螺丝，帮我找 STEP 模型。
-
-step.parts 技能会从标准件库中检索匹配的型号，返回可直接装配的 STEP 文件。
-
-### 场景三：机器人模型
-
-> 为一个六轴机械臂编写 URDF 文件，基座高度 300 mm，臂展 800 mm，各关节包含惯量参数和限位。
-
-URDF 技能会生成包含 links、joints、inertials、limits 和 meshes 的完整机器人描述文件，随后可以用 SRDF 技能为 MoveIt2 添加规划组。
-
-## 基准测试
-
-仓库内置了 10 个基准测试，从简单到复杂，直观展示了 CAD 技能的能力边界：
-
-| # | 测试目标 | 复杂度 | 验证要点 |
-|---|---------|--------|---------|
-| 1 | 矩形校准块（四孔 + 顶部倒角） | ★☆☆☆☆ | 基础拉伸、孔阵列、倒角 |
-| 2 | 圆形法兰（螺栓孔分布圆） | ★☆☆☆☆ | 旋转体、孔圆周阵列、圆角 |
-| 3 | L 型支架（加强筋 + 双向孔） | ★★☆☆☆ | 多体组合、不同方向特征 |
-| 4 | 阶梯轴（键槽 + 端部倒角） | ★★☆☆☆ | 旋转轴、键槽切削、倒角 |
-| 5 | 电子外壳（带凸台） | ★★★☆☆ | 薄壁、内部沉孔、圆角 |
-| 6 | 航空风格 U 型接头（减重孔） | ★★★☆☆ | 对称设计、加强筋、轻量化 |
-| 7 | 星型发动机气缸（散热片） | ★★★★☆ | 阵列薄壁、角度特征、通孔 |
-| 8 | 离心叶轮（后弯叶片） | ★★★★☆ | 螺旋扫掠、叶片融合 |
-| 9 | 螺旋楼梯（含扶手） | ★★★★★ | 螺旋几何、阵列踏步、栏杆 |
-| 10 | 行星齿轮组（太阳轮 + 行星轮 + 齿圈） | ★★★★★ | 齿轮啮合、多体装配、运动关系 |
-
-每个基准测试都包含完整的 prompt 描述和期望输出的旋转预览图，可以用来评估不同 AI 代理在 CAD 任务上的表现。
+**技能说环境有问题。** 跑 `cadgen doctor`，内核会直接指出缺什么。
 
 ## 适用边界
 
 ### Text to CAD 擅长的
 
-- **参数化零件设计**：法兰、支架、外壳、轴类零件等规则几何体
-- **标准件选型**：通过 step.parts 快速获取螺丝、轴承等现成 STEP 模型
-- **机器人模型定义**：URDF/SRDF/SDF 三件套覆盖 ROS 2 开发全流程
-- **制造准备**：从 3D 模型到 G-code 的自动切片和打印验证
-- **原型迭代**：自然语言驱动，修改参数即可快速生成新版本
+- **参数化零件设计**：法兰、支架、外壳、轴类等规则几何体，改参数即出新版本；
+- **标准件选型**：step.parts 直接返回螺丝、轴承等现成 STEP 模型；
+- **机器人模型定义**：URDF / SRDF / SDF 覆盖 ROS 2 开发链路；
+- **制造预检**：DfAM Check 查可打印性、DFM 审钣金 / CNC / 注塑、SendCutSend 验上传文件；
+- **打印准备**：G-code 切片 + Bambu Labs 送打印，全自动；
+- **2D 与工程图**：DXF 出切割排版，Engineering Drawing 出带标注的图纸 PDF。
 
 ### 需要注意的
 
-- **复杂曲面建模**：基准测试中最难的行星齿轮组仍使用「简化的梯形齿」，并非真正的渐开线齿廓。对于工业级曲面建模（如汽车外形、涡轮叶片），仍需专业 CAD 软件
-- **Implicit CAD 是实验性的**：基于 GLSL 符号距离场的隐式建模目前仍标记为 Experimental，不适合生产环境
-- **本地运行依赖**：CAD 技能底层依赖 Python 3.11+，需要本地安装相应的内核和依赖
-- **不是替代品**：Text to CAD 是 AI 代理的技能增强，不是 Fusion 360 或 SolidWorks 的替代品。它的价值在于让 AI 代理具备工程文件读写能力，适合快速原型和自动化工作流
+- **它不是 Fusion 360 或 SolidWorks 的替代品**：适合快速原型和自动化工作流，工业级曲面造型、大型装配管理仍要专业软件；
+- **演示语料 ≠ 生产零件**：`models/` 里的猎鹰重型等复杂模型是教育性重建，不代表输出可以直接制造；
+- **本地运行依赖**：技能底层依赖 Python 环境和 build123d / OCP 等内核依赖，第一次运行要装齐；Windows 上另有 Smart App Control 的坑（见上文）。
+
+## 采用建议
+
+按由浅入深的顺序引入：
+
+1. **先验证**：装好技能，让代理复现 `models/` 里一个简单零件，确认本地内核和技能链路是通的；
+2. **个人原型**：日常零件设计交给 CAD + CAD Viewer，替代重复的参数化建模；
+3. **标准件与图纸**：设计里需要选型、出 2D 图时接入 step.parts 和 DXF / Engineering Drawing；
+4. **机器人项目**：做 ROS 2 开发时用 URDF / SRDF / SDF 三件套；
+5. **制造闭环**：要真打印或外发加工时，接上 DfAM Check、G-code、SendCutSend、DFM。
+
+如果工作流里根本没有"生成工程文件"这一步——比如你只写业务代码、不碰机械件——那这套技能库暂时用不上。它值得关注，但不必为了安装而安装。
 
 ## 阅读路径
 
-- **想快速上手**：直接跑 `npx skills install earthtojake/text-to-cad`，然后在你的 AI 代理里尝试基准测试 #1 的 prompt
-- **想了解技能实现**：阅读仓库中 [skills/cad/SKILL.md](https://github.com/earthtojake/text-to-cad/blob/main/skills/cad/SKILL.md)，每个技能都有完整的工作流定义
-- **想做本地开发**：阅读 [CONTRIBUTING.md](https://github.com/earthtojake/text-to-cad/blob/main/CONTRIBUTING.md)，从 `develop` 分支开始
-- **想看完整文档**：访问 [cadskills.xyz](https://www.cadskills.xyz)，或在线 [Demo](https://demo.cadskills.xyz)
+- **看完整文档**：[texttocad.dev](https://www.texttocad.dev)
+- **看技能实现**：仓库 [skills/](https://github.com/earthtojake/text-to-cad/tree/main/skills) 下每个技能目录的 [SKILL.md](https://github.com/earthtojake/text-to-cad/blob/main/skills/cad/SKILL.md)，定义了完整工作流
+- **看演示语料**：仓库 [models/](https://github.com/earthtojake/text-to-cad/tree/main/models) 的 README 是模型目录地图
+- **做本地开发**：阅读 [CONTRIBUTING.md](https://github.com/earthtojake/text-to-cad/blob/main/CONTRIBUTING.md)，从 `main` 分支开始

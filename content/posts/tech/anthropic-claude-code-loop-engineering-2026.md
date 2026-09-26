@@ -2,7 +2,7 @@
 title: "Anthropic Claude Code 101：一门免费课把 Loop Engineering 讲透"
 date: "2026-07-11T20:54:22+08:00"
 slug: "anthropic-claude-code-loop-engineering-2026"
-description: "Anthropic 免费课 Claude Code 101 的笔记：agentic loop 三阶段、5 类内置工具 + 4 类扩展、hooks 的 31 个事件、Explore/Plan 内置 sub-agent，再加上 Draft PR、声音输入、Fable 5 的非代码用法和 5 条工程经验。"
+description: "Anthropic 免费课 Claude Code 101 的笔记：agentic loop 三阶段、5 类内置工具 + 4 类扩展、hooks 的 33 个事件、Explore/Plan 内置 sub-agent，再加上 Draft PR、声音输入、Fable 5 的非代码用法和 5 条工程经验。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Anthropic", "Claude Code", "Loop Engineering", "Hooks", "MCP", "Skills", "AI Coding Agent"]
@@ -37,7 +37,7 @@ hiddenFromHomePage: false
 - `32:34` — 用 Draft PR 自动审代码
 - `58:39` — Fable 5 用于非代码工作
 
-这门课的加分项在配套资料。Anthropic 把 Claude Code 文档从 `docs.claude.com` 迁到 `code.claude.com/docs/en/`，hooks、sub-agents、MCP、skills 四个扩展点的 reference 和 quickstart 都写得很细。课程里的每个示例，都能在文档里找到对应章节的真实代码。
+这门课的加分项在配套资料。Claude Code 文档已迁到 `code.claude.com/docs/en/`，hooks、sub-agents、MCP、skills 四个扩展点的 reference 和 quickstart 都写得很细。课程里的每个示例，都能在文档里找到对应章节的真实代码。
 
 ## 2. Loop Engineering 是什么
 
@@ -53,7 +53,7 @@ Anthropic 在 2024 年底的 [Building Effective Agents](https://www.anthropic.c
 | **Orchestrator-workers** | 中央 LLM 拆解任务 + workers 并行执行 | 任务结构未知、需动态分解 |
 | **Evaluator-optimizer** | 一个 LLM 生成 + 另一个 LLM 评分，迭代改进 | 有清晰评价标准、迭代可收敛 |
 
-loop engineering 是这 5 类工作流之上抽出来的一条共通主线：一个 agent 要反复执行"决策 → 行动 → 评估"循环，问题在于怎么把循环本身工程化。核心不是把 prompt 写得更好，而是让每次循环都可观测、可中断、可改进。Claude Code 的 agentic loop + hooks + sub-agents 三件套，是它第一次有了可运行的参考实现。
+同一篇文章里，排在五种工作流之上的还有一种更自主的形态，原文就叫 agents：模型在循环里调用工具、根据环境反馈决定下一步，适合"无法预测需要多少步"的开放问题。loop engineering 的对象就是这个循环——怎么让"决策 → 行动 → 评估"的每一圈都可观测、可中断、可改进，而不是把 prompt 写得更漂亮。Claude Code 的 agentic loop + hooks + sub-agents 三件套，把这条主线变成了可运行、可配置的参考实现。
 
 ## 3. agentic loop 三阶段
 
@@ -92,13 +92,15 @@ loop engineering 是这 5 类工作流之上抽出来的一条共通主线：一
 
 把三阶段和这些工具拼起来，一个典型改动任务的长相是这样：Claude 先读目标文件和相关调用，定位改动点（Gather，靠 File operations 和 Search）；然后改代码、跑测试（Act，靠 Execution）；测试没过，它读报错、再改、再跑（Verify，又回到 Gather / Act）。文档里那句 "A bug fix cycles through all three phases repeatedly" 落到实操，就是这一圈一圈的循环。任务越大，循环嵌套得越深，hooks 和 sub-agent 的价值也越明显——它们是往这个循环里插工程挂点的东西。
 
-下面几节逐个展开 hooks、sub-agents、voice、Draft PR、Fable 5 五块。
-
 ## 4. Hooks：99% 开发者忽略的功能
 
 课程 16:21 段对应 [Hooks reference](https://code.claude.com/docs/en/hooks)。这是整门课最需要花时间学的部分。
 
-Hooks 是 Claude Code 在 agentic loop 关键节点自动触发的用户定义命令。它们能：
+Hooks 是 Claude Code 在 agentic loop 关键节点自动执行的用户定义逻辑。文档对它的定义是：
+
+> Hooks are user-defined shell commands, HTTP endpoints, MCP tool calls, LLM prompts, or subagents that execute automatically at specific points in Claude Code's lifecycle.
+
+注意载体不止 shell 命令一种——HTTP 端点、MCP 工具调用、LLM prompt、subagent 都能当 hook。它们能：
 
 - **每个工具调用前** 拦截（`PreToolUse`）
 - **每个工具调用后** 触发（`PostToolUse`）
@@ -106,7 +108,7 @@ Hooks 是 Claude Code 在 agentic loop 关键节点自动触发的用户定义�
 - **每条 prompt 提交时**（`UserPromptSubmit`）
 - **每次 context 压缩前后**（`PreCompact` / `PostCompact`）
 
-官方文档目前列出了 31 个 hook 事件（截至 2026-08），按触发节奏大致分几组：
+官方文档目前列出了 33 个 hook 事件（2026-09 核对），按触发节奏大致分几组：
 
 ```
 once per session:   SessionStart, Setup, InstructionsLoaded, SessionEnd
@@ -118,6 +120,7 @@ sub-agent / team:   SubagentStart, SubagentStop, TaskCreated, TaskCompleted,
                     TeammateIdle
 worktree / dir:     WorktreeCreate, WorktreeRemove, DirectoryAdded, CwdChanged,
                     FileChanged, ConfigChange
+model switch:       PreModelSwitch, PostModelSwitch
 context:            PreCompact, PostCompact
 MCP elicitation:    Elicitation, ElicitationResult
 ```
@@ -235,42 +238,46 @@ YAML frontmatter 字段：
 | `permissionMode` | 权限模式（acceptEdits / bypassPermissions / default） |
 | `hooks` | sub-agent 专属 hooks |
 
+必填的只有 `name` 和 `description`，其余全是可选。文档还支持 `disallowedTools`、`maxTurns`、`skills`、`mcpServers`、`memory` 等十几个字段，用到再查。
+
 `tools` 字段值得单独拎出来说。一个 code reviewer 不该有 `Write` 工具，因为它的职责是"读 + 评论"，不是"读 + 改"。这种最小权限是 sub-agent 设计的关键。
 
-sub-agent 的 context 还是隔离的。Explore / Plan 拿到结果后，只把摘要返回主对话，自己的完整 context 不进主对话，避免探索性操作把主对话 context 灌满。
+sub-agent 的 context 是隔离的。Explore / Plan 拿到结果后，只把摘要返回主对话，自己的完整 context 不进主对话，避免探索性操作把主对话 context 灌满。
 
 ## 6. 为什么声音胜于写作
 
-课程 19:01 段是"软"的一块，Anthropic 在多处强调：写 prompt 不如说 prompt。
+课程 19:01 段是"软"的一块，讲的输入方式：说话，而不是打字。
+
+这不是课程自创的噱头，Claude Code 里有真实功能托底。interactive-mode 文档列了专门的 Voice input 条目：按住或点按 `Space` 开始语音听写，`/voice tap` 可以切成点按切换模式，快捷键支持重绑。对着终端说一段需求，Claude 收到的是转写后的 prompt。
 
 这和 hooks 的工程哲学一致：
 
 - **Hooks 是"机器可读的语言"** —— 用 JSON schema、命令、shell 表达意图
 - **Voice 是"自然语言的高密度变体"** —— 说话比打字带的信息密度高
 
-落到 loop engineering 上：如果你发现自己反复输入同一段 prompt，先想 hooks 能不能把它机械化掉，再想 voice 能不能说得更省，剩下的纯重复 prompt 才值得封装成 / 命令。
+落到 loop engineering 上：如果你发现自己反复输入同一段 prompt，先想 hooks 能不能把它机械化掉，再想 voice 能不能说得更省，剩下的纯重复 prompt 才值得封装成 slash 命令。
 
 ## 7. Draft PR：自动代码评审
 
-课程 32:34 段对应 Claude Code 的 draft pull request 自动评审功能。
+课程 32:34 段对应 Claude Code 的 pull request 工作流。
 
-流程是这样：Claude 改完一组相关文件 → 自动跑 hooks（lint / format / type-check）→ 把 diff 推到远端开一个 Draft PR → 通知 reviewer 审阅。
+官方能力分两层。第一层是本地：文档 overview 原话是 Claude Code "works directly with git. It stages changes, writes commit messages, creates branches, and opens pull requests"——改完一组相关文件，让 Claude 自己跑 hooks（lint / format / type-check）、推分支、开 PR。第二层在 CI：GitHub Actions 集成可以在每个 PR 上自动跑 code review，changelog 里的 `/ultrareview` 命令也在这条线上。
 
-这套链路把"agent 写代码 → CI 验证 → 团队审阅"接起来，人不用从 IDE 跳出来。loop engineering 在这里落在团队协作上：agent 不是替开发者写代码，而是把开发者从"写完再手动验证"里解放出来，改成评审 agent 写的代码。
-
-文档给的一句定义：
-
-> Hooks are user-defined shell commands, HTTP endpoints, or LLM prompts that execute automatically at specific points in Claude Code's lifecycle.
+把 PR 开成 draft 状态、让 reviewer 先看机器写完并通过自动检查的代码，是对这套能力的自然用法。loop engineering 在这里落在团队协作上：agent 不是替开发者写代码，而是把开发者从"写完再手动验证"里解放出来，改成评审 agent 写的代码。
 
 容易踩的坑是 hook 写得太激进（比如 PostToolUse 直接 push force）。如果不写 `if` matcher，所有 Bash 调用都会触发 hook。最小权限 + 最小触发面是写 hook 的核心。
 
 ## 8. Fable 5 用于非代码工作
 
-课程 58:39 段讲一个事实：Fable 5（Claude 5）不只能写代码。
+课程 58:39 段讲一个事实：Fable 5 不只能写代码。
 
-Claude Code 底层不只是"代码 agent"——它的 agentic loop + tools 框架是 model-agnostic 的，任何命令行任务都能跑。文档原文：
+先说模型本身。Fable 是 Anthropic 与 Opus、Sonnet、Haiku 并列的一条模型线，模型配置文档的原话是 "Claude Fable 5.1 and Claude Fable 5 are the most capable models in Claude Code"——写作本文时它是 Claude Code 里最强的模型。它不叫"Claude 5"，就像 Opus 5 不叫"Claude 5"一样，Fable 是独立的名字。
 
-> Claude Code is an agentic assistant that runs in your terminal. While it excels at coding, it can help with anything you can do from the command line: writing docs, running builds, searching files, researching topics, and more.
+而 Claude Code 底层也不只是"代码 agent"。overview 的定义是：
+
+> Claude Code is an agentic coding tool that reads your codebase, edits files, runs commands, and integrates with your development tools.
+
+读代码库、改文件、跑命令、接工具——这套循环 + 工具的框架不挑任务，任何命令行能表达的事都能跑。
 
 项目里常见的非代码用法：
 
@@ -280,7 +287,7 @@ Claude Code 底层不只是"代码 agent"——它的 agentic loop + tools 框�
 - **运维脚本生成** —— 用户说"我需要一个 cron 脚本每天备份 X"，Claude 生成 + 自我测试
 - **研究 agent** —— 搜网页 + 抓文档 + 写 summary，写到本地 markdown 文件
 
-loop engineering 比 prompt engineering 强的地方在这里：循环是 agent 的核心，写什么 prompt 只是循环的第一步。
+这段课的价值在于换了个视角：循环是 agent 的主体，prompt 只是每一圈的输入。把 prompt engineering 的功夫花在循环的挂点上——hooks、sub-agents、工具——比反复打磨某一句话的措辞，回报高得多。
 
 ## 9. 给独立 Agent 项目作者的 5 条工程经验
 
@@ -299,7 +306,7 @@ loop engineering 比 prompt engineering 强的地方在这里：循环是 agent 
 
 Hooks + sub-agent + MCP 共同提供了这三个问题的答案。如果你写完 agent 还是答不上来，说明 loop 还没被工程化。
 
-**5. Fable 5 / Claude 5 不只是代码模型。** 把 Claude Code 当成"终端里的通用 agent"——任何能用命令行表达的任务，都能让它跑。这意味着你投入的 hooks / sub-agents / skills 不只服务代码场景，而是服务所有命令行工作，这是 hook 体系性价比最高的回报。
+**5. Fable 5 不只是代码模型。** 把 Claude Code 当成"终端里的通用 agent"——任何能用命令行表达的任务，都能让它跑。这意味着你投入的 hooks / sub-agents / skills 不只服务代码场景，而是服务所有命令行工作，这是 hook 体系性价比最高的回报。
 
 ## 10. 关键资源与延伸阅读
 
@@ -307,29 +314,22 @@ Hooks + sub-agent + MCP 共同提供了这三个问题的答案。如果你写�
 - Claude Code 101（Skilljar 免费课）：`https://anthropic.skilljar.com/claude-code-101`
 - precis0x 整理的 6 段大纲推文：`https://x.com/precisox/status/2075824818440519692`
 
-**Claude Code 官方文档**（已迁到 `code.claude.com/docs/en/`）：
+**Claude Code 官方文档**（`code.claude.com/docs/en/`）：
 - 总目录：`https://code.claude.com/docs/en/`
 - Overview：`https://code.claude.com/docs/en/overview`
 - How Claude Code works：`https://code.claude.com/docs/en/how-claude-code-works`
-- Best practices：`https://code.claude.com/docs/en/best-practices`
 - Sub-agents：`https://code.claude.com/docs/en/sub-agents`
 - Hooks reference：`https://code.claude.com/docs/en/hooks`
 - Changelog：`https://code.claude.com/docs/en/changelog`
 
 **Anthropic 关于 Agent 的官方博客**：
-- Building Effective Agents：`https://www.anthropic.com/engineering/building-effective-agents`
-
-**横向对比框架**：
-- **Google ADK** —— 官方框架，5 SDK 一致 + graph workflow + MemoryService
-- **LangChain / LangGraph** —— 最广泛采用的链式 / 图式框架，model 无关
-- **CrewAI** —— role-based 多 agent 编排
-- **AutoGen（Microsoft）** —— 多 agent 对话范式
+- Building Effective Agents（2024-12）：`https://www.anthropic.com/engineering/building-effective-agents`
 
 **延伸阅读建议**：
-- 想深入 hooks 的全部事件：`https://code.claude.com/docs/en/hooks#hook-events`
-- 想写 custom sub-agent：`https://code.claude.com/docs/en/sub-agents#quickstart-create-your-first-subagent`
-- 想把 Claude Code 跑成 server：`https://code.claude.com/docs/en/agent-sdk`
+- 想深入 hooks 的全部事件：`https://code.claude.com/docs/en/hooks`
+- 想写 custom sub-agent：`https://code.claude.com/docs/en/sub-agents`
+- 想查模型别名与版本解析：`https://code.claude.com/docs/en/model-config`
 
 ---
 
-*本文基于 Anthropic 官方 Claude Code 文档（2026-08 版本）与免费课 Claude Code 101。所有代码示例与 hook 事件清单均来自 `code.claude.com/docs/en/` 原文。文档会随版本变化，建议以当前版本为准。*
+*本文基于 Anthropic 官方 Claude Code 文档与免费课 Claude Code 101，hook 事件清单、引文与模型信息于 2026-09 对照 `code.claude.com/docs/en/` 原文核对。文档会随版本变化，建议以当前版本为准。*

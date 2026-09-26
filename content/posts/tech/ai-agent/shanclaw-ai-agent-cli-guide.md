@@ -1,766 +1,437 @@
 ---
-title: "ShanClaw：macOS 智能交互式 AI Agent CLI 指南"
+title: "ShanClaw（现名 Kocoro）：macOS 原生 AI Agent CLI 指南"
 date: "2026-04-01T12:40:00+08:00"
+lastmod: "2026-09-23T10:20:00+08:00"
 slug: "shanclaw-ai-agent-cli-guide"
-github_repo: "Kocoro-lab/Shannon"
-source_key: "gh:Kocoro-lab/Shannon"
+github_repo: "Kocoro-lab/Kocoro"
+source_key: "gh:Kocoro-lab/Kocoro"
 aliases:
   - /posts/tech/shanclaw-ai-agent-cli-guide/
 categories: ["技术笔记"]
 tags: ["AI Agent", "macOS", "CLI", "Shannon", "MCP"]
-description: "ShanClaw 是由 Kocoro-lab 开发的 macOS 原生交互式 AI Agent CLI，由 Shannon Gateway 提供 LLM 推理支持。支持多 Agent、MCP 扩展、消息通道（Telegram/Slack/LINE）、定时任务和本地工具控制。"
+description: "ShanClaw（现名 Kocoro）是 Kocoro-lab 开源的 macOS 原生 AI Agent CLI，基于 Shannon Gateway 提供推理，支持命名 Agent、本地工具、MCP 扩展、消息通道（Telegram/Slack/LINE）、launchd 定时任务与心跳巡逻。本文以 2026-04-01 仓库快照为口径。"
 ---
 
-# ShanClaw：macOS 智能交互式 AI Agent CLI 指南
+# ShanClaw（现名 Kocoro）：macOS 原生 AI Agent CLI 指南
 
-> 预计阅读时间：20 分钟 | 难度：⭐⭐⭐
+> 预计阅读时间：23 分钟 | 难度：⭐⭐⭐
 
----
+多数终端里的 AI Agent 生命周期只有一轮对话：提问、回答、退出。ShanClaw（命令名 `shan`）押的是另一个方向——Agent 应该以命名身份常驻 macOS：在本机直接读写文件、点击界面、跑 AppleScript，按 cron 和心跳自己巡逻，Slack 或 Telegram 里 @一下就能使唤。它由 [Kocoro-lab](https://github.com/Kocoro-lab) 开发，Go 编写、MIT 协议，LLM 推理交给同组织的开源框架 [Shannon Gateway](https://github.com/Kocoro-lab/Shannon)（云服务或自托管均可）。
 
-## 本文覆盖范围
+一个值得先说清的变化：仓库原名 `Kocoro-lab/ShanClaw`，现已改名为 `Kocoro-lab/Kocoro`，命令行入口仍是 `shan`。本文以 2026-04-01 的仓库快照（main@`2a8de6ace`）为口径写成，改名后的主要演进见文末口径说明。
 
-阅读本文后，你会了解：
+## 一、它解决什么问题
 
-- ✅ ShanClaw 的定位与设计思路
-- ✅ ShanClaw 的本地工具集（18 类 + 50+工具）
-- ✅ 命名 Agent 与独立指令/记忆机制
-- ✅ MCP 客户端连接第三方服务（GitHub、Slack、数据库等）
-- ✅ Daemon 模式实现跨平台消息通道（Telegram、Slack、LINE）
-- ✅ 定时任务与心跳保持机制
-- ✅ /research 和 /swarm 命令进行远程研究与多智能体协作
-- ✅ ShanClaw 的技术架构与源码结构
-- ✅ 从安装到生产环境部署的完整流程
-- ✅ 开发自定义 Skills 与 MCP 工具集成
+把 ShanClaw 与常见编码 CLI 区分开的是三件事，它们都指向同一个判断：**Agent 的价值在对话之外的时间里**。
 
----
+**第一，本地工具直达 GUI。** 它不只是读写文件、跑 shell，而是通过 macOS 辅助功能（Accessibility）接口读界面树、按引用点击控件，配合截图与 CGEvent 鼠标键盘事件兜底。Finder、Safari、日历、系统设置都在可操作范围内——这是"操控电脑"四个字的实际含义。
 
-## 一、项目概述
+**第二，命名 Agent 常驻。** 每个 Agent 是磁盘上的一个目录：独立的指令（`AGENT.md`）、独立的记忆（`MEMORY.md`）、独立的工具白名单和会话历史。你可以同时养一个运维机器人、一个代码评审员和一个资料整理员，互不串上下文。
 
-### 1.1 什么是 ShanClaw
+**第三，离开终端也能用。** daemon 模式把 Agent 接进 Slack、LINE、Telegram（经 Shannon Cloud 中转），再暴露一个本地 HTTP API（端口 7533）给脚本和原生应用调用；launchd 定时任务和心跳机制让 Agent 在没人提问时也保持巡逻。
 
-**ShanClaw**（命令名 `shan`）是由 [Kocoro-lab](https://github.com/Kocoro-lab) 开发的 **macOS 原生交互式 AI Agent CLI**，由 [Shannon Gateway](https://github.com/Kocoro-lab/Shannon) 提供 LLM 推理能力支持。
+### 1.1 与 Shannon 的分工
 
-> 官网：https://shan.run
+| | ShanClaw（现 Kocoro） | Shannon Gateway |
+|------|------|------|
+| 定位 | macOS 本地 Agent 运行时（客户端） | 多智能体编排框架（服务端） |
+| 形态 | 单个 Go 二进制 + TUI/daemon | docker compose 自托管，或 shannon.run 云服务 |
+| 职责 | Agent 循环、本地工具、权限、调度、通道接入 | LLM 补全、远程工具（联网搜索等）、多 Agent 编排 |
+| 协议 | MIT（开源） | 开源（仓库同在 Kocoro-lab） |
 
-ShanClaw 不是又一个聊天机器人，而是一个**有名字、有记忆、能操控电脑的 AI Agent 运行时**。您可以创建多个命名 Agent，每个 Agent 拥有独立的指令系统、记忆存储和工具权限，通过 TUI 与之交互，也可以让 Agent 在后台运行，通过 Telegram、Slack、LINE 等渠道发送消息。
+这个分工决定了 ShanClaw 的一个硬前提：**它不能直接填 OpenAI 或 Anthropic 的 API key，推理必须经 Shannon Gateway**。想完全离线自用，就得自己跑一套 Gateway 的 docker compose。
 
-### 1.2 定位
+### 1.2 关键数据
 
-| 特性 | 描述 |
+| 指标 | 数值（2026-09-23 GitHub API 读数） |
 |------|------|
-| **交互方式** | TUI 终端界面 + Daemon 后台服务 + 消息渠道 |
-| **Agent 模式** | 支持多个命名 Agent，每个 Agent 独立指令/记忆 |
-| **工具生态** | 本地 macOS 工具（文件/系统/截图/自动化）+ MCP 扩展 |
-| **消息通道** | 支持 Telegram、Slack、LINE 等消息平台 |
-| **调度能力** | 本地定时任务（launchd） + 心跳保活 |
-| **远程协作** | /research 远程研究 + /swarm 多智能体 P2P 协作 |
-| **隐私优先** | 所有数据本地存储，无云端依赖 |
+| 仓库 | Kocoro-lab/Kocoro（原名 ShanClaw，301 重定向） |
+| Stars / Forks | 409 / 130 |
+| 语言 / 协议 | Go / MIT |
+| 最新 release | v0.4.9（2026-08-23） |
+| 仓库创建 | 2026-02-23 |
+| npm 包 | `@kocoro/shanclaw`（2026-03-17 上架，29 个版本，latest 0.1.6） |
 
-### 1.3 关键数据
+原文发布时（2026-04-01）仓库尚无正式 release，README 主推 npm 安装；现在官方推荐下载 Kocoro Desktop（闭源 GUI，跑在这个开源 daemon 之上），CLI 安装包已换名为 `@kocoro/kocoro`。版本演进见文末口径说明。
 
-| 指标 | 数值 |
-|------|------|
-| **GitHub Stars** | 74 |
-| **GitHub Forks** | 25 |
-| **最新版本** | (持续更新中) |
-| **最新提交** | 2026-04-01：`fix: correct cache ratio formula for Anthropic token semantics` |
-| **主要语言** | Go |
-| **协议** | MIT |
-| **依赖项** | Shannon Gateway（LLM 推理）, macOS 系统能力 |
-| **源码目录** | `internal/` 下 20+ 模块 |
+## 二、系统总览
 
-### 1.4 ShanClaw vs 竞品对比
+```mermaid
+graph TB
+    subgraph Entry ["交互入口"]
+        TUI["TUI 交互会话（shan）"]
+        ONCE["单次命令（shan 后跟一句任务）"]
+        CH["消息通道<br/>Slack / LINE / Telegram"]
+        HTTP["本地 HTTP API :7533"]
+    end
+    subgraph Local ["本地运行时（Go 二进制）"]
+        ROUTER["消息路由 / Agent 选择"]
+        LOOP["Agent Loop"]
+        PERM["权限引擎（五层检查）"]
+        REG["ToolRegistry<br/>本地工具 + MCP 工具 + Gateway 工具"]
+        AUDIT["审计日志（自动脱敏）"]
+    end
+    GW["Shannon Gateway<br/>LLM 补全 + 远程工具"]
 
-| 特性 | ShanClaw | Claude Code | OpenAI Codex |
-|------|----------|-------------|--------------|
-| **平台** | macOS 原生 | 跨平台 | 跨平台 |
-| **交互方式** | TUI + Daemon + 消息渠道 | CLI + IDE 集成 | CLI + API |
-| **Agent 数量** | 多 Agent（独立记忆） | 单会话 | 单会话 |
-| **MCP 支持** | ✅ 原生 | ✅ | ✅ |
-| **消息通道** | Telegram/Slack/LINE | ❌ | ❌ |
-| **本地工具** | macOS 深度集成 | 基础文件操作 | 基础文件操作 |
-| **定时任务** | ✅ launchd | ❌ | ❌ |
+    TUI --> LOOP
+    ONCE --> LOOP
+    CH -- webhook --> CLOUD["Shannon Cloud"] -- WebSocket --> DAEMON["shan daemon"] --> ROUTER --> LOOP
+    HTTP --> DAEMON
+    LOOP --> PERM --> REG
+    REG -- "LLM 调用/远程工具" --> GW
+    PERM --> AUDIT
+```
 
----
+源码结构与职责一一对应，`internal/` 下 20 个模块（2026-04-01 时点实测）：
 
-## 二、概念与原理分析
-
-### 2.1 Agent 是什么
-
-在 ShanClaw 中，**Agent** 是一个有名字、有身份、有记忆的 AI 智能体。您可以创建多个 Agent：
-
-```bash
-# 创建 Agent
-shan agent create dev "后端开发助手，擅长 Go 和系统设计"
-
-# 切换 Agent
-shan agent switch dev
-
-# 查看所有 Agent
-shan agent list
-```text
-┌─────────────────────────────────────────────────────────┐
-│                    Shannon Gateway                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │  OpenAI    │  │ Anthropic  │  │  Custom    │     │
-│  │  Provider  │  │  Provider  │  │  LLM API   │     │
-│  └─────────────┘  └─────────────┘  └─────────────┘     │
-│                          │                               │
-│                   ┌──────┴──────┐                       │
-│                   │  LLM Router  │                       │
-│                   └──────┬──────┘                       │
-│                          │                               │
-│  ┌──────────────────────┼──────────────────────────┐   │
-│  │              ShanClaw CLI / Daemon                │   │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌───────┐ │   │
-│  │  │  TUI    │  │ Agent  │  │  Tools  │  │ MCP   │ │   │
-│  │  │ Console │  │ Engine │  │ System  │  │ Client│ │   │
-│  │  └─────────┘  └─────────┘  └─────────┘  └───────┘ │   │
-│  └───────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-```textyaml
-# ~/.shanclaw/config.yaml
-mcp:
-  servers:
-    github:
-      command: npx
-      args: ["-y", "@modelcontextprotocol/server-github"]
-      env:
-        GITHUB_TOKEN: "your-token-here"
-    slack:
-      command: npx
-      args: ["-y", "@modelcontextprotocol/server-slack"]
-```text
-ShanClaw Agent → MCP Client → MCP Server → 第三方 API
-                                    ↓
-                              GitHub / Slack / DB / etc.
-```text
-┌──────────────────────────────────────────────────────────┐
-│                    ShanClaw Daemon                        │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐        │
-│  │  Telegram  │  │   Slack    │  │   LINE     │        │
-│  │   Bot      │  │   Bot      │  │   Bot      │        │
-│  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘        │
-│        └───────────────┼───────────────┘                 │
-│                        ↓                                 │
-│               ┌────────────────┐                        │
-│               │  Message Router │                       │
-│               └───────┬────────┘                        │
-│                       ↓                                  │
-│               ┌────────────────┐                        │
-│               │  Agent Engine  │                        │
-│               └───────┬────────┘                        │
-│                       ↓                                  │
-│              ┌─────────────────┐                        │
-│              │ ShanClaw Tools  │                        │
-│              └─────────────────┘                        │
-└──────────────────────────────────────────────────────────┘
 ```text
 ShanClaw/
-├── cmd/                    # CLI 入口
+├── cmd/                  # 子命令入口
 ├── internal/
-│   ├── agent/            # Agent 主引擎
-│   ├── agents/          # 多 Agent 管理
-│   ├── audit/            # 审计日志
-│   ├── client/          # Shannon Gateway 客户端
-│   ├── config/          # 配置管理
-│   ├── context/         # 会话上下文管理
-│   ├── daemon/           # 后台服务
+│   ├── agent/            # Agent Loop 与工具接口（loop.go / tools.go）
+│   ├── agents/           # 命名 Agent 加载与管理
+│   ├── audit/            # 审计日志（JSON-lines，自动脱敏）
+│   ├── client/           # Shannon Gateway 客户端
+│   ├── config/           # 多层配置合并
+│   ├── context/          # 会话上下文
+│   ├── daemon/           # 后台服务与通道消息
 │   ├── heartbeat/        # 心跳保活
-│   ├── hooks/           # 生命周期钩子
-│   ├── instructions/     # Agent 指令模板
-│   ├── mcp/             # MCP 客户端实现
-│   ├── permissions/      # 工具权限控制
-│   ├── prompt/          # Prompt 工程
-│   ├── schedule/         # 定时任务调度
-│   ├── session/          # 会话管理
-│   ├── skills/          # Skills 系统
-│   ├── tools/           # 本地工具实现
-│   ├── tui/             # 终端 UI
-│   ├── update/          # 自动更新
-│   └── watcher/         # 文件监听
-├── npm/                  # npm 发布包
-├── test/                 # 测试用例
+│   ├── hooks/            # 生命周期钩子
+│   ├── instructions/     # 指令文件加载
+│   ├── mcp/              # MCP 客户端（ClientManager）
+│   ├── permissions/      # 权限引擎
+│   ├── prompt/           # Prompt 组装
+│   ├── schedule/         # launchd 定时任务
+│   ├── session/          # 会话持久化与 FTS5 搜索
+│   ├── skills/           # SKILL.md 加载
+│   ├── tools/            # 本地工具实现（register.go 统一注册）
+│   ├── tui/              # 终端 UI
+│   ├── update/           # 自动更新
+│   └── watcher/          # 文件监听
+├── npm/                  # npm 发布配置
+├── test/                 # 测试
 ├── main.go               # 程序入口
-├── go.mod               # Go 模块定义
-└── install.sh           # 安装脚本
-```textgo
-// Agent Engine 主流程（伪代码）
-func (a *Agent) Run(ctx context.Context, input string) error {
-    // 1. 加载 Agent 指令
-    instructions := a.LoadInstructions()
-    
-    // 2. 获取对话历史
-    history := a.Session.GetHistory()
-    
-    // 3. 构建 Prompt
-    prompt := BuildPrompt(instructions, history, input)
-    
-    // 4. 调用 LLM
-    response, err := a.client.Complete(ctx, prompt)
-    if err != nil {
-        return err
-    }
-    
-    // 5. 处理工具调用
-    for _, toolCall := range response.ToolCalls {
-        result, err := a.tools.Execute(ctx, toolCall)
-        // 将工具结果追加到对话历史
-        history.AddToolResult(toolCall, result)
-    }
-    
-    // 6. 返回最终响应
-    return a.tui.Render(response.Content)
-}
-```textgo
-// 工具接口定义
+├── go.mod
+└── install.sh            # 安装脚本
+```
+
+## 三、核心机制
+
+### 3.1 Agent Loop
+
+`internal/agent/loop.go` 的 `AgentLoop` 是全项目的发动机。构造时注入五样东西：Gateway 客户端、工具注册表、模型档位（small/medium/large）、配置目录、权限配置；另有审批器、审计器、钩子运行器协同。一轮对话里它反复做一件事：把系统提示（指令 + 记忆 + 工具 schema + MCP context）发给 Gateway，解析返回的工具调用，过权限检查后执行，把结果截断回传，循环直到模型给出最终答复或触达迭代上限（`max_iterations`，默认 25）。
+
+它的可配置面比一般 CLI 宽：温度、思考预算（extended thinking，adaptive/enabled 两档）、上下文窗口、指定模型覆盖，都可以通过 config 或 TUI 的 `/model` 命令调整。远程任务（`/research`、`/swarm`）的进度经 SSE 事件流入 TUI，`WORKFLOW_STARTED`、`TOOL_INVOKED`、`thread.message.delta` 等事件各有对应的终端显示。
+
+### 3.2 工具系统：一个接口，三种来源
+
+所有工具实现同一个三方法接口（`internal/agent/tools.go` 原文）：
+
+```go
 type Tool interface {
-    Name() string           // 工具名称
-    Description() string    // 工具描述
-    Schema() InputSchema    // 输入参数 schema
-    Execute(ctx context.Context, input json.RawMessage) (json.RawMessage, error)
+	Info() ToolInfo
+	Run(ctx context.Context, args string) (ToolResult, error)
+	RequiresApproval() bool
 }
-
-// 工具注册表
-type ToolRegistry struct {
-    tools map[string]Tool
-}
-
-func (r *ToolRegistry) Register(tool Tool) error
-func (r *ToolRegistry) Get(name string) (Tool, error)
-func (r *ToolRegistry) List() []Tool
-```textgo
-// MCP 客户端主体
-type MCPClient struct {
-    servers  map[string]*MCPConnection
-    session  *MCPSession
-}
-
-func (c *MCPClient) Connect(ctx context.Context, server Config) error {
-    // 1. 启动 MCP 服务器进程
-    // 2. 建立 stdio 通信
-    // 3. 协议握手
-    // 4. 获取可用工具列表
-}
-
-func (c *MCPClient) CallTool(ctx context.Context, server, tool string, args json.RawMessage) (json.RawMessage, error)
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                          用户输入                                  │
-│                    (TUI / 消息渠道 / CLI)                          │
-└─────────────────────────┬───────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                     Message Router                                │
-│              (TUI 输入 / Telegram / Slack / LINE)                 │
-└─────────────────────────┬───────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                      Agent Selector                               │
-│                  (根据消息来源选择 Agent)                          │
-└─────────────────────────┬───────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                      Prompt Builder                               │
-│        (Agent 指令 + Session History + 工具描述 + 上下文)           │
-└─────────────────────────┬───────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    Shannon Gateway                                │
-│                    (LLM 推理调用)                                  │
-└─────────────────────────┬───────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    Tool Executor                                  │
-│              (本地工具 / MCP 工具 / Shannon 远程工具)              │
-└─────────────────────────┬───────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    Response Renderer                             │
-│                 (TUI 渲染 / 消息回复 / 文件输出)                    │
-└─────────────────────────────────────────────────────────────────┘
-```textbash
-npm install -g @kocoro/shanclaw
-```textbash
-curl -fsSL https://raw.githubusercontent.com/Kocoro-lab/ShanClaw/main/install.sh | sh
-```textbash
-# 克隆仓库
-git clone https://github.com/Kocoro-lab/ShanClaw.git
-cd ShanClaw
-
-# 确认 Go 版本 >= 1.25
-go version
-
-# 编译安装
-go build -o shan
-sudo mv shan /usr/local/bin/
-```textyaml
-# ~/.shanclaw/config.yaml
-gateway:
-  url: "http://localhost:8080"  # Shannon Gateway 地址
-  api_key: "your-gateway-api-key"  # Gateway API Key
-
-# LLM 提供商配置
-providers:
-  openai:
-    api_key: "sk-..."
-    model: "gpt-4o"
-  anthropic:
-    api_key: "sk-ant-..."
-    model: "claude-sonnet-4-20250514"
-  google:
-    api_key: "..."
-    model: "gemini-2.0-flash"
-```textyaml
-# ~/.shanclaw/config.yaml
-mcp:
-  servers:
-    # GitHub 集成
-    github:
-      command: npx
-      args: ["-y", "@modelcontextprotocol/server-github"]
-      env:
-        GITHUB_TOKEN: "${GITHUB_TOKEN}"  # 支持环境变量
-
-    # Slack 集成
-    slack:
-      command: npx  
-      args: ["-y", "@modelcontextprotocol/server-slack"]
-      env:
-        SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
-        SLACK_TEAM_ID: "${SLACK_TEAM_ID}"
-
-    # 数据库（以 PostgreSQL 为例）
-    postgres:
-      command: npx
-      args: ["-y", "@modelcontextprotocol/server-postgres"]
-      env:
-        DATABASE_URL: "postgresql://user:pass@localhost:5432/mydb"
-```textyaml
-# ~/.shanclaw/config.yaml
-permissions:
-  # Agent 工具权限控制
-  agents:
-    default:
-      allow:
-        - file_read
-        - file_write
-        - bash
-        - notify
-      deny:
-        - screenshot
-        - applescript
-
-    dev:
-      allow:
-        - "*"  # 允许所有工具
-```textbash
-# 启动配置向导
-shan setup
-
-# 交互式配置流程：
-# 1. 输入 Shannon Gateway 地址
-# 2. 输入 API Key
-# 3. 选择默认 LLM 提供商
-# 4. 配置 MCP 服务器（可选）
-# 5. 授予 Accessibility 权限
-```textbash
-# 1. 确保 Shannon Gateway 运行中
-shan gateway status
-
-# 2. 创建第一个 Agent
-shan agent create myagent "我的助手，可以帮我处理日常任务"
-
-# 3. 启动交互式会话
-shan
-
-# 在 TUI 中输入：
-# /myagent
-# 你好，帮我查看当前目录下的所有 Go 文件
-```textbash
-# 直接执行命令
-shan run "帮我写一个 Hello World 的 Go 程序"
-
-# 指定 Agent 执行
-shan --agent myagent "帮我 review 这段代码"
-
-# 非交互模式（CI/CD 用）
-shan --yes "执行测试"
-shan --agent dev "部署到生产环境"
-```text
-/research 调研 2024 年最火的 AI Agent 框架
-
-# ShanClaw 会：
-# 1. 联网搜索相关信息
-# 2. 阅读相关文档和论文
-# 3. 整理成结构化报告
-# 4. 保存到本地供后续参考
-```textbash
-# 语法：/swarm <agent1>:<任务1> <agent2>:<任务2> ...
-
-# 示例 1：开发 + Review
-/swarm dev:实现用户登录功能 qa:review 代码逻辑
-
-# 示例 2：研究 + 实现
-/swarm research:调研支付系统推荐做法 dev:实现支付模块
-
-# 示例 3：数据 + 分析
-/swarm data:收集竞品数据 analyst:生成对比报告
-```textbash
-# 创建代码助手
-shan agent create coder \
-  "资深 Go 开发者，擅长高并发系统设计，熟悉 Kubernetes" \
-  --tools "file,grep,glob,bash" \
-  --mcp "github,postgres"
-
-# 创建写作助手
-shan agent create writer \
-  "专业技术写手，擅长写清晰的技术文档和博客" \
-  --no-mcp  # 不启用 MCP
-
-# 创建全栈助手
-shan agent create fullstack \
-  "全栈工程师，精通前后端开发和 DevOps" \
-  --tools "*"  # 所有工具
-```textmarkdown
-<!-- ~/.shanclaw/agents/coder/instructions.md -->
-
-# {{agent_name}}
-
-## 角色
-你是一名资深软件工程师，专注于 {{language}} 开发。
-
-## 能力范围
-- 编写高质量、可维护的代码
-- 设计可扩展的系统架构
-- Code Review 和性能优化
-- 编写测试和文档
-
-## 工作原则
-1. 代码优先：先生成代码，再解释
-2. 测试驱动：关键逻辑必须有测试
-3. 文档完善：公共 API 必须有注释
-
-## 限制
-- 不生成可能有安全漏洞的代码
-- 不执行破坏性的数据库操作
-- 重大决策先询问用户
-```textbash
-# 创建 Agent 组
-shan group create dev-team --agents "crawler,parser,saver"
-
-# 并行执行任务
-shan group run dev-team "抓取并解析新闻保存到数据库"
-```textyaml
-# 配置 GitHub MCP
-mcp:
-  servers:
-    github:
-      command: npx
-      args: ["-y", "@modelcontextprotocol/server-github"]
-```textbash
-# 在 ShanClaw 中直接使用 GitHub：
-shan --agent dev "帮我创建一个 Issue，标题是 '性能优化'，标签是 enhancement"
-shan --agent dev "搜索最近 star 数超过 1000 的 Go 项目"
-```textyaml
-mcp:
-  servers:
-    slack:
-      command: npx
-      args: ["-y", "@modelcontextprotocol/server-slack"]
-      env:
-        SLACK_BOT_TOKEN: "xoxb-..."
-        SLACK_TEAM_ID: "T0123456789"
 ```
 
-```bash
-# 发送消息到 Slack 频道
-shan --agent notify "发送消息到 #engineering 频道：部署完成"
-```textyaml
-mcp:
-  servers:
-    postgres:
-      command: npx
-      args: ["-y", "@modelcontextprotocol/server-postgres"]
-      env:
-        DATABASE_URL: "postgresql://user:pass@localhost:5432/mydb"
+`ToolInfo` 携带名称、描述与 JSON Schema 参数；`RequiresApproval` 决定是否弹审批；返回值 `ToolResult` 里最有意思的是错误四分类——`transient`（超时/网络，可重试）、`validation`（参数错误，修了再试）、`business`（策略违规，禁止重试）、`permission`（需升级给用户）。这让模型能对失败做出有依据的重试决策，而不是盲目重来。
+
+三个可选接口扩展行为：`SafeChecker` 声明某些参数组合免审批（如 `git status`）；`NativeToolProvider` 使用厂商原生工具 schema（`computer` 工具即采用 Anthropic 的 `computer_20251124`，含视网膜屏坐标换算）；`ToolSourcer` 标注来源，注册表按 local、mcp、gateway 三类排序。
+
+本地工具按 `internal/tools/register.go` 的注册项清点，共 27 个：文件六件套（`file_read`/`file_write`/`file_edit`/`glob`/`grep`/`directory_list`）、`bash`（120 秒超时，安全命令自动放行）、`memory_append`、`think`、`http`（走网络白名单）、`system_info`、`clipboard`、`notify`、`process`、`applescript`、`accessibility`（主力 GUI 工具，经编译好的 Swift sidecar 常驻读取界面树）、`ghostty`（终端标签与分屏，需 Ghostty ≥ 1.3.0）、`browser`（Playwright MCP 优先，pinchtab/chromedp 兜底）、`screenshot`、`computer`、`wait_for`（等 UI 条件而非 sleep）、`schedule_*` 四件、`session_search`（FTS5 全文检索历史会话），外加激活 Skills 的 `use_skill`。
+
+Gateway 侧另有一份白名单式的远程工具（`web_search`、`web_fetch`、`web_crawl`、财报与广告分析、GA4 报表等约 20 个），同样注册进注册表；名字冲突时本地工具恒优先。
+
+工具结果有硬尺寸约束：bash 输出上限 30000 字符，单条工具结果截断线同为 30000 字符，参数展示截到 200 字符——上下文预算是设计时考量的第一公民。
+
+### 3.3 权限引擎：五层检查
+
+危险命令不会走到"弹窗问一下"那一步。五层依次是：
+
+1. **硬黑名单**——`rm -rf /`、`mkfs`、`dd if=`、`curl | sh` 等内置常量，任何配置都解不开；
+2. **显式拒绝**——config 的 `permissions.denied_commands`；
+3. **复合命令拆分**——`&&`、`||`、`;`、`|` 切开逐段检查，堵"白名单命令后面接危险命令"的绕路；
+4. **显式允许**——`permissions.allowed_commands` 的 glob 模式（如 `"git *"`）；
+5. **用户审批**——TUI 内 `[y/n]`，one-shot 模式配 `-y` 全放行。
+
+文件路径另有独立检查：symlink 经 `filepath.EvalSymlinks` 解析后再验（防借道跳目录）、`.env`/`*.pem`/`id_rsa` 等敏感模式、`allowed_dirs` 边界。网络出口按白名单放行，localhost 恒允许。同一轮里被你拒绝过的"工具+参数"组合不会再次弹窗。
+
+### 3.4 审计日志与 Hooks
+
+所有工具调用追加写入 `~/.shannon/logs/audit.log`（JSON-lines），每条含时间戳、会话 ID、工具名、输入输出摘要、决策与耗时。写入前自动脱敏：AWS key、JWT、`sk-`/`key-` 前缀、Bearer token、PEM 标记、环境变量赋值语句都会被打码。
+
+Hooks 提供四个生命周期事件，配置在 `~/.shannon/config.yaml`：
+
+```yaml
+hooks:
+  PreToolUse:
+    - matcher: "bash"
+      command: ".shannon/hooks/check-bash.sh"
+  PostToolUse:
+    - matcher: "file_edit|file_write"
+      command: ".shannon/hooks/post-edit.sh"
+  SessionStart:
+    - command: ".shannon/hooks/on-start.sh"
+  Stop:
+    - command: ".shannon/hooks/on-stop.sh"
 ```
 
+协议是 shell 脚本经 stdin 收 JSON（工具名、参数、结果），退出码 0 放行、2 拒绝（仅 `PreToolUse` 有效）；10 秒超时、10KB 输出上限。出于安全考虑，hook 命令必须带 `./` 前缀或位于 `~/.shannon/` 下的绝对路径，裸命令名和目录外绝对路径一律拒收。
+
+### 3.5 MCP：客户端与服务器双形态
+
+作为客户端，ShanClaw 把外部 MCP server 的工具并入注册表。配置键是 `mcp_servers`（注意不是 `mcp.servers`），支持 stdio 和 HTTP 两种传输：
+
+```yaml
+mcp_servers:
+  github:
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: "ghp_xxxxx"
+    context: "GitHub user 'yourname'. query 'user:yourname' for repos."
+```
+
+`context` 字段是这个设计的点睛之处——它被注入系统提示，告诉模型"现在以谁的身份、该用什么查询方式"。README 原话很直白：没有 context，模型会猜错。其他要点：所有 MCP 工具默认要审批；`disabled: true` 停用不删配置；one-shot 模式每次冷启动连接，TUI 会话内连接保持；项目级可用 `.shannon/config.yaml` 覆盖全局。
+
+反过来，`shan mcp serve` 把本地工具经 JSON-RPC 2.0 over stdio 暴露给任何 MCP 客户端（比如让别的 Agent 框架调用你 Mac 上的截图和 AppleScript）。MCP 模式强制走同一套权限引擎和审计，无 TTY 可弹审批的工具一律拒绝——安全的失败方向（fail-safe）。
+
+### 3.6 Skills 与自定义命令
+
+Skills 采用 Anthropic 的 [SKILL.md 规范](https://agentskills.io/specification)：每个技能一个目录、一份带 name/description frontmatter 的 Markdown。技能清单以"名称 + 描述"进系统提示，模型判断需要时调 `use_skill` 工具取回全文——典型的渐进披露，提示词体积不受技能数量膨胀拖累。来源优先级：Agent 目录 `skills/` > 全局 `~/.shannon/skills/` > 内置；技能还会自动注册成斜杠命令（`/summarize`）。
+
+不需要模型自主判断的固定流程，用自定义斜杠命令更直接。在 `.shannon/commands/review.md` 写好提示词，`$ARGUMENTS` 会被替换成命令后的实际参数，TUI 里 `/review src/auth/login.go` 即触发。
+
+## 四、一次真实任务的任务流
+
+把机制串起来看一条命令的完整路径：
+
 ```bash
-# 执行 SQL 查询
-shan --agent data "查询过去一周的活跃用户数"
-```textbash
-# 启动 Daemon（后台运行）
-shan daemon start
+shan --agent ops-bot "check error rate in prod"
+```
 
-# 查看 Daemon 状态
-shan daemon status
+1. CLI 从 `~/.shannon/agents/ops-bot/` 读 `AGENT.md`（替换默认系统提示）与 `MEMORY.md`（跨会话记忆）；若该目录有 `config.yaml`，工具注册表按 allow/deny 收窄，MCP server 按 `_inherit` 决定继承全局还是只用自己的一份。
+2. 组装请求：AGENT.md + 记忆 + 工具 schema（本地、MCP、Gateway 三源排序）+ MCP context，发往 Shannon Gateway。
+3. 模型返回工具调用，比如 `bash` 跑一段查询脚本。请求先进权限引擎五层检查，`PreToolUse` 钩子有机会拦截，通过后执行；审计日志记一条（已脱敏）。
+4. 工具结果按 30000 字符截断回传，模型继续推理；循环直到给出结论，或触达 `max_iterations`。
+5. TUI 在回复末尾显示 `[tokens: N | cost: $X.XXXX]`；会话写入 `~/.shannon/agents/ops-bot/sessions/<id>.json`，同时进 SQLite FTS5 索引，之后 `/search error rate` 可检索。
 
-# 停止 Daemon
-shan daemon stop
-```textbash
-# 1. 创建 Telegram Bot
-#    在 Telegram 中找 @BotFather，发送 /newbot
+如果这条命令换成从 Telegram 发来——`@ops-bot check prod`——前三步完全相同，只是入口变成了 Shannon Cloud 的 WebSocket 消息，回复原路送回频道。审批也不缺位：需要批准的操作会经 Cloud 中转成频道里的审批卡片，支持"本次允许"与"always allow"。
 
-# 2. 获取 Bot Token
-#    BotFather 会返回类似 xoxb-... 的 token
+## 五、命名 Agent：目录即身份
 
-# 3. 配置 ShanClaw
-shan config set telegram.enabled true
-shan config set telegram.bot_token "your-bot-token"
-shan config set telegram.allowed_users "user_id_1,user_id_2"
-```textbash
-# 1. 在 Slack API 创建 App
-# 2. 配置 Bot Token 和 Signing Secret
-# 3. 启用 Event API 和 Message permissions
+创建 Agent 没有 `create` 子命令，就是建目录写文件：
 
-shan config set slack.enabled true
-shan config set slack.bot_token "xoxb-..."
-shan config set slack.signing_secret "your-signing-secret"
-```text
-Telegram 消息 (@myagent hello)
-       ↓
-ShanClaw Daemon
-       ↓
-Message Router
-       ↓
-查找 @myagent 对应的 Agent
-       ↓
-执行 Agent 处理
-       ↓
-通过 Telegram 返回结果
-```textgo
-// 示例：创建自定义天气工具
-package tools
-
-import (
-    "context"
-    "encoding/json"
-    "net/http"
-)
-
-type WeatherTool struct{}
-
-func (t *WeatherTool) Name() string {
-    return "weather"
-}
-
-func (t *WeatherTool) Description() string {
-    return "获取指定城市的天气预报"
-}
-
-func (t *WeatherTool) Schema() InputSchema {
-    return InputSchema{
-        Type: "object",
-        Properties: map[string]SchemaProperty{
-            "city": {
-                Type:        "string",
-                Description: "城市名称（中文或英文）",
-            },
-            "days": {
-                Type:        "integer",
-                Description: "预报天数（1-7）",
-                Default:     3,
-            },
-        },
-        Required: []string{"city"},
-    }
-}
-
-func (t *WeatherTool) Execute(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
-    var args struct {
-        City string `json:"city"`
-        Days int    `json:"days"`
-    }
-    if err := json.Unmarshal(input, &args); err != nil {
-        return nil, err
-    }
-    
-    // 调用天气 API
-    url := fmt.Sprintf("https://api.weather.com/v3/forecast?city=%s&days=%d", args.City, args.Days)
-    resp, err := http.Get(url)
-    if err != nil {
-        return nil, err
-    }
-    defer resp.Body.Close()
-    
-    var result map[string]interface{}
-    json.NewDecoder(resp.Body).Decode(&result)
-    
-    return json.Marshal(result)
-}
-```textgo
-// 示例：简单的自定义 MCP 服务器
-package main
-
-import (
-    "context"
-    "github.com/modelcontextprotocol/sdk/go/server"
-)
-
-func main() {
-    s := server.NewStdioServer("my-custom-server")
-    
-    // 注册工具
-    s.RegisterTool("custom_tool", "我的自定义工具", handleCustomTool)
-    
-    // 运行
-    s.Serve()
-}
-
-func handleCustomTool(ctx context.Context, args map[string]interface{}) (interface{}, error) {
-    // 实现工具逻辑
-    return map[string]string{"result": "success"}, nil
-}
-```textmarkdown
-<!-- ~/.shanclaw/skills/my-skill/SKILL.md -->
-
-# My Skill
-
-## 描述
-这是一个自定义 Skill，用于...
-
-## 使用场景
-- 场景 1
-- 场景 2
-
-## 使用方法
-```text
-
-## 实现代码
-```python
-def my_skill_impl(args):
-    # 工具逻辑
-    pass
-```textbash
-# 1. 整理 Skill 结构
-~/.shanclaw/skills/
-├── my-skill/
-│   ├── SKILL.md
-│   ├── README.md
-│   └── src/
-│       └── skill.py
-
-# 2. 创建 README（包含使用说明、截图等）
-
-# 3. 发布到 GitHub
-
-# 4. 提交到 ShanClaw Skills 索引
-```textyaml
-# ~/.shanclaw/config.yaml
-security:
-  # 禁止危险操作
-  deny_patterns:
-    - "rm -rf /"
-    - "DROP TABLE *"
-    - "format.*drive"
-  
-  # 文件访问限制
-  allowed_paths:
-    - "~/workspace"
-    - "~/projects"
-  
-  # API Key 保护
-  env_vars_strict: true
-```textyaml
-# ~/.shanclaw/config.yaml
-performance:
-  # 上下文窗口大小
-  context_window: 128000
-  
-  # 历史会话保留数
-  max_history: 100
-  
-  # 工具并行执行
-  parallel_tools: true
-  max_parallel: 5
-  
-  # 缓存配置
-  cache:
-    enabled: true
-    ttl: 3600
-```textbash
-# 1. 使用 launchd 管理 Daemon
-cat > ~/Library/LaunchAgents/com.kocoro.shanclaw.plist <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "...">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.kocoro.shanclaw</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/shan</string>
-        <string>daemon</string>
-        <string>start</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-</dict>
-</plist>
+```bash
+mkdir -p ~/.shannon/agents/ops-bot
+cat > ~/.shannon/agents/ops-bot/AGENT.md << 'EOF'
+You are ops-bot, a production operations assistant.
+- Monitor health metrics and error rates
+- Summarize incidents concisely
+- Always recommend next steps
 EOF
-
-# 2. 加载服务
-launchctl load ~/Library/LaunchAgents/com.kocoro.shanclaw.plist
-
-# 3. 设置开机自启
-launchctl enable gui/$(id -u)/com.kocoro.shanclaw
-```textbash
-# 1. 配置 Telegram Bot Token
-shan config set telegram.enabled true
-shan config set telegram.bot_token "xoxb-your-token"
-
-# 2. 启动 Daemon
-shan daemon start
-
-# 3. 添加 Bot 到频道/群组
-# 4. @mention Bot 即可对话
-```textbash
-# 会话历史存储位置
-~/.shanclaw/sessions/
-├── myagent/
-│   ├── history.jsonl   # 对话历史
-│   ├── memory.md       # 长期记忆
-│   └── context/        # 上下文文件
-```textbash
-# 备份
-tar -czvf shanclaw-backup.tar.gz ~/.shanclaw/
-
-# 恢复
-tar -xzvf shanclaw-backup.tar.gz -C ~/
 ```
 
----
+`AGENT.md` 是指令本体，直接替换默认系统提示，不带模板变量。完整的目录约定：
 
-## 十二、总结
+```text
+~/.shannon/agents/
+  ops-bot/
+    AGENT.md          # 指令（替换默认系统提示）
+    MEMORY.md         # Agent 专属记忆（跨会话持久）
+    config.yaml       # 可选：工具过滤、MCP 范围、模型覆盖
+    commands/         # 可选：Agent 专属斜杠命令（*.md）
+    skills/           # 可选：Agent 专属技能
+```
 
-ShanClaw 是一个专为 macOS 设计的**交互式 AI Agent CLI**，它不仅仅是另一个聊天机器人，而是一个**有名字、有记忆、能操控电脑的多功能 Agent 运行时**。
+`config.yaml` 是能力收窄的开关面板：
 
-**主要优势：**
-- 🎯 **多 Agent 系统**：每个 Agent 独立指令/记忆，可同时运行多个专业 Agent
-- 🔧 **丰富工具集**：50+ 本地工具 + MCP 扩展，覆盖文件操作、系统控制、自动化
-- 💬 **多渠道消息**：支持 Telegram/Slack/LINE，Agent 可以随时响应
-- ⏰ **定时任务**：本地 launchd 调度，无需额外服务
-- 🔒 **隐私优先**：所有数据本地存储，无云端依赖
-- 🚀 **可扩展**：支持自定义工具、Skills 和 MCP 服务器
+```yaml
+# 工具白名单——配了 allow，白名单之外全部不可用
+tools:
+  allow: [file_read, grep, glob, bash]
 
-**适用场景：**
-- 日常 macOS 任务自动化
-- 多 Agent 协作开发
-- 远程服务器管理（通过消息渠道）
-- 定时报告生成与推送
-- 企业内部 AI 助手
+# MCP 范围：_inherit: false 表示只用下面这份，忽略全局配置
+mcp_servers:
+  _inherit: false
+  github:
+    command: mcp-server-github
+    env:
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
 
----
+# 模型与行为覆盖
+agent:
+  model: "claude-sonnet-4-6"
+  max_iterations: 10
+  temperature: 0.2
+  max_tokens: 16000
+  context_window: 64000
 
-## 相关链接
+# 文件监听：命中 glob 的文件变化会触发 Agent
+watch:
+  - path: ~/Code/myproject
+    glob: "*.go"
 
-- 🌐 官网：https://shan.run
-- 🐙 GitHub：https://github.com/Kocoro-lab/ShanClaw
-- 📦 npm：https://www.npmjs.com/package/@kocoro/shanclaw
-- 🔗 Shannon Gateway：https://github.com/Kocoro-lab/Shannon
-- 📖 Shannon 文档：https://docs.shan.run
+# 心跳
+heartbeat:
+  every: 30m
+  active_hours: "09:00-22:00"
+```
 
----
+工具过滤对三种来源统一生效（本地、MCP、Gateway）；allow 与 deny 同时存在时 allow 优先。Agent 名字须匹配 `^[a-z0-9][a-z0-9_-]{0,63}$`。会话天然隔离——每个 Agent 有自己的 `sessions/` 目录。
 
-*🦞 每日08:00自动更新*
+## 六、定时任务、心跳与文件监听
+
+这三件事合起来构成"无人值守"的完整拼图，各有分工：定时任务管"什么时候跑"，心跳管"有没有需要担心的事"，文件监听管"外部世界变了要不要反应"。
+
+**定时任务**走 launchd，重启后依然生效：
+
+```bash
+shan schedule create --agent ops-bot --cron "0 9 * * *" --prompt "check production health"
+shan schedule list
+shan schedule sync        # 重新同步失败的 plist
+```
+
+完整的五段 cron 语法（经 [gronx](https://github.com/adhocore/gronx) 库），支持区间、步进、列表。真相源是 `~/.shannon/schedules.json`，实际执行体是 `~/Library/LaunchAgents/com.shannon.schedule.<id>.plist`，每次运行等价于 `shan -y --agent <name> "<prompt>"` 的 one-shot，日志落在 `~/.shannon/logs/schedule-<id>.log`。写入用"临时文件 + 改名"的原子操作加文件锁，`SyncStatus` 追踪 plist 是否与配置同步（ok/pending/failed）。一个值得注意的安全默认：daemon 模式下，`schedule_create/update/remove` 工具默认拒绝——频道里的消息不能私自给自己加定时任务。
+
+**心跳**解决"检查清单要不要每天人肉跑一遍"。在 Agent 目录放一份 `HEARTBEAT.md` 列检查项，config 里配间隔：
+
+```bash
+cat > ~/.shannon/agents/ops-bot/HEARTBEAT.md << 'EOF'
+- Check if any git repos in ~/Code have uncommitted changes
+- Check if disk usage > 90%
+- Check if any background processes are stuck
+EOF
+```
+
+```yaml
+heartbeat:
+  every: 30m                    # Go duration，必填
+  active_hours: "09:00-22:00"   # 可选时间窗，支持跨夜 "22:00-02:00"
+  model: small                  # 可选：例行检查用便宜档
+  isolated_session: true        # 默认 true：每次心跳全新会话
+```
+
+成本控制做在了四处：隔离会话不携带历史、可用低档模型、`HEARTBEAT.md` 缺失或为空则整个跳过（零 token）、上一轮没跑完则本轮跳过。事事正常时 Agent 回 `HEARTBEAT_OK`，系统静默丢弃——不通知、不存会话；有异常才作为 `heartbeat_alert` 事件发出来。
+
+**文件监听**让 Agent 对文件系统变化实时反应。`watch` 配置（见上文 agent config 示例）命中 glob 的创建、修改、删除、重命名都会打包成一条提示送进 Agent 会话，2 秒防抖窗口合并快速连续保存，子目录递归监听、新目录自动加入，多个 Agent 重叠监听时各自拿到独立的事件批次。`POST /config/reload` 可在不重启 daemon 的情况下重建全部监听器。
+
+## 七、Daemon 与消息通道
+
+daemon 同时扮演两个角色：经 WebSocket 连 Shannon Cloud 收发频道消息，以及在本地 7533 端口暴露 HTTP API。架构只有一条线：
+
+```text
+Slack/LINE ──webhook──▶ Shannon Cloud ──WebSocket──▶ shan daemon (macOS)
+                                                      ├─ Agent loop + local tools
+                                                      └─ HTTP :7533 (local API)
+                                                           ▲
+                                              curl / native apps / scripts
+```
+
+注意通道消息**不经本地 Bot token 直连**——Slack、LINE、Telegram 的接入都由 Shannon Cloud 侧完成，webhook 打到云端，云端再经 WebSocket 推给你 Mac 上的 daemon。通道与 Agent 的绑定关系在云端配置，未绑定频道回落到 `@mention` 解析（`@ops-bot check prod` 路由给 ops-bot，普通消息走默认 Agent）。
+
+消息层协议有工程细节：类型化信封加 claim/ack 握手（广播 + 先到先认领），长任务运行期间以 15 秒间隔的心跳续期认领 TTL，worker 池上限 5 个并发 Agent 防止资源耗尽，断线指数退避重连，关闭时发送下线消息。
+
+本地 HTTP API 是脚本集成的正门，常用端点：
+
+| 端点 | 方法 | 用途 |
+|------|------|------|
+| `/health` | GET | 存活检查 |
+| `/status` | GET | 连接状态、当前 Agent、运行时长 |
+| `/agents` | GET | 列出命名 Agent |
+| `/message` | POST | 发消息给 Agent 并取回回复（支持 HITL 注入） |
+| `/sessions/search` | GET | 检索会话历史 |
+| `/events` | GET | SSE 事件流（`agent_reply`、`heartbeat_alert` 等） |
+| `/config/reload` | POST | 热重载配置 |
+
+```bash
+# 同步调用：阻塞到 Agent 完成
+curl -X POST http://localhost:7533/message \
+  -d '{"text":"check disk usage","agent":"ops-bot","session_id":"2026-03-08-abc123"}' \
+  -H "Content-Type: application/json"
+
+# SSE 流式：带工具进度与文本增量
+curl -X POST http://localhost:7533/message \
+  -d '{"text":"analyze this codebase"}' \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream"
+```
+
+daemon 的启停只有三条命令：`shan daemon start`（前台）、`shan daemon start -d`（后台，自动注册 launchd 服务，重启存活）、`shan daemon stop`（停止并移除 launchd 服务）。`shan daemon status` 显示连接与 launchd 状态。
+
+## 八、安装与配置
+
+三种安装方式（2026-04-01 时点 README 口径）：
+
+```bash
+# 方式一：npm（当时 README 推荐，启动时自动更新）
+npm install -g @kocoro/shanclaw
+
+# 方式二：安装脚本（下载最新 release 二进制到 /usr/local/bin）
+curl -fsSL https://raw.githubusercontent.com/Kocoro-lab/Kocoro/main/install.sh | sh
+
+# 方式三：源码编译（需 Go 1.25+，二进制落在 $GOPATH/bin）
+git clone https://github.com/Kocoro-lab/Kocoro.git
+cd Kocoro && go install .
+```
+
+初始化用 `shan --setup`（注意是带连字符的 flag，不是子命令），二选一：连 Shannon Cloud（endpoint `https://api-dev.shannon.run`，key 从 shannon.run 获取），或指向自托管 Gateway（`http://localhost:8080`，key 留空）。
+
+配置分三层合并，后者覆盖前者：全局 `~/.shannon/config.yaml` → 项目 `.shannon/config.yaml` → 本地 `.shannon/config.local.yaml`（gitignore）。合并规则：标量覆盖、列表合并去重、结构体逐字段合并。TUI 里 `/config` 可查看合并结果及每个值来自哪个文件。主干配置：
+
+```yaml
+# 连接
+endpoint: http://localhost:8080    # Shannon Gateway 地址
+api_key: ""                        # Gateway API key
+model_tier: medium                 # small / medium / large（默认 medium）
+
+# 权限
+permissions:
+  allowed_dirs:
+    - ~/Documents/notes
+  allowed_commands:
+    - "git *"
+    - "go test *"
+  denied_commands:
+    - "rm -rf *"
+  network_allowlist:
+    - "localhost"
+    - "api.example.com"
+
+# Agent 行为
+agent:
+  max_iterations: 25               # 每轮工具调用上限（默认 25）
+  temperature: 0
+  max_tokens: 32000
+  thinking: true                   # extended thinking 开关
+  thinking_budget: 10000
+  context_window: 128000
+
+# 工具
+tools:
+  bash_timeout: 120                # 秒
+  bash_max_output: 30000           # 字符
+  result_truncation: 30000
+```
+
+指令与记忆是两个平行的个性化通道：`~/.shannon/instructions.md`（全局）与 `.shannon/instructions.md`（项目）都会注入系统提示（带 token 预算、去重）；`~/.shannon/memory/MEMORY.md` 的前 200 行随启动加载，Agent 自己也会往里写——跨会话记忆就是这么攒起来的。会话以 JSON 文件存于 `~/.shannon/sessions/`（命名 Agent 在各自目录下），标题取首条用户消息前 50 字符；旁边的 `sessions.db`（SQLite FTS5）是自动维护的搜索索引，删了会在下次启动重建。
+
+## 九、上手路径与采用建议
+
+**推荐顺序**：先 `shan` 进 TUI 单会话，用文件与 shell 工具建立信任边界，顺手试 `/research deep "<主题>"`（Gateway 远程深度研究）和 `/swarm "<目标>"`（多 Agent 编排）；然后建第一个命名 Agent（ops-bot 是个好起点），配上工具白名单；跑顺了再加 `schedule` 定时检查和心跳；最后才是 daemon 接频道、脚本调 7533 端口。每一步都可独立回退。
+
+**它适合**：整天在 macOS 上工作、想让 Agent 处理 GUI 自动化（界面操作、应用控制）、消息通道值守或定时巡逻的个人用户与小型团队；已有 Shannon 自托管经验、想给多 Agent 体系加本地执行端的团队。
+
+**先等等，如果你**：在 Windows/Linux 上（本地工具与 launchd 调度均为 macOS 专属）；预期 one-shot 流式输出（它等完整回复才显示）；不希望引入 Gateway 这层依赖（推理必须过它）；或需要的是纯编码工作流——Claude Code 一类编码 CLI 在代码场景的工具链更成熟，ShanClaw 的差异化在 GUI 控制与常驻值守，不在写代码本身。
+
+**已知边界**（README "Known Limitations" 口径）：视觉依赖截图，缩到 1200px 内以 base64 送模型，官方明言视觉模型可能把看到的内容与训练知识混淆，关键细节需人工核实；复杂 cron 表达式（区间、步进）会退化为 `StartInterval` 而非精确的 `StartCalendarInterval`。
+
+## 参考来源与口径说明
+
+- **版本锚点**：本文机制与配置描述以 2026-04-01 的仓库快照 main@`2a8de6ace`（commit "fix: correct cache ratio formula for Anthropic token semantics"，2026-04-01 02:15 UTC）的 README 与源码为口径；涉及当前状态处已单独注明。
+- **改名与演进**：仓库原名 `Kocoro-lab/ShanClaw`，现名 `Kocoro-lab/Kocoro`（GitHub 301 重定向），命令行入口仍为 `shan`。截至 2026-09-23 的主要演进：官方推荐 Kocoro Desktop（闭源 GUI，构建于开源 daemon 之上，支持一键导入 `~/.claude/` 的 agents/skills/instructions）；CLI npm 包改为 `@kocoro/kocoro`；新增语音入口 Voice Front Brain（`shan koe`）、云端记忆同步（Kocoro Cloud）、会话云同步、Feishu 通道、上下文压缩、对话批注/Side Chat/分支等桌面功能；release 现至 v0.4.9（2026-08-23）。
+- **数据读数**：stars/forks、release 列表为 GitHub API 2026-09-23 读数；npm 包信息（上架时间、版本数、latest）为 npm registry API 同日读数。stars 类数字波动频繁，引用时请以查询当日为准。
+- **路径说明**：配置与数据目录名为 `~/.shannon/`（与底层 Shannon 框架同名，而非 ShanClaw/Kocoro 本名），检索本机文件时以此为准。
+- **工具计数口径**：本地工具 27 个，按 `internal/tools/register.go` 的注册项（26 个）加 README 单列的 `session_search` 清点；`web_search` 等 Gateway 远程工具约 20 个，按 `register.go` 的 `gatewayAllowedTools` 白名单清点。
+- **素材来源**：安装/配置/Hooks/MCP/命名 Agent/定时任务/心跳/Daemon 各节的功能描述与代码示例，均出自快照时点 README 原文，或对 `internal/agent/tools.go`、`internal/agent/loop.go`、`internal/tools/register.go`、`internal/mcp/client.go` 源码的转述；工具审批流程图、daemon 架构图为 README 原图的翻译。

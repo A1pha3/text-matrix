@@ -1,10 +1,11 @@
 ---
 title: "AI先进技术学习笔记｜2026年3月"
 date: "2026-03-24T18:30:00+08:00"
+lastmod: "2026-09-21T12:00:00+08:00"
 slug: "ai-advanced-technology-learning-notes-2026-03"
-github_repo: "assafelovic/gpt-researcher"
-source_key: "gh:assafelovic/gpt-researcher"
-description: "系统整理2026年最新AI先进技术发展趋势与核心原理，涵盖大语言模型(LLM)、AI Agent、RAG检索增强生成及多模态AI四大前沿领域，并提供详尽的学习路线与优质论文/工具资源推荐。"
+github_repo: "modelcontextprotocol/servers"
+source_key: "gh:modelcontextprotocol/servers"
+description: "一份面向工程师的 AI 先进技术学习笔记：从大语言模型的核心原理（Transformer、RLHF、MoE）出发，过一遍 AI Agent（ReAct、工具调用、MCP）、RAG 完整技术栈与多模态进展，附对齐入门、学习路线、练习与自测题。"
 draft: false
 categories: ["技术笔记"]
 tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
@@ -12,7 +13,9 @@ tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
 
 # AI 先进技术学习笔记
 
-> 更新时间：2026 年 3 月 24 日
+> 初稿 2026-03-24｜修订 2026-09-21（全文外链与模型名单已按 2026 年 3 月口径复核）
+>
+> 阅读建议：无基础先读一、五，做完练习一再进二；有基础可直接跳三、四，卡在哪一节就回头翻对应的"相关工具"与"学习资源"。
 
 ## 学习目标
 
@@ -46,16 +49,16 @@ tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
 
 大语言模型（**LLM**，Large Language Model）是基于 **Transformer 架构**的大规模预训练语言模型，通过在海量文本数据上进行自监督学习，学习语言的统计规律和知识表示。
 
-2025-2026 年，LLM 的定位从"对话助手"扩展到推理和 Agent 底座，代表模型包括：
+2025-2026 年，LLM 的定位从"对话助手"扩展到推理和 Agent 底座。截至 2026 年 3 月，代表模型包括：
 
 | 厂商 | 代表模型 | 特点 |
 |------|----------|------|
-| OpenAI | GPT-4o、o1、o3、o3-mini | 推理能力显著提升，o3 在 ARC-AGI 上取得突破性进展 |
-| Anthropic | Claude 3.5、Claude 3.7 Sonnet | Constitutional AI 对齐，长上下文窗口（200K） |
-| Google | Gemini 2.0 Flash、Gemini 2.0 Flash Thinking | 原生多模态，推理速度极快 |
-| DeepSeek | DeepSeek V3、DeepSeek R1 | 开源推理模型，RLVR 技术突破 |
-| Meta | Llama 4 | 开源多模态，支持百万级上下文 |
-| 阿里巴巴 | Qwen 3、Qwen-VL3 | 中文优化，开源生态完善 |
+| OpenAI | GPT-5 系列、o3 / o4-mini | GPT-5（2025 年 8 月发布）把对话与推理统一到一个模型里，按问题复杂度自动分配思考量；o3 曾在 ARC-AGI 基准上取得突破性成绩 |
+| Anthropic | Claude Opus 4.6、Sonnet 4.5 | Constitutional AI 对齐，200K 上下文，编码与 Agent 任务表现突出 |
+| Google | Gemini 3.1 Pro、Gemini 2.5 Flash | 原生多模态，最高百万级 token 输入，推理速度快 |
+| DeepSeek | DeepSeek V3.2、DeepSeek R1 | 开源权重模型，主打高性价比推理，R1 以 RLVR 训练路线出圈 |
+| Meta | Llama 4 | 开源多模态，Scout 版上下文最高 1000 万 token |
+| 阿里巴巴 | Qwen3、Qwen3-VL | 中文优化，开源生态完善，全尺寸覆盖 |
 
 ### 1.2 核心原理
 
@@ -65,10 +68,10 @@ tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
 | **Next Token Prediction** | 海量语料学习预测下一个 token，采用交叉熵损失函数 |
 | **RLHF** | 人类反馈强化学习对齐人类偏好，InstructGPT 核心方法 |
 | **DPO / ORPO** | 直接偏好优化，绕过 Reward Model 直接优化策略 |
-| **MoE** | 混合专家架构（DeepSeek V3、GPT-4o 均采用），大幅提升参数量同时控制推理成本 |
-| **长上下文窗口** | 支持 128K-1M token，采用 Sparse Attention、Ring Attention 等优化 |
-| **推理模型** | 思维链（Chain-of-Thought）显式化，Test-Time Compute 扩展推理能力 |
-| **多阶段训练** | Pretrain → SFT → RLHF → DPO，层层递进优化 |
+| **MoE** | 混合专家架构，按需激活部分专家参数，参数量做大同时控制推理成本（DeepSeek V3、GPT-OSS 明确采用；闭源主力模型架构未公开，业界普遍认为也是 MoE） |
+| **长上下文窗口** | 主流模型支持 128K 以上，Gemini 3 Pro 达 1M，Llama 4 Scout 宣称 10M；靠 Sparse Attention、Ring Attention 等优化撑起 |
+| **推理模型** | 思维链（Chain-of-Thought）显式化，用 Test-Time Compute 换推理能力 |
+| **多阶段训练** | Pretrain → SFT → 偏好对齐（RLHF 或 DPO 二选一或并用），层层递进优化 |
 
 ### 1.3 应用场景
 
@@ -82,15 +85,16 @@ tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
 ### 1.4 相关工具
 
 **模型服务：**
-- OpenAI API、Anthropic API、Google Vertex AI、Azure OpenAI
+- OpenAI API、Anthropic API、Gemini API、Azure OpenAI
 - VLLM、Ollama、Text Generation Inference（TGI）
 
 **本地部署：**
 - llama.cpp（量化推理）、Ollama、LM Studio、Jan
 
 **评测基准：**
-- MMLU、HellaSwag、GSM8K、MATH、BIG-Bench Hard、ChatArena
+- MMLU、HellaSwag、GSM8K、MATH、BIG-Bench Hard
 - **新基准**：ARC-AGI（通用推理）、SWE-bench（软件工程）、GPQA（研究生水平问答）
+- **人类偏好榜**：Chatbot Arena（LMArena），匿名对战投票产生排名
 
 **微调框架：**
 - LLaMA-Factory、Axolotl、DeepSpeed-Chat、Unsloth（高效微调）
@@ -100,9 +104,9 @@ tags: ["LLM", "RAG", "多模态", "AI Agent", "AI 安全"]
 - 论文：[Attention Is All You Need](https://arxiv.org/abs/1706.03762)（Transformer 原始论文）
 - 论文：[InstructGPT](https://arxiv.org/abs/2203.02155)（RLHF 奠基之作）
 - 论文：[DeepSeek-R1](https://arxiv.org/abs/2501.12599)（推理模型突破）
-- 博客：[The Illustrated Transformer](https://jalamar.github.io/illustrated-transformer/)（Jay Alammar）
-- 课程：Coursera "Natural Language Processing with Deep Learning"
-- 社区：Hugging Face Hub、r/MachineLearning、lmsys/chatbot-arena
+- 博客：[The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)（Jay Alammar 的可视化讲解，入门首选）
+- 课程：斯坦福 CS224n《Natural Language Processing with Deep Learning》（公开课）
+- 社区：Hugging Face Hub、r/MachineLearning、LMArena
 
 ---
 
@@ -117,7 +121,7 @@ AI Agent 是能够**自主感知环境、规划行动、执行任务**并根据�
 - 多步骤推理
 - 自主决策能力
 
-Claude 3.7、GPT-4o、DeepSeek R1 等模型的工具调用能力大幅提升，Agent 从研究走向落地。
+Claude 4.5、GPT-5、DeepSeek V3.2 等模型的工具调用能力大幅提升，Agent 从研究走向落地。
 
 ### 2.2 核心原理
 
@@ -139,7 +143,7 @@ Claude 3.7、GPT-4o、DeepSeek R1 等模型的工具调用能力大幅提升，A
 - 科研助手（文献检索、实验设计、数据分析）
 - 个人助手（浏览器自动化、个人知识管理）
 - 金融分析（财报解读、投资研究、风险评估）
-- 计算机使用（Claude Computer Use、OpenAI Operator）
+- 计算机使用（Claude Computer Use、ChatGPT agent——2025 年 8 月底接棒已下线的 OpenAI Operator）
 
 ### 2.4 相关工具
 
@@ -148,7 +152,7 @@ Claude 3.7、GPT-4o、DeepSeek R1 等模型的工具调用能力大幅提升，A
 - Flowise（低代码）、Dify
 
 **MCP 生态：**
-- [MCP Servers](https://modelcontextprotocol.io/servers)（官方 MCP 服务器列表）
+- [MCP Servers](https://github.com/modelcontextprotocol/servers)（官方维护的参考实现与社区服务器合集）
 - 各种 MCP 工具集成（文件系统、数据库、API 等）
 
 **工具生态：**
@@ -164,10 +168,10 @@ Claude 3.7、GPT-4o、DeepSeek R1 等模型的工具调用能力大幅提升，A
 ### 2.5 学习资源
 
 - 论文：[ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
-- 论文：[AutoGPT+P: An Autonomous GPT-like Investigator](https://arxiv.org/abs/2306.02250)
-- 论文：[MCP: Model Context Protocol](https://modelcontextprotocol.io/)（官方协议文档）
-- 博客：[Building Multi-Agent Systems with LangGraph](https://langchain.github.io/langgraph/tutorials/multi_agent/hierarchical_agent_teams.html)（LangChain 官方）
-- 开源：[gpt-researcher](https://github.com/assafelovic/gpt-researcher)、[Manus](https://manus.im/)、[OpenManus](https://github.com/mannaandpoop/openmanus)
+- 论文：[AutoGPT+P: Affordance-based Task Planning with Large Language Models](https://arxiv.org/abs/2402.10778)（用可供性建模改进任务规划）
+- 协议：[Model Context Protocol](https://modelcontextprotocol.io/)（官方协议文档）
+- 博客：[Multi-Agent Architectures](https://langchain-ai.github.io/langgraph/concepts/multi_agent/)（LangGraph 官方多智能体概念文档）
+- 开源：[gpt-researcher](https://github.com/assafelovic/gpt-researcher)、[Manus](https://manus.im/)、[OpenManus](https://github.com/FoundationAgents/OpenManus)
 - 社区：Hugging Face Agents 文档、OpenAI Cookbook - Agent 案例
 
 ---
@@ -229,21 +233,20 @@ Native RAG 与 Agentic RAG 的区别在于：后者让 Agent 动态决定是否�
 - Milvus、Pinecone、Qdrant、Weaviate、Chroma
 
 **Embedding 模型：**
-- BGE（BAAI）、M3E（海量统一 Embedding）、text-embedding-3（OpenAI）、Jina AI
+- BGE（BAAI）、M3E（Moka Massive Mixed Embedding，中文场景常用）、text-embedding-3（OpenAI）、Jina AI
 
 **重排序：**
 - Cohere Rerank、BGE-Reranker、FlagEmbedding
 
 **托管服务：**
-- Pinecone Serverless、Azure AI Search、AWS Kendra、Dify（低代码 RAG）
+- Pinecone Serverless、Azure AI Search、Amazon Bedrock Knowledge Bases、Dify（低代码 RAG）
 
 ### 3.5 学习资源
 
 - 论文：[Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401)
-- 博客：[The RAG Triad](https://www.pinecone.io/blog/rag-triad/)（Pinecone 官方博客）
-- 博客：[GraphRAG: From Chaos to Clarity](https://www.microsoft.com/en-us/research/blog/graphrag-unlocking-insights-from-complex-text/)(Microsoft Research)
+- 概念：[The RAG Triad](https://www.trulens.org/getting_started/core_concepts/rag_triad/)（TruLens：上下文相关性、忠实度、答案相关性三指标评估 RAG 质量）
+- 博客：[GraphRAG: Unlocking LLM discovery on narrative private data](https://www.microsoft.com/en-us/research/blog/graphrag-unlocking-llm-discovery-on-narrative-private-data/)（Microsoft Research）
 - 教程：LlamaIndex Documentation、LangChain RAG Tutorials
-- 实践：Azure OpenAI RAG Workshop、AWS AI Services Demo
 - 社区：r/LangChain、LlamaIndex Discord
 
 ---
@@ -258,10 +261,10 @@ Native RAG 与 Agentic RAG 的区别在于：后者让 Agent 动态决定是否�
 
 | 领域 | 代表进展 |
 |------|----------|
-| **图像理解** | GPT-4o、Gemini 2.0、Claude 3.7 原生支持图像理解 |
-| **视频生成** | Sora 2.0（OpenAI）、Kling 2.0（快手）、Vidu 2.0（生数科技）、Runway Gen-3 |
-| **语音交互** | GPT-4o with voice、Her-style 对话（实时语音+视觉）、CosyVoice |
-| **3D/具身** | 单目 3D 重建、RT-2、PaLM-E、RoboGPT |
+| **图像理解** | GPT-5、Gemini 3、Claude Sonnet 4.5 原生支持图像理解 |
+| **视频生成** | Sora 2（OpenAI）、可灵 Kling（快手）、Vidu（生数科技）、Runway Gen-4 |
+| **语音交互** | GPT Realtime 实时语音对话、CosyVoice（中文 TTS） |
+| **3D/具身** | 单目 3D 重建、RT-2、PaLM-E、OpenVLA、Gemini Robotics |
 
 ### 4.2 核心原理
 
@@ -272,8 +275,8 @@ Native RAG 与 Agentic RAG 的区别在于：后者让 Agent 动态决定是否�
 | **LLM 作为多模态大脑** | 视觉 Token 经映射后与文本 Token 一同输入 LLM（LLaVA、MiniGPT-4） |
 | **视频理解** | 时空建模（3D CNN、Video Transformer）、帧采样、帧间注意力 |
 | **音频处理** | Whisper（语音识别）、CosyVoice（中文 TTS）、Fish Audio、ElevenLabs |
-| **跨模态生成** | 文生图（SDXL、FLUX、DALL-E 3）、文生视频（Sora、Runway Gen-3、Kling） |
-| **具身智能** | VLA 模型：RT-2、PaLM-E、RoboGPT |
+| **跨模态生成** | 文生图（SDXL、FLUX、GPT Image）、文生视频（Sora、Runway Gen-4、可灵） |
+| **具身智能** | VLA 模型：RT-2、PaLM-E、OpenVLA、Gemini Robotics |
 
 ### 4.3 应用场景
 
@@ -289,28 +292,27 @@ Native RAG 与 Agentic RAG 的区别在于：后者让 Agent 动态决定是否�
 ### 4.4 相关工具
 
 **模型：**
-- GPT-4o、Gemini 2.0 Multimodal、Claude 3.7 Sonnet
-- Qwen-VL2、InternVL3、LLaVA、Paligemma
+- GPT-5、Gemini 3、Claude Sonnet 4.5
+- Qwen3-VL、Qwen2.5-VL、InternVL3、LLaVA、PaliGemma
 
 **图像生成：**
-- Midjourney v7、Stable Diffusion 3、FLUX、DALL-E 3、Adobe Firefly
+- Midjourney V7、Stable Diffusion 3.5、FLUX、GPT Image（OpenAI）、Adobe Firefly
 
 **视频生成：**
-- Sora 2.0（OpenAI）、Runway Gen-3 Alpha、Kling 2.0（快手）、Vidu 2.0（生数科技）、HailuoAI
+- Sora 2（OpenAI）、Runway Gen-4、可灵 Kling（快手）、Vidu（生数科技）、海螺 Hailuo（MiniMax）
 
 **语音：**
 - Whisper（STT）、CosyVoice（中文 TTS）、Fish Audio、ElevenLabs
 
 **开发框架：**
-- transformers（HF）、PyTorch Multimedia、LAVIS、LLaVA-Org
+- transformers（Hugging Face）、torchvision、LAVIS（Salesforce）
 
 ### 4.5 学习资源
 
 - 论文：[LLaVA: Large Language and Vision Assistant](https://arxiv.org/abs/2304.08485)
-- 论文：[GPT-4V(ision) System Card](https://openai.com/index/gpt-4v-system-card/)（OpenAI 官方分析）
-- 论文：[Sora: Video Generation from Text](https://openai.com/index/sora-video-generation-model/)
-- 博客：[Understanding Multimodal LLMs](https://huggingface.co/blog/multimodal-models)（HuggingFace）
-- 课程：DeepLearning.AI "Multimodal Learning with GPT-4V"
+- 页面：[GPT-4V(ision) System Card](https://openai.com/index/gpt-4v-system-card/)（OpenAI 官方安全性分析）
+- 页面：[Sora](https://openai.com/index/sora-video-generation-model/)（OpenAI 官方介绍）
+- 博客：[Vision Language Models Explained](https://huggingface.co/blog/vlms)（Hugging Face，视觉语言模型入门）
 - 社区：r/LocalLLaMA（多模态讨论）、Hugging Face Multimodal 集合
 
 ---
@@ -331,8 +333,7 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 | **RLHF** | 人类反馈强化学习对齐人类偏好（InstructGPT 核心方法） |
 | **DPO / ORPO** | 直接优化人类偏好，绕过 Reward Model |
 | **可解释性** | Mechanistic Interpretability，研究模型内部工作原理 |
-| **对齐假象** | Alignment Faking，模型表面服从但实际按另一套逻辑运行 |
-| **EFG 框架** | Fairness, Explanation, Guardrails |
+| **对齐假象** | Alignment Faking，模型表面服从训练目标、实际按另一套逻辑运行（Anthropic 2024 年 12 月论文提出） |
 
 ### 5.3 实践方法
 
@@ -340,15 +341,15 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 - **输出过滤**：防止生成有害内容
 - **模型规范**：Anthropic Model Spec、Google Model Card
 - **红队测试**：模拟攻击测试模型安全性
-- **A/B 对比评测**：多模型安全性能对比
+- **横向对比评测**：用同一套红队用例测试多个模型，比较安全表现
 
 ### 5.4 学习资源
 
 - 论文：[Constitutional AI: Harmlessness from AI Feedback](https://arxiv.org/abs/2212.08073)
 - 论文：[Learning to Summarize with Human Feedback](https://arxiv.org/abs/2009.01325)（RLHF 奠基）
 - 论文：[Toy Models of Superposition](https://transformer-circuits.pub/2022/toy_model/index.html)（可解释性经典）
-- 博客：[Anthropic's AI Safety](https://www.anthropic.com/ai-safety)（官方安全研究）
-- 社区：Alignment Forum、Safety BM
+- 页面：[Anthropic Research](https://www.anthropic.com/research)（官方安全与对齐研究入口）
+- 社区：Alignment Forum、LessWrong
 
 ---
 
@@ -360,11 +361,15 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 - 理解 Transformer 架构原理
 - 学会使用主流 API（OpenAI / Claude / Gemini / 本地模型）
 
+验收标准：能不看资料画出 Self-Attention 的 QKV 计算流程，并用一条 API 请求跑通一个问答。
+
 ### 第二阶段｜进阶
 
 - 学习 LangChain / LlamaIndex 开发
 - 掌握向量数据库与 Embedding 技术
 - 搭建完整 RAG pipeline
+
+验收标准：能对着自定义文档库跑通一次带重排序的 RAG 问答，并说清改 chunk 粒度后会怎样影响命中率。
 
 ### 第三阶段｜Agent 开发
 
@@ -373,11 +378,15 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 - 实践 Tool Calling 与多步推理
 - 探索 Multi-Agent 协作系统
 
+验收标准：能让 Agent 通过工具调用完成一个需要两步以上子任务的例子，并能在中间环节注入错误观察让它纠正。
+
 ### 第四阶段｜多模态
 
 - 理解 CLIP/视觉语言模型原理
 - 实践图文/视频多模态应用开发
 - 探索 Agentic AI 与具身智能
+
+验收标准：能给一张图片补上文字描述并解释视觉编码器与 LLM 之间的对齐方式，或跑通一个图文问答示例。
 
 ### 第五阶段｜AI Safety（可选）
 
@@ -385,36 +394,38 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 - 了解可解释性研究方法
 - 关注 AI Safety 最新论文和实践
 
+验收标准：能区分 RLHF 与 DPO 的优化目标差异，并指出一次实践中的对齐风险（如奖励模型过拟合）。
+
 ---
 
 ## 七、常见问题 FAQ
 
-### Q1：这篇文章适合完全没有AI基础的人吗？
+### Q1：这篇文章适合完全没有 AI 基础的人吗？
 
-不适合。本文假设读者已经有基本的编程能力和数学基础。如果你完全没有AI经验，建议先学习Python编程、线性代数、概率统计，再回头看本文。
+不适合。本文假设读者已经有基本的编程能力和数学基础。如果你完全没有 AI 经验，建议先学习 Python 编程、线性代数、概率统计，再回头看本文。
 
-### Q2：我应该先学LLM、Agent，还是RAG？
+### Q2：我应该先学 LLM、Agent，还是 RAG？
 
 推荐顺序：LLM 是基础，RAG 是 LLM 的重要应用，Agent 是进阶使用方式，多模态是扩展方向。
 
-### Q3：需要多少数学基础才能看懂Transformer原理？
+### Q3：需要多少数学基础才能看懂 Transformer 原理？
 
-需要线性代数（矩阵运算、向量空间）、概率统计（概率分布、期望）、优化理论（梯度下降）的基础。如果数学基础薄弱，可以先看[Jay Alammar的可视化教程](https://jalamar.github.io/illustrated-transformer/)，再回头补数学。
+需要线性代数（矩阵运算、向量空间）、概率统计（概率分布、期望）、优化理论（梯度下降）的基础。如果数学基础薄弱，可以先看[Jay Alammar 的可视化教程](https://jalammar.github.io/illustrated-transformer/)，再回头补数学。
 
-### Q4：本地部署LLM需要多少资源？
+### Q4：本地部署 LLM 需要多少资源？
 
-本地部署的资源需求因模型参数量而异：
-- 7B参数模型：至少8GB RAM，推荐16GB
-- 13B参数模型：至少16GB RAM，推荐32GB
-- 70B参数模型：至少48GB RAM，推荐64GB+或量化推理
+本地部署的资源需求因模型参数量而异（以下为量化推理的经验值，具体以模型卡片为准）：
+- 7B 级别小模型：8GB 内存可用，推荐 16GB
+- 13B 级别：16GB 内存可用，推荐 32GB
+- 70B 级别：至少 48GB 内存，推荐 64GB 以上或更激进的量化方案
 
-使用Ollama或llama.cpp可以大幅降低资源需求。
+使用 Ollama 或 llama.cpp 选择合适的量化等级，可以大幅降低资源需求。
 
-### Q5：如何跟上AI技术的快速迭代？
+### Q5：如何跟上 AI 技术的快速迭代？
 
 1. 关注关键会议：NeurIPS、ICML、ICLR、ACL、CVPR
-2. 订阅高质量Newsletter：The Batch（Andrew Ng）、Deep Learning Weekly
-3. 加入社区：Hugging Face、Reddit r/MachineLearning、Discord服务器
+2. 订阅高质量 Newsletter：The Batch（Andrew Ng）、Deep Learning Weekly
+3. 加入社区：Hugging Face、Reddit r/MachineLearning、Discord 服务器
 4. 动手实践：每学一个新技术，立即用代码验证
 
 ---
@@ -423,10 +434,12 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ### 练习一：搭建本地 LLM 推理环境
 
-1. 安装 Ollama 并下载一个开源模型（如 Llama 3.2 或 Qwen 2.5）
+1. 安装 Ollama 并下载一个小参数模型（如 Qwen3 8B）
 2. 用 Python 调用 Ollama API 完成一个简单的问答任务
-3. 对比相同任务下本地模型和云端 API（如 GPT-4o）的响应质量差异
+3. 对比相同任务下本地模型和云端 API（如 GPT-5 mini）的响应质量差异
 4. 记录：响应速度、答案准确性、推理成本
+
+完成标志：本地模型能稳定返回同一问题的上下文中合理答案，且你能给出它在响应质量与成本上当与不当的结论。
 
 ### 练习二：用 LlamaIndex 搭建个人知识库 RAG
 
@@ -436,6 +449,8 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 4. 尝试不同的 Chunking 策略（按句子、按段落、语义分块），对比检索效果
 5. 记录：检索准确率、响应时间、Token 消耗
 
+完成标志：对不在训练数据里的新文档，回答能引用到正确段落；换 chunk 粒度后你能解释命中率变化的原因。
+
 ### 练习三：用 LangGraph 写一个多步推理 Agent
 
 1. 设计一个需要多步推理的任务（如"分析某个 GitHub 仓库的代码结构并生成文档"）
@@ -443,6 +458,8 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 3. 集成至少一个工具（如 GitHub API 或文件系统工具）
 4. 测试 Agent 的任务完成能力和错误恢复能力
 5. 记录：任务完成率、平均步数、失败原因分析
+
+完成标志：Agent 能独立完成至少一轮 Thought → Action → Observation，并在工具返回异常时能修正下一步，而不是无限循环。
 
 ---
 
@@ -462,7 +479,7 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ### 探索多模态与具身智能
 
-- 动手实践 LLaVA 或 Qwen-VL，理解视觉语言模型的对齐方法
+- 动手实践 LLaVA 或 Qwen3-VL，理解视觉语言模型的对齐方法
 - 学习视频理解的基础模型（如 VideoMAE、TimeSformer）
 - 关注具身智能的最新进展（RT-2、OpenVLA）
 
@@ -476,15 +493,16 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 
 ## 十、资料口径与参考来源
 
-本文整理自官方文档、技术博客、学术论文和社区资源。关键判断的取径方式：
+本文以 **2026 年 3 月 24 日**为资料截止口径整理，2026 年 9 月修订时逐条核对了模型名单与全部外链。关键判断的取径方式：
 
-- **模型能力描述**：来自官方博客和论文，如 GPT-4o 的推理能力来自 OpenAI 官方博客，DeepSeek R1 的 RLVR 技术来自 DeepSeek 团队发表的论文。
-- **评测基准结果**：来自各模型的官方技术报告或独立评测机构（如 ChatArena、Hugging Face Open LLM Leaderboard）。
-- **工具推荐**：基于社区采用率和 GitHub Stars，不构成商业推荐。
+- **模型能力描述**：来自官方博客和论文，如 GPT-5 的发布信息来自 OpenAI 官方博客，DeepSeek R1 的 RLVR 训练路线来自 DeepSeek 团队发表的论文。
+- **模型版本与发布时间**：以各家官方发布页为准；文中模型名单反映 2026 年 3 月时点的最新一代，不代表当前最新。
+- **评测基准结果**：来自各模型的官方技术报告或独立评测（如 LMArena、Hugging Face Open LLM Leaderboard）。
+- **工具推荐**：基于社区采用率，不构成商业推荐。
 - **学习路线建议**：基于作者个人的学习路径和社区反馈整理，不同背景的读者可能需要调整顺序。
-- **AI 技术发展趋势**：基于 2026 年 3 月前的公开信息，AI 领域发展极快，部分判断可能在数月后过时。
+- **时效边界**：AI 领域发展极快，模型版本数字尤其容易过时；引用本文的模型名单时，建议先查对应厂商的官方页面确认现状。
 
-主要参考来源涵盖了各章节已列出的论文和资源，包括但不限于 OpenAI、Anthropic、Google DeepMind、DeepSeek 的官方博客，Hugging Face、LangChain、LlamaIndex 的技术博客，以及各章节引用的学术论文。本文持续更新，欢迎通过 GitHub Issues 提交修正建议。
+各章节"学习资源"小节列出的论文、文档与博客即主要参考来源，涵盖 OpenAI、Anthropic、Google DeepMind、DeepSeek 的官方页面，Hugging Face、LangChain、LlamaIndex 的技术文档，以及 arXiv 学术论文，此处不再重复罗列。
 
 ---
 
@@ -513,7 +531,7 @@ AI Safety（AI 安全）与 Alignment（对齐）研究如何确保 AI 系统行
 **问题 4**: 能举例说明 2026 年图像理解、视频生成、语音交互的代表模型吗？
 <details>
 <summary>查看答案</summary>
-答：图像理解：GPT-4o、Gemini 2.0、Claude 3.7；视频生成：Sora 2.0、Runway Gen-3、Kling 2.0；语音交互：GPT-4o with voice、CosyVoice、Fish Audio。
+答：图像理解：GPT-5、Gemini 3、Claude Sonnet 4.5；视频生成：Sora 2、Runway Gen-4、可灵 Kling；语音交互：GPT Realtime 实时语音、CosyVoice、Fish Audio。
 </details>
 
 **问题 5**: 能根据自己的背景制定合理的 AI 技术学习顺序吗？

@@ -1,315 +1,350 @@
 ---
-title: "EAGLE / EAGLE-2 / EAGLE-3：基于特征外推的 LLM 推测解码全栈指南"
+title: "EAGLE-1/2/3 拆解：推测解码省的是大模型前向次数，赚不赚看草稿准确率"
 date: "2026-06-28T15:19:20+08:00"
+lastmod: "2026-09-20T00:30:00+08:00"
 slug: "safe-ai-lab-eagle-speculative-decoding-guide"
 github_repo: "SafeAILab/EAGLE"
 source_key: "gh:SafeAILab/EAGLE"
-description: "拆解 SafeAILab/EAGLE 三代推测解码：EAGLE-1 特征外推、EAGLE-2 动态草稿树、EAGLE-3 训练时测试，对比 Medusa。"
+description: "从 SafeAILab/EAGLE 的源码与三篇论文拆清楚：EAGLE-1 特征层自回归、EAGLE-2 动态草稿树、EAGLE-3 训练时测试与多层特征融合，以及三代加速数字该按哪个口径读。"
 draft: false
 categories: ["技术笔记"]
-tags: ["LLM推理", "vLLM", "SGLang"]
+tags: ["LLM推理", "推测解码", "vLLM", "SGLang"]
 ---
 
-# EAGLE / EAGLE-2 / EAGLE-3：基于特征外推的 LLM 推测解码全栈指南
+## 先给判断
 
-## 学习目标
+EAGLE 三代做的事情可以归成一件：让大语言模型（LLM）每跑一次前向，能多带出几个真正落地的词元（token）。
 
-阅读本文后，你将能够：
+这句话决定了读这套系统的方式。推测解码不是"让小模型多写几个字"，而是用一次大模型前向去并行验证一批候选，只留下从左到右的第一条一致前缀。所以真正值钱的量是**平均接受长度 τ**——一个"起草—验证"周期里平均落到最终输出里的词元数。仓库和三篇论文的加速数字，几乎都能还原成"τ 涨了多少、起草开销占一次前向的几成"这两件事。
 
-1. 复述推测解码（speculative decoding）的两阶段范式，以及它"无损失"加速 LLM 自回归解码的数学基础。
-2. 解释 EAGLE-1 的"次顶层特征外推"机制为什么比 Medusa 的"多头并行预测"更高效。
-3. 描述 EAGLE-2 的"动态草稿树"（Dynamic Draft Tree）如何用 draft 模型置信度动态调整树结构。
-4. 复述 EAGLE-3 的"训练时测试"（Training-Time Testing）以及低/中/高层语义特征融合策略。
-5. 给出 EAGLE 与 Medusa、Lookahead、vanilla decoding 在 Vicuna-13B 上的速度对比范围与适用边界。
-6. 列出 EAGLE 已被合并的主流推理框架（vLLM、SGLang、TensorRT-LLM、NeMo、MLC-LLM 等）。
+τ 有两条涨法：把草稿猜得更准，或者把同样的草稿预算分得更聪明。EAGLE-1 和 EAGLE-3 走前者，EAGLE-2 只走后者。按 EAGLE-3 论文 Table 1 的五数据集平均（Vicuna-13B，Temperature=0，即贪心解码），标准推测解码（拿 Vicuna-68M 当草稿模型）τ 是 2.24，EAGLE-1 是 3.96，EAGLE-2 是 4.83，EAGLE-3 是 6.62。
+
+判断也因此可以提前给出：如果你的负载是单请求、长输出，EAGLE-3 现在就是推测解码这一档的工程上限；如果你要的是大 batch 吞吐，EAGLE-1 的实现在 batch 24 附近就已经开始亏，而 EAGLE-3 论文自己在 H100 + SGLang 上报到 batch 64 仍有 1.38 倍——这一步是三代里唯一真正改变"能不能上生产"结论的变化。
 
 ## 目录
 
-- [1. 项目定位与最新状态](#1-项目定位与最新状态)
-  - [1.1 是什么](#11-是什么)
-  - [1.2 关键数据（截至 2026-06）](#12-关键数据截至-2026-06)
-  - [1.3 三代演进一览](#13-三代演进一览)
-- [2. 推测解码基础](#2-推测解码基础)
-  - [2.1 两阶段范式](#21-两阶段范式)
-  - [2.2 为什么能"无损失"](#22-为什么能无损失)
-  - [2.3 接受率与加速比的关系](#23-接受率与加速比的关系)
-- [3. EAGLE-1：特征外推（Feature Extrapolation）](#3-eagle-1特征外推feature-extrapolation)
-  - [3.1 核心观察](#31-核心观察)
-  - [3.2 训练目标](#32-训练目标)
-  - [3.3 与 Medusa 的本质差异](#33-与-medusa-的本质差异)
-- [4. EAGLE-2：动态草稿树（Dynamic Draft Tree）](#4-eagle-2动态草稿树dynamic-draft-tree)
-  - [4.1 静态树 vs 动态树](#41-静态树-vs-动态树)
-  - [4.2 接受率近似](#42-接受率近似)
-  - [4.3 树注意力实现](#43-树注意力实现)
-- [5. EAGLE-3：训练时测试与多层特征融合](#5-eagle-3训练时测试与多层特征融合)
-  - [5.1 训练时测试（Training-Time Testing）](#51-训练时测试training-time-testing)
-  - [5.2 低/中/高层特征融合](#52-低中层特征融合)
-  - [5.3 速度曲线](#53-速度曲线)
-- [6. 任务如何流过系统：一次 EAGLE-3 解码](#6-任务如何流过系统一次-eagle-3-解码)
-- [7. 与 Medusa、Lookahead 的设计取舍](#7-与-medusalookahead-的设计取舍)
-  - [7.1 能力矩阵对比](#71-能力矩阵对比)
-  - [7.2 速度数字与测量条件](#72-速度数字与测量条件)
-- [8. 安装与推理](#8-安装与推理)
-  - [8.1 环境与权重](#81-环境与权重)
-  - [8.2 Web UI 推理](#82-web-ui-推理)
-  - [8.3 代码内推理（eagenerate）](#83-代码内推理eagenerate)
-  - [8.4 训练 EAGLE-3](#84-训练-eagle-3)
-- [9. 主流框架集成状态](#9-主流框架集成状态)
-- [10. 适用边界与已知限制](#10-适用边界与已知限制)
-  - [10.1 适合的场景](#101-适合的场景)
-  - [10.2 不适合的场景](#102-不适合的场景)
-  - [10.3 训练 / 工程已知坑](#103-训练--工程已知坑)
-- [11. 采用顺序与决策建议](#11-采用顺序与决策建议)
-- [12. 常见问题与排查](#12-常见问题与排查)
-- [13. 延伸阅读](#13-延伸阅读)
+- [先给判断](#先给判断)
+- [三代之间到底换了什么](#三代之间到底换了什么)
+- [加速比、平均接受长度与接受率：三个指标各说一件事](#加速比平均接受长度与接受率三个指标各说一件事)
+- [无损性的来源与它的证明位置](#无损性的来源与它的证明位置)
+- [EAGLE-1：把自回归从词元层挪到特征层](#eagle-1把自回归从词元层挪到特征层)
+- [EAGLE-2：草稿树的 Expansion 与 Reranking](#eagle-2草稿树的-expansion-与-reranking)
+- [EAGLE-3：取消特征约束、多层融合与推理侧扩展律](#eagle-3取消特征约束多层融合与推理侧扩展律)
+- [一次 eagenerate 调用的完整流转](#一次-eagenerate-调用的完整流转)
+- [一个可复算的例子：加速比和接受长度之间差的是什么](#一个可复算的例子加速比和接受长度之间差的是什么)
+- [数字该怎么读：README、论文、Spec-Bench 三套口径](#数字该怎么读readme论文spec-bench-三套口径)
+- [从零跑通：安装、推理、训练、评测](#从零跑通安装推理训练评测)
+- [框架集成：仓库列了 15 个入口](#框架集成仓库列了-15-个入口)
+- [什么时候不值得上](#什么时候不值得上)
+- [采用顺序](#采用顺序)
+- [常见故障与排查](#常见故障与排查)
+- [五个自测题](#五个自测题)
+- [下一步读哪份代码](#下一步读哪份代码)
+- [参考文献](#参考文献)
 
-## 1. 项目定位与最新状态
+## 三代之间到底换了什么
 
-### 1.1 是什么
+[SafeAILab/EAGLE](https://github.com/SafeAILab/EAGLE) 是 EAGLE 系列的官方实现，作者为 Yuhui Li、Fangyun Wei、Chao Zhang、Hongyang Zhang，单位横跨北京大学、微软研究院、滑铁卢大学与 Vector Institute。GitHub 上仓库的描述写得很直接："Official Implementation of EAGLE-1 (ICML'24), EAGLE-2 (EMNLP'24), and EAGLE-3 (NeurIPS'25)"。
 
-EAGLE（Extrapolation Algorithm for Greater Language-model Efficiency）是 [SafeAILab/EAGLE](https://github.com/SafeAILab/EAGLE) 维护的推测解码（speculative decoding）官方实现，由 Yuhui Li、Fangyun Wei、Chao Zhang、Hongyang Zhang 主导。它经历了三代演进：
+| 代次 | 发表 | 换了什么 | 没换什么 |
+|------|------|----------|----------|
+| EAGLE-1 | ICML 2024（2024-01-26 提交 arXiv） | 草稿模型不再预测词元，改为自回归预测目标模型次顶层特征；输入拼一路提前一步的真实词元序列 | 单层 Transformer 架构的解码器 + 复用目标模型的语言模型头（LM head）；静态草稿树 |
+| EAGLE-2 | EMNLP 2024（2024-06-24） | 草稿树从"每层固定 top-k"改成按累计置信度选点，并加一次全局重排 | 草稿模型结构、训练目标完全不动，权重与 EAGLE-1 通用 |
+| EAGLE-3 | NeurIPS 2025（2025-03-03 提交 arXiv） | 取消特征回归约束、直接预测词元；特征输入从次顶层换成低/中/高三层融合；训练数据扩到约 8 倍 | 仍是单层解码器量级的草稿头，仍是 draft-verify 两阶段 |
 
-| 版本 | 会议 / 时间 | 核心机制 |
-|------|-------------|----------|
-| EAGLE-1 | ICML 2024 | 次顶层（second-top-layer）特征外推 + 自回归头 |
-| EAGLE-2 | EMNLP 2024 | 动态草稿树（Dynamic Draft Tree）——用 draft 置信度近似接受率，动态调整树结构 |
-| EAGLE-3 | NeurIPS 2025 | 训练时测试（Training-Time Testing）+ 低/中/高层语义特征融合 |
+README 对三代关系的原话是：EAGLE-3 "removes the feature prediction constraint in EAGLE and simulates this process during training using training-time testing"，并且"Considering that top-layer features are limited to next-token prediction, EAGLE-3 replaces them with a fusion of low-, mid-, and high-level semantic features"。
 
-仓库默认 `main` 分支是 EAGLE-3 + EAGLE-2 实现；EAGLE-1 在 `v1` 分支上保留。当前 v3.0.0（2025-09-18 随 NeurIPS'25 acceptance 发布）。
+仓库当前的分支布局也值得一开始说清楚，因为它决定了你能不能跑对代码。README 里用一整行标题写着："The default main branch is the implementation of EAGLE-3 and EAGLE-2. For using EAGLE-1, please switch to the v1 branch." 但 `main` 上并没有把 EAGLE-1 删掉——`eagle/model/cnets1.py` 仍在，且被 `ea_model.py` 以 `from .cnets1 import Model as Model1` 引入，专门给非 EAGLE-3 权重用。所以准确的说法是：`main` 同时装着两条推理路径，靠 `use_eagle3` 开关分派；`v1` 分支保留的是 EAGLE-1 那一代的完整训练与评测流程。
 
-### 1.2 关键数据（截至 2026-06）
-
-| 指标 | 数值 |
-|------|------|
-| Stars | 2,417 ⭐ |
-| Forks | 287 |
-| 主语言 | Python |
-| License | Apache 2.0 |
-| 最近一次提交 | 2026-02-20（添加 GLM-4.7-Flash EAGLE-3 社区模型） |
-| 已被合并 | vLLM、SGLang、TensorRT-LLM、NeMo、MLC-LLM、PaddleNLP 等 15+ 框架 |
-| 第三方验证 | Spec-Bench leaderboard 评为当时"最快的 speculative 方法" |
-| 官方 EAGLE-3 权重数 | 6 个（Vicuna-13B、LLaMA-3.1-8B、LLaMA-3.3-70B、DeepSeek-R1-Distill-LLaMA-8B 等） |
-| 社区 EAGLE-3 权重数 | 15+（LLaMA-4、MiniCPM4、Qwen3 全系、GLM-4.7-Flash、GPT-OSS-120B 等） |
-
-数据来源：GitHub API `repos/SafeAILab/EAGLE`、README、EAGLE-3 Weights 表，访问于 2026-06-28。
-
-### 1.3 三代演进一览
-
-```mermaid
-graph LR
-  A["EAGLE-1<br/>(ICML'24)<br/>特征外推"] --> B["EAGLE-2<br/>(EMNLP'24)<br/>动态草稿树"]
-  B --> C["EAGLE-3<br/>(NeurIPS'25)<br/>训练时测试 + 多层特征"]
-  style A fill:#f5f5dc
-  style B fill:#d4e8d4
-  style C fill:#cce0f5
-```
-
-## 2. 推测解码基础
-
-### 2.1 两阶段范式
-
-推测解码把一次完整自回归解码拆成两阶段：
-
-1. **Draft 阶段**：用一个小而快的 draft 模型（或 head）一次性生成 K 个候选 token。
-2. **Verify 阶段**：用原始大模型并行验证这 K 个 token，从左到右接受最长公共前缀；遇到第一个不一致的 token 时，根据 rejection sampling（拒绝采样）决定是否替换。
+一个容易踩的版本坑：仓库**既没有 GitHub Release，也没有任何 git tag**——两个页面打开都是空的。README 顶部那个 "Version-v3.0.0" 徽章是张静态 shield 图，不对应任何可 checkout 的制品。要锁定代码版本，只能用提交（commit）的 SHA；README 的 Update 段给出的时间线才是可核对的：
 
 ```text
-Draft:    [t1, t2, t3, t4, t5]      ← draft 模型 1 次前向
-Verify:   [✓,  ✓,  ✓,  ✗,  —]      ← 大模型 1 次前向
-            1   2   3   4           实际生成 4 个 token（含一个拒绝采样后的替换）
+2023.12.8   EAGLE v1.0 is released
+2024.1.17   支持 Mixtral-8x7B-Instruct
+2024.2.25   被 Spec-Bench 第三方评测评为当时最快的推测解码方法
+2024.6.27   EAGLE-2 发布
+2024.8.8    支持 Qwen-2
+2025.3.19   EAGLE-3 发布
+2025.7.23   强烈推荐用 SpecForge 做 EAGLE-3 开箱即用训练
+2025.9.18   EAGLE-3 被 NeurIPS'25 接收
 ```
 
-加速比 = 实际生成 token 数 / 大模型前向次数。
+最后一行是"接收"，不是"发布"。把 2025-09-18 当成 v3.0.0 的发布日期会找不到对应制品——EAGLE-3 的代码与权重早在 2025-03-19 就进了仓库。
 
-### 2.2 为什么能"无损失"
+## 加速比、平均接受长度与接受率：三个指标各说一件事
 
-Leviathan et al. (2023) 的定理 1 证明：当 draft 模型与大模型的输出分布相同时，使用拒绝采样后，输出分布与原分布严格一致。EAGLE 的所有版本都满足这个条件——所以理论上加速后的输出与 vanilla decoding **逐 token 概率分布一致**，不是"近似"，是"严格相等"。
+EAGLE 论文自己不混用指标，三篇论文对度量的定义高度一致，值得原样搬过来用：
 
-这也是为什么仓库强调 "**provably maintaining the consistency with vanilla decoding in the distribution of generated texts**"。
+| 指标 | 论文定义 | 它随什么变 |
+|------|----------|------------|
+| Walltime speedup ratio | 相对 vanilla 自回归解码的实测加速比 | 换 GPU、换精度、换 batch、换实现都会变 |
+| Average acceptance length τ | 平均每个 draft-verify 周期产出的词元数（EAGLE-1 的措辞是"每次目标模型前向被接受的词元数"） | 随草稿准确率、任务分布，以及草稿预算怎么分配而变；EAGLE-2 论文明确说它"独立于硬件与运行环境" |
+| Acceptance rate α | 起草阶段被接受词元数与生成词元数之比 | EAGLE-1 论文自己补了一句：树形草稿每个位置采样多个候选，这个指标"less applicable" |
 
-### 2.3 接受率与加速比的关系
+这张表是读后面所有数字的前提。τ 是可跨机器比较的那一个；加速比不是。EAGLE-3 论文另外定义了 `n-α`，表示输入里含 `n` 个草稿模型自预测值时的接受比例——这是为了把"自己的误差累积了多少"这件事单独量化，和表里按"生成/接受"计数的 α 不是一回事。
 
-经验公式（粗略）：
+## 无损性的来源与它的证明位置
+
+推测解码之所以敢叫"无损"，靠的是拒绝采样：草稿词元 `x_q` 以 `min(1, p(x_q)/q(x_q))` 的概率接受；一旦拒绝，就从修正分布 `norm(max(0, p - q))` 里重新采一个。这样每一步产出的边际分布严格等于目标模型的分布，多出来的开销只是时间。
+
+关于这条性质的出处，EAGLE-3 论文给的位置很具体："Appendix A.1 of Leviathan et al. 2023 proves that speculative sampling is consistent with the distribution of vanilla autoregressive decoding." 引用时按这个位置指到附录，比转述成"某定理"更可核对。
+
+需要把边界说清：无损性属于**验证规则**，不属于草稿模型质量。草稿再差也只会拖慢速度，不会改变输出分布——这也是 EAGLE-1 论文里那句略带傲慢的话的依据："evaluating the quality of EAGLE's generated results is both unnecessary and meaningless"。真正会破坏无损的是放宽接受条件：EAGLE-3 论文 §4 的 Metrics 段点名 Medusa "relax acceptance conditions under non-greedy settings, which do not guarantee lossless acceleration. Therefore, we do not compare EAGLE-3 with these methods when temperature=1"；EAGLE-1 论文的 Figure 2 图注交代了另一侧——"Lookahead is confined to greedy decoding, and the non-greedy generation of Medusa does not guarantee lossless performance."
+
+这条区分对选型有两个方向的后果。一是**跨方法的无损性不等价**：拿 EAGLE 和 Medusa 在非贪心下比加速比，两篇 EAGLE 论文都因此只在 temperature=0 做这组对比。二是**严格无损不等于不掉速**：温度升高后目标分布变平、采样随机性上升，接受率随之下降（这一步是标准推测解码的通用推理，论文未单列数字）。EAGLE-3 论文 Table 1 里 Vicuna-13B 的 EAGLE-3 从 temperature=0 的 5.58x（五数据集平均 5.51x）降到 temperature=1 的 4.57x（平均 4.65x），τ 从 6.65 降到 5.42；同一张表里 EAGLE-1 是 3.07x → 2.32x，降幅更陡。
+
+## EAGLE-1：把自回归从词元层挪到特征层
+
+EAGLE-1 的论文标题就是它的论点：*Speculative Sampling Requires Rethinking Feature Uncertainty*。摘要里给了两条观察，一是"autoregression at the feature (second-to-top-layer) level is more straightforward than at the token level"，二是这种特征层自回归本身被"the inherent uncertainty in feature level autoregression"卡住。第二条观察是方法的真正来源。
+
+为什么在特征层做自回归更容易？词元层预测要重新决定"下一个字是什么"，是一次跨整个词表的分类；而目标模型已经算好的次顶层隐藏状态（hidden state）里，上下文信息是现成的，草稿头只需要外推一步。代价是隐藏状态是高维连续量，没法像词元那样"采样一个新值"注入下一步——误差会一路漂下去。这就是 feature uncertainty。
+
+EAGLE-1 的解法是：**把真实序列提前一步的词元喂进草稿头**。摘要原话是"By incorporating a token sequence advanced by one time step, EAGLE effectively resolves the uncertainty"。直觉上，预测第 t+1 步的隐藏状态时，第 t+1 步的词元已经把"上一个字定成了什么"这条最强的信息递给了草稿头，漂移被锚住。
+
+这条推理在代码里能一行对上。`eagle/model/cnets1.py` 中 `Model.forward` 的第一步是：
+
+```python
+inputs_embeds = self.embed_tokens(input_ids)
+hidden_states = self.fc(torch.cat((inputs_embeds, hidden_states), dim=-1))
+```
+
+`self.fc` 的构造是 `nn.Linear(2 * config.hidden_size, config.hidden_size, bias=bias)`——输入维度恰好是"词元嵌入 + 隐藏状态"两份。压缩之后送进一个解码器层，`self.layers = nn.ModuleList([LlamaDecoderLayer(config, index) for index in range(config.num_hidden_layers)])`，层数由配置决定：仓库自带的 `eagle/train/vicuna_13B_config.json` 与 `eagle/traineagle3/config.json` 都把 `num_hidden_layers` 写成 1。EAGLE-1 论文对同一个结构的表述是："The method adds only a lightweight plug-in (a single transformer decoder layer) to the LLM"。
+
+还有一点常被二手资料写错：**EAGLE-1 的草稿头没有自己的语言模型头**。`cnets1.py` 的 `Model` 类里根本没有 `lm_head` 这个子模块，草稿头输出的隐藏状态直接借用目标模型的 LM head 得到词表分布。`ea_model.py` 只在草稿层与 LM head 不在同一张卡时才做兜底：`self.ea_layer.headweight = base_model.lm_head.weight.clone().to(device)`。
+
+### 训练目标不是 MSE
+
+EAGLE-1 用两个损失联合训练。回归项针对特征，原文是"Predicting the next feature constitutes a regression task, for which we employ **Smooth L1 loss**"；分类项针对最终目的，用交叉熵对齐目标模型 LM head 的分布。两者相加：
 
 ```text
-加速比 ≈ (1 - α^K) / (1 - α)
+L = L_reg + w_cls * L_cls
 ```
 
-其中 α 是单 token 接受率，K 是 draft 长度。α 越高（draft 越准）、K 越大（draft 越长），加速比越高。EAGLE-1 的 α 比 Medusa 高（详见 §3.3），所以同样 K 下能拿到更高加速比。
+论文给了 0.1 这个取值的理由："Typically, the classification loss is an order of magnitude larger than the regression loss in numerical terms. Consequently, we set w_cls to 0.1." 0.1 不是调参偏好，而是把两项拉回同一量级。
 
-## 3. EAGLE-1：特征外推（Feature Extrapolation）
+训练配置的原文在实验节：固定目标模型权重，在 ShareGPT 上取 **68,000 段对话**，学习率 3e-5，AdamW 且 β 取 (0.9, 0.95)，梯度裁剪 0.5。成本描述出现在引言：对 LLaMA2-Chat 70B，"EAGLE trains a decoder layer with fewer than 1B parameters using no more than 70k dialogues from the ShareGPT dataset. The training is completed in 1-2 days on 4x A100 (40G) GPUs"，而 7B/13B/33B 甚至可以压在一台 RTX 3090 节点上，同样 1-2 天。README 的口径与之一致："trainable (within 1-2 days) and testable on 8x RTX 3090 GPUs"。
 
-### 3.1 核心观察
+EAGLE-1 论文用一组消融回答了一个实际问题：把 ShareGPT 固定问答对与"用目标模型重新生成回答"两种训练集对比，LLaMA2-Chat 7B 上前者拿到 2.78x 加速、τ=3.62，后者只是"marginally improves performance"。论文的结论是 EAGLE 对训练数据不敏感，所以宁可固定数据集省开销。这个性质到 EAGLE-3 才被反转——见后文扩展律一节。
 
-EAGLE 的核心观察来自论文标题：**"Speculative Sampling Requires Rethinking Feature Uncertainty"**。
-
-作者发现：LLM 最后一层的 hidden state（隐藏状态）已经非常"挑剔"——它只服务于 next-token prediction（下一个词预测）这一单一任务，信息高度专一化。而倒数第二层（second-top-layer）的 hidden state 反而保留了更通用的语义信息，更适合作为"下一时刻 hidden state"的预测目标。
-
-直觉：最后一层 = "已经决定下一个 token 是什么"；倒数第二层 = "还在思考下一个 token 是什么"。后者更容易被外推。
-
-### 3.2 训练目标
-
-EAGLE 的 draft 模型 `Model1`（`cnets1.py`）：
-
-```text
-输入：第 t 步的 hidden state（来自大模型第二顶层）+ 第 t+1 步的真实 token embedding
-输出：第 t+1 步的第二顶层 hidden state 预测
-```
-
-训练时用 MSE loss 把 draft 输出和大模型真实的下一时刻 hidden state 对齐；推理时把 draft 输出再送进一个小型的 LM head（语言模型头）得到 token 概率。整个 draft 模型参数量极小（Vicuna-13B 配 0.37B 参数，约为 base 模型的 3%）。
-
-### 3.3 与 Medusa 的本质差异
+### 与 Medusa 的分野到底在哪
 
 | 维度 | EAGLE-1 | Medusa |
 |------|---------|--------|
-| Draft 来源 | 自回归 head（用上一时刻 draft 输出当下一时刻输入） | 多头并行 head（每个 head 独立预测 K 个 token） |
-| 单步操作 | 1 次 draft 前向生成 1 个 token | 1 次 draft 前向生成 K 个 token |
-| 累积误差 | 较小（用真实 hidden state 作 anchor） | 较大（独立 head 之间无序约束） |
-| 训练数据需求 | ~60K 样本 | ~100K+ 样本 |
-| 1.6x faster than Medusa (13B) | ✅ | — |
+| 草稿来源 | 单个自回归解码器层，用上一步草稿输出继续外推特征 | 一组并行 MLP 头，每个头直接预测第 k 个位置的词元 |
+| 复用目标模型什么 | 紧邻 LM head 之前的那层特征，并借用目标模型的 LM head 出词表分布 | 同样是紧邻 LM head 之前的特征，但另训自己的头 |
+| 同一位置的候选 | 多路并行采样成树 | 每个头各自 top-k 成树 |
+| 非贪心无损 | 是 | 否（放宽接受条件） |
+| Vicuna-13B 草稿参数量 | 0.37B，约为基座 2.8% | 未在 EAGLE 材料中给出 |
 
-EAGLE-1 用自回归特性让每个 draft token 都能从前一个 draft token 学到上下文；Medusa 的多头是独立的，所以同一时刻的 K 个预测互相不约束。EAGLE-1 在长 draft（K=5–8）场景下明显领先。
+两篇 EAGLE 论文都把 Medusa 归为"复用目标模型特征"的一派（EAGLE-3 论文原话："EAGLE and speculative sampling methods such as Medusa reuse the top-layer features of the target model, specifically the features immediately before the LM head"），所以真正的分野不在取哪一层，而在**草稿是外推出来还是并行猜出来**。
 
-## 4. EAGLE-2：动态草稿树（Dynamic Draft Tree）
+README 报的三组相对数字是：13B 上比 vanilla 快 3 倍、比 Lookahead 快 2 倍、比 Medusa 快 1.6 倍。gpt-fast 那条不来自 README——README 只写 "achieving 2x speedup on gpt-fast"，具体数字在 EAGLE-1 论文引言："with gpt-fast, EAGLE accelerates LLaMA2-Chat 7B decoding to 160.4 tokens/s on a single RTX 3090 GPU"。
 
-### 4.1 静态树 vs 动态树
+参数量这一行是 EAGLE 系列成本的来源。README 的 EAGLE 权重表逐行标了参数量：Vicuna-7B 0.24B、Vicuna-13B 0.37B、Vicuna-33B 0.56B、LLaMA2-Chat 7B/13B/70B 分别 0.24B/0.37B/0.99B、LLaMA3-Instruct 8B/70B 分别 0.25B/0.99B、Qwen2-7B/72B-Instruct 分别 0.26B/1.05B。按稠密基座的标称规模折算，落在约 1.4%–3.7%，而不是常见转述的"3%–5%"。Mixtral-8x7B 的 0.28B 是例外——它的基座是混合专家模型（Mixture of Experts, MoE），拿总参数或激活参数去除都会得出不同比例，不适合并进同一个百分比区间。
 
-EAGLE-1 用的是固定树（static tree）：每一层扩展 top-k 候选，结构不变。EAGLE-2 把"树怎么长"这件事变成**由 draft 模型自己决定**。
+## EAGLE-2：草稿树的 Expansion 与 Reranking
+
+EAGLE-2 不动草稿模型，只动树。摘要把动机讲得很清楚：主流方法用静态草稿树，"implicitly assuming that the acceptance rate of draft tokens depends only on their position"，而作者发现接受率其实是**上下文相关**的。论文点名的静态做法包括 EAGLE 与 Medusa："at the i-th step of the draft phase, k candidates are added, with k being fixed"；Sequoia 则被指为"explicitly assumes that the acceptance rate of a draft token depends only on its position in the tree"。
+
+### 一个可核对的经验性质
+
+支撑动态树的是 EAGLE-2 论文 §3.2 的一条观察，措辞是校准而非定理："we find that EAGLE is well-calibrated: the confidence score (probability) of the draft model is a good approximation of the acceptance rate of draft tokens"。
+
+这条性质之所以够用，是因为树形草稿里一个词元被拒会连带丢掉它后面的整条分支——EAGLE-2 论文的表述是"rejecting a draft token leads to discarding all subsequent tokens; a token is ultimately accepted only if all its prefixes are accepted"。于是一个节点真正被接受要求根到它的路径全部通过，论文就把节点价值定义成路径上的连乘，再用草稿置信度近似：
 
 ```text
-Static tree (EAGLE-1):
-  root
-   ├─ A (top-1)
-   ├─ B (top-2)
-   └─ C (top-3)
-       ├─ AA
-       ├─ AB
-       └─ AC
-
-Dynamic tree (EAGLE-2):
-  root
-   ├─ A (high confidence → 展开深度 4)
-   │   ├─ AA
-   │   ├─ AB
-   │   └─ AC
-   └─ B (low confidence → 展开深度 1)
-       └─ BX
+V_i = ∏ p_j  (j 取 root 到 t_i 路径上的节点)
+    ≈ ∏ c_j  (c_j 是草稿模型给出的置信度)
 ```
 
-直觉：draft 模型对哪个分支更确定，就把更多预算分配给哪个分支——就像人在不确定的地方多思考几次。
+论文没有把它写成接受率上界，也没有这个必要——近似误差小就足够指导预算分配。
 
-### 4.2 接受率近似
+### 两阶段，而不是"按置信度决定深度"
 
-论文核心定理：当 draft 模型与大模型共享同一词表（vocab）且温度为 0（greedy）时，draft 模型的 top-1 置信度近似等于该 token 被大模型接受的上界。当使用非 greedy 时，可以用 draft 概率和大模型概率的比例来估计接受率。
+对 EAGLE-2 最常见的误述是画一棵"高置信分支深、低置信分支浅"的可变深度树。真实做法分两步，深度和分支数是固定的，变的是**每一层谁有资格继续长**以及**最后送去验证的是哪些节点**。
 
-这条性质让 EAGLE-2 在 verify 之前就能"预先决定"在哪里加深树——不需要等 verify 反馈。
+```text
+Expansion 阶段（§4.1）
+  第 0 层：当前已接受序列末尾
+  每往下一层：只对上一层里 V_i 最高的 k 个节点做草稿前向
+  树注意力让这一批节点一次前向全部算完
+        │
+        ▼
+Reranking 阶段（§4.2）
+  在整棵树的所有节点上按 V_i 重新排序
+  取全局 top-N 送去验证 —— 未展开的浅层节点可能胜过已展开的深层节点
+```
 
-### 4.3 树注意力实现
+论文给出的理由是：接受率落在 0 到 1 之间，所以越深的节点 V_i 天然越低，"Some shallow nodes that were not expanded may have higher values than the deeper expanded nodes"，因此不能直接把 Expansion 选出的那批节点当作验证输入。
 
-`init_tree()` 在初始化时构建一个树状 attention mask（注意力掩码），让一次前向里所有候选路径并行被验证：
+树注意力不是 EAGLE-2 的发明，它是让这套预算分配策略在成本上可行的前提。EAGLE-2 论文的说法是："Thanks to tree attention, the draft model can simultaneously input all tokens from the current layer and compute the probabilities for the next tokens in a single forward pass."
+
+代码侧的落点在 `eagle/model/cnets.py`。`Model.__init__` 的签名把预算参数全部显式暴露出来：
 
 ```python
-self.ea_layer.init_tree()
+class Model(nn.Module):
+    def __init__(self, config, load_emb=False, path=None, bias=True,
+                 total_tokens=63, depth=5, top_k=8, threshold=1.0):
 ```
 
-树注意力的实现位于 `cnets.py` 中的 `attention(...)` 函数，通过构造形如三角 + 树的混合 mask 实现。代码里大量 `# [MODIFIED]` 标记说明推理时复用了 KV cache（键值缓存）——这是从 `modeling_llama_kv.py` 派生来的关键优化。
+`init_tree()` 干的事是把初始树掩码建成单位阵，也就是同一层的 k 个候选彼此互不可见：
 
-## 5. EAGLE-3：训练时测试与多层特征融合
-
-### 5.1 训练时测试（Training-Time Testing）
-
-EAGLE-2 仍然假设"draft 模型预测的是第二顶层特征"。EAGLE-3 打破这个假设：
-
-- **训练时**：在每个训练 step，随机采样一个"测试 step"——丢掉 draft 模型预测的特征，改用大模型真实的下一时刻特征继续自回归。
-- **效果**：draft 模型被迫学习"当我的预测错时如何继续"——本质上是训练时模拟了推理时的误差累积。
-
-这就是 "Training-Time Testing"（训练时测试）的命名由来。
-
-### 5.2 低/中/高层特征融合
-
-EAGLE-3 还有一个独立贡献：hidden state 的来源从"倒数第二层"扩展到**低/中/高多层融合**。
-
-直觉：
-
-- 低层（接近 input）= 词法、句法
-- 中层 = 局部语义
-- 高层（接近 output）= 全局语义
-
-只预测高层（EAGLE-1/2）丢失了细粒度信息；融合多层后 draft 的语义预测更准。
-
-代码层面，`cnets.py` 的 `Model` 类（与 `Model1` 对应 EAGLE-1）通过 `load_emb=True` 加载 base 模型的 embedding，并在 `forward()` 里 concat 多层 hidden state 后再喂给 LM head。
-
-### 5.3 速度曲线
-
-README 给出 Vicuna 13B / 2×RTX 3090 / fp16 下的对比（与 vanilla decoding 的倍数）：
-
-```text
-EAGLE-1:    3x
-EAGLE-2:    4x
-EAGLE-3:    5.6x
+```python
+def init_tree(self):
+    self.tree_mask_init = torch.eye(self.top_k, device=self.embed_tokens.weight.device)[None, None]
+    self.position_ids = torch.zeros(self.top_k, device=self.embed_tokens.weight.device, dtype=torch.long)
 ```
 
-同时 EAGLE-3 是 1.8x faster than EAGLE-1，1.4x faster than EAGLE-2。**注意：这些数字仅适用于特定模型、硬件与 batch 条件**，不同模型差异较大，下文 7.2 会展开。
+三个默认值需要和论文实验附录对齐着读。EAGLE-2 论文附录 A 给的实际配置是：7B（8B）、13B、70B 的草稿词元总数分别设为 **60、50、48**，草稿树深度 **6**，Expansion 阶段每层选 **10** 个节点。`total_tokens=63, depth=5, top_k=8` 是代码默认值，不等于论文用值；`self.total_tokens = total_tokens - 1` 这一行减法在两个版本的 `Model` 里都存在，配置时容易忽略。
 
-## 6. 任务如何流过系统：一次 EAGLE-3 解码
+## EAGLE-3：取消特征约束、多层融合与推理侧扩展律
+
+EAGLE-3 的论文标题把方法直接写进去了：*Scaling up Inference Acceleration of Large Language Models via **Training-Time Test***。引用这个术语时留意两种写法：论文与 BibTeX 用 Training-Time Test，README 的表述句里写作 "using training-time testing"，指的是同一件事，但作为方法名以论文标题的形式为准。
+
+### 它要解决的问题是"加数据不涨点"
+
+论文的问题陈述很具体：社区普遍在靠扩数据提升模型能力而不增加推理成本，但"we observe that scaling up data provides limited improvements for EAGLE"。作者把原因归到特征预测约束本身——要求草稿头去回归一个连续高维目标，等于给它加了一道限制表达能力的额外约束，数据再多也用不上。
+
+拆开约束之后出现了新麻烦。论文把这一步的失败写了进来：去掉特征约束、扩数据，第一个草稿词元的接受率确实明显改善，但草稿头第 1 步的输出离真值很远，导致后续输入序列整体偏离。训练时按真值喂、推理时吃自己的输出，这个错位就是训练—推理不一致。
+
+### training-time test 与多层特征融合
+
+对应的两项改动，论文措辞是"abandons feature prediction in favor of direct token prediction and replaces reliance on top-layer features with multi-layer feature fusion via a technique named training-time test"。
+
+- **training-time test**：训练阶段就模拟多步草稿过程，让草稿头在训练时吃到自己前几步的预测结果，从而学会在带误差的输入上继续往下写。
+- **低/中/高层特征融合**：不再只用紧邻 LM head 之前的那一层。README 的说法是"Considering that top-layer features are limited to next-token prediction, EAGLE-3 replaces them with a fusion of low-, mid-, and high-level semantic features"。论文给的动机更精确：满秩的 LM head 之下，顶层特征与下一个词元的 logits 一一对应，因此"predicting the next-next token based solely on top-layer features—which are inherently limited to the next token—poses a significant challenge"。
+
+两项也不是并列关系，论文写的是因果：正因为训练时移除了特征预测损失，中间层的特征才变得可用——"the training-time test technique described above enables the use of features from intermediate layers instead of relying solely on the top layer, as the feature prediction loss has been removed during training"。先解约束，才能换输入。
+
+两项各自的贡献量，论文用消融表（Table 2，temperature=0）给齐了。目标模型 LLaMA-Instruct 3.1 8B：
+
+| 方法 | MT-bench 加速 / τ | GSM8K 加速 / τ |
+|------|-------------------|----------------|
+| EAGLE-2 | 3.16x / 4.05 | 3.39x / 4.24 |
+| + 去特征约束 | 3.82x / 5.37 | 3.77x / 5.22 |
+| + 多层融合（EAGLE-3） | 4.40x / 6.13 | 4.48x / 6.23 |
+
+第三项才是 EAGLE-3 的完整形态：MT-bench 上比 EAGLE-2 高约 39%。
+
+### 代码里能直接读到的三处改动
+
+融合层的数量不是一个说法，是一个矩阵形状。`eagle/model/cnets.py` 的 `Model.__init__` 里：
+
+```python
+if hasattr(config, "target_hidden_size"):
+    self.fc = nn.Linear(config.target_hidden_size * 3, self.hidden_size, bias=False)
+else:
+    self.fc = nn.Linear(config.hidden_size * 3, self.hidden_size, bias=False)
+```
+
+乘 3 就是低/中/高三层。往下一步，`LlamaDecoderLayeremb.forward` 把嵌入与特征各自归一化后拼在一起：
+
+```python
+hidden_states = self.hidden_norm(hidden_states)
+input_emb = self.input_layernorm(input_emb)
+hidden_states = torch.cat((input_emb, hidden_states), dim=-1)
+```
+
+所以这个类里被注释掉的那行 `self.fc = nn.Linear(config.hidden_size * 2, config.hidden_size)` 才有意义——拼接后的 2 倍维度直接喂给注意力投影，`LlamaAttention` 里 `q_proj`/`k_proj`/`v_proj` 的输入维度都写成 `self.hidden_size * 2`。草稿头只有一层：`self.midlayer = LlamaDecoderLayeremb(config)`。
+
+第三处改动决定了草稿头的输出形状：**EAGLE-3 的草稿头有自己的、词表规模独立于目标模型的语言模型头**。
+
+```python
+self.lm_head = nn.Linear(config.hidden_size, config.draft_vocab_size, bias=False)
+...
+d2t = torch.zeros((config.draft_vocab_size), dtype=torch.long)
+t2d = torch.zeros((config.vocab_size), dtype=torch.bool)
+```
+
+`draft_vocab_size` 与 `vocab_size` 不等时才需要 `d2t` 和 `t2d`。从形状和用法看，`d2t` 是一张按草稿词表索引、给出目标词表下标的映射表，`t2d` 是反方向的布尔掩码；`ea_model.py` 里有一条对应的清理逻辑：`if self.use_eagle3 and config.vocab_size == config.draft_vocab_size: del self.ea_layer.d2t, self.ea_layer.t2d`。推理时草稿头的输出靠 `input_ids = topk_index + self.d2t[topk_index]` 落回目标词表。仓库自带的示例配置把这套机制的具体尺度写死了：`eagle/traineagle3/config.json` 里 `vocab_size` 是 128256，`draft_vocab_size` 是 32000——草稿头只在自己那 3.2 万个候选里排序，再用一张表换回目标词表下标。
+
+这一处是 EAGLE-1 与 EAGLE-3 在结构上真正的分界：前者借用目标模型的 LM head，后者自带一个小词表头。论文没有把扩展律的成立归因于这个裁剪词表，所以这里只记为架构差异，不当成因果结论。
+
+### 扩展律：这一代真正的新东西
+
+README 把 EAGLE-3 讲成速度增量，论文把 EAGLE-3 讲成一个可外推的关系："increasing the amount of training data for the draft model leads to a proportional increase in the speedup ratio of EAGLE-3. This scaling behavior was not observed in the original EAGLE architecture." 论文的 Figure 1 用 LLaMA-Instruct 3.1 8B 在 MT-bench 上画这条曲线，横轴是相对 ShareGPT 的数据规模。
+
+数据配置的原文在实现细节附录：AdamW，β=(0.9, 0.95)，梯度裁剪 0.5，学习率 **5e-5**（EAGLE-1 是 3e-5），训练集为 ShareGPT（约 68K 条）与 UltraChat-200K（约 464K 条），并且"**We call the target model to generate responses rather than using a fixed dataset**"。对推理模型 DeepSeek-R1-Distill-LLaMA 8B 额外用了 OpenThoughts-114k-math。
+
+最后一句是方向性变化：EAGLE-1 论证过固定数据集够用、对训练数据不敏感；EAGLE-3 却必须用目标模型自己生成的回答来喂草稿头，才让扩数据换到加速比。论文给的结果是"trained with approximately 8x more data than EAGLE, achieves a 1.4x latency speedup over EAGLE-2 at batch size 1"。
+
+还有一条对硬件规划有用的信息藏在相关工作一节："EAGLE inspired the multi-token prediction technique used in the pre-training of DeepSeek-v3, which in turn inspired new architectural designs in EAGLE-3." EAGLE-3 的架构改动方向，部分来自 DeepSeek-V3 的多词元预测预训练实践。
+
+## 一次 eagenerate 调用的完整流转
+
+把三代机制放回真实调用里看。下面按 `eagle/model/ea_model.py` 的实际路径走一遍，参数取代码默认值。
 
 ```mermaid
 sequenceDiagram
-  participant U as 用户
-  participant EM as EaModel (eagenerate)
-  participant Base as Base LLM (冻结)
-  participant Draft as EAGLE-3 Draft Head
-  participant Tree as 动态草稿树
-  U->>EM: prompt
-  EM->>Base: forward(prompt)
-  Base-->>EM: 第 0 步 hidden states
-  loop 每一步生成 K 个 token
-    EM->>Draft: predict_next_feature(h_t)
-    Draft->>Draft: 多层特征融合 + LM head
-    Draft-->>Tree: top-k 候选 + 置信度
-    Tree->>Tree: 按置信度构建动态树
-    EM->>Base: forward(tree_attn_mask)
-    Base-->>EM: 全部候选 token 的概率
-    EM->>EM: 拒绝采样, 决定接受路径
+  participant App as 调用方
+  participant EM as EaModel.eagenerate
+  participant Draft as ea_layer (Model / Model1)
+  participant Base as base_model (冻结)
+  App->>EM: input_ids, temperature, max_new_tokens
+  EM->>Base: 前向整段 prompt
+  Base-->>EM: 顶层之前的隐藏状态 + KV cache
+  loop 每个 draft-verify 周期
+    EM->>Draft: 隐藏状态 + 提前一步的词元
+    Draft->>Draft: fc 压缩 → midlayer（树注意力）
+    Draft-->>EM: 本层候选词元 + 置信度
+    EM->>EM: Expansion 选 top-k 续长 → Reranking 取全局 top-N
+    EM->>Base: 一次前向并行验证 N 个候选路径
+    Base-->>EM: 各候选位置的 p 分布
+    EM->>EM: 拒绝采样，保留最长通过前缀 + 1 个修正采样词元
   end
-  EM-->>U: 完整输出 (与 vanilla 分布一致)
+  EM-->>App: 生成结果（分布与 vanilla 一致）
 ```
 
-关键点：
+流转里三个点最值得记：
 
-1. Base LLM 全程冻结（frozen），不参与训练。
-2. Draft Head 参数量小（base 模型的 3–5%）。
-3. 树结构每步动态重建，依赖 draft 自己的置信度，不需要 verify 反馈。
+1. 目标模型全程冻结，草稿头是唯一可训练部分。`eagenerate` 的签名里能看出推理侧可调的东西很少——`temperature=0.0, top_p=0.0, top_k=0.0, max_new_tokens=512, max_length=2048, log=False, is_llama3=False`。
+2. 一个周期产出的词元数等于"最长通过前缀 + 那个必定落地的修正采样词元"，所以每周期至少产出 1 个词元。但每周期也要付一次大模型前向加草稿开销，即 1+c 的时间——加速比的下限是 `1/(1+c)`，**可以低于 1**。后面"什么时候不值得上"一节里 EAGLE 的 batch 表就出现了 0.88x、0.71x 这样的实测值。
+3. 树的形状由草稿置信度决定，验证之前就已经定了。这正是 EAGLE-2 相对 EAGLE-1 的全部收益来源。
 
-## 7. 与 Medusa、Lookahead 的设计取舍
+## 一个可复算的例子：加速比和接受长度之间差的是什么
 
-### 7.1 能力矩阵对比
+EAGLE-3 论文 Table 1 报的 Vicuna-13B / temperature=0 / MT-bench：EAGLE-2 是 4.26x、τ=4.83；EAGLE-3 是 5.58x、τ=6.65。这两个数同时给了"周期产出"和"实际墙钟"，可以反解出草稿与验证的相对开销。
 
-| 维度 | EAGLE-3 | Medusa | Lookahead |
-|------|---------|--------|-----------|
-| Draft 来源 | 自回归 head（次顶层特征） | 多头并行 | Jacobi 迭代 |
-| 草稿长度 | 动态 5–10 | 固定 K | 固定 window |
-| 训练成本 | 低（~60K 样本，1–2 天，8×3090） | 中（~100K 样本） | 无（无参数） |
-| 输出分布保证 | 严格一致（理论） | 严格一致 | 近似 |
-| Greedy 加速 | 5.6x（13B） | 1.6x slower than EAGLE-1 | 2x slower than EAGLE-1 |
-| 主流框架集成 | vLLM/SGLang/TRT-LLM/NeMo/MLC 等 15+ | vLLM/TRT-LLM | 较少 |
-| 论文发表 | NeurIPS'25 | NeurIPS'24 | — |
-| 维护活跃度 | 高（2026-02 仍在合并 PR） | 中 | 低 |
+设一个周期里目标模型跑一次前向的耗时为 1，草稿头与额外验证开销合计为 c，那么每周期耗时 1+c、产出 τ 个词元，加速比≈τ/(1+c)。论文数字代进去：
 
-### 7.2 速度数字与测量条件
+| 方法 | 加速比 | τ | 反解出的 c = τ/加速比 − 1 |
+|------|--------|-----|--------------------------|
+| EAGLE-1 | 3.07x | 3.98 | ≈0.30 |
+| EAGLE-2 | 4.26x | 4.83 | ≈0.13 |
+| EAGLE-3 | 5.58x | 6.65 | ≈0.19 |
 
-README 的速度数字都来自 **Vicuna 13B / 2×RTX 3090 / fp16** 单一硬件 + MT-bench 数据集。常见误解需要纠正：
+**这张表是我对公开数字做的算术，不是论文结论**，但它的形状有用：三代之间 τ 涨了 67%，反解开销一直压在 0.1–0.3 区间，说明加速比的增长几乎全部来自接受长度而非省开销。它也解释了为什么同一份权重换个 harness 数字会大变——c 对实现细节敏感，τ 不太敏感。
 
-| 误解 | 事实 |
-|------|------|
-| "EAGLE-3 总能 5.6x 加速" | 仅在该硬件 + 模型组合下成立；换 LLaMA-70B 或 A100 数字会下降 |
-| "EAGLE-3 比 Medusa 快" | 大多数情况下成立；但**短输出**（< 64 tokens）时草稿开销可能反而拖慢 |
-| "EAGLE-3 是无损的" | 理论上严格无损；工程上需关注 KV cache 实现是否有 bug |
-| "训练成本低" | 仅指 draft head；首次跑通 EAGLE-3 训练仍需 ~1–2 天 8×3090 |
+把同一个换算用到第三方榜单上，差距立刻可见。Spec-Bench 在 A100 / Vicuna-13B-v1.3 / 贪心 / FP16 / batch=1 上报 EAGLE-3 总体 3.02x、平均被接受词元数 5.71，反解 c≈0.89，接近论文值的 4.7 倍。两个 c 不是同一套代码、同一套树配置量出来的，所以真正该带走的结论不是"论文夸大了"，而是：**c 才是你的框架需要自己测的那一项。**
 
-## 8. 安装与推理
+## 数字该怎么读：README、论文、Spec-Bench 三套口径
 
-### 8.1 环境与权重
+同一件事在三份材料里有三组数字，混起来就会得出错误判断。
+
+| 来源 | 条件 | Vicuna-13B 上 EAGLE-3 的说法 |
+|------|------|------------------------------|
+| 仓库 README | 2×RTX 3090、fp16、Vicuna 13B（图注未写数据集） | "5.6 faster than vanilla decoding (13B)"、"1.8x faster than EAGLE-1 (13B)" |
+| EAGLE-3 论文 Table 1 | temperature=0、MT-bench、5 个数据集之一 | 5.58x，τ=6.65；五数据集平均 5.51x、τ=6.62；HumanEval 最高 6.47x、τ=7.54 |
+| Spec-Bench（第三方） | 单张 A100、贪心、FP16、batch=1、统一 harness | 总体 3.02x，平均被接受词元 5.71 |
+
+先说这三组各测什么。README 那组明确标了设备——图注写的是 "Inference is conducted on 2x RTX 3090 GPUs at fp16 precision using the Vicuna 13B model"，而仓库的推理代码支持跨卡装载权重；论文 Table 1 只写了模型、数据集与温度，没有标 GPU 型号；Spec-Bench 则把所有方法塞进同一个单卡环境测**相对排名**。三者的口径本来就不齐。
+
+数字差异更可能反映哪部分？前两组之间几乎一致（5.58 vs 5.6），差异全在最后一组。从 5.58x 到 3.02x，τ 只从 6.65 降到 5.71（−14%），加速比却降了 46%——按前一节的分解，掉的那部分几乎全在开销 c 里：不同 GPU、不同 batch、不同实现。Spec-Bench 自己在榜单顶部写的提醒也正是这个意思："model speedup rates may differ across various devices. For more precise speedup metrics, we recommend conducting evaluations of specific models on your intended devices."
+
+由此，这些数字**不能**推出四件事：
+
+- 不能推出大 batch 吞吐。README 与论文 Table 1 都是 batch=1 的延迟数字；吞吐要另看论文 §4.3、§4.4。
+- 不能推出跨模型规模保持。同为 EAGLE-3，论文 Table 1 里 Vicuna-13B 五数据集平均 5.51x，LLaMA-Instruct 3.3 70B 只有 4.12x。代际增益也随规模衰减：EAGLE-2 相对 EAGLE-1 在 13B 上是 3.05x→4.22x（+38%），而 Spec-Bench 的 A100 / Vicuna-33B 子榜上 EAGLE 到 EAGLE-2 只从 2.43x 到 2.59x（+6.6%）。
+- 不能推出跨任务保持。任务差别直接影响草稿命中率：论文里 EAGLE-3 在 HumanEval 上最好，理由是代码里"many fixed templates"最容易起草；DeepSeek-R1-Distill-LLaMA 8B 反而在 GSM8K 上最高，作者猜测是因为它的草稿头额外用 OpenThoughts-114k-math 训练过。
+- 不能推出"Spec-Bench 榜单还认 EAGLE 是第一"。README 徽章写的"certified by the third-party evaluation as the fastest speculative method so far"对应的是 Update 里 2024.2.25 那一条；当前 3090 榜上 EAGLE-1 已排第三，榜首是 SAMD[EAGLE2]（2.38x），EAGLE-2 以 2.19x 居次，而 EAGLE-3 没有出现在 3090 榜单上，只在 A100 的 Vicuna-13B 子榜以 3.02x 排第一。
+
+同一组条件对读比单个数字更有信息量，但要用**同一来源内部**的比值。EAGLE-3 论文 Table 1（temperature=0）里，EAGLE-3 相对 EAGLE 在 Vicuna-13B 五数据集平均上是 5.51x/3.05x ≈ 1.8 倍；Spec-Bench 的 A100 / 13B 子榜里，同一对方法是 3.02x/2.16x ≈ 1.4 倍。两份材料给出的相对增益并不一致——这本身就是结论：**跨来源连比值都不可迁移，能迁移的只有"同一实现下 EAGLE-3 明显优于 EAGLE"这个排序。**
+
+## 从零跑通：安装、推理、训练、评测
+
+### 环境
+
+仓库安装段给的命令原样可用：
 
 ```bash
 git clone https://github.com/SafeAILab/EAGLE.git
@@ -319,30 +354,46 @@ source ~/venvs/ea_env/bin/activate
 pip install -r requirements.txt
 ```
 
-权重从 Hugging Face 下载（README 表格列出了全部官方与社区权重）。注意：
+根目录另有一份 `requirements-rocm.txt`，供 AMD ROCm 环境使用；`setup.py` 存在，但 README 的安装路径没有走 `pip install -e .`。
 
-- 官方 EAGLE-3 仅 6 个（Vicuna-13B、LLaMA-3.1-8B、LLaMA-3.3-70B、DeepSeek-R1-Distill-LLaMA-8B 等）。
-- LLaMA-4-Scout/ Maverick、Qwen3 全系、GLM-4.7-Flash、GPT-OSS-120B 等均为社区权重。
-- Qwen2 推荐使用 bf16（半精度浮点）而非 fp16，避免数值溢出。
+### 权重
 
-### 8.2 Web UI 推理
+EAGLE-3 权重表共 18 行基座模型，其中标 Official=Yes 的只有 **4 个**：Vicuna-13B v1.3、LLaMA-3.1-8B-Instruct、LLaMA-3.3-70B-Instruct、DeepSeek-R1-Distill-LLaMA-8B，均由 `yuhuili/` 发布。其余 **14 个基座对应 21 个非官方 checkpoint**，上传方包括 lmsys、nvidia、AngelSlim、Tengyunw、wantsleep、Zjcxy-SmartAI、thoughtworks，另有 MiniCPM4 那一个托管在 ModelScope 而非 Hugging Face。覆盖的基座是 LLaMA-4 Scout/Maverick、Qwen3 全系（1.7B/4B/8B/14B/30B-A3B/32B/235B-A22B）、MiniCPM4-8B、OLMoE-1B-7B、granite-3.1-1b-a400m、GPT-OSS-120B 与 GLM-4.7-Flash。
+
+这一区分比"支持 18 个模型"这种说法更有用。README 在权重表前专门写了一段："This repository recognizes only official EAGLE-3 checkpoints. Performance of unofficial checkpoints may vary. If you want to compare with EAGLE-3, please compare with official checkpoints and official draft tree setups." 拿社区权重跑出的加速比去对表论文数字，按 README 的口径这个比较不成立。
+
+老的 EAGLE（EAGLE-1 系）权重表有 12 个官方 + 1 个社区条目，两张表不通用。README 的提醒是："The current code defaults to using EAGLE-3. If you want to use EAGLE weights, please specify `use_eagle3=False` in `EaModel.from_pretrained`."
+
+还有一条会直接影响输出正确性的注记："When Qwen2 is the target model, please use bf16 precision instead of fp16 to avoid numerical overflow. The training dataset for the draft model of Qwen2 is ShareGPT, which has removed non-English data."
+
+### 命令行界面
 
 ```bash
 python -m eagle.application.webui \
   --ea-model-path [path of EAGLE weight] \
   --base-model-path [path of the original model] \
-  --model-type [vicuna|llama2|llama3] \
+  --model-type [vicuna\llama2\llama3] \
   --total-token [int]
 ```
 
-`--total-token` 是 draft 长度。小模型 + 强 GPU 可调大（10+）；设为 -1 时 EAGLE-2/3 自动配置（动态）。
+这段是 README 原文，但 `--model-type` 的取值写错了，照抄会直接被 argparse 拒绝。`eagle/application/webui.py` 里的实际定义是：
 
-### 8.3 代码内推理（eagenerate）
+```python
+parser.add_argument("--model-type", type=str, default="vicuna",
+                    choices=["llama-2-chat", "vicuna", "mixtral", "llama-3-instruct"])
+```
+
+要填的是 `llama-2-chat` 与 `llama-3-instruct`，不是 README 里的 `llama2` / `llama3`。同一个文件里还有几个 README 没提的开关：`--no-eagle3`（回退到 EAGLE-1/2 权重）、`--load-in-8bit` / `--load-in-4bit`、`--max-new-token`（默认 512），以及 `--total-token` 的默认值 **60**。两个模型路径参数的 default 也是作者本机的 `/home/lyh/weights/...`，不显式传会直接报错。
+
+README 对 `--total-token` 的说明是：它是草稿词元数，模型越小、GPU 越好就可以设越大，需按具体设备与模型调整；"If set to -1, **EAGLE-2** will automatically configure this parameter." 这句话只点了 EAGLE-2，EAGLE-3 的自动配置行为 README 没有承诺。
+
+### 代码内推理
+
+README 给的 `eagenerate` 示例（注意它省略了 `import torch`，实跑要自己补）：
 
 ```python
 from eagle.model.ea_model import EaModel
 from fastchat.model import get_conversation_template
-
 model = EaModel.from_pretrained(
     base_model_path=base_model_path,
     ea_model_path=EAGLE_model_path,
@@ -352,153 +403,195 @@ model = EaModel.from_pretrained(
     total_token=-1
 )
 model.eval()
-
-your_message = "Hello"
+your_message="Hello"
 conv = get_conversation_template("vicuna")
 conv.append_message(conv.roles[0], your_message)
 conv.append_message(conv.roles[1], None)
 prompt = conv.get_prompt()
-
-input_ids = model.tokenizer([prompt]).input_ids
+input_ids=model.tokenizer([prompt]).input_ids
 input_ids = torch.as_tensor(input_ids).cuda()
-output_ids = model.eagenerate(input_ids, temperature=0.5, max_new_tokens=512)
-output = model.tokenizer.decode(output_ids[0])
+output_ids=model.eagenerate(input_ids,temperature=0.5,max_new_tokens=512)
+output=model.tokenizer.decode(output_ids[0])
 ```
 
-注意：Vicuna / LLaMA2-Chat / LLaMA3-Instruct 都是 chat 模型，必须用对的 chat template，否则输出异常且影响加速比。
+README 在代码块后用加粗强调过一句："Vicuna, LLaMA2-Chat, and LLaMA3-Instruct are both chat models. You need to use the correct chat template, otherwise it will cause abnormal output from the model and affect the performance of EAGLE." 模板错了同时伤输出质量和接受率，这是排查表里第一条的原因。
 
-### 8.4 训练 EAGLE-3
+### 训练与评测
+
+EAGLE-3 的训练入口在仓库里是独立目录，和 EAGLE-1/2 的 `eagle/train/` 分开：
 
 ```bash
 cd eagle/traineagle3
 deepspeed main.py --deepspeed_config ds_config.json
 ```
 
-官方 README **强烈推荐**用 [SpecForge](https://github.com/sgl-project/SpecForge) 来开箱即用地训练 EAGLE-3 + 集成 SGLang，省去大量样板代码。
+`eagle/traineagle3/` 下除 `main.py`、`ds_config.json` 外，还自带一份 `cnets.py`、`configs.py` 与 `modeling_llama_kv.py`——训练与推理各持一套草稿头实现，改动时两边都要看。
 
-## 9. 主流框架集成状态
+README 紧接着推荐了另一条路："We strongly recommend using [SpecForge](https://github.com/sgl-project/SpecForge) for out-of-the-box training of EAGLE-3 with SGLang." 这条建议的时间戳是 2025.7.23。
 
-EAGLE 已被合并到 15+ 个 LLM 推理框架（按字母序）：
+评测命令也值得一抄，因为它是仓库自己认可的可复现入口：
 
-| 框架 | 类型 | 集成方式 |
-|------|------|----------|
-| AMD ROCm | 硬件平台 | MTP（Multi-Token Prediction）路径 |
-| AngelSlim | 模型压缩 | speculative_decoding/eagle.html |
-| AWS NeuronX | 硬件平台 | nxd-inference feature guide |
-| CPM.cu | 推理引擎 | 官方合并 |
-| Intel® Extension for Transformers | CPU 推理 | PR #1504 |
-| Intel® IPEX-LLM | CPU 推理 | PR #11104 |
-| MLC-LLM | 端侧推理 | REST 文档 |
-| NVIDIA NeMo Framework | 训练 + 推理 | speculative.html |
-| NVIDIA TensorRT-LLM | 高性能推理 | examples/eagle |
-| NVIDIA TensorRT Model Optimizer | 模型优化 | 7_speculative_decoding.html |
-| PaddleNLP | 飞桨推理 | predict/speculative_decoding.html |
-| SGLang | 高性能推理 | advanced_features/speculative_decoding |
-| SpecForge | 训练 | EAGLE-3 + SGLang 开箱即用 |
-| speculators | 投机解码库 | vLLM 官方 |
-| vLLM | 高性能推理 | PR #16937 |
+```bash
+python -m eagle.evaluation.gen_ea_answer_llama3chat \
+  --ea-model-path yuhuili/EAGLE3-LLaMA3.1-Instruct-8B \
+  --base-model-path meta-llama/Llama-3.1-8B-Instruct --use_eagle3
 
-这意味着 EAGLE 不是孤立的学术玩具——生产级 LLM 服务框架大多直接支持。如果你已经在用 vLLM 或 SGLang，开启 EAGLE 通常只需要 3 行配置。
+python -m eagle.evaluation.gen_baseline_answer_llama3chat \
+  --ea-model-path yuhuili/EAGLE3-LLaMA3.1-Instruct-8B \
+  --base-model-path meta-llama/Llama-3.1-8B-Instruct
+```
 
-## 10. 适用边界与已知限制
+两条命令各产出一个 `.jsonl`，记录生成结果与 wall time，README 说再用 `evaluation/speed.py` 求速度比，也说明要看具体加速比就必须把基线那条一起跑。但 `speed.py` 得先改：文件顶部三行是硬编码的作者本机路径与文件名——
 
-### 10.1 适合的场景
+```python
+tokenizer=AutoTokenizer.from_pretrained("/home/lyh/weights/hf/llama2chat/13B/")
+jsonl_file = "llama-2-chat-70b-fp16-ea-in-temperature-0.0.jsonl"
+jsonl_file_base = "llama-2-chat-70b-fp16-base-in-temperature-0.0.jsonl"
+```
 
-- 长输出（512+ tokens）场景，加速比随输出长度提升。
-- 单请求 batch=1 的低并发对话场景——这种场景 GPU 常常没打满，EAGLE 通过减少大模型前向次数提升吞吐。
-- 已有 vLLM / SGLang / TensorRT-LLM 的生产环境，启用 EAGLE-3 的边际成本极低。
-- 已有对应官方 EAGLE-3 权重或愿意自己训练 draft head 的团队。
-- 与量化（quantization）、FlashAttention、MoE 架构兼容（README 明示）。
+它按题号累加 `choices[0]['new_tokens']` 与各轮耗时，最后一行输出 `ratio = mean(speeds)/mean(speeds0)`。README 里另一条 Qwen3 的示例命令同样带着作者的绝对路径 `/workspace/yunhai/Qwen3-4B_eagle3`，直接复制会失败。
 
-### 10.2 不适合的场景
+想测接受率而不是只测速度，仓库里有 `gen_ea_answer_*` 之外的两个脚本：`gen_ea_alpha_vicuna.py` / `gen_ea_alpha_llama2chat.py` 配合 `alpha.py`，会按草稿位置记录 `alpha` 与 `alpha_num` 两个数组——这正好对应 EAGLE-1 论文里那个"1-α 到 4-α"的鲁棒性分析。但这条路径目前跑不通：两个 alpha 脚本都 `from model.utils_alpha import *`，而仓库里不存在 `utils_alpha.py`（`eagle/model/` 下只有 `utils.py` 与 `utils_c.py`）。`alpha.py` 顶部同样写死了 `/home/lyh/code/nlp/EAGLE/data/...`。要测 α，实际得自己补这个模块。
 
-- **超短输出**（< 64 tokens）：草稿构建 + 验证的开销可能超过节省。
-- **高并发 batch 服务**：每个请求的 KV cache 已经占满 GPU，EAGLE 节省的时间被请求级调度掩盖。
-- **小模型（< 7B）**：base 模型本身就快，加速空间有限；EAGLE-3 在小模型上提升有限。
-- **没有现成 EAGLE-3 权重的私有模型**：训练需要 1–2 天 + 8×3090 量级资源。
-- **严格受控的生成场景**（如受限 beam search、grammar constrained decoding）：动态树结构可能与 grammar 解码器冲突。
+## 框架集成：仓库列了 15 个入口
 
-### 10.3 训练 / 工程已知坑
+README 的 Support 段按字母序列出 15 个条目，标题写的是"merged in the following mainstream LLM serving frameworks"。逐条核对过链接：
 
-- **Qwen2 必须用 bf16**：fp16 在长 prompt 下会触发 overflow。
-- **Qwen2 draft 的训练数据用了 ShareGPT（去掉了非英文数据）**：在中文为主的应用上需要用中文数据重新训练。
-- **LLaMA-3 Instruct 等 chat 模型**必须用对的 chat template，否则 EAGLE 的接受率会大幅下降。
-- **EAGLE-3 还没覆盖的官方支持**：Qwen-3（Todo 列表里）。
-- **draft head 训练数据**与 base 模型分布不一致时，加速比会显著下降。
-- **Spec-Bench 第三方评测**显示 EAGLE-1 在 2024-02 当时最快；后来 EAGLE-2/3、Lookahead 的新方法陆续逼近。
+| 条目 | 接入形式 |
+|------|----------|
+| AMD ROCm | ROCm 博客的 MTP 优化文 |
+| AngelSlim | 文档 `features/speculative_decoding/eagle.html` |
+| AWS NeuronX Distributed Core | nxd-inference feature guide 的 eagle 一节 |
+| CPM.cu | OpenBMB 仓库 |
+| Intel® Extension for Transformers | PR intel/intel-extension-for-transformers#1504 |
+| Intel® LLM Library for PyTorch | PR intel-analytics/ipex-llm#11104 |
+| MLC-LLM | REST（表述性状态转移）接口的部署文档 |
+| NVIDIA NeMo Framework | `model-optimization/speculative/speculative.html` |
+| NVIDIA TensorRT-LLM | `examples/eagle` |
+| NVIDIA TensorRT Model Optimizer | `7_speculative_decoding.html` |
+| PaddleNLP | `predict/speculative_decoding.html` |
+| SGLang | `advanced_features/speculative_decoding.html` |
+| SpecForge | 训练侧仓库 |
+| speculators | vLLM 项目下的独立仓库 |
+| vLLM | PR vllm-project/vllm#16937 |
 
-## 11. 采用顺序与决策建议
+两点需要在动手前知道。第一，这 15 项里 AMD ROCm、AWS NeuronX、两个 Intel 条目指的是硬件平台的接入文档，真正的推理框架数量比 15 小；把 README 的条目数当成"框架适配数"会高估生态。第二，vLLM 那条链接指向的 PR 标题是 "[V1][Spec Decode] EAGLE-3 Support"，页面显示它已于 2025-04-25 合并——所以它是 **EAGLE-3 在 vLLM V1 路径上的支持**，而 README 的 Todo 段另一条 vLLM 记录指向的是更早的 PR #6830。
 
-按以下顺序评估 EAGLE-3：
+至于"接入要改几行配置"，README 与论文都没给数字，各框架的开关名与参数形态也各不相同。唯一可直接引用的是 README 那句能力声明：EAGLE "combinable with other parallelled techniques such as vLLM, DeepSpeed, Mamba, FlashAttention, quantization, and hardware optimization"。想评估接入成本，只能拿自己那套框架的文档去核对。
 
-1. **第 1 步：确认应用场景**。长输出 + 低 batch 是 EAGLE 的甜区；高并发短请求先不要上。
-2. **第 2 步：检查权重表**。如果你的 base 模型在官方 EAGLE-3 权重表里（Vicuna-13B、LLaMA-3.1-8B 等），直接下载用；社区权重（AngelSlim、nvidia、lmsys）通常也够稳。
-3. **第 3 步：跑通最小推理**。用 `eagenerate` 在测试集上对比 vanilla decoding 的 wall time，记录 token/s（每秒生成 token 数）。
-4. **第 4 步：决定是否接入生产框架**。如果已经在用 vLLM/SGLang/TRT-LLM，切换成本极低（3 行配置）；自研推理栈则需要 patch KV cache。
-5. **第 5 步：监控接受率**。生产环境加一个 metric（仪表盘指标）记录平均接受率 α；如果 α < 0.6 说明 base 模型与 draft 训练分布不一致，需要重新训练。
-6. **第 6 步：自定义模型训练**。如果 base 是私有模型，用 SpecForge 或 `deepspeed main.py` 训练 draft head，至少需要 ~60K 样本。
+Todo 段的完成状态澄清了一个常见误传。整段 10 项里只有两项未勾选：`Support official EAGLE-3 for Qwen-3` 与 `EAGLE-4`。这**不等于** Qwen3 跑不起来——`eagle/model/modeling_qwen3_kv.py` 已存在，`gen_ea_answer_qwen3` 评测脚本已在 `eagle/evaluation/` 下，权重表里还有 7 个 Qwen3 基座对应的 12 个社区 EAGLE-3 checkpoint。未勾选的只是"官方 Qwen3 EAGLE-3 权重"这一项：代码支持、社区权重、官方权重是三件事。
 
-不建议一上来就在主流量上启用 EAGLE-3——先用 1–2 周小流量试点，确认收益。
+## 什么时候不值得上
 
-## 12. 常见问题与排查
+### 值得上的条件
 
-| 症状 | 可能原因 | 排查 |
+- 单请求、长输出。加速来自减少大模型前向次数，输出越长摊得越开；论文的加速比表以单请求为主口径，EAGLE-3 论文在给出跨 batch 数据前也明写 "at batch size 1"。
+- 基座落在权重一节列出的那几个官方 EAGLE-3 模型里，或者你愿意自己练一个草稿头。
+- 已经在用 README Support 列表里的框架，并且能沿用列表给出的那条官方文档路径。
+- 需要和量化、FlashAttention 等技术共存——README 明确说可以叠加。
+- 目标模型是 Mixtral 8x7B 这类混合专家模型（Mixture of Experts, MoE）：`modeling_mixtral_kv.py` 与官方 EAGLE 权重 `yuhuili/EAGLE-mixtral-instruct-8x7B`（0.28B）都在仓库里，README 的 Mixtral 支持记录在 2024.1.17。注意这是 EAGLE-1 时代的官方权重，不是 EAGLE-3。
+
+### 不值得上的条件
+
+- **输出很短**。一个周期要付草稿前向与更大验证输入的代价，只换来多几个词元；EAGLE 论文的度量口径本身就是 MT-bench 这类长回答。
+- **基座不在权重表、又不打算自己训练**。这时可以先看免训练的那一类：Spec-Bench 榜单顶部点名 PLD、Lookahead 与 Recycling 是"plug-and-play methods that require minimal extra parameters, making them easier to integrate into a wider range of models"。
+- **要求严格受控解码**（受限 beam search、语法约束生成）。仓库的 README 与三篇论文都没有覆盖这个场景，动态草稿树与这类解码器的候选管理如何共存没有可引用的结论。
+- **只关心大 batch 吞吐，且停留在 EAGLE-1**。论文 §4.3 的 H100 + SGLang 表格是硬证据：以不开推测解码为 1.00x，EAGLE 在 batch 2 是 1.40x，到 batch 16 只剩 1.02x，batch 24 起跌到 1.00x 以下（0.93x、0.94x、0.88x、0.99x、0.99x）。
+
+| batch size | 2 | 4 | 8 | 16 | 24 | 32 | 48 | 56 | 64 |
+|------------|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| EAGLE | 1.40x | 1.38x | 1.23x | 1.02x | 0.93x | 0.94x | 0.88x | 0.99x | 0.99x |
+| **EAGLE-3** | 1.81x | 1.82x | 1.62x | 1.48x | 1.39x | 1.32x | 1.38x | 1.34x | **1.38x** |
+
+（EAGLE-3 论文 Table 3：H100、LLaMA-Instruct 3.1 8B、MT-Bench、SGLang v0.4.4，实验由 SGLang 团队完成；该组**未使用树结构**，链长固定为 3。）
+
+EAGLE-3 论文的 vLLM 一节给出同方向的第二组证据：
+
+| batch size | 2 | 4 | 8 | 16 | 24 | 32 | 48 | 56 |
+|------------|-----|-----|-----|-----|-----|-----|-----|-----|
+| EAGLE | 1.30x | 1.25x | 1.21x | 1.10x | 1.03x | 0.93x | 0.82x | 0.71x |
+| **EAGLE-3** | 1.75x | 1.68x | 1.58x | 1.49x | 1.42x | 1.36x | 1.21x | **1.01x** |
+
+（Table 5：vLLM、LLaMA-Instruct 3.1 8B、MT-Bench，同样未用树结构，最大链长 2。）
+
+正文里那句解读要连着看："EAGLE shows the maximum throughput improvement at a batch size of 24, while EAGLE-3 shows this at 56." 对照 Table 5，24 是 EAGLE 仍 ≥1.00x 的最大 batch，56 是 EAGLE-3 仍 ≥1.00x 的最大 batch——这句讲的是**收益上限所在的 batch**，不是峰值。峰值在 batch=2（1.30x 与 1.75x）。
+
+一处需要标注 unresolved：这组实验的正文说设备是 RTX 3090，Table 5 的标题写的是 A100，论文内部两处口径不一致，引用时最好把两种说法都带上。
+
+一个需要分开的判断是：**EAGLE-3 在高 batch 上并非没有价值**。论文引言的原话是"Speculative sampling is often thought to reduce throughput at large batch sizes. However, in SGLang, a production-grade framework, EAGLE-3 improves throughput by 40% at a batch size of 64"（同一件事在摘要里写作 1.38x）。目前缺的那块证据是大 batch 下**开着树结构**的吞吐。
+
+### 训练与工程上的已知坑
+
+- 精度：Qwen2 作为目标模型时 README 要求 bf16，理由是 fp16 下数值溢出。
+- 语言：Qwen2 草稿头训练用的 ShareGPT 已剔除非英文数据，中文场景需按 README 的指示用对应数据重训。
+- 权重代次：EAGLE-3 与 EAGLE 权重不能混用，需在 `from_pretrained` 里对齐 `use_eagle3`。
+- 树掩码只在构造时建：`init_tree()` 在 `EaModel.__init__` 末尾被调用一次，用 `top_k` 决定初始掩码形状；运行期改 `top_k` 不会自动重建树掩码。
+- 自定义结构：目标模型的层结构与仓库内置的四份 `modeling_*_kv.py`（llama / mixtral / qwen2 / qwen3）都对不上时，README 的指引是从 Transformers 里拷 `modeling_basemodelname.py` 自行改，并参考 `model/modeling_llama_kv.py`——那里的改动点用 `# [MODIFIED]` 标注。README 对改动量的判断是"These modifications are minimal"。实际标记分布：`modeling_llama_kv.py` 6 处、`modeling_mixtral_kv.py` 2 处、`modeling_qwen3_kv.py` 1 处、`cnets.py` 与 `cnets1.py` 各 2 处。
+
+## 采用顺序
+
+按下面这个顺序推进，每一步都有明确的通过条件，任何一步不过就不要往下投。
+
+1. **确认负载形态**。输出长度分布和并发度决定收益上限。单请求长回答直接进第 2 步；大 batch 为主的，只看论文 §4.3、§4.4 那两组吞吐表所对应的场景（当前证据下的安全区大约到 batch 56，且不含树草稿）。
+2. **核对权重代次**。基座在那 4 个官方 EAGLE-3 权重里最好；否则先确定用哪个社区 checkpoint，并把它标成"非官方、性能可能浮动"，因为 README 明说比较要用官方权重与官方草稿树设置。
+3. **测自己的 c，不要抄别人的加速比**。跑评测一节那两条命令，改完 `speed.py` 顶部的硬编码路径再算 wall time 比。要拿 τ，`eagenerate` 传 `log=True` 时返回 `(input_ids, new_token, idx)`：`new_token` 是**累计**值——`eagle/model/utils.py` 里每个周期执行 `new_token += accept_length + 1`，循环前才初始化成 0——`idx` 是周期下标（从 0 计），所以 τ = `new_token / (idx + 1)`，不要把 `new_token` 直接当成单周期均值。另有一条容易忽略的循环上限：`eagenerate` 里有 `max_length = max_length - self.ea_layer.total_tokens - 10`，长上下文生成时这个扣减会先于 `max_new_tokens` 生效。τ 用来判断草稿头质量，加速比用来判断你的开销。
+4. **决定放在哪一层**。已有 vLLM / SGLang / TensorRT-LLM 的，走各自文档，注意 vLLM 的 EAGLE-3 支持在 2025-04-25 才随 PR #16937 合入 V1 路径，版本要求以 vLLM 侧文档为准；自研推理栈要按 README 的"custom models"路径改一份 `modeling_*.py`。
+5. **上线后按 τ 判收益衰减**。生产负载的 τ 相对试点明显下滑，通常是数据分布漂移，此时先看模板与语言，再考虑重训。仓库没有提供"τ 低于某个值就不值得"的阈值，任何阈值都得由你在第 3 步的对照实验里定。
+6. **需要自定义模型时按 EAGLE-3 的数据口径估成本**。论文用的是 ShareGPT（约 68K）+ UltraChat-200K（约 464K），并且要调用目标模型生成回答；EAGLE-1 时代"固定数据集就够"的结论在 EAGLE-3 上不再成立。GPU 预算按 README 的"within 1-2 days on 8x RTX 3090"作为起点。
+
+不建议一上来就在主流量上启用。先用一周小流量，把 τ 和 wall time 两条曲线拉出来对照，再决定扩大范围。
+
+## 常见故障与排查
+
+按现象分类，最常见的一类是模板与精度配错，第二类才是性能不达预期。第三列给出每条判断的出处：
+
+| 现象 | 先查什么 | 依据 |
 |------|----------|------|
-| `eagenerate` 输出乱码 | chat template 错 | 对照 README 切换 `get_conversation_template` 模板名 |
-| fp16 下数值溢出 | Qwen2 等用 fp16 | 改 bf16 |
-| 加速比远低于 README | batch 太大 / 输出太短 | 调低 batch 或加大 `total-token` |
-| 加载权重报错 `size mismatch` | EAGLE-3 vs EAGLE-1 权重混用 | 确认 `use_eagle3=True/False` 与权重对应 |
-| vLLM 集成看不到加速 | vLLM 版本 < 0.7 | 升级 vLLM 或检查 PR #16937 状态 |
-| draft head 训练 Loss 不收敛 | base 模型权重冻结被破坏 | 检查 optimizer（优化器）参数列表只含 draft head |
-| 训练中文输出接受率低 | draft 训练数据是英文 | 用中文数据集（ShareGPT-CN 等）重训 |
-| KV cache 显存爆炸 | base 模型太大 + 长上下文 | 用 4-bit 量化 base 模型 |
+| 输出乱码或明显劣化，同时加速比变差 | chat template 是否与基座匹配 | README 加粗提示：Vicuna / LLaMA2-Chat / LLaMA3-Instruct 都是 chat 模型，模板错会同时导致异常输出与性能下降 |
+| Qwen2 上出现 NaN / inf | 精度是否写成 fp16 | README 要求 Qwen2 用 bf16 以避免数值溢出 |
+| 中文任务接受率很低 | 草稿头训练数据语言 | README：Qwen2 的 ShareGPT 训练集剔除了非英文数据，需换数据重训 |
+| 加载权重报 size mismatch | `use_eagle3` 与权重代次是否对应 | README：代码默认走 EAGLE-3，用 EAGLE 权重要显式 `use_eagle3=False` |
+| 换到非 LLaMA/Mixtral 结构就报错 | 是否补了对应 `modeling_*_kv.py` | 仓库只内置 llama / mixtral / qwen2 / qwen3 四份；其余按 README 的 custom models 指引自行改 |
+| vLLM 上找不到 EAGLE-3 开关 | 版本是否落在 PR #16937（2025-04-25 合并）之后的 V1 路径 | vLLM 侧文档 |
+| 训练 loss 不降 | 是否把目标模型权重一起塞进了优化器 | EAGLE-1 论文实验节写 "We fixed the target LLMs"，EAGLE-3 论文 §4 的 Metrics 段写 "EAGLE-3 does not modify the target model's weights"；`Model.__init__` 里也显式冻结了从基座载入的嵌入：`for param in self.embed_tokens.parameters(): param.requires_grad = False` |
+| 加速比远低于 README | 是否用社区权重 / 非官方草稿树配置 / 输出过短 / batch 过大 | README 权重段的比较要求 + 论文 §4.3 的 batch 衰减表 |
+| `--total-token` 设 -1 后行为不变 | 用的到底是 EAGLE-2 还是 EAGLE-3 路径 | README 只对 EAGLE-2 承诺了自动配置 |
 
-## 练习
+## 五个自测题
 
-### 练习 1：跑通 eagenerate 最小推理
-按照 [§8.3 代码内推理](#83-代码内推理eagenerate) 的步骤，使用 Vicuna-13B 的 EAGLE-3 权重，运行一段 512 token 的生成。记录 vanilla decoding 和 EAGLE-3 的 wall time 和 token/s，计算实际加速比。对比 README 自报的 5.6x，分析差异可能来自哪里。
+1. 一个周期里，为什么"草稿全被拒"仍然会产出 1 个词元？这决定了加速比的下限是什么。
+2. EAGLE-2 的节点价值为什么写成路径上的连乘而不是单点置信度？这决定了 Expansion 与 Reranking 两步各自的必要性。
+3. EAGLE-3 的 `fc` 输入维度是隐藏维度的 3 倍，`LlamaAttention` 的三个投影却是 2 倍。这两处分别对应架构里的哪两件事？
+4. 去掉特征回归约束之后，第一个草稿词元的接受率涨了，但整体并不立刻变好。论文给出的原因是什么，它如何指向 training-time test？
+5. 同一份 EAGLE-3 权重，论文报 5.58x、Spec-Bench 报 3.02x。用 τ 与开销 c 的分解说明：哪一部分是跨设备可比的，哪一部分必须自己测。
 
-### 练习 2：观察接受率 α 与加速比的关系
-在 `eagenerate` 推理时，打印每步的接受 token 数和大模型前向次数，计算实际接受率 α。尝试 3 个不同的 `total_token`（K 值）：5、10、15，记录 α 和加速比的变化。验证文中给出的经验公式（加速比 ≈ (1 - α^K) / (1 - α)）是否近似成立。
+## 下一步读哪份代码
 
-### 练习 3：切换 chat template 观察接受率变化
-使用 LLaMA-3 Instruct 模型，先故意用一个错误的 chat template（例如用 Vicuna 的 template 去跑 LLaMA-3），观察输出质量和接受率的变化。然后切换回正确的 `get_conversation_template("llama3")`，对比两次运行的接受率和输出连贯性。
+想改机制，按这个顺序读，每步都能对上前面的一条断言：
 
-### 练习 4：理解动态草稿树的结构
-在 EAGLE-2 模式下，选取一个高置信度和一个低置信度的 draft 预测，打印动态树的展开结构（树深度、分支数）。手动验证：高置信度分支是否真的展开了更多层级？这个"置信度→树结构"的映射是否合理？
+- 先读 `eagle/model/cnets1.py` 的 `Model.forward`，只看 `torch.cat` 那一行和它后面的层调用。EAGLE-1 的全部机制就在"嵌入 + 提前一步的词元"这个拼接里。
+- 再读 `eagle/model/cnets.py` 的同名函数，对比 `fc` 从 2 倍变 3 倍、以及 `self.lm_head` 是新增的这两处。EAGLE-3 的两项改动在这里可验证。
+- 然后读 `eagle/model/ea_model.py` 的 `EaModel.__init__`，`use_eagle3` 分派、`load_emb=True`、`d2t/t2d` 清理、`init_tree()` 全在几十行里。
+- 草稿树策略读 `eagle/model/choices.py` 与 `cnets.py` 里 `total_tokens / depth / top_k / threshold` 的使用点，和论文 §4.1、§4.2 对照。
+- 训练侧读 `eagle/traineagle3/main.py` 与 `ds_config.json`，注意它与 `eagle/model/cnets.py` 是两份实现。
+- 想理解验证为何能并行，读 `eagle/model/kv_cache.py` 里的 `initialize_past_key_values`，再看 `modeling_llama_kv.py` 上那 6 处 `# [MODIFIED]`。
+- 最后读 EAGLE-3 论文 §4.3、§4.4 两张吞吐表：目前能支撑"大 batch 也能上"的官方证据只有这两组。
 
-### 练习 5：尝试在 vLLM 中启用 EAGLE
-如果你已经在用 vLLM，按照 [§9 主流框架集成状态](#9-主流框架集成状态) 的指引，在 vLLM 配置中启用 EAGLE。用 vLLM 的 benchmark 脚本跑一个短测试，对比启用/不启用 EAGLE 的吞吐差异。记录配置改动点，确保至少 3 行。
+## 参考文献
 
-## 自测
-
-1. 推测解码的"无损失"保证背后的数学定理是什么？这个定理对 draft 模型和大模型之间的关系有什么要求？
-2. EAGLE-1 的 draft 模型 `Model1` 训练时用的目标函数是什么？它预测的是 token 还是 hidden state？预测的是哪一层的 hidden state？
-3. EAGLE-2 的"接受率近似"定理说了什么？为什么这个定理让动态树可以在 verify 之前就决定树结构？
-4. EAGLE-3 的"训练时测试（Training-Time Testing）"具体怎么做？它解决 EAGLE-2 的什么缺陷？
-5. 如果你的 base 模型是私有模型，没有现成的 EAGLE-3 权重，你需要做什么？最少需要多少训练样本，大概需要多少 GPU 资源？
-6. EAGLE 在哪些场景下不适合使用？列出至少 3 种场景，并解释原因。
-
-## 进阶路径
-
-- **初学者（刚接触推测解码）**：先理解 [§2 推测解码基础](#2-推测解码基础) 的两阶段范式和无损失定理；跑通练习 1，建立对加速比的直观感知；读 EAGLE-1 论文（ICML'24）的前 3 节。
-- **中级（已在用 vLLM/SGLang）**：研究 EAGLE 在你的推理框架中的集成方式；用练习 2 的方法在生产模型上测实际接受率和加速比；评估 draft head 训练成本是否可接受。
-- **高级（想改进或训练 EAGLE）**：深入研究 `cnets.py` 中 draft head 的 forward 逻辑；理解 Tree Attention 的实现（三角+树的混合 mask）；用 SpecForge 在自己的 base 模型上训练 EAGLE-3 draft head；评估是否有必要改进动态树策略（例如针对特定任务调整置信度阈值）。
-
-## 13. 延伸阅读
-
-- 仓库主页：<https://github.com/SafeAILab/EAGLE>
-- EAGLE-1 论文（ICML'24）：<https://arxiv.org/pdf/2401.15077.pdf>
-- EAGLE-2 论文（EMNLP'24）：<https://arxiv.org/pdf/2406.16858>
-- EAGLE-3 论文（NeurIPS'25）：<https://arxiv.org/pdf/2503.01840>
+- 仓库：<https://github.com/SafeAILab/EAGLE>（`main`，核对时 HEAD 为 `cb7e0841`）
+- EAGLE-1：Yuhui Li et al. *EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty.* ICML 2024。<https://arxiv.org/abs/2401.15077>
+- EAGLE-2：Yuhui Li et al. *EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees.* EMNLP 2024。<https://arxiv.org/abs/2406.16858>
+- EAGLE-3：Yuhui Li et al. *EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test.* NeurIPS 2025。<https://arxiv.org/abs/2503.01840>
+- Leviathan et al. *Fast Inference from Transformers via Speculative Decoding.*（arXiv 于 2022-11-30 提交，无损性证明见附录 A.1）<https://arxiv.org/abs/2211.17192>
 - 官方博客：<https://sites.google.com/view/eagle-llm>
-- 第三方评测 Spec-Bench：<https://github.com/hemingkx/Spec-Bench/blob/main/Leaderboard.md>
-- SpecForge（训练推荐）：<https://github.com/sgl-project/SpecForge>
-- vLLM PR：<https://github.com/vllm-project/vllm/pull/16937>
-- TensorRT-LLM Example：<https://github.com/NVIDIA/TensorRT-LLM/tree/main/examples/eagle>
-- 对比项目 Medusa：<https://sites.google.com/view/medusa-llm>
-- 对比项目 Lookahead：<https://lmsys.org/blog/2023-11-21-lookahead-decoding/>
+- Spec-Bench 第三方榜单：<https://github.com/hemingkx/Spec-Bench/blob/main/Leaderboard.md>
+- SpecForge（README 推荐的 EAGLE-3 训练入口）：<https://github.com/sgl-project/SpecForge>
+- vLLM EAGLE-3 支持 PR：<https://github.com/vllm-project/vllm/pull/16937>
+- TensorRT-LLM 示例：<https://github.com/NVIDIA/TensorRT-LLM/tree/main/examples/eagle>
+- 对比方法 Medusa：<https://arxiv.org/abs/2401.10774>
+- 对比方法 Lookahead：<https://lmsys.org/blog/2023-11-21-lookahead-decoding/>
 
-> 数据采集声明：本文核心数据来自 GitHub 仓库 `SafeAILab/EAGLE` 的公开 README、Releases、EAGLE-3 Weights 表与 GitHub API，访问时间 2026-06-28。文章中引用的速度数字均来自仓库 README 自报的 Vicuna-13B / 2×RTX 3090 / fp16 测量条件；其他模型 / 硬件下的真实加速比需要自行复现。所有命令、配置项、API 名称与权重链接均可在仓库与论文中找到对应出处，未做虚构。
+最后放三件背景数据，核对时间 2026-09-20：仓库约 2.5k star、约 300 fork，最后一次提交是 2026-02-20 合并的 PR #330（把 GLM-4.7-Flash 加进 EAGLE-3 社区权重表），默认分支 `main`，主体语言 Python。许可证条款写在 `LICENSE` 文件里，首行是 "Copyright 2025 SafeAI Lab (SAIL)"，正文为 Apache-2.0；由于这份自定义头部，GitHub 在仓库页面上不识别它，显示成 "Other"——只按页面标签判断许可证会得出错误结论。
 
-> 重要归属说明：用户原任务要求写作 `NVlabs/Eagle`，但 [NVlabs/Eagle](https://github.com/NVlabs/Eagle) 实际是 NVIDIA 的视觉-语言模型（"Eagle: Frontier Vision-Language Models with Data-Centric Strategies"），与"Tree Draft + Dynamic Draft Tree + Medusa 对比"的推测解码内容不符。本文中描述的"EAGLE / EAGLE-2 / EAGLE-3 推测解码"是 [SafeAILab/EAGLE](https://github.com/SafeAILab/EAGLE) 的项目，由 Yuhui Li 等作者在 ICML'24 / EMNLP'24 / NeurIPS'25 发表。slug 已相应调整为 `safe-ai-lab-eagle-speculative-decoding-guide`。
+> 本文事实来源为 SafeAILab/EAGLE 仓库（README、`eagle/model/`、`eagle/traineagle3/`、`eagle/evaluation/`）、EAGLE 系列三篇 arXiv 原文与 Spec-Bench 公开榜单，核对时间 2026-09-20。文中性能数字一律标注测量条件；仅由本文对公开数字做的算术（"可复算的例子"一节）已就地标明，不作为论文结论引用。vLLM 论文正文与 Table 5 标题的设备口径不一致处已标 unresolved。

@@ -1,6 +1,7 @@
 ---
-title: "Agent 时代软件构建革命：黄东旭百亿 Token 实践后的深度思考"
+title: "Agent 时代软件构建：黄东旭上百亿 Token 实践后的深度思考"
 date: "2026-04-18T00:20:00+08:00"
+lastmod: 2026-09-19
 slug: "agent-era-software-construction-huangdongxu"
 summary: "黄东旭在推进一个已进入生产环境的基础软件项目时耗掉了上百亿 Token。本文整理他的核心判断：代码作为思考媒介的地位在下降，讲清 Goal、Context、Constraints 比堆 Agent 更重要，验证与治理将比生成更稀缺。"
 description: "梳理黄东旭基于高强度 Agent 实战的判断链：代码从思考载体退为执行载体、Spec 胜过堆 Agent、程序员能力快速分化、验证与治理成为下一代基础设施，并落到一套可试运行的实践清单。"
@@ -42,7 +43,7 @@ tags: ["AI Agent", "软件工程", "Coding Agent", "LLM", "Skill", "Harness Engi
 - **方法判断**：对"怎样更有效"的工程结论，值得试，但需在本团队验证。
 - **趋势推演**：对产业结构和软件形态的预测，重点看方向，别当时间表。文中所有标注"趋势："的观点均属此类。
 
-黄东旭的原始分享（演讲视频、公众号文章等）暂未在公开渠道统一归档，可关注其微信公众号及 TiDB/PingCAP 官方渠道获取原始材料。
+黄东旭的原始分享是其公众号文章《消耗了上百亿 Token 后，对于 Agent 时代软件构建、软件形态及未来发展的思考》，网页版检索不稳定，可关注其微信公众号及 TiDB/PingCAP 官方渠道获取原始材料。
 
 ---
 
@@ -340,7 +341,7 @@ UI 不再垄断交互入口，但不会消失。意图入口和界面入口会�
 
 黄东旭把 OpenClaw 当作一种基线样本来谈，它代表了一种判断标准：如果新一代软件的灵活度和操作体验还不如 Agent 原生工具，那它就仍然停留在旧范式。
 
-OpenClaw（[https://openclaw.ai](https://openclaw.ai)）是一个面向 Agent 操作的开源工具项目，定位是给 Agent 提供可调用的浏览器与系统操作能力，常被用作衡量"Agent 原生交互体验"的参照样本。本文引用它仅作为基线参照，不代表对其稳定性、维护状态或商用可行性的背书。
+OpenClaw（[https://openclaw.ai](https://openclaw.ai)）是一个开源的个人 AI 助理项目：跑在用户自己的机器上，通过 WhatsApp、Telegram 这类聊天渠道交互，能浏览网页、读写文件、执行命令。在开发者社区里，它常被用作衡量"Agent 原生交互体验"的参照样本。本文引用它仅作为基线参照，不代表对其稳定性、维护状态或商用可行性的背书。
 
 未来用户会拿你和"能听懂意图、能自动串流程、能快速试错"的系统做对比，而不只是拿你和传统软件做对比。
 
@@ -375,7 +376,7 @@ OpenClaw（[https://openclaw.ai](https://openclaw.ai)）是一个面向 Agent �
 
 ### 9.2 "没有账号体系"反映了什么
 
-他提到 TiDB Cloud 的新产品线 Zero（参见 [TiDB Cloud 官网](https://www.pingcap.com/products/tidbcloud/)），强调的是一种 Agent-first 的思路：如果未来发起请求的主体越来越多是 Agent，而不是人，那么围绕"人类登录流程"设计的很多默认前提都会变成摩擦。
+他在分享中提到 TiDB Cloud 当时的新产品线 Zero（产品命名以 [TiDB Cloud 官网](https://www.pingcap.com/products/tidbcloud/) 当前公开信息为准），强调的是一种 Agent-first 的思路：如果未来发起请求的主体越来越多是 Agent，而不是人，那么围绕"人类登录流程"设计的很多默认前提都会变成摩擦。
 
 **趋势：**越来越多基础设施会朝"随调随走、弱人工配置、适合机器调用"的形态演进。
 
@@ -469,7 +470,7 @@ Coding 本身不会消失，变化的是它在工程工作里的位置还会继�
 3. 审计与治理负责人：负责权限、回滚、责任归属与证据链。
 4. 委托系统设计者：负责把人类目标翻译成 Agent 可持续执行的工作流。
 
-未来你主要是对代码负责，还是对结果、风险和演化负责？后者会越来越重要。
+未来的工程师，主要对结果、风险和演化负责；对代码本身负责，退居其次。
 
 ### 12.4 一个更尖锐的判断
 
@@ -669,4 +670,4 @@ Rollback:
 
 ---
 
-*本文基于黄东旭在 2026 年 4 月 QCon 全球软件开发大会上的主题演讲《The Age of Autonomous Systems（自主系统的时代）》整理。黄东旭是 TiDB 联合创始人兼 CTO，观点源自高强度一线实践，文中趋势推演部分需要更多行业样本验证。延伸阅读：[Anthropic Claude Code](https://docs.anthropic.com/en/docs/claude-code)、[OpenClaw](https://openclaw.ai)、[TiDB Cloud](https://www.pingcap.com/products/tidbcloud/)。*
+*本文基于黄东旭的公开分享《消耗了上百亿 Token 后，对于 Agent 时代软件构建、软件形态及未来发展的思考》整理。黄东旭是 TiDB 联合创始人兼 CTO，观点源自高强度一线实践，文中趋势推演部分需要更多行业样本验证。延伸阅读：[Claude Code 文档](https://code.claude.com/docs)、[OpenClaw](https://openclaw.ai)、[TiDB Cloud](https://www.pingcap.com/products/tidbcloud/)。*

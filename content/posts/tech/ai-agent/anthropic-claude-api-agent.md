@@ -1,6 +1,7 @@
 ---
-title: "Claude API基础专题（七）：Agent架构与智能体设计"
+title: "Claude API 基础专题（七）：Agent 架构与智能体设计"
 date: "2026-03-25T10:00:00+08:00"
+lastmod: "2026-09-21T10:00:00+08:00"
 slug: "claude-api-agent-architecture-design"
 aliases:
   - /posts/tech/claude-api-agent-architecture-design/
@@ -12,12 +13,14 @@ tags: ["Claude", "AI Agent", "Python"]
 
 # Claude API 基础专题（七）：Agent 架构与智能体设计
 
+> 本专题讲透用 Claude API（应用程序接口）搭建智能体的完整路径：从单 Agent 主循环到多 Agent 协作，再到生产环境的容错与安全。
+>
 > **目标读者**：构建复杂 AI 应用系统的架构师与高级开发者
-> **前置知识**：已完成第一篇《API基础》、第二篇《提示词工程》、第三篇《工具调用》、第四篇《RAG系统》、第五篇《MCP协议》、第六篇《Claude Code与Computer Use》
+> **前置知识**：已完成第一篇《API 基础》、第二篇《提示词工程》、第三篇《工具调用》、第四篇《RAG（检索增强生成）系统》、第五篇《MCP 协议》、第六篇《Claude Code 与 Computer Use》
 
 ---
 
-## 学习目标
+## 本章学习目标
 
 1. 说清 Agent 与单次工具调用的边界，指出五个必备要素中缺一项会导致什么后果
 2. 写出一个状态外部化、终止条件前置的最小 Agent 主循环
@@ -50,13 +53,13 @@ tags: ["Claude", "AI Agent", "Python"]
 
 ```python
 result = await client.messages.create(
-    model="claude-opus-4-20250514",
+    model="claude-opus-4-8",
     messages=[{"role": "user", "content": "帮我查一下北京天气"}],
-    tools=[{"name": "get_weather", ...}]
+    tools=[get_weather_tool],  # 工具定义的完整写法见 7.8 节
 )
 ```
 
-这个模式里，LLM 是被动响应者：用户提问 → LLM 调用工具 → 工具返回结果 → LLM 回答。LLM 不持有状态，不主动决策，只根据当前输入决定调用哪个工具。
+这个模式里，LLM（大语言模型）是被动响应者：用户提问 → LLM 调用工具 → 工具返回结果 → LLM 回答。LLM 不持有状态，不主动决策，只根据当前输入决定调用哪个工具。
 
 现实任务往往比这复杂：
 
@@ -74,7 +77,7 @@ Agent 可以拆成五个要素：
 
 > **Agent = LLM + 状态 + 工具 + 执行循环 + 终止条件**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                        Agent 系统                           │
 │   ┌───────────┐   ┌───────────┐   ┌───────────┐            │
@@ -113,7 +116,7 @@ Agent 可以拆成五个要素：
 ### 最小可运行 Agent
 
 ```python
-from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 from dataclasses import dataclass, field
 from typing import Any
 import asyncio
@@ -129,7 +132,7 @@ class AgentState:
 
 class SimpleAgent:
     def __init__(self, api_key: str, tools: list[dict]):
-        self.client = Anthropic(api_key=api_key)
+        self.client = AsyncAnthropic(api_key=api_key)
         self.tools = tools
 
     async def run(self, goal: str) -> dict[str, Any]:
@@ -159,8 +162,8 @@ class SimpleAgent:
         return state.iterations >= state.max_iterations
 
     async def _think(self, state: AgentState) -> Any:
-        return self.client.messages.create(
-            model="claude-opus-4-20250514", max_tokens=4096,
+        return await self.client.messages.create(
+            model="claude-opus-4-8", max_tokens=4096,
             messages=state.messages, tools=self.tools,
         )
 
@@ -168,12 +171,14 @@ class SimpleAgent:
         return {"tool": tool_use.name, "args": tool_use.input, "output": f"Tool {tool_use.name} executed"}
 ```
 
-上面这段代码有两处与 Anthropic Messages API 规范相关的细节，容易踩坑：
+上面这段代码有几处与 Anthropic Messages API 规范相关的细节，容易踩坑：
 
-1. **tool_result 必须以 `role: "user"` 回传**，且 `content` 是 `tool_result` 类型的块数组，每块带 `tool_use_id` 指向对应的工具调用。如果直接把工具返回值塞进 `role: "assistant"`，API 会报 400。
-2. **`_think` 必须传入完整的 `state.messages`**，否则 LLM 看不到上一轮的工具调用和结果，会重复发起相同的调用。
+1. **`run` 是 async 函数，客户端就要用 `AsyncAnthropic`**。如果在这里用同步客户端，每次 LLM 调用都会阻塞整个事件循环——7.4 节的并行执行会把并发请求变成串行排队。
+2. **tool_result 必须以 `role: "user"` 回传**，且 `content` 是 `tool_result` 类型的块数组，每块带 `tool_use_id` 指向对应的工具调用。Claude API 没有独立的 `tool` 或 `function` 角色，工具结果直接嵌入 user/assistant 消息结构，由用户侧在下一轮回传。
+3. **tool_result 消息必须紧跟对应的 assistant 工具调用消息**，中间不能插入其他消息；同一条 user 消息里，tool_result 块要排在 content 数组最前面，文字说明放在全部工具结果之后。
+4. **`_think` 必须传入完整的 `state.messages`（当前对话状态）**，否则 LLM 看不到上一轮的工具调用和结果，会重复发起相同的调用。
 
-参考来源：[Anthropic Messages API - Tool use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
+参考来源：[Handle tool calls](https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls)
 
 ### 为什么要这样设计？
 
@@ -203,7 +208,7 @@ while True:
     if self._should_terminate(state): break
 ```
 
-先检查再执行，避免在达到终止条件后还多跑一次 LLM 推理——既浪费 token，又可能触发不必要的工具调用。
+先检查再执行，避免在达到终止条件后还多跑一次 LLM 推理——既浪费 token（词元），又可能触发不必要的工具调用。
 
 **3. 完整记录对话历史**
 
@@ -217,7 +222,7 @@ while True:
 
 单个 Agent 处理复杂任务时会遇到几个具体问题：要同时精通多个领域、上下文越来越长导致响应变慢、一个环节出错可能污染整个对话。以旅行规划为例：
 
-```
+```text
 单个Agent的问题：
 - 需要同时是旅行专家 + 酒店专家 + 天气专家 + 预算专家
 - 知识过于分散，难以精通所有领域
@@ -343,21 +348,24 @@ sequential_tasks = [
 ]
 ```
 
+还有一层并行发生在模型内部：Claude 默认可以在一次响应里发起多个 `tool_use` 块，7.2 节的主循环会拿到一批 `tool_blocks` 逐个执行。想限制每轮最多调一个工具，把 `disable_parallel_tool_use: true` 放进 `tool_choice` 对象——它是 `tool_choice` 的字段，不是顶层请求参数。
+
+参考来源：[Parallel tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/parallel-tool-use)
+
 ### 链式执行
 
 ```python
 async def chain_execution(tasks: list[dict]) -> dict:
     context = {}
     for task in tasks:
-        task_input = await self._prepare_input(task, context)
+        task_input = prepare_input(task, context)
         agent = create_agent(task["type"])
         result = await agent.run(task_input)
-        context[task["id"]] = result
-        if not self._is_success(result):
-            if task.get("retry"):
-                result = await self._retry(task, context)
-            else:
+        if not is_success(result):
+            if not task.get("retry"):
                 raise ExecutionError(f"Task {task['id']} failed")
+            result = await retry_task(task, context)
+        context[task["id"]] = result
     return context
 ```
 
@@ -393,22 +401,27 @@ Agent 跑得越久，对话历史越长，迟早会撞上上下文窗口上限�
 **方案一：状态压缩与摘要**
 
 ```python
+from datetime import datetime, timezone
+
 class StateManager:
-    def __init__(self, max_history: int = 10):
+    def __init__(self, client, max_history: int = 10):
+        self.client = client
         self.max_history = max_history
         self.summaries = []
         self.working_memory = {}
 
     def add_interaction(self, user_msg: str, assistant_msg: str):
-        self.summaries.append({"user": user_msg, "assistant": assistant_msg, "timestamp": now()})
+        self.summaries.append({"user": user_msg, "assistant": assistant_msg,
+                               "timestamp": datetime.now(timezone.utc).isoformat()})
         if len(self.summaries) > self.max_history:
-            self._compress()
+            self.compress()
 
-    def _compress(self):
+    def compress(self):
         recent = self.summaries[-self.max_history:]
         older = self.summaries[:-self.max_history]
+        # 摘要压缩是机械性任务,交给更便宜的模型即可(见 7.8 成本控制)
         summary = self.client.messages.create(
-            model="claude-opus-4-20250514",
+            model="claude-haiku-4-5", max_tokens=1024,
             messages=[{"role": "user", "content": f"请总结以下对话的关键信息：{self._format_conversation(older)}\n提取：1.用户的主要目标 2.已完成的关键步骤 3.当前状态 4.重要的中间结果"}]
         )
         self.working_memory["conversation_summary"] = summary.content[0].text
@@ -452,11 +465,44 @@ class SmartContextManager:
                 selected.append(item)
                 total += tokens
         return self._format_selected(selected)
+
+    def _calculate_relevance(self, item: dict, current_task: str) -> float:
+        # 词面重叠的朴素相关性。生产实现可换成向量召回,或让模型对候选打分
+        task_chars = set(current_task)
+        text = item.get("text", "")
+        if not text:
+            return 0.0
+        overlap = sum(1 for ch in set(text) if ch in task_chars)
+        return overlap / max(len(set(text)), 1)
+
+    def _get_priority(self, item: dict) -> str:
+        return item.get("priority", "normal")
+
+    def _estimate_tokens(self, item: dict) -> int:
+        # 粗估:中文约 1 字 1 token,英文约 4 字符 1 token,这里取保守值;
+        # 要精确计数可调用官方 count tokens 接口
+        return len(item.get("text", ""))
+
+    def _format_selected(self, selected: list[dict]) -> str:
+        return "\n".join(
+            f"[{item.get('priority', 'normal')}] {item.get('text', '')}"
+            for item in selected
+        )
 ```
+
+挑上下文的实现千差万别，但骨架一致：给每条历史算分（相关性 × 优先级权重），按分数从高到低装进预算。分怎么算可以朴素，预算必须硬性执行——靠"感觉还行"裁剪上下文的 Agent，迟早把窗口撑爆。
+
+### 什么时候用现成方案
+
+上面两段代码用于演示原理。跨会话记忆这类需求，官方已有现成的 memory tool：Claude 在一个记忆文件目录里创建、读取、更新、删除文件，信息跨会话持久化，不必全部塞在上下文窗口里。Python SDK（软件开发包）提供 `BetaLocalFilesystemMemoryTool` 这样的现成实现（辅助类在 beta 命名空间，memory tool 本身不需要 beta header），要接自己的存储时替换后端即可。
+
+参考来源：[Memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool)
 
 ---
 
 ## 7.6 错误处理与容错机制
+
+动手分类错误之前，先知道 SDK 已经替你做了一层：anthropic Python SDK 默认对连接错误、408、409、429 和 5xx 自动重试 2 次，带短指数退避，构造客户端时用 `max_retries` 可以调整。自己再写重试逻辑时要有意识地跟这一层配合——比如把 `max_retries` 设为 0 交给自建策略接管，否则一次超时会被放大成双份请求。
 
 ```python
 from enum import Enum
@@ -499,7 +545,13 @@ class ErrorHandler:
         return ErrorAction.FAIL
 
     async def _handle_rate_limit(self, error, state):
-        await asyncio.sleep(getattr(error, "retry_after", 60))
+        # 走到这里通常意味着 SDK 的自动重试额度已用尽。
+        # 等待时间以响应的 retry-after 头为准（单位：秒）
+        retry_after = None
+        response = getattr(error, "response", None)
+        if response is not None:
+            retry_after = response.headers.get("retry-after")
+        await asyncio.sleep(float(retry_after or 60))
         return ErrorAction.RETRY
 
     async def _handle_tool_failure(self, error, state):
@@ -511,7 +563,7 @@ class ErrorHandler:
     async def _handle_context_overflow(self, error, state):
         manager = state.context.get("state_manager")
         if manager:
-            manager._compress()
+            manager.compress()
             return ErrorAction.RETRY
         return ErrorAction.FAIL
 
@@ -560,9 +612,15 @@ class FallbackManager:
         raise AllToolsFailedError([primary_tool] + self.fallback_map.get(primary_tool, []), last_error)
 ```
 
+限流里有一类 429 要单独识别：当月消费达到套餐上限后，API 返回的 `rate_limit_error` 不带 `retry-after` 头，SDK 的自动重试也会一直失败。这时候该做的不是重试，而是暂停任务、触发告警，等额度恢复。
+
+参考来源：[Rate limits](https://platform.claude.com/docs/en/api/rate-limits)
+
 ---
 
 ## 7.7 安全与权限管理
+
+Agent 能执行的每项操作，都该先过一遍权限检查；代码执行与网络访问则要收进沙箱（sandbox），防止一个失控的工具把整个宿主拖下水。下面给出权限模型与沙箱的骨架实现。
 
 ```python
 from enum import Enum
@@ -575,13 +633,15 @@ class PermissionScope(Enum):
     ADMIN = "admin"
 
 class Permission:
-    def __init__(self, scopes: list[PermissionScope] = None, file_paths: list[str] = [],
-                 allowed_tools: list[str] = [], allowed_domains: list[str] = [],
+    def __init__(self, scopes: list[PermissionScope] | None = None,
+                 file_paths: list[str] | None = None,
+                 allowed_tools: list[str] | None = None,
+                 allowed_domains: list[str] | None = None,
                  max_execution_time: int = 300, max_api_calls: int = 100):
         self.scopes = scopes or [PermissionScope.READ]
-        self.file_paths = file_paths
-        self.allowed_tools = allowed_tools
-        self.allowed_domains = allowed_domains
+        self.file_paths = file_paths or []
+        self.allowed_tools = allowed_tools or []
+        self.allowed_domains = allowed_domains or []
         self.max_execution_time = max_execution_time
         self.max_api_calls = max_api_calls
 
@@ -595,17 +655,29 @@ class SecurityManager:
             return False
         import os
         real = os.path.realpath(path)
-        return any(real.startswith(os.path.realpath(p)) for p in self.permission.file_paths)
+        for p in self.permission.file_paths:
+            boundary = os.path.realpath(p)
+            # 逐字符 startswith 会放过同级目录：/workspace/sandbox 也匹配 /workspace/sandbox-evil
+            if real == boundary or real.startswith(boundary + os.sep):
+                return True
+        return False
 
     def check_tool_usage(self, tool_name: str) -> bool:
         return tool_name in self.permission.allowed_tools
 
     def check_network_access(self, domain: str) -> bool:
-        return any(domain.endswith(a) or domain == a for a in self.permission.allowed_domains)
+        # endswith 直接匹配会把 notexample.com 放进 example.com 的白名单，
+        # 必须保证剩余前缀以点结尾
+        return any(domain == a or domain.endswith("." + a)
+                   for a in self.permission.allowed_domains)
 
     def audit(self, operation: str, details: dict):
-        self.audit_log.append({"timestamp": now(), "operation": operation, "details": details})
+        from datetime import datetime, timezone
+        self.audit_log.append({"timestamp": datetime.now(timezone.utc).isoformat(),
+                               "operation": operation, "details": details})
 ```
+
+路径和域名这两处白名单匹配是安全代码里最常见的笔误：前缀检查不补 `os.sep`，同级目录 `sandbox-evil` 就能借道 `sandbox` 的授权；后缀检查不加点，`notexample.com` 就能冒充 `example.com`。审计日志同理要真实落盘（写文件或接日志系统），只在内存里 append 的 `audit_log` 进程一崩就没了。
 
 ### 沙箱隔离
 
@@ -667,7 +739,7 @@ class AlertManager:
 
 ### 部署架构
 
-```
+```text
 负载均衡层（Nginx/云负载均衡）
     → API网关层（认证、限流、日志、路由）
         → Agent服务集群（Agent-1 ... Agent-N）
@@ -720,7 +792,7 @@ def run_agent(goal: str, max_iterations: int = 10):
     messages = [{"role": "user", "content": goal}]
     for i in range(max_iterations):
         response = client.messages.create(
-            model="claude-opus-4-20250514", max_tokens=1024, tools=tools, messages=messages,
+            model="claude-opus-4-8", max_tokens=1024, tools=tools, messages=messages,
         )
         tool_blocks = [b for b in response.content if b.type == "tool_use"]
         if not tool_blocks:
@@ -766,7 +838,7 @@ if __name__ == "__main__":
 **Q2**：下面这段代码会导致什么问题？如何修复？
 ```python
 response = client.messages.create(
-    model="claude-opus-4-20250514",
+    model="claude-opus-4-8",
     messages=[{"role": "user", "content": "继续"}],
     tools=tools,
 )
@@ -774,7 +846,7 @@ response = client.messages.create(
 
 **Q3**：星型架构和链式架构分别适合什么场景？如何组合？
 
-**Q4**：`asyncio.gather` 中某个子 Agent 抛异常，默认行为是什么？如何避免单点失败拖垮全部？
+**Q4**：`asyncio.gather` 中某个子 Agent 抛异常，其余协程会怎样？`return_exceptions=True` 改变了什么？
 
 **Q5**：为什么 tool_result 必须以 `role: "user"` 回传？
 
@@ -787,24 +859,37 @@ response = client.messages.create(
 
 **A3**：星型适合子任务独立（同时查酒店、天气、景点）；链式适合有严格顺序依赖（查用户 → 查订单 → 生成报告）。组合：先并行跑独立子任务，再按依赖顺序跑链式任务。
 
-**A4**：默认情况第一个异常时 gather 立即返回，其他协程被取消。用 `return_exceptions=True` 避免。
+**A4**：`gather` 会把第一个异常立即抛给调用方，但其余协程**不会被取消**——它们继续在后台跑完，只是结果没人接收，token 白花，副作用照常发生。`return_exceptions=True` 让 gather 把异常当普通返回值收进结果列表，等全部结束后统一处理。Python 3.11 起还可以用 `asyncio.TaskGroup`：任一任务失败时会自动取消其余任务。
 
-**A5**：Anthropic Messages API 要求 user 和 assistant 角色严格交替。tool_result 属于用户侧反馈，必须以 user 角色回传，否则 API 返回 400。
+**A5**：Claude API 没有 `tool` 或 `function` 这样的独立角色，工具结果直接嵌在 user/assistant 消息结构里，由用户侧在下一轮回传；模型按交替轮次训练，工具执行结果作为环境反馈归入 user 侧。同时 tool_result 消息必须紧跟对应的 tool_use 消息，顺序不合法的请求无法通过校验。
 
 </details>
 
-### 进阶路径
+### 进阶方向
 
 1. **MCP 协议与 Agent 结合**：把子 Agent 替换为 MCP 服务器，参考 [MCP 官方规范](https://modelcontextprotocol.io/)
 2. **长时任务与断点续跑**：将 `AgentState` 序列化到数据库，实现崩溃恢复
-3. **多 Agent 评估与调优**：搭建离线评估管线，参考 [Anthropic Agent 评估指南](https://docs.anthropic.com/en/docs/build-with-claude/agent-evals)
+3. **多 Agent 评估与调优**：搭建离线评估管线，从定义可度量的成功标准开始，参考 [Define success criteria and build evaluations](https://platform.claude.com/docs/en/test-and-evaluate/develop-tests)
 4. **成本控制**：监控 token 消耗，简单任务用 Haiku，复杂推理用 Opus
 5. **安全加固**：加入人工审批环节（human-in-the-loop），高危操作强制确认
 
 ### 参考资料
 
-- [Anthropic 官方文档 - Tool use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
-- [Anthropic 官方文档 - Agent patterns](https://docs.anthropic.com/en/docs/build-with-claude/agent-patterns)
-- [Anthropic 官方文档 - Agent evals](https://docs.anthropic.com/en/docs/build-with-claude/agent-evals)
-- [Anthropic 官方文档 - Models](https://docs.anthropic.com/en/docs/about-claude/models)
+- [Tool use overview](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
+- [Handle tool calls（tool_result 格式与顺序规则）](https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls)
+- [Parallel tool use（模型侧并行工具调用）](https://platform.claude.com/docs/en/agents-and-tools/tool-use/parallel-tool-use)
+- [Memory tool（官方跨会话记忆）](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool)
+- [Build a tool-using agent（官方教程）](https://platform.claude.com/docs/en/agents-and-tools/tool-use/build-a-tool-using-agent)
+- [Define success criteria and build evaluations（评估）](https://platform.claude.com/docs/en/test-and-evaluate/develop-tests)
+- [Model deprecations（模型生命周期与退役日期）](https://platform.claude.com/docs/en/about-claude/model-deprecations)
+- [Building effective agents（Anthropic 工程博客）](https://www.anthropic.com/engineering/building-effective-agents)
 - [Model Context Protocol 规范](https://modelcontextprotocol.io/)
+
+---
+
+## 参考来源与口径说明
+
+- **模型 ID 口径**：原文写作时示例统一使用 `claude-opus-4-20250514`（Claude Opus 4）。该模型已于 2026-06-15 从 Claude API 退役，官方迁移表指定的继任模型即 `claude-opus-4-8`，本文全部示例已随之替换；摘要压缩示例用现行的 `claude-haiku-4-5`。各模型生命周期见官方 Model deprecations 页。
+- **文档地址口径**：Anthropic 文档已从 docs.anthropic.com 迁移至 platform.claude.com，原文引用的 "agent-patterns" 与 "agent-evals" 两个文档页已不存在，参考资料换成了内容对应的现行页面。链接有效性核对时间：2026-09-21。
+- **SDK 口径**：自动重试（默认 2 次，覆盖连接错误、408、409、429 与 5xx）、`AsyncAnthropic`、`max_retries` 配置均依据 anthropic Python SDK 官方文档（要求 Python 3.10+）。
+- **代码性质**：除 7.8 节最小可运行示例外，各节代码用于演示结构与取舍，`create_agent`、`prepare_input`、消息队列等外部依赖以函数签名示意，接入时按自己的工具实现补齐。

@@ -5,8 +5,8 @@ slug: opensre-ai-sre-agent-framework
 github_repo: "Tracer-Cloud/opensre"
 source_key: "gh:Tracer-Cloud/opensre"
 aliases:
-       - "/posts/tech/opensre-ai-sre-framework/"
-       - "/posts/tech/opensre-ai-sre-agent-toolkit/"
+  - "/posts/tech/opensre-ai-sre-framework/"
+  - "/posts/tech/opensre-ai-sre-agent-toolkit/"
 description: "OpenSRE 是一个开源 AI SRE Agent 框架，解决生产事故调查问题。连接 Grafana/Datadog/Sentry 等 60+ 工具，自动抓取告警上下文、日志、指标、追踪，生成结构化 RCA 报告。支持 Kubernetes/EC2/CloudWatch 等多种基础设施。"
 draft: false
 categories: ["技术笔记"]
@@ -15,64 +15,28 @@ tags: ["AI Agent", "DevOps", "Kubernetes", "开源工具", "Python"]
 
 # OpenSRE：开源 AI SRE Agent 框架，连接 60+ 工具自动调查生产事故
 
-## 学习目标
+OpenSRE 想做的不只是再给你一个监控面板，而是把"事故调查"本身做成一套可在真实基础设施上训练、评估的 Agent 环境。它默认只调查、不操作，输出带证据的 RCA 报告，把误操作风险挡在工作流之外。
 
-阅读本文后，你将能够：
+它连接 60+ 工具，覆盖可观测性、基础设施、数据库、事件管理多个环节；采用 Apache 2.0 协议，GitHub 3.3k stars，可以在你自己的基础设施上跑。
 
-1. 解释 AI SRE 缺乏规模化训练和评估环境的核心原因，以及 OpenSRE 如何解题。
-2. 描述 OpenSRE 的系统架构和事故调查的完整流程（抓取 → 推理 → 报告 → 推送）。
-3. 列出 OpenSRE 支持的 60+ 工具类别，并判断你的基础设施是否被覆盖。
-4. 独立完成 OpenSRE 的安装、onboard 配置和一个测试告警的调查。
-5. 评估 OpenSRE 是否适合你的团队，列出至少 3 个适用场景和 3 个已知边界。
+## 一、核心问题：事故调查缺一个 SWE-bench
 
-## 目录
+SWE-bench 给编码 Agent 提供了规模化的训练数据和清晰反馈，这是 AI Coding 快速推进的关键条件之一。生产事故调查一直缺对等的东西。
 
-- [学习目标](#学习目标)
-- [一、核心问题：为什么 AI SRE 没有突破](#一核心问题为什么-ai-sre-没有突破)
-- [二、系统架构](#二系统架构)
-- [三、主要能力](#三主要能力)
-- [四、60+ 工具集成](#四60-工具集成)
-- [五、测试框架](#五测试框架)
-- [六、快速开始](#六快速开始)
-- [七、与传统 SRE 工具的对比](#七与传统-sre-工具的对比)
-- [八、技术栈](#八技术栈)
-- [九、Roadmap 上的重要集成](#九roadmap-上的重要集成)
-- [十、适用场景](#十适用场景)
-- [练习](#练习)
-- [自测](#自测)
-- [进阶路径](#进阶路径)
-- [常见问题 FAQ](#常见问题-faq)
-- [总结](#总结)
+不是没人想做，而是分布式故障本身的特点卡住了这条路：
 
-生产环境出事，证据散落在日志、指标、追踪、runbook、Slack 线程里。传统的 AI Coding 有 SWE-bench 提供标准化训练和反馈，但 **AI SRE（生产事故调查）缺少同等规模的环境**。
+- 一次故障比本地代码任务更慢、更嘈杂，信号和噪声混在一起。
+- 难以在可重复的前提下模拟和评估——本地能跑的用例，生产里复现不了。
+- 证据散落在日志、指标、追踪、runbook、Slack 线程等多个系统。
+- 判断依赖基础设施上下文（Kubernetes、AWS、数据库等），模型需要在线理解这些系统怎么运转。
 
-分布式故障比本地代码任务更慢、更嘈杂、更难模拟和评估，AI SRE 至今没有突破。
+OpenSRE 的解法是构建一个开放环境，让 AI SRE Agent 在真实基础设施上训练和评估，核心定位是"用于 Agent 基础设施事故响应的开放强化学习环境，包含端到端测试和合成事故模拟"。
 
-OpenSRE 要填补这个空白。
+## 二、系统地图：一次告警怎么流过 OpenSRE
 
-GitHub 3.3k stars，Apache 2.0 协议，一个开源的 AI SRE Agent 框架和训练评估环境，在自己的基础设施上运行。连接 60+ 工具，调查生产事故，生成带证据的根因分析报告。
+先看整体，再拆细节。
 
----
-
-## 一、核心问题：为什么 AI SRE 没有突破
-
-SWE-bench 给编码 Agent 提供了规模化训练数据和清晰反馈，但生产事故调查没有同等的东西。
-
-**原因**：
-- 分布式故障比本地代码任务更慢、更嘈杂
-- 难以模拟和评估
-- 证据分散在多个系统（日志、指标、追踪、runbook、Slack）
-- 需要理解基础设施上下文（Kubernetes、AWS、数据库等）
-
-**OpenSRE 的解题思路**：构建一个开放的环境，让 AI SRE Agent 在真实基础设施上训练和评估：
-
-> 一个用于 Agent 基础设施事故响应的开放强化学习环境，包含端到端测试和合成事故模拟
-
----
-
-## 二、系统架构
-
-```
+```text
 告警触发 → OpenSRE Agent 自动调查
               ↓
     ┌─────────┴──────────┐
@@ -88,63 +52,79 @@ SWE-bench 给编码 Agent 提供了规模化训练数据和清晰反馈，但生
        推送至 Slack/PagerDuty
 ```
 
-当告警触发时，OpenSRE 自动：
-1. **抓取**告警上下文和关联的日志、指标、追踪
-2. **推理**跨连接系统识别异常
-3. **生成**带证据的结构化调查报告（最可能的根因）
-4. **建议**下一步行动，可选执行修复操作
-5. **推送**摘要直接到 Slack 或 PagerDuty
+一次调查分五步，OpenSRE 会自动完成：
 
----
+1. **抓取**告警上下文，以及关联的日志、指标、追踪。
+2. **推理**跨连接系统之后，识别异常在哪。
+3. **生成**带证据的结构化调查报告，指出最可能的根因。
+4. **建议**下一步行动，可选执行修复操作。
+5. **推送**摘要到 Slack 或 PagerDuty。
 
-## 三、主要能力
+这套流程里有一个值得注意的边界：各数据源是作为独立集成接入的，Agent 调查时把它们当作多个证据来源，而不是嵌套在一个大系统里。
 
-| 能力 | 说明 |
-|------|------|
-| **结构化事故调查** | 跨所有信号进行关联根因分析 |
-| **Runbook 感知推理** | 读取 runbook 并自动应用 |
-| **预测性故障检测** | 在告警之前捕获新兴问题 |
-| **证据支持根因** | 每个结论都链接到背后的数据 |
-| **全 LLM 灵活性** | 支持 Anthropic/OpenAI/Ollama/Gemini/OpenRouter/NVIDIA NIM/Bedrock |
+## 三、核心机制：四条主线拆开看
 
----
+把"事件调查"拆开，OpenSRE 有三个相互独立的能力，加上一个跨层约束：
 
-## 四、60+ 工具集成
+| 能力 | 职责 | 边界 |
+|------|------|------|
+| 结构化事故调查 | 跨所有信号做关联根因分析 | 只分析，不执行修复 |
+| Runbook 感知推理 | 读取 runbook 并自动套用 | 依赖团队是否有可读的 runbook |
+| 预测性故障检测 | 在告警之前捕获新兴问题 | 属于增值能力，不替代告警 |
+| 证据支持根因 | 每个结论都链接到背后数据 | 结论可追溯，可被人工复核 |
+
+跨层约束是"全 LLM 灵活性"：支持 Anthropic、OpenAI、Ollama、Gemini、OpenRouter、NVIDIA NIM、Bedrock。这意味着同一个 Agent 可以换模型跑，也可以使用本地模型。
+
+## 四、一次真实任务怎么流过系统
+
+用一个测试告警看整条链路。假设你的 Kubernetes 集群里，一个 Datadog 告警被触发：
+
+```bash
+opensre investigate -i tests/e2e/kubernetes/fixtures/datadog_k8s_alert.json
+```
+
+触发后，Agent 先抓取这个告警的上下文——关联的日志、指标和追踪数据从已配置的 Datadog、Grafana（Loki/Mimir/Tempo）等集成里取回。然后它跨这些系统做推理，判断异常是来自应用本身的代码问题，还是来自底层的资源、数据库或网络。中途如果存在 runbook，Agent 会读取并尝试套用其中的处置步骤。最终生成一份 RCA 报告，每个"最可能的根因"都带对应的证据链接，再推送到 Slack 或 PagerDuty 供人审阅。
+
+这一步值得关注的是：报告里的结论不是模型空口说的，而是可以回溯到具体数据的。人工复核"它为什么这么判断"有据可依。
+
+## 五、60+ 工具集成：覆盖了哪些环节
+
+集成按类别展开，覆盖事故调查所需的几乎全部数据源：
 
 | 类别 | 集成 |
 |------|------|
-| **AI / LLM** | Anthropic · OpenAI · Ollama · Google Gemini · OpenRouter · NVIDIA NIM · Bedrock |
-| **可观测性** | Grafana (Loki/Mimir/Tempo) · Datadog · Honeycomb · Coralogix · CloudWatch · Sentry · Elasticsearch · Better Stack |
-| **基础设施** | Kubernetes · AWS (S3/Lambda/EKS/EC2) · GCP · Azure |
-| **数据库** | MongoDB · ClickHouse · PostgreSQL · MySQL · MariaDB · MongoDB Atlas · Azure SQL |
-| **数据平台** | Apache Airflow · Apache Kafka · Apache Spark · Prefect · RabbitMQ |
-| **Dev 工具** | GitHub · GitHub MCP · Bitbucket · GitLab |
-| **事件管理** | PagerDuty · Opsgenie · Jira |
-| **通信** | Slack · Google Docs |
+| AI / LLM | Anthropic · OpenAI · Ollama · Google Gemini · OpenRouter · NVIDIA NIM · Bedrock |
+| 可观测性 | Grafana (Loki/Mimir/Tempo) · Datadog · Honeycomb · Coralogix · CloudWatch · Sentry · Elasticsearch · Better Stack |
+| 基础设施 | Kubernetes · AWS (S3/Lambda/EKS/EC2) · GCP · Azure |
+| 数据库 | MongoDB · ClickHouse · PostgreSQL · MySQL · MariaDB · MongoDB Atlas · Azure SQL |
+| 数据平台 | Apache Airflow · Apache Kafka · Apache Spark · Prefect · RabbitMQ |
+| Dev 工具 | GitHub · GitHub MCP · Bitbucket · GitLab |
+| 事件管理 | PagerDuty · Opsgenie · Jira |
+| 通信 | Slack · Google Docs |
 
-还有 MCP 和 OpenClaw 协议支持。
+还支持 MCP 和 OpenClaw 协议，接入未列出的工具时可以作为补充通道。
 
----
+## 六、测试框架：怎么评估一个 AI SRE
 
-## 五、测试框架：合成 RCA + 端到端测试
+OpenSRE 内置两类测试，对应评估的两条主线。
 
-OpenSRE 内置两类测试：
+**合成 RCA 测试（Synthetic RCA）**：在 `tests/synthetic/` 下检查根因准确性、所需证据和对抗性红鲱鱼。它测的是"面对一个受控故障，Agent 能不能找到设定好的根因，是否会被故意放进去的干扰信息带偏"。场景示例是 RDS + PostgreSQL。
 
-### 合成 RCA 测试（Synthetic RCA）
+**端到端测试（E2E）**：跨云支持场景的完整测试，覆盖 Kubernetes、EC2、CloudWatch、Lambda、ECS Fargate、Flink。它测的是"Agent 在接近真实的环境里能不能走完整条调查链路"。
 
-在 `tests/synthetic/` 下检查根因准确性、所需证据和对抗性红鲱鱼。例如 RDS + PostgreSQL 场景。
+两条主线的边界靠目录结构维持，E2E 与合成、本地与云的分界始终清晰。
 
-### 端到端测试（E2E）
+需要说清楚的是：合成测试是受控环境，故障时长和影响范围都是预设的，通过它不代表生产可用；但它作为"最低质量标准"有意义——不通过合成测试一定有问题。
 
-跨云支持场景的完整测试：Kubernetes、EC2、CloudWatch、Lambda、ECS Fargate、Flink。
+## 七、技术栈与部署
 
-测试目录结构设计让 E2E vs 合成、本地 vs 云的边界始终清晰可见。
+- **语言**：Python 3.13
+- **运行时**：LangGraph
+- **数据库**：PostgreSQL + Redis
+- **部署**：Railway / Docker
+- **Dev Container**：VS Code devcontainer 开箱即用
 
----
-
-## 六、快速开始
-
-### 安装
+安装：
 
 ```bash
 # Linux/macOS
@@ -157,7 +137,7 @@ brew install Tracer-Cloud/opensre/opensre
 irm https://raw.githubusercontent.com/Tracer-Cloud/opensre/main/install.ps1 | iex
 ```
 
-### 开发模式
+开发模式：
 
 ```bash
 git clone https://github.com/Tracer-Cloud/opensre
@@ -171,18 +151,13 @@ opensre onboard
 opensre investigate -i tests/e2e/kubernetes/fixtures/datadog_k8s_alert.json
 ```
 
-### Railway 部署
-
-部署前需要先在 Railway 项目中配置 Postgres 和 Redis 服务：
+Railway 部署前，需要先在 Railway 项目中配置 Postgres 和 Redis，再设置 `DATABASE_URI` 与 `REDIS_URI`：
 
 ```bash
-# 创建/链接 Railway Postgres 和 Redis 后设置 DATABASE_URI 和 REDIS_URI
 opensre deploy railway --project <project> --service <service> --yes
 ```
 
----
-
-## 七、与传统 SRE 工具的对比
+## 八、与传统 SRE 工具的对比
 
 | 对比 | 传统 SRE | OpenSRE |
 |------|---------|---------|
@@ -192,17 +167,7 @@ opensre deploy railway --project <project> --service <service> --yes
 | 训练环境 | 无 | 合成 + E2E 场景，规模化 |
 | LLM 支持 | 不支持 AI | 支持多种 LLM |
 
----
-
-## 八、技术栈
-
-- **语言**：Python 3.13
-- **运行时**：LangGraph
-- **数据库**：PostgreSQL + Redis
-- **部署**：Railway / Docker
-- **Dev Container**：VS Code devcontainer 开箱即用
-
----
+这里要区分两类工具的关系：OpenSRE 不是告警管理工具，而是事故调查工具。PagerDuty / Opsgenie 负责告警路由、升级、值班表；OpenSRE 处理的是一个告警触发后"查清根因、出报告"这一段。两者互补，OpenSRE 可以把报告推送到 PagerDuty 作为注释，或创建一个跟进的 Jira 工单。
 
 ## 九、Roadmap 上的重要集成
 
@@ -215,90 +180,52 @@ opensre deploy railway --project <project> --service <service> --yes
 | 通信 | Discord, Notion, Teams, WhatsApp, Confluence |
 | Agent 部署 | Railway |
 
----
+## 十、采用建议：谁该先上，谁可以等等
 
-## 十、适用场景
+- **大厂 SRE 团队**：自动化事故调查，减少 MTTR，回报最直接。
+- **创业公司**：一个人 on-call 时，AI 辅助分析能分担判断压力。
+- **AI 研究**：用它的测试框架训练、评估 AI SRE Agent，是最有建设性的用途之一。
+- **平台工程**：可以拿它当构建内部 AI SRE 能力的基座。
 
-- **大厂 SRE 团队**：自动化事故调查，减少 MTTR
-- **创业公司**：一个人 on-call 时 AI 辅助分析
-- **AI 研究**：用 OpenSRE 的测试框架训练 AI SRE Agent
-- **平台工程**：构建内部 AI SRE 能力的基座
+两类团队可以先等等：告警系统本身还很乱、runbook 没有沉淀的团队，直接上 Agent 收益有限；以及对自动排查可信度要求极高、必须人工逐条复核的受监管场景，更适合先只把它当辅助分析工具，不接自动流程。
 
----
+落地前有几点要明确：
 
-## 总结
+- 默认只调查、不执行修复；输出 RCA 报告需人工审核后才有下一步。若启用"可选执行修复操作"，务必先在测试环境充分验证，并把 Agent 权限限制在只读范围。
+- 核心推理依赖 LLM。若 LLM 不可用，Agent 无法完成调查，建议配置至少一个备用 provider（例如主用 Anthropic，备用 OpenAI 或本地 Ollama），并设置 fallback 顺序。
+- 对中文告警和日志不设语言限制——它抓取的是工具 API 返回的结构化数据，由 LLM 理解后生成报告。但合成测试目前以英文场景为主，中文场景需要自己写测试。
+- 混合云（如 AWS + 自建机房）可以同时接入，集成是模块化的；跨云的网络连通性和权限配置需提前处理。
 
-OpenSRE 解决的是 AI SRE 缺乏规模化训练和评估环境的问题——和 SWE-bench 对 Coding Agent 的作用类似，OpenSRE 要成为 AI SRE 的基准平台。
+## 常见问题 FAQ
 
-60+ 工具集成、合成 RCA + E2E 测试框架、支持多种 LLM（Anthropic/OpenAI/Ollama/Gemini 等），让 AI Agent 能够在真实基础设施上做事故调查并获得可量化的反馈。
+**Q1: OpenSRE 能直接在生产环境跑吗？会不会误操作？**
 
-如果你在构建 AI SRE 能力，或者需要自动化生产事故调查，OpenSRE 是目前少数提供完整训练评估环境的开源选项。
+默认只做"调查"和"报告"，不执行修复。输出是结构化 RCA 报告，需人工审核。如果启用"可选执行修复操作"，务必在测试环境充分验证，并限制权限在只读范围。
 
-**相关链接：**
+**Q2: 如果 LLM 宕机或超时怎么办？**
+
+核心推理依赖 LLM，不可用则调查无法完成。建议配至少一个备用 provider 并设 fallback 顺序。
+
+**Q3: 合成 RCA 测试能替代真实事故评估吗？**
+
+不能。合成测试是受控环境，真实事故更复杂、涉及更多系统和人员。把它理解为最低质量标准：通过不代表生产可用，不通过一定有问题。
+
+**Q4: 支持中文告警和日志吗？**
+
+不设语言限制——抓取的是结构数据，由 LLM 理解。只要 LLM 支持中文即可。合成测试目前以英文为主，中文场景需自建测试。
+
+**Q5: 混合云能同时接入吗？**
+
+可以。集成模块化，可同时启用 AWS CloudWatch 和自建机房 Prometheus/Grafana；注意提前处理跨云网络连通性和权限配置。
+
+**Q6: OpenSRE 和 PagerDuty / Opsgenie 是什么关系？**
+
+OpenSRE 是事故调查工具，不是告警管理工具。PagerDuty/Opsgenie 管告警路由、升级和值班；OpenSRE 处理告警后的调查与报告。两者互补。
+
+## 相关链接
 
 - GitHub：https://github.com/Tracer-Cloud/opensre（3.3k stars）
 - 官网：https://www.opensre.com
 - Discord：https://discord.gg/7NTpevXf7w
 
 🦞 每日 08:00 自动更新
-
----
-
-## 练习
-
-### 练习 1：走通第一个测试告警调查
-按照 [六、快速开始](#六快速开始) 的步骤安装 OpenSRE，运行 `opensre investigate -i tests/e2e/kubernetes/fixtures/datadog_k8s_alert.json`。观察 Agent 的输出：它抓取了哪些工具的数据？生成的 RCA 报告包含哪些部分？报告中的每个结论是否都有对应的证据链接？
-
-### 练习 2：配置一个自定义集成
-假设你团队用的可观测性工具不在 OpenSRE 的 60+ 集成列表中（例如一个内部自建的监控平台），研究 `tests/synthetic/` 下的合成 RCA 测试写法，尝试为这个自定义工具写一个最小的 adapter（适配器），让 OpenSRE 能够读取它的告警和日志数据。
-
-### 练习 3：评估 OpenSRE 对你的基础设施的覆盖率
-列出你的团队当前使用的所有可观测性、基础设施、数据库、Dev 工具（至少 10 个）。对照 [四、60+ 工具集成](#四60-工具集成) 的表格，标记哪些已被 OpenSRE 支持，哪些需要自定义集成。计算覆盖率百分比。
-
-### 练习 4：阅读合成 RCA 测试的理解
-打开 `tests/synthetic/` 下的一个测试文件（例如 RDS + PostgreSQL 场景），阅读它的根因准确性检查、所需证据列表和对抗性红鲱鱼。尝试为一个你熟悉的故障场景（例如"Redis 缓存雪崩"）写一个类似的合成测试 JSON。
-
-### 练习 5：部署 OpenSRE 到 Railway
-如果你有 Railway 账号，按照 [六、快速开始](#六快速开始) 的 Railway 部署步骤，完成 Postgres + Redis 的配置和 `opensre deploy railway`。部署后触发一个测试告警，验证端到端流程是否打通。
-
-## 自测
-
-1. OpenSRE 的"合成 RCA 测试"和"端到端测试"分别测什么？如果你要为一个新集成（例如一个自建监控工具）写测试，应该先写哪种测试？
-2. OpenSRE 的 Agent 用什么运行时框架？（提示：看 [八、技术栈](#八技术栈)）这个框架的主要职责是什么？
-3. OpenSRE 支持哪些 LLM provider？如果你要用 Ollama 在本地跑一个无需 API Key 的 SRE Agent，需要改哪些配置？
-4. OpenSRE 的 RCA 报告"每个结论都链接到背后的数据"——这个设计解决了 SRE 工作中的什么痛点？
-5. 如果你团队的告警系统不是 Datadog 或 Grafana（例如用 Prometheus + Alertmanager），OpenSRE 能接入吗？需要做什么？
-
-## 进阶路径
-
-- **初学者（刚接触 AI SRE）**：先理解 [一、核心问题](#一核心问题为什么-ai-sre-没有突破) 和 [二、系统架构](#二系统架构)，跑通练习 1；读 OpenSRE 的 GitHub README，重点看"Supported Integrations"和"Testing Framework"两节。
-- **中级（已在做事故响应自动化）**：研究 OpenSRE 的 Agent prompt 设计和工具调用逻辑；尝试为你团队的自建工具写集成 adapter；评估 OpenSRE 的 RCA 报告质量是否达到人工调查的水平。
-- **高级（想在团队落地 AI SRE）**：在测试环境部署 OpenSRE，接入团队的告警和观测工具；设计一个"人工审核 + AI 辅助"的事故响应流程；评估 OpenSRE 的 false positive（误报）率和 missed root cause（漏掉根因）率；考虑如何把 OpenSRE 的调查报告自动关联到 PagerDuty 或 Jira 工单中。
-
-## 常见问题 FAQ
-
-**Q1: OpenSRE 能直接在生产环境跑吗？会不会误操作？**
-
-OpenSRE 默认只做"调查"和"报告"，不执行任何修复操作。它的输出是结构化的 RCA 报告，需要人工审核后才能执行修复。如果你启用了"可选执行修复操作"功能，务必在测试环境充分验证，并确保 Agent 的权限被限制在只读范围。
-
-**Q2: OpenSRE 对 LLM 的依赖有多强？如果 LLM 宕机或超时怎么办？**
-
-目前 OpenSRE 的核心推理依赖 LLM（大模型）。如果 LLM 不可用，Agent 无法完成调查。建议配置至少一个备用 LLM provider（例如主用 Anthropic，备用 OpenAI 或 Ollama 本地模型）。OpenSRE 支持多种 LLM，可以在配置中设置 fallback（备用）顺序。
-
-**Q3: 合成 RCA 测试能完全替代真实事故场景的评估吗？**
-
-不能。合成测试是受控环境，故障时长和影响范围都是预设的。真实事故通常更复杂、更高压力、涉及更多系统和人员。OpenSRE 的测试框架应该被理解为"最低质量标准"——通过合成测试不代表生产可用，但不通过合成测试一定有问题。
-
-**Q4: OpenSRE 支持中文环境的告警和日志吗？**
-
-支持。OpenSRE 本身不限制告警和日志的语言——它抓取的是工具 API 返回的结构化数据，LLM 负责理解这些内容并生成报告。只要你的 LLM 支持中文（Claude、GPT、Gemini 都支持），中文告警和日志可以被正确处理。但合成测试目前主要是英文场景，中文场景需要自己写测试。
-
-**Q5: 如果我们的基础设施是混合云（AWS + 自建机房），OpenSRE 能同时接入吗？**
-
-可以。OpenSRE 的集成是模块化的，你可以同时启用 AWS CloudWatch 和自建机房的 Prometheus/Grafana。Agent 在调查时会自动关联所有已启用集成的数据。需要注意的是，跨云的网络连通性和权限配置需要提前处理好。
-
-**Q6: OpenSRE 和 PagerDuty / Opsgenie 的关系是什么？**
-
-OpenSRE 不是告警管理工具，而是事故调查工具。PagerDuty/Opsgenie 负责告警路由、升级、值班表；OpenSRE 负责在一个告警触发后，自动调查并生成 RCA 报告。两者是互补关系：OpenSRE 可以把 RCA 报告推送到 PagerDuty 作为注释，或者创建一个跟进的 Jira 工单。
-
-## 总结

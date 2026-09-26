@@ -63,13 +63,15 @@ def score_article(content):
     # 段落长度
     # 纯列表/表格等结构化块不受 10 行限制（目录超 9 项属常态），只约束长文本段落。
     # quality.md 的段落密度口径是「每段 3-8 行正文（不含代码块）」，P3 又规定
-    # YAML frontmatter 不参与检查，因此两者先剔除再分段。
+    # frontmatter 不参与检查，因此两者先剔除再分段。
     def prose_only(text):
         lines = text.split("\n")
         start = 0
-        if lines and lines[0].strip() == "---":
+        # Hugo 的 frontmatter 有三种围栏，P3 对三者同样生效
+        opener = lines[0].strip() if lines else ""
+        if opener in ("---", "+++", ";;;"):
             for i in range(1, len(lines)):
-                if lines[i].strip() == "---":
+                if lines[i].strip() == opener:
                     start = i + 1
                     break
         out = []

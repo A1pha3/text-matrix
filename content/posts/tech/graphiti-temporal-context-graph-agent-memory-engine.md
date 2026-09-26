@@ -4,7 +4,7 @@ date: 2026-06-26T00:00:00+08:00
 slug: graphiti-temporal-context-graph-agent-memory-engine
 github_repo: "getzep/graphiti"
 source_key: "gh:getzep/graphiti"
-description: "深度拆解 getzep/graphiti 的设计：一个为 AI Agent 设计的时序知识图谱引擎，以 Episode 为溯源锚点、把事实建模成带有效期的边、用 RRF 把语义/BM25/图遍历三路召回融合起来。重点对比它与 GraphRAG、传统向量 RAG 的工程边界，给出在不同 agent 场景下的采用顺序。"
+description: "深度拆解 getzep/graphiti 的设计：一个为 AI Agent 设计的时序知识图谱引擎，以 Episode 为溯源锚点、把事实建模成带有效期的边、用 RRF 融合语义与 BM25 两路召回。重点对比它与 GraphRAG、传统向量 RAG 的工程边界，给出在不同 agent 场景下的采用顺序。"
 categories: ["技术笔记"]
 tags: ["RAG", "AI Agent", "MCP", "结构化输出"]
 draft: false
@@ -14,8 +14,8 @@ draft: false
 
 读完这篇，你将能：
 
-- 解释 Graphiti 真正解决的不是「更聪明的检索」而是「事实会过期、会被推翻，必须可溯源」。
-- 区分 Graphiti 里的四个图元素：EpisodicNode、EntityNode、EntityEdge、CommunityNode，以及它们之间的引用关系。
+- 说清 Graphiti 真正解决的是什么问题：事实会过期、会被推翻，必须可溯源——而不只是「检索更准」。
+- 区分 Graphiti 图里的五类节点与事实边：EpisodicNode、EntityNode、EntityEdge、CommunityNode、SagaNode，以及它们之间的引用关系。
 - 用一个具体场景（用户的穿衣偏好随时间变化）走完「Episode 入图 → 抽取 → 边失效 → 混合检索」的完整链路。
 - 看懂 Graphiti 的混合检索其实由「三种方法 × 五种 Reranker」组合而成，并能挑出适合自己场景的预设 Recipe。
 - 判断 Graphiti 与 GraphRAG、与 Zep 商业版的工程边界，并决定要不要在你的 agent 里用、怎么用。
@@ -25,12 +25,12 @@ draft: false
 - [信息来源约定](#信息来源约定)
 - [§1 先给判断](#先给判断)
 - [§2 它解决的不是一个检索问题](#它解决的不是一个检索问题)
-- [§3 总览图：Graphiti 的四个图元素](#总览图graphiti-的四个图元素)
+- [§3 总览图：Graphiti 的五类图元素](#总览图graphiti-的五类图元素)
 - [§4 机制一：Episode 是一切的起点](#机制一episode-是一切的起点)
 - [§5 机制二：事实是一条带过期时间的边](#机制二事实是一条带过期时间的边)
 - [§6 机制三：去重不是「合并字符串」](#机制三去重不是合并字符串)
 - [§7 机制四：可插拔的四件套](#机制四可插拔的四件套)
-- [§8 机制五：混合检索是「3×5」的笛卡尔积](#机制五混合检索是35的笛卡尔积)
+- [§8 机制五：混合检索是「3×5」的组合空间](#机制五混合检索是35的组合空间)
 - [§9 LLM 接入：结构化输出的两种模式](#llm-接入结构化输出的两种模式)
 - [§10 任务流案例：用户的穿衣偏好随时间变化](#任务流案例用户的穿衣偏好随时间变化)
 - [§11 vs GraphRAG / vs Zep：边界在哪里](#vs-graphrag--vs-zep边界在哪里)
@@ -46,7 +46,7 @@ draft: false
 
 本文混合了三种来源：
 
-- **（仓库证据）**：直接引自 `getzep/graphiti` 仓库的 README、源码、`pyproject.toml`、`examples/`、`mcp_server/` 子目录。本文写作时仓库当前版本为 `v0.29.2`（Apache-2.0 协议，主代码 `pyproject.toml` 要求 `requires-python = ">=3.10,<4"`、`neo4j>=5.26.0`），所有 API 名称与命令均以该版本为准。
+- **（仓库证据）**：直接引自 `getzep/graphiti` 仓库的 README、源码、`pyproject.toml`、`examples/`、`mcp_server/` 子目录。本文写作时仓库当前版本为 `v0.30.2`（2026 年 9 月 8 日发布，Apache-2.0 协议，主代码 `pyproject.toml` 要求 `requires-python = ">=3.10,<4"`、`neo4j>=5.26.0`），所有 API 名称与命令均以该版本为准。
 - **（论文证据）**：直接引自 Zep 团队的 arXiv 论文 [Zep: A Temporal Knowledge Graph Architecture for Agent Memory](https://arxiv.org/abs/2501.13956)，由 Zep 工程团队在仓库 README 中引用。
 - **（作者推断）**：基于工程原理的合理推导，但未在仓库或论文中显式说明的部分。
 
@@ -54,7 +54,7 @@ draft: false
 
 ## §1 先给判断
 
-如果你想把 RAG 从「文档片段相似度匹配」推进到「能记住用户说过什么、什么时候说的、后来有没有改口」，那么你今天在开源生态里能找到的、**不是研究原型、不是论文 demo、已经有生产级后端接入** 的工程化框架里，Graphiti 是少数几个最值得认真看的。
+如果你想把 RAG 从「文档片段相似度匹配」推进到「能记住用户说过什么、什么时候说的、后来有没有改口」，Graphiti 是开源生态里少数值得认真看的选项——它不是研究原型，也不是论文 demo，已经有生产级后端接入。
 
 它真正解决的问题不是「检索得不够准」，而是「**事实会过期、会互相矛盾、必须能回溯到原始输入**」。这三件事，传统向量数据库做不了，GraphRAG 做得不够好，LangChain 的 RAG chain 也只解决了一半。Graphiti 把它做成了一个独立的图引擎，并且把可插拔的边界（后端、LLM、embedder、reranker）都留在了框架外部。
 
@@ -69,35 +69,38 @@ draft: false
 3. **可分类**——开发者在某些场景下希望实体类型是 Pydantic 模型强约束的（prescribed），在其他场景下希望结构自动涌现（learned）。
 4. **可检索**——既要做语义匹配（用户说「鞋」要命中「Adidas Ultraboost」），又要做关键词匹配（型号、ID 之类不能被向量召回的内容），还要做图遍历（用户提到的「去年那双」要能跨时间锚点找到）。
 
-GraphRAG 满足前两条里的一半，LangChain 的 RAG 满足第四条，前两条几乎不做。Graphiti 把这四条都做到了，并把它包装成可独立运行的服务或 Python 库。
+GraphRAG 的强项在第三条的社区摘要和静态文档的批量处理，可溯源只做到「引用来源文档」这一层，事实失效则完全没有；LangChain 的 RAG chain 主要覆盖第四条的语义匹配，前三条基本缺位。四条全部做齐，在当前开源生态里 Graphiti 是少数派，它以 Python 库（`graphiti-core`）加 MCP server 两种形态提供。
 
-## §3 总览图：Graphiti 的四个图元素
+## §3 总览图：Graphiti 的五类图元素
 
-在动手写代码前，先给一张系统地图。Graphiti 的图由四类节点和三类关系组成：
+在动手写代码前，先给一张系统地图。Graphiti 的图由四类核心节点、一类辅助节点和三类关系组成：
 
 ```mermaid
 graph TD
-    Epi[EpisodicNode<br/>episode = 原始输入<br/>type: message / text / json]
+    Epi[EpisodicNode<br/>episode = 原始输入<br/>source: message / text / json / fact_triple]
     Ent[EntityNode<br/>name + summary<br/>labels: Person / Product / ...]
     Edge[EntityEdge<br/>fact + valid_at + invalid_at<br/>两个 EntityNode 之间的关系]
     Comm[CommunityNode<br/>cluster of entities]
-    
+    Saga[SagaNode<br/>episode 滚动摘要]
+
     Epi -->|MENTIONS| Ent
     Epi -->|NEXT_EPISODE| Epi2[EpisodicNode]
     Ent -->|RELATES_TO| Edge
     Edge -->|RELATES_TO| Ent2[EntityNode]
     Ent -->|MEMBER_OF| Comm
     Comm -.->|HAS_MEMBER| Ent
+    Saga -.->|汇总覆盖| Epi
 ```
 
-**四个图元素的真实身份**（仓库证据）：
+**五类图元素的真实身份**（仓库证据 `graphiti_core/nodes.py`、`graphiti_core/edges.py`）：
 
-| 元素 | 来源 | 关键字段 | 什么时候用 |
-| --- | --- | --- | --- |
-| `EpisodicNode` | `graphiti_core/nodes.py` | `content`, `source`, `created_at`, `type ∈ {message, text, json}` | 每次原始输入（用户消息、文章片段、结构化数据）都生成一个 |
-| `EntityNode` | `graphiti_core/nodes.py` | `name`, `summary`, `labels`, `attributes` | LLM 从 episode 中抽取的命名实体 |
-| `EntityEdge` | `graphiti_core/edges.py` | `fact`, `valid_at`, `invalid_at`, `source_node_uuid`, `target_node_uuid` | 实体之间的关系事实，可被新事实 invalidate |
-| `CommunityNode` | `graphiti_core/nodes.py` | `name`, `summary` | 同类实体的聚类（与 GraphRAG 的 community 概念一致） |
+| 元素 | 关键字段 | 什么时候出现 |
+| --- | --- | --- |
+| `EpisodicNode` | `content`, `source ∈ {message, text, json, fact_triple}`, `source_description`, `valid_at`, `episode_metadata` | 每次原始输入（用户消息、文章片段、结构化数据）都生成一个 |
+| `EntityNode` | `name`, `summary`, `labels`, `attributes` | LLM 从 episode 中抽取的命名实体 |
+| `EntityEdge` | `name`, `fact`, `valid_at`, `invalid_at`, `expired_at`, `episodes`, `reference_time` | 实体之间的关系事实，可被新事实 invalidate |
+| `CommunityNode` | `name`, `summary` | 同类实体的聚类（与 GraphRAG 的 community 概念一致） |
+| `SagaNode` | `summary`, `first_episode_uuid`, `last_episode_uuid` | 一段 episode 区间的滚动摘要，v0.29.0 起通过 `summarize_saga(saga_id)` API 构建 |
 
 **三类关系**：
 
@@ -114,16 +117,18 @@ graph TD
 
 Graphiti 的入口 API 是 `graphiti.add_episode(...)`，仓库证据见 `graphiti_core/graphiti.py` 的 `Graphiti` 类。调用一次会触发一连串操作：
 
-1. 接收一段原始内容（文本、JSON 或 message 类型）。
+1. 接收一段原始内容（文本、JSON、fact_triple 或 message 类型）。
 2. 调用 LLM 抽取其中的实体（`extract_nodes`）和关系（`extract_edges`）。
 3. 对抽取出的实体和关系做去重（`resolve_extracted_nodes` / `resolve_extracted_edges`）。
 4. 对已存在的、可能冲突的边做时序合并或失效处理。
 5. 把 episode 本身作为 `EpisodicNode` 写入图，并把 `MENTIONS` 边连到被提到的 entity。
 6. 异步触发社区构建（`build_communities`）。
 
+v0.29.0 起多了一个省钱的开关：传 `use_combined_extraction=True` 可以让一次 LLM 调用同时产出节点和边——原来的流程里这是两次独立调用（仓库证据：v0.29.0 release notes 与 `graphiti.py` 的 bulk 路径）。抽取是大头开销，调用次数减半直接反映在账单上。
+
 **为什么 Episode 必须保留**：
 
-如果你把 Graphiti 当成「知识图谱构建器」，你可以选择不存 episode，只存 entity 和 edge。但仓库默认 `store_raw_episode_content=True`，并且把 episode 作为唯一溯源锚点——这是设计决策，不是性能考虑。
+如果你把 Graphiti 当成「知识图谱构建器」，你可以选择不存 episode，只存 entity 和 edge。但仓库默认 `store_raw_episode_content=True`，并且把 episode 作为溯源锚点——这是设计决策，不是性能考虑。
 
 理由是：当一个新事实进入图，Graphiti 需要判断它是否与已有边冲突。如果只比较 entity name + fact 字符串，会漏掉「同一条 episode 反复被引用」「上下文在 episode 之间互相矛盾」之类的场景。让 episode 留底，相当于让系统永远能看到「这件事是在什么场景下被说出来的」。
 
@@ -132,16 +137,19 @@ Graphiti 的入口 API 是 `graphiti.add_episode(...)`，仓库证据见 `graphi
 `EntityEdge` 是 Graphiti 与其他 RAG 系统最显眼的差异点。它的字段（仓库证据 `graphiti_core/edges.py`）：
 
 ```python
-class EntityEdge(BaseModel):
-    source_node_uuid: str
-    target_node_uuid: str
+class EntityEdge(Edge):
+    name: str  # 边的关系名（LLM 抽取的语义标签）
     fact: str  # 自然语言描述这条事实
+    episodes: list[str]  # 引用过这条边的 episode uuid 列表，溯源就靠它
     valid_at: datetime | None  # 何时开始为真
     invalid_at: datetime | None  # 何时被推翻（None 表示目前仍为真）
+    expired_at: datetime | None  # 何时被失效处理
+    reference_time: datetime | None  # 产出这条边的 episode 的参考时间
     created_at: datetime
-    expired_at: datetime | None
     # ...
 ```
+
+字段比多数教程写的多两层时间语义：`valid_at`/`invalid_at` 记录「事实在事件时间里何时成立、何时失效」，`reference_time` 保留「这条边从哪条 episode 的哪个时刻来」。做时间线回放时这两个坐标系不能混用。
 
 **与传统 RAG 的关键差异**：
 
@@ -164,11 +172,11 @@ class EntityEdge(BaseModel):
 
 ## §6 机制三：去重不是「合并字符串」
 
-`resolve_extracted_nodes` 和 `resolve_extracted_edges` 是 Graphiti 里相对少被讨论但工作量极大的两个函数。从命名推测（作者推断）：
+`resolve_extracted_nodes` 和 `resolve_extracted_edges` 是 Graphiti 里相对少被讨论但分量很重的两个函数。去重不是字符串比对，而是再调一次 LLM：仓库的 `graphiti_core/prompts/dedupe_nodes.py`、`dedupe_edges.py` 就是干这个的（仓库证据）。具体行为：
 
 - **实体去重**：LLM 会从不同 episode 里抽到同一个实体的不同表述（"阿迪达斯" / "Adidas" / "Adidas AG"），Graphiti 通过 LLM 二次判断把它们合并为同一个 `EntityNode`，并把 `name` 统一为最规范的形式。
 - **边去重**：LLM 抽到的「同主题边」（都是「用户喜欢 X」）需要判断是否真的同义——这比实体去重难，因为事实是自然语言。
-- **去重的副作用**：合并之后，原 episode 与 entity 之间的 `MENTIONS` 边也会相应更新，保证溯源链路不丢。
+- **去重的副作用**：合并之后，原 episode 与 entity 之间的 `MENTIONS` 边也会相应更新，保证溯源链路不丢（此条为作者推断）。
 
 ## §7 机制四：可插拔的四件套
 
@@ -191,11 +199,11 @@ Kuzu 的 driver 还会随包发布，但会发 `DeprecationWarning`。这意味�
 
 **关于 FalkorDB**：
 
-FalkorDB 是基于 Redis 的图数据库，Docker 一行命令即可启动（`docker run -p 6379:6379 -p 3000:3000 -it --rm falkordb/falkordb:latest`）。`graphiti-core[falkordblite]` 还能跑嵌入式版本，连 Redis 都不用装。生产上要注意 Redis 持久化配置——FalkorDB 写入直接进 Redis AOF。
+FalkorDB 是基于 Redis 的图数据库，Docker 一行命令即可启动（`docker run -p 6379:6379 -p 3000:3000 -it --rm falkordb/falkordb:latest`）。`graphiti-core[falkordblite]` 还能跑嵌入式版本，连 Redis 都不用装（需要 Python 3.12+，且 pyproject 特意把 `redis` 钉在 9 以下——redis-py 8.x 会弄坏嵌入式服务端启动）。生产上注意持久化由 Redis 侧的配置决定，这部分要自己兜底。
 
-## §8 机制五：混合检索是「3×5」的笛卡尔积
+## §8 机制五：混合检索是「3×5」的组合空间
 
-`graphiti_core/search/search_config.py` 暴露了 Graphiti 真正的检索设计（仓库证据）。它**不是一种检索方法**，而是「**3 种召回方法 × 5 种重排序器**」的笛卡尔积：
+`graphiti_core/search/search_config.py` 暴露了 Graphiti 真正的检索设计（仓库证据）。它**不是一种检索方法**，而是一个「**3 种召回方法 × 5 种 Reranker**」的组合空间：
 
 **3 种召回方法**（`EdgeSearchMethod`、`NodeSearchMethod` 都同样支持）：
 
@@ -211,11 +219,13 @@ FalkorDB 是基于 Redis 的图数据库，Docker 一行命令即可启动（`do
 - `mmr`（maximal_marginal_relevance）——既相关又多样，避免 Top-K 全是同一主题
 - `cross_encoder`——调用 cross-encoder 模型精排
 
-**预设 Recipe**（仓库证据 `graphiti_core/search/search_config_recipes.py`）：
+**预设 Recipe**（仓库证据 `graphiti_core/search/search_config_recipes.py`，共 4 个系列 16 个预设：`EDGE_`、`NODE_`、`COMMUNITY_`、`COMBINED_`）：
 
-- `EDGE_HYBRID_SEARCH_RRF`：cosine + bm25 + bfs → rrf
-- `EDGE_HYBRID_SEARCH_NODE_DISTANCE`：cosine + bm25 + bfs → node_distance
-- `COMBINED_HYBRID_SEARCH_CROSS_ENCODER`：cosine + bm25 + bfs → cross_encoder（精度最高、成本也最高）
+- `EDGE_HYBRID_SEARCH_RRF`：bm25 + cosine → rrf。注意没有 bfs——RRF 系列是两路召回。
+- `EDGE_HYBRID_SEARCH_NODE_DISTANCE`：bm25 + cosine → node_distance，同样不含 bfs。
+- `COMBINED_HYBRID_SEARCH_CROSS_ENCODER`：bm25 + cosine + bfs → cross_encoder（edge/node 两层都带图遍历，精度最高、成本也最高）。
+
+三路召回（含 BFS）只出现在 cross_encoder 系列和自定义 config 里；BFS 还需要显式传入起点（`search_` 方法的 `bfs_origin_node_uuids` 参数），不会自动发生。
 
 **如何选**（作者推断）：
 
@@ -223,6 +233,8 @@ FalkorDB 是基于 Redis 的图数据库，Docker 一行命令即可启动（`do
 - 检索「与已知中心点相关」→ `EDGE_HYBRID_SEARCH_NODE_DISTANCE`
 - 检索「最近用户在聊的」→ 加 `episode_mentions`
 - 生产环境、有 cross-encoder 服务（如 Voyage / Cohere）→ `COMBINED_HYBRID_SEARCH_CROSS_ENCODER`
+
+还有一个藏在源码里的路由规则（仓库证据 `graphiti.py` 的 `search` 方法）：直接调 `graphiti.search(query)` 时，不传 `center_node_uuid` 用的是 `EDGE_HYBRID_SEARCH_RRF`，一旦传了就自动切换成 `EDGE_HYBRID_SEARCH_NODE_DISTANCE`。也就是说「以某节点为中心重排序」不需要你手动选 recipe，传个中心节点 uuid 就生效。
 
 `EpisodeSearchMethod` 有点反直觉——**它只支持 `bm25`**，不支持语义检索。这是有意为之的：episode 本身是溯源锚点，召回时更看重精确匹配（episode ID、用户原话、来源时间戳），BM25 比 cosine 更适合。
 
@@ -235,9 +247,9 @@ FalkorDB 是基于 Redis 的图数据库，Docker 一行命令即可启动（`do
 
 这是 Graphiti 真正为「不是所有团队都用 GPT」的现实做的工程化让步。当你要切到 DeepSeek、Qwen、本地 Ollama 时，不要无脑用 `json_schema` 默认值，先切到 `json_object` 看看抽取质量。
 
-**`SEMAPHORE_LIMIT` 的取舍**（仓库证据）：
+**`SEMAPHORE_LIMIT` 的取舍**（仓库证据 `graphiti_core/helpers.py`）：
 
-Graphiti 默认 `SEMAPHORE_LIMIT=10`，目的是**避免 LLM 端 429 错误**。如果你的 LLM provider 配额更高，可以上调到 50、100；如果跑本地 Ollama、并发要降到 2-5（本地模型没有云端那种水平扩展能力）。
+Graphiti 默认 `SEMAPHORE_LIMIT=20`（`int(os.getenv('SEMAPHORE_LIMIT', 20))`），目的是**压住并发、避免 LLM 端 429 错误**——README 还专门提醒小模型/本地模型场景要把这个值调得更低。如果你的 LLM provider 配额更高，可以上调到 50、100；如果跑本地 Ollama，README 的建议是保持低位（本地模型没有云端那种水平扩展能力）。
 
 ## §10 任务流案例：用户的穿衣偏好随时间变化
 
@@ -249,6 +261,7 @@ Graphiti 默认 `SEMAPHORE_LIMIT=10`，目的是**避免 LLM 端 429 错误**。
 await graphiti.add_episode(
     name="shopping chat 2025-12",
     episode_body="Kendra bought a pair of Adidas Ultraboost at the mall.",
+    source_description="chat transcript",
     source=EpisodeType.message,
     reference_time=datetime(2025, 12, 5, 14, 30),
 )
@@ -260,6 +273,7 @@ await graphiti.add_episode(
 await graphiti.add_episode(
     name="shopping chat 2026-03",
     episode_body="Kendra said she switched to Nike Pegasus because of knee pain.",
+    source_description="chat transcript",
     source=EpisodeType.message,
     reference_time=datetime(2026, 3, 12, 10, 15),
 )
@@ -279,16 +293,15 @@ results = await graphiti.search(
 )
 ```
 
-**检索过程**（按 §8 推断）：
+**检索过程**（仓库证据：`search()` 传入 `center_node_uuid` 后自动走 `EDGE_HYBRID_SEARCH_NODE_DISTANCE`）：
 
-1. 三路召回：cosine 找「跑鞋 / Nike / knee pain」相关的边；BM25 找「switched」「Pegasus」；BFS 从 Kendra 节点出发找 2 层邻居。
-2. RRF 把三路结果合并。
-3. node_distance 用 Kendra 作为中心点重排序——历史切换记录会被优先召回。
-4. 命中：`Edge(Kendra → Nike, fact="switched to Nike Pegasus because of knee pain", valid_at=2026-03-12)` + `Edge(Kendra → Adidas, fact="bought Adidas Ultraboost", invalid_at=2026-03-12)`。
+1. 两路召回：cosine 找「跑鞋 / Nike / knee pain」语义相关的边；BM25 精确命中「switched」「Pegasus」这类型号词。
+2. node_distance 以 Kendra 为中心节点按图距离重排——离 Kendra 越近的事实排得越靠前。
+3. 命中：`Edge(Kendra → Nike, fact="switched to Nike Pegasus because of knee pain", valid_at=2026-03-12)` + `Edge(Kendra → Adidas, fact="bought Adidas Ultraboost", invalid_at=2026-03-12)`。
 
 **agent 拿到结果后**能给出完整解释：「2025 年 12 月你买了双 Adidas Ultraboost，到了 2026 年 3 月你因为膝盖痛换成了 Nike Pegasus。」
 
-如果用传统向量 RAG，第二个 episode 入库时会与第一个产生相似度冲突，但不会有「旧的买鞋事实」被标记失效——结果是「我可能买到一双 Nike，但我不确定你是不是还喜欢 Adidas」。这种回答在长时 agent 里不够用。
+如果用传统向量 RAG，第二个 episode 入库时会与第一个产生相似度冲突，但不会有「旧的买鞋事实」被标记失效——结果是「我可能买到一双 Nike，但我不确定你是不是还喜欢 Adidas」。这种回答对一个要长期陪伴用户的 agent 来说不够用。
 
 ## §11 vs GraphRAG / vs Zep：边界在哪里
 
@@ -344,13 +357,13 @@ results = await graphiti.search(
 下面是 Graphiti 当前 main 分支的明确边界，使用前要清楚：
 
 - **Kuzu 后端已弃用**：仓库 README 写明「will be removed in a future release」。新项目不要用。
-- **LLM 必须支持结构化输出**：README 明确「Graphiti works best with LLM services that support Structured Output. Using other services may result in incorrect output schemas and ingestion failures. This is particularly problematic when using smaller models.」——小模型（7B、13B）经常抽不出合法 schema，导致 ingestion 失败。
+- **LLM 必须支持结构化输出**：README 明确「Graphiti works best with LLM services that support Structured Output. Using other services may result in incorrect output schemas and ingestion failures. This is particularly problematic when using smaller models.」——小模型抽不出合法 schema 时，ingestion 会直接失败。
 - **FalkorDB Lite 要求 Python 3.12+**：嵌入式 FalkorDB Lite 需要较新 Python，老环境只能跑服务端 FalkorDB。
-- **依赖 OpenAI 默认**：虽然支持多 provider，但 prompt 模板、schema 设计都默认针对 OpenAI 优化；切换到 Anthropic/Gemini 时 prompt 行为会有偏差，需要重新做 prompt 评测。
-- **没有内置 benchmark 数据集**：README 没有提供 LongMemEval、LoCoMo、DMR 等公开基准上的官方数字，论文 arXiv 2501.13956 给的是 Zep 商业版的 DMR 数据，Graphiti 开源版的相对位置**没有公开评估**。这意味着你不能拿现成数字做技术选型答辩，必须在自己的数据上跑评测。
+- **跨 provider 可靠性有差异**：README 明说「Reliability varies across OpenAI-compatible providers」；具体哪家表现如何 README 没点名，但切 provider 后重新评测抽取质量是必要的——抽取质量直接决定图的质量（后果推断自仓库文档对 structured output 的强调）。
+- **没有内置 benchmark 数据集**：README 没有提供 LongMemEval、LoCoMo、DMR 等公开基准上的官方数字，论文 arXiv 2501.13956 给的是 Zep 服务的 DMR 数据（94.8% 对 MemGPT 的 93.4%），Graphiti 开源版的相对位置**没有公开评估**。这意味着你不能拿现成数字做技术选型答辩，必须在自己的数据上跑评测。
 - **Kuzu 之外的 backend 都依赖外部服务**：Neo4j、FalkorDB、Neptune 都需要单独部署 + 监控；Graphiti 自身不做 HA、不做备份策略——这部分要由你兜底。
-- **MCP server 还在演化**：仓库有一个 `mcp_server/` 子目录（README 推荐用于 Claude / Cursor），但版本节奏和 Graphiti 主库未必同步，使用前要看清楚版本对应关系。
-- **结构化输出对小模型失败率高**：与「LLM 必须支持结构化输出」对应的事实是：本地 Ollama + Qwen2.5 7B + `json_schema` 模式抽出来的 JSON 经常字段缺失，切换到 `json_object` 模式能好一些但仍不如云端模型稳定。
+- **MCP server 还在演化**：仓库有一个 `mcp_server/` 子目录（其 README 给了 Claude Desktop、Cursor 等 MCP 客户端的接入指引），但它独立发版（如 `mcp-v1.1.0`），版本节奏和 Graphiti 主库不同步，使用前要看清楚版本对应关系。
+- **结构化输出对小模型失败率高**：README 原话是「Very small models frequently emit JSON that doesn't match the requested schema, which surfaces as extraction failures」；还有一类本地服务「接受 `json_schema` 请求但并不真正约束输出」，对它们 README 明确建议切到 `json_object` 模式，反而更可靠。
 
 ## §13 采用顺序与适用边界
 
@@ -367,7 +380,7 @@ results = await graphiti.search(
 
 **适合**：
 
-- 长期 agent（多轮对话超过 50 轮、单用户数据超过 1k 条 episode）
+- 长期 agent（多轮对话跨越数天、单用户 episode 累积到千条量级——这是作者给的经验阈值，不是仓库结论）
 - 需要回溯解释的 agent（医疗顾问、金融顾问、教育辅导）
 - 多源数据融合（聊天 + 文档 + 结构化数据）
 
@@ -409,7 +422,7 @@ results = await graphiti.search(
 
 **Q3：Graphiti 与 Zep 商业版能数据互通吗？**
 
-能。Zep 商业版的存储层是 Graphiti 引擎的托管实现，可以导入导出。生产迁移时这是重要的逃生通道。
+不要做这个假设。README 的「Zep vs Graphiti」对比表写明：Zep 跑在专有的 Context Graph Engine 上（不依赖第三方图数据库），Graphiti 则要求你自带 Neo4j / FalkorDB 等第三方图数据库——两者存储层不同。选型时把它们当独立产品评估，迁移不是一键的事。
 
 **Q4：MCP server 怎么用？**
 
@@ -421,7 +434,7 @@ results = await graphiti.search(
 
 **Q6：怎么关闭 telemetry？**
 
-设置环境变量 `GRAPHITI_TELEMETRY_ENABLED=false`，或者在 Python 里 `os.environ['GRAPHITI_TELEMETRY_ENABLED'] = 'false'` 再初始化 Graphiti。Telemetry 只在生产环境可选关闭，本地开发保留无妨。
+遥测默认开启（走 PostHog），设置环境变量 `GRAPHITI_TELEMETRY_ENABLED=false` 即可在任何环境关闭，或者在 Python 里 `os.environ['GRAPHITI_TELEMETRY_ENABLED'] = 'false'` 再初始化 Graphiti（仓库证据 `graphiti_core/telemetry/telemetry.py`，默认值为 `'true'`）。
 
 ## §16 术语对照
 
@@ -443,9 +456,7 @@ results = await graphiti.search(
 
 ## §17 一个值得记住的判断
 
-Graphiti 真正解决的不是一个检索问题，而是一个**记忆的可信度问题**。
-
-当你让一个 agent 长时间陪同一个用户、回答「你还记得我以前说过什么吗」「我什么时候改的口味」「这条结论是从哪条消息推出来的」这类问题，向量数据库和 GraphRAG 都不够用。Graphiti 用「带过期时间的事实 + 不可删除的 episode + 时序有效的混合检索」三件套把这三件事都做了。
+同一个 agent 长时间陪同一个用户，就要答得上「你还记得我以前说过什么吗」「我什么时候改的口味」「这条结论是从哪条消息推出来的」。这类问题背后是**记忆的可信度**：事实有没有过期、有没有被推翻、能不能回溯到原始输入。向量数据库和 GraphRAG 在这里都不够用，Graphiti 用「带过期时间的事实 + 不可删除的 episode + 时序有效的混合检索」把这三件事做进了图结构本身。
 
 它不是一个更聪明的 RAG 框架，它是 RAG 之上的一层「带时间的记忆」。
 
@@ -461,4 +472,4 @@ Graphiti 真正解决的不是一个检索问题，而是一个**记忆的可信
 
 ---
 
-*本文所有事实均经过 `getzep/graphiti` 仓库 README、源码、`pyproject.toml`（`v0.29.2`、`requires-python = ">=3.10,<4"`、`license = "Apache-2.0"`、`neo4j>=5.26.0`）三方验证。涉及 Kuzu 弃用、结构化输出要求、`SEMAPHORE_LIMIT` 默认值、Neo4j 版本下限等关键限制均直接引自仓库原文；涉及「事实失效」「溯源机制」「混合检索 RRF 融合顺序」等实现细节为基于 `extract_edges` / `resolve_extracted_edges` / `search_utils.py` 命名的合理推断，已在文中相应位置标注「作者推断」。*
+*本文所有事实均经过 `getzep/graphiti` 仓库 README、源码、`pyproject.toml`（`v0.30.2`、`requires-python = ">=3.10,<4"`、`license = "Apache-2.0"`、`neo4j>=5.26.0`）三方验证。涉及 Kuzu 弃用、结构化输出与小模型、`SEMAPHORE_LIMIT` 默认值（`graphiti_core/helpers.py`）、search 方法的 recipe 路由（`graphiti_core/graphiti.py`）、遥测开关（`graphiti_core/telemetry/telemetry.py`）、Neo4j 版本下限等关键限制均直接引自仓库原文或源码；涉及「事实失效」「去重副作用」等实现细节为基于 `extract_edges` / `resolve_extracted_edges` 源码结构的合理推断，已在文中相应位置标注「作者推断」。*

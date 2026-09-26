@@ -14,13 +14,13 @@ tags: ["Claude", "API", "Python"]
 
 # Claude API 基础专题（一）：认证、请求与会话管理
 
-Claude Messages API（应用程序接口）的入口是一个 `messages.create()` 调用：给它模型名、消息列表和最大输出长度，它返回一条完整的回复。本文把这套调用的工程细节拆开讲——密钥怎么管、请求怎么发、响应怎么解析、多轮对话怎么维护、系统提示词怎么写、结构化输出怎么拿到合法 JSON。代码基于 `anthropic` Python SDK（软件开发包），示例模型统一用 `claude-sonnet-4-6`。
+Claude Messages API（应用程序接口）的入口是一个 `messages.create()` 调用：给它模型名、消息列表和最大输出长度，它返回一条完整的回复。本文把这套调用的工程细节拆开讲——密钥怎么管、请求怎么发、响应怎么解析、多轮对话怎么维护、系统提示词怎么写、结构化输出怎么拿到合法 JSON。代码基于 `anthropic` Python SDK（软件开发包），示例模型统一用 `claude-sonnet-5`（2026 年 9 月口径，模型迭代快，接入前以官方模型页为准）。
 
 读完本文，你能拿到一份可以直接改着用的请求模板，以及排查 401、429、输出截断这类常见问题时的判断顺序。只关心某个环节时，按标题跳读即可。
 
 ## 前置条件
 
-- Python 3.8 及以上
+- Python 3.10 及以上（`anthropic` SDK 的硬性要求，见其 `pyproject.toml` 的 `requires-python`）
 - 一个 [Anthropic Console](https://console.anthropic.com/) 账户和 API 密钥
 - 已安装 `anthropic` SDK：
 
@@ -102,6 +102,8 @@ anthropic_client = Anthropic(api_key=api_key)
 
 ### SDK 初始化
 
+不传 `api_key` 时，SDK 会自动读取 `ANTHROPIC_API_KEY` 环境变量，所以最简写法就是 `client = Anthropic()`。前面几节显式传参是为了让"密钥从哪来"一目了然。
+
 每次 `Anthropic()` 都会建立新的连接池。同一个进程里复用一个客户端实例，避免反复建连：
 
 ```python
@@ -130,13 +132,13 @@ class AnthropicClient:
 # 使用单例模式
 anthropic = AnthropicClient()
 response = anthropic.client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1024,
     messages=[{"role": "user", "content": "Hello"}]
 )
 ```
 
-`timeout=30` 是单次请求的秒数上限，`max_retries=3` 让 SDK 对网络抖动和 429 限流自动重试。这两个参数是生产接入的常见起点，不是越多越好——重试过多会放大下游压力。
+`timeout=30` 是单次请求的秒数上限（SDK 默认 10 分钟），`max_retries=3` 让 SDK 对网络抖动和 429 限流自动重试（SDK 默认 2 次，退避间隔从 0.5 秒起步、上限 8 秒）。这两个参数是生产接入的常见起点，不是越多越好——重试过多会放大下游压力。
 
 ---
 
@@ -151,7 +153,7 @@ import os
 client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 message = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1024,
     messages=[
         {
@@ -170,25 +172,26 @@ print(message.content[0].text)
 
 **`model`**
 
-三个模型按能力和成本递增排序（价格为每百万 token（词元），输入/输出，随版本调整，接入前以官方定价页为准）：
+在售模型按能力和成本递增排序（价格为每百万 token（词元），输入/输出，2026 年 9 月口径，随版本调整，接入前以官方定价页为准）：
 
 | 模型 | 定位 | 输入 | 输出 |
 |------|------|------|------|
 | `claude-haiku-4-5` | 延迟最低，适合实时聊天、简单问答、大批量任务 | $1 | $5 |
-| `claude-sonnet-4-6` | 平衡之选，日常对话、写作、分析的主力模型 | $3 | $15 |
-| `claude-opus-4-6` | 最强能力，适合复杂推理和代码生成 | $5 | $25 |
+| `claude-sonnet-5` | 平衡之选，日常对话、写作、分析的主力模型 | $2 | $10 |
+| `claude-opus-5` | 官方建议的大多数工作负载起点，复杂推理和代码生成 | $5 | $25 |
+| `claude-fable-5-1` | 高阶推理与长程智能体任务 | $10 | $50 |
 
-模型名随版本迭代更新，本文示例以 `claude-sonnet-4-6` 为准。选模型先看任务对延迟和能力的敏感度：实时交互用 Haiku，兼顾性能与成本用 Sonnet，复杂推理再上 Opus。
+Sonnet 4.6、Opus 4.6 等旧模型已转入 legacy（历史型号），API 仍可调用，价格官网可查。模型名随版本迭代更新，本文示例统一用 `claude-sonnet-5`。选模型先看任务对延迟和能力的敏感度：实时交互用 Haiku，兼顾性能与成本用 Sonnet，复杂推理用 Opus，长程智能体任务再上 Fable。
 
 **`max_tokens`**
 
-控制单次请求最多生成的 token（词元）数。1 token 约等于 0.75 个英文单词或 1-2 个中文字符。按输出长度预期设置：短回答 100-200，几段话 500-1000，完整文章 2000-4096。
+控制单次请求最多生成的 token 数。粗略换算：1 token 约合 0.75 个英文单词，中文约 1-2 个字——这是旧模型的口径，Opus 4.7 起换用新 tokenizer，同样文本比旧模型多算约 30%，跨模型估算成本时别直接搬数字，用 `client.messages.count_tokens()` 按目标模型实测。按输出长度预期设置 `max_tokens`：短回答 100-200，几段话 500-1000，完整文章 2000-4096。
 
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=4096,
-    messages=[{"role": "user", "content": "写一篇2000字的文章..."}]
+    messages=[{"role": "user", "content": "写一篇2000字的文章介绍量子计算"}]
 )
 ```
 
@@ -213,7 +216,7 @@ import os
 client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 with client.messages.stream(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1024,
     messages=[{"role": "user", "content": "讲一个关于程序员的笑话"}]
 ) as stream:
@@ -232,7 +235,7 @@ with client.messages.stream(
 
 ```python
 message = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1024,
     messages=[{"role": "user", "content": "解释光合作用"}]
 )
@@ -241,7 +244,7 @@ print(message.id)          # msg_xxxxx
 print(message.type)        # "message"
 print(message.role)        # "assistant"
 print(message.content)     # [ContentBlock(text='...')]
-print(message.model)       # "claude-sonnet-4-6"
+print(message.model)       # "claude-sonnet-5"
 print(message.stop_reason) # "end_turn"
 print(message.stop_sequence) # None
 print(message.usage)       # Usage(input_tokens=xx, output_tokens=xx)
@@ -259,9 +262,13 @@ for block in message.content:
 
 ### 停止原因
 
-- `"end_turn"`：正常完成
+`stop_reason` 共五种取值：
+
+- `"end_turn"`：模型自然讲完，正常完成
 - `"max_tokens"`：达到 `max_tokens` 限制，响应可能被截断
-- `"stop_sequence"`：遇到指定的停止序列
+- `"stop_sequence"`：遇到请求里指定的停止序列
+- `"pause_turn"`：长回合被暂停，把响应原样放进下一轮请求可让模型继续
+- `"refusal"`：模型因安全策略拒绝回答，输出不保证符合你要求的格式
 
 ```python
 if message.stop_reason == "max_tokens":
@@ -272,16 +279,16 @@ elif message.stop_reason == "end_turn":
 
 ### Token 使用量
 
-`usage` 给出本次请求消耗的输入和输出 token（词元），是计算成本、优化提示词长度的依据。
+`usage` 给出本次请求消耗的输入和输出 token，是计算成本、优化提示词长度的依据。
 
 ```python
 print(f"输入token: {message.usage.input_tokens}")
 print(f"输出token: {message.usage.output_tokens}")
 print(f"总token: {message.usage.input_tokens + message.usage.output_tokens}")
 
-# 计算成本（以 Sonnet 4.6 为例：输入 $3/M，输出 $15/M）
-input_cost = (message.usage.input_tokens / 1_000_000) * 3
-output_cost = (message.usage.output_tokens / 1_000_000) * 15
+# 计算成本（以 Sonnet 5 为例：输入 $2/M，输出 $10/M）
+input_cost = (message.usage.input_tokens / 1_000_000) * 2
+output_cost = (message.usage.output_tokens / 1_000_000) * 10
 
 print(f"本次请求成本: ${input_cost + output_cost:.6f}")
 ```
@@ -296,11 +303,12 @@ client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 try:
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-sonnet-5",
         max_tokens=1024,
         messages=[{"role": "user", "content": "Hello"}]
     )
 except RateLimitError:
+    # SDK 已自动退避重试过，走到这里说明重试次数内始终 429
     print("速率限制：请求太频繁，等待后重试")
     import time
     time.sleep(5)
@@ -322,14 +330,14 @@ Claude API 本身是无状态的——每次 `messages.create()` 调用都是独
 
 ```python
 response1 = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1024,
     messages=[{"role": "user", "content": "我的狗叫豆豆"}]
 )
 print(response1.content[0].text)
 
 response2 = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1024,
     messages=[{"role": "user", "content": "它喜欢吃什么？"}]
 )
@@ -347,7 +355,7 @@ while True:
     conversation_history.append({"role": "user", "content": user_input})
 
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-sonnet-5",
         max_tokens=1024,
         messages=conversation_history
     )
@@ -367,25 +375,22 @@ while True:
 **限制历史长度**
 
 ```python
-def trim_conversation(messages, max_turns=10):
-    """只保留最近N轮对话"""
-    system_messages = [m for m in messages if m.get("role") == "system"]
-    conversation = [m for m in messages if m.get("role") != "system"]
-
-    return system_messages + conversation[-(max_turns * 2):]
+def trim_conversation(messages, max_turns=5):
+    """只保留最近 N 轮对话（一轮 = 一条 user 加一条 assistant）"""
+    return messages[-(max_turns * 2):]
 
 messages = trim_conversation(conversation_history, max_turns=5)
 ```
 
 **摘要旧消息**
 
-用 Haiku 模型压缩早期对话，保留关键信息：
+用 Haiku 模型压缩早期对话，保留关键信息。注意摘要不能以 `system` 角色塞回 `messages`——Messages API 的输入消息只有 `user` 和 `assistant` 两种角色，系统级内容必须走顶层 `system` 参数：
 
 ```python
 def summarize_old_messages(messages, summary_turns=5):
-    """将早期对话摘要，保留最近的消息"""
+    """摘要早期对话，返回 (摘要文本, 最近消息列表)"""
     if len(messages) <= summary_turns * 2 + 2:
-        return messages
+        return None, messages
 
     early = messages[:-summary_turns * 2]
     recent = messages[-summary_turns * 2:]
@@ -405,13 +410,19 @@ def summarize_old_messages(messages, summary_turns=5):
     )
 
     summary = summary_response.content[0].text
+    return summary, recent
 
-    return [
-        {"role": "system", "content": f"对话摘要：{summary}"}
-    ] + recent
+summary, recent = summarize_old_messages(conversation_history, summary_turns=5)
+kwargs = {"system": f"对话摘要：{summary}"} if summary else {}
+response = client.messages.create(
+    model="claude-sonnet-5",
+    max_tokens=1024,
+    messages=recent,
+    **kwargs
+)
 ```
 
-把摘要放进 `system` 而非普通消息，是让它持续生效又不占最近几轮的位置。
+把摘要放进 `system` 参数，既让它在整轮对话里持续生效，又不占用最近几轮消息的位置。
 
 **分离话题**
 
@@ -468,7 +479,7 @@ messages = manager.get_messages()
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1024,
     system="你是一位专业的产品经理，用词简洁专业。",
     messages=[{"role": "user", "content": "我应该做什么产品？"}]
@@ -553,7 +564,7 @@ def test_system_prompt(system_prompt, test_cases):
     """测试系统提示词"""
     for i, test in enumerate(test_cases):
         response = client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-sonnet-5",
             max_tokens=500,
             system=system_prompt,
             messages=[{"role": "user", "content": test}]
@@ -575,7 +586,7 @@ def test_system_prompt(system_prompt, test_cases):
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1000,
     messages=[{
         "role": "user",
@@ -601,7 +612,7 @@ print(data)
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1000,
     messages=[{
         "role": "user",
@@ -664,7 +675,7 @@ class LanguageList(BaseModel):
 client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 response = client.messages.parse(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1000,
     messages=[{"role": "user", "content": "返回3个编程语言的列表"}],
     output_format=LanguageList,
@@ -725,7 +736,7 @@ def safe_json_parse(text):
 
 **429 rate_limit_error：请求过频**
 
-SDK 默认会按指数退避重试。若仍频繁触发，检查是否每次请求都新建了 `Anthropic()` 实例（应复用同一个 client），以及 `max_retries` 是否被调小。
+SDK 默认按指数退避自动重试（最多 2 次）。若仍频繁触发，检查是否每次请求都新建了 `Anthropic()` 实例（应复用同一个 client），以及 `max_retries` 是否被调小；持续 429 说明撞到了账户或模型的速率上限，去 Console 核对限额或申请提额。
 
 **400 invalid_request_error：参数不合法**
 
@@ -741,12 +752,13 @@ SDK 默认会按指数退避重试。若仍频繁触发，检查是否每次请�
 
 **模型名与价格过期**
 
-文中模型名与定价随版本迭代更新，接入前以 Anthropic 官方模型文档与定价页为准。锁版本时把 `anthropic==<版本>` 写进依赖，避免升级引入不兼容。
+文中模型名与定价随版本迭代更新（新模型上线，旧型号逐步转入 legacy，API ID 仍可调用），接入前以 Anthropic 官方[模型概览](https://platform.claude.com/docs/en/about-claude/models/overview)与[定价页](https://platform.claude.com/docs/en/about-claude/pricing)为准。锁版本时把 `anthropic==<版本>` 写进依赖，避免升级引入不兼容。
 
 ---
 
 **参考资源：**
 - [Anthropic Messages API 文档](https://platform.claude.com/docs/en/api/messages)
 - [Structured outputs 文档](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+- [模型概览](https://platform.claude.com/docs/en/about-claude/models/overview)与[定价页](https://platform.claude.com/docs/en/about-claude/pricing)
 - [Anthropic Python SDK（anthropic）](https://github.com/anthropics/anthropic-sdk-python)
 - [Anthropic Console](https://console.anthropic.com/)

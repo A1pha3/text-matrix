@@ -12,7 +12,7 @@ tags: ["CI/CD", "Java", "DevOps"]
 
 # Jenkins 自动化服务器深度拆解：2000+ 插件、Java 实现与企业级 CI/CD 事实标准
 
-`jenkinsci/jenkins` 想回答的问题是"什么样的 CI/CD 才能撑住 20 年的演进"。Jenkins 项目从 2011 年从 Hudson 分叉出来，到 2026 年已经在无数企业的产线里跑了 14 年。仓库 README 第一句话把它定位得很克制：
+`jenkinsci/jenkins` 想回答的问题是"什么样的 CI/CD 才能撑住 20 年的演进"。Jenkins 项目从 2011 年从 Hudson 分叉出来，到 2026 年已经在无数企业的产线里跑了 15 年。仓库 README 第一句话把它定位得很克制：
 
 > In a nutshell, Jenkins is the leading open-source automation server.
 
@@ -115,7 +115,7 @@ Jenkins 项目维护两套发行线：
 
 ## 五、发行形态
 
-Jenkins 提供 5 种官方发行方式：
+Jenkins 提供 4 类官方发行方式：
 
 - **WAR 文件**：传统 Java EE 部署
 - **Docker 镜像**：最常见的容器化方式

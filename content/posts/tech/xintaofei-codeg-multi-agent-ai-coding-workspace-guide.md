@@ -9,22 +9,22 @@ categories: ["技术笔记"]
 tags: ["AI 编程", "Multi-Agent", "Tauri", "Rust", "开源工具"]
 author: "钳岳星君"
 draft: false
-summary: "读 xintaofei/codeg v0.30.10 的源码：15 个内置 Agent 各自的会话存放方式与解析器、Claude Code/Codex 的 ACP 适配器关系、codeg-mcp 九工具与异步委托语义、To-dos 的 worktree 与两阶段合并、skill × agent 矩阵的符号链接实现、`--supervise` 升级回滚。"
-description: "Codeg 用 ACP（Agent Client Protocol）把 15 种编码 Agent 收进同一个工作空间，真正的工程量在别处：15 个会话解析器、按 Agent 白名单排除凭据文件、codeg-mcp 的异步委托工具与深度上限、To-dos 的 git worktree 隔离与两阶段合并、Tauri/HTTP/远程三条传输通路。桌面、codeg-server、Docker 与移动端共用一份 Rust core。"
+summary: "读 xintaofei/codeg v0.30.10 的源码：15 个内置 Agent 各自的会话存放方式与解析器、Claude Code 与 Codex 的 ACP 适配器关系、codeg-mcp 的十一个工具与异步委托语义、To-dos 的 git worktree 与两阶段合并、skill × agent 矩阵的符号链接实现、--supervise 下的升级回滚。"
+description: "Codeg 用 ACP（Agent Client Protocol）把 15 种编码 Agent 收进同一个工作空间，真正的工程量在别处：15 个会话解析器、按 Agent 白名单排除凭据文件、codeg-mcp 的异步委托工具与深度上限、To-dos 的 git worktree 隔离与两阶段合并、Tauri/HTTP/远程三条传输通路。桌面、codeg-server、Docker 与移动端共用同一份 Rust core。"
 ---
 
 ## 先说结论
 
 Codeg 常被介绍成"用 ACP 协议统一多家编码 Agent（智能体）的工作空间"。这句话没错，但它把难度放错了地方。协议是现成的，[Agent Client Protocol](https://agentclientprotocol.com/) 定义了编辑器与 Agent 之间的握手和事件流，谁都可以实现。真正吃掉这个项目工程量的是两件更脏的活：把 15 家 Agent 各写各的会话文件读回来，以及在一次对话里把子任务安全地交给另一个进程去跑。
 
-`src-tauri/src/parsers/` 下有 19 个文件，其中 15 个对应 15 个内置 Agent，每家一份手写解析器，剩下的是 `mod.rs`、自定义 Agent 的 `acp_native.rs`、Codex 的一种变体 `codex_code_mode.rs` 和 `summary_cache.rs`；`src-tauri/src/acp/delegation/` 下有 13 个 Rust 模块加一份 MCP 工具清单的 JSON，处理委托的 broker、线格式、深度计算与父进程看护。前者决定了"历史会话能不能被搜索和续用"，后者决定了"多个 Agent 能不能真的并行干活而不是互相踩文件"。
+`src-tauri/src/parsers/` 下有 19 个文件，其中 15 个对应 15 个内置 Agent，每家一份手写解析器。剩下四个是 `mod.rs`、自定义 Agent 用的 `acp_native.rs`、Codex 的一种变体 `codex_code_mode.rs`，以及 `summary_cache.rs`。另一侧，`src-tauri/src/acp/delegation/` 下有 13 个 Rust 模块加一份 MCP 工具清单的 JSON，分别管 broker、线格式、深度计算与父进程看护。前一处决定"历史会话能不能被搜索和续用"，后一处决定"多个 Agent 能不能真的并行干活而不是互相踩文件"。
 
 本文基于 `main` 分支 `385eb4f3`（v0.30.10 之后）的源码、`README.md`、`AGENTS.md` 与 `.github/workflows/release.yml`，把这两条主线拆开来看，并顺带纠正几处流传较广的过时说法。
 
 ## 阅读目标：读完你要能判断这四件事
 
 1. Codeg 能不能接住你手上那几个 Agent——这取决于该 Agent 有没有 ACP 入口，以及它的会话存在哪、什么格式。
-2. 跨 Agent 委托在生产里能不能开——默认是关的，而且链深度上限默认是 1。
+2. 跨 Agent 委托能不能开箱就用——不能，那个开关默认是关的，链深度上限默认是 1。
 3. 自建服务器会不会踩凭据泄露——`uploads/` 配额只在单进程内生效，备份白名单存在的理由正是各家 home 目录里混着密钥。
 4. 桌面版、`codeg-server`、Docker 和手机之间该选哪个——它们共用同一份 Rust core，差别只在传输通路和谁持有文件。
 
@@ -60,7 +60,7 @@ Transport 抽象层（3 个实现）
           本地文件系统      git 仓库      Telegram/Lark/微信
 ```
 
-两个模式共用业务逻辑的做法写在 `AGENTS.md` 里：核心函数取 `_core` 后缀、参数是普通的 `&AppDatabase` 与 `&EventEmitter`，Tauri 命令和 Axum handler 都调它；`#[cfg_attr(feature = "tauri-runtime", tauri::command)]` 让同一个函数只在桌面构建里被标成命令。事件回传靠 `EventEmitter` 枚举分叉成 `Tauri(AppHandle)` 或 `WebOnly(Arc<WebEventBroadcaster>)`。这是"三个二进制互不污染"能成立的实际原因，不是修辞。
+两个模式共用业务逻辑的做法写在 `AGENTS.md` 里：核心函数取 `_core` 后缀、参数是普通的 `&AppDatabase` 与 `&EventEmitter`，Tauri 命令和 Axum handler 都调它。`#[cfg_attr(feature = "tauri-runtime", tauri::command)]` 则让同一个函数只在桌面构建里被标成 Tauri 命令。事件回传靠 `EventEmitter` 枚举分叉，两个分支是 `Tauri(AppHandle)` 与 `WebOnly(Arc<WebEventBroadcaster>)`。这是"三个二进制互不污染"能成立的实际原因，不是修辞。
 
 技术栈其余部分：SeaORM + SQLite 本地优先、next-intl 十种语言、pnpm、TypeScript strict 且开 `noUnusedLocals`。
 
@@ -90,7 +90,18 @@ Transport 抽象层（3 个实现）
 
 ### 白名单存在的理由，是隔壁就躺着密钥
 
-上表最后一列不是"支持哪些格式"的清单，而是一圈排除边界。`parsers/mod.rs::external_transcript_sources()` 给每个源配了 `include_top` 白名单，注释逐条点名了要防的东西：Gemini 的 base 目录里混着 `oauth_creds.json`，Cline 的同级有 `secrets.json`、`settings/`、`locks/`，Grok 的 home 下有 `auth.json` 与 `bin/`，Kimi Code 旁边是 `config.toml` 和 `credentials/`、`oauth/`，Cursor 的同级是 `cli-config.json` 与 `mcp.json`，DeepSeek 的 `~/.dsh` 里有 `.credentials.yaml`，Qoder 的 `~/.qoder` 下有 `security/`。
+上表最后一列不是"支持哪些格式"的清单，而是一圈排除边界。`parsers/mod.rs::external_transcript_sources()` 给每个源配了 `include_top` 白名单，注释逐条点名了要防的东西——每个 home 目录里，会话只是其中一部分，其余是凭据和机器状态。
+
+| Agent | 同级存在、必须被白名单挡在外面的东西 |
+|-------|--------------------------------------|
+| Gemini | `oauth_creds.json` |
+| Cline | `secrets.json`、`settings/`、`cache/`（缓存）、`locks/` |
+| Grok | `auth.json`、`config.toml`、`bin/` |
+| Kimi Code | `config.toml`、`credentials/`、`oauth/` |
+| Cursor | `cli-config.json`、`mcp.json`、编辑器自身状态 |
+| DeepSeek Harness | `~/.dsh/.credentials.yaml`、`attachments/` 下的暂存与派生目录 |
+| Qoder | `settings.json`、`security/`、`cache/` |
+| Google Antigravity | `acp_token.json`、`acp_business_token.json` |
 
 SQLite 的源还多标一个 `sqlite: true`。原因很具体：直接拷主文件会把它对应的 `-wal` 留在另一个时刻，恢复出来是一个坏库。标了之后备份走只读连接的 page-copy，把 WAL 里的帧一并收进同一个归档条目。Hermes 的注释就是拿这条写的——它的会话库自己管理，只有 WAL 里有最近几帧。
 
@@ -98,11 +109,15 @@ SQLite 的源还多标一个 `sqlite: true`。原因很具体：直接拷主文�
 
 ## 适配器与启动元数据：Agent 到底是怎么被拉起来的
 
-`acp/registry.rs` 2796 行，装着 15 个内置 Agent 的启动元数据。形状只有两种：`Npx { package, cmd, args, env, node_required }` 与 `Binary { cmd, args, env, platforms, dir_entry }`。`node_required` 记的是该适配器要求的 Node.js 下限，`Binary` 的 `dir_entry` 区分"单文件解出来直接跑"和"整棵目录树要保完整"——Cursor 的 agent-cli-package 属于后者。版本全部锁死，例如 `@agentclientprotocol/claude-agent-acp@0.78.0`、`@agentclientprotocol/codex-acp@1.12.0`、`@google/gemini-cli@0.60.0`、`cline@3.0.62`、`@tencent-ai/codebuddy-code@2.151.0`、`@moonshot-ai/kimi-code@2.0.0`、`@qoder-ai/qodercli@1.1.54`，OpenCode 与 Cursor 走 `Binary`。README 里"Codeg installs, pins, and updates most of them for you"对应的就是 `acp/binary_cache.rs` 按版本建缓存目录。
+`acp/registry.rs` 2796 行，装着 15 个内置 Agent 的启动元数据。形状只有两种：`Npx { package, cmd, args, env, node_required }` 与 `Binary { cmd, args, env, platforms, dir_entry }`。`node_required` 记的是该适配器要求的 Node.js 下限。`Binary` 的 `dir_entry` 区分"单文件解出来直接跑"和"整棵目录树要保完整"，Cursor 的 agent-cli-package 与 Antigravity 的 Go harness 属于后者；`Binary` 一共三个，OpenCode、Cursor 与 Google Antigravity。
+
+版本全部锁死在元数据里：Claude Code 是 `@agentclientprotocol/claude-agent-acp@0.78.0`，Codex 是 `@agentclientprotocol/codex-acp@1.12.0`，Gemini 是 `@google/gemini-cli@0.60.0`，Qoder 是 `@qoder-ai/qodercli@1.1.54`。README 里那句 "Codeg installs, pins, and updates most of them for you" 落到代码上，就是 `acp/binary_cache.rs` 按版本建缓存目录。
 
 ### Claude Code 与 Codex 走的是另一条路
 
-`acp_adapter_relation()` 只对这两个 Agent 返回 `Some`。它们的 npx 包提供的命令是 `claude-agent-acp`、`codex-acp`，而不是用户自己装的 `claude`、`codex`——也就是 codeg 启动的是一个把 Anthropic/OpenAI 原生 CLI 桥接到 ACP 的适配器。`shared_config_dir` 填 `~/.claude` 与 `~/.codex`，注释解释得很直白：适配器与原生命令读同一份配置和凭据，装了适配器不需要第二次登录。`extra_dirs` 列出厂商安装器会写、但 GUI（图形用户界面）应用的 `PATH` 通常不含的位置（`~/.local/bin`、旧版的 `~/.claude/local`），`preflight` 靠它把"你没装 CLI"和"装了但 codeg 找不到"这两种错误分开报。有一条测试专门断言适配器命令不等于原生命令。
+`acp_adapter_relation()` 只对这两个 Agent 返回 `Some`。它们的 npx 包提供的命令是 `claude-agent-acp`、`codex-acp`，而不是用户自己装的 `claude`、`codex`——也就是说，codeg 启动的是一个把 Anthropic/OpenAI 原生 CLI 桥接到 ACP 的适配器。`shared_config_dir` 填 `~/.claude` 与 `~/.codex`，注释解释得很直白：适配器与原生命令读同一份配置和凭据，装了适配器不需要第二次登录。
+
+`extra_dirs` 列出厂商安装器会写、但 GUI（图形用户界面）应用的 `PATH` 通常不含的位置，也就是 `~/.local/bin` 和旧版的 `~/.claude/local`。`preflight` 靠它把"你没装 CLI"和"装了但 codeg 找不到"这两种错误分开报。另有一条测试专门断言适配器命令不等于原生命令。
 
 其余 13 个 Agent 的 npm 包或发行物自己就是 ACP 入口，没有这层桥接。这个区分决定了故障排查的走向：Claude Code 连不上，要同时怀疑原生命令的登录态和适配器的版本；Gemini 连不上，只有一个包要看。
 
@@ -110,7 +125,7 @@ SQLite 的源还多标一个 `sqlite: true`。原因很具体：直接拷主文�
 
 Codeg 有两条委托入口，共用一个开关和一个执行体。
 
-用户在输入框里 `@` 某个 Agent 时，`acp/agent_mentions.rs::append_agent_routes()` 把可见的 `codeg://agent/...` 引用收敛成一张路由表，作为额外一个 text block 追加到 prompt（提示词）上。这张表用 `U+001E` 记录分隔符包住，带 `kind`、`version` 与一个 nonce；一帧最多 16 个去重后的不同 Agent、256 次引用、16 KB。追加发生在连接循环里，广播、预览和乐观显示的用户消息都看不到它。
+用户在输入框里 `@` 某个 Agent 时，`acp/agent_mentions.rs::append_agent_routes()` 把可见的 `codeg://agent/...` 引用收敛成一张路由表，作为一个额外的 text block 追加到 prompt（提示词）上。这张表用 `U+001E` 记录分隔符包住，带 `kind`、`version` 与一个 nonce；一帧最多 16 个去重后的不同 Agent、256 次引用、16 KB。追加发生在连接循环里，广播、预览和乐观显示的用户消息都看不到它。
 
 Agent 自己也能发起委托：`codeg-mcp` 通过 MCP 把工具暴露给 LLM（大语言模型）。注释点明了分工——Agent 从工具清单里本来就能发现 `delegate_to_agent`，它们做错的是改用自家的 sub-agent 机制，所以路由帧只绑通道，不催 Agent 去委托。
 
@@ -118,9 +133,9 @@ Agent 自己也能发起委托：`codeg-mcp` 通过 MCP 把工具暴露给 LLM�
 
 `parse_internal_agent_routes()` 只接受能**逐字节重渲染**成当前样子的候选帧。好处是解析器可以放心地从 Agent 自己的转录里删掉 codeg 写进去的帧，永不误删用户写的相似文本；代价是任何措辞改动都会让已经落盘的旧帧再也匹配不上，变成可见历史。文件注释直接把这条后果写在那里，并要求改动必须 bump `ROUTE_FRAME_VERSION`，由 `route_frame_wording_is_pinned_to_its_version` 守着。目前没有兼容渲染器，注释的理由是"还没发布过值得保留的历史"。
 
-### 九个工具与异步语义
+### 十一个工具与异步语义
 
-`delegation/tool_schema.json` 里是九个工具，不是 `delegate_to_agent` 一个：
+`delegation/tool_schema.json` 里是十一个工具，不是 `delegate_to_agent` 一个。前九个服务父 Agent 侧的委托与交互：
 
 | 工具 | 语义 |
 |------|------|
@@ -133,6 +148,8 @@ Agent 自己也能发起委托：`codeg-mcp` 通过 MCP 把工具暴露给 LLM�
 | `get_session_info` | 按 id 解析被引用的会话 |
 | `create_automation` | 建自动化 |
 | `create_work_task` | 建待办 |
+
+剩下两个是反方向的：执行 work task 的子 Agent 用 `task_progress` 上报进度里程碑（fire-and-forget，不阻塞工作），用 `task_complete` 交终局裁决——`success` 与 `needs_review` 都送 review 列，后者要求写明该让人工复核什么，`blocked` 记为失败。不调 `task_complete` 也没关系，回合结束照样结算。
 
 把 `delegate_to_agent` 写成同步调用是常见误解。它是异步的：一次调用不阻塞，结果靠 `get_delegation_status` 长轮询收。工具按 `--features` 分成 `delegation`/`feedback`/`ask`/`sessions`/`tasks`/`automations`/`taskboard` 七组，父进程按设置决定注入哪些组，关掉的那组直接从 Agent 的 MCP 目录里消失。
 
@@ -155,7 +172,7 @@ Agent 自己也能发起委托：`codeg-mcp` 通过 MCP 把工具暴露给 LLM�
 
 响应永远是 `{"tasks": [...]}`，一个 id 一个条目，按你提问的顺序排。`wait_ms` 的三档语义是这份工具清单自己写明的：省略就是非阻塞快照；正值最多等这么久，上限 60000 毫秒，要接着等就再调一次；`0` 是无超时阻塞，直到子 Agent 跑完。多个 id 一起等时，任意一个到终态就返回，所以拿剩下几个还得再问。
 
-同一份清单里还有一条对怎么写 `task` 影响最大的约束：子 Agent 看不到这段对话、你看开的文件、也看不到之前的轮次，它是冷启动的，`task` 必须自带全部所需上下文。适合派出去的是能一次讲清的独立可并行工作，不适合的是需要你持续来回的步步推进。
+同一份清单里还有一条对怎么写 `task` 影响最大的约束：子 Agent 看不到这段对话、你看开的文件、也看不到之前的轮次，它是冷启动的，`task` 必须自带全部所需上下文。适合派出去的是能一次讲清、彼此独立、可以并行的工作；不适合的是需要你持续来回的那种。
 
 伴生进程与主进程之间不走 stdio。`delegation/transport.rs` 的帧格式是一个小端 `u32` 长度加 UTF-8 JSON，每次 `tools/call` 重开一次连接；Unix 上是 UDS，Windows 上是命名管道。选长度前缀而不是换行分隔的理由写在注释里：大模型给的 `task` 参数本身可以含换行。父进程拉起它时要交三个必填参数——父连接 id、套接字路径和一个临时令牌：
 
@@ -172,11 +189,11 @@ codeg-mcp \
 
 `DelegationConfig::default()` 是 `enabled: false`、`depth_limit: 1`。也就是说装完就试的读者，第一步要在设置里把多 Agent 协作打开——`enableHint` 的原文是关掉时 `delegate_to_agent` 从 Agent 的 MCP 目录里隐藏。深度按会话的父子链算，`depth_limit = 2` 才允许 root → 子 → 孙，孙再往下被拒；向上多走一层就够 broker 判定，所以调用方传 `depth_limit + 1` 作为遍历封顶，防的是链上有环或历史过深。
 
-查找伴生二进制的顺序是 `CODEG_MCP_BIN` → 当前可执行文件的同级目录 → `PATH`。三处都没有就在日志里写一行 WARN，跳过工具注入，会话照常跑。函数注释对调用方提了硬要求：拿到 `None` 必须当成"这里没有委托能力"，不能塞一个幻影路径，那会在 Agent 的 MCP 启动循环里炸掉，严格一点的 Agent 会连整个 ACP 会话一起带走。所有功能组都关着时，代码在查二进制之前就短路返回，连那行 WARN 都不发。
+查找伴生二进制的顺序是 `CODEG_MCP_BIN` → 当前可执行文件的同级目录 → `PATH`。三处都没有就在日志里写一行 WARN，跳过工具注入，会话照常跑。函数注释对调用方提了硬要求：拿到 `None` 必须当成"这里没有委托能力"，不能塞一个幻影路径。那样的路径会在 Agent 的 MCP 启动循环里炸掉，严格一点的 Agent 会连整个 ACP 会话一起带走。所有功能组都关着时，代码在查二进制之前就短路返回，连那行 WARN 都不发。
 
 ## To-dos：把不用盯着的活放进独立 worktree
 
-`work_task/` 是 v0.30 线里新增的一块，README 把它列在 To-dos 一节。状态机是 `todo → queued → preparing → running ⇄ awaiting_input → review → merging → done`，失败原因限 `agent_error`、`setup_error`、`verdict_blocked`、`interrupted` 四种。
+`work_task/` 对应 README 的 To-dos 一节，代码里的名字是 work task。状态机是 `todo → queued → preparing → running ⇄ awaiting_input → review → merging → done`，失败原因限 `agent_error`、`setup_error`、`verdict_blocked`、`interrupted` 四种。
 
 几个设计点值得单独看：
 
@@ -194,12 +211,12 @@ codeg-mcp \
 
 1. 你在输入框写"帮我 review 这段改动 @Codex"，`@Codex` 在前端渲染成一条 `codeg://agent/codex` 引用。
 2. 连接循环调 `append_agent_routes()`，识别出 `codex`，在 prompt blocks 尾部追加一帧路由描述。界面上的乐观气泡里没有它。
-3. Claude Code 侧的 MCP 目录里有 `delegate_to_agent`（`delegation` 组已开），它按帧里的通道调用它，参数是 `agent_type="codex"` 加一段自包含的任务描述。
-4. `codeg-mcp` 把请求按长度前缀写到 UDS，主进程的 broker 收到，先算链深度：本次是 root → 子，`depth_limit = 1` 允许；如果它再往下派一次就会被拒，错误码 `depth_limit`。
-5. broker 用 `registry.rs` 里 Codex 的元数据起子会话——`@agentclientprotocol/codex-acp@1.12.0`，缓存命中就不装，`shared_config_dir` 是 `~/.codex`，沿用你已有的登录态。
-6. `delegate_to_agent` 当场返回 `task_id`。Claude Code 可以继续干活，也可以按注释鼓励的样子一次扇出多个。
-7. 子会话在独立标签里流式跑，父侧调 `get_delegation_status`（带 `wait_ms`）收终态报告，结果合并回你正在看的那条对话流。
-8. 如果这条改动你想让它直接落地，更合适的是记成一条 To-do：它会拿到 `~/code/billing` 旁边的一个 worktree 和自己的分支，跑完停在 review 列等你看 diff、退回或者接受。
+3. Claude Code 侧的 MCP 目录里有 `delegate_to_agent`（`delegation` 组已开），它按帧里的通道调用它。参数是 `agent_type="codex"` 加一段自包含的任务描述。
+4. `codeg-mcp` 把请求按长度前缀写到 UDS，主进程的 broker 收到后先算链深度：本次是 root → 子，`depth_limit = 1` 允许；如果它再往下派一次就会被拒，错误码 `depth_limit`。
+5. broker 用 `registry.rs` 里 Codex 的元数据起子会话，包是 `@agentclientprotocol/codex-acp@1.12.0`。缓存命中就不装，`shared_config_dir` 是 `~/.codex`，沿用你已有的登录态。
+6. `delegate_to_agent` 当场返回 `task_id`。Claude Code 可以继续干活，也可以一次扇出多个。
+7. 子会话在独立标签里流式跑。父侧调 `get_delegation_status`（带 `wait_ms`）收终态报告，结果合并回你正在看的那条对话流。
+8. 如果这条改动你想让它直接落地，更合适的是记成一条 To-do。它会拿到 `~/code/billing` 旁边的一个 worktree 和自己的分支，跑完停在 review 列，等你看 diff、退回或者接受。
 
 ## 能力层：skill × agent 矩阵的物理实现
 
@@ -214,9 +231,24 @@ codeg-mcp \
 
 按排除法识别的意思很实用：中心仓库里任何含 `SKILL.md`、且 id 未被三个内置包占用的目录，都算自定义 skill。往 `~/.codeg/skills` 里丢一个文件夹，刷新就出现。启动时的内置包提取是 id 粒度的（哈希 + manifest + 备份，绝不整体清空），所以不会碰用户放的目录。`include_dir!` 不带 Unix 权限位，注释专门标了这一点，捆绑脚本的执行位要另外修。
 
-科研包的来源记在 `science/NOTICE.md`：vendored、逐字节一致、钉在某个提交（commit）`4d97e293dc6f604fb6b63dcd49b9028df413d65b` 上、MIT、只收"自包含且无跨 skill 依赖"的项，重同步走 `scripts/sync-science-skills.sh`。13 个 skill 的中文名以 `science.toml` 的 `zh-CN` 为准：科学头脑风暴、假设生成、实验设计、统计功效、统计分析、探索性数据分析、科学可视化、批判性思维、论文检索、同行评审、引用管理、学术评估、科学示意图。矩阵上的两个徽章各有明确触发条件：`needs_key` 只有 scientific-schematics 一个（要 OpenRouter 密钥），`needs_env` 标的是"自带脚本可能需要 Python/uv 环境"。
+科研包的来源记在 `science/NOTICE.md`：vendored、逐字节一致、钉在某个提交（commit）`4d97e293dc6f604fb6b63dcd49b9028df413d65b` 上、MIT，且只收"自包含、无跨 skill 依赖"的项。重同步走 `scripts/sync-science-skills.sh`。13 个 skill 的中文名以 `science.toml` 的 `zh-CN` 为准，`category` 字段已经把它们分成六组：
 
-Office 那一格容易被误读成"内置了 Office 工具"。`office_tools.rs` 的模块标题是 detect、install/uninstall the binary——`officecli` 是外部二进制，先在 `PATH` 上找，再回落到官方安装器的已知位置；找不到还要往被派生 Agent 的 `PATH` 前面拼一个目录，注释的理由是 `install.ps1` 改的用户级 `PATH` 到不了一个已经在跑的进程。预览侧同理：`office_watch/` 维护的是长生命周期的 `officecli watch <file> --port N` 子进程，一个文件一个，按引用计数共享与回收。它替代的是旧的 `officecli view html` 渲染路径——那条路径每次变更重开一个进程去重读整个 OpenXML zip，Agent 正在写同一个文件时两边抢盘，Windows 上直接 "file is in use"。预览 URL 上挂的 `cap` 是 watch 首次拉起时铸造的高熵 UUID：泄漏一个 `cap` 只放出那一个打开的文档，桌面模式则完全忽略它。
+| category | skill |
+|----------|-------|
+| ideation | 科学头脑风暴、假设生成 |
+| design | 实验设计、统计功效 |
+| analysis | 统计分析、探索性数据分析 |
+| visualization | 科学可视化、科学示意图 |
+| evaluation | 批判性思维、同行评审、学术评估 |
+| literature | 论文检索、引用管理 |
+
+矩阵上的两个徽章各有明确触发条件。`needs_key` 只有科学示意图一个，它要一把 OpenRouter 密钥；`needs_env` 标的是"自带脚本可能需要 Python/uv 环境"，13 个里占了 10 个。
+
+Office 那一格容易被误读成"内置了 Office 工具"。`office_tools.rs` 模块开头的自述是 detect、install/uninstall the binary，外加把 OfficeCLI 技能当外部 experts 管理。`officecli` 是外部二进制，先在 `PATH` 上找，找不到再回落到官方安装器的已知位置；这时还要往被派出去的子 Agent 的 `PATH` 前面拼一个目录，注释给的理由是 `install.ps1` 改的用户级 `PATH` 到不了一个已经在跑的进程。
+
+预览侧同理。`office_watch/` 维护的是长生命周期的 `officecli watch <file> --port N` 子进程，一个文件一个，按引用计数共享、在关标签/移目录/退出时回收。它替代的是旧的 `officecli view html` 渲染路径：那条路径每次变更重开一个进程，把整个 OpenXML（zip 容器）重读一遍，Agent 正在写同一个文件时两边抢盘，Windows 上直接 `file is in use`。换成 watch 之后，刷新浏览器由 officecli 自己做，编辑与预览不再是两个争抢磁盘的进程。
+
+预览 URL 上挂的 `cap` 是 watch 首次拉起时铸造的高熵 UUID。泄漏一个 `cap` 只放出那一个打开的文档，桌面模式则完全忽略它。
 
 ## Project Boot、Chat Channels 与 Automations 的准确边界
 
@@ -229,15 +261,17 @@ PACKAGE_MANAGER_OPTIONS  pnpm | npm | yarn | bun
 
 同一个页面下还有一个 HyperFrames 标签，选完分辨率预设，用 `skills` CLI 把全局 skill 装给六个 Agent。
 
-Chat Channels 是三个后端，不是计划中的五个。`backends/telegram.rs` 走 Telegram 的应用程序接口，用 `getUpdates` 长轮询；`backends/lark.rs` 连 `open.feishu.cn`，WebSocket 与 HTTP 两种通路并用；`backends/weixin.rs` 走 iLink 的 `ilinkai.weixin.qq.com`，纯 HTTP，`context_token` 过期期间最多缓冲 50 条消息。README 里"驱动你的 Agent"能做的四件事是建任务、发后续消息、批权限请求、收带工具调用细节的实时回复。
+Chat Channels 目前只有三个后端实现，`backends/` 目录下没有 Discord 或 Slack 的代码。`telegram.rs` 走 Telegram 的应用程序接口，用 `getUpdates` 长轮询；`lark.rs` 连 `open.feishu.cn`，WebSocket 与 HTTP 两种通路并用；`weixin.rs` 走 iLink 的 `ilinkai.weixin.qq.com`，纯 HTTP，`context_token` 过期期间最多缓冲 50 条消息。README 里"驱动你的 Agent"能做的四件事是建任务、发后续消息、批权限请求、收带工具调用细节的实时回复。
 
-Automations 常被写成"三种触发方式"，字段其实分两层。`TriggerKind` 只有 `Schedule` 与 `Manual`；`Schedule` 时 `cron` 存五段表达式，另有一列 `timezone` 存 IANA 时区名，`next_run_at` 以 UTC 存调度键、每次触发后向前重算，所以进程重启的追赶最多补一次。执行动作是另一个字段 `AutomationAction`，取 `LaunchSession`（无头会话，也是旧行的默认值）或 `EnqueueTask`（只在目录看板上放一条待办，交给 work-task 引擎）。`IsolationMode` 再决定落在哪：`WorktreePerRun` 每次生成 `automation/<id>/run-<run_id>` 分支的新 worktree，`SharedInRoot` 在根仓库切分支、按目录串行。侧栏那个失败角标是 `unseen_failures`，打开视图清零。
+Automations 常被写成"三种触发方式"，字段其实分两层。触发是 `TriggerKind`，只有 `Schedule` 与 `Manual` 两个值；取 `Schedule` 时 `cron` 存五段表达式，另有一列 `timezone` 存 IANA 时区名。`next_run_at` 以 UTC 存着调度键，每次触发后向前重算，所以进程重启的追赶最多补一次。
+
+执行动作是另一个字段 `AutomationAction`，取 `LaunchSession`（无头会话，也是旧行的默认值）或 `EnqueueTask`（只在目录看板上放一条待办，交给 work-task 引擎）。`IsolationMode` 再决定落在哪：`WorktreePerRun` 每次生成一个挂在 `automation/<id>/run-<run_id>` 分支上的新 worktree，`SharedInRoot` 在根仓库切分支、按目录串行。侧栏那个失败角标是 `unseen_failures`，打开视图清零。
 
 ## 前端传输层：三条通路和一个 60 秒的耦合
 
-`src/lib/transport/` 下是三个实现，不是两个：`tauri-transport.ts` 走 `invoke()`；`web-transport.ts` 把命令 `fetch()` 到后端的应用程序接口 `/api/<command>`、事件走 WebSocket，访问令牌放在 WS 子协议里带上（`buildCodegWebSocketProtocols`），另有 `/api/health` 探活；`remote-desktop-transport.ts` 是桌面版通过 `commands/remote_proxy.rs` 代理到远端 `codeg-server` 的第三条路。
+`src/lib/transport/` 下是三个实现，不是两个。`tauri-transport.ts` 走 `invoke()`。`web-transport.ts` 把命令 `fetch()` 到后端的应用程序接口 `/api/<command>`，事件走 WebSocket，访问令牌放在 WS 子协议里带上（`buildCodegWebSocketProtocols`），另有 `/api/health` 探活。`remote-desktop-transport.ts` 是第三条路：桌面版通过 `commands/remote_proxy.rs` 代理到远端的 `codeg-server`。
 
-三个数字值得记。`WEB_CALL_TIMEOUT_MS = 60_000`，注释解释它必须不短于后端 `ConnectionManager::probe_agent_options` 的 60 秒——Gemini 这类 Agent 光 Initialize 握手就要烧掉 8 到 10 秒，前端上限低了会在后端还握着一个活的探测进程时先报超时。`READY_TIMEOUT_MS = 5_000` 是等服务器 `__ready__` 帧的上限，超时就在没有确认的情况下继续，防的是老版本服务端、卡住的后端任务或缓冲的代理把界面永久锁死。桌面版起的 Web Service 与独立 server 是同一套 HTTP/WS，手机上的原生客户端连的就是它。
+三个数字值得记。`WEB_CALL_TIMEOUT_MS = 60_000`，注释解释它必须不短于后端 `ConnectionManager::probe_agent_options` 的 60 秒。Gemini 这类 Agent 光 Initialize 握手就要烧掉 8 到 10 秒，前端上限低了，会在后端还握着一个活的探测进程时先报超时。`READY_TIMEOUT_MS = 5_000` 是等服务器 `__ready__` 帧的上限，超时就在没有确认的情况下继续；防的是老版本服务端、卡住的后端任务或缓冲的代理把界面永久锁死。桌面版起的 Web Service 与独立 server 是同一套 HTTP/WS，手机上的原生客户端连的就是它。
 
 ## 部署：桌面、独立服务、Docker 与移动端
 
@@ -299,7 +333,7 @@ docker run -d -p 3080:3080 \
 | `CODEG_TOKEN` | 未设则生成 | 生成的那个会持久化并跨重启复用，只在 stderr 打一次 |
 | `CODEG_DATA_DIR` | `dirs::data_dir()/codeg` | SQLite 数据目录，同时是 `uploads/`、`pets/` 的根 |
 | `CODEG_HOME` | 未设 | 桌面侧配置根 `~/.codeg`，优先级在 `CODEG_DATA_DIR` 之前 |
-| `CODEG_STATIC_DIR` | `./web` 或 `./out` | 前端静态导出目录 |
+| `CODEG_STATIC_DIR` | `./web`，再退 `out` | 显式值要含 `index.html`（索引页）才被采纳，否则回落并打一条 WARN |
 | `CODEG_MCP_BIN` | 未设 | 伴生进程绝对路径，覆盖"同级 + `PATH`" |
 | `CODEG_SKIP_SIDECAR` | 未设 | 只在 `prepare-sidecars.mjs` 里生效，发布构建必须不设 |
 | `CODEG_UPLOAD_MAX_TOTAL_BYTES` | 未设 | `uploads/` 总量上限，字节 |
@@ -317,13 +351,13 @@ docker run -d -p 3080:3080 \
 
 ## 原地升级与 `--supervise`
 
-只有 `codeg-server` 与 Docker 走这条路，桌面版由 `tauri-plugin-updater` 管。流程是下载、验签、解包、原子换文件，换的是 `codeg-server` + `codeg-mcp` + `web/` 三件，各留一个 `.bak`。签名是 release 流水线用 `tauri signer sign` 产的分离 `.sig`，公钥就是 `tauri.conf.json` 里那把，两边都是"minisign 文本再套一层 base64"，验不过不碰任何活文件。下载与解包分别有 600 MB 与 1536 MB 的字节上限，注释写明挡的是坏 `Content-Length` 和误打包，不是真实体积。
+只有 `codeg-server` 与 Docker 走这条路，桌面版由 `tauri-plugin-updater` 管。流程是下载、验签、解包、原子换文件。换的是 `codeg-server`、`codeg-mcp` 和 `web/` 三件，各留一个 `.bak`。签名是 release 流水线用 `tauri signer sign` 产的分离 `.sig`，公钥就是 `tauri.conf.json` 里那把；两边都写成"minisign 文本再套一层 base64"，验不过就不碰任何活文件。下载与解包分别有 600 MB 与 1536 MB 的字节上限，注释写明挡的是坏 `Content-Length` 和误打包，不是真实体积。
 
-重启方式取决于运行形态：`--supervise` 之下 worker 以退出码 86 请求重拉（这个值仓库自己没用），supervisor 等 `CODEG_RESTART_DELAY_MS` 再从被换掉的路径起进程；没有 supervisor 时 worker 自己 re-exec。supervisor 在 Docker 里是 PID 1，所以还要转发 `SIGTERM`/`SIGINT`、回收过继来的孤儿进程。
+重启方式取决于运行形态。`--supervise` 之下，worker 用退出码 86 请求重拉（这个值仓库自己没占用），supervisor 等 `CODEG_RESTART_DELAY_MS` 再从被换掉的路径起进程；没有 supervisor 时，worker 自己 re-exec。supervisor 在 Docker 里是 PID 1，所以还要转发 `SIGTERM`/`SIGINT`、回收过继来的孤儿进程。
 
-自动回滚只覆盖一种失败：因为升级而重拉的 worker 处于观察期，在 `CODEG_UPGRADE_TRIAL_SECS`（默认 30 秒）内异常退出，就从 `.bak` 恢复上一版再起一次。注释强调这是唯一一条不依赖那个已经死掉的 HTTP 回滚端点的恢复路径；过了窗口才崩，按普通运行时故障向上抛出，让容器的重启策略退回镜像，而不是在启动循环里热转。窗口默认值给得宽，理由是能起不来的二进制几乎立刻就会失败。
+自动回滚只覆盖一种失败：因为升级而重拉的 worker 处于观察期，在 `CODEG_UPGRADE_TRIAL_SECS`（默认 30 秒）内异常退出，就从 `.bak` 恢复上一版再起一次。注释强调这是唯一一条不依赖 HTTP 回滚端点的恢复路径——那个端点随旧版本一起死了。过了窗口才崩，按普通运行时故障向上抛出，让容器的重启策略退回镜像，而不是在启动循环里热转。窗口默认值给得宽，理由是能起不来的二进制几乎立刻就会失败。
 
-Windows 的原地升级没有被禁用。`update/install.rs` 的产物映射里有 `("windows", "x86_64") => "codeg-server-windows-x64"`，扩展名 `.zip`，目标文件 `codeg-server.exe` 与 `codeg-mcp.exe`。Linux/macOS 独占的只是那个原子交换目录的快速路径（`RENAME_EXCHANGE` / `renamex_np`），别处返回 `Unsupported` 然后退到非原子移动。伴生进程看护父 PID 那段的注释，说的恰恰是 Windows 上文件被锁导致升级失败——如果这条路根本不走，不会有这段代码。
+Windows 的原地升级没有被禁用。`update/install.rs` 的产物映射里有 `("windows", "x86_64")` 一项，指向 `codeg-server-windows-x64`，扩展名 `.zip`，目标文件是 `codeg-server.exe` 与 `codeg-mcp.exe`。Linux/macOS 独占的只是那个原子交换目录的快速路径（`RENAME_EXCHANGE` 与 `renamex_np`），别处返回 `Unsupported` 然后退到非原子移动。伴生进程看护父 PID 那段的注释，说的恰恰是 Windows 上文件被锁导致升级失败——如果这条路根本不走，不会有这段代码。
 
 ## 与同类工具的边界
 
@@ -336,7 +370,7 @@ Windows 的原地升级没有被禁用。`update/install.rs` 的产物映射里�
 | 承载形态 | 桌面、独立 HTTP 服务、Docker、移动端连前者 | 终端进程 | 编辑器进程内 |
 | 并行任务隔离 | 每任务一个 `git worktree`，两阶段合并、评审后落地 | 不是这类工具的内置流程 | 不是这类工具的内置流程 |
 
-第一行是这张表里唯一有硬证据的一行：Codeg 需要 15 个手写解析器这件事本身就说明各家存储互不相通。第二行的措辞取自 `agent_mentions.rs` 的注释——Agent 会"改用自家的 sub-agent 机制"，README 也点了 Claude Code、Codex、Grok、OpenCode 四家确实自己会派子 Agent；区别在于 Codeg 把子任务落成**另一个类型 Agent 的独立会话**，于是那段转录能被同一个工作空间搜到。
+第一行是这张表里唯一有硬证据的一行：Codeg 需要 15 个手写解析器这件事本身就说明各家存储互不相通。第二行的措辞取自 `agent_mentions.rs` 的注释——Agent 会"改用自家的 sub-agent 机制"。README 也点了 Claude Code、Codex、Grok、OpenCode 四家确实自己会派子 Agent。区别在于 Codeg 把子任务落成**另一个类型 Agent 的独立会话**，于是那段转录能被同一个工作空间搜到。
 
 Codeg 不做模型路由，也不替代任何一家 CLI，它假设你已经在用这些工具并且为它们各自付订阅。真正把它和"给 Agent 套个壳"区分开的是 worktree 那条链：To-do 与 Automation 的执行体都跑在自己的分支和目录里，合并前先看 git。如果你只需要一个更强的终端 Agent，这套复杂度对你是净负担。
 
@@ -344,7 +378,7 @@ Codeg 不做模型路由，也不替代任何一家 CLI，它假设你已经在�
 
 最常见的两类是"看不见"和"接不上"。
 
-**某个 Agent 的历史没出现在搜索结果里。** 先确认它落在自己那份白名单列出的子树里——各家允许的位置不同，Gemini 是 `tmp/`、`history/` 与 `projects.json`，Cline 是 `sessions/`、`db/`、`state/`、`tasks/`，Antigravity 只有 `conversations`。再确认覆盖变量指对了：`GEMINI_CLI_HOME` 给的是父目录，codeg 会把 `.gemini` 拼上去；Antigravity 读的 `GEMINI_HOME` 给的就是目录本身。同一家厂商的两个变量含义差一层，是最容易静默读空的地方。`CODEG_HOME` 则是 codeg 自己用作配置根的，与 Agent 侧那些 `*_HOME` 不是一层。
+**某个 Agent 的历史没出现在搜索结果里。** 先确认它落在自己那份白名单列出的子树里。各家允许的位置不同：Gemini 是 `tmp/`、`history/` 与 `projects.json`，Cline 是 `sessions/`、`db/`、`state/`、`tasks/`，Antigravity 只有 `conversations`。再确认覆盖变量指对了。`GEMINI_CLI_HOME` 给的是父目录，codeg 会把 `.gemini` 拼上去；Antigravity 读的 `GEMINI_HOME` 给的就是目录本身。同一家厂商的两个变量含义差一层，是最容易静默读空的地方。`CODEG_HOME` 则是 codeg 自己用作配置根的，与 Agent 侧那些 `*_HOME` 不是一层。
 
 **`delegate_to_agent` 在 Agent 的工具列表里没有。** 设置里那组开关默认是关的。关掉时它不进 MCP 目录；`@` 提及同样失效，因为 `append_agent_routes()` 第一行就按 `delegation_enabled` 返回。
 
@@ -380,11 +414,20 @@ Codeg 不做模型路由，也不替代任何一家 CLI，它假设你已经在�
 
 ## 下一步读哪份代码
 
-按投入产出排序：`src-tauri/src/parsers/mod.rs`（`external_transcript_sources()` 与 `build_agent_parser()` 两个函数就是会话聚合的全部入口）→ `src-tauri/src/models/agent.rs`（15 个内置 Agent 的唯一真相，含 wire 名与显示名）→ `src-tauri/src/acp/agent_mentions.rs`（委托的语义从这里开始）→ `src-tauri/src/acp/delegation/transport.rs` 与 `broker.rs`（异步委托的线格式与状态机）→ `src-tauri/src/work_task/engine.rs`（模块开头三段注释，是理解 To-dos 最快的路）→ `src-tauri/src/update/install.rs` 与 `supervise.rs`（原地升级与自动回滚）。`AGENTS.md` 与 `CLAUDE.md` 除抬头两行外内容一致，121 行，是核对功能开关与条件编译约定的入口。
+按投入产出排序：
+
+1. `src-tauri/src/parsers/mod.rs` — `external_transcript_sources()` 与 `build_agent_parser()` 两个函数就是会话聚合的全部入口。
+2. `src-tauri/src/models/agent.rs` — 15 个内置 Agent 的唯一真相，含 wire 名与显示名。
+3. `src-tauri/src/acp/agent_mentions.rs` — 委托的语义从这里开始。
+4. `src-tauri/src/acp/delegation/transport.rs` 与同目录的 `broker.rs` — 异步委托的线格式与状态机。
+5. `src-tauri/src/work_task/engine.rs` — 模块开头三段注释，是理解 To-dos 最快的路。
+6. `src-tauri/src/update/install.rs` 与 `supervise.rs` — 原地升级与自动回滚。
+
+`AGENTS.md` 与 `CLAUDE.md` 除抬头两行外内容一致，121 行，是核对功能开关与条件编译约定的入口。
 
 ## 事实口径与失效条件
 
-文中所有断言在 2026-09-19 对 `xintaofei/codeg` 的 `main` 分支 `385eb4f3` 浅克隆逐条核对，命令与文件行号以该提交为准；仓库版本 `0.30.10`，最近一次发布 v0.30.10 在 2026-09-17，创建时间 2026-02-09，许可证 Apache-2.0，Stars 3,531、forks 449。
+文中所有断言在 2026-09-19 对 `xintaofei/codeg` 的 `main` 分支 `385eb4f3` 浅克隆逐条核对，引用的文件路径、函数名与默认值以该提交为准。仓库版本 `0.30.10`，最近一次发布 v0.30.10 在 2026-09-17，创建时间 2026-02-09，许可证 Apache-2.0，Stars 3,544、forks 449。
 
 这些数字要单独看。仓库七个月攒到 3.5k Stars、发布间隔常在一天到几天，说明的是迭代速度，不是功能稳定；`ROUTE_FRAME_VERSION` 的注释明说没有旧版本兼容渲染器，因为它判定"还没发布过值得保留的历史"。委托路由帧、自动升级回滚、To-dos 状态机这三块处在"设计写得很清楚、契约随时会换版本"的阶段。据此不能推出的是：接口在 v1.0 之前保持不变，或者某个 Agent 的适配器版本能被你锁定——`registry.rs` 里的版本是 codeg 锁的，不是你的锁。
 

@@ -1,10 +1,11 @@
 ---
 title: "Agents Towards Production：AI Agent 生产级开发全栈指南"
 date: "2026-05-17T20:10:00+08:00"
+lastmod: "2026-09-21T11:30:00+08:00"
 slug: "agents-towards-production-ai-agents-production-guide"
 github_repo: "NirDiamant/agents-towards-production"
 source_key: "gh:NirDiamant/agents-towards-production"
-description: "Agents Towards Production 是 GitHub 上专注于 AI Agent 生产级部署的开源教程仓库，涵盖状态流编排、向量记忆、实时搜索、Docker 容器化、FastAPI 暴露、安全防护、GPU 扩展、多智能体协作、可观测性与评估等 28 个完整教程，覆盖从原型到企业级的完整路径。"
+description: "Agents Towards Production 是 GitHub 上专注于 AI Agent 生产级部署的开源教程仓库，涵盖状态流编排、向量记忆、实时搜索、Docker 容器化、FastAPI 暴露、安全防护、GPU 扩展、多智能体协作、可观测性与评估等 24 个完整教程，覆盖从原型到企业级的完整路径。"
 draft: false
 categories: ["技术笔记"]
 topics: ["ai-agent"]
@@ -17,12 +18,12 @@ tags: ["AI Agent", "GenAI", "LangGraph", "RAG", "Docker", "FastAPI", "多智能�
 >
 > 读完这篇文章后，你应该能够：
 > 1. 说出生产级 AI Agent 需要解决的八层问题（编排、记忆、工具、安全、可观测性、评估、部署、UI）
-> 2. 解释 LangGraph、FastAPI、Koog 三种编排框架的适用场景和选择标准
+> 2. 解释 LangGraph、FastAPI、Koog 三条编排与服务化路径的适用场景和选择标准
 > 3. 区分 MCP、Arcade、Tavily、Bright Data 四条工具集成路径的边界和组合方式
 > 4. 为团队设计 Agent 技术选型方案，判断哪些教程是最小可用子集
 > 5. 描述安全层（LlamaFirewall）和可观测性层（LangSmith）各自测量什么、不能推出什么
 
-[Agents Towards Production](https://github.com/NirDiamant/agents-towards-production) 把生产环境里真正会卡住人的环节——状态持久化、工具权限、记忆冲突、追踪调试——拆成 28 个独立可运行的教程。每个教程对应一个具体工程问题，配 Jupyter Notebook 或 Python 脚本，克隆下来就能跑。仓库由 Nir Diamant 维护，背后有 LangChain、Redis、Contextual AI 等厂商贡献对应模块的集成教程，不是第三方二手解读（赞助商与教程的对应关系参见仓库 README 与 SPONSORS.md）。
+[Agents Towards Production](https://github.com/NirDiamant/agents-towards-production) 把生产环境里真正会卡住人的环节——状态持久化、工具权限、记忆冲突、追踪调试——拆成 24 个独立可运行的教程。每个教程对应一个具体工程问题，配 Jupyter Notebook、Python 脚本或 Kotlin 工程，克隆下来就能跑。仓库由 Nir Diamant 维护，LangChain、Redis、Contextual AI 等厂商贡献了自己工具的集成教程，不是第三方二手解读（赞助商与教程的对应关系参见仓库 README 的赞助商章节）。
 
 仓库本身不发明新框架。它做的事是把分散在十几个厂商文档里的集成方案，按生产 Agent 的层次结构归位，并补上每层常见的失败模式。
 
@@ -33,7 +34,7 @@ tags: ["AI Agent", "GenAI", "LangGraph", "RAG", "Docker", "FastAPI", "多智能�
 - 一个生产级 Agent 至少要解决哪几层问题，每层不解决会出什么故障
 - 工具集成、记忆系统、部署这三块各自有几条路径，边界在哪里
 - 安全、可观测性、评估这三层分别测什么、不能测什么
-- 面对一个具体业务需求，怎么从 28 个教程里挑出最小可用子集
+- 面对一个具体业务需求，怎么从 24 个教程里挑出最小可用子集
 
 如果你正在把一个 Demo Agent 推向生产，或者评估要不要引入某个厂商方案，这篇指南可以作为选型地图。如果你刚接触 Agent 开发，建议先跑通文末"采用顺序"里的第一阶段，再回头看各层细节。
 
@@ -45,6 +46,7 @@ tags: ["AI Agent", "GenAI", "LangGraph", "RAG", "Docker", "FastAPI", "多智能�
 - [文件转换：本地与云端的双通道](#文件转换本地与云端的双通道)
 - [记忆系统：三种架构的取舍](#记忆系统三种架构的取舍)
 - [RAG：企业级精度](#rag企业级精度)
+- [持久化摄取：管道在失败中存活](#持久化摄取管道在失败中存活)
 - [部署：四条路径的演进](#部署四条路径的演进)
 - [多智能体协作](#多智能体协作)
 - [安全：防御与攻击两条线](#安全防御与攻击两条线)
@@ -99,7 +101,7 @@ flowchart TD
 
 ## Agent 框架：三种编排层的选择
 
-编排层是整个 Agent 的骨架，决定了状态怎么流转、任务怎么分发、错误怎么恢复。仓库里给了三种实现路径，分别对应不同的技术栈和复杂度。
+编排层是整个 Agent 的骨架，决定了状态怎么流转、任务怎么分发、错误怎么恢复。仓库里给了三条路径：Python 生态的有状态编排和服务化暴露，以及 JVM 生态的整体方案。
 
 ### LangGraph：有状态工作流
 
@@ -107,11 +109,11 @@ flowchart TD
 
 ### FastAPI：服务化
 
-[Deploying Agents as APIs with FastAPI](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/fastapi-agent) 把 Agent 包装成高性能 API，同时支持同步调用和流式响应（streaming）。需要将 Agent 集成到既有后端系统的团队会用到这条路径——LangGraph 负责内部状态流转，FastAPI 负责对外暴露 HTTP 接口，两者经常成对出现。
+[Deploying Agents as APIs with FastAPI](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/fastapi-agent) 把 Agent 包装成高性能 API：`/agent` 端点处理同步调用，`/agent/stream` 端点做 token 级流式响应，教程还覆盖了 API Key 认证和单元测试。需要将 Agent 集成到既有后端系统的团队会用到这条路径——LangGraph 负责内部状态流转，FastAPI 负责对外暴露 HTTP 接口，两者经常成对出现。
 
 ### Koog：JVM 生态
 
-[Building AI Agents in Kotlin with Koog](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/kotlin-agent-with-koog) 面向 JVM 生态的开发者。Koog 是 JetBrains 推出的 AI Agent 框架，教程从零开始，30 分钟内完成从 hello world 到工具调用和结构化输出的完整路径。技术栈在 JVM、不想引入 Python 依赖的团队会用到这条路径。
+[Building AI Agents in Kotlin with Koog](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/kotlin-agent-with-koog) 面向 JVM 生态的开发者。Koog 是 JetBrains 推出的 AI Agent 框架，教程分三步走：基础 Agent、工具调用（ReAct 模式）、结构化输出（返回 Kotlin 数据类），官方预估总时长 25–30 分钟。技术栈在 JVM、不想引入 Python 依赖的团队会用到这条路径。
 
 三种框架并不互斥。Python 项目里 LangGraph + FastAPI 是常见组合；JVM 项目用 Koog 替代前两者。如果团队已经在用 LangChain 生态，LangGraph 几乎是默认选择；如果只是要把一个现成的 Agent 暴露成 API，FastAPI 单独使用也够。
 
@@ -139,7 +141,7 @@ flowchart TD
 
 ## 文件转换：本地与云端的双通道
 
-[Agent File Conversion, Locally and Privately（hushvert）](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-file-conversion-with-hushvert) 补的是另一类能力——处理各种格式文件的转换。它走双通道：横道上，开源的 WebAssembly 引擎在用户设备本地转换图片、HEIC、音频和压缩包，数据不出设备；竖道上，MCP 工具调用负责 Office 文档和 PDF 转 Markdown。教程还附了一份与常见提取器的保真度对比。涉及用户文件上传、对数据隐私敏感的场景会用到这条路径——它和上面的四条工具路径不冲突，反过来，把文件转换包成一个 MCP 工具，就能同时走协议适配层。
+[Agent File Conversion, Locally and Privately（hushvert）](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-file-conversion-with-hushvert) 补的是另一类能力——处理各种格式文件的转换。它把一条路由规则贯穿始终：设备自己能做的转换，不花钱、不传数据。本地通道是一个 MIT 许可的 WebAssembly 引擎，在用户设备上转换图片、HEIC、音频、压缩包和 PDF 页面操作，字节不出设备；服务通道负责浏览器做不了的重量格式——Office 文档转 PDF、PDF 转 Word、PDF/PPTX/XLSX 转可供 LLM 使用的 Markdown——并以两种方式暴露：Agent 可调用的 MCP 服务器，以及供流水线使用的 REST API。教程还附了一份与常见提取器的保真度对比，标明哪些场景转换质量占优、哪些场景是已经解决好的问题。涉及用户文件上传、对数据隐私敏感的场景会用到这条路径——它和上面的四条工具路径不冲突，反过来，把文件转换包成一个 MCP 工具，就能同时走协议适配层。
 
 ## 记忆系统：三种架构的取舍
 
@@ -147,21 +149,25 @@ flowchart TD
 
 ### Redis 双重记忆：短时 + 长时
 
-[Agent Memory with Redis](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-memory-with-redis) 实现了经典的双重记忆架构。**短时记忆**基于当前对话窗口的上下文，**长时记忆**持久化用户偏好和学习成果。Redis 同时充当向量数据库（语义搜索）和内存数据库（高速读写），兼顾检索精度和响应速度。对话密集、对延迟敏感的场景适合这套架构。
+[Agent Memory with Redis](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-memory-with-redis) 实现了经典的双重记忆架构。**短时记忆**基于当前对话窗口的上下文，**长时记忆**持久化用户偏好和学习成果。Redis 同时充当向量数据库（RedisVL 语义搜索）和内存数据库（高速读写），教程还演示了用 Redis checkpointer 做状态持久化。对话密集、对延迟敏感的场景适合这套架构。
 
 ### Mem0：自进化记忆
 
-[Self-Improving Memory with Mem0](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-memory-with-mem0) 展示了更进一步的记忆架构。Mem0 不仅存储记忆，还会自动提取洞察、解决记忆冲突，并在每次交互中优化自身。混合存储架构结合了向量搜索（语义召回）和图数据库（关系推理），让记忆既精准又有关联性。长期运行、需要积累用户画像的场景适合这套架构。
+[Self-Improving Memory with Mem0](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-memory-with-mem0) 展示了更进一步的记忆架构。Mem0 不仅存储记忆，还会自动提取洞察、解决记忆冲突，并在每次交互中优化自身。混合存储架构结合了向量搜索（教程用 Qdrant 做语义召回）和图数据库（教程用 Neo4j 做关系映射），让记忆既精准又有关联性。长期运行、需要积累用户画像的场景适合这套架构。
 
 ### Cognee：知识图谱增强
 
-[Cognee 教程](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/ai-memory-with-cognee) 展示了如何将分散的开发数据转化为统一的知识图谱，为 Agent 提供结构化的上下文背景。数据来源多、关系复杂的场景——代码库分析、企业知识管理——会用到这套架构。
+[Cognee 教程](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/ai-memory-with-cognee) 展示了如何将分散的开发数据——代码贡献记录、规范文档、编码对话——转化为统一的知识图谱，为 Agent 提供结构化的上下文背景。数据来源多、关系复杂的场景——代码库分析、企业知识管理——会用到这套架构。
 
 三种架构按记忆需求分流：对话密集且延迟敏感用 Redis，长期运行需要积累用户画像用 Mem0，数据来源多且关系复杂用 Cognee。Redis 不处理记忆冲突，Mem0 自动解决冲突但写入路径更重，Cognee 强在结构化关系但建图成本高——三者各有代价，不是越复杂越好。
 
 ## RAG：企业级精度
 
-[Production-Ready RAG with Contextual AI](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-RAG-with-Contextual) 是面向企业用户的 RAG（Retrieval-Augmented Generation，检索增强生成）教程。Contextual AI 提供托管平台，教程演示了从文档处理、智能索引到 Agent 部署的完整流程，并包含基于 LMUnit 测试框架的自动化评估。金融文档分析这类对精度要求极高的场景会用到——召回率差几个百分点就意味着合规风险。
+[Production-Ready RAG with Contextual AI](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-RAG-with-Contextual) 是面向企业用户的 RAG（Retrieval-Augmented Generation，检索增强生成）教程。Contextual AI 提供托管平台，官方口径是 15 分钟搭起企业级 RAG：从文档处理、智能索引到 Agent 部署的完整流程，并包含基于 LMUnit 测试框架的自动化评估。教程的业务场景是金融文档分析——召回率差几个百分点就意味着合规风险。
+
+## 持久化摄取：管道在失败中存活
+
+[Durable RAG Ingestion with Inngest](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/durable-rag-ingestion-inngest) 处理的是 RAG 教程普遍跳过的问题：文档没进索引时会发生什么。一个跑了几千份文档的摄取任务在三分之二处挂掉，天真的重试会把已经付费的解析和嵌入全部重做一遍。教程用 Inngest 的事件-函数-步骤模型重建这条管道：每个阶段包进持久化步骤，重试从失败的文档继续而不是从头再来；以文档 ID 加内容哈希做幂等 upsert，同一份文件重灌只更新不重复；按文档粒度扇出，一份坏文件不会拖垮整批；再配上限流和租户级并发控制，历史回灌不会挤占线上摄取；解析失败的文档进入人工审查门。值得一读的是教程里"什么时候你不需要这些"一节——很多管道确实用不上这层复杂度，教程没有回避这个判断。
 
 ## 部署：四条路径的演进
 
@@ -177,11 +183,11 @@ flowchart TD
 
 ### RunPod：GPU 云扩展
 
-[Scalable GPU Deployment with RunPod](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/runpod-gpu-deploy) 针对计算密集型 Agent 场景——比如需要频繁调用大模型的任务。使用 RunPod 的 GPU 云服务，可以快速搭建推理集群，教程涵盖了环境配置、成本优化和高可用部署。流量波动大、需要弹性算力的场景会用到这条路径。
+[Scalable GPU Deployment with RunPod](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/runpod-gpu-deploy) 讲的是 RunPod 的 Serverless 部署：把一个 CrewAI 多智能体写作应用（内嵌 Ollama 模型推理）打包成容器，部署为按请求自动伸缩的 serverless 端点。开发者只管把代码装进容器，伸缩、负载均衡、资源分配由平台处理，按实际使用的计算时间计费——这对用量波动大、单次请求又很吃算力的 Agent 场景尤其合适。
 
 ### AWS Bedrock AgentCore：托管运行时
 
-[AWS Bedrock AgentCore](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/aws_agentcore) 演示如何将本地开发的 Agent 部署到 AWS Bedrock 的托管运行时，享受自动扩缩容、请求追踪和标准化通信模式。已经用 AWS 生态、不想自己运维推理集群的团队会用到这条路径。
+[AWS Bedrock AgentCore](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/aws_agentcore) 演示如何把本地开发的 Agent 变成 AWS Bedrock 上的托管服务，由平台自动接管基础设施，并提供请求追踪和标准化通信模式。已经用 AWS 生态、不想自己运维推理集群的团队会用到这条路径。
 
 从 Docker 到 Ollama、RunPod、AWS Bedrock，每一步解决一个新约束：环境一致性、数据隐私、算力弹性、运维托管。四条路径可以并存——本地推理和云上托管并不冲突，按场景切换即可。
 
@@ -193,15 +199,15 @@ flowchart TD
 
 安全层在仓库里分两条线展开。
 
-### LlamaFirewall：防御侧
+### LlamaFirewall：运行时防护
 
-[Comprehensive Agent Security with LlamaFirewall](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-security-with-llamafirewall) 用 Meta 开源的 LlamaFirewall（Purple Llama 项目）做护栏。它由几道可叠加的扫描器组成：PromptGuard 2 在输入侧检测提示注入与越狱尝试，AlignmentCheck 在推理过程中审计 Agent 的目标是否被劫持，CodeShield 在输出侧检查 Agent 生成的代码是否含不安全模式，此外还有可自定义规则的正则与提示词扫描器。教程提供了预配置的护栏方案，适合需要快速为 Agent 加安全兜底的生产项目。
+[Comprehensive Agent Security with LlamaFirewall](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-security-with-llamafirewall) 用 Meta 开源的 LlamaFirewall（Purple Llama 项目）做护栏。它由几道可叠加的扫描器组成：PromptGuard 2 在输入侧检测提示注入与越狱尝试，AlignmentCheck 在推理过程中审计 Agent 的目标是否被劫持，CodeShield 在输出侧检查 Agent 生成的代码是否含不安全模式，此外还有可自定义规则的正则与提示词扫描器。教程按输入、输出、工具三个面拆成四个 notebook，从基础消息扫描一路做到工具访问控制。需要快速为 Agent 加安全兜底的生产项目从这里入手。
 
-### Apex：攻击侧
+### Apex：安全评估与攻击验证
 
-[Apex Hands-On Agent Security](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-security-apex) 从攻击者视角出发，通过红队演练帮助开发者理解 Agent 可能遭受的安全威胁——包括提示注入攻击的常见手法、防御策略以及自动化安全测试流程。红队测试的价值不在"发现漏洞"本身，而在于上线前用真实攻击手法验证护栏是否拦得住——这比上线后被外部研究者披露漏洞的代价低得多。
+[Agent Security with Apex](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/agent-security-apex) 是一个攻防一体的安全评估教程：不是只读漏洞原理，而是实际动手——用 8 大类提示注入攻击、91 个真实攻击样本和 12 种混淆绕过手法测试自己的系统，配合自动化测试工具量化防护效果，再实现防御并用同样的数据集验证。红队式测试的价值不在"发现漏洞"本身，而在于上线前用真实攻击手法验证护栏是否拦得住——这比上线后被外部研究者披露漏洞的代价低得多。
 
-两条线配合使用。Apex 在上线前做红队测试，发现漏洞；LlamaFirewall 在运行时做防护，拦截攻击。只做防御不做攻击测试，护栏是否有效无从验证；只做攻击测试不做防御，发现问题也来不及拦截。
+两条线配合使用。Apex 在上线前做测试，验证防御对已知攻击手法是否有效；LlamaFirewall 在运行时做防护，拦截实际攻击。只做防御不做攻击测试，护栏是否有效无从验证；只做攻击测试不做防御，发现问题也来不及拦截。
 
 ## 可观测性与评估：测什么，不能推出什么
 
@@ -223,7 +229,7 @@ IntellAgent 能告诉你：改了 prompt 后行为是变好还是变坏、不同
 
 ## 模型定制与前端界面
 
-这两层分别处理"模型本身"和"用户入口"，在 28 个教程里各占一个，内容相对轻量，但都给出了从 Demo 走向生产的关键判断。
+这两层分别处理"模型本身"和"用户入口"，在 24 个教程里各占一个，内容相对轻量，但都给出了从 Demo 走向生产的关键判断。
 
 ### 微调：垂直领域的精度提升
 
@@ -243,18 +249,20 @@ Streamlit 的边界很清楚：内部演示、测试、运营后台够用；面�
 
 1. **安全层（输入）**：LlamaFirewall 检查输入，确认没有提示注入
 2. **编排层**：LangGraph 接收请求，初始化状态机
-3. **记忆层**：Redis 召回该用户的历史偏好（比如关注多智能体方向）
+3. **记忆层**：Mem0 召回该用户的历史偏好（比如关注多智能体方向）
 4. **工具层**：Tavily 搜索"AI Agent 最新进展"，Bright Data 采集几篇关键论文的摘要
 5. **编排层**：LangGraph 把搜索结果和用户偏好传给 LLM
 6. **LLM 推理**：生成结构化摘要
 7. **安全层（输出）**：LlamaFirewall 检查输出，过滤敏感内容
 8. **可观测性**：LangSmith 全程记录每一步的输入、输出和耗时
 9. **记忆层**：Mem0 把这次交互的洞察存入长时记忆，供下次使用
-10. **部署层**：FastAPI 把响应流式返回给用户，Docker 保证环境一致性
+10. **部署层**：FastAPI 把响应流式返回给用户
+
+注意第 3 步和第 9 步用的是同一套记忆系统——召回和写入要落在同一个存储里，否则写进去的偏好下次召不回来。
 
 ## 采用顺序与决策建议
 
-面对 28 个教程，按以下顺序推进：
+面对 24 个教程，按以下顺序推进：
 
 **第一阶段：跑通一个完整 Agent**
 从 LangGraph 的[有状态工作流教程](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/LangGraph-agent)开始，配合 [FastAPI 部署教程](https://github.com/NirDiamant/agents-towards-production/tree/main/tutorials/fastapi-agent)，在本地搭建一个可运行的 Agent 服务。这个阶段的目标是让 Agent 跑通"接收请求→调用 LLM→返回响应"的最小循环。
@@ -266,65 +274,62 @@ Streamlit 的边界很清楚：内部演示、测试、运营后台够用；面�
 上线前必须做两件事：给 Agent 加上 LlamaFirewall 安全护栏，接入 LangSmith 追踪。这两层决定了 Agent 能否在无人值守的情况下稳定运行。
 
 **第四阶段：规模化部署**
-Docker 容器化 → RunPod GPU 扩展 → AWS Bedrock 托管。这三步对应从个人项目到企业级产品的演进路径，每一步解决一个新约束。
+Docker 容器化 → RunPod Serverless → AWS Bedrock 托管。这三步对应从个人项目到企业级产品的演进路径，每一步解决一个新约束。
 
 **选型边界**：
 
-- 工具集成：工具少用 MCP，工具多且需要权限审批用 Arcade
+- 工具集成：工具数量多或变更频繁走 MCP 协议适配；涉及账户的敏感操作需要审批时叠加 Arcade；实时检索用 Tavily，批量采集用 Bright Data
 - 记忆系统：对话密集用 Redis，长期运行用 Mem0，关系复杂用 Cognee
 - 部署：数据不能出内网用 Ollama，流量波动大用 RunPod，已用 AWS 生态用 Bedrock
-- 安全：上线前用 Apex 做红队测试，运行时用 LlamaFirewall 做防护
+- 安全：上线前用 Apex 的攻击数据集验证防御，运行时用 LlamaFirewall 拦截攻击
 - 评估：追踪执行过程用 LangSmith，评估输出质量用 IntellAgent
 
 ## 快速上手
 
-每个教程都可独立运行。不需要克隆整个仓库再摸索依赖关系，每个 tutorial 文件夹下都有独立的 `requirements.txt` 和说明文档，选中哪个就直接进入对应的目录开始。
+每个教程自包含，克隆仓库后直接进入对应目录即可，不需要摸清教程之间的依赖关系。各教程的形态不完全一样：约一半目录带 README 和 `requirements.txt`，其余是自包含的 notebook（依赖安装写在 notebook 的第一个单元格里）；Koog 教程则是一个完整的 Kotlin 工程。以 LangGraph 教程为例，它只有一个 notebook 文件：
 
 ```bash
 # 克隆仓库
 git clone https://github.com/NirDiamant/agents-towards-production.git
 cd agents-towards-production
 
-# 进入目标教程目录，以 LangGraph 为例
+# 进入目标教程目录（以 LangGraph 为例）
 cd tutorials/LangGraph-agent
 
-# 安装依赖
-pip install -r requirements.txt
-
-# 启动 Jupyter Notebook
-jupyter notebook tutorial.ipynb
+# 启动 Jupyter Notebook，按单元格顺序执行
+jupyter notebook langgraph_tutorial.ipynb
 ```
 
-仓库对 Python 版本的要求因教程而异，具体版本要求参见各教程目录下的 `requirements.txt` 与 README，没有统一的最低版本号。如果克隆后跑某个教程报依赖冲突，先看[常见问题与排查](#常见问题与排查)里的 Q1，按教程单独建虚拟环境再装依赖。
+建议为每个教程单独建虚拟环境，避免依赖互相冲突——不是每个教程目录都有 `requirements.txt`，对于 notebook 自带安装单元的教程，装完即可运行；对于带 `requirements.txt` 的教程，`pip install -r requirements.txt` 之后再打开 notebook。具体依赖清单以各教程目录下的实际文件为准。
 
 ## 常见问题与排查
 
 **Q1：克隆仓库后跑某个教程，报依赖冲突怎么办？**
 
-每个教程目录下都有独立的 `requirements.txt`，不要在同一个虚拟环境里装所有教程的依赖。推荐为每个教程单独建一个 venv 或 conda 环境：
+多个教程共用一个虚拟环境是依赖冲突的常见原因——不同教程锁的库版本可能不一样。推荐为每个教程单独建一个 venv 或 conda 环境：
 
 ```bash
 cd tutorials/LangGraph-agent
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install jupyter
+jupyter notebook langgraph_tutorial.ipynb
 ```
 
-如果仍然报版本冲突，先看 `requirements.txt` 里是否锁定了具体版本，再对照你本地的 Python 版本——部分教程依赖的库在 Python 3.8 以下不可用。
+带 `requirements.txt` 的教程先装 `requirements.txt` 再启动。如果仍然报版本冲突，先看 `requirements.txt` 里是否锁定了具体版本，再对照你本地 Python 版本——部分依赖对 Python 最低版本有要求，版本过旧会直接装不上。
 
 **Q2：LangGraph 状态机跑到一半挂了，重启后状态丢了怎么办？**
 
-LangGraph 默认把状态存在内存里，进程退出就没了。生产环境需要接一个 checkpointer，把状态持久化到 Redis、Postgres 或 SQLite。教程里演示的是内存模式，上线前必须替换成持久化后端，否则长任务无法恢复。
+LangGraph 只有在配置了 checkpointer 时才会持久化状态，仓库里的 LangGraph 教程没有接 checkpointer，状态只活在进程内存里，进程退出就没了。生产环境需要接一个 checkpointer，把状态持久化到 Redis、Postgres 或 SQLite——仓库的 Redis 记忆教程演示了 Redis checkpointer 的接法。上线前务必补上这一层，否则长任务无法恢复。
 
 **Q3：Tavily 搜索返回的结果质量不稳定，怎么排查？**
 
 先看搜索 query 是不是 Agent 自己拼的——LLM 生成的 query 经常过于宽泛或过于具体。可以在 LangGraph 里加一个 query 改写节点，让 LLM 先把用户问题转成 2-3 个具体搜索词再调 Tavily。其次看 Tavily 的 `search_depth` 参数，`advanced` 模式会做内容提取，召回质量更高但更慢、更贵。
 
-下面是一个最小可用的 query 改写节点示例，把它插在 LangGraph 的搜索节点之前：
+下面是一个最小可用的 query 改写节点示例，把它插在 LangGraph 的搜索节点之前（`llm` 和 `tavily_client` 是你已初始化好的客户端）：
 
 ```python
 from typing import List, TypedDict
-from langgraph.graph import StateGraph
 
 class ResearchState(TypedDict):
     user_question: str
@@ -349,28 +354,23 @@ def tavily_search_node(state: ResearchState) -> ResearchState:
         results.append(tavily_client.search(q, search_depth="advanced"))
     state["search_results"] = "\n\n".join(str(r) for r in results)
     return state
-
-graph = StateGraph(ResearchState)
-graph.add_node("rewrite", query_rewrite_node)
-graph.add_node("search", tavily_search_node)
-graph.add_edge("rewrite", "search")
 ```
 
-改写节点把"最近一周 AI Agent 领域有什么重要进展"拆成 `AI Agent framework release 2026-06`、`multi-agent orchestration new paper`、`LangGraph production update` 这类具体查询，召回质量会明显比直接搜原问题好。
+两个节点函数写好后，用 `graph.add_node("rewrite", query_rewrite_node)` 和 `graph.add_node("search", tavily_search_node)` 挂进你的状态图，再 `add_edge("rewrite", "search")` 连接。改写节点把"最近一周 AI Agent 领域有什么重要进展"拆成 `AI Agent framework release 2026-09`、`multi-agent orchestration new paper`、`LangGraph production update` 这类具体查询，召回质量会明显比直接搜原问题好。
 
 **Q4：LangSmith 追踪看不到工具调用的入参和出参，只看到名字。**
 
-这通常是因为工具函数没有用 LangChain 的 `@tool` 装饰器，或者用了自定义的工具调用方式，LangSmith 无法自动捕获。把工具函数用 `@tool` 包装，并加上类型注解，LangSmith 就能记录完整的输入输出。如果用的是原生 OpenAI function calling，需要在调用处手动加 `langsmith` 的 trace 包装。
+这通常是因为工具函数没有用 LangChain 的 `@tool` 装饰器，或者用了自定义的工具调用方式，LangSmith 无法自动捕获。把工具函数用 `@tool` 包装，并加上类型注解，LangSmith 就能记录完整的输入输出。如果用的是原生 OpenAI function calling，需要在调用处手动加 `langsmith` 的 `@traceable` 包装。
 
 **Q5：LlamaFirewall 拦截了正常用户输入，误报率高怎么办？**
 
-LlamaFirewall 的提示注入检测默认配置偏保守。先看拦截日志里命中的是哪条规则——如果是基于关键词的规则，可以加白名单；如果是基于模型的判断，可以调整阈值。误报率高的场景建议先在影子模式（只记录不拦截）跑一周，收集真实流量后再调规则。
+提示注入检测由分类模型驱动，误报需要结合真实业务流量来调。先看拦截日志里命中的是哪条规则——基于规则的扫描器可以加白名单，基于模型的判断可以调整阈值。拿不准的场景建议先只记录不拦截，跑一段时间收集真实流量后再决定拦截策略。
 
 **Q6：Mem0 记忆冲突解决机制把用户偏好改错了，怎么回滚？**
 
-Mem0 的记忆更新是写操作，冲突解决策略默认是"新覆盖旧"。如果发现改错了，可以从 Mem0 的存储后端（通常是向量数据库）手动删除错误条目，让 Agent 重新学习。生产环境建议在 Mem0 之上加一层版本控制或审计日志，记录每次记忆变更的触发原因和前后状态。
+Mem0 的记忆更新是写操作，冲突解决策略默认是"新覆盖旧"。如果发现改错了，可以从 Mem0 的存储后端（教程配置里是 Qdrant 向量库加 Neo4j 图库）手动删除错误条目，让 Agent 重新学习。生产环境建议在 Mem0 之上加一层审计，记录每次记忆变更的触发原因和前后状态。
 
-下面是一个最小审计包装，把每次写入的前后状态记下来，回滚时按记录恢复：
+下面是一个最小审计包装，把每次写入的前后状态记下来，回滚时按记录恢复（基于 mem0 当前版本的 API：`search` 用 `filters` 传用户维度、`top_k` 控制条数，返回值里的记忆条目在 `results` 键下）：
 
 ```python
 from datetime import datetime
@@ -383,9 +383,13 @@ class VersionedMemory:
         self.audit_log: List[dict] = []
 
     def add(self, messages, user_id: str):
-        before = self.memory.search(query="", user_id=user_id, limit=20)
+        before = self.memory.search(
+            query="", filters={"user_id": user_id}, top_k=20
+        )["results"]
         self.memory.add(messages, user_id=user_id)
-        after = self.memory.search(query="", user_id=user_id, limit=20)
+        after = self.memory.search(
+            query="", filters={"user_id": user_id}, top_k=20
+        )["results"]
         self.audit_log.append({
             "timestamp": datetime.utcnow().isoformat(),
             "user_id": user_id,
@@ -424,7 +428,7 @@ class VersionedMemory:
 
 4. 你的 Agent 部署在内网，数据不能出网，但需要跑 70B 参数的模型。Ollama 够用吗？如果不够，下一步该怎么做？
 
-5. 上线前做了 Apex 红队测试，没发现漏洞。LlamaFirewall 还需要部署吗？两条线的职责差异是什么？
+5. 上线前用 Apex 的攻击数据集做过评估，没有发现可利用的漏洞。LlamaFirewall 还需要部署吗？两条线的职责差异是什么？
 
 6. 一个研究型 Agent 同时用了 Tavily 和 Bright Data。两者职责怎么划分？如果只用一个，会缺什么能力？
 
@@ -437,9 +441,9 @@ class VersionedMemory:
 
 3. **LangSmith 不能直接定位**。LangSmith 测的是执行过程（路径、耗时、工具调用），不测输出质量。用户投诉变多说明输出质量下降，需要补 IntellAgent 做行为质量评估，对比改 prompt 前后的行为差异。LangSmith 的追踪数据可以辅助定位是哪些场景出了问题，但判断"变好还是变坏"需要评估层。
 
-4. **Ollama 不一定够用**。Ollama 能在本地跑模型，但 70B 参数模型对显存要求高（通常需要多卡或量化）。先确认内网机器的 GPU 配置——如果显存够，Ollama 加量化模型可以跑；如果显存不够，要么换更小的模型，要么在内网搭 GPU 集群（参考 RunPod 教程的集群搭建思路，但用内网机器）。数据不能出网是硬约束，AWS Bedrock 这条路径排除。
+4. **Ollama 不一定够用**。Ollama 能在本地跑模型，但 70B 参数模型对显存要求高（通常需要多卡或量化）。先确认内网机器的 GPU 配置——如果显存够，Ollama 加量化模型可以跑；如果显存不够，要么换更小的模型，要么在内网搭 GPU 集群（参考 RunPod 教程的容器化思路，但用内网机器）。数据不能出网是硬约束，AWS Bedrock 这条路径排除。
 
-5. **LlamaFirewall 仍需要部署**。Apex 是攻击侧，上线前做红队测试，发现潜在漏洞；LlamaFirewall 是防御侧，运行时拦截实际攻击。Apex 没发现漏洞不代表运行时没有攻击——新的攻击手法会不断出现，运行时防护不能省。两条线的职责差异：Apex 测"现在有没有已知漏洞"，LlamaFirewall 防"运行时遇到的攻击"。
+5. **LlamaFirewall 仍需要部署**。Apex 的评估针对的是数据集里的已知攻击手法，LlamaFirewall 防的是运行时遇到的实际攻击——新的攻击手法会不断出现，运行时防护不能省。两条线的职责差异：Apex 验证"已知手法能不能拦住"，LlamaFirewall 防"运行时遇到的攻击"。
 
 6. **Tavily 负责实时信息检索（少量、精准），Bright Data 负责大规模网页采集（批量、结构化）**。Tavily 适合"查最新进展"这类需要时效性的查询，返回的是搜索结果；Bright Data 适合"采集 100 个竞品官网的定价页"这类需要批量抓取和反爬的任务，返回的是结构化数据。只用 Tavily 会缺批量采集能力，只用 Bright Data 会缺时效性检索能力——前者抓不到"最新"，后者查不了"实时"。
 
@@ -447,26 +451,30 @@ class VersionedMemory:
 
 ## 使用前需要注意
 
-仓库声明了免责声明：所有教程仅用于教育目的，作者不对因使用教程内容而造成的任何损失负责。安全相关工具（LlamaFirewall、Apex 等）必须在获得授权后才能用于实际测试。
+仓库的免责声明写明：内容仅用于教育目的，作者对使用、滥用及其后果不承担责任，也不为文中提到的第三方公司、工具或服务背书。安全相关工具（LlamaFirewall、Apex 等）必须在获得授权后才能用于实际测试。
 
-仓库采用自定义非商业许可证，具体条款在 [LICENSE](https://github.com/NirDiamant/agents-towards-production/blob/main/LICENSE) 文件中约定，使用前请务必查阅。
+仓库采用自定义非商业许可证：使用和分发须署名并注明修改，商业使用需事先获得作者的书面许可（贡献者复用自己的贡献除外），具体条款在 [LICENSE](https://github.com/NirDiamant/agents-towards-production/blob/main/LICENSE) 文件中约定，使用前请务必查阅。
 
 ## 赞助生态
 
-仓库背后有真实的企业赞助商提供支持，每个赞助商贡献了对应工具的详细教程（赞助商名单与对应教程参见仓库 README 与 SPONSORS.md）：
+仓库的赞助商分两类（名单与对应教程见 README 赞助商章节）：
+
+**教程赞助商**——贡献了对应工具的动手教程：
 
 - **LangChain**——Agent 框架与工作流编排
-- **Redis**——向量存储与内存数据库
+- **Redis**——内存数据库与向量存储
 - **Contextual AI**——企业级 RAG 平台
 - **Bright Data**——网络数据采集基础设施
 - **Tavily**——实时网络搜索 API
-- **Arcade**——安全的多工具调用平台
-- **JetBrains Koog**——Kotlin AI Agent 框架
+- **Arcade**——多用户安全工具调用平台
+- **JetBrains**——Kotlin 与 Koog AI Agent 框架
 - **Mem0**——自进化记忆系统
 - **RunPod**——GPU 云算力
-- **CodeRabbit**——AI 代码审查
+- **Inngest**——持久化执行平台
 
-每个教程链接都直接指向赞助商的官方文档和技术支持页面。教程内容来自对应领域厂商的官方集成方案——但教程会偏向赞助商自家的工具，选型时需要对照其他方案。
+**一般赞助商**——通过伙伴关系和资源支持项目，如 **CodeRabbit**（AI 代码审查），没有对应教程。
+
+教程内容来自对应领域厂商的贡献者——但教程会偏向赞助商自家的工具，选型时需要对照其他方案。
 
 ## 推荐阅读与进阶路径
 
@@ -479,7 +487,7 @@ class VersionedMemory:
 想往更深走的读者，可以接着看下面这些资料：
 
 - **[12-Factor Agents](https://github.com/humanlayer/12-factor-agents)**——HumanLayer 提出的生产级 Agent 设计原则，类似 Twelve-Factor App 之于 Web 应用。适合用来对照检查自己的 Agent 是否漏了关键工程约束。
-- **[Anthropic Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk)**——Anthropic 官方的 Agent SDK，文档里对工具调用、记忆、安全的设计取舍有详细说明。适合想理解厂商为什么这样设计 Agent 抽象的读者。
+- **[Anthropic Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-python)**——Anthropic 官方的 Agent SDK，文档里对工具调用、记忆、安全的设计取舍有详细说明。适合想理解厂商为什么这样设计 Agent 抽象的读者。
 - **[LangGraph 官方文档](https://langchain-ai.github.io/langgraph/)**——仓库里 LangGraph 教程的进阶版，覆盖了 checkpointer、人机协作、子图等生产级特性。跑通仓库教程后想深入编排层细节的读者从这里继续。
 - **[OpenAI Agents SDK](https://github.com/openai/openai-agents-python)**——OpenAI 官方的 Agent 框架，和 LangGraph 是同一层的对照方案。适合做选型对比。
 
@@ -487,19 +495,20 @@ class VersionedMemory:
 
 本文基于 Agents Towards Production 项目的 GitHub 仓库（[NirDiamant/agents-towards-production](https://github.com/NirDiamant/agents-towards-production)）中的以下来源进行判断和撰写：
 
-1. **官方 README.md**：项目的整体介绍、教程列表、赞助商信息
-2. **各教程目录**：28 个教程的独立说明文档、代码示例、requirements.txt
-3. **赞助商官方文档**：LangChain、Redis、Contextual AI、Bright Data、Tavily、Arcade、JetBrains Koog、Mem0、RunPod 等赞助商提供的官方集成方案和文档
-4. **相关技术文档**：LangGraph 官方文档、LangSmith 文档、LlamaFirewall 文档、Apex 文档、IntellAgent 文档
+1. **官方 README.md**：项目的整体介绍、教程索引、赞助商章节、免责声明
+2. **llms.txt**：官方教程索引，与 tutorials 目录逐一对应
+3. **各教程目录**：README、代码示例、notebook、requirements.txt
+4. **赞助商官方文档**：LangChain、Redis、Contextual AI、Bright Data、Tavily、Arcade、JetBrains Koog、Mem0、RunPod、Inngest 等厂商提供的官方集成方案和文档
+5. **相关技术文档**：LangGraph 官方文档、LangSmith 文档、LlamaFirewall 文档、Mem0 SDK 文档
 
 **局限性说明**：
 
-- 项目采用自定义非商业许可证，具体条款需要在使用前查阅 LICENSE 文件
-- 教程内容来自对应领域厂商的官方集成方案，可能会偏向赞助商自家的工具，选型时需要对照其他方案
-- 教程的依赖版本可能因时间而变化，建议在使用前查看各教程目录下的 requirements.txt 和 README
-- 本文中的代码示例为简化版，实际实现可能更复杂
-- 性能数据和安全建议来自项目文档和社区反馈，实际效果可能因使用场景而异
+- 项目采用自定义非商业许可证，商业使用需事先获得书面许可，具体条款以 LICENSE 文件为准
+- 教程内容来自对应领域厂商的贡献者，可能会偏向赞助商自家的工具，选型时需要对照其他方案
+- 教程的依赖版本可能因时间而变化，以各教程目录下的 requirements.txt 和 README 为准
+- 本文中的代码示例（Q3、Q6）为演示接口用法的最小片段，`llm`、`tavily_client` 等客户端需按你自己的环境初始化
+- 文中排查建议（Q4、Q5、Q7、Q8）是工程经验层面的做法，不是对应工具官方文档的内容
 
 ---
 
-*本文对应仓库版本为 README.md 中记录的 28 个教程，更新时间请参考 [GitHub 仓库](https://github.com/NirDiamant/agents-towards-production) 最新版本。文中所有外部链接的有效性以发布时为准。*
+*本文教程数量以仓库 tutorials 目录为准（24 个，2026-09-21 核对，对应仓库 2026-09-18 的最新推送）。README 教程表格中另有一条已从仓库移除的教程条目，不计入。文中所有外部链接的有效性以发布时为准。*

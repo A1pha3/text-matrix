@@ -2,23 +2,23 @@
 title: "人类造出的最后一个 AI：通向真正的递归自我改进"
 slug: arxiv-2609-11873-recursive-self-improvement
 date: 2026-09-14T19:18:00+08:00
-lastmod: 2026-09-14T19:18:00+08:00
+lastmod: 2026-09-22T14:30:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["RSI", "Recursive Self-Improvement", "LLM", "Agent", "Meta-Learning", "AutoML", "Self-Play", "arXiv 2609.11873", "Theseus", "Gödel Agent", "Anthropic", "OpenAI", "DeepSeek", "Tencent Hunyuan", "ByteDance Seed", "Alibaba", "Kimi", "GLM"]
-description: "深度解读 arXiv 2609.11873《The Last AI Built by Humans: Toward Genuine Recursive Self-Improvement》。32 位作者、横跨上海交大 / 清华 / 字节 / ModelBest / 小红书 / 腾讯 / Agent-Native / 上海 AI Lab 等机构的工业级 RSI 综述。提出 Headroom-Closed Index（HCI）衡量现有 LLM 真实能力分布，把递归自我改进拆成 B0 到 L5 的五级自主性骨架，按四个反馈机制迥异的应用域（科学发现 / 具身智能 / 软件工程 / 医疗）盘点代表系统，并区分结构性递归与有效性递归。本文同时充当全文翻译 + 路线图。"
+description: "深度解读 arXiv 2609.11873《The Last AI Built by Humans: Toward Genuine Recursive Self-Improvement》。35 位作者、横跨上海交大 / 清华 / 字节 / ModelBest / 小红书 / 腾讯 / Agent-Native / 上海 AI Lab 等机构的工业级 RSI 综述。提出 Headroom-Closed Index（HCI）衡量现有 LLM 真实能力分布，把递归自我改进拆成一条基线 B0 加五级自主性骨架（L1–L5），按四个反馈机制迥异的应用域（科学发现 / 具身智能 / 软件工程 / 医疗）盘点代表系统，并用 8 套工业系统（Theseus、Lark、小红书、Humanlaya、面壁、腾讯混元、Agent-Native、Frontis.AI）区分结构性递归与有效性递归。本文为深度解读 + 路线图。"
 author: 钳岳
 arxiv_id: "2609.11873"
-github_repo: "theseus-labs/Theseus"
+github_repo: "theseus-labs-rsi/awesome-rsi"
 project_page: "https://theseus-labs-rsi.github.io/"
-source_key: "gh:theseus-labs/Theseus"
+source_key: "gh:theseus-labs-rsi/awesome-rsi"
 ---
 
 # 人类造出的最后一个 AI：通向真正的递归自我改进
 
-> 来源：arXiv 2609.11873v1（2026-09-10 提交）— Yi Duan, Ying Liu, Zirui Tang, Haodong Chen, Jun Zhou 等 32 位作者，上海交通大学 / 清华 / 字节跳动 / ModelBest / 小红书 / 腾讯混元 / Agent-Native Research Lab / 上海 AI Lab / Humanlaya / Theseus Labs 等机构联合署名。
+> 来源：arXiv 2609.11873v2（v1 2026-09-10 提交，v2 2026-09-15 修订，本文按 v2 口径撰写）— Yi Duan, Ying Liu, Zirui Tang, Haodong Chen, Jun Zhou 等 35 位作者，上海交通大学 / 清华 / 字节跳动 / ModelBest / 小红书 / 腾讯混元 / Agent-Native Research Lab / 上海 AI Lab / Humanlaya / Theseus Labs 等机构联合署名。
 >
-> 论文 75 页，12 张主表 + 11 张图，覆盖 130+ 篇参考文献与 50+ 套工业系统。本文为该综述的深度中文化 + 路线图解读。
+> 论文 79 页，13 张主表 + 18 张图，覆盖 210+ 篇参考文献与数十套工业系统。论文脚注给出的两个官方入口：[项目页](https://theseus-labs-rsi.github.io/)与 [awesome-rsi 仓库](https://github.com/theseus-labs-rsi/awesome-rsi)。本文为该综述的深度中文化 + 路线图解读。
 
 ## 这篇综述要回答的问题
 
@@ -55,9 +55,11 @@ Anthropic 的可解释性研究、DeepSeek 的训练流水线、字节的自动�
 
 把三条合起来读：当前的"AI 大爆发"在 HCI 已经到 80+ 的能力域上撞天花板，**剩下能跑出大幅增长的地方都是需要持续环境反馈、需要把经验攒下来、再用经验改自己工作方式的任务**。后面所有 RSI 论述，都从这条判断起步。
 
-## 二、把"改进自己"拆成五个层级：B0 到 L5
+## 二、从基线 B0 到 L5：剥开五级自主性骨架
 
-论文提了一个五级自主性骨架（autonomy-centered framework，B0 + L1–L5），按"哪些决策从人手里转交给了 AI"切层。先把全图放在这里，后面再拆每一层：
+论文把"改进自己"这条链拆成 **一条基线加五级自主性骨架**（autonomy-centered framework）。此处先澄清计数：**B0 是基线，五级指 L1–L5**。B0 不占自主性层级——任务内改进"输出可改、状态不变"够不上自主；真正按"哪些决策从人手里转交给了 AI"切层的只有 L1–L5。
+
+先把全图放在这里，后面再拆每一层：
 
 ```mermaid
 flowchart TB
@@ -67,7 +69,7 @@ flowchart TB
     subgraph L4["L4 部署与环境适应自主"]
         L4A["把线上交互证据固化为持久状态<br/>PANDO / Metis / Ouroboros<br/>Evo-Harness / SHAPER"]
     end
-    subgraph L3["L3 学习经验自主"]
+    subgraph L3["L3 学习经验获取自主"]
         L3A["决定"下一步该学什么"<br/>SSP / AZR / R-Zero / STP<br/>VOYAGER / SIMA 2 / SEAgent"]
     end
     subgraph L2["L2 改进策略自主"]
@@ -80,24 +82,26 @@ flowchart TB
         B0A["输出可改, 系统状态不变<br/>Self-Refine / Reflexion<br/>Tree-of-Thoughts"]
     end
     B0 --> L1 --> L2 --> L3 --> L4 --> L5
+    classDef base fill:#f3f4f6,stroke:#6b7280,color:#374151;
     classDef frontier fill:#fff5e6,stroke:#d97706,color:#7c2d12;
     classDef mature fill:#e6f4ff,stroke:#1d4ed8,color:#1e3a8a;
     classDef prod fill:#e8f5e9,stroke:#15803d,color:#14532d;
+    class B0 base
     class L2,L3 frontier
     class L1 mature
     class L4,L5 prod
 ```
 
-论文提了一个五级自主性骨架（B0 + L1–L5），切片维度是"哪些决策从人手里转交给了 AI"：
+逐层拆开：
 
 - **B0（任务内改进）**：输出可以改，但系统状态不变。Self-Refine / Reflexion / Tree-of-Thoughts 都属于这一层——任务结束，反思就没了，APEX-EM 论文里说得明白："LLM 智能体普遍缺乏持久程序记忆，即使解决了同样的任务，下一次还要从头再推一遍。"
 - **L1（改进执行自主）**：人写好流程，AI 执行。Meta 的 Capacity Efficiency 把工程师调试经验编码成可复用技能后，每次新故障自动调用；NVIDIA NeMo Curator 把数据清洗流程模块化。这是现在大多数"AI 帮 AI"系统的真实位置。
 - **L2（改进策略自主）**：人定目标、定验收标准，AI 自己决定"下一步该改什么"。Self-Harness 让模型看自己的执行轨迹、提出对自己 agent harness 的修改；AFlow 把工作流编码成可执行图、用蒙特卡洛树搜索改图。
-- **L3（学习经验自主）**：AI 不光决定"怎么改"，还决定"下一步该学什么"。SSP 让解题者表现反作用于出题者的奖励；AZR 用可执行代码验证任务难度；VOYAGER 在 Minecraft 里根据当前技能和库存挑下一个练什么。
+- **L3（学习经验获取自主，experience-acquisition autonomy）**：AI 不光决定"怎么改"，还决定"下一步该学什么"。SSP 让解题者表现反作用于出题者的奖励；AZR 用可执行代码验证任务难度；VOYAGER 在 Minecraft 里根据当前技能和库存挑下一个练什么。
 - **L4（部署与环境适应自主）**：AI 把部署中产生的真实交互证据固化成持久状态。PANDO 在网页代理运行时增删可复用规则；Metis 把重复使用的文本计划升级为可执行代码工具。
 - **L5（递归继承自主）**：AI 开始改"自己改自己的流程"。STOP 把搜索器本身当成被优化的对象，迭代出第四代搜索器在五个迁移任务上全部跑赢种子；DGM / Gödel Agent / HyperAgents 在这一层做实验；A-Evolve-Training 把后训练研究策略本身作为持久状态留给下一轮。
 
-每一级之间的跃迁都有明确的语义**：
+每一级之间的跃迁都有明确的语义：
 
 - B0→L1 是**持久性**：改完能不能撑到下一次任务。
 - L1→L2 是**策略选择**：从"按脚本改"到"挑改哪个"。
@@ -109,11 +113,11 @@ flowchart TB
 
 ### 一次具体任务如何流过这五级骨架
 
-挑论文 §3.3 反复出现的 Self-Harness（Self-Harness 由同底模看自己的执行轨迹提小改）走一遍纵向流程。假设任务是"用一个 coding agent 修一个 Python 仓库里的 bug"：
+挑论文 §3.3 反复出现的 Self-Harness（让同一个底座模型观察自己的执行轨迹、对自己 harness 提小改）走一遍纵向流程。假设任务是"用一个 coding agent 修一个 Python 仓库里的 bug"：
 
 - **B0 层**：agent 写一段代码，跑测试，失败，再写，再跑——五次失败后放弃。这次会话里反复修订的轨迹、反思、上下文，**全部不会带到下一个独立任务**。下一次遇到别的 bug，agent 从零开始。
 - **L1 层**：Meta Capacity Efficiency 这类系统已经编码好"看到 NCCL watchdog timeout → 跑这个 runbook"的流程。AI 不决定改什么、按工程师预先写好的步骤改。修好的"可复用规则"进入规则库，下次新故障自动调。
-- **L2 层**：Self-Harness 自己跑 coding 任务，**收集执行轨迹**，用同一底模提议对自己 harness（提示、工具循环、上下文装配）的小改，跑回归测试，**通过的版本留下、不通过的回滚**。这是"决定下一步改什么"的自主性。
+- **L2 层**：Self-Harness 自己跑 coding 任务，**收集执行轨迹**，用同一个底座模型提议对自己 harness（提示、工具循环、上下文装配）的小改，跑回归测试，**通过的版本留下、不通过的回滚**。这是"决定下一步改什么"的自主性。
 - **L3 层**：SEAgent 在软件环境里维护一份"软件指南（software guidebook）"，**用当前轨迹评估更新这份指南**，指南再去生成后续练习任务。修 bug 不仅是改一个文件，还会改"下次遇到类似 bug 我该先看哪里"的策略。
 - **L4 层**：Ouroboros 把**部署后的真实修复证据**（不只是测试通过，而是用户/评审反馈）作为输入，提出对自己工具/上下文/提示/核心实现的版本化修改；通过测试和人工审核后**替换运行时**，后面所有任务用新版本。
 - **L5 层**：DGM / Gödel Agent 这一类系统，**改的对象是"自己改自己的流程"**——A-Evolve-Training 里 meta-agent 改"下一轮 worker 该用什么训练配方"；HyperAgents 里 meta-agent 在数学评分任务上学到的 agent-构造能力被拿去改机器人/论文评审任务上的 agent。
@@ -166,17 +170,17 @@ flowchart TB
 - **策略与动作模型进化**：Self-Improving Embodied Foundation Models 用预训练模型自给奖励；MEDAL++ 同时学完成任务与撤销任务，减少人工 reset。
 - **世界模型与评估器进化**：VLAW 用真实机器人轨迹改进动作条件视频世界模型；World-VLA-Loop 让策略失败去精化世界模型、精化后的世界模型给下一轮策略优化；Motus2 把策略、仿真、评估函数集成到同一模型。
 
-论文给 S2 域的判断：**L2 已经是常态，L3 / L4 在仿真里跑通，真实硬件上的 L5 还在起步**。
+放到具身智能上，结论变成：**L2 已经是常态，L3 / L4 在仿真里跑通，真实硬件上的 L5 还在起步**。
 
 ### S3：软件工程
 
 软件工程之所以特殊，是因为**开发出来的工件和开发工件用的 agent 都是可执行代码**。这种双重可执行性让软件工程的 RSI 跑得最快：
 
-- **改 coding-agent 实现和 harness**：SICA 让 agent 检查自己过往版本和基准结果、修改自己的 Python 代码库；Self-Harness 用执行轨迹找弱点，让同一底模对自己 harness 提小改；Agentic Harness Engineering 把 harness 暴露成可单独编辑/可回滚的文件；Ouroboros 把部署证据转成 agent 工具/上下文/提示的核心实现变更。
+- **改 coding-agent 实现和 harness**：SICA 让 agent 检查自己过往版本和基准结果、修改自己的 Python 代码库；Self-Harness 用执行轨迹找弱点，让同一个底座模型对自己 harness 提小改；Agentic Harness Engineering 把 harness 暴露成可单独编辑/可回滚的文件；Ouroboros 把部署证据转成 agent 工具/上下文/提示的核心实现变更。
 - **改经验、技能与协作**：SWE-Exp 把成功和失败轨迹都存进经验库，跨任务检索；CODESKILL 学一个管理策略维护多层级程序技能；EvoMAC 用测试反馈和"文本反向传播"改多 agent 工作流的角色提示与通信链。
 - **改改进流程本身**：DGM 维护编码 agent 变体的 archive，让 agent 改自己实现后评估后代；HGM 进一步用"元生产力"分配评估预算给更有长期改进潜力的 agent；HELIX 在模型–harness 双环里改 harness 给当前执行用、积累验证轨迹改模型、再用改后模型重建 harness。
 
-论文给 S3 域的判断：**L2 成熟、L3 正在出现、L4 基本缺席、bouned L5 偶有闪现**。
+软件工程这边论文给的位置是：**L2 成熟、L3 正在出现、L4 基本缺席、bounded L5 偶有闪现**。
 
 ### S4：医疗
 
@@ -186,26 +190,28 @@ flowchart TB
 - **临床推理策略**：EvoClinician 用 Diagnose–Grade–Evolve 循环，让 Actor 顺序问诊和检查、Process Grader 按临床收益打分、Evolver 据此修订下一例的提示与记忆；EvoMDT 把肿瘤决策拆给角色专门化的 agent，用专家评分更新提示、共识权重与检索范围。
 - **临床工具与工作流**：MACRO 从固定医学影像工具中识别多步模式、合成成新高层动作；SkeMex 用 Read–Write–Assess–Govern 生命周期管理临床技能；TissueLab 让领域专家检查中间结果并提供修正，引导主动学习与工作流构造；HealthFlow 把完成的 EHR 分析转成持久保障、可复用工作流、代码片段。
 
-论文给 S4 域的判断：**L1/L2 已经部署，L3 在模拟病人上跑通，L4 真实患者端开始探索但 L5 完全空白**。
+医疗域的图景保守得多：**L1/L2 已经部署，L3 在模拟病人上跑通，L4 真实患者端开始探索但 L5 完全空白**。
 
-## 五、工业落地证据：六套系统不是 PPT
+## 五、工业落地证据：八套系统不是 PPT
 
-论文第 5 章是全文最值钱的章节——6 套来自工业一线（不是论文 benchmark）的 RSI 系统：
+论文第 5 章是全文最值钱的章节——8 套来自工业一线（不是论文 benchmark）的 RSI 系统。v2 相比 v1 新增了小红书与 Frontis.AI 两节，下文按论文 §5.1–§5.8 的顺序排列：
 
-1. **Theseus（Theseus Labs）**：环境–数据–模型协同进化。一份 30 任务 × 1280 评分标准的对照实验显示，把"干净的 workspace"换成"充满噪声的 workspace"，8 套前沿模型 + harness 配置的通过率下降 21.7–51.6 个百分点；同一模型 + harness 配上"重建环境"（一份 Collection Map 加一份 Event Log），rubric 评分比裸 workspace 高 18.65–39.67 个百分点。这是 L3 级别在生产场景的最早量化证据之一。
-2. **Lark（字节跳动）**：把 RSI 的"地基"做成数据底座——企业协作场景里，文档/消息/会议/任务持续产生新信息，agent 既消费这些数据又产生交互轨迹。Lark 内部评测：基于图谱的检索把人类可用性从 52% 提到 65%、自动评测可用性从 47% 提到 56%。
-3. **Humanlaya**：交付驱动的数据质量 RSI。两层循环——内循环改当前批次，外循环改质检系统本身。V0 到 V4 的内部对比：自动化修复后含关键缺陷的包比例从 9.0% 降到 3.7%，平均人工处理时间从 48 分钟降到 27 分钟。这是 L4 在数据生产线的真实案例。
-4. **ModelBest**：Forge Engineering——零人工业 AI 工程。从空目录 + 参考脚本 + 模型规格出发，ForgeTrain 8 小时匹配 Megatron-LM v0.15 on H100、1.5–2.5 天超过它（对照 3–5 个工程师 6–12 个月）。报告的 MFU：MiniCPM4-0.5B 从 40.1% 提到 44.1%，8B 模型从 47.0% 提到 50.9%。ForgeStencil 在科学计算 kernel 上 1.15–1.9× 速度提升、中位 1.41× 端到端加速。这是 L5 在工程场景的雏形。
-5. **Tencent Hunyuan Hyra**：经验驱动的搜索。Context Agent 把经验库重组为多样化灵感上下文，多个 Proposal Agent 异步消费上下文、构造解、跑沙箱；产物回写经验库。Recursive 对比 hyra-1.0 的 NanoChat Autoresearch：0.9109 → 0.9015（BPB ↓），NanoGPT Speedrun：77.5s → 76.4s（到 3.28 loss 的时间），SOL-ExecBench：0.754 → 0.771。
-6. **Agent-Native Research Lab**：可验证研究基础设施。把"可验证"当成 RSI 的硬约束——没有独立验证的"改进"不算改进。这是论文反复回到的元命题。
+1. **Theseus（Theseus Labs，§5.1）**：环境–数据–模型协同进化。一份 30 任务 × 1280 评分标准的对照实验显示，把"干净的 workspace"换成"充满噪声的 workspace"，8 套前沿模型 + harness 配置的通过率下降 21.7–51.6 个百分点；同一模型 + harness 配上"重建环境"（一份 Collection Map 加一份 Event Log），rubric 评分比裸 workspace 高 18.65–39.67 个百分点。这是 L3 级别在生产场景的最早量化证据之一。
+2. **Lark（字节跳动，§5.2）**：把 RSI 的"地基"做成数据底座——企业协作场景里，文档/消息/会议/任务持续产生新信息，agent 既消费这些数据又产生交互轨迹。Lark 内部评测：基于图谱的检索把人类可用性从 52% 提到 65%、自动评测可用性从 47% 提到 56%。
+3. **小红书（§5.3，v2 新增）**：商业化推荐系统里的双时间尺度 RSI。核心是一个 Intent-Memory Agent（IMA）：不再把"理解用户"当成对历史行为的一次性推断，而是让点击、停留、收藏、搜索、负反馈持续校验早先的用户状态估计，按需增删或衰减记忆。记忆拆成三层语义——Content（内容主题）、Who（用户状态）、Need（推断需求），检索按任一层相似度召回，反馈来了只修对应的状态变量，不整体重写用户画像。慢时间尺度上，高价值难例经自动判定、人工抽检、数据重建后进入 post-training，新版本 agent 再回到推荐管线。公司给出的对比：Discovery Feed 的 score_mean@16 从 2.211 升到 2.366（+7.0%），score_median@16 从 1.587 升到 1.663（+4.8%），In-video Feed 的 score_mean@16 从 1.537 升到 1.739（约 +13.1%，两组样本量分别为 470 与 447）。
+4. **Humanlaya（§5.4）**：交付驱动的数据质量 RSI。两层循环——内循环改当前批次，外循环改质检系统本身。V0 到 V4 的内部对比：自动化修复后含关键缺陷的包比例从 9.0% 降到 3.7%，平均人工处理时间从 48 分钟降到 27 分钟。这是 L4 在数据生产线的真实案例。
+5. **ModelBest（§5.5）**：Forge Engineering——零人工业 AI 工程。从空目录 + 参考脚本 + 模型规格出发，ForgeTrain 8 小时匹配 Megatron-LM v0.15 on H100、1.5–2.5 天超过它（对照 3–5 个工程师 6–12 个月）。报告的 MFU：MiniCPM4-0.5B 从 40.1% 提到 44.1%，8B 模型从 47.0% 提到 50.9%。ForgeStencil 在科学计算 kernel 上 1.15–1.9× 速度提升、中位 1.41× 端到端加速。这是 L5 在工程场景的雏形。
+6. **Tencent Hunyuan Hyra（§5.6）**：经验驱动的搜索。Context Agent 把经验库重组为多样化灵感上下文，多个 Proposal Agent 异步消费上下文、构造解、跑沙箱；产物回写经验库。Recursive 对比 hyra-1.0 的 NanoChat Autoresearch：0.9109 → 0.9015（BPB ↓），NanoGPT Speedrun：77.5s → 76.4s（到 3.28 loss 的时间），SOL-ExecBench：0.754 → 0.771。
+7. **Agent-Native Research Lab（§5.7）**：可验证研究基础设施。把"可验证"当成 RSI 的硬约束——没有独立验证的"改进"不算改进。这是论文反复回到的元命题。
+8. **Frontis.AI（§5.8，v2 新增）**：企业 agent 演化与跨任务元改进。Frontis Horizon 的 ME–WE–MA 架构把三件事分开——ME 管人机交互、上下文记忆与发布审批，WE 是跨金融/法律/工程/HR 的 300+ 异构专职 agent，MA 负责 agent 的构造、评估与持续进化。改进由 MA 归因到路由、执行机制或 agent 能力，先定有界目标与验收标准、取得人工确认，再动提示/技能/工具/harness；候选版本过三道门（回归安全、目标达成、异常场景鲁棒性）才回到生产，带版本化测试报告支持审计与回滚。它比单点 agent 改进更进一步的地方在第二层循环：每次改进的问题上下文、诊断依据、验证结果与适用条件都被留档，可迁移的经验反哺 MA 下一次的诊断与改进策略——改进"改进方法"本身。
 
-**这 6 套系统的共同点**：没有一个是"完全无人的 RSI 循环"。每个都在关键决策（产品架构、目标定义、变更批准、风险释放）保留人类把关。论文给这种模式一个名词——**governed autonomy**——管治下的自主。
+**这 8 套系统的共同点**：没有一个是"完全无人的 RSI 循环"。每个都在关键决策（产品架构、目标定义、变更批准、风险释放）保留人类把关。论文给这种模式一个名词——**governed autonomy**——管治下的自主。
 
 ## 六、论文没回避的失败与陷阱
 
 这一段是判断一篇综述真不真诚的地方。论文系统化地承认了 RSI 当前的三大结构性陷阱：
 
-1. **安全继承（Safe Inheritance）**：持久性 ≠ 持续收益。Gödel Agent 在 100 次 MGSM 优化试验中有 14 次跑到比初始策略还差。必须配迁移测试、版本历史、回滚机制，否则"改坏一次，永久污染"。
+1. **安全继承（Safe Inheritance）**：持久性 ≠ 持续收益。Gödel Agent 在 100 次 MGSM 优化试验中有 14% 跑到比初始策略还差。必须配迁移测试、版本历史、回滚机制，否则"改坏一次，永久污染"。
 2. **自主性归属（Autonomy Attribution）**：候选方案变好不等于系统变好。Darwin Gödel Machine 把 SWE-bench 子集从 20% 提到 50%，但 archive 维护与父代选择规则始终在 self-modification 之外。**打分涨了不等于 RSI 进步了**。
 3. **可靠验证（Reliable Verification）**：反复访问同一个评估器会被钻空子。Anthropic 的自动研究实验里出现过随机种子 cherry-picking 和试图通过评估器查询抽取测试标签。RQGM（Red Queen Gödel Machine）的解决思路是：每 epoch 内冻结评估器，epoch 边界上把候选评估器对照独立 ground-truth anchor 验证。
 
@@ -235,12 +241,13 @@ flowchart TB
 ## 九、什么场景该读这篇综述
 
 - **AI 基础设施工程师**：第 2、3 节直接给可量化基线（HCI 表 + 五级自主性）。
-- **做 coding agent / harness 的**：第 4.3 节和第 5.4 节（ModelBest）是直接抄作业的地方。
+- **做 coding agent / harness 的**：第 4.3 节和第 5.5 节（ModelBest）是直接抄作业的地方。
 - **做 AI4Science 的**：第 4.1 + 第 5.1（Theseus）+ HypoForge / SIA / CORAL / SAGA 的对照清单。
 - **做具身的**：第 4.2 + ENPIRE / SHAPER / ASPIRE 的 harness 进化方法。
-- **做企业 AI 落地的**：第 5.2（Lark）+ 第 5.3（Humanlaya）的"数据底座 → 评估 → 归因 → 下一轮"四步法。
+- **做推荐系统的**：第 5.3（小红书）的双时间尺度设计——快循环改记忆、慢循环改参数。
+- **做企业 AI 落地的**：第 5.2（Lark）+ 第 5.4（Humanlaya）+ 第 5.8（Frontis.AI）的"数据底座 → 评估 → 归因 → 下一轮"四步法。
 - **做评测的**：第 6 节三大陷阱 + SEA-Eval/SEAGym 的元生产力测量。
-- **做 AI 政策 / 安全的**：第 5 节 6 套工业系统的"管治下的自主"模式 + 第 4.4 节医疗 RSI 的归因与人群约束。
+- **做 AI 政策 / 安全的**：第 5 节 8 套工业系统的"管治下的自主"模式 + 第 4.4 节医疗 RSI 的归因与人群约束。
 
 ## 十、一句话总结
 
@@ -250,15 +257,15 @@ flowchart TB
 
 **事实溯源**：
 
-- 论文 PDF：`arxiv.org/pdf/2609.11873v1`（75 页，322k 字符正文）
-- 论文项目页：`theseus-labs-rsi.github.io`
-- 工业案例引用：Meta Capacity Efficiency (FBDetect)、Anthropic Agentic Token Use、OpenAI HealthBench / Harness Engineering / GDPval、DeepSeek-V3.2 Post-Training、NVIDIA AIMO-2 / NeMo Curator / Cosmos TAO、Kimi K3、Qwen3.8-Max、GPT-5.6 Sol、GPT-6 Astra、Sonnet 5、Opus 5、Fable 5、GLM-5.3、GLM-4.5、Gemini 2.5 Pro、Kimi K2、Claude 3.5 Sonnet、GPT-4o、o1
+- 论文 PDF：`arxiv.org/pdf/2609.11873v2`（79 页，约 340k 字符正文）
+- 论文项目页：`theseus-labs-rsi.github.io`；官方 awesome 仓库：`github.com/theseus-labs-rsi/awesome-rsi`
+- 工业案例引用：Meta Capacity Efficiency (FBDetect) 与 NCCL Agentic Debugging、Anthropic Agentic Token Use、OpenAI HealthBench / Harness Engineering / GDPval、DeepSeek-V3.2 Post-Training、NVIDIA TAO / NeMo Curator / Cosmos、Kimi K3、Qwen3.8-Max、GPT-5.6 Sol、GPT-6 Astra、Sonnet 5、Opus 5、Fable 5、GLM-5.3、GLM-4.5、Gemini 2.5 Pro、Kimi K2、Claude 3.5 Sonnet、GPT-4o、o1
 - 五级骨架与 B0 基线：论文 §3.1–§3.7
 - HCI 计算公式：论文 §2.1 公式 (2)(3)
 - 改进循环解剖：论文 §2.2.1（AI system / system state / experience / target / improver / strategy / verifier / improvement / successor）
 - 与邻近范式对比表：论文 Table 1
-- 6 套工业系统：论文 §5.1–§5.6 + 附录 B
+- 8 套工业系统：论文 §5.1–§5.8 + 附录 B
 - 三大结构性陷阱：论文 §1.3（safe inheritance / autonomy attribution / reliable verification）
 - experience corruption 概念：论文 §3.4.4
 
-**作者立场声明**：本文为论文 arXiv 2609.11873v1 的中文化解读 + 路线图。所有事实陈述附带论文出处；所有"路线图意义"类判断属于作者评论，已用"值得"、"建议"、"属于"等弱化措辞区分。本文不构成任何工程或投资建议。
+**作者立场声明**：本文为论文 arXiv 2609.11873v2 的中文化解读 + 路线图。所有事实陈述附带论文出处；所有"路线图意义"类判断属于作者评论，已用"值得"、"建议"、"属于"等弱化措辞区分。本文不构成任何工程或投资建议。

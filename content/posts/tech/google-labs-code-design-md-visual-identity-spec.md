@@ -1,156 +1,211 @@
 ---
-title: "DESIGN.md 哲学与采用路径：Google Labs 给 Coding Agent 的设计简报范式"
+title: "DESIGN.md 的散文承诺与导出边界：Google Labs 给 Coding Agent 的设计简报规范"
 date: "2026-06-26T18:01:00+08:00"
+lastmod: "2026-09-21T00:00:00+08:00"
 slug: "google-labs-code-design-md-visual-identity-spec"
 github_repo: "google-labs-code/design.md"
 source_key: "gh:google-labs-code/design.md"
-description: "Google Labs 开源的 DESIGN.md 不只是一个 token 文件格式，它把「Prose 优先」「具体参考 > 形容词列表」「负约束自动从参考对象继承」三条设计哲学编进了规范里。本文拆解 PHILOSOPHY.md 的核心洞察、9 条 lint 规则作为生产契约的意义、Tailwind v3/v4 + W3C DTCG 互操作路径，以及 `.md` 仓库命名的工程意图。"
+description: "对照 google-labs-code/design.md 的 main 分支、npm @google/design.md 0.4.0 与实跑输出读 DESIGN.md：PHILOSOPHY.md 的四条主张各自落在哪一层、11 条校验规则的真实严重级别与退出码、五种导出格式为什么丢掉了组件、文档与实现不一致的四处现场，以及动效令牌写进 front matter 之后会发生什么。"
 draft: false
 categories: ["技术笔记"]
 tags: ["设计系统", "AI Agent"]
 ---
 
-# DESIGN.md 哲学与采用路径：Google Labs 给 Coding Agent 的设计简报范式
+> **目标读者**：已经让编码智能体（Coding Agent）生成前端界面、发现每次生成的配色和字距都不一致的团队；以及在读 DESIGN.md 规范、需要判断"这套格式到底约束到哪一层"的工程师。
+> **本文的读法**：先给一句判断，再按"哲学主张 → 格式骨架 → 校验规则 → 导出边界"四层拆开，每条主张都用仓库原文与实跑输出对齐。文中所有命令、输出与计数来自 2026-09-21 对 `main` 分支与 npm `0.4.0` 的一次实际执行，复核命令集中在文末，可逐条重跑。`lint` 与 `diff` 的正常结果只有 JSON 一种形态；下文按"级别 规则名 路径"排版的 finding 摘录，是把 JSON 里的字段重排成便于阅读的形式，不是终端原始字节。
 
-## 学习目标
+## 一句话判断
 
-读完本文后，你应当能够：
+DESIGN.md 想用一份 Markdown 文件同时做两件事：给智能体（Agent）读的设计散文，和给工具链消费的数值表。它的**散文层是真开放**——自定义小节、自定义词汇，规范不拦；它的**数值层其实很窄**——只有 5 个设计令牌（token）分组会被解析，其中进入导出产物的只有 4 组，其余顶层键在导出时静默丢弃。
 
-- 说出 DESIGN.md 与「普通设计 token 文件」的本质区别——它把**散文（prose）作为规范的中心**，token 只是参考上下文
-- 解释 PHILOSOPHY.md 提出的三条设计原则（Prose 优先、具体参考胜过形容词列表、负约束从参考对象自动继承）为什么比「列规范」更适合生成式 Agent
-- 把 9 条 lint 规则看作一份"机器可读的生产合同"，知道 `broken-ref` / `contrast-ratio` / `unknown-key` 这几条对应什么样的真实事故
-- 在 Tailwind v3 配置、Tailwind v4 主题、W3C DTCG 三种下游格式中，根据团队现状选择合适的 export 路径
-- 解释仓库名 `design.md` 与文件名 `DESIGN.md`、npm 包名 `@google/design.md` 三者为何是同一个标识符
-- 判断自己的项目是否值得引入 DESIGN.md，什么规模以下不必上
+把这两层混为一谈就会读错这个项目：`PHILOSOPHY.md` 说"格式靠使用者生长，不靠规范修订"，而仓库里那条叫 `token-like-ignored` 的规则，会指着它自己那个例句告警。
 
-阅读建议：本文和站内另一篇 [DESIGN.md：让 Coding Agents 理解视觉设计的格式规范](/posts/tech/design-md-visual-identity-coding-agents-guide/) 是姐妹篇，那篇从 schema 与架构切入，本篇从哲学、命名、采用路径切入。先读哪一篇取决于你想先了解"怎么用"还是"为什么这样设计"。
+这个矛盾不是缺陷，是设计的接缝。本文要做的就是把它对准读者：什么该写进散文，什么必须写进 token，写了之后哪一层会丢。
 
-## 核心判断
+## 项目坐标
 
-如果只用一句话概括 DESIGN.md 和"把 token 写到 YAML 文件"的区别，那就是：
+| 项 | 值（2026-09-21 核对） |
+|:---|:---|
+| 仓库 | [google-labs-code/design.md](https://github.com/google-labs-code/design.md)，`main` 分支 |
+| 首次提交 | 2026-04-10 的 `Initial commit`；同日并入 linter 与 `spec.md` |
+| 提交规模 | `main` 上共 62 个提交，最近一次推送 2026-09-14 |
+| 许可 | Apache-2.0（仓库有 `LICENSE`；npm 包体的 `package.json` 未声明 `license` 字段） |
+| 语言与构建 | TypeScript，Bun workspaces 加 turbo 单仓 |
+| npm 包 | `@google/design.md`，最新 `0.4.0`（2026-07-27 发布），首个版本 `0.1.0` 发布于 2026-04-21 |
+| 运行门槛 | 运行时为 Node.js，版本下限 `>=18.0.0`（写在 `engines.node` 字段） |
+| 关注度 | 28,017 stars、2,285 forks、44 个未关闭 issue |
+| 规范主页 | 仓库在 GitHub 登记的 homepage：https://stitch.withgoogle.com/docs/design-md/specification |
+| 文档体量 | `README.md` 364 行、`PHILOSOPHY.md` 110 行、`docs/spec.md` 377 行 |
+| 附带样例 | `examples/` 目录下三套完整设计系统，linter 另有 9 个测试夹具 |
 
-> **DESIGN.md 把「Prose 是规范中心」这件事直接写进了格式要求里。** Token 不再是渲染指令，而是给 Prose 描述做参考的上下文；Agent 先读散文理解设计意图，再回到 token 取精确数值。
-
-这个判断来自 Google Labs 团队在仓库根目录写的 [PHILOSOPHY.md](https://github.com/google-labs-code/design.md/blob/main/PHILOSOPHY.md)，里面有一段几乎是把整个项目定调的话：
-
-> **The quality of a generated design is determined less by the precision of its values than by how clearly the intent is described.**
-> 决定生成质量的不是 token 的精度，而是设计意图被描述得有多清楚。
-
-读到这句话之后，再看 README 里那张把 "Architectural Minimalism meets Journalistic Gravitas" 写在 `## Overview` 下面的 Heritage 示例，意义就完全不同了：那段散文不是装饰、不是 docstring，它是规范的"主菜"。
-
-仓库 [github.com/google-labs-code/design.md](https://github.com/google-labs-code/design.md) 在 2026-04-10 首次提交，到 2026-06-26 已积累 20,274 stars、1,683 forks、Apache-2.0 协议，npm 包名是 `@google/design.md`。它不是单纯的格式玩具——Google Labs 的产品 [Stitch.withgoogle.com](https://stitch.withgoogle.com/docs/design-md/specification) 把这一规范作为设计→代码流程的中间表示。理解这个上下文，再看 9 条 lint 规则与 export pipeline，就能看出 Google 想推的是一条完整链路，不只是一个 lint 工具。
+格式本身仍是 `alpha`：`docs/spec.md` 的生成头写着 `version: alpha`，README 的 `## Status` 也明确写了规范、取值结构与命令行工具三者都在活跃变更期。这条决定了后文所有"要不要现在上"的判断。
 
 ## 目录
 
-- [学习目标](#学习目标)
-- [核心判断](#核心判断)
-- [一、为什么不是"又一个 token 文件"](#一为什么不是又一个-token-文件)
-- [二、PHILOSOPHY.md 三条原则](#二philosophymd-三条原则)
-- [三、格式骨架：把 Prose 摆上桌](#三格式骨架把-prose-摆上桌)
-- [四、9 条 Lint 规则：把规范变成生产合同](#四9-条-lint-规则把规范变成生产合同)
-- [五、Export 三条路径：把 DESIGN.md 送进现有栈](#五export-三条路径把-designmd-送进现有栈)
-- [六、`.md` 三重身份：一个标识符的工程意图](#六md-三重身份一个标识符的工程意图)
-- [七、Windows 上的 `designmd` shim：被 `.md` 绑架的命令名](#七windows-上的-designmd-shim被-md-绑架的命令名)
-- [八、采用路径与适用边界](#八采用路径与适用边界)
-- [九、自检清单](#九自检清单)
-- [总结](#总结)
+- [一句话判断](#一句话判断)
+- [项目坐标](#项目坐标)
+- [系统地图：三条链路，不是一条](#系统地图三条链路不是一条)
+- [问题拆分：散文、token、工具是三件事](#问题拆分散文token工具是三件事)
+- [核心机制之一：PHILOSOPHY.md 的四条主张](#核心机制之一philosophymd-的四条主张)
+- [核心机制之二：格式骨架只有两层](#核心机制之二格式骨架只有两层)
+- [校验：11 条规则、真实严重级别与退出码](#校验11-条规则真实严重级别与退出码)
+- [导出：五种格式与一条硬边界](#导出五种格式与一条硬边界)
+- [文档与实现不一致的四处现场](#文档与实现不一致的四处现场)
+- [程序化接口：把 linter 当编辑菜单](#程序化接口把-linter-当编辑菜单)
+- [一次完整流转：给一套设计系统加动效](#一次完整流转给一套设计系统加动效)
+- [命名上的选择：`.md` 的三重身份与 Windows 的 designmd](#命名上的选择md-的三重身份与-windows-的-designmd)
+- [适用边界与替换方案](#适用边界与替换方案)
+- [采用顺序](#采用顺序)
+- [排查：按现象定位](#排查按现象定位)
+- [自测清单](#自测清单)
+- [下一步读哪份代码](#下一步读哪份代码)
+- [参考与复核命令](#参考与复核命令)
 
----
+## 系统地图：三条链路，不是一条
 
-## 一、为什么不是"又一个 token 文件"
+DESIGN.md 常被当成"一个 linter"，实际交付物是三条彼此独立、共享同一份 schema（结构模式）定义的链路。
 
-在 DESIGN.md 之前，把设计系统塞进文本格式已经有不少尝试：
+| 链路 | 输入 | 输出 | 由谁驱动 |
+|:-----|:-----|:-----|:---------|
+| 规范链路 | `spec.mdx` 加 `spec-config.yaml` | `docs/spec.md`（生成物） | `bun run spec:gen` |
+| 校验链路 | DESIGN.md 文本 | findings 列表与分级汇总 | 11 条规则、`lint` 子命令 |
+| 导出链路 | 解析后的 token 模型 | Tailwind v3、v4、DTCG、CSS 变量 | 4 个 emitter、`export` 子命令 |
 
-- **Style Dictionary**（Amazon 开源）：把 token 转成多平台 JSON / CSS / iOS / Android，思路是"pipeline"。
-- **W3C Design Tokens Community Group（DTCG）**：制定 `tokens.json` 行业标准，思路是"互操作"。
-- **Salesforce Theo**：单一 JSON token + gulp 转译，思路是"工作流自动化"。
+```text
+仓库源文件   spec.mdx + spec-config.yaml ────────▶ docs/spec.md
 
-DESIGN.md 的差异在于它**没有把 token 当成规范的中心**。它给 YAML front matter 和 Markdown body 同等地位，但两者的职责完全不一样：
+DESIGN.md  ─┬─ parser ─▶ model ─▶ 11 rules ──────▶ lint findings
+            │                        └────────────▶ diff（前后对比）
+            └─ model ─▶ 4 emitters ───────────────▶ tailwind / dtcg / css-vars
+```
 
-| 层级 | 职责 | Agent 怎么用 |
-|:-----|:-----|:-------------|
-| YAML Front Matter | 给出**精确数值**（色值、字号、间距、圆角、组件属性） | 解析为 token map，遇到精确匹配直接采用 |
-| Markdown Body | 解释**为什么**这样选，以及**什么时候用** | 解析为自由文本，遇到 token 没覆盖的边角场景，按散文描述推断 |
+三条链路共享的是同一批常量与规则描述符。这一点带出本文最重要的操作性结论：**规范文档、规则清单、导出能力都是源文件的产物或消费者，只有 `README.md` 里那几张表是手写的。** 手写表格与生成物之间的时间差，就是绝大多数"读到过期说法"的来源。
 
-这种双层结构不是 DESIGN.md 的发明——很多项目的 README 都有"用法说明 + 配置示例"——但它是少数**把这种结构形式化进规范**的：哪一段必须是 YAML、哪一段必须是 Markdown、Section 顺序、哪些字段是机器可解析的、哪些字段是给 Agent 看的，全部明确。
+## 问题拆分：散文、token、工具是三件事
 
-更深的一层：DESIGN.md 团队在 PHILOSOPHY.md 里说，token 的值只是 context，**不是 rendering instruction**。这条立场是反直觉的——大多数 token 工具都把"精确渲染"当作卖点。DESIGN.md 反而说：你拿 `#1A1C1E` 给 Agent，它不会知道这个色值该用在哪儿；你写"Deep ink for headlines and core text"，Agent 才知道这是"标题用墨色"。Token 提供锚点，散文提供语义，二者缺一不可。
+在 DESIGN.md 之前，把设计系统写进文本的尝试大致分三类：Style Dictionary 走"一份 token 转多平台产物"的流水线路线，W3C Design Tokens 社区组走"定义行业标准格式"的互操作路线，Salesforce Theo 走"单一来源加构建期转译"的工作流路线。三者共同点是**规范的中心是 token**。
 
-## 二、PHILOSOPHY.md 三条原则
+DESIGN.md 把中心换成了散文，但换得不彻底，而且这是刻意的——仓库里三份文档对同一件事的措辞并不一致：
 
-PHILOSOPHY.md 总共不到 200 行，但密度极高。我把它浓缩成三条可以直接在评审会上引用的原则。
+| 出处 | 原话 | 立场 |
+|:-----|:-----|:-----|
+| `PHILOSOPHY.md` | The prose is the most vital part of the specification. | 散文是规范主体 |
+| `PHILOSOPHY.md` | The token values serve as context and are not rendering instructions. | token 只是上下文 |
+| `docs/spec.md` | The tokens are the normative values; the prose provides context for how to apply them. | token 才是规范值 |
+| `README.md` | Tokens give agents exact values. Prose tells them *why* those values exist and how to apply them. | 二者并列分工 |
 
-### 原则 1：Prose 是规范中心，token 是上下文
+这不是编辑事故，是视角差异：PHILOSOPHY 回答"生成质量从哪来"，规范性文档回答"机器该信谁"。两句可以同时成立——**意图靠散文传递，取值以 token 为准**。但代价很清楚：只写在散文里的东西没有规范值可继承，导出产物里也不会有它；只写在 token 里、没有散文解释的值，Agent 会用错地方。
 
-原文摘录：
+于是"该写在哪一层"有了一条可执行的判据：**希望 Agent 在边角场景自行推断的，写进散文；希望出现在导出产物里的，写进 token。** 夹在中间最糟的写法，是把只有数值没有用途的 token 表塞满 front matter，然后在正文里一个字都不解释。
+
+## 核心机制之一：PHILOSOPHY.md 的四条主张
+
+`PHILOSOPHY.md` 只有 110 行，四条主张各占一节标题。常被概述成"三条原则"，其实是四条——第四条恰好最容易被忽略，也最影响采用决策。
+
+### 主张一：散文是主体，token 不是渲染指令
 
 > The prose is the most vital part of the specification.
-> The token values serve as context and are not rendering instructions.
+> The token values serve as context and are not rendering instructions. Generally, we do not accept or recommend token requirements in the specification.
 
-推论：**在 DESIGN.md 里，散文不能写得像"文档"**，而要写得像"设计简报"。Heritage 示例的 `## Overview` 段只有一句"Architectural Minimalism meets Journalistic Gravitas. The UI evokes a premium matte finish — a high-end broadsheet or contemporary gallery."，没有一句废话，但每个词都在为 Agent 锚定一个具体的视觉世界。
+第三句常被省略，但它最硬：规范**不接收也不推荐**针对 token 的强制要求。配合开篇那句 "The prose is where the design lives. Everything else in the document exists to support it."，这一条的强度已经超过一般项目自述。
 
-如果你的 `## Overview` 写的是"现代、简洁、可信、专业"，那就违反了这条原则——那只是四个形容词。
+它落到写法上的要求很具体：`## Colors` 一节要说清每个颜色的**用途边界**，而不是复述色值。文档自带的例子就是照这个写法：
 
-### 原则 2：具体参考胜过形容词列表
+> **Vermilion** {colors.vermilion} is the single accent and appears only inside diagrams and chart annotations — never on typography, never on page numerals, never on metadata of any kind.
 
-原文摘录：
+一句里给了正面用途加三条禁地，还用 `{colors.vermilion}` 引回 token。这种句子对生成质量的贡献，比再列十个色值都大。
 
-> A 1970s graduate lecture handout in the tradition of an old and established university evokes a complete world: the one color of ink, the generous margins, the serif set at a reading size, and the absence of decoration.
-> That single sentence carries more useful information than a dozen metric values.
+### 主张二：一个具体参照胜过一串形容词
 
-对比：
+> A design that references "A 1970s graduate lecture handout in the tradition of an old and established university" evokes a complete world: the one color of ink, the generous margins, the serif set at a reading size, and the absence of decoration. That single sentence carries more useful information than a dozen metric values. It carries the reasoning behind the values.
 
-> "Modern, clean, trustworthy, premium" evokes nothing specific. A model creates something in the center of what those words describe, creating an output that is typically generic.
+紧接着是原文里的另一句对照：
 
-这条原则直接告诉 Agent 怎么写 Overview：不要列举形容词，找一个**真实存在的、读者熟悉的、有视觉风格的对象**，然后说"像那个"。Lecture handout、broadsheet、gallery、subway signage、children's book、technical manual——任选一个，都比 "modern + clean" 信息密度高出一个数量级。
+> "Modern, clean, trustworthy, premium" evokes nothing specific. A model creates something in the center of what those words describe, creating an output that is typically generic. Adjectives describe a region. A specific reference describes a point.
 
-### 原则 3：负约束从参考对象自动继承
+最后一句才是落点：形容词描述的是一个区域的中心，也就是统计意义上最平庸的那个解；具体参照描述的是一个点。`## Overview` 里写"现代、简洁、可信、高端"，等于把生成结果推回分布中央。
 
-原文摘录：
+README 给的例子是另一个方向：`Architectural Minimalism meets Journalistic Gravitas. The UI evokes a premium matte finish — a high-end broadsheet or contemporary gallery.` 三个名词短语各自锚定一类印刷物，一处形容词堆叠都没有。
 
-> A clear design reference carries its restrictions automatically. A model knows what a lecture handout is, and it knows what a lecture handout is not. It does not glow or use a gradient.
+### 主张三：负约束随参照对象免费继承
 
-这一条是设计哲学里最反直觉的部分。常规做法是显式写"不要渐变、不要阴影、不要暗色模式"——但 PHILOSOPHY 团队说，**只要你把参考对象说清楚，负约束是免费送的**。Lecture handout 不会发光、Substack 不会有杂志式封面、Pixar 字体不会出现在严肃报告里——这些"不要"都不需要写。
+> A clear design reference carries its restrictions automatically. A model knows what a lecture handout is, and it knows what a lecture handout is not. It does not glow or use a gradient. You don't have to list these. Naming the object names them, the same way naming a dog tells the model that dogs don't meow.
 
-当然后面紧跟一条补丁："The negative constraints arrive for free when the reference is specific enough. An intentional list of do's and don'ts is useful. A long rambling list is often a sign the description was too vague to carry them."——即**有意整理的 Do's and Don'ts 仍然是有用的**，但它应该是参考对象的"小词典"，而不是"兜底全列"。
+"命名一个对象就命名了它的否定面"是整套哲学里最反直觉、也最有工程含义的一句。它的实用价值在于：显式穷举"不要渐变、不要阴影、不要暗色模式"这类否定清单，收益远低于把一个参照物说清。
 
-PHILOSOPHY.md 给出的 Do's and Don'ts 示例非常具体：不要给标题页加 hero moment、不要再加一个 italic standfirst、不要再加 corner ornaments——每一条都是在把"lecture handout"这个参考对象的边界一条条描清，而不是泛泛说"保持极简"。
+但文档同时给这条设了边界，边界常被漏引：
 
-把这三条原则合起来看，DESIGN.md 的设计哲学就清楚了：
+> The negative constraints arrive for free when the reference is specific enough. An intentional list of "don'ts" is useful. A long rambling list is often a sign the description was too vague to carry them. A strong reference and an intentional list of do's and don'ts working together is the sweet spot.
 
-- **散文是中心**——不要把所有规范都塞进 token 表
-- **参考是锚点**——找一个具体事物比列形容词有用
-- **负约束是副产品**——参考对象自带否定列表
+即否定清单不是要删掉的东西，而是要**有意整理**的东西，它和强参照是叠加关系。文档随后给出的示例是 8 条 Don't 加 4 条 Do，每条都贴在参照物的边界上：不给标题页加 hero moment、不在大标题下配斜体导言（原文点名 "That is the Substack register"）、不给页码上色、不用加粗、不引入暗色模式与圆角。这些都不是泛泛的"保持极简"，而是在给一份讲义一条条描出边界。
 
-## 三、格式骨架：把 Prose 摆上桌
+### 主张四：格式靠使用者生长，不靠规范修订
 
-有了哲学再看格式骨架就顺了。DESIGN.md 文件只有两层。
+这节的标题就是主张：The format grows through its users, not its spec.
 
-### 3.1 YAML Front Matter
+> The spec defines the structural minimum that every DESIGN.md shares: a name, and a small set of categories (colors, typography, spacing, rounded, components) that are universal enough to standardize. Everything beyond that minimum is yours to define.
 
-YAML 给出机器可解析的精确数值，结构是固定的几类：
+为了演示这一点，文档现写了一个规范里根本不存在的动效分组：
 
 ```yaml
----
-name: Heritage
-version: "alpha"          # 当前固定为 "alpha"
-description: "..."        # 可选
-colors:
-  primary: "#1A1C1E"
-  tertiary: "#B8422E"
-typography:
-  h1:
-    fontFamily: Public Sans
-    fontSize: 3rem
-    fontWeight: 600
-    lineHeight: 1.1
-    letterSpacing: -0.02em
-rounded:
-  sm: 4px
-  md: 8px
-spacing:
-  sm: 8px
-  md: 16px
+motion:
+  feedback: 120ms
+  content: 250ms
+  easing: 'cubic-bezier(0.2, 0, 0, 1)'
+```
+
+> The linter accepts these values and agents read the prose. No spec change was needed because the tokens themselves are context rather than instruction.
+
+这段是自述里最需要校准的一处。**linter 确实不拒绝它**，这一点我实测通过；但"接受"不等于"无话可说"。把 `motion:` 原样放进一个真实文件的 front matter，`0.4.0` 会给出这样一条告警：
+
+```text
+warning  motion
+"motion" looks like a design-token map but is not a recognized schema key
+(colors, typography, spacing, rounded, components). It will be silently
+ignored by export commands. Rename it to a supported key or move its
+values under a recognized section.
+```
+
+规则名 `token-like-ignored`，级别 warning，不阻断合并，退出码仍是 0。判据是纯词法的，与键名无关：只要这个未知键的值（含向下递归一层）里出现十六进制色、带单位尺寸，或者出现 `fontFamily` 这类排版属性名，就判定"看起来是 token 表却不在 schema 里"。把 `colors:` 误写成 `colours:` 也会命中它。作为对照，同一份文件若只是多出一个 `## Motion` 散文小节，linter 一条告警都不发。
+
+于是主张四的真实边界划出来了：**散文层的扩展完全免费，token 层的扩展要付一条告警，而导出链路根本不认它。** 这不是文档说谎，而是"Agent 读得到"与"工具链接得住"本来就是两件事——只是 `PHILOSOPHY.md` 把它们写在了一起。
+
+## 核心机制之二：格式骨架只有两层
+
+一个 DESIGN.md 由 YAML front matter 与 Markdown 正文两层组成，用的都是 `---` 与 `##` 这类最常见标记，没有自定义语法。
+
+### 机器可读的那一层
+
+front matter 一共 9 个键，4 个元信息加 5 个 token 分组（取自命令行工具子包 `packages/cli/src/linter/parser/spec.ts` 里的 `SCHEMA_KEYS`）：
+
+| 键 | 必填 | 说明 |
+|:---|:-----|:-----|
+| `name` | 规范视为最小结构 | 设计系统名；linter 不检查它，缺了也不告警 |
+| `version` | 否 | 字符串，当前写 `"alpha"` |
+| `description` | 否 | 一句说明 |
+| `omitted` | 否 | 声明"有意省略"的小节，把缺失提示改写成有理由的声明 |
+| `colors` | 否 | 颜色 token 表 |
+| `typography` | 否 | 排版 token 表 |
+| `rounded` | 否 | 圆角尺度 |
+| `spacing` | 否 | 间距尺度，允许无单位数字 |
+| `components` | 否 | 组件属性表 |
+
+`version` 是**可选**字段，不是固定值——README 与 spec 都写作 `optional, current: "alpha"`。把它当必填、或者以为它能做版本协商，都会读错这份 schema。
+
+token 值只有四种形态：
+
+| 类型 | 允许的形式 | 示例 |
+|:-----|:-----------|:-----|
+| Color | 任意 CSS 颜色：十六进制、颜色关键字、`rgb()`/`hsl()`/`hwb()`、`oklch()`/`oklab()`/`lab()`、`color-mix()` | `"#1A1C1E"`、`"oklch(62% 0.18 250)"` |
+| Dimension | 数字加 `px`/`em`/`rem` | `48px`、`-0.02em` |
+| Token Reference | `{分组.名称}`，指向已定义的原始值；`components` 内允许引用复合值 | `{colors.tertiary}`、`{typography.label-md}` |
+| Typography | 对象，7 个属性：`fontFamily`、`fontSize`、`fontWeight`、`lineHeight`、`letterSpacing`、`fontFeature`、`fontVariation` | 见下方片段 |
+
+颜色的支持面比多数同类工具宽，代价藏在对比度检查里。spec 写明所有颜色会被内部转换到 sRGB 再做 WCAG（网页内容无障碍指南）计算，原始格式只保留用于展示与导出。所以一个宽色域 `oklch()` 能否通过 `contrast-ratio`，取决于它转换后的结果。`lineHeight` 接受无单位数字，spec 直接推荐这种写法，因为倍数比绝对行高更适合响应式。`fontFeature` 与 `fontVariation` 分别映射到 `font-feature-settings` 与 `font-variation-settings`。
+
+组件层有 8 个合法属性：`backgroundColor`、`textColor`、`typography`、`rounded`、`padding`、`size`、`height`、`width`。状态变体不嵌套，平铺成相关键名——`button-primary`、`button-primary-hover`、`button-primary-active`。spec 同时提醒组件规范仍在演化，鼓励各团队按领域补组件类型。
+
+```yaml
 components:
   button-primary:
     backgroundColor: "{colors.tertiary}"
@@ -159,26 +214,16 @@ components:
     padding: 12px
   button-primary-hover:
     backgroundColor: "{colors.tertiary-container}"
----
 ```
 
-四种 token 类型：
+模型层还有两个安全上限：token 嵌套深度 20、引用链深度 10。它们写在 `spec-config.yaml` 的 `limits` 段，由 2026-06-12 那次支持嵌套 token 声明的提交（`#103`）一并引入。另有一批同类约束是 2026-07-02 "bound token-validation cost on adversarial input"（`#121`）加的：行内值超过 64 字符就不做模式匹配、编辑距离比较前先按长度差剪枝。两者的动机是同一件事——这份文件任何人都能递进来，校验成本必须有上界。
 
-| 类型 | 格式 | 示例 |
-|:-----|:-----|:-----|
-| Color | 任意 CSS 颜色 | `"#1A1C1E"`, `"oklch(62% 0.18 250)"` |
-| Dimension | 数字 + 单位 | `48px`, `-0.02em` |
-| Token Reference | `{path.to.token}` | `{colors.primary}` |
-| Typography | 对象（见下） | `fontFamily` + `fontSize` + `fontWeight` + `lineHeight` + `letterSpacing` + `fontFeature` + `fontVariation` |
+### 人读的那一层
 
-Token Reference 是 DESIGN.md 一个值得专门讲的小设计：`{colors.tertiary}` 这种语法让一个 token 引用另一个 token，构建依赖图。Linter 能检测"悬空引用"——写了 `{colors.oops}` 但 colors 里没有 `oops`，会直接 `error` 拦下。Component 嵌套 token 也是这个机制。
+正文小节用 `##` 标题，顺序固定，可省略但不可乱序，共 8 节：
 
-### 3.2 Markdown Body
-
-散文部分用 `##` 标题分 Section，顺序固定（允许省略，但出现的必须按这个顺序）：
-
-| # | Section | 别名 |
-|:--|:--------|:-----|
+| # | 小节 | 认可的别名 |
+|:--|:-----|:-----------|
 | 1 | Overview | Brand & Style |
 | 2 | Colors | |
 | 3 | Typography | |
@@ -188,45 +233,84 @@ Token Reference 是 DESIGN.md 一个值得专门讲的小设计：`{colors.terti
 | 7 | Components | |
 | 8 | Do's and Don'ts | |
 
-Section 顺序本身是规范的一部分——Linter 有 `section-order` 规则专门检查这件事。Agent 在生成 UI 时按固定顺序读 Section，跨项目的一致性能大幅提升。
+`## Overview` 的职责在 spec 里写得很具体：定义品牌个性、目标受众，以及界面该 "playful 还是 professional、dense 还是 spacious"——它是具体规则没覆盖时，Agent 用来兜底判断的那段上下文。
 
-"Consumer Behavior for Unknown Content" 这条小规则容易被忽略，但它直接回答了一个关键问题："Agent 读到规范没覆盖的内容时，应该怎么办？"
+规范对"没见过的内容"整体宽容，但 README 与 spec 的清单不等长：spec 列了 6 种情形，README 只抄了 5 种，漏掉的是"未知间距值按字符串保留"这一条。以 spec 为准：
 
-| 情况 | 行为 |
-|:-----|:-----|
-| 未知 Section 标题 | 保留，不报错 |
-| 未知 color token 名 | 只要值合法就接受 |
-| 未知 typography token 名 | 接受为合法 typography |
-| 未知 component property | 接受 + warning |
-| 重复 Section 标题 | 报错，拒绝文件 |
+| 情形 | 规定行为 | 文档给的例子 |
+|:-----|:---------|:-------------|
+| 未知小节标题 | 保留，不报错 | `## Iconography` |
+| 未知颜色 token 名 | 值合法即接受 | `surface-container-high: '#ede7dd'`（表面容器层级命名） |
+| 未知排版 token 名 | 接受为合法排版 | `telemetry-data` |
+| 未知间距值 | 接受，非法尺寸按字符串存留 | `grid-columns: '5'` |
+| 未知组件属性 | 接受，并告警 | `borderColor` |
+| 重复小节标题 | 报错，拒绝整个文件 | 两个 `## Colors` |
 
-最后一行尤其重要——重复 Section 是**唯一**会让 Linter 拒绝整个文件的情况。其他情况都是宽松处理，这是设计者明确选择的"前向兼容"姿态：让规范保持开放，让用户项目得以渐进扩展。
+宽容姿态带来的前向兼容确实有效：一份带 `## Motion`、`## Iconography` 的文件能原样通过校验。但最后那一行需要单独看，它和实际行为不一致。
 
-## 四、9 条 Lint 规则：把规范变成生产合同
+## 校验：11 条规则、真实严重级别与退出码
 
-DESIGN.md 最有生产价值的一块不是格式，是 9 条 Lint 规则。每条规则在固定严重级别产出 finding，结构化 JSON 输出让 Agent 可以直接消费：
+linter 是这个项目最有生产价值的部分，也是文档最容易被读错的部分。下面这张清单**不是从 README 抄的**，而是 `designmd spec --rules-only` 在 0.4.0 上的实际输出——这张表由规则描述符自动生成，因此不会过期。
 
-| Rule | Severity | 检查 |
-|:-----|:---------|:-----|
-| `broken-ref` | error | Token 引用（如 `{colors.primary}`）未解析到任何已定义 token |
-| `missing-primary` | warning | 定义了 color 但没有 `primary`——Agent 会自动生成一个 |
-| `contrast-ratio` | warning | Component 的 `backgroundColor`/`textColor` 对低于 WCAG AA（4.5:1） |
-| `orphaned-tokens` | warning | 颜色 token 定义了但没有任何 component 引用 |
-| `token-summary` | info | 统计每个 section 多少 token |
-| `missing-sections` | info | 其他 token 存在时，optional section（spacing / rounded）缺失 |
-| `missing-typography` | warning | 定义了 color 但没定义 typography——Agent 会用默认字体 |
-| `section-order` | warning | Section 出现顺序不符 |
-| `unknown-key` | warning | 顶层 YAML key 像是已知 schema key 的拼写错误（如 `colours:` → `colors:`） |
+| 规则 | 级别 | 检查内容 |
+|:-----|:-----|:---------|
+| `broken-ref` | error | 引用解析不到已定义 token；同时兼管未知组件子属性 |
+| `missing-primary` | warning | 定义了颜色却没有 `primary` |
+| `contrast-ratio` | warning | 组件的 `backgroundColor`/`textColor` 配对低于 4.5:1 |
+| `orphaned-tokens` | warning | 颜色 token 未被任何组件引用 |
+| `token-summary` | info | 汇总各组 token 数量 |
+| `missing-sections` | info | `spacing`、`rounded` 在其他 token 存在时缺失 |
+| `missing-typography` | warning | 定义了颜色却没有任何排版 token |
+| `section-order` | warning | 小节顺序不符规范顺序 |
+| `unknown-key` | warning | 顶层键像已知键的拼写错误 |
+| `token-like-ignored` | warning | 顶层未知键的取值看起来是 token 表 |
+| `omitted-rules` | info | 校验 `omitted` 声明本身是否有效 |
 
-把规则表当成"生产合同"来读，里面藏着几个有意思的工程选择：
+README 的表格写 "Each rule produces findings at a fixed severity level"，源码 `RuleFinding` 上写的却是 `Optional override of the descriptor's default severity`。**实际行为以后者为准**，两处可复现：
 
-1. **`broken-ref` 唯一是 error**。其他都是 warning。意思很直接：唯一会让 Lint 拒绝合并的，是"token 引用悬空"——这是 Agent 必出错的事。其他都允许通过，但给出建议。
-2. **`contrast-ratio` 默认阈值是 WCAG AA 4.5:1**，不是 AAA 7:1。这是设计者在"严格可访问性"和"现实设计系统多样性"之间做的取舍。
-3. **`orphaned-tokens` 是 warning 不是 error**。意思是"你定义了但没被任何 component 用的颜色"会被标出来，但不会拒绝——很多 token 是"future-proof"用，规则理解这一点。
-4. **`unknown-key` 只对看起来像已知 key 拼错的告警**，自定义扩展 key 静默。这条避免了"严格 linter 把未来扩展打回去"的常见错误。
-5. **存在 `missing-primary` 和 `missing-typography` 这种"提示规则"**——它们不报错，但告诉 Agent："如果你看到这种不完整规范，你会按默认行为补全"。这是把 Agent 退化路径写进了规范。
+```text
+# 组件里写了一个不在 8 个合法属性内的键
+warning  broken-ref  components.button-primary.borderColor
+'borderColor' is not a recognized component sub-token. Valid sub-tokens: …
+```
 
-把 Linter 当 Agent 守门员来用，可以这样集成到 CI：
+它挂在 `broken-ref` 名下，级别却是 warning。`omitted-rules` 也一样：声明级别写着 info，实际会按情形发出三个不同的规则 ID——声明有效时 `declared-omission`（info），写了已经存在的分组时 `redundant-omission`（warning），写了不认识的节名时 `unknown-omission`（warning）。所以"一条规则一个固定级别"这个说法，在 11 条里有 2 条不成立。
+
+`omitted` 这个键值得单看，因为它把"缺省"从一条疑问变成一条声明。一份故意不做圆角的设计系统会一直收到 `missing-sections`（info）；声明之后它被替换成 `declared-omission`（info），**finding 条数不变，变的是语义**——从"你少了 spacing"变成"你有意省略了 spacing"，而且可以带上理由：
+
+```yaml
+omitted:
+  - spacing
+  - section: rounded
+    reason: "No rounded corners defined in brand book"
+```
+
+### 只有 error 拦得住合并
+
+三条子命令的退出码语义不同，混用会让人以为 CI 生效了其实没有。以下每一格都实测过：
+
+| 命令 | 退出 0 | 退出 1 | 退出 2 |
+|:-----|:-------|:-------|:-------|
+| `lint` | 无 error | 有 error | 输入文件读不到 |
+| `export` | 导出成功（**不管源文件有没有告警**） | `--format` 非法或 emitter 出错 | 输入读不到 |
+| `diff` | 无退化 | `after` 的 error 或 warning 变多 | 任一输入读不到 |
+
+`export` 的退出码语义是 2026-07 一次修正后定下来的（"exit 0 on a successful export regardless of source lint findings"），意图很清楚：把关交给 `lint`，`export` 只负责产出。
+
+更要小心的是**哪些情况根本不产生 error**。我实测的四例：
+
+| 输入 | 实际结果 |
+|:-----|:---------|
+| front matter 里引用 `{colors.oops}` | `broken-ref`，error，退出 1 |
+| YAML 语法写坏（流式序列没闭合） | 一条 warning 且不带规则名，`summary` 显示 0 error，退出 **0** |
+| 同一份文件里出现两个 `## Colors` | **没有与重复标题有关的 finding**，退出 **0** |
+| 顶层键写成 `colours:`（该文件无组件引用） | `unknown-key` 与 `token-like-ignored` 各一条 warning，退出 0 |
+
+第三行直接推翻了文档说法。spec 与 README 都写着"重复小节标题 Error；拒绝文件"，而源码里的 `DUPLICATE_SECTION` 实际只用于**跨块的顶层 YAML 键重复**，即 front matter 与正文代码块之间的键名冲突。`##` 标题重复这条路径根本没有实现。第二行则属于文档根本没写：`spec.md` 与 `spec.mdx` 里都找不到关于 YAML 语法错误的处理约定，实跑结果是降级成一条不带规则名的 warning 继续跑。跨块键真重复时也一样——`Section 'colors' is defined in both frontmatter and code block 1.` 是 warning，退出码 0。
+
+这决定了集成姿势：**把 `lint` 当守门员是有效的，但不能以为它覆盖了所有结构性错误。** 语法写坏与手误重复标题这两类它都放行。反过来，能产出 error 级 finding 的也不止 `broken-ref` 一条规则。模型层遇到非法色值同样给 error，例如 `'not-a-color' is not a valid color`，退出码 1，而这条 finding 并不带 `rule` 字段。
+
+### 接进 CI
 
 ```yaml
 name: Design System Lint
@@ -239,141 +323,275 @@ jobs:
       - run: npx @google/design.md lint DESIGN.md
 ```
 
-`lint` 命令 exit code 在有 error 时为 1，因此 `npx @google/design.md lint DESIGN.md` 自然成为 PR 阻塞点。
+Linux 上直接用 `design.md` 这个 bin 名没有问题（Windows 的情况见后文）。若希望把告警也交给 Agent 读，可以显式取 JSON：`npx @google/design.md lint --format json DESIGN.md`。
 
-Linter 也作为库暴露：
+`lint` 与 `diff` 的 `--format` 帮助文本写着 "json or text"，但 `text` 目前没有对应实现：同一份输入下 `--format json`、`--format text` 与不带该参数的输出**逐字节相同**，都是 JSON。传一个更离谱的值（`--format yaml`）也不会报错，照常输出 JSON 退出 0。`export` 则会校验：非法取值返回 `{"error":"INVALID_FORMAT", …}` 并列出 5 个合法格式，退出码 1。
 
-```typescript
-import { lint, DEFAULT_RULES } from '@google/design.md/linter';
+### 规则数量半年里变了三次
 
-const report = lint(content);                       // 用默认 9 条规则
-// report.findings: Finding[]
-// report.summary:  { errors, warnings, info }
-// report.designSystem: 解析后的 DesignSystemState
+这条经验值得单独写，因为它决定了"该从哪里读规则"。
 
-// 也可以扩展自定义规则
-const noGradientRule = {
-  name: 'no-gradients',
-  severity: 'warning',
-  check: (state) => {
-    const findings = [];
-    for (const [name, comp] of Object.entries(state.components)) {
-      if (comp.backgroundColor?.includes('gradient')) {
-        findings.push({
-          severity: 'warning',
-          path: `components.${name}.backgroundColor`,
-          message: 'Gradient backgrounds are prohibited. Use solid colors.',
-        });
-      }
-    }
-    return findings;
-  },
-};
+| 时间 | 变化 | 证据 |
+|:-----|:-----|:-----|
+| 2026-04-10 | linter 与 spec 同日进仓 | `feat: add design.md linter (#1)` |
+| 2026-06-15 | 新增 `token-like-ignored`；`0.3.0` 发布 | `#105`、`release: 0.3.0` |
+| 2026-07-01 | 新增 `css-vars` 导出格式 | `#109` |
+| 2026-07-27 | 新增 `omitted` 键与其校验规则，README 的条数**从 nine 直接跳到 eleven**（一次补两行）；`0.4.0` 发布 | `#155`、`release: 0.4.0` |
+| 2026-07-27，在 `#155` 之后 | 提交说明写着"改成 ten 并补 `token-like-ignored` 一行"，实际 diff 只把输出示例的 `info` 改成 `infos`、扩写了 diff 示例 | `#119` |
 
-const customReport = lint(content, {
-  rules: [...DEFAULT_RULES, noGradientRule],
-});
+`#119` 是最能说明问题的一条。它的提交说明声称把条数改成 ten 并补了一行规则，可它落地时 `#155` 已经先把 nine 改成了 eleven，于是那条 diff 里根本没有规则表。`token-like-ignored` 早在 2026-06-15 就进了 linter，README 却直到 7 月还写着 nine——**表格与代码差了整整一个月，而且是靠外部贡献者提 PR 才对上的**。现在 main 上写的是 "eleven rules"，与 11 个描述符一致。
+
+所以，**要规则清单就跑 `spec --rules-only`，别读 README**。这条命令的实现在 `commands/spec.ts` 里直接 `import { DEFAULT_RULE_DESCRIPTORS }`，表格是从规则对象本身生成的；README 那一张靠人记得改。
+
+## 导出：五种格式与一条硬边界
+
+`export` 的 `--format` 接受 5 个取值，README 的表格只列了 4 个——`css-vars` 是 2026-07-01 加的，表没跟着更新。`--help` 里五个都在：
+
+| `--format` | 输出 | 用途 |
+|:-----------|:-----|:-----|
+| `json-tailwind` | JSON | Tailwind v3 的 `theme.extend` 对象 |
+| `tailwind` | JSON | `json-tailwind` 的向后兼容别名 |
+| `css-tailwind` | CSS | Tailwind v4 的 `@theme { … }` 块 |
+| `dtcg` | JSON | W3C Design Tokens Format Module |
+| `css-vars` | CSS | 裸 CSS 自定义属性，支持 `--prefix` |
+
+拿仓库自带的 `examples/paws-and-paths/DESIGN.md` 实跑，得到的 `@theme` 块确实只用 Tailwind v4 自己的 8 个命名空间：
+
+```text
+--color-  --font-  --text-  --leading-
+--tracking-  --font-weight-  --radius-  --spacing-
 ```
 
-这条扩展点让每个团队可以在 9 条基础上加自家规则——比如"禁止渐变"、"禁止使用某个字体"、"按钮高度必须 ≥ 40px"——Linter 充当"组织级设计守门员"。
-
-## 五、Export 三条路径：把 DESIGN.md 送进现有栈
-
-格式规范的真正考验是"和现有工具链接得上吗"。DESIGN.md 的答案是 `export` 子命令，覆盖三种常见下游：
+`css-vars` 加上前缀后是同一批变量换了名字：
 
 ```bash
-# 1. Tailwind v3 — 传统 JSON 配置
-npx @google/design.md export --format json-tailwind DESIGN.md > tailwind.theme.json
-# （--format tailwind 是 json-tailwind 的别名，向后兼容）
-
-# 2. Tailwind v4 — 新的 CSS 主题块
-npx @google/design.md export --format css-tailwind DESIGN.md > theme.css
-
-# 3. W3C Design Tokens Format Module
-npx @google/design.md export --format dtcg DESIGN.md > tokens.json
+npx @google/design.md export --format css-vars --prefix ds DESIGN.md
 ```
 
-三条路径对应三种团队现实：
-
-| 现有栈 | 推荐 export | 落地方式 |
-|:-------|:------------|:---------|
-| Tailwind v3 项目（`tailwind.config.js`） | `json-tailwind` | 导出后 `module.exports = require('./tailwind.theme.json').theme.extend` |
-| Tailwind v4 项目（`@theme` in CSS） | `css-tailwind` | 把 `@theme { ... }` 块拷进根 CSS |
-| 多端 Figma / iOS / Android 同步 | `dtcg` | 配合 Style Dictionary 等消费 DTCG JSON |
-| Agent 直接消费 | 不必 export | 让 Agent 直接读 DESIGN.md |
-
-注意第三种是反直觉但正确的路径：很多 Agent 场景下，**根本不需要 export**。Agent 直接读 DESIGN.md 的 YAML + 散文，比解析 `tailwind.config.js` 拿到更多信息（散文段只在 DESIGN.md 里）。
-
-`export` 输出的 Tailwind v4 CSS 块用 Tailwind v4 自己的命名空间：
-
 ```css
-@theme {
-  --color-*: ...;       /* 颜色 token 映射到 --color-* */
-  --font-*: ...;        /* 字体 */
-  --text-*: ...;        /* 字号 */
-  --leading-*: ...;     /* 行高 */
-  --tracking-*: ...;    /* 字距 */
-  --font-weight-*: ...; /* 字重 */
-  --radius-*: ...;      /* 圆角 */
-  --spacing-*: ...;     /* 间距 */
+:root {
+  --ds-color-surface: #f9f9ff;
+  --ds-color-primary: #855300;
+  /* 该文件在 css-vars 下共展开 61 个自定义属性，这里只取两行 */
 }
 ```
 
-这意味着 v4 用户的 `bg-primary` / `text-h1` / `rounded-md` / `p-md` 可以直接用，不用再写自定义 className。
+`dtcg` 的输出比"符合 W3C 格式"这句描述具体得多，值得看一眼实际形状：
 
-`dtcg` 输出符合 [W3C Design Tokens Format Module](https://tr.designtokens.org/format/)——`$type` / `$value` 风格——可以接入 Style Dictionary、Tokens Studio for Figma 等生态。Style Dictionary 的现有用户可以把 DESIGN.md 当作"上游 source"。
-
-最后一条命令是 `spec`：
-
-```bash
-npx @google/design.md spec                  # 输出 spec markdown
-npx @google/design.md spec --rules          # 末尾追加当前 9 条 lint 规则
-npx @google/design.md spec --rules-only --format json
+```json
+{
+  "$schema": "https://www.designtokens.org/schemas/2025.10/format.json",
+  "$description": "Paws & Paths",
+  "color": {
+    "$type": "color",
+    "surface": {
+      "$value": { "colorSpace": "srgb", "components": [0.976, 0.976, 1], "hex": "#f9f9ff" }
+    }
+  }
+}
 ```
 
-`spec` 设计的本意是**注入到 Agent prompt**：你在 system prompt 里放"读取项目根目录的 DESIGN.md，再执行 `npx @google/design.md spec` 拿到 spec 全文当作额外上下文"。这一点和 Stitch.withgoogle.com 的产品形态高度吻合。
+上面只截了 `color` 一组。真实顶层键是 `$schema`、`$description`、`color`、`spacing`、`rounded`、`typography` 六个——**没有 `components`**。分组名用单数 `color`，颜色值被拆成 `colorSpace` 加分量数组再加原始 `hex`，所以下游拿到的是已经过 sRGB 归一的结构，`hex` 字段留了退路。
 
-## 六、`.md` 三重身份：一个标识符的工程意图
+### 硬边界：组件不进导出
 
-DESIGN.md 仓库命名有一个常被忽略的细节：`design.md` 这个名字**同时是 GitHub 仓库名、文件名、npm 包名的一部分**，三者共用同一个标识符。
+`json-tailwind` 的实际输出结构是 `{ theme: { extend: { colors, fontFamily, fontSize, borderRadius, spacing } } }`——**组件（component）这一类属性完全不进导出**。
+
+这不是遗漏。`examples/paws-and-paths/README.md` 在介绍配套 `tailwind.config.js` 时就把话说明白了：
+
+> Component tokens are intentionally excluded — Tailwind's utility-first approach handles component styling through composition of these primitives.
+
+于是"导出三条路径搞定一切"这个印象需要收紧成一句更准的话：**导出搬运的是原始值层（颜色、排版、圆角、间距），组件层与散文层不进任何导出格式。** 组件属性与散文的唯一消费者是 Agent 本身。
+
+这也把 `token-like-ignored` 那条告警的意义讲清楚了。它担心的是一种很自然的误判：有人把只在 DESIGN.md 内部自洽的 token 组（比如动效）写进 front matter，以为它会随导出进入构建产物。它不会。
+
+| 现有栈 | 推荐 `--format` | 接入方式 |
+|:-------|:---------------|:---------|
+| Tailwind v3（`tailwind.config.js`） | `json-tailwind` | `module.exports = require('./tailwind.theme.json').theme.extend` |
+| Tailwind v4（CSS 里写 `@theme`） | `css-tailwind` | 把块拷进根样式 |
+| 不吃 Tailwind 的普通前端 | `css-vars` | 直接引 CSS，用 `--prefix` 避让 |
+| 多端与 Figma 生态 | `dtcg` | 交给支持 DTCG 的管道 |
+| 只让 Agent 读 | 不必导出 | 直接把 DESIGN.md 放进仓库 |
+
+最后一行是反直觉但常常正确的路径：Agent 场景下 `export` 一步都不需要做，因为散文只在 DESIGN.md 里，导出反而会把它丢掉。
+
+## 文档与实现不一致的四处现场
+
+把上面散落的对照集中一处，方便复核。这四处都是 0.4.0 上的实跑结果，不是推测：
+
+**1. 程序化接口的 `summary` 键名。** README 的注释写 `{ errors, warnings, info }`，实际命令行工具与 `lint()` 返回的都是 `infos`。仓库在 `#119` 已经为这一点改过 README 的输出示例，但那段接口注释漏了，至今仍是旧的。
+
+**2. lint 的 JSON 示例形状。** README 顶部那条示例 finding 是 `"textColor (#ffffff) on backgroundColor (#1A1C1E) has contrast ratio 15.42:1 — passes WCAG AA."`，级别 warning。而 `contrast-ratio` 只在**低于**阈值时发 finding；实跑一例：
 
 ```text
-GitHub 仓库：  github.com/google-labs-code/design.md
-文件名：      DESIGN.md   （项目根目录）
-npm 包：      @google/design.md
-CLI 入口：    designmd  （Windows 兼容 shim，详见下节）
-品牌名：      DESIGN.md
+warning  contrast-ratio  components.button-ghost
+textColor (#b8422e) on backgroundColor (#dccbff) has contrast ratio 3.64:1,
+below WCAG AA minimum of 4.5:1.
 ```
 
-这个"重名"不是巧合，是工程选择。代价和收益都很明确：
+15.42:1 那种通过情形不会出现在输出里。另外，规则层产出的每条 finding 都带 `rule` 字段，README 的示例里没有。但反过来也别把它当通则：解析层与模型层的 finding 恰恰**不带** `rule`，前文的非法色值与 YAML 降级都属这类。"有没有 `rule`"因此成了区分两类来源的可靠标志。
 
-- **代价 1：Windows 命令名冲突**——见下节 `designmd` shim。
-- **代价 2：搜索/GitHub SEO**——`design.md` 这种短词在 GitHub 全局搜几乎搜不到，团队需要靠完整 owner 路径定位。
-- **代价 3：和现有项目命名规范冲突**——`@google/design.md` 名字里带点号，npm 历史上没有这种先例。
+**3. 重复小节标题。** 见前文实测：spec 承诺拒绝文件，实现里没有这条检测。
 
-收益同样清晰：
+**4. `motion` 示例与 `token-like-ignored`。** 见主张四：散文里写 `## Motion` 零告警，front matter 里写 `motion:` 一条 warning 并明示导出不认。
 
-- **URL 即规范**：`github.com/google-labs-code/design.md` 直接就是 spec 仓库的入口，没有 "spec" / "docs" 之类的二级路径。
-- **包名即品牌**：`npm install @google/design.md` 之后 `npx @google/design.md lint` 看上去就很自然。
-- **跨平台一致**：仓库名 = 文件名 = 包名根，复制 README 提到 DESIGN.md 时不用解释是哪一个。
+这四处里只有一处需要修代码（第 3 处），其余三处都是"读错了对象"：README 是给人看的简介，`docs/spec.md` 是生成的规范，`spec --rules-only` 是规则的事实来源。**要准确就往下游走一层。**
 
-更妙的是 **.md 这个扩展名本身的语义**——它是个 Markdown 文件，所有 GitHub 渲染、所有编辑器、所有 Agent 都能直接读。如果仓库叫 `design-system-spec`、文件名叫 `design-spec.md`，反而要解释一次"哪个是规范的入口"。
+## 程序化接口：把 linter 当编辑菜单
 
-读 PHILOSOPHY.md 的时候你也能感受到这条选择：项目以 .md 后缀出现，意思是"这是一个用 Markdown 描述的设计规范"——**这个描述本身才是产品的全部**。CLI 工具 `@google/design.md` 只是这个 spec 的"配套工具"，而不是反过来。
+`@google/design.md` 导出两个入口：根路径给 CLI，`./linter` 子路径给程序使用。后者实际导出的符号比 README 提到的 `lint` 多得多：`DEFAULT_RULES`（长度正好 11）、`runLinter`、`preEvaluate`、`fixSectionOrder`、四个 emitter，以及单条规则函数。但这里有个坑：11 条规则里有 10 条能单独取到，**`sectionOrder` 没有导出**，`omitted` 导出的是对象而不是函数。要单独复用这两条，只能从 `DEFAULT_RULES` 里按下标取，或者自己重实现。
 
-## 七、Windows 上的 `designmd` shim：被 `.md` 绑架的命令名
+`lint()` 返回的不只是 finding：
 
-`.md` 既是品牌名也是 npm bin 名，会撞上一个 Windows 特有的问题：Windows 的命令解析把 `.md` 视作 Markdown 文件关联名，PowerShell 在某些情况下会**优先打开 Markdown 编辑器**而不是执行 bin。
+```js
+import { lint } from '@google/design.md/linter';
 
-DESIGN.md 仓库的 README 里有专门一节解释这件事：
+const report = lint(readFileSync('DESIGN.md', 'utf8'));
+
+report.findings;         // Finding[]：规则层的带 rule，解析层与模型层的不带
+report.summary;          // { errors, warnings, infos }
+report.designSystem;     // 解析完引用之后的设计系统模型
+report.tailwindConfig;   // 直接算好的 Tailwind 主题
+report.sections;         // 文档里出现的小节标题
+report.documentSections; // 按标题切开的正文
+```
+
+`sections` 给回的是**原样的标题文本**，不做规范化，也不判断是否认识——`## Overview`、`## Layout`、`## Iconography` 会分别得到 `Overview`、`Layout`、`Iconography`。它有用是因为能一次拿到全部小节名（含自定义小节）来做分支判断，而不是因为它认得别名。`examples/paws-and-paths` 的正文标题恰好直接用了别名写法，所以取回来的名字看起来像规范名：
+
+```text
+['Brand & Style', 'Colors', 'Typography', 'Layout & Spacing',
+ 'Elevation & Depth', 'Shapes', 'Components']
+```
+
+自定义规则是最值得用起来的扩展点，但形状要注意。**`LintOptions.rules` 要的是 `LintRule`，也就是接收解析后的设计系统状态、返回 finding 数组的函数**（`(state) => Finding[]`），不是带 `run` 的描述符对象。另外模型里的 `components` 与组件的 `properties` 都是 `Map`，得按 `Map` 遍历。
+
+```js
+import { lint, DEFAULT_RULES } from '@google/design.md/linter';
+
+// 仓库 tsconfig 为 strict；用 TypeScript 复写时给 state 加 DesignSystemState 标注
+const noGradientRule = (state) => {
+  const findings = [];
+  for (const [name, comp] of state.components) {
+    for (const [prop, value] of comp.properties) {
+      if (String(value).includes('gradient')) {
+        findings.push({
+          severity: 'warning',
+          path: `components.${name}.${prop}`,
+          message: 'Gradient values are prohibited by house style.',
+          rule: 'no-gradients',
+        });
+      }
+    }
+  }
+  return findings;
+};
+
+const base = lint(content);                              // 默认 11 条
+const wider = lint(content, { rules: [...DEFAULT_RULES, noGradientRule] });
+```
+
+拿一份最小探针文件跑一遍（3 个颜色加 1 组排版，其中一个组件的背景色是渐变，故缺 `spacing` 与 `rounded`），两次汇总的差值就是这条规则带来的：
+
+```text
+default :  {"errors":0,"warnings":0,"infos":3}
+extended:  {"errors":0,"warnings":1,"infos":3}
+  warning no-gradients components.hero-card.backgroundColor
+  Gradient values are prohibited by house style.
+```
+
+`preEvaluate(state)` 接收同一份状态对象，把 finding 按严重级别分成 fixes、improvements、suggestions 三档。它的用途比 `lint` 更贴近 Agent 工作流：给模型的不是原始错误列表，而是一份"必须改、建议改、可以考虑"的菜单。目前 CLI 没有暴露自动修复，仓库里唯一的修复类函数是内部的 `fixSectionOrder`，只能调乱序的小节。
+
+## 一次完整流转：给一套设计系统加动效
+
+抽象机制说完了，用一次真实工作串一遍。目标是给 `paws-and-paths` 这套示例加一组动效令牌，并让它们进入构建产物。全程命令与输出都在本机跑过。
+
+**第 1 步：确认起点干净。**
+
+```bash
+npx @google/design.md lint DESIGN.md
+```
+
+```json
+{
+  "findings": [
+    { "severity": "info",
+      "message": "Design system defines 47 colors, 8 typography scales, 6 rounding levels, 8 spacing tokens, 10 components.",
+      "rule": "token-summary" }
+  ],
+  "summary": { "errors": 0, "warnings": 0, "infos": 1 }
+}
+```
+
+**第 2 步：把动效写成散文小节。** 放在 `## Components` 之后，内容描述节奏而不是数值：
+
+```markdown
+## Motion
+
+Transitions are quick and mechanical. Nothing bounces, nothing overshoots.
+Nothing in the UI animates longer than 300ms.
+```
+
+再跑一次 lint：finding 数量不变，退出 0。**未知小节按规范被静默保留**，这一步什么都不用改。
+
+**第 3 步：再补上数值，写成顶层 `motion:` 键。** lint 立刻多一条告警：
+
+```text
+summary {"errors":0,"warnings":1,"infos":1}
+warning motion — "motion" looks like a design-token map …
+It will be silently ignored by export commands.
+```
+
+退出码仍是 0，合并不受阻。真正的判断在第 4 步。
+
+**第 4 步：确认下游到底拿不拿得到。**
+
+```bash
+npx @google/design.md export --format json-tailwind DESIGN.md | grep -c '120ms\|cubic-bezier'   # 0
+npx @google/design.md export --format dtcg        DESIGN.md | grep -c 'cubic-bezier'            # 0
+npx @google/design.md export --format css-vars    DESIGN.md | grep -c 'motion'                  # 0
+```
+
+三种格式全部为 0——动效值确实只活在 DESIGN.md 内部。到这一步才有决策依据：若动效由 Agent 直接生成内联样式或写进组件样式，停在散文层就够了；若要 `transition-duration: var(--motion-feedback)` 这类真实构建产物，动效值必须走另一条路（`css-vars` 手写、或放进 `spacing` 之类被识别的分组里借用）。
+
+**第 5 步：改动现有令牌时，用 `diff` 卡退化。** 把 `primary` 从 `#855300` 调成 `#7A4C00`：
+
+```json
+{
+  "tokens": { "colors": { "modified": ["primary"] },
+              "components": { "modified": ["button-primary"] } },
+  "findings": { "before": { "errors": 0, "warnings": 0, "infos": 1 },
+                "after":  { "errors": 0, "warnings": 0, "infos": 1 },
+                "delta":  { "errors": 0, "warnings": 0 } },
+  "regression": false
+}
+```
+
+引用它的组件同步出现在 `components.modified` 里，说明 diff 比对的是解析后的值。把 `button-primary` 的引用改成一个不存在的 token，`delta.errors` 变 1，回归标记 `regression` 变 `true`，退出码 1。
+
+这次流转把三条链路的实际分工暴露完了：**散文负责意图，token 负责取值；校验主要在引用悬空与取值非法时说不；导出只搬运 `colors`、`typography`、`spacing`、`rounded` 四组，连 `components` 都不带上。**
+
+## 命名上的选择：`.md` 的三重身份与 Windows 的 designmd
+
+`design.md` 这个名字同时是仓库名、文件名与 npm 包名片段，四个标识符共用同一个词根：
+
+```text
+GitHub 仓库   google-labs-code/design.md
+规范文件名    DESIGN.md
+npm 包        @google/design.md
+CLI bin       design.md 与 designmd（都指向 dist/index.js）
+```
+
+好处直接：URL 即规范入口，`npx @google/design.md lint` 读起来就是一句话，复制粘贴时不存在"到底指哪一个"的歧义。`.md` 后缀还顺带解决了分发问题——GitHub 直接渲染、任何编辑器直接打开、Agent 直接读，不需要插件。
+
+代价则集中在 Windows。README 为此专门留了一节，原文是：
 
 > On **Windows/PowerShell**, this direct form can produce no output (or open `DESIGN.md` in your Markdown editor) because the `.md` suffix in the `design.md` bin name collides with the Windows Markdown file association during command resolution. Run the dot-free `designmd` alias instead — point `npx` at the package with `-p`, then invoke `designmd`:
->
-> ```bash
-> npx -p @google/design.md designmd lint DESIGN.md
-> ```
 
-`designmd` 是同一个入口点的 shim，跨平台行为一致。`package.json` scripts 里同样要用 alias：
+```bash
+npx -p @google/design.md designmd lint DESIGN.md
+```
+
+`designmd` 这个无点别名是 2026 年 5 月一次修复加进去的（`fix(cli): add Windows-friendly designmd bin alias (#62)`），两个 bin 都指向同一个入口，跨平台行为一致。从 `package.json` 的脚本里调用时同样要用别名：
 
 ```jsonc
 {
@@ -383,75 +601,98 @@ DESIGN.md 仓库的 README 里有专门一节解释这件事：
 }
 ```
 
-在 macOS / Linux 上 `npx @google/design.md lint DESIGN.md` 一切正常，Windows 上要先切换到 `designmd`。这是一个典型的"文件名后缀绑架命令名"问题——值得所有做工具链的人在 README 里写一段"Windows tip"。
+带点号的 scope 在 PowerShell 里还有一层：`@` 在部分 shell 下有特殊含义，README 的建议是加引号，`npm install "@google/design.md"`。
 
-另一个 Windows 坑：`@google/design.md` 这种带点号的 scope，在某些 PowerShell 配置下 `npm install` 会把 `@` 当特殊字符。解决方案是加引号：
+如果装不到包，README 给的判断是：`ENOVERSIONS` 几乎总是 npm 没在查公共仓库，具体三种成因——`.npmrc` 里的自定义 `registry=`、企业镜像没同步这个包、`@google:registry` 配错。定位命令是 `npm config get registry`，正常应返回 `https://registry.npmjs.org/`；改好之后如果仍报错，用 `npm cache clean --force` 清掉缓存住的 404。
+
+顺带纠正一个容易脱口而出的说法：带点号的 npm 包名**并非**没有先例。`node.extend`（2012 年上架）与 `dot`（2011 年）都在同一个注册表里活了很多年。`@google/design.md` 真正的特殊之处不在包名，而在 bin 名——npm 允许包名里带点，Windows 的命令解析却按文件扩展名行事，冲突是从这里来的。
+
+## 适用边界与替换方案
+
+DESIGN.md 的适用面比"任何前端项目"窄，它的收益全部来自两个前提：**有人（或 Agent）会读散文**，以及**你愿意为描述意图付出维护成本**。
+
+适合的情形：
+
+- Agent 反复生成界面代码，跨会话一致性是明确痛点。DESIGN.md 的价值恰好在散文层，而那一层只有 Agent 会消费。
+- 设计与前端之间需要一份能 `git diff`、能走代码审查的规范载体。
+- 下游已经在用 Tailwind 或 DTCG 生态，导出这一步是净收益。
+- 团队愿意写 200 到 500 字的 `## Overview`，并且能给出具体参照物。
+
+不必用的情形，以及替代选择：
+
+| 情形 | 更合适的做法 | 原因 |
+|:-----|:-------------|:-----|
+| 单页活动站、一次性界面 | 直接写 Tailwind 配置 | 规范维护成本高于收益 |
+| 设计系统真源在 Figma，Agent 不读规范 | Style Dictionary 加主题文件 | DESIGN.md 的散文层没有消费者 |
+| 已有强约束体系（Material、Ant Design） | 引用上游规范 | 再造一层只会漂移 |
+| 只需要跨工具搬运数值、不需要意图 | 直接用 DTCG `tokens.json` | DESIGN.md 的 token 子集是 DTCG 的子集 |
+| 组件规格是核心诉求 | 再等几个版本 | 组件层不进导出，spec 自己也标注"仍在演化" |
+
+组件这一层的成熟度要单独提醒：`docs/spec.md` 在 Components 一节直接放了提示 "The components specification is actively evolving"。若你的设计系统重心就在组件状态与尺寸规约，现在押上去赌注偏大。
+
+## 采用顺序
+
+如果决定要试，按这个顺序推进，每一步都有可验证的收口条件。
+
+1. **先只写散文。** `name` 加一段 `## Overview` 加 `## Colors` 的用途说明，front matter 里只留必要数值。收口条件：`lint` 只有 info，退出 0；把 Overview 交给 Agent 生成一次页面，看风格是否稳定。这一步是唯一别人替代不了的工作。
+2. **补 token，让引用闭合。** 加 `typography`、`spacing`、`rounded` 与 `components`，把散文里点到的值都变成可引用的 token。收口条件：`broken-ref` 零条。此时会出现 `orphaned-tokens` 告警，逐条判断是删掉还是被组件引用。
+3. **接导出，并检查丢了什么。** 用 `json-tailwind` 或 `css-tailwind` 生成主题，把产物 diff 进构建。**明确接受组件与散文不进导出**这个事实，并决定这两层由谁消费。
+4. **把 `lint` 挂上 PR。** 只让它对 error 说话，退出码 1 才阻断。这一步要顺手确认团队知道"语法写坏不会被拦"，否则会产生虚假安全感。
+5. **稳定后再加自定义规则。** 组织级约束（按钮最小尺寸、禁用字体、禁止渐变）写成 `LintRule` 函数挂在 `DEFAULT_RULES` 之后。这些是纯函数，能直接进单测。
+6. **给规范本身留退路。** 格式是 `alpha`，把 DESIGN.md 当作上游、导出产物当作下游生成物，不要反向手工维护生成物。
+
+## 排查：按现象定位
+
+下面按"看到什么"排，每条都对应本文里已经验证过的行为。
+
+| 现象 | 先查什么 | 定位依据 |
+|:-----|:---------|:---------|
+| CI 绿了，但主题里没值 | 该分组是不是 4 个会进导出的键之一（`components` 也不算） | 未知顶层键被静默丢弃并带 `token-like-ignored`，组件层则按设计排除在 Tailwind 导出之外 |
+| 明明写坏了 YAML，`lint` 却过了 | 看 `summary` 而不是退出码 | YAML 解析问题降级为 warning，不产生 error |
+| 两个同名小节没被拦 | 这是当前实现，不是配置问题 | `DUPLICATE_SECTION` 只覆盖跨块的顶层 YAML 键 |
+| `missing-sections` 一直出现 | 是不是真的有意省略 | 用 `omitted:` 声明，可附 `reason`；条数不会减少，规则名会变 |
+| 颜色改了对比度却没过 | 转换到 sRGB 后的值 | 所有颜色先归一到 sRGB 再算 WCAG 比值 |
+| Windows 上 `npx` 没输出 | 换 `designmd` 别名 | `.md` 后缀与 Markdown 文件关联冲突 |
+| `ENOVERSIONS` | `npm config get registry` | 自定义镜像未同步该包 |
+| 生成的界面仍是通用风格 | Overview 里有没有具体参照物 | 形容词只描述区域中心 |
+
+## 自测清单
+
+1. 一份 DESIGN.md 里，哪一层的内容不会被任何 `--format` 带到下游？（答：散文层与组件层；导出只搬运颜色、排版、间距、圆角四组。）
+2. `lint` 在什么情况下退出 1？YAML 语法写坏会吗？（答：只有出现 error 级 finding 时；语法写坏降级为 warning，退出 0。）
+3. 想把一组新的数值令牌纳入校验与导出，最少需要动几处？（答：加 schema 键要改解析器；只加散文小节零成本，但也不会进导出。）
+4. `unknown-key` 为什么不把所有未知顶层键都告警？（答：schema 有意保持可扩展，只对与已知键编辑距离不超过 2 的键提示拼写错误；真正丢值的风险由 `token-like-ignored` 承担。）
+5. 判断一份 Overview 写得够不够具体，用哪个反例最快？（答：把里面的形容词逐个划掉，如果划完什么都不剩，就还是"区域"而不是"点"。）
+6. README 说每条规则级别固定，为什么实际不是？（答：`RuleFinding` 允许覆盖描述符默认级别，`broken-ref` 与 `omitted-rules` 各自跨两个级别。）
+
+## 下一步读哪份代码
+
+按目的选，不必顺序读完。
+
+- 想判断"该写哪些内容"：`PHILOSOPHY.md`（110 行），四个主张各一节，重点在第四条的边界。
+- 想核对字段的规范定义：`docs/spec.md`，注意它是生成物，改需求要动 `spec.mdx` 与 `spec-config.yaml`。
+- 想知道规则到底怎么触发：`packages/cli/src/linter/linter/rules/`，一个规则一个文件，每个都配同名测试。
+- 想知道导出丢了什么：`packages/cli/src/linter/tailwind/`、`dtcg/`、`css-vars/` 三个 emitter。
+- 想看三份可直接抄的完整样本：`examples/` 下的 `paws-and-paths`、`atmospheric-glass`、`totality-festival`，每套都同时给了 DESIGN.md、Tailwind 配置与 DTCG 文件，三者差异本身就是最好的教材。
+- 站内另一篇 [DESIGN.md：让 Coding Agents 理解视觉设计的格式规范](/posts/tech/design-md-visual-identity-coding-agents-guide/) 从 schema 与 CLI 用法切入，与本文互补：那篇讲怎么用，这篇讲它承诺到哪一步。
+
+## 参考与复核命令
+
+- 仓库：[google-labs-code/design.md](https://github.com/google-labs-code/design.md)（`main`，Apache-2.0）
+- 哲学文档：[PHILOSOPHY.md](https://github.com/google-labs-code/design.md/blob/main/PHILOSOPHY.md)
+- 生成的规范正文：[docs/spec.md](https://github.com/google-labs-code/design.md/blob/main/docs/spec.md)
+- npm 包与发布历史：[@google/design.md](https://www.npmjs.com/package/@google/design.md)
+- Stitch 侧的规范页：[stitch.withgoogle.com/docs/design-md/specification](https://stitch.withgoogle.com/docs/design-md/specification)
+- W3C Design Tokens Format Module：[tr.designtokens.org/format](https://tr.designtokens.org/format/)
+
+本文所有数字与输出都可以用下面几条命令复核，前提是 Node 不低于 18：
 
 ```bash
-npm install "@google/design.md"
+npm install @google/design.md          # 装到本地 node_modules
+npx @google/design.md spec --rules-only --format json   # 规则清单的事实来源
+npx @google/design.md export --help    # 五个 --format 取值都在这里
+npx @google/design.md lint examples/paws-and-paths/DESIGN.md
+npx @google/design.md diff examples/paws-and-paths/DESIGN.md examples/totality-festival/DESIGN.md
 ```
 
-如果遇到 `npm error ENOVERSIONS`（"No versions available for @google/design.md"），按 README 的诊断流程先看 `npm config get registry`——99% 是 `.npmrc` 里的 corporate mirror 没有同步这个包。
-
-## 八、采用路径与适用边界
-
-不是所有项目都该上 DESIGN.md。把它当"必选规范"会拖慢小项目；把它当"先评估再决定"则价值最大。
-
-### 8.1 适合采用的场景
-
-- **AI Coding Agent 频繁生成 UI**——Claude Code、Cursor、Copilot 生成前端代码，DESIGN.md 让 Agent 有持久上下文。
-- **多 Agent / 多设计师协作**——每个贡献者用同一份 DESIGN.md，AI 生成产物跨人一致。
-- **设计系统需要版本管理**——DESIGN.md 是纯文本，可 git diff、可 code review、可回溯。
-- **下游要用 Tailwind / DTCG 多端**——export pipeline 一行命令出三套产物。
-
-### 8.2 不必采用的场景
-
-- **页面数 < 5、视觉复杂度低**——单页营销站、一次性活动页，开 DESIGN.md 的维护成本高于收益。
-- **设计系统完全在 Figma 里、Agent 不直接读规范**——这种情况下 Style Dictionary + Tailwind 主题已够，DESIGN.md 加一层。
-- **组件总数 < 20**——PHILOSOPHY 的"prose 优先"在组件少时收益不明显，散文和组件表信息密度接近。
-- **已有强约束的设计系统**（如 Material Design / Ant Design）——直接用上游规范，不要再造一层。
-
-### 8.3 渐进采用建议
-
-如果决定要上，建议按这个顺序：
-
-1. **第 1 周：写一个最小 DESIGN.md**——只放 `name` + `colors` + `typography` + 一段 `## Overview`。跑 `npx @google/design.md lint` 让 Linter 当 reviewer。
-2. **第 2 周：接 Tailwind export**——`json-tailwind` 或 `css-tailwind`，让现有项目用上规范。
-3. **第 3 周：把 `## Do's and Don'ts` 写出来**——这时候 Linter 的 `unknown-key` 不会卡，但写作本身会暴露设计冲突。
-4. **第 4 周：接 CI 阻断**——`npx @google/design.md lint DESIGN.md` 放到 PR check，error 直接拒绝合并。
-5. **稳定后：加自定义 lint 规则**——比如"按钮最小高度 40px"、"字体禁用列表"，把组织级设计守门员职责挂到 Linter。
-
-## 九、自检清单
-
-把这份清单当作"该不该引入 DESIGN.md"的最后决策表：
-
-- [ ] 项目至少有一个 Coding Agent（Claude Code / Cursor / Copilot）会生成 UI 代码
-- [ ] 组件数量 ≥ 20，或者有 5+ 个组件会被多个页面复用
-- [ ] 设计系统需要跨人 / 跨 Agent 一致（多人协作或多会话 Agent）
-- [ ] 团队愿意写"设计简报"风格的散文（至少 200-500 字 Overview + 各 Section 解释）
-- [ ] 下游至少一个 Tailwind v3 / v4 / DTCG 消费方
-- [ ] CI 流程允许引入新的阻断 check
-- [ ] 团队接受 `alpha` 版本的不稳定性（`@google/design.md` 当前是 alpha，规范可能演化）
-
-如果 7 条命中 5 条以上，DESIGN.md 值得一试。命中 3 条以下，建议先观察 3 个月看上游 API 是否稳定。
-
-## 总结
-
-DESIGN.md 不是一个"标准 token 文件格式"，而是一份**给 Coding Agent 的设计简报规范**。它的设计哲学核心是三条：
-
-1. **Prose 是中心**——token 是给散文做参考的上下文，不是渲染指令
-2. **具体参考胜过形容词**——找一个真实存在的、有视觉风格的对象
-3. **负约束从参考对象自动继承**——不要"穷举不要"，把参考说清楚
-
-9 条 Lint 规则 + 自定义扩展点让规范可以**当作生产合同**，Tailwind v3/v4 + W3C DTCG 三条 export 路径让规范**接得上现有栈**，`.md` 三重身份和 `designmd` Windows shim 让规范**全平台可用**。
-
-如果你的项目要让 Coding Agent 生成视觉一致的前端 UI，DESIGN.md 是当前最值得评估的方案之一——前提是你愿意写散文，而不只是写 token 表。
-
----
-
-> **延伸阅读**：
-> - 仓库：[github.com/google-labs-code/design.md](https://github.com/google-labs-code/design.md)
-> - 官方 Spec：[stitch.withgoogle.com/docs/design-md/specification](https://stitch.withgoogle.com/docs/design-md/specification)
-> - 哲学文档：[PHILOSOPHY.md](https://github.com/google-labs-code/design.md/blob/main/PHILOSOPHY.md)
-> - W3C Design Tokens：[designtokens.org](https://www.designtokens.org/)
-> - 姐妹篇：[DESIGN.md：让 Coding Agents 理解视觉设计的格式规范](/posts/tech/design-md-visual-identity-coding-agents-guide/)
+维护说明：本文的核对基线是 `main` 的 HEAD 提交 `9bf8eae`（2026-07-27 的 `release: 0.4.0`），GitHub 侧显示的最近推送时间是 2026-09-14。四个位置最容易随版本漂移，复核时优先看它们——规则条数（以 `spec --rules-only` 为准）、`export` 的格式数量（以 `--help` 为准）、重复小节的处置方式（源码里搜 `DUPLICATE_SECTION` 的适用范围），以及 `omitted` 键支持的节名列表（源码里搜 `validSections`）。格式仍处于 `alpha`，任何一条能力都可能在正式版收紧。

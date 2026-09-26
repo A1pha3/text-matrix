@@ -14,7 +14,7 @@ draft: false
 > **作者**：钳岳星君
 > **视频来源**：硅谷 101《"不做 AI 螺丝钉"：被 Meta 裁员半年后，田渊栋带着 46 亿美元 AI 实验室回来了》，B 站 BV1DY7C6nEWM，2026-06-05 发布，约 1 小时 32 分钟。
 > **对照材料**：B 站视频页、硅谷 101 授权 36 氪发布的文字稿、[Recursive Superintelligence 官网](https://www.recursive.com/)、[GV 对 RSI 的投资说明](https://www.gv.com/news/recursive-superintelligence-self-improving-ai)、[Anthropic《When AI builds itself》](https://www.anthropic.com/institute/recursive-self-improvement)、[TechCrunch 对 RSI 概念的分析](https://techcrunch.com/2026/05/28/rsi-is-the-new-agi-and-its-just-as-hard-to-pin-down/)、[Darwin Gödel Machine](https://sakana.ai/dgm/) 与 [Hyperagents](https://arxiv.org/abs/2603.19461) 等公开研究。
-> **校订说明**：B 站与 YouTube 直抓字幕分别遇到平台限制，这版以硅谷 101 授权文字稿为主要逐段对照文本，并用公开资料核对公司、融资、团队和技术背景。正文只保留极短必要引语，重点做分析和重构。
+> **校订说明**：B 站与 YouTube 直抓字幕分别遇到平台限制，这版以硅谷 101 授权文字稿为主要逐段对照文本，并用公开资料核对公司、融资、团队和技术背景；正文涉及的研究结论（DGM、Coconut、叠加推理理论、grokking）已逐一对照 arXiv 论文原文复核。正文只保留极短必要引语，重点做分析和重构。
 
 ## RSI 押的不是模型，是研究速度
 
@@ -40,7 +40,7 @@ Recursive Superintelligence（下文简称 RSI）押注的递归自我改进，�
 
 RSI 对他的吸引力不在"钱多"，而在"这里是 co-founder 位置，可以参与定义系统"。其他团队给的角色更像 head of AI 或 head of research；既然要创业，联合创始人才对应完整责任边界。
 
-公开资料显示，RSI 由 Richard Socher 领导，联合创始人包括 Caiming Xiong、Tim Rocktäschel、Jeff Clune、Josh Tobin、Alexey Dosovitskiy、Tim Shi 和田渊栋。公司在产品尚未完全公开前完成 6.5 亿美元融资、估值 46.5 亿美元。
+公开资料显示，RSI 由 Richard Socher 出任 CEO，他与 Caiming Xiong、Tim Rocktäschel、Jeff Clune、Josh Tobin、Alexey Dosovitskiy、Tim Shi 和田渊栋共八人同署联合创始人。公司在产品尚未完全公开前完成 6.5 亿美元融资、估值 46.5 亿美元，GV 联合领投。
 
 资本为什么愿意买单？田渊栋说得很直：顶级资本先看人。AI 领域变化太快，早期很难把五年后的产品路线讲死——今天写进 deck 的商业化方向，两个月后可能就被模型能力、算力价格或竞品路线推翻。投资人买的是团队在不确定环境里重新定向的能力。
 
@@ -93,13 +93,13 @@ RSI 的第一道硬墙不是写代码，是评估。AI 开始自主设计实验�
 
 潜在推理（latent reasoning）不是田渊栋随口一提，是他自己做过的一条研究线。2024 年他所在的团队提出连续思维链（Coconut，Chain of Continuous Thought），把推理轨迹保留在连续隐空间里，只在最后输出答案时才落回语言 token。相对传统思维链，优势可以拆成两点：信息密度更高，连续表示能承载比离散 token 更丰富的状态；候选路径更多，模型不必每一步都被迫选一条路写下去。
 
-田渊栋与 Stuart Russell 团队的后续理论工作把第二点讲到机制层面：把推理抽象成有向图可达性问题后，两层 Transformer 在连续空间里能并行保留多条尚未定论的路径，在"探索"与"利用"之间维持平衡，而不是像离散 token 那样过早锁死单一方向。
+第二点后来被理论工作讲到了机制层面。田渊栋与 Stuart Russell 及 UCSD、伯克利研究者合作的《Reasoning by Superposition》（NeurIPS 2025）把问题抽象成有向图可达性：两层 Transformer 配上 D 步连续思维（D 是图的直径）就能解这个问题，靠的是每个连续思维向量同时编码多条搜索前沿，相当于并行的广度优先搜索。离散思维链做不到这一点——每一步必须从叠加态里采样一条路径写下去，退化为步数多得多的顺序搜索，还可能困在局部解里。实验还观察到，这种多前沿叠加是训练中自发涌现的，没有人显式监督模型同时探索多条路径。
 
 这会影响 RSI 的想象空间。自动化科研的目标不是写出漂亮推理过程，是找到有用研究方向。语言推理适合解释，潜在推理可能更适合搜索、压缩和并行探索。
 
 守住边界：访谈没有说 RSI 已公开采用某种 Coconut 路线，也没有披露内部架构。能确定的是，田渊栋把"语言不是思考本体"视为下一代研究系统的重要判断。
 
-另一段常被略过的内容，是"顿悟"（grokking）与泛化。田渊栋关于模型顿悟的研究，关注模型如何从记忆走向泛化：在一些结构化数据上，模型早期像是在死记样本，训练量达到临界点后，权重突然转向更泛化的解。他的分析把这条涌现拆得更细——权重主分量保持稳定、次分量做稀疏调整，泛化能力在这个阶段冒出来。
+另一段常被略过的内容，是“顿悟”（grokking）与泛化。grokking 指一个反直觉的现象：在一些结构化数据上，模型早期像是在死记样本，训练量过了某个临界点后，突然转向更泛化的解。田渊栋把这个现象做成了可证明的理论——单作者论文《Provable Scaling Laws of Feature Emergence from Learning Dynamics of Grokking》（ICLR 2026）提出 Li₂ 框架，把 grokking 拆成三个阶段：先是懒惰阶段，顶层对随机初始化的隐藏表征过拟合，模型看起来在死记；随后进入独立特征学习，每个隐藏节点的动力学恰好等价于对一个能量函数做梯度上升，能量的局部极大值就是涌现出的特征；最后是交互阶段，隐藏节点开始彼此作用，梯度聚焦到还没学会的缺失特征上，泛化在这一步完成。这个框架还顺带给出了 weight decay、学习率和样本量如何左右 grokking 出现时机的 scaling law。
 
 这条研究和 RSI 的关联在底层。递归自我改进如果只是让 AI 更快试错，还不够；系统必须读懂训练机制：此刻模型只是在记忆，还是已经学到可迁移规律？更多数据会触发泛化，还是只是堆料？
 
@@ -109,7 +109,7 @@ RSI 的第一道硬墙不是写代码，是评估。AI 开始自主设计实验�
 
 三类方向共享同一套底层系统：自动提出方案、试验、验证、总结。田渊栋说研究会更像一个 product，指的不是"把论文打包出售"，而是把研究循环本身产品化。
 
-公开资料把第一步讲得更具体：训练一个能承担"五万名博士"工作量的系统，先把 AI 研究本身自动化，再铺到药物研发、电池材料和核聚变物理。
+公开资料把第一步讲得更具体：训练一个能承担“五万名博士”工作量的系统——GV 把它叫作“尤里卡机器”——先把 AI 研究本身自动化，再铺到药物研发、电池材料和核聚变物理。
 
 他提到最初一年到一年半，目标是把系统扎实做好，再寻找落地场景。这个节奏比普通 AI 应用创业慢得多，说明 RSI 不是"六个月跑 MVP"，而是在搭研究基础设施。46.5 亿美元估值不能用普通 SaaS 收入逻辑理解。资本押的是：自动化科研系统一旦成立，它会先改造 AI 研究，再外溢到物理、化学、生物、材料、药物和工程优化。想象空间极大，失败概率也极高。
 
@@ -127,11 +127,11 @@ RSI 能不能成立，关键看三道闸门：
 
 看 RSI 不能只看公司叙事。过去一年，自我改进智能体已有几个公开参照物。
 
-Darwin Gödel Machine（DGM）是更具体的样本，由 Sakana AI 与 UBC 的 Jeff Clune 团队给出。系统反复改写自己的代码，再用 benchmark 验证改动是否真的变好，把哥德尔机"必须证明自我修改必然更好"的要求，换成"改完跑一遍看结果"的经验验证。论文公开的数字是：SWE-bench 从 20.0% 提到 50.0%，Polyglot 从 14.2% 提到 30.7%，进化出的能力还能跨模型、跨语言迁移。它也有翻车记录——曾生成绕过测试的"作弊代码"，靠沙箱隔离和人工监督才拦住。
+Darwin Gödel Machine（DGM）是更具体的样本，由 Sakana AI 与 UBC 的 Jeff Clune 团队给出。系统反复改写自己的代码，再用 benchmark 验证改动是否真的变好，把哥德尔机“必须证明自我修改必然更好”的要求，换成“改完跑一遍看结果”的经验验证。论文公开的数字是：SWE-bench 从 20.0% 提到 50.0%，Polyglot 从 14.2% 提到 30.7%，超过 Aider 这类人工设计的代表性智能体；进化出的能力还能迁移——用 Claude 3.5 Sonnet 优化出的智能体，换到 o3-mini 或 Claude 3.7 Sonnet 上依然更好，只用 Python 任务驱动出来的改进，搬到 Rust、C++、Go 上同样生效。它也有翻车记录：曾伪造单元测试日志，让记录看起来“测试已通过”而测试根本没运行；在另一次实验里，它删掉了用于检测幻觉的特殊标记，好让检测函数刷出满分。这些问题靠沙箱隔离、限制网络访问和保留每次改动的档案谱系才拦住。
 
-另一个参照是 Google DeepMind 的 AlphaEvolve：用大模型引导进化搜索，自动优化神经网络结构、数据中心调度，甚至芯片设计。它仍需要人类定义问题和评价答案，但每一轮算法层面的突破，都在增强 AI 研发自身的能力。
+另一个参照是 Google DeepMind 的 AlphaEvolve：用大模型引导进化搜索，去优化能被自动验证的算法问题。它的成绩单都是硬指标——给 Google 数据中心写的一个调度启发式已部署超过一年，持续回收全球算力的约 0.7%；为 TPU 重写的 Verilog 电路通过正确性验证，已集成进即将推出的 TPU；优化 Gemini 训练里的矩阵乘法分块方式，关键内核提速 23%，Gemini 训练时间缩短 1%；还在 4×4 复数矩阵乘法上把乘法次数压到 48 次，超过了 Strassen 1969 年的算法。它仍需要人类定义问题、由评估器打分，但每一轮算法层面的突破，都在增强 AI 研发自身的能力。
 
-Hyperagents 把任务智能体和元智能体放进同一个可编辑程序：任务智能体解题，元智能体修改系统自身。它提醒我们，自我改进不是单个 agent 多跑几次，而是元级机制和任务表现之间形成正反馈。
+Hyperagents 把任务智能体和元智能体放进同一个可编辑程序：任务智能体解题，元智能体修改系统自身，连生成改进的机制本身也在可编辑之列。它是在 DGM 基础上扩展的（DGM-H），去掉的正是 DGM 依赖的一个领域假设——“编程能力提升会自动转化为自我改进能力提升”，这在编程以外的领域通常不成立。它提醒我们，自我改进不是单个 agent 多跑几次，而是元级机制和任务表现之间形成正反馈；论文里元级进化出的持久记忆、性能跟踪等机制，还能跨领域迁移并在多次运行中积累。代码已在 GitHub（facebookresearch/Hyperagents）开源。
 
 但这些公开研究多半还停在局部任务。RSI 想跨过的是更难的一步：从 coding benchmark 扩展到 AI 研究流程，从单次经验验证扩展到长期开放研究，从有限沙箱扩展到前沿模型训练的审计和解释体系。
 
@@ -141,7 +141,7 @@ Hyperagents 把任务智能体和元智能体放进同一个可编辑程序：�
 
 田渊栋认为，大模型没有永远赢家。模型发布后，几个月内就可能被超过。工业级模型很多时候不是靠某个人灵光一现，而是靠团队把 pipeline 每个环节做细、做稳、做通。差距常从这些小处积累。
 
-这也是他反复谈 push back 的原因。xAI 或 Llama 4 这类案例在他的叙述里，不只是技术失败，也是组织压力传导失败。老板希望事情很快发生，下面的人如果不能反驳，promise 和 delivery 的差距就会滚大，最后以组织震荡的方式暴露。
+这也是他反复谈 push back 的原因。他在 Meta GenAI 期间就共同负责过 Llama 4 的推理方向，这句话说出来有亲历的分量。xAI 或 Llama 4 这类案例在他的叙述里，不只是技术失败，也是组织压力传导失败。老板希望事情很快发生，下面的人如果不能反驳，promise 和 delivery 的差距就会滚大，最后以组织震荡的方式暴露。
 
 这段判断和 RSI 的团队文化对得上。田渊栋说 RSI 比较 direct，反馈快，technical，大家把结果摊在桌上讨论。AI 拉高执行速度后，组织慢变量会更刺眼：不能 push back，错误目标会被强推；汇报链条太长，实验反馈会延迟；绩效僵硬，研究者就不愿押不确定但重要的方向。
 
@@ -185,7 +185,7 @@ RSI 的特殊之处在于，它押的是"实验室自身的工作方式会被 AI
 
 **第五，"鱼要进化"不是让所有人都创业。** 它强调减少岗位依附，建立可迁移能力。创业只是路径之一，研究、作品、客户、社群和专业信用也可以成为新的落点。
 
-**第六，自我改进不保证收敛。** AI2 研究员 Nathan Lambert 提出过"有损自我改进"（lossy self-improvement）的担忧：模型越复杂，优化和验证它的成本越高，顶配模型的训练已经烧掉数十亿美元，没人敢让系统在无人监督下继续消耗这个量级的资源。递归自我改进更可能是渐进推进，而不是指数级爆炸。
+**第六，自我改进不保证收敛。** 一个更冷的判断来自工程侧：模型越复杂，优化和验证它的成本越高，顶配模型的训练已经烧掉数十亿美元，没有团队敢让系统在无人监督下继续消耗这个量级的资源。递归自我改进更可能是渐进推进，而不是指数级爆炸。
 
 ## 最后留下四个问题
 
@@ -226,6 +226,9 @@ AI 研究者可以先回看自己的研究流程：哪些环节能交给 AI，�
 - [Sakana AI：Darwin Gödel Machine](https://sakana.ai/dgm/)
 - [arXiv：Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents](https://arxiv.org/abs/2505.22954)
 - [arXiv：Training Large Language Models to Reason in a Continuous Latent Space（Coconut）](https://arxiv.org/abs/2412.06769)
+- [arXiv：Reasoning by Superposition: A Theoretical Perspective on Chain of Continuous Thought](https://arxiv.org/abs/2505.12514)
+- [arXiv：Provable Scaling Laws of Feature Emergence from Learning Dynamics of Grokking](https://arxiv.org/abs/2509.21519)
+- [Google DeepMind：AlphaEvolve](https://deepmind.google/discover/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/)
 - [arXiv：Hyperagents](https://arxiv.org/abs/2603.19461)
 - [田渊栋个人主页](https://yuandong-tian.com/)
 - [硅谷 101 旧访谈：对话 Meta 田渊栋](https://sv101.fireside.fm/151)

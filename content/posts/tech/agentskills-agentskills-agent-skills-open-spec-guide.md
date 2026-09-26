@@ -1,11 +1,11 @@
 ---
 title: "agentskills/agentskills 原理拆解：Agent Skills 开放规范是怎么设计的"
 date: "2026-07-02T21:02:26+08:00"
-lastmod: "2026-07-02T21:02:26+08:00"
+lastmod: "2026-09-21T20:30:00+08:00"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "LLM", "Prompt Engineering"]
-description: "拆解 Agent Skills 开放规范的核心设计：SKILL.md frontmatter 字段语义、渐进披露三阶段、42 个兼容客户端、参考实现 skills-ref 的取舍。"
+description: "拆解 Agent Skills 开放规范的核心设计：SKILL.md frontmatter 字段语义、渐进披露三阶段、客户端生态、参考实现 skills-ref 的取舍。"
 author: text-matrix
 slug: agentskills-agentskills-agent-skills-open-spec-guide
 github_repo: "agentskills/agentskills"
@@ -33,7 +33,7 @@ source_key: "gh:agentskills/agentskills"
 - [渐进披露三阶段](#渐进披露三阶段)
 - [文件引用规则](#文件引用规则)
 - [Scripts/、references/、assets/ 的角色差异](#scriptsreferencesassets-的角色差异)
-- [42 个兼容客户端意味着什么](#42-个兼容客户端意味着什么)
+- [客户端生态意味着什么](#客户端生态意味着什么)
 - [参考实现：skills-ref 库](#参考实现skills-ref-库)
 - [写一个 skill 的最小闭环](#写一个-skill-的最小闭环)
 - [它不是什么](#它不是什么)
@@ -47,6 +47,7 @@ source_key: "gh:agentskills/agentskills"
 - [自测题](#自测题)
 - [练习](#练习)
 - [进阶路径](#进阶路径)
+- [资料口径说明](#资料口径说明)
 
 ## 核心判断
 
@@ -76,7 +77,7 @@ my-skill/
 └── ...               # 任何额外内容
 ```
 
-整个规范刻意保持"目录即接口"的形态：没有 JSON schema、没有中央注册表、没有任何强制元数据。它走的是文件系统约定这条最朴素的路子。
+整个规范刻意保持"目录即接口"的形态：没有 JSON Schema、没有中央注册表，必选元数据只有 `name` 与 `description` 两个字段。它走的是文件系统约定这条最朴素的路子。
 
 ## Frontmatter 字段语义
 
@@ -95,7 +96,7 @@ my-skill/
 
 ### `description`（必选，1-1024 字符）
 
-这是规范里最被强调的字段。README 与 best-practices 反复讲：description 要"既说做什么也说何时用"，并且要塞进 agent 能识别的关键词。
+这是规范里最被强调的字段。规范在字段定义里直接写明：description 要"既说做什么也说何时用"，并且要塞进 agent 能识别的关键词。
 
 对比一下官方给的例子：
 
@@ -111,7 +112,7 @@ merges multiple PDFs. Use when working with PDF documents or when the user
 mentions PDFs, forms, or document extraction.
 ```
 
-"及格"版多出来的内容不是凑字数：前半句让 agent 知道 skill 的能力边界（不能处理扫描件就别指望），后半句给 agent 提供触发关键词（用户提到 PDF/forms/extraction 时应该激活）。`description` 是 progressive disclosure 里第一段（discovery）唯一会进 agent 上下文的字段，它的命中率决定了这个 skill 能不能被"看见"。
+"及格"版多出来的内容不是凑字数：前半句让 agent 知道 skill 的能力边界（不能处理扫描件就别指望），后半句给 agent 提供触发关键词（用户提到 PDF/forms/extraction 时应该激活）。discovery 阶段进 agent 上下文的元数据只有 `name` 与 `description` 两个（合计约 100 tokens），而触发判断几乎全压在 `description` 上——它的命中率决定了这个 skill 能不能被"看见"。
 
 ### `license`、`compatibility`、`metadata`、`allowed-tools`（可选）
 
@@ -128,11 +129,11 @@ mentions PDFs, forms, or document extraction.
 
 - `disable-model-invocation`：设为 `true` 后，模型不会自动加载该 skill，只能由用户通过 `/skill-name` 手动触发；
 - `user-invocable`：设为 `false` 后，skill 从 `/` 菜单里隐藏，仅供模型在相关场景自动加载；
-- `model`：指定该 skill 激活时使用的模型；
+- `model`：指定该 skill 激活时所用的模型，仅覆盖当前这一轮，下一条消息恢复会话模型；
 - `context: fork`：在独立的子上下文（子代理）里运行该 skill，避免占用主会话上下文；
 - `argument-hint`：在 `/skill-name` 后面给出参数补全提示。
 
-这些扩展不属于规范本体，却恰好解释了"标准为什么能保持得这么小"：核心只承诺六个字段的跨客户端兼容，厂商需要的差异化能力全部挂在标准之外的外围字段上，既不污染规范，也不破坏向后兼容。
+这份清单还在变长——Claude Code 文档里另有 `disallowed-tools`（skill 激活期间移出可用工具池）、`agent`（配合 `context: fork` 指定子代理类型）、`background`（fork 运行是否阻塞等待结果）等字段。这些扩展不属于规范本体，却恰好解释了"标准为什么能保持得这么小"：核心只承诺六个字段的跨客户端兼容，厂商需要的差异化能力全部挂在标准之外的外围字段上，既不污染规范，也不破坏向后兼容。
 
 ## 渐进披露三阶段
 
@@ -169,13 +170,13 @@ quickstart 的"roll a d20"任务流恰好把三阶段都走了一遍：
 
 这三类边界很微妙但很重要：脚本执行有副作用（写文件、调用 API），references 是只读的扩展阅读材料，assets 是被引用而不是被解读的素材。混淆这三者会让 agent 在 progressive disclosure 时做错决策。
 
-## 42 个兼容客户端意味着什么
+## 客户端生态意味着什么
 
-`docs/snippets/clients.jsx` 于写作时点列出 42 个已经接入 Agent Skills 格式的 agent 产品（README 里的说法是 "a large number of AI tools and agentic clients"）；接入仍在持续，这个数字只是一份随时间增长的快照，不同来源口径从 20 出头到 40 多不等。从里面挑几个有代表性的：
+文档站的 Client Showcase（源码在 `docs/snippets/clients.jsx`）列出已经接入 Agent Skills 格式的 agent 产品——README 里的说法是 "a large number of AI tools and agentic clients"：本文写作时（2026 年 7 月初）是 43 个，到 2026 年 9 月下旬增加到 46 个。接入仍在持续，这个数字只是一份随时间增长的快照，下文以 2026 年 9 月的 46 个为口径。从里面挑几个有代表性的：
 
 - **Claude Code** 与 **Claude**：Anthropic 自家主力，是规范的原始实现方。
 - **GitHub Copilot** 与 **VS Code**：仓库自身的 quickstart 教程就是用 VS Code Copilot 的 Agent 模式。
-- **OpenAI Codex** 与 **OpenCode**：另一家主流 LLM 厂商的代码 agent。
+- **ChatGPT & Codex** 与 **OpenCode**：另一家主流 LLM 厂商的代码 agent（showcase 里该条目 2026 年 8 月前叫 "OpenAI Codex"）。
 - **Cursor**、**Amp**、**Roo Code**、**Qodo**：独立 AI 编辑器/agent 产品。
 - **Junie**：JetBrains 出品，跑在 IntelliJ 平台上。
 - **Gemini CLI**、**Databricks Genie Code**、**Snowflake Cortex Code**：终端/平台型 agent。
@@ -186,13 +187,15 @@ quickstart 的"roll a d20"任务流恰好把三阶段都走了一遍：
 
 ## 参考实现：skills-ref 库
 
-`CONTRIBUTING.md` 写到 "We're still determining the direction for the reference library and are not accepting code contributions to it at this time"。但仓库里 `skills-ref/` 目录确实存在，并且 `docs/specification.mdx` 提到了它的用法：
+`CONTRIBUTING.md` 写到 "We're still determining the direction for the reference library and are not accepting code contributions to it at this time"。但仓库里 `skills-ref/` 目录确实存在，`docs/specification.mdx` 也提到了它的用法：
 
 ```bash
 skills-ref validate ./my-skill
 ```
 
-这步校验做的是 frontmatter 字段合规性、命名约定、目录结构。把它当成"写完 skill 后的本地 lint"会比较合适——比提交到 CI 跑一遍再让产品报错更省时间。
+实际可用的命令有三个：`validate` 校验 frontmatter 合规性与命名约定；`read-properties` 读取 skill 属性并输出 JSON；`to-prompt` 把若干 skill 汇总成一段 `<available_skills>` XML 块，用于注入 agent 的系统提示词——这个格式是给 Anthropic 模型的建议格式，其他客户端可以自行排版。Python 侧同样暴露这三个函数（`from skills_ref import validate, read_properties, to_prompt`）。
+
+对它的定位要引用 README 的原话："This library is intended for demonstration purposes only. It is not meant to be used in production." 把它当成"写完 skill 后的本地 lint"和"客户端实现 discovery 阶段的参考答案"比较合适——比提交到 CI 跑一遍再让产品报错更省时间，但别直接把它当生产依赖。
 
 ## 写一个 skill 的最小闭环
 
@@ -229,14 +232,14 @@ Replace `<sides>` with the number of sides on the die.
 
 跑一次 `skills-ref validate .agents/skills/roll-dice`，确认 frontmatter 合法。在 agent 里说"Roll a d20"，观察 agent 是否走 shell 命令还是试图自己回答。
 
-best-practices 里特别提示了一句："Tool-use reliability varies across models — some follow skill instructions and run commands consistently, while others may attempt to answer on their own." 所以验证步骤不是一次性的，而是要在不同模型上各跑一遍。
+best-practices 建议在真实任务上跑一遍再修订；quickstart 则在结尾的 Note 里特别提示："Tool-use reliability varies across models — some follow skill instructions and run commands consistently, while others may attempt to answer on their own." 所以验证步骤不是一次性的，而是要在不同模型上各跑一遍。
 
 ## 它不是什么
 
 写到这里值得把边界划清楚：
 
-- **不是产品**。仓库没有 release artifact，没有 CLI 提供给终端用户，没有"skill 市场"。
-- **不是 SDK**。没有 Python/Node 包，不存在 `import agent_skills` 这种用法。
+- **不是产品**。仓库没有 release artifact（GitHub 上零 release、零 tag），没有 CLI 提供给终端用户，没有"skill 市场"。
+- **不是给 skill 作者的 SDK**。写 skill 不需要安装任何包——一个文件夹加一个 `SKILL.md` 就够了。`skills-ref` 虽然是个可以 `pip install -e .` 的 Python 库，但它的角色是参考实现与校验工具，不是写 skill 的依赖。
 - **不是 agent 配置**。Skill 应该是跨 agent 可移植的；如果一个 skill 只能在某个 agent 上工作，说明它带了私有约定。
 - **不是 prompt 模板**。Prompt 模板是单段文字，skill 是个目录，里面可以有脚本和参考资料。
 - **不是中央注册表**。`CONTRIBUTING.md` 明示不维护社区 skill 目录，skill 放在哪里、用什么版本控制，完全由作者决定。
@@ -253,27 +256,29 @@ open-standards 设计中常见的混淆在这里值得一提，因为它直接�
 
 ## `metadata` 与 `allowed-tools` 的扩展使用
 
-按规范说法，`metadata` 是"任意 key-value map"，但 best-practices 给出的两个示例已经暗示了用法：`author` 与 `version`。这两个 key 实际承担了"作者归属"与"版本语义"，是私域扩展位最常见的填充方式。建议团队内部约定类似 `internal:team`、`internal:owner` 这样的命名空间前缀，避免与未来规范字段冲突。
+按规范说法，`metadata` 是"任意 key-value map"，规范自带的示例给出了两个 key：`author` 与 `version`。这两个 key 实际承担了"作者归属"与"版本语义"，是私域扩展位最常见的填充方式。建议团队内部约定类似 `internal:team`、`internal:owner` 这样的命名空间前缀，避免与未来规范字段冲突。
 
-`allowed-tools` 是规范里唯一触及"权限"概念的字段。`Bash(git:*) Bash(jq:*) Read` 这种写法让 skill 自我声明它需要的工具子集。规范标了"Experimental"，并且明说"支持度可能不一致"。实务上建议：宁可先不写，等目标客户端稳定支持再加——它一旦写错，skill 在某些 agent 上激活反而会被拒绝执行。
+`allowed-tools` 是规范里唯一触及"权限"概念的字段。`Bash(git:*) Bash(jq:*) Read` 这种写法让 skill 自我声明它需要的工具子集。规范标了"Experimental"，并且明说"支持度可能不一致"。落地语义由各客户端决定：在 Claude Code 里，它的含义是"skill 激活的这一轮内这些工具免权限直接用"，下一条消息即失效，授权始终经过正常权限流。实务上建议：宁可先不写，等目标客户端稳定支持再加——它一旦写错，skill 在某些 agent 上激活反而会被拒绝执行。
 
 ## 多 skill 组合与冲突处理
 
-规范没有规定多 skill 同时激活时的合并策略，但 README 与 best-practices 透露出两条隐含规则：
+规范没有规定多 skill 同时激活时的合并策略。以下两条是文档留白处的实务推演，不是规范条文，供设计时参考：
 
-1. **按 description 独立激活**：每个 skill 的激活判断只看自己的 description，互相不感知。如果两个 skill 的 description 重叠，agent 可能会同时激活两者；这时 `SKILL.md` 的指令要足够清晰，避免歧义。
-2. **共享 references 文件要谨慎**：如果两个 skill 都引用 `references/api-errors.md`，修改这个文件会影响两边。设计上更建议把 references 复制到各自的 skill 目录里，或者放在公共位置并在 description 里注明"参见 common skill X"。
+1. **按 description 独立激活**：激活判断只看各自的 description，规范没有任何跨 skill 的协调机制。如果两个 skill 的 description 重叠，agent 可能会同时激活两者；这时 `SKILL.md` 的指令要足够清晰，避免歧义。
+2. **共享 references 文件要谨慎**：如果两个 skill 都引用 `references/api-errors.md`，修改这个文件会影响两边。设计上更稳妥的做法是把 references 复制到各自的 skill 目录里，或者放在公共位置并在指令正文里注明出处。
 
-`CONTRIBUTING.md` 那句"Skills scoped too narrowly force multiple skills to load for a single task, risking overhead and conflicting instructions"也是这条原则的另一面：粒度太细会引发冲突与加载开销，粒度太粗又难以精准激活。判断标准参考 best-practices："deciding what a skill should cover is like deciding what a function should do: you want it to encapsulate a coherent unit of work that composes well with other skills"。
+粒度问题 best-practices 有一段原话："Deciding what a skill should cover is like deciding what a function should do: you want it to encapsulate a coherent unit of work that composes well with other skills. Skills scoped too narrowly force multiple skills to load for a single task, risking overhead and conflicting instructions. Skills scoped too broadly become hard to activate precisely." 粒度太细会引发冲突与加载开销，粒度太粗又难以精准激活——文中给的分界例子是："查数据库并格式化结果"是一条内聚的 skill，再捎带数据库管理就越界了。
 
 ## description 的优化是一个独立课题
 
-仓库的 `docs/skill-creation/optimizing-descriptions.mdx` 把 description 单独拎出来讲。几个核心点：
+仓库的 `docs/skill-creation/optimizing-descriptions.mdx` 把 description 单独拎出来讲。写法上给了四条原则：
 
-- description 要把"做什么"和"何时用"写在一句话里。
-- 在 description 里塞进用户最可能提到的关键词（库名、文件格式、错误信息、动词），agent 才能在有限上下文里命中。
-- 描述太长（接近 1024 上限）会让 discovery 阶段读多个 skill 时挤占上下文；太短又容易被忽略。
-- 测试方法：跑一组典型用户请求，看每个 skill 的激活率与误激活率，根据 trace 调整 description。
+- 用祈使句写："Use this skill when..."，而不是 "This skill does..."——agent 在决定是否行动，就直接告诉它何时行动。
+- 描述用户意图，而不是实现机制：agent 拿用户原话来匹配，匹配的是用户想达成什么。
+- 宁可强势一点：明确列出适用场景，包括用户没有点名领域的场合（"即使用户没提 CSV 或分析"）。
+- 保持简短：几句话到一小段为宜——规范给 description 的硬上限是 1024 字符，太长的描述会在 discovery 阶段挤占多个 skill 合计的上下文预算。
+
+测试方法这篇文档给得很具体：准备约 20 条带标注的评测请求，应触发与不应触发各 8-10 条；最有价值的不应触发样本是"近似命中"——共享关键词但实际需要别的东西，它们检验的是 description 准不准，而不只是宽不宽。每条请求跑多次（3 次是合理起点）统计触发率：应触发的以高于 0.5 为通过，不应触发的以低于 0.5 为通过；再按训练/验证集切分防止过拟合——文档特别提醒，别把失败查询里的具体关键词直接抄进 description，那是对着评测集背答案。
 
 best-practices 里给了一个细节："Read agent execution traces, not just final outputs"——如果 agent 走了不必要的步骤、或者根本没激活 skill，问题大概率出在 description，不在 body。
 
@@ -282,11 +287,11 @@ best-practices 里给了一个细节："Read agent execution traces, not just fi
 仓库本身并不大，主要由四块组成：
 
 - `docs/`：Mintlify 文档站源文件，部署到 `agentskills.io`。`docs.json` 里的 `navigation.pages` 数组决定侧边栏顺序。
-- `skills-ref/`：参考实现库，提供 `validate` 子命令做 frontmatter 校验。具体支持哪些命令需要看当前实现（`CONTRIBUTING.md` 明说"还在定方向，暂不接受代码贡献"）。
-- `package.json`：仓库根有一份，主要是文档站依赖。
-- `.claude/`：仓库自身用 Claude 维护的元数据。
+- `skills-ref/`：参考实现库，见上一节。
+- `package.json`：仓库根只有一份、一个脚本——`npm run dev`，进 docs 目录起 Mintlify 开发服务器。
+- `CLAUDE.md`、`AGENTS.md` 与 `.claude/`：仓库自身用 Claude 维护的指引、hook 与设置。
 
-仓库的 npm 命令入口是 `npm run dev`（`docs/CLAUDE.md` 写了），本地预览 `http://localhost:3000`。
+本地预览按 `docs/README.md` 的说法，在 docs 目录跑 `npx mint dev`，打开 `http://localhost:3000`；文档站部署是自动的，推到 main 即上线。许可证分两层：代码 Apache 2.0，文档站内容 CC-BY-4.0。
 
 ## 适用边界与采用顺序
 
@@ -342,7 +347,7 @@ skill 在某些 agent 上仍然可以正常执行。allowed-tools 是实验性�
 
 **题 3**：scripts/ 是可执行代码（有副作用），references/ 是只读扩展阅读，assets/ 是模板/图片等静态资源。混淆三者会让 agent 在 progressive disclosure 时做错决策（例如把脚本当文档读，或试图执行纯文本）。
 
-**题 4**：description 是 discovery 阶段 agent 唯一能读到的字段。它的命中率决定了 skill 能不能被"看见"。一个写不好的 description 等于 skill 不存在。
+**题 4**：discovery 阶段 agent 只读 `name` 与 `description` 两个字段，其中 description 承担了几乎全部触发判断——它的命中率决定了 skill 能不能被"看见"。一个写不好的 description 等于 skill 不存在。
 
 **题 5**：System prompt 是单段文字没有按需加载；MCP 负责工具调用协议；RAG 用相似度检索而非显式匹配。Skills 是格式公开的目录约定，支持渐进披露和跨 agent 可移植。
 
@@ -374,6 +379,18 @@ skill 在某些 agent 上仍然可以正常执行。allowed-tools 是实验性�
 
 1. **[Agent Skills 官方仓库](https://github.com/agentskills/agentskills)**（必读）。这里有完整的规范定义、best-practices 和 quickstart。先读 `docs/specification.mdx` 建立整体认知。
 2. **[Optimizing Descriptions 文档](https://github.com/agentskills/agentskills/blob/main/docs/skill-creation/optimizing-descriptions.mdx)**（必读）。当你开始认真写 description 时，这一篇直接决定了你的 skill 会不会被 agent "看见"。
-3. **[Thariq 的《Lessons from Building Claude Code: How We Use Skills》](https://x.com/trq212/status/2033949937936085378)**（推荐）。Anthropic Skills 团队负责人对 Skills 范式的官方总结，里面给出了判断 skill 粒度的实际经验。
+3. **[Thariq 的《Lessons from Building Claude Code: How We Use Skills》](https://x.com/trq212/status/2033949937936085378)**（推荐）。Anthropic Claude Code 团队工程师 Thariq Shihipar（@trq212）2026 年 3 月发的长文，讲 Anthropic 内部如何在 Claude Code 里大量使用 skills，里面有判断 skill 粒度的实际经验。
 4. **[skills-ref 参考实现](https://github.com/agentskills/agentskills/tree/main/skills-ref)**（可选）。如果你想在 CI 或本地做自动化校验，可以了解这个工具。
+
+---
+
+## 资料口径说明
+
+1. **版本口径**：本文以 [agentskills/agentskills](https://github.com/agentskills/agentskills) 仓库 main 分支 2026-09-21 读取时点为口径（仓库最后推送为 2026-08-09，此后无变更）；规范原文 `docs/specification.mdx`、`docs/skill-creation/` 各篇、`CONTRIBUTING.md`、skills-ref README 均逐段对照。
+2. **客户端数量**：Client Showcase（`docs/snippets/clients.jsx`）在本文初稿发布时（2026-07-02）为 43 个，2026-09-21 实测 46 个（最后一条为 2026-08-09 加入的 OpenClaw）；该数字随接入持续增长，请以 showcase 页面实时数据为准。showcase 条目 "ChatGPT & Codex" 于 2026-08-03 由 "OpenAI Codex" 改名。
+3. **skills-ref 定位**：按官方 README 声明"仅供演示，不用于生产"；文中 CLI 子命令与 Python API 以 skills-ref README（2026-09-21 版）为口径。
+4. **Claude Code 扩展字段**：`disable-model-invocation`、`user-invocable`、`model`、`context: fork`、`argument-hint`、`disallowed-tools`、`agent`、`background` 均出自 Claude Code 官方文档（code.claude.com/docs，2026-09-21 读取），属客户端扩展而非规范本体，可能随版本变化。
+5. **文档站运行方式**：`npm run dev`/`npx mint dev`、`http://localhost:3000` 以现行 `package.json`、`docs/README.md` 与 `CONTRIBUTING.md` 为准；仓库早期提供的 `docs/CLAUDE.md` 已于 2026-08-03 并入根 `CLAUDE.md` 并删除。
+6. **许可证**：仓库代码 Apache 2.0，`docs/` 文档内容 CC-BY-4.0（README"License"节）。
+7. **同主题姊妹篇**：[《agent-skills 开放规范指南》](/posts/tech/agent-skills-ai-agent-open-specification-guide/)侧重规范文档站的字段与生态全景；本文侧重仓库本体（规范源码组织、skills-ref 参考实现、客户端接入方式），两篇可对照阅读。
 

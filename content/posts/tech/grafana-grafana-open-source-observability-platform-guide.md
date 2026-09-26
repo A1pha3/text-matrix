@@ -26,6 +26,7 @@ Grafana 常被当成"画 dashboard 的工具"，这个定位已经过时了。�
 - [七、最小部署](#七最小部署)
 - [八、什么时候该用、什么时候不要用](#八什么时候该用什么时候不要用)
 - [九、学习路径与延伸阅读](#九学习路径与延伸阅读)
+- [附录：术语与版本参考](#附录术语与版本参考)
 
 ## 学习目标
 
@@ -305,6 +306,44 @@ docker run -d -p 9100:9100 --name=node-exporter prom/node-exporter
 - Play 实例（在线试）：[play.grafana.org](https://play.grafana.org/)
 - Plugin Hub：[grafana.com/grafana/plugins](https://grafana.com/grafana/plugins/)
 - LGTM 栈说明：[grafana.com/oss](https://grafana.com/oss/)
+
+---
+
+## 附录：术语与版本参考
+
+给这篇文档补两个可检索的锚点：一是把正文反复用到、但读者不一定一眼认识的概念收成一张速查；二是把文中涉及的版本线排成一张带官方链接的追溯表。改版本往上升时，只要这两张表还对着上面的章节，维护者就能在十几分钟内定位到所有需要动的地方。
+
+### 术语速查
+
+| 术语 | 中文释义 | 一句话用途 |
+|------|----------|-----------|
+| data source | 数据源 | 连接 Prometheus / Loki 等外部存储，并把它自己的查询语言翻译成 Grafana 内部的数据帧 |
+| panel | 面板 | 在"已查询到的结果"上做变换与绘制的单元（Time series、Stat、Logs 等） |
+| dashboard | 仪表板 | 一组面板的组织与快照，V1 存 JSON，V2 走 Resource API |
+| Explore | 探索 | 脱离看板、现场拼接查询的排障工作台 |
+| Grafana-managed alerts | 告警规则 | Grafana 自己的规则引擎，规则存 SQL，与 Prometheus 风格文件平行 |
+| recording rule | 记录规则 | 把高危查询预计算成新指标，减少重复查询 |
+| notification policy | 通知策略 | 把告警状态路由到联系人 / 渠道的规则 |
+| Provisioning | 配置下发 | 用 YAML 或 Git 文件管理数据源、看板、告警规则、权限 |
+| Git Sync | Git 同步 | 看板直接同步 GitHub / GitLab / Bitbucket 仓库，可在 UI 内提交并发 PR |
+| Dynamic Dashboards / V2 schema | 动态看板（V2） | 新 dashboard 模型，迁移后不可回退，新功能主要长在这里 |
+| Drilldown App | 钻取应用 | Metrics / Logs / Traces / Profiles 面向"不写查询逛数据"的入口 |
+| Plugin SDK | 插件 SDK | 数据源 / 面板 / 应用 / 渲染四类插件共用的一套接口 |
+| LGTM 栈 | — | Loki + Grafana + Tempo + Mimir 的自托管组合，外加 Pyroscope |
+| Alloy | 采集进程 | 厂商中立发行版，把指标 / 日志 / 追踪 / profile 的采集收进一个进程 |
+
+这张表不负责教你怎么用某个面板，只提供一个回查点：正文里碰见、或别人口中出现某个词而一时拿不准指什么时，回这里扫一眼。往正文里加新概念的人，也应顺手在这里补一行。
+
+### 版本追溯
+
+| 版本线 | GA 时间（以官方为准） | 本文要点 | 官方锚点 |
+|--------|----------------------|----------|----------|
+| 12.0 | 2025-05 | Drilldown Apps GA、Grafana-managed alerts GA、移 Angular、Table 面板重做 | [What's new 12.0](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v12-0/) |
+| 13.0 | 2026-04 | Git Sync GA、Dynamic Dashboards 默认开启、React 19、Assistant on-prem preview | [What's new 13.0](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v13-0/) |
+| 13.1 | 未在本处精确标注 | 数据源前端 / 后端解耦推进、Mimir Alertmanager auto-sync、Alerting 转向事件响应 | 见 13.x What's new 与 [Changelog](https://github.com/grafana/grafana/CHANGELOG.md) |
+| 13.2 | 2026-09（写作时稳定线） | 当前建议的 Docker 镜像版本 | [grafana/grafana 镜像](https://hub.docker.com/r/grafana/grafana) |
+
+两处提醒：表格里的 GA 时间以官方 What's new 为准，正文未见出处的版本号写作时按官方 changelog 核对；版本再往上走时，更新这张表的同时记得回头改第七节的镜像与第八节的升级判断。
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "Agent 技术全史精读：苏煜为什么把 2026 看成数字智能体的分水岭"
 date: "2026-05-01T13:50:00+08:00"
-lastmod: 2026-08-13T10:00:00+08:00
+lastmod: "2026-09-20T10:00:00+08:00"
 slug: "agent-technology-history-su-yu"
 description: '基于张小珺与苏煜访谈，结合 Language Agents tutorial、Computer Use、OpenClaw、NeoCognition 等公开材料，梳理 Agent 从逻辑代理到语言代理的演进，解释 2026 年的变化重点为何从"模型会不会回答"转到 Agent 的执行栈、运行时与责任边界。'
 summary: "这篇访谈精读梳理 Agent 技术史：规则系统写死下一步，策略网络学出下一步，语义解析把语言变成程序，Language Agent 再把语言、工具、记忆、GUI 和日志接进同一条执行链。OpenClaw 是入口和界面的变化，NeoCognition 是长期学习和专业化的尝试。分水岭在于这条执行链能不能跑稳，错误能不能收住，人类能不能接管。"
@@ -27,11 +27,11 @@ hiddenFromHomePage: false
 | ---- | ---- |
 | 标题 | 《Agent 的综述》和苏煜聊 Agent 技术史、OpenClaw Moment、边界的消弭和社会的辐射 |
 | 主持 | 张小珺 Jùn |
-| 嘉宾 | 苏煜，俄亥俄州立大学 CSE 副教授、OSU NLP group 共同负责人、NeoCognition 联合创始人 |
+| 嘉宾 | 苏煜，俄亥俄州立大学 CSE 副教授、OSU NLP group 共同负责人、NeoCognition 联合创始人兼 CEO |
 | 发布时间 | 2026 年 5 月 1 日 |
 | 时长 | Apple Podcasts 标注约 2 小时 18 分；节目 outline 最后一项为 02:10:13 |
 | 主要议题 | Agent 技术史、Language Agent、OpenClaw Moment、NeoCognition、持续学习、世界模型、中美应用扩散 |
-| 链接 | [Apple Podcasts](https://podcasts.apple.com/cy/podcast/139-agent%E7%9A%84%E7%BB%BC%E8%BF%B0-%E5%92%8C%E8%8B%8F%E7%85%9C%E8%81%8Aagent%E6%8A%80%E6%9C%AF%E5%8F%B2-openclaw-moment-%E8%BE%B9%E7%95%8C%E7%9A%84%E6%B6%88%E5%BC%AD%E5%92%8C%E7%A4%BE%E4%BC%9A%E7%9A%84%E8%BE%90%E5%B0%84/id1634356920?i=1000765020256&l=el) / [微博视频](https://weibo.com/tv/show/2373717:5293674209411091) |
+| 链接 | [Apple Podcasts](https://podcasts.apple.com/cy/podcast/139-agent%E7%9A%84%E7%BB%BC%E8%BF%B0-%E5%92%8C%E8%8B%8F%E7%85%9C%E8%81%8Aagent%E6%8A%80%E6%9C%AF%E5%8F%B2-openclaw-moment-%E8%BE%B9%E7%95%8C%E7%9A%84%E6%B6%88%E5%BC%AD%E5%92%8C%E7%A4%BE%E4%BC%9A%E7%9A%84%E8%BE%90%E5%B0%84/id1634356920?i=1000765020256) / [微博视频](https://weibo.com/tv/show/2373717:5293674209411091) |
 
 ## 为什么说 2026 是分水岭
 
@@ -81,7 +81,7 @@ flowchart LR
 
 ## 第一阶段：Logical Agent，把世界写进规则
 
-如果从 1960 年代算起，Agent 的第一条主线是符号主义和逻辑代理。代表案例常被提到的是 SRI 的 Shakey 机器人。Shakey 在 1966 到 1972 年间开发，Computer History Museum 把它描述为第一台能够对自身行动进行推理的移动机器人。它能在简化环境里识别物体、规划路径、推动方块，背后依赖的是状态表示、搜索、STRIPS 规划等早期 AI 技术。
+如果从 1960 年代算起，Agent 的第一条主线是符号主义和逻辑代理。代表案例常被提到的是 SRI 的 Shakey 机器人。Shakey 在 1966 到 1972 年间开发，开发方 SRI 把它描述为第一台能感知并推理周围环境的移动机器人。它能在简化环境里识别物体、规划路径、推动方块，背后依赖的是状态表示、搜索、STRIPS 规划等早期 AI 技术。
 
 Logical Agent 的出发点很清楚：只要把世界状态、动作前提、动作效果和目标函数写清楚，系统就能通过推理找到行动方案。这条路很漂亮，也很容易碎。它适合封闭、规则清晰的环境；一旦进入开放世界，规则数量、异常情况和感知噪声很快就会超过工程师能维护的范围。
 
@@ -120,7 +120,7 @@ Semantic Parsing 到 Language Agent 的关键差别在这里：过去，语言�
 - **语言推理**：大语言模型先补上了可用的通用语言推理能力。Chain-of-Thought 让模型能把复杂任务拆成中间步骤。它不能直接保证可靠性，但让"用语言组织中间状态"变成了可操作的工程手段。
 - **工具协议**：ReAct 在 2022 年把 reasoning traces 和 actions 交替组织起来；Toolformer 在 2023 年讨论模型如何学习何时调用 API、传什么参数、怎样把结果放回上下文；Reflexion 则把失败反馈写成语言记忆，让 Agent 不改权重也能调整后续行为。
 - **真实环境**：WebGPT、Mind2Web、WebArena、OSWorld、SWE-bench 这类评测把网页、桌面、代码仓库和真实任务带进评估视野。Agent 不再只在 prompt 里"假装行动"，而是开始撞上按钮找不到、网页变化、权限不足、测试失败、费用超预算这些真实约束。
-- **平台运行时**：OpenAI 的 Operator、Responses API 和 Agents SDK，Anthropic 的 Computer Use 和 Claude Code，Google 的 ADK 与 Jules，Microsoft 的 Agent Framework，都在把模型能力、工具、状态、观测和安全边界包装成可开发、可部署的系统。
+- **平台运行时**：OpenAI 的 Operator（2025 年 8 月起由 ChatGPT agent 接棒）、Responses API 和 Agents SDK，Anthropic 的 Computer Use 和 Claude Code，Google 的 ADK 与 Jules，Microsoft 的 Agent Framework，都在把模型能力、工具、状态、观测和安全边界包装成可开发、可部署的系统。
 
 这四层一叠，Language Agent 才从论文概念变成工程对象。它把计划、行动、反馈、工具说明和人类协作都塞进同一条执行链。
 
@@ -166,9 +166,9 @@ OpenClaw Moment 的入口变化更值得盯：数字 Agent 正在从"聊天框�
 
 ## NeoCognition：从通用助手到专业化智能（01:02:05 起）
 
-谈 NeoCognition 时，边界要收紧。公开新闻稿显示，NeoCognition 以 4000 万美元种子轮融资出场，定位是面向 specialized intelligence（专业化智能）和 expert agents（专家智能体）的 AI Agent lab。新闻稿里有一句话基本把方向说清了：他们希望构建能持续学习所处环境的结构、工作流和约束，并通过学习"工作世界模型"（world model of work）成为领域专家的 Agent。
+谈 NeoCognition 时，边界要收紧。公开新闻稿显示，NeoCognition 以 4000 万美元种子轮融资出场，由 Cambium Capital 与 Walden Catalyst Ventures 联合领投，定位是面向 specialized intelligence（专业化智能）和 expert agents（专家智能体）的 AI Agent lab。新闻稿里有一句话基本把方向说清了：他们希望构建能持续学习所处环境的结构、工作流和约束，并通过学习"工作世界模型"（world model of work）成为领域专家的 Agent。
 
-它和普通"通用助手"的叙事不一样。通用助手强调一上来什么都能做；NeoCognition 的公开表达更接近另一条路线：Agent 在使用中慢慢专业化。新闻稿里另一句是：当 general-purpose agents 逐渐变成 table stakes，真正难的部分会转向 expert-level intelligence。它押注的是"更像某个岗位里的熟手"。
+它和普通"通用助手"的叙事不一样。通用助手强调一上来什么都能做；NeoCognition 的公开表达更接近另一条路线：Agent 在使用中慢慢专业化。新闻稿里另一句来自 UC Berkeley 教授、Databricks 联合创始人 Ion Stoica：当 general-purpose agents 逐渐变成 table stakes，真正难的部分会转向 expert-level intelligence。苏煜自己说得更直接：今天的 AI 在执行需要深度专业知识的真实工作时，根本上仍不可靠，而人的智能恰恰在于能持续学习、在使用中专业化。它押注的是"更像某个岗位里的熟手"。
 
 "世界模型"这个词容易被误解成机器人或物理仿真里的世界模型。放到 NeoCognition 的语境里，更准确的理解是工作模型（work model），或者某个微型工作世界的结构化模型。它关心的是：
 
@@ -241,7 +241,7 @@ SWE-bench、WebArena、OSWorld、TAU-bench 这些评估把 Agent 从主观演示
 
 | 公司或生态 | 代表动作 | 押注点 |
 | ---- | ---- | ---- |
-| OpenAI | Operator、Responses API、Agents SDK、Computer Use | 把搜索、文件、浏览器/计算机操作、追踪和多 Agent 编排平台化 |
+| OpenAI | ChatGPT agent（接棒 Operator）、Responses API、Agents SDK、Computer Use | 把搜索、文件、浏览器/计算机操作、追踪和多 Agent 编排平台化 |
 | Anthropic | Claude Computer Use、Claude Code、工具调用和安全实践 | 把 coding、电脑操作和高信任工作流做成 Claude 的强场景 |
 | Google | ADK、Jules、Workspace / Cloud 连接能力 | 用云、Workspace、企业连接器和 ADK 承接复杂 Agent 应用 |
 | Microsoft | Agent Framework、Copilot、M365 生态 | 把 AutoGen/Semantic Kernel 的经验并入企业级状态、遥测和人机协作 |
@@ -332,9 +332,10 @@ OpenClaw Moment 把入口和界面问题推到台前：用户开始看到 Agent 
 
 ## 参考资料
 
-- [Apple Podcasts：Agent 的综述，张小珺与苏煜访谈](https://podcasts.apple.com/cy/podcast/139-agent%E7%9A%84%E7%BB%BC%E8%BF%B0-%E5%92%8C%E8%8B%8F%E7%85%9C%E8%81%8Aagent%E6%8A%80%E6%9C%AF%E5%8F%B2-openclaw-moment-%E8%BE%B9%E7%95%8C%E7%9A%84%E6%B6%88%E5%BC%AD%E5%92%8C%E7%A4%BE%E4%BC%9A%E7%9A%84%E8%BE%90%E5%B0%84/id1634356920?i=1000765020256&l=el)
+- [Apple Podcasts：Agent 的综述，张小珺与苏煜访谈](https://podcasts.apple.com/cy/podcast/139-agent%E7%9A%84%E7%BB%BC%E8%BF%B0-%E5%92%8C%E8%8B%8F%E7%85%9C%E8%81%8Aagent%E6%8A%80%E6%9C%AF%E5%8F%B2-openclaw-moment-%E8%BE%B9%E7%95%8C%E7%9A%84%E6%B6%88%E5%BC%AD%E5%92%8C%E7%A4%BE%E4%BC%9A%E7%9A%84%E8%BE%90%E5%B0%84/id1634356920?i=1000765020256)
 - [Yu Su 个人主页](https://ysu1989.github.io/)
 - [OSU：Yu Su 获 2025 Sloan Research Fellowship](https://cse.osu.edu/news/2025/02/cse-assistant-professor-yu-su-honored-2025-sloan-research-fellowship)
+- [SRI：Shakey the Robot](https://www.sri.com/infrastructures/shakey-the-robot/)
 - [Language Agents: Foundations, Prospects, and Risks](https://language-agent-tutorial.github.io/)
 - [NeoCognition：4000 万美元种子轮新闻稿](https://www.prnewswire.com/news-releases/neocognition-emerges-from-stealth-with-40-million-seed-round-to-advance-specialized-intelligence-and-expert-agents-302749108.html)
 - [OpenClaw 官网](https://openclaw.ai/)

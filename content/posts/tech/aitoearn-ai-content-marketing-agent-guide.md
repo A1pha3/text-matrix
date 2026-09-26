@@ -1,40 +1,39 @@
 ---
-title: "AiToEarn 源码解读：把'一段想法'变成'13 个平台的自动内容流水线'"
+title: "AiToEarn 源码解读：把'一段想法'变成'十几个平台的自动内容流水线'"
 date: 2026-06-04T16:53:00+08:00
+lastmod: "2026-09-24T10:00:00+08:00"
 slug: aitoearn-ai-content-marketing-agent-guide
 github_repo: "yikart/AiToEarn"
 source_key: "gh:yikart/AiToEarn"
-description: "yikart/AiToEarn 源码级解析：从一段中文创意到 13 平台自动发布+商单撮合的端到端架构。覆盖 MCP 协议、OpenClaw 集成、Monetize/Publish/Engage/Create 四 Agent 拆解、变现结算回路。"
+description: "yikart/AiToEarn 源码级解析：从一段中文创意到 14 平台自动发布+商单撮合的端到端架构。覆盖 MCP 双端点 35 个工具、OpenClaw 插件、Monetize/Publish/Engage/Create 四 Agent 拆解、Docker 自部署。"
 draft: false
 categories: ["技术笔记"]
 tags: ["MCP", "OpenClaw", "AI Agent"]
 hiddenFromHomePage: true
 ---
 
----
-
 ## 目录
 
 - [先给判断](#先给判断)
 - [学习目标](#学习目标)
-- [系统总览：四 Agent + 三链路](#系统总览四-agent--三链路)
-- [任务流：把一段中文创意推到 13 个平台](#任务流把一段中文创意推到-13-个平台)
-- [MCP 协议：让任意 AI 工具都能调 AiToEarn](#mcp-协议让任意-ai-工具都能调-aitoearn)
+- [系统总览：四 Agent 产品层，三个子项目代码层](#系统总览四-agent-产品层三个子项目代码层)
+- [任务流：一条 MCP 工具链走完创作到发布](#任务流一条-mcp-工具链走完创作到发布)
+- [MCP 接入：云端端点，不是本地包](#mcp-接入云端端点不是本地包)
 - [常见问题](#常见问题)
 - [采用建议与适用边界](#采用建议与适用边界)
 - [自测与进阶路径](#自测与进阶路径)
-- [资料口径说明](#资料口径说明)
+- [参考来源与口径说明](#参考来源与口径说明)
 - [链接与版本](#链接与版本)
 
 ---
 
 ## 先给判断
 
-AiToEarn 把 **AI 内容生成、平台分发适配、商单撮合结算** 三件事做在同一个仓库里，并以 **SaaS 网页、OpenClaw 原生调用、MCP 协议、Claude/Cursor 接入、Docker 自部署** 五种形态暴露给调用方。它的定位介于"AI 写作工具"和"Buffer/Hootsuite 多平台定时发布器"之间——前者只管生成不管分发，后者只管分发不管生成，AiToEarn 把两端连同变现层一起打包。
+AiToEarn 把 **AI 内容生成、平台分发、商单变现** 三件事做在同一个仓库里，并以官网直接用、OpenClaw（龙虾）插件、Claude/Cursor 等 MCP 客户端、Docker 自部署、源码开发五种方式开放。它的定位介于"AI 写作工具"和"Buffer/Hootsuite 多平台定时发布器"之间——前者只管生成不管分发，后者只管分发不管生成，AiToEarn 把两端连同变现层一起打包。
 
-**核心场景**：当一个 Agent（比如 Claude Code）写完一段产品介绍，它可以直接调 AiToEarn 的 MCP server，让这段介绍在 13 个平台（抖音、小红书、YouTube、TikTok、X、Threads、Instagram、Pinterest、LinkedIn、Facebook、哔哩哔哩、视频号、快手）上以各自原生格式自动出现，并在内容交易市场里接变现任务。
+**核心场景**：当一个 Agent（比如 Claude Code）写完一段产品介绍，它可以调 AiToEarn 的 MCP 工具生成多平台草稿，再创建发布流，让这段介绍以各自账号的状态出现在抖音、小红书、哔哩哔哩、视频号、YouTube、TikTok 等平台上；互动和结算环节也能在同一套体系里跑完。
 
-截至 2026-06-04（据 README 与 Trending Shift 页面显示），仓库在 GitHub Trending 单日新增约 320 stars，MIT 协议，中英日三语 README。本文基于 2026-05-21 发布的 v2.4.0 源码与 README 整理；文中涉及的具体耗时、Token 消耗、星数等数字均来自 README 描述或作者公开声明，未经独立复测。
+版本口径：本文主体以 2026-05-21 发布的 v2.4.0 为基线；仓库迭代很快，MCP 工具清单、支持渠道数等标注了"2026-09-24 读数"的内容以当天 main 分支为准。仓库当前 26370 stars、4275 forks（2026-09-24 读数），MIT 协议，README 有中英日三语版本。
 
 ---
 
@@ -42,141 +41,112 @@ AiToEarn 把 **AI 内容生成、平台分发适配、商单撮合结算** 三�
 
 读完本文，你应该能够：
 
-1. **理解 AiToEarn 的定位**：说清它和"AI 写作工具""多平台发布器"的核心差异，以及它把哪三件事做在同一个仓库里。
-2. **拆解四 Agent 架构**：区分 Create / Publish / Engage 三个执行 Agent 和 Monetize 撮合层的职责边界，能画出一个创意从输入到 13 平台发布的流向图。
-3. **解释 MCP 协议的价值**：说清 MCP 解决的是什么问题，以及接入 MCP 后 Claude Code / Cursor / OpenClaw 等工作流会发生什么变化。
-4. **评估适用场景**：面对"多平台运营团队""单平台品牌号""MCN 商单撮合"三类读者，能分别给出"先用/可以等等"的判断理由。
-5. **独立运行最小闭环**：按照文中的步骤，用 Docker 自部署或官方 SaaS，实际跑通一次"输入创意 → 生成草稿 → 多平台发布"的完整流程。
+1. **理解 AiToEarn 的定位**：说清它和"AI 写作工具""多平台发布器"的差异，以及它把哪三件事做在同一个仓库里。
+2. **对应产品与代码**：把 README 里 Monetize / Publish / Engage / Create 四个 Agent 映射到仓库真实的三个子项目和后端服务模块上。
+3. **解释 MCP 接入方式**：说清 AiToEarn 的 MCP 是云端端点而非本地包，以及 Claude Code / Cursor 接入后能调用哪些工具。
+4. **评估适用场景**：面对"多平台运营团队""单平台品牌号""有接单需求的创作者"三类读者，能分别给出"先用/可以等等"的判断理由。
+5. **独立跑通最小闭环**：用官方 SaaS 或 Docker 自部署，实际走一遍"输入创意 → 生成草稿 → 多平台发布"。
 
 ---
 
-## 系统总览：四 Agent + 三链路
+## 系统总览：四 Agent 产品层，三个子项目代码层
 
-仓库 README 把能力切成 4 块：**Monetize / Publish / Engage / Create**。从代码结构看，真正决定复杂度的是三条并行链路——创作者端、商单端、AI 执行端。Monetize 在代码上是**撮合层 + 结算层**，消费 Publish/Engage 产生的数据，向商单端和创作者端同时开放 API。把 Monetize 算作第四个 Agent 是产品语言，从架构上看它是**横切关注点**。
+README 把能力切成四块：**Monetize / Publish / Engage / Create**。这是产品语言。代码层的真实结构是一个 monorepo，顶层 `project/` 目录下有三个子项目：
 
-### 三链路职责对照
+| 子项目 | 技术栈 | 职责 |
+| --- | --- | --- |
+| `project/aitoearn-backend` | Nx + pnpm（NestJS） | 两个应用：`aitoearn-server` 是对外 API 与 MCP 服务，`aitoearn-ai` 是草稿生成等 AI 能力服务 |
+| `project/aitoearn-web` | Next.js + pnpm | Web 前端与官网 |
+| `project/aitoearn-electron` | Electron | 桌面客户端 |
 
-| 链路 | 关心的问题 | 主要代码位置 | 对外暴露 |
-| --- | --- | --- | --- |
-| 创作者端 | 如何减少手动操作，让内容自动跑起来 | `packages/agent-create/` 等 Agent 包的调用入口 | SaaS 后台、OpenClaw 入口 |
-| 商单端 | 任务有没有人接、效果数据是否真实 | `packages/agent-monetize/`（撮合 + 结算） | 商家后台 API |
-| AI 执行端 | 把"一段想法"翻译成 N 个平台的原生内容 | `packages/agent-create/`、`packages/agent-publish/`、`packages/agent-engage/` | MCP server、OpenClaw 原生调用 |
+后端内部还有一层值得看的划分。`aitoearn-server` 的 `src/core/` 下是 api-key、assets、channels、content、publish-record、short-link、unified-mcp、user 八个模块——围绕"渠道账号、内容、发布记录"组织；`aitoearn-ai` 的 `src/core/` 下是 agent、ai、ai-availability、draft-generation、internal 五个模块——围绕"生成什么、用什么模型生成"组织。两个服务通过内部客户端调用互通，`draft-generation` 收到请求后返回任务 ID，生成过程异步完成。
 
-三链路之间靠 **OpenAPI 规范 + 事件总线** 串接：创作者端看不到商单端的内部数据，商单端也调不动 AI 生成的中间态。这种隔离让商单撮合可以独立升级，而创作者工作流不受影响。Monetize 没有自己的执行体，因此被归为横切关注点，不作为独立 Agent 看待——撮合逻辑由 `task-matching` 触发，结算逻辑由 `settlement-engine` 在发布事件后异步执行，两者都依附于 Publish/Engage 产生的事件流。
+四个 Agent 与代码的对应关系大致是：
 
----
+| Agent | README 能力 | 代码侧落点 |
+| --- | --- | --- |
+| Create | 调用视频/图片模型生成内容，支持批量 | `aitoearn-ai` 的 `draft-generation` 与 `agent` 模块 |
+| Publish | 一键分发到全球 10+ 平台，日历排期 | `aitoearn-server` 的 `channels`、`publish-record` 模块 |
+| Engage | 浏览器插件自动点赞/收藏/关注，AI 回复评论 | `aitoearn-server` 的 engagement 相关接口 + 独立分发的浏览器插件 |
+| Monetize | 创作者接商家推广任务，按 CPS/CPE/CPM 结算 | 主要在 SaaS 侧运营，开源仓库内没有独立的撮合服务模块 |
 
-## 任务流：把一段中文创意推到 13 个平台
+Monetize 这一行值得多说一句：README 给出的结算模式有三种——按成交额（CPS）、按互动量（CPE）、按播放量（CPM），结算以结果为导向。但在开源代码里找不到对应的撮合引擎模块，商单匹配与结算主要发生在官方 SaaS 侧。想要自建撮合能力的团队，不能假设这部分逻辑随开源仓库交付。
 
-这一节用一个完整案例把三链路串起来，看抽象机制在一次真实工作里如何配合。
-
-### 输入
-
-创作者在 aitoearn.ai 后台或 OpenClaw 入口，输入：
-
-> "我们刚发了 v2.4.0，新增了 HappyHorse 1.0 视频模型支持，写一段 200 字的更新说明，重点突出对个人创作者的成本下降。"
-
-### 步骤 1：Create Agent 选题与草稿
-
-Create Agent 接收到这段文字后，先做三件事：
-
-1. **结构化提示词补全**：把模糊的"200 字"补成"中文 180-220 字、分 3 段、第 1 段产品变化、第 2 段用户收益、第 3 段行动号召"。补全规则写在 `packages/agent-create/prompts/` 下，目的是把人类自然语言里的模糊量词映射成模型可执行的硬约束。
-2. **风格基线匹配**：从创作者历史内容中提取风格向量（句长、emoji 使用频率、口语化程度），保证产出与创作者本人风格一致。这一步需要创作者先授权读取历史发布数据，未授权时退化为平台默认风格。
-3. **目标平台标记**：默认全平台，但可指定"小红书要加 emoji、抖音要短句、LinkedIn 要英文版"。
-
-这一步对应仓库 `packages/agent-create/` 下的服务，模型默认走 GPT-4o 级别，v2.4.0 起也支持 HappyHorse 1.0 / Seedance 2.0（国产视频模型，README 未给出与 GPT-4o 的对比数据）。
-
-### 步骤 2：Publish Agent 平台适配
-
-Create Agent 输出的是**结构化 JSON**（标题、正文、图片位、标签、CTA），Publish Agent 接管后做平台级适配：
-
-- **小红书**：自动加 emoji 标题、把正文拆成 6-9 张图位、生成 3-5 个标签
-- **抖音**：把核心信息浓缩成 15 秒脚本 + 7 段字幕 + BGM 建议
-- **YouTube / TikTok**：自动生成 60 秒英文脚本 + 章节标记
-- **LinkedIn**：翻译为英文并加 hashtag
-- **X / Threads**：缩到 280 字符以内，附 1 个链接
-
-这一步的代码集中在 `packages/agent-publish/`，每个平台一个 adapter 子包，遵循同一份 **PlatformAdapter 接口**。新加平台实现这个接口即可，不必改动 Create 或 Engage 的代码——这是 AiToEarn 能快速扩展到 13 个平台的根本原因。
-
-### 步骤 3：Engage Agent 互动与反馈
-
-发布完成后，Engage Agent 进入"长跑模式"：
-
-- **自动回复评论**（基于品牌音色 + 创作者过往回复风格）
-- **主动点赞/关注** 同类目创作者
-- **数据回流**：定期把每个平台的曝光/互动/转化数据拉回，写入创作者端数据看板（README 未给出具体拉取频率，需查 `packages/agent-engage/` 源码确认调度配置）
-
-数据看板会反过来影响 Create Agent 下次生成时的"风格基线"——创作 → 发布 → 互动 → 反馈 → 创作，跑完一圈。这个闭环让风格匹配从"一次性快照"变成"持续校准"。
-
-### 步骤 4：Monetize 撮合（可选）
-
-如果创作者开启了"接商单"开关，Monetize 撮合层会同时做事：
-
-1. 商家在后台下发任务："需要 5 篇关于 AI Agent 的小红书爆款笔记，单篇 500 元 CPS 结算"
-2. 撮合层按创作者的**内容标签 + 历史互动率 + 受众画像**做匹配
-3. 创作者端收到任务卡片，可以接单 / 拒单
-4. 接单后，Create Agent 直接基于商家 Brief 生成草稿
-5. 发布后 7 天内，结算层按"实际成交额"自动计算 CPS 分润
-
-这一步的代码在 `packages/agent-monetize/`，包含 `task-matching`、`brief-parser`、`settlement-engine` 三个子模块。撮合层只读 Publish/Engage 的数据，不直接调用 AI 生成——这保证了商单流程可以独立审计。
-
-### 整个任务的资源消耗
-
-以下数字来自 README 描述，实际消耗取决于平台数量、内容长度和模型选择：
-
-- **时间**：从输入到 13 平台全部发布，3-8 分钟（全自动模式，不含人工审核）
-- **Token 消耗**：约 80K-150K（Create + Publish + Engage 累计）
-- **人工介入点**：只有步骤 1 的"提示词补全确认"和步骤 4 的"接单决策"是人工的
+支持渠道方面，v2.4.0 的 README 列了 13 个：抖音、小红书（Rednote）、快手、哔哩哔哩、视频号、TikTok、YouTube、Facebook、Instagram、Threads、Twitter（X）、Pinterest、LinkedIn；2026-09-24 读数的 main 分支已加入微信公众号，共 14 个。
 
 ---
 
-## MCP 协议：让任意 AI 工具都能调 AiToEarn
+## 任务流：一条 MCP 工具链走完创作到发布
 
-2026-03-26 起的 v2.1 版本，AiToEarn 加了 **MCP（Model Context Protocol）** server 支持。MCP 是 Anthropic 2024 年底提出、2025 年被 OpenAI / Google / Cursor 共同采纳的**工具调用协议**，目标是让所有 AI 工具能像调用函数一样调用外部服务。
+这一节用一个真实可跑的链路把系统串起来。链路上的每个工具都来自 `aitoearn-server` 源码里注册的 MCP 工具定义，不是示意。
 
-### 为什么需要 MCP
+### 第 1 步：生成草稿
 
-在 MCP 之前，要让 Claude Code 调 AiToEarn，得手写一段 HTTP 调用代码或装一个专用插件。MCP 把"外部服务能做什么"标准化成一份工具清单，AI 工具按清单调用即可。对 AiToEarn 来说，接入 MCP 意味着任何支持 MCP 的客户端（Claude Code、Cursor、OpenClaw 等）都能零集成成本调用它的发布、生成、撮合能力。
+创作者在 Claude Code 里说："用 AiToEarn 给我生成一条视频草稿，主题是新版本发布，重点讲对个人创作者的成本下降。"Agent 调用 `createVideoDraft` 工具。源码里的行为是：请求透传给 `aitoearn-ai` 的草稿生成服务，**立即返回任务 ID**，生成异步进行——工具描述原话是 "Returns task IDs, use getDraftTaskStatus to check progress"。
 
-### 启用 MCP 后的工作流
+生成期间用 `getDraftTaskStatus` 轮询，状态机只有三态：generating、success、failed。成功后返回完整草稿内容。图文内容走对称的 `createImageTextDraft`。
 
-假设你在 Claude Code 里写完一篇博客：
+v2.4.0 起草稿生成支持多模型选择：README 的版本动态明确写着"草稿生成新增支持 HappyHorse 1.0 和 Seedance 2.0，增强视频/图文草稿批量生成、多模型选择、参考图片/视频、目标平台限制与文案提示词"。README 在 Create 能力介绍里提到的模型还包括 Grok、Veo、Seedance（视频）与 Nano Banana（图片）。
 
-```bash
-# 1. 安装 AiToEarn MCP server
-claude mcp add aitoearn -- npx -y @aitoearn/mcp-server
+### 第 2 步：创建发布流
 
-# 2. 设置 API key
-export AITOEAEN_API_KEY=your_key_here
+草稿就绪后，`createChannelPublishFlow` 用 v2 版渠道输入格式创建一次发布流。发布前可以先用 `listChannelPlatforms` 看当前账号可用的平台，B 站和 YouTube 还有专门的分类查询工具（`listBilibiliChannelPlatformCategories`、`listYoutubeChannelPlatformCategories`），用于给内容挂分区。
 
-# 3. 在 Claude Code 里直接说：
-# "用 AiToEarn 把我刚才写的博客改成小红书 + 抖音 + 视频号三个版本，19:00 一起发布"
-```
+发布时机有两种：`publishChannelTaskNow` 立即发，或 `updateChannelPublishAt` 改成定时——README 里"像排日程一样统一规划所有平台的内容发布时间"的日历排期，落到工具层就是这个接口。发完之后 `listChannelPublishRecords` 按 flowId、taskId 或 recordId 三种粒度查发布记录。
 
-OpenClaw MCP 配置示例：
+### 第 3 步：互动与数据回流
+
+发布后进入长跑模式。`listChannelEngagementComments` 拉取评论，`submitChannelEngagementComment` 提交回复，`callChannelEngagementFunction` 执行点赞、收藏这类互动动作——这些是 Engage Agent 在工具层的真实形态，浏览器插件负责在各平台页面上落地执行。数据侧有 `getChannelAccountAnalytics`（账号维度）和 `getChannelWorkAnalytics`（作品维度）两个查询工具。
+
+### 第 4 步：接商单（可选）
+
+创作者在 SaaS 侧开启接单后，可以承接商家下发的推广任务，按 CPS/CPE/CPM 之一结算。2026-04-20 起，OpenClaw（龙虾）用户可以在龙虾里直接接收并执行这些变现任务——README 的演示场景是"在 OpenClaw 中执行 AiToEarn 赚钱任务"。这条链路的撮合逻辑在官方服务端，开源仓库里看不到。
+
+---
+
+## MCP 接入：云端端点，不是本地包
+
+2026-03-26 的 v2.1 版本，AiToEarn 上线了 MCP 协议支持（同一次更新还上线了内容交易市场和 OpenClaw 支持）。MCP 是 Anthropic 2024 年底提出的工具调用协议，让 AI 工具能像调用函数一样调用外部服务。
+
+这里有一个容易踩的认知坑：AiToEarn 的 MCP server **不是**一个 `npx` 启动的本地包，而是官方托管的云端端点。所有配置只需要两样东西——端点 URL 和 API Key 请求头：
+
+| 配置项 | 值 |
+| --- | --- |
+| MCP 地址 | `https://aitoearn.ai/api/unified/mcp`（国际版）或 `https://aitoearn.cn/api/unified/mcp`（中国版） |
+| 认证 Header | `x-api-key: 你的API-Key` |
+| SSE 长连接 | 把路径里的 `mcp` 换成 `sse` |
+
+Claude Desktop 的配置示例（README 原版）：
 
 ```json
 {
   "mcpServers": {
     "aitoearn": {
-      "command": "npx",
-      "args": ["-y", "@aitoearn/mcp-server"],
-      "env": { "AITOEAEN_API_KEY": "<your_key>" }
+      "type": "http",
+      "url": "https://aitoearn.ai/api/unified/mcp",
+      "headers": {
+        "x-api-key": "你的API-Key"
+      }
     }
   }
 }
 ```
 
-自部署方式：
+API Key 在 aitoearn.ai 或 aitoearn.cn 注册后，从"设置 → API Key"里创建。**中国版 Key 只能搭配 `aitoearn.cn` 的地址，国际版 Key 只能搭配 `aitoearn.ai` 的地址**，环境与 Key 不匹配会返回 401。自部署用户把域名换成自己的地址即可。
+
+工具清单（2026-09-24 读数，main 分支）：统一端点 `unified` 下挂 13 个工具，覆盖草稿生成（createVideoDraft、createImageTextDraft、getDraftTaskStatus）与内容管理（createDraft、listDrafts、deleteDraft、listMedia 等）；另有独立的 `channels` 端点挂 22 个工具，覆盖发布流、互动与数据分析。合计 35 个。上一节的任务流就是按这批工具的真实定义写的。
+
+OpenClaw 是另一条接入路径：在服务器终端运行 `npx -y @aitoearn/openclaw-plugin-cli` 安装插件，选择环境并填入对应 Key 之后，OpenClaw 里就能直接接收并执行 AiToEarn 的赚钱任务。它与 MCP 的分工是——MCP 让你的 Agent 主动调用 AiToEarn 的能力，OpenClaw 插件让 AiToEarn 的任务找到你的 Agent。
+
+自部署只要三条命令：
 
 ```bash
 git clone https://github.com/yikart/AiToEarn.git
 cd AiToEarn
-docker-compose up -d
-# 默认监听 http://localhost:3000
+docker compose up -d
 ```
 
-**注意**：自部署版**不含内容交易市场**和**官方商单撮合**——这些必须连官方 SaaS。源码里有清晰的 `LICENSE` 和 `packages/commercial/` 目录做隔离。这是作者的商业护城河：开源核心引擎，闭源撮合网络。
+启动后打开 `http://localhost:8080`。compose 文件编排了 10 个服务：mongodb（含副本集初始化）、redis、rustfs（本地 S3 兼容对象存储）、aitoearn-ai、aitoearn-server、aitoearn-web、nginx，外加三个一次性初始化任务；数据库不需要手动装。
 
 ---
 
@@ -184,26 +154,23 @@ docker-compose up -d
 
 **Q1：内容会被平台判定为 AI 生成吗？**
 
-AiToEarn 不主动做"反检测"操作。Publish Agent 输出的是**结构化草稿**，最终发布前可以人工二次编辑。如果你的平台对 AI 内容有严格限制，建议在 Create Agent 输出后加一步人工 review。
+各平台对 AI 内容的政策不同，AiToEarn 的发布链路产出的是草稿，发布前可以人工二次编辑。如果你的平台对 AI 内容有严格限制，把人工 review 作为固定步骤加进流程，比事后补救可靠。
 
-**Q2：14:00 之后 GitHub 直连频繁 5 秒超时，但 raw.githubusercontent.com 200——这会影响 AiToEarn 的源码研究吗？**
+**Q2：中国版和国际版有什么区别？**
 
-不影响。MCP server、PlatformAdapter、Monetize 撮合层的代码都在 `packages/` 目录，可以直接 `git clone`（即使 push 受阻，clone 多数时候仍可走 GitHub 镜像或 SSH）。如果遇到持续 000，可以换 `git clone https://ghproxy.com/https://github.com/yikart/AiToEarn.git`。
+两个独立环境：中国版 aitoearn.cn，国际版 aitoearn.ai。账号、API Key、MCP 地址都不互通，Key 配错环境直接 401。功能面基本一致，选哪个取决于你的目标平台和账号体系在哪边。
 
 **Q3：商用有什么限制？**
 
-MIT 协议允许商用，但**自部署版不能连官方商单撮合**（这是商业护城河）。如果你的产品要分发 AiToEarn 二进制或基于它做衍生产品并对外收费，需要联系 yikart 团队确认。
+仓库用 MIT 协议，允许商用，没有附加条款。需要注意的反而是运营层面：商单撮合与结算跑在官方 SaaS 侧，自部署拿到的是内容生成与分发能力，不含撮合网络。
 
 **Q4：HappyHorse 1.0 和 Seedance 2.0 是什么？**
 
-- **HappyHorse 1.0**：国产视频生成模型之一，v2.4.0 起作为可选生成模型
-- **Seedance 2.0**：字节系视频生成模型，同样作为 v2.4.0 新增选项
+v2.4.0 新增的两个草稿生成可选模型，出处是 README 的版本动态原文，README 没有给出它们与其他模型的对比数据。想评估效果，最直接的办法是在草稿生成时分别指定模型跑同一段提示词对比。
 
-这两个模型在 README 中没有详细对比数据，仓库 `packages/agent-create/models/` 目录可能有 model card，建议 fork 后自己跑 benchmark。
+**Q5：自部署版和 SaaS 版差在哪？**
 
-**Q5：3-8 分钟的端到端耗时是真的吗？**
-
-是的，但**不包括人工审核时间**。如果开启"全自动"模式（无人工），3-8 分钟覆盖 13 平台；如果开启"半自动"（每平台人工确认），实际耗时 30-60 分钟。该数字来自 README 声明，实际表现取决于网络状况和各平台 API 限流。
+自部署包含完整的生成、发布、互动接口和 Web 界面，数据留在自己服务器；内容交易市场、商单撮合这些需要多方参与的能力在官方 SaaS 侧。另外自部署要自己在配置管理里处理各发布平台的 OAuth 授权，或者配置 Relay 借用官方凭据（详见 README 的 Docker 部署一节）。
 
 ---
 
@@ -211,22 +178,22 @@ MIT 协议允许商用，但**自部署版不能连官方商单撮合**（这是
 
 ### 谁该先用
 
-- **多平台内容运营团队**：已经在 5 个以上平台手动维护账号，每周重复"改写-排版-发布"流程，AiToEarn 能把这部分工时压缩一个数量级。
-- **AI Agent 开发者**：需要在 Agent 工作流里嵌入"发布到社交平台"能力，MCP server 提供了零集成成本的接入路径。
-- **有商单撮合需求的 MCN**：官方 SaaS 的撮合层可以省去自建任务匹配和结算引擎的工作。
+- **多平台内容运营团队**：已经在 5 个以上平台手动维护账号，每周重复"改写-排版-发布"流程，AiToEarn 的草稿批量生成加日历排期能把这部分工时压下来。
+- **AI Agent 开发者**：需要在 Agent 工作流里嵌入"发布到社交平台"能力。MCP 端点现成，35 个工具覆盖从生成到数据查询的完整链路，接入成本接近零。
+- **有接单需求的创作者**：官方 SaaS 的撮合层和 OpenClaw 的变现任务通道是现成的赚钱入口，CPS/CPE/CPM 按结果结算。
 
 ### 谁可以等等
 
-- **单平台运营者**：只做小红书或只做 YouTube，直接用平台官方后台更可控，AiToEarn 的多平台适配价值发挥不出来。
-- **对内容原创性要求极高的品牌**：AI 生成的草稿即使经过人工 review，风格一致性仍弱于纯人工创作，品牌主账号建议谨慎。
-- **需要严格数据合规的团队**：自部署版不含撮合层，但 SaaS 版的数据流向（尤其是创作者历史内容被用于风格匹配）需要单独评估合规风险。
+- **单平台运营者**：只做小红书或只做 YouTube，平台官方后台更可控，多平台分发的价值发挥不出来。
+- **对内容原创性要求极高的品牌**：批量生成的草稿即使人工 review，仍需要为品牌调性付出额外校对成本。
+- **数据合规敏感的团队**：用 SaaS 意味着内容与账号数据经过官方服务；自部署可以缓解，但撮合类能力又必须回到 SaaS。两头都要的场景需要先做合规评估。
 
 ### 接入顺序建议
 
-1. 先用官方 SaaS 跑通"创作 → 发布"最小闭环，验证内容质量是否达标
-2. 再启用 MCP server，把发布能力嵌入现有 Agent 工作流
-3. 最后评估是否开启商单撮合，这一步涉及资金流，建议法务先介入
-4. 若决定自部署，从 `docker-compose.yml` 入手，先跑核心三 Agent，再按需引入商业模块
+1. 先在官网注册，用 SaaS 跑通"创作 → 发布"最小闭环，验证内容质量是否达标
+2. 再配 MCP 端点，把发布能力嵌进现有 Agent 工作流
+3. 有变现诉求再评估商单撮合，这一步涉及资金流，条款看清楚再开
+4. 需要数据私有再自部署，从 `docker compose up -d` 三条命令起步
 
 ---
 
@@ -234,48 +201,42 @@ MIT 协议允许商用，但**自部署版不能连官方商单撮合**（这是
 
 ### 自测问题
 
-以下问题可以检验你对 AiToEarn 边界的理解：
-
 1. 如果一个创作者只想运营小红书一个平台，他应该用 AiToEarn 还是直接用小红书官方后台？为什么？
-2. MCP 协议和 OpenClaw 集成的本质差异是什么？什么场景下必须用 OpenClaw 集成？
-3. Monetize 在产品语言里是"第四个 Agent"，在代码里更准确的描述应该是什么？
-4. 如果你要给一家跨境电商公司做技术选型，AiToEarn 和 Make.com 哪个更适合？为什么？
+2. MCP 接入和 OpenClaw 插件的分工差异是什么？什么场景下必须用后者？
+3. Monetize 在产品语言里是"第四个 Agent"，在开源代码里它的真实形态是什么？
+4. `createVideoDraft` 返回任务 ID 而不是直接返回草稿，这个设计对 Agent 侧的调用流程意味着什么？
 
 ### 进阶路径
 
-- **源码层面**：从 `packages/agent-create/` 入手，理解 Create Agent 的提示词补全逻辑
-- **协议层面**：读 Anthropic 官方 MCP 规范 https://modelcontextprotocol.io/，对比 AiToEarn 的 `packages/mcp-server/` 实现
-- **架构层面**：从 `docker-compose.yml` 入手，理清自部署版的 12 个服务依赖关系
-- **业务层面**：注册 aitoearn.ai 账号，实际跑通"创作 → 发布 → 接单 → 结算"完整链路
+- **源码层面**：从 `project/aitoearn-backend/apps/aitoearn-server/src/core/unified-mcp/` 入手，看 MCP 工具如何注册与透传；再看 `apps/aitoearn-ai/src/core/draft-generation/` 理解异步生成
+- **协议层面**：读 Anthropic 官方 MCP 规范（modelcontextprotocol.io），对比 AiToEarn 的 `libs/nest-mcp` 封装
+- **部署层面**：从 `docker-compose.yml` 入手，理清 10 个服务的依赖关系与 rustfs 对象存储的角色
+- **业务层面**：注册账号实际跑通"创作 → 发布 → 接单 → 结算"完整链路
 
 ---
 
-## 资料口径说明
+## 参考来源与口径说明
 
-为确保本文的技术准确性和适用范围清晰，特此说明以下边界：
-
-1. **信息来源与时效性**：本文基于 2026-05-21 发布的 v2.4.0 源码与 README 整理。AiToEarn 仍在快速迭代，后续版本可能在 Agent 职责划分、MCP server 配置、PlatformAdapter 接口等方面发生变化。若你阅读时版本已更新，请以最新源码为准。
-2. **技术细节验证**：文中涉及的耗时（3-8 分钟）、Token 消耗（80K-150K）、星数（+320 stars）等数字均来自 README 描述或作者公开声明，未经独立复测。实际表现取决于网络状况、平台 API 限流、内容长度和模型选择。
-3. **判断与建议的边界**：本文给出的"谁该先用""谁可以等等""接入顺序建议"等判断，基于公开文档和架构分析得出，不代表 AiToEarn 官方立场，也不构成商业建议。实际技术选型请结合团队现状和评估结果。
-4. **未覆盖的内容**：本文聚焦架构解读和 MCP 协议接入，未深入覆盖：自部署版 `docker-compose.yml` 的完整 12 个服务依赖配置、Monetize 撮合层的结算引擎具体实现、`packages/agent-engage/` 的调度配置细节、HappyHorse 1.0 与 Seedance 2.0 的 benchmark 对比数据。
-5. **术语使用说明**：本文保留 MCP（Model Context Protocol）、SaaS（Software as a Service）、MCP server、PlatformAdapter、Docker、Claude Code、Cursor、OpenClaw 等专有名词不翻译，因为它们在 AI 工具链和开源社区中有固定英文表述。首次出现时已附中文说明。
-6. **更新记录**：本文初稿基于 v2.4.0（2026-05-21），若 AiToEarn 后续版本有架构变化，将同步更新对应章节。
+1. **主要信源**：yikart/AiToEarn 仓库 v2.4.0 tag（74e884f，2026-05-21）与 main 分支源码、README（中/英/日）、`DOCKER_DEPLOYMENT_CN.md`、`AGENTS.md`，GitHub API 仓库元数据。核实日期 2026-09-24。
+2. **版本口径**：主体描述以 v2.4.0 为基线；MCP 工具数（35）、支持渠道数（14）、compose 服务数为 main 分支 2026-09-24 读数，与 v2.4.0 时点存在差异处已注明（v2.4.0 支持 13 渠道）。v2.5.0（2026-06-24）起 Relay 配置从 compose 文件移到配置管理界面，并新增开放平台（docs.aitoearn.cn）。
+3. **数字来源**：stars/forks 为 2026-09-24 GitHub API 读数；四 Agent 能力描述、结算模式、平台清单、5 种使用方式均转述 README 原文；MCP 工具清单逐一取自源码中注册的工具定义。本文不含未经复测的性能与耗时数字。
+4. **边界**：浏览器插件本体不在开源仓库内（仓库只有插件指南素材），分发渠道以官方文档为准；商单撮合与结算的服务端实现不开源，文中仅描述产品层行为。
 
 ---
 
 ## 链接与版本
 
 - **GitHub 仓库**：https://github.com/yikart/AiToEarn
-- **官网 SaaS**：https://www.aitoearn.ai/
+- **官网**：https://www.aitoearn.ai/（国际版）、https://aitoearn.cn/（中国版）
+- **开放平台文档**：https://docs.aitoearn.cn/
 - **英文 README**：https://github.com/yikart/AiToEarn/blob/main/README_EN.md
 - **日文 README**：https://github.com/yikart/AiToEarn/blob/main/README_JA.md
-- **Trending Shift**：https://trendshift.io/repositories/20785
-- **源码版本**：v2.4.0（2026-05-21）
+- **TrendShift**：https://trendshift.io/repositories/20785
+- **基线版本**：v2.4.0（2026-05-21）；最新 release v2.5.0（2026-06-24）
 - **开源协议**：MIT
 - **主要语言**：TypeScript
-- **GitHub Trending 单日**：2026-06-04 约 +320 stars（据 Trending Shift 页面）
+- **仓库读数**：26370 stars / 4275 forks（2026-09-24）
 
 ---
 
-**声明**：本文基于 2026-05-21 v2.4.0 源码与 README 整理。文中涉及的耗时、Token 消耗、星数等数字来自 README 描述或作者公开声明，未经独立复测；部分 14:00 后的 GitHub 直连 URL（`github.com` 域名）受网络抖动影响未做最终核链，但 `raw.githubusercontent.com` 仓库 raw 文件 200 验证通过，README 内容真实可查。
-
+**延伸阅读**：AiToEarn 的 MCP 接入方式与站内另一篇同类项目解读可以对照着看——{{< relref "ai-agent/xiaohongshu-mcp-xiaohongshu-model-context-protocol-guide.md" >}}（小红书 MCP，同样走"AI 工具直连社交平台"的路线）；想深入 MCP 协议本身，见 {{< relref "ai-agent/anthropic-claude-api-mcp.md" >}}。

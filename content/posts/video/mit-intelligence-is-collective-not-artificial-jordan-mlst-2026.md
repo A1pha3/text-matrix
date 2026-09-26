@@ -10,9 +10,9 @@ tags: ["集体智能", "AI理论", "统计学", "经济学"]
 
 读完这篇文章，你至少能回答一个问题：Jordan 说的"智能是集体的"到底是什么意思，跟我有什么关系。
 
-他的核心判断是：把 AI 系统当市场而不是大脑。围绕这个判断，文章会铺开他的"集体智能三角"（计算 + 推断 + 经济），再用数据市场、AlphaFold 案例和 LLM 过度自信三个实例把三角落地，最后给出研究者、工程师、监管者、学生各自的读法。
+他的核心判断只有一句：把 AI 系统当市场，而不是大脑。文章先讲清这个判断和他的"集体智能三角"（计算 + 推断 + 经济），再用三个实例检验它——三层数据市场、AlphaFold 的置信区间、LLM 的过度自信——最后给出研究者、工程师、监管者、学生各自的读法。
 
-先按「核心判断 → 系统地图 → 集体智能三角」建立全局视角，再按需跳到数据市场、AlphaFold 案例、LLM 过度自信三章；文末「采用顺序」可作为下一步的行动指南。
+建议先读「核心判断」和「系统地图」建立全局视角，三个实例按需跳读；文末「采用顺序」是行动指南。
 
 ### 适合谁读
 
@@ -42,11 +42,11 @@ tags: ["集体智能", "AI理论", "统计学", "经济学"]
 
 ## 核心判断
 
-Michael I. Jordan（UC Berkeley / Inria 教授，美国科学院、工程院、艺术与科学院三院院士，常被媒体称作"机器学习之父"）2026 年 5 月在 Machine Learning Street Talk 接受了 77 分钟长访谈（[YouTube AREWYbVtX64][3]），主题是 **Intelligence is collective, not artificial**。访谈的核心论点只有一句话：
+Michael I. Jordan（UC Berkeley / Inria 教授，美国科学院、工程院、艺术与科学院三院院士）2026 年 5 月在 Machine Learning Street Talk 接受了 77 分钟长访谈（[YouTube AREWYbVtX64][3]），主题是 **Intelligence is collective, not artificial**。访谈的核心论点只有一句话：
 
 > **智能是集体的，不是人工的。把 AI 系统视作"市场"——而不是"大脑"或"助理"——才是 AI 走向成熟工程学科的必经之路。**
 
-Jordan 在 2025 年 7 月发表了配套论文《[A Collectivist, Economic Perspective on AI][1]》（arXiv:2507.06268），把这条论点扩展成了 14 页的数学 + 案例分析。访谈和论文彼此印证，是当前 AI 学术界少数几个**直接挑战 AGI 路线**的论述。
+Jordan 在 2025 年 7 月发表了配套论文《[A Collectivist, Economic Perspective on AI][1]》（arXiv:2507.06268），把这条论点扩展成了数学推导 + 案例分析。访谈和论文彼此印证，是当前 AI 学术界少数几个**直接挑战 AGI 路线**的论述。
 
 这条判断不只是"另一种视角"，它直接反驳了当前 AGI 路线（以 OpenAI / Anthropic / DeepMind 为代表）的方法论基础——"造一个能思考的大脑"。Jordan 的论证是：拟人化智能是科幻；AGI 是 PR 术语，让年轻人困惑；当前 LLM 商业模型（"坐在你肩膀上的秘书"）注定失败；真正能创造价值的是把 AI 嵌入到健康医疗、交通、金融等真实数据流中，并用经济学视角设计激励机制。
 
@@ -70,7 +70,7 @@ graph TD
   end
 
   subgraph "AGI 路线:拟人化大脑"
-    A1[认知科学视角<br/>Brain as Computer]
+    A1[认知类比<br/>Brain as Computer]
     A2[梯度下降<br/>Gradient Descent]
     A3[规模化<br/>Scale + Data]
     A1 --> A2 --> A3
@@ -122,7 +122,7 @@ Jordan 多次强调：这三条主线在**数学层面互补**，不是非此即
 
 ## 十五个核心论点
 
-下面 15 个论点按访谈顺序排列，每个都附原文要点 + 我的解读。
+下面 15 个论点按访谈顺序排列，每个配原话要点和本文的解读。
 
 ### 论点 1：智能是集体的，不是人工的
 
@@ -134,7 +134,7 @@ Jordan 多次强调：这三条主线在**数学层面互补**，不是非此即
 
 > *"I've never actually thought of myself as an AI researcher. I didn't read an AI book."*
 
-Jordan 的训练背景是统计学和认知科学，职业生涯横跨 operations research、Bayesian methods、推荐系统。这种跨学科训练让他能用"非 AI 内部人"的视角批评当前 AI 路径——他能看到 AGI 路线忽略的东西。
+Jordan 的学术出身是认知科学（UCSD 博士，师从联结主义先驱 David Rumelhart），此后长期在 Berkeley 统计系和电气工程与计算机科学系任教，是 LDA（潜在狄利克雷分配）、变分推断这些机器学习基础方法的奠基人之一。这种跨学科训练让他用"非 AI 内部人"的视角批评当前 AI 路径——他能看到 AGI 路线忽略的东西。
 
 ### 论点 3：AGI 是 PR 术语
 
@@ -152,7 +152,7 @@ AGI 这个术语本身没有清晰的数学定义，它的"作用"是吸引资�
 
 > *"Drewfus came up with this idea of the first step fallacy... we create something so amazing and we just think we're only one step away from being able to do anything."*
 
-做出一个智能 demo 不等于能做任何事。Amazon Echo 智能音箱很惊艳，但它不会因此"理解"你家的电力系统；AlphaFold 预测 200M 蛋白质结构很厉害，但它不会因此"理解"细胞内的化学动力学。**每一步 demo 都需要独立的系统设计，不能靠"通用智能"自动延伸到下一个领域**。
+引语里的 "Drewfus" 指哲学家 Hubert Dreyfus，他在 20 世纪 70 年代就批评过 AI 界的这种推理方式：迈出第一步，就宣布终点可达。做出一个智能 demo 不等于能做任何事。Amazon Echo 智能音箱很惊艳，但它不会因此"理解"你家的电力系统；AlphaFold 预测 200M 蛋白质结构很厉害，但它不会因此"理解"细胞内的化学动力学。**每一步 demo 都需要独立的系统设计，不能靠"通用智能"自动延伸到下一个领域**。
 
 ### 论点 6：当前 LLM 商业模型注定失败
 
@@ -170,7 +170,7 @@ AGI 这个术语本身没有清晰的数学定义，它的"作用"是吸引资�
 
 > *"Three layer thing... user, platform, data buyers... as soon as that third layer was introduced, the equilibrium has to shift because the user who's sending their data in just lost something."*
 
-当前互联网数据流是"用户 → 平台 → 数据买家"的三层结构。用户失去隐私，平台赚钱，数据买家获益，整个系统的社会总福利（social welfare）是次优的。Jordan 主张让平台提供"可调 differential privacy"作为差异化竞争——高隐私 vs 低隐私的服务对应不同的价格 / 数据质量，最终通过均衡达成社会福利最大化。
+当前互联网数据流是"用户 → 平台 → 数据买家"的三层结构。用户失去隐私，平台赚钱，数据买家获益，整个系统的社会总福利（social welfare）是次优的。Jordan 主张让平台把隐私保证做进产品——加入可审计的合同化噪声（即可控的 differential privacy），高隐私与低隐私的服务对应不同的价格与数据质量，通过均衡而非一刀切规定来逼近更高的社会福利。
 
 ### 论点 9：制药监管博弈是经典信息不对称
 
@@ -180,23 +180,23 @@ AGI 这个术语本身没有清晰的数学定义，它的"作用"是吸引资�
 
 ### 论点 10：AlphaFold 对"知识边缘问题"过度自信
 
-> *"Angelopoulos et al. (2023) showed that AlphaFold can give highly biased confidence intervals (intervals that are overly narrow and do not cover the ground truth) for certain queries involving proteins that exhibit quantum fluctuations."*
+访谈中 Jordan 谈到 AlphaFold 的一个麻烦：它在训练分布内的预测很准，但预测准不等于置信区间可信——对训练数据覆盖不到的问题（他举了蛋白质动态行为这类例子），模型给出的区间可能过窄，盖不住真值。
 
-AlphaFold 在训练集分布内的预测很准确，但科学家关心的是"知识边缘"——例如"蛋白质的量子涨落是否与磷酸化相关"。这类问题训练数据少，AlphaFold 会给出置信区间过窄（过于自信）的预测。解决方案是 **prediction-powered inference（PPI）**（[Angelopoulos et al. 2023][6]）——把少量 ground-truth 实验数据与大规模模型预测结合，给出统计上有效的置信区间。这篇论文的合著者里就有 Jordan 本人，这条路线正是他团队在做的。
+解决方案是 **prediction-powered inference（PPI）**（[Angelopoulos et al. 2023][6]）：把少量 ground-truth 实验数据与大规模模型预测结合，给出统计上有效的置信区间。PPI 论文在蛋白质组学、天文学、基因组学、遥感、人口普查分析和生态学数据集上验证了这套方法。这篇论文的合著者里就有 Jordan 本人，这条路线正是他团队在做的。
 
 ### 论点 11：e-values 与契约理论的等价
 
 > *"Statistical contract theory... it turns out that we can have incentive compatibility in contract land if and only if e-value in statistics land."*
 
-Jordan 团队发现一个深刻的数学等价：博弈论中"激励相容"（incentive compatibility，代理人愿意如实披露信息）和统计学中"e-values"（一种比 p-values 更灵活的可重复检验工具）是**同一个数学对象**。
+这是 Jordan 团队正在推进的 statistical contract theory（统计合同理论）。论文中对应的落点是 Bates et al. (2024) 的工作：用 e-values 构造支付菜单式的合同，即使数据提交方策略性造假，Leader 也能把假阳性、假阴性的概率压在可控范围内。
 
-这个等价深的地方在于：激励相容和 e-value 在做的其实是同一件事——设计一个规则，让"说谎没有好处"。激励相容的契约，让隐瞒真实类型的代理人无法获利；e-value 检验，让"假阳性"的期望值被压到可控范围。两者都在回答"如何设计一个没人能靠造假占便宜的系统"。这条等价意味着设计经济机制和设计统计检验在数学层面是同一类问题，可能催生新一代"机制 + 推断"联合算法。
+深的地方在于两边的结构同构：激励相容的契约让隐瞒真实类型的代理人无利可图，e-value 检验把"假阳性"的期望压到可控范围——两者都在回答"如何设计一个没人能靠造假占便宜的系统"。设计经济机制和设计统计检验，在数学层面是同一类问题，这可能催生新一代"机制 + 推断"联合算法。
 
 ### 论点 12：鸭子纳什均衡
 
 > *"All the ducks went to the same side of the lake... if all the ducks have that same uncertainty, then they can sample with probability 2/3 and go to this side versus 1/3... that's a Nash equilibrium."*
 
-这是一个经典的多主体协同进化问题。如果所有鸭子都按"最可能的一侧"行动（左岸概率 2/3），资源会被过载。正确策略是按 2/3 概率去左岸、1/3 概率去右岸——这是**纳什均衡**：单个鸭子改变策略不会更优。贝叶斯期望最大化会得出"全部去左岸"的错误结论，因为它忽略了多主体竞争。
+这是 Jordan 常用的多主体例子，论文中的对应版本是小鼠走迷宫的 probability matching 实验：食物在左支路的比例是 2/3，小鼠也大约按 2/3 的频率走左支路。放到鸭子身上：如果所有鸭子都按"最可能的一侧"行动——全去左岸——左岸资源会被过载，群体的期望收益反而下降。按 2/3 概率去左岸、1/3 概率去右岸，恰好是不存在单方面偏离动机的混合策略，也就是**纳什均衡**：单个鸭子改变策略不会更优。贝叶斯期望最大化会得出"全部去左岸"的错误结论，因为它忽略了多主体竞争。
 
 ### 论点 13：数据的"年龄元数据"应纳入不确定性
 
@@ -206,9 +206,15 @@ Jordan 团队发现一个深刻的数学等价：博弈论中"激励相容"（in
 
 ### 论点 14：LLM 过度自信问题（Sun et al. 2025）
 
-Jordan 引用了一项 2025 年的实证研究（Sun et al.，见文末）：*"Large language models are overconfident and amplify human bias."*
+Jordan 引用了一项 2025 年的实证研究：Fengfei Sun、Ningke Li、Kailong Wang 与 Lorenz Goette 的 [*Large Language Models are overconfident and amplify human bias*](https://arxiv.org/abs/2505.02151)。
 
-研究发现，LLM 不仅在不确定时表现出过度自信（confidence 高但 accuracy 低），还会**放大人类的认知偏差**——把人类的细微偏差放大成显著偏差。这与 Jordan 在访谈中反复强调的"不要把 AI 当真理之源"一致。
+研究模仿行为实验的协议：用算法生成有标准答案的推理题，让模型作答并报告置信度，再与人类被试在同一批题目上对比。三个发现直接支撑 Jordan 的判断：
+
+- 五个被测 LLM 全部过度自信，对"答案正确"的概率高估 20% 到 60%；
+- 模型越没把握，偏差相对人类放大得越急剧——人类不确定时会收窄声明，模型反而不确定还要自信；
+- 让人类参考 LLM 的答案再作答，准确率上升，但答案里的过度自信程度翻了一倍以上。
+
+第二点尤其值得注意：问题不在"模型有时会错"，而在"模型错的时候不自知"，这会顺着使用链路传给人类。
 
 ### 论点 15：批评 Silicon Valley 的"cream off the top"文化
 
@@ -274,9 +280,9 @@ Jordan 引用了一项 2025 年的实证研究（Sun et al.，见文末）：*"L
 - 高噪声数据（ε=0.1）价值低，价格低
 - 低噪声数据（ε=10）价值高，价格高
 
-**Step 4：均衡 + 社会福利最大化**
+**Step 4：均衡 + 社会福利**
 
-通过数学建模可以证明：在 ε 可调 + 用户理性 + 数据买家按质量定价的均衡下，**社会总福利高于"统一 ε=1"或"无 differential privacy"两种极端**。原因是高隐私用户的存在创造了"低噪声数据稀缺性"，让平台和数据买家有动力提供差异化服务。
+在这个设定下可以比较三种制度：统一 ε、无 DP、差异化菜单。哪种制度对用户或社会总福利更好，不是拍脑袋能定的——这正是需要数学推导的原因。
 
 ### 数学上的难点
 
@@ -287,19 +293,19 @@ Jordan 引用了一项 2025 年的实证研究（Sun et al.，见文末）：*"L
 - 数据买家按市场清算定价
 - 最终要求：**没有用户愿意偏离均衡选择**（激励相容）
 
-Jordan 团队在论文中给了完整数学推导。核心结论是：当平台能从差异化菜单中获利更多时，**激励兼容的菜单设计会自然带来更高的社会总福利**——这比政府强制规定"统一隐私标准"更优。
+Fallah、Jordan、Makhdoumi、Malekian 在 [On Three-Layer Data Markets][2] 里给了完整推导，结论比"菜单一定更优"更谨慎：当市场上都是低成本平台时，直接禁止数据共享对用户最有利；成本混合的市场里，用户更偏好最低噪声要求；对高成本平台限噪声、对低成本平台禁共享的组合政策，能进一步提升用户效用。哪种监管工具最好，取决于市场结构——没有一刀切的答案。
 
 ### 为什么这层设计值得推敲
 
-如果金融、医疗、教育等所有领域都按"统一隐私标准 + 平台静默卖数据"运作，整个社会的**数据价值分配**是扭曲的。用户创造了 80% 的数据价值，但只获得 20% 的回报（服务折扣）。长期看，这种扭曲会**抑制用户分享数据的意愿**，反过来伤害所有参与者。
+如果金融、医疗、教育等所有领域都按"统一隐私标准 + 平台静默卖数据"运作，整个社会的**数据价值分配**是扭曲的：用户创造了数据，回报却以隐性服务折扣的形式被平台截留。长期看，这种扭曲会抑制用户分享数据的意愿，反过来伤害所有参与者。
 
-Jordan 的三层市场设计是当前"欧盟 AI 法案""美国 AI 行政命令"等监管框架的**理论基础**——它告诉监管者应该强制要求什么（如：可调 differential privacy），不应该强制什么（如：禁止所有数据共享）。
+Jordan 的三层市场设计没有直接写进哪部现行法规，但它给监管者提供了一种建模工具：把"要求平台提供可调的隐私噪声"和"直接禁止数据共享"放进同一个博弈模型里比较优劣，而不是靠直觉选边。欧盟 AI 法案、美国 AI 行政命令这类监管讨论里，缺的正是这一层。
 
 ---
 
 ## 任务流案例：AlphaFold 知识边缘问题如何修正
 
-把 Jordan 论点 10 走得更深——用一次"研究人员用 AlphaFold 预测蛋白质功能"的任务，展示 prediction-powered inference 如何修正置信区间。
+把 Jordan 论点 10 走得更深——用一次"研究人员用 AlphaFold 研究蛋白质功能"的任务，展示 prediction-powered inference 如何修正置信区间。本节是一个示意推演，数字为教学用的假设值，说明的是 PPI 的使用方式，不是某次真实实验的记录。
 
 ### 任务设定
 
@@ -327,7 +333,7 @@ Jordan 的三层市场设计是当前"欧盟 AI 法案""美国 AI 行政命令"�
 
 ### prediction-powered inference 修正
 
-PPI 算法的核心思想（[Angelopoulos et al. 2023][6]）：
+PPI 的核心思想（[Angelopoulos et al. 2023][6]）：
 
 ```
 1. 用 AlphaFold 在 200M 数据上的预测 + 100 个 ground truth 实验数据
@@ -336,20 +342,22 @@ PPI 算法的核心思想（[Angelopoulos et al. 2023][6]）：
 4. 输出修正后的置信区间
 ```
 
-数学上（示意）：
+写成估计量的形式（示意）：
 
 ```
-θ̂_corrected = θ̂_alphafold + (θ̂_ground_truth - α(θ̂_alphafold))
+θ̂_PPI = θ̂_全量预测 + (θ̂_小样本真值 - θ̂_小样本预测)
 ```
 
-其中 α 是 ground truth 数据上学到的"修正函数"。这个修正**不需要 200M 数据上重新训练**，只需要少量 ground truth（100 个）就足以校准置信区间。
+括号里这项叫 rectifier（修正项），衡量模型在小样本真值上的系统性偏差。预测越准，修正项越小，置信区间越窄。这个修正**不需要在 200M 数据上重新训练**，只需要少量 ground truth（100 个）就足以校准置信区间。
 
 ### 结果
 
-- 修正前的置信区间：[0.495, 0.505]（过窄、错误）
+按本节的假设值走一遍：
+
+- 修正前的置信区间：[0.495, 0.505]（过窄，未覆盖真实值）
 - 修正后的置信区间：[0.20, 0.50]（覆盖真实值）
 
-AlphaFold 是有用的工具，但不能盲信它的置信区间。在知识边缘问题上，必须**额外采集少量 ground truth** + 用 PPI 类算法修正。
+结论不受假设值影响：AlphaFold 是有用的工具，但不能盲信它的置信区间。在知识边缘问题上，必须**额外采集少量 ground truth**，再用 PPI 类算法修正。
 
 ### 对 LLM 的迁移
 
@@ -365,39 +373,34 @@ Jordan 在访谈中说得很直白："That's all not science fiction. That's wha
 
 ## LLM 过度自信：Jordan 论点 14 的实证依据
 
-Sun 等人 2025 年发表的论文（*Large language models are overconfident and amplify human bias*）给出了 LLM 过度自信的系统性实证。
+Sun 等人 2025 年的论文（*Large Language Models are overconfident and amplify human bias*，[arXiv:2505.02151](https://arxiv.org/abs/2505.02151)）把 Jordan 在访谈里的担忧做成了可测量的实验。
 
 ### 实验设计
 
-研究人员在 10 个标准 benchmark 上测试 GPT-4 / Claude 3 / Gemini Pro：
-
-- **每个问题**：模型给出 0-100 的置信度 + 答案
-- **测量**：
-  - **Calibration Error**：模型置信度 vs 实际准确率的偏差
-  - **Bias Amplification**：输入人类微小偏差时，模型输出偏差放大倍数
+作者用算法生成有标准答案的推理题，套用行为经济学的实验协议：模型作答并报告置信度，与人类被试在同一批题目上的表现对比。他们还测了第二件事：人类被试参考 LLM 的答案后再作答，LLM 的输入会怎样改变人的判断。
 
 ### 主要发现
 
-1. **过度自信**：LLM 在错误答案上平均给出 65% 的置信度（应接近 0%）。GPT-4 的 calibration error 在 10 个 benchmark 上平均 18%。
-2. **偏差放大**：当输入文本含有"我认为这个答案是 X"的暗示（X 错），LLM 输出 X 的概率从 30% 升到 55%（放大 1.8 倍）。
-3. **不确定性语言失效**：要求 LLM "如果不确定请说不知道"对过度自信只有轻微改善（calibration error 减少 3%）。
+1. **过度自信是普遍现象**：五个被测 LLM 无一例外，对"答案正确"的概率高估 20% 到 60%。
+2. **越不确定，偏差越大**：模型没把握时，回答的偏差相对人类急剧放大——人类在没把握时倾向收窄声明，模型反而不确定还要自信。
+3. **LLM 让人类更准，但更敢赌**：参考 LLM 答案后，人类作答准确率上升，但答案中的过度自信程度翻了一倍以上。
 
 ### 与 Jordan 论点的关系
 
-Jordan 论点 13 提到"数据年龄元数据应纳入不确定性"——Sun 的结果证明：**LLM 不仅忽略数据年龄，还忽略自身的不确定性**。两者都是"集体智能三角"缺失"经济 + 数据治理"的体现：
+论点 13 说数据缺"年龄元数据"，Sun et al. 的结果补上另一层：LLM 连"自身不确定"都没有如实表达。两件事指向同一个诊断——"集体智能三角"里经济与数据治理两条边缺失：
 
 - 经济维度缺失：LLM 没有"承认不知道"的激励（用户付费给"自信"的回答）
 - 数据治理缺失：LLM 训练数据的"年龄 / 来源 / 质量"元数据被丢弃
 
 ### 解决方案（Jordan 框架）
 
-Jordan 隐含的解决方案是：
+顺着 Jordan 的框架可以推出三条改进：
 
-1. **引入"经济激励"**：让 LLM 输出"不确定 + 解释原因"能获得更高奖励
+1. **引入"经济激励"**：让"输出不确定 + 解释原因"在训练目标和产品评价里获得正反馈
 2. **引入"数据治理"**：训练时保留数据年龄 + 来源 + 质量元数据
-3. **引入"机制设计"**：用户对"诚实承认不确定"的 LLM 支付更高费用
+3. **引入"机制设计"**：让"诚实承认不确定"的系统能在市场上获得溢价，而不是被淘汰
 
-这与 e-values + 统计契约理论结合，可能催生新一代"机制 + 推断"联合算法，是 Jordan 团队的活跃研究方向。
+这与 e-values + 统计契约理论的结合，是 Jordan 团队的活跃研究方向。
 
 ---
 
@@ -414,7 +417,7 @@ Jordan 隐含的解决方案是：
 ### 反映什么
 
 - 高 MMLU 分数说明模型在标准测试集上答得好，但**不能说明模型"理解"了知识**——可能只是记住了训练数据。
-- 低 calibration error 说明模型的"自信度"在标准测试集上校准，但**在分布外可能严重失调**（AlphaFold 案例已证实）。
+- 低 calibration error 说明模型的"自信度"在标准测试集上校准，但**在分布外可能严重失调**（上文 AlphaFold 示例就是这类风险）。
 - 高 HumanEval 通过率说明模型能写代码，但**不能说明模型能 debug 复杂系统**——debug 需要真正的因果推理。
 
 ### 不能推出什么
@@ -443,11 +446,11 @@ Jordan 明确指出：当前 benchmark 文化是"first step fallacy"的典型—
 
 ### 第四类：学生 / 年轻研究者
 
-按顺序读：访谈前 10 分钟（AGI 批评）+ 论文 Section 1-2（背景 + 三角）+ 访谈 50:00-60:00（教育 + 年轻人）+ Data 8 课程（Berkeley 的计算 + 推断 + 经济学入门课）。重点是不要被 AGI hype 吓退，也不要被 LLM "理解"叙事误导——还有很多"经济思维 + 数据治理 + 系统设计"领域值得做。
+按顺序读：访谈前 10 分钟（AGI 批评）+ 论文 Section 1-2（背景 + 三角）+ 访谈 50:00-60:00（教育 + 年轻人）+ Data 8 课程（Berkeley 的数据科学基础课，教计算与推断思维，Jordan 主张把经济思维也补进去）。重点是不要被 AGI hype 吓退，也不要被 LLM "理解"叙事误导——还有很多"经济思维 + 数据治理 + 系统设计"领域值得做。
 
 ### 一个提醒
 
-不要把 Jordan 的"集体智能"框架当作"对当前 AI 的整体否定"。他的批评是**方法论层面**的（拟人化路线 vs 集体智能路线），不是"AI 无用论"。事实上，Jordan 是 2000 年代 Amazon ML、推荐系统、Bayesian methods 的奠基人之一——他比大多数"AI 怀疑论者"更懂当前 AI 的能力边界。
+不要把 Jordan 的"集体智能"框架当作"对当前 AI 的整体否定"。他的批评是**方法论层面**的（拟人化路线 vs 集体智能路线），不是"AI 无用论"。事实上，Jordan 是 LDA、变分推断这些机器学习基础方法的奠基人之一——他比大多数"AI 怀疑论者"更懂当前 AI 的能力边界。
 
 ---
 
@@ -464,9 +467,9 @@ Jordan 在访谈结尾的这段话，把整场讨论收得很准：
 
 > *"I'm trying to become a bit of a historian. I mentioned chemical engineering, electrical engineering... you look back at the history there was something else going on. There were physicists and mathematicians and they had concepts. The current generation is just way too 'oh it's possible to build it.'... let's not give so much credit to the people that did that. It's the people 20, 30 years ago who did that."*
 
-换个角度看：当前 AGI 叙事让一代人相信"AGI 就要来了，所以我们没事可做"，这是**双重错误**。错误一：AGI 不会来，至少不是你想象的那种。错误二：即使 AGI 不来，AI 系统能创造的真实价值（在健康医疗、交通、金融的市场设计中）**远远超过当前 LLM demo 展示的能力**。
+换个角度看，当前 AGI 叙事让一代人相信"AGI 就要来了，所以我们没事可做"，这里叠着两个误判：一是把"AGI 要来"当成定论——至少它不会是你想象的那种；二是没看到 AGI 叙事之外，AI 系统能创造的真实价值（在健康医疗、交通、金融的市场设计中）远超当前 LLM demo 展示的能力。
 
-未来 5 年 AI 学术和工程的主战场，**不是更大的 LLM**，而是**把集体智能三角真正做出来**——把"计算 + 推断 + 经济"三种 thinking styles 结合起来，设计出真正能改善社会福利的 AI 生态系统。这条路比"做出更聪明的 AI"更难，也更有价值。
+照 Jordan 的判断推下去，未来 5 年 AI 学术和工程的主战场，未必是更大的 LLM，更可能是把集体智能三角真正做出来——把"计算 + 推断 + 经济"三种 thinking styles 结合起来，设计出能改善社会福利的 AI 生态系统。这条路比"做出更聪明的 AI"更难，也更有价值。
 
 ---
 
@@ -518,7 +521,7 @@ Jordan 框架是**学术 / 大型组织**级别的论述。对于 5 人初创公
 
 如果你读完想继续深入：
 
-- **数学层**：读 [Jordan 论文][1] 完整 14 页 + [Fallah et al. 2024][2]（数据市场数学）+ e-values 相关文献。这三篇论文 = 集体智能数学基础。
+- **数学层**：读 [Jordan 论文][1] 全文 + [Fallah et al. 2024][2]（数据市场数学）+ e-values 相关文献。这三篇论文 = 集体智能数学基础。
 - **工程层**：把 e-values 集成到 LLM 输出层（在 LLM 生成的 token 上加 e-value 校准），把三层数据市场逻辑部署到一个小型 fintech demo。
 - **政策层**：读欧盟 AI 法案 + 美国 AI 行政命令 + Jordan 论文 Section 5，看哪些条款有 Jordan 框架的理论支撑，哪些条款缺失。
 - **教育层**：学 Berkeley Data 8 课程（[inferential + computational thinking][7]）——Jordan 主张未来加入 economic thinking。
@@ -550,7 +553,7 @@ def llm_call_with_calibration(query, threshold=0.7):
 
 **任务 B（3 小时，产品层）**：为一个简单的推荐系统设计"隐私预算"差异化菜单。设你有 100 万用户的浏览记录，用 epsilon=0.1/1.0/10 三个隐私等级实现"隐私越高 → 推荐越不准 → 价格越低"的三层服务。用真实用户调研验证"隐私敏感用户是否愿意选高隐私低价方案"。
 
-**任务 C（1 周，论文层）**：选一篇最近 6 个月的 AI 顶会论文（NeurIPS / ICML / ICLR），分析它是否考虑了"计算 + 推断 + 经济"三角中的某几条。记录哪些维度被默认忽略，看是否补上后能加强论文贡献。Jordan 论文的 Reference 部分有 40+ 篇文献，代表了他的"三角思维的论据库"。
+**任务 C（1 周，论文层）**：选一篇最近 6 个月的 AI 顶会论文（NeurIPS / ICML / ICLR），分析它是否考虑了"计算 + 推断 + 经济"三角中的某几条。记录哪些维度被默认忽略，看是否补上后能加强论文贡献。Jordan 论文的参考文献部分是他的"三角思维论据库"，值得顺藤摸瓜。
 
 ---
 
@@ -558,7 +561,7 @@ def llm_call_with_calibration(query, threshold=0.7):
 
 **Q：Jordan 是反 AI 派吗？**
 
-不是。Jordan 是 2000 年代 Amazon ML 系统奠基人之一，他比多数"AI 怀疑论者"更懂当前 AI 能力边界。他的批评是**方法论层面**——拟人化路线 vs 集体智能路线，不是"AI 无用"。
+不是。Jordan 是 LDA、变分推断这些机器学习基础方法的奠基人之一，他比多数"AI 怀疑论者"更懂当前 AI 能力边界。他的批评是**方法论层面**——拟人化路线 vs 集体智能路线，不是"AI 无用"。
 
 **Q：集体智能三角和"AGI 安全"研究冲突吗？**
 
@@ -574,7 +577,11 @@ Jordan 明确说"anthropomorphizing of intelligence and understanding... is not 
 
 **Q：我应该从 Jordan 论文开始读还是从访谈开始？**
 
-如果你只有 2 小时：看访谈（77 分钟，MLST 频道有完整字幕）。如果你能投入 10+ 小时：先读论文 Section 1-3 建立框架，再看访谈补充语调，最后读 Section 4-5 的案例。
+如果你只有 2 小时：看访谈（MLST 频道有完整字幕）。如果你能投入 10+ 小时：先读论文 Section 1-3 建立框架，再看访谈补充语调，最后读 Section 4-5 的案例。
+
+**Q：读本文就够了，还是必须看原视频？**
+
+只需要判断"该不该往这个方向投入"的研究者、找设计原则的工程师和政策分析者，读本文就能拿到全部论点、案例和框架。值得点开原片的是两类人：要在论文或报告里引用 Jordan 原话的，以及想听他现场语气的——哪些问题他答得快，哪些他停顿了很久，这些是文字稿带不走的信息。
 
 ---
 
@@ -582,9 +589,9 @@ Jordan 明确说"anthropomorphizing of intelligence and understanding... is not 
 
 - 写作时间：2026-06-21 23:25
 - 写作依据：
-  - 访谈视频：[MLST - Intelligence is collective, not artificial - Prof. Michael I. Jordan][3]（77 分钟，2026-05-20 上传，31437 观看）
-  - 配套论文：[A Collectivist, Economic Perspective on AI][1]（arXiv:2507.06268v3，14 页，2025-07-08）
-  - 关联论文：[Fallah et al. 2024 On three-layer data markets][2] / Sun et al. 2025 LLM overconfidence / [Angelopoulos et al. 2023 PPI][6]
-- 待人工核实：文中引用的 Sun et al. 2025（LLM 过度自信）与 e-values 相关文献，原稿未给出可核验的 arXiv 编号，故未加超链接，发布前请补充或确认。
+  - 访谈视频：[MLST - Intelligence is collective, not artificial - Prof. Michael I. Jordan][3]（Machine Learning Street Talk 频道）
+  - 配套论文：[A Collectivist, Economic Perspective on AI][1]（arXiv:2507.06268，v1 2025-07-08）
+  - 关联论文：[Fallah, Jordan, Makhdoumi, Malekian 2024, On Three-Layer Data Markets][2] / [Sun, Li, Wang, Goette 2025, Large Language Models are overconfident and amplify human bias](https://arxiv.org/abs/2505.02151) / [Angelopoulos, Bates, Fannjiang, Jordan, Zrnic 2023, Prediction-Powered Inference][6]
+- 待人工核对：访谈时长（77 分钟）、上传日期与「采用顺序」一节中的访谈时间点取自原稿作者笔记，未经二次核对；正文涉及的 e-value 合同工作（Bates et al. 2024）以 Jordan 论文参考文献为准。
 
 [1]: https://arxiv.org/abs/2507.06268

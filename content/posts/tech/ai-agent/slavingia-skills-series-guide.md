@@ -1,8 +1,10 @@
 ---
 title: "Minimalist Entrepreneur Skills 专题导读：原理、案例与 Prompt 模板一站看完"
 date: "2026-03-30T18:20:00+08:00"
-lastmod: 2026-04-03T23:24:59+08:00
+lastmod: "2026-09-24T10:00:00+08:00"
 slug: slavingia-skills-series-guide
+github_repo: "slavingia/skills"
+source_key: "gh:slavingia/skills"
 aliases:
   - /posts/tech/slavingia-skills-series-guide/
 description: "一页看完 Minimalist Entrepreneur Skills 专题的阅读顺序：先理解方法论，再看真实案例，最后直接复制 Prompt 模板开始执行。"
@@ -31,6 +33,8 @@ tags: ["Claude Code", "Skill", "创业", "Minimalist Entrepreneur"]
 4. **把阅读转成行动**：读完后可以立刻决定自己接下来 1 步到 2 步该做什么。
 
 ## 先记住一个核心原则
+
+这套专题解读的对象，是 Gumroad 创始人 Sahil Lavingia 开源的 [slavingia/skills](https://github.com/slavingia/skills) 仓库：他把《The Minimalist Entrepreneur》（2021）里的创业方法论做成了 10 个可直接调用的 Claude Code Skill。专题的三篇文章分别负责方法论拆解、案例推演和模板落地。
 
 这个专题真正想解决的不是“给你更多创业灵感”，而是帮你建立一条**更不容易自我欺骗的执行顺序**。
 
@@ -92,7 +96,7 @@ Minimalist Entrepreneur Skills 这组文章的价值，就在于把这些高频�
 
 ### 第二篇：再看它如何在真实约束里落地
 
-- [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "slavingia-skills-real-startup-case.md" >}})
+- [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "../slavingia-skills-real-startup-case.md" >}})
 
 你会得到什么：
 
@@ -107,13 +111,13 @@ Minimalist Entrepreneur Skills 这组文章的价值，就在于把这些高频�
 
 ### 第三篇：最后直接复制模板开始做
 
-- [Minimalist Entrepreneur Skills 实战 Prompt 模板：从找社区到首批付费的可复制脚本]({{< relref "slavingia-skills-prompt-templates.md" >}})
+- [Minimalist Entrepreneur Skills 实战 Prompt 模板：从找社区到首批付费的可复制脚本]({{< relref "../slavingia-skills-prompt-templates.md" >}})
 
 你会得到什么：
 
 - 10 个 Skill 对应的直接可用模板。
 - 每个模板里最关键的输入字段。
-- 一个总诊断模板，帮你判断当前最该调用哪个 Skill。
+- 一个组合诊断模板，帮你判断当前最该调用哪个 Skill。
 
 适合谁先读：
 
@@ -194,10 +198,10 @@ Minimalist Entrepreneur Skills 这组文章的价值，就在于把这些高频�
 最好的下一步不是继续收藏，而是立刻进入其中一条路径：
 
 1. 如果你连服务谁都不确定，先读 [Minimalist Entrepreneur Skills 详解：把 Claude Code 变成创业决策操作系统]({{< relref "slavingia-skills-minimalist-entrepreneur.md" >}})。
-2. 如果你已经有方向，但不会落地，先读 [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "slavingia-skills-real-startup-case.md" >}})。
-3. 如果你已经准备开始执行，直接打开 [Minimalist Entrepreneur Skills 实战 Prompt 模板：从找社区到首批付费的可复制脚本]({{< relref "slavingia-skills-prompt-templates.md" >}})，复制第一个模板去跑。
+2. 如果你已经有方向，但不会落地，先读 [如何用 10 个 Minimalist Entrepreneur Skills 跑完一个真实约束创业案例]({{< relref "../slavingia-skills-real-startup-case.md" >}})。
+3. 如果你已经准备开始执行，直接打开 [Minimalist Entrepreneur Skills 实战 Prompt 模板：从找社区到首批付费的可复制脚本]({{< relref "../slavingia-skills-prompt-templates.md" >}})，复制第一个模板去跑。
 
 ---
 
 **文档元信息**
-难度：⭐⭐ | 类型：专题导航 | 更新日期：2026-04-03 | 预计阅读时间：8 分钟
+难度：⭐⭐ | 类型：专题导航 | 更新日期：2026-09-24 | 预计阅读时间：15 分钟

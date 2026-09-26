@@ -7,7 +7,7 @@ categories: ["技术笔记"]
 tags: ["Data Formulator", "数据可视化", "AI 数据分析", "微软研究院"]
 github_repo: "microsoft/data-formulator"
 source_key: "gh:microsoft/data-formulator"
-slug : data-formulator-ai-visualization-data-thread-guide
+slug: data-formulator-ai-visualization-data-thread-guide
 ---
 
 用 AI 做数据分析的人大多遇到过同一类挫败：要么是聊天式 BI——问一句答一句，追问三轮后上下文糊掉，再也说不清自己探索到了哪一步；要么是传统 BI——图表精细但每次改维度都要重新拖拽配置。微软研究院的 Data Formulator（Python，17k+ stars，MIT）试图在这两者之间落一个平衡点：**一个可视化工作台，AI 代理在背后干活，探索过程本身可分叉、可回溯**。当前稳定版 0.7，0.8 beta 1（2026-08-15）正在统一交互流。
@@ -35,7 +35,7 @@ Flint 值得单独一提：图表不是由 LLM 直接吐 SVG 或 matplotlib 代�
 
 版本史能看出项目重心的迁移：
 
-- **早期（0.1.x–0.2）**：多表自动 join、DuckDB 支持大数据量、外部数据加载器（MySQL / PostgreSQL / MSSQL / Azure Data Explorer / S3）、从截图和文本里抽取数据——这些是数据侧的地基。
+- **早期（0.1.x–0.2）**：多表自动连接（0.1.6）、DuckDB 支撑大数据量（0.2）、外部数据加载器（0.2.1：MySQL / PostgreSQL / MSSQL / Azure Data Explorer / S3 / Azure Blob），加上从截图和文本里抽取数据——这几项铺的是数据侧的地基。
 - **中期（0.2.2–0.5）**：代理模式、目标驱动的探索推荐、可编辑报告。
 - **0.7（2026-05）**：现在的形态——治理化的数据源连接、统一 DataAgent + Data Thread、Flint 语义图表引擎 + 风格精修代理、持久化会话与工作区、中英双语 UI。
 - **0.8 beta 1（2026-08-15）**：统一「加载 → 提问 → 审视结果 → 分叉」的单一流，扩充数据源（含 Databricks），图表推荐与主题样式增强。
@@ -63,7 +63,7 @@ Docker：
 docker compose up --build   # 同样访问 localhost:5567
 ```
 
-0.8 预览版：`uvx data_formulator@0.8.0b1`。另有桌面版（Windows / macOS）从 CI 构建产物下载——注意官方警告：预览构建**未签名未公证**，绕过系统警告前务必确认来源是本仓库的 artifacts 或 releases。`uvx data_formulator --help` 可看自定义端口、沙箱模式、数据存储位置等选项。
+0.8 预览版：`uvx data_formulator@0.8.0b1`，或 `pip install --pre data_formulator==0.8.0b1`。另有桌面版（Windows / macOS）从 CI 构建产物下载——注意官方警告：预览构建**未签名未公证**，绕过系统警告前务必确认来源是本仓库的 artifacts 或 releases。`uvx data_formulator --help` 可看自定义端口、沙箱模式、数据存储位置等选项。
 
 ## 一个探索任务怎么走
 
@@ -84,3 +84,10 @@ docker compose up --build   # 同样访问 localhost:5567
 - **注意**：0.7 → 0.8 正在交互重构期，beta 版适合尝鲜不适合依赖；桌面构建未签名；核心交互假设「探索为主」，如果你的日常是「每月跑同一套固定图表」，它带来的增益有限。
 
 Data Formulator 对「AI + 数据分析」的贡献是一个清醒的判断：聊天不是数据分析的好界面，**可分支的探索树才是**。把 AI 的生成能力和可视化工作台的空间感结合起来，这条路比「更聪明的聊天机器人」更接近分析师的真实工作方式。
+
+## 来源与进一步阅读
+
+- 项目仓库：[microsoft/data-formulator](https://github.com/microsoft/data-formulator)，版本与 News 以 README 和 [CHANGELOG](https://github.com/microsoft/data-formulator/blob/main/CHANGELOG.md) 为准。
+- 图表引擎：[microsoft/flint-chart](https://microsoft.github.io/flint-chart/) —— 独立的开源可视化语言，可单独使用。
+- 初版说明：[微软研究院博客](https://www.microsoft.com/en-us/research/blog/data-formulator-exploring-how-ai-can-help-analysts-create-rich-data-visualizations/)。
+- 在线体验：[data-formulator.ai](https://data-formulator.ai/)。

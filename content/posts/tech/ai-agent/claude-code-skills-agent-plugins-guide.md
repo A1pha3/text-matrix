@@ -6,22 +6,23 @@ source_key: "gh:alirezarezvani/claude-skills"
 aliases:
   - /posts/tech/claude-code-skills-agent-plugins-guide/
 date: "2026-03-31T12:35:00+08:00"
+lastmod: "2026-09-26T12:00:00+08:00"
 categories: ["技术笔记"]
 tags: ["Claude Code", "AI 编程", "Skills", "OpenClaw", "Cursor"]
-description: "解析 alirezarezvani/claude-skills：362 个技能、18 个领域、支持 13 个 AI 编码工具的技能库。从技能包结构、Skills/Agents/Personas 分层、Orchestration 编排到安装引入顺序。"
+description: "解析 alirezarezvani/claude-skills：388 个技能、20 个领域、支持 13 个 AI 编码工具的技能库。从技能包结构、Skills/Agents/Personas 分层、Orchestration 编排到安装引入顺序。"
 ---
 
 # Claude Code Skills & Plugins：AI 编程智能体技能库完全指南
 
 AI 编程工具缺的往往不是知识，而是可重复的工作流。通用模型通晓概念，却不太擅长把概念落成一套能跑、可维护的具体做法。alirezarezvani/claude-skills 的解法，是把领域专家的决策流程写进文件，让 AI 加载后照着执行，而不是靠训练数据里的模糊记忆临场发挥。
 
-截至 2026-08-06，这个仓库收录 362 个技能、102 个 Agent、7 个 Persona、116 个命令，覆盖 18 个领域，能靠一份 `convert.sh` 分发到 13 个编码工具。数量不是重点，真正值得看的是三件事：技能包怎么组织、Skills/Agents/Personas 怎么分层、无框架的编排协议怎么把跨领域的活串起来。
+截至 2026-09-26，这个仓库收录 388 个技能、118 个 Agent、7 个 Persona、150 个命令，覆盖 20 个领域，能靠一份 `convert.sh` 分发到 13 个编码工具。数量不是重点，真正值得看的是三件事：技能包怎么组织、Skills/Agents/Personas 怎么分层、无框架的编排协议怎么把跨领域的活串起来。
 
 ---
 
 ## 系统地图
 
-一个技能包由三部分组成：`SKILL.md` 定义工作流和决策框架，`tools/` 放纯标准库的 Python 脚本，`references/` 放模板和检查清单。仓库里这类技能包有 362 个。
+一个技能包由三部分组成：`SKILL.md` 定义工作流和决策框架，`scripts/` 放纯标准库的 Python 脚本，`references/` 放模板和检查清单。仓库里这类技能包有 388 个。
 
 ```mermaid
 flowchart LR
@@ -34,26 +35,28 @@ flowchart LR
     C --> MT["Cursor / Aider / Windsurf / Kilo Code<br/>OpenCode / Augment / Antigravity"]
 ```
 
-下面这张表把 18 个领域和技能数对应起来，方便你判断哪些领域值得先看。
+下面这张表把 20 个领域和技能数对应起来，方便你判断哪些领域值得先看。
 
 | 领域 | 技能数 | 覆盖方向 |
 |------|--------|---------|
-| Engineering — Core | 52 | 架构、前后端、全栈、QA、DevOps、SecOps、Playwright Pro |
-| Engineering — POWERFUL | 84 | Agent 设计、RAG 架构、数据库设计、CI/CD、安全审计、MCP 构建 |
+| Engineering — Core | 53 | 架构、前后端、全栈、QA、DevOps、SecOps、AI/ML、数据、Playwright Pro |
+| Engineering — POWERFUL | 93 | Agent 设计、RAG 架构、数据库设计、CI/CD、安全审计、MCP 构建 |
 | Product | 17 | 产品经理、UX 研究、落地页、SaaS 脚手架 |
-| Marketing | 48 | 内容、SEO + AEO、CRO、增长、销售（8 个分组） |
-| Productivity | 11 | capture、email、reflect、weekly-review、deep-work、meetings |
-| Marketing（顶层 landing） | 1 | 单文件 HTML 落地页生成 |
-| Research（学术） | 9 | litreview、grants、patent、deep-research 等 |
+| Marketing | 49 | 8 个分组：内容、SEO + AEO、CRO、渠道、增长、情报、销售 |
+| Productivity | 12 | capture、email、reflect、weekly-review、deep-work、meetings |
+| Marketing（顶层） | 7 | 单文件 HTML 落地页、LinkedIn 运营 |
+| Research（学术） | 10 | litreview、grants、patent、deep-research 等 |
 | Research Operations | 5 | 临床研究、研发财务、市场研究、产品研究 |
 | Project Management | 9 | 高级 PM、scrum master、Jira、Confluence |
 | Regulatory & QM | 19 | ISO、FDA、GDPR、SOC 2、CAPA |
 | Compliance OS | 9 | 合规操作系统：控制项、证据、审计就绪 |
-| C-Level Advisory | 68 | 完整 C-suite 顾问 + founder-mode 代理 |
+| C-Level Advisory | 46 | 完整 C-suite 顾问 |
+| C-Level Agents（founder mode） | 22 | 13 个 cs-* persona 代理 + 21 个 /cs:* 命令 |
+| Agent Launcher | 6 | 构建、启动、评估 Claude Managed Agents |
 | Business & Growth | 5 | 客户成功、销售工程、收入运营 |
 | Business Operations | 7 | 流程映射、供应商管理、采购优化 |
 | Commercial | 8 | 定价策略、联合合作、RFP 应答 |
-| Finance | 4 | 财务分析、SaaS 指标、投资顾问 |
+| Finance | 5 | 财务分析、SaaS 指标、投资顾问 |
 | Loop Library | 1 | 有边界 AI-agent 循环的发现与设计 |
 | Markdown → HTML | 5 | markdown 转交互式 HTML 工具链 |
 
@@ -74,7 +77,7 @@ flowchart LR
 
 **Agents** 在 Skills 之上加了"该做什么"的判断。`/security-agent` 不等人命令，会自己扫描项目里值得审计的地方，再按需拉起对应技能。
 
-**Personas** 改的是思考框架，不绑定具体任务。给 AI 设定 `"Think like a startup CTO"` 后，它在讨论技术选型时会自动带上成本、团队能力、迁移风险的权衡。仓库预置了 Startup CTO、Growth Marketer、Solo Founder 三个 Persona，用法是复制到 `~/.claude/agents/` 或通过 `convert.sh` 转换。
+**Personas** 改的是思考框架，不绑定具体任务。给 AI 设定 `"Think like a startup CTO"` 后，它在讨论技术选型时会自动带上成本、团队能力、迁移风险的权衡。`agents/personas/` 下预置了 7 个 Persona，README 重点推荐其中三个：Startup CTO、Growth Marketer、Solo Founder，用法是复制到 `~/.claude/agents/` 或通过 `convert.sh` 转换。
 
 三层配合使用，而不是只挑一层。仓库为怎么组合它们单独写了编排协议（见下文任务流）。
 
@@ -82,23 +85,24 @@ flowchart LR
 
 ## 核心机制：技能包怎么组织
 
-一个技能包的结构是固定的，`SKILL.md` 是核心，它定义了 AI 在该领域如何提问、执行和验证。
+每个技能以 Claude Code 插件包的形式发布，`SKILL.md` 是核心，它定义了 AI 在该领域如何提问、执行和验证。
 
 ```text
-<skill-name>/
-├── SKILL.md           # 技能核心定义：流程、决策框架、验证标准
-├── README.md          # 人类可读的使用说明
-├── CLAUDE.md          # AI 智能体的配置与指令
-├── tools/             # 可选：Python 工具脚本
-├── references/        # 可选：模板、检查清单
-└── package.json       # 技能元数据
+<skill-name>/                  # 插件包顶层
+├── README.md                  # 人类可读的使用说明
+├── .claude-plugin/
+│   └── plugin.json            # 插件元数据
+└── skills/<skill-name>/       # 技能本体
+    ├── SKILL.md               # 技能核心定义：流程、决策框架、验证标准
+    ├── references/            # 可选：模板、检查清单
+    └── scripts/               # 可选：Python 工具脚本
 ```
 
-一份合格的 `SKILL.md` 通常包含：目标声明、前置条件、执行流程、决策框架、验证标准。执行流程里每一步都写明输入、输出和检查点，AI 照着走完就能确认任务质量。
+一份合格的 `SKILL.md` 通常包含：目标声明、前置条件、执行流程、决策框架、验证标准。执行流程里每一步都写明输入、输出和检查点，AI 照着走完就能确认任务质量。仓库根目录的 `SKILL-AUTHORING-STANDARD.md` 是官方模板：frontmatter 声明名称和触发词，正文以"你在某领域是专家"开场，先收集上下文再动手，工作流按模式拆分。
 
-**tools/ 是自动化能力的承重墙**。仓库里 644 个 Python 脚本全部只用标准库，零第三方依赖，这是刻意为之的约束：脚本在任何 Python 环境都能直接跑，不会因为 pip 安装失败而中断一条技能链。每个脚本只做一件事，靠管道组合出复杂功能。外部命令（如 `curl`、`jq`、`git`）在脚本内部有 fallback 或明确的依赖声明。
+**scripts/ 是自动化能力的承重墙**。仓库里 727 个 Python 脚本全部只用标准库，零第三方依赖，这是刻意为之的约束：脚本在任何 Python 环境都能直接跑，不会因为 pip 安装失败而中断一条技能链。每个脚本只做一件事，靠管道组合出复杂功能。外部命令（如 `curl`、`jq`、`git`）在脚本内部有 fallback 或明确的依赖声明。
 
-**references/ 是支撑材料**。741 份模板、检查清单和领域知识文件，让技能在具体场景里有可以套用的底稿。
+**references/ 是支撑材料**。README 自报 823 份模板、检查清单和领域知识文件（2026-09-26 实测 843 份，徽章数字略有滞后），388 个技能里 282 个带这个目录，让技能在具体场景里有可以套用的底稿。
 
 整套结构解答了一个问题：为什么技能比零散提示词可靠。因为工作流被写进了文件，AI 每一步的输入输出都是预先定义的，交接给下一个技能时不需要重新猜测上下文。
 
@@ -202,11 +206,11 @@ README 用一个 6 周的产品发布示例把机制串起来：
 
 先说明这些数字在测什么：它们是仓库的自报口径（README 徽章 + 技能总览表），度量的是"技能的静态规模"，不是"技能的运行效果"。基于这个前提，能读出三点：
 
-1. **363 左右的总量里有明显的金字塔结构**。C-Level Advisory（68）和 Engineering（Core 52 + POWERFUL 84）占了近一半。这说明仓库的定位偏向"决策辅助 + 工程落地"，而不是纯代码生成。
-2. **18 个领域是对"AI 编程工具"的泛化**。Marketing、Product、Compliance、Commercial 这些和写代码关系不大的领域也在，意味着它把"编码智能体"做成了"通用工作代理"。
-3. **不能推出**"技能越多越好用"。362 个技能全部加载会给上下文带来巨大负担，反而拖低输出质量。数量是规模信号，不是质量信号。
+1. **388 的总量里有明显的金字塔结构**。C-Level 两个领域（Advisory 46 + Agents 22）和 Engineering 两个领域（Core 53 + POWERFUL 93）合计 214 个，占了一半还多。这说明仓库的定位偏向"决策辅助 + 工程落地"，而不是纯代码生成。
+2. **20 个领域是对"AI 编程工具"的泛化**。Marketing、Product、Compliance、Commercial 这些和写代码关系不大的领域也在，意味着它把"编码智能体"做成了"通用工作代理"。
+3. **不能推出**"技能越多越好用"。388 个技能全部加载会给上下文带来巨大负担，反而拖低输出质量。数量是规模信号，不是质量信号。
 
-GitHub 侧的事实（API，2026-08-06 验证）：Stars 23,495、Forks 3,247、主语言 Python、MIT 许可证、默认分支 main、创建于 2025-10-19、最近推送 2026-07-17。项目通过 SkillCheck 验证（getskillcheck.com）。
+GitHub 侧的事实（API，2026-09-26 验证）：Stars 26,472、Forks 3,732、主语言 Python、MIT 许可证、默认分支 main、创建于 2025-10-19、最近推送 2026-08-30。项目通过 SkillCheck 验证（getskillcheck.com）。
 
 ---
 
@@ -228,6 +232,6 @@ GitHub 侧的事实（API，2026-08-06 验证）：Stars 23,495、Forks 3,247、
 
 ## 结语
 
-claude-skills 的价值不在 362 这个数字，而在它把"提示词"从每次手写变成了可复用、可编排、可跨工具分发的文件。SKILL.md + 纯标准库 tools 的结构，让技能在任何 Python 环境都能直接跑；convert.sh 让一份技能库散到 13 个工具；Orchestration 又给了它跨领域组合的方式。评估它只看一件事：你的工作流是否需要"跨工具分发 + 跨领域编排"。需要就用全套，不需要就挑几个技能手动复制，不必为规模买单。
+claude-skills 的价值不在 388 这个数字，而在它把"提示词"从每次手写变成了可复用、可编排、可跨工具分发的文件。SKILL.md + 纯标准库 scripts 的结构，让技能在任何 Python 环境都能直接跑；convert.sh 让一份技能库散到 13 个工具；Orchestration 又给了它跨领域组合的方式。评估它只看一件事：你的工作流是否需要"跨工具分发 + 跨领域编排"。需要就用全套，不需要就挑几个技能手动复制，不必为规模买单。
 
 **开源协议与社区**：MIT 许可证，可自由使用和修改。官方仓库：[alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills)。

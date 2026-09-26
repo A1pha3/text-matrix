@@ -12,11 +12,10 @@ tags: ["世界模型", "开源"]
 
 > **快速信息卡**
 > - **GitHub**: [Biohub/esm](https://github.com/Biohub/esm)
-> - **Stars**: 2,700+
-> - **Forks**: 300+
-> - **License**: NOASSERTION（GitHub 未能识别为标准许可，商用前需查阅仓库 LICENSE 文件）
+> - **Stars / Forks**: 约 2,700+ / 300+（快速波动，以仓库实时为准）
+> - **License**: ESMC 与 ESMFold2 组件为 MIT；仓库整体标记为 NOASSERTION，因为内含 ESM3（非商用协议），商用前需按使用场景确认 LICENSE
 > - **语言**: Python / Jupyter Notebook
-> - **维护状态**: 活跃（2026-07 仍有提交）
+> - **维护状态**: 活跃；`esm` 包已在 PyPI 发布（v3.4.1），ESMC / ESMFold2 也已接入 Hugging Face Transformers（v5.16.0 起）
 
 ## 学习目标
 
@@ -50,7 +49,7 @@ tags: ["世界模型", "开源"]
 
 ## 一句话判断
 
-esm 不是单个预测模型，而是一条从序列理解到结构预测、再到功能解释的完整推理链。ESMFold2 在蛋白质-蛋白质和抗体-抗原结合的基准上已展示出可比肩甚至超过 AlphaFold3 的成绩，ESM Atlas 把「世界模型」从概念推进到了可检索的生物学空间。值得注意的是，这些结论目前主要来自官方发布与预印本，第三方独立复现有限。
+esm 不是单个预测模型，而是从序列理解到结构预测、再到功能解释的一条链路。ESMFold2 在蛋白质-蛋白质与抗体-抗原结合基准上展示出接近甚至超过 AlphaFold3 的成绩，ESM Atlas 让「世界模型」变成可检索的生物空间。这些结论目前主要来自官方发布与预印本，第三方独立复现有限。
 
 ## 系统地图
 
@@ -96,11 +95,13 @@ with torch.inference_mode():
     output = model(**inputs)
 ```
 
-官方目前说明 PyPI 包尚未正式发布，需通过 `pip install esm@git+https://github.com/Biohub/esm.git@c94ed8d` 从 GitHub 安装。
+`esm` 已发布到 PyPI，直接 `pip install esm` 即可；ESMC、ESMFold2 也支持通过 Hugging Face Transformers（v5.16.0 起）加载。使用 6B 模型前先确认 GPU 显存与 Flash Attention 依赖（见下文「能力边界」）。
 
 ### ESMFold2：融合语言模型的结构预测
 
 ESMFold2 用 ESMC-6B 的表征作为输入，接一个扩散（diffusion）结构预测头，直接从序列产出原子分辨率的全原子结构。相比早期 ESMFold，它可以处理蛋白质、DNA、RNA、小分子配体以及带修饰的氨基酸组成的复合体系。
+
+架构上，ESMC-6B 的权重保持冻结：全部 80 层表征先汇成「成对表示」（表示任意两个残基间的关系），再送入 48 层循环折叠、最后以全原子扩散变换器去噪出原子坐标。这也解释了它的速度与精度：单序列模式下，抗体-抗原复合物的 DockQ 通过率可达 50%，高于依赖多序列比对（MSA）的 AlphaFold3 的 47%；补上 MSA 后进一步提升到约 53%。
 
 核心特性：
 
@@ -141,7 +142,7 @@ ESMC 隐藏层表征 → 稀疏自编码器(SAE) → 离散特征激活 → Agen
 4. **功能预估**：通过 ESM Atlas 查询候选序列的表征特征，评估潜在活性
 5. **实验迭代**：在实验室合成并测试，按实测结果调整序列
 
-Biohub 在 2026 年 5 月的发布说明与一份预印本中报告，用这套流程针对与癌症和免疫相关的 5 个靶点完成了一次纯计算设计，搜索在**数天内**完成（而非数月到数年），所得 binder 在实验室验证中表现出高亲和力、高特异性和高稳定性，且与公开数据库已知序列相似度很低，倾向于是从头（de novo）生成的新解。需要说明：这批结果来自官方发布与预印本，完整实验方案和第三方复现尚未公开。
+Biohub 在 2026 年 5 月的发布说明与一份预印本中报告，用这套流程针对 5 个治疗相关靶点——受体酪氨酸激酶 EGFR、PDGFRβ，免疫检查点 PD-L1、CTLA-4，以及免疫信号调节因子 CD45——完成纯计算设计，搜索在**数天内**完成（而非数月到数年）。所得 binder 在实验室验证中表现出高亲和力（约 68 pM–70 nM）、高特异性和高稳定性：两个设计模态（从头迷你蛋白与 scFv 抗体片段）在较高算力下的实验命中率分别约 36%–88% 与 15%–29%；其中一个 EGFR 迷你蛋白经冷冻电镜确认计算预测的结合位点，与实验结构 RMSD 约 1.2 Å；PD-L1 binder 还能在细胞免疫检查点实验中恢复 T 细胞信号。这些序列与公开数据库已知序列相似度很低，倾向于是从头（de novo）生成的新解。需要说明：全部结果来自官方发布与预印本，第三方复现与临床前评估尚未公开。
 
 ## 能力边界与不确定性
 
@@ -188,14 +189,14 @@ Biohub 在 2026 年 5 月的发布说明与一份预印本中报告，用这套�
 | ESMFold2 | 冻结 ESMC-6B + 扩散头 | 序列 ± 配体 | 3D 结构（cif/pdb）+ 置信度 |
 | ESM Atlas SAE | 从 ESMC 表征提取 | ESMC 表征 | 约 1.6 万个可解释特征 |
 
-许可：GitHub 将仓库标记为 NOASSERTION，表明它不是 MIT 或 Apache 这类标准开放许可，实际条款以仓库 LICENSE 文件为准，商用前需确认。
+许可：ESMC 与 ESMFold2 以 MIT 协议开源，ATLAS 与上述权重也随仓库公开。但仓库同时托管 ESM3（采用非商用协议），GitHub 因而整体标记为 NOASSERTION。区分使用场景：只跑 ESMC / ESMFold2 走 MIT；做生成式设计或调用 ESM3 相关接口时，需单独核对许可证。
 
 ## 如何开始
 
 ### 云平台（最快）
 
 ```python
-pip install esm  # PyPI 即将发布，当前建议用 git+... 安装
+pip install esm  # 已发布到 PyPI
 from esm.sdk import esmc_client
 model = esmc_client(model="esmc-600m-2024-12", url="https://biohub.ai", token="<your_token>")
 ```
@@ -272,7 +273,7 @@ A：ESMC-6B 与 ESMFold2 都需要较大的 GPU 内存。Biohub 云平台是最�
 A：特征由自动化流程生成，存在幻觉可能，更适合作为假设生成工具，而非确定性结论，不应直接用于临床决策。
 
 ### Q4: 可以商用吗？
-A：GitHub 将仓库标记为 NOASSERTION，不是 MIT 或 Apache 标准许可。具体能否商用、以何种形式，需查看仓库 LICENSE 文件并咨询法律意见。
+A：ESMC 与 ESMFold2 组件采用 MIT 许可，可商用；仓库整体因同时托管 ESM3（非商用协议）而显示为 NOASSERTION。需使用生成式设计或 ESM3 相关能力时，按 LICENSE 文件确认后再咨询法律意见。
 
 ### Q5: 如何获取技术支持？
 A：可通过 GitHub Issues 或在官方渠道提问。科研类问题通常在 GitHub Issues 能得到社区或官方回复。
@@ -336,7 +337,7 @@ A：可通过 GitHub Issues 或在官方渠道提问。科研类问题通常在 
 
 1. **主要来源**：[Biohub 官方发布说明](https://biohub.org/news/world-model-of-protein-biology/)（2026-05-27）、[ESM 预印本](https://www.biorxiv.org/content/10.64898/2026.06.03.729735v1)、ESM GitHub 仓库。
 2. **断言强度**：ESMFold2 对比 AlphaFold3、binder 设计的成绩均为官方发布与预印本口径，第三方独立复现有限。
-3. **稳定性边界**：代码示例基于 ESM 现有 Python API，具体签名会随版本变化；PyPI 包尚未正式发布，需用 git+ 方式安装。
+3. **稳定性边界**：代码示例基于 ESM 现有 Python API（含 HF Transformers 集成），具体签名会随版本变化；`esm` 包已可通过 PyPI 安装。
 4. **时效性**：本文基于 2026 年 5–6 月的版本撰写，后续以官方为准。
 
 🦞 文档版本：2026-05-30 | ESM 版本：ESMC-6B / ESMFold2 | 来源：[GitHub](https://github.com/Biohub/esm)

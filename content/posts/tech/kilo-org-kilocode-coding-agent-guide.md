@@ -18,10 +18,10 @@ tags: ["MCP", "VS Code", "CLI"]
 
 - [学习目标](#学习目标)
 - [一、仓库定位：5 大入口的 Agentic 编码平台](#一仓库定位5-大入口的-agentic-编码平台)
-- [二、5 个内置 Agent 与"切 Agent"心智](#二5-个内置-agent-与切-agent-心智)
+- [二、内置 Agent 与"切 Agent"心智](#二内置-agent-与切-agent-心智)
 - [三、核心机制：500+ 模型 + Mid-Task Switching](#三核心机制500-模型--mid-task-switching)
 - [四、能力清单与 MCP 市场](#四能力清单与-mcp-市场)
-- [五、任务如何流过系统：从 Plan 到 Review 的端到端案例](#五任务如何流过系统从-plan-到-review-的端到端案例)
+- [五、任务如何流过系统：从 Architect 到 Code Reviewer 的端到端案例](#五任务如何流过系统从-architect-到-code-reviewer-的端到端案例)
 - [六、Autonomous Mode（CI/CD 场景）](#六autonomous-modecicd-场景)
 - [七、安装与各入口差异](#七安装与各入口差异)
 - [八、适用边界](#八适用边界)
@@ -36,9 +36,9 @@ tags: ["MCP", "VS Code", "CLI"]
 
 1. 说清 Kilo Code 5 大入口（VS Code / JetBrains / CLI / Cloud Agent / KiloClaw）各自的使用场景与限制，并判断自己该从哪个入口入手
 2. 解释 mid-task switching 在工程上的两个直接收益（实时折中、降级路径），并知道何时该切模型、何时不该切
-3. 区分 5 个内置 Agent（Code / Plan / Ask / Debug / Review）的职责边界，避免在错误阶段调用错误 Agent——尤其是 `Ask` 只读不改、`Plan` 先出方案再动文件
+3. 区分内置 Agent（Ask / Architect / Code / Debug / Orchestrator）的职责边界，避免在错误阶段调用错误 Agent——尤其是 `Ask` 只读不改、`Architect` 先出方案再动文件、评审另走 Code Reviewer
 4. 根据"是否需要 MCP 扩展、是否需要 CI/CD 自治、是否接受联网"判断团队是否适合采用 Kilo Code
-5. 在本地复现一次"Plan → Code → Review"的端到端任务流，并至少完成一次 mid-task 模型切换
+5. 在本地复现一次"Architect → Code → Code Reviewer"的端到端任务流，并至少完成一次 mid-task 模型切换
 
 ## 一、仓库定位：5 大入口的 Agentic 编码平台
 
@@ -54,17 +54,20 @@ Kilo Code README 把"哪里都能跑"放在最前面：
 
 README 里有一句值得单独拎出来："open source with open pricing"——开源 + 开放定价。前者意味着整个 Agent 逻辑、模型路由、自定义 Agent 框架都在 GitHub 上；后者意味着 Kilo 不会在模型调用上加 markup。
 
-## 二、5 个内置 Agent 与"切 Agent"心智
+## 二、内置 Agent 与"切 Agent"心智
 
-Kilo Code 提供了 5 个开箱即用的 Agent 角色：
+Kilo Code 提供了几个开箱即用的 Agent 角色：
 
 1. **Code**：默认 Agent，从自然语言生成 / 修改代码
-2. **Plan**：先出架构和实现计划，再动文件
+2. **Architect**：先出架构和实现计划，再动文件
 3. **Ask**：只读不改，专做代码库问答
 4. **Debug**：故障定位 + trace
-5. **Review**：PR 评审，覆盖性能、安全、风格、测试覆盖度
+5. **Orchestrator**：编排多 Agent 并行，规划、构建、评审同时推进
+6. **Custom**：按 YAML frontmatter 自定义子 Agent，可组合能力面
 
-切换 Agent 是一次心智切换——`Plan` 不是"写完代码再写计划"，而是"先写计划、用户确认、才动代码"；`Ask` 完全不动文件，只回答问题。这种设计把"什么时候需要 AI 改、什么时候只是问"拆得很干净。
+评审职责不放在内置 Agent 里，而是单独的产品 **Code Reviewer**，覆盖性能、安全、风格、测试覆盖度。
+
+切换 Agent 是一次心智切换——`Architect` 不是"写完代码再写计划"，而是"先写计划、用户确认、才动代码"；`Ask` 完全不动文件，只回答问题。这种设计把"什么时候需要 AI 改、什么时候只是问"拆得很干净。
 
 > 文档里明确支持"自定义 Agent"，可以组合能力面，但 README 没有展开自定义 DSL 的细节，本文不深入。
 
@@ -94,15 +97,15 @@ Kilo Code 的功能矩阵（直接取自 README）：
 
 MCP marketplace 是它的"可插拔面"。模型本身不擅长直接操作外部系统（数据库、CI、监控），MCP 提供了一套标准协议——Kilo Code 不需要为每个外部系统写专门适配，只要接 MCP server 就行。市面上 MCP server 越多，Kilo Code 能直接调用的外部系统就越多，不用等官方逐个写适配。
 
-## 五、任务如何流过系统：从 Plan 到 Review 的端到端案例
+## 五、任务如何流过系统：从 Architect 到 Code Reviewer 的端到端案例
 
-抽象的"5 个 Agent + 500+ 模型 + MCP"很难想象在一次真实任务里如何配合。下面用一个最小但完整的例子把机制串起来。
+抽象的"几个 Agent + 500+ 模型 + MCP"很难想象在一次真实任务里如何配合。下面用一个最小但完整的例子把机制串起来。
 
 场景：用户在 VS Code 里要给一个 Python 项目加"日志脱敏"功能，要求覆盖 `logging` 模块输出的 token、email、手机号。
 
-### Step 1：Plan Agent 出方案
+### Step 1：Architect Agent 出方案
 
-用户在 Kilo Code 面板选 `Plan` Agent，输入需求。Plan Agent 不动文件，只产出一份实现计划：
+用户在 Kilo Code 面板选 `Architect` Agent，输入需求。Architect Agent 不动文件，只产出一份实现计划：
 
 - 新增 `src/utils/redact.py`，提供 `redact_record(record: logging.LogRecord) -> str`
 - 在 `src/logger.py` 的 `setup_logging()` 里挂一个 `logging.Filter`
@@ -119,17 +122,17 @@ Code Agent 默认用一个便宜快模型（假设 Gemini Flash）先把 `redact
 
 Code Agent 写完代码后，通过 Kilo Code 的 terminal control 能力直接在 VS Code 集成终端里跑 `pytest tests/test_redact.py`。如果测试失败，Agent 读取失败输出，回到 Step 2 修代码，循环直到测试通过。
 
-### Step 4：Review Agent 评审
+### Step 4：Code Reviewer 评审
 
-用户切到 `Review` Agent，让它对本次改动做 PR 评审。Review Agent 不改代码，只输出意见：性能（正则是否预编译）、安全（是否漏了 SSRF 日志）、风格（是否符合现有 naming convention）、测试覆盖度（是否覆盖了多行日志）。
+用户把改动交给 Code Reviewer，让它做 PR 评审。Code Reviewer 不改代码，只输出意见：性能（正则是否预编译）、安全（是否漏了 SSRF 日志）、风格（是否符合现有 naming convention）、测试覆盖度（是否覆盖了多行日志）。
 
 ### Step 5：Ask Agent 答疑
 
-如果 Review 提了"为什么不覆盖 structlog"，用户可以用 `Ask` Agent 问"本项目有没有用 structlog"——Ask 只读不改，扫一遍代码库给出回答，不会偷偷动文件。
+如果评审提了"为什么不覆盖 structlog"，用户可以用 `Ask` Agent 问"本项目有没有用 structlog"——Ask 只读不改，扫一遍代码库给出回答，不会偷偷动文件。
 
 ### 机制串场
 
-这一次任务里穿过了：Agent 切换（Plan → Code → Review → Ask）、mid-task 模型切换（Flash → Sonnet）、terminal control（跑 pytest）、只读与可写 Agent 的边界隔离（Ask 不动文件）。如果接了 MCP server（比如内部代码规范库），Review 阶段还能自动比对团队规范。这就是 Kilo Code 把"入口、模型、能力"三层可插拔设计在一次任务里的实际形态。
+这一次任务里穿过了：Agent 切换（Architect → Code → Code Reviewer → Ask）、mid-task 模型切换（Flash → Sonnet）、terminal control（跑 pytest）、只读与可写 Agent 的边界隔离（Ask 不动文件）。如果接了 MCP server（比如内部代码规范库），评审阶段还能自动比对团队规范。这就是 Kilo Code 把"入口、模型、能力"三层可插拔设计在一次任务里的实际形态。
 
 ## 六、Autonomous Mode（CI/CD 场景）
 
@@ -149,7 +152,7 @@ README 给了一个非常明确的警告：
 
 ### VS Code
 
-直接装 `kilocode.Kilo-Code` 扩展。安装完注册账号就能拿到 500+ 模型访问权，截至撰写时包括 GPT-5.5、Claude Opus 4.7、Claude Sonnet 4.6、Gemini 3.1 Pro Preview（具体可用列表以官方页面为准）。
+直接装 `kilocode.kilo-code` 扩展。安装完注册账号就能拿到 500+ 模型访问权，截至撰写时包括 GPT-5.5、Claude Opus 4.6、Claude Sonnet 4.6、Gemini 3 系列（具体可用列表以官方页面为准）。
 
 ### CLI
 
@@ -207,7 +210,7 @@ paru -S kilo-bin
 
 ### 入门顺序
 
-1. **从 VS Code 扩展入手**：体验门槛最低，能直接感受 5 个 Agent 角色
+1. **从 VS Code 扩展入手**：体验门槛最低，能直接感受几个内置 Agent 角色
 2. **把 CLI 装上**：在终端跑 `kilo`，熟悉非 IDE 交互
 3. **试一次 mid-task switching**：在长任务里中途切换模型，对比效果
 4. **再上 `--auto` / Cloud Agent / KiloClaw**：把这三个当"高阶开关"用，不要一上来就全开
@@ -217,10 +220,10 @@ paru -S kilo-bin
 | 场景 | 推荐入口 | 推荐 Agent | 是否需要 MCP |
 |---|---|---|---|
 | 日常 IDE 编码 | VS Code 扩展 | Code + Ask | 视团队工具链而定 |
-| 大型重构前的方案设计 | VS Code / JetBrains | Plan | 否 |
-| PR 评审 | VS Code / Cloud Agent | Review | 接代码规范 MCP 更好 |
+| 大型重构前的方案设计 | VS Code / JetBrains | Architect | 否 |
+| PR 评审 | VS Code / Cloud Agent | Code Reviewer | 接代码规范 MCP 更好 |
 | CI/CD 跑测试 + 修代码 | CLI (`kilo run --auto`) | Code + Debug | 接 CI / 监控 MCP |
-| 长期后台任务 | KiloClaw | 自定义 | 通常需要 |
+| 多子任务并行推进 | VS Code / CLI | Orchestrator | 通常需要 |
 | 无本地机器的远程任务 | Cloud Agent | 任意 | 视任务而定 |
 
 ### 关键决策点
@@ -239,14 +242,14 @@ paru -S kilo-bin
 4. **Autonomous Mode**：`kilo run --auto` 适合什么场景、不适合什么场景？为什么 README 强调 "only use it in trusted environments"？
 5. **MCP 价值**：如果不接任何 MCP server，Kilo Code 还能做什么？接了 MCP server 之后多了什么能力？
 6. **入口选择**：一个纯终端用户（不用 VS Code / JetBrains）想用 Kilo Code，该走哪个入口？一个想在 CI/CD 里跑自治 Agent 的团队呢？
-7. **任务流**：回顾第五节的端到端案例，如果 Review Agent 发现了安全漏洞，下一步该切到哪个 Agent？为什么不能直接让 Review Agent 改代码？
+7. **任务流**：回顾第五节的端到端案例，如果 Code Reviewer 发现了安全漏洞，下一步该切到哪个 Agent？为什么不能直接让 Code Reviewer 改代码？
 
 ## 十一、进阶路径
 
 ### 入门 → 核心
 
 1. 装 VS Code 扩展，跑一次 `Code` Agent 写个简单函数
-2. 试一遍 5 个 Agent，感受"什么时候该切"
+2. 试一遍 Ask / Architect / Code / Debug，感受"什么时候该切"
 3. 在一个长任务里做一次 mid-task switching，观察上下文是否保留
 
 ### 核心 → 进阶
@@ -264,10 +267,12 @@ paru -S kilo-bin
 ## 十二、参考与延伸
 
 - 仓库：`https://github.com/Kilo-Org/kilocode`
-- VS Code Marketplace：`https://marketplace.visualstudio.com/items?itemName=kilocode.Kilo-Code`
+- 官网：`https://kilo.ai`
+- VS Code Marketplace：`https://marketplace.visualstudio.com/items?itemName=kilocode.kilo-code`
 - CLI npm：`https://www.npmjs.com/package/@kilocode/cli`
-- Cloud Agent：`https://app.kilo.ai/cloud`
+- Cloud Agents：`https://app.kilo.ai/cloud`
 - Code Reviews：`https://app.kilo.ai/code-reviews`
 - KiloClaw：`https://app.kilo.ai/claw`
+- 使用文档：`https://kilo.ai/docs`
 
-> 本文证据全部来自 Kilo Code README。未在 README 中明确给出的"自定义 Agent DSL 细节"、"模型路由策略"、"MCP 鉴权机制"，本文未作推断。文中提到的模型版本号（GPT-5.5、Claude Opus 4.7、Claude Sonnet 4.6、Gemini 3.1 Pro Preview）截至撰写时在可用列表内，后续可能变动。
+> 本文证据来自 Kilo Code 官方 README 与产品页。未在 README 中明确给出的"自定义 Agent DSL 细节"、"模型路由策略"、"MCP 鉴权机制"，本文未作推断。文中提到的模型版本号（GPT-5.5、Claude Opus 4.6、Claude Sonnet 4.6、Gemini 3 系列）截至撰写时在可用列表内，后续可能变动。

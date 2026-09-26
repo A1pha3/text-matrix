@@ -71,7 +71,7 @@ Flutter 的分层在 `docs/about/The-Engine-architecture.md` 里画得很清楚�
 └──────────────────────────────────────┘
 ```
 
-### 4.1 每一层的边界
+### 2.1 每一层的边界
 
 **Dart App** — 开发者写的业务代码。import `package:flutter/material.dart`，组合 widget tree。
 
@@ -83,9 +83,9 @@ Flutter 的分层在 `docs/about/The-Engine-architecture.md` 里画得很清楚�
 
 framework 和 engine 之间通过 `dart:ui` API 通信，engine 不知道上层 framework 的存在。embedder 和 engine 之间通过 Embedder API 通信，engine 不知道目标平台是 iOS 还是 Linux。
 
-### 4.2 为什么把渲染放在 C++ 而不是 Dart
+### 2.2 为什么把渲染放在 C++ 而不是 Dart
 
-Dart 完全可以自己实现一个软件渲染器（Flutter 早期在 Sky 引擎里就这么干过），为什么最后把渲染器下沉到 C++？三个原因按重要性排：
+Dart 完全可以自己实现一个软件渲染器（Flutter 早期在 Sky 引擎里就这么干过），最后还是把渲染器下沉到 C++。按重要性有三个原因：
 
 **性能**：把 Skia 完整移植到 Dart 意味着要重写一个生产级 2D 图形库（大约 100 万行 C++ 代码），并且在 Dart 里实现 GPU 命令队列、纹理管理、路径栅格化、所有 GLSL 着色器编译。
 
@@ -93,30 +93,11 @@ Dart 完全可以自己实现一个软件渲染器（Flutter 早期在 Sky 引�
 
 **Dart 的角色定位**：Dart 是个"足够快、足够简单、能编译到 ARM 的高级语言"，不是"低层系统语言"。把渲染、文本布局、I/O 留给 C++ 是为了把 Dart 留在它擅长的位置——应用层语言 + UI 组合。
 
-### 4.3 引擎迁移：flutter/engine archived（2025-02-25）
+### 2.3 引擎迁移：flutter/engine archived（2025-02-25）
 
-2025-02-25，flutter/engine 仓库发了最后一个 commit："Prepare for archive (#57288)"。
+2025-02-25，flutter/engine 仓库发了最后一个 commit："Prepare for archive (#57288)"。之后 C++ 引擎源码并入主仓库的 `engine/src/flutter/` 子树，framework 与 engine 两条线合到一个仓库、PR 流程合一，代价是仓库体积从 ~200 MB 涨到 ~448 MB。
 
-**迁移前**：
-- flutter/flutter — Dart framework
-- flutter/engine — C++ engine（独立仓库）
-- 跨仓库联动靠 `bin/internal/engine.version` 文件写 SHA
-
-**迁移后**：
-- flutter/flutter — 包含 framework + engine（在 `engine/src/flutter/` 子树）
-- 引擎和 framework 在同一个仓库，PR 流程合一
-
-从仓库的 commit 信息看，这次迁移要解决的是：
-1. **降低贡献门槛**——以前改一个 framework 行为可能涉及 engine，开发者要在两个仓库分别开 PR
-2. **避免版本对齐问题**——`engine.version` 文件容易出现"framework 期望的 engine 接口 vs engine 实际提供的接口"漂移
-3. **统一 CI**——engine 有自己的 LUCI 构建（Flutter 自建在 Google Cloud 的 CI），framework 有 GitHub Actions，CI 拓扑分离让单 PR 的端到端测试要跨两套系统
-
-**这次迁移的代价**：
-- 仓库体积从 ~200 MB 涨到 ~448 MB（engine/ 子树）
-- 一次 clone 拉取时间变长（master 单一分支）
-- engine 的 C++ 编译基础设施（GN + Ninja）从仓库根目录移到了 `engine/src/flutter/build/`
-
-实际效果：过去 4 个月（2025-02 到 2026-06）flutter/flutter 的 commit 数量稳定在每天 50-80 个，其中 40% 左右是 engine 相关的提交（Skia 滚动、Impeller 改动、平台 embedder 修复）。这次合并让 framework + engine 的协同改动的 PR 周期从 2 个仓库各自 review 压缩到 1 个 PR。
+这次迁移要解决什么问题、付出哪些代价、16 个月后的实际效果，§7 有完整拆解。
 
 ## §3 渲染管线：Skia vs Impeller
 
@@ -189,14 +170,14 @@ GPU command buffer
 屏幕帧
 ```
 
-### 6.1 Framework 层：Dart side
+### 4.1 Framework 层：Dart side
 
 1. **Build** — `widget.build()` 被调用，返回 `Widget` 子树
 2. **Layout** — framework 走 RenderObject 树，算出每个节点的 size 和 position
 3. **Paint** — RenderObject 把自己的绘制操作（drawRect / drawText / drawImage）记录到 `Picture`
 4. **Composite** — `Picture`（Skia 时代）/ `DisplayList`（Impeller 时代）作为中间表示
 
-### 6.2 Engine 层：C++ side
+### 4.2 Engine 层：C++ side
 
 5. **Rasterize** — engine 的 Rasterizer 拿到 `DisplayList`，把它翻译成 GPU 命令
    - Impeller：直接走 DisplayList dispatcher
@@ -204,7 +185,7 @@ GPU command buffer
 6. **Submit** — GPU 命令提交到 GPU 驱动
 7. **Present** — 驱动把 frame buffer 推到屏幕
 
-### 6.3 一次具体帧的瓶颈在哪
+### 4.3 一次具体帧的瓶颈在哪
 
 帧时间 16.67 ms（60 fps）的预算里：
 - **Dart side**（build + layout + paint）：典型 2-5 ms
@@ -257,7 +238,7 @@ Web 端的包大小是个老问题：一个最简单的 Flutter Web 应用打包
 
 ## §6 任务流案例：`flutter create` 到上线
 
-跟一个具体的 Flutter app 从初始化到上线的完整流程。
+下面跟着一个具体 App，从初始化走到上线，看每个环节 Flutter 分别做了什么。
 
 ### 6.1 初始化
 
@@ -418,19 +399,9 @@ release build 触发：
 
 ### 6.6 同样的流程，Flutter 在哪里做不同的事
 
-跟 React Native 对照，每一步 Flutter 都在做不同的取舍：
+跟 React Native 对照，每一步 Flutter 都在换一种取舍：写代码用 Dart 而不是 JS，UI 用自带 Material / Cupertino 而不是原生控件桥接，渲染走自带像素管线，Hot Reload 保留 State。同一份 App 在 7 个平台上画出一致的像素，但包比 React Native 大两三倍。
 
-| 步骤 | Flutter | React Native |
-|------|---------|--------------|
-| 写代码 | Dart | JavaScript / TypeScript |
-| UI 库 | Material + Cupertino | React Native + 第三方 |
-| Hot reload | 1 秒，State 保留 | 1-2 秒，State 偶发丢失 |
-| 渲染 | Skia / Impeller 像素 | 原生控件 |
-| 性能 profile | 4 阶段（build/layout/paint/rasterize） | 跨 JS / Native bridge |
-| 包大小（移动端） | 5-15 MB | 3-8 MB（Hermes 后） |
-| 包大小（Web） | 1.5-2.5 MB | 100-300 KB |
-
-"渲染"和"Hot reload"这两行的差异最终会决定什么场景选 Flutter、什么场景选 React Native。
+「自渲染 vs 原生控件」「保留 State vs 偶发丢失」这两处分歧，正是选型时决定选 Flutter 还是 React Native 的关键，详细对照见 §8。
 
 ## §7 引擎源码迁移：flutter/engine archived 之后
 

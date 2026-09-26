@@ -5,6 +5,7 @@ github_repo: "karpathy/autoresearch"
 source_key: "gh:karpathy/autoresearch"
 aliases: ["/posts/tech/autoresearch-ai-autonomous-research-guide/"]
 date: "2026-03-31T15:05:00+08:00"
+lastmod: "2026-09-21T12:00:00+08:00"
 categories: ["技术笔记"]
 tags: ["AutoResearch", "AI Agent", "LLM训练", "Karpathy", "PyTorch"]
 description: "AutoResearch 把单 GPU 训练、固定 5 分钟预算和 AI Agent 可审查修改面拼成一个可连续跑通宵的研究闭环。本文基于 README、program.md、prepare.py 与 train.py 逐行拆解它为什么成立、适合谁、哪里不该高估。"
@@ -18,7 +19,7 @@ description: "AutoResearch 把单 GPU 训练、固定 5 分钟预算和 AI Agent
 >
 > 前置知识：知道单卡训练、验证集、Transformer、优化器这些基本概念即可。
 >
-> 资料口径：本文基于 GitHub 仓库 README、program.md、prepare.py、train.py 逐行读完写成，状态截至 2026-07-08。
+> 资料口径：本文基于 GitHub 仓库 README、program.md、prepare.py、train.py 逐行读完写成。仓库代码自 2026-03-26 起未再更新，文中 Stars/Forks 等公开数据刷新至 2026-09-21。
 
 ---
 
@@ -87,22 +88,22 @@ AutoResearch 没有发明新模型，它做的事情是把"夜里不停做小实
 
 ## 项目状态：热度很高，但它不是成熟训练框架
 
-截至 2026-07-08，GitHub 公开页面显示这个项目处在下面这个状态：
+截至 2026-09-21，GitHub 公开页面显示这个项目处在下面这个状态：
 
 | 指标 | 公开状态 |
 | ---- | ---- |
-| Stars | 90.2k+ |
-| Forks | 13k+ |
+| Stars | 96.5k+ |
+| Forks | 13.5k+ |
 | Commits | 36 |
 | Contributors | 9 |
 | 最新公开提交 | `228791f`（2026-03-26，合并 PR #342） |
-| 首次提交 | 2026-03-07 |
-| License | MIT |
+| 首次提交 | 2026-03-06 |
+| License | MIT（README 声明，仓库未附 LICENSE 文件） |
 | 官方运行前提 | 单 NVIDIA GPU、Python 3.10+、`uv` |
 
 这些数字说明两件事。
 
-第一，它的传播性很强。Karpathy 把一个很容易让人产生画面感的想法写成了极小、可运行、可 fork 的仓库，天然适合被开发者转发和复现。从首次提交到 9 万 Star 只用了不到三周，这个速度即便在 AI 领域也不常见。
+第一，它的传播性很强。Karpathy 把一个很容易让人产生画面感的想法写成了极小、可运行、可 fork 的仓库，天然适合被开发者转发和复现。按 Wayback Machine 的快照实测，上线次日（3 月 7 日）约 1,700 Star，一周后冲到 3.2 万，三周约 5.9 万，到 7 月初破 9 万。即便在 AI 领域，这个速度也不常见。
 
 第二，**你不该把高热度误判成"功能完备"**。整个仓库只有 36 个 commit、9 个贡献者，核心代码集中在三个文件里。AutoResearch 不是 Lightning、DeepSpeed、Axolotl 这类训练框架，也不是标准的超参搜索平台。它更像一份带强约束的实验样板：你可以在它上面做很多事，但默认仓库本身故意不负责那些"企业级该有的东西"。
 
@@ -191,7 +192,7 @@ c3d4e5f   1.005000  44.0        discard  switch to GeLU activation
 d4e5f6g   0.000000  0.0         crash    double model width (OOM)
 ```
 
-有意思的是，AutoResearch 把"失败实验"也当成一等公民。崩了就记 `crash`，变差就 `discard`。这些记录本身就有价值——它们划出了搜索面的边界。`program.md` 甚至明确要求：不要把 `results.tsv` 提交到 Git，保持 untracked。这样实验账本是本地积累的，不会污染版本历史。
+有意思的是，AutoResearch 把"失败实验"也当成一等公民。崩了就记 `crash`，变差就 `discard`。这些记录本身就有价值——它们划出了搜索面的边界。另外，账本用 TSV 而不是 CSV，`program.md` 特意写明了原因：描述文本里会出现逗号，逗号分隔会把行撑破。`program.md` 还要求：不要把 `results.tsv` 提交到 Git，保持 untracked。这样实验账本是本地积累的，不会污染版本历史。
 
 ### 判断规则：什么时候 keep，什么时候 discard
 
@@ -200,8 +201,9 @@ d4e5f6g   0.000000  0.0         crash    double model width (OOM)
 - `val_bpb` 更低 → keep，保留 commit，分支前进。
 - `val_bpb` 持平或更高 → discard，`git reset` 回到之前的状态。
 - 跑崩了 → 如果是小问题（typo、漏 import），修了重跑；如果思路本身有问题，标 `crash` 跳过。
+- 单次实验超过 10 分钟还没结束 → 直接杀掉，按失败处理（discard 并回滚）。5 分钟是训练预算，10 分钟是 `program.md` 给的硬上限，多出来的余量留给启动和评估开销。
 
-还有一条容易忽略的规则：**复杂度也要计成本**。一个只带来 0.001 级别提升但加了 20 行难看 hack 的改动，未必值得保留；反过来，如果删掉一些东西结果差不多甚至更好，那是简化收益，应该偏向保留。这条规则直接写在 `program.md` 里，等于给 Agent 一套带审美的研究纪律。
+还有一条容易忽略的规则：**复杂度也要计成本**。一个只带来 0.001 级别提升但加了 20 行难看 hack 的改动，未必值得保留；反过来，如果删掉一些东西结果差不多甚至更好，那是简化收益，应该偏向保留。这条规则直接写在 `program.md` 里，等于给 Agent 一套带审美的研究纪律。`program.md` 还有一句提醒：感觉卡住的时候可以 rewind，但应该极其节制——最好根本别用。
 
 ## 固定 5 分钟预算 + val_bpb，才让这个循环成立
 
@@ -385,7 +387,7 @@ def forward(self, x):
     return x
 ```
 
-这里用的是 `ReLU(x)^2`，不是最常见的 GELU 或 SwiGLU。ReLU 平方最早出现在 Primer（2021）里，后来在 SoRA、nanochat 等工作中被重新捡起来。它的好处是实现极简——一次 ReLU 加一次逐元素平方，没有分支也没有近似，在大规模训练里和 GELU 相当甚至更快。MLP 的中间维度是 `4 * n_embd`，这是标准配置。
+这里用的是 `ReLU(x)^2`，不是最常见的 GELU 或 SwiGLU。ReLU 平方最早出现在 Primer（2021）里，后来在 modded-nanogpt、nanochat 等工作中被重新捡起来。它的好处是实现极简——一次 ReLU 加一次逐元素平方，没有分支也没有近似，在大规模训练里和 GELU 相当甚至更快。MLP 的中间维度是 `4 * n_embd`，这是标准配置。
 
 ### 残差连接：可学习的标量混合
 
@@ -436,19 +438,22 @@ logits 被限制在 `[-15, 15]` 之间。这是 Gemma 2 引入的技巧，能防
 
 源码把所有参数分成两组，用不同的优化器：
 
-| 参数组 | 优化器 | 默认学习率 | 为什么 |
+| 参数组 | 优化器 | 默认学习率 | 备注 |
 | ---- | ---- | ---- | ---- |
 | 矩阵参数（注意力和 MLP 的权重） | Muon | 0.04 | 2D 矩阵，适合正交化更新 |
 | token embedding | AdamW | 0.6 | 嵌入需要大学习率 |
 | lm_head | AdamW | 0.004 | 输出层要稳，学习率小 |
 | value embeddings | AdamW | 0.6 | 和 token embedding 同等对待 |
-| 逐层标量（resid/x0 lambdas） | AdamW | 0.5 | 标量参数，独立学习率 |
+| 逐层标量 `x0_lambdas` | AdamW | 0.5 | betas 单独一组，是 (0.96, 0.95) |
+| 逐层标量 `resid_lambdas` | AdamW | 0.005（`scalar_lr × 0.01`） | 学习率是 `x0_lambdas` 的百分之一 |
 
-Muon 是 2024 年底由 Keller Jordan 等人提出的新优化器，核心思路是：对 2D 矩阵参数的梯度做正交化（把梯度投影到正交矩阵附近），再用 Nesterov 动量更新。它在 modded-nanogPT（GPT-2 small speedrun）里把收敛速度推到了比 AdamW 更快的水平，后来被 nanochat 等项目采纳。
+注意两个"逐层标量"的待遇完全不同：`resid_lambdas` 的学习率是 `scalar_lr` 的百分之一，`x0_lambdas` 用的是单独一组动量超参。而且这两组不参与下文的 `dmodel` 学习率缩放。
+
+Muon 是 2024 年底由 Keller Jordan 等人提出的新优化器，核心思路是：对 2D 矩阵参数的梯度做正交化（把梯度投影到正交矩阵附近），再用 Nesterov 动量更新。它在 modded-nanogpt（GPT-2 small speedrun）里把收敛速度推到了比 AdamW 更快的水平，后来被 nanochat 等项目采纳。
 
 ### Muon 的三步内部流程
 
-`train.py` 里的 Muon 更新分三步，全部用 `@torch.compile` 融合编译过：
+`train.py` 里的 Muon 更新分三步，全部用 `@torch.compile` 融合编译过。还有个容易漏看的细节：同形状的参数会被堆成一个批次一起更新，实际学习率会乘一个形状因子 `max(1, 行数/列数)^0.5`——行多于列时学习率会被放大。
 
 **第一步：Nesterov 动量。**
 
@@ -496,13 +501,15 @@ Cautious weight decay 是一个有意思的细节：它只对那些"梯度和参
 
 ### AdamW 的学习率缩放
 
-AdamW 组的学习率按模型维度缩放：
+AdamW 组里有三组的学习率按模型维度缩放：
 
 ```python
 dmodel_lr_scale = (model_dim / 768) ** -0.5
 ```
 
-这是 width-based LR scaling：模型越宽，学习率越小，按 `1/sqrt(d_model)` 缩放。思路和 μP（maximal update parameterization）一脉相承，但只保留了最核心的宽度缩放规则。基准是在 `d_model=768` 下调好的。Agent 如果改了 `DEPTH` 或 `ASPECT_RATIO` 导致 `model_dim` 变化，学习率会自动跟着缩，不需要手动调。
+这是 width-based LR scaling：模型越宽，学习率越小，按 `1/sqrt(d_model)` 缩放。思路和 μP（maximal update parameterization）一脉相承，但只保留了最核心的宽度缩放规则。基准是在 `d_model=768` 下调好的。受它影响的是 lm_head、token embedding、value embeddings 三组：Agent 如果改了 `DEPTH` 或 `ASPECT_RATIO` 导致 `model_dim` 变化，这三组的学习率会自动跟着缩，不需要手动调。
+
+例外是 `resid_lambdas` 和 `x0_lambdas` 两组标量——它们的学习率是固定值，不随模型宽度缩放。
 
 ### 学习率调度：没有 warmup，直接 warmdown
 
@@ -708,8 +715,8 @@ uv run train.py
 单次训练没问题后，再让 Agent 进场：
 
 1. 打开仓库，让 Agent 读 `README.md`、`prepare.py`、`train.py`、`program.md`。
-2. 禁掉不必要权限，避免 Agent 越界。
-3. 先建 run branch，比如 `autoresearch/jul8`。
+2. 禁用所有权限（README 原话是 disable all permissions），避免 Agent 越界。
+3. 先建 run branch，tag 按当天日期起，比如 `autoresearch/sep21`。
 4. 先跑 baseline。
 5. 再开始第一轮真实修改。
 
@@ -765,7 +772,7 @@ README 还提了一个组合技巧：降 `MAX_SEQ_LEN` 的同时，可以适当�
 
 ### 4. 小机器上优先试 `WINDOW_PATTERN = "L"`
 
-默认的 `SSSL` 交替窗口模式在某些平台上可能并不划算，因为短窗口的 banded attention 实现可能没有优化好。对于较弱设备，全部全窗口也许更慢，但实现更简单、行为更稳定，值得作为对照组。
+README 的原话说得比较保守：默认的 `SSSL` 交替 banded attention "对你的平台可能非常低效"，建议换成全窗口的 `"L"` 再 `Try it`。它没解释原因，但方向清楚——短窗口注意力在不同硬件上的实现质量参差，弱设备上未必占优。小机器拿 `"L"` 做默认、用 `"SSSL"` 做对照，是最稳的试法。
 
 ### 5. 降 `TOTAL_BATCH_SIZE`，但保持 2 的幂
 
@@ -831,7 +838,7 @@ uv run prepare.py
 
 - 失败也写进 `results.tsv`，`val_bpb` 填 `0.000000`，`memory_gb` 填 `0.0`，`status` 标 `crash`。
 - 观察是不是某类改动（比如反复加大 `DEPTH`）反复导致同一类崩溃。
-- 如果某个思路连续 crash 三次以上，大概率是思路本身有问题，跳过它。
+- 如果某个思路反复 crash、修了几次都不行（`program.md` 的原话是 "more than a few attempts"），大概率是思路本身有问题，跳过它。
 
 ### 错误 4：横向比较不同机器上的 `val_bpb`
 
@@ -968,5 +975,7 @@ README 原话提到：你能看出怎么在上面迭代，找到让研究进度�
 - 上游训练参考：[karpathy/nanochat](https://github.com/karpathy/nanochat)
 - 小模型低熵数据集：[TinyStories](https://huggingface.co/datasets/karpathy/tinystories-gpt4-clean)
 - Karpathy 项目介绍推文：[x.com/karpathy/status/2029701092347630069](https://x.com/karpathy/status/2029701092347630069)
+- Karpathy 项目补充说明推文：[x.com/karpathy/status/2031135152349524125](https://x.com/karpathy/status/2031135152349524125)
+- 神经网络入门指南（README 推荐）：[x.com/hooeem/status/2030720614752039185](https://x.com/hooeem/status/2030720614752039185)
 
 最后给一个尽量不夸张的结论：AutoResearch 值得关注，因为它把"AI 做科研"这个问题里最容易被验证、最容易被自动化、也最容易一夜之间持续运行的那一块，先切了出来，而且切得很干净。`train.py` 里那一套从 nanochat 搬来的模型架构和 Muon 优化器，已经足够让 Agent 在真实的研究空间里探索，而不只是调几个超参数。剩下的想象空间，留给了 `program.md` 这个"研究组织代码"会怎么演化。

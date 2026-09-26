@@ -1,6 +1,7 @@
 ---
 title: "AI 编程 Agent 的 Harness 设计：如何让大模型更稳定地产出高质量代码"
 date: "2026-03-29T23:07:00+08:00"
+lastmod: "2026-09-21T12:00:00+08:00"
 slug: ai-agent-harness-design-long-running-applications
 github_repo: "karpathy/autoresearch"
 source_key: "gh:karpathy/autoresearch"
@@ -13,11 +14,11 @@ description: "从 Anthropic 两代长时运行 Harness 到 Karpathy 的 AutoRese
 
 # AI 编程 Agent 的 Harness 设计：如何让大模型更稳定地产出高质量代码
 
-> 预计阅读时间：40 分钟 | 难度：⭐⭐⭐⭐
+> 预计阅读时间：25 分钟 | 难度：⭐⭐⭐⭐
 
-单靠把模型放进一个循环里，并不能稳定产出高质量应用。决定上限的是系统能不能持续完成三件事，不是模型会不会写代码：把任务拆对、把进度交清、把结果验真。
+单靠把模型放进一个循环里，并不能稳定产出高质量应用。决定上限的往往不是模型会不会写代码，而是系统能不能持续完成三件事：把任务拆对、把进度交清、把结果验真。
 
-这也是 Anthropic 这两篇文章最值得看的地方。它们讨论的“当模型在长任务中会失忆、会自我美化、会在半成品前宣布胜利时，系统应该怎样补位”，不是“怎样写一个更复杂的 Agent”。
+这也是 Anthropic 这两篇文章最值得看的地方。它们讨论的是：当模型在长任务中会失忆、会自我美化、会在半成品前宣布胜利时，系统应该怎样补位。
 
 ---
 
@@ -35,9 +36,9 @@ description: "从 Anthropic 两代长时运行 Harness 到 Karpathy 的 AutoRese
 
 | 来源 | 标题 | 核心贡献 |
 |------|------|----------|
-| Anthropic | [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) | Initializer/Coding Agent、Feature List、Progress File、`init.sh` 与 Git 交接 |
-| Anthropic | [Harness Design for Long-Running Application Development](https://www.anthropic.com/engineering/harness-design-long-running-apps) | Generator-Evaluator、Planner-Generator-Evaluator、多轮 QA 与 Harness 简化演进 |
-| Karpathy | [AutoResearch](https://github.com/karpathy/autoresearch) | 自主 LLM 训练研究范式 |
+| Anthropic（2025-11-26） | [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) | Initializer/Coding Agent、Feature List、Progress File、`init.sh` 与 Git 交接 |
+| Anthropic（2026-03-24） | [Harness Design for Long-Running Application Development](https://www.anthropic.com/engineering/harness-design-long-running-apps) | Generator-Evaluator、Planner-Generator-Evaluator、多轮 QA 与 Harness 简化演进 |
+| Karpathy（2026-03） | [AutoResearch](https://github.com/karpathy/autoresearch) | 自主 LLM 训练研究范式 |
 
 ---
 
@@ -61,7 +62,7 @@ Harness 是一种「环绕在模型周围的架构」，通过提示词设计、
 
 ---
 
-## ️ 核心架构：Generator-Evaluator 模式
+## 核心架构：Generator-Evaluator 模式
 
 ### GAN 启发的双 Agent 架构
 
@@ -91,8 +92,10 @@ Anthropic 从生成对抗网络（GAN）中汲取灵感，设计了 **Generator-
 评价器不能只说「很好」，需要：
 
 1. **具体可操作的反馈**：指出问题所在，并给出修改建议
-2. **对抗性调试**：像 QA 工程师一样主动寻找 Bug
-3. **使用外部工具验证**：通过 Playwright、Puppeteer 这类浏览器自动化工具实际运行代码验证功能
+2. **对抗性调试**：像 QA 工程师一样主动探测边界情况、寻找 Bug
+3. **使用外部工具验证**：通过 Playwright 这类浏览器自动化工具实际运行代码验证功能
+
+Anthropic 还分享了一条来之不易的调优经验：开箱即用的 Claude 并不是好的 QA。早期迭代里，他们会看到评价器先发现一个真问题，再自己说服自己「这不严重」，然后放行；测试也偏表面，不爱碰边界情况，微妙 Bug 因此漏网。Anthropic 的办法是反复读评价器的日志，找出它的判断与人类预期分歧的位置，针对性修改 QA 提示词，几轮之后评价器的标准才稳定下来。更根本的难点在于，评价器自己也是 LLM，天生对 LLM 产出宽容——把一个独立的评价器调得足够挑剔，远比让生成器学会批评自己的作品可行。
 
 下面的伪代码是根据 Anthropic 文中的评价思路整理的**示意实现**，不是原文代码：
 
@@ -116,6 +119,14 @@ class Evaluator:
 
         return EvaluationResult(passed=True)
 ```
+
+### 前端设计实验：先把评价标准磨出来
+
+这套循环最早在纯主观的前端设计任务上验证。Anthropic 写了四条评分标准，同时交给生成器和评价器，把「这个设计好不好」转成可以逐项打分的具体问题。每一轮生成跑 5 到 15 次迭代，评价器用 Playwright 直接操作真实页面、截图研究之后再打分，所以整个流程很慢——完整跑一轮最长要四个小时。
+
+有两个实验发现值得留意。其一，评价器用带详细分数拆解的 few-shot 示例校准，用来对齐作者偏好、减少多轮之间的分数漂移。其二，标准的措辞本身会塑造输出风格：像「最好的设计是博物馆级的」这类短语，会把设计推向某种特定的视觉趋同。
+
+一个被作者反复提及的例子：让模型给一家荷兰艺术博物馆做官网，前九次迭代都是一个干净、暗色的常规落地页；第十轮它整个推翻重来，把网站改成空间体验——用 CSS perspective 渲染的 3D 展厅、棋盘格地板、自由悬挂的画作、靠门洞穿行的导航。这种单轮生成里罕见的美学跳跃，正是独立评价回路喂出来的。
 
 ---
 
@@ -174,9 +185,11 @@ Planner 的职责是根据用户的简单描述（如「做一个 2D 游戏制�
 4. 技术架构建议
 ```
 
+为什么要限制 Planner 做高层设计？Anthropic 的考虑是：如果 Planner 预先规定了细粒度的技术细节又写错了，错误会顺着规格级联到下游实现。更好的做法是约束「交付什么」，让 Agent 们在做的过程中自己找路径。
+
 #### 2. Generator Agent
 
-Generator 一次只实现一个功能（按 Sprint 工作），完成后自检并交给 QA。
+Generator 一次只实现一个功能（按 Sprint 工作），每个 Sprint 结束时先自评，再交给 QA。技术栈是 React + Vite + FastAPI + SQLite（后期换成 PostgreSQL），用 Git 做版本控制。
 
 下面的 Prompt 同样是**示意版本**，用于帮助理解 Generator 的工作边界：
 
@@ -192,7 +205,7 @@ Generator 一次只实现一个功能（按 Sprint 工作），完成后自检�
 
 #### 3. Evaluator Agent
 
-Evaluator 使用浏览器自动化工具与实际运行的应用交互，测试 UI 功能、API 端点和数据库状态。
+Evaluator 使用 Playwright MCP 像真实用户一样点击运行中的应用，测试 UI 功能、API 端点和数据库状态，然后对照一组从前端实验改造而来的标准给每个 Sprint 评分。标准覆盖产品深度、功能、视觉设计与代码质量，每条都有硬性阈值，任何一条低于阈值即判 Sprint 失败，并给 Generator 反馈具体错在哪里。
 
 下面的评分维度是根据 Anthropic 前端设计实验中披露的标准整理的**示意表达**：
 
@@ -201,69 +214,60 @@ Evaluator 使用浏览器自动化工具与实际运行的应用交互，测试 
 EVALUATION_CRITERIA = {
     "design_quality": "设计是否感觉像是一个有凝聚力的整体？",
     "originality": "是否有定制决策的证据，还是模板化布局？",
-    "craft": "技术执行：排版层次、间距一致性、色彩和谐度",
+    "craft": "技术执行：排版层次、间距一致性、色彩和谐度、对比度",
     "functionality": "可用性：用户能否理解界面功能、找到主要操作？"
 }
 ```
 
+这套标准的权重分配是另一处关键设计：设计质量与独创性的权重高于工艺与功能。原因很实际——Claude 默认就能把工艺和功能做得不错，平庸的恰恰是设计与独创性；标准明确惩罚高度模板化的「AI slop」模式，把权重往设计上偏，就是在逼模型做美学冒险。
+
 ### Sprint Contract 机制
 
-在每个 Sprint 开始前，Generator 和 Evaluator 协商「合约」：
+在每个 Sprint 开始前，Generator 和 Evaluator 先协商「合约」：Generator 提出这一段要做什么、怎样算验证通过，Evaluator 审查提案是否在造对的东西，双方迭代到达成一致后才动笔写代码。产品规格有意保持高层，合约就是用户故事与可测试实现之间的那座桥。通信全程走文件：一个 Agent 写文件，另一个读后在文件内或新文件里回复。
+
+一份合约的示意结构如下：
 
 ```markdown
-## Sprint 3 合约
+## Sprint N 合约（示意结构）
 
-**功能**：矩形填充工具
-
-**验收标准**：
-- [ ] 点击拖拽可以在选中区域填充矩形
-- [ ] 释放鼠标后填充生效
-- [ ] 填充工具图标正确高亮
-- [ ] 撤销功能可以回退填充操作
-
-**测试方法**：
-1. 选择矩形填充工具
-2. 在画布上点击并拖拽
-3. 观察是否在拖拽起点和终点之间填充矩形
+**功能**：本 Sprint 要实现的内容
+**验收标准**：可测试的行为清单，每条对应一个可验证的结果
+**测试方法**：评价器将如何操作运行中的应用来逐条验证
 ```
+
+真实实验里的粒度可以说明这套机制有多细：在 retro game maker 实验中，Planner 把一句话需求扩成 16 个功能、横跨 10 个 Sprint 的规格；仅 Sprint 3 一个合约就有 27 条验收标准，全部覆盖关卡编辑器。合约够细，评价器找出的问题也就具体到可以直接修——比如矩形填充工具这一条：
+
+> **合约标准**：矩形填充工具支持点击拖拽，用选中的瓦片填充矩形区域。
+> **评价器发现**：FAIL——工具只在拖拽的起点和终点放置瓦片，没有填充整个区域；`fillRectangle` 函数存在，但 `mouseUp` 时没有被正确触发。
 
 ### Anthropic Harness 演进时间线
 
-如果把两篇 Anthropic 文章连起来看，更准确的理解：“他们围绕模型短板，分阶段搭建过不同版本的 Harness”，不是“发明了一套固定三 Agent 架构”。
+把两篇文章连起来看，更准确的理解是：他们围绕模型短板，分阶段搭建过不同版本的 Harness，而不是发明了一套固定的三 Agent 架构。
 
-- V1：跨上下文稳定推进
-    代表文章：Effective Harnesses for Long-Running Agents
-    使用模型：Claude Sonnet 4.5
-    主要目标：解决多上下文窗口下的失忆、抢跑和半成品问题
-    关键组件：Initializer Agent、Coding Agent、Feature List、Progress File、`init.sh`、Git 交接、Context Reset
-    测试工具：Puppeteer MCP
-    设计原因：Sonnet 4.5 存在明显的上下文焦虑，需要靠结构化工件、Context Reset 和干净交接维持连续开发
-    备注：该文未提供成本/时长对比数据
+| | V1：跨上下文稳定推进 | V2：引入独立评价与 Sprint | V3：在更强模型上简化 |
+|------|------|------|------|
+| 代表文章 | Effective Harnesses for Long-Running Agents | Harness Design for Long-Running Application Development | 同上（后半部分） |
+| 使用模型 | Claude Sonnet 4.5 | Claude Opus 4.5 | Claude Opus 4.6 |
+| 主要目标 | 解决多上下文窗口下的失忆、抢跑和半成品问题 | 用独立 QA 解决自我评价失准，用 Sprint 切分工作 | 在保持质量的前提下减少编排成本 |
+| 关键组件 | Initializer Agent、Coding Agent、Feature List、Progress File、`init.sh`、Git 交接、Context Reset | Planner、Generator、Evaluator、Sprint Contract、自动 Compaction | 去掉 Sprint 结构，Evaluator 改为构建结束后整体评估 |
+| 测试工具 | Puppeteer MCP | Playwright MCP | Playwright MCP（保留） |
+| 设计原因 | Sonnet 4.5 的上下文焦虑明显，需要结构化工件、Context Reset 与干净交接维持连续开发 | Opus 4.5 已基本没有上下文焦虑，可去掉 Context Reset，改用连续会话加自动 Compaction；规划与外部评价仍有明显价值 | Opus 4.6 长任务规划与自我纠错更强，Sprint 分解不再是必要脚手架 |
+| 备注 | 该文未提供成本/时长对比数据 | —— | —— |
 
-- V2：引入 Generator-Evaluator 与 Sprint 结构
-    代表文章：Harness Design for Long-Running Application Development
-    使用模型：Claude Opus 4.5
-    主要目标：引入独立 QA 解决自我评价失准，通过 Sprint 分解工作
-    关键组件：Planner、Generator、Evaluator、Sprint Contract、自动 Compaction
-    测试工具：Playwright MCP
-    设计原因：Opus 4.5 本身已不再有上下文焦虑，可以去掉 Context Reset，改用连续会话配合自动 Compaction；但"规划"和"外部评价"仍然有明显价值
+几个值得展开的实证细节：
 
-- V3：在更强模型上简化 Harness
-    代表文章：同上（Harness Design for Long-Running Application Development）
-    使用模型：Claude Opus 4.6
-    主要目标：在保持质量的前提下减少编排成本
-    关键变化：去掉 Sprint 结构，Evaluator 改为整体一次性评估而非逐 Sprint 检查
-    设计原因：Opus 4.6 具备更好的长任务规划和自我纠错能力，Sprint 分解不再是必要脚手架
+- **V1 的 Feature List 特意用 JSON 而非 Markdown。** Anthropic 让 Initializer Agent 把需求展开成一份完整的功能清单——在 claude.ai 克隆实验里超过 200 项，全部初始标记为 failing，后续 Coding Agent 只允许改动每项的 `passes` 字段。多轮实验后他们选定 JSON，理由很直接：模型乱改或覆盖 JSON 文件的倾向比 Markdown 低得多。
+- **V3 保留 Planner 与 Evaluator 各有实证理由。** 去掉 Planner 的对照里，Generator 拿到原始需求就直接开写、不做规格，产出的应用功能明显更少。Evaluator 的价值则取决于任务落在模型能力边界的位置：Opus 4.5 时代任务贴着能力边缘，评价器全程都能拦下真问题；Opus 4.6 把边界外推之后，边界内的任务里它成了纯开销，只有仍在边缘之外的部分才继续带来真实收益。评价器不是一个非开即关的固定组件，值得为每个任务单独判断。
 
-这条演进线很重要，因为它对应的是一种更普遍的方法论：**Harness 应该针对当前模型最真实的短板来设计，不是越复杂越好。** 当模型本身已经能稳定完成某一步时，继续保留那一层脚手架就可能只是在增加时延、成本和系统复杂度。
+这条演进线对应的是一种更普遍的方法论：**Harness 应该针对当前模型最真实的短板来设计，不是越复杂越好。** 当模型本身已经能稳定完成某一步时，继续保留那一层脚手架就可能只是在增加时延、成本和系统复杂度。
 
 ---
 
-## ️ Context Reset vs Compaction
+## Context Reset vs Compaction
 
 ### Compaction（压缩）的局限
 
-传统做法是在上下文快满时，对历史对话进行摘要压缩。这保留了连续性，但无法给 Agent 一个干净的起点。
+传统做法是在上下文快满时，对历史对话进行摘要压缩。这保留了连续性，但无法给 Agent 一个干净的起点——残留的历史意味着上下文焦虑仍可能出现。
 
 ### Context Reset（上下文重置）
 
@@ -278,7 +282,7 @@ Context Reset 是完全清空上下文窗口，开启一个新的 Agent 会话�
 
 **关键发现**：在 Anthropic 第一篇文章的实验里，Claude Sonnet 4.5 表现出明显的上下文焦虑，仅靠压缩难以稳定支撑长任务，因此 Context Reset 在那个阶段成为关键设计。
 
-但这不是一个永久结论。当第二篇文章切换到 Opus 4.5 时，上下文焦虑问题已经大幅缓解，Anthropic 直接去掉了 Context Reset，改用单次连续会话配合 Claude Agent SDK 的自动 Compaction。也就是说，**是否需要 Reset，取决于模型特性、任务长度和交接成本，而不是固定教条**。
+但这不是一个永久结论。当第二篇文章切换到 Opus 4.5 时，上下文焦虑问题已经大幅缓解，Anthropic 直接去掉了 Context Reset，改用单次连续会话配合 Claude Agent SDK 的自动 Compaction。也就是说，**是否需要 Reset，取决于模型特性、任务长度和交接成本**。
 
 ---
 
@@ -286,7 +290,7 @@ Context Reset 是完全清空上下文窗口，开启一个新的 Agent 会话�
 
 ### 核心思想
 
-Karpathy 的 AutoResearch 展示了另一种 Harness 范式：**让 AI Agent 自主研究 LLM 训练**。
+Karpathy 的 AutoResearch 展示了另一种 Harness 范式：**让 AI Agent 自主研究 LLM 训练**。给 Agent 一个小而真实的训练环境，让它整夜自主实验：改代码、训练 5 分钟、检查指标是否变好、保留或丢弃、继续。早上醒来，你得到一份实验日志，以及一个（但愿）更好的模型。训练代码本身是 nanochat 的简化单 GPU 实现。
 
 ```mermaid
 graph LR
@@ -303,7 +307,7 @@ graph LR
 
 #### 1. 固定时间预算
 
-训练始终运行 **5 分钟**（wall clock，不含启动与编译开销）。这使得同一平台上的实验更容易直接比较，但不同硬件之间的结果并不天然可比。
+训练始终运行 **5 分钟**（wall clock，不含启动与编译开销）。这让同一平台上的实验可以直接比较——无论 Agent 改的是模型大小、批尺寸还是架构；代价是不同硬件之间的结果并不天然可比。按这个预算，一小时约能跑 12 次实验，睡一觉醒来约有一百次实验的日志在等你。
 
 #### 2. 单一修改文件
 
@@ -311,16 +315,19 @@ Agent 只修改 `train.py` 一个文件，保持范围可控和差异可审查�
 
 #### 3. 单一评估指标
 
-使用 **val_bpb**（验证集每字节比特数）——越低越好，与词表大小无关。
+使用 **val_bpb**（验证集每字节比特数）——越低越好，且与词表大小无关，架构改动因此可以被公平比较。
 
 ### 三文件架构
 
 ```
 autoresearch/
-├── prepare.py      # 固定常量、数据准备、运行时工具（不修改）
-├── train.py        # 模型、优化器、训练循环（Agent 修改此文件）
-└── program.md      # Agent 指令（Human 修改此文件）
+├── prepare.py      # 固定常量、一次性数据准备（下载训练数据、训练 BPE 分词器）、运行时工具（不修改）
+├── train.py        # GPT 模型、Muon + AdamW 优化器、训练循环（Agent 修改此文件）
+├── program.md      # Agent 指令（Human 修改此文件）
+└── pyproject.toml  # 依赖
 ```
+
+Karpathy 把这套玩法称作「自主研究组织」的起点：研究者不再像过去那样动手改 Python 文件，而是编写 `program.md`——README 里叫它一个「极轻量的 skill」，用它给 Agent 提供上下文、定义研究流程。整个项目的自我要求可以概括成一句话：一块 GPU、一个文件、一个指标。
 
 ---
 
@@ -340,6 +347,8 @@ autoresearch/
 
 **结论**：Harness 成本高出 20 倍以上，但输出质量差异立竿见影。
 
+两个成品的差距比数字更直观。Solo 版开局看着像样：布局能看、精灵编辑器在，但实际玩起来，实体出现在屏幕上却对输入毫无反应——翻代码才发现实体定义与游戏运行时之间的接线断了，表面毫无线索指向断点。完整 Harness 版则真的能玩：能移动实体、能跑完核心流程，虽然物理有毛边（角色跳上平台会与平台重叠），核心链路是通的。因为 Anthropic 特意要求 Planner 在规格里编织 AI 功能，这版还自带一个用自然语言生成关卡和精灵的内置 Claude 集成，明显加快了工作流。
+
 ### Opus 4.6 + 简化 Harness（V3）：去掉 Sprint 结构
 
 这一组数字同样来自第二篇文章，使用 **Opus 4.6**。关键变化是去掉了 Sprint 结构——Generator 不再按 Sprint 逐个实现功能，而是连续构建；Evaluator 改为在构建完成后整体评估。测试 Prompt 是「Build a fully featured DAW in the browser using the Web Audio API」。
@@ -354,6 +363,8 @@ autoresearch/
 | Build (Round 3) | 10.9 分钟 | $5.88 |
 | QA (Round 3) | 9.6 分钟 | $4.06 |
 | **总计** | **3h 50min** | **$124.70** |
+
+即便到了 Opus 4.6，QA 依然拦下了真问题：第一轮反馈指出多个核心 DAW 功能只有展示没有交互——剪辑不能在时间线上拖动、没有合成器旋钮和鼓机面板、没有 EQ 曲线一类的可视化效果器；第二轮又揪出录音仍是占位实现、剪辑不能拖拽缩放或拆分。Generator 独自干活时仍会漏细节、留桩模块，QA 的价值就体现在这最后一公里。
 
 ---
 
@@ -407,7 +418,7 @@ autoresearch/
 
 #### 2. 功能清单或 Sprint Contract
 
-作用：把“要做什么”转成“怎样算完成”，避免 Generator 提前宣布胜利。
+作用：把「要做什么」转成「怎样算完成」，避免 Generator 提前宣布胜利。
 
 ```json
 {
@@ -427,7 +438,7 @@ autoresearch/
 
 #### 3. Progress File / Handoff Note
 
-作用：让新一轮 Agent 在最短时间内知道“刚做了什么、现在卡在哪、下一步该干什么”。
+作用：让新一轮 Agent 在最短时间内知道「刚做了什么、现在卡在哪、下一步该干什么」。
 
 ```markdown
 # Progress Update
@@ -450,7 +461,7 @@ autoresearch/
 
 #### 4. Evaluator Report
 
-作用：让反馈变成可执行清单，而不是泛泛地说“还不错”。
+作用：让反馈变成可执行清单，而不是泛泛地说「还不错」。
 
 ```markdown
 # QA Report
@@ -471,11 +482,11 @@ autoresearch/
 - 恢复标题字段并补回归验证
 ```
 
-这四类工件里，真正不能省的是后两项：**交接文档**决定你能不能跨会话稳定推进，**Evaluator 报告**决定你能不能把“模型觉得做完了”改成“系统证明做完了”。
+这四类工件里，真正不能省的是后两项：**交接文档**决定你能不能跨会话稳定推进，**Evaluator 报告**决定你能不能把「模型觉得做完了」改成「系统证明做完了」。
 
 ### 步骤 3：实现评价器
 
-下面的代码是概念示意，重点在“外部验证 + 结构化报告”这个模式：
+下面的代码是概念示意，重点在「外部验证 + 结构化报告」这个模式：
 
 ```python
 class CodeEvaluator:
@@ -517,7 +528,7 @@ class CodeEvaluator:
 ## 核心洞察
 
 1. **Harness 往往是高价值杠杆**：当任务超过模型裸跑的稳定边界时，Harness 设计能显著提升输出质量
-2. **分离评价者是关键**：让 Generator 评价自己的作品会导致过度乐观，分离后评价更可靠
+2. **分离评价者是关键**：让 Generator 评价自己的作品会导致过度乐观。但独立出来还不够——评价器自己也是 LLM，天生宽容；把独立的评价器调得挑剔，远比让生成器自我批评可行。它的收益还随模型进步而流动：任务在模型能力边界之外时值得开，边界之内时是纯开销
 3. **Context Reset 不是银弹**：它解决了上下文焦虑，但带来了编排复杂性和延迟开销
 4. **模型在进步，Harness 也需演进**：随着模型能力提升，今天的「推荐做法」可能明天就过时
 5. **AutoResearch 启示**：Harness 思想可以泛化到模型训练以外的领域
@@ -529,18 +540,18 @@ class CodeEvaluator:
 - [Anthropic: Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
 - [Anthropic: Harness Design for Long-Running Application Development](https://www.anthropic.com/engineering/harness-design-long-running-apps)
 - [Karpathy/AutoResearch GitHub](https://github.com/karpathy/autoresearch)
-- [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview)
+- [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview)
 - [Playwright MCP](https://github.com/microsoft/playwright-mcp)
 
 ---
 
 ## 总结
 
-Anthropic 这组实践最有价值的地方，展示了一种更可靠的工程思路，不是证明了某一套固定 Harness “已经胜出”：先观察模型在真实任务里的失败模式，再用最小必要的结构去补它的短板。
+Anthropic 这组实践最有价值的地方，在于展示了一种可靠的工程思路：先观察模型在真实任务里的失败模式，再用最小必要的结构去补它的短板。
 
-早期模型容易在长任务里失焦，就强化交接、进度文件和 Context Reset；后续模型本体更强，就删掉一部分重脚手架，把系统重心转向规划质量与独立 QA。真正可迁移的经验是这种持续重估系统负载点的方式，不是某个 prompt 片段。
+早期模型容易在长任务里失焦，就强化交接、进度文件和 Context Reset；后续模型本体更强，就删掉一部分重脚手架，把系统重心转向规划质量与独立 QA。真正可迁移的经验是这种持续重估的习惯——定期检查 Harness 里哪些部件还在承重，而不是收藏某个一劳永逸的 prompt 片段。
 
-如果把全文再压缩成一句话，那就是：**Harness 的本质是让系统在该约束的地方约束、在该验证的地方验证、在该简化的时候果断简化，不是把模型包得更厚。**
+如果把全文再压缩成一句话，那就是：**Harness 的本质是让系统在该约束的地方约束、在该验证的地方验证、在该简化的时候果断简化，而不是把模型包得更厚。**
 
 关键抓手仍然是：
 
@@ -548,4 +559,14 @@ Anthropic 这组实践最有价值的地方，展示了一种更可靠的工程�
 - **具体反馈**：评价器必须给出可操作的改进建议
 - **持续迭代**：Harness 需要随模型进步而演进
 
-随着 AI 模型能力的不断提升，最有趣的 Harness 组合空间不会缩小，只会移动。未来真正拉开差距的，不会只是“谁能调用更多工具”，而是谁能更快识别模型的新边界，并把它们转化成新的系统设计。
+Anthropic 文章作者在结尾写道，随着模型进步，有趣的 Harness 组合空间不会缩小，只会移动。对 AI 工程师来说，真正的功课是持续找到下一种新组合：识别模型的新边界，再把它转化成新的系统设计。
+
+---
+
+## 参考来源与口径说明
+
+- 三个来源均为公开资料：Anthropic 工程博客两篇（2025-11-26、2026-03-24）与 karpathy/autoresearch 的 README（master 分支，2026-03-26 后仓库无更新）。文中全部实验数字（Solo 20 分钟/$9 对 6 小时/$200、Opus 4.6 分阶段表格、5 分钟预算、约 12 次实验/小时）已逐项对照原文核实。
+- 两组对比实验是 Anthropic 的展示性单次运行（特定 Prompt、特定时点的模型价格），不是受控基准；适合用来理解量级与收益方向，不适合横向精确比较。
+- 标注「示意」的 Prompt、伪代码、合约结构与蓝图示例，均为帮助理解的整理稿，不是原文逐字内容；「评价器发现」引文为原文真实记录的翻译。
+- V1 时间线的使用模型（Claude Sonnet 4.5）与失败模式细节，出自第二篇文章对第一篇实验的回顾；第一篇原文没有「上下文焦虑」一词，该概念在第二篇文章中命名并回溯归因。
+- Claude Agent SDK 文档现位于 code.claude.com，旧的 platform.claude.com 链接会自动重定向。

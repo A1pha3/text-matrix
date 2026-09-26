@@ -5,7 +5,7 @@ date = '2026-05-24T00:00:00+08:00'
 draft = false
 title = 'yt-dlp：开源视频下载器'
 slug = 'yt-dlp-ultimate-video-downloader-guide'
-description = 'yt-dlp 是 youtube-dl 的社区活跃分支，支持 YouTube、Twitter、B 站等全球 1500+ 平台，是目前维护最活跃的开源视频音频下载工具。'
+description = 'yt-dlp 是 youtube-dl 的社区分支，支持 YouTube、Twitter、B 站等数千个网站，是命令行视频音频下载工具中维护最活跃的一个。'
 categories = ['技术笔记']
 tags = ['开源', 'Python', '工具', '视频']
 +++
@@ -17,6 +17,7 @@ tags = ['开源', 'Python', '工具', '视频']
 读完本文你应该能够：
 
 - 说清 yt-dlp 与 youtube-dl 的关系，以及为什么今天它几乎成了命令行下载的事实标准
+- 按安装方式选对升级命令，分清 stable 与 nightly 两个更新频道各自的适用场景
 - 用 `-f` 选择合并特定清晰度与编码，而不是只会无脑下「最高清」
 - 把播放列表、字幕、区间下载、登录内容这些常见需求做成可复用的命令
 - 判断哪些平台 yt-dlp 能下、哪些受 DRM（数字版权管理）限制根本下不了
@@ -40,19 +41,21 @@ tags = ['开源', 'Python', '工具', '视频']
 
 视频网站从来没打算让你把内容存到本地。它们用 HLS / DASH 把视频切成几百个几秒长的小分片，再用签名令牌保护播放地址，过期就失效。浏览器能播，是因为前端按既定顺序把这些分片拼起来——但如果你想离线看、做素材库、或者批量归档一个 UP 主的全部作品，手动做这件事根本不现实。
 
-yt-dlp 做的事情就是把「浏览器怎么拿到并拼接视频」这一整套流程自动化：解析页面拿到真实播放地址、选分辨率、下载分片、用 `ffmpeg` 合并成单个文件、顺手把字幕和元数据也带上。它的前身 youtube-dl 在 2021 年后基本停更，yt-dlp 接手后修定了大量兼容性 bug、补了大量站点支持，并采用「版本号即发布日期」的日历版本号、大约每两周发布一个新版——YouTube 一旦改版失效，通常几小时内就有修复，因而成了命令行下载里维护最活跃、更新最快的那个。
+yt-dlp 做的事情就是把「浏览器怎么拿到并拼接视频」这一整套流程自动化：解析页面拿到真实播放地址、选分辨率、下载分片、用 `ffmpeg` 合并成单个文件、顺手把字幕和元数据也带上。它脱胎于 youtube-dl 的分支 youtube-dlc——youtube-dl 在 2021 年 12 月发布了最后一个版本后基本停更，yt-dlp 接手后修复了大量兼容性问题、补了大量站点支持，如今在 GitHub 上有约 19 万颗星（2026 年 9 月数据），是命令行下载里维护最活跃的项目。
+
+版本号就是发布日期，更新分两个频道：stable 频道大体按月发布，nightly 频道只要代码有变动就每天发布，官方明确建议普通用户直接用 nightly——YouTube 一旦改版，master 分支通常当天就有修复，跟着 nightly 更新基本不用等。反过来，一个超过 90 天没更新的 yt-dlp 每次运行都会提醒你升级，因为旧版对站点改版最脆弱。
 
 ## 核心能力
 
 ### 平台覆盖
 
-支持 1500+ 站点，覆盖主流视频、社交、直播与课程平台：
+支持数千个网站（官方支持列表列有 1700 多个提取器），覆盖主流视频、社交、直播与课程平台：
 
 | 类别 | 代表平台 |
 |------|---------|
 | 国际视频 | YouTube、Vimeo、Dailymotion、Twitch |
 | 社交 | Twitter / X、Instagram、Facebook、TikTok |
-| 中国平台 | B 站（哔哩哔哩）、抖音、快手、小红书、微博视频 |
+| 中国平台 | B 站（哔哩哔哩）、抖音、小红书、微博视频 |
 | 音乐 | SoundCloud、Bandcamp（注意：Spotify、Apple Music 这类 DRM 保护的流媒体不在支持范围） |
 | 课程 | Coursera、Udemy、Skillshare 的部分公开内容 |
 | 其他 | 各国电视台、新闻网站、PeerTube 实例 |
@@ -97,13 +100,18 @@ yt-dlp 不是「一个巨大的下载函数」，而是一条可拆解的流水�
 2. **Downloader（下载器）**：拿到地址后实际拉取分片，处理续传、重试、并发。
 3. **PostProcessor（后处理器）**：下载完之后做合并、转码、内嵌字幕/封面、改格式等，多数后处理依赖 `ffmpeg`。
 
-也就是说，你下到一个奇怪结果（比如只有音频没有画面、字幕没嵌进去），先想清楚它卡在 Extractor 解析、Downloader 拉取，还是 PostProcessor 合并，定位会快很多。项目用 Python 3.10+ 开发，运行时依赖极少；解析、下载本身不依赖额外包，只有合并、转码这类后处理才需要 `ffmpeg`（含配套的 `ffprobe`）。
+也就是说，你下到一个奇怪结果（比如只有音频没有画面、字幕没嵌进去），先想清楚它卡在 Extractor 解析、Downloader 拉取，还是 PostProcessor 合并，定位会快很多。
+
+运行环境上，yt-dlp 需要 Python 3.10+（CPython）。依赖并不复杂：解析和下载本身不依赖额外包；合并、转码这类后处理需要 `ffmpeg`（含配套的 `ffprobe`）；而要完整支持 YouTube，还需要 `yt-dlp-ejs` 配合一个 JavaScript 运行时——YouTube 把部分签名参数藏在 JS 挑战里，这套挑战由 deno（默认启用）、Node.js 或 QuickJS 执行求解，缺了它们，很多 YouTube 视频直接解析不出播放地址。用 `pip install "yt-dlp[default]"` 安装时 `yt-dlp-ejs` 已经带上，只需另装一个 JS 运行时。
 
 ## 快速上手
 
 ```bash
-# 推荐用 pipx 隔离安装，避免污染全局 Python
-pipx install yt-dlp
+# pip 安装，[default] 会带上 YouTube 支持所需的 yt-dlp-ejs 等依赖
+python -m pip install -U "yt-dlp[default]"
+
+# 另装一个 JavaScript 运行时（官方推荐 deno，默认启用）
+# macOS: brew install deno   Windows: winget install DenoLand.Deno
 
 # 一条命令下单个视频
 yt-dlp "https://www.youtube.com/watch?v=VIDEO_ID"
@@ -116,9 +124,13 @@ yt-dlp -x --audio-format mp3 URL
 
 # 列出所有可选格式，挑之前先看一眼
 yt-dlp --list-formats URL
+```
 
-# 自更新到最新版（版本号即日期，约每两周一发）
-yt-dlp -U
+升级方式跟着安装方式走，混用会报错：pip 装的版本重跑安装命令即可；`yt-dlp -U` 自更新只对官方发布的独立二进制（Windows 的 `yt-dlp.exe`、macOS 的 `yt-dlp_macos` 等）生效。stable 频道按月发布，遇到 YouTube 改版导致 stable 不可用时，官方建议先切 nightly 再提 issue：
+
+```bash
+# 官方二进制切到每日构建，拿到最新修复
+yt-dlp --update-to nightly
 ```
 
 `--list-formats`（简写 `-F`）是排错第一步：它把服务器提供的每条音视频流、分辨率、编码、文件大小都打出来，你再据此写 `-f` 表达式，比盲猜稳得多。
@@ -157,27 +169,31 @@ yt-dlp -r 2M -N 8 URL
 
 ## 常见问题与排查
 
-### Q1：提示 `ffmpeg` 没找到 / 合并失败？
+### Q1：YouTube 视频突然全部下载失败？
+
+十有八九是站点改版而你的版本没跟上。先看 `yt-dlp --version` 是否超过 90 天，再升级：pip 装的重跑安装命令，二进制用 `yt-dlp -U` 或 `--update-to nightly`。修复通常先落在 nightly/master 频道，stable 要等下一次月度发布。GitHub 上已有的 issue 不必重复提，官方也要求报 issue 前先复现于最新 nightly。
+
+### Q2：提示 `ffmpeg` 没找到 / 合并失败？
 
 yt-dlp 合并和转码依赖 `ffmpeg`。装好并确保 `ffmpeg` 在 `PATH` 里，再跑 `--version` 验证。只下单一流（不合并）时其实不强制需要它。
 
-### Q2：为什么有的视频下下来没有声音？
+### Q3：为什么有的视频下下来没有声音？
 
 你大概率选了纯视频流（`bestvideo` 本身不含音轨）。用 `bestvideo+bestaudio` 让后处理器合并音视频，或者直接写 `/best` 让它自己选带声的合并流。
 
-### Q3：`--cookies-from-browser chrome` 报错？
+### Q4：`--cookies-from-browser chrome` 报错？
 
-常见原因是浏览器正在运行、cookie 被锁，或者系统上有多个 Chrome 配置。先关掉浏览器再试，或导出 cookie 文件用 `--cookies cookies.txt`。
+常见原因是浏览器正在运行、cookie 被锁，或者系统上有多个 Chrome 配置。先关掉浏览器再试。也可以让 yt-dlp 把 cookie 导出成文本文件备用：`yt-dlp --cookies-from-browser chrome --cookies cookies.txt`，之后统一改用 `--cookies cookies.txt`。注意导出文件包含你所有站点的登录态，别外传。
 
-### Q4：下载一半断了，要重头再来吗？
+### Q5：下载一半断了，要重头再来吗？
 
 不用。`-c`（默认开启）会断点续传。重跑同一条命令即可从已下载处继续；用播放列表模板时，已完成的条目通常会被跳过。
 
-### Q5：下 Spotify / Netflix 提示不支持？
+### Q6：下 Spotify / Netflix 提示不支持？
 
 这些是 DRM 保护的流媒体，yt-dlp 在协议层面就下不了。这不是配置问题，换专用工具前请先确认当地的合法使用范围。
 
-### Q6：如何避免批量下载把带宽占满？
+### Q7：如何避免批量下载把带宽占满？
 
 用 `-r 2M` 限速、`-N 8` 控制并发分片数，两者配合既能跑满空闲带宽，又不至于把家里网络挤死。
 
@@ -187,17 +203,18 @@ yt-dlp 合并和转码依赖 `ffmpeg`。装好并确保 `ffmpeg` 在 `PATH` 里�
 
 1. yt-dlp 的「支持某平台」本质上是支持什么？排查「下下来只有画面没声音」时，应该先怀疑流水线里的哪一段？
 2. `bestvideo+bestaudio/best` 里 `+` 和 `/` 各表示什么语义？如果只写 `bestvideo` 会发生什么？
-3. 为什么 Spotify、Netflix 这类平台 yt-dlp 下不了，但这不被视为 bug？
+3. `yt-dlp -U` 只适用于哪种安装方式？stable 版因 YouTube 改版失效时，普通用户拿到修复最快的路径是什么？
+4. 为什么 Spotify、Netflix 这类平台 yt-dlp 下不了，但这不被视为 bug？
 
 **场景题**
 
-4. 你要离线归档一个 200 集的教程播放列表，希望断点续传、按序号命名、不重复下载已有文件。写出核心命令，并说明模板里你会放哪些占位符。
-5. 你只想要某视频 1 分 30 秒到 2 分的片段做素材。用哪个参数实现？它依赖哪一段流水线？
-6. 合并报 `ffmpeg` 相关错误，但单流下载正常。请说明原因和最简修复步骤。
+5. 你要离线归档一个 200 集的教程播放列表，希望断点续传、按序号命名、不重复下载已有文件。写出核心命令，并说明模板里你会放哪些占位符。
+6. 你只想要某视频 1 分 30 秒到 2 分的片段做素材。用哪个参数实现？它依赖哪一段流水线？
+7. 合并报 `ffmpeg` 相关错误，但单流下载正常。请说明原因和最简修复步骤。
 
 **进阶判断**
 
-7. 下面哪个需求 yt-dlp 适合、哪个不适合，为什么：把 B 站 UP 主全部视频存本地；把网易云会员歌曲批量转 MP3；给团队做课程离线库并带字幕。
+8. 下面哪个需求 yt-dlp 适合、哪个不适合，为什么：把 B 站 UP 主全部视频存本地；把网易云会员歌曲批量转 MP3；给团队做课程离线库并带字幕。
 
 ## 练习
 
@@ -214,11 +231,12 @@ yt-dlp 合并和转码依赖 `ffmpeg`。装好并确保 `ffmpeg` 在 `PATH` 里�
 - 读官方文档的 [Format Selection](https://github.com/yt-dlp/yt-dlp#format-selection) 一节，把 `-f` 的过滤、合并、排序语法吃透，这是 80% 日常问题的来源
 - 研究 Extractor 源码结构，当你关心的站点支持变差时，能自己定位是页面改版还是选择器失效
 - 把 yt-dlp 接进 `ffmpeg` 流水线，做批量转码、片段拼接、字幕烧录的工程化处理
-- 了解 `yt-dlp` 的插件机制（如 `yt-dlp-get-pot` 处理签名挑战），在站点加强反爬时仍有可行路径
+- 了解 YouTube 反爬的两个环节怎么过：JS 挑战由 `yt-dlp-ejs` 加 JS 运行时求解（见官方 wiki 的 [EJS 指南](https://github.com/yt-dlp/yt-dlp/wiki/EJS)），PO Token 则可通过 provider 插件按 `fetch_pot` 策略自动获取
 
 ## 相关资源
 
 - 仓库：https://github.com/yt-dlp/yt-dlp
 - 文档与格式选择：https://github.com/yt-dlp/yt-dlp#readme
 - 发布页（更新日志与最新构建）：https://github.com/yt-dlp/yt-dlp/releases
+- 官方 FAQ（cookie、IP 封锁等疑难解答）：https://github.com/yt-dlp/yt-dlp/wiki/FAQ
 - ffmpeg：https://ffmpeg.org

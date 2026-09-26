@@ -14,8 +14,6 @@ tags: ["OpenAI", "提示词工程", "开源项目"]
 
 Awesome GPT Image 2 是一个把"提示词众包投稿"工程化的开源项目：用 GitHub Issue 收稿，CMS 做单一数据源，TypeScript 脚本生成 17 种语言 README，4000+ 提示词全部通过自动化流水线持续产出。本文拆解它的三条并行机制——内容生产、自动化同步、多语言发布——并给出可复用的提示词结构模板与采用建议。
 
-> 仓库指标采集自 2026 年 5 月 3 日，stars/forks/提示词数为时点值；GPT Image 2 模型能力描述基于 2026 年 4 月社区测试反馈，后续版本可能变化。
-
 ## 目录
 
 - [项目总览](#项目总览)
@@ -43,6 +41,8 @@ Awesome GPT Image 2 是一个把"提示词众包投稿"工程化的开源项目�
 | 最新更新 | 2026 年 5 月 3 日 |
 
 项目官网（Web Gallery）：[https://youmind.com/gpt-image-2-prompts](https://youmind.com/gpt-image-2-prompts)
+
+> 仓库指标采集自 2026 年 5 月 3 日，stars/forks/提示词数为时点值；GPT Image 2 模型能力描述基于 2026 年 4 月社区测试反馈，此后版本可能变化，请以最新为准。
 
 ### 三条并行机制地图
 
@@ -135,7 +135,7 @@ awesome-gpt-image-2/
 4. 调用 `generateMarkdown()` 生成 Markdown 内容
 5. 写入对应语言的 README 文件
 
-脚本通过 GitHub Actions 每日定时运行，让 README 与 CMS 数据保持一致。多语言 README 对实时性要求不高，定时批量生成可避开高频 Webhook 的并发与限流问题，也便于生成失败时整体重跑。
+脚本通过 GitHub Actions 按固定周期（仓库 FAQ 称约每 4 小时）运行，让 README 与 CMS 数据保持一致。多语言 README 对实时性要求不高，定时批量生成可避开高频 Webhook 的并发与限流问题，也便于生成失败时整体重跑。
 
 ### 核心脚本：sync-approved-to-cms.ts
 
@@ -167,7 +167,7 @@ awesome-gpt-image-2/
 7. README 变更提交到 main 分支，GitHub Pages / Web Gallery 部署
 ```
 
-整条链路从打标签到 README 上线，最长延迟约 24 小时（取决于定时任务节奏）。三个产物各司其职：Issue 是投稿入口，CMS 是数据源，README 是面向读者的最终产物。
+整条链路从打标签到 README 上线，最快约 4 小时（仓库 FAQ 声明 README 由 GitHub Actions 每 4 小时自动刷新，审核通过后 4 小时内可见）。三个产物各司其职：Issue 是投稿入口，CMS 是数据源，README 是面向读者的最终产物。
 
 ## 提示词结构设计深度解析
 

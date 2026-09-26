@@ -1,7 +1,7 @@
 ---
 title: "AiToEarn：一人公司 AI 内容营销自动化平台"
 date: "2026-05-14T10:53:00+08:00"
-lastmod: "2026-09-19T06:00:00+08:00"
+lastmod: "2026-09-25T11:30:00+08:00"
 slug: "aitoearn-ai-content-marketing-platform-guide"
 github_repo: "yikart/AiToEarn"
 source_key: "gh:yikart/AiToEarn"
@@ -16,7 +16,7 @@ toc: true
 
 | 项目 | 内容 |
 | ---- | ---- |
-| 热度 | Stars 26,051、Forks 4,210（2026-09-19 取自 GitHub 仓库数据） |
+| 热度 | Stars 26,407、Forks 4,286（2026-09-25 取自 GitHub 仓库数据） |
 | 最新版本 | v2.5.0（2026-06-24 发布），仓库最近一次推送 2026-09-18 |
 | 许可证 | MIT |
 | 主要语言 | TypeScript，约占代码量 84% |
@@ -52,7 +52,7 @@ Engage 这一行的信息量比表面看起来大。多数同类工具把这一�
 
 ## 代码里的 Agent 是什么
 
-README 说了四块能力，没说这四块靠什么跑。把 `project/aitoearn-backend` 打开，内核是一组可以直接指认的部件。
+README 说了四块能力，没说这四块靠什么跑。打开 `project/aitoearn-backend`，内核是一组可以直接指认的部件。
 
 `apps/aitoearn-ai/src/core/agent/services/agent-runtime.service.ts` 从 `@anthropic-ai/claude-agent-sdk` 引入 `query` 与 `createSdkMcpServer`：`query()` 负责发起一次 Agent 会话，进程启动交给自定义的 `spawn` 钩子，日志里把退出事件写成 "Claude Code process exited"。每个生成任务有自己的工作目录 `<cwd>/.claude-session/tasks/<taskId>`，会话状态按任务隔离。
 
@@ -107,7 +107,7 @@ README 列出 5 条使用方式，从纯网页体验到源码贡献铺成一条�
 
 一个容易混淆的点：**自部署和贡献开发是两条不同的路**。前者把产品搬到自己服务器上跑起来，后者改产品代码。普通使用者走前者就够了，不需要一开头去读启动流程。
 
-## 先记住这条前提：Key 和端点必须在同一侧
+## 前提：Key 和端点必须在同一侧
 
 这是 README、部署文档和仓库内的 AGENTS.md 都反复写到的约束，也是最容易踩的坑。
 
@@ -121,7 +121,7 @@ README 列出 5 条使用方式，从纯网页体验到源码贡献铺成一条�
 
 ## MCP 这条路径能走到哪一步
 
-配置只需要两个信息：MCP 地址和认证 Header。README 按环境列了一张端点表：
+MCP（Model Context Protocol，模型上下文协议）配置只需要两个信息：MCP 地址和认证 Header。README 按环境列了一张端点表：
 
 | 环境 | MCP 地址 | SSE 地址 |
 | ---- | ---- | ---- |
@@ -144,7 +144,7 @@ Claude Desktop 的示例配置写进 `claude_desktop_config.json`：
 }
 ```
 
-Cursor 或其他支持 MCP 的工具，把上表的地址和 `x-api-key: 你的 API Key` 填进设置即可；长连接场景走 SSE 那一列。自部署用户把域名换成自己的地址，README 给的例子是 `localhost:8080`。
+Cursor 或其他支持 MCP 的工具，把上表的地址和 `x-api-key: 你的 API Key` 填进设置即可；长连接场景走 SSE（Server-Sent Events）那一列。自部署用户把域名换成自己的地址，README 给的例子是 `localhost:8080`。
 
 这条路径到底给了助手多大的操作面，README 没有写，`aitoearn-server` 的源码里有准确答案。`core/unified-mcp/unified-mcp.module.ts` 以 `apiPrefix: 'unified'` 注册 MCP，并引入了三组工具控制器，`@Tool` 装饰器总数 35 个：
 
@@ -204,7 +204,7 @@ docker compose up -d
 仓库自带的 `docker-compose.yml` 里有三处设置，公网部署前需要先过一眼：
 
 1. 端口映射把 8080、9000、9001、27017、6379 全部暴露到了宿主机，其中两个是数据库和缓存。
-2. 默认凭证是明文弱值：MongoDB 是 `admin` / `password`，RustFS 的 access key 与 secret key 都是 `rustfsadmin`，JWT 密钥是 `change-this-jwt-secret`。
+2. 默认凭证是明文弱值：MongoDB 是 `admin` / `password`，Redis 的 requirepass 也是 `password`，RustFS 的 access key 与 secret key 都是 `rustfsadmin`，JWT 密钥是 `change-this-jwt-secret`。
 3. 自动登录默认开启：`aitoearn-init` 生成的管理员登录令牌会写进共享卷，由 `aitoearn-web` 启动时读取。
 
 这三条叠起来的含义很直接——照仓库原样部署到一台有公网 IP 的机器上，等于把一个带默认密码的数据库和一个可自动取得管理员登录态的站点摆在了公网上。要公网跑，先改端口映射与这几个默认值，或者把整栈收到内网、放到自己的反向代理后面。
@@ -270,7 +270,7 @@ Node 版本在三个地方给了三个要求，这是本地开发前先要理清
 | v2.4.0 | 2026-05-21 | 草稿生成接入 HappyHorse 1.0 与 Seedance 2.0，强化视频/图文批量生成、多模型选择、参考图片与视频、目标平台限制与文案提示词；界面改版，Twitter/X 探索与互动能力增强 |
 | v2.5.0 | 2026-06-24 | Relay 配置迁入配置管理界面并拆为 Server Relay 与 AI Relay；运行时配置改为挂载 `config.yaml`；新增[开放平台文档](https://docs.aitoearn.cn/) |
 
-把这条时间线折起来看，三个节点起了转折作用。
+这条时间线上有三个节点起了转折作用。
 
 v1.4.3 是分界点。在此之前它是一个多平台发布工具，从这一版开始，内容的生成和发布交给 Agent 调度。
 
@@ -321,7 +321,7 @@ HappyHorse 1.0 和 Seedance 2.0 都是 v2.4.0 接进草稿生成的模型。READ
 
 ## 资料口径说明
 
-本文的判断基于以下来源，核查时间为 2026-09-19：
+本文的判断基于以下来源，核查时间为 2026-09-25：
 
 1. **仓库文档**：README（含英日双语版本）、`DOCKER_DEPLOYMENT_CN.md`、`CONTRIBUTING.md`、根目录与后端的 `AGENTS.md`
 2. **后端源码**：`project/aitoearn-backend/apps/aitoearn-ai/src/core/agent/`（运行时、skills、MCP 工具、claude-code-router）、`apps/aitoearn-server/src/core/unified-mcp/`、`core/content/`、`core/channels/mcp/`，以及 `docker-compose.yml`
@@ -333,7 +333,7 @@ HappyHorse 1.0 和 Seedance 2.0 都是 v2.4.0 接进草稿生成的模型。READ
 - 未实际运行 AiToEarn，也未部署过这一整套容器。功能可用性与平台授权成功率取决于账号状态、平台策略和模型服务商配额，本文不作承诺。
 - 源码结论（Agent 内核、35 个 MCP 工具、Relay 配置方式）取自 main 分支当前状态，v2.5.0 之后仓库仍在持续提交，这部分描述可能随后续版本失效。
 - Stars、Forks 和语言占比是某一天的快照，会随时间变化。
-- README 的「最新动态」日期与 GitHub release 的发布时间存在一两天出入（如 v1.3.2 记为 2025-11-12，release 页面为 2025-11-13），本文表格统一采用 release 页面时间。
+- README 的「最新动态」日期与 GitHub release 的发布时间存在一到三天出入（如 v1.3.2 记为 2025-11-12、release 页面为 2025-11-13，v1.8.0 记为 2026-02-07、release 页面为 2026-02-10），本文表格统一采用 release 页面时间。
 
 ## 参考链接
 
