@@ -1,11 +1,12 @@
 ---
 title: "microsandbox：100 毫秒内启动的本地微型虚拟机"
 date: 2026-08-19T03:26:14+08:00
+lastmod: 2026-09-26T00:00:00+08:00
 slug: "microsandbox-local-microvm-runtime"
 github_repo: "superradcompany/microsandbox"
 source_key: "gh:superradcompany/microsandbox"
 
-description: "microsandbox 是一个 Rust 编写的本地优先 microVM 运行时，用 OCI 标准镜像在 100 毫秒内启动隔离虚拟机，支持 AI Agent、用户代码、CI 等不可信负载，提供 Rust、Python、TypeScript、Go 多语言 SDK。"
+description: "microsandbox 是一个 Rust 编写的本地优先 microVM 运行时，用 OCI 标准镜像在 100 毫秒内启动隔离虚拟机，支持 AI Agent、用户代码、CI 等不可信负载，提供 Rust、Python、TypeScript、Go、Ruby 多语言 SDK，支持沙箱分支与快照。"
 categories: ["技术笔记"]
 tags: ["microVM", "Rust", "容器", "隔离", "AI Agent"]
 ---
@@ -14,7 +15,7 @@ tags: ["microVM", "Rust", "容器", "隔离", "AI Agent"]
 
 AI Agent（智能体）要跑用户代码、插件要执行第三方脚本、CI 要构建不可信产物——这些场景都需要隔离，但传统虚拟机太重、普通容器隔离又太薄。microsandbox 站在两者之间：**一个本地优先的 microVM（微型虚拟机）运行时，启动速度在 100 毫秒级**，用起来却像 Docker 一样熟悉。
 
-读完本文，你会清楚三件事：microVM 和容器的隔离边界差在哪里；microsandbox 如何用占位符机制让密钥“可用但不可见”；如何通过 CLI（命令行工具）或 SDK（软件开发包）启动并控制一个沙箱。
+读完本文，你会清楚三件事：microVM 和容器的隔离边界差在哪里；microsandbox 如何用占位符机制让密钥"可用但不可见"；如何通过 CLI（命令行工具）或 SDK（软件开发包）启动、分支并控制一个沙箱。
 
 ## 目录
 
@@ -33,7 +34,7 @@ AI Agent（智能体）要跑用户代码、插件要执行第三方脚本、CI 
 
 ## 一分钟总览
 
-microsandbox 由 superradcompany 开发（Y Combinator 支持），Rust 编写，Apache 2.0 协议，仓库约 7,700 stars（截至 2026-08-19）。它把**不可信负载**（AI Agent、用户代码、插件、CI 任务、开发环境、爬虫、自动化）跑进快速启动的本地 microVM 里，提供硬件级隔离，同时保持 Docker 风格的工作流。
+microsandbox 由 superradcompany 开发（Y Combinator 支持），Rust 编写，Apache 2.0 协议，仓库约 8,400 stars（截至 2026-09-26）。它把**不可信负载**（AI Agent、用户代码、插件、CI 任务、开发环境、爬虫、自动化）跑进快速启动的本地 microVM 里，提供硬件级隔离，同时保持 Docker 风格的工作流。
 
 ```sh
 npx microsandbox run debian      # 一条命令启动一个 microVM
@@ -43,7 +44,8 @@ msb run debian                   # 安装 CLI 后的等价写法
 关键特性（来自仓库 README）：
 
 - **硬件级隔离**：microVM 技术，隔离边界在硬件虚拟化层而非进程层
-- **跨平台**：Linux（KVM，内核虚拟机模块）、macOS（Apple Silicon 自带 Hypervisor）、Windows 10+（WHP，Windows Hypervisor Platform）
+- **分支与快照**：fork 一个正在运行的沙箱；把运行状态存成快照，之后恢复
+- **跨平台**：Linux（KVM，内核虚拟机模块）、macOS（Apple Silicon 自带 Hypervisor）、Windows 10+（WHP，Windows Hypervisor Platform，目前为 preview 状态）
 - **OCI 兼容**：直接跑 Docker Hub、GHCR 或任意 OCI（开放容器倡议）仓库的标准容器镜像
 - **毫秒级启动**：平均启动时间低于 100 毫秒（README 注明测量环境为 M1 机器的 guest 启动）
 - **可嵌入**：在代码里直接拉起 VM，无需安装服务器，也无需常驻 daemon（守护进程）
@@ -74,7 +76,26 @@ microsandbox 没有从零实现虚拟化，而是构建在 [libkrun](https://git
 | `metrics` / `metrics-collector` | CPU/内存/网络实时指标 |
 | `testing` / `utils` | 测试支撑与公共工具 |
 
-理解这个结构的意义在于：SDK 调用 `create()` 时，实际是以子进程方式启动 runtime，runtime 再通过 libkrun 拉起 microVM——整条链路不需要常驻服务。这也是"无需基础设施"这个卖点的工程来源。
+宿主机与 guest 的分界，以及各部分如何配合，可以画成一张图：
+
+```mermaid
+flowchart LR
+    subgraph host["宿主机"]
+        CLI["CLI / SDK"] -->|"子进程"| RT["runtime"]
+        IMG["image<br/>OCI 拉取与缓存"] --> RT
+        RT -->|"libkrun + libkrunfw"| VM
+        NET["network<br/>TLS 拦截 / DNS pin / 秘密替换"]
+    end
+    subgraph guest["microVM（独立内核）"]
+        AD["agentd"] --> W["负载进程"]
+    end
+    RT <-->|"vsock"| AD
+    W -->|"出站流量"| NET
+```
+
+把图走一遍，就是一条命令的完整路径——`msb run python -- python3 -c "print('hi')"`：CLI 解析参数，`image` crate 先查本地缓存，没有就从 Docker Hub 拉取并解包（这是首次运行慢的唯一原因）；随后 `runtime` 以子进程方式启动，通过 libkrun 加载 `libkrunfw` 的精简内核，拉起 microVM。`agentd` 的二进制在 release 构建里直接嵌在 `msb` 可执行文件内，随 VM 启动进入 guest，通过 vsock 与宿主维持一条通信链路——你 exec 的每条命令都走这条链路交给 agentd 执行，输出原路返回。guest 的出站流量则统一经过宿主侧的 `network` 栈，受 DNS pin、TLS 拦截和秘密替换规则的约束。
+
+整条链路里没有任何常驻服务：SDK 调用 `create()` 时以子进程方式启动 runtime，用完即退。这也是"无需基础设施"这个卖点的工程来源。
 
 ## 上手：CLI 与多语言 SDK
 
@@ -85,7 +106,7 @@ curl -fsSL https://install.microsandbox.dev | sh    # macOS / Linux
 msb run debian
 ```
 
-Windows 走 PowerShell 安装脚本 `irm https://install.microsandbox.dev/windows | iex`；brew、npm、uv、cargo 也都能装。底层要求：macOS 需要 Apple Silicon，Linux 需要 KVM 开启，Windows 需要 WHP 开启（Windows Server 还需要嵌套虚拟化）。**项目仍是 beta**，README 明确提示会有 breaking changes、缺失功能和粗糙边角。
+Windows 走 PowerShell 安装脚本 `irm https://install.microsandbox.dev/windows | iex`；brew、npm、uv、cargo 也都能装。底层要求：macOS 需要 Apple Silicon，Linux 需要 KVM 开启，Windows 需要 WHP 开启（x64 与 ARM64 均可，支持目前处于 preview）。**项目仍是 beta**，README 明确提示会有 breaking changes、缺失功能和粗糙边角。
 
 CLI 覆盖沙箱、镜像、卷的完整生命周期：
 
@@ -97,9 +118,19 @@ msb pull python && msb image ls  # 镜像管理
 msb metrics app                  # 实时 CPU/内存/网络指标
 ```
 
+分支与快照是 CLI 里相对新的能力，值得单独看一眼：
+
+```sh
+msb branch app --name experiment               # 从运行中的沙箱 fork 出独立副本
+msb snap create --sandbox app --full -o app.msb # 快照：磁盘 + 内存 + 运行状态
+msb snap restore app.msb --name restored        # 恢复成新沙箱，源沙箱不动
+```
+
+快照分两种：**Disk**（默认，只存文件与卷，恢复时启动一个新 VM）和 **Full**（额外保存内存与运行中的进程，恢复时从中断处继续执行）；没有只存内存的中间档。每次 restore 都生成一个新沙箱，源沙箱保持原样。对 Agent 工作流来说，这组命令的组合用法是：环境配好一次，fork 出副本随便折腾，或者存成快照当模板反复恢复。
+
 ### SDK：在代码里嵌一个沙箱
 
-microsandbox 的 SDK 是它的真正卖点——一行代码就能以子进程方式拉起一个 microVM，不需要任何基础设施。官方提供 **Rust、Python、TypeScript、Go、Ruby** 五种语言的 SDK：
+对集成方来说，SDK 才是日常打交道最多的部分——几行代码就能以子进程方式拉起一个 microVM，不需要任何基础设施。官方提供 **Rust、Python、TypeScript、Go、Ruby** 五种语言的 SDK：
 
 ```rust
 use microsandbox::Sandbox;
@@ -144,7 +175,7 @@ async def main():
 asyncio.run(main())
 ```
 
-注意一个时序细节：第一次调用 `create()` 会拉取镜像（如果本地没有缓存），耗时取决于网络；后续运行复用缓存，才能体现 100 毫秒级的启动速度。
+注意一个时序细节：第一次调用 `create()` 会拉取镜像（如果本地没有缓存），耗时取决于网络；后续运行复用缓存，才能体现 100 毫秒级的启动速度。Go SDK 还提供了 `EnsureRuntime`——首次运行时把 runtime 下载到 `~/.microsandbox/`，适合把沙箱能力嵌进自家工具分发给用户。
 
 ### 网络管控与秘密注入
 
@@ -184,9 +215,11 @@ sandbox = Microsandbox::Sandbox.create(
 4. 出站流量到达允许的 host 时，宿主机一侧的网络代理解密被拦截的 TLS（传输层安全）连接，验证请求确实去往声称的目的地，再把占位符替换为真实值转发。
 5. 上游服务器收到真实密钥，guest 自始至终没有接触过它。
 
-替换动作有四道闸门：TLS 的 SNI（服务器名称指示）必须匹配允许的 host 模式；目标 IP 必须确实通过拦截器解析出来（硬编码 IP 伪造 SNI 不算数）；默认要求被拦截的 TLS 连接；HTTP 请求的 `Host` 头必须与 SNI 一致，封死 domain-fronting。任何一项不满足，占位符原样发出——对端拿到的只是一串无用字符。
+替换动作有四道闸门：TLS 的 SNI（服务器名称指示）必须匹配允许的 host 模式；目标 IP 必须确实通过拦截器解析出来（硬编码 IP 伪造 SNI 不算数）；默认要求被拦截的 TLS 连接；HTTP 请求的 `Host` 头（HTTP/2 里是 `:authority`）必须与 SNI 一致，封死 domain-fronting。
 
-文档同时坦诚了这个机制不保护什么：你显式允许的端点会收到真实密钥，所以允许列表要收窄；部分请求形态（HTTP/2 请求体、gzip 编码体、超大定长体）不做替换，此时请求会被阻断而不是带错发出；真实值存活在宿主进程的内存里，宿主被攻陷不在防护范围内。这种把边界写清楚的文档风格，本身就值得加分。
+四道闸门任何一项不满足、而请求中又检测到占位符时，默认策略是**阻断请求并记录警告**；也可以配置成静默阻断、直接终止沙箱，或把占位符原样放行。无论选哪种，离开沙箱的至多是一串无用字符，绝不是真实值。
+
+文档同时坦诚了这个机制不保护什么：你显式允许的端点会收到真实密钥，所以允许列表要收窄，而且允许端点若在响应里回显密钥，guest 仍能拿到；正文替换默认关闭，打开后也有限制——不超过 16 MiB 的 HTTP/1 定长体可以替换（替换后更新 Content-Length），更大的定长体和 HTTP/2 DATA 帧正文不支持替换，检测到占位符会被阻断，gzip 这类编码体则不做检测、原样转发；真实值存活在宿主进程的内存里，宿主被攻陷不在防护范围内。还有一条容易忽略：通过 SDK 直接传入的密钥原文会写进宿主侧的沙箱配置，**停止沙箱并不会清掉这份副本**——如果介意，改用宿主环境变量引用的方式绑定密钥，配置里就不会留存原文。这种把边界写清楚的文档风格，本身就值得加分。
 
 ## AI Agent 场景的针对性设计
 
@@ -197,13 +230,13 @@ sandbox = Microsandbox::Sandbox.create(
 - **嵌入友好**：SDK 以子进程启动 VM，不要求先架起服务器或常驻 daemon
 - **长驻会话**：detached 模式适合需要跨多轮对话存活的 Agent 工作区
 
-README 列出的使用方也能佐证定位：Vercel 的 Eve、Chaitin 的 agent-compose、LlamaIndex 的 sandboxed-lit 等十个项目已在生产中使用。
+README 的社区展示区列出了正在用它的项目：Vercel 的 Agent 框架 Eve 把 microsandbox 作为沙箱后端；Shopify CEO Tobi Lütke 的 wrap 用它把编码 Agent 跑进隔离的 Arch Linux microVM；美国 GSA（总务管理局）的 Agentic Coding Quickstart、Tuist 的 Condukt、社区维护的 langchain-microsandbox 也在列。定位能被这些使用方佐证：它服务的正是"要跑不可信 Agent 负载"的团队。
 
 ## 适用边界
 
 - **适合**：需要跑不可信代码的 AI Agent 平台、插件沙箱、CI 构建隔离、开发环境隔离、爬虫与自动化。
 - **不适合**：如果你的负载完全可信、只需要进程隔离，容器可能更轻；如果你需要全功能 VM（GUI，图形用户界面、完整设备模拟），microVM 的极简设计反而不够。
-- **注意**：beta 阶段，breaking changes 预期存在；macOS 需要 Apple Silicon（Intel Mac 即使走 Rosetta 也不支持），Linux 需要 KVM，老硬件跑不了。
+- **注意**：beta 阶段，breaking changes 预期存在；macOS 需要 Apple Silicon（Intel Mac 即使走 Rosetta 也不支持），Linux 需要 KVM，老硬件跑不了；Windows 支持尚在 preview。
 
 ## 自检与排障
 
@@ -233,17 +266,19 @@ msb doctor    # 本地环境自检
 1. 安装 CLI 后运行 `msb run python -- python3 -c "print('hi')"`，观察镜像拉取与第二次运行的耗时差异。
 2. 用 `msb create --name dev python` 建一个命名沙箱，练习 `exec` / `stop` / `start` / `rm` 全生命周期。
 3. 在自己的语言里跑通官方 SDK 示例，然后加上 `allowed_hosts` 限制，验证沙箱内访问其他域名会被阻断。
+4. 对 `dev` 沙箱分别做 Disk 快照和 `--full` 快照，恢复成两个新沙箱，对比"文件状态恢复"与"进程现场恢复"的差别。
 
 ## 进阶方向
 
 - 读 [docs/security](https://github.com/superradcompany/microsandbox/tree/main/docs/security) 的 isolation、network、hardening 三篇，理解 DNS pin 与 SNI 校验的完整设计
+- 读 [docs/sandboxes/snapshots.mdx](https://github.com/superradcompany/microsandbox/blob/main/docs/sandboxes/snapshots.mdx)，把分支与快照接入自己的工作流
 - 试官方示例里的 Warm Workers（快照工具链后启动干净 worker）和 GitHub Actions Runner（每个 job 一个一次性 microVM）
 - 对比 Firecracker、Kata Containers 等同类 microVM 方案，关注启动路径与镜像格式的差异
 
 ## 参考文献
 
 1. microsandbox 仓库与 README：https://github.com/superradcompany/microsandbox
-2. 官方文档（SDK / CLI / 安全模型 / 排障）：https://docs.microsandbox.dev
+2. 官方文档（SDK / CLI / 安全模型 / 快照 / 排障）：https://docs.microsandbox.dev
 3. 密钥机制说明：仓库内 `docs/security/secrets.mdx`
 4. 底层依赖 libkrun：https://github.com/containers/libkrun
 5. Agent Skills：https://github.com/superradcompany/skills ；MCP server：https://github.com/superradcompany/microsandbox-mcp
