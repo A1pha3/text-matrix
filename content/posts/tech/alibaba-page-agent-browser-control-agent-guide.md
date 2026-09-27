@@ -1,22 +1,22 @@
 ---
-title: "Page Agent v1.10.0：阿里巴巴开源的浏览器控制 Agent 全栈拆解"
+title: "Page Agent v1.12.4：阿里巴巴开源的浏览器控制 Agent 全栈拆解"
 date: "2026-06-28T15:19:20+08:00"
 slug: "alibaba-page-agent-browser-control-agent-guide"
 github_repo: "alibaba/page-agent"
 source_key: "gh:alibaba/page-agent"
-description: "拆解 alibaba/page-agent v1.10.0 单仓多包架构与 PageAgentCore 异步解耦，对比 browser-use 与 Playwright MCP 的设计取舍。"
+description: "拆解 alibaba/page-agent v1.12.4 的单仓多包架构与 PageAgentCore 主循环：文本化 DOM、单次调用的反思输出、MCP 桥接，并对比 browser-use 与 Playwright MCP 的设计取舍。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Page Agent", "阿里巴巴", "MCP", "浏览器自动化"]
 ---
 
-# Page Agent v1.10.0：阿里巴巴开源的浏览器控制 Agent 全栈拆解
+# Page Agent v1.12.4：阿里巴巴开源的浏览器控制 Agent 全栈拆解
 
 ## 读完你能判断什么
 
 读这篇文章，你应该能：
 
-1. 复述 Page Agent 单仓多包（monorepo）拆分中 8 个 npm package 的职责边界与依赖方向。
+1. 复述 Page Agent 单仓多包（monorepo）拆分中 8 个 workspace 的职责边界与依赖方向。
 2. 解释 `PageAgentCore` 与 `PageController` 的异步解耦方式，以及 FlatDomTree → 文本化 → LLM → 索引化操作这条 DOM 流水线。
 3. 描述 `@page-agent/mcp` Server 与 Chrome 扩展 Hub Tab 之间通过 localhost WebSocket 桥接外部 Agent 客户端的全过程。
 4. 对照 Page Agent、browser-use、Playwright MCP 给出三者的选型建议与适用边界。
@@ -26,15 +26,15 @@ tags: ["Page Agent", "阿里巴巴", "MCP", "浏览器自动化"]
 
 - [1. 项目定位与最新状态](#1-项目定位与最新状态)
   - [1.1 一句话定位](#11-一句话定位)
-  - [1.2 截至 2026-06 的核心数据](#12-截至-2026-06-的核心数据)
+  - [1.2 截至 2026-09 的核心数据](#12-截至-2026-09-的核心数据)
   - [1.3 与既有方案的设计分界](#13-与既有方案的设计分界)
 - [2. 单仓多包架构总览](#2-单仓多包架构总览)
-  - [2.1 8 个 npm package 的拓扑顺序](#21-8-个-npm-package-的拓扑顺序)
+  - [2.1 8 个 workspace 的拓扑顺序](#21-8-个-workspace-的拓扑顺序)
   - [2.2 模块边界与通信契约](#22-模块边界与通信契约)
-- [3. DOM 流水线：FlatDomTree → 文本化 → LLM → 索引化操作](#3-dom-流水线flattdomtree--文本化--llm--索引化操作)
-  - [3.1 提取（FlatDomTree）](#31-提取flattdomtree)
+- [3. DOM 流水线：FlatDomTree → 文本化 → LLM → 索引化操作](#3-dom-流水线flatdomtree--文本化--llm--索引化操作)
+  - [3.1 提取（FlatDomTree）](#31-提取flatdomtree)
   - [3.2 脱水（Dehydration）](#32-脱水dehydration)
-  - [3.3 LLM 决策与反射循环](#33-llm-决策与反射循环)
+  - [3.3 LLM 决策：一次调用里的反思与行动](#33-llm-决策一次调用里的反思与行动)
   - [3.4 PageController 异步回写](#34-pagecontroller-异步回写)
 - [4. 任务如何流过系统：一次"点登录按钮"](#4-任务如何流过系统一次点登录按钮)
 - [5. MCP Server：让外部 Agent 接管你的浏览器](#5-mcp-server让外部-agent-接管你的浏览器)
@@ -43,7 +43,7 @@ tags: ["Page Agent", "阿里巴巴", "MCP", "浏览器自动化"]
   - [5.3 在 Claude Desktop / Cursor 中配置](#53-在-claude-desktop--cursor-中配置)
 - [6. Chrome 扩展与多页面 Agent](#6-chrome-扩展与多页面-agent)
   - [6.1 Hub Tab WebSocket 协议](#61-hub-tab-websocket-协议)
-  - [6.2 跨页面上下文共享](#62-跨页面上下文共享)
+  - [6.2 多标签页调度](#62-多标签页调度)
 - [7. 与 browser-use、Playwright MCP 的设计取舍](#7-与-browser-useplaywright-mcp-的设计取舍)
   - [7.1 三者目标对比](#71-三者目标对比)
   - [7.2 选型决策表](#72-选型决策表)
@@ -66,26 +66,27 @@ tags: ["Page Agent", "阿里巴巴", "MCP", "浏览器自动化"]
 
 ### 1.1 一句话定位
 
-Page Agent 是阿里巴巴在 2025 年 9 月开源、目标"让任何 Web 页面自带 AI 助手"的前端 Agent 框架。它的核心承诺是：网站运营方不需要写后端 Agent，也不需要给用户安装浏览器扩展或 Python 运行环境，只需在自己网页里加一段 `<script>` 标签，就让访问者用自然语言操控这个页面。
+Page Agent 是阿里巴巴在 2025 年 9 月开源、目标"让任何 Web 页面自带 AI 助手"的前端 Agent 框架。它的核心承诺是：网站运营方不需要写后端 Agent，也不需要让用户装浏览器扩展或 Python 运行环境，只要在自己网页里加一段 `<script>` 标签，访问者就能用自然语言操控这个页面。
 
-仓库 [alibaba/page-agent](https://github.com/alibaba/page-agent) 当前版本 v1.10.0（2026-06-15 发布），License 为 MIT，TypeScript 为主语言。它不是一个孤立的脚本，而是一个 npm workspaces 单仓多包体系：核心 Agent 在 `@page-agent/core`，带 UI 的入口类在 `page-agent`，DOM 操作在 `@page-agent/page-controller`，LLM 客户端在 `@page-agent/llms`，浏览器扩展在 `packages/extension`，MCP Server 在 `@page-agent/mcp`。
+仓库 [alibaba/page-agent](https://github.com/alibaba/page-agent) 当前版本 v1.12.4（2026-09-06 发布），License 为 MIT，TypeScript 为主语言。它不是一个孤立脚本，而是一个 npm workspaces 单仓多包体系：核心 Agent 在 `@page-agent/core`，带 UI 的入口类在 `page-agent`，DOM 操作在 `@page-agent/page-controller`，LLM 客户端在 `@page-agent/llms`，浏览器扩展在 `packages/extension`，MCP Server 在 `@page-agent/mcp`。
 
-### 1.2 截至 2026-06 的核心数据
+### 1.2 截至 2026-09 的核心数据
 
 | 指标 | 数值 |
 |------|------|
-| Stars | 20,408 ⭐ |
-| Forks | 1,761 |
+| Stars | 29,217 ⭐ |
+| Forks | 2,626 |
 | 主语言 | TypeScript（仓库声明） |
-| 最新版本 | v1.10.0（2026-06-15） |
-| 最近提交 | 2026-06-25（dependabot + LLM 客户端补丁） |
+| 仓库创建 | 2025-09-23 |
+| 最新版本 | v1.12.4（2026-09-06） |
+| 最近提交 | 2026-09-21 |
 | License | MIT |
-| 浏览器扩展商店 | Chrome Web Store 上架 |
+| 浏览器扩展 | Chrome Web Store 上架（Page Agent Ext） |
 | Demo 链接 | <https://alibaba.github.io/page-agent/> |
 | HN 讨论 | <https://news.ycombinator.com/item?id=47264138> |
 | 仓库 Topics | agent、ai、ai-agents、browser-automation、javascript、mcp、typescript、web |
 
-数据来源：GitHub API `repos/alibaba/page-agent`、Releases 页、`AGENTS.md`，访问于 2026-06-28。
+数据来源：GitHub API `repos/alibaba/page-agent` 与 Releases 页，访问于 2026-09-27。
 
 ### 1.3 与既有方案的设计分界
 
@@ -99,55 +100,52 @@ Page Agent 跟以下两类项目经常被一起提及，但目标截然不同：
 
 ## 2. 单仓多包架构总览
 
-### 2.1 8 个 npm package 的拓扑顺序
+### 2.1 8 个 workspace 的拓扑顺序
 
-`alibaba/page-agent` 的 `package.json` 使用 npm workspaces，顶层声明了 8 个内部 package 的拓扑顺序（`workspaces` 字段必须按依赖方向排序）：
+`alibaba/page-agent` 的顶层 `package.json` 用 npm workspaces 管理 8 个内部包，其中 6 个发布到 npm（`page-agent`、`@page-agent/core`、`@page-agent/llms`、`@page-agent/page-controller`、`@page-agent/ui`、`@page-agent/mcp`，截至本文均为 1.12.4），`extension` 打包为浏览器扩展，`website` 是私有官网：
 
 ```text
 alibaba/page-agent (monorepo)
 ├── packages/
-│   ├── core/             # npm: @page-agent/core      ← 头部 Agent 逻辑（无 UI）
-│   ├── page-agent/       # npm: page-agent            ← 入口类（带 UI + Controller + demo builds）
-│   ├── extension/        # 浏览器扩展（WXT + React）
-│   ├── website/          # 官网 + 文档（React）
-│   ├── llms/             # npm: @page-agent/llms      ← LLM 客户端（reflection-before-action）
 │   ├── page-controller/  # npm: @page-agent/page-controller ← DOM 操作 + SimulatorMask
 │   ├── ui/               # npm: @page-agent/ui        ← Panel 与 i18n
-│   └── mcp/              # npm: @page-agent/mcp       ← MCP Server（Beta）
+│   ├── llms/             # npm: @page-agent/llms      ← LLM 客户端（reflection-before-action）
+│   ├── core/             # npm: @page-agent/core      ← 核心 Agent 逻辑（无 UI）
+│   ├── page-agent/       # npm: page-agent            ← 入口类（带 UI + demo builds）
+│   ├── mcp/              # npm: @page-agent/mcp       ← MCP Server（Beta）
+│   ├── extension/        # 浏览器扩展（WXT + React）
+│   └── website/          # 官网 + 文档（React，私有）
 ```
 
-依赖方向（自底向上）：
+依赖方向（箭头从被依赖方指向依赖方）：
 
 ```mermaid
 graph TD
-  PC["@page-agent/page-controller<br/>(DOM + Mask)"]
-  LLMS["@page-agent/llms<br/>(OpenAI 兼容客户端)"]
-  CORE["@page-agent/core<br/>(PageAgentCore)"]
-  UI["@page-agent/ui<br/>(Panel + i18n)"]
-  PA["page-agent<br/>(PageAgent 入口类)"]
-  EXT["packages/extension<br/>(Hub Tab)"]
-  MCP["@page-agent/mcp<br/>(MCP Server)"]
-  WEB["packages/website<br/>(官网)"]
+  PC["@page-agent/page-controller<br/>DOM 操作 + SimulatorMask"]
+  LLMS["@page-agent/llms<br/>LLM 客户端"]
+  CORE["@page-agent/core<br/>PageAgentCore"]
+  UI["@page-agent/ui<br/>Panel + i18n"]
+  PA["page-agent<br/>PageAgent 入口类"]
   PC --> CORE
   LLMS --> CORE
   CORE --> PA
   UI --> PA
-  PA --> WEB
-  EXT --> MCP
 ```
 
-四个关键约束：
+这张图之外的三个包各有各的接法：`extension` 直接依赖 core、llms、page-controller、ui 四个底层包；`mcp` 和 `website` 不依赖任何内部包——前者只靠 WebSocket 与扩展对话，后者是独立 React 站点。
 
-1. `core` 不依赖 UI，可以独立被 Node.js 脚本或服务端调用。
-2. `page-controller` 不依赖任何 LLM 库，DOM 操作可单独测。
-3. `llms` 不依赖 `page-agent`，只定义 `MacroToolInput` / `AgentBrain` / `LLMConfig` 等抽象。
-4. `ui` 通过 `PanelAgentAdapter` 接口与 `PageAgent` 解耦，可被第三方换皮。
+四条边界，各自都可独立验证：
 
-源码级注释明确写道：`workspaces in package.json must be in topological order`，否则会出现符号链接循环。
+1. `page-controller`、`ui`、`llms` 是三个零内部依赖的底层包，任何一个都能单独抽走复用。
+2. `core` 只依赖 `llms` 和 `page-controller`，无 UI，可以被 Node.js 脚本或服务端直接调用。
+3. `page-agent` 入口类把 `PageAgentCore` 和 `Panel` 装在一起，前端页面引它一个就够。
+4. `mcp` 的 npm 依赖只有 MCP 官方 SDK、ws 和 zod，扩展侧换成任何 WebSocket 客户端都能对接。
+
+`AGENTS.md` 原文写明："`workspaces` in `package.json` must be in topological order"。顶层 `package.json` 里 8 个目录的排列顺序，就是依赖的拓扑序。
 
 ### 2.2 模块边界与通信契约
 
-`AGENTS.md` 描述的通信契约非常严格：
+`PageAgent` 与 `PageController` 之间全部走异步方法（以下方法名核对自 v1.12.4 源码 `packages/page-controller/src/PageController.ts`）：
 
 ```typescript
 // PageAgent 委托 DOM 操作给 PageController
@@ -156,104 +154,113 @@ await this.pageController.clickElement(index)
 await this.pageController.inputText(index, text)
 await this.pageController.scroll({ down: true, numPages: 1 })
 
-// PageController 通过 async 方法暴露状态
-const simplifiedHTML = await this.pageController.getSimplifiedHTML()
-const pageInfo = await this.pageController.getPageInfo()
+// 状态读取：getBrowserState() 内部会先自动 updateTree() 刷新 DOM
+const browserState = await this.pageController.getBrowserState()
 ```
 
 三条边界原则：
 
-- **全部异步**：`PageController` 不阻塞主线程，避免 LLM 决策期间网页卡顿。
-- **隔离**：`PageController` 与 LLM 通过 DOM 索引（`index`）交互，不暴露内部节点引用。
-- **可选遮罩**：通过 `enableMask: true` 启动 `SimulatorMask`，在操作期间冻结用户交互，避免误触。
+- **全部异步**：`PageController` 的方法清一色返回 Promise，LLM 决策期间不阻塞页面主线程。
+- **索引隔离**：`PageController` 与 LLM 之间只传递数字索引（`index`），LLM 拿不到任何真实 DOM 节点引用。
+- **可选遮罩**：`PageAgent` 构造时默认 `enableMask: true`，执行动作期间用 `SimulatorMask` 冻结用户交互，避免人机同时操作同一个页面。
 
 ## 3. DOM 流水线：FlatDomTree → 文本化 → LLM → 索引化操作
 
-整条流水线在 `AGENTS.md` 里被简化成四步，下面逐项展开。
+整条流水线在 `AGENTS.md` 里被概括成四步：DOM 提取、脱水、LLM 处理、按索引操作。下面逐步展开。
 
 ### 3.1 提取（FlatDomTree）
 
-`@page-agent/page-controller` 的 `src/dom/dom_tree/index.js` 是核心提取器。它把活 DOM（live DOM）扁平化成 `FlatDomTree`：
+`@page-agent/page-controller` 的 `src/dom/dom_tree/index.js` 是核心提取器（约 1700 行，衍生自 browser-use 的 DOM 处理组件）。它把活 DOM（live DOM）整理成一棵 `FlatDomTree`：
 
-- 丢弃对交互无意义的节点（script、style、注释、display:none、aria-hidden）。
-- 给每个可交互元素分配一个稳定 `index`（在页面渲染期间保持不变）。
-- 保留元素语义（`role`、`aria-label`、可见文本、`type`）。
-
-这一步的结果是一个纯 JS 对象数组，每个元素对应原 DOM 中的一个可交互单元。
+- 只保留可交互元素：input、textarea、select、button 这类原生控件，加上按 ARIA role、指针光标样式等规则判定的可点击节点。`interactiveBlacklist`/`interactiveWhitelist` 配置可以增删目标；页面侧不用改代码，给元素加 `data-page-agent-not-interactive` 属性就能把它从 Agent 的视野里剔除。
+- 丢弃对交互无意义的节点：不可见元素、`aria-hidden` 节点都不会进入树。
+- 处理 Shadow DOM 与同域 iframe：通过 `getRootNode()` 递归进 open shadow root，通过 `contentDocument` 递归进同源 iframe，跨域 iframe 则被浏览器安全策略挡住。
+- 给每个可交互元素分配数字 `index`；相比上一步新出现的元素带 `*` 前缀标记。
 
 ### 3.2 脱水（Dehydration）
 
-LLM 看到的是 `simplifiedHTML`，不是渲染后的 HTML。`PageController.getSimplifiedHTML()` 把 `FlatDomTree` 序列化成一段紧凑文本：
+LLM 看到的不是原始 HTML，也不是截图，而是 `getBrowserState()` 返回的文本化状态。它由三部分组成：页头（当前页面、视口与整页尺寸、上下各剩多少页）、带索引的交互元素列表、页尾的滚动位置提示。元素部分的格式，`dom/index.ts` 的源码注释里有一个真实样例：
 
 ```text
-[1] button "登录" (top-right)
-[2] input[text] placeholder="邮箱"
-[3] input[password] placeholder="密码"
-[4] link "忘记密码" → /forgot
+[0]<a aria-label=page-agent.js 首页 />
+[4]<a aria-label=查看源码（在新窗口打开）>源码 />
+[5]<a role=button>快速开始 />
+UI Agent in your webpage
+用户输入需求，AI 理解页面并自动操作。
 ```
 
-脱水后体积通常比原 DOM 小 1–2 个数量级（实测在京东首页从 800KB HTML 降到 ~12KB 文本），也让 LLM 不用处理 CSS 与样式噪声。Page Agent 的关键决策就是不做截图、不依赖多模态模型，让只读文本接口的小模型也能跑得动。
+规则：只有带 `[数字]` 的元素可交互；缩进代表 DOM 父子关系；普通可见文本直接列出；相比上一步新出现的元素带 `*` 前缀（源码用 WeakMap 缓存判断）。序列化默认附带 title、type、placeholder、aria-label、aria-expanded、contenteditable 等 20 类属性——都是判断"能不能点、点了会怎样"要用到的信息；文本超长会截断加省略号。
 
-### 3.3 LLM 决策与反射循环
+页面范围是个可调项：`viewportExpansion` 默认 -1（提取整页），设为 0 就只取当前视口，此时页头页尾的 "... N pixels below - scroll to see more ..." 提示会引导模型先滚动再操作。可滚动容器在状态里带 `data-scrollable` 标注，这是系统提示词和序列化输出之间的又一层约定。
 
-`@page-agent/llms` 的 `LLM` 类实现了 reflection-before-action（反思—行动）心智模型：
+这个设计的直接后果是：不需要多模态模型。README 把它列为特性第一条——"No screenshots. No multi-modal LLMs or special permissions needed."
 
-1. 把简化 HTML + 当前任务 + 历史步骤送进 LLM。
-2. LLM 返回候选动作（如 `click(1)`、`input(2, "user@x.com")`）。
-3. 客户端做一次"自检"——把即将执行的动作写回去再问 LLM："这一步会发生什么？是否与目标一致？"
-4. 通过校验后才落到 PageController，否则重试或换工具。
+### 3.3 LLM 决策：一次调用里的反思与行动
 
-这套反思循环不依赖额外模型，但显著降低误点、误填的概率。`OpenAIClient` 是默认后端，OpenAI 兼容协议即可（Qwen、DeepSeek、Mistral 都可）。
+`@page-agent/llms` 的 `LLM` 类是所有模型调用的出口：默认走 `OpenAIClient`（OpenAI 兼容协议即可，Qwen、DeepSeek、Kimi 都行），传输层失败按 `maxRetries`（默认 2 次）自动重试。真正决定行为的是 `packages/core/src/prompts/system_prompt.md` 和一个聚合工具：模型每步必须以一个 `AgentOutput` 结构作答，形如：
+
+```json
+{
+  "evaluation_previous_goal": "点击登录按钮后出现了认证表单。Verdict: Success",
+  "memory": "已在邮箱框填入 user@example.com，还差密码和验证码",
+  "next_goal": "向密码框输入密码",
+  "action": { "input_text": { "index": 16, "text": "my-password-123" } }
+}
+```
+
+reflection-before-action 指的就是前三个字段：先评估上一步动作的实际结果，再写记忆，再说下一步目标，最后才给动作。这四样在同一次模型调用里一起返回——没有第二次"自检"调用。`PageAgentCore` 的主循环（`packages/core/src/PageAgentCore.ts`）默认最多 40 步（`maxSteps`），步间默认间隔 0.4 秒（`stepDelay`）。
+
+系统提示词里还有一条直接影响执行质量：模型"绝不默认上一步成功"，若预期页面变化没出现，必须把上一步标记为失败并规划恢复。AGENTS.md 则写明了整个项目的取舍——"Traceability and predictability is more important than success rate."
+
+可用的动作不止点击和输入。内置工具共九个：`done`（结束任务并给出结果）、`wait`、`ask_user`（需配置 `onAskUser` 回调，否则禁用）、`click_element_by_index`、`input_text`、`select_dropdown_option`、`scroll`、`scroll_horizontally`、`execute_javascript`（默认禁用，需 `experimentalScriptExecutionTool` 显式开启）。通过 `customTools` 配置还能增删工具。
 
 ### 3.4 PageController 异步回写
 
-`actions.ts` 实现了三个核心动作：
+`actions.ts` 负责把动作落到真实 DOM，实现比"模拟点击"四个字讲究得多：
 
-- `clickElement(index)`：滚动到元素可视区，模拟 mousedown/mouseup/click，触发原生事件。
-- `inputText(index, text)`：聚焦、清空、触发 `input` 与 `change` 事件（让 React/Vue 的受控组件能监听到）。
-- `scroll({ down, numPages })`：按视口高度滚动。
+- `clickElement`：按 W3C 规范顺序派发完整事件序列——pointerover/enter → mouseover/enter → pointerdown → mousedown → focus → pointerup → mouseup → click，并且先用 `elementFromPoint` 做命中测试，找到点击坐标处最深的目标元素。前端框架在按钮外面包几层 div，也不会点错对象。
+- `inputText`：先点击聚焦，再派发 `beforeinput`/`input` 事件，React、Vue 的受控组件都能监听到；contenteditable 场景在合成事件无效时回退到 `execCommand`。源码注释也写明边界：Monaco、CodeMirror 这类需要直接拿编辑器实例的组件不支持。
+- `scroll`：支持按页数、按像素、按指定容器滚动。
+- `selectOption`：按选项文本选择下拉项。
 
-所有动作完成后返回新状态的 `FlatDomTree` 与 `simplifiedHTML`，交给下一步循环使用。
+每个动作执行完，下一步循环会重新走一遍 3.1 的提取流程，拿到新状态。
 
 ## 4. 任务如何流过系统：一次"点登录按钮"
 
-把上述四步串成一个具体案例。用户在 Page Agent Panel 里输入 "Click the login button"：
+把上述四步串成一个具体案例。用户在 Page Agent Panel 里输入"点登录按钮"：
 
 ```mermaid
 sequenceDiagram
   participant U as 用户
-  participant P as PageAgent (UI 入口)
+  participant P as Panel（UI 入口）
   participant C as PageAgentCore
-  participant L as LLM 客户端
+  participant L as LLM
   participant PC as PageController
-  participant D as 浏览器 DOM
-  U->>P: "Click the login button"
+  participant D as 页面 DOM
+  U->>P: 输入任务
   P->>C: execute(task)
-  C->>PC: updateTree() + getSimplifiedHTML()
-  PC->>D: querySelectorAll(可交互节点)
-  D-->>PC: live DOM
-  PC-->>C: FlatDomTree + simplifiedHTML
-  C->>L: prompt(task + html + history)
-  L-->>C: click(1)
-  C->>L: 自检：这一动作是否与目标一致？
-  L-->>C: 通过
-  C->>PC: clickElement(1)
-  PC->>D: 模拟 click 事件
-  D-->>PC: 新 DOM
-  PC-->>C: 更新后的 FlatDomTree
-  C-->>P: action log + 当前状态
-  P-->>U: Panel 显示"已点击登录"
+  loop 每一步（默认最多 40 步，步间 0.4s）
+    C->>PC: getBrowserState()
+    PC->>D: 重建 FlatDomTree + 分配索引
+    PC-->>C: 文本化状态（URL + 带索引元素 + 可见文本）
+    C->>L: 系统提示词 + 任务历史 + 页面状态
+    L-->>C: AgentOutput（评估 + 记忆 + 目标 + 动作）
+    C->>PC: 执行动作（如 click_element_by_index）
+    PC->>D: 派发 pointer/mouse 事件序列
+  end
+  C-->>P: ExecutionResult（done 动作的 success + 文本）
+  P-->>U: 面板展示结果
 ```
 
-链路上的关键时延：一次 LLM 往返（取决于模型与网络，约 0.5–3s）+ 一次本地 DOM 回写（毫秒级）。整个执行路径只在前端，没有后端中转。
+每一步的成本 = 一次 LLM 往返（取决于模型与网络）+ 一次本地 DOM 重建（毫秒级）+ 0.4 秒步间等待。执行路径全部在浏览器里，没有后端中转。
 
 ## 5. MCP Server：让外部 Agent 接管你的浏览器
 
-v1.10.0 之前的 Page Agent 已经能用浏览器扩展做"多页面 Agent"。v1.10.0 的新动作是把 MCP Server 单独拆出来一个 npm package——`@page-agent/mcp`，让 Claude Desktop、Cursor、Copilot 等 MCP 客户端能直接控制你的浏览器。
+`@page-agent/mcp` 是一个独立的 npm 包（Beta），让 Claude Desktop、Cursor、Copilot 等 MCP 客户端能直接控制你的浏览器。它是纯 JS ESM、无构建步骤——发布的就是源码本身，npm 依赖只有 MCP 官方 SDK、ws 和 zod。
 
 ### 5.1 启动流程
 
-`@page-agent/mcp/src/index.js` 是入口（纯 JS ESM，无构建步骤）：
+`@page-agent/mcp/src/index.js` 是入口：
 
 ```text
 ┌──────────────┐  stdio   ┌──────────────────┐  WebSocket   ┌──────────────┐
@@ -272,9 +279,11 @@ v1.10.0 之前的 Page Agent 已经能用浏览器扩展做"多页面 Agent"。v
 四步走：
 
 1. MCP 客户端通过 stdio 启动 `npx -y @page-agent/mcp`。
-2. Server 在 `localhost:PORT`（默认 38401）开 HTTP + WebSocket，并在浏览器打开 launcher 页面。
+2. Server 在 `localhost:PORT`（默认 38401）同时开 HTTP 与 WebSocket，并在默认浏览器打开 launcher 页面（HTTP 端口服务的就是这个页面，`curl http://localhost:38401` 能看到它）。
 3. launcher 页面触发扩展打开 Hub Tab（`hub.html?ws=PORT`）。
-4. Hub 连上 WS，MCP 工具现在可以把任务代理给 Hub。
+4. Hub 连上 WebSocket，MCP 工具从这时起可以把任务代理给 Hub。
+
+两道安全阀：首次连接时，扩展会弹窗询问"允许外部应用控制你的浏览器吗？"（可在扩展设置里记住允许，对应 `allowAllHubConnection`）；同一时刻只接受一个 Hub 连接、只跑一个任务，第二个 Hub 会被直接断开。
 
 Hub Tab 只认 `hub-ws.ts` 定义的 WebSocket 协议，不关心调用方是不是 MCP。换掉 MCP 客户端，浏览器侧不需要跟着改。
 
@@ -286,7 +295,7 @@ Hub Tab 只认 `hub-ws.ts` 定义的 WebSocket 协议，不关心调用方是不
 | `get_status` | — | 返回 `{ connected, busy }` |
 | `stop_task` | — | 停止当前正在跑的任务 |
 
-环境变量：`LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL_NAME`、`PORT`（默认 38401）。
+环境变量：`LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL_NAME`、`PORT`（默认 38401）。前提：Node.js >= 20，扩展已安装。
 
 ### 5.3 在 Claude Desktop / Cursor 中配置
 
@@ -308,28 +317,24 @@ Hub Tab 只认 `hub-ws.ts` 定义的 WebSocket 协议，不关心调用方是不
 }
 ```
 
-Cursor / Copilot 用同样的 MCP 设置格式即可。这样 Claude 在桌面端就可以直接说"打开京东后台，帮我把昨天那批订单导出成 CSV"——它会在你已登录的 Chrome 里运行。
+Cursor / Copilot 用同样的 MCP 设置格式即可。配好之后，Claude 在桌面端就能在你已登录的 Chrome 里执行浏览器任务——复用的是现成的登录态，不需要再交一遍账号密码。
 
 ## 6. Chrome 扩展与多页面 Agent
 
 ### 6.1 Hub Tab WebSocket 协议
 
-`packages/extension` 是 WXT + React 实现的 Chrome 扩展。Hub Tab 启动后建立一条到 `@page-agent/mcp` 暴露的 WS Server 的长连接，承载两类消息：
+`packages/extension` 是 WXT + React 实现的 Chrome 扩展，除了 Hub Tab 还有侧边栏面板（查看任务历史）。Hub Tab 启动后作为 WS 客户端连到 `ws://localhost:{port}`，协议本身就定义在 `packages/extension/src/entrypoints/hub/hub-ws.ts` 的文件头注释里，一共五种消息：
 
-- 客户端 → Hub：`useAgent(taskPayload)`，把任务转给 MultiPage Agent 调度。
-- Hub → 客户端：步骤事件流（`step_start`、`step_done`、`task_finished`、`task_failed`）。
+- 调用方 → Hub：`{"type":"execute","task":"…","config":{…}}`、`{"type":"stop"}`
+- Hub → 调用方：`{"type":"ready"}`、`{"type":"result","success":true,"data":"…"}`、`{"type":"error","message":"…"}`
 
-Hub Tab 只跟 WS 协议对话，不感知 MCP 的存在；MCP Server 只跟 Hub Tab 对话，不感知扩展的存在。协议、传输、语义各管一层，任何一侧被替换，另一侧都无需改动。
+全部是 JSON 文本帧，一次只处理一个任务。协议、传输、语义各管一层：Hub 不感知 MCP 的存在，MCP Server 只跟 Hub 对话。任何一侧被替换——比如你的自有平台想直接用 WebSocket 派任务——另一侧都不用动。
 
-### 6.2 跨页面上下文共享
+### 6.2 多标签页调度
 
-MultiPage Agent 的核心数据流：
+多页面能力由扩展里的 `MultiPageAgent` 实现：在 core 的单页工具之外，追加三个标签页工具——`open_tab`、`switch_tab`、`close_tab`。当前标签页列表会出现在页面状态里，模型只能切到列表内的标签页；每个标签页的摘要（标题、URL、加载状态）进入 LLM 上下文，v1.12.0 起摘要里包含加载状态。
 
-1. 在 Tab A 完成任务步骤 1，记录关键变量（订单号、cookie、表单已填值）。
-2. 切到 Tab B，用步骤 1 的结果继续。
-3. 跨 Tab 之间通过 Hub Tab 的内存对象共享，不依赖 localStorage 或 Service Worker 持久化。
-
-这条路径的文档还在完善中；扩展本身已上架 Chrome Web Store（扩展 ID `akldabonmimlicnjlflnapfeklbfemhj`，出处见 `packages/mcp/README.md`）。
+近期版本对这里做过两次工程改进：v1.12.0 把标签页状态同步改成按需拉取，MV3 service worker 保持无状态——被浏览器闲置回收后任务不会卡死，摘要里也从这一版起包含每个标签页的加载状态；跨步骤的"记忆"则由模型在 `memory` 字段里自己维护，随任务历史一起进入后续提示词，扩展同时把历史事件流落盘 IndexedDB 供回看。
 
 ## 7. 与 browser-use、Playwright MCP 的设计取舍
 
@@ -339,15 +344,15 @@ MultiPage Agent 的核心数据流：
 |------|------------|-------------|----------------|
 | 形态 | 前端 JS 注入目标页面 | Python + 无头浏览器 | MCP Server + Playwright |
 | 触达目标 | 合作站点（自带 AI Copilot） | 任意站点（自动化） | 任意站点（自动化） |
-| 感知 DOM | 文本化（不需多模态） | 截图 + HTML 双轨 | 截图 + selector |
+| 感知 DOM | 文本化（不需多模态） | HTML 为主，可选视觉 | 截图 + selector |
 | 模型要求 | 任意 OpenAI 兼容 LLM | 偏好多模态 LLM | 任意视觉/文本 LLM |
 | 用户登录态 | 复用浏览器现成 Cookie | 自行登录或持久化 profile | 自行登录或持久化 profile |
 | 部署成本 | 一行 `<script>` | Python 环境 + 浏览器 | Node 环境 + 浏览器 |
 | 浏览器扩展 | 可选（多页面） | 不需要 | 不需要 |
-| 上游依赖 | 复用 browser-use 的 DOM 处理组件 | — | Playwright 内核 |
+| 上游依赖 | DOM 处理组件与提示词衍生自 browser-use | — | Playwright 内核 |
 | 站点配合度 | 必须愿意嵌入 JS | 任意 | 任意 |
 
-Page Agent 的 DOM 处理组件与提示词源自 browser-use（README 明确致谢 Gregor Zunic），定位却从"服务端自动化"切到了"客户端增强"。
+Page Agent 的 DOM 处理组件与提示词源自 browser-use（README 明确致谢 Gregor Zunic，并附版权声明），定位却从"服务端自动化"切到了"客户端增强"——上游是同一套 DOM 理解逻辑，落点是两个互斥的场景。
 
 ### 7.2 选型决策表
 
@@ -369,21 +374,21 @@ Page Agent 的 DOM 处理组件与提示词源自 browser-use（README 明确致
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/page-agent@1.10.0/dist/iife/page-agent.demo.js"
-  crossorigin="true">
+  src="https://cdn.jsdelivr.net/npm/page-agent@1.12.4/dist/iife/page-agent.demo.js"
+  crossorigin="anonymous">
 </script>
 ```
 
-页面加载后会自动弹出 Demo 面板，使用 Page Agent 团队提供的免费测试 LLM（仅供技术评估）。国内镜像：
+页面加载后会自动弹出 Demo 面板，用的是 Page Agent 团队提供的免费测试 LLM（仅供技术评估，使用条款见仓库 `docs/terms-and-privacy.md`）。国内镜像：
 
 ```html
 <script
-  src="https://registry.npmmirror.com/page-agent/1.10.0/files/dist/iife/page-agent.demo.js"
-  crossorigin="true">
+  src="https://registry.npmmirror.com/page-agent/1.12.4/files/dist/iife/page-agent.demo.js"
+  crossorigin="anonymous">
 </script>
 ```
 
-加 `?autoInit=false` 可以避免自动创建 Demo Agent，由你手动实例化。
+加 `?autoInit=false` 可以避免自动创建 Demo Agent，然后用 `new window.PageAgent(...)` 手动实例化、接入自己的模型。script 标签的 URL 还支持 `model`、`baseURL`、`apiKey`、`lang`、`showPanel` 参数（见 `packages/page-agent/src/demo.ts`）。
 
 ### 8.2 NPM 安装（生产环境）
 
@@ -391,18 +396,20 @@ Page Agent 的 DOM 处理组件与提示词源自 browser-use（README 明确致
 npm install page-agent
 ```
 
-```typescript
+```javascript
 import { PageAgent } from 'page-agent'
 
 const agent = new PageAgent({
   model: 'qwen3.5-plus',
   baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-  apiKey: process.env.ALIYUN_KEY!,
+  apiKey: 'YOUR_API_KEY',
   language: 'en-US',
 })
 
 await agent.execute('Click the login button')
 ```
+
+除这四个必填/常用项外，配置对象还支持 `maxSteps`、`stepDelay`、`enableMask`、`instructions`（系统级与按 URL 的页面级自定义指令）、`customTools`、`onBeforeStep`/`onAfterStep` 等生命周期钩子，类型定义见 `@page-agent/core` 的 `AgentConfig`。
 
 ### 8.3 自定义模型接入
 
@@ -413,7 +420,7 @@ await agent.execute('Click the login button')
 - OpenAI：`baseURL = https://api.openai.com/v1`
 - 自托管 vLLM：`baseURL = http://your-host:8000/v1`
 
-把 `model` 字段改成对应模型名即可。仓库 `packages/llms/README.md` 列出已知坑：`-chat-latest` 系列模型需要省略 `reasoning_effort` 与 `temperature`（v1.10.0 修复）。
+把 `model` 字段改成对应模型名即可。`packages/llms` 内部维护着一份按模型打请求补丁的清单（v1.11.0 重写过）：`*-chat-latest` 系列模型会跳过 `reasoning_effort` 补丁；`temperature` 配置已弃用，确需设置时用 `transformRequestBody` 只对验证过支持的模型加字段。支持的模型列表见官方文档 [Models](https://alibaba.github.io/page-agent/docs/features/models)。
 
 ## 9. 适用边界与已知限制
 
@@ -427,53 +434,57 @@ await agent.execute('Click the login button')
 
 ### 9.2 Page Agent 不适合的场景
 
-- **抓取你无法控制的站点**：目标站点如果不愿意嵌入脚本，Page Agent 抓不到（这种情况用 browser-use / Playwright）。
-- **高频工业自动化**：LLM 决策延迟不适合毫秒级任务。
-- **强合规要求**：LLM 决策有随机性，金融、医疗场景需审计与回放——目前没有完整 step replay。
-- **复杂视觉判断**：截图都没进流水线，"看图选图"任务做不了。
+- **抓取你无法控制的站点**：目标站点如果不愿意嵌入脚本，Page Agent 进不去（这种情况用 browser-use / Playwright）。
+- **高频工业自动化**：每步一次 LLM 往返加 0.4 秒步间等待，不适合毫秒级任务。
+- **强合规要求**：LLM 决策有随机性。扩展能查看、导出历史记录（含每步的原始请求响应），但完整的审计回放体系仍需自行建设，金融、医疗场景要先把这块补齐。
+- **复杂视觉判断**：截图不在流水线里，"看图选图"任务做不了。
 - **跨域跨账号**：每个 Tab 只能复用当前浏览器实例的登录态。
 
 ### 9.3 已知限制
 
-- **仅依赖 DOM 文本**：动态 canvas / WebGL / Shadow DOM 深嵌套元素会被 FlatDomTree 过滤掉。
-- **iframe 跨域**：跨域 iframe 拿不到内部 DOM（浏览器安全限制）。
-- **iframe 同域可访问**，但 v1.10.0 暂未提供专门工具，需自行扩展 `PageController`。
-- **MCP Server 仍是 Beta**：Hub Tab 需要 Chrome 扩展已经安装并打开一次 launcher。
-- **依赖注入的稳定性**：每次刷新页面，`FlatDomTree` 的 `index` 会重新分配，长任务需要把"上一步的 index"在反思循环里重新核对。
-- **LLM 决策随机性**：连续两次"点登录按钮"可能给出不同执行路径，调试时建议打开 step log。
+- **非 DOM 内容不可见**：canvas、WebGL 画出来的东西进不了文本状态。
+- **跨域 iframe 拿不到内部 DOM**（浏览器同源策略）；同域 iframe 会被递归收录。
+- **超长页面会让状态文本变大**：`viewportExpansion` 默认提取整页，页面极长时上下文膨胀明显，可切到视口模式（设为 0），让模型按滚动提示分页读取。
+- **验证码不能解**：系统提示词要求遇到 captcha 直接告知用户、结束任务。
+- **不跳出新页面**：Agent 只在单页面范围内工作，`target="_blank"` 的链接不会点击。
+- **特定富文本编辑器无法输入**：Monaco、CodeMirror 需要直接操作编辑器实例，合成事件进不去。
+- **MCP Server 仍是 Beta**：Hub Tab 需要扩展已安装，且先打开一次 launcher 页面。
+- **索引会重新分配**：每次重建 DOM 树索引都重新编号，页面变化后新元素带 `*` 标记；长任务要靠反思字段重新核对元素。
+- **LLM 决策随机性**：同一任务两次执行的路径可能不同，调试时看 step 日志——每步历史都带原始请求与响应。
 
 ## 10. 采用顺序与决策建议
 
 如果你是 SaaS 运营方，按以下顺序评估：
 
-1. **第 1 周**：用 8.1 的 CDN 方式嵌入自家产品 demo，跑 5 个真实用户任务，确认 LLM 在自家 DOM 上的命中率。
-2. **第 2 周**：把模型切到生产可用的 Qwen/DeepSeek，把 `?autoInit=false` 加上，由产品方控制何时弹 Panel。
-3. **第 3 周**：评估是否需要多页面/MCP 扩展——只有"用户已经在多个 Tab 切换"是核心痛点时才上。
-4. **第 4 周**：决定是否需要自托管 LLM。Page Agent 自身已经能直接对接 vLLM，无须额外封装。
+1. **第 1 周**：用 8.1 的 CDN 方式嵌入自家产品 demo，跑 5 个真实用户任务，确认模型在自家 DOM 上的命中率。
+2. **第 2 周**：把模型切到生产可用的 Qwen/DeepSeek，加上 `?autoInit=false`，由产品方控制何时弹 Panel。
+3. **第 3 周**：评估是否需要多页面/MCP 扩展——只有"用户已经在多个 Tab 之间切换"是核心痛点时才上。
+4. **第 4 周**：决定是否需要自托管 LLM。Page Agent 可以直接对接 vLLM，无须额外封装。
 
 如果你是想用 Claude/Cursor 控制浏览器的工程师：
 
 1. 先装 Chrome 扩展，确认 Hub Tab 能独立启动。
-2. 用 5.3 的最小 MCP 配置让 Claude Desktop 接入，跑一次 `execute_task`。
-3. 把模型换成你想用的（默认是 qwen3.5-plus），确认延迟可接受。
+2. 用 5.3 的最小 MCP 配置把 Claude Desktop 接入，跑一次 `execute_task`。
+3. 把模型换成你想用的（示例配置是 qwen3.5-plus），确认延迟可接受。
 4. 再考虑复杂多步任务。
 
-不建议一上来就在生产环境启用 Page Agent——reflection-before-action 的额外 LLM 调用会增加成本。先用小流量试点 1–2 周。
+不建议一上来就在生产环境启用 Page Agent：每个决策步都是一次 LLM 调用，任务越长、历史越重，token 消耗线性上涨。先用小流量试点 1–2 周，把单任务的步数和成本摸清楚。
 
 ## 11. 常见问题与排查
 
 | 症状 | 可能原因 | 排查 |
 |------|----------|------|
-| `<script>` 加载后没弹 Panel | `crossorigin` 未设置 / CDN 缓存旧版本 | 强制刷新 + DevTools 看网络 |
+| `<script>` 加载后没弹 Panel | 属性没照 README 写（`crossorigin="anonymous"`）/ CDN 缓存旧版本 | 强制刷新 + DevTools 看网络请求 |
 | Panel 弹出但 execute 卡住 | API Key 错误 / baseURL 配错 | DevTools Network 看 `/chat/completions` 响应 |
-| 点击按钮没反应 | 按钮被 FlatDomTree 过滤 | Console 跑 `window.__pageAgent__.pageController.getPageInfo()` 看节点数 |
-| MCP 客户端连不上 Hub | 扩展未安装 / 端口被占 | `curl http://localhost:38401` 看是否 200 |
-| execute 报 reasoning_effort 错误 | 用了 `*-chat-latest` 模型 | 升级到 v1.10.0 或手动去除 `reasoning_effort` 字段 |
+| 点不到页面元素 | 元素在视口外、由 canvas 渲染、或在跨域 iframe 里 | 先滚动再试；Console 里确认 `window.pageAgent` 已创建 |
+| MCP 客户端连不上 Hub | 扩展未装 / 未打开 launcher / 端口被占 | `curl http://localhost:38401` 应返回 launcher 页面；再用 `get_status` 看 `connected` |
+| `execute_task` 报 "Hub is not connected" | Hub Tab 未连上，或已有另一个 Hub 占用 | 重新打开 launcher 页面；同一端口只允许一个 Hub |
+| execute 报 `reasoning_effort` 相关错误 | 用了 `*-chat-latest` 模型且版本低于 v1.11.0 | 升级到 v1.11.0 或更高 |
 | 国内访问 jsDelivr 慢 | 网络问题 | 切换 npmmirror 镜像 |
 
 ## 12. 练习与自测
 
-读完架构，动手跑一遍比继续读更有效。三条练习覆盖三种使用方式，五道自测题用来检查判断依据是否站得住。
+读完架构，动手跑一遍比继续读更有效。三条练习覆盖三种使用方式，五道自测题检查判断依据是否站得住。
 
 ### 练习一：在本页跑通一行 script 标签
 
@@ -489,47 +500,50 @@ await agent.execute('Click the login button')
 
 ### 自测题
 
-1. Page Agent 的 `FlatDomTree` 与 browser-use 的截图方案，核心差异是什么？什么场景下必须选截图？
+1. Page Agent 的文本化 DOM 与 browser-use 的视觉方案，核心差异是什么？什么场景下必须选截图？
 2. `@page-agent/core` 为什么不依赖 UI？什么场景下你会直接调用 `PageAgentCore` 而不是 `page-agent` 入口类？
 3. Hub Tab 用 WebSocket 而不是 HTTP 轮询，换来什么，付出什么代价？
 4. 生产环境用 Page Agent，模型选型优先看哪三个指标？
-5. Page Agent 没有完整 step replay，会影响哪类场景的采用决策？
+5. Page Agent 的历史记录机制能覆盖哪类审计需求，覆盖不了哪类？
 
 <details>
 <summary>参考答案</summary>
 
-1. `FlatDomTree` 是文本化 DOM，成本远低于截图，且不需要多模态模型；但"看图选图"或复杂视觉布局会丢失信息，需要视觉判断的场景必须选截图。
-2. `core` 不依赖 UI，可以被 Node.js 脚本或服务端调用，适合后端定时任务操控页面或测试脚本；前端页面里的 AI Copilot 才用 `page-agent` 入口类。
-3. WebSocket 换来低延迟双向通信，LLM 执行步骤可以实时推给 Hub Tab；代价是连接管理更复杂，扩展需要常驻后台。
-4. 延迟（决定用户感知的响应速度）、成本（反射循环会调用两次模型）、上下文窗口（简化 HTML 的体积）。
-5. 金融、医疗等需要完整操作审计和回放的场景——没有 step replay，无法向合规方证明模型每一步做了什么。
+1. 文本化 DOM 成本低、不需多模态模型，但拿不到视觉信息；"看图选图"或依赖画布渲染的场景必须选截图方案。
+2. `core` 无 UI，可以被 Node.js 脚本或服务端直接调用，适合后端定时任务操控页面或自动化测试；前端页面里的 AI Copilot 才用 `page-agent` 入口类。
+3. WebSocket 换来双向长连接：任务下发和结果回传都不用轮询；代价是要管理连接生命周期和授权——所以协议里才有 `ready`/`error` 这类状态消息和首次连接确认。
+4. 指令遵循与工具调用稳定性（决定每步动作质量）、延迟（每步一次往返，直接计入用户等待）、成本与上下文（任务历史随步数增长）。
+5. 能覆盖：开发者调试与事后追溯——每步历史带反思字段和原始请求响应，扩展还能查看导出。覆盖不了：合规级完整回放（含页面快照、回放环境），这些仍需自行建设。
 
 </details>
 
 ## 13. 进阶路径
 
-- **源码层面**：从 `packages/core/src/PageAgentCore.ts` 入手，理解 Agent 主循环
-- **协议层面**：读 `packages/mcp/src/hub-ws.ts`，理解 Hub Tab WebSocket 协议
-- **DOM 层面**：从 `packages/page-controller/src/dom/dom_tree/index.js` 入手，理解 FlatDomTree 提取逻辑
-- **模型层面**：从 `packages/llms/` 入手，理解 reflection-before-action 的实现
+- **主循环**：从 `packages/core/src/PageAgentCore.ts` 入手，理解 observe → think → act 的 Re-act 循环
+- **系统提示词**：读 `packages/core/src/prompts/system_prompt.md`，模型的全部行为规则都在这里
+- **工具定义**：`packages/core/src/tools/index.ts`，九个内置工具的输入输出
+- **DOM 提取**：`packages/page-controller/src/dom/dom_tree/index.js`，FlatDomTree 的过滤与索引逻辑
+- **事件模拟**：`packages/page-controller/src/actions.ts`，W3C 顺序的点击与输入实现
+- **Hub 协议**：`packages/extension/src/entrypoints/hub/hub-ws.ts`，五种 WebSocket 消息
+- **模型适配**：`packages/llms/`，按模型打补丁的请求改写逻辑
 
 ## 14. 资料口径说明
 
-1. **信息来源与时效性**：本文基于 2026-06-15 发布的 v1.10.0 源码与 README 整理。Page Agent 仍在快速迭代，后续版本可能在 MCP Server 配置、Hub Tab 协议、FlatDomTree 过滤规则等方面发生变化。
-2. **技术细节验证**：文中涉及的 npm package 拓扑、`PageController` 异步接口、`reflection-before-action` 心智模型均来自 `AGENTS.md` 与源码，未经独立复测；实际表现取决于模型选择、网络状况和页面 DOM 复杂度。
-3. **判断与建议的边界**：本文给出的选型建议、适用边界、采用顺序等判断，基于公开文档和架构分析得出，不构成阿里官方立场，也不构成商业建议。
-4. **未覆盖的内容**：本文聚焦架构解读和 MCP 接入，未深入覆盖：`packages/extension` 的完整 WXT 构建配置、MultiPage Agent 跨 Tab 上下文共享的具体实现、`SimulatorMask` 的 CSS 隔离细节、`packages/llms/` 对其他 LLM 的适配层代码。
-5. **术语使用说明**：本文保留 MCP（Model Context Protocol）、npm、ESM、WS（WebSocket）、CDN、SaaS、CRM、ERP、LLM、OpenAI 兼容协议等专有名词不翻译。
-6. **更新记录**：本文初稿基于 v1.10.0（2026-06-15），若 Page Agent 后续版本有架构变化，将同步更新对应章节。
+1. **信息来源与时效性**：本文基于 v1.12.4（2026-09-06 发布）的源码、README、AGENTS.md 与各子包文档整理，GitHub API 数据访问于 2026-09-27。Page Agent 仍在快速迭代，后续版本可能在 MCP Server 配置、Hub Tab 协议、模型补丁清单等方面变化。
+2. **技术细节验证**：文中方法名、消息类型、默认值（`maxSteps=40`、`stepDelay=0.4s`、`PORT=38401` 等）均核对自对应源码文件；未做端到端复测，实际表现取决于模型选择、网络状况和页面 DOM 复杂度。
+3. **与 AGENTS.md 的差异**：`AGENTS.md` 的通信契约示例中 `getSimplifiedHTML()`/`getPageInfo()` 与当前源码（`getBrowserState()`）存在滞后，本文以源码为准。
+4. **判断与建议的边界**：选型建议、适用边界、采用顺序基于公开文档和架构分析得出，不构成阿里官方立场，也不构成商业建议。
+5. **未覆盖的内容**：`packages/extension` 的完整 WXT 构建配置、`SimulatorMask` 的 CSS 隔离细节、`packages/llms` 各模型补丁的逐项清单。
+6. **更新记录**：本文初稿基于 v1.10.0（2026-06-15），现更新至 v1.12.4（2026-09-06）；后续版本有架构变化时将同步更新对应章节。
 
 ## 15. 延伸阅读
 
 - 仓库主页：<https://github.com/alibaba/page-agent>
 - Demo：<https://alibaba.github.io/page-agent/>
 - 文档站：<https://alibaba.github.io/page-agent/docs/introduction/overview>
-- Chrome 扩展：搜索 "Page Agent Ext"（`akldabonmimlicnjlflnapfeklbfemhj`）
+- 支持模型与免费测试 API：<https://alibaba.github.io/page-agent/docs/features/models>
+- Chrome 扩展：[Page Agent Ext](https://chromewebstore.google.com/detail/page-agent-ext/akldabonmimlicnjlflnapfeklbfemhj)
 - 上游项目：[browser-use](https://github.com/browser-use/browser-use)
 - MCP 协议：<https://modelcontextprotocol.io>
 - 维护者 X 账号：`@simonluvramen`（README 标注）
 - HN 讨论：<https://news.ycombinator.com/item?id=47264138>
-

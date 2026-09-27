@@ -2,7 +2,7 @@
 github_repo = "roboflow/supervision"
 source_key = "gh:roboflow/supervision"
 date = '2026-05-14T20:17:49+08:00'
-lastmod = '2026-09-19T00:00:00+08:00'
+lastmod = '2026-09-27T00:00:00+08:00'
 draft = false
 title = 'supervision 的模型无关，来自它放弃推理'
 slug = 'supervision-computer-vision-toolbox'
@@ -57,23 +57,25 @@ supervision 常被介绍成「模型无关的计算机视觉工具箱」。这�
 
 ## 2. 仓库现状与核实口径
 
-下表数字在 2026-09-19 采集，来源与方法写在第 18 节。这类清单最容易过期，所以把口径钉死在「哪个 API（应用程序接口）字段、哪个分支」上，而不是只给一个数。
+下表数字在 2026-09-27 采集，来源与方法写在第 18 节。这类清单最容易过期，所以把口径钉死在「哪个 API（应用程序接口）字段、哪个分支」上，而不是只给一个数。
 
 | 项 | 值 | 口径 |
 |---|---|---|
 | 仓库 | [roboflow/supervision](https://github.com/roboflow/supervision) | — |
-| Stars / Forks | 50,929 / 4,840 | GitHub API `stargazers_count` / `forks_count` |
-| Contributors | 189 | contributors 接口分页计数，不含匿名 |
-| Commits | 5,161 | commits 接口 `sha=develop`；`main` 是 4,619 |
-| Release 总数 / 最新 | 44 / **0.30.4**（2026-09-17） | releases 接口分页 |
+| Stars / Forks | 51,050 / 4,859 | GitHub API `stargazers_count` / `forks_count` |
+| Contributors | 196 | contributors 接口分页计数，不含匿名 |
+| Commits | 5,182 | commits 接口 `sha=develop`；`main` 是 4,619 |
+| Release 总数 / 最新 | 45 / **0.30.5**（2026-09-22） | releases 接口分页 |
 | 开发分支版本号 | 0.31.0.dev0 | `develop` 上的 `pyproject.toml` |
 | 默认分支 | `develop` | `default_branch`，不是 `main` |
-| 建仓 / 最近推送 | 2022-11-28 / 2026-09-19 | `created_at` / `pushed_at` |
+| 建仓 / 最近推送 | 2022-11-28 / 2026-09-26 | `created_at` / `pushed_at` |
 | Python 下限 | **3.10**（classifiers 覆盖 3.10–3.14） | `requires-python` |
 | 许可证 | MIT | `License-Expression` |
-| 语言构成 | Python 100%（3,309,319 字节） | languages 接口 |
+| 语言构成 | Python 100%（3,433,640 字节） | languages 接口 |
 | 直接运行依赖 | 10 个，**不含 OpenCV** | wheel 的 `Requires-Dist` |
 | 顶层导出名 | 137（`sv.__all__`） | 导入包后读取 |
+
+两点口径说明。其一，本文第 4 到第 12 节的运行时核查在 0.30.4 上完成；0.30.5（2026-09-22）是纯修复补丁，发布说明写明没有破坏性变更、没有弃用与移除，所有 `remove_in` 标记仍指向 0.31.0，那些行为断言在 0.30.5 上原样成立，唯一被它改动的是第 10 节要说的 fallback 写盘默认质量。其二，0.31.0 还没上 PyPI，但 `develop` 分支已经处在 0.31.0 开发周期里，第 11 节那份移除清单在分支上已经生效。
 
 那 10 个依赖值得列全，因为「supervision 是个薄库」这件事由它们直接决定：
 
@@ -322,6 +324,8 @@ python -c "from supervision import _cv2; print(_cv2.BACKEND_NAME)"
 
 还有一条不属于 breaking 但会影响锁版本的环境：`av>=14.2` 从 0.30.0 起是必需依赖。0.30.1 又把它改成惰性导入，因为 OpenCV 后端活跃时提前加载 PyAV 会带进重复的 libavdevice。
 
+0.30.5（2026-09-22）修的正是 fallback 路线的一批坑，不开 OpenCV 的人值得整版看完：旋转手机视频不再横着出来，CMYK 与透明、1 位 PNG 不再画错，写盘默认质量对齐 OpenCV（JPEG 95、无损 WebP）；另外 `LineZone.trigger` 不再把目标在线一侧的单帧闪烁计成一次穿越，`MeanAverageRecall` 的 mAR@K 只从每张图自己的前 K 个预测里取匹配，`InferenceSlicer` 遇到各切片 `metadata` 不一致时不再崩掉合并。这一版没有新的弃用与移除，唯一新增的公开面是常量 `sv.config.SOURCE_IMAGE_METADATA_FIELD`。
+
 ## 10. 怎么读本文的性能数字
 
 这一节的数字只回答一个问题：**没有 OpenCV 时，画标注到底慢多少**。测的是纯绘制耗时，不含解码、不含推理。
@@ -345,13 +349,13 @@ python -c "from supervision import _cv2; print(_cv2.BACKEND_NAME)"
 2. 这里没有解码、也没有模型推理。端到端里 141 ms 是否致命，取决于你的模型本身多少毫秒——模型 8 ms 时它是瓶颈，模型 200 ms 时它无所谓。
 3. 帧率结论不能从本文搬到另一台机器、别的框数或别的分辨率。要决策就在自己的素材上重跑这个循环。
 
-另一个必须一起看的结论是**两后端的输出不逐像素相同**。同一批数据用两个后端各渲染一遍，取最后一帧逐字节比对。单帧 6,220,800 个字节里有 120,352 个不同，占 1.93%，最大单字节差 255，差异集中在文本与抗锯齿边缘。这个比例本文重复测过，结果一致。官方迁移指南同样写了这一点。推论很实际：**图像级基线回归测试必须固定后端**，换个后端而不是改代码，就足够让像素 diff 全红。JPEG/WebP 的默认编码质量两侧统一（JPEG 95、WebP 无损），PNG/TIFF 都无损但字节不保证一致。
+另一个必须一起看的结论是**两后端的输出不逐像素相同**。同一批数据用两个后端各渲染一遍，取最后一帧逐字节比对。单帧 6,220,800 个字节里有 120,352 个不同，占 1.93%，最大单字节差 255，差异集中在文本与抗锯齿边缘。这个比例本文重复测过，结果一致。官方迁移指南同样写了这一点。推论很实际：**图像级基线回归测试必须固定后端**，换个后端而不是改代码，就足够让像素 diff 全红。落盘还有一层：0.30.4 上两侧的编码默认值并不一致，OpenCV 侧写 JPEG 95、无损 WebP，`fallback` 侧跟的是 Pillow 默认（JPEG 75、有损 WebP），0.30.5 才把后者拉齐到前者的默认；PNG/TIFF 两侧都无损，但字节不保证一致。
 
 ## 11. 跟踪正在被搬出库
 
 `supervision/tracker/` 还在，但状态尴尬。`ByteTrack` 确实写进了 `sv.__all__`（第 2 节那 137 个名字里就有它），偏偏 `dir(sv)` 里查不到，只有 `getattr` 才拿得到。它是 `__init__.py` 末尾那个 `__getattr__` 惰性兜出来的，函数的文档字符串写得很直白：`Lazily resolve deprecated compatibility exports`。一个名字同时是「公开导出」和「待移除的兼容垫片」，就写在这里。
 
-实例化它时收到的那句警告把时间表说得最清楚：`FutureWarning: The ByteTrack was deprecated since v0.28.0. It will be removed in v0.31.0.`（0.30.1 起 `import supervision` 本身不再触发这条警告，警告挪到了构造时）。按 `docs/deprecated.md` 的移除清单，它属于 **0.31.0 移除**的一批。同批的还有 `supervision.keypoint` 模块、`sv.LMM` 与 `Detections.from_lmm`、`denormalize_boxes` 的 `normalized_xyxy` 参数，以及 `create_tiles` / `overlay_image`。指定替代是外部 `trackers` 包：
+实例化它时收到的那句警告把时间表说得最清楚：`FutureWarning: The ByteTrack was deprecated since v0.28.0. It will be removed in v0.31.0.`（0.30.1 起 `import supervision` 本身不再触发这条警告，警告挪到了构造时）。按 `docs/deprecated.md` 的移除清单，它属于 **0.31.0 移除**的一批。0.31.0 截至本文修订还没上 PyPI（最新 release 仍是 0.30.5），但 `develop` 分支上这批移除已经落地，那份文档里已经写成完成时。同批的还有 `supervision.keypoint` 模块、`sv.LMM` 与 `Detections.from_lmm`、`denormalize_boxes` 的 `normalized_xyxy` 参数、`create_tiles` / `overlay_image` 等一组兼容垫片，完整名单以那份文档为准。指定替代是外部 `trackers` 包：
 
 ```bash
 pip install trackers
@@ -365,7 +369,7 @@ tracker = ByteTrackTracker()
 tracked = tracker.update(detections)      # 不再是 update_with_detections(...)
 ```
 
-装 `trackers` 2.6.0 核对：提供 `ByteTrackTracker`、`BoTSORTTracker`、`OCSORTTracker`、`SORTTracker`、`CBIoUTracker`、`McByteTracker` 六种，`update(detections, frame=None, timestamp=None)` 的签名与 supervision 旧接口不同。行为上更要紧的是 `minimum_consecutive_frames` 默认为 2，实测**第一帧返回的 `tracker_id` 是 -1**，第二帧起才拿到稳定编号。把 `-1` 当成有效目标来计数，是迁移时最容易写进 bug 的一行。
+装 `trackers` 2.6.0 核对：提供 `ByteTrackTracker`、`BoTSORTTracker`、`OCSORTTracker`、`SORTTracker`、`CBIoUTracker`、`McByteTracker` 六种，`update(detections, frame=None, timestamp=None)` 的签名与 supervision 旧接口不同。行为上更要紧的是 `minimum_consecutive_frames` 默认为 2，实测**第一帧返回的 `tracker_id` 是 -1**，第二帧起才拿到稳定编号。把 `-1` 当成有效目标来计数，是迁移时最容易写进 bug 的一行。PyPI 上的 `trackers` 在 2026-09-27 已到 2.6.1，下面这些行为断言按 2.6.0 实测，换版需重核默认参数。
 
 而仍在库内的 `sv.ByteTrack`，同一份输入跑出来是每帧 `[1]`，没有预热帧。也就是说：同一批检测、同一个算法名，两条路径的第一帧输出不同。迁移不是换个 import 就等价，验证集上的轨迹数量得重跑。
 
@@ -538,7 +542,7 @@ written: VideoInfo(width=640, height=480, fps=10.0, total_frames=40)
 
 1. **元数据**：GitHub API 的 `repos`、`releases`、`contributors`、`commits`、`languages` 五个端点，以及 `develop` 上的 `pyproject.toml`。分页计数一律用 `per_page=1` 读 `Link` 头的 `last` 页码。
 2. **运行时**：两个 Python 3.11 干净 venv，一个只装 `supervision==0.30.4`（`_cv2.BACKEND_NAME` 打印 `fallback`），一个额外装 `opencv-python-headless`（实测 `opencv`）。跨版本对照额外装了 0.27.0 / 0.28.0 / 0.29.1 / 0.30.4，`trackers` 为 2.6.0。所有 API 存在性用 `hasattr` / `dir` / `inspect.signature` 判定，未凭文档印象。另经 GitHub raw 与 PyPI wheel 双向比对，确认包来源一致。
-3. **定量**：第 10 节的耗时是 warmup 后 15 轮均值；第 12 节的 `22` 与手算区间 `i ∈ 17..38` 互验。硬件 Apple M4，未做温度/降频控制。
+3. **定量**：第 10 节的耗时是每轮 warmup 后取 10 轮均值、整个测量重复 5 轮取中位数；第 12 节的 `22` 与手算区间 `i ∈ 17..38` 互验。硬件 Apple M4，未做温度/降频控制。
 
 失效条件按节列在这里，日后重读时先核这几处：
 
@@ -552,7 +556,7 @@ written: VideoInfo(width=640, height=480, fps=10.0, total_frames=40)
 | 第 8 节 | 「无 `VideoSource` / `ImageAnnotator`」 | 若被重新引入需重写本节 |
 | 第 9 节 | 五条 breaking、依赖清单 | 下一大版可能再变；`av>=14.2` 是本轮引入 |
 | 第 10 节 | 全部毫秒与 1.93% 像素差 | 换机、换分辨率、换框数即不可比；绝对值对机器负载敏感，本文首轮测量就被并行任务抬高了 2–3 倍，只有比值稳定 |
-| 第 11 节 | 0.31.0 移除清单、`trackers` 2.6.0 行为 | 0.31.0 发布后本节改为既成事实；`trackers` 换版需重核默认参数 |
+| 第 11 节 | 0.31.0 移除清单、`trackers` 2.6.0 行为 | 0.31.0 发布后本节改为既成事实（`develop` 分支上移除已生效）；`trackers` 换版需重核默认参数 |
 | 第 13 节 | MA 指标实现迁移 | 0.31.0 完成后，「旧类待移除」措辞失效 |
 | 第 1 节 | 包目录内 3 个文件出现 `torch` | 口径是 `site-packages/supervision/**/*.py`，不含 tests 与 examples；上游若引入 torch 后端需重数 |
 
@@ -564,7 +568,7 @@ written: VideoInfo(width=640, height=480, fps=10.0, total_frames=40)
 - 官方文档：<https://supervision.roboflow.com/latest/>
 - OpenCV 可选后端迁移指南：`docs/how_to/opencv_migration.md`
 - 弃用与移除时间表：`docs/deprecated.md`
-- 发布说明：v0.30.0（2026-08-04，Run supervision without OpenCV）、v0.30.1（2026-08-24）、v0.30.4（2026-09-17）
+- 发布说明：v0.30.0（2026-08-04，Run supervision without OpenCV）、v0.30.1（2026-08-24）、v0.30.4（2026-09-17）、v0.30.5（2026-09-22，Tracking/metrics/图像绘制正确性修复）
 - PyPI：`supervision`（元数据 `Requires-Python: >=3.10`）与 `trackers`
 - 示例目录：<https://github.com/roboflow/supervision/tree/develop/examples>
 - 标注器在线演示：<https://huggingface.co/spaces/Roboflow/Annotators>

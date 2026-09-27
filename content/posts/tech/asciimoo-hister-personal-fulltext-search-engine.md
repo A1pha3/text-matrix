@@ -1,7 +1,7 @@
 ---
 title: "Hister：把你看过的一切变成可检索的私有搜索引擎"
 date: 2026-09-01T03:45:00+08:00
-lastmod: 2026-09-05T00:00:00+08:00
+lastmod: 2026-09-27T00:00:00+08:00
 draft: false
 slug: "asciimoo-hister-personal-fulltext-search-engine"
 github_repo: "asciimoo/hister"
@@ -20,21 +20,21 @@ keywords: ["hister", "asciimoo", "Adam Tauber", "Searx", "全文检索", "个人
 
 [Hister](https://github.com/asciimoo/hister) 自称 "Your own search engine"——你自己的搜索引擎。它索引你访问过的网页和本地文件的**完整内容**（而不只是标题和链接），然后让你从 Web 界面、终端 TUI/命令行，或通过 MCP（Model Context Protocol，模型上下文协议）连接的 AI 助手三种方式检索这些内容。
 
-一个值得注意的背景：作者是 Adam Tauber（GitHub ID `asciimoo`）——隐私元搜索引擎 Searx 和 Go 爬虫框架 Colly 的作者（Colly 至今提交量榜首仍是 asciimoo）。一个做了十年"如何更好地搜索"和"如何更好地爬取"的人，转向"如何检索自己看过的东西"，这个谱系本身就说明了项目的定位：它不是又一个书签管理器，而是从搜索基础设施的视角重新设计个人知识的检索层。
+作者是 Adam Tauber（GitHub ID `asciimoo`）——隐私元搜索引擎 Searx 和 Go 爬虫框架 Colly 的作者（Colly 至今提交量榜首仍是 asciimoo）。一个做了十年"如何更好地搜索"和"如何更好地爬取"的人，转向"如何检索自己看过的东西"，这个谱系本身就说明了项目的定位：它不是又一个书签管理器，而是从搜索基础设施的视角重新设计个人知识的检索层。
 
-截至本文写作时（2026-09-05），仓库约 3.6k Stars、169 Forks，最新版本 v0.19.0（2026-09-03 发布），最近一次提交也在 2026-09-03——维护活跃。语言为 Go，许可证 AGPLv3。官方提供[在线演示](https://demo.hister.org/)和[文档站](https://hister.org/docs)，可以不用部署先体验一遍检索界面。
+截至本文更新时（2026-09-27），仓库约 5.7k Stars、249 Forks，最新版本 v0.20.0（2026-09-24 发布），最近一次提交在 2026-09-26——维护活跃。语言为 Go，许可证 AGPLv3。官方提供[在线演示](https://demo.hister.org/)和[文档站](https://hister.org/docs)，可以不用部署先体验一遍检索界面。
 
 ## 它解决的是什么问题
 
 个人知识的常见困境是这样的：信息看过了，但没存下来；存下来了，但找不到。浏览器历史记录只回答"我什么时候访问过哪个 URL"，回答不了"那篇讲 residual stream 的文章里具体说了什么"——因为历史数据库里只有 URL 和访问信息，根本没有页面内容。
 
-Hister 的处理方式是把"访问"这个动作本身变成索引事件：浏览器扩展（Firefox/Chrome 官方商店均有上架）在你访问页面时，把页面内容发送到你配置的 Hister 服务器，服务器对全文建索引。已有的历史记录则通过 `hister import browser` 读回 URL 列表，再逐个抓取页面补上内容。加上本地文件导入与目录监听，你经手过的信息形成了一个可全文检索的私有语料库。
+Hister 的处理方式是把"访问"这个动作本身变成索引事件：浏览器扩展（Firefox/Chrome 官方商店均有上架）在你访问页面时，把页面内容发送到你配置的 Hister 服务器，服务器对全文建索引。已有的历史记录则通过 `hister import browser history` 读回 URL 列表，再逐个抓取页面补上内容。加上本地文件导入与目录监听，你经手过的信息形成了一个可全文检索的私有语料库。
 
 ## 系统地图
 
 Hister 是一个单二进制 Go 服务，整体结构可以这样看：
 
-- **采集层**：浏览器扩展（自动索引新访问页面）、浏览器历史导入、内置爬虫、本地目录监听
+- **采集层**：浏览器扩展（自动索引新访问页面）、浏览器历史与书签导入、Raindrop.io 收藏导入、内置爬虫、本地文件监听（`hister import file --watch`）
 - **索引层**：对页面和文件的正文做全文索引，可加语义检索（embeddings，向量嵌入），指向你自行配置的端点
 - **查询层**：Web UI、终端 TUI、命令行客户端、MCP 服务端
 
@@ -83,7 +83,7 @@ golang sort:date
 domain:github.com title:(security|vulnerability) -tutorial
 ```
 
-字段还覆盖 `added:` / `updated:`（按时间过滤，支持 `>90d` 这类相对时间）、`visits:`（按访问次数）、`language:`（按检测语言）。完整字段清单见[查询语言文档](https://hister.org/docs/query-language)。
+字段还覆盖 `text:`（只搜正文）、`label:`（按文档标签）、`added:` / `updated:`（按时间过滤，支持 `>90d` 这类相对时间，也支持 `>=2026-04-01` 绝对日期）、`visits:`（按访问次数，支持 `2..4` 这类区间）、`language:`（按检测语言）。结果顺序用 `sort:` 控制：除默认相关性外可按 `date`、`visits`、`domain` 排序，加 `-` 前缀反向。完整字段清单见[查询语言文档](https://hister.org/docs/query-language)。
 
 ## 隐私边界：说清楚什么留在本地、什么会出去
 
@@ -93,14 +93,15 @@ domain:github.com title:(security|vulnerability) -tutorial
 - 浏览器扩展只把索引的页面内容发给你配置的 Hister 服务器，唯一的例外是下载页面 favicon。扩展不会对你正在访问的站点发出任何请求，对索引的网站完全透明。
 - **语义检索是显式的可选项**：开启后文档文本会发送到你配置的 embeddings 端点。如果你把端点指向第三方 API，等于把文档内容交了出去——官方文档明确提醒启用前审查隐私配置。
 
-所以，"本地部署 + 不开语义检索"是一个完全闭环的形态：语义检索带来的能力提升以部分数据外流为代价，边界由你自己画。
+所以，"本地部署 + 不开语义检索"这个组合下，数据不离开你控制的机器；语义检索带来的能力提升以部分数据外流为代价，边界由你自己画。
 
 ## 上手：五分钟路径
 
 个人本地部署不需要任何配置：
 
 ```bash
-# 1. 从 release 下载对应平台的二进制，重命名为 hister
+# macOS / Linux 也可用 Homebrew：brew install hister
+# 或从 release 下载对应平台的二进制，重命名为 hister
 chmod +x hister
 ./hister listen
 ```
@@ -110,11 +111,13 @@ chmod +x hister
 已有的浏览器历史可以一次性导入：
 
 ```bash
-# 自动检测本机常见浏览器的历史数据库
-hister import browser
+# 自动检测本机常见浏览器的历史数据库，逐个抓取页面补全正文
+hister import browser history
 ```
 
-进阶用法包括多用户模式（共享服务器上每个用户的文档与检索结果相互隔离）、爬虫索引指定站点、配置语义检索端点。v0.19.0 还加入了 Safari 历史导入（macOS 需授予完全磁盘访问权限）与 `url_re:` 正则检索。
+进阶用法包括多用户模式（共享服务器上每个用户的文档与检索结果相互隔离）、爬虫索引指定站点、配置语义检索端点。最近两个版本补齐了不少采集入口：v0.19.0 加入 Safari 历史导入（macOS 需授予完全磁盘访问权限）与 `url_re:` 正则检索；v0.20.0 加入浏览器书签导入（覆盖 Firefox/Chromium 系与 Ladybird，默认打上 `bookmarks` 标签，导入任务可中断续跑）、Raindrop.io 收藏导入（走 API 时保留标题、日期、高亮与标签），以及 `hister import file --watch` 持续文件监听——源文件改动后，索引里的快照自动更新。
+
+排障先用 `hister doctor`：它检查本机配置、抽取器依赖、服务器连通性与索引兼容性，v0.20.0 起自带。
 
 ## 用 AI 检索你的阅读历史：MCP 接口
 
@@ -133,9 +136,9 @@ Hister 原生暴露 MCP 端点 `POST /mcp`，AI 助手连上后可以检索你�
 }
 ```
 
-默认本地部署不要求认证，`Authorization` 头只有在服务器配置了访问令牌时才需要。端点提供三个工具：`search`（按查询语言检索，可带日期范围与语义开关）、`get_preview`（按 URL 取回存储的页面快照）、`get_history`（查看最近索引或打开过的页面）。
+默认本地部署不要求认证，`Authorization` 头只有在服务器配置了访问令牌或多用户模式时才需要。端点提供三个工具：`search`（按查询语言检索，可带日期范围与语义开关；`fields` 参数能直接取回存储的全文而非摘要片段，AI 做主题总结时不必再逐个打开 URL）、`get_preview`（按 URL 取回存储的页面快照）、`get_history`（查看最近索引或打开过的页面）。
 
-一个需要注意的细节：索引里的标题、正文、元数据都来自你浏览过的网页，属于**不可信数据**。Hister 在 MCP 工具响应里把这些字段标为 `trust: "untrusted"`，并要求客户端渲染 HTML 前先消毒，防止网页里的提示注入影响 AI 助手。接 MCP 之前，先想清楚你的 AI 助手会不会被检索到的页面内容带偏。
+索引里的标题、正文、元数据都来自你浏览过的网页，属于**不可信数据**——页面完全可能藏着写给 AI 看的指令。Hister 在 MCP 工具响应里把这些值放进 `untrusted_content` 结构，逐条标为 `trust: "untrusted"`，并过滤不可见控制字符；文档同时明确，这些控制不能保证每个模型都扛得住提示注入，客户端渲染 HTML 前必须消毒，只读检索之外的动作应先征求用户确认。接 MCP 之前，先想清楚你的 AI 助手会不会被检索到的页面内容带偏。
 
 ## 适用边界
 

@@ -8,7 +8,7 @@ description: "DFlash 用一次前向并行吐出一整块草稿 token，把投�
 draft: false
 categories: ["技术笔记"]
 tags: ["LLM", "推理加速", "扩散模型", "投机解码", "vLLM", "SGLang"]
-lastmod: "2026-09-20T00:00:00+08:00"
+lastmod: "2026-09-27T00:00:00+08:00"
 ---
 
 DFlash 容易被介绍成"用扩散模型来写文本，所以能并行"。源码读下来，这个说法把因果讲反了。它之所以敢把去噪步骤压到只剩一步，不是因为扩散模型本身够好，而是因为它把扩散模型放在了草稿位置上：写错的词元（token）会在验证阶段被整段丢掉，草稿的质量下限不再需要谁来守。
@@ -50,12 +50,12 @@ DFlash 的判断落在这里：草稿侧的串行是主要矛盾，而草稿不�
 
 ## 2. 仓库现状与核实口径
 
-下表数字采集于 2026-09-20，来源是 GitHub 与 PyPI 的公开应用程序接口（API）；仓库代码取自 `main` 分支的提交 `07ebd93`（2026-08-18）。清单类信息最容易过期，所以每个数都注明它来自哪个字段，第 19 节给出复核命令。
+下表数字采集于 2026-09-27，来源是 GitHub 与 PyPI 的公开应用程序接口（API）；仓库代码取自 `main` 分支的提交 `07ebd93`（2026-08-18）。清单类信息最容易过期，所以每个数都注明它来自哪个字段，第 19 节给出复核命令。
 
 | 项 | 值 | 来源 |
 |---|---|---|
-| Stars / Forks / Watchers | 6,102 / 432 / 45 | `/repos/z-lab/dflash` |
-| Open issues | 103 | 同上 |
+| Stars / Forks / Watchers | 6,121 / 434 / 45 | `/repos/z-lab/dflash` |
+| Open issues | 106 | 同上 |
 | 许可证 | MIT | `LICENSE`，`pyproject.toml` 的 `license` 字段 |
 | 创建 / 最近推送 | 2026-01-04 / 2026-08-18 | `created_at`、`pushed_at` |
 | 唯一 tag 与正式版 | `v0.1.0`（2026-08-18） | `/tags`、`/releases` |
@@ -158,7 +158,7 @@ block = mx.array([[tokens[-1]] + [mask_id] * (bs - 1)])
 | 冻结嵌入与输出头 | 草稿共享目标模型的嵌入向量层（token embedding）和输出头（LM head），两者不参与训练，只更新草稿的 Transformer 层 | 少训一大量参数，同时把草稿钉在目标的表示空间里，逼它做适配器而不是独立语言模型 |
 | 训练数据用目标自己的输出 | 约 800K 条 NVIDIA Nemotron Post-Training Dataset V2 与 CodeAlpaca 混合，但答案换成目标模型重新生成的 response | 草稿要拟合的是"这个目标模型会怎么写"，不是"标准答案长什么样" |
 
-其余超参：AdamW，学习率 $6\times10^{-4}$，梯度裁剪 1.0，余弦调度、warmup 比例 0.04，6 个 epoch，最大序列长 3072（Qwen3-Coder 用 4096），每条序列采 512 个锚点位置。特征可以在线算（online），也可以预先缓存后离线读（offline）。后者省算力，代价是缓存目标隐状态的存储量随抽取层数线性增长——这也是论文把目标特征从 3 组加到 5 组时给出的唯一代价。
+其余超参：AdamW，学习率 $6\times10^{-4}$，梯度裁剪 1.0，余弦调度、warmup 比例 0.04，6 个 epoch，最大序列长 3072（Qwen3-Coder 用 4096），每条序列采 512 个锚点位置（论文 §A.1）。特征可以在线算（online），也可以预先缓存后离线读（offline）。后者省算力，代价是缓存目标隐状态的存储量随抽取层数线性增长——这也是论文把目标特征从 3 组加到 5 组时给出的唯一代价。
 
 训练代码不在仓库里。README 的旧版本写过"训练 recipe 会很快开源"，而 `07ebd93` 的仓库里仍然只有推理与基准两个入口。自训草稿这条路目前只能参照论文描述自行复现。
 
@@ -434,9 +434,9 @@ done
 
 ## 20. 参考来源
 
-以下链接均在 2026-09-20 实测可访问：
+以下链接均在 2026-09-27 实测可访问：
 
-- 仓库：<https://github.com/z-lab/dflash>（MIT，6,102 Stars，最近推送 2026-08-18）
+- 仓库：<https://github.com/z-lab/dflash>（MIT，6,121 Stars，最近推送 2026-08-18）
 - 论文：Chen, Liang, Liu. *DFlash: Block Diffusion for Flash Speculative Decoding*. arXiv:2602.06036v2 — <https://arxiv.org/abs/2602.06036>
 - 项目页：<https://z-lab.ai/projects/dflash/>（`dflash.z-lab.ai` 重定向至此）
 - DFlash 2 发布文：<https://inco.ai/blog/dflash2/>
