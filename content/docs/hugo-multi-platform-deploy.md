@@ -3,6 +3,8 @@ date = '2026-03-22T00:10:00+08:00'
 draft = false
 title = 'Hugo 新手多平台上线实战（GitHub Pages、Vercel、Cloudflare）'
 description = 'Hugo 静态网站多平台部署实战教程，覆盖 GitHub Pages、Vercel 和 Cloudflare Pages 三种主流方案，含域名配置与 HTTPS 设置。'
+slug = 'hugo-multi-platform-deploy'
+categories = ['技术笔记']
 +++
 
 # Hugo 新手多平台上线实战（GitHub Pages、Vercel、Cloudflare）
@@ -147,12 +149,12 @@ npm --version
 
 ### 1.3 如果你在 Hugo 源码目录：先本地编译 Hugo 再创建站点
 
-如果你当前就在 Hugo 源码目录（例如 `/Volumes/mini_matrix/github/a1pha3/hugo`），可以直接编译一个本地可执行文件来使用。
+如果你当前就在 Hugo 源码目录（例如 `~/hugo-src`），可以直接编译一个本地可执行文件来使用。
 
 先进入源码目录并编译：
 
 ```bash
-cd /Volumes/mini_matrix/github/a1pha3/hugo
+cd ~/hugo-src
 go build -tags extended -o ./hugo
 ./hugo version
 ```
@@ -170,14 +172,14 @@ go build -tags extended -o ./hugo
 ```bash
 mkdir -p ~/Sites
 cd ~/Sites
-/Volumes/mini_matrix/github/a1pha3/hugo/hugo new site my-hugo-multi-deploy
+~/hugo-src/hugo new site my-hugo-multi-deploy
 cd my-hugo-multi-deploy
 ```
 
 如果你希望后续直接使用 `hugo` 命令，可以临时加入 PATH：
 
 ```bash
-export PATH="/Volumes/mini_matrix/github/a1pha3/hugo:$PATH"
+export PATH="$HOME/hugo-src:$PATH"
 hugo version
 ```
 

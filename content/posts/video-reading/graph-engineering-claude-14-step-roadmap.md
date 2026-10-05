@@ -786,9 +786,7 @@ LangGraph 是落地运行框架之一：它的 StateGraph 天然支持"多入边
 | 17 | HNqtS-UXkAAAKzv.png | The assembled graph（终极组装图），OCR 完整 |
 
 > OCR 校对工具：macOS Vision.framework（`VNRecognizeTextRequest`，recognitionLevel=.accurate），单脚本批量跑全部 17 张图。
-> HTML 备份：`/Users/damon/.openclaw/workspace/state/reverse-write/x-0xcodez-2079165300625330317/tweet.html`
-> OCR 全文：`/Users/damon/.openclaw/workspace/state/reverse-write/x-0xcodez-2079165300625330317/ocr_all.txt`
-> 17 张原图：`/Users/damon/.openclaw/workspace/state/reverse-write/x-0xcodez-2079165300625330317/images/`
+> 产出物归档：HTML 备份、OCR 全文与 17 张原图存放在本地 reverse-write 工作区，按推文 ID `x-0xcodez-2079165300625330317` 建目录管理。
 
 ## 附录 B · 引用与延伸阅读
 

@@ -8,6 +8,8 @@ fi
 
 python3 ./scripts/validate_site.py future-dates
 python3 ./scripts/validate_hugo_template_compatibility.py
+# 内部产物若混入 content/ 会把构建机绝对路径发布到公网；部署前拦截（2026-10-05）。
+python3 ./scripts/check_no_local_paths.py
 
 # 环境判定：只有 main 分支才用 production（注入 GA/AdSense）。
 # 预览分支（PR/其他 branch）必须用非 production 环境——gtag/adsense 模板都以
